@@ -1,8 +1,10 @@
 
+
 To build and run Albany:
 
 (1) Have cmake installed on your machine (2.8 or newer)
-(2) Download Trilinos. 
+(2) Download Trilinos:  
+       eg clone software.sandia.gov:/space/git/Trilinos
   * Albany and Trilinos development branches stay in sync. 
   * Albany 1.0 is compatible with Trilinos 10.6.1
 (3) Configure Trilinos using a cmake script like 
@@ -15,4 +17,5 @@ To build and run Albany:
     (tests are the same as examples )
 (6) A setup for a nightly test harness is in 
     doc/nightlyTestHarness
+
 
