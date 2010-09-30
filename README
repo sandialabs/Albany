@@ -1,4 +1,5 @@
-
+This repository can be checked-out as:
+git clone software.sandia.gov:/space/git/Albany
 
 To build and run Albany:
 
