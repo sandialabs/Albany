@@ -1,0 +1,24 @@
+create vertex 0.0 0.0 0.0
+#{_vert1 = Id("vertex")}
+create vertex {_Length} 0.0 0.0
+#{_vert2 = Id("vertex")}
+create vertex {_Length } {_Height} 0.0
+#{_vert3 = Id("vertex")}
+create vertex 0.0 {_Height} 0.0
+#{_vert4 = Id("vertex")}
+create curve vertex {_vert1} vertex {_vert2}
+#{_curve1 = Id("curve")}
+create curve vertex {_vert2} vertex {_vert3}
+#{_curve2 = Id("curve")}
+create curve vertex {_vert3} vertex {_vert4}
+#{_curve3 = Id("curve")}
+create curve vertex {_vert4} vertex {_vert1}
+#{_curve4 = Id("curve")}
+create surface {_curve1} {_curve2} {_curve3} {_curve4}
+#{_surf1 = Id("surface")}
+nodeset 15 curve {_curve1}
+nodeset 16 curve {_curve2}
+nodeset 17 curve {_curve3}
+nodeset 18 curve {_curve4}
+compress ids all
+

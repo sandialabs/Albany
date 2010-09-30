@@ -1,0 +1,75 @@
+
+The scripts in this directory will checkout and build VOTD
+versions of Trilinos, Dakota, and Albany, and run Albany's
+tests. To get this running on your machine takes three steps:
+
+1) Copy "set_andys_env.in" to a new name (e.g. "my_env.in")
+and modify the required environment variables (mostly paths).  
+
+2) ./run_master.sh  my_env.in
+
+==============================================================
+
+More details on files:
+
+set_andys_env.in:
+-----------------
+File that sets required paths and environment variables,
+set to those used successfully by Andy. All customizations
+for individual users are in this one place. This filename
+must be given as a command-line argument to run_master.sh.
+
+run_master.sh
+--------------
+Single script that (1) sources the file given as an
+argument (see previous)), and (2) calls the following 
+scripts in the order listed. 
+
+  trilinos_checkout.sh
+  ----------------
+  checkout Trilinos votd from  git  repository
+  checkout preCopyrightTrilinos votd from  git  repository
+
+  dakota_checkout.sh
+  ----------------
+  Fetches the Dakota_votd tarball with the "wget" command,
+  and untars all of Dakota withing Trilinos/packages/TriKota
+
+  trilinos_build_all.sh
+  ----------------
+  "cmake; make; make install;" all of Trilinos to include 
+  everything needed by Albany, including TriKota which knows 
+  how to build Dakota.
+  Uses the cmake configure script:
+     do_cmake_trilinos
+
+  albany_build.sh
+  ----------------
+  Export new albany votd from SVN repository, configure the
+  code using above installed Trilinos and using the
+  Makefile.export.*package files to pick up paths and libs,
+  and build "albany" "albanyDakota" and "albanySG" executables.
+  
+  albany_runtest.sh
+  -----------------
+  Runs all the tests in Albany. These include standard
+  tests (forward simulation with albany executable),
+  Dakota tests (albanyDakota executable) for example problem
+  directories with a "dakota.in" file, and Stochastic Galerkin
+  problems (albanySG executable) for examples with an 
+  inputSG.xml input file.
+
+  send_email.sh
+  -------------
+  Script to email results of test to this  mail list:
+    demoapps-regression@software.sandia.gov
+
+::end of run_master.sh script
+
+=========================================================
+Note:
+The standard output of the builds and test are sent
+to seperate files in the nightly test directory: 
+under sub-driectories Albany_out, Trilinos_out,
+and Dakota_out. (These paths are specified in the
+file with environmental variables.)

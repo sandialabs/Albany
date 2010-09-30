@@ -1,0 +1,11 @@
+curve 1 interval 60
+curve 2 interval 40
+curve 3 interval 30
+curve 4 interval 50
+#curve 1 interval 40
+#curve 2 interval 40
+#curve 3 interval 40
+#curve 4 interval 40
+mesh surface 1
+list totals
+

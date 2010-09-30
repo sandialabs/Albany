@@ -1,0 +1,9 @@
+create vertex {_Translation} 0.0 0.0
+#{_vert1 = Id("vertex")}
+create vertex {_Length + _Translation} 0.0 0.0
+#{_vert2 = Id("vertex")}
+create curve vertex {_vert1} vertex {_vert2}
+nodeset 15 vertex {_vert1}
+nodeset 16 vertex {_vert2}
+compress ids all
+

@@ -1,0 +1,8 @@
+(1) Configure without -O? optimization, and with::
+ -D CMAKE_CXX_FLAGS:STRING="-fprofile-arcs -ftest-coverage" \
+(2) Compile, and Run CTest
+(3) cd into directory with object files,
+    cd  src/CMakeFiles/albanyLib.dir
+(4) Run gcov on files -- seem to need termianl period
+   gcov AlbanyApplication.cpp.
+
