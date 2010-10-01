@@ -18,6 +18,7 @@
 #include "ENAT_SGNOXSolver.hpp"
 #include "Piro_Epetra_NOXSolver.hpp"
 #include "Stokhos.hpp"
+#include "Stokhos_Epetra.hpp"
 #include "Sacado_PCE_OrthogPoly.hpp"
 #include "Teuchos_XMLParameterListHelpers.hpp"
 
