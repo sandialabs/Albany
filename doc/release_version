@@ -3,5 +3,8 @@ Albany revision number 540 in svn is compatible
 with released Trilinos 10.4, and refered to as
 Albany v0.5 in copyright paperwork.
 
-Albany 1.0 is in the git repository and compatible
-with Trilinos 10.6.
+Albany_release_1_0 is a branch in the git repository 
+and compatible with Trilinos 10.6.1.
+
+Albany master branch in the git repository is kept
+in sync with Trilinos development branch.
