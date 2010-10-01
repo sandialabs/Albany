@@ -31,14 +31,3 @@ echo "------------------CTEST----------------------" \
 ctest >> $ALBOUTDIR/albany_runtests.out
 
 echo >> $ALBOUTDIR/albany_runtests.out
-
-# Repeat for autoconf build
-echo "------------------runtests----------------------" \
-     >> $ALBOUTDIR/albany_runtests.out
-
-cd $ALBDIR/test/utilities
-./runtestsDakotaSGAnalysis --tramonto-dir=$NIGHTLYDIR/Albany \
-                   --build-dir=LINUX_DEBUG --category=default \
-                   --verbosity=2 >> $ALBOUTDIR/albany_runtests.out
-
-

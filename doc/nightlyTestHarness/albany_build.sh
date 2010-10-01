@@ -25,24 +25,10 @@ cd $NIGHTLYDIR
 mkdir $ALBOUTDIR
 
 #-------------------------------------------
-# svn checkout Albany
+# git clone Albany
 #-------------------------------------------
 
-svn export svn+ssh://software.sandia.gov/space/sandiasvn/private/DemoApps/trunk/Albany Albany > $ALBOUTDIR/albany_checkout.out 2>&1
-
-#-------------------------------------------
-# autoconf:  configure and make Albany
-#-------------------------------------------
-
-cd $ALBDIR
-rm -rf $ALBDIR/LINUX_DEBUG
-mkdir $ALBDIR/LINUX_DEBUG
-cd $ALBDIR/LINUX_DEBUG
-../configure --with-gnumake --with-trilinos="$TRILINSTALLDIR" \
-  --with-dakota="$TRILINSTALLDIR" > $ALBOUTDIR/albany_configure.out 2>&1
-
-/usr/bin/make -j 4 > $ALBOUTDIR/albany_make.out 2>&1
-
+eg clone software.sandia.gov:/space/git/Albany > $ALBOUTDIR/albany_checkout.out 2>&1
 
 #-------------------------------------------
 # cmake:  configure and make Albany 
