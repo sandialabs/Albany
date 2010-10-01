@@ -1,0 +1,6 @@
+This file is just a visual reminder of what git
+branch you are on.
+
+The master branch is meant to stay compatible with
+Trilinos development branch through nightly
+integration testing.
