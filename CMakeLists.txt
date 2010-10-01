@@ -101,4 +101,3 @@ IF(ALBANY_MPI)
 ENDIF(ALBANY_MPI)
 
 add_subdirectory(examples)
-
