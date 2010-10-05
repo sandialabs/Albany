@@ -56,6 +56,8 @@ using namespace boost::mpl::placeholders;
     - You must provide a boost::mpl::vector named EvaluatorTypes that contain all Evaluator objects that you wish the factory to build.  Do not confuse evaluator types (concrete instances of evaluator objects) with evaluation types (types of evaluations to perform, i.e., Residual, Jacobian). 
 
 */
+namespace PHAL {
+
 template<typename Traits>
 struct FactoryTraits {
   
@@ -88,36 +90,37 @@ struct FactoryTraits {
   static const int id_tl_elas_resid             = 26;
 
   typedef boost::mpl::vector27< 
- 			      Dirichlet<_,Traits>,                //  0
- 			      GatherSolution<_,Traits>,           //  1
- 			      GatherCoordinateVector<_,Traits>,   //  2
- 			      ScatterResidual<_,Traits>,          //  3
- 			      ComputeBasisFunctions<_,Traits>,    //  4
- 			      DOFInterpolation<_,Traits>,         //  5
- 			      DOFGradInterpolation<_,Traits>,     //  6
- 			      DOFVecInterpolation<_,Traits>,      //  7
- 			      DOFVecGradInterpolation<_,Traits>,  //  8
- 			      MapToPhysicalFrame<_,Traits>,       //  9
- 			      Source<_,Traits>,                   // 10
-			      ThermalConductivity<_,Traits>,      // 11
- 			      HelmholtzResid<_,Traits>,           // 12
- 			      HeatEqResid<_,Traits>,              // 13
- 			      Constant<_,Traits>,                 // 14
- 			      ElasticModulus<_,Traits>,           // 15
- 			      Stress<_,Traits>,                   // 16
- 			      Strain<_,Traits>,                   // 17
-                              ElasticityResid<_,Traits>,          // 18
-                              PoissonsRatio<_,Traits>,            // 19
-                              DefGrad<_,Traits>,                  // 20
-                              RCG<_,Traits>,                      // 21
-                              LCG<_,Traits>,                      // 22
-                              DirichletAggregator<_,Traits>,      // 23
-                              DetDefGrad<_,Traits>,               // 24
-                              Neohookean<_,Traits>,               // 25
-                              TLElasResid<_,Traits>               // 26
+            PHAL::Dirichlet<_,Traits>,                //  0
+            PHAL::GatherSolution<_,Traits>,           //  1
+            PHAL::GatherCoordinateVector<_,Traits>,   //  2
+            PHAL::ScatterResidual<_,Traits>,          //  3
+            PHAL::ComputeBasisFunctions<_,Traits>,    //  4
+            PHAL::DOFInterpolation<_,Traits>,         //  5
+            PHAL::DOFGradInterpolation<_,Traits>,     //  6
+            PHAL::DOFVecInterpolation<_,Traits>,      //  7
+            PHAL::DOFVecGradInterpolation<_,Traits>,  //  8
+            PHAL::MapToPhysicalFrame<_,Traits>,       //  9
+            PHAL::Source<_,Traits>,                   // 10
+            PHAL::ThermalConductivity<_,Traits>,      // 11
+            PHAL::HelmholtzResid<_,Traits>,           // 12
+            PHAL::HeatEqResid<_,Traits>,              // 13
+            PHAL::Constant<_,Traits>,                 // 14
+            PHAL::ElasticModulus<_,Traits>,           // 15
+            PHAL::Stress<_,Traits>,                   // 16
+            PHAL::Strain<_,Traits>,                   // 17
+            PHAL::ElasticityResid<_,Traits>,          // 18
+            PHAL::PoissonsRatio<_,Traits>,            // 19
+            PHAL::DefGrad<_,Traits>,                  // 20
+            PHAL::RCG<_,Traits>,                      // 21
+            PHAL::LCG<_,Traits>,                      // 22
+            PHAL::DirichletAggregator<_,Traits>,      // 23
+            PHAL::DetDefGrad<_,Traits>,               // 24
+            PHAL::Neohookean<_,Traits>,               // 25
+            PHAL::TLElasResid<_,Traits>               // 26
   > EvaluatorTypes;
   
 };
+}
 
 #endif
 

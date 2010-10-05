@@ -28,6 +28,8 @@
     This evaluator interpolates nodal DOF values to quad points.
 
 */
+namespace PHAL {
+
 template<typename EvalT, typename Traits>
 class Stress : public PHX::EvaluatorWithBaseImpl<Traits>,
 		    public PHX::EvaluatorDerived<EvalT, Traits>  {
@@ -57,6 +59,7 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;
 };
+}
 
 #ifndef PHAL_ETI
 #include "PHAL_Stress_Def.hpp"

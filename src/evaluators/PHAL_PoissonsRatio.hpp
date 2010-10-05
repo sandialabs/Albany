@@ -29,6 +29,8 @@
 #include "Stokhos_KL_ExponentialRandomField.hpp"
 #include "Teuchos_Array.hpp"
 
+namespace PHAL {
+
 /** 
  * \brief Evaluates poissons ratio, either as a constant or a truncated
  * KL expansion.
@@ -76,6 +78,7 @@ private:
   //! Values of the random variables
   Teuchos::Array<ScalarT> rv;
 };
+}
 
 #ifndef PHAL_ETI
 #include "PHAL_PoissonsRatio_Def.hpp"

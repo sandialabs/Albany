@@ -29,6 +29,8 @@
     Deformation Gradient.
 
 */
+namespace PHAL {
+
 template<typename EvalT, typename Traits>
 class DetDefGrad : public PHX::EvaluatorWithBaseImpl<Traits>,
 		    public PHX::EvaluatorDerived<EvalT, Traits>  {
@@ -56,6 +58,7 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint> J;
 };
+}
 
 #ifndef PHAL_ETI
 #include "PHAL_DetDefGrad_Def.hpp"

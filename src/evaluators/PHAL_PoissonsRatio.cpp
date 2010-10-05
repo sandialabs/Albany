@@ -22,7 +22,7 @@
 #include "PHAL_PoissonsRatio.hpp"
 #include "PHAL_PoissonsRatio_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(PoissonsRatio)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::PoissonsRatio)
 
 #endif
 

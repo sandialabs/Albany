@@ -33,6 +33,8 @@
  * \brief Evaluates thermal conductivity, either as a constant or a truncated
  * KL expansion.
  */
+namespace PHAL {
+
 template<typename EvalT, typename Traits>
 class ThermalConductivity : 
   public PHX::EvaluatorWithBaseImpl<Traits>,
@@ -71,6 +73,7 @@ private:
   //! Values of the random variables
   Teuchos::Array<ScalarT> rv;
 };
+}
 
 #ifndef PHAL_ETI
 #include "PHAL_ThermalConductivity_Def.hpp"

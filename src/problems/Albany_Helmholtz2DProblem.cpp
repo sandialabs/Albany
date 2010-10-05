@@ -25,6 +25,7 @@
 #include "Intrepid_FieldContainer.hpp"
 #include "Intrepid_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
+#include "PHAL_FactoryTraits.hpp"
 
 Albany::Helmholtz2DProblem::
 Helmholtz2DProblem(
@@ -113,7 +114,8 @@ Albany::Helmholtz2DProblem::constructEvaluators(
    using PHX::MDALayout;
    using std::vector;
    using std::map;
-
+   using PHAL::FactoryTraits;
+   using PHAL::AlbanyTraits;
 
    RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis =
      rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
@@ -167,7 +169,7 @@ Albany::Helmholtz2DProblem::constructEvaluators(
      (*dof_names)[1] = "V";
 
     RCP<ParameterList> p = rcp(new ParameterList("Helmholtz Gather Solution"));
-    int type = FactoryTraits<PHAL::AlbanyTraits>::id_gather_solution;
+    int type = FactoryTraits<AlbanyTraits>::id_gather_solution;
     p->set<int>("Type", type);
     p->set< RCP< vector<string> > >("Solution Names", dof_names);
     p->set< RCP<DataLayout> >("Data Layout", node_scalar);
@@ -181,7 +183,7 @@ Albany::Helmholtz2DProblem::constructEvaluators(
      (*dof_names)[0] = "U";
 
     RCP<ParameterList> p = rcp(new ParameterList("Helmholtz Gather Solution"));
-    int type = FactoryTraits<PHAL::AlbanyTraits>::id_gather_solution;
+    int type = FactoryTraits<AlbanyTraits>::id_gather_solution;
     p->set<int>("Type", type);
     p->set< RCP< vector<string> > >("Solution Names", dof_names);
     p->set< RCP<DataLayout> >("Data Layout", node_scalar);
@@ -196,7 +198,7 @@ Albany::Helmholtz2DProblem::constructEvaluators(
      (*dof_names)[0] = "V";
 
     RCP<ParameterList> p = rcp(new ParameterList("Helmholtz Gather Solution"));
-    int type = FactoryTraits<PHAL::AlbanyTraits>::id_gather_solution;
+    int type = FactoryTraits<AlbanyTraits>::id_gather_solution;
     p->set<int>("Type", type);
     p->set< RCP< vector<string> > >("Solution Names", dof_names);
     p->set< RCP<DataLayout> >("Data Layout", node_scalar);
@@ -210,7 +212,7 @@ Albany::Helmholtz2DProblem::constructEvaluators(
 
   { // Gather Coordinate Vector
     RCP<ParameterList> p = rcp(new ParameterList("Helmholtz Gather Coordinate Vector"));
-    int type = FactoryTraits<PHAL::AlbanyTraits>::id_gather_coordinate_vector;
+    int type = FactoryTraits<AlbanyTraits>::id_gather_coordinate_vector;
     p->set<int>                ("Type", type);
     p->set<bool>("Periodic BC", false);
 
@@ -222,7 +224,7 @@ Albany::Helmholtz2DProblem::constructEvaluators(
   { // Compute Basis Functions
     RCP<ParameterList> p = rcp(new ParameterList("Helmholtz Compute Basis Functions"));
 
-    int type = FactoryTraits<PHAL::AlbanyTraits>::id_compute_basis_functions;
+    int type = FactoryTraits<AlbanyTraits>::id_compute_basis_functions;
     p->set<int>   ("Type", type);
 
     // Inputs: X, Y at nodes, Cubature, and Basis
@@ -250,7 +252,7 @@ Albany::Helmholtz2DProblem::constructEvaluators(
   { // DOF: Interpolate nodal U values to quad points
     RCP<ParameterList> p = rcp(new ParameterList("Helmholtz DOFInterpolation U"));
 
-    int type = FactoryTraits<PHAL::AlbanyTraits>::id_dof_interpolation;
+    int type = FactoryTraits<AlbanyTraits>::id_dof_interpolation;
     p->set<int>   ("Type", type);
 
     // Input
@@ -269,7 +271,7 @@ Albany::Helmholtz2DProblem::constructEvaluators(
   { // DOF: Interpolate nodal V values to quad points
     RCP<ParameterList> p = rcp(new ParameterList("Helmholtz DOFInterpolation V"));
 
-    int type = FactoryTraits<PHAL::AlbanyTraits>::id_dof_interpolation;
+    int type = FactoryTraits<AlbanyTraits>::id_dof_interpolation;
     p->set<int>   ("Type", type);
 
     // Input
@@ -288,7 +290,7 @@ Albany::Helmholtz2DProblem::constructEvaluators(
   { // DOFGrad: Interpolate nodal U to Grad-U at quad points
     RCP<ParameterList> p = rcp(new ParameterList("Helmholtz DOFGradInterpolation U"));
 
-    int type = FactoryTraits<PHAL::AlbanyTraits>::id_dof_grad_interpolation;
+    int type = FactoryTraits<AlbanyTraits>::id_dof_grad_interpolation;
     p->set<int>   ("Type", type);
 
     // Input
@@ -308,7 +310,7 @@ Albany::Helmholtz2DProblem::constructEvaluators(
   { // DOFGrad: Interpolate nodal V to Grad-V at quad points
     RCP<ParameterList> p = rcp(new ParameterList("Helmholtz DOFGradInterpolation V"));
 
-    int type = FactoryTraits<PHAL::AlbanyTraits>::id_dof_grad_interpolation;
+    int type = FactoryTraits<AlbanyTraits>::id_dof_grad_interpolation;
     p->set<int>   ("Type", type);
 
     // Input
@@ -328,7 +330,7 @@ Albany::Helmholtz2DProblem::constructEvaluators(
   { // Map To Physical Frame: Interpolate X, Y to QuadPoints
     RCP<ParameterList> p = rcp(new ParameterList("Helmholtz Map To Physical Frame"));
 
-    int type = FactoryTraits<PHAL::AlbanyTraits>::id_map_to_physical_frame;
+    int type = FactoryTraits<AlbanyTraits>::id_map_to_physical_frame;
     p->set<int>   ("Type", type);
 
     // Input: X, Y at vertices
@@ -347,7 +349,7 @@ Albany::Helmholtz2DProblem::constructEvaluators(
   if (haveSource) { // Source on U (Real) equation
     RCP<ParameterList> p = rcp(new ParameterList("Helmholtz Source U"));
 
-    int type = FactoryTraits<PHAL::AlbanyTraits>::id_source;
+    int type = FactoryTraits<AlbanyTraits>::id_source;
     p->set<int>("Type", type);
 
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
@@ -367,7 +369,7 @@ Albany::Helmholtz2DProblem::constructEvaluators(
   if (haveSource) { // Source on V (Imag) equation
     RCP<ParameterList> p = rcp(new ParameterList("Helmholtz Source V"));
 
-    int type = FactoryTraits<PHAL::AlbanyTraits>::id_source;
+    int type = FactoryTraits<AlbanyTraits>::id_source;
     p->set<int>("Type", type);
 
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
@@ -387,7 +389,7 @@ Albany::Helmholtz2DProblem::constructEvaluators(
   { // Helmholtz Resid
     RCP<ParameterList> p = rcp(new ParameterList("Helmholtz Resid"));
 
-    int type = FactoryTraits<PHAL::AlbanyTraits>::id_helmholtzresid;
+    int type = FactoryTraits<AlbanyTraits>::id_helmholtzresid;
     p->set<int>("Type", type);
 
     //Input
@@ -427,7 +429,7 @@ Albany::Helmholtz2DProblem::constructEvaluators(
      (*resid_names)[1] = "V Residual";
 
     RCP<ParameterList> p = rcp(new ParameterList("Helmholtz Scatter Residual"));
-    int type = FactoryTraits<PHAL::AlbanyTraits>::id_scatter_residual;
+    int type = FactoryTraits<AlbanyTraits>::id_scatter_residual;
     p->set<int>("Type", type);
     p->set< RCP< vector<string> > >("Residual Names", resid_names);
 
@@ -438,27 +440,27 @@ Albany::Helmholtz2DProblem::constructEvaluators(
   }
 
    // Build Field Evaluators for each evaluation type
-   PHX::EvaluatorFactory<PHAL::AlbanyTraits,FactoryTraits<PHAL::AlbanyTraits> > factory;
-   RCP< vector< RCP<PHX::Evaluator_TemplateManager<PHAL::AlbanyTraits> > > >
+   PHX::EvaluatorFactory<AlbanyTraits,FactoryTraits<AlbanyTraits> > factory;
+   RCP< vector< RCP<PHX::Evaluator_TemplateManager<AlbanyTraits> > > >
      evaluators;
    evaluators = factory.buildEvaluators(evaluators_to_build);
 
    // Create a FieldManager
-   fm = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+   fm = Teuchos::rcp(new PHX::FieldManager<AlbanyTraits>);
 
    // Register all Evaluators
    PHX::registerEvaluators(evaluators, *fm);
 
-   PHX::Tag<PHAL::AlbanyTraits::Residual::ScalarT> res_tag("Scatter", dummy);
-   fm->requireField<PHAL::AlbanyTraits::Residual>(res_tag);
-   PHX::Tag<PHAL::AlbanyTraits::Jacobian::ScalarT> jac_tag("Scatter", dummy);
-   fm->requireField<PHAL::AlbanyTraits::Jacobian>(jac_tag);
-   PHX::Tag<PHAL::AlbanyTraits::Tangent::ScalarT> tan_tag("Scatter", dummy);
-   fm->requireField<PHAL::AlbanyTraits::Tangent>(tan_tag);
-   PHX::Tag<PHAL::AlbanyTraits::SGResidual::ScalarT> sgres_tag("Scatter", dummy);
-   fm->requireField<PHAL::AlbanyTraits::SGResidual>(sgres_tag);
-   PHX::Tag<PHAL::AlbanyTraits::SGJacobian::ScalarT> sgjac_tag("Scatter", dummy);
-   fm->requireField<PHAL::AlbanyTraits::SGJacobian>(sgjac_tag);
+   PHX::Tag<AlbanyTraits::Residual::ScalarT> res_tag("Scatter", dummy);
+   fm->requireField<AlbanyTraits::Residual>(res_tag);
+   PHX::Tag<AlbanyTraits::Jacobian::ScalarT> jac_tag("Scatter", dummy);
+   fm->requireField<AlbanyTraits::Jacobian>(jac_tag);
+   PHX::Tag<AlbanyTraits::Tangent::ScalarT> tan_tag("Scatter", dummy);
+   fm->requireField<AlbanyTraits::Tangent>(tan_tag);
+   PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_tag("Scatter", dummy);
+   fm->requireField<AlbanyTraits::SGResidual>(sgres_tag);
+   PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag("Scatter", dummy);
+   fm->requireField<AlbanyTraits::SGJacobian>(sgjac_tag);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

@@ -19,6 +19,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
+namespace PHAL {
 
 template<typename EvalT, typename Traits>
 ThermalConductivity<EvalT, Traits>::
@@ -139,3 +140,5 @@ ThermalConductivity<EvalT,Traits>::getValue(const std::string &n)
 
 // **********************************************************************
 // **********************************************************************
+}
+

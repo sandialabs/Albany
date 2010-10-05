@@ -22,7 +22,7 @@
 #include "PHAL_DOFGradInterpolation.hpp"
 #include "PHAL_DOFGradInterpolation_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(DOFGradInterpolation)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::DOFGradInterpolation)
 
 #endif
 

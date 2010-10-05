@@ -28,6 +28,8 @@
     This evaluator interpolates nodal DOF values to quad points.
 
 */
+namespace PHAL {
+
 template<typename EvalT, typename Traits>
 class ElasticityResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 		        public PHX::EvaluatorDerived<EvalT, Traits>  {
@@ -58,6 +60,7 @@ private:
   std::size_t numDims;
 
 };
+}
 
 #ifndef PHAL_ETI
 #include "PHAL_ElasticityResid_Def.hpp"

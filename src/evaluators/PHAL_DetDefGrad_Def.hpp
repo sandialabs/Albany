@@ -21,6 +21,7 @@
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Intrepid_RealSpaceTools.hpp"
 
+namespace PHAL {
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
@@ -66,3 +67,5 @@ evaluateFields(typename Traits::EvalData workset)
 }
 
 //**********************************************************************
+}
+

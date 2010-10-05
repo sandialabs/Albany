@@ -28,6 +28,8 @@
     This evaluator interpolates nodal DOF values to quad points.
 
 */
+namespace PHAL {
+
 template<typename EvalT, typename Traits>
 class HeatEqResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 		    public PHX::EvaluatorDerived<EvalT, Traits>  {
@@ -62,6 +64,7 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,Node> TResidual;
 };
+}
 
 #ifndef PHAL_ETI
 #include "PHAL_HeatEqResid_Def.hpp"

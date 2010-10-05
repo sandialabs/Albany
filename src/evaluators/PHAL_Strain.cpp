@@ -22,7 +22,7 @@
 #include "PHAL_Strain.hpp"
 #include "PHAL_Strain_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(Strain)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::Strain)
 
 #endif
 

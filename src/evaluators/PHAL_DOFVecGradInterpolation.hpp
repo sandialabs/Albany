@@ -29,6 +29,8 @@
     gradients at quad points.
 
 */
+namespace PHAL {
+
 template<typename EvalT, typename Traits>
 class DOFVecGradInterpolation : public PHX::EvaluatorWithBaseImpl<Traits>,
  			 public PHX::EvaluatorDerived<EvalT, Traits>  {
@@ -63,6 +65,7 @@ private:
   std::size_t numDims;
 
 };
+}
 
 #ifndef PHAL_ETI
 #include "PHAL_DOFVecGradInterpolation_Def.hpp"

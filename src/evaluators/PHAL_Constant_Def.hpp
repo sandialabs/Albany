@@ -15,6 +15,8 @@
 \********************************************************************/
 
 
+namespace PHAL {
+
 //**********************************************************************
 template<typename EvalT, typename Traits>
 Constant<EvalT, Traits>::Constant(Teuchos::ParameterList& p) :
@@ -46,3 +48,4 @@ void Constant<EvalT, Traits>::evaluateFields(typename Traits::EvalData d)
 { }
 
 //**********************************************************************
+}

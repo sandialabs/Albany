@@ -29,6 +29,8 @@
 #include "PHAL_Dimension.hpp"
 #include "Sacado_Traits.hpp"
 
+namespace PHAL {
+
 namespace Source_Functions { template <typename EvalT, typename Traits> class Source_Base; }
 
 template<typename EvalT, typename Traits>
@@ -55,6 +57,7 @@ private:
   std::vector<Source_Functions::Source_Base<EvalT,Traits>*> m_sources;
 
 };
+}
 
 #ifndef PHAL_ETI
 #include "PHAL_Source_Def.hpp"

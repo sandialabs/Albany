@@ -22,7 +22,7 @@
 #include "PHAL_ElasticityResid.hpp"
 #include "PHAL_ElasticityResid_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(ElasticityResid)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::ElasticityResid)
 
 #endif
 

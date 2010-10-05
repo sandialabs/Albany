@@ -22,7 +22,7 @@
 #include "PHAL_TLElasResid.hpp"
 #include "PHAL_TLElasResid_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(TLElasResid)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::TLElasResid)
 
 #endif
 

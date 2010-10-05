@@ -38,7 +38,7 @@
 // Base Class with Generic Implementations: Specializations for
 // Automatic Differentiation Below 
 // **************************************************************
-//template<typename EvalT, typename Traits> class GatherSolutionBase;
+namespace PHAL {
 
 template<typename EvalT, typename Traits>
 class GatherSolutionBase
@@ -161,12 +161,11 @@ private:
   std::size_t neq;
   const std::size_t numFields;
 };
-
 // **************************************************************
+}
 
 #ifndef PHAL_ETI
 #include "PHAL_GatherSolution_Def.hpp"
 #endif
 
-// **************************************************************
 #endif

@@ -28,6 +28,8 @@
     This evaluator interpolates nodal DOFVec values to quad points.
 
 */
+namespace PHAL {
+
 template<typename EvalT, typename Traits>
 class DOFVecInterpolation : public PHX::EvaluatorWithBaseImpl<Traits>,
  			 public PHX::EvaluatorDerived<EvalT, Traits>  {
@@ -59,6 +61,7 @@ private:
   std::size_t numQPs;
   std::size_t numDims;
 };
+}
 
 #ifndef PHAL_ETI
 #include "PHAL_DOFVecInterpolation_Def.hpp"

@@ -21,6 +21,8 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
+namespace PHAL {
+
 template<typename EvalT, typename Traits>
 GatherCoordinateVector<EvalT, Traits>::
 GatherCoordinateVector(const Teuchos::ParameterList& p) :
@@ -126,3 +128,5 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 }
+}
+

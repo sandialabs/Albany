@@ -22,7 +22,7 @@
 #include "PHAL_Source.hpp"
 #include "PHAL_Source_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(Source)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::Source)
 
 #endif
 

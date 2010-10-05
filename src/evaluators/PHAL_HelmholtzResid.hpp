@@ -31,6 +31,8 @@
     This evaluator interpolates nodal DOF values to quad points.
 
 */
+namespace PHAL {
+
 template<typename EvalT, typename Traits>
 class HelmholtzResid : public PHX::EvaluatorWithBaseImpl<Traits>,
  		       public PHX::EvaluatorDerived<EvalT, Traits>,
@@ -71,6 +73,7 @@ private:
   PHX::MDField<ScalarT,Cell,Node> UResidual;
   PHX::MDField<ScalarT,Cell,Node> VResidual;
 };
+}
 
 #ifndef PHAL_ETI
 #include "PHAL_HelmholtzResid_Def.hpp"

@@ -22,7 +22,7 @@
 #include "PHAL_HeatEqResid.hpp"
 #include "PHAL_HeatEqResid_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(HeatEqResid)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::HeatEqResid)
 
 #endif
 

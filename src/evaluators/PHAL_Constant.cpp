@@ -22,7 +22,7 @@
 #include "PHAL_Constant.hpp"
 #include "PHAL_Constant_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(Constant)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::Constant)
 
 #endif
 

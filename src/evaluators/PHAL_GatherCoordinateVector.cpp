@@ -22,7 +22,7 @@
 #include "PHAL_GatherCoordinateVector.hpp"
 #include "PHAL_GatherCoordinateVector_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(GatherCoordinateVector)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::GatherCoordinateVector)
 
 #endif
 

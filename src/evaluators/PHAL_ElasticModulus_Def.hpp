@@ -20,6 +20,8 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 
+namespace PHAL {
+
 template<typename EvalT, typename Traits>
 ElasticModulus<EvalT, Traits>::
 ElasticModulus(Teuchos::ParameterList& p) :
@@ -167,3 +169,5 @@ ElasticModulus<EvalT,Traits>::getValue(const std::string &n)
 
 // **********************************************************************
 // **********************************************************************
+}
+

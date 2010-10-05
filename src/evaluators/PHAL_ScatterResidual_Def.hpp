@@ -21,6 +21,7 @@
 // **********************************************************************
 // Base Class Generic Implemtation
 // **********************************************************************
+namespace PHAL {
 
 template<typename EvalT, typename Traits>
 ScatterResidualBase<EvalT, Traits>::
@@ -361,3 +362,5 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 }
+}
+

@@ -15,6 +15,7 @@
 \********************************************************************/
 
 #include "Albany_AbstractProblem.hpp"
+#include "PHAL_FactoryTraits.hpp"
 
 // Generic implementations that can be used by derived problems
 
@@ -84,6 +85,8 @@ Albany::AbstractProblem::constructDirichletEvaluators(
    using std::vector;
    using std::map;
    using std::string;
+   using PHAL::FactoryTraits;
+   using PHAL::AlbanyTraits;
 
    DBCparams.validateParameters(*(getValidDirichletBCParameters(nodeSetIDs)),0);
 
@@ -98,7 +101,7 @@ Albany::AbstractProblem::constructDirichletEvaluators(
 
        if (DBCparams.isParameter(ss)) {
          RCP<ParameterList> p = rcp(new ParameterList);
-         int type = FactoryTraits<PHAL::AlbanyTraits>::id_dirichlet;
+         int type = FactoryTraits<AlbanyTraits>::id_dirichlet;
          p->set<int>("Type", type);
 
          p->set< RCP<DataLayout> >("Data Layout", dummy);
@@ -119,7 +122,7 @@ Albany::AbstractProblem::constructDirichletEvaluators(
    string allDBC="Evaluator for all Dirichlet BCs";
    {
       RCP<ParameterList> p = rcp(new ParameterList);
-      int type = FactoryTraits<PHAL::AlbanyTraits>::id_dirichlet_aggregator;
+      int type = FactoryTraits<AlbanyTraits>::id_dirichlet_aggregator;
       p->set<int>("Type", type);
 
       p->set<vector<string>* >("DBC Names", &dbcs);
@@ -129,30 +132,30 @@ Albany::AbstractProblem::constructDirichletEvaluators(
    }
 
    // Build Field Evaluators for each evaluation type
-   PHX::EvaluatorFactory<PHAL::AlbanyTraits,FactoryTraits<PHAL::AlbanyTraits> > factory;
-   RCP< vector< RCP<PHX::Evaluator_TemplateManager<PHAL::AlbanyTraits> > > > evaluators;
+   PHX::EvaluatorFactory<AlbanyTraits,FactoryTraits<AlbanyTraits> > factory;
+   RCP< vector< RCP<PHX::Evaluator_TemplateManager<AlbanyTraits> > > > evaluators;
    evaluators = factory.buildEvaluators(evaluators_to_build);
 
    // Create a DirichletFieldManager
-   dfm = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+   dfm = Teuchos::rcp(new PHX::FieldManager<AlbanyTraits>);
 
    // Register all Evaluators
    PHX::registerEvaluators(evaluators, *dfm);
 
-   PHX::Tag<PHAL::AlbanyTraits::Residual::ScalarT> res_tag0(allDBC, dummy);
-   dfm->requireField<PHAL::AlbanyTraits::Residual>(res_tag0);
+   PHX::Tag<AlbanyTraits::Residual::ScalarT> res_tag0(allDBC, dummy);
+   dfm->requireField<AlbanyTraits::Residual>(res_tag0);
 
-   PHX::Tag<PHAL::AlbanyTraits::Jacobian::ScalarT> jac_tag0(allDBC, dummy);
-   dfm->requireField<PHAL::AlbanyTraits::Jacobian>(jac_tag0);
+   PHX::Tag<AlbanyTraits::Jacobian::ScalarT> jac_tag0(allDBC, dummy);
+   dfm->requireField<AlbanyTraits::Jacobian>(jac_tag0);
 
-   PHX::Tag<PHAL::AlbanyTraits::Tangent::ScalarT> tan_tag0(allDBC, dummy);
-   dfm->requireField<PHAL::AlbanyTraits::Tangent>(tan_tag0);
+   PHX::Tag<AlbanyTraits::Tangent::ScalarT> tan_tag0(allDBC, dummy);
+   dfm->requireField<AlbanyTraits::Tangent>(tan_tag0);
 
-   PHX::Tag<PHAL::AlbanyTraits::SGResidual::ScalarT> sgres_tag0(allDBC, dummy);
-   dfm->requireField<PHAL::AlbanyTraits::SGResidual>(sgres_tag0);
+   PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_tag0(allDBC, dummy);
+   dfm->requireField<AlbanyTraits::SGResidual>(sgres_tag0);
 
-   PHX::Tag<PHAL::AlbanyTraits::SGJacobian::ScalarT> sgjac_tag0(allDBC, dummy);
-   dfm->requireField<PHAL::AlbanyTraits::SGJacobian>(sgjac_tag0);
+   PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag0(allDBC, dummy);
+   dfm->requireField<AlbanyTraits::SGJacobian>(sgjac_tag0);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

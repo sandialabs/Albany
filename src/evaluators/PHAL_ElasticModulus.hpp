@@ -33,6 +33,8 @@
  * \brief Evaluates elastic modulus, either as a constant or a truncated
  * KL expansion.
  */
+namespace PHAL {
+
 template<typename EvalT, typename Traits>
 class ElasticModulus : 
   public PHX::EvaluatorWithBaseImpl<Traits>,
@@ -76,6 +78,7 @@ private:
   //! Values of the random variables
   Teuchos::Array<ScalarT> rv;
 };
+}
 
 #ifndef PHAL_ETI
 #include "PHAL_ElasticModulus_Def.hpp"

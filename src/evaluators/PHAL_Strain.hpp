@@ -28,6 +28,8 @@
     This evaluator interpolates nodal DOF values to quad points.
 
 */
+namespace PHAL {
+
 template<typename EvalT, typename Traits>
 class Strain : public PHX::EvaluatorWithBaseImpl<Traits>,
 		    public PHX::EvaluatorDerived<EvalT, Traits>  {
@@ -55,6 +57,7 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> strain;
 };
+}
 
 #ifndef PHAL_ETI
 #include "PHAL_Strain_Def.hpp"

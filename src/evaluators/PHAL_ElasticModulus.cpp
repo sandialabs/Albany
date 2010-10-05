@@ -22,7 +22,7 @@
 #include "PHAL_ElasticModulus.hpp"
 #include "PHAL_ElasticModulus_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(ElasticModulus)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::ElasticModulus)
 
 #endif
 

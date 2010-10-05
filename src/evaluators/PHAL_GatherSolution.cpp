@@ -22,7 +22,7 @@
 #include "PHAL_GatherSolution.hpp"
 #include "PHAL_GatherSolution_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(GatherSolution)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::GatherSolution)
 
 #endif
 

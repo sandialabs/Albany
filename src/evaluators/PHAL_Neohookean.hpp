@@ -29,6 +29,8 @@
     Helmholtz potential
 
 */
+namespace PHAL {
+
 template<typename EvalT, typename Traits>
 class Neohookean : public PHX::EvaluatorWithBaseImpl<Traits>,
 		    public PHX::EvaluatorDerived<EvalT, Traits>  {
@@ -59,6 +61,7 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;
 };
+}
 
 #ifndef PHAL_ETI
 #include "PHAL_Neohookean_Def.hpp"

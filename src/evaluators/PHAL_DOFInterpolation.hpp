@@ -28,6 +28,8 @@
     This evaluator interpolates nodal DOF values to quad points.
 
 */
+namespace PHAL {
+
 template<typename EvalT, typename Traits>
 class DOFInterpolation : public PHX::EvaluatorWithBaseImpl<Traits>,
  			 public PHX::EvaluatorDerived<EvalT, Traits>  {
@@ -55,6 +57,7 @@ private:
   //! Values at quadrature points
   PHX::MDField<ScalarT,Cell,QuadPoint> val_qp;
 };
+}
 
 #ifndef PHAL_ETI
 #include "PHAL_DOFInterpolation_Def.hpp"

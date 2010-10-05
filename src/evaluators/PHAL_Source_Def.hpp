@@ -20,6 +20,7 @@
 #include "Sacado_ParameterAccessor.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 #include "Teuchos_VerboseObject.hpp"
+namespace PHAL {
 
 namespace Source_Functions {
 
@@ -618,3 +619,5 @@ void Source<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 }
 
 //**********************************************************************
+}
+

@@ -29,6 +29,8 @@
     Deformation Tensor from the Deformation Gradient.
 
 */
+namespace PHAL {
+
 template<typename EvalT, typename Traits>
 class LCG : public PHX::EvaluatorWithBaseImpl<Traits>,
 		    public PHX::EvaluatorDerived<EvalT, Traits>  {
@@ -56,6 +58,7 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> lcg;
 };
+}
 
 #ifndef PHAL_ETI
 #include "PHAL_LCG_Def.hpp"

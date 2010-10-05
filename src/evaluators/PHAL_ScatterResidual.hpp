@@ -35,6 +35,8 @@
 // **************************************************************
 // Base Class for code that is independent of evaluation type
 // **************************************************************
+namespace PHAL {
+
 template<typename EvalT, typename Traits> 
 class ScatterResidualBase
   : public PHX::EvaluatorWithBaseImpl<Traits>,
@@ -148,10 +150,10 @@ private:
 };
 
 // **************************************************************
+}
 
 #ifndef PHAL_ETI
 #include "PHAL_ScatterResidual_Def.hpp"
 #endif
 
-// **************************************************************
 #endif

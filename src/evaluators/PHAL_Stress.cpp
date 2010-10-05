@@ -22,7 +22,7 @@
 #include "PHAL_Stress.hpp"
 #include "PHAL_Stress_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(Stress)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::Stress)
 
 #endif
 

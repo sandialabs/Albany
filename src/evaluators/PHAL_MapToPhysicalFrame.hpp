@@ -32,6 +32,8 @@
     to quad points.
 
 */
+namespace PHAL {
+
 template<typename EvalT, typename Traits>
 class MapToPhysicalFrame : public PHX::EvaluatorWithBaseImpl<Traits>,
  			 public PHX::EvaluatorDerived<EvalT, Traits>  {
@@ -60,6 +62,7 @@ private:
   //! Values at quadrature points
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coords_qp;
 };
+}
 
 #ifndef PHAL_ETI
 #include "PHAL_MapToPhysicalFrame_Def.hpp"

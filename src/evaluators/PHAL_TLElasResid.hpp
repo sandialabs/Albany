@@ -28,6 +28,8 @@
     This evaluator computes a nonlinear elasticity residual
 
 */
+namespace PHAL {
+
 template<typename EvalT, typename Traits>
 class TLElasResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 		        public PHX::EvaluatorDerived<EvalT, Traits>  {
@@ -58,8 +60,8 @@ private:
   std::size_t numNodes;
   std::size_t numQPs;
   std::size_t numDims;
-
 };
+}
 
 #ifndef PHAL_ETI
 #include "PHAL_TLElasResid_Def.hpp"

@@ -29,6 +29,8 @@
 
 #include "Teuchos_ParameterList.hpp"
 
+namespace PHAL {
+
 template<typename EvalT, typename Traits>
 class Constant : 
   public PHX::EvaluatorWithBaseImpl<Traits>,
@@ -51,7 +53,8 @@ private:
 
   PHX::MDField<ScalarT,Cell,Point> constant;
 
-};
+}; 
+}
 
 #ifndef PHAL_ETI
 #include "PHAL_Constant_Def.hpp"

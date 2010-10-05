@@ -30,6 +30,8 @@
     This evaluator interpolates nodal DOF values to quad points.
 
 */
+namespace PHAL {
+
 template<typename EvalT, typename Traits>
 class ComputeBasisFunctions : public PHX::EvaluatorWithBaseImpl<Traits>,
  			 public PHX::EvaluatorDerived<EvalT, Traits>  {
@@ -62,7 +64,7 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
 };
-
+}
 #ifndef PHAL_ETI
 #include "PHAL_ComputeBasisFunctions_Def.hpp"
 #endif

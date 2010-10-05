@@ -22,7 +22,7 @@
 #include "PHAL_DOFVecGradInterpolation.hpp"
 #include "PHAL_DOFVecGradInterpolation_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(DOFVecGradInterpolation)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::DOFVecGradInterpolation)
 
 #endif
 

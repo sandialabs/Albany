@@ -20,6 +20,7 @@
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 
+namespace PHAL {
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
@@ -111,3 +112,5 @@ evaluateFields(typename Traits::EvalData workset)
 }
 
 //**********************************************************************
+}
+

@@ -21,6 +21,8 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
+namespace PHAL {
+
 template<typename EvalT, typename Traits>
 GatherSolutionBase<EvalT,Traits>::
 GatherSolutionBase(const Teuchos::ParameterList& p) 
@@ -387,5 +389,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+}
+
 }
 

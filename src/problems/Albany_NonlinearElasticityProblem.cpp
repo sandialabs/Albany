@@ -25,6 +25,7 @@
 #include "Intrepid_FieldContainer.hpp"
 #include "Intrepid_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
+#include "PHAL_FactoryTraits.hpp"
 
 
 Albany::NonlinearElasticityProblem::
@@ -122,7 +123,8 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
    using PHX::MDALayout;
    using std::vector;
    using std::map;
-
+   using PHAL::FactoryTraits;
+   using PHAL::AlbanyTraits;
 
    RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
    RCP<shards::CellTopology> cellType;
@@ -184,7 +186,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
      (*dof_names)[0] = "Displacement";
 
     RCP<ParameterList> p = rcp(new ParameterList);
-    int type = FactoryTraits<PHAL::AlbanyTraits>::id_gather_solution;
+    int type = FactoryTraits<AlbanyTraits>::id_gather_solution;
     p->set<int>("Type", type);
     p->set< RCP< vector<string> > >("Solution Names", dof_names);
     p->set<bool>("Vector Field", true);
@@ -203,7 +205,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
 
   { // Gather Coordinate Vector
     RCP<ParameterList> p = rcp(new ParameterList("NonlinearElasticity Gather Coordinate Vector"));
-    int type = FactoryTraits<PHAL::AlbanyTraits>::id_gather_coordinate_vector;
+    int type = FactoryTraits<AlbanyTraits>::id_gather_coordinate_vector;
     p->set<int>                ("Type", type);
 
     // Output:: Coordindate Vector at vertices
@@ -216,7 +218,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
   { // Map To Physical Frame: Interpolate X, Y to QuadPoints
     RCP<ParameterList> p = rcp(new ParameterList("NonlinearElasticity Map To Physical Frame"));
 
-    int type = FactoryTraits<PHAL::AlbanyTraits>::id_map_to_physical_frame;
+    int type = FactoryTraits<AlbanyTraits>::id_map_to_physical_frame;
     p->set<int>   ("Type", type);
 
     // Input: X, Y at vertices
@@ -235,7 +237,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
   { // Compute Basis Functions
     RCP<ParameterList> p = rcp(new ParameterList("NonlinearElasticity Compute Basis Functions"));
 
-    int type = FactoryTraits<PHAL::AlbanyTraits>::id_compute_basis_functions;
+    int type = FactoryTraits<AlbanyTraits>::id_compute_basis_functions;
     p->set<int>   ("Type", type);
 
     // Inputs: X, Y at nodes, Cubature, and Basis
@@ -264,7 +266,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
   { // Elastic Modulus
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    int type = FactoryTraits<PHAL::AlbanyTraits>::id_elastic_modulus;
+    int type = FactoryTraits<AlbanyTraits>::id_elastic_modulus;
     p->set<int>("Type", type);
 
     p->set<string>("QP Variable Name", "Elastic Modulus");
@@ -283,7 +285,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
   { // Poissons Ratio 
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    int type = FactoryTraits<PHAL::AlbanyTraits>::id_poissons_ratio;
+    int type = FactoryTraits<AlbanyTraits>::id_poissons_ratio;
     p->set<int>("Type", type);
 
     p->set<string>("QP Variable Name", "Poissons Ratio");
@@ -302,7 +304,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
   { // DOFVec: Interpolate nodal Displacement values to quad points
     RCP<ParameterList> p = rcp(new ParameterList("NonlinearElasticity DOFVecInterpolation Displacement"));
 
-    int type = FactoryTraits<PHAL::AlbanyTraits>::id_dofvec_interpolation;
+    int type = FactoryTraits<AlbanyTraits>::id_dofvec_interpolation;
     p->set<int>   ("Type", type);
 
     // Input
@@ -322,7 +324,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
    // DOF: Interpolate nodal Displacement Dot  values to quad points
     RCP<ParameterList> p = rcp(new ParameterList("NonlinearElasticity DOFVecInterpolation Displacement Dot"));
 
-    int type = FactoryTraits<PHAL::AlbanyTraits>::id_dofvec_interpolation;
+    int type = FactoryTraits<AlbanyTraits>::id_dofvec_interpolation;
     p->set<int>   ("Type", type);
 
     // Input
@@ -341,7 +343,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
   { // DOFVecGrad: Interpolate nodal Displacement gradients to quad points
     RCP<ParameterList> p = rcp(new ParameterList("NonlinearElasticity DOFVecInterpolation Displacement Grad"));
 
-    int type = FactoryTraits<PHAL::AlbanyTraits>::id_dofvec_grad_interpolation;
+    int type = FactoryTraits<AlbanyTraits>::id_dofvec_grad_interpolation;
     p->set<int>   ("Type", type);
     // Input
     p->set<string>("Variable Name", "Displacement");
@@ -363,7 +365,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
 
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    int type = FactoryTraits<PHAL::AlbanyTraits>::id_source;
+    int type = FactoryTraits<AlbanyTraits>::id_source;
     p->set<int>("Type", type);
 
     p->set<string>("Source Name", "Source");
@@ -380,7 +382,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
   { // Deformation Gradient
     RCP<ParameterList> p = rcp(new ParameterList("DefGrad"));
 
-    int type = FactoryTraits<PHAL::AlbanyTraits>::id_defgrad;
+    int type = FactoryTraits<AlbanyTraits>::id_defgrad;
     p->set<int>("Type", type);
 
     //Input
@@ -396,7 +398,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
   { // Determinant of Deformation Gradient
     RCP<ParameterList> p = rcp(new ParameterList("Determinant of Deformation Gradient"));
 
-    int type = FactoryTraits<PHAL::AlbanyTraits>::id_detdefgrad;
+    int type = FactoryTraits<AlbanyTraits>::id_detdefgrad;
     p->set<int>("Type", type);
 
     //Input
@@ -413,7 +415,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
   { // LCG
     RCP<ParameterList> p = rcp(new ParameterList("LCG"));
 
-    int type = FactoryTraits<PHAL::AlbanyTraits>::id_lcg;
+    int type = FactoryTraits<AlbanyTraits>::id_lcg;
     p->set<int>("Type", type);
 
     //Input
@@ -429,7 +431,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
   { // Stress
     RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
-    int type = FactoryTraits<PHAL::AlbanyTraits>::id_neohookean;
+    int type = FactoryTraits<AlbanyTraits>::id_neohookean;
     p->set<int>("Type", type);
 
     //Input
@@ -451,7 +453,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
   { // Residual
     RCP<ParameterList> p = rcp(new ParameterList("Residual"));
 
-    int type = FactoryTraits<PHAL::AlbanyTraits>::id_tl_elas_resid;
+    int type = FactoryTraits<AlbanyTraits>::id_tl_elas_resid;
     p->set<int>("Type", type);
 
     //Input
@@ -483,7 +485,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
      (*resid_names)[0] = "Residual";
 
     RCP<ParameterList> p = rcp(new ParameterList);
-    int type = FactoryTraits<PHAL::AlbanyTraits>::id_scatter_residual;
+    int type = FactoryTraits<AlbanyTraits>::id_scatter_residual;
     p->set<int>("Type", type);
     p->set<bool>("Vector Field", true);
     p->set< RCP< vector<string> > >("Residual Names", resid_names);
@@ -495,27 +497,27 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
   }
 
    // Build Field Evaluators for each evaluation type
-   PHX::EvaluatorFactory<PHAL::AlbanyTraits,FactoryTraits<PHAL::AlbanyTraits> > factory;
-   RCP< vector< RCP<PHX::Evaluator_TemplateManager<PHAL::AlbanyTraits> > > >
+   PHX::EvaluatorFactory<AlbanyTraits,FactoryTraits<AlbanyTraits> > factory;
+   RCP< vector< RCP<PHX::Evaluator_TemplateManager<AlbanyTraits> > > >
      evaluators;
    evaluators = factory.buildEvaluators(evaluators_to_build);
 
    // Create a FieldManager
-   fm = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+   fm = Teuchos::rcp(new PHX::FieldManager<AlbanyTraits>);
 
    // Register all Evaluators
    PHX::registerEvaluators(evaluators, *fm);
 
-   PHX::Tag<PHAL::AlbanyTraits::Residual::ScalarT> res_tag("Scatter", dummy);
-   fm->requireField<PHAL::AlbanyTraits::Residual>(res_tag);
-   PHX::Tag<PHAL::AlbanyTraits::Jacobian::ScalarT> jac_tag("Scatter", dummy);
-   fm->requireField<PHAL::AlbanyTraits::Jacobian>(jac_tag);
-   PHX::Tag<PHAL::AlbanyTraits::Tangent::ScalarT> tan_tag("Scatter", dummy);
-   fm->requireField<PHAL::AlbanyTraits::Tangent>(tan_tag);
-   PHX::Tag<PHAL::AlbanyTraits::SGResidual::ScalarT> sgres_tag("Scatter", dummy);
-   fm->requireField<PHAL::AlbanyTraits::SGResidual>(sgres_tag);
-   PHX::Tag<PHAL::AlbanyTraits::SGJacobian::ScalarT> sgjac_tag("Scatter", dummy);
-   fm->requireField<PHAL::AlbanyTraits::SGJacobian>(sgjac_tag);
+   PHX::Tag<AlbanyTraits::Residual::ScalarT> res_tag("Scatter", dummy);
+   fm->requireField<AlbanyTraits::Residual>(res_tag);
+   PHX::Tag<AlbanyTraits::Jacobian::ScalarT> jac_tag("Scatter", dummy);
+   fm->requireField<AlbanyTraits::Jacobian>(jac_tag);
+   PHX::Tag<AlbanyTraits::Tangent::ScalarT> tan_tag("Scatter", dummy);
+   fm->requireField<AlbanyTraits::Tangent>(tan_tag);
+   PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_tag("Scatter", dummy);
+   fm->requireField<AlbanyTraits::SGResidual>(sgres_tag);
+   PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag("Scatter", dummy);
+   fm->requireField<AlbanyTraits::SGJacobian>(sgjac_tag);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

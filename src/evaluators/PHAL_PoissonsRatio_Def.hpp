@@ -19,6 +19,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
+namespace PHAL {
 
 template<typename EvalT, typename Traits>
 PoissonsRatio<EvalT, Traits>::
@@ -167,3 +168,5 @@ PoissonsRatio<EvalT,Traits>::getValue(const std::string &n)
 
 // **********************************************************************
 // **********************************************************************
+}
+

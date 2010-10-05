@@ -29,6 +29,8 @@
     gradients at quad points.
 
 */
+namespace PHAL {
+
 template<typename EvalT, typename Traits>
 class DOFGradInterpolation : public PHX::EvaluatorWithBaseImpl<Traits>,
  			 public PHX::EvaluatorDerived<EvalT, Traits>  {
@@ -58,6 +60,7 @@ private:
   //! Values at quadrature points
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> grad_val_qp;
 };
+}
 
 #ifndef PHAL_ETI
 #include "PHAL_DOFGradInterpolation_Def.hpp"

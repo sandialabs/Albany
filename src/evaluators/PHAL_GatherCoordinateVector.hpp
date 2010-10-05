@@ -34,6 +34,7 @@
     names vector.
 
 */
+namespace PHAL {
 
 template<typename EvalT, typename Traits> 
 class GatherCoordinateVector : public PHX::EvaluatorWithBaseImpl<Traits>,
@@ -86,6 +87,8 @@ private:
   std::size_t numVertices;
   std::size_t numDim;
 };
+}
+
 #ifndef PHAL_ETI
 #include "PHAL_GatherCoordinateVector_Def.hpp"
 #endif

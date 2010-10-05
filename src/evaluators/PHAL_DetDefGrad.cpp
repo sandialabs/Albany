@@ -22,7 +22,7 @@
 #include "PHAL_DetDefGrad.hpp"
 #include "PHAL_DetDefGrad_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(DetDefGrad)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::DetDefGrad)
 
 #endif
 

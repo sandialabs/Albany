@@ -22,7 +22,7 @@
 #include "PHAL_Neohookean.hpp"
 #include "PHAL_Neohookean_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(Neohookean)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::Neohookean)
 
 #endif
 

@@ -24,6 +24,8 @@
 // Genereric Template Code for Constructor and PostRegistrationSetup
 // **********************************************************************
 
+namespace PHAL {
+
 template<typename EvalT,typename Traits>
 DirichletBase<EvalT, Traits>::
 DirichletBase(Teuchos::ParameterList& p) :
@@ -275,3 +277,5 @@ DirichletAggregator(Teuchos::ParameterList& p)
 }
 
 // **********************************************************************
+}
+

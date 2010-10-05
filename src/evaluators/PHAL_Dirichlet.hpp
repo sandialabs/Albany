@@ -40,6 +40,8 @@
 // **************************************************************
 // Generic Template Impelementation for constructor and PostReg
 // **************************************************************
+namespace PHAL {
+
 template<typename EvalT, typename Traits>
 class DirichletBase
   : public PHX::EvaluatorWithBaseImpl<Traits>,
@@ -157,10 +159,10 @@ public:
   // This function will be overloaded with template specialized code
   void evaluateFields(typename Traits::EvalData d) {};
 };
+}
 
 #ifndef PHAL_ETI
 #include "PHAL_Dirichlet_Def.hpp"
 #endif
 
-// **************************************************************
 #endif
