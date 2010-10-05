@@ -37,9 +37,9 @@ cmake \
 \
       -D Trilinos_EXTRA_REPOSITORIES:STRING=preCopyrightTrilinos \
       -D Trilinos_ENABLE_Trios:BOOL=ON \
-        -D Trios_ENABLE_XDMF:BOOL=OFF \
-        -D TPL_ENABLE_netcdf:BOOL=ON \
-        -D TPL_Netcdf_INCLUDE_DIRS:PATH="$NETCDFDIR/include" \
+      -D Trios_ENABLE_XDMF:BOOL=OFF \
+      -D TPL_ENABLE_Netcdf:BOOL=ON \
+      -D TPL_Netcdf_INCLUDE_DIRS:PATH="$NETCDFDIR/include" \
       -D Netcdf_LIBRARY_DIRS:PATH="$NETCDFDIR/lib" \
 \
       -D Trilinos_ENABLE_Mesquite:BOOL=OFF \

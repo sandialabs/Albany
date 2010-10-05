@@ -332,9 +332,6 @@ for (int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
       workset.firstCell = fc;
       if (elNodeID.size() - fc < worksetSize) {
           workset.numCells = elNodeID.size() - fc;
-        *out << "DBG Worksets: Last workset decreased from "  
-             << workset.worksetSize << " to " << workset.numCells
-             << " cells." << endl;
       }
 
       // FillType template argument used to specialize Sacado

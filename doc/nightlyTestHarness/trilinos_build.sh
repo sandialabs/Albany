@@ -8,13 +8,13 @@ cd $TRILINSTALLDIR
 
 cp $NIGHTLYDIR/do-cmake-trilinos .
 
-#Reconfigure all of Trilinos
+#Configure Trilinos
 echo "    Starting Trilinos cmake" ; date
-source ./do-cmake-trilinos > $TRILOUTDIR/trilinos_all_cmake.out 2>&1
+source ./do-cmake-trilinos > $TRILOUTDIR/trilinos_cmake.out 2>&1
 echo "    Finished Trilinos cmake, starting make" ; date
 
-#Build all of Trilinos
-/usr/bin/make -j 4  > $TRILOUTDIR/trilinos_all_make.out 2>&1
+#Build Trilinos
+/usr/bin/make -j 4  > $TRILOUTDIR/trilinos_make.out 2>&1
 echo "    Finished Trilinos make, starting install" ; date
 /usr/bin/make install > $TRILOUTDIR/trilinos_install.out 2>&1
 

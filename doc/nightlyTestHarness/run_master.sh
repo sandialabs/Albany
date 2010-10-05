@@ -50,7 +50,7 @@ time source $SCRIPTDIR/trilinos_checkout.sh
 echo; echo "...Starting Dakota VOTD wget and untar"
 time source $SCRIPTDIR/dakota_checkout.sh
 echo; echo "...Starting Trilinos full Build, including Trikota"
-time source $SCRIPTDIR/trilinos_build_all.sh
+time source $SCRIPTDIR/trilinos_build.sh
 echo; echo "...Starting Albany VOTD Export and Build"
 time source $SCRIPTDIR/albany_build.sh
 

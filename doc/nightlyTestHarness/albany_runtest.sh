@@ -26,7 +26,7 @@ fi
 
 cd $ALBDIR/CMAKE_BUILD
 echo "------------------CTEST----------------------" \
-     >> $ALBOUTDIR/albany_runtests.out
+     > $ALBOUTDIR/albany_runtests.out
 
 ctest >> $ALBOUTDIR/albany_runtests.out
 

@@ -14,7 +14,7 @@ source .bash_profile
 
 # Set these to whatever you like
 SCRIPTDIR=/home/agsalin/NightlyAlbanyTriKota
-NIGHTLYDIR=/home/agsalin/NightlyAlbanyTriKota/Results
+NIGHTLYDIR=/home/agsalin/NightlyAlbanyTriKota/Results_release
 
 #set this correctly
 BOOSTDIR=/home/agsalin/install/boost_1_42_0
@@ -33,7 +33,8 @@ TRILOUTDIR=$NIGHTLYDIR/Trilinos_out
 ALBOUTDIR=$NIGHTLYDIR/Albany_out
 DAKOUTDIR=$NIGHTLYDIR/Dakota_out
 
-# Must be set
-TRILINOS_BRANCH=master
-ALBANY_BRANCH=master
+#TRILINOS_BRANCH=master
+#ALBANY_BRANCH=master
+TRILINOS_BRANCH=trilinos-release-10-6-branch
+ALBANY_BRANCH=albany_version_1_0
 

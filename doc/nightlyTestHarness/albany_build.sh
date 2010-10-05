@@ -29,6 +29,9 @@ mkdir $ALBOUTDIR
 #-------------------------------------------
 
 eg clone software.sandia.gov:/space/git/Albany > $ALBOUTDIR/albany_checkout.out 2>&1
+cd Albany
+echo "Switching Albany to branch ", $ALBANY_BRANCH
+eg switch $ALBANY_BRANCH
 
 #-------------------------------------------
 # cmake:  configure and make Albany 
@@ -43,4 +46,4 @@ cmake \
  -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
  ..   > $ALBOUTDIR/albany_cmake.out 2>&1
 
-/usr/bin/make -j 4 > $ALBOUTDIR/albany_cmake_make.out 2>&1
+/usr/bin/make -j 4 > $ALBOUTDIR/albany_make.out 2>&1
