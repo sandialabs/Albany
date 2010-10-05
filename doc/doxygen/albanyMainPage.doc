@@ -1,0 +1,62 @@
+/*! \mainpage Albany: a Trilinos-based PDE Code
+\htmlonly
+\endhtmlonly
+
+\section alb_outline Outline
+
+<ul>
+<li>\ref alb_intro
+<li>\ref alb_cap
+<li>\ref alb_help
+</ul>
+
+\section alb_intro Introduction 
+
+Albany is a PDE code built from numerous Trilinos packages. 
+
+
+
+Albany is a parallel, unstructured grid finite element code, 
+complete with transformational analysis capabilities such
+as embedded optimization and UQ. It serves as a testbed,
+a development environment, and an example code for
+the algorithms, interfacesm and software quality tools
+in the Trilinos framework.
+
+\subsection alb_cap Albany Capabilitites
+The capabilities in Albany can be organized by Trilinos
+Capability Area.
+
+\subsection alb_sq Software Environment
+
+\subsection alb_in Interfaces
+
+\subsection alb_ac Analysis Capabilities
+
+\subsection alb_ls Linear Solvers
+
+\subsection alb_di Discretizations
+
+\subsection alb_mp Mesh Database and Partitioning 
+
+\subsection alb_io Mesh I/O
+
+\subsection alb_sc Scalability on New Architectures
+
+\subsection alb_so Shape Optimization
+
+Problems are...
+
+\section alb_help Albany Contacts and Acknowledgments
+
+Albany is developed by Andy Salinger, Eric Phipps, and Jake Ostein.
+Questions can be sent to demoapps-developers@software.sandia.gov,
+or agsalin@sandia.gov.
+
+Code was contributed by Roger Pawlowski, Roscoe Bartlett, James Overfelt,
+Curt Ober, Bart van Bloemen Waanders, Denis Ridzal, Pavel Bochev,
+Carter Edwards, Greg Sjaardema, and Nathan Fabian. 
+
+The project was strongly influenced by Trilinos developers, STK developers,
+and CSRF management.
+*/
