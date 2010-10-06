@@ -26,9 +26,11 @@ using namespace std;
 
 Albany_NOXObserver::Albany_NOXObserver(
      const Teuchos::RCP<Albany_VTK> vtk_,
-     const Teuchos::RCP<Albany::AbstractDiscretization> &disc_) : 
+     const Teuchos::RCP<Albany::Application> &app_) : 
   vtk(vtk_),
-  disc(disc_)
+  app(app_),
+  disc(app_->getDiscretization())
+
 {
    if (vtk != Teuchos::null) { vtk->updateGeometry (disc); }
 }
@@ -39,6 +41,8 @@ void Albany_NOXObserver::observeSolution(
    if (vtk != Teuchos::null) {
      vtk->visualizeField (solution, disc);
    }
+
+   app->updateState();
 
 #ifdef ALBANY_IOSS
   if (solution.Map().Comm().MyPID()==0)

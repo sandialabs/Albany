@@ -55,6 +55,8 @@ namespace Albany {
     //! Each problem must generate it's list of valid parameters
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
+    Teuchos::RCP<Intrepid::FieldContainer<RealType> > getAllocatedState(const int numCells) const;
+
   private:
 
     //! Private to prohibit copying
@@ -69,6 +71,12 @@ namespace Albany {
     //! Boundary conditions on source term
     bool haveIC;
     bool haveSource;
+    int numDim;
+    int numQPts;
+    int numNodes;
+    int numVertices;
+
+    std::string matModel;
 
   };
 

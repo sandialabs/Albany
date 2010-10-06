@@ -24,7 +24,7 @@
 #include "Rythmos_IntegrationObserverBase.hpp"
 #include "Rythmos_TimeRange.hpp"
 #include "Albany_VTK.hpp"
-#include "Albany_AbstractDiscretization.hpp"
+#include "Albany_Application.hpp"
 #include "Thyra_EpetraThyraWrappers.hpp"
 
 typedef double Scalar;
@@ -34,7 +34,7 @@ class Albany_RythmosObserver : public Rythmos::IntegrationObserverBase<Scalar>
 public:
    Albany_RythmosObserver (
          const Teuchos::RCP<Albany_VTK> vtk_,
-         const Teuchos::RCP<Albany::AbstractDiscretization> &disc_);
+         const Teuchos::RCP<Albany::Application> &app_);
 
    ~Albany_RythmosObserver ()
    { };
@@ -58,6 +58,7 @@ public:
 private:
 
    Teuchos::RCP<Albany::AbstractDiscretization> disc;
+   Teuchos::RCP<Albany::Application> app;
    Teuchos::RCP<Albany_VTK> vtk;
 
 };

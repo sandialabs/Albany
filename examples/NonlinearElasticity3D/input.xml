@@ -2,6 +2,7 @@
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="NonlinearElasticity 3D"/>
     <Parameter name="Transient" type="bool" value="false"/>
+    <Parameter name="Continuation" type="bool" value="false"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS NodeSet0 for DOF X" type="double" value="0.0"/>
@@ -11,7 +12,10 @@
     </ParameterList>
     <ParameterList name="Elastic Modulus">
       <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="1.0"/>
+      <Parameter name="Value" type="double" value="1.5"/>
+    </ParameterList>
+    <ParameterList name="Material Model">
+      <Parameter name="Model Name" type="string" value="J2"/>
     </ParameterList>
     <ParameterList name="Poissons Ratio">
       <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
@@ -49,12 +53,24 @@
     <ParameterList name="Bifurcation"/>
     <ParameterList name="Constraints"/>
     <ParameterList name="Predictor">
-      <ParameterList name="First Step Predictor"/>
-      <ParameterList name="Last Step Predictor"/>
+      <Parameter  name="Method" type="string" value="Tangent"/>
     </ParameterList>
-    <ParameterList name="Step Size"/>
     <ParameterList name="Stepper">
-      <ParameterList name="Eigensolver"/>
+      <Parameter  name="Initial Value" type="double" value="1.0"/>
+      <Parameter  name="Continuation Parameter" type="string" value="DBC on NS NodeSet1 for DOF X"/>
+      <Parameter  name="Max Steps" type="int" value="2"/>
+      <Parameter  name="Max Value" type="double" value="200.0"/>
+      <Parameter  name="Min Value" type="double" value="0.5"/>
+      <Parameter  name="Compute Eigenvalues" type="bool" value="1"/>
+      <ParameterList name="Eigensolver">
+        <Parameter name="Method" type="string" value="Anasazi"/>
+        <Parameter name="Operator" type="string" value="Jacobian Inverse"/>
+        <Parameter name="Num Eigenvalues" type="int" value="1"/>
+      </ParameterList>
+    </ParameterList>
+    <ParameterList name="Step Size">
+      <Parameter  name="Initial Step Size" type="double" value="0.1"/>
+      <Parameter name="Method" type="string" value="Constant"/>
     </ParameterList>
   </ParameterList>
   <ParameterList name="NOX">

@@ -129,6 +129,7 @@ SET(SOURCES ${SOURCES}
 	evaluators/PHAL_LCG.cpp 
 	evaluators/PHAL_DetDefGrad.cpp
 	evaluators/PHAL_Neohookean.cpp
+	evaluators/PHAL_J2Stress.cpp
 	evaluators/PHAL_TLElasResid.cpp
   )
 SET(HEADERS ${HEADERS}
@@ -180,8 +181,10 @@ SET(HEADERS ${HEADERS}
 	evaluators/PHAL_LCG_Def.hpp
 	evaluators/PHAL_DetDefGrad.hpp 
 	evaluators/PHAL_DetDefGrad_Def.hpp
-	evaluators/PHAL_Neohookean.hpp 
+	evaluators/PHAL_Neohookean.hpp
 	evaluators/PHAL_Neohookean_Def.hpp
+	evaluators/PHAL_J2Stress.hpp 
+	evaluators/PHAL_J2Stress_Def.hpp
 	evaluators/PHAL_TLElasResid.hpp 
 	evaluators/PHAL_TLElasResid_Def.hpp 
   )

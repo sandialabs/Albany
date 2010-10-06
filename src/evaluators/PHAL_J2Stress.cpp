@@ -15,33 +15,14 @@
 \********************************************************************/
 
 
-#ifndef ALBANY_NOXOBSERVER
-#define ALBANY_NOXOBSERVER
+#include "PHAL_AlbanyTraits.hpp"
 
+#ifdef PHAL_ETI
 
-#include "Albany_VTK.hpp"
-#include "Albany_Application.hpp"
-#include "NOX_Epetra_Observer.H"
+#include "PHAL_J2Stress.hpp"
+#include "PHAL_J2Stress_Def.hpp"
 
-class Albany_NOXObserver : public NOX::Epetra::Observer
-{
-public:
-   Albany_NOXObserver (
-         const Teuchos::RCP<Albany_VTK> vtk_,
-         const Teuchos::RCP<Albany::Application> &app_);
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::J2Stress)
 
-   ~Albany_NOXObserver ()
-   { };
+#endif
 
-  void observeSolution(
-    const Epetra_Vector& solution);
-
-private:
-
-   Teuchos::RCP<Albany::Application> app;
-   Teuchos::RCP<Albany::AbstractDiscretization> disc;
-   Teuchos::RCP<Albany_VTK> vtk;
-
-};
-
-#endif //ALBANY_NOXOBSERVER

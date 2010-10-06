@@ -27,9 +27,10 @@ using namespace std;
 
 Albany_RythmosObserver::Albany_RythmosObserver(
      const Teuchos::RCP<Albany_VTK> vtk_,
-     const Teuchos::RCP<Albany::AbstractDiscretization> &disc_) : 
+     const Teuchos::RCP<Albany::Application> &app_) : 
   vtk(vtk_),
-  disc(disc_)
+  app(app_),
+  disc(app_->getDiscretization())
 {
    if (vtk != Teuchos::null) { vtk->updateGeometry (disc); }
 }
@@ -57,6 +58,8 @@ void Albany_RythmosObserver::observeCompletedTimeStep(
 
   const Epetra_Vector soln= *(Thyra::get_Epetra_Vector(*disc->getMap(), solution));
   if (vtk != Teuchos::null) vtk->visualizeField (soln, disc);
+
+  app->updateState();
 
 #ifdef ALBANY_IOSS
   Albany::STKDiscretization* stkDisc =

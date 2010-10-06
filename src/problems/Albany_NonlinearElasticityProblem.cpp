@@ -44,6 +44,8 @@ NonlinearElasticityProblem(
   haveIC     =  params->isSublist("Initial Condition");
   haveSource =  params->isSublist("Source Functions");
 
+  matModel = params->sublist("Material Model").get("Model Name","NeoHookean");
+
   dofNames.resize(neq);
   dofNames[0] = "X";
   if (neq>1) dofNames[1] = "Y";
@@ -143,14 +145,14 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
        break;
    }
 
-   const int numNodes = intrepidBasis->getCardinality();
+   numNodes = intrepidBasis->getCardinality();
 
    Intrepid::DefaultCubatureFactory<RealType> cubFactory;
    RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, cubDegree);
 
-   const int numDim = cubature->getDimension();
-   const int numQPts = cubature->getNumPoints();
-   const int numVertices = cellType->getVertexCount();
+   numDim = cubature->getDimension();
+   numQPts = cubature->getNumPoints();
+   numVertices = cellType->getVertexCount();
 
    *out << "Field Dimensions: Workset=" << worksetSize 
         << ", Vertices= " << numVertices
@@ -428,10 +430,12 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
     evaluators_to_build["LCG"] = p;
   }
 
+  
+ if (matModel == "NeoHookean")
   { // Stress
     RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
-    int type = FactoryTraits<AlbanyTraits>::id_neohookean;
+    int type = FactoryTraits<AlbanyTraits>::id_neohookean_stress;
     p->set<int>("Type", type);
 
     //Input
@@ -449,6 +453,33 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
 
     evaluators_to_build["Stress"] = p;
   }
+  else if (matModel == "J2")
+  { // Stress
+    RCP<ParameterList> p = rcp(new ParameterList("Stress"));
+
+    int type = FactoryTraits<AlbanyTraits>::id_j2_stress;
+    p->set<int>("Type", type);
+
+    //Input
+    p->set<string>("LCG Name", "LCG");
+    p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
+
+    p->set<string>("Elastic Modulus Name", "Elastic Modulus");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+
+    p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // qp_scalar also
+    p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient");  // qp_scalar also
+
+    //Output
+    p->set<string>("Stress Name", "Stress"); //qp_tensor also
+
+    evaluators_to_build["Stress"] = p;
+  }
+  else
+    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+       "Unrecognized Material Name: " << matModel 
+        << "  Recognized names are : NeoHookean and J2");
+    
 
   { // Residual
     RCP<ParameterList> p = rcp(new ParameterList("Residual"));
@@ -528,7 +559,14 @@ Albany::NonlinearElasticityProblem::getValidProblemParameters() const
 
   validPL->sublist("Elastic Modulus", false, "");
   validPL->sublist("Poissons Ratio", false, "");
+  validPL->sublist("Material Model", false, "");
 
   return validPL;
+}
+
+Teuchos::RCP<Intrepid::FieldContainer<RealType> >
+Albany::NonlinearElasticityProblem::getAllocatedState(const int numCells) const
+{
+   return Teuchos::rcp(new Intrepid::FieldContainer<RealType>(numCells,numQPts,numDim,numDim));
 }
 

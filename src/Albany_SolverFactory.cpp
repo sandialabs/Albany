@@ -121,10 +121,10 @@ Albany::SolverFactory::SolverFactory(
     }
     if (transient)
       Rythmos_observer = rcp<Rythmos::IntegrationObserverBase<Scalar> >
-        (new Albany_RythmosObserver(vtk, app->getDiscretization()));
+        (new Albany_RythmosObserver(vtk, app));
     else  // both NOX and LOCA can use this observer...
       NOX_observer = rcp<NOX::Epetra::Observer>
-        (new Albany_NOXObserver(vtk, app->getDiscretization()));
+        (new Albany_NOXObserver(vtk, app));
 }
 
 

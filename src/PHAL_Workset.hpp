@@ -28,6 +28,10 @@
 #include "Stokhos_OrthogPolyExpansion.hpp"
 #include "Stokhos_VectorOrthogPoly.hpp"
 #include "Stokhos_VectorOrthogPolyTraitsEpetra.hpp"
+#include <Intrepid_FieldContainer.hpp>
+#include "PHAL_AlbanyTraits.hpp"
+
+typedef double RealType;
 
 namespace PHAL {
 
@@ -80,6 +84,9 @@ struct Workset {
 
   const Teuchos::ArrayRCP<double> &coordinates;
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >  &elNodeID;
+
+  Teuchos::RCP<Intrepid::FieldContainer<RealType> > oldState;
+  Teuchos::RCP<Intrepid::FieldContainer<RealType> > newState;
 };
 
 }

@@ -238,6 +238,9 @@ namespace Albany {
     //! Provide access to shapeParameters -- no AD
     PHAL::AlbanyTraits::Residual::ScalarT& getValue(const std::string &n);
 
+    //! Function to copy newState into oldState
+    void updateState();
+
   private:
 
     //! Call to Teko to build strided block operator
@@ -338,8 +341,13 @@ namespace Albany {
 
     unsigned int neq;
 
-    // Size of a chunk of elements to be processed at once.
+    //! Size of a chunk of elements to be processed at once.
     int worksetSize;
+
+    //! State data, allocated in Problem class
+    Teuchos::RCP<Intrepid::FieldContainer<RealType> > oldState;
+    Teuchos::RCP<Intrepid::FieldContainer<RealType> > newState;
+
 
     //! Teko stuff
     Teuchos::RCP<Teko::InverseLibrary> inverseLib;

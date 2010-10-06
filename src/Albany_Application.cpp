@@ -132,6 +132,9 @@ Albany::Application::Application(
   if (initial_guess != Teuchos::null)
     *initial_x = *initial_guess;
 
+  oldState = problem->getAllocatedState(elNodeID.size());
+  newState = problem->getAllocatedState(elNodeID.size());
+
   // Create response map
   unsigned int total_num_responses = 0;
   for (unsigned int i=0; i<responses.size(); i++)
@@ -327,6 +330,9 @@ for (int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
 
     workset.worksetSize = worksetSize;
     workset.numCells = worksetSize;
+
+    workset.oldState = oldState;
+    workset.newState = newState;
 
     for (int fc=0; fc<elNodeID.size(); fc+=worksetSize) {
       workset.firstCell = fc;
@@ -1279,5 +1285,13 @@ Albany::Application::buildWrappedOperator(const Teuchos::RCP<Epetra_Operator>& J
      *out << "Teko: Tested operator correctness:  " << (result ? "passed" : "FAILED!") << std::endl;
   }
   return wrappedOp;
+}
+
+void
+Albany::Application::updateState()
+{
+    Teuchos::RCP<Intrepid::FieldContainer<RealType> > tmp = newState;
+    newState = oldState;
+    oldState = tmp;
 }
 

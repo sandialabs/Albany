@@ -44,6 +44,7 @@
 #include "PHAL_LCG.hpp"
 #include "PHAL_DetDefGrad.hpp"
 #include "PHAL_Neohookean.hpp"
+#include "PHAL_J2Stress.hpp"
 #include "PHAL_TLElasResid.hpp"
 
 #include "boost/mpl/vector/vector30.hpp"
@@ -86,10 +87,11 @@ struct FactoryTraits {
   static const int id_lcg                       = 22;
   static const int id_dirichlet_aggregator      = 23;
   static const int id_detdefgrad                = 24;
-  static const int id_neohookean                = 25;
+  static const int id_neohookean_stress         = 25;
   static const int id_tl_elas_resid             = 26;
+  static const int id_j2_stress                 = 27;
 
-  typedef boost::mpl::vector27< 
+  typedef boost::mpl::vector28< 
             PHAL::Dirichlet<_,Traits>,                //  0
             PHAL::GatherSolution<_,Traits>,           //  1
             PHAL::GatherCoordinateVector<_,Traits>,   //  2
@@ -116,7 +118,8 @@ struct FactoryTraits {
             PHAL::DirichletAggregator<_,Traits>,      // 23
             PHAL::DetDefGrad<_,Traits>,               // 24
             PHAL::Neohookean<_,Traits>,               // 25
-            PHAL::TLElasResid<_,Traits>               // 26
+            PHAL::TLElasResid<_,Traits>,              // 26
+            PHAL::J2Stress<_,Traits>                  // 27
   > EvaluatorTypes;
   
 };

@@ -34,6 +34,7 @@
 #include "PHAL_Dimension.hpp"
 
 #include "Teuchos_VerboseObject.hpp"
+#include <Intrepid_FieldContainer.hpp>
 
 namespace Albany {
 
@@ -69,6 +70,10 @@ namespace Albany {
     //! Each problem must generate it's list of valide parameters
     virtual Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const 
       {return getGenericProblemParams("Generic Problem List");};
+
+    virtual Teuchos::RCP<Intrepid::FieldContainer<RealType> >
+      getAllocatedState(const int numCells) const {return Teuchos::null;};
+
 
   protected:
 
