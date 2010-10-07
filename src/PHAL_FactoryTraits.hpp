@@ -46,8 +46,11 @@
 #include "PHAL_Neohookean.hpp"
 #include "PHAL_J2Stress.hpp"
 #include "PHAL_TLElasResid.hpp"
+#include "QCAD_Permittivity.hpp"
+#include "QCAD_PoissonResid.hpp"
+#include "QCAD_PoissonSource.hpp"
 
-#include "boost/mpl/vector/vector30.hpp"
+#include "boost/mpl/vector/vector40.hpp"
 #include "boost/mpl/placeholders.hpp"
 using namespace boost::mpl::placeholders;
 
@@ -90,8 +93,11 @@ struct FactoryTraits {
   static const int id_neohookean_stress         = 25;
   static const int id_tl_elas_resid             = 26;
   static const int id_j2_stress                 = 27;
+  static const int id_qcad_permittivity         = 28;
+  static const int id_qcad_poisson_resid        = 29;
+  static const int id_qcad_poisson_source       = 30;
 
-  typedef boost::mpl::vector28< 
+  typedef boost::mpl::vector31< 
             PHAL::Dirichlet<_,Traits>,                //  0
             PHAL::GatherSolution<_,Traits>,           //  1
             PHAL::GatherCoordinateVector<_,Traits>,   //  2
@@ -119,7 +125,10 @@ struct FactoryTraits {
             PHAL::DetDefGrad<_,Traits>,               // 24
             PHAL::Neohookean<_,Traits>,               // 25
             PHAL::TLElasResid<_,Traits>,              // 26
-            PHAL::J2Stress<_,Traits>                  // 27
+            PHAL::J2Stress<_,Traits>,                 // 27
+            QCAD::Permittivity<_,Traits>,             // 28
+            QCAD::PoissonResid<_,Traits>,             // 29
+            QCAD::PoissonSource<_,Traits>              // 30
   > EvaluatorTypes;
   
 };

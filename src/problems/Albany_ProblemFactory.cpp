@@ -22,6 +22,7 @@
 #include "Albany_ElasticityProblem.hpp"
 #include "Albany_NonlinearElasticityProblem.hpp"
 #include "Albany_ThermoElasticityProblem.hpp"
+#include "QCAD_PoissonProblem.hpp"
 
 Albany::ProblemFactory::ProblemFactory(
        const Teuchos::RCP<Teuchos::ParameterList>& problemParams_,
@@ -71,6 +72,15 @@ Albany::ProblemFactory::create()
   }
   else if (method == "ThermoElasticity 3D") {
     strategy = rcp(new Albany::ThermoElasticityProblem(problemParams, paramLib, 3));
+  }
+  else if (method == "Poisson 1D") {
+    strategy = rcp(new QCAD::PoissonProblem(problemParams, paramLib, 1));
+  }
+  else if (method == "Poisson 2D") {
+    strategy = rcp(new QCAD::PoissonProblem(problemParams, paramLib, 2));
+  }
+  else if (method == "Poisson 3D") {
+    strategy = rcp(new QCAD::PoissonProblem(problemParams, paramLib, 3));
   }
   else {
     TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,

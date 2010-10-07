@@ -189,6 +189,24 @@ SET(HEADERS ${HEADERS}
 	evaluators/PHAL_TLElasResid_Def.hpp 
   )
 
+SET(SOURCES ${SOURCES}
+       evaluators/QCAD_Permittivity.cpp
+       evaluators/QCAD_PoissonResid.cpp
+       evaluators/QCAD_PoissonSource.cpp
+       problems/QCAD_PoissonProblem.cpp
+  )
+
+SET(HEADERS ${HEADERS}
+       evaluators/QCAD_Permittivity.hpp
+       evaluators/QCAD_Permittivity_Def.hpp
+       evaluators/QCAD_PoissonResid.hpp
+       evaluators/QCAD_PoissonResid_Def.hpp
+       evaluators/QCAD_PoissonSource.hpp
+       evaluators/QCAD_PoissonSource_Def.hpp
+       problems/QCAD_PoissonProblem.hpp
+  )
+
+
 SET(MESHMOVER_DIR ${Albany_SOURCE_DIR}/src/MeshMover/src)
 SET(CUTR_SRCS
   ${MESHMOVER_DIR}/CUTR_CubitMeshMover.cpp
