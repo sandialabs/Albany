@@ -18,7 +18,6 @@
 #include "Albany_RythmosObserver.hpp"
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_VectorBase.hpp"
-#include "Teuchos_TimeMonitor.hpp"
 #ifdef ALBANY_IOSS
   #include "Albany_STKDiscretization.hpp"
 #endif
@@ -33,6 +32,8 @@ Albany_RythmosObserver::Albany_RythmosObserver(
   disc(app_->getDiscretization())
 {
    if (vtk != Teuchos::null) { vtk->updateGeometry (disc); }
+
+    exooutTime = Teuchos::TimeMonitor::getNewTimer("Albany: Output to Exodus");
 }
 
 void Albany_RythmosObserver::observeCompletedTimeStep(
@@ -66,8 +67,6 @@ void Albany_RythmosObserver::observeCompletedTimeStep(
     dynamic_cast<Albany::STKDiscretization*>(disc.get());
 
   {
-    Teuchos::RCP<Teuchos::Time> exooutTime =
-      Teuchos::TimeMonitor::getNewTimer("Albany Output to Exodus");
     Teuchos::TimeMonitor exooutTimer(*exooutTime); //start timer
 
 

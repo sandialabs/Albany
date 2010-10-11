@@ -53,7 +53,7 @@ J2Stress(const Teuchos::ParameterList& p) :
 
   this->addEvaluatedField(stress);
 
-  this->setName("Stress");
+  this->setName("Stress"+PHX::TypeString<EvalT>::value);
 
 }
 

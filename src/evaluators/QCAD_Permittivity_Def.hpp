@@ -54,7 +54,7 @@ Permittivity(Teuchos::ParameterList& p) :
   } 
 
   this->addEvaluatedField(permittivity);
-  this->setName("Permittivity");
+  this->setName("Permittivity"+PHX::TypeString<EvalT>::value);
 }
 
 // **********************************************************************

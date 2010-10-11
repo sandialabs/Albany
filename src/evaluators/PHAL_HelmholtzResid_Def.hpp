@@ -63,7 +63,7 @@ HelmholtzResid(const Teuchos::ParameterList& p) :
   this->addEvaluatedField(UResidual);
   this->addEvaluatedField(VResidual);
 
-  this->setName("HelmholtzResid");
+  this->setName("HelmholtzResid"+PHX::TypeString<EvalT>::value);
 
   // Add K-Squared wavelength as a Sacado-ized parameter
   Teuchos::RCP<ParamLib> paramLib =

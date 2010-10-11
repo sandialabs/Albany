@@ -47,7 +47,7 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p) :
   this->addEvaluatedField(GradBF);
   this->addEvaluatedField(wGradBF);
 
-  this->setName("ComputeBasisFunctions");
+  this->setName("ComputeBasisFunctions"+PHX::TypeString<EvalT>::value);
 }
 
 //**********************************************************************

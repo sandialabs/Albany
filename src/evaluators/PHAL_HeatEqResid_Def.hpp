@@ -55,7 +55,7 @@ HeatEqResid(const Teuchos::ParameterList& p) :
 
   this->addEvaluatedField(TResidual);
 
-  this->setName("HeatEqResid");
+  this->setName("HeatEqResid"+PHX::TypeString<EvalT>::value);
 }
 
 //**********************************************************************

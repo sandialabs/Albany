@@ -58,9 +58,9 @@ int main(int argc, char *argv[]) {
   try {
 
     RCP<Teuchos::Time> totalTime = 
-      Teuchos::TimeMonitor::getNewTimer("Albany ***Total Time***");
+      Teuchos::TimeMonitor::getNewTimer("Albany: ***Total Time***");
     RCP<Teuchos::Time> setupTime = 
-      Teuchos::TimeMonitor::getNewTimer("Albany Setup Time");
+      Teuchos::TimeMonitor::getNewTimer("Albany: Setup Time");
     Teuchos::TimeMonitor totalTimer(*totalTime); //start timer
     Teuchos::TimeMonitor setupTimer(*setupTime); //start timer
 
@@ -151,6 +151,6 @@ int main(int argc, char *argv[]) {
   *out << "\tTOTAL TIME =     -999.0  -999.0" << endl;
 #endif
 
-  Teuchos::TimeMonitor::summarize(*out,false,true,false);
+  Teuchos::TimeMonitor::summarize(*out,false,true,false/*zero timers*/);
   return status;
 }

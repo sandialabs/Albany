@@ -37,7 +37,7 @@ DOFVecGradInterpolation(const Teuchos::ParameterList& p) :
   this->addDependentField(GradBF);
   this->addEvaluatedField(grad_val_qp);
 
-  this->setName("DOFVecGradInterpolation");
+  this->setName("DOFVecGradInterpolation"+PHX::TypeString<EvalT>::value);
 
   std::vector<PHX::DataLayout::size_type> dims;
   GradBF.fieldTag().dataLayout().dimensions(dims);

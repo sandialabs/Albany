@@ -37,7 +37,7 @@ DOFVecInterpolation(const Teuchos::ParameterList& p) :
   this->addDependentField(BF);
   this->addEvaluatedField(val_qp);
 
-  this->setName("DOFVecInterpolation");
+  this->setName("DOFVecInterpolation"+PHX::TypeString<EvalT>::value);
   std::vector<PHX::DataLayout::size_type> dims;
   BF.fieldTag().dataLayout().dimensions(dims);
   numNodes = dims[1];

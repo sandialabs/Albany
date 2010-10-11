@@ -42,7 +42,7 @@
   </ParameterList>
   <ParameterList name="VTK">
     <Parameter name="Do Visualization" type="bool" value="0"/>
-    <Parameter name="Visualize Sensitivities" type="bool" value="0"/>
+    <Parameter name="Visualize Sensitivities" type="bool" value="1"/>
     <Parameter name="RotateX" type="double" value="120.0" />
     <Parameter name="RotateZ" type="double" value="50.0" />
     <Parameter name="Stagger Windows" type="bool" value="true" />

@@ -38,7 +38,7 @@ ElasticityResid(const Teuchos::ParameterList& p) :
 
   this->addEvaluatedField(ExResidual);
 
-  this->setName("ElasticityResid");
+  this->setName("ElasticityResid"+PHX::TypeString<EvalT>::value);
 
   std::vector<PHX::DataLayout::size_type> dims;
   wGradBF.fieldTag().dataLayout().dimensions(dims);

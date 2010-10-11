@@ -34,7 +34,7 @@ GatherCoordinateVector(const Teuchos::ParameterList& p) :
   else periodic = false;
 
   this->addEvaluatedField(coordVec);
-  this->setName("Gather Coordinate Vector");
+  this->setName("Gather Coordinate Vector"+PHX::TypeString<EvalT>::value);
 }
 
 // **********************************************************************
@@ -82,7 +82,8 @@ GatherCoordinateVector(const Teuchos::ParameterList& p) :
   else periodic = false;
 
   this->addEvaluatedField(coordVec);
-  this->setName("Gather Coordinate Vector");
+  this->setName("Gather Coordinate Vector"
+                +PHX::TypeString<PHAL::AlbanyTraits::Tangent>::value);
 }
 
 // **********************************************************************

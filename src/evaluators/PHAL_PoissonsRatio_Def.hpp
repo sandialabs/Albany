@@ -97,7 +97,7 @@ PoissonsRatio(Teuchos::ParameterList& p) :
 
 
   this->addEvaluatedField(poissonsRatio);
-  this->setName("Poissons Ratio");
+  this->setName("Poissons Ratio"+PHX::TypeString<EvalT>::value);
 }
 
 // **********************************************************************

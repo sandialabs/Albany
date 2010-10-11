@@ -26,6 +26,7 @@
 #include "Albany_VTK.hpp"
 #include "Albany_Application.hpp"
 #include "Thyra_EpetraThyraWrappers.hpp"
+#include "Teuchos_TimeMonitor.hpp"
 
 typedef double Scalar;
 
@@ -60,6 +61,8 @@ private:
    Teuchos::RCP<Albany::AbstractDiscretization> disc;
    Teuchos::RCP<Albany::Application> app;
    Teuchos::RCP<Albany_VTK> vtk;
+
+   Teuchos::RCP<Teuchos::Time> exooutTime;
 
 };
 

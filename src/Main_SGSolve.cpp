@@ -99,7 +99,7 @@ int main(int argc, char *argv[]) {
     }
 
     Teuchos::RCP<Teuchos::Time> totalTime =
-      Teuchos::TimeMonitor::getNewTimer("AlbanySG ***Total Time***");
+      Teuchos::TimeMonitor::getNewTimer("AlbanySG: ***Total Time***");
     Teuchos::TimeMonitor totalTimer(*totalTime); //start timer
 
     Albany::SolverFactory sg_slvrfctry(sg_xmlfilename, appComm, g2);

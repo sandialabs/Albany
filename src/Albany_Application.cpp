@@ -44,13 +44,13 @@ Albany::Application::Application(
   setupCalledResidual(false), setupCalledJacobian(false), setupCalledTangent(false),
   setupCalledSGResidual(false), setupCalledSGJacobian(false)
 {
-  timers.push_back(Teuchos::TimeMonitor::getNewTimer("Albany   Residual Fill"));
-  timers.push_back(Teuchos::TimeMonitor::getNewTimer("Albany   Jacobian Fill"));
-  timers.push_back(Teuchos::TimeMonitor::getNewTimer("Albany    Precond Fill"));
-  timers.push_back(Teuchos::TimeMonitor::getNewTimer("Albany    Tangent Fill"));
-  timers.push_back(Teuchos::TimeMonitor::getNewTimer("Albany SGResidual Fill"));
-  timers.push_back(Teuchos::TimeMonitor::getNewTimer("Albany SGJacobian Fill"));
-  timers.push_back(Teuchos::TimeMonitor::getNewTimer("Cubit MeshMover"));
+  timers.push_back(Teuchos::TimeMonitor::getNewTimer("> Albany Fill: Residual"));
+  timers.push_back(Teuchos::TimeMonitor::getNewTimer("> Albany Fill: Jacobian"));
+  timers.push_back(Teuchos::TimeMonitor::getNewTimer("> Albany Fill: Precond"));
+  timers.push_back(Teuchos::TimeMonitor::getNewTimer("> Albany Fill: Tangent"));
+  timers.push_back(Teuchos::TimeMonitor::getNewTimer("> Albany Fill: SGResidual"));
+  timers.push_back(Teuchos::TimeMonitor::getNewTimer("> Albany Fill: SGJacobian"));
+  timers.push_back(Teuchos::TimeMonitor::getNewTimer("Albany-Cubit MeshMover"));
 
   // Create parameter library
   paramLib = Teuchos::rcp(new ParamLib);

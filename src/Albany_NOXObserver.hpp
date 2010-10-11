@@ -22,6 +22,7 @@
 #include "Albany_VTK.hpp"
 #include "Albany_Application.hpp"
 #include "NOX_Epetra_Observer.H"
+#include "Teuchos_TimeMonitor.hpp"
 
 class Albany_NOXObserver : public NOX::Epetra::Observer
 {
@@ -41,6 +42,8 @@ private:
    Teuchos::RCP<Albany::Application> app;
    Teuchos::RCP<Albany::AbstractDiscretization> disc;
    Teuchos::RCP<Albany_VTK> vtk;
+
+   Teuchos::RCP<Teuchos::Time> exooutTime;
 
 };
 

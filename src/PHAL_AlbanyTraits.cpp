@@ -18,19 +18,19 @@
 #include "PHAL_AlbanyTraits.hpp"
 
 const std::string PHX::TypeString<PHAL::AlbanyTraits::Residual>::value = 
-  "Residual";
+  "<Residual>";
 
 const std::string PHX::TypeString<PHAL::AlbanyTraits::Jacobian>::value = 
-  "Jacobian";
+  "<Jacobian>";
 
 const std::string PHX::TypeString<PHAL::AlbanyTraits::Tangent>::value = 
-  "Tangent";
+  "<Tangent>";
 
 const std::string PHX::TypeString<PHAL::AlbanyTraits::SGResidual>::value = 
-  "SGResidual";
+  "<SGResidual>";
 
 const std::string PHX::TypeString<PHAL::AlbanyTraits::SGJacobian>::value = 
-  "SGJacobian";
+  "<SGJacobian>";
 
 const std::string PHX::TypeString<double>::value = 
   "double";

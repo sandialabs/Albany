@@ -36,7 +36,7 @@ MapToPhysicalFrame(const Teuchos::ParameterList& p) :
   this->addDependentField(coords_vertices);
   this->addEvaluatedField(coords_qp);
 
-  this->setName("MapToPhysicalFrame");
+  this->setName("MapToPhysicalFrame"+PHX::TypeString<EvalT>::value);
 }
 
 //**********************************************************************

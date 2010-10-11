@@ -85,8 +85,7 @@ GatherSolutionBase(const Teuchos::ParameterList& p)
     neqBase = p.get<int>("Number of DOF per Node");
   else neqBase = numFieldsBase; // Defaults to all
 
-
-  this->setName("Gather Solution");
+  this->setName("Gather Solution"+PHX::TypeString<EvalT>::value);
 }
 
 // **********************************************************************

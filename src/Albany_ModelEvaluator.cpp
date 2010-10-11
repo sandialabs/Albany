@@ -88,7 +88,7 @@ Albany::ModelEvaluator::ModelEvaluator(
 
   supports_g = (app->getResponseMap() != Teuchos::null);
 
-  timer = Teuchos::TimeMonitor::getNewTimer("Albany ***Total Fill Time***");
+  timer = Teuchos::TimeMonitor::getNewTimer("Albany: **Total Fill Time**");
 }
 
 // Overridden from EpetraExt::ModelEvaluator

@@ -16,7 +16,6 @@
 
 
 #include "Albany_NOXObserver.hpp"
-#include "Teuchos_TimeMonitor.hpp"
 
 #ifdef ALBANY_IOSS
   #include "Albany_STKDiscretization.hpp"
@@ -33,6 +32,8 @@ Albany_NOXObserver::Albany_NOXObserver(
 
 {
    if (vtk != Teuchos::null) { vtk->updateGeometry (disc); }
+
+   exooutTime = Teuchos::TimeMonitor::getNewTimer("Albany: Output to Exodus");
 }
 
 void Albany_NOXObserver::observeSolution(
@@ -52,8 +53,6 @@ void Albany_NOXObserver::observeSolution(
     dynamic_cast<Albany::STKDiscretization*>(disc.get());
 
   {
-    Teuchos::RCP<Teuchos::Time> exooutTime =
-      Teuchos::TimeMonitor::getNewTimer("Albany Output to Exodus");
     Teuchos::TimeMonitor exooutTimer(*exooutTime); //start timer
 
 

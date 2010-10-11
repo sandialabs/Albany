@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
 
   try {
     Teuchos::RCP<Teuchos::Time> totalTime = 
-      Teuchos::TimeMonitor::getNewTimer("AlbanyAnalysis ***Total Time***");
+      Teuchos::TimeMonitor::getNewTimer("AlbanyAnalysis: ***Total Time***");
     Teuchos::TimeMonitor totalTimer(*totalTime); //start timer
 
     using namespace std;

@@ -36,7 +36,7 @@ DetDefGrad(const Teuchos::ParameterList& p) :
 
   this->addEvaluatedField(J);
 
-  this->setName("DetDefGrad");
+  this->setName("DetDefGrad"+PHX::TypeString<EvalT>::value);
 
   Teuchos::RCP<PHX::DataLayout> tensor_dl =
     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");

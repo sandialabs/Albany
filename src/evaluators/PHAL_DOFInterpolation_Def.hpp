@@ -37,7 +37,7 @@ DOFInterpolation(const Teuchos::ParameterList& p) :
   this->addDependentField(BF);
   this->addEvaluatedField(val_qp);
 
-  this->setName("DOFInterpolation");
+  this->setName("DOFInterpolation"+PHX::TypeString<EvalT>::value);
 }
 
 //**********************************************************************

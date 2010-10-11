@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
 
   try {
     Teuchos::RCP<Teuchos::Time> totalTime = 
-      Teuchos::TimeMonitor::getNewTimer("AlbanyDakota ***Total Time***");
+      Teuchos::TimeMonitor::getNewTimer("AlbanyDakota: ***Total Time***");
     Teuchos::TimeMonitor totalTimer(*totalTime); //start timer
 
     status += Albany_Dakota();

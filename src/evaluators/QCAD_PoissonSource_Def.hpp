@@ -54,7 +54,7 @@ PoissonSource(Teuchos::ParameterList& p) :
   this->addDependentField(coordVec);
 
   this->addEvaluatedField(poissonSource);
-  this->setName("Poisson Source");
+  this->setName("Poisson Source"+PHX::TypeString<EvalT>::value);
 }
 
 // **********************************************************************
