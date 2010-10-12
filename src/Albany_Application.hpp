@@ -345,8 +345,8 @@ namespace Albany {
     int worksetSize;
 
     //! State data, allocated in Problem class
-    Teuchos::RCP<Intrepid::FieldContainer<RealType> > oldState;
-    Teuchos::RCP<Intrepid::FieldContainer<RealType> > newState;
+    Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > oldState;
+    Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > newState;
 
 
     //! Teko stuff

@@ -61,12 +61,13 @@ void
 Albany::NonlinearElasticityProblem::
 buildProblem(
     const int worksetSize,
+    const int numCells,
     const Albany::AbstractDiscretization& disc,
     std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
     const Teuchos::RCP<Epetra_Vector>& u)
 {
   /* Construct All Phalanx Evaluators */
-  constructEvaluators(worksetSize, disc.getCubatureDegree());
+  constructEvaluators(worksetSize, disc.getCubatureDegree(), numCells);
   constructDirichletEvaluators(disc.getNodeSetIDs());
 
   const Epetra_Map& dofMap = *(disc.getMap());
@@ -116,7 +117,7 @@ buildProblem(
 
 void
 Albany::NonlinearElasticityProblem::constructEvaluators(
-       const int worksetSize, const int cubDegree)
+       const int worksetSize, const int cubDegree, const int numCells)
 {
    using Teuchos::RCP;
    using Teuchos::rcp;
@@ -472,6 +473,14 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
 
     //Output
     p->set<string>("Stress Name", "Stress"); //qp_tensor also
+ 
+    // Allocate space for saved states
+    int numStateVariables = 1;
+    oldState.resize(numStateVariables);
+    newState.resize(numStateVariables);
+    // First state is a stress tensor
+    oldState[0]=Teuchos::rcp(new Intrepid::FieldContainer<RealType>(numCells,numQPts,numDim,numDim));
+    newState[0]=Teuchos::rcp(new Intrepid::FieldContainer<RealType>(numCells,numQPts,numDim,numDim));
 
     evaluators_to_build["Stress"] = p;
   }
@@ -564,9 +573,13 @@ Albany::NonlinearElasticityProblem::getValidProblemParameters() const
   return validPL;
 }
 
-Teuchos::RCP<Intrepid::FieldContainer<RealType> >
-Albany::NonlinearElasticityProblem::getAllocatedState(const int numCells) const
+void
+Albany::NonlinearElasticityProblem::getAllocatedStates(
+   Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > oldState_,
+   Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > newState_
+   ) const
 {
-   return Teuchos::rcp(new Intrepid::FieldContainer<RealType>(numCells,numQPts,numDim,numDim));
+  oldState_ = oldState;
+  newState_ = newState;
 }
 

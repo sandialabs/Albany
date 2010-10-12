@@ -85,8 +85,9 @@ struct Workset {
   const Teuchos::ArrayRCP<double> &coordinates;
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >  &elNodeID;
 
-  Teuchos::RCP<Intrepid::FieldContainer<RealType> > oldState;
-  Teuchos::RCP<Intrepid::FieldContainer<RealType> > newState;
+  Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > oldState;
+  Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > newState;
+
 };
 
 }

@@ -298,7 +298,6 @@ IF (ALBANY_DAKOTA)
   target_link_libraries(AlbanyDakota    albanyLib ${ALB_TRILINOS_LIBS}
                         ${ALB_CUBIT_LIBS} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
 ENDIF ()
-message ("XXX ",${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
 
 target_link_libraries(AlbanyAnalysis  albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS}
                       ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 

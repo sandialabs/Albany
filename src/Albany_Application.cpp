@@ -42,7 +42,8 @@ Albany::Application::Application(
   physicsBasedPreconditioner(false),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   setupCalledResidual(false), setupCalledJacobian(false), setupCalledTangent(false),
-  setupCalledSGResidual(false), setupCalledSGJacobian(false)
+  setupCalledSGResidual(false), setupCalledSGJacobian(false),
+  oldState(Teuchos::null), newState(Teuchos::null)
 {
   timers.push_back(Teuchos::TimeMonitor::getNewTimer("> Albany Fill: Residual"));
   timers.push_back(Teuchos::TimeMonitor::getNewTimer("> Albany Fill: Jacobian"));
@@ -128,12 +129,11 @@ Albany::Application::Application(
      // the same number of worksets as the enetered worksetSize
      worksetSize = 1 + (elNodeID.size()-1) / ( 1 + (elNodeID.size()-1) / worksetSize );
 
-  problem->buildProblem(worksetSize, *disc, responses, initial_x);
+  problem->buildProblem(worksetSize, elNodeID.size(), *disc, responses, initial_x);
   if (initial_guess != Teuchos::null)
     *initial_x = *initial_guess;
 
-  oldState = problem->getAllocatedState(elNodeID.size());
-  newState = problem->getAllocatedState(elNodeID.size());
+  problem->getAllocatedStates(oldState, newState);
 
   // Create response map
   unsigned int total_num_responses = 0;
@@ -1290,7 +1290,7 @@ Albany::Application::buildWrappedOperator(const Teuchos::RCP<Epetra_Operator>& J
 void
 Albany::Application::updateState()
 {
-    Teuchos::RCP<Intrepid::FieldContainer<RealType> > tmp = newState;
+    Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > tmp = newState;
     newState = oldState;
     oldState = tmp;
 }

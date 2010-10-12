@@ -78,6 +78,8 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT kappa;
   ScalarT mu;
   ScalarT Jm53;
+  bool saveState = (workset.newState != Teuchos::null);
+
   switch (numDims) {
   case 1:
     Intrepid::FunctionSpaceTools::tensorMultiplyDataData<ScalarT>(stress, elasticModulus, lcg);
@@ -121,6 +123,16 @@ evaluateFields(typename Traits::EvalData workset)
     }
     break;
   }
+
+  if (saveState)
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) 
+      for (std::size_t qp=0; qp < numQPs; ++qp) 
+        for (std::size_t i=0; i < numDims; ++i)
+          for (std::size_t j=0; j < numDims; ++j)
+            // save stress as first state variable
+            (*workset.newState[0])(cell+workset.firstCell,qp,i,j) =
+               Sacado::ScalarValue<ScalarT>::eval(stress(cell,qp,i,j));
+
 }
 
 //**********************************************************************

@@ -48,6 +48,7 @@ namespace QCAD {
     //! Build the PDE instantiations, boundary conditions, and initial solution
     void buildProblem(
        const int worksetSize,
+       const int numCells,
        const Albany::AbstractDiscretization& disc,
        std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
        const Teuchos::RCP<Epetra_Vector>& u);
