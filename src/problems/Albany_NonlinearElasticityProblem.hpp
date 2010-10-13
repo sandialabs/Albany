@@ -48,7 +48,7 @@ namespace Albany {
     //! Build the PDE instantiations, boundary conditions, and initial solution
     virtual void 
     buildProblem( const int worksetSize,
-       const int numCells,
+       const int numWorksets,
        const Albany::AbstractDiscretization& disc,
        std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
        const Teuchos::RCP<Epetra_Vector>& u);
@@ -57,8 +57,8 @@ namespace Albany {
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
     void getAllocatedStates(
-         Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > oldState_,
-         Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > newState_
+         Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState_,
+         Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState_
          ) const;
 
   private:
@@ -69,7 +69,7 @@ namespace Albany {
     //! Private to prohibit copying
     NonlinearElasticityProblem& operator=(const NonlinearElasticityProblem&);
 
-    void constructEvaluators(const int worksetSize, const int cubDegree, const int numCells);
+    void constructEvaluators(const int worksetSize, const int cubDegree, const int numWorksets);
   protected:
 
     //! Boundary conditions on source term
@@ -82,8 +82,8 @@ namespace Albany {
 
     std::string matModel;
 
-    Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > oldState;
-    Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > newState;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState;
   };
 
 }

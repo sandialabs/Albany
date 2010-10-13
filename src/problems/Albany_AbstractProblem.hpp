@@ -60,7 +60,7 @@ namespace Albany {
     //! And construct the evaluators and field managers
     virtual void buildProblem(
        const int worksetSize,
-       const int numCells,
+       const int numWorksets,
        const Albany::AbstractDiscretization& disc,
        std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
        const Teuchos::RCP<Epetra_Vector>& u) = 0;
@@ -74,8 +74,8 @@ namespace Albany {
 
     virtual void
       getAllocatedStates(
-         Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > oldState_,
-         Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > newState_
+         Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState_,
+         Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState_
          ) const  {};
 
   protected:

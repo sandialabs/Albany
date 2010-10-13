@@ -61,13 +61,13 @@ void
 Albany::NonlinearElasticityProblem::
 buildProblem(
     const int worksetSize,
-    const int numCells,
+    const int numWorksets,
     const Albany::AbstractDiscretization& disc,
     std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
     const Teuchos::RCP<Epetra_Vector>& u)
 {
   /* Construct All Phalanx Evaluators */
-  constructEvaluators(worksetSize, disc.getCubatureDegree(), numCells);
+  constructEvaluators(worksetSize, disc.getCubatureDegree(), numWorksets);
   constructDirichletEvaluators(disc.getNodeSetIDs());
 
   const Epetra_Map& dofMap = *(disc.getMap());
@@ -117,7 +117,7 @@ buildProblem(
 
 void
 Albany::NonlinearElasticityProblem::constructEvaluators(
-       const int worksetSize, const int cubDegree, const int numCells)
+       const int worksetSize, const int cubDegree, const int numWorksets)
 {
    using Teuchos::RCP;
    using Teuchos::rcp;
@@ -474,13 +474,20 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
     //Output
     p->set<string>("Stress Name", "Stress"); //qp_tensor also
  
-    // Allocate space for saved states
-    int numStateVariables = 1;
-    oldState.resize(numStateVariables);
-    newState.resize(numStateVariables);
-    // First state is a stress tensor
-    oldState[0]=Teuchos::rcp(new Intrepid::FieldContainer<RealType>(numCells,numQPts,numDim,numDim));
-    newState[0]=Teuchos::rcp(new Intrepid::FieldContainer<RealType>(numCells,numQPts,numDim,numDim));
+    // Allocate space for saved states -- repeated for each workset
+    oldState.resize(numWorksets);
+    newState.resize(numWorksets);
+    for (int ws=0; ws<numWorksets; ws++) {
+      int numStateVariables = 2;
+      oldState[ws].resize(numStateVariables);
+      newState[ws].resize(numStateVariables);
+      // First state is a stress tensor
+      oldState[ws][0]=Teuchos::rcp(new Intrepid::FieldContainer<RealType>(worksetSize,numQPts,numDim,numDim));
+      newState[ws][0]=Teuchos::rcp(new Intrepid::FieldContainer<RealType>(worksetSize,numQPts,numDim,numDim));
+      // Second state is a vector (not yet used)
+      oldState[ws][1]=Teuchos::rcp(new Intrepid::FieldContainer<RealType>(worksetSize,numQPts,numDim));
+      newState[ws][1]=Teuchos::rcp(new Intrepid::FieldContainer<RealType>(worksetSize,numQPts,numDim));
+    }
 
     evaluators_to_build["Stress"] = p;
   }
@@ -575,8 +582,8 @@ Albany::NonlinearElasticityProblem::getValidProblemParameters() const
 
 void
 Albany::NonlinearElasticityProblem::getAllocatedStates(
-   Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > oldState_,
-   Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > newState_
+   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState_,
+   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState_
    ) const
 {
   oldState_ = oldState;

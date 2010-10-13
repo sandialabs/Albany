@@ -341,12 +341,13 @@ namespace Albany {
 
     unsigned int neq;
 
-    //! Size of a chunk of elements to be processed at once.
+    //! Size of a chunk of elements to be processed at once, and number of chunks
     int worksetSize;
+    int numWorksets;
 
     //! State data, allocated in Problem class
-    Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > oldState;
-    Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > newState;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState;
 
 
     //! Teko stuff

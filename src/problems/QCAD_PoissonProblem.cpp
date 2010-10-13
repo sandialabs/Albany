@@ -64,7 +64,7 @@ void
 QCAD::PoissonProblem::
 buildProblem(
     const int worksetSize,
-    const int numCells,
+    const int numWorksets,
     const Albany::AbstractDiscretization& disc,
     std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
     const Teuchos::RCP<Epetra_Vector>& u)

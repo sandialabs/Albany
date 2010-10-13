@@ -122,14 +122,18 @@ Albany::Application::Application(
   }
 
   worksetSize = problemParams->get("Workset Size",0);
-  if (worksetSize < 1 || worksetSize > elNodeID.size())
+  if (worksetSize < 1 || worksetSize > elNodeID.size()) {
      worksetSize = elNodeID.size();
-  else
+     numWorksets = 1;
+  }
+  else {
      // Decrease worksetSize to smallest size that leads to
      // the same number of worksets as the enetered worksetSize
-     worksetSize = 1 + (elNodeID.size()-1) / ( 1 + (elNodeID.size()-1) / worksetSize );
+     numWorksets = 1 + (elNodeID.size()-1) / worksetSize;
+     worksetSize = 1 + (elNodeID.size()-1) / numWorksets;
+  }
 
-  problem->buildProblem(worksetSize, elNodeID.size(), *disc, responses, initial_x);
+  problem->buildProblem(worksetSize, numWorksets, *disc, responses, initial_x);
   if (initial_guess != Teuchos::null)
     *initial_x = *initial_guess;
 
@@ -331,13 +335,15 @@ for (int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
     workset.worksetSize = worksetSize;
     workset.numCells = worksetSize;
 
-    workset.oldState = oldState;
-    workset.newState = newState;
-
-    for (int fc=0; fc<elNodeID.size(); fc+=worksetSize) {
+    for (int fc=0, ws=0; ws < numWorksets; fc+=worksetSize, ws++) {
       workset.firstCell = fc;
       if (elNodeID.size() - fc < worksetSize) {
           workset.numCells = elNodeID.size() - fc;
+      }
+
+      if (oldState != Teuchos::null) {
+        workset.oldState = oldState[ws];
+        workset.newState = newState[ws];
       }
 
       // FillType template argument used to specialize Sacado
@@ -434,11 +440,15 @@ for (int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
     workset.worksetSize = worksetSize;
     workset.numCells = worksetSize;
 
-    for (int fc=0; fc<elNodeID.size(); fc+=worksetSize) {
+    for (int fc=0, ws=0; ws < numWorksets; fc+=worksetSize, ws++) {
       workset.firstCell = fc;
       if (elNodeID.size() - fc < worksetSize)
           workset.numCells = elNodeID.size() - fc;
 
+      if (oldState != Teuchos::null) {
+        workset.oldState = oldState[ws];
+        workset.newState = newState[ws];
+      }
 
       // FillType template argument used to specialize Sacado
       fm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
@@ -712,10 +722,15 @@ for (int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
     workset.worksetSize = worksetSize;
     workset.numCells = worksetSize;
 
-    for (int fc=0; fc<elNodeID.size(); fc+=worksetSize) {
+    for (int fc=0, ws=0; ws < numWorksets; fc+=worksetSize, ws++) {
       workset.firstCell = fc;
       if (elNodeID.size() - fc < worksetSize)
         workset.numCells = elNodeID.size() - fc;
+
+      if (oldState != Teuchos::null) {
+        workset.oldState = oldState[ws];
+        workset.newState = newState[ws];
+      }
 
       // FillType template argument used to specialize Sacado
       fm->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
@@ -974,10 +989,15 @@ for (int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
     workset.worksetSize = worksetSize;
     workset.numCells = worksetSize;
 
-    for (int fc=0; fc<elNodeID.size(); fc+=worksetSize) {
+    for (int fc=0, ws=0; ws < numWorksets; fc+=worksetSize, ws++) {
       workset.firstCell = fc;
       if (elNodeID.size() - fc < worksetSize)
         workset.numCells = elNodeID.size() - fc;
+
+      if (oldState != Teuchos::null) {
+        workset.oldState = oldState[ws];
+        workset.newState = newState[ws];
+      }
 
       // FillType template argument used to specialize Sacado
       fm->evaluateFields<PHAL::AlbanyTraits::SGResidual>(workset);
@@ -1105,10 +1125,15 @@ for (int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
     workset.worksetSize = worksetSize;
     workset.numCells = worksetSize;
 
-    for (int fc=0; fc<elNodeID.size(); fc+=worksetSize) {
+    for (int fc=0, ws=0; ws < numWorksets; fc+=worksetSize, ws++) {
       workset.firstCell = fc;
       if (elNodeID.size() - fc < worksetSize)
           workset.numCells = elNodeID.size() - fc;
+
+      if (oldState != Teuchos::null) {
+        workset.oldState = oldState[ws];
+        workset.newState = newState[ws];
+      }
 
       // FillType template argument used to specialize Sacado
       fm->evaluateFields<PHAL::AlbanyTraits::SGJacobian>(workset);
@@ -1290,7 +1315,7 @@ Albany::Application::buildWrappedOperator(const Teuchos::RCP<Epetra_Operator>& J
 void
 Albany::Application::updateState()
 {
-    Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > tmp = newState;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > tmp = newState;
     newState = oldState;
     oldState = tmp;
 }
