@@ -24,7 +24,6 @@
 #include "Phalanx_MDField.hpp"
 #include "Sacado_ParameterAccessor.hpp"
 #include "Sacado_ParameterRegistration.hpp"
-#include "SPL_AlbanyTraits.hpp"
 
 /** \brief Finite Element Interpolation Evaluator
 

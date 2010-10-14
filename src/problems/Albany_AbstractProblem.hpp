@@ -27,8 +27,10 @@
 #include "Epetra_Vector.h"
 
 #include "Albany_AbstractResponseFunction.hpp"
+#include "Albany_StateManager.hpp"
 
 #include "Phalanx.hpp"
+#include "Albany_DataTypes.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
@@ -60,7 +62,7 @@ namespace Albany {
     //! And construct the evaluators and field managers
     virtual void buildProblem(
        const int worksetSize,
-       const int numWorksets,
+       StateManager& stateMgr,
        const Albany::AbstractDiscretization& disc,
        std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
        const Teuchos::RCP<Epetra_Vector>& u) = 0;

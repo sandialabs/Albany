@@ -61,7 +61,6 @@ void DefGrad<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   int numCells = workset.numCells;
-//  bool saveState = (workset.newState != Teuchos::null);
 
   // Compute DefGrad tensor from displacement gradient
   for (std::size_t cell=0; cell < numCells; ++cell) {
@@ -71,15 +70,9 @@ evaluateFields(typename Traits::EvalData workset)
           defgrad(cell,qp,i,j) = GradU(cell,qp,i,j);
         }
 	defgrad(cell,qp,i,i) += 1.0;
-//        if (saveState)
-//          for (std::size_t j=0; j < numDims; ++j)
-//            (*workset.newState)(cell+workset.firstCell,qp,i,j) = 
-//               Sacado::ScalarValue<ScalarT>::eval(defgrad(cell,qp,i,j));
       }
     }
   }
-//  if (saveState)
-//     cout << "SAVED STATE " <<   (*workset.newState)(workset.firstCell,0,0,0) << endl;
 }
 
 //**********************************************************************

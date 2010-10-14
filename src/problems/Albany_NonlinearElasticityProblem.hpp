@@ -48,7 +48,7 @@ namespace Albany {
     //! Build the PDE instantiations, boundary conditions, and initial solution
     virtual void 
     buildProblem( const int worksetSize,
-       const int numWorksets,
+       StateManager& stateMgr,
        const Albany::AbstractDiscretization& disc,
        std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
        const Teuchos::RCP<Epetra_Vector>& u);
@@ -69,7 +69,7 @@ namespace Albany {
     //! Private to prohibit copying
     NonlinearElasticityProblem& operator=(const NonlinearElasticityProblem&);
 
-    void constructEvaluators(const int worksetSize, const int cubDegree, const int numWorksets);
+    void constructEvaluators(const int worksetSize, const int cubDegree, StateManager& stateMgr);
   protected:
 
     //! Boundary conditions on source term

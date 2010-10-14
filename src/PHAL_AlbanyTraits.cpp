@@ -32,7 +32,7 @@ const std::string PHX::TypeString<PHAL::AlbanyTraits::SGResidual>::value =
 const std::string PHX::TypeString<PHAL::AlbanyTraits::SGJacobian>::value = 
   "<SGJacobian>";
 
-const std::string PHX::TypeString<double>::value = 
+const std::string PHX::TypeString<RealType>::value = 
   "double";
 
 const std::string PHX::TypeString<FadType>::

@@ -21,17 +21,16 @@
 #include <list>
 
 #include "Phalanx_ConfigDefs.hpp" // for std::vector
-#include "SPL_AlbanyTraits.hpp"   // for ParamVec
+#include "Albany_DataTypes.hpp" 
 #include "Epetra_Vector.h"
 #include "Epetra_CrsMatrix.h"
 #include "Albany_AbstractDiscretization.hpp"
+#include "Albany_StateManager.hpp"
 #include "Stokhos_OrthogPolyExpansion.hpp"
 #include "Stokhos_VectorOrthogPoly.hpp"
 #include "Stokhos_VectorOrthogPolyTraitsEpetra.hpp"
 #include <Intrepid_FieldContainer.hpp>
 #include "PHAL_AlbanyTraits.hpp"
-
-typedef double RealType;
 
 namespace PHAL {
 
@@ -85,8 +84,8 @@ struct Workset {
   const Teuchos::ArrayRCP<double> &coordinates;
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >  &elNodeID;
 
-  Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > oldState;
-  Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > newState;
+  Teuchos::RCP<const Albany::StateVariables> oldState;
+  Teuchos::RCP<Albany::StateVariables> newState;
 
 };
 

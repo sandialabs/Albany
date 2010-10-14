@@ -23,6 +23,7 @@
 
 #include<string>
 #include "PHAL_Workset.hpp"
+#include "Albany_DataTypes.hpp"
 
 #include "Albany_DummyParameterAccessor.hpp"
 #ifdef ALBANY_CUTR
@@ -42,8 +43,8 @@ Albany::Application::Application(
   physicsBasedPreconditioner(false),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   setupCalledResidual(false), setupCalledJacobian(false), setupCalledTangent(false),
-  setupCalledSGResidual(false), setupCalledSGJacobian(false),
-  oldState(Teuchos::null), newState(Teuchos::null)
+  setupCalledSGResidual(false), setupCalledSGJacobian(false)
+  //, stateMgr(Albany::StateManager())
 {
   timers.push_back(Teuchos::TimeMonitor::getNewTimer("> Albany Fill: Residual"));
   timers.push_back(Teuchos::TimeMonitor::getNewTimer("> Albany Fill: Jacobian"));
@@ -133,11 +134,11 @@ Albany::Application::Application(
      worksetSize = 1 + (elNodeID.size()-1) / numWorksets;
   }
 
-  problem->buildProblem(worksetSize, numWorksets, *disc, responses, initial_x);
+  problem->buildProblem(worksetSize, stateMgr, *disc, responses, initial_x);
   if (initial_guess != Teuchos::null)
     *initial_x = *initial_guess;
 
-  problem->getAllocatedStates(oldState, newState);
+  stateMgr.allocateStateVariables(numWorksets);
 
   // Create response map
   unsigned int total_num_responses = 0;
@@ -158,7 +159,7 @@ Albany::Application::Application(
   *out << "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"
        << " Sacado ParameterLibrary has been initialized:\n " 
        << *paramLib 
-       << "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+       << "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"
        << endl;
 }
 
@@ -341,10 +342,8 @@ for (int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
           workset.numCells = elNodeID.size() - fc;
       }
 
-      if (oldState != Teuchos::null) {
-        workset.oldState = oldState[ws];
-        workset.newState = newState[ws];
-      }
+      workset.oldState = stateMgr.getOldStateVariables(ws);
+      workset.newState = stateMgr.getNewStateVariables(ws);
 
       // FillType template argument used to specialize Sacado
       fm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
@@ -445,10 +444,8 @@ for (int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
       if (elNodeID.size() - fc < worksetSize)
           workset.numCells = elNodeID.size() - fc;
 
-      if (oldState != Teuchos::null) {
-        workset.oldState = oldState[ws];
-        workset.newState = newState[ws];
-      }
+      workset.oldState = stateMgr.getOldStateVariables(ws);
+      workset.newState = stateMgr.getNewStateVariables(ws);
 
       // FillType template argument used to specialize Sacado
       fm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
@@ -727,10 +724,8 @@ for (int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
       if (elNodeID.size() - fc < worksetSize)
         workset.numCells = elNodeID.size() - fc;
 
-      if (oldState != Teuchos::null) {
-        workset.oldState = oldState[ws];
-        workset.newState = newState[ws];
-      }
+      workset.oldState = stateMgr.getOldStateVariables(ws);
+      workset.newState = stateMgr.getNewStateVariables(ws);
 
       // FillType template argument used to specialize Sacado
       fm->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
@@ -994,10 +989,8 @@ for (int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
       if (elNodeID.size() - fc < worksetSize)
         workset.numCells = elNodeID.size() - fc;
 
-      if (oldState != Teuchos::null) {
-        workset.oldState = oldState[ws];
-        workset.newState = newState[ws];
-      }
+      workset.oldState = stateMgr.getOldStateVariables(ws);
+      workset.newState = stateMgr.getNewStateVariables(ws);
 
       // FillType template argument used to specialize Sacado
       fm->evaluateFields<PHAL::AlbanyTraits::SGResidual>(workset);
@@ -1130,10 +1123,8 @@ for (int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
       if (elNodeID.size() - fc < worksetSize)
           workset.numCells = elNodeID.size() - fc;
 
-      if (oldState != Teuchos::null) {
-        workset.oldState = oldState[ws];
-        workset.newState = newState[ws];
-      }
+      workset.oldState = stateMgr.getOldStateVariables(ws);
+      workset.newState = stateMgr.getNewStateVariables(ws);
 
       // FillType template argument used to specialize Sacado
       fm->evaluateFields<PHAL::AlbanyTraits::SGJacobian>(workset);
@@ -1311,12 +1302,3 @@ Albany::Application::buildWrappedOperator(const Teuchos::RCP<Epetra_Operator>& J
   }
   return wrappedOp;
 }
-
-void
-Albany::Application::updateState()
-{
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > tmp = newState;
-    newState = oldState;
-    oldState = tmp;
-}
-

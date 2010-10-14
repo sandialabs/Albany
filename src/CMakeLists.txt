@@ -23,6 +23,7 @@ SET(SOURCES
 	Albany_Application.cpp 
 	Albany_RythmosObserver.cpp 
 	Albany_NOXObserver.cpp 
+	Albany_StateManager.cpp 
 	Albany_VTK.cpp 
 	Albany_ModelEvaluator.cpp
   )
@@ -30,6 +31,7 @@ SET(SOURCES
 SET(HEADERS
 	ENAT_SGNOXSolver.hpp 
 	Albany_SolverFactory.hpp
+	Albany_DataTypes.hpp 
 	PHAL_Dimension.hpp 
 	PHAL_FactoryTraits.hpp 
 	PHAL_AlbanyTraits.hpp 
@@ -37,6 +39,7 @@ SET(HEADERS
 	Albany_Application.hpp 
 	Albany_RythmosObserver.hpp 
 	Albany_NOXObserver.hpp 
+	Albany_StateManager.hpp 
 	Albany_VTK.hpp 
 	Albany_ModelEvaluator.hpp
         CUTR_AbstractMeshMover.hpp

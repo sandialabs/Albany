@@ -34,6 +34,7 @@
 
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_AbstractProblem.hpp"
+#include "Albany_StateManager.hpp"
 
 #include "CUTR_AbstractMeshMover.hpp"
 
@@ -238,8 +239,8 @@ namespace Albany {
     //! Provide access to shapeParameters -- no AD
     PHAL::AlbanyTraits::Residual::ScalarT& getValue(const std::string &n);
 
-    //! Function to copy newState into oldState
-    void updateState();
+    //! Class to manage state varaibles (a.k.a. history)
+    StateManager& getStateMgr() {return stateMgr;};
 
   private:
 
@@ -345,11 +346,6 @@ namespace Albany {
     int worksetSize;
     int numWorksets;
 
-    //! State data, allocated in Problem class
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState;
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState;
-
-
     //! Teko stuff
     Teuchos::RCP<Teko::InverseLibrary> inverseLib;
     Teuchos::RCP<Teko::InverseFactory> inverseFac;
@@ -364,6 +360,8 @@ namespace Albany {
     bool setupCalledSGResidual;
     bool setupCalledSGJacobian;
     mutable int phxGraphVisDetail;
+
+    StateManager stateMgr;
   };
 }
 #endif // ALBANY_APPLICATION_HPP

@@ -60,7 +60,7 @@ void Albany_RythmosObserver::observeCompletedTimeStep(
   const Epetra_Vector soln= *(Thyra::get_Epetra_Vector(*disc->getMap(), solution));
   if (vtk != Teuchos::null) vtk->visualizeField (soln, disc);
 
-  app->updateState();
+  app->getStateMgr().updateStates();;
 
 #ifdef ALBANY_IOSS
   Albany::STKDiscretization* stkDisc =

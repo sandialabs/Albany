@@ -60,7 +60,7 @@ void
 Albany::HeatProblem::
 buildProblem(
     const int worksetSize,
-    const int numWorksets,
+    Albany::StateManager& stateMgr,
     const Albany::AbstractDiscretization& disc,
     std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
     const Teuchos::RCP<Epetra_Vector>& u)

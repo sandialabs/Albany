@@ -48,7 +48,7 @@ namespace Albany {
     //! Build the PDE instantiations, boundary conditions, and initial solution
     void buildProblem(
        const int worksetSize,
-       const int numWorksets,
+       StateManager& stateMgr,
        const Albany::AbstractDiscretization& disc,
        std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
        const Teuchos::RCP<Epetra_Vector>& u);

@@ -43,7 +43,7 @@ void Albany_NOXObserver::observeSolution(
      vtk->visualizeField (solution, disc);
    }
 
-   app->updateState();
+   app->getStateMgr().updateStates();;
 
 #ifdef ALBANY_IOSS
   if (solution.Map().Comm().MyPID()==0)

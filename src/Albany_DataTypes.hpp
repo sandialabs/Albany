@@ -15,8 +15,23 @@
 \********************************************************************/
 
 
-#ifndef SPL_ALBANYTRAITS
-#define SPL_ALBANYTRAITS
+#ifndef PHAL_DATATYPES
+#define PHAL_DATATYPES
+
+//! Data Type Definitions that span the code.
+
+// Include all of our AD types
+#include "Sacado.hpp"
+#include "Sacado_ELRFad_DFad.hpp"
+#include "Sacado_ELRCacheFad_DFad.hpp"
+#include "Sacado_PCE_OrthogPoly.hpp"
+
+// Typedef AD types to standard names
+typedef double RealType;
+typedef Sacado::ELRFad::DFad<double> FadType;
+typedef Sacado::PCE::OrthogPoly<double> SGType;
+typedef Sacado::ELRFad::DFad<SGType> SGFadType;
+
 
 // Include ScalarParameterLibrary to specialize its traits
 #include "Sacado_ScalarParameterLibrary.hpp"

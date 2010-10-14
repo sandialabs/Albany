@@ -34,28 +34,16 @@
 #include "Phalanx_Allocator_New.hpp"
 #include "Phalanx_TypeStrings.hpp"
 
+
+#include "Albany_DataTypes.hpp"
 #include "PHAL_Dimension.hpp"
 #include "PHAL_Workset.hpp"
-
-// Include all of our AD types
-#include "Sacado_ELRFad_DFad.hpp"
-#include "Sacado_ELRCacheFad_DFad.hpp"
-#include "Sacado_PCE_OrthogPoly.hpp"
-
-// Typedef AD types to standard names
-typedef double RealType;
-typedef Sacado::ELRFad::DFad<double> FadType;
-typedef Sacado::PCE::OrthogPoly<double> SGType;
-typedef Sacado::ELRFad::DFad<SGType> SGFadType;
-
-// Sacado Parameter Library Traits specializations
-#include "SPL_AlbanyTraits.hpp"
 
 #include "Albany_DiscretizationFactory.hpp"
 namespace PHAL {
 
   struct AlbanyTraits : public PHX::TraitsBase {
-    
+
     // ******************************************************************
     // *** Evaluation Types
     //   * ScalarT is for quantities that depend on solution/params
@@ -147,7 +135,7 @@ namespace PHX {
   { static const std::string value; };
 
   // Data Types
-  template<> struct TypeString<double> 
+  template<> struct TypeString<RealType> 
   { static const std::string value; };
 
   template<> struct TypeString<FadType > 

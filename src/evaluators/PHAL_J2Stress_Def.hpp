@@ -124,15 +124,16 @@ evaluateFields(typename Traits::EvalData workset)
     break;
   }
 
-  if (saveState)
+  if (saveState) {
+    Albany::StateVariables& newState = *workset.newState;
+    Intrepid::FieldContainer<RealType>& savedJ2Stress = *newState["J2StressState"];
     for (std::size_t cell=0; cell < workset.numCells; ++cell) 
       for (std::size_t qp=0; qp < numQPs; ++qp) 
         for (std::size_t i=0; i < numDims; ++i)
-          for (std::size_t j=0; j < numDims; ++j)
-            // save stress as first state variable
-            (*workset.newState[0])(cell+workset.firstCell,qp,i,j) =
+           for (std::size_t j=0; j < numDims; ++j)
+             savedJ2Stress(cell,qp,i,j) =
                Sacado::ScalarValue<ScalarT>::eval(stress(cell,qp,i,j));
-
+  }
 }
 
 //**********************************************************************

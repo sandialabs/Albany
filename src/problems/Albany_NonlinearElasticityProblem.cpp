@@ -61,13 +61,13 @@ void
 Albany::NonlinearElasticityProblem::
 buildProblem(
     const int worksetSize,
-    const int numWorksets,
+    Albany::StateManager& stateMgr,
     const Albany::AbstractDiscretization& disc,
     std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
     const Teuchos::RCP<Epetra_Vector>& u)
 {
   /* Construct All Phalanx Evaluators */
-  constructEvaluators(worksetSize, disc.getCubatureDegree(), numWorksets);
+  constructEvaluators(worksetSize, disc.getCubatureDegree(), stateMgr);
   constructDirichletEvaluators(disc.getNodeSetIDs());
 
   const Epetra_Map& dofMap = *(disc.getMap());
@@ -117,7 +117,7 @@ buildProblem(
 
 void
 Albany::NonlinearElasticityProblem::constructEvaluators(
-       const int worksetSize, const int cubDegree, const int numWorksets)
+       const int worksetSize, const int cubDegree, Albany::StateManager& stateMgr)
 {
    using Teuchos::RCP;
    using Teuchos::rcp;
@@ -474,20 +474,9 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
     //Output
     p->set<string>("Stress Name", "Stress"); //qp_tensor also
  
-    // Allocate space for saved states -- repeated for each workset
-    oldState.resize(numWorksets);
-    newState.resize(numWorksets);
-    for (int ws=0; ws<numWorksets; ws++) {
-      int numStateVariables = 2;
-      oldState[ws].resize(numStateVariables);
-      newState[ws].resize(numStateVariables);
-      // First state is a stress tensor
-      oldState[ws][0]=Teuchos::rcp(new Intrepid::FieldContainer<RealType>(worksetSize,numQPts,numDim,numDim));
-      newState[ws][0]=Teuchos::rcp(new Intrepid::FieldContainer<RealType>(worksetSize,numQPts,numDim,numDim));
-      // Second state is a vector (not yet used)
-      oldState[ws][1]=Teuchos::rcp(new Intrepid::FieldContainer<RealType>(worksetSize,numQPts,numDim));
-      newState[ws][1]=Teuchos::rcp(new Intrepid::FieldContainer<RealType>(worksetSize,numQPts,numDim));
-    }
+    //Declare what state data will need to be saved (name, layout)
+    stateMgr.registerStateVariable("J2StressState",qp_tensor);
+    stateMgr.registerStateVariable("junkTest",qp_scalar);
 
     evaluators_to_build["Stress"] = p;
   }
