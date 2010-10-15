@@ -21,7 +21,8 @@
 //! Data Type Definitions that span the code.
 
 // Include all of our AD types
-#include "Sacado.hpp"
+#include "Sacado_MathFunctions.hpp"
+#include "Stokhos_Sacado_MathFunctions.hpp"
 #include "Sacado_ELRFad_DFad.hpp"
 #include "Sacado_ELRCacheFad_DFad.hpp"
 #include "Sacado_PCE_OrthogPoly.hpp"

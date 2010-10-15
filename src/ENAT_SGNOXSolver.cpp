@@ -177,14 +177,14 @@ SGNOXSolver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
       double rtol = sgParams.get<double>("Taylor Expansion Tolerance");
       expansion = 
 	Teuchos::rcp(new Stokhos::ForUQTKOrthogPolyExpansion<int,double>(
-		       basis,
+		       basis, Cijk,
 		       Stokhos::ForUQTKOrthogPolyExpansion<int,double>::TAYLOR,
 		       rtol));
     }
     else
       expansion = 
 	Teuchos::rcp(new Stokhos::ForUQTKOrthogPolyExpansion<int,double>(
-		       basis));
+		       basis, Cijk));
   }
 #endif
   else if (exp_type == "Derivative") {
