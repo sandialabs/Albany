@@ -30,7 +30,8 @@
 // Typedef AD types to standard names
 typedef double RealType;
 typedef Sacado::ELRFad::DFad<double> FadType;
-typedef Sacado::PCE::OrthogPoly<double> SGType;
+typedef Stokhos::StandardStorage<int,double> StorageType;
+typedef Sacado::PCE::OrthogPoly<double,StorageType> SGType;
 typedef Sacado::ELRFad::DFad<SGType> SGFadType;
 
 
