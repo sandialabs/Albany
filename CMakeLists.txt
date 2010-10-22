@@ -48,7 +48,10 @@ MESSAGE("End of Trilinos details\n")
 SET(CMAKE_CXX_COMPILER ${Trilinos_CXX_COMPILER} )
 SET(CMAKE_C_COMPILER ${Trilinos_C_COMPILER} )
 SET(CMAKE_Fortran_COMPILER ${Trilinos_Fortran_COMPILER} )
-ENABLE_LANGUAGE(Fortran)
+
+IF (CMAKE_Fortran_COMPILER) # Enable Fortran if it is enabled in Trilinos.
+  ENABLE_LANGUAGE(Fortran) 
+ENDIF()
 
 add_definitions("-g -O2")
 # End of setup and error checking
@@ -56,6 +59,7 @@ add_definitions("-g -O2")
 #        is moved AFTER setting CMAKE_CXX_COMPILER from Trilinos
 
 PROJECT(Albany)
+
 
 MESSAGE("-- Looking for Dakota (via TriKota):")
 LIST(FIND Trilinos_PACKAGE_LIST TriKota TriKota_List_ID)
