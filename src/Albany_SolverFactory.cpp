@@ -342,6 +342,9 @@ Albany::SolverFactory::getValidAppParameters() const
   validPL->sublist("NOX",                false, "NOX sublist");
   validPL->sublist("Analysis",           false, "Analysis sublist");
 
+  validPL->set<string>("Jacobian Operator", "Have Jacobian", "Flag to alloe Matrix-Free specification in Piro");
+  validPL->set<double>("Matrix-Free Perturbation", 3.0e-7, "delta in matrix-free formula");
+
   return validPL;
 }
 

@@ -1,4 +1,6 @@
 <ParameterList>
+  <Parameter name="Jacobian Operator" type="string" value="Matrix-Free"/>
+  <Parameter name="Matrix-Free Perturbation" type="double" value="1.0e-7"/>
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Elasticity 1D"/>
     <Parameter name="Transient" type="bool" value="false"/>
@@ -87,13 +89,13 @@
                     <Parameter name="Verbosity" type="int" value="33"/>
                     <Parameter name="Maximum Iterations" type="int" value="100"/>
                     <Parameter name="Block Size" type="int" value="1"/>
-                    <Parameter name="Num Blocks" type="int" value="50"/>
+                    <Parameter name="Num Blocks" type="int" value="100"/>
                     <Parameter name="Flexible Gmres" type="bool" value="0"/>
                   </ParameterList>
                 </ParameterList>
               </ParameterList>
             </ParameterList>
-            <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
+            <Parameter name="Preconditioner Type" type="string" value="None"/>
             <ParameterList name="Preconditioner Types">
               <ParameterList name="Ifpack">
                 <Parameter name="Overlap" type="int" value="2"/>
