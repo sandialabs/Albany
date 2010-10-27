@@ -5,4 +5,7 @@
 *.[oa]
 *~
 /build/
-
+/sandbox/
+\#*\#
+.\#*
+phalanx_graph
