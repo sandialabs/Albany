@@ -61,6 +61,12 @@ Albany::ProblemFactory::create()
   else if (method == "Elasticity 3D") {
     strategy = rcp(new Albany::ElasticityProblem(problemParams, paramLib, 3));
   }
+  else if (method == "NonlinearElasticity 1D") {
+    strategy = rcp(new Albany::NonlinearElasticityProblem(problemParams, paramLib, 1));
+  }
+  else if (method == "NonlinearElasticity 2D") {
+    strategy = rcp(new Albany::NonlinearElasticityProblem(problemParams, paramLib, 2));
+  }
   else if (method == "NonlinearElasticity 3D") {
     strategy = rcp(new Albany::NonlinearElasticityProblem(problemParams, paramLib, 3));
   }

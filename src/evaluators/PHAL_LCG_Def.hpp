@@ -69,7 +69,7 @@ evaluateFields(typename Traits::EvalData workset)
         for (std::size_t j=0; j < numDims; ++j) {
 	  lcg(cell,qp,i,j) = 0.0;
 	  for (std::size_t k=0; k < numDims; ++k) {
-	    lcg(cell,qp,i,j) += defgrad(cell,qp,j,i) * defgrad(cell,qp,k,j);
+	    lcg(cell,qp,i,j) += defgrad(cell,qp,i,k) * defgrad(cell,qp,j,k);
 	  }
         }
       }

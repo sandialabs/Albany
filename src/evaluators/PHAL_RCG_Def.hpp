@@ -69,7 +69,7 @@ evaluateFields(typename Traits::EvalData workset)
         for (std::size_t j=0; j < numDims; ++j) {
 	  rcg(cell,qp,i,j) = 0.0;
 	  for (std::size_t k=0; k < numDims; ++k) {
-	    rcg(cell,qp,i,j) += defgrad(cell,qp,j,i) * defgrad(cell,qp,j,k);
+	    rcg(cell,qp,i,j) += defgrad(cell,qp,k,i) * defgrad(cell,qp,k,j);
 	  }
         }
       }

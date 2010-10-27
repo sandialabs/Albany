@@ -90,9 +90,9 @@ evaluateFields(typename Traits::EvalData workset)
 	mu    = elasticModulus(cell,qp) / ( 2. * ( 1. - poissonsRatio(cell,qp) ) );
 	Jm53  = std::pow(J(cell,qp), -5./3.);
 	stress(cell,qp,0,0) = 0.5 * kappa * ( J(cell,qp) - 1. / J(cell,qp) ) 
-	  + mu * Jm53 * ( lcg(cell,qp,0,0) - ( 1. / 3. ) * ( lcg(cell,qp,0,0) + lcg(cell,qp,1,1) ) );
+	  + mu * Jm53 * ( lcg(cell,qp,0,0) - ( 1. / 2. ) * ( lcg(cell,qp,0,0) + lcg(cell,qp,1,1) ) );
 	stress(cell,qp,1,1) = 0.5 * kappa * ( J(cell,qp) - 1. / J(cell,qp) ) 
-	  + mu * Jm53 * ( lcg(cell,qp,1,1) - ( 1. / 3. ) * ( lcg(cell,qp,0,0) + lcg(cell,qp,1,1) ) );
+	  + mu * Jm53 * ( lcg(cell,qp,1,1) - ( 1. / 2. ) * ( lcg(cell,qp,0,0) + lcg(cell,qp,1,1) ) );
 	stress(cell,qp,0,1) = mu * Jm53 * ( lcg(cell,qp,0,1) );
 	stress(cell,qp,1,0) = stress(cell,qp,0,1); 
       }
