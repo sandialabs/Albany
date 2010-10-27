@@ -16,7 +16,7 @@
       <Parameter name="Value" type="double" value="1.5"/>
     </ParameterList>
     <ParameterList name="Material Model">
-      <Parameter name="Model Name" type="string" value="J2"/>
+      <Parameter name="Model Name" type="string" value="NeoHookean"/>
     </ParameterList>
     <ParameterList name="Poissons Ratio">
       <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
@@ -42,7 +42,7 @@
     <Parameter name="Exodus Output File Name" type="string" value="stel3d.exo"/>
   </ParameterList>
   <ParameterList name="Regression Results">
-    <Parameter  name="Number of Comparisons" type="int" value="0"/>
+    <Parameter  name="Number of Comparisons" type="int" value="1"/>
     <Parameter  name="Test Values" type="array" value="{0.166666666}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-7"/>
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="1"/>

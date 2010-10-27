@@ -75,48 +75,32 @@ template<typename EvalT, typename Traits>
 void Neohookean<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  cout << "IN STRESS" << endl;
   ScalarT kappa;
   ScalarT mu;
   ScalarT Jm53;
+  ScalarT trace;
   switch (numDims) {
   case 1:
     Intrepid::FunctionSpaceTools::tensorMultiplyDataData<ScalarT>(stress, elasticModulus, lcg);
     break;
   case 2:
-    // Compute Stress (with the plane strain assumption for now)
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
-	kappa = elasticModulus(cell,qp) / ( 3. * ( 1. - 2. * poissonsRatio(cell,qp) ) );
-	mu    = elasticModulus(cell,qp) / ( 2. * ( 1. - poissonsRatio(cell,qp) ) );
-	Jm53  = std::pow(J(cell,qp), -5./3.);
-	stress(cell,qp,0,0) = 0.5 * kappa * ( J(cell,qp) - 1. / J(cell,qp) ) 
-	  + mu * Jm53 * ( lcg(cell,qp,0,0) - ( 1. / 2. ) * ( lcg(cell,qp,0,0) + lcg(cell,qp,1,1) ) );
-	stress(cell,qp,1,1) = 0.5 * kappa * ( J(cell,qp) - 1. / J(cell,qp) ) 
-	  + mu * Jm53 * ( lcg(cell,qp,1,1) - ( 1. / 2. ) * ( lcg(cell,qp,0,0) + lcg(cell,qp,1,1) ) );
-	stress(cell,qp,0,1) = mu * Jm53 * ( lcg(cell,qp,0,1) );
-	stress(cell,qp,1,0) = stress(cell,qp,0,1); 
-      }
-    }
-    break;
   case 3:
-    // Compute Stress
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      cout << " cell : " << cell << endl;
       for (std::size_t qp=0; qp < numQPs; ++qp) {
+	cout << "  qp : " << qp << endl;
 	kappa = elasticModulus(cell,qp) / ( 3. * ( 1. - 2. * poissonsRatio(cell,qp) ) );
 	mu    = elasticModulus(cell,qp) / ( 2. * ( 1. - poissonsRatio(cell,qp) ) );
 	Jm53  = std::pow(J(cell,qp), -5./3.);
-	stress(cell,qp,0,0) = 0.5 * kappa * ( J(cell,qp) - 1. / J(cell,qp) ) 
-	  + mu * Jm53 * ( lcg(cell,qp,0,0) - ( 1. / 3. ) * ( lcg(cell,qp,0,0) + lcg(cell,qp,1,1) + lcg(cell,qp,2,2) ) );
-	stress(cell,qp,1,1) = 0.5 * kappa * ( J(cell,qp) - 1. / J(cell,qp) ) 
-	  + mu * Jm53 * ( lcg(cell,qp,1,1) - ( 1. / 3. ) * ( lcg(cell,qp,0,0) + lcg(cell,qp,1,1) + lcg(cell,qp,2,2) ) );
-	stress(cell,qp,2,2) = 0.5 * kappa * ( J(cell,qp) - 1. / J(cell,qp) ) 
-	  + mu * Jm53 * ( lcg(cell,qp,2,2) - ( 1. / 3. ) * ( lcg(cell,qp,0,0) + lcg(cell,qp,1,1) + lcg(cell,qp,2,2) ) );
-	stress(cell,qp,0,1) = mu * Jm53 * ( lcg(cell,qp,0,1) );
-	stress(cell,qp,1,2) = mu * Jm53 * ( lcg(cell,qp,1,2) );
-	stress(cell,qp,2,0) = mu * Jm53 * ( lcg(cell,qp,2,0) );
-	stress(cell,qp,1,0) = stress(cell,qp,0,1);
-	stress(cell,qp,2,1) = stress(cell,qp,1,2);
-	stress(cell,qp,0,2) = stress(cell,qp,2,0);
+	trace = 0.0;
+	for (std::size_t i=0; i < numDims; ++i) trace += (1./numDims) * lcg(cell,qp,i,i);
+	for (std::size_t i=0; i < numDims; ++i) {
+	  for (std::size_t j=0; j < numDims; ++j) {
+	    stress(cell,qp,i,j) = mu * Jm53 * ( lcg(cell,qp,i,j) );
+	  }
+	  stress(cell,qp,i,i) += 0.5 * kappa * ( J(cell,qp) - 1. / J(cell,qp) ) - mu * Jm53 * trace;
+	}
       }
     }
     break;
