@@ -61,15 +61,15 @@ SGNOXSolver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
     Teuchos::ParameterList& bp = basisParams.sublist(ss.str());
     std::string type = bp.get("Type","Legendre");
     int order = bp.get("Order", 3);
+    bool normalize = bp.get("Normalize", false);
     if (type == "Legendre")
-      bases[i] = Teuchos::rcp(new Stokhos::LegendreBasis<int,double>(order));
+      bases[i] = Teuchos::rcp(new Stokhos::LegendreBasis<int,double>(order, normalize));
     else if (type == "Clenshaw-Curtis")
-      bases[i] = Teuchos::rcp(new Stokhos::ClenshawCurtisLegendreBasis<int,double>(order));
+      bases[i] = Teuchos::rcp(new Stokhos::ClenshawCurtisLegendreBasis<int,double>(order, normalize));
     else if (type == "Hermite")
-      bases[i] = Teuchos::rcp(new Stokhos::HermiteBasis<int,double>(order));
+      bases[i] = Teuchos::rcp(new Stokhos::HermiteBasis<int,double>(order, normalize));
     else if (type == "Rys") {
       double cut = bp.get("Weight Cut", 1.0);
-      bool normalize = bp.get("Normalize", false);
       bases[i] = Teuchos::rcp(new Stokhos::RysBasis<int,double>(order, cut,
 								normalize));
     }
