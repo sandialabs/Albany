@@ -57,11 +57,13 @@ int Albany_Dakota()
   // Run the requested Dakota strategy using this interface
   dakota.run(trikota_interface.get());
 
-  Dakota::RealVector finalValues = dakota.getFinalSolution().continuous_variables();
-  cout << "\nAlbany_Dakota: Final Values from Dakota = " 
-       << setprecision(8) << finalValues << endl;
+  if (dakota.rankZero()) {
+    Dakota::RealVector finalValues = dakota.getFinalSolution().continuous_variables();
+    cout << "\nAlbany_Dakota: Final Values from Dakota = " 
+         << setprecision(8) << finalValues << endl;
 
-  return slvrfctry->checkTestResults(NULL, NULL, &finalValues);
-
+    return slvrfctry->checkTestResults(NULL, NULL, &finalValues);
+  }
+  else return 0;
 }
 #endif
