@@ -54,7 +54,12 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   neq = neq_;
 
   cubatureDegree = params->get("Cubature Degree", 3);
+
+  // Restart index to read solution from exodus file.
   int index = params->get("Restart Index",-1); // Default to no restart
+  if (index<1) *out << "Restart Index not set. Not reading solution from exodus (" 
+         << index << ")"<< endl;
+  else *out << "Restart Index set, reading solution time step: " << index << endl;
 
   metaData = new stk::mesh::MetaData(stk::mesh::fem_entity_rank_names() );
   bulkData = new stk::mesh::BulkData(*metaData , MPI_COMM_WORLD , field_data_chunk_size );

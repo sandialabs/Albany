@@ -50,6 +50,7 @@ add_subdirectory(Poisson2D)
 IF(ALBANY_IOSS)
   add_subdirectory(Ioss2D)
   add_subdirectory(Ioss3D)
+  add_subdirectory(IossRestart)
   add_subdirectory(BoreDemo)
 ENDIF()
 
