@@ -70,7 +70,7 @@ buildProblem(
     const Teuchos::RCP<Epetra_Vector>& u)
 {
   /* Construct All Phalanx Evaluators */
-  constructEvaluators(worksetSize, disc.getCubatureDegree());
+  constructEvaluators(worksetSize, disc.getCubatureDegree(), disc.getCellTopologyData());
   constructDirichletEvaluators(disc.getNodeSetIDs());
  
   const Epetra_Map& dofMap = *(disc.getMap());
@@ -120,7 +120,7 @@ buildProblem(
 
 void
 QCAD::PoissonProblem::constructEvaluators(
-       const int worksetSize, const int cubDegree)
+       const int worksetSize, const int cubDegree, const CellTopologyData& ctd)
 {
    using Teuchos::RCP;
    using Teuchos::rcp;
@@ -133,19 +133,19 @@ QCAD::PoissonProblem::constructEvaluators(
    using PHAL::AlbanyTraits;
 
    RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
-   RCP<shards::CellTopology> cellType;
+   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&ctd));
    switch (numDim) {
      case 1:
        intrepidBasis = rcp(new Intrepid::Basis_HGRAD_LINE_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
-       cellType = rcp(new shards::CellTopology (shards::getCellTopologyData< shards::Line<2> >()));
        break;
      case 2:
-       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
-       cellType = rcp(new shards::CellTopology (shards::getCellTopologyData< shards::Quadrilateral<4> >()));
+       if (ctd.vertex_count==4)
+         intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
+       else if (ctd.vertex_count==3)
+         intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TRI_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
        break;
      case 3:
        intrepidBasis = rcp(new Intrepid::Basis_HGRAD_HEX_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
-       cellType = rcp(new shards::CellTopology (shards::getCellTopologyData< shards::Hexahedron<8> >()));
        break;
    }
 

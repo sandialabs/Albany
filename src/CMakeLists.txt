@@ -88,7 +88,7 @@ SET(SOURCES ${SOURCES}
         stk/Albany_STKDiscretization.cpp
 	stk/Albany_DiscretizationFactory.cpp
         stk/Albany_Line1DSTKMeshStruct.cpp
-        stk/Albany_Quad2DSTKMeshStruct.cpp
+        stk/Albany_Rect2DSTKMeshStruct.cpp
         stk/Albany_Cube3DSTKMeshStruct.cpp
         stk/Albany_FromCubitSTKMeshStruct.cpp
         stk/Albany_IossSTKMeshStruct.cpp
@@ -99,7 +99,7 @@ SET(HEADERS ${HEADERS}
 	stk/Albany_DiscretizationFactory.hpp
         stk/Albany_AbstractSTKMeshStruct.hpp
         stk/Albany_Line1DSTKMeshStruct.hpp
-        stk/Albany_Quad2DSTKMeshStruct.hpp
+        stk/Albany_Rect2DSTKMeshStruct.hpp
         stk/Albany_Cube3DSTKMeshStruct.hpp
         stk/Albany_FromCubitSTKMeshStruct.hpp
         stk/Albany_IossSTKMeshStruct.hpp

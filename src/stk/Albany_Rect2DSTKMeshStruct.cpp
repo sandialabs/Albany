@@ -17,7 +17,7 @@
 
 #include <iostream>
 
-#include "Albany_Quad2DSTKMeshStruct.hpp"
+#include "Albany_Rect2DSTKMeshStruct.hpp"
 
 #include <Shards_BasicTopologies.hpp>
 
@@ -38,11 +38,12 @@
 enum { field_data_chunk_size = 1001 };
 
 
-Albany::Quad2DSTKMeshStruct::Quad2DSTKMeshStruct(
+Albany::Rect2DSTKMeshStruct::Rect2DSTKMeshStruct(
 		  const Teuchos::RCP<const Epetra_Comm>& comm,
 		  const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_) :
-  periodic(params->get("Periodic BC", false))
+  periodic(params->get("Periodic BC", false)),
+  triangles(false)
 {
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
@@ -52,16 +53,26 @@ Albany::Quad2DSTKMeshStruct::Quad2DSTKMeshStruct(
 
   cubatureDegree = params->get("Cubature Degree", 3);
 
+  string cellTopo = params->get("Cell Topology", "Quad");
+  if (cellTopo == "Tri" || cellTopo == "Triangle")  triangles = true;
+  else TEST_FOR_EXCEPTION (cellTopo != "Quad", std::logic_error,
+     "\nUnknown Cell Topology entry in STK2D(not \'Tri\' or \'Quad\'): "
+      << cellTopo);
+
   // Create global mesh: 2D structured, rectangular
   int nelem_x = params->get<int>("1D Elements");
   int nelem_y = params->get<int>("2D Elements");
   double scale_x = params->get("1D Scale",     1.0);
   double scale_y = params->get("2D Scale",     1.0);
 
-  if (comm->MyPID()==0)
-    std::cout<<" Creating 2D Quadralateral mesh of size "
-              <<nelem_x<<"x"<<nelem_y<<" elements and scaled to "
+  if (comm->MyPID()==0) {
+    std::cout<<" Creating 2D Rectanglular mesh of size "
+              <<nelem_x<<"x"<<nelem_y<<" quad elements and scaled to "
               <<scale_x<<"x"<<scale_y<<std::endl;
+    if (triangles)
+      std::cout<<" Quad elements cut to make twice as many triangles " <<std::endl;
+  }
+
 
   std::vector<double> x(nelem_x+1);
   double h_x = scale_x/nelem_x;
@@ -71,7 +82,7 @@ Albany::Quad2DSTKMeshStruct::Quad2DSTKMeshStruct(
   double h_y = scale_y/nelem_y;
   for (unsigned int i=0; i<=nelem_y; i++) y[i] = h_y*i;
 
-  // Distribute rectangle mesh of elements equally among processors
+  // Distribute rectangle mesh of quad elements equally among processors
   Teuchos::RCP<Epetra_Map> elem_map = Teuchos::rcp(new Epetra_Map(nelem_x * nelem_y, 0, *comm));
   int numMyElements = elem_map->NumMyElements();
 
@@ -89,7 +100,10 @@ Albany::Quad2DSTKMeshStruct::Quad2DSTKMeshStruct(
   nsPartVec["NodeSet2"] = & metaData->declare_part( "NodeSet2", stk::mesh::Node );
   nsPartVec["NodeSet3"] = & metaData->declare_part( "NodeSet3", stk::mesh::Node );
 
-  stk::mesh::set_cell_topology< shards::Quadrilateral<4> >(*partVec[0]);
+  if (triangles)
+    stk::mesh::set_cell_topology< shards::Triangle<3> >(*partVec[0]);
+  else 
+    stk::mesh::set_cell_topology< shards::Quadrilateral<4> >(*partVec[0]);
 
   stk::mesh::put_field( *coordinates_field , stk::mesh::Node , metaData->universal_part(), numDim );
   stk::mesh::put_field( *solution_field , stk::mesh::Node , metaData->universal_part(), neq );
@@ -124,19 +138,33 @@ Albany::Quad2DSTKMeshStruct::Quad2DSTKMeshStruct(
     const unsigned int upper_right = (x_GID+1)%mod_x + nodes_x*((y_GID+1)%mod_y);
     const unsigned int upper_left  =  x_GID          + nodes_x*((y_GID+1)%mod_y);
 
+    // get ID of quadrilateral -- will be doubled for trianlges below
     stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
     singlePartVec[0] = partVec[0];
 
-    // Add one to IDs because STK requires 1-based
-    stk::mesh::Entity& face  = bulkData->declare_entity(stk::mesh::Element, 1+elem_id, singlePartVec);
+    // Declare NodesL= (Add one to IDs because STK requires 1-based
     stk::mesh::Entity& llnode = bulkData->declare_entity(stk::mesh::Node, 1+lower_left, noPartVec);
     stk::mesh::Entity& lrnode = bulkData->declare_entity(stk::mesh::Node, 1+lower_right, noPartVec);
     stk::mesh::Entity& urnode = bulkData->declare_entity(stk::mesh::Node, 1+upper_right, noPartVec);
     stk::mesh::Entity& ulnode = bulkData->declare_entity(stk::mesh::Node, 1+upper_left, noPartVec);
-    bulkData->declare_relation(face, llnode, 0);
-    bulkData->declare_relation(face, lrnode, 1);
-    bulkData->declare_relation(face, urnode, 2);
-    bulkData->declare_relation(face, ulnode, 3);
+
+    if (triangles) { // pair of 3-node triangles
+      stk::mesh::Entity& face  = bulkData->declare_entity(stk::mesh::Element, 1+2*elem_id, singlePartVec);
+      bulkData->declare_relation(face, llnode, 0);
+      bulkData->declare_relation(face, lrnode, 1);
+      bulkData->declare_relation(face, urnode, 2);
+      stk::mesh::Entity& face2 = bulkData->declare_entity(stk::mesh::Element, 1+2*elem_id+1, singlePartVec);
+      bulkData->declare_relation(face2, llnode, 0);
+      bulkData->declare_relation(face2, urnode, 1);
+      bulkData->declare_relation(face2, ulnode, 2);
+    }
+    else {  //4-node quad
+      stk::mesh::Entity& face  = bulkData->declare_entity(stk::mesh::Element, 1+elem_id, singlePartVec);
+      bulkData->declare_relation(face, llnode, 0);
+      bulkData->declare_relation(face, lrnode, 1);
+      bulkData->declare_relation(face, urnode, 2);
+      bulkData->declare_relation(face, ulnode, 3);
+    }
 
     double* llnode_coord = stk::mesh::field_data(*coordinates_field, llnode);
     llnode_coord[0] = x[x_GID];   llnode_coord[1] = y[y_GID];
@@ -178,7 +206,7 @@ Albany::Quad2DSTKMeshStruct::Quad2DSTKMeshStruct(
     exoOutFile = params->get<string>("Exodus Output File Name");
 }
 
-Albany::Quad2DSTKMeshStruct::~Quad2DSTKMeshStruct()
+Albany::Rect2DSTKMeshStruct::~Rect2DSTKMeshStruct()
 {
   delete metaData;
   delete bulkData;
@@ -186,7 +214,7 @@ Albany::Quad2DSTKMeshStruct::~Quad2DSTKMeshStruct()
 
 
 Teuchos::RCP<const Teuchos::ParameterList>
-Albany::Quad2DSTKMeshStruct::getValidDiscretizationParameters() const
+Albany::Rect2DSTKMeshStruct::getValidDiscretizationParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
      rcp(new Teuchos::ParameterList("ValidSTK2D_DiscParams"));;
@@ -195,6 +223,7 @@ Albany::Quad2DSTKMeshStruct::getValidDiscretizationParameters() const
   validPL->set<int>("2D Elements", 0, "Number of Elements in Y discretization");
   validPL->set<double>("1D Scale", 1.0, "Width of X discretization");
   validPL->set<double>("2D Scale", 1.0, "Height of Y discretization");
+  validPL->set<string>("Cell Topology", "Quad" , "Quad or Tri Cell Topology");
   validPL->set<std::string>("Exodus Output File Name", "",
     "Request exodus output to given file name. Requires IOSS build");
   validPL->set<std::string>("Method", "",
@@ -203,4 +232,3 @@ Albany::Quad2DSTKMeshStruct::getValidDiscretizationParameters() const
 
   return validPL;
 }
-

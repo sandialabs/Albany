@@ -28,6 +28,8 @@
 #include "Epetra_Vector.h"
 #include "Epetra_CrsGraph.h"
 
+#include "Shards_CellTopologyData.h"
+
 namespace Albany {
 
   typedef std::map<std::string, std::vector<int> > NodeSetList;
@@ -77,6 +79,8 @@ namespace Albany {
     //! Get solution vector from mesh database
     virtual Teuchos::RCP<Epetra_Vector> getSolutionField() const = 0;
 
+    //! Get Cell Topology Data (for Element block 0 so far)
+    virtual const CellTopologyData& getCellTopologyData() const = 0;
 
   private:
 

@@ -21,12 +21,6 @@
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
 #include "Albany_InitialCondition.hpp"
 
-#include "Intrepid_HGRAD_QUAD_C1_FEM.hpp"
-#include "Intrepid_FieldContainer.hpp"
-#include "Intrepid_DefaultCubatureFactory.hpp"
-#include "Shards_CellTopology.hpp"
-#include "PHAL_FactoryTraits.hpp"
-
 Albany::Helmholtz2DProblem::
 Helmholtz2DProblem(
                          const Teuchos::RCP<Teuchos::ParameterList>& params_,
@@ -62,7 +56,7 @@ buildProblem(
     const Teuchos::RCP<Epetra_Vector>& u)
 {
   /* Construct All Phalanx Evaluators */
-  constructEvaluators(worksetSize, disc.getCubatureDegree());
+  constructEvaluators(worksetSize, disc.getCubatureDegree(), disc.getCellTopologyData());
   constructDirichletEvaluators(disc.getNodeSetIDs());
 
   const Epetra_Map& dofMap = *(disc.getMap());
@@ -106,7 +100,7 @@ buildProblem(
 
 void
 Albany::Helmholtz2DProblem::constructEvaluators(
-       const int worksetSize, const int cubDegree)
+       const int worksetSize, const int cubDegree, const CellTopologyData& ctd)
 {
    using Teuchos::RCP;
    using Teuchos::rcp;
@@ -118,15 +112,17 @@ Albany::Helmholtz2DProblem::constructEvaluators(
    using PHAL::FactoryTraits;
    using PHAL::AlbanyTraits;
 
-   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis =
-     rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
+   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology(&ctd)); 
+
+   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
+   if (ctd.vertex_count==4)
+     intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
+   else if (ctd.vertex_count==3)
+     intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TRI_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
 
    const int numNodes = intrepidBasis->getCardinality();
 
    Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-   // cubature and cellType  gets passed into evaluators below
-   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology
-      (shards::getCellTopologyData< shards::Quadrilateral<> >())); 
 
    RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, cubDegree);
 

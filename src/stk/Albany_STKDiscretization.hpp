@@ -88,6 +88,9 @@ namespace Albany {
     //! Get Cubature Degree from input file
     int getCubatureDegree() const {return stkMeshStruct->cubatureDegree;};
 
+    //! Get Element Topology Type
+    const CellTopologyData& getCellTopologyData() const;
+
     Teuchos::RCP<Epetra_Vector> getSolutionField() const;
 
   private:

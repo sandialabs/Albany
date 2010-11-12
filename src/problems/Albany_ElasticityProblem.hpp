@@ -64,7 +64,8 @@ namespace Albany {
     //! Private to prohibit copying
     ElasticityProblem& operator=(const ElasticityProblem&);
 
-    void constructEvaluators(const int worksetSize, const int cubDegree);
+    void constructEvaluators(const int worksetSize,
+        const int cubDegree, const CellTopologyData& ctd);
   protected:
 
     //! Boundary conditions on source term

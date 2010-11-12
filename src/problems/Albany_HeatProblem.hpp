@@ -64,8 +64,9 @@ namespace Albany {
     //! Private to prohibit copying
     HeatProblem& operator=(const HeatProblem&);
 
-    void constructEvaluators(const int worksetSize, const int cubDegree);
-
+    void constructEvaluators(const int worksetSize,
+                             const int cubDegree,
+                             const CellTopologyData& ctd);
   protected:
 
     //! Boundary conditions on source term

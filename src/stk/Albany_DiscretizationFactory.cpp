@@ -19,7 +19,7 @@
 #include "Albany_DiscretizationFactory.hpp"
 #include "Albany_STKDiscretization.hpp"
 #include "Albany_Line1DSTKMeshStruct.hpp"
-#include "Albany_Quad2DSTKMeshStruct.hpp"
+#include "Albany_Rect2DSTKMeshStruct.hpp"
 #include "Albany_Cube3DSTKMeshStruct.hpp"
 #ifdef ALBANY_IOSS
 #include "Albany_IossSTKMeshStruct.hpp"
@@ -53,7 +53,7 @@ Albany::DiscretizationFactory::create(
   }
   else if (method == "STK2D") {
     
-    stkMeshStruct = Teuchos::rcp(new Albany::Quad2DSTKMeshStruct(epetra_comm, discParams, neq));
+    stkMeshStruct = Teuchos::rcp(new Albany::Rect2DSTKMeshStruct(epetra_comm, discParams, neq));
 
     strategy = Teuchos::rcp(new Albany::STKDiscretization(stkMeshStruct, epetra_comm));
   }

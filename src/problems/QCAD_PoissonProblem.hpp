@@ -64,7 +64,8 @@ namespace QCAD {
     //! Private to prohibit copying
     PoissonProblem& operator=(const PoissonProblem&);
 
-    void constructEvaluators(const int worksetSize, const int cubDegree);
+    void constructEvaluators(const int worksetSize,
+        const int cubDegree, const CellTopologyData& ctd);
 
   protected:
 

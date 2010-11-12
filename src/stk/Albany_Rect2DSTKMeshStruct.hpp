@@ -15,30 +15,31 @@
 \********************************************************************/
 
 
-#ifndef ALBANY_QUAD2DSTKMESHSTRUCT_HPP
-#define ALBANY_QUAD2DSTKMESHSTRUCT_HPP
+#ifndef ALBANY_RECT2DSTKMESHSTRUCT_HPP
+#define ALBANY_RECT2DSTKMESHSTRUCT_HPP
 
 #include "Albany_AbstractSTKMeshStruct.hpp"
 
 
 namespace Albany {
 
-  struct Quad2DSTKMeshStruct : public AbstractSTKMeshStruct {
+  struct Rect2DSTKMeshStruct : public AbstractSTKMeshStruct {
 
-    Quad2DSTKMeshStruct(
+    Rect2DSTKMeshStruct(
                   const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_);
 
-    ~Quad2DSTKMeshStruct();
+    ~Rect2DSTKMeshStruct();
 
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParameters() const;
 
     bool periodic;
+    bool triangles; // Deaults to false, meaning quad elements
 
   };
 
 }
 
-#endif // ALBANY_QUAD2DSTKMESHSTRUCT_HPP
+#endif

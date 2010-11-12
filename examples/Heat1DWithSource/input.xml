@@ -34,20 +34,20 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="3"/>
-    <Parameter  name="Test Values" type="array" value="{0.116518,  0.641695, -0.64169}"/>
+    <Parameter  name="Test Values" type="array" value="{0.117236,  0.645240, -0.645240}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
-    <Parameter  name="Sensitivity Test Values 0" type="array" value="{0.465586, 0.465586}"/>
+    <Parameter  name="Sensitivity Test Values 0" type="array" value="{0.465129, 0.465129}"/>
   </ParameterList>
   <ParameterList name="Rythmos">
-    <Parameter name="Num Time Steps" type="int" value="1600"/>
+    <Parameter name="Num Time Steps" type="int" value="200"/>
     <Parameter name="Final Time" type="double" value="0.25"/>
     <Parameter name="Max State Error" type="double" value="0.001"/>
     <Parameter name="Alpha"           type="double" value="0.75"/>
     <Parameter name="Name"            type="string" value="1D Gauss-Sin"/>
     <ParameterList name="Rythmos Stepper">
       <ParameterList name="VerboseObject">
-        <Parameter name="Verbosity Level" type="string" value="medium"/>
+        <Parameter name="Verbosity Level" type="string" value="none"/>
       </ParameterList>
     </ParameterList>
     <ParameterList name="Stratimikos">
@@ -58,7 +58,7 @@
     </ParameterList>
     <ParameterList name="Rythmos Integrator">
       <ParameterList name="VerboseObject">
-        <Parameter name="Verbosity Level" type="string" value="medium"/>
+        <Parameter name="Verbosity Level" type="string" value="low"/>
       </ParameterList>
     </ParameterList>
   </ParameterList>

@@ -1,14 +1,13 @@
 <ParameterList>
   <ParameterList name="Problem">
-    <Parameter name="Name" type="string" value="Elasticity 3D"/>
+    <Parameter name="Name" type="string" value="Elasticity 2D"/>
     <Parameter name="Transient" type="bool" value="false"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
     <ParameterList name="Dirichlet BCs">
-      <Parameter name="DBC on NS nodelist_10 for DOF X" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_10 for DOF Y" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_10 for DOF Z" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_21 for DOF X" type="double" value="1.0"/>
-      <Parameter name="DBC on NS nodelist_21 for DOF Y" type="double" value="3.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF X" type="double" value="0.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Y" type="double" value="0.0"/>
+      <Parameter name="DBC on NS NodeSet1 for DOF X" type="double" value="-0.2"/>
+      <Parameter name="DBC on NS NodeSet1 for DOF Y" type="double" value="0.2"/>
     </ParameterList>
     <ParameterList name="Elastic Modulus">
       <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
@@ -16,12 +15,12 @@
     </ParameterList>
     <ParameterList name="Poissons Ratio">
       <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="0.35"/>
+      <Parameter name="Value" type="double" value="0.25"/>
     </ParameterList>
     <ParameterList name="Parameters">
-      <Parameter name="Number" type="int" value="0"/>
-      <Parameter name="Parameter 0" type="string" value="DBC on NS nodelist_21 for DOF X"/>
-      <Parameter name="Parameter 1" type="string" value="DBC on NS nodelist_21 for DOF Y"/>
+      <Parameter name="Number" type="int" value="2"/>
+      <Parameter name="Parameter 0" type="string" value="DBC on NS NodeSet0 for DOF X"/>
+      <Parameter name="Parameter 1" type="string" value="DBC on NS NodeSet1 for DOF X"/>
     </ParameterList>
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="1"/>
@@ -29,18 +28,19 @@
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
-    <Parameter name="Method" type="string" value="Ioss"/>
-    <Parameter name="Exodus Input File Name" type="string" value="boreMesh.exo"/>
-    <Parameter name="Exodus Output File Name" type="string" value="boreOut.exo"/>
+    <Parameter name="1D Elements" type="int" value="50"/>
+    <Parameter name="2D Elements" type="int" value="50"/>
+    <Parameter name="Method" type="string" value="STK2D"/>
+    <Parameter name="Cell Topology" type="string" value="Tri"/>
+    <Parameter name="Exodus Output File Name" type="string" value="eltri2d.exo"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="array" value="{0.58953013}"/>
-    <Parameter  name="Relative Tolerance" type="double" value="1.0e-7"/>
-    <Parameter name="Number of Sensitivity Comparisons" type="int" value="0"/>
-    <Parameter  name="Sensitivity Test Values 0" type="array" value="{0.33333333, 0.33333333}"/>
-    <Parameter name="Number of Dakota Comparisons" type="int" value="0"/>
-    <Parameter  name="Dakota Test Values" type="array" value="{ 1.0, 1.0}"/>
+    <Parameter  name="Test Values" type="array" value="{0.000}"/>
+    <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
+    <Parameter  name="Absolute Tolerance" type="double" value="1.0e-8"/>
+    <Parameter name="Number of Sensitivity Comparisons" type="int" value="1"/>
+    <Parameter  name="Sensitivity Test Values 0" type="array" value="{ 0.25, 0.25}"/>
   </ParameterList>
   <ParameterList name="LOCA">
     <ParameterList name="Bifurcation"/>
@@ -82,7 +82,7 @@
                 <Parameter name="Solver Type" type="string" value="Block GMRES"/>
                 <ParameterList name="Solver Types">
                   <ParameterList name="Block GMRES">
-                    <Parameter name="Convergence Tolerance" type="double" value="1e-5"/>
+                    <Parameter name="Convergence Tolerance" type="double" value="1e-12"/>
                     <Parameter name="Output Frequency" type="int" value="10"/>
                     <Parameter name="Output Style" type="int" value="1"/>
                     <Parameter name="Verbosity" type="int" value="33"/>
@@ -97,11 +97,12 @@
             <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
             <ParameterList name="Preconditioner Types">
               <ParameterList name="Ifpack">
-                <Parameter name="Overlap" type="int" value="1"/>
+                <Parameter name="Overlap" type="int" value="2"/>
                 <Parameter name="Prec Type" type="string" value="ILU"/>
                 <ParameterList name="Ifpack Settings">
                   <Parameter name="fact: drop tolerance" type="double" value="0"/>
-                  <Parameter name="fact: level-of-fill" type="int" value="0"/>
+                  <Parameter name="fact: ilut level-of-fill" type="double" value="1"/>
+                  <Parameter name="fact: level-of-fill" type="int" value="2"/>
                 </ParameterList>
               </ParameterList>
             </ParameterList>

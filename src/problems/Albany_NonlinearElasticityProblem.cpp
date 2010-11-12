@@ -21,13 +21,6 @@
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
 #include "Albany_InitialCondition.hpp"
 
-#include "Intrepid_HGRAD_LINE_C1_FEM.hpp"
-#include "Intrepid_FieldContainer.hpp"
-#include "Intrepid_DefaultCubatureFactory.hpp"
-#include "Shards_CellTopology.hpp"
-#include "PHAL_FactoryTraits.hpp"
-
-
 Albany::NonlinearElasticityProblem::
 NonlinearElasticityProblem(
                          const Teuchos::RCP<Teuchos::ParameterList>& params_,
@@ -67,7 +60,7 @@ buildProblem(
     const Teuchos::RCP<Epetra_Vector>& u)
 {
   /* Construct All Phalanx Evaluators */
-  constructEvaluators(worksetSize, disc.getCubatureDegree(), stateMgr);
+  constructEvaluators(worksetSize, disc.getCubatureDegree(), disc.getCellTopologyData(), stateMgr);
   constructDirichletEvaluators(disc.getNodeSetIDs());
 
   const Epetra_Map& dofMap = *(disc.getMap());
@@ -117,7 +110,8 @@ buildProblem(
 
 void
 Albany::NonlinearElasticityProblem::constructEvaluators(
-       const int worksetSize, const int cubDegree, Albany::StateManager& stateMgr)
+       const int worksetSize, const int cubDegree,
+       const CellTopologyData& ctd, Albany::StateManager& stateMgr)
 {
    using Teuchos::RCP;
    using Teuchos::rcp;
@@ -130,19 +124,19 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
    using PHAL::AlbanyTraits;
 
    RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
-   RCP<shards::CellTopology> cellType;
+   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&ctd));
    switch (neq) {
      case 1:
        intrepidBasis = rcp(new Intrepid::Basis_HGRAD_LINE_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
-       cellType = rcp(new shards::CellTopology (shards::getCellTopologyData< shards::Line<2> >()));
        break;
      case 2:
-       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
-       cellType = rcp(new shards::CellTopology (shards::getCellTopologyData< shards::Quadrilateral<4> >()));
+       if (ctd.vertex_count==4)
+         intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
+       else if (ctd.vertex_count==3)
+         intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TRI_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
        break;
      case 3:
        intrepidBasis = rcp(new Intrepid::Basis_HGRAD_HEX_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
-       cellType = rcp(new shards::CellTopology (shards::getCellTopologyData< shards::Hexahedron<8> >()));
        break;
    }
 

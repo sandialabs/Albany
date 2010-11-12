@@ -38,6 +38,17 @@
 #include "Teuchos_VerboseObject.hpp"
 #include <Intrepid_FieldContainer.hpp>
 
+// Includes needed by most prolems
+#include "Intrepid_HGRAD_LINE_C1_FEM.hpp"
+#include "Intrepid_HGRAD_QUAD_C1_FEM.hpp"
+#include "Intrepid_HGRAD_TRI_C1_FEM.hpp"
+#include "Intrepid_HGRAD_HEX_C1_FEM.hpp"
+#include "Intrepid_FieldContainer.hpp"
+#include "Intrepid_DefaultCubatureFactory.hpp"
+#include "Shards_CellTopology.hpp"
+#include "PHAL_FactoryTraits.hpp"
+
+
 namespace Albany {
 
   /*!

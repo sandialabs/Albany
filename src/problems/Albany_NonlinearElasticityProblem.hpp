@@ -69,7 +69,8 @@ namespace Albany {
     //! Private to prohibit copying
     NonlinearElasticityProblem& operator=(const NonlinearElasticityProblem&);
 
-    void constructEvaluators(const int worksetSize, const int cubDegree, StateManager& stateMgr);
+    void constructEvaluators(const int worksetSize, const int cubDegree,
+      const CellTopologyData& ctd, StateManager& stateMgr);
   protected:
 
     //! Boundary conditions on source term

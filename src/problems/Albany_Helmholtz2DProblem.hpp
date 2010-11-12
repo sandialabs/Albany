@@ -63,7 +63,8 @@ namespace Albany {
     //! Private to prohibit copying
     Helmholtz2DProblem& operator=(const Helmholtz2DProblem&);
 
-    void constructEvaluators(const int worksetSize, const int cubDegree);
+    void constructEvaluators(const int worksetSize,
+       const int cubDegree, const CellTopologyData& ctd);
   protected:
 
     //! Boundary conditions, factor on source term

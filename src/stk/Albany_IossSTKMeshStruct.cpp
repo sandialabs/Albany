@@ -79,37 +79,30 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 
   *out << "AGS_IOSS: Loading STKMesh from exodus file  " << endl;
 
-  partVec[0] = & metaData->universal_part();
-  stk::io::put_io_part_attribute(*partVec[0]);
-
-  metaData->commit();
-
-  stk::io::util::populate_bulk_data(*bulkData, *mesh_data, "exodusii", index);
-  bulkData->modification_end();
-
+  stk::io::put_io_part_attribute(metaData->universal_part());
 
   // Set node sets
   const stk::mesh::PartVector & all_parts = metaData->get_parts();
-  int numVerts;
-  int nsid=0;
+  int eb=0;
   for (stk::mesh::PartVector::const_iterator i = all_parts.begin();
        i != all_parts.end(); ++i) {
 
     stk::mesh::Part * const part = *i ;
 
-
     switch( part->primary_entity_rank() ) {
-      case stk::mesh::Element:
+      case stk::mesh::Element: {
           *out << "IOSS-STK: Element part found " << endl;
+          partVec[eb++] = part;
           // Since Cubit likes to define numDim=3 always, use vertex
-          // count on top element block to figure out quad vs hex.
-          numVerts = stk::mesh::get_cell_topology(*part)->vertex_count;
-          if (numVerts==4) numDim=2;
+          // count on top element block to figure out quad(tri) vs hex.
+          //   Needs to be fixed for Tets ro Shells
+          int numVerts = stk::mesh::get_cell_topology(*part)->vertex_count;
+          if (numVerts==4 || numVerts==3) numDim=2;
           else if (numVerts==8) numDim=3;
           else TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                  std::endl << "Error!  IossSTKMeshStruct:  " <<
                  "Invalid vertex count from exodus mesh: " << numVerts << std::endl);
-          *out << "IOSS-STK:  numDim =  " << numDim << endl;
+          *out << "IOSS-STK:  numDim =  " << numDim << endl; }
         break;
       case stk::mesh::Node:
           {
@@ -121,9 +114,14 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     }
   }
 
- *out << "IOSS-STK: number of node sets = " << nsPartVec.size() << endl;
+  *out << "IOSS-STK: number of node sets = " << nsPartVec.size() << endl;
 
- coordinates_field = metaData->get_field<VectorFieldType>(std::string("coordinates"));
+  metaData->commit();
+
+  stk::io::util::populate_bulk_data(*bulkData, *mesh_data, "exodusii", index);
+  bulkData->modification_end();
+
+  coordinates_field = metaData->get_field<VectorFieldType>(std::string("coordinates"));
 
   delete mesh_data;
   useElementAsTopRank = true;

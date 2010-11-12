@@ -22,6 +22,8 @@
 #include <iostream>
 
 #include <Shards_BasicTopologies.hpp>
+#include "Shards_CellTopology.hpp"
+#include "Shards_CellTopology.hpp"
 
 #include <stk_util/parallel/Parallel.hpp>
 
@@ -61,12 +63,8 @@ Albany::STKDiscretization::STKDiscretization(
 
   //Teuchos::RCP<Epetra_Map>& elem_map = stkMeshStruct->elem_map;
   int& numDim = stkMeshStruct->numDim;
-  //nodes_per_element =  stk::mesh::get_cell_topology(*partVec[0])->vertex_count; 
-  switch (numDim) {
-    case 1: nodes_per_element = 2; break;
-    case 2: nodes_per_element = 4; break;
-    case 3: nodes_per_element = 8; break;
-  }
+
+  nodes_per_element =  stk::mesh::get_cell_topology(*(stkMeshStruct->partVec[0]))->vertex_count; 
 
   stk::mesh::EntityRankEnum topEntityRank = stk::mesh::EntityRankUndefined;
   
@@ -329,6 +327,11 @@ Albany::STKDiscretization::getNodeSetIDs() const
   return nodeSetIDs;
 }
 
+const CellTopologyData&
+Albany::STKDiscretization::getCellTopologyData() const
+{
+  return *(stk::mesh::get_cell_topology(*(stkMeshStruct->partVec[0])));
+}
 
 void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln)
 {
