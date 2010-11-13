@@ -63,14 +63,14 @@ Albany::DiscretizationFactory::create(
 
     strategy = Teuchos::rcp(new Albany::STKDiscretization(stkMeshStruct, epetra_comm));
   }
-  else if (method == "Ioss" || method == "Exodus") {
+  else if (method == "Ioss" || method == "Exodus" ||  method == "Pamgen") {
 #ifdef ALBANY_IOSS
     
     stkMeshStruct = Teuchos::rcp(new Albany::IossSTKMeshStruct(epetra_comm, discParams, neq));
 
     strategy = Teuchos::rcp(new Albany::STKDiscretization(stkMeshStruct, epetra_comm));
 #else
-    TEST_FOR_EXCEPTION(method == "Ioss" || method == "Exodus",
+    TEST_FOR_EXCEPTION(method == "Ioss" || method == "Exodus" ||  method == "Pamgen",
           Teuchos::Exceptions::InvalidParameter,
          "Error: Discretization method " << method 
           << " requested, but not compiled in" << std::endl);

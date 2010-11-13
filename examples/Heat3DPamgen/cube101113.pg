@@ -1,0 +1,21 @@
+mesh  three-d
+  rectilinear 
+    nx = 10
+    ny = 11
+    nz = 13
+    bx = 1 
+    by = 1 
+    bz = 1 
+    gmin = 0.0 0.0 0.0 
+    gmax = 1.0 1.0 1.0 
+  end 
+  set assign 
+    nodeset,ilo,1 
+    nodeset,ihi,2 
+    nodeset,jlo,3 
+    nodeset,jhi,4 
+    nodeset,klo,5 
+    nodeset,khi,6 
+  end 
+end
+

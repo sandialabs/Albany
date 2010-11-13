@@ -141,6 +141,9 @@ Albany::STKDiscretization::STKDiscretization(
 //                           bulkData.buckets( stk::mesh::Element ) ,
                            cells );
 
+  if (comm->MyPID()==0)
+    cout << "STKDisc: " << cells.size() << " elements on Proc 0 " << endl;
+
   for (int i=0; i < cells.size(); i++) {
     stk::mesh::Entity& e = *cells[i];
     stk::mesh::PairIterRelation rel = e.relations();

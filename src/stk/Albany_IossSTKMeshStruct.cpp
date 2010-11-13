@@ -55,12 +55,6 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 
   cubatureDegree = params->get("Cubature Degree", 3);
 
-  // Restart index to read solution from exodus file.
-  int index = params->get("Restart Index",-1); // Default to no restart
-  if (index<1) *out << "Restart Index not set. Not reading solution from exodus (" 
-         << index << ")"<< endl;
-  else *out << "Restart Index set, reading solution time step: " << index << endl;
-
   metaData = new stk::mesh::MetaData(stk::mesh::fem_entity_rank_names() );
   bulkData = new stk::mesh::BulkData(*metaData , MPI_COMM_WORLD , field_data_chunk_size );
   coordinates_field = & metaData->declare_field< VectorFieldType >( "coordinates" );
@@ -72,12 +66,29 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   stk::io::util::MeshData* mesh_data = new stk::io::util::MeshData();
 
   Ioss::Init::Initializer io;
-  stk::io::util::create_input_mesh("exodusii",
-                             params->get<string>("Exodus Input File Name"),
-                             "", MPI_COMM_WORLD, 
-                             *metaData, *mesh_data, false); 
 
-  *out << "AGS_IOSS: Loading STKMesh from exodus file  " << endl;
+  bool usePamgen = (params->get("Method","Exodus") == "Pamgen");
+  if (!usePamgen) {
+    *out << "Albany_IOSS: Loading STKMesh from Exodus file  " 
+         << params->get<string>("Exodus Input File Name") << endl;
+
+    stk::io::util::create_input_mesh("exodusii",
+                               params->get<string>("Exodus Input File Name"),
+                               "", MPI_COMM_WORLD, 
+                               *metaData, *mesh_data, false); 
+    *out << "Albany_IOSS: Loading STKMesh from exodus file  " << endl;
+  }
+  else {
+    *out << "Albany_IOSS: Loading STKMesh from Pamgen file  " 
+         << params->get<string>("Pamgen Input File Name") << endl;
+
+    stk::io::util::create_input_mesh("pamgen",
+                               params->get<string>("Pamgen Input File Name"),
+                               "", MPI_COMM_WORLD, 
+                               *metaData, *mesh_data, false); 
+
+  }
+
 
   stk::io::put_io_part_attribute(metaData->universal_part());
 
@@ -90,7 +101,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     stk::mesh::Part * const part = *i ;
 
     switch( part->primary_entity_rank() ) {
-      case stk::mesh::Element: {
+      case stk::mesh::Element:{
           *out << "IOSS-STK: Element part found " << endl;
           partVec[eb++] = part;
           // Since Cubit likes to define numDim=3 always, use vertex
@@ -118,7 +129,17 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 
   metaData->commit();
 
-  stk::io::util::populate_bulk_data(*bulkData, *mesh_data, "exodusii", index);
+  if (!usePamgen)  {
+    // Restart index to read solution from exodus file.
+    int index = params->get("Restart Index",-1); // Default to no restart
+    if (index<1) *out << "Restart Index not set. Not reading solution from exodus (" 
+           << index << ")"<< endl;
+    else *out << "Restart Index set, reading solution time step: " << index << endl;
+
+    stk::io::util::populate_bulk_data(*bulkData, *mesh_data, "exodusii", index);
+  }
+  else  stk::io::util::populate_bulk_data(*bulkData, *mesh_data, "pamgen", 0);
+
   bulkData->modification_end();
 
   coordinates_field = metaData->get_field<VectorFieldType>(std::string("coordinates"));
@@ -144,6 +165,7 @@ Albany::IossSTKMeshStruct::getValidDiscretizationParameters() const
      rcp(new Teuchos::ParameterList("ValidSTKIoss_DiscParams"));;
   validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic a mesh");
   validPL->set<string>("Exodus Input File Name", "", "File Name For Exodus Mesh Input");
+  validPL->set<string>("Pamgen Input File Name", "", "File Name For Pamgen Mesh Input");
   validPL->set<std::string>("Exodus Output File Name", "",
     "Request exodus output to given file name. Requires IOSS build");
   validPL->set<std::string>("Method", "",
