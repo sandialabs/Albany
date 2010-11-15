@@ -15,8 +15,8 @@
 \********************************************************************/
 
 
-#ifndef QCAD_PERMITTIVITY_HPP
-#define QCAD_PERMITTIVITY_HPP
+#ifndef PHAL_JOULEHEATING_HPP
+#define PHAL_JOULEHEATING_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -29,51 +29,43 @@
 #include "Stokhos_KL_ExponentialRandomField.hpp"
 #include "Teuchos_Array.hpp"
 
-/** 
- * \brief Evaluates thermal conductivity, either as a constant or a truncated
- * KL expansion.
- */
-namespace QCAD {
+namespace PHAL {
 
+/** 
+ * \brief Joule heating source term for ThermoElectrostatics
+ */
 template<typename EvalT, typename Traits>
-class Permittivity : 
+class JouleHeating : 
   public PHX::EvaluatorWithBaseImpl<Traits>,
-  public PHX::EvaluatorDerived<EvalT, Traits>,
-  public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+  public PHX::EvaluatorDerived<EvalT, Traits> {
   
 public:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  Permittivity(Teuchos::ParameterList& p);
+  JouleHeating(Teuchos::ParameterList& p);
   
   void postRegistrationSetup(typename Traits::SetupData d,
 			     PHX::FieldManager<Traits>& vm);
   
   void evaluateFields(typename Traits::EvalData d);
-  
-  ScalarT& getValue(const std::string &n);
 
 private:
 
   std::size_t numQPs;
   std::size_t numDims;
-  PHX::MDField<ScalarT,Cell,QuadPoint> permittivity;
-  PHX::MDField<ScalarT,Cell,QuadPoint> Temp;
-  //PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
 
-  //! Is conductivity constant, or random field
-  bool is_constant;
-  bool temp_dependent;
+  // Inputs
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> potentialGrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> potentialFlux;
 
-  //! Constant value
-  ScalarT constant_value;
-  ScalarT factor;
+  // Outputs
+  PHX::MDField<ScalarT,Cell,QuadPoint> jouleHeating;
 };
 }
 
 #ifndef PHAL_ETI
-#include "QCAD_Permittivity_Def.hpp"
+#include "PHAL_JouleHeating_Def.hpp"
 #endif
 
 #endif

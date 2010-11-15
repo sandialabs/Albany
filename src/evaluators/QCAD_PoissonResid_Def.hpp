@@ -33,6 +33,8 @@ PoissonResid(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   PhiGrad       (p.get<std::string>                   ("Gradient QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
+  PhiFlux       (p.get<std::string>                   ("Flux QP Variable Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
   wGradBF     (p.get<std::string>                   ("Weighted Gradient BF Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
   haveSource  (p.get<bool>("Have Source")),
@@ -42,13 +44,14 @@ PoissonResid(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") )
 {
   this->addDependentField(wBF);
-  this->addDependentField(Potential);
+  //this->addDependentField(Potential);
   this->addDependentField(Permittivity);
   this->addDependentField(PhiGrad);
   this->addDependentField(wGradBF);
   if (haveSource) this->addDependentField(Source);
 
   this->addEvaluatedField(PhiResidual);
+  this->addEvaluatedField(PhiFlux);
 
   this->setName("PoissonResid"+PHX::TypeString<EvalT>::value);
 }
@@ -60,9 +63,10 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(wBF,fm);
-  this->utils.setFieldData(Potential,fm);
+  //this->utils.setFieldData(Potential,fm);
   this->utils.setFieldData(Permittivity,fm);
   this->utils.setFieldData(PhiGrad,fm);
+  this->utils.setFieldData(PhiFlux,fm);
   this->utils.setFieldData(wGradBF,fm);
   if (haveSource)  this->utils.setFieldData(Source,fm);
 
@@ -77,9 +81,9 @@ evaluateFields(typename Traits::EvalData workset)
   typedef Intrepid::FunctionSpaceTools FST;
 
   // Scale gradient into a flux, reusing same memory
-  FST::scalarMultiplyDataData<ScalarT> (PhiGrad, Permittivity, PhiGrad);
+  FST::scalarMultiplyDataData<ScalarT> (PhiFlux, Permittivity, PhiGrad);
 
-  FST::integrate<ScalarT>(PhiResidual, PhiGrad, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+  FST::integrate<ScalarT>(PhiResidual, PhiFlux, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
 
   if (haveSource) {
     for (int i=0; i<Source.size(); i++) Source[i] *= -1.0;

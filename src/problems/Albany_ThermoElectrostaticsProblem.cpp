@@ -15,44 +15,45 @@
 \********************************************************************/
 
 
-#include "QCAD_PoissonProblem.hpp"
+#include "Albany_ThermoElectrostaticsProblem.hpp"
 #include "Albany_BoundaryFlux1DResponseFunction.hpp"
 #include "Albany_SolutionAverageResponseFunction.hpp"
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
 #include "Albany_InitialCondition.hpp"
 
-QCAD::PoissonProblem::
-PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
+#include "Intrepid_HGRAD_LINE_C1_FEM.hpp"
+#include "Intrepid_HGRAD_QUAD_C1_FEM.hpp"
+#include "Intrepid_HGRAD_TRI_C1_FEM.hpp"
+#include "Intrepid_HGRAD_HEX_C1_FEM.hpp"
+#include "Intrepid_FieldContainer.hpp"
+#include "Intrepid_DefaultCubatureFactory.hpp"
+#include "Shards_CellTopology.hpp"
+#include "PHAL_FactoryTraits.hpp"
+
+
+Albany::ThermoElectrostaticsProblem::
+ThermoElectrostaticsProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
              const int numDim_) :
-  Albany::AbstractProblem(params_, paramLib_, 1),
+  Albany::AbstractProblem(params_, paramLib_, 2),
   haveIC(false),
-  haveSource(false),
   numDim(numDim_)
 {
-  if (numDim==1) periodic = params->get("Periodic BC", false);
-  else           periodic = false;
-  if (periodic) *out <<" Periodic Boundary Conditions being used." <<std::endl;
-
   haveIC     =  params->isSublist("Initial Condition");
-  haveSource =  params->isSublist("Poisson Source");
 
-  TEST_FOR_EXCEPTION(params->isSublist("Source Functions"), Teuchos::Exceptions::InvalidParameter,
-		     "\nError! Poisson problem does not parse Source Functions sublist\n" 
-                     << "\tjust Poisson Source sublist " << std::endl);
-
-  // neq=1 set in AbstractProblem constructor
+  // neq=2 set in AbstractProblem constructor
   dofNames.resize(neq);
   dofNames[0] = "Phi";
+  dofNames[1] = "T";
 }
 
-QCAD::PoissonProblem::
-~PoissonProblem()
+Albany::ThermoElectrostaticsProblem::
+~ThermoElectrostaticsProblem()
 {
 }
 
 void
-QCAD::PoissonProblem::
+Albany::ThermoElectrostaticsProblem::
 buildProblem(
     const int worksetSize,
     Albany::StateManager& stateMgr,
@@ -81,17 +82,17 @@ buildProblem(
        // Need real size, not 1.0
        double h =  1.0 / (dofMap.NumGlobalElements() - 1);
        responses[i] =
-         Teuchos::rcp(new Albany::BoundaryFlux1DResponseFunction(left_node,
+         Teuchos::rcp(new BoundaryFlux1DResponseFunction(left_node,
                                                          right_node,
                                                          0, 1, h,
                                                          dofMap));
      }
 
      else if (name == "Solution Average")
-       responses[i] = Teuchos::rcp(new Albany::SolutionAverageResponseFunction());
+       responses[i] = Teuchos::rcp(new SolutionAverageResponseFunction());
 
      else if (name == "Solution Two Norm")
-       responses[i] = Teuchos::rcp(new Albany::SolutionTwoNormResponseFunction());
+       responses[i] = Teuchos::rcp(new SolutionTwoNormResponseFunction());
 
      else {
        TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
@@ -110,7 +111,7 @@ buildProblem(
 
 
 void
-QCAD::PoissonProblem::constructEvaluators(
+Albany::ThermoElectrostaticsProblem::constructEvaluators(
        const int worksetSize, const int cubDegree, const CellTopologyData& ctd)
 {
    using Teuchos::RCP;
@@ -154,10 +155,7 @@ QCAD::PoissonProblem::constructEvaluators(
         << ", QuadPts= " << numQPts
         << ", Dim= " << numDim << endl;
 
-   TEST_FOR_EXCEPTION(params->get("Transient", false), Teuchos::Exceptions::InvalidParameter,
-                      "\nError! Transient option not valid for Poisson problem" << std::endl);
-   bool transient = false;
-   
+   const bool transient = params->get("Transient", false);
 
    // Parser will build parameter list that determines the field
    // evaluators to build
@@ -182,6 +180,7 @@ QCAD::PoissonProblem::constructEvaluators(
   { // Gather Solution
    RCP< vector<string> > dof_names = rcp(new vector<string>(neq));
      (*dof_names)[0] = "Potential";
+     (*dof_names)[1] = "Temperature";
 
     RCP<ParameterList> p = rcp(new ParameterList);
     int type = FactoryTraits<AlbanyTraits>::id_gather_solution;
@@ -194,7 +193,7 @@ QCAD::PoissonProblem::constructEvaluators(
   }
 
   { // Gather Coordinate Vector
-    RCP<ParameterList> p = rcp(new ParameterList("Poisson Gather Coordinate Vector"));
+    RCP<ParameterList> p = rcp(new ParameterList("ThermoElectrostatics Gather Coordinate Vector"));
     int type = FactoryTraits<AlbanyTraits>::id_gather_coordinate_vector;
     p->set<int>                ("Type", type);
     // Input: Periodic BC flag
@@ -207,7 +206,7 @@ QCAD::PoissonProblem::constructEvaluators(
   }
 
   { // Map To Physical Frame: Interpolate X, Y to QuadPoints
-    RCP<ParameterList> p = rcp(new ParameterList("Poisson 1D Map To Physical Frame"));
+    RCP<ParameterList> p = rcp(new ParameterList("ThermoElectrostatics 1D Map To Physical Frame"));
 
     int type = FactoryTraits<AlbanyTraits>::id_map_to_physical_frame;
     p->set<int>   ("Type", type);
@@ -226,7 +225,7 @@ QCAD::PoissonProblem::constructEvaluators(
   }
 
   { // Compute Basis Functions
-    RCP<ParameterList> p = rcp(new ParameterList("Poisson Compute Basis Functions"));
+    RCP<ParameterList> p = rcp(new ParameterList("ThermoElectrostatics Compute Basis Functions"));
 
     int type = FactoryTraits<AlbanyTraits>::id_compute_basis_functions;
     p->set<int>   ("Type", type);
@@ -254,6 +253,25 @@ QCAD::PoissonProblem::constructEvaluators(
   }
 
 
+  { // Thermal conductivity
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    int type = FactoryTraits<AlbanyTraits>::id_thermal_conductivity;
+    p->set<int>("Type", type);
+
+    p->set<string>("QP Variable Name", "Thermal Conductivity");
+    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Thermal Conductivity");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    evaluators_to_build["Thermal Conductivity"] = p;
+  }
+
   { // Permittivity
     RCP<ParameterList> p = rcp(new ParameterList);
 
@@ -263,6 +281,7 @@ QCAD::PoissonProblem::constructEvaluators(
     p->set<string>("QP Variable Name", "Permittivity");
     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
+    p->set<string>("Temperature Variable Name", "Temperature");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
 
@@ -311,29 +330,63 @@ QCAD::PoissonProblem::constructEvaluators(
 
     evaluators_to_build["DOF Grad Potential"] = p;
   }
+  { // DOF: Interpolate nodal Temperature values to quad points
+    RCP<ParameterList> p = rcp(new ParameterList("ThermoElectrostatics DOFInterpolation Temperature"));
 
-  if (haveSource) { // Source
+    int type = FactoryTraits<AlbanyTraits>::id_dof_interpolation;
+    p->set<int>   ("Type", type);
+
+    // Input
+    p->set<string>("Variable Name", "Temperature");
+    p->set< RCP<DataLayout> >("Node Data Layout",      node_scalar);
+
+    p->set<string>("BF Name", "BF");
+    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
+
+    // Output (assumes same Name as input)
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+
+    evaluators_to_build["DOF Temperature"] = p;
+  }
+
+  { // DOF: Interpolate nodal Temperature gradients to quad points
+    RCP<ParameterList> p = rcp(new ParameterList("ThermoElectrostatics DOFInterpolation Temperature Grad"));
+
+    int type = FactoryTraits<AlbanyTraits>::id_dof_grad_interpolation;
+    p->set<int>   ("Type", type);
+
+    // Input
+    p->set<string>("Variable Name", "Temperature");
+    p->set< RCP<DataLayout> >("Node Data Layout",      node_scalar);
+
+    p->set<string>("Gradient BF Name", "Grad BF");
+    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);
+
+    // Output
+    p->set<string>("Gradient Variable Name", "Temperature Gradient");
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+
+    evaluators_to_build["DOF Grad Temperature"] = p;
+  }
+
+  {
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    int type = FactoryTraits<AlbanyTraits>::id_qcad_poisson_source;
+    int type = FactoryTraits<AlbanyTraits>::id_jouleheating;
     p->set<int>("Type", type);
 
     //Input
-    p->set< string >("Coordinate Vector Name", "Coord Vec");
+    p->set<string>("Gradient Variable Name", "Potential Gradient");
+    p->set<string>("Flux Variable Name", "Potential Flux");
     p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
-
-    p->set<string>("Variable Name", "Potential");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
-    Teuchos::ParameterList& paramList = params->sublist("Poisson Source");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
     //Output
-    p->set<string>("Source Name", "Poisson Source");
+    p->set<string>("Source Name", "Joule");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
 
-    evaluators_to_build["Poisson Source"] = p;
+    evaluators_to_build["Joule Heating"] = p;
   }
 
   { // Potential Resid
@@ -347,12 +400,6 @@ QCAD::PoissonProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
     p->set<string>("QP Variable Name", "Potential");
 
-    p->set<bool>("Is Transient", transient);
-    p->set<string>("QP Time Derivative Variable Name", "Potential_dot");
-
-    p->set<bool>("Have Source", haveSource);
-    p->set<string>("Source Name", "Poisson Source");
-
     p->set<string>("Permittivity Name", "Permittivity");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
 
@@ -363,6 +410,9 @@ QCAD::PoissonProblem::constructEvaluators(
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);
 
+    p->set<bool>("Have Source", false);
+    p->set<string>("Source Name", "None");
+
     //Output
     p->set<string>("Residual Name", "Potential Residual");
     p->set< RCP<DataLayout> >("Node Scalar Data Layout", node_scalar);
@@ -370,9 +420,43 @@ QCAD::PoissonProblem::constructEvaluators(
     evaluators_to_build["Poisson Resid"] = p;
   }
 
+  { // Temperature Resid
+    RCP<ParameterList> p = rcp(new ParameterList("Temperature Resid"));
+
+    int type = FactoryTraits<AlbanyTraits>::id_heateqresid;
+    p->set<int>("Type", type);
+
+    //Input
+    p->set<string>("Weighted BF Name", "wBF");
+    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
+    p->set<string>("QP Variable Name", "Temperature");
+
+    p->set<bool>("Have Source", true);
+    p->set<string>("Source Name", "Joule");
+
+    p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+
+    p->set<string>("Gradient QP Variable Name", "Temperature Gradient");
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+
+    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);
+ 
+    p->set<bool>("Is Transient", false);
+    p->set<string>("QP Time Derivative Variable Name", "Temperature_dot");
+
+    //Output
+    p->set<string>("Residual Name", "Temperature Residual");
+    p->set< RCP<DataLayout> >("Node Scalar Data Layout", node_scalar);
+
+    evaluators_to_build["ThermoElectrostatics Resid"] = p;
+  }
+
   { // Scatter Residual
    RCP< vector<string> > resid_names = rcp(new vector<string>(neq));
      (*resid_names)[0] = "Potential Residual";
+     (*resid_names)[1] = "Temperature Residual";
 
     RCP<ParameterList> p = rcp(new ParameterList);
     int type = FactoryTraits<AlbanyTraits>::id_scatter_residual;
@@ -410,16 +494,13 @@ QCAD::PoissonProblem::constructEvaluators(
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
-QCAD::PoissonProblem::getValidProblemParameters() const
+Albany::ThermoElectrostaticsProblem::getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
-    this->getGenericProblemParams("ValidPoissonProblemParams");
+    this->getGenericProblemParams("ValidThermoElectrostaticsProblemParams");
 
-  if (numDim==1)
-    validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic BC for 1D problems");
+  validPL->sublist("Thermal Conductivity", false, "");
   validPL->sublist("Permittivity", false, "");
-  validPL->sublist("Poisson Source", false, "");
 
   return validPL;
 }
-

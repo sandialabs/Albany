@@ -49,6 +49,7 @@ add_subdirectory(ThermoElasticity2D)
 add_subdirectory(ThermoElasticity3D)
 
 add_subdirectory(Poisson2D)
+add_subdirectory(ThermoElectrostatics2D)
 
 IF(ALBANY_IOSS)
   add_subdirectory(Ioss2D)

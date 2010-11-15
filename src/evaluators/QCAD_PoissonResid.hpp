@@ -54,6 +54,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> Permittivity;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> PhiGrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> PhiFlux;
 
   PHX::MDField<ScalarT,Cell,QuadPoint> Source;
 

@@ -55,6 +55,7 @@ SET(SOURCES ${SOURCES}
 	problems/Albany_ElasticityProblem.cpp 
 	problems/Albany_NonlinearElasticityProblem.cpp 
 	problems/Albany_ThermoElasticityProblem.cpp 
+	problems/Albany_ThermoElectrostaticsProblem.cpp 
 	problems/Albany_AnalyticFunction.cpp 
 	problems/Albany_InitialCondition.cpp 
   )
@@ -66,6 +67,7 @@ SET(HEADERS ${HEADERS}
 	problems/Albany_ElasticityProblem.hpp 
 	problems/Albany_NonlinearElasticityProblem.hpp 
 	problems/Albany_ThermoElasticityProblem.hpp 
+	problems/Albany_ThermoElectrostaticsProblem.hpp 
 	problems/Albany_AnalyticFunction.hpp 
 	problems/Albany_InitialCondition.hpp 
   )
@@ -134,6 +136,7 @@ SET(SOURCES ${SOURCES}
 	evaluators/PHAL_Neohookean.cpp
 	evaluators/PHAL_J2Stress.cpp
 	evaluators/PHAL_TLElasResid.cpp
+	evaluators/PHAL_JouleHeating.cpp
   )
 SET(HEADERS ${HEADERS}
 	evaluators/PHAL_GatherSolution.hpp 
@@ -190,6 +193,8 @@ SET(HEADERS ${HEADERS}
 	evaluators/PHAL_J2Stress_Def.hpp
 	evaluators/PHAL_TLElasResid.hpp 
 	evaluators/PHAL_TLElasResid_Def.hpp 
+	evaluators/PHAL_JouleHeating.hpp
+	evaluators/PHAL_JouleHeating_Def.hpp
   )
 
 SET(SOURCES ${SOURCES}

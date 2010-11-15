@@ -55,6 +55,13 @@ HeatEqResid(const Teuchos::ParameterList& p) :
 
   this->addEvaluatedField(TResidual);
 
+  Teuchos::RCP<PHX::DataLayout> vector_dl =
+    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
+  std::vector<PHX::DataLayout::size_type> dims;
+  vector_dl->dimensions(dims);
+  numQPs  = dims[1];
+  numDims = dims[2];
+
   this->setName("HeatEqResid"+PHX::TypeString<EvalT>::value);
 }
 
@@ -81,11 +88,12 @@ void HeatEqResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   typedef Intrepid::FunctionSpaceTools FST;
+  Intrepid::FieldContainer<ScalarT> flux(workset.worksetSize, numQPs, numDims);
 
-  // Scale gradient into a flux, reusing same memory
-  FST::scalarMultiplyDataData<ScalarT> (TGrad, ThermalCond, TGrad);
+  // Scale gradient into a flux, NO LONGER reusing same memory
+  FST::scalarMultiplyDataData<ScalarT> (flux, ThermalCond, TGrad);
 
-  FST::integrate<ScalarT>(TResidual, TGrad, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+  FST::integrate<ScalarT>(TResidual, flux, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
 
   if (haveSource) {
     for (int i=0; i<Source.size(); i++) Source[i] *= -1.0;

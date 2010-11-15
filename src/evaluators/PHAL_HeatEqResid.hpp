@@ -60,6 +60,7 @@ private:
 
   bool haveSource;
   bool transient;
+  int numQPs, numDims;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> TResidual;

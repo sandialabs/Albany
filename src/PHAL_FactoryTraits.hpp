@@ -49,6 +49,7 @@
 #include "QCAD_Permittivity.hpp"
 #include "QCAD_PoissonResid.hpp"
 #include "QCAD_PoissonSource.hpp"
+#include "PHAL_JouleHeating.hpp"
 
 #include "boost/mpl/vector/vector40.hpp"
 #include "boost/mpl/placeholders.hpp"
@@ -96,8 +97,9 @@ struct FactoryTraits {
   static const int id_qcad_permittivity         = 28;
   static const int id_qcad_poisson_resid        = 29;
   static const int id_qcad_poisson_source       = 30;
+  static const int id_jouleheating              = 31;
 
-  typedef boost::mpl::vector31< 
+  typedef boost::mpl::vector32< 
             PHAL::Dirichlet<_,Traits>,                //  0
             PHAL::GatherSolution<_,Traits>,           //  1
             PHAL::GatherCoordinateVector<_,Traits>,   //  2
@@ -128,7 +130,8 @@ struct FactoryTraits {
             PHAL::J2Stress<_,Traits>,                 // 27
             QCAD::Permittivity<_,Traits>,             // 28
             QCAD::PoissonResid<_,Traits>,             // 29
-            QCAD::PoissonSource<_,Traits>              // 30
+            QCAD::PoissonSource<_,Traits>,            // 30
+            PHAL::JouleHeating<_,Traits>              // 31
   > EvaluatorTypes;
   
 };
