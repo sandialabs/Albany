@@ -93,6 +93,7 @@ namespace Albany {
 
     Teuchos::RCP<Epetra_Vector> getSolutionField() const;
 
+
   private:
 
     //! Private to prohibit copying
@@ -106,6 +107,7 @@ namespace Albany {
 
     // Copy solution vector from Epetra_Vector into STK Mesh
     void setSolutionField(const Epetra_Vector& soln);
+    void zeroSolutionField(const Epetra_Vector& soln);
 
   protected:
     

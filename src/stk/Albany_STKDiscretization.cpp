@@ -34,6 +34,7 @@
 #include <stk_mesh/base/Selector.hpp>
 
 #include <stk_mesh/fem/FieldDeclarations.hpp>
+#include <stk_mesh/base/FieldParallel.hpp>
 #include <stk_mesh/fem/TopologyHelpers.hpp>
 #include <stk_mesh/fem/EntityRanks.hpp>
 
@@ -339,10 +340,18 @@ Albany::STKDiscretization::getCellTopologyData() const
 void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln)
 {
   // Put solution as Epetra_Vector into STK Mesh
+  zeroSolutionField(soln);
   setSolutionField(soln);
 
 #ifdef ALBANY_IOSS
   if (stkMeshStruct->exoOutput) {
+/*This communication updates the field values on un-owned nodes*/
+/*it is correct because the zeroSolutionField above zeroes them all*/
+/*and the getSolutionField only sets the owned nodes*/
+    {
+      stk::mesh::BulkData& bulkData = *stkMeshStruct->bulkData;
+      stk::mesh::parallel_reduce(bulkData, stk::mesh::sum(*stkMeshStruct->solution_field));
+    }
 
     time+=1.0;
 
@@ -356,8 +365,7 @@ void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln)
 #endif
 }
 
-void 
-Albany::STKDiscretization::setSolutionField(const Epetra_Vector& soln) 
+void Albany::STKDiscretization::setSolutionField(const Epetra_Vector& soln) 
 {
   // Copy soln vector into solution field, one node at a time
   for (int i=0; i < ownednodes.size(); i++)  {
@@ -366,6 +374,16 @@ Albany::STKDiscretization::setSolutionField(const Epetra_Vector& soln)
     double* sol = stk::mesh::field_data(*stkMeshStruct->solution_field, *ownednodes[i]);
     for (int j=0; j<neq; j++)
       sol[j] = soln[soln_lid + j];
+  }
+}
+
+void Albany::STKDiscretization::zeroSolutionField(const Epetra_Vector& soln) 
+{
+  // Copy soln vector into solution field, one node at a time
+  for (int i=0; i < overlapnodes.size(); i++)  {
+    double* sol = stk::mesh::field_data(*stkMeshStruct->solution_field, *overlapnodes[i]);
+    for (int j=0; j<neq; j++)
+      sol[j] = 0.0;
   }
 }
 
