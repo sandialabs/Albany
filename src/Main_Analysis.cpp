@@ -37,7 +37,14 @@ int main(int argc, char *argv[]) {
 #ifdef ALBANY_MPI
   double total_time = -MPI_Wtime();
 #endif
-  MPI_Comm appComm = MPI_COMM_WORLD;
+
+  // Create a communicator for Epetra objects
+  Teuchos::RCP<Epetra_Comm> appComm;
+#ifdef ALBANY_MPI
+  appComm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
+#else
+  appComm = Teuchos::rcp(new Epetra_SerialComm);
+#endif
 
   try {
     Teuchos::RCP<Teuchos::Time> totalTime = 
@@ -52,6 +59,7 @@ int main(int argc, char *argv[]) {
   
     Teuchos::RCP<Albany::SolverFactory> slvrfctry =
       Teuchos::rcp(new Albany::SolverFactory("inputAnalysis.xml", appComm));
+    slvrfctry->createModel();
     Teuchos::RCP<EpetraExt::ModelEvaluator> App = slvrfctry->create();
 
 

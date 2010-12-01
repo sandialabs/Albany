@@ -39,15 +39,16 @@ using Teuchos::ParameterList;
 
 Albany::SolverFactory::SolverFactory(
 			  const std::string inputFile, 
-			  const MPI_Comm& appComm,
-			  const RCP<Epetra_Vector>& initial_guess) 
- : out(Teuchos::VerboseObjectBase::getDefaultOStream())
+			  const Teuchos::RCP<const Epetra_Comm>& comm) 
+  : Comm(comm),
+    out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
 #ifdef ALBANY_MPI
-    Comm = rcp(new Epetra_MpiComm(appComm));
-    Teuchos::MpiComm<int> tcomm = Teuchos::MpiComm<int>(Teuchos::opaqueWrapper(appComm));
+    Teuchos::RCP<const Epetra_MpiComm> mpiComm =
+      Teuchos::rcp_dynamic_cast<const Epetra_MpiComm>(Comm, true);
+    Teuchos::MpiComm<int> tcomm = 
+      Teuchos::MpiComm<int>(Teuchos::opaqueWrapper(mpiComm->Comm()));
 #else
-    Comm = rcp(new Epetra_SerialComm);
     Teuchos::SerialComm<int> tcomm = Teuchos::SerialComm<int>();
 #endif
 
@@ -61,16 +62,26 @@ Albany::SolverFactory::SolverFactory(
 
     appParams->validateParametersAndSetDefaults(*getValidAppParameters(),0);
 
-    // Create some references
+    // Get solver type
     ParameterList& problemParams = appParams->sublist("Problem");
-    transient = appParams->sublist("Problem").get("Transient", false);
-    continuation = appParams->sublist("Problem").get("Continuation", false);
-    stochastic = appParams->sublist("Problem").get("Stochastic", false);
+    transient = problemParams.get("Transient", false);
+    continuation = problemParams.get("Continuation", false);
+    stochastic = problemParams.get("Stochastic", false);
+}
+
+void Albany::SolverFactory::createModel(
+  const Teuchos::RCP<const Epetra_Comm>& appComm_,
+  const Teuchos::RCP<const Epetra_Vector>& initial_guess)
+{
+  Teuchos::RCP<const Epetra_Comm> appComm = appComm_;
+  if (appComm == Teuchos::null)
+    appComm = Comm;
 
     // Create application
-    app = rcp(new Albany::Application(Comm, appParams, initial_guess));
+    app = rcp(new Albany::Application(appComm, appParams, initial_guess));
 
     //set up parameters
+    ParameterList& problemParams = appParams->sublist("Problem");
     ParameterList& parameterParams = problemParams.sublist("Parameters");
     parameterParams.validateParameters(*getValidParameterParameters(),0);
 

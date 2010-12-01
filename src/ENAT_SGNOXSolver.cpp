@@ -50,38 +50,8 @@ SGNOXSolver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 		       "Invalid SG Method  " << sg_type << std::endl);
 
   // Create SG basis
-  Teuchos::ParameterList& sg_parameterParams =
-    sgParams.sublist("SG Parameters");
-  int numParameters = sg_parameterParams.get("Number", 0);
-  Teuchos::ParameterList& basisParams = sgParams.sublist("Basis");
-  Teuchos::Array< Teuchos::RCP<const Stokhos::OneDOrthogPolyBasis<int,double> > > bases(numParameters);
-  for (int i=0; i<numParameters; i++) {
-    std::ostringstream ss;
-    ss << "Basis " << i;
-    Teuchos::ParameterList& bp = basisParams.sublist(ss.str());
-    std::string type = bp.get("Type","Legendre");
-    int order = bp.get("Order", 3);
-    bool normalize = bp.get("Normalize", false);
-    if (type == "Legendre")
-      bases[i] = Teuchos::rcp(new Stokhos::LegendreBasis<int,double>(order, normalize));
-    else if (type == "Clenshaw-Curtis")
-      bases[i] = Teuchos::rcp(new Stokhos::ClenshawCurtisLegendreBasis<int,double>(order, normalize));
-    else if (type == "Hermite")
-      bases[i] = Teuchos::rcp(new Stokhos::HermiteBasis<int,double>(order, normalize));
-    else if (type == "Rys") {
-      double cut = bp.get("Weight Cut", 1.0);
-      bases[i] = Teuchos::rcp(new Stokhos::RysBasis<int,double>(order, cut,
-								normalize));
-    }
-    else
-      TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-			 std::endl << "Error!  ENAT_SGNOXSolver():  " <<
-			 "Invalid basis type  " << type << std::endl);
-
-    
-  }
-  basis = 
-    Teuchos::rcp(new Stokhos::CompletePolynomialBasis<int,double>(bases));
+  basis = Stokhos::BasisFactory<int,double>::create(sgParams);
+  int numParameters = basis->dimension();
   if (comm->MyPID()==0) std::cout << "Basis size = " << basis->size() << std::endl;
 
   // Set up stochastic parameters
@@ -99,6 +69,7 @@ SGNOXSolver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   }
   sg_p[sg_p_index] = 
     Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(basis, p_sg_map));
+  Teuchos::ParameterList& basisParams = sgParams.sublist("Basis");
   for (int i=0; i<numParameters; i++) {
     std::ostringstream ss;
     ss << "Basis " << i;
@@ -125,82 +96,15 @@ SGNOXSolver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   if (exp_type == "Quadrature" || 
       sg_method == SG_GLOBAL ||
       sg_method == SG_NI) {
-    std::string quad_type = sgParams.get("Quadrature Type", "Tensor Product");
-    if (quad_type == "Tensor Product")
-      quad = 
-	Teuchos::rcp(new Stokhos::TensorProductQuadrature<int,double>(basis));
-    else if (quad_type == "Sparse Grid") {
-#ifdef HAVE_STOKHOS_DAKOTA
-      if (sgParams.isType<int>("Sparse Grid Level")) {
-	int level = sgParams.get<int>("Sparse Grid Level");
-	quad = 
-	  Teuchos::rcp(new Stokhos::SparseGridQuadrature<int,double>(basis,
-								   level));
-      }
-      else
-	quad = 
-	  Teuchos::rcp(new Stokhos::SparseGridQuadrature<int,double>(basis));
-#else
-      TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-			 std::endl << "Error!  ENAT_SGNOXSolver():  " <<
-			 "SparseGrid quadrature requires Dakota" << std::endl);
-#endif
-    }
-    else
-      TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-			 std::endl << "Error!  ENAT_SGNOXSolver():  " <<
-			 "Invalid quadrature type  " << quad_type << std::endl);
+    quad = Stokhos::QuadratureFactory<int,double>::create(sgParams);
   }
 
-  // Triple product tensor
-  std::string Cijk_type = sgSolverParams->get("Triple Product Size", "Full");
-  int Cijk_sz = basis->size();
-  if (Cijk_type == "Linear")
-    Cijk_sz = basis->dimension()+1;
-  Teuchos::RCP<Stokhos::Sparse3Tensor<int,double> > Cijk =
-    basis->computeTripleProductTensor(Cijk_sz);
-
-  // SG AD Expansion
-  Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> > expansion;
-  if (exp_type == "Quadrature")
-    expansion = 
-      Teuchos::rcp(new Stokhos::QuadOrthogPolyExpansion<int,double>(basis,
-								    Cijk,
-								    quad));
-  else if (exp_type == "Algebraic")
-    expansion = 
-      Teuchos::rcp(new Stokhos::AlgebraicOrthogPolyExpansion<int,double>(
-		     basis, Cijk));
-#ifdef HAVE_STOKHOS_FORUQTK
-  else if (exp_type == "For UQTK") {
-    if (sgParams.isType<double>("Taylor Expansion Tolerance")) {
-      double rtol = sgParams.get<double>("Taylor Expansion Tolerance");
-      expansion = 
-	Teuchos::rcp(new Stokhos::ForUQTKOrthogPolyExpansion<int,double>(
-		       basis, Cijk,
-		       Stokhos::ForUQTKOrthogPolyExpansion<int,double>::TAYLOR,
-		       rtol));
-    }
-    else
-      expansion = 
-	Teuchos::rcp(new Stokhos::ForUQTKOrthogPolyExpansion<int,double>(
-		       basis, Cijk));
-  }
-#endif
-  else if (exp_type == "Derivative") {
-    Teuchos::RCP<Teuchos::SerialDenseMatrix<int,double> > Bij = 
-      basis->computeDerivDoubleProductTensor();
-    Teuchos::RCP<Stokhos::Dense3Tensor<int,double> > Dijk = 
-      basis->computeDerivTripleProductTensor(Bij, Cijk);
-    expansion = 
-      Teuchos::rcp(new Stokhos::DerivOrthogPolyExpansion<int,double>(
-		     basis, Bij, Cijk, Dijk));
-  }
-  else
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-		       std::endl << "Error!  ENAT_SGNOXSolver():  " <<
-		       "Invalid expansion type  " << exp_type << std::endl);
-
+  // Create expansion
+  Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> > expansion = 
+    Stokhos::ExpansionFactory<int,double>::create(sgParams);
+  Teuchos::RCP<Stokhos::Sparse3Tensor<int,double> > Cijk = 
+    sgParams.get< Teuchos::RCP<Stokhos::Sparse3Tensor<int,double> > >("Triple Product Tensor");
+    
   // Set up stochastic Galerkin model
   Teuchos::RCP<EpetraExt::ModelEvaluator> sg_model;
   if (sg_method == SG_AD) {
@@ -218,10 +122,19 @@ SGNOXSolver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 						     basis));
   }
 
+  // Create stochastic parallel distribution
+  Teuchos::RCP<const EpetraExt::MultiComm> sg_comm = 
+    Teuchos::rcp_dynamic_cast<const EpetraExt::MultiComm>(comm, true);
+  Teuchos::ParameterList parallelParams;
+  Teuchos::RCP<Stokhos::ParallelData> sg_parallel_data =
+    Teuchos::rcp(new Stokhos::ParallelData(basis, Cijk, sg_comm,
+					   parallelParams));
+
   // Set up SG nonlinear model
   Teuchos::RCP<Stokhos::SGModelEvaluator> sg_nonlin_model =
     Teuchos::rcp(new Stokhos::SGModelEvaluator(sg_model, basis, quad, expansion,
-					       Cijk, sgSolverParams, comm,
+					       sg_parallel_data, 
+					       sgSolverParams,
 					       Teuchos::null, sg_p));
 
   // Set up Observer to call noxObserver for each vector block

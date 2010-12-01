@@ -61,7 +61,7 @@ namespace Albany {
     //! Constructor 
     Application(const Teuchos::RCP<const Epetra_Comm>& comm,
 		const Teuchos::RCP<Teuchos::ParameterList>& params,
-		const Teuchos::RCP<Epetra_Vector>& initial_guess = 
+		const Teuchos::RCP<const Epetra_Vector>& initial_guess = 
 		Teuchos::null);
 
     //! Destructor

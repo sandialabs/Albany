@@ -57,13 +57,21 @@ namespace Albany {
 
     //! Default constructor
     SolverFactory(const std::string inputfile,
-		  const MPI_Comm& appComm,
-		  const Teuchos::RCP<Epetra_Vector>& initial_guess = 
-		  Teuchos::null);
+		  const Teuchos::RCP<const Epetra_Comm>& comm);
 
     //! Destructor
     virtual ~SolverFactory() {}
 
+    //! Create model evaluator for this problem
+    /*!
+     * If \c appComm is null, then the comm created within this class
+     * will be used.
+     */
+    virtual void createModel(
+      const Teuchos::RCP<const Epetra_Comm>& appComm = Teuchos::null,
+      const Teuchos::RCP<const Epetra_Vector>& initial_guess = Teuchos::null);
+
+    //! Create solver as response-only model evaluator
     virtual Teuchos::RCP<EpetraExt::ModelEvaluator> create();
 
     //! Get application
@@ -112,10 +120,9 @@ namespace Albany {
 
     //! Parameter list specifying what solver to create
     Teuchos::RCP<Teuchos::ParameterList> appParams;
-    Teuchos::RCP<Epetra_Comm> Comm;
+    Teuchos::RCP<const Epetra_Comm> Comm;
     Teuchos::RCP<Albany::Application> app;
     Teuchos::RCP<EpetraExt::ModelEvaluator> model;
-    Teuchos::RCP<Epetra_Vector> initial_guess;
 
     bool transient;
     bool continuation;

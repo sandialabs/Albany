@@ -22,6 +22,8 @@
 #include "ENAT_SGNOXSolver.hpp"
 #include "Stokhos_EpetraVectorOrthogPoly.hpp"
 #include "Teuchos_VerboseObject.hpp"
+#include "Stokhos.hpp"
+#include "Stokhos_Epetra.hpp"
 
 int main(int argc, char *argv[]) {
 
@@ -34,7 +36,14 @@ int main(int argc, char *argv[]) {
 #ifdef ALBANY_MPI
   double total_time = -MPI_Wtime();
 #endif
-  MPI_Comm appComm = MPI_COMM_WORLD;
+  
+  // Create a communicator for Epetra objects
+  Teuchos::RCP<Epetra_Comm> globalComm;
+#ifdef ALBANY_MPI
+  globalComm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
+#else
+  globalComm = Teuchos::rcp(new Epetra_SerialComm);
+#endif
 
   // Command-line argument for input file
   char * xmlfilename=0;
@@ -68,10 +77,33 @@ int main(int argc, char *argv[]) {
   
   try {
 
+    Teuchos::RCP<Teuchos::Time> totalTime =
+      Teuchos::TimeMonitor::getNewTimer("AlbanySG: ***Total Time***");
+    Teuchos::TimeMonitor totalTimer(*totalTime); //start timer
+    
+    // First instantiate the stochastic basis 
+    // (we need this to get stochastic parallelism right)
+    Albany::SolverFactory sg_slvrfctry(sg_xmlfilename, globalComm);
+    Teuchos::ParameterList& appParams = sg_slvrfctry.getParameters();
+    Teuchos::ParameterList& problemParams = appParams.sublist("Problem");
+    Teuchos::ParameterList& sgParams =
+      problemParams.sublist("Stochastic Galerkin");
+    Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> > basis = 
+      Stokhos::BasisFactory<int,double>::create(sgParams);
+
+    // Create multi-level comm and spatial comm
+    int num_stoch_blocks = basis->size();
+    int num_spatial_procs = -1;
+    Teuchos::RCP<const EpetraExt::MultiComm> sg_comm =
+      Stokhos::buildMultiComm(*globalComm, num_stoch_blocks, num_spatial_procs);
+    Teuchos::RCP<const Epetra_Comm> app_comm = Stokhos::getSpatialComm(sg_comm);
+
+    // Compute initial guess if requested
     Teuchos::RCP<Epetra_Vector> g2;
     if (do_initial_guess) {
 
-      Albany::SolverFactory slvrfctry(xmlfilename, appComm);
+      Albany::SolverFactory slvrfctry(xmlfilename, sg_comm);
+      slvrfctry.createModel(app_comm);
       Teuchos::RCP<EpetraExt::ModelEvaluator> App = slvrfctry.create();
 
       Teuchos::RCP<Epetra_Vector> p = 
@@ -98,18 +130,10 @@ int main(int argc, char *argv[]) {
       Teuchos::TimeMonitor::zeroOutTimers();
     }
 
-    Teuchos::RCP<Teuchos::Time> totalTime =
-      Teuchos::TimeMonitor::getNewTimer("AlbanySG: ***Total Time***");
-    Teuchos::TimeMonitor totalTimer(*totalTime); //start timer
-
-    Albany::SolverFactory sg_slvrfctry(sg_xmlfilename, appComm, g2);
+    sg_slvrfctry.createModel(app_comm);
     Teuchos::RCP<ENAT::SGNOXSolver> App_sg = 
       Teuchos::rcp_dynamic_cast<ENAT::SGNOXSolver>(sg_slvrfctry.create());
-
     Teuchos::ParameterList& params = sg_slvrfctry.getParameters();
-    Teuchos::ParameterList& problemParams = params.sublist("Problem");
-    Teuchos::ParameterList& sgParams =
-      problemParams.sublist("Stochastic Galerkin");
     std::string sg_type = sgParams.get("SG Method", "AD");
     int sg_p_index = 1;
     if (sg_type == "AD")

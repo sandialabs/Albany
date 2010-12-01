@@ -95,7 +95,7 @@ namespace ENAT {
     /** \brief . */
     void evalModel( const InArgs& inArgs, const OutArgs& outArgs ) const;
 
-    Teuchos::RCP<const Stokhos::CompletePolynomialBasis<int,double> >
+    Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> >
     getBasis() const { return basis; }
     Teuchos::RCP<const Stokhos::Quadrature<int,double> >
     getQuad() const { return quad; }
@@ -131,7 +131,7 @@ namespace ENAT {
 
     //These are set in the constructor and used in evalModel
     Teuchos::RCP<EpetraExt::ModelEvaluator> sg_solver;
-    Teuchos::RCP<const Stokhos::CompletePolynomialBasis<int,double> > basis;
+    Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> > basis;
     Teuchos::RCP<const Stokhos::Quadrature<int,double> > quad;
   };
   

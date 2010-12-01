@@ -37,7 +37,7 @@
 Albany::Application::Application(
 		   const Teuchos::RCP<const Epetra_Comm>& comm,
 		   const Teuchos::RCP<Teuchos::ParameterList>& params,
-		   const Teuchos::RCP<Epetra_Vector>& initial_guess) :
+		   const Teuchos::RCP<const Epetra_Vector>& initial_guess) :
   transient(params->sublist("Problem").get("Transient", false)),
   shapeParamsHaveBeenReset(false),
   physicsBasedPreconditioner(false),

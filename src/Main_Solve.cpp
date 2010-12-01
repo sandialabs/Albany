@@ -33,7 +33,14 @@ int main(int argc, char *argv[]) {
 #ifdef ALBANY_MPI
   double total_time = -MPI_Wtime();
 #endif
-  MPI_Comm appComm = MPI_COMM_WORLD;
+
+  // Create a communicator for Epetra objects
+  Teuchos::RCP<Epetra_Comm> appComm;
+#ifdef ALBANY_MPI
+  appComm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
+#else
+  appComm = Teuchos::rcp(new Epetra_SerialComm);
+#endif
 
   using Teuchos::RCP;
   using Teuchos::rcp;
@@ -65,6 +72,7 @@ int main(int argc, char *argv[]) {
     Teuchos::TimeMonitor setupTimer(*setupTime); //start timer
 
     Albany::SolverFactory slvrfctry(xmlfilename, appComm);
+    slvrfctry.createModel();
     RCP<EpetraExt::ModelEvaluator> App = slvrfctry.create();
 
     EpetraExt::ModelEvaluator::InArgs params_in = App->createInArgs();
