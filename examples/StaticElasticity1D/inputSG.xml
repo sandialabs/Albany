@@ -21,26 +21,28 @@
         <Parameter name="Parameter 0" type="string" value="DBC on NS NodeSet1 for DOF X"/>
       </ParameterList>
       <ParameterList name="Basis">
+	<Parameter name="Dimension 1" type="int" value="1"/>
         <ParameterList name="Basis 0">
           <Parameter name="Type" type="string" value="Legendre"/>
           <Parameter name="Order" type="int" value="3"/>
-          <Parameter  name="Initial Expansion Coefficients" type="array"
+          <Parameter  name="Initial Expansion Coefficients" type="string"
                       value="{1.0, 1.0}"/>
         </ParameterList>
         <ParameterList name="Basis 1">
           <Parameter name="Type" type="string" value="Legendre"/>
           <Parameter name="Order" type="int" value="5"/>
-          <Parameter  name="Initial Expansion Coefficients" type="array"
+          <Parameter  name="Initial Expansion Coefficients" type="string"
                       value="{2.0, 0.0, 1.0}"/>
         </ParameterList>
       </ParameterList>
-      <Parameter name="SG Method" type="string" value="AD"/>
-      <!--Parameter name="SG Method" type="string" value="Non-intrusive"/-->
-      <Parameter name="AD Expansion Type" type="string" value="Quadrature"/>
-      <Parameter name="Quadrature Type" type="string" value="Tensor Product"/>
-       <ParameterList name="SG Solver Parameters">
-         <Parameter name="Jacobian Method" type="string" value="Matrix Free"/>
-       </ParameterList>
+      <ParameterList name="SG Solver Parameters">
+	<Parameter name="Jacobian Expansion Type" type="string" 
+		   value="Linear"/>
+	<Parameter name="Parameter Expansion Type" type="string" 
+		   value="Linear"/>
+      </ParameterList>
+      <Parameter name="Triple Product Size" type="string" 
+		 value="Linear"/>
     </ParameterList>
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="1"/>
@@ -57,11 +59,11 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="0"/>
-    <Parameter  name="Test Values" type="array" value="{0.5}"/>
+    <Parameter  name="Test Values" type="string" value="{0.5}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-6"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Number of Stochastic Galerkin Comparisons" type="int" value="1"/>
-    <Parameter  name="Stochastic Galerkin Expansion Test Values 0" type="array"
+    <Parameter  name="Stochastic Galerkin Expansion Test Values 0" type="string"
       value="{0.5, 0.5, 0.0, 0.0}"/>
   </ParameterList>
   <ParameterList name="LOCA">

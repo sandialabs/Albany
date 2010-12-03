@@ -58,9 +58,9 @@ int main(int argc, char *argv[]) {
     // Construct a ModelEvaluator for your application;
   
     Teuchos::RCP<Albany::SolverFactory> slvrfctry =
-      Teuchos::rcp(new Albany::SolverFactory("inputAnalysis.xml", appComm));
-    slvrfctry->createModel();
-    Teuchos::RCP<EpetraExt::ModelEvaluator> App = slvrfctry->create();
+      Teuchos::rcp(new Albany::SolverFactory("inputAnalysis.xml", *appComm));
+    Teuchos::RCP<EpetraExt::ModelEvaluator> App = 
+      slvrfctry->create(appComm, appComm);
 
 
     Thyra::EpetraModelEvaluator appThyra;

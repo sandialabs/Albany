@@ -19,9 +19,9 @@
       <Parameter name="Elastic Modulus KL Random Variable 0" type="double" value="0.001"/>
       <Parameter name="Elastic Modulus KL Random Variable 1" type="double" value="0.001"/>
       <Parameter name="Standard Deviation" type="double" value="0.2"/>
-      <Parameter name="Domain Lower Bounds" type="array" value="{0.0, 0.0, 0.0}"/>
-      <Parameter name="Domain Upper Bounds" type="array" value="{1.0, 1.0, 1.0}"/>
-      <Parameter name="Correlation Lengths" type="array" value="{0.1, 0.1, 0.1}"/>
+      <Parameter name="Domain Lower Bounds" type="string" value="{0.0, 0.0, 0.0}"/>
+      <Parameter name="Domain Upper Bounds" type="string" value="{1.0, 1.0, 1.0}"/>
+      <Parameter name="Correlation Lengths" type="string" value="{0.1, 0.1, 0.1}"/>
       <Parameter name="dEdT Value" type="double" value="1.0"/>
     </ParameterList>
     <ParameterList name="Poissons Ratio">
@@ -32,9 +32,9 @@
       <Parameter name="Poissons Ratio KL Random Variable 0" type="double" value="1.0"/>
       <Parameter name="Poissons Ratio KL Random Variable 1" type="double" value="1.0"/>
       <Parameter name="Standard Deviation" type="double" value="0.2"/>
-      <Parameter name="Domain Lower Bounds" type="array" value="{0.0, 0.0, 0.0}"/>
-      <Parameter name="Domain Upper Bounds" type="array" value="{1.0, 1.0, 1.0}"/>
-      <Parameter name="Correlation Lengths" type="array" value="{0.1, 0.1, 0.1}"/>
+      <Parameter name="Domain Lower Bounds" type="string" value="{0.0, 0.0, 0.0}"/>
+      <Parameter name="Domain Upper Bounds" type="string" value="{1.0, 1.0, 1.0}"/>
+      <Parameter name="Correlation Lengths" type="string" value="{0.1, 0.1, 0.1}"/>
       <Parameter name="dnudT Value" type="double" value="40.0"/>
     </ParameterList>
     <ParameterList name="Parameters">

@@ -31,6 +31,12 @@
 #else
 #include "Teuchos_DefaultSerialComm.hpp"
 #endif
+#include "Teuchos_TestForException.hpp"
+
+#include "Rythmos_IntegrationObserverBase.hpp"
+#include "Albany_Application.hpp"
+
+#include "NOX_Epetra_Observer.H"
 
 
 using Teuchos::RCP;
@@ -38,16 +44,15 @@ using Teuchos::rcp;
 using Teuchos::ParameterList;
 
 Albany::SolverFactory::SolverFactory(
-			  const std::string inputFile, 
-			  const Teuchos::RCP<const Epetra_Comm>& comm) 
-  : Comm(comm),
-    out(Teuchos::VerboseObjectBase::getDefaultOStream())
+			  const std::string& inputFile, 
+			  const Epetra_Comm& comm) 
+  : out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
 #ifdef ALBANY_MPI
-    Teuchos::RCP<const Epetra_MpiComm> mpiComm =
-      Teuchos::rcp_dynamic_cast<const Epetra_MpiComm>(Comm, true);
+    const Epetra_MpiComm& mpiComm =
+      dynamic_cast<const Epetra_MpiComm&>(comm);
     Teuchos::MpiComm<int> tcomm = 
-      Teuchos::MpiComm<int>(Teuchos::opaqueWrapper(mpiComm->Comm()));
+      Teuchos::MpiComm<int>(Teuchos::opaqueWrapper(mpiComm.Comm()));
 #else
     Teuchos::SerialComm<int> tcomm = Teuchos::SerialComm<int>();
 #endif
@@ -57,31 +62,29 @@ Albany::SolverFactory::SolverFactory(
     Teuchos::updateParametersFromXmlFileAndBroadcast(inputFile, appParams.get(), tcomm);
 
     RCP<ParameterList> defaultSolverParams = rcp(new ParameterList());
-    setSolverParamDefaults(defaultSolverParams.get());
+    setSolverParamDefaults(comm, defaultSolverParams.get());
     appParams->setParametersNotAlreadySet(*defaultSolverParams);
 
     appParams->validateParametersAndSetDefaults(*getValidAppParameters(),0);
+}
+
+Teuchos::RCP<EpetraExt::ModelEvaluator>  
+Albany::SolverFactory::create(
+  const Teuchos::RCP<const Epetra_Comm>& appComm,
+  const Teuchos::RCP<const Epetra_Comm>& solverComm,
+  const Teuchos::RCP<const Epetra_Vector>& initial_guess)
+{
+    // Create application
+    Teuchos::RCP<Albany::Application> app = 
+      rcp(new Albany::Application(appComm, appParams, initial_guess));
 
     // Get solver type
     ParameterList& problemParams = appParams->sublist("Problem");
-    transient = problemParams.get("Transient", false);
-    continuation = problemParams.get("Continuation", false);
-    stochastic = problemParams.get("Stochastic", false);
-}
-
-void Albany::SolverFactory::createModel(
-  const Teuchos::RCP<const Epetra_Comm>& appComm_,
-  const Teuchos::RCP<const Epetra_Vector>& initial_guess)
-{
-  Teuchos::RCP<const Epetra_Comm> appComm = appComm_;
-  if (appComm == Teuchos::null)
-    appComm = Comm;
-
-    // Create application
-    app = rcp(new Albany::Application(appComm, appParams, initial_guess));
+    bool transient = problemParams.get("Transient", false);
+    bool continuation = problemParams.get("Continuation", false);
+    bool stochastic = problemParams.get("Stochastic", false);
 
     //set up parameters
-    ParameterList& problemParams = appParams->sublist("Problem");
     ParameterList& parameterParams = problemParams.sublist("Parameters");
     parameterParams.validateParameters(*getValidParameterParameters(),0);
 
@@ -121,26 +124,21 @@ void Albany::SolverFactory::createModel(
       validateParameters(*getValidResponseParameters(),0);
 
     // Create model evaluator
-    model = rcp<EpetraExt::ModelEvaluator>
-      (new Albany::ModelEvaluator(app, free_param_names, sg_param_names));
+    Teuchos::RCP<EpetraExt::ModelEvaluator> model = 
+      rcp(new Albany::ModelEvaluator(app, free_param_names, sg_param_names));
 
     // Create observer for output from time-stepper
     RCP<Albany_VTK> vtk;
-
+    typedef double Scalar;
+    RCP<Rythmos::IntegrationObserverBase<Scalar> > Rythmos_observer;
+    RCP<NOX::Epetra::Observer > NOX_observer;
     if (appParams->sublist("VTK").get("Do Visualization", false) == true) {
       vtk = rcp(new Albany_VTK(appParams->sublist("VTK")));
     }
     if (transient)
-      Rythmos_observer = rcp<Rythmos::IntegrationObserverBase<Scalar> >
-        (new Albany_RythmosObserver(vtk, app));
+      Rythmos_observer = rcp(new Albany_RythmosObserver(vtk, app));
     else  // both NOX and LOCA can use this observer...
-      NOX_observer = rcp<NOX::Epetra::Observer>
-        (new Albany_NOXObserver(vtk, app));
-}
-
-
-RCP<EpetraExt::ModelEvaluator> Albany::SolverFactory::create()
-{
+       NOX_observer = rcp(new Albany_NOXObserver(vtk, app));
 
     if (transient) 
       return  rcp(new Piro::Epetra::RythmosSolver(appParams, model, Rythmos_observer));
@@ -148,7 +146,8 @@ RCP<EpetraExt::ModelEvaluator> Albany::SolverFactory::create()
       // add save eigen data here
       return  rcp(new Piro::Epetra::LOCASolver(appParams, model, NOX_observer));
     else if (stochastic)
-      return  rcp(new ENAT::SGNOXSolver(appParams, model, Comm, NOX_observer));
+      return  rcp(new ENAT::SGNOXSolver(appParams, model, solverComm, 
+					NOX_observer));
     else // default to NOX
       return  rcp(new Piro::Epetra::NOXSolver(appParams, model, NOX_observer));
 }
@@ -284,7 +283,8 @@ int Albany::SolverFactory::scaledCompare(double x1, double x2, double relTol, do
 }
 
 
-void Albany::SolverFactory::setSolverParamDefaults(ParameterList* appParams_)
+void Albany::SolverFactory::setSolverParamDefaults(const Epetra_Comm& comm,
+						   ParameterList* appParams_)
 {
     // Set the nonlinear solver method
     ParameterList& noxParams = appParams_->sublist("NOX");
@@ -292,7 +292,7 @@ void Albany::SolverFactory::setSolverParamDefaults(ParameterList* appParams_)
 
     // Set the printing parameters in the "Printing" sublist
     ParameterList& printParams = noxParams.sublist("Printing");
-    printParams.set("MyPID", Comm->MyPID()); 
+    printParams.set("MyPID", comm.MyPID()); 
     printParams.set("Output Precision", 3);
     printParams.set("Output Processor", 0);
     printParams.set("Output Information", 
@@ -353,7 +353,7 @@ Albany::SolverFactory::getValidAppParameters() const
   validPL->sublist("NOX",                false, "NOX sublist");
   validPL->sublist("Analysis",           false, "Analysis sublist");
 
-  validPL->set<string>("Jacobian Operator", "Have Jacobian", "Flag to alloe Matrix-Free specification in Piro");
+  validPL->set<string>("Jacobian Operator", "Have Jacobian", "Flag to allow Matrix-Free specification in Piro");
   validPL->set<double>("Matrix-Free Perturbation", 3.0e-7, "delta in matrix-free formula");
 
   return validPL;

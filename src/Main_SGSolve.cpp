@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
     
     // First instantiate the stochastic basis 
     // (we need this to get stochastic parallelism right)
-    Albany::SolverFactory sg_slvrfctry(sg_xmlfilename, globalComm);
+    Albany::SolverFactory sg_slvrfctry(sg_xmlfilename, *globalComm);
     Teuchos::ParameterList& appParams = sg_slvrfctry.getParameters();
     Teuchos::ParameterList& problemParams = appParams.sublist("Problem");
     Teuchos::ParameterList& sgParams =
@@ -93,7 +93,8 @@ int main(int argc, char *argv[]) {
 
     // Create multi-level comm and spatial comm
     int num_stoch_blocks = basis->size();
-    int num_spatial_procs = -1;
+    int num_spatial_procs = 
+      problemParams.get("Number of Spatial Processors", -1);
     Teuchos::RCP<const EpetraExt::MultiComm> sg_comm =
       Stokhos::buildMultiComm(*globalComm, num_stoch_blocks, num_spatial_procs);
     Teuchos::RCP<const Epetra_Comm> app_comm = Stokhos::getSpatialComm(sg_comm);
@@ -102,9 +103,9 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<Epetra_Vector> g2;
     if (do_initial_guess) {
 
-      Albany::SolverFactory slvrfctry(xmlfilename, sg_comm);
-      slvrfctry.createModel(app_comm);
-      Teuchos::RCP<EpetraExt::ModelEvaluator> App = slvrfctry.create();
+      Albany::SolverFactory slvrfctry(xmlfilename, *sg_comm);
+      Teuchos::RCP<EpetraExt::ModelEvaluator> App = 
+	slvrfctry.create(app_comm, app_comm);
 
       Teuchos::RCP<Epetra_Vector> p = 
 	Teuchos::rcp(new Epetra_Vector(*(App->get_p_init(0))));
@@ -130,9 +131,8 @@ int main(int argc, char *argv[]) {
       Teuchos::TimeMonitor::zeroOutTimers();
     }
 
-    sg_slvrfctry.createModel(app_comm);
     Teuchos::RCP<ENAT::SGNOXSolver> App_sg = 
-      Teuchos::rcp_dynamic_cast<ENAT::SGNOXSolver>(sg_slvrfctry.create());
+      Teuchos::rcp_dynamic_cast<ENAT::SGNOXSolver>(sg_slvrfctry.create(app_comm, sg_comm, g2));
     Teuchos::ParameterList& params = sg_slvrfctry.getParameters();
     std::string sg_type = sgParams.get("SG Method", "AD");
     int sg_p_index = 1;

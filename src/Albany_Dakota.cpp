@@ -51,9 +51,8 @@ int Albany_Dakota()
 #endif
 
   if (analysis_comm != MPI_COMM_NULL) {
-    slvrfctry = Teuchos::rcp(new Albany::SolverFactory("input.xml", appComm));
-    slvrfctry->createModel();
-    App = slvrfctry->create();
+    slvrfctry = Teuchos::rcp(new Albany::SolverFactory("input.xml", *appComm));
+    App = slvrfctry->create(appComm, appComm);
   } else {
     cout << " Got  MPI_COMM_NULL\n" << endl;
   }

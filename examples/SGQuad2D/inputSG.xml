@@ -1,6 +1,7 @@
 <ParameterList>
   <ParameterList name="Problem">
     <Parameter name="Stochastic" type="bool" value="true"/>
+    <Parameter name="Number of Spatial Processors" type="int" value="-1"/>
     <Parameter name="Name" type="string" value="Heat 2D"/>
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS NodeSet0 for DOF T" type="double" value="1.5"/>
@@ -19,9 +20,9 @@
       <Parameter name="Number of KL Terms" type="int" value="2"/>
       <Parameter name="Mean" type="double" value="0.2"/>
       <Parameter name="Standard Deviation" type="double" value="0.1"/>
-      <Parameter name="Domain Lower Bounds" type="array" value="{0.0, 0.0}"/>
-      <Parameter name="Domain Upper Bounds" type="array" value="{1.0, 1.0}"/>
-      <Parameter name="Correlation Lengths" type="array" value="{1.0, 1.0}"/>
+      <Parameter name="Domain Lower Bounds" type="string" value="{0.0, 0.0}"/>
+      <Parameter name="Domain Upper Bounds" type="string" value="{1.0, 1.0}"/>
+      <Parameter name="Correlation Lengths" type="string" value="{1.0, 1.0}"/>
     </ParameterList>
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="1"/>
@@ -36,37 +37,48 @@
 		   value="Thermal Conductivity KL Random Variable 1"/>
       </ParameterList>
       <ParameterList name="Basis">
+	<Parameter name="Dimension" type="int" value="2"/>
 	<ParameterList name="Basis 0">
 	  <Parameter name="Type" type="string" value="Legendre"/>
 	  <Parameter name="Order" type="int" value="3"/>
-	  <Parameter  name="Initial Expansion Coefficients" type="array"
+	  <Parameter  name="Initial Expansion Coefficients" type="string"
 		      value="{0.0, 1.0}"/>
 	</ParameterList>
 	<ParameterList name="Basis 1">
 	  <Parameter name="Type" type="string" value="Legendre"/>
 	  <Parameter name="Order" type="int" value="3"/>
-	  <Parameter  name="Initial Expansion Coefficients" type="array"
+	  <Parameter  name="Initial Expansion Coefficients" type="string"
 		      value="{0.0, 0.0, 1.0}"/>
 	</ParameterList>
       </ParameterList>
       <Parameter name="SG Method" type="string" value="AD"/>
-      <Parameter name="AD Expansion Type" type="string" value="Algebraic"/>
-       <ParameterList name="SG Solver Parameters">
-	 <Parameter name="Jacobian Method" type="string" 
-		    value="Matrix Free"/>
-	 <Parameter name="Jacobian Expansion Type" type="string" 
-		    value="Full"/>
-	 <Parameter name="Parameter Expansion Type" type="string" 
-		    value="Full"/>
-	 <Parameter name="Triple Product Size" type="string" 
-		    value="Full"/>
-	 <Parameter name="Mean Preconditioner Type" type="string" value="ML"/>
-	 <ParameterList name="Preconditioner Parameters">
-	   <Parameter name="smoother: type" type="string" 
-		       value="symmetric Gauss-Seidel"/>
+      <ParameterList name="Expansion">
+	<Parameter name="Type" type="string" value="Algebraic"/>
+      </ParameterList>
+      <Parameter name="Triple Product Size" type="string" 
+		 value="Full"/>
+      <ParameterList name="SG Solver Parameters">
+	<Parameter name="Jacobian Expansion Type" type="string" 
+		   value="Full"/>
+	<Parameter name="Parameter Expansion Type" type="string" 
+		   value="Full"/>
+	<ParameterList name="SG Operator">
+	  <Parameter name="Operator Method" type="string" value="Matrix Free"/>
+	</ParameterList>
+	<ParameterList name="SG Preconditioner">
+	  <Parameter name="Preconditioner Method" type="string" value="Approximate Gauss-Seidel"/>
+	  <Parameter name="Symmetric Gauss-Seidel" type="bool" value="0"/>
+	  <Parameter name="Mean Preconditioner Type" type="string" value="ML"/>
+	  <ParameterList name="Mean Preconditioner Parameters">
+	    <Parameter name="default values" type="string" value="SA"/>
+	    <Parameter name="smoother: type" type="string" 
+		       value="ML symmetric Gauss-Seidel"/>
+	    <Parameter name="smoother: pre or post" type="string" 
+		       value="both"/>
 	    <Parameter name="coarse: type" type="string" value="Amesos-KLU"/>
-	 </ParameterList>
-       </ParameterList>
+	  </ParameterList>
+	</ParameterList>
+      </ParameterList>
     </ParameterList>
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="1"/>
@@ -83,7 +95,7 @@
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter  name="Number of Dakota Comparisons" type="int" value="0"/>
     <Parameter  name="Number of Stochastic Galerkin Comparisons" type="int" value="1"/>
-    <Parameter  name="Stochastic Galerkin Expansion Test Values 0" type="array"
+    <Parameter  name="Stochastic Galerkin Expansion Test Values 0" type="string"
     value="{1.1867, -0.02865, -0.007762, 0.008780, 0.002895, 0.0007957, -0.002302, -0.0006913, -0.0009845, -4.562e-05}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-3"/>
   </ParameterList>
@@ -146,10 +158,11 @@
 		<Parameter name="Base Method Defaults" type="string" 
 			     value="none"/>
                 <ParameterList name="ML Settings">
+		  <Parameter name="default values" type="string" value="SA"/>
                   <Parameter name="smoother: type" type="string" 
-			     value="symmetric Gauss-Seidel"/>
+			     value="ML symmetric Gauss-Seidel"/>
 		  <Parameter name="smoother: pre or post" type="string" 
-			     value="post"/>
+			     value="both"/>
 		  <Parameter name="coarse: type" type="string" 
 			     value="Amesos-KLU"/>
                 </ParameterList>
@@ -168,7 +181,6 @@
     </ParameterList>
     <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
     <ParameterList name="Printing">
-      <Parameter name="MyPID" type="int" value="0"/>
       <Parameter name="Output Information" type="int" value="103"/>
       <!--Parameter name="Output Information" type="int" value="127"/-->
       <Parameter name="Output Precision" type="int" value="3"/>

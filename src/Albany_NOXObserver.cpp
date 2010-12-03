@@ -46,8 +46,8 @@ void Albany_NOXObserver::observeSolution(
    app->getStateMgr().updateStates();;
 
 #ifdef ALBANY_IOSS
-  if (solution.Map().Comm().MyPID()==0)
-    cout << "Albany::NOXObserver calling exodus output " << endl;
+  // if (solution.Map().Comm().MyPID()==0)
+  //   cout << "Albany::NOXObserver calling exodus output " << endl;
 
   Albany::STKDiscretization* stkDisc =
     dynamic_cast<Albany::STKDiscretization*>(disc.get());

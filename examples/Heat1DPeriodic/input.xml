@@ -30,11 +30,11 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="3"/>
-    <Parameter  name="Test Values" type="array" value="{1.00069    , -0.01376    , 0.01376    }"/>
+    <Parameter  name="Test Values" type="string" value="{1.00069    , -0.01376    , 0.01376    }"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="2"/>
-    <Parameter  name="Sensitivity Test Values 0" type="array" value="{0.056265}"/>
-    <Parameter  name="Sensitivity Test Values 1" type="array" value="{-0.00141826}"/>
+    <Parameter  name="Sensitivity Test Values 0" type="string" value="{0.056265}"/>
+    <Parameter  name="Sensitivity Test Values 1" type="string" value="{-0.00141826}"/>
   </ParameterList>
   <ParameterList name="Rythmos">
     <Parameter name="Num Time Steps" type="int" value="500"/>

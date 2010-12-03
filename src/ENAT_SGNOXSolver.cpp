@@ -102,8 +102,8 @@ SGNOXSolver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   // Create expansion
   Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> > expansion = 
     Stokhos::ExpansionFactory<int,double>::create(sgParams);
-  Teuchos::RCP<Stokhos::Sparse3Tensor<int,double> > Cijk = 
-    sgParams.get< Teuchos::RCP<Stokhos::Sparse3Tensor<int,double> > >("Triple Product Tensor");
+  Teuchos::RCP<const Stokhos::Sparse3Tensor<int,double> > Cijk = 
+    sgParams.get< Teuchos::RCP<const Stokhos::Sparse3Tensor<int,double> > >("Triple Product Tensor");
     
   // Set up stochastic Galerkin model
   Teuchos::RCP<EpetraExt::ModelEvaluator> sg_model;
@@ -268,12 +268,10 @@ ENAT::SGNOXSolver::getValidSGParameters() const
   validPL->sublist("SG Parameters", false, "");
   validPL->sublist("SG Solver Parameters", false, "");
   validPL->sublist("Basis", false, "");
+  validPL->sublist("Expansion", false, "");
+  validPL->sublist("Quadrature", false, "");
   validPL->set<std::string>("SG Method", "","");
-  validPL->set<std::string>("SG Method", "","");
-  validPL->set<std::string>("AD Expansion Type", "","");
-  validPL->set<std::string>("Quadrature Type", "","");
-  validPL->set<int>("Sparse Grid Level", 0);
-
+  validPL->set<std::string>("Triple Product Size", "","");
   return validPL;
 }
 

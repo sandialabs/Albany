@@ -20,10 +20,9 @@
 
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
-#include "Teuchos_SerialDenseVector.hpp"
 #include "EpetraExt_ModelEvaluator.h"
+#include "Teuchos_SerialDenseVector.hpp"
 #include "Epetra_Vector.h"
-#include "Teuchos_TestForException.hpp"
 #include "Thyra_VectorBase.hpp"
 #include "Stokhos_EpetraVectorOrthogPoly.hpp"
 
@@ -42,11 +41,6 @@ typedef int MPI_Comm;
 #include "Epetra_SerialComm.h"
 #endif
 
-#include "Rythmos_IntegrationObserverBase.hpp"
-#include "Albany_Application.hpp"
-
-#include "NOX_Epetra_Observer.H"
-
 namespace Albany {
 
   /*!
@@ -56,26 +50,17 @@ namespace Albany {
   public:
 
     //! Default constructor
-    SolverFactory(const std::string inputfile,
-		  const Teuchos::RCP<const Epetra_Comm>& comm);
+    SolverFactory(const std::string& inputfile,
+		  const Epetra_Comm& comm);
 
     //! Destructor
     virtual ~SolverFactory() {}
 
-    //! Create model evaluator for this problem
-    /*!
-     * If \c appComm is null, then the comm created within this class
-     * will be used.
-     */
-    virtual void createModel(
-      const Teuchos::RCP<const Epetra_Comm>& appComm = Teuchos::null,
-      const Teuchos::RCP<const Epetra_Vector>& initial_guess = Teuchos::null);
-
     //! Create solver as response-only model evaluator
-    virtual Teuchos::RCP<EpetraExt::ModelEvaluator> create();
-
-    //! Get application
-    Teuchos::RCP<Albany::Application> getApplication() { return app; }
+    virtual Teuchos::RCP<EpetraExt::ModelEvaluator> create(
+      const Teuchos::RCP<const Epetra_Comm>& appComm,
+      const Teuchos::RCP<const Epetra_Comm>& solverComm,
+      const Teuchos::RCP<const Epetra_Vector>& initial_guess = Teuchos::null);
 
     /** \brief Function that does regression testing. */
     // Probably needs to be moved to another class? AGS
@@ -95,7 +80,8 @@ namespace Albany {
   private:
 
     // Private functions to set deafult parameter values
-    void setSolverParamDefaults(Teuchos::ParameterList* appParams);
+    void setSolverParamDefaults(const Epetra_Comm& comm, 
+				Teuchos::ParameterList* appParams);
 
     // Functions to generate reference parameter lists for validation
     Teuchos::RCP<const Teuchos::ParameterList>
@@ -120,18 +106,8 @@ namespace Albany {
 
     //! Parameter list specifying what solver to create
     Teuchos::RCP<Teuchos::ParameterList> appParams;
-    Teuchos::RCP<const Epetra_Comm> Comm;
-    Teuchos::RCP<Albany::Application> app;
-    Teuchos::RCP<EpetraExt::ModelEvaluator> model;
-
-    bool transient;
-    bool continuation;
-    bool stochastic;
+    
     int numParameters;
-
-    typedef double Scalar;
-    Teuchos::RCP<Rythmos::IntegrationObserverBase<Scalar> > Rythmos_observer;
-    Teuchos::RCP<NOX::Epetra::Observer > NOX_observer;
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
   };

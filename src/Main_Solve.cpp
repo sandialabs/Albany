@@ -71,9 +71,9 @@ int main(int argc, char *argv[]) {
     Teuchos::TimeMonitor totalTimer(*totalTime); //start timer
     Teuchos::TimeMonitor setupTimer(*setupTime); //start timer
 
-    Albany::SolverFactory slvrfctry(xmlfilename, appComm);
-    slvrfctry.createModel();
-    RCP<EpetraExt::ModelEvaluator> App = slvrfctry.create();
+    Albany::SolverFactory slvrfctry(xmlfilename, *appComm);
+    RCP<EpetraExt::ModelEvaluator> App = 
+      slvrfctry.create(appComm, appComm);
 
     EpetraExt::ModelEvaluator::InArgs params_in = App->createInArgs();
     EpetraExt::ModelEvaluator::OutArgs responses_out = App->createOutArgs();

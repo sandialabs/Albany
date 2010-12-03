@@ -21,7 +21,7 @@
     <ParameterList name="Source Functions">
       <ParameterList name="Point">
         <Parameter name="Number"    type="int"    value="1"/>
-        <Parameter name="Center 0"  type="array"  value="{1.3, 0.8}"/>
+        <Parameter name="Center 0"  type="string"  value="{1.3, 0.8}"/>
         <ParameterList name="Time Wavelet">
           <Parameter name="Type"       type="string" value="Monotone"/>
         </ParameterList>
@@ -83,11 +83,11 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="2"/>
-    <Parameter  name="Test Values" type="array" value="{-0.2892021, 51.415553}"/>
+    <Parameter  name="Test Values" type="string" value="{-0.2892021, 51.415553}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="2"/>
-    <Parameter  name="Sensitivity Test Values 0" type="array" value="{0.42088217}"/>
-    <Parameter  name="Sensitivity Test Values 1" type="array" value="{7.3046288}"/>
+    <Parameter  name="Sensitivity Test Values 0" type="string" value="{0.42088217}"/>
+    <Parameter  name="Sensitivity Test Values 1" type="string" value="{7.3046288}"/>
   </ParameterList>
   <ParameterList name="VTK">
     <Parameter name="Do Visualization" type="bool" value="1"/>
