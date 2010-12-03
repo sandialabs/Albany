@@ -34,6 +34,7 @@
 #ifdef ALBANY_IOSS
 #include <stk_io/IossBridge.hpp>
 #endif
+#include "Albany_Utils.hpp"
 
 enum { field_data_chunk_size = 1001 };
 
@@ -66,7 +67,7 @@ Albany::Line1DSTKMeshStruct::Line1DSTKMeshStruct(
 
   //Start STK stuff, from UseCase_2 constructor
   metaData = new stk::mesh::MetaData(stk::mesh::fem_entity_rank_names() );
-  bulkData = new stk::mesh::BulkData(*metaData , MPI_COMM_WORLD , field_data_chunk_size );
+  bulkData = new stk::mesh::BulkData(*metaData , Albany::getMpiCommFromEpetraComm(*comm), field_data_chunk_size );
   coordinates_field = & metaData->declare_field< VectorFieldType >( "coordinates" );
   solution_field = & metaData->declare_field< VectorFieldType >( "solution" );
 

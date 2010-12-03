@@ -28,23 +28,7 @@
 #include <NOX_Epetra_MultiVector.H>
 
 #include "Albany_ModelEvaluator.hpp"
-
-//This is needed for autocinf builds
-#ifdef HAVE_MPI 
- #ifndef ALBANY_MPI
-  #define ALBANY_MPI
- #endif
-#endif
-
-#ifdef ALBANY_MPI
-#include "Epetra_MpiComm.h"
-#else
-typedef int MPI_Comm;
-#define MPI_COMM_WORLD 1
-#include "Epetra_SerialComm.h"
-#endif
-
-#include "EpetraExt_ModelEvaluator.h"
+#include "Albany_Utils.hpp"
 #include "Piro_Epetra_StokhosNOXObserver.hpp"
 
 #include "Stokhos_CompletePolynomialBasis.hpp"

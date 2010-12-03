@@ -26,15 +26,11 @@
 #include "Piro_Epetra_RythmosSolver.hpp"
 
 #include "Teuchos_XMLParameterListHelpers.hpp"
-#ifdef ALBANY_MPI
-#include "Teuchos_DefaultMpiComm.hpp"
-#else
-#include "Teuchos_DefaultSerialComm.hpp"
-#endif
 #include "Teuchos_TestForException.hpp"
 
 #include "Rythmos_IntegrationObserverBase.hpp"
 #include "Albany_Application.hpp"
+#include "Albany_Utils.hpp"
 
 #include "NOX_Epetra_Observer.H"
 
@@ -45,27 +41,20 @@ using Teuchos::ParameterList;
 
 Albany::SolverFactory::SolverFactory(
 			  const std::string& inputFile, 
-			  const Epetra_Comm& comm) 
+			  const MPI_Comm& mcomm) 
   : out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
-#ifdef ALBANY_MPI
-    const Epetra_MpiComm& mpiComm =
-      dynamic_cast<const Epetra_MpiComm&>(comm);
-    Teuchos::MpiComm<int> tcomm = 
-      Teuchos::MpiComm<int>(Teuchos::opaqueWrapper(mpiComm.Comm()));
-#else
-    Teuchos::SerialComm<int> tcomm = Teuchos::SerialComm<int>();
-#endif
+  RCP<Teuchos::Comm<int> > tcomm = Albany::createTeuchosCommFromMpiComm(mcomm);
 
-    // Set up application parameters: read and broadcast XML file, and set defaults
-    appParams = rcp(new ParameterList("Albany Parameters"));
-    Teuchos::updateParametersFromXmlFileAndBroadcast(inputFile, appParams.get(), tcomm);
+  // Set up application parameters: read and broadcast XML file, and set defaults
+  appParams = rcp(new ParameterList("Albany Parameters"));
+  Teuchos::updateParametersFromXmlFileAndBroadcast(inputFile, appParams.get(), *tcomm);
 
-    RCP<ParameterList> defaultSolverParams = rcp(new ParameterList());
-    setSolverParamDefaults(comm, defaultSolverParams.get());
-    appParams->setParametersNotAlreadySet(*defaultSolverParams);
+  RCP<ParameterList> defaultSolverParams = rcp(new ParameterList());
+  setSolverParamDefaults(defaultSolverParams.get(), tcomm->getRank());
+  appParams->setParametersNotAlreadySet(*defaultSolverParams);
 
-    appParams->validateParametersAndSetDefaults(*getValidAppParameters(),0);
+  appParams->validateParametersAndSetDefaults(*getValidAppParameters(),0);
 }
 
 Teuchos::RCP<EpetraExt::ModelEvaluator>  
@@ -178,11 +167,20 @@ int Albany::SolverFactory::checkTestResults(
       Teuchos::Array<double> testValues =
          Teuchos::getArrayFromStringParameter<double> (testParams,
                                 "Test Values", numResponseTests, true);
-
+      
       for (int i=0; i<numResponseTests; i++) {
         failures += scaledCompare((*g)[i], testValues[i], relTol, absTol);
         comparisons++;
       }
+/* SWITCH TO THIS SOON
+      Teuchos::Array<double> testValues;
+      testParams.get<Teuchos::Array<double> >("Test Values",testValues);
+      
+      for (int i=0; i<testValues.size(); i++) {
+        failures += scaledCompare((*g)[i], testValues[i], relTol, absTol);
+        comparisons++;
+      }
+*/
     }
   }
 
@@ -283,8 +281,8 @@ int Albany::SolverFactory::scaledCompare(double x1, double x2, double relTol, do
 }
 
 
-void Albany::SolverFactory::setSolverParamDefaults(const Epetra_Comm& comm,
-						   ParameterList* appParams_)
+void Albany::SolverFactory::setSolverParamDefaults(
+              ParameterList* appParams_, int myRank)
 {
     // Set the nonlinear solver method
     ParameterList& noxParams = appParams_->sublist("NOX");
@@ -292,7 +290,7 @@ void Albany::SolverFactory::setSolverParamDefaults(const Epetra_Comm& comm,
 
     // Set the printing parameters in the "Printing" sublist
     ParameterList& printParams = noxParams.sublist("Printing");
-    printParams.set("MyPID", comm.MyPID()); 
+    printParams.set("MyPID", myRank); 
     printParams.set("Output Precision", 3);
     printParams.set("Output Processor", 0);
     printParams.set("Output Information", 
@@ -364,6 +362,7 @@ Albany::SolverFactory::getValidRegressionResultsParameters() const
 {
   RCP<ParameterList> validPL = rcp(new ParameterList("ValidRegressionParams"));;
   std::string ta; // string to be converted to teuchos array
+  Teuchos::Array<double> tta;; // string to be converted to teuchos array
 
   validPL->set<double>("Relative Tolerance", 1.0e-4,
           "Relative Tolerance used in regression testing");
@@ -372,6 +371,7 @@ Albany::SolverFactory::getValidRegressionResultsParameters() const
 
   validPL->set<int>("Number of Comparisons", 0,
           "Number of responses to regress against");
+  //validPL->set<Teuchos::Array<double> >("Test Values", tta,
   validPL->set<std::string>("Test Values", ta,
           "Array of regression values for responses");
 

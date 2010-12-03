@@ -30,6 +30,7 @@
 #include <stk_mesh/fem/FieldDeclarations.hpp>
 #include <stk_mesh/fem/TopologyHelpers.hpp>
 #include <stk_mesh/fem/EntityRanks.hpp>
+#include "Albany_Utils.hpp"
 
 #ifdef ALBANY_IOSS
 #include <stk_io/IossBridge.hpp>
@@ -83,7 +84,7 @@ Albany::Cube3DSTKMeshStruct::Cube3DSTKMeshStruct(
 
   //Start STK stuff
   metaData = new stk::mesh::MetaData(stk::mesh::fem_entity_rank_names() );
-  bulkData = new stk::mesh::BulkData(*metaData , MPI_COMM_WORLD , field_data_chunk_size );
+  bulkData = new stk::mesh::BulkData(*metaData , Albany::getMpiCommFromEpetraComm(*comm) , field_data_chunk_size );
   coordinates_field = & metaData->declare_field< VectorFieldType >( "coordinates" );
   solution_field = & metaData->declare_field< VectorFieldType >( "solution" );
 

@@ -18,6 +18,7 @@
 #ifdef ALBANY_DAKOTA
 #include <iostream>
 #include "Albany_Dakota.hpp"
+#include "Albany_Utils.hpp"
 
 using namespace std;
 
@@ -42,16 +43,9 @@ int Albany_Dakota()
 
   MPI_Comm analysis_comm = dakota.getAnalysisComm();
 
-// Create a communicator for Epetra objects
-  Teuchos::RCP<Epetra_Comm> appComm;
-#ifdef ALBANY_MPI
-  appComm = Teuchos::rcp(new Epetra_MpiComm(analysis_comm));
-#else
-  appComm = Teuchos::rcp(new Epetra_SerialComm);
-#endif
-
   if (analysis_comm != MPI_COMM_NULL) {
-    slvrfctry = Teuchos::rcp(new Albany::SolverFactory("input.xml", *appComm));
+    slvrfctry = Teuchos::rcp(new Albany::SolverFactory("input.xml", analysis_comm));
+    Teuchos::RCP<Epetra_Comm> appComm = Albany::createEpetraCommFromMpiComm(analysis_comm);
     App = slvrfctry->create(appComm, appComm);
   } else {
     cout << " Got  MPI_COMM_NULL\n" << endl;

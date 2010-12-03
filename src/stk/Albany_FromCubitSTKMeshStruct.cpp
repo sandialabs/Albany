@@ -32,7 +32,7 @@
 #include <stk_mesh/fem/FieldDeclarations.hpp>
 #include <stk_mesh/fem/TopologyHelpers.hpp>
 #include <stk_mesh/fem/EntityRanks.hpp>
-
+#include "Albany_Utils.hpp"
 
 enum { field_data_chunk_size = 1001 };
 
@@ -62,10 +62,19 @@ Albany::FromCubitSTKMeshStruct::FromCubitSTKMeshStruct(
     ns++;
   }
 
-
   cubatureDegree = params->get("Cubature Degree", 3);
 
-  partVec[0] = & metaData->universal_part();
+/*
+  int id=0;
+  stk::mesh::Part* eb;
+  do {
+    if (numDim==2) eb = stkMeshData->surface_part(id++);
+    else           eb = stkMeshData->volume_part(id++);
+  } while (eb==NULL);
+  cout << "Processing cubit element block " << id-1 << " as EB0 " << endl;
+
+  partVec[0] = eb;
+*/
 
   cout << "FromCubitSTKMeshStruct: numDim = " << numDim
        << "  nodesets = " << nsPartVec.size() << endl;

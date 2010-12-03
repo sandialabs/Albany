@@ -22,17 +22,15 @@
 #include "Teuchos_GlobalMPISession.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 #include "Teuchos_VerboseObject.hpp"
+#include "Teuchos_StandardCatchMacros.hpp"
 
 int main(int argc, char *argv[]) {
 
   int status=0; // 0 = pass, failures are incremented
-
+  bool success = true;
   Teuchos::GlobalMPISession mpiSession(&argc,&argv);
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
-#ifdef ALBANY_MPI
-  double total_time = -MPI_Wtime();
-#endif
   MPI_Comm appComm = MPI_COMM_WORLD;
 
   try {
@@ -46,34 +44,9 @@ int main(int argc, char *argv[]) {
     if (mpiSession.getRank() > 0) status=0;
     else *out << "\nNumber of Failed Comparisons: " << status << endl;
   }
+  TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);
+  if (!success) status+=10000;
   
-  catch (std::exception& e) {
-    cout << e.what() << endl;
-    status = 10;
-  }
-  catch (string& s) {
-    cout << s << endl;
-    status = 20;
-  }
-  catch (char *s) {
-    cout << s << endl;
-    status = 30;
-  }
-  catch (...) {
-    cout << "Caught unknown exception!" << endl;
-    status = 40;
-  }
-
   Teuchos::TimeMonitor::summarize(cout, false, true, false);
-
-#ifdef ALBANY_MPI
-  MPI_Barrier(MPI_COMM_WORLD);
-  total_time +=  MPI_Wtime();
-  *out << "\n\nTOTAL TIME     " << 
-                  total_time << "  " << total_time << endl;
-#else
-  *out << "\tTOTAL TIME =     -999.0  -999.0" << endl;
-#endif
-
   return status;
 }

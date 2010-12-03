@@ -18,12 +18,13 @@
 #include <limits>
 #include "Epetra_Export.h"
 
+#include "Albany_Utils.hpp"
 #include "Albany_STKDiscretization.hpp"
 #include <iostream>
 
 #include <Shards_BasicTopologies.hpp>
 #include "Shards_CellTopology.hpp"
-#include "Shards_CellTopology.hpp"
+#include "Shards_CellTopologyData.h"
 
 #include <stk_util/parallel/Parallel.hpp>
 
@@ -34,15 +35,11 @@
 #include <stk_mesh/base/Selector.hpp>
 
 #include <stk_mesh/fem/FieldDeclarations.hpp>
-#include <stk_mesh/base/FieldParallel.hpp>
 #include <stk_mesh/fem/TopologyHelpers.hpp>
 #include <stk_mesh/fem/EntityRanks.hpp>
 
 #ifdef ALBANY_IOSS
   #include <Ionit_Initializer.h>
-  #ifdef ALBANY_MPI
-    #include "Epetra_MpiComm.h"
-  #endif 
 #endif 
 
 Albany::STKDiscretization::STKDiscretization(
@@ -65,7 +62,13 @@ Albany::STKDiscretization::STKDiscretization(
   //Teuchos::RCP<Epetra_Map>& elem_map = stkMeshStruct->elem_map;
   int& numDim = stkMeshStruct->numDim;
 
-  nodes_per_element =  stk::mesh::get_cell_topology(*(stkMeshStruct->partVec[0]))->vertex_count; 
+  if (stkMeshStruct->useElementAsTopRank)
+    nodes_per_element =  stk::mesh::get_cell_topology(*(stkMeshStruct->partVec[0]))->vertex_count; 
+  else {  // comes from cubit
+    if (numDim==1)  nodes_per_element = 2;   //can't get topology from Cubit
+    else if (numDim==2)  nodes_per_element = 4;   //can't get topology from Cubit
+    else             nodes_per_element = 8;
+  }
 
   stk::mesh::EntityRankEnum topEntityRank = stk::mesh::EntityRankUndefined;
   
@@ -232,20 +235,12 @@ Albany::STKDiscretization::STKDiscretization(
   if (stkMeshStruct->exoOutput) {
     if (stkMeshStruct->numDim > 1) {
 
-#ifdef ALBANY_MPI
-      const Epetra_MpiComm& mpicomm = dynamic_cast<const Epetra_MpiComm&>(*comm);
-      MPI_Comm mcomm = mpicomm.Comm();
-#else
-      int mcomm=1;
-#endif
-
       Ioss::Init::Initializer io;
-
       mesh_data = new stk::io::util::MeshData();
-
-      stk::io::util::create_output_mesh(stkMeshStruct->exoOutFile,
-                 "", "", mcomm, bulkData, metaData, *mesh_data);
-
+      stk::io::util::create_output_mesh(
+            stkMeshStruct->exoOutFile, "", "",
+            Albany::getMpiCommFromEpetraComm(*comm),
+            bulkData, metaData, *mesh_data);
     }
     else {
       cout << "\nWARNING: Exodus output for 1D Meshes not implemented:"
@@ -334,24 +329,22 @@ Albany::STKDiscretization::getNodeSetIDs() const
 const CellTopologyData&
 Albany::STKDiscretization::getCellTopologyData() const
 {
-  return *(stk::mesh::get_cell_topology(*(stkMeshStruct->partVec[0])));
+  if (stkMeshStruct->useElementAsTopRank)
+    return *(stk::mesh::get_cell_topology(*(stkMeshStruct->partVec[0])));
+  else { // havn't figured out how to get shards topo from Cubit
+   if (stkMeshStruct->numDim==1) return *(shards::getCellTopologyData<shards::Line<2> >());
+   else if (stkMeshStruct->numDim==2) return *(shards::getCellTopologyData<shards::Quadrilateral<4> >());
+   else                          return *(shards::getCellTopologyData<shards::Hexahedron<8> >());
+  }
 }
 
 void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln)
 {
   // Put solution as Epetra_Vector into STK Mesh
-  zeroSolutionField(soln);
   setSolutionField(soln);
 
 #ifdef ALBANY_IOSS
   if (stkMeshStruct->exoOutput) {
-/*This communication updates the field values on un-owned nodes*/
-/*it is correct because the zeroSolutionField above zeroes them all*/
-/*and the getSolutionField only sets the owned nodes*/
-    {
-      stk::mesh::BulkData& bulkData = *stkMeshStruct->bulkData;
-      stk::mesh::parallel_reduce(bulkData, stk::mesh::sum(*stkMeshStruct->solution_field));
-    }
 
     time+=1.0;
 
@@ -365,7 +358,8 @@ void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln)
 #endif
 }
 
-void Albany::STKDiscretization::setSolutionField(const Epetra_Vector& soln) 
+void 
+Albany::STKDiscretization::setSolutionField(const Epetra_Vector& soln) 
 {
   // Copy soln vector into solution field, one node at a time
   for (int i=0; i < ownednodes.size(); i++)  {
@@ -374,16 +368,6 @@ void Albany::STKDiscretization::setSolutionField(const Epetra_Vector& soln)
     double* sol = stk::mesh::field_data(*stkMeshStruct->solution_field, *ownednodes[i]);
     for (int j=0; j<neq; j++)
       sol[j] = soln[soln_lid + j];
-  }
-}
-
-void Albany::STKDiscretization::zeroSolutionField(const Epetra_Vector& soln) 
-{
-  // Copy soln vector into solution field, one node at a time
-  for (int i=0; i < overlapnodes.size(); i++)  {
-    double* sol = stk::mesh::field_data(*stkMeshStruct->solution_field, *overlapnodes[i]);
-    for (int j=0; j<neq; j++)
-      sol[j] = 0.0;
   }
 }
 

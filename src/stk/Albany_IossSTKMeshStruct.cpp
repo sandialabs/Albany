@@ -37,6 +37,7 @@
 #include <Ionit_Initializer.h>
 
 #include <stk_io/IossBridge.hpp>
+#include "Albany_Utils.hpp"
 
 enum { field_data_chunk_size = 1001 };
 
@@ -56,7 +57,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   cubatureDegree = params->get("Cubature Degree", 3);
 
   metaData = new stk::mesh::MetaData(stk::mesh::fem_entity_rank_names() );
-  bulkData = new stk::mesh::BulkData(*metaData , MPI_COMM_WORLD , field_data_chunk_size );
+  bulkData = new stk::mesh::BulkData(*metaData , Albany::getMpiCommFromEpetraComm(*comm), field_data_chunk_size );
   coordinates_field = & metaData->declare_field< VectorFieldType >( "coordinates" );
   solution_field = & metaData->declare_field< VectorFieldType >( "solution" );
   stk::mesh::put_field( *solution_field , stk::mesh::Node , metaData->universal_part() , neq );
@@ -74,7 +75,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 
     stk::io::util::create_input_mesh("exodusii",
                                params->get<string>("Exodus Input File Name"),
-                               "", MPI_COMM_WORLD, 
+                               "", Albany::getMpiCommFromEpetraComm(*comm), 
                                *metaData, *mesh_data, false); 
     *out << "Albany_IOSS: Loading STKMesh from exodus file  " << endl;
   }
@@ -84,7 +85,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 
     stk::io::util::create_input_mesh("pamgen",
                                params->get<string>("Pamgen Input File Name"),
-                               "", MPI_COMM_WORLD, 
+                               "", Albany::getMpiCommFromEpetraComm(*comm), 
                                *metaData, *mesh_data, false); 
 
   }

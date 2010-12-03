@@ -16,6 +16,7 @@
 
 #include <iostream>
 
+#include "Albany_Utils.hpp"
 #include "Albany_SolverFactory.hpp"
 #include "Thyra_EpetraModelEvaluator.hpp"
 #include "Piro_Thyra_PerformAnalysis.hpp"
@@ -23,28 +24,15 @@
 #include "Teuchos_GlobalMPISession.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 #include "Teuchos_VerboseObject.hpp"
+#include "Teuchos_StandardCatchMacros.hpp"
 
 
 int main(int argc, char *argv[]) {
 
   int status=0; // 0 = pass, failures are incremented
-
+  bool success = true;
   Teuchos::GlobalMPISession mpiSession(&argc,&argv);
-
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
-
-
-#ifdef ALBANY_MPI
-  double total_time = -MPI_Wtime();
-#endif
-
-  // Create a communicator for Epetra objects
-  Teuchos::RCP<Epetra_Comm> appComm;
-#ifdef ALBANY_MPI
-  appComm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
-#else
-  appComm = Teuchos::rcp(new Epetra_SerialComm);
-#endif
 
   try {
     Teuchos::RCP<Teuchos::Time> totalTime = 
@@ -58,9 +46,9 @@ int main(int argc, char *argv[]) {
     // Construct a ModelEvaluator for your application;
   
     Teuchos::RCP<Albany::SolverFactory> slvrfctry =
-      Teuchos::rcp(new Albany::SolverFactory("inputAnalysis.xml", *appComm));
-    Teuchos::RCP<EpetraExt::ModelEvaluator> App = 
-      slvrfctry->create(appComm, appComm);
+      Teuchos::rcp(new Albany::SolverFactory("inputAnalysis.xml", MPI_COMM_WORLD));
+    Teuchos::RCP<Epetra_Comm> appComm = Albany::createEpetraCommFromMpiComm(MPI_COMM_WORLD);
+    Teuchos::RCP<EpetraExt::ModelEvaluator> App = slvrfctry->create(appComm, appComm);
 
 
     Thyra::EpetraModelEvaluator appThyra;
@@ -80,34 +68,9 @@ int main(int argc, char *argv[]) {
     if (mpiSession.getRank()>0)  status=0;
     else *out << "\nNumber of Failed Comparisons: " << status << endl;
   }
+  TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);
+  if (!success) status+=10000;
   
-  catch (std::exception& e) {
-    cout << e.what() << endl;
-    status = 10;
-  }
-  catch (string& s) {
-    cout << s << endl;
-    status = 20;
-  }
-  catch (char *s) {
-    cout << s << endl;
-    status = 30;
-  }
-  catch (...) {
-    cout << "Caught unknown exception!" << endl;
-    status = 40;
-  }
-
-#ifdef ALBANY_MPI
-  MPI_Barrier(MPI_COMM_WORLD);
-  total_time +=  MPI_Wtime();
-  *out << "\n\nTOTAL TIME     " << 
-                  total_time << "  " << total_time << endl;
-#else
-  *out << "\tTOTAL TIME =     -999.0  -999.0" << endl;
-#endif
-
-   Teuchos::TimeMonitor::summarize(cout, false, true, false);
-
+  Teuchos::TimeMonitor::summarize(cout, false, true, false);
   return status;
 }

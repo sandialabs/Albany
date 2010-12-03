@@ -25,21 +25,7 @@
 #include "Epetra_Vector.h"
 #include "Thyra_VectorBase.hpp"
 #include "Stokhos_EpetraVectorOrthogPoly.hpp"
-
-// This is needed for autoconf builds
-#ifdef HAVE_MPI 
- #ifndef ALBANY_MPI
-  #define ALBANY_MPI
- #endif
-#endif
-
-#ifdef ALBANY_MPI
-#include "Epetra_MpiComm.h"
-#else
-typedef int MPI_Comm;
-#define MPI_COMM_WORLD 1
-#include "Epetra_SerialComm.h"
-#endif
+#include "Albany_Utils.hpp"
 
 namespace Albany {
 
@@ -51,7 +37,7 @@ namespace Albany {
 
     //! Default constructor
     SolverFactory(const std::string& inputfile,
-		  const Epetra_Comm& comm);
+		  const MPI_Comm& mcomm);
 
     //! Destructor
     virtual ~SolverFactory() {}
@@ -80,8 +66,8 @@ namespace Albany {
   private:
 
     // Private functions to set deafult parameter values
-    void setSolverParamDefaults(const Epetra_Comm& comm, 
-				Teuchos::ParameterList* appParams);
+    void setSolverParamDefaults(Teuchos::ParameterList* appParams,
+                                int myRank);
 
     // Functions to generate reference parameter lists for validation
     Teuchos::RCP<const Teuchos::ParameterList>

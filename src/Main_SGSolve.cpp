@@ -18,32 +18,21 @@
 #include <iostream>
 #include <string>
 
+#include "Albany_Utils.hpp"
 #include "Albany_SolverFactory.hpp"
 #include "ENAT_SGNOXSolver.hpp"
 #include "Stokhos_EpetraVectorOrthogPoly.hpp"
 #include "Teuchos_VerboseObject.hpp"
+#include "Teuchos_StandardCatchMacros.hpp"
 #include "Stokhos.hpp"
 #include "Stokhos_Epetra.hpp"
 
 int main(int argc, char *argv[]) {
 
   int status=0; // 0 = pass, failures are incremented
-
-  // Initialize MPI and timer
+  bool success = true;
   Teuchos::GlobalMPISession mpiSession(&argc,&argv);
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
-
-#ifdef ALBANY_MPI
-  double total_time = -MPI_Wtime();
-#endif
-  
-  // Create a communicator for Epetra objects
-  Teuchos::RCP<Epetra_Comm> globalComm;
-#ifdef ALBANY_MPI
-  globalComm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
-#else
-  globalComm = Teuchos::rcp(new Epetra_SerialComm);
-#endif
 
   // Command-line argument for input file
   char * xmlfilename=0;
@@ -83,7 +72,7 @@ int main(int argc, char *argv[]) {
     
     // First instantiate the stochastic basis 
     // (we need this to get stochastic parallelism right)
-    Albany::SolverFactory sg_slvrfctry(sg_xmlfilename, *globalComm);
+    Albany::SolverFactory sg_slvrfctry(sg_xmlfilename, MPI_COMM_WORLD);
     Teuchos::ParameterList& appParams = sg_slvrfctry.getParameters();
     Teuchos::ParameterList& problemParams = appParams.sublist("Problem");
     Teuchos::ParameterList& sgParams =
@@ -95,6 +84,8 @@ int main(int argc, char *argv[]) {
     int num_stoch_blocks = basis->size();
     int num_spatial_procs = 
       problemParams.get("Number of Spatial Processors", -1);
+    Teuchos::RCP<Epetra_Comm> globalComm = 
+      Albany::createEpetraCommFromMpiComm(MPI_COMM_WORLD);
     Teuchos::RCP<const EpetraExt::MultiComm> sg_comm =
       Stokhos::buildMultiComm(*globalComm, num_stoch_blocks, num_spatial_procs);
     Teuchos::RCP<const Epetra_Comm> app_comm = Stokhos::getSpatialComm(sg_comm);
@@ -103,7 +94,8 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<Epetra_Vector> g2;
     if (do_initial_guess) {
 
-      Albany::SolverFactory slvrfctry(xmlfilename, *sg_comm);
+      Albany::SolverFactory slvrfctry(xmlfilename,
+                                      Albany::getMpiCommFromEpetraComm(*sg_comm));
       Teuchos::RCP<EpetraExt::ModelEvaluator> App = 
 	slvrfctry.create(app_comm, app_comm);
 
@@ -178,31 +170,8 @@ int main(int argc, char *argv[]) {
     *out << setprecision(16) << std_dev << std::endl;
     
   }
-
-  catch (std::exception& e) {
-    cout << e.what() << endl;
-    status = 10;
-  }
-  catch (string& s) {
-    cout << s << endl;
-    status = 20;
-  }
-  catch (char *s) {
-    cout << s << endl;
-    status = 30;
-  }
-  catch (...) {
-    cout << "Caught unknown exception!" << endl;
-    status = 40;
-  }
-
-#ifdef ALBANY_MPI
-  MPI_Barrier(MPI_COMM_WORLD);
-  total_time +=  MPI_Wtime();
-  *out << "\n\nTOTAL TIME     " << total_time << "  " << total_time << endl;
-#else
-  *out << "\tTOTAL TIME =     -999.0  -999.0" << endl;
-#endif
+  TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);
+  if (!success) status+=10000;
 
   return status;
 }
