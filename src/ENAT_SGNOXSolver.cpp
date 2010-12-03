@@ -102,7 +102,8 @@ SGNOXSolver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 						     *(model->get_x_map())));
 
   // SG Quadrature
-  std::string exp_type = sgParams.get("AD Expansion Type", "Quadrature");
+  Teuchos::ParameterList& expParams = sgParams.sublist("Expansion");
+  std::string exp_type = expParams.get("Type", "Quadrature");
   if (exp_type == "Quadrature" || 
       sg_method == SG_GLOBAL ||
       sg_method == SG_NI) {
