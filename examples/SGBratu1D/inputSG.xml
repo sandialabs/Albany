@@ -30,7 +30,6 @@
 		   value="Multivariate Exponential Nonlinear Factor 1"/>
       </ParameterList>
       <ParameterList name="Basis">
-	<Parameter name="Dimension" type="int" value="1"/>
 	<ParameterList name="Basis 0">
 	  <Parameter name="Type" type="string" value="Legendre"/>
 	  <Parameter name="Order" type="int" value="5"/>

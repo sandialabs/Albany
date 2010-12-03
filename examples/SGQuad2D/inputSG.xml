@@ -37,19 +37,9 @@
 		   value="Thermal Conductivity KL Random Variable 1"/>
       </ParameterList>
       <ParameterList name="Basis">
-	<Parameter name="Dimension" type="int" value="2"/>
-	<ParameterList name="Basis 0">
-	  <Parameter name="Type" type="string" value="Legendre"/>
-	  <Parameter name="Order" type="int" value="3"/>
-	  <Parameter  name="Initial Expansion Coefficients" type="string"
-		      value="{0.0, 1.0}"/>
-	</ParameterList>
-	<ParameterList name="Basis 1">
-	  <Parameter name="Type" type="string" value="Legendre"/>
-	  <Parameter name="Order" type="int" value="3"/>
-	  <Parameter  name="Initial Expansion Coefficients" type="string"
-		      value="{0.0, 0.0, 1.0}"/>
-	</ParameterList>
+	<Parameter name="Isotropic" type="bool" value="true"/>
+	<Parameter name="Type" type="string" value="Legendre"/>
+	<Parameter name="Order" type="int" value="3"/>
       </ParameterList>
       <Parameter name="SG Method" type="string" value="AD"/>
       <ParameterList name="Expansion">

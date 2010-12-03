@@ -50,9 +50,19 @@ SGNOXSolver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 		       "Invalid SG Method  " << sg_type << std::endl);
 
   // Create SG basis
+  Teuchos::ParameterList& sg_parameterParams = 
+    sgParams.sublist("SG Parameters");
+  Teuchos::ParameterList& sg_basisParams = sgParams.sublist("Basis");
+  int numParameters = sg_parameterParams.get("Number", 0);
+  int dim = sg_basisParams.get("Dimension", numParameters);
+  TEST_FOR_EXCEPTION(dim != numParameters, std::logic_error,
+		     std::endl << "Error!  ENAT_SGNOXSolver():  " <<
+		     "Basis dimension (" << dim << ") does not match number " 
+		     << " of SG parameters (" << numParameters << ")!" << 
+		     std::endl);
   basis = Stokhos::BasisFactory<int,double>::create(sgParams);
-  int numParameters = basis->dimension();
-  if (comm->MyPID()==0) std::cout << "Basis size = " << basis->size() << std::endl;
+  if (comm->MyPID()==0) 
+    std::cout << "Basis size = " << basis->size() << std::endl;
 
   // Set up stochastic parameters
   Epetra_LocalMap p_sg_map(numParameters, 0, *comm);

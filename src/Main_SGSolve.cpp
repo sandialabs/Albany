@@ -77,6 +77,12 @@ int main(int argc, char *argv[]) {
     Teuchos::ParameterList& problemParams = appParams.sublist("Problem");
     Teuchos::ParameterList& sgParams =
       problemParams.sublist("Stochastic Galerkin");
+    Teuchos::ParameterList& sg_parameterParams = 
+      sgParams.sublist("SG Parameters");
+    Teuchos::ParameterList& sg_basisParams = sgParams.sublist("Basis");
+    int numParameters = sg_parameterParams.get("Number", 0);
+    if (!sg_basisParams.isParameter("Dimension"))
+      sg_basisParams.set("Dimension", numParameters);
     Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> > basis = 
       Stokhos::BasisFactory<int,double>::create(sgParams);
 
