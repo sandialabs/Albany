@@ -136,10 +136,9 @@ SGNOXSolver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   // Create stochastic parallel distribution
   Teuchos::RCP<const EpetraExt::MultiComm> sg_comm = 
     Teuchos::rcp_dynamic_cast<const EpetraExt::MultiComm>(comm, true);
-  Teuchos::ParameterList parallelParams;
   Teuchos::RCP<Stokhos::ParallelData> sg_parallel_data =
     Teuchos::rcp(new Stokhos::ParallelData(basis, Cijk, sg_comm,
-					   parallelParams));
+					   sgParams));
 
   // Set up SG nonlinear model
   Teuchos::RCP<Stokhos::SGModelEvaluator> sg_nonlin_model =
@@ -283,6 +282,8 @@ ENAT::SGNOXSolver::getValidSGParameters() const
   validPL->sublist("Quadrature", false, "");
   validPL->set<std::string>("SG Method", "","");
   validPL->set<std::string>("Triple Product Size", "","");
+  validPL->set<bool>("Rebalance Stochastic Graph", false, "");
+  validPL->sublist("Isorropia", false, "");
   return validPL;
 }
 
