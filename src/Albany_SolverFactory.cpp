@@ -41,7 +41,7 @@ using Teuchos::ParameterList;
 
 Albany::SolverFactory::SolverFactory(
 			  const std::string& inputFile, 
-			  const MPI_Comm& mcomm) 
+			  const Albany_MPI_Comm& mcomm) 
   : out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
   RCP<Teuchos::Comm<int> > tcomm = Albany::createTeuchosCommFromMpiComm(mcomm);

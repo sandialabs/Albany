@@ -46,8 +46,8 @@ int main(int argc, char *argv[]) {
     // Construct a ModelEvaluator for your application;
   
     Teuchos::RCP<Albany::SolverFactory> slvrfctry =
-      Teuchos::rcp(new Albany::SolverFactory("inputAnalysis.xml", MPI_COMM_WORLD));
-    Teuchos::RCP<Epetra_Comm> appComm = Albany::createEpetraCommFromMpiComm(MPI_COMM_WORLD);
+      Teuchos::rcp(new Albany::SolverFactory("inputAnalysis.xml", Albany_MPI_COMM_WORLD));
+    Teuchos::RCP<Epetra_Comm> appComm = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
     Teuchos::RCP<EpetraExt::ModelEvaluator> App = slvrfctry->create(appComm, appComm);
 
 

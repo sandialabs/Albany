@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
     
     // First instantiate the stochastic basis 
     // (we need this to get stochastic parallelism right)
-    Albany::SolverFactory sg_slvrfctry(sg_xmlfilename, MPI_COMM_WORLD);
+    Albany::SolverFactory sg_slvrfctry(sg_xmlfilename, Albany_MPI_COMM_WORLD);
     Teuchos::ParameterList& appParams = sg_slvrfctry.getParameters();
     Teuchos::ParameterList& problemParams = appParams.sublist("Problem");
     Teuchos::ParameterList& sgParams =
@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
     int num_spatial_procs = 
       problemParams.get("Number of Spatial Processors", -1);
     Teuchos::RCP<Epetra_Comm> globalComm = 
-      Albany::createEpetraCommFromMpiComm(MPI_COMM_WORLD);
+      Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
     Teuchos::RCP<const EpetraExt::MultiComm> sg_comm =
       Stokhos::buildMultiComm(*globalComm, num_stoch_blocks, num_spatial_procs);
     Teuchos::RCP<const Epetra_Comm> app_comm = Stokhos::getSpatialComm(sg_comm);

@@ -19,35 +19,35 @@
 
 #ifdef ALBANY_MPI
 
-  const MPI_Comm Albany::getMpiCommFromEpetraComm(const Epetra_Comm& ec) {
+  const Albany_MPI_Comm Albany::getMpiCommFromEpetraComm(const Epetra_Comm& ec) {
     const Epetra_MpiComm& emc = dynamic_cast<const Epetra_MpiComm&>(ec);
     return emc.Comm();
   }
 
-  MPI_Comm Albany::getMpiCommFromEpetraComm(Epetra_Comm& ec) {
+  Albany_MPI_Comm Albany::getMpiCommFromEpetraComm(Epetra_Comm& ec) {
     Epetra_MpiComm& emc = dynamic_cast<Epetra_MpiComm&>(ec);
     return emc.Comm();
   }
 
-  Teuchos::RCP<Epetra_Comm> Albany::createEpetraCommFromMpiComm(const MPI_Comm& mc) {
+  Teuchos::RCP<Epetra_Comm> Albany::createEpetraCommFromMpiComm(const Albany_MPI_Comm& mc) {
     return Teuchos::rcp(new Epetra_MpiComm(mc));
   }
 
-  Teuchos::RCP<Teuchos::Comm<int> > Albany::createTeuchosCommFromMpiComm(const MPI_Comm& mc) {
+  Teuchos::RCP<Teuchos::Comm<int> > Albany::createTeuchosCommFromMpiComm(const Albany_MPI_Comm& mc) {
     return Teuchos::rcp(new Teuchos::MpiComm<int>(Teuchos::opaqueWrapper(mc)));
   }
 
 #else
 
-  const MPI_Comm Albany::getMpiCommFromEpetraComm(const Epetra_Comm& ec) { return 1; }
+  const Albany_MPI_Comm Albany::getMpiCommFromEpetraComm(const Epetra_Comm& ec) { return 1; }
 
-  MPI_Comm Albany::getMpiCommFromEpetraComm(Epetra_Comm& ec) { return 1; }
+  Albany_MPI_Comm Albany::getMpiCommFromEpetraComm(Epetra_Comm& ec) { return 1; }
 
-  Teuchos::RCP<Epetra_Comm> Albany::createEpetraCommFromMpiComm(const MPI_Comm& mc) {
+  Teuchos::RCP<Epetra_Comm> Albany::createEpetraCommFromMpiComm(const Albany_MPI_Comm& mc) {
     return Teuchos::rcp(new Epetra_SerialComm);
   }
 
-  Teuchos::RCP<Teuchos::Comm<int> > Albany::createTeuchosCommFromMpiComm(const MPI_Comm& mc) {
+  Teuchos::RCP<Teuchos::Comm<int> > Albany::createTeuchosCommFromMpiComm(const Albany_MPI_Comm& mc) {
     return Teuchos::rcp(new Teuchos::SerialComm<int>());
   }
 #endif

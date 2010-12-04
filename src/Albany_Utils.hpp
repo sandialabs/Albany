@@ -19,11 +19,13 @@
 #define ALBANY_UTILS_H
 
 #ifdef ALBANY_MPI
+  #define Albany_MPI_Comm MPI_Comm
+  #define Albany_MPI_COMM_WORLD MPI_COMM_WORLD
   #include "Epetra_MpiComm.h"
   #include "Teuchos_DefaultMpiComm.hpp"
 #else
-  typedef int MPI_Comm;
-  #define MPI_COMM_WORLD 1
+  #define Albany_MPI_Comm int
+  #define Albany_MPI_COMM_WORLD 0
   #include "Epetra_SerialComm.h"
   #include "Teuchos_DefaultSerialComm.hpp"
 #endif
@@ -31,11 +33,11 @@
 
 namespace Albany {
 
-  const MPI_Comm getMpiCommFromEpetraComm(const Epetra_Comm& ec);
+  const Albany_MPI_Comm getMpiCommFromEpetraComm(const Epetra_Comm& ec);
 
-  MPI_Comm getMpiCommFromEpetraComm(Epetra_Comm& ec);
+  Albany_MPI_Comm getMpiCommFromEpetraComm(Epetra_Comm& ec);
 
-  Teuchos::RCP<Epetra_Comm> createEpetraCommFromMpiComm(const MPI_Comm& mc);
-  Teuchos::RCP<Teuchos::Comm<int> > createTeuchosCommFromMpiComm(const MPI_Comm& mc);
+  Teuchos::RCP<Epetra_Comm> createEpetraCommFromMpiComm(const Albany_MPI_Comm& mc);
+  Teuchos::RCP<Teuchos::Comm<int> > createTeuchosCommFromMpiComm(const Albany_MPI_Comm& mc);
 }
 #endif //ALBANY_UTILS
