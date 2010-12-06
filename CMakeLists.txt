@@ -53,7 +53,7 @@ IF (CMAKE_Fortran_COMPILER) # Enable Fortran if it is enabled in Trilinos.
   ENABLE_LANGUAGE(Fortran) 
 ENDIF()
 
-add_definitions("-g -O2")
+add_definitions("-g -O2 -Wno-builtin-macro-redefined")
 # End of setup and error checking
 #  NOTE: PROJECT command checks for compilers, so this statement
 #        is moved AFTER setting CMAKE_CXX_COMPILER from Trilinos

@@ -43,7 +43,7 @@ int Albany_Dakota()
 
   Albany_MPI_Comm analysis_comm = dakota.getAnalysisComm();
 
-  if (analysis_comm != MPI_COMM_NULL) {
+  if (analysis_comm != Albany_MPI_COMM_NULL) {
     slvrfctry = Teuchos::rcp(new Albany::SolverFactory("input.xml", analysis_comm));
     Teuchos::RCP<Epetra_Comm> appComm = Albany::createEpetraCommFromMpiComm(analysis_comm);
     App = slvrfctry->create(appComm, appComm);

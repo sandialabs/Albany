@@ -24,6 +24,7 @@
 #include "Teuchos_TimeMonitor.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Teuchos_StandardCatchMacros.hpp"
+#include "Epetra_Map.h"  //Needed for serial, somehow
 
 int main(int argc, char *argv[]) {
 

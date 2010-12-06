@@ -126,7 +126,6 @@ int main(int argc, char *argv[]) {
       g1->Print(*out << "\nResponses!\n");
 
       Teuchos::TimeMonitor::summarize(std::cout,false,true,false);
-      Teuchos::TimeMonitor::zeroOutTimers();
     }
 
     Teuchos::RCP<ENAT::SGNOXSolver> App_sg = 
