@@ -23,16 +23,16 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="0"/>
-    <Parameter  name="Test Values" type="string" value="{1.5485, 1.8654, -3.7809}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{1.5485, 1.8654, -3.7809}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="0"/>
-    <Parameter  name="Sensitivity Test Values 0" type="string" value="{1.56218, 1.2873, 0.852306}"/>
-    <Parameter  name="Sensitivity Test Values 1" type="string" value="{ 6.01405,  5.16667,   5.3397 }"/>
-    <Parameter  name="Sensitivity Test Values 2" type="string" value="{ -5.16732, -2.59676, -3.40671 }"/>
+    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{1.56218, 1.2873, 0.852306}"/>
+    <Parameter  name="Sensitivity Test Values 1" type="Array(double)" value="{ 6.01405,  5.16667,   5.3397 }"/>
+    <Parameter  name="Sensitivity Test Values 2" type="Array(double)" value="{ -5.16732, -2.59676, -3.40671 }"/>
     <Parameter name="Number of Dakota Comparisons" type="int" value="1"/>
-    <Parameter  name="Dakota Test Values" type="string" value="{2.5, 3.5}"/>
+    <Parameter  name="Dakota Test Values" type="Array(double)" value="{2.5, 3.5}"/>
     <Parameter  name="Number of Piro Analysis Comparisons" type="int" value="2"/>
-    <Parameter  name="Piro Analysis Test Values" type="string" value="{2.5, 3.5}"/>
+    <Parameter  name="Piro Analysis Test Values" type="Array(double)" value="{2.5, 3.5}"/>
   </ParameterList>
   <ParameterList name="VTK">
     <Parameter name="Do Visualization" type="bool" value="0"/>

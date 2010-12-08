@@ -22,6 +22,7 @@
 #include "Albany_InitialCondition.hpp"
 #include "Albany_AnalyticFunction.hpp"
 #include "Epetra_Comm.h"
+#include "Albany_Utils.hpp"
 
 namespace Albany {
 

@@ -29,6 +29,7 @@
 #include "Intrepid_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 #include "PHAL_FactoryTraits.hpp"
+#include "Albany_Utils.hpp"
 
 
 Albany::HeatProblem::
@@ -79,9 +80,7 @@ buildProblem(
   int num_responses = responseList.get("Number", 0);
   responses.resize(num_responses);
   for (int i=0; i<num_responses; i++) {
-     std::ostringstream ss;
-     ss << "Response " << i;
-     std::string name = responseList.get(ss.str(), "??");
+     std::string name = responseList.get(Albany::strint("Response",i), "??");
 
      if (name == "Boundary Flux 1D" && numDim==1) {
        // Need real size, not 1.0

@@ -41,5 +41,8 @@ namespace Albany {
 
   Teuchos::RCP<Epetra_Comm> createEpetraCommFromMpiComm(const Albany_MPI_Comm& mc);
   Teuchos::RCP<Teuchos::Comm<int> > createTeuchosCommFromMpiComm(const Albany_MPI_Comm& mc);
+
+  // Utility to make a string out of a string + int: strint("dog",2) = "dog 2"
+  std::string strint(const std::string s, const int i);
 }
 #endif //ALBANY_UTILS

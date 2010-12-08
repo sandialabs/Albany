@@ -20,6 +20,7 @@
 #include "Sacado_ParameterAccessor.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 #include "Teuchos_VerboseObject.hpp"
+#include "Albany_Utils.hpp"
 namespace PHAL {
 
 namespace Source_Functions {
@@ -155,14 +156,11 @@ MVQuadratic<EvalT,Traits>::MVQuadratic(Teuchos::ParameterList& p) {
   m_factor.resize(num_vars);
   Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib> > ("Parameter Library", Teuchos::null);
   for (int i=0; i<num_vars; i++) {
-    std::stringstream ss;
-    ss << "Nonlinear Factor " << i;
-    m_factor[i] = paramList.get(ss.str(), 0.0);
+    m_factor[i] = paramList.get(Albany::strint("Nonlinear Factor",i), 0.0);
 
     // Add the factor as a Sacado-ized parameter
-    std::stringstream ss2;
-    ss2 << "Multivariate Quadratic Nonlinear Factor " << i;
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss2.str(), this, paramLib);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
+      Albany::strint("Multivariate Quadratic Nonlinear Factor",i), this, paramLib);
   }
 }
 
@@ -213,9 +211,7 @@ typename MVQuadratic<EvalT,Traits>::ScalarT&
 MVQuadratic<EvalT,Traits>::getValue(const std::string &n)
 {
   for (unsigned int i=0; i<m_factor.size(); i++) {
-    std::stringstream ss;
-    ss << "Multivariate Quadratic Nonlinear Factor " << i;
-    if (n == ss.str())
+    if (n == Albany::strint("Multivariate Quadratic Nonlinear Factor",i))
       return m_factor[i];
   }
   return m_factor[0];
@@ -257,14 +253,11 @@ MVExponential<EvalT,Traits>::MVExponential(Teuchos::ParameterList& p) {
   m_factor.resize(num_vars);
   Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib> > ("Parameter Library", Teuchos::null);
   for (int i=0; i<num_vars; i++) {
-    std::stringstream ss;
-    ss << "Nonlinear Factor " << i;
-    m_factor[i] = paramList.get(ss.str(), 0.0);
+    m_factor[i] = paramList.get(Albany::strint("Nonlinear Factor",i), 0.0);
 
     // Add the factor as a Sacado-ized parameter
-    std::stringstream ss2;
-    ss2 << "Multivariate Exponential Nonlinear Factor " << i;
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits> (ss2.str(), this, paramLib);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits> (
+      Albany::strint("Multivariate Exponential Nonlinear Factor",i), this, paramLib);
   }
 }
 
@@ -315,9 +308,7 @@ typename MVExponential<EvalT,Traits>::ScalarT&
 MVExponential<EvalT,Traits>::getValue(const std::string &n)
 {
   for (unsigned int i=0; i<m_factor.size(); i++) {
-    std::stringstream ss;
-    ss << "Multivariate Exponential Nonlinear Factor " << i;
-    if (n == ss.str())
+    if (n == Albany::strint("Multivariate Exponential Nonlinear Factor",i))
       return m_factor[i];
   }
   return m_factor[0];
@@ -361,12 +352,10 @@ inline bool Gaussian<EvalT>::check_for_existance(Teuchos::ParameterList &source_
 template<typename EvalT>
 inline Gaussian<EvalT>::Gaussian(Teuchos::ParameterList &source_list, std::size_t num)
 {
-  std::stringstream ss;
-  ss <<"Center "<<num;
   Teuchos::ParameterList& paramList = source_list.sublist("Spatial",true);
   m_amplitude = paramList.get("Amplitude",      1.0);
   m_radius    = paramList.get("Radius",         1.0);
-  m_centroid  = Teuchos::getArrayFromStringParameter<double> (source_list, ss.str());
+  m_centroid  = source_list.get(Albany::strint("Center",num),m_centroid);
   m_sigma_sq = 1.0/(2.0*std::pow(m_radius, 2));
   const double pi = 3.1415926535897932385;
   m_sigma_pi = 1.0/(m_radius*std::sqrt(2*pi));

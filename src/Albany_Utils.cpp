@@ -17,6 +17,7 @@
 #include "Albany_Utils.hpp"
 
 
+  // Start of Utils to do with Communicators
 #ifdef ALBANY_MPI
 
   const Albany_MPI_Comm Albany::getMpiCommFromEpetraComm(const Epetra_Comm& ec) {
@@ -51,3 +52,11 @@
     return Teuchos::rcp(new Teuchos::SerialComm<int>());
   }
 #endif
+  // End of Utils to do with Communicators
+
+  std::string Albany::strint(const std::string s, const int i) {
+    std::ostringstream ss;
+    ss << s << " " << i;
+    return ss.str();
+  }
+
