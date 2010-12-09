@@ -1,0 +1,231 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+
+<head>
+  <title> <?php echo $title ?> </title>
+
+  <meta name = "Description"  content="Trilinos Solvers Project Home Page">
+  <link rev="owns" title="Michael A. Heroux" href="mailto:maherou@sandia.gov">
+  <meta name="Author" content="Michael A. Heroux">
+  <meta name="filename" content="<?php echo $filename ?>">
+  <meta name="review" content="26 January, 2001">
+  <meta name="Trilinos" content="The Trilinos Project">
+  <link rel="schema.sandia" href="http://www.sandia.gov/html_schema.htm">
+  <meta name="sandia.approval_type" content="formal">
+  <meta name="sandia.approved" content="2001-1494W">
+  <meta name="sandia.create_date" content="05/28/03">
+  <link rev="mheroux" title="Trilinos Home Page/Mike Heroux" href="mailto:mheroux@cs.sandia.gov">
+  <link rev="made" title="Mike Heroux" href="mailto:mheroux@cs.sandia.gov">
+  <meta name="MikeHeroux" content="mheroux@cs.sandia.gov">
+  <meta name="Trilinos" content="The Trilinos Project">
+  <meta name="keywords" content="Solvers, Matrix, Vector, Iterative Methods, C++, Parallel Computing">
+
+  <meta http-equiv="content-type" content="text/html; charset=iso-8859-1">
+  <link rel="stylesheet" type="text/css" href="<?php echo $dir ?>common/webroot_common/styles.css">
+  <link rel="stylesheet" type="text/css" href="<?php echo $dir ?>common/styles.css">
+  <link rel="SHORTCUT ICON" href="<?php echo $dir ?>common/favicon.ico">
+  
+  <script language="JavaScript" type="text/javascript"> 
+    <?php include "{$dir}packages/common/webroot_common/load_images.js" ?>
+  </script>
+  
+  <script language="JavaScript" type="text/javascript"> <!--
+  
+    <?php echo $scripts ?>
+    
+  --> </script>
+  
+  <style type="text/css"> <!--
+  
+    <?php echo $styles ?>
+    
+  --> </style>
+  
+</head>
+
+<!-- ####################################################################### -->
+<!-- Body ################################################################## -->
+<!-- ####################################################################### -->
+
+<body class="body">
+
+<table class="mainTable" cellspacing="0" cellpadding="0">
+
+  <!-- Top Row ############################################################# -->
+  <tr> <td class="titleContainerCell" colspan="3"> <div class="titleContainerInside">
+
+    <table class="titleTable" cellspacing="0" cellpadding="0"> <tr>
+
+      <!-- Title =========================================================== -->
+      <td class="titleCell">
+          <p class="packageTitle"> 
+            <a href="index.html">
+              <?php echo $packageName ?>
+              <span class="packageSubtitle">
+                <?php echo $packageSubtitle ?>
+              </span> 
+            </a>
+          </p>
+      </td>
+      
+      <!-- Top-Right Corner ================================================ -->
+      <td class="topCornerCell">
+        <a href="http://www.sandia.gov/" target="_blank"
+          onmouseover="document.getElementById('sandia').src=sandia_over.src;"
+          onmouseout="document.getElementById('sandia').src=sandia_normal.src;">
+            <img class="sandia" id="sandia" src="<?php echo $dir ?>/common/webroot_common/sandia_normal.png"
+            alt="Sandia National Laboratories" /></a>
+      </td> </div>
+      
+    </tr> </table>
+
+  </td> </tr>
+  
+  <!-- Main Row ############################################################ -->
+  <tr>
+
+    <!-- Menu Bar ========================================================== -->
+    <td class="leftMenuCell menuContainer">
+    
+      <ul class="menu">
+        <li class="header"><a href="index.html">&nbsp;&nbsp;<?php echo $packageName ?> Home</a></li>
+        <li class="header"><a href="about.html">&nbsp;&nbsp;About</a></li>
+        <li><a href="overview.html">&nbsp;&nbsp;Overview</a></li>
+        <li><a href="team.html">&nbsp;&nbsp;Team</a></li>
+        <li class="header"><a href="downloads.html">&nbsp;&nbsp;Downloads</a></li>
+        <li class="header"><a href="mail_lists.html">&nbsp;&nbsp;Mail Lists</a></li>
+        <li class="header"><a href="documentation.html">&nbsp;&nbsp;Documentation</a></li>
+        <?php 
+          if ($includePublications) { ?>
+            <li><a href="<?php echo $dir ?>packages/<?php echo $packageDirName ?>/publications.html">&nbsp;&nbsp;Publications</a></li> <?php
+          }
+          if ($includeRelease106Docs) {
+            echo "<li><a href=\"";
+            if ($release106DocsPagePath) {
+              echo "{$dir}packages/{$release106DocsPagePath}";
+            } else {
+              echo "{$dir}packages/docs/r10.6/packages/{$packageTDirName}/doc/html/index.html";            
+            }
+            echo "\">&nbsp;&nbsp;Trilinos Release 10.6</a></li>";
+          }
+          if ($includeRelease104Docs) {
+            echo "<li><a href=\"";
+            if ($release104DocsPagePath) {
+              echo "{$dir}packages/{$release104DocsPagePath}";
+            } else {
+              echo "{$dir}packages/docs/r10.4/packages/{$packageTDirName}/doc/html/index.html";            
+            }
+            echo "\">&nbsp;&nbsp;Trilinos Release 10.4</a></li>";
+          }
+          if ($includeRelease102Docs) {
+            echo "<li><a href=\"";
+            if ($release102DocsPagePath) {
+              echo "{$dir}packages/{$release102DocsPagePath}";
+            } else {
+              echo "{$dir}packages/docs/r10.2/packages/{$packageTDirName}/doc/html/index.html";            
+            }
+            echo "\">&nbsp;&nbsp;Trilinos Release 10.2</a></li>";
+          }
+          if ($includeRelease100Docs) {
+            echo "<li><a href=\"";
+            if ($release100DocsPagePath) {
+              echo "{$dir}packages/{$release100DocsPagePath}";
+            } else {
+              echo "{$dir}packages/docs/r10.0/packages/{$packageTDirName}/doc/html/index.html";            
+            }
+            echo "\">&nbsp;&nbsp;Trilinos Release 10.0</a></li>";
+          }
+          if ($includeRelease90Docs) {
+            echo "<li><a href=\"";
+            if ($release90DocsPagePath) {
+              echo "{$dir}packages/{$release90DocsPagePath}";
+            } else {
+              echo "{$dir}packages/docs/r9.0/packages/{$packageTDirName}/doc/html/index.html";            
+            }
+            echo "\">&nbsp;&nbsp;Trilinos Release 9.0</a></li>";
+          }
+          if ($includeRelease80Docs) {
+            echo "<li><a href=\"";
+            if ($release80DocsPagePath) {
+              echo "{$dir}packages/{$release80DocsPagePath}";
+            } else {
+              echo "{$dir}packages/docs/r8.0/packages/{$packageTDirName}/doc/html/index.html";            
+            }
+            echo "\">&nbsp;&nbsp;Trilinos Release 8.0</a></li>";
+          }
+          if ($includeRelease70Docs) {
+            echo "<li><a href=\"";
+            if ($release70DocsPagePath) {
+              echo "{$dir}packages/{$release70DocsPagePath}";
+            } else {
+              echo "{$dir}packages/docs/r7.0/packages/{$packageTDirName}/doc/html/index.html";            
+            }
+            echo "\">&nbsp;&nbsp;Trilinos Release 7.0</a></li>";
+          }
+          if ($includeRelease60Docs) {
+            echo "<li><a href=\"";
+            if ($release60DocsPagePath) {
+              echo "{$dir}packages/{$release60DocsPagePath}";
+            } else {
+              echo "{$dir}packages/docs/r6.0/packages/{$packageTDirName}/doc/html/index.html";            
+            }
+            echo "\">&nbsp;&nbsp;Trilinos Release 6.0</a></li>";
+          }
+          if ($includeRelease50Docs) {
+            echo "<li><a href=\"";
+            if ($release50DocsPagePath) {
+              echo "{$dir}packages/{$release50DocsPagePath}";
+            } else {
+              echo "{$dir}packages/docs/r5.0/packages/{$packageTDirName}/doc/html/index.html";            
+            }
+            echo "\">&nbsp;&nbsp;Trilinos Release 5.0</a></li>";
+          } if ($includeRelease40Docs) {
+            echo "<li><a href=\"";
+            if ($release40DocsPagePath) {
+              echo "{$dir}packages/{$release40DocsPagePath}";
+            } else {
+              echo "{$dir}packages/docs/r4.0/packages/{$packageTDirName}/doc/html/index.html";
+            }
+            echo "\">&nbsp;&nbsp;Trilinos Release 4.0</a></li>";
+          } if ($includeDevelopmentDocs) {
+            echo "<li><a href=\"";
+            if ($developmentDocsPagePath) {
+              echo "{$dir}packages/{$developmentDocsPagePath}";
+            } else {
+              echo "{$dir}packages/docs/dev/packages/{$packageTDirName}/doc/html/index.html";
+            }
+            echo "\">&nbsp;&nbsp;Development</a></li>";
+          }
+        ?>
+        <li class="header"><a href="help.html">&nbsp;&nbsp;Help</a></li>
+        <li><a href="faq.html">&nbsp;&nbsp;FAQ</a></li>
+        <li><a href="contact.html">&nbsp;&nbsp;Contact</a></li>
+      
+        <?php foreach ($additionalMenuItems as $menuItem) { ?>
+          <li <?php if ($menuItem->isHeader) { echo ' class="header"'; } else { echo ''; } ?>><a href="<?php echo $dir ?><?php echo $menuItem->url ?>">&nbsp;&nbsp;<?php echo $menuItem->label ?></a></li>
+        <?php } ?>
+      
+      </ul>  
+      
+      <?php if (sizeof($quickLinks) != 0) { ?>
+      
+        <br />              
+        <ul class="menu">
+          <li class="headerNonLink">&nbsp;&nbsp;Quick Links:</li>
+          
+          <?php foreach ($quickLinks as $menuItem) { ?>
+            <li><a href="<?php echo $dir ?><?php echo $menuItem->url ?>">&nbsp;&nbsp;<?php echo $menuItem->label ?></a></li>
+          <?php } ?> 
+        </ul>
+             
+      <?php } ?> 
+      
+      <img class="menuSpacer" src="<?php echo $dir ?>common/webroot_common/spacer.png" />
+    </td>
+
+    <!-- Content =========================================================== -->
+    <td class="contentCell">
+    <!-- 8888888888888888888888888888888888888888888888888888888888888888888 -->
+    <!-- 88888888888888888888888=== Content Cell ==8888888888888888888888888 -->
+    <!-- 8888888888888888888888888888888888888888888888888888888888888888888 -->

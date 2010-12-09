@@ -1,0 +1,79 @@
+<?php 
+  include './common/webroot_common/header.php';
+  include './common/header.php';
+  include 'header.php';
+  setFilename('team.html');
+  setTitle('Albany - Team');
+  setDir('./');
+  
+  $y = <<< END
+    .mail {
+      width: 22px;
+      height: 22px;
+      margin: 0px 0px 0px 10px;
+      padding: 0px;
+      border-style: none;
+      vertical-align: text-bottom;
+    }
+    
+    .site {
+      width: 22px;
+      height: 22px;
+      margin: 0px;
+      padding: 0px;
+      border-style: none;
+      vertical-align: text-bottom;
+    }
+END;
+  setStyles($y); 
+  
+  include './common/header.html'; 
+?>
+
+<!-- begin content ######################################################### -->
+
+      <p class="heading"> 
+        <a href="about.html"> About </a> - 
+        Team 
+      </p> <br />
+
+      EpetraExt development is done by the following people: <br />
+      <br />
+        
+      <!-- Robert Hoekstra =============================================== -->
+        <p class="inlineHeading"> Robert Hoekstra </p>
+
+        <a href="mailto:rjhoeks@sandia.gov" target="_blank">
+          <img class="mail" id="mailHoekstra" src="./common/webroot_common/mail.png"
+          alt="Send mail to Robert Hoekstra" /> </a> <br />
+
+        Lead Developer of EpetraExt <br />
+        <br />
+        
+      <!-- Mike Heroux ===================================================== -->
+        <p class="inlineHeading"> Mike Heroux </p>
+
+        <a href="mailto:mheroux@cs.sandia.gov" target="_blank">
+          <img class="mail" id="mailHeroux" src="./common/webroot_common/mail.png"
+          alt="Send mail to Mike Heroux" /> </a>
+
+        <a href="http://www.cs.sandia.gov/~mheroux" target="_blank">
+          <img class="site" id="siteHeroux" src="./common/webroot_common/site.png"
+          alt="Visit Mike Heroux's website" /> </a> <br />
+
+        Developer of EpetraExt <br />
+        <br />
+        
+      <!-- Jim Willenbring =============================================== -->
+        <p class="inlineHeading"> Jim Willenbring </p>
+
+        <a href="mailto:jmwille@sandia.gov" target="_blank">
+          <img class="mail" id="mailWillenbring" src="./common/webroot_common/mail.png"
+          alt="Send mail to Jim Willenbring" /> </a> <br />
+
+        Developer of EpetraExt <br />
+        <br />
+
+<!-- end content ########################################################### -->
+      
+<?php include './common/footer.html'; ?>

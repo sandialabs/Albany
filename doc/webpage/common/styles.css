@@ -1,0 +1,67 @@
+/* styles.css */
+
+/* Link styles ************************************************************** */
+
+a:link, a:visited, a:active {
+  text-decoration: none;
+  font-weight: bold;
+  color: #036;
+  background-color: transparent;
+}
+
+a:hover {
+  text-decoration: underline;
+  font-weight: bold;
+  color: #036;
+  background-color: transparent;
+}
+
+/* Font styles ************************************************************** */
+
+.codeBox {
+  width: 100%;
+  font-family: monospace;
+  font-size: 9pt;
+  white-space: nowrap;
+  padding: 5px;
+  background-color: #eee;
+  border: 1px solid #666;
+}
+    
+.packageTitle {
+  font-size: 18pt;
+  font-weight: bold;
+}
+
+.packageTitle a:link, .packageTitle a:visited, .packageTitle a:active {
+  text-decoration: none;
+  font-weight: bold;
+  color: #036;
+  background-color: transparent;
+}
+
+.packageTitle a:hover {
+  text-decoration: none;
+  font-weight: bold;
+  color: #369;
+  background-color: transparent;
+}
+
+.packageSubtitle {
+  font-size: 10pt;
+  font-weight: normal;
+}
+
+.packageSubtitle a:link, .packageSubtitle a:visited, .packageSubtitle a:active {
+  text-decoration: none;
+  font-weight: normal;
+  color: #036;
+  background-color: transparent;
+}
+
+.packageSubtitle a:hover {
+  text-decoration: none;
+  font-weight: normal;
+  color: #369;
+  background-color: transparent;
+}
