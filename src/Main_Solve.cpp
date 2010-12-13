@@ -24,6 +24,7 @@
 #include "Teuchos_TimeMonitor.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Teuchos_StandardCatchMacros.hpp"
+#include "Epetra_Map.h"  //Needed for serial, somehow
 
 int main(int argc, char *argv[]) {
 
@@ -59,8 +60,8 @@ int main(int argc, char *argv[]) {
     Teuchos::TimeMonitor totalTimer(*totalTime); //start timer
     Teuchos::TimeMonitor setupTimer(*setupTime); //start timer
 
-    Albany::SolverFactory slvrfctry(xmlfilename, MPI_COMM_WORLD);
-    RCP<Epetra_Comm> appComm = Albany::createEpetraCommFromMpiComm(MPI_COMM_WORLD);
+    Albany::SolverFactory slvrfctry(xmlfilename, Albany_MPI_COMM_WORLD);
+    RCP<Epetra_Comm> appComm = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
     RCP<EpetraExt::ModelEvaluator> App = slvrfctry.create(appComm, appComm);
 
     EpetraExt::ModelEvaluator::InArgs params_in = App->createInArgs();
@@ -75,7 +76,7 @@ int main(int argc, char *argv[]) {
     if (num_g > 1)
       g1 = rcp(new Epetra_Vector(*(App->get_g_map(0))));
     RCP<Epetra_Vector> xfinal =
-      rcp(new Epetra_Vector(*(App->get_g_map(num_g-1))));
+      rcp(new Epetra_Vector(*(App->get_g_map(num_g-1)),true) );
 
     // Sensitivity Analysis stuff
     bool supportsSensitivities = false;

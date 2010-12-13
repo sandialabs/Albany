@@ -36,12 +36,12 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="string" value="{1.4291}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{1.4291}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
-    <Parameter  name="Sensitivity Test Values 0" type="string" value="{0.553795, 0.383248, 0.313747, 0.453999,0.162515}"/>
+    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{0.553795, 0.383248, 0.313747, 0.453999,0.162515}"/>
     <Parameter  name="Number of Dakota Comparisons" type="int" value="0"/>
-    <Parameter  name="Dakota Test Values" type="string" value="{1.72756}"/>
+    <Parameter  name="Dakota Test Values" type="Array(double)" value="{1.72756}"/>
   </ParameterList>
   <ParameterList name="VTK">
     <Parameter name="Do Visualization" type="bool" value="0"/>

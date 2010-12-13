@@ -33,15 +33,15 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="3"/>
-    <Parameter  name="Test Values" type="string" value="{0.000034188, 0.000170384, -0.000170384}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{0.000034188, 0.000170384, -0.000170384}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-2"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="3"/>
-    <Parameter  name="Sensitivity Test Values 0" type="string" value="{0.5,  0.5, 3.0e-6}"/>
-    <Parameter  name="Sensitivity Test Values 1" type="string" value="{-1.0, 1.0, 1.5e-5}"/>
-    <Parameter  name="Sensitivity Test Values 2" type="string" value="{-1.0, 1.0,-1.5e-5}"/>
+    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{0.5,  0.5, 3.0e-6}"/>
+    <Parameter  name="Sensitivity Test Values 1" type="Array(double)" value="{-1.0, 1.0, 1.5e-5}"/>
+    <Parameter  name="Sensitivity Test Values 2" type="Array(double)" value="{-1.0, 1.0,-1.5e-5}"/>
     <Parameter  name="Number of Piro Analysis Comparisons" type="int" value="1"/>
-    <Parameter  name="Piro Analysis Test Values" type="string" value="{-0.049567}"/>
+    <Parameter  name="Piro Analysis Test Values" type="Array(double)" value="{-0.049567}"/>
   </ParameterList>
   <ParameterList name="Rythmos">
     <Parameter name="Num Time Steps" type="int" value="10"/>

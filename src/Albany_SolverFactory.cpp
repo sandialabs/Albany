@@ -41,7 +41,7 @@ using Teuchos::ParameterList;
 
 Albany::SolverFactory::SolverFactory(
 			  const std::string& inputFile, 
-			  const MPI_Comm& mcomm) 
+			  const Albany_MPI_Comm& mcomm) 
   : out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
   RCP<Teuchos::Comm<int> > tcomm = Albany::createTeuchosCommFromMpiComm(mcomm);
@@ -82,9 +82,7 @@ Albany::SolverFactory::create(
     if (numParameters>0) {
       free_param_names = rcp(new Teuchos::Array<std::string>);
       for (int i=0; i<numParameters; i++) {
-        std::ostringstream ss;
-        ss << "Parameter " << i;
-        free_param_names->push_back(parameterParams.get(ss.str(), "??"));
+        free_param_names->push_back(parameterParams.get(Albany::strint("Parameter",i), "??"));
       }
     }
     *out << "Number of Parameters in ENAT = " << numParameters << endl;
@@ -101,9 +99,7 @@ Albany::SolverFactory::create(
     if (sg_numParameters>0) {
       sg_param_names = rcp(new Teuchos::Array<std::string>);
       for (int i=0; i<sg_numParameters; i++) {
-        std::ostringstream ss;
-        ss << "Parameter " << i;
-      sg_param_names->push_back(sg_parameterParams.get(ss.str(), "??"));
+      sg_param_names->push_back(sg_parameterParams.get(Albany::strint("Parameter",i), "??"));
       }
     }
     *out << "Number of SG Parameters in ENAT = " << sg_numParameters << endl;
@@ -150,6 +146,8 @@ int Albany::SolverFactory::checkTestResults(
   const Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly>& g_sg) const
 {
   ParameterList& testParams = appParams->sublist("Regression Results");
+  TEST_FOR_EXCEPTION(testParams.isType<string>("Test Values"), std::logic_error,
+    "Array information in XML file must now be of type Array(double)\n");
   testParams.validateParametersAndSetDefaults(*getValidRegressionResultsParameters(),0);
 
   int failures = 0;
@@ -157,30 +155,21 @@ int Albany::SolverFactory::checkTestResults(
   double relTol = testParams.get<double>("Relative Tolerance");
   double absTol = testParams.get<double>("Absolute Tolerance");
 
+
   // Get number of responses (g) to test
   int numResponseTests = testParams.get<int>("Number of Comparisons");
   if (numResponseTests > 0 && g != NULL) {
 
     if (numResponseTests > g->MyLength()) failures +=1000;
     else { // do comparisons
-      // Read accepted test results
       Teuchos::Array<double> testValues =
-         Teuchos::getArrayFromStringParameter<double> (testParams,
-                                "Test Values", numResponseTests, true);
+        testParams.get<Teuchos::Array<double> >("Test Values");
       
-      for (int i=0; i<numResponseTests; i++) {
-        failures += scaledCompare((*g)[i], testValues[i], relTol, absTol);
-        comparisons++;
-      }
-/* SWITCH TO THIS SOON
-      Teuchos::Array<double> testValues;
-      testParams.get<Teuchos::Array<double> >("Test Values",testValues);
-      
+      TEST_FOR_EXCEPT(numResponseTests != testValues.size());
       for (int i=0; i<testValues.size(); i++) {
         failures += scaledCompare((*g)[i], testValues[i], relTol, absTol);
         comparisons++;
       }
-*/
     }
   }
 
@@ -191,12 +180,10 @@ int Albany::SolverFactory::checkTestResults(
     if (numSensTests > dgdp->MyLength() ||
         numParameters != dgdp->NumVectors() ) failures += 10000;
     else {
-      Teuchos::Array<double> testSensValues;
       for (int i=0; i<numSensTests; i++) {
-        std::stringstream tsv;
-        tsv << "Sensitivity Test Values " << i;
-        testSensValues = Teuchos::getArrayFromStringParameter<double> (testParams,
-                                    tsv.str(), numParameters, true);
+        Teuchos::Array<double> testSensValues =
+          testParams.get<Teuchos::Array<double> >(Albany::strint("Sensitivity Test Values",i));
+        TEST_FOR_EXCEPT(numParameters != testSensValues.size());
         for (int j=0; j<numParameters; j++) {
           failures += scaledCompare((*dgdp)[j][i], testSensValues[j], relTol, absTol);
           comparisons++;
@@ -213,9 +200,9 @@ int Albany::SolverFactory::checkTestResults(
     else { // do comparisons
       // Read accepted test results
       Teuchos::Array<double> testValues =
-         Teuchos::getArrayFromStringParameter<double> (testParams,
-                                "Dakota Test Values", numDakotaTests, true);
+        testParams.get<Teuchos::Array<double> >("Dakota Test Values");
 
+      TEST_FOR_EXCEPT(numDakotaTests != testValues.size());
       for (int i=0; i<numDakotaTests; i++) {
         failures += scaledCompare((*drdv)[i], testValues[i], relTol, absTol);
         comparisons++;
@@ -234,9 +221,9 @@ int Albany::SolverFactory::checkTestResults(
     else { // do comparisons
       // Read accepted test results
       Teuchos::Array<double> testValues =
-         Teuchos::getArrayFromStringParameter<double> (testParams,
-                                "Piro Analysis Test Values", numPiroTests, true);
+        testParams.get<Teuchos::Array<double> >("Piro Analysis Test Values");
 
+      TEST_FOR_EXCEPT(numPiroTests != testValues.size());
       for (int i=0; i<numPiroTests; i++) {
         failures += scaledCompare(p[i], testValues[i], relTol, absTol);
         comparisons++;
@@ -249,12 +236,11 @@ int Albany::SolverFactory::checkTestResults(
   if (numSGTests > 0 && g_sg != Teuchos::null) {
     if (numSGTests > (*g_sg)[0].MyLength()) failures += 10000;
     else {
-      Teuchos::Array<double> testSGValues;
       for (int i=0; i<numSGTests; i++) {
-	std::stringstream tsgv;
-	tsgv << "Stochastic Galerkin Expansion Test Values " << i;
-	testSGValues = Teuchos::getArrayFromStringParameter<double> (
-	  testParams, tsgv.str(), g_sg->size(), true);
+        Teuchos::Array<double> testSGValues = 
+          testParams.get<Teuchos::Array<double> >
+            (Albany::strint("Stochastic Galerkin Expansion Test Values",i));
+        TEST_FOR_EXCEPT(g_sg->size() != testSGValues.size());
 	for (int j=0; j<g_sg->size(); j++) {
 	  failures += 
 	    scaledCompare((*g_sg)[j][i], testSGValues[j], relTol, absTol);
@@ -360,9 +346,9 @@ Albany::SolverFactory::getValidAppParameters() const
 RCP<const ParameterList>
 Albany::SolverFactory::getValidRegressionResultsParameters() const
 {
+  using Teuchos::Array;
   RCP<ParameterList> validPL = rcp(new ParameterList("ValidRegressionParams"));;
-  std::string ta; // string to be converted to teuchos array
-  Teuchos::Array<double> tta;; // string to be converted to teuchos array
+  Array<double> ta;; // string to be converted to teuchos array
 
   validPL->set<double>("Relative Tolerance", 1.0e-4,
           "Relative Tolerance used in regression testing");
@@ -371,8 +357,7 @@ Albany::SolverFactory::getValidRegressionResultsParameters() const
 
   validPL->set<int>("Number of Comparisons", 0,
           "Number of responses to regress against");
-  //validPL->set<Teuchos::Array<double> >("Test Values", tta,
-  validPL->set<std::string>("Test Values", ta,
+  validPL->set<Array<double> >("Test Values", ta,
           "Array of regression values for responses");
 
   validPL->set<int>("Number of Sensitivity Comparisons", 0,
@@ -380,20 +365,19 @@ Albany::SolverFactory::getValidRegressionResultsParameters() const
 
   const int maxSensTests=10;
   for (int i=0; i<maxSensTests; i++) {
-    std::stringstream stv, sd;
-    stv << "Sensitivity Test Values " << i;
-    sd <<  "Array of regression values for Sensitivities w.r.t parameter " << i;
-    validPL->set<std::string>(stv.str(), ta, sd.str());
+    validPL->set<Array<double> >(
+       Albany::strint("Sensitivity Test Values",i), ta,
+       Albany::strint("Array of regression values for Sensitivities w.r.t parameter",i));
   }
 
   validPL->set<int>("Number of Dakota Comparisons", 0,
           "Number of paramters from Dakota runs to regress against");
-  validPL->set<std::string>("Dakota Test Values", ta,
+  validPL->set<Array<double> >("Dakota Test Values", ta,
           "Array of regression values for final parameters from Dakota runs");
 
   validPL->set<int>("Number of Piro Analysis Comparisons", 0,
           "Number of paramters from Analysis to regress against");
-  validPL->set<std::string>("Piro Analysis Test Values", ta,
+  validPL->set<Array<double> >("Piro Analysis Test Values", ta,
           "Array of regression values for final parameters from Analysis runs");
 
   validPL->set<int>("Number of Stochastic Galerkin Comparisons", 0,
@@ -401,11 +385,9 @@ Albany::SolverFactory::getValidRegressionResultsParameters() const
 
   const int maxSGTests=10;
   for (int i=0; i<maxSGTests; i++) {
-    std::stringstream sgtv, sgd;
-    sgtv << "Stochastic Galerkin Expansion Test Values " << i;
-    sgd <<  "Array of regression values for stochastic Galerkin expansions " 
-	<< i;
-    validPL->set<std::string>(sgtv.str(), ta, sgd.str());
+    validPL->set<Array<double> >(
+       Albany::strint("Stochastic Galerkin Expansion Test Values",i), ta,
+       Albany::strint("Array of regression values for stochastic Galerkin expansions",i));
   }
 
   // These two are typically not set on input, just output.
@@ -425,9 +407,7 @@ Albany::SolverFactory::getValidParameterParameters() const
   validPL->set<int>("Number", 0);
   const int maxParameters = 100;
   for (int i=0; i<maxParameters; i++) {
-    std::ostringstream ss;
-    ss << "Parameter " << i;
-    validPL->set<std::string>(ss.str(), "");
+    validPL->set<std::string>(Albany::strint("Parameter",i), "");
   }
   return validPL;
 }
@@ -440,9 +420,7 @@ Albany::SolverFactory::getValidResponseParameters() const
   validPL->set<int>("Number", 0);
   const int maxParameters = 100;
   for (int i=0; i<maxParameters; i++) {
-    std::ostringstream ss;
-    ss << "Response " << i;
-    validPL->set<std::string>(ss.str(), "");
+    validPL->set<std::string>(Albany::strint("Response",i), "");
   }
   return validPL;
 }

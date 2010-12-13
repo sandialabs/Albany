@@ -15,6 +15,7 @@
 \********************************************************************/
 
 #include "Albany_Application.hpp"
+#include "Albany_Utils.hpp"
 #include "Albany_ProblemFactory.hpp"
 #include "Albany_DiscretizationFactory.hpp"
 #include "Epetra_LocalMap.h"
@@ -1205,11 +1206,8 @@ void Albany::Application::registerShapeParameters()
   int numShParams = shapeParams.size();
   if (shapeParamNames.size() == 0) {
     shapeParamNames.resize(numShParams);
-    for (int i=0; i<numShParams; i++) {
-       std::ostringstream ss;
-       ss << "ShapeParam " << i;
-       shapeParamNames[i] = ss.str();
-    }
+    for (int i=0; i<numShParams; i++)
+       shapeParamNames[i] = Albany::strint("ShapeParam",i);
   }
   Albany::DummyParameterAccessor<PHAL::AlbanyTraits::Jacobian, SPL_Traits> * dJ =
    new Albany::DummyParameterAccessor<PHAL::AlbanyTraits::Jacobian, SPL_Traits>();

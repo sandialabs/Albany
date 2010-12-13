@@ -37,7 +37,7 @@ namespace Albany {
 
     //! Default constructor
     SolverFactory(const std::string& inputfile,
-		  const MPI_Comm& mcomm);
+		  const Albany_MPI_Comm& mcomm);
 
     //! Destructor
     virtual ~SolverFactory() {}

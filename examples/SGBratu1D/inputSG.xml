@@ -33,13 +33,13 @@
 	<ParameterList name="Basis 0">
 	  <Parameter name="Type" type="string" value="Legendre"/>
 	  <Parameter name="Order" type="int" value="5"/>
-	  <Parameter  name="Initial Expansion Coefficients" type="string"
+	  <Parameter  name="Initial Expansion Coefficients" type="Array(double)"
 		      value="{2.0, 1.0}"/>
 	</ParameterList>
 	<ParameterList name="Basis 1">
 	  <Parameter name="Type" type="string" value="Legendre"/>
 	  <Parameter name="Order" type="int" value="5"/>
-	  <Parameter  name="Initial Expansion Coefficients" type="string"
+	  <Parameter  name="Initial Expansion Coefficients" type="Array(double)"
 		      value="{2.0, 0.0, 1.0}"/>
 	</ParameterList>
       </ParameterList>
@@ -62,7 +62,7 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Stochastic Galerkin Comparisons" type="int" value="1"/>
-    <Parameter  name="Stochastic Galerkin Expansion Test Values 0" type="string"
+    <Parameter  name="Stochastic Galerkin Expansion Test Values 0" type="Array(double)"
     value="{0.29533, 0.17302, 0.032152, 0.0088249, 0.00279032, 0.00086555}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
   </ParameterList>

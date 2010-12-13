@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
   Teuchos::GlobalMPISession mpiSession(&argc,&argv);
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
-  MPI_Comm appComm = MPI_COMM_WORLD;
+  Albany_MPI_Comm appComm = Albany_MPI_COMM_WORLD;
 
   try {
     Teuchos::RCP<Teuchos::Time> totalTime = 

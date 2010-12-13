@@ -19,6 +19,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
+#include "Albany_Utils.hpp"
 namespace PHAL {
 
 template<typename EvalT, typename Traits>
@@ -66,11 +67,9 @@ ThermalConductivity(Teuchos::ParameterList& p) :
     Teuchos::RCP<ParamLib> paramLib = 
       p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
     for (int i=0; i<num_KL; i++) {
-      std::stringstream ss;
-      ss << "Thermal Conductivity KL Random Variable " << i;
-      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss.str(), this, 
-							   paramLib);
-      rv[i] = cond_list->get(ss.str(), 0.0);
+      std::string ss = Albany::strint("Thermal Conductivity KL Random Variable",i);
+      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss, this, paramLib);
+      rv[i] = cond_list->get(ss, 0.0);
     }
   }
   else {
@@ -126,9 +125,7 @@ ThermalConductivity<EvalT,Traits>::getValue(const std::string &n)
   if (is_constant)
     return constant_value;
   for (int i=0; i<rv.size(); i++) {
-    std::stringstream ss;
-    ss << "Thermal Conductivity KL Random Variable " << i;
-    if (n == ss.str())
+    if (n == Albany::strint("Thermal Conductivity KL Random Variable",i))
       return rv[i];
   }
   TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,

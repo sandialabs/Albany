@@ -20,6 +20,7 @@
 #include "Albany_SolutionAverageResponseFunction.hpp"
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
 #include "Albany_InitialCondition.hpp"
+#include "Albany_Utils.hpp"
 
 QCAD::PoissonProblem::
 PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
@@ -73,9 +74,7 @@ buildProblem(
   int num_responses = responseList.get("Number", 0);
   responses.resize(num_responses);
   for (int i=0; i<num_responses; i++) {
-     std::ostringstream ss;
-     ss << "Response " << i;
-     std::string name = responseList.get(ss.str(), "??");
+     std::string name = responseList.get(Albany::strint("Response",i), "??");
 
      if (name == "Boundary Flux 1D" && numDim==1) {
        // Need real size, not 1.0

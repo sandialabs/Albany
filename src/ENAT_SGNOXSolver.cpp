@@ -84,9 +84,8 @@ SGNOXSolver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
     std::ostringstream ss;
     ss << "Basis " << i;
     Teuchos::ParameterList& bp = basisParams.sublist(ss.str());
-    Teuchos::Array<double> initial_p_vals = 
-      Teuchos::getArrayFromStringParameter<double>(
-	bp, std::string("Initial Expansion Coefficients"), -1, false);
+    Teuchos::Array<double> initial_p_vals;
+    initial_p_vals =  bp.get("Initial Expansion Coefficients",initial_p_vals);
     if (initial_p_vals.size() == 0) {
       sg_p[sg_p_index]->term(i,0)[i] = 0.0;
       sg_p[sg_p_index]->term(i,1)[i] = 1.0;  // Set order 1 coeff to 1 for this RV

@@ -34,10 +34,10 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="string" value="{2.0147489295}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{2.0147489295}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
-    <Parameter  name="Sensitivity Test Values 0" type="string" 
+    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" 
                value="{ 4.793056e-01, 4.623893e-01,-4.643509e-01, 3.095672e-02 }"/>
   </ParameterList>
   <ParameterList name="VTK">
