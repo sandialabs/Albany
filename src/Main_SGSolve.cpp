@@ -172,6 +172,7 @@ int main(int argc, char *argv[]) {
     // Print out mean & standard deviation
     *out << "Mean = " << std::endl;
     *out << setprecision(16) << mean << std::endl;
+    *out << "Standard Deviation = " << std::endl;
     *out << setprecision(16) << std_dev << std::endl;
     
   }
