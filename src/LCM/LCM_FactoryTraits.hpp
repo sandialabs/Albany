@@ -48,6 +48,7 @@
 #include "LCM/evaluators/Neohookean.hpp"
 #include "LCM/evaluators/J2Stress.hpp"
 #include "LCM/evaluators/TLElasResid.hpp"
+#include "LCM/evaluators/EnergyPotential.hpp"
 
 #include "boost/mpl/vector/vector30.hpp"
 #include "boost/mpl/placeholders.hpp"
@@ -93,8 +94,9 @@ struct FactoryTraits {
   static const int id_neohookean_stress         = 26;
   static const int id_tl_elas_resid             = 27;
   static const int id_j2_stress                 = 28;
+  static const int id_energy_potential          = 29;
 
-  typedef boost::mpl::vector29< 
+  typedef boost::mpl::vector30< 
             PHAL::Dirichlet<_,Traits>,                //  0
             PHAL::GatherSolution<_,Traits>,           //  1
             PHAL::GatherCoordinateVector<_,Traits>,   //  2
@@ -123,7 +125,8 @@ struct FactoryTraits {
             LCM::DetDefGrad<_,Traits>,                // 25
             LCM::Neohookean<_,Traits>,                // 26
             LCM::TLElasResid<_,Traits>,               // 27
-            LCM::J2Stress<_,Traits>                   // 28
+            LCM::J2Stress<_,Traits>,                  // 28
+            LCM::EnergyPotential<_,Traits>            // 29
     > EvaluatorTypes;
 };
 }

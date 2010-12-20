@@ -192,6 +192,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/J2Stress.cpp 
     ${LCM_DIR}/evaluators/ElasticityResid.cpp
     ${LCM_DIR}/evaluators/TLElasResid.cpp 
+    ${LCM_DIR}/evaluators/EnergyPotential.cpp 
   )
 
   SET(HEADERS ${HEADERS}
@@ -219,6 +220,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/ElasticityResid_Def.hpp
     ${LCM_DIR}/evaluators/TLElasResid.hpp 
     ${LCM_DIR}/evaluators/TLElasResid_Def.hpp 
+    ${LCM_DIR}/evaluators/EnergyPotential.hpp 
+    ${LCM_DIR}/evaluators/EnergyPotential_Def.hpp 
   )
 ENDIF()
 
