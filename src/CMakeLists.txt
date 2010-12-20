@@ -54,9 +54,6 @@ SET(SOURCES ${SOURCES}
 	problems/Albany_ProblemFactory.cpp
 	problems/Albany_HeatProblem.cpp 
 	problems/Albany_Helmholtz2DProblem.cpp 
-	problems/Albany_ElasticityProblem.cpp 
-	problems/Albany_NonlinearElasticityProblem.cpp 
-	problems/Albany_ThermoElasticityProblem.cpp 
 	problems/Albany_ThermoElectrostaticsProblem.cpp 
 	problems/Albany_AnalyticFunction.cpp 
 	problems/Albany_InitialCondition.cpp 
@@ -66,9 +63,6 @@ SET(HEADERS ${HEADERS}
 	problems/Albany_AbstractProblem.hpp 
 	problems/Albany_HeatProblem.hpp 
 	problems/Albany_Helmholtz2DProblem.hpp 
-	problems/Albany_ElasticityProblem.hpp 
-	problems/Albany_NonlinearElasticityProblem.hpp 
-	problems/Albany_ThermoElasticityProblem.hpp 
 	problems/Albany_ThermoElectrostaticsProblem.hpp 
 	problems/Albany_AnalyticFunction.hpp 
 	problems/Albany_InitialCondition.hpp 
@@ -118,7 +112,6 @@ SET(SOURCES ${SOURCES}
 	evaluators/PHAL_Constant.cpp 
 	evaluators/PHAL_ThermalConductivity.cpp 
         evaluators/PHAL_HeatEqResid.cpp
-        evaluators/PHAL_ElasticityResid.cpp
         evaluators/PHAL_ComputeBasisFunctions.cpp
         evaluators/PHAL_DOFInterpolation.cpp
         evaluators/PHAL_DOFGradInterpolation.cpp
@@ -127,17 +120,6 @@ SET(SOURCES ${SOURCES}
         evaluators/PHAL_MapToPhysicalFrame.cpp
         evaluators/PHAL_HelmholtzResid.cpp
         evaluators/PHAL_GatherCoordinateVector.cpp
-	evaluators/PHAL_Stress.cpp 
-	evaluators/PHAL_Strain.cpp 
-	evaluators/PHAL_ElasticModulus.cpp 
-	evaluators/PHAL_PoissonsRatio.cpp
-	evaluators/PHAL_DefGrad.cpp
-	evaluators/PHAL_RCG.cpp
-	evaluators/PHAL_LCG.cpp 
-	evaluators/PHAL_DetDefGrad.cpp
-	evaluators/PHAL_Neohookean.cpp
-	evaluators/PHAL_J2Stress.cpp
-	evaluators/PHAL_TLElasResid.cpp
 	evaluators/PHAL_JouleHeating.cpp
   )
 SET(HEADERS ${HEADERS}
@@ -155,8 +137,6 @@ SET(HEADERS ${HEADERS}
 	evaluators/PHAL_ThermalConductivity_Def.hpp
         evaluators/PHAL_HeatEqResid.hpp
         evaluators/PHAL_HeatEqResid_Def.hpp
-        evaluators/PHAL_ElasticityResid.hpp
-        evaluators/PHAL_ElasticityResid_Def.hpp
         evaluators/PHAL_ComputeBasisFunctions.hpp
         evaluators/PHAL_ComputeBasisFunctions_Def.hpp
         evaluators/PHAL_DOFInterpolation.hpp
@@ -173,31 +153,74 @@ SET(HEADERS ${HEADERS}
         evaluators/PHAL_HelmholtzResid_Def.hpp
         evaluators/PHAL_GatherCoordinateVector.hpp
         evaluators/PHAL_GatherCoordinateVector_Def.hpp
-	evaluators/PHAL_Stress.hpp 
-	evaluators/PHAL_Stress_Def.hpp 
-	evaluators/PHAL_Strain.hpp 
-	evaluators/PHAL_Strain_Def.hpp 
-	evaluators/PHAL_ElasticModulus.hpp 
-	evaluators/PHAL_ElasticModulus_Def.hpp 
-	evaluators/PHAL_PoissonsRatio.hpp 
-	evaluators/PHAL_PoissonsRatio_Def.hpp
-	evaluators/PHAL_DefGrad.hpp 
-	evaluators/PHAL_DefGrad_Def.hpp 
-	evaluators/PHAL_RCG.hpp 
-	evaluators/PHAL_RCG_Def.hpp 
-	evaluators/PHAL_LCG.hpp 
-	evaluators/PHAL_LCG_Def.hpp
-	evaluators/PHAL_DetDefGrad.hpp 
-	evaluators/PHAL_DetDefGrad_Def.hpp
-	evaluators/PHAL_Neohookean.hpp
-	evaluators/PHAL_Neohookean_Def.hpp
-	evaluators/PHAL_J2Stress.hpp 
-	evaluators/PHAL_J2Stress_Def.hpp
-	evaluators/PHAL_TLElasResid.hpp 
-	evaluators/PHAL_TLElasResid_Def.hpp 
 	evaluators/PHAL_JouleHeating.hpp
 	evaluators/PHAL_JouleHeating_Def.hpp
   )
+
+# LCM
+IF(ALBANY_LCM)
+  SET(LCM_DIR ${Albany_SOURCE_DIR}/src/LCM)
+
+  SET(HEADERS ${HEADERS}
+    ${LCM_DIR}/LCM_FactoryTraits.hpp
+  )
+  
+  # LCM problems
+  SET(SOURCES ${SOURCES}
+    ${LCM_DIR}/problems/ElasticityProblem.cpp 
+    ${LCM_DIR}/problems/NonlinearElasticityProblem.cpp 
+    ${LCM_DIR}/problems/ThermoElasticityProblem.cpp 
+  )
+
+  SET(HEADERS ${HEADERS}
+   ${LCM_DIR}/problems/ElasticityProblem.hpp 
+    ${LCM_DIR}/problems/NonlinearElasticityProblem.hpp 
+    ${LCM_DIR}/problems/ThermoElasticityProblem.hpp 
+  )
+
+  # LCM evaluators
+  SET(SOURCES ${SOURCES}
+    ${LCM_DIR}/evaluators/Stress.cpp 
+    ${LCM_DIR}/evaluators/Strain.cpp 
+    ${LCM_DIR}/evaluators/ElasticModulus.cpp 
+    ${LCM_DIR}/evaluators/PoissonsRatio.cpp 
+    ${LCM_DIR}/evaluators/DefGrad.cpp 
+    ${LCM_DIR}/evaluators/RCG.cpp 
+    ${LCM_DIR}/evaluators/LCG.cpp 
+    ${LCM_DIR}/evaluators/DetDefGrad.cpp 
+    ${LCM_DIR}/evaluators/Neohookean.cpp
+    ${LCM_DIR}/evaluators/J2Stress.cpp 
+    ${LCM_DIR}/evaluators/ElasticityResid.cpp
+    ${LCM_DIR}/evaluators/TLElasResid.cpp 
+  )
+
+  SET(HEADERS ${HEADERS}
+    ${LCM_DIR}/evaluators/Stress.hpp 
+    ${LCM_DIR}/evaluators/Stress_Def.hpp 
+    ${LCM_DIR}/evaluators/Strain.hpp 
+    ${LCM_DIR}/evaluators/Strain_Def.hpp 
+    ${LCM_DIR}/evaluators/ElasticModulus.hpp 
+    ${LCM_DIR}/evaluators/ElasticModulus_Def.hpp 
+    ${LCM_DIR}/evaluators/PoissonsRatio.hpp 
+    ${LCM_DIR}/evaluators/PoissonsRatio_Def.hpp
+    ${LCM_DIR}/evaluators/DefGrad.hpp 
+    ${LCM_DIR}/evaluators/DefGrad_Def.hpp 
+    ${LCM_DIR}/evaluators/RCG.hpp 
+    ${LCM_DIR}/evaluators/RCG_Def.hpp 
+    ${LCM_DIR}/evaluators/LCG.hpp 
+    ${LCM_DIR}/evaluators/LCG_Def.hpp
+    ${LCM_DIR}/evaluators/DetDefGrad.hpp 
+    ${LCM_DIR}/evaluators/DetDefGrad_Def.hpp
+    ${LCM_DIR}/evaluators/Neohookean.hpp
+    ${LCM_DIR}/evaluators/Neohookean_Def.hpp
+    ${LCM_DIR}/evaluators/J2Stress.hpp 
+    ${LCM_DIR}/evaluators/J2Stress_Def.hpp
+    ${LCM_DIR}/evaluators/ElasticityResid.hpp
+    ${LCM_DIR}/evaluators/ElasticityResid_Def.hpp
+    ${LCM_DIR}/evaluators/TLElasResid.hpp 
+    ${LCM_DIR}/evaluators/TLElasResid_Def.hpp 
+  )
+ENDIF()
 
 SET(SOURCES ${SOURCES}
        evaluators/QCAD_Permittivity.cpp

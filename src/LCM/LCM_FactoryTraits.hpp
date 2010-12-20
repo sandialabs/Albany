@@ -15,8 +15,8 @@
 \********************************************************************/
 
 
-#ifndef PHAL_FACTORY_TRAITS_HPP
-#define PHAL_FACTORY_TRAITS_HPP
+#ifndef LCM_FACTORY_TRAITS_HPP
+#define LCM_FACTORY_TRAITS_HPP
 
 // User Defined Evaluator Types
 #include "PHAL_Constant.hpp"
@@ -34,10 +34,20 @@
 #include "PHAL_HelmholtzResid.hpp"
 #include "PHAL_HeatEqResid.hpp"
 #include "PHAL_GatherCoordinateVector.hpp"
-#include "QCAD_Permittivity.hpp"
-#include "QCAD_PoissonResid.hpp"
-#include "QCAD_PoissonSource.hpp"
 #include "PHAL_JouleHeating.hpp"
+
+#include "LCM/evaluators/Stress.hpp"
+#include "LCM/evaluators/Strain.hpp"
+#include "LCM/evaluators/ElasticModulus.hpp"
+#include "LCM/evaluators/ElasticityResid.hpp"
+#include "LCM/evaluators/PoissonsRatio.hpp"
+#include "LCM/evaluators/DefGrad.hpp"
+#include "LCM/evaluators/RCG.hpp"
+#include "LCM/evaluators/LCG.hpp"
+#include "LCM/evaluators/DetDefGrad.hpp"
+#include "LCM/evaluators/Neohookean.hpp"
+#include "LCM/evaluators/J2Stress.hpp"
+#include "LCM/evaluators/TLElasResid.hpp"
 
 #include "boost/mpl/vector/vector30.hpp"
 #include "boost/mpl/placeholders.hpp"
@@ -49,7 +59,7 @@ using namespace boost::mpl::placeholders;
     - You must provide a boost::mpl::vector named EvaluatorTypes that contain all Evaluator objects that you wish the factory to build.  Do not confuse evaluator types (concrete instances of evaluator objects) with evaluation types (types of evaluations to perform, i.e., Residual, Jacobian). 
 
 */
-namespace PHAL {
+namespace LCM {
 
 template<typename Traits>
 struct FactoryTraits {
@@ -70,12 +80,21 @@ struct FactoryTraits {
   static const int id_heateqresid               = 13;
   static const int id_constant                  = 14;
   static const int id_dirichlet_aggregator      = 15;
-  static const int id_qcad_permittivity         = 16;
-  static const int id_qcad_poisson_resid        = 17;
-  static const int id_qcad_poisson_source       = 18;
-  static const int id_jouleheating              = 19;
+  static const int id_jouleheating              = 16;
+  static const int id_elastic_modulus           = 17;
+  static const int id_stress                    = 18;
+  static const int id_strain                    = 19;
+  static const int id_elasticityresid           = 20;
+  static const int id_poissons_ratio            = 21;
+  static const int id_defgrad                   = 22;
+  static const int id_rcg                       = 23;
+  static const int id_lcg                       = 24;
+  static const int id_detdefgrad                = 25;
+  static const int id_neohookean_stress         = 26;
+  static const int id_tl_elas_resid             = 27;
+  static const int id_j2_stress                 = 28;
 
-  typedef boost::mpl::vector20< 
+  typedef boost::mpl::vector29< 
             PHAL::Dirichlet<_,Traits>,                //  0
             PHAL::GatherSolution<_,Traits>,           //  1
             PHAL::GatherCoordinateVector<_,Traits>,   //  2
@@ -92,12 +111,20 @@ struct FactoryTraits {
             PHAL::HeatEqResid<_,Traits>,              // 13
             PHAL::Constant<_,Traits>,                 // 14
             PHAL::DirichletAggregator<_,Traits>,      // 15
-            QCAD::Permittivity<_,Traits>,             // 16
-            QCAD::PoissonResid<_,Traits>,             // 17
-            QCAD::PoissonSource<_,Traits>,            // 18
-            PHAL::JouleHeating<_,Traits>              // 19
-  > EvaluatorTypes;
-  
+            PHAL::JouleHeating<_,Traits>,             // 16
+            LCM::ElasticModulus<_,Traits>,            // 17
+            LCM::Stress<_,Traits>,                    // 18
+            LCM::Strain<_,Traits>,                    // 19
+            LCM::ElasticityResid<_,Traits>,           // 20
+            LCM::PoissonsRatio<_,Traits>,             // 21
+            LCM::DefGrad<_,Traits>,                   // 22
+            LCM::RCG<_,Traits>,                       // 23
+            LCM::LCG<_,Traits>,                       // 24
+            LCM::DetDefGrad<_,Traits>,                // 25
+            LCM::Neohookean<_,Traits>,                // 26
+            LCM::TLElasResid<_,Traits>,               // 27
+            LCM::J2Stress<_,Traits>                   // 28
+    > EvaluatorTypes;
 };
 }
 

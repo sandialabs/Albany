@@ -96,6 +96,16 @@ ELSE()
   SET(ALBANY_IOSS FALSE)
 ENDIF()
 
+# set optional dependency on LCM
+IF (NOT ENABLE_LCM)
+  MESSAGE("-- LCM is NOT Enabled.")
+  SET(ALBANY_LCM FALSE)
+ELSE()
+  ADD_DEFINITIONS(-DALBANY_LCM)
+  MESSAGE("-- LCM is Enabled, compiling with -DALBANY_LCM")
+  SET(ALBANY_LCM TRUE)
+ENDIF()
+
 add_subdirectory(src)
 
 enable_testing()

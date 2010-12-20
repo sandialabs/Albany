@@ -19,11 +19,14 @@
 #include "Albany_ProblemFactory.hpp"
 #include "Albany_Helmholtz2DProblem.hpp"
 #include "Albany_HeatProblem.hpp"
-#include "Albany_ElasticityProblem.hpp"
-#include "Albany_NonlinearElasticityProblem.hpp"
-#include "Albany_ThermoElasticityProblem.hpp"
 #include "Albany_ThermoElectrostaticsProblem.hpp"
 #include "QCAD_PoissonProblem.hpp"
+
+#ifdef ALBANY_LCM
+#include "LCM/problems/ElasticityProblem.hpp"
+#include "LCM/problems/NonlinearElasticityProblem.hpp"
+#include "LCM/problems/ThermoElasticityProblem.hpp"
+#endif
 
 Albany::ProblemFactory::ProblemFactory(
        const Teuchos::RCP<Teuchos::ParameterList>& problemParams_,
@@ -53,6 +56,25 @@ Albany::ProblemFactory::create()
   else if (method == "Helmholtz 2D") {
     strategy = rcp(new Albany::Helmholtz2DProblem(problemParams, paramLib));
   }
+  else if (method == "Poisson 1D") {
+    strategy = rcp(new QCAD::PoissonProblem(problemParams, paramLib, 1));
+  }
+  else if (method == "Poisson 2D") {
+    strategy = rcp(new QCAD::PoissonProblem(problemParams, paramLib, 2));
+  }
+  else if (method == "Poisson 3D") {
+    strategy = rcp(new QCAD::PoissonProblem(problemParams, paramLib, 3));
+  }
+  else if (method == "ThermoElectrostatics 1D") {
+    strategy = rcp(new Albany::ThermoElectrostaticsProblem(problemParams, paramLib, 1));
+  }
+  else if (method == "ThermoElectrostatics 2D") {
+    strategy = rcp(new Albany::ThermoElectrostaticsProblem(problemParams, paramLib, 2));
+  }
+  else if (method == "ThermoElectrostatics 3D") {
+    strategy = rcp(new Albany::ThermoElectrostaticsProblem(problemParams, paramLib, 3));
+  }
+#ifdef ALBANY_LCM
   else if (method == "Elasticity 1D") {
     strategy = rcp(new Albany::ElasticityProblem(problemParams, paramLib, 1));
   }
@@ -80,24 +102,7 @@ Albany::ProblemFactory::create()
   else if (method == "ThermoElasticity 3D") {
     strategy = rcp(new Albany::ThermoElasticityProblem(problemParams, paramLib, 3));
   }
-  else if (method == "Poisson 1D") {
-    strategy = rcp(new QCAD::PoissonProblem(problemParams, paramLib, 1));
-  }
-  else if (method == "Poisson 2D") {
-    strategy = rcp(new QCAD::PoissonProblem(problemParams, paramLib, 2));
-  }
-  else if (method == "Poisson 3D") {
-    strategy = rcp(new QCAD::PoissonProblem(problemParams, paramLib, 3));
-  }
-  else if (method == "ThermoElectrostatics 1D") {
-    strategy = rcp(new Albany::ThermoElectrostaticsProblem(problemParams, paramLib, 1));
-  }
-  else if (method == "ThermoElectrostatics 2D") {
-    strategy = rcp(new Albany::ThermoElectrostaticsProblem(problemParams, paramLib, 2));
-  }
-  else if (method == "ThermoElectrostatics 3D") {
-    strategy = rcp(new Albany::ThermoElectrostaticsProblem(problemParams, paramLib, 3));
-  }
+#endif
   else {
     TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                        std::endl << 
