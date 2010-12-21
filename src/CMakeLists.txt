@@ -173,7 +173,7 @@ IF(ALBANY_LCM)
   )
 
   SET(HEADERS ${HEADERS}
-   ${LCM_DIR}/problems/ElasticityProblem.hpp 
+    ${LCM_DIR}/problems/ElasticityProblem.hpp
     ${LCM_DIR}/problems/NonlinearElasticityProblem.hpp 
     ${LCM_DIR}/problems/ThermoElasticityProblem.hpp 
   )
@@ -193,6 +193,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/ElasticityResid.cpp
     ${LCM_DIR}/evaluators/TLElasResid.cpp 
     ${LCM_DIR}/evaluators/EnergyPotential.cpp 
+    ${LCM_DIR}/evaluators/HardeningModulus.cpp
+    ${LCM_DIR}/evaluators/YieldStrength.cpp
   )
 
   SET(HEADERS ${HEADERS}
@@ -222,6 +224,10 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/TLElasResid_Def.hpp 
     ${LCM_DIR}/evaluators/EnergyPotential.hpp 
     ${LCM_DIR}/evaluators/EnergyPotential_Def.hpp 
+    ${LCM_DIR}/evaluators/HardeningModulus.hpp
+    ${LCM_DIR}/evaluators/HardeningModulus_Def.hpp
+    ${LCM_DIR}/evaluators/YieldStrength.hpp
+    ${LCM_DIR}/evaluators/YieldStrength_Def.hpp
   )
 ENDIF()
 

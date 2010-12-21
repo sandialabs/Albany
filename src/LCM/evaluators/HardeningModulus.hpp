@@ -15,61 +15,73 @@
 \********************************************************************/
 
 
-#ifndef J2STRESS_HPP
-#define J2STRESS_HPP
+#ifndef HARDENING_MOUDULS_HPP
+#define HARDENING_MOUDULS_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
-/** \brief J2Stress stress response
+#include "Teuchos_ParameterList.hpp"
+#include "Epetra_Vector.h"
+#include "Sacado_ParameterAccessor.hpp"
+#include "Stokhos_KL_ExponentialRandomField.hpp"
+#include "Teuchos_Array.hpp"
 
-    This evaluator computes stress based on a uncoupled J2Stress
-    potential
-
-*/
+/** 
+ * \brief Evaluates hardening modulus, either as a constant or a truncated
+ * KL expansion.
+ */
 namespace LCM {
 
 template<typename EvalT, typename Traits>
-class J2Stress : public PHX::EvaluatorWithBaseImpl<Traits>,
-		 public PHX::EvaluatorDerived<EvalT, Traits>  {
-
+class HardeningModulus : 
+  public PHX::EvaluatorWithBaseImpl<Traits>,
+  public PHX::EvaluatorDerived<EvalT, Traits>,
+  public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+  
 public:
-
-  J2Stress(const Teuchos::ParameterList& p);
-
-  void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
-
-  void evaluateFields(typename Traits::EvalData d);
-
-private:
-
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  typename EvalT::ScalarT norm(Intrepid::FieldContainer<ScalarT>);
-  void exponential_map(Intrepid::FieldContainer<ScalarT>, Intrepid::FieldContainer<ScalarT>);
+  HardeningModulus(Teuchos::ParameterList& p);
+  
+  void postRegistrationSetup(typename Traits::SetupData d,
+			     PHX::FieldManager<Traits>& vm);
+  
+  void evaluateFields(typename Traits::EvalData d);
+  
+  ScalarT& getValue(const std::string &n);
 
-  // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defgrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint> J;
-  PHX::MDField<ScalarT,Cell,QuadPoint> elasticModulus;
-  PHX::MDField<ScalarT,Cell,QuadPoint> poissonsRatio;
-  PHX::MDField<ScalarT,Cell,QuadPoint> yieldStrength;
+private:
+
+  std::size_t numQPs;
+  std::size_t numDims;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
   PHX::MDField<ScalarT,Cell,QuadPoint> hardeningModulus;
 
-  int numQPs;
-  int numDims;
+  //! Is conductivity constant, or random field
+  bool is_constant;
 
-  // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;
+  //! Constant value
+  ScalarT constant_value;
+
+  //! Optional dependence on Temperature (E = E_const + dHdT * T)
+  PHX::MDField<ScalarT,Cell,QuadPoint> Temperature;
+  bool isThermoElastic;
+  ScalarT dHdT_value;
+
+  //! Exponential random field
+  Teuchos::RCP< Stokhos::KL::ExponentialRandomField<MeshScalarT> > exp_rf_kl;
+
+  //! Values of the random variables
+  Teuchos::Array<ScalarT> rv;
 };
 }
 
 #ifndef PHAL_ETI
-#include "J2Stress_Def.hpp"
+#include "HardeningModulus_Def.hpp"
 #endif
 
 #endif
