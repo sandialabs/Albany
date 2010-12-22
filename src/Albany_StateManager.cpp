@@ -24,11 +24,13 @@ Albany::StateManager::StateManager () :
 void 
 Albany::StateManager::registerStateVariable(
   const std::string &name,
-  const Teuchos::RCP< PHX::DataLayout > &dl) 
+  const Teuchos::RCP< PHX::DataLayout > &dl,
+  const std::string &init_type) 
 {
   TEST_FOR_EXCEPT(stateVarsAreAllocated);
 
   statesToStore[name] = dl;
+  stateInit[name] = init_type;
 }
 
 void 
@@ -57,6 +59,65 @@ Albany::StateManager::allocateStateVariables(const int numWorksets)
     for (int ws=0; ws<numWorksets; ws++) {
       state1[ws][st->first] = Teuchos::rcp(new Intrepid::FieldContainer<RealType>(dims));
       state2[ws][st->first] = Teuchos::rcp(new Intrepid::FieldContainer<RealType>(dims));
+    }
+    st++;
+  }
+  *out << std::endl;
+}
+
+void 
+Albany::StateManager::initializeStateVariables(const int numWorksets)
+{
+  TEST_FOR_EXCEPT(!stateVarsAreAllocated);
+  stateVarsAreAllocated=true;
+  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+
+  // For each workset, loop over registered states
+  InitializationType::iterator st = stateInit.begin();
+
+  *out << std::endl;
+  while (st != stateInit.end()) {
+
+    std::string init_type = st->second;
+
+    *out << "StateManager: initializing state:  " << st->first << std::endl;
+
+    for (int ws=0; ws<numWorksets; ws++) {
+      if ( init_type == "zero" )
+      {
+	std::cout << "initialization type 'zero'" << std::endl;
+	state1[ws][st->first]->initialize(0.0);
+	state2[ws][st->first]->initialize(0.0);
+      }
+      else if ( init_type == "identity" )
+      {
+	std::cout << "initialization type 'identity'" << std::endl;
+	// we assume operating on the last two indices is correct
+	std::vector<PHX::DataLayout::size_type> dims;
+	state1[ws][st->first]->dimensions(dims);
+
+	int size = dims.size();
+	TEST_FOR_EXCEPTION(size != 4, std::logic_error, 
+			   "Something is wrong during identity state variable initialization");
+	int cells = dims[0];
+	int qps   = dims[1];
+	int dim   = dims[2];
+	int dim2  = dims[3];
+
+	TEST_FOR_EXCEPT( ! (dim == dim2) );
+	
+	for (int cell = 0; cell < cells; ++cell)
+	{
+	  for (int qp = 0; qp < qps; ++qp)
+	  {
+	    for (int i = 0; i < dim; ++i)
+	    {
+	      (*state1[ws][st->first])(cell,qp,i,i) = 1.0;
+	      (*state2[ws][st->first])(cell,qp,i,i) = 1.0;
+	    }
+	  }
+	}
+      }
     }
     st++;
   }

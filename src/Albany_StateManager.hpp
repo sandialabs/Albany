@@ -44,10 +44,14 @@ public:
   ~StateManager () { };
 
   //! Method to call multiple timed (before allocate) to register which states will be saved.
-  void registerStateVariable(const std::string &name, const Teuchos::RCP< PHX::DataLayout > &t);
+  void registerStateVariable(const std::string &name, const Teuchos::RCP< PHX::DataLayout > &t, 
+			     const std::string &init_type);
 
   //! Function to allocate storage, called once after registering and before get calls
   void allocateStateVariables(const int numWorksets=1);
+
+  //! Method to initialize state variables, called once after allocating and before get calls
+  void initializeStateVariables(const int numWorksets=1);
 
   //! Method to get the saved "old" state as a const
   Teuchos::RCP<const StateVariables> getOldStateVariables(const int workset=0) const;
@@ -68,6 +72,7 @@ private:
 private:
 
   typedef std::map<std::string, Teuchos::RCP<PHX::DataLayout> >  RegisteredStates;
+  typedef std::map<std::string, std::string >  InitializationType;
 
   //! boolean that takes care of swapping new and old state
   bool state1_is_old_state;
@@ -82,6 +87,9 @@ private:
 
   //! Container to hold the states that have been registered, to be allocated later
   RegisteredStates statesToStore;
+
+  //! Container to hold the initilization type for each state
+  InitializationType stateInit;
 };
 
 }

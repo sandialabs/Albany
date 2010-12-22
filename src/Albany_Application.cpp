@@ -140,6 +140,7 @@ Albany::Application::Application(
     *initial_x = *initial_guess;
 
   stateMgr.allocateStateVariables(numWorksets);
+  stateMgr.initializeStateVariables(numWorksets);
 
   // Create response map
   unsigned int total_num_responses = 0;

@@ -95,8 +95,11 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT smag2, smag, f, p, dgam;
 
   bool saveState = (workset.newState != Teuchos::null);
+  std::cout << "saveState: " << saveState << std::endl;
+  saveState = (workset.oldState != Teuchos::null);
+  std::cout << "saveState: " << saveState << std::endl;
   Albany::StateVariables& newState = *workset.newState;
-  Albany::StateVariables& oldState = *workset.newState;
+  Albany::StateVariables  oldState = *workset.oldState;
   Intrepid::FieldContainer<RealType>& Fpold   = *oldState["Fp"];
   Intrepid::FieldContainer<RealType>& eqpsold = *oldState["eqps"];
   Intrepid::FieldContainer<RealType>& FP      = *newState["Fp"];
@@ -119,8 +122,6 @@ evaluateFields(typename Traits::EvalData workset)
   RST::inverse(Fpinv, Fpold);
   RST::transpose(FpinvT, Fpinv);
   FST::tensorMultiplyDataData<ScalarT>(Cpinv, Fpinv, FpinvT);
-
-  std::cout << "Fp old: " << Fpold << std::endl;
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) 
   {

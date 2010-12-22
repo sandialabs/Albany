@@ -509,10 +509,10 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
       //Output
       p->set<string>("Stress Name", "Stress"); //qp_tensor also
  
-      //Declare what state data will need to be saved (name, layout)
-      stateMgr.registerStateVariable("stress",qp_scalar);
-      stateMgr.registerStateVariable("Fp",qp_tensor);
-      stateMgr.registerStateVariable("eqps",qp_scalar);
+      //Declare what state data will need to be saved (name, layout, init_type)
+      stateMgr.registerStateVariable("stress",qp_tensor,"zero");
+      stateMgr.registerStateVariable("Fp",qp_tensor,"identity");
+      stateMgr.registerStateVariable("eqps",qp_scalar,"zero");
 
       evaluators_to_build["Stress"] = p;
     }
