@@ -223,6 +223,16 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/EnergyPotential.hpp 
     ${LCM_DIR}/evaluators/EnergyPotential_Def.hpp 
   )
+
+  #LCM utils
+  SET(SOURCES ${SOURCES}
+    ${LCM_DIR}/utils/Tensor.cc
+  )
+
+  SET(HEADERS ${HEADERS}
+    ${LCM_DIR}/utils/Tensor.h 
+  )
+
 ENDIF()
 
 SET(SOURCES ${SOURCES}
