@@ -26,13 +26,17 @@ namespace LCM {
 template<typename EvalT, typename Traits>
 J2Stress<EvalT, Traits>::
 J2Stress(const Teuchos::ParameterList& p) :
-  lcg              (p.get<std::string>                   ("LCG Name"),
+  defgrad          (p.get<std::string>                   ("DefGrad Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
   stress           (p.get<std::string>                   ("Stress Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
   elasticModulus   (p.get<std::string>                   ("Elastic Modulus Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   poissonsRatio    (p.get<std::string>                   ("Poissons Ratio Name"),
+	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  hardeningModulus (p.get<std::string>                   ("Hardening Modulus Name"),
+	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  yieldStrength    (p.get<std::string>                   ("Yield Strength Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   J                (p.get<std::string>                   ("DetDefGrad Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") )
@@ -45,9 +49,11 @@ J2Stress(const Teuchos::ParameterList& p) :
   numQPs  = dims[1];
   numDims = dims[2];
 
-  this->addDependentField(lcg);
+  this->addDependentField(defgrad);
   this->addDependentField(J);
   this->addDependentField(elasticModulus);
+  this->addDependentField(hardeningModulus);
+  this->addDependentField(yieldStrength);
   // PoissonRatio not used in 1D stress calc
   if (numDims>1) this->addDependentField(poissonsRatio);
 
@@ -64,9 +70,11 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(stress,fm);
-  this->utils.setFieldData(lcg,fm);
+  this->utils.setFieldData(defgrad,fm);
   this->utils.setFieldData(J,fm);
   this->utils.setFieldData(elasticModulus,fm);
+  this->utils.setFieldData(hardeningModulus,fm);
+  this->utils.setFieldData(yieldStrength,fm);
   if (numDims>1) this->utils.setFieldData(poissonsRatio,fm);
 }
 
@@ -75,67 +83,237 @@ template<typename EvalT, typename Traits>
 void J2Stress<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  typedef Intrepid::FunctionSpaceTools FST;
+  typedef Intrepid::RealSpaceTools<ScalarT> RST;
+
   ScalarT kappa;
-  ScalarT mu;
-  ScalarT Jm53;
+  ScalarT mu, mubar;
+  ScalarT K;
+  ScalarT Y;
+  ScalarT Jm23;
+  ScalarT trace;
+  ScalarT smag2, smag, f, p, dgam;
+
   bool saveState = (workset.newState != Teuchos::null);
+  Albany::StateVariables& newState = *workset.newState;
+  Albany::StateVariables& oldState = *workset.newState;
+  Intrepid::FieldContainer<RealType>& Fpold   = *oldState["Fp"];
+  Intrepid::FieldContainer<RealType>& eqpsold = *oldState["eqps"];
+  Intrepid::FieldContainer<RealType>& FP      = *newState["Fp"];
+  Intrepid::FieldContainer<RealType>& EQPS    = *newState["eqps"];
+  Intrepid::FieldContainer<RealType>& STRESS  = *newState["stress"];
 
-  switch (numDims) {
-  case 1:
-    Intrepid::FunctionSpaceTools::tensorMultiplyDataData<ScalarT>(stress, elasticModulus, lcg);
-    break;
-  case 2:
-    // Compute Stress (with the plane strain assumption for now)
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
-	kappa = elasticModulus(cell,qp) / ( 3. * ( 1. - 2. * poissonsRatio(cell,qp) ) );
-	mu    = elasticModulus(cell,qp) / ( 2. * ( 1. - poissonsRatio(cell,qp) ) );
-	Jm53  = std::pow(J(cell,qp), -5./3.);
-	stress(cell,qp,0,0) = 0.5 * kappa * ( J(cell,qp) - 1. / J(cell,qp) ) 
-	  + mu * Jm53 * ( lcg(cell,qp,0,0) - ( 1. / 3. ) * ( lcg(cell,qp,0,0) + lcg(cell,qp,1,1) ) );
-	stress(cell,qp,1,1) = 0.5 * kappa * ( J(cell,qp) - 1. / J(cell,qp) ) 
-	  + mu * Jm53 * ( lcg(cell,qp,1,1) - ( 1. / 3. ) * ( lcg(cell,qp,0,0) + lcg(cell,qp,1,1) ) );
-	stress(cell,qp,0,1) = mu * Jm53 * ( lcg(cell,qp,0,1) );
-	stress(cell,qp,1,0) = stress(cell,qp,0,1); 
+  // scratch space FCs
+  Intrepid::FieldContainer<ScalarT> be(numDims, numDims);
+  Intrepid::FieldContainer<ScalarT> s(numDims, numDims);
+  Intrepid::FieldContainer<ScalarT> N(numDims, numDims);
+  Intrepid::FieldContainer<ScalarT> A(numDims, numDims);
+  Intrepid::FieldContainer<ScalarT> expA(numDims, numDims);
+  Intrepid::FieldContainer<ScalarT> Fp(workset.worksetSize, numQPs, numDims, numDims);
+  Intrepid::FieldContainer<ScalarT> Fpinv(workset.worksetSize, numQPs, numDims, numDims);
+  Intrepid::FieldContainer<ScalarT> FpinvT(workset.worksetSize, numQPs, numDims, numDims);
+  Intrepid::FieldContainer<ScalarT> Cpinv(workset.worksetSize, numQPs, numDims, numDims);
+  Intrepid::FieldContainer<ScalarT> eqps(workset.worksetSize, numQPs);
+
+  // compute Cp_{n}^{-1}
+  RST::inverse(Fpinv, Fpold);
+  RST::transpose(FpinvT, Fpinv);
+  FST::tensorMultiplyDataData<ScalarT>(Cpinv, Fpinv, FpinvT);
+
+  std::cout << "Fp old: " << Fpold << std::endl;
+
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) 
+  {
+    for (std::size_t qp=0; qp < numQPs; ++qp) 
+    {
+      // local parameters
+      kappa = elasticModulus(cell,qp) / ( 3. * ( 1. - 2. * poissonsRatio(cell,qp) ) );
+      mu    = elasticModulus(cell,qp) / ( 2. * ( 1. - poissonsRatio(cell,qp) ) );
+      K     = hardeningModulus(cell,qp);
+      Y     = yieldStrength(cell,qp);
+      Jm23  = std::pow( J(cell,qp), -2./3. );
+
+      // Compute Trial State      
+      for (std::size_t i=0; i < numDims; ++i)
+      {	
+	for (std::size_t j=0; j < numDims; ++j)
+	{
+	  be(cell,qp,i,j) = 0.0;
+	  for (std::size_t p=0; p < numDims; ++p)
+	  {
+	    for (std::size_t q=0; q < numDims; ++q)
+	    {
+	      be(i,j) += Jm23 * defgrad(cell,qp,i,p) * Cpinv(cell,qp,p,q) * defgrad(cell,qp,j,q);
+	    }
+	  }
+	}
+      } 
+
+      trace = 0.0;
+      for (std::size_t i=0; i < numDims; ++i)
+	trace += be(i,i);
+      trace /= numDims;
+      mubar = trace*mu;
+      for (std::size_t i=0; i < numDims; ++i)
+      {	
+	for (std::size_t j=0; j < numDims; ++j)
+	{
+	  s(i,j) = mu * be(i,j);
+	}
+	s(i,i) -= mu * trace;
+      }	  
+      
+      // check for yielding
+      // smag = s.norm();
+      smag2 = 0.0;
+      for (std::size_t i=0; i < numDims; ++i)	
+	for (std::size_t j=0; j < numDims; ++j)
+	  smag2 += s(i,j) * s(i,j);
+      smag = std::sqrt(smag2);
+      
+      f = smag - sqrt(2./3.)*( K * eqpsold(cell,qp) - Y );
+
+      if (f > 1E-12)
+      {
+	// return mapping algorithm
+	dgam = ( f / ( 2. * mubar) ) / ( 1. + K / ( 3. * mubar ) );
+
+	// plastic direction
+	for (std::size_t i=0; i < numDims; ++i)	
+	  for (std::size_t j=0; j < numDims; ++j)
+	    N(i,j) = (1/smag) * s(i,j);
+
+	for (std::size_t i=0; i < numDims; ++i)	
+	  for (std::size_t j=0; j < numDims; ++j)
+	    s(i,j) -= 2. * mubar * dgam * N(i,j);
+
+	// update eqps
+	eqps(cell,qp) = eqpsold(cell,qp) + sqrt(2./3.) * dgam;
+
+	// exponential map to get Fp
+	for (std::size_t i=0; i < numDims; ++i)	
+	  for (std::size_t j=0; j < numDims; ++j)
+	    A(i,j) = dgam * N(i,j);
+
+	exponential_map(expA, A);
+
+	for (std::size_t i=0; i < numDims; ++i)	
+	{
+	  for (std::size_t j=0; j < numDims; ++j)
+	  {
+	    Fp(cell,qp,i,j) = 0.0;
+	    for (std::size_t p=0; p < numDims; ++p)
+	    {
+	      Fp(cell,qp,i,j) += expA(i,p) * Fpold(cell,qp,p,j);
+	    }
+	  }
+	}
+      } 
+      else
+      {
+	// set state variables to old values
+	eqps(cell, qp) = eqpsold(cell,qp);
+	for (std::size_t i=0; i < numDims; ++i)	
+	  for (std::size_t j=0; j < numDims; ++j)
+	    Fp(cell,qp,i,j) = Fpold(cell,qp,i,j);
+      }
+      
+
+      // compute pressure
+      p = kappa * ( J(cell,qp) - 1 / ( J(cell,qp) ) );
+      
+      // compute stress
+      for (std::size_t i=0; i < numDims; ++i)	
+      {
+	for (std::size_t j=0; j < numDims; ++j)
+	{
+	  stress(cell,qp,i,j) = s(i,j) / J(cell,qp);
+	}
+	stress(cell,qp,i,i) += p;
       }
     }
-    break;
-  case 3:
-    // Compute Stress
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
-	kappa = elasticModulus(cell,qp) / ( 3. * ( 1. - 2. * poissonsRatio(cell,qp) ) );
-	mu    = elasticModulus(cell,qp) / ( 2. * ( 1. - poissonsRatio(cell,qp) ) );
-	Jm53  = std::pow(J(cell,qp), -5./3.);
-	stress(cell,qp,0,0) = 0.5 * kappa * ( J(cell,qp) - 1. / J(cell,qp) ) 
-	  + mu * Jm53 * ( lcg(cell,qp,0,0) - ( 1. / 3. ) * ( lcg(cell,qp,0,0) + lcg(cell,qp,1,1) + lcg(cell,qp,2,2) ) );
-	stress(cell,qp,1,1) = 0.5 * kappa * ( J(cell,qp) - 1. / J(cell,qp) ) 
-	  + mu * Jm53 * ( lcg(cell,qp,1,1) - ( 1. / 3. ) * ( lcg(cell,qp,0,0) + lcg(cell,qp,1,1) + lcg(cell,qp,2,2) ) );
-	stress(cell,qp,2,2) = 0.5 * kappa * ( J(cell,qp) - 1. / J(cell,qp) ) 
-	  + mu * Jm53 * ( lcg(cell,qp,2,2) - ( 1. / 3. ) * ( lcg(cell,qp,0,0) + lcg(cell,qp,1,1) + lcg(cell,qp,2,2) ) );
-	stress(cell,qp,0,1) = mu * Jm53 * ( lcg(cell,qp,0,1) );
-	stress(cell,qp,1,2) = mu * Jm53 * ( lcg(cell,qp,1,2) );
-	stress(cell,qp,2,0) = mu * Jm53 * ( lcg(cell,qp,2,0) );
-	stress(cell,qp,1,0) = stress(cell,qp,0,1);
-	stress(cell,qp,2,1) = stress(cell,qp,1,2);
-	stress(cell,qp,0,2) = stress(cell,qp,2,0);
-      }
-    }
-    break;
   }
 
-  if (saveState) {
-    Albany::StateVariables& newState = *workset.newState;
-    Intrepid::FieldContainer<RealType>& savedJ2Stress = *newState["J2StressState"];
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) 
-      for (std::size_t qp=0; qp < numQPs; ++qp) 
-        for (std::size_t i=0; i < numDims; ++i)
-           for (std::size_t j=0; j < numDims; ++j)
-             savedJ2Stress(cell,qp,i,j) =
-               Sacado::ScalarValue<ScalarT>::eval(stress(cell,qp,i,j));
+
+  // Save Stress as State Variable
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) 
+  {
+    for (std::size_t qp=0; qp < numQPs; ++qp) 
+    {
+      EQPS(cell,qp) = Sacado::ScalarValue<ScalarT>::eval(eqps(cell,qp));
+      for (std::size_t i=0; i < numDims; ++i)
+      {
+	for (std::size_t j=0; j < numDims; ++j)
+	{
+	  STRESS(cell,qp,i,j) = Sacado::ScalarValue<ScalarT>::eval(stress(cell,qp,i,j));
+	  FP(cell,qp,i,j) = Sacado::ScalarValue<ScalarT>::eval(Fp(cell,qp,i,j));
+	}
+      }
+    }
   }
 }
-
 //**********************************************************************
+template<typename EvalT, typename Traits>
+void J2Stress<EvalT, Traits>::
+exponential_map(Intrepid::FieldContainer<ScalarT> expA, Intrepid::FieldContainer<ScalarT> A)
+{
+  Intrepid::FieldContainer<ScalarT> tmp(numDims, numDims);
+  Intrepid::FieldContainer<ScalarT> tmp2(numDims, numDims);
+  tmp.initialize(0.0);
+  expA.initialize(0.0);
+
+  bool converged = false;
+  ScalarT norm0 = norm(A);
+
+  for (std::size_t i=0; i < numDims; ++i)
+  {
+    tmp(i,i) = 1.0;
+  }
+
+  ScalarT k = 0.0;
+  while (!converged)
+  {
+    // expA += tmp
+    for (std::size_t i=0; i < numDims; ++i)
+      for (std::size_t j=0; j < numDims; ++j)
+	expA(i,j) += tmp(i,j);
+
+    tmp2.initialize(0.0);
+    for (std::size_t i=0; i < numDims; ++i)
+      for (std::size_t j=0; j < numDims; ++j)
+	for (std::size_t p=0; p < numDims; ++p)
+	  tmp2(i,j) += A(i,p) * tmp(p,j);
+
+    // tmp = tmp2
+    k = k + 1.0;
+    for (std::size_t i=0; i < numDims; ++i)
+      for (std::size_t j=0; j < numDims; ++j)
+	tmp(i,j) = (1/k) * tmp2(i,j);
+
+    if (norm(tmp)/norm0 < 1.E-14 ) converged = true;
+    
+    TEST_FOR_EXCEPTION( k > 50.0, std::logic_error,
+			std::endl << "Error in exponential map, k = " << k << std::endl);
+    
+  }
 }
+//**********************************************************************
+template<typename EvalT, typename Traits>
+typename EvalT::ScalarT J2Stress<EvalT, Traits>::
+norm(Intrepid::FieldContainer<ScalarT> A)
+{
+  ScalarT max(0.0), colsum;
+
+  for (int i(0); i < numDims; ++i)
+  {
+    colsum = 0.0;
+    for (int j(0); j < numDims; ++j)
+      colsum += A(i,j);
+    max = (colsum > max) ? colsum : max;  
+  }
+
+  return max;
+}
+//**********************************************************************
+} // end LCM
 

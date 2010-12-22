@@ -258,7 +258,6 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
     evaluators_to_build["Compute Basis Functions"] = p;
   }
 
-
   { // Elastic Modulus
     RCP<ParameterList> p = rcp(new ParameterList);
 
@@ -407,71 +406,116 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
 
     evaluators_to_build["DetDefGrad"] = p;
   }
-
-  { // LCG
-    RCP<ParameterList> p = rcp(new ParameterList("LCG"));
-
-    int type = FactoryTraits<AlbanyTraits>::id_lcg;
-    p->set<int>("Type", type);
-
-    //Input
-    p->set<string>("DefGrad Name", "Deformation Gradient");
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
-
-    //Output
-    p->set<string>("LCG Name", "LCG"); //qp_tensor also
-
-    evaluators_to_build["LCG"] = p;
-  }
-
   
  if (matModel == "NeoHookean")
-  { // Stress
-    RCP<ParameterList> p = rcp(new ParameterList("Stress"));
+ {
 
-    int type = FactoryTraits<AlbanyTraits>::id_neohookean_stress;
-    p->set<int>("Type", type);
+   { // LCG
+     RCP<ParameterList> p = rcp(new ParameterList("LCG"));
 
-    //Input
-    p->set<string>("LCG Name", "LCG");
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
+     int type = FactoryTraits<AlbanyTraits>::id_lcg;
+     p->set<int>("Type", type);
+     
+     //Input
+     p->set<string>("DefGrad Name", "Deformation Gradient");
+     p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
 
-    p->set<string>("Elastic Modulus Name", "Elastic Modulus");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+     //Output
+     p->set<string>("LCG Name", "LCG"); //qp_tensor also
 
-    p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // qp_scalar also
-    p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient");  // qp_scalar also
+     evaluators_to_build["LCG"] = p;
+   }
 
-    //Output
-    p->set<string>("Stress Name", "Stress"); //qp_tensor also
+  
+   { // Stress
+     RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
-    evaluators_to_build["Stress"] = p;
+     int type = FactoryTraits<AlbanyTraits>::id_neohookean_stress;
+     p->set<int>("Type", type);
+
+     //Input
+     p->set<string>("LCG Name", "LCG");
+     p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
+
+     p->set<string>("Elastic Modulus Name", "Elastic Modulus");
+     p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+
+     p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // qp_scalar also
+     p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient");  // qp_scalar also
+
+     //Output
+     p->set<string>("Stress Name", "Stress"); //qp_tensor also
+
+     evaluators_to_build["Stress"] = p;
+   }
   }
   else if (matModel == "J2")
-  { // Stress
-    RCP<ParameterList> p = rcp(new ParameterList("Stress"));
+  { 
+    { // Hardening Modulus
+      RCP<ParameterList> p = rcp(new ParameterList);
 
-    int type = FactoryTraits<AlbanyTraits>::id_j2_stress;
-    p->set<int>("Type", type);
+      int type = FactoryTraits<AlbanyTraits>::id_hardening_modulus;
+      p->set<int>("Type", type);
 
-    //Input
-    p->set<string>("LCG Name", "LCG");
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
+      p->set<string>("QP Variable Name", "Hardening Modulus");
+      p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+      p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
+      p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+      p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
 
-    p->set<string>("Elastic Modulus Name", "Elastic Modulus");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+      Teuchos::ParameterList& paramList = params->sublist("Hardening Modulus");
+      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-    p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // qp_scalar also
-    p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient");  // qp_scalar also
+      evaluators_to_build["Hardening Modulus"] = p;
+    }
 
-    //Output
-    p->set<string>("Stress Name", "Stress"); //qp_tensor also
+    { // Yield Strength
+      RCP<ParameterList> p = rcp(new ParameterList);
+
+      int type = FactoryTraits<AlbanyTraits>::id_yield_strength;
+      p->set<int>("Type", type);
+
+      p->set<string>("QP Variable Name", "Yield Strength");
+      p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+      p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
+      p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+      p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+
+      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+      Teuchos::ParameterList& paramList = params->sublist("Yield Strength");
+      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+      evaluators_to_build["Yield Strength"] = p;
+    }
+    {// Stress
+      RCP<ParameterList> p = rcp(new ParameterList("Stress"));
+
+      int type = FactoryTraits<AlbanyTraits>::id_j2_stress;
+      p->set<int>("Type", type);
+
+      //Input
+      p->set<string>("DefGrad Name", "Deformation Gradient");
+      p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
+
+      p->set<string>("Elastic Modulus Name", "Elastic Modulus");
+      p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+
+      p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // qp_scalar also
+      p->set<string>("Hardening Modulus Name", "Hardening Modulus"); // qp_scalar also
+      p->set<string>("Yield Strength Name", "Yield Strength"); // qp_scalar also
+      p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient");  // qp_scalar also
+
+      //Output
+      p->set<string>("Stress Name", "Stress"); //qp_tensor also
  
-    //Declare what state data will need to be saved (name, layout)
-    stateMgr.registerStateVariable("J2StressState",qp_tensor);
-    stateMgr.registerStateVariable("junkTest",qp_scalar);
+      //Declare what state data will need to be saved (name, layout)
+      stateMgr.registerStateVariable("stress",qp_scalar);
+      stateMgr.registerStateVariable("Fp",qp_tensor);
+      stateMgr.registerStateVariable("eqps",qp_scalar);
 
-    evaluators_to_build["Stress"] = p;
+      evaluators_to_build["Stress"] = p;
+    }
   }
   else
     TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
@@ -558,6 +602,11 @@ Albany::NonlinearElasticityProblem::getValidProblemParameters() const
   validPL->sublist("Elastic Modulus", false, "");
   validPL->sublist("Poissons Ratio", false, "");
   validPL->sublist("Material Model", false, "");
+  if (matModel == "J2")
+  {
+    validPL->sublist("Hardening Modulus", false, "");
+    validPL->sublist("Yield Strength", false, "");
+  }
 
   return validPL;
 }
