@@ -283,6 +283,7 @@ ENAT::SGNOXSolver::getValidSGParameters() const
   validPL->set<std::string>("Triple Product Size", "","");
   validPL->set<bool>("Rebalance Stochastic Graph", false, "");
   validPL->sublist("Isorropia", false, "");
+  validPL->set<bool>("Ignore SG Residual In Jacobian", false, "");
   return validPL;
 }
 

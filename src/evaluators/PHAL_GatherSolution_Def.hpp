@@ -368,6 +368,7 @@ evaluateFields(typename Traits::EvalData workset)
         if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
         else                   valptr = &(this->val[eq])(cell,node);
 	*valptr = SGFadType(num_dof, 0.0);
+	valptr->setUpdateValue(!workset.ignore_residual);
 	valptr->fastAccessDx(neq * node + eq + this->offset) = workset.j_coeff;
 	valptr->val().reset(sg_expansion);
 	valptr->val().copyForWrite();

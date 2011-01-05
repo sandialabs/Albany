@@ -87,6 +87,13 @@ struct Workset {
   Teuchos::RCP<const Albany::StateVariables> oldState;
   Teuchos::RCP<Albany::StateVariables> newState;
 
+  // Flag indicating whether to ignore residual calculations in the 
+  // Jacobian calculation.  This only works for some problems where the 
+  // the calculation of the Jacobian doesn't require calculation of the
+  // residual (such as linear problems), but if it does work it can
+  // significantly reduce Jacobian calculation cost.
+  bool ignore_residual;
+
 };
 
 }
