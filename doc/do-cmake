@@ -22,8 +22,14 @@ cmake \
  -D ALBANY_TRILINOS_DIR:FILEPATH=/home/agsalin/Trilinos/build_july10 \
  ..
 
-# Some options:
+## Some options (As listed below, they will change the default):
 #
 #  -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
 #  -D ALBANY_ENABLE_CUBIT:BOOL=ON \
+#  -D ENABLE_LCM:BOOL=OFF \
+
+## Use this line to override Trilinos CXX Flags:
+#  -D CMAKE_CXX_FLAGS:STRING=" -O3 " \
+## Use this line to append more CXX Flags:
+#  -D ALBANY_CXX_FLAGS:STRING="-Wno-builtin-macro-redefined" \
 
