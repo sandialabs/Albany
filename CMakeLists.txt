@@ -43,6 +43,7 @@ MESSAGE("   Trilinos_TPL_INCLUDE_DIRS = ${Trilinos_TPL_INCLUDE_DIRS}")
 MESSAGE("   Trilinos_TPL_LIBRARIES = ${Trilinos_TPL_LIBRARIES}")
 MESSAGE("   Trilinos_TPL_LIBRARY_DIRS = ${Trilinos_TPL_LIBRARY_DIRS}")
 MESSAGE("   Trilinos_BUILD_SHARED_LIBS = ${Trilinos_BUILD_SHARED_LIBS}")
+MESSAGE("   Trilinos_CXX_COMPILER_FLAGS = ${Trilinos_CXX_COMPILER_FLAGS}")
 MESSAGE("End of Trilinos details\n")
 
 SET(CMAKE_CXX_COMPILER ${Trilinos_CXX_COMPILER} )
@@ -53,12 +54,16 @@ IF (CMAKE_Fortran_COMPILER) # Enable Fortran if it is enabled in Trilinos.
   ENABLE_LANGUAGE(Fortran) 
 ENDIF()
 
-add_definitions("-g -O2 -Wno-builtin-macro-redefined")
 # End of setup and error checking
 #  NOTE: PROJECT command checks for compilers, so this statement
 #        is moved AFTER setting CMAKE_CXX_COMPILER from Trilinos
 
 PROJECT(Albany)
+
+IF (NOT CMAKE_CXX_FLAGS)
+  SET(CMAKE_CXX_FLAGS ${Trilinos_CXX_COMPILER_FLAGS} )
+ENDIF()
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ALBANY_CXX_FLAGS}")
 
 
 MESSAGE("-- Looking for Dakota (via TriKota):")
