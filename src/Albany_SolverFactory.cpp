@@ -24,6 +24,7 @@
 #include "Piro_Epetra_NOXSolver.hpp"
 #include "Piro_Epetra_LOCASolver.hpp"
 #include "Piro_Epetra_RythmosSolver.hpp"
+#include "Piro_Epetra_VelocityVerletSolver.hpp"
 
 #include "Teuchos_XMLParameterListHelpers.hpp"
 #include "Teuchos_TestForException.hpp"
@@ -72,6 +73,8 @@ Albany::SolverFactory::create(
     bool transient = problemParams.get("Transient", false);
     bool continuation = problemParams.get("Continuation", false);
     bool stochastic = problemParams.get("Stochastic", false);
+    bool secondOrder = false;
+    if (transient) secondOrder = problemParams.get("Second Order", false);
 
     //set up parameters
     ParameterList& parameterParams = problemParams.sublist("Parameters");
@@ -120,13 +123,15 @@ Albany::SolverFactory::create(
     if (appParams->sublist("VTK").get("Do Visualization", false) == true) {
       vtk = rcp(new Albany_VTK(appParams->sublist("VTK")));
     }
-    if (transient)
+    if (transient && !secondOrder)
       Rythmos_observer = rcp(new Albany_RythmosObserver(vtk, app));
     else  // both NOX and LOCA can use this observer...
        NOX_observer = rcp(new Albany_NOXObserver(vtk, app));
 
-    if (transient) 
+    if (transient && !secondOrder) 
       return  rcp(new Piro::Epetra::RythmosSolver(appParams, model, Rythmos_observer));
+    else if (transient && secondOrder)
+      return  rcp(new Piro::Epetra::VelocityVerletSolver(appParams, model, NOX_observer));
     else if (continuation)
       // add save eigen data here
       return  rcp(new Piro::Epetra::LOCASolver(appParams, model, NOX_observer));
@@ -333,6 +338,7 @@ Albany::SolverFactory::getValidAppParameters() const
   validPL->sublist("Regression Results", false, "Regression Results sublist");
   validPL->sublist("VTK",                false, "VTK sublist");
   validPL->sublist("Rythmos",            false, "Rythmos sublist");
+  validPL->sublist("Velocity Verlet",    false, "Piro Velocity Verlet sublist");
   validPL->sublist("LOCA",               false, "LOCA sublist");
   validPL->sublist("NOX",                false, "NOX sublist");
   validPL->sublist("Analysis",           false, "Analysis sublist");
