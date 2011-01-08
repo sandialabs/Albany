@@ -61,6 +61,7 @@ private:
   bool haveSource;
   bool transient;
   int numQPs, numDims;
+  Intrepid::FieldContainer<ScalarT> flux;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> TResidual;

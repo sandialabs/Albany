@@ -63,6 +63,22 @@ private:
   int numQPs;
   int numDims;
 
+  // scratch space FCs
+  Intrepid::FieldContainer<ScalarT> be;
+  Intrepid::FieldContainer<ScalarT> s;
+  Intrepid::FieldContainer<ScalarT> N;
+  Intrepid::FieldContainer<ScalarT> A;
+  Intrepid::FieldContainer<ScalarT> expA;
+  Intrepid::FieldContainer<ScalarT> Fp;
+  Intrepid::FieldContainer<ScalarT> Fpinv;
+  Intrepid::FieldContainer<ScalarT> FpinvT;
+  Intrepid::FieldContainer<ScalarT> Cpinv;
+  Intrepid::FieldContainer<ScalarT> eqps;
+
+  Intrepid::FieldContainer<ScalarT> tmp;
+  Intrepid::FieldContainer<ScalarT> tmp2;
+
+
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;
 };

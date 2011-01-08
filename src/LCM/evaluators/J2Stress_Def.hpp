@@ -48,6 +48,7 @@ J2Stress(const Teuchos::ParameterList& p) :
   tensor_dl->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
+  int worksetSize = dims[0];
 
   this->addDependentField(defgrad);
   this->addDependentField(J);
@@ -58,6 +59,20 @@ J2Stress(const Teuchos::ParameterList& p) :
   if (numDims>1) this->addDependentField(poissonsRatio);
 
   this->addEvaluatedField(stress);
+
+  // scratch space FCs
+  be.resize(numDims, numDims);
+  s.resize(numDims, numDims);
+  N.resize(numDims, numDims);
+  A.resize(numDims, numDims);
+  expA.resize(numDims, numDims);
+  Fp.resize(worksetSize, numQPs, numDims, numDims);
+  Fpinv.resize(worksetSize, numQPs, numDims, numDims);
+  FpinvT.resize(worksetSize, numQPs, numDims, numDims);
+  Cpinv.resize(worksetSize, numQPs, numDims, numDims);
+  eqps.resize(worksetSize, numQPs);
+  tmp.resize(numDims, numDims);
+  tmp2.resize(numDims, numDims);
 
   this->setName("Stress"+PHX::TypeString<EvalT>::value);
 
@@ -105,18 +120,6 @@ evaluateFields(typename Traits::EvalData workset)
   Intrepid::FieldContainer<RealType>& FP      = *newState["Fp"];
   Intrepid::FieldContainer<RealType>& EQPS    = *newState["eqps"];
   Intrepid::FieldContainer<RealType>& STRESS  = *newState["stress"];
-
-  // scratch space FCs
-  Intrepid::FieldContainer<ScalarT> be(numDims, numDims);
-  Intrepid::FieldContainer<ScalarT> s(numDims, numDims);
-  Intrepid::FieldContainer<ScalarT> N(numDims, numDims);
-  Intrepid::FieldContainer<ScalarT> A(numDims, numDims);
-  Intrepid::FieldContainer<ScalarT> expA(numDims, numDims);
-  Intrepid::FieldContainer<ScalarT> Fp(workset.worksetSize, numQPs, numDims, numDims);
-  Intrepid::FieldContainer<ScalarT> Fpinv(workset.worksetSize, numQPs, numDims, numDims);
-  Intrepid::FieldContainer<ScalarT> FpinvT(workset.worksetSize, numQPs, numDims, numDims);
-  Intrepid::FieldContainer<ScalarT> Cpinv(workset.worksetSize, numQPs, numDims, numDims);
-  Intrepid::FieldContainer<ScalarT> eqps(workset.worksetSize, numQPs);
 
   // compute Cp_{n}^{-1}
   RST::inverse(Fpinv, Fpold);
@@ -258,8 +261,6 @@ template<typename EvalT, typename Traits>
 void J2Stress<EvalT, Traits>::
 exponential_map(Intrepid::FieldContainer<ScalarT> expA, Intrepid::FieldContainer<ScalarT> A)
 {
-  Intrepid::FieldContainer<ScalarT> tmp(numDims, numDims);
-  Intrepid::FieldContainer<ScalarT> tmp2(numDims, numDims);
   tmp.initialize(0.0);
   expA.initialize(0.0);
 

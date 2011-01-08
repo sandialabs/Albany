@@ -52,6 +52,13 @@ TLElasResid(const Teuchos::ParameterList& p) :
   numNodes = dims[1];
   numQPs   = dims[2];
   numDims  = dims[3];
+  int worksetSize = dims[0];
+
+  // Works space FCs
+  F_inv.resize(worksetSize, numQPs, numDims, numDims);
+  F_invT.resize(worksetSize, numQPs, numDims, numDims);
+  JF_invT.resize(worksetSize, numQPs, numDims, numDims);
+  P.resize(worksetSize, numQPs, numDims, numDims);
 }
 
 //**********************************************************************
@@ -76,10 +83,6 @@ evaluateFields(typename Traits::EvalData workset)
   typedef Intrepid::FunctionSpaceTools FST;
   typedef Intrepid::RealSpaceTools<ScalarT> RST;
 
-  Intrepid::FieldContainer<ScalarT> F_inv(workset.worksetSize, numQPs, numDims, numDims);
-  Intrepid::FieldContainer<ScalarT> F_invT(workset.worksetSize, numQPs, numDims, numDims);
-  Intrepid::FieldContainer<ScalarT> JF_invT(workset.worksetSize, numQPs, numDims, numDims);
-  Intrepid::FieldContainer<ScalarT> P(workset.worksetSize, numQPs, numDims, numDims);
   RST::inverse(F_inv, defgrad);
   RST::transpose(F_invT, F_inv);
   FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);

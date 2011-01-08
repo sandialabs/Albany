@@ -58,6 +58,9 @@ private:
   Teuchos::RCP <Intrepid::Cubature<RealType> > cubature;
   Teuchos::RCP <shards::CellTopology> cellType;
 
+  Intrepid::FieldContainer<RealType> refPoints;
+  Intrepid::FieldContainer<RealType> refWeights;
+
   // Output:
   //! Values at quadrature points
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coords_qp;

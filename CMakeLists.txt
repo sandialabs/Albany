@@ -101,7 +101,9 @@ ELSE()
   SET(ALBANY_IOSS FALSE)
 ENDIF()
 
-# set optional dependency on LCM
+# set optional dependency on LCM, defaults to Enabled
+##    This changes default to ON:
+##    IF (NOT ENABLE_LCM AND DEFINED ENABLE_LCM)
 IF (NOT ENABLE_LCM)
   MESSAGE("-- LCM is NOT Enabled.")
   SET(ALBANY_LCM FALSE)

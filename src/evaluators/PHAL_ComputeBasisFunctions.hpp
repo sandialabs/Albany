@@ -57,6 +57,16 @@ private:
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
   Teuchos::RCP<shards::CellTopology> cellType;
 
+  // Temporary FieldContainers
+  Intrepid::FieldContainer<RealType> val_at_cub_points;
+  Intrepid::FieldContainer<RealType> grad_at_cub_points;
+  Intrepid::FieldContainer<RealType> refPoints;
+  Intrepid::FieldContainer<RealType> refWeights;
+  Intrepid::FieldContainer<MeshScalarT> jacobian;
+  Intrepid::FieldContainer<MeshScalarT> jacobian_inv;
+  Intrepid::FieldContainer<MeshScalarT> jacobian_det;
+  Intrepid::FieldContainer<MeshScalarT> weighted_measure;
+
   // Output:
   //! Basis Functions at quadrature points
   PHX::MDField<RealType,Cell,Node,QuadPoint> BF;

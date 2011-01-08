@@ -47,6 +47,37 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p) :
   this->addEvaluatedField(GradBF);
   this->addEvaluatedField(wGradBF);
 
+  // Get Dimensions
+  Teuchos::RCP<PHX::DataLayout> vector_dl = p.get< Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout");
+  std::vector<PHX::DataLayout::size_type> dim;
+  vector_dl->dimensions(dim);
+
+  int containerSize = dim[0];
+  numNodes = dim[1];
+  numQPs = dim[2];
+  numDims = dim[3];
+
+
+  Teuchos::RCP<PHX::DataLayout> vert_dl = p.get< Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout");
+  std::vector<PHX::DataLayout::size_type> dims;
+  vert_dl->dimensions(dims);
+  numVertices = dims[1];
+
+  // Allocate Temporary FieldContainers
+  val_at_cub_points.resize(numNodes, numQPs);
+  grad_at_cub_points.resize(numNodes, numQPs, numDims);
+  refPoints.resize(numQPs, numDims);
+  refWeights.resize(numQPs);
+  jacobian.resize(containerSize, numQPs, numDims, numDims);
+  jacobian_inv.resize(containerSize, numQPs, numDims, numDims);
+  jacobian_det.resize(containerSize, numQPs);
+  weighted_measure.resize(containerSize, numQPs);
+
+  // Pre-Calculate reference element quantitites
+  cubature->getCubature(refPoints, refWeights);
+  intrepidBasis->getValues(val_at_cub_points, refPoints, Intrepid::OPERATOR_VALUE);
+  intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid::OPERATOR_GRAD);
+
   this->setName("ComputeBasisFunctions"+PHX::TypeString<EvalT>::value);
 }
 
@@ -61,16 +92,6 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(GradBF,fm);
   this->utils.setFieldData(wGradBF,fm);
-
-  typename std::vector< typename PHX::template MDField<MeshScalarT,Cell,Vertex,Dim>::size_type > dims;
-  coordVec.dimensions(dims); //get dimensions
-  numVertices = dims[1];
-  numDims = dims[2];
-
-  typename std::vector< typename PHX::template MDField<RealType,Cell,Node,QuadPoint>::size_type > dim;
-  BF.dimensions(dim); //get dimensions
-  numNodes = dim[1];
-  numQPs = dim[2];
 }
 
 //**********************************************************************
@@ -84,29 +105,9 @@ evaluateFields(typename Traits::EvalData workset)
     * this is the size that is used in the computation. There is
     * wasted effort computing on zeroes for the padding on the
     * final workset. Ideally, these are size numCells.
+  //int containerSize = workset.numCells;
     */
   
-  //int containerSize = workset.numCells;
-  int containerSize = workset.worksetSize;
-
-  // Temporary FieldContainers
-  Intrepid::FieldContainer<RealType> val_at_cub_points(numNodes, numQPs);
-  Intrepid::FieldContainer<RealType> grad_at_cub_points(numNodes, numQPs, numDims);
-  Intrepid::FieldContainer<RealType> refPoints(numQPs, numDims);
-  Intrepid::FieldContainer<RealType> refWeights(numQPs);
-  Intrepid::FieldContainer<MeshScalarT> jacobian(containerSize, numQPs, numDims, numDims);
-  Intrepid::FieldContainer<MeshScalarT> jacobian_inv(containerSize, numQPs, numDims, numDims);
-  Intrepid::FieldContainer<MeshScalarT> jacobian_det(containerSize, numQPs);
-  Intrepid::FieldContainer<MeshScalarT> weighted_measure(containerSize, numQPs);
-
-  // Start computations
-  cubature->getCubature(refPoints, refWeights);
-
-  intrepidBasis->getValues(val_at_cub_points, refPoints, Intrepid::OPERATOR_VALUE);
-  intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid::OPERATOR_GRAD);
-
-//cout << "EvalT value = " <<  PHX::TypeString<EvalT>::value << endl;
-
   // setJacobian only needs to be RealType since the data type is only
   //  used internally for Basis Fns on reference elements, which are
   //  not functions of coordinates. This save 18min of compile time!!!

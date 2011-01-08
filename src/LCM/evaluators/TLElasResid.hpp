@@ -60,6 +60,12 @@ private:
   std::size_t numNodes;
   std::size_t numQPs;
   std::size_t numDims;
+
+  // Work space FCs
+  Intrepid::FieldContainer<ScalarT> F_inv;
+  Intrepid::FieldContainer<ScalarT> F_invT;
+  Intrepid::FieldContainer<ScalarT> JF_invT;
+  Intrepid::FieldContainer<ScalarT> P;
 };
 }
 

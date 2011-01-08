@@ -36,6 +36,17 @@ MapToPhysicalFrame(const Teuchos::ParameterList& p) :
   this->addDependentField(coords_vertices);
   this->addEvaluatedField(coords_qp);
 
+  // Get Dimensions
+  Teuchos::RCP<PHX::DataLayout> vector_dl =
+    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
+  std::vector<PHX::DataLayout::size_type> dims;
+  vector_dl->dimensions(dims);
+
+  // Compute cubature points in reference elements
+  refPoints.resize(dims[1],dims[2]);
+  refWeights.resize(dims[1]);
+  cubature->getCubature(refPoints, refWeights); 
+
   this->setName("MapToPhysicalFrame"+PHX::TypeString<EvalT>::value);
 }
 
@@ -55,14 +66,6 @@ template<typename EvalT, typename Traits>
 void MapToPhysicalFrame<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  // Grap cubature points using cubature object
-  typename std::vector< typename PHX::template MDField<MeshScalarT,Cell,QuadPoint,Dim>::size_type > dims;
-  coords_qp.dimensions(dims); //get dimensions
-
-  // AGS: Consider pre-computing, or at least pre-allocating
-  Intrepid::FieldContainer<RealType> refPoints(dims[1],dims[2]);
-  Intrepid::FieldContainer<RealType> refWeights(dims[1]);
-  cubature->getCubature(refPoints, refWeights); 
   
   Intrepid::CellTools<RealType>::mapToPhysicalFrame
        (coords_qp, refPoints, coords_vertices, *cellType);
