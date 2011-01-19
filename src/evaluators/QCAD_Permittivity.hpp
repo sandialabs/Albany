@@ -33,43 +33,53 @@
  * \brief Evaluates thermal conductivity, either as a constant or a truncated
  * KL expansion.
  */
-namespace QCAD {
+namespace QCAD 
+{
+	template<typename EvalT, typename Traits>
+	class Permittivity : 
+  	public PHX::EvaluatorWithBaseImpl<Traits>,
+  	public PHX::EvaluatorDerived<EvalT, Traits>,
+  	public Sacado::ParameterAccessor<EvalT, SPL_Traits> 
+	{
+	public:
+  	typedef typename EvalT::ScalarT ScalarT;
+  	typedef typename EvalT::MeshScalarT MeshScalarT;
 
-template<typename EvalT, typename Traits>
-class Permittivity : 
-  public PHX::EvaluatorWithBaseImpl<Traits>,
-  public PHX::EvaluatorDerived<EvalT, Traits>,
-  public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+ 	 	Permittivity(Teuchos::ParameterList& p);
   
-public:
-  typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
-
-  Permittivity(Teuchos::ParameterList& p);
-  
-  void postRegistrationSetup(typename Traits::SetupData d,
+  	void postRegistrationSetup(typename Traits::SetupData d,
 			     PHX::FieldManager<Traits>& vm);
   
-  void evaluateFields(typename Traits::EvalData d);
+  	void evaluateFields(typename Traits::EvalData d);
   
-  ScalarT& getValue(const std::string &n);
+  	ScalarT& getValue(const std::string &n);
 
-private:
+	private:
 
-  std::size_t numQPs;
-  std::size_t numDims;
-  PHX::MDField<ScalarT,Cell,QuadPoint> permittivity;
-  PHX::MDField<ScalarT,Cell,QuadPoint> Temp;
-  //PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+  	//! Validate the name strings under "Permittivity" section in xml input file, 
+  	Teuchos::RCP<const Teuchos::ParameterList>
+    		getValidPermittivityParameters() const;
 
-  //! Is conductivity constant, or random field
-  bool is_constant;
-  bool temp_dependent;
+  	std::size_t numQPs;
+  	std::size_t numDims;
+  	PHX::MDField<ScalarT,Cell,QuadPoint> permittivity;
+  	PHX::MDField<ScalarT,Cell,QuadPoint> Temp;
+  	PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
 
-  //! Constant value
-  ScalarT constant_value;
-  ScalarT factor;
-};
+  	//! Define boolean variables to categorize 
+  	bool is_constant;					// is permittivity constant ?
+  	bool temp_dependent;			// is permittivity temperature dependent ?
+  	bool position_dependent;	// is permittivity position dependent ?
+
+  	//! Constant value
+  	ScalarT constant_value;		// for constant permittivity
+  	ScalarT factor;						// for temperature-dependent permittivity
+  
+  	//! Variables to hold Silicon and SiO2 relative permittivity
+  	ScalarT silicon_value;
+  	ScalarT oxide_value;
+	};
+	
 }
 
 #ifndef PHAL_ETI

@@ -11,7 +11,7 @@
       <Parameter name="Factor" type="double" value="30.0"/>
     </ParameterList>
     <ParameterList name="Permittivity">
-       <Parameter name="Name" type="string" value="Constant"/>
+       <Parameter name="Permittivity Type" type="string" value="Constant"/>
        <Parameter name="Value" type="double" value="2.0"/>
     </ParameterList>
     <ParameterList name="Parameters">

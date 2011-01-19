@@ -32,49 +32,52 @@
 /** 
  * \brief Evaluates Poisson Source Term 
  */
-namespace QCAD {
-
-template<typename EvalT, typename Traits>
-class PoissonSource : 
+namespace QCAD 
+{
+	template<typename EvalT, typename Traits>
+	class PoissonSource : 
   public PHX::EvaluatorWithBaseImpl<Traits>,
   public PHX::EvaluatorDerived<EvalT, Traits>,
-  public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
-  
-public:
-  typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
+  public Sacado::ParameterAccessor<EvalT, SPL_Traits> 
+  {
+	public:
+  	typedef typename EvalT::ScalarT ScalarT;
+  	typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  PoissonSource(Teuchos::ParameterList& p);
+  	PoissonSource(Teuchos::ParameterList& p);
   
-  void postRegistrationSetup(typename Traits::SetupData d,
+  	void postRegistrationSetup(typename Traits::SetupData d,
 			     PHX::FieldManager<Traits>& vm);
   
-  void evaluateFields(typename Traits::EvalData d);
+  	void evaluateFields(typename Traits::EvalData d);
   
-  //! Function to allow parameters to be exposed for embedded analysis
-  ScalarT& getValue(const std::string &n);
+  	//! Function to allow parameters to be exposed for embedded analysis
+  	ScalarT& getValue(const std::string &n);
 
-private:
+	private:
 
-  //! Reference parameter list generator to check xml input file
-  Teuchos::RCP<const Teuchos::ParameterList>
-    getValidPoissonSourceParameters() const;
+  	//! Reference parameter list generator to check xml input file
+  	Teuchos::RCP<const Teuchos::ParameterList>
+    		getValidPoissonSourceParameters() const;
 
-  ScalarT chargeDistribution( const int numDim,
+  	ScalarT chargeDistribution( const int numDim,
         const MeshScalarT* coord, const ScalarT& phi) const;
 
-  // !input
-  std::size_t numQPs;
-  std::size_t numDims;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
-  PHX::MDField<ScalarT,Cell,QuadPoint> potential;
+  	//! input
+  	std::size_t numQPs;
+  	std::size_t numDims;
+  	PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+  	PHX::MDField<ScalarT,Cell,QuadPoint> potential;
 
-  //!output
-  PHX::MDField<ScalarT,Cell,QuadPoint> poissonSource;
+  	//! output
+  	PHX::MDField<ScalarT,Cell,QuadPoint> poissonSource;
 
-  //! Parameter in source function
-  ScalarT factor;
-};
+  	//! constant prefactor parameter in source function
+  	ScalarT factor;
+  	
+  	//! string variable to differ the various devices implementation
+  	std::string device;
+	};
 }
 
 #ifndef PHAL_ETI

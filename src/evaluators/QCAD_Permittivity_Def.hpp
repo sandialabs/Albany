@@ -24,55 +24,90 @@ template<typename EvalT, typename Traits>
 QCAD::Permittivity<EvalT, Traits>::
 Permittivity(Teuchos::ParameterList& p) :
   permittivity(p.get<std::string>("QP Variable Name"),
-	      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-  is_constant(false), temp_dependent(false)
+	  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+  is_constant(false), temp_dependent(false), position_dependent(false)
 {
-	  Teuchos::ParameterList* perm_list = 
-    p.get<Teuchos::ParameterList*>("Parameter List");
+	Teuchos::ParameterList* perm_list = 
+    	p.get<Teuchos::ParameterList*>("Parameter List");
+
+  Teuchos::RCP<const Teuchos::ParameterList> reflist = 
+  		this->getValidPermittivityParameters();
+  perm_list->validateParameters(*reflist,0);
 
   Teuchos::RCP<PHX::DataLayout> scalar_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+    	p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
   Teuchos::RCP<PHX::DataLayout> vector_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
+    	p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
   vector_dl->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
 
   std::string type = perm_list->get("Permittivity Type", "Constant");
-  if (type == "Constant") {
+  
+  // Permittivity (relative) value is constant
+  if (type == "Constant") 
+  {
     is_constant = true;
     constant_value = perm_list->get("Value", 1.0);
 
     // Add Permittivity as a Sacado-ized parameter
     Teuchos::RCP<ParamLib> paramLib = 
-      p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
-      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-	"Permittivity", this, paramLib);
+      	p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
+				"Permittivity", this, paramLib);
   }
-  else if (type == "Temperature Dependent") {
+  
+  // Permittivity (relative) has position dependence 
+  else if (type == "Position Dependent") 
+  {
+  	position_dependent = true;
+    silicon_value = perm_list->get("Silicon Value", 1.0);
+    oxide_value = perm_list->get("Oxide Value", 1.0);
+  	
+  	// Add coordinate dependence to permittivity evaluator
+    PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>
+      	tmp(p.get<string>("Coordinate Vector Name"), vector_dl);
+    coordVec = tmp;
+    this->addDependentField(coordVec);
+
+    // Add Silicon and Oxide Permittivity as Sacado-ized parameters
+    Teuchos::RCP<ParamLib> paramLib = 
+      	p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
+				"Silicon Permittivity", this, paramLib);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
+				"Oxide Permittivity", this, paramLib);
+  }
+  
+  // Permittivity (relative) has temperature dependence
+  else if (type == "Temperature Dependent") 
+  {
     temp_dependent = true;
-    is_constant = false;
     constant_value = perm_list->get("Value", 1.0);
     factor = perm_list->get("Factor", 1.0);
 
+		// Add temperature dependence to permittivity evaluator
     PHX::MDField<ScalarT,Cell,QuadPoint>
-      tmp(p.get<string>("Temperature Variable Name"), scalar_dl);
+      	tmp(p.get<string>("Temperature Variable Name"), scalar_dl);
     Temp = tmp;
     this->addDependentField(Temp);
 
     // Add Permittivity as a Sacado-ized parameter
     Teuchos::RCP<ParamLib> paramLib = 
-      p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
-      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-	"Permittivity", this, paramLib);
-      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-	"Permittivity Factor", this, paramLib);
+      	p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
+				"Permittivity", this, paramLib);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
+				"Permittivity Factor", this, paramLib);
   }
+  
   // Parse for other functional form for permittivity variation here
-  else {
+  // This effectively validates the 2nd argument in perm_list->get (...);
+  else 
+  {
     TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-		       "Invalid Permittivity type " << type);
+		       "Invalid Permittivity Type: " << type);
   } 
 
   this->addEvaluatedField(permittivity);
@@ -86,9 +121,8 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(permittivity,fm);
-  //if (!is_constant) this->utils.setFieldData(coordVec,fm);
+  if (position_dependent) this->utils.setFieldData(coordVec,fm);
   if (temp_dependent) this->utils.setFieldData(Temp,fm);
-  //if (!is_constant && temp_dependent) this->utils.setFieldData(coordVec,fm);
 }
 
 // **********************************************************************
@@ -98,22 +132,57 @@ evaluateFields(typename Traits::EvalData workset)
 {
   int numCells = workset.numCells;
 
-  if (is_constant) {
-    for (std::size_t cell=0; cell < numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
-	permittivity(cell,qp) = constant_value;
+	// assign constant_value to permittivity defined in .hpp file
+  if (is_constant) 
+  {	
+    for (std::size_t cell=0; cell < numCells; ++cell) 
+    {	
+      for (std::size_t qp=0; qp < numQPs; ++qp) 
+      {
+				permittivity(cell,qp) = constant_value;
       }
     }
   }
-  else if (temp_dependent) {
-    for (std::size_t cell=0; cell < numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
+  
+  // assign silicon_value for y>0 and oxide_value for y<=0 to permittivity
+  else if (position_dependent)
+  {	
+  	// loop through all elements in one workset
+    for (std::size_t cell=0; cell < numCells; ++cell) 
+    {	
+    	// loop through the QPs for each element
+      for (std::size_t qp=0; qp < numQPs; ++qp) 
+      {
+				if (coordVec(cell,qp,1) > 0.0) //3rd argument: 0 for x, 1 for y, 2 for z
+					permittivity(cell,qp) = silicon_value;
+				else
+					permittivity(cell,qp) = oxide_value;
+      }
+    }
+  }
+  
+  // calculate temp-dep value and fill in the permittivity field
+  else if (temp_dependent) 
+  {
+    for (std::size_t cell=0; cell < numCells; ++cell) 
+    {
+      for (std::size_t qp=0; qp < numQPs; ++qp) 
+      {
         ScalarT denom = 1.0 + factor * Temp(cell,qp);
-	permittivity(cell,qp) = constant_value / denom;;
+				permittivity(cell,qp) = constant_value / denom;;
       }
     }
     cout << " TTTDDD  " << permittivity(5,1) << endl;
   }
+  
+  // otherwise, throw out error message and exit the program
+  else 
+  {
+    std::cout << "Error: permittivity has to be either constant, " <<  
+    		"position dependent, or temperature dependent !" << endl;
+    exit(1);
+  } 
+  
 }
 
 // **********************************************************************
@@ -121,17 +190,49 @@ template<typename EvalT,typename Traits>
 typename QCAD::Permittivity<EvalT,Traits>::ScalarT& 
 QCAD::Permittivity<EvalT,Traits>::getValue(const std::string &n)
 {
-  if (n=="Permittivity")
+	// constant permittivity, n must match the value string in the "Parameters"
+	// section of the input.xml file as parameters for response analysis 
+  if (n == "Permittivity")	
     return constant_value;
-  else if (n=="Permittivity Factor")
+  
+  // register the Silicon and Oxide permittivity for position-dep. case
+  else if (n == "Silicon Permittivity")
+  	return silicon_value;
+  	
+  else if (n == "Oxide Permittivity")
+  	return oxide_value;
+
+  // temperature factor used in the temp-dep permittivity calculation
+  else if (n == "Permittivity Factor")
     return factor;
-  else {
+  
+  // otherwise, throw out error message and continue the program
+  else 
+  {
     TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-  		       std::endl <<
-  		       "Error! Logic error in getting paramter " << n
-		       << " in Permittivity::getValue()" << std::endl);
+				std::endl <<
+				"Error! Logic error in getting paramter " << n <<
+				" in Permittivity::getValue()" << std::endl);
     return constant_value;
   }
+}
+
+// **********************************************************************
+template<typename EvalT,typename Traits>
+Teuchos::RCP<const Teuchos::ParameterList>
+QCAD::Permittivity<EvalT,Traits>::getValidPermittivityParameters() const
+{
+  Teuchos::RCP<Teuchos::ParameterList> validPL =
+     	rcp(new Teuchos::ParameterList("Valid Permittivty Params"));;
+
+  validPL->set<string>("Permittivity Type", "Constant", 
+  		"Constant permittivity in the entire device");
+  validPL->set<double>("Value", 1.0, "Constant permittivity value");
+  validPL->set<double>("Factor", 1.0, "Permittivity temperature factor");
+  validPL->set<double>("Silicon Value", 1.0, "Silicon permittivity value");
+  validPL->set<double>("Oxide Value", 1.0, "SiO2 permittivity value");
+
+  return validPL;
 }
 
 // **********************************************************************

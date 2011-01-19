@@ -42,6 +42,7 @@ add_subdirectory(Heat1DWithSource)
 add_subdirectory(Helmholtz2D)
 
 add_subdirectory(Poisson2D)
+add_subdirectory(PoissonPNDiode)
 add_subdirectory(ThermoElectrostatics2D)
 
 IF(ALBANY_LCM)
