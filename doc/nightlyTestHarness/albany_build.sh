@@ -38,12 +38,13 @@ eg switch $ALBANY_BRANCH
 #-------------------------------------------
 
 cd $ALBDIR
-rm -rf $ALBDIR/CMAKE_BUILD
-mkdir $ALBDIR/CMAKE_BUILD
-cd $ALBDIR/CMAKE_BUILD
+rm -rf $ALBDIR/LINUX_DEBUG
+mkdir $ALBDIR/LINUX_DEBUG
+cd $ALBDIR/LINUX_DEBUG
 cmake \
  -D ALBANY_TRILINOS_DIR:FILEPATH="$TRILINSTALLDIR" \
  -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
+ -D ENABLE_LCM:BOOL=ON \
  ..   > $ALBOUTDIR/albany_cmake.out 2>&1
 
 /usr/bin/make -j 4 > $ALBOUTDIR/albany_make.out 2>&1
