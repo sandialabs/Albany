@@ -60,8 +60,13 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> yieldStrength;
   PHX::MDField<ScalarT,Cell,QuadPoint> hardeningModulus;
 
-  int numQPs;
-  int numDims;
+  // Output:
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;
+
+  //int numQPs;
+  //int numDims;
+  std::size_t numQPs;
+  std::size_t numDims;
 
   // scratch space FCs
   Intrepid::FieldContainer<ScalarT> be;
@@ -79,8 +84,6 @@ private:
   Intrepid::FieldContainer<ScalarT> tmp2;
 
 
-  // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;
 };
 }
 
