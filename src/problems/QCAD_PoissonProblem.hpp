@@ -33,7 +33,8 @@ namespace QCAD {
    * \brief Abstract interface for representing a 1-D finite element
    * problem.
    */
-  class PoissonProblem : public Albany::AbstractProblem {
+  class PoissonProblem : public Albany::AbstractProblem 
+  {
   public:
   
     //! Default constructor
