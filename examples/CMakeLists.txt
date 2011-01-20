@@ -53,6 +53,7 @@ IF(ALBANY_LCM)
   add_subdirectory(NonlinearElasticity3D)
   add_subdirectory(ThermoElasticity2D)
   add_subdirectory(ThermoElasticity3D)
+  add_subdirectory(J2Plasticity2D)	
 ENDIF()
 
 IF(ALBANY_IOSS)

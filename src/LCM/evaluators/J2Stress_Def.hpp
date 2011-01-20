@@ -129,6 +129,46 @@ evaluateFields(typename Traits::EvalData workset)
   FST::tensorMultiplyDataData<ScalarT>(Cpinv, Fpinv, FpinvT);
 
   std::size_t numCells = workset.numCells;
+  
+  std::cout << "F:\n";
+  for (std::size_t cell=0; cell < numCells; ++cell)
+  {
+    for (std::size_t qp=0; qp < numQPs; ++qp)
+    {
+      for (std::size_t i=0; i < numDims; ++i)
+	for (std::size_t j=0; j < numDims; ++j)
+	  std::cout << defgrad(cell,qp,i,j) << " ";
+    }
+    std::cout << std::endl;      
+  }
+  std::cout << std::endl;      
+
+  std::cout << "Fpold:\n";
+  for (std::size_t cell=0; cell < numCells; ++cell)
+  {
+    for (std::size_t qp=0; qp < numQPs; ++qp)
+    {
+      for (std::size_t i=0; i < numDims; ++i)
+	for (std::size_t j=0; j < numDims; ++j)
+	  std::cout << Fpold(cell,qp,i,j) << " ";
+    }
+    std::cout << std::endl;      
+  }
+  std::cout << std::endl;      
+    
+  std::cout << "Cpinv:\n";
+  for (std::size_t cell=0; cell < numCells; ++cell)
+  {
+    for (std::size_t qp=0; qp < numQPs; ++qp)
+    {
+      for (std::size_t i=0; i < numDims; ++i)
+	for (std::size_t j=0; j < numDims; ++j)
+	  std::cout << Cpinv(cell,qp,i,j) << " ";
+    }
+    std::cout << std::endl;      
+  }
+  std::cout << std::endl;      
+
 
   for (std::size_t cell=0; cell < numCells; ++cell) 
   {
@@ -141,10 +181,10 @@ evaluateFields(typename Traits::EvalData workset)
       Y     = yieldStrength(cell,qp);
       Jm23  = std::pow( J(cell,qp), -2./3. );
 
-//       std::cout << "kappa: " << kappa << std::endl;
-//       std::cout << "mu   : " << mu << std::endl;
-//       std::cout << "K    : " << K << std::endl;
-//       std::cout << "Y    : " << Y << std::endl;
+      std::cout << "kappa: " << kappa << std::endl;
+      std::cout << "mu   : " << mu << std::endl;
+      std::cout << "K    : " << K << std::endl;
+      std::cout << "Y    : " << Y << std::endl;
       be.initialize(0.0);
       // Compute Trial State      
       for (std::size_t i=0; i < numDims; ++i)
@@ -161,7 +201,7 @@ evaluateFields(typename Traits::EvalData workset)
 	}
       } 
       
-//       std::cout << "be: \n" << be;
+      std::cout << "be: \n" << be;
       
       trace = 0.0;
       for (std::size_t i=0; i < numDims; ++i)
@@ -177,7 +217,7 @@ evaluateFields(typename Traits::EvalData workset)
 	s(i,i) -= mu * trace;
       }	  
       
-//       std::cout << "s: \n" << s;
+      std::cout << "s: \n" << s;
 
       // check for yielding
       // smag = s.norm();
@@ -189,11 +229,11 @@ evaluateFields(typename Traits::EvalData workset)
       
       f = smag - sqrt(2./3.)*( K * eqpsold(cell,qp) + Y );
 
-//       std::cout << "smag : " << smag << std::endl;
-//       std::cout << "eqpsold: " << eqpsold(cell,qp) << std::endl;
-//       std::cout << "K      : " << K << std::endl;
-//       std::cout << "Y      : " << Y << std::endl;
-//       std::cout << "f      : " << f << std::endl;
+      std::cout << "smag : " << smag << std::endl;
+      std::cout << "eqpsold: " << eqpsold(cell,qp) << std::endl;
+      std::cout << "K      : " << K << std::endl;
+      std::cout << "Y      : " << Y << std::endl;
+      std::cout << "f      : " << f << std::endl;
 
       if (f > 1E-12)
       {
@@ -219,6 +259,12 @@ evaluateFields(typename Traits::EvalData workset)
 
 	exponential_map(expA, A);
 
+	std::cout << "expA: \n";
+	for (std::size_t i=0; i < numDims; ++i)	
+	  for (std::size_t j=0; j < numDims; ++j)
+	    std::cout << expA(i,j) << " ";
+	std::cout << std::endl;
+		  
 	for (std::size_t i=0; i < numDims; ++i)	
 	{
 	  for (std::size_t j=0; j < numDims; ++j)
@@ -256,7 +302,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
-
+  std::cout << "Fp: \n";
   // Save Stress as State Variable
   for (std::size_t cell=0; cell < numCells; ++cell) 
   {
@@ -269,15 +315,18 @@ evaluateFields(typename Traits::EvalData workset)
 	{
 	  STRESS(cell,qp,i,j) = Sacado::ScalarValue<ScalarT>::eval(stress(cell,qp,i,j));
 	  FP(cell,qp,i,j) = Sacado::ScalarValue<ScalarT>::eval(Fp(cell,qp,i,j));
+	  std::cout << FP(cell,qp,i,j) << " ";
 	}
       }
+      std::cout << std::endl;
     }
+    std::cout << std::endl;
   }
 }
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void J2Stress<EvalT, Traits>::
-exponential_map(Intrepid::FieldContainer<ScalarT> expA, Intrepid::FieldContainer<ScalarT> A)
+void 
+J2Stress<EvalT, Traits>::exponential_map(Intrepid::FieldContainer<ScalarT> & expA, const Intrepid::FieldContainer<ScalarT> A)
 {
   tmp.initialize(0.0);
   expA.initialize(0.0);
@@ -319,8 +368,8 @@ exponential_map(Intrepid::FieldContainer<ScalarT> expA, Intrepid::FieldContainer
 }
 //**********************************************************************
 template<typename EvalT, typename Traits>
-typename EvalT::ScalarT J2Stress<EvalT, Traits>::
-norm(Intrepid::FieldContainer<ScalarT> A)
+typename EvalT::ScalarT 
+J2Stress<EvalT, Traits>::norm(Intrepid::FieldContainer<ScalarT> A)
 {
   ScalarT max(0.0), colsum;
 

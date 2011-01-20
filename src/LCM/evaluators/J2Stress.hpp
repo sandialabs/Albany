@@ -50,7 +50,7 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   typename EvalT::ScalarT norm(Intrepid::FieldContainer<ScalarT>);
-  void exponential_map(Intrepid::FieldContainer<ScalarT>, Intrepid::FieldContainer<ScalarT>);
+  void exponential_map(Intrepid::FieldContainer<ScalarT> &, const Intrepid::FieldContainer<ScalarT>);
 
   // Input:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defgrad;
