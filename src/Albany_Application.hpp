@@ -363,7 +363,7 @@ namespace Albany {
 
     StateManager stateMgr;
 
-    bool ignore_sg_residual_in_jacobian;
+    bool ignore_residual_in_jacobian;
   };
 }
 #endif // ALBANY_APPLICATION_HPP

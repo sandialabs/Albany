@@ -189,6 +189,7 @@ evaluateFields(typename Traits::EvalData workset)
         if (this->vectorField) valptr = &((this->valVec[0])(cell,node,eq));
         else                   valptr = &(this->val[eq])(cell,node);
 	*valptr = FadType(num_dof, (*x)[firstDOF + eq]);
+	valptr->setUpdateValue(!workset.ignore_residual);
 	valptr->fastAccessDx(neq * node + eq + this->offset) = workset.j_coeff;
       }
       if (this->transient) {

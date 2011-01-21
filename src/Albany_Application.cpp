@@ -164,8 +164,8 @@ Albany::Application::Application(
        << "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"
        << endl;
 
-  ignore_sg_residual_in_jacobian = 
-    problemParams->sublist("Stochastic Galerkin").get("Ignore SG Residual In Jacobian", false);
+  ignore_residual_in_jacobian = 
+    problemParams->get("Ignore Residual In Jacobian", false);
 }
 
 Albany::Application::~Application()
@@ -440,6 +440,7 @@ for (int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
     workset.j_coeff      = beta;
     workset.m_coeff      = alpha;
     workset.current_time = current_time;
+    workset.ignore_residual = ignore_residual_in_jacobian;
 
     workset.worksetSize = worksetSize;
     workset.numCells = worksetSize;
@@ -1119,6 +1120,7 @@ for (int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
     workset.j_coeff      = beta;
     workset.m_coeff      = alpha;
     workset.current_time = current_time;
+    workset.ignore_residual = ignore_residual_in_jacobian;
 
     workset.worksetSize = worksetSize;
     workset.numCells = worksetSize;
@@ -1130,8 +1132,6 @@ for (int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
 
       workset.oldState = stateMgr.getOldStateVariables(ws);
       workset.newState = stateMgr.getNewStateVariables(ws);
-
-      workset.ignore_residual = ignore_sg_residual_in_jacobian;
 
       // FillType template argument used to specialize Sacado
       fm->evaluateFields<PHAL::AlbanyTraits::SGJacobian>(workset);
