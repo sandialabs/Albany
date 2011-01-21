@@ -19,6 +19,7 @@
 #include "Phalanx_DataLayout.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid_RealSpaceTools.hpp"
 
 namespace LCM {
 
@@ -28,12 +29,16 @@ DefGrad<EvalT, Traits>::
 DefGrad(const Teuchos::ParameterList& p) :
   GradU       (p.get<std::string>                   ("Gradient QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-  defgrad      (p.get<std::string>                  ("DefGrad Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") )
+  defgrad     (p.get<std::string>                  ("DefGrad Name"),
+		p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+  J           (p.get<std::string>                   ("DetDefGrad Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") )
+
 {
   this->addDependentField(GradU);
 
   this->addEvaluatedField(defgrad);
+  this->addEvaluatedField(J);
 
   this->setName("DefGrad"+PHX::TypeString<EvalT>::value);
 
@@ -52,6 +57,7 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(defgrad,fm);
+  this->utils.setFieldData(J,fm);
   this->utils.setFieldData(GradU,fm);
 }
 
@@ -73,6 +79,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+  Intrepid::RealSpaceTools<ScalarT>::det(J, defgrad);
 }
 
 //**********************************************************************
