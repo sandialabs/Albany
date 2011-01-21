@@ -319,7 +319,7 @@ SET(CUTR_HDRS
 set(ALB_TRILINOS_LIBS ${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES})
 
 include_directories (${Trilinos_INCLUDE_DIRS}
-                     ./ ./evaluators ./problems ./responses ./stk
+                     ./ ./evaluators ./problems ./responses ./stk ./LCM/utils
                      ${Trilinos_TPL_INCLUDE_DIRS})
 
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
@@ -344,6 +344,9 @@ IF (ALBANY_DAKOTA)
 ENDIF ()
 add_executable(AlbanyAnalysis Main_Analysis.cpp)
 
+# Tests
+add_executable(UtilsTest LCM/test/utils/UtilsTest.cc)
+
 target_link_libraries(Albany          albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
 target_link_libraries(AlbanySG        albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
 IF (ALBANY_DAKOTA)
@@ -353,3 +356,6 @@ ENDIF ()
 
 target_link_libraries(AlbanyAnalysis  albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS}
                       ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
+
+#Linking tests
+target_link_libraries(UtilsTest albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
