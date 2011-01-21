@@ -28,18 +28,18 @@ J2Stress<EvalT, Traits>::
 J2Stress(const Teuchos::ParameterList& p) :
   defgrad          (p.get<std::string>                   ("DefGrad Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-  stress           (p.get<std::string>                   ("Stress Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+  J                (p.get<std::string>                   ("DetDefGrad Name"),
+	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   elasticModulus   (p.get<std::string>                   ("Elastic Modulus Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   poissonsRatio    (p.get<std::string>                   ("Poissons Ratio Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  hardeningModulus (p.get<std::string>                   ("Hardening Modulus Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   yieldStrength    (p.get<std::string>                   ("Yield Strength Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  J                (p.get<std::string>                   ("DetDefGrad Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") )
+  hardeningModulus (p.get<std::string>                   ("Hardening Modulus Name"),
+	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  stress           (p.get<std::string>                   ("Stress Name"),
+	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") )
 {
   // Pull out numQPs and numDims from a Layout
   Teuchos::RCP<PHX::DataLayout> tensor_dl =
@@ -48,15 +48,17 @@ J2Stress(const Teuchos::ParameterList& p) :
   tensor_dl->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
-  int worksetSize = dims[0];
+  //int worksetSize = dims[0];
+  std::size_t worksetSize = dims[0];
 
   this->addDependentField(defgrad);
   this->addDependentField(J);
   this->addDependentField(elasticModulus);
-  this->addDependentField(hardeningModulus);
+  this->addDependentField(poissonsRatio);
   this->addDependentField(yieldStrength);
+  this->addDependentField(hardeningModulus);
   // PoissonRatio not used in 1D stress calc
-  if (numDims>1) this->addDependentField(poissonsRatio);
+  //  if (numDims>1) this->addDependentField(poissonsRatio);
 
   this->addEvaluatedField(stress);
 
@@ -109,10 +111,10 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT trace;
   ScalarT smag2, smag, f, p, dgam;
 
-  bool saveState = (workset.newState != Teuchos::null);
-  std::cout << "saveState: " << saveState << std::endl;
-  saveState = (workset.oldState != Teuchos::null);
-  std::cout << "saveState: " << saveState << std::endl;
+  //bool saveState = (workset.newState != Teuchos::null);
+  //std::cout << "saveState: " << saveState << std::endl;
+  //saveState = (workset.oldState != Teuchos::null);
+  //std::cout << "saveState: " << saveState << std::endl;
   Albany::StateVariables& newState = *workset.newState;
   Albany::StateVariables  oldState = *workset.oldState;
   Intrepid::FieldContainer<RealType>& Fpold   = *oldState["Fp"];
@@ -126,7 +128,49 @@ evaluateFields(typename Traits::EvalData workset)
   RST::transpose(FpinvT, Fpinv);
   FST::tensorMultiplyDataData<ScalarT>(Cpinv, Fpinv, FpinvT);
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) 
+  std::size_t numCells = workset.numCells;
+  
+  std::cout << "F:\n";
+  for (std::size_t cell=0; cell < numCells; ++cell)
+  {
+    for (std::size_t qp=0; qp < numQPs; ++qp)
+    {
+      for (std::size_t i=0; i < numDims; ++i)
+	for (std::size_t j=0; j < numDims; ++j)
+	  std::cout << defgrad(cell,qp,i,j) << " ";
+    }
+    std::cout << std::endl;      
+  }
+  std::cout << std::endl;      
+
+  std::cout << "Fpold:\n";
+  for (std::size_t cell=0; cell < numCells; ++cell)
+  {
+    for (std::size_t qp=0; qp < numQPs; ++qp)
+    {
+      for (std::size_t i=0; i < numDims; ++i)
+	for (std::size_t j=0; j < numDims; ++j)
+	  std::cout << Fpold(cell,qp,i,j) << " ";
+    }
+    std::cout << std::endl;      
+  }
+  std::cout << std::endl;      
+    
+  std::cout << "Cpinv:\n";
+  for (std::size_t cell=0; cell < numCells; ++cell)
+  {
+    for (std::size_t qp=0; qp < numQPs; ++qp)
+    {
+      for (std::size_t i=0; i < numDims; ++i)
+	for (std::size_t j=0; j < numDims; ++j)
+	  std::cout << Cpinv(cell,qp,i,j) << " ";
+    }
+    std::cout << std::endl;      
+  }
+  std::cout << std::endl;      
+
+
+  for (std::size_t cell=0; cell < numCells; ++cell) 
   {
     for (std::size_t qp=0; qp < numQPs; ++qp) 
     {
@@ -137,12 +181,16 @@ evaluateFields(typename Traits::EvalData workset)
       Y     = yieldStrength(cell,qp);
       Jm23  = std::pow( J(cell,qp), -2./3. );
 
+      std::cout << "kappa: " << kappa << std::endl;
+      std::cout << "mu   : " << mu << std::endl;
+      std::cout << "K    : " << K << std::endl;
+      std::cout << "Y    : " << Y << std::endl;
+      be.initialize(0.0);
       // Compute Trial State      
       for (std::size_t i=0; i < numDims; ++i)
       {	
 	for (std::size_t j=0; j < numDims; ++j)
 	{
-	  be(cell,qp,i,j) = 0.0;
 	  for (std::size_t p=0; p < numDims; ++p)
 	  {
 	    for (std::size_t q=0; q < numDims; ++q)
@@ -152,7 +200,9 @@ evaluateFields(typename Traits::EvalData workset)
 	  }
 	}
       } 
-
+      
+      std::cout << "be: \n" << be;
+      
       trace = 0.0;
       for (std::size_t i=0; i < numDims; ++i)
 	trace += be(i,i);
@@ -167,6 +217,8 @@ evaluateFields(typename Traits::EvalData workset)
 	s(i,i) -= mu * trace;
       }	  
       
+      std::cout << "s: \n" << s;
+
       // check for yielding
       // smag = s.norm();
       smag2 = 0.0;
@@ -175,7 +227,13 @@ evaluateFields(typename Traits::EvalData workset)
 	  smag2 += s(i,j) * s(i,j);
       smag = std::sqrt(smag2);
       
-      f = smag - sqrt(2./3.)*( K * eqpsold(cell,qp) - Y );
+      f = smag - sqrt(2./3.)*( K * eqpsold(cell,qp) + Y );
+
+      std::cout << "smag : " << smag << std::endl;
+      std::cout << "eqpsold: " << eqpsold(cell,qp) << std::endl;
+      std::cout << "K      : " << K << std::endl;
+      std::cout << "Y      : " << Y << std::endl;
+      std::cout << "f      : " << f << std::endl;
 
       if (f > 1E-12)
       {
@@ -201,6 +259,12 @@ evaluateFields(typename Traits::EvalData workset)
 
 	exponential_map(expA, A);
 
+	std::cout << "expA: \n";
+	for (std::size_t i=0; i < numDims; ++i)	
+	  for (std::size_t j=0; j < numDims; ++j)
+	    std::cout << expA(i,j) << " ";
+	std::cout << std::endl;
+		  
 	for (std::size_t i=0; i < numDims; ++i)	
 	{
 	  for (std::size_t j=0; j < numDims; ++j)
@@ -238,9 +302,9 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
-
+  std::cout << "Fp: \n";
   // Save Stress as State Variable
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) 
+  for (std::size_t cell=0; cell < numCells; ++cell) 
   {
     for (std::size_t qp=0; qp < numQPs; ++qp) 
     {
@@ -251,15 +315,18 @@ evaluateFields(typename Traits::EvalData workset)
 	{
 	  STRESS(cell,qp,i,j) = Sacado::ScalarValue<ScalarT>::eval(stress(cell,qp,i,j));
 	  FP(cell,qp,i,j) = Sacado::ScalarValue<ScalarT>::eval(Fp(cell,qp,i,j));
+	  std::cout << FP(cell,qp,i,j) << " ";
 	}
       }
+      std::cout << std::endl;
     }
+    std::cout << std::endl;
   }
 }
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void J2Stress<EvalT, Traits>::
-exponential_map(Intrepid::FieldContainer<ScalarT> expA, Intrepid::FieldContainer<ScalarT> A)
+void 
+J2Stress<EvalT, Traits>::exponential_map(Intrepid::FieldContainer<ScalarT> & expA, const Intrepid::FieldContainer<ScalarT> A)
 {
   tmp.initialize(0.0);
   expA.initialize(0.0);
@@ -301,15 +368,15 @@ exponential_map(Intrepid::FieldContainer<ScalarT> expA, Intrepid::FieldContainer
 }
 //**********************************************************************
 template<typename EvalT, typename Traits>
-typename EvalT::ScalarT J2Stress<EvalT, Traits>::
-norm(Intrepid::FieldContainer<ScalarT> A)
+typename EvalT::ScalarT 
+J2Stress<EvalT, Traits>::norm(Intrepid::FieldContainer<ScalarT> A)
 {
   ScalarT max(0.0), colsum;
 
-  for (int i(0); i < numDims; ++i)
+  for (std::size_t i(0); i < numDims; ++i)
   {
     colsum = 0.0;
-    for (int j(0); j < numDims; ++j)
+    for (std::size_t j(0); j < numDims; ++j)
       colsum += A(i,j);
     max = (colsum > max) ? colsum : max;  
   }

@@ -45,6 +45,8 @@ add_subdirectory(Heat1DWithSource)
 add_subdirectory(Helmholtz2D)
 
 add_subdirectory(Poisson2D)
+add_subdirectory(PoissonPNDiode)
+add_subdirectory(PoissonPMOSCapacitor)
 add_subdirectory(ThermoElectrostatics2D)
 
 IF(ALBANY_LCM)
@@ -55,6 +57,7 @@ IF(ALBANY_LCM)
   add_subdirectory(NonlinearElasticity3D)
   add_subdirectory(ThermoElasticity2D)
   add_subdirectory(ThermoElasticity3D)
+  add_subdirectory(J2Plasticity2D)	
   add_subdirectory(UtilsTest)
 ENDIF()
 

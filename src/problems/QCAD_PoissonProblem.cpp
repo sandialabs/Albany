@@ -73,10 +73,12 @@ buildProblem(
   Teuchos::ParameterList& responseList = params->sublist("Response Functions");
   int num_responses = responseList.get("Number", 0);
   responses.resize(num_responses);
-  for (int i=0; i<num_responses; i++) {
+  for (int i=0; i<num_responses; i++) 
+  {
      std::string name = responseList.get(Albany::strint("Response",i), "??");
 
-     if (name == "Boundary Flux 1D" && numDim==1) {
+     if (name == "Boundary Flux 1D" && numDim==1) 
+     {
        // Need real size, not 1.0
        double h =  1.0 / (dofMap.NumGlobalElements() - 1);
        responses[i] =
@@ -92,7 +94,8 @@ buildProblem(
      else if (name == "Solution Two Norm")
        responses[i] = Teuchos::rcp(new Albany::SolutionTwoNormResponseFunction());
 
-     else {
+     else 
+     {
        TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                           std::endl <<
                           "Error!  Unknown response function " << name <<
@@ -124,7 +127,8 @@ QCAD::PoissonProblem::constructEvaluators(
 
    RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
    RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&ctd));
-   switch (numDim) {
+   switch (numDim) 
+   {
      case 1:
        intrepidBasis = rcp(new Intrepid::Basis_HGRAD_LINE_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
        break;
@@ -260,12 +264,12 @@ QCAD::PoissonProblem::constructEvaluators(
     p->set<int>("Type", type);
 
     p->set<string>("QP Variable Name", "Permittivity");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set<string>("Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
 
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    p->set< RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Permittivity");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
@@ -311,7 +315,8 @@ QCAD::PoissonProblem::constructEvaluators(
     evaluators_to_build["DOF Grad Potential"] = p;
   }
 
-  if (haveSource) { // Source
+  if (haveSource) 
+  { // Source
     RCP<ParameterList> p = rcp(new ParameterList);
 
     int type = FactoryTraits<AlbanyTraits>::id_qcad_poisson_source;
