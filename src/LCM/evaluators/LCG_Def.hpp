@@ -26,9 +26,9 @@ namespace LCM {
 template<typename EvalT, typename Traits>
 LCG<EvalT, Traits>::
 LCG(const Teuchos::ParameterList& p) :
-  lcg       (p.get<std::string>                   ("LCG Name"),
-	     p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
   defgrad   (p.get<std::string>                   ("DefGrad Name"),
+	     p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+  lcg       (p.get<std::string>                   ("LCG Name"),
 	     p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") )
 {
   this->addDependentField(defgrad);
@@ -60,7 +60,7 @@ template<typename EvalT, typename Traits>
 void LCG<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  int numCells = workset.numCells;
+  std::size_t numCells = workset.numCells;
 
   // Compute lcg tensor from deformation gradient
   for (std::size_t cell=0; cell < numCells; ++cell) {
