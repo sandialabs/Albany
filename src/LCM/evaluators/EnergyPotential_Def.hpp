@@ -28,13 +28,13 @@ EnergyPotential<EvalT, Traits>::
 EnergyPotential(const Teuchos::ParameterList& p) :
   defgrad          (p.get<std::string>                   ("DefGrad Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-  energy           (p.get<std::string>                   ("EnergyPotential Name"),
+  J                (p.get<std::string>                   ("DetDefGrad Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   elasticModulus   (p.get<std::string>                   ("Elastic Modulus Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   poissonsRatio    (p.get<std::string>                   ("Poissons Ratio Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  J                (p.get<std::string>                   ("DetDefGrad Name"),
+  energy           (p.get<std::string>                   ("EnergyPotential Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") )
 {
   // Pull out numQPs and numDims from a Layout
@@ -79,7 +79,9 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT Jm23;
   ScalarT trace;
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+  numCells = workset.numCells;
+
+  for (std::size_t cell=0; cell < numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       kappa = elasticModulus(cell,qp) / ( 3. * ( 1. - 2. * poissonsRatio(cell,qp) ) );
       mu    = elasticModulus(cell,qp) / ( 2. * ( 1. - poissonsRatio(cell,qp) ) );

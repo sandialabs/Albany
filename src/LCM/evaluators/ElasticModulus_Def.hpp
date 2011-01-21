@@ -116,7 +116,7 @@ template<typename EvalT, typename Traits>
 void ElasticModulus<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  int numCells = workset.numCells;
+  std::size_t numCells = workset.numCells;
 
   if (is_constant) {
     for (std::size_t cell=0; cell < numCells; ++cell) {
