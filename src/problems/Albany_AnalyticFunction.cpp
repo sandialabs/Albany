@@ -53,7 +53,7 @@ std::string stringify_names()
 int name_to_id(const std::string name)
 {
   const std::vector<std::string> &list = names();
-  int id = find(list.begin(), list.end(), name) - list.begin();
+  unsigned int id = find(list.begin(), list.end(), name) - list.begin();
   if (id == list.size()) id = -1;
   return id;
 }

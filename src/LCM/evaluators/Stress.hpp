@@ -53,8 +53,8 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> elasticModulus;
   PHX::MDField<ScalarT,Cell,QuadPoint> poissonsRatio;
 
-  int numQPs;
-  int numDims;
+  unsigned int numQPs;
+  unsigned int numDims;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;

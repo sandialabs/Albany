@@ -40,9 +40,9 @@ struct Workset {
           const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > &e) :
    coordinates(c), elNodeID(e) {}
 
-  int numCells;
-  int worksetSize;
-  int firstCell;
+  unsigned int numCells;
+  unsigned int worksetSize;
+  unsigned int firstCell;
 
   Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> > sg_expansion;
 

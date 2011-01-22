@@ -128,10 +128,8 @@ evaluateFields(typename Traits::EvalData workset)
   RST::transpose(FpinvT, Fpinv);
   FST::tensorMultiplyDataData<ScalarT>(Cpinv, Fpinv, FpinvT);
 
-  std::size_t numCells = workset.numCells;
-  
   std::cout << "F:\n";
-  for (std::size_t cell=0; cell < numCells; ++cell)
+  for (std::size_t cell=0; cell < workset.numCells; ++cell)
   {
     for (std::size_t qp=0; qp < numQPs; ++qp)
     {
@@ -144,7 +142,7 @@ evaluateFields(typename Traits::EvalData workset)
   std::cout << std::endl;      
 
   std::cout << "Fpold:\n";
-  for (std::size_t cell=0; cell < numCells; ++cell)
+  for (std::size_t cell=0; cell < workset.numCells; ++cell)
   {
     for (std::size_t qp=0; qp < numQPs; ++qp)
     {
@@ -157,7 +155,7 @@ evaluateFields(typename Traits::EvalData workset)
   std::cout << std::endl;      
     
   std::cout << "Cpinv:\n";
-  for (std::size_t cell=0; cell < numCells; ++cell)
+  for (std::size_t cell=0; cell < workset.numCells; ++cell)
   {
     for (std::size_t qp=0; qp < numQPs; ++qp)
     {
@@ -170,7 +168,7 @@ evaluateFields(typename Traits::EvalData workset)
   std::cout << std::endl;      
 
 
-  for (std::size_t cell=0; cell < numCells; ++cell) 
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) 
   {
     for (std::size_t qp=0; qp < numQPs; ++qp) 
     {
@@ -304,7 +302,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   std::cout << "Fp: \n";
   // Save Stress as State Variable
-  for (std::size_t cell=0; cell < numCells; ++cell) 
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) 
   {
     for (std::size_t qp=0; qp < numQPs; ++qp) 
     {

@@ -55,8 +55,8 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> rcg;
 
-  std::size_t numQPs;
-  std::size_t numDims;
+  unsigned int numQPs;
+  unsigned int numDims;
 };
 }
 

@@ -25,11 +25,11 @@ Albany::ModelEvaluator::ModelEvaluator(
   const Teuchos::RCP< Teuchos::Array<std::string> >& free_param_names,
   const Teuchos::RCP< Teuchos::Array<std::string> >& sg_param_names) 
   : app(app_),
+    transient(app_->isTransient()),
     supports_p(false),
     supports_g(false),
     supports_sg(false),
-    supplies_prec(app_->suppliesPreconditioner()),
-    transient(app_->isTransient())
+    supplies_prec(app_->suppliesPreconditioner())
 {
   // Compute number of parameter vectors
   int num_param_vecs = 0;

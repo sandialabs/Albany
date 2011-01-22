@@ -60,7 +60,7 @@ buildProblem(
   constructEvaluators(worksetSize, disc.getCubatureDegree(), disc.getCellTopologyData());
   constructDirichletEvaluators(disc.getNodeSetIDs());
 
-  const Epetra_Map& dofMap = *(disc.getMap());
+  //const Epetra_Map& dofMap = *(disc.getMap());
   // Build response functions
   Teuchos::ParameterList& responseList = params->sublist("Response Functions");
   int num_responses = responseList.get("Number", 0);

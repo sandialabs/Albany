@@ -50,12 +50,13 @@ private:
 
   // Input:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> GradU;
+
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defgrad;
   PHX::MDField<ScalarT,Cell,QuadPoint> J;
 
-  std::size_t numQPs;
-  std::size_t numDims;
+  unsigned int numQPs;
+  unsigned int numDims;
 };
 
 }

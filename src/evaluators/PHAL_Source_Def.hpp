@@ -79,7 +79,7 @@ Quadratic<EvalT,Traits>::Quadratic(Teuchos::ParameterList& p) {
 
 template<typename EvalT,typename Traits>
 void Quadratic<EvalT,Traits>::EvaluatedFields(Source<EvalT,Traits> &source, Teuchos::ParameterList& p) {
-  Teuchos::ParameterList& paramList = m_source_list->sublist("Quadratic");
+  //Teuchos::ParameterList& paramList = m_source_list->sublist("Quadratic");
   Teuchos::RCP<PHX::DataLayout> dl = p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
   PHX::MDField<ScalarT,Cell,Point> f(p.get<std::string>("Source Name"), dl);
   m_source = f ;
@@ -87,7 +87,7 @@ void Quadratic<EvalT,Traits>::EvaluatedFields(Source<EvalT,Traits> &source, Teuc
 }
 template<typename EvalT,typename Traits>
 void Quadratic<EvalT,Traits>::DependentFields(Source<EvalT,Traits> &source, Teuchos::ParameterList& p) {
-  Teuchos::ParameterList& paramList = m_source_list->sublist("Quadratic");
+  //Teuchos::ParameterList& paramList = m_source_list->sublist("Quadratic");
   Teuchos::RCP<PHX::DataLayout> dl = p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
   PHX::MDField<ScalarT,Cell,Point> f(p.get<std::string>("Variable Name"), dl);
   m_baseField = f;
@@ -104,16 +104,15 @@ void Quadratic<EvalT,Traits>::FieldData(PHX::EvaluatorUtilities<EvalT,Traits> &u
 
 template<typename EvalT,typename Traits>
 void Quadratic<EvalT,Traits>::evaluateFields(typename Traits::EvalData workset){
-  int numCells = workset.numCells;
 
   // Loop over cells, quad points: compute Quadratic Source Term
   if (m_constant) {
-    for (std::size_t cell = 0; cell < numCells; ++cell) {
+    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
       for (std::size_t iqp=0; iqp<m_num_qp; iqp++)
         m_source(cell, iqp) = m_factor;
     }
   } else {
-    for (std::size_t cell = 0; cell < numCells; ++cell) {
+    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
       for (std::size_t iqp=0; iqp<m_num_qp; iqp++)
         m_source(cell, iqp) = m_factor * m_baseField(cell,iqp) * m_baseField(cell,iqp);
     }
@@ -166,7 +165,7 @@ MVQuadratic<EvalT,Traits>::MVQuadratic(Teuchos::ParameterList& p) {
 
 template<typename EvalT,typename Traits>
 void MVQuadratic<EvalT,Traits>::EvaluatedFields(Source<EvalT,Traits> &source, Teuchos::ParameterList& p) {
-  Teuchos::ParameterList& paramList = m_source_list->sublist("Multivariate Quadratic");
+  //Teuchos::ParameterList& paramList = m_source_list->sublist("Multivariate Quadratic");
   Teuchos::RCP<PHX::DataLayout> dl = p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
   PHX::MDField<ScalarT,Cell,Point> f(p.get<std::string>("Source Name"), dl);
   m_source = f ;
@@ -174,7 +173,7 @@ void MVQuadratic<EvalT,Traits>::EvaluatedFields(Source<EvalT,Traits> &source, Te
 }
 template<typename EvalT,typename Traits>
 void MVQuadratic<EvalT,Traits>::DependentFields(Source<EvalT,Traits> &source, Teuchos::ParameterList& p) {
-  Teuchos::ParameterList& paramList = m_source_list->sublist("Multivariate Quadratic");
+  //Teuchos::ParameterList& paramList = m_source_list->sublist("Multivariate Quadratic");
   Teuchos::RCP<PHX::DataLayout> dl = p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
   PHX::MDField<ScalarT,Cell,Point> f(p.get<std::string>("Variable Name"), dl);
   m_baseField = f;
@@ -191,7 +190,6 @@ void MVQuadratic<EvalT,Traits>::FieldData(PHX::EvaluatorUtilities<EvalT,Traits> 
 
 template<typename EvalT,typename Traits>
 void MVQuadratic<EvalT,Traits>::evaluateFields(typename Traits::EvalData workset){
-  int numCells = workset.numCells;
 
   ScalarT a = 0.0;
   for (unsigned int j=0; j<m_factor.size(); j++) {
@@ -200,7 +198,7 @@ void MVQuadratic<EvalT,Traits>::evaluateFields(typename Traits::EvalData workset
   a /= static_cast<double>(m_factor.size());
 
   // Loop over cells, quad points: compute MVQuadratic Source Term
-  for (std::size_t cell = 0; cell < numCells; ++cell) {
+  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
     for (std::size_t iqp=0; iqp<m_num_qp; iqp++)
       m_source(cell, iqp) = a * m_baseField(cell,iqp) * m_baseField(cell,iqp);
   }
@@ -263,7 +261,7 @@ MVExponential<EvalT,Traits>::MVExponential(Teuchos::ParameterList& p) {
 
 template<typename EvalT,typename Traits>
 void MVExponential<EvalT,Traits>::EvaluatedFields(Source<EvalT,Traits> &source, Teuchos::ParameterList& p) {
-  Teuchos::ParameterList& paramList = m_source_list->sublist("Multivariate Exponential");
+  //Teuchos::ParameterList& paramList = m_source_list->sublist("Multivariate Exponential");
   Teuchos::RCP<PHX::DataLayout> dl = p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
   PHX::MDField<ScalarT,Cell,Point> f(p.get<std::string>("Source Name"), dl);
   m_source = f ;
@@ -271,7 +269,7 @@ void MVExponential<EvalT,Traits>::EvaluatedFields(Source<EvalT,Traits> &source, 
 }
 template<typename EvalT,typename Traits>
 void MVExponential<EvalT,Traits>::DependentFields(Source<EvalT,Traits> &source, Teuchos::ParameterList& p) {
-  Teuchos::ParameterList& paramList = m_source_list->sublist("Multivariate Exponential");
+  //Teuchos::ParameterList& paramList = m_source_list->sublist("Multivariate Exponential");
   Teuchos::RCP<PHX::DataLayout> dl = p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
   PHX::MDField<ScalarT,Cell,Point> f(p.get<std::string>("Variable Name"), dl);
   m_baseField = f;
@@ -288,7 +286,6 @@ void MVExponential<EvalT,Traits>::FieldData(PHX::EvaluatorUtilities<EvalT,Traits
 
 template<typename EvalT,typename Traits>
 void MVExponential<EvalT,Traits>::evaluateFields(typename Traits::EvalData workset){
-  int numCells = workset.numCells;
 
   ScalarT a = 0.0;
   for (unsigned int j=0; j<m_factor.size(); j++) {
@@ -297,7 +294,7 @@ void MVExponential<EvalT,Traits>::evaluateFields(typename Traits::EvalData works
   a /= static_cast<double>(m_factor.size());
 
   // Loop over cells, quad points: compute MVExponential Source Term
-  for (std::size_t cell = 0; cell < numCells; ++cell) {
+  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
     for (std::size_t iqp=0; iqp<m_num_qp; iqp++)
       m_source(cell, iqp) = a*std::exp(m_baseField(cell,iqp));
   }
@@ -371,7 +368,7 @@ evaluateFields(const std::vector<typename EvalT::MeshScalarT> &coords)
     exponent += std::pow(m_centroid[i]-coords[i],2);
   }
   exponent *= m_sigma_sq;  
-  MeshScalarT x;
+  MeshScalarT x(0.0);
   if (nsd==1)
     x = m_amplitude *          m_sigma_pi    * std::exp(-exponent);           
   else if (nsd==2)
@@ -512,10 +509,8 @@ void    PointSource<EvalT,Traits>::FieldData(PHX::EvaluatorUtilities<EvalT,Trait
 template<typename EvalT, typename Traits>
 void PointSource<EvalT,Traits>::evaluateFields(typename Traits::EvalData workset)
 {
-  int numCells = workset.numCells;
-
   const RealType time  = workset.current_time;
-  for (std::size_t cell = 0; cell < numCells; ++cell) {
+  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
     for (std::size_t iqp=0; iqp<m_num_qp; iqp++) {
       std::vector<MeshScalarT> coord;
       for (std::size_t i=0; i<m_num_dim; ++i) {

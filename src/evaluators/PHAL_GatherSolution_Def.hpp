@@ -224,7 +224,7 @@ template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 { 
-  const std::size_t num_dof = neq * this->numNodes;
+  //const std::size_t num_dof = neq * this->numNodes;
 
   Teuchos::RCP<const Epetra_Vector> x = workset.x;
   Teuchos::RCP<const Epetra_Vector> xdot = workset.xdot;

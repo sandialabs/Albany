@@ -51,11 +51,11 @@ private:
   // Input:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> GradU;
 
-  int numQPs;
-  int numDims;
-
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> strain;
+
+  unsigned int numQPs;
+  unsigned int numDims;
 };
 }
 

@@ -80,14 +80,13 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT mu;
   ScalarT Jm53;
   ScalarT trace;
-  std::size_t numCells = workset.numCells;
   switch (numDims) {
   case 1:
     Intrepid::FunctionSpaceTools::tensorMultiplyDataData<ScalarT>(stress, elasticModulus, lcg);
     break;
   case 2:
   case 3:
-    for (std::size_t cell=0; cell < numCells; ++cell) {
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
 	kappa = elasticModulus(cell,qp) / ( 3. * ( 1. - 2. * poissonsRatio(cell,qp) ) );
 	mu    = elasticModulus(cell,qp) / ( 2. * ( 1. - poissonsRatio(cell,qp) ) );

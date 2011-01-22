@@ -39,10 +39,10 @@ Albany::Application::Application(
 		   const Teuchos::RCP<const Epetra_Comm>& comm,
 		   const Teuchos::RCP<Teuchos::ParameterList>& params,
 		   const Teuchos::RCP<const Epetra_Vector>& initial_guess) :
-  transient(params->sublist("Problem").get("Transient", false)),
-  shapeParamsHaveBeenReset(false),
-  physicsBasedPreconditioner(false),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
+  transient(params->sublist("Problem").get("Transient", false)),
+  physicsBasedPreconditioner(false),
+  shapeParamsHaveBeenReset(false),
   setupCalledResidual(false), setupCalledJacobian(false), setupCalledTangent(false),
   setupCalledSGResidual(false), setupCalledSGJacobian(false)
   //, stateMgr(Albany::StateManager())
@@ -204,7 +204,7 @@ Albany::Application::getPreconditioner()
    ss << tekoParams->get<std::string>("Unknown Blocking");
 
    // figure out the decomposition requested by the string
-   int num=0,sum=0;
+   unsigned int num=0,sum=0;
    while(not ss.eof()) {
       ss >> num;
       TEUCHOS_ASSERT(num>0);
@@ -318,7 +318,7 @@ Albany::Application::computeGlobalResidual(
     Teuchos::TimeMonitor cubitTimer(*timers[6]); //start timer
 
 *out << " Calling moveMesh with params: " << std::setprecision(8);
-for (int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
+ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
 *out << endl;
     meshMover->moveMesh(shapeParams);
     coordinates = disc->getCoordinates();
@@ -409,7 +409,7 @@ Albany::Application::computeGlobalJacobian(
     Teuchos::TimeMonitor Timer(*timers[6]); //start timer
 
 *out << " Calling moveMesh with params: " << std::setprecision(8);
-for (int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
+ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
 *out << endl;
     meshMover->moveMesh(shapeParams);
     coordinates = disc->getCoordinates();
@@ -645,8 +645,8 @@ Albany::Application::computeGlobalTangent(
      std::vector<int> shape_param_indices;
 
      // Find any shape params from param list
-     for (int i=0; i<params->size(); i++) {
-       for (int j=0; j<shapeParamNames.size(); j++) {
+     for (unsigned int i=0; i<params->size(); i++) {
+       for (unsigned int j=0; j<shapeParamNames.size(); j++) {
          if ((*params)[i].family->getName() == shapeParamNames[j]) {
            num_sp++;
            coord_deriv_indices.resize(num_sp);
@@ -675,7 +675,7 @@ Albany::Application::computeGlobalTangent(
        coord_derivs[i].resize(coordinates.size());
        shapeParams[shape_param_indices[i]] += pert;
 *out << " Calling moveMesh with params: " << std::setprecision(8);
-for (int ii=0; ii<shapeParams.size(); ii++) *out << shapeParams[ii] << "  ";
+for (unsigned int ii=0; ii<shapeParams.size(); ii++) *out << shapeParams[ii] << "  ";
 *out << endl;
        meshMover->moveMesh(shapeParams);
        coordinates = disc->getCoordinates();
@@ -684,7 +684,7 @@ for (int ii=0; ii<shapeParams.size(); ii++) *out << shapeParams[ii] << "  ";
        shapeParams[shape_param_indices[i]] -= pert;
      }
 *out << " Calling moveMesh with params: " << std::setprecision(8);
-for (int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
+for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
 *out << endl;
      meshMover->moveMesh(shapeParams);
      coordinates = disc->getCoordinates();
@@ -846,7 +846,7 @@ evaluateResponseTangents(
         (*g)[offset+j] = (*local_g)[j];
       for (unsigned int l=0; l<gt.size(); l++)
 	if (gt[l] != Teuchos::null)
-	  for (unsigned int k=0; k<gt[l]->NumVectors(); k++)
+	  for (int k=0; k<gt[l]->NumVectors(); k++)
 	    (*gt[l])[k][offset+j] = (*local_gt[l])[k][j];
     }
 
@@ -962,7 +962,7 @@ Albany::Application::computeGlobalSGResidual(
   if (shapeParamsHaveBeenReset) {
     Teuchos::TimeMonitor Timer(*timers[6]); //start timer
 *out << " Calling moveMesh with params: " << std::setprecision(8);
-for (int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
+for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
 *out << endl;
     meshMover->moveMesh(shapeParams);
     coordinates = disc->getCoordinates();
@@ -1089,7 +1089,7 @@ Albany::Application::computeGlobalSGJacobian(
   if (shapeParamsHaveBeenReset) {
     Teuchos::TimeMonitor Timer(*timers[6]); //start timer
 *out << " Calling moveMesh with params: " << std::setprecision(8);
-for (int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
+for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
 *out << endl;
     meshMover->moveMesh(shapeParams);
     coordinates = disc->getCoordinates();
@@ -1245,7 +1245,7 @@ PHAL::AlbanyTraits::Residual::ScalarT&
 Albany::Application::getValue(const std::string& name)
 {
   int index=-1;
-  for (int i=0; i<shapeParamNames.size(); i++) {
+  for (unsigned int i=0; i<shapeParamNames.size(); i++) {
     if (name == shapeParamNames[i]) index = i;
   }
   TEST_FOR_EXCEPTION(index==-1,  std::logic_error,
