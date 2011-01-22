@@ -1,17 +1,8 @@
 <?php 
   setPackageName('Albany');
   setPackageSubtitle('');
-  setPackageDirName('epetraext');
+  setPackageDirName('Albany');
   setPackageTDirName('epetraext');
-  setIncludeRelease106Docs(true);
-  setIncludeRelease104Docs(true);
-  setIncludeRelease102Docs(true);
-  setIncludeRelease100Docs(true);
-  setIncludeRelease90Docs(true);
-  setIncludeRelease80Docs(true);
-  setIncludeRelease70Docs(true);
-  setIncludeRelease60Docs(true);
-  setIncludeRelease50Docs(true); 
-  setIncludeRelease40Docs(true); 
+  setIncludeRelease10Docs(true); 
   setIncludeDevelopmentDocs(true);
 ?>
