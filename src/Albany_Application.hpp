@@ -362,6 +362,8 @@ namespace Albany {
     mutable int phxGraphVisDetail;
 
     StateManager stateMgr;
+
+    bool ignore_residual_in_jacobian;
   };
 }
 #endif // ALBANY_APPLICATION_HPP

@@ -187,7 +187,6 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/DefGrad.cpp 
     ${LCM_DIR}/evaluators/RCG.cpp 
     ${LCM_DIR}/evaluators/LCG.cpp 
-    ${LCM_DIR}/evaluators/DetDefGrad.cpp 
     ${LCM_DIR}/evaluators/Neohookean.cpp
     ${LCM_DIR}/evaluators/J2Stress.cpp 
     ${LCM_DIR}/evaluators/ElasticityResid.cpp
@@ -212,8 +211,6 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/RCG_Def.hpp 
     ${LCM_DIR}/evaluators/LCG.hpp 
     ${LCM_DIR}/evaluators/LCG_Def.hpp
-    ${LCM_DIR}/evaluators/DetDefGrad.hpp 
-    ${LCM_DIR}/evaluators/DetDefGrad_Def.hpp
     ${LCM_DIR}/evaluators/Neohookean.hpp
     ${LCM_DIR}/evaluators/Neohookean_Def.hpp
     ${LCM_DIR}/evaluators/J2Stress.hpp 
@@ -319,7 +316,7 @@ SET(CUTR_HDRS
 set(ALB_TRILINOS_LIBS ${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES})
 
 include_directories (${Trilinos_INCLUDE_DIRS}
-                     ./ ./evaluators ./problems ./responses ./stk
+                     ./ ./evaluators ./problems ./responses ./stk ./LCM/utils
                      ${Trilinos_TPL_INCLUDE_DIRS})
 
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
@@ -344,6 +341,9 @@ IF (ALBANY_DAKOTA)
 ENDIF ()
 add_executable(AlbanyAnalysis Main_Analysis.cpp)
 
+# Tests
+add_executable(UtilsTest LCM/test/utils/UtilsTest.cc)
+
 target_link_libraries(Albany          albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
 target_link_libraries(AlbanySG        albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
 IF (ALBANY_DAKOTA)
@@ -353,3 +353,6 @@ ENDIF ()
 
 target_link_libraries(AlbanyAnalysis  albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS}
                       ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
+
+#Linking tests
+target_link_libraries(UtilsTest albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 

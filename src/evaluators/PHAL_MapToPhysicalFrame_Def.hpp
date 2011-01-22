@@ -28,10 +28,10 @@ MapToPhysicalFrame<EvalT, Traits>::
 MapToPhysicalFrame(const Teuchos::ParameterList& p) :
   coords_vertices  (p.get<std::string>                   ("Coordinate Vector Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout") ),
-  coords_qp        (p.get<std::string>                   ("Coordinate Vector Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
   cubature         (p.get<Teuchos::RCP <Intrepid::Cubature<RealType> > >("Cubature")),
-  cellType         (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type"))
+  cellType         (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
+  coords_qp        (p.get<std::string>                   ("Coordinate Vector Name"),
+	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") )
 {
   this->addDependentField(coords_vertices);
   this->addEvaluatedField(coords_qp);

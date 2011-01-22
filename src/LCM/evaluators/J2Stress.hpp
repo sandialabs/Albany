@@ -63,10 +63,8 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;
 
-  //int numQPs;
-  //int numDims;
-  std::size_t numQPs;
-  std::size_t numDims;
+  unsigned int numQPs;
+  unsigned int numDims;
 
   // scratch space FCs
   Intrepid::FieldContainer<ScalarT> be;

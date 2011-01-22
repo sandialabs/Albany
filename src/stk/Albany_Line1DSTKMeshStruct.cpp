@@ -58,7 +58,7 @@ Albany::Line1DSTKMeshStruct::Line1DSTKMeshStruct(
   const double scale = params->get("1D Scale",     1.0);
   std::vector<double> x(nelem+1);
   double h = scale/nelem;
-  for (unsigned int i=0; i<=nelem; i++) x[i] = h*i;
+  for (int i=0; i<=nelem; i++) x[i] = h*i;
 
   // Distribute the elements equally among processors
   Teuchos::RCP<Epetra_Map> elem_map = Teuchos::rcp(new Epetra_Map(nelem, 0, *comm));
@@ -97,9 +97,9 @@ Albany::Line1DSTKMeshStruct::Line1DSTKMeshStruct(
   std::vector<stk::mesh::Part*> singlePartVec(1);
 
 
-  int rightNode=0;
+  unsigned int rightNode=0;
   // Create elements and node IDs
-  for (unsigned int i=0; i<numMyElements; i++) {
+  for (int i=0; i<numMyElements; i++) {
     const unsigned int elem_GID = elem_map->GID(i);
     const unsigned int left_node  = elem_GID;
     unsigned int right_node = left_node+1;

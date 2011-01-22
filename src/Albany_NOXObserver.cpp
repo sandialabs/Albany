@@ -26,10 +26,9 @@ using namespace std;
 Albany_NOXObserver::Albany_NOXObserver(
      const Teuchos::RCP<Albany_VTK> vtk_,
      const Teuchos::RCP<Albany::Application> &app_) : 
-  vtk(vtk_),
   app(app_),
-  disc(app_->getDiscretization())
-
+  disc(app_->getDiscretization()),
+  vtk(vtk_)
 {
    if (vtk != Teuchos::null) { vtk->updateGeometry (disc); }
 

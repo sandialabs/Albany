@@ -29,9 +29,9 @@ namespace PHAL {
 template<typename EvalT,typename Traits>
 DirichletBase<EvalT, Traits>::
 DirichletBase(Teuchos::ParameterList& p) :
-  nodeSetID(p.get<std::string>("Node Set ID")),
   offset(p.get<int>("Equation Offset")),
-  neq(p.get<int>("Number of Equations"))
+  neq(p.get<int>("Number of Equations")),
+  nodeSetID(p.get<std::string>("Node Set ID"))
 {
   value = p.get<RealType>("Dirichlet Value");
 
@@ -77,7 +77,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   const std::vector<int>& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
 
   int gunk, lunk; // global and local indicies into unknown vector
-  for (int inode = 0; inode < nsNodes.size(); inode++) {
+  for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
       gunk = nsNodes[inode] * this->neq + this->offset;
       lunk = f->Map().LID(gunk);
       (*f)[lunk] = ((*x)[lunk] - this->value);
@@ -114,7 +114,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   RealType diag=j_coeff;
   bool fillResid = (f != Teuchos::null);
 
-  for (int inode = 0; inode < nsNodes.size(); inode++) {
+  for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
     const unsigned nodeid = nsNodes[inode];
       const int gunk = nodeid * this->neq + this->offset;
       int lunk = map.LID(gunk);
@@ -153,7 +153,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   const Epetra_BlockMap& map = x->Map();
   bool fillResid = (f != Teuchos::null);
 
-  for (int inode = 0; inode < nsNodes.size(); inode++) {
+  for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
     const unsigned nodeid = nsNodes[inode];
       const int gunk = nodeid * this->neq + this->offset;
       int lunk = map.LID(gunk);
@@ -191,7 +191,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 
   int nblock = x->size();
   int gunk, lunk; // global and local indicies into unknown vector
-  for (int inode = 0; inode < nsNodes.size(); inode++) {
+  for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
       gunk = nsNodes[inode] * this->neq + this->offset;
       lunk = (*f)[0].Map().LID(gunk);
       for (int block=0; block<nblock; block++)
@@ -236,7 +236,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   RealType diag=j_coeff;
   bool fillResid = (f != Teuchos::null);
 
-  for (int inode = 0; inode < nsNodes.size(); inode++) {
+  for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
     const unsigned nodeid = nsNodes[inode];
       const int gunk = nodeid * this->neq + this->offset;
       int lunk = map.LID(gunk);
@@ -267,7 +267,7 @@ DirichletAggregator(Teuchos::ParameterList& p)
 
   std::vector<std::string>& dbcs = *(p.get<std::vector<std::string>* >("DBC Names"));
 
-  for (int i=0; i<dbcs.size(); i++) {
+  for (unsigned int i=0; i<dbcs.size(); i++) {
     PHX::Tag<ScalarT> fieldTag(dbcs[i], dl);
     this->addDependentField(fieldTag);
   }

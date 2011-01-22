@@ -30,20 +30,20 @@ HeatEqResid(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
   Temperature (p.get<std::string>                   ("QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  ThermalCond (p.get<std::string>                   ("Thermal Conductivity Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  transient   (p.get<bool>("Is Transient")),
   Tdot        (p.get<std::string>                   ("QP Time Derivative Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  TGrad       (p.get<std::string>                   ("Gradient QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
+  ThermalCond (p.get<std::string>                   ("Thermal Conductivity Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   wGradBF     (p.get<std::string>                   ("Weighted Gradient BF Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
-  haveSource  (p.get<bool>("Have Source")),
+  TGrad       (p.get<std::string>                   ("Gradient QP Variable Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
   Source      (p.get<std::string>                   ("Source Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   TResidual   (p.get<std::string>                   ("Residual Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") )
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
+  haveSource  (p.get<bool>("Have Source")),
+  transient   (p.get<bool>("Is Transient"))
 {
   this->addDependentField(wBF);
  // this->addDependentField(Temperature);

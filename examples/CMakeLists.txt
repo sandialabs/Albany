@@ -31,6 +31,9 @@ ENDIF()
 set(SerialAlbany.exe  ${Albany_BINARY_DIR}/src/Albany)
 set(SerialAlbanyDakota.exe  ${Albany_BINARY_DIR}/src/AlbanyDakota)
 
+# Tests
+set(UtilsTest.exe  ${Albany_BINARY_DIR}/src/UtilsTest)
+
 add_subdirectory(SteadyHeat1D)
 add_subdirectory(SteadyHeat2D)
 add_subdirectory(SteadyHeat3D)
@@ -55,6 +58,7 @@ IF(ALBANY_LCM)
   add_subdirectory(ThermoElasticity2D)
   add_subdirectory(ThermoElasticity3D)
   add_subdirectory(J2Plasticity2D)	
+  add_subdirectory(UtilsTest)
 ENDIF()
 
 IF(ALBANY_IOSS)

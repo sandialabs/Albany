@@ -386,27 +386,12 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
 
     //Output
     p->set<string>("DefGrad Name", "Deformation Gradient"); //qp_tensor also
+    p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient"); 
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
 
     evaluators_to_build["DefGrad"] = p;
   }
 
-  { // Determinant of Deformation Gradient
-    RCP<ParameterList> p = rcp(new ParameterList("Determinant of Deformation Gradient"));
-
-    int type = FactoryTraits<AlbanyTraits>::id_detdefgrad;
-    p->set<int>("Type", type);
-
-    //Input
-    p->set<string>("DefGrad Name", "Deformation Gradient");
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
-
-    //Output
-    p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient"); 
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
-
-    evaluators_to_build["DetDefGrad"] = p;
-  }
-  
  if (matModel == "NeoHookean")
  {
 

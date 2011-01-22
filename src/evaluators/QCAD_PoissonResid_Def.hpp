@@ -31,15 +31,15 @@ PoissonResid(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   Permittivity (p.get<std::string>                   ("Permittivity Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  wGradBF     (p.get<std::string>                   ("Weighted Gradient BF Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
   PhiGrad       (p.get<std::string>                   ("Gradient QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
   PhiFlux       (p.get<std::string>                   ("Flux QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  wGradBF     (p.get<std::string>                   ("Weighted Gradient BF Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
-  haveSource  (p.get<bool>("Have Source")),
   Source      (p.get<std::string>                   ("Source Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  haveSource  (p.get<bool>("Have Source")),
   PhiResidual   (p.get<std::string>                   ("Residual Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") )
 {
