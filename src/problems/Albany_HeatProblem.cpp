@@ -135,10 +135,12 @@ Albany::HeatProblem::constructEvaluators(
        intrepidBasis = rcp(new Intrepid::Basis_HGRAD_LINE_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
        break;
      case 2:
-       if (ctd.vertex_count==4)
+       if (ctd.node_count==4)
          intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
-       else if (ctd.vertex_count==3)
+       else if (ctd.node_count==3)
          intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TRI_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
+       else if (ctd.node_count==9)
+         intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C2_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
        break;
      case 3:
        intrepidBasis = rcp(new Intrepid::Basis_HGRAD_HEX_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
@@ -151,7 +153,9 @@ Albany::HeatProblem::constructEvaluators(
    RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, cubDegree);
 
    const int numQPts = cubature->getNumPoints();
-   const int numVertices = cellType->getVertexCount();
+   const int numVertices = cellType->getNodeCount();
+  cout << "NUM VERTICES SET TO NUM NODES " << endl;
+//   const int numVertices = cellType->getVertexCount();
 
    *out << "Field Dimensions: Workset=" << worksetSize 
         << ", Vertices= " << numVertices

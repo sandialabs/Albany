@@ -62,8 +62,10 @@ Albany::STKDiscretization::STKDiscretization(
   //Teuchos::RCP<Epetra_Map>& elem_map = stkMeshStruct->elem_map;
   int& numDim = stkMeshStruct->numDim;
 
-  if (stkMeshStruct->useElementAsTopRank)
-    nodes_per_element =  stk::mesh::get_cell_topology(*(stkMeshStruct->partVec[0]))->vertex_count; 
+  if (stkMeshStruct->useElementAsTopRank) {
+    nodes_per_element =  stk::mesh::get_cell_topology(*(stkMeshStruct->partVec[0]))->node_count; 
+cout << "XXX Nodes per el = " << nodes_per_element << endl;
+   } 
   else {  // comes from cubit
     if (numDim==1)  nodes_per_element = 2;   //can't get topology from Cubit
     else if (numDim==2)  nodes_per_element = 4;   //can't get topology from Cubit
@@ -184,6 +186,7 @@ Albany::STKDiscretization::STKDiscretization(
 
     elNodeID[el_lid].resize(nodes_per_element);
     // loop over local nodes
+cout << "YYY  cell "<<i<< "  relsize " << rel.size() << endl;
     for (unsigned int j=0; j < rel.size(); j++) {
       stk::mesh::Entity& rowNode = * rel[j].entity();
       int node_gid = rowNode.identifier() - 1;

@@ -126,13 +126,16 @@ Albany::ElasticityProblem::constructEvaluators(
        intrepidBasis = rcp(new Intrepid::Basis_HGRAD_LINE_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
        break;
      case 2:
-       if (ctd.vertex_count==4)
+       if (ctd.node_count==4)
          intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
-       else if (ctd.vertex_count==3)
+       else if (ctd.node_count==3)
          intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TRI_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
        break;
      case 3:
-       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_HEX_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
+       if (ctd.node_count==8)
+         intrepidBasis = rcp(new Intrepid::Basis_HGRAD_HEX_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
+       else if (ctd.node_count==10)
+         intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TET_C2_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
        break;
    }
 
@@ -143,7 +146,9 @@ Albany::ElasticityProblem::constructEvaluators(
 
    const int numDim = cubature->getDimension();
    const int numQPts = cubature->getNumPoints();
-   const int numVertices = cellType->getVertexCount();
+   const int numVertices = cellType->getNodeCount();
+cout << "XXXX USING NODES FOR VERTICES" << endl;
+//   const int numVertices = cellType->getVertexCount();
 
    *out << "Field Dimensions: Workset=" << worksetSize 
         << ", Vertices= " << numVertices
