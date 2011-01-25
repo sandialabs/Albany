@@ -57,6 +57,8 @@ private:
 
   unsigned int numQPs;
   unsigned int numDims;
+
+  bool avgJ;
 };
 
 }

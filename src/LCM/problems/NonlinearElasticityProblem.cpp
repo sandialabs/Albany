@@ -380,6 +380,10 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
     int type = FactoryTraits<AlbanyTraits>::id_defgrad;
     p->set<int>("Type", type);
 
+    // Volumetric averaging flag
+    const bool avgJ = params->get("avgJ", false);
+    p->set<bool>("avgJ Name", avgJ);
+
     //Input
     p->set<string>("Gradient QP Variable Name", "Displacement Gradient");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);

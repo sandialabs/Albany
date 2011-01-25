@@ -32,8 +32,8 @@ DefGrad(const Teuchos::ParameterList& p) :
   defgrad     (p.get<std::string>                  ("DefGrad Name"),
 		p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
   J           (p.get<std::string>                   ("DetDefGrad Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") )
-
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  avgJ        (p.get<bool> ("avgJ Name"))
 {
   this->addDependentField(GradU);
 
@@ -67,10 +67,14 @@ void DefGrad<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // Compute DefGrad tensor from displacement gradient
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
-      for (std::size_t i=0; i < numDims; ++i) {
-        for (std::size_t j=0; j < numDims; ++j) {
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) 
+  {
+    for (std::size_t qp=0; qp < numQPs; ++qp) 
+    {
+      for (std::size_t i=0; i < numDims; ++i) 
+      {
+        for (std::size_t j=0; j < numDims; ++j) 
+	{
           defgrad(cell,qp,i,j) = GradU(cell,qp,i,j);
         }
 	defgrad(cell,qp,i,i) += 1.0;
@@ -78,6 +82,32 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
   Intrepid::RealSpaceTools<ScalarT>::det(J, defgrad);
+
+  if (avgJ)
+  {
+    ScalarT Jbar = 0.0;
+    for (std::size_t cell=0; cell < workset.numCells; ++cell)
+    {
+      for (std::size_t qp=0; qp < numQPs; ++qp)
+      {
+	Jbar += std::log(J(cell,qp));
+      }
+      Jbar /= numQPs;
+      Jbar = std::exp(Jbar);
+      for (std::size_t qp=0; qp < numQPs; ++qp)
+      {
+	for (std::size_t i=0; i < numDims; ++i) 
+	{
+	  for (std::size_t j=0; j < numDims; ++j) 
+	  {
+	    defgrad(cell,qp,i,j) *= std::pow(Jbar/J(cell,qp),1./3.);
+	  }
+	}
+	J(cell,qp) = Jbar;
+      }
+    }
+      
+  }
 }
 
 //**********************************************************************
