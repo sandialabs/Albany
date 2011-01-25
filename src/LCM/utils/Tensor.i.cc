@@ -13,7 +13,7 @@
 namespace LCM {
 
   //
-  // Vector construction/destruction
+  // Vector constructor with NaNs
   //
   template<typename ScalarT>
   inline
@@ -27,7 +27,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Vector constructor with scalar
   //
   template<typename ScalarT>
   inline
@@ -41,7 +41,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Vector constructor with 3 scalars
   //
   template<typename ScalarT>
   inline
@@ -55,7 +55,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Vector constructor from vector
   //
   template<typename ScalarT>
   inline
@@ -69,7 +69,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Destructor
   //
   template<typename ScalarT>
   inline
@@ -79,7 +79,7 @@ namespace LCM {
   }
 
   //
-  // Vector utilities
+  // Fill with zeros
   //
   template<typename ScalarT>
   inline void
@@ -93,7 +93,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Vector indexing
   //
   template<typename ScalarT>
   inline const ScalarT &
@@ -104,7 +104,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Vector indexing
   //
   template<typename ScalarT>
   inline ScalarT &
@@ -115,7 +115,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Copy assignment
   //
   template<typename ScalarT>
   inline Vector<ScalarT> &
@@ -130,7 +130,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Vector addition
   //
   template<typename ScalarT>
   inline Vector<ScalarT>
@@ -146,7 +146,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Vector substraction
   //
   template<typename ScalarT>
   inline Vector<ScalarT>
@@ -162,7 +162,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Vector increment
   //
   template<typename ScalarT>
   inline Vector<ScalarT> &
@@ -176,7 +176,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Vector decrement
   //
   template<typename ScalarT>
   inline Vector<ScalarT> &
@@ -190,7 +190,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Vector dot product
   //
   template<typename ScalarT>
   inline ScalarT
@@ -200,7 +200,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Vector equality
   //
   template<typename ScalarT>
   inline bool
@@ -210,7 +210,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Vector inequality
   //
   template<typename ScalarT>
   inline bool
@@ -220,7 +220,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Scalar vector product
   //
   template<typename ScalarT>
   inline Vector<ScalarT>
@@ -230,7 +230,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Vector scalar product
   //
   template<typename ScalarT>
   inline Vector<ScalarT>
@@ -240,7 +240,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Vector dot product
   //
   template<typename ScalarT>
   inline ScalarT
@@ -250,7 +250,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Cross product
   //
   template<typename ScalarT>
   inline Vector<ScalarT>
@@ -266,7 +266,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Vector 2-norm
   //
   template<typename ScalarT>
   inline ScalarT
@@ -276,7 +276,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Vector 1-norm
   //
   template<typename ScalarT>
   inline ScalarT
@@ -286,7 +286,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Vector infinity-norm
   //
   template<typename ScalarT>
   inline ScalarT
@@ -296,7 +296,7 @@ namespace LCM {
   }
 
   //
-  // Second order tensor construction/destruction
+  // Tensor constructor with NaNs
   //
   template<typename ScalarT>
   inline
@@ -318,7 +318,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Tensor constructor from scalar
   //
   template<typename ScalarT>
   inline
@@ -340,7 +340,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Tensor constructor from 9 scalars
   //
   template<typename ScalarT>
   inline
@@ -365,7 +365,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Tensor constructor from tensor
   //
   template<typename ScalarT>
   inline
@@ -387,7 +387,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Destructor
   //
   template<typename ScalarT>
   inline
@@ -397,7 +397,7 @@ namespace LCM {
   }
 
   //
-  // Tensor utilities
+  // Tensor fill with zeros
   //
   template<typename ScalarT>
   inline void
@@ -419,7 +419,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Tensor indexing
   //
   template<typename ScalarT>
   inline const ScalarT &
@@ -431,7 +431,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Tensor indexing
   //
   template<typename ScalarT>
   inline ScalarT &
@@ -443,7 +443,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Tensor copy assignment
   //
   template<typename ScalarT>
   inline Tensor<ScalarT> &
@@ -466,7 +466,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Tensor increment
   //
   template<typename ScalarT>
   inline Tensor<ScalarT> &
@@ -488,7 +488,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Tensor decrement
   //
   template<typename ScalarT>
   inline Tensor<ScalarT> &
@@ -511,7 +511,7 @@ namespace LCM {
 
 
   //
-  //
+  // Tensor addition
   //
   template<typename ScalarT>
   inline Tensor<ScalarT>
@@ -535,7 +535,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Tensor substraction
   //
   template<typename ScalarT>
   inline Tensor<ScalarT>
@@ -559,7 +559,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Tensor dot product C = A B
   //
   template<typename ScalarT>
   inline Tensor<ScalarT>
@@ -569,7 +569,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Tensor equality
   //
   template<typename ScalarT>
   inline bool
@@ -582,7 +582,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Tensor inequality
   //
   template<typename ScalarT>
   inline bool
@@ -592,7 +592,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Scalar tensor product
   //
   template<typename ScalarT>
   inline Tensor<ScalarT>
@@ -605,7 +605,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Tensor scalar product
   //
   template<typename ScalarT>
   inline Tensor<ScalarT>
@@ -615,7 +615,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Tensor vector product v = A u
   //
   template<typename ScalarT>
   inline Vector<ScalarT>
@@ -624,9 +624,8 @@ namespace LCM {
     return dot(A,u);
   }
 
-
   //
-  //
+  // Vector tensor product v = u A
   //
   template<typename ScalarT>
   inline Vector<ScalarT>
@@ -635,9 +634,40 @@ namespace LCM {
     return dot(u,A);
   }
 
+  //
+  // Tensor vector product v = A u
+  //
+  template<typename ScalarT>
+  inline Vector<ScalarT>
+  dot(Tensor<ScalarT> const & A, Vector<ScalarT> const & u)
+  {
+    Vector<ScalarT> v;
+
+    v(0) = A(0,0)*u(0) + A(0,1)*u(1) + A(0,2)*u(2);
+    v(1) = A(1,0)*u(0) + A(1,1)*u(1) + A(1,2)*u(2);
+    v(2) = A(2,0)*u(0) + A(2,1)*u(1) + A(2,2)*u(2);
+
+    return v;
+  }
 
   //
+  // Vector tensor product v = u A
   //
+  template<typename ScalarT>
+  inline Vector<ScalarT>
+  dot(Vector<ScalarT> const & u, Tensor<ScalarT> const & A)
+  {
+    Vector<ScalarT> v;
+
+    v(0) = A(0,0)*u(0) + A(1,0)*u(1) + A(2,0)*u(2);
+    v(1) = A(0,1)*u(0) + A(1,1)*u(1) + A(2,1)*u(2);
+    v(2) = A(0,2)*u(0) + A(1,2)*u(1) + A(2,2)*u(2);
+
+    return v;
+  }
+
+  //
+  // Tensor tensor dot product C = A B
   //
   template<typename ScalarT>
   inline Tensor<ScalarT>
@@ -660,43 +690,8 @@ namespace LCM {
     return C;
   }
 
-
   //
-  //
-  //
-  template<typename ScalarT>
-  inline Vector<ScalarT>
-  dot(Tensor<ScalarT> const & A, Vector<ScalarT> const & u)
-  {
-    Vector<ScalarT> v;
-
-    v(0) = A(0,0)*u(0) + A(0,1)*u(1) + A(0,2)*u(2);
-    v(1) = A(1,0)*u(0) + A(1,1)*u(1) + A(1,2)*u(2);
-    v(2) = A(2,0)*u(0) + A(2,1)*u(1) + A(2,2)*u(2);
-
-    return v;
-  }
-
-
-  //
-  //
-  //
-  template<typename ScalarT>
-  inline Vector<ScalarT>
-  dot(Vector<ScalarT> const & u, Tensor<ScalarT> const & A)
-  {
-    Vector<ScalarT> v;
-
-    v(0) = A(0,0)*u(0) + A(1,0)*u(1) + A(2,0)*u(2);
-    v(1) = A(0,1)*u(0) + A(1,1)*u(1) + A(2,1)*u(2);
-    v(2) = A(0,2)*u(0) + A(1,2)*u(1) + A(2,2)*u(2);
-
-    return v;
-  }
-
-
-  //
-  //
+  // Tensor tensor double dot product (contraction)
   //
   template<typename ScalarT>
   inline ScalarT
@@ -711,9 +706,8 @@ namespace LCM {
     return s;
   }
 
-
   //
-  // Frobenius norm
+  // Tensor Frobenius norm
   //
   template<typename ScalarT>
   inline ScalarT
@@ -729,7 +723,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Tensor 1-norm
   //
   template<typename ScalarT>
   inline ScalarT
@@ -743,7 +737,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Tensor infinity-norm
   //
   template<typename ScalarT>
   inline ScalarT
@@ -757,7 +751,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Dyad
   //
   template<typename ScalarT>
   inline Tensor<ScalarT>
@@ -781,7 +775,7 @@ namespace LCM {
   }
 
   //
-  // Just for Jay
+  // Dyad, just for Jay
   //
   template<typename ScalarT>
   inline Tensor<ScalarT>
@@ -791,7 +785,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Dyad
   //
   template<typename ScalarT>
   inline Tensor<ScalarT>
@@ -801,7 +795,17 @@ namespace LCM {
   }
 
   //
+  // Zero tensor
   //
+  template<typename ScalarT>
+  inline const Tensor<ScalarT>
+  zero()
+  {
+    return Tensor<ScalarT>(0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0);
+  }
+
+  //
+  // Identity tensor
   //
   template<typename ScalarT>
   inline const Tensor<ScalarT>
@@ -811,7 +815,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Identity tensor
   //
   template<typename ScalarT>
   inline const Tensor<ScalarT>
@@ -821,7 +825,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Transpose
   //
   template<typename ScalarT>
   inline Tensor<ScalarT>
@@ -834,7 +838,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Symmetric part of tensor
   //
   template<typename ScalarT>
   inline Tensor<ScalarT>
@@ -855,7 +859,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Skew symmetric part of tensor
   //
   template<typename ScalarT>
   inline Tensor<ScalarT>
@@ -872,7 +876,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Skew symmetric tensor from vector
   //
   template<typename ScalarT>
   inline Tensor<ScalarT>
@@ -885,7 +889,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Tensor inverse
   //
   template<typename ScalarT>
   inline Tensor<ScalarT>
@@ -908,7 +912,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Determinant
   //
   template<typename ScalarT>
   inline ScalarT
@@ -921,7 +925,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Trace
   //
   template<typename ScalarT>
   inline ScalarT
@@ -931,7 +935,7 @@ namespace LCM {
   }
 
   //
-  //
+  // First invariant, trace
   //
   template<typename ScalarT>
   inline ScalarT
@@ -941,7 +945,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Second invariant
   //
   template<typename ScalarT>
   inline ScalarT
@@ -954,7 +958,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Third invariant
   //
   template<typename ScalarT>
   inline ScalarT
@@ -964,7 +968,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Exponential map by Taylor series
   //
   template<typename ScalarT>
   inline Tensor<ScalarT>
@@ -974,7 +978,7 @@ namespace LCM {
     const ScalarT tol = std::numeric_limits<ScalarT>::epsilon();
 
     Index k = 0;
-    const Tensor<ScalarT> term = identity<ScalarT>();
+    Tensor<ScalarT> term = identity<ScalarT>();
 
     // Relative error taken wrt to the first term, which is I and norm = 1
     ScalarT relError = 1.0;
@@ -992,7 +996,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Logarithmic map by Taylor series
   //
   template<typename ScalarT>
   inline Tensor<ScalarT>
@@ -1022,7 +1026,7 @@ namespace LCM {
   }
 
   //
-  //
+  // 3rd-order tensor indexing
   //
   template<typename ScalarT>
   inline const ScalarT &
@@ -1035,7 +1039,7 @@ namespace LCM {
   }
 
   //
-  //
+  // 3rd-order tensor indexing
   //
   template<typename ScalarT>
   inline ScalarT &
@@ -1048,7 +1052,7 @@ namespace LCM {
   }
 
   //
-  //
+  // 4th-order tensor indexing
   //
   template<typename ScalarT>
   inline const ScalarT &
@@ -1063,7 +1067,7 @@ namespace LCM {
   }
 
   //
-  //
+  // 4th-order tensor indexing
   //
   template<typename ScalarT>
   inline ScalarT &

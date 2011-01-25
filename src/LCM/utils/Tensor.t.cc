@@ -6,7 +6,7 @@
 namespace LCM {
 
   //
-  //
+  // Vector input
   //
   template<typename ScalarT>
   std::istream &
@@ -20,7 +20,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Vector output
   //
   template<typename ScalarT>
   std::ostream &
@@ -37,7 +37,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Tensor input
   //
   template<typename ScalarT>
   std::istream &
@@ -59,7 +59,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Tensor output
   //
   template<typename ScalarT>
   std::ostream &
@@ -88,7 +88,7 @@ namespace LCM {
   }
 
   //
-  //
+  // 4th-order tensor 2nd-order tensor double dot product
   //
   template<typename ScalarT>
   Tensor<ScalarT>
@@ -111,7 +111,7 @@ namespace LCM {
   }
 
   //
-  //
+  // 2nd-order tensor 4th-order tensor double dot product
   //
   template<typename ScalarT>
   Tensor<ScalarT>
@@ -134,7 +134,7 @@ namespace LCM {
   }
 
   //
-  //
+  // 2nd-order tensor 2nd-order tensor tensor product
   //
   template<typename ScalarT>
   Tensor4<ScalarT>
@@ -156,7 +156,7 @@ namespace LCM {
   }
 
   //
-  //
+  // odot operator useful for dA(-1)/dA, see Holzapfel eqn 6.165
   //
   template<typename ScalarT>
   Tensor4<ScalarT>
@@ -178,7 +178,7 @@ namespace LCM {
   }
 
   //
-  // Third order tensor construction/destruction and utilities.
+  // 3rd-order tensor constructor with NaNs
   //
   template<typename ScalarT>
   Tensor3<ScalarT>::Tensor3()
@@ -195,7 +195,7 @@ namespace LCM {
   }
 
   //
-  //
+  // 3rd-order tensor constructor with a scalar
   //
   template<typename ScalarT>
   Tensor3<ScalarT>::Tensor3(const ScalarT s)
@@ -212,7 +212,7 @@ namespace LCM {
   }
 
   //
-  //
+  // 3rd-order tensor constructor from 3rd-order tensor
   //
   template<typename ScalarT>
   Tensor3<ScalarT>::Tensor3(Tensor3<ScalarT> const & A)
@@ -229,7 +229,7 @@ namespace LCM {
   }
 
   //
-  //
+  // 3rd-order tensor destructor
   //
   template<typename ScalarT>
   Tensor3<ScalarT>::~Tensor3()
@@ -238,7 +238,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Fill with zeros
   //
   template<typename ScalarT>
   void
@@ -256,7 +256,7 @@ namespace LCM {
   }
 
   //
-  //
+  // 3rd-order tensor copy assignment
   //
   template<typename ScalarT>
   Tensor3<ScalarT> &
@@ -276,7 +276,7 @@ namespace LCM {
   }
 
   //
-  //
+  // 3rd-order tensor increment
   //
   template<typename ScalarT>
   Tensor3<ScalarT> &
@@ -294,7 +294,7 @@ namespace LCM {
   }
 
   //
-  //
+  // 3rd-order tensor decrement
   //
   template<typename ScalarT>
   Tensor3<ScalarT> &
@@ -312,7 +312,7 @@ namespace LCM {
   }
 
   //
-  //
+  // 3rd-order tensor addition
   //
   template<typename ScalarT>
   Tensor3<ScalarT>
@@ -332,7 +332,7 @@ namespace LCM {
   }
 
   //
-  //
+  // 3rd-order tensor substraction
   //
   template<typename ScalarT>
   Tensor3<ScalarT>
@@ -352,7 +352,7 @@ namespace LCM {
   }
 
   //
-  //
+  // 3rd-order tensor inequality
   //
   template<typename ScalarT>
   inline bool
@@ -372,7 +372,7 @@ namespace LCM {
   }
 
   //
-  //
+  // 3rd-order tensor inequality
   //
   template<typename ScalarT>
   inline bool
@@ -382,7 +382,7 @@ namespace LCM {
   }
 
   //
-  //
+  // 3rd-order tensor input
   //
   template<typename ScalarT>
   std::istream &
@@ -400,7 +400,7 @@ namespace LCM {
   }
 
   //
-  //
+  // 3rd-order tensor output
   //
   template<typename ScalarT>
   std::ostream &
@@ -422,7 +422,7 @@ namespace LCM {
   }
 
   //
-  // Fourth order tensor construction/destruction and utilities.
+  // 4th-order tensor constructor with NaNs
   //
   template<typename ScalarT>
   Tensor4<ScalarT>::Tensor4()
@@ -441,7 +441,7 @@ namespace LCM {
   }
 
   //
-  //
+  // 4th-order tensor constructor with a scalar
   //
   template<typename ScalarT>
   Tensor4<ScalarT>::Tensor4(const ScalarT s)
@@ -460,7 +460,7 @@ namespace LCM {
   }
 
   //
-  //
+  // 4th-order tensor constructor with 4th-order tensor
   //
   template<typename ScalarT>
   Tensor4<ScalarT>::Tensor4(Tensor4<ScalarT> const & A)
@@ -479,7 +479,7 @@ namespace LCM {
   }
 
   //
-  //
+  // 4th-order tensor destructor
   //
   template<typename ScalarT>
   Tensor4<ScalarT>::~Tensor4()
@@ -488,7 +488,7 @@ namespace LCM {
   }
 
   //
-  //
+  // Fill with zeros
   //
   template<typename ScalarT>
   void
@@ -508,7 +508,7 @@ namespace LCM {
   }
 
   //
-  //
+  // 4th-order tensor copy assignment
   //
   template<typename ScalarT>
   Tensor4<ScalarT> &
@@ -530,7 +530,7 @@ namespace LCM {
   }
 
   //
-  //
+  // 4th-order tensor increment
   //
   template<typename ScalarT>
   Tensor4<ScalarT> &
@@ -550,7 +550,7 @@ namespace LCM {
   }
 
   //
-  //
+  // 4th-order tensor decrement
   //
   template<typename ScalarT>
   Tensor4<ScalarT> &
@@ -570,7 +570,7 @@ namespace LCM {
   }
 
   //
-  //
+  // 4th-order tensor addition
   //
   template<typename ScalarT>
   Tensor4<ScalarT>
@@ -592,7 +592,7 @@ namespace LCM {
   }
 
   //
-  //
+  // 4th-order tensor substraction
   //
   template<typename ScalarT>
   Tensor4<ScalarT>
@@ -614,7 +614,7 @@ namespace LCM {
   }
 
   //
-  //
+  // 4th-order identity delta_ik delta_jl, A = I_1 A
   //
   template<typename ScalarT>
   const Tensor4<ScalarT>
@@ -636,7 +636,7 @@ namespace LCM {
   }
 
   //
-  //
+  // 4th-order identity delta_il delta_jk, A^T = I_2 A
   //
   template<typename ScalarT>
   const Tensor4<ScalarT>
@@ -658,7 +658,7 @@ namespace LCM {
   }
 
   //
-  //
+  // 4th-order identity delta_ij delta_kl, trA I = I_3 A
   //
   template<typename ScalarT>
   const Tensor4<ScalarT>
@@ -680,7 +680,7 @@ namespace LCM {
   }
 
   //
-  //
+  // 4th-order equality
   //
   template<typename ScalarT>
   inline bool
@@ -702,7 +702,7 @@ namespace LCM {
   }
 
   //
-  //
+  // 4th-order inequality
   //
   template<typename ScalarT>
   inline bool
@@ -712,7 +712,7 @@ namespace LCM {
   }
 
   //
-  //
+  // 4th-order input
   //
   template<typename ScalarT>
   std::istream &
@@ -732,7 +732,7 @@ namespace LCM {
   }
 
   //
-  //
+  // 4th-order output
   //
   template<typename ScalarT>
   std::ostream &

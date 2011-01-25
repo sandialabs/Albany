@@ -4,6 +4,8 @@
 
 #include "Tensor.h"
 
+typedef double ScalarT;
+
 int main(int ac, char* av[])
 {
 
@@ -49,25 +51,27 @@ int main(int ac, char* av[])
     }
   }
 
-  if(InvalidCmdLineArgs == true || (ac > 4)) {
-    std::cout << "Invalid command line arguments detected. Use the following flags:" << std::endl
-      << "\t -v enables verbose mode (reports number of failed/successful tests)" << std::endl
-      << "\t -d enables debug mode (same as verbose with output of each test)" << std::endl
-      << "\t -m enables matlab-style output; only has an effect if debug mode is enabled" << std::endl;
+  if (InvalidCmdLineArgs == true || (ac > 4)) {
+    std::cout << "Invalid command line arguments. Use:" << std::endl;
+    std::cout << "\t -v verbose (number of failed/passed tests)" << std::endl;
+    std::cout << "\t -d debug (same as verbose)" << std::endl;
+    std::cout << "\t -m matlab-style output" << std::endl;
     return 1;
   }
-
-  int PassedTestCount = 0;
-  const int TotalTests = 2;
-  bool passed = false;
 
   //
   // The tests
   //
+  int PassedTestCount = 0;
+  const int TotalTests = 7;
+  bool passed = false;
 
-  LCM::Vector<double> u(1.0, 0.0, 0.0);
-  LCM::Vector<double> v(0.0, 1.0, 0.0);
-  LCM::Vector<double> w(1.0, 1.0, 0.0);
+  //
+  // Test 1
+  //
+  LCM::Vector<ScalarT> u(1.0, 0.0, 0.0);
+  LCM::Vector<ScalarT> v(0.0, 1.0, 0.0);
+  LCM::Vector<ScalarT> w(1.0, 1.0, 0.0);
 
   passed = (u + v == w);
 
@@ -76,7 +80,47 @@ int main(int ac, char* av[])
   }
 
   if(verbose || debug) {
-      std::cout << "Tensor: " << PassedTestCount << " of " << TotalTests << " tests were successful.";
+      std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
+      std::cout << std::endl;
+  }
+
+  //
+  // Test 2
+  //
+  u(0) = 1.0;
+  u(1) = 2.0;
+  u(2) = 3.0;
+
+  v = u - u;
+
+  passed = (LCM::norm(v) == 0.0);
+
+  if (passed == true) {
+    PassedTestCount++;
+  }
+
+  if(verbose || debug) {
+      std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
+      std::cout << std::endl;
+  }
+
+  //
+  // Test 3
+  //
+  v(0) = -2.0;
+  v(1) = -4.0;
+  v(2) = -6.0;
+
+  w = 4.0 * u + 2.0 * v;
+
+  passed = (LCM::norm(w) == 0.0);
+
+  if (passed == true) {
+    PassedTestCount++;
+  }
+
+  if(verbose || debug) {
+    std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
       std::cout << std::endl;
   }
 
@@ -86,9 +130,12 @@ int main(int ac, char* av[])
       std::cout << w << std::endl;
   }
 
-  LCM::Tensor4<double> A(1.0);
-  LCM::Tensor4<double> B(2.0);
-  LCM::Tensor4<double> C(3.0);
+  //
+  // Test 4
+  //
+  LCM::Tensor<ScalarT> A(1.0);
+  LCM::Tensor<ScalarT> B(2.0);
+  LCM::Tensor<ScalarT> C(3.0);
 
   passed = (C == A + B);
 
@@ -97,7 +144,90 @@ int main(int ac, char* av[])
   }
 
   if(verbose || debug) {
-      std::cout << "Tensor: " << PassedTestCount << " of " << TotalTests << " tests were successful.";
+    std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
+      std::cout << std::endl;
+  }
+
+  //
+  // Test 5
+  //
+  A = LCM::eye<ScalarT>();
+  A = 2.0 * A;
+  A(1,0) = A(0,1) = 1.0;
+  A(2,1) = A(1,2) = 1.0;
+
+  B = LCM::inverse(A);
+
+  C = A * B;
+
+  passed = (LCM::norm(C - LCM::eye<ScalarT>()) <=
+        std::numeric_limits<ScalarT>::epsilon());
+
+  if (passed == true) {
+    PassedTestCount++;
+  }
+
+  if(verbose || debug) {
+    std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
+      std::cout << std::endl;
+  }
+
+  if(matlab) {
+      std::cout << A << std::endl;
+      std::cout << B << std::endl;
+      std::cout << C << std::endl;
+  }
+
+  //
+  // Test 6
+  //
+  ScalarT I1 = LCM::I1(A);
+  ScalarT I2 = LCM::I2(A);
+  ScalarT I3 = LCM::I3(A);
+
+  u(0) = I1 - 6;
+  u(1) = I2 - 10;
+  u(2) = I3 - 4;
+
+  passed = (LCM::norm(u) <= std::numeric_limits<ScalarT>::epsilon());
+
+  if (passed == true) {
+    PassedTestCount++;
+  }
+
+  if(verbose || debug) {
+    std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
+      std::cout << std::endl;
+  }
+
+  if(matlab) {
+      std::cout << I1 << std::endl;
+      std::cout << I2 << std::endl;
+      std::cout << I3 << std::endl;
+      std::cout << std::endl;
+      std::cout << std::endl;
+  }
+
+  //
+  // Test 7
+  //
+  A = LCM::eye<ScalarT>();
+  B = LCM::log(A);
+
+  passed = (LCM::norm(B) <= std::numeric_limits<ScalarT>::epsilon());
+
+  C = LCM::exp(B);
+
+  C -= A;
+
+  passed = passed && (LCM::norm(C) <= std::numeric_limits<ScalarT>::epsilon());
+
+  if (passed == true) {
+    PassedTestCount++;
+  }
+
+  if(verbose || debug) {
+    std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
       std::cout << std::endl;
   }
 
