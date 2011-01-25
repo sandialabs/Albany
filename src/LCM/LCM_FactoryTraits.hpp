@@ -44,7 +44,6 @@
 #include "LCM/evaluators/DefGrad.hpp"
 #include "LCM/evaluators/RCG.hpp"
 #include "LCM/evaluators/LCG.hpp"
-#include "LCM/evaluators/DetDefGrad.hpp"
 #include "LCM/evaluators/Neohookean.hpp"
 #include "LCM/evaluators/J2Stress.hpp"
 #include "LCM/evaluators/TLElasResid.hpp"
@@ -92,15 +91,14 @@ struct FactoryTraits {
   static const int id_defgrad                   = 22;
   static const int id_rcg                       = 23;
   static const int id_lcg                       = 24;
-  static const int id_detdefgrad                = 25;
-  static const int id_neohookean_stress         = 26;
-  static const int id_tl_elas_resid             = 27;
-  static const int id_j2_stress                 = 28;
-  static const int id_energy_potential          = 29;
-  static const int id_hardening_modulus         = 30;
-  static const int id_yield_strength            = 31;
+  static const int id_neohookean_stress         = 25;
+  static const int id_tl_elas_resid             = 26;
+  static const int id_j2_stress                 = 27;
+  static const int id_energy_potential          = 28;
+  static const int id_hardening_modulus         = 29;
+  static const int id_yield_strength            = 30;
 
-  typedef boost::mpl::vector32< 
+  typedef boost::mpl::vector31< 
             PHAL::Dirichlet<_,Traits>,                //  0
             PHAL::GatherSolution<_,Traits>,           //  1
             PHAL::GatherCoordinateVector<_,Traits>,   //  2
@@ -126,13 +124,12 @@ struct FactoryTraits {
             LCM::DefGrad<_,Traits>,                   // 22
             LCM::RCG<_,Traits>,                       // 23
             LCM::LCG<_,Traits>,                       // 24
-            LCM::DetDefGrad<_,Traits>,                // 25
-            LCM::Neohookean<_,Traits>,                // 26
-            LCM::TLElasResid<_,Traits>,               // 27
-            LCM::J2Stress<_,Traits>,                  // 28
-            LCM::EnergyPotential<_,Traits>,           // 29
-            LCM::HardeningModulus<_,Traits>,          // 30
-            LCM::YieldStrength<_,Traits>              // 31
+            LCM::Neohookean<_,Traits>,                // 25
+            LCM::TLElasResid<_,Traits>,               // 26
+            LCM::J2Stress<_,Traits>,                  // 27
+            LCM::EnergyPotential<_,Traits>,           // 28
+            LCM::HardeningModulus<_,Traits>,          // 29
+            LCM::YieldStrength<_,Traits>              // 30
     > EvaluatorTypes;
 };
 }

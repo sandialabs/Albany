@@ -55,16 +55,15 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> ThermalCond;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> TGrad;
-
   PHX::MDField<ScalarT,Cell,QuadPoint> Source;
+
+  // Output:
+  PHX::MDField<ScalarT,Cell,Node> TResidual;
 
   bool haveSource;
   bool transient;
   int numQPs, numDims;
   Intrepid::FieldContainer<ScalarT> flux;
-
-  // Output:
-  PHX::MDField<ScalarT,Cell,Node> TResidual;
 };
 }
 

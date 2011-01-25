@@ -45,25 +45,27 @@
 Albany::STKDiscretization::STKDiscretization(
      Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
      const Teuchos::RCP<const Epetra_Comm>& comm) :
-  stkMeshStruct(stkMeshStruct_),
   neq(stkMeshStruct_->neq),
+  stkMeshStruct(stkMeshStruct_),
   time(0.0)
 {
   //Unpack mesh data from struct container
   stk::mesh::MetaData& metaData = *stkMeshStruct->metaData;
   stk::mesh::BulkData& bulkData = *stkMeshStruct->bulkData;
-  Albany::AbstractSTKMeshStruct::VectorFieldType& coordinates_field
-        = *stkMeshStruct->coordinates_field;
-  Albany::AbstractSTKMeshStruct::VectorFieldType& solution_field
-        = *stkMeshStruct->solution_field;
+  //Albany::AbstractSTKMeshStruct::VectorFieldType& coordinates_field
+  //      = *stkMeshStruct->coordinates_field;
+  //Albany::AbstractSTKMeshStruct::VectorFieldType& solution_field
+  //      = *stkMeshStruct->solution_field;
 
   stk::mesh::Part& universalPart = stkMeshStruct->metaData->universal_part();
 
   //Teuchos::RCP<Epetra_Map>& elem_map = stkMeshStruct->elem_map;
   int& numDim = stkMeshStruct->numDim;
 
-  if (stkMeshStruct->useElementAsTopRank)
-    nodes_per_element =  stk::mesh::get_cell_topology(*(stkMeshStruct->partVec[0]))->vertex_count; 
+  if (stkMeshStruct->useElementAsTopRank) {
+    nodes_per_element =  stk::mesh::get_cell_topology(*(stkMeshStruct->partVec[0]))->node_count; 
+cout << "XXX Nodes per el = " << nodes_per_element << endl;
+   } 
   else {  // comes from cubit
     if (numDim==1)  nodes_per_element = 2;   //can't get topology from Cubit
     else if (numDim==2)  nodes_per_element = 4;   //can't get topology from Cubit
@@ -105,7 +107,7 @@ Albany::STKDiscretization::STKDiscretization(
 
   indices.resize(numOwned * neq);
   for (int i=0; i < numOwned; i++)
-    for (int j=0; j < neq; j++)
+    for (unsigned int j=0; j < neq; j++)
       indices[i*neq+j] = getDOF(*ownednodes[i],j);
 
   map = Teuchos::rcp(new Epetra_Map(-1, indices.size(),
@@ -125,8 +127,8 @@ Albany::STKDiscretization::STKDiscretization(
                            overlapnodes );
 
   indices.resize(overlapnodes.size() * neq);
-  for (int i=0; i < overlapnodes.size(); i++)
-    for (int j=0; j < neq; j++)
+  for (unsigned int i=0; i < overlapnodes.size(); i++)
+    for (unsigned int j=0; j < neq; j++)
       indices[i*neq+j] = getDOF(*overlapnodes[i],j);
 
   overlap_map = Teuchos::rcp(new Epetra_Map(-1, indices.size(),
@@ -148,20 +150,20 @@ Albany::STKDiscretization::STKDiscretization(
   if (comm->MyPID()==0)
     cout << "STKDisc: " << cells.size() << " elements on Proc 0 " << endl;
 
-  for (int i=0; i < cells.size(); i++) {
+  for (unsigned int i=0; i < cells.size(); i++) {
     stk::mesh::Entity& e = *cells[i];
     stk::mesh::PairIterRelation rel = e.relations();
 
     // loop over local nodes
-    for (int j=0; j < rel.size(); j++) {
+    for (unsigned int j=0; j < rel.size(); j++) {
       stk::mesh::Entity& rowNode = * rel[j].entity();
 
       // loop over eqs
-      for (int k=0; k < neq; k++) {
+      for (unsigned int k=0; k < neq; k++) {
         row = getDOF(rowNode, k);
-        for (int l=0; l < rel.size(); l++) {
+        for (unsigned int l=0; l < rel.size(); l++) {
           stk::mesh::Entity& colNode = * rel[l].entity();
-          for (int m=0; m < neq; m++) {
+          for (unsigned int m=0; m < neq; m++) {
             col = getDOF(colNode, m);
             overlap_graph->InsertGlobalIndices(row, 1, &col);
           }
@@ -173,9 +175,9 @@ Albany::STKDiscretization::STKDiscretization(
 
   // Fill  elNodeID(el_LID, local node) => node_LID
   elNodeID.resize(cells.size());
-  for (int i=0; i < cells.size(); i++) {
+  for (unsigned int i=0; i < cells.size(); i++) {
     stk::mesh::Entity& e = *cells[i];
-    int  el_lid = i;
+    unsigned int  el_lid = i;
 
     // Q: Does (i==el_lid) always???
     TEST_FOR_EXCEPTION(el_lid<0 || el_lid >= cells.size(), std::logic_error,
@@ -184,7 +186,8 @@ Albany::STKDiscretization::STKDiscretization(
 
     elNodeID[el_lid].resize(nodes_per_element);
     // loop over local nodes
-    for (int j=0; j < rel.size(); j++) {
+cout << "YYY  cell "<<i<< "  relsize " << rel.size() << endl;
+    for (unsigned int j=0; j < rel.size(); j++) {
       stk::mesh::Entity& rowNode = * rel[j].entity();
       int node_gid = rowNode.identifier() - 1;
       int node_lid = overlap_map->LID(node_gid * neq) / neq;
@@ -227,7 +230,7 @@ Albany::STKDiscretization::STKDiscretization(
     nodeSetIDs.push_back(ns->first); // Grab string ID
     if (comm->MyPID()==0)
       cout << "STKDisc: nodeset "<< ns->first <<" has size " << nodes.size() << "  on Proc 0." << endl;
-    for (int i=0; i < nodes.size(); i++) nodeSets[ns->first][i] = nodes[i]->identifier() - 1;
+    for (unsigned int i=0; i < nodes.size(); i++) nodeSets[ns->first][i] = nodes[i]->identifier() - 1;
     ns++;
   }
 
@@ -306,7 +309,7 @@ Albany::STKDiscretization::getCoordinates() const
 {
   // Coordinates are computed here, and not precomputed,
   // since the mesh can move in shape opt problems
-  for (int i=0; i < overlapnodes.size(); i++)  {
+  for (unsigned int i=0; i < overlapnodes.size(); i++)  {
       int node_gid = overlapnodes[i]->identifier() - 1;
       int node_lid = overlap_map->LID(node_gid * neq) / neq;
     double* x = stk::mesh::field_data(*stkMeshStruct->coordinates_field, *overlapnodes[i]);
@@ -362,11 +365,11 @@ void
 Albany::STKDiscretization::setSolutionField(const Epetra_Vector& soln) 
 {
   // Copy soln vector into solution field, one node at a time
-  for (int i=0; i < ownednodes.size(); i++)  {
+  for (unsigned int i=0; i < ownednodes.size(); i++)  {
     int soln_gid = getDOF(*ownednodes[i], 0);;
     int soln_lid = soln.Map().LID(soln_gid);
     double* sol = stk::mesh::field_data(*stkMeshStruct->solution_field, *ownednodes[i]);
-    for (int j=0; j<neq; j++)
+    for (unsigned int j=0; j<neq; j++)
       sol[j] = soln[soln_lid + j];
   }
 }
@@ -376,11 +379,11 @@ Albany::STKDiscretization::getSolutionField() const
 {
   // Copy soln vector into solution field, one node at a time
   Teuchos::RCP<Epetra_Vector> soln = Teuchos::rcp(new Epetra_Vector(*map));
-  for (int i=0; i < ownednodes.size(); i++)  {
+  for (unsigned int i=0; i < ownednodes.size(); i++)  {
     const int soln_gid = getDOF(*ownednodes[i], 0);;
     const int soln_lid = soln->Map().LID(soln_gid);
     const double* sol = stk::mesh::field_data(*stkMeshStruct->solution_field, *ownednodes[i]);
-    for (int j=0; j<neq; j++) (*soln)[soln_lid + j] = sol[j];
+    for (unsigned int j=0; j<neq; j++) (*soln)[soln_lid + j] = sol[j];
   }
   return soln;
 }

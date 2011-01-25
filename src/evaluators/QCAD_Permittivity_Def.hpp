@@ -130,12 +130,10 @@ template<typename EvalT, typename Traits>
 void QCAD::Permittivity<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  int numCells = workset.numCells;
-
-	// assign constant_value to permittivity defined in .hpp file
+  // assign constant_value to permittivity defined in .hpp file
   if (is_constant) 
   {	
-    for (std::size_t cell=0; cell < numCells; ++cell) 
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) 
     {	
       for (std::size_t qp=0; qp < numQPs; ++qp) 
       {
@@ -148,7 +146,7 @@ evaluateFields(typename Traits::EvalData workset)
   else if (position_dependent)
   {	
   	// loop through all elements in one workset
-    for (std::size_t cell=0; cell < numCells; ++cell) 
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) 
     {	
     	// loop through the QPs for each element
       for (std::size_t qp=0; qp < numQPs; ++qp) 
@@ -164,7 +162,7 @@ evaluateFields(typename Traits::EvalData workset)
   // calculate temp-dep value and fill in the permittivity field
   else if (temp_dependent) 
   {
-    for (std::size_t cell=0; cell < numCells; ++cell) 
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) 
     {
       for (std::size_t qp=0; qp < numQPs; ++qp) 
       {

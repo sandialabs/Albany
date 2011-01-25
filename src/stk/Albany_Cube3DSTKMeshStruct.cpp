@@ -68,15 +68,15 @@ Albany::Cube3DSTKMeshStruct::Cube3DSTKMeshStruct(
 
   std::vector<double> x(nelem_x+1);
   double h_x = scale_x/nelem_x;
-  for (unsigned int i=0; i<=nelem_x; i++) x[i] = h_x*i;
+  for (int i=0; i<=nelem_x; i++) x[i] = h_x*i;
 
   std::vector<double> y(nelem_y+1);
   double h_y = scale_y/nelem_y;
-  for (unsigned int i=0; i<=nelem_y; i++) y[i] = h_y*i;
+  for (int i=0; i<=nelem_y; i++) y[i] = h_y*i;
 
   std::vector<double> z(nelem_z+1);
   double h_z = scale_z/nelem_z;
-  for (unsigned int i=0; i<=nelem_z; i++) z[i] = h_z*i;
+  for (int i=0; i<=nelem_z; i++) z[i] = h_z*i;
 
   // Distribute rectangle mesh of elements equally among processors
   Teuchos::RCP<Epetra_Map> elem_map = Teuchos::rcp(new Epetra_Map(nelem_x * nelem_y * nelem_z, 0, *comm));
@@ -123,7 +123,7 @@ Albany::Cube3DSTKMeshStruct::Cube3DSTKMeshStruct(
   const unsigned int nodes_x = nelem_x + 1;
   const unsigned int nodes_xy = nodes_x*(nelem_y + 1);
   // Create elements and node IDs
-  for (unsigned int i=0; i<numMyElements; i++) {
+  for (int i=0; i<numMyElements; i++) {
     const unsigned int elem_GID = elem_map->GID(i);
     const unsigned int z_GID = elem_GID / (nelem_x*nelem_y); // mesh column number
     const unsigned int xy_plane = elem_GID % (nelem_x*nelem_y); 

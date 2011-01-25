@@ -19,6 +19,7 @@
 #include "Phalanx_DataLayout.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid_RealSpaceTools.hpp"
 
 namespace LCM {
 
@@ -28,12 +29,16 @@ DefGrad<EvalT, Traits>::
 DefGrad(const Teuchos::ParameterList& p) :
   GradU       (p.get<std::string>                   ("Gradient QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-  defgrad      (p.get<std::string>                  ("DefGrad Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") )
+  defgrad     (p.get<std::string>                  ("DefGrad Name"),
+		p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+  J           (p.get<std::string>                   ("DetDefGrad Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") )
+
 {
   this->addDependentField(GradU);
 
   this->addEvaluatedField(defgrad);
+  this->addEvaluatedField(J);
 
   this->setName("DefGrad"+PHX::TypeString<EvalT>::value);
 
@@ -52,6 +57,7 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(defgrad,fm);
+  this->utils.setFieldData(J,fm);
   this->utils.setFieldData(GradU,fm);
 }
 
@@ -60,10 +66,8 @@ template<typename EvalT, typename Traits>
 void DefGrad<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  std::size_t numCells = workset.numCells;
-
   // Compute DefGrad tensor from displacement gradient
-  for (std::size_t cell=0; cell < numCells; ++cell) {
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       for (std::size_t i=0; i < numDims; ++i) {
         for (std::size_t j=0; j < numDims; ++j) {
@@ -73,6 +77,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+  Intrepid::RealSpaceTools<ScalarT>::det(J, defgrad);
 }
 
 //**********************************************************************

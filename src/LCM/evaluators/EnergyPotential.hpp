@@ -54,11 +54,12 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> elasticModulus;
   PHX::MDField<ScalarT,Cell,QuadPoint> poissonsRatio;
 
-  int numQPs;
-  int numDims;
-
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> energy;
+
+  std::size_t numQPs;
+  std::size_t numDims;
+  std::size_t numCells;
 };
 }
 

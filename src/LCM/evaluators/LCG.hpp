@@ -52,11 +52,11 @@ private:
   // Input:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defgrad;
 
-  int numQPs;
-  int numDims;
-
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> lcg;
+
+  unsigned int numQPs;
+  unsigned int numDims;
 };
 }
 

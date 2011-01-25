@@ -23,11 +23,11 @@ Albany::AbstractProblem::AbstractProblem(
          const Teuchos::RCP<Teuchos::ParameterList>& params_,
          const Teuchos::RCP<ParamLib>& paramLib_,
          const int neq_) :
-    params(params_),
-    paramLib(paramLib_),
-    DBCparams(params_->sublist("Dirichlet BCs")),
-    neq(neq_),
-    out(Teuchos::VerboseObjectBase::getDefaultOStream()) 
+  out(Teuchos::VerboseObjectBase::getDefaultOStream()),
+  neq(neq_),
+  params(params_),
+  DBCparams(params_->sublist("Dirichlet BCs")),
+  paramLib(paramLib_)
 {}
 
 unsigned int 
@@ -72,6 +72,9 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   validPL->sublist("Teko", false, "");
   validPL->sublist("Dirichlet BCs", false, "");
 
+  validPL->set<bool>("Ignore Residual In Jacobian", false, 
+		     "Ignore residual calculations while computing the Jacobian (only generally appropriate for linear problems)");
+
   return validPL;
 }
 
@@ -97,8 +100,8 @@ Albany::AbstractProblem::constructDirichletEvaluators(
    vector<string> dbcs;
 
    // Check for all possible BCs (every dof on every nodeset) to see which is set
-   for (int i=0; i<nodeSetIDs.size(); i++) {
-     for (int j=0; j<dofNames.size(); j++) {
+   for (std::size_t i=0; i<nodeSetIDs.size(); i++) {
+     for (std::size_t j=0; j<dofNames.size(); j++) {
        std::string ss = constructDBCName(nodeSetIDs[i],dofNames[j]);
 
        if (DBCparams.isParameter(ss)) {
@@ -112,6 +115,7 @@ Albany::AbstractProblem::constructDirichletEvaluators(
          p->set< string >  ("Node Set ID", nodeSetIDs[i]);
          p->set< int >     ("Number of Equations", dofNames.size());
          p->set< int >     ("Equation Offset", j);
+
          p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
          std::stringstream ess; ess << "Evaluator for " << ss;
@@ -167,8 +171,8 @@ Albany::AbstractProblem::getValidDirichletBCParameters(
   Teuchos::RCP<Teuchos::ParameterList> validPL =
      Teuchos::rcp(new Teuchos::ParameterList("Valid Dirichlet BC List"));;
 
-  for (int i=0; i<nodeSetIDs.size(); i++) {
-    for (int j=0; j<dofNames.size(); j++) {
+  for (std::size_t i=0; i<nodeSetIDs.size(); i++) {
+    for (std::size_t j=0; j<dofNames.size(); j++) {
       std::string ss = constructDBCName(nodeSetIDs[i],dofNames[j]);
       validPL->set<double>(ss, 0.0, "Value of BC corresponding to nodeSetID and dofName");
     }

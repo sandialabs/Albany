@@ -108,13 +108,9 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
           // Since Cubit likes to define numDim=3 always, use vertex
           // count on top element block to figure out quad(tri) vs hex.
           //   Needs to be fixed for Tets ro Shells
-          int numVerts = stk::mesh::get_cell_topology(*part)->vertex_count;
-          if (numVerts==4 || numVerts==3) numDim=2;
-          else if (numVerts==8) numDim=3;
-          else TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-                 std::endl << "Error!  IossSTKMeshStruct:  " <<
-                 "Invalid vertex count from exodus mesh: " << numVerts << std::endl);
-          *out << "IOSS-STK:  numDim =  " << numDim << endl; }
+          numDim = stk::mesh::get_cell_topology(*part)->dimension;
+          *out << "IOSS-STK:  numDim =  " << numDim << endl;
+          }
         break;
       case stk::mesh::Node:
           {

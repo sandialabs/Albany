@@ -23,12 +23,12 @@
 template<typename EvalT, typename Traits>
 QCAD::PoissonSource<EvalT, Traits>::
 PoissonSource(Teuchos::ParameterList& p) :
-  poissonSource(p.get<std::string>("Source Name"),
-	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+  coordVec(p.get<std::string>("Coordinate Vector Name"),
+	   p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout")),
   potential(p.get<std::string>("Variable Name"),
 	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-  coordVec(p.get<std::string>("Coordinate Vector Name"),
-	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout"))
+  poissonSource(p.get<std::string>("Source Name"),
+	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"))
 {
   Teuchos::ParameterList* psList = p.get<Teuchos::ParameterList*>("Parameter List");
 
@@ -75,9 +75,7 @@ template<typename EvalT, typename Traits>
 void QCAD::PoissonSource<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  int numCells = workset.numCells;
-
-  for (std::size_t cell=0; cell < numCells; ++cell) 
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) 
   {
     for (std::size_t qp=0; qp < numQPs; ++qp) 
     {

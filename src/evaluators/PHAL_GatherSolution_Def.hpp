@@ -189,6 +189,7 @@ evaluateFields(typename Traits::EvalData workset)
         if (this->vectorField) valptr = &((this->valVec[0])(cell,node,eq));
         else                   valptr = &(this->val[eq])(cell,node);
 	*valptr = FadType(num_dof, (*x)[firstDOF + eq]);
+	valptr->setUpdateValue(!workset.ignore_residual);
 	valptr->fastAccessDx(neq * node + eq + this->offset) = workset.j_coeff;
       }
       if (this->transient) {
@@ -223,7 +224,7 @@ template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 { 
-  const std::size_t num_dof = neq * this->numNodes;
+  //const std::size_t num_dof = neq * this->numNodes;
 
   Teuchos::RCP<const Epetra_Vector> x = workset.x;
   Teuchos::RCP<const Epetra_Vector> xdot = workset.xdot;
@@ -368,6 +369,7 @@ evaluateFields(typename Traits::EvalData workset)
         if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
         else                   valptr = &(this->val[eq])(cell,node);
 	*valptr = SGFadType(num_dof, 0.0);
+	valptr->setUpdateValue(!workset.ignore_residual);
 	valptr->fastAccessDx(neq * node + eq + this->offset) = workset.j_coeff;
 	valptr->val().reset(sg_expansion);
 	valptr->val().copyForWrite();

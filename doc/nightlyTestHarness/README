@@ -45,7 +45,7 @@ scripts in the order listed.
 
   albany_build.sh
   ----------------
-  eg clone Albany from git repository, configure the
+  git clone Albany from git repository, configure the
   code using above installed Trilinos and using the
   and build "Albany" "AlbanyDakota" "AlbanyAnalysis" and,
   "AlbanySG" executables.

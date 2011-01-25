@@ -29,17 +29,16 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p) :
   coordVec      (p.get<std::string>                   ("Coordinate Vector Name"),
                  p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout") ),
   cubature      (p.get<Teuchos::RCP <Intrepid::Cubature<RealType> > >("Cubature")),
+  intrepidBasis (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > > ("Intrepid Basis") ),
   cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
-  intrepidBasis (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >
-        ("Intrepid Basis") ),
-  BF     (p.get<std::string>                   ("BF Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
-  wBF     (p.get<std::string>                   ("Weighted BF Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
-  GradBF  (p.get<std::string>                   ("Gradient BF Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
-  wGradBF (p.get<std::string>                   ("Weighted Gradient BF Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") )
+  BF            (p.get<std::string>                   ("BF Name"),
+                 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
+  wBF           (p.get<std::string>                   ("Weighted BF Name"),
+                 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
+  GradBF        (p.get<std::string>                   ("Gradient BF Name"),
+                 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
+  wGradBF       (p.get<std::string>                   ("Weighted Gradient BF Name"),
+                 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") )
 {
   this->addDependentField(coordVec);
   this->addEvaluatedField(BF);

@@ -187,7 +187,6 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/DefGrad.cpp 
     ${LCM_DIR}/evaluators/RCG.cpp 
     ${LCM_DIR}/evaluators/LCG.cpp 
-    ${LCM_DIR}/evaluators/DetDefGrad.cpp 
     ${LCM_DIR}/evaluators/Neohookean.cpp
     ${LCM_DIR}/evaluators/J2Stress.cpp 
     ${LCM_DIR}/evaluators/ElasticityResid.cpp
@@ -212,8 +211,6 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/RCG_Def.hpp 
     ${LCM_DIR}/evaluators/LCG.hpp 
     ${LCM_DIR}/evaluators/LCG_Def.hpp
-    ${LCM_DIR}/evaluators/DetDefGrad.hpp 
-    ${LCM_DIR}/evaluators/DetDefGrad_Def.hpp
     ${LCM_DIR}/evaluators/Neohookean.hpp
     ${LCM_DIR}/evaluators/Neohookean_Def.hpp
     ${LCM_DIR}/evaluators/J2Stress.hpp 

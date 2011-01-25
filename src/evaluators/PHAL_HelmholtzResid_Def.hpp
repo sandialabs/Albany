@@ -38,16 +38,16 @@ HelmholtzResid(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
   VGrad       (p.get<std::string>                   ("V Gradient Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  haveSource  (p.get<bool>("Have Source")),
   USource     (p.get<std::string>                   ("U Pressure Source Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   VSource     (p.get<std::string>                   ("V Pressure Source Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  haveSource  (p.get<bool>("Have Source")),
+  ksqr        (p.get<double>("Ksqr")),
   UResidual   (p.get<std::string>                   ("U Residual Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
   VResidual   (p.get<std::string>                   ("V Residual Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
-  ksqr        (p.get<double>("Ksqr"))
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") )
 {
   this->addDependentField(wBF);
   this->addDependentField(U);

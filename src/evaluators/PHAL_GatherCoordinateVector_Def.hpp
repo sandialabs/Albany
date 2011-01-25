@@ -56,8 +56,8 @@ template<typename EvalT, typename Traits>
 void GatherCoordinateVector<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 { 
   const Teuchos::ArrayRCP<double> &coordinates = workset.coordinates;
-  int numCells = workset.numCells;
-  int firstCell = workset.firstCell;
+  unsigned int numCells = workset.numCells;
+  unsigned int firstCell = workset.firstCell;
 
   for (std::size_t cell=0; cell < numCells; ++cell) {
     const Teuchos::ArrayRCP<int>& nodeID  = workset.elNodeID[firstCell+cell];
@@ -106,8 +106,8 @@ void GatherCoordinateVector<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 { 
   const Teuchos::ArrayRCP<double> &coordinates = workset.coordinates;
-  int numCells = workset.numCells;
-  int firstCell = workset.firstCell;
+  unsigned int numCells = workset.numCells;
+  unsigned int firstCell = workset.firstCell;
 
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& coord_derivs = workset.coord_derivs;
   std::vector<int> *coord_deriv_indices = workset.coord_deriv_indices;

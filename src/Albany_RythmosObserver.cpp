@@ -27,9 +27,9 @@ using namespace std;
 Albany_RythmosObserver::Albany_RythmosObserver(
      const Teuchos::RCP<Albany_VTK> vtk_,
      const Teuchos::RCP<Albany::Application> &app_) : 
-  vtk(vtk_),
+  disc(app_->getDiscretization()),
   app(app_),
-  disc(app_->getDiscretization())
+  vtk(vtk_)
 {
    if (vtk != Teuchos::null) { vtk->updateGeometry (disc); }
 
