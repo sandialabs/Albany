@@ -39,6 +39,7 @@ Albany::DiscretizationFactory::DiscretizationFactory(
 Teuchos::RCP<Albany::AbstractDiscretization>
 Albany::DiscretizationFactory::create(
 		  unsigned int neq,
+		  unsigned int nstates,
                   const Teuchos::RCP<const Epetra_Comm>& epetra_comm)
 {
   Teuchos::RCP<Albany::AbstractDiscretization> strategy;
@@ -47,26 +48,26 @@ Albany::DiscretizationFactory::create(
   std::string& method = discParams->get("Method", "STK1D");
   if (method == "STK1D") {
     
-    stkMeshStruct = Teuchos::rcp(new Albany::Line1DSTKMeshStruct(epetra_comm, discParams, neq));
+    stkMeshStruct = Teuchos::rcp(new Albany::Line1DSTKMeshStruct(epetra_comm, discParams, neq, nstates));
 
     strategy = Teuchos::rcp(new Albany::STKDiscretization(stkMeshStruct, epetra_comm));
   }
   else if (method == "STK2D") {
     
-    stkMeshStruct = Teuchos::rcp(new Albany::Rect2DSTKMeshStruct(epetra_comm, discParams, neq));
+    stkMeshStruct = Teuchos::rcp(new Albany::Rect2DSTKMeshStruct(epetra_comm, discParams, neq, nstates));
 
     strategy = Teuchos::rcp(new Albany::STKDiscretization(stkMeshStruct, epetra_comm));
   }
   else if (method == "STK3D") {
     
-    stkMeshStruct = Teuchos::rcp(new Albany::Cube3DSTKMeshStruct(epetra_comm, discParams, neq));
+    stkMeshStruct = Teuchos::rcp(new Albany::Cube3DSTKMeshStruct(epetra_comm, discParams, neq, nstates));
 
     strategy = Teuchos::rcp(new Albany::STKDiscretization(stkMeshStruct, epetra_comm));
   }
   else if (method == "Ioss" || method == "Exodus" ||  method == "Pamgen") {
 #ifdef ALBANY_IOSS
     
-    stkMeshStruct = Teuchos::rcp(new Albany::IossSTKMeshStruct(epetra_comm, discParams, neq));
+    stkMeshStruct = Teuchos::rcp(new Albany::IossSTKMeshStruct(epetra_comm, discParams, neq, nstates));
 
     strategy = Teuchos::rcp(new Albany::STKDiscretization(stkMeshStruct, epetra_comm));
 #else
@@ -80,7 +81,7 @@ Albany::DiscretizationFactory::create(
 #ifdef ALBANY_CUTR
     
     STKMeshData* stk_mesh = STKMeshData::instance();
-    stkMeshStruct = Teuchos::rcp(new Albany::FromCubitSTKMeshStruct(stk_mesh, discParams, neq));
+    stkMeshStruct = Teuchos::rcp(new Albany::FromCubitSTKMeshStruct(stk_mesh, discParams, neq, nstates));
 
     strategy = Teuchos::rcp(new Albany::STKDiscretization(stkMeshStruct, epetra_comm));
 #else 

@@ -23,6 +23,7 @@
 #include "Albany_Application.hpp"
 #include "NOX_Epetra_Observer.H"
 #include "Teuchos_TimeMonitor.hpp"
+#include "Albany_StateManager.hpp"
 
 class Albany_NOXObserver : public NOX::Epetra::Observer
 {
@@ -38,6 +39,8 @@ public:
     const Epetra_Vector& solution);
 
 private:
+   std::vector<std::vector<double> > 
+     averageStates(const std::vector<Albany::StateVariables>& stateVariables);
 
    Teuchos::RCP<Albany::Application> app;
    Teuchos::RCP<Albany::AbstractDiscretization> disc;

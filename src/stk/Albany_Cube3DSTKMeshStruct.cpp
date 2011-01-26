@@ -42,7 +42,7 @@ enum { field_data_chunk_size = 1001 };
 Albany::Cube3DSTKMeshStruct::Cube3DSTKMeshStruct(
 		  const Teuchos::RCP<const Epetra_Comm>& comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params, 
-                  const unsigned int neq_) :
+                  const unsigned int neq_, const unsigned int nstates_) :
   periodic(false)
 {
 
@@ -50,6 +50,7 @@ Albany::Cube3DSTKMeshStruct::Cube3DSTKMeshStruct(
 
   numDim = 3;
   neq = neq_;
+  nstates = nstates_;
 
   cubatureDegree = params->get("Cubature Degree", 3);
 
@@ -87,6 +88,7 @@ Albany::Cube3DSTKMeshStruct::Cube3DSTKMeshStruct(
   bulkData = new stk::mesh::BulkData(*metaData , Albany::getMpiCommFromEpetraComm(*comm) , field_data_chunk_size );
   coordinates_field = & metaData->declare_field< VectorFieldType >( "coordinates" );
   solution_field = & metaData->declare_field< VectorFieldType >( "solution" );
+  state_field = & metaData->declare_field< VectorFieldType >( "state" );
 
   partVec[0] = &  metaData->declare_part( "Block_1", stk::mesh::Element );
 
@@ -101,6 +103,7 @@ Albany::Cube3DSTKMeshStruct::Cube3DSTKMeshStruct(
 
   stk::mesh::put_field( *coordinates_field , stk::mesh::Node , metaData->universal_part() , numDim );
   stk::mesh::put_field( *solution_field , stk::mesh::Node , metaData->universal_part() , neq );
+  if (nstates>0) stk::mesh::put_field( *state_field , stk::mesh::Element , metaData->universal_part() , nstates );
 #ifdef ALBANY_IOSS
   stk::io::put_io_part_attribute(*partVec[0]);
   stk::io::put_io_part_attribute(*nsPartVec["NodeSet0"]);
@@ -111,6 +114,7 @@ Albany::Cube3DSTKMeshStruct::Cube3DSTKMeshStruct(
   stk::io::put_io_part_attribute(*nsPartVec["NodeSet5"]);
   stk::io::set_field_role(*coordinates_field, Ioss::Field::ATTRIBUTE);
   stk::io::set_field_role(*solution_field, Ioss::Field::TRANSIENT);
+  if (nstates>0) stk::io::set_field_role(*state_field, Ioss::Field::TRANSIENT);
 #endif
 
   metaData->commit();

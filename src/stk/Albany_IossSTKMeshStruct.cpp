@@ -45,7 +45,7 @@ enum { field_data_chunk_size = 1001 };
 Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 		  const Teuchos::RCP<const Epetra_Comm>& comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_) :
+                  const unsigned int neq_, const unsigned int nstates_) :
   periodic(params->get("Periodic BC", false))
 {
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
@@ -53,6 +53,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
   neq = neq_;
+  nstates = nstates_;
 
   cubatureDegree = params->get("Cubature Degree", 3);
 
@@ -60,9 +61,15 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   bulkData = new stk::mesh::BulkData(*metaData , Albany::getMpiCommFromEpetraComm(*comm), field_data_chunk_size );
   coordinates_field = & metaData->declare_field< VectorFieldType >( "coordinates" );
   solution_field = & metaData->declare_field< VectorFieldType >( "solution" );
+  state_field = & metaData->declare_field< VectorFieldType >( "state" );
+
   stk::mesh::put_field( *solution_field , stk::mesh::Node , metaData->universal_part() , neq );
+  if (nstates>0) stk::mesh::put_field( *state_field , stk::mesh::Element , metaData->universal_part() , nstates );
+
   stk::io::set_field_role(*coordinates_field, Ioss::Field::ATTRIBUTE);
   stk::io::set_field_role(*solution_field, Ioss::Field::TRANSIENT);
+  if (nstates>0) stk::io::set_field_role(*state_field, Ioss::Field::TRANSIENT);
+
 
   stk::io::util::MeshData* mesh_data = new stk::io::util::MeshData();
 

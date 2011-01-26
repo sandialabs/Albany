@@ -40,7 +40,7 @@ enum { field_data_chunk_size = 1001 };
 Albany::FromCubitSTKMeshStruct::FromCubitSTKMeshStruct(
                   STKMeshData* stkMeshData,
                   const Teuchos::RCP<Teuchos::ParameterList>& params, 
-                  const unsigned int neq_) :
+                  const unsigned int neq_, const unsigned int nstates_) :
   periodic(params->get("Periodic BC", false))
 {
   params->validateParameters(*getValidDiscretizationParameters(),0);
@@ -51,6 +51,7 @@ Albany::FromCubitSTKMeshStruct::FromCubitSTKMeshStruct(
   solution_field = stkMeshData->get_solution_field();
   numDim = stkMeshData->get_high_rank();
   neq = neq_;
+  nstates = nstates_;
 
   // Construct nsPartVec from similar stkMeshData struct
   std::map<int, stk::mesh::Part*> nsList= stkMeshData->get_nodeset_list();

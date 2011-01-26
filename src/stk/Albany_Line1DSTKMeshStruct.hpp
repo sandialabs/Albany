@@ -28,7 +28,7 @@ namespace Albany {
     Line1DSTKMeshStruct(
                   const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_);
+                  const unsigned int neq_, const unsigned int nstates_);
 
     ~Line1DSTKMeshStruct();
 

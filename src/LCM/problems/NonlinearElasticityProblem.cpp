@@ -44,6 +44,9 @@ NonlinearElasticityProblem(
   dofNames[0] = "X";
   if (neq>1) dofNames[1] = "Y";
   if (neq>2) dofNames[2] = "Z";
+
+  if (matModel == "NeoHookean")  nstates=numDim*numDim;
+  else if (matModel == "J2")  nstates=2*numDim*numDim+1;
 }
 
 Albany::NonlinearElasticityProblem::
@@ -434,6 +437,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
 
      //Output
      p->set<string>("Stress Name", "Stress"); //qp_tensor also
+     stateMgr.registerStateVariable("stress",qp_tensor,"zero");
 
      evaluators_to_build["Stress"] = p;
    }

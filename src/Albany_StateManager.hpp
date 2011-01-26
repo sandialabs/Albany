@@ -59,6 +59,9 @@ public:
   //! Method to get the "new" state so that it can be overwritten
   Teuchos::RCP<StateVariables> getNewStateVariables(const int workset=0);
 
+  //! Method to get the "new" state so that it can be overwritten
+  const std::vector<StateVariables>& getStateVariables();
+
   //! Method to make the current newState the oldState, and vice versa
   void updateStates();
 

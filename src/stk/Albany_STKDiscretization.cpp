@@ -141,7 +141,7 @@ cout << "XXX Nodes per el = " << nodes_per_element << endl;
     Teuchos::rcp(new Epetra_CrsGraph(Copy, *overlap_map,
                                      neq*nodes_per_element, false));
 
-  std::vector< stk::mesh::Entity * > cells ;
+  //std::vector< stk::mesh::Entity * > cells ;
   stk::mesh::get_selected_entities( select_owned_in_part ,
                            bulkData.buckets( topEntityRank ) ,
 //                           bulkData.buckets( stk::mesh::Element ) ,
@@ -186,7 +186,6 @@ cout << "XXX Nodes per el = " << nodes_per_element << endl;
 
     elNodeID[el_lid].resize(nodes_per_element);
     // loop over local nodes
-cout << "YYY  cell "<<i<< "  relsize " << rel.size() << endl;
     for (unsigned int j=0; j < rel.size(); j++) {
       stk::mesh::Entity& rowNode = * rel[j].entity();
       int node_gid = rowNode.identifier() - 1;
@@ -341,10 +340,13 @@ Albany::STKDiscretization::getCellTopologyData() const
   }
 }
 
-void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln)
+void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln,
+                                   const std::vector<std::vector<double> > states)
 {
   // Put solution as Epetra_Vector into STK Mesh
   setSolutionField(soln);
+
+  if (states.size()>0) setStateField(states);
 
 #ifdef ALBANY_IOSS
   if (stkMeshStruct->exoOutput) {
@@ -359,6 +361,16 @@ void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln)
            << " index " <<out_step<<" to file "<<stkMeshStruct->exoOutFile<< endl;
   }
 #endif
+}
+
+void 
+Albany::STKDiscretization::setStateField(const std::vector<std::vector<double> > states) 
+{
+  for (unsigned int i=0; i < cells.size(); i++)  {
+    double* st = stk::mesh::field_data(*stkMeshStruct->state_field, *cells[i]);
+    for (unsigned int j=0; j<stkMeshStruct->nstates; j++)
+      st[j] = states[i][j];
+  }
 }
 
 void 

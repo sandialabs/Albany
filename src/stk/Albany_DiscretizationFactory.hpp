@@ -42,7 +42,7 @@ namespace Albany {
     virtual ~DiscretizationFactory() {}
 
     virtual Teuchos::RCP<Albany::AbstractDiscretization>
-    create(unsigned int num_equations,
+    create(unsigned int num_equations,unsigned int num_states,
            const Teuchos::RCP<const Epetra_Comm>& epetra_comm);
 
   private:

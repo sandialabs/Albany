@@ -144,6 +144,15 @@ Albany::StateManager::getNewStateVariables(const int ws)
   else                     return Teuchos::rcp(&state1[ws],false);
 }
 
+
+const std::vector<Albany::StateVariables>&
+Albany::StateManager::getStateVariables()
+{
+  TEST_FOR_EXCEPT(!stateVarsAreAllocated);
+  if (state1_is_old_state) return state2;
+  else                     return state1;
+}
+
 void 
 Albany::StateManager::updateStates()
 {

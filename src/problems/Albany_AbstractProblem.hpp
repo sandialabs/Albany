@@ -68,6 +68,7 @@ namespace Albany {
 
     //! Get the number of equations
     unsigned int numEquations() const;
+    unsigned int numStates() const;
 
     //! Build the PDE instantiations, boundary conditions, and initial solution
     //! And construct the evaluators and field managers
@@ -110,6 +111,7 @@ namespace Albany {
 
     //! Number of equations per node being solved
     unsigned int neq;
+    unsigned int nstates;
 
     //! Problem parameters
     Teuchos::RCP<Teuchos::ParameterList> params;

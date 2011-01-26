@@ -83,7 +83,8 @@ namespace Albany {
     Teuchos::ArrayRCP<double>& getCoordinates() const;
 
     // 
-    void outputToExodus(const Epetra_Vector& soln);
+    void outputToExodus(const Epetra_Vector& soln,
+                        const std::vector<std::vector<double> > states);
  
     //! Get Cubature Degree from input file
     int getCubatureDegree() const {return stkMeshStruct->cubatureDegree;};
@@ -106,6 +107,7 @@ namespace Albany {
     inline int getDOF(stk::mesh::Entity& node, int eq) const;
 
     // Copy solution vector from Epetra_Vector into STK Mesh
+    void setStateField(const std::vector<std::vector<double> > states);
     void setSolutionField(const Epetra_Vector& soln);
     void zeroSolutionField(const Epetra_Vector& soln);
 
@@ -156,6 +158,7 @@ namespace Albany {
 
     //! list of all owned nodes, saved for setting solution
     std::vector< stk::mesh::Entity * > ownednodes ;
+    std::vector< stk::mesh::Entity * > cells ;
 
     //! list of all overlap nodes, saved for getting coordinates for mesh motion
     std::vector< stk::mesh::Entity * > overlapnodes ;

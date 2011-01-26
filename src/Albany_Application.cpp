@@ -95,7 +95,7 @@ Albany::Application::Application(
   Teuchos::RCP<Teuchos::ParameterList> discParams = 
     Teuchos::rcpFromRef(params->sublist("Discretization"));
   Albany::DiscretizationFactory discFactory(discParams);
-  disc = discFactory.create(neq, comm);
+  disc = discFactory.create(neq, problem->numStates(), comm);
 
   // Load connectivity map and coordinates 
   elNodeID = disc->getElNodeID();

@@ -30,7 +30,8 @@ namespace Albany {
     FromCubitSTKMeshStruct(
                   STKMeshData* stkMeshData,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_);
+                  const unsigned int neq_, const unsigned int nstates_);
+
 
     ~FromCubitSTKMeshStruct();
 

@@ -49,8 +49,10 @@ namespace Albany {
     std::map<std::string, stk::mesh::Part*> nsPartVec;  //Node Sets
     VectorFieldType* coordinates_field;
     VectorFieldType* solution_field;
+    VectorFieldType* state_field;
     int numDim;
     unsigned int neq;
+    unsigned int nstates;
 
     bool exoOutput;
     std::string exoOutFile;

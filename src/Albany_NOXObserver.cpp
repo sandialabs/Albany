@@ -42,8 +42,6 @@ void Albany_NOXObserver::observeSolution(
      vtk->visualizeField (solution, disc);
    }
 
-   app->getStateMgr().updateStates();;
-
 #ifdef ALBANY_IOSS
   // if (solution.Map().Comm().MyPID()==0)
   //   cout << "Albany::NOXObserver calling exodus output " << endl;
@@ -54,9 +52,48 @@ void Albany_NOXObserver::observeSolution(
   {
     Teuchos::TimeMonitor exooutTimer(*exooutTime); //start timer
 
+    std::vector<std::vector<double> > states = averageStates(app->getStateMgr().getStateVariables());
 
-    stkDisc->outputToExodus(solution);
+    stkDisc->outputToExodus(solution, states);
   }
 #endif
-  
+
+   // This must come at the end since it renames the New state 
+   // as the Old state in preparation for the next step
+   app->getStateMgr().updateStates();;
+
+}
+
+std::vector<std::vector<double> >
+Albany_NOXObserver::averageStates(const std::vector<Albany::StateVariables>& stateVariables) {
+  std::vector<std::vector<double> > states;
+  int numStates = stateVariables[0].size();
+  if (numStates==0) return states;
+
+  int numWorksets = stateVariables.size();
+
+  int containerSize = stateVariables[0].begin()->second->dimension(0);
+  int numQP  = stateVariables[0].begin()->second->dimension(1);
+  int numDim  = stateVariables[0].begin()->second->dimension(2);
+  int numDim2 = stateVariables[0].begin()->second->dimension(3);
+  int numScalarStates = numDim * numDim2; // 2D stress tensor
+
+  states.resize(numWorksets*containerSize);
+  for (int i=0; i<numWorksets*containerSize;i++)  states[i].resize(numScalarStates);
+
+  cout << "QQQ numWorksets " <<  numWorksets << "  numScalarStates " << numScalarStates << "  containersize " << containerSize << endl;
+
+  for (int i=0; i< numWorksets; i++) {
+    const Intrepid::FieldContainer<RealType>& fc = *(stateVariables[i].begin()->second);
+    for (int j=0; j< containerSize; j++) {
+      for (int k=0; k< numQP; k++) {
+        for (int l=0; l< numDim; l++) {
+          for (int m=0; m< numDim2; m++) {
+             states[i*containerSize + j][m+l*numDim] += fc(j,k,l,m)/numQP;
+          }
+        }
+      }
+    }
+  }
+  return states;
 }
