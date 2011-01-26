@@ -85,13 +85,13 @@ Albany::StateManager::initializeStateVariables(const int numWorksets)
     for (int ws=0; ws<numWorksets; ws++) {
       if ( init_type == "zero" )
       {
-	std::cout << "initialization type 'zero'" << std::endl;
+	if (ws==0) *out << "initialization type 'zero'" << std::endl;
 	state1[ws][st->first]->initialize(0.0);
 	state2[ws][st->first]->initialize(0.0);
       }
       else if ( init_type == "identity" )
       {
-	std::cout << "initialization type 'identity'" << std::endl;
+	if (ws==0) *out << "initialization type 'identity'" << std::endl;
 	// we assume operating on the last two indices is correct
 	std::vector<PHX::DataLayout::size_type> dims;
 	state1[ws][st->first]->dimensions(dims);
@@ -163,6 +163,7 @@ Albany::StateManager::getElementAveragedStates() {
   if (state1_is_old_state)  stateVariables = state2;
 
   int numStates = stateVariables[0].size();
+std::cout << "SSSMMM numStates = " << numStates << std::endl;
   if (numStates==0) return states;
 
   int numWorksets = stateVariables.size();
