@@ -60,8 +60,6 @@ void Albany_RythmosObserver::observeCompletedTimeStep(
   const Epetra_Vector soln= *(Thyra::get_Epetra_Vector(*disc->getMap(), solution));
   if (vtk != Teuchos::null) vtk->visualizeField (soln, disc);
 
-  app->getStateMgr().updateStates();;
-
 #ifdef ALBANY_IOSS
   Albany::STKDiscretization* stkDisc =
     dynamic_cast<Albany::STKDiscretization*>(disc.get());
@@ -69,10 +67,10 @@ void Albany_RythmosObserver::observeCompletedTimeStep(
   {
     Teuchos::TimeMonitor exooutTimer(*exooutTime); //start timer
 
-    std::vector<std::vector<double> > states;
-    cout << " NEED TO LOAD STATES FOR RYTHMOS RUN " << endl;
+    std::vector<std::vector<double> > states = app->getStateMgr().getElementAveragedStates();
     stkDisc->outputToExodus(soln,states);
   }
 #endif
 
+  app->getStateMgr().updateStates();;
 }

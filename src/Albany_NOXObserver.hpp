@@ -39,8 +39,6 @@ public:
     const Epetra_Vector& solution);
 
 private:
-   std::vector<std::vector<double> > 
-     averageStates(const std::vector<Albany::StateVariables>& stateVariables);
 
    Teuchos::RCP<Albany::Application> app;
    Teuchos::RCP<Albany::AbstractDiscretization> disc;

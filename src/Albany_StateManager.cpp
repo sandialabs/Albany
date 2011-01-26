@@ -144,15 +144,6 @@ Albany::StateManager::getNewStateVariables(const int ws)
   else                     return Teuchos::rcp(&state1[ws],false);
 }
 
-
-const std::vector<Albany::StateVariables>&
-Albany::StateManager::getStateVariables()
-{
-  TEST_FOR_EXCEPT(!stateVarsAreAllocated);
-  if (state1_is_old_state) return state2;
-  else                     return state1;
-}
-
 void 
 Albany::StateManager::updateStates()
 {
@@ -161,4 +152,41 @@ Albany::StateManager::updateStates()
   // Swap boolean that defines old and new (in terms of state1 and 2) in accessors
   TEST_FOR_EXCEPT(!stateVarsAreAllocated);
   state1_is_old_state = !state1_is_old_state;
+}
+
+const std::vector<std::vector<double> >
+Albany::StateManager::getElementAveragedStates() {
+  TEST_FOR_EXCEPT(!stateVarsAreAllocated);
+  std::vector<std::vector<double> > states;
+
+  std::vector<StateVariables>& stateVariables = state1;
+  if (state1_is_old_state)  stateVariables = state2;
+
+  int numStates = stateVariables[0].size();
+  if (numStates==0) return states;
+
+  int numWorksets = stateVariables.size();
+
+  int containerSize = stateVariables[0].begin()->second->dimension(0);
+  int numQP  = stateVariables[0].begin()->second->dimension(1);
+  int numDim  = stateVariables[0].begin()->second->dimension(2);
+  int numDim2 = stateVariables[0].begin()->second->dimension(3);
+  int numScalarStates = numDim * numDim2; // 2D stress tensor
+
+  states.resize(numWorksets*containerSize);
+  for (int i=0; i<numWorksets*containerSize;i++)  states[i].resize(numScalarStates);
+
+  for (int i=0; i< numWorksets; i++) {
+    const Intrepid::FieldContainer<RealType>& fc = *(stateVariables[i].begin()->second);
+    for (int j=0; j< containerSize; j++) {
+      for (int k=0; k< numQP; k++) {
+        for (int l=0; l< numDim; l++) {
+          for (int m=0; m< numDim2; m++) {
+             states[i*containerSize + j][m+l*numDim] += fc(j,k,l,m)/numQP;
+          }
+        }
+      }
+    }
+  }
+  return states;
 }

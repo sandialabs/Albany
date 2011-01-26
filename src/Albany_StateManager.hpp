@@ -60,7 +60,7 @@ public:
   Teuchos::RCP<StateVariables> getNewStateVariables(const int workset=0);
 
   //! Method to get the "new" state so that it can be overwritten
-  const std::vector<StateVariables>& getStateVariables();
+  const std::vector<std::vector<double> > getElementAveragedStates();
 
   //! Method to make the current newState the oldState, and vice versa
   void updateStates();
