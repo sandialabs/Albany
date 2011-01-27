@@ -29,8 +29,8 @@ NonlinearElasticityProblem(
                          const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_, numDim_),
   haveIC(false),
-  numDim(numDim_),
-  haveSource(false)
+  haveSource(false),
+  numDim(numDim_)
 {
  
   std::string& method = params->get("Name", "NonlinearElasticity ");
