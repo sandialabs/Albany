@@ -93,7 +93,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
 	kappa = elasticModulus(cell,qp) / ( 3. * ( 1. - 2. * poissonsRatio(cell,qp) ) );
-	mu    = elasticModulus(cell,qp) / ( 2. * ( 1. - poissonsRatio(cell,qp) ) );
+	mu    = elasticModulus(cell,qp) / ( 2. * ( 1. + poissonsRatio(cell,qp) ) );
 	Jm53  = std::pow(J(cell,qp), -5./3.);
 	trace = 0.0;
 	for (std::size_t i=0; i < numDims; ++i) trace += (1./numDims) * lcg(cell,qp,i,i);
