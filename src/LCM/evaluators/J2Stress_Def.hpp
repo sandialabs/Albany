@@ -128,44 +128,44 @@ evaluateFields(typename Traits::EvalData workset)
   RST::transpose(FpinvT, Fpinv);
   FST::tensorMultiplyDataData<ScalarT>(Cpinv, Fpinv, FpinvT);
 
-  std::cout << "F:\n";
-  for (std::size_t cell=0; cell < workset.numCells; ++cell)
-  {
-    for (std::size_t qp=0; qp < numQPs; ++qp)
-    {
-      for (std::size_t i=0; i < numDims; ++i)
-	for (std::size_t j=0; j < numDims; ++j)
-	  std::cout << Sacado::ScalarValue<ScalarT>::eval(defgrad(cell,qp,i,j)) << " ";
-    }
-    std::cout << std::endl;      
-  }
-  std::cout << std::endl;      
+  // std::cout << "F:\n";
+  // for (std::size_t cell=0; cell < workset.numCells; ++cell)
+  // {
+  //   for (std::size_t qp=0; qp < numQPs; ++qp)
+  //   {
+  //     for (std::size_t i=0; i < numDims; ++i)
+  // 	for (std::size_t j=0; j < numDims; ++j)
+  // 	  std::cout << Sacado::ScalarValue<ScalarT>::eval(defgrad(cell,qp,i,j)) << " ";
+  //   }
+  //   std::cout << std::endl;      
+  // }
+  // std::cout << std::endl;      
 
-  std::cout << "Fpold:\n";
-  for (std::size_t cell=0; cell < workset.numCells; ++cell)
-  {
-    for (std::size_t qp=0; qp < numQPs; ++qp)
-    {
-      for (std::size_t i=0; i < numDims; ++i)
-	for (std::size_t j=0; j < numDims; ++j)
-	  std::cout << Sacado::ScalarValue<ScalarT>::eval(Fpold(cell,qp,i,j)) << " ";
-    }
-    std::cout << std::endl;      
-  }
-  std::cout << std::endl;      
+  // std::cout << "Fpold:\n";
+  // for (std::size_t cell=0; cell < workset.numCells; ++cell)
+  // {
+  //   for (std::size_t qp=0; qp < numQPs; ++qp)
+  //   {
+  //     for (std::size_t i=0; i < numDims; ++i)
+  // 	for (std::size_t j=0; j < numDims; ++j)
+  // 	  std::cout << Sacado::ScalarValue<ScalarT>::eval(Fpold(cell,qp,i,j)) << " ";
+  //   }
+  //   std::cout << std::endl;      
+  // }
+  // std::cout << std::endl;      
     
-  std::cout << "Cpinv:\n";
-  for (std::size_t cell=0; cell < workset.numCells; ++cell)
-  {
-    for (std::size_t qp=0; qp < numQPs; ++qp)
-    {
-      for (std::size_t i=0; i < numDims; ++i)
-	for (std::size_t j=0; j < numDims; ++j)
-	  std::cout << Sacado::ScalarValue<ScalarT>::eval(Cpinv(cell,qp,i,j)) << " ";
-    }
-    std::cout << std::endl;      
-  }
-  std::cout << std::endl;      
+  // std::cout << "Cpinv:\n";
+  // for (std::size_t cell=0; cell < workset.numCells; ++cell)
+  // {
+  //   for (std::size_t qp=0; qp < numQPs; ++qp)
+  //   {
+  //     for (std::size_t i=0; i < numDims; ++i)
+  // 	for (std::size_t j=0; j < numDims; ++j)
+  // 	  std::cout << Sacado::ScalarValue<ScalarT>::eval(Cpinv(cell,qp,i,j)) << " ";
+  //   }
+  //   std::cout << std::endl;      
+  // }
+  // std::cout << std::endl;      
 
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) 
@@ -179,10 +179,10 @@ evaluateFields(typename Traits::EvalData workset)
       Y     = yieldStrength(cell,qp);
       Jm23  = std::pow( J(cell,qp), -2./3. );
 
-      std::cout << "kappa: " << Sacado::ScalarValue<ScalarT>::eval(kappa) << std::endl;
-      std::cout << "mu   : " << Sacado::ScalarValue<ScalarT>::eval(mu) << std::endl;
-      std::cout << "K    : " << Sacado::ScalarValue<ScalarT>::eval(K) << std::endl;
-      std::cout << "Y    : " << Sacado::ScalarValue<ScalarT>::eval(Y) << std::endl;
+      // std::cout << "kappa: " << Sacado::ScalarValue<ScalarT>::eval(kappa) << std::endl;
+      // std::cout << "mu   : " << Sacado::ScalarValue<ScalarT>::eval(mu) << std::endl;
+      // std::cout << "K    : " << Sacado::ScalarValue<ScalarT>::eval(K) << std::endl;
+      // std::cout << "Y    : " << Sacao::ScalarValue<ScalarT>::eval(Y) << std::endl;
       be.initialize(0.0);
       // Compute Trial State      
       for (std::size_t i=0; i < numDims; ++i)
@@ -199,7 +199,7 @@ evaluateFields(typename Traits::EvalData workset)
 	}
       } 
       
-      std::cout << "be: \n" << be;
+      // std::cout << "be: \n" << be;
       
       trace = 0.0;
       for (std::size_t i=0; i < numDims; ++i)
@@ -215,7 +215,7 @@ evaluateFields(typename Traits::EvalData workset)
 	s(i,i) -= mu * trace;
       }	  
       
-      std::cout << "s: \n" << s;
+      // std::cout << "s: \n" << s;
 
       // check for yielding
       // smag = s.norm();
@@ -227,11 +227,11 @@ evaluateFields(typename Traits::EvalData workset)
       
       f = smag - sqrt(2./3.)*( K * eqpsold(cell,qp) + Y );
 
-      std::cout << "smag : " << Sacado::ScalarValue<ScalarT>::eval(smag) << std::endl;
-      std::cout << "eqpsold: " << Sacado::ScalarValue<ScalarT>::eval(eqpsold(cell,qp)) << std::endl;
-      std::cout << "K      : " << Sacado::ScalarValue<ScalarT>::eval(K) << std::endl;
-      std::cout << "Y      : " << Sacado::ScalarValue<ScalarT>::eval(Y) << std::endl;
-      std::cout << "f      : " << Sacado::ScalarValue<ScalarT>::eval(f) << std::endl;
+      // std::cout << "smag : " << Sacado::ScalarValue<ScalarT>::eval(smag) << std::endl;
+      // std::cout << "eqpsold: " << Sacado::ScalarValue<ScalarT>::eval(eqpsold(cell,qp)) << std::endl;
+      // std::cout << "K      : " << Sacado::ScalarValue<ScalarT>::eval(K) << std::endl;
+      // std::cout << "Y      : " << Sacado::ScalarValue<ScalarT>::eval(Y) << std::endl;
+      // std::cout << "f      : " << Sacado::ScalarValue<ScalarT>::eval(f) << std::endl;
 
       if (f > 1E-12)
       {
@@ -257,11 +257,11 @@ evaluateFields(typename Traits::EvalData workset)
 
 	exponential_map(expA, A);
 
-	std::cout << "expA: \n";
-	for (std::size_t i=0; i < numDims; ++i)	
-	  for (std::size_t j=0; j < numDims; ++j)
-	    std::cout << Sacado::ScalarValue<ScalarT>::eval(expA(i,j)) << " ";
-	std::cout << std::endl;
+	// std::cout << "expA: \n";
+	// for (std::size_t i=0; i < numDims; ++i)	
+	//   for (std::size_t j=0; j < numDims; ++j)
+	//     std::cout << Sacado::ScalarValue<ScalarT>::eval(expA(i,j)) << " ";
+	// std::cout << std::endl;
 		  
 	for (std::size_t i=0; i < numDims; ++i)	
 	{
@@ -300,7 +300,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
-  std::cout << "Fp: \n";
+  // std::cout << "Fp: \n";
   // Save Stress as State Variable
   for (std::size_t cell=0; cell < workset.numCells; ++cell) 
   {
@@ -313,12 +313,12 @@ evaluateFields(typename Traits::EvalData workset)
 	{
 	  STRESS(cell,qp,i,j) = Sacado::ScalarValue<ScalarT>::eval(stress(cell,qp,i,j));
 	  FP(cell,qp,i,j) = Sacado::ScalarValue<ScalarT>::eval(Fp(cell,qp,i,j));
-	  std::cout << FP(cell,qp,i,j) << " ";
+	  // std::cout << FP(cell,qp,i,j) << " ";
 	}
       }
-      std::cout << std::endl;
+      // std::cout << std::endl;
     }
-    std::cout << std::endl;
+    // std::cout << std::endl;
   }
 }
 //**********************************************************************
