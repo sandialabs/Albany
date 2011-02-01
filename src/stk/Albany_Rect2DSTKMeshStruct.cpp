@@ -53,7 +53,6 @@ Albany::Rect2DSTKMeshStruct::Rect2DSTKMeshStruct(
   numDim = 2;
   neq = neq_;
   nstates = nstates_;
-cout << "RRR nstates = " << nstates << endl;
 
   cubatureDegree = params->get("Cubature Degree", 3);
 

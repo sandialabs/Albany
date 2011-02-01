@@ -45,6 +45,9 @@ PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   // neq=1 set in AbstractProblem constructor
   dofNames.resize(neq);
   dofNames[0] = "Phi";
+
+  // STATE OUTPUT
+  nstates=1;
 }
 
 QCAD::PoissonProblem::
@@ -62,7 +65,7 @@ buildProblem(
     const Teuchos::RCP<Epetra_Vector>& u)
 {
   /* Construct All Phalanx Evaluators */
-  constructEvaluators(worksetSize, disc.getCubatureDegree(), disc.getCellTopologyData());
+  constructEvaluators(worksetSize, disc.getCubatureDegree(), disc.getCellTopologyData(), stateMgr);
   constructDirichletEvaluators(disc.getNodeSetIDs());
  
   const Epetra_Map& dofMap = *(disc.getMap());
@@ -113,7 +116,9 @@ buildProblem(
 
 void
 QCAD::PoissonProblem::constructEvaluators(
-       const int worksetSize, const int cubDegree, const CellTopologyData& ctd)
+       const int worksetSize, const int cubDegree,
+       const CellTopologyData& ctd,
+       Albany::StateManager& stateMgr)
 {
    using Teuchos::RCP;
    using Teuchos::rcp;
@@ -338,6 +343,9 @@ QCAD::PoissonProblem::constructEvaluators(
     p->set<string>("Source Name", "Poisson Source");
 
     evaluators_to_build["Poisson Source"] = p;
+
+    // STATE OUTPUT
+    stateMgr.registerStateVariable("ChargeDistribution", qp_scalar);
   }
 
   { // Potential Resid

@@ -45,7 +45,7 @@ public:
 
   //! Method to call multiple timed (before allocate) to register which states will be saved.
   void registerStateVariable(const std::string &name, const Teuchos::RCP< PHX::DataLayout > &t, 
-			     const std::string &init_type);
+			     const std::string &init_type="zero");
 
   //! Function to allocate storage, called once after registering and before get calls
   void allocateStateVariables(const int numWorksets=1);

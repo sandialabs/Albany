@@ -66,7 +66,8 @@ namespace QCAD {
     PoissonProblem& operator=(const PoissonProblem&);
 
     void constructEvaluators(const int worksetSize,
-        const int cubDegree, const CellTopologyData& ctd);
+        const int cubDegree, const CellTopologyData& ctd,
+        Albany::StateManager& stateMgr);
 
   protected:
 

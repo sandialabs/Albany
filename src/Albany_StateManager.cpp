@@ -15,6 +15,7 @@
 \********************************************************************/
 #include "Albany_StateManager.hpp"
 #include "Teuchos_VerboseObject.hpp"
+#include "Teuchos_TestForException.hpp"
 
 Albany::StateManager::StateManager () :
   state1_is_old_state(true),
@@ -163,28 +164,47 @@ Albany::StateManager::getElementAveragedStates() {
   if (state1_is_old_state)  stateVariables = state2;
 
   int numStates = stateVariables[0].size();
-std::cout << "SSSMMM numStates = " << numStates << std::endl;
   if (numStates==0) return states;
 
   int numWorksets = stateVariables.size();
 
-  int containerSize = stateVariables[0].begin()->second->dimension(0);
-  int numQP  = stateVariables[0].begin()->second->dimension(1);
-  int numDim  = stateVariables[0].begin()->second->dimension(2);
-  int numDim2 = stateVariables[0].begin()->second->dimension(3);
-  int numScalarStates = numDim * numDim2; // 2D stress tensor
+  std::vector<int> dims;
+  stateVariables[0].begin()->second->dimensions(dims);
 
+  int stateRank = dims.size();
+  int containerSize = dims[0];
+  int numQP  = dims[1];
+
+  int numDim, numScalarStates;
+  switch (stateRank) {
+    case 2: numDim=-1; numScalarStates=1; break;
+    case 3: numDim=dims[2]; numScalarStates=numDim; break;
+    case 4: numDim=dims[2]; numScalarStates=numDim*numDim; break;
+    default: TEST_FOR_EXCEPTION(true, std::logic_error,
+             "state manager postprocessing logic error");
+  }
+  
   states.resize(numWorksets*containerSize);
   for (int i=0; i<numWorksets*containerSize;i++)  states[i].resize(numScalarStates);
 
+  // Average states over QPs and store. Separate logic for scalar,vector,tensor
   for (int i=0; i< numWorksets; i++) {
     const Intrepid::FieldContainer<RealType>& fc = *(stateVariables[i].begin()->second);
     for (int j=0; j< containerSize; j++) {
       for (int k=0; k< numQP; k++) {
-        for (int l=0; l< numDim; l++) {
-          for (int m=0; m< numDim2; m++) {
-             states[i*containerSize + j][m+l*numDim] += fc(j,k,l,m)/numQP;
-          }
+        switch (stateRank) {
+          case 2: //scalar
+              states[i*containerSize + j][0] += fc(j,k)/numQP;
+              break;
+          case 3: //vector
+              for (int l=0; l< numDim; l++)
+                states[i*containerSize + j][l] += fc(j,k,l)/numQP;
+              break;
+          case 4: //tensor
+              for (int l=0; l< numDim; l++)
+                for (int m=0; m< numDim; m++) 
+                   states[i*containerSize + j][m+l*numDim] += fc(j,k,l,m)/numQP;
+              break;
         }
       }
     }
