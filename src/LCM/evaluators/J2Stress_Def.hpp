@@ -360,7 +360,10 @@ J2Stress<EvalT, Traits>::exponential_map(Intrepid::FieldContainer<ScalarT> & exp
     if (norm(tmp)/norm0 < 1.E-14 ) converged = true;
     
     TEST_FOR_EXCEPTION( k > 50.0, std::logic_error,
-			std::endl << "Error in exponential map, k = " << k << std::endl);
+			std::endl << "Error in exponential map, k = " << k << 
+			"\nnorm0 = " << norm0 <<
+			"\nnorm = " << norm(tmp)/norm0 <<
+			"\nA = \n" << A << std::endl);
     
   }
 }
@@ -375,7 +378,7 @@ J2Stress<EvalT, Traits>::norm(Intrepid::FieldContainer<ScalarT> A)
   {
     colsum = 0.0;
     for (std::size_t j(0); j < numDims; ++j)
-      colsum += A(i,j);
+      colsum += std::abs(A(i,j));
     max = (colsum > max) ? colsum : max;  
   }
 
