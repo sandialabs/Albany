@@ -160,16 +160,17 @@ Albany::StateManager::getElementAveragedStates() {
   TEST_FOR_EXCEPT(!stateVarsAreAllocated);
   std::vector<std::vector<double> > states;
 
-  std::vector<StateVariables>& stateVariables = state1;
-  if (state1_is_old_state)  stateVariables = state2;
+  std::vector<StateVariables>* stateVarPtr;
+  if (state1_is_old_state)  stateVarPtr = &state2;
+  else stateVarPtr = &state1;
 
-  int numStates = stateVariables[0].size();
+  int numStates = (*stateVarPtr)[0].size();
   if (numStates==0) return states;
 
-  int numWorksets = stateVariables.size();
+  int numWorksets = (*stateVarPtr).size();
 
   std::vector<int> dims;
-  stateVariables[0].begin()->second->dimensions(dims);
+  (*stateVarPtr)[0].begin()->second->dimensions(dims);
 
   int stateRank = dims.size();
   int containerSize = dims[0];
@@ -189,7 +190,7 @@ Albany::StateManager::getElementAveragedStates() {
 
   // Average states over QPs and store. Separate logic for scalar,vector,tensor
   for (int i=0; i< numWorksets; i++) {
-    const Intrepid::FieldContainer<RealType>& fc = *(stateVariables[i].begin()->second);
+    const Intrepid::FieldContainer<RealType>& fc = *((*stateVarPtr)[i].begin()->second);
     for (int j=0; j< containerSize; j++) {
       for (int k=0; k< numQP; k++) {
         switch (stateRank) {
