@@ -603,6 +603,7 @@ Albany::NonlinearElasticityProblem::getValidProblemParameters() const
   validPL->sublist("Elastic Modulus", false, "");
   validPL->sublist("Poissons Ratio", false, "");
   validPL->sublist("Material Model", false, "");
+  validPL->sublist("avgJ", false, "");
   if (matModel == "J2")
   {
     validPL->sublist("Hardening Modulus", false, "");
