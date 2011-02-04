@@ -159,8 +159,6 @@ Albany::StateManager::updateStates()
   if (statesToStore.empty())
     return;
 
-  std::cout << "Updating State boolean" << std::endl;
-
   // Swap boolean that defines old and new (in terms of state1 and 2) in accessors
   TEST_FOR_EXCEPT(!stateVarsAreAllocated);
   state1_is_old_state = !state1_is_old_state;
@@ -244,7 +242,7 @@ Albany::StateManager::getElementAveragedStates()
   {
     StateVariables::iterator it = (*stateVarPtr)[i].begin();
     int index = 0;
-    while (it != (*stateVarPtr)[i].end())
+      while (it != (*stateVarPtr)[i].end())
     {
       const Intrepid::FieldContainer<RealType>& fc = *(it->second);
       stateRank = fc.rank();
