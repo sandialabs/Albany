@@ -47,12 +47,12 @@ NonlinearElasticityProblem(
   if (neq>2) dofNames[2] = "Z";
 
   if (matModel == "NeoHookean")  this->nstates=numDim*numDim;
-  //else if (matModel == "J2")  this->nstates=2*numDim*numDim+1;
-  else if (matModel == "J2") {
-    std::cout << "XXXXXXX J2 Stress Model only outputing stress and not other states"
-     << " until StateMgr Averaging is generalized to multiple states" << std::endl;
-     this->nstates=numDim*numDim;
-  }
+  else if (matModel == "J2")  this->nstates=2*numDim*numDim+1;
+//  else if (matModel == "J2") {
+//    std::cout << "XXXXXXX J2 Stress Model only outputing stress and not other states"
+//     << " until StateMgr Averaging is generalized to multiple states" << std::endl;
+//     this->nstates=numDim*numDim;
+//  }
   *out << "Num States to Store: " << this->nstates << std::endl;
   
 }
