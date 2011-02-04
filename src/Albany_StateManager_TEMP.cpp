@@ -209,8 +209,8 @@ Albany::StateManager::getElementAveragedStates() {
     switch (stateRank) 
     {
     case 2: numDim=-1; numScalarStates+=1; break;
-    case 3: numDim=dims[0][2]; numScalarStates+=numDim; break;
-    case 4: numDim=dims[0][2]; numScalarStates+=numDim*numDim; break;
+    case 3: numDim=dims[i][2]; numScalarStates+=numDim; break;
+    case 4: numDim=dims[i][2]; numScalarStates+=numDim*numDim; break;
     default: TEST_FOR_EXCEPTION(true, std::logic_error,
 				"state manager postprocessing logic error");
     }
