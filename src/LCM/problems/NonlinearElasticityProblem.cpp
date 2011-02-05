@@ -146,7 +146,10 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
          intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TRI_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
        break;
      case 3:
-       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_HEX_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
+       if (ctd.node_count==8)
+         intrepidBasis = rcp(new Intrepid::Basis_HGRAD_HEX_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
+       else if (ctd.node_count==10)
+         intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TET_C2_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
        break;
    }
 
@@ -157,7 +160,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
 
    numDim = cubature->getDimension();
    numQPts = cubature->getNumPoints();
-   numVertices = cellType->getVertexCount();
+   numVertices = cellType->getNodeCount();
 
    *out << "Field Dimensions: Workset=" << worksetSize 
         << ", Vertices= " << numVertices
@@ -603,7 +606,7 @@ Albany::NonlinearElasticityProblem::getValidProblemParameters() const
   validPL->sublist("Elastic Modulus", false, "");
   validPL->sublist("Poissons Ratio", false, "");
   validPL->sublist("Material Model", false, "");
-  validPL->sublist("avgJ", false, "");
+  validPL->set<bool>("avgJ", false, "Flag to indicate the J should be volume averaged");
   if (matModel == "J2")
   {
     validPL->sublist("Hardening Modulus", false, "");
