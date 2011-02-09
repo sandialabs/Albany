@@ -60,14 +60,15 @@ namespace QCAD
   	Teuchos::RCP<const Teuchos::ParameterList>
     		getValidPoissonSourceParameters() const;
 
+  	// Suzey: need to assign values to private variables, so remove "const"
   	ScalarT chargeDistribution( const int numDim,
-        const MeshScalarT* coord, const ScalarT& phi) const;
+        const MeshScalarT* coord, const ScalarT& phi);
 
   	//! input
   	std::size_t numQPs;
   	std::size_t numDims;
   	PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
-  	PHX::MDField<ScalarT,Cell,QuadPoint> potential;
+  	PHX::MDField<ScalarT,Cell,QuadPoint> potential;	// scaled potential, no unit.
 
   	//! output
   	PHX::MDField<ScalarT,Cell,QuadPoint> poissonSource;
@@ -77,6 +78,12 @@ namespace QCAD
   	
   	//! string variable to differ the various devices implementation
   	std::string device;
+  	
+  	//! variables to hold the computed output quantities
+  	ScalarT chargeDensity; 	    // space charge density in [cm-3]
+  	ScalarT electronDensity;		// electron density in [cm-3]
+  	ScalarT holeDensity;				// hole density in [cm-3]
+  	ScalarT electricPotential;	// electric potential in [V]
 	};
 }
 

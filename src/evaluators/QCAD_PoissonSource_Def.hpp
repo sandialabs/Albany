@@ -76,16 +76,32 @@ void QCAD::PoissonSource<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // STATE OUTPUT
-  Intrepid::FieldContainer<RealType>& CDState = *((*workset.newState)["ChargeDistribution"]);
+  Intrepid::FieldContainer<RealType>& CDState = *((*workset.newState)["SpaceChargeDensity"]);
+  Intrepid::FieldContainer<RealType>& eDensityState = *((*workset.newState)["ElectronDensity"]);
+  Intrepid::FieldContainer<RealType>& hDensityState = *((*workset.newState)["HoleDensity"]);
+  Intrepid::FieldContainer<RealType>& ePotentialState = *((*workset.newState)["ElectricPotential"]);
   
   for (std::size_t cell=0; cell < workset.numCells; ++cell) 
   {
     for (std::size_t qp=0; qp < numQPs; ++qp) 
     {
-      const ScalarT& CD = chargeDistribution(numDims, &coordVec(cell,qp,0), potential(cell,qp));
-      poissonSource(cell,qp) = factor * CD;
+      // chargeDistribution() returns a scaled 'charge',
+      // not the actual charge density in [cm-3]
+      poissonSource(cell, qp) = factor*
+      	chargeDistribution(numDims, &coordVec(cell,qp,0), potential(cell,qp));
+      
       // STATE OUTPUT: Save off real part into saved state vector
+      const ScalarT& CD = chargeDensity; 	
       CDState(cell,qp) = Sacado::ScalarValue<ScalarT>::eval(CD);
+
+      const ScalarT& eDensity = electronDensity; 
+      eDensityState(cell,qp) = Sacado::ScalarValue<ScalarT>::eval(eDensity);
+      
+      const ScalarT& hDensity = holeDensity; 
+      hDensityState(cell,qp) = Sacado::ScalarValue<ScalarT>::eval(hDensity);
+      
+      const ScalarT& ePotential = electricPotential; 
+      ePotentialState(cell,qp) = Sacado::ScalarValue<ScalarT>::eval(ePotential);
     }
   }
 }
@@ -116,7 +132,7 @@ QCAD::PoissonSource<EvalT,Traits>::getValidPoissonSourceParameters() const
 template<typename EvalT,typename Traits>
 typename QCAD::PoissonSource<EvalT,Traits>::ScalarT
 QCAD::PoissonSource<EvalT,Traits>::chargeDistribution(
-    const int numDim, const MeshScalarT* coord, const ScalarT& phi) const
+    const int numDim, const MeshScalarT* coord, const ScalarT& phi)
 {
   ScalarT charge;
 
@@ -146,33 +162,41 @@ QCAD::PoissonSource<EvalT,Traits>::chargeDistribution(
   // derived scaling factor that appears in the scaled Poisson equation,in [1]
   const double Lambda2 = V0*eps0/(eleQ*X0*X0*C0);  
   
-  /***** implement RHS of the equilibrium Poisson equation in pn diode *****/
+  
+  /***** implement RHS of the scaled Poisson equation in pn diode *****/
   if (device == "pndiode") 
   {
     // define doping concentration
-    double acceptor = 1e16; // constant acceptor doping in [cm^-3]
-    double donor = 1e16;     // constant donor doping in [cm^-3]
+    double acceptor = 1e16;	// constant acceptor doping in [cm^-3]
+    double donor = 1e16;		// constant donor doping in [cm^-3]
     switch (numDim) 
     {
        case 2:
         // assign doping profile 
         if (coord[0] <= 0.5)      // acceptor doping for x/X0<=0.5 
-          charge = -acceptor/C0;   // normalized by C0
+          charge = -acceptor/C0;  // normalized by C0
         else                      // donor doping for x/X0>0.5
           charge = donor/C0; 
         
-        // define the full RHS 
+        // define the full RHS (scaled)
         charge = 1.0/Lambda2*(charge+exp(-phi)-exp(phi));
+        
+        // compute quantities that are output to .exo file
+        chargeDensity = charge*Lambda2*C0;  // space charge density [cm-3]
+        electronDensity = exp(-phi)*C0;     // electron density [cm-3]
+        holeDensity = exp(phi)*C0;          // hole density [cm-3]
+        electricPotential = phi*V0;         // electric potential [V]
 
         break;
       case 1:
       case 3:
-       default:
+      default:
         TEST_FOR_EXCEPT(true);
     }  // end of switch(numDim)
   }    // end of if (device="pndidoe")
   
-  /***** implement RHS of the equilibrium Poisson eqn in a pmos capacitor *****/
+  
+  /***** implement RHS of the scaled Poisson eqn in a pmos capacitor *****/
   else if (device == "pmoscap") 
   {
     // define substrate acceptor doping in [cm^-3]
@@ -185,11 +209,22 @@ QCAD::PoissonSource<EvalT,Traits>::chargeDistribution(
         {
           charge = -acceptor/C0;  // acceptor doping in Silicon
           charge = 1.0/Lambda2*(charge+exp(-phi)-exp(phi));  // the full RHS
+          
+          // compute quantities that are output to .exo file
+          chargeDensity = charge*Lambda2*C0;  // space charge density [cm-3]
+          electronDensity = exp(-phi)*C0;     // electron density [cm-3]
+          holeDensity = exp(phi)*C0;          // hole density [cm-3]
         }  
         
         // consider the SiO2 region (y/X0 < 0)
         else
+        {
           charge = 0.0;  // no charge in SiO2 (solve the Lapalace equation)
+        	chargeDensity = 0.0;      // no space charge in SiO2
+        	electronDensity = 0.0;    // no electrons in SiO2
+        	holeDensity = 0.0;        // no holes in SiO2
+        }
+        electricPotential = phi*V0;	// electric potential [V]
           
         break;
       case 1:
@@ -198,6 +233,7 @@ QCAD::PoissonSource<EvalT,Traits>::chargeDistribution(
         TEST_FOR_EXCEPT(true);
     }
   }    // end of else if (device=="pmoscap")
+  
   
   /***** otherwise, run the /examples/Poisson2D device  *****/
   else 
@@ -208,11 +244,12 @@ QCAD::PoissonSource<EvalT,Traits>::chargeDistribution(
         if (coord[1]<0.8) charge = (coord[1]*coord[1]);
         else charge = 3.0;
         charge *= (1.0 + exp(-phi));
+        chargeDensity = charge;	// default device has NO scaling
         break;
-       case 1:
-       case 3:
-       default:
-         TEST_FOR_EXCEPT(true);
+      case 1:
+      case 3:
+      default:
+        TEST_FOR_EXCEPT(true);
     }
   }
   
