@@ -1,0 +1,8 @@
+This directory contains a few files to the LCM project
+1) LCM_build.sh is a bash script that will compile Trilinos and its TPLs
+
+2) *_algebra.i are algebra scripts
+
+to run this algebra scripts, assuming you have access to the SEACAS tools, do
+
+% algebra <exo_in> <exo_out> < *_algebra.i
