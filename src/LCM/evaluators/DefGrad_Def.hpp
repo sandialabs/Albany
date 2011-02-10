@@ -67,13 +67,13 @@ void DefGrad<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // Compute DefGrad tensor from displacement gradient
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) 
+  for (std::size_t cell=0; cell < workset.numCells; ++cell)
   {
-    for (std::size_t qp=0; qp < numQPs; ++qp) 
+    for (std::size_t qp=0; qp < numQPs; ++qp)
     {
-      for (std::size_t i=0; i < numDims; ++i) 
+      for (std::size_t i=0; i < numDims; ++i)
       {
-        for (std::size_t j=0; j < numDims; ++j) 
+        for (std::size_t j=0; j < numDims; ++j)
 	{
           defgrad(cell,qp,i,j) = GradU(cell,qp,i,j);
         }
@@ -85,20 +85,24 @@ evaluateFields(typename Traits::EvalData workset)
 
   if (avgJ)
   {
-    ScalarT Jbar = 0.0;
+    ScalarT Jbar;
     for (std::size_t cell=0; cell < workset.numCells; ++cell)
     {
+      Jbar = 0.0;
       for (std::size_t qp=0; qp < numQPs; ++qp)
       {
+        TEST_FOR_EXCEPTION(J(cell,qp) < 0, std::runtime_error,
+            " negative volume detected in avgJ routine");
 	Jbar += std::log(J(cell,qp));
+        //Jbar += J(cell,qp);
       }
       Jbar /= numQPs;
       Jbar = std::exp(Jbar);
       for (std::size_t qp=0; qp < numQPs; ++qp)
       {
-	for (std::size_t i=0; i < numDims; ++i) 
+	for (std::size_t i=0; i < numDims; ++i)
 	{
-	  for (std::size_t j=0; j < numDims; ++j) 
+	  for (std::size_t j=0; j < numDims; ++j)
 	  {
 	    defgrad(cell,qp,i,j) *= std::pow(Jbar/J(cell,qp),1./3.);
 	  }
@@ -106,7 +110,6 @@ evaluateFields(typename Traits::EvalData workset)
 	J(cell,qp) = Jbar;
       }
     }
-      
   }
 }
 

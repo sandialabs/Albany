@@ -106,16 +106,19 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
     // Save Stress as State Variable
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
-        for (std::size_t i=0; i < numDims; ++i) {
-          for (std::size_t j=0; j < numDims; ++j) {
+    for (std::size_t cell=0; cell < workset.numCells; ++cell)
+    {
+      for (std::size_t qp=0; qp < numQPs; ++qp)
+      {
+        for (std::size_t i=0; i < numDims; ++i)
+        {
+          for (std::size_t j=0; j < numDims; ++j)
+          {
             STRESS(cell,qp,i,j) = Sacado::ScalarValue<ScalarT>::eval(stress(cell,qp,i,j));
           }
         }
       }
     }
-
     break;
   }
 }
