@@ -15,63 +15,67 @@
 \********************************************************************/
 
 
-#ifndef PHAL_HEATEQRESID_HPP
-#define PHAL_HEATEQRESID_HPP
+#ifndef PHAL_TEPROP_HPP
+#define PHAL_TEPROP_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
-/** \brief Finite Element Interpolation Evaluator
+#include "Teuchos_ParameterList.hpp"
+#include "Epetra_Vector.h"
+#include "Sacado_ParameterAccessor.hpp"
+#include "Stokhos_KL_ExponentialRandomField.hpp"
+#include "Teuchos_Array.hpp"
 
-    This evaluator interpolates nodal DOF values to quad points.
-
-*/
+/** 
+ * \brief Evaluates thermal conductivity, either as a constant or a truncated
+ * KL expansion.
+ */
 namespace PHAL {
 
 template<typename EvalT, typename Traits>
-class HeatEqResid : public PHX::EvaluatorWithBaseImpl<Traits>,
-		    public PHX::EvaluatorDerived<EvalT, Traits>  {
-
+class TEProp : 
+  public PHX::EvaluatorWithBaseImpl<Traits>,
+  public PHX::EvaluatorDerived<EvalT, Traits>,
+  public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+  
 public:
-
-  HeatEqResid(const Teuchos::ParameterList& p);
-
-  void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
-
-  void evaluateFields(typename Traits::EvalData d);
-
-private:
-
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  // Input:
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
-  PHX::MDField<ScalarT,Cell,QuadPoint> Temperature;
-  PHX::MDField<ScalarT,Cell,QuadPoint> Tdot;
-  PHX::MDField<ScalarT,Cell,QuadPoint> ThermalCond;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> TGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint> Source;
-  Teuchos::Array<double> convectionVels;
+  TEProp(Teuchos::ParameterList& p);
+  
+  void postRegistrationSetup(typename Traits::SetupData d,
+			     PHX::FieldManager<Traits>& vm);
+  
+  void evaluateFields(typename Traits::EvalData d);
+  
+  ScalarT& getValue(const std::string &n);
+
+private:
+  int whichMat(const MeshScalarT& x);
+
+  std::size_t numQPs;
+  std::size_t numDims;
+  PHX::MDField<ScalarT,Cell,QuadPoint> permittivity;
+  PHX::MDField<ScalarT,Cell,QuadPoint> thermalCond;
   PHX::MDField<ScalarT,Cell,QuadPoint> rhoCp;
+  PHX::MDField<ScalarT,Cell,QuadPoint> Temp;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
 
-  // Output:
-  PHX::MDField<ScalarT,Cell,Node> TResidual;
-
-  bool haveSource;
-  bool transient;
-  bool haveConvection;
-  int numQPs, numDims;
-  Intrepid::FieldContainer<ScalarT> flux;
+  int mats;
+  Teuchos::Array<ScalarT> elecCs;
+  Teuchos::Array<double> thermCs;
+  Teuchos::Array<double> rhoCps;
+  Teuchos::Array<double> factor;
+  Teuchos::Array<double> xBounds;
 };
 }
 
 #ifndef PHAL_ETI
-#include "PHAL_HeatEqResid_Def.hpp"
+#include "PHAL_TEProp_Def.hpp"
 #endif
 
 #endif

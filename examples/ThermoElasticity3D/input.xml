@@ -49,6 +49,7 @@
     <Parameter name="2D Elements" type="int" value="20"/>
     <Parameter name="3D Elements" type="int" value="15"/>
     <Parameter name="Method" type="string" value="STK3D"/>
+    <Parameter name="Exodus Output File Name" type="string" value="thel3d.exo"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="0"/>

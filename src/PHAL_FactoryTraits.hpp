@@ -38,6 +38,7 @@
 #include "QCAD_PoissonResid.hpp"
 #include "QCAD_PoissonSource.hpp"
 #include "PHAL_JouleHeating.hpp"
+#include "PHAL_TEProp.hpp"
 
 #include "boost/mpl/vector/vector30.hpp"
 #include "boost/mpl/placeholders.hpp"
@@ -74,8 +75,9 @@ struct FactoryTraits {
   static const int id_qcad_poisson_resid        = 17;
   static const int id_qcad_poisson_source       = 18;
   static const int id_jouleheating              = 19;
+  static const int id_teprop                    = 20;
 
-  typedef boost::mpl::vector20< 
+  typedef boost::mpl::vector21< 
             PHAL::Dirichlet<_,Traits>,                //  0
             PHAL::GatherSolution<_,Traits>,           //  1
             PHAL::GatherCoordinateVector<_,Traits>,   //  2
@@ -95,7 +97,8 @@ struct FactoryTraits {
             QCAD::Permittivity<_,Traits>,             // 16
             QCAD::PoissonResid<_,Traits>,             // 17
             QCAD::PoissonSource<_,Traits>,            // 18
-            PHAL::JouleHeating<_,Traits>              // 19
+            PHAL::JouleHeating<_,Traits>,             // 19
+            PHAL::TEProp<_,Traits>                    // 20
   > EvaluatorTypes;
   
 };

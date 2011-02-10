@@ -1,0 +1,157 @@
+# parameters for h.geom.jou
+
+
+#{_HeightB=0.05}
+
+# CMS: I'm going to fix this to make meshing easier
+#{_HeightA=4*_HeightB}
+
+
+#{_Widtha=0.1}
+#{_Widthb=0.005}
+#{_Widthc=0.075 - 2.0 * _Widthb}
+#{_ZOffsetDistance=0.02}
+
+
+group 'before_vols' add vol all
+
+#########################
+# Start with the vertices
+#########################
+create vertex 0 0 0 
+#{_v1 = Id("vertex")}
+create vertex {_Widtha} 0 0 
+#{_v2 = Id("vertex")}
+create vertex {_Widtha+2*_Widthb+_Widthc} 0 0 
+#{_v3 = Id("vertex")}
+create vertex {2*_Widtha+2*_Widthb+_Widthc} 0 0 
+#{_v4 = Id("vertex")}
+create vertex {_Widtha} {_HeightA} 0 
+#{_v5 = Id("vertex")}
+create vertex {_Widtha+_Widthb} {_HeightA} 0 
+#{_v6 = Id("vertex")}
+create vertex {_Widtha+_Widthb+_Widthc} {_HeightA} 0 
+#{_v7 = Id("vertex")}
+create vertex {_Widtha+2*_Widthb+_Widthc} {_HeightA} 0 
+#{_v8 = Id("vertex")}
+create vertex {_Widtha} {_HeightA+_HeightB} 0 
+#{_v9 = Id("vertex")}
+create vertex {_Widtha+_Widthb} {_HeightA+_HeightB} 0 
+#{_v10 = Id("vertex")}
+create vertex {_Widtha+_Widthb+_Widthc}{_HeightA+_HeightB} 0 
+#{_v11 = Id("vertex")}
+create vertex {_Widtha+2*_Widthb+_Widthc} {_HeightA+_HeightB} 0 
+#{_v12 = Id("vertex")}
+create vertex 0 {2*_HeightA+_HeightB} 0 
+#{_v13 = Id("vertex")}
+create vertex {_Widtha} {2*_HeightA+_HeightB} 0 
+#{_v14 = Id("vertex")}
+create vertex {_Widtha+2*_Widthb+_Widthc} {2*_HeightA+_HeightB} 0 
+#{_v15 = Id("vertex")}
+create vertex {2*_Widtha+2*_Widthb+_Widthc} {2*_HeightA+_HeightB} 0 
+#{_v16 = Id("vertex")}
+#
+
+# "Bend" vertices
+create vertex {_Widtha+_Widthb+0.5*_Widthc} {_HeightA+_BendOffset} 0 
+#{_vB1 = Id("vertex")}
+create vertex {_Widtha+_Widthb+0.5*_Widthc} {_HeightA+_HeightB+_BendOffset +_ExtraTopBendOffset} 0 
+#{_vB2 = Id("vertex")}
+
+
+#
+#
+#########################
+# Now for the curves
+#########################
+create curve vertex {_v1} vertex {_v2}
+#{_c1 = Id("curve")}
+create curve vertex {_v3} vertex {_v4}
+#{_c2 = Id("curve")}
+create curve vertex {_v1} vertex {_v13}
+#{_c3 = Id("curve")}
+create curve vertex {_v2} vertex {_v5}
+#{_c4 = Id("curve")}
+create curve vertex {_v3} vertex {_v8}
+#{_c5 = Id("curve")}
+create curve vertex {_v4} vertex {_v16}
+#{_c6 = Id("curve")}
+create curve vertex {_v5} vertex {_v6}
+#{_c7 = Id("curve")}
+create curve vertex {_v6} vertex {_v7} vertex {_vB1} parabolic
+#{_c8 = Id("curve")}
+create curve vertex {_v7} vertex {_v8}
+#{_c9 = Id("curve")}
+create curve vertex {_v5} vertex {_v9}
+#{_c10 = Id("curve")}
+create curve vertex {_v6} vertex {_v10}
+#{_c11 = Id("curve")}
+create curve vertex {_v7} vertex {_v11}
+#{_c12 = Id("curve")}
+create curve vertex {_v8} vertex {_v12}
+#{_c13 = Id("curve")}
+create curve vertex {_v9} vertex {_v10}
+#{_c14 = Id("curve")}
+create curve vertex {_v10} vertex {_v11} vertex {_vB2} parabolic
+#{_c15 = Id("curve")}
+create curve vertex {_v11} vertex {_v12}
+#{_c16 = Id("curve")}
+create curve vertex {_v9} vertex {_v14}
+#{_c17 = Id("curve")}
+create curve vertex {_v12} vertex {_v15}
+#{_c18 = Id("curve")}
+create curve vertex {_v13} vertex {_v14}
+#{_c19 = Id("curve")}
+create curve vertex {_v15} vertex {_v16}
+#{_c20 = Id("curve")}
+#
+#
+#
+#########################
+# And the faces...
+#########################
+create surface curve {_c1} {_c3} {_c4} {_c10} {_c17} {_c19}
+#{_s1 = Id("surface")}
+create surface curve {_c2} {_c5} {_c6} {_c13} {_c18} {_c20}
+#{_s2 = Id("surface")}
+create surface curve {_c7} {_c10} {_c11} {_c14}
+#{_s3 = Id("surface")}
+create surface curve {_c8} {_c11} {_c12} {_c15}
+#{_s4 = Id("surface")}
+create surface curve {_c9} {_c12} {_c13} {_c16}
+#{_s5 = Id("surface")}
+#
+#
+
+delete curve all
+delete vertex all
+
+group 'plane_curves' add curve all
+sweep surface {_s1} {_s2} {_s3} {_s4} {_s5} direction z distance {_ZOffsetDistance}
+group 'new_vols' add vol all
+group 'new_vols' remove vol in before_vols
+
+#Find a curve in the offset direction that we can apply an interval size to.
+group 'sweep_curve' add curve in vertex {_v13}
+group 'sweep_curve' remove curve in plane_curves
+
+#{if(NumInGrp( "sweep_curve" )!=1)}
+#{PrintError("Error: Unable to find curve in sweep direction to apply interval to.")}
+#{endif}
+
+imprint vol in new_vols
+merge vol in new_vols
+
+block 1 vol all
+#block 1 element type quad4
+
+#########################
+# Boundary conditions
+#########################
+nodeset 1 curve {_c1}
+nodeset 2 curve {_c2}
+nodeset 19 curve {_c19}
+nodeset 20 curve {_c20}
+#
+compress ids all
+

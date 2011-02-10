@@ -19,6 +19,8 @@
 #include "Albany_BoundaryFlux1DResponseFunction.hpp"
 #include "Albany_SolutionAverageResponseFunction.hpp"
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
+#include "Albany_SolutionMaxValueResponseFunction.hpp"
+#include "Albany_SolutionFileL2ResponseFunction.hpp"
 #include "Albany_InitialCondition.hpp"
 
 #include "Intrepid_HGRAD_LINE_C1_FEM.hpp"
@@ -92,6 +94,12 @@ buildProblem(
 
      else if (name == "Solution Two Norm")
        responses[i] = Teuchos::rcp(new SolutionTwoNormResponseFunction());
+
+     else if (name == "Solution Max Value")
+       responses[i] = Teuchos::rcp(new SolutionMaxValueResponseFunction());
+
+     else if (name == "Solution File L2")
+       responses[i] = Teuchos::rcp(new SolutionFileL2ResponseFunction());
 
      else {
        TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
@@ -255,40 +263,22 @@ Albany::ThermoElectrostaticsProblem::constructEvaluators(
   { // Thermal conductivity
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    int type = FactoryTraits<AlbanyTraits>::id_thermal_conductivity;
+    int type = FactoryTraits<AlbanyTraits>::id_teprop;
     p->set<int>("Type", type);
 
     p->set<string>("QP Variable Name", "Thermal Conductivity");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
-
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Thermal Conductivity");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-    evaluators_to_build["Thermal Conductivity"] = p;
-  }
-
-  { // Permittivity
-    RCP<ParameterList> p = rcp(new ParameterList);
-
-    int type = FactoryTraits<AlbanyTraits>::id_qcad_permittivity;
-    p->set<int>("Type", type);
-
-    p->set<string>("QP Variable Name", "Permittivity");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
+    p->set<string>("QP Variable Name 2", "Permittivity");  // really electrical conductivity
+    p->set<string>("QP Variable Name 3", "Rho Cp"); 
+    p->set<string>("Coordinate Vector Name", "Coord Vec");
     p->set<string>("Temperature Variable Name", "Temperature");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Permittivity");
+    Teuchos::ParameterList& paramList = params->sublist("TE Properties");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-    evaluators_to_build["Permittivity"] = p;
+    evaluators_to_build["TE Properties"] = p;
   }
 
   { // DOF: Interpolate nodal Potential values to quad points
@@ -445,6 +435,11 @@ Albany::ThermoElectrostaticsProblem::constructEvaluators(
     p->set<bool>("Is Transient", false);
     p->set<string>("QP Time Derivative Variable Name", "Temperature_dot");
 
+    if (params->isType<string>("Convection Velocity")) {
+      p->set<string>("Convection Velocity",params->get<string>("Convection Velocity"));
+      p->set<string>("Rho Cp Name", "Rho Cp"); 
+    }
+
     //Output
     p->set<string>("Residual Name", "Temperature Residual");
     p->set< RCP<DataLayout> >("Node Scalar Data Layout", node_scalar);
@@ -498,8 +493,8 @@ Albany::ThermoElectrostaticsProblem::getValidProblemParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidThermoElectrostaticsProblemParams");
 
-  validPL->sublist("Thermal Conductivity", false, "");
-  validPL->sublist("Permittivity", false, "");
+  validPL->sublist("TE Properties", false, "");
+  validPL->set("Convection Velocity", "{0,0,0}", "");
 
   return validPL;
 }

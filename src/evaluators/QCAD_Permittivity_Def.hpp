@@ -141,7 +141,6 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-  
   // assign silicon_value for y>0 and oxide_value for y<=0 to permittivity
   else if (position_dependent)
   {	
@@ -167,10 +166,9 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t qp=0; qp < numQPs; ++qp) 
       {
         ScalarT denom = 1.0 + factor * Temp(cell,qp);
-				permittivity(cell,qp) = constant_value / denom;;
+        permittivity(cell,qp) = constant_value / denom;;
       }
     }
-    cout << " TTTDDD  " << permittivity(5,1) << endl;
   }
   
   // otherwise, throw out error message and exit the program

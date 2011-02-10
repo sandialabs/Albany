@@ -72,13 +72,17 @@ SET(HEADERS ${HEADERS}
 SET(SOURCES ${SOURCES}
 	responses/Albany_BoundaryFlux1DResponseFunction.cpp 
 	responses/Albany_SolutionAverageResponseFunction.cpp 
+	responses/Albany_SolutionMaxValueResponseFunction.cpp
 	responses/Albany_SolutionTwoNormResponseFunction.cpp
+        responses/Albany_SolutionFileL2ResponseFunction.cpp
   )
 SET(HEADERS ${HEADERS}
 	responses/Albany_AbstractResponseFunction.hpp 
 	responses/Albany_BoundaryFlux1DResponseFunction.hpp 
 	responses/Albany_SolutionAverageResponseFunction.hpp 
+	responses/Albany_SolutionMaxValueResponseFunction.hpp
 	responses/Albany_SolutionTwoNormResponseFunction.hpp
+        responses/Albany_SolutionFileL2ResponseFunction.hpp
   )
 
 #stk
@@ -121,6 +125,7 @@ SET(SOURCES ${SOURCES}
         evaluators/PHAL_HelmholtzResid.cpp
         evaluators/PHAL_GatherCoordinateVector.cpp
 	evaluators/PHAL_JouleHeating.cpp
+	evaluators/PHAL_TEProp.cpp
   )
 SET(HEADERS ${HEADERS}
 	evaluators/PHAL_GatherSolution.hpp 
@@ -155,6 +160,8 @@ SET(HEADERS ${HEADERS}
         evaluators/PHAL_GatherCoordinateVector_Def.hpp
 	evaluators/PHAL_JouleHeating.hpp
 	evaluators/PHAL_JouleHeating_Def.hpp
+	evaluators/PHAL_TEProp.hpp
+	evaluators/PHAL_TEProp_Def.hpp
   )
 
 # LCM
@@ -329,6 +336,7 @@ if (ALBANY_ENABLE_CUBIT)
   link_directories (${MESHMOVER_DIR}/../cubit/linux64)
   set(ALB_CUBIT_LIBS  cubiti19)
   ADD_DEFINITIONS(-DALBANY_CUTR)
+  MESSAGE("-- CUBIT is Enabled, compiling with -DALBANY_CUTR")
 endif (ALBANY_ENABLE_CUBIT)
 
 add_library(albanyLib ${SOURCES} ${HEADERS})

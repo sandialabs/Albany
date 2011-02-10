@@ -43,7 +43,8 @@ HeatEqResid(const Teuchos::ParameterList& p) :
   TResidual   (p.get<std::string>                   ("Residual Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
   haveSource  (p.get<bool>("Have Source")),
-  transient   (p.get<bool>("Is Transient"))
+  transient   (p.get<bool>("Is Transient")),
+  haveConvection(false)
 {
   this->addDependentField(wBF);
  // this->addDependentField(Temperature);
@@ -65,6 +66,18 @@ HeatEqResid(const Teuchos::ParameterList& p) :
   // Allocate workspace
   flux.resize(dims[0], numQPs, numDims);
 
+  convectionVels = Teuchos::getArrayFromStringParameter<double> (p,
+                           "Convection Velocity", numDims, false);
+  cout << "  CV  " << convectionVels.size() << endl;
+  if (convectionVels.size()>0) {
+    haveConvection = true;
+    
+    PHX::MDField<ScalarT,Cell,QuadPoint> tmp(p.get<string>("Rho Cp Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"));
+    rhoCp = tmp;
+    this->addDependentField(rhoCp);
+  }
+
   this->setName("HeatEqResid"+PHX::TypeString<EvalT>::value);
 }
 
@@ -81,6 +94,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(wGradBF,fm);
   if (haveSource)  this->utils.setFieldData(Source,fm);
   if (transient)  this->utils.setFieldData(Tdot,fm);
+
+  if (haveConvection)  this->utils.setFieldData(rhoCp,fm);
 
   this->utils.setFieldData(TResidual,fm);
 }
@@ -103,6 +118,21 @@ evaluateFields(typename Traits::EvalData workset)
 
   if (transient) 
     FST::integrate<ScalarT>(TResidual, Tdot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+
+  if (haveConvection)  {
+    Intrepid::FieldContainer<ScalarT> convection(workset.worksetSize, numQPs);
+
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+        convection(cell,qp) = 0.0;
+        for (std::size_t i=0; i < numDims; ++i) {
+          convection(cell,qp) += rhoCp(cell,qp) * convectionVels[i] * TGrad(cell,qp,i);
+        }
+      }
+    }
+
+    FST::integrate<ScalarT>(TResidual, convection, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+  }
 
 }
 

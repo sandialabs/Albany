@@ -1,0 +1,28 @@
+#  DAKOTA INPUT FILE - dakota_rosenbrock.in
+#  This sample Dakota input file optimizes the Rosenbrock function.
+#  See p. 95 in Practical Optimization by Gill, Murray, and Wright.
+
+method,
+   conmin_mfd
+   max_iterations = 100
+   convergence_tolerance = 1.0e-4
+
+variables,
+	continuous_design = 1
+	cdv_lower_bounds -.007
+	cdv_upper_bounds  .010 
+#          cdv_lower_bounds 1.0e6  1.0e6 0.01
+#          cdv_upper_bounds 1.0e8  1.0e8 0.02
+
+
+interface,
+	direct
+	  analysis_driver = 'Albany_Dakota'
+          evaluation_servers = 1
+
+responses,
+	num_objective_functions = 1
+        analytic_gradients
+# 	numerical_gradients
+# 	  fd_gradient_step_size = 1.0e-6
+	no_hessians
