@@ -17,10 +17,10 @@
 # 
 
 IF (ALBANY_MPI)
-  set(Albany.exe          ${MPIEX} ${MPINPF} ${MPIMNP}} ${Albany_BINARY_DIR}/src/Albany)
-  set(AlbanyDakota.exe    ${MPIEX} ${MPINPF} ${MPIMNP}} ${Albany_BINARY_DIR}/src/AlbanyDakota)
-  set(AlbanySG.exe        ${MPIEX} ${MPINPF} ${MPIMNP}} ${Albany_BINARY_DIR}/src/AlbanySG)
-  set(AlbanyAnalysis.exe  ${MPIEX} ${MPINPF} ${MPIMNP}} ${Albany_BINARY_DIR}/src/AlbanyAnalysis)
+  set(Albany.exe          ${MPIEX} ${MPINPF} ${MPIMNP} ${Albany_BINARY_DIR}/src/Albany)
+  set(AlbanyDakota.exe    ${MPIEX} ${MPINPF} ${MPIMNP} ${Albany_BINARY_DIR}/src/AlbanyDakota)
+  set(AlbanySG.exe        ${MPIEX} ${MPINPF} ${MPIMNP} ${Albany_BINARY_DIR}/src/AlbanySG)
+  set(AlbanyAnalysis.exe  ${MPIEX} ${MPINPF} ${MPIMNP} ${Albany_BINARY_DIR}/src/AlbanyAnalysis)
 ELSE()
   set(Albany.exe          ${Albany_BINARY_DIR}/src/Albany)
   set(AlbanyDakota.exe    ${Albany_BINARY_DIR}/src/AlbanyDakota)

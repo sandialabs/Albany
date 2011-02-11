@@ -5,6 +5,8 @@
 *.[oa]
 *~
 /build/
+/DEBUG/
+/RELEASE/
 /sandbox/
 \#*\#
 .\#*
