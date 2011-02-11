@@ -63,8 +63,8 @@ private:
   PHX::MDField<ScalarT,Cell,Node> TResidual;
 
   bool haveSource;
-  bool transient;
   bool haveConvection;
+  bool enableTransient;
   int numQPs, numDims;
   Intrepid::FieldContainer<ScalarT> flux;
 };

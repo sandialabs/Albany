@@ -38,7 +38,8 @@ struct Workset {
   
   Workset(const Teuchos::ArrayRCP<double> &c,
           const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > &e) :
-   coordinates(c), elNodeID(e) {}
+    coordinates(c), elNodeID(e),
+    transientTerms(false), ignore_residual(false) {}
 
   unsigned int numCells;
   unsigned int worksetSize;
@@ -54,6 +55,8 @@ struct Workset {
   Teuchos::RCP<const Epetra_MultiVector> Vp;
   Teuchos::RCP<const Stokhos::VectorOrthogPoly<Epetra_Vector> > sg_x;
   Teuchos::RCP<const Stokhos::VectorOrthogPoly<Epetra_Vector> > sg_xdot;
+
+  bool transientTerms;
 
   Teuchos::RCP<Epetra_Vector> f;
   Teuchos::RCP<Epetra_CrsMatrix> Jac;

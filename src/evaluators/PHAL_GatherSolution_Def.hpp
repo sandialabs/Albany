@@ -25,12 +25,14 @@ namespace PHAL {
 
 template<typename EvalT, typename Traits>
 GatherSolutionBase<EvalT,Traits>::
-GatherSolutionBase(const Teuchos::ParameterList& p) 
+GatherSolutionBase(const Teuchos::ParameterList& p)
 { 
-  transient = p.get<bool>("Is Transient");
   if (p.isType<bool>("Vector Field"))
     vectorField = p.get<bool>("Vector Field");
   else vectorField = false;
+  if (p.isType<bool>("Disable Transient"))
+    enableTransient = !p.get<bool>("Disable Transient");
+  else enableTransient = true;
 
   std::vector<std::string> solution_names; 
   if (p.getEntryPtr("Solution Names")) {
@@ -46,8 +48,8 @@ GatherSolutionBase(const Teuchos::ParameterList& p)
       val[eq] = f;
       this->addEvaluatedField(val[eq]);
     }
-    // repeat for xdot if transient
-    if (transient) {
+    // repeat for xdot if transient is enabled
+    if (enableTransient) {
       const std::vector<std::string>& names_dot = 
         *(p.get< Teuchos::RCP< std::vector<std::string> > >("Time Dependent Solution Names"));
   
@@ -65,8 +67,8 @@ GatherSolutionBase(const Teuchos::ParameterList& p)
     PHX::MDField<ScalarT,Cell,Node,Dim> f(solution_names[0],dl);
     valVec[0] = f;
     this->addEvaluatedField(valVec[0]);
-    // repeat for xdot if transient
-    if (transient) {
+    // repeat for xdot if transient is enabled
+    if (enableTransient) {
       const std::vector<std::string>& names_dot = 
         *(p.get< Teuchos::RCP< std::vector<std::string> > >("Time Dependent Solution Names"));
   
@@ -97,7 +99,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   if (!vectorField) {
     for (std::size_t eq = 0; eq < numFieldsBase; ++eq)
       this->utils.setFieldData(val[eq],fm);
-    if (transient) {
+    if (enableTransient) {
       for (std::size_t eq = 0; eq < val_dot.size(); ++eq)
         this->utils.setFieldData(val_dot[eq],fm);
     }
@@ -105,7 +107,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   }
   else {
     this->utils.setFieldData(valVec[0],fm);
-    if (transient) this->utils.setFieldData(valVec_dot[0],fm);
+    if (enableTransient) this->utils.setFieldData(valVec_dot[0],fm);
     numNodes = valVec[0].dimension(1);
   }
 }
@@ -145,7 +147,7 @@ evaluateFields(typename Traits::EvalData workset)
         else                   valptr = &(this->val[eq])(cell,node);
 	*valptr = (*x)[firstDOF + eq];
       }
-      if (this->transient) {
+      if (workset.transientTerms && this->enableTransient) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
           if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
           else                   valptr = &(this->val_dot[eq])(cell,node);
@@ -192,7 +194,7 @@ evaluateFields(typename Traits::EvalData workset)
 	valptr->setUpdateValue(!workset.ignore_residual);
 	valptr->fastAccessDx(neq * node + eq + this->offset) = workset.j_coeff;
       }
-      if (this->transient) {
+      if (workset.transientTerms && this->enableTransient) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
           if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
           else                   valptr = &(this->val_dot[eq])(cell,node);
@@ -252,7 +254,7 @@ evaluateFields(typename Traits::EvalData workset)
 	else
 	  *valptr = FadType((*x)[firstDOF + eq]);
       }
-      if (this->transient) {
+      if (workset.transientTerms && this->enableTransient) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
           if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
           else                   valptr = &(this->val_dot[eq])(cell,node);
@@ -313,7 +315,7 @@ evaluateFields(typename Traits::EvalData workset)
 	  valptr->fastAccessCoeff(block) = 
 	    (*x)[block][firstDOF + eq];
       }
-      if (this->transient) {
+      if (workset.transientTerms && this->enableTransient) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
           if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
           else                   valptr = &(this->val_dot[eq])(cell,node);
@@ -376,7 +378,7 @@ evaluateFields(typename Traits::EvalData workset)
 	for (int block=0; block<nblock; block++)
 	  valptr->val().fastAccessCoeff(block) = (*x)[block][firstDOF + eq];
       }
-      if (this->transient) {
+      if (workset.transientTerms && this->enableTransient) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
           if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
           else                   valptr = &(this->val_dot[eq])(cell,node);

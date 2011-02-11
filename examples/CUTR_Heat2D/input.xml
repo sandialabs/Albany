@@ -1,7 +1,6 @@
 <ParameterList>
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Heat 2D"/>
-    <Parameter name="Continuation" type="bool" value="false"/>
     <Parameter name="Enable Cubit Shape Parameters" type="bool" value="true"/>
     <Parameter name="Cubit Base Filename" type="string" value="quad"/>
     <ParameterList name="Dirichlet BCs">

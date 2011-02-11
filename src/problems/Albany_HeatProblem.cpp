@@ -163,8 +163,6 @@ Albany::HeatProblem::constructEvaluators(
         << ", QuadPts= " << numQPts
         << ", Dim= " << numDim << endl;
 
-   const bool transient = params->get("Transient", false);
-
    // Parser will build parameter list that determines the field
    // evaluators to build
    map<string, RCP<ParameterList> > evaluators_to_build;
@@ -194,14 +192,11 @@ Albany::HeatProblem::constructEvaluators(
     p->set<int>("Type", type);
     p->set< RCP< vector<string> > >("Solution Names", dof_names);
     p->set< RCP<DataLayout> >("Data Layout", node_scalar);
-    p->set<bool>("Is Transient", transient);
 
-   if (transient) {
-     RCP< vector<string> > dof_names_dot = rcp(new vector<string>(neq));
-       (*dof_names_dot)[0] = "Temperature_dot";
+   RCP< vector<string> > dof_names_dot = rcp(new vector<string>(neq));
+     (*dof_names_dot)[0] = "Temperature_dot";
 
-     p->set< RCP< vector<string> > >("Time Dependent Solution Names", dof_names_dot);
-   }
+   p->set< RCP< vector<string> > >("Time Dependent Solution Names", dof_names_dot);
 
     evaluators_to_build["Gather Solution"] = p;
   }
@@ -305,7 +300,7 @@ Albany::HeatProblem::constructEvaluators(
     evaluators_to_build["DOF Temperature"] = p;
   }
 
-  if (transient) {
+  {
    // DOF: Interpolate nodal Temperature Dot  values to quad points
     RCP<ParameterList> p = rcp(new ParameterList("Heat DOFInterpolation Temperature Dot"));
 
@@ -373,7 +368,6 @@ Albany::HeatProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
     p->set<string>("QP Variable Name", "Temperature");
 
-    p->set<bool>("Is Transient", transient);
     p->set<string>("QP Time Derivative Variable Name", "Temperature_dot");
 
     p->set<bool>("Have Source", haveSource);

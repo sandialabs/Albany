@@ -2,7 +2,7 @@
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Helmholtz 2D"/>
     <Parameter name="Ksqr" type="double" value="1.100"/>
-    <Parameter name="Continuation" type="bool" value="true"/>
+    <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="2"/>
     <Parameter name="Workset Size" type="int" value="100"/>
     <ParameterList name="Dirichlet BCs">

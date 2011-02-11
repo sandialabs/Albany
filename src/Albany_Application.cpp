@@ -40,7 +40,6 @@ Albany::Application::Application(
 		   const Teuchos::RCP<Teuchos::ParameterList>& params,
 		   const Teuchos::RCP<const Epetra_Vector>& initial_guess) :
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
-  transient(params->sublist("Problem").get("Transient", false)),
   physicsBasedPreconditioner(false),
   shapeParamsHaveBeenReset(false),
   setupCalledResidual(false), setupCalledJacobian(false), setupCalledTangent(false),
@@ -107,21 +106,17 @@ Albany::Application::Application(
   exporter = Teuchos::rcp(new Epetra_Export(*(disc->getOverlapMap()), 
                                             *(disc->getMap())));
   overlapped_x = Teuchos::rcp(new Epetra_Vector(*(disc->getOverlapMap())));
-  if (transient)
-    overlapped_xdot = 
+  overlapped_xdot = 
       Teuchos::rcp(new Epetra_Vector(*(disc->getOverlapMap())));
   overlapped_f = Teuchos::rcp(new Epetra_Vector(*(disc->getOverlapMap())));
   overlapped_jac = 
     Teuchos::rcp(new Epetra_CrsMatrix(Copy, 
                                       *(disc->getOverlapJacobianGraph())));
 
-  // Initialize solution vector 
+  // Initialize solution vector and time deriv
   initial_x = disc->getSolutionField();
-
-  if (transient) {
-    initial_x_dot = Teuchos::rcp(new Epetra_Vector(*(disc->getMap())));
-    initial_x_dot->PutScalar(0.0);
-  }
+  initial_x_dot = Teuchos::rcp(new Epetra_Vector(*(disc->getMap())));
+  initial_x_dot->PutScalar(0.0);
 
   worksetSize = problemParams->get("Workset Size",0);
   if (worksetSize < 1 || worksetSize > elNodeID.size()) {
@@ -241,12 +236,6 @@ Albany::Application::getResponseMap() const
 }
 
 bool
-Albany::Application::isTransient() const
-{
-  return transient;
-}
-
-bool
 Albany::Application::suppliesPreconditioner() const 
 {
   return physicsBasedPreconditioner;
@@ -269,8 +258,7 @@ Albany::Application::init_sg(const Teuchos::RCP<Stokhos::OrthogPolyExpansion<int
     sg_overlapped_x = 
       Teuchos::rcp(new Stokhos::VectorOrthogPoly<Epetra_Vector>(
 		     sg_basis, *overlapped_x));
-    if (transient)
-      sg_overlapped_xdot = 
+    sg_overlapped_xdot = 
 	Teuchos::rcp(new Stokhos::VectorOrthogPoly<Epetra_Vector>(
 		       sg_basis, *overlapped_xdot));
     sg_overlapped_f = 
@@ -302,7 +290,7 @@ Albany::Application::computeGlobalResidual(
   overlapped_x->Import(x, *importer, Insert);
 
   // Scatter xdot to the overlapped distribution
-  if (transient)
+  if (xdot != NULL)
     overlapped_xdot->Import(*xdot, *importer, Insert);
 
   // Set parameters
@@ -338,6 +326,8 @@ Albany::Application::computeGlobalResidual(
     workset.f        = overlapped_f;
     workset.current_time = current_time;
 
+    if (xdot != NULL) workset.transientTerms = true;
+
     workset.worksetSize = worksetSize;
     workset.numCells = worksetSize;
 
@@ -364,6 +354,7 @@ Albany::Application::computeGlobalResidual(
     workset.f = Teuchos::rcpFromRef(f);
     workset.nodeSets = Teuchos::rcpFromRef(disc->getNodeSets());
     workset.x = Teuchos::rcpFromRef(x);;
+    if (xdot != NULL) workset.transientTerms = true;
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
@@ -396,7 +387,7 @@ Albany::Application::computeGlobalJacobian(
   overlapped_x->Import(x, *importer, Insert);
 
   // Scatter xdot to the overlapped distribution
-  if (transient)
+  if (xdot != NULL)
     overlapped_xdot->Import(*xdot, *importer, Insert);
 
   // Set parameters
@@ -441,6 +432,7 @@ Albany::Application::computeGlobalJacobian(
     workset.m_coeff      = alpha;
     workset.current_time = current_time;
     workset.ignore_residual = ignore_residual_in_jacobian;
+    if (xdot != NULL) workset.transientTerms = true;
 
     workset.worksetSize = worksetSize;
     workset.numCells = worksetSize;
@@ -473,6 +465,7 @@ Albany::Application::computeGlobalJacobian(
     workset.Jac = Teuchos::rcpFromRef(jac);
     workset.j_coeff = beta;
     workset.x = Teuchos::rcpFromRef(x);;
+    if (xdot != NULL) workset.transientTerms = true;
 
     workset.nodeSets = Teuchos::rcpFromRef (disc->getNodeSets());
 
@@ -533,7 +526,7 @@ Albany::Application::computeGlobalTangent(
   overlapped_x->Import(x, *importer, Insert);
 
   // Scatter xdot to the overlapped distribution
-  if (transient)
+  if (xdot != NULL)
     overlapped_xdot->Import(*xdot, *importer, Insert);
 
   // Scatter Vx dot the overlapped distribution
@@ -714,6 +707,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     workset.j_coeff      = beta;
     workset.m_coeff      = alpha;
     workset.current_time = current_time;
+    if (xdot != NULL) workset.transientTerms = true;
 
     workset.num_cols_x = num_cols_x;
     workset.num_cols_p = num_cols_p;
@@ -765,6 +759,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     workset.j_coeff = beta;
     workset.x = Teuchos::rcpFromRef(x);
     workset.Vx = Teuchos::rcp(Vx,false);
+    if (xdot != NULL) workset.transientTerms = true;
 
     workset.nodeSets = Teuchos::rcpFromRef(disc->getNodeSets());
 
@@ -944,7 +939,7 @@ Albany::Application::computeGlobalSGResidual(
     (*sg_overlapped_x)[i].Import(sg_x[i], *importer, Insert);
 
     // Scatter xdot to the overlapped distribution
-    if (transient)
+    if (sg_xdot != NULL)
       (*sg_overlapped_xdot)[i].Import((*sg_xdot)[i], *importer, Insert);
 
     // Zero out overlapped residual
@@ -986,6 +981,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     workset.sg_f         = sg_overlapped_f;
 
     workset.current_time = current_time;
+    if (sg_xdot != NULL) workset.transientTerms = true;
 
     workset.worksetSize = worksetSize;
     workset.numCells = worksetSize;
@@ -1015,6 +1011,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     workset.sg_f = Teuchos::rcpFromRef(sg_f);
     workset.nodeSets = Teuchos::rcpFromRef(disc->getNodeSets());
     workset.sg_x = Teuchos::rcpFromRef(sg_x);
+    if (sg_xdot != NULL) workset.transientTerms = true;
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::SGResidual>(workset);
@@ -1051,7 +1048,7 @@ Albany::Application::computeGlobalSGJacobian(
     (*sg_overlapped_x)[i].Import(sg_x[i], *importer, Insert);
 
     // Scatter xdot to the overlapped distribution
-    if (transient)
+    if (sg_xdot != NULL)
       (*sg_overlapped_xdot)[i].Import((*sg_xdot)[i], *importer, Insert);
 
     // Zero out overlapped residual
@@ -1121,6 +1118,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     workset.m_coeff      = alpha;
     workset.current_time = current_time;
     workset.ignore_residual = ignore_residual_in_jacobian;
+    if (sg_xdot != NULL) workset.transientTerms = true;
 
     workset.worksetSize = worksetSize;
     workset.numCells = worksetSize;
@@ -1160,6 +1158,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     workset.sg_Jac = Teuchos::rcpFromRef(sg_jac);
     workset.j_coeff = beta;
     workset.sg_x = Teuchos::rcpFromRef(sg_x);;
+    if (sg_xdot != NULL) workset.transientTerms = true;
 
     workset.nodeSets = Teuchos::rcpFromRef (disc->getNodeSets());
 

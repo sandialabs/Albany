@@ -25,7 +25,6 @@ Albany::ModelEvaluator::ModelEvaluator(
   const Teuchos::RCP< Teuchos::Array<std::string> >& free_param_names,
   const Teuchos::RCP< Teuchos::Array<std::string> >& sg_param_names) 
   : app(app_),
-    transient(app_->isTransient()),
     supports_p(false),
     supports_g(false),
     supports_sg(false),
@@ -273,14 +272,14 @@ Albany::ModelEvaluator::createInArgs() const
   }
   else
     inArgs.set_Np_sg(0);
-  if (transient) {
-    inArgs.setSupports(IN_ARG_t,true);
-    inArgs.setSupports(IN_ARG_x_dot,true);
-    inArgs.setSupports(IN_ARG_alpha,true);
-    inArgs.setSupports(IN_ARG_beta,true);
-    if (supports_sg)
-      inArgs.setSupports(IN_ARG_x_dot_sg,true);
-  }
+
+  inArgs.setSupports(IN_ARG_t,true);
+  inArgs.setSupports(IN_ARG_x_dot,true);
+  inArgs.setSupports(IN_ARG_alpha,true);
+  inArgs.setSupports(IN_ARG_beta,true);
+  if (supports_sg)
+    inArgs.setSupports(IN_ARG_x_dot_sg,true);
+
   return inArgs;
 }
 
@@ -305,9 +304,7 @@ Albany::ModelEvaluator::createOutArgs() const
 
   if (supports_g) {
     outArgs.setSupports(OUT_ARG_DgDx, 0, DerivativeSupport(DERIV_MV_BY_COL));
-    if (transient)
-      outArgs.setSupports(OUT_ARG_DgDx_dot, 0, 
-                          DerivativeSupport(DERIV_MV_BY_COL));
+    outArgs.setSupports(OUT_ARG_DgDx_dot, 0, DerivativeSupport(DERIV_MV_BY_COL));
   }
   if (supports_p)
     for (unsigned int i=0; i<param_names.size(); i++)
@@ -351,13 +348,11 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
   double alpha     = 0.0;
   double beta      = 1.0;
   double curr_time = 0.0;
-  if (transient) {
-    x_dot = inArgs.get_x_dot();
-    if (x_dot != Teuchos::null) {
-      alpha = inArgs.get_alpha();
-      beta = inArgs.get_beta();
-      curr_time  = inArgs.get_t();
-    }
+  x_dot = inArgs.get_x_dot();
+  if (x_dot != Teuchos::null) {
+    alpha = inArgs.get_alpha();
+    beta = inArgs.get_beta();
+    curr_time  = inArgs.get_t();
   }
   for (int i=0; i<inArgs.Np(); i++) {
     Teuchos::RCP<const Epetra_Vector> p = inArgs.get_p(i);
@@ -451,7 +446,6 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
     Teuchos::RCP<Epetra_MultiVector> dgdx_out = 
       outArgs.get_DgDx(0).getMultiVector();
     Teuchos::RCP<Epetra_MultiVector> dgdxdot_out;
-    if (transient)
       dgdxdot_out = outArgs.get_DgDx_dot(0).getMultiVector();
     
     Teuchos::Array< Teuchos::RCP<ParamVec> > p_vec(outArgs.Np());
@@ -491,9 +485,7 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
     InArgs::sg_const_vector_t x_sg = inArgs.get_x_sg();
     if (x_sg != Teuchos::null) {
       app->init_sg(inArgs.get_sg_expansion());
-      InArgs::sg_const_vector_t x_dot_sg;
-      if (transient)
-	x_dot_sg = inArgs.get_x_dot_sg();
+      InArgs::sg_const_vector_t x_dot_sg = inArgs.get_x_dot_sg();
       InArgs::sg_const_vector_t epetra_p_sg = inArgs.get_p_sg(0);
       Teuchos::Array<SGType> *p_sg_ptr = NULL;
       if (epetra_p_sg != Teuchos::null) {

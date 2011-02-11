@@ -66,8 +66,8 @@ protected:
   std::size_t neqBase;  // Total number of DOF per  node (used as stride)
   std::size_t numFieldsBase; // Number of fields gathered in this call
   std::size_t offset; // Offset of first DOF being gathered when numFields<neq
-  bool transient;
   bool vectorField;
+  bool enableTransient;
 };
 
 template<typename EvalT, typename Traits> class GatherSolution;

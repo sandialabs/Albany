@@ -54,7 +54,7 @@ if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
                    ${CMAKE_CURRENT_BINARY_DIR}/dakota_nls.data COPYONLY)
   endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota_nls.data)
   get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Dakota NAME)
-  add_test(${testName} ${AlbanyDakota.exe})
+  add_test(${testName}_SERIAL ${SerialAlbanyDakota.exe})
 endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
 endif()
 

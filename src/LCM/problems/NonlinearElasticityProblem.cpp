@@ -168,8 +168,6 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
         << ", QuadPts= " << numQPts
         << ", Dim= " << numDim << endl;
 
-   const bool transient = params->get("Transient", false);
-
    // Parser will build parameter list that determines the field
    // evaluators to build
    map<string, RCP<ParameterList> > evaluators_to_build;
@@ -201,14 +199,11 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
     p->set< RCP< vector<string> > >("Solution Names", dof_names);
     p->set<bool>("Vector Field", true);
     p->set< RCP<DataLayout> >("Data Layout", node_vector);
-    p->set<bool>("Is Transient", transient);
 
-   if (transient) {
-     RCP< vector<string> > dof_names_dot = rcp(new vector<string>(1));
-       (*dof_names_dot)[0] = "Displacement_dot";
+    RCP< vector<string> > dof_names_dot = rcp(new vector<string>(1));
+     (*dof_names_dot)[0] = "Displacement_dot";
 
-     p->set< RCP< vector<string> > >("Time Dependent Solution Names", dof_names_dot);
-   }
+    p->set< RCP< vector<string> > >("Time Dependent Solution Names", dof_names_dot);
 
     evaluators_to_build["Gather Solution"] = p;
   }
@@ -329,7 +324,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
     evaluators_to_build["DOFVec Displacement"] = p;
   }
 
-  if (transient) {
+  {
    // DOF: Interpolate nodal Displacement Dot  values to quad points
     RCP<ParameterList> p = rcp(new ParameterList("NonlinearElasticity DOFVecInterpolation Displacement Dot"));
 
@@ -541,11 +536,6 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
 
     p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
-
-/*
-    p->set<bool>("Is Transient", transient);
-    p->set<string>("QP Time Derivative Variable Name", "Displacement_dot");
-*/
 
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);

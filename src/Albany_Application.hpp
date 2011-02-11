@@ -91,9 +91,6 @@ namespace Albany {
     //! Get response map
     Teuchos::RCP<const Epetra_Map> getResponseMap() const;
 
-    //! Return whether problem is transient
-    bool isTransient() const;
-
     //! Return whether problem wants to use its own preconditioner
     bool suppliesPreconditioner() const;
 
@@ -267,9 +264,6 @@ namespace Albany {
     //! Output stream, defaults to pronting just Proc 0
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
-    //! Is problem transient
-    bool transient;
-    
     //! Element discretization
     Teuchos::RCP<Albany::AbstractDiscretization> disc;
 

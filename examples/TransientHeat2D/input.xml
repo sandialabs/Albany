@@ -1,7 +1,7 @@
 <ParameterList>
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Heat 2D"/>
-    <Parameter name="Transient" type="bool" value="true"/>
+    <Parameter name="Solution Method" type="string" value="Transient"/>
     <Parameter name="Workset Size" type="int" value="50"/>
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS NodeSet0 for DOF T" type="double" value="0.0"/>

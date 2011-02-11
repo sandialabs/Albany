@@ -5,11 +5,8 @@
 
     <!-- Declare your Physics (What you intend to model)! -->
     <Parameter name="Name" type="string" value="NonlinearElasticity 3D"/>
-    <!-- Transient or Quasi-Static -->
-    <Parameter name="Transient" type="bool" value="false"/>
-    <!-- Continuation->"true" indicates the problem should be solved over
-         multiple loading increments. "false" -> the problem is solved over 1 increment-->
-    <Parameter name="Continuation" type="bool" value="false"/>
+    <!-- Transient or Steady (Quasi-Static) or Continuation (load steps) -->
+    <Parameter name="Solution Method" type="string" value="Steady"/>
     <!-- Have Phalanx output a graph of the used evaluators -->
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
     <!-- Sets the number of elements per workset -->

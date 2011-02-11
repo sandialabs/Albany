@@ -162,8 +162,6 @@ Albany::ThermoElectrostaticsProblem::constructEvaluators(
         << ", QuadPts= " << numQPts
         << ", Dim= " << numDim << endl;
 
-   const bool transient = params->get("Transient", false);
-
    // Parser will build parameter list that determines the field
    // evaluators to build
    map<string, RCP<ParameterList> > evaluators_to_build;
@@ -194,7 +192,9 @@ Albany::ThermoElectrostaticsProblem::constructEvaluators(
     p->set<int>("Type", type);
     p->set< RCP< vector<string> > >("Solution Names", dof_names);
     p->set< RCP<DataLayout> >("Data Layout", node_scalar);
-    p->set<bool>("Is Transient", transient);
+
+    // Poisson solve does not have transient terms
+    p->set<bool>("Disable Transient", true);
 
     evaluators_to_build["Gather Solution"] = p;
   }
@@ -432,7 +432,8 @@ Albany::ThermoElectrostaticsProblem::constructEvaluators(
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);
  
-    p->set<bool>("Is Transient", false);
+    // Poisson solve does not have transient terms
+    p->set<bool>("Disable Transient", true);
     p->set<string>("QP Time Derivative Variable Name", "Temperature_dot");
 
     if (params->isType<string>("Convection Velocity")) {

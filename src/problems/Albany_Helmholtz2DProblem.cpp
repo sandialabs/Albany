@@ -135,10 +135,6 @@ Albany::Helmholtz2DProblem::constructEvaluators(
         << ", QuadPts= " << numQPts
         << ", Dim= " << numDim << endl;
 
-   const bool transient = params->get("Transient", false);
-   TEST_FOR_EXCEPTION(transient, std::logic_error, 
-       "Error: Helmoltz problem can not be transient");
-
    // Parser will build parameter list that determines the field
    // evaluators to build
    map<string, RCP<ParameterList> > evaluators_to_build;
@@ -169,7 +165,9 @@ Albany::Helmholtz2DProblem::constructEvaluators(
     p->set<int>("Type", type);
     p->set< RCP< vector<string> > >("Solution Names", dof_names);
     p->set< RCP<DataLayout> >("Data Layout", node_scalar);
-    p->set<bool>("Is Transient", transient);
+
+    // Helmholtz solve does not have transient terms
+    p->set<bool>("Disable Transient", true);
 
     evaluators_to_build["Gather Solution"] = p;
   }
@@ -183,9 +181,11 @@ Albany::Helmholtz2DProblem::constructEvaluators(
     p->set<int>("Type", type);
     p->set< RCP< vector<string> > >("Solution Names", dof_names);
     p->set< RCP<DataLayout> >("Data Layout", node_scalar);
-    p->set<bool>("Is Transient", transient);
     p->set<int>("Offset of First DOF", 0);
     p->set<int>("Number of DOF per Node", neq);
+
+    // Helmholtz solve does not have transient terms
+    p->set<bool>("Disable Transient", true);
 
     evaluators_to_build["Gather U Solution"] = p;
   }
@@ -198,9 +198,11 @@ Albany::Helmholtz2DProblem::constructEvaluators(
     p->set<int>("Type", type);
     p->set< RCP< vector<string> > >("Solution Names", dof_names);
     p->set< RCP<DataLayout> >("Data Layout", node_scalar);
-    p->set<bool>("Is Transient", transient);
     p->set<int>("Offset of First DOF", 1);
     p->set<int>("Number of DOF per Node", neq);
+
+    // Helmholtz solve does not have transient terms
+    p->set<bool>("Disable Transient", true);
 
     evaluators_to_build["Gather V Solution"] = p;
   }

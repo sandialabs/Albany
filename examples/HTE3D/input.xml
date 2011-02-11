@@ -5,7 +5,6 @@
     <Parameter name="Convection Velocity" type="string" value="{0.0,-100.0,0.0}"/>
     <Parameter name="Enable Cubit Shape Parameters" type="bool" value="true"/>
     <Parameter name="Cubit Base Filename" type="string" value="h3d"/>
-    <Parameter name="Continuation" type="bool" value="false"/>
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS nodelist_20 for DOF T" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_19 for DOF T" type="double" value="0.0"/>

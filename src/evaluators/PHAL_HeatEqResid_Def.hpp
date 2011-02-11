@@ -43,13 +43,16 @@ HeatEqResid(const Teuchos::ParameterList& p) :
   TResidual   (p.get<std::string>                   ("Residual Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
   haveSource  (p.get<bool>("Have Source")),
-  transient   (p.get<bool>("Is Transient")),
   haveConvection(false)
 {
+  if (p.isType<bool>("Disable Transient"))
+    enableTransient = !p.get<bool>("Disable Transient");
+  else enableTransient = true;
+
   this->addDependentField(wBF);
  // this->addDependentField(Temperature);
   this->addDependentField(ThermalCond);
-  if (transient) this->addDependentField(Tdot);
+  if (enableTransient) this->addDependentField(Tdot);
   this->addDependentField(TGrad);
   this->addDependentField(wGradBF);
   if (haveSource) this->addDependentField(Source);
@@ -68,7 +71,6 @@ HeatEqResid(const Teuchos::ParameterList& p) :
 
   convectionVels = Teuchos::getArrayFromStringParameter<double> (p,
                            "Convection Velocity", numDims, false);
-  cout << "  CV  " << convectionVels.size() << endl;
   if (convectionVels.size()>0) {
     haveConvection = true;
     
@@ -93,7 +95,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(TGrad,fm);
   this->utils.setFieldData(wGradBF,fm);
   if (haveSource)  this->utils.setFieldData(Source,fm);
-  if (transient)  this->utils.setFieldData(Tdot,fm);
+  if (enableTransient) this->utils.setFieldData(Tdot,fm);
 
   if (haveConvection)  this->utils.setFieldData(rhoCp,fm);
 
@@ -116,7 +118,7 @@ evaluateFields(typename Traits::EvalData workset)
     FST::integrate<ScalarT>(TResidual, Source, wBF, Intrepid::COMP_CPP, true); // "true" sums into
   }
 
-  if (transient) 
+  if (workset.transientTerms && enableTransient) 
     FST::integrate<ScalarT>(TResidual, Tdot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
 
   if (haveConvection)  {

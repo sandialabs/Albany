@@ -54,9 +54,8 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
      Teuchos::rcp(new Teuchos::ParameterList(listname));;
   validPL->set<std::string>("Name", "", "String to designate Problem Class");
   validPL->set<int>("Number of Spatial Processors", -1, "Number of spatial processors in multi-level parallelism");
-  validPL->set<bool>("Transient", false, "Flag to indicate time-dependent problem");
+  validPL->set<std::string>("Solution Method", "Steady", "Flag for Steady, Transient, or Continuation");
   validPL->set<bool>("Second Order", false, "Flag to indicate that a transient problem has two time derivs");
-  validPL->set<bool>("Continuation", false, "Flag to indicate a continuation problem");
   validPL->set<bool>("Stochastic", false, "Flag to indicate a StochasticGalerkin problem");
   validPL->set<bool>("Enable Cubit Shape Parameters", false, "Flag to enable shape change capability");
   validPL->set<std::string>("Cubit Base Filename", "", "Base name of three Cubit files");

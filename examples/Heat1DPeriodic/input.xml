@@ -2,7 +2,7 @@
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Heat 1D"/>
     <Parameter name="Periodic BC" type="bool" value="true"/>
-    <Parameter name="Transient" type="bool" value="true"/>
+    <Parameter name="Solution Method" type="string" value="Transient"/>
     <ParameterList name="Dirichlet BCs">
     </ParameterList>
     <ParameterList name="Initial Condition">

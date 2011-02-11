@@ -70,11 +70,13 @@ Albany::SolverFactory::create(
 
     // Get solver type
     ParameterList& problemParams = appParams->sublist("Problem");
-    bool transient = problemParams.get("Transient", false);
-    bool continuation = problemParams.get("Continuation", false);
+    string solutionMethod = problemParams.get("Solution Method", "Steady");
+    TEST_FOR_EXCEPTION(solutionMethod != "Steady" &&
+            solutionMethod != "Transient" && solutionMethod != "Continuation", 
+            std::logic_error, "Solution Method must be Steady, Transient, "
+            << "or Continuation, not : " << solutionMethod);
     bool stochastic = problemParams.get("Stochastic", false);
-    bool secondOrder = false;
-    if (transient) secondOrder = problemParams.get("Second Order", false);
+    bool secondOrder = problemParams.get("Second Order", false);
 
     //set up parameters
     ParameterList& parameterParams = problemParams.sublist("Parameters");
@@ -123,22 +125,24 @@ Albany::SolverFactory::create(
     if (appParams->sublist("VTK").get("Do Visualization", false) == true) {
       vtk = rcp(new Albany_VTK(appParams->sublist("VTK")));
     }
-    if (transient && !secondOrder)
-      Rythmos_observer = rcp(new Albany_RythmosObserver(vtk, app));
-    else  // both NOX and LOCA can use this observer...
-       NOX_observer = rcp(new Albany_NOXObserver(vtk, app));
 
-    if (transient && !secondOrder) 
-      return  rcp(new Piro::Epetra::RythmosSolver(appParams, model, Rythmos_observer));
-    else if (transient && secondOrder)
-      return  rcp(new Piro::Epetra::VelocityVerletSolver(appParams, model, NOX_observer));
-    else if (continuation)
-      // add save eigen data here
+    if (solutionMethod=="Transient" && !secondOrder)
+      Rythmos_observer = rcp(new Albany_RythmosObserver(vtk, app));
+    else
+      NOX_observer = rcp(new Albany_NOXObserver(vtk, app));
+
+    TEST_FOR_EXCEPTION(stochastic && solutionMethod!="Steady", std::logic_error,
+         "Stochastic problems only implemented for Steady NOX solves so far\n");
+
+    if (stochastic && solutionMethod=="Steady")
+      return  rcp(new ENAT::SGNOXSolver(appParams, model, solverComm, NOX_observer));
+    else if (solutionMethod== "Continuation")   // add save eigen data here as in Piro test
       return  rcp(new Piro::Epetra::LOCASolver(appParams, model, NOX_observer));
-    else if (stochastic)
-      return  rcp(new ENAT::SGNOXSolver(appParams, model, solverComm, 
-					NOX_observer));
-    else // default to NOX
+    else if (solutionMethod== "Transient" && !secondOrder) 
+      return  rcp(new Piro::Epetra::RythmosSolver(appParams, model, Rythmos_observer));
+    else if (solutionMethod== "Transient" && secondOrder)
+      return  rcp(new Piro::Epetra::VelocityVerletSolver(appParams, model, NOX_observer));
+    else
       return  rcp(new Piro::Epetra::NOXSolver(appParams, model, NOX_observer));
 }
 

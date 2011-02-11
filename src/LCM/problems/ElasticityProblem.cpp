@@ -156,8 +156,6 @@ cout << "XXXX USING NODES FOR VERTICES" << endl;
         << ", QuadPts= " << numQPts
         << ", Dim= " << numDim << endl;
 
-   const bool transient = params->get("Transient", false);
-
    // Parser will build parameter list that determines the field
    // evaluators to build
    map<string, RCP<ParameterList> > evaluators_to_build;
@@ -189,14 +187,11 @@ cout << "XXXX USING NODES FOR VERTICES" << endl;
     p->set< RCP< vector<string> > >("Solution Names", dof_names);
     p->set<bool>("Vector Field", true);
     p->set< RCP<DataLayout> >("Data Layout", node_vector);
-    p->set<bool>("Is Transient", transient);
 
-   if (transient) {
      RCP< vector<string> > dof_names_dot = rcp(new vector<string>(1));
        (*dof_names_dot)[0] = "Displacement_dot";
 
      p->set< RCP< vector<string> > >("Time Dependent Solution Names", dof_names_dot);
-   }
 
     evaluators_to_build["Gather Solution"] = p;
   }
@@ -318,7 +313,7 @@ cout << "XXXX USING NODES FOR VERTICES" << endl;
     evaluators_to_build["DOFVec Displacement"] = p;
   }
 
-  if (transient) {
+  {
    // DOF: Interpolate nodal Displacement Dot  values to quad points
     RCP<ParameterList> p = rcp(new ParameterList("Elasticity DOFVecInterpolation Displacement Dot"));
 
@@ -423,11 +418,6 @@ cout << "XXXX USING NODES FOR VERTICES" << endl;
     //Input
     p->set<string>("Stress Name", "Stress");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
-
-/*
-    p->set<bool>("Is Transient", transient);
-    p->set<string>("QP Time Derivative Variable Name", "Displacement_dot");
-*/
 
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);
