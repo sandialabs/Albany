@@ -48,6 +48,7 @@ add_subdirectory(Poisson2D)
 add_subdirectory(PoissonPNDiode)
 add_subdirectory(PoissonPMOSCapacitor)
 add_subdirectory(ThermoElectrostatics2D)
+add_subdirectory(Schrod1D)
 
 IF(ALBANY_LCM)
   add_subdirectory(StaticElasticity1D)
