@@ -56,8 +56,6 @@ struct Workset {
   Teuchos::RCP<const Stokhos::VectorOrthogPoly<Epetra_Vector> > sg_x;
   Teuchos::RCP<const Stokhos::VectorOrthogPoly<Epetra_Vector> > sg_xdot;
 
-  bool transientTerms;
-
   Teuchos::RCP<Epetra_Vector> f;
   Teuchos::RCP<Epetra_CrsMatrix> Jac;
   Teuchos::RCP<Epetra_MultiVector> JV;
@@ -89,6 +87,8 @@ struct Workset {
 
   Teuchos::RCP<const Albany::StateVariables> oldState;
   Teuchos::RCP<Albany::StateVariables> newState;
+
+  bool transientTerms;
 
   // Flag indicating whether to ignore residual calculations in the 
   // Jacobian calculation.  This only works for some problems where the 

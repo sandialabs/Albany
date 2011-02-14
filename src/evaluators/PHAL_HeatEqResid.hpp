@@ -65,7 +65,7 @@ private:
   bool haveSource;
   bool haveConvection;
   bool enableTransient;
-  int numQPs, numDims;
+  unsigned int numQPs, numDims;
   Intrepid::FieldContainer<ScalarT> flux;
 };
 }

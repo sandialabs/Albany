@@ -59,9 +59,9 @@ private:
 
   std::size_t numQPs;
   std::size_t numDims;
+  PHX::MDField<ScalarT,Cell,QuadPoint> rhoCp;
   PHX::MDField<ScalarT,Cell,QuadPoint> permittivity;
   PHX::MDField<ScalarT,Cell,QuadPoint> thermalCond;
-  PHX::MDField<ScalarT,Cell,QuadPoint> rhoCp;
   PHX::MDField<ScalarT,Cell,QuadPoint> Temp;
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
 

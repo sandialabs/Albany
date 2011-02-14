@@ -99,7 +99,7 @@ template<typename EvalT, typename Traits>
 void PHAL::TEProp<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  int numCells = workset.numCells;
+  unsigned int numCells = workset.numCells;
    
   for (std::size_t cell=0; cell < numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
