@@ -1,4 +1,4 @@
-#{_MeshRefinement=8}
+#{_MeshRefinement=6}
 #{_OffsetIntervals=1}
 
 curve in sweep_curve interval {_OffsetIntervals}
@@ -23,8 +23,8 @@ curve {_c11} interval {2*_MeshRefinement}
 curve {_c12} interval {2*_MeshRefinement}
 
 # Horizontal surfaces, crossbar of H
-curve {_c8} interval  {3*2*_MeshRefinement}
-curve {_c15} interval {3*2*_MeshRefinement}
+curve {_c8} interval  {2*_MeshRefinement}
+curve {_c15} interval {2*_MeshRefinement}
 
 # Horizontal surfaces, minicrossbar of H
 curve {_c7} interval  {_MeshRefinement}

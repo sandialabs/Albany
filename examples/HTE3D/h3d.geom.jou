@@ -10,7 +10,7 @@
 #{_Widtha=0.1}
 #{_Widthb=0.005}
 #{_Widthc=0.075 - 2.0 * _Widthb}
-#{_ZOffsetDistance=0.02}
+#{_ZOffsetDistance=0.01}
 
 
 group 'before_vols' add vol all
@@ -55,7 +55,7 @@ create vertex {2*_Widtha+2*_Widthb+_Widthc} {2*_HeightA+_HeightB} 0
 # "Bend" vertices
 create vertex {_Widtha+_Widthb+0.5*_Widthc} {_HeightA+_BendOffset} 0 
 #{_vB1 = Id("vertex")}
-create vertex {_Widtha+_Widthb+0.5*_Widthc} {_HeightA+_HeightB+_BendOffset +_ExtraTopBendOffset} 0 
+create vertex {_Widtha+_Widthb+0.5*_Widthc} {_HeightA+_HeightB+_BendOffset} 0 
 #{_vB2 = Id("vertex")}
 
 
