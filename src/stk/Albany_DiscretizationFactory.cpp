@@ -26,7 +26,6 @@
 #endif
 #ifdef ALBANY_CUTR
 #include "Albany_FromCubitSTKMeshStruct.hpp"
-#include "STKMeshData.hpp"
 #endif
 
 
@@ -36,13 +35,20 @@ Albany::DiscretizationFactory::DiscretizationFactory(
 {
 }
 
+#ifdef ALBANY_CUTR
+void
+Albany::DiscretizationFactory::setMeshMover(const Teuchos::RCP<CUTR::CubitMeshMover>& meshMover_)
+{
+  meshMover = meshMover_;
+}
+#endif
+
 Teuchos::RCP<Albany::AbstractDiscretization>
 Albany::DiscretizationFactory::create(
 		  unsigned int neq,
 		  unsigned int nstates,
                   const Teuchos::RCP<const Epetra_Comm>& epetra_comm)
 {
-  Teuchos::RCP<Albany::AbstractDiscretization> strategy;
   Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct;
 
   std::string& method = discParams->get("Method", "STK1D");
@@ -50,26 +56,22 @@ Albany::DiscretizationFactory::create(
     
     stkMeshStruct = Teuchos::rcp(new Albany::Line1DSTKMeshStruct(epetra_comm, discParams, neq, nstates));
 
-    strategy = Teuchos::rcp(new Albany::STKDiscretization(stkMeshStruct, epetra_comm));
   }
   else if (method == "STK2D") {
     
     stkMeshStruct = Teuchos::rcp(new Albany::Rect2DSTKMeshStruct(epetra_comm, discParams, neq, nstates));
 
-    strategy = Teuchos::rcp(new Albany::STKDiscretization(stkMeshStruct, epetra_comm));
   }
   else if (method == "STK3D") {
     
     stkMeshStruct = Teuchos::rcp(new Albany::Cube3DSTKMeshStruct(epetra_comm, discParams, neq, nstates));
 
-    strategy = Teuchos::rcp(new Albany::STKDiscretization(stkMeshStruct, epetra_comm));
   }
   else if (method == "Ioss" || method == "Exodus" ||  method == "Pamgen") {
 #ifdef ALBANY_IOSS
     
     stkMeshStruct = Teuchos::rcp(new Albany::IossSTKMeshStruct(epetra_comm, discParams, neq, nstates));
 
-    strategy = Teuchos::rcp(new Albany::STKDiscretization(stkMeshStruct, epetra_comm));
 #else
     TEST_FOR_EXCEPTION(method == "Ioss" || method == "Exodus" ||  method == "Pamgen",
           Teuchos::Exceptions::InvalidParameter,
@@ -80,10 +82,7 @@ Albany::DiscretizationFactory::create(
   else if (method == "Cubit") {
 #ifdef ALBANY_CUTR
     
-    STKMeshData* stk_mesh = STKMeshData::instance();
-    stkMeshStruct = Teuchos::rcp(new Albany::FromCubitSTKMeshStruct(stk_mesh, discParams, neq, nstates));
-
-    strategy = Teuchos::rcp(new Albany::STKDiscretization(stkMeshStruct, epetra_comm));
+    stkMeshStruct = Teuchos::rcp(new Albany::FromCubitSTKMeshStruct(meshMover, discParams, neq, nstates));
 #else 
     TEST_FOR_EXCEPTION(method == "Cubit", 
           Teuchos::Exceptions::InvalidParameter,
@@ -97,6 +96,9 @@ Albany::DiscretizationFactory::create(
        "!" << std::endl << "Supplied parameter list is " << std::endl << *discParams 
        << "\nValid Methods are: STK1D, STK2D, STK3D, Ioss, Exodus, Cubit" << std::endl);
   }
+
+  Teuchos::RCP<Albany::AbstractDiscretization> strategy
+    = Teuchos::rcp(new Albany::STKDiscretization(stkMeshStruct, epetra_comm));
 
   return strategy;
 }

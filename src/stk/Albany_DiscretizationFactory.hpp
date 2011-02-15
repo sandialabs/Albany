@@ -26,6 +26,10 @@
 
 #include "Albany_AbstractDiscretization.hpp"
 
+#ifdef ALBANY_CUTR
+#include "CUTR_CubitMeshMover.hpp"
+#endif
+
 namespace Albany {
 
   /*!
@@ -39,9 +43,14 @@ namespace Albany {
 	      const Teuchos::RCP<Teuchos::ParameterList>& discParams);
 
     //! Destructor
-    virtual ~DiscretizationFactory() {}
+    ~DiscretizationFactory() {}
 
-    virtual Teuchos::RCP<Albany::AbstractDiscretization>
+    //! Method to inject cubit dependence.
+#ifdef ALBANY_CUTR
+    void setMeshMover(const Teuchos::RCP<CUTR::CubitMeshMover>& meshMover_);
+#endif
+
+    Teuchos::RCP<Albany::AbstractDiscretization>
     create(unsigned int num_equations,unsigned int num_states,
            const Teuchos::RCP<const Epetra_Comm>& epetra_comm);
 
@@ -57,6 +66,10 @@ namespace Albany {
 
     //! Parameter list specifying what element to create
     Teuchos::RCP<Teuchos::ParameterList> discParams;
+
+#ifdef ALBANY_CUTR
+    Teuchos::RCP<CUTR::CubitMeshMover> meshMover;
+#endif
 
   };
 

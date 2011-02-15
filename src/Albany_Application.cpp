@@ -74,7 +74,7 @@ Albany::Application::Application(
 #ifdef ALBANY_CUTR
     Teuchos::TimeMonitor Timer(*timers[6]); //start timer
     meshMover = Teuchos::rcp(new CUTR::CubitMeshMover
-          (problemParams->get<std::string>("Cubit Base Filename"),neq));
+          (problemParams->get<std::string>("Cubit Base Filename")));
 
     meshMover->getShapeParams(shapeParamNames, shapeParams);
     *out << "SSS : Registering " << shapeParams.size() << " Shape Parameters" << endl;
@@ -94,6 +94,9 @@ Albany::Application::Application(
   Teuchos::RCP<Teuchos::ParameterList> discParams = 
     Teuchos::rcpFromRef(params->sublist("Discretization"));
   Albany::DiscretizationFactory discFactory(discParams);
+#ifdef ALBANY_CUTR
+  discFactory.setMeshMover(meshMover);
+#endif
   disc = discFactory.create(neq, problem->numStates(), comm);
 
   // Load connectivity map and coordinates 
@@ -305,6 +308,7 @@ Albany::Application::computeGlobalResidual(
   if (shapeParamsHaveBeenReset) {
     Teuchos::TimeMonitor cubitTimer(*timers[6]); //start timer
 
+#ifdef ALBANY_CUTR
 *out << " Calling moveMesh with params: " << std::setprecision(8);
  for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
 *out << endl;
@@ -312,6 +316,7 @@ Albany::Application::computeGlobalResidual(
     coordinates = disc->getCoordinates();
     shapeParamsHaveBeenReset = false;
   }
+#endif
 
   // Zero out overlapped residual
   overlapped_f->PutScalar(0.0);
@@ -399,6 +404,7 @@ Albany::Application::computeGlobalJacobian(
   if (shapeParamsHaveBeenReset) {
     Teuchos::TimeMonitor Timer(*timers[6]); //start timer
 
+#ifdef ALBANY_CUTR
 *out << " Calling moveMesh with params: " << std::setprecision(8);
  for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
 *out << endl;
@@ -406,6 +412,7 @@ Albany::Application::computeGlobalJacobian(
     coordinates = disc->getCoordinates();
     shapeParamsHaveBeenReset = false;
   }
+#endif
 
   // Zero out overlapped residual
   Teuchos::RCP<Epetra_Vector> overlapped_ff;
@@ -628,6 +635,7 @@ Albany::Application::computeGlobalTangent(
     }
   }
 
+#ifdef ALBANY_CUTR
   // Begin shape optimization logic
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > coord_derivs;
   std::vector<int> coord_deriv_indices;
@@ -689,6 +697,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
      shapeParamsHaveBeenReset = false;
   }
   // End shape optimization logic
+#endif
 
   // Set data in Workset struct, and perform fill via field manager
   {
@@ -954,6 +963,7 @@ Albany::Application::computeGlobalSGResidual(
       (*p)[i].family->setRealValueForAllTypes((*p)[i].baseValue);
     }
   }
+#ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
     Teuchos::TimeMonitor Timer(*timers[6]); //start timer
 *out << " Calling moveMesh with params: " << std::setprecision(8);
@@ -963,6 +973,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     coordinates = disc->getCoordinates();
     shapeParamsHaveBeenReset = false;
   }
+#endif
 
   // Set SG parameters
   if (sg_p != NULL && sg_p_vals != NULL) {
@@ -1083,6 +1094,7 @@ Albany::Application::computeGlobalSGJacobian(
       (*p)[i].family->setRealValueForAllTypes((*p)[i].baseValue);
     }
   }
+#ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
     Teuchos::TimeMonitor Timer(*timers[6]); //start timer
 *out << " Calling moveMesh with params: " << std::setprecision(8);
@@ -1092,6 +1104,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     coordinates = disc->getCoordinates();
     shapeParamsHaveBeenReset = false;
   }
+#endif
 
   // Set SG parameters
   if (sg_p != NULL && sg_p_vals != NULL) {

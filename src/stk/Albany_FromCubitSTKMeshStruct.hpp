@@ -19,16 +19,16 @@
 #define ALBANY_FROMCUBIT_STKMESHSTRUCT_HPP
 
 #include "Albany_AbstractSTKMeshStruct.hpp"
+#include "CUTR_CubitMeshMover.hpp"
 
 #ifdef ALBANY_CUTR
-#include "STKMeshData.hpp"
 
 namespace Albany {
 
   struct FromCubitSTKMeshStruct : public AbstractSTKMeshStruct {
 
     FromCubitSTKMeshStruct(
-                  STKMeshData* stkMeshData,
+                  const Teuchos::RCP<CUTR::CubitMeshMover>& meshMover,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_, const unsigned int nstates_);
 
@@ -39,10 +39,9 @@ namespace Albany {
       getValidDiscretizationParameters() const;
 
     bool periodic;
-
   };
 
 }
 #endif
 
-#endif // ALBANY_QUAD2D_STKMESHSTRUCT_HPP
+#endif

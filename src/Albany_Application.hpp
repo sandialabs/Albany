@@ -36,7 +36,10 @@
 #include "Albany_AbstractProblem.hpp"
 #include "Albany_StateManager.hpp"
 
-#include "CUTR_AbstractMeshMover.hpp"
+#ifdef ALBANY_CUTR
+  #include "CUTR_CubitMeshMover.hpp"
+  #include "STKMeshData.hpp"
+#endif
 
 #include "Sacado_ScalarParameterLibrary.hpp"
 #include "Sacado_ScalarParameterVector.hpp"
@@ -332,7 +335,9 @@ namespace Albany {
     bool shapeParamsHaveBeenReset;
     std::vector<RealType> shapeParams;
     std::vector<std::string> shapeParamNames;
-    Teuchos::RCP<CUTR::AbstractMeshMover> meshMover;
+#ifdef ALBANY_CUTR
+    Teuchos::RCP<CUTR::CubitMeshMover> meshMover;
+#endif
 
     unsigned int neq;
 
