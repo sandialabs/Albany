@@ -305,10 +305,10 @@ Albany::Application::computeGlobalResidual(
 
   // Mesh motion needs to occur here on the global mesh befor
   // it is potentially carved into worksets.
+#ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
     Teuchos::TimeMonitor cubitTimer(*timers[6]); //start timer
 
-#ifdef ALBANY_CUTR
 *out << " Calling moveMesh with params: " << std::setprecision(8);
  for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
 *out << endl;
@@ -401,10 +401,10 @@ Albany::Application::computeGlobalJacobian(
       for (unsigned int j=0; j<p[i]->size(); j++)
 	(*(p[i]))[j].family->setRealValueForAllTypes((*(p[i]))[j].baseValue);
   }
+#ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
     Teuchos::TimeMonitor Timer(*timers[6]); //start timer
 
-#ifdef ALBANY_CUTR
 *out << " Calling moveMesh with params: " << std::setprecision(8);
  for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
 *out << endl;
@@ -635,10 +635,10 @@ Albany::Application::computeGlobalTangent(
     }
   }
 
-#ifdef ALBANY_CUTR
   // Begin shape optimization logic
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > coord_derivs;
   std::vector<int> coord_deriv_indices;
+#ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
     Teuchos::TimeMonitor Timer(*timers[6]); //start timer
 
