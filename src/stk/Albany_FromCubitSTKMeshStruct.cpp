@@ -69,7 +69,7 @@ Albany::FromCubitSTKMeshStruct::FromCubitSTKMeshStruct(
     std::stringstream ss; ss << "nodelist_" << ns->first;
     nsPartVec[ss.str()] = ns->second;
 #ifdef ALBANY_IOSS
- //   stk::io::put_io_part_attribute(*ns->second);
+   stk::io::put_io_part_attribute(*ns->second);
 #endif
     ns++;
   }
@@ -77,23 +77,22 @@ Albany::FromCubitSTKMeshStruct::FromCubitSTKMeshStruct(
   numDim = stkMeshData->get_num_dim();
   cout << "numDim form cubit  " << numDim << endl;
 
-//  partVec[0] = &  metaData->declare_part( "Block_1", stk::mesh::Element );
+  if (numDim==2) partVec[0] = stkMeshData->surface_part(0);
+  else           partVec[0] = stkMeshData->volume_part(0);
+
+#ifdef ALBANY_IOSS
 /*
+  // set all top rank parts as IO parts
   int id=0;
   stk::mesh::Part* eb;
   do {
     if (numDim==2) eb = stkMeshData->surface_part(id++);
     else           eb = stkMeshData->volume_part(id++);
-  } while (eb==NULL);
-  cout << "Processing cubit element block " << id-1 << " as EB0 " << endl;
-
-  partVec[0] = eb;
+    stk::io::put_io_part_attribute(*eb);
+  } while (eb!=NULL);
 */
 
-#ifdef ALBANY_IOSS
-  stk::io::put_io_part_attribute(metaData->universal_part());
-
-//  stk::io::put_io_part_attribute(*partVec[0]);
+  stk::io::set_field_role(*coordinates_field, Ioss::Field::TRANSIENT);
   stk::io::set_field_role(*solution_field, Ioss::Field::TRANSIENT);
   if (nstates>0) stk::io::set_field_role(*state_field, Ioss::Field::TRANSIENT);
 #endif
