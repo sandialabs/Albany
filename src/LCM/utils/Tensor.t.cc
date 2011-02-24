@@ -10,7 +10,7 @@ namespace LCM {
   //
   template<typename ScalarT>
   std::istream &
-  operator<<(std::istream & is, Vector<ScalarT> & u)
+  operator>>(std::istream & is, Vector<ScalarT> & u)
   {
     is >> u(0);
     is >> u(1);
@@ -41,7 +41,7 @@ namespace LCM {
   //
   template<typename ScalarT>
   std::istream &
-  operator<<(std::istream & is, Tensor<ScalarT> & A)
+  operator>>(std::istream & is, Tensor<ScalarT> & A)
   {
     is >> A(0,0);
     is >> A(0,1);
@@ -386,7 +386,7 @@ namespace LCM {
   //
   template<typename ScalarT>
   std::istream &
-  operator<<(std::istream & is, Tensor3<ScalarT> & A)
+  operator>>(std::istream & is, Tensor3<ScalarT> & A)
   {
     for (Index i = 0; i < MaxDim; ++i) {
       for (Index j = 0; j < MaxDim; ++j) {
@@ -716,7 +716,7 @@ namespace LCM {
   //
   template<typename ScalarT>
   std::istream &
-  operator<<(std::istream & is, Tensor4<ScalarT> & A)
+  operator>>(std::istream & is, Tensor4<ScalarT> & A)
   {
     for (Index i = 0; i < MaxDim; ++i) {
       for (Index j = 0; j < MaxDim; ++j) {
