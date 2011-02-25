@@ -21,6 +21,8 @@
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
 #include "Albany_InitialCondition.hpp"
 #include "Albany_Utils.hpp"
+#include "Shards_BasicTopologies.hpp"
+#include "Shards_CellTopology.hpp"
 
 Albany::NonlinearElasticityProblem::
 NonlinearElasticityProblem(
@@ -133,6 +135,9 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
    using LCM::FactoryTraits;
    using PHAL::AlbanyTraits;
 
+   const bool composite = params->get("Use Composite Tet 10", false);
+   RCP<shards::CellTopology> comp_cellType = rcp(new shards::CellTopology( shards::getCellTopologyData<shards::Tetrahedron<11> >() ) );
+
    RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
    RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&ctd));
    switch (neq) {
@@ -149,7 +154,15 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
        if (ctd.node_count==8)
          intrepidBasis = rcp(new Intrepid::Basis_HGRAD_HEX_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
        else if (ctd.node_count==10)
-         intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TET_C2_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
+       {
+           if (!composite)
+             intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TET_C2_FEM<RealType, Intrepid::FieldContainer<RealType> >());
+           else
+           {
+             intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TET_COMP12_FEM<RealType, Intrepid::FieldContainer<RealType> >());
+             cellType = comp_cellType;
+           }
+       }
        break;
    }
 
@@ -160,7 +173,8 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
 
    numDim = cubature->getDimension();
    numQPts = cubature->getNumPoints();
-   numVertices = cellType->getNodeCount();
+   //numVertices = cellType->getNodeCount();
+   numVertices = numNodes;
 
    *out << "Field Dimensions: Workset=" << worksetSize 
         << ", Vertices= " << numVertices
@@ -597,6 +611,7 @@ Albany::NonlinearElasticityProblem::getValidProblemParameters() const
   validPL->sublist("Poissons Ratio", false, "");
   validPL->sublist("Material Model", false, "");
   validPL->set<bool>("avgJ", false, "Flag to indicate the J should be volume averaged");
+  validPL->set<bool>("Use Composite Tet 10", false, "Flag to use the compostie tet 10 basis in Intrepid");
   if (matModel == "J2")
   {
     validPL->sublist("Hardening Modulus", false, "");
