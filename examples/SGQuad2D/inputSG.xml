@@ -30,6 +30,7 @@
       <Parameter name="Parameter 0" type="string" value="Quadratic Nonlinear Factor"/>
     </ParameterList>
     <ParameterList name="Stochastic Galerkin">
+      <Parameter name="Save Moments" type="int" value="2"/>
       <ParameterList name="SG Parameters">
 	<Parameter name="Number" type="int" value="2"/>
 	<Parameter name="Parameter 0" type="string"
@@ -80,6 +81,7 @@
     <Parameter name="1D Elements" type="int" value="20"/>
     <Parameter name="2D Elements" type="int" value="20"/>
     <Parameter name="Method" type="string" value="STK2D"/>
+    <Parameter name="Exodus Output File Name" type="string" value="sgquad_out.exo"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="0"/>
