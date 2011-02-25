@@ -58,6 +58,11 @@ void Albany_NOXObserver::observeSolution(
   }
 #endif
 
+   // Special output for loca runs of HTE problem
+   //double mx;
+   //solution.MaxValue(&mx);
+   //cout << setprecision(9) << "MaxValue " << mx << endl;
+
    // This must come at the end since it renames the New state 
    // as the Old state in preparation for the next step
    app->getStateMgr().updateStates();;

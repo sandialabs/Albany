@@ -151,10 +151,10 @@ int main(int argc, char *argv[]) {
     responses_out_sg.set_g_sg(0,g_sg);
     App_sg->evalModel(params_in_sg, responses_out_sg);
 
-    // *out << "Finished eval of sg model: Params, Responses " 
-    //      << std::setprecision(12) << endl;
-    // p_sg->print(*out << "\nParameters!\n");
-    // g_sg->print(*out << "\nResponses!\n");
+     *out << "Finished eval of sg model: Params, Responses " 
+          << std::setprecision(12) << endl;
+     p_sg->print(*out << "\nParameters!\n");
+     g_sg->print(*out << "\nResponses!\n");
 
     totalTimer.~TimeMonitor();
     Teuchos::TimeMonitor::summarize(std::cout,false,true,false);

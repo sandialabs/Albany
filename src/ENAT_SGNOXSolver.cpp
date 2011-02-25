@@ -148,11 +148,13 @@ SGNOXSolver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 
   // Set up Observer to call noxObserver for each vector block
   Teuchos::RCP<NOX::Epetra::Observer> sgnoxObserver;
-  if (noxObserver != Teuchos::null)
+  if (noxObserver != Teuchos::null) {
+    int save_moments = sgParams.get("Save Moments",-1);
     sgnoxObserver = 
       Teuchos::rcp(new Piro::Epetra::StokhosNOXObserver(noxObserver,
-							*(model->get_x_map()),
-							basis->size()));
+							model->get_x_map(),
+							basis, save_moments));
+  }
 
   // Create SG NOX solver
   Teuchos::RCP<EpetraExt::ModelEvaluator> sg_block_solver;
@@ -282,6 +284,7 @@ ENAT::SGNOXSolver::getValidSGParameters() const
   validPL->set<std::string>("SG Method", "","");
   validPL->set<std::string>("Triple Product Size", "","");
   validPL->set<bool>("Rebalance Stochastic Graph", false, "");
+  validPL->set<int>("Save Moments", -1, "Set to 2 for Mean and Variance. Default writes Coeffs");
   validPL->sublist("Isorropia", false, "");
   return validPL;
 }

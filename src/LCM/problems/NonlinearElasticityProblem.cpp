@@ -554,6 +554,10 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);
 
+    p->set<string>("Weighted BF Name", "wBF");
+    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+
     //Output
     p->set<string>("Residual Name", "Residual");
     p->set< RCP<DataLayout> >("Node Vector Data Layout", node_vector);

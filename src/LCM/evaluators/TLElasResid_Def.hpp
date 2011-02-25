@@ -20,6 +20,7 @@
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Intrepid_RealSpaceTools.hpp"
+#include "Sacado_ParameterRegistration.hpp"
 
 namespace LCM {
 
@@ -35,6 +36,8 @@ TLElasResid(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
   wGradBF     (p.get<std::string>                   ("Weighted Gradient BF Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
+  wBF         (p.get<std::string>                   ("Weighted BF Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
   Residual    (p.get<std::string>                   ("Residual Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") )
 {
@@ -42,6 +45,7 @@ TLElasResid(const Teuchos::ParameterList& p) :
   this->addDependentField(J);
   this->addDependentField(defgrad);
   this->addDependentField(wGradBF);
+  this->addDependentField(wBF);
 
   this->addEvaluatedField(Residual);
 
@@ -59,6 +63,12 @@ TLElasResid(const Teuchos::ParameterList& p) :
   F_invT.resize(worksetSize, numQPs, numDims, numDims);
   JF_invT.resize(worksetSize, numQPs, numDims, numDims);
   P.resize(worksetSize, numQPs, numDims, numDims);
+
+  Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib> >("Parameter Library");
+
+  zGrav=0.0;
+  new Sacado::ParameterRegistration<EvalT, SPL_Traits>("zGrav", this, paramLib);
+
 }
 
 //**********************************************************************
@@ -71,6 +81,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(J,fm);
   this->utils.setFieldData(defgrad,fm);
   this->utils.setFieldData(wGradBF,fm);
+  this->utils.setFieldData(wBF,fm);
 
   this->utils.setFieldData(Residual,fm);
 }
@@ -101,9 +112,25 @@ evaluateFields(typename Traits::EvalData workset)
     } 
   }
 
-//  FST::integrate<ScalarT>(Residual, Stress, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+/** // Gravity term used for load stepping 
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+    for (std::size_t node=0; node < numNodes; ++node) {
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+         Residual(cell,node,2) +=  zGrav * wBF(cell, node, qp);
+      } 
+    } 
+  }
+**/
 
 }
+// **********************************************************************
+template<typename EvalT,typename Traits>
+typename TLElasResid<EvalT,Traits>::ScalarT&
+TLElasResid<EvalT,Traits>::getValue(const std::string &n)
+{
+  return zGrav;
+}
+
 
 //**********************************************************************
 }

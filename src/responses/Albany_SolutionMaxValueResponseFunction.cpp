@@ -114,5 +114,18 @@ evaluateSGResponses(const Stokhos::VectorOrthogPoly<Epetra_Vector>* sg_xdot,
 		    const Teuchos::Array<SGType>* sg_p_vals,
 		    Stokhos::VectorOrthogPoly<Epetra_Vector>& sg_g)
 {
-  throw 55;
+
+  // find node im with max value
+    double mxv;
+    int im = -1;
+    sg_x[0].MaxValue(&mxv);
+    for (int i=0; i<sg_x[0].Map().NumMyElements(); i++) {
+       if (sg_x[0][i] == mxv) im = i; 
+    }
+
+  // copy its coeffs to g
+  unsigned int sz = sg_x.size();
+  for (unsigned int i=0; i<sz; i++)
+     sg_g[i][0] = sg_x[i][im];
+
 }

@@ -43,7 +43,8 @@ Albany::Application::Application(
   physicsBasedPreconditioner(false),
   shapeParamsHaveBeenReset(false),
   setupCalledResidual(false), setupCalledJacobian(false), setupCalledTangent(false),
-  setupCalledSGResidual(false), setupCalledSGJacobian(false)
+  setupCalledSGResidual(false), setupCalledSGJacobian(false),
+  morphFromInit(true)
   //, stateMgr(Albany::StateManager())
 {
   timers.push_back(Teuchos::TimeMonitor::getNewTimer("> Albany Fill: Residual"));
@@ -80,6 +81,7 @@ Albany::Application::Application(
     *out << "SSS : Registering " << shapeParams.size() << " Shape Parameters" << endl;
 
     registerShapeParameters();
+
 #else
   TEST_FOR_EXCEPTION(problemParams->get("Enable Cubit Shape Parameters",false), std::logic_error,
                      "Cubit requested but not Compiled in!");
@@ -306,13 +308,26 @@ Albany::Application::computeGlobalResidual(
   // Mesh motion needs to occur here on the global mesh befor
   // it is potentially carved into worksets.
 #ifdef ALBANY_CUTR
+  static int first=true;
   if (shapeParamsHaveBeenReset) {
     Teuchos::TimeMonitor cubitTimer(*timers[6]); //start timer
+
+/*
+    if (first) {
+     cout << "Wiggling mesh a little to get some smoothing in place" << endl;
+     first=false;
+     shapeParams[0] +=1.0e-6;
+      meshMover->moveMesh(shapeParams, morphFromInit);
+   shapeParams[0] -=2.0e-6;
+      meshMover->moveMesh(shapeParams, morphFromInit);
+     shapeParams[0] +=1.0e-6;
+    }
+*/
 
 *out << " Calling moveMesh with params: " << std::setprecision(8);
  for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
 *out << endl;
-    meshMover->moveMesh(shapeParams);
+    meshMover->moveMesh(shapeParams, morphFromInit);
     coordinates = disc->getCoordinates();
     shapeParamsHaveBeenReset = false;
   }
@@ -408,7 +423,7 @@ Albany::Application::computeGlobalJacobian(
 *out << " Calling moveMesh with params: " << std::setprecision(8);
  for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
 *out << endl;
-    meshMover->moveMesh(shapeParams);
+    meshMover->moveMesh(shapeParams, morphFromInit);
     coordinates = disc->getCoordinates();
     shapeParamsHaveBeenReset = false;
   }
@@ -665,7 +680,8 @@ Albany::Application::computeGlobalTangent(
                        std::endl);
 
      // Compute FD derivs of coordinate vector w.r.t. shape params
-     double pert = 1.0e-5;
+     double eps = 1.0e-4;
+     double pert;
      coord_derivs.resize(num_sp);
      for (int i=0; i<num_sp; i++) {
 *out << "XXX perturbing parameter " << coord_deriv_indices[i]
@@ -673,12 +689,14 @@ Albany::Application::computeGlobalTangent(
      << " with name " <<  shapeParamNames[shape_param_indices[i]]
      << " which should equal " << (*params)[coord_deriv_indices[i]].family->getName() << endl;
 
+     pert = (fabs(shapeParams[shape_param_indices[i]]) + 1.0e-2) * eps;
+
        coord_derivs[i].resize(coordinates.size());
        shapeParams[shape_param_indices[i]] += pert;
 *out << " Calling moveMesh with params: " << std::setprecision(8);
 for (unsigned int ii=0; ii<shapeParams.size(); ii++) *out << shapeParams[ii] << "  ";
 *out << endl;
-       meshMover->moveMesh(shapeParams);
+       meshMover->moveMesh(shapeParams, morphFromInit);
        coordinates = disc->getCoordinates();
        for (int j=0; j<coordinates.size(); j++)  coord_derivs[i][j] = coordinates[j];
 
@@ -687,7 +705,7 @@ for (unsigned int ii=0; ii<shapeParams.size(); ii++) *out << shapeParams[ii] << 
 *out << " Calling moveMesh with params: " << std::setprecision(8);
 for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
 *out << endl;
-     meshMover->moveMesh(shapeParams);
+     meshMover->moveMesh(shapeParams, morphFromInit);
      coordinates = disc->getCoordinates();
      for (int i=0; i<num_sp; i++) {
        for (int j=0; j<coordinates.size(); j++) {
@@ -969,7 +987,7 @@ Albany::Application::computeGlobalSGResidual(
 *out << " Calling moveMesh with params: " << std::setprecision(8);
 for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
 *out << endl;
-    meshMover->moveMesh(shapeParams);
+    meshMover->moveMesh(shapeParams, morphFromInit);
     coordinates = disc->getCoordinates();
     shapeParamsHaveBeenReset = false;
   }
@@ -1100,7 +1118,7 @@ Albany::Application::computeGlobalSGJacobian(
 *out << " Calling moveMesh with params: " << std::setprecision(8);
 for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
 *out << endl;
-    meshMover->moveMesh(shapeParams);
+    meshMover->moveMesh(shapeParams, morphFromInit);
     coordinates = disc->getCoordinates();
     shapeParamsHaveBeenReset = false;
   }

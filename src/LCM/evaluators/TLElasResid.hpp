@@ -22,6 +22,7 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+#include "Sacado_ParameterAccessor.hpp"
 
 /** \brief Total Lagrangian (Non-linear) Elasticity Residual
 
@@ -32,9 +33,12 @@ namespace LCM {
 
 template<typename EvalT, typename Traits>
 class TLElasResid : public PHX::EvaluatorWithBaseImpl<Traits>,
-		        public PHX::EvaluatorDerived<EvalT, Traits>  {
+                    public PHX::EvaluatorDerived<EvalT, Traits>,
+                    public Sacado::ParameterAccessor<EvalT, SPL_Traits>   {
 
 public:
+  typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
 
   TLElasResid(const Teuchos::ParameterList& p);
 
@@ -43,16 +47,17 @@ public:
 
   void evaluateFields(typename Traits::EvalData d);
 
-private:
+  ScalarT& getValue(const std::string &n);
 
-  typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
+private:
 
   // Input:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;
   PHX::MDField<ScalarT,Cell,QuadPoint> J;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defgrad;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
+  ScalarT zGrav;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node,Dim> Residual;

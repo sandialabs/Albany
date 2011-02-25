@@ -362,6 +362,7 @@ namespace Albany {
 
     StateManager stateMgr;
 
+    bool morphFromInit;
     bool ignore_residual_in_jacobian;
   };
 }
