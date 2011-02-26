@@ -149,9 +149,6 @@ namespace PHX {
 
 }
 
-// Turn on/off explicit template instantiation
-#define PHAL_ETI
-
 // Define macro for explicit template instantiation
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_RESIDUAL(name) \
   template class name<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>;
