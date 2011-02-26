@@ -17,12 +17,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#ifdef PHAL_ETI
-
 #include "PHAL_DOFVecGradInterpolation.hpp"
 #include "PHAL_DOFVecGradInterpolation_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::DOFVecGradInterpolation)
-
-#endif
 

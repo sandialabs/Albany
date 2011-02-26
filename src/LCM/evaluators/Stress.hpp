@@ -61,8 +61,4 @@ private:
 };
 }
 
-#ifndef PHAL_ETI
-#include "Stress_Def.hpp"
-#endif
-
 #endif

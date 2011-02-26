@@ -63,8 +63,4 @@ private:
 };
 }
 
-#ifndef PHAL_ETI
-#include "Neohookean_Def.hpp"
-#endif
-
 #endif

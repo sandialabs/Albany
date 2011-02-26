@@ -89,8 +89,4 @@ private:
 };
 }
 
-#ifndef PHAL_ETI
-#include "PHAL_GatherCoordinateVector_Def.hpp"
-#endif
-
 #endif

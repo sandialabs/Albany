@@ -82,8 +82,4 @@ namespace QCAD
 	
 }
 
-#ifndef PHAL_ETI
-#include "QCAD_Permittivity_Def.hpp"
-#endif
-
 #endif

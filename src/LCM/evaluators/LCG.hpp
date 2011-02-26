@@ -60,8 +60,4 @@ private:
 };
 }
 
-#ifndef PHAL_ETI
-#include "LCG_Def.hpp"
-#endif
-
 #endif

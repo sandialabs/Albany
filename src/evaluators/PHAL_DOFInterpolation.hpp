@@ -59,8 +59,4 @@ private:
 };
 }
 
-#ifndef PHAL_ETI
-#include "PHAL_DOFInterpolation_Def.hpp"
-#endif
-
 #endif

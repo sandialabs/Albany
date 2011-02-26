@@ -17,12 +17,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#ifdef PHAL_ETI
-
 #include "PHAL_Constant.hpp"
 #include "PHAL_Constant_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::Constant)
-
-#endif
 

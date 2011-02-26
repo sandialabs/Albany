@@ -17,12 +17,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#ifdef PHAL_ETI
-
 #include "PHAL_Source.hpp"
 #include "PHAL_Source_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::Source)
-
-#endif
 

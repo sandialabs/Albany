@@ -67,8 +67,4 @@ private:
 };
 }
 
-#ifndef PHAL_ETI
-#include "PHAL_DOFVecGradInterpolation_Def.hpp"
-#endif
-
 #endif

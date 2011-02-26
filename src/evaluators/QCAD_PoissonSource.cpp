@@ -17,12 +17,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#ifdef PHAL_ETI
-
 #include "QCAD_PoissonSource.hpp"
 #include "QCAD_PoissonSource_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(QCAD::PoissonSource)
-
-#endif
 

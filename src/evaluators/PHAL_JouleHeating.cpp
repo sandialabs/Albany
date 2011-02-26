@@ -17,12 +17,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#ifdef PHAL_ETI
-
 #include "PHAL_JouleHeating.hpp"
 #include "PHAL_JouleHeating_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::JouleHeating)
-
-#endif
 

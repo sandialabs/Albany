@@ -17,12 +17,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#ifdef PHAL_ETI
-
 #include "QCAD_PoissonResid.hpp"
 #include "QCAD_PoissonResid_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(QCAD::PoissonResid)
-
-#endif
 

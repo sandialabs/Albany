@@ -80,8 +80,4 @@ private:
 };
 }
 
-#ifndef PHAL_ETI
-#include "PoissonsRatio_Def.hpp"
-#endif
-
 #endif

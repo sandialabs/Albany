@@ -59,8 +59,4 @@ private:
 };
 }
 
-#ifndef PHAL_ETI
-#include "Strain_Def.hpp"
-#endif
-
 #endif

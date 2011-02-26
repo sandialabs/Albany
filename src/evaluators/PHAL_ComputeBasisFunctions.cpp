@@ -17,12 +17,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#ifdef PHAL_ETI
-
 #include "PHAL_ComputeBasisFunctions.hpp"
 #include "PHAL_ComputeBasisFunctions_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::ComputeBasisFunctions)
-
-#endif
 

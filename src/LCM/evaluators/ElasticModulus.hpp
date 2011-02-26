@@ -80,8 +80,4 @@ private:
 };
 }
 
-#ifndef PHAL_ETI
-#include "ElasticModulus_Def.hpp"
-#endif
-
 #endif

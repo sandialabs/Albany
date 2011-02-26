@@ -164,8 +164,4 @@ private:
 // **************************************************************
 }
 
-#ifndef PHAL_ETI
-#include "PHAL_GatherSolution_Def.hpp"
-#endif
-
 #endif

@@ -67,8 +67,4 @@ private:
 };
 }
 
-#ifndef PHAL_ETI
-#include "PHAL_MapToPhysicalFrame_Def.hpp"
-#endif
-
 #endif

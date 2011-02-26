@@ -63,8 +63,4 @@ private:
 };
 }
 
-#ifndef PHAL_ETI
-#include "EnergyPotential_Def.hpp"
-#endif
-
 #endif

@@ -17,12 +17,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#ifdef PHAL_ETI
-
 #include "PHAL_GatherSolution.hpp"
 #include "PHAL_GatherSolution_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::GatherSolution)
-
-#endif
 

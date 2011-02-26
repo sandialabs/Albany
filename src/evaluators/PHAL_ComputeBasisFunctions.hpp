@@ -75,8 +75,5 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
 };
 }
-#ifndef PHAL_ETI
-#include "PHAL_ComputeBasisFunctions_Def.hpp"
-#endif
 
 #endif

@@ -17,12 +17,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#ifdef PHAL_ETI
-
 #include "EnergyPotential.hpp"
 #include "EnergyPotential_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::EnergyPotential)
-
-#endif
 

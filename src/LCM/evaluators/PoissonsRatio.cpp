@@ -17,12 +17,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#ifdef PHAL_ETI
-
 #include "PoissonsRatio.hpp"
 #include "PoissonsRatio_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::PoissonsRatio)
-
-#endif
 

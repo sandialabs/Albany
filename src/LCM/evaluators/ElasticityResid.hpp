@@ -62,8 +62,4 @@ private:
 };
 }
 
-#ifndef PHAL_ETI
-#include "ElasticityResid_Def.hpp"
-#endif
-
 #endif

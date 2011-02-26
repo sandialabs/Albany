@@ -85,8 +85,4 @@ private:
 };
 }
 
-#ifndef PHAL_ETI
-#include "J2Stress_Def.hpp"
-#endif
-
 #endif

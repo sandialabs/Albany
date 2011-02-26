@@ -65,8 +65,4 @@ private:
 };
 }
 
-#ifndef PHAL_ETI
-#include "QCAD_PotentialResid_Def.hpp"
-#endif
-
 #endif

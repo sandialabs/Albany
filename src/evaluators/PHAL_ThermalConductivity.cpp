@@ -17,12 +17,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#ifdef PHAL_ETI
-
 #include "PHAL_ThermalConductivity.hpp"
 #include "PHAL_ThermalConductivity_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::ThermalConductivity)
-
-#endif
 

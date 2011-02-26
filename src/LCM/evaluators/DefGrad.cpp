@@ -17,12 +17,7 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#ifdef PHAL_ETI
-
 #include "DefGrad.hpp"
 #include "DefGrad_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::DefGrad)
-
-#endif
-

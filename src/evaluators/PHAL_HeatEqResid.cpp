@@ -17,12 +17,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#ifdef PHAL_ETI
-
 #include "PHAL_HeatEqResid.hpp"
 #include "PHAL_HeatEqResid_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::HeatEqResid)
-
-#endif
 

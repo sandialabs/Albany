@@ -80,8 +80,4 @@ private:
 };
 }
 
-#ifndef PHAL_ETI
-#include "HardeningModulus_Def.hpp"
-#endif
-
 #endif

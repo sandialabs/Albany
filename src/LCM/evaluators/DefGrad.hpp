@@ -62,8 +62,4 @@ private:
 };
 
 }
-#ifndef PHAL_ETI
-#include "DefGrad_Def.hpp"
-#endif
-
 #endif

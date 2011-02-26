@@ -17,12 +17,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#ifdef PHAL_ETI
-
 #include "PHAL_HelmholtzResid.hpp"
 #include "PHAL_HelmholtzResid_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::HelmholtzResid)
-
-#endif
 

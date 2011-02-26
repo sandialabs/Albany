@@ -87,8 +87,4 @@ namespace QCAD
 	};
 }
 
-#ifndef PHAL_ETI
-#include "QCAD_PoissonSource_Def.hpp"
-#endif
-
 #endif

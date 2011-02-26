@@ -17,12 +17,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#ifdef PHAL_ETI
-
 #include "J2Stress.hpp"
 #include "J2Stress_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::J2Stress)
-
-#endif
 

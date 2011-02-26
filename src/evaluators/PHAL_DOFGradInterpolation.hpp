@@ -62,8 +62,4 @@ private:
 };
 }
 
-#ifndef PHAL_ETI
-#include "PHAL_DOFGradInterpolation_Def.hpp"
-#endif
-
 #endif

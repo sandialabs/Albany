@@ -64,8 +64,4 @@ private:
 };
 }
 
-#ifndef PHAL_ETI
-#include "PHAL_JouleHeating_Def.hpp"
-#endif
-
 #endif

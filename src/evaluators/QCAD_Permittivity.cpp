@@ -17,12 +17,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#ifdef PHAL_ETI
-
 #include "QCAD_Permittivity.hpp"
 #include "QCAD_Permittivity_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(QCAD::Permittivity)
-
-#endif
 

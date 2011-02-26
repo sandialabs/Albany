@@ -161,8 +161,4 @@ public:
 };
 }
 
-#ifndef PHAL_ETI
-#include "PHAL_Dirichlet_Def.hpp"
-#endif
-
 #endif

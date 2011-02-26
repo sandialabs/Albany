@@ -74,8 +74,4 @@ private:
 };
 }
 
-#ifndef PHAL_ETI
-#include "TLElasResid_Def.hpp"
-#endif
-
 #endif

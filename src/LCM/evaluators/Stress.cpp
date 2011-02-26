@@ -17,12 +17,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#ifdef PHAL_ETI
-
 #include "Stress.hpp"
 #include "Stress_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::Stress)
-
-#endif
 

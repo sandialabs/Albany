@@ -17,12 +17,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#ifdef PHAL_ETI
-
 #include "PHAL_ScatterResidual.hpp"
 #include "PHAL_ScatterResidual_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::ScatterResidual)
-
-#endif
 

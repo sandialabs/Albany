@@ -74,8 +74,4 @@ private:
 };
 }
 
-#ifndef PHAL_ETI
-#include "PHAL_TEProp_Def.hpp"
-#endif
-
 #endif

@@ -17,12 +17,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#ifdef PHAL_ETI
-
 #include "HardeningModulus.hpp"
 #include "HardeningModulus_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::HardeningModulus)
-
-#endif
 

@@ -17,12 +17,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#ifdef PHAL_ETI
-
 #include "ElasticModulus.hpp"
 #include "ElasticModulus_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::ElasticModulus)
-
-#endif
 

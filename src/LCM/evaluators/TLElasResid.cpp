@@ -17,12 +17,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#ifdef PHAL_ETI
-
 #include "TLElasResid.hpp"
 #include "TLElasResid_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::TLElasResid)
-
-#endif
 
