@@ -496,7 +496,8 @@ Albany::Application::computeGlobalJacobian(
   }
 
   jac.FillComplete(true);
-  //cout << jac << endl;;
+  //cout << "f " << *f << endl;;
+  //cout << "J " << jac << endl;;
 }
 
 void

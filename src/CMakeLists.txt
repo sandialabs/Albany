@@ -52,6 +52,7 @@ SET(SOURCES ${SOURCES}
 	problems/Albany_AbstractProblem.cpp 
 	problems/Albany_ProblemFactory.cpp
 	problems/Albany_HeatProblem.cpp 
+	problems/Albany_ODEProblem.cpp 
 	problems/Albany_Helmholtz2DProblem.cpp 
 	problems/Albany_ThermoElectrostaticsProblem.cpp 
 	problems/Albany_AnalyticFunction.cpp 
@@ -61,6 +62,7 @@ SET(HEADERS ${HEADERS}
 	problems/Albany_ProblemFactory.hpp 
 	problems/Albany_AbstractProblem.hpp 
 	problems/Albany_HeatProblem.hpp 
+	problems/Albany_ODEProblem.hpp 
 	problems/Albany_Helmholtz2DProblem.hpp 
 	problems/Albany_ThermoElectrostaticsProblem.hpp 
 	problems/Albany_AnalyticFunction.hpp 
@@ -88,6 +90,7 @@ SET(HEADERS ${HEADERS}
 SET(SOURCES ${SOURCES}
         stk/Albany_STKDiscretization.cpp
 	stk/Albany_DiscretizationFactory.cpp
+        stk/Albany_Point0DSTKMeshStruct.cpp
         stk/Albany_Line1DSTKMeshStruct.cpp
         stk/Albany_Rect2DSTKMeshStruct.cpp
         stk/Albany_Cube3DSTKMeshStruct.cpp
@@ -99,6 +102,7 @@ SET(HEADERS ${HEADERS}
         stk/Albany_STKDiscretization.hpp
 	stk/Albany_DiscretizationFactory.hpp
         stk/Albany_AbstractSTKMeshStruct.hpp
+        stk/Albany_Point0DSTKMeshStruct.hpp
         stk/Albany_Line1DSTKMeshStruct.hpp
         stk/Albany_Rect2DSTKMeshStruct.hpp
         stk/Albany_Cube3DSTKMeshStruct.hpp
@@ -113,6 +117,7 @@ SET(SOURCES ${SOURCES}
 	evaluators/PHAL_Dirichlet.cpp 
 	evaluators/PHAL_Source.cpp 
 	evaluators/PHAL_Constant.cpp 
+	evaluators/PHAL_ODEResid.cpp 
 	evaluators/PHAL_ThermalConductivity.cpp 
         evaluators/PHAL_HeatEqResid.cpp
         evaluators/PHAL_ComputeBasisFunctions.cpp
@@ -137,6 +142,8 @@ SET(HEADERS ${HEADERS}
 	evaluators/PHAL_Source_Def.hpp 
 	evaluators/PHAL_Constant.hpp 
 	evaluators/PHAL_Constant_Def.hpp 
+	evaluators/PHAL_ODEResid.hpp 
+	evaluators/PHAL_ODEResid_Def.hpp 
 	evaluators/PHAL_ThermalConductivity.hpp 
 	evaluators/PHAL_ThermalConductivity_Def.hpp
         evaluators/PHAL_HeatEqResid.hpp

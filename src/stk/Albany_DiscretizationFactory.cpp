@@ -18,6 +18,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Albany_DiscretizationFactory.hpp"
 #include "Albany_STKDiscretization.hpp"
+#include "Albany_Point0DSTKMeshStruct.hpp"
 #include "Albany_Line1DSTKMeshStruct.hpp"
 #include "Albany_Rect2DSTKMeshStruct.hpp"
 #include "Albany_Cube3DSTKMeshStruct.hpp"
@@ -55,6 +56,11 @@ Albany::DiscretizationFactory::create(
   if (method == "STK1D") {
     
     stkMeshStruct = Teuchos::rcp(new Albany::Line1DSTKMeshStruct(epetra_comm, discParams, neq, nstates));
+
+  }
+  else if (method == "STK0D") {
+    
+    stkMeshStruct = Teuchos::rcp(new Albany::Point0DSTKMeshStruct(epetra_comm, discParams, neq, nstates));
 
   }
   else if (method == "STK2D") {

@@ -19,6 +19,7 @@
 #include "Albany_ProblemFactory.hpp"
 #include "Albany_Helmholtz2DProblem.hpp"
 #include "Albany_HeatProblem.hpp"
+#include "Albany_ODEProblem.hpp"
 #include "Albany_ThermoElectrostaticsProblem.hpp"
 #include "QCAD_PoissonProblem.hpp"
 
@@ -52,6 +53,9 @@ Albany::ProblemFactory::create()
   }
   else if (method == "Heat 3D") {
     strategy = rcp(new Albany::HeatProblem(problemParams, paramLib, 3));
+  }
+  else if (method == "ODE") {
+    strategy = rcp(new Albany::ODEProblem(problemParams, paramLib, 0));
   }
   else if (method == "Helmholtz 2D") {
     strategy = rcp(new Albany::Helmholtz2DProblem(problemParams, paramLib));

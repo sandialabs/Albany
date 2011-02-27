@@ -64,6 +64,7 @@ Albany::STKDiscretization::STKDiscretization(
 
   if (stkMeshStruct->useElementAsTopRank) {
     nodes_per_element =  stk::mesh::get_cell_topology(*(stkMeshStruct->partVec[0]))->node_count; 
+    if (numDim==0) nodes_per_element=1;  // Needs to be fixed in STK??
 cout << "XXX Nodes per el = " << nodes_per_element << endl;
    } 
   else {  // comes from cubit
@@ -198,6 +199,7 @@ cout << "XXX Nodes per el = " << nodes_per_element << endl;
 
   int estNonzeroesPerRow;
   switch (numDim) {
+    case 0: estNonzeroesPerRow=1*neq; break;
     case 1: estNonzeroesPerRow=3*neq; break;
     case 2: estNonzeroesPerRow=9*neq; break;
     case 3: estNonzeroesPerRow=27*neq; break;
