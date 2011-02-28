@@ -35,6 +35,10 @@
 #include "Teko_InverseFactoryOperator.hpp"
 #include "Teko_StridedEpetraOperator.hpp"
 
+#ifdef ALBANY_IOSS
+  #include "Albany_STKDiscretization.hpp"
+#endif
+
 Albany::Application::Application(
 		   const Teuchos::RCP<const Epetra_Comm>& comm,
 		   const Teuchos::RCP<Teuchos::ParameterList>& params,
@@ -367,6 +371,12 @@ Albany::Application::computeGlobalResidual(
 
   f.Export(*overlapped_f, *exporter, Add);
 
+#ifdef ALBANY_IOSS
+  Albany::STKDiscretization* stkDisc =
+    dynamic_cast<Albany::STKDiscretization*>(disc.get());
+  stkDisc->setResidualField(f);
+#endif
+
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (dfm!=Teuchos::null) { 
     PHAL::Workset workset(coordinates, elNodeID);
@@ -379,7 +389,7 @@ Albany::Application::computeGlobalResidual(
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
   } 
-  //cout << f << endl;;
+  //cout << f << endl;
 }
 
 void

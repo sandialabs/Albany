@@ -343,11 +343,11 @@ Albany::STKDiscretization::getCellTopologyData() const
 }
 
 void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln,
-                                   const std::vector<std::vector<double> > states)
+					       const std::vector<std::vector<double> > states)
 {
   // Put solution as Epetra_Vector into STK Mesh
   setSolutionField(soln);
-
+ 
   if (states.size()>0) setStateField(states);
 
 #ifdef ALBANY_IOSS
@@ -385,6 +385,20 @@ Albany::STKDiscretization::setSolutionField(const Epetra_Vector& soln)
     double* sol = stk::mesh::field_data(*stkMeshStruct->solution_field, *ownednodes[i]);
     for (unsigned int j=0; j<neq; j++)
       sol[j] = soln[soln_lid + j];
+  }
+}
+
+void 
+Albany::STKDiscretization::setResidualField(const Epetra_Vector& residual) 
+{
+  // Copy residual vector into residual field, one node at a time
+  for (unsigned int i=0; i < ownednodes.size(); i++)  
+  {
+    int res_gid = getDOF(*ownednodes[i], 0);
+    int res_lid = residual.Map().LID(res_gid);
+    double* res = stk::mesh::field_data(*stkMeshStruct->residual_field, *ownednodes[i]);
+    for (unsigned int j=0; j<neq; j++)
+      res[j] = residual[res_lid + j];
   }
 }
 

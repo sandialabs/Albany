@@ -72,6 +72,7 @@ Albany::Line1DSTKMeshStruct::Line1DSTKMeshStruct(
   bulkData = new stk::mesh::BulkData(*metaData , Albany::getMpiCommFromEpetraComm(*comm), field_data_chunk_size );
   coordinates_field = & metaData->declare_field< VectorFieldType >( "coordinates" );
   solution_field = & metaData->declare_field< VectorFieldType >( "solution" );
+  residual_field = & metaData->declare_field< VectorFieldType >( "residual" );
   state_field = & metaData->declare_field< VectorFieldType >( "state" );
 
   partVec[0] = &  metaData->declare_part( "Block_1", stk::mesh::Element );
@@ -82,6 +83,7 @@ Albany::Line1DSTKMeshStruct::Line1DSTKMeshStruct(
   stk::mesh::set_cell_topology< shards::Line<2> >(*partVec[0]);
   stk::mesh::put_field( *coordinates_field , stk::mesh::Node , metaData->universal_part() , numDim );
   stk::mesh::put_field( *solution_field , stk::mesh::Node , metaData->universal_part() , neq );
+  stk::mesh::put_field( *residual_field , stk::mesh::Node , metaData->universal_part() , neq );
   if (nstates>0) stk::mesh::put_field( *state_field , stk::mesh::Element , metaData->universal_part() , nstates );
 
 
@@ -91,6 +93,7 @@ Albany::Line1DSTKMeshStruct::Line1DSTKMeshStruct(
   stk::io::put_io_part_attribute(*nsPartVec["NodeSet1"]);
   stk::io::set_field_role(*coordinates_field, Ioss::Field::ATTRIBUTE);
   stk::io::set_field_role(*solution_field, Ioss::Field::TRANSIENT);
+  stk::io::set_field_role(*residual_field, Ioss::Field::TRANSIENT);
   if (nstates>0) stk::io::set_field_role(*state_field, Ioss::Field::TRANSIENT);
 #endif
   metaData->commit();

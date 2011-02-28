@@ -94,6 +94,7 @@ namespace Albany {
 
     Teuchos::RCP<Epetra_Vector> getSolutionField() const;
 
+    void setResidualField(const Epetra_Vector& residual);
 
   private:
 
