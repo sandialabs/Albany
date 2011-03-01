@@ -152,9 +152,11 @@ SGNOXSolver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   if (noxObserver != Teuchos::null) {
     int save_moments = sgParams.get("Save Moments",-1);
     sgnoxObserver = 
-      Teuchos::rcp(new Piro::Epetra::StokhosNOXObserver(noxObserver,
-							model->get_x_map(),
-							basis, save_moments));
+      Teuchos::rcp(new Piro::Epetra::StokhosNOXObserver(
+        noxObserver, basis, model->get_x_map(), 
+        sg_nonlin_model->get_overlap_stochastic_map(),
+        sg_nonlin_model->get_x_sg_overlap_map(),
+        sg_comm, sg_nonlin_model->get_x_sg_importer(), save_moments));
   }
 
   // Create SG NOX solver
