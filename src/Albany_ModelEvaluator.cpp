@@ -484,8 +484,8 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
   if (supports_sg) {
     InArgs::sg_const_vector_t x_sg = inArgs.get_x_sg();
     if (x_sg != Teuchos::null) {
-      app->init_sg(inArgs.get_sg_expansion());
-      InArgs::sg_const_vector_t x_dot_sg = inArgs.get_x_dot_sg();
+      app->init_sg(inArgs.get_sg_expansion(), x_sg->productComm());
+      InArgs::sg_const_vector_t x_dot_sg  = inArgs.get_x_dot_sg();
       InArgs::sg_const_vector_t epetra_p_sg = inArgs.get_p_sg(0);
       Teuchos::Array<SGType> *p_sg_ptr = NULL;
       if (epetra_p_sg != Teuchos::null) {
@@ -503,7 +503,7 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
       OutArgs::sg_operator_t W_sg = outArgs.get_W_sg();
       if (W_sg != Teuchos::null) {
 	Stokhos::VectorOrthogPoly<Epetra_CrsMatrix> W_sg_crs(W_sg->basis(), 
-							     W_sg->size());
+							     W_sg->map());
 	for (int i=0; i<W_sg->size(); i++)
 	  W_sg_crs.setCoeffPtr(
 	    i,

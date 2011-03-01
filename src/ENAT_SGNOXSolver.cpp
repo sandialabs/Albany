@@ -64,42 +64,6 @@ SGNOXSolver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   if (comm->MyPID()==0) 
     std::cout << "Basis size = " << basis->size() << std::endl;
 
-  // Set up stochastic parameters
-  Epetra_LocalMap p_sg_map(numParameters, 0, *comm);
-  Teuchos::Array< Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> > sg_p;
-  int sg_p_index;
-  if (sg_method == SG_AD) {
-    sg_p.resize(1);
-    sg_p_index = 0;
-  }
-  else {
-    // When SGQuadModelEvaluator is used, there are 2 SG parameter vectors
-    sg_p.resize(2);
-    sg_p_index = 1;
-  }
-  sg_p[sg_p_index] = 
-    Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(basis, p_sg_map));
-  Teuchos::ParameterList& basisParams = sgParams.sublist("Basis");
-  for (int i=0; i<numParameters; i++) {
-    std::ostringstream ss;
-    ss << "Basis " << i;
-    Teuchos::ParameterList& bp = basisParams.sublist(ss.str());
-    Teuchos::Array<double> initial_p_vals;
-    initial_p_vals =  bp.get("Initial Expansion Coefficients",initial_p_vals);
-    if (initial_p_vals.size() == 0) {
-      sg_p[sg_p_index]->term(i,0)[i] = 0.0;
-      sg_p[sg_p_index]->term(i,1)[i] = 1.0;  // Set order 1 coeff to 1 for this RV
-    }
-    else
-      for (unsigned int j = 0; j<initial_p_vals.size(); j++)
-	(*sg_p[sg_p_index])[j][i] = initial_p_vals[j];
-  }
-
-  // Setup stochastic initial guess
-  Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_x = 
-    Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(basis, 
-						     *(model->get_x_map())));
-
   // SG Quadrature
   Teuchos::ParameterList& expParams = sgParams.sublist("Expansion");
   std::string exp_type = expParams.get("Type", "Quadrature");
@@ -128,8 +92,7 @@ SGNOXSolver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
       underlying_model =
 	Teuchos::rcp(new Piro::Epetra::NOXSolver(appParams, model));
     sg_model =
-      Teuchos::rcp(new Stokhos::SGQuadModelEvaluator(underlying_model, 
-						     basis));
+      Teuchos::rcp(new Stokhos::SGQuadModelEvaluator(underlying_model));
   }
 
   // Create stochastic parallel distribution
@@ -140,11 +103,49 @@ SGNOXSolver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 					   sgParams));
 
   // Set up SG nonlinear model
-  Teuchos::RCP<Stokhos::SGModelEvaluator> sg_nonlin_model =
+  sg_nonlin_model =
     Teuchos::rcp(new Stokhos::SGModelEvaluator(sg_model, basis, quad, expansion,
 					       sg_parallel_data, 
-					       sgSolverParams,
-					       Teuchos::null, sg_p));
+					       sgSolverParams));
+
+  // Set up stochastic parameters
+  Epetra_LocalMap p_sg_map(numParameters, 0, *comm);
+  int sg_p_index;
+  if (sg_method == SG_AD) {
+    sg_p_index = 0;
+  }
+  else {
+    // When SGQuadModelEvaluator is used, there are 2 SG parameter vectors
+    sg_p_index = 1;
+  }
+  Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_p =
+    sg_nonlin_model->create_p_sg(sg_p_index);
+  Teuchos::ParameterList& basisParams = sgParams.sublist("Basis");
+  for (int i=0; i<numParameters; i++) {
+    std::ostringstream ss;
+    ss << "Basis " << i;
+    Teuchos::ParameterList& bp = basisParams.sublist(ss.str());
+    Teuchos::Array<double> initial_p_vals;
+    initial_p_vals = bp.get("Initial Expansion Coefficients",initial_p_vals);
+    if (initial_p_vals.size() == 0) {
+      sg_p->term(i,0)[i] = 0.0;
+      sg_p->term(i,1)[i] = 1.0;  // Set order 1 coeff to 1 for this RV
+    }
+    else
+      for (unsigned int j = 0; j<initial_p_vals.size(); j++)
+	(*sg_p)[j][i] = initial_p_vals[j];
+  }
+  sg_nonlin_model->set_p_sg_init(sg_p_index, *sg_p);
+
+  // Setup stochastic initial guess
+  if (sg_method != SG_NI) {
+    Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_x = 
+      sg_nonlin_model->create_x_sg();
+    sg_x->init(0.0);
+    if (sg_x->myGID(0))
+      (*sg_x)[0] = *(model->get_x_init());
+    sg_nonlin_model->set_x_sg_init(*sg_x);
+  }
 
   // Set up Observer to call noxObserver for each vector block
   Teuchos::RCP<NOX::Epetra::Observer> sgnoxObserver;
@@ -185,7 +186,6 @@ SGNOXSolver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   }
   sg_solver = 
     Teuchos::rcp(new Stokhos::SGInverseModelEvaluator(sg_block_solver, 
-						      basis,
 						      sg_inverse_p_index, 
 						      non_sg_inverse_p_index, 
 						      sg_inverse_g_index, 
@@ -249,7 +249,7 @@ ENAT::SGNOXSolver::get_p_init(int l) const
 Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly>
 ENAT::SGNOXSolver::get_p_sg_init(int l) const
 {
-  return sg_solver->get_p_sg_init(l);
+  return sg_nonlin_model->get_p_sg_init(l);
 }
 
 EpetraExt::ModelEvaluator::InArgs 

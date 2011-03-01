@@ -257,22 +257,29 @@ Albany::Application::getStochasticExpansion()
 }
 
 void
-Albany::Application::init_sg(const Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> >& expansion)
+Albany::Application::init_sg(
+  const Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> >& expansion,
+  const Teuchos::RCP<const EpetraExt::MultiComm>& multiComm)
 {
+
   // Setup stohastic Galerkin
   sg_expansion = expansion;
   Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> > sg_basis =
     sg_expansion->getBasis();
+  
   if (sg_overlapped_x == Teuchos::null) {
+    sg_overlap_map =
+      Teuchos::rcp(new Epetra_LocalMap(sg_basis->size(), 0, 
+				       multiComm->TimeDomainComm()));
     sg_overlapped_x = 
       Teuchos::rcp(new Stokhos::VectorOrthogPoly<Epetra_Vector>(
-		     sg_basis, *overlapped_x));
+		     sg_basis, sg_overlap_map, *overlapped_x));
     sg_overlapped_xdot = 
 	Teuchos::rcp(new Stokhos::VectorOrthogPoly<Epetra_Vector>(
-		       sg_basis, *overlapped_xdot));
+		       sg_basis, sg_overlap_map, *overlapped_xdot));
     sg_overlapped_f = 
       Teuchos::rcp(new Stokhos::VectorOrthogPoly<Epetra_Vector>(
-		     sg_basis, *overlapped_f));
+		     sg_basis, sg_overlap_map, *overlapped_f));
     // Delay creation of sg_overlapped_jac until needed
   }
 }
@@ -1101,15 +1108,16 @@ Albany::Application::computeGlobalSGJacobian(
 
   // Create, resize and initialize overlapped Jacobians
   if (sg_overlapped_jac == Teuchos::null || 
-      sg_overlapped_jac->size() < sg_jac.size()) {
+      sg_overlapped_jac->size() != sg_jac.size()) {
     Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> > sg_basis =
       sg_expansion->getBasis();
+    Teuchos::RCP<Epetra_LocalMap> sg_overlap_jac_map = 
+      Teuchos::rcp(new Epetra_LocalMap(sg_jac.size(), 0, 
+				       sg_overlap_map->Comm()));
     sg_overlapped_jac = 
       Teuchos::rcp(new Stokhos::VectorOrthogPoly<Epetra_CrsMatrix>(
-		     sg_basis,  *overlapped_jac, sg_jac.size()));
+		     sg_basis, sg_overlap_jac_map, *overlapped_jac));
   }
-  else if (sg_overlapped_jac->size() > sg_jac.size())
-    sg_overlapped_jac->resize(sg_jac.size());
   for (int i=0; i<sg_overlapped_jac->size(); i++)
     (*sg_overlapped_jac)[i].PutScalar(0.0);
 
@@ -1231,9 +1239,9 @@ evaluateSGResponses(const Stokhos::VectorOrthogPoly<Epetra_Vector>* sg_xdot,
     Epetra_LocalMap local_response_map(num_responses, 0, comm);
 
     // Create Epetra_Vector for response function
-    Stokhos::VectorOrthogPoly<Epetra_Vector> local_sg_g(basis,
-							local_response_map);
-
+    Stokhos::VectorOrthogPoly<Epetra_Vector> local_sg_g(
+      basis, sg_overlap_map, local_response_map);
+    
     // Evaluate response function
     responses[i]->evaluateSGResponses(sg_xdot, sg_x, p, sg_p, sg_p_vals,
 				      local_sg_g);

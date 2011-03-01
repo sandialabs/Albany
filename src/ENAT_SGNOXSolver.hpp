@@ -31,6 +31,7 @@
 #include "Albany_Utils.hpp"
 #include "Piro_Epetra_StokhosNOXObserver.hpp"
 
+#include "Stokhos_SGModelEvaluator.hpp"
 #include "Stokhos_CompletePolynomialBasis.hpp"
 #include "Stokhos_Quadrature.hpp"
 
@@ -83,6 +84,8 @@ namespace ENAT {
     getBasis() const { return basis; }
     Teuchos::RCP<const Stokhos::Quadrature<int,double> >
     getQuad() const { return quad; }
+    Teuchos::RCP<Stokhos::SGModelEvaluator>
+    get_sg_model() const { return sg_nonlin_model; }
     
   private:
     /** \brief . */
@@ -115,6 +118,7 @@ namespace ENAT {
 
     //These are set in the constructor and used in evalModel
     Teuchos::RCP<EpetraExt::ModelEvaluator> sg_solver;
+    Teuchos::RCP<Stokhos::SGModelEvaluator> sg_nonlin_model;
     Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> > basis;
     Teuchos::RCP<const Stokhos::Quadrature<int,double> > quad;
   };

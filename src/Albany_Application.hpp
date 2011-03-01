@@ -52,6 +52,7 @@
 #include "Stokhos_OrthogPolyExpansion.hpp"
 #include "Stokhos_VectorOrthogPoly.hpp"
 #include "Stokhos_VectorOrthogPolyTraitsEpetra.hpp"
+#include "EpetraExt_MultiComm.h"
 
 #include "Teko_InverseLibrary.hpp"
 
@@ -102,7 +103,9 @@ namespace Albany {
     getStochasticExpansion();
 
     //! Intialize stochastic Galerkin method
-    void init_sg(const Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> >& expansion);
+    void init_sg(
+      const Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> >& expansion,
+      const Teuchos::RCP<const EpetraExt::MultiComm>& multiComm);
 
     //! Compute global residual
     /*!
@@ -314,6 +317,9 @@ namespace Albany {
 
     //! Stochastic Galerkin expansion
     Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> > sg_expansion;
+
+    //! Overlap stochastic map
+    Teuchos::RCP<const Epetra_BlockMap> sg_overlap_map;
 
     //! SG overlapped solution vectors
     Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_Vector> >  sg_overlapped_x;

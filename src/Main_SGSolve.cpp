@@ -139,8 +139,7 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly> p_sg = 
       App_sg->get_p_sg_init(sg_p_index);
     Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> g_sg =
-      Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(
-		     App_sg->getBasis(), *(App_sg->get_g_sg_map(0))));
+      App_sg->get_sg_model()->create_g_sg(0);
 
     EpetraExt::ModelEvaluator::InArgs params_in_sg = App_sg->createInArgs();
     EpetraExt::ModelEvaluator::OutArgs responses_out_sg = 
