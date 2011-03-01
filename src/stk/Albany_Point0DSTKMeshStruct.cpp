@@ -67,7 +67,7 @@ Albany::Point0DSTKMeshStruct::Point0DSTKMeshStruct(
 
   partVec[0] = &  metaData->declare_part( "Block_1", stk::mesh::Element );
 
-  stk::mesh::set_cell_topology< shards::Node >(*partVec[0]);
+  stk::mesh::set_cell_topology< shards::Particle >(*partVec[0]);
   stk::mesh::put_field( *coordinates_field , stk::mesh::Node , metaData->universal_part() , numDim );
   stk::mesh::put_field( *solution_field , stk::mesh::Node , metaData->universal_part() , neq );
   stk::mesh::put_field( *residual_field , stk::mesh::Node , metaData->universal_part() , neq );

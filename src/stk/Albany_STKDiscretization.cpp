@@ -64,8 +64,6 @@ Albany::STKDiscretization::STKDiscretization(
 
   if (stkMeshStruct->useElementAsTopRank) {
     nodes_per_element =  stk::mesh::get_cell_topology(*(stkMeshStruct->partVec[0]))->node_count; 
-    if (numDim==0) nodes_per_element=1;  // Needs to be fixed in STK??
-cout << "XXX Nodes per el = " << nodes_per_element << endl;
    } 
   else {  // comes from cubit
     if (numDim==1)  nodes_per_element = 2;   //can't get topology from Cubit
