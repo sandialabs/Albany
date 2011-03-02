@@ -256,6 +256,93 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 }
 
 // **********************************************************************
+// Specialization: Multi-point Residual
+// **********************************************************************
+
+template<typename Traits>
+Dirichlet<PHAL::AlbanyTraits::MPResidual, Traits>::
+Dirichlet(Teuchos::ParameterList& p) :
+  DirichletBase<PHAL::AlbanyTraits::MPResidual, Traits>(p)
+{
+}
+// **********************************************************************
+template<typename Traits>
+void Dirichlet<PHAL::AlbanyTraits::MPResidual, Traits>::
+evaluateFields(typename Traits::EvalData dirichletWorkset)
+{
+  Teuchos::RCP< Stokhos::ProductContainer<Epetra_Vector> > f = 
+    dirichletWorkset.mp_f;
+  Teuchos::RCP< const Stokhos::ProductContainer<Epetra_Vector> > x = 
+    dirichletWorkset.mp_x;
+  const std::vector<int>& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+
+  int nblock = x->size();
+  int gunk, lunk; // global and local indicies into unknown vector
+  for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
+      gunk = nsNodes[inode] * this->neq + this->offset;
+      lunk = (*f)[0].Map().LID(gunk);
+      for (int block=0; block<nblock; block++)
+	(*f)[block][lunk] = ((*x)[block][lunk] - this->value.coeff(block));
+  }
+}
+
+// **********************************************************************
+// Specialization: Multi-point Jacobian
+// **********************************************************************
+template<typename Traits>
+Dirichlet<PHAL::AlbanyTraits::MPJacobian, Traits>::
+Dirichlet(Teuchos::ParameterList& p) :
+  DirichletBase<PHAL::AlbanyTraits::MPJacobian, Traits>(p)
+{
+}
+
+// **********************************************************************
+template<typename Traits>
+void Dirichlet<PHAL::AlbanyTraits::MPJacobian, Traits>::
+evaluateFields(typename Traits::EvalData dirichletWorkset)
+{
+
+  Teuchos::RCP< Stokhos::ProductContainer<Epetra_Vector> > f = 
+    dirichletWorkset.mp_f;
+  Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix> > jac = 
+    dirichletWorkset.mp_Jac;
+  Teuchos::RCP<const Stokhos::ProductContainer<Epetra_Vector> > x = 
+    dirichletWorkset.mp_x;
+  const RealType j_coeff = dirichletWorkset.j_coeff;
+  const std::vector<int>& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+
+  const Epetra_Map& map = (*jac)[0].RowMap();
+
+  RealType* matrixEntries;
+  int*    matrixIndices;
+  int     numEntries;
+  int nblock = 0;
+  if (f != Teuchos::null)
+    nblock = f->size();
+  int nblock_jac = jac->size();
+  RealType diag=j_coeff;
+  bool fillResid = (f != Teuchos::null);
+
+  for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
+    const unsigned nodeid = nsNodes[inode];
+      const int gunk = nodeid * this->neq + this->offset;
+      int lunk = map.LID(gunk);
+      for (int block=0; block<nblock_jac; block++) {
+	(*jac)[block].ExtractMyRowView(lunk, numEntries, matrixEntries, 
+				       matrixIndices);
+	for (int i=0; i<numEntries; i++) 
+	  matrixEntries[i]=0;
+	(*jac)[block].ReplaceMyValues(lunk, 1, &diag, &lunk);
+      }
+      if (fillResid) {
+	for (int block=0; block<nblock; block++)
+	  (*f)[block][lunk] = 
+	    (*x)[block][lunk] - this->value.val().coeff(block);
+      }
+  }
+}
+
+// **********************************************************************
 // Simple evaluator to aggregate all Dirichlet BCs into one "field"
 // **********************************************************************
 

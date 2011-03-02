@@ -87,7 +87,15 @@ int main(int argc, char *argv[]) {
       Stokhos::BasisFactory<int,double>::create(sgParams);
 
     // Create multi-level comm and spatial comm
-    int num_stoch_blocks = basis->size();
+    int num_stoch_blocks;
+    std::string sg_type = sgParams.get("SG Method", "AD");
+    if (sg_type == "Multi-point Non-intrusive") {
+      Teuchos::RCP<const Stokhos::Quadrature<int,double> > quad =
+	Stokhos::QuadratureFactory<int,double>::create(sgParams);
+      num_stoch_blocks = quad->size();
+    }
+    else
+      num_stoch_blocks = basis->size();
     int num_spatial_procs = 
       problemParams.get("Number of Spatial Processors", -1);
     Teuchos::RCP<Epetra_Comm> globalComm = 
@@ -131,9 +139,8 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<ENAT::SGNOXSolver> App_sg = 
       Teuchos::rcp_dynamic_cast<ENAT::SGNOXSolver>(sg_slvrfctry.create(app_comm, sg_comm, g2));
     Teuchos::ParameterList& params = sg_slvrfctry.getParameters();
-    std::string sg_type = sgParams.get("SG Method", "AD");
     int sg_p_index = 1;
-    if (sg_type == "AD")
+    if (sg_type == "AD" || sg_type == "Multi-point Non-intrusive")
       sg_p_index = 0;
 
     Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly> p_sg = 
@@ -150,10 +157,10 @@ int main(int argc, char *argv[]) {
     responses_out_sg.set_g_sg(0,g_sg);
     App_sg->evalModel(params_in_sg, responses_out_sg);
 
-     *out << "Finished eval of sg model: Params, Responses " 
-          << std::setprecision(12) << endl;
-     p_sg->print(*out << "\nParameters!\n");
-     g_sg->print(*out << "\nResponses!\n");
+     // *out << "Finished eval of sg model: Params, Responses " 
+     //      << std::setprecision(12) << endl;
+     // p_sg->print(*out << "\nParameters!\n");
+     // g_sg->print(*out << "\nResponses!\n");
 
     totalTimer.~TimeMonitor();
     Teuchos::TimeMonitor::summarize(std::cout,false,true,false);

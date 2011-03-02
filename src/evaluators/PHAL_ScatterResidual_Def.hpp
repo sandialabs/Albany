@@ -362,5 +362,118 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 }
+
+// **********************************************************************
+// Specialization: Multi-point Residual
+// **********************************************************************
+
+template<typename Traits>
+ScatterResidual<PHAL::AlbanyTraits::MPResidual, Traits>::
+ScatterResidual(const Teuchos::ParameterList& p)
+  : ScatterResidualBase<PHAL::AlbanyTraits::MPResidual,Traits>(p),
+  neq(ScatterResidualBase<PHAL::AlbanyTraits::MPResidual,Traits>::neqBase),
+  numFields(ScatterResidualBase<PHAL::AlbanyTraits::MPResidual,Traits>::numFieldsBase)
+{
+}
+
+// **********************************************************************
+template<typename Traits>
+void ScatterResidual<PHAL::AlbanyTraits::MPResidual, Traits>::
+evaluateFields(typename Traits::EvalData workset)
+{
+  Teuchos::RCP< Stokhos::ProductContainer<Epetra_Vector> > f = workset.mp_f;
+  ScalarT *valptr;
+
+  int nblock = f->size();
+  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+    const Teuchos::ArrayRCP<int>& nodeID  = workset.elNodeID[workset.firstCell+cell];
+
+    for (std::size_t node = 0; node < this->numNodes; ++node) {
+      int firstDOF = nodeID[node] * neq + this->offset;
+
+      for (std::size_t eq = 0; eq < numFields; eq++) {
+        if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+        else                   valptr = &(this->val[eq])(cell,node);
+	for (int block=0; block<nblock; block++)
+	  (*f)[block][firstDOF + eq] += valptr->coeff(block);
+      }
+    }
+  }
+}
+
+// **********************************************************************
+// Specialization: Multi-point Jacobian
+// **********************************************************************
+
+template<typename Traits>
+ScatterResidual<PHAL::AlbanyTraits::MPJacobian, Traits>::
+ScatterResidual(const Teuchos::ParameterList& p)
+  : ScatterResidualBase<PHAL::AlbanyTraits::MPJacobian,Traits>(p),
+  neq(ScatterResidualBase<PHAL::AlbanyTraits::MPJacobian,Traits>::neqBase),
+  numFields(ScatterResidualBase<PHAL::AlbanyTraits::MPJacobian,Traits>::numFieldsBase)
+{
+}
+
+// **********************************************************************
+template<typename Traits>
+void ScatterResidual<PHAL::AlbanyTraits::MPJacobian, Traits>::
+evaluateFields(typename Traits::EvalData workset)
+{
+  Teuchos::RCP< Stokhos::ProductContainer<Epetra_Vector> > f = workset.mp_f;
+  Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix> > Jac = 
+    workset.mp_Jac;
+  ScalarT *valptr;
+
+  int row, lcol, firstcol, col;
+  int nblock = 0;
+  if (f != Teuchos::null)
+    nblock = f->size();
+  int nblock_jac = Jac->size();
+  double c; // use double since it goes into CrsMatrix
+
+  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+    const Teuchos::ArrayRCP<int>& nodeID  = workset.elNodeID[workset.firstCell+cell];
+
+    for (std::size_t node = 0; node < this->numNodes; ++node) {
+      int firstDOF = nodeID[node] * neq + this->offset;
+
+      for (std::size_t eq = 0; eq < numFields; eq++) {
+        if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+        else                   valptr = &(this->val[eq])(cell,node);
+
+        row = firstDOF + eq;
+
+        if (f != Teuchos::null) {
+	  for (int block=0; block<nblock; block++)
+	    (*f)[block].SumIntoMyValue(row, 0, valptr->val().coeff(block));
+        }
+
+        // Check derivative array is nonzero
+        if (valptr->hasFastAccess()) {
+
+          // Loop over nodes in element
+          for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
+	    firstcol = nodeID[node_col] * neq;
+
+            // Loop over equations per node
+            for (unsigned int eq_col=0; eq_col<numFields; eq_col++) {
+              lcol = neq * node_col + eq_col + this->offset;
+
+              // Global column
+              col =  firstcol + eq_col + this->offset;
+
+              // Sum Jacobian
+	      for (int block=0; block<nblock_jac; block++) {
+		c = valptr->fastAccessDx(lcol).coeff(block);
+		(*Jac)[block].SumIntoMyValues(row, 1, &c, &col);
+	      }
+            } // column equations
+          } // column nodes
+        } // has fast access
+      }
+    }
+  }
+}
+
 }
 

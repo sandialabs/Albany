@@ -137,6 +137,28 @@ public:
 };
 
 // **************************************************************
+// Multi-point Residual 
+// **************************************************************
+template<typename Traits>
+class Dirichlet<PHAL::AlbanyTraits::MPResidual,Traits>
+   : public DirichletBase<PHAL::AlbanyTraits::MPResidual, Traits> {
+public:
+  Dirichlet(Teuchos::ParameterList& p);
+  void evaluateFields(typename Traits::EvalData d);
+};
+
+// **************************************************************
+// Multi-point Jacobian
+// **************************************************************
+template<typename Traits>
+class Dirichlet<PHAL::AlbanyTraits::MPJacobian,Traits>
+   : public DirichletBase<PHAL::AlbanyTraits::MPJacobian, Traits> {
+public:
+  Dirichlet(Teuchos::ParameterList& p);
+  void evaluateFields(typename Traits::EvalData d);
+};
+
+// **************************************************************
 // **************************************************************
 // Evaluator to aggregate all Dirichlet BCs into one "field"
 // **************************************************************

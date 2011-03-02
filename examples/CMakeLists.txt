@@ -75,6 +75,7 @@ ENDIF()
 
 add_subdirectory(SGBratu1D)
 add_subdirectory(SGQuad2D)
+add_subdirectory(MPNIQuad2D)
 add_subdirectory(TransientHeat1D)
 add_subdirectory(TransientHeat2D)
 add_subdirectory(TekoPrec)

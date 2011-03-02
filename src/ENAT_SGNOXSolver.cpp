@@ -22,6 +22,9 @@
 #include "Sacado_PCE_OrthogPoly.hpp"
 #include "Teuchos_XMLParameterListHelpers.hpp"
 
+#include "NOX_Epetra_LinearSystem_Stratimikos.H"
+#include "NOX_Epetra_LinearSystem_MPBD.hpp"
+
 ENAT::SGNOXSolver::
 SGNOXSolver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 	    const Teuchos::RCP<EpetraExt::ModelEvaluator>& model,
@@ -44,6 +47,8 @@ SGNOXSolver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
     sg_method = SG_GLOBAL;
   else if (sg_type == "Non-intrusive")
     sg_method = SG_NI;
+  else if (sg_type == "Multi-point Non-intrusive")
+    sg_method = SG_MPNI;
   else
     TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		       std::endl << "Error!  ENAT_SGNOXSolver():  " <<
@@ -69,20 +74,137 @@ SGNOXSolver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   std::string exp_type = expParams.get("Type", "Quadrature");
   if (exp_type == "Quadrature" || 
       sg_method == SG_GLOBAL ||
-      sg_method == SG_NI) {
+      sg_method == SG_NI ||
+      sg_method == SG_MPNI) {
     quad = Stokhos::QuadratureFactory<int,double>::create(sgParams);
+    if (comm->MyPID()==0) 
+      std::cout << "Quadrature size = " << quad->size() << std::endl;
   }
 
   // Create expansion
-  Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> > expansion = 
-    Stokhos::ExpansionFactory<int,double>::create(sgParams);
-  Teuchos::RCP<const Stokhos::Sparse3Tensor<int,double> > Cijk = 
-    sgParams.get< Teuchos::RCP<const Stokhos::Sparse3Tensor<int,double> > >("Triple Product Tensor");
+  Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> > expansion;
+  Teuchos::RCP<const Stokhos::Sparse3Tensor<int,double> > Cijk;
+  if (sg_method != SG_NI && sg_method != SG_MPNI) {
+    expansion = 
+      Stokhos::ExpansionFactory<int,double>::create(sgParams);
+    Cijk = 
+      sgParams.get< Teuchos::RCP<const Stokhos::Sparse3Tensor<int,double> > >("Triple Product Tensor");
+  }
+
+   // Create stochastic parallel distribution
+  Teuchos::RCP<const EpetraExt::MultiComm> sg_comm = 
+    Teuchos::rcp_dynamic_cast<const EpetraExt::MultiComm>(comm, true);
+  Teuchos::RCP<Stokhos::ParallelData> sg_parallel_data =
+    Teuchos::rcp(new Stokhos::ParallelData(basis, Cijk, sg_comm,
+					   sgParams));
     
   // Set up stochastic Galerkin model
   Teuchos::RCP<EpetraExt::ModelEvaluator> sg_model;
   if (sg_method == SG_AD) {
     sg_model = model;
+  }
+  else if (sg_method == SG_MPNI) {
+    int num_mp = quad->size();
+    Teuchos::RCP<const Epetra_Comm> mp_comm = 
+      Stokhos::getStochasticComm(sg_comm);
+    Teuchos::RCP<const Epetra_Map> mp_block_map = 
+      Teuchos::rcp(new Epetra_Map(num_mp, 0, *mp_comm));
+    Teuchos::RCP<EpetraExt::ModelEvaluator> mp_model = model;
+
+    // Turn mp_model into an MP-nonlinear problem
+    Teuchos::RCP<Teuchos::ParameterList> mpParams = 
+    Teuchos::rcp(&(sgParams.sublist("MP Solver Parameters")),false);
+    Teuchos::RCP<Stokhos::MPModelEvaluator> mp_nonlinear_model =
+      Teuchos::rcp(new Stokhos::MPModelEvaluator(mp_model, sg_comm,
+						 mp_block_map, mpParams));
+
+    bool use_mpbd_solver = mpParams->get("Use MPBD Solver", false);
+    Teuchos::RCP<NOX::Epetra::LinearSystem> linsys;
+    Teuchos::RCP<NOX::Epetra::ModelEvaluatorInterface> nox_interface;
+    if (use_mpbd_solver) {
+      nox_interface = 
+	Teuchos::rcp(new NOX::Epetra::ModelEvaluatorInterface(mp_nonlinear_model));
+      Teuchos::RCP<Epetra_Operator> A = 
+	mp_nonlinear_model->create_W();
+      Teuchos::RCP<Epetra_Operator> M = 
+	mp_nonlinear_model->create_WPrec()->PrecOp;
+      Teuchos::RCP<NOX::Epetra::Interface::Required> iReq = 
+	nox_interface;
+      Teuchos::RCP<NOX::Epetra::Interface::Jacobian> iJac = 
+	nox_interface;
+      Teuchos::RCP<NOX::Epetra::Interface::Preconditioner> iPrec = 
+	nox_interface;
+
+      Teuchos::ParameterList& noxParams = appParams->sublist("NOX");
+      Teuchos::ParameterList& printParams = noxParams.sublist("Printing");
+      Teuchos::ParameterList& newtonParams = 
+	noxParams.sublist("Direction").sublist("Newton");
+      Teuchos::ParameterList& noxstratlsParams = 
+	newtonParams.sublist("Stratimikos Linear Solver");
+
+      Teuchos::RCP<const Teuchos::ParameterList> ortho_params = 
+	Teuchos::rcp(new Teuchos::ParameterList);
+      noxstratlsParams.sublist("Stratimikos").sublist("Linear Solver Types").sublist("Belos").sublist("Solver Types").sublist("GCRODR").set("Orthogonalization Parameters", ortho_params);
+
+
+      Teuchos::ParameterList& mpbdParams = 
+	mpParams->sublist("MPBD Linear Solver");
+      mpbdParams.sublist("Deterministic Solver Parameters") = 
+	noxstratlsParams;
+      Teuchos::RCP<Epetra_Operator> inner_A = model->create_W();
+      Teuchos::RCP<NOX::Epetra::ModelEvaluatorInterface> inner_nox_interface = 
+	Teuchos::rcp(new NOX::Epetra::ModelEvaluatorInterface(model));
+      Teuchos::RCP<NOX::Epetra::Interface::Required> inner_iReq = 
+	inner_nox_interface;
+      Teuchos::RCP<NOX::Epetra::Interface::Jacobian> inner_iJac = 
+	inner_nox_interface;
+      Teuchos::RCP<const Epetra_Vector> inner_u = model->get_x_init();
+      Teuchos::RCP<NOX::Epetra::LinearSystem> inner_linsys = 
+	Teuchos::rcp(new NOX::Epetra::LinearSystemStratimikos(
+		       printParams, 
+		       noxstratlsParams,
+		       inner_iJac, inner_A, *inner_u));
+      linsys = 
+	Teuchos::rcp(new NOX::Epetra::LinearSystemMPBD(printParams, 
+						       mpbdParams,
+						       inner_linsys,
+						       iReq, iJac, A,
+						       model->get_x_map()));
+    }
+
+    // Create solver to map p -> g
+    Teuchos::RCP<Piro::Epetra::NOXSolver> mp_solver =
+      Teuchos::rcp(new Piro::Epetra::NOXSolver(appParams, mp_nonlinear_model,
+					       Teuchos::null, nox_interface,
+					       linsys));
+
+    // Create MP inverse model evaluator to map p_mp -> g_mp
+    Teuchos::Array<int> non_mp_inverse_p_index = 
+      mp_nonlinear_model->get_non_p_mp_indices();
+    Teuchos::Array<int> mp_inverse_p_index = 
+      mp_nonlinear_model->get_p_mp_indices();
+    Teuchos::Array<int> non_mp_inverse_g_index = 
+      mp_nonlinear_model->get_non_g_mp_indices();
+    Teuchos::Array<int> mp_inverse_g_index = 
+      mp_nonlinear_model->get_g_mp_indices();
+    Teuchos::Array< Teuchos::RCP<const Epetra_Map> > base_p_maps = 
+      mp_nonlinear_model->get_p_mp_base_maps();
+    Teuchos::Array< Teuchos::RCP<const Epetra_Map> > base_g_maps = 
+      mp_nonlinear_model->get_g_mp_base_maps();
+    Teuchos::RCP<EpetraExt::ModelEvaluator> mp_inverse_solver =
+      Teuchos::rcp(new Stokhos::MPInverseModelEvaluator(mp_solver,
+							mp_inverse_p_index, 
+							non_mp_inverse_p_index,
+							mp_inverse_g_index, 
+							non_mp_inverse_g_index,
+							base_p_maps, 
+							base_g_maps));
+
+    // Create MP-based SG Quadrature model evaluator to calculate g_sg
+    sg_model =
+      Teuchos::rcp(new Stokhos::SGQuadMPModelEvaluator(mp_inverse_solver, 
+						       sg_comm, 
+						       mp_block_map));
   }
   else {
     Teuchos::RCP<EpetraExt::ModelEvaluator> underlying_model;
@@ -95,13 +217,6 @@ SGNOXSolver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
       Teuchos::rcp(new Stokhos::SGQuadModelEvaluator(underlying_model));
   }
 
-  // Create stochastic parallel distribution
-  Teuchos::RCP<const EpetraExt::MultiComm> sg_comm = 
-    Teuchos::rcp_dynamic_cast<const EpetraExt::MultiComm>(comm, true);
-  Teuchos::RCP<Stokhos::ParallelData> sg_parallel_data =
-    Teuchos::rcp(new Stokhos::ParallelData(basis, Cijk, sg_comm,
-					   sgParams));
-
   // Set up SG nonlinear model
   sg_nonlin_model =
     Teuchos::rcp(new Stokhos::SGModelEvaluator(sg_model, basis, quad, expansion,
@@ -111,7 +226,7 @@ SGNOXSolver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   // Set up stochastic parameters
   Epetra_LocalMap p_sg_map(numParameters, 0, *comm);
   int sg_p_index;
-  if (sg_method == SG_AD) {
+  if (sg_method == SG_AD || sg_method == SG_MPNI) {
     sg_p_index = 0;
   }
   else {
@@ -137,8 +252,16 @@ SGNOXSolver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   }
   sg_nonlin_model->set_p_sg_init(sg_p_index, *sg_p);
 
+  // Set other sg parameter vector when using quadrature
+  if (sg_method != SG_AD && sg_method != SG_MPNI) {
+    Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_p0 =
+    sg_nonlin_model->create_p_sg(0);
+    (*sg_p0)[0] = *(model->get_p_init(0));
+    sg_nonlin_model->set_p_sg_init(0, *sg_p0);
+  }
+
   // Setup stochastic initial guess
-  if (sg_method != SG_NI) {
+  if (sg_method != SG_NI && sg_method != SG_MPNI) {
     Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_x = 
       sg_nonlin_model->create_x_sg();
     sg_x->init(0.0);
@@ -149,19 +272,20 @@ SGNOXSolver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 
   // Set up Observer to call noxObserver for each vector block
   Teuchos::RCP<NOX::Epetra::Observer> sgnoxObserver;
-  if (noxObserver != Teuchos::null) {
+  if (noxObserver != Teuchos::null && sg_method != SG_NI && sg_method != SG_MPNI) {
     int save_moments = sgParams.get("Save Moments",-1);
     sgnoxObserver = 
       Teuchos::rcp(new Piro::Epetra::StokhosNOXObserver(
-        noxObserver, basis, model->get_x_map(), 
+        noxObserver, basis, 
         sg_nonlin_model->get_overlap_stochastic_map(),
+	model->get_x_map(), 
         sg_nonlin_model->get_x_sg_overlap_map(),
         sg_comm, sg_nonlin_model->get_x_sg_importer(), save_moments));
   }
 
   // Create SG NOX solver
   Teuchos::RCP<EpetraExt::ModelEvaluator> sg_block_solver;
-  if (sg_method != SG_NI) {
+  if (sg_method != SG_NI && sg_method != SG_MPNI) {
     // Will find preconditioner for Matrix-Free method
     sg_block_solver = Teuchos::rcp(new Piro::Epetra::NOXSolver(appParams, 
 							       sg_nonlin_model, 
@@ -182,7 +306,7 @@ SGNOXSolver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   Teuchos::Array< Teuchos::RCP<const Epetra_Map> > base_g_maps = 
     sg_nonlin_model->get_g_sg_base_maps();
   // Add sg_u response function supplied by Piro::Epetra::NOXSolver
-  if (sg_method != SG_NI) {
+  if (sg_method != SG_NI && sg_method != SG_MPNI) {
     sg_inverse_g_index.push_back(sg_inverse_g_index[sg_inverse_g_index.size()-1]+1);
     base_g_maps.push_back(model->get_x_map());
   }
@@ -280,6 +404,7 @@ ENAT::SGNOXSolver::getValidSGParameters() const
      rcp(new Teuchos::ParameterList("ValidSGParams"));;
   validPL->sublist("SG Parameters", false, "");
   validPL->sublist("SG Solver Parameters", false, "");
+  validPL->sublist("MP Solver Parameters", false, "");
   validPL->sublist("Basis", false, "");
   validPL->sublist("Expansion", false, "");
   validPL->sublist("Quadrature", false, "");

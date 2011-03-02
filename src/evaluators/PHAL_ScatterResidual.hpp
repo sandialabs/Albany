@@ -150,6 +150,36 @@ private:
 };
 
 // **************************************************************
+// Multi-point Residual 
+// **************************************************************
+template<typename Traits>
+class ScatterResidual<PHAL::AlbanyTraits::MPResidual,Traits>
+  : public ScatterResidualBase<PHAL::AlbanyTraits::MPResidual, Traits>  {
+public:
+  ScatterResidual(const Teuchos::ParameterList& p);
+  void evaluateFields(typename Traits::EvalData d);
+private:
+  typedef typename PHAL::AlbanyTraits::MPResidual::ScalarT ScalarT;
+  const std::size_t neq;
+  const std::size_t numFields;
+};
+
+// **************************************************************
+// Multi-point Jacobian
+// **************************************************************
+template<typename Traits>
+class ScatterResidual<PHAL::AlbanyTraits::MPJacobian,Traits>
+  : public ScatterResidualBase<PHAL::AlbanyTraits::MPJacobian, Traits>  {
+public:
+  ScatterResidual(const Teuchos::ParameterList& p);
+  void evaluateFields(typename Traits::EvalData d);
+private:
+  typedef typename PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
+  const std::size_t neq;
+  const std::size_t numFields;
+};
+
+// **************************************************************
 }
 
 #endif

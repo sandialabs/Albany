@@ -55,6 +55,8 @@ struct Workset {
   Teuchos::RCP<const Epetra_MultiVector> Vp;
   Teuchos::RCP<const Stokhos::VectorOrthogPoly<Epetra_Vector> > sg_x;
   Teuchos::RCP<const Stokhos::VectorOrthogPoly<Epetra_Vector> > sg_xdot;
+  Teuchos::RCP<const Stokhos::ProductContainer<Epetra_Vector> > mp_x;
+  Teuchos::RCP<const Stokhos::ProductContainer<Epetra_Vector> > mp_xdot;
 
   Teuchos::RCP<Epetra_Vector> f;
   Teuchos::RCP<Epetra_CrsMatrix> Jac;
@@ -62,6 +64,8 @@ struct Workset {
   Teuchos::RCP<Epetra_MultiVector> fp;
   Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_Vector> > sg_f;
   Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_CrsMatrix> > sg_Jac;
+  Teuchos::RCP< Stokhos::ProductContainer<Epetra_Vector> > mp_f;
+  Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix> > mp_Jac;
 
   Teuchos::RCP<const Albany::NodeSetList> nodeSets;
 

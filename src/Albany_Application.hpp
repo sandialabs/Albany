@@ -239,6 +239,46 @@ namespace Albany {
 			const Teuchos::Array<SGType>* sg_p_vals,
 			Stokhos::VectorOrthogPoly<Epetra_Vector>& sg_g);
 
+    //! Compute global residual for stochastic Galerkin problem
+    /*!
+     * Set xdot to NULL for steady-state problems
+     */
+    void computeGlobalMPResidual(
+			const double current_time,
+		        const Stokhos::ProductContainer<Epetra_Vector>* mp_xdot,
+			const Stokhos::ProductContainer<Epetra_Vector>& mp_x,
+			const ParamVec* p,
+			const ParamVec* mp_p,
+			const Teuchos::Array<MPType>* mp_p_vals,
+			Stokhos::ProductContainer<Epetra_Vector>& mp_f);
+
+    //! Compute global Jacobian for stochastic Galerkin problem
+    /*!
+     * Set xdot to NULL for steady-state problems
+     */
+    void computeGlobalMPJacobian(
+			double alpha, double beta,
+			const double current_time,
+			const Stokhos::ProductContainer<Epetra_Vector>* mp_xdot,
+			const Stokhos::ProductContainer<Epetra_Vector>& mp_x,
+			const ParamVec* p,
+			const ParamVec* mp_p,
+			const Teuchos::Array<MPType>* mp_p_vals,
+			Stokhos::ProductContainer<Epetra_Vector>* mp_f,
+			Stokhos::ProductContainer<Epetra_CrsMatrix>& mp_jac);
+
+    //! Evaluate stochastic Galerkin response functions
+    /*!
+     * Set xdot to NULL for steady-state problems
+     */
+    void 
+    evaluateMPResponses(const Stokhos::ProductContainer<Epetra_Vector>* mp_xdot,
+			const Stokhos::ProductContainer<Epetra_Vector>& mp_x,
+			ParamVec* p,
+			ParamVec* mp_p,
+			const Teuchos::Array<MPType>* mp_p_vals,
+			Stokhos::ProductContainer<Epetra_Vector>& mp_g);
+
     //! Provide access to shapeParameters -- no AD
     PHAL::AlbanyTraits::Residual::ScalarT& getValue(const std::string &n);
 
@@ -333,6 +373,18 @@ namespace Albany {
     //! Overlapped Jacobian matrixs
     Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_CrsMatrix> > sg_overlapped_jac;
 
+    //! MP overlapped solution vectors
+    Teuchos::RCP< Stokhos::ProductContainer<Epetra_Vector> >  mp_overlapped_x;
+
+    //! MP overlapped time derivative vectors
+    Teuchos::RCP< Stokhos::ProductContainer<Epetra_Vector> > mp_overlapped_xdot;
+
+    //! MP overlapped residual vectors
+    Teuchos::RCP< Stokhos::ProductContainer<Epetra_Vector> > mp_overlapped_f;
+
+    //! Overlapped Jacobian matrixs
+    Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix> > mp_overlapped_jac;
+
     //! Data for Physics-Based Preconditioners
     bool physicsBasedPreconditioner;
     Teuchos::RCP<Teuchos::ParameterList> tekoParams;
@@ -364,6 +416,8 @@ namespace Albany {
     bool setupCalledTangent;
     bool setupCalledSGResidual;
     bool setupCalledSGJacobian;
+    bool setupCalledMPResidual;
+    bool setupCalledMPJacobian;
     mutable int phxGraphVisDetail;
 
     StateManager stateMgr;

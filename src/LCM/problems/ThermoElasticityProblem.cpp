@@ -650,6 +650,10 @@ Albany::ThermoElasticityProblem::constructEvaluators(
    fm->requireField<AlbanyTraits::SGResidual>(sgres_tag);
    PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag("Scatter", dummy);
    fm->requireField<AlbanyTraits::SGJacobian>(sgjac_tag);
+   PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag("Scatter", dummy);
+   fm->requireField<AlbanyTraits::MPResidual>(mpres_tag);
+   PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag("Scatter", dummy);
+   fm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag);
 
    PHX::Tag<AlbanyTraits::Residual::ScalarT> res_tag2(fieldName, dummy);
    fm->requireField<AlbanyTraits::Residual>(res_tag2);
@@ -661,6 +665,10 @@ Albany::ThermoElasticityProblem::constructEvaluators(
    fm->requireField<AlbanyTraits::SGResidual>(sgres_tag2);
    PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag2(fieldName, dummy);
    fm->requireField<AlbanyTraits::SGJacobian>(sgjac_tag2);
+   PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag2(fieldName, dummy);
+   fm->requireField<AlbanyTraits::MPResidual>(mpres_tag2);
+   PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag2(fieldName, dummy);
+   fm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag2);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

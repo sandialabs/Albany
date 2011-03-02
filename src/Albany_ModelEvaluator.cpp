@@ -81,8 +81,10 @@ Albany::ModelEvaluator::ModelEvaluator(
     }
 
     // Create storage for SG parameter values
-    if (supports_sg)
+    if (supports_sg) {
       p_sg_vals.resize(sg_param_names->size());
+      p_mp_vals.resize(sg_param_names->size());
+    }
   }
 
   supports_g = (app->getResponseMap() != Teuchos::null);
@@ -140,6 +142,23 @@ Albany::ModelEvaluator::get_p_sg_map(int l) const
 }
 
 Teuchos::RCP<const Epetra_Map>
+Albany::ModelEvaluator::get_p_mp_map(int l) const
+{
+  TEST_FOR_EXCEPTION(supports_sg == false, 
+                     Teuchos::Exceptions::InvalidParameter,
+                     std::endl << 
+                     "Error!  Albany::ModelEvaluator::get_p_mp_map():  " <<
+                     "SG is not enabled.");
+  TEST_FOR_EXCEPTION(l != 0, 
+		     Teuchos::Exceptions::InvalidParameter,
+                     std::endl << 
+                     "Error!  Albany::ModelEvaluator::get_p_mp_map():  " <<
+                     "Invalid parameter index l = " << l << std::endl);
+
+  return epetra_param_map[1];
+}
+
+Teuchos::RCP<const Epetra_Map>
 Albany::ModelEvaluator::get_g_map(int l) const
 {
   TEST_FOR_EXCEPTION(supports_g == false, 
@@ -174,6 +193,23 @@ Albany::ModelEvaluator::get_g_sg_map(int l) const
   return app->getResponseMap();
 }
 
+Teuchos::RCP<const Epetra_Map>
+Albany::ModelEvaluator::get_g_mp_map(int l) const
+{
+  TEST_FOR_EXCEPTION(supports_sg == false, 
+                     Teuchos::Exceptions::InvalidParameter,
+                     std::endl << 
+                     "Error!  Albany::ModelEvaluator::get_g_mp_map():  " <<
+                     "SG is not enabled.");
+  TEST_FOR_EXCEPTION(l != 0, Teuchos::Exceptions::InvalidParameter,
+                     std::endl << 
+                     "Error!  Albany::ModelEvaluator::get_g_mp_map() only " <<
+                     " supports 1 response vector.  Supplied index l = " << 
+                     l << std::endl);
+
+  return app->getResponseMap();
+}
+
 Teuchos::RCP<const Teuchos::Array<std::string> >
 Albany::ModelEvaluator::get_p_names(int l) const
 {
@@ -198,12 +234,29 @@ Albany::ModelEvaluator::get_p_sg_names(int l) const
   TEST_FOR_EXCEPTION(supports_sg == false, 
                      Teuchos::Exceptions::InvalidParameter,
                      std::endl << 
-                     "Error!  Albany::ModelEvaluator::get_p_names():  " <<
+                     "Error!  Albany::ModelEvaluator::get_p_sg_names():  " <<
                      "SG is not enabled.");
   TEST_FOR_EXCEPTION(l != 0, 
 		     Teuchos::Exceptions::InvalidParameter,
                      std::endl << 
                      "Error!  Albany::ModelEvaluator::get_p_sg_names():  " <<
+                     "Invalid parameter index l = " << l << std::endl);
+
+  return param_names[1];
+}
+
+Teuchos::RCP<const Teuchos::Array<std::string> >
+Albany::ModelEvaluator::get_p_mp_names(int l) const
+{
+  TEST_FOR_EXCEPTION(supports_sg == false, 
+                     Teuchos::Exceptions::InvalidParameter,
+                     std::endl << 
+                     "Error!  Albany::ModelEvaluator::get_p_mp_names():  " <<
+                     "SG is not enabled.");
+  TEST_FOR_EXCEPTION(l != 0, 
+		     Teuchos::Exceptions::InvalidParameter,
+                     std::endl << 
+                     "Error!  Albany::ModelEvaluator::get_p_mp_names():  " <<
                      "Invalid parameter index l = " << l << std::endl);
 
   return param_names[1];
@@ -269,16 +322,23 @@ Albany::ModelEvaluator::createInArgs() const
     inArgs.setSupports(IN_ARG_x_sg,true);
     inArgs.set_Np_sg(1); // 1 SG parameter vector
     inArgs.setSupports(IN_ARG_sg_expansion,true);
+
+    inArgs.setSupports(IN_ARG_x_mp,true);
+    inArgs.set_Np_mp(1); // 1 SG parameter vector
   }
-  else
+  else {
     inArgs.set_Np_sg(0);
+    inArgs.set_Np_mp(0);
+  }
 
   inArgs.setSupports(IN_ARG_t,true);
   inArgs.setSupports(IN_ARG_x_dot,true);
   inArgs.setSupports(IN_ARG_alpha,true);
   inArgs.setSupports(IN_ARG_beta,true);
-  if (supports_sg)
+  if (supports_sg) {
     inArgs.setSupports(IN_ARG_x_dot_sg,true);
+    inArgs.setSupports(IN_ARG_x_dot_mp,true);
+  }
 
   return inArgs;
 }
@@ -330,6 +390,17 @@ Albany::ModelEvaluator::createOutArgs() const
       outArgs.set_Np_Ng_sg(0, 1);
     else
       outArgs.set_Np_Ng_sg(0, 0);
+
+    outArgs.setSupports(OUT_ARG_f_mp,true);
+    outArgs.setSupports(OUT_ARG_W_mp,true);
+    if (supports_p && supports_g)
+      outArgs.set_Np_Ng_mp(param_names.size(), 1);
+    else if (supports_p)
+      outArgs.set_Np_Ng_mp(1, 0);
+    else if (supports_g)
+      outArgs.set_Np_Ng_mp(0, 1);
+    else
+      outArgs.set_Np_Ng_mp(0, 0);
   }
 
   return outArgs;
@@ -528,6 +599,54 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
 				   sacado_param_vec[0].get(), 
 				   sacado_param_vec[1].get(), p_sg_ptr, 
 				   *g_sg);
+      }
+    }
+
+
+    mp_const_vector_t x_mp = inArgs.get_x_mp();
+    if (x_mp != Teuchos::null) {
+      mp_const_vector_t x_dot_mp  = inArgs.get_x_dot_mp();
+      mp_const_vector_t epetra_p_mp = inArgs.get_p_mp(0);
+      Teuchos::Array<MPType> *p_mp_ptr = NULL;
+      if (epetra_p_mp != Teuchos::null) {
+	for (unsigned int i=0; i<p_mp_vals.size(); i++) {
+	  int num_mp_blocks = epetra_p_mp->size();
+	  p_mp_vals[i].reset(num_mp_blocks);
+	  p_mp_vals[i].copyForWrite();
+	  for (int j=0; j<num_mp_blocks; j++) {
+	    p_mp_vals[i].fastAccessCoeff(j) = (*epetra_p_mp)[j][i];
+	  }
+	}
+	p_mp_ptr = &p_mp_vals;
+      }
+      mp_vector_t f_mp = outArgs.get_f_mp();
+      mp_operator_t W_mp = outArgs.get_W_mp();
+      if (W_mp != Teuchos::null) {
+	Stokhos::ProductContainer<Epetra_CrsMatrix> W_mp_crs(W_mp->map());
+	for (int i=0; i<W_mp->size(); i++)
+	  W_mp_crs.setCoeffPtr(
+	    i,
+	    Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(W_mp->getCoeffPtr(i)));
+	app->computeGlobalMPJacobian(alpha, beta, curr_time, 
+				     x_dot_mp.get(), *x_mp, 
+				     sacado_param_vec[0].get(), 
+				     sacado_param_vec[1].get(), p_mp_ptr,
+				     f_mp.get(), W_mp_crs);
+      }
+      else if (f_mp != Teuchos::null)
+	app->computeGlobalMPResidual(curr_time, x_dot_mp.get(), *x_mp, 
+				     sacado_param_vec[0].get(), 
+				     sacado_param_vec[1].get(), p_mp_ptr,
+				     *f_mp);
+
+      // Response functions
+      if (outArgs.Ng() > 0 && supports_g) {
+	mp_vector_t g_mp = outArgs.get_g_mp(0);
+	if (g_mp != Teuchos::null)
+	  app->evaluateMPResponses(x_dot_mp.get(), *x_mp, 
+				   sacado_param_vec[0].get(), 
+				   sacado_param_vec[1].get(), p_mp_ptr, 
+				   *g_mp);
       }
     }
   }

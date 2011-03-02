@@ -48,6 +48,7 @@ Albany::Application::Application(
   shapeParamsHaveBeenReset(false),
   setupCalledResidual(false), setupCalledJacobian(false), setupCalledTangent(false),
   setupCalledSGResidual(false), setupCalledSGJacobian(false),
+  setupCalledMPResidual(false), setupCalledMPJacobian(false),
   morphFromInit(true)
   //, stateMgr(Albany::StateManager())
 {
@@ -57,6 +58,8 @@ Albany::Application::Application(
   timers.push_back(Teuchos::TimeMonitor::getNewTimer("> Albany Fill: Tangent"));
   timers.push_back(Teuchos::TimeMonitor::getNewTimer("> Albany Fill: SGResidual"));
   timers.push_back(Teuchos::TimeMonitor::getNewTimer("> Albany Fill: SGJacobian"));
+  timers.push_back(Teuchos::TimeMonitor::getNewTimer("> Albany Fill: MPResidual"));
+  timers.push_back(Teuchos::TimeMonitor::getNewTimer("> Albany Fill: MPJacobian"));
   timers.push_back(Teuchos::TimeMonitor::getNewTimer("Albany-Cubit MeshMover"));
 
   // Create parameter library
@@ -77,7 +80,7 @@ Albany::Application::Application(
   // Register shape parameters for manipulation by continuation/optimization
   if (problemParams->get("Enable Cubit Shape Parameters",false)) {
 #ifdef ALBANY_CUTR
-    Teuchos::TimeMonitor Timer(*timers[6]); //start timer
+    Teuchos::TimeMonitor Timer(*timers[8]); //start timer
     meshMover = Teuchos::rcp(new CUTR::CubitMeshMover
           (problemParams->get<std::string>("Cubit Base Filename")));
 
@@ -321,7 +324,7 @@ Albany::Application::computeGlobalResidual(
 #ifdef ALBANY_CUTR
   static int first=true;
   if (shapeParamsHaveBeenReset) {
-    Teuchos::TimeMonitor cubitTimer(*timers[6]); //start timer
+    Teuchos::TimeMonitor cubitTimer(*timers[8]); //start timer
 
 /*
     if (first) {
@@ -435,7 +438,7 @@ Albany::Application::computeGlobalJacobian(
   }
 #ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
-    Teuchos::TimeMonitor Timer(*timers[6]); //start timer
+    Teuchos::TimeMonitor Timer(*timers[8]); //start timer
 
 *out << " Calling moveMesh with params: " << std::setprecision(8);
  for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
@@ -673,7 +676,7 @@ Albany::Application::computeGlobalTangent(
   std::vector<int> coord_deriv_indices;
 #ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
-    Teuchos::TimeMonitor Timer(*timers[6]); //start timer
+    Teuchos::TimeMonitor Timer(*timers[8]); //start timer
 
      int num_sp = 0;
      std::vector<int> shape_param_indices;
@@ -1001,7 +1004,7 @@ Albany::Application::computeGlobalSGResidual(
   }
 #ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
-    Teuchos::TimeMonitor Timer(*timers[6]); //start timer
+    Teuchos::TimeMonitor Timer(*timers[8]); //start timer
 *out << " Calling moveMesh with params: " << std::setprecision(8);
 for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
 *out << endl;
@@ -1133,7 +1136,7 @@ Albany::Application::computeGlobalSGJacobian(
   }
 #ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
-    Teuchos::TimeMonitor Timer(*timers[6]); //start timer
+    Teuchos::TimeMonitor Timer(*timers[8]); //start timer
 *out << " Calling moveMesh with params: " << std::setprecision(8);
 for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
 *out << endl;
@@ -1256,6 +1259,323 @@ evaluateSGResponses(const Stokhos::VectorOrthogPoly<Epetra_Vector>* sg_xdot,
   }
 }
 
+void
+Albany::Application::computeGlobalMPResidual(
+			const double current_time,
+			const Stokhos::ProductContainer<Epetra_Vector>* mp_xdot,
+			const Stokhos::ProductContainer<Epetra_Vector>& mp_x,
+			const ParamVec* p,
+			const ParamVec* mp_p,
+			const Teuchos::Array<MPType>* mp_p_vals,
+			Stokhos::ProductContainer<Epetra_Vector>& mp_f)
+{
+  if (!setupCalledMPResidual) {
+    setupCalledMPResidual=true;
+    fm->postRegistrationSetupForType<PHAL::AlbanyTraits::MPResidual>(*disc);
+    if (dfm!=Teuchos::null)
+      dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::MPResidual>(*disc);
+    writeGraphVisFile();
+  }
+
+  Teuchos::TimeMonitor Timer(*timers[6]); //start timer
+  //TEUCHOS_FUNC_TIME_MONITOR("Albany::Application::computeGlobalMPResidual");
+
+  // Create overlapped multi-point Epetra objects
+  if (mp_overlapped_x == Teuchos::null || 
+      mp_overlapped_x->size() != mp_x.size()) {
+    mp_overlapped_x = 
+      Teuchos::rcp(new Stokhos::ProductContainer<Epetra_Vector>(
+		     mp_x.map(), *overlapped_x));
+
+    if (mp_xdot != NULL)
+      mp_overlapped_xdot = 
+	Teuchos::rcp(new Stokhos::ProductContainer<Epetra_Vector>(
+		       mp_xdot->map(), *overlapped_xdot));
+
+  }
+
+  if (mp_overlapped_f == Teuchos::null || 
+      mp_overlapped_f->size() != mp_f.size()) {
+    mp_overlapped_f = 
+      Teuchos::rcp(new Stokhos::ProductContainer<Epetra_Vector>(
+		     mp_f.map(), *overlapped_f));
+  }
+
+  for (int i=0; i<mp_x.size(); i++) {
+
+    // Scatter x to the overlapped distrbution
+    (*mp_overlapped_x)[i].Import(mp_x[i], *importer, Insert);
+
+    // Scatter xdot to the overlapped distribution
+    if (mp_xdot != NULL)
+      (*mp_overlapped_xdot)[i].Import((*mp_xdot)[i], *importer, Insert);
+
+    // Zero out overlapped residual
+    (*mp_overlapped_f)[i].PutScalar(0.0);
+    mp_f[i].PutScalar(0.0);
+
+  }
+
+  // Set real parameters
+  if (p != NULL) {
+    for (unsigned int i=0; i<p->size(); ++i) {
+      (*p)[i].family->setRealValueForAllTypes((*p)[i].baseValue);
+    }
+  }
+#ifdef ALBANY_CUTR
+  if (shapeParamsHaveBeenReset) {
+    Teuchos::TimeMonitor Timer(*timers[8]); //start timer
+*out << " Calling moveMesh with params: " << std::setprecision(8);
+for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
+*out << endl;
+    meshMover->moveMesh(shapeParams, morphFromInit);
+    coordinates = disc->getCoordinates();
+    shapeParamsHaveBeenReset = false;
+  }
+#endif
+
+  // Set MP parameters
+  if (mp_p != NULL && mp_p_vals != NULL) {
+    for (unsigned int i=0; i<mp_p->size(); ++i) {
+      (*mp_p)[i].family->setValue<PHAL::AlbanyTraits::MPResidual>((*mp_p_vals)[i]);
+    }
+  }
+
+  // Set data in Workset struct, and perform fill via field manager
+  {  
+    PHAL::Workset workset(coordinates, elNodeID);
+
+    workset.mp_x         = mp_overlapped_x;
+    workset.mp_xdot      = mp_overlapped_xdot;
+    workset.mp_f         = mp_overlapped_f;
+
+    workset.current_time = current_time;
+    if (mp_xdot != NULL) workset.transientTerms = true;
+
+    workset.worksetSize = worksetSize;
+    workset.numCells = worksetSize;
+
+    for (int fc=0, ws=0; ws < numWorksets; fc+=worksetSize, ws++) {
+      workset.firstCell = fc;
+      if (elNodeID.size() - fc < worksetSize)
+        workset.numCells = elNodeID.size() - fc;
+
+      workset.oldState = stateMgr.getOldStateVariables(ws);
+      workset.newState = stateMgr.getNewStateVariables(ws);
+
+      // FillType template argument used to specialize Sacado
+      fm->evaluateFields<PHAL::AlbanyTraits::MPResidual>(workset);
+    }
+  } 
+
+  // Assemble global residual
+  for (int i=0; i<mp_f.size(); i++) {
+    mp_f[i].Export((*mp_overlapped_f)[i], *exporter, Add);
+  }
+
+  // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
+  if (dfm!=Teuchos::null) { 
+    PHAL::Workset workset(coordinates, elNodeID);
+
+    workset.mp_f = Teuchos::rcpFromRef(mp_f);
+    workset.nodeSets = Teuchos::rcpFromRef(disc->getNodeSets());
+    workset.mp_x = Teuchos::rcpFromRef(mp_x);
+    if (mp_xdot != NULL) workset.transientTerms = true;
+
+    // FillType template argument used to specialize Sacado
+    dfm->evaluateFields<PHAL::AlbanyTraits::MPResidual>(workset);
+
+  }
+}
+
+void
+Albany::Application::computeGlobalMPJacobian(
+			double alpha, double beta,
+			const double current_time,
+			const Stokhos::ProductContainer<Epetra_Vector>* mp_xdot,
+			const Stokhos::ProductContainer<Epetra_Vector>& mp_x,
+			const ParamVec* p,
+			const ParamVec* mp_p,
+			const Teuchos::Array<MPType>* mp_p_vals,
+			Stokhos::ProductContainer<Epetra_Vector>* mp_f,
+			Stokhos::ProductContainer<Epetra_CrsMatrix>& mp_jac)
+{
+  if (!setupCalledMPJacobian) {
+    setupCalledMPJacobian=true;
+    fm->postRegistrationSetupForType<PHAL::AlbanyTraits::MPJacobian>(*disc);
+    if (dfm!=Teuchos::null)
+      dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::MPJacobian>(*disc);
+    writeGraphVisFile();
+  }
+
+  Teuchos::TimeMonitor Timer(*timers[7]); //start timer
+  //TEUCHOS_FUNC_TIME_MONITOR("Albany::Application::computeGlobalMPJacobian");
+
+  // Create overlapped multi-point Epetra objects
+  if (mp_overlapped_x == Teuchos::null || 
+      mp_overlapped_x->size() != mp_x.size()) {
+    mp_overlapped_x = 
+      Teuchos::rcp(new Stokhos::ProductContainer<Epetra_Vector>(
+		     mp_x.map(), *overlapped_x));
+
+    if (mp_xdot != NULL)
+      mp_overlapped_xdot = 
+	Teuchos::rcp(new Stokhos::ProductContainer<Epetra_Vector>(
+		       mp_xdot->map(), *overlapped_xdot));
+
+  }
+
+  if (mp_f != NULL && (mp_overlapped_f == Teuchos::null || 
+		       mp_overlapped_f->size() != mp_f->size()))
+    mp_overlapped_f = 
+      Teuchos::rcp(new Stokhos::ProductContainer<Epetra_Vector>(
+		     mp_f->map(), *overlapped_f));
+
+  if (mp_overlapped_jac == Teuchos::null || 
+      mp_overlapped_jac->size() != mp_jac.size())
+    mp_overlapped_jac = 
+      Teuchos::rcp(new Stokhos::ProductContainer<Epetra_CrsMatrix>(
+		     mp_jac.map(), *overlapped_jac));
+
+  for (int i=0; i<mp_x.size(); i++) {
+
+    // Scatter x to the overlapped distrbution
+    (*mp_overlapped_x)[i].Import(mp_x[i], *importer, Insert);
+
+    // Scatter xdot to the overlapped distribution
+    if (mp_xdot != NULL)
+      (*mp_overlapped_xdot)[i].Import((*mp_xdot)[i], *importer, Insert);
+
+    // Zero out overlapped residual
+    if (mp_f != NULL) {
+      (*mp_overlapped_f)[i].PutScalar(0.0);
+      (*mp_f)[i].PutScalar(0.0);
+    }
+
+    mp_jac[i].PutScalar(0.0);
+    (*mp_overlapped_jac)[i].PutScalar(0.0);
+
+  }
+
+  // Set real parameters
+  if (p != NULL) {
+    for (unsigned int i=0; i<p->size(); ++i) {
+      (*p)[i].family->setRealValueForAllTypes((*p)[i].baseValue);
+    }
+  }
+#ifdef ALBANY_CUTR
+  if (shapeParamsHaveBeenReset) {
+    Teuchos::TimeMonitor Timer(*timers[8]); //start timer
+*out << " Calling moveMesh with params: " << std::setprecision(8);
+for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
+*out << endl;
+    meshMover->moveMesh(shapeParams, morphFromInit);
+    coordinates = disc->getCoordinates();
+    shapeParamsHaveBeenReset = false;
+  }
+#endif
+
+  // Set MP parameters
+  if (mp_p != NULL && mp_p_vals != NULL) {
+    for (unsigned int i=0; i<mp_p->size(); ++i) {
+      (*mp_p)[i].family->setValue<PHAL::AlbanyTraits::MPJacobian>((*mp_p_vals)[i]);
+    }
+  }
+
+  Teuchos::RCP< Stokhos::ProductContainer<Epetra_Vector> > mp_overlapped_ff;
+  if (mp_f != NULL)
+    mp_overlapped_ff = mp_overlapped_f;
+
+  // Set data in Workset struct, and perform fill via field manager
+  {
+    PHAL::Workset workset(coordinates, elNodeID);
+
+    workset.mp_x         = mp_overlapped_x;
+    workset.mp_xdot      = mp_overlapped_xdot;
+    workset.mp_f         = mp_overlapped_ff;
+
+    workset.mp_Jac       = mp_overlapped_jac;
+    workset.j_coeff      = beta;
+    workset.m_coeff      = alpha;
+    workset.current_time = current_time;
+    workset.ignore_residual = ignore_residual_in_jacobian;
+    if (mp_xdot != NULL) workset.transientTerms = true;
+
+    workset.worksetSize = worksetSize;
+    workset.numCells = worksetSize;
+
+    for (int fc=0, ws=0; ws < numWorksets; fc+=worksetSize, ws++) {
+      workset.firstCell = fc;
+      if (elNodeID.size() - fc < worksetSize)
+          workset.numCells = elNodeID.size() - fc;
+
+      workset.oldState = stateMgr.getOldStateVariables(ws);
+      workset.newState = stateMgr.getNewStateVariables(ws);
+
+      // FillType template argument used to specialize Sacado
+      fm->evaluateFields<PHAL::AlbanyTraits::MPJacobian>(workset);
+    }
+  } 
+  
+  // Assemble global residual
+  if (mp_f != NULL)
+    for (int i=0; i<mp_f->size(); i++)
+      (*mp_f)[i].Export((*mp_overlapped_f)[i], *exporter, Add);
+    
+  // Assemble block Jacobians
+  Teuchos::RCP<Epetra_CrsMatrix> jac;
+  for (int i=0; i<mp_jac.size(); i++) {
+    jac = mp_jac.getCoeffPtr(i);
+    jac->PutScalar(0.0);
+    jac->Export((*mp_overlapped_jac)[i], *exporter, Add);
+    jac->FillComplete(true);
+  }
+
+  // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
+  if (dfm!=Teuchos::null) {
+    PHAL::Workset workset(coordinates, elNodeID);
+
+    workset.mp_f = Teuchos::rcp(mp_f,false);
+    workset.mp_Jac = Teuchos::rcpFromRef(mp_jac);
+    workset.j_coeff = beta;
+    workset.mp_x = Teuchos::rcpFromRef(mp_x);;
+    if (mp_xdot != NULL) workset.transientTerms = true;
+
+    workset.nodeSets = Teuchos::rcpFromRef (disc->getNodeSets());
+
+    // FillType template argument used to specialize Sacado
+    dfm->evaluateFields<PHAL::AlbanyTraits::MPJacobian>(workset);
+  } 
+}
+
+void
+Albany::Application::
+evaluateMPResponses(const Stokhos::ProductContainer<Epetra_Vector>* mp_xdot,
+		    const Stokhos::ProductContainer<Epetra_Vector>& mp_x,
+		    ParamVec* p,
+		    ParamVec* mp_p,
+		    const Teuchos::Array<MPType>* mp_p_vals,
+		    Stokhos::ProductContainer<Epetra_Vector>& mp_g)
+{
+  TEUCHOS_FUNC_TIME_MONITOR("Albany::Application::evaluateMPResponses");
+  
+  Teuchos::Array< Teuchos::RCP<ParamVec> > p_array(2);
+  p_array[0] = Teuchos::rcp(p, false);
+  p_array[1] = Teuchos::rcp(mp_p, false);
+  const Epetra_Vector* xdot = NULL;
+  for (int i=0; i<mp_x.size(); i++) {
+    if (mp_p != NULL && mp_p_vals != NULL)
+      for (unsigned int j=0; j<mp_p->size(); ++j)
+	(*mp_p)[j].baseValue = (*mp_p_vals)[j].coeff(i);
+
+    if (mp_xdot != NULL)
+      xdot = mp_xdot->getCoeffPtr(i).get();
+    
+    // Evaluate response function
+    evaluateResponses(xdot, mp_x[i], p_array, mp_g[i]);
+  }
+}
+
 void Albany::Application::registerShapeParameters() 
 {
   int numShParams = shapeParams.size();
@@ -1272,6 +1592,10 @@ void Albany::Application::registerShapeParameters()
    new Albany::DummyParameterAccessor<PHAL::AlbanyTraits::SGResidual, SPL_Traits>();
   Albany::DummyParameterAccessor<PHAL::AlbanyTraits::SGJacobian, SPL_Traits> * dSGJ =
    new Albany::DummyParameterAccessor<PHAL::AlbanyTraits::SGJacobian, SPL_Traits>();
+  Albany::DummyParameterAccessor<PHAL::AlbanyTraits::MPResidual, SPL_Traits> * dMPR =
+   new Albany::DummyParameterAccessor<PHAL::AlbanyTraits::MPResidual, SPL_Traits>();
+  Albany::DummyParameterAccessor<PHAL::AlbanyTraits::MPJacobian, SPL_Traits> * dMPJ =
+   new Albany::DummyParameterAccessor<PHAL::AlbanyTraits::MPJacobian, SPL_Traits>();
 
   // Register Parameter for Residual fill using "this->getValue" but
   // create dummy ones for other type that will not be used.
@@ -1287,6 +1611,10 @@ void Albany::Application::registerShapeParameters()
       (shapeParamNames[i], dSGR, paramLib);
     new Sacado::ParameterRegistration<PHAL::AlbanyTraits::SGJacobian, SPL_Traits>
       (shapeParamNames[i], dSGJ, paramLib);
+    new Sacado::ParameterRegistration<PHAL::AlbanyTraits::MPResidual, SPL_Traits>
+      (shapeParamNames[i], dMPR, paramLib);
+    new Sacado::ParameterRegistration<PHAL::AlbanyTraits::MPJacobian, SPL_Traits>
+      (shapeParamNames[i], dMPJ, paramLib);
   }
 }
 
@@ -1325,6 +1653,10 @@ void Albany::Application::writeGraphVisFile() const
        fm->writeGraphvizFile<PHAL::AlbanyTraits::SGResidual>("phalanx_graph",detail,detail);
      else if (setupCalledSGJacobian)
        fm->writeGraphvizFile<PHAL::AlbanyTraits::SGJacobian>("phalanx_graph",detail,detail);
+     else if (setupCalledMPResidual) 
+       fm->writeGraphvizFile<PHAL::AlbanyTraits::MPResidual>("phalanx_graph",detail,detail);
+     else if (setupCalledMPJacobian)
+       fm->writeGraphvizFile<PHAL::AlbanyTraits::MPJacobian>("phalanx_graph",detail,detail);
      *out << "(If failed to find 1_42, try removing <trilinos-install>/include/boost/)" << endl;
 
      phxGraphVisDetail = -1;

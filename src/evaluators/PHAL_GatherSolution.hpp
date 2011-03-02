@@ -161,6 +161,40 @@ private:
   std::size_t neq;
   const std::size_t numFields;
 };
+
+// **************************************************************
+// Multi-point Residual
+// **************************************************************
+
+template<typename Traits>
+class GatherSolution<PHAL::AlbanyTraits::MPResidual,Traits>
+   : public GatherSolutionBase<PHAL::AlbanyTraits::MPResidual, Traits>  {
+  
+public:
+  GatherSolution(const Teuchos::ParameterList& p);
+  void evaluateFields(typename Traits::EvalData d);
+private:
+  typedef typename PHAL::AlbanyTraits::MPResidual::ScalarT ScalarT;
+  const std::size_t neq;
+  const std::size_t numFields;
+};
+
+
+// **************************************************************
+// Multi-point Jacobian
+// **************************************************************
+template<typename Traits>
+class GatherSolution<PHAL::AlbanyTraits::MPJacobian,Traits>
+   : public GatherSolutionBase<PHAL::AlbanyTraits::MPJacobian, Traits>  {
+  
+public:
+  GatherSolution(const Teuchos::ParameterList& p);
+  void evaluateFields(typename Traits::EvalData d);
+private:
+  typedef typename PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
+  std::size_t neq;
+  const std::size_t numFields;
+};
 // **************************************************************
 }
 

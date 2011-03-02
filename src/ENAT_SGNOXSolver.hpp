@@ -113,7 +113,8 @@ namespace ENAT {
     enum SG_METHOD {
       SG_AD,
       SG_GLOBAL,
-      SG_NI
+      SG_NI,
+      SG_MPNI
     };
 
     //These are set in the constructor and used in evalModel

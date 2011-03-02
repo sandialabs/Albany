@@ -56,9 +56,12 @@ namespace PHAL {
                        // typedef RealType MeshScalarT; }; // Uncomment for no shape opt
     struct SGResidual { typedef SGType    ScalarT; typedef RealType MeshScalarT; };
     struct SGJacobian { typedef SGFadType ScalarT; typedef RealType MeshScalarT; };
+    struct MPResidual { typedef MPType    ScalarT; typedef RealType MeshScalarT; };
+    struct MPJacobian { typedef MPFadType ScalarT; typedef RealType MeshScalarT; };
     typedef Sacado::mpl::vector<Residual, Jacobian, Tangent, 
-				SGResidual, SGJacobian> EvalTypes;
-
+				SGResidual, SGJacobian, 
+				MPResidual, MPJacobian> EvalTypes;
+    
     // ******************************************************************
     // *** Data Types
     // ******************************************************************
@@ -83,13 +86,21 @@ namespace PHAL {
     // SG Jacobian (default scalar type is Fad<SGType>)
     typedef Sacado::mpl::vector<SGFadType,RealType> SGJacobianDataTypes;
 
+    // MP Residual (default scalar type is MPType)
+    typedef Sacado::mpl::vector<MPType,RealType> MPResidualDataTypes;
+  
+    // MP Jacobian (default scalar type is Fad<MPType>)
+    typedef Sacado::mpl::vector<MPFadType,RealType> MPJacobianDataTypes;
+
     // Maps the key EvalType a vector of DataTypes
     typedef boost::mpl::map<
       boost::mpl::pair<Residual, ResidualDataTypes>,
       boost::mpl::pair<Jacobian, JacobianDataTypes>,
       boost::mpl::pair<Tangent,  TangentDataTypes>,
       boost::mpl::pair<SGResidual, SGResidualDataTypes>,
-      boost::mpl::pair<SGJacobian, SGJacobianDataTypes>
+      boost::mpl::pair<SGJacobian, SGJacobianDataTypes>,
+      boost::mpl::pair<MPResidual, MPResidualDataTypes>,
+      boost::mpl::pair<MPJacobian, MPJacobianDataTypes>
     >::type EvalToDataMap;
 
     // ******************************************************************
@@ -134,6 +145,12 @@ namespace PHX {
   template<> struct TypeString<PHAL::AlbanyTraits::SGJacobian> 
   { static const std::string value; };
 
+  template<> struct TypeString<PHAL::AlbanyTraits::MPResidual> 
+  { static const std::string value; };
+
+  template<> struct TypeString<PHAL::AlbanyTraits::MPJacobian> 
+  { static const std::string value; };
+
   // Data Types
   template<> struct TypeString<RealType> 
   { static const std::string value; };
@@ -145,6 +162,12 @@ namespace PHX {
   { static const std::string value; };
 
   template<> struct TypeString<SGFadType> 
+  { static const std::string value; };
+
+  template<> struct TypeString<MPType> 
+  { static const std::string value; };
+
+  template<> struct TypeString<MPFadType> 
   { static const std::string value; };
 
 }
@@ -160,12 +183,18 @@ namespace PHX {
   template class name<PHAL::AlbanyTraits::SGResidual, PHAL::AlbanyTraits>;
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_SGJACOBIAN(name) \
   template class name<PHAL::AlbanyTraits::SGJacobian, PHAL::AlbanyTraits>;
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_MPRESIDUAL(name) \
+  template class name<PHAL::AlbanyTraits::MPResidual, PHAL::AlbanyTraits>;
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_MPJACOBIAN(name) \
+  template class name<PHAL::AlbanyTraits::MPJacobian, PHAL::AlbanyTraits>;
 
-#define PHAL_INSTANTIATE_TEMPLATE_CLASS(name) \
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS(name)		 \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_RESIDUAL(name)	 \
-  PHAL_INSTANTIATE_TEMPLATE_CLASS_JACOBIAN(name)      \
-  PHAL_INSTANTIATE_TEMPLATE_CLASS_TANGENT(name)	 \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_JACOBIAN(name)	 \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_TANGENT(name)		 \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_SGRESIDUAL(name)	 \
-  PHAL_INSTANTIATE_TEMPLATE_CLASS_SGJACOBIAN(name)
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_SGJACOBIAN(name)	 \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_MPRESIDUAL(name)	 \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_MPJACOBIAN(name)
 
 #endif
