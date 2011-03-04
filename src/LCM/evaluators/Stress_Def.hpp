@@ -20,6 +20,11 @@
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 
+//// DJL Hack to see if we can call lame for the stress. ////
+// #include <models/Material.h>
+// #include <models/Elastic.h>
+//// End DJL Hack ////
+
 namespace LCM {
 
 //**********************************************************************
@@ -91,6 +96,42 @@ evaluateFields(typename Traits::EvalData workset)
     }
     break;
   case 3:
+
+    //// DJL Hack to see if we can call lame for the stress. ////
+
+//     Teuchos::RCP<lame::MatProps> props = Teuchos::rcp(new lame::MatProps());
+
+//     std::vector<double> youngs;
+//     double youngsValue = 1000.0;
+//     youngs.push_back(youngsValue);
+//     std::string youngsModName = "YOUNGS_MODULUS";
+//     props->insert(youngsModName, youngs);
+
+//     std::string prName = "POISSONS_RATIO";
+//     std::vector<double> pr;
+//     double prValue = 0.0;
+//     pr.push_back(prValue);
+//     props->insert(prName, pr);
+
+//     Teuchos::RCP<lame::Material> elasticMat = Teuchos::rcp(new lame::Elastic(*props));
+//     Teuchos::RCP<lame::matParams> matp = Teuchos::rcp(new lame::matParams());
+//     matp->nelements = 1;
+//     matp->dt = 5e-3;
+//     double strainRate[] = { 0.025, 0.0, 0.0, 0.0, 0.0, 0.0 };
+//     double stressOld[]  = { 0.0,   0.0, 0.0, 0.0, 0.0, 0.0 };
+//     double stressNew[]  = { 0.0,   0.0, 0.0, 0.0, 0.0, 0.0 };
+//     matp->strain_rate = strainRate;
+//     matp->stress_old = stressOld;
+//     matp->stress_new = stressNew;
+
+//     // get the stress from the LAME material
+//     elasticMat->getStress(matp.get());
+
+//     cout << "LAME Stress computed as " << stressNew[0] << ", " << stressNew[1] << ", " << stressNew[2] << ", " << stressNew[3] << ", " << stressNew[4] << ", " << stressNew[5] << endl;
+//     cout << "LAME Stress should be   " << 5e-3*0.025*youngsValue << ", 0, 0, 0, 0, 0" << endl;
+
+    //// End DJL Hack ////
+
     // Compute Stress
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {

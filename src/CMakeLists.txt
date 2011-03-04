@@ -334,6 +334,15 @@ include_directories (${Trilinos_INCLUDE_DIRS}
 
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
 
+# LAME
+IF(ENABLE_LAME)
+  include_directories (${LAME_INCLUDE_DIR})
+  link_directories (${LAME_LIBRARY_DIR})
+  set(LAME_LIB lame)
+ELSE()
+  set(LAME_LIB )
+ENDIF()
+
 if (ALBANY_ENABLE_CUBIT)
   INCLUDE(${MESHMOVER_DIR}/UseUtil.cmake)
   set (SOURCES ${SOURCES} ${CUTR_SRCS})
@@ -358,15 +367,15 @@ add_executable(AlbanyAnalysis Main_Analysis.cpp)
 # Tests
 add_executable(UtilsTest LCM/test/utils/UtilsTest.cc)
 
-target_link_libraries(Albany          albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
-target_link_libraries(AlbanySG        albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
+target_link_libraries(Albany          albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
+target_link_libraries(AlbanySG        albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
 IF (ALBANY_DAKOTA)
   target_link_libraries(AlbanyDakota    albanyLib ${ALB_TRILINOS_LIBS}
-                        ${ALB_CUBIT_LIBS} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
+                        ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
 ENDIF ()
 
-target_link_libraries(AlbanyAnalysis  albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS}
+target_link_libraries(AlbanyAnalysis  albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} 
                       ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
 
 #Linking tests
-target_link_libraries(UtilsTest albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
+target_link_libraries(UtilsTest albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
