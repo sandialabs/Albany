@@ -194,6 +194,7 @@ IF(ALBANY_LCM)
   # LCM evaluators
   SET(SOURCES ${SOURCES}
     ${LCM_DIR}/evaluators/Stress.cpp 
+    ${LCM_DIR}/evaluators/LameStress.cpp 
     ${LCM_DIR}/evaluators/Strain.cpp 
     ${LCM_DIR}/evaluators/ElasticModulus.cpp 
     ${LCM_DIR}/evaluators/PoissonsRatio.cpp 
@@ -211,7 +212,9 @@ IF(ALBANY_LCM)
 
   SET(HEADERS ${HEADERS}
     ${LCM_DIR}/evaluators/Stress.hpp 
-    ${LCM_DIR}/evaluators/Stress_Def.hpp 
+    ${LCM_DIR}/evaluators/Stress_Def.hpp
+    ${LCM_DIR}/evaluators/LameStress.hpp 
+    ${LCM_DIR}/evaluators/LameStress_Def.hpp 
     ${LCM_DIR}/evaluators/Strain.hpp 
     ${LCM_DIR}/evaluators/Strain_Def.hpp 
     ${LCM_DIR}/evaluators/ElasticModulus.hpp 

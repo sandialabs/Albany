@@ -29,7 +29,8 @@ ElasticityProblem(
                          const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_, numDim_),
   haveIC(false),
-  haveSource(false)
+  haveSource(false),
+  useLame(false)
 {
  
   std::string& method = params->get("Name", "Elasticity ");
@@ -37,6 +38,7 @@ ElasticityProblem(
   
   haveIC     =  params->isSublist("Initial Condition");
   haveSource =  params->isSublist("Source Functions");
+  useLame = params->get("Use Lame", false);
 
   dofNames.resize(neq);
   dofNames[0] = "X";
@@ -388,10 +390,30 @@ cout << "XXXX USING NODES FOR VERTICES" << endl;
     evaluators_to_build["Strain"] = p;
   }
 
-  { // Stress
+  if (!useLame) { // Stress
     RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
     int type = LCM::FactoryTraits<AlbanyTraits>::id_stress;
+    p->set<int>("Type", type);
+
+    //Input
+    p->set<string>("Strain Name", "Strain");
+    p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
+
+    p->set<string>("Elastic Modulus Name", "Elastic Modulus");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+
+    p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // qp_scalar also
+
+    //Output
+    p->set<string>("Stress Name", "Stress"); //qp_tensor also
+
+    evaluators_to_build["Stress"] = p;
+  }
+  else { // LameStress
+    RCP<ParameterList> p = rcp(new ParameterList("Stress"));
+
+    int type = LCM::FactoryTraits<AlbanyTraits>::id_lame_stress;
     p->set<int>("Type", type);
 
     //Input
@@ -481,6 +503,7 @@ Albany::ElasticityProblem::getValidProblemParameters() const
 
   validPL->sublist("Elastic Modulus", false, "");
   validPL->sublist("Poissons Ratio", false, "");
+  validPL->set<bool>("Use Lame", false, "");
 
   return validPL;
 }

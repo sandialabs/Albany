@@ -71,6 +71,7 @@ namespace Albany {
     //! Boundary conditions on source term
     bool haveIC;
     bool haveSource;
+    bool useLame;
 
   };
 

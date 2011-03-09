@@ -115,7 +115,8 @@ ENDIF()
 
 # optional dependency on LAME, defaults to FALSE
 IF(ENABLE_LAME)
-  MESSAGE("-- LAME is enabled")
+  MESSAGE("-- LAME is enabled, compiling with -DENABLE_LAME")
+  ADD_DEFINITIONS(-DENABLE_LAME)
   IF(NOT LAME_INCLUDE_DIR)
     MESSAGE("\nError:  LAME_INCLUDE_DIR not defined\n")
   ELSE()
