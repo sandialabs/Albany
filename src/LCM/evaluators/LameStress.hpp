@@ -49,7 +49,7 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> strainField;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defGradField;
   PHX::MDField<ScalarT,Cell,QuadPoint> elasticModulusField;
   PHX::MDField<ScalarT,Cell,QuadPoint> poissonsRatioField;
 

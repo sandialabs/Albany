@@ -392,6 +392,28 @@ cout << "XXXX USING NODES FOR VERTICES" << endl;
     evaluators_to_build["Strain"] = p;
   }
 
+  { // Deformation Gradient
+    RCP<ParameterList> p = rcp(new ParameterList("DefGrad"));
+
+    int type = FactoryTraits<AlbanyTraits>::id_defgrad;
+    p->set<int>("Type", type);
+
+    // Volumetric averaging flag
+    const bool avgJ = params->get("avgJ", false);
+    p->set<bool>("avgJ Name", avgJ);
+
+    //Input
+    p->set<string>("Gradient QP Variable Name", "Displacement Gradient");
+    p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
+
+    //Output
+    p->set<string>("DefGrad Name", "Deformation Gradient"); //qp_tensor also
+    p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient"); 
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+
+    evaluators_to_build["DefGrad"] = p;
+  }
+
   if (!useLame) { // Stress
     RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
@@ -422,16 +444,19 @@ cout << "XXXX USING NODES FOR VERTICES" << endl;
     p->set<string>("Strain Name", "Strain");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
 
+    p->set<string>("DefGrad Name", "Deformation Gradient"); // qp_tensor also
+
     p->set<string>("Elastic Modulus Name", "Elastic Modulus");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
 
     p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // qp_scalar also
 
     //Output
-    p->set<string>("Stress Name", "Stress"); //qp_tensor also
+    p->set<string>("Stress Name", "Stress"); // qp_tensor also
 
     //Declare what state data will need to be saved (name, layout, init_type)
     stateMgr.registerStateVariable("stress",qp_tensor,"zero");
+    stateMgr.registerStateVariable("def_grad",qp_tensor,"zero");
     stateMgr.registerStateVariable("strain",qp_tensor,"zero");
 
     evaluators_to_build["Stress"] = p;
