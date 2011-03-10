@@ -49,15 +49,15 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> strain;
-  PHX::MDField<ScalarT,Cell,QuadPoint> elasticModulus;
-  PHX::MDField<ScalarT,Cell,QuadPoint> poissonsRatio;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> strainField;
+  PHX::MDField<ScalarT,Cell,QuadPoint> elasticModulusField;
+  PHX::MDField<ScalarT,Cell,QuadPoint> poissonsRatioField;
 
   unsigned int numQPs;
   unsigned int numDims;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stressField;
 };
 }
 

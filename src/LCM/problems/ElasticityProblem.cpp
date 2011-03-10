@@ -61,7 +61,7 @@ buildProblem(
     const Teuchos::RCP<Epetra_Vector>& u)
 {
   /* Construct All Phalanx Evaluators */
-  constructEvaluators(worksetSize, disc.getCubatureDegree(), disc.getCellTopologyData());
+  constructEvaluators(worksetSize, disc.getCubatureDegree(), disc.getCellTopologyData(), stateMgr);
   constructDirichletEvaluators(disc.getNodeSetIDs());
 
   const Epetra_Map& dofMap = *(disc.getMap());
@@ -108,8 +108,10 @@ buildProblem(
 
 
 void
-Albany::ElasticityProblem::constructEvaluators(
-       const int worksetSize, const int cubDegree, const CellTopologyData& ctd)
+Albany::ElasticityProblem::constructEvaluators(const int worksetSize,
+                                               const int cubDegree,
+                                               const CellTopologyData& ctd,
+                                               Albany::StateManager& stateMgr)
 {
    using Teuchos::RCP;
    using Teuchos::rcp;
@@ -427,6 +429,10 @@ cout << "XXXX USING NODES FOR VERTICES" << endl;
 
     //Output
     p->set<string>("Stress Name", "Stress"); //qp_tensor also
+
+    //Declare what state data will need to be saved (name, layout, init_type)
+    stateMgr.registerStateVariable("stress",qp_tensor,"zero");
+    stateMgr.registerStateVariable("strain",qp_tensor,"zero");
 
     evaluators_to_build["Stress"] = p;
   }

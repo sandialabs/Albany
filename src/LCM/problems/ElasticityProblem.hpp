@@ -65,7 +65,9 @@ namespace Albany {
     ElasticityProblem& operator=(const ElasticityProblem&);
 
     void constructEvaluators(const int worksetSize,
-        const int cubDegree, const CellTopologyData& ctd);
+                             const int cubDegree, 
+                             const CellTopologyData& ctd,
+                             Albany::StateManager& stateMgr);
   protected:
 
     //! Boundary conditions on source term
