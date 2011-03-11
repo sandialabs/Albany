@@ -18,25 +18,28 @@
 #ifndef ALBANY_POINT0D_STKMESHSTRUCT_HPP
 #define ALBANY_POINT0D_STKMESHSTRUCT_HPP
 
-#include "Albany_AbstractSTKMeshStruct.hpp"
+#include "Albany_GenericSTKMeshStruct.hpp"
 
 
 namespace Albany {
 
-  struct Point0DSTKMeshStruct : public AbstractSTKMeshStruct {
+  class Point0DSTKMeshStruct : public GenericSTKMeshStruct {
+
+    public:
 
     Point0DSTKMeshStruct(
                   const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_, const unsigned int nstates_);
 
-    ~Point0DSTKMeshStruct();
+    ~Point0DSTKMeshStruct() {};
+
+    private:
 
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParameters() const;
 
   };
-
 }
 
 #endif // ALBANY_POINT0D_STKMESHSTRUCT_HPP

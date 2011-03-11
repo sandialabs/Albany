@@ -39,40 +39,16 @@
 #include <stk_io/IossBridge.hpp>
 #include "Albany_Utils.hpp"
 
-enum { field_data_chunk_size = 1001 };
-
-
 Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 		  const Teuchos::RCP<const Epetra_Comm>& comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_, const unsigned int nstates_) :
+  GenericSTKMeshStruct(comm),
   periodic(params->get("Periodic BC", false))
 {
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
-
   params->validateParameters(*getValidDiscretizationParameters(),0);
-  neq = neq_;
-  nstates = nstates_;
-
-  cubatureDegree = params->get("Cubature Degree", 3);
-
-  metaData = new stk::mesh::MetaData(stk::mesh::fem_entity_rank_names() );
-  bulkData = new stk::mesh::BulkData(*metaData , Albany::getMpiCommFromEpetraComm(*comm), field_data_chunk_size );
-  coordinates_field = & metaData->declare_field< VectorFieldType >( "coordinates" );
-  solution_field = & metaData->declare_field< VectorFieldType >( "solution" );
-  residual_field = & metaData->declare_field< VectorFieldType >( "residual" );
-  state_field = & metaData->declare_field< VectorFieldType >( "state" );
-
-  stk::mesh::put_field( *solution_field , stk::mesh::Node , metaData->universal_part() , neq );
-  stk::mesh::put_field( *residual_field , stk::mesh::Node , metaData->universal_part() , neq );
-  if (nstates>0) stk::mesh::put_field( *state_field , stk::mesh::Element , metaData->universal_part() , nstates );
-
-  stk::io::set_field_role(*coordinates_field, Ioss::Field::ATTRIBUTE);
-  stk::io::set_field_role(*solution_field, Ioss::Field::TRANSIENT);
-  stk::io::set_field_role(*residual_field, Ioss::Field::TRANSIENT);
-  if (nstates>0) stk::io::set_field_role(*state_field, Ioss::Field::TRANSIENT);
-
 
   stk::io::util::MeshData* mesh_data = new stk::io::util::MeshData();
 
@@ -100,10 +76,9 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 
   }
 
+   stk::io::put_io_part_attribute(metaData->universal_part());
 
-  stk::io::put_io_part_attribute(metaData->universal_part());
-
-  // Set node sets
+  // Set element blocks and node sets
   const stk::mesh::PartVector & all_parts = metaData->get_parts();
   int eb=0;
   for (stk::mesh::PartVector::const_iterator i = all_parts.begin();
@@ -132,6 +107,8 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     }
   }
 
+  this->SetupMetaData(params, neq_, nstates_, numDim);
+
   *out << "IOSS-STK: number of node sets = " << nsPartVec.size() << endl;
 
   metaData->commit();
@@ -153,31 +130,16 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 
   delete mesh_data;
   useElementAsTopRank = true;
-
-  exoOutput = params->isType<string>("Exodus Output File Name");
-  if (exoOutput)
-    exoOutFile = params->get<string>("Exodus Output File Name");
-}
-
-Albany::IossSTKMeshStruct::~IossSTKMeshStruct()
-{ 
-  delete metaData;
-  delete bulkData;
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
 Albany::IossSTKMeshStruct::getValidDiscretizationParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
-     rcp(new Teuchos::ParameterList("ValidSTKIoss_DiscParams"));;
+    this->getValidGenericSTKParameters("Valid IOSS_DiscParams");
   validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic a mesh");
   validPL->set<string>("Exodus Input File Name", "", "File Name For Exodus Mesh Input");
   validPL->set<string>("Pamgen Input File Name", "", "File Name For Pamgen Mesh Input");
-  validPL->set<std::string>("Exodus Output File Name", "",
-    "Request exodus output to given file name. Requires IOSS build");
-  validPL->set<std::string>("Method", "",
-    "The discretization method, parsed in the Discretization Factory");
-  validPL->set<int>("Cubature Degree", 3, "Integration order sent to Intrepid");
   validPL->set<int>("Restart Index", 1, "Exodus time index to read for inital guess/condition.");
 
   return validPL;

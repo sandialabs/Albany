@@ -19,18 +19,22 @@
 #ifndef ALBANY_IOSS_STKMESHSTRUCT_HPP
 #define ALBANY_IOSS_STKMESHSTRUCT_HPP
 
-#include "Albany_AbstractSTKMeshStruct.hpp"
+#include "Albany_GenericSTKMeshStruct.hpp"
 
 namespace Albany {
 
-  struct IossSTKMeshStruct : public AbstractSTKMeshStruct {
+  class IossSTKMeshStruct : public GenericSTKMeshStruct {
+
+    public:
 
     IossSTKMeshStruct(
                   const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_, const unsigned int nstates_);
 
-    ~IossSTKMeshStruct();
+    ~IossSTKMeshStruct() {};
+
+    private:
 
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParameters() const;

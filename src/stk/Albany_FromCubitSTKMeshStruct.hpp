@@ -25,7 +25,9 @@
 
 namespace Albany {
 
-  struct FromCubitSTKMeshStruct : public AbstractSTKMeshStruct {
+  class FromCubitSTKMeshStruct : public AbstractSTKMeshStruct {
+
+    public:
 
     FromCubitSTKMeshStruct(
                   const Teuchos::RCP<CUTR::CubitMeshMover>& meshMover,
@@ -34,6 +36,8 @@ namespace Albany {
 
 
     ~FromCubitSTKMeshStruct();
+ 
+    private:
 
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParameters() const;

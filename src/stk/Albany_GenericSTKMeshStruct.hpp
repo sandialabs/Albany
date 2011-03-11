@@ -15,34 +15,37 @@
 \********************************************************************/
 
 
-#ifndef ALBANY_LINE1D_STKMESHSTRUCT_HPP
-#define ALBANY_LINE1D_STKMESHSTRUCT_HPP
+#ifndef ALBANY_GENERICSTKMESHSTRUCT_HPP
+#define ALBANY_GENERICSTKMESHSTRUCT_HPP
 
-#include "Albany_GenericSTKMeshStruct.hpp"
+//#include <vector>
+//#include <string>
+#include "Albany_AbstractSTKMeshStruct.hpp"
+#include "Teuchos_ParameterList.hpp"
+#include "Epetra_Comm.h"
 
 
 namespace Albany {
 
-  class Line1DSTKMeshStruct : public GenericSTKMeshStruct {
+  class GenericSTKMeshStruct : public AbstractSTKMeshStruct {
 
-    public:
+    protected: 
+    GenericSTKMeshStruct(const Teuchos::RCP<const Epetra_Comm>& comm);
 
-    Line1DSTKMeshStruct(
-                  const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
+    void SetupMetaData(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_, const unsigned int nstates_);
+                  const unsigned int neq_, const unsigned int nstates_,
+                  const int numDim_);
 
-    ~Line1DSTKMeshStruct() {};
+    void DeclareParts(std::vector<std::string> nsNames);
 
-    private:
+    ~GenericSTKMeshStruct();
 
-    Teuchos::RCP<const Teuchos::ParameterList>
-      getValidDiscretizationParameters() const;
-
-    bool periodic;
+    Teuchos::RCP<Teuchos::ParameterList> getValidGenericSTKParameters(
+         std::string listname = "Discretization Param Names") const;
 
   };
 
 }
 
-#endif // ALBANY_LINE1D_STKMESHSTRUCT_HPP
+#endif

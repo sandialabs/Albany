@@ -18,19 +18,23 @@
 #ifndef ALBANY_CUBE3DSTKMESHSTRUCT_HPP
 #define ALBANY_CUBE3DSTKMESHSTRUCT_HPP
 
-#include "Albany_AbstractSTKMeshStruct.hpp"
+#include "Albany_GenericSTKMeshStruct.hpp"
 
 
 namespace Albany {
 
-  struct Cube3DSTKMeshStruct : public AbstractSTKMeshStruct {
+  class Cube3DSTKMeshStruct : public GenericSTKMeshStruct {
+
+    public:
 
     Cube3DSTKMeshStruct(
                   const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_, const unsigned int nstates_);
 
-    ~Cube3DSTKMeshStruct();
+    ~Cube3DSTKMeshStruct() {};
+
+    private:
 
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParameters() const;

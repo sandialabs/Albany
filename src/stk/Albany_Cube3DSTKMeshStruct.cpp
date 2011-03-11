@@ -36,23 +36,16 @@
 #include <stk_io/IossBridge.hpp>
 #endif
 
-enum { field_data_chunk_size = 1001 };
-
-
 Albany::Cube3DSTKMeshStruct::Cube3DSTKMeshStruct(
 		  const Teuchos::RCP<const Epetra_Comm>& comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params, 
                   const unsigned int neq_, const unsigned int nstates_) :
+  GenericSTKMeshStruct(comm),
   periodic(false)
 {
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
-
-  numDim = 3;
-  neq = neq_;
-  nstates = nstates_;
-
-  cubatureDegree = params->get("Cubature Degree", 3);
+  int numDim_ = 3;
 
   // Create global mesh: 3D structured, rectangular
   int nelem_x = params->get<int>("1D Elements");
@@ -83,42 +76,18 @@ Albany::Cube3DSTKMeshStruct::Cube3DSTKMeshStruct(
   Teuchos::RCP<Epetra_Map> elem_map = Teuchos::rcp(new Epetra_Map(nelem_x * nelem_y * nelem_z, 0, *comm));
   int numMyElements = elem_map->NumMyElements();
 
-  //Start STK stuff
-  metaData = new stk::mesh::MetaData(stk::mesh::fem_entity_rank_names() );
-  bulkData = new stk::mesh::BulkData(*metaData , Albany::getMpiCommFromEpetraComm(*comm) , field_data_chunk_size );
-  coordinates_field = & metaData->declare_field< VectorFieldType >( "coordinates" );
-  solution_field = & metaData->declare_field< VectorFieldType >( "solution" );
-  residual_field = & metaData->declare_field< VectorFieldType >( "residual" );
-  state_field = & metaData->declare_field< VectorFieldType >( "state" );
+  std::vector<std::string> nsNames;
+  nsNames.push_back("NodeSet0");
+  nsNames.push_back("NodeSet1");
+  nsNames.push_back("NodeSet2");
+  nsNames.push_back("NodeSet3");
+  nsNames.push_back("NodeSet4");
+  nsNames.push_back("NodeSet5");
 
-  partVec[0] = &  metaData->declare_part( "Block_1", stk::mesh::Element );
-
-  nsPartVec["NodeSet0"] = & metaData->declare_part( "NodeSet0", stk::mesh::Node );
-  nsPartVec["NodeSet1"] = & metaData->declare_part( "NodeSet1", stk::mesh::Node );
-  nsPartVec["NodeSet2"] = & metaData->declare_part( "NodeSet2", stk::mesh::Node );
-  nsPartVec["NodeSet3"] = & metaData->declare_part( "NodeSet3", stk::mesh::Node );
-  nsPartVec["NodeSet4"] = & metaData->declare_part( "NodeSet4", stk::mesh::Node );
-  nsPartVec["NodeSet5"] = & metaData->declare_part( "NodeSet5", stk::mesh::Node );
+  this->SetupMetaData(params, neq_, nstates_, numDim_);
+  this->DeclareParts(nsNames);
 
   stk::mesh::set_cell_topology< shards::Hexahedron<8> >(*partVec[0]);
-
-  stk::mesh::put_field( *coordinates_field , stk::mesh::Node , metaData->universal_part() , numDim );
-  stk::mesh::put_field( *solution_field , stk::mesh::Node , metaData->universal_part() , neq );
-  stk::mesh::put_field( *residual_field , stk::mesh::Node , metaData->universal_part() , neq );
-  if (nstates>0) stk::mesh::put_field( *state_field , stk::mesh::Element , metaData->universal_part() , nstates );
-#ifdef ALBANY_IOSS
-  stk::io::put_io_part_attribute(*partVec[0]);
-  stk::io::put_io_part_attribute(*nsPartVec["NodeSet0"]);
-  stk::io::put_io_part_attribute(*nsPartVec["NodeSet1"]);
-  stk::io::put_io_part_attribute(*nsPartVec["NodeSet2"]);
-  stk::io::put_io_part_attribute(*nsPartVec["NodeSet3"]);
-  stk::io::put_io_part_attribute(*nsPartVec["NodeSet4"]);
-  stk::io::put_io_part_attribute(*nsPartVec["NodeSet5"]);
-  stk::io::set_field_role(*coordinates_field, Ioss::Field::ATTRIBUTE);
-  stk::io::set_field_role(*solution_field, Ioss::Field::TRANSIENT);
-  stk::io::set_field_role(*residual_field, Ioss::Field::TRANSIENT);
-  if (nstates>0) stk::io::set_field_role(*state_field, Ioss::Field::TRANSIENT);
-#endif
 
   metaData->commit();
 
@@ -234,24 +203,13 @@ Albany::Cube3DSTKMeshStruct::Cube3DSTKMeshStruct(
   // STK
   bulkData->modification_end();
   useElementAsTopRank = true;
-
-  exoOutput = params->isType<string>("Exodus Output File Name");
-  if (exoOutput)
-    exoOutFile = params->get<string>("Exodus Output File Name");
 }
-
-Albany::Cube3DSTKMeshStruct::~Cube3DSTKMeshStruct()
-{
-  delete metaData;
-  delete bulkData;
-}
-
 
 Teuchos::RCP<const Teuchos::ParameterList>
 Albany::Cube3DSTKMeshStruct::getValidDiscretizationParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
-     rcp(new Teuchos::ParameterList("ValidSTK3D_DiscParams"));;
+    this->getValidGenericSTKParameters("ValidSTK3D_DiscParams");
 // AGS: 5/10: Periodic not implemented for 3D
 //  validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic a mesh");
   validPL->set<int>("1D Elements", 0, "Number of Elements in X discretization");
@@ -260,11 +218,6 @@ Albany::Cube3DSTKMeshStruct::getValidDiscretizationParameters() const
   validPL->set<double>("1D Scale", 1.0, "Width of X discretization");
   validPL->set<double>("2D Scale", 1.0, "Deptt of Y discretization");
   validPL->set<double>("3D Scale", 1.0, "Height of Z discretization");
-  validPL->set<std::string>("Exodus Output File Name", "", 
-    "Request exodus output to given file name. Requires IOSS build");
-  validPL->set<std::string>("Method", "",
-    "The discretization method, parsed in the Discretization Factory");
-  validPL->set<int>("Cubature Degree", 3, "Integration order sent to Intrepid");
 
   return validPL;
 }

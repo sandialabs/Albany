@@ -36,24 +36,17 @@
 #endif
 #include "Albany_Utils.hpp"
 
-enum { field_data_chunk_size = 1001 };
-
-
 Albany::Line1DSTKMeshStruct::Line1DSTKMeshStruct(
 		  const Teuchos::RCP<const Epetra_Comm>& comm,
 		  const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_, const unsigned int nstates_) :
-
+  GenericSTKMeshStruct(comm),
   periodic(params->get("Periodic BC", false))
 {
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
-  numDim = 1;
-  neq = neq_;
-  nstates = nstates_;
-
-  cubatureDegree = params->get("Cubature Degree", 3);
+  int numDim_ = 1;
 
   // Create global mesh
   const int nelem = params->get<int>("1D Elements");
@@ -66,36 +59,15 @@ Albany::Line1DSTKMeshStruct::Line1DSTKMeshStruct(
   Teuchos::RCP<Epetra_Map> elem_map = Teuchos::rcp(new Epetra_Map(nelem, 0, *comm));
   int numMyElements = elem_map->NumMyElements();
 
+  std::vector<std::string> nsNames;
+  nsNames.push_back("NodeSet0");
+  nsNames.push_back("NodeSet1");
 
-  //Start STK stuff, from UseCase_2 constructor
-  metaData = new stk::mesh::MetaData(stk::mesh::fem_entity_rank_names() );
-  bulkData = new stk::mesh::BulkData(*metaData , Albany::getMpiCommFromEpetraComm(*comm), field_data_chunk_size );
-  coordinates_field = & metaData->declare_field< VectorFieldType >( "coordinates" );
-  solution_field = & metaData->declare_field< VectorFieldType >( "solution" );
-  residual_field = & metaData->declare_field< VectorFieldType >( "residual" );
-  state_field = & metaData->declare_field< VectorFieldType >( "state" );
-
-  partVec[0] = &  metaData->declare_part( "Block_1", stk::mesh::Element );
-
-  nsPartVec["NodeSet0"] = & metaData->declare_part( "NodeSet0", stk::mesh::Node );
-  nsPartVec["NodeSet1"] = & metaData->declare_part( "NodeSet1", stk::mesh::Node );
+  this->SetupMetaData(params, neq_, nstates_, numDim_);
+  this->DeclareParts(nsNames);
 
   stk::mesh::set_cell_topology< shards::Line<2> >(*partVec[0]);
-  stk::mesh::put_field( *coordinates_field , stk::mesh::Node , metaData->universal_part() , numDim );
-  stk::mesh::put_field( *solution_field , stk::mesh::Node , metaData->universal_part() , neq );
-  stk::mesh::put_field( *residual_field , stk::mesh::Node , metaData->universal_part() , neq );
-  if (nstates>0) stk::mesh::put_field( *state_field , stk::mesh::Element , metaData->universal_part() , nstates );
 
-
-#ifdef ALBANY_IOSS
-  stk::io::put_io_part_attribute(*partVec[0]);
-  stk::io::put_io_part_attribute(*nsPartVec["NodeSet0"]);
-  stk::io::put_io_part_attribute(*nsPartVec["NodeSet1"]);
-  stk::io::set_field_role(*coordinates_field, Ioss::Field::ATTRIBUTE);
-  stk::io::set_field_role(*solution_field, Ioss::Field::TRANSIENT);
-  stk::io::set_field_role(*residual_field, Ioss::Field::TRANSIENT);
-  if (nstates>0) stk::io::set_field_role(*state_field, Ioss::Field::TRANSIENT);
-#endif
   metaData->commit();
 
   // Finished with metaData, now work on bulk data
@@ -143,31 +115,16 @@ Albany::Line1DSTKMeshStruct::Line1DSTKMeshStruct(
   // STK
   bulkData->modification_end();
   useElementAsTopRank = true;
-
-  exoOutput = params->isType<string>("Exodus Output File Name");
-  if (exoOutput)
-    exoOutFile = params->get<string>("Exodus Output File Name");
-}
-
-Albany::Line1DSTKMeshStruct::~Line1DSTKMeshStruct()
-{ 
-  delete metaData;
-  delete bulkData;
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
 Albany::Line1DSTKMeshStruct::getValidDiscretizationParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
-     rcp(new Teuchos::ParameterList("ValidSTK1D_DiscParams"));;
+    this->getValidGenericSTKParameters("ValidSTK1D_DiscParams");
   validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic a mesh");
   validPL->set<int>("1D Elements", 0, "Number of Elements in X discretization");
   validPL->set<double>("1D Scale", 1.0, "Width of X discretization");
-  validPL->set<std::string>("Exodus Output File Name", "",
-    "Request exodus output to given file name. Requires IOSS build");
-  validPL->set<std::string>("Method", "",
-    "The discretization method, parsed in the Discretization Factory");
-  validPL->set<int>("Cubature Degree", 3, "Integration order sent to Intrepid");
 
   return validPL;
 }

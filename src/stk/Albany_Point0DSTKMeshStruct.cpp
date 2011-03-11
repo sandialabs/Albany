@@ -36,51 +36,27 @@
 #endif
 #include "Albany_Utils.hpp"
 
-enum { field_data_chunk_size = 1001 };
-
-
 Albany::Point0DSTKMeshStruct::Point0DSTKMeshStruct(
 		  const Teuchos::RCP<const Epetra_Comm>& comm,
 		  const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_, const unsigned int nstates_) 
+                  const unsigned int neq_, const unsigned int nstates_) :
+  GenericSTKMeshStruct(comm)
 {
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
-
-  numDim = 0;
-  neq = neq_;
-  nstates = nstates_;
+  int numDim_ = 0;
 
   const int nelem = 1;
 
   // Distribute the elements equally among processors
   Teuchos::RCP<Epetra_Map> elem_map = Teuchos::rcp(new Epetra_Map(nelem, 0, *comm));
-  //int numMyElements = elem_map->NumMyElements();
 
-  //Start STK stuff, from UseCase_2 constructor
-  metaData = new stk::mesh::MetaData(stk::mesh::fem_entity_rank_names() );
-  bulkData = new stk::mesh::BulkData(*metaData , Albany::getMpiCommFromEpetraComm(*comm), field_data_chunk_size );
-  coordinates_field = & metaData->declare_field< VectorFieldType >( "coordinates" );
-  solution_field = & metaData->declare_field< VectorFieldType >( "solution" );
-  residual_field = & metaData->declare_field< VectorFieldType >( "residual" );
-  state_field = & metaData->declare_field< VectorFieldType >( "state" );
+  std::vector<std::string> nsNames;
 
-  partVec[0] = &  metaData->declare_part( "Block_1", stk::mesh::Element );
-
+  this->SetupMetaData(params, neq_, nstates_, numDim_);
+  this->DeclareParts(nsNames);
+  
   stk::mesh::set_cell_topology< shards::Particle >(*partVec[0]);
-  stk::mesh::put_field( *coordinates_field , stk::mesh::Node , metaData->universal_part() , numDim );
-  stk::mesh::put_field( *solution_field , stk::mesh::Node , metaData->universal_part() , neq );
-  stk::mesh::put_field( *residual_field , stk::mesh::Node , metaData->universal_part() , neq );
-  if (nstates>0) stk::mesh::put_field( *state_field , stk::mesh::Element , metaData->universal_part() , nstates );
-
-
-#ifdef ALBANY_IOSS
-  stk::io::put_io_part_attribute(*partVec[0]);
-  stk::io::set_field_role(*coordinates_field, Ioss::Field::ATTRIBUTE);
-  stk::io::set_field_role(*solution_field, Ioss::Field::TRANSIENT);
-  stk::io::set_field_role(*residual_field, Ioss::Field::TRANSIENT);
-  if (nstates>0) stk::io::set_field_role(*state_field, Ioss::Field::TRANSIENT);
-#endif
   metaData->commit();
 
   // Finished with metaData, now work on bulk data
@@ -100,19 +76,11 @@ Albany::Point0DSTKMeshStruct::Point0DSTKMeshStruct(
   useElementAsTopRank = true;
 }
 
-Albany::Point0DSTKMeshStruct::~Point0DSTKMeshStruct()
-{ 
-  delete metaData;
-  delete bulkData;
-}
-
 Teuchos::RCP<const Teuchos::ParameterList>
 Albany::Point0DSTKMeshStruct::getValidDiscretizationParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
-     rcp(new Teuchos::ParameterList("ValidSTK0D_DiscParams"));;
-  validPL->set<std::string>("Method", "",
-    "The discretization method, parsed in the Discretization Factory");
+    this->getValidGenericSTKParameters("ValidSTK0D_DiscParams");
 
   return validPL;
 }

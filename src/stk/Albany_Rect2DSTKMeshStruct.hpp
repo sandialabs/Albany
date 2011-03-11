@@ -18,12 +18,14 @@
 #ifndef ALBANY_RECT2DSTKMESHSTRUCT_HPP
 #define ALBANY_RECT2DSTKMESHSTRUCT_HPP
 
-#include "Albany_AbstractSTKMeshStruct.hpp"
+#include "Albany_GenericSTKMeshStruct.hpp"
 
 
 namespace Albany {
 
-  struct Rect2DSTKMeshStruct : public AbstractSTKMeshStruct {
+  class Rect2DSTKMeshStruct : public GenericSTKMeshStruct {
+
+    public: 
 
     Rect2DSTKMeshStruct(
                   const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
@@ -32,7 +34,9 @@ namespace Albany {
 
 
 
-    ~Rect2DSTKMeshStruct();
+    ~Rect2DSTKMeshStruct() {};
+
+    private: 
 
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParameters() const;
