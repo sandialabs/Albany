@@ -1,3 +1,5 @@
+#include <boost/tuple/tuple.hpp>
+
 //
 // First cut of LCM small tensor utilities.
 //
@@ -756,6 +758,204 @@ namespace LCM {
     }
 
     return os;
+  }
+
+  //
+  // Left polar decomposition
+  //
+  template<typename ScalarT>
+  std::pair<Tensor<ScalarT>,Tensor<ScalarT> >
+  polarL(Tensor<ScalarT> const & F)
+  {
+    // set up return tensors
+    Tensor<ScalarT> R;
+    Tensor<ScalarT> V;
+
+    // compute spd tensor
+    Tensor<ScalarT> b(F*transpose(F));
+
+    // get eigenvalues/eigenvectors
+    Tensor<ScalarT> eVal;
+    Tensor<ScalarT> eVec;
+    
+    boost::tie(eVal,eVec) = polarL(b);
+    
+
+    return std::make_pair(V,R);
+  }
+
+  //
+  // Right polar decomposition
+  //
+  template<typename ScalarT>
+  std::pair<Tensor<ScalarT>,Tensor<ScalarT> >
+  polarR(Tensor<ScalarT> const & F)
+  {
+    Tensor<ScalarT> R;
+    Tensor<ScalarT> U;
+
+    
+
+    return std::make_pair(R,U);
+  }
+
+  //
+  // Eigenvalue decomposition for SPD 2nd order tensor
+  //
+  template<typename ScalarT>
+  std::pair<Tensor<ScalarT>,Tensor<ScalarT> >
+  eig_spd(Tensor<ScalarT> const & A)
+  {
+    ScalarT pi = 3.14159265358979323846;
+
+    Tensor<ScalarT> D = zero<ScalarT>();
+    Tensor<ScalarT> V = zero<ScalarT>();
+
+    const Tensor<ScalarT> I(identity<ScalarT>());
+    const Vector<ScalarT> e0(1.0, 0.0, 0.0);
+    const Vector<ScalarT> e1(0.0, 1.0, 0.0);
+    const Vector<ScalarT> e2(0.0, 0.0, 1.0);
+    const int ii[3][2] = { 1, 2, 2, 0, 0, 1 };
+
+    std::cout << "checking ii: \n";
+    std::cout << ii[0][0] << " " << ii[0][1] << "\n";
+    std::cout << ii[1][0] << " " << ii[1][1] << "\n";
+    std::cout << ii[2][0] << " " << ii[2][1] << "\n";
+
+    ScalarT trA = (1.0/3.0)*I1(A);
+    Tensor<ScalarT> Ap(A - trA*I);
+
+    ScalarT J2 = I2(Ap);
+    ScalarT J3 = det(Ap);
+
+    std::cout << "J2: " << J2 << std::endl;
+    std::cout << "J3: " << J3 << std::endl;
+
+    if (-J2 <= 1.e-30)
+    {
+      D(0,0) = trA;
+      D(1,1) = trA;
+      D(2,2) = trA;
+
+      V(0,0) = 1.0;
+      V(1,0) = 0.0;
+      V(2,0) = 0.0;
+      
+      V(0,1) = 0.0;
+      V(1,1) = 1.0;
+      V(2,1) = 0.0;
+      
+      V(0,2) = 0.0;
+      V(1,2) = 0.0;
+      V(2,2) = 1.0;
+    }
+    else
+    {
+      // first things first, find the most dominant e-value
+      // Need to solve cos(3 theta)=rhs for theta
+      ScalarT rhs = (-J3/2.0)*pow(3.0/-J2,1.5);
+      ScalarT theta = pi/2*(1.0 - (rhs < 0 ? -1.0 : 1.0));
+      if (abs(rhs) <= 1.0) theta = acos(rhs);
+      ScalarT thetad3 = theta/3.0;
+      if (thetad3 > pi/6) thetad3 += 2.0*pi/3.0;
+
+      // most dominant e-value
+      D(0,0) = 2.0*cos(thetad3)*sqrt(-J2/3.0);
+
+      std::cout << "D(0,0): " << D(0,0) << std::endl;
+      std::cout << "rhs   : " << rhs << std::endl;
+      std::cout << "theta : " << theta << std::endl;
+      std::cout << "thd3  : " << thetad3 << std::endl;
+      
+
+      // now find the e-vector associated with the most dominant e-value
+      Tensor<ScalarT> R = Ap - D(0,0)*I;
+
+      // QR factorization with column pivoting
+      Tensor<ScalarT> RtR = transpose(R)*R;
+      
+      // find the largest vector
+      Vector<ScalarT> a;
+      a(0) = e0*RtR*e0;
+      a(1) = e1*RtR*e1;
+      a(2) = e2*RtR*e2;
+      
+      int k = 0;
+      ScalarT max = a(0);
+      if (a(1) > max) 
+      {
+	k = 1;
+	max = a(1);
+      }
+      if (a(2) > max)
+      {
+	k = 2;
+      }
+
+      // normalize
+      a(k) = sqrt(a(k));
+      for (int i(0); i < 3; ++i)
+	RtR(i,k) /= a(k);
+      
+
+      ScalarT d0 = 0.0;
+      ScalarT d1 = 0.0;
+      // dot products
+      for (int i(0); i < 3; ++i)
+      {
+	d0 += RtR(i,k)*RtR(i,ii[k][0]);
+	d1 += RtR(i,k)*RtR(i,ii[k][1]);
+      }
+
+      for (int i(0); i < 3; ++i)
+      {
+	RtR(i,ii[k][0]) -= d0*RtR(i,k);
+	RtR(i,ii[k][1]) -= d1*RtR(i,k);
+      }
+
+      a(0) = 0.0;
+      a(1) = 0.0;
+      for (int i(0); i < 3; ++i)
+      {
+	a(0) += RtR(i,ii[k][0])*RtR(i,ii[k][0]);
+	a(1) += RtR(i,ii[k][1])*RtR(i,ii[k][1]);
+      }
+      
+      int p = 0;
+      if (abs(a(0)) > abs(a(1))) p = 1;
+
+      // normalize
+      a(p) = sqrt(a(p));
+      int k2 = ii[k][p];
+
+      for (int i(0); i < 3; ++i)
+	RtR(i,k2) /= a(p);
+
+      // set first eigenvector
+      V(0,0) = RtR(1,k)*RtR(2,k2) - RtR(2,k)*RtR(1,k2);
+      V(1,0) = RtR(2,k)*RtR(0,k2) - RtR(0,k)*RtR(2,k2);
+      V(2,0) = RtR(0,k)*RtR(1,k2) - RtR(1,k)*RtR(0,k2);
+
+      ScalarT mag = sqrt(V(0,0)*V(0,0) + V(1,0)*V(1,0) + V(2,0)*V(2,0));
+      V(0,0) /= mag;
+      V(1,0) /= mag;
+      V(2,0) /= mag;
+
+      // now for the other two eigenvalues
+      Vector<ScalarT> rk(RtR(0,k), RtR(1,k), RtR(2,k));
+      Vector<ScalarT> rk2(RtR(0,k2), RtR(1,k2), RtR(2,k2));
+
+      Vector<ScalarT> ak  = Ap*rk;
+      Vector<ScalarT> ak2 = Ap*rk2;
+
+      
+
+      // add back in the offset
+      for (int i(0); i < 3; ++i)
+	D(i,i) += trA;
+    }
+
+    return std::make_pair(V,D);
   }
 
 } // namespace LCM

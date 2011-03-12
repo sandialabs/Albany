@@ -403,6 +403,21 @@ namespace LCM {
   ScalarT
   I3(Tensor<ScalarT> const & A);
 
+  // Left polar decomposition
+  template<typename ScalarT>
+  std::pair<Tensor<ScalarT>,Tensor<ScalarT> >
+  polarL(Tensor<ScalarT> const & F);
+
+  // Right polar decomposition
+  template<typename ScalarT>
+  std::pair<Tensor<ScalarT>,Tensor<ScalarT> >
+  polarR(Tensor<ScalarT> const & F);
+
+  // Eigenvalue decomposition for SPD 2nd order tensor
+  template<typename ScalarT>
+  std::pair<Tensor<ScalarT>,Tensor<ScalarT> >
+  eig_spd(Tensor<ScalarT> const & A);
+
   // Exponential map using Taylor series
   template<typename ScalarT>
   Tensor<ScalarT>
