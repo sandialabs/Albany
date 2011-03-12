@@ -816,11 +816,12 @@ namespace LCM {
     const Vector<ScalarT> e1(0.0, 1.0, 0.0);
     const Vector<ScalarT> e2(0.0, 0.0, 1.0);
     const int ii[3][2] = { 1, 2, 2, 0, 0, 1 };
+    ScalarT rm[2][2] = { 0.0, 0.0, 0.0, 0.0 };
 
-    std::cout << "checking ii: \n";
-    std::cout << ii[0][0] << " " << ii[0][1] << "\n";
-    std::cout << ii[1][0] << " " << ii[1][1] << "\n";
-    std::cout << ii[2][0] << " " << ii[2][1] << "\n";
+//     std::cout << "checking ii: \n";
+//     std::cout << ii[0][0] << " " << ii[0][1] << "\n";
+//     std::cout << ii[1][0] << " " << ii[1][1] << "\n";
+//     std::cout << ii[2][0] << " " << ii[2][1] << "\n";
 
     ScalarT trA = (1.0/3.0)*I1(A);
     Tensor<ScalarT> Ap(A - trA*I);
@@ -828,8 +829,8 @@ namespace LCM {
     ScalarT J2 = I2(Ap);
     ScalarT J3 = det(Ap);
 
-    std::cout << "J2: " << J2 << std::endl;
-    std::cout << "J3: " << J3 << std::endl;
+//     std::cout << "J2: " << J2 << std::endl;
+//     std::cout << "J3: " << J3 << std::endl;
 
     if (-J2 <= 1.e-30)
     {
@@ -853,32 +854,42 @@ namespace LCM {
     {
       // first things first, find the most dominant e-value
       // Need to solve cos(3 theta)=rhs for theta
-      ScalarT rhs = (-J3/2.0)*pow(3.0/-J2,1.5);
-      ScalarT theta = pi/2*(1.0 - (rhs < 0 ? -1.0 : 1.0));
+      ScalarT rhs = (J3/2.0)*pow(3.0/-J2,1.5);
+      ScalarT theta = pi/2.0*(1.0 - (rhs < 0 ? -1.0 : 1.0));
       if (abs(rhs) <= 1.0) theta = acos(rhs);
       ScalarT thetad3 = theta/3.0;
-      if (thetad3 > pi/6) thetad3 += 2.0*pi/3.0;
+      if (thetad3 > pi/6.0) thetad3 += 2.0*pi/3.0;
 
       // most dominant e-value
       D(0,0) = 2.0*cos(thetad3)*sqrt(-J2/3.0);
 
-      std::cout << "D(0,0): " << D(0,0) << std::endl;
-      std::cout << "rhs   : " << rhs << std::endl;
-      std::cout << "theta : " << theta << std::endl;
-      std::cout << "thd3  : " << thetad3 << std::endl;
-      
+//       std::cout << "D(0,0): " << D(0,0) << std::endl;
+//       std::cout << "rhs   : " << rhs << std::endl;
+//       std::cout << "theta : " << theta << std::endl;
+//       std::cout << "thd3  : " << thetad3 << std::endl;
+//       std::cout << "2*cos(thd3)  : " << 2.0*cos(thetad3) << std::endl;
+//       std::cout << "sqrt(-J2/3.0)  : " << sqrt(-J2/3.0) << std::endl;
 
       // now find the e-vector associated with the most dominant e-value
       Tensor<ScalarT> R = Ap - D(0,0)*I;
 
+//       std::cout << "R:\n";
+//       std::cout << R;
+
       // QR factorization with column pivoting
       Tensor<ScalarT> RtR = transpose(R)*R;
       
+//       std::cout << "RtR:\n";
+//       std::cout << RtR;
+
       // find the largest vector
       Vector<ScalarT> a;
       a(0) = e0*RtR*e0;
       a(1) = e1*RtR*e1;
       a(2) = e2*RtR*e2;
+
+//       std::cout << "a:\n";
+//       std::cout << a;
       
       int k = 0;
       ScalarT max = a(0);
@@ -892,63 +903,138 @@ namespace LCM {
 	k = 2;
       }
 
+//       std::cout << "max: " << max << ", k: " << k << std::endl;
       // normalize
       a(k) = sqrt(a(k));
       for (int i(0); i < 3; ++i)
-	RtR(i,k) /= a(k);
+	R(i,k) /= a(k);
       
+//       std::cout << "R:\n";
+//       std::cout << R;
 
       ScalarT d0 = 0.0;
       ScalarT d1 = 0.0;
       // dot products
+//       std::cout << "ii[k][0]: " << ii[k][0] << std::endl;
+//       std::cout << "ii[k][1]: " << ii[k][1] << std::endl;
       for (int i(0); i < 3; ++i)
       {
-	d0 += RtR(i,k)*RtR(i,ii[k][0]);
-	d1 += RtR(i,k)*RtR(i,ii[k][1]);
+	d0 += R(i,k)*R(i,ii[k][0]);
+	d1 += R(i,k)*R(i,ii[k][1]);
       }
+
+//       std::cout << "d0: " << d0 << ", d1: " << d1 << std::endl;
 
       for (int i(0); i < 3; ++i)
       {
-	RtR(i,ii[k][0]) -= d0*RtR(i,k);
-	RtR(i,ii[k][1]) -= d1*RtR(i,k);
+	R(i,ii[k][0]) -= d0*R(i,k);
+	R(i,ii[k][1]) -= d1*R(i,k);
       }
 
-      a(0) = 0.0;
-      a(1) = 0.0;
+//       std::cout << "R:\n";
+//       std::cout << R;
+
+      a.clear();
+//       std::cout << "a:\n";
+//       std::cout << a;
       for (int i(0); i < 3; ++i)
       {
-	a(0) += RtR(i,ii[k][0])*RtR(i,ii[k][0]);
-	a(1) += RtR(i,ii[k][1])*RtR(i,ii[k][1]);
+	a(0) += R(i,ii[k][0])*R(i,ii[k][0]);
+	a(1) += R(i,ii[k][1])*R(i,ii[k][1]);
       }
       
+//       std::cout << "a:\n";
+//       std::cout << a;
+
       int p = 0;
-      if (abs(a(0)) > abs(a(1))) p = 1;
+      if (abs(a(1)) > abs(a(0))) p = 1;
 
       // normalize
       a(p) = sqrt(a(p));
       int k2 = ii[k][p];
 
       for (int i(0); i < 3; ++i)
-	RtR(i,k2) /= a(p);
+	R(i,k2) /= a(p);
 
       // set first eigenvector
-      V(0,0) = RtR(1,k)*RtR(2,k2) - RtR(2,k)*RtR(1,k2);
-      V(1,0) = RtR(2,k)*RtR(0,k2) - RtR(0,k)*RtR(2,k2);
-      V(2,0) = RtR(0,k)*RtR(1,k2) - RtR(1,k)*RtR(0,k2);
+      V(0,0) = R(1,k)*R(2,k2) - R(2,k)*R(1,k2);
+      V(1,0) = R(2,k)*R(0,k2) - R(0,k)*R(2,k2);
+      V(2,0) = R(0,k)*R(1,k2) - R(1,k)*R(0,k2);
 
       ScalarT mag = sqrt(V(0,0)*V(0,0) + V(1,0)*V(1,0) + V(2,0)*V(2,0));
       V(0,0) /= mag;
       V(1,0) /= mag;
       V(2,0) /= mag;
 
+//       std::cout << "k: " << k << ", k2: " << k2 << std::endl;
+//       std::cout << "R:\n";
+//       std::cout << R;
+
       // now for the other two eigenvalues
-      Vector<ScalarT> rk(RtR(0,k), RtR(1,k), RtR(2,k));
-      Vector<ScalarT> rk2(RtR(0,k2), RtR(1,k2), RtR(2,k2));
+      Vector<ScalarT> rk(R(0,k), R(1,k), R(2,k));
+      Vector<ScalarT> rk2(R(0,k2), R(1,k2), R(2,k2));
+
+//       std::cout << "rk:\n";
+//       std::cout << rk;
+//       std::cout << "rk2:\n";
+//       std::cout << rk2;
 
       Vector<ScalarT> ak  = Ap*rk;
       Vector<ScalarT> ak2 = Ap*rk2;
 
-      
+//       std::cout << "ak:\n";
+//       std::cout << ak;
+//       std::cout << "ak2:\n";
+//       std::cout << ak2;
+
+      rm[0][0] = dot(rk,ak);
+      rm[0][1] = dot(rk,ak2);
+      rm[1][1] = dot(rk2,ak2);
+
+      ScalarT b = 0.5*(rm[0][0] - rm[1][1]);
+      ScalarT fac = (b < 0 ? -1.0 : 1.0);
+      D(1,1) = rm[1][1] + b - fac*sqrt(b*b+rm[0][1]*rm[0][1]);
+      D(2,2) = rm[0][0] + rm[1][1] - D(1,1);
+
+//       std::cout << "b: " << b << std::endl;
+//       std::cout << "fac: " << fac << std::endl;
+//       std::cout << "rm[0][0]: " << rm[0][0] << std::endl;
+//       std::cout << "rm[0][1]: " << rm[0][1] << std::endl;
+//       std::cout << "rm[1][1]: " << rm[1][1] << std::endl;
+
+      rm[0][0] -= D(1,1);
+      rm[1][0] = rm[0][1];
+      rm[1][1] -= D(1,1);
+
+      a.clear();
+      a(0) = rm[0][0]*rm[0][0] + rm[0][1]*rm[0][1];
+      a(1) = rm[0][1]*rm[0][1] + rm[1][1]*rm[1][1];
+
+      int k3 = 0;
+      if ( a(1) > a(0) ) k3 = 1;
+      if ( a(k3) == 0.0 )
+      {
+	rm[0][k3] = 1.0;
+	rm[1][k3] = 0.0;
+      }
+
+      V(0,1) = rm[0][k3]*rk2(0) - rm[1][k3]*rk(0);
+      V(1,1) = rm[0][k3]*rk2(1) - rm[1][k3]*rk(1);
+      V(2,1) = rm[0][k3]*rk2(2) - rm[1][k3]*rk(2);
+
+      mag = sqrt(V(0,1)*V(0,1) + V(1,1)*V(1,1) + V(2,1)*V(2,1));
+      V(0,1) /= mag;
+      V(1,1) /= mag;
+      V(2,1) /= mag;
+
+      V(0,2) = V(1,0)*V(2,1) - V(2,0)*V(1,1);
+      V(1,2) = V(2,0)*V(0,1) - V(0,0)*V(2,1);
+      V(2,2) = V(0,0)*V(1,1) - V(1,0)*V(0,1);
+
+      mag = sqrt(V(0,2)*V(0,2) + V(1,2)*V(1,2) + V(2,2)*V(2,2));
+      V(0,2) /= mag;
+      V(1,2) /= mag;
+      V(2,2) /= mag;
 
       // add back in the offset
       for (int i(0); i < 3; ++i)
