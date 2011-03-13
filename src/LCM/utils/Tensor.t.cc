@@ -771,15 +771,30 @@ namespace LCM {
     Tensor<ScalarT> R;
     Tensor<ScalarT> V;
 
+    // temp
+    Tensor<ScalarT> Vinv;
+
     // compute spd tensor
-    Tensor<ScalarT> b(F*transpose(F));
+    Tensor<ScalarT> b = F*transpose(F);
 
     // get eigenvalues/eigenvectors
     Tensor<ScalarT> eVal;
     Tensor<ScalarT> eVec;
     
-    boost::tie(eVal,eVec) = polarL(b);
+    boost::tie(eVal,eVec) = eig_spd(b);
     
+    Tensor<ScalarT> x = zero<ScalarT>();
+    x(0,0) = sqrt(eVal(0,0));
+    x(1,1) = sqrt(eVal(1,1));
+    x(2,2) = sqrt(eVal(2,2));
+    Tensor<ScalarT> xi = zero<ScalarT>();
+    xi(0,0) = 1.0/x(0,0);
+    xi(1,1) = 1.0/x(1,1);
+    xi(2,2) = 1.0/x(2,2);
+
+    V = eVal*x*transpose(eVal);
+    Vinv = eVal*xi*transpose(eVal);
+    R = Vinv*F;
 
     return std::make_pair(V,R);
   }
@@ -794,8 +809,31 @@ namespace LCM {
     Tensor<ScalarT> R;
     Tensor<ScalarT> U;
 
-    
+    // temp
+    Tensor<ScalarT> Uinv;
 
+    // compute spd tensor
+    Tensor<ScalarT> C = transpose(F)*F;
+
+    // get eigenvalues/eigenvectors
+    Tensor<ScalarT> eVal;
+    Tensor<ScalarT> eVec;
+    
+    boost::tie(eVal,eVec) = eig_spd(C);
+    
+    Tensor<ScalarT> x = zero<ScalarT>();
+    x(0,0) = sqrt(eVal(0,0));
+    x(1,1) = sqrt(eVal(1,1));
+    x(2,2) = sqrt(eVal(2,2));
+    Tensor<ScalarT> xi = zero<ScalarT>();
+    xi(0,0) = 1.0/x(0,0);
+    xi(1,1) = 1.0/x(1,1);
+    xi(2,2) = 1.0/x(2,2);
+
+    U = eVal*x*transpose(eVal);
+    Uinv = eVal*xi*transpose(eVal);
+    R = F*Uinv;
+    
     return std::make_pair(R,U);
   }
 
