@@ -63,7 +63,7 @@ int main(int ac, char* av[])
   // The tests
   //
   int PassedTestCount = 0;
-  const int TotalTests = 7;
+  const int TotalTests = 8;
   bool passed = false;
 
   //
@@ -235,6 +235,35 @@ int main(int ac, char* av[])
       std::cout << A << std::endl;
       std::cout << B << std::endl;
       std::cout << C << std::endl;
+  }
+
+  //
+  // Test 8
+  //
+  A = LCM::eye<ScalarT>();
+  A(0,1) = 0.1;
+  A(1,0) = 0.1;
+  LCM::Tensor<ScalarT> eVec;
+  LCM::Tensor<ScalarT> eVal;
+  boost::tie(eVec,eVal) = LCM::eig_spd(A);
+
+  passed = (std::abs(eVal(0,0) - 1.0) <= std::numeric_limits<ScalarT>::epsilon());
+  passed = passed && (std::abs(eVal(1,1) - 0.9) <= std::numeric_limits<ScalarT>::epsilon());
+  passed = passed && (std::abs(eVal(2,2) - 1.1) <= std::numeric_limits<ScalarT>::epsilon());
+
+  if (passed == true) {
+    PassedTestCount++;
+  }
+
+  if(verbose || debug) {
+    std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
+      std::cout << std::endl;
+  }
+
+  if(matlab) {
+      std::cout << A << std::endl;
+      std::cout << eVec << std::endl;
+      std::cout << eVal << std::endl;
   }
 
   return 0;
