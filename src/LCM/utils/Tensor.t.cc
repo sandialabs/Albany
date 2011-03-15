@@ -765,7 +765,7 @@ namespace LCM {
   //
   template<typename ScalarT>
   std::pair<Tensor<ScalarT>,Tensor<ScalarT> >
-  polarL(Tensor<ScalarT> const & F)
+  polar_left(Tensor<ScalarT> const & F)
   {
     // set up return tensors
     Tensor<ScalarT> R;
@@ -810,7 +810,7 @@ namespace LCM {
   //
   template<typename ScalarT>
   std::pair<Tensor<ScalarT>,Tensor<ScalarT> >
-  polarR(Tensor<ScalarT> const & F)
+  polar_right(Tensor<ScalarT> const & F)
   {
     Tensor<ScalarT> R;
     Tensor<ScalarT> U;
@@ -860,8 +860,8 @@ namespace LCM {
     Tensor<ScalarT> V = zero<ScalarT>();
 
     const Tensor<ScalarT> I(identity<ScalarT>());
-    const int ii[3][2] = { 1, 2, 2, 0, 0, 1 };
-    ScalarT rm[2][2] = { 0.0, 0.0, 0.0, 0.0 };
+    int ii[3][2] = { { 1, 2 }, { 2, 0 }, { 0, 1 } } ;
+    ScalarT rm[2][2] = { { 0.0, 0.0 }, { 0.0, 0.0 } };
 
     ScalarT trA = (1.0/3.0)*I1(A);
     Tensor<ScalarT> Ap(A - trA*I);
@@ -891,7 +891,8 @@ namespace LCM {
     {
       // first things first, find the most dominant e-value
       // Need to solve cos(3 theta)=rhs for theta
-      ScalarT rhs = (J3/2.0)*pow(3.0/-J2,1.5);
+      ScalarT t1 = 3.0/-J2;
+      ScalarT rhs = (J3/2.0)*sqrt(t1*t1*t1);
       ScalarT theta = pi/2.0*(1.0 - (rhs < 0 ? -1.0 : 1.0));
       if (std::abs(rhs) <= 1.0) theta = acos(rhs);
       ScalarT thetad3 = theta/3.0;

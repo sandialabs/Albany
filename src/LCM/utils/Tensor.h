@@ -406,12 +406,12 @@ namespace LCM {
   // Left polar decomposition
   template<typename ScalarT>
   std::pair<Tensor<ScalarT>,Tensor<ScalarT> >
-  polarL(Tensor<ScalarT> const & F);
+  polar_left(Tensor<ScalarT> const & F);
 
   // Right polar decomposition
   template<typename ScalarT>
   std::pair<Tensor<ScalarT>,Tensor<ScalarT> >
-  polarR(Tensor<ScalarT> const & F);
+  polar_right(Tensor<ScalarT> const & F);
 
   // Eigenvalue decomposition for SPD 2nd order tensor
   template<typename ScalarT>

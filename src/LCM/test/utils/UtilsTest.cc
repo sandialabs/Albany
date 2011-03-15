@@ -63,7 +63,7 @@ int main(int ac, char* av[])
   // The tests
   //
   int PassedTestCount = 0;
-  const int TotalTests = 8;
+  const int TotalTests = 9;
   bool passed = false;
 
   //
@@ -264,6 +264,43 @@ int main(int ac, char* av[])
       std::cout << A << std::endl;
       std::cout << eVec << std::endl;
       std::cout << eVal << std::endl;
+  }
+
+  //
+  // Test 9
+  //
+  LCM::Tensor<ScalarT> V0(1.1, 0.2, 0.0,
+			  0.2, 1.0, 0.0,
+			  0.0, 0.0, 1.2);
+  LCM::Tensor<ScalarT> R0(sqrt(2)/2, -sqrt(2)/2, 0.0,
+			  sqrt(2)/2,  sqrt(2)/2, 0.0,
+			  0.0,        0.0,       1.0);
+
+  LCM::Tensor<ScalarT> F = V0*R0;
+  LCM::Tensor<ScalarT> V;
+  LCM::Tensor<ScalarT> R;
+  boost::tie(V,R) = LCM::polar_left(F);
+
+  passed = (LCM::norm(V-V0) <= 10*std::numeric_limits<ScalarT>::epsilon());
+  passed = passed && (LCM::norm(R-R0) <= std::numeric_limits<ScalarT>::epsilon());
+
+  if (passed == true) {
+    PassedTestCount++;
+  }
+
+  if(verbose || debug) {
+    std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
+      std::cout << std::endl;
+  }
+
+  if(matlab) {
+      std::cout << F << std::endl;
+      std::cout << V0 << std::endl;
+      std::cout << V << std::endl;
+      std::cout << R0 << std::endl;
+      std::cout << R << std::endl;
+      std::cout << LCM::norm(V-V0) << std::endl;
+     std::cout << LCM::norm(R-R0) << std::endl;
   }
 
   return 0;
