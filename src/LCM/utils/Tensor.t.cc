@@ -771,20 +771,18 @@ namespace LCM {
     Tensor<ScalarT> R;
     Tensor<ScalarT> V;
 
-    // temp
+    // temporary tensor used to compute R
     Tensor<ScalarT> Vinv;
 
     // compute spd tensor
     Tensor<ScalarT> b = F*transpose(F);
 
-//     std::cout << "b: \n" << b;
-
     // get eigenvalues/eigenvectors
     Tensor<ScalarT> eVal;
     Tensor<ScalarT> eVec;
-    
     boost::tie(eVec,eVal) = eig_spd(b);
     
+    // compute sqrt() and inv(sqrt()) of eigenvalues
     Tensor<ScalarT> x = zero<ScalarT>();
     x(0,0) = sqrt(eVal(0,0));
     x(1,1) = sqrt(eVal(1,1));
@@ -794,13 +792,10 @@ namespace LCM {
     xi(1,1) = 1.0/x(1,1);
     xi(2,2) = 1.0/x(2,2);
 
-    Vector<ScalarT> v0(eVec(0,0), eVec(1,0), eVec(2,0));
-    Vector<ScalarT> v1(eVec(0,1), eVec(1,1), eVec(2,1));
-    Vector<ScalarT> v2(eVec(0,2), eVec(1,2), eVec(2,2));
-
-    V    = x(0,0)*dyad(v0,v0)  + x(1,1)*dyad(v1,v1)  + x(2,2)*dyad(v2,v2); 
-    Vinv = xi(0,0)*dyad(v0,v0) + xi(1,1)*dyad(v1,v1) + xi(2,2)*dyad(v2,v2); 
-    R = Vinv*F;
+    // compute V, Vinv, and R
+    V    = eVec*x*transpose(eVec);
+    Vinv = eVec*xi*transpose(eVec);
+    R    = Vinv*F;
 
     return std::make_pair(V,R);
   }
@@ -815,7 +810,7 @@ namespace LCM {
     Tensor<ScalarT> R;
     Tensor<ScalarT> U;
 
-    // temp
+    // temporary tensor used to compute R
     Tensor<ScalarT> Uinv;
 
     // compute spd tensor
@@ -824,9 +819,9 @@ namespace LCM {
     // get eigenvalues/eigenvectors
     Tensor<ScalarT> eVal;
     Tensor<ScalarT> eVec;
-    
     boost::tie(eVec,eVal) = eig_spd(C);
     
+    // compute sqrt() and inv(sqrt()) of eigenvalues
     Tensor<ScalarT> x = zero<ScalarT>();
     x(0,0) = sqrt(eVal(0,0));
     x(1,1) = sqrt(eVal(1,1));
@@ -836,13 +831,10 @@ namespace LCM {
     xi(1,1) = 1.0/x(1,1);
     xi(2,2) = 1.0/x(2,2);
 
-    Vector<ScalarT> v0(eVec(0,0), eVec(1,0), eVec(2,0));
-    Vector<ScalarT> v1(eVec(0,1), eVec(1,1), eVec(2,1));
-    Vector<ScalarT> v2(eVec(0,2), eVec(1,2), eVec(2,2));
-
-    U    = x(0,0)*dyad(v0,v0)  + x(1,1)*dyad(v1,v1)  + x(2,2)*dyad(v2,v2); 
-    Uinv = xi(0,0)*dyad(v0,v0) + xi(1,1)*dyad(v1,v1) + xi(2,2)*dyad(v2,v2); 
-    R = F*Uinv;
+    // compute U, Uinv, and R
+    U    = eVec*x*transpose(eVec);
+    Uinv = eVec*xi*transpose(eVec);
+    R    = F*Uinv;
     
     return std::make_pair(R,U);
   }
@@ -854,21 +846,32 @@ namespace LCM {
   std::pair<Tensor<ScalarT>,Tensor<ScalarT> >
   eig_spd(Tensor<ScalarT> const & A)
   {
-    ScalarT pi = 3.14159265358979323846;
+    // This algorithm comes from the journal article
+    // Scherzinger and Dohrmann, CMAME 197 (2008) 4007-4015
 
+
+    // this algorithm will return the eigenvalues in D
+    // and the eigenvectors in V
     Tensor<ScalarT> D = zero<ScalarT>();
     Tensor<ScalarT> V = zero<ScalarT>();
 
+    // not sure if this is necessary...
+    ScalarT pi = 3.14159265358979323846;
+ 
+    // convenience operators
     const Tensor<ScalarT> I(identity<ScalarT>());
     int ii[3][2] = { { 1, 2 }, { 2, 0 }, { 0, 1 } } ;
     ScalarT rm[2][2] = { { 0.0, 0.0 }, { 0.0, 0.0 } };
 
+    // scale the matrix to reduce the characteristic equation
     ScalarT trA = (1.0/3.0)*I1(A);
     Tensor<ScalarT> Ap(A - trA*I);
 
+    // compute other invariants
     ScalarT J2 = I2(Ap);
     ScalarT J3 = det(Ap);
 
+    // deal with volumetric tensors
     if (-J2 <= 1.e-30)
     {
       D(0,0) = trA;
@@ -901,33 +904,16 @@ namespace LCM {
       // most dominant e-value
       D(2,2) = 2.0*cos(thetad3)*sqrt(-J2/3.0);
 
-
-//       std::cout << "rhs   : " << rhs << std::endl;
-//       std::cout << "theta : " << theta << std::endl;
-//       std::cout << "thd3  : " << thetad3 << std::endl;
-//       std::cout << "2*cos(thd3)  : " << 2.0*cos(thetad3) << std::endl;
-//       std::cout << "sqrt(-J2/3.0)  : " << sqrt(-J2/3.0) << std::endl;
-
-//       std::cout << "D(2,2): " << D(2,2) << std::endl;
-//       std::cout << "lam 1 : " << D(2,2) + trA << std::endl;
-      // now find the e-vector associated with the most dominant e-value
+      // now reduce the system
       Tensor<ScalarT> R = Ap - D(2,2)*I;
 
-//       std::cout << "R:\n";
-//       std::cout << R;
-
       // QR factorization with column pivoting
-
-      // find the largest vector
       Vector<ScalarT> a;
-      
       a(0) = R(0,0)*R(0,0) + R(1,0)*R(1,0) + R(2,0)*R(2,0);
       a(1) = R(0,1)*R(0,1) + R(1,1)*R(1,1) + R(2,1)*R(2,1);
       a(2) = R(0,2)*R(0,2) + R(1,2)*R(1,2) + R(2,2)*R(2,2);
 
-//       std::cout << "a:\n";
-//       std::cout << a;
-      
+      // find the most dominant column
       int k = 0;
       ScalarT max = a(0);
       if (a(1) > max) 
@@ -940,37 +926,28 @@ namespace LCM {
 	k = 2;
       }
 
-//       std::cout << "max: " << max << ", k: " << k << std::endl;
-      // normalize
+      // normalize the most dominant column to get s1
       a(k) = sqrt(a(k));
       for (int i(0); i < 3; ++i)
 	R(i,k) /= a(k);
-      
-//       std::cout << "R:\n";
-//       std::cout << R;
 
+      // dot products of dominant column with other two columns
       ScalarT d0 = 0.0;
       ScalarT d1 = 0.0;
-      // dot products
-//        std::cout << "ii[k][0]: " << ii[k][0] << std::endl;
-//        std::cout << "ii[k][1]: " << ii[k][1] << std::endl;
       for (int i(0); i < 3; ++i)
       {
 	d0 += R(i,k)*R(i,ii[k][0]);
 	d1 += R(i,k)*R(i,ii[k][1]);
       }
 
-//       std::cout << "d0: " << d0 << ", d1: " << d1 << std::endl;
-
+      // projection
       for (int i(0); i < 3; ++i)
       {
 	R(i,ii[k][0]) -= d0*R(i,k);
 	R(i,ii[k][1]) -= d1*R(i,k);
       }
 
-//       std::cout << "R:\n";
-//       std::cout << R;
-
+      // now finding next most dominant column
       a.clear();
       for (int i(0); i < 3; ++i)
       {
@@ -978,80 +955,53 @@ namespace LCM {
 	a(1) += R(i,ii[k][1])*R(i,ii[k][1]);
       }
       
-//       std::cout << "a:\n";
-//       std::cout << a;
-
       int p = 0;
       if (std::abs(a(1)) > std::abs(a(0))) p = 1;
 
-//       std::cout << "abs(a(1)): " << std::abs(a(1)) << std::endl;
-//       std::cout << "abs(a(0)): " << std::abs(a(0)) << std::endl;
-//       std::cout << "p: " << p << std::endl;
-
-      // normalize
+      // normalize next most dominant column to get s2
       a(p) = sqrt(a(p));
       int k2 = ii[k][p];
 
       for (int i(0); i < 3; ++i)
 	R(i,k2) /= a(p);
 
-//       std::cout << "R:\n";
-//       std::cout << R;
-
-      // set first eigenvector
+      // set first eigenvector as cross product of s1 and s2
       V(0,2) = R(1,k)*R(2,k2) - R(2,k)*R(1,k2);
       V(1,2) = R(2,k)*R(0,k2) - R(0,k)*R(2,k2);
       V(2,2) = R(0,k)*R(1,k2) - R(1,k)*R(0,k2);
 
+      // normalize
       ScalarT mag = sqrt(V(0,2)*V(0,2) + V(1,2)*V(1,2) + V(2,2)*V(2,2));
       V(0,2) /= mag;
       V(1,2) /= mag;
       V(2,2) /= mag;
 
-//       std::cout << "k: " << k << ", k2: " << k2 << std::endl;
-//       std::cout << "R:\n";
-//       std::cout << R;
-
-//       std::cout << "V:\n";
-//       std::cout << V;
-
-
-      // now for the other two eigenvalues
+      // now for the other two eigenvalues, extract vectors
       Vector<ScalarT> rk(R(0,k), R(1,k), R(2,k));
       Vector<ScalarT> rk2(R(0,k2), R(1,k2), R(2,k2));
 
-//       std::cout << "rk:\n";
-//       std::cout << rk;
-//       std::cout << "rk2:\n";
-//       std::cout << rk2;
-
+      // compute projections
       Vector<ScalarT> ak  = Ap*rk;
       Vector<ScalarT> ak2 = Ap*rk2;
 
-//       std::cout << "ak:\n";
-//       std::cout << ak;
-//       std::cout << "ak2:\n";
-//       std::cout << ak2;
-
+      // set up reduced remainder matrix
+      // NB: We don't have a 2D tensor class yet some I am just using an array
       rm[0][0] = dot(rk,ak);
       rm[0][1] = dot(rk,ak2);
       rm[1][1] = dot(rk2,ak2); 
 
+      // compute eigenvalues 2 and 3
       ScalarT b = 0.5*(rm[0][0] - rm[1][1]);
       ScalarT fac = (b < 0 ? -1.0 : 1.0);
       D(0,0) = rm[1][1] + b - fac*sqrt(b*b+rm[0][1]*rm[0][1]);
       D(1,1) = rm[0][0] + rm[1][1] - D(0,0);
 
-//       std::cout << "b: " << b << std::endl;
-//       std::cout << "fac: " << fac << std::endl;
-//       std::cout << "rm[0][0]: " << rm[0][0] << std::endl;
-//       std::cout << "rm[0][1]: " << rm[0][1] << std::endl;
-//       std::cout << "rm[1][1]: " << rm[1][1] << std::endl;
-
+      // update reduced remainder matrix
       rm[0][0] -= D(0,0);
       rm[1][0] = rm[0][1];
       rm[1][1] -= D(0,0);
 
+      // again, find most dominant column
       a.clear();
       a(0) = rm[0][0]*rm[0][0] + rm[0][1]*rm[0][1];
       a(1) = rm[0][1]*rm[0][1] + rm[1][1]*rm[1][1];
@@ -1064,19 +1014,23 @@ namespace LCM {
 	rm[1][k3] = 0.0;
       }
 
+      // set 2nd eigenvector via cross product
       V(0,0) = rm[0][k3]*rk2(0) - rm[1][k3]*rk(0);
       V(1,0) = rm[0][k3]*rk2(1) - rm[1][k3]*rk(1);
       V(2,0) = rm[0][k3]*rk2(2) - rm[1][k3]*rk(2);
 
+      // normalize
       mag = sqrt(V(0,0)*V(0,0) + V(1,0)*V(1,0) + V(2,0)*V(2,0));
       V(0,0) /= mag;
       V(1,0) /= mag;
       V(2,0) /= mag;
 
+      // set last eigenvector as cross product of other two
       V(0,1) = V(1,0)*V(2,2) - V(2,0)*V(1,2);
       V(1,1) = V(2,0)*V(0,2) - V(0,0)*V(2,2);
       V(2,1) = V(0,0)*V(1,2) - V(1,0)*V(0,2);
 
+      // normalize
       mag = sqrt(V(0,1)*V(0,1) + V(1,1)*V(1,1) + V(2,1)*V(2,1));
       V(0,1) /= mag;
       V(1,1) /= mag;

@@ -300,7 +300,7 @@ int main(int ac, char* av[])
       std::cout << R0 << std::endl;
       std::cout << R << std::endl;
       std::cout << LCM::norm(V-V0) << std::endl;
-     std::cout << LCM::norm(R-R0) << std::endl;
+      std::cout << LCM::norm(R-R0) << std::endl;
   }
 
   return 0;
