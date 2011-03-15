@@ -63,7 +63,7 @@ int main(int ac, char* av[])
   // The tests
   //
   int PassedTestCount = 0;
-  const int TotalTests = 9;
+  const int TotalTests = 11;
   bool passed = false;
 
   //
@@ -299,9 +299,65 @@ int main(int ac, char* av[])
       std::cout << V << std::endl;
       std::cout << R0 << std::endl;
       std::cout << R << std::endl;
-      std::cout << LCM::norm(V-V0) << std::endl;
-      std::cout << LCM::norm(R-R0) << std::endl;
   }
 
+  //
+  // Test 10
+  //
+  R = LCM::identity<ScalarT>();
+
+  LCM::Tensor<ScalarT> r  = log_rotation(R);
+  LCM::Tensor<ScalarT> r0 = log_rotation(R0);
+
+  passed = LCM::norm(r - LCM::zero<ScalarT>()) <= std::numeric_limits<ScalarT>::epsilon();
+  passed = passed && std::abs(r0(0,1) + 0.785398163397448) <= 10*std::numeric_limits<ScalarT>::epsilon();
+  passed = passed && std::abs(r0(0,1) + r0(1,0)) <= 10*std::numeric_limits<ScalarT>::epsilon();
+
+  if (passed == true) {
+    PassedTestCount++;
+  }
+
+  if(verbose || debug) {
+    std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
+      std::cout << std::endl;
+  }
+
+  if(matlab) {
+      std::cout << R0 << std::endl;
+      std::cout << r0 << std::endl;
+  }
+
+  //
+  // Test 11
+  //
+  F = 3.0*LCM::identity<ScalarT>();
+  LCM::Tensor<ScalarT> logV;
+  LCM::Tensor<ScalarT> logR;
+
+  boost::tie(V,R,logV) = polar_left_logV(F);
+  logR = log_rotation(R);
+
+  LCM::Tensor<ScalarT> f = LCM::bch(logV,logR);
+
+  passed = std::abs(f(0,0) - std::log(3.0)) <= std::numeric_limits<ScalarT>::epsilon();
+
+  if (passed == true) {
+    PassedTestCount++;
+  }
+
+  if(verbose || debug) {
+    std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
+      std::cout << std::endl;
+  }
+
+  if(matlab) {
+      std::cout << f << std::endl;
+      std::cout << logV << std::endl;
+      std::cout << logR << std::endl;
+  }
+
+
+
   return 0;
+
 }

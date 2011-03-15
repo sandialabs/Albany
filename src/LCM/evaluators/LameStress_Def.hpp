@@ -143,6 +143,25 @@ evaluateFields(typename Traits::EvalData workset)
       // 2) polar decomposition of 3x3 matrix      ??
       // 3) logarithm of a 3x3 matrix              template<typename ScalarT> Tensor<ScalarT>log(Tensor<ScalarT> const & A);
 
+      // JTO:  here is how I think this will go (of course the first two lines won't work as is...)
+      // LCM::Tensor<ScalarT> F = newDefGrad;
+      // LCM::Tensor<ScalarT> Fn = oldDefGrad;
+      // LCM::Tensor<ScalarT> f = F*LCM::inverse(Fn);
+      // LCM::Tensor<ScalarT> V;
+      // LCM::Tensor<ScalarT> R;
+      // boost::tie(V,R) = LCM::polar_left(F);
+      // LCM::Tensor<ScalarT> Vinc;
+      // LCM::Tensor<ScalarT> Rinc;
+      // LCM::Tensor<ScalarT> logVinc;
+      // boost::tie(Vinc,Rinc,logVinc) = LCM::polar_left_logV(f)
+      // LCM::Tensor<ScalarT> logRinc = LCM::log_rotation(Rinc);
+      // LCM::Tensor<ScalarT> logf = LCM::bch(logVinc,logRinc);
+      // LCM::Tensor<ScalarT> L = (1.0/deltaT)*logf;
+      // LCM::Tensor<ScalarT> D = LCM::sym(L);
+      // LCM::Tensor<ScalarT> W = LCM::skew(L);
+      // and then fill data into the vectors below
+      
+
       std::vector<RealType> strainRate(6);   // symmetric tensor
       std::vector<RealType> spin(3);         // skew-symmetric tensor
       std::vector<RealType> leftStretch(6);  // symmetric tensor

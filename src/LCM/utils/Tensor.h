@@ -5,6 +5,7 @@
 #define LCM_Tensor_h
 
 #include <iostream>
+#include <boost/tuple/tuple.hpp>
 
 namespace LCM {
 
@@ -413,6 +414,11 @@ namespace LCM {
   std::pair<Tensor<ScalarT>,Tensor<ScalarT> >
   polar_right(Tensor<ScalarT> const & F);
 
+  // Left polar decomposition with matrix logarithm for V
+  template<typename ScalarT>
+  boost::tuple<Tensor<ScalarT>,Tensor<ScalarT>,Tensor<ScalarT> >
+  polar_left_logV(Tensor<ScalarT> const & F);
+
   // Eigenvalue decomposition for SPD 2nd order tensor
   template<typename ScalarT>
   std::pair<Tensor<ScalarT>,Tensor<ScalarT> >
@@ -427,6 +433,16 @@ namespace LCM {
   template<typename ScalarT>
   Tensor<ScalarT>
   log(Tensor<ScalarT> const & A);
+
+  // Logarithmic map of a rotation
+  template<typename ScalarT>
+  Tensor<ScalarT>
+  log_rotation(Tensor<ScalarT> const & R);
+
+  // Logarithmic map using BCH expansion (3 terms)
+  template<typename ScalarT>
+  Tensor<ScalarT>
+  bch(Tensor<ScalarT> const & v, Tensor<ScalarT> const & r);
 
   // 4th-order identity delta_ik delta_jl, A = I_1 A
   template<typename ScalarT>

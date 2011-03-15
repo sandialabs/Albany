@@ -840,6 +840,87 @@ namespace LCM {
   }
 
   //
+  // Left polar decomposition with matrix logarithm for V
+  //
+  template<typename ScalarT>
+  boost::tuple<Tensor<ScalarT>,Tensor<ScalarT>,Tensor<ScalarT> >
+  polar_left_logV(Tensor<ScalarT> const & F)
+  {
+    // set up return tensors
+    Tensor<ScalarT> R;
+    Tensor<ScalarT> V;
+    Tensor<ScalarT> v; //v = log(V)
+
+    // temporary tensor used to compute R
+    Tensor<ScalarT> Vinv;
+
+    // compute spd tensor
+    Tensor<ScalarT> b = F*transpose(F);
+
+    // get eigenvalues/eigenvectors
+    Tensor<ScalarT> eVal;
+    Tensor<ScalarT> eVec;
+    boost::tie(eVec,eVal) = eig_spd(b);
+    
+    // compute sqrt() and inv(sqrt()) of eigenvalues
+    Tensor<ScalarT> x = zero<ScalarT>();
+    x(0,0) = sqrt(eVal(0,0));
+    x(1,1) = sqrt(eVal(1,1));
+    x(2,2) = sqrt(eVal(2,2));
+    Tensor<ScalarT> xi = zero<ScalarT>();
+    xi(0,0) = 1.0/x(0,0);
+    xi(1,1) = 1.0/x(1,1);
+    xi(2,2) = 1.0/x(2,2);
+    Tensor<ScalarT> lnx = zero<ScalarT>();
+    lnx(0,0) = std::log(x(0,0));
+    lnx(1,1) = std::log(x(1,1));
+    lnx(2,2) = std::log(x(2,2));
+
+    // compute V, Vinv, log(V)=v, and R
+    V    = eVec*x*transpose(eVec);
+    Vinv = eVec*xi*transpose(eVec);
+    v    = eVec*lnx*transpose(eVec);
+    R    = Vinv*F;
+
+    return boost::make_tuple(V,R,v);
+  }
+
+  //
+  // Logarithmic map of a rotation
+  //
+  template<typename ScalarT>
+  Tensor<ScalarT>
+  log_rotation(Tensor<ScalarT> const & R)
+  {
+    Tensor<ScalarT> r;
+
+    ScalarT theta = acos(0.5*(trace(R) - 1.0));
+    
+    if (theta == 0) 
+      r = zero<ScalarT>();
+    else
+      r = theta/(2.0*sin(theta))*(R - transpose(R));
+
+    return r;
+  }
+
+  //
+  // Logarithmic map using BCH expansion (3 terms)
+  //
+  template<typename ScalarT>
+  Tensor<ScalarT>
+  bch(Tensor<ScalarT> const & v, Tensor<ScalarT> const & r)
+  {
+    Tensor<ScalarT> f;
+    
+    return f =  
+      v + r // term 1 
+      + 0.5*(v*r - r*v) // term 2
+      + (1./12.)*(v*v*r - 2.*v*r*v + v*r*r + r*v*v - 2.*r*v*r + r*r*v); // term 3
+
+  }
+
+  //
   // Eigenvalue decomposition for SPD 2nd order tensor
   //
   template<typename ScalarT>
@@ -985,7 +1066,7 @@ namespace LCM {
       Vector<ScalarT> ak2 = Ap*rk2;
 
       // set up reduced remainder matrix
-      // NB: We don't have a 2D tensor class yet some I am just using an array
+      // NB: We don't have a 2D tensor class yet so I am just using an array
       rm[0][0] = dot(rk,ak);
       rm[0][1] = dot(rk,ak2);
       rm[1][1] = dot(rk2,ak2); 
