@@ -17,8 +17,8 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-
 #include "Intrepid_FunctionSpaceTools.hpp"
+#include "Tensor.h"
 
 #ifdef ENABLE_LAME
 #include <models/Material.h>
@@ -117,6 +117,9 @@ evaluateFields(typename Traits::EvalData workset)
       props->insert(std::string("POISSONS_RATIO"), poissonsRatioVector);
       
       Teuchos::RCP<lame::Material> elasticMat = Teuchos::rcp(new lame::Elastic(*props));
+
+      // \todo Call initialize() on material.
+
       Teuchos::RCP<lame::matParams> matp = Teuchos::rcp(new lame::matParams());
 
       // Fill the following entries in matParams for call to LAME
@@ -137,11 +140,6 @@ evaluateFields(typename Traits::EvalData workset)
       // 
       // The velocity gradient is not available but can be computed at the logarithm of the incremental deformation gradient divided by deltaT
       // The incremental deformation gradient is computed as F_new F_old^-1
-      //
-      // Required functions from tensor library:
-      // 1) invert a 3x3 matrix                    template<typename ScalarT> Tensor<ScalarT>inverse(Tensor<ScalarT> const & A);
-      // 2) polar decomposition of 3x3 matrix      ??
-      // 3) logarithm of a 3x3 matrix              template<typename ScalarT> Tensor<ScalarT>log(Tensor<ScalarT> const & A);
 
       // JTO:  here is how I think this will go (of course the first two lines won't work as is...)
       // LCM::Tensor<ScalarT> F = newDefGrad;
@@ -160,8 +158,44 @@ evaluateFields(typename Traits::EvalData workset)
       // LCM::Tensor<ScalarT> D = LCM::sym(L);
       // LCM::Tensor<ScalarT> W = LCM::skew(L);
       // and then fill data into the vectors below
-      
 
+      // new deformation gradient (the current deformation gradient as computed in the current configuration)
+      LCM::Tensor<ScalarT> Fnew( newDefGrad(cell,qp,0,0), newDefGrad(cell,qp,0,1), newDefGrad(cell,qp,0,2),
+                                 newDefGrad(cell,qp,1,0), newDefGrad(cell,qp,1,1), newDefGrad(cell,qp,1,2),
+                                 newDefGrad(cell,qp,2,0), newDefGrad(cell,qp,2,1), newDefGrad(cell,qp,2,2) );
+
+      // old deformation gradient (deformation gradient at previous load step)
+      LCM::Tensor<ScalarT> Fold( oldDefGrad(cell,qp,0,0), oldDefGrad(cell,qp,0,1), oldDefGrad(cell,qp,0,2),
+                                 oldDefGrad(cell,qp,1,0), oldDefGrad(cell,qp,1,1), oldDefGrad(cell,qp,1,2),
+                                 oldDefGrad(cell,qp,2,0), oldDefGrad(cell,qp,2,1), oldDefGrad(cell,qp,2,2) );
+       
+      // incremental deformation gradient
+      LCM::Tensor<ScalarT> Finc = Fnew * LCM::inverse(Fold);
+
+      // left stretch V, and rotation R, from left polar decomposition of new deformation gradient
+      LCM::Tensor<ScalarT> V, R;
+      boost::tie(V,R) = LCM::polar_left(Fnew);
+
+      // incremental left stretch Vinc, incremental rotation Rinc, and log of incremental left stretch, logVinc
+      LCM::Tensor<ScalarT> Vinc, Rinc, logVinc;
+      boost::tie(Vinc,Rinc,logVinc) = LCM::polar_left_logV(Fnew);
+
+      // log of incremental rotation
+      LCM::Tensor<ScalarT> logRinc = LCM::log_rotation(Rinc);
+
+      // log of incremental deformation gradient
+      LCM::Tensor<ScalarT> logFinc = LCM::bch(logVinc, logRinc);
+
+      // velocity gradient
+      LCM::Tensor<ScalarT> L = ScalarT(1.0/deltaT)*logFinc;
+
+      // strain rate (a.k.a rate of deformation)
+      LCM::Tensor<ScalarT> D = LCM::symm(L);
+
+      // spin
+      LCM::Tensor<ScalarT> W = LCM::skew(L);
+     
+      // load data into standard arrays for LAME
       std::vector<RealType> strainRate(6);   // symmetric tensor
       std::vector<RealType> spin(3);         // skew-symmetric tensor
       std::vector<RealType> leftStretch(6);  // symmetric tensor
@@ -181,7 +215,33 @@ evaluateFields(typename Traits::EvalData workset)
       matp->stress_old = &stressOld[0];
       matp->stress_new = &stressNew[0];
 
-      // Carry out computations required to fill matParams here...
+      strainRate[0] = Sacado::ScalarValue<ScalarT>::eval( D(0,0) );
+      strainRate[1] = Sacado::ScalarValue<ScalarT>::eval( D(1,1) );
+      strainRate[2] = Sacado::ScalarValue<ScalarT>::eval( D(2,2) );
+      strainRate[3] = Sacado::ScalarValue<ScalarT>::eval( D(0,1) );
+      strainRate[4] = Sacado::ScalarValue<ScalarT>::eval( D(1,2) );
+      strainRate[5] = Sacado::ScalarValue<ScalarT>::eval( D(0,2) );
+
+      spin[0] = Sacado::ScalarValue<ScalarT>::eval( W(0,1) );
+      spin[1] = Sacado::ScalarValue<ScalarT>::eval( W(1,2) );
+      spin[2] = Sacado::ScalarValue<ScalarT>::eval( W(0,2) );
+
+      leftStretch[0] = Sacado::ScalarValue<ScalarT>::eval( V(0,0) );
+      leftStretch[1] = Sacado::ScalarValue<ScalarT>::eval( V(1,1) );
+      leftStretch[2] = Sacado::ScalarValue<ScalarT>::eval( V(2,2) );
+      leftStretch[3] = Sacado::ScalarValue<ScalarT>::eval( V(0,1) );
+      leftStretch[4] = Sacado::ScalarValue<ScalarT>::eval( V(1,2) );
+      leftStretch[5] = Sacado::ScalarValue<ScalarT>::eval( V(0,2) );
+
+      rotation[0] = Sacado::ScalarValue<ScalarT>::eval( R(0,0) );
+      rotation[1] = Sacado::ScalarValue<ScalarT>::eval( R(1,1) );
+      rotation[2] = Sacado::ScalarValue<ScalarT>::eval( R(2,2) );
+      rotation[3] = Sacado::ScalarValue<ScalarT>::eval( R(0,1) );
+      rotation[4] = Sacado::ScalarValue<ScalarT>::eval( R(1,2) );
+      rotation[5] = Sacado::ScalarValue<ScalarT>::eval( R(0,2) );
+      rotation[6] = Sacado::ScalarValue<ScalarT>::eval( R(1,0) );
+      rotation[7] = Sacado::ScalarValue<ScalarT>::eval( R(2,1) );
+      rotation[8] = Sacado::ScalarValue<ScalarT>::eval( R(2,0) );
 
       stressOld[0] = oldStress(cell,qp,0,0);
       stressOld[1] = oldStress(cell,qp,1,1);
@@ -189,6 +249,8 @@ evaluateFields(typename Traits::EvalData workset)
       stressOld[3] = oldStress(cell,qp,0,1);
       stressOld[4] = oldStress(cell,qp,1,2);
       stressOld[5] = oldStress(cell,qp,0,2);
+
+      // \todo Call loadStepInit();
 
       // Get the stress from the LAME material
       elasticMat->getStress(matp.get());

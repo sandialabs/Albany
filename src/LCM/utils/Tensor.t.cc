@@ -899,7 +899,7 @@ namespace LCM {
     if (theta == 0) 
       r = zero<ScalarT>();
     else
-      r = theta/(2.0*sin(theta))*(R - transpose(R));
+      r = ScalarT(theta/(2.0*sin(theta)))*(R - transpose(R));
 
     return r;
   }
@@ -912,12 +912,11 @@ namespace LCM {
   bch(Tensor<ScalarT> const & v, Tensor<ScalarT> const & r)
   {
     Tensor<ScalarT> f;
-    
+
     return f =  
       v + r // term 1 
-      + 0.5*(v*r - r*v) // term 2
-      + (1./12.)*(v*v*r - 2.*v*r*v + v*r*r + r*v*v - 2.*r*v*r + r*r*v); // term 3
-
+      + ScalarT(0.5)*(v*r - r*v) // term 2
+      + ScalarT(1.0/12.0)*(v*v*r - ScalarT(2.0)*v*r*v + v*r*r + r*v*v - ScalarT(2.0)*r*v*r + r*r*v); // term 3
   }
 
   //
