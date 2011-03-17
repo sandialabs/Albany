@@ -69,7 +69,7 @@ void Albany::GenericSTKMeshStruct::SetupMetaData(
   if (nstates>0) stk::mesh::put_field( *state_field , stk::mesh::Element , metaData->universal_part(), nstates );
   
 #ifdef ALBANY_IOSS
-  stk::io::set_field_role(*coordinates_field, Ioss::Field::ATTRIBUTE);
+  stk::io::set_field_role(*coordinates_field, Ioss::Field::MESH);
   stk::io::set_field_role(*solution_field, Ioss::Field::TRANSIENT);
   stk::io::set_field_role(*residual_field, Ioss::Field::TRANSIENT);
   if (nstates>0) stk::io::set_field_role(*state_field, Ioss::Field::TRANSIENT);

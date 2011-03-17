@@ -413,6 +413,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
 
     //Output
     p->set<string>("DefGrad Name", "Deformation Gradient"); //qp_tensor also
+    // DetDefGrad calculation moed later for AD case
     p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient"); 
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
 
@@ -421,7 +422,6 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
 
  if (matModel == "NeoHookean")
  {
-
    { // LCG
      RCP<ParameterList> p = rcp(new ParameterList("LCG"));
 
@@ -438,7 +438,6 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
      evaluators_to_build["LCG"] = p;
    }
 
-  
    { // Stress
      RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
@@ -461,6 +460,27 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
 
      evaluators_to_build["Stress"] = p;
    }
+  }
+  else if (matModel == "NeoHookean AD")
+  {
+     RCP<ParameterList> p = rcp(new ParameterList("Stress"));
+
+     int type = FactoryTraits<AlbanyTraits>::id_pisdwdf_stress;
+     p->set<int>("Type", type);
+
+     //Input
+     p->set<string>("Elastic Modulus Name", "Elastic Modulus");
+     p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+     p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // qp_scalar also
+
+     p->set<string>("DefGrad Name", "Deformation Gradient"); 
+     p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
+
+     //Output
+     p->set<string>("Stress Name", "Stress"); //qp_tensor also
+     stateMgr.registerStateVariable("stress",qp_tensor,"zero");
+
+     evaluators_to_build["PISDWDF_Stress"] = p;
   }
   else if (matModel == "J2")
   { 

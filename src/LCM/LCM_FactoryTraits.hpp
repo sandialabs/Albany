@@ -51,6 +51,7 @@
 #include "LCM/evaluators/EnergyPotential.hpp"
 #include "LCM/evaluators/HardeningModulus.hpp"
 #include "LCM/evaluators/YieldStrength.hpp"
+#include "LCM/evaluators/PisdWdF.hpp"
 
 #include "boost/mpl/vector/vector40.hpp"
 #include "boost/mpl/placeholders.hpp"
@@ -99,8 +100,9 @@ struct FactoryTraits {
   static const int id_hardening_modulus         = 29;
   static const int id_yield_strength            = 30;
   static const int id_lame_stress               = 31;
+  static const int id_pisdwdf_stress            = 32;
 
-  typedef boost::mpl::vector32< 
+  typedef boost::mpl::vector33< 
             PHAL::Dirichlet<_,Traits>,                //  0
             PHAL::GatherSolution<_,Traits>,           //  1
             PHAL::GatherCoordinateVector<_,Traits>,   //  2
@@ -132,7 +134,8 @@ struct FactoryTraits {
             LCM::EnergyPotential<_,Traits>,           // 28
             LCM::HardeningModulus<_,Traits>,          // 29
             LCM::YieldStrength<_,Traits>,             // 30
-            LCM::LameStress<_,Traits>                 // 31
+            LCM::LameStress<_,Traits>,                // 31
+            LCM::PisdWdF<_,Traits>                    // 32
     > EvaluatorTypes;
 };
 }

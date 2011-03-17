@@ -115,6 +115,7 @@ evaluateFields(typename Traits::EvalData workset)
           for (std::size_t j=0; j < numDims; ++j)
           {
             STRESS(cell,qp,i,j) = Sacado::ScalarValue<ScalarT>::eval(stress(cell,qp,i,j));
+ //cout << cell << "  " << qp << "  " << i << "  " << j << "  " << stress(cell, qp, i, j) << "  " << endl;
           }
         }
       }

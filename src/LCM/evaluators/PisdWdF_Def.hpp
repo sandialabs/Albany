@@ -28,8 +28,8 @@ PisdWdF<EvalT, Traits>::
 PisdWdF(const Teuchos::ParameterList& p) :
   defgrad          (p.get<std::string>                   ("DefGrad Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-  P                (p.get<std::string>                   ("P Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
+  P                (p.get<std::string>                   ("Stress Name"),
+	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
   elasticModulus   (p.get<std::string>                   ("Elastic Modulus Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   poissonsRatio    (p.get<std::string>                   ("Poissons Ratio Name"),
@@ -98,7 +98,10 @@ evaluateFields(typename Traits::EvalData workset)
       // Extract stress from derivs of energy
       for (std::size_t i=0; i < numDims; ++i) 
         for (std::size_t j=0; j < numDims; ++j) 
+{
            P(cell, qp, i, j) = W.fastAccessDx(i + numDims*j);
+//  cout << cell << "  " << qp << "  " << i << "  " << j << "  " << P(cell, qp, i, j) << "  " << endl;
+}
       
     }
   }
@@ -120,6 +123,7 @@ PisdWdF<EvalT, Traits>::computeEnergy(ScalarT& kappa, ScalarT& mu, Intrepid::Fie
   for (std::size_t i=0; i < numDims; ++i) 
     for (std::size_t j=0; j < numDims; ++j) 
       trace += F(0,i,j) * F(0,i,j);
+// cout << "tr " << trace << endl;
       
   EnergyFadType kappa_div_2 = EnergyFadType(0.5 * kappa);
   EnergyFadType mu_div_2 = EnergyFadType(0.5 * mu);
