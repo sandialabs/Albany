@@ -210,6 +210,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/EnergyPotential.cpp 
     ${LCM_DIR}/evaluators/HardeningModulus.cpp
     ${LCM_DIR}/evaluators/YieldStrength.cpp
+    ${LCM_DIR}/evaluators/PisdWdF.cpp 
   )
 
   SET(HEADERS ${HEADERS}
@@ -243,6 +244,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/HardeningModulus_Def.hpp
     ${LCM_DIR}/evaluators/YieldStrength.hpp
     ${LCM_DIR}/evaluators/YieldStrength_Def.hpp
+    ${LCM_DIR}/evaluators/PisdWdF.hpp 
+    ${LCM_DIR}/evaluators/PisdWdF_Def.hpp 
   )
 
   #LCM utils
