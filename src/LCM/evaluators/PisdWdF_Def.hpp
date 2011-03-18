@@ -28,12 +28,12 @@ PisdWdF<EvalT, Traits>::
 PisdWdF(const Teuchos::ParameterList& p) :
   defgrad          (p.get<std::string>                   ("DefGrad Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-  P                (p.get<std::string>                   ("Stress Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
   elasticModulus   (p.get<std::string>                   ("Elastic Modulus Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   poissonsRatio    (p.get<std::string>                   ("Poissons Ratio Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") )
+	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  P                (p.get<std::string>                   ("Stress Name"),
+	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") )
 {
   // Pull out numQPs and numDims from a Layout
   Teuchos::RCP<PHX::DataLayout> tensor_dl =
@@ -77,15 +77,18 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Allocate F ( = defgrad of derivative types) and seed with identity derivs
   for (std::size_t i=0; i < numDims; ++i) 
-    for (std::size_t j=0; j < numDims; ++j) {
-       F(0,i,j) = EnergyFadType(numDims*numDims, 0.0); // 0.0 will be overwriten below
-       F(0,i,j).fastAccessDx(i + numDims*j) = 1.0;
+  {
+    for (std::size_t j=0; j < numDims; ++j) 
+    {
+      F(0,i,j) = EnergyFadType(numDims*numDims, 0.0); // 0.0 will be overwriten below
+      F(0,i,j).fastAccessDx(i*numDims + j) = 1.0;
+    }
   }
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       kappa = elasticModulus(cell,qp) / ( 3. * ( 1. - 2. * poissonsRatio(cell,qp) ) );
-      mu    = elasticModulus(cell,qp) / ( 2. * ( 1. - poissonsRatio(cell,qp) ) );
+      mu    = elasticModulus(cell,qp) / ( 2. * ( 1. + poissonsRatio(cell,qp) ) );
 
       // Fill F with defgrad for value. Derivs already seeded with identity.
       for (std::size_t i=0; i < numDims; ++i) 
@@ -98,10 +101,7 @@ evaluateFields(typename Traits::EvalData workset)
       // Extract stress from derivs of energy
       for (std::size_t i=0; i < numDims; ++i) 
         for (std::size_t j=0; j < numDims; ++j) 
-{
-           P(cell, qp, i, j) = W.fastAccessDx(i + numDims*j);
-//  cout << cell << "  " << qp << "  " << i << "  " << j << "  " << P(cell, qp, i, j) << "  " << endl;
-}
+           P(cell, qp, i, j) = W.fastAccessDx(i*numDims + j);
       
     }
   }
@@ -123,13 +123,12 @@ PisdWdF<EvalT, Traits>::computeEnergy(ScalarT& kappa, ScalarT& mu, Intrepid::Fie
   for (std::size_t i=0; i < numDims; ++i) 
     for (std::size_t j=0; j < numDims; ++j) 
       trace += F(0,i,j) * F(0,i,j);
-// cout << "tr " << trace << endl;
       
   EnergyFadType kappa_div_2 = EnergyFadType(0.5 * kappa);
   EnergyFadType mu_div_2 = EnergyFadType(0.5 * mu);
 
   return ( kappa_div_2 * ( 0.5 * ( J * J - 1.0 ) - std::log(J) )
-	 + mu_div_2 * Jm23 * ( trace - 3.0 ));
+	   + mu_div_2 * ( Jm23 * trace - 3.0 ));
 }
 
-}
+} // LCM

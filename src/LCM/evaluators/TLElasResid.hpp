@@ -66,6 +66,9 @@ private:
   std::size_t numQPs;
   std::size_t numDims;
 
+  // Material Name
+  std::string matModel;
+
   // Work space FCs
   Intrepid::FieldContainer<ScalarT> F_inv;
   Intrepid::FieldContainer<ScalarT> F_invT;

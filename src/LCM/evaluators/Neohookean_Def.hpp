@@ -76,6 +76,7 @@ template<typename EvalT, typename Traits>
 void Neohookean<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  cout.precision(15);
   ScalarT kappa;
   ScalarT mu;
   ScalarT Jm53;

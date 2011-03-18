@@ -66,6 +66,8 @@ TLElasResid(const Teuchos::ParameterList& p) :
 
   Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib> >("Parameter Library");
 
+  matModel = p.get<std::string>("Stress Name");
+
   zGrav=0.0;
   new Sacado::ParameterRegistration<EvalT, SPL_Traits>("zGrav", this, paramLib);
 
@@ -91,25 +93,44 @@ template<typename EvalT, typename Traits>
 void TLElasResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  cout.precision(15);
   typedef Intrepid::FunctionSpaceTools FST;
   typedef Intrepid::RealSpaceTools<ScalarT> RST;
 
-  RST::inverse(F_inv, defgrad);
-  RST::transpose(F_invT, F_inv);
-  FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
-  FST::tensorMultiplyDataData<ScalarT>(P, stress, JF_invT);
-
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t node=0; node < numNodes; ++node) {
-      for (std::size_t dim=0; dim<numDims; dim++)  Residual(cell,node,dim)=0.0;
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
-	for (std::size_t i=0; i<numDims; i++) {
-	  for (std::size_t j=0; j<numDims; j++) {
-	    Residual(cell,node,i) += P(cell, qp, i, j) * wGradBF(cell, node, qp, j);
+  // using AD gives us P directly, we don't need to transform it
+  if (matModel == "NeoHookean AD")
+  {
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t node=0; node < numNodes; ++node) {
+	for (std::size_t dim=0; dim<numDims; dim++)  Residual(cell,node,dim)=0.0;
+	for (std::size_t qp=0; qp < numQPs; ++qp) {
+	  for (std::size_t i=0; i<numDims; i++) {
+	    for (std::size_t j=0; j<numDims; j++) {
+	      Residual(cell,node,i) += stress(cell, qp, i, j) * wGradBF(cell, node, qp, j);
+	    } 
 	  } 
 	} 
       } 
-    } 
+    }
+  }
+  else
+  {
+    RST::inverse(F_inv, defgrad);
+    RST::transpose(F_invT, F_inv);
+    FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
+    FST::tensorMultiplyDataData<ScalarT>(P, stress, JF_invT);
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t node=0; node < numNodes; ++node) {
+	for (std::size_t dim=0; dim<numDims; dim++)  Residual(cell,node,dim)=0.0;
+	for (std::size_t qp=0; qp < numQPs; ++qp) {
+	  for (std::size_t i=0; i<numDims; i++) {
+	    for (std::size_t j=0; j<numDims; j++) {
+	      Residual(cell,node,i) += P(cell, qp, i, j) * wGradBF(cell, node, qp, j);
+	    } 
+	  } 
+	} 
+      } 
+    }
   }
 
 /** // Gravity term used for load stepping 

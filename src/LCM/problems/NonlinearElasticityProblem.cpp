@@ -455,7 +455,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
      p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient");  // qp_scalar also
 
      //Output
-     p->set<string>("Stress Name", "Stress"); //qp_tensor also
+     p->set<string>("Stress Name", matModel); //qp_tensor also
      stateMgr.registerStateVariable("stress",qp_tensor,"zero");
 
      evaluators_to_build["Stress"] = p;
@@ -477,10 +477,10 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
      p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
 
      //Output
-     p->set<string>("Stress Name", "Stress"); //qp_tensor also
+     p->set<string>("Stress Name", matModel); //qp_tensor also
      stateMgr.registerStateVariable("stress",qp_tensor,"zero");
 
-     evaluators_to_build["PISDWDF_Stress"] = p;
+     evaluators_to_build["Stress"] = p;
   }
   else if (matModel == "J2")
   { 
@@ -540,7 +540,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
       p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient");  // qp_scalar also
 
       //Output
-      p->set<string>("Stress Name", "Stress"); //qp_tensor also
+      p->set<string>("Stress Name", matModel); //qp_tensor also
  
       //Declare what state data will need to be saved (name, layout, init_type)
       stateMgr.registerStateVariable("stress",qp_tensor,"zero");
@@ -563,7 +563,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
     p->set<int>("Type", type);
 
     //Input
-    p->set<string>("Stress Name", "Stress");
+    p->set<string>("Stress Name", matModel);
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
 
     p->set<string>("DefGrad Name", "Deformation Gradient"); //qp_tensor also
