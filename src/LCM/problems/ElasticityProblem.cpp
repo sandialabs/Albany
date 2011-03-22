@@ -456,7 +456,7 @@ cout << "XXXX USING NODES FOR VERTICES" << endl;
 
     //Declare what state data will need to be saved (name, layout, init_type)
     stateMgr.registerStateVariable("stress",qp_tensor,"zero");
-    stateMgr.registerStateVariable("def_grad",qp_tensor,"zero");
+    stateMgr.registerStateVariable("def_grad",qp_tensor,"identity");
     stateMgr.registerStateVariable("strain",qp_tensor,"zero");
 
     evaluators_to_build["Stress"] = p;
@@ -471,6 +471,9 @@ cout << "XXXX USING NODES FOR VERTICES" << endl;
     //Input
     p->set<string>("Stress Name", "Stress");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
+
+    // \todo Is the required?
+    p->set<string>("DefGrad Name", "Deformation Gradient"); //qp_tensor also
 
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);

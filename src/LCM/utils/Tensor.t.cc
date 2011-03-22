@@ -894,7 +894,13 @@ namespace LCM {
   {
     Tensor<ScalarT> r;
 
-    ScalarT theta = acos(0.5*(trace(R) - 1.0));
+    // acos requires input between -1 and +1
+    ScalarT acosArg = 0.5*(trace(R) - 1.0);
+    if(acosArg < -1.0)
+      acosArg = -1.0;
+    if(acosArg > 1.0)
+      acosArg = 1.0;
+    ScalarT theta = acos(acosArg);
     
     if (theta == 0) 
       r = zero<ScalarT>();

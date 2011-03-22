@@ -100,7 +100,7 @@ evaluateFields(typename Traits::EvalData workset)
   Intrepid::FieldContainer<RealType>& newStress  = *newState["stress"];
 
   // \todo Get actual time step for calls to LAME materials.
-  RealType deltaT = 1.0e-3;
+  RealType deltaT = 1.0;
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
@@ -159,6 +159,19 @@ evaluateFields(typename Traits::EvalData workset)
       // LCM::Tensor<ScalarT> W = LCM::skew(L);
       // and then fill data into the vectors below
 
+      // Copy the new deformation gradient into the "def_grad" component of StateVariables
+      // Need to do this so we can get oldDefGrad next time around
+      // \todo Should this be done in the defGrad evaluator?
+      newDefGrad(cell,qp,0,0) = Sacado::ScalarValue<ScalarT>::eval(defGradField(cell,qp,0,0));
+      newDefGrad(cell,qp,0,1) = Sacado::ScalarValue<ScalarT>::eval(defGradField(cell,qp,0,1));
+      newDefGrad(cell,qp,0,2) = Sacado::ScalarValue<ScalarT>::eval(defGradField(cell,qp,0,2));
+      newDefGrad(cell,qp,1,0) = Sacado::ScalarValue<ScalarT>::eval(defGradField(cell,qp,1,0));
+      newDefGrad(cell,qp,1,1) = Sacado::ScalarValue<ScalarT>::eval(defGradField(cell,qp,1,1));
+      newDefGrad(cell,qp,1,2) = Sacado::ScalarValue<ScalarT>::eval(defGradField(cell,qp,1,2));
+      newDefGrad(cell,qp,2,0) = Sacado::ScalarValue<ScalarT>::eval(defGradField(cell,qp,2,0));
+      newDefGrad(cell,qp,2,1) = Sacado::ScalarValue<ScalarT>::eval(defGradField(cell,qp,2,1));
+      newDefGrad(cell,qp,2,2) = Sacado::ScalarValue<ScalarT>::eval(defGradField(cell,qp,2,2));
+
       // new deformation gradient (the current deformation gradient as computed in the current configuration)
       LCM::Tensor<ScalarT> Fnew( newDefGrad(cell,qp,0,0), newDefGrad(cell,qp,0,1), newDefGrad(cell,qp,0,2),
                                  newDefGrad(cell,qp,1,0), newDefGrad(cell,qp,1,1), newDefGrad(cell,qp,1,2),
@@ -168,7 +181,7 @@ evaluateFields(typename Traits::EvalData workset)
       LCM::Tensor<ScalarT> Fold( oldDefGrad(cell,qp,0,0), oldDefGrad(cell,qp,0,1), oldDefGrad(cell,qp,0,2),
                                  oldDefGrad(cell,qp,1,0), oldDefGrad(cell,qp,1,1), oldDefGrad(cell,qp,1,2),
                                  oldDefGrad(cell,qp,2,0), oldDefGrad(cell,qp,2,1), oldDefGrad(cell,qp,2,2) );
-       
+
       // incremental deformation gradient
       LCM::Tensor<ScalarT> Finc = Fnew * LCM::inverse(Fold);
 
@@ -194,7 +207,7 @@ evaluateFields(typename Traits::EvalData workset)
 
       // spin
       LCM::Tensor<ScalarT> W = LCM::skew(L);
-     
+
       // load data into standard arrays for LAME
       std::vector<RealType> strainRate(6);   // symmetric tensor
       std::vector<RealType> spin(3);         // skew-symmetric tensor
@@ -254,7 +267,7 @@ evaluateFields(typename Traits::EvalData workset)
 
       // Get the stress from the LAME material
       elasticMat->getStress(matp.get());
-        
+
       // Copy the new stress into the stress field
       stressField(cell,qp,0,0) = stressNew[0];
       stressField(cell,qp,1,1) = stressNew[1];
@@ -276,19 +289,6 @@ evaluateFields(typename Traits::EvalData workset)
       newStress(cell,qp,1,0) = newStress(cell,qp,0,1); 
       newStress(cell,qp,2,1) = newStress(cell,qp,1,2); 
       newStress(cell,qp,2,0) = newStress(cell,qp,0,2); 
-
-      // Copy the new deformation gradient into the "def_grad" component of StateVariables
-      // Need to do this so we can get oldDefGrad next time around
-      // \todo Should this be done in the defGrad evaluator?
-      newDefGrad(cell,qp,0,0) = Sacado::ScalarValue<ScalarT>::eval(defGradField[0]);
-      newDefGrad(cell,qp,1,1) = Sacado::ScalarValue<ScalarT>::eval(defGradField[1]);
-      newDefGrad(cell,qp,2,2) = Sacado::ScalarValue<ScalarT>::eval(defGradField[2]);
-      newDefGrad(cell,qp,0,1) = Sacado::ScalarValue<ScalarT>::eval(defGradField[3]);
-      newDefGrad(cell,qp,1,2) = Sacado::ScalarValue<ScalarT>::eval(defGradField[4]);
-      newDefGrad(cell,qp,0,2) = Sacado::ScalarValue<ScalarT>::eval(defGradField[5]);
-      newDefGrad(cell,qp,1,0) = Sacado::ScalarValue<ScalarT>::eval(defGradField[6]);
-      newDefGrad(cell,qp,2,1) = Sacado::ScalarValue<ScalarT>::eval(defGradField[7]);
-      newDefGrad(cell,qp,2,0) = Sacado::ScalarValue<ScalarT>::eval(defGradField[8]);
     }
   }
 }
