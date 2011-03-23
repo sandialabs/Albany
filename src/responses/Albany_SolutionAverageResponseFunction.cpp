@@ -61,7 +61,7 @@ evaluateTangents(
     x.MeanValue(&(*g)[0]);
 
   // Evaluate tangent of g = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
-  for (unsigned int j=0; j<gt.size(); j++)
+  for (Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >::size_type j=0; j<gt.size(); j++)
     if (gt[j] != Teuchos::null)
       for (int i=0; i<dx_dp[i]->NumVectors(); i++)
 	(*dx_dp[j])(i)->MeanValue(&(*gt[j])[i][0]);
@@ -93,7 +93,7 @@ evaluateGradients(
     dg_dxdot->PutScalar(0.0);
 
   // Evaluate dg/dp
-  for (unsigned int j=0; j<dg_dp.size(); j++)
+  for (Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >::size_type j=0; j<dg_dp.size(); j++)
     if (dg_dp[j] != Teuchos::null)
       dg_dp[j]->PutScalar(0.0);
 }

@@ -351,7 +351,7 @@ Albany::ModelEvaluator::createOutArgs() const
   
   if (supports_p && supports_g) {
     outArgs.set_Np_Ng(param_names.size(), 1);
-    for (unsigned int i=0; i<param_names.size(); i++)
+    for (Teuchos::Array< Teuchos::RCP< Teuchos::Array<std::string> > >::size_type i=0; i<param_names.size(); i++)
       outArgs.setSupports(OUT_ARG_DgDp, 0, i, 
 			  DerivativeSupport(DERIV_MV_BY_COL));
   }
@@ -367,7 +367,7 @@ Albany::ModelEvaluator::createOutArgs() const
     outArgs.setSupports(OUT_ARG_DgDx_dot, 0, DerivativeSupport(DERIV_MV_BY_COL));
   }
   if (supports_p)
-    for (unsigned int i=0; i<param_names.size(); i++)
+    for (Teuchos::Array< Teuchos::RCP< Teuchos::Array<std::string> > >::size_type i=0; i<param_names.size(); i++)
       outArgs.setSupports(OUT_ARG_DfDp, i, DerivativeSupport(DERIV_MV_BY_COL));
 
   outArgs.setSupports(OUT_ARG_f,true);
@@ -560,7 +560,7 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
       InArgs::sg_const_vector_t epetra_p_sg = inArgs.get_p_sg(0);
       Teuchos::Array<SGType> *p_sg_ptr = NULL;
       if (epetra_p_sg != Teuchos::null) {
-	for (unsigned int i=0; i<p_sg_vals.size(); i++) {
+        for (Teuchos::Array<SGType>::size_type i=0; i<p_sg_vals.size(); i++) {
 	  int num_sg_blocks = epetra_p_sg->size();
 	  p_sg_vals[i].reset(app->getStochasticExpansion(), num_sg_blocks);
 	  p_sg_vals[i].copyForWrite();
@@ -609,7 +609,7 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
       mp_const_vector_t epetra_p_mp = inArgs.get_p_mp(0);
       Teuchos::Array<MPType> *p_mp_ptr = NULL;
       if (epetra_p_mp != Teuchos::null) {
-	for (unsigned int i=0; i<p_mp_vals.size(); i++) {
+        for (Teuchos::Array<SGType>::size_type i=0; i<p_mp_vals.size(); i++) {
 	  int num_mp_blocks = epetra_p_mp->size();
 	  p_mp_vals[i].reset(num_mp_blocks);
 	  p_mp_vals[i].copyForWrite();

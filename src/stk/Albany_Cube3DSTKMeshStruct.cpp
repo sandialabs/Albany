@@ -163,7 +163,7 @@ Albany::Cube3DSTKMeshStruct::Cube3DSTKMeshStruct(
        bulkData->change_entity_parts(llnodeb, singlePartVec);
        bulkData->change_entity_parts(ulnodeb, singlePartVec);
     }
-    if ((x_GID+1)==nelem_x) {
+    if ((x_GID+1)==(unsigned int)nelem_x) {
        singlePartVec[0] = nsPartVec["NodeSet1"];
        bulkData->change_entity_parts(lrnode, singlePartVec);
        bulkData->change_entity_parts(urnode, singlePartVec);
@@ -177,7 +177,7 @@ Albany::Cube3DSTKMeshStruct::Cube3DSTKMeshStruct(
        bulkData->change_entity_parts(llnodeb, singlePartVec);
        bulkData->change_entity_parts(lrnodeb, singlePartVec);
     }
-    if ((y_GID+1)==nelem_y) {
+    if ((y_GID+1)==(unsigned int)nelem_y) {
        singlePartVec[0] = nsPartVec["NodeSet3"];
        bulkData->change_entity_parts(ulnode, singlePartVec);
        bulkData->change_entity_parts(urnode, singlePartVec);
@@ -191,7 +191,7 @@ Albany::Cube3DSTKMeshStruct::Cube3DSTKMeshStruct(
        bulkData->change_entity_parts(ulnode, singlePartVec);
        bulkData->change_entity_parts(urnode, singlePartVec);
     }
-    if ((z_GID+1)==nelem_z) {
+    if ((z_GID+1)==(unsigned int)nelem_z) {
        singlePartVec[0] = nsPartVec["NodeSet5"];
        bulkData->change_entity_parts(llnodeb, singlePartVec);
        bulkData->change_entity_parts(lrnodeb, singlePartVec);

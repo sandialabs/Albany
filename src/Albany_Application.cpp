@@ -313,7 +313,7 @@ Albany::Application::computeGlobalResidual(
     overlapped_xdot->Import(*xdot, *importer, Insert);
 
   // Set parameters
-  for (unsigned int i=0; i<p.size(); i++) {
+  for (Teuchos::Array< Teuchos::RCP<ParamVec> >::size_type i=0; i<p.size(); i++) {
     if (p[i] != Teuchos::null)
       for (unsigned int j=0; j<p[i]->size(); j++)
 	(*(p[i]))[j].family->setRealValueForAllTypes((*(p[i]))[j].baseValue);
@@ -431,7 +431,7 @@ Albany::Application::computeGlobalJacobian(
     overlapped_xdot->Import(*xdot, *importer, Insert);
 
   // Set parameters
-  for (unsigned int i=0; i<p.size(); i++) {
+  for (Teuchos::Array< Teuchos::RCP<ParamVec> >::size_type i=0; i<p.size(); i++) {
     if (p[i] != Teuchos::null)
       for (unsigned int j=0; j<p[i]->size(); j++)
 	(*(p[i]))[j].family->setRealValueForAllTypes((*(p[i]))[j].baseValue);
@@ -591,7 +591,7 @@ Albany::Application::computeGlobalTangent(
   }
 
   // Set parameters
-  for (unsigned int i=0; i<par.size(); i++) {
+  for (Teuchos::Array< Teuchos::RCP<ParamVec> >::size_type i=0; i<par.size(); i++) {
     if (par[i] != Teuchos::null)
       for (unsigned int j=0; j<par[i]->size(); j++)
 	(*(par[i]))[j].family->setRealValueForAllTypes((*(par[i]))[j].baseValue);
@@ -874,7 +874,7 @@ evaluateResponseTangents(
     Teuchos::RCP<Epetra_Vector> local_g;
     if (g != NULL)
       local_g = Teuchos::rcp(new Epetra_Vector(local_response_map));
-    for (unsigned int j=0; j<gt.size(); j++)
+    for (Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >::size_type j=0; j<gt.size(); j++)
       if (gt[j] != Teuchos::null)
 	local_gt[j] = Teuchos::rcp(new Epetra_MultiVector(local_response_map, 
 							  gt[j]->NumVectors()));
@@ -887,7 +887,7 @@ evaluateResponseTangents(
     for (unsigned int j=0; j<num_responses; j++) {
       if (g != NULL)
         (*g)[offset+j] = (*local_g)[j];
-      for (unsigned int l=0; l<gt.size(); l++)
+      for (Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >::size_type l=0; l<gt.size(); l++)
 	if (gt[l] != Teuchos::null)
 	  for (int k=0; k<gt[l]->NumVectors(); k++)
 	    (*gt[l])[k][offset+j] = (*local_gt[l])[k][j];
@@ -931,7 +931,7 @@ evaluateResponseGradients(
     if (dg_dxdot != NULL)
       local_dgdxdot = Teuchos::rcp(new Epetra_MultiVector(dg_dxdot->Map(), 
                                                           num_responses));
-    for (unsigned int j=0; j<dg_dp.size(); j++)
+    for (Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >::size_type j=0; j<dg_dp.size(); j++)
       if (dg_dp[j] != Teuchos::null)
 	local_dgdp[j] = Teuchos::rcp(new Epetra_MultiVector(local_response_map, 
 							    dg_dp[j]->NumVectors()));
@@ -949,7 +949,7 @@ evaluateResponseGradients(
         (*dg_dx)(offset+j)->Update(1.0, *((*local_dgdx)(j)), 0.0);
       if (dg_dxdot != NULL)
         (*dg_dxdot)(offset+j)->Update(1.0, *((*local_dgdxdot)(j)), 0.0);
-      for (unsigned int l=0; l<dg_dp.size(); l++)
+      for (Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >::size_type l=0; l<dg_dp.size(); l++)
 	if (dg_dp[l] != Teuchos::null)
 	  for (int k=0; k<dg_dp[l]->NumVectors(); k++)
 	    (*dg_dp[l])[k][offset+j] = (*local_dgdp[l])[k][j];

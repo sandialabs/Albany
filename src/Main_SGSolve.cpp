@@ -138,7 +138,7 @@ int main(int argc, char *argv[]) {
 
     Teuchos::RCP<ENAT::SGNOXSolver> App_sg = 
       Teuchos::rcp_dynamic_cast<ENAT::SGNOXSolver>(sg_slvrfctry.create(app_comm, sg_comm, g2));
-    Teuchos::ParameterList& params = sg_slvrfctry.getParameters();
+//     Teuchos::ParameterList& params = sg_slvrfctry.getParameters();
     int sg_p_index = 1;
     if (sg_type == "AD" || sg_type == "Multi-point Non-intrusive")
       sg_p_index = 0;

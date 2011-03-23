@@ -247,7 +247,7 @@ SGNOXSolver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
       sg_p->term(i,1)[i] = 1.0;  // Set order 1 coeff to 1 for this RV
     }
     else
-      for (unsigned int j = 0; j<initial_p_vals.size(); j++)
+      for (Teuchos::Array<double>::size_type j = 0; j<initial_p_vals.size(); j++)
 	(*sg_p)[j][i] = initial_p_vals[j];
   }
   sg_nonlin_model->set_p_sg_init(sg_p_index, *sg_p);

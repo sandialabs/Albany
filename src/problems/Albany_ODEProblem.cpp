@@ -55,9 +55,9 @@ buildProblem(
   constructEvaluators(worksetSize, disc.getCubatureDegree(), disc.getCellTopologyData());
   constructDirichletEvaluators(disc.getNodeSetIDs());
  
-  const Epetra_Map& dofMap = *(disc.getMap());
-  int left_node = dofMap.MinAllGID();
-  int right_node = dofMap.MaxAllGID();
+//   const Epetra_Map& dofMap = *(disc.getMap());
+//   int left_node = dofMap.MinAllGID();
+//   int right_node = dofMap.MaxAllGID();
 
   // Build response functions
   Teuchos::ParameterList& responseList = params->sublist("Response Functions");
@@ -82,7 +82,7 @@ buildProblem(
 
   }
   //initial guess
-  for (int i=0; i<neq; i++) (*u)[i] = 1.0;
+  for (unsigned int i=0; i<neq; i++) (*u)[i] = 1.0;
 }
 
 

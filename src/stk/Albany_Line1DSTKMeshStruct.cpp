@@ -106,7 +106,7 @@ Albany::Line1DSTKMeshStruct::Line1DSTKMeshStruct(
        singlePartVec[0] = nsPartVec["NodeSet0"];
        bulkData->change_entity_parts(lnode, singlePartVec);
     }
-    if ((elem_GID+1)==elem_map->NumGlobalElements()) {
+    if ((elem_GID+1)==(unsigned int)elem_map->NumGlobalElements()) {
       singlePartVec[0] = nsPartVec["NodeSet1"];
       bulkData->change_entity_parts(rnode, singlePartVec);
     }

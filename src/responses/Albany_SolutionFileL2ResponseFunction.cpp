@@ -113,7 +113,7 @@ evaluateGradients(
     dg_dxdot->PutScalar(0.0);
 
   // Evaluate dg/dp
-  for (unsigned int j=0; j<dg_dp.size(); j++)
+  for (Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >::size_type j=0; j<dg_dp.size(); j++)
     if (dg_dp[j] != Teuchos::null)
       dg_dp[j]->PutScalar(0.0);
 }

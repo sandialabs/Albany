@@ -89,7 +89,7 @@ void Albany::GenericSTKMeshStruct::DeclareParts(std::vector<std::string> nsNames
 #endif
 
   // NodeSets
-  for (int i=0; i<nsNames.size(); i++) {
+  for (unsigned int i=0; i<nsNames.size(); i++) {
     std::string nsn = nsNames[i];
     nsPartVec[nsn] = & metaData->declare_part(nsn, stk::mesh::Node );
 #ifdef ALBANY_IOSS

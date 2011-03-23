@@ -158,7 +158,7 @@ Albany::Rect2DSTKMeshStruct::Rect2DSTKMeshStruct(
        bulkData->change_entity_parts(llnode, singlePartVec);
        bulkData->change_entity_parts(ulnode, singlePartVec);
     }
-    if ((x_GID+1)==nelem_x) {
+    if ((x_GID+1)==(unsigned int)nelem_x) {
        singlePartVec[0] = nsPartVec["NodeSet1"];
        bulkData->change_entity_parts(lrnode, singlePartVec);
        bulkData->change_entity_parts(urnode, singlePartVec);
@@ -168,7 +168,7 @@ Albany::Rect2DSTKMeshStruct::Rect2DSTKMeshStruct(
        bulkData->change_entity_parts(llnode, singlePartVec);
        bulkData->change_entity_parts(lrnode, singlePartVec);
     }
-    if ((y_GID+1)==(nelem_y)) {
+    if ((y_GID+1)==(unsigned int)nelem_y) {
        singlePartVec[0] = nsPartVec["NodeSet3"];
        bulkData->change_entity_parts(ulnode, singlePartVec);
        bulkData->change_entity_parts(urnode, singlePartVec);

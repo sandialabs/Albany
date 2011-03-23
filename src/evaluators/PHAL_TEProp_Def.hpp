@@ -120,6 +120,9 @@ whichMat(const MeshScalarT& x)
      "Quadrature point " << x << " not within bounds \n");
   for (int i=0; i<mats; i++) 
      if (x<xBounds[i+1]) return i;
+  TEST_FOR_EXCEPTION(true, std::logic_error,
+     "Quadrature point " << x << " not within bounds \n");
+  return -1;
 }
 // **********************************************************************
 template<typename EvalT,typename Traits>
