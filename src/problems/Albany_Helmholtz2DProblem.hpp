@@ -49,8 +49,7 @@ namespace Albany {
        const int worksetSize,
        StateManager& stateMgr,
        const Albany::AbstractDiscretization& disc,
-       std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
-       const Teuchos::RCP<Epetra_Vector>& u);
+       std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
 
     //! Each problem must generate it's list of valide parameters
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
@@ -69,7 +68,6 @@ namespace Albany {
 
     //! Boundary conditions, factor on source term
     double ksqr;
-    bool haveIC;
     bool haveSource;
   };
 

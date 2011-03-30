@@ -10,8 +10,8 @@
       <Parameter name="DBC on NS NodeSet3 for DOF T" type="double" value="0.0"/>
     </ParameterList>
     <ParameterList name="Initial Condition">
-       <Parameter name="Name" type="string" value="Constant"/>
-       <Parameter name="Beta" type="double" value="1.0"/>
+       <Parameter name="Function" type="string" value="Constant"/>
+       <Parameter name="Function Data" type="Array(double)" value="{1.0}"/>
     </ParameterList>
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="1"/>

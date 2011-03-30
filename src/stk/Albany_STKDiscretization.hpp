@@ -92,6 +92,9 @@ namespace Albany {
     //! Get Element Topology Type
     const CellTopologyData& getCellTopologyData() const;
 
+    //! Get Number of Spatial Dimensions
+    virtual int getNumDim() const {return stkMeshStruct->numDim;};
+
     Teuchos::RCP<Epetra_Vector> getSolutionField() const;
 
     void setResidualField(const Epetra_Vector& residual);

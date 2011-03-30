@@ -50,8 +50,7 @@ namespace Albany {
     buildProblem( const int worksetSize,
        StateManager& stateMgr,
        const Albany::AbstractDiscretization& disc,
-       std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
-       const Teuchos::RCP<Epetra_Vector>& u);
+       std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
 
     //! Each problem must generate it's list of valid parameters
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
@@ -69,7 +68,6 @@ namespace Albany {
   protected:
 
     //! Boundary conditions on source term
-    bool haveIC;
     bool haveSource;
     int T_offset;  //Position of T unknown in nodal DOFs
     int X_offset;  //Position of X unknown in nodal DOFs, followed by Y,Z

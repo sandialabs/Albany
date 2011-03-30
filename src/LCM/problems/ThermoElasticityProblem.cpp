@@ -19,7 +19,6 @@
 #include "Albany_BoundaryFlux1DResponseFunction.hpp"
 #include "Albany_SolutionAverageResponseFunction.hpp"
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
-#include "Albany_InitialCondition.hpp"
 #include "Albany_Utils.hpp"
 
 Albany::ThermoElasticityProblem::
@@ -28,7 +27,6 @@ ThermoElasticityProblem(
                          const Teuchos::RCP<ParamLib>& paramLib_,
                          const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_, numDim_ + 1),
-  haveIC(false),
   haveSource(false),
   numDim(numDim_)
 {
@@ -36,7 +34,6 @@ ThermoElasticityProblem(
   std::string& method = params->get("Name", "ThermoElasticity ");
   *out << "Problem Name = " << method << std::endl;
   
-  haveIC     =  params->isSublist("Initial Condition");
   haveSource =  params->isSublist("Source Functions");
 
   dofNames.resize(neq);
@@ -66,8 +63,7 @@ buildProblem(
     const int worksetSize,
     Albany::StateManager& stateMgr,
     const Albany::AbstractDiscretization& disc,
-    std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
-    const Teuchos::RCP<Epetra_Vector>& u)
+    std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
   /* Construct All Phalanx Evaluators */
   constructEvaluators(worksetSize, disc.getCubatureDegree(), disc.getCellTopologyData());
@@ -109,10 +105,6 @@ buildProblem(
      }
 
   }
-
-  // Build initial solution
-  if (haveIC) 
-    Albany::InitialCondition(u, 1, 1, params->sublist("Initial Condition"));
 }
 
 
@@ -196,10 +188,8 @@ Albany::ThermoElasticityProblem::constructEvaluators(
     p->set<int>("Offset of First DOF", X_offset);
     p->set<int>("Number of DOF per Node", neq);
 
-    RCP< vector<string> > dof_names_dot = rcp(new vector<string>(1));
-      (*dof_names_dot)[0] = "Displacement_dot";
-
-    p->set< RCP< vector<string> > >("Time Dependent Solution Names", dof_names_dot);
+    // Can;t do mixture of dot and dotdot: disabling elasticity time dependence
+    p->set<bool>("Disable Transient", true);
 
     evaluators_to_build["Gather Displacement Solution"] = p;
   }
@@ -347,26 +337,6 @@ Albany::ThermoElasticityProblem::constructEvaluators(
     evaluators_to_build["DOFVec Displacement"] = p;
   }
 
-  {
-   // DOF: Interpolate nodal Displacement Dot  values to quad points
-    RCP<ParameterList> p = rcp(new ParameterList("Elasticity DOFVecInterpolation Displacement Dot"));
-
-    int type = FactoryTraits<AlbanyTraits>::id_dofvec_interpolation;
-    p->set<int>   ("Type", type);
-
-    // Input
-    p->set<string>("Variable Name", "Displacement_dot");
-    p->set< RCP<DataLayout> >("Node Vector Data Layout",      node_vector);
-
-    p->set<string>("BF Name", "BF");
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
-
-    // Output (assumes same Name as input)
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
-
-    evaluators_to_build["DOFVec Displacement_dot"] = p;
-  }
-
   { // DOFVecGrad: Interpolate nodal Displacement gradients to quad points
     RCP<ParameterList> p = rcp(new ParameterList("Elasticity DOFVecInterpolation Displacement Grad"));
 
@@ -455,6 +425,8 @@ Albany::ThermoElasticityProblem::constructEvaluators(
 
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);
+
+    p->set<bool>("Disable Transient", true);
 
     //Output
     p->set<string>("Residual Name", "Displacement Residual");

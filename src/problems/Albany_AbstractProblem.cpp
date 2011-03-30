@@ -67,6 +67,7 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
                     "Choose size of elements to be processed together (0 for all at once)");
 
   validPL->sublist("Initial Condition", false, "");
+  validPL->sublist("Initial Condition Dot", false, "");
   validPL->sublist("Source Functions", false, "");
   validPL->sublist("Response Functions", false, "");
   validPL->sublist("Parameters", false, "");
@@ -76,6 +77,8 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
 
   validPL->set<bool>("Ignore Residual In Jacobian", false, 
 		     "Ignore residual calculations while computing the Jacobian (only generally appropriate for linear problems)");
+  validPL->set<double>("Perturb Dirichlet", 0.0, 
+		     "Add this (small) perturbation to the diagonal to prevent Mass Matrices from being singular for Dirichlets)");
 
   return validPL;
 }

@@ -25,11 +25,8 @@ IF (NOT DEFINED ALBANY_TRILINOS_DIR)
 ENDIF()
 
 # Get Trilinos as one entity
-FIND_PACKAGE(Trilinos PATHS ${ALBANY_TRILINOS_DIR}/include)
-
-IF(NOT Trilinos_FOUND)
-  MESSAGE(FATAL_ERROR "Could not find Trilinos!")
-ENDIF()
+SET(CMAKE_PREFIX_PATH ${ALBANY_TRILINOS_DIR} ${CMAKE_PREFIX_PATH})
+FIND_PACKAGE(Trilinos REQUIRED)
 
 MESSAGE("\nFound Trilinos!  Here are the details: ")
 MESSAGE("   Trilinos_DIR = ${Trilinos_DIR}")

@@ -24,16 +24,11 @@
 
 namespace Albany {
 
-void InitialCondition(const Teuchos::RCP<Epetra_Vector>& u,
-                      const unsigned int local_len_x,
-                      const unsigned int local_len_y,
-                      Teuchos::ParameterList& p);
-
-void InitialCondition(const Teuchos::RCP<Epetra_Vector>& u,
-                      const unsigned int global_len_x,
-                      const unsigned int global_len_y,
-                      const double alpha, 
-                      const double beta, 
-                      const std::string &name);
+void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
+                       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& elNodeID,
+                       const Teuchos::ArrayRCP<double>& coordinates,
+                       const int neq,
+                       const int numDim,
+                       Teuchos::ParameterList& icParams);
 }
 #endif

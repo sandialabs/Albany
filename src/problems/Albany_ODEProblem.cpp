@@ -48,8 +48,7 @@ buildProblem(
     const int worksetSize,
     Albany::StateManager& stateMgr,
     const Albany::AbstractDiscretization& disc,
-    std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
-    const Teuchos::RCP<Epetra_Vector>& u)
+    std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
   /* Construct All Phalanx Evaluators */
   constructEvaluators(worksetSize, disc.getCubatureDegree(), disc.getCellTopologyData());
@@ -81,8 +80,11 @@ buildProblem(
      }
 
   }
+<<<<<<< HEAD
   //initial guess
   for (unsigned int i=0; i<neq; i++) (*u)[i] = 1.0;
+=======
+>>>>>>> Major changes for transient dynamics and Intiial COndition specification
 }
 
 

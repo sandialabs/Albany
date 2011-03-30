@@ -18,6 +18,7 @@
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemFactory.hpp"
 #include "Albany_DiscretizationFactory.hpp"
+#include "Albany_InitialCondition.hpp"
 #include "Epetra_LocalMap.h"
 #include "Stokhos_OrthogPolyBasis.hpp"
 #include "Teuchos_TimeMonitor.hpp"
@@ -49,7 +50,7 @@ Albany::Application::Application(
   setupCalledResidual(false), setupCalledJacobian(false), setupCalledTangent(false),
   setupCalledSGResidual(false), setupCalledSGJacobian(false),
   setupCalledMPResidual(false), setupCalledMPJacobian(false),
-  morphFromInit(true)
+  morphFromInit(true), perturbBetaForDirichlets(0.0)
   //, stateMgr(Albany::StateManager())
 {
   timers.push_back(Teuchos::TimeMonitor::getNewTimer("> Albany Fill: Residual"));
@@ -111,6 +112,7 @@ Albany::Application::Application(
   // Load connectivity map and coordinates 
   elNodeID = disc->getElNodeID();
   coordinates = disc->getCoordinates();
+  int numDim = disc->getNumDim();
 
   // Create Epetra objects
   importer = Teuchos::rcp(new Epetra_Import(*(disc->getOverlapMap()), 
@@ -128,8 +130,19 @@ Albany::Application::Application(
   // Initialize solution vector and time deriv
   initial_x = disc->getSolutionField();
   initial_x_dot = Teuchos::rcp(new Epetra_Vector(*(disc->getMap())));
-  initial_x_dot->PutScalar(0.0);
 
+  if (initial_guess != Teuchos::null) *initial_x = *initial_guess;
+  else {
+    overlapped_x->Import(*initial_x, *importer, Insert);
+    Albany::InitialConditions(overlapped_x, elNodeID, coordinates, neq, numDim,
+                              problemParams->sublist("Initial Condition"));
+    Albany::InitialConditions(overlapped_xdot,  elNodeID, coordinates, neq, numDim,
+                              problemParams->sublist("Initial Condition Dot"));
+    initial_x->Export(*overlapped_x, *exporter, Insert);
+    initial_x_dot->Export(*overlapped_xdot, *exporter, Insert);
+  }
+
+  // Compute Workset Size
   worksetSize = problemParams->get("Workset Size",0);
   if (worksetSize < 1 || worksetSize > elNodeID.size()) {
      worksetSize = elNodeID.size();
@@ -142,9 +155,7 @@ Albany::Application::Application(
      worksetSize = 1 + (elNodeID.size()-1) / numWorksets;
   }
 
-  problem->buildProblem(worksetSize, stateMgr, *disc, responses, initial_x);
-  if (initial_guess != Teuchos::null)
-    *initial_x = *initial_guess;
+  problem->buildProblem(worksetSize, stateMgr, *disc, responses);
 
   stateMgr.allocateStateVariables(numWorksets);
   stateMgr.initializeStateVariables(numWorksets);
@@ -173,6 +184,8 @@ Albany::Application::Application(
 
   ignore_residual_in_jacobian = 
     problemParams->get("Ignore Residual In Jacobian", false);
+
+  perturbBetaForDirichlets = problemParams->get("Perturb Dirichlet",0.0);
 }
 
 Albany::Application::~Application()
@@ -505,7 +518,11 @@ Albany::Application::computeGlobalJacobian(
 
     workset.f = Teuchos::rcp(f,false);
     workset.Jac = Teuchos::rcpFromRef(jac);
+    workset.m_coeff = alpha;
     workset.j_coeff = beta;
+
+    if (beta==0.0 && perturbBetaForDirichlets>0.0) workset.j_coeff = perturbBetaForDirichlets;
+
     workset.x = Teuchos::rcpFromRef(x);;
     if (xdot != NULL) workset.transientTerms = true;
 

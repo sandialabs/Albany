@@ -6,8 +6,8 @@
     <ParameterList name="Dirichlet BCs">
     </ParameterList>
     <ParameterList name="Initial Condition">
-      <Parameter name="Name" type="string" value="1D Gauss-Cos"/>
-      <Parameter name="Nonlinear Factor" type="double" value="0.0"/>
+      <Parameter name="Function" type="string" value="1D Gauss-Cos"/>
+      <Parameter name="Function Data" type="Array(double)" value="{0.0}"/>
     </ParameterList>
     <ParameterList name="Source Functions">
       <ParameterList name="Quadratic">

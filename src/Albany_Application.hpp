@@ -424,6 +424,10 @@ namespace Albany {
 
     bool morphFromInit;
     bool ignore_residual_in_jacobian;
+
+    //! To prevent a singular mass matrix associated with Dirichlet
+    //  conditions, optionally add a small perturbation to the diag
+    double perturbBetaForDirichlets;
   };
 }
 #endif // ALBANY_APPLICATION_HPP

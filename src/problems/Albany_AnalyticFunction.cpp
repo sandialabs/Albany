@@ -19,121 +19,86 @@
 
 #include "Albany_AnalyticFunction.hpp"
 #include "Teuchos_TestForException.hpp"
+#include "Teuchos_Exceptions.hpp"
+
+const double pi=3.141592653589793;
 
 
-enum {CONSTANT=0,
-      GAUSS_SIN_1D,
-      GAUSS_COS_1D,
-      GAUSS_1D, 
-      GAUSS_2D};
-namespace {
-const std::vector<std::string> &names()
+// Factory method to build functions based on a string
+Teuchos::RCP<Albany::AnalyticFunction> Albany::createAnalyticFunction(
+   std::string name, int neq, int numDim,
+   Teuchos::Array<double> data)
 {
-  static std::vector<std::string> list;
-  static bool init=true;
-  if (init) {
-    init = false;
-    list.push_back("Constant"); 
-    list.push_back("1D Gauss-Sin"); 
-    list.push_back("1D Gauss-Cos");
-    list.push_back("1D Gauss");
-    list.push_back("2D Gauss");
-  }
-  return list;
-}
-std::string stringify_names()
+  Teuchos::RCP<Albany::AnalyticFunction> F;
+
+  if (name=="Constant")
+    F = Teuchos::rcp(new Albany::ConstantFunction(neq, numDim, data));
+  else if (name=="1D Gauss-Sin")
+    F = Teuchos::rcp(new Albany::GaussSin(neq, numDim, data));
+  else if (name=="1D Gauss-Cos")
+    F = Teuchos::rcp(new Albany::GaussCos(neq, numDim, data));
+  else if (name=="Linear Y")
+    F = Teuchos::rcp(new Albany::LinearY(neq, numDim, data));
+  else
+    TEST_FOR_EXCEPTION(name != "Valid Initial Condition Function",
+                       std::logic_error,
+                       "Unrecognized initial condition function name: " << name);
+  return F;
+};
+
+
+//*****************************************************************************
+Albany::ConstantFunction::ConstantFunction(int neq_, int numDim_,
+   Teuchos::Array<double> data_) : neq(neq_), numDim(numDim_), data(data_)
 {
-  const std::vector<std::string> list = names();
-  std::string n;
-  for (std::size_t i=0; i<list.size(); ++i) {
-    n += "'"+list[i]+"', " ;
-  }
-  return n;
+  if (data.size()>0) val=data[0];
+  else val = 0.0;
 }
-int name_to_id(const std::string name)
+void Albany::ConstantFunction::compute(double* x, const double *X) 
 {
-  const std::vector<std::string> &list = names();
-  unsigned int id = find(list.begin(), list.end(), name) - list.begin();
-  if (id == list.size()) id = -1;
-  return id;
+  for (int i=0; i<neq; i++) x[i]=val;
 }
-}
-bool Albany::ValidIdentifier(const std::string name)
+
+//*****************************************************************************
+Albany::GaussSin::GaussSin(int neq_, int numDim_, Teuchos::Array<double> data_)
+ : neq(neq_), numDim(numDim_), data(data_)
 {
-  const bool valid = (-1 != name_to_id(name));
-  return valid;
+  TEST_FOR_EXCEPTION((neq!=1) || (numDim!=1) || (data.size()!=1),
+                      std::logic_error,
+                     "Error! Invalid call of GaussSin with " <<neq
+                    <<" "<< numDim <<"  "<< data.size() << std::endl);
 }
-void Albany::AnalyticFunction(Epetra_Vector& u, 
-                       const unsigned int l,
-                       const unsigned int h,
-                       const double t, 
-                       const double alpha, 
-                       const double beta, 
-                       const std::string name)
+void Albany::GaussSin::compute(double* x, const double *X) 
 {
-   const double pi=3.141592653589793;
-   const int id = name_to_id(name);
-   switch (id) {
-   case CONSTANT : {
-     for (int i=0; i< u.MyLength(); i++)  u[i] = beta; 
-   } 
-   break;
-   case GAUSS_SIN_1D : {
-     const double dx = 1.0 / (u.GlobalLength()-1);
-     for (int i=0; i< u.MyLength(); i++) {
-       const double x = dx * u.Map().GID(i);
-       u[i] = sin(pi * x) * exp(-pi*pi*t) + 0.5*alpha*x*(1.0-x);
-     }
-   } 
-   break;
-   case GAUSS_COS_1D: {
-     const double dx = 1.0 / (u.GlobalLength()-1);
-     for (int i=0; i< u.MyLength(); i++) {
-       const double x = dx * u.Map().GID(i);
-       u[i] = 1 + cos(2*pi*x) * exp(-4*pi*pi*t) + 0.5*alpha*x*(1.0-x);
-     }
-   } 
-   break;
-   case GAUSS_1D :{
-     const double wave_speed = beta ? beta : 1;
-     const double dx = 2.0 / (u.GlobalLength()-2);
-     for (int i=0; i< u.MyLength(); i+=2) {
-       const double y = dx*u.Map().GID(i)/2;
-       const double x = y + wave_speed*t;
-       const double z = x - std::floor(x) - 0.5;
-       u[i+0] = exp(-alpha*alpha*z*z);
-       u[i+1] = exp(-alpha*alpha*z*z)/wave_speed;
-     }
-   } 
-   break;
-   case GAUSS_2D:{
-     const double dx = 1.0/(l-1);
-     const double dy = 1.0/(h-1);
-     for (int i=0; i< u.MyLength(); i+=3) {
-       const unsigned int gid = u.Map().GID(i)/3;
-       const unsigned int nx = gid%l;
-       const unsigned int ny = gid/l;
-       const double x = nx*dx;
-       const double y = ny*dy;
-       const double a = (x+t)   - std::floor(x+t)   - 0.5;
-       const double b = (y+t)   - std::floor(y+t)   - 0.5;
-       const double s = std::sqrt(2.0);
-       const double c = (x+y+t)/s - std::floor(x+y+t)/s - 0.5;
-       const double p = exp(-20.0*20.0*a*a);
-       const double q = exp(-20.0*20.0*b*b);
-       const double r = exp(-20.0*20.0*c*c);
-       u[i]   = p + q + r;
-       u[i+1] = p + r;
-       u[i+2] = q + r;
-     }
-   } 
-   break;
-   default : {
-     TEST_FOR_EXCEPTION(1 != 0, std::logic_error, //Teuchos::Exceptions::InvalidParameter,
-                        "Error! Analytic Function name should be one of: "<<std::endl
-                        << stringify_names()<<std::endl
-                        << "Found: `"<<name<<"'" 
-                        << std::endl);
-   }
-   }
+  x[0] =     sin(pi * X[0]) + 0.5*data[0]*X[0]*(1.0-X[0]);
 }
+
+//*****************************************************************************
+Albany::GaussCos::GaussCos(int neq_, int numDim_, Teuchos::Array<double> data_)
+ : neq(neq_), numDim(numDim_), data(data_)
+{
+  TEST_FOR_EXCEPTION((neq!=1) || (numDim!=1) || (data.size()!=1),
+                      std::logic_error,
+                     "Error! Invalid call of GaussCos with " <<neq
+                    <<" "<< numDim <<"  "<< data.size() << std::endl);
+}
+void Albany::GaussCos::compute(double* x, const double *X) 
+{
+  x[0] = 1 + cos(2*pi * X[0]) + 0.5*data[0]*X[0]*(1.0-X[0]);
+}
+//*****************************************************************************
+Albany::LinearY::LinearY(int neq_, int numDim_, Teuchos::Array<double> data_)
+ : neq(neq_), numDim(numDim_), data(data_)
+{
+  TEST_FOR_EXCEPTION((neq<2) || (numDim<2) || (data.size()!=1),
+                      std::logic_error,
+                     "Error! Invalid call of LinearY with " <<neq
+                    <<" "<< numDim <<"  "<< data.size() << std::endl);
+}
+void Albany::LinearY::compute(double* x, const double *X) 
+{
+  x[0] = 0.0;
+  x[1] = data[0] * X[0];
+  if (numDim>2) x[2]=0.0;
+}
+//*****************************************************************************

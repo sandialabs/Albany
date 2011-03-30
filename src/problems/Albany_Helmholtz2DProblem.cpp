@@ -35,7 +35,6 @@ Helmholtz2DProblem(
   ksqr = params->get<double>("Ksqr",1.0);
 
   haveSource =  params->isSublist("Source Functions");
-  haveIC     =  params->isSublist("Initial Condition");
 
   dofNames.resize(neq);
   dofNames[0] = "U";
@@ -53,8 +52,7 @@ buildProblem(
     const int worksetSize,
     Albany::StateManager& stateMgr,
     const Albany::AbstractDiscretization& disc,
-    std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
-    const Teuchos::RCP<Epetra_Vector>& u)
+    std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
   /* Construct All Phalanx Evaluators */
   constructEvaluators(worksetSize, disc.getCubatureDegree(), disc.getCellTopologyData());
@@ -89,11 +87,6 @@ buildProblem(
      }
 
   }
-
-  // Build initial solution
-  if (haveIC) 
-    Albany::InitialCondition(u, 1, 1, params->sublist("Initial Condition"));
-
 }
 
 

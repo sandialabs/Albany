@@ -9,6 +9,9 @@
       <Parameter name="DBC on NS nodelist_17 for DOF T" type="double" value="1.0"/>
       <Parameter name="DBC on NS nodelist_18 for DOF T" type="double" value="1.0"/>
     </ParameterList>
+    <ParameterList name="Initial Condition">
+      <Parameter name="Function" type="string" value="Restart"/>
+    </ParameterList>
     <ParameterList name="Source Functions">
       <ParameterList name="Quadratic">
         <Parameter name="Nonlinear Factor" type="double" value="3.4"/>

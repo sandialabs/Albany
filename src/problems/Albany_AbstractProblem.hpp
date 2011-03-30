@@ -76,8 +76,7 @@ namespace Albany {
        const int worksetSize,
        StateManager& stateMgr,
        const Albany::AbstractDiscretization& disc,
-       std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
-       const Teuchos::RCP<Epetra_Vector>& u) = 0;
+       std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses) = 0;
 
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > getFieldManager();
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > getDirichletFieldManager() ;

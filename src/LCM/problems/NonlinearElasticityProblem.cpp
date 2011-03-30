@@ -19,7 +19,6 @@
 #include "Albany_BoundaryFlux1DResponseFunction.hpp"
 #include "Albany_SolutionAverageResponseFunction.hpp"
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
-#include "Albany_InitialCondition.hpp"
 #include "Albany_Utils.hpp"
 #include "Shards_BasicTopologies.hpp"
 #include "Shards_CellTopology.hpp"
@@ -30,7 +29,6 @@ NonlinearElasticityProblem(
                          const Teuchos::RCP<ParamLib>& paramLib_,
                          const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_, numDim_),
-  haveIC(false),
   haveSource(false),
   numDim(numDim_)
 {
@@ -38,7 +36,6 @@ NonlinearElasticityProblem(
   std::string& method = params->get("Name", "NonlinearElasticity ");
   *out << "Problem Name = " << method << std::endl;
   
-  haveIC     =  params->isSublist("Initial Condition");
   haveSource =  params->isSublist("Source Functions");
 
   matModel = params->sublist("Material Model").get("Model Name","NeoHookean");
@@ -70,8 +67,7 @@ buildProblem(
     const int worksetSize,
     Albany::StateManager& stateMgr,
     const Albany::AbstractDiscretization& disc,
-    std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
-    const Teuchos::RCP<Epetra_Vector>& u)
+    std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
   /* Construct All Phalanx Evaluators */
   constructEvaluators(worksetSize, disc.getCubatureDegree(), disc.getCellTopologyData(), stateMgr);
@@ -113,10 +109,6 @@ buildProblem(
      }
 
   }
-
-  // Build initial solution
-  if (haveIC) 
-    Albany::InitialCondition(u, 1, 1, params->sublist("Initial Condition"));
 }
 
 

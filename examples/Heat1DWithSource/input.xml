@@ -7,8 +7,8 @@
       <Parameter name="DBC on NS NodeSet1 for DOF T" type="double" value="0.0"/>
     </ParameterList>
     <ParameterList name="Initial Condition">
-      <Parameter name="Name" type="string" value="1D Gauss-Sin"/>
-      <Parameter name="Nonlinear Factor" type="double" value="0.75"/>
+      <Parameter name="Function" type="string" value="1D Gauss-Sin"/>
+      <Parameter name="Function Data" type="Array(double)" value="{0.75}"/>
     </ParameterList>
     <ParameterList name="Source Functions">
       <ParameterList name="Quadratic">

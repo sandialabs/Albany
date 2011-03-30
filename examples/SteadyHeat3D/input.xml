@@ -12,8 +12,8 @@
       <Parameter name="DBC on NS NodeSet5 for DOF T" type="double" value="1.5"/>
     </ParameterList>
     <ParameterList name="Initial Condition">
-       <Parameter name="Name" type="string" value="Constant"/>
-       <Parameter name="Beta" type="double" value="1.5"/>
+       <Parameter name="Function" type="string" value="Constant"/>
+       <Parameter name="Function Data" type="Array(double)" value="{1.5}"/>
     </ParameterList>
     <ParameterList name="Thermal Conductivity">
        <Parameter name="Name" type="string" value="Constant"/>

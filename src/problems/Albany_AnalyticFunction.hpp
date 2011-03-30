@@ -20,20 +20,64 @@
 
 #include <string>
 
-#include "Epetra_Vector.h"
-
+#include "Teuchos_Array.hpp"
 
 namespace Albany {
 
-void AnalyticFunction(Epetra_Vector& u, 
-                       const unsigned int l,
-                       const unsigned int h,
-                       const double t, 
-                       const double alpha, 
-                       const double beta, 
-                       const std::string name);
+// Base class for initial condition functions
+class AnalyticFunction {
+  public:
+    virtual void compute(double* x, const double *X) = 0;
+};
 
-bool ValidIdentifier(const std::string name);
+// Factory method to build functions based on a string name
+Teuchos::RCP<AnalyticFunction> createAnalyticFunction(
+   std::string name, int neq, int numDim,
+   Teuchos::Array<double> data);
+
+// Below is a library of intial condition functions
+
+class ConstantFunction : public AnalyticFunction {
+  public:
+    ConstantFunction(int neq_, int numDim_, Teuchos::Array<double> data_);
+    void compute(double* x, const double *X);
+  private:
+    int numDim; // size of coordinate vector X
+    int neq;    // size of solution vector x
+    Teuchos::Array<double> data;  
+    double val;
+};
+
+class GaussSin : public AnalyticFunction {
+  public:
+    GaussSin(int neq_, int numDim_, Teuchos::Array<double> data_);
+    void compute(double* x, const double *X);
+  private:
+    int numDim; // size of coordinate vector X
+    int neq;    // size of solution vector x
+    Teuchos::Array<double> data;  
+};
+
+class GaussCos : public AnalyticFunction {
+  public:
+    GaussCos(int neq_, int numDim_, Teuchos::Array<double> data_);
+    void compute(double* x, const double *X);
+  private:
+    int numDim; // size of coordinate vector X
+    int neq;    // size of solution vector x
+    Teuchos::Array<double> data;  
+};
+
+class LinearY : public AnalyticFunction {
+  public:
+    LinearY(int neq_, int numDim_, Teuchos::Array<double> data_);
+    void compute(double* x, const double *X);
+  private:
+    int numDim; // size of coordinate vector X
+    int neq;    // size of solution vector x
+    Teuchos::Array<double> data;  
+};
+
 
 }
 

@@ -26,49 +26,53 @@
 
 namespace Albany {
 
+const double pi=3.141592653589793;
+
+
 Teuchos::RCP<const Teuchos::ParameterList>
 getValidInitialConditionParameters()
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
      rcp(new Teuchos::ParameterList("ValidInitialConditionParams"));;
-  validPL->set<double>("Nonlinear Factor", 0.0, "");
-  validPL->set<double>("Beta", 0.0, "");
-  validPL->set<std::string>("Name", "", "");
+  validPL->set<std::string>("Function", "", "");
+  Teuchos::Array<double> defaultData;
+  validPL->set<Teuchos::Array<double> >("Function Data", defaultData, "");
 
   return validPL;
 }
 
-void InitialCondition(const Teuchos::RCP<Epetra_Vector>& u,
-                      const unsigned int local_len_x,
-                      const unsigned int local_len_y,
-                      Teuchos::ParameterList& p)
+void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
+                       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& elNodeID,
+                       const Teuchos::ArrayRCP<double>& coordinates, 
+                       const int neq,
+                       const int numDim,
+                       Teuchos::ParameterList& icParams)
 {
-  p.validateParameters(*Albany::getValidInitialConditionParameters(),0);
+  // Called twice, with x and xdot. Different param lists are sent in.
+  icParams.validateParameters(*Albany::getValidInitialConditionParameters(),0);
 
-  int  global_len_x = 0 ;
-  int  global_len_y = 0 ;
-  int lx = local_len_x;
-  int ly = local_len_y;
+  const std::string name = icParams.get("Function","Constant");
+  if (name=="Restart") return;
 
-  u->Comm().SumAll(&lx, &global_len_x, 1);
-  u->Comm().SumAll(&ly, &global_len_y, 1);
+  Teuchos::Array<double> defaultData;
+  Teuchos::Array<double> data = icParams.get("Function Data",defaultData);
 
-  const std::string name = p.get<std::string>("Name");
+  // Call factory method from library of initial condition functions
+  Teuchos::RCP<Albany::AnalyticFunction> initFunc
+    = createAnalyticFunction(name, neq, numDim, data);
 
-  // All other sources are names of Analytic functions
-  const double factor    = p.get("Nonlinear Factor", 0.0);
-  const double beta      = p.get("Beta",             0.0);
-  InitialCondition(u, global_len_x, global_len_y, factor, beta, name);
-}
+  // Loop over all elements, all local nodes, compute soln as a function of coord
+  for (int el=0; el < elNodeID.size(); el++) {
+    for (int ln=0; ln < elNodeID[0].size(); ln++) {
+       int lid = elNodeID[el][ln];
+       int coordID = 3*lid;
+       double* x = &(*soln)[neq*lid];
+       const double* X = &coordinates[coordID];
 
-void InitialCondition(const Teuchos::RCP<Epetra_Vector>& u,
-                      const unsigned int global_len_x,
-                      const unsigned int global_len_y,
-                      const double alpha, 
-                      const double beta, 
-                      const std::string &name)
-{
-  AnalyticFunction(*u, global_len_x, global_len_y, 0.0, alpha, beta, name);
+       initFunc->compute(x,X);
+
+    }
+  }
 }
 
 }

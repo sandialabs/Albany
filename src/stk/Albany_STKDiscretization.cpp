@@ -143,7 +143,6 @@ Albany::STKDiscretization::STKDiscretization(
   //std::vector< stk::mesh::Entity * > cells ;
   stk::mesh::get_selected_entities( select_owned_in_part ,
                            bulkData.buckets( topEntityRank ) ,
-//                           bulkData.buckets( stk::mesh::Element ) ,
                            cells );
 
   if (comm->MyPID()==0)
@@ -256,6 +255,12 @@ Albany::STKDiscretization::STKDiscretization(
          << " disabling exodus output \n" << endl;
   
 #endif
+
+
+  const stk::mesh::PartVector& pv = metaData.get_parts();
+  for (unsigned int i=0; i < pv.size(); i++)
+    if (pv[i]->primary_entity_rank() == topEntityRank)
+      cout << "QQQQ " << pv[i]->name() << endl;
 
 }
 

@@ -37,7 +37,6 @@ HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
              const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_, 1),
-  haveIC(false),
   haveSource(false),
   numDim(numDim_)
 {
@@ -45,7 +44,6 @@ HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   else           periodic = false;
   if (periodic) *out <<" Periodic Boundary Conditions being used." <<std::endl;
 
-  haveIC     =  params->isSublist("Initial Condition");
   haveSource =  params->isSublist("Source Functions");
 
   // neq=1 set in AbstractProblem constructor
@@ -64,8 +62,7 @@ buildProblem(
     const int worksetSize,
     Albany::StateManager& stateMgr,
     const Albany::AbstractDiscretization& disc,
-    std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
-    const Teuchos::RCP<Epetra_Vector>& u)
+    std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
   /* Construct All Phalanx Evaluators */
   constructEvaluators(worksetSize, disc.getCubatureDegree(), disc.getCellTopologyData());
@@ -107,10 +104,6 @@ buildProblem(
      }
 
   }
-
-  // Build initial solution
-  if (haveIC) 
-    Albany::InitialCondition(u, 1, 1, params->sublist("Initial Condition"));
 }
 
 

@@ -39,11 +39,8 @@ ThermoElectrostaticsProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_
              const Teuchos::RCP<ParamLib>& paramLib_,
              const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_, 2),
-  haveIC(false),
   numDim(numDim_)
 {
-  haveIC     =  params->isSublist("Initial Condition");
-
   // neq=2 set in AbstractProblem constructor
   dofNames.resize(neq);
   dofNames[0] = "Phi";
@@ -61,8 +58,7 @@ buildProblem(
     const int worksetSize,
     Albany::StateManager& stateMgr,
     const Albany::AbstractDiscretization& disc,
-    std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
-    const Teuchos::RCP<Epetra_Vector>& u)
+    std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
   /* Construct All Phalanx Evaluators */
   constructEvaluators(worksetSize, disc.getCubatureDegree(), disc.getCellTopologyData());
@@ -110,10 +106,6 @@ buildProblem(
      }
 
   }
-
-  // Build initial solution
-  if (haveIC) 
-    Albany::InitialCondition(u, 1, 1, params->sublist("Initial Condition"));
 }
 
 

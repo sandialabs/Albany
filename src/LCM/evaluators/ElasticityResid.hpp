@@ -52,12 +52,16 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> Stress;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
 
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> uDotDot;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
+
   // Output:
   PHX::MDField<ScalarT,Cell,Node,Dim> ExResidual;
 
   std::size_t numNodes;
   std::size_t numQPs;
   std::size_t numDims;
+  bool enableTransient;
 
 };
 }

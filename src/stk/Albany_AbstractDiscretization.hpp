@@ -82,6 +82,9 @@ namespace Albany {
     //! Get Cell Topology Data (for Element block 0 so far)
     virtual const CellTopologyData& getCellTopologyData() const = 0;
 
+    //! Get Number of Spatial Dimensions
+    virtual int getNumDim() const = 0;
+
   private:
 
     //! Private to prohibit copying
