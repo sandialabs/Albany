@@ -80,11 +80,6 @@ buildProblem(
      }
 
   }
-<<<<<<< HEAD
-  //initial guess
-  for (unsigned int i=0; i<neq; i++) (*u)[i] = 1.0;
-=======
->>>>>>> Major changes for transient dynamics and Intiial COndition specification
 }
 
 
