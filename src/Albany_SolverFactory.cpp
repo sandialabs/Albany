@@ -25,6 +25,7 @@
 #include "Piro_Epetra_LOCASolver.hpp"
 #include "Piro_Epetra_RythmosSolver.hpp"
 #include "Piro_Epetra_VelocityVerletSolver.hpp"
+#include "Piro_Epetra_TrapezoidRuleSolver.hpp"
 
 #include "Teuchos_XMLParameterListHelpers.hpp"
 #include "Teuchos_TestForException.hpp"
@@ -76,7 +77,7 @@ Albany::SolverFactory::create(
             std::logic_error, "Solution Method must be Steady, Transient, "
             << "or Continuation, not : " << solutionMethod);
     bool stochastic = problemParams.get("Stochastic", false);
-    bool secondOrder = problemParams.get("Second Order", false);
+    string secondOrder = problemParams.get("Second Order", "No");
 
     //set up parameters
     ParameterList& parameterParams = problemParams.sublist("Parameters");
@@ -126,7 +127,7 @@ Albany::SolverFactory::create(
       vtk = rcp(new Albany_VTK(appParams->sublist("VTK")));
     }
 
-    if (solutionMethod=="Transient" && !secondOrder)
+    if (solutionMethod=="Transient" && secondOrder=="No")
       Rythmos_observer = rcp(new Albany_RythmosObserver(vtk, app));
     else
       NOX_observer = rcp(new Albany_NOXObserver(vtk, app));
@@ -138,10 +139,18 @@ Albany::SolverFactory::create(
       return  rcp(new ENAT::SGNOXSolver(appParams, model, solverComm, NOX_observer));
     else if (solutionMethod== "Continuation")   // add save eigen data here as in Piro test
       return  rcp(new Piro::Epetra::LOCASolver(appParams, model, NOX_observer));
-    else if (solutionMethod== "Transient" && !secondOrder) 
+    else if (solutionMethod== "Transient" && secondOrder=="No") 
       return  rcp(new Piro::Epetra::RythmosSolver(appParams, model, Rythmos_observer));
-    else if (solutionMethod== "Transient" && secondOrder)
+    else if (solutionMethod== "Transient" && secondOrder=="Velocity Verlet")
       return  rcp(new Piro::Epetra::VelocityVerletSolver(appParams, model, NOX_observer));
+    else if (solutionMethod== "Transient" && secondOrder=="Trapezoid Rule")
+      return  rcp(new Piro::Epetra::TrapezoidRuleSolver(appParams, model, NOX_observer));
+    else if (solutionMethod== "Transient") {
+      TEST_FOR_EXCEPTION(secondOrder!="No", std::logic_error,
+         "Invalid value for Second Order: (No, Velocity Verlet, Trapezoid Rule): "
+         << secondOrder << "\n");
+      return Teuchos::null;
+      }
     else
       return  rcp(new Piro::Epetra::NOXSolver(appParams, model, NOX_observer));
 }
@@ -343,6 +352,7 @@ Albany::SolverFactory::getValidAppParameters() const
   validPL->sublist("VTK",                false, "VTK sublist");
   validPL->sublist("Rythmos",            false, "Rythmos sublist");
   validPL->sublist("Velocity Verlet",    false, "Piro Velocity Verlet sublist");
+  validPL->sublist("Trapezoid Rule",     false, "Piro Trapezoid Rule sublist");
   validPL->sublist("LOCA",               false, "LOCA sublist");
   validPL->sublist("NOX",                false, "NOX sublist");
   validPL->sublist("Analysis",           false, "Analysis sublist");

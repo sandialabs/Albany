@@ -3,8 +3,7 @@
     <Parameter name="Name" type="string" value="Elasticity 2D"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
     <Parameter name="Solution Method" type="string" value="Transient"/>
-    <Parameter name="Second Order" type="string" value="Velocity Verlet"/>
-    <Parameter name="Perturb Dirichlet" type="double" value="1.0e-6"/>
+    <Parameter name="Second Order" type="string" value="Trapezoid Rule"/>
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS NodeSet0 for DOF X" type="double" value="0.0"/>
       <Parameter name="DBC on NS NodeSet0 for DOF Y" type="double" value="0.0"/>
@@ -43,12 +42,82 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{0.0019693189}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{-0.0052863116}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{ 0.333333, 0.166666, 0.5}"/>
     <Parameter name="Number of Dakota Comparisons" type="int" value="0"/>
     <Parameter  name="Dakota Test Values" type="Array(double)" value="{ 1.0, 1.0}"/>
+  </ParameterList>
+  <ParameterList name="Trapezoid Rule">
+    <Parameter name="Num Time Steps" type="int" value="100"/>
+    <Parameter name="Final Time" type="double" value="60.00"/>
+    <Parameter name="Initial Time" type="double" value="0.0"/>
+    <ParameterList name="NOX">
+      <ParameterList name="Direction">
+        <Parameter name="Method" type="string" value="Newton"/>
+        <ParameterList name="Newton">
+          <Parameter name="Forcing Term Method" type="string" value="Constant"/>
+          <Parameter name="Rescue Bad Newton Solve" type="bool" value="1"/>
+          <ParameterList name="Stratimikos Linear Solver">
+            <ParameterList name="NOX Stratimikos Options">
+            </ParameterList>
+            <ParameterList name="Stratimikos">
+              <Parameter name="Linear Solver Type" type="string" value="Belos"/>
+              <ParameterList name="Linear Solver Types">
+                <ParameterList name="Belos">
+                  <Parameter name="Solver Type" type="string" value="Block GMRES"/>
+                  <ParameterList name="Solver Types">
+                    <ParameterList name="Block GMRES">
+                      <Parameter name="Convergence Tolerance" type="double" value="1e-5"/>
+                      <Parameter name="Output Frequency" type="int" value="10"/>
+                      <Parameter name="Output Style" type="int" value="1"/>
+                      <Parameter name="Verbosity" type="int" value="33"/>
+                      <Parameter name="Maximum Iterations" type="int" value="100"/>
+                      <Parameter name="Num Blocks" type="int" value="100"/>
+                    </ParameterList>
+                  </ParameterList>
+                </ParameterList>
+              </ParameterList>
+              <Parameter name="Preconditioner Type" type="string" value="None"/>
+              <ParameterList name="Preconditioner Types">
+                <ParameterList name="Ifpack">
+                  <Parameter name="Overlap" type="int" value="1"/>
+                  <Parameter name="Prec Type" type="string" value="ILU"/>
+                  <ParameterList name="Ifpack Settings">
+                    <Parameter name="fact: level-of-fill" type="int" value="1"/>
+                  </ParameterList>
+                </ParameterList>
+              </ParameterList>
+            </ParameterList>
+          </ParameterList>
+        </ParameterList>
+      </ParameterList>
+      <ParameterList name="Line Search">
+        <Parameter name="Method" type="string" value="Full Step"/>
+      </ParameterList>
+      <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
+      <ParameterList name="Printing">
+        <Parameter name="Output Information" type="int" value="103"/>
+        <Parameter name="Output Precision" type="int" value="3"/>
+        <Parameter name="Output Processor" type="int" value="0"/>
+      </ParameterList>
+      <ParameterList name="Status Tests">
+        <Parameter name="Test Type" type="string" value="Combo"/>
+        <Parameter name="Combo Type" type="string" value="OR"/>
+        <Parameter name="Number of Tests" type="int" value="2"/>
+        <ParameterList name="Test 0">
+          <Parameter name="Test Type" type="string" value="NormF"/>
+          <Parameter name="Norm Type" type="string" value="Two Norm"/>
+          <Parameter name="Scale Type" type="string" value="Scaled"/>
+          <Parameter name="Tolerance" type="double" value="1e-10"/>
+        </ParameterList>
+        <ParameterList name="Test 1">
+          <Parameter name="Test Type" type="string" value="MaxIters"/>
+          <Parameter name="Maximum Iterations" type="int" value="10"/>
+        </ParameterList>
+      </ParameterList>
+    </ParameterList>
   </ParameterList>
   <ParameterList name="Velocity Verlet">
     <Parameter name="Num Time Steps" type="int" value="40"/>
