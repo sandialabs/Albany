@@ -30,7 +30,7 @@
 #include <stk_mesh/base/Selector.hpp>
 
 #include <stk_mesh/fem/FieldDeclarations.hpp>
-#include <stk_mesh/fem/TopologyHelpers.hpp>
+#include <stk_mesh/fem/FEMHelpers.hpp>
 #include <stk_mesh/fem/EntityRanks.hpp>
 
 #include <stk_io/util/UseCase_mesh.hpp>
@@ -76,7 +76,10 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 
   }
 
-   stk::io::put_io_part_attribute(metaData->universal_part());
+  numDim = metaData->spatial_dimension();
+  *out << "IOSS-STK:  numDim =  " << numDim << endl;
+
+  stk::io::put_io_part_attribute(metaData->universal_part());
 
   // Set element blocks and node sets
   const stk::mesh::PartVector & all_parts = metaData->get_parts();
@@ -86,24 +89,13 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 
     stk::mesh::Part * const part = *i ;
 
-    switch( part->primary_entity_rank() ) {
-      case stk::mesh::Element:{
-          *out << "IOSS-STK: Element part found " << endl;
-          partVec[eb++] = part;
-          // Since Cubit likes to define numDim=3 always, use vertex
-          // count on top element block to figure out quad(tri) vs hex.
-          //   Needs to be fixed for Tets ro Shells
-          numDim = stk::mesh::get_cell_topology(*part)->dimension;
-          *out << "IOSS-STK:  numDim =  " << numDim << endl;
-          }
-        break;
-      case stk::mesh::Node:
-          {
-            *out << "Mesh has Node Set ID: " << part->name() << endl;
-            nsPartVec[part->name()]=part;
-          }
-        break;
-      default: break ;
+    if ( part->primary_entity_rank() == metaData->element_rank()) {
+      *out << "IOSS-STK: Element part found " << endl;
+      if (part->name()[0] != '{') partVec[eb++] = part;
+    }
+    else if ( part->primary_entity_rank() == metaData->node_rank()) {
+       *out << "Mesh has Node Set ID: " << part->name() << endl;
+      if (part->name()[0] != '{') nsPartVec[part->name()]=part;
     }
   }
 

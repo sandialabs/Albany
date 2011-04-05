@@ -28,7 +28,7 @@
 #include <stk_mesh/base/Selector.hpp>
 
 #include <stk_mesh/fem/FieldDeclarations.hpp>
-#include <stk_mesh/fem/TopologyHelpers.hpp>
+#include <stk_mesh/fem/FEMHelpers.hpp>
 #include <stk_mesh/fem/EntityRanks.hpp>
 
 #ifdef ALBANY_IOSS
@@ -40,10 +40,11 @@ enum { field_data_chunk_size = 1001 };
 
 
 Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
-    const Teuchos::RCP<const Epetra_Comm>& comm)
+    const Teuchos::RCP<const Epetra_Comm>& comm_)
+    : comm (comm_)
 {
-  metaData = new stk::mesh::MetaData(stk::mesh::fem_entity_rank_names() );
-  bulkData = new stk::mesh::BulkData(*metaData , Albany::getMpiCommFromEpetraComm(*comm), field_data_chunk_size );
+  metaData = new stk::mesh::fem::FEMMetaData();
+  bulkData = NULL;
 }
 
 void Albany::GenericSTKMeshStruct::SetupMetaData(
@@ -55,6 +56,14 @@ void Albany::GenericSTKMeshStruct::SetupMetaData(
   neq = neq_;
   nstates = nstates_;
 
+  if (! metaData->is_FEM_initialized()) metaData->FEM_initialize(numDim);
+
+  if (bulkData ==  NULL)
+  bulkData = new stk::mesh::BulkData(stk::mesh::fem::FEMMetaData::get_meta_data(*metaData),
+                          Albany::getMpiCommFromEpetraComm(*comm), field_data_chunk_size );
+
+  cout << " FFF  " << metaData->element_rank() << "   " << metaData->node_rank() << endl;
+
   cubatureDegree = params->get("Cubature Degree", 3);
 
   //Start STK stuff
@@ -63,10 +72,10 @@ void Albany::GenericSTKMeshStruct::SetupMetaData(
   residual_field = & metaData->declare_field< VectorFieldType >( "residual" );
   state_field = & metaData->declare_field< VectorFieldType >( "state" );
 
-  stk::mesh::put_field( *coordinates_field , stk::mesh::Node , metaData->universal_part(), numDim );
-  stk::mesh::put_field( *solution_field , stk::mesh::Node , metaData->universal_part(), neq );
-  stk::mesh::put_field( *residual_field , stk::mesh::Node , metaData->universal_part() , neq );
-  if (nstates>0) stk::mesh::put_field( *state_field , stk::mesh::Element , metaData->universal_part(), nstates );
+  stk::mesh::put_field( *coordinates_field , metaData->node_rank() , metaData->universal_part(), numDim );
+  stk::mesh::put_field( *solution_field , metaData->node_rank() , metaData->universal_part(), neq );
+  stk::mesh::put_field( *residual_field , metaData->node_rank() , metaData->universal_part() , neq );
+  if (nstates>0) stk::mesh::put_field( *state_field , metaData->element_rank() , metaData->universal_part(), nstates );
   
 #ifdef ALBANY_IOSS
   stk::io::set_field_role(*coordinates_field, Ioss::Field::MESH);
@@ -83,7 +92,7 @@ void Albany::GenericSTKMeshStruct::SetupMetaData(
 void Albany::GenericSTKMeshStruct::DeclareParts(std::vector<std::string> nsNames)
 {
   // HandCoded meshes have 1 element block
-  partVec[0] = &  metaData->declare_part( "Block_1", stk::mesh::Element );
+  partVec[0] = &  metaData->declare_part( "Block_1", metaData->element_rank() );
 #ifdef ALBANY_IOSS
   stk::io::put_io_part_attribute(*partVec[0]);
 #endif
@@ -91,7 +100,7 @@ void Albany::GenericSTKMeshStruct::DeclareParts(std::vector<std::string> nsNames
   // NodeSets
   for (unsigned int i=0; i<nsNames.size(); i++) {
     std::string nsn = nsNames[i];
-    nsPartVec[nsn] = & metaData->declare_part(nsn, stk::mesh::Node );
+    nsPartVec[nsn] = & metaData->declare_part(nsn, metaData->node_rank() );
 #ifdef ALBANY_IOSS
     stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif

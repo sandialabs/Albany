@@ -28,7 +28,7 @@
 #include <stk_mesh/base/Selector.hpp>
 
 #include <stk_mesh/fem/FieldDeclarations.hpp>
-#include <stk_mesh/fem/TopologyHelpers.hpp>
+#include <stk_mesh/fem/FEMHelpers.hpp>
 #include <stk_mesh/fem/EntityRanks.hpp>
 
 #ifdef ALBANY_IOSS
@@ -76,7 +76,7 @@ Albany::Line1DSTKMeshStruct::Line1DSTKMeshStruct(
   //Needed for rebalancing
   //stk::mesh::DefaultFEM fem(*metaData,numDim_);
 
-  stk::mesh::set_cell_topology< shards::Line<2> >(*partVec[0]);
+  stk::mesh::fem::set_cell_topology_new< shards::Line<2> >(*partVec[0]);
 
   metaData->commit();
 
@@ -100,9 +100,9 @@ Albany::Line1DSTKMeshStruct::Line1DSTKMeshStruct(
     stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
     singlePartVec[0] = partVec[0];
 
-    stk::mesh::Entity& edge  = bulkData->declare_entity(stk::mesh::Element, 1+elem_id, singlePartVec);
-    stk::mesh::Entity& lnode = bulkData->declare_entity(stk::mesh::Node, 1+left_node, noPartVec);
-    stk::mesh::Entity& rnode = bulkData->declare_entity(stk::mesh::Node, 1+right_node, noPartVec);
+    stk::mesh::Entity& edge  = bulkData->declare_entity(metaData->element_rank(), 1+elem_id, singlePartVec);
+    stk::mesh::Entity& lnode = bulkData->declare_entity(metaData->node_rank(), 1+left_node, noPartVec);
+    stk::mesh::Entity& rnode = bulkData->declare_entity(metaData->node_rank(), 1+right_node, noPartVec);
     bulkData->declare_relation(edge, lnode, 0);
     bulkData->declare_relation(edge, rnode, 1);
 
@@ -128,14 +128,14 @@ Albany::Line1DSTKMeshStruct::Line1DSTKMeshStruct(
 
 // Needed for rebalance 
 //  stk::mesh::Selector owned_selector = metaData->locally_owned_part();
-//  cout << "Before rebal " << comm->MyPID() << "  " << stk::mesh::count_selected_entities(owned_selector, bulkData->buckets(stk::mesh::Node)) << endl;
+//  cout << "Before rebal " << comm->MyPID() << "  " << stk::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->node_rank())) << endl;
 //  // Use Zoltan to determine new partition
 //  Teuchos::ParameterList emptyList;
 //  stk::rebalance::Zoltan zoltan_partition(Albany::getMpiCommFromEpetraComm(*comm), numDim, emptyList);
 //  stk::mesh::Selector selector(metaData->universal_part());
 //  stk::rebalance::rebalance(*bulkData, selector, coordinates_field, NULL, zoltan_partition);
 //
-//  cout << "After rebal " << comm->MyPID() << "  " << stk::mesh::count_selected_entities(owned_selector, bulkData->buckets(stk::mesh::Node)) << endl;
+//  cout << "After rebal " << comm->MyPID() << "  " << stk::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->node_rank())) << endl;
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

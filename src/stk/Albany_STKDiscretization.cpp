@@ -35,7 +35,7 @@
 #include <stk_mesh/base/Selector.hpp>
 
 #include <stk_mesh/fem/FieldDeclarations.hpp>
-#include <stk_mesh/fem/TopologyHelpers.hpp>
+#include <stk_mesh/fem/FEMHelpers.hpp>
 #include <stk_mesh/fem/EntityRanks.hpp>
 
 #ifdef ALBANY_IOSS
@@ -50,40 +50,27 @@ Albany::STKDiscretization::STKDiscretization(
   time(0.0)
 {
   //Unpack mesh data from struct container
-  stk::mesh::MetaData& metaData = *stkMeshStruct->metaData;
+  stk::mesh::fem::FEMMetaData& metaData = *stkMeshStruct->metaData;
   stk::mesh::BulkData& bulkData = *stkMeshStruct->bulkData;
   //Albany::AbstractSTKMeshStruct::VectorFieldType& coordinates_field
   //      = *stkMeshStruct->coordinates_field;
   //Albany::AbstractSTKMeshStruct::VectorFieldType& solution_field
   //      = *stkMeshStruct->solution_field;
 
-  stk::mesh::Part& universalPart = stkMeshStruct->metaData->universal_part();
+  stk::mesh::Part& universalPart = metaData.universal_part();
 
   //Teuchos::RCP<Epetra_Map>& elem_map = stkMeshStruct->elem_map;
   int& numDim = stkMeshStruct->numDim;
 
   if (stkMeshStruct->useElementAsTopRank) {
-    nodes_per_element =  stk::mesh::get_cell_topology(*(stkMeshStruct->partVec[0]))->node_count; 
+    nodes_per_element =  metaData.get_cell_topology(*(stkMeshStruct->partVec[0])).getNodeCount(); 
+    cout << " SSS " <<   metaData.get_cell_topology(*(stkMeshStruct->partVec[0])).getName() << endl;
    } 
   else {  // comes from cubit
     if (numDim==1)  nodes_per_element = 2;   //can't get topology from Cubit
     else if (numDim==2)  nodes_per_element = 4;   //can't get topology from Cubit
     else             nodes_per_element = 8;
   }
-
-  stk::mesh::EntityRankEnum topEntityRank = stk::mesh::EntityRankUndefined;
-  
-  if (stkMeshStruct->useElementAsTopRank)
-    topEntityRank = stk::mesh::Element;
-  else
-    switch (numDim) {
-      case 1: topEntityRank = stk::mesh::Edge; break;
-      case 2: topEntityRank = stk::mesh::Face; break;
-      case 3: topEntityRank = stk::mesh::Element; break;
-      default: TEST_FOR_EXCEPTION(true, std::logic_error,
-          "STKDiscretization:  Bad numDim"<< numDim);
-    }
-  
 
  // Constructs overlap_map, overlap_graph, and graph.
   int row, col;
@@ -94,7 +81,7 @@ Albany::STKDiscretization::STKDiscretization(
     stk::mesh::Selector( metaData.locally_owned_part() );
 
   stk::mesh::get_selected_entities( select_owned_in_part ,
-                           bulkData.buckets( stk::mesh::Node ) ,
+                           bulkData.buckets( metaData.node_rank() ) ,
                            ownednodes );
 
   int numOwned = ownednodes.size();
@@ -122,7 +109,7 @@ Albany::STKDiscretization::STKDiscretization(
 
   //  overlapnodes used for overlap map -- stored for changing coords
   stk::mesh::get_selected_entities( select_overlap_in_part ,
-                           bulkData.buckets( stk::mesh::Node ) ,
+                           bulkData.buckets( metaData.node_rank() ) ,
                            overlapnodes );
 
   indices.resize(overlapnodes.size() * neq);
@@ -142,7 +129,7 @@ Albany::STKDiscretization::STKDiscretization(
 
   //std::vector< stk::mesh::Entity * > cells ;
   stk::mesh::get_selected_entities( select_owned_in_part ,
-                           bulkData.buckets( topEntityRank ) ,
+                           bulkData.buckets( metaData.element_rank() ) ,
                            cells );
 
   if (comm->MyPID()==0)
@@ -221,7 +208,7 @@ Albany::STKDiscretization::STKDiscretization(
 
     std::vector< stk::mesh::Entity * > nodes ;
     stk::mesh::get_selected_entities( select_owned_in_nspart ,
-                             bulkData.buckets( stk::mesh::Node ) ,
+                             bulkData.buckets( metaData.node_rank() ) ,
                              nodes );
 
     nodeSets[ns->first].resize(nodes.size());
@@ -259,7 +246,8 @@ Albany::STKDiscretization::STKDiscretization(
 
   const stk::mesh::PartVector& pv = metaData.get_parts();
   for (unsigned int i=0; i < pv.size(); i++)
-    if (pv[i]->primary_entity_rank() == topEntityRank)
+    if (pv[i]->primary_entity_rank() == metaData.element_rank())
+     if (pv[i]->name()[0] != '{')
       cout << "QQQQ " << pv[i]->name() << endl;
 
 }
@@ -337,7 +325,7 @@ const CellTopologyData&
 Albany::STKDiscretization::getCellTopologyData() const
 {
   if (stkMeshStruct->useElementAsTopRank)
-    return *(stk::mesh::get_cell_topology(*(stkMeshStruct->partVec[0])));
+    return *(stkMeshStruct->metaData->get_cell_topology(*(stkMeshStruct->partVec[0])).getCellTopologyData()); 
   else { // havn't figured out how to get shards topo from Cubit
    if (stkMeshStruct->numDim==1) return *(shards::getCellTopologyData<shards::Line<2> >());
    else if (stkMeshStruct->numDim==2) return *(shards::getCellTopologyData<shards::Quadrilateral<4> >());

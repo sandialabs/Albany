@@ -28,7 +28,7 @@
 #include <stk_mesh/base/Selector.hpp>
 
 #include <stk_mesh/fem/FieldDeclarations.hpp>
-#include <stk_mesh/fem/TopologyHelpers.hpp>
+#include <stk_mesh/fem/FEMHelpers.hpp>
 #include <stk_mesh/fem/EntityRanks.hpp>
 #include "Albany_Utils.hpp"
 
@@ -87,7 +87,7 @@ Albany::Cube3DSTKMeshStruct::Cube3DSTKMeshStruct(
   this->SetupMetaData(params, neq_, nstates_, numDim_);
   this->DeclareParts(nsNames);
 
-  stk::mesh::set_cell_topology< shards::Hexahedron<8> >(*partVec[0]);
+  stk::mesh::fem::set_cell_topology_new< shards::Hexahedron<8> >(*partVec[0]);
 
   metaData->commit();
 
@@ -118,15 +118,15 @@ Albany::Cube3DSTKMeshStruct::Cube3DSTKMeshStruct(
     singlePartVec[0] = partVec[0];
 
     // Add one to IDs because STK requires 1-based
-    stk::mesh::Entity& elem  = bulkData->declare_entity(stk::mesh::Element, 1+elem_id, singlePartVec);
-    stk::mesh::Entity& llnode = bulkData->declare_entity(stk::mesh::Node, 1+lower_left, noPartVec);
-    stk::mesh::Entity& lrnode = bulkData->declare_entity(stk::mesh::Node, 1+lower_right, noPartVec);
-    stk::mesh::Entity& urnode = bulkData->declare_entity(stk::mesh::Node, 1+upper_right, noPartVec);
-    stk::mesh::Entity& ulnode = bulkData->declare_entity(stk::mesh::Node, 1+upper_left, noPartVec);
-    stk::mesh::Entity& llnodeb = bulkData->declare_entity(stk::mesh::Node, 1+lower_left_back, noPartVec);
-    stk::mesh::Entity& lrnodeb = bulkData->declare_entity(stk::mesh::Node, 1+lower_right_back, noPartVec);
-    stk::mesh::Entity& urnodeb = bulkData->declare_entity(stk::mesh::Node, 1+upper_right_back, noPartVec);
-    stk::mesh::Entity& ulnodeb = bulkData->declare_entity(stk::mesh::Node, 1+upper_left_back, noPartVec);
+    stk::mesh::Entity& elem  = bulkData->declare_entity(metaData->element_rank(), 1+elem_id, singlePartVec);
+    stk::mesh::Entity& llnode = bulkData->declare_entity(metaData->node_rank(), 1+lower_left, noPartVec);
+    stk::mesh::Entity& lrnode = bulkData->declare_entity(metaData->node_rank(), 1+lower_right, noPartVec);
+    stk::mesh::Entity& urnode = bulkData->declare_entity(metaData->node_rank(), 1+upper_right, noPartVec);
+    stk::mesh::Entity& ulnode = bulkData->declare_entity(metaData->node_rank(), 1+upper_left, noPartVec);
+    stk::mesh::Entity& llnodeb = bulkData->declare_entity(metaData->node_rank(), 1+lower_left_back, noPartVec);
+    stk::mesh::Entity& lrnodeb = bulkData->declare_entity(metaData->node_rank(), 1+lower_right_back, noPartVec);
+    stk::mesh::Entity& urnodeb = bulkData->declare_entity(metaData->node_rank(), 1+upper_right_back, noPartVec);
+    stk::mesh::Entity& ulnodeb = bulkData->declare_entity(metaData->node_rank(), 1+upper_left_back, noPartVec);
     bulkData->declare_relation(elem, llnode, 0);
     bulkData->declare_relation(elem, lrnode, 1);
     bulkData->declare_relation(elem, urnode, 2);

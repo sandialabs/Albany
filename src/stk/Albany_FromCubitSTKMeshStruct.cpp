@@ -33,7 +33,7 @@
 #include <stk_mesh/base/Selector.hpp>
 
 #include <stk_mesh/fem/FieldDeclarations.hpp>
-#include <stk_mesh/fem/TopologyHelpers.hpp>
+#include <stk_mesh/fem/FEMHelpers.hpp>
 #include <stk_mesh/fem/EntityRanks.hpp>
 #include "Albany_Utils.hpp"
 
@@ -59,9 +59,9 @@ Albany::FromCubitSTKMeshStruct::FromCubitSTKMeshStruct(
   solution_field = & metaData->declare_field< VectorFieldType >( "solution" );
   residual_field = & metaData->declare_field< VectorFieldType >( "residual" );
   state_field = & metaData->declare_field< VectorFieldType >( "state" );
-  stk::mesh::put_field( *solution_field , stk::mesh::Node , metaData->universal_part(), neq );
-  stk::mesh::put_field( *residual_field , stk::mesh::Node , metaData->universal_part() , neq );
-  if (nstates>0) stk::mesh::put_field( *state_field , stk::mesh::Element , metaData->universal_part(), nstates );
+  stk::mesh::put_field( *solution_field , metaData->node_rank() , metaData->universal_part(), neq );
+  stk::mesh::put_field( *residual_field , metaData->node_rank() , metaData->universal_part() , neq );
+  if (nstates>0) stk::mesh::put_field( *state_field , metaData->element_rank() , metaData->universal_part(), nstates );
 
   // Construct nsPartVec from similar stkMeshData struct
   std::map<int, stk::mesh::Part*> nsList= stkMeshData->get_nodeset_list();

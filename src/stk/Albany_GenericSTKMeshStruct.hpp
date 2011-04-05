@@ -30,7 +30,7 @@ namespace Albany {
   class GenericSTKMeshStruct : public AbstractSTKMeshStruct {
 
     protected: 
-    GenericSTKMeshStruct(const Teuchos::RCP<const Epetra_Comm>& comm);
+    GenericSTKMeshStruct(const Teuchos::RCP<const Epetra_Comm>& comm_);
 
     void SetupMetaData(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
@@ -43,6 +43,8 @@ namespace Albany {
 
     Teuchos::RCP<Teuchos::ParameterList> getValidGenericSTKParameters(
          std::string listname = "Discretization Param Names") const;
+
+    Teuchos::RCP<const Epetra_Comm> comm;
 
   };
 

@@ -28,7 +28,7 @@
 #include <stk_mesh/base/Selector.hpp>
 
 #include <stk_mesh/fem/FieldDeclarations.hpp>
-#include <stk_mesh/fem/TopologyHelpers.hpp>
+#include <stk_mesh/fem/FEMHelpers.hpp>
 #include <stk_mesh/fem/EntityRanks.hpp>
 
 #ifdef ALBANY_IOSS
@@ -56,7 +56,7 @@ Albany::Point0DSTKMeshStruct::Point0DSTKMeshStruct(
   this->SetupMetaData(params, neq_, nstates_, numDim_);
   this->DeclareParts(nsNames);
   
-  stk::mesh::set_cell_topology< shards::Particle >(*partVec[0]);
+  stk::mesh::fem::set_cell_topology_new< shards::Particle >(*partVec[0]);
   metaData->commit();
 
   // Finished with metaData, now work on bulk data
@@ -68,8 +68,8 @@ Albany::Point0DSTKMeshStruct::Point0DSTKMeshStruct(
 
     singlePartVec[0] = partVec[0];
 
-    stk::mesh::Entity& pt  = bulkData->declare_entity(stk::mesh::Element, 1, singlePartVec);
-    stk::mesh::Entity& node = bulkData->declare_entity(stk::mesh::Node, 1, noPartVec);
+    stk::mesh::Entity& pt  = bulkData->declare_entity(metaData->element_rank(), 1, singlePartVec);
+    stk::mesh::Entity& node = bulkData->declare_entity(metaData->node_rank(), 1, noPartVec);
     bulkData->declare_relation(pt, node, 0);
 
   bulkData->modification_end();
