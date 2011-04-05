@@ -1,0 +1,688 @@
+/********************************************************************\
+*            Albany, Copyright (2010) Sandia Corporation             *
+*                                                                    *
+* Notice: This computer software was prepared by Sandia Corporation, *
+* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
+* the Department of Energy (DOE). All rights in the computer software*
+* are reserved by DOE on behalf of the United States Government and  *
+* the Contractor as provided in the Contract. You are authorized to  *
+* use this computer software for Governmental purposes but it is not *
+* to be released or distributed to the public. NEITHER THE GOVERNMENT*
+* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
+* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
+* including this sentence must appear on any copies of this software.*
+*    Questions to Andy Salinger, agsalin@sandia.gov                  *
+\********************************************************************/
+
+#include "LCM/LCM_FactoryTraits.hpp"
+#include "GradientDamageProblem.hpp"
+#include "Albany_BoundaryFlux1DResponseFunction.hpp"
+#include "Albany_SolutionAverageResponseFunction.hpp"
+#include "Albany_SolutionTwoNormResponseFunction.hpp"
+#include "Albany_Utils.hpp"
+
+Albany::GradientDamageProblem::
+GradientDamageProblem(
+		      const Teuchos::RCP<Teuchos::ParameterList>& params_,
+		      const Teuchos::RCP<ParamLib>& paramLib_,
+		      const int numDim_) :
+  Albany::AbstractProblem(params_, paramLib_, numDim_ + 1),
+  haveSource(false),
+  numDim(numDim_)
+{
+ 
+  std::string& method = params->get("Name", "GradientDamage ");
+  *out << "Problem Name = " << method << std::endl;
+  
+  haveSource =  params->isSublist("Source Functions");
+
+  dofNames.resize(neq);
+// Changing this ifdef changes ordering from  (X,Y,D) to (D,X,Y)
+//#define NUMBER_D_FIRST
+#ifdef NUMBER_D_FIRST
+  D_offset=0;
+  X_offset=1;
+#else
+  X_offset=0;
+  D_offset=numDim;
+#endif
+  dofNames[X_offset] = "X";
+  if (numDim>1) dofNames[X_offset+1] = "Y";
+  if (numDim>2) dofNames[X_offset+2] = "Z";
+  dofNames[D_offset] = "D";
+
+  // check matModel
+  //if (matModel == "NeoHookean") 
+  this->nstates=numDim*numDim;
+
+  *out << "Num States to Store: " << this->nstates << std::endl;
+
+}
+
+Albany::GradientDamageProblem::
+~GradientDamageProblem()
+{
+}
+
+void
+Albany::GradientDamageProblem::
+buildProblem(
+    const int worksetSize,
+    Albany::StateManager& stateMgr,
+    const Albany::AbstractDiscretization& disc,
+    std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
+{
+  /* Construct All Phalanx Evaluators */
+  constructEvaluators(worksetSize, disc.getCubatureDegree(), disc.getCellTopologyData(), stateMgr);
+  constructDirichletEvaluators(disc.getNodeSetIDs());
+
+  // Build response functions
+  Teuchos::ParameterList& responseList = params->sublist("Response Functions");
+  int num_responses = responseList.get("Number", 0);
+  responses.resize(num_responses);
+  for (int i=0; i<num_responses; i++) {
+     std::string name = responseList.get(Albany::strint("Response",i), "??");
+
+     if (name == "Solution Average")
+       responses[i] = Teuchos::rcp(new SolutionAverageResponseFunction());
+
+     else if (name == "Solution Two Norm")
+       responses[i] = Teuchos::rcp(new SolutionTwoNormResponseFunction());
+
+     else {
+       TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+                          std::endl <<
+                          "Error!  Unknown response function " << name <<
+                          "!" << std::endl << "Supplied parameter list is " <<
+                          std::endl << responseList);
+     }
+
+  }
+}
+
+
+void
+Albany::GradientDamageProblem::constructEvaluators(
+       const int worksetSize, const int cubDegree, 
+       const CellTopologyData& ctd, Albany::StateManager& stateMgr)
+{
+   using Teuchos::RCP;
+   using Teuchos::rcp;
+   using Teuchos::ParameterList;
+   using PHX::DataLayout;
+   using PHX::MDALayout;
+   using std::vector;
+   using std::map;
+   using LCM::FactoryTraits;
+   using PHAL::AlbanyTraits;
+
+   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
+   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&ctd));
+   switch (numDim) {
+     case 1:
+       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_LINE_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
+       break;
+     case 2:
+       if (ctd.vertex_count==4)
+         intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
+       else if (ctd.vertex_count==3)
+         intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TRI_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
+       break;
+     case 3:
+       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_HEX_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
+       break;
+   }
+
+   numNodes = intrepidBasis->getCardinality();
+
+   Intrepid::DefaultCubatureFactory<RealType> cubFactory;
+   RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, cubDegree);
+
+   const int numQPts = cubature->getNumPoints();
+   const int numVertices = cellType->getVertexCount();
+
+   *out << "Field Dimensions: Workset=" << worksetSize 
+        << ", Vertices= " << numVertices
+        << ", Nodes= " << numNodes
+        << ", QuadPts= " << numQPts
+        << ", Dim= " << numDim << endl;
+
+   // Parser will build parameter list that determines the field
+   // evaluators to build
+   map<string, RCP<ParameterList> > evaluators_to_build;
+
+   RCP<DataLayout> node_scalar = rcp(new MDALayout<Cell,Node>(worksetSize,numNodes));
+   RCP<DataLayout> qp_scalar = rcp(new MDALayout<Cell,QuadPoint>(worksetSize,numQPts));
+
+   RCP<DataLayout> node_vector = rcp(new MDALayout<Cell,Node,Dim>(worksetSize,numNodes,numDim));
+   RCP<DataLayout> qp_vector = rcp(new MDALayout<Cell,QuadPoint,Dim>(worksetSize,numQPts,numDim));
+   RCP<DataLayout> qp_tensor = rcp(new MDALayout<Cell,QuadPoint,Dim,Dim>(worksetSize,numQPts,numDim,numDim));
+
+   RCP<DataLayout> vertices_vector = 
+     rcp(new MDALayout<Cell,Vertex, Dim>(worksetSize,numVertices,numDim));
+   // Basis functions, Basis function gradient
+   RCP<DataLayout> node_qp_scalar =
+     rcp(new MDALayout<Cell,Node,QuadPoint>(worksetSize,numNodes, numQPts));
+   RCP<DataLayout> node_qp_vector =
+     rcp(new MDALayout<Cell,Node,QuadPoint,Dim>(worksetSize,numNodes, numQPts,numDim));
+
+   RCP<DataLayout> dummy = rcp(new MDALayout<Dummy>(0));
+
+  { // Gather Solution X,Y,Z
+   RCP< vector<string> > dof_names = rcp(new vector<string>(1));
+     (*dof_names)[0] = "Displacement";
+
+    RCP<ParameterList> p = rcp(new ParameterList);
+    int type = FactoryTraits<AlbanyTraits>::id_gather_solution;
+    p->set<int>("Type", type);
+    p->set< RCP< vector<string> > >("Solution Names", dof_names);
+    p->set<bool>("Vector Field", true);
+    p->set< RCP<DataLayout> >("Data Layout", node_vector);
+
+    p->set<int>("Offset of First DOF", X_offset);
+    p->set<int>("Number of DOF per Node", neq);
+
+    // Can;t do mixture of dot and dotdot: disabling elasticity time dependence
+    p->set<bool>("Disable Transient", true);
+
+    evaluators_to_build["Gather Displacement Solution"] = p;
+  }
+  { // Gather Solution D
+   RCP< vector<string> > dof_names = rcp(new vector<string>(1));
+     (*dof_names)[0] = "Damage";
+
+    RCP<ParameterList> p = rcp(new ParameterList);
+    int type = FactoryTraits<AlbanyTraits>::id_gather_solution;
+    p->set<int>("Type", type);
+    p->set< RCP< vector<string> > >("Solution Names", dof_names);
+    p->set< RCP<DataLayout> >("Data Layout", node_scalar);
+
+    p->set<int>("Offset of First DOF", D_offset);
+    p->set<int>("Number of DOF per Node", neq);
+
+    //RCP< vector<string> > dof_names_dot = rcp(new vector<string>(1));
+    //  (*dof_names_dot)[0] = "Damage_dot";
+
+    //p->set< RCP< vector<string> > >("Time Dependent Solution Names", dof_names_dot);
+
+    evaluators_to_build["Gather D Solution"] = p;
+  }
+
+  { // Gather Coordinate Vector
+    RCP<ParameterList> p = rcp(new ParameterList("Gather Coordinate Vector"));
+    int type = FactoryTraits<AlbanyTraits>::id_gather_coordinate_vector;
+    p->set<int>                ("Type", type);
+
+    // Output:: Coordindate Vector at vertices
+    p->set< RCP<DataLayout> >  ("Coordinate Data Layout",  vertices_vector);
+    p->set< string >("Coordinate Vector Name", "Coord Vec");
+    evaluators_to_build["Gather Coordinate Vector"] = p;
+  }
+
+  { // Compute Basis Functions
+    RCP<ParameterList> p = rcp(new ParameterList("Compute Basis Functions"));
+
+    int type = FactoryTraits<AlbanyTraits>::id_compute_basis_functions;
+    p->set<int>   ("Type", type);
+
+    // Inputs: X, Y at nodes, Cubature, and Basis
+    p->set<string>("Coordinate Vector Name","Coord Vec");
+    p->set< RCP<DataLayout> >("Coordinate Data Layout", vertices_vector);
+    p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+
+    p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >
+        ("Intrepid Basis", intrepidBasis);
+
+    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
+
+    // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
+    p->set<string>("BF Name",          "BF");
+    p->set<string>("Weighted BF Name", "wBF");
+    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
+
+    p->set<string>("Gradient BF Name",          "Grad BF");
+    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);
+
+    evaluators_to_build["Compute Basis Functions"] = p;
+  }
+
+
+  { // Elastic Modulus
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    int type = FactoryTraits<AlbanyTraits>::id_elastic_modulus;
+    p->set<int>("Type", type);
+
+    p->set<string>("QP Variable Name", "Elastic Modulus");
+    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Elastic Modulus");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    evaluators_to_build["Elastic Modulus"] = p;
+  }
+
+  { // Poissons Ratio 
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    int type = FactoryTraits<AlbanyTraits>::id_poissons_ratio;
+    p->set<int>("Type", type);
+
+    p->set<string>("QP Variable Name", "Poissons Ratio");
+    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Poissons Ratio");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    evaluators_to_build["Poissons Ratio"] = p;
+  }
+
+  { // DOFVec: Interpolate nodal Displacement values to quad points
+    RCP<ParameterList> p = rcp(new ParameterList("DOFVecInterpolation Displacement"));
+
+    int type = FactoryTraits<AlbanyTraits>::id_dofvec_interpolation;
+    p->set<int>   ("Type", type);
+
+    // Input
+    p->set<string>("Variable Name", "Displacement");
+    p->set< RCP<DataLayout> >("Node Vector Data Layout",      node_vector);
+
+    p->set<string>("BF Name", "BF");
+    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
+
+    // Output (assumes same Name as input)
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+
+    evaluators_to_build["DOFVec Displacement"] = p;
+  }
+
+  { // DOFVecGrad: Interpolate nodal Displacement gradients to quad points
+    RCP<ParameterList> p = rcp(new ParameterList("DOFVecInterpolation Displacement Grad"));
+
+    int type = FactoryTraits<AlbanyTraits>::id_dofvec_grad_interpolation;
+    p->set<int>   ("Type", type);
+    // Input
+    p->set<string>("Variable Name", "Displacement");
+    p->set< RCP<DataLayout> >("Node Vector Data Layout",      node_vector);
+
+    p->set<string>("Gradient BF Name", "Grad BF");
+    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);
+
+    // Output
+    p->set<string>("Gradient Variable Name", "Displacement Gradient");
+    p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
+
+    evaluators_to_build["DOFVec Grad Displacement"] = p;
+  }
+
+  if (haveSource) { // Source
+    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+                       "Error!  Sources not implemented in Elasticity yet!");
+
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    int type = FactoryTraits<AlbanyTraits>::id_source;
+    p->set<int>("Type", type);
+
+    p->set<string>("Source Name", "Source");
+    p->set<string>("Variable Name", "Displacement");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Source Functions");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    evaluators_to_build["Source"] = p;
+  }
+
+  { // Deformation Gradient
+    RCP<ParameterList> p = rcp(new ParameterList("DefGrad"));
+
+    int type = FactoryTraits<AlbanyTraits>::id_defgrad;
+    p->set<int>("Type", type);
+
+    // Volumetric averaging flag
+    const bool avgJ = params->get("avgJ", false);
+    p->set<bool>("avgJ Name", avgJ);
+
+    //Input
+    p->set<string>("Gradient QP Variable Name", "Displacement Gradient");
+    p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
+
+    //Output
+    p->set<string>("DefGrad Name", "Deformation Gradient"); //qp_tensor also
+    // DetDefGrad calculation moed later for AD case
+    p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient"); 
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+
+    evaluators_to_build["DefGrad"] = p;
+  }
+  { // Hardening Modulus
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    int type = FactoryTraits<AlbanyTraits>::id_hardening_modulus;
+    p->set<int>("Type", type);
+
+    p->set<string>("QP Variable Name", "Hardening Modulus");
+    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Hardening Modulus");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    evaluators_to_build["Hardening Modulus"] = p;
+  }
+
+  { // Yield Strength
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    int type = FactoryTraits<AlbanyTraits>::id_yield_strength;
+    p->set<int>("Type", type);
+
+    p->set<string>("QP Variable Name", "Yield Strength");
+    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Yield Strength");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    evaluators_to_build["Yield Strength"] = p;
+  }
+  {// Stress
+    RCP<ParameterList> p = rcp(new ParameterList("Stress"));
+
+    int type = FactoryTraits<AlbanyTraits>::id_j2_damage;
+    p->set<int>("Type", type);
+
+    //Input
+    p->set<string>("DefGrad Name", "Deformation Gradient");
+    p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
+
+    p->set<string>("Elastic Modulus Name", "Elastic Modulus");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+
+    p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // qp_scalar also
+    p->set<string>("Hardening Modulus Name", "Hardening Modulus"); // qp_scalar also
+    p->set<string>("Yield Strength Name", "Yield Strength"); // qp_scalar also
+    p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient");  // qp_scalar also
+    p->set<string>("QP Damage Name", "Damage");
+
+    //Output
+    p->set<string>("Stress Name", "Stress"); //qp_tensor also
+ 
+    //Declare what state data will need to be saved (name, layout, init_type)
+    stateMgr.registerStateVariable("stress",qp_tensor,"zero");
+    stateMgr.registerStateVariable("Fp",qp_tensor,"identity");
+    stateMgr.registerStateVariable("eqps",qp_scalar,"zero");
+
+    evaluators_to_build["Stress"] = p;
+  }
+
+  { // Displacement Resid
+    RCP<ParameterList> p = rcp(new ParameterList("Mechanical Residual"));
+
+    int type = FactoryTraits<AlbanyTraits>::id_tl_elas_resid;
+    p->set<int>("Type", type);
+
+    //Input
+    p->set<string>("Stress Name", "Stress");
+    p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
+
+    p->set<string>("DefGrad Name", "Deformation Gradient"); //qp_tensor also
+
+    p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+
+    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);
+
+    p->set<string>("Weighted BF Name", "wBF");
+    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+
+    //Output
+    p->set<string>("Residual Name", "Residual");
+    p->set< RCP<DataLayout> >("Node Vector Data Layout", node_vector);
+
+    evaluators_to_build["Mechanical Residual"] = p;
+  }
+
+  { // Scatter Residual
+   RCP< vector<string> > resid_names = rcp(new vector<string>(1));
+     (*resid_names)[0] = "Mechanical Residual";
+
+    RCP<ParameterList> p = rcp(new ParameterList);
+    int type = FactoryTraits<AlbanyTraits>::id_scatter_residual;
+    p->set<int>("Type", type);
+    p->set<bool>("Vector Field", true);
+    p->set< RCP< vector<string> > >("Residual Names", resid_names);
+
+    p->set< RCP<DataLayout> >("Dummy Data Layout", dummy);
+    p->set< RCP<DataLayout> >("Data Layout", node_vector);
+
+    p->set<int>("Offset of First DOF", X_offset);
+    p->set<int>("Number of DOF per Node", neq);
+
+    evaluators_to_build["Scatter Mechanical Residual"] = p;
+  }
+
+  { // Damage length scale
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    int type = FactoryTraits<AlbanyTraits>::id_damage_ls;
+    p->set<int>("Type", type);
+
+    p->set<string>("QP Variable Name", "Damage Length Scale");
+    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Damage Length Scale");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    evaluators_to_build["Damage Length Scale"] = p;
+  }
+
+  { // DOF: Interpolate nodal Damage values to quad points
+    RCP<ParameterList> p = rcp(new ParameterList("DOFInterpolation Damage"));
+
+    int type = FactoryTraits<AlbanyTraits>::id_dof_interpolation;
+    p->set<int>   ("Type", type);
+
+    // Input
+    p->set<string>("Variable Name", "Damage");
+    p->set< RCP<DataLayout> >("Node Data Layout",      node_scalar);
+
+    p->set<string>("BF Name", "BF");
+    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
+
+    // Output (assumes same Name as input)
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+
+    evaluators_to_build["DOF Damage"] = p;
+  }
+
+  {
+   // DOF: Interpolate nodal Damage Dot values to quad points
+    RCP<ParameterList> p = rcp(new ParameterList("DOFInterpolation Damage Dot"));
+
+    int type = FactoryTraits<AlbanyTraits>::id_dof_interpolation;
+    p->set<int>   ("Type", type);
+
+    // Input
+    p->set<string>("Variable Name", "Damage_dot");
+    p->set< RCP<DataLayout> >("Node Data Layout",      node_scalar);
+
+    p->set<string>("BF Name", "BF");
+    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
+
+    // Output (assumes same Name as input)
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+
+    evaluators_to_build["DOF Damage_dot"] = p;
+}
+  { // DOF: Interpolate nodal Damage gradients to quad points
+    RCP<ParameterList> p = rcp(new ParameterList("DOFInterpolation Damage Grad"));
+
+    int type = FactoryTraits<AlbanyTraits>::id_dof_grad_interpolation;
+    p->set<int>   ("Type", type);
+
+    // Input
+    p->set<string>("Variable Name", "Damage");
+    p->set< RCP<DataLayout> >("Node Data Layout",      node_scalar);
+
+    p->set<string>("Gradient BF Name", "Grad BF");
+    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);
+
+    // Output
+    p->set<string>("Gradient Variable Name", "Damage Gradient");
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+
+    evaluators_to_build["DOF Grad Damage"] = p;
+  }
+
+  if (haveSource) { // Source
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    int type = FactoryTraits<AlbanyTraits>::id_source;
+    p->set<int>("Type", type);
+
+    p->set<string>("Source Name", "Source");
+    p->set<string>("Variable Name", "Damage");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Source Functions");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    evaluators_to_build["Source"] = p;
+  }
+  { // Damage Resid
+    RCP<ParameterList> p = rcp(new ParameterList("Damage Resid"));
+
+    int type = FactoryTraits<AlbanyTraits>::id_damage_resid;
+    p->set<int>("Type", type);
+
+    //Input
+    p->set<string>("Weighted BF Name", "wBF");
+    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
+    p->set<string>("QP Variable Name", "Damage");
+
+    p->set<string>("QP Time Derivative Variable Name", "Damage_dot");
+
+    p->set<bool>("Have Source", haveSource);
+    p->set<string>("Source Name", "Source");
+
+    p->set<string>("Damage Length Scale Name", "Damage Length Scale");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+
+    p->set<string>("Gradient QP Variable Name", "Damage Gradient");
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+
+    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);
+
+    //Output
+    p->set<string>("Residual Name", "Damage Residual");
+    p->set< RCP<DataLayout> >("Node Scalar Data Layout", node_scalar);
+
+    evaluators_to_build["Damage Residual"] = p;
+  }
+
+  string fieldName="Scatter Damage";
+  { // Scatter Residual
+   RCP< vector<string> > resid_names = rcp(new vector<string>(1));
+     (*resid_names)[0] = "Damage Residual";
+
+    RCP<ParameterList> p = rcp(new ParameterList);
+    int type = FactoryTraits<AlbanyTraits>::id_scatter_residual;
+    p->set<int>("Type", type);
+    p->set< RCP< vector<string> > >("Residual Names", resid_names);
+
+    p->set< RCP<DataLayout> >("Dummy Data Layout", dummy);
+    p->set< RCP<DataLayout> >("Data Layout", node_scalar);
+
+    p->set<int>("Offset of First DOF", D_offset);
+    p->set<int>("Number of DOF per Node", neq);
+
+    // Give this Scatter evaluator a different evaluatedField then the default
+    p->set<string>("Scatter Field Name", fieldName);
+
+    evaluators_to_build["Scatter Damage Residual"] = p;
+  }
+
+   // Build Field Evaluators for each evaluation type
+   PHX::EvaluatorFactory<AlbanyTraits,FactoryTraits<AlbanyTraits> > factory;
+   RCP< vector< RCP<PHX::Evaluator_TemplateManager<AlbanyTraits> > > >
+     evaluators;
+   evaluators = factory.buildEvaluators(evaluators_to_build);
+
+   // Create a FieldManager
+   fm = Teuchos::rcp(new PHX::FieldManager<AlbanyTraits>);
+
+   // Register all Evaluators
+   PHX::registerEvaluators(evaluators, *fm);
+
+   PHX::Tag<AlbanyTraits::Residual::ScalarT> res_tag("Scatter", dummy);
+   fm->requireField<AlbanyTraits::Residual>(res_tag);
+   PHX::Tag<AlbanyTraits::Jacobian::ScalarT> jac_tag("Scatter", dummy);
+   fm->requireField<AlbanyTraits::Jacobian>(jac_tag);
+   PHX::Tag<AlbanyTraits::Tangent::ScalarT> tan_tag("Scatter", dummy);
+   fm->requireField<AlbanyTraits::Tangent>(tan_tag);
+   PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_tag("Scatter", dummy);
+   fm->requireField<AlbanyTraits::SGResidual>(sgres_tag);
+   PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag("Scatter", dummy);
+   fm->requireField<AlbanyTraits::SGJacobian>(sgjac_tag);
+   PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag("Scatter", dummy);
+   fm->requireField<AlbanyTraits::MPResidual>(mpres_tag);
+   PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag("Scatter", dummy);
+   fm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag);
+
+   PHX::Tag<AlbanyTraits::Residual::ScalarT> res_tag2(fieldName, dummy);
+   fm->requireField<AlbanyTraits::Residual>(res_tag2);
+   PHX::Tag<AlbanyTraits::Jacobian::ScalarT> jac_tag2(fieldName, dummy);
+   fm->requireField<AlbanyTraits::Jacobian>(jac_tag2);
+   PHX::Tag<AlbanyTraits::Tangent::ScalarT> tan_tag2(fieldName, dummy);
+   fm->requireField<AlbanyTraits::Tangent>(tan_tag2);
+   PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_tag2(fieldName, dummy);
+   fm->requireField<AlbanyTraits::SGResidual>(sgres_tag2);
+   PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag2(fieldName, dummy);
+   fm->requireField<AlbanyTraits::SGJacobian>(sgjac_tag2);
+   PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag2(fieldName, dummy);
+   fm->requireField<AlbanyTraits::MPResidual>(mpres_tag2);
+   PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag2(fieldName, dummy);
+   fm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag2);
+}
+
+Teuchos::RCP<const Teuchos::ParameterList>
+Albany::GradientDamageProblem::getValidProblemParameters() const
+{
+  Teuchos::RCP<Teuchos::ParameterList> validPL =
+    this->getGenericProblemParams("ValidGradientDamageProblemParams");
+
+  validPL->sublist("Elastic Modulus", false, "");
+  validPL->sublist("Poissons Ratio", false, "");
+  validPL->sublist("Damage Length Scale", false, "");
+  validPL->sublist("Hardening Modulus", false, "");
+  validPL->sublist("Yield Strength", false, "");
+
+  return validPL;
+}
+

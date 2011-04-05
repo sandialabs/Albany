@@ -52,6 +52,9 @@
 #include "LCM/evaluators/HardeningModulus.hpp"
 #include "LCM/evaluators/YieldStrength.hpp"
 #include "LCM/evaluators/PisdWdF.hpp"
+#include "LCM/evaluators/DamageResid.hpp"
+#include "LCM/evaluators/J2Damage.hpp"
+#include "LCM/evaluators/DamageLS.hpp"
 
 #include "boost/mpl/vector/vector40.hpp"
 #include "boost/mpl/placeholders.hpp"
@@ -101,8 +104,12 @@ struct FactoryTraits {
   static const int id_yield_strength            = 30;
   static const int id_lame_stress               = 31;
   static const int id_pisdwdf_stress            = 32;
+  static const int id_damage_resid              = 33;
+  static const int id_j2_damage                 = 34;
+  static const int id_damage_ls                 = 35;
 
-  typedef boost::mpl::vector33< 
+
+  typedef boost::mpl::vector36< 
             PHAL::Dirichlet<_,Traits>,                //  0
             PHAL::GatherSolution<_,Traits>,           //  1
             PHAL::GatherCoordinateVector<_,Traits>,   //  2
@@ -135,7 +142,10 @@ struct FactoryTraits {
             LCM::HardeningModulus<_,Traits>,          // 29
             LCM::YieldStrength<_,Traits>,             // 30
             LCM::LameStress<_,Traits>,                // 31
-            LCM::PisdWdF<_,Traits>                    // 32
+            LCM::PisdWdF<_,Traits>,                   // 32
+            LCM::DamageResid<_,Traits>,               // 33
+            LCM::J2Damage<_,Traits>,                  // 34
+            LCM::DamageLS<_,Traits>                   // 35
     > EvaluatorTypes;
 };
 }

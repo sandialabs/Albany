@@ -15,8 +15,8 @@
 \********************************************************************/
 
 
-#ifndef NONLINEARELASTICITYPROBLEM_HPP
-#define NONLINEARELASTICITYPROBLEM_HPP
+#ifndef GRADIENTDAMAGEPROBLEM_HPP
+#define GRADIENTDAMAGEPROBLEM_HPP
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -29,21 +29,17 @@
 
 namespace Albany {
 
-  /*!
-   * \brief Abstract interface for representing a 2-D finite element
-   * problem.
-   */
-  class NonlinearElasticityProblem : public Albany::AbstractProblem {
+  class GradientDamageProblem : public Albany::AbstractProblem {
   public:
   
     //! Default constructor
-    NonlinearElasticityProblem(
+    GradientDamageProblem(
                          const Teuchos::RCP<Teuchos::ParameterList>& params,
                          const Teuchos::RCP<ParamLib>& paramLib,
                          const int numEq);
 
     //! Destructor
-    virtual ~NonlinearElasticityProblem();
+    virtual ~GradientDamageProblem();
 
     //! Build the PDE instantiations, boundary conditions, and initial solution
     virtual void 
@@ -63,28 +59,35 @@ namespace Albany {
   private:
 
     //! Private to prohibit copying
-    NonlinearElasticityProblem(const NonlinearElasticityProblem&);
+    GradientDamageProblem(const GradientDamageProblem&);
     
     //! Private to prohibit copying
-    NonlinearElasticityProblem& operator=(const NonlinearElasticityProblem&);
+    GradientDamageProblem& operator=(const GradientDamageProblem&);
 
-    void constructEvaluators(const int worksetSize, const int cubDegree,
+    void constructEvaluators(const int worksetSize, const int cubDegree, 
 			     const CellTopologyData& ctd, StateManager& stateMgr);
   protected:
 
     //! Boundary conditions on source term
     bool haveSource;
-    int numDim;
+
+    // counting helpers
     int numQPts;
     int numNodes;
     int numVertices;
 
+    int D_offset;  //Position of T unknown in nodal DOFs
+    int X_offset;  //Position of X unknown in nodal DOFs, followed by Y,Z
+    int numDim;    //Number of spatial dimensions and displacement variable 
+
+    // string to store material model name
     std::string matModel;
 
+    // state containers
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState;
   };
 
 }
 
-#endif // ALBANY_NONLINEARELASTICITYPROBLEM_HPP
+#endif // ALBANY_GRADIENTDAMAGEPROBLEM_HPP

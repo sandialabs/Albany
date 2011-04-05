@@ -185,12 +185,14 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/problems/ElasticityProblem.cpp 
     ${LCM_DIR}/problems/NonlinearElasticityProblem.cpp 
     ${LCM_DIR}/problems/ThermoElasticityProblem.cpp 
+    ${LCM_DIR}/problems/GradientDamageProblem.cpp 
   )
 
   SET(HEADERS ${HEADERS}
     ${LCM_DIR}/problems/ElasticityProblem.hpp
     ${LCM_DIR}/problems/NonlinearElasticityProblem.hpp 
     ${LCM_DIR}/problems/ThermoElasticityProblem.hpp 
+    ${LCM_DIR}/problems/GradientDamageProblem.hpp 
   )
 
   # LCM evaluators
@@ -211,6 +213,9 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/HardeningModulus.cpp
     ${LCM_DIR}/evaluators/YieldStrength.cpp
     ${LCM_DIR}/evaluators/PisdWdF.cpp 
+    ${LCM_DIR}/evaluators/DamageResid.cpp 
+    ${LCM_DIR}/evaluators/J2Damage.cpp 
+    ${LCM_DIR}/evaluators/DamageLS.cpp 
   )
 
   SET(HEADERS ${HEADERS}
@@ -246,6 +251,12 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/YieldStrength_Def.hpp
     ${LCM_DIR}/evaluators/PisdWdF.hpp 
     ${LCM_DIR}/evaluators/PisdWdF_Def.hpp 
+    ${LCM_DIR}/evaluators/DamageResid.cpp 
+    ${LCM_DIR}/evaluators/DamageResid_Def.hpp 
+    ${LCM_DIR}/evaluators/J2Damage.cpp 
+    ${LCM_DIR}/evaluators/J2Damage_Def.hpp 
+    ${LCM_DIR}/evaluators/DamageLS.cpp 
+    ${LCM_DIR}/evaluators/DamageLS_Def.hpp 
   )
 
   #LCM utils
