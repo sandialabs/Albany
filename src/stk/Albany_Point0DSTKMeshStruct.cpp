@@ -44,7 +44,7 @@ Albany::Point0DSTKMeshStruct::Point0DSTKMeshStruct(
 {
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
-  int numDim_ = 0;
+  int numDim_ = 1;
 
   const int nelem = 1;
 
