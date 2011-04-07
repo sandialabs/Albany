@@ -267,6 +267,7 @@ IF(ALBANY_LCM)
 
   #LCM utils
   SET(SOURCES ${SOURCES}
+    ${LCM_DIR}/utils/Geometry.cc
     ${LCM_DIR}/utils/Tensor.cc
   )
 
