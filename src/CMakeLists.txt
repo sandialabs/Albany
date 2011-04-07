@@ -216,6 +216,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/DamageResid.cpp 
     ${LCM_DIR}/evaluators/J2Damage.cpp 
     ${LCM_DIR}/evaluators/DamageLS.cpp 
+    ${LCM_DIR}/evaluators/SaturationModulus.cpp		
+    ${LCM_DIR}/evaluators/SaturationExponent.cpp 	   
   )
 
   SET(HEADERS ${HEADERS}
@@ -257,6 +259,10 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/J2Damage_Def.hpp 
     ${LCM_DIR}/evaluators/DamageLS.cpp 
     ${LCM_DIR}/evaluators/DamageLS_Def.hpp 
+    ${LCM_DIR}/evaluators/SaturationModulus.cpp 
+    ${LCM_DIR}/evaluators/SaturationModulus_Def.hpp 
+    ${LCM_DIR}/evaluators/SaturationExponent.cpp 
+    ${LCM_DIR}/evaluators/SaturationExponent_Def.hpp 
   )
 
   #LCM utils

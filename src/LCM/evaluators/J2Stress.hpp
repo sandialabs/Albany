@@ -59,6 +59,8 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> poissonsRatio;
   PHX::MDField<ScalarT,Cell,QuadPoint> yieldStrength;
   PHX::MDField<ScalarT,Cell,QuadPoint> hardeningModulus;
+  PHX::MDField<ScalarT,Cell,QuadPoint> satMod;
+  PHX::MDField<ScalarT,Cell,QuadPoint> satExp;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;
@@ -80,7 +82,6 @@ private:
 
   Intrepid::FieldContainer<ScalarT> tmp;
   Intrepid::FieldContainer<ScalarT> tmp2;
-
 
 };
 }

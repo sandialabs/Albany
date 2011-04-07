@@ -55,6 +55,8 @@
 #include "LCM/evaluators/DamageResid.hpp"
 #include "LCM/evaluators/J2Damage.hpp"
 #include "LCM/evaluators/DamageLS.hpp"
+#include "LCM/evaluators/SaturationModulus.hpp"
+#include "LCM/evaluators/SaturationExponent.hpp"
 
 #include "boost/mpl/vector/vector40.hpp"
 #include "boost/mpl/placeholders.hpp"
@@ -107,9 +109,11 @@ struct FactoryTraits {
   static const int id_damage_resid              = 33;
   static const int id_j2_damage                 = 34;
   static const int id_damage_ls                 = 35;
+  static const int id_sat_mod                   = 36;
+  static const int id_sat_exp                   = 37;
 
 
-  typedef boost::mpl::vector36< 
+  typedef boost::mpl::vector38< 
             PHAL::Dirichlet<_,Traits>,                //  0
             PHAL::GatherSolution<_,Traits>,           //  1
             PHAL::GatherCoordinateVector<_,Traits>,   //  2
@@ -145,7 +149,9 @@ struct FactoryTraits {
             LCM::PisdWdF<_,Traits>,                   // 32
             LCM::DamageResid<_,Traits>,               // 33
             LCM::J2Damage<_,Traits>,                  // 34
-            LCM::DamageLS<_,Traits>                   // 35
+            LCM::DamageLS<_,Traits>,                  // 35
+            LCM::SaturationModulus<_,Traits>,         // 36
+            LCM::SaturationExponent<_,Traits>         // 37
     > EvaluatorTypes;
 };
 }
