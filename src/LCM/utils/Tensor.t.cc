@@ -1,9 +1,9 @@
-#include <boost/tuple/tuple.hpp>
-
 //
 // First cut of LCM small tensor utilities.
 //
 #if !defined(LCM_Tensor_t_cc)
+
+#include <boost/tuple/tuple.hpp>
 
 namespace LCM {
 
