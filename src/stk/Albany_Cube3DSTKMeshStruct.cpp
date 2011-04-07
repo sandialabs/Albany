@@ -27,9 +27,7 @@
 #include <stk_mesh/base/FieldData.hpp>
 #include <stk_mesh/base/Selector.hpp>
 
-#include <stk_mesh/fem/FieldDeclarations.hpp>
 #include <stk_mesh/fem/FEMHelpers.hpp>
-#include <stk_mesh/fem/EntityRanks.hpp>
 #include "Albany_Utils.hpp"
 
 #ifdef ALBANY_IOSS

@@ -29,9 +29,7 @@
 #include <stk_mesh/base/FieldData.hpp>
 #include <stk_mesh/base/Selector.hpp>
 
-#include <stk_mesh/fem/FieldDeclarations.hpp>
 #include <stk_mesh/fem/FEMHelpers.hpp>
-#include <stk_mesh/fem/EntityRanks.hpp>
 
 #include <stk_io/util/UseCase_mesh.hpp>
 #include <Ionit_Initializer.h>

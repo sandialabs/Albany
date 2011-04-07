@@ -34,9 +34,7 @@
 #include <stk_mesh/base/FieldData.hpp>
 #include <stk_mesh/base/Selector.hpp>
 
-#include <stk_mesh/fem/FieldDeclarations.hpp>
 #include <stk_mesh/fem/FEMHelpers.hpp>
-#include <stk_mesh/fem/EntityRanks.hpp>
 
 #ifdef ALBANY_IOSS
   #include <Ionit_Initializer.h>

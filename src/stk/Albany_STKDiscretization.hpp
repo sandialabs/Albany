@@ -35,7 +35,7 @@
 #include <stk_mesh/base/MetaData.hpp>
 #include <stk_mesh/base/BulkData.hpp>
 #include <stk_mesh/base/Field.hpp>
-#include <stk_mesh/fem/FieldTraits.hpp>
+#include <stk_mesh/base/FieldTraits.hpp>
 #ifdef ALBANY_IOSS
 //  #include "Albany_IossSTKMeshStruct.hpp"
   #include <stk_io/util/UseCase_mesh.hpp>
