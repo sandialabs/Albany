@@ -986,7 +986,7 @@ namespace LCM {
     Tensor<ScalarT> B = term;
 
     while (relError > tol && k < maxNumIter) {
-      term = (1.0 / (k + 1.0)) * term * A;
+      term = ScalarT(1.0 / (k + 1.0)) * term * A;
       B = B + term;
       relError = norm_1(term);
       ++k;

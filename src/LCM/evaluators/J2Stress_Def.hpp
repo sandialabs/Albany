@@ -235,7 +235,7 @@ evaluateFields(typename Traits::EvalData workset)
 	  smag2 += s(i,j) * s(i,j);
       smag = std::sqrt(smag2);
       
-      f = smag - sq23 * ( K * eqpsold(cell,qp) + Y );
+      f = smag - sq23 * ( Y + K * eqpsold(cell,qp) + siginf * ( 1. - exp( -delta * eqpsold(cell,qp) ) ) );
 
       // std::cout << "smag : " << Sacado::ScalarValue<ScalarT>::eval(smag) << std::endl;
       // std::cout << "eqpsold: " << Sacado::ScalarValue<ScalarT>::eval(eqpsold(cell,qp)) << std::endl;

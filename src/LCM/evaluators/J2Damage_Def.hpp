@@ -38,6 +38,10 @@ J2Damage(const Teuchos::ParameterList& p) :
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   hardeningModulus (p.get<std::string>                   ("Hardening Modulus Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  satMod           (p.get<std::string>                   ("Saturation Modulus Name"),
+	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  satExp           (p.get<std::string>                   ("Saturation Exponent Name"),
+	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   damage           (p.get<std::string>                   ("Damage Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   stress           (p.get<std::string>                   ("Stress Name"),
@@ -59,6 +63,8 @@ J2Damage(const Teuchos::ParameterList& p) :
   this->addDependentField(poissonsRatio);
   this->addDependentField(yieldStrength);
   this->addDependentField(hardeningModulus);
+  this->addDependentField(satMod);  
+  this->addDependentField(satExp);
   this->addDependentField(damage);
   // PoissonRatio not used in 1D stress calc
   //  if (numDims>1) this->addDependentField(poissonsRatio);
@@ -66,18 +72,11 @@ J2Damage(const Teuchos::ParameterList& p) :
   this->addEvaluatedField(stress);
 
   // scratch space FCs
-  be.resize(numDims, numDims);
-  s.resize(numDims, numDims);
-  N.resize(numDims, numDims);
-  A.resize(numDims, numDims);
-  expA.resize(numDims, numDims);
   Fp.resize(worksetSize, numQPs, numDims, numDims);
   Fpinv.resize(worksetSize, numQPs, numDims, numDims);
   FpinvT.resize(worksetSize, numQPs, numDims, numDims);
   Cpinv.resize(worksetSize, numQPs, numDims, numDims);
   eqps.resize(worksetSize, numQPs);
-  tmp.resize(numDims, numDims);
-  tmp2.resize(numDims, numDims);
 
   this->setName("Stress"+PHX::TypeString<EvalT>::value);
 
@@ -95,6 +94,9 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(elasticModulus,fm);
   this->utils.setFieldData(hardeningModulus,fm);
   this->utils.setFieldData(yieldStrength,fm);
+  this->utils.setFieldData(satMod,fm);
+  this->utils.setFieldData(satExp,fm);
+  this->utils.setFieldData(damage,fm);
   if (numDims>1) this->utils.setFieldData(poissonsRatio,fm);
 }
 
@@ -108,11 +110,12 @@ evaluateFields(typename Traits::EvalData workset)
 
   ScalarT kappa;
   ScalarT mu, mubar;
-  ScalarT K;
-  ScalarT Y;
+  ScalarT K, Y, siginf, delta;
   ScalarT Jm23;
-  ScalarT trace;
-  ScalarT smag2, smag, f, p, dgam;
+  ScalarT trd3;
+  ScalarT smag, f, p, dgam;
+  ScalarT exph;
+  ScalarT sq23 = std::sqrt(2./3.);
 
   //bool saveState = (workset.newState != Teuchos::null);
   //std::cout << "saveState: " << saveState << std::endl;
@@ -176,59 +179,38 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t qp=0; qp < numQPs; ++qp) 
     {
       // local parameters
-      kappa = elasticModulus(cell,qp) / ( 3. * ( 1. - 2. * poissonsRatio(cell,qp) ) );
-      mu    = elasticModulus(cell,qp) / ( 2. * ( 1. + poissonsRatio(cell,qp) ) );
-      K     = hardeningModulus(cell,qp);
-      Y     = yieldStrength(cell,qp);
-      Jm23  = std::pow( J(cell,qp), -2./3. );
+      kappa  = elasticModulus(cell,qp) / ( 3. * ( 1. - 2. * poissonsRatio(cell,qp) ) );
+      mu     = elasticModulus(cell,qp) / ( 2. * ( 1. + poissonsRatio(cell,qp) ) );
+      K      = hardeningModulus(cell,qp);
+      Y      = yieldStrength(cell,qp);
+      siginf = satMod(cell,qp);
+      delta  = satExp(cell,qp);
+      Jm23   = std::pow( J(cell,qp), -2./3. );
+      exph   = std::exp( damage(cell,qp) );
 
       // std::cout << "kappa: " << Sacado::ScalarValue<ScalarT>::eval(kappa) << std::endl;
       // std::cout << "mu   : " << Sacado::ScalarValue<ScalarT>::eval(mu) << std::endl;
       // std::cout << "K    : " << Sacado::ScalarValue<ScalarT>::eval(K) << std::endl;
       // std::cout << "Y    : " << Sacao::ScalarValue<ScalarT>::eval(Y) << std::endl;
-      be.initialize(0.0);
+      be.clear();
       // Compute Trial State      
       for (std::size_t i=0; i < numDims; ++i)
-      {	
 	for (std::size_t j=0; j < numDims; ++j)
-	{
 	  for (std::size_t p=0; p < numDims; ++p)
-	  {
 	    for (std::size_t q=0; q < numDims; ++q)
-	    {
 	      be(i,j) += Jm23 * defgrad(cell,qp,i,p) * Cpinv(cell,qp,p,q) * defgrad(cell,qp,j,q);
-	    }
-	  }
-	}
-      } 
       
       // std::cout << "be: \n" << be;
       
-      trace = 0.0;
-      for (std::size_t i=0; i < numDims; ++i)
-	trace += be(i,i);
-      trace /= numDims;
-      mubar = trace*mu;
-      for (std::size_t i=0; i < numDims; ++i)
-      {	
-	for (std::size_t j=0; j < numDims; ++j)
-	{
-	  s(i,j) = mu * be(i,j);
-	}
-	s(i,i) -= mu * trace;
-      }	  
+      trd3 = trace(be)/3.;
+      mubar = trd3*mu;
+      s = mu*(be - trd3*eye<ScalarT>());
       
       // std::cout << "s: \n" << s;
 
       // check for yielding
-      // smag = s.norm();
-      smag2 = 0.0;
-      for (std::size_t i=0; i < numDims; ++i)	
-	for (std::size_t j=0; j < numDims; ++j)
-	  smag2 += s(i,j) * s(i,j);
-      smag = std::sqrt(smag2);
-      
-      f = smag - sqrt(2./3.)*( K * eqpsold(cell,qp) + Y );
+      smag = norm(s);
+      f = smag - exph * sq23 * ( Y + K * eqpsold(cell,qp) + siginf * ( 1. - std::exp( -delta * eqpsold(cell,qp) ) ) );
 
       // std::cout << "smag : " << Sacado::ScalarValue<ScalarT>::eval(smag) << std::endl;
       // std::cout << "eqpsold: " << Sacado::ScalarValue<ScalarT>::eval(eqpsold(cell,qp)) << std::endl;
@@ -239,26 +221,56 @@ evaluateFields(typename Traits::EvalData workset)
       if (f > 1E-12)
       {
 	// return mapping algorithm
-	dgam = ( f / ( 2. * mubar) ) / ( 1. + K / ( 3. * mubar ) );
+	bool converged = false;
+	ScalarT g = f;
+	ScalarT H = K * eqpsold(cell,qp) + siginf*( 1. - std::exp( -delta * eqpsold(cell,qp) ) );
+	ScalarT dg = ( -2. * mubar ) * ( 1. + H / ( 3. * mubar ) );
+	ScalarT dH = 0.0;;
+	ScalarT alpha = 0.0;
+	ScalarT res = 0.0;
+	int count = 0;
+	dgam = 0.0;
+
+	while (!converged)
+	{
+	  count++;
+
+	  //dgam = ( f / ( 2. * mubar) ) / ( 1. + K / ( 3. * mubar ) );
+	  dgam -= g/dg;
+
+	  alpha = eqpsold(cell,qp) + sq23 * dgam;
+
+	  H = K * alpha + exph * siginf * ( 1. - std::exp( -delta * alpha ) );
+	  dH = K + exph * delta * siginf * std::exp( -delta * alpha );
+
+	  g = smag -  ( 2. * mubar * dgam + sq23 * ( Y + H ) );
+	  dg = -2. * mubar * ( 1. + dH / ( 3. * mubar ) );
+
+	  res = std::abs(g);
+	  if ( res < 1.e-14 || res/f < 1.E-14 )
+	    converged = true;
+
+	  TEST_FOR_EXCEPTION( count > 20, std::runtime_error,
+			      std::endl << "Error in return mapping, count = " << count << 			
+			      "\nres = " << res <<
+			      "\ng = " << g <<
+			      "\ndg = " << dg <<
+			      "\nalpha = " << alpha << std::endl);
+
+	}
 
 	// plastic direction
-	for (std::size_t i=0; i < numDims; ++i)	
-	  for (std::size_t j=0; j < numDims; ++j)
-	    N(i,j) = (1/smag) * s(i,j);
+	N = ScalarT(1./smag) * s;
 
-	for (std::size_t i=0; i < numDims; ++i)	
-	  for (std::size_t j=0; j < numDims; ++j)
-	    s(i,j) -= 2. * mubar * dgam * N(i,j);
+	// updated deviatoric stress
+	s -= ScalarT(2. * mubar * dgam) * N;
 
 	// update eqps
-	eqps(cell,qp) = eqpsold(cell,qp) + sqrt(2./3.) * dgam;
+	eqps(cell,qp) = alpha;
 
 	// exponential map to get Fp
-	for (std::size_t i=0; i < numDims; ++i)	
-	  for (std::size_t j=0; j < numDims; ++j)
-	    A(i,j) = dgam * N(i,j);
-
-	exponential_map(expA, A);
+	A = dgam * N;
+	expA = LCM::exp<ScalarT>(A);
 
 	// std::cout << "expA: \n";
 	// for (std::size_t i=0; i < numDims; ++i)	
@@ -323,69 +335,6 @@ evaluateFields(typename Traits::EvalData workset)
     }
     // std::cout << std::endl;
   }
-}
-//**********************************************************************
-template<typename EvalT, typename Traits>
-void 
-J2Damage<EvalT, Traits>::exponential_map(Intrepid::FieldContainer<ScalarT> & expA, const Intrepid::FieldContainer<ScalarT> A)
-{
-  tmp.initialize(0.0);
-  expA.initialize(0.0);
-
-  bool converged = false;
-  ScalarT norm0 = norm(A);
-
-  for (std::size_t i=0; i < numDims; ++i)
-  {
-    tmp(i,i) = 1.0;
-  }
-
-  ScalarT k = 0.0;
-  while (!converged)
-  {
-    // expA += tmp
-    for (std::size_t i=0; i < numDims; ++i)
-      for (std::size_t j=0; j < numDims; ++j)
-	expA(i,j) += tmp(i,j);
-
-    tmp2.initialize(0.0);
-    for (std::size_t i=0; i < numDims; ++i)
-      for (std::size_t j=0; j < numDims; ++j)
-	for (std::size_t p=0; p < numDims; ++p)
-	  tmp2(i,j) += A(i,p) * tmp(p,j);
-
-    // tmp = tmp2
-    k = k + 1.0;
-    for (std::size_t i=0; i < numDims; ++i)
-      for (std::size_t j=0; j < numDims; ++j)
-	tmp(i,j) = (1/k) * tmp2(i,j);
-
-    if (norm(tmp)/norm0 < 1.E-14 ) converged = true;
-    
-    TEST_FOR_EXCEPTION( k > 50.0, std::logic_error,
-			std::endl << "Error in exponential map, k = " << k << 
-			"\nnorm0 = " << norm0 <<
-			"\nnorm = " << norm(tmp)/norm0 <<
-			"\nA = \n" << A << std::endl);
-    
-  }
-}
-//**********************************************************************
-template<typename EvalT, typename Traits>
-typename EvalT::ScalarT 
-J2Damage<EvalT, Traits>::norm(Intrepid::FieldContainer<ScalarT> A)
-{
-  ScalarT max(0.0), colsum;
-
-  for (std::size_t i(0); i < numDims; ++i)
-  {
-    colsum = 0.0;
-    for (std::size_t j(0); j < numDims; ++j)
-      colsum += std::abs(A(i,j));
-    max = (colsum > max) ? colsum : max;  
-  }
-
-  return max;
 }
 //**********************************************************************
 } // end LCM

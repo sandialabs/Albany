@@ -78,7 +78,7 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(wBF,fm);
- // this->utils.setFieldData(damage,fm);
+  this->utils.setFieldData(damage,fm);
   this->utils.setFieldData(damageLS,fm);
   this->utils.setFieldData(damage_grad,fm);
   this->utils.setFieldData(wGradBF,fm);
