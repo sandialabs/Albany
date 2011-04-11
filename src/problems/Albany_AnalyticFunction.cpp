@@ -44,12 +44,12 @@ Teuchos::RCP<Albany::AnalyticFunction> Albany::createAnalyticFunction(
                        std::logic_error,
                        "Unrecognized initial condition function name: " << name);
   return F;
-};
+}
 
 
 //*****************************************************************************
 Albany::ConstantFunction::ConstantFunction(int neq_, int numDim_,
-   Teuchos::Array<double> data_) : neq(neq_), numDim(numDim_), data(data_)
+   Teuchos::Array<double> data_) : numDim(numDim_), neq(neq_), data(data_)
 {
   if (data.size()>0) val=data[0];
   else val = 0.0;
@@ -61,7 +61,7 @@ void Albany::ConstantFunction::compute(double* x, const double *X)
 
 //*****************************************************************************
 Albany::GaussSin::GaussSin(int neq_, int numDim_, Teuchos::Array<double> data_)
- : neq(neq_), numDim(numDim_), data(data_)
+ : numDim(numDim_), neq(neq_), data(data_)
 {
   TEST_FOR_EXCEPTION((neq!=1) || (numDim!=1) || (data.size()!=1),
                       std::logic_error,
@@ -75,7 +75,7 @@ void Albany::GaussSin::compute(double* x, const double *X)
 
 //*****************************************************************************
 Albany::GaussCos::GaussCos(int neq_, int numDim_, Teuchos::Array<double> data_)
- : neq(neq_), numDim(numDim_), data(data_)
+ : numDim(numDim_), neq(neq_), data(data_)
 {
   TEST_FOR_EXCEPTION((neq!=1) || (numDim!=1) || (data.size()!=1),
                       std::logic_error,
@@ -88,7 +88,7 @@ void Albany::GaussCos::compute(double* x, const double *X)
 }
 //*****************************************************************************
 Albany::LinearY::LinearY(int neq_, int numDim_, Teuchos::Array<double> data_)
- : neq(neq_), numDim(numDim_), data(data_)
+ : numDim(numDim_), neq(neq_), data(data_)
 {
   TEST_FOR_EXCEPTION((neq<2) || (numDim<2) || (data.size()!=1),
                       std::logic_error,

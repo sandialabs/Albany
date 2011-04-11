@@ -27,6 +27,7 @@ namespace Albany {
 // Base class for initial condition functions
 class AnalyticFunction {
   public:
+    virtual ~AnalyticFunction(){}
     virtual void compute(double* x, const double *X) = 0;
 };
 
