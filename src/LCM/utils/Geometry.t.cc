@@ -2,6 +2,8 @@
 // First cut of LCM geometry utilities
 //
 #if !defined(LCM_Geometry_t_cc)
+#define LCM_Geometry_t_cc
+
 
 namespace LCM {
 
@@ -125,21 +127,16 @@ namespace LCM {
   //
   template<typename ScalarT>
   Vector<ScalarT>
-  centroid(int vertices, ...)
+  centroid(std::vector<Vector<ScalarT> > const & points)
   {
-    va_list ap;
     Vector<ScalarT> C(0.0, 0.0, 0.0);
+    typedef typename std::vector<Vector<ScalarT> >::size_type sizeT;
+    sizeT n = points.size();
 
-    //Requires the last fixed parameter (to get the address)
-    va_start(ap, vertices);
-
-    typedef Vector<ScalarT> const & PointT;
-    for (int i = 0; i < vertices; ++i) {
-      //Requires the type to cast to. Increments ap to the next argument.
-      C += va_arg(ap, PointT);
+    for (sizeT i = 0; i < n; ++i) {
+      C += points[i];
     }
-    va_end(ap);
-    return C / static_cast<double>(vertices);
+    return C / static_cast<double>(n);
   }
 
 } // namespace LCM

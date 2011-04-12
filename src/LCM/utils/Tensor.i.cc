@@ -2,6 +2,7 @@
 //
 //
 #if !defined(LCM_Tensor_i_cc)
+#define LCM_Tensor_i_cc
 
 #include <algorithm>
 #include <cassert>

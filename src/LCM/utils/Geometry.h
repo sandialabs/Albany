@@ -4,7 +4,7 @@
 #if !defined(LCM_Geometry_h)
 #define LCM_Geometry_h
 
-#include <cstdarg>
+#include <vector>
 #include "Tensor.h"
 
 namespace LCM {
@@ -58,11 +58,11 @@ namespace LCM {
   // For these we can just take the average of the vertices
   template<typename ScalarT>
   ScalarT
-  centroid(int vertices, ...);
+  centroid(std::vector<Vector<ScalarT> > const & points);
+
+} // namespace LCM
 
 #include "Geometry.i.cc"
 #include "Geometry.t.cc"
-
-}
 
 #endif // LCM_Geometry_h

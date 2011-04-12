@@ -2,6 +2,7 @@
 // First cut of LCM small tensor utilities.
 //
 #if !defined(LCM_Tensor_t_cc)
+#define LCM_Tensor_t_cc
 
 #include <boost/tuple/tuple.hpp>
 
