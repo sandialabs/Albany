@@ -22,10 +22,9 @@
 #include "Albany_Utils.hpp"
 
 Albany::ThermoElasticityProblem::
-ThermoElasticityProblem(
-                         const Teuchos::RCP<Teuchos::ParameterList>& params_,
-                         const Teuchos::RCP<ParamLib>& paramLib_,
-                         const int numDim_) :
+ThermoElasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
+			const Teuchos::RCP<ParamLib>& paramLib_,
+			const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_, numDim_ + 1),
   haveSource(false),
   numDim(numDim_)
@@ -35,6 +34,8 @@ ThermoElasticityProblem(
   *out << "Problem Name = " << method << std::endl;
   
   haveSource =  params->isSublist("Source Functions");
+
+  this->nstates=numDim*numDim;
 
   dofNames.resize(neq);
 // Changing this ifdef changes ordering from  (X,Y,T) to (T,X,Y)
@@ -66,7 +67,7 @@ buildProblem(
     std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
   /* Construct All Phalanx Evaluators */
-  constructEvaluators(worksetSize, disc.getCubatureDegree(), disc.getCellTopologyData());
+  constructEvaluators(worksetSize, disc.getCubatureDegree(), disc.getCellTopologyData(), stateMgr);
   constructDirichletEvaluators(disc.getNodeSetIDs());
 
   const Epetra_Map& dofMap = *(disc.getMap());
@@ -109,8 +110,10 @@ buildProblem(
 
 
 void
-Albany::ThermoElasticityProblem::constructEvaluators(
-       const int worksetSize, const int cubDegree, const CellTopologyData& ctd)
+Albany::ThermoElasticityProblem::constructEvaluators(const int worksetSize, 
+						     const int cubDegree, 
+						     const CellTopologyData& ctd, 
+						     Albany::StateManager& stateMgr)
 {
    using Teuchos::RCP;
    using Teuchos::rcp;
@@ -409,6 +412,7 @@ Albany::ThermoElasticityProblem::constructEvaluators(
 
     //Output
     p->set<string>("Stress Name", "Stress"); //qp_tensor also
+    stateMgr.registerStateVariable("stress",qp_tensor,"zero");
 
     evaluators_to_build["Stress"] = p;
   }
@@ -653,5 +657,15 @@ Albany::ThermoElasticityProblem::getValidProblemParameters() const
   validPL->sublist("Poissons Ratio", false, "");
 
   return validPL;
+}
+
+void
+Albany::ThermoElasticityProblem::getAllocatedStates(
+   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState_,
+   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState_
+   ) const
+{
+  oldState_ = oldState;
+  newState_ = newState;
 }
 

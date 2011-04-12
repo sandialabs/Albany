@@ -22,17 +22,19 @@
 #include "Albany_Utils.hpp"
 
 Albany::ElasticityProblem::
-ElasticityProblem(
-                         const Teuchos::RCP<Teuchos::ParameterList>& params_,
-                         const Teuchos::RCP<ParamLib>& paramLib_,
-                         const int numDim_) :
+ElasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
+		  const Teuchos::RCP<ParamLib>& paramLib_,
+		  const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_, numDim_),
   haveSource(false),
-  useLame(false)
+  useLame(false),
+  numDim(numDim_)
 {
  
   std::string& method = params->get("Name", "Elasticity ");
   *out << "Problem Name = " << method << std::endl;
+
+  this->nstates=numDim*numDim;
   
   haveSource =  params->isSublist("Source Functions");
   useLame = params->get("Use Lame", false);
@@ -423,6 +425,7 @@ cout << "XXXX USING NODES FOR VERTICES" << endl;
 
     //Output
     p->set<string>("Stress Name", "Stress"); //qp_tensor also
+    stateMgr.registerStateVariable("stress",qp_tensor,"zero");
 
     evaluators_to_build["Stress"] = p;
   }
@@ -540,3 +543,12 @@ Albany::ElasticityProblem::getValidProblemParameters() const
   return validPL;
 }
 
+void
+Albany::ElasticityProblem::getAllocatedStates(
+   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState_,
+   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState_
+   ) const
+{
+  oldState_ = oldState;
+  newState_ = newState;
+}

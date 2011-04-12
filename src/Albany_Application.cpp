@@ -384,6 +384,8 @@ Albany::Application::computeGlobalResidual(
           workset.numCells = elNodeID.size() - fc;
       }
 
+      cout << "set old/new state" << endl;
+
       workset.oldState = stateMgr.getOldStateVariables(ws);
       workset.newState = stateMgr.getNewStateVariables(ws);
 

@@ -38,9 +38,9 @@ namespace Albany {
   
     //! Default constructor
     ThermoElasticityProblem(
-                         const Teuchos::RCP<Teuchos::ParameterList>& params,
-                         const Teuchos::RCP<ParamLib>& paramLib,
-                         const int numEq);
+			    const Teuchos::RCP<Teuchos::ParameterList>& params,
+			    const Teuchos::RCP<ParamLib>& paramLib,
+			    const int numEq);
 
     //! Destructor
     virtual ~ThermoElasticityProblem();
@@ -55,6 +55,10 @@ namespace Albany {
     //! Each problem must generate it's list of valid parameters
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
+    void getAllocatedStates(Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState_,
+			    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState_
+			    ) const;
+
   private:
 
     //! Private to prohibit copying
@@ -63,8 +67,8 @@ namespace Albany {
     //! Private to prohibit copying
     ThermoElasticityProblem& operator=(const ThermoElasticityProblem&);
 
-    void constructEvaluators(const int worksetSize,
-      const int cubDegree, const CellTopologyData& ctd);
+    void constructEvaluators(const int worksetSize, const int cubDegree, 
+			     const CellTopologyData& ctd, StateManager& stateMgr);
   protected:
 
     //! Boundary conditions on source term
@@ -73,6 +77,8 @@ namespace Albany {
     int X_offset;  //Position of X unknown in nodal DOFs, followed by Y,Z
     int numDim;    //Number of spatial dimensions and displacement variable 
 
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState;
   };
 
 }

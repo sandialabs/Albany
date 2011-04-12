@@ -191,7 +191,7 @@ evaluateFields(typename Traits::EvalData workset)
 
       // incremental left stretch Vinc, incremental rotation Rinc, and log of incremental left stretch, logVinc
       LCM::Tensor<ScalarT> Vinc, Rinc, logVinc;
-      boost::tie(Vinc,Rinc,logVinc) = LCM::polar_left_logV(Fnew);
+      boost::tie(Vinc,Rinc,logVinc) = LCM::polar_left_logV(Finc);
 
       // log of incremental rotation
       LCM::Tensor<ScalarT> logRinc = LCM::log_rotation(Rinc);

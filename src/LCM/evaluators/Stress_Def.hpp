@@ -73,6 +73,12 @@ evaluateFields(typename Traits::EvalData workset)
 {
   ScalarT lambda, mu;
 
+  cout << "in stress_def, getting newState" << endl;
+  Albany::StateVariables& newState = *workset.newState;
+  cout << "assigning a reference to the stress state var" << endl;
+  Intrepid::FieldContainer<RealType>& STRESS  = *newState["stress"];
+
+  cout << "computing the stress" << endl;
   switch (numDims) {
   case 1:
     Intrepid::FunctionSpaceTools::tensorMultiplyDataData<ScalarT>(stress, elasticModulus, strain);
@@ -109,6 +115,12 @@ evaluateFields(typename Traits::EvalData workset)
     }
     break;
   }
+  // Save Stress as State Variable
+  for (std::size_t cell=0; cell < workset.numCells; ++cell)
+    for (std::size_t qp=0; qp < numQPs; ++qp)
+      for (std::size_t i=0; i < numDims; ++i)
+	for (std::size_t j=0; j < numDims; ++j)
+	  STRESS(cell,qp,i,j) = Sacado::ScalarValue<ScalarT>::eval(stress(cell,qp,i,j));
 }
 
 //**********************************************************************
