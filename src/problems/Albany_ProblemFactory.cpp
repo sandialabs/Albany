@@ -25,6 +25,7 @@
 
 #ifdef ALBANY_LCM
 #include "LCM/problems/ElasticityProblem.hpp"
+#include "LCM/problems/LameProblem.hpp"
 #include "LCM/problems/NonlinearElasticityProblem.hpp"
 #include "LCM/problems/ThermoElasticityProblem.hpp"
 #endif
@@ -87,6 +88,9 @@ Albany::ProblemFactory::create()
   }
   else if (method == "Elasticity 3D") {
     strategy = rcp(new Albany::ElasticityProblem(problemParams, paramLib, 3));
+  }
+  else if (method == "LAME" || method == "Lame" || method == "lame") {
+    strategy = rcp(new Albany::LameProblem(problemParams, paramLib, 3));
   }
   else if (method == "NonlinearElasticity 1D") {
     strategy = rcp(new Albany::NonlinearElasticityProblem(problemParams, paramLib, 1));

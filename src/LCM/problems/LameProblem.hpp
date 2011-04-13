@@ -15,8 +15,8 @@
 \********************************************************************/
 
 
-#ifndef ELASTICITYPROBLEM_HPP
-#define ELASTICITYPROBLEM_HPP
+#ifndef LAMEPROBLEM_HPP
+#define LAMEPROBLEM_HPP
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -33,39 +33,34 @@ namespace Albany {
    * \brief Abstract interface for representing a 2-D finite element
    * problem.
    */
-  class ElasticityProblem : public Albany::AbstractProblem {
+  class LameProblem : public Albany::AbstractProblem {
   public:
   
     //! Default constructor
-    ElasticityProblem(
-		      const Teuchos::RCP<Teuchos::ParameterList>& params,
-		      const Teuchos::RCP<ParamLib>& paramLib,
-		      const int numEq);
+    LameProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
+                const Teuchos::RCP<ParamLib>& paramLib,
+                const int numEq);
 
     //! Destructor
-    virtual ~ElasticityProblem();
+    virtual ~LameProblem();
 
     //! Build the PDE instantiations, boundary conditions, and initial solution
     virtual void 
-    buildProblem( const int worksetSize,
-       StateManager& stateMgr,
-       const Albany::AbstractDiscretization& disc,
-       std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
+    buildProblem(const int worksetSize,
+                 StateManager& stateMgr,
+                 const Albany::AbstractDiscretization& disc,
+                 std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
 
     //! Each problem must generate it's list of valid parameters
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
-    void getAllocatedStates(Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState_,
-			    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState_
-			    ) const;
-
   private:
 
     //! Private to prohibit copying
-    ElasticityProblem(const ElasticityProblem&);
+    LameProblem(const LameProblem&);
     
     //! Private to prohibit copying
-    ElasticityProblem& operator=(const ElasticityProblem&);
+    LameProblem& operator=(const LameProblem&);
 
     void constructEvaluators(const int worksetSize,
                              const int cubDegree, 
@@ -75,12 +70,9 @@ namespace Albany {
 
     //! Boundary conditions on source term
     bool haveSource;
-    int numDim;
 
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState;
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState;
   };
 
 }
 
-#endif // ALBANY_ELASTICITYPROBLEM_HPP
+#endif // ALBANY_LAMEPROBLEM_HPP

@@ -15,25 +15,22 @@
 \********************************************************************/
 
 #include "LCM/LCM_FactoryTraits.hpp"
-#include "ElasticityProblem.hpp"
+#include "LameProblem.hpp"
 #include "Albany_BoundaryFlux1DResponseFunction.hpp"
 #include "Albany_SolutionAverageResponseFunction.hpp"
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
 #include "Albany_Utils.hpp"
 
-Albany::ElasticityProblem::
-ElasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
-		  const Teuchos::RCP<ParamLib>& paramLib_,
-		  const int numDim_) :
+Albany::LameProblem::
+LameProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
+            const Teuchos::RCP<ParamLib>& paramLib_,
+            const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_, numDim_),
-  haveSource(false),
-  numDim(numDim_)
+  haveSource(false)
 {
  
-  std::string& method = params->get("Name", "Elasticity ");
+  std::string& method = params->get("Name", "Library of Advanced Materials for Engineering (LAME) ");
   *out << "Problem Name = " << method << std::endl;
-
-  this->nstates=numDim*numDim;
   
   haveSource =  params->isSublist("Source Functions");
 
@@ -41,15 +38,20 @@ ElasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   dofNames[0] = "X";
   if (neq>1) dofNames[1] = "Y";
   if (neq>2) dofNames[2] = "Z";
+
+  // currently only support 3D analyses
+  TEST_FOR_EXCEPTION(neq != 3,
+                     Teuchos::Exceptions::InvalidParameter,
+                     "\nOnly three-dimensional analyses are suppored when using the Library of Advanced Materials for Engineering (LAME)\n");
 }
 
-Albany::ElasticityProblem::
-~ElasticityProblem()
+Albany::LameProblem::
+~LameProblem()
 {
 }
 
 void
-Albany::ElasticityProblem::
+Albany::LameProblem::
 buildProblem(
     const int worksetSize,
     Albany::StateManager& stateMgr,
@@ -100,10 +102,10 @@ buildProblem(
 
 
 void
-Albany::ElasticityProblem::constructEvaluators(const int worksetSize,
-                                               const int cubDegree,
-                                               const CellTopologyData& ctd,
-                                               Albany::StateManager& stateMgr)
+Albany::LameProblem::constructEvaluators(const int worksetSize,
+                                         const int cubDegree,
+                                         const CellTopologyData& ctd,
+                                         Albany::StateManager& stateMgr)
 {
    using Teuchos::RCP;
    using Teuchos::rcp;
@@ -143,8 +145,8 @@ Albany::ElasticityProblem::constructEvaluators(const int worksetSize,
    const int numDim = cubature->getDimension();
    const int numQPts = cubature->getNumPoints();
    const int numVertices = cellType->getNodeCount();
-cout << "XXXX USING NODES FOR VERTICES" << endl;
-//   const int numVertices = cellType->getVertexCount();
+   cout << "XXXX USING NODES FOR VERTICES" << endl;
+   //   const int numVertices = cellType->getVertexCount();
 
    *out << "Field Dimensions: Workset=" << worksetSize 
         << ", Vertices= " << numVertices
@@ -406,15 +408,17 @@ cout << "XXXX USING NODES FOR VERTICES" << endl;
     evaluators_to_build["DefGrad"] = p;
   }
 
-  { // Stress
+  { // LameStress
     RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
-    int type = LCM::FactoryTraits<AlbanyTraits>::id_stress;
+    int type = LCM::FactoryTraits<AlbanyTraits>::id_lame_stress;
     p->set<int>("Type", type);
 
     //Input
     p->set<string>("Strain Name", "Strain");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
+
+    p->set<string>("DefGrad Name", "Deformation Gradient"); // qp_tensor also
 
     p->set<string>("Elastic Modulus Name", "Elastic Modulus");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
@@ -422,8 +426,12 @@ cout << "XXXX USING NODES FOR VERTICES" << endl;
     p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // qp_scalar also
 
     //Output
-    p->set<string>("Stress Name", "Stress"); //qp_tensor also
+    p->set<string>("Stress Name", "Stress"); // qp_tensor also
+
+    //Declare what state data will need to be saved (name, layout, init_type)
     stateMgr.registerStateVariable("stress",qp_tensor,"zero");
+    stateMgr.registerStateVariable("def_grad",qp_tensor,"identity");
+    stateMgr.registerStateVariable("strain",qp_tensor,"zero");
 
     evaluators_to_build["Stress"] = p;
   }
@@ -502,24 +510,14 @@ cout << "XXXX USING NODES FOR VERTICES" << endl;
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
-Albany::ElasticityProblem::getValidProblemParameters() const
+Albany::LameProblem::getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
-    this->getGenericProblemParams("ValidElasticityProblemParams");
+    this->getGenericProblemParams("ValidLameProblemParams");
 
   validPL->sublist("Elastic Modulus", false, "");
   validPL->sublist("Poissons Ratio", false, "");
-  validPL->set<bool>("Use Lame", false, "");
 
   return validPL;
 }
 
-void
-Albany::ElasticityProblem::getAllocatedStates(
-   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState_,
-   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState_
-   ) const
-{
-  oldState_ = oldState;
-  newState_ = newState;
-}
