@@ -57,6 +57,7 @@
 #include "LCM/evaluators/DamageLS.hpp"
 #include "LCM/evaluators/SaturationModulus.hpp"
 #include "LCM/evaluators/SaturationExponent.hpp"
+#include "LCM/evaluators/Localization.hpp"
 
 #include "boost/mpl/vector/vector40.hpp"
 #include "boost/mpl/placeholders.hpp"
@@ -111,47 +112,49 @@ struct FactoryTraits {
   static const int id_damage_ls                 = 35;
   static const int id_sat_mod                   = 36;
   static const int id_sat_exp                   = 37;
+  static const int id_localization              = 38;
 
 
-  typedef boost::mpl::vector38< 
-            PHAL::Dirichlet<_,Traits>,                //  0
-            PHAL::GatherSolution<_,Traits>,           //  1
-            PHAL::GatherCoordinateVector<_,Traits>,   //  2
-            PHAL::ScatterResidual<_,Traits>,          //  3
-            PHAL::ComputeBasisFunctions<_,Traits>,    //  4
-            PHAL::DOFInterpolation<_,Traits>,         //  5
-            PHAL::DOFGradInterpolation<_,Traits>,     //  6
-            PHAL::DOFVecInterpolation<_,Traits>,      //  7
-            PHAL::DOFVecGradInterpolation<_,Traits>,  //  8
-            PHAL::MapToPhysicalFrame<_,Traits>,       //  9
-            PHAL::Source<_,Traits>,                   // 10
-            PHAL::ThermalConductivity<_,Traits>,      // 11
-            PHAL::HelmholtzResid<_,Traits>,           // 12
-            PHAL::HeatEqResid<_,Traits>,              // 13
-            PHAL::Constant<_,Traits>,                 // 14
-            PHAL::DirichletAggregator<_,Traits>,      // 15
-            PHAL::JouleHeating<_,Traits>,             // 16
-            LCM::ElasticModulus<_,Traits>,            // 17
-            LCM::Stress<_,Traits>,                    // 18
-            LCM::Strain<_,Traits>,                    // 19
-            LCM::ElasticityResid<_,Traits>,           // 20
-            LCM::PoissonsRatio<_,Traits>,             // 21
-            LCM::DefGrad<_,Traits>,                   // 22
-            LCM::RCG<_,Traits>,                       // 23
-            LCM::LCG<_,Traits>,                       // 24
-            LCM::Neohookean<_,Traits>,                // 25
-            LCM::TLElasResid<_,Traits>,               // 26
-            LCM::J2Stress<_,Traits>,                  // 27
-            LCM::EnergyPotential<_,Traits>,           // 28
-            LCM::HardeningModulus<_,Traits>,          // 29
-            LCM::YieldStrength<_,Traits>,             // 30
-            LCM::LameStress<_,Traits>,                // 31
-            LCM::PisdWdF<_,Traits>,                   // 32
-            LCM::DamageResid<_,Traits>,               // 33
-            LCM::J2Damage<_,Traits>,                  // 34
-            LCM::DamageLS<_,Traits>,                  // 35
-            LCM::SaturationModulus<_,Traits>,         // 36
-            LCM::SaturationExponent<_,Traits>         // 37
+  typedef boost::mpl::vector39< 
+    PHAL::Dirichlet<_,Traits>,                //  0
+    PHAL::GatherSolution<_,Traits>,           //  1
+    PHAL::GatherCoordinateVector<_,Traits>,   //  2
+    PHAL::ScatterResidual<_,Traits>,          //  3
+    PHAL::ComputeBasisFunctions<_,Traits>,    //  4
+    PHAL::DOFInterpolation<_,Traits>,         //  5
+    PHAL::DOFGradInterpolation<_,Traits>,     //  6
+    PHAL::DOFVecInterpolation<_,Traits>,      //  7
+    PHAL::DOFVecGradInterpolation<_,Traits>,  //  8
+    PHAL::MapToPhysicalFrame<_,Traits>,       //  9
+    PHAL::Source<_,Traits>,                   // 10
+    PHAL::ThermalConductivity<_,Traits>,      // 11
+    PHAL::HelmholtzResid<_,Traits>,           // 12
+    PHAL::HeatEqResid<_,Traits>,              // 13
+    PHAL::Constant<_,Traits>,                 // 14
+    PHAL::DirichletAggregator<_,Traits>,      // 15
+    PHAL::JouleHeating<_,Traits>,             // 16
+    LCM::ElasticModulus<_,Traits>,            // 17
+    LCM::Stress<_,Traits>,                    // 18
+    LCM::Strain<_,Traits>,                    // 19
+    LCM::ElasticityResid<_,Traits>,           // 20
+    LCM::PoissonsRatio<_,Traits>,             // 21
+    LCM::DefGrad<_,Traits>,                   // 22
+    LCM::RCG<_,Traits>,                       // 23
+    LCM::LCG<_,Traits>,                       // 24
+    LCM::Neohookean<_,Traits>,                // 25
+    LCM::TLElasResid<_,Traits>,               // 26
+    LCM::J2Stress<_,Traits>,                  // 27
+    LCM::EnergyPotential<_,Traits>,           // 28
+    LCM::HardeningModulus<_,Traits>,          // 29
+    LCM::YieldStrength<_,Traits>,             // 30
+    LCM::LameStress<_,Traits>,                // 31
+    LCM::PisdWdF<_,Traits>,                   // 32
+    LCM::DamageResid<_,Traits>,               // 33
+    LCM::J2Damage<_,Traits>,                  // 34
+    LCM::DamageLS<_,Traits>,                  // 35
+    LCM::SaturationModulus<_,Traits>,         // 36
+    LCM::SaturationExponent<_,Traits>,        // 37
+    LCM::Localization<_,Traits>               // 38
     > EvaluatorTypes;
 };
 }
