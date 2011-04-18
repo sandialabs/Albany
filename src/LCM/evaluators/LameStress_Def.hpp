@@ -20,14 +20,10 @@
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Tensor.h"
 
-#ifdef ENABLE_LAME
-#include <models/Material.h>
-#include <models/Elastic.h>
-#endif
-
 namespace LCM {
 
-//**********************************************************************
+#ifdef ENABLE_LAME
+
 template<typename EvalT, typename Traits>
 LameStress<EvalT, Traits>::
 LameStress(const Teuchos::ParameterList& p) :
@@ -38,7 +34,8 @@ LameStress(const Teuchos::ParameterList& p) :
   poissonsRatioField(p.get<std::string>("Poissons Ratio Name"),
                      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   stressField(p.get<std::string>("Stress Name"),
-              p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") )
+              p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+  lameMaterialModel(Teuchos::RCP<lame::Material>())
 {
   // Pull out numQPs and numDims from a Layout
   Teuchos::RCP<PHX::DataLayout> tensor_dl =
@@ -55,11 +52,8 @@ LameStress(const Teuchos::ParameterList& p) :
   this->addEvaluatedField(stressField);
 
   this->setName("LameStress"+PHX::TypeString<EvalT>::value);
-
-  cout << "\nUSING LIBRARY OF ADVANCED MATERIALS FOR ENGINEERING (LAME)\n" << endl;
 }
 
-//**********************************************************************
 template<typename EvalT, typename Traits>
 void LameStress<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
@@ -71,24 +65,36 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(stressField,fm);
 }
 
-//**********************************************************************
-#ifndef ENABLE_LAME
-
 template<typename EvalT, typename Traits>
 void LameStress<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  TEST_FOR_EXCEPTION(true, std::runtime_error, " LAME materials not enabled, recompile with -DENABLE_LAME");
-}
+  TEST_FOR_EXCEPTION(numDims != 3, Teuchos::Exceptions::InvalidParameter, " LAME materials enabled only for three-dimensional analyses.");
 
-#else
+  // Initialize the LAME material model
+  // This assumes that there is a single material model associated with this
+  // evaluator and that the material properties are constant (LameProblem enforces
+  // them to be constant)
+  // Note that this initialization cannot be done in postRegistrationSetup because
+  // elasticModulusField, poissonsRatioField, etc., are not set until the corresponding
+  // evaluators are called.
+  if(lameMaterialModel.is_null()){
+    Teuchos::RCP<lame::MatProps> props = Teuchos::rcp(new lame::MatProps());
+    std::vector<RealType> elasticModulusVector;
+    RealType elasticModulusValue = Sacado::ScalarValue<ScalarT>::eval(elasticModulusField(0,0));
+    elasticModulusVector.push_back(elasticModulusValue);
+    props->insert(std::string("YOUNGS_MODULUS"), elasticModulusVector);
+    std::vector<RealType> poissonsRatioVector;
+    RealType poissonsRatioValue = Sacado::ScalarValue<ScalarT>::eval(poissonsRatioField(0,0));
+    poissonsRatioVector.push_back(poissonsRatioValue);
+    props->insert(std::string("POISSONS_RATIO"), poissonsRatioVector);
+      
+    cout << "CHECK " << elasticModulusValue << ", " << poissonsRatioValue << endl;
+    
+    lameMaterialModel = Teuchos::rcp(new lame::Elastic(*props));
 
-template<typename EvalT, typename Traits>
-void LameStress<EvalT, Traits>::
-evaluateFields(typename Traits::EvalData workset)
-{
-  if(numDims == 1 || numDims == 2)
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, " LAME materials enabled only for three-dimensional analyses.");
+    // \todo Call initialize() on material.
+  }
 
   // Get the old and new state data
   // StateVariables is:  typedef std::map<std::string, Teuchos::RCP<Intrepid::FieldContainer<RealType> > >
@@ -107,21 +113,6 @@ evaluateFields(typename Traits::EvalData workset)
 
       // \todo Optimize calls to LAME such that we're not creating a new material instance for each evaluation; also, call on block of elements with same material properties.
       
-      Teuchos::RCP<lame::MatProps> props = Teuchos::rcp(new lame::MatProps());
-      std::vector<RealType> elasticModulusVector;
-      RealType elasticModulusValue = Sacado::ScalarValue<ScalarT>::eval(elasticModulusField(cell,qp));
-      elasticModulusVector.push_back(elasticModulusValue);
-      props->insert(std::string("YOUNGS_MODULUS"), elasticModulusVector);
-      std::vector<RealType> poissonsRatioVector;
-      poissonsRatioVector.push_back( Sacado::ScalarValue<ScalarT>::eval(poissonsRatioField(cell,qp)) );
-      props->insert(std::string("POISSONS_RATIO"), poissonsRatioVector);
-      
-      Teuchos::RCP<lame::Material> elasticMat = Teuchos::rcp(new lame::Elastic(*props));
-
-      // \todo Call initialize() on material.
-
-      Teuchos::RCP<lame::matParams> matp = Teuchos::rcp(new lame::matParams());
-
       // Fill the following entries in matParams for call to LAME
       //
       // nelements     - number of elements 
@@ -216,6 +207,7 @@ evaluateFields(typename Traits::EvalData workset)
       std::vector<RealType> stressOld(6);    // symmetric tensor
       std::vector<RealType> stressNew(6);    // symmetric tensor
 
+      Teuchos::RCP<lame::matParams> matp = Teuchos::rcp(new lame::matParams());
       matp->nelements = 1;
       matp->dt = deltaT;
       matp->time = 0.0;
@@ -266,7 +258,7 @@ evaluateFields(typename Traits::EvalData workset)
       // \todo Call loadStepInit();
 
       // Get the stress from the LAME material
-      elasticMat->getStress(matp.get());
+      lameMaterialModel->getStress(matp.get());
 
       // Copy the new stress into the stress field
       stressField(cell,qp,0,0) = stressNew[0];
@@ -293,7 +285,31 @@ evaluateFields(typename Traits::EvalData workset)
   }
 }
 
+#else
+//************************* NO-OP VERSIONS OF FUNCTIONS CREATED IF LAME IS NOT AVAILABLE **********************
+template<typename EvalT, typename Traits>
+LameStress<EvalT, Traits>::
+LameStress(const Teuchos::ParameterList& p)
+{
+  TEST_FOR_EXCEPTION(true, std::runtime_error, " LAME materials not enabled, recompile with -DENABLE_LAME");
+}
+
+template<typename EvalT, typename Traits>
+void LameStress<EvalT, Traits>::
+postRegistrationSetup(typename Traits::SetupData d,
+                      PHX::FieldManager<Traits>& fm)
+{
+  TEST_FOR_EXCEPTION(true, std::runtime_error, " LAME materials not enabled, recompile with -DENABLE_LAME");
+}
+
+template<typename EvalT, typename Traits>
+void LameStress<EvalT, Traits>::
+evaluateFields(typename Traits::EvalData workset)
+{
+  TEST_FOR_EXCEPTION(true, std::runtime_error, " LAME materials not enabled, recompile with -DENABLE_LAME");
+}
+//************************* END NO-OP VERSIONS OF FUNCTIONS ***************************************************
 #endif
-//**********************************************************************
+
 }
 

@@ -1,8 +1,7 @@
 <ParameterList>
   <Parameter name="Jacobian Operator" type="string" value="Matrix-Free"/>
   <ParameterList name="Problem">
-    <Parameter name="Name" type="string" value="Elasticity 3D"/>
-    <Parameter name="Use Lame" type="bool" value="true"/>
+    <Parameter name="Name" type="string" value="Lame"/>
     <Parameter name="Solution Method" type="string" value="Steady"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
     <ParameterList name="Dirichlet BCs">

@@ -270,6 +270,11 @@ Albany::LameProblem::constructEvaluators(const int worksetSize,
     Teuchos::ParameterList& paramList = params->sublist("Elastic Modulus");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
+    // The LameStress evaluator functions properly only if the material properties are constant
+    string elasticModulusType = paramList.get<std::string>("Elastic Modulus Type");
+    TEST_FOR_EXCEPTION(elasticModulusType != "Constant", Teuchos::Exceptions::InvalidParameter,
+                       " LAME materials enabled only for constant material properties.  Set \"Elastic Modulus Type\" to \"Constant\".");
+
     evaluators_to_build["Elastic Modulus"] = p;
   }
 
@@ -288,6 +293,11 @@ Albany::LameProblem::constructEvaluators(const int worksetSize,
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Poissons Ratio");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    // The LameStress evaluator functions properly only if the material properties are constant
+    string poissonsRatioType = paramList.get<std::string>("Poissons Ratio Type");
+    TEST_FOR_EXCEPTION(poissonsRatioType != "Constant", Teuchos::Exceptions::InvalidParameter,
+                       " LAME materials enabled only for constant material properties.  Set \"Poissons Ratio Type\" to \"Constant\".");
 
     evaluators_to_build["Poissons Ratio"] = p;
   }
