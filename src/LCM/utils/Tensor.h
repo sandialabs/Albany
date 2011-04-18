@@ -198,6 +198,11 @@ namespace LCM {
   Vector<ScalarT>
   operator*(Vector<ScalarT> const & u, const ScalarT s);
 
+  // Vector scalar division
+  template<typename ScalarT>
+  Vector<ScalarT>
+  operator/(Vector<ScalarT> const & u, const ScalarT s);
+
   // Vector dot product
   template<typename ScalarT>
   ScalarT

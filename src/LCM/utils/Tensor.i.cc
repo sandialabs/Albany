@@ -241,6 +241,16 @@ namespace LCM {
   }
 
   //
+  // Vector scalar division
+  //
+  template<typename ScalarT>
+  inline Vector<ScalarT>
+  operator/(Vector<ScalarT> const & u, const ScalarT s)
+  {
+    return Vector<ScalarT>(u(0)/s, u(1)/s, u(2)/s);
+  }
+
+  //
   // Vector dot product
   //
   template<typename ScalarT>
