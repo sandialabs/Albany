@@ -108,11 +108,45 @@ evaluateFields(typename Traits::EvalData workset)
   // \todo Get actual time step for calls to LAME materials.
   RealType deltaT = 1.0;
 
+  // Allocate workset space
+  // Lame is called one time (called for all material points in the workset at once)
+  int numMaterialEvaluations = workset.numCells * numQPs;
+  std::vector<RealType> strainRate(6*numMaterialEvaluations);   // symmetric tensor5
+  std::vector<RealType> spin(3*numMaterialEvaluations);         // skew-symmetric tensor
+  std::vector<RealType> leftStretch(6*numMaterialEvaluations);  // symmetric tensor
+  std::vector<RealType> rotation(9*numMaterialEvaluations);     // full tensor
+  std::vector<RealType> stressOld(6*numMaterialEvaluations);    // symmetric tensor
+  std::vector<RealType> stressNew(6*numMaterialEvaluations);    // symmetric tensor
+
+  // \todo Set up state variables for material models.
+  // \todo Set up scratch space for material models using getNumScratchVars() and setScratchPtr().
+
+  // Create the matParams structure, which is passed to Lame
+  Teuchos::RCP<lame::matParams> matp = Teuchos::rcp(new lame::matParams());
+  matp->nelements = numMaterialEvaluations;
+  matp->dt = deltaT;
+  matp->time = 0.0;
+  matp->strain_rate = &strainRate[0];
+  matp->spin = &spin[0];
+  matp->left_stretch = &leftStretch[0];
+  matp->rotation = &rotation[0];
+  matp->state_old = 0;
+  matp->state_new = 0;
+  matp->stress_old = &stressOld[0];
+  matp->stress_new = &stressNew[0];
+
+  // Pointers used for filling the matParams structure
+  double* strainRatePtr = matp->strain_rate;
+  double* spinPtr = matp->spin;
+  double* leftStretchPtr = matp->left_stretch;
+  double* rotationPtr = matp->rotation;
+  double* stateOldPtr = matp->state_old;
+  double* stateNewPtr = matp->state_new;
+  double* stressOldPtr = matp->stress_old;
+
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
 
-      // \todo Optimize calls to LAME such that we're not creating a new material instance for each evaluation; also, call on block of elements with same material properties.
-      
       // Fill the following entries in matParams for call to LAME
       //
       // nelements     - number of elements 
@@ -199,88 +233,88 @@ evaluateFields(typename Traits::EvalData workset)
       // spin
       LCM::Tensor<ScalarT> W = LCM::skew(L);
 
-      // load data into standard arrays for LAME
-      std::vector<RealType> strainRate(6);   // symmetric tensor
-      std::vector<RealType> spin(3);         // skew-symmetric tensor
-      std::vector<RealType> leftStretch(6);  // symmetric tensor
-      std::vector<RealType> rotation(9);     // full tensor
-      std::vector<RealType> stressOld(6);    // symmetric tensor
-      std::vector<RealType> stressNew(6);    // symmetric tensor
+      // load everything into the Lame data structure
 
-      Teuchos::RCP<lame::matParams> matp = Teuchos::rcp(new lame::matParams());
-      matp->nelements = 1;
-      matp->dt = deltaT;
-      matp->time = 0.0;
-      matp->strain_rate = &strainRate[0];
-      matp->spin = &spin[0];
-      matp->left_stretch = &leftStretch[0];
-      matp->rotation = &rotation[0];
-      matp->state_old = 0;
-      matp->state_new = 0;
-      matp->stress_old = &stressOld[0];
-      matp->stress_new = &stressNew[0];
+      strainRatePtr[0] = Sacado::ScalarValue<ScalarT>::eval( D(0,0) );
+      strainRatePtr[1] = Sacado::ScalarValue<ScalarT>::eval( D(1,1) );
+      strainRatePtr[2] = Sacado::ScalarValue<ScalarT>::eval( D(2,2) );
+      strainRatePtr[3] = Sacado::ScalarValue<ScalarT>::eval( D(0,1) );
+      strainRatePtr[4] = Sacado::ScalarValue<ScalarT>::eval( D(1,2) );
+      strainRatePtr[5] = Sacado::ScalarValue<ScalarT>::eval( D(0,2) );
 
-      strainRate[0] = Sacado::ScalarValue<ScalarT>::eval( D(0,0) );
-      strainRate[1] = Sacado::ScalarValue<ScalarT>::eval( D(1,1) );
-      strainRate[2] = Sacado::ScalarValue<ScalarT>::eval( D(2,2) );
-      strainRate[3] = Sacado::ScalarValue<ScalarT>::eval( D(0,1) );
-      strainRate[4] = Sacado::ScalarValue<ScalarT>::eval( D(1,2) );
-      strainRate[5] = Sacado::ScalarValue<ScalarT>::eval( D(0,2) );
+      spinPtr[0] = Sacado::ScalarValue<ScalarT>::eval( W(0,1) );
+      spinPtr[1] = Sacado::ScalarValue<ScalarT>::eval( W(1,2) );
+      spinPtr[2] = Sacado::ScalarValue<ScalarT>::eval( W(0,2) );
 
-      spin[0] = Sacado::ScalarValue<ScalarT>::eval( W(0,1) );
-      spin[1] = Sacado::ScalarValue<ScalarT>::eval( W(1,2) );
-      spin[2] = Sacado::ScalarValue<ScalarT>::eval( W(0,2) );
+      leftStretchPtr[0] = Sacado::ScalarValue<ScalarT>::eval( V(0,0) );
+      leftStretchPtr[1] = Sacado::ScalarValue<ScalarT>::eval( V(1,1) );
+      leftStretchPtr[2] = Sacado::ScalarValue<ScalarT>::eval( V(2,2) );
+      leftStretchPtr[3] = Sacado::ScalarValue<ScalarT>::eval( V(0,1) );
+      leftStretchPtr[4] = Sacado::ScalarValue<ScalarT>::eval( V(1,2) );
+      leftStretchPtr[5] = Sacado::ScalarValue<ScalarT>::eval( V(0,2) );
 
-      leftStretch[0] = Sacado::ScalarValue<ScalarT>::eval( V(0,0) );
-      leftStretch[1] = Sacado::ScalarValue<ScalarT>::eval( V(1,1) );
-      leftStretch[2] = Sacado::ScalarValue<ScalarT>::eval( V(2,2) );
-      leftStretch[3] = Sacado::ScalarValue<ScalarT>::eval( V(0,1) );
-      leftStretch[4] = Sacado::ScalarValue<ScalarT>::eval( V(1,2) );
-      leftStretch[5] = Sacado::ScalarValue<ScalarT>::eval( V(0,2) );
+      rotationPtr[0] = Sacado::ScalarValue<ScalarT>::eval( R(0,0) );
+      rotationPtr[1] = Sacado::ScalarValue<ScalarT>::eval( R(1,1) );
+      rotationPtr[2] = Sacado::ScalarValue<ScalarT>::eval( R(2,2) );
+      rotationPtr[3] = Sacado::ScalarValue<ScalarT>::eval( R(0,1) );
+      rotationPtr[4] = Sacado::ScalarValue<ScalarT>::eval( R(1,2) );
+      rotationPtr[5] = Sacado::ScalarValue<ScalarT>::eval( R(0,2) );
+      rotationPtr[6] = Sacado::ScalarValue<ScalarT>::eval( R(1,0) );
+      rotationPtr[7] = Sacado::ScalarValue<ScalarT>::eval( R(2,1) );
+      rotationPtr[8] = Sacado::ScalarValue<ScalarT>::eval( R(2,0) );
 
-      rotation[0] = Sacado::ScalarValue<ScalarT>::eval( R(0,0) );
-      rotation[1] = Sacado::ScalarValue<ScalarT>::eval( R(1,1) );
-      rotation[2] = Sacado::ScalarValue<ScalarT>::eval( R(2,2) );
-      rotation[3] = Sacado::ScalarValue<ScalarT>::eval( R(0,1) );
-      rotation[4] = Sacado::ScalarValue<ScalarT>::eval( R(1,2) );
-      rotation[5] = Sacado::ScalarValue<ScalarT>::eval( R(0,2) );
-      rotation[6] = Sacado::ScalarValue<ScalarT>::eval( R(1,0) );
-      rotation[7] = Sacado::ScalarValue<ScalarT>::eval( R(2,1) );
-      rotation[8] = Sacado::ScalarValue<ScalarT>::eval( R(2,0) );
+      stressOldPtr[0] = oldStress(cell,qp,0,0);
+      stressOldPtr[1] = oldStress(cell,qp,1,1);
+      stressOldPtr[2] = oldStress(cell,qp,2,2);
+      stressOldPtr[3] = oldStress(cell,qp,0,1);
+      stressOldPtr[4] = oldStress(cell,qp,1,2);
+      stressOldPtr[5] = oldStress(cell,qp,0,2);
 
-      stressOld[0] = oldStress(cell,qp,0,0);
-      stressOld[1] = oldStress(cell,qp,1,1);
-      stressOld[2] = oldStress(cell,qp,2,2);
-      stressOld[3] = oldStress(cell,qp,0,1);
-      stressOld[4] = oldStress(cell,qp,1,2);
-      stressOld[5] = oldStress(cell,qp,0,2);
+      // increment the pointers
+      strainRatePtr += 6;
+      spinPtr += 3;
+      leftStretchPtr += 6;
+      rotationPtr += 9;
+      stateOldPtr = 0;
+      stateNewPtr = 0;
+      stressOldPtr += 6;
+    }
+  }
 
-      // \todo Call loadStepInit();
+  // \todo Call loadStepInit();
 
-      // Get the stress from the LAME material
-      lameMaterialModel->getStress(matp.get());
+  // Get the stress from the LAME material
+  lameMaterialModel->getStress(matp.get());
+
+  double* stressNewPtr = matp->stress_new;
+
+  // Post-process data from Lame call
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+    for (std::size_t qp=0; qp < numQPs; ++qp) {
 
       // Copy the new stress into the stress field
-      stressField(cell,qp,0,0) = stressNew[0];
-      stressField(cell,qp,1,1) = stressNew[1];
-      stressField(cell,qp,2,2) = stressNew[2];
-      stressField(cell,qp,0,1) = stressNew[3];
-      stressField(cell,qp,1,2) = stressNew[4];
-      stressField(cell,qp,0,2) = stressNew[5];
+      stressField(cell,qp,0,0) = stressNewPtr[0];
+      stressField(cell,qp,1,1) = stressNewPtr[1];
+      stressField(cell,qp,2,2) = stressNewPtr[2];
+      stressField(cell,qp,0,1) = stressNewPtr[3];
+      stressField(cell,qp,1,2) = stressNewPtr[4];
+      stressField(cell,qp,0,2) = stressNewPtr[5];
       stressField(cell,qp,1,0) = stressField(cell,qp,0,1); 
       stressField(cell,qp,2,1) = stressField(cell,qp,1,2); 
       stressField(cell,qp,2,0) = stressField(cell,qp,0,2);
 
       // Copy the new stress into the "stress" component of StateVariables
-      newStress(cell,qp,0,0) = stressNew[0];
-      newStress(cell,qp,1,1) = stressNew[1];
-      newStress(cell,qp,2,2) = stressNew[2];
-      newStress(cell,qp,0,1) = stressNew[3];
-      newStress(cell,qp,1,2) = stressNew[4];
-      newStress(cell,qp,0,2) = stressNew[5];
+      newStress(cell,qp,0,0) = stressNewPtr[0];
+      newStress(cell,qp,1,1) = stressNewPtr[1];
+      newStress(cell,qp,2,2) = stressNewPtr[2];
+      newStress(cell,qp,0,1) = stressNewPtr[3];
+      newStress(cell,qp,1,2) = stressNewPtr[4];
+      newStress(cell,qp,0,2) = stressNewPtr[5];
       newStress(cell,qp,1,0) = newStress(cell,qp,0,1); 
       newStress(cell,qp,2,1) = newStress(cell,qp,1,2); 
-      newStress(cell,qp,2,0) = newStress(cell,qp,0,2); 
+      newStress(cell,qp,2,0) = newStress(cell,qp,0,2);
+
+      stressNewPtr += 6;
     }
   }
 }
