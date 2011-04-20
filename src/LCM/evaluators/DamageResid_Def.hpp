@@ -32,7 +32,7 @@ DamageResid(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   damage_dot  (p.get<std::string>                   ("QP Time Derivative Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  damageLS    (p.get<std::string>                   ("Thermal Conductivity Name"),
+  damageLS    (p.get<std::string>                   ("Damage Length Scale Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   wGradBF     (p.get<std::string>                   ("Weighted Gradient BF Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),

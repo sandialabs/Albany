@@ -53,7 +53,7 @@ GradientDamageProblem(
 
   // check matModel
   //if (matModel == "NeoHookean") 
-  this->nstates=numDim*numDim;
+  this->nstates=2*numDim*numDim+1;
 
   *out << "Num States to Store: " << this->nstates << std::endl;
 
@@ -200,10 +200,10 @@ Albany::GradientDamageProblem::constructEvaluators(
     p->set<int>("Offset of First DOF", D_offset);
     p->set<int>("Number of DOF per Node", neq);
 
-    //RCP< vector<string> > dof_names_dot = rcp(new vector<string>(1));
-    //  (*dof_names_dot)[0] = "Damage_dot";
+    RCP< vector<string> > dof_names_dot = rcp(new vector<string>(1));
+      (*dof_names_dot)[0] = "Damage_dot";
 
-    //p->set< RCP< vector<string> > >("Time Dependent Solution Names", dof_names_dot);
+    p->set< RCP< vector<string> > >("Time Dependent Solution Names", dof_names_dot);
 
     evaluators_to_build["Gather D Solution"] = p;
   }
@@ -403,6 +403,45 @@ Albany::GradientDamageProblem::constructEvaluators(
 
     evaluators_to_build["Yield Strength"] = p;
   }
+
+  { // Saturation Modulus
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    int type = FactoryTraits<AlbanyTraits>::id_sat_mod;
+    p->set<int>("Type", type);
+
+    p->set<string>("QP Variable Name", "Saturation Modulus");
+    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Saturation Modulus");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    evaluators_to_build["Saturation Modulus"] = p;
+  }
+
+  { // Saturation Exponent
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    int type = FactoryTraits<AlbanyTraits>::id_sat_exp;
+    p->set<int>("Type", type);
+
+    p->set<string>("QP Variable Name", "Saturation Exponent");
+    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Saturation Exponent");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    evaluators_to_build["Saturation Exponent"] = p;
+  }
+
   {// Stress
     RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
@@ -419,8 +458,10 @@ Albany::GradientDamageProblem::constructEvaluators(
     p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // qp_scalar also
     p->set<string>("Hardening Modulus Name", "Hardening Modulus"); // qp_scalar also
     p->set<string>("Yield Strength Name", "Yield Strength"); // qp_scalar also
+    p->set<string>("Saturation Modulus Name", "Saturation Modulus"); // qp_scalar also
+    p->set<string>("Saturation Exponent Name", "Saturation Exponent"); // qp_scalar also
     p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient");  // qp_scalar also
-    p->set<string>("QP Damage Name", "Damage");
+    p->set<string>("Damage Name", "Damage");
 
     //Output
     p->set<string>("Stress Name", "Stress"); //qp_tensor also
@@ -456,7 +497,7 @@ Albany::GradientDamageProblem::constructEvaluators(
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
     //Output
-    p->set<string>("Residual Name", "Residual");
+    p->set<string>("Residual Name", "Mechanical Residual");
     p->set< RCP<DataLayout> >("Node Vector Data Layout", node_vector);
 
     evaluators_to_build["Mechanical Residual"] = p;
@@ -682,7 +723,18 @@ Albany::GradientDamageProblem::getValidProblemParameters() const
   validPL->sublist("Damage Length Scale", false, "");
   validPL->sublist("Hardening Modulus", false, "");
   validPL->sublist("Yield Strength", false, "");
+  validPL->sublist("Saturation Modulus", false, "");
+  validPL->sublist("Saturation Exponent", false, "");
 
   return validPL;
 }
 
+void
+Albany::GradientDamageProblem::getAllocatedStates(
+   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState_,
+   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState_
+   ) const
+{
+  oldState_ = oldState;
+  newState_ = newState;
+}
