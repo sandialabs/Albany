@@ -271,10 +271,13 @@ IF(ALBANY_LCM)
   #LCM utils
   SET(SOURCES ${SOURCES}
     ${LCM_DIR}/utils/Geometry.cc
+    ${LCM_DIR}/utils/Partition.cc
     ${LCM_DIR}/utils/Tensor.cc
   )
 
   SET(HEADERS ${HEADERS}
+    ${LCM_DIR}/utils/Geometry.h
+    ${LCM_DIR}/utils/Partition.h
     ${LCM_DIR}/utils/Tensor.h 
   )
 
@@ -406,6 +409,7 @@ ENDIF ()
 add_executable(AlbanyAnalysis Main_Analysis.cpp)
 
 # Tests
+add_executable(PartitionTest LCM/test/utils/PartitionTest.cc)
 add_executable(UtilsTest LCM/test/utils/UtilsTest.cc)
 
 target_link_libraries(Albany          albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
@@ -419,4 +423,5 @@ target_link_libraries(AlbanyAnalysis  albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT
                       ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
 
 #Linking tests
+target_link_libraries(PartitionTest albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
 target_link_libraries(UtilsTest albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
