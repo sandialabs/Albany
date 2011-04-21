@@ -74,7 +74,7 @@ namespace LCM {
 
       LCM::Vector<double> point(0.0, 0.0, 0.0);
 
-      for (LCM::Index j = 0; j < dimension_; ++j) {
+      for (int j = 0; j < dimension_; ++j) {
         point(j) = coordinates[i * dimension_ + j];
       }
 
@@ -1173,8 +1173,8 @@ namespace LCM {
     *ierr = ZOLTAN_OK;
 
     // Validate
-    assert(num_vtx_edge == zhg.GetVertexIDs().size());
-    assert(num_pins == zhg.GetEdgeIDs().size());
+    assert(num_vtx_edge == static_cast<int>(zhg.GetVertexIDs().size()));
+    assert(num_pins == static_cast<int>(zhg.GetEdgeIDs().size()));
     assert(format == ZOLTAN_COMPRESSED_VERTEX);
 
     // Copy hypergraph data

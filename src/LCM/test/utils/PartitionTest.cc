@@ -45,7 +45,6 @@ int main(int ac, char* av[])
   command_line_processor.throwExceptions(false);
 
   // Parse command line
-
   Teuchos::CommandLineProcessor::EParseCommandLineReturn
   parse_return = command_line_processor.parse(ac, av);
 
@@ -95,9 +94,10 @@ int main(int ac, char* av[])
   stk_discretization = static_cast<Albany::STKDiscretization &>(discretization);
 
   // Need solution for output call
-  stk_discretization.outputToExodus(
-      (*stk_discretization.getSolutionField()),
-      stk_partitions);
+  Teuchos::RCP<Epetra_Vector>
+  solution_field = stk_discretization.getSolutionField();
+
+  stk_discretization.outputToExodus(*solution_field, stk_partitions);
 
 #if defined(DEBUG)
 
