@@ -39,7 +39,7 @@ namespace LCM {
     disc_params->set<std::string>("Method", "Exodus");
     disc_params->set<std::string>("Exodus Input File Name", input_file);
     disc_params->set<std::string>("Exodus Output File Name", output_file);
-    disc_params->print(std::cout);
+    //disc_params->print(std::cout);
 
     Teuchos::RCP<Epetra_Comm>
     communicator = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
@@ -54,14 +54,14 @@ namespace LCM {
     dimension_ = discretization_ptr_->getNumDim();
 
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >
-    element_node_list = discretization_ptr_->getElNodeID();
+    element_connectivity = discretization_ptr_->getElNodeID();
 
     Teuchos::ArrayRCP<double>
     coordinates = discretization_ptr_->getCoordinates();
 
-    // Assume all the elements have the same number of nodes_
+    // Assume all the elements have the same number of nodes
     Teuchos::ArrayRCP<int>::size_type
-    nodes_per_element = element_node_list[0].size();
+    nodes_per_element = element_connectivity[0].size();
 
     type_ = FindType(nodes_per_element, dimension_);
 
@@ -70,7 +70,10 @@ namespace LCM {
     Teuchos::ArrayRCP<double>::size_type
     number_nodes = coordinates.size() / dimension_;
 
-    for (Teuchos::ArrayRCP<double>::size_type i = 0; i < number_nodes; ++i) {
+    for (Teuchos::ArrayRCP<double>::size_type
+        i = 0;
+        i < number_nodes;
+        ++i) {
 
       LCM::Vector<double> point(0.0, 0.0, 0.0);
 
@@ -83,20 +86,28 @@ namespace LCM {
 
     // Build connectivity array.
     // Assume that local numbering of elements is contiguous.
-    for (Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >::size_type i = 0;
-        i < element_node_list.size(); ++i) {
+    for (Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >::size_type
+        i = 0;
+        i < element_connectivity.size();
+        ++i) {
 
       IDList nodes_element(nodes_per_element);
 
-      for (Teuchos::ArrayRCP<int>::size_type j = 0;
-          j < nodes_per_element; ++j) {
-        nodes_element[j] = element_node_list[i][j];
+      for (Teuchos::ArrayRCP<int>::size_type
+          j = 0;
+          j < nodes_per_element;
+          ++j) {
+
+        nodes_element[j] = element_connectivity[i][j];
+
       }
 
       connectivity_.insert(std::make_pair(i, nodes_element));
+
     }
 
     return;
+
   }
 
 
@@ -459,7 +470,7 @@ namespace LCM {
         it = vertex_weights.begin();
         it != vertex_weights.end();
         ++it) {
-      int vertex = (*it).first;
+      const int vertex = (*it).first;
       partitions[vertex] = 0;
     }
 
@@ -618,7 +629,8 @@ namespace LCM {
         std::map<std::set<int>, int>::const_iterator
         face_map_iter = face_nodes_ID_map.find(face_nodes);
 
-        bool face_is_new = face_map_iter == face_nodes_ID_map.end();
+        const bool
+        face_is_new = face_map_iter == face_nodes_ID_map.end();
 
         // If face is new then assign new ID to it and add to face map
         int faceID = -1;
@@ -768,7 +780,7 @@ namespace LCM {
     std::vector< std::vector<int> >
     face_connectivity;
 
-    ConnectivityArray::Type
+    const ConnectivityArray::Type
     type = ca.GetType();
 
     // Ugly initialization, but cannot rely on compilers
