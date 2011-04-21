@@ -1,6 +1,9 @@
-//
-// First cut of LCM small tensor utilities.
-//
+///
+/// \file Tensor.h
+/// First cut of LCM small tensor utilities.
+/// \author Alejandro Mota
+/// \author Jake Ostien
+///
 #if !defined(LCM_Tensor_h)
 #define LCM_Tensor_h
 
@@ -9,537 +12,866 @@
 
 namespace LCM {
 
+  ///
+  /// Indexing type
+  ///
   typedef unsigned int Index;
+
+  ///
+  /// Maximum spatial dimension
+  ///
   const Index MaxDim = 3;
 
-  //
-  // Vector
-  //
+  ///
+  /// Vector in R^3
+  ///
   template<typename ScalarT>
   class Vector
   {
   public:
 
-    // Constructors
+    ///
+    /// Default constructor
+    ///
     Vector();
+
+    ///
+    /// Create vector with a scalar
+    ///
     Vector(const ScalarT s);
+
+    ///
+    /// Create vector specifying components
+    ///
     Vector(const ScalarT s0, const ScalarT s1, const ScalarT s2);
+
+    ///
+    /// Copy constructor
+    ///
     Vector(Vector const & v);
 
-    // Destructor
+    ///
+    /// Destructor
+    ///
     ~Vector();
 
-    // Indexing
-    const ScalarT & operator()(const Index i) const;
-    ScalarT & operator()(const Index i);
+    ///
+    /// Indexing for const vector
+    ///
+    const ScalarT &
+    operator()(const Index i) const;
 
-    // Copy assignment
-    Vector<ScalarT> & operator=  (Vector<ScalarT> const & v);
+    ///
+    /// Indexing
+    ///
+    ScalarT &
+    operator()(const Index i);
 
-    // Increment, decrement
-    Vector<ScalarT> & operator+= (Vector<ScalarT> const & v);
-    Vector<ScalarT> & operator-= (Vector<ScalarT> const & v);
+    ///
+    /// Copy assignment
+    ///
+    Vector<ScalarT> &
+    operator=(Vector<ScalarT> const & v);
 
-    // Fill with zeros
-    void clear();
+    ///
+    /// Increment
+    ///
+    Vector<ScalarT> &
+    operator+=(Vector<ScalarT> const & v);
+
+    ///
+    /// Decrement
+    ///
+    Vector<ScalarT> &
+    operator-=(Vector<ScalarT> const & v);
+
+    ///
+    /// Fill with zeros
+    ///
+    void
+    clear();
 
   private:
-    ScalarT e[MaxDim];
+
+    ///
+    /// Vector components
+    ///
+    ScalarT
+    e[MaxDim];
+
   };
 
-  //
-  // Second order tensor
-  //
+  ///
+  /// Second order tensor
+  ///
   template<typename ScalarT>
   class Tensor
   {
   public:
 
-    // Constructors
+    ///
+    /// Default constructor
+    ///
     Tensor();
+
+    ///
+    /// Create tensor with a scalar
+    ///
     Tensor(const ScalarT s);
+
+    ///
+    /// Create tensor specifying components
+    ///
     Tensor(
         const ScalarT s00, const ScalarT s01, const ScalarT s02,
         const ScalarT s10, const ScalarT s11, const ScalarT s12,
         const ScalarT s20, const ScalarT s21, const ScalarT s22);
+
+    ///
+    /// Copy constructor
+    ///
     Tensor(const Tensor & A);
 
-    // Destructor
+    ///
+    /// Destructor
+    ///
     ~Tensor();
 
-    // Indexing
-    const ScalarT & operator()(const Index i, const Index j) const;
-    ScalarT & operator()(const Index i, const Index j);
+    ///
+    /// Indexing for const tensor
+    ///
+    const ScalarT &
+    operator()(const Index i, const Index j) const;
 
-    // Copy assignment
-    Tensor<ScalarT> & operator=  (Tensor<ScalarT> const & A);
+    ///
+    /// Indexing
+    ///
+    ScalarT &
+    operator()(const Index i, const Index j);
 
-    // Increment, decrement
-    Tensor<ScalarT> & operator+= (Tensor<ScalarT> const & A);
-    Tensor<ScalarT> & operator-= (Tensor<ScalarT> const & A);
+    ///
+    /// Copy assignment
+    ///
+    Tensor<ScalarT> &
+    operator=(Tensor<ScalarT> const & A);
 
-    // Fill with zeros
-    void clear();
+    ///
+    /// Increment
+    ///
+    Tensor<ScalarT> &
+    operator+=(Tensor<ScalarT> const & A);
+
+    ///
+    /// Decrement
+    ///
+    Tensor<ScalarT> &
+    operator-=(Tensor<ScalarT> const & A);
+
+    ///
+    /// Fill with zeros
+    ///
+    void
+    clear();
 
   private:
-    ScalarT e[MaxDim][MaxDim];
+
+    ///
+    /// Tensor components
+    ///
+    ScalarT
+    e[MaxDim][MaxDim];
+
   };
 
-  //
-  // Third order tensor
-  //
+  ///
+  /// Third order tensor
+  ///
   template<typename ScalarT>
   class Tensor3
   {
   public:
 
-    // Constructors
+    ///
+    /// Default constructor
+    ///
     Tensor3();
+
+    ///
+    /// Create tensor with a scalar
+    ///
     Tensor3(const ScalarT s);
+
+    ///
+    /// Copy constructor
+    ///
     Tensor3(const Tensor3 & A);
 
-    // Destructor
+    ///
+    /// Destructor
+    ///
     ~Tensor3();
 
-    // Indexing
-    const ScalarT & operator()(
-        const Index i, const Index j, const Index k) const;
+    ///
+    /// Indexing for const tensor
+    ///
+    const ScalarT &
+    operator()(const Index i, const Index j, const Index k) const;
 
-    ScalarT & operator()(const Index i, const Index j, const Index k);
+    ///
+    /// Indexing
+    ///
+    ScalarT &
+    operator()(const Index i, const Index j, const Index k);
 
-    // Copy assignment
-    Tensor3<ScalarT> & operator=  (Tensor3<ScalarT> const & A);
+    ///
+    /// Copy assignment
+    ///
+    Tensor3<ScalarT> &
+    operator=(Tensor3<ScalarT> const & A);
 
-    // Increment, decrement
-    Tensor3<ScalarT> & operator+= (Tensor3<ScalarT> const & A);
-    Tensor3<ScalarT> & operator-= (Tensor3<ScalarT> const & A);
+    ///
+    /// Increment
+    ///
+    Tensor3<ScalarT> &
+    operator+=(Tensor3<ScalarT> const & A);
 
-    // Fill with zeros
-    void clear();
+    ///
+    /// Decrement
+    ///
+    Tensor3<ScalarT> &
+    operator-=(Tensor3<ScalarT> const & A);
+
+    ///
+    /// Fill with zeros
+    ///
+    void
+    clear();
 
   private:
-    ScalarT e[MaxDim][MaxDim][MaxDim];
+
+    ///
+    /// Tensor components
+    ///
+    ScalarT
+    e[MaxDim][MaxDim][MaxDim];
+
   };
 
-  //
-  // Fourth order tensor
-  //
+  ///
+  /// Fourth order tensor
+  ///
   template<typename ScalarT>
   class Tensor4
   {
   public:
 
-    // Constructor
+    ///
+    /// Default constructor
+    ///
     Tensor4();
+
+    ///
+    /// Create tensor with a scalar
+    ///
     Tensor4(const ScalarT s);
+
+    ///
+    /// Copy constructor
+    ///
     Tensor4(const Tensor4 & A);
 
-    // Destructor
+    ///
+    /// Destructor
+    ///
     ~Tensor4();
 
-    // Indexing
-    const ScalarT & operator()(
-        const Index i, const Index j, const Index k, const Index l) const;
+    ///
+    /// Indexing for const tensor
+    ///
+    const ScalarT &
+    operator()(
+        const Index i,
+        const Index j,
+        const Index k,
+        const Index l) const;
 
-    ScalarT & operator()(
-        const Index i, const Index j,
-        const Index k, const Index l);
+    ///
+    /// Indexing
+    ///
+    ScalarT &
+    operator()(
+        const Index i,
+        const Index j,
+        const Index k,
+        const Index l);
 
-    // Copy assignment
-    Tensor4<ScalarT> & operator=  (Tensor4<ScalarT> const & A);
+    ///
+    /// Copy assignment
+    ///
+    Tensor4<ScalarT> &
+    operator=(Tensor4<ScalarT> const & A);
 
-    // Increment, decrement
-    Tensor4<ScalarT> & operator+= (Tensor4<ScalarT> const & A);
-    Tensor4<ScalarT> & operator-= (Tensor4<ScalarT> const & A);
+    ///
+    /// Increment
+    ///
+    Tensor4<ScalarT> &
+    operator+=(Tensor4<ScalarT> const & A);
 
-    // Fill with zeros
-    void clear();
+    ///
+    /// Decrement
+    ///
+    Tensor4<ScalarT> &
+    operator-=(Tensor4<ScalarT> const & A);
+
+    ///
+    /// Fill with zeros
+    ///
+    void
+    clear();
 
   private:
-    ScalarT e[MaxDim][MaxDim][MaxDim][MaxDim];
+
+    ///
+    /// Tensor components
+    ///
+    ScalarT
+    e[MaxDim][MaxDim][MaxDim][MaxDim];
+
   };
 
   //
   // Prototypes for utilities
   //
 
-  // Vector addition
+  ///
+  /// Vector addition
+  ///
   template<typename ScalarT>
   Vector<ScalarT>
   operator+(Vector<ScalarT> const & u, Vector<ScalarT> const & v);
 
-  // Vector substraction
+  ///
+  /// Vector substraction
+  ///
   template<typename ScalarT>
   Vector<ScalarT>
   operator-(Vector<ScalarT> const & u, Vector<ScalarT> const & v);
 
-  // Vector dot product
+  ///
+  /// Vector dot product
+  ///
   template<typename ScalarT>
   ScalarT
   operator*(Vector<ScalarT> const & u, Vector<ScalarT> const & v);
 
-  // Vector equality
+  ///
+  /// Vector equality
+  ///
   template<typename ScalarT>
   bool
   operator==(Vector<ScalarT> const & u, Vector<ScalarT> const & v);
 
-  // Vector inequality
+  ///
+  /// Vector inequality
+  ///
   template<typename ScalarT>
   bool
   operator!=(Vector<ScalarT> const & u, Vector<ScalarT> const & v);
 
-  // Scalar vector product
+  ///
+  /// Scalar vector product
+  ///
   template<typename ScalarT>
   Vector<ScalarT>
   operator*(const ScalarT s, Vector<ScalarT> const & u);
 
-  // Vector scalar product
+  ///
+  /// Vector scalar product
+  ///
   template<typename ScalarT>
   Vector<ScalarT>
   operator*(Vector<ScalarT> const & u, const ScalarT s);
 
-  // Vector scalar division
+  ///
+  /// Vector scalar division
+  ///
   template<typename ScalarT>
   Vector<ScalarT>
   operator/(Vector<ScalarT> const & u, const ScalarT s);
 
-  // Vector dot product
+  ///
+  /// Vector dot product
+  ///
   template<typename ScalarT>
   ScalarT
   dot(Vector<ScalarT> const & u, Vector<ScalarT> const & v);
 
-  // Tensor vector product v = A u
+  ///
+  /// Tensor vector product v = A u
+  ///
   template<typename ScalarT>
   Vector<ScalarT>
   dot(Tensor<ScalarT> const & A, Vector<ScalarT> const & u);
 
-  // Vector tensor product v = u A
+  ///
+  /// Vector tensor product v = u A
+  ///
   template<typename ScalarT>
   Vector<ScalarT>
   dot(Vector<ScalarT> const & u, Tensor<ScalarT> const & A);
 
-  // Tensor vector product v = A u
+  ///
+  /// Tensor vector product v = A u
+  ///
   template<typename ScalarT>
   Vector<ScalarT>
   operator*(Tensor<ScalarT> const & A, Vector<ScalarT> const & u);
 
-  // Vector tensor product v = u A
+  ///
+  /// Vector tensor product v = u A
+  ///
   template<typename ScalarT>
   Vector<ScalarT>
   operator*(Vector<ScalarT> const & u, Tensor<ScalarT> const & A);
 
-  // Cross product
+  ///
+  /// Cross product
+  ///
   template<typename ScalarT>
   Vector<ScalarT>
   cross(Vector<ScalarT> const & u, Vector<ScalarT> const & v);
 
-  // Vector 2-norm
+  ///
+  /// Vector 2-norm
+  ///
   template<typename ScalarT>
   ScalarT
   norm(Vector<ScalarT> const & u);
 
-  // Vector 1-norm
+  ///
+  /// Vector 1-norm
+  ///
   template<typename ScalarT>
   ScalarT
   norm_1(Vector<ScalarT> const & u);
 
-  // Vector infinity norm
+  ///
+  /// Vector infinity norm
+  ///
   template<typename ScalarT>
   ScalarT
   norm_infinity(Vector<ScalarT> const & u);
 
-  // Tensor addition
+  ///
+  /// Tensor addition
+  ///
   template<typename ScalarT>
   Tensor<ScalarT>
   operator+(Tensor<ScalarT> const & A, Tensor<ScalarT> const & B);
 
-  // Tensor substraction
+  ///
+  /// Tensor substraction
+  ///
   template<typename ScalarT>
   Tensor<ScalarT>
   operator-(Tensor<ScalarT> const & A, Tensor<ScalarT> const & B);
 
-  // Scalar tensor product
+  ///
+  /// Scalar tensor product
+  ///
   template<typename ScalarT>
   Tensor<ScalarT>
   operator*(const ScalarT s, Tensor<ScalarT> const & A);
 
-  // Tensor scalar product
+  ///
+  /// Tensor scalar product
+  ///
   template<typename ScalarT>
   Tensor<ScalarT>
   operator*(Tensor<ScalarT> const & A, const ScalarT s);
 
-  // Tensor dot product C = A B
+  ///
+  /// Tensor dot product C = A B
+  ///
   template<typename ScalarT>
   Tensor<ScalarT>
   dot(Tensor<ScalarT> const & A, Tensor<ScalarT> const & B);
 
-  // Tensor dot product C = A B
+  ///
+  /// Tensor dot product C = A B
+  ///
   template<typename ScalarT>
   Tensor<ScalarT>
   operator*(Tensor<ScalarT> const & A, Tensor<ScalarT> const & B);
 
-  // Tensor equality
+  ///
+  /// Tensor equality
+  ///
   template<typename ScalarT>
   bool
   operator==(Tensor<ScalarT> const & A, Tensor<ScalarT> const & B);
 
-  // Tensor inequality
+  ///
+  /// Tensor inequality
+  ///
   template<typename ScalarT>
   bool
   operator!=(Tensor<ScalarT> const & A, Tensor<ScalarT> const & B);
 
-  // Tensor double dot product (contraction)
+  ///
+  /// Tensor double dot product (contraction)
+  ///
   template<typename ScalarT>
   ScalarT
   dotdot(Tensor<ScalarT> const & A, Tensor<ScalarT> const & B);
 
-  // 4th-order tensor 2nd-order tensor double dot product
+  ///
+  /// 4th-order tensor 2nd-order tensor double dot product
+  ///
   template<typename ScalarT>
   Tensor<ScalarT>
   dotdot(Tensor4<ScalarT> const & A, Tensor<ScalarT> const & B);
 
-  // 2nd-order tensor 4th-order tensor double dot product
+  ///
+  /// 2nd-order tensor 4th-order tensor double dot product
+  ///
   template<typename ScalarT>
   Tensor<ScalarT>
   dotdot(Tensor<ScalarT> const & B, Tensor4<ScalarT> const & A);
 
-  // 2nd-order tensor 2nd-order tensor tensor product
+  ///
+  /// 2nd-order tensor 2nd-order tensor tensor product
+  ///
   template<typename ScalarT>
   Tensor4<ScalarT>
   tensor(Tensor<ScalarT> const & A, Tensor<ScalarT> const & B);
 
-  // odot operator useful for dA(-1)/dA, see Holzapfel eqn 6.165
-  // C_ijkl = 1/2 (A_ik B_jl + A_il B_jk)
+  ///
+  /// odot operator useful for dA(-1)/dA, see Holzapfel eqn 6.165
+  /// C_ijkl = 1/2 (A_ik B_jl + A_il B_jk)
+  ///
   template<typename ScalarT>
   Tensor4<ScalarT>
   odot(Tensor<ScalarT> const & A, Tensor<ScalarT> const & B);
 
-  // Tensor Frobenius norm
+  ///
+  /// Tensor Frobenius norm
+  ///
   template<typename ScalarT>
   ScalarT
   norm(Tensor<ScalarT> const & A);
 
-  // Tensor 1-norm
+  ///
+  /// Tensor 1-norm
+  ///
   template<typename ScalarT>
   ScalarT
   norm_1(Tensor<ScalarT> const & A);
 
-  // Tensor infinity norm
+  ///
+  /// Tensor infinity norm
+  ///
   template<typename ScalarT>
   ScalarT
   norm_infinity(Tensor<ScalarT> const & A);
 
-  // Dyad
+  ///
+  /// Dyad
+  ///
   template<typename ScalarT>
   Tensor<ScalarT>
   dyad(Vector<ScalarT> const & u, Vector<ScalarT> const & v);
 
-  // Dyad
+  ///
+  /// Dyad
+  ///
   template<typename ScalarT>
   Tensor<ScalarT>
   tensor(Vector<ScalarT> const & u, Vector<ScalarT> const & v);
 
-  // Dyad, just for Jay
+  ///
+  /// Bun operator, just for Jay (dyad)
+  ///
   template<typename ScalarT>
   Tensor<ScalarT>
   bun(Vector<ScalarT> const & u, Vector<ScalarT> const & v);
 
-  // 2nd-order identity
+  ///
+  /// 2nd-order identity
+  ///
   template<typename ScalarT>
   const Tensor<ScalarT>
   identity();
 
-  // 2nd-order identity
+  ///
+  /// 2nd-order identity, à la Matlab
+  ///
   template<typename ScalarT>
   const Tensor<ScalarT>
   eye();
 
-  // 2nd-order zero
+  ///
+  /// 2nd-order zero
+  ///
   template<typename ScalarT>
   const Tensor<ScalarT>
   zero();
 
-  // Transpose
+  ///
+  /// Transpose
+  ///
   template<typename ScalarT>
   Tensor<ScalarT>
   transpose(Tensor<ScalarT> const & A);
 
-  // Symmetric part of 2nd-order tensor
+  ///
+  /// Symmetric part of 2nd-order tensor
+  ///
   template<typename ScalarT>
   Tensor<ScalarT>
   symm(Tensor<ScalarT> const & A);
 
-  // Skew symmetric part of 2nd-order tensor
+  ///
+  /// Skew symmetric part of 2nd-order tensor
+  ///
   template<typename ScalarT>
   Tensor<ScalarT>
   skew(Tensor<ScalarT> const & A);
 
-  // Skew symmetric 2nd-order tensor from vector
+  ///
+  /// Skew symmetric 2nd-order tensor from vector
+  ///
   template<typename ScalarT>
   Tensor<ScalarT>
   skew(Vector<ScalarT> const & u);
 
-  // Tensor inverse
+  ///
+  /// Tensor inverse
+  ///
   template<typename ScalarT>
   Tensor<ScalarT>
   inverse(Tensor<ScalarT> const & A);
 
-  // Determinant
+  ///
+  /// Determinant
+  ///
   template<typename ScalarT>
   ScalarT
   det(Tensor<ScalarT> const & A);
 
-  // Trace
+  ///
+  /// Trace
+  ///
   template<typename ScalarT>
   ScalarT
   trace(Tensor<ScalarT> const & A);
 
-  // First invariant, trace
+  ///
+  /// First invariant, trace
+  ///
   template<typename ScalarT>
   ScalarT
   I1(Tensor<ScalarT> const & A);
 
-  // Second invariant
+  ///
+  /// Second invariant
+  ///
   template<typename ScalarT>
   ScalarT
   I2(Tensor<ScalarT> const & A);
 
-  // Third invariant, determinat
+  ///
+  /// Third invariant, determinat
+  ///
   template<typename ScalarT>
   ScalarT
   I3(Tensor<ScalarT> const & A);
 
-  // Left polar decomposition
+  ///
+  /// Left polar decomposition
+  ///
   template<typename ScalarT>
-  std::pair<Tensor<ScalarT>,Tensor<ScalarT> >
+  std::pair<Tensor<ScalarT>, Tensor<ScalarT> >
   polar_left(Tensor<ScalarT> const & F);
 
-  // Right polar decomposition
+  ///
+  /// Right polar decomposition
+  ///
   template<typename ScalarT>
-  std::pair<Tensor<ScalarT>,Tensor<ScalarT> >
+  std::pair<Tensor<ScalarT>, Tensor<ScalarT> >
   polar_right(Tensor<ScalarT> const & F);
 
-  // Left polar decomposition with matrix logarithm for V
+  ///
+  /// Left polar decomposition with matrix logarithm for V
+  ///
   template<typename ScalarT>
-  boost::tuple<Tensor<ScalarT>,Tensor<ScalarT>,Tensor<ScalarT> >
+  boost::tuple<Tensor<ScalarT>, Tensor<ScalarT>, Tensor<ScalarT> >
   polar_left_logV(Tensor<ScalarT> const & F);
 
-  // Eigenvalue decomposition for SPD 2nd order tensor
+  ///
+  /// Eigenvalue decomposition for SPD 2nd order tensor
+  ///
   template<typename ScalarT>
-  std::pair<Tensor<ScalarT>,Tensor<ScalarT> >
+  std::pair<Tensor<ScalarT>, Tensor<ScalarT> >
   eig_spd(Tensor<ScalarT> const & A);
 
-  // Exponential map using Taylor series
+  ///
+  /// Exponential map using Taylor series
+  ///
   template<typename ScalarT>
   Tensor<ScalarT>
   exp(Tensor<ScalarT> const & A);
 
-  // Logarithmic map using Taylor series
+  ///
+  /// Logarithmic map using Taylor series
+  ///
   template<typename ScalarT>
   Tensor<ScalarT>
   log(Tensor<ScalarT> const & A);
 
-  // Logarithmic map of a rotation
+  ///
+  /// Logarithmic map of a rotation
+  ///
   template<typename ScalarT>
   Tensor<ScalarT>
   log_rotation(Tensor<ScalarT> const & R);
 
-  // Logarithmic map using BCH expansion (3 terms)
+  ///
+  /// Logarithmic map using BCH expansion (3 terms)
+  ///
   template<typename ScalarT>
   Tensor<ScalarT>
   bch(Tensor<ScalarT> const & v, Tensor<ScalarT> const & r);
 
-  // 4th-order identity delta_ik delta_jl, A = I_1 A
+  ///
+  /// 4th-order identity delta_ik delta_jl, A = I_1 A
+  ///
   template<typename ScalarT>
   const Tensor4<ScalarT>
   identity_1();
 
-  // 4th-order identity delta_il delta_jk, A^T = I_2 A
+  ///
+  /// 4th-order identity delta_il delta_jk, A^T = I_2 A
+  ///
   template<typename ScalarT>
   const Tensor4<ScalarT>
   identity_2();
 
-  // 4th-order identity delta_ij delta_kl, trA I = I_3 A
+  ///
+  /// 4th-order identity delta_ij delta_kl, trA I = I_3 A
+  ///
   template<typename ScalarT>
   const Tensor4<ScalarT>
   identity_3();
 
-  // Vector input
+  ///
+  /// Vector input
+  ///
   template<typename ScalarT>
   std::istream &
   operator>>(std::istream & is, Vector<ScalarT> & u);
 
-  // Vector output
+  ///
+  /// Vector output
+  ///
   template<typename ScalarT>
   std::ostream &
   operator<<(std::ostream & os, Vector<ScalarT> const & u);
 
-  // Tensor input
+  ///
+  /// Tensor input
+  ///
   template<typename ScalarT>
   std::istream &
   operator>>(std::istream & is, Tensor<ScalarT> & A);
 
-  // Tensor output
+  ///
+  /// Tensor output
+  ///
   template<typename ScalarT>
   std::ostream &
   operator<<(std::ostream & os, Tensor<ScalarT> const & A);
 
-  // 3rd-order tensor input
+  ///
+  /// 3rd-order tensor input
+  ///
   template<typename ScalarT>
   std::istream &
   operator>>(std::istream & is, Tensor3<ScalarT> & A);
 
-  // 3rd-order tensor output
+  ///
+  /// 3rd-order tensor output
+  ///
   template<typename ScalarT>
   std::ostream &
   operator<<(std::ostream & os, Tensor3<ScalarT> const & A);
 
-  // 4th-order tensor input
+  ///
+  /// 4th-order tensor input
+  ///
   template<typename ScalarT>
   std::istream &
   operator>>(std::istream & is, Tensor4<ScalarT> & A);
 
-  // 4th-order tensor output
+  ///
+  /// 4th-order tensor output
+  ///
   template<typename ScalarT>
   std::ostream &
   operator<<(std::ostream & os, Tensor4<ScalarT> const & A);
 
-  // 3rd-order tensor addition
+  ///
+  /// 3rd-order tensor addition
+  ///
   template<typename ScalarT>
   Tensor3<ScalarT>
   operator+(Tensor3<ScalarT> const & A, Tensor3<ScalarT> const & B);
 
-  // 3rd-order tensor substraction
+  ///
+  /// 3rd-order tensor substraction
+  ///
   template<typename ScalarT>
   Tensor3<ScalarT>
   operator-(Tensor3<ScalarT> const & A, Tensor3<ScalarT> const & B);
 
-  // 3rd-order equality
+  ///
+  /// 3rd-order equality
+  ///
   template<typename ScalarT>
   bool
   operator==(Tensor3<ScalarT> const & A, Tensor3<ScalarT> const & B);
 
-  // 3rd-order inequality
+  ///
+  /// 3rd-order inequality
+  ///
   template<typename ScalarT>
   bool
   operator!=(Tensor3<ScalarT> const & A, Tensor3<ScalarT> const & B);
 
-  // 4th-order tensor addition
+  ///
+  /// 4th-order tensor addition
+  ///
   template<typename ScalarT>
   Tensor4<ScalarT>
   operator+(Tensor4<ScalarT> const & A, Tensor4<ScalarT> const & B);
 
-  // 4th-order tensor substraction
+  ///
+  /// 4th-order tensor substraction
+  ///
   template<typename ScalarT>
   Tensor4<ScalarT>
   operator-(Tensor4<ScalarT> const & A, Tensor4<ScalarT> const & B);
 
-  // 4th-order equality
+  ///
+  /// 4th-order equality
+  ///
   template<typename ScalarT>
   bool
   operator==(Tensor4<ScalarT> const & A, Tensor4<ScalarT> const & B);
 
-  // 4th-order inequality
+  ///
+  /// 4th-order inequality
+  ///
   template<typename ScalarT>
   bool
   operator!=(Tensor4<ScalarT> const & A, Tensor4<ScalarT> const & B);

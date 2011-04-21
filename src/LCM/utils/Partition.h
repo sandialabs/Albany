@@ -2,6 +2,9 @@
 // Simple Zoltan compact hyperedge graph for partitioning meshes
 //
 
+// Define only if Zoltan is enabled
+#if defined(ALBANY_ZOLTAN)
+
 #include <iostream>
 #include <map>
 #include <set>
@@ -286,4 +289,6 @@ namespace LCM {
 
 } // namespace LCM
 
-#endif // LCM_Partition_h
+#endif // #if !defined(LCM_Partition_h)
+
+#endif // #if defined (ALBANY_ZOLTAN)

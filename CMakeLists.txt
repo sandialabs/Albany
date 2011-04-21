@@ -98,6 +98,18 @@ ELSE()
   SET(ALBANY_IOSS FALSE)
 ENDIF()
 
+# set optional dependency on Zoltan, for partitioning
+MESSAGE("-- Looking for Zoltan:")
+LIST(FIND Trilinos_PACKAGE_LIST Zoltan Zoltan_List_ID)
+IF (Zoltan_List_ID GREATER -1)
+  ADD_DEFINITIONS(-DALBANY_ZOLTAN)
+  MESSAGE("-- Looking for Zoltan: -- found, compiling with -DALBANY_ZOLTAN")
+  SET(ALBANY_ZOLTAN TRUE)
+ELSE()
+  MESSAGE("-- Looking for Zoltan: -- not found.")
+  SET(ALBANY_ZOLTAN FALSE)
+ENDIF()
+
 # set optional dependency on LCM, defaults to Enabled
 ##    This changes default to ON:
 ##    IF (NOT ENABLE_LCM AND DEFINED ENABLE_LCM)
