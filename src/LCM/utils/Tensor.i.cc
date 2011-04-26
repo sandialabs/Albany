@@ -1,6 +1,9 @@
-//
-//
-//
+///
+/// \file Tensor.i.cc
+/// First cut of LCM small tensor utilities. Inline functions.
+/// \author Alejandro Mota
+/// \author Jake Ostien
+///
 #if !defined(LCM_Tensor_i_cc)
 #define LCM_Tensor_i_cc
 
@@ -9,13 +12,11 @@
 #include <cmath>
 #include <limits>
 
-//#include "Teuchos_TestForException.hpp"
-
 namespace LCM {
 
-  //
-  // Vector constructor with NaNs
-  //
+  ///
+  /// Default constructor that initializes to NaNs
+  ///
   template<typename ScalarT>
   inline
   Vector<ScalarT>::Vector()
@@ -27,9 +28,10 @@ namespace LCM {
     return;
   }
 
-  //
-  // Vector constructor with scalar
-  //
+  ///
+  /// Create vector from a scalar
+  /// \param s all components are set equal to this value
+  ///
   template<typename ScalarT>
   inline
   Vector<ScalarT>::Vector(const ScalarT s)
@@ -41,9 +43,12 @@ namespace LCM {
     return;
   }
 
-  //
-  // Vector constructor with 3 scalars
-  //
+  ///
+  /// Create vector specifying components
+  /// \param s0
+  /// \param s1
+  /// \param s2 are the vector components in the canonical basis
+  ///
   template<typename ScalarT>
   inline
   Vector<ScalarT>::Vector(const ScalarT s0, const ScalarT s1, const ScalarT s2)
@@ -55,23 +60,24 @@ namespace LCM {
     return;
   }
 
-  //
-  // Vector constructor from vector
-  //
+  ///
+  /// Copy constructor
+  /// \param v the values of its componets are copied to the new vector
+  ///
   template<typename ScalarT>
   inline
-  Vector<ScalarT>::Vector(Vector<ScalarT> const & V)
+  Vector<ScalarT>::Vector(Vector<ScalarT> const & v)
   {
-    e[0] = V.e[0];
-    e[1] = V.e[1];
-    e[2] = V.e[2];
+    e[0] = v.e[0];
+    e[1] = v.e[1];
+    e[2] = v.e[2];
 
     return;
   }
 
-  //
-  // Destructor
-  //
+  ///
+  /// Simple destructor
+  ///
   template<typename ScalarT>
   inline
   Vector<ScalarT>::~Vector()
@@ -79,23 +85,10 @@ namespace LCM {
     return;
   }
 
-  //
-  // Fill with zeros
-  //
-  template<typename ScalarT>
-  inline void
-  Vector<ScalarT>::clear()
-  {
-    e[0] = 0.0;
-    e[1] = 0.0;
-    e[2] = 0.0;
-
-    return;
-  }
-
-  //
-  // Vector indexing
-  //
+  ///
+  /// Indexing for constant vector
+  /// \param i the index
+  ///
   template<typename ScalarT>
   inline const ScalarT &
   Vector<ScalarT>::operator()(const Index i) const
@@ -104,9 +97,10 @@ namespace LCM {
     return e[i];
   }
 
-  //
-  // Vector indexing
-  //
+  ///
+  /// Vector indexing
+  /// \param i the index
+  ///
   template<typename ScalarT>
   inline ScalarT &
   Vector<ScalarT>::operator()(const Index i)
@@ -115,9 +109,10 @@ namespace LCM {
     return e[i];
   }
 
-  //
-  // Copy assignment
-  //
+  ///
+  /// Copy assignment
+  /// \param v the values of its componets are copied to this vector
+  ///
   template<typename ScalarT>
   inline Vector<ScalarT> &
   Vector<ScalarT>::operator=(Vector<ScalarT> const & v)
@@ -130,9 +125,56 @@ namespace LCM {
     return *this;
   }
 
-  //
-  // Vector addition
-  //
+  ///
+  /// Vector increment
+  /// \param v added to currrent vector
+  ///
+  template<typename ScalarT>
+  inline Vector<ScalarT> &
+  Vector<ScalarT>::operator+=(Vector<ScalarT> const & v)
+  {
+    e[0] += v.e[0];
+    e[1] += v.e[1];
+    e[2] += v.e[2];
+
+    return *this;
+  }
+
+  ///
+  /// Vector decrement
+  /// \param v substracted from current vector
+  ///
+  template<typename ScalarT>
+  inline Vector<ScalarT> &
+  Vector<ScalarT>::operator-=(Vector<ScalarT> const & v)
+  {
+    e[0] -= v.e[0];
+    e[1] -= v.e[1];
+    e[2] -= v.e[2];
+
+    return *this;
+  }
+
+  ///
+  /// Fill with zeros
+  ///
+  template<typename ScalarT>
+  inline void
+  Vector<ScalarT>::clear()
+  {
+    e[0] = 0.0;
+    e[1] = 0.0;
+    e[2] = 0.0;
+
+    return;
+  }
+
+  ///
+  /// Vector addition
+  /// \param u
+  /// \param v the operands
+  /// \return \f$ u + v \f$
+  ///
   template<typename ScalarT>
   inline Vector<ScalarT>
   operator+(Vector<ScalarT> const & u, Vector<ScalarT> const & v)
@@ -146,9 +188,12 @@ namespace LCM {
     return s;
   }
 
-  //
-  // Vector substraction
-  //
+  ///
+  /// Vector substraction
+  /// \param u
+  /// \param v the operands
+  /// \return \f$ u - v \f$
+  ///
   template<typename ScalarT>
   inline Vector<ScalarT>
   operator-(Vector<ScalarT> const & u, Vector<ScalarT> const & v)
@@ -162,37 +207,24 @@ namespace LCM {
     return s;
   }
 
-  //
-  // Vector increment
-  //
+  ///
+  /// Vector minus
+  /// \param u
+  /// \return \f$ -u \f$
+  ///
   template<typename ScalarT>
-  inline Vector<ScalarT> &
-  Vector<ScalarT>::operator+=(Vector<ScalarT> const & v)
+  inline Vector<ScalarT>
+  operator-(Vector<ScalarT> const & u)
   {
-    e[0] += v.e[0];
-    e[1] += v.e[1];
-    e[2] += v.e[2];
-
-    return *this;
+    return Vector<ScalarT>(-u(0), -u(1), -u(2));
   }
 
-  //
-  // Vector decrement
-  //
-  template<typename ScalarT>
-  inline Vector<ScalarT> &
-  Vector<ScalarT>::operator-=(Vector<ScalarT> const & v)
-  {
-    e[0] -= v.e[0];
-    e[1] -= v.e[1];
-    e[2] -= v.e[2];
-
-    return *this;
-  }
-
-  //
-  // Vector dot product
-  //
+  ///
+  /// Vector dot product
+  /// \param u
+  /// \param v the operands
+  /// \return \f$ u \cdot v \f$
+  ///
   template<typename ScalarT>
   inline ScalarT
   operator*(Vector<ScalarT> const & u, Vector<ScalarT> const & v)
@@ -200,9 +232,12 @@ namespace LCM {
     return dot(u, v);
   }
 
-  //
-  // Vector equality
-  //
+  ///
+  /// Vector equality tested by components
+  /// \param u
+  /// \param v the operands
+  /// \return \f$ u \equiv v \f$
+  ///
   template<typename ScalarT>
   inline bool
   operator==(Vector<ScalarT> const & u, Vector<ScalarT> const & v)
@@ -210,9 +245,12 @@ namespace LCM {
     return u(0)==v(0) && u(1)==v(1) && u(2)==v(2);
   }
 
-  //
-  // Vector inequality
-  //
+  ///
+  /// Vector inequality tested by components
+  /// \param u
+  /// \param v the operands
+  /// \return \f$ u \neq v \f$
+  ///
   template<typename ScalarT>
   inline bool
   operator!=(Vector<ScalarT> const & u, Vector<ScalarT> const & v)
@@ -220,9 +258,12 @@ namespace LCM {
     return !(u==v);
   }
 
-  //
-  // Scalar vector product
-  //
+  ///
+  /// Scalar vector product
+  /// \param s scalar factor
+  /// \param u vector factor
+  /// \return \f$ s u \f$
+  ///
   template<typename ScalarT>
   inline Vector<ScalarT>
   operator*(const ScalarT s, Vector<ScalarT> const & u)
@@ -230,9 +271,12 @@ namespace LCM {
     return Vector<ScalarT>(s*u(0), s*u(1), s*u(2));
   }
 
-  //
-  // Vector scalar product
-  //
+  ///
+  /// Vector scalar product
+  /// \param u vector factor
+  /// \param s scalar factor
+  /// \return \f$ s u \f$
+  ///
   template<typename ScalarT>
   inline Vector<ScalarT>
   operator*(Vector<ScalarT> const & u, const ScalarT s)
@@ -240,9 +284,12 @@ namespace LCM {
     return s * u;
   }
 
-  //
-  // Vector scalar division
-  //
+  ///
+  /// Vector scalar division
+  /// \param u vector
+  /// \param s scalar that divides each component of vector
+  /// \return \f$ u / s \f$
+  ///
   template<typename ScalarT>
   inline Vector<ScalarT>
   operator/(Vector<ScalarT> const & u, const ScalarT s)
@@ -250,9 +297,12 @@ namespace LCM {
     return Vector<ScalarT>(u(0)/s, u(1)/s, u(2)/s);
   }
 
-  //
-  // Vector dot product
-  //
+  ///
+  /// Vector dot product
+  /// \param u
+  /// \param v operands
+  /// \return \f$ u \cdot v \f$
+  ///
   template<typename ScalarT>
   inline ScalarT
   dot(Vector<ScalarT> const & u, Vector<ScalarT> const & v)
@@ -260,9 +310,12 @@ namespace LCM {
     return u(0)*v(0) + u(1)*v(1) + u(2)*v(2);
   }
 
-  //
-  // Cross product
-  //
+  ///
+  /// Cross product
+  /// \param u
+  /// \param v operands
+  /// \return \f$ u \times v \f$
+  ///
   template<typename ScalarT>
   inline Vector<ScalarT>
   cross(Vector<ScalarT> const & u, Vector<ScalarT> const & v)
@@ -276,9 +329,10 @@ namespace LCM {
     return w;
   }
 
-  //
-  // Vector 2-norm
-  //
+  ///
+  /// Vector 2-norm
+  /// \return \f$ \sqrt{u \cdot u} \f$
+  ///
   template<typename ScalarT>
   inline ScalarT
   norm(Vector<ScalarT> const & u)
@@ -286,9 +340,10 @@ namespace LCM {
     return sqrt(u(0)*u(0) + u(1)*u(1) + u(2)*u(2));
   }
 
-  //
-  // Vector 1-norm
-  //
+  ///
+  /// Vector 1-norm
+  /// \return \f$ |u_0|+|u_1|+|u_2| \f$
+  ///
   template<typename ScalarT>
   inline ScalarT
   norm_1(Vector<ScalarT> const & u)
@@ -296,9 +351,10 @@ namespace LCM {
     return std::fabs(u(0)) + std::fabs(u(1)) + std::fabs(u(2));
   }
 
-  //
-  // Vector infinity-norm
-  //
+  ///
+  /// Vector infinity-norm
+  /// \return \f$ \max(|u_0|,|u_1|,|u_2|) \f$
+  ///
   template<typename ScalarT>
   inline ScalarT
   norm_infinity(Vector<ScalarT> const & u)
@@ -306,9 +362,9 @@ namespace LCM {
     return std::max(std::max(std::fabs(u(0)),std::fabs(u(1))),std::fabs(u(2)));
   }
 
-  //
-  // Tensor constructor with NaNs
-  //
+  ///
+  /// Default constructor that initializes to NaNs
+  ///
   template<typename ScalarT>
   inline
   Tensor<ScalarT>::Tensor()
@@ -328,9 +384,10 @@ namespace LCM {
     return;
   }
 
-  //
-  // Tensor constructor from scalar
-  //
+  ///
+  /// Create tensor from a scalar
+  /// \param s all components are set equal to this value
+  ///
   template<typename ScalarT>
   inline
   Tensor<ScalarT>::Tensor(const ScalarT s)
@@ -350,9 +407,12 @@ namespace LCM {
     return;
   }
 
-  //
-  // Tensor constructor from 9 scalars
-  //
+  ///
+  /// Create tensor specifying components
+  /// The parameters are the components in the canonical basis
+  /// \param s00 ...
+  /// \param s22
+  ///
   template<typename ScalarT>
   inline
   Tensor<ScalarT>::Tensor(
@@ -375,9 +435,10 @@ namespace LCM {
     return;
   }
 
-  //
-  // Tensor constructor from tensor
-  //
+  ///
+  /// Copy constructor
+  /// \param A the values of its componets are copied to the new tensor
+  ///
   template<typename ScalarT>
   inline
   Tensor<ScalarT>::Tensor(Tensor<ScalarT> const & A)
@@ -397,9 +458,9 @@ namespace LCM {
     return;
   }
 
-  //
-  // Destructor
-  //
+  ///
+  /// Simple destructor
+  ///
   template<typename ScalarT>
   inline
   Tensor<ScalarT>::~Tensor()
@@ -407,31 +468,11 @@ namespace LCM {
     return;
   }
 
-  //
-  // Tensor fill with zeros
-  //
-  template<typename ScalarT>
-  inline void
-  Tensor<ScalarT>::clear()
-  {
-    e[0][0] = 0.0;
-    e[0][1] = 0.0;
-    e[0][2] = 0.0;
-
-    e[1][0] = 0.0;
-    e[1][1] = 0.0;
-    e[1][2] = 0.0;
-
-    e[2][0] = 0.0;
-    e[2][1] = 0.0;
-    e[2][2] = 0.0;
-
-    return;
-  }
-
-  //
-  // Tensor indexing
-  //
+  ///
+  /// Indexing for constant tensor
+  /// \param i index
+  /// \param j index
+  ///
   template<typename ScalarT>
   inline const ScalarT &
   Tensor<ScalarT>::operator()(const Index i, const Index j) const
@@ -441,9 +482,11 @@ namespace LCM {
     return e[i][j];
   }
 
-  //
-  // Tensor indexing
-  //
+  ///
+  /// Tensor indexing
+  /// \param i index
+  /// \param j index
+  ///
   template<typename ScalarT>
   inline ScalarT &
   Tensor<ScalarT>::operator()(const Index i, const Index j)
@@ -453,9 +496,10 @@ namespace LCM {
     return e[i][j];
   }
 
-  //
-  // Tensor copy assignment
-  //
+  ///
+  /// Copy assignment
+  /// \param A the values of its componets are copied to this tensor
+  ///
   template<typename ScalarT>
   inline Tensor<ScalarT> &
   Tensor<ScalarT>::operator=(Tensor<ScalarT> const & A)
@@ -476,9 +520,10 @@ namespace LCM {
     return *this;
   }
 
-  //
-  // Tensor increment
-  //
+  ///
+  /// Tensor increment
+  /// \param A added to current tensor
+  ///
   template<typename ScalarT>
   inline Tensor<ScalarT> &
   Tensor<ScalarT>::operator+=(Tensor<ScalarT> const & A)
@@ -498,9 +543,10 @@ namespace LCM {
     return *this;
   }
 
-  //
-  // Tensor decrement
-  //
+  ///
+  /// Tensor decrement
+  /// \param A substracted from current tensor
+  ///
   template<typename ScalarT>
   inline Tensor<ScalarT> &
   Tensor<ScalarT>::operator-=(Tensor<ScalarT> const & A)
@@ -520,10 +566,32 @@ namespace LCM {
     return *this;
   }
 
+  ///
+  /// Fill with zeros
+  ///
+  template<typename ScalarT>
+  inline void
+  Tensor<ScalarT>::clear()
+  {
+    e[0][0] = 0.0;
+    e[0][1] = 0.0;
+    e[0][2] = 0.0;
 
-  //
-  // Tensor addition
-  //
+    e[1][0] = 0.0;
+    e[1][1] = 0.0;
+    e[1][2] = 0.0;
+
+    e[2][0] = 0.0;
+    e[2][1] = 0.0;
+    e[2][2] = 0.0;
+
+    return;
+  }
+
+  ///
+  /// Tensor addition
+  /// \return \f$ A + B \f$
+  ///
   template<typename ScalarT>
   inline Tensor<ScalarT>
   operator+(Tensor<ScalarT> const & A, Tensor<ScalarT> const & B)
@@ -545,9 +613,10 @@ namespace LCM {
     return S;
   }
 
-  //
-  // Tensor substraction
-  //
+  ///
+  /// Tensor substraction
+  /// \return \f$ A - B \f$
+  ///
   template<typename ScalarT>
   inline Tensor<ScalarT>
   operator-(Tensor<ScalarT> const & A, Tensor<ScalarT> const & B)
@@ -569,19 +638,25 @@ namespace LCM {
     return S;
   }
 
-  //
-  // Tensor dot product C = A B
-  //
+  ///
+  /// Tensor minus
+  /// \return \f$ -A \f$
+  ///
   template<typename ScalarT>
   inline Tensor<ScalarT>
-  operator*(Tensor<ScalarT> const & A, Tensor<ScalarT> const & B)
+  operator-(Tensor<ScalarT> const & A)
   {
-    return dot(A, B);
+    return Tensor<ScalarT>(
+        -A(0,0),-A(0,1),-A(0,2),
+        -A(1,0),-A(1,1),-A(1,2),
+        -A(2,0),-A(2,1),-A(2,2));
   }
 
-  //
-  // Tensor equality
-  //
+  ///
+  /// Tensor equality
+  /// Tested by components
+  /// \return \f$ A \equiv B \f$
+  ///
   template<typename ScalarT>
   inline bool
   operator==(Tensor<ScalarT> const & A, Tensor<ScalarT> const & B)
@@ -592,9 +667,11 @@ namespace LCM {
       A(2,0)==B(2,0) && A(2,1)==B(2,1) && A(2,2)==B(2,2);
   }
 
-  //
-  // Tensor inequality
-  //
+  ///
+  /// Tensor inequality
+  /// Tested by components
+  /// \return \f$ A \neq B \f$
+  ///
   template<typename ScalarT>
   inline bool
   operator!=(Tensor<ScalarT> const & A, Tensor<ScalarT> const & B)
@@ -602,9 +679,12 @@ namespace LCM {
     return !(A==B);
   }
 
-  //
-  // Scalar tensor product
-  //
+  ///
+  /// Scalar tensor product
+  /// \param s scalar
+  /// \param A tensor
+  /// \return \f$ s A \f$
+  ///
   template<typename ScalarT>
   inline Tensor<ScalarT>
   operator*(const ScalarT s, Tensor<ScalarT> const & A)
@@ -615,9 +695,12 @@ namespace LCM {
         s*A(2,0), s*A(2,1), s*A(2,2));
   }
 
-  //
-  // Tensor scalar product
-  //
+  ///
+  /// Tensor scalar product
+  /// \param A tensor
+  /// \param s scalar
+  /// \return \f$ s A \f$
+  ///
   template<typename ScalarT>
   inline Tensor<ScalarT>
   operator*(Tensor<ScalarT> const & A, const ScalarT s)
@@ -625,9 +708,12 @@ namespace LCM {
     return s * A;
   }
 
-  //
-  // Tensor vector product v = A u
-  //
+  ///
+  /// Tensor vector product v = A u
+  /// \param A tensor
+  /// \param u vector
+  /// \return \f$ A u \f$
+  ///
   template<typename ScalarT>
   inline Vector<ScalarT>
   operator*(Tensor<ScalarT> const & A, Vector<ScalarT> const & u)
@@ -635,9 +721,12 @@ namespace LCM {
     return dot(A,u);
   }
 
-  //
-  // Vector tensor product v = u A
-  //
+  ///
+  /// Vector tensor product v = u A
+  /// \param A tensor
+  /// \param u vector
+  /// \return \f$ u A = A^T u \f$
+  ///
   template<typename ScalarT>
   inline Vector<ScalarT>
   operator*(Vector<ScalarT> const & u, Tensor<ScalarT> const & A)
@@ -645,9 +734,12 @@ namespace LCM {
     return dot(u,A);
   }
 
-  //
-  // Tensor vector product v = A u
-  //
+  ///
+  /// Tensor vector product v = A u
+  /// \param A tensor
+  /// \param u vector
+  /// \return \f$ A u \f$
+  ///
   template<typename ScalarT>
   inline Vector<ScalarT>
   dot(Tensor<ScalarT> const & A, Vector<ScalarT> const & u)
@@ -661,9 +753,12 @@ namespace LCM {
     return v;
   }
 
-  //
-  // Vector tensor product v = u A
-  //
+  ///
+  /// Vector tensor product v = u A
+  /// \param A tensor
+  /// \param u vector
+  /// \return \f$ u A = A^T u \f$
+  ///
   template<typename ScalarT>
   inline Vector<ScalarT>
   dot(Vector<ScalarT> const & u, Tensor<ScalarT> const & A)
@@ -677,9 +772,23 @@ namespace LCM {
     return v;
   }
 
-  //
-  // Tensor tensor dot product C = A B
-  //
+  ///
+  /// Tensor dot product C = A B
+  /// \return \f$ A \cdot B \f$
+  ///
+  template<typename ScalarT>
+  inline Tensor<ScalarT>
+  operator*(Tensor<ScalarT> const & A, Tensor<ScalarT> const & B)
+  {
+    return dot(A, B);
+  }
+
+  ///
+  /// Tensor tensor product C = A B
+  /// \param A tensor
+  /// \param B tensor
+  /// \return a tensor \f$ A \cdot B \f$
+  ///
   template<typename ScalarT>
   inline Tensor<ScalarT>
   dot(Tensor<ScalarT> const & A, Tensor<ScalarT> const & B)
@@ -701,9 +810,12 @@ namespace LCM {
     return C;
   }
 
-  //
-  // Tensor tensor double dot product (contraction)
-  //
+  ///
+  /// Tensor tensor double dot product (contraction)
+  /// \param A tensor
+  /// \param B tensor
+  /// \return a scalar \f$ A : B \f$
+  ///
   template<typename ScalarT>
   inline ScalarT
   dotdot(Tensor<ScalarT> const & A, Tensor<ScalarT> const & B)
@@ -717,9 +829,10 @@ namespace LCM {
     return s;
   }
 
-  //
-  // Tensor Frobenius norm
-  //
+  ///
+  /// Tensor Frobenius norm
+  /// \return \f$ \sqrt{A:A} \f$
+  ///
   template<typename ScalarT>
   inline ScalarT
   norm(Tensor<ScalarT> const & A)
@@ -733,9 +846,10 @@ namespace LCM {
     return sqrt(s);
   }
 
-  //
-  // Tensor 1-norm
-  //
+  ///
+  /// Tensor 1-norm
+  /// \return \f$ \max_{j \in {0,1,2}}\Sigma_{i=0}^2 |A_{ij}| \f$
+  ///
   template<typename ScalarT>
   inline ScalarT
   norm_1(Tensor<ScalarT> const & A)
@@ -747,9 +861,10 @@ namespace LCM {
     return std::max(std::max(s0,s1),s2);
   }
 
-  //
-  // Tensor infinity-norm
-  //
+  ///
+  /// Tensor infinity-norm
+  /// \return \f$ \max_{i \in {0,1,2}}\Sigma_{j=0}^2 |A_{ij}| \f$
+  ///
   template<typename ScalarT>
   inline ScalarT
   norm_infinity(Tensor<ScalarT> const & A)
@@ -761,9 +876,12 @@ namespace LCM {
     return std::max(std::max(s0,s1),s2);
   }
 
-  //
-  // Dyad
-  //
+  ///
+  /// Dyad
+  /// \param u vector
+  /// \param v vector
+  /// \return \f$ u \otimes v \f$
+  ///
   template<typename ScalarT>
   inline Tensor<ScalarT>
   dyad(Vector<ScalarT> const & u, Vector<ScalarT> const & v)
@@ -785,9 +903,12 @@ namespace LCM {
     return A;
   }
 
-  //
-  // Dyad, just for Jay
-  //
+  ///
+  /// Bun operator, just for Jay
+  /// \param u vector
+  /// \param v vector
+  /// \return \f$ u \otimes v \f$
+  ///
   template<typename ScalarT>
   inline Tensor<ScalarT>
   bun(Vector<ScalarT> const & u, Vector<ScalarT> const & v)
@@ -795,9 +916,12 @@ namespace LCM {
     return dyad(u,v);
   }
 
-  //
-  // Dyad
-  //
+  ///
+  /// Tensor product
+  /// \param u vector
+  /// \param v vector
+  /// \return \f$ u \otimes v \f$
+  ///
   template<typename ScalarT>
   inline Tensor<ScalarT>
   tensor(Vector<ScalarT> const & u, Vector<ScalarT> const & v)
@@ -805,9 +929,10 @@ namespace LCM {
     return dyad(u,v);
   }
 
-  //
-  // Zero tensor
-  //
+  ///
+  /// Zero 2nd-order tensor
+  /// All components are zero
+  ///
   template<typename ScalarT>
   inline const Tensor<ScalarT>
   zero()
@@ -815,9 +940,9 @@ namespace LCM {
     return Tensor<ScalarT>(0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0);
   }
 
-  //
-  // Identity tensor
-  //
+  ///
+  /// 2nd-order identity tensor
+  ///
   template<typename ScalarT>
   inline const Tensor<ScalarT>
   identity()
@@ -825,9 +950,9 @@ namespace LCM {
     return Tensor<ScalarT>(1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0);
   }
 
-  //
-  // Identity tensor
-  //
+  ///
+  /// 2nd-order identity tensor, à la Matlab
+  ///
   template<typename ScalarT>
   inline const Tensor<ScalarT>
   eye()
@@ -835,9 +960,9 @@ namespace LCM {
     return identity<ScalarT>();
   }
 
-  //
-  // Transpose
-  //
+  ///
+  /// 2nd-order tensor transpose
+  ///
   template<typename ScalarT>
   inline Tensor<ScalarT>
   transpose(Tensor<ScalarT> const & A)
@@ -848,9 +973,10 @@ namespace LCM {
         A(0,2),A(1,2),A(2,2));
   }
 
-  //
-  // Symmetric part of tensor
-  //
+  ///
+  /// Symmetric part of 2nd-order tensor
+  /// \return \f$ \frac{1}{2}(A + A^T) \f$
+  ///
   template<typename ScalarT>
   inline Tensor<ScalarT>
   symm(Tensor<ScalarT> const & A)
@@ -869,9 +995,10 @@ namespace LCM {
         s02, s12, s22);
   }
 
-  //
-  // Skew symmetric part of tensor
-  //
+  ///
+  /// Skew symmetric part of 2nd-order tensor
+  /// \return \f$ \frac{1}{2}(A - A^T) \f$
+  ///
   template<typename ScalarT>
   inline Tensor<ScalarT>
   skew(Tensor<ScalarT> const & A)
@@ -886,9 +1013,11 @@ namespace LCM {
         -s02, -s12,  0.0);
   }
 
-  //
-  // Skew symmetric tensor from vector
-  //
+  ///
+  /// Skew symmetric 2nd-order tensor from vector
+  /// \param u vector
+  /// \return \f$ {{0, -u_2, u_1}, {u_2, 0, -u_0}, {-u_1, u+0, 0}} \f$
+  ///
   template<typename ScalarT>
   inline Tensor<ScalarT>
   skew(Vector<ScalarT> const & u)
@@ -899,15 +1028,17 @@ namespace LCM {
        -u(1),  u(0),   0.0);
   }
 
-  //
-  // Tensor inverse
-  //
+  ///
+  /// 2nd-order tensor inverse
+  /// \param A nonsingular tensor
+  /// \return \f$ A^{-1} \f$
+  ///
   template<typename ScalarT>
   inline Tensor<ScalarT>
   inverse(Tensor<ScalarT> const & A)
   {
     const ScalarT d = det(A);
-    //TEST_FOR_EXCEPT_MSG(d == 0.0, "Attempted to invert a singular Tensor.");
+    assert(d != 0.0);
     Tensor<ScalarT> B(
         -A(1,2)*A(2,1) + A(1,1)*A(2,2),
          A(0,2)*A(2,1) - A(0,1)*A(2,2),
@@ -922,9 +1053,11 @@ namespace LCM {
     return ScalarT(1.0 / d) * B;
   }
 
-  //
-  // Determinant
-  //
+  ///
+  /// Determinant
+  /// \param A tensor
+  /// \return \f$ \det A \f$
+  ///
   template<typename ScalarT>
   inline ScalarT
   det(Tensor<ScalarT> const & A)
@@ -935,9 +1068,11 @@ namespace LCM {
          A(0,1)*A(1,0)*A(2,2) + A(0,0)*A(1,1)*A(2,2);
   }
 
-  //
-  // Trace
-  //
+  ///
+  /// Trace
+  /// \param A tensor
+  /// \return \f$ A:I \f$
+  ///
   template<typename ScalarT>
   inline ScalarT
   trace(Tensor<ScalarT> const & A)
@@ -945,9 +1080,11 @@ namespace LCM {
     return A(0,0) + A(1,1) + A(2,2);
   }
 
-  //
-  // First invariant, trace
-  //
+  ///
+  /// First invariant, trace
+  /// \param A tensor
+  /// \return \f$ I_A = A:I \f$
+  ///
   template<typename ScalarT>
   inline ScalarT
   I1(Tensor<ScalarT> const & A)
@@ -955,9 +1092,11 @@ namespace LCM {
     return trace(A);
   }
 
-  //
-  // Second invariant
-  //
+  ///
+  /// Second invariant
+  /// \param A tensor
+  /// \return \f$ II_A = \frac{1}{2}((I_A)^2-I_{A^2}) \f$
+  ///
   template<typename ScalarT>
   inline ScalarT
   I2(Tensor<ScalarT> const & A)
@@ -968,9 +1107,11 @@ namespace LCM {
         A(0,1)*A(1,0) - A(0,2)*A(2,0) - A(1,2)*A(2,1);
   }
 
-  //
-  // Third invariant
-  //
+  ///
+  /// Third invariant
+  /// \param A tensor
+  /// \return \f$ III_A = \det A \f$
+  ///
   template<typename ScalarT>
   inline ScalarT
   I3(Tensor<ScalarT> const & A)
@@ -978,70 +1119,18 @@ namespace LCM {
     return det(A);
   }
 
-  //
-  // Exponential map by Taylor series
-  //
-  template<typename ScalarT>
-  inline Tensor<ScalarT>
-  exp(Tensor<ScalarT> const & A)
-  {
-    const Index maxNumIter = 128;
-    const ScalarT tol = std::numeric_limits<ScalarT>::epsilon();
-
-    Index k = 0;
-    Tensor<ScalarT> term = identity<ScalarT>();
-
-    // Relative error taken wrt to the first term, which is I and norm = 1
-    ScalarT relError = 1.0;
-
-    Tensor<ScalarT> B = term;
-
-    while (relError > tol && k < maxNumIter) {
-      term = ScalarT(1.0 / (k + 1.0)) * term * A;
-      B = B + term;
-      relError = norm_1(term);
-      ++k;
-    }
-
-    return B;
-  }
-
-  //
-  // Logarithmic map by Taylor series
-  //
-  template<typename ScalarT>
-  inline Tensor<ScalarT>
-  log(Tensor<ScalarT> const & A)
-  {
-    const Index maxNumIter = 128;
-    const ScalarT tol = std::numeric_limits<ScalarT>::epsilon();
-
-    Index k = 1;
-    const ScalarT normA = norm_1(A);
-    const Tensor<ScalarT> Am1 = A - identity<ScalarT>();
-    Tensor<ScalarT> term = Am1;
-    ScalarT normTerm = norm_1(term);
-    ScalarT relError = normTerm / normA;
-
-    Tensor<ScalarT> B = term;
-
-    while (relError > tol && k < maxNumIter) {
-      term = - (k / (k + 1.0)) * term * Am1;
-      B = B + term;
-      normTerm = norm_1(term);
-      relError = normTerm / normA;
-      ++k;
-    }
-
-    return B;
-  }
-
-  //
-  // 3rd-order tensor indexing
-  //
+  ///
+  /// Indexing for constant 3rd order tensor
+  /// \param i index
+  /// \param j index
+  /// \param k index
+  ///
   template<typename ScalarT>
   inline const ScalarT &
-  Tensor3<ScalarT>::operator()(const Index i, const Index j, const Index k) const
+  Tensor3<ScalarT>::operator()(
+      const Index i,
+      const Index j,
+      const Index k) const
   {
     assert(i < MaxDim);
     assert(j < MaxDim);
@@ -1049,9 +1138,12 @@ namespace LCM {
     return e[i][j][k];
   }
 
-  //
-  // 3rd-order tensor indexing
-  //
+  ///
+  /// 3rd-order tensor indexing
+  /// \param i index
+  /// \param j index
+  /// \param k index
+  ///
   template<typename ScalarT>
   inline ScalarT &
   Tensor3<ScalarT>::operator()(const Index i, const Index j, const Index k)
@@ -1062,9 +1154,13 @@ namespace LCM {
     return e[i][j][k];
   }
 
-  //
-  // 4th-order tensor indexing
-  //
+  ///
+  /// Indexing for constant 4th order tensor
+  /// \param i index
+  /// \param j index
+  /// \param k index
+  /// \param l index
+  ///
   template<typename ScalarT>
   inline const ScalarT &
   Tensor4<ScalarT>::operator()(
@@ -1077,9 +1173,13 @@ namespace LCM {
     return e[i][j][k][l];
   }
 
-  //
-  // 4th-order tensor indexing
-  //
+  ///
+  /// 4th-order tensor indexing
+  /// \param i index
+  /// \param j index
+  /// \param k index
+  /// \param l index
+  ///
   template<typename ScalarT>
   inline ScalarT &
   Tensor4<ScalarT>::operator()(
