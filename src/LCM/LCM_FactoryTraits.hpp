@@ -58,8 +58,11 @@
 #include "LCM/evaluators/SaturationModulus.hpp"
 #include "LCM/evaluators/SaturationExponent.hpp"
 #include "LCM/evaluators/Localization.hpp"
+#include "LCM/evaluators/DamageSource.hpp"
+#include "LCM/evaluators/ShearModulus.hpp"
+#include "LCM/evaluators/BulkModulus.hpp"
 
-#include "boost/mpl/vector/vector40.hpp"
+#include "boost/mpl/vector/vector50.hpp"
 #include "boost/mpl/placeholders.hpp"
 using namespace boost::mpl::placeholders;
 
@@ -113,9 +116,12 @@ struct FactoryTraits {
   static const int id_sat_mod                   = 36;
   static const int id_sat_exp                   = 37;
   static const int id_localization              = 38;
+  static const int id_damage_source             = 39;
+  static const int id_bulk_modulus              = 40;
+  static const int id_shear_modulus             = 41;
 
 
-  typedef boost::mpl::vector39< 
+  typedef boost::mpl::vector42< 
     PHAL::Dirichlet<_,Traits>,                //  0
     PHAL::GatherSolution<_,Traits>,           //  1
     PHAL::GatherCoordinateVector<_,Traits>,   //  2
@@ -154,7 +160,10 @@ struct FactoryTraits {
     LCM::DamageLS<_,Traits>,                  // 35
     LCM::SaturationModulus<_,Traits>,         // 36
     LCM::SaturationExponent<_,Traits>,        // 37
-    LCM::Localization<_,Traits>               // 38
+    LCM::Localization<_,Traits>,              // 38
+    LCM::DamageSource<_,Traits>,              // 39
+    LCM::BulkModulus<_,Traits>,               // 40
+    LCM::ShearModulus<_,Traits>               // 41
     > EvaluatorTypes;
 };
 }

@@ -248,42 +248,42 @@ Albany::GradientDamageProblem::constructEvaluators(
   }
 
 
-  { // Elastic Modulus
+  { // Bulk Modulus
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    int type = FactoryTraits<AlbanyTraits>::id_elastic_modulus;
+    int type = FactoryTraits<AlbanyTraits>::id_bulk_modulus;
     p->set<int>("Type", type);
 
-    p->set<string>("QP Variable Name", "Elastic Modulus");
+    p->set<string>("QP Variable Name", "Bulk Modulus");
     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Elastic Modulus");
+    Teuchos::ParameterList& paramList = params->sublist("Bulk Modulus");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-    evaluators_to_build["Elastic Modulus"] = p;
+    evaluators_to_build["Bulk Modulus"] = p;
   }
 
-  { // Poissons Ratio 
+  { // Shear Modulus 
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    int type = FactoryTraits<AlbanyTraits>::id_poissons_ratio;
+    int type = FactoryTraits<AlbanyTraits>::id_shear_modulus;
     p->set<int>("Type", type);
 
-    p->set<string>("QP Variable Name", "Poissons Ratio");
+    p->set<string>("QP Variable Name", "Shear Modulus");
     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Poissons Ratio");
+    Teuchos::ParameterList& paramList = params->sublist("Shear Modulus");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-    evaluators_to_build["Poissons Ratio"] = p;
+    evaluators_to_build["Shear Modulus"] = p;
   }
 
   { // DOFVec: Interpolate nodal Displacement values to quad points
@@ -452,10 +452,10 @@ Albany::GradientDamageProblem::constructEvaluators(
     p->set<string>("DefGrad Name", "Deformation Gradient");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
 
-    p->set<string>("Elastic Modulus Name", "Elastic Modulus");
+    p->set<string>("Bulk Modulus Name", "Bulk Modulus");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
 
-    p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // qp_scalar also
+    p->set<string>("Shear Modulus Name", "Shear Modulus");  // qp_scalar also
     p->set<string>("Hardening Modulus Name", "Hardening Modulus"); // qp_scalar also
     p->set<string>("Yield Strength Name", "Yield Strength"); // qp_scalar also
     p->set<string>("Saturation Modulus Name", "Saturation Modulus"); // qp_scalar also
@@ -465,6 +465,7 @@ Albany::GradientDamageProblem::constructEvaluators(
 
     //Output
     p->set<string>("Stress Name", "Stress"); //qp_tensor also
+    p->set<string>("DP Name", "DP"); // qp_scalar also
  
     //Declare what state data will need to be saved (name, layout, init_type)
     stateMgr.registerStateVariable("stress",qp_tensor,"zero");
@@ -578,7 +579,8 @@ Albany::GradientDamageProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
 
     evaluators_to_build["DOF Damage_dot"] = p;
-}
+  }
+  
   { // DOF: Interpolate nodal Damage gradients to quad points
     RCP<ParameterList> p = rcp(new ParameterList("DOFInterpolation Damage Grad"));
 
@@ -599,22 +601,25 @@ Albany::GradientDamageProblem::constructEvaluators(
     evaluators_to_build["DOF Grad Damage"] = p;
   }
 
-  if (haveSource) { // Source
-    RCP<ParameterList> p = rcp(new ParameterList);
+  { // Damage Source
+    RCP<ParameterList> p = rcp(new ParameterList("Damage Source"));
 
-    int type = FactoryTraits<AlbanyTraits>::id_source;
+    int type = FactoryTraits<AlbanyTraits>::id_damage_source;
     p->set<int>("Type", type);
 
-    p->set<string>("Source Name", "Source");
-    p->set<string>("Variable Name", "Damage");
+    //Input
+    p->set<string>("Bulk Modulus Name", "Bulk Modulus");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    p->set<string>("Damage Name", "Damage");
+    p->set<string>("DP Name", "DP");
+    p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient");
 
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Source Functions");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+    //Output
+    p->set<string>("Damage Source Name", "Damage Source");
 
-    evaluators_to_build["Source"] = p;
+    evaluators_to_build["Damage Source"] = p;
   }
+
   { // Damage Resid
     RCP<ParameterList> p = rcp(new ParameterList("Damage Resid"));
 
@@ -628,8 +633,7 @@ Albany::GradientDamageProblem::constructEvaluators(
 
     p->set<string>("QP Time Derivative Variable Name", "Damage_dot");
 
-    p->set<bool>("Have Source", haveSource);
-    p->set<string>("Source Name", "Source");
+    p->set<string>("Damage Source Name", "Damage Source");  //qp_scalar
 
     p->set<string>("Damage Length Scale Name", "Damage Length Scale");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
@@ -718,8 +722,8 @@ Albany::GradientDamageProblem::getValidProblemParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidGradientDamageProblemParams");
 
-  validPL->sublist("Elastic Modulus", false, "");
-  validPL->sublist("Poissons Ratio", false, "");
+  validPL->sublist("Bulk Modulus", false, "");
+  validPL->sublist("Shear Modulus", false, "");
   validPL->sublist("Damage Length Scale", false, "");
   validPL->sublist("Hardening Modulus", false, "");
   validPL->sublist("Yield Strength", false, "");

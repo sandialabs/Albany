@@ -30,9 +30,9 @@ J2Damage(const Teuchos::ParameterList& p) :
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
   J                (p.get<std::string>                   ("DetDefGrad Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  elasticModulus   (p.get<std::string>                   ("Elastic Modulus Name"),
+  bulkModulus      (p.get<std::string>                   ("Bulk Modulus Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  poissonsRatio    (p.get<std::string>                   ("Poissons Ratio Name"),
+  shearModulus     (p.get<std::string>                   ("Shear Modulus Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   yieldStrength    (p.get<std::string>                   ("Yield Strength Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
@@ -45,7 +45,9 @@ J2Damage(const Teuchos::ParameterList& p) :
   damage           (p.get<std::string>                   ("Damage Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   stress           (p.get<std::string>                   ("Stress Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") )
+	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+  dp               (p.get<std::string>                   ("DP Name"),
+	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") )
 {
   // Pull out numQPs and numDims from a Layout
   Teuchos::RCP<PHX::DataLayout> tensor_dl =
@@ -59,17 +61,16 @@ J2Damage(const Teuchos::ParameterList& p) :
 
   this->addDependentField(defgrad);
   this->addDependentField(J);
-  this->addDependentField(elasticModulus);
-  this->addDependentField(poissonsRatio);
+  this->addDependentField(bulkModulus);
+  this->addDependentField(shearModulus);
   this->addDependentField(yieldStrength);
   this->addDependentField(hardeningModulus);
   this->addDependentField(satMod);  
   this->addDependentField(satExp);
   this->addDependentField(damage);
-  // PoissonRatio not used in 1D stress calc
-  //  if (numDims>1) this->addDependentField(poissonsRatio);
 
   this->addEvaluatedField(stress);
+  this->addEvaluatedField(dp);
 
   // scratch space FCs
   Fp.resize(worksetSize, numQPs, numDims, numDims);
@@ -89,15 +90,16 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(stress,fm);
+  this->utils.setFieldData(dp,fm);
   this->utils.setFieldData(defgrad,fm);
   this->utils.setFieldData(J,fm);
-  this->utils.setFieldData(elasticModulus,fm);
+  this->utils.setFieldData(bulkModulus,fm);
+  this->utils.setFieldData(shearModulus,fm);
   this->utils.setFieldData(hardeningModulus,fm);
   this->utils.setFieldData(yieldStrength,fm);
   this->utils.setFieldData(satMod,fm);
   this->utils.setFieldData(satExp,fm);
   this->utils.setFieldData(damage,fm);
-  if (numDims>1) this->utils.setFieldData(poissonsRatio,fm);
 }
 
 //**********************************************************************
@@ -179,8 +181,8 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t qp=0; qp < numQPs; ++qp) 
     {
       // local parameters
-      kappa  = elasticModulus(cell,qp) / ( 3. * ( 1. - 2. * poissonsRatio(cell,qp) ) );
-      mu     = elasticModulus(cell,qp) / ( 2. * ( 1. + poissonsRatio(cell,qp) ) );
+      kappa  = bulkModulus(cell,qp);
+      mu     = shearModulus(cell,qp);
       K      = hardeningModulus(cell,qp);
       Y      = yieldStrength(cell,qp);
       siginf = satMod(cell,qp);
@@ -258,6 +260,9 @@ evaluateFields(typename Traits::EvalData workset)
 			      "\nalpha = " << alpha << std::endl);
 
 	}
+	
+	// set dp for this QP
+	dp(cell,qp) = dgam;
 
 	// plastic direction
 	N = ScalarT(1./smag) * s;

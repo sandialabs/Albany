@@ -15,54 +15,64 @@
 \********************************************************************/
 
 
-#ifndef DAMAGERESID_HPP
-#define DAMAGERESID_HPP
+#ifndef BULK_MOUDULS_HPP
+#define BULK_MOUDULS_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
-/** \brief Damage Equation Evaluator
+#include "Teuchos_ParameterList.hpp"
+#include "Epetra_Vector.h"
+#include "Sacado_ParameterAccessor.hpp"
+#include "Stokhos_KL_ExponentialRandomField.hpp"
+#include "Teuchos_Array.hpp"
 
-    This evaluator computes the residual for the damage equation.
-
-*/
+/** 
+ * \brief Evaluates bulk modulus, either as a constant or a truncated
+ * KL expansion.
+ */
 namespace LCM {
 
 template<typename EvalT, typename Traits>
-class DamageResid : public PHX::EvaluatorWithBaseImpl<Traits>,
-		    public PHX::EvaluatorDerived<EvalT, Traits>  {
-
+class BulkModulus : 
+  public PHX::EvaluatorWithBaseImpl<Traits>,
+  public PHX::EvaluatorDerived<EvalT, Traits>,
+  public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+  
 public:
-
-  DamageResid(const Teuchos::ParameterList& p);
-
-  void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
-
-  void evaluateFields(typename Traits::EvalData d);
-
-private:
-
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  // Input:
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
-  PHX::MDField<ScalarT,Cell,QuadPoint> damage;
-  PHX::MDField<ScalarT,Cell,QuadPoint> damage_dot;
-  PHX::MDField<ScalarT,Cell,QuadPoint> damageLS;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> damage_grad;
-  PHX::MDField<ScalarT,Cell,QuadPoint> source;
+  BulkModulus(Teuchos::ParameterList& p);
+  
+  void postRegistrationSetup(typename Traits::SetupData d,
+			     PHX::FieldManager<Traits>& vm);
+  
+  void evaluateFields(typename Traits::EvalData d);
+  
+  ScalarT& getValue(const std::string &n);
 
-  // Output:
-  PHX::MDField<ScalarT,Cell,Node> dResidual;
+private:
 
-  bool enableTransient;
-  unsigned int numQPs, numDims;
-  Intrepid::FieldContainer<ScalarT> flux;
+  unsigned int numQPs;
+  unsigned int numDims;
+
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+  PHX::MDField<ScalarT,Cell,QuadPoint> bulkModulus;
+
+  //! Is the bulk modulus constant, or random field
+  bool is_constant;
+
+  //! Constant value
+  ScalarT constant_value;
+
+  //! Exponential random field
+  Teuchos::RCP< Stokhos::KL::ExponentialRandomField<MeshScalarT> > exp_rf_kl;
+
+  //! Values of the random variables
+  Teuchos::Array<ScalarT> rv;
 };
 }
 

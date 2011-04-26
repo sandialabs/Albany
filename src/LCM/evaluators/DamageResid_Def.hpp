@@ -38,23 +38,22 @@ DamageResid(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
   damage_grad (p.get<std::string>                   ("Gradient QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  source      (p.get<std::string>                   ("Source Name"),
+  source      (p.get<std::string>                   ("Damage Source Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   dResidual   (p.get<std::string>                   ("Residual Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
-  haveSource  (p.get<bool>("Have Source"))
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") )
 {
   if (p.isType<bool>("Disable Transient"))
     enableTransient = !p.get<bool>("Disable Transient");
   else enableTransient = true;
 
   this->addDependentField(wBF);
- // this->addDependentField(Temperature);
+  this->addDependentField(damage);
   this->addDependentField(damageLS);
   if (enableTransient) this->addDependentField(damage_dot);
   this->addDependentField(damage_grad);
   this->addDependentField(wGradBF);
-  if (haveSource) this->addDependentField(source);
+  this->addDependentField(source);
 
   this->addEvaluatedField(dResidual);
 
@@ -82,7 +81,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(damageLS,fm);
   this->utils.setFieldData(damage_grad,fm);
   this->utils.setFieldData(wGradBF,fm);
-  if (haveSource)  this->utils.setFieldData(source,fm);
+  this->utils.setFieldData(source,fm);
   if (enableTransient) this->utils.setFieldData(damage_dot,fm);
 
   this->utils.setFieldData(dResidual,fm);
@@ -99,11 +98,9 @@ evaluateFields(typename Traits::EvalData workset)
 
   FST::integrate<ScalarT>(dResidual, flux, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
 
-  if (haveSource) {
-    for (int i=0; i < source.size(); i++) source[i] *= -1.0;
-    FST::integrate<ScalarT>(dResidual, source, wBF, Intrepid::COMP_CPP, true); // "true" sums into
-  }
-
+  for (int i=0; i < source.size(); i++) source[i] *= -1.0;
+  FST::integrate<ScalarT>(dResidual, source, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+  
   if (workset.transientTerms && enableTransient) 
     FST::integrate<ScalarT>(dResidual, damage_dot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
 }

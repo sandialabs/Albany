@@ -15,54 +15,54 @@
 \********************************************************************/
 
 
-#ifndef DAMAGERESID_HPP
-#define DAMAGERESID_HPP
+#ifndef DAMAGE_SOURCE_HPP
+#define DAMAGE_SOURCE_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
-/** \brief Damage Equation Evaluator
+#include "Teuchos_ParameterList.hpp"
+#include "Epetra_Vector.h"
+#include "Sacado_ParameterAccessor.hpp"
+#include "Stokhos_KL_ExponentialRandomField.hpp"
+#include "Teuchos_Array.hpp"
 
-    This evaluator computes the residual for the damage equation.
-
-*/
+/** 
+ * \brief Damage Source
+ */
 namespace LCM {
 
 template<typename EvalT, typename Traits>
-class DamageResid : public PHX::EvaluatorWithBaseImpl<Traits>,
-		    public PHX::EvaluatorDerived<EvalT, Traits>  {
-
+class DamageSource : 
+  public PHX::EvaluatorWithBaseImpl<Traits>,
+  public PHX::EvaluatorDerived<EvalT, Traits> {
+  
 public:
-
-  DamageResid(const Teuchos::ParameterList& p);
-
+  DamageSource(Teuchos::ParameterList& p);
+  
   void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
-
+			     PHX::FieldManager<Traits>& vm);
+  
   void evaluateFields(typename Traits::EvalData d);
-
+  
 private:
 
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
+  PHX::MDField<ScalarT,Cell,QuadPoint> bulkModulus;
+  PHX::MDField<ScalarT,Cell,QuadPoint> dp;
+  PHX::MDField<ScalarT,Cell,QuadPoint> J;
   PHX::MDField<ScalarT,Cell,QuadPoint> damage;
-  PHX::MDField<ScalarT,Cell,QuadPoint> damage_dot;
-  PHX::MDField<ScalarT,Cell,QuadPoint> damageLS;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> damage_grad;
-  PHX::MDField<ScalarT,Cell,QuadPoint> source;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> dResidual;
+  PHX::MDField<ScalarT,Cell,QuadPoint> source;
 
-  bool enableTransient;
-  unsigned int numQPs, numDims;
-  Intrepid::FieldContainer<ScalarT> flux;
+  unsigned int numQPs;
+  unsigned int numDims;
 };
 }
 

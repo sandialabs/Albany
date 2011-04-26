@@ -53,8 +53,8 @@ private:
   // Input:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defgrad;
   PHX::MDField<ScalarT,Cell,QuadPoint> J;
-  PHX::MDField<ScalarT,Cell,QuadPoint> elasticModulus;
-  PHX::MDField<ScalarT,Cell,QuadPoint> poissonsRatio;
+  PHX::MDField<ScalarT,Cell,QuadPoint> bulkModulus;
+  PHX::MDField<ScalarT,Cell,QuadPoint> shearModulus;
   PHX::MDField<ScalarT,Cell,QuadPoint> yieldStrength;
   PHX::MDField<ScalarT,Cell,QuadPoint> hardeningModulus;
   PHX::MDField<ScalarT,Cell,QuadPoint> satMod;
@@ -63,6 +63,7 @@ private:
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;
+  PHX::MDField<ScalarT,Cell,QuadPoint> dp;
 
   unsigned int numQPs;
   unsigned int numDims;

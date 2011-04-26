@@ -218,7 +218,10 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/DamageLS.cpp 
     ${LCM_DIR}/evaluators/SaturationModulus.cpp		
     ${LCM_DIR}/evaluators/SaturationExponent.cpp
-    ${LCM_DIR}/evaluators/Localization.cpp 	   
+    ${LCM_DIR}/evaluators/Localization.cpp
+    ${LCM_DIR}/evaluators/DamageSource.cpp
+    ${LCM_DIR}/evaluators/BulkModulus.cpp
+    ${LCM_DIR}/evaluators/ShearModulus.cpp
   )
 
   SET(HEADERS ${HEADERS}
@@ -254,18 +257,24 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/YieldStrength_Def.hpp
     ${LCM_DIR}/evaluators/PisdWdF.hpp 
     ${LCM_DIR}/evaluators/PisdWdF_Def.hpp 
-    ${LCM_DIR}/evaluators/DamageResid.cpp 
+    ${LCM_DIR}/evaluators/DamageResid.hpp 
     ${LCM_DIR}/evaluators/DamageResid_Def.hpp 
-    ${LCM_DIR}/evaluators/J2Damage.cpp 
+    ${LCM_DIR}/evaluators/J2Damage.hpp 
     ${LCM_DIR}/evaluators/J2Damage_Def.hpp 
-    ${LCM_DIR}/evaluators/DamageLS.cpp 
+    ${LCM_DIR}/evaluators/DamageLS.hpp 
     ${LCM_DIR}/evaluators/DamageLS_Def.hpp 
-    ${LCM_DIR}/evaluators/SaturationModulus.cpp 
+    ${LCM_DIR}/evaluators/SaturationModulus.hpp 
     ${LCM_DIR}/evaluators/SaturationModulus_Def.hpp 
-    ${LCM_DIR}/evaluators/SaturationExponent.cpp 
+    ${LCM_DIR}/evaluators/SaturationExponent.hpp 
     ${LCM_DIR}/evaluators/SaturationExponent_Def.hpp
-    ${LCM_DIR}/evaluators/Localization.cpp 
-    ${LCM_DIR}/evaluators/Localization_Def.hpp 
+    ${LCM_DIR}/evaluators/Localization.hpp 
+    ${LCM_DIR}/evaluators/Localization_Def.hpp
+    ${LCM_DIR}/evaluators/DamageSource.hpp 
+    ${LCM_DIR}/evaluators/DamageSource_Def.hpp
+    ${LCM_DIR}/evaluators/BulkModulus.hpp 
+    ${LCM_DIR}/evaluators/BulkModulus_Def.hpp
+    ${LCM_DIR}/evaluators/ShearModulus.hpp 
+    ${LCM_DIR}/evaluators/ShearModulus_Def.hpp 
   )
 
   #LCM utils
