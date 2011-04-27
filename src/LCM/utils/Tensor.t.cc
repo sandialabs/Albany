@@ -11,11 +11,11 @@
 
 namespace LCM {
 
-  ///
-  /// Exponential map by Taylor series, radius of convergence is infinity
-  /// \param A tensor
-  /// \return \f$ \exp A \f$
-  ///
+  //
+  // Exponential map by Taylor series, radius of convergence is infinity
+  // \param A tensor
+  // \return \f$ \exp A \f$
+  //
   template<typename ScalarT>
   Tensor<ScalarT>
   exp(Tensor<ScalarT> const & A)
@@ -48,11 +48,11 @@ namespace LCM {
     return B;
   }
 
-  ///
-  /// Logarithmic map by Taylor series, converges for \f$ |A-I| < 1 \f$
-  /// \param A tensor
-  /// \return \f$ \log A \f$
-  ///
+  //
+  // Logarithmic map by Taylor series, converges for \f$ |A-I| < 1 \f$
+  // \param A tensor
+  // \return \f$ \log A \f$
+  //
   template<typename ScalarT>
   Tensor<ScalarT>
   log(Tensor<ScalarT> const & A)
@@ -94,11 +94,11 @@ namespace LCM {
     return B;
   }
 
-  ///
-  /// Logarithmic map of a rotation
-  /// \param R with \f$ R \in SO(3) \f$
-  /// \return \f$ r = \log R \f$ with \f$ r \in so(3) \f$
-  ///
+  //
+  // Logarithmic map of a rotation
+  // \param R with \f$ R \in SO(3) \f$
+  // \return \f$ r = \log R \f$ with \f$ r \in so(3) \f$
+  //
   template<typename ScalarT>
   Tensor<ScalarT>
   log_rotation(Tensor<ScalarT> const & R)
@@ -132,11 +132,11 @@ namespace LCM {
     return r;
   }
 
-  ///
-  /// Left polar decomposition
-  /// \param F tensor (often a deformation-gradient-like tensor)
-  /// \return \f$ VR = F \f$ with \f$ R \in SO(3) \f$ and V SPD
-  ///
+  //
+  // Left polar decomposition
+  // \param F tensor (often a deformation-gradient-like tensor)
+  // \return \f$ VR = F \f$ with \f$ R \in SO(3) \f$ and V SPD
+  //
   template<typename ScalarT>
   std::pair<Tensor<ScalarT>,Tensor<ScalarT> >
   polar_left(Tensor<ScalarT> const & F)
@@ -174,11 +174,11 @@ namespace LCM {
     return std::make_pair(V,R);
   }
 
-  ///
-  /// Right polar decomposition
-  /// \param F tensor (often a deformation-gradient-like tensor)
-  /// \return \f$ RU = F \f$ with \f$ R \in SO(3) \f$ and U SPD
-  ///
+  //
+  // Right polar decomposition
+  // \param F tensor (often a deformation-gradient-like tensor)
+  // \return \f$ RU = F \f$ with \f$ R \in SO(3) \f$ and U SPD
+  //
   template<typename ScalarT>
   std::pair<Tensor<ScalarT>,Tensor<ScalarT> >
   polar_right(Tensor<ScalarT> const & F)
@@ -215,11 +215,11 @@ namespace LCM {
     return std::make_pair(R,U);
   }
 
-  ///
-  /// Left polar decomposition with matrix logarithm for V
-  /// \param F tensor (often a deformation-gradient-like tensor)
-  /// \return \f$ VR = F \f$ with \f$ R \in SO(3) \f$ and V SPD, and log V
-  ///
+  //
+  // Left polar decomposition with matrix logarithm for V
+  // \param F tensor (often a deformation-gradient-like tensor)
+  // \return \f$ VR = F \f$ with \f$ R \in SO(3) \f$ and V SPD, and log V
+  //
   template<typename ScalarT>
   boost::tuple<Tensor<ScalarT>,Tensor<ScalarT>,Tensor<ScalarT> >
   polar_left_logV(Tensor<ScalarT> const & F)
@@ -263,12 +263,12 @@ namespace LCM {
     return boost::make_tuple(V,R,v);
   }
 
-  ///
-  /// Logarithmic map using BCH expansion (3 terms)
-  /// \param v tensor
-  /// \param r tensor
-  /// \return Baker-Campbell-Hausdorff series up to 3 terms
-  ///
+  //
+  // Logarithmic map using BCH expansion (3 terms)
+  // \param v tensor
+  // \param r tensor
+  // \return Baker-Campbell-Hausdorff series up to 3 terms
+  //
   template<typename ScalarT>
   Tensor<ScalarT>
   bch(Tensor<ScalarT> const & v, Tensor<ScalarT> const & r)
@@ -283,11 +283,11 @@ namespace LCM {
             v*r*r + r*v*v - ScalarT(2.0)*r*v*r + r*r*v); // term 3
   }
 
-  ///
-  /// Eigenvalue decomposition for SPD 2nd-order tensor
-  /// \param A tensor
-  /// \return V eigenvectors, D eigenvalues in diagonal Matlab-style
-  ///
+  //
+  // Eigenvalue decomposition for SPD 2nd-order tensor
+  // \param A tensor
+  // \return V eigenvectors, D eigenvalues in diagonal Matlab-style
+  //
   template<typename ScalarT>
   std::pair<Tensor<ScalarT>,Tensor<ScalarT> >
   eig_spd(Tensor<ScalarT> const & A)
@@ -490,12 +490,12 @@ namespace LCM {
     return std::make_pair(V,D);
   }
 
-  ///
-  /// 4th-order tensor 2nd-order tensor double dot product
-  /// \param A 4th-order tensor
-  /// \param B 2nd-order tensor
-  /// \return 2nd-order tensor \f$ A:B \f$ as \f$ C_{ij}=A_{ijkl}B_{kl} \f$
-  ///
+  //
+  // 4th-order tensor 2nd-order tensor double dot product
+  // \param A 4th-order tensor
+  // \param B 2nd-order tensor
+  // \return 2nd-order tensor \f$ A:B \f$ as \f$ C_{ij}=A_{ijkl}B_{kl} \f$
+  //
   template<typename ScalarT>
   Tensor<ScalarT>
   dotdot(Tensor4<ScalarT> const & A, Tensor<ScalarT> const & B)
@@ -516,12 +516,12 @@ namespace LCM {
     return C;
   }
 
-  ///
-  /// 2nd-order tensor 4th-order tensor double dot product
-  /// \param B 2nd-order tensor
-  /// \param A 4th-order tensor
-  /// \return 2nd-order tensor \f$ B:A \f$ as \f$ C_{kl}=A_{ijkl}B_{ij} \f$
-  ///
+  //
+  // 2nd-order tensor 4th-order tensor double dot product
+  // \param B 2nd-order tensor
+  // \param A 4th-order tensor
+  // \return 2nd-order tensor \f$ B:A \f$ as \f$ C_{kl}=A_{ijkl}B_{ij} \f$
+  //
   template<typename ScalarT>
   Tensor<ScalarT>
   dotdot(Tensor<ScalarT> const & B, Tensor4<ScalarT> const & A)
@@ -542,12 +542,12 @@ namespace LCM {
     return C;
   }
 
-  ///
-  /// Vector input
-  /// \param u vector
-  /// \param is input stream
-  /// \return is input stream
-  ///
+  //
+  // Vector input
+  // \param u vector
+  // \param is input stream
+  // \return is input stream
+  //
   template<typename ScalarT>
   std::istream &
   operator>>(std::istream & is, Vector<ScalarT> & u)
@@ -559,12 +559,12 @@ namespace LCM {
     return is;
   }
 
-  ///
-  /// Vector output
-  /// \param u vector
-  /// \param os output stream
-  /// \return os output stream
-  ///
+  //
+  // Vector output
+  // \param u vector
+  // \param os output stream
+  // \return os output stream
+  //
   template<typename ScalarT>
   std::ostream &
   operator<<(std::ostream & os, Vector<ScalarT> const & u)
@@ -579,12 +579,12 @@ namespace LCM {
     return os;
   }
 
-  ///
-  /// Tensor input
-  /// \param A tensor
-  /// \param is input stream
-  /// \return is input stream
-  ///
+  //
+  // Tensor input
+  // \param A tensor
+  // \param is input stream
+  // \return is input stream
+  //
   template<typename ScalarT>
   std::istream &
   operator>>(std::istream & is, Tensor<ScalarT> & A)
@@ -604,12 +604,12 @@ namespace LCM {
     return is;
   }
 
-  ///
-  /// Tensor output
-  /// \param A tensor
-  /// \param os output stream
-  /// \return os output stream
-  ///
+  //
+  // Tensor output
+  // \param A tensor
+  // \param os output stream
+  // \return os output stream
+  //
   template<typename ScalarT>
   std::ostream &
   operator<<(std::ostream & os, Tensor<ScalarT> const & A)
@@ -636,12 +636,12 @@ namespace LCM {
     return os;
   }
 
-  ///
-  /// 2nd-order tensor 2nd-order tensor tensor product
-  /// \param A 2nd-order tensor
-  /// \param B 2nd-order tensor
-  /// \return \f$ A \otimes B \f$
-  ///
+  //
+  // 2nd-order tensor 2nd-order tensor tensor product
+  // \param A 2nd-order tensor
+  // \param B 2nd-order tensor
+  // \return \f$ A \otimes B \f$
+  //
   template<typename ScalarT>
   Tensor4<ScalarT>
   tensor(Tensor<ScalarT> const & A, Tensor<ScalarT> const & B)
@@ -661,14 +661,14 @@ namespace LCM {
     return C;
   }
 
-  ///
-  /// odot operator useful for \f$ \frac{\partial A^{-1}}{\partial A} \f$
-  /// see Holzapfel eqn 6.165
-  /// \param A 2nd-order tensor
-  /// \param B 2nd-order tensor
-  /// \return \f$ A \odot B \f$ which is
-  /// \f$ C_{ijkl} = \frac{1}{2}(A_{ik} B_{jl} + A_{il} B_{jk}) \f$
-  ///
+  //
+  // odot operator useful for \f$ \frac{\partial A^{-1}}{\partial A} \f$
+  // see Holzapfel eqn 6.165
+  // \param A 2nd-order tensor
+  // \param B 2nd-order tensor
+  // \return \f$ A \odot B \f$ which is
+  // \f$ C_{ijkl} = \frac{1}{2}(A_{ik} B_{jl} + A_{il} B_{jk}) \f$
+  //
   template<typename ScalarT>
   Tensor4<ScalarT>
   odot(Tensor<ScalarT> const & A, Tensor<ScalarT> const & B)
@@ -688,9 +688,9 @@ namespace LCM {
     return C;
   }
 
-  ///
-  /// 3rd-order tensor constructor with NaNs
-  ///
+  //
+  // 3rd-order tensor constructor with NaNs
+  //
   template<typename ScalarT>
   Tensor3<ScalarT>::Tensor3()
   {
@@ -705,10 +705,10 @@ namespace LCM {
     return;
   }
 
-  ///
-  /// 3rd-order tensor constructor with a scalar
-  /// \param s all components set to this scalar
-  ///
+  //
+  // 3rd-order tensor constructor with a scalar
+  // \param s all components set to this scalar
+  //
   template<typename ScalarT>
   Tensor3<ScalarT>::Tensor3(const ScalarT s)
   {
@@ -723,11 +723,11 @@ namespace LCM {
     return;
   }
 
-  ///
-  /// Copy constructor
-  /// 3rd-order tensor constructor from 3rd-order tensor
-  /// \param A from which components are copied
-  ///
+  //
+  // Copy constructor
+  // 3rd-order tensor constructor from 3rd-order tensor
+  // \param A from which components are copied
+  //
   template<typename ScalarT>
   Tensor3<ScalarT>::Tensor3(Tensor3<ScalarT> const & A)
   {
@@ -742,18 +742,18 @@ namespace LCM {
     return;
   }
 
-  ///
-  /// 3rd-order tensor simple destructor
-  ///
+  //
+  // 3rd-order tensor simple destructor
+  //
   template<typename ScalarT>
   Tensor3<ScalarT>::~Tensor3()
   {
     return;
   }
 
-  ///
-  /// 3rd-order tensor copy assignment
-  ///
+  //
+  // 3rd-order tensor copy assignment
+  //
   template<typename ScalarT>
   Tensor3<ScalarT> &
   Tensor3<ScalarT>::operator=(Tensor3<ScalarT> const & A)
@@ -771,10 +771,10 @@ namespace LCM {
     return *this;
   }
 
-  ///
-  /// 3rd-order tensor increment
-  /// \param A added to this tensor
-  ///
+  //
+  // 3rd-order tensor increment
+  // \param A added to this tensor
+  //
   template<typename ScalarT>
   Tensor3<ScalarT> &
   Tensor3<ScalarT>::operator+=(Tensor3<ScalarT> const & A)
@@ -790,10 +790,10 @@ namespace LCM {
     return *this;
   }
 
-  ///
-  /// 3rd-order tensor decrement
-  /// \param A substracted from this tensor
-  ///
+  //
+  // 3rd-order tensor decrement
+  // \param A substracted from this tensor
+  //
   template<typename ScalarT>
   Tensor3<ScalarT> &
   Tensor3<ScalarT>::operator-=(Tensor3<ScalarT> const & A)
@@ -809,9 +809,9 @@ namespace LCM {
     return *this;
   }
 
-  ///
-  /// Fill 3rd-order tensor with zeros
-  ///
+  //
+  // Fill 3rd-order tensor with zeros
+  //
   template<typename ScalarT>
   void
   Tensor3<ScalarT>::clear()
@@ -827,12 +827,12 @@ namespace LCM {
     return;
   }
 
-  ///
-  /// 3rd-order tensor addition
-  /// \param A 3rd-order tensor
-  /// \param B 3rd-order tensor
-  /// \return \f$ A + B \f$
-  ///
+  //
+  // 3rd-order tensor addition
+  // \param A 3rd-order tensor
+  // \param B 3rd-order tensor
+  // \return \f$ A + B \f$
+  //
   template<typename ScalarT>
   Tensor3<ScalarT>
   operator+(Tensor3<ScalarT> const & A, Tensor3<ScalarT> const & B)
@@ -850,12 +850,12 @@ namespace LCM {
     return S;
   }
 
-  ///
-  /// 3rd-order tensor substraction
-  /// \param A 3rd-order tensor
-  /// \param B 3rd-order tensor
-  /// \return \f$ A - B \f$
-  ///
+  //
+  // 3rd-order tensor substraction
+  // \param A 3rd-order tensor
+  // \param B 3rd-order tensor
+  // \return \f$ A - B \f$
+  //
   template<typename ScalarT>
   Tensor3<ScalarT>
   operator-(Tensor3<ScalarT> const & A, Tensor3<ScalarT> const & B)
@@ -873,10 +873,10 @@ namespace LCM {
     return S;
   }
 
-  ///
-  /// 3rd-order tensor minus
-  /// \return \f$ -A \f$
-  ///
+  //
+  // 3rd-order tensor minus
+  // \return \f$ -A \f$
+  //
   template<typename ScalarT>
   Tensor3<ScalarT>
   operator-(Tensor3<ScalarT> const & A)
@@ -894,10 +894,10 @@ namespace LCM {
     return S;
   }
 
-  ///
-  /// 3rd-order tensor equality
-  /// Tested by components
-  ///
+  //
+  // 3rd-order tensor equality
+  // Tested by components
+  //
   template<typename ScalarT>
   inline bool
   operator==(Tensor3<ScalarT> const & A, Tensor3<ScalarT> const & B)
@@ -915,10 +915,10 @@ namespace LCM {
     return true;
   }
 
-  ///
-  /// 3rd-order tensor inequality
-  /// Tested by components
-  ///
+  //
+  // 3rd-order tensor inequality
+  // Tested by components
+  //
   template<typename ScalarT>
   inline bool
   operator!=(Tensor3<ScalarT> const & A, Tensor3<ScalarT> const & B)
@@ -926,12 +926,12 @@ namespace LCM {
     return !(A==B);
   }
 
-  ///
-  /// 3rd-order tensor input
-  /// \param A 3rd-order tensor
-  /// \param is input stream
-  /// \return is input stream
-  ///
+  //
+  // 3rd-order tensor input
+  // \param A 3rd-order tensor
+  // \param is input stream
+  // \return is input stream
+  //
   template<typename ScalarT>
   std::istream &
   operator>>(std::istream & is, Tensor3<ScalarT> & A)
@@ -947,12 +947,12 @@ namespace LCM {
     return is;
   }
 
-  ///
-  /// 3rd-order tensor output
-  /// \param A 3rd-order tensor
-  /// \param os output stream
-  /// \return os output stream
-  ///
+  //
+  // 3rd-order tensor output
+  // \param A 3rd-order tensor
+  // \param os output stream
+  // \return os output stream
+  //
   template<typename ScalarT>
   std::ostream &
   operator<<(std::ostream & os, Tensor3<ScalarT> const & A)
@@ -972,9 +972,9 @@ namespace LCM {
     return os;
   }
 
-  ///
-  /// 4th-order tensor constructor with NaNs
-  ///
+  //
+  // 4th-order tensor constructor with NaNs
+  //
   template<typename ScalarT>
   Tensor4<ScalarT>::Tensor4()
   {
@@ -991,10 +991,10 @@ namespace LCM {
     return;
   }
 
-  ///
-  /// 4th-order tensor constructor with a scalar
-  /// \param s all components set to this scalar
-  ///
+  //
+  // 4th-order tensor constructor with a scalar
+  // \param s all components set to this scalar
+  //
   template<typename ScalarT>
   Tensor4<ScalarT>::Tensor4(const ScalarT s)
   {
@@ -1011,11 +1011,11 @@ namespace LCM {
     return;
   }
 
-  ///
-  /// Copy constructor
-  /// 4th-order tensor constructor with 4th-order tensor
-  /// \param A from which components are copied
-  ///
+  //
+  // Copy constructor
+  // 4th-order tensor constructor with 4th-order tensor
+  // \param A from which components are copied
+  //
   template<typename ScalarT>
   Tensor4<ScalarT>::Tensor4(Tensor4<ScalarT> const & A)
   {
@@ -1032,18 +1032,18 @@ namespace LCM {
     return;
   }
 
-  ///
-  /// 4th-order tensor simple destructor
-  ///
+  //
+  // 4th-order tensor simple destructor
+  //
   template<typename ScalarT>
   Tensor4<ScalarT>::~Tensor4()
   {
     return;
   }
 
-  ///
-  /// 4th-order tensor copy assignment
-  ///
+  //
+  // 4th-order tensor copy assignment
+  //
   template<typename ScalarT>
   Tensor4<ScalarT> &
   Tensor4<ScalarT>::operator=(Tensor4<ScalarT> const & A)
@@ -1063,10 +1063,10 @@ namespace LCM {
     return *this;
   }
 
-  ///
-  /// 4th-order tensor increment
-  /// \param A added to this tensor
-  ///
+  //
+  // 4th-order tensor increment
+  // \param A added to this tensor
+  //
   template<typename ScalarT>
   Tensor4<ScalarT> &
   Tensor4<ScalarT>::operator+=(Tensor4<ScalarT> const & A)
@@ -1084,10 +1084,10 @@ namespace LCM {
     return *this;
   }
 
-  ///
-  /// 4th-order tensor decrement
-  /// \param A substracted from this tensor
-  ///
+  //
+  // 4th-order tensor decrement
+  // \param A substracted from this tensor
+  //
   template<typename ScalarT>
   Tensor4<ScalarT> &
   Tensor4<ScalarT>::operator-=(Tensor4<ScalarT> const & A)
@@ -1105,9 +1105,9 @@ namespace LCM {
     return *this;
   }
 
-  ///
-  /// Fill 4th-order tensor with zeros
-  ///
+  //
+  // Fill 4th-order tensor with zeros
+  //
   template<typename ScalarT>
   void
   Tensor4<ScalarT>::clear()
@@ -1125,12 +1125,12 @@ namespace LCM {
     return;
   }
 
-  ///
-  /// 4th-order tensor addition
-  /// \param A 4th-order tensor
-  /// \param B 4th-order tensor
-  /// \return \f$ A + B \f$
-  ///
+  //
+  // 4th-order tensor addition
+  // \param A 4th-order tensor
+  // \param B 4th-order tensor
+  // \return \f$ A + B \f$
+  //
   template<typename ScalarT>
   Tensor4<ScalarT>
   operator+(Tensor4<ScalarT> const & A, Tensor4<ScalarT> const & B)
@@ -1150,12 +1150,12 @@ namespace LCM {
     return S;
   }
 
-  ///
-  /// 4th-order tensor substraction
-  /// \param A 4th-order tensor
-  /// \param B 4th-order tensor
-  /// \return \f$ A - B \f$
-  ///
+  //
+  // 4th-order tensor substraction
+  // \param A 4th-order tensor
+  // \param B 4th-order tensor
+  // \return \f$ A - B \f$
+  //
   template<typename ScalarT>
   Tensor4<ScalarT>
   operator-(Tensor4<ScalarT> const & A, Tensor4<ScalarT> const & B)
@@ -1175,10 +1175,10 @@ namespace LCM {
     return S;
   }
 
-  ///
-  /// 4th-order tensor minus
-  /// \return \f$ -A \f$
-  ///
+  //
+  // 4th-order tensor minus
+  // \return \f$ -A \f$
+  //
   template<typename ScalarT>
   Tensor4<ScalarT>
   operator-(Tensor4<ScalarT> const & A)
@@ -1198,10 +1198,10 @@ namespace LCM {
     return S;
   }
 
-  ///
-  /// 4th-order identity I1
-  /// \return \f$ \delta_{ik} \delta_{jl} \f$ such that \f$ A = I_1 A \f$
-  ///
+  //
+  // 4th-order identity I1
+  // \return \f$ \delta_{ik} \delta_{jl} \f$ such that \f$ A = I_1 A \f$
+  //
   template<typename ScalarT>
   const Tensor4<ScalarT>
   identity_1()
@@ -1221,10 +1221,10 @@ namespace LCM {
     return I;
   }
 
-  ///
-  /// 4th-order identity I2
-  /// \return \f$ \delta_{il} \delta_{jk} \f$ such that \f$ A^T = I_2 A \f$
-  ///
+  //
+  // 4th-order identity I2
+  // \return \f$ \delta_{il} \delta_{jk} \f$ such that \f$ A^T = I_2 A \f$
+  //
   template<typename ScalarT>
   const Tensor4<ScalarT>
   identity_2()
@@ -1244,10 +1244,10 @@ namespace LCM {
     return I;
   }
 
-  ///
-  /// 4th-order identity I3
-  /// \return \f$ \delta_{ij} \delta_{kl} \f$ such that \f$ I_A I = I_3 A \f$
-  ///
+  //
+  // 4th-order identity I3
+  // \return \f$ \delta_{ij} \delta_{kl} \f$ such that \f$ I_A I = I_3 A \f$
+  //
   template<typename ScalarT>
   const Tensor4<ScalarT>
   identity_3()
@@ -1267,10 +1267,10 @@ namespace LCM {
     return I;
   }
 
-  ///
-  /// 4th-order equality
-  /// Tested by components
-  ///
+  //
+  // 4th-order equality
+  // Tested by components
+  //
   template<typename ScalarT>
   inline bool
   operator==(Tensor4<ScalarT> const & A, Tensor4<ScalarT> const & B)
@@ -1290,10 +1290,10 @@ namespace LCM {
     return true;
   }
 
-  ///
-  /// 4th-order inequality
-  /// Tested by components
-  ///
+  //
+  // 4th-order inequality
+  // Tested by components
+  //
   template<typename ScalarT>
   inline bool
   operator!=(Tensor4<ScalarT> const & A, Tensor4<ScalarT> const & B)
@@ -1301,12 +1301,12 @@ namespace LCM {
     return !(A==B);
   }
 
-  ///
-  /// 4th-order input
-  /// \param A 4th-order tensor
-  /// \param is input stream
-  /// \return is input stream
-  ///
+  //
+  // 4th-order input
+  // \param A 4th-order tensor
+  // \param is input stream
+  // \return is input stream
+  //
   template<typename ScalarT>
   std::istream &
   operator>>(std::istream & is, Tensor4<ScalarT> & A)
@@ -1324,12 +1324,12 @@ namespace LCM {
     return is;
   }
 
-  ///
-  /// 4th-order output
-  /// \param A 4th-order tensor
-  /// \param os output stream
-  /// \return os output stream
-  ///
+  //
+  // 4th-order output
+  // \param A 4th-order tensor
+  // \param os output stream
+  // \return os output stream
+  //
   template<typename ScalarT>
   std::ostream &
   operator<<(std::ostream & os, Tensor4<ScalarT> const & A)

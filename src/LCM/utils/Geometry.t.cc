@@ -1,6 +1,8 @@
-//
-// First cut of LCM geometry utilities
-//
+///
+/// \file Geometry.t.cc
+/// Geometry utilities for LCM. Templates.
+/// \author Alejandro Mota
+///
 #if !defined(LCM_Geometry_t_cc)
 #define LCM_Geometry_t_cc
 

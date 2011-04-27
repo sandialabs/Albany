@@ -1,6 +1,10 @@
-//
-// Simple Zoltan compact hyperedge graph for partitioning meshes
-//
+///
+/// \file Partition.cc
+/// Simple Zoltan compact hyperedge graph for partitioning meshes.
+/// Implementation.
+/// \author Alejandro Mota
+///
+
 
 // Define only if Zoltan is enabled
 #if defined(ALBANY_ZOLTAN)
@@ -27,7 +31,9 @@ namespace LCM {
   }
 
   //
-  // Create array from Exodus file
+  // Build array specifying input and output
+  // \param input_file Exodus II input fine name
+  // \param output_file Exodus II output fine name
   //
   ConnectivityArray::ConnectivityArray(
       std::string const & input_file,
@@ -115,7 +121,7 @@ namespace LCM {
 
 
   //
-  //
+  // \return Number of nodes on the array
   //
   int
   ConnectivityArray::GetNumberNodes() const
@@ -124,7 +130,7 @@ namespace LCM {
   }
 
   //
-  //
+  // \return Number of elements in the array
   //
   int
   ConnectivityArray::GetNumberElements() const
@@ -133,7 +139,7 @@ namespace LCM {
   }
 
   //
-  //
+  // \return Space dimension
   //
   int
   ConnectivityArray::GetDimension() const
@@ -142,7 +148,8 @@ namespace LCM {
   }
 
   //
-  //
+  // \return Type of finite element in the array
+  // (assume same type for all elements)
   //
   ConnectivityArray::Type
   ConnectivityArray::GetType() const
@@ -151,7 +158,7 @@ namespace LCM {
   }
 
   //
-  //
+  // \return Node ID and associated point in space
   //
   PointMap
   ConnectivityArray::GetNodeList() const
@@ -160,7 +167,7 @@ namespace LCM {
   }
 
   //
-  //
+  // \return Element - nodes connectivity
   //
   AdjacencyMap
   ConnectivityArray::GetConnectivity() const
@@ -168,6 +175,9 @@ namespace LCM {
     return connectivity_;
   }
 
+  //
+  // \return Albany abstract discretization corresponding to array
+  //
   Albany::AbstractDiscretization &
   ConnectivityArray::GetDiscretization()
   {
@@ -175,7 +185,7 @@ namespace LCM {
   }
 
   //
-  //
+  // \return Volume for each element
   //
   ScalarMap
   ConnectivityArray::GetVolumes() const
@@ -248,7 +258,7 @@ namespace LCM {
   }
 
   //
-  //
+  // \return Total volume of the array
   //
   double
   ConnectivityArray::GetVolume() const
@@ -271,7 +281,8 @@ namespace LCM {
   }
 
   //
-  //
+  // Given number of nodes and space dimension, determine the type of a
+  // finite element.
   //
   ConnectivityArray::Type
   ConnectivityArray::FindType(int nodes, int dim) const
@@ -326,7 +337,10 @@ namespace LCM {
   }
 
   //
-  //
+  // \param length_scale Length scale for partitioning for
+  // variational non-local regularization
+  // \return Number of partitions defined as total volume
+  // of the array divided by the cube of the length scale
   //
   int
   ConnectivityArray::GetNumberPartitions(const double length_scale) const
@@ -337,7 +351,10 @@ namespace LCM {
   }
 
   //
-  //
+  // Partition mesh with Zoltan Hypergraph algortithm
+  // \param length_scale The length scale for variational nonlocal
+  // regularization
+  // \return Partition number for each element
   //
   std::map<int, int>
   ConnectivityArray::PartitionHyperGraph(const double length_scale)
@@ -582,7 +599,7 @@ namespace LCM {
   {
 
     const std::vector< std::vector<int> >
-    face_connectivity = GetFaceConnectivity(ca);
+    face_connectivity = GetFaceConnectivity(ca.GetType());
 
     const AdjacencyMap
     connectivity = ca.GetConnectivity();
@@ -777,14 +794,11 @@ namespace LCM {
   //
   //
   std::vector< std::vector<int> >
-  DualGraph::GetFaceConnectivity(ConnectivityArray const & ca) const
+  DualGraph::GetFaceConnectivity(const ConnectivityArray::Type type) const
   {
 
     std::vector< std::vector<int> >
     face_connectivity;
-
-    const ConnectivityArray::Type
-    type = ca.GetType();
 
     // Ugly initialization, but cannot rely on compilers
     // supporting #include <initializer_list> for the time being.
