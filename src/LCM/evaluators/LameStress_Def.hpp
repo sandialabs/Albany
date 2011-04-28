@@ -27,10 +27,6 @@ LameStress<EvalT, Traits>::
 LameStress(const Teuchos::ParameterList& p) :
   defGradField(p.get<std::string>("DefGrad Name"),
                            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
-  elasticModulusField(p.get<std::string>("Elastic Modulus Name"),
-                      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  poissonsRatioField(p.get<std::string>("Poissons Ratio Name"),
-                     p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   stressField(p.get<std::string>("Stress Name"),
               p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
   lameMaterialModel(Teuchos::RCP<lame::Material>())
@@ -44,12 +40,30 @@ LameStress(const Teuchos::ParameterList& p) :
   numDims = dims[2];
 
   this->addDependentField(defGradField);
-  this->addDependentField(elasticModulusField);
-  this->addDependentField(poissonsRatioField);
 
   this->addEvaluatedField(stressField);
 
   this->setName("LameStress"+PHX::TypeString<EvalT>::value);
+
+  string lameMaterialModelName = p.get<string>("Lame Material Model");
+  const Teuchos::ParameterList& lameMaterialParameters = p.sublist("Lame Material Parameters");
+
+  // Initialize the LAME material model
+  // This assumes that there is a single material model associated with this
+  // evaluator and that the material properties are constant (read directly
+  // from input deck parameter list)
+  Teuchos::RCP<lame::MatProps> props = Teuchos::rcp(new lame::MatProps());
+  std::vector<RealType> elasticModulusVector;
+  RealType elasticModulusValue = lameMaterialParameters.get<double>("Elastic Modulus");
+  elasticModulusVector.push_back(elasticModulusValue);
+  props->insert(std::string("YOUNGS_MODULUS"), elasticModulusVector);
+  std::vector<RealType> poissonsRatioVector;
+  RealType poissonsRatioValue = lameMaterialParameters.get<double>("Poissons Ratio");
+  poissonsRatioVector.push_back(poissonsRatioValue);
+  props->insert(std::string("POISSONS_RATIO"), poissonsRatioVector);
+  lameMaterialModel = Teuchos::rcp(new lame::Elastic(*props));
+
+  // \todo Call initialize() on material.
 }
 
 template<typename EvalT, typename Traits>
@@ -57,8 +71,6 @@ void LameStress<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(elasticModulusField,fm);
-  this->utils.setFieldData(poissonsRatioField,fm);
   this->utils.setFieldData(defGradField,fm);
   this->utils.setFieldData(stressField,fm);
 }
@@ -68,31 +80,6 @@ void LameStress<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   TEST_FOR_EXCEPTION(numDims != 3, Teuchos::Exceptions::InvalidParameter, " LAME materials enabled only for three-dimensional analyses.");
-
-  // Initialize the LAME material model
-  // This assumes that there is a single material model associated with this
-  // evaluator and that the material properties are constant (LameProblem enforces
-  // them to be constant)
-  // Note that this initialization cannot be done in postRegistrationSetup because
-  // elasticModulusField, poissonsRatioField, etc., are not set until the corresponding
-  // evaluators are called.
-  if(lameMaterialModel.is_null()){
-    Teuchos::RCP<lame::MatProps> props = Teuchos::rcp(new lame::MatProps());
-    std::vector<RealType> elasticModulusVector;
-    RealType elasticModulusValue = Sacado::ScalarValue<ScalarT>::eval(elasticModulusField(0,0));
-    elasticModulusVector.push_back(elasticModulusValue);
-    props->insert(std::string("YOUNGS_MODULUS"), elasticModulusVector);
-    std::vector<RealType> poissonsRatioVector;
-    RealType poissonsRatioValue = Sacado::ScalarValue<ScalarT>::eval(poissonsRatioField(0,0));
-    poissonsRatioVector.push_back(poissonsRatioValue);
-    props->insert(std::string("POISSONS_RATIO"), poissonsRatioVector);
-      
-    cout << "CHECK " << elasticModulusValue << ", " << poissonsRatioValue << endl;
-    
-    lameMaterialModel = Teuchos::rcp(new lame::Elastic(*props));
-
-    // \todo Call initialize() on material.
-  }
 
   // Get the old and new state data
   // StateVariables is:  typedef std::map<std::string, Teuchos::RCP<Intrepid::FieldContainer<RealType> > >

@@ -51,8 +51,8 @@ private:
 
   // Input:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defGradField;
-  PHX::MDField<ScalarT,Cell,QuadPoint> elasticModulusField;
-  PHX::MDField<ScalarT,Cell,QuadPoint> poissonsRatioField;
+//   PHX::MDField<ScalarT,Cell,QuadPoint> elasticModulusField;
+//   PHX::MDField<ScalarT,Cell,QuadPoint> poissonsRatioField;
 
   unsigned int numQPs;
   unsigned int numDims;
