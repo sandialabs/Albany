@@ -22,8 +22,6 @@
 
 namespace LCM {
 
-#ifdef ENABLE_LAME
-
 template<typename EvalT, typename Traits>
 LameStress<EvalT, Traits>::
 LameStress(const Teuchos::ParameterList& p) :
@@ -318,32 +316,6 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 }
-
-#else
-//************************* NO-OP VERSIONS OF FUNCTIONS CREATED IF LAME IS NOT AVAILABLE **********************
-template<typename EvalT, typename Traits>
-LameStress<EvalT, Traits>::
-LameStress(const Teuchos::ParameterList& p)
-{
-  TEST_FOR_EXCEPTION(true, std::runtime_error, " LAME materials not enabled, recompile with -DENABLE_LAME");
-}
-
-template<typename EvalT, typename Traits>
-void LameStress<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& fm)
-{
-  TEST_FOR_EXCEPTION(true, std::runtime_error, " LAME materials not enabled, recompile with -DENABLE_LAME");
-}
-
-template<typename EvalT, typename Traits>
-void LameStress<EvalT, Traits>::
-evaluateFields(typename Traits::EvalData workset)
-{
-  TEST_FOR_EXCEPTION(true, std::runtime_error, " LAME materials not enabled, recompile with -DENABLE_LAME");
-}
-//************************* END NO-OP VERSIONS OF FUNCTIONS ***************************************************
-#endif
 
 }
 

@@ -83,11 +83,13 @@ Albany::ProblemFactory::create()
     strategy = rcp(new Albany::ThermoElectrostaticsProblem(problemParams, paramLib, 3));
   }
 #ifdef ALBANY_LCM
-#ifdef ALBANY_LAME
   else if (method == "LAME" || method == "Lame" || method == "lame") {
+#ifdef ALBANY_LAME
     strategy = rcp(new Albany::LameProblem(problemParams, paramLib, 3));
-  }
+#else
+    TEST_FOR_EXCEPTION(true, std::runtime_error, " **** LAME materials not enabled, recompile with -DENABLE_LAME ****\n");
 #endif
+  }
   else if (method == "Elasticity 1D") {
     strategy = rcp(new Albany::ElasticityProblem(problemParams, paramLib, 1));
   }
