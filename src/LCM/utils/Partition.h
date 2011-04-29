@@ -329,11 +329,11 @@ namespace LCM {
   private:
 
     //
-    // Given number of nodes and space dimension, determine the type of a
-    // finite element.
+    // Given number of (vertex) nodes and space dimension,
+    // determine the type of a finite element.
     //
     Type
-    FindType(int nodes, int dimension) const;
+    FindType(int dimension, int nodes) const;
 
   private:
 

@@ -99,9 +99,9 @@ namespace LCM {
   // Default constructor for Connectivity Array
   //
   ConnectivityArray::ConnectivityArray() :
-      type_(ConnectivityArray::UNKNOWN),
-      dimension_(0),
-      discretization_ptr_(Teuchos::null)
+    type_(ConnectivityArray::UNKNOWN),
+    dimension_(0),
+    discretization_ptr_(Teuchos::null)
   {
     return;
   }
@@ -144,16 +144,30 @@ namespace LCM {
     Teuchos::ArrayRCP<double>
     coordinates = discretization_ptr_->getCoordinates();
 
+    // For higher-order elements, mid-nodes are ignored and only
+    // the nodes at the corners of the element are considered
+    // to define the topology.
+    const CellTopologyData
+    cell_topology = discretization_ptr_->getCellTopologyData();
+
+    const int
+    dimension = cell_topology.dimension;
+
+    assert(dimension == dimension_);
+
+    const int
+    vertices_per_element = cell_topology.vertex_count;
+
+    type_ = FindType(dimension, vertices_per_element);
+
     // Assume all the elements have the same number of nodes
     Teuchos::ArrayRCP<int>::size_type
     nodes_per_element = element_connectivity[0].size();
 
-    type_ = FindType(nodes_per_element, dimension_);
-
     // Build coordinate array.
     // Assume that local numbering of nodes is contiguous.
     Teuchos::ArrayRCP<double>::size_type
-    number_nodes = coordinates.size() / dimension_;
+    number_nodes = coordinates.size() / dimension;
 
     for (Teuchos::ArrayRCP<double>::size_type
         i = 0;
@@ -162,8 +176,8 @@ namespace LCM {
 
       LCM::Vector<double> point(0.0, 0.0, 0.0);
 
-      for (int j = 0; j < dimension_; ++j) {
-        point(j) = coordinates[i * dimension_ + j];
+      for (int j = 0; j < dimension; ++j) {
+        point(j) = coordinates[i * dimension + j];
       }
 
       nodes_.insert(std::make_pair(i, point));
@@ -171,6 +185,7 @@ namespace LCM {
 
     // Build connectivity array.
     // Assume that local numbering of elements is contiguous.
+    // Ignore extra nodes in higher-order elements
     for (Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >::size_type
         i = 0;
         i < element_connectivity.size();
@@ -180,7 +195,7 @@ namespace LCM {
 
       for (Teuchos::ArrayRCP<int>::size_type
           j = 0;
-          j < nodes_per_element;
+          j < vertices_per_element;
           ++j) {
 
         nodes_element[j] = element_connectivity[i][j];
@@ -413,54 +428,105 @@ namespace LCM {
   }
 
   //
-  // Given number of nodes and space dimension, determine the type of a
-  // finite element.
+  // Helper functions for determining the type of element
+  //
+  namespace {
+
+    ConnectivityArray::Type
+    FindType1D(int nodes)
+    {
+      ConnectivityArray::Type
+      type = ConnectivityArray::UNKNOWN;
+
+      switch (nodes) {
+      case 2:
+        type = ConnectivityArray::SEGMENTAL;
+        break;
+      default:
+        type = ConnectivityArray::UNKNOWN;
+        break;
+      }
+      return type;
+    }
+
+    ConnectivityArray::Type
+    FindType2D(int nodes)
+    {
+      ConnectivityArray::Type
+      type = ConnectivityArray::UNKNOWN;
+
+      switch (nodes) {
+      case 3:
+        type = ConnectivityArray::TRIANGULAR;
+        break;
+      case 4:
+        type = ConnectivityArray::QUADRILATERAL;
+        break;
+      default:
+        type = ConnectivityArray::UNKNOWN;
+        break;
+      }
+      return type;
+    }
+
+    ConnectivityArray::Type
+    FindType3D(int nodes)
+    {
+      ConnectivityArray::Type
+      type = ConnectivityArray::UNKNOWN;
+
+      switch (nodes) {
+      case 4:
+        type = ConnectivityArray::TETRAHEDRAL;
+        break;
+      case 8:
+        type = ConnectivityArray::HEXAHEDRAL;
+        break;
+      default:
+        type = ConnectivityArray::UNKNOWN;
+        break;
+      }
+      return type;
+    }
+
+  }
+
+  //
+  // Given number of (vertex) nodes and space dimension,
+  // determine the type of a finite element.
   //
   ConnectivityArray::Type
-  ConnectivityArray::FindType(int nodes, int dim) const
+  ConnectivityArray::FindType(int dimension, int nodes) const
   {
 
-    Type type;
+    ConnectivityArray::Type
+    type = ConnectivityArray::UNKNOWN;
 
-    switch (nodes) {
+    switch (dimension) {
+
+    case 1:
+      type = FindType1D(nodes);
+      break;
 
     case 2:
-      type = SEGMENTAL;
+      type = FindType2D(nodes);
       break;
 
     case 3:
-      type = TRIANGULAR;
-      break;
-
-    case 4:
-      switch (dim) {
-      case 2:
-        type = QUADRILATERAL;
-        break;
-      case 3:
-        type = TETRAHEDRAL;
-        break;
-      default:
-        type = UNKNOWN;
-        break;
-      }
-      break;
-
-    case 8:
-      type = HEXAHEDRAL;
+      type = FindType3D(nodes);
       break;
 
     default:
-      type = UNKNOWN;
+      type = ConnectivityArray::UNKNOWN;
       break;
 
     }
 
-    if (type == UNKNOWN) {
+    if (type == ConnectivityArray::UNKNOWN) {
       std::cerr << "Unknown element type" << std::endl;
       std::cerr << "Spatial dimension: ";
-      std::cerr << dim << std::endl;
-      std::cerr << "Nodes per element: ";
+      std::cerr << dimension << std::endl;
+      std::cerr << "Vertices per element: ";
       std::cerr << nodes << std::endl;
       std::exit(1);
     }
@@ -477,8 +543,12 @@ namespace LCM {
   int
   ConnectivityArray::GetNumberPartitions(const double length_scale) const
   {
-    const double ball_volume = length_scale * length_scale * length_scale;
-    const int number_partitions = static_cast<int>(GetVolume() / ball_volume);
+    const double
+    ball_volume = length_scale * length_scale * length_scale;
+
+    const int
+    number_partitions = static_cast<int>(GetVolume() / ball_volume);
+
     return number_partitions;
   }
 
