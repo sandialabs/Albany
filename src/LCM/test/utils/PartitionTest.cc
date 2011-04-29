@@ -12,12 +12,19 @@
 
 int main(int ac, char* av[])
 {
+  //
   // Initialize Zoltan
-  float version;
+  //
+  float
+  version;
+
   Zoltan_Initialize(ac, av, &version);
 
-  // Create a command line processor
-  Teuchos::CommandLineProcessor command_line_processor;
+  //
+  // Create a command line processor and parse command line options
+  //
+  Teuchos::CommandLineProcessor
+  command_line_processor;
 
   command_line_processor.setDocString(
       "Partitioning of Exodus mesh with Zoltan.\n"
@@ -35,7 +42,29 @@ int main(int ac, char* av[])
       &output_file,
       "Output File Name");
 
-  double length_scale = 0.001;
+  const int
+  number_schemes = 2;
+
+  const LCM::PartitionScheme
+  scheme_values[] = {LCM::GEOMETRIC, LCM::HYPERGRAPH};
+
+  const char*
+  scheme_names[] = {"geometric", "hypergraph"};
+
+  LCM::PartitionScheme
+  partition_scheme = LCM::HYPERGRAPH;
+
+  command_line_processor.setOption(
+      "scheme",
+      &partition_scheme,
+      number_schemes,
+      scheme_values,
+      scheme_names,
+      "Partition Scheme");
+
+  double
+  length_scale = 0.001;
+
   command_line_processor.setOption(
       "length-scale",
       &length_scale,
@@ -57,42 +86,52 @@ int main(int ac, char* av[])
   }
 
   if (parse_return != Teuchos::CommandLineProcessor::PARSE_SUCCESSFUL) {
-    // Error
     return 1;
   }
 
+  //
   // Read mesh
+  //
   LCM::ConnectivityArray
-  ca(input_file, output_file);
+  connectivity_array(input_file, output_file);
 
+  //
   // Partition mesh
+  //
   const std::map<int, int>
-  partitions = ca.PartitionHyperGraph(length_scale);
+  partitions = connectivity_array.Partition(partition_scheme, length_scale);
+
+  //
+  // Output partitions
+  //
 
   // Convert partition map to format used by Albany to set internal variables.
   // Assumption: numbering of elements is contiguous.
   const int
-  number_elements = ca.GetNumberElements();
+  number_elements = connectivity_array.GetNumberElements();
 
   std::vector< std::vector< double> >
   stk_partitions(number_elements);
 
   for (std::map<int, int>::const_iterator
-      it = partitions.begin();
-      it != partitions.end();
-      ++it) {
+      partitions_iter = partitions.begin();
+      partitions_iter != partitions.end();
+      ++partitions_iter) {
 
-    const int element = (*it).first;
-    const int partition = (*it).second;
+    const int
+    element = (*partitions_iter).first;
+
+    const int
+    partition = (*partitions_iter).second;
 
     stk_partitions[element].push_back(static_cast<double>(partition));
 
   }
 
-  // Get abstract discretization from coonectivity array and convert
-  // to stk discretization to use stk specific methods.
+  // Get abstract discretization from connectivity array and convert
+  // to stk discretization to use stk-specific methods.
   Albany::AbstractDiscretization &
-  discretization = ca.GetDiscretization();
+  discretization = connectivity_array.GetDiscretization();
 
   Albany::STKDiscretization &
   stk_discretization = static_cast<Albany::STKDiscretization &>(discretization);
@@ -102,98 +141,6 @@ int main(int ac, char* av[])
   solution_field = stk_discretization.getSolutionField();
 
   stk_discretization.outputToExodus(*solution_field, stk_partitions);
-
-#if defined(DEBUG)
-
-  // Output partition map
-  std::cout << "Partition map:" << std::endl;
-
-  for (std::map<int, int>::const_iterator
-      it = partitions.begin();
-      it != partitions.end();
-      ++it) {
-
-    const int
-    vertex = (*it).first;
-
-    const int
-    partition = (*it).second;
-
-    std::cout << std::setw(12) << vertex;
-    std::cout << std::setw(12) << partition << std::endl;
-
-  }
-
-  //Teuchos::GlobalMPISession mpiSession(&ac,&av);
-  std::string filename(av[1]);
-
-  LCM::ConnectivityArray ca(filename);
-
-  std::cout << "Connectivity Array:" << std::endl;
-  std::cout << ca;
-  std::cout << std::endl;
-  std::cout << std::endl;
-
-  LCM::DualGraph dg(ca);
-  LCM::ZoltanHyperGraph zhg(dg);
-
-  std::cout << "Zoltan Hypergraph:" << std::endl;
-  std::cout << zhg;
-  std::cout << std::endl;
-  std::cout << std::endl;
-
-  std::cout << "Zoltan Vertex IDs:" << std::endl;
-
-  const std::vector<ZOLTAN_ID_TYPE>
-  vertices = zhg.GetVertexIDs();
-
-  for (std::vector<ZOLTAN_ID_TYPE>::size_type
-      i = 0;
-      i < vertices.size();
-      ++i ) {
-
-    std::cout << " " << vertices[i];
-
-  }
-
-  std::cout << std::endl;
-  std::cout << std::endl;
-
-  std::cout << "Zoltan Hyperedge Pointers:" << std::endl;
-
-  const std::vector<int>
-  pointers = zhg.GetEdgePointers();
-
-  for (std::vector<int>::size_type
-      i = 0;
-      i < pointers.size();
-      ++i ) {
-
-    std::cout << " " << pointers[i];
-
-  }
-
-  std::cout << std::endl;
-  std::cout << std::endl;
-
-  std::cout << "Zoltan Hyperedge IDs:" << std::endl;
-
-  const std::vector<ZOLTAN_ID_TYPE>
-  edges = zhg.GetEdgeIDs();
-
-  for (std::vector<ZOLTAN_ID_TYPE>::size_type
-      i = 0;
-      i < edges.size();
-      ++i ) {
-
-    std::cout << " " << edges[i];
-
-  }
-
-  std::cout << std::endl;
-  std::cout << std::endl;
-
-#endif // #if defined(DEBUG)
 
   return 0;
 

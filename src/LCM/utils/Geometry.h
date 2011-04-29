@@ -73,7 +73,7 @@ namespace LCM {
   /// For these we can just take the average of the vertices
   ///
   template<typename ScalarT>
-  ScalarT
+  Vector<ScalarT>
   centroid(std::vector<Vector<ScalarT> > const & points);
 
 } // namespace LCM

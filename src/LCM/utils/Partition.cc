@@ -20,6 +20,82 @@
 namespace LCM {
 
   //
+  // Anonymous namespace for helper functions
+  //
+  namespace {
+
+    //
+    // Print parameters and partitions computed by Zoltan.
+    // Used for debugging.
+    //
+    void PrintPartitionInfo(
+        std::ostream & output_stream,
+        int &changes,
+        int &num_gid_entries,
+        int &num_lid_entries,
+        int &num_import,
+        ZOLTAN_ID_PTR &import_global_ids,
+        ZOLTAN_ID_PTR &import_local_ids,
+        int * &import_procs,
+        int * &import_to_part,
+        int &num_export,
+        ZOLTAN_ID_PTR &export_global_ids,
+        ZOLTAN_ID_PTR &export_local_ids,
+        int * &export_procs,
+        int * &export_to_part )
+    {
+
+      output_stream << "Changes           : " << changes << std::endl;
+      output_stream << "Number GID entries: " << num_gid_entries << std::endl;
+      output_stream << "Number LID entries: " << num_lid_entries << std::endl;
+      output_stream << "Number to import  : " << num_import << std::endl;
+      output_stream << "Number to export  : " << num_export << std::endl;
+
+      output_stream << "Import GIDs:" << std::endl;
+      for (int i = 0; i < num_import; ++i) {
+        output_stream << import_global_ids[i] << std::endl;
+      }
+
+      output_stream << "Import LIDs:" << std::endl;
+      for (int i = 0; i < num_import; ++i) {
+        output_stream << import_local_ids[i] << std::endl;
+      }
+
+      output_stream << "Import procs:" << std::endl;
+      for (int i = 0; i < num_import; ++i) {
+        output_stream << import_procs[i] << std::endl;
+      }
+
+      output_stream << "Import parts:" << std::endl;
+      for (int i = 0; i < num_import; ++i) {
+        output_stream << import_to_part[i] << std::endl;
+      }
+
+      output_stream << "Export GIDs:" << std::endl;
+      for (int i = 0; i < num_export; ++i) {
+        output_stream << export_global_ids[i] << std::endl;
+      }
+
+      output_stream << "Export LIDs:" << std::endl;
+      for (int i = 0; i < num_export; ++i) {
+        output_stream << export_local_ids[i] << std::endl;
+      }
+
+      output_stream << "Export procs:" << std::endl;
+      for (int i = 0; i < num_export; ++i) {
+        output_stream << export_procs[i] << std::endl;
+      }
+
+      output_stream << "Export parts:" << std::endl;
+      for (int i = 0; i < num_export; ++i) {
+        output_stream << export_to_part[i] << std::endl;
+      }
+
+    }
+
+  } // anonymous namespace
+
+  //
   // Default constructor for Connectivity Array
   //
   ConnectivityArray::ConnectivityArray() :
@@ -192,15 +268,15 @@ namespace LCM {
   {
     ScalarMap volumes;
     for (AdjacencyMap::const_iterator
-        amci = connectivity_.begin();
-        amci != connectivity_.end();
-        ++amci) {
+        elements_iter = connectivity_.begin();
+        elements_iter != connectivity_.end();
+        ++elements_iter) {
 
       int const &
-      element = (*amci).first;
+      element = (*elements_iter).first;
 
       IDList const &
-      node_list = (*amci).second;
+      node_list = (*elements_iter).second;
 
       std::vector< LCM::Vector<double> >
       points;
@@ -211,10 +287,10 @@ namespace LCM {
           ++i) {
 
         PointMap::const_iterator
-        pmci = nodes_.find(node_list[i]);
+        nodes_iter = nodes_.find(node_list[i]);
 
-        assert(pmci != nodes_.end());
-        points.push_back((*pmci).second);
+        assert(nodes_iter != nodes_.end());
+        points.push_back((*nodes_iter).second);
 
       }
 
@@ -269,15 +345,71 @@ namespace LCM {
     volumes = GetVolumes();
 
     for (ScalarMap::const_iterator
-        it = volumes.begin();
-        it != volumes.end();
-        ++it) {
+        volumes_iter = volumes.begin();
+        volumes_iter != volumes.end();
+        ++volumes_iter) {
 
-      volume += (*it).second;
+      volume += (*volumes_iter).second;
 
     }
 
     return volume;
+  }
+
+  //
+  // \return Centroids for each element
+  //
+  PointMap
+  ConnectivityArray::GetCentroids() const
+  {
+    PointMap
+    centroids;
+
+    for (AdjacencyMap::const_iterator
+        elements_iter = connectivity_.begin();
+        elements_iter != connectivity_.end();
+        ++elements_iter) {
+
+      // Get an element
+      int const &
+      element = (*elements_iter).first;
+
+      IDList const &
+      node_list = (*elements_iter).second;
+
+      std::vector< LCM::Vector<double> >
+      points;
+
+      // Collect element nodes
+      for (IDList::size_type
+          i = 0;
+          i < node_list.size();
+          ++i) {
+
+        const int
+        node = node_list[i];
+
+        PointMap::const_iterator
+        nodes_iter = nodes_.find(node);
+
+        assert(nodes_iter != nodes_.end());
+
+        const LCM::Vector<double>
+        point = (*nodes_iter).second;
+
+        points.push_back(point);
+
+      }
+
+      const LCM::Vector<double>
+      centroid = LCM::centroid(points);
+
+      centroids.insert(std::make_pair(element, centroid));
+
+    }
+
+    return centroids;
+
   }
 
   //
@@ -351,6 +483,42 @@ namespace LCM {
   }
 
   //
+  // Partition mesh according to the speficied algorithm and lengh scale
+  // \param partition_scheme The partition algorithm to use
+  // \param length_scale The length scale for variational nonlocal
+  // regularization
+  // \return Partition number for each element
+  //
+  std::map<int, int>
+  ConnectivityArray::Partition(
+      const LCM::PartitionScheme partition_scheme,
+      const double length_scale)
+  {
+
+    std::map<int, int>
+    partitions;
+
+    switch (partition_scheme) {
+
+    case LCM::HYPERGRAPH:
+      partitions = PartitionHyperGraph(length_scale);
+      break;
+
+    case LCM::GEOMETRIC:
+      partitions = PartitionGeometric(length_scale);
+      break;
+
+    default:
+      std::cerr << "Unknown partitioning scheme." << std::endl;
+      std::exit(1);
+
+    }
+
+    return partitions;
+
+  }
+
+  //
   // Partition mesh with Zoltan Hypergraph algortithm
   // \param length_scale The length scale for variational nonlocal
   // regularization
@@ -360,120 +528,87 @@ namespace LCM {
   ConnectivityArray::PartitionHyperGraph(const double length_scale)
   {
     // Zoltan setup
-    Zoltan zoltan(MPI::COMM_WORLD);
+    const int
+    number_partitions = GetNumberPartitions(length_scale);
+
+    std::stringstream
+    ioss;
+
+    ioss << number_partitions;
+
+    std::string
+    zoltan_number_parts;
+
+    ioss >> zoltan_number_parts;
+
+    Zoltan
+    zoltan(MPI::COMM_WORLD);
 
     zoltan.Set_Param("LB_METHOD", "HYPERGRAPH");
     zoltan.Set_Param("LB_APPROACH", "PARTITION");
     zoltan.Set_Param("DEBUG_LEVEL", "0");
     zoltan.Set_Param("OBJ_WEIGHT_DIM", "1");
-
-    const int number_partitions = GetNumberPartitions(length_scale);
-
-    std::stringstream ioss;
-    ioss << number_partitions;
-
-    std::string zoltan_number_parts;
-    ioss >> zoltan_number_parts;
-
     zoltan.Set_Param("NUM_LOCAL_PARTS", zoltan_number_parts.c_str());
     zoltan.Set_Param("REMAP", "0");
-
     zoltan.Set_Param("HYPERGRAPH_PACKAGE", "PHG");
-
     zoltan.Set_Param("PHG_MULTILEVEL", "1");
     zoltan.Set_Param("PHG_EDGE_WEIGHT_OPERATION", "ERROR");
 
     //
     // Partition
     //
-    DualGraph dg(*this);
-    ZoltanHyperGraph zhg(dg);
+    DualGraph
+    dual_graph(*this);
+
+    ZoltanHyperGraph
+    zoltan_hypergraph(dual_graph);
 
     // Set up hypergraph
-    zoltan.Set_Num_Obj_Fn(LCM::ZoltanHyperGraph::GetNumberOfObjects, &zhg);
-    zoltan.Set_Obj_List_Fn(LCM::ZoltanHyperGraph::GetObjectList, &zhg);
-    zoltan.Set_HG_Size_CS_Fn(LCM::ZoltanHyperGraph::GetHyperGraphSize, &zhg);
-    zoltan.Set_HG_CS_Fn(LCM::ZoltanHyperGraph::GetHyperGraph, &zhg);
+    zoltan.Set_Num_Obj_Fn(
+        LCM::ZoltanHyperGraph::GetNumberOfObjects,
+        &zoltan_hypergraph);
+
+    zoltan.Set_Obj_List_Fn(
+        LCM::ZoltanHyperGraph::GetObjectList,
+        &zoltan_hypergraph);
+
+    zoltan.Set_HG_Size_CS_Fn(
+        LCM::ZoltanHyperGraph::GetHyperGraphSize,
+        &zoltan_hypergraph);
+
+    zoltan.Set_HG_CS_Fn(
+        LCM::ZoltanHyperGraph::GetHyperGraph,
+        &zoltan_hypergraph);
 
     int changes;
-    int numGidEntries;
-    int numLidEntries;
-    int numImport;
-    ZOLTAN_ID_PTR importGlobalIds;
-    ZOLTAN_ID_PTR importLocalIds;
-    int *importProcs;
-    int *importToPart;
-    int numExport;
-    ZOLTAN_ID_PTR exportGlobalIds;
-    ZOLTAN_ID_PTR exportLocalIds;
-    int *exportProcs;
-    int *exportToPart;
+    int num_gid_entries;
+    int num_lid_entries;
+    int num_import;
+    ZOLTAN_ID_PTR import_global_ids;
+    ZOLTAN_ID_PTR import_local_ids;
+    int* import_procs;
+    int* import_to_part;
+    int num_export;
+    ZOLTAN_ID_PTR export_global_ids;
+    ZOLTAN_ID_PTR export_local_ids;
+    int* export_procs;
+    int* export_to_part;
 
     int rc =
       zoltan.LB_Partition(
           changes,
-          numGidEntries,
-          numLidEntries,
-          numImport,
-          importGlobalIds,
-          importLocalIds,
-          importProcs,
-          importToPart,
-          numExport,
-          exportGlobalIds,
-          exportLocalIds,
-          exportProcs,
-          exportToPart);
-
-#if defined(DEBUG)
-
-    std::cout << "Changes           : " << changes << std::endl;
-    std::cout << "Number GID entries: " << numGidEntries << std::endl;
-    std::cout << "Number LID entries: " << numLidEntries << std::endl;
-    std::cout << "Number to import  : " << numImport << std::endl;
-    std::cout << "Number to export  : " << numExport << std::endl;
-
-    std::cout << "Import GIDs:" << std::endl;
-    for (int i = 0; i < numImport; ++i) {
-      std::cout << importGlobalIds[i] << std::endl;
-    }
-
-    std::cout << "Import LIDs:" << std::endl;
-    for (int i = 0; i < numImport; ++i) {
-      std::cout << importLocalIds[i] << std::endl;
-    }
-
-    std::cout << "Import procs:" << std::endl;
-    for (int i = 0; i < numImport; ++i) {
-      std::cout << importProcs[i] << std::endl;
-    }
-
-    std::cout << "Import parts:" << std::endl;
-    for (int i = 0; i < numImport; ++i) {
-      std::cout << importToPart[i] << std::endl;
-    }
-
-    std::cout << "Export GIDs:" << std::endl;
-    for (int i = 0; i < numExport; ++i) {
-      std::cout << exportGlobalIds[i] << std::endl;
-    }
-
-    std::cout << "Export LIDs:" << std::endl;
-    for (int i = 0; i < numExport; ++i) {
-      std::cout << exportLocalIds[i] << std::endl;
-    }
-
-    std::cout << "Export procs:" << std::endl;
-    for (int i = 0; i < numExport; ++i) {
-      std::cout << exportProcs[i] << std::endl;
-    }
-
-    std::cout << "Export parts:" << std::endl;
-    for (int i = 0; i < numExport; ++i) {
-      std::cout << exportToPart[i] << std::endl;
-    }
-
-#endif // #if defined(DEBUG)
+          num_gid_entries,
+          num_lid_entries,
+          num_import,
+          import_global_ids,
+          import_local_ids,
+          import_procs,
+          import_to_part,
+          num_export,
+          export_global_ids,
+          export_local_ids,
+          export_procs,
+          export_to_part);
 
     if (rc != ZOLTAN_OK) {
       std::cerr << "Partitioning failed" << std::endl;
@@ -484,102 +619,399 @@ namespace LCM {
     std::map<int, int> partitions;
 
     const ScalarMap
-    vertex_weights = zhg.GetVertexWeights();
+    vertex_weights = zoltan_hypergraph.GetVertexWeights();
 
     for (ScalarMap::const_iterator
-        it = vertex_weights.begin();
-        it != vertex_weights.end();
-        ++it) {
-      const int vertex = (*it).first;
+        weights_iter = vertex_weights.begin();
+        weights_iter != vertex_weights.end();
+        ++weights_iter) {
+      const int vertex = (*weights_iter).first;
       partitions[vertex] = 0;
     }
 
     // Fill up with results from Zoltan
-    for (int i = 0; i < numImport; ++i) {
-      const int vertex = static_cast<int>(importLocalIds[i]);
-      partitions[vertex] = importToPart[i];
+    for (int i = 0; i < num_import; ++i) {
+      const int vertex = static_cast<int>(import_local_ids[i]);
+      partitions[vertex] = import_to_part[i];
     }
 
     return partitions;
 
   }
 
+  //
+  /// Partition mesh with Zoltan Recursive Inertial Bisection algortithm
+  // \param length_scale The length scale for variational nonlocal
+  // regularization
+  // \return Partition number for each element
+  //
+  std::map<int, int>
+  ConnectivityArray::PartitionGeometric(const double length_scale)
+  {
+    // Zoltan setup
+    const int
+    number_partitions = GetNumberPartitions(length_scale);
 
+    std::stringstream
+    ioss;
+
+    ioss << number_partitions;
+
+    std::string
+    zoltan_number_parts;
+
+    ioss >> zoltan_number_parts;
+
+    Zoltan
+    zoltan(MPI::COMM_WORLD);
+
+    zoltan.Set_Param("LB_METHOD", "RIB");
+    zoltan.Set_Param("LB_APPROACH", "PARTITION");
+    zoltan.Set_Param("DEBUG_LEVEL", "0");
+    zoltan.Set_Param("OBJ_WEIGHT_DIM", "1");
+    zoltan.Set_Param("NUM_LOCAL_PARTS", zoltan_number_parts.c_str());
+    zoltan.Set_Param("REMAP", "0");
+    zoltan.Set_Param("CHECK_GEOM", "1");
+    zoltan.Set_Param("AVERAGE_CUTS", "1");
+    zoltan.Set_Param("REDUCE_DIMENSIONS", "1");
+    zoltan.Set_Param("DEGENERATE_RATIO", "25");
+
+    //
+    // Partition
+    //
+
+    // Set up recursive inertial bisection (RIB)
+    zoltan.Set_Num_Obj_Fn(LCM::ConnectivityArray::GetNumberOfObjects, this);
+    zoltan.Set_Obj_List_Fn(LCM::ConnectivityArray::GetObjectList, this);
+    zoltan.Set_Num_Geom_Fn(LCM::ConnectivityArray::GetNumberGeometry, this);
+    zoltan.Set_Geom_Multi_Fn(LCM::ConnectivityArray::GetGeometry, this);
+
+    int changes;
+    int num_gid_entries;
+    int num_lid_entries;
+    int num_import;
+    ZOLTAN_ID_PTR import_global_ids;
+    ZOLTAN_ID_PTR import_local_ids;
+    int* import_procs;
+    int* import_to_part;
+    int num_export;
+    ZOLTAN_ID_PTR export_global_ids;
+    ZOLTAN_ID_PTR export_local_ids;
+    int* export_procs;
+    int* export_to_part;
+
+    int rc =
+      zoltan.LB_Partition(
+          changes,
+          num_gid_entries,
+          num_lid_entries,
+          num_import,
+          import_global_ids,
+          import_local_ids,
+          import_procs,
+          import_to_part,
+          num_export,
+          export_global_ids,
+          export_local_ids,
+          export_procs,
+          export_to_part);
+
+    if (rc != ZOLTAN_OK) {
+      std::cerr << "Partitioning failed" << std::endl;
+      std::exit(1);
+    }
+
+    // Set up partition map initializing all partitions to zero
+    std::map<int, int> partitions;
+
+    const ScalarMap
+    element_volumes = GetVolumes();
+
+    for (ScalarMap::const_iterator
+        volumes_iter = element_volumes.begin();
+        volumes_iter != element_volumes.end();
+        ++volumes_iter) {
+      const int element = (*volumes_iter).first;
+      partitions[element] = 0;
+    }
+
+    // Fill up with results from Zoltan
+    for (int i = 0; i < num_import; ++i) {
+      const int element = static_cast<int>(import_local_ids[i]);
+      partitions[element] = import_to_part[i];
+    }
+
+    return partitions;
+
+  }
+
+  //
+  // Zoltan interface query function that returns the number of values
+  // needed to express the geometry of an object.
+  // For a three-dimensional object, the return value should be three.
+  //
+  // \param   data  Pointer to user-defined data.
+  //
+  // \param   ierr  Error code to be set by function.
+  //
+  // \return  The number of values needed to express the
+  // geometry of an object.
+  //
+  int
+  ConnectivityArray::GetNumberGeometry(
+      void* data,
+      int* ierr)
+  {
+
+    ConnectivityArray &
+    connectivity_array = *(static_cast<ConnectivityArray*>(data));
+
+    *ierr = ZOLTAN_OK;
+
+    int dimension = connectivity_array.GetDimension();
+
+    return dimension;
+
+  }
+
+  //
+  // Zoltan interface, return number of objects
+  //
+  int
+  ConnectivityArray::GetNumberOfObjects(void* data, int* ierr)
+  {
+
+    ConnectivityArray &
+    connectivity_array = *(static_cast<ConnectivityArray*>(data));
+
+    *ierr = ZOLTAN_OK;
+
+    int num_objects = connectivity_array.GetConnectivity().size();
+
+    return num_objects;
+
+  }
+
+  //
+  // Zoltan interface, return relevant object properties
+  //
+  void
+  ConnectivityArray::GetObjectList(
+      void* data,
+      int sizeGID,
+      int sizeLID,
+      ZOLTAN_ID_PTR globalID,
+      ZOLTAN_ID_PTR localID,
+      int wgt_dim,
+      float* obj_wgts,
+      int* ierr)
+  {
+
+    ConnectivityArray &
+    connectivity_array = *(static_cast<ConnectivityArray*>(data));
+
+    *ierr = ZOLTAN_OK;
+
+    ScalarMap
+    element_volumes = connectivity_array.GetVolumes();
+
+    ZOLTAN_ID_PTR
+    global_id_ptr = globalID;
+
+    ZOLTAN_ID_PTR
+    local_id_ptr = localID;
+
+    float*
+    weight_ptr = obj_wgts;
+
+    for (ScalarMap::const_iterator
+        volumes_iter = element_volumes.begin();
+        volumes_iter != element_volumes.end();
+        ++volumes_iter) {
+
+      int element = (*volumes_iter).first;
+      double volume = (*volumes_iter).second;
+
+      // Beware of this evil pointer manipulation
+      (*global_id_ptr) = element;
+      (*local_id_ptr) = element;
+      (*weight_ptr) = volume;
+      global_id_ptr++;
+      local_id_ptr++;
+      weight_ptr++;
+
+    }
+
+    return;
+
+  }
+
+  //
+  // Zoltan interface query function that returns a vector of geometry
+  // values for a list of given objects. The geometry vector is allocated
+  // by Zoltan to be of size num_obj * num_dim;
+  // its format is described below.
+  //
+  // \param data Pointer to user-defined data.
+  //
+  // \param sizeGID The number of array entries used to describe a
+  // single global ID.  This value is the maximum value over all processors
+  // of the parameter NUM_GID_ENTRIES.
+  //
+  // \param sizeLID The number of array entries used to describe a
+  // single local ID.  This value is the maximum value over all processors
+  // of the parameter NUM_LID_ENTRIES. (It should be zero if local ids
+  // are not used.)
+  //
+  // \param num_obj The number of object IDs in arrays
+  // globalID and localID
+  //
+  // \param globalID  Upon return, an array of unique global IDs for
+  // all objects assigned to the processor.
+  //
+  // \param localID Upon return, an array of local IDs, the meaning
+  // of which can be determined by the application, for all objects
+  // assigned to the processor. (Optional.)
+  //
+  // \param num_dim Number of coordinate entries per object
+  // (typically 1, 2, or 3).
+  //
+  // \param geom_vec  Upon return, an array containing geometry values.
+  // For object i (specified by globalID[i*sizeGID] and
+  // localID[i*sizeLID], i=0,1,...,num_obj-1),
+  // coordinate values should be stored in
+  // geom_vec[i*num_dim:(i+1)*num_dim-1].
+  //
+  // \param ierr Error code to be set by function.
+  //
+  void
+  ConnectivityArray::GetGeometry(
+      void* data,
+      int sizeGID,
+      int sizeLID,
+      int num_obj,
+      ZOLTAN_ID_PTR globalID,
+      ZOLTAN_ID_PTR localID,
+      int num_dim,
+      double* geom_vec,
+      int* ierr)
+  {
+
+    ConnectivityArray &
+    connectivity_array = *(static_cast<ConnectivityArray*>(data));
+
+    *ierr = ZOLTAN_OK;
+
+    PointMap
+    centroids = connectivity_array.GetCentroids();
+
+    // Transfer the centroid coordinates to the Zoltan array
+    int
+    index_geom_vec = 0;
+
+    for (PointMap::const_iterator
+        centroids_iter = centroids.begin();
+        centroids_iter != centroids.end();
+        ++centroids_iter) {
+
+      const LCM::Vector<double>
+      centroid = (*centroids_iter).second;
+
+      for (LCM::Index i = 0; i < LCM::MaxDim; ++i) {
+
+        geom_vec[index_geom_vec] = centroid(i);
+        ++index_geom_vec;
+
+      }
+
+    }
+
+    return;
+
+  }
   //
   // Write a Connectivity Array to an output stream
   //
   std::ostream &
-  operator<<(std::ostream & os, ConnectivityArray const & ca)
+  operator<<(
+      std::ostream & output_stream,
+      ConnectivityArray const & connectivity_array)
   {
-    os << std::setw(12) << ca.GetNumberNodes();
-    os << std::setw(12) << ca.GetNumberElements();
-    os << std::setw(12) << ca.GetType();
-    os << std::endl;
+    output_stream << std::setw(12) << connectivity_array.GetNumberNodes();
+    output_stream << std::setw(12) << connectivity_array.GetNumberElements();
+    output_stream << std::setw(12) << connectivity_array.GetType();
+    output_stream << std::endl;
 
     // Node list
-    const PointMap nodes = ca.GetNodeList();
-    const int dimension = ca.GetDimension();
+    const PointMap
+    nodes = connectivity_array.GetNodeList();
+
+    const int
+    dimension = connectivity_array.GetDimension();
 
     for (PointMap::const_iterator
-        it = nodes.begin();
-        it != nodes.end();
-        ++it) {
+        nodes_iter = nodes.begin();
+        nodes_iter != nodes.end();
+        ++nodes_iter) {
 
-      const int node = (*it).first;
-      os << std::setw(12) << node;
+      const int
+      node = (*nodes_iter).first;
+
+      output_stream << std::setw(12) << node;
 
       LCM::Vector<double> const &
-      point = (*it).second;
+      point = (*nodes_iter).second;
 
       for (int j = 0; j < dimension; ++j) {
-        os << std::scientific << std::setw(16) << std::setprecision(8);
-        os << point(j);
+        output_stream << std::scientific;
+        output_stream << std::setw(16) << std::setprecision(8);
+        output_stream << point(j);
       }
 
-      os << std::endl;
+      output_stream << std::endl;
 
     }
 
     // Output element volumes as well
     const ScalarMap
-    volumes = ca.GetVolumes();
+    volumes = connectivity_array.GetVolumes();
 
-    // Element connectivity_
+    // Element connectivity
     const AdjacencyMap
-    connectivity = ca.GetConnectivity();
+    connectivity = connectivity_array.GetConnectivity();
 
     for (AdjacencyMap::const_iterator
-        it = connectivity.begin();
-        it != connectivity.end();
-        ++it) {
+        connectivity_iter = connectivity.begin();
+        connectivity_iter != connectivity.end();
+        ++connectivity_iter) {
 
-      const int element = (*it).first;
+      const int element = (*connectivity_iter).first;
 
-      os << std::setw(12) << element;
+      output_stream << std::setw(12) << element;
 
       IDList const &
-      node_list = (*it).second;
+      node_list = (*connectivity_iter).second;
 
       for (IDList::size_type j = 0; j < node_list.size(); ++j) {
-        os << std::setw(12) << node_list[j];
+        output_stream << std::setw(12) << node_list[j];
       }
 
       // Element volume
       ScalarMap::const_iterator
-      smci = volumes.find(element);
+      volumes_iter = volumes.find(element);
 
-      assert(smci != volumes.end());
+      assert(volumes_iter != volumes.end());
 
       const double
-      volume = (*smci).second;
+      volume = (*volumes_iter).second;
 
-      os << std::scientific << std::setw(16) << std::setprecision(8);
-      os << volume;
+      output_stream << std::scientific << std::setw(16) << std::setprecision(8);
+      output_stream << volume;
 
-      os << std::endl;
+      output_stream << std::endl;
     }
 
-    return os;
+    return output_stream;
 
   }
 
@@ -595,19 +1027,20 @@ namespace LCM {
   // Build dual graph from connectivity array
   // The term face is used as in "proper face" in algebraic topology
   //
-  DualGraph::DualGraph(ConnectivityArray const & ca)
+  DualGraph::DualGraph(ConnectivityArray const & connectivity_array)
   {
 
     const std::vector< std::vector<int> >
-    face_connectivity = GetFaceConnectivity(ca.GetType());
+    face_connectivity = GetFaceConnectivity(connectivity_array.GetType());
 
     const AdjacencyMap
-    connectivity = ca.GetConnectivity();
+    connectivity = connectivity_array.GetConnectivity();
 
     std::map<std::set<int>, int>
-    face_nodes_ID_map;
+    face_nodes_faceID_map;
 
-    int face_count = 0;
+    int
+    face_count = 0;
 
     graph_.clear();
 
@@ -616,15 +1049,15 @@ namespace LCM {
 
     // Go element by element
     for (AdjacencyMap::const_iterator
-        it = connectivity.begin();
-        it != connectivity.end();
-        ++it) {
+        connectivity_iter = connectivity.begin();
+        connectivity_iter != connectivity.end();
+        ++connectivity_iter) {
 
       const int
-      element = (*it).first;
+      element = (*connectivity_iter).first;
 
       const std::vector<int>
-      element_nodes = (*it).second;
+      element_nodes = (*connectivity_iter).second;
 
       // All elements go into graph, regardless of number of internal faces
       // attached to them. This clearing will allocate space for all of them.
@@ -636,7 +1069,8 @@ namespace LCM {
           i < face_connectivity.size();
           ++i) {
 
-        std::set<int> face_nodes;
+        std::set<int>
+        face_nodes;
 
         for (std::vector<int>::size_type
             j = 0;
@@ -647,16 +1081,18 @@ namespace LCM {
 
         // Determine whether this face is new (not found in face map)
         std::map<std::set<int>, int>::const_iterator
-        face_map_iter = face_nodes_ID_map.find(face_nodes);
+        face_map_iter = face_nodes_faceID_map.find(face_nodes);
 
         const bool
-        face_is_new = face_map_iter == face_nodes_ID_map.end();
+        face_is_new = face_map_iter == face_nodes_faceID_map.end();
 
         // If face is new then assign new ID to it and add to face map
-        int faceID = -1;
+        int
+        faceID = -1;
+
         if (face_is_new == true) {
           faceID = face_count;
-          face_nodes_ID_map.insert(std::make_pair(face_nodes, faceID));
+          face_nodes_faceID_map.insert(std::make_pair(face_nodes, faceID));
           ++face_count;
         } else {
           faceID = (*face_map_iter).second;
@@ -670,22 +1106,24 @@ namespace LCM {
     }
 
     // Identify internal faces
-    IDList internal_faces;
+    IDList
+    internal_faces;
 
     for (AdjacencyMap::const_iterator
-        it = faceID_element_map.begin();
-        it != faceID_element_map.end();
-        ++it) {
+        face_element_iter = faceID_element_map.begin();
+        face_element_iter != faceID_element_map.end();
+        ++face_element_iter) {
 
       const int
-      faceID = (*it).first;
+      faceID = (*face_element_iter).first;
 
       const int
-      number_elements_per_face = ((*it).second).size();
+      number_elements_per_face = ((*face_element_iter).second).size();
 
       switch (number_elements_per_face) {
 
       case 1:
+        // Do nothing
         break;
 
       case 2:
@@ -720,7 +1158,9 @@ namespace LCM {
           j < elements_face.size();
           ++j) {
 
-        const int element = elements_face[j];
+        const int
+        element = elements_face[j];
+
         graph_[element].push_back(faceID);
 
       }
@@ -728,7 +1168,7 @@ namespace LCM {
     }
 
     number_edges_ = internal_faces.size();
-    vertex_weights_ = ca.GetVolumes();
+    vertex_weights_ = connectivity_array.GetVolumes();
 
     return;
 
@@ -756,9 +1196,9 @@ namespace LCM {
   //
   //
   void
-  DualGraph::SetGraph(AdjacencyMap & g)
+  DualGraph::SetGraph(AdjacencyMap & graph)
   {
-    graph_ = g;
+    graph_ = graph;
     return;
   }
 
@@ -775,9 +1215,9 @@ namespace LCM {
   //
   //
   void
-  DualGraph::SetVertexWeights(ScalarMap & vw)
+  DualGraph::SetVertexWeights(ScalarMap & vertex_weights)
   {
-    vertex_weights_ = vw;
+    vertex_weights_ = vertex_weights;
     return;
   }
 
@@ -802,8 +1242,11 @@ namespace LCM {
 
     // Ugly initialization, but cannot rely on compilers
     // supporting #include <initializer_list> for the time being.
-    int number_faces = 0;
-    int nodes_per_face = 0;
+    int
+    number_faces = 0;
+
+    int
+    nodes_per_face = 0;
 
     switch (type) {
 
@@ -908,12 +1351,12 @@ namespace LCM {
   //
   // Build Zoltan Hypergraph from FE mesh Dual Graph
   //
-  ZoltanHyperGraph::ZoltanHyperGraph(DualGraph const & dg)
+  ZoltanHyperGraph::ZoltanHyperGraph(DualGraph const & dual_graph)
   {
-    graph_ = dg.GetGraph();
-    vertex_weights_ = dg.GetVertexWeights();
-    number_vertices_ = dg.GetNumberVertices();
-    number_hyperedges_ = dg.GetNumberEdges();
+    graph_ = dual_graph.GetGraph();
+    vertex_weights_ = dual_graph.GetVertexWeights();
+    number_vertices_ = dual_graph.GetNumberVertices();
+    number_hyperedges_ = dual_graph.GetNumberEdges();
     return;
   }
 
@@ -930,9 +1373,9 @@ namespace LCM {
   //
   //
   void
-  ZoltanHyperGraph::SetNumberHyperedges(int ne)
+  ZoltanHyperGraph::SetNumberHyperedges(int number_hyperedges)
   {
-    number_hyperedges_ = ne;
+    number_hyperedges_ = number_hyperedges;
     return;
   }
 
@@ -949,9 +1392,9 @@ namespace LCM {
   //
   //
   void
-  ZoltanHyperGraph::SetGraph(AdjacencyMap & g)
+  ZoltanHyperGraph::SetGraph(AdjacencyMap & graph)
   {
-    graph_ = g;
+    graph_ = graph;
     return;
   }
 
@@ -968,9 +1411,9 @@ namespace LCM {
   //
   //
   void
-  ZoltanHyperGraph::SetVertexWeights(ScalarMap & vw)
+  ZoltanHyperGraph::SetVertexWeights(ScalarMap & vertex_weights)
   {
-    vertex_weights_ = vw;
+    vertex_weights_ = vertex_weights;
     return;
   }
 
@@ -994,20 +1437,20 @@ namespace LCM {
     edges;
 
     for (AdjacencyMap::const_iterator
-        amci = graph_.begin();
-        amci != graph_.end();
-        ++amci) {
+        graph_iter = graph_.begin();
+        graph_iter != graph_.end();
+        ++graph_iter) {
 
       IDList
-      hyperedges = (*amci).second;
+      hyperedges = (*graph_iter).second;
 
 
       for (IDList::const_iterator
-          ilci = hyperedges.begin();
-          ilci != hyperedges.end();
-          ++ilci) {
+          hyperedges_iter = hyperedges.begin();
+          hyperedges_iter != hyperedges.end();
+          ++hyperedges_iter) {
 
-        const int hyperedge = (*ilci);
+        const int hyperedge = (*hyperedges_iter);
         edges.push_back(hyperedge);
 
       }
@@ -1027,23 +1470,24 @@ namespace LCM {
     std::vector<int>
     pointers;
 
-    int pointer = 0;
+    int
+    pointer = 0;
 
     for (AdjacencyMap::const_iterator
-        amci = graph_.begin();
-        amci != graph_.end();
-        ++amci) {
+        graph_iter = graph_.begin();
+        graph_iter != graph_.end();
+        ++graph_iter) {
 
       pointers.push_back(pointer);
 
       IDList
-      hyperedges = (*amci).second;
+      hyperedges = (*graph_iter).second;
 
 
       for (IDList::const_iterator
-          ilci = hyperedges.begin();
-          ilci != hyperedges.end();
-          ++ilci) {
+          hyperedges_iter = hyperedges.begin();
+          hyperedges_iter != hyperedges.end();
+          ++hyperedges_iter) {
 
         ++pointer;
 
@@ -1066,11 +1510,11 @@ namespace LCM {
     vertices;
 
     for (AdjacencyMap::const_iterator
-        amci = graph_.begin();
-        amci != graph_.end();
-        ++amci) {
+        graph_iter = graph_.begin();
+        graph_iter != graph_.end();
+        ++graph_iter) {
 
-      int vertex = (*amci).first;
+      int vertex = (*graph_iter).first;
       vertices.push_back(vertex);
 
     }
@@ -1087,11 +1531,12 @@ namespace LCM {
   {
 
     ZoltanHyperGraph &
-    zhg = *(static_cast<ZoltanHyperGraph*>(data));
+    zoltan_hypergraph = *(static_cast<ZoltanHyperGraph*>(data));
 
     *ierr = ZOLTAN_OK;
 
-    int num_objects = zhg.GetGraph().size();
+    int
+    num_objects = zoltan_hypergraph.GetGraph().size();
 
     return num_objects;
 
@@ -1102,48 +1547,48 @@ namespace LCM {
   //
   void
   ZoltanHyperGraph::GetObjectList(
-      void *data,
+      void* data,
       int sizeGID,
       int sizeLID,
       ZOLTAN_ID_PTR globalID,
       ZOLTAN_ID_PTR localID,
       int wgt_dim,
-      float *obj_wgts,
-      int *ierr)
+      float* obj_wgts,
+      int* ierr)
   {
 
     ZoltanHyperGraph &
-    zhg = *(static_cast<ZoltanHyperGraph*>(data));
+    zoltan_hypergraph = *(static_cast<ZoltanHyperGraph*>(data));
 
     *ierr = ZOLTAN_OK;
 
     ScalarMap
-    vertex_weights = zhg.GetVertexWeights();
+    vertex_weights = zoltan_hypergraph.GetVertexWeights();
 
     ZOLTAN_ID_PTR
-    pGID = globalID;
+    global_id_ptr = globalID;
 
     ZOLTAN_ID_PTR
-    pLID = localID;
+    local_id_ptr = localID;
 
     float*
-    pWT = obj_wgts;
+    weight_ptr = obj_wgts;
 
     for (ScalarMap::const_iterator
-        smci = vertex_weights.begin();
-        smci != vertex_weights.end();
-        ++smci) {
+        weights_iter = vertex_weights.begin();
+        weights_iter != vertex_weights.end();
+        ++weights_iter) {
 
-      int vertex = (*smci).first;
-      double vw = (*smci).second;
+      int vertex = (*weights_iter).first;
+      double vertex_weight = (*weights_iter).second;
 
       // Beware of this evil pointer manipulation
-      (*pGID) = vertex;
-      (*pLID) = vertex;
-      (*pWT) = vw;
-      pGID++;
-      pLID++;
-      pWT++;
+      (*global_id_ptr) = vertex;
+      (*local_id_ptr) = vertex;
+      (*weight_ptr) = vertex_weight;
+      global_id_ptr++;
+      local_id_ptr++;
+      weight_ptr++;
 
     }
 
@@ -1156,23 +1601,23 @@ namespace LCM {
   //
   void
   ZoltanHyperGraph::GetHyperGraphSize(
-      void *data,
-      int *num_lists,
-      int *num_pins,
-      int *format,
-      int *ierr)
+      void* data,
+      int* num_lists,
+      int* num_pins,
+      int* format,
+      int* ierr)
   {
 
     ZoltanHyperGraph &
-    zhg = *(static_cast<ZoltanHyperGraph*>(data));
+    zoltan_hypergraph = *(static_cast<ZoltanHyperGraph*>(data));
 
     *ierr = ZOLTAN_OK;
 
     // Number of vertices
-    *num_lists = zhg.GetVertexIDs().size();
+    *num_lists = zoltan_hypergraph.GetVertexIDs().size();
 
     // Numbers of pins, i.e. size of list of hyperedges attached to vertices
-    *num_pins = zhg.GetEdgeIDs().size();
+    *num_pins = zoltan_hypergraph.GetEdgeIDs().size();
 
     *format = ZOLTAN_COMPRESSED_VERTEX;
 
@@ -1185,36 +1630,40 @@ namespace LCM {
   //
   void
   ZoltanHyperGraph::GetHyperGraph(
-      void *data,
+      void* data,
       int num_gid_entries,
       int num_vtx_edge,
       int num_pins,
       int format,
       ZOLTAN_ID_PTR vtxedge_GID,
-      int *vtxedge_ptr,
+      int* vtxedge_ptr,
       ZOLTAN_ID_PTR pin_GID,
-      int *ierr)
+      int* ierr)
   {
 
     ZoltanHyperGraph &
-    zhg = *(static_cast<ZoltanHyperGraph*>(data));
+    zoltan_hypergraph = *(static_cast<ZoltanHyperGraph*>(data));
 
     *ierr = ZOLTAN_OK;
 
     // Validate
-    assert(num_vtx_edge == static_cast<int>(zhg.GetVertexIDs().size()));
-    assert(num_pins == static_cast<int>(zhg.GetEdgeIDs().size()));
+    assert(num_vtx_edge ==
+        static_cast<int>(zoltan_hypergraph.GetVertexIDs().size()));
+
+    assert(num_pins ==
+        static_cast<int>(zoltan_hypergraph.GetEdgeIDs().size()));
+
     assert(format == ZOLTAN_COMPRESSED_VERTEX);
 
     // Copy hypergraph data
     std::vector<ZOLTAN_ID_TYPE>
-    vertex_IDs = zhg.GetVertexIDs();
+    vertex_IDs = zoltan_hypergraph.GetVertexIDs();
 
     std::vector<ZOLTAN_ID_TYPE>
-    edge_IDs = zhg.GetEdgeIDs();
+    edge_IDs = zoltan_hypergraph.GetEdgeIDs();
 
     std::vector<int>
-    edge_pointers = zhg.GetEdgePointers();
+    edge_pointers = zoltan_hypergraph.GetEdgePointers();
 
     for (std::vector<ZOLTAN_ID_TYPE>::size_type
         i = 0;
@@ -1251,7 +1700,7 @@ namespace LCM {
   // Read a Zoltan Hyperedge Graph from an input stream
   //
   std::istream &
-  operator>>(std::istream & is, ZoltanHyperGraph & zhg)
+  operator>>(std::istream & input_stream, ZoltanHyperGraph & zoltan_hypergraph)
   {
     //
     // First line must contain the number of vertices and hyperedges
@@ -1260,17 +1709,17 @@ namespace LCM {
     MaxChar = 256;
 
     char line[MaxChar];
-    is.getline(line, MaxChar);
+    input_stream.getline(line, MaxChar);
 
-    std::stringstream iss_hdr(line);
+    std::stringstream header(line);
     std::string token;
 
     // Number of vertices
-    iss_hdr >> token;
+    header >> token;
     int number_vertices = atoi(token.c_str());
 
     // Number of hyperegdes
-    iss_hdr >> token;
+    header >> token;
     int number_hyperedges = atoi(token.c_str());
 
     AdjacencyMap
@@ -1282,21 +1731,21 @@ namespace LCM {
     // Read list of hyperedge IDs adjacent to given vertex
     for (int i = 0; i < number_vertices; ++i) {
 
-      is.getline(line, MaxChar);
-      std::stringstream iss_vtx(line);
+      input_stream.getline(line, MaxChar);
+      std::stringstream input_line(line);
 
       // First entry should be vertex ID
-      iss_vtx >> token;
+      input_line >> token;
       int vertex = atoi(token.c_str());
 
       // Second entry should be vertex weight
-      iss_vtx >> token;
+      input_line >> token;
       double vw = atof(token.c_str());
       vertex_weights[vertex] = vw;
 
       // Read the hyperedges
       IDList hyperedges;
-      while (iss_vtx >> token) {
+      while (input_line >> token) {
         int hyperedge = atoi(token.c_str());
         hyperedges.push_back(hyperedge);
       }
@@ -1305,11 +1754,11 @@ namespace LCM {
 
     }
 
-    zhg.SetGraph(graph);
-    zhg.SetVertexWeights(vertex_weights);
-    zhg.SetNumberHyperedges(number_hyperedges);
+    zoltan_hypergraph.SetGraph(graph);
+    zoltan_hypergraph.SetVertexWeights(vertex_weights);
+    zoltan_hypergraph.SetNumberHyperedges(number_hyperedges);
 
-    return is;
+    return input_stream;
 
   }
 
@@ -1317,63 +1766,59 @@ namespace LCM {
   // Write a Zoltan Hyperedge Graph to an output stream
   //
   std::ostream &
-  operator<<(std::ostream & os, ZoltanHyperGraph const & zhg)
+  operator<<(
+      std::ostream & output_stream,
+      ZoltanHyperGraph const & zoltan_hypergraph)
   {
 
-    os << std::setw(12) << zhg.GetNumberVertices();
-    os << std::setw(12) << zhg.GetNumberHyperedges() << std::endl;
+    output_stream << std::setw(12) << zoltan_hypergraph.GetNumberVertices();
+    output_stream << std::setw(12) << zoltan_hypergraph.GetNumberHyperedges();
+    output_stream << std::endl;
 
     AdjacencyMap const &
-    graph = zhg.GetGraph();
+    graph = zoltan_hypergraph.GetGraph();
 
     ScalarMap
-    vertex_weights = zhg.GetVertexWeights();
+    vertex_weights = zoltan_hypergraph.GetVertexWeights();
 
     for (AdjacencyMap::const_iterator
-        amci = graph.begin();
-        amci != graph.end();
-        ++amci) {
+        graph_iter = graph.begin();
+        graph_iter != graph.end();
+        ++graph_iter) {
 
       // Vertex ID
       const int
-      vertex = (*amci).first;
+      vertex = (*graph_iter).first;
 
       const double
-      vw = vertex_weights[vertex];
+      vertex_weight = vertex_weights[vertex];
 
-      os << std::setw(12) << vertex;
-      os << std::scientific << std::setw(16) << std::setprecision(8) << vw;
+      output_stream << std::setw(12) << vertex;
+      output_stream << std::scientific;
+      output_stream << std::setw(16) << std::setprecision(8);
+      output_stream << vertex_weight;
 
       const IDList
-      hyperedges = (*amci).second;
+      hyperedges = (*graph_iter).second;
 
       for (IDList::const_iterator
-          ilci = hyperedges.begin();
-          ilci != hyperedges.end();
-          ++ilci) {
+          hyperedges_iter = hyperedges.begin();
+          hyperedges_iter != hyperedges.end();
+          ++hyperedges_iter) {
 
         const int
-        hyperedge = (*ilci);
+        hyperedge = (*hyperedges_iter);
 
-        os << std::setw(12) << hyperedge;
+        output_stream << std::setw(12) << hyperedge;
 
       }
 
-      os << std::endl;
+      output_stream << std::endl;
 
     }
 
-    return os;
+    return output_stream;
 
-  }
-
-  //
-  // Test the conversion
-  //
-  void
-  TestGraphs()
-  {
-    return;
   }
 
 } // namespace LCM

@@ -35,23 +35,32 @@ namespace LCM {
   ///
   /// A list of IDs
   ///
-  typedef std::vector<int> IDList;
+  typedef std::vector<int>
+  IDList;
 
   ///
   /// Maps topological object by its ID to adjacent topological objects
   /// by their IDs. Objects may and usually live in different spaces.
   ///
-  typedef std::map<int, IDList> AdjacencyMap;
+  typedef std::map<int, IDList>
+  AdjacencyMap;
 
   ///
   /// A scalar quantity associated with a topological object.
   ///
-  typedef std::map<int, double> ScalarMap;
+  typedef std::map<int, double>
+  ScalarMap;
 
   ///
   /// Map for topologcal objects for which it is possible to associate points.
   ///
-  typedef std::map<int, LCM::Vector<double> > PointMap;
+  typedef std::map<int, LCM::Vector<double> >
+  PointMap;
+
+  ///
+  /// Useful to distinguish among different partitioning schemes.
+  ///
+  enum PartitionScheme {UNKNOWN, GEOMETRIC, HYPERGRAPH};
 
   //
   ///Forward declarations
@@ -137,6 +146,12 @@ namespace LCM {
     GetVolume() const;
 
     ///
+    /// \return Centroids for each element
+    ///
+    PointMap
+    GetCentroids() const;
+
+    ///
     /// \param length_scale Length scale for partitioning for
     /// variational non-local regularization
     /// \return Number of partitions defined as total volume
@@ -152,6 +167,18 @@ namespace LCM {
     GetDiscretization();
 
     ///
+    /// Partition mesh the speficied algorithm and lengh scale
+    /// \param partition_scheme The partition algorithm to use
+    /// \param length_scale The length scale for variational nonlocal
+    /// regularization
+    /// \return Partition number for each element
+    ///
+    std::map<int, int>
+    Partition(
+        const LCM::PartitionScheme partition_scheme,
+        const double length_scale);
+
+    ///
     /// Partition mesh with Zoltan Hypergraph algortithm
     /// \param length_scale The length scale for variational nonlocal
     /// regularization
@@ -159,6 +186,145 @@ namespace LCM {
     ///
     std::map<int, int>
     PartitionHyperGraph(const double length_scale);
+
+    ///
+    /// Partition mesh with Zoltan Recursive Inertial Bisection algortithm
+    /// \param length_scale The length scale for variational nonlocal
+    /// regularization
+    /// \return Partition number for each element
+    ///
+    std::map<int, int>
+    PartitionGeometric(const double length_scale);
+
+    ///
+    /// Zoltan interface query function that returns the number of values
+    /// needed to express the geometry of an object.
+    /// For a three-dimensional object, the return value should be three.
+    ///
+    /// \param   data  Pointer to user-defined data.
+    ///
+    /// \param   ierr  Error code to be set by function.
+    ///
+    /// \return  The number of values needed to express the
+    /// geometry of an object.
+    ///
+    static int
+    GetNumberGeometry(
+        void* data,
+        int* ierr);
+
+    ///
+    /// Zoltan interface query function that returns the number of objects
+    /// that are currently assigned to the processor.
+    ///
+    /// \param    data Pointer to user-defined data.
+    ///
+    /// \param    ierr Error code to be set by function.
+    ///
+    /// \return   int The number of objects that are assigned to the processor.
+    ///
+    static int
+    GetNumberOfObjects(
+        void* data,
+        int* ierr);
+
+    ///
+    /// Zoltan interface query function that fills two
+    /// (three if weights are used) arrays with information about
+    /// the objects currently assigned to the processor.
+    /// Both arrays are allocated (and subsequently freed) by Zoltan;
+    /// their size is determined by a call to the
+    /// ZoltanHyperGraph::GetNumberOfObjects query function
+    /// to get the array size.
+    ///
+    /// \param data Pointer to user-defined data.
+    ///
+    /// \param sizeGID The number of array entries used to describe a
+    /// single global ID.  This value is the maximum value over all processors
+    /// of the parameter NUM_GID_ENTRIES.
+    ///
+    /// \param sizeLID The number of array entries used to describe a
+    /// single local ID.  This value is the maximum value over all processors
+    /// of the parameter NUM_LID_ENTRIES. (It should be zero if local ids
+    /// are not used.)
+    ///
+    /// \param globalID  Upon return, an array of unique global IDs for
+    /// all objects assigned to the processor.
+    ///
+    /// \param localID Upon return, an array of local IDs, the meaning
+    /// of which can be determined by the application, for all objects
+    /// assigned to the processor. (Optional.)
+    ///
+    /// \param wgt_dim The number of weights associated with an object
+    /// (typically 1), or 0 if weights are not requested.
+    /// This value is set through the parameter OBJ_WEIGHT_DIM.
+    ///
+    /// \param obj_wgts  Upon return, an array of object weights.
+    /// Weights for object i are stored in obj_wgts[(i-1)*wgt_dim:i*wgt_dim-1].
+    /// If wgt_dim=0, the return value of obj_wgts is undefined and may be NULL.
+    ///
+    /// \param ierr Error code to be set by function.
+    ///
+    static void
+    GetObjectList(
+        void* data,
+        int sizeGID,
+        int sizeLID,
+        ZOLTAN_ID_PTR globalID,
+        ZOLTAN_ID_PTR localID,
+        int wgt_dim,
+        float* obj_wgts,
+        int* ierr);
+
+    ///
+    /// Zoltan interface query function that returns a vector of geometry
+    /// values for a list of given objects. The geometry vector is allocated
+    /// by Zoltan to be of size num_obj * num_dim;
+    /// its format is described below.
+    ///
+    /// \param data Pointer to user-defined data.
+    ///
+    /// \param sizeGID The number of array entries used to describe a
+    /// single global ID.  This value is the maximum value over all processors
+    /// of the parameter NUM_GID_ENTRIES.
+    ///
+    /// \param sizeLID The number of array entries used to describe a
+    /// single local ID.  This value is the maximum value over all processors
+    /// of the parameter NUM_LID_ENTRIES. (It should be zero if local ids
+    /// are not used.)
+    ///
+    /// \param num_obj The number of object IDs in arrays
+    /// globalID and localID
+    ///
+    /// \param globalID  Upon return, an array of unique global IDs for
+    /// all objects assigned to the processor.
+    ///
+    /// \param localID Upon return, an array of local IDs, the meaning
+    /// of which can be determined by the application, for all objects
+    /// assigned to the processor. (Optional.)
+    ///
+    /// \param num_dim Number of coordinate entries per object
+    /// (typically 1, 2, or 3).
+    ///
+    /// \param geom_vec  Upon return, an array containing geometry values.
+    /// For object i (specified by globalID[i*sizeGID] and
+    /// localID[i*sizeLID], i=0,1,...,num_obj-1),
+    /// coordinate values should be stored in
+    /// geom_vec[i*num_dim:(i+1)*num_dim-1].
+    ///
+    /// \param ierr Error code to be set by function.
+    ///
+    static void
+    GetGeometry(
+        void* data,
+        int sizeGID,
+        int sizeLID,
+        int num_obj,
+        ZOLTAN_ID_PTR globalID,
+        ZOLTAN_ID_PTR localID,
+        int num_dim,
+        double* geom_vec,
+        int* ierr);
 
   private:
 
@@ -218,7 +384,7 @@ namespace LCM {
     ///
     /// Build dual graph from a connectivity array
     ///
-    DualGraph(ConnectivityArray const & ca);
+    DualGraph(ConnectivityArray const & connectivity_array);
 
     ///
     /// \return Number of vertices in the dual graph
@@ -237,7 +403,7 @@ namespace LCM {
     /// \param vw Map from vertex ID to weight
     ///
     void
-    SetVertexWeights(ScalarMap & vw);
+    SetVertexWeights(ScalarMap & vertex_weights);
 
     ///
     /// \return Vertex weights of dual graph, if any
@@ -247,10 +413,10 @@ namespace LCM {
 
     ///
     /// Replace current graph structure
-    /// \param g Graph structure that will replace the current one
+    /// \param graph Graph structure that will replace the current one
     ///
     void
-    SetGraph(AdjacencyMap & g);
+    SetGraph(AdjacencyMap & graph);
 
     ///
     /// \return Current graph structure
@@ -290,7 +456,7 @@ namespace LCM {
   };
 
   ///
-  /// Class to interface with Zoltan
+  /// Class to interface with Zoltan HyperGraph
   /// Hypergraph is represented in compressed vertex
   /// storage format. See
   /// http://www.cs.sandia.gov/Zoltan/ug_html/ug_query_lb.html#ZOLTAN_HG_CS_FN
@@ -300,7 +466,6 @@ namespace LCM {
   /// See Zoltan documentation at
   /// http://www.cs.sandia.gov/Zoltan/ug_html/ug.html
   ///
-
   class ZoltanHyperGraph {
 
   public:
@@ -312,9 +477,9 @@ namespace LCM {
 
     ///
     /// Build Zoltan hypergraph from dual graph
-    /// \param dg Dual graph
+    /// \param dual_graph Dual graph
     ///
-    ZoltanHyperGraph(DualGraph const & dg);
+    ZoltanHyperGraph(DualGraph const & dual_graph);
 
     ///
     /// \return Number of vertices in hypergraph
@@ -324,10 +489,10 @@ namespace LCM {
 
     ///
     /// Set number of hyperedges
-    /// \param ne Number of hyperedges
+    /// \param number_hyperedges Number of hyperedges
     ///
     void
-    SetNumberHyperedges(int ne);
+    SetNumberHyperedges(int number_hyperedges);
 
     ///
     /// \return Number of hyperedges
@@ -337,10 +502,10 @@ namespace LCM {
 
     ///
     /// Replace current graph structure
-    /// \param g Graph structure that replaces current one
+    /// \param graph Graph structure that replaces current one
     ///
     void
-    SetGraph(AdjacencyMap & g);
+    SetGraph(AdjacencyMap & graph);
 
     ///
     /// \return Current graph structure
@@ -350,10 +515,10 @@ namespace LCM {
 
     ///
     /// Set weights for hypergraph vertices
-    /// \param vw Map from vertex ID to weight
+    /// \param vertex_weights Map from vertex ID to weight
     ///
     void
-    SetVertexWeights(ScalarMap & vw);
+    SetVertexWeights(ScalarMap & vertex_weights);
 
     ///
     /// \return Vertex weights of hypergraph, if any.
@@ -434,14 +599,14 @@ namespace LCM {
     ///
     static void
     GetObjectList(
-        void *data,
+        void* data,
         int sizeGID,
         int sizeLID,
         ZOLTAN_ID_PTR globalID,
         ZOLTAN_ID_PTR localID,
         int wgt_dim,
-        float *obj_wgts,
-        int *ierr);
+        float* obj_wgts,
+        int* ierr);
 
     ///
     /// Zoltan interface query function to tell Zoltan in which format
@@ -469,11 +634,11 @@ namespace LCM {
     ///
     static void
     GetHyperGraphSize(
-        void *data,
-        int *num_lists,
-        int *num_pins,
-        int *format,
-        int *ierr);
+        void* data,
+        int* num_lists,
+        int* num_pins,
+        int* format,
+        int* ierr);
 
     ///
     /// Zoltan interface function that returns the hypergraph in
@@ -523,16 +688,16 @@ namespace LCM {
     ///
     static void
     GetHyperGraph(
-        void *data,
+        void* data,
         int num_gid_entries,
         int num_vtx_edge,
         int num_pins,
         int format,
         ZOLTAN_ID_PTR
         vtxedge_GID,
-        int *vtxedge_ptr,
+        int* vtxedge_ptr,
         ZOLTAN_ID_PTR pin_GID,
-        int *ierr);
+        int* ierr);
 
   private:
 
@@ -564,41 +729,43 @@ namespace LCM {
 
   ///
   /// Read a Conectivity Array from an input stream
-  /// \param is Input stream
-  /// \param ca Connectivity array
+  /// \param input_stream Input stream
+  /// \param connectivity_array Connectivity array
   ///
   std::istream &
-  operator>>(std::istream & is, ConnectivityArray & ca);
+  operator>>(
+      std::istream & input_stream,
+      ConnectivityArray & connectivity_array);
 
   ///
   /// Write a Connectivity Array to an output stream
-  /// \param os Output stream
-  /// \param ca Connectivity array
+  /// \param output_stream Output stream
+  /// \param connectivity_array Connectivity array
   ///
   std::ostream &
-  operator<<(std::ostream & os, ConnectivityArray const & ca);
+  operator<<(
+      std::ostream & output_stream,
+      ConnectivityArray const & connectivity_array);
 
   ///
   /// Read a Zoltan Hyperedge Graph from an input stream
-  /// \param is Input stream
-  /// \param zhg Zoltan Hypergraph
+  /// \param input_stream Input stream
+  /// \param zoltan_hypergraph Zoltan Hypergraph
   ///
   std::istream &
-  operator>>(std::istream & is, ZoltanHyperGraph & zhg);
+  operator>>(
+      std::istream & input_stream,
+      ZoltanHyperGraph & zoltan_hypergraph);
 
   ///
   /// Write a Zoltan Hyperedge Graph to an output stream
-  /// \param os Output stream
-  /// \param zhg Zoltan Hypergraph
+  /// \param output_stream Output stream
+  /// \param zoltan_hypergraph Zoltan Hypergraph
   ///
   std::ostream &
-  operator<<(std::ostream & os, ZoltanHyperGraph const & zhg);
-
-  //
-  // Tests
-  //
-  void
-  TestGraphs();
+  operator<<(
+      std::ostream & output_stream,
+      ZoltanHyperGraph const & zoltan_hypergraph);
 
 } // namespace LCM
 
