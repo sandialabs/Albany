@@ -55,6 +55,7 @@ private:
   // Input:
   PHX::MDField<ScalarT,Cell,QuadPoint> bulkModulus;
   PHX::MDField<ScalarT,Cell,QuadPoint> dp;
+  PHX::MDField<ScalarT,Cell,QuadPoint> seff;
   PHX::MDField<ScalarT,Cell,QuadPoint> J;
   PHX::MDField<ScalarT,Cell,QuadPoint> damage;
 

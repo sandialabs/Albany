@@ -47,6 +47,8 @@ J2Damage(const Teuchos::ParameterList& p) :
   stress           (p.get<std::string>                   ("Stress Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
   dp               (p.get<std::string>                   ("DP Name"),
+	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  seff             (p.get<std::string>                   ("Effective Stress Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") )
 {
   // Pull out numQPs and numDims from a Layout
@@ -71,6 +73,7 @@ J2Damage(const Teuchos::ParameterList& p) :
 
   this->addEvaluatedField(stress);
   this->addEvaluatedField(dp);
+  this->addEvaluatedField(seff);
 
   // scratch space FCs
   Fp.resize(worksetSize, numQPs, numDims, numDims);
@@ -91,6 +94,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(stress,fm);
   this->utils.setFieldData(dp,fm);
+  this->utils.setFieldData(seff,fm);
   this->utils.setFieldData(defgrad,fm);
   this->utils.setFieldData(J,fm);
   this->utils.setFieldData(bulkModulus,fm);

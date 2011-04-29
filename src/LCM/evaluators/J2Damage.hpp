@@ -64,6 +64,7 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;
   PHX::MDField<ScalarT,Cell,QuadPoint> dp;
+  PHX::MDField<ScalarT,Cell,QuadPoint> seff;
 
   unsigned int numQPs;
   unsigned int numDims;

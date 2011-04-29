@@ -30,6 +30,8 @@ DamageSource(Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   dp          (p.get<std::string>("DP Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  seff        (p.get<std::string>("Effective Stress Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   J           (p.get<std::string>("DetDefGrad Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   damage      (p.get<std::string>("Damage Name"),
@@ -51,6 +53,7 @@ DamageSource(Teuchos::ParameterList& p) :
   this->addDependentField(dp);
   this->addDependentField(J);
   this->addDependentField(damage);
+  this->addDependentField(seff);
 
   this->addEvaluatedField(source);
   this->setName("Damage Source"+PHX::TypeString<EvalT>::value);
@@ -66,6 +69,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(dp,fm);
   this->utils.setFieldData(J,fm);
   this->utils.setFieldData(damage,fm);
+  this->utils.setFieldData(seff,fm);
   this->utils.setFieldData(source,fm);
 }
 
@@ -74,15 +78,18 @@ template<typename EvalT, typename Traits>
 void DamageSource<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  ScalarT exphsq, Jsq;
+  ScalarT expz, p, Je, triax;
 
   for (unsigned int cell=0; cell < workset.numCells; ++cell) 
   {
     for (std::size_t qp=0; qp < numQPs; ++qp) 
     {
-      exphsq = std::exp( 2. * damage(cell,qp) );
-      Jsq    = J(cell,qp) * J(cell,qp);
-      source(cell,qp) = 0.5 * bulkModulus(cell,qp) * ( exphsq * Jsq - 1. );
+      expz = std::exp( damage(cell,qp) );
+      Je = expz * J(cell,qp);
+      p = 0.5 * bulkModulus(cell,qp) * (Je - 1/Je);
+      triax = 0.0;
+      if (seff(cell,qp) > 0.0) triax = p/seff(cell,qp);
+      source(cell,qp) = p * Je + expz * triax * dp(cell,qp);
     }
   }
 }

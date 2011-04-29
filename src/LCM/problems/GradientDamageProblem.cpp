@@ -466,6 +466,7 @@ Albany::GradientDamageProblem::constructEvaluators(
     //Output
     p->set<string>("Stress Name", "Stress"); //qp_tensor also
     p->set<string>("DP Name", "DP"); // qp_scalar also
+    p->set<string>("Effective Stress Name", "Effective Stress"); // qp_scalar also
  
     //Declare what state data will need to be saved (name, layout, init_type)
     stateMgr.registerStateVariable("stress",qp_tensor,"zero");
@@ -612,6 +613,7 @@ Albany::GradientDamageProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
     p->set<string>("Damage Name", "Damage");
     p->set<string>("DP Name", "DP");
+    p->set<string>("Effective Stress Name", "Effective Stress");
     p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient");
 
     //Output
