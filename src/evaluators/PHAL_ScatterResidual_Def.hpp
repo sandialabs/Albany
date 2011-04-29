@@ -45,6 +45,7 @@ ScatterResidualBase(const Teuchos::ParameterList& p)
     vectorField = p.get<bool>("Vector Field");
   else vectorField = false;
 
+  
   if (!vectorField) {
     numFieldsBase = names.size();
     const std::size_t num_val = numFieldsBase;
@@ -180,9 +181,15 @@ evaluateFields(typename Traits::EvalData workset)
 
               // Global column
               col =  firstcol + eq_col + this->offset;
-
-              // Sum Jacobian
-              Jac->SumIntoMyValues(row, 1, &(valptr->fastAccessDx(lcol)), &col);
+              
+              if (workset.is_adjoint) {
+                  // Sum Jacobian transposed
+                  Jac->SumIntoMyValues(col, 1, &(valptr->fastAccessDx(lcol)), &row);
+              }
+              else {
+                  // Sum Jacobian
+                  Jac->SumIntoMyValues(row, 1, &(valptr->fastAccessDx(lcol)), &col);
+              }
             } // column equations
           } // column nodes
         } // has fast access
@@ -353,7 +360,12 @@ evaluateFields(typename Traits::EvalData workset)
               // Sum Jacobian
 	      for (int block=0; block<nblock_jac; block++) {
 		c = valptr->fastAccessDx(lcol).coeff(block);
-		(*Jac)[block].SumIntoMyValues(row, 1, &c, &col);
+                if (workset.is_adjoint) { 
+		  (*Jac)[block].SumIntoMyValues(col, 1, &c, &row);
+                }
+                else {
+		  (*Jac)[block].SumIntoMyValues(row, 1, &c, &col);
+                }
 	      }
             } // column equations
           } // column nodes

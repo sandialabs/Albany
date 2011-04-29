@@ -180,6 +180,9 @@ Albany::Application::Application(
     problemParams->get("Ignore Residual In Jacobian", false);
 
   perturbBetaForDirichlets = problemParams->get("Perturb Dirichlet",0.0);
+
+  is_adjoint = 
+    problemParams->get("Solve Adjoint", false);
 }
 
 Albany::Application::~Application()
@@ -469,6 +472,7 @@ Albany::Application::computeGlobalJacobian(
     workset.current_time = current_time;
     workset.ignore_residual = ignore_residual_in_jacobian;
     if (xdot != NULL) workset.transientTerms = true;
+    workset.is_adjoint   = is_adjoint;
 
     workset.worksetSize = worksetSize;
     for (int ws=0; ws < numWorksets; ws++) {
