@@ -6,7 +6,7 @@
 ///
 
 // Define only if Zoltan is enabled
-#if defined(ALBANY_ZOLTAN)
+#if defined (ALBANY_LCM) && defined(ALBANY_ZOLTAN)
 
 #include <iostream>
 #include <map>
@@ -771,4 +771,4 @@ namespace LCM {
 
 #endif // #if !defined(LCM_Partition_h)
 
-#endif // #if defined (ALBANY_ZOLTAN)
+#endif // #if defined (ALBANY_LCM) && defined(ALBANY_ZOLTAN)
