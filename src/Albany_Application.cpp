@@ -107,7 +107,10 @@ Albany::Application::Application(
 #ifdef ALBANY_CUTR
   discFactory.setMeshMover(meshMover);
 #endif
-  disc = discFactory.create(neq, problem->numStates(), comm);
+  worksetSize = problemParams->get("Workset Size",100);
+  if (worksetSize < 1) { cout << "FIX ME " << endl; worksetSize = 1000;}
+
+  disc = discFactory.create(neq, problem->numStates(), worksetSize, comm);
 
   // Load connectivity map and coordinates 
   elNodeID = disc->getElNodeID();
@@ -142,6 +145,7 @@ Albany::Application::Application(
     initial_x_dot->Export(*overlapped_xdot, *exporter, Insert);
   }
 
+/*
   // Compute Workset Size
   worksetSize = problemParams->get("Workset Size",0);
   if (worksetSize < 1 || worksetSize > elNodeID.size()) {
@@ -154,6 +158,8 @@ Albany::Application::Application(
      numWorksets = 1 + (elNodeID.size()-1) / worksetSize;
      worksetSize = 1 + (elNodeID.size()-1) / numWorksets;
   }
+*/
+  numWorksets = 1 + (elNodeID.size()-1) / worksetSize;
 
   problem->buildProblem(worksetSize, stateMgr, *disc, responses);
 

@@ -48,6 +48,7 @@ Teuchos::RCP<Albany::AbstractDiscretization>
 Albany::DiscretizationFactory::create(
 		  unsigned int neq,
 		  unsigned int nstates,
+		  unsigned int worksetSize,
                   const Teuchos::RCP<const Epetra_Comm>& epetra_comm)
 {
   Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct;
@@ -55,28 +56,28 @@ Albany::DiscretizationFactory::create(
   std::string& method = discParams->get("Method", "STK1D");
   if (method == "STK1D") {
     
-    stkMeshStruct = Teuchos::rcp(new Albany::Line1DSTKMeshStruct(epetra_comm, discParams, neq, nstates));
+    stkMeshStruct = Teuchos::rcp(new Albany::Line1DSTKMeshStruct(epetra_comm, discParams, neq, nstates, worksetSize));
 
   }
   else if (method == "STK0D") {
     
-    stkMeshStruct = Teuchos::rcp(new Albany::Point0DSTKMeshStruct(epetra_comm, discParams, neq, nstates));
+    stkMeshStruct = Teuchos::rcp(new Albany::Point0DSTKMeshStruct(epetra_comm, discParams, neq, nstates, worksetSize));
 
   }
   else if (method == "STK2D") {
     
-    stkMeshStruct = Teuchos::rcp(new Albany::Rect2DSTKMeshStruct(epetra_comm, discParams, neq, nstates));
+    stkMeshStruct = Teuchos::rcp(new Albany::Rect2DSTKMeshStruct(epetra_comm, discParams, neq, nstates, worksetSize));
 
   }
   else if (method == "STK3D") {
     
-    stkMeshStruct = Teuchos::rcp(new Albany::Cube3DSTKMeshStruct(epetra_comm, discParams, neq, nstates));
+    stkMeshStruct = Teuchos::rcp(new Albany::Cube3DSTKMeshStruct(epetra_comm, discParams, neq, nstates, worksetSize));
 
   }
   else if (method == "Ioss" || method == "Exodus" ||  method == "Pamgen") {
 #ifdef ALBANY_IOSS
     
-    stkMeshStruct = Teuchos::rcp(new Albany::IossSTKMeshStruct(epetra_comm, discParams, neq, nstates));
+    stkMeshStruct = Teuchos::rcp(new Albany::IossSTKMeshStruct(epetra_comm, discParams, neq, nstates, worksetSize));
 
 #else
     TEST_FOR_EXCEPTION(method == "Ioss" || method == "Exodus" ||  method == "Pamgen",
@@ -88,7 +89,7 @@ Albany::DiscretizationFactory::create(
   else if (method == "Cubit") {
 #ifdef ALBANY_CUTR
     
-    stkMeshStruct = Teuchos::rcp(new Albany::FromCubitSTKMeshStruct(meshMover, discParams, neq, nstates));
+    stkMeshStruct = Teuchos::rcp(new Albany::FromCubitSTKMeshStruct(meshMover, discParams, neq, nstates, worksetSize));
 #else 
     TEST_FOR_EXCEPTION(method == "Cubit", 
           Teuchos::Exceptions::InvalidParameter,

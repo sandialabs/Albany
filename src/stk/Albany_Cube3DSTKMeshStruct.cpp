@@ -37,7 +37,8 @@
 Albany::Cube3DSTKMeshStruct::Cube3DSTKMeshStruct(
 		  const Teuchos::RCP<const Epetra_Comm>& comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params, 
-                  const unsigned int neq_, const unsigned int nstates_) :
+                  const unsigned int neq_, const unsigned int nstates_,
+                  const unsigned int worksetSize) :
   GenericSTKMeshStruct(comm),
   periodic(false)
 {
@@ -82,7 +83,7 @@ Albany::Cube3DSTKMeshStruct::Cube3DSTKMeshStruct(
   nsNames.push_back("NodeSet4");
   nsNames.push_back("NodeSet5");
 
-  this->SetupMetaData(params, neq_, nstates_, numDim_);
+  this->SetupMetaData(params, neq_, nstates_, numDim_, worksetSize);
   this->DeclareParts(nsNames);
 
   stk::mesh::fem::set_cell_topology_new< shards::Hexahedron<8> >(*partVec[0]);

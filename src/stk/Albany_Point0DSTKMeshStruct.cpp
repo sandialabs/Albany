@@ -37,7 +37,8 @@
 Albany::Point0DSTKMeshStruct::Point0DSTKMeshStruct(
 		  const Teuchos::RCP<const Epetra_Comm>& comm,
 		  const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_, const unsigned int nstates_) :
+                  const unsigned int neq_, const unsigned int nstates_,
+                  const unsigned int worksetSize) :
   GenericSTKMeshStruct(comm)
 {
 
@@ -51,7 +52,7 @@ Albany::Point0DSTKMeshStruct::Point0DSTKMeshStruct(
 
   std::vector<std::string> nsNames;
 
-  this->SetupMetaData(params, neq_, nstates_, numDim_);
+  this->SetupMetaData(params, neq_, nstates_, numDim_, worksetSize);
   this->DeclareParts(nsNames);
   
   stk::mesh::fem::set_cell_topology_new< shards::Particle >(*partVec[0]);

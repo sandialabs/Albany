@@ -30,12 +30,13 @@ namespace Albany {
   class GenericSTKMeshStruct : public AbstractSTKMeshStruct {
 
     protected: 
-    GenericSTKMeshStruct(const Teuchos::RCP<const Epetra_Comm>& comm_);
+    GenericSTKMeshStruct(const Teuchos::RCP<const Epetra_Comm>& comm);
 
     void SetupMetaData(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_, const unsigned int nstates_,
-                  const int numDim_);
+                  const int numDim_,
+                  const int worksetSize_);
 
     void DeclareParts(std::vector<std::string> nsNames);
 

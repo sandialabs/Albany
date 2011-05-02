@@ -37,7 +37,8 @@
 Albany::Rect2DSTKMeshStruct::Rect2DSTKMeshStruct(
 		  const Teuchos::RCP<const Epetra_Comm>& comm,
 		  const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_, const unsigned int nstates_) :
+                  const unsigned int neq_, const unsigned int nstates_,
+                  const unsigned int worksetSize) :
   GenericSTKMeshStruct(comm),
   periodic(params->get("Periodic BC", false)),
   triangles(false)
@@ -86,7 +87,7 @@ Albany::Rect2DSTKMeshStruct::Rect2DSTKMeshStruct(
   nsNames.push_back("NodeSet2"); 
   nsNames.push_back("NodeSet3"); 
 
-  this->SetupMetaData(params, neq_, nstates_, numDim_);
+  this->SetupMetaData(params, neq_, nstates_, numDim_, worksetSize);
   this->DeclareParts(nsNames);
 
   if (triangles)

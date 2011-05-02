@@ -134,7 +134,8 @@ namespace LCM {
 
     // 1 DOF per node
     // 1 internal variable (partition number)
-    discretization_ptr_ = disc_factory.create(1, 1, communicator);
+    // 10000 workset size
+    discretization_ptr_ = disc_factory.create(1, 1, 10000, communicator);
 
     dimension_ = discretization_ptr_->getNumDim();
 
