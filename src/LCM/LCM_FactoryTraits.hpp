@@ -37,7 +37,9 @@
 #include "PHAL_JouleHeating.hpp"
 
 #include "LCM/evaluators/Stress.hpp"
+#ifdef ALBANY_LAME
 #include "LCM/evaluators/LameStress.hpp"
+#endif
 #include "LCM/evaluators/Strain.hpp"
 #include "LCM/evaluators/ElasticModulus.hpp"
 #include "LCM/evaluators/ElasticityResid.hpp"
@@ -58,8 +60,11 @@
 #include "LCM/evaluators/SaturationModulus.hpp"
 #include "LCM/evaluators/SaturationExponent.hpp"
 #include "LCM/evaluators/Localization.hpp"
+#include "LCM/evaluators/DamageSource.hpp"
+#include "LCM/evaluators/ShearModulus.hpp"
+#include "LCM/evaluators/BulkModulus.hpp"
 
-#include "boost/mpl/vector/vector40.hpp"
+#include "boost/mpl/vector/vector50.hpp"
 #include "boost/mpl/placeholders.hpp"
 using namespace boost::mpl::placeholders;
 
@@ -105,17 +110,23 @@ struct FactoryTraits {
   static const int id_energy_potential          = 28;
   static const int id_hardening_modulus         = 29;
   static const int id_yield_strength            = 30;
-  static const int id_lame_stress               = 31;
-  static const int id_pisdwdf_stress            = 32;
-  static const int id_damage_resid              = 33;
-  static const int id_j2_damage                 = 34;
-  static const int id_damage_ls                 = 35;
-  static const int id_sat_mod                   = 36;
-  static const int id_sat_exp                   = 37;
-  static const int id_localization              = 38;
+  static const int id_pisdwdf_stress            = 31;
+  static const int id_damage_resid              = 32;
+  static const int id_j2_damage                 = 33;
+  static const int id_damage_ls                 = 34;
+  static const int id_sat_mod                   = 35;
+  static const int id_sat_exp                   = 36;
+  static const int id_localization              = 37;
+  static const int id_damage_source             = 38;
+  static const int id_bulk_modulus              = 39;
+  static const int id_shear_modulus             = 40;
+  static const int id_lame_stress               = 41;
 
-
-  typedef boost::mpl::vector39< 
+#ifndef ALBANY_LAME
+  typedef boost::mpl::vector41<
+#else
+  typedef boost::mpl::vector42<
+#endif
     PHAL::Dirichlet<_,Traits>,                //  0
     PHAL::GatherSolution<_,Traits>,           //  1
     PHAL::GatherCoordinateVector<_,Traits>,   //  2
@@ -147,14 +158,19 @@ struct FactoryTraits {
     LCM::EnergyPotential<_,Traits>,           // 28
     LCM::HardeningModulus<_,Traits>,          // 29
     LCM::YieldStrength<_,Traits>,             // 30
-    LCM::LameStress<_,Traits>,                // 31
-    LCM::PisdWdF<_,Traits>,                   // 32
-    LCM::DamageResid<_,Traits>,               // 33
-    LCM::J2Damage<_,Traits>,                  // 34
-    LCM::DamageLS<_,Traits>,                  // 35
-    LCM::SaturationModulus<_,Traits>,         // 36
-    LCM::SaturationExponent<_,Traits>,        // 37
-    LCM::Localization<_,Traits>               // 38
+    LCM::PisdWdF<_,Traits>,                   // 31
+    LCM::DamageResid<_,Traits>,               // 32
+    LCM::J2Damage<_,Traits>,                  // 33
+    LCM::DamageLS<_,Traits>,                  // 34
+    LCM::SaturationModulus<_,Traits>,         // 35
+    LCM::SaturationExponent<_,Traits>,        // 36
+    LCM::Localization<_,Traits>,              // 37
+    LCM::DamageSource<_,Traits>,              // 38
+    LCM::BulkModulus<_,Traits>,               // 39
+    LCM::ShearModulus<_,Traits>               // 40
+#ifdef ALBANY_LAME
+    ,LCM::LameStress<_,Traits>                // 41
+#endif
     > EvaluatorTypes;
 };
 }

@@ -509,7 +509,6 @@ Albany::ElasticityProblem::getValidProblemParameters() const
 
   validPL->sublist("Elastic Modulus", false, "");
   validPL->sublist("Poissons Ratio", false, "");
-  validPL->set<bool>("Use Lame", false, "");
 
   return validPL;
 }

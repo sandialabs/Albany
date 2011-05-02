@@ -253,55 +253,6 @@ Albany::LameProblem::constructEvaluators(const int worksetSize,
     evaluators_to_build["Compute Basis Functions"] = p;
   }
 
-
-  { // Elastic Modulus
-    RCP<ParameterList> p = rcp(new ParameterList);
-
-    int type = LCM::FactoryTraits<AlbanyTraits>::id_elastic_modulus;
-    p->set<int>("Type", type);
-
-    p->set<string>("QP Variable Name", "Elastic Modulus");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
-
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Elastic Modulus");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-    // The LameStress evaluator functions properly only if the material properties are constant
-    string elasticModulusType = paramList.get<std::string>("Elastic Modulus Type");
-    TEST_FOR_EXCEPTION(elasticModulusType != "Constant", Teuchos::Exceptions::InvalidParameter,
-                       " LAME materials enabled only for constant material properties.  Set \"Elastic Modulus Type\" to \"Constant\".");
-
-    evaluators_to_build["Elastic Modulus"] = p;
-  }
-
-  { // Poissons Ratio 
-    RCP<ParameterList> p = rcp(new ParameterList);
-
-    int type = LCM::FactoryTraits<AlbanyTraits>::id_poissons_ratio;
-    p->set<int>("Type", type);
-
-    p->set<string>("QP Variable Name", "Poissons Ratio");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
-
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Poissons Ratio");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-    // The LameStress evaluator functions properly only if the material properties are constant
-    string poissonsRatioType = paramList.get<std::string>("Poissons Ratio Type");
-    TEST_FOR_EXCEPTION(poissonsRatioType != "Constant", Teuchos::Exceptions::InvalidParameter,
-                       " LAME materials enabled only for constant material properties.  Set \"Poissons Ratio Type\" to \"Constant\".");
-
-    evaluators_to_build["Poissons Ratio"] = p;
-  }
-
   { // DOFVec: Interpolate nodal Displacement values to quad points
     RCP<ParameterList> p = rcp(new ParameterList("Elasticity DOFVecInterpolation Displacement"));
 
@@ -418,22 +369,23 @@ Albany::LameProblem::constructEvaluators(const int worksetSize,
     evaluators_to_build["DefGrad"] = p;
   }
 
-  { // LameStress
+  { //LameStress
     RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
     int type = LCM::FactoryTraits<AlbanyTraits>::id_lame_stress;
     p->set<int>("Type", type);
+
+    //Material properties that will be passed to LAME material model
+    string lameMaterialModel = params->get<string>("Lame Material Model");
+    p->set<string>("Lame Material Model", lameMaterialModel);
+    Teuchos::ParameterList& lameMaterialParametersList = p->sublist("Lame Material Parameters");
+    lameMaterialParametersList = params->sublist("Lame Material Parameters");
 
     //Input
     p->set<string>("Strain Name", "Strain");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
 
     p->set<string>("DefGrad Name", "Deformation Gradient"); // qp_tensor also
-
-    p->set<string>("Elastic Modulus Name", "Elastic Modulus");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
-
-    p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // qp_scalar also
 
     //Output
     p->set<string>("Stress Name", "Stress"); // qp_tensor also
@@ -525,8 +477,8 @@ Albany::LameProblem::getValidProblemParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidLameProblemParams");
 
-  validPL->sublist("Elastic Modulus", false, "");
-  validPL->sublist("Poissons Ratio", false, "");
+  validPL->set<string>("Lame Material Model", "", "The name of the LAME material model.");
+  validPL->sublist("Lame Material Parameters", false, "");
 
   return validPL;
 }

@@ -23,15 +23,11 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
-#ifdef ENABLE_LAME
+// LAME includes
 #include <models/Material.h>
 #include <models/Elastic.h>
-#endif
 
-/** \brief Finite Element Interpolation Evaluator
-
-    This evaluator interpolates nodal DOF values to quad points.
-
+/** \brief Evaluates stress using the Library for Advanced Materials for Engineering (LAME).
 */
 namespace LCM {
 
@@ -55,8 +51,6 @@ private:
 
   // Input:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defGradField;
-  PHX::MDField<ScalarT,Cell,QuadPoint> elasticModulusField;
-  PHX::MDField<ScalarT,Cell,QuadPoint> poissonsRatioField;
 
   unsigned int numQPs;
   unsigned int numDims;
@@ -64,12 +58,8 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stressField;
 
-#ifdef ENABLE_LAME
-
   // The LAME material model
   Teuchos::RCP<lame::Material> lameMaterialModel;
-
-#endif
 };
 }
 
