@@ -7,7 +7,7 @@
 
 
 // Define only if Zoltan is enabled
-#if defined(ALBANY_ZOLTAN)
+#if defined (ALBANY_LCM) && defined(ALBANY_ZOLTAN)
 
 #include <cassert>
 #include <cstdlib>
@@ -1893,4 +1893,4 @@ namespace LCM {
 
 } // namespace LCM
 
-#endif // #if defined (ALBANY_ZOLTAN)
+#endif // #if defined (ALBANY_LCM) && defined(ALBANY_ZOLTAN)

@@ -3,7 +3,7 @@
 //
 
 // Define only if Zoltan is enabled
-#if defined(ALBANY_ZOLTAN)
+#if defined (ALBANY_LCM) && defined(ALBANY_ZOLTAN)
 
 #include <iomanip>
 #include <Teuchos_CommandLineProcessor.hpp>
@@ -146,7 +146,7 @@ int main(int ac, char* av[])
 
 }
 
-#else // #if defined (ALBANY_ZOLTAN)
+#else // #if defined (ALBANY_LCM) && defined(ALBANY_ZOLTAN)
 
 // Zoltan not defined, do nothing
 int main(int ac, char* av[])
