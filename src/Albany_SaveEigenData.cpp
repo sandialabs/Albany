@@ -59,32 +59,56 @@ Albany::SaveEigenData::save(
   if (ns > evecs_r->numVectors())
     ns = evecs_r->numVectors();
 
+  std::fstream evecFile;
+  std::fstream evalFile;
+  char buf[100];
+  evalFile.open ("evals.txtdump", fstream::out);
+  evalFile << "# Eigenvalues: index, Re, Im" << endl;
   for (int i=0; i<ns; i++) {
-    if ((*evals_i)[i]==0) {
-      cout << setprecision(8) 
-           << "Eigenvalue " << i << " with value: " << (*evals_r)[i] 
-           << "\n   Has Eigenvector: " << *(e_r(i)) << "\n" << endl;
+    evalFile << i << "  " << (*evals_r)[i] << "  " << (*evals_i)[i] << endl;
 
-      std::fstream file;
-      char buf[100];
+    if ( fabs((*evals_i)[i]) == 0 ) {  //  /(fabs((*evals_r)[i]) + ZERO_TOL) < ZERO_TO
+      //Print to stdout -- good for debugging but too much output in most cases
+      //cout << setprecision(8) 
+      //     << "Eigenvalue " << i << " with value: " << (*evals_r)[i] 
+      //     << "\n   Has Eigenvector: " << *(e_r(i)) << "\n" << endl;
+
+      //write text format to evec<i>.txtdump file
       sprintf(buf,"evec%d.txtdump",i);
-      file.open (buf, fstream::out);
-      file << setprecision(8) 
+      evecFile.open (buf, fstream::out);
+      evecFile << setprecision(8) 
            << "# Eigenvalue " << i << " with value: " << (*evals_r)[i] 
            << "\n# Has Eigenvector: \n" << *(e_r(i)) << "\n" << endl;
-      file.close();
+      evecFile.close();
       cout << "Saved to " << buf << endl;
+
+      //export to exodus
+      noxObserver->observeSolution( *(e_r(i)) );
     }
     else {
-      cout << setprecision(8) 
-           << "Eigenvalue " << i << " with value: " << (*evals_r)[i] 
-           << " +  " << (*evals_i)[i] << " i \nHas Eigenvector Re, Im" 
-           << *(e_r(i)) << "\n" << *(e_i(i)) << endl;
-    }
+      //Print to stdout -- good for debugging but too much output in most cases
+      //cout << setprecision(8) 
+      //     << "Eigenvalue " << i << " with value: " << (*evals_r)[i] 
+      //     << " +  " << (*evals_i)[i] << " i \nHas Eigenvector Re, Im" 
+      //     << *(e_r(i)) << "\n" << *(e_i(i)) << endl;
 
-    //export real part to exodus
-    //noxObserver->observeSolution( *(e_r(i)) );
+      //write text format to evec<i>.txtdump file
+      sprintf(buf,"evec%d.txtdump",i);
+      evecFile.open (buf, fstream::out);
+      evecFile << setprecision(8) 
+           << "# Eigenvalue " << i << " with value: " 
+	   << (*evals_r)[i] <<" +  " << (*evals_i)[i] << "\n"
+           << "# Has Eigenvector Re,Im: \n" 
+	   << *(e_r(i)) << "\n" << *(e_i(i)) << "\n" << endl;
+      evecFile.close();
+      cout << "Saved Re, Im to " << buf << endl;
+
+      //export real and imaginary parts to exodus
+      noxObserver->observeSolution( *(e_r(i)) );
+      noxObserver->observeSolution( *(e_i(i)) );
+    }
   }
+  evalFile.close();
 
   return NOX::Abstract::Group::Ok;
 }

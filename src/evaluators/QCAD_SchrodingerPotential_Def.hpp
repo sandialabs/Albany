@@ -153,6 +153,7 @@ QCAD::SchrodingerPotential<EvalT,Traits>::potentialValue(
 	r2 = (coord[0]-0.5)*(coord[0]-0.5) + (coord[1]-0.5)*(coord[1]-0.5) 
 	   + (coord[2]-0.5)*(coord[2]-0.5);
 	val = prefactor * r2;
+	break;
       default:
         TEST_FOR_EXCEPT(true);
     }  // end of switch(numDim)
