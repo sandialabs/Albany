@@ -36,14 +36,11 @@ namespace PHAL {
 
 struct Workset {
   
-  Workset(const Teuchos::ArrayRCP<double> &c,
-          const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > &e) :
-    coordinates(c), elNodeID(e),
-    transientTerms(false), ignore_residual(false) {}
+  Workset(const Teuchos::ArrayRCP<double> &c) :
+    coordinates(c), transientTerms(false), ignore_residual(false) {}
 
   unsigned int numCells;
   unsigned int worksetSize;
-  unsigned int firstCell;
 
   Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> > sg_expansion;
 
@@ -87,7 +84,8 @@ struct Workset {
   std::vector<int> *coord_deriv_indices;
 
   const Teuchos::ArrayRCP<double> &coordinates;
-  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >  &elNodeID;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >  wsElNodeID;
+  std::string EBName;
 
   Teuchos::RCP<const Albany::StateVariables> oldState;
   Teuchos::RCP<Albany::StateVariables> newState;

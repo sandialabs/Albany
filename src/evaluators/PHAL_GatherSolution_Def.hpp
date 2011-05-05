@@ -138,7 +138,7 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<const Epetra_Vector> xdot = workset.xdot;
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<int>& nodeID  = workset.elNodeID[workset.firstCell+cell];
+    const Teuchos::ArrayRCP<int>& nodeID  = workset.wsElNodeID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       int firstDOF =    nodeID[node] * neq + this->offset;
@@ -183,7 +183,7 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT* valptr;
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<int>& nodeID  = workset.elNodeID[workset.firstCell+cell];
+    const Teuchos::ArrayRCP<int>& nodeID  = workset.wsElNodeID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       int firstDOF = nodeID[node] * neq + this->offset;
@@ -238,7 +238,7 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT* valptr;
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<int>& nodeID  = workset.elNodeID[workset.firstCell+cell];
+    const Teuchos::ArrayRCP<int>& nodeID  = workset.wsElNodeID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       int firstDOF = nodeID[node] * neq + this->offset;
@@ -302,7 +302,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   int nblock = x->size();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<int>& nodeID  = workset.elNodeID[workset.firstCell+cell];
+    const Teuchos::ArrayRCP<int>& nodeID  = workset.wsElNodeID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       int firstDOF = nodeID[node] * neq + this->offset;
@@ -362,7 +362,7 @@ evaluateFields(typename Traits::EvalData workset)
   
   int nblock = x->size();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<int>& nodeID  = workset.elNodeID[workset.firstCell+cell];
+    const Teuchos::ArrayRCP<int>& nodeID  = workset.wsElNodeID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       int firstDOF = nodeID[node] * neq + this->offset;
@@ -422,7 +422,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   int nblock = x->size();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<int>& nodeID  = workset.elNodeID[workset.firstCell+cell];
+    const Teuchos::ArrayRCP<int>& nodeID  = workset.wsElNodeID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       int firstDOF = nodeID[node] * neq + this->offset;
@@ -480,7 +480,7 @@ evaluateFields(typename Traits::EvalData workset)
   
   int nblock = x->size();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<int>& nodeID  = workset.elNodeID[workset.firstCell+cell];
+    const Teuchos::ArrayRCP<int>& nodeID  = workset.wsElNodeID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       int firstDOF = nodeID[node] * neq + this->offset;

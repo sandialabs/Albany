@@ -113,9 +113,12 @@ Albany::Application::Application(
   disc = discFactory.create(neq, problem->numStates(), worksetSize, comm);
 
   // Load connectivity map and coordinates 
-  elNodeID = disc->getElNodeID();
+  wsElNodeID = disc->getWsElNodeID();
   coordinates = disc->getCoordinates();
+  wsEBNames = disc->getWsEBNames();
   int numDim = disc->getNumDim();
+  numWorksets = wsElNodeID.size();
+
 
   // Create Epetra objects
   importer = Teuchos::rcp(new Epetra_Import(*(disc->getOverlapMap()), 
@@ -137,29 +140,13 @@ Albany::Application::Application(
   if (initial_guess != Teuchos::null) *initial_x = *initial_guess;
   else {
     overlapped_x->Import(*initial_x, *importer, Insert);
-    Albany::InitialConditions(overlapped_x, elNodeID, coordinates, neq, numDim,
+    Albany::InitialConditions(overlapped_x, wsElNodeID, coordinates, neq, numDim,
                               problemParams->sublist("Initial Condition"));
-    Albany::InitialConditions(overlapped_xdot,  elNodeID, coordinates, neq, numDim,
+    Albany::InitialConditions(overlapped_xdot,  wsElNodeID, coordinates, neq, numDim,
                               problemParams->sublist("Initial Condition Dot"));
     initial_x->Export(*overlapped_x, *exporter, Insert);
     initial_x_dot->Export(*overlapped_xdot, *exporter, Insert);
   }
-
-/*
-  // Compute Workset Size
-  worksetSize = problemParams->get("Workset Size",0);
-  if (worksetSize < 1 || worksetSize > elNodeID.size()) {
-     worksetSize = elNodeID.size();
-     numWorksets = 1;
-  }
-  else {
-     // Decrease worksetSize to smallest size that leads to
-     // the same number of worksets as the enetered worksetSize
-     numWorksets = 1 + (elNodeID.size()-1) / worksetSize;
-     worksetSize = 1 + (elNodeID.size()-1) / numWorksets;
-  }
-*/
-  numWorksets = 1 + (elNodeID.size()-1) / worksetSize;
 
   problem->buildProblem(worksetSize, stateMgr, *disc, responses);
 
@@ -372,7 +359,7 @@ Albany::Application::computeGlobalResidual(
 
   // Set data in Workset struct, and perform fill via field manager
   { 
-    PHAL::Workset workset(coordinates, elNodeID);
+    PHAL::Workset workset(coordinates);
 
     workset.x        = overlapped_x;
     workset.xdot     = overlapped_xdot;
@@ -382,14 +369,10 @@ Albany::Application::computeGlobalResidual(
     if (xdot != NULL) workset.transientTerms = true;
 
     workset.worksetSize = worksetSize;
-    workset.numCells = worksetSize;
-
-    for (int fc=0, ws=0; ws < numWorksets; fc+=worksetSize, ws++) {
-      workset.firstCell = fc;
-      if (elNodeID.size() - fc < worksetSize) {
-          workset.numCells = elNodeID.size() - fc;
-      }
-
+    for (int ws=0; ws < numWorksets; ws++) {
+      workset.numCells = wsElNodeID[ws].size();
+      workset.wsElNodeID = wsElNodeID[ws];
+      workset.EBName = wsEBNames[ws];
 
       workset.oldState = stateMgr.getOldStateVariables(ws);
       workset.newState = stateMgr.getNewStateVariables(ws);
@@ -409,7 +392,7 @@ Albany::Application::computeGlobalResidual(
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (dfm!=Teuchos::null) { 
-    PHAL::Workset workset(coordinates, elNodeID);
+    PHAL::Workset workset(coordinates);
 
     workset.f = Teuchos::rcpFromRef(f);
     workset.nodeSets = Teuchos::rcpFromRef(disc->getNodeSets());
@@ -483,7 +466,7 @@ Albany::Application::computeGlobalJacobian(
 
   // Set data in Workset struct, and perform fill via field manager
   {
-    PHAL::Workset workset(coordinates, elNodeID);
+    PHAL::Workset workset(coordinates);
 
     workset.x        = overlapped_x;
     workset.xdot     = overlapped_xdot;
@@ -497,12 +480,10 @@ Albany::Application::computeGlobalJacobian(
     if (xdot != NULL) workset.transientTerms = true;
 
     workset.worksetSize = worksetSize;
-    workset.numCells = worksetSize;
-
-    for (int fc=0, ws=0; ws < numWorksets; fc+=worksetSize, ws++) {
-      workset.firstCell = fc;
-      if (elNodeID.size() - fc < worksetSize)
-          workset.numCells = elNodeID.size() - fc;
+    for (int ws=0; ws < numWorksets; ws++) {
+      workset.numCells = wsElNodeID[ws].size();
+      workset.wsElNodeID = wsElNodeID[ws];
+      workset.EBName = wsEBNames[ws];
 
       workset.oldState = stateMgr.getOldStateVariables(ws);
       workset.newState = stateMgr.getNewStateVariables(ws);
@@ -521,7 +502,7 @@ Albany::Application::computeGlobalJacobian(
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (dfm!=Teuchos::null) {
-    PHAL::Workset workset(coordinates, elNodeID);
+    PHAL::Workset workset(coordinates);
 
     workset.f = Teuchos::rcp(f,false);
     workset.Jac = Teuchos::rcpFromRef(jac);
@@ -764,7 +745,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
   // Set data in Workset struct, and perform fill via field manager
   {
-    PHAL::Workset workset(coordinates, elNodeID);
+    PHAL::Workset workset(coordinates);
 
     workset.x = overlapped_x;
     workset.xdot = overlapped_xdot;
@@ -789,12 +770,10 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     workset.coord_deriv_indices = &coord_deriv_indices;
 
     workset.worksetSize = worksetSize;
-    workset.numCells = worksetSize;
-
-    for (int fc=0, ws=0; ws < numWorksets; fc+=worksetSize, ws++) {
-      workset.firstCell = fc;
-      if (elNodeID.size() - fc < worksetSize)
-        workset.numCells = elNodeID.size() - fc;
+    for (int ws=0; ws < numWorksets; ws++) {
+      workset.numCells = wsElNodeID[ws].size();
+      workset.wsElNodeID = wsElNodeID[ws];
+      workset.EBName = wsEBNames[ws];
 
       workset.oldState = stateMgr.getOldStateVariables(ws);
       workset.newState = stateMgr.getNewStateVariables(ws);
@@ -819,7 +798,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (dfm!=Teuchos::null) {
-    PHAL::Workset workset(coordinates, elNodeID);
+    PHAL::Workset workset(coordinates);
 
     workset.num_cols_x = num_cols_x;
     workset.num_cols_p = num_cols_p;
@@ -1047,7 +1026,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
   // Set data in Workset struct, and perform fill via field manager
   {  
-    PHAL::Workset workset(coordinates, elNodeID);
+    PHAL::Workset workset(coordinates);
 
     workset.sg_expansion = sg_expansion;
     workset.sg_x         = sg_overlapped_x;
@@ -1058,12 +1037,10 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     if (sg_xdot != NULL) workset.transientTerms = true;
 
     workset.worksetSize = worksetSize;
-    workset.numCells = worksetSize;
-
-    for (int fc=0, ws=0; ws < numWorksets; fc+=worksetSize, ws++) {
-      workset.firstCell = fc;
-      if (elNodeID.size() - fc < worksetSize)
-        workset.numCells = elNodeID.size() - fc;
+    for (int ws=0; ws < numWorksets; ws++) {
+      workset.numCells = wsElNodeID[ws].size();
+      workset.wsElNodeID = wsElNodeID[ws];
+      workset.EBName = wsEBNames[ws];
 
       workset.oldState = stateMgr.getOldStateVariables(ws);
       workset.newState = stateMgr.getNewStateVariables(ws);
@@ -1080,7 +1057,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (dfm!=Teuchos::null) { 
-    PHAL::Workset workset(coordinates, elNodeID);
+    PHAL::Workset workset(coordinates);
 
     workset.sg_f = Teuchos::rcpFromRef(sg_f);
     workset.nodeSets = Teuchos::rcpFromRef(disc->getNodeSets());
@@ -1183,7 +1160,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
   // Set data in Workset struct, and perform fill via field manager
   {
-    PHAL::Workset workset(coordinates, elNodeID);
+    PHAL::Workset workset(coordinates);
 
     workset.sg_expansion = sg_expansion;
     workset.sg_x         = sg_overlapped_x;
@@ -1198,12 +1175,10 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     if (sg_xdot != NULL) workset.transientTerms = true;
 
     workset.worksetSize = worksetSize;
-    workset.numCells = worksetSize;
-
-    for (int fc=0, ws=0; ws < numWorksets; fc+=worksetSize, ws++) {
-      workset.firstCell = fc;
-      if (elNodeID.size() - fc < worksetSize)
-          workset.numCells = elNodeID.size() - fc;
+    for (int ws=0; ws < numWorksets; ws++) {
+      workset.numCells = wsElNodeID[ws].size();
+      workset.wsElNodeID = wsElNodeID[ws];
+      workset.EBName = wsEBNames[ws];
 
       workset.oldState = stateMgr.getOldStateVariables(ws);
       workset.newState = stateMgr.getNewStateVariables(ws);
@@ -1229,7 +1204,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (dfm!=Teuchos::null) {
-    PHAL::Workset workset(coordinates, elNodeID);
+    PHAL::Workset workset(coordinates);
 
     workset.sg_f = Teuchos::rcp(sg_f,false);
     workset.sg_Jac = Teuchos::rcpFromRef(sg_jac);
@@ -1367,7 +1342,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
   // Set data in Workset struct, and perform fill via field manager
   {  
-    PHAL::Workset workset(coordinates, elNodeID);
+    PHAL::Workset workset(coordinates);
 
     workset.mp_x         = mp_overlapped_x;
     workset.mp_xdot      = mp_overlapped_xdot;
@@ -1377,12 +1352,10 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     if (mp_xdot != NULL) workset.transientTerms = true;
 
     workset.worksetSize = worksetSize;
-    workset.numCells = worksetSize;
-
-    for (int fc=0, ws=0; ws < numWorksets; fc+=worksetSize, ws++) {
-      workset.firstCell = fc;
-      if (elNodeID.size() - fc < worksetSize)
-        workset.numCells = elNodeID.size() - fc;
+    for (int ws=0; ws < numWorksets; ws++) {
+      workset.numCells = wsElNodeID[ws].size();
+      workset.wsElNodeID = wsElNodeID[ws];
+      workset.EBName = wsEBNames[ws];
 
       workset.oldState = stateMgr.getOldStateVariables(ws);
       workset.newState = stateMgr.getNewStateVariables(ws);
@@ -1399,7 +1372,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (dfm!=Teuchos::null) { 
-    PHAL::Workset workset(coordinates, elNodeID);
+    PHAL::Workset workset(coordinates);
 
     workset.mp_f = Teuchos::rcpFromRef(mp_f);
     workset.nodeSets = Teuchos::rcpFromRef(disc->getNodeSets());
@@ -1512,7 +1485,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
   // Set data in Workset struct, and perform fill via field manager
   {
-    PHAL::Workset workset(coordinates, elNodeID);
+    PHAL::Workset workset(coordinates);
 
     workset.mp_x         = mp_overlapped_x;
     workset.mp_xdot      = mp_overlapped_xdot;
@@ -1526,12 +1499,10 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     if (mp_xdot != NULL) workset.transientTerms = true;
 
     workset.worksetSize = worksetSize;
-    workset.numCells = worksetSize;
-
-    for (int fc=0, ws=0; ws < numWorksets; fc+=worksetSize, ws++) {
-      workset.firstCell = fc;
-      if (elNodeID.size() - fc < worksetSize)
-          workset.numCells = elNodeID.size() - fc;
+    for (int ws=0; ws < numWorksets; ws++) {
+      workset.numCells = wsElNodeID[ws].size();
+      workset.wsElNodeID = wsElNodeID[ws];
+      workset.EBName = wsEBNames[ws];
 
       workset.oldState = stateMgr.getOldStateVariables(ws);
       workset.newState = stateMgr.getNewStateVariables(ws);
@@ -1557,7 +1528,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (dfm!=Teuchos::null) {
-    PHAL::Workset workset(coordinates, elNodeID);
+    PHAL::Workset workset(coordinates);
 
     workset.mp_f = Teuchos::rcp(mp_f,false);
     workset.mp_Jac = Teuchos::rcpFromRef(mp_jac);

@@ -42,7 +42,7 @@ getValidInitialConditionParameters()
 }
 
 void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
-                       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& elNodeID,
+                       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >& wsElNodeID,
                        const Teuchos::ArrayRCP<double>& coordinates, 
                        const int neq,
                        const int numDim,
@@ -61,10 +61,11 @@ void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
   Teuchos::RCP<Albany::AnalyticFunction> initFunc
     = createAnalyticFunction(name, neq, numDim, data);
 
-  // Loop over all elements, all local nodes, compute soln as a function of coord
-  for (int el=0; el < elNodeID.size(); el++) {
-    for (int ln=0; ln < elNodeID[0].size(); ln++) {
-       int lid = elNodeID[el][ln];
+  // Loop over all worksets, elements, all local nodes: compute soln as a function of coord
+  for (int ws=0; ws < wsElNodeID.size(); ws++) {
+  for (int el=0; el < wsElNodeID[ws].size(); el++) {
+    for (int ln=0; ln < wsElNodeID[ws][0].size(); ln++) {
+       int lid = wsElNodeID[ws][el][ln];
        int coordID = 3*lid;
        double* x = &(*soln)[neq*lid];
        const double* X = &coordinates[coordID];
@@ -72,7 +73,7 @@ void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
        initFunc->compute(x,X);
 
     }
-  }
+  } }
 }
 
 }

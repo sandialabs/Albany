@@ -65,6 +65,7 @@
     <Parameter name="3D Elements" type="int" value="10"/> <!-- Number in the third direction -->
     <Parameter name="Method" type="string" value="STK3D"/>
     <Parameter name="Exodus Output File Name" type="string" value="stel3d.exo"/>
+    <Parameter name="Cubature Degree" type="int" value="3"/> 
   </ParameterList>
   <!-- RGRESSION comparison of the RESPONSE FUNCTION declared above-->
   <ParameterList name="Regression Results">

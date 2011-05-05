@@ -114,7 +114,7 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT *valptr;
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<int>& nodeID  = workset.elNodeID[workset.firstCell+cell];
+    const Teuchos::ArrayRCP<int>& nodeID  = workset.wsElNodeID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       int firstDOF = nodeID[node] * neq + this->offset;
@@ -153,7 +153,7 @@ evaluateFields(typename Traits::EvalData workset)
   int row, lcol, firstcol, col;
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<int>& nodeID  = workset.elNodeID[workset.firstCell+cell];
+    const Teuchos::ArrayRCP<int>& nodeID  = workset.wsElNodeID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       int firstDOF = nodeID[node] * neq + this->offset;
@@ -226,7 +226,7 @@ evaluateFields(typename Traits::EvalData workset)
                      "One of f, JV, or fp must be non-null! " << std::endl);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<int>& nodeID  = workset.elNodeID[workset.firstCell+cell];
+    const Teuchos::ArrayRCP<int>& nodeID  = workset.wsElNodeID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       int firstDOF = nodeID[node] * neq + this->offset;
@@ -274,7 +274,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   int nblock = f->size();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<int>& nodeID  = workset.elNodeID[workset.firstCell+cell];
+    const Teuchos::ArrayRCP<int>& nodeID  = workset.wsElNodeID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       int firstDOF = nodeID[node] * neq + this->offset;
@@ -320,7 +320,7 @@ evaluateFields(typename Traits::EvalData workset)
   double c; // use double since it goes into CrsMatrix
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<int>& nodeID  = workset.elNodeID[workset.firstCell+cell];
+    const Teuchos::ArrayRCP<int>& nodeID  = workset.wsElNodeID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       int firstDOF = nodeID[node] * neq + this->offset;
@@ -386,7 +386,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   int nblock = f->size();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<int>& nodeID  = workset.elNodeID[workset.firstCell+cell];
+    const Teuchos::ArrayRCP<int>& nodeID  = workset.wsElNodeID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       int firstDOF = nodeID[node] * neq + this->offset;
@@ -432,7 +432,7 @@ evaluateFields(typename Traits::EvalData workset)
   double c; // use double since it goes into CrsMatrix
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<int>& nodeID  = workset.elNodeID[workset.firstCell+cell];
+    const Teuchos::ArrayRCP<int>& nodeID  = workset.wsElNodeID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       int firstDOF = nodeID[node] * neq + this->offset;

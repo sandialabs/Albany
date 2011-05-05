@@ -67,11 +67,14 @@ namespace Albany {
     virtual const NodeSetList& getNodeSets() const = 0;
     virtual const std::vector<std::string>& getNodeSetIDs() const = 0;
 
-    //! Get map from (El, Local Node) -> NodeID
-    virtual const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& getElNodeID() const = 0;
+    //! Get map from (Ws, El, Local Node) -> NodeLID
+    virtual const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >& getWsElNodeID() const = 0;
 
     //! Retrieve coodinate vector (num_used_nodes * 3)
     virtual Teuchos::ArrayRCP<double>&  getCoordinates() const = 0;
+
+    //! Retrieve Vector (length num worksets) of element block names
+    virtual const Teuchos::ArrayRCP<std::string>&  getWsEBNames() const = 0;
 
     //! Get Cubature Degree from input file
     virtual int getCubatureDegree() const = 0;

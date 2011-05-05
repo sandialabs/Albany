@@ -138,6 +138,20 @@ Albany::STKDiscretization::STKDiscretization(
 
   int numBuckets =  buckets.size();
 
+  wsEBNames.resize(numBuckets);
+  for (int i=0; i<numBuckets; i++) {
+     std::vector< stk::mesh::Part * >  bpv;
+     buckets[i]->supersets(bpv);
+     for (int j=0; j<bpv.size(); j++) {
+       if (bpv[j]->primary_entity_rank() == metaData.element_rank()) {
+         if (bpv[j]->name()[0] != '{') {
+           cout << "Bucket " << i << " is in Element Block:  " << bpv[j]->name() 
+                << "  and has " << buckets[i]->size() << " elements." << endl;
+           wsEBNames[i]=bpv[j]->name();
+         }
+       }
+     }
+  }
 
   if (comm->MyPID()==0)
     cout << "STKDisc: " << cells.size() << " elements on Proc 0 " << endl;
@@ -165,18 +179,19 @@ Albany::STKDiscretization::STKDiscretization(
   }
   overlap_graph->FillComplete();
 
-  // Fill  elNodeID(el_LID, local node) => node_LID
-  elNodeID.resize(cells.size());
+  // Fill  wsElNodeID(workset, el_LID, local node) => node_LID
+  wsElNodeID.resize(numBuckets);
   int el_lid=0;
 for (unsigned int b=0; b < buckets.size(); b++) {
   stk::mesh::Bucket& buck = *buckets[b];
+  wsElNodeID[b].resize(buck.size());
   for (unsigned int i=0; i < buck.size(); i++, el_lid++) {
 
     stk::mesh::Entity& e = buck[i];
 
     stk::mesh::PairIterRelation rel = e.relations();
 
-    elNodeID[el_lid].resize(nodes_per_element);
+    wsElNodeID[b][i].resize(nodes_per_element);
     // loop over local nodes
     for (unsigned int j=0; j < rel.size(); j++) {
       stk::mesh::Entity& rowNode = * rel[j].entity();
@@ -184,7 +199,7 @@ for (unsigned int b=0; b < buckets.size(); b++) {
       int node_lid = overlap_map->LID(node_gid * neq) / neq;
       TEST_FOR_EXCEPTION(node_lid<0, std::logic_error,
           "STK1D_Disc: node_lid out of range " << node_lid << endl);
-      elNodeID[el_lid][j] = node_lid;
+      wsElNodeID[b][i][j] = node_lid;
     }
   }
 }
@@ -250,14 +265,6 @@ for (unsigned int b=0; b < buckets.size(); b++) {
          << " disabling exodus output \n" << endl;
   
 #endif
-
-
-  const stk::mesh::PartVector& pv = metaData.get_parts();
-  for (unsigned int i=0; i < pv.size(); i++)
-    if (pv[i]->primary_entity_rank() == metaData.element_rank())
-     if (pv[i]->name()[0] != '{')
-      cout << "QQQQ " << pv[i]->name() << endl;
-
 }
 
 Albany::STKDiscretization::~STKDiscretization()
@@ -298,10 +305,10 @@ Albany::STKDiscretization::getNodeMap() const
   return node_map;
 }
 
-const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >&
-Albany::STKDiscretization::getElNodeID() const
+const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >&
+Albany::STKDiscretization::getWsElNodeID() const
 {
-  return elNodeID;
+  return wsElNodeID;
 }
 
 Teuchos::ArrayRCP<double>& 
@@ -318,6 +325,12 @@ Albany::STKDiscretization::getCoordinates() const
   }
 
   return coordinates;
+}
+
+const Teuchos::ArrayRCP<std::string>& 
+Albany::STKDiscretization::getWsEBNames() const
+{
+  return wsEBNames;
 }
 
 inline int Albany::STKDiscretization::getDOF(stk::mesh::Entity& node, int eq) const

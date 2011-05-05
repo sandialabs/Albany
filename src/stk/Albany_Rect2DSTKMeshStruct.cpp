@@ -126,13 +126,9 @@ Albany::Rect2DSTKMeshStruct::Rect2DSTKMeshStruct(
     singlePartVec[0] = partVec[0];
 
     // Declare NodesL= (Add one to IDs because STK requires 1-based
-cout << " RRR0 noPartVec size  " << noPartVec.size() << endl;
     stk::mesh::Entity& llnode = bulkData->declare_entity(metaData->node_rank(), 1+lower_left, noPartVec);
-cout << " RRR1 noPartVec size  " << noPartVec.size() << endl;
     stk::mesh::Entity& lrnode = bulkData->declare_entity(metaData->node_rank(), 1+lower_right, noPartVec);
-cout << " RRR2 noPartVec size  " << noPartVec.size() << endl;
     stk::mesh::Entity& urnode = bulkData->declare_entity(metaData->node_rank(), 1+upper_right, noPartVec);
-cout << " RRR3 noPartVec size  " << noPartVec.size() << endl;
     stk::mesh::Entity& ulnode = bulkData->declare_entity(metaData->node_rank(), 1+upper_left, noPartVec);
 
     if (triangles) { // pair of 3-node triangles

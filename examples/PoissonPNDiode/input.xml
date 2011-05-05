@@ -1,7 +1,6 @@
 <ParameterList>
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Poisson 2D" />
-    <Parameter name="Workset Size" type="int" value="-1" />
 
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS anode for DOF Phi" type="double" value="-13.4439" />

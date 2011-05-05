@@ -80,6 +80,10 @@ evaluateFields(typename Traits::EvalData workset)
   Intrepid::FieldContainer<RealType>& eDensityState = *((*workset.newState)["ElectronDensity"]);
   Intrepid::FieldContainer<RealType>& hDensityState = *((*workset.newState)["HoleDensity"]);
   Intrepid::FieldContainer<RealType>& ePotentialState = *((*workset.newState)["ElectricPotential"]);
+
+  if (workset.EBName == "silicon") cout << "Posson Source: in  silicon  material" << endl;
+  else if (workset.EBName == "sio2") cout << "Posson Source: in  sio2  material" << endl;
+  else  cout << "Posson Source: in unknown material. HELP." << endl;
   
   for (std::size_t cell=0; cell < workset.numCells; ++cell) 
   {

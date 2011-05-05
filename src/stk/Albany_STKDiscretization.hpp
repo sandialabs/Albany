@@ -76,11 +76,14 @@ namespace Albany {
 
     const std::vector<std::string>& getNodeSetIDs() const;
 
-    //! Get map from (El, Local Node) -> NodeLID
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& getElNodeID() const;
+    //! Get map from (Ws, El, Local Node) -> NodeLID
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >& getWsElNodeID() const;
 
     //! Retrieve coodinate vector (num_used_nodes * 3)
     Teuchos::ArrayRCP<double>& getCoordinates() const;
+
+    //! Retrieve Vector (length num worksets) of element block names
+    const Teuchos::ArrayRCP<std::string>&  getWsEBNames() const;
 
     // 
     void outputToExodus(const Epetra_Vector& soln,
@@ -156,9 +159,11 @@ namespace Albany {
     //! Just the node set ID strings
     std::vector<std::string> nodeSetIDs;
 
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > elNodeID;
+    //! Connectivity array [workset, element, local-node] => LID
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > wsElNodeID;
 
     mutable Teuchos::ArrayRCP<double> coordinates;
+    Teuchos::ArrayRCP<std::string> wsEBNames;
 
     //! list of all owned nodes, saved for setting solution
     std::vector< stk::mesh::Entity * > ownednodes ;

@@ -57,10 +57,9 @@ void GatherCoordinateVector<EvalT, Traits>::evaluateFields(typename Traits::Eval
 { 
   const Teuchos::ArrayRCP<double> &coordinates = workset.coordinates;
   unsigned int numCells = workset.numCells;
-  unsigned int firstCell = workset.firstCell;
 
   for (std::size_t cell=0; cell < numCells; ++cell) {
-    const Teuchos::ArrayRCP<int>& nodeID  = workset.elNodeID[firstCell+cell];
+    const Teuchos::ArrayRCP<int>& nodeID  = workset.wsElNodeID[cell];
     for (std::size_t node = 0; node < numVertices; ++node) {
       const int row_loc = 3*nodeID[node];
 
@@ -107,7 +106,6 @@ evaluateFields(typename Traits::EvalData workset)
 { 
   const Teuchos::ArrayRCP<double> &coordinates = workset.coordinates;
   unsigned int numCells = workset.numCells;
-  unsigned int firstCell = workset.firstCell;
 
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& coord_derivs = workset.coord_derivs;
   std::vector<int> *coord_deriv_indices = workset.coord_deriv_indices;
@@ -115,7 +113,7 @@ evaluateFields(typename Traits::EvalData workset)
   int numParams = workset.num_cols_p;
 
   for (std::size_t cell=0; cell < numCells; ++cell) {
-    const Teuchos::ArrayRCP<int>& nodeID  = workset.elNodeID[firstCell+cell];
+    const Teuchos::ArrayRCP<int>& nodeID  = workset.wsElNodeID[cell];
     for (std::size_t node = 0; node < numVertices; ++node) {
       const int row_loc = 3*nodeID[node];
 

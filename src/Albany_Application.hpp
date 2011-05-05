@@ -353,7 +353,8 @@ namespace Albany {
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > dfm;
 
     Teuchos::ArrayRCP<double> coordinates;
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > elNodeID;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > wsElNodeID;
+    Teuchos::ArrayRCP<std::string> wsEBNames;
 
     //! Stochastic Galerkin expansion
     Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> > sg_expansion;

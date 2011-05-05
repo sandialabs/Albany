@@ -139,8 +139,9 @@ namespace LCM {
 
     dimension_ = discretization_ptr_->getNumDim();
 
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >
-    element_connectivity = discretization_ptr_->getElNodeID();
+    // Dimesnioned: Workset, Cell, Local Node
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >
+    element_connectivity = discretization_ptr_->getWsElNodeID();
 
     Teuchos::ArrayRCP<double>
     coordinates = discretization_ptr_->getCoordinates();
@@ -163,7 +164,7 @@ namespace LCM {
 
     // Assume all the elements have the same number of nodes
     Teuchos::ArrayRCP<int>::size_type
-    nodes_per_element = element_connectivity[0].size();
+    nodes_per_element = element_connectivity[0][0].size();
 
     // Build coordinate array.
     // Assume that local numbering of nodes is contiguous.
@@ -187,10 +188,13 @@ namespace LCM {
     // Build connectivity array.
     // Assume that local numbering of elements is contiguous.
     // Ignore extra nodes in higher-order elements
+
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >::size_type el=0;
+    for (int ws=0; ws<element_connectivity.size(); ws++)
     for (Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >::size_type
         i = 0;
-        i < element_connectivity.size();
-        ++i) {
+        i < element_connectivity[ws].size();
+        ++i, el++) {
 
       IDList nodes_element(nodes_per_element);
 
@@ -199,11 +203,11 @@ namespace LCM {
           j < vertices_per_element;
           ++j) {
 
-        nodes_element[j] = element_connectivity[i][j];
+        nodes_element[j] = element_connectivity[ws][i][j];
 
       }
 
-      connectivity_.insert(std::make_pair(i, nodes_element));
+      connectivity_.insert(std::make_pair(el, nodes_element));
 
     }
 
