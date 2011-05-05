@@ -20,6 +20,7 @@
 #include "Albany_RythmosObserver.hpp"
 #include "Albany_NOXObserver.hpp"
 #include "Thyra_DetachedVectorView.hpp"
+#include "Albany_SaveEigenData.hpp"
 
 #include "Piro_Epetra_NOXSolver.hpp"
 #include "Piro_Epetra_LOCASolver.hpp"
@@ -137,8 +138,13 @@ Albany::SolverFactory::create(
 
     if (stochastic && solutionMethod=="Steady")
       return  rcp(new ENAT::SGNOXSolver(appParams, model, solverComm, NOX_observer));
-    else if (solutionMethod== "Continuation")   // add save eigen data here as in Piro test
-      return  rcp(new Piro::Epetra::LOCASolver(appParams, model, NOX_observer));
+    else if (solutionMethod== "Continuation") { // add save eigen data here as in Piro test
+      Teuchos::ParameterList& locaParams = (*appParams).sublist("LOCA");
+        RCP<LOCA::SaveEigenData::AbstractStrategy> saveEigs =
+	  rcp(new Albany::SaveEigenData( locaParams, NOX_observer));
+        return  rcp(new Piro::Epetra::LOCASolver(appParams, model, NOX_observer, saveEigs));
+	//return  rcp(new Piro::Epetra::LOCASolver(appParams, model, NOX_observer));
+    }
     else if (solutionMethod== "Transient" && secondOrder=="No") 
       return  rcp(new Piro::Epetra::RythmosSolver(appParams, model, Rythmos_observer));
     else if (solutionMethod== "Transient" && secondOrder=="Velocity Verlet")

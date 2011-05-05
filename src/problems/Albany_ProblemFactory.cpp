@@ -22,6 +22,7 @@
 #include "Albany_ODEProblem.hpp"
 #include "Albany_ThermoElectrostaticsProblem.hpp"
 #include "QCAD_PoissonProblem.hpp"
+#include "QCAD_SchrodingerProblem.hpp"
 
 #ifdef ALBANY_LCM
 #include "LCM/problems/ElasticityProblem.hpp"
@@ -71,6 +72,15 @@ Albany::ProblemFactory::create()
   }
   else if (method == "Poisson 3D") {
     strategy = rcp(new QCAD::PoissonProblem(problemParams, paramLib, 3));
+  }
+  else if (method == "Schrodinger 1D") {
+    strategy = rcp(new QCAD::SchrodingerProblem(problemParams, paramLib, 1));
+  }
+  else if (method == "Schrodinger 2D") {
+    strategy = rcp(new QCAD::SchrodingerProblem(problemParams, paramLib, 2));
+  }
+  else if (method == "Schrodinger 3D") {
+    strategy = rcp(new QCAD::SchrodingerProblem(problemParams, paramLib, 3));
   }
   else if (method == "ThermoElectrostatics 1D") {
     strategy = rcp(new Albany::ThermoElectrostaticsProblem(problemParams, paramLib, 1));

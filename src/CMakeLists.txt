@@ -27,6 +27,7 @@ SET(SOURCES
 	Albany_StateManager.cpp 
 	Albany_VTK.cpp 
 	Albany_ModelEvaluator.cpp
+	Albany_SaveEigenData.cpp
   )
 
 SET(HEADERS
@@ -44,6 +45,7 @@ SET(HEADERS
 	Albany_StateManager.hpp 
 	Albany_VTK.hpp 
 	Albany_ModelEvaluator.hpp
+	Albany_SaveEigenData.hpp
         Albany_DummyParameterAccessor.hpp
   )
 
@@ -307,6 +309,22 @@ SET(HEADERS ${HEADERS}
        evaluators/QCAD_PoissonSource.hpp
        evaluators/QCAD_PoissonSource_Def.hpp
        problems/QCAD_PoissonProblem.hpp
+  )
+
+
+#QCAD Schrodinger problem
+SET(SOURCES ${SOURCES}
+       evaluators/QCAD_SchrodingerPotential.cpp
+       evaluators/QCAD_SchrodingerResid.cpp
+       problems/QCAD_SchrodingerProblem.cpp
+  )
+
+SET(HEADERS ${HEADERS}
+       evaluators/QCAD_SchrodingerPotential.hpp
+       evaluators/QCAD_SchrodingerPotential_Def.hpp
+       evaluators/QCAD_SchrodingerResid.hpp
+       evaluators/QCAD_SchrodingerResid_Def.hpp
+       problems/QCAD_SchrodingerProblem.hpp
   )
 
 

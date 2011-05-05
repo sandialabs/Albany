@@ -37,6 +37,8 @@
 #include "QCAD_Permittivity.hpp"
 #include "QCAD_PoissonResid.hpp"
 #include "QCAD_PoissonSource.hpp"
+#include "QCAD_SchrodingerPotential.hpp"
+#include "QCAD_SchrodingerResid.hpp"
 #include "PHAL_JouleHeating.hpp"
 #include "PHAL_TEProp.hpp"
 #include "PHAL_ODEResid.hpp"
@@ -78,8 +80,10 @@ struct FactoryTraits {
   static const int id_jouleheating              = 19;
   static const int id_teprop                    = 20;
   static const int id_oderesid                  = 21;
+  static const int id_schrodinger_potential     = 22;
+  static const int id_schrodinger_resid         = 23;
 
-  typedef boost::mpl::vector22< 
+  typedef boost::mpl::vector24< 
             PHAL::Dirichlet<_,Traits>,                //  0
             PHAL::GatherSolution<_,Traits>,           //  1
             PHAL::GatherCoordinateVector<_,Traits>,   //  2
@@ -101,7 +105,10 @@ struct FactoryTraits {
             QCAD::PoissonSource<_,Traits>,            // 18
             PHAL::JouleHeating<_,Traits>,             // 19
             PHAL::TEProp<_,Traits>,                   // 20
-            PHAL::ODEResid<_,Traits>                  // 21
+            PHAL::ODEResid<_,Traits>,                 // 21
+            QCAD::SchrodingerPotential<_,Traits>,     // 22
+            QCAD::SchrodingerResid<_,Traits>          // 23
+
   > EvaluatorTypes;
   
 };
