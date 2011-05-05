@@ -86,7 +86,7 @@ Albany::Cube3DSTKMeshStruct::Cube3DSTKMeshStruct(
   this->SetupMetaData(params, neq_, nstates_, numDim_, worksetSize);
   this->DeclareParts(nsNames);
 
-  stk::mesh::fem::set_cell_topology_new< shards::Hexahedron<8> >(*partVec[0]);
+  stk::mesh::fem::set_cell_topology< shards::Hexahedron<8> >(*partVec[0]);
 
   metaData->commit();
 

@@ -55,7 +55,7 @@ Albany::Point0DSTKMeshStruct::Point0DSTKMeshStruct(
   this->SetupMetaData(params, neq_, nstates_, numDim_, worksetSize);
   this->DeclareParts(nsNames);
   
-  stk::mesh::fem::set_cell_topology_new< shards::Particle >(*partVec[0]);
+  stk::mesh::fem::set_cell_topology< shards::Particle >(*partVec[0]);
   metaData->commit();
 
   // Finished with metaData, now work on bulk data

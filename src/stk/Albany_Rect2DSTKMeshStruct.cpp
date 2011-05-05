@@ -91,9 +91,9 @@ Albany::Rect2DSTKMeshStruct::Rect2DSTKMeshStruct(
   this->DeclareParts(nsNames);
 
   if (triangles)
-    stk::mesh::fem::set_cell_topology_new< shards::Triangle<3> >(*partVec[0]);
+    stk::mesh::fem::set_cell_topology< shards::Triangle<3> >(*partVec[0]);
   else 
-    stk::mesh::fem::set_cell_topology_new< shards::Quadrilateral<4> >(*partVec[0]);
+    stk::mesh::fem::set_cell_topology< shards::Quadrilateral<4> >(*partVec[0]);
 
   metaData->commit();
 
