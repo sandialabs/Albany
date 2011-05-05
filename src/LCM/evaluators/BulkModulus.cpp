@@ -15,40 +15,10 @@
 \********************************************************************/
 
 
-#ifndef ALBANY_GENERICSTKMESHSTRUCT_HPP
-#define ALBANY_GENERICSTKMESHSTRUCT_HPP
+#include "PHAL_AlbanyTraits.hpp"
 
-//#include <vector>
-//#include <string>
-#include "Albany_AbstractSTKMeshStruct.hpp"
-#include "Teuchos_ParameterList.hpp"
-#include "Epetra_Comm.h"
+#include "BulkModulus.hpp"
+#include "BulkModulus_Def.hpp"
 
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::BulkModulus)
 
-namespace Albany {
-
-  class GenericSTKMeshStruct : public AbstractSTKMeshStruct {
-
-    protected: 
-    GenericSTKMeshStruct(const Teuchos::RCP<const Epetra_Comm>& comm);
-
-    void SetupMetaData(
-                  const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_, const unsigned int nstates_,
-                  const int numDim_,
-                  const int worksetSize_);
-
-    void DeclareParts(std::vector<std::string> nsNames);
-
-    ~GenericSTKMeshStruct();
-
-    Teuchos::RCP<Teuchos::ParameterList> getValidGenericSTKParameters(
-         std::string listname = "Discretization Param Names") const;
-
-    Teuchos::RCP<const Epetra_Comm> comm;
-
-  };
-
-}
-
-#endif

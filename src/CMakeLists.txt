@@ -200,7 +200,6 @@ IF(ALBANY_LCM)
   # LCM evaluators
   SET(SOURCES ${SOURCES}
     ${LCM_DIR}/evaluators/Stress.cpp 
-    ${LCM_DIR}/evaluators/LameStress.cpp 
     ${LCM_DIR}/evaluators/Strain.cpp 
     ${LCM_DIR}/evaluators/ElasticModulus.cpp 
     ${LCM_DIR}/evaluators/PoissonsRatio.cpp 
@@ -220,14 +219,15 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/DamageLS.cpp 
     ${LCM_DIR}/evaluators/SaturationModulus.cpp		
     ${LCM_DIR}/evaluators/SaturationExponent.cpp
-    ${LCM_DIR}/evaluators/Localization.cpp 	   
+    ${LCM_DIR}/evaluators/Localization.cpp
+    ${LCM_DIR}/evaluators/DamageSource.cpp
+    ${LCM_DIR}/evaluators/BulkModulus.cpp
+    ${LCM_DIR}/evaluators/ShearModulus.cpp
   )
 
   SET(HEADERS ${HEADERS}
     ${LCM_DIR}/evaluators/Stress.hpp 
     ${LCM_DIR}/evaluators/Stress_Def.hpp
-    ${LCM_DIR}/evaluators/LameStress.hpp 
-    ${LCM_DIR}/evaluators/LameStress_Def.hpp 
     ${LCM_DIR}/evaluators/Strain.hpp 
     ${LCM_DIR}/evaluators/Strain_Def.hpp 
     ${LCM_DIR}/evaluators/ElasticModulus.hpp 
@@ -256,40 +256,49 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/YieldStrength_Def.hpp
     ${LCM_DIR}/evaluators/PisdWdF.hpp 
     ${LCM_DIR}/evaluators/PisdWdF_Def.hpp 
-    ${LCM_DIR}/evaluators/DamageResid.cpp 
+    ${LCM_DIR}/evaluators/DamageResid.hpp 
     ${LCM_DIR}/evaluators/DamageResid_Def.hpp 
-    ${LCM_DIR}/evaluators/J2Damage.cpp 
+    ${LCM_DIR}/evaluators/J2Damage.hpp 
     ${LCM_DIR}/evaluators/J2Damage_Def.hpp 
-    ${LCM_DIR}/evaluators/DamageLS.cpp 
+    ${LCM_DIR}/evaluators/DamageLS.hpp 
     ${LCM_DIR}/evaluators/DamageLS_Def.hpp 
-    ${LCM_DIR}/evaluators/SaturationModulus.cpp 
+    ${LCM_DIR}/evaluators/SaturationModulus.hpp 
     ${LCM_DIR}/evaluators/SaturationModulus_Def.hpp 
-    ${LCM_DIR}/evaluators/SaturationExponent.cpp 
+    ${LCM_DIR}/evaluators/SaturationExponent.hpp 
     ${LCM_DIR}/evaluators/SaturationExponent_Def.hpp
-    ${LCM_DIR}/evaluators/Localization.cpp 
-    ${LCM_DIR}/evaluators/Localization_Def.hpp 
+    ${LCM_DIR}/evaluators/Localization.hpp 
+    ${LCM_DIR}/evaluators/Localization_Def.hpp
+    ${LCM_DIR}/evaluators/DamageSource.hpp 
+    ${LCM_DIR}/evaluators/DamageSource_Def.hpp
+    ${LCM_DIR}/evaluators/BulkModulus.hpp 
+    ${LCM_DIR}/evaluators/BulkModulus_Def.hpp
+    ${LCM_DIR}/evaluators/ShearModulus.hpp 
+    ${LCM_DIR}/evaluators/ShearModulus_Def.hpp 
   )
 
   #LCM utils
   SET(SOURCES ${SOURCES}
     ${LCM_DIR}/utils/Geometry.cc
+    ${LCM_DIR}/utils/Partition.cc
     ${LCM_DIR}/utils/Tensor.cc
   )
 
   SET(HEADERS ${HEADERS}
+    ${LCM_DIR}/utils/Geometry.h
+    ${LCM_DIR}/utils/Partition.h
     ${LCM_DIR}/utils/Tensor.h 
   )
 
-IF(ENABLE_LAME)
-
+IF(ALBANY_LAME)
   SET(SOURCES ${SOURCES}
-    ${LCM_DIR}/problems/LAMEProblem.cpp 
+    ${LCM_DIR}/evaluators/LameStress.cpp 
+    ${LCM_DIR}/problems/LameProblem.cpp 
   )
-
   SET(HEADERS ${HEADERS}
-    ${LCM_DIR}/problems/LAMEProblem.hpp
+    ${LCM_DIR}/evaluators/LameStress.hpp 
+    ${LCM_DIR}/evaluators/LameStress_Def.hpp 
+    ${LCM_DIR}/problems/LameProblem.hpp
   )
-
 ENDIF()
 
 ENDIF()
@@ -394,7 +403,7 @@ include_directories (${Trilinos_INCLUDE_DIRS}
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
 
 # LAME
-IF(ENABLE_LAME)
+IF(ALBANY_LAME)
   include_directories (${LAME_INCLUDE_DIR})
   link_directories (${LAME_LIBRARY_DIR})
   set(LAME_LIB lame)
@@ -424,6 +433,7 @@ ENDIF ()
 add_executable(AlbanyAnalysis Main_Analysis.cpp)
 
 # Tests
+add_executable(PartitionTest LCM/test/utils/PartitionTest.cc)
 add_executable(UtilsTest LCM/test/utils/UtilsTest.cc)
 
 target_link_libraries(Albany          albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
@@ -437,4 +447,5 @@ target_link_libraries(AlbanyAnalysis  albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT
                       ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
 
 #Linking tests
+target_link_libraries(PartitionTest albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
 target_link_libraries(UtilsTest albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 

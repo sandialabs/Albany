@@ -40,7 +40,8 @@
 Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 		  const Teuchos::RCP<const Epetra_Comm>& comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_, const unsigned int nstates_) :
+                  const unsigned int neq_, const unsigned int nstates_,
+                  const unsigned int worksetSize) :
   GenericSTKMeshStruct(comm),
   periodic(params->get("Periodic BC", false))
 {
@@ -97,7 +98,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     }
   }
 
-  this->SetupMetaData(params, neq_, nstates_, numDim);
+  this->SetupMetaData(params, neq_, nstates_, numDim, worksetSize);
 
   *out << "IOSS-STK: number of node sets = " << nsPartVec.size() << endl;
 

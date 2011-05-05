@@ -52,6 +52,7 @@ namespace Albany {
 
     Teuchos::RCP<Albany::AbstractDiscretization>
     create(unsigned int num_equations,unsigned int num_states,
+           unsigned int worksetSize,
            const Teuchos::RCP<const Epetra_Comm>& epetra_comm);
 
   private:

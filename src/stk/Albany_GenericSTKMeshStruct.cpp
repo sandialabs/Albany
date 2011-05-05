@@ -34,9 +34,6 @@
 #endif
 #include "Albany_Utils.hpp"
 
-enum { field_data_chunk_size = 1001 };
-
-
 Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
     const Teuchos::RCP<const Epetra_Comm>& comm_)
     : comm (comm_)
@@ -48,7 +45,7 @@ Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
 void Albany::GenericSTKMeshStruct::SetupMetaData(
 		  const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_, const unsigned int nstates_,
-                  const int numDim_) 
+                  const int numDim_, const int worksetSize) 
 {
   numDim = numDim_;
   neq = neq_;
@@ -56,9 +53,10 @@ void Albany::GenericSTKMeshStruct::SetupMetaData(
 
   if (! metaData->is_FEM_initialized()) metaData->FEM_initialize(numDim);
 
+  cout << " GGG  setting worksetsize = " << worksetSize << endl;
   if (bulkData ==  NULL)
   bulkData = new stk::mesh::BulkData(stk::mesh::fem::FEMMetaData::get_meta_data(*metaData),
-                          Albany::getMpiCommFromEpetraComm(*comm), field_data_chunk_size );
+                          Albany::getMpiCommFromEpetraComm(*comm), worksetSize );
 
   cout << " FFF  " << metaData->element_rank() << "   " << metaData->node_rank() << endl;
 

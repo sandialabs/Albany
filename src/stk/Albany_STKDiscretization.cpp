@@ -130,6 +130,15 @@ Albany::STKDiscretization::STKDiscretization(
                            bulkData.buckets( metaData.element_rank() ) ,
                            cells );
 
+
+  std::vector< stk::mesh::Bucket * > buckets ;
+  stk::mesh::get_buckets( select_owned_in_part ,
+                          bulkData.buckets( metaData.element_rank() ) ,
+                          buckets);
+
+  int numBuckets =  buckets.size();
+
+
   if (comm->MyPID()==0)
     cout << "STKDisc: " << cells.size() << " elements on Proc 0 " << endl;
 
@@ -158,13 +167,13 @@ Albany::STKDiscretization::STKDiscretization(
 
   // Fill  elNodeID(el_LID, local node) => node_LID
   elNodeID.resize(cells.size());
-  for (unsigned int i=0; i < cells.size(); i++) {
-    stk::mesh::Entity& e = *cells[i];
-    unsigned int  el_lid = i;
+  int el_lid=0;
+for (unsigned int b=0; b < buckets.size(); b++) {
+  stk::mesh::Bucket& buck = *buckets[b];
+  for (unsigned int i=0; i < buck.size(); i++, el_lid++) {
 
-    // Q: Does (i==el_lid) always???
-    TEST_FOR_EXCEPTION(el_lid<0 || el_lid >= cells.size(), std::logic_error,
-        "STK1D_Disc: el_lid out of range " << el_lid << " ("<<cells.size()<<")"<<endl);
+    stk::mesh::Entity& e = buck[i];
+
     stk::mesh::PairIterRelation rel = e.relations();
 
     elNodeID[el_lid].resize(nodes_per_element);
@@ -178,6 +187,7 @@ Albany::STKDiscretization::STKDiscretization(
       elNodeID[el_lid][j] = node_lid;
     }
   }
+}
 
   int estNonzeroesPerRow;
   switch (numDim) {
