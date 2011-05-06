@@ -15,7 +15,13 @@
 \********************************************************************/
 
 #include "Albany_AbstractProblem.hpp"
+
+// JTO note: I do not like this, I am open to suggestions on a better way
+#ifndef ALBANY_LCM
 #include "PHAL_FactoryTraits.hpp"
+#else
+#include "LCM/LCM_FactoryTraits.hpp"
+#endif
 
 // Generic implementations that can be used by derived problems
 
@@ -95,7 +101,13 @@ Albany::AbstractProblem::constructDirichletEvaluators(
    using std::vector;
    using std::map;
    using std::string;
+
+   // JTO note: I do not like this, I am open to suggestions on a better way
+#ifndef ALBANY_LCM
    using PHAL::FactoryTraits;
+#else
+   using LCM::FactoryTraits;
+#endif
    using PHAL::AlbanyTraits;
 
    DBCparams.validateParameters(*(getValidDirichletBCParameters(nodeSetIDs)),0);
@@ -104,7 +116,7 @@ Albany::AbstractProblem::constructDirichletEvaluators(
    RCP<DataLayout> dummy = rcp(new MDALayout<Dummy>(0));
    vector<string> dbcs;
 
-   // Check for all possible BCs (every dof on every nodeset) to see which is set
+   // Check for all possible standard BCs (every dof on every nodeset) to see which is set
    for (std::size_t i=0; i<nodeSetIDs.size(); i++) {
      for (std::size_t j=0; j<dofNames.size(); j++) {
        std::string ss = constructDBCName(nodeSetIDs[i],dofNames[j]);
@@ -119,7 +131,7 @@ Albany::AbstractProblem::constructDirichletEvaluators(
          p->set< RealType >("Dirichlet Value", DBCparams.get<double>(ss));
          p->set< string >  ("Node Set ID", nodeSetIDs[i]);
          p->set< int >     ("Number of Equations", dofNames.size());
-         p->set< int >     ("Equation Offset", j);
+	 p->set< int >     ("Equation Offset", j);
 
          p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
@@ -130,6 +142,64 @@ Albany::AbstractProblem::constructDirichletEvaluators(
        }
      }
    }
+
+   for (std::size_t i=0; i<nodeSetIDs.size(); i++) 
+   {
+     std::string ss = constructDBCName(nodeSetIDs[i],"K");
+     
+     if (DBCparams.isSublist(ss)) 
+     {
+       // grab the sublist
+       ParameterList& sub_list = DBCparams.sublist(ss);
+       
+       if (sub_list.get<string>("BC Function") == "Kfield" )
+       {
+	 RCP<ParameterList> p = rcp(new ParameterList);
+	 int type = FactoryTraits<AlbanyTraits>::id_kfield_bc;
+	 p->set<int>("Type", type);
+
+	 // This BC needs a shear modulus and poissons ratio defined
+	 TEST_FOR_EXCEPTION(!params->isSublist("Shear Modulus"), 
+			    Teuchos::Exceptions::InvalidParameter, 
+			    "This BC needs a Shear Modulus");
+	 ParameterList& shmd_list = params->sublist("Shear Modulus");
+	 TEST_FOR_EXCEPTION(!(shmd_list.get("Shear Modulus Type","") == "Constant"), 
+			    Teuchos::Exceptions::InvalidParameter,
+			    "Invalid Shear Modulus type");
+	 p->set< RealType >("Shear Modulus", shmd_list.get("Value", 1.0));
+
+	 TEST_FOR_EXCEPTION(!params->isSublist("Poissons Ratio"), 
+			    Teuchos::Exceptions::InvalidParameter, 
+			    "This BC needs a Poissons Ratio");
+	 ParameterList& pr_list = params->sublist("Poissons Ratio");
+	 TEST_FOR_EXCEPTION(!(pr_list.get("Poissons Ratio Type","") == "Constant"), 
+			    Teuchos::Exceptions::InvalidParameter,
+			    "Invalid Poissons Ratio type");
+	 p->set< RealType >("Poissons Ratio", pr_list.get("Value", 1.0));
+
+	 // Extract BC parameters
+	 p->set< string >("Kfield KI Name", "Kfield KI");
+	 p->set< string >("Kfield KII Name", "Kfield KII");
+	 p->set< RealType >("KI Value", sub_list.get<double>("Kfield KI"));
+	 p->set< RealType >("KII Value", sub_list.get<double>("Kfield KII"));
+
+	 // Fill up ParameterList with things DirichletBase wants
+	 p->set< RCP<DataLayout> >("Data Layout", dummy);
+	 p->set< string >  ("Dirichlet Name", ss);
+         p->set< RealType >("Dirichlet Value", 0.0);
+	 p->set< string >  ("Node Set ID", nodeSetIDs[i]);
+         p->set< int >     ("Number of Equations", dofNames.size());
+	 p->set< int >     ("Equation Offset", 0);
+	 
+	 p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+	 std::stringstream ess; ess << "Evaluator for " << ss;
+	 evaluators_to_build[ess.str()] = p;
+
+	 dbcs.push_back(ss);
+       }
+     }
+   }
+
    string allDBC="Evaluator for all Dirichlet BCs";
    {
       RCP<ParameterList> p = rcp(new ParameterList);
@@ -187,6 +257,12 @@ Albany::AbstractProblem::getValidDirichletBCParameters(
       std::string ss = constructDBCName(nodeSetIDs[i],dofNames[j]);
       validPL->set<double>(ss, 0.0, "Value of BC corresponding to nodeSetID and dofName");
     }
+  }
+  
+  for (std::size_t i=0; i<nodeSetIDs.size(); i++) 
+  {
+    std::string ss = constructDBCName(nodeSetIDs[i],"K");
+    validPL->sublist(ss, false, "");
   }
 
   return validPL;

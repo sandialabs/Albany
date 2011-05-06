@@ -726,6 +726,7 @@ Albany::GradientDamageProblem::getValidProblemParameters() const
 
   validPL->sublist("Bulk Modulus", false, "");
   validPL->sublist("Shear Modulus", false, "");
+  validPL->sublist("Poissons Ratio", false, "");
   validPL->sublist("Damage Length Scale", false, "");
   validPL->sublist("Hardening Modulus", false, "");
   validPL->sublist("Yield Strength", false, "");
