@@ -354,6 +354,7 @@ namespace Albany {
 
     Teuchos::ArrayRCP<double> coordinates;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > wsElNodeID;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords;
     Teuchos::ArrayRCP<std::string> wsEBNames;
 
     //! Stochastic Galerkin expansion

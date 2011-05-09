@@ -31,7 +31,7 @@
 
 #include <stk_mesh/fem/FEMHelpers.hpp>
 
-#include <stk_io/util/UseCase_mesh.hpp>
+#include <stk_io/MeshReadWriteUtils.hpp>
 #include <Ionit_Initializer.h>
 
 #include <stk_io/IossBridge.hpp>
@@ -49,7 +49,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
-  stk::io::util::MeshData* mesh_data = new stk::io::util::MeshData();
+  stk::io::MeshData* mesh_data = new stk::io::MeshData();
 
   Ioss::Init::Initializer io;
 
@@ -58,20 +58,20 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     *out << "Albany_IOSS: Loading STKMesh from Exodus file  " 
          << params->get<string>("Exodus Input File Name") << endl;
 
-    stk::io::util::create_input_mesh("exodusii",
+    stk::io::create_input_mesh("exodusii",
                                params->get<string>("Exodus Input File Name"),
-                               "", Albany::getMpiCommFromEpetraComm(*comm), 
-                               *metaData, *mesh_data, false); 
+                               Albany::getMpiCommFromEpetraComm(*comm), 
+                               *metaData, *mesh_data); 
     *out << "Albany_IOSS: Loading STKMesh from exodus file  " << endl;
   }
   else {
     *out << "Albany_IOSS: Loading STKMesh from Pamgen file  " 
          << params->get<string>("Pamgen Input File Name") << endl;
 
-    stk::io::util::create_input_mesh("pamgen",
+    stk::io::create_input_mesh("pamgen",
                                params->get<string>("Pamgen Input File Name"),
-                               "", Albany::getMpiCommFromEpetraComm(*comm), 
-                               *metaData, *mesh_data, false); 
+                               Albany::getMpiCommFromEpetraComm(*comm), 
+                               *metaData, *mesh_data); 
 
   }
 
@@ -104,16 +104,18 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 
   metaData->commit();
 
+  stk::io::populate_bulk_data(*bulkData, *mesh_data);
+
   if (!usePamgen)  {
     // Restart index to read solution from exodus file.
     int index = params->get("Restart Index",-1); // Default to no restart
     if (index<1) *out << "Restart Index not set. Not reading solution from exodus (" 
            << index << ")"<< endl;
-    else *out << "Restart Index set, reading solution time step: " << index << endl;
-
-    stk::io::util::populate_bulk_data(*bulkData, *mesh_data, "exodusii", index);
+    else {
+      *out << "Restart Index set, reading solution time : " << index << endl;
+       process_input_request(*mesh_data, *bulkData, 1.0*index);
+    }
   }
-  else  stk::io::util::populate_bulk_data(*bulkData, *mesh_data, "pamgen", 0);
 
   bulkData->modification_end();
 

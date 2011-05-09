@@ -68,8 +68,9 @@ KfieldBC<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(typename Traits::
   Teuchos::RCP<const Epetra_Vector> x = dirichletWorkset.x;
   // Grab the vector off node GIDs for this Node Set ID from the std::map
   const std::vector<int>& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+  const std::vector<double*>& nsNodeCoords = dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
 
-  int xgunk, ygunk, xlunk, ylunk, clunk; // global and local indicies into unknown vector
+  int xgunk, ygunk, xlunk, ylunk; // global and local indicies into unknown vector
   double* coord;
   RealType Xval, Yval, X, Y, R, theta, coeff_1, coeff_2;
   RealType tau = 6.283185307179586;
@@ -79,8 +80,7 @@ KfieldBC<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(typename Traits::
     ygunk = nsNodes[inode] * this->neq + 1;
     xlunk = f->Map().LID(xgunk);
     ylunk = f->Map().LID(ygunk);
-    clunk =  3*(xlunk/this->neq);
-    coord = &(dirichletWorkset.coordinates[clunk]);
+    coord = nsNodeCoords[inode];
     
     X = coord[0];
     Y = coord[1];
@@ -103,9 +103,10 @@ KfieldBC<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(typename Traits::
     (*f)[ylunk] = ((*x)[ylunk] - Yval);
 
 //  JTO: I am going to leave this here for now...
-//     std::cout << "================" << std::endl;
-//     std::cout.precision(15);
-//     std::cout << "X : " << X << ", Y: " << Y << ", R: " << R << std::endl;
+     std::cout << "================" << std::endl;
+     std::cout.precision(15);
+     std::cout << "X : " << X << ", Y: " << Y << ", R: " << R << std::endl;
+     std::cout << "Node : " << nsNodes[inode] << std::endl;
 //     std::cout << "KI : " << KI << ", KII: " << KII << std::endl;
 //     std::cout << "theta: " << theta << std::endl;
 //     std::cout << "coeff_1: " << coeff_1 << ", coeff_2: " << coeff_2 << std::endl;
@@ -164,6 +165,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   Teuchos::RCP<const Epetra_Vector> x = dirichletWorkset.x;
   const RealType j_coeff = dirichletWorkset.j_coeff;
   const std::vector<int>& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+  const std::vector<double*>& nsNodeCoords = dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
 
   const Epetra_Map& map = jac->RowMap();
 
@@ -173,7 +175,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   RealType diag=j_coeff;
   bool fillResid = (f != Teuchos::null);
 
-  int xgunk, ygunk, xlunk, ylunk, clunk; // global and local indicies into unknown vector
+  int xgunk, ygunk, xlunk, ylunk; // global and local indicies into unknown vector
   double* coord;
   RealType Xval, Yval; 
   RealType X, Y, R, theta, coeff_1, coeff_2;
@@ -186,8 +188,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     ygunk = nsNodes[inode] * this->neq + 1;
     xlunk = map.LID(xgunk);
     ylunk = map.LID(ygunk);
-    clunk =  3*(xlunk/this->neq);
-    coord = &(dirichletWorkset.coordinates[clunk]);
+    coord = nsNodeCoords[inode];
     
     X = coord[0];
     Y = coord[1];
@@ -271,11 +272,12 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   Teuchos::RCP<const Epetra_MultiVector> Vx = dirichletWorkset.Vx;
   const RealType j_coeff = dirichletWorkset.j_coeff;
   const std::vector<int>& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+  const std::vector<double*>& nsNodeCoords = dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
 
   const Epetra_BlockMap& map = x->Map();
   bool fillResid = (f != Teuchos::null);
 
-  int xgunk, ygunk, xlunk, ylunk, clunk; // global and local indicies into unknown vector
+  int xgunk, ygunk, xlunk, ylunk; // global and local indicies into unknown vector
   double* coord;
   RealType Xval, Yval, X, Y, R, theta, coeff_1, coeff_2;
   RealType tau = 6.283185307179586;
@@ -287,8 +289,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     ygunk = nsNodes[inode] * this->neq + 1;
     xlunk = map.LID(xgunk);
     ylunk = map.LID(ygunk);
-    clunk =  3*(xlunk/this->neq);
-    coord = &(dirichletWorkset.coordinates[clunk]);
+    coord = nsNodeCoords[inode];
     
     X = coord[0];
     Y = coord[1];
@@ -372,6 +373,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 //   Teuchos::RCP< const Stokhos::VectorOrthogPoly<Epetra_Vector> > x = 
 //     dirichletWorkset.sg_x;
 //   const std::vector<int>& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+//  const std::vector<double*>& nsNodeCoords = dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
 
 //   int nblock = x->size();
 //   int gunk, lunk; // global and local indicies into unknown vector
@@ -430,6 +432,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 //     dirichletWorkset.sg_x;
 //   const RealType j_coeff = dirichletWorkset.j_coeff;
 //   const std::vector<int>& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+//  const std::vector<double*>& nsNodeCoords = dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
 
 //   const Epetra_Map& map = (*jac)[0].RowMap();
 
@@ -506,6 +509,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 //   Teuchos::RCP< const Stokhos::ProductContainer<Epetra_Vector> > x = 
 //     dirichletWorkset.mp_x;
 //   const std::vector<int>& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+//  const std::vector<double*>& nsNodeCoords = dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
 
 //   int nblock = x->size();
 //   int gunk, lunk; // global and local indicies into unknown vector
@@ -566,6 +570,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 //     dirichletWorkset.mp_x;
 //   const RealType j_coeff = dirichletWorkset.j_coeff;
 //   const std::vector<int>& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+//  const std::vector<double*>& nsNodeCoords = dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
 
 //   const Epetra_Map& map = (*jac)[0].RowMap();
 

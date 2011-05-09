@@ -65,6 +65,7 @@ struct Workset {
   Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix> > mp_Jac;
 
   Teuchos::RCP<const Albany::NodeSetList> nodeSets;
+  Teuchos::RCP<const Albany::NodeSetCoordList> nodeSetCoords;
 
   // jacobian and mass matrix coefficients for matrix fill
   double j_coeff;
@@ -85,6 +86,8 @@ struct Workset {
 
   const Teuchos::ArrayRCP<double> &coordinates;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >  wsElNodeID;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> >  wsCoords;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > >  ws_coord_derivs;
   std::string EBName;
 
   Teuchos::RCP<const Albany::StateVariables> oldState;

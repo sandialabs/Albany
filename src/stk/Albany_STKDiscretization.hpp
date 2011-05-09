@@ -37,8 +37,7 @@
 #include <stk_mesh/base/Field.hpp>
 #include <stk_mesh/base/FieldTraits.hpp>
 #ifdef ALBANY_IOSS
-//  #include "Albany_IossSTKMeshStruct.hpp"
-  #include <stk_io/util/UseCase_mesh.hpp>
+  #include <stk_io/MeshReadWriteUtils.hpp>
 #endif
 
 
@@ -73,6 +72,7 @@ namespace Albany {
 
     //! Get Node set lists (typdef in Albany_AbstractDiscretization.hpp)
     const NodeSetList& getNodeSets() const { return nodeSets; };
+    const NodeSetCoordList& getNodeSetCoords() const { return nodeSetCoords; };
 
     const std::vector<std::string>& getNodeSetIDs() const;
 
@@ -81,6 +81,8 @@ namespace Albany {
 
     //! Retrieve coodinate vector (num_used_nodes * 3)
     Teuchos::ArrayRCP<double>& getCoordinates() const;
+
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >& getCoords() const;
 
     //! Retrieve Vector (length num worksets) of element block names
     const Teuchos::ArrayRCP<std::string>&  getWsEBNames() const;
@@ -155,6 +157,7 @@ namespace Albany {
 
     //! node sets stored as std::map(string ID, int vector of GIDs)
     Albany::NodeSetList nodeSets;
+    Albany::NodeSetCoordList nodeSetCoords;
 
     //! Just the node set ID strings
     std::vector<std::string> nodeSetIDs;
@@ -164,6 +167,7 @@ namespace Albany {
 
     mutable Teuchos::ArrayRCP<double> coordinates;
     Teuchos::ArrayRCP<std::string> wsEBNames;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords;
 
     //! list of all owned nodes, saved for setting solution
     std::vector< stk::mesh::Entity * > ownednodes ;
@@ -176,7 +180,7 @@ namespace Albany {
 
     // Used in Exodus writing capability
 #ifdef ALBANY_IOSS
-    stk::io::util::MeshData* mesh_data;
+    stk::io::MeshData* mesh_data;
 #endif
     mutable double time;
 

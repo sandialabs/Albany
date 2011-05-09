@@ -181,10 +181,12 @@ Albany::STKDiscretization::STKDiscretization(
 
   // Fill  wsElNodeID(workset, el_LID, local node) => node_LID
   wsElNodeID.resize(numBuckets);
+  coords.resize(numBuckets);
   int el_lid=0;
 for (unsigned int b=0; b < buckets.size(); b++) {
   stk::mesh::Bucket& buck = *buckets[b];
   wsElNodeID[b].resize(buck.size());
+  coords[b].resize(buck.size());
   for (unsigned int i=0; i < buck.size(); i++, el_lid++) {
 
     stk::mesh::Entity& e = buck[i];
@@ -192,6 +194,7 @@ for (unsigned int b=0; b < buckets.size(); b++) {
     stk::mesh::PairIterRelation rel = e.relations();
 
     wsElNodeID[b][i].resize(nodes_per_element);
+    coords[b][i].resize(nodes_per_element);
     // loop over local nodes
     for (unsigned int j=0; j < rel.size(); j++) {
       stk::mesh::Entity& rowNode = * rel[j].entity();
@@ -200,6 +203,7 @@ for (unsigned int b=0; b < buckets.size(); b++) {
       TEST_FOR_EXCEPTION(node_lid<0, std::logic_error,
           "STK1D_Disc: node_lid out of range " << node_lid << endl);
       wsElNodeID[b][i][j] = node_lid;
+      coords[b][i][j] = stk::mesh::field_data(*stkMeshStruct->coordinates_field, rowNode);
     }
   }
 }
@@ -235,10 +239,14 @@ for (unsigned int b=0; b < buckets.size(); b++) {
                              nodes );
 
     nodeSets[ns->first].resize(nodes.size());
+    nodeSetCoords[ns->first].resize(nodes.size());
     nodeSetIDs.push_back(ns->first); // Grab string ID
     if (comm->MyPID()==0)
       cout << "STKDisc: nodeset "<< ns->first <<" has size " << nodes.size() << "  on Proc 0." << endl;
-    for (unsigned int i=0; i < nodes.size(); i++) nodeSets[ns->first][i] = nodes[i]->identifier() - 1;
+    for (unsigned int i=0; i < nodes.size(); i++) {
+      nodeSets[ns->first][i] = nodes[i]->identifier() - 1;
+      nodeSetCoords[ns->first][i] = stk::mesh::field_data(*stkMeshStruct->coordinates_field, *nodes[i]);
+    }
     ns++;
   }
 
@@ -247,11 +255,14 @@ for (unsigned int b=0; b < buckets.size(); b++) {
     if (stkMeshStruct->numDim > 1) {
 
       Ioss::Init::Initializer io;
-      mesh_data = new stk::io::util::MeshData();
-      stk::io::util::create_output_mesh(
-            stkMeshStruct->exoOutFile, "", "",
+      mesh_data = new stk::io::MeshData();
+      stk::io::create_output_mesh(
+            stkMeshStruct->exoOutFile,
             Albany::getMpiCommFromEpetraComm(*comm),
-            bulkData, metaData, *mesh_data);
+            bulkData, *mesh_data);
+
+      stk::io::define_output_fields(*mesh_data, metaData);
+
     }
     else {
       cout << "\nWARNING: Exodus output for 1D Meshes not implemented:"
@@ -311,6 +322,12 @@ Albany::STKDiscretization::getWsElNodeID() const
   return wsElNodeID;
 }
 
+const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >&
+Albany::STKDiscretization::getCoords() const
+{
+  return coords;
+}
+
 Teuchos::ArrayRCP<double>& 
 Albany::STKDiscretization::getCoordinates() const
 {
@@ -367,7 +384,7 @@ void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln,
 
     time+=1.0;
 
-    int out_step = stk::io::util::process_output_request(
+    int out_step = stk::io::process_output_request(
                    *mesh_data, *stkMeshStruct->bulkData, time);
 
     if (map->Comm().MyPID()==0)
