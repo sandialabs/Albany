@@ -13,11 +13,12 @@
 
     <ParameterList name="Poisson Source">
       <Parameter name="Factor" type="double" value="1.0" />
-      <Parameter name="Device" type="string" value="pmoscap" />
+      <Parameter name="Device" type="string" value="elementblocks" />
+      <Parameter name="Acceptor Doping" type="double" value="1e14" />
     </ParameterList>
 
     <ParameterList name="Permittivity">
-      <Parameter name="Permittivity Type" type="string" value="Position Dependent" />
+      <Parameter name="Permittivity Type" type="string" value="Block Dependent" />
       <Parameter name="Silicon Value" type="double" value="11.9" />
       <Parameter name="Oxide Value" type="double" value="3.9" />
     </ParameterList>
@@ -39,9 +40,9 @@
 
 
   <ParameterList name="Discretization">
-    <Parameter name="Exodus Input File Name" type="string" value="pmoscap.exo" />
+    <Parameter name="Exodus Input File Name" type="string" value="pmoscapEB.exo" />
     <Parameter name="Method" type="string" value="Ioss" />
-    <Parameter name="Exodus Output File Name" type="string" value="potential.exo" />
+    <Parameter name="Exodus Output File Name" type="string" value="potentialEB.exo" />
   </ParameterList>
 
 

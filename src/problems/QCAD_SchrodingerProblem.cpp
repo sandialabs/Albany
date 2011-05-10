@@ -345,6 +345,7 @@ QCAD::SchrodingerProblem::constructEvaluators(
     Teuchos::ParameterList& paramList = params->sublist("Potential");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
+    //Global Problem Parameters
     p->set<double>("Energy unit in eV", energy_unit_in_eV);
     p->set<double>("Length unit in m", length_unit_in_m);
 
@@ -384,6 +385,7 @@ QCAD::SchrodingerProblem::constructEvaluators(
       p->set<Teuchos::ParameterList*>("Material Parameter List", &paramList);
     }
 
+    //Global Problem Parameters
     p->set<double>("Energy unit in eV", energy_unit_in_eV);
     p->set<double>("Length unit in m", length_unit_in_m);
 
@@ -444,7 +446,7 @@ QCAD::SchrodingerProblem::getValidProblemParameters() const
   validPL->sublist("Material", false, "");
   validPL->sublist("Potential", false, "");
   validPL->set<double>("EnergyUnitInElectronVolts",1e-3,"Energy unit in electron volts");
-  validPL->set<double>("LengthUnitInMeters",1e-3,"Length unit in meters");
+  validPL->set<double>("LengthUnitInMeters",1e-9,"Length unit in meters");
 
   return validPL;
 }

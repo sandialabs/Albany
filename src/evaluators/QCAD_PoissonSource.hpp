@@ -54,15 +54,27 @@ namespace QCAD
   	//! Function to allow parameters to be exposed for embedded analysis
   	ScalarT& getValue(const std::string &n);
 
+        //! Public Universal Constants
+        /***** define universal constants as double constants *****/
+        static const double kbBoltz; // Boltzmann constant in [eV/K]
+        static const double eps0; // vacuum permittivity in [C/(V.cm)]
+        static const double eleQ; // electron elemental charge in [C]
+
 	private:
 
   	//! Reference parameter list generator to check xml input file
   	Teuchos::RCP<const Teuchos::ParameterList>
     		getValidPoissonSourceParameters() const;
 
-  	// Suzey: need to assign values to private variables, so remove "const"
-  	ScalarT chargeDistribution( const int numDim,
-        const MeshScalarT* coord, const ScalarT& phi);
+        //! evaluateFields functions for different devices (device specified in xml input)
+        void evaluateFields_pndiode(typename Traits::EvalData workset);
+        void evaluateFields_pmoscap(typename Traits::EvalData workset);
+        void evaluateFields_elementblocks(typename Traits::EvalData workset);
+        void evaluateFields_default(typename Traits::EvalData workset);
+
+        //! fills workset's state fields using temporary member variables that just
+        //   hold data for one output point.
+        void fillOutputState(typename Traits::EvalData workset, std::size_t cell, std::size_t qp);
 
   	//! input
   	std::size_t numQPs;
@@ -75,10 +87,22 @@ namespace QCAD
 
   	//! constant prefactor parameter in source function
   	ScalarT factor;
+
+  	//! Temperature parameter in source function
+  	ScalarT temperature; //lattice temperature in [K]
   	
   	//! string variable to differ the various devices implementation
   	std::string device;
-  	
+    
+        //! donor and acceptor concentrations (for element blocks nsilicon & psilicon)
+        double dopingDonor;
+        double dopingAcceptor;
+
+        //! scaling parameters
+        double length_unit_in_m; // length unit for input and output mesh
+        double X0;   // length scaling to get to [cm]
+        double C0;   // Scaling for conc. [cm^-3]
+
   	//! variables to hold the computed output quantities
   	ScalarT chargeDensity; 	    // space charge density in [cm-3]
   	ScalarT electronDensity;		// electron density in [cm-3]

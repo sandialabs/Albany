@@ -40,6 +40,18 @@ PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 		     "\nError! Poisson problem does not parse Source Functions sublist\n" 
                      << "\tjust Poisson Source sublist " << std::endl);
 
+  //get length scale for problem (length unit for in/out mesh)
+  length_unit_in_m = 1e-6; //default to um
+  if(params->isType<double>("LengthUnitInMeters"))
+    length_unit_in_m = params->get<double>("LengthUnitInMeters");
+
+  temperature = 300; //default to 300K
+  if(params->isType<double>("Temperature"))
+    temperature = params->get<double>("Temperature");
+
+
+  std::cout << "Length unit = " << length_unit_in_m << " meters" << endl;
+
   // neq=1 set in AbstractProblem constructor
   dofNames.resize(neq);
   dofNames[0] = "Phi";
@@ -332,6 +344,10 @@ QCAD::PoissonProblem::constructEvaluators(
     //Output
     p->set<string>("Source Name", "Poisson Source");
 
+    //Global Problem Parameters
+    p->set<double>("Length unit in m", length_unit_in_m);
+    p->set<double>("Temperature", temperature);
+
     evaluators_to_build["Poisson Source"] = p;
 
     // STATE OUTPUT
@@ -427,6 +443,8 @@ QCAD::PoissonProblem::getValidProblemParameters() const
     validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic BC for 1D problems");
   validPL->sublist("Permittivity", false, "");
   validPL->sublist("Poisson Source", false, "");
+  validPL->set<double>("LengthUnitInMeters",1e-6,"Length unit in meters");
+  validPL->set<double>("Temperature",300,"Temperature in Kelvin");
 
   return validPL;
 }

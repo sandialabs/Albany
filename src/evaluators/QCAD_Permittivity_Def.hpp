@@ -24,8 +24,8 @@ template<typename EvalT, typename Traits>
 QCAD::Permittivity<EvalT, Traits>::
 Permittivity(Teuchos::ParameterList& p) :
   permittivity(p.get<std::string>("QP Variable Name"),
-	  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-  is_constant(false), temp_dependent(false), position_dependent(false)
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+  temp_dependent(false), position_dependent(false)
 {
 	Teuchos::ParameterList* perm_list = 
     	p.get<Teuchos::ParameterList*>("Parameter List");
@@ -43,12 +43,11 @@ Permittivity(Teuchos::ParameterList& p) :
   numQPs  = dims[1];
   numDims = dims[2];
 
-  std::string type = perm_list->get("Permittivity Type", "Constant");
+  typ = perm_list->get("Permittivity Type", "Constant");
   
   // Permittivity (relative) value is constant
-  if (type == "Constant") 
+  if (typ == "Constant") 
   {
-    is_constant = true;
     constant_value = perm_list->get("Value", 1.0);
 
     // Add Permittivity as a Sacado-ized parameter
@@ -59,7 +58,7 @@ Permittivity(Teuchos::ParameterList& p) :
   }
   
   // Permittivity (relative) has position dependence 
-  else if (type == "Position Dependent") 
+  else if (typ == "Position Dependent") 
   {
   	position_dependent = true;
     silicon_value = perm_list->get("Silicon Value", 1.0);
@@ -81,7 +80,7 @@ Permittivity(Teuchos::ParameterList& p) :
   }
   
   // Permittivity (relative) has temperature dependence
-  else if (type == "Temperature Dependent") 
+  else if (typ == "Temperature Dependent") 
   {
     temp_dependent = true;
     constant_value = perm_list->get("Value", 1.0);
@@ -101,13 +100,32 @@ Permittivity(Teuchos::ParameterList& p) :
     new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
 				"Permittivity Factor", this, paramLib);
   }
+
+  else if (typ == "Block Dependent") 
+  {
+    constant_value = perm_list->get("Value", 1.0);
+    silicon_value = perm_list->get("Silicon Value", 1.0);
+    oxide_value = perm_list->get("Oxide Value", 1.0);
+    poly_value = perm_list->get("Poly Value", 1.0);
+
+    // Add Material Permittivities as Sacado-ized parameters
+    Teuchos::RCP<ParamLib> paramLib = 
+      	p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
+				"Silicon Permittivity", this, paramLib);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
+				"Oxide Permittivity", this, paramLib);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
+				"Poly Permittivity", this, paramLib);
+  }
+
   
   // Parse for other functional form for permittivity variation here
   // This effectively validates the 2nd argument in perm_list->get (...);
   else 
   {
     TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-		       "Invalid Permittivity Type: " << type);
+		       "Invalid Permittivity Type: " << typ);
   } 
 
   this->addEvaluatedField(permittivity);
@@ -131,18 +149,18 @@ void QCAD::Permittivity<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // assign constant_value to permittivity defined in .hpp file
-  if (is_constant) 
+  if (typ == "Constant") 
   {	
     for (std::size_t cell=0; cell < workset.numCells; ++cell) 
     {	
       for (std::size_t qp=0; qp < numQPs; ++qp) 
       {
-				permittivity(cell,qp) = constant_value;
+	permittivity(cell,qp) = constant_value;
       }
     }
   }
   // assign silicon_value for y>0 and oxide_value for y<=0 to permittivity
-  else if (position_dependent)
+  else if (typ == "Position Dependent") 
   {	
   	// loop through all elements in one workset
     for (std::size_t cell=0; cell < workset.numCells; ++cell) 
@@ -150,16 +168,16 @@ evaluateFields(typename Traits::EvalData workset)
     	// loop through the QPs for each element
       for (std::size_t qp=0; qp < numQPs; ++qp) 
       {
-				if (coordVec(cell,qp,1) > 0.0) //3rd argument: 0 for x, 1 for y, 2 for z
-					permittivity(cell,qp) = silicon_value;
-				else
-					permittivity(cell,qp) = oxide_value;
+	if (coordVec(cell,qp,1) > 0.0) //3rd argument: 0 for x, 1 for y, 2 for z
+	  permittivity(cell,qp) = silicon_value;
+	else
+	  permittivity(cell,qp) = oxide_value;
       }
     }
   }
   
   // calculate temp-dep value and fill in the permittivity field
-  else if (temp_dependent) 
+  else if (typ == "Temperature Dependent") 
   {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) 
     {
@@ -168,6 +186,28 @@ evaluateFields(typename Traits::EvalData workset)
         ScalarT denom = 1.0 + factor * Temp(cell,qp);
         permittivity(cell,qp) = constant_value / denom;;
       }
+    }
+  }
+
+  else if (typ == "Block Dependent") 
+  {	
+    ScalarT value;
+
+    if(workset.EBName == "silicon" || workset.EBName == "nsilicon" || workset.EBName == "psilicon")
+      value = silicon_value;
+    else if(workset.EBName == "sio2") value = oxide_value;
+    else if(workset.EBName == "poly") value = poly_value;
+    else {
+      TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+			 std::endl << "Error!  Unknown element block name "
+			 << workset.EBName << "!" << std::endl);
+    }
+
+    // loop through all elements in one workset
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {	
+      // loop through the QPs for each element
+      for (std::size_t qp=0; qp < numQPs; ++qp)
+	permittivity(cell,qp) = value;
     }
   }
   
@@ -198,6 +238,9 @@ QCAD::Permittivity<EvalT,Traits>::getValue(const std::string &n)
   else if (n == "Oxide Permittivity")
   	return oxide_value;
 
+  else if (n == "Poly Permittivity")
+        return poly_value;
+
   // temperature factor used in the temp-dep permittivity calculation
   else if (n == "Permittivity Factor")
     return factor;
@@ -227,6 +270,7 @@ QCAD::Permittivity<EvalT,Traits>::getValidPermittivityParameters() const
   validPL->set<double>("Factor", 1.0, "Permittivity temperature factor");
   validPL->set<double>("Silicon Value", 1.0, "Silicon permittivity value");
   validPL->set<double>("Oxide Value", 1.0, "SiO2 permittivity value");
+  validPL->set<double>("Poly Value", 1.0, "Poly-silicon permittivity value");
 
   return validPL;
 }

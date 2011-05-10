@@ -67,17 +67,18 @@ namespace QCAD
   	PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
 
   	//! Define boolean variables to categorize 
-  	bool is_constant;					// is permittivity constant ?
-  	bool temp_dependent;			// is permittivity temperature dependent ?
+	std::string typ;		// permittivity type
+  	bool temp_dependent;		// is permittivity temperature dependent ?
   	bool position_dependent;	// is permittivity position dependent ?
 
   	//! Constant value
   	ScalarT constant_value;		// for constant permittivity
-  	ScalarT factor;						// for temperature-dependent permittivity
+  	ScalarT factor;			// for temperature-dependent permittivity
   
   	//! Variables to hold Silicon and SiO2 relative permittivity
   	ScalarT silicon_value;
   	ScalarT oxide_value;
+  	ScalarT poly_value;
 	};
 	
 }

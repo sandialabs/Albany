@@ -74,6 +74,8 @@ namespace QCAD {
     bool periodic;
     bool haveSource;
     int numDim;
+    double length_unit_in_m;
+    double temperature;
 
   };
 

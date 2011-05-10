@@ -20,5 +20,17 @@
 #include "QCAD_PoissonSource.hpp"
 #include "QCAD_PoissonSource_Def.hpp"
 
+// Boltzmann constant in [eV/K]
+template<typename EvalT, typename Traits>
+const double QCAD::PoissonSource<EvalT, Traits>::kbBoltz = 8.617343e-05;
+
+// vacuum permittivity in [C/(V.cm)]
+template<typename EvalT, typename Traits>
+const double QCAD::PoissonSource<EvalT, Traits>::eps0 = 8.854187817e-12*0.01;
+
+// electron elemental charge in [C]
+template<typename EvalT, typename Traits>
+const double QCAD::PoissonSource<EvalT, Traits>::eleQ = 1.602e-19; 
+
 PHAL_INSTANTIATE_TEMPLATE_CLASS(QCAD::PoissonSource)
 
