@@ -63,6 +63,8 @@
 #include "LCM/evaluators/DamageSource.hpp"
 #include "LCM/evaluators/ShearModulus.hpp"
 #include "LCM/evaluators/BulkModulus.hpp"
+#include "LCM/evaluators/KfieldBC.hpp"
+
 
 #include "boost/mpl/vector/vector50.hpp"
 #include "boost/mpl/placeholders.hpp"
@@ -71,7 +73,10 @@ using namespace boost::mpl::placeholders;
 /*! \brief Struct to define Evaluator objects for the EvaluatorFactory.
     
     Preconditions:
-    - You must provide a boost::mpl::vector named EvaluatorTypes that contain all Evaluator objects that you wish the factory to build.  Do not confuse evaluator types (concrete instances of evaluator objects) with evaluation types (types of evaluations to perform, i.e., Residual, Jacobian). 
+    - You must provide a boost::mpl::vector named EvaluatorTypes that contain all 
+    Evaluator objects that you wish the factory to build.  Do not confuse evaluator types 
+    (concrete instances of evaluator objects) with evaluation types (types of evaluations 
+    to perform, i.e., Residual, Jacobian). 
 
 */
 namespace LCM {
@@ -120,12 +125,14 @@ struct FactoryTraits {
   static const int id_damage_source             = 38;
   static const int id_bulk_modulus              = 39;
   static const int id_shear_modulus             = 40;
-  static const int id_lame_stress               = 41;
+  static const int id_kfield_bc                 = 41;
+  // JTO - leave lame stress at the bottom for the convention below to be most effective
+  static const int id_lame_stress               = 42;
 
 #ifndef ALBANY_LAME
-  typedef boost::mpl::vector41<
-#else
   typedef boost::mpl::vector42<
+#else
+  typedef boost::mpl::vector43<
 #endif
     PHAL::Dirichlet<_,Traits>,                //  0
     PHAL::GatherSolution<_,Traits>,           //  1
@@ -167,9 +174,10 @@ struct FactoryTraits {
     LCM::Localization<_,Traits>,              // 37
     LCM::DamageSource<_,Traits>,              // 38
     LCM::BulkModulus<_,Traits>,               // 39
-    LCM::ShearModulus<_,Traits>               // 40
+    LCM::ShearModulus<_,Traits>,              // 40
+    LCM::KfieldBC<_,Traits>                   // 41
 #ifdef ALBANY_LAME
-    ,LCM::LameStress<_,Traits>                // 41
+    ,LCM::LameStress<_,Traits>                // 42
 #endif
     > EvaluatorTypes;
 };

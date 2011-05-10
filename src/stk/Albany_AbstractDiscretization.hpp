@@ -33,6 +33,7 @@
 namespace Albany {
 
   typedef std::map<std::string, std::vector<int> > NodeSetList;
+  typedef std::map<std::string, std::vector<double*> > NodeSetCoordList;
 
   class AbstractDiscretization {
   public:
@@ -65,13 +66,15 @@ namespace Albany {
 
     //! Get Node set lists (typdef in Albany_Discretization.hpp)
     virtual const NodeSetList& getNodeSets() const = 0;
+    virtual const NodeSetCoordList& getNodeSetCoords() const = 0;
     virtual const std::vector<std::string>& getNodeSetIDs() const = 0;
 
     //! Get map from (Ws, El, Local Node) -> NodeLID
     virtual const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >& getWsElNodeID() const = 0;
 
-    //! Retrieve coodinate vector (num_used_nodes * 3)
+    //! Retrieve coodinate ptr_field (ws, el, node)
     virtual Teuchos::ArrayRCP<double>&  getCoordinates() const = 0;
+    virtual const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >& getCoords() const = 0;
 
     //! Retrieve Vector (length num worksets) of element block names
     virtual const Teuchos::ArrayRCP<std::string>&  getWsEBNames() const = 0;

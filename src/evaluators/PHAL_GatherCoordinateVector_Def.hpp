@@ -55,8 +55,8 @@ void GatherCoordinateVector<EvalT, Traits>::postRegistrationSetup(typename Trait
 template<typename EvalT, typename Traits>
 void GatherCoordinateVector<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 { 
-  const Teuchos::ArrayRCP<double> &coordinates = workset.coordinates;
   unsigned int numCells = workset.numCells;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > wsCoords = workset.wsCoords;
 
   for (std::size_t cell=0; cell < numCells; ++cell) {
     const Teuchos::ArrayRCP<int>& nodeID  = workset.wsElNodeID[cell];
@@ -64,7 +64,7 @@ void GatherCoordinateVector<EvalT, Traits>::evaluateFields(typename Traits::Eval
       const int row_loc = 3*nodeID[node];
 
       for (std::size_t eq=0; eq < numDim; ++eq) { 
-        coordVec(cell,node,eq) = coordinates[row_loc+eq]; 
+        coordVec(cell,node,eq) = wsCoords[cell][node][eq]; 
       }
     }
   }
@@ -122,6 +122,7 @@ evaluateFields(typename Traits::EvalData workset)
         for (int j=0; j < numShapeDerivs; ++j) { 
           coordVec(cell,node,eq).fastAccessDx((*coord_deriv_indices)[j]) 
                =  coord_derivs[j][row_loc+eq];
+//               =  ws_coord_derivs[j][cell][node][eq];
         }
       }
     }

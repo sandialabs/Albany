@@ -75,7 +75,7 @@ Albany::Line1DSTKMeshStruct::Line1DSTKMeshStruct(
   //Needed for rebalancing
   //stk::mesh::DefaultFEM fem(*metaData,numDim_);
 
-  stk::mesh::fem::set_cell_topology_new< shards::Line<2> >(*partVec[0]);
+  stk::mesh::fem::set_cell_topology< shards::Line<2> >(*partVec[0]);
 
   metaData->commit();
 

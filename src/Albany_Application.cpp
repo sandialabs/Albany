@@ -114,6 +114,7 @@ Albany::Application::Application(
 
   // Load connectivity map and coordinates 
   wsElNodeID = disc->getWsElNodeID();
+  coords = disc->getCoords();
   coordinates = disc->getCoordinates();
   wsEBNames = disc->getWsEBNames();
   int numDim = disc->getNumDim();
@@ -372,6 +373,7 @@ Albany::Application::computeGlobalResidual(
     for (int ws=0; ws < numWorksets; ws++) {
       workset.numCells = wsElNodeID[ws].size();
       workset.wsElNodeID = wsElNodeID[ws];
+      workset.wsCoords = coords[ws];
       workset.EBName = wsEBNames[ws];
 
       workset.oldState = stateMgr.getOldStateVariables(ws);
@@ -396,6 +398,7 @@ Albany::Application::computeGlobalResidual(
 
     workset.f = Teuchos::rcpFromRef(f);
     workset.nodeSets = Teuchos::rcpFromRef(disc->getNodeSets());
+    workset.nodeSetCoords = Teuchos::rcpFromRef (disc->getNodeSetCoords());
     workset.x = Teuchos::rcpFromRef(x);;
     if (xdot != NULL) workset.transientTerms = true;
 
@@ -483,6 +486,7 @@ Albany::Application::computeGlobalJacobian(
     for (int ws=0; ws < numWorksets; ws++) {
       workset.numCells = wsElNodeID[ws].size();
       workset.wsElNodeID = wsElNodeID[ws];
+      workset.wsCoords = coords[ws];
       workset.EBName = wsEBNames[ws];
 
       workset.oldState = stateMgr.getOldStateVariables(ws);
@@ -515,6 +519,7 @@ Albany::Application::computeGlobalJacobian(
     if (xdot != NULL) workset.transientTerms = true;
 
     workset.nodeSets = Teuchos::rcpFromRef (disc->getNodeSets());
+    workset.nodeSetCoords = Teuchos::rcpFromRef (disc->getNodeSetCoords());
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
@@ -678,6 +683,9 @@ Albany::Application::computeGlobalTangent(
 
   // Begin shape optimization logic
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > coord_derivs;
+  // ws, sp, cell, node, dim
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > > > ws_coord_derivs;
+  ws_coord_derivs.resize(coords.size());
   std::vector<int> coord_deriv_indices;
 #ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
@@ -709,6 +717,7 @@ Albany::Application::computeGlobalTangent(
      double eps = 1.0e-4;
      double pert;
      coord_derivs.resize(num_sp);
+     for (int ws=0; ws<coords.size(); ws++)  ws_coord_derivs[ws].resize(num_sp);
      for (int i=0; i<num_sp; i++) {
 *out << "XXX perturbing parameter " << coord_deriv_indices[i]
      << " which is shapeParam # " << shape_param_indices[i] 
@@ -726,6 +735,16 @@ for (unsigned int ii=0; ii<shapeParams.size(); ii++) *out << shapeParams[ii] << 
        coordinates = disc->getCoordinates();
        for (int j=0; j<coordinates.size(); j++)  coord_derivs[i][j] = coordinates[j];
 
+       for (int ws=0; ws<coords.size(); ws++) {  //worset
+         ws_coord_derivs[ws][i].resize(coords[ws].size());
+         for (int e=0; e<coords[ws].size(); e++) { //cell
+           ws_coord_derivs[ws][i][e].resize(coords[ws][e].size());
+           for (int j=0; j<coords[ws][e].size(); j++) { //node
+             ws_coord_derivs[ws][i][e][j].resize(disc->getNumDim());
+             for (int d=0; d<disc->getNumDim(); d++)  //node
+                ws_coord_derivs[ws][i][e][j][d] = coords[ws][e][j][d];
+       } } } } 
+
        shapeParams[shape_param_indices[i]] -= pert;
      }
 *out << " Calling moveMesh with params: " << std::setprecision(8);
@@ -734,6 +753,11 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
      meshMover->moveMesh(shapeParams, morphFromInit);
      coordinates = disc->getCoordinates();
      for (int i=0; i<num_sp; i++) {
+       for (int ws=0; ws<coords.size(); ws++)  //worset
+         for (int e=0; e<coords[ws].size(); e++)  //cell
+           for (int j=0; j<coords[ws][i].size(); j++)  //node
+             for (int d=0; d<disc->getNumDim; d++)  //node
+                ws_coord_derivs[ws][i][e][j][d] = (ws_coord_derivs[ws][i][e][j][d] - coords[ws][e][j][d]) / pert;
        for (int j=0; j<coordinates.size(); j++) {
           coord_derivs[i][j] = (coord_derivs[i][j] - coordinates[j]) / pert;
        }
@@ -773,7 +797,9 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     for (int ws=0; ws < numWorksets; ws++) {
       workset.numCells = wsElNodeID[ws].size();
       workset.wsElNodeID = wsElNodeID[ws];
+      workset.wsCoords = coords[ws];
       workset.EBName = wsEBNames[ws];
+      workset.ws_coord_derivs = ws_coord_derivs[ws];
 
       workset.oldState = stateMgr.getOldStateVariables(ws);
       workset.newState = stateMgr.getNewStateVariables(ws);
@@ -813,6 +839,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     if (xdot != NULL) workset.transientTerms = true;
 
     workset.nodeSets = Teuchos::rcpFromRef(disc->getNodeSets());
+    workset.nodeSetCoords = Teuchos::rcpFromRef (disc->getNodeSetCoords());
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
@@ -1040,6 +1067,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     for (int ws=0; ws < numWorksets; ws++) {
       workset.numCells = wsElNodeID[ws].size();
       workset.wsElNodeID = wsElNodeID[ws];
+      workset.wsCoords = coords[ws];
       workset.EBName = wsEBNames[ws];
 
       workset.oldState = stateMgr.getOldStateVariables(ws);
@@ -1061,6 +1089,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
     workset.sg_f = Teuchos::rcpFromRef(sg_f);
     workset.nodeSets = Teuchos::rcpFromRef(disc->getNodeSets());
+    workset.nodeSetCoords = Teuchos::rcpFromRef (disc->getNodeSetCoords());
     workset.sg_x = Teuchos::rcpFromRef(sg_x);
     if (sg_xdot != NULL) workset.transientTerms = true;
 
@@ -1178,6 +1207,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     for (int ws=0; ws < numWorksets; ws++) {
       workset.numCells = wsElNodeID[ws].size();
       workset.wsElNodeID = wsElNodeID[ws];
+      workset.wsCoords = coords[ws];
       workset.EBName = wsEBNames[ws];
 
       workset.oldState = stateMgr.getOldStateVariables(ws);
@@ -1213,6 +1243,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     if (sg_xdot != NULL) workset.transientTerms = true;
 
     workset.nodeSets = Teuchos::rcpFromRef (disc->getNodeSets());
+    workset.nodeSetCoords = Teuchos::rcpFromRef (disc->getNodeSetCoords());
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::SGJacobian>(workset);
@@ -1355,6 +1386,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     for (int ws=0; ws < numWorksets; ws++) {
       workset.numCells = wsElNodeID[ws].size();
       workset.wsElNodeID = wsElNodeID[ws];
+      workset.wsCoords = coords[ws];
       workset.EBName = wsEBNames[ws];
 
       workset.oldState = stateMgr.getOldStateVariables(ws);
@@ -1376,6 +1408,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
     workset.mp_f = Teuchos::rcpFromRef(mp_f);
     workset.nodeSets = Teuchos::rcpFromRef(disc->getNodeSets());
+    workset.nodeSetCoords = Teuchos::rcpFromRef (disc->getNodeSetCoords());
     workset.mp_x = Teuchos::rcpFromRef(mp_x);
     if (mp_xdot != NULL) workset.transientTerms = true;
 
@@ -1502,6 +1535,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     for (int ws=0; ws < numWorksets; ws++) {
       workset.numCells = wsElNodeID[ws].size();
       workset.wsElNodeID = wsElNodeID[ws];
+      workset.wsCoords = coords[ws];
       workset.EBName = wsEBNames[ws];
 
       workset.oldState = stateMgr.getOldStateVariables(ws);
@@ -1537,6 +1571,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     if (mp_xdot != NULL) workset.transientTerms = true;
 
     workset.nodeSets = Teuchos::rcpFromRef (disc->getNodeSets());
+    workset.nodeSetCoords = Teuchos::rcpFromRef (disc->getNodeSetCoords());
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::MPJacobian>(workset);
