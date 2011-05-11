@@ -116,22 +116,9 @@ Albany::GradientDamageProblem::constructEvaluators(
    using LCM::FactoryTraits;
    using PHAL::AlbanyTraits;
 
-   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
    RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&ctd));
-   switch (numDim) {
-     case 1:
-       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_LINE_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
-       break;
-     case 2:
-       if (ctd.vertex_count==4)
-         intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
-       else if (ctd.vertex_count==3)
-         intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TRI_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
-       break;
-     case 3:
-       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_HEX_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
-       break;
-   }
+   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
+     intrepidBasis = this->getIntrepidBasis(ctd);
 
    numNodes = intrepidBasis->getCardinality();
 

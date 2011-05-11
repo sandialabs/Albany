@@ -124,34 +124,12 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
 
    const bool composite = params->get("Use Composite Tet 10", false);
    RCP<shards::CellTopology> comp_cellType = rcp(new shards::CellTopology( shards::getCellTopologyData<shards::Tetrahedron<11> >() ) );
-
-   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
    RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&ctd));
-   switch (neq) {
-     case 1:
-       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_LINE_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
-       break;
-     case 2:
-       if (ctd.vertex_count==4)
-         intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
-       else if (ctd.vertex_count==3)
-         intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TRI_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
-       break;
-     case 3:
-       if (ctd.node_count==8)
-         intrepidBasis = rcp(new Intrepid::Basis_HGRAD_HEX_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
-       else if (ctd.node_count==10)
-       {
-           if (!composite)
-             intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TET_C2_FEM<RealType, Intrepid::FieldContainer<RealType> >());
-           else
-           {
-             intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TET_COMP12_FEM<RealType, Intrepid::FieldContainer<RealType> >());
-             cellType = comp_cellType;
-           }
-       }
-       break;
-   }
+
+   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
+     intrepidBasis = this->getIntrepidBasis(ctd, composite);
+
+   if (composite && ctd.dimension==3 && ctd.node_count==10) cellType = comp_cellType;
 
    numNodes = intrepidBasis->getCardinality();
 

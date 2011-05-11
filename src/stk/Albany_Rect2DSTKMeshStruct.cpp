@@ -97,10 +97,6 @@ Albany::Rect2DSTKMeshStruct::Rect2DSTKMeshStruct(
 
   metaData->commit();
 
-  stk::mesh::MetaData& md = stk::mesh::MetaData::get(*bulkData);
-  cout << "MMM numparts  " << md.get_parts().size() << endl;
-  cout << "MMM er count  " << md.entity_rank_count() << endl;
-  cout << "MMM is commit  " << md.is_commit() << endl;
   // STK
   bulkData->modification_begin(); // Begin modifying the mesh
   //std::vector<stk::mesh::Part*> noPartVec;

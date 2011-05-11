@@ -53,12 +53,9 @@ void Albany::GenericSTKMeshStruct::SetupMetaData(
 
   if (! metaData->is_FEM_initialized()) metaData->FEM_initialize(numDim);
 
-  cout << " GGG  setting worksetsize = " << worksetSize << endl;
   if (bulkData ==  NULL)
   bulkData = new stk::mesh::BulkData(stk::mesh::fem::FEMMetaData::get_meta_data(*metaData),
                           Albany::getMpiCommFromEpetraComm(*comm), worksetSize );
-
-  cout << " FFF  " << metaData->element_rank() << "   " << metaData->node_rank() << endl;
 
   cubatureDegree = params->get("Cubature Degree", 3);
 

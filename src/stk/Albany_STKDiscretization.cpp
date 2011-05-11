@@ -62,7 +62,6 @@ Albany::STKDiscretization::STKDiscretization(
 
   if (stkMeshStruct->useElementAsTopRank) {
     nodes_per_element =  metaData.get_cell_topology(*(stkMeshStruct->partVec[0])).getNodeCount(); 
-    cout << " SSS " <<   metaData.get_cell_topology(*(stkMeshStruct->partVec[0])).getName() << endl;
    } 
   else {  // comes from cubit
     if (numDim==1)  nodes_per_element = 2;   //can't get topology from Cubit
