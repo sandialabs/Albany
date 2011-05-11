@@ -151,7 +151,8 @@ Albany::AbstractProblem::constructDirichletEvaluators(
      {
        // grab the sublist
        ParameterList& sub_list = DBCparams.sublist(ss);
-       
+
+#ifdef ALBANY_LCM       
        if (sub_list.get<string>("BC Function") == "Kfield" )
        {
 	 RCP<ParameterList> p = rcp(new ParameterList);
@@ -197,6 +198,7 @@ Albany::AbstractProblem::constructDirichletEvaluators(
 
 	 dbcs.push_back(ss);
        }
+#endif
      }
    }
 
