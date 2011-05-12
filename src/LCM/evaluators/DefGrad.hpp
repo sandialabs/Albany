@@ -23,23 +23,26 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
+#include "Intrepid_CellTools.hpp"
+#include "Intrepid_Cubature.hpp"
+
 /** \brief Deformation Gradient
 
-    This evaluator compute the deformation gradient
+    This evaluator computes the deformation gradient
 
 */
 namespace LCM {
 
 template<typename EvalT, typename Traits>
 class DefGrad : public PHX::EvaluatorWithBaseImpl<Traits>,
-		    public PHX::EvaluatorDerived<EvalT, Traits>  {
+		public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
   DefGrad(const Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
+			     PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
@@ -50,7 +53,8 @@ private:
 
   // Input:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> GradU;
-
+  PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
+  
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defgrad;
   PHX::MDField<ScalarT,Cell,QuadPoint> J;
@@ -59,6 +63,8 @@ private:
   unsigned int numDims;
 
   bool avgJ;
+  bool volavgJ;
+
 };
 
 }

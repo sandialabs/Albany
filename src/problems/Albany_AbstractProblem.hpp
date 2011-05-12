@@ -38,11 +38,17 @@
 #include "Teuchos_VerboseObject.hpp"
 #include <Intrepid_FieldContainer.hpp>
 
-// Includes needed by most prolems
 #include "Intrepid_HGRAD_LINE_C1_FEM.hpp"
+#include "Intrepid_HGRAD_LINE_Cn_FEM.hpp"
 #include "Intrepid_HGRAD_QUAD_C1_FEM.hpp"
+#include "Intrepid_HGRAD_QUAD_C2_FEM.hpp"
 #include "Intrepid_HGRAD_TRI_C1_FEM.hpp"
+#include "Intrepid_HGRAD_TRI_C2_FEM.hpp"
 #include "Intrepid_HGRAD_HEX_C1_FEM.hpp"
+#include "Intrepid_HGRAD_HEX_C2_FEM.hpp"
+#include "Intrepid_HGRAD_TET_C1_FEM.hpp"
+#include "Intrepid_HGRAD_TET_C2_FEM.hpp"
+#include "Intrepid_HGRAD_TET_COMP12_FEM.hpp"
 #include "Intrepid_FieldContainer.hpp"
 #include "Intrepid_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
@@ -128,6 +134,10 @@ namespace Albany {
     //! Names of scalar variables in this problem, used in specifying BCs
     std::vector<std::string> dofNames;
 
+    //! Factory function to construct Intrepid Basis from Shards CellTopologyData
+    Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
+      getIntrepidBasis(const CellTopologyData& ctd, bool compositeTet=false);
+
   private:
 
     //! Private to prohibit default or copy constructor
@@ -139,6 +149,7 @@ namespace Albany {
 
     //! Local utility function to construct unique string from Nodeset name and dof name
     std::string constructDBCName(const std::string ns, const std::string dof) const;
+
   };
 
 }

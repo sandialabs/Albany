@@ -62,7 +62,6 @@ Albany::STKDiscretization::STKDiscretization(
 
   if (stkMeshStruct->useElementAsTopRank) {
     nodes_per_element =  metaData.get_cell_topology(*(stkMeshStruct->partVec[0])).getNodeCount(); 
-    cout << " SSS " <<   metaData.get_cell_topology(*(stkMeshStruct->partVec[0])).getName() << endl;
    } 
   else {  // comes from cubit
     if (numDim==1)  nodes_per_element = 2;   //can't get topology from Cubit
@@ -142,7 +141,7 @@ Albany::STKDiscretization::STKDiscretization(
   for (int i=0; i<numBuckets; i++) {
      std::vector< stk::mesh::Part * >  bpv;
      buckets[i]->supersets(bpv);
-     for (int j=0; j<bpv.size(); j++) {
+     for (unsigned int j=0; j<bpv.size(); j++) {
        if (bpv[j]->primary_entity_rank() == metaData.element_rank()) {
          if (bpv[j]->name()[0] != '{') {
            cout << "Bucket " << i << " is in Element Block:  " << bpv[j]->name() 

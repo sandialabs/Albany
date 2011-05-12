@@ -136,24 +136,9 @@ QCAD::SchrodingerProblem::constructEvaluators(
    using PHAL::FactoryTraits;
    using PHAL::AlbanyTraits;
 
-   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
    RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&ctd));
-   switch (numDim) {
-     case 1:
-       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_LINE_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
-       break;
-     case 2:
-       if (ctd.node_count==4)
-         intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
-       else if (ctd.node_count==3)
-         intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TRI_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
-       else if (ctd.node_count==9)
-         intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C2_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
-       break;
-     case 3:
-       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_HEX_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
-       break;
-   }
+   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
+     intrepidBasis = this->getIntrepidBasis(ctd);
 
    const int numNodes = intrepidBasis->getCardinality();
 
@@ -162,8 +147,6 @@ QCAD::SchrodingerProblem::constructEvaluators(
 
    const int numQPts = cubature->getNumPoints();
    const int numVertices = cellType->getNodeCount();
-  cout << "NUM VERTICES SET TO NUM NODES " << endl;
-//   const int numVertices = cellType->getVertexCount();
 
    *out << "Field Dimensions: Workset=" << worksetSize 
         << ", Vertices= " << numVertices
@@ -258,6 +241,8 @@ QCAD::SchrodingerProblem::constructEvaluators(
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
 
     // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
+    p->set<string>("Weights Name",          "Weights");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
     p->set<string>("BF Name",          "BF");
     p->set<string>("Weighted BF Name", "wBF");
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);

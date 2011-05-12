@@ -103,10 +103,10 @@ KfieldBC<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(typename Traits::
     (*f)[ylunk] = ((*x)[ylunk] - Yval);
 
 //  JTO: I am going to leave this here for now...
-     std::cout << "================" << std::endl;
-     std::cout.precision(15);
-     std::cout << "X : " << X << ", Y: " << Y << ", R: " << R << std::endl;
-     std::cout << "Node : " << nsNodes[inode] << std::endl;
+//     std::cout << "================" << std::endl;
+//     std::cout.precision(15);
+//     std::cout << "X : " << X << ", Y: " << Y << ", R: " << R << std::endl;
+//     std::cout << "Node : " << nsNodes[inode] << std::endl;
 //     std::cout << "KI : " << KI << ", KII: " << KII << std::endl;
 //     std::cout << "theta: " << theta << std::endl;
 //     std::cout << "coeff_1: " << coeff_1 << ", coeff_2: " << coeff_2 << std::endl;

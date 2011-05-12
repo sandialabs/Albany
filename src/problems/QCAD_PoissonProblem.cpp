@@ -135,23 +135,9 @@ QCAD::PoissonProblem::constructEvaluators(
    using PHAL::FactoryTraits;
    using PHAL::AlbanyTraits;
 
-   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
    RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&ctd));
-   switch (numDim) 
-   {
-     case 1:
-       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_LINE_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
-       break;
-     case 2:
-       if (ctd.vertex_count==4)
-         intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
-       else if (ctd.vertex_count==3)
-         intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TRI_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
-       break;
-     case 3:
-       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_HEX_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
-       break;
-   }
+   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
+     intrepidBasis = this->getIntrepidBasis(ctd);
 
    const int numNodes = intrepidBasis->getCardinality();
 
@@ -252,6 +238,8 @@ QCAD::PoissonProblem::constructEvaluators(
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
 
     // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
+    p->set<string>("Weights Name",          "Weights");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
     p->set<string>("BF Name",          "BF");
     p->set<string>("Weighted BF Name", "wBF");
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);

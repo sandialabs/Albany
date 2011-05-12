@@ -31,6 +31,8 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p) :
   cubature      (p.get<Teuchos::RCP <Intrepid::Cubature<RealType> > >("Cubature")),
   intrepidBasis (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > > ("Intrepid Basis") ),
   cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
+  weighted_measure (p.get<std::string>                   ("Weights Name"),
+                 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   BF            (p.get<std::string>                   ("BF Name"),
                  p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
   wBF           (p.get<std::string>                   ("Weighted BF Name"),
@@ -41,6 +43,7 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p) :
                  p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") )
 {
   this->addDependentField(coordVec);
+  this->addEvaluatedField(weighted_measure);
   this->addEvaluatedField(BF);
   this->addEvaluatedField(wBF);
   this->addEvaluatedField(GradBF);
@@ -70,7 +73,6 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p) :
   jacobian.resize(containerSize, numQPs, numDims, numDims);
   jacobian_inv.resize(containerSize, numQPs, numDims, numDims);
   jacobian_det.resize(containerSize, numQPs);
-  weighted_measure.resize(containerSize, numQPs);
 
   // Pre-Calculate reference element quantitites
   cubature->getCubature(refPoints, refWeights);
@@ -87,6 +89,7 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(coordVec,fm);
+  this->utils.setFieldData(weighted_measure,fm);
   this->utils.setFieldData(BF,fm);
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(GradBF,fm);

@@ -124,34 +124,12 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
 
    const bool composite = params->get("Use Composite Tet 10", false);
    RCP<shards::CellTopology> comp_cellType = rcp(new shards::CellTopology( shards::getCellTopologyData<shards::Tetrahedron<11> >() ) );
-
-   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
    RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&ctd));
-   switch (neq) {
-     case 1:
-       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_LINE_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
-       break;
-     case 2:
-       if (ctd.vertex_count==4)
-         intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
-       else if (ctd.vertex_count==3)
-         intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TRI_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
-       break;
-     case 3:
-       if (ctd.node_count==8)
-         intrepidBasis = rcp(new Intrepid::Basis_HGRAD_HEX_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
-       else if (ctd.node_count==10)
-       {
-           if (!composite)
-             intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TET_C2_FEM<RealType, Intrepid::FieldContainer<RealType> >());
-           else
-           {
-             intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TET_COMP12_FEM<RealType, Intrepid::FieldContainer<RealType> >());
-             cellType = comp_cellType;
-           }
-       }
-       break;
-   }
+
+   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
+     intrepidBasis = this->getIntrepidBasis(ctd, composite);
+
+   if (composite && ctd.dimension==3 && ctd.node_count==10) cellType = comp_cellType;
 
    numNodes = intrepidBasis->getCardinality();
 
@@ -257,6 +235,8 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
 
     // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
+    p->set<string>("Weights Name",          "Weights");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
     p->set<string>("BF Name",          "BF");
     p->set<string>("Weighted BF Name", "wBF");
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
@@ -390,17 +370,18 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
     int type = FactoryTraits<AlbanyTraits>::id_defgrad;
     p->set<int>("Type", type);
 
-    // Volumetric averaging flag
+    //Inputs: flags, weights, GradU
     const bool avgJ = params->get("avgJ", false);
     p->set<bool>("avgJ Name", avgJ);
-
-    //Input
+    const bool volavgJ = params->get("volavgJ", false);
+    p->set<bool>("volavgJ Name", volavgJ);
+    p->set<string>("Weights Name","Weights");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
     p->set<string>("Gradient QP Variable Name", "Displacement Gradient");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
 
-    //Output
+    //Outputs: F, J
     p->set<string>("DefGrad Name", "Deformation Gradient"); //qp_tensor also
-    // DetDefGrad calculation moed later for AD case
     p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient"); 
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
 
@@ -667,7 +648,8 @@ Albany::NonlinearElasticityProblem::getValidProblemParameters() const
   validPL->sublist("Poissons Ratio", false, "");
   validPL->sublist("Shear Modulus", false, "");
   validPL->sublist("Material Model", false, "");
-  validPL->set<bool>("avgJ", false, "Flag to indicate the J should be volume averaged");
+  validPL->set<bool>("avgJ", false, "Flag to indicate the J should be averaged");
+  validPL->set<bool>("volavgJ", false, "Flag to indicate the J should be volume averaged");
   validPL->set<bool>("Use Composite Tet 10", false, "Flag to use the compostie tet 10 basis in Intrepid");
   if (matModel == "J2")
   {
