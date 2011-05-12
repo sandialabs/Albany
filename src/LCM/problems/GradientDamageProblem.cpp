@@ -456,6 +456,10 @@ Albany::GradientDamageProblem::constructEvaluators(
     p->set<string>("Stress Name", "Stress"); //qp_tensor also
     p->set<string>("DP Name", "DP"); // qp_scalar also
     p->set<string>("Effective Stress Name", "Effective Stress"); // qp_scalar also
+
+    p->set<string>("Fp Name", "Fp");  // qp_tensor also
+    p->set<string>("Eqps Name", "eqps");  // qp_scalar also
+
  
     //Declare what state data will need to be saved (name, layout, init_type)
     stateMgr.registerStateVariable("stress",qp_tensor,"zero");
@@ -463,6 +467,14 @@ Albany::GradientDamageProblem::constructEvaluators(
     stateMgr.registerStateVariable("eqps",qp_scalar,"zero");
 
     evaluators_to_build["Stress"] = p;
+
+    int issf = FactoryTraits<AlbanyTraits>::id_savestatefield;
+    evaluators_to_build["Save Stress"] =
+      stateMgr.registerStateVariable(matModel,qp_tensor, dummy, issf,"zero");
+    evaluators_to_build["Save Fp"] =
+      stateMgr.registerStateVariable("Fp",qp_tensor, dummy, issf,"identity");
+    evaluators_to_build["Save Eqps"] =
+      stateMgr.registerStateVariable("eqps",qp_scalar, dummy, issf,"zero");
   }
 
   { // Displacement Resid
@@ -705,6 +717,14 @@ Albany::GradientDamageProblem::constructEvaluators(
    fm->requireField<AlbanyTraits::MPResidual>(mpres_tag2);
    PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag2(fieldName, dummy);
    fm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag2);
+
+   // States to output every residual fill
+   PHX::Tag<AlbanyTraits::Residual::ScalarT> res_out_tag("Stress", dummy);
+   fm->requireField<AlbanyTraits::Residual>(res_out_tag);
+   PHX::Tag<AlbanyTraits::Residual::ScalarT> res_out_tag2("Fp", dummy);
+   fm->requireField<AlbanyTraits::Residual>(res_out_tag2);
+   PHX::Tag<AlbanyTraits::Residual::ScalarT> res_out_tag3("eqps", dummy);
+   fm->requireField<AlbanyTraits::Residual>(res_out_tag3);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

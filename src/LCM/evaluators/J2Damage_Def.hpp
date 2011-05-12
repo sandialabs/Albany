@@ -49,7 +49,11 @@ J2Damage(const Teuchos::ParameterList& p) :
   dp               (p.get<std::string>                   ("DP Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   seff             (p.get<std::string>                   ("Effective Stress Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") )
+	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  Fp               (p.get<std::string>                   ("Fp Name"),
+                    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+  eqps             (p.get<std::string>                   ("Eqps Name"),
+                    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") )
 {
   // Pull out numQPs and numDims from a Layout
   Teuchos::RCP<PHX::DataLayout> tensor_dl =
@@ -71,16 +75,19 @@ J2Damage(const Teuchos::ParameterList& p) :
   this->addDependentField(satExp);
   this->addDependentField(damage);
 
+
+  fpName = p.get<std::string>("Fp Name");
+  eqpsName = p.get<std::string>("Eqps Name");
   this->addEvaluatedField(stress);
   this->addEvaluatedField(dp);
   this->addEvaluatedField(seff);
+  this->addEvaluatedField(Fp);
+  this->addEvaluatedField(eqps);
 
   // scratch space FCs
-  Fp.resize(worksetSize, numQPs, numDims, numDims);
   Fpinv.resize(worksetSize, numQPs, numDims, numDims);
   FpinvT.resize(worksetSize, numQPs, numDims, numDims);
   Cpinv.resize(worksetSize, numQPs, numDims, numDims);
-  eqps.resize(worksetSize, numQPs);
 
   this->setName("Stress"+PHX::TypeString<EvalT>::value);
 
@@ -127,13 +134,9 @@ evaluateFields(typename Traits::EvalData workset)
   //std::cout << "saveState: " << saveState << std::endl;
   //saveState = (workset.oldState != Teuchos::null);
   //std::cout << "saveState: " << saveState << std::endl;
-  Albany::StateVariables& newState = *workset.newState;
   Albany::StateVariables  oldState = *workset.oldState;
-  Intrepid::FieldContainer<RealType>& Fpold   = *oldState["Fp"];
-  Intrepid::FieldContainer<RealType>& eqpsold = *oldState["eqps"];
-  Intrepid::FieldContainer<RealType>& FP      = *newState["Fp"];
-  Intrepid::FieldContainer<RealType>& EQPS    = *newState["eqps"];
-  Intrepid::FieldContainer<RealType>& STRESS  = *newState["stress"];
+  Intrepid::FieldContainer<RealType>& Fpold   = *oldState[fpName];
+  Intrepid::FieldContainer<RealType>& eqpsold = *oldState[eqpsName];
 
   // compute Cp_{n}^{-1}
   RST::inverse(Fpinv, Fpold);
@@ -329,27 +332,6 @@ evaluateFields(typename Traits::EvalData workset)
       // compute seff for damage coupling
       seff(cell,qp) = norm( ScalarT( 1.0 / J(cell,qp) ) * s );
     }
-  }
-
-  // std::cout << "Fp: \n";
-  // Save Stress as State Variable
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) 
-  {
-    for (std::size_t qp=0; qp < numQPs; ++qp) 
-    {
-      EQPS(cell,qp) = Sacado::ScalarValue<ScalarT>::eval(eqps(cell,qp));
-      for (std::size_t i=0; i < numDims; ++i)
-      {
-	for (std::size_t j=0; j < numDims; ++j)
-	{
-	  STRESS(cell,qp,i,j) = Sacado::ScalarValue<ScalarT>::eval(stress(cell,qp,i,j));
-	  FP(cell,qp,i,j) = Sacado::ScalarValue<ScalarT>::eval(Fp(cell,qp,i,j));
-	  // std::cout << FP(cell,qp,i,j) << " ";
-	}
-      }
-      // std::cout << std::endl;
-    }
-    // std::cout << std::endl;
   }
 }
 //**********************************************************************

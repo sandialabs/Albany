@@ -20,10 +20,32 @@
 Albany::StateManager::StateManager() :
   state1_is_old_state(true), stateVarsAreAllocated(false)
 {
+  //Teuchos::RCP<PHX::DataLayout> dummy = Teuchos::rcp(new PHX::MDALayout<Dummy>(0));
+}
+
+Teuchos::RCP<Teuchos::ParameterList>
+Albany::StateManager::registerStateVariable(const std::string &name, const Teuchos::RCP<PHX::DataLayout> &dl,
+                                            const Teuchos::RCP<PHX::DataLayout> &dummy,
+                                            const int saveStateFieldID,
+                                            const std::string &init_type)
+{
+  TEST_FOR_EXCEPT(stateVarsAreAllocated);
+
+  statesToStore[name] = dl;
+  stateInit[name] = init_type;
+
+  // Create param list for SaveStateField evaluator 
+  Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Save State" + name));
+  p->set<const int>("Type", saveStateFieldID);
+  p->set<const std::string>("State Field Name", name);
+  p->set<const Teuchos::RCP<PHX::DataLayout> >("State Field Layout", dl);
+  p->set<const Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout", dummy);
+  return p;
 }
 
 void
-Albany::StateManager::registerStateVariable(const std::string &name, const Teuchos::RCP<PHX::DataLayout> &dl, const std::string &init_type)
+Albany::StateManager::registerStateVariable(const std::string &name, const Teuchos::RCP<PHX::DataLayout> &dl,
+                                            const std::string &init_type)
 {
   TEST_FOR_EXCEPT(stateVarsAreAllocated);
 

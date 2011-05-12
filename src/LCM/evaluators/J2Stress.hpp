@@ -64,7 +64,10 @@ private:
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> Fp;
+  PHX::MDField<ScalarT,Cell,QuadPoint> eqps;
 
+  std::string fpName, eqpsName;
   unsigned int numQPs;
   unsigned int numDims;
 
@@ -74,11 +77,9 @@ private:
   Intrepid::FieldContainer<ScalarT> N;
   Intrepid::FieldContainer<ScalarT> A;
   Intrepid::FieldContainer<ScalarT> expA;
-  Intrepid::FieldContainer<ScalarT> Fp;
   Intrepid::FieldContainer<ScalarT> Fpinv;
   Intrepid::FieldContainer<ScalarT> FpinvT;
   Intrepid::FieldContainer<ScalarT> Cpinv;
-  Intrepid::FieldContainer<ScalarT> eqps;
 
   Intrepid::FieldContainer<ScalarT> tmp;
   Intrepid::FieldContainer<ScalarT> tmp2;

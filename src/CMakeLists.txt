@@ -134,6 +134,7 @@ SET(SOURCES ${SOURCES}
         evaluators/PHAL_GatherCoordinateVector.cpp
 	evaluators/PHAL_JouleHeating.cpp
 	evaluators/PHAL_TEProp.cpp
+	evaluators/PHAL_SaveStateField.cpp
   )
 SET(HEADERS ${HEADERS}
 	evaluators/PHAL_GatherSolution.hpp 
@@ -172,6 +173,8 @@ SET(HEADERS ${HEADERS}
 	evaluators/PHAL_JouleHeating_Def.hpp
 	evaluators/PHAL_TEProp.hpp
 	evaluators/PHAL_TEProp_Def.hpp
+	evaluators/PHAL_SaveStateField.hpp
+	evaluators/PHAL_SaveStateField_Def.hpp
   )
 
 # LCM

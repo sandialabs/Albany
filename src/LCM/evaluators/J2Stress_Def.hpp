@@ -43,7 +43,11 @@ J2Stress(const Teuchos::ParameterList& p) :
   satExp           (p.get<std::string>                   ("Saturation Exponent Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   stress           (p.get<std::string>                   ("Stress Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") )
+	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+  Fp               (p.get<std::string>                   ("Fp Name"),
+	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+  eqps             (p.get<std::string>                   ("Eqps Name"),
+	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") )
 {
   // Pull out numQPs and numDims from a Layout
   Teuchos::RCP<PHX::DataLayout> tensor_dl =
@@ -66,7 +70,11 @@ J2Stress(const Teuchos::ParameterList& p) :
   // PoissonRatio not used in 1D stress calc
   //  if (numDims>1) this->addDependentField(poissonsRatio);
 
+  fpName = p.get<std::string>("Fp Name");
+  eqpsName = p.get<std::string>("Eqps Name");
   this->addEvaluatedField(stress);
+  this->addEvaluatedField(Fp);
+  this->addEvaluatedField(eqps);
 
   // scratch space FCs
   be.resize(numDims, numDims);
@@ -74,11 +82,9 @@ J2Stress(const Teuchos::ParameterList& p) :
   N.resize(numDims, numDims);
   A.resize(numDims, numDims);
   expA.resize(numDims, numDims);
-  Fp.resize(worksetSize, numQPs, numDims, numDims);
   Fpinv.resize(worksetSize, numQPs, numDims, numDims);
   FpinvT.resize(worksetSize, numQPs, numDims, numDims);
   Cpinv.resize(worksetSize, numQPs, numDims, numDims);
-  eqps.resize(worksetSize, numQPs);
   tmp.resize(numDims, numDims);
   tmp2.resize(numDims, numDims);
 
@@ -100,6 +106,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(yieldStrength,fm);
   this->utils.setFieldData(satMod,fm);
   this->utils.setFieldData(satExp,fm);
+  this->utils.setFieldData(Fp,fm);
+  this->utils.setFieldData(eqps,fm);
   if (numDims>1) this->utils.setFieldData(poissonsRatio,fm);
 }
 
@@ -123,13 +131,9 @@ evaluateFields(typename Traits::EvalData workset)
   //std::cout << "saveState: " << saveState << std::endl;
   //saveState = (workset.oldState != Teuchos::null);
   //std::cout << "saveState: " << saveState << std::endl;
-  Albany::StateVariables& newState = *workset.newState;
   Albany::StateVariables  oldState = *workset.oldState;
-  Intrepid::FieldContainer<RealType>& Fpold   = *oldState["Fp"];
-  Intrepid::FieldContainer<RealType>& eqpsold = *oldState["eqps"];
-  Intrepid::FieldContainer<RealType>& FP      = *newState["Fp"];
-  Intrepid::FieldContainer<RealType>& EQPS    = *newState["eqps"];
-  Intrepid::FieldContainer<RealType>& STRESS  = *newState["stress"];
+  Intrepid::FieldContainer<RealType>& Fpold   = *oldState[fpName];
+  Intrepid::FieldContainer<RealType>& eqpsold = *oldState[eqpsName];
 
   // compute Cp_{n}^{-1}
   RST::inverse(Fpinv, Fpold);
@@ -346,27 +350,6 @@ evaluateFields(typename Traits::EvalData workset)
 	stress(cell,qp,i,i) += p;
       }
     }
-  }
-
-  // std::cout << "Fp: \n";
-  // Save Stress as State Variable
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) 
-  {
-    for (std::size_t qp=0; qp < numQPs; ++qp) 
-    {
-      EQPS(cell,qp) = Sacado::ScalarValue<ScalarT>::eval(eqps(cell,qp));
-      for (std::size_t i=0; i < numDims; ++i)
-      {
-	for (std::size_t j=0; j < numDims; ++j)
-	{
-	  STRESS(cell,qp,i,j) = Sacado::ScalarValue<ScalarT>::eval(stress(cell,qp,i,j));
-	  FP(cell,qp,i,j) = Sacado::ScalarValue<ScalarT>::eval(Fp(cell,qp,i,j));
-	  // std::cout << FP(cell,qp,i,j) << " ";
-	}
-      }
-      // std::cout << std::endl;
-    }
-    // std::cout << std::endl;
   }
 }
 //**********************************************************************

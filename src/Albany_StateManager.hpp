@@ -25,6 +25,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Intrepid_FieldContainer.hpp"
 #include "Albany_DataTypes.hpp"
+#include "Teuchos_ParameterList.hpp"
 
 namespace Albany {
 
@@ -42,6 +43,14 @@ public:
   StateManager ();
 
   ~StateManager () { };
+
+  //! Method to call multiple timed (before allocate) to register which states will be saved.
+  //! Now returns param vector with all info to build a SaveStateField evaluator
+  Teuchos::RCP<Teuchos::ParameterList>
+  registerStateVariable(const std::string &name, const Teuchos::RCP<PHX::DataLayout> &dl, 
+                                            const Teuchos::RCP<PHX::DataLayout> &dummy,
+                                            const int saveStateFieldID,
+                                            const std::string &init_type="zero");
 
   //! Method to call multiple timed (before allocate) to register which states will be saved.
   void registerStateVariable(const std::string &name, const Teuchos::RCP< PHX::DataLayout > &t, 

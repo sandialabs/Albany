@@ -42,6 +42,7 @@
 #include "PHAL_JouleHeating.hpp"
 #include "PHAL_TEProp.hpp"
 #include "PHAL_ODEResid.hpp"
+#include "PHAL_SaveStateField.hpp"
 
 #include "boost/mpl/vector/vector30.hpp"
 #include "boost/mpl/placeholders.hpp"
@@ -80,10 +81,11 @@ struct FactoryTraits {
   static const int id_jouleheating              = 19;
   static const int id_teprop                    = 20;
   static const int id_oderesid                  = 21;
-  static const int id_schrodinger_potential     = 22;
-  static const int id_schrodinger_resid         = 23;
+  static const int id_savestatefield            = 22;
+  static const int id_schrodinger_potential     = 23;
+  static const int id_schrodinger_resid         = 24;
 
-  typedef boost::mpl::vector24< 
+  typedef boost::mpl::vector25< 
             PHAL::Dirichlet<_,Traits>,                //  0
             PHAL::GatherSolution<_,Traits>,           //  1
             PHAL::GatherCoordinateVector<_,Traits>,   //  2
@@ -106,9 +108,9 @@ struct FactoryTraits {
             PHAL::JouleHeating<_,Traits>,             // 19
             PHAL::TEProp<_,Traits>,                   // 20
             PHAL::ODEResid<_,Traits>,                 // 21
-            QCAD::SchrodingerPotential<_,Traits>,     // 22
-            QCAD::SchrodingerResid<_,Traits>          // 23
-
+            PHAL::SaveStateField<_,Traits>,           // 22
+            QCAD::SchrodingerPotential<_,Traits>,     // 23
+            QCAD::SchrodingerResid<_,Traits>          // 24
   > EvaluatorTypes;
   
 };

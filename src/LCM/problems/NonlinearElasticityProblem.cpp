@@ -45,7 +45,8 @@ NonlinearElasticityProblem(
   if (neq>1) dofNames[1] = "Y";
   if (neq>2) dofNames[2] = "Z";
 
-  if (matModel == "NeoHookean")  this->nstates=numDim*numDim;
+  if (matModel == "NeoHookean" || matModel == "NeoHookean AD")
+   this->nstates=numDim*numDim;
   else if (matModel == "J2")  this->nstates=2*numDim*numDim+1;
   *out << "Num States to Store: " << this->nstates << std::endl;
   
@@ -424,9 +425,11 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
 
      //Output
      p->set<string>("Stress Name", matModel); //qp_tensor also
-     stateMgr.registerStateVariable("stress",qp_tensor,"zero");
 
      evaluators_to_build["Stress"] = p;
+     evaluators_to_build["Save Stress"] =
+      stateMgr.registerStateVariable(matModel,qp_tensor,
+            dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
    }
   }
   else if (matModel == "NeoHookean AD")
@@ -446,9 +449,11 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
 
      //Output
      p->set<string>("Stress Name", matModel); //qp_tensor also
-     stateMgr.registerStateVariable("stress",qp_tensor,"zero");
 
      evaluators_to_build["Stress"] = p;
+     evaluators_to_build["Save Stress"] =
+      stateMgr.registerStateVariable(matModel,qp_tensor,
+            dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
   }
   else if (matModel == "J2")
   { 
@@ -547,14 +552,25 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
       p->set<string>("Saturation Exponent Name", "Saturation Exponent"); // qp_scalar also
       p->set<string>("Yield Strength Name", "Yield Strength"); // qp_scalar also
       p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient");  // qp_scalar also
+      p->set<string>("Fp Name", "Fp");  // qp_tensor also
+      p->set<string>("Eqps Name", "eqps");  // qp_scalar also
 
       //Output
       p->set<string>("Stress Name", matModel); //qp_tensor also
  
       //Declare what state data will need to be saved (name, layout, init_type)
-      stateMgr.registerStateVariable("stress",qp_tensor,"zero");
-      stateMgr.registerStateVariable("Fp",qp_tensor,"identity");
-      stateMgr.registerStateVariable("eqps",qp_scalar,"zero");
+//      stateMgr.registerStateVariable("stress",qp_tensor,"zero");
+//      stateMgr.registerStateVariable("Fp",qp_tensor,"identity");
+//      stateMgr.registerStateVariable("eqps",qp_scalar,"zero");
+     evaluators_to_build["Save Stress"] =
+      stateMgr.registerStateVariable(matModel,qp_tensor,
+            dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
+     evaluators_to_build["Save Fp"] =
+      stateMgr.registerStateVariable("Fp",qp_tensor,
+            dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"identity");
+     evaluators_to_build["Save Eqps"] =
+      stateMgr.registerStateVariable("eqps",qp_scalar,
+            dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
 
       evaluators_to_build["Stress"] = p;
     }
@@ -636,6 +652,20 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
    fm->requireField<AlbanyTraits::MPResidual>(mpres_tag);
    PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag("Scatter", dummy);
    fm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag);
+
+   // Output states as part of Residual Evaluation
+   if (matModel == "NeoHookean" || matModel == "NeoHookean AD") {
+     PHX::Tag<AlbanyTraits::Residual::ScalarT> res_out_tag(matModel, dummy);
+     fm->requireField<AlbanyTraits::Residual>(res_out_tag);
+   }
+   else if (matModel == "J2") {
+     PHX::Tag<AlbanyTraits::Residual::ScalarT> res_out_tag(matModel, dummy);
+     fm->requireField<AlbanyTraits::Residual>(res_out_tag);
+     PHX::Tag<AlbanyTraits::Residual::ScalarT> res_out_tag2("Fp", dummy);
+     fm->requireField<AlbanyTraits::Residual>(res_out_tag2);
+     PHX::Tag<AlbanyTraits::Residual::ScalarT> res_out_tag3("eqps", dummy);
+     fm->requireField<AlbanyTraits::Residual>(res_out_tag3);
+   }
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

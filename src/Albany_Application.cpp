@@ -333,18 +333,6 @@ Albany::Application::computeGlobalResidual(
   if (shapeParamsHaveBeenReset) {
     Teuchos::TimeMonitor cubitTimer(*timers[8]); //start timer
 
-/*
-    if (first) {
-     cout << "Wiggling mesh a little to get some smoothing in place" << endl;
-     first=false;
-     shapeParams[0] +=1.0e-6;
-      meshMover->moveMesh(shapeParams, morphFromInit);
-   shapeParams[0] -=2.0e-6;
-      meshMover->moveMesh(shapeParams, morphFromInit);
-     shapeParams[0] +=1.0e-6;
-    }
-*/
-
 *out << " Calling moveMesh with params: " << std::setprecision(8);
  for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
 *out << endl;

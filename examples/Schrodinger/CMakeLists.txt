@@ -21,22 +21,26 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input1D.xml
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and executable
-add_test(${testName} ${Albany.exe} input1D.xml)
+add_test(${testName}_1D ${Albany.exe} input1D.xml)
 
 # 1. Copy Input file from source to binary dir
-#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input2D.xml
-#               ${CMAKE_CURRENT_BINARY_DIR}/input2D.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input2D.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input2D.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/square2D.exo
+               ${CMAKE_CURRENT_BINARY_DIR}/square2D.exo COPYONLY)
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and executable
-#add_test(${testName} ${Albany.exe} input2D.xml)
+add_test(${testName}_2D_SERIAL ${SerialAlbany.exe} input2D.xml)
 
 # 1. Copy Input file from source to binary dir
-#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input3D.xml
-#               ${CMAKE_CURRENT_BINARY_DIR}/input3D.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input3D.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input3D.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube3D.exo
+               ${CMAKE_CURRENT_BINARY_DIR}/cube3D.exo COPYONLY)
 # 2. Name the test with the directory name
-#get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and executable
-#add_test(${testName} ${Albany.exe} input3D.xml)
+add_test(${testName}_3D_SERIAL ${SerialAlbany.exe} input3D.xml)
 
 

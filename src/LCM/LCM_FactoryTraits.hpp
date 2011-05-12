@@ -35,6 +35,7 @@
 #include "PHAL_HeatEqResid.hpp"
 #include "PHAL_GatherCoordinateVector.hpp"
 #include "PHAL_JouleHeating.hpp"
+#include "PHAL_SaveStateField.hpp"
 
 #include "LCM/evaluators/Stress.hpp"
 #ifdef ALBANY_LAME
@@ -126,13 +127,14 @@ struct FactoryTraits {
   static const int id_bulk_modulus              = 39;
   static const int id_shear_modulus             = 40;
   static const int id_kfield_bc                 = 41;
+  static const int id_savestatefield            = 42;
   // JTO - leave lame stress at the bottom for the convention below to be most effective
-  static const int id_lame_stress               = 42;
+  static const int id_lame_stress               = 43;
 
 #ifndef ALBANY_LAME
-  typedef boost::mpl::vector42<
-#else
   typedef boost::mpl::vector43<
+#else
+  typedef boost::mpl::vector44<
 #endif
     PHAL::Dirichlet<_,Traits>,                //  0
     PHAL::GatherSolution<_,Traits>,           //  1
@@ -175,9 +177,10 @@ struct FactoryTraits {
     LCM::DamageSource<_,Traits>,              // 38
     LCM::BulkModulus<_,Traits>,               // 39
     LCM::ShearModulus<_,Traits>,              // 40
-    LCM::KfieldBC<_,Traits>                   // 41
+    LCM::KfieldBC<_,Traits>,                  // 41
+    PHAL::SaveStateField<_,Traits>             // 42
 #ifdef ALBANY_LAME
-    ,LCM::LameStress<_,Traits>                // 42
+    ,LCM::LameStress<_,Traits>                // 43
 #endif
     > EvaluatorTypes;
 };

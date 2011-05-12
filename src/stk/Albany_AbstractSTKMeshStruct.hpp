@@ -41,6 +41,8 @@ namespace Albany {
     //AbstractSTKMeshStruct();
   public:
 
+    virtual void doFieldsAndBulkData() {};
+
     typedef stk::mesh::Field<double,stk::mesh::Cartesian> VectorFieldType ;
     typedef stk::mesh::Field<double>                      ScalarFieldType ;
 

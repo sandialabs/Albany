@@ -410,9 +410,12 @@ cout << "XXXX USING NODES FOR VERTICES" << endl;
 
     //Output
     p->set<string>("Stress Name", "Stress"); //qp_tensor also
-    stateMgr.registerStateVariable("stress",qp_tensor,"zero");
 
     evaluators_to_build["Stress"] = p;
+    evaluators_to_build["Save Stress"] =
+      stateMgr.registerStateVariable("Stress",qp_tensor,
+            dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
+
   }
 
   { // Displacement Resid
@@ -486,6 +489,9 @@ cout << "XXXX USING NODES FOR VERTICES" << endl;
    fm->requireField<AlbanyTraits::MPResidual>(mpres_tag);
    PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag("Scatter", dummy);
    fm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag);
+
+   PHX::Tag<AlbanyTraits::Residual::ScalarT> res_out_tag("Stress", dummy);
+   fm->requireField<AlbanyTraits::Residual>(res_out_tag);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
