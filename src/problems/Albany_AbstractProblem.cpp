@@ -288,7 +288,7 @@ Albany::AbstractProblem::getIntrepidBasis(const CellTopologyData& ctd, bool comp
    const int& numDim = ctd.dimension;
    std::string name = ctd.name;
 
-   cout << "CellTopology is " << name << " with nodes " << ctd.node_count << "  dim " << numDim << endl;
+   cout << "CellTopology is " << name << " with nodes " << numNodes << "  dim " << numDim << endl;
 
    if (name == "Line_2" )
        intrepidBasis = rcp(new Intrepid::Basis_HGRAD_LINE_C1_FEM<RealType, FieldContainer<RealType> >() );
@@ -314,10 +314,11 @@ Albany::AbstractProblem::getIntrepidBasis(const CellTopologyData& ctd, bool comp
    else if (name == "Tetrahedron_10" && compositeTet )
            intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TET_COMP12_FEM<RealType, FieldContainer<RealType> >() );
    else
-	 TEST_FOR_EXCEPTION( ctd.name != "Recognized Element Name", 
-			    Teuchos::Exceptions::InvalidParameter,
-			    "Albany::AbstractProblem::getIntrepidBasis did not recognize element name: "
-                             << ctd.name);
+     TEST_FOR_EXCEPTION( //JTO compiler doesn't like this --> ctd.name != "Recognized Element Name", 
+			true,
+			Teuchos::Exceptions::InvalidParameter,
+			"Albany::AbstractProblem::getIntrepidBasis did not recognize element name: "
+			<< ctd.name);
 
    return intrepidBasis;
 }

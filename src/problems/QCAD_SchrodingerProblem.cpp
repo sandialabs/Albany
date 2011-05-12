@@ -241,6 +241,8 @@ QCAD::SchrodingerProblem::constructEvaluators(
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
 
     // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
+    p->set<string>("Weights Name",          "Weights");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
     p->set<string>("BF Name",          "BF");
     p->set<string>("Weighted BF Name", "wBF");
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);

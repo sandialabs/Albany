@@ -216,7 +216,8 @@ evaluateFields(typename Traits::EvalData workset)
 
       // check for yielding
       smag = norm(s);
-      f = smag - exph * sq23 * ( Y + K * eqpsold(cell,qp) + siginf * ( 1. - std::exp( -delta * eqpsold(cell,qp) ) ) );
+      //f = smag - exph * sq23 * ( Y + K * eqpsold(cell,qp) + siginf * ( 1. - std::exp( -delta * eqpsold(cell,qp) ) ) );
+      f = smag - sq23 * ( Y + K * eqpsold(cell,qp) + siginf * ( 1. - std::exp( -delta * eqpsold(cell,qp) ) ) );
 
       // std::cout << "smag : " << Sacado::ScalarValue<ScalarT>::eval(smag) << std::endl;
       // std::cout << "eqpsold: " << Sacado::ScalarValue<ScalarT>::eval(eqpsold(cell,qp)) << std::endl;
@@ -246,19 +247,22 @@ evaluateFields(typename Traits::EvalData workset)
 
 	  alpha = eqpsold(cell,qp) + sq23 * dgam;
 
-	  H = K * alpha + exph * siginf * ( 1. - std::exp( -delta * alpha ) );
-	  dH = K + exph * delta * siginf * std::exp( -delta * alpha );
+	  //H = K * alpha + exph * siginf * ( 1. - std::exp( -delta * alpha ) );
+	  //dH = K + exph * delta * siginf * std::exp( -delta * alpha );
+	  H = K * alpha + siginf * ( 1. - std::exp( -delta * alpha ) );
+	  dH = K + delta * siginf * std::exp( -delta * alpha );
 
 	  g = smag -  ( 2. * mubar * dgam + sq23 * ( Y + H ) );
 	  dg = -2. * mubar * ( 1. + dH / ( 3. * mubar ) );
 
 	  res = std::abs(g);
-	  if ( res < 1.e-14 || res/f < 1.E-14 )
+	  if ( res < 1.e-12 || res/f < 1.e-12 )
 	    converged = true;
 
-	  TEST_FOR_EXCEPTION( count > 20, std::runtime_error,
+	  TEST_FOR_EXCEPTION( count > 50, std::runtime_error,
 			      std::endl << "Error in return mapping, count = " << count << 			
 			      "\nres = " << res <<
+			      "\nrelres = " << res/f <<
 			      "\ng = " << g <<
 			      "\ndg = " << dg <<
 			      "\nalpha = " << alpha << std::endl);
@@ -321,6 +325,9 @@ evaluateFields(typename Traits::EvalData workset)
 	}
 	stress(cell,qp,i,i) += p;
       }
+
+      // compute seff for damage coupling
+      seff(cell,qp) = norm( ScalarT( 1.0 / J(cell,qp) ) * s );
     }
   }
 

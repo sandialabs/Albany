@@ -235,6 +235,8 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
 
     // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
+    p->set<string>("Weights Name",          "Weights");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
     p->set<string>("BF Name",          "BF");
     p->set<string>("Weighted BF Name", "wBF");
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
@@ -368,17 +370,18 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
     int type = FactoryTraits<AlbanyTraits>::id_defgrad;
     p->set<int>("Type", type);
 
-    // Volumetric averaging flag
+    //Inputs: flags, weights, GradU
     const bool avgJ = params->get("avgJ", false);
     p->set<bool>("avgJ Name", avgJ);
-
-    //Input
+    const bool volavgJ = params->get("volavgJ", false);
+    p->set<bool>("volavgJ Name", volavgJ);
+    p->set<string>("Weights Name","Weights");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
     p->set<string>("Gradient QP Variable Name", "Displacement Gradient");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
 
-    //Output
+    //Outputs: F, J
     p->set<string>("DefGrad Name", "Deformation Gradient"); //qp_tensor also
-    // DetDefGrad calculation moed later for AD case
     p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient"); 
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
 
@@ -645,7 +648,8 @@ Albany::NonlinearElasticityProblem::getValidProblemParameters() const
   validPL->sublist("Poissons Ratio", false, "");
   validPL->sublist("Shear Modulus", false, "");
   validPL->sublist("Material Model", false, "");
-  validPL->set<bool>("avgJ", false, "Flag to indicate the J should be volume averaged");
+  validPL->set<bool>("avgJ", false, "Flag to indicate the J should be averaged");
+  validPL->set<bool>("volavgJ", false, "Flag to indicate the J should be volume averaged");
   validPL->set<bool>("Use Composite Tet 10", false, "Flag to use the compostie tet 10 basis in Intrepid");
   if (matModel == "J2")
   {

@@ -272,12 +272,13 @@ evaluateFields(typename Traits::EvalData workset)
 	  dg = -2. * mubar * ( 1. + dH / ( 3. * mubar ) );
 
 	  res = std::abs(g);
-	  if ( res < 1.e-14 || res/f < 1.E-14 )
+	  if ( res < 1.e-12 || res/f < 1.E-12 )
 	    converged = true;
 
 	  TEST_FOR_EXCEPTION( count > 20, std::runtime_error,
 			      std::endl << "Error in return mapping, count = " << count << 			
 			      "\nres = " << res <<
+			      "\nrelres = " << res/f <<
 			      "\ng = " << g <<
 			      "\ndg = " << dg <<
 			      "\nalpha = " << alpha << std::endl);

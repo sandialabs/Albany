@@ -141,7 +141,7 @@ Albany::STKDiscretization::STKDiscretization(
   for (int i=0; i<numBuckets; i++) {
      std::vector< stk::mesh::Part * >  bpv;
      buckets[i]->supersets(bpv);
-     for (int j=0; j<bpv.size(); j++) {
+     for (unsigned int j=0; j<bpv.size(); j++) {
        if (bpv[j]->primary_entity_rank() == metaData.element_rank()) {
          if (bpv[j]->name()[0] != '{') {
            cout << "Bucket " << i << " is in Element Block:  " << bpv[j]->name() 

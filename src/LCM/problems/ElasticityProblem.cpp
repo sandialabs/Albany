@@ -224,6 +224,8 @@ cout << "XXXX USING NODES FOR VERTICES" << endl;
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
 
     // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
+    p->set<string>("Weights Name", "Weights");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
     p->set<string>("BF Name",          "BF");
     p->set<string>("Weighted BF Name", "wBF");
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
@@ -374,15 +376,16 @@ cout << "XXXX USING NODES FOR VERTICES" << endl;
     int type = FactoryTraits<AlbanyTraits>::id_defgrad;
     p->set<int>("Type", type);
 
-    // Volumetric averaging flag
+    //Inputs: flags, weights, GradU
     const bool avgJ = params->get("avgJ", false);
     p->set<bool>("avgJ Name", avgJ);
-
-    //Input
+    const bool volavgJ = params->get("volavgJ", false);
+    p->set<bool>("volavgJ Name", volavgJ);
+    p->set<string>("Weights Name","Weights");
     p->set<string>("Gradient QP Variable Name", "Displacement Gradient");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
 
-    //Output
+    //Outputs: F, J
     p->set<string>("DefGrad Name", "Deformation Gradient"); //qp_tensor also
     p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient"); 
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
