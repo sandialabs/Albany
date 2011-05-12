@@ -74,7 +74,8 @@ namespace QCAD
 
         //! fills workset's state fields using temporary member variables that just
         //   hold data for one output point.
-        void fillOutputState(typename Traits::EvalData workset, std::size_t cell, std::size_t qp);
+        // ANDY: remove this function when new state output framwork is added (egn)
+        void fillOutputState(typename Traits::EvalData workset);
 
   	//! input
   	std::size_t numQPs;
@@ -84,15 +85,21 @@ namespace QCAD
 
   	//! output
   	PHX::MDField<ScalarT,Cell,QuadPoint> poissonSource;
+  	PHX::MDField<ScalarT,Cell,QuadPoint> chargeDensity; // in [cm-3]
+  	PHX::MDField<ScalarT,Cell,QuadPoint> electronDensity; // in [cm-3]
+        PHX::MDField<ScalarT,Cell,QuadPoint> holeDensity; // in [cm-3]
+  	PHX::MDField<ScalarT,Cell,QuadPoint> electricPotential;	// phi in [V]
 
   	//! constant prefactor parameter in source function
   	ScalarT factor;
 
   	//! Temperature parameter in source function
   	ScalarT temperature; //lattice temperature in [K]
-  	
+
   	//! string variable to differ the various devices implementation
   	std::string device;
+        std::string carrierStatistics;
+        std::string incompIonization;
     
         //! donor and acceptor concentrations (for element blocks nsilicon & psilicon)
         double dopingDonor;
@@ -102,12 +109,8 @@ namespace QCAD
         double length_unit_in_m; // length unit for input and output mesh
         double X0;   // length scaling to get to [cm]
         double C0;   // Scaling for conc. [cm^-3]
-
-  	//! variables to hold the computed output quantities
-  	ScalarT chargeDensity; 	    // space charge density in [cm-3]
-  	ScalarT electronDensity;		// electron density in [cm-3]
-  	ScalarT holeDensity;				// hole density in [cm-3]
-  	ScalarT electricPotential;	// electric potential in [V]
+        ScalarT V0;
+        ScalarT Lambda2;
 	};
 }
 

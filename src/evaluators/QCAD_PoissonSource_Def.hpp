@@ -28,7 +28,16 @@ PoissonSource(Teuchos::ParameterList& p) :
   potential(p.get<std::string>("Variable Name"),
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
   poissonSource(p.get<std::string>("Source Name"),
+      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+  chargeDensity("Charge Density",
+      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+  electronDensity("Electron Density",
+      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+  holeDensity("Hole Density",
+      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+  electricPotential("Electric Potential",
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"))
+
 {
   Teuchos::ParameterList* psList = p.get<Teuchos::ParameterList*>("Parameter List");
 
@@ -45,6 +54,8 @@ PoissonSource(Teuchos::ParameterList& p) :
 
   factor = psList->get("Factor", 1.0);
   device = psList->get("Device", "defaultdevice");
+  carrierStatistics = psList->get("Carrier Statistics", "Boltzmann");
+  incompIonization = psList->get("Incomplete Ionization", "False");
   dopingDonor = psList->get("Donor Doping", 1e14);
   dopingAcceptor = psList->get("Acceptor Doping", 1e14);
 
@@ -52,8 +63,12 @@ PoissonSource(Teuchos::ParameterList& p) :
   temperature = p.get<double>("Temperature");
   length_unit_in_m = p.get<double>("Length unit in m");
 
+  //Scaling factors
   X0 = length_unit_in_m / 1e-2; // length scaling to get to [cm] (so 1e-4 for mesh in [um])
   C0 = 1.45e10;  // Scaling for conc. [cm^-3] (Silicon intrinsic concentration at 300 K)
+  V0 = kbBoltz * temperature / 1.0; // kb*T/q in [V], scaling for potential
+  Lambda2 = V0 * eps0/(eleQ*X0*X0*C0); // derived scaling factor that appears in the scaled Poisson equation,in [1]
+
 
   // Add factor  and temperature as a Sacado-ized parameters
   Teuchos::RCP<ParamLib> paramLib =
@@ -67,6 +82,11 @@ PoissonSource(Teuchos::ParameterList& p) :
   this->addDependentField(coordVec);
 
   this->addEvaluatedField(poissonSource);
+  this->addEvaluatedField(chargeDensity);
+  this->addEvaluatedField(electronDensity);
+  this->addEvaluatedField(holeDensity);
+  this->addEvaluatedField(electricPotential);
+  
   this->setName("Poisson Source"+PHX::TypeString<EvalT>::value);
 }
 
@@ -79,6 +99,11 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(poissonSource,fm);
   this->utils.setFieldData(potential,fm);
   this->utils.setFieldData(coordVec,fm);
+
+  this->utils.setFieldData(chargeDensity,fm);
+  this->utils.setFieldData(electronDensity,fm);
+  this->utils.setFieldData(holeDensity,fm);
+  this->utils.setFieldData(electricPotential,fm);
 }
 
 // **********************************************************************
@@ -126,6 +151,8 @@ QCAD::PoissonSource<EvalT,Traits>::getValidPoissonSourceParameters() const
   validPL->set<string>("Device", "defaultdevice", "Switch between different device models");
   validPL->set<double>("Donor Doping", 1e14, "Doping for nsilicon element blocks [cm^-3]");
   validPL->set<double>("Acceptor Doping", 1e14, "Doping for psilicon element blocks [cm^-3]");
+  validPL->set<string>("Carrier Statistics", "Boltzmann", "Carrier Statistics");
+  validPL->set<string>("Incomplete Ionization", "False", "Partial Ionization of dopants");
 
   return validPL;
 }
@@ -136,13 +163,6 @@ template<typename EvalT, typename Traits>
 void QCAD::PoissonSource<EvalT, Traits>::
 evaluateFields_pndiode(typename Traits::EvalData workset)
 {
-  // kb*T/q in [V], scaling for potential
-  ScalarT V0 = QCAD::PoissonSource<EvalT, Traits>::kbBoltz * temperature / 1.0; 
-
-  // derived scaling factor that appears in the scaled Poisson equation,in [1]
-  ScalarT Lambda2 = V0 * QCAD::PoissonSource<EvalT, Traits>::eps0/ 
-                      (QCAD::PoissonSource<EvalT, Traits>::eleQ*X0*X0*C0);  
-
   // define doping concentration for pndiode
   double acceptorCnst = 1e16;	// constant acceptor doping in [cm^-3]
   double donorCnst = 1e16;      // constant donor doping in [cm^-3]
@@ -169,10 +189,10 @@ evaluateFields_pndiode(typename Traits::EvalData workset)
         charge = 1.0/Lambda2*(charge+exp(-phi)-exp(phi));
         
         // compute quantities that are output to .exo file
-        chargeDensity = charge*Lambda2*C0;  // space charge density [cm-3]
-        electronDensity = exp(-phi)*C0;     // electron density [cm-3]
-        holeDensity = exp(phi)*C0;          // hole density [cm-3]
-        electricPotential = phi*V0;         // electric potential [V]
+        chargeDensity(cell, qp) = charge*Lambda2*C0;  // space charge density [cm-3]
+        electronDensity(cell, qp) = exp(-phi)*C0;     // electron density [cm-3]
+        holeDensity(cell, qp) = exp(phi)*C0;          // hole density [cm-3]
+        electricPotential(cell, qp) = phi*V0;         // electric potential [V]
 
         break;
       default: TEST_FOR_EXCEPT(true);
@@ -181,9 +201,10 @@ evaluateFields_pndiode(typename Traits::EvalData workset)
       // returns a scaled 'charge',
       // not the actual charge density in [cm-3]
       poissonSource(cell, qp) = factor*charge;
-      fillOutputState(workset, cell, qp);
     }
   }
+
+  fillOutputState(workset);
 }
 
 // **********************************************************************
@@ -191,13 +212,6 @@ template<typename EvalT, typename Traits>
 void QCAD::PoissonSource<EvalT, Traits>::
 evaluateFields_pmoscap(typename Traits::EvalData workset)
 {
-    // kb*T/q in [V], scaling for potential
-  ScalarT V0 = QCAD::PoissonSource<EvalT, Traits>::kbBoltz * temperature / 1.0; 
-
-  // derived scaling factor that appears in the scaled Poisson equation,in [1]
-  ScalarT Lambda2 = V0 * QCAD::PoissonSource<EvalT, Traits>::eps0/ 
-                      (QCAD::PoissonSource<EvalT, Traits>::eleQ*X0*X0*C0);  
-
   // define substrate acceptor doping in [cm^-3]
   double acceptorCnst = 1e14;  
 
@@ -220,20 +234,20 @@ evaluateFields_pmoscap(typename Traits::EvalData workset)
           charge = 1.0/Lambda2*(charge+exp(-phi)-exp(phi));  // the full RHS
           
           // compute quantities that are output to .exo file
-          chargeDensity = charge*Lambda2*C0;  // space charge density [cm-3]
-          electronDensity = exp(-phi)*C0;     // electron density [cm-3]
-          holeDensity = exp(phi)*C0;          // hole density [cm-3]
+          chargeDensity(cell, qp) = charge*Lambda2*C0;  // space charge density [cm-3]
+          electronDensity(cell, qp) = exp(-phi)*C0;     // electron density [cm-3]
+          holeDensity(cell, qp) = exp(phi)*C0;          // hole density [cm-3]
         }  
         
         // consider the SiO2 region (y/X0 < 0)
         else
         {
           charge = 0.0;  // no charge in SiO2 (solve the Lapalace equation)
-        	chargeDensity = 0.0;      // no space charge in SiO2
-        	electronDensity = 0.0;    // no electrons in SiO2
-        	holeDensity = 0.0;        // no holes in SiO2
+          chargeDensity(cell, qp) = 0.0;      // no space charge in SiO2
+          electronDensity(cell, qp) = 0.0;    // no electrons in SiO2
+          holeDensity(cell, qp) = 0.0;        // no holes in SiO2
         }
-        electricPotential = phi*V0;	// electric potential [V]
+        electricPotential(cell, qp) = phi*V0;	// electric potential [V]
           
         break;
       default: TEST_FOR_EXCEPT(true);
@@ -242,9 +256,9 @@ evaluateFields_pmoscap(typename Traits::EvalData workset)
       // returns a scaled 'charge',
       // not the actual charge density in [cm-3]
       poissonSource(cell, qp) = factor*charge;
-      fillOutputState(workset, cell, qp);
     }
   }
+  fillOutputState(workset);
 }
 
 // **********************************************************************
@@ -252,12 +266,15 @@ template<typename EvalT, typename Traits>
 void QCAD::PoissonSource<EvalT, Traits>::
 evaluateFields_elementblocks(typename Traits::EvalData workset)
 {
-  // kb*T/q in [V], scaling for potential
-  ScalarT V0 = QCAD::PoissonSource<EvalT, Traits>::kbBoltz * temperature / 1.0; 
+  // Later:
+  //mass = materialManager.GetMaterialParameter(workset.EBname, "mass")
+  //Eg = materialManager.GetMaterialParameter(workset.EBname, "Eg")
 
-  // derived scaling factor that appears in the scaled Poisson equation,in [1]
-  ScalarT Lambda2 = V0 * QCAD::PoissonSource<EvalT, Traits>::eps0/ 
-                      (QCAD::PoissonSource<EvalT, Traits>::eleQ*X0*X0*C0);  
+  // Material parameters
+  double mass, Eg, Nv, Nc;
+  mass = 1;
+  Eg = 2; 
+
   ScalarT charge;
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) 
@@ -268,39 +285,39 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
       
       if(workset.EBName == "silicon") {
         charge = 1.0/Lambda2*(exp(-phi)-exp(phi)); // full RHS (scaled)
-        chargeDensity = charge*Lambda2*C0;  // space charge density [cm-3]
-        electronDensity = exp(-phi)*C0;     // electron density [cm-3]
-        holeDensity = exp(phi)*C0;          // hole density [cm-3]
+        chargeDensity(cell, qp) = charge*Lambda2*C0;  // space charge density [cm-3]
+        electronDensity(cell, qp) = exp(-phi)*C0;     // electron density [cm-3]
+        holeDensity(cell, qp) = exp(phi)*C0;          // hole density [cm-3]
       }
 
       else if(workset.EBName == "nsilicon") {
 	charge = dopingDonor/C0; // normalized by C0
         charge = 1.0/Lambda2*(charge + exp(-phi)-exp(phi)); // full RHS (scaled)
-        chargeDensity = charge*Lambda2*C0;  // space charge density [cm-3]
-        electronDensity = exp(-phi)*C0;     // electron density [cm-3]
-        holeDensity = exp(phi)*C0;          // hole density [cm-3]
+        chargeDensity(cell, qp) = charge*Lambda2*C0;  // space charge density [cm-3]
+        electronDensity(cell, qp) = exp(-phi)*C0;     // electron density [cm-3]
+        holeDensity(cell, qp) = exp(phi)*C0;          // hole density [cm-3]
       }
 
       else if(workset.EBName == "psilicon") {
 	charge = -dopingAcceptor/C0;  // normalized by C0
         charge = 1.0/Lambda2*(charge + exp(-phi)-exp(phi)); // full RHS (scaled)
-        chargeDensity = charge*Lambda2*C0;  // space charge density [cm-3]
-        electronDensity = exp(-phi)*C0;     // electron density [cm-3]
-        holeDensity = exp(phi)*C0;          // hole density [cm-3]
+        chargeDensity(cell, qp) = charge*Lambda2*C0;  // space charge density [cm-3]
+        electronDensity(cell, qp) = exp(-phi)*C0;     // electron density [cm-3]
+        holeDensity(cell, qp) = exp(phi)*C0;          // hole density [cm-3]
       }
 	
       else if (workset.EBName == "sio2") {
 	charge = 0.0;  // no charge in SiO2 (solve the Lapalace equation)
-	chargeDensity = 0.0;      // no space charge in SiO2
-	electronDensity = 0.0;    // no electrons in SiO2
-	holeDensity = 0.0;        // no holes in SiO2
+	chargeDensity(cell, qp) = 0.0;      // no space charge in SiO2
+	electronDensity(cell, qp) = 0.0;    // no electrons in SiO2
+	holeDensity(cell, qp) = 0.0;        // no holes in SiO2
       }
 
       else if (workset.EBName == "poly") {
 	charge = 0.0;  // no charge in poly - treat as conductor so all at boundaries
-	chargeDensity = 0.0;    
-	electronDensity = 0.0;
-	holeDensity = 0.0;
+	chargeDensity(cell, qp) = 0.0;    
+	electronDensity(cell, qp) = 0.0;
+	holeDensity(cell, qp) = 0.0;
       }
 
       else {
@@ -312,11 +329,11 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
       
       // returns a scaled 'charge',
       // not the actual charge density in [cm-3]
-      electricPotential = phi*V0;	// electric potential [V]
-      fillOutputState(workset, cell, qp);
+      electricPotential(cell, qp) = phi*V0;	// electric potential [V]
       poissonSource(cell, qp) = factor*charge;
     }
   }
+  fillOutputState(workset);
 }
 
 // **********************************************************************
@@ -339,22 +356,25 @@ evaluateFields_default(typename Traits::EvalData workset)
 	if (coord[1]<0.8) charge = (coord[1]*coord[1]);
 	else charge = 3.0;
 	charge *= (1.0 + exp(-phi));
-	chargeDensity = charge;	// default device has NO scaling
+	chargeDensity(cell, qp) = charge;	// default device has NO scaling
 	break;
       default: TEST_FOR_EXCEPT(true);
       }
 
       poissonSource(cell, qp) = factor*charge;
-      fillOutputState(workset, cell, qp);
     }
   }
+
+  fillOutputState(workset);
 }
 
 
 // **********************************************************************
+
+// ANDY: remove this function and references above when new state output framwork is added (egn)
 template<typename EvalT, typename Traits>
 void QCAD::PoissonSource<EvalT, Traits>::
-fillOutputState(typename Traits::EvalData workset, std::size_t cell, std::size_t qp)
+fillOutputState(typename Traits::EvalData workset)
 {
   // STATE OUTPUT
   Intrepid::FieldContainer<RealType>& CDState = *((*workset.newState)["SpaceChargeDensity"]);
@@ -362,16 +382,22 @@ fillOutputState(typename Traits::EvalData workset, std::size_t cell, std::size_t
   Intrepid::FieldContainer<RealType>& hDensityState = *((*workset.newState)["HoleDensity"]);
   Intrepid::FieldContainer<RealType>& ePotentialState = *((*workset.newState)["ElectricPotential"]);
 
-  // STATE OUTPUT: Save off real part into saved state vector
-  const ScalarT& CD = chargeDensity; 	
-  CDState(cell,qp) = Sacado::ScalarValue<ScalarT>::eval(CD);
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) 
+  {
+    for (std::size_t qp=0; qp < numQPs; ++qp) 
+    {
+      // STATE OUTPUT: Save off real part into saved state vector
+      const ScalarT& CD = chargeDensity(cell,qp); 	
+      CDState(cell,qp) = Sacado::ScalarValue<ScalarT>::eval(CD);
 
-  const ScalarT& eDensity = electronDensity; 
-  eDensityState(cell,qp) = Sacado::ScalarValue<ScalarT>::eval(eDensity);
+      const ScalarT& eDensity = electronDensity(cell,qp); 
+      eDensityState(cell,qp) = Sacado::ScalarValue<ScalarT>::eval(eDensity);
       
-  const ScalarT& hDensity = holeDensity; 
-  hDensityState(cell,qp) = Sacado::ScalarValue<ScalarT>::eval(hDensity);
+      const ScalarT& hDensity = holeDensity(cell,qp); 
+      hDensityState(cell,qp) = Sacado::ScalarValue<ScalarT>::eval(hDensity);
       
-  const ScalarT& ePotential = electricPotential; 
-  ePotentialState(cell,qp) = Sacado::ScalarValue<ScalarT>::eval(ePotential);
+      const ScalarT& ePotential = electricPotential(cell,qp); 
+      ePotentialState(cell,qp) = Sacado::ScalarValue<ScalarT>::eval(ePotential);
+    }
+  }
 }
