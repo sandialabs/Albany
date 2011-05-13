@@ -558,7 +558,7 @@ namespace LCM {
   }
 
   //
-  // Partition mesh according to the speficied algorithm and lengh scale
+  // Partition mesh according to the specified algorithm and length scale
   // \param partition_scheme The partition algorithm to use
   // \param length_scale The length scale for variational nonlocal
   // regularization
