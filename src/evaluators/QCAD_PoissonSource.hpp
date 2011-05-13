@@ -72,11 +72,6 @@ namespace QCAD
         void evaluateFields_elementblocks(typename Traits::EvalData workset);
         void evaluateFields_default(typename Traits::EvalData workset);
 
-        //! fills workset's state fields using temporary member variables that just
-        //   hold data for one output point.
-        // ANDY: remove this function when new state output framwork is added (egn)
-        void fillOutputState(typename Traits::EvalData workset);
-
   	//! input
   	std::size_t numQPs;
   	std::size_t numDims;

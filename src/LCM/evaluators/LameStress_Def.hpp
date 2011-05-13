@@ -39,6 +39,8 @@ LameStress(const Teuchos::ParameterList& p) :
   numQPs  = dims[1];
   numDims = dims[2];
 
+  defGradName = p.get<std::string>("DefGrad Name");
+  stressName = p.get<std::string>("Stress Name");
   this->addDependentField(defGradField);
 
   this->addEvaluatedField(stressField);
@@ -83,12 +85,9 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Get the old and new state data
   // StateVariables is:  typedef std::map<std::string, Teuchos::RCP<Intrepid::FieldContainer<RealType> > >
-  Albany::StateVariables& newState = *workset.newState;
   Albany::StateVariables oldState = *workset.oldState;
-  const Intrepid::FieldContainer<RealType>& oldDefGrad  = *oldState["def_grad"];
-  Intrepid::FieldContainer<RealType>& newDefGrad  = *newState["def_grad"];
-  const Intrepid::FieldContainer<RealType>& oldStress  = *oldState["stress"];
-  Intrepid::FieldContainer<RealType>& newStress  = *newState["stress"];
+  const Intrepid::FieldContainer<RealType>& oldDefGrad  = *oldState[defgradName];
+  const Intrepid::FieldContainer<RealType>& oldStress  = *oldState[stressName];
 
   // \todo Get actual time step for calls to LAME materials.
   RealType deltaT = 1.0;
@@ -169,23 +168,18 @@ evaluateFields(typename Traits::EvalData workset)
       // LCM::Tensor<ScalarT> W = LCM::skew(L);
       // and then fill data into the vectors below
 
-      // Copy the new deformation gradient into the "def_grad" component of StateVariables
-      // Need to do this so we can get oldDefGrad next time around
-      // \todo Should this be done in the defGrad evaluator?
-      newDefGrad(cell,qp,0,0) = Sacado::ScalarValue<ScalarT>::eval(defGradField(cell,qp,0,0));
-      newDefGrad(cell,qp,0,1) = Sacado::ScalarValue<ScalarT>::eval(defGradField(cell,qp,0,1));
-      newDefGrad(cell,qp,0,2) = Sacado::ScalarValue<ScalarT>::eval(defGradField(cell,qp,0,2));
-      newDefGrad(cell,qp,1,0) = Sacado::ScalarValue<ScalarT>::eval(defGradField(cell,qp,1,0));
-      newDefGrad(cell,qp,1,1) = Sacado::ScalarValue<ScalarT>::eval(defGradField(cell,qp,1,1));
-      newDefGrad(cell,qp,1,2) = Sacado::ScalarValue<ScalarT>::eval(defGradField(cell,qp,1,2));
-      newDefGrad(cell,qp,2,0) = Sacado::ScalarValue<ScalarT>::eval(defGradField(cell,qp,2,0));
-      newDefGrad(cell,qp,2,1) = Sacado::ScalarValue<ScalarT>::eval(defGradField(cell,qp,2,1));
-      newDefGrad(cell,qp,2,2) = Sacado::ScalarValue<ScalarT>::eval(defGradField(cell,qp,2,2));
-
       // new deformation gradient (the current deformation gradient as computed in the current configuration)
-      LCM::Tensor<ScalarT> Fnew( newDefGrad(cell,qp,0,0), newDefGrad(cell,qp,0,1), newDefGrad(cell,qp,0,2),
-                                 newDefGrad(cell,qp,1,0), newDefGrad(cell,qp,1,1), newDefGrad(cell,qp,1,2),
-                                 newDefGrad(cell,qp,2,0), newDefGrad(cell,qp,2,1), newDefGrad(cell,qp,2,2) );
+      LCM::Tensor<ScalarT> Fnew(
+       Sacado::ScalarValue<ScalarT>::eval(defGradField(cell,qp,0,0)),
+       Sacado::ScalarValue<ScalarT>::eval(defGradField(cell,qp,0,1)),
+       Sacado::ScalarValue<ScalarT>::eval(defGradField(cell,qp,0,2)),
+       Sacado::ScalarValue<ScalarT>::eval(defGradField(cell,qp,1,0)),
+       Sacado::ScalarValue<ScalarT>::eval(defGradField(cell,qp,1,1)),
+       Sacado::ScalarValue<ScalarT>::eval(defGradField(cell,qp,1,2)),
+       Sacado::ScalarValue<ScalarT>::eval(defGradField(cell,qp,2,0)),
+       Sacado::ScalarValue<ScalarT>::eval(defGradField(cell,qp,2,1)),
+       Sacado::ScalarValue<ScalarT>::eval(defGradField(cell,qp,2,2)) );
+
 
       // old deformation gradient (deformation gradient at previous load step)
       LCM::Tensor<ScalarT> Fold( oldDefGrad(cell,qp,0,0), oldDefGrad(cell,qp,0,1), oldDefGrad(cell,qp,0,2),
@@ -287,17 +281,6 @@ evaluateFields(typename Traits::EvalData workset)
       stressField(cell,qp,1,0) = stressField(cell,qp,0,1); 
       stressField(cell,qp,2,1) = stressField(cell,qp,1,2); 
       stressField(cell,qp,2,0) = stressField(cell,qp,0,2);
-
-      // Copy the new stress into the "stress" component of StateVariables
-      newStress(cell,qp,0,0) = stressNewPtr[0];
-      newStress(cell,qp,1,1) = stressNewPtr[1];
-      newStress(cell,qp,2,2) = stressNewPtr[2];
-      newStress(cell,qp,0,1) = stressNewPtr[3];
-      newStress(cell,qp,1,2) = stressNewPtr[4];
-      newStress(cell,qp,0,2) = stressNewPtr[5];
-      newStress(cell,qp,1,0) = newStress(cell,qp,0,1); 
-      newStress(cell,qp,2,1) = newStress(cell,qp,1,2); 
-      newStress(cell,qp,2,0) = newStress(cell,qp,0,2);
 
       stressNewPtr += 6;
     }

@@ -339,10 +339,16 @@ QCAD::PoissonProblem::constructEvaluators(
     evaluators_to_build["Poisson Source"] = p;
 
     // STATE OUTPUT
-    stateMgr.registerStateVariable("SpaceChargeDensity", qp_scalar);
-    stateMgr.registerStateVariable("ElectronDensity", qp_scalar);
-    stateMgr.registerStateVariable("HoleDensity", qp_scalar);
-    stateMgr.registerStateVariable("ElectricPotential", qp_scalar);
+    int issf = FactoryTraits<AlbanyTraits>::id_savestatefield;
+    evaluators_to_build["Save Charge Density"] =
+      stateMgr.registerStateVariable("Charge Density", qp_scalar, dummy, issf);
+    evaluators_to_build["Save Electron Density"] =
+      stateMgr.registerStateVariable("Electron Density", qp_scalar, dummy, issf);
+    evaluators_to_build["Save Hole Density"] =
+      stateMgr.registerStateVariable("Hole Density", qp_scalar, dummy, issf);
+    evaluators_to_build["Save Electric Potential"] =
+      stateMgr.registerStateVariable("Electric Potential", qp_scalar, dummy, issf);
+
   }
 
   { // Potential Resid
@@ -419,6 +425,15 @@ QCAD::PoissonProblem::constructEvaluators(
    fm->requireField<AlbanyTraits::MPResidual>(mpres_tag);
    PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag("Scatter", dummy);
    fm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag);
+
+   PHX::Tag<AlbanyTraits::Residual::ScalarT> res_out_tag("Charge Density", dummy);
+   fm->requireField<AlbanyTraits::Residual>(res_out_tag);
+   PHX::Tag<AlbanyTraits::Residual::ScalarT> res_out_tag2("Electron Density", dummy);
+   fm->requireField<AlbanyTraits::Residual>(res_out_tag2);
+   PHX::Tag<AlbanyTraits::Residual::ScalarT> res_out_tag3("Hole Density", dummy);
+   fm->requireField<AlbanyTraits::Residual>(res_out_tag3);
+   PHX::Tag<AlbanyTraits::Residual::ScalarT> res_out_tag4("Electric Potential", dummy);
+   fm->requireField<AlbanyTraits::Residual>(res_out_tag4);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

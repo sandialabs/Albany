@@ -379,9 +379,15 @@ Albany::LameProblem::constructEvaluators(const int worksetSize,
     //Declare what state data will need to be saved (name, layout, init_type)
     stateMgr.registerStateVariable("stress",qp_tensor,"zero");
     stateMgr.registerStateVariable("def_grad",qp_tensor,"identity");
-    stateMgr.registerStateVariable("strain",qp_tensor,"zero");
 
     evaluators_to_build["Stress"] = p;
+
+    evaluators_to_build["Save Stress"] =
+      stateMgr.registerStateVariable("Stress",qp_tensor,
+            dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
+    evaluators_to_build["Save DefGrad"] =
+      stateMgr.registerStateVariable("Deformation Gradient",qp_tensor,
+            dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
   }
 
   { // Displacement Resid
@@ -455,6 +461,11 @@ Albany::LameProblem::constructEvaluators(const int worksetSize,
    fm->requireField<AlbanyTraits::MPResidual>(mpres_tag);
    PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag("Scatter", dummy);
    fm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag);
+
+   PHX::Tag<AlbanyTraits::Residual::ScalarT> res_out_tag("Sterss", dummy);
+   fm->requireField<AlbanyTraits::Residual>(res_out_tag);
+   PHX::Tag<AlbanyTraits::Residual::ScalarT> res_out_tag2("Deformation Gradient", dummy);
+   fm->requireField<AlbanyTraits::Residual>(res_out_tag2);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

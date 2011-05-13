@@ -203,8 +203,6 @@ evaluateFields_pndiode(typename Traits::EvalData workset)
       poissonSource(cell, qp) = factor*charge;
     }
   }
-
-  fillOutputState(workset);
 }
 
 // **********************************************************************
@@ -258,7 +256,6 @@ evaluateFields_pmoscap(typename Traits::EvalData workset)
       poissonSource(cell, qp) = factor*charge;
     }
   }
-  fillOutputState(workset);
 }
 
 // **********************************************************************
@@ -333,7 +330,6 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
       poissonSource(cell, qp) = factor*charge;
     }
   }
-  fillOutputState(workset);
 }
 
 // **********************************************************************
@@ -364,40 +360,5 @@ evaluateFields_default(typename Traits::EvalData workset)
       poissonSource(cell, qp) = factor*charge;
     }
   }
-
-  fillOutputState(workset);
 }
 
-
-// **********************************************************************
-
-// ANDY: remove this function and references above when new state output framwork is added (egn)
-template<typename EvalT, typename Traits>
-void QCAD::PoissonSource<EvalT, Traits>::
-fillOutputState(typename Traits::EvalData workset)
-{
-  // STATE OUTPUT
-  Intrepid::FieldContainer<RealType>& CDState = *((*workset.newState)["SpaceChargeDensity"]);
-  Intrepid::FieldContainer<RealType>& eDensityState = *((*workset.newState)["ElectronDensity"]);
-  Intrepid::FieldContainer<RealType>& hDensityState = *((*workset.newState)["HoleDensity"]);
-  Intrepid::FieldContainer<RealType>& ePotentialState = *((*workset.newState)["ElectricPotential"]);
-
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) 
-  {
-    for (std::size_t qp=0; qp < numQPs; ++qp) 
-    {
-      // STATE OUTPUT: Save off real part into saved state vector
-      const ScalarT& CD = chargeDensity(cell,qp); 	
-      CDState(cell,qp) = Sacado::ScalarValue<ScalarT>::eval(CD);
-
-      const ScalarT& eDensity = electronDensity(cell,qp); 
-      eDensityState(cell,qp) = Sacado::ScalarValue<ScalarT>::eval(eDensity);
-      
-      const ScalarT& hDensity = holeDensity(cell,qp); 
-      hDensityState(cell,qp) = Sacado::ScalarValue<ScalarT>::eval(hDensity);
-      
-      const ScalarT& ePotential = electricPotential(cell,qp); 
-      ePotentialState(cell,qp) = Sacado::ScalarValue<ScalarT>::eval(ePotential);
-    }
-  }
-}
