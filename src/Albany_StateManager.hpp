@@ -44,6 +44,8 @@ public:
 
   ~StateManager () { };
 
+  typedef std::map<std::string, Teuchos::RCP<PHX::DataLayout> >  RegisteredStates;
+
   //! Method to call multiple timed (before allocate) to register which states will be saved.
   //! Now returns param vector with all info to build a SaveStateField evaluator
   Teuchos::RCP<Teuchos::ParameterList>
@@ -71,6 +73,9 @@ public:
   //! Method to get the "new" state so that it can be overwritten
   const std::vector<std::vector<double> > getElementAveragedStates();
 
+  //! Method to get the Names of the state variables
+  RegisteredStates& getRegisteredStates(){return statesToStore;};
+
   //! Method to make the current newState the oldState, and vice versa
   void updateStates();
 
@@ -83,7 +88,6 @@ private:
 
 private:
 
-  typedef std::map<std::string, Teuchos::RCP<PHX::DataLayout> >  RegisteredStates;
   typedef std::map<std::string, std::string >  InitializationType;
 
   //! boolean that takes care of swapping new and old state

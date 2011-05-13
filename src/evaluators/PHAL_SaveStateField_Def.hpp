@@ -80,7 +80,7 @@ template<typename Traits>
 void SaveStateField<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 { 
-  cout << "SaveStateField copying off " << fieldName << " with size " << state.size() << endl;
+  //cout << "SaveStateField copying off  " << fieldName << "  with size " << state.size() << endl;
 
   // Get state field container of same name
   Albany::StateVariables& newState = *workset.newState;

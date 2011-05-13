@@ -490,8 +490,13 @@ cout << "XXXX USING NODES FOR VERTICES" << endl;
    PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag("Scatter", dummy);
    fm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag);
 
-   PHX::Tag<AlbanyTraits::Residual::ScalarT> res_out_tag("Stress", dummy);
-   fm->requireField<AlbanyTraits::Residual>(res_out_tag);
+   const Albany::StateManager::RegisteredStates& reg = stateMgr.getRegisteredStates();
+   Albany::StateManager::RegisteredStates::const_iterator st = reg.begin();
+   while (st != reg.end()) {
+     PHX::Tag<AlbanyTraits::Residual::ScalarT> res_out_tag(st->first, dummy);
+     fm->requireField<AlbanyTraits::Residual>(res_out_tag);
+     st++;
+   }
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
