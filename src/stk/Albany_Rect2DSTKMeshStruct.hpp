@@ -27,15 +27,15 @@ namespace Albany {
 
     public: 
 
-    Rect2DSTKMeshStruct(
-                  const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
-                  const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_, const unsigned int nstates_,
-                  const unsigned int worksetSize_);
-
-
+    Rect2DSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params);
 
     ~Rect2DSTKMeshStruct() {};
+
+    void setFieldAndBulkData(
+                  const Teuchos::RCP<const Epetra_Comm>& comm,
+                  const Teuchos::RCP<Teuchos::ParameterList>& params,
+                  const unsigned int neq_, const unsigned int nstates_,
+                  const unsigned int worksetSize);
 
     private: 
 

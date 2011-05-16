@@ -35,27 +35,37 @@
 #include "Albany_Utils.hpp"
 
 Albany::Point0DSTKMeshStruct::Point0DSTKMeshStruct(
-		  const Teuchos::RCP<const Epetra_Comm>& comm,
-		  const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_, const unsigned int nstates_,
-                  const unsigned int worksetSize) :
-  GenericSTKMeshStruct(comm)
+		  const Teuchos::RCP<Teuchos::ParameterList>& params) :
+  GenericSTKMeshStruct(params,1) // Really 0D, but STK prefers to think of it as 1D
 {
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
-  int numDim_ = 1;
+  std::vector<std::string> nsNames;
+  this->DeclareParts(nsNames);
+  stk::mesh::fem::set_cell_topology< shards::Particle >(*partVec[0]);
+
+  int cub = params->get("Cubature Degree",3);
+  const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
+  this->meshSpecs = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub, nsNames));
+}
+
+void
+Albany::Point0DSTKMeshStruct::setFieldAndBulkData(
+                  const Teuchos::RCP<const Epetra_Comm>& comm,
+                  const Teuchos::RCP<Teuchos::ParameterList>& params,
+                  const unsigned int neq_, const unsigned int nstates_,
+                  const unsigned int worksetSize)
+{
+  cout << "XXX Point0DSTKMeshStruct::setFieldAndBulkData " << endl;
 
   const int nelem = 1;
 
   // Distribute the elements equally among processors
   Teuchos::RCP<Epetra_Map> elem_map = Teuchos::rcp(new Epetra_Map(nelem, 0, *comm));
 
-  std::vector<std::string> nsNames;
 
-  this->SetupMetaData(params, neq_, nstates_, numDim_, worksetSize);
-  this->DeclareParts(nsNames);
+  this->SetupFieldData(comm, neq_, nstates_, worksetSize);
   
-  stk::mesh::fem::set_cell_topology< shards::Particle >(*partVec[0]);
   metaData->commit();
 
   // Finished with metaData, now work on bulk data

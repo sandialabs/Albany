@@ -29,13 +29,23 @@ namespace Albany {
 
   class GenericSTKMeshStruct : public AbstractSTKMeshStruct {
 
-    protected: 
-    GenericSTKMeshStruct(const Teuchos::RCP<const Epetra_Comm>& comm);
-
-    void SetupMetaData(
+    public:
+    virtual void setFieldAndBulkData(
+                  const Teuchos::RCP<const Epetra_Comm>& comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_, const unsigned int nstates_,
-                  const int numDim_,
+                  const unsigned int worksetSize) { cout << "Error: In GenericSTKMeshStruct setFieldAndBulkData" << endl; throw 3;};
+
+    const Teuchos::RCP<Albany::MeshSpecsStruct>& getMeshSpecs() const;
+
+    protected: 
+    GenericSTKMeshStruct(
+                  const Teuchos::RCP<Teuchos::ParameterList>& params,
+                  const int numDim=-1);
+
+    void SetupFieldData(
+                  const Teuchos::RCP<const Epetra_Comm>& comm,
+                  const int neq_, const int nstates_,
                   const int worksetSize_);
 
     void DeclareParts(std::vector<std::string> nsNames);
@@ -45,8 +55,8 @@ namespace Albany {
     Teuchos::RCP<Teuchos::ParameterList> getValidGenericSTKParameters(
          std::string listname = "Discretization Param Names") const;
 
-    Teuchos::RCP<const Epetra_Comm> comm;
-
+    Teuchos::RCP<Teuchos::ParameterList> params;
+    Teuchos::RCP<Albany::MeshSpecsStruct> meshSpecs;
   };
 
 }

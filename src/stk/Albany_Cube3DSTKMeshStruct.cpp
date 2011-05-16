@@ -35,16 +35,37 @@
 #endif
 
 Albany::Cube3DSTKMeshStruct::Cube3DSTKMeshStruct(
-		  const Teuchos::RCP<const Epetra_Comm>& comm,
-                  const Teuchos::RCP<Teuchos::ParameterList>& params, 
-                  const unsigned int neq_, const unsigned int nstates_,
-                  const unsigned int worksetSize) :
-  GenericSTKMeshStruct(comm),
+                  const Teuchos::RCP<Teuchos::ParameterList>& params) :
+  GenericSTKMeshStruct(params,3),
   periodic(false)
 {
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
-  int numDim_ = 3;
+
+  std::vector<std::string> nsNames;
+  nsNames.push_back("NodeSet0");
+  nsNames.push_back("NodeSet1");
+  nsNames.push_back("NodeSet2");
+  nsNames.push_back("NodeSet3");
+  nsNames.push_back("NodeSet4");
+  nsNames.push_back("NodeSet5");
+  this->DeclareParts(nsNames);
+
+  stk::mesh::fem::set_cell_topology< shards::Hexahedron<8> >(*partVec[0]);
+
+  int cub = params->get("Cubature Degree",3);
+  const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
+  this->meshSpecs = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub, nsNames));
+}
+
+void
+Albany::Cube3DSTKMeshStruct::setFieldAndBulkData(
+                  const Teuchos::RCP<const Epetra_Comm>& comm,
+                  const Teuchos::RCP<Teuchos::ParameterList>& params,
+                  const unsigned int neq_, const unsigned int nstates_,
+                  const unsigned int worksetSize)
+{
+  cout << "XXX Cube3DSTKMeshStruct::setFieldAndBulkData " << endl;
 
   // Create global mesh: 3D structured, rectangular
   int nelem_x = params->get<int>("1D Elements");
@@ -75,18 +96,7 @@ Albany::Cube3DSTKMeshStruct::Cube3DSTKMeshStruct(
   Teuchos::RCP<Epetra_Map> elem_map = Teuchos::rcp(new Epetra_Map(nelem_x * nelem_y * nelem_z, 0, *comm));
   int numMyElements = elem_map->NumMyElements();
 
-  std::vector<std::string> nsNames;
-  nsNames.push_back("NodeSet0");
-  nsNames.push_back("NodeSet1");
-  nsNames.push_back("NodeSet2");
-  nsNames.push_back("NodeSet3");
-  nsNames.push_back("NodeSet4");
-  nsNames.push_back("NodeSet5");
-
-  this->SetupMetaData(params, neq_, nstates_, numDim_, worksetSize);
-  this->DeclareParts(nsNames);
-
-  stk::mesh::fem::set_cell_topology< shards::Hexahedron<8> >(*partVec[0]);
+  this->SetupFieldData(comm, neq_, nstates_, worksetSize);
 
   metaData->commit();
 

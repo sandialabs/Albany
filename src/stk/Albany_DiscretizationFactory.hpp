@@ -25,6 +25,7 @@
 #include "Epetra_Comm.h"
 
 #include "Albany_AbstractDiscretization.hpp"
+#include "Albany_GenericSTKMeshStruct.hpp"
 
 #ifdef ALBANY_CUTR
 #include "CUTR_CubitMeshMover.hpp"
@@ -55,6 +56,18 @@ namespace Albany {
            unsigned int worksetSize,
            const Teuchos::RCP<const Epetra_Comm>& epetra_comm);
 
+    const Teuchos::RCP<Albany::MeshSpecsStruct>
+    createMeshSpecs(unsigned int num_equations,unsigned int num_states,
+           unsigned int worksetSize,
+           const Teuchos::RCP<const Epetra_Comm>& epetra_comm);
+
+    Teuchos::RCP<Albany::AbstractDiscretization>
+    createDiscretization(unsigned int num_equations,unsigned int num_states,
+           unsigned int worksetSize,
+           const Teuchos::RCP<const Epetra_Comm>& epetra_comm);
+
+
+
   private:
 
     //! Private to prohibit copying
@@ -72,6 +85,7 @@ namespace Albany {
     Teuchos::RCP<CUTR::CubitMeshMover> meshMover;
 #endif
 
+    Teuchos::RCP<Albany::GenericSTKMeshStruct> stkMeshStruct;
   };
 
 }
