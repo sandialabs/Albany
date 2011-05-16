@@ -139,7 +139,7 @@ namespace LCM {
 
     dimension_ = discretization_ptr_->getNumDim();
 
-    // Dimesnioned: Workset, Cell, Local Node
+    // Dimensioned: Workset, Cell, Local Node
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >
     element_connectivity = discretization_ptr_->getWsElNodeID();
 
@@ -172,42 +172,50 @@ namespace LCM {
     number_nodes = coordinates.size() / dimension;
 
     for (Teuchos::ArrayRCP<double>::size_type
-        i = 0;
-        i < number_nodes;
-        ++i) {
+        node = 0;
+        node < number_nodes;
+        ++node) {
 
       LCM::Vector<double> point(0.0, 0.0, 0.0);
 
       for (int j = 0; j < dimension; ++j) {
-        point(j) = coordinates[i * dimension + j];
+        point(j) = coordinates[node * dimension + j];
       }
 
-      nodes_.insert(std::make_pair(i, point));
+      nodes_.insert(std::make_pair(node, point));
     }
 
     // Build connectivity array.
     // Assume that local numbering of elements is contiguous.
     // Ignore extra nodes in higher-order elements
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >::size_type
+    element_number = 0;
 
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >::size_type el=0;
-    for (int ws=0; ws<element_connectivity.size(); ws++)
-    for (Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >::size_type
-        i = 0;
-        i < element_connectivity[ws].size();
-        ++i, el++) {
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::size_type
+    workset = 0;
 
-      IDList nodes_element(nodes_per_element);
+    for (workset = 0; workset < element_connectivity.size(); ++workset) {
 
-      for (Teuchos::ArrayRCP<int>::size_type
-          j = 0;
-          j < vertices_per_element;
-          ++j) {
+      for (Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >::size_type
+          cell = 0;
+          cell < element_connectivity[workset].size();
+          ++cell, ++element_number) {
 
-        nodes_element[j] = element_connectivity[ws][i][j];
+        IDList
+        nodes_element(nodes_per_element);
+
+        for (Teuchos::ArrayRCP<int>::size_type
+            node = 0;
+            node < vertices_per_element;
+            ++node) {
+
+          nodes_element[node] = element_connectivity[workset][cell][node];
+
+        }
+
+        connectivity_.insert(std::make_pair(element_number, nodes_element));
 
       }
-
-      connectivity_.insert(std::make_pair(el, nodes_element));
 
     }
 

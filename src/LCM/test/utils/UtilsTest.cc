@@ -356,8 +356,6 @@ int main(int ac, char* av[])
       std::cout << logR << std::endl;
   }
 
-
-
-  return 0;
+  return PassedTestCount == TotalTests ? 0 : 1;
 
 }
