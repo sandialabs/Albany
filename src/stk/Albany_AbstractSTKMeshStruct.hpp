@@ -41,7 +41,12 @@ namespace Albany {
     //AbstractSTKMeshStruct();
   public:
 
-    virtual void doFieldsAndBulkData() {};
+    virtual void setFieldAndBulkData(
+                  const Teuchos::RCP<const Epetra_Comm>& comm,
+                  const Teuchos::RCP<Teuchos::ParameterList>& params,
+                  const unsigned int neq_, const unsigned int nstates_,
+                  const unsigned int worksetSize) {};
+
 
     typedef stk::mesh::Field<double,stk::mesh::Cartesian> VectorFieldType ;
     typedef stk::mesh::Field<double>                      ScalarFieldType ;
@@ -55,8 +60,8 @@ namespace Albany {
     VectorFieldType* residual_field;
     VectorFieldType* state_field;
     int numDim;
-    unsigned int neq;
-    unsigned int nstates;
+    int neq;
+    int nstates;
 
     bool exoOutput;
     std::string exoOutFile;
@@ -65,6 +70,17 @@ namespace Albany {
 
     // Temporary flag to switch between 2D elements being Rank Elements or Faces
     bool useElementAsTopRank;
+  };
+
+  // Container for mesh specification info needed to construct an Albany Problem
+  struct MeshSpecsStruct {
+    MeshSpecsStruct(const CellTopologyData& ctd_, int numDim_, 
+                    int cubatureDegree_, std::vector<std::string> nsNames_)
+       :  ctd(ctd_), numDim(numDim_), cubatureDegree(cubatureDegree_), nsNames(nsNames_) {}
+    const CellTopologyData ctd;
+    int numDim;
+    int cubatureDegree;
+    std::vector<std::string> nsNames;  //Node Sets Names
   };
 
 }

@@ -35,24 +35,45 @@
 #include "Albany_Utils.hpp"
 
 Albany::Rect2DSTKMeshStruct::Rect2DSTKMeshStruct(
-		  const Teuchos::RCP<const Epetra_Comm>& comm,
-		  const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_, const unsigned int nstates_,
-                  const unsigned int worksetSize) :
-  GenericSTKMeshStruct(comm),
+		  const Teuchos::RCP<Teuchos::ParameterList>& params) :
+  GenericSTKMeshStruct(params,2),
   periodic(params->get("Periodic BC", false)),
   triangles(false)
 {
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
-  int numDim_ = 2;
+  std::vector<std::string> nsNames;
+  nsNames.push_back("NodeSet0"); 
+  nsNames.push_back("NodeSet1"); 
+  nsNames.push_back("NodeSet2"); 
+  nsNames.push_back("NodeSet3"); 
+  this->DeclareParts(nsNames);
 
   string cellTopo = params->get("Cell Topology", "Quad");
   if (cellTopo == "Tri" || cellTopo == "Triangle")  triangles = true;
   else TEST_FOR_EXCEPTION (cellTopo != "Quad", std::logic_error,
      "\nUnknown Cell Topology entry in STK2D(not \'Tri\' or \'Quad\'): "
       << cellTopo);
+
+  if (triangles)
+    stk::mesh::fem::set_cell_topology< shards::Triangle<3> >(*partVec[0]);
+  else 
+    stk::mesh::fem::set_cell_topology< shards::Quadrilateral<4> >(*partVec[0]);
+
+  int cub = params->get("Cubature Degree",3);
+  const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
+  this->meshSpecs = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub, nsNames));
+}
+
+void
+Albany::Rect2DSTKMeshStruct::setFieldAndBulkData(
+                  const Teuchos::RCP<const Epetra_Comm>& comm,
+                  const Teuchos::RCP<Teuchos::ParameterList>& params,
+                  const unsigned int neq_, const unsigned int nstates_,
+                  const unsigned int worksetSize)
+{
+  cout << "XXX Rect2DSTKMeshStruct::setFieldAndBulkData " << endl;
 
   // Create global mesh: 2D structured, rectangular
   int nelem_x = params->get<int>("1D Elements");
@@ -81,19 +102,8 @@ Albany::Rect2DSTKMeshStruct::Rect2DSTKMeshStruct(
   Teuchos::RCP<Epetra_Map> elem_map = Teuchos::rcp(new Epetra_Map(nelem_x * nelem_y, 0, *comm));
   int numMyElements = elem_map->NumMyElements();
 
-  std::vector<std::string> nsNames;
-  nsNames.push_back("NodeSet0"); 
-  nsNames.push_back("NodeSet1"); 
-  nsNames.push_back("NodeSet2"); 
-  nsNames.push_back("NodeSet3"); 
 
-  this->SetupMetaData(params, neq_, nstates_, numDim_, worksetSize);
-  this->DeclareParts(nsNames);
-
-  if (triangles)
-    stk::mesh::fem::set_cell_topology< shards::Triangle<3> >(*partVec[0]);
-  else 
-    stk::mesh::fem::set_cell_topology< shards::Quadrilateral<4> >(*partVec[0]);
+  this->SetupFieldData(comm, neq_, nstates_, worksetSize);
 
   metaData->commit();
 

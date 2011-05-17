@@ -42,17 +42,35 @@
 
 
 Albany::Line1DSTKMeshStruct::Line1DSTKMeshStruct(
-		  const Teuchos::RCP<const Epetra_Comm>& comm,
-		  const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_, const unsigned int nstates_,
-                  const unsigned int worksetSize) :
-  GenericSTKMeshStruct(comm),
+		  const Teuchos::RCP<Teuchos::ParameterList>& params) :
+  GenericSTKMeshStruct(params,1),
   periodic(params->get("Periodic BC", false))
 {
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
-  int numDim_ = 1;
+  std::vector<std::string> nsNames;
+  nsNames.push_back("NodeSet0");
+  nsNames.push_back("NodeSet1");
+  this->DeclareParts(nsNames);
+  stk::mesh::fem::set_cell_topology< shards::Line<2> >(*partVec[0]);
+
+  // Construct MeshSpecsStruct
+  int cub = params->get("Cubature Degree",3);
+  const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
+  this->meshSpecs = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub, nsNames));
+}
+
+void
+Albany::Line1DSTKMeshStruct::setFieldAndBulkData(
+		  const Teuchos::RCP<const Epetra_Comm>& comm,
+		  const Teuchos::RCP<Teuchos::ParameterList>& params,
+                  const unsigned int neq_, const unsigned int nstates_,
+                  const unsigned int worksetSize) 
+{
+  cout << "XXX Line1DSTKMeshStruct::setFieldAndBulkData " << endl;
+  this->SetupFieldData(comm, neq_, nstates_, worksetSize);
+  metaData->commit();
 
   // Create global mesh
   const int nelem = params->get<int>("1D Elements");
@@ -64,20 +82,6 @@ Albany::Line1DSTKMeshStruct::Line1DSTKMeshStruct(
   // Distribute the elements equally among processors
   Teuchos::RCP<Epetra_Map> elem_map = Teuchos::rcp(new Epetra_Map(nelem, 0, *comm));
   int numMyElements = elem_map->NumMyElements();
-
-  std::vector<std::string> nsNames;
-  nsNames.push_back("NodeSet0");
-  nsNames.push_back("NodeSet1");
-
-  this->SetupMetaData(params, neq_, nstates_, numDim_, worksetSize);
-  this->DeclareParts(nsNames);
-
-  //Needed for rebalancing
-  //stk::mesh::DefaultFEM fem(*metaData,numDim_);
-
-  stk::mesh::fem::set_cell_topology< shards::Line<2> >(*partVec[0]);
-
-  metaData->commit();
 
   // Finished with metaData, now work on bulk data
 

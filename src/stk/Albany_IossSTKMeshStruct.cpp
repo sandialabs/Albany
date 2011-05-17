@@ -28,32 +28,27 @@
 #include <stk_mesh/base/GetBuckets.hpp>
 #include <stk_mesh/base/FieldData.hpp>
 #include <stk_mesh/base/Selector.hpp>
+#include <Ionit_Initializer.h>
 
 #include <stk_mesh/fem/FEMHelpers.hpp>
 
-#include <stk_io/MeshReadWriteUtils.hpp>
-#include <Ionit_Initializer.h>
-
-#include <stk_io/IossBridge.hpp>
 #include "Albany_Utils.hpp"
 
 Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 		  const Teuchos::RCP<const Epetra_Comm>& comm,
-                  const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_, const unsigned int nstates_,
-                  const unsigned int worksetSize) :
-  GenericSTKMeshStruct(comm),
-  periodic(params->get("Periodic BC", false))
+                  const Teuchos::RCP<Teuchos::ParameterList>& params) :
+  GenericSTKMeshStruct(params),
+  periodic(params->get("Periodic BC", false)),
+  out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
-  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
-  stk::io::MeshData* mesh_data = new stk::io::MeshData();
+  mesh_data = new stk::io::MeshData();
 
   Ioss::Init::Initializer io;
 
-  bool usePamgen = (params->get("Method","Exodus") == "Pamgen");
+  usePamgen = (params->get("Method","Exodus") == "Pamgen");
   if (!usePamgen) {
     *out << "Albany_IOSS: Loading STKMesh from Exodus file  " 
          << params->get<string>("Exodus Input File Name") << endl;
@@ -83,6 +78,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   // Set element blocks and node sets
   const stk::mesh::PartVector & all_parts = metaData->get_parts();
   int eb=0;
+  std::vector<std::string> nsNames;
   for (stk::mesh::PartVector::const_iterator i = all_parts.begin();
        i != all_parts.end(); ++i) {
 
@@ -94,11 +90,29 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     }
     else if ( part->primary_entity_rank() == metaData->node_rank()) {
        *out << "Mesh has Node Set ID: " << part->name() << endl;
-      if (part->name()[0] != '{') nsPartVec[part->name()]=part;
+      if (part->name()[0] != '{') {
+         nsPartVec[part->name()]=part;
+         nsNames.push_back(part->name());
+      }
     }
   }
 
-  this->SetupMetaData(params, neq_, nstates_, numDim, worksetSize);
+  // Construct MeshSpecsStruct
+  int cub = params->get("Cubature Degree",3);
+  const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
+  this->meshSpecs = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub, nsNames));
+}
+
+void
+Albany::IossSTKMeshStruct::setFieldAndBulkData(
+                  const Teuchos::RCP<const Epetra_Comm>& comm,
+                  const Teuchos::RCP<Teuchos::ParameterList>& params,
+                  const unsigned int neq_, const unsigned int nstates_,
+                  const unsigned int worksetSize)
+{
+  cout << "XXX IossSTKMeshStruct::setFieldAndBulkData " << endl;
+
+  this->SetupFieldData(comm, neq_, nstates_, worksetSize);
 
   *out << "IOSS-STK: number of node sets = " << nsPartVec.size() << endl;
 
@@ -113,7 +127,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
            << index << ")"<< endl;
     else {
       *out << "Restart Index set, reading solution time : " << index << endl;
-       process_input_request(*mesh_data, *bulkData, 1.0*index);
+       stk::io::process_input_request(*mesh_data, *bulkData, 1.0*index);
     }
   }
 

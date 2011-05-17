@@ -35,29 +35,38 @@
 #include "Albany_Utils.hpp"
 
 Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
-    const Teuchos::RCP<const Epetra_Comm>& comm_)
-    : comm (comm_)
+    const Teuchos::RCP<Teuchos::ParameterList>& params_,
+    int numDim_)
+    : params(params_)
 {
   metaData = new stk::mesh::fem::FEMMetaData();
+  
+  // numDim = -1 is default flag value to postpone initialization
+  if (numDim_>0) {
+    this->numDim = numDim_;
+    metaData->FEM_initialize(numDim_);
+  }
+
   bulkData = NULL;
+
+  cubatureDegree = params->get("Cubature Degree", 3);
 }
 
-void Albany::GenericSTKMeshStruct::SetupMetaData(
-		  const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_, const unsigned int nstates_,
-                  const int numDim_, const int worksetSize) 
+void Albany::GenericSTKMeshStruct::SetupFieldData(
+		  const Teuchos::RCP<const Epetra_Comm>& comm,
+                  const int neq_, const int nstates_,
+                  const int worksetSize) 
 {
-  numDim = numDim_;
+  TEST_FOR_EXCEPTION(!metaData->is_FEM_initialized(),
+       std::logic_error,
+       "LogicError: metaData->FEM_initialize(numDim) not yet called" << std::endl);
+
   neq = neq_;
   nstates = nstates_;
-
-  if (! metaData->is_FEM_initialized()) metaData->FEM_initialize(numDim);
 
   if (bulkData ==  NULL)
   bulkData = new stk::mesh::BulkData(stk::mesh::fem::FEMMetaData::get_meta_data(*metaData),
                           Albany::getMpiCommFromEpetraComm(*comm), worksetSize );
-
-  cubatureDegree = params->get("Cubature Degree", 3);
 
   //Start STK stuff
   coordinates_field = & metaData->declare_field< VectorFieldType >( "coordinates" );
@@ -105,6 +114,15 @@ Albany::GenericSTKMeshStruct::~GenericSTKMeshStruct()
 {
   delete metaData;
   delete bulkData;
+}
+
+const Teuchos::RCP<Albany::MeshSpecsStruct>&
+Albany::GenericSTKMeshStruct::getMeshSpecs() const
+{
+  TEST_FOR_EXCEPTION(meshSpecs==Teuchos::null,
+       std::logic_error,
+       "meshSpecs accessed, but it has not been constructed" << std::endl);
+  return meshSpecs;
 }
 
 
