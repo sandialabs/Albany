@@ -290,7 +290,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
         holeDensity(cell, qp) = exp(phi)*C0;          // hole density [cm-3]
       }
 
-      else if(workset.EBName == "nsilicon") {
+      else if(workset.EBName == "silicon.ntype") {
 	charge = dopingDonor/C0; // normalized by C0
         charge = 1.0/Lambda2*(charge + exp(-phi)-exp(phi)); // full RHS (scaled)
         chargeDensity(cell, qp) = charge*Lambda2*C0;  // space charge density [cm-3]
@@ -298,7 +298,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
         holeDensity(cell, qp) = exp(phi)*C0;          // hole density [cm-3]
       }
 
-      else if(workset.EBName == "psilicon") {
+      else if(workset.EBName == "silicon.ptype") {
 	charge = -dopingAcceptor/C0;  // normalized by C0
         charge = 1.0/Lambda2*(charge + exp(-phi)-exp(phi)); // full RHS (scaled)
         chargeDensity(cell, qp) = charge*Lambda2*C0;  // space charge density [cm-3]
@@ -313,7 +313,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 	holeDensity(cell, qp) = 0.0;        // no holes in SiO2
       }
 
-      else if (workset.EBName == "poly") {
+      else if (workset.EBName == "polysilicon") {
 	charge = 0.0;  // no charge in poly - treat as conductor so all at boundaries
 	chargeDensity(cell, qp) = 0.0;    
 	electronDensity(cell, qp) = 0.0;

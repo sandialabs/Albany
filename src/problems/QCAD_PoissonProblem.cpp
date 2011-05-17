@@ -16,6 +16,7 @@
 
 
 #include "QCAD_PoissonProblem.hpp"
+#include "QCAD_MaterialDatabase.hpp"
 #include "Albany_BoundaryFlux1DResponseFunction.hpp"
 #include "Albany_SolutionAverageResponseFunction.hpp"
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
@@ -49,6 +50,9 @@ PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   if(params->isType<double>("Temperature"))
     temperature = params->get<double>("Temperature");
 
+  mtrlDbFilename = "materials.xml";
+  if(params->isType<string>("MaterialDB Filename"))
+    mtrlDbFilename = params->get<string>("MaterialDB Filename");
 
   std::cout << "Length unit = " << length_unit_in_m << " meters" << endl;
 
@@ -173,6 +177,10 @@ QCAD::PoissonProblem::constructEvaluators(
 
    RCP<DataLayout> dummy = rcp(new MDALayout<Dummy>(0));
 
+
+   // Create Material Database
+   RCP<QCAD::MaterialDatabase> materialDB = rcp(new QCAD::MaterialDatabase(mtrlDbFilename));
+
   { // Gather Solution
    RCP< vector<string> > dof_names = rcp(new vector<string>(neq));
      (*dof_names)[0] = "Potential";
@@ -268,6 +276,8 @@ QCAD::PoissonProblem::constructEvaluators(
     Teuchos::ParameterList& paramList = params->sublist("Permittivity");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
+    p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
+
     evaluators_to_build["Permittivity"] = p;
   }
 
@@ -335,6 +345,7 @@ QCAD::PoissonProblem::constructEvaluators(
     //Global Problem Parameters
     p->set<double>("Length unit in m", length_unit_in_m);
     p->set<double>("Temperature", temperature);
+    p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
 
     evaluators_to_build["Poisson Source"] = p;
 
@@ -433,6 +444,7 @@ QCAD::PoissonProblem::getValidProblemParameters() const
   validPL->sublist("Poisson Source", false, "");
   validPL->set<double>("LengthUnitInMeters",1e-6,"Length unit in meters");
   validPL->set<double>("Temperature",300,"Temperature in Kelvin");
+  validPL->set<string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
 
   return validPL;
 }

@@ -314,6 +314,7 @@ SET(SOURCES ${SOURCES}
        evaluators/QCAD_PoissonResid.cpp
        evaluators/QCAD_PoissonSource.cpp
        problems/QCAD_PoissonProblem.cpp
+       problems/QCAD_MaterialDatabase.cpp
   )
 
 SET(HEADERS ${HEADERS}

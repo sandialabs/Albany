@@ -1,0 +1,23 @@
+<ParameterList>
+
+  <ParameterList name="silicon">
+    <Parameter name="Permittivity" type="double" value="11.9" />
+  </ParameterList>
+
+  <ParameterList name="silicon.ntype">
+    <Parameter name="Permittivity" type="double" value="11.9" />
+  </ParameterList>
+
+  <ParameterList name="silicon.ptype">
+    <Parameter name="Permittivity" type="double" value="11.9" />
+  </ParameterList>
+
+  <ParameterList name="sio2">
+    <Parameter name="Permittivity" type="double" value="3.9" />
+  </ParameterList>
+
+  <ParameterList name="polysilicon">
+    <Parameter name="Permittivity" type="double" value="3" />
+  </ParameterList>
+
+</ParameterList>

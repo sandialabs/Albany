@@ -49,13 +49,13 @@ color nodeset 1 green
 
 # define blocks (each block represents one material)
 block 1 volume 1
-block 1 name "Silicon"
+block 1 name "silicon"
 
 block 2 volume 5 6 7
-block 2 name "SiO2"
+block 2 name "sio2"
 
 block 3 volume 3
-block 3 name "Poly"
+block 3 name "polysilicon"
 
 # set mesh size
 volume 1 3 5 6 7 size 1

@@ -43,6 +43,10 @@ Permittivity(Teuchos::ParameterList& p) :
   numQPs  = dims[1];
   numDims = dims[2];
 
+  // Material database
+  materialDB = p.get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
+
+  // Permittivity type
   typ = perm_list->get("Permittivity Type", "Constant");
   
   // Permittivity (relative) value is constant
@@ -60,23 +64,13 @@ Permittivity(Teuchos::ParameterList& p) :
   // Permittivity (relative) has position dependence 
   else if (typ == "Position Dependent") 
   {
-  	position_dependent = true;
-    silicon_value = perm_list->get("Silicon Value", 1.0);
-    oxide_value = perm_list->get("Oxide Value", 1.0);
+    position_dependent = true;
   	
   	// Add coordinate dependence to permittivity evaluator
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>
       	tmp(p.get<string>("Coordinate Vector Name"), vector_dl);
     coordVec = tmp;
     this->addDependentField(coordVec);
-
-    // Add Silicon and Oxide Permittivity as Sacado-ized parameters
-    Teuchos::RCP<ParamLib> paramLib = 
-      	p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-				"Silicon Permittivity", this, paramLib);
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-				"Oxide Permittivity", this, paramLib);
   }
   
   // Permittivity (relative) has temperature dependence
@@ -103,20 +97,7 @@ Permittivity(Teuchos::ParameterList& p) :
 
   else if (typ == "Block Dependent") 
   {
-    constant_value = perm_list->get("Value", 1.0);
-    silicon_value = perm_list->get("Silicon Value", 1.0);
-    oxide_value = perm_list->get("Oxide Value", 1.0);
-    poly_value = perm_list->get("Poly Value", 1.0);
 
-    // Add Material Permittivities as Sacado-ized parameters
-    Teuchos::RCP<ParamLib> paramLib = 
-      	p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-				"Silicon Permittivity", this, paramLib);
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-				"Oxide Permittivity", this, paramLib);
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-				"Poly Permittivity", this, paramLib);
   }
 
   
@@ -162,6 +143,9 @@ evaluateFields(typename Traits::EvalData workset)
   // assign silicon_value for y>0 and oxide_value for y<=0 to permittivity
   else if (typ == "Position Dependent") 
   {	
+    ScalarT silicon_value = materialDB->getMaterialParam<double>("silicon","Permittivity");
+    ScalarT oxide_value = materialDB->getMaterialParam<double>("sio2","Permittivity");
+
   	// loop through all elements in one workset
     for (std::size_t cell=0; cell < workset.numCells; ++cell) 
     {	
@@ -191,17 +175,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   else if (typ == "Block Dependent") 
   {	
-    ScalarT value;
-
-    if(workset.EBName == "silicon" || workset.EBName == "nsilicon" || workset.EBName == "psilicon")
-      value = silicon_value;
-    else if(workset.EBName == "sio2") value = oxide_value;
-    else if(workset.EBName == "poly") value = poly_value;
-    else {
-      TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-			 std::endl << "Error!  Unknown element block name "
-			 << workset.EBName << "!" << std::endl);
-    }
+    const ScalarT& value = materialDB->getMaterialParam<double>(workset.EBName,"Permittivity");
 
     // loop through all elements in one workset
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {	
@@ -231,21 +205,11 @@ QCAD::Permittivity<EvalT,Traits>::getValue(const std::string &n)
   if (n == "Permittivity")	
     return constant_value;
   
-  // register the Silicon and Oxide permittivity for position-dep. case
-  else if (n == "Silicon Permittivity")
-  	return silicon_value;
-  	
-  else if (n == "Oxide Permittivity")
-  	return oxide_value;
-
-  else if (n == "Poly Permittivity")
-        return poly_value;
-
-  // temperature factor used in the temp-dep permittivity calculation
+        // temperature factor used in the temp-dep permittivity calculation
   else if (n == "Permittivity Factor")
     return factor;
   
-  // otherwise, throw out error message and continue the program
+        // otherwise, throw out error message and continue the program
   else 
   {
     TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
@@ -268,10 +232,6 @@ QCAD::Permittivity<EvalT,Traits>::getValidPermittivityParameters() const
   		"Constant permittivity in the entire device");
   validPL->set<double>("Value", 1.0, "Constant permittivity value");
   validPL->set<double>("Factor", 1.0, "Permittivity temperature factor");
-  validPL->set<double>("Silicon Value", 1.0, "Silicon permittivity value");
-  validPL->set<double>("Oxide Value", 1.0, "SiO2 permittivity value");
-  validPL->set<double>("Poly Value", 1.0, "Poly-silicon permittivity value");
-
   return validPL;
 }
 
