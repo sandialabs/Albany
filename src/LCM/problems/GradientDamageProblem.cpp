@@ -462,19 +462,19 @@ Albany::GradientDamageProblem::constructEvaluators(
 
  
     //Declare what state data will need to be saved (name, layout, init_type)
-    stateMgr.registerStateVariable("stress",qp_tensor,"zero");
-    stateMgr.registerStateVariable("Fp",qp_tensor,"identity");
-    stateMgr.registerStateVariable("eqps",qp_scalar,"zero");
-
-    evaluators_to_build["Stress"] = p;
+    //stateMgr.registerStateVariable("stress",qp_tensor,"zero");
+    //stateMgr.registerStateVariable("Fp",qp_tensor,"identity");
+    //stateMgr.registerStateVariable("eqps",qp_scalar,"zero");
 
     int issf = FactoryTraits<AlbanyTraits>::id_savestatefield;
     evaluators_to_build["Save Stress"] =
-      stateMgr.registerStateVariable(matModel,qp_tensor, dummy, issf,"zero");
+      stateMgr.registerStateVariable("Stress",qp_tensor, dummy, issf,"zero");
     evaluators_to_build["Save Fp"] =
       stateMgr.registerStateVariable("Fp",qp_tensor, dummy, issf,"identity");
     evaluators_to_build["Save Eqps"] =
       stateMgr.registerStateVariable("eqps",qp_scalar, dummy, issf,"zero");
+
+    evaluators_to_build["Stress"] = p;
   }
 
   { // Displacement Resid
@@ -744,6 +744,7 @@ Albany::GradientDamageProblem::getValidProblemParameters() const
   validPL->sublist("Saturation Exponent", false, "");
   validPL->set<bool>("avgJ", false, "Flag to indicate the J should be averaged");
   validPL->set<bool>("volavgJ", false, "Flag to indicate the J should be volume averaged");
+  validPL->set<bool>("Use Composite Tet 10", false, "Flag to use the compostie tet 10 basis in Intrepid");
 
   return validPL;
 }
