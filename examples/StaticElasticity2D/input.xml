@@ -82,9 +82,9 @@
                 <ParameterList name="Solver Types">
                   <ParameterList name="Block GMRES">
                     <Parameter name="Convergence Tolerance" type="double" value="1e-12"/>
-                    <Parameter name="Output Frequency" type="int" value="10"/>
+                    <Parameter name="Output Frequency" type="int" value="2"/>
                     <Parameter name="Output Style" type="int" value="1"/>
-                    <Parameter name="Verbosity" type="int" value="33"/>
+                    <Parameter name="Verbosity" type="int" value="127"/>
                     <Parameter name="Maximum Iterations" type="int" value="200"/>
                     <Parameter name="Block Size" type="int" value="1"/>
                     <Parameter name="Num Blocks" type="int" value="200"/>
@@ -101,7 +101,10 @@
                 <ParameterList name="Ifpack Settings">
                   <Parameter name="fact: drop tolerance" type="double" value="0"/>
                   <Parameter name="fact: ilut level-of-fill" type="double" value="1"/>
-                  <Parameter name="fact: level-of-fill" type="int" value="2"/>
+                  <Parameter name="fact: level-of-fill" type="int" value="0"/>
+                </ParameterList>
+                <ParameterList name="VerboseObject">
+                  <Parameter name="Verbosity Level" type="string" value="medium"/>
                 </ParameterList>
               </ParameterList>
             </ParameterList>
