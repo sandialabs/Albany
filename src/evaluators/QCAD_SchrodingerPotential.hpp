@@ -61,7 +61,7 @@ namespace QCAD
     		getValidSchrodingerPotentialParameters() const;
 
   	// Suzey: need to assign values to private variables, so remove "const"
-  	ScalarT potentialValue( const int numDim, const MeshScalarT* coord);
+  	ScalarT parabolicPotentialValue( const int numDim, const MeshScalarT* coord);
 
   	//! input
   	std::size_t numQPs;
@@ -81,6 +81,7 @@ namespace QCAD
   	
   	//! string variable to differ the various devices implementation
   	std::string potentialType;
+        std::string potentialStateName;
 
         //! units
         double energy_unit_in_eV, length_unit_in_m;

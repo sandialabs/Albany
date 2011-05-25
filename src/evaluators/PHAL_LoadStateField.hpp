@@ -15,8 +15,8 @@
 \********************************************************************/
 
 
-#ifndef PHAL_SAVESTATEFIELD_HPP
-#define PHAL_SAVESTATEFIELD_HPP
+#ifndef PHAL_LOADSTATEFIELD_HPP
+#define PHAL_LOADSTATEFIELD_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -26,18 +26,18 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Epetra_Vector.h"
 
-/** \brief SaveStateField
+/** \brief LoadStateField
 
 */
 namespace PHAL {
 
 template<typename EvalT, typename Traits> 
-class SaveStateField : public PHX::EvaluatorWithBaseImpl<Traits>,
+class LoadStateField : public PHX::EvaluatorWithBaseImpl<Traits>,
                        public PHX::EvaluatorDerived<EvalT, Traits>  {
   
 public:
   
-  SaveStateField(const Teuchos::ParameterList& p);
+  LoadStateField(const Teuchos::ParameterList& p);
   
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
@@ -48,33 +48,12 @@ private:
 
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
-};
 
-
-template<typename Traits> 
-class SaveStateField<PHAL::AlbanyTraits::Residual, Traits> 
-                    : public PHX::EvaluatorWithBaseImpl<Traits>,
-                      public PHX::EvaluatorDerived<PHAL::AlbanyTraits::Residual, Traits>  {
-  
-public:
-  
-  SaveStateField(const Teuchos::ParameterList& p);
-  
-  void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
-  
-  void evaluateFields(typename Traits::EvalData d);
-  
-private:
-
-  typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
-  typedef typename PHAL::AlbanyTraits::Residual::MeshScalarT MeshScalarT;
-
-  Teuchos::RCP<PHX::FieldTag> savestate_operation;
-  PHX::MDField<ScalarT> state;
+  PHX::MDField<ScalarT> data;
   std::string fieldName;
   std::string stateName;
 };
+
 }
 
 #endif

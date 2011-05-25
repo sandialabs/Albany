@@ -22,17 +22,23 @@
 #include <string>
 
 Albany::SaveEigenData::
-SaveEigenData(Teuchos::ParameterList& locaParams, Teuchos::RCP<NOX::Epetra::Observer> observer)
+SaveEigenData(Teuchos::ParameterList& locaParams, Teuchos::RCP<NOX::Epetra::Observer> observer, Albany::StateManager* pStateMgr)
    :  nsave(0)
 {
   bool doEig = locaParams.sublist("Stepper").get("Compute Eigenvalues", false);
-  if (doEig) nsave = locaParams.sublist("Stepper").
-              sublist("Eigensolver").get("Save Eigenvectors",0);
+  if (doEig) {
+    nsave = locaParams.sublist("Stepper").
+      sublist("Eigensolver").get("Save Eigenvectors",0);
+
+    nSaveAsStates = nsave; //in future, perhaps allow this to be set in LOCA params?
+  }
 
   cout << "\nSaveEigenData: Will save up to " 
-       << nsave << " eigenvectors." << endl;
+       << nsave << " eigenvectors, and output "
+       << nSaveAsStates << " as states." << endl;
   
   noxObserver = observer;
+  pAlbStateMgr = pStateMgr;
 }
 
 Albany::SaveEigenData::~SaveEigenData()
@@ -55,19 +61,45 @@ Albany::SaveEigenData::save(
   Epetra_MultiVector& e_r = ne_r->getEpetraMultiVector();
   Epetra_MultiVector& e_i = ne_i->getEpetraMultiVector();
 
+  char buf[100];
+
   int ns = nsave;
   if (ns > evecs_r->numVectors())
     ns = evecs_r->numVectors();
 
+
+  // Output to state manager
+  ns = nSaveAsStates;
+  if (ns > evecs_r->numVectors())
+    ns = evecs_r->numVectors();
+  
+  //Output states to hardcoded "Eigenvector_(Re|Im)<index>" state 
+  // names IF they are present in the state manager
+  for (int i=0; i<ns; i++) {
+    if ( fabs((*evals_i)[i]) == 0 ) {
+      sprintf(buf, "Eigenvector_Re%d", i);
+      if(pAlbStateMgr->containsState(buf)) 
+	pAlbStateMgr->saveVectorAsState(buf, *(e_r(i)));
+    }
+    else {
+      sprintf(buf, "Eigenvector_Re%d", i);
+      if(pAlbStateMgr->containsState(buf)) 
+	pAlbStateMgr->saveVectorAsState(buf, *(e_r(i)));
+      sprintf(buf, "Eigenvector_Im%d", i);
+      if(pAlbStateMgr->containsState(buf)) 
+	pAlbStateMgr->saveVectorAsState(buf, *(e_i(i)));
+    }
+  }
+
+
   std::fstream evecFile;
   std::fstream evalFile;
-  char buf[100];
   evalFile.open ("evals.txtdump", fstream::out);
   evalFile << "# Eigenvalues: index, Re, Im" << endl;
   for (int i=0; i<ns; i++) {
     evalFile << i << "  " << (*evals_r)[i] << "  " << (*evals_i)[i] << endl;
 
-    if ( fabs((*evals_i)[i]) == 0 ) {  //  /(fabs((*evals_r)[i]) + ZERO_TOL) < ZERO_TO
+    if ( fabs((*evals_i)[i]) == 0 ) {
       //Print to stdout -- good for debugging but too much output in most cases
       //cout << setprecision(8) 
       //     << "Eigenvalue " << i << " with value: " << (*evals_r)[i] 

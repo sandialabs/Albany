@@ -26,18 +26,29 @@ Albany::StateManager::StateManager() :
 Teuchos::RCP<Teuchos::ParameterList>
 Albany::StateManager::registerStateVariable(const std::string &name, const Teuchos::RCP<PHX::DataLayout> &dl,
                                             const Teuchos::RCP<PHX::DataLayout> &dummy,
-                                            const int saveStateFieldID,
+                                            const int saveOrLoadStateFieldID,
                                             const std::string &init_type)
+{
+  return registerStateVariable(name, dl, dummy, saveOrLoadStateFieldID, init_type, name);
+}
+
+Teuchos::RCP<Teuchos::ParameterList>
+Albany::StateManager::registerStateVariable(const std::string &stateName, const Teuchos::RCP<PHX::DataLayout> &dl,
+                                            const Teuchos::RCP<PHX::DataLayout> &dummy,
+                                            const int saveOrLoadStateFieldID,
+                                            const std::string &init_type, const std::string& fieldName)
 {
   TEST_FOR_EXCEPT(stateVarsAreAllocated);
 
-  statesToStore[name] = dl;
-  stateInit[name] = init_type;
+  statesToStore[stateName] = dl;
+  stateInit[stateName] = init_type;
 
   // Create param list for SaveStateField evaluator 
-  Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Save State" + name));
-  p->set<const int>("Type", saveStateFieldID);
-  p->set<const std::string>("State Field Name", name);
+  Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Save or Load State " 
+							  + stateName + " to/from field " + fieldName));
+  p->set<const int>("Type", saveOrLoadStateFieldID);
+  p->set<const std::string>("State Name", stateName);
+  p->set<const std::string>("Field Name", fieldName);
   p->set<const Teuchos::RCP<PHX::DataLayout> >("State Field Layout", dl);
   p->set<const Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout", dummy);
   return p;
@@ -85,6 +96,7 @@ Albany::StateManager::allocateStateVariables(const int numWorksets)
   }
   *out << std::endl;
 }
+
 
 void
 Albany::StateManager::initializeStateVariables(const int numWorksets)
@@ -149,6 +161,69 @@ Albany::StateManager::initializeStateVariables(const int numWorksets)
   *out << std::endl;
 }
 
+void
+Albany::StateManager::reinitializeStateVariables(Teuchos::RCP<std::vector<StateVariables> >& 
+						 stateVarsToCopyFrom, const int numWorksets)
+{
+  TEST_FOR_EXCEPT(!stateVarsAreAllocated);
+  stateVarsAreAllocated = true;
+
+  if( stateVarsToCopyFrom == Teuchos::null ) return;
+
+  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+
+  *out << std::endl;
+  for (int ws = 0; ws < numWorksets; ws++)
+  {
+    std::vector<StateVariables>& vec = *stateVarsToCopyFrom;
+    StateVariables& stateVarsForWorkset = vec[ws];
+    StateVariables::iterator st;
+
+    for( st = stateVarsForWorkset.begin(); st != stateVarsForWorkset.end(); st++)
+    {
+      std::string stateName = st->first;
+
+      if( state1[ws].find(stateName) != state1[ws].end() ) {
+	if(ws == 0) *out << "StateManager: reinitializing state:  " << st->first << std::endl;
+
+        // we assume operating on the last two indices is correct
+        std::vector<PHX::DataLayout::size_type> dims;
+        state1[ws][st->first]->dimensions(dims);
+
+        int size = dims.size();
+        TEST_FOR_EXCEPTION(size != 2, std::logic_error,
+	   "Something is wrong during identity state variable reinitialization: size = " << size);
+        int cells = dims[0];
+        int qps = dims[1];
+        //int dim = dims[2];
+        //int dim2 = dims[3];
+
+        //TEST_FOR_EXCEPT( ! (dim == dim2) );
+
+        for (int cell = 0; cell < cells; ++cell)
+        {
+          for (int qp = 0; qp < qps; ++qp)
+          {
+            //for (int i = 0; i < dim; ++i)
+            //{
+            //  (*state1[ws][st->first])(cell, qp, i, i) = (*(st->second))(cell, qp, i, i);
+	    //  (*state2[ws][st->first])(cell, qp, i, i) = (*(st->second))(cell, qp, i, i);
+	    //}
+	    (*state1[ws][st->first])(cell, qp) = (*(st->second))(cell, qp);
+	    (*state2[ws][st->first])(cell, qp) = (*(st->second))(cell, qp);
+          }
+        }
+
+	//TODO - 3,4 dimensions
+      }
+      else {
+	if(ws == 0) *out << "StateManager: state " << st->first << " not present, so not reinitialized" << std::endl;
+      }
+    }
+  }
+  *out << std::endl;
+}
+
 Teuchos::RCP<const Albany::StateVariables>
 Albany::StateManager::getOldStateVariables(const int ws) const
 {
@@ -174,6 +249,35 @@ Albany::StateManager::getNewStateVariables(const int ws)
   else
     return Teuchos::rcp(&state1[ws], false);
 }
+
+
+//ANDY - make const?
+Teuchos::RCP<std::vector<Albany::StateVariables> >
+Albany::StateManager::getAllOldStateVariables()
+{
+  if (statesToStore.empty())
+    return Teuchos::null;
+
+  TEST_FOR_EXCEPT(!stateVarsAreAllocated);
+  if (state1_is_old_state)
+    return Teuchos::rcp(&state1, false);
+  else
+    return Teuchos::rcp(&state2, false);
+}
+
+Teuchos::RCP<std::vector<Albany::StateVariables> >
+Albany::StateManager::getAllNewStateVariables()
+{
+  if (statesToStore.empty())
+    return Teuchos::null;
+
+  TEST_FOR_EXCEPT(!stateVarsAreAllocated);
+  if (state1_is_old_state)
+    return Teuchos::rcp(&state2, false);
+  else
+    return Teuchos::rcp(&state1, false);
+}
+
 
 void
 Albany::StateManager::updateStates()
@@ -254,9 +358,35 @@ Albany::StateManager::getElementAveragedStates()
     }
   }
 
+
+
+  std::vector<int> worksetSizes(numWorksets);
+  std::vector<int> worksetOffsets(numWorksets);
+
+  if(disc != Teuchos::null) {
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > wsElNodeID;
+    wsElNodeID = disc->getWsElNodeID();
+    for(int ws=0; ws<numWorksets; ++ws) 
+      worksetSizes[ws] = wsElNodeID[ws].size();
+  }
+  else { 
+    //All worksets = container size (mostly for back compat?).
+    //This means:
+    // flattenedSize = numWorksets * containerSize and
+    // worksetOffets[i] = i*containerSize
+    for(int ws=0; ws<numWorksets; ++ws) 
+      worksetSizes[ws] = containerSize; 
+  }
+    
+  int flattenedSize = 0;
+  for(int ws=0; ws<numWorksets; ++ws) {
+    worksetOffsets[ws] = flattenedSize;
+    flattenedSize += worksetSizes[ws];
+  }
+
   // resize the vector<vector<double> >
-  states.resize(numWorksets * containerSize);
-  for (int i = 0; i < numWorksets * containerSize; i++)
+  states.resize(flattenedSize);
+  for (int i = 0; i < flattenedSize; i++)
     states[i].resize(numScalarStates);
 
   // Average states over QPs and store. Separate logic for scalar,vector,tensor
@@ -264,36 +394,40 @@ Albany::StateManager::getElementAveragedStates()
   {
     StateVariables::iterator it = (*stateVarPtr)[i].begin();
     int index = 0;
-      while (it != (*stateVarPtr)[i].end())
+    int numCells;
+
+    while (it != (*stateVarPtr)[i].end())
     {
       const Intrepid::FieldContainer<RealType>& fc = *(it->second);
       stateRank = fc.rank();
       containerSize = fc.dimension(0);
       numQP = fc.dimension(1);
+      numCells = worksetSizes[i];
+
       switch (stateRank)
       {
       case 2: //scalar
-        for (int j = 0; j < containerSize; ++j)
+        for (int j = 0; j < numCells; ++j)
           for (int k = 0; k < numQP; ++k)
-            states[i * containerSize + j][index + 0] += fc(j, k) / numQP;
+            states[worksetOffsets[i] + j][index + 0] += fc(j, k) / numQP;
         index++;
         break;
       case 3: //vector
         numDim = fc.dimension(2);
-        for (int j = 0; j < containerSize; ++j)
+        for (int j = 0; j < numCells; ++j)
           for (int k = 0; k < numQP; ++k)
             for (int l = 0; l < numDim; ++l)
-              states[i * containerSize + j][index + l] += fc(j, k, l) / numQP;
+              states[worksetOffsets[i] + j][index + l] += fc(j, k, l) / numQP;
         index += numDim;
         break;
       case 4: //tensor
         numDim = fc.dimension(2);
         assert(fc.dimension(2) == fc.dimension(3));
-        for (int j = 0; j < containerSize; ++j)
+        for (int j = 0; j < numCells; ++j)
           for (int k = 0; k < numQP; ++k)
             for (int l = 0; l < numDim; ++l)
               for (int m = 0; m < numDim; ++m)
-                states[i * containerSize + j][index + m + l * numDim] += fc(j, k, l, m) / numQP;
+                states[worksetOffsets[i] + j][index + m + l * numDim] += fc(j, k, l, m) / numQP;
         index += numDim * numDim;
         break;
       }
@@ -301,4 +435,49 @@ Albany::StateManager::getElementAveragedStates()
     }
   }
   return states;
+}
+
+
+
+
+void
+Albany::StateManager::saveVectorAsState(const std::string& stateName, const Epetra_Vector& vec)
+{
+  // we will be filling up states with QP averaged element quantities
+  TEST_FOR_EXCEPT(!stateVarsAreAllocated);
+
+  // make sure we have discretization object
+  TEST_FOR_EXCEPT(disc == Teuchos::null); 
+
+  // the number of worksets being used
+  int numWorksets = state1.size(); //state2 should be the same size
+
+  //Get field container for first workset of desired state
+  Intrepid::FieldContainer<RealType>& fc = *(state1[0][stateName]);
+
+  std::vector<int> dims; // size of field containter for first workset. We 
+  fc.dimensions(dims);   //  assume numQP and numDim is the same for all worksets
+
+  //int containerSize = dims[0];
+  std::size_t numNodes = dims[1];
+  int stateRank = dims.size();
+  TEST_FOR_EXCEPT(!(stateRank == 2)); //save Epetra vector to a scalar field only
+
+  //Set state1 and state2 with given Epetra vector data
+  // NOTE: these states must have node-type data layouts; can we enforce this?
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > wsElNodeID;
+  wsElNodeID = disc->getWsElNodeID();
+
+  for (int i = 0; i < numWorksets; i++) {
+    std::size_t numCells = wsElNodeID[i].size();
+    for (std::size_t cell=0; cell < numCells; ++cell ) {
+      const Teuchos::ArrayRCP<int>& nodeID = wsElNodeID[i][cell];
+    
+      for(std::size_t node =0; node < numNodes; ++node) {
+	int offsetIntoVec = nodeID[node];
+	(*(state1[i][stateName]))(cell,node) = vec[offsetIntoVec];
+	(*(state2[i][stateName]))(cell,node) = vec[offsetIntoVec];
+      }
+    }
+  }
 }

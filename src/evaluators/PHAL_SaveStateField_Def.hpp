@@ -51,7 +51,8 @@ template<typename Traits>
 SaveStateField<PHAL::AlbanyTraits::Residual, Traits>::
 SaveStateField(const Teuchos::ParameterList& p)
 {  
-  fieldName =  p.get<std::string>("State Field Name");
+  fieldName =  p.get<std::string>("Field Name");
+  stateName =  p.get<std::string>("State Name");
   PHX::MDField<ScalarT> f(fieldName, p.get<Teuchos::RCP<PHX::DataLayout> >("State Field Layout") );
   state = f;
 
@@ -61,7 +62,7 @@ SaveStateField(const Teuchos::ParameterList& p)
   this->addDependentField(state);
   this->addEvaluatedField(*savestate_operation);
 
-  this->setName("Save State Field " + fieldName
+  this->setName("Save State " + stateName +" to Field " + fieldName
                 + PHX::TypeString<PHAL::AlbanyTraits::Residual>::value);
 }
 
@@ -80,13 +81,18 @@ template<typename Traits>
 void SaveStateField<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 { 
-  //cout << "SaveStateField copying off  " << fieldName << "  with size " << state.size() << endl;
-
+  cout << "SaveStateField copying off  " << fieldName << " to state " 
+       << stateName << " with size " << state.size() << endl;
+  
   // Get state field container of same name
   Albany::StateVariables& newState = *workset.newState;
-  Intrepid::FieldContainer<RealType>& savedState  = *newState[fieldName];
-
-  for (std::size_t i=0; i < state.size() ; ++i) savedState[i] = state[i];
+  Intrepid::FieldContainer<RealType>& savedState  = *newState[stateName];
+  
+  double max = 0;
+  for (std::size_t i=0; i < state.size() ; ++i) {
+    savedState[i] = state[i];
+    if(fabs(state[i]) > max) max = fabs(state[i]);
+  }
 }
 }
 

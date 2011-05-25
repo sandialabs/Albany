@@ -282,8 +282,11 @@ namespace Albany {
     //! Provide access to shapeParameters -- no AD
     PHAL::AlbanyTraits::Residual::ScalarT& getValue(const std::string &n);
 
-    //! Class to manage state varaibles (a.k.a. history)
+    //! Class to manage state variables (a.k.a. history)
     StateManager& getStateMgr() {return stateMgr;};
+
+    //! Access to number of worksets - needed for working with StateManager
+    int getNumWorksets() { return numWorksets;};
 
   private:
 

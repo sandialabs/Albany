@@ -49,6 +49,9 @@ SchrodingerPotential(Teuchos::ParameterList& p) :
   E0 = psList->get("E0", 1.0);
   scalingFactor = psList->get("Scaling Factor", 1.0);
 
+  energy_unit_in_eV = p.get<double>("Energy unit in eV");
+  potentialStateName = p.get<std::string>("QP Potential Name");
+
   // Add E0 as a Sacado-ized parameter
   Teuchos::RCP<ParamLib> paramLib =
       p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
@@ -80,12 +83,45 @@ template<typename EvalT, typename Traits>
 void QCAD::SchrodingerPotential<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) 
+
+  //Parabolic potential (test case)
+  if (potentialType == "Parabolic") 
   {
-    for (std::size_t qp=0; qp < numQPs; ++qp) 
-    {
-      V(cell, qp) = potentialValue(numDims, &coordVec(cell,qp,0));
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+	V(cell, qp) = parabolicPotentialValue(numDims, &coordVec(cell,qp,0));
+      }
     }
+  }
+
+
+  //Potential taken from input state "Electric Potential" - now hardcoded, maybe allow variable later?
+  else if (potentialType == "FromState") 
+  {
+    //ANDY - can't access oldState due to const qualifiers, so not just use newstate (since both hold re-init data)
+    //const Albany::StateVariables& oldState = *workset.oldState;
+    //Intrepid::FieldContainer<RealType>& potentialState = *oldState[potentialStateName];
+
+    Albany::StateVariables& newState = *workset.newState;
+    Intrepid::FieldContainer<RealType>& potentialState = *newState[potentialStateName];
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+	double d =  potentialState(cell, qp);
+	V(cell, qp) = scalingFactor * d;
+
+	//HACK to help anasazi solve
+	//if(workset.EBName == "silicon" || scalingFactor < 0) {
+	//  V(cell, qp) =  d;
+	//}
+	//else V(cell, qp) = scalingFactor;
+      }
+    }
+  }    
+
+  /***** otherwise error? ******/
+  else 
+  {
+    TEST_FOR_EXCEPT(true);
   }
 }
 
@@ -119,10 +155,12 @@ QCAD::SchrodingerPotential<EvalT,Traits>::getValidSchrodingerPotentialParameters
 //Return potential in energy_unit_in_eV * eV units
 template<typename EvalT,typename Traits>
 typename QCAD::SchrodingerPotential<EvalT,Traits>::ScalarT
-QCAD::SchrodingerPotential<EvalT,Traits>::potentialValue(
+QCAD::SchrodingerPotential<EvalT,Traits>::parabolicPotentialValue(
     const int numDim, const MeshScalarT* coord)
 {
-  ScalarT val, r2;
+  ScalarT val;
+  MeshScalarT r2;
+  int i;
 
   //std::cout << "x = " << coord[0] << endl; //in 1D, x-coords run from zero to 1
 
@@ -133,38 +171,14 @@ QCAD::SchrodingerPotential<EvalT,Traits>::potentialValue(
 
   const double parabolicFctr = 0.5 * (emass / (evPerJ * hbar*hbar) );
 
-  ScalarT prefactor;  // prefactor from constant, including scaling due to units
+  // prefactor from constant, including scaling due to units
+  ScalarT prefactor;  
   
-  /***** implement RHS of the scaled Poisson equation in pn diode *****/
-  if (potentialType == "Parabolic") 
-  {
-    prefactor = parabolicFctr * E0*E0 * (energy_unit_in_eV * pow(length_unit_in_m,2));  
-    switch (numDim) 
-    {
-      case 1: 
-	r2 = (coord[0]-0.5)*(coord[0]-0.5);
-	val = prefactor * r2;
-	break;
-      case 2:
-	r2 = (coord[0]-0.5)*(coord[0]-0.5) + (coord[1]-0.5)*(coord[1]-0.5);
-	val = prefactor * r2;
-        break;
-      case 3:
-	r2 = (coord[0]-0.5)*(coord[0]-0.5) + (coord[1]-0.5)*(coord[1]-0.5) 
-	   + (coord[2]-0.5)*(coord[2]-0.5);
-	val = prefactor * r2;
-	break;
-      default:
-        TEST_FOR_EXCEPT(true);
-    }  // end of switch(numDim)
-  }
+  prefactor = parabolicFctr * E0*E0 * (energy_unit_in_eV * pow(length_unit_in_m,2));  
+  for(i=0, r2=0.0; i<numDim; i++)
+    r2 += (coord[i]-0.5)*(coord[i]-0.5);
+  val = prefactor * r2;  
   
-  /***** otherwise error? ******/
-  else 
-  {
-    TEST_FOR_EXCEPT(true);
-  }
-
   return scalingFactor * val;
 }
 

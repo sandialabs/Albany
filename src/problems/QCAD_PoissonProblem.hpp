@@ -79,8 +79,8 @@ namespace QCAD {
     double length_unit_in_m;
     double temperature;
     std::string mtrlDbFilename;
+    int nEigenvectorsToInputFromStates;
     
-
   };
 
 }

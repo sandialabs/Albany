@@ -120,7 +120,6 @@ Albany::Application::Application(
   int numDim = disc->getNumDim();
   numWorksets = wsElNodeID.size();
 
-
   // Create Epetra objects
   importer = Teuchos::rcp(new Epetra_Import(*(disc->getOverlapMap()), 
                                             *(disc->getMap())));
@@ -150,7 +149,8 @@ Albany::Application::Application(
   }
 
   problem->buildProblem(worksetSize, stateMgr, *disc, responses);
-
+  
+  stateMgr.setDiscretization(disc);
   stateMgr.allocateStateVariables(numWorksets);
   stateMgr.initializeStateVariables(numWorksets);
 

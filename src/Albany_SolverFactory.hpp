@@ -27,6 +27,8 @@
 #include "Stokhos_EpetraVectorOrthogPoly.hpp"
 #include "Albany_Utils.hpp"
 
+#include "Albany_Application.hpp"
+
 namespace Albany {
 
   /*!
@@ -47,6 +49,12 @@ namespace Albany {
       const Teuchos::RCP<const Epetra_Comm>& appComm,
       const Teuchos::RCP<const Epetra_Comm>& solverComm,
       const Teuchos::RCP<const Epetra_Vector>& initial_guess = Teuchos::null);
+
+    Teuchos::RCP<EpetraExt::ModelEvaluator> createAndGetAlbanyApp(
+      Teuchos::RCP<Application>& albanyApp,
+      const Teuchos::RCP<const Epetra_Comm>& appComm,
+      const Teuchos::RCP<const Epetra_Comm>& solverComm,
+      const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null);
 
     /** \brief Function that does regression testing. */
     // Probably needs to be moved to another class? AGS

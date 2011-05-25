@@ -55,6 +55,22 @@ SchrodingerProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     length_unit_in_m = params->get<double>("LengthUnitInMeters");
   std::cout << "Length unit = " << length_unit_in_m << " meters" << endl;
 
+  potentialStateName = "V"; //default name for potential at QPs field
+  if(params->isType<string>("Potential State Name"))
+    potentialStateName = params->get<string>("Potential State Name");
+
+  nEigenvectorsToOuputAsStates = 0;
+  if(params->isType<int>("Save Eigenvectors as States"))
+    nEigenvectorsToOuputAsStates = params->get<int>("Save Eigenvectors as States");
+
+  //Check LOCA params to see if eigenvectors will be output to states.
+  //Teuchos::ParameterList& locaStepperList = params->sublist("LOCA").sublist("Stepper");
+  //if( locaStepperList.get("Compute Eigenvalues", false) > 0) {
+  //  int nSave = locaStepperList.sublist("Eigensolver").get("Save Eigenvectors",0);
+  //  int nSaveAsStates = locaStepperList.sublist("Eigensolver").get("Save Eigenvectors as States", 0);
+  //  nEigenvectorsToOuputAsStates = (nSave < nSaveAsStates)? nSave : nSaveAsStates;
+  //}
+
   TEST_FOR_EXCEPTION(params->isSublist("Source Functions"), Teuchos::Exceptions::InvalidParameter,
 		     "\nError! Schrodinger problem does not parse Source Functions sublist\n" 
                      << "\tjust Potential sublist " << std::endl);
@@ -62,6 +78,10 @@ SchrodingerProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   // neq=1 set in AbstractProblem constructor
   dofNames.resize(neq);
   dofNames[0] = "psi";
+
+  //STATES TO OUTPUT
+  nstates = 1; // Potential energy
+  nstates += nEigenvectorsToOuputAsStates*2; // Re and Im parts of each eigenvector
 }
 
 QCAD::SchrodingerProblem::
@@ -254,7 +274,7 @@ QCAD::SchrodingerProblem::constructEvaluators(
     evaluators_to_build["Compute Basis Functions"] = p;
   }
 
-  { // DOF: Interpolate nodal Temperature values to quad points
+  { // DOF: Interpolate nodal Wavefunction values to quad points
     RCP<ParameterList> p = rcp(new ParameterList("Schrodinger DOFInterpolation Wavefunction"));
 
     int type = FactoryTraits<AlbanyTraits>::id_dof_interpolation;
@@ -320,7 +340,7 @@ QCAD::SchrodingerProblem::constructEvaluators(
     p->set<int>("Type", type);
 
     p->set<string>("QP Variable Name", "psi");
-    p->set<string>("QP Potential Name", "V");
+    p->set<string>("QP Potential Name", potentialStateName);
     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
@@ -335,6 +355,14 @@ QCAD::SchrodingerProblem::constructEvaluators(
     p->set<double>("Length unit in m", length_unit_in_m);
 
     evaluators_to_build["Potential Energy"] = p;
+
+    
+    std::cout << "DEBUG: potential from state name " << potentialStateName << std::endl;
+
+    // STATE INPUT / OUTPUT
+    int issf = FactoryTraits<AlbanyTraits>::id_savestatefield;
+    evaluators_to_build["Save Potential"] =
+      stateMgr.registerStateVariable(potentialStateName, qp_scalar, dummy, issf);
   }
 
   { // Wavefunction (psi) Resid
@@ -352,7 +380,7 @@ QCAD::SchrodingerProblem::constructEvaluators(
 
     p->set<bool>("Have Potential", havePotential);
     p->set<bool>("Have Material", haveMaterial);
-    p->set<string>("Potential Name", "V");
+    p->set<string>("Potential Name", potentialStateName); // was "V"
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
 
     p->set<string>("Gradient QP Variable Name", "Grad psi");
@@ -418,6 +446,28 @@ QCAD::SchrodingerProblem::constructEvaluators(
    fm->requireField<AlbanyTraits::MPResidual>(mpres_tag);
    PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag("Scatter", dummy);
    fm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag);
+
+   const Albany::StateManager::RegisteredStates& reg = stateMgr.getRegisteredStates();
+   Albany::StateManager::RegisteredStates::const_iterator st = reg.begin();
+   while (st != reg.end()) {
+     PHX::Tag<AlbanyTraits::Residual::ScalarT> res_out_tag(st->first, dummy);
+     fm->requireField<AlbanyTraits::Residual>(res_out_tag);
+     st++;
+   }
+
+  // EIGENSTATE OUTPUT - to this registration after above loop because 
+  //  we don't want evaluators to fill these states - they get filled 
+  //  in SaveEigenData call after LOCA is done.
+  if( nEigenvectorsToOuputAsStates > 0 ) {
+    char evecStateName[100];
+    for( int k = 0; k < nEigenvectorsToOuputAsStates; k++) {
+      sprintf(evecStateName,"Eigenvector_Re%d",k);
+      stateMgr.registerStateVariable(evecStateName, node_scalar);
+      sprintf(evecStateName,"Eigenvector_Im%d",k);
+      stateMgr.registerStateVariable(evecStateName, node_scalar);    
+    }
+  }
+
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
@@ -432,7 +482,8 @@ QCAD::SchrodingerProblem::getValidProblemParameters() const
   validPL->sublist("Potential", false, "");
   validPL->set<double>("EnergyUnitInElectronVolts",1e-3,"Energy unit in electron volts");
   validPL->set<double>("LengthUnitInMeters",1e-9,"Length unit in meters");
-
+  validPL->set<string>("Potential State Name", "","Name of State to use as potential");
+  validPL->set<int>("Save Eigenvectors as States", 0,"Number of eigenstates to save as states");
   return validPL;
 }
 

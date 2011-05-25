@@ -271,6 +271,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
   double mass, Eg, Nv, Nc;
   mass = 1;
   Eg = 2; 
+  double hackOffset = 0.3;
 
   ScalarT charge;
 
@@ -279,6 +280,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
     for (std::size_t qp=0; qp < numQPs; ++qp) 
     {
       const ScalarT& phi = potential(cell,qp);
+      electricPotential(cell, qp) = -phi*V0;	// electric potential [V]
       
       if(workset.EBName == "silicon") {
         charge = 1.0/Lambda2*(exp(-phi)-exp(phi)); // full RHS (scaled)
@@ -302,12 +304,13 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
         electronDensity(cell, qp) = exp(-phi)*C0;     // electron density [cm-3]
         holeDensity(cell, qp) = exp(phi)*C0;          // hole density [cm-3]
       }
-	
+      
       else if (workset.EBName == "sio2") {
 	charge = 0.0;  // no charge in SiO2 (solve the Lapalace equation)
 	chargeDensity(cell, qp) = 0.0;      // no space charge in SiO2
 	electronDensity(cell, qp) = 0.0;    // no electrons in SiO2
 	holeDensity(cell, qp) = 0.0;        // no holes in SiO2
+	electricPotential(cell, qp) += hackOffset; //HACK to add electron barrier to test Schrodinger -- do not keep this
       }
 
       else if (workset.EBName == "polysilicon") {
@@ -315,6 +318,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 	chargeDensity(cell, qp) = 0.0;    
 	electronDensity(cell, qp) = 0.0;
 	holeDensity(cell, qp) = 0.0;
+	electricPotential(cell, qp) += hackOffset; //HACK to add electron barrier to test Schrodinger -- do not keep this
       }
 
       else {
@@ -326,7 +330,6 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
       
       // returns a scaled 'charge',
       // not the actual charge density in [cm-3]
-      electricPotential(cell, qp) = phi*V0;	// electric potential [V]
       poissonSource(cell, qp) = factor*charge;
     }
   }
