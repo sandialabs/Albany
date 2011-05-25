@@ -111,6 +111,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(satMod,fm);
   this->utils.setFieldData(satExp,fm);
   this->utils.setFieldData(damage,fm);
+  this->utils.setFieldData(Fp,fm);
+  this->utils.setFieldData(eqps,fm);
 }
 
 //**********************************************************************
