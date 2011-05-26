@@ -48,7 +48,7 @@
     <Parameter name="Relative Tolerance" type="double" value="1.0e-5" />
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="1" />
     <Parameter name="Sensitivity Test Values 0" type="Array(double)"
-     	       value="{0.04620507,0.04620507,0,0}" />
+     	       value="{ 0.0459844003001,0.0459844003001,0,0}" />
   </ParameterList>
 
 

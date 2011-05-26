@@ -57,7 +57,7 @@ PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   dofNames[0] = "Phi";
 
   // STATE OUTPUT
-  nstates = 4;
+  nstates = 6;
 }
 
 QCAD::PoissonProblem::
@@ -343,6 +343,8 @@ QCAD::PoissonProblem::constructEvaluators(
     stateMgr.registerStateVariable("ElectronDensity", qp_scalar);
     stateMgr.registerStateVariable("HoleDensity", qp_scalar);
     stateMgr.registerStateVariable("ElectricPotential", qp_scalar);
+    stateMgr.registerStateVariable("IonizedDonor", qp_scalar);
+    stateMgr.registerStateVariable("IonizedAcceptor", qp_scalar);
   }
 
   { // Potential Resid

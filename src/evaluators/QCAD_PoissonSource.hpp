@@ -54,11 +54,14 @@ namespace QCAD
   	//! Function to allow parameters to be exposed for embedded analysis
   	ScalarT& getValue(const std::string &n);
 
-        //! Public Universal Constants
-        /***** define universal constants as double constants *****/
-        static const double kbBoltz; // Boltzmann constant in [eV/K]
-        static const double eps0; // vacuum permittivity in [C/(V.cm)]
-        static const double eleQ; // electron elemental charge in [C]
+    //! Public Universal Constants
+    /***** define universal constants as double constants *****/
+    static const double kbBoltz; // Boltzmann constant in [eV/K]
+    static const double eps0; // vacuum permittivity in [C/(V.cm)]
+    static const double eleQ; // electron elemental charge in [C]
+    static const double m0;   // vacuum electron mass in [kg]
+    static const double hbar; // reduced planck constant in [J.s]
+    static const double pi;   // pi constant (unitless)
 
 	private:
 
@@ -66,51 +69,77 @@ namespace QCAD
   	Teuchos::RCP<const Teuchos::ParameterList>
     		getValidPoissonSourceParameters() const;
 
-        //! evaluateFields functions for different devices (device specified in xml input)
-        void evaluateFields_pndiode(typename Traits::EvalData workset);
-        void evaluateFields_pmoscap(typename Traits::EvalData workset);
-        void evaluateFields_elementblocks(typename Traits::EvalData workset);
-        void evaluateFields_default(typename Traits::EvalData workset);
+    //! evaluateFields functions for different devices (device specified in xml input)
+    void evaluateFields_pndiode(typename Traits::EvalData workset);
+    void evaluateFields_pmoscap(typename Traits::EvalData workset);
+    void evaluateFields_elementblocks(typename Traits::EvalData workset);
+    void evaluateFields_default(typename Traits::EvalData workset);
 
-        //! fills workset's state fields using temporary member variables that just
-        //   hold data for one output point.
-        // ANDY: remove this function when new state output framwork is added (egn)
-        void fillOutputState(typename Traits::EvalData workset);
+    //! fills workset's state fields using temporary member variables that just
+    //  hold data for one output point.
+    // ANDY: remove this function when new state output framwork is added (egn)
+    void fillOutputState(typename Traits::EvalData workset);
+    
+    //! compute the Maxwell-Boltzmann statistics
+    inline ScalarT computeMBStat(const ScalarT x);
 
+    //! compute the Fermi-Dirac integral of 1/2 order
+    inline ScalarT computeFDIntOneHalf(const ScalarT x);
+    
+    //! compute the 0-K Fermi-Dirac integral
+    inline ScalarT computeZeroKFDInt(const ScalarT x);
+
+    //! return the doping value when incompIonization = False
+    inline ScalarT fullDopants(const std::string dopType, const ScalarT &x);
+
+    //! compute the ionized dopants when incompIonization = True
+    ScalarT ionizedDopants(const std::string dopType, const ScalarT &x);
+
+    
   	//! input
   	std::size_t numQPs;
   	std::size_t numDims;
   	PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
-  	PHX::MDField<ScalarT,Cell,QuadPoint> potential;	// scaled potential, no unit.
+  	PHX::MDField<ScalarT,Cell,QuadPoint> potential;	// scaled potential (no unit)
 
   	//! output
-  	PHX::MDField<ScalarT,Cell,QuadPoint> poissonSource;
-  	PHX::MDField<ScalarT,Cell,QuadPoint> chargeDensity; // in [cm-3]
-  	PHX::MDField<ScalarT,Cell,QuadPoint> electronDensity; // in [cm-3]
-        PHX::MDField<ScalarT,Cell,QuadPoint> holeDensity; // in [cm-3]
-  	PHX::MDField<ScalarT,Cell,QuadPoint> electricPotential;	// phi in [V]
+    PHX::MDField<ScalarT,Cell,QuadPoint> poissonSource; // scaled RHS (unitless)
+    PHX::MDField<ScalarT,Cell,QuadPoint> chargeDensity; // space charge density in [cm-3]
+    PHX::MDField<ScalarT,Cell,QuadPoint> electronDensity; // electron density in [cm-3]
+    PHX::MDField<ScalarT,Cell,QuadPoint> holeDensity;   // electron density in [cm-3]
+    PHX::MDField<ScalarT,Cell,QuadPoint> electricPotential;	// phi in [V]
+    PHX::MDField<ScalarT,Cell,QuadPoint> ionizedDonor;    // ionized donors in [cm-3]
+    PHX::MDField<ScalarT,Cell,QuadPoint> ionizedAcceptor; // ionized acceptors in [cm-3]
 
   	//! constant prefactor parameter in source function
   	ScalarT factor;
 
-  	//! Temperature parameter in source function
+  	//! temperature parameter in source function
   	ScalarT temperature; //lattice temperature in [K]
-
+    
   	//! string variable to differ the various devices implementation
   	std::string device;
-        std::string carrierStatistics;
-        std::string incompIonization;
     
-        //! donor and acceptor concentrations (for element blocks nsilicon & psilicon)
-        double dopingDonor;
-        double dopingAcceptor;
+    //! specify carrier statistics and incomplete ionization
+    std::string carrierStatistics;
+    std::string incompIonization;
+    
+    //! donor and acceptor concentrations (for element blocks nsilicon & psilicon)
+    double dopingDonor;   // in [cm-3]
+    double dopingAcceptor;
+    
+    //! donor and acceptor activation energy in [eV]
+    double donorActE;     // (Ec-Ed) where Ed = donor energy level
+    double acceptorActE;  // (Ea-Ev) where Ea = acceptor energy level
 
-        //! scaling parameters
-        double length_unit_in_m; // length unit for input and output mesh
-        double X0;   // length scaling to get to [cm]
-        double C0;   // Scaling for conc. [cm^-3]
-        ScalarT V0;
-        ScalarT Lambda2;
+    //! scaling parameters
+    double length_unit_in_m; // length unit for input and output mesh
+    double X0;   // length scaling to get to [cm] (input structure is in [um])
+    ScalarT C0;  // scaling for conc. [cm^-3]
+    ScalarT V0;  // scaling for potential [V]
+    ScalarT Lambda2;  // derived scaling factor (unitless) that appears in the scaled Poisson equation
+    
+    //PoissonSource objPS(Teuchos::ParameterList& p);
 	};
 }
 
