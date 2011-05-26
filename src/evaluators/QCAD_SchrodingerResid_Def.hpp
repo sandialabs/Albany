@@ -140,6 +140,7 @@ evaluateFields(typename Traits::EvalData workset)
   //psiDot term (to use loca): add integral( psi_dot * BF dV ) to residual
   if (workset.transientTerms && enableTransient) 
     FST::integrate<ScalarT>(psiResidual, psiDot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+  //set psiDot term to zero outside of quantum region - and set H = Identity here too
 }
 //**********************************************************************
 

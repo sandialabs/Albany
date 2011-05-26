@@ -143,8 +143,8 @@ evaluateFields(typename Traits::EvalData workset)
   // assign silicon_value for y>0 and oxide_value for y<=0 to permittivity
   else if (typ == "Position Dependent") 
   {	
-    ScalarT silicon_value = materialDB->getMaterialParam<double>("silicon","Permittivity");
-    ScalarT oxide_value = materialDB->getMaterialParam<double>("sio2","Permittivity");
+    ScalarT silicon_value = materialDB->getMaterialParam<double>("Silicon","Permittivity");
+    ScalarT oxide_value = materialDB->getMaterialParam<double>("SiliconDioxide","Permittivity");
 
   	// loop through all elements in one workset
     for (std::size_t cell=0; cell < workset.numCells; ++cell) 
@@ -175,7 +175,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   else if (typ == "Block Dependent") 
   {	
-    const ScalarT& value = materialDB->getMaterialParam<double>(workset.EBName,"Permittivity");
+    const ScalarT& value = materialDB->getElementBlockParam<double>(workset.EBName,"Permittivity");
 
     // loop through all elements in one workset
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {	
