@@ -6,8 +6,12 @@
 
     <Parameter name="EnergyUnitInElectronVolts" type="double" value="1e-3"/>
     <Parameter name="LengthUnitInMeters" type="double" value="1e-6"/>
-    <Parameter name="Potential State Name" type="string" value="Electric Potential"/>
-    <Parameter name="Save Eigenvectors as States" type="int" value="2"/>
+
+    <ParameterList name="Poisson Coupling">
+      <Parameter name="Only solve in quantum blocks" type="bool" value="false"/>
+      <Parameter name="Potential State Name" type="string" value="Electric Potential"/>
+      <Parameter name="Save Eigenvectors as States" type="int" value="2"/>
+    </ParameterList>
 
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS substrate for DOF psi" type="double" value="0" />

@@ -62,6 +62,38 @@ PoissonSource(Teuchos::ParameterList& p) :
   //passed down from main list
   temperature = p.get<double>("Temperature");
   length_unit_in_m = p.get<double>("Length unit in m");
+  bSchrodingerInQuantumRegions = p.get<bool>("Use Schrodinger source");
+
+  if(bSchrodingerInQuantumRegions) {
+    std::string eigenvalFilename = p.get<string>("Eigenvalues file");
+    nEigenvectors = p.get<int>("Schrodinger eigenvectors");
+    evecStateRoot = p.get<string>("Eigenvector state name root");
+
+    //Open eigenvalue filename and read into eigenvals vector
+    /*std::ifstream evalData;
+    evalData.open(eigenvalFilename.c_str());
+    TEST_FOR_EXCEPTION(!evalData.is_open(), Teuchos::Exceptions::InvalidParameter,
+		       std::endl << "Error! Cannot open eigenvalue filename  " 
+		       << eigenvalFilename << std::endl);
+
+    eigenvals.resize(nEigenvectors);
+
+    char buf[100];
+    int index;
+    double RePart, ImPart;
+    evalData.getline(buf,100); //skip header
+    while ( !evalData.eof() ) { // keep reading until end-of-file
+      evalData >> index >> RePart >> ImPart;
+      //TODO: check that ImPart == 0
+
+      eigenvals[index] = RePart;
+    }
+    evalData.close();*/
+  }
+  else {
+    nEigenvectors = 0;
+    evecStateRoot = "";
+  }
 
   //Scaling factors
   X0 = length_unit_in_m / 1e-2; // length scaling to get to [cm] (so 1e-4 for mesh in [um])

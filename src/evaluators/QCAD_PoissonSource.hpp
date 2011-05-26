@@ -106,6 +106,13 @@ namespace QCAD
         double C0;   // Scaling for conc. [cm^-3]
         ScalarT V0;
         ScalarT Lambda2;
+
+        //! Schrodinger coupling
+        bool bSchrodingerInQuantumRegions;
+        int  nEigenvectors;
+        std::string evecStateRoot;
+        std::vector<double> eigenvals;
+    
 	};
 }
 

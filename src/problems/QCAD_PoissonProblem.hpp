@@ -79,6 +79,10 @@ namespace QCAD {
     double length_unit_in_m;
     double temperature;
     std::string mtrlDbFilename;
+
+    //! Parameters for coupling to Schrodinger
+    bool bUseSchrodingerSource;
+    std::string eigenvalFilename;
     int nEigenvectorsToInputFromStates;
     
   };

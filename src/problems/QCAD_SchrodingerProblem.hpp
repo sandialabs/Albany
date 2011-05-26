@@ -73,10 +73,11 @@ namespace QCAD {
     bool haveMaterial;
     double energy_unit_in_eV, length_unit_in_m;
     std::string potentialStateName;
+    std::string mtrlDbFilename;
 
     int numDim;
     int nEigenvectorsToOuputAsStates;
-
+    bool bOnlySolveInQuantumBlocks;
   };
 
 }

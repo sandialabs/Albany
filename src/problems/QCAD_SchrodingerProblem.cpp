@@ -16,6 +16,7 @@
 
 
 #include "QCAD_SchrodingerProblem.hpp"
+#include "QCAD_MaterialDatabase.hpp"
 #include "Albany_BoundaryFlux1DResponseFunction.hpp"
 #include "Albany_SolutionAverageResponseFunction.hpp"
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
@@ -55,13 +56,26 @@ SchrodingerProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     length_unit_in_m = params->get<double>("LengthUnitInMeters");
   std::cout << "Length unit = " << length_unit_in_m << " meters" << endl;
 
-  potentialStateName = "V"; //default name for potential at QPs field
-  if(params->isType<string>("Potential State Name"))
-    potentialStateName = params->get<string>("Potential State Name");
+  mtrlDbFilename = "materials.xml";
+  if(params->isType<string>("MaterialDB Filename"))
+    mtrlDbFilename = params->get<string>("MaterialDB Filename");
 
+
+  potentialStateName = "V"; //default name for potential at QPs field
   nEigenvectorsToOuputAsStates = 0;
-  if(params->isType<int>("Save Eigenvectors as States"))
-    nEigenvectorsToOuputAsStates = params->get<int>("Save Eigenvectors as States");
+  bOnlySolveInQuantumBlocks = false;
+
+  //Poisson coupling
+  if(params->isSublist("Poisson Coupling")) {
+    Teuchos::ParameterList& cList = params->sublist("Poisson Coupling");
+    if(cList.isType<bool>("Only solve in quantum blocks"))
+      bOnlySolveInQuantumBlocks = cList.get<bool>("Only solve in quantum blocks");
+    if(cList.isType<string>("Potential State Name"))
+    potentialStateName = cList.get<string>("Potential State Name");
+
+    if(cList.isType<int>("Save Eigenvectors as States"))
+      nEigenvectorsToOuputAsStates = cList.get<int>("Save Eigenvectors as States");
+  }
 
   //Check LOCA params to see if eigenvectors will be output to states.
   //Teuchos::ParameterList& locaStepperList = params->sublist("LOCA").sublist("Stepper");
@@ -193,6 +207,9 @@ QCAD::SchrodingerProblem::constructEvaluators(
      rcp(new MDALayout<Cell,Node,QuadPoint,Dim>(worksetSize,numNodes, numQPts,numDim));
 
    RCP<DataLayout> dummy = rcp(new MDALayout<Dummy>(0));
+
+   // Create Material Database
+   RCP<QCAD::MaterialDatabase> materialDB = rcp(new QCAD::MaterialDatabase(mtrlDbFilename));
 
   { // Gather Solution
    RCP< vector<string> > dof_names = rcp(new vector<string>(neq));
@@ -401,6 +418,8 @@ QCAD::SchrodingerProblem::constructEvaluators(
     //Global Problem Parameters
     p->set<double>("Energy unit in eV", energy_unit_in_eV);
     p->set<double>("Length unit in m", length_unit_in_m);
+    p->set<bool>("Only solve in quantum blocks", bOnlySolveInQuantumBlocks);
+    p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
 
     evaluators_to_build["psi Resid"] = p;
   }
@@ -482,8 +501,12 @@ QCAD::SchrodingerProblem::getValidProblemParameters() const
   validPL->sublist("Potential", false, "");
   validPL->set<double>("EnergyUnitInElectronVolts",1e-3,"Energy unit in electron volts");
   validPL->set<double>("LengthUnitInMeters",1e-9,"Length unit in meters");
-  validPL->set<string>("Potential State Name", "","Name of State to use as potential");
-  validPL->set<int>("Save Eigenvectors as States", 0,"Number of eigenstates to save as states");
+
+  validPL->sublist("Poisson Coupling", false, "");
+
+  validPL->sublist("Poisson Coupling").set<bool>("Only solve in quantum blocks", false,"Only perform Schrodinger solve in element blocks marked as quatum regions.");
+  validPL->sublist("Poisson Coupling").set<string>("Potential State Name", "","Name of State to use as potential");
+  validPL->sublist("Poisson Coupling").set<int>("Save Eigenvectors as States", 0,"Number of eigenstates to save as states");
   return validPL;
 }
 

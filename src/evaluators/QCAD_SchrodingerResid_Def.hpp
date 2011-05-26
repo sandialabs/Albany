@@ -46,9 +46,10 @@ SchrodingerResid(const Teuchos::ParameterList& p) :
   psiResidual (p.get<std::string>                   ("Residual Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") )
 {
-  enableTransient = true; //always true now - problem doesn't seem to make sense otherwise
+  enableTransient = true; //always true - problem doesn't make sense otherwise
   energy_unit_in_eV = p.get<double>("Energy unit in eV");
   length_unit_in_m = p.get<double>("Length unit in m");
+  bOnlyInQuantumBlocks = p.get<bool>("Only solve in quantum blocks");
 
   if(haveMaterial) {
      Teuchos::ParameterList* pMatList = p.get<Teuchos::ParameterList*>("Material Parameter List");
@@ -57,6 +58,9 @@ SchrodingerResid(const Teuchos::ParameterList& p) :
      pMatList->validateParameters(*reflist,0);
      materialName = pMatList->get("Name", "defaultName");
   }
+
+  // Material database
+  materialDB = p.get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
 
   Teuchos::RCP<PHX::DataLayout> vector_dl =
       p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
@@ -111,36 +115,50 @@ evaluateFields(typename Traits::EvalData workset)
   /***** define universal constants as double constants *****/
   const double hbar = 1.0546e-34;  // Planck constant [J s]
   const double evPerJ = 6.2415e18; // eV per Joule (J/eV)
+  bool bValidRegion = true;
 
-  //compute inverse effective mass here (no separate evaluator)
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) 
+  if(bOnlyInQuantumBlocks)
+    bValidRegion = materialDB->getElementBlockParam<bool>(workset.EBName,
+							  "quantum");
+
+  if(bValidRegion)
   {
-    for (std::size_t qp=0; qp < numQPs; ++qp) 
-    {
-      //scaled hbar^2/2m so kinetic energy has specified units (EnergyUnitInEV)
-      invEffMass(cell, qp) =  0.5*pow(hbar,2)*evPerJ / 
-      	(energy_unit_in_eV * pow(length_unit_in_m,2)) *
-	getInvEffMass(numDims, &coordVec(cell,qp,0)); 
+  
+    //compute inverse effective mass here (no separate evaluator)
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+	//scaled hbar^2/2m so kinetic energy has specified units (EnergyUnitInEV)
+	invEffMass(cell, qp) =  0.5*pow(hbar,2)*evPerJ / 
+	  (energy_unit_in_eV * pow(length_unit_in_m,2)) *
+	  getInvEffMass(numDims, &coordVec(cell,qp,0)); 
+      }
+    }
+
+    //compute hbar^2/2m * Grad(psi)
+    FST::scalarMultiplyDataData<ScalarT> (psiGradWithMass, invEffMass, psiGrad);
+
+    //Kinetic term: add integral( hbar^2/2m * Grad(psi) * Grad(BF)dV ) to residual
+    FST::integrate<ScalarT>(psiResidual, psiGradWithMass, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+  
+    //Potential term: add integral( psi * V * BF dV ) to residual
+    if (havePotential) {
+      FST::scalarMultiplyDataData<ScalarT> (psiV, V, psi);
+      FST::integrate<ScalarT>(psiResidual, psiV, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+    }
+
+    //**Note: I think this should always be used with enableTransient = True
+    //psiDot term (to use loca): add integral( psi_dot * BF dV ) to residual
+    if (workset.transientTerms && enableTransient) 
+      FST::integrate<ScalarT>(psiResidual, psiDot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+  }
+  else { 
+    // Invalid region (don't perform calc here - evectors should all be zero)
+    // So, set psiDot term to zero and set psi term (H) = Identity
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t qp=0; qp < numQPs; ++qp)
+	psiResidual(cell, qp) = 1.0*psi(cell,qp);
     }
   }
-
-  //compute hbar^2/2m * Grad(psi)
-  FST::scalarMultiplyDataData<ScalarT> (psiGradWithMass, invEffMass, psiGrad);
-
-  //Kinetic term: add integral( hbar^2/2m * Grad(psi) * Grad(BF)dV ) to residual
-  FST::integrate<ScalarT>(psiResidual, psiGradWithMass, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
-  
-  //Potential term: add integral( psi * V * BF dV ) to residual
-  if (havePotential) {
-    FST::scalarMultiplyDataData<ScalarT> (psiV, V, psi);
-    FST::integrate<ScalarT>(psiResidual, psiV, wBF, Intrepid::COMP_CPP, true); // "true" sums into
-  }
-
-  //**Note: I think this should always be used with enableTransient = True
-  //psiDot term (to use loca): add integral( psi_dot * BF dV ) to residual
-  if (workset.transientTerms && enableTransient) 
-    FST::integrate<ScalarT>(psiResidual, psiDot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
-  //set psiDot term to zero outside of quantum region - and set H = Identity here too
 }
 //**********************************************************************
 

@@ -54,9 +54,21 @@ PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   if(params->isType<string>("MaterialDB Filename"))
     mtrlDbFilename = params->get<string>("MaterialDB Filename");
 
+  //Schrodinger coupling
   nEigenvectorsToInputFromStates = 0;
-  if(params->isType<int>("Eigenvectors from States"))
-    nEigenvectorsToInputFromStates = params->get<int>("Eigenvectors from States");
+  bUseSchrodingerSource = false;
+  eigenvalFilename = "evals.txtdump";
+  if(params->isSublist("Schrodinger Coupling")) {
+    Teuchos::ParameterList& cList = params->sublist("Schrodinger Coupling");
+    if(cList.isType<bool>("Schrodinger source in quantum blocks"))
+      bUseSchrodingerSource = cList.get<bool>("Schrodinger source in quantum blocks");
+
+    if(cList.isType<int>("Eigenvectors from States"))
+      nEigenvectorsToInputFromStates = cList.get<int>("Eigenvectors from States");
+
+    if(cList.isType<string>("Eigenvalues file"))
+      eigenvalFilename = cList.get<string>("Eigenvalues file");
+  }
 
   std::cout << "Length unit = " << length_unit_in_m << " meters" << endl;
 
@@ -353,9 +365,15 @@ QCAD::PoissonProblem::constructEvaluators(
     p->set<double>("Temperature", temperature);
     p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
 
+    // Schrodinger coupling
+    p->set<bool>("Use Schrodinger source", bUseSchrodingerSource);
+    p->set<string>("Eigenvalues file", eigenvalFilename);
+    p->set<int>("Schrodinger eigenvectors", nEigenvectorsToInputFromStates);
+    p->set<string>("Eigenvector state name root", "Evec");
+
     evaluators_to_build["Poisson Source"] = p;
 
-    // EIGENSTATE INPUT
+    // EIGENSTATE INPUT from states
     if( nEigenvectorsToInputFromStates > 0 ) {
       int ilsf = FactoryTraits<AlbanyTraits>::id_loadstatefield;
       char evecStateName[100]; char evecFieldName[100]; char evalName[100];
@@ -556,7 +574,11 @@ QCAD::PoissonProblem::getValidProblemParameters() const
   validPL->set<double>("LengthUnitInMeters",1e-6,"Length unit in meters");
   validPL->set<double>("Temperature",300,"Temperature in Kelvin");
   validPL->set<string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
-  validPL->set<int>("Eigenvectors from States",0,"Number of eigenvectors to use for quantum region source");
+
+  validPL->sublist("Schrodinger Coupling", false, "");
+  validPL->sublist("Schrodinger Coupling").set<bool>("Schrodinger source in quantum blocks",false,"Use eigenvector data to compute charge distribution within quantum blocks");
+  validPL->sublist("Schrodinger Coupling").set<int>("Eigenvectors from States",0,"Number of eigenvectors to use for quantum region source");
+  validPL->sublist("Schrodinger Coupling").set<string>("Eigenvalues file","evals.txtdump","File specifying eigevalues, output by Schrodinger problem");
 
   return validPL;
 }
