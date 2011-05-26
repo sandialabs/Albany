@@ -72,11 +72,19 @@ namespace QCAD {
 
     //! Boundary conditions on source term
     bool periodic;
+
+    //! Parameters to use when constructing evaluators
     bool haveSource;
     int numDim;
     double length_unit_in_m;
     double temperature;
+    std::string mtrlDbFilename;
 
+    //! Parameters for coupling to Schrodinger
+    bool bUseSchrodingerSource;
+    std::string eigenvalFilename;
+    int nEigenvectorsToInputFromStates;
+    
   };
 
 }

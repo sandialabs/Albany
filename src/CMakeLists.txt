@@ -135,6 +135,7 @@ SET(SOURCES ${SOURCES}
 	evaluators/PHAL_JouleHeating.cpp
 	evaluators/PHAL_TEProp.cpp
 	evaluators/PHAL_SaveStateField.cpp
+	evaluators/PHAL_LoadStateField.cpp
   )
 SET(HEADERS ${HEADERS}
 	evaluators/PHAL_GatherSolution.hpp 
@@ -175,6 +176,8 @@ SET(HEADERS ${HEADERS}
 	evaluators/PHAL_TEProp_Def.hpp
 	evaluators/PHAL_SaveStateField.hpp
 	evaluators/PHAL_SaveStateField_Def.hpp
+	evaluators/PHAL_LoadStateField.hpp
+	evaluators/PHAL_LoadStateField_Def.hpp
   )
 
 # LCM
@@ -314,6 +317,7 @@ SET(SOURCES ${SOURCES}
        evaluators/QCAD_PoissonResid.cpp
        evaluators/QCAD_PoissonSource.cpp
        problems/QCAD_PoissonProblem.cpp
+       problems/QCAD_MaterialDatabase.cpp
   )
 
 SET(HEADERS ${HEADERS}
@@ -436,6 +440,11 @@ add_executable(AlbanySG Main_SGSolve.cpp)
 IF (ALBANY_DAKOTA)
   add_executable(AlbanyDakota Main_Dakota.cpp Albany_Dakota.cpp Albany_Dakota.hpp)
 ENDIF ()
+
+IF (ALBANY_QCAD)
+  add_executable(AlbanyQCAD Main_QCAD_Solve.cpp)
+ENDIF ()
+
 add_executable(AlbanyAnalysis Main_Analysis.cpp)
 
 # Tests
@@ -447,6 +456,10 @@ target_link_libraries(AlbanySG        albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT
 IF (ALBANY_DAKOTA)
   target_link_libraries(AlbanyDakota    albanyLib ${ALB_TRILINOS_LIBS}
                         ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
+ENDIF ()
+
+IF (ALBANY_QCAD)
+target_link_libraries(AlbanyQCAD      albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
 ENDIF ()
 
 target_link_libraries(AlbanyAnalysis  albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} 

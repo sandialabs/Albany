@@ -654,17 +654,12 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
    fm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag);
 
    // Output states as part of Residual Evaluation
-   if (matModel == "NeoHookean" || matModel == "NeoHookean AD") {
-     PHX::Tag<AlbanyTraits::Residual::ScalarT> res_out_tag(matModel, dummy);
+   const Albany::StateManager::RegisteredStates& reg = stateMgr.getRegisteredStates();
+   Albany::StateManager::RegisteredStates::const_iterator st = reg.begin();
+   while (st != reg.end()) {
+     PHX::Tag<AlbanyTraits::Residual::ScalarT> res_out_tag(st->first, dummy);
      fm->requireField<AlbanyTraits::Residual>(res_out_tag);
-   }
-   else if (matModel == "J2") {
-     PHX::Tag<AlbanyTraits::Residual::ScalarT> res_out_tag(matModel, dummy);
-     fm->requireField<AlbanyTraits::Residual>(res_out_tag);
-     PHX::Tag<AlbanyTraits::Residual::ScalarT> res_out_tag2("Fp", dummy);
-     fm->requireField<AlbanyTraits::Residual>(res_out_tag2);
-     PHX::Tag<AlbanyTraits::Residual::ScalarT> res_out_tag3("eqps", dummy);
-     fm->requireField<AlbanyTraits::Residual>(res_out_tag3);
+     st++;
    }
 }
 

@@ -63,7 +63,7 @@ int main(int ac, char* av[])
       "Partition Scheme");
 
   double
-  length_scale = 0.001;
+  length_scale = 0.0016;
 
   command_line_processor.setOption(
       "length-scale",

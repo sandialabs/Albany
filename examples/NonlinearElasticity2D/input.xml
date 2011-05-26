@@ -9,9 +9,6 @@
       <Parameter name="DBC on NS NodeSet1 for DOF X" type="double" value="1.0"/>
       <Parameter name="DBC on NS NodeSet1 for DOF Y" type="double" value="0.3"/>
     </ParameterList>
-    <ParameterList name="Material Model">
-      <Parameter name="Model Name" type="string" value="NeoHookean AD"/>
-    </ParameterList>
     <ParameterList name="Elastic Modulus">
       <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
       <Parameter name="Value" type="double" value="1.0"/>

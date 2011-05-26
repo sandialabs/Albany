@@ -23,6 +23,8 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
+#include "QCAD_MaterialDatabase.hpp"
+
 /** \brief Finite Element Interpolation Evaluator
 
     This evaluator interpolates nodal DOF values to quad points.
@@ -71,11 +73,11 @@ private:
   bool enableTransient;
   bool havePotential;
   bool haveMaterial;
+  bool bOnlyInQuantumBlocks;
   std::string materialName;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> psiResidual;
-
 
   // Intermediate workspace
   Intrepid::FieldContainer<ScalarT> psiGradWithMass;
@@ -83,6 +85,9 @@ private:
 
   //! units
   double energy_unit_in_eV, length_unit_in_m;
+  
+  //! Material database
+  Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
 };
 }
 

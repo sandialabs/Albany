@@ -68,6 +68,38 @@ PoissonSource(Teuchos::ParameterList& p) :
   // passed down from main list
   temperature = p.get<double>("Temperature");
   length_unit_in_m = p.get<double>("Length unit in m");
+  bSchrodingerInQuantumRegions = p.get<bool>("Use Schrodinger source");
+
+  if(bSchrodingerInQuantumRegions) {
+    std::string eigenvalFilename = p.get<string>("Eigenvalues file");
+    nEigenvectors = p.get<int>("Schrodinger eigenvectors");
+    evecStateRoot = p.get<string>("Eigenvector state name root");
+
+    //Open eigenvalue filename and read into eigenvals vector
+    /*std::ifstream evalData;
+    evalData.open(eigenvalFilename.c_str());
+    TEST_FOR_EXCEPTION(!evalData.is_open(), Teuchos::Exceptions::InvalidParameter,
+		       std::endl << "Error! Cannot open eigenvalue filename  " 
+		       << eigenvalFilename << std::endl);
+
+    eigenvals.resize(nEigenvectors);
+
+    char buf[100];
+    int index;
+    double RePart, ImPart;
+    evalData.getline(buf,100); //skip header
+    while ( !evalData.eof() ) { // keep reading until end-of-file
+      evalData >> index >> RePart >> ImPart;
+      //TODO: check that ImPart == 0
+
+      eigenvals[index] = RePart;
+    }
+    evalData.close();*/
+  }
+  else {
+    nEigenvectors = 0;
+    evecStateRoot = "";
+  }
 
   // Scaling factors
   X0 = length_unit_in_m/1e-2; // length scaling to get to [cm] (structure dimension in [um])
@@ -216,8 +248,6 @@ evaluateFields_pndiode(typename Traits::EvalData workset)
       poissonSource(cell, qp) = factor*charge;
     }
   }
-
-  fillOutputState(workset);
 }
 
 // **********************************************************************
@@ -274,7 +304,6 @@ evaluateFields_pmoscap(typename Traits::EvalData workset)
       poissonSource(cell, qp) = factor*charge;
     }
   }
-  fillOutputState(workset);
 }
 
 // **********************************************************************
@@ -282,10 +311,6 @@ template<typename EvalT, typename Traits>
 void QCAD::PoissonSource<EvalT, Traits>::
 evaluateFields_elementblocks(typename Traits::EvalData workset)
 {
-  // Later:
-  //mass = materialManager.GetMaterialParameter(workset.EBname, "mass")
-  //Eg = materialManager.GetMaterialParameter(workset.EBname, "Eg")
-
   //! temperature-independent material parameters
   double ml;  // longitudinal electron effective mass in [m0]
   double mt;  // traverse electron effective mass in [m0]
@@ -293,7 +318,6 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
   double mhh; // heavy hole effective mass in [m0]
   double mlh; // light hole effective mass in [m0]
   double mdp; // hole DOS effective mass (including hh and lh) in [m0]
-
   double Tref;  // reference temperature [K] in computing Nc and Nv
   double NcvFactor;  // constant prefactor in calculating Nc and Nv in [cm-3]
   
@@ -404,7 +428,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
   //***************************************************************************
   //! element block "nsilicon" 
   //***************************************************************************
-  else if (workset.EBName == "nsilicon")
+  else if (workset.EBName == "silicon.ntype")
   {
     for (std::size_t cell=0; cell < workset.numCells; ++cell)
     {
@@ -435,7 +459,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
   //***************************************************************************
   //! element block "psilicon" 
   //***************************************************************************
-  else if (workset.EBName == "psilicon")
+  else if (workset.EBName == "silicon.ptype")
   {
     for (std::size_t cell=0; cell < workset.numCells; ++cell)
     {
@@ -488,7 +512,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
   //***************************************************************************
   //! element block "poly" 
   //***************************************************************************
-  else if (workset.EBName == "poly")
+  else if (workset.EBName == "polysilicon")
   {
     for (std::size_t cell=0; cell < workset.numCells; ++cell)
     {
@@ -514,8 +538,6 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
       std::endl << "Error!  Unknown element block name " << 
       workset.EBName << "!" << std::endl);
   }  
-
-  fillOutputState(workset);
 }
 
 // **********************************************************************
@@ -544,50 +566,6 @@ evaluateFields_default(typename Traits::EvalData workset)
       }
 
       poissonSource(cell, qp) = factor*charge;
-    }
-  }
-
-  fillOutputState(workset);
-}
-
-
-// **********************************************************************
-
-// ANDY: remove this function and references above when new state output framwork is added (egn)
-template<typename EvalT, typename Traits>
-void QCAD::PoissonSource<EvalT, Traits>::
-fillOutputState(typename Traits::EvalData workset)
-{
-  // STATE OUTPUT
-  Intrepid::FieldContainer<RealType>& CDState = *((*workset.newState)["SpaceChargeDensity"]);
-  Intrepid::FieldContainer<RealType>& eDensityState = *((*workset.newState)["ElectronDensity"]);
-  Intrepid::FieldContainer<RealType>& hDensityState = *((*workset.newState)["HoleDensity"]);
-  Intrepid::FieldContainer<RealType>& ePotentialState = *((*workset.newState)["ElectricPotential"]);
-  Intrepid::FieldContainer<RealType>& ionNdState = *((*workset.newState)["IonizedDonor"]);
-  Intrepid::FieldContainer<RealType>& ionNaState = *((*workset.newState)["IonizedAcceptor"]);
-
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) 
-  {
-    for (std::size_t qp=0; qp < numQPs; ++qp) 
-    {
-      // STATE OUTPUT: Save off real part into saved state vector
-      const ScalarT& CD = chargeDensity(cell,qp); 	
-      CDState(cell,qp) = Sacado::ScalarValue<ScalarT>::eval(CD);
-
-      const ScalarT& eDensity = electronDensity(cell,qp); 
-      eDensityState(cell,qp) = Sacado::ScalarValue<ScalarT>::eval(eDensity);
-      
-      const ScalarT& hDensity = holeDensity(cell,qp); 
-      hDensityState(cell,qp) = Sacado::ScalarValue<ScalarT>::eval(hDensity);
-      
-      const ScalarT& ePotential = electricPotential(cell,qp); 
-      ePotentialState(cell,qp) = Sacado::ScalarValue<ScalarT>::eval(ePotential);
-
-      const ScalarT& ionNd = ionizedDonor(cell,qp); 
-      ionNdState(cell,qp) = Sacado::ScalarValue<ScalarT>::eval(ionNd);
-
-      const ScalarT& ionNa = ionizedAcceptor(cell,qp); 
-      ionNaState(cell,qp) = Sacado::ScalarValue<ScalarT>::eval(ionNa);
     }
   }
 }

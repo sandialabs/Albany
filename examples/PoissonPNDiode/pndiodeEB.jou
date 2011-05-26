@@ -22,11 +22,11 @@ nodeset 2 name "cathode"
 
 # Define blocks for a single material
 block 1 surface 15
-block 1 name "pSilicon"
+block 1 name "silicon.ptype"
 block 1 element type quad4
 
 block 2 surface 8
-block 2 name "nSilicon"
+block 2 name "silicon.ntype"
 block 2 element type quad4
 
 # Define meshing size on the long side

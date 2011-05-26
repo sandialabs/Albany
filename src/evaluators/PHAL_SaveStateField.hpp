@@ -73,6 +73,7 @@ private:
   Teuchos::RCP<PHX::FieldTag> savestate_operation;
   PHX::MDField<ScalarT> state;
   std::string fieldName;
+  std::string stateName;
 };
 }
 

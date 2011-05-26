@@ -75,11 +75,6 @@ namespace QCAD
     void evaluateFields_elementblocks(typename Traits::EvalData workset);
     void evaluateFields_default(typename Traits::EvalData workset);
 
-    //! fills workset's state fields using temporary member variables that just
-    //  hold data for one output point.
-    // ANDY: remove this function when new state output framwork is added (egn)
-    void fillOutputState(typename Traits::EvalData workset);
-    
     //! compute the Maxwell-Boltzmann statistics
     inline ScalarT computeMBStat(const ScalarT x);
 
@@ -95,7 +90,6 @@ namespace QCAD
     //! compute the ionized dopants when incompIonization = True
     ScalarT ionizedDopants(const std::string dopType, const ScalarT &x);
 
-    
   	//! input
   	std::size_t numQPs;
   	std::size_t numDims;
@@ -139,7 +133,12 @@ namespace QCAD
     ScalarT V0;  // scaling for potential [V]
     ScalarT Lambda2;  // derived scaling factor (unitless) that appears in the scaled Poisson equation
     
-    //PoissonSource objPS(Teuchos::ParameterList& p);
+    //! Schrodinger coupling
+    bool bSchrodingerInQuantumRegions;
+    int  nEigenvectors;
+    std::string evecStateRoot;
+    std::vector<double> eigenvals;
+    
 	};
 }
 

@@ -43,6 +43,7 @@
 #include "PHAL_TEProp.hpp"
 #include "PHAL_ODEResid.hpp"
 #include "PHAL_SaveStateField.hpp"
+#include "PHAL_LoadStateField.hpp"
 
 #include "boost/mpl/vector/vector30.hpp"
 #include "boost/mpl/placeholders.hpp"
@@ -82,10 +83,11 @@ struct FactoryTraits {
   static const int id_teprop                    = 20;
   static const int id_oderesid                  = 21;
   static const int id_savestatefield            = 22;
-  static const int id_schrodinger_potential     = 23;
-  static const int id_schrodinger_resid         = 24;
+  static const int id_loadstatefield            = 23;
+  static const int id_schrodinger_potential     = 24;
+  static const int id_schrodinger_resid         = 25;
 
-  typedef boost::mpl::vector25< 
+  typedef boost::mpl::vector26< 
             PHAL::Dirichlet<_,Traits>,                //  0
             PHAL::GatherSolution<_,Traits>,           //  1
             PHAL::GatherCoordinateVector<_,Traits>,   //  2
@@ -109,8 +111,9 @@ struct FactoryTraits {
             PHAL::TEProp<_,Traits>,                   // 20
             PHAL::ODEResid<_,Traits>,                 // 21
             PHAL::SaveStateField<_,Traits>,           // 22
-            QCAD::SchrodingerPotential<_,Traits>,     // 23
-            QCAD::SchrodingerResid<_,Traits>          // 24
+            PHAL::LoadStateField<_,Traits>,           // 23
+            QCAD::SchrodingerPotential<_,Traits>,     // 24
+            QCAD::SchrodingerResid<_,Traits>          // 25
   > EvaluatorTypes;
   
 };

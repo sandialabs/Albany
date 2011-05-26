@@ -29,6 +29,8 @@
 #include "Stokhos_KL_ExponentialRandomField.hpp"
 #include "Teuchos_Array.hpp"
 
+#include "QCAD_MaterialDatabase.hpp"
+
 /** 
  * \brief Evaluates thermal conductivity, either as a constant or a truncated
  * KL expansion.
@@ -74,12 +76,10 @@ namespace QCAD
   	//! Constant value
   	ScalarT constant_value;		// for constant permittivity
   	ScalarT factor;			// for temperature-dependent permittivity
-  
-  	//! Variables to hold Silicon and SiO2 relative permittivity
-  	ScalarT silicon_value;
-  	ScalarT oxide_value;
-  	ScalarT poly_value;
-	};
+
+	//! Material database - holds permittivity among other quantities
+        Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
+  	};
 	
 }
 

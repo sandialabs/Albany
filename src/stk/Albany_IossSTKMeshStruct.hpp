@@ -20,6 +20,9 @@
 #define ALBANY_IOSS_STKMESHSTRUCT_HPP
 
 #include "Albany_GenericSTKMeshStruct.hpp"
+#include <stk_io/MeshReadWriteUtils.hpp>
+#include <stk_io/IossBridge.hpp>
+
 
 namespace Albany {
 
@@ -29,11 +32,15 @@ namespace Albany {
 
     IossSTKMeshStruct(
                   const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
-                  const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_, const unsigned int nstates_,
-                  const unsigned int worksetSize_);
+                  const Teuchos::RCP<Teuchos::ParameterList>& params);
 
     ~IossSTKMeshStruct() {};
+
+    void setFieldAndBulkData(
+                  const Teuchos::RCP<const Epetra_Comm>& comm,
+                  const Teuchos::RCP<Teuchos::ParameterList>& params,
+                  const unsigned int neq_, const unsigned int nstates_,
+                  const unsigned int worksetSize);
 
     private:
 
@@ -41,7 +48,10 @@ namespace Albany {
       getValidDiscretizationParameters() const;
 
 
+    Teuchos::RCP<Teuchos::FancyOStream> out;
+    bool usePamgen;
     bool periodic;
+    stk::io::MeshData* mesh_data;
   };
 
 }

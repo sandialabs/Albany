@@ -22,6 +22,7 @@
 #include "LOCA_SaveEigenData_AbstractStrategy.H" // base class
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
+#include "Albany_StateManager.hpp"
 
 //! Strategy for saving eigenvector/value data
 /*!
@@ -36,7 +37,8 @@ public:
 
   //! Constructor
   SaveEigenData(Teuchos::ParameterList& locaParams, 
-		Teuchos::RCP<NOX::Epetra::Observer> observer = Teuchos::null);
+		Teuchos::RCP<NOX::Epetra::Observer> observer = Teuchos::null,
+		Albany::StateManager* pStateMgr = NULL);
     
   //! Destructor
   virtual ~SaveEigenData();
@@ -60,7 +62,9 @@ protected:
 
   //! number of eigenvalues/vectors to save
   int nsave;
+  int nSaveAsStates;
   Teuchos::RCP<NOX::Epetra::Observer> noxObserver;
+  Albany::StateManager* pAlbStateMgr;
 
 }; // Class SaveEigenData
 }

@@ -60,8 +60,21 @@ Albany::SolverFactory::SolverFactory(
   appParams->validateParametersAndSetDefaults(*getValidAppParameters(),0);
 }
 
+
 Teuchos::RCP<EpetraExt::ModelEvaluator>  
 Albany::SolverFactory::create(
+  const Teuchos::RCP<const Epetra_Comm>& appComm,
+  const Teuchos::RCP<const Epetra_Comm>& solverComm,
+  const Teuchos::RCP<const Epetra_Vector>& initial_guess)
+{
+  Teuchos::RCP<Albany::Application> dummyAlbanyApp;
+  return createAndGetAlbanyApp(dummyAlbanyApp, appComm, solverComm, initial_guess);
+}
+
+
+Teuchos::RCP<EpetraExt::ModelEvaluator>  
+Albany::SolverFactory::createAndGetAlbanyApp(
+  Teuchos::RCP<Albany::Application>& albanyApp,
   const Teuchos::RCP<const Epetra_Comm>& appComm,
   const Teuchos::RCP<const Epetra_Comm>& solverComm,
   const Teuchos::RCP<const Epetra_Vector>& initial_guess)
@@ -69,6 +82,11 @@ Albany::SolverFactory::create(
     // Create application
     Teuchos::RCP<Albany::Application> app = 
       rcp(new Albany::Application(appComm, appParams, initial_guess));
+
+    //Pass back albany app so that interface beyond ModelEvaluator can be used.
+    // This is essentially a hack to allow additional in/out arguments beyond 
+    //  what ModelEvaluator specifies.
+    albanyApp = app; 
 
     // Get solver type
     ParameterList& problemParams = appParams->sublist("Problem");
@@ -141,7 +159,7 @@ Albany::SolverFactory::create(
     else if (solutionMethod== "Continuation") { // add save eigen data here as in Piro test
       Teuchos::ParameterList& locaParams = (*appParams).sublist("LOCA");
         RCP<LOCA::SaveEigenData::AbstractStrategy> saveEigs =
-	  rcp(new Albany::SaveEigenData( locaParams, NOX_observer));
+	  rcp(new Albany::SaveEigenData( locaParams, NOX_observer, &app->getStateMgr() ));
         return  rcp(new Piro::Epetra::LOCASolver(appParams, model, NOX_observer, saveEigs));
 	//return  rcp(new Piro::Epetra::LOCASolver(appParams, model, NOX_observer));
     }
