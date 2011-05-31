@@ -39,7 +39,9 @@ PoissonSource(Teuchos::ParameterList& p) :
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
   ionizedDopant("Ionized Dopant",
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-  conductionBandEdge("Conduction Band Edge",
+  conductionBand("Conduction Band",
+      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+  valenceBand("Valence Band",
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"))
 {
   Teuchos::ParameterList* psList = p.get<Teuchos::ParameterList*>("Parameter List");
@@ -127,7 +129,8 @@ PoissonSource(Teuchos::ParameterList& p) :
   this->addEvaluatedField(holeDensity);
   this->addEvaluatedField(electricPotential);
   this->addEvaluatedField(ionizedDopant);
-  this->addEvaluatedField(conductionBandEdge);
+  this->addEvaluatedField(conductionBand);
+  this->addEvaluatedField(valenceBand);
   
   this->setName("Poisson Source"+PHX::TypeString<EvalT>::value);
 }
@@ -148,7 +151,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(electricPotential,fm);
 
   this->utils.setFieldData(ionizedDopant,fm);
-  this->utils.setFieldData(conductionBandEdge,fm);
+  this->utils.setFieldData(conductionBand,fm);
+  this->utils.setFieldData(valenceBand,fm);
 }
 
 // **********************************************************************
@@ -201,16 +205,37 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 {
   string matrlCategory = materialDB->getElementBlockParam<string>(workset.EBName,"Category");
 
+  //! Constant energy reference for heterogeneous structures
+  ScalarT qPhiRef;
+  string refMtrlName = "Silicon"; //hardcoded reference material name - change this later
+  {
+    double mdn = materialDB->getMaterialParam<double>(refMtrlName,"Electron DOS Effective Mass");
+    double mdp = materialDB->getMaterialParam<double>(refMtrlName,"Hole DOS Effective Mass");
+    double Chi = materialDB->getMaterialParam<double>(refMtrlName,"Electron Affinity");
+    double Eg0 = materialDB->getMaterialParam<double>(refMtrlName,"Zero Temperature Band Gap");
+    double alpha = materialDB->getMaterialParam<double>(refMtrlName,"Band Gap Alpha Coefficient");
+    double beta = materialDB->getMaterialParam<double>(refMtrlName,"Band Gap Beta Coefficient");
+    ScalarT Eg = Eg0-alpha*pow(temperature,2.0)/(beta+temperature); // in [eV]
+    
+    ScalarT kbT = kbBoltz*temperature;      // in [eV]
+    ScalarT Eic = -Eg/2. + 3./4.*kbT*log(mdp/mdn);  // (Ei-Ec) in [eV]
+    qPhiRef = Chi - Eic;  // (Evac-Ei) in [eV] where Evac = vacuum level
+  }  
+
+
+  //! Schrodinger source
   if(bSchrodingerInQuantumRegions && 
      materialDB->getElementBlockParam<bool>(workset.EBName,"quantum",false)) {
     
     ScalarT scalingFctr = V0*eps0*X0/eleQ; // scaling factor for charge density with dimensions L^-d
+    ScalarT kbT = kbBoltz*temperature;      // in [eV]
     char buf[100];
 
     //!Compute schrodinger source
     for(int i=0; i<nEigenvectors; i++) {
 
-      double fermiFactor = 1.0;
+      double Ef = 0.0;  //Fermi energy == 0
+      ScalarT fermiFactor = 1.0/( exp( (eigenvals[i]-Ef)/kbT) + 1.0 );
 
       Albany::StateVariables& newState = *workset.newState;
 
@@ -243,11 +268,13 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 	electronDensity(cell, qp) = charge*Lambda2*C0; //all electrons ?
 	holeDensity(cell, qp) = 0.0;
 	electricPotential(cell, qp) = phi*V0;
-	conductionBandEdge(cell, qp) = phi*V0;
+	conductionBand(cell, qp) = phi*V0; // TODO [eV]
+        valenceBand(cell, qp) = phi*V0; // TODO [eV]
       }
     }
 
   }
+
 
   //***************************************************************************
   //! element block with "Semiconductor" material
@@ -286,12 +313,11 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
     Eic = -Eg/2. + 3./4.*kbT*log(mdp/mdn);  // (Ei-Ec) in [eV]
     Evi = -Eg/2. - 3./4.*kbT*log(mdp/mdn);  // (Ev-Ei) in [eV]
     WFintSC = Chi - Eic;  // (Evac-Ei) in [eV] where Evac = vacuum level
-    
+
     //! material parameter dependent scaling factor 
     C0 = (Nc > Nv) ? Nc : Nv;  // scaling for conc. [cm^-3]
     Lambda2 = V0*eps0/(eleQ*X0*X0*C0); // derived scaling factor (unitless)
     
-
     //! function pointer to carrier statistics member function
     ScalarT (QCAD::PoissonSource<EvalT,Traits>::*carrStat) (const ScalarT);
     
@@ -345,7 +371,6 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
     }
 
 
-
     for (std::size_t cell=0; cell < workset.numCells; ++cell)
     {
       for (std::size_t qp=0; qp < numQPs; ++qp)
@@ -367,8 +392,9 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
         electronDensity(cell, qp) = Nc*(this->*carrStat)(phi+Eic/kbT);
         holeDensity(cell, qp) = Nv*(this->*carrStat)(-phi+Evi/kbT);
         electricPotential(cell, qp) = phi*V0;
-	conductionBandEdge(cell, qp) = phi*V0 - Eic;
 	ionizedDopant(cell, qp) = ionN;
+        conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
+        valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
       }
     }
 
@@ -380,6 +406,8 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
   else if(matrlCategory == "Insulator")
   {
     double Eg = materialDB->getElementBlockParam<double>(workset.EBName,"Band Gap",0.0);
+    double Chi = materialDB->getElementBlockParam<double>(workset.EBName,"Electron Affinity",0.0);
+
     for (std::size_t cell=0; cell < workset.numCells; ++cell)
     {
       for (std::size_t qp=0; qp < numQPs; ++qp)
@@ -393,7 +421,9 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
         electronDensity(cell, qp) = 0.0;  // no electrons in an insulator
         holeDensity(cell, qp) = 0.0;      // no holes in an insulator
         electricPotential(cell, qp) = phi*V0;
-	conductionBandEdge(cell, qp) = phi*V0 + Eg/2.0;
+        ionizedDopant(cell, qp) = 0.0;
+        conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
+        valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
       }
     }
   }
@@ -403,6 +433,10 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
   //***************************************************************************
   else if(matrlCategory == "Metal")
   {
+    double Eg = materialDB->getElementBlockParam<double>(workset.EBName,"Band Gap",0.0);
+    double Chi = materialDB->getElementBlockParam<double>(workset.EBName,"Electron Affinity",0.0);
+
+    // polysilicon needs special considertion and the following is temporary
     for (std::size_t cell=0; cell < workset.numCells; ++cell)
     {
       for (std::size_t qp=0; qp < numQPs; ++qp)
@@ -412,11 +446,14 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
         charge = 0.0;  // no charge in metal bulk
         poissonSource(cell, qp) = factor*charge;
         
+        // output states
         chargeDensity(cell, qp) = 0.0;    
         electronDensity(cell, qp) = 0.0;  
         holeDensity(cell, qp) = 0.0;      
         electricPotential(cell, qp) = phi*V0; 
-	conductionBandEdge(cell, qp) = phi*V0; 
+        ionizedDopant(cell, qp) = 0.0;
+        conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
+        valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
       }
     }
   }

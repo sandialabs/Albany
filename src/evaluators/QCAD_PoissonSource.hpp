@@ -103,7 +103,8 @@ namespace QCAD
         PHX::MDField<ScalarT,Cell,QuadPoint> holeDensity;   // electron density in [cm-3]
         PHX::MDField<ScalarT,Cell,QuadPoint> electricPotential;	// phi in [V]
         PHX::MDField<ScalarT,Cell,QuadPoint> ionizedDopant;    // ionized dopants in [cm-3]
-        PHX::MDField<ScalarT,Cell,QuadPoint> conductionBandEdge; // conduction band in [V]
+        PHX::MDField<ScalarT,Cell,QuadPoint> conductionBand; // conduction band in [eV]
+        PHX::MDField<ScalarT,Cell,QuadPoint> valenceBand;   // valence band in [eV]
 
   	//! constant prefactor parameter in source function
   	ScalarT factor;
