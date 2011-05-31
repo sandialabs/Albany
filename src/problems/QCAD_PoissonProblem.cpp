@@ -403,12 +403,10 @@ QCAD::PoissonProblem::constructEvaluators(
       stateMgr.registerStateVariable("Hole Density", qp_scalar, dummy, issf);
     evaluators_to_build["Save Electric Potential"] =
       stateMgr.registerStateVariable("Electric Potential", qp_scalar, dummy, issf);
-    evaluators_to_build["Save Ionized Donor"] =
-      stateMgr.registerStateVariable("Ionized Donor", qp_scalar, dummy, issf);
-    evaluators_to_build["Save Ionized Acceptor"] =
-      stateMgr.registerStateVariable("Ionized Acceptor", qp_scalar, dummy, issf);
-
-
+    evaluators_to_build["Save Conduction Band Edge"] =
+      stateMgr.registerStateVariable("Conduction Band Edge", qp_scalar, dummy, issf);
+    evaluators_to_build["Save Ionized Dopant"] =
+      stateMgr.registerStateVariable("Ionized Dopant", qp_scalar, dummy, issf);
   }
 
   // Interpolate Input Eigenvectors (if any) to quad points

@@ -136,12 +136,8 @@ getElementBlockParam(const std::string& ebName, const std::string& paramName, T 
   if( subList.isParameter(paramName) )
     return subList.get<T>(paramName);
 
-  //check if related material exists (it always should)
-  TEST_FOR_EXCEPTION(!subList.isParameter("material"), 
-		     Teuchos::Exceptions::InvalidParameter, std::endl 
-		     << "MaterialDB Error! Param " << paramName
-		     << " not found in " << ebName << " list and there"
-		     << " is no related material." << std::endl);
+  //check if related material exists - if not return default
+  if(!subList.isParameter("material")) return def_value;
 
   //Parameter not directly in element block sublist, so try related material
   std::string materialName = subList.get<std::string>("material");
@@ -152,11 +148,6 @@ getElementBlockParam(const std::string& ebName, const std::string& paramName, T 
 		     << " material " << materialName << "is invalid." << std::endl);
 
   Teuchos::ParameterList& matSubList = pMaterialsList_->sublist(materialName);
-  TEST_FOR_EXCEPTION(!matSubList.isParameter(paramName), 
-		     Teuchos::Exceptions::InvalidParameter, std::endl 
-		     << "MaterialDB Error! Param " << paramName
-		     << " not found in " << ebName << " list or related"
-		     << " material " << materialName << "list." << std::endl);
   return matSubList.get<T>(paramName, def_value);
 }
 
