@@ -40,6 +40,10 @@ PoissonSource(Teuchos::ParameterList& p) :
   ionizedDonor("Ionized Donor",
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
   ionizedAcceptor("Ionized Acceptor",
+      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+  conductionBand("Conduction Band",
+      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+  valenceBand("Valence Band",
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"))
 {
   Teuchos::ParameterList* psList = p.get<Teuchos::ParameterList*>("Parameter List");
@@ -123,6 +127,8 @@ PoissonSource(Teuchos::ParameterList& p) :
   this->addEvaluatedField(electricPotential);
   this->addEvaluatedField(ionizedDonor);
   this->addEvaluatedField(ionizedAcceptor);
+  this->addEvaluatedField(conductionBand);
+  this->addEvaluatedField(valenceBand);
   
   this->setName("Poisson Source"+PHX::TypeString<EvalT>::value);
 }
@@ -144,6 +150,9 @@ postRegistrationSetup(typename Traits::SetupData d,
 
   this->utils.setFieldData(ionizedDonor,fm);
   this->utils.setFieldData(ionizedAcceptor,fm);
+
+  this->utils.setFieldData(conductionBand,fm);
+  this->utils.setFieldData(valenceBand,fm);
 }
 
 // **********************************************************************
@@ -334,6 +343,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
   ScalarT Eic; // intrinsic Fermi level - conduction band edge in [eV]
   ScalarT Evi; // valence band edge - intrinsic Fermi level in [eV]
   ScalarT WFintSC;  // semiconductor intrinsic workfunction in [eV]
+  ScalarT qPhiRef;  // constant energy reference for heterogeneous structures
 
   //! assign Silicon parameters for the time being
   ml = 0.98;  // all effective masses are in unit of [m0]
@@ -361,6 +371,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
   Eic = -Eg/2. + 3./4.*kbT*log(mdp/mdn);  // (Ei-Ec) in [eV]
   Evi = -Eg/2. - 3./4.*kbT*log(mdp/mdn);  // (Ev-Ei) in [eV]
   WFintSC = Chi - Eic;  // (Evac-Ei) in [eV] where Evac = vacuum level
+  qPhiRef = WFintSC;    // for devices containing Silicon
 
   //! material parameter dependent scaling factor 
   C0 = (Nc > Nv) ? Nc : Nv;  // scaling for conc. [cm^-3]
@@ -421,6 +432,10 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
         electronDensity(cell, qp) = Nc*(this->*carrStat)(phi+Eic/kbT);
         holeDensity(cell, qp) = Nv*(this->*carrStat)(-phi+Evi/kbT);
         electricPotential(cell, qp) = phi*V0;
+        ionizedDonor(cell, qp) = 0.0;
+        ionizedAcceptor(cell, qp) = 0.0;
+        conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
+        valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
       }
     }      
   }  
@@ -452,6 +467,9 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
         holeDensity(cell, qp) = Nv*(this->*carrStat)(-phi+Evi/kbT);
         electricPotential(cell, qp) = phi*V0;
         ionizedDonor(cell, qp) = ionNd;
+        ionizedAcceptor(cell, qp) = 0.0;
+        conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
+        valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
       }
     }
   }  
@@ -482,7 +500,10 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
         electronDensity(cell, qp) = Nc*(this->*carrStat)(phi+Eic/kbT);
         holeDensity(cell, qp) = Nv*(this->*carrStat)(-phi+Evi/kbT);
         electricPotential(cell, qp) = phi*V0;
+        ionizedDonor(cell, qp) = 0.0;
         ionizedAcceptor(cell, qp) = ionNa;
+        conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
+        valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
       }
     }
   }      
@@ -492,6 +513,8 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
   //***************************************************************************
   else if (workset.EBName == "sio2")
   {
+    Chi = 1.0;  // SiO2 electron affinity [eV]
+    Eg = 9.0;   // SiO2 band gap [eV]
     for (std::size_t cell=0; cell < workset.numCells; ++cell)
     {
       for (std::size_t qp=0; qp < numQPs; ++qp)
@@ -501,19 +524,25 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
         charge = 0.0;  // no charge in SiO2
         poissonSource(cell, qp) = factor*charge;
         
+        // output states
         chargeDensity(cell, qp) = 0.0;    // no space charge in SiO2  
         electronDensity(cell, qp) = 0.0;  // no electrons in SiO2  
         holeDensity(cell, qp) = 0.0;      // no holes in SiO2
-        electricPotential(cell, qp) = phi*V0;  
+        electricPotential(cell, qp) = phi*V0;
+        ionizedDonor(cell, qp) = 0.0;
+        ionizedAcceptor(cell, qp) = 0.0;  
+        conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
+        valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
       }
     }
   }
 
   //***************************************************************************
-  //! element block "poly" 
+  //! element block "polysilicon" 
   //***************************************************************************
   else if (workset.EBName == "polysilicon")
   {
+    // polysilicon needs special considertion and the following is temporary
     for (std::size_t cell=0; cell < workset.numCells; ++cell)
     {
       for (std::size_t qp=0; qp < numQPs; ++qp)
@@ -523,10 +552,15 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
         charge = 0.0;  // no charge in poly treated as conductor
         poissonSource(cell, qp) = factor*charge;
         
+        // output states
         chargeDensity(cell, qp) = 0.0;    
         electronDensity(cell, qp) = 0.0;  
         holeDensity(cell, qp) = 0.0;      
-        electricPotential(cell, qp) = phi*V0;  
+        electricPotential(cell, qp) = phi*V0;
+        ionizedDonor(cell, qp) = 0.0;
+        ionizedAcceptor(cell, qp) = 0.0;  
+        conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
+        valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
       }
     }
   }

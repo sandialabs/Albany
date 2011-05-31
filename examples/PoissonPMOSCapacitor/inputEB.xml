@@ -16,6 +16,8 @@
       <Parameter name="Factor" type="double" value="1.0" />
       <Parameter name="Device" type="string" value="elementblocks" />
       <Parameter name="Acceptor Doping" type="double" value="1e14" />
+      <Parameter name="Carrier Statistics" type="string" value="Boltzmann Statistics" />
+      <Parameter name="Incomplete Ionization" type="string" value="False" />
     </ParameterList>
 
     <ParameterList name="Permittivity">

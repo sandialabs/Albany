@@ -77,7 +77,7 @@ PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   dofNames[0] = "Phi";
 
   // STATE OUTPUT
-  nstates = 6;
+  nstates = 8;
   nstates += nEigenvectorsToInputFromStates*2; //Re and Im parts (input @ nodes)
   nstates += nEigenvectorsToInputFromStates*2; //Re and Im parts (output @ qps)
 }
@@ -378,17 +378,17 @@ QCAD::PoissonProblem::constructEvaluators(
       int ilsf = FactoryTraits<AlbanyTraits>::id_loadstatefield;
       char evecStateName[100]; char evecFieldName[100]; char evalName[100];
       for( int k = 0; k < nEigenvectorsToInputFromStates; k++) {
-	sprintf(evecStateName,"Eigenvector_Re%d",k);
-	sprintf(evecFieldName,"Evec_Re%d",k);
-	sprintf(evalName,"Input Evec_Re%d",k);
-	evaluators_to_build[evecStateName] =
-	  stateMgr.registerStateVariable(evecStateName, node_scalar, dummy, ilsf, "zero", evecFieldName);
+        sprintf(evecStateName,"Eigenvector_Re%d",k);
+        sprintf(evecFieldName,"Evec_Re%d",k);
+        sprintf(evalName,"Input Evec_Re%d",k);
+        evaluators_to_build[evecStateName] =
+          stateMgr.registerStateVariable(evecStateName, node_scalar, dummy, ilsf, "zero", evecFieldName);
 
-	sprintf(evecStateName,"Eigenvector_Im%d",k);
-	sprintf(evecFieldName,"Evec_Im%d",k);
-	sprintf(evalName,"Input Evec_Im%d",k);
-	evaluators_to_build[evecStateName] =
-	  stateMgr.registerStateVariable(evecStateName, node_scalar, dummy, ilsf, "zero", evecFieldName);
+        sprintf(evecStateName,"Eigenvector_Im%d",k);
+        sprintf(evecFieldName,"Evec_Im%d",k);
+        sprintf(evalName,"Input Evec_Im%d",k);
+        evaluators_to_build[evecStateName] =
+          stateMgr.registerStateVariable(evecStateName, node_scalar, dummy, ilsf, "zero", evecFieldName);
       }
     }
 
@@ -407,8 +407,10 @@ QCAD::PoissonProblem::constructEvaluators(
       stateMgr.registerStateVariable("Ionized Donor", qp_scalar, dummy, issf);
     evaluators_to_build["Save Ionized Acceptor"] =
       stateMgr.registerStateVariable("Ionized Acceptor", qp_scalar, dummy, issf);
-
-
+    evaluators_to_build["Save Condution Band"] =
+      stateMgr.registerStateVariable("Conduction Band", qp_scalar, dummy, issf);
+    evaluators_to_build["Save Valence Band"] =
+      stateMgr.registerStateVariable("Valence Band", qp_scalar, dummy, issf);
   }
 
   // Interpolate Input Eigenvectors (if any) to quad points
