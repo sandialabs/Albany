@@ -23,9 +23,9 @@
 namespace PHAL {
 
 template<typename EvalT, typename Traits>
-ThermalConductivity<EvalT, Traits>::
-ThermalConductivity(Teuchos::ParameterList& p) :
-  thermalCond(p.get<std::string>("QP Variable Name"),
+Absorption<EvalT, Traits>::
+Absorption(Teuchos::ParameterList& p) :
+  absorption(p.get<std::string>("QP Variable Name"),
 	      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"))
 {
   Teuchos::ParameterList* cond_list = 
@@ -38,16 +38,16 @@ ThermalConductivity(Teuchos::ParameterList& p) :
   numQPs  = dims[1];
   numDims = dims[2];
 
-  std::string type = cond_list->get("Thermal Conductivity Type", "Constant");
+  std::string type = cond_list->get("Absorption Type", "Constant");
   if (type == "Constant") {
     is_constant = true;
     constant_value = cond_list->get("Value", 1.0);
 
-    // Add thermal conductivity as a Sacado-ized parameter
+    // Add absorption as a Sacado-ized parameter
     Teuchos::RCP<ParamLib> paramLib = 
       p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
       new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-    	"Thermal Conductivity", this, paramLib);
+	"Absorption", this, paramLib);
   }
   else if (type == "Truncated KL Expansion") {
     is_constant = false;
@@ -67,43 +67,43 @@ ThermalConductivity(Teuchos::ParameterList& p) :
     Teuchos::RCP<ParamLib> paramLib = 
       p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
     for (int i=0; i<num_KL; i++) {
-      std::string ss = Albany::strint("Thermal Conductivity KL Random Variable",i);
+      std::string ss = Albany::strint("Absorption KL Random Variable",i);
       new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss, this, paramLib);
       rv[i] = cond_list->get(ss, 0.0);
     }
   }
   else {
     TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-		       "Invalid thermal conductivity type " << type);
+		       "Invalid absorption type " << type);
   } 
 
-  this->addEvaluatedField(thermalCond);
-  this->setName("Thermal Conductivity"+PHX::TypeString<EvalT>::value);
+  this->addEvaluatedField(absorption);
+  this->setName("Absorption"+PHX::TypeString<EvalT>::value);
 }
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
-void ThermalConductivity<EvalT, Traits>::
+void Absorption<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(thermalCond,fm);
+  this->utils.setFieldData(absorption,fm);
   if (!is_constant) this->utils.setFieldData(coordVec,fm);
 }
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
-void ThermalConductivity<EvalT, Traits>::
+void Absorption<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   if (is_constant) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-	thermalCond(cell,qp) = constant_value;
+	absorption(cell,qp) = constant_value;
       }
     }
   }
-  else {
+  /*else {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
 	Teuchos::Array<MeshScalarT> point(numDims);
@@ -112,24 +112,24 @@ evaluateFields(typename Traits::EvalData workset)
 	thermalCond(cell,qp) = exp_rf_kl->evaluate(point, rv);
       }
     }
-  }
+  }*/
 }
 
 // **********************************************************************
 template<typename EvalT,typename Traits>
-typename ThermalConductivity<EvalT,Traits>::ScalarT& 
-ThermalConductivity<EvalT,Traits>::getValue(const std::string &n)
+typename Absorption<EvalT,Traits>::ScalarT& 
+Absorption<EvalT,Traits>::getValue(const std::string &n)
 {
   if (is_constant)
     return constant_value;
-  for (int i=0; i<rv.size(); i++) {
+  /*for (int i=0; i<rv.size(); i++) {
     if (n == Albany::strint("Thermal Conductivity KL Random Variable",i))
       return rv[i];
-  }
+  }*/
   TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		     std::endl <<
 		     "Error! Logic error in getting paramter " << n
-		     << " in ThermalConductivity::getValue()" << std::endl);
+		     << " in Absorption::getValue()" << std::endl);
   return constant_value;
 }
 

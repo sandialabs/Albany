@@ -40,22 +40,26 @@ HeatEqResid(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
   Source      (p.get<std::string>                   ("Source Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  Absorption  (p.get<std::string>                   ("Absorption Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   TResidual   (p.get<std::string>                   ("Residual Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
   haveSource  (p.get<bool>("Have Source")),
-  haveConvection(false)
+  haveConvection(false),
+  haveAbsorption  (p.get<bool>("Have Absorption"))
 {
   if (p.isType<bool>("Disable Transient"))
     enableTransient = !p.get<bool>("Disable Transient");
   else enableTransient = true;
 
   this->addDependentField(wBF);
- // this->addDependentField(Temperature);
+  this->addDependentField(Temperature);
   this->addDependentField(ThermalCond);
   if (enableTransient) this->addDependentField(Tdot);
   this->addDependentField(TGrad);
   this->addDependentField(wGradBF);
   if (haveSource) this->addDependentField(Source);
+  if (haveAbsorption) this->addDependentField(Absorption);
 
   this->addEvaluatedField(TResidual);
 
@@ -68,6 +72,8 @@ HeatEqResid(const Teuchos::ParameterList& p) :
 
   // Allocate workspace
   flux.resize(dims[0], numQPs, numDims);
+
+  if (haveAbsorption)  aterm.resize(dims[0], numQPs);
 
   convectionVels = Teuchos::getArrayFromStringParameter<double> (p,
                            "Convection Velocity", numDims, false);
@@ -90,7 +96,7 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(wBF,fm);
- // this->utils.setFieldData(Temperature,fm);
+  this->utils.setFieldData(Temperature,fm);
   this->utils.setFieldData(ThermalCond,fm);
   this->utils.setFieldData(TGrad,fm);
   this->utils.setFieldData(wGradBF,fm);
@@ -98,6 +104,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   if (enableTransient) this->utils.setFieldData(Tdot,fm);
 
   if (haveConvection)  this->utils.setFieldData(rhoCp,fm);
+  
+  if (haveAbsorption)  this->utils.setFieldData(Absorption,fm);
 
   this->utils.setFieldData(TResidual,fm);
 }
@@ -136,6 +144,11 @@ evaluateFields(typename Traits::EvalData workset)
     FST::integrate<ScalarT>(TResidual, convection, wBF, Intrepid::COMP_CPP, true); // "true" sums into
   }
 
+
+  if (haveAbsorption) {
+    FST::scalarMultiplyDataData<ScalarT> (aterm, Absorption, Temperature);
+    FST::integrate<ScalarT>(TResidual, aterm, wBF, Intrepid::COMP_CPP, true); 
+  }
 }
 
 //**********************************************************************
