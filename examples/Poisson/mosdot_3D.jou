@@ -62,7 +62,7 @@ volume 1 3 5 6 7 size 1
 volume all scheme auto
 
 #mesh volumes
-set default element tri
+set default element hex
 mesh volume all
 
 # refine mesh in Silicon near the Silicon/SiO2 interface
@@ -73,4 +73,4 @@ merge all
 
 # dimension size is assumed in [um]
 # output the Exodus II mesh
-export mesh "mosDot3DTet.exo" dimension 3 block all overwrite
+export mesh "mosdot_3D.exo" dimension 3 block all overwrite

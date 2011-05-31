@@ -40,19 +40,19 @@
 
 
   <ParameterList name="Discretization">
-    <Parameter name="Exodus Input File Name" type="string" value="mosDotTet.exo" />
+    <Parameter name="Exodus Input File Name" type="string" value="mosdot_2D.exo" />
     <Parameter name="Method" type="string" value="Ioss" />
-    <Parameter name="Exodus Output File Name" type="string" value="potentialTet.exo" />
+    <Parameter name="Exodus Output File Name" type="string" value="potential_mosdot_2D.exo" />
   </ParameterList>
 
 
   <ParameterList name="Regression Results">
     <Parameter name="Number of Comparisons" type="int" value="1" />
-    <Parameter name="Test Values" type="Array(double)" value="{0.191701296932}" />
+    <Parameter name="Test Values" type="Array(double)" value="{0.556910190279}" />
     <Parameter name="Relative Tolerance" type="double" value="1.0e-5" />
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="1" />
     <Parameter name="Sensitivity Test Values 0" type="Array(double)"
-     	       value="{0.375337621232,0.205779416375,0.20539484199,0.184201975032,0.00807905511717}" />
+     	       value="{0.369980604322, 0.197147181604,0.197149787748,0.213817628479,0.00593312163935}" />
   </ParameterList>
 
 

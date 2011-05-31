@@ -45,7 +45,7 @@ mesh surface all
 merge all
 
 # Output the Exodus II mesh
-export mesh "pndiodeEB.exo" dimension 2 block all overwrite
+export mesh "pndiode.exo" dimension 2 block all overwrite
 
 
 

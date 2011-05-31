@@ -1,6 +1,6 @@
 <ParameterList>
   <ParameterList name="Problem">
-    <Parameter name="Name" type="string" value="Poisson 2D" />
+    <Parameter name="Name" type="string" value="Poisson 3D" />
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
 
     <Parameter name="LengthUnitInMeters" type="double" value="1e-6"/>
@@ -8,24 +8,26 @@
     <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
 
     <ParameterList name="Dirichlet BCs">
-      <Parameter name="DBC on NS substrate for DOF Phi" type="double" value="-8.8388" />
-      <Parameter name="DBC on NS gate for DOF Phi" type="double" value="74.7291" />
+      <Parameter name="DBC on NS substrate for DOF Phi" type="double" value="0" />
+      <Parameter name="DBC on NS gate for DOF Phi" type="double" value="-4" />
+      <Parameter name="DBC on NS topgate for DOF Phi" type="double" value="10" />
     </ParameterList>
 
     <ParameterList name="Poisson Source">
       <Parameter name="Factor" type="double" value="1.0" />
-      <Parameter name="Device" type="string" value="pmoscap" />
+      <Parameter name="Device" type="string" value="elementblocks" />
     </ParameterList>
 
     <ParameterList name="Permittivity">
-      <Parameter name="Permittivity Type" type="string" value="Position Dependent" />
+      <Parameter name="Permittivity Type" type="string" value="Block Dependent" />
     </ParameterList>
 
     <ParameterList name="Parameters">
-      <Parameter name="Number" type="int" value="3" />
+      <Parameter name="Number" type="int" value="4" />
       <Parameter name="Parameter 0" type="string" value="DBC on NS substrate for DOF Phi" />
       <Parameter name="Parameter 1" type="string" value="DBC on NS gate for DOF Phi" />
-      <Parameter name="Parameter 2" type="string" value="Poisson Source Factor" />
+      <Parameter name="Parameter 2" type="string" value="DBC on NS topgate for DOF Phi" />
+      <Parameter name="Parameter 3" type="string" value="Poisson Source Factor" />
     </ParameterList>
 
     <ParameterList name="Response Functions">
@@ -36,19 +38,19 @@
 
 
   <ParameterList name="Discretization">
-    <Parameter name="Exodus Input File Name" type="string" value="pmoscap.exo" />
+    <Parameter name="Exodus Input File Name" type="string" value="mosdot_3D_tet.exo" />
     <Parameter name="Method" type="string" value="Ioss" />
-    <Parameter name="Exodus Output File Name" type="string" value="potential.exo" />
+    <Parameter name="Exodus Output File Name" type="string" value="potential_mosdot_3D_tet.exo" />
   </ParameterList>
 
 
   <ParameterList name="Regression Results">
     <Parameter name="Number of Comparisons" type="int" value="1" />
-    <Parameter name="Test Values" type="Array(double)" value="{ 5.09553042441}" />
+    <Parameter name="Test Values" type="Array(double)" value="{0.541087}" />
     <Parameter name="Relative Tolerance" type="double" value="1.0e-5" />
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="1" />
     <Parameter name="Sensitivity Test Values 0" type="Array(double)"
-     	       value="{0.0297036589035, 0.121022617464, -1.9785666208}" />
+     	       value="{0.456548932153,0.343578201515,0.191704251069,0.00273985304269}" />
   </ParameterList>
 
 
