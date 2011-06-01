@@ -410,7 +410,7 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./ ./evaluators ./problems ./responses ./stk ./LCM/utils
                      ${Trilinos_TPL_INCLUDE_DIRS})
 
-#link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
+link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
 
 # LAME
 IF(ALBANY_LAME)
