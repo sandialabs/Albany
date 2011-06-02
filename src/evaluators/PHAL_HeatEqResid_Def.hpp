@@ -46,7 +46,7 @@ HeatEqResid(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
   haveSource  (p.get<bool>("Have Source")),
   haveConvection(false),
-  haveAbsorption  (p.get<bool>("Have Absorption"))
+  haveAbsorption  (p.get<bool>("Have Absorption")),
   haverhoCp(false)
 {
   if (p.isType<bool>("Disable Transient"))
