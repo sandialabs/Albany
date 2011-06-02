@@ -135,9 +135,9 @@ int main(int argc, char *argv[]) {
 		 poisson_params_in, poisson_responses_out,
 		 statesToPass, statesToLoop);
 
-      //Test single iteration first, then test these
-      //bConverged = checkConvergence(statesToLoop, lastSavedPotential, "potential", 1e-3);
-      //CopyState(lastSavedPotential, statesToLoop, "potential");
+      if(iter > 0) 
+	bConverged = checkConvergence(statesToLoop, lastSavedPotential, "Electric Potential", 1e-3);
+      CopyState(lastSavedPotential, statesToLoop, "Electric Potential");
       iter++;
     } while(!bConverged && iter <= maxIter);
     *out << "QCAD Solve: Completed Poisson-Schrodinger solve loop after " << iter << " iterations." << endl;
@@ -234,9 +234,15 @@ void CopyState(Teuchos::RCP<std::vector<Albany::StateVariables> >& dest,
 	       std::string stateNameToCopy)
 {
   int numWorksets = src->size();
+  std::vector<PHX::DataLayout::size_type> dims;
 
-  if(dest->size() != (unsigned int)numWorksets)
-    dest->resize(numWorksets); //deallocation necessary?
+  //allocate destination if necessary
+  if(dest->size() != (unsigned int)numWorksets) {
+    dest->resize(numWorksets);    
+    (*src)[0][stateNameToCopy]->dimensions(dims);
+    for (int ws = 0; ws < numWorksets; ws++)
+      (*dest)[ws][stateNameToCopy] = Teuchos::rcp(new Intrepid::FieldContainer<RealType>(dims));
+  }
 
   for (int ws = 0; ws < numWorksets; ws++)
   {
@@ -250,18 +256,13 @@ void CopyState(Teuchos::RCP<std::vector<Albany::StateVariables> >& dest,
       if(srcStateName == stateNameToCopy) {
 
         // we assume operating on the last two indices is correct
-        std::vector<PHX::DataLayout::size_type> dims;
         srcForWorkset[srcStateName]->dimensions(dims);
 
         int size = dims.size();
-        TEST_FOR_EXCEPTION(size != 4, std::logic_error,
+        TEST_FOR_EXCEPTION(size != 2, std::logic_error,
             "Something is wrong during copy state variable operation");
         int cells = dims[0];
         int qps = dims[1];
-        int dim = dims[2];
-        int dim2 = dims[3];
-
-        TEST_FOR_EXCEPT( ! (dim == dim2) );
 
 	//allocate space in destination if necessary -- will RCP take care of freeing if assign to already alloc'd?
 	std::vector<PHX::DataLayout::size_type> destDims;
@@ -273,10 +274,7 @@ void CopyState(Teuchos::RCP<std::vector<Albany::StateVariables> >& dest,
         {
           for (int qp = 0; qp < qps; ++qp)
           {
-            for (int i = 0; i < dim; ++i)
-            {
-              (*((*dest)[ws][srcStateName]))(cell, qp, i, i) = (*(st->second))(cell, qp, i, i);
-            }
+	    (*((*dest)[ws][srcStateName]))(cell, qp) = (*(st->second))(cell, qp);
           }
         }
       }

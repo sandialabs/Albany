@@ -8,7 +8,7 @@
 
     <ParameterList name="silicon.quantum">
       <Parameter name="material" type="string" value="Silicon" />
-      <Parameter name="quantum" type="bool" value="true" />
+      <Parameter name="quantum" type="bool" value="false" />
     </ParameterList>
     
     <ParameterList name="silicon.ntype">
@@ -27,6 +27,11 @@
     
     <ParameterList name="sio2">
       <Parameter name="material" type="string" value="SiliconDioxide" />
+    </ParameterList>
+
+    <ParameterList name="sio2.quantum">
+      <Parameter name="material" type="string" value="SiliconDioxide" />
+      <Parameter name="quantum" type="bool" value="false" />
     </ParameterList>
 
     <ParameterList name="polysilicon">
@@ -83,13 +88,23 @@
     <ParameterList name="SiliconDioxide">
       <Parameter name="Category" type="string" value="Insulator" />
       <Parameter name="Permittivity" type="double" value="3.9" />
-      <Parameter name="Band Gap" type="double" value="8" />
+
+      <!-- Band Gap in [eV] -->
+      <Parameter name="Band Gap" type="double" value="9.0" />
+
+      <!-- Electron affinity in [eV] -->
+      <Parameter name="Electron Affinity" type="double" value="1.0" />
     </ParameterList>
 
     <ParameterList name="PolySilicon">
       <Parameter name="Category" type="string" value="Insulator" />
       <Parameter name="Permittivity" type="double" value="11.9" />
-      <Parameter name="Band Gap" type="double" value="0" />
+
+      <!-- Band Gap in [eV] -->
+      <Parameter name="Band Gap" type="double" value="9.0" />
+
+      <!-- Electron affinity in [eV] -->
+      <Parameter name="Electron Affinity" type="double" value="1.0" />
     </ParameterList>
 
   </ParameterList>

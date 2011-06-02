@@ -127,9 +127,8 @@ getElementBlockParam(const std::string& ebName, const std::string& paramName, T 
   TEST_FOR_EXCEPTION(ebName.length() == 0, Teuchos::Exceptions::InvalidParameter,
 		     std::endl << "MaterialDB Error! Empty element block name" << std::endl);
 
-  TEST_FOR_EXCEPTION(!pEBList_->isSublist(ebName), Teuchos::Exceptions::InvalidParameter,
-		     std::endl << "MaterialDB Error! Invalid element block name " 
-		     << ebName << std::endl);
+  //check if element block exists - if not return default
+  if(!pEBList_->isSublist(ebName)) return def_value;
 
   Teuchos::ParameterList& subList = pEBList_->sublist(ebName);
 
@@ -167,6 +166,18 @@ template double QCAD::MaterialDatabase::
 getElementBlockParam<double>(const std::string& materialName, const std::string& paramName);
 template double QCAD::MaterialDatabase:: 
 getElementBlockParam<double>(const std::string& materialName, const std::string& paramName, double def_val);
+
+//int
+template int QCAD::MaterialDatabase:: 
+getMaterialParam<int>(const std::string& materialName, const std::string& paramName);
+template int QCAD::MaterialDatabase:: 
+getMaterialParam<int>(const std::string& materialName, const std::string& paramName, int def_val);
+
+template int QCAD::MaterialDatabase:: 
+getElementBlockParam<int>(const std::string& materialName, const std::string& paramName);
+template int QCAD::MaterialDatabase:: 
+getElementBlockParam<int>(const std::string& materialName, const std::string& paramName, int def_val);
+
 
 //bool
 template bool QCAD::MaterialDatabase:: 

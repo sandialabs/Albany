@@ -227,18 +227,36 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
   if(bSchrodingerInQuantumRegions && 
      materialDB->getElementBlockParam<bool>(workset.EBName,"quantum",false)) {
     
+    cout << "DEBUG: Using Schrodinger source for element block " << workset.EBName << endl;
     ScalarT scalingFctr = V0*eps0*X0/eleQ; // scaling factor for charge density with dimensions L^-d
     ScalarT kbT = kbBoltz*temperature;      // in [eV]
     char buf[100];
 
-    //!Compute schrodinger source
+    //Degeneracy factor
+    int spinDegeneracyFactor = 2;
+    int valleyDegeneracyFactor = materialDB->getElementBlockParam<int>(workset.EBName,"Num of conduction band min",1);
+    double degeneracyFactor = spinDegeneracyFactor * valleyDegeneracyFactor;
+
+    //TODO: Suzey: add 1D and 2D cases where we need integral over k-states - I just include order of magnitude estimate here
+    double dimFactor = 1.0, pi = 3.141592;
+    switch (numDims) {
+    case 1: dimFactor = pow(2*pi,2); break;
+    case 2: dimFactor = pow(2*pi,1); break;
+    }
+
+    //! Zero out poisson source field -- there's probably a function call that does this that I don't know about
+    for (std::size_t cell=0; cell < workset.numCells; ++cell)
+      for (std::size_t qp=0; qp < numQPs; ++qp)
+	poissonSource(cell, qp) = 0.0; 
+
+    //! Compute schrodinger source
     for(int i=0; i<nEigenvectors; i++) {
 
       double Ef = 0.0;  //Fermi energy == 0
       ScalarT fermiFactor = 1.0/( exp( (eigenvals[i]-Ef)/kbT) + 1.0 );
+      cout << "DEBUG: Eigenvector " << i << " with weight " << fermiFactor << endl;
 
       Albany::StateVariables& newState = *workset.newState;
-
       sprintf(buf,"%s_Re%d", evecStateRoot.c_str(), i);
       Intrepid::FieldContainer<RealType>& wfRe = *newState[buf];
       sprintf(buf,"%s_Im%d", evecStateRoot.c_str(), i);
@@ -251,13 +269,26 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 	  ScalarT quantumCharge = (pow(wfRe(cell,qp),2) + pow(wfIm(cell,qp),2))*fermiFactor; // in [L^-d]
 
 	  // the scaled full RHS
-	  quantumCharge = 1/scalingFctr * quantumCharge; // in scaled units
+	  quantumCharge = -1/scalingFctr * degeneracyFactor * dimFactor * quantumCharge; // in scaled units
 	  poissonSource(cell, qp) += factor*quantumCharge;
 	}
       }
     }
 
     //! output states
+    double Chi = materialDB->getElementBlockParam<double>(workset.EBName,"Electron Affinity");
+    ScalarT Eg;
+
+    if(matrlCategory == "Semiconductor") {
+      double Eg0 = materialDB->getElementBlockParam<double>(workset.EBName,"Zero Temperature Band Gap");
+      double alpha = materialDB->getElementBlockParam<double>(workset.EBName,"Band Gap Alpha Coefficient");
+      double beta = materialDB->getElementBlockParam<double>(workset.EBName,"Band Gap Beta Coefficient");
+      Eg = Eg0-alpha*pow(temperature,2.0)/(beta+temperature); // in [eV]
+    }
+    else {
+      Eg = materialDB->getElementBlockParam<double>(workset.EBName,"Band Gap",0.0);
+    }
+
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
 	const ScalarT& phi = potential(cell,qp);
@@ -268,8 +299,8 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 	electronDensity(cell, qp) = charge*Lambda2*C0; //all electrons ?
 	holeDensity(cell, qp) = 0.0;
 	electricPotential(cell, qp) = phi*V0;
-	conductionBand(cell, qp) = phi*V0; // TODO [eV]
-        valenceBand(cell, qp) = phi*V0; // TODO [eV]
+        conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
+        valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
       }
     }
 
@@ -279,7 +310,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
   //***************************************************************************
   //! element block with "Semiconductor" material
   //***************************************************************************
-  if(matrlCategory == "Semiconductor") 
+  else if(matrlCategory == "Semiconductor") 
   {
     //! temperature-independent material parameters
     double mdn = materialDB->getElementBlockParam<double>(workset.EBName,"Electron DOS Effective Mass");

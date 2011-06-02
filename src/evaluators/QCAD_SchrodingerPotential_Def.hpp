@@ -49,7 +49,6 @@ SchrodingerPotential(Teuchos::ParameterList& p) :
   E0 = psList->get("E0", 1.0);
   scalingFactor = psList->get("Scaling Factor", 1.0);
 
-  energy_unit_in_eV = p.get<double>("Energy unit in eV");
   potentialStateName = p.get<std::string>("QP Potential Name");
 
   // Add E0 as a Sacado-ized parameter

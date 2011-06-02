@@ -4,12 +4,12 @@
     <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="Workset Size" type="int" value="1000" />
 
-    <Parameter name="EnergyUnitInElectronVolts" type="double" value="1e-3"/>
+    <Parameter name="EnergyUnitInElectronVolts" type="double" value="1"/>
     <Parameter name="LengthUnitInMeters" type="double" value="1e-6"/>
 
     <ParameterList name="Poisson Coupling">
-      <Parameter name="Only solve in quantum blocks" type="bool" value="false"/>
-      <Parameter name="Potential State Name" type="string" value="Electric Potential"/>
+      <Parameter name="Only solve in quantum blocks" type="bool" value="true"/>
+      <Parameter name="Potential State Name" type="string" value="Conduction Band"/>
       <Parameter name="Save Eigenvectors as States" type="int" value="2"/>
     </ParameterList>
 
@@ -19,6 +19,7 @@
       <Parameter name="DBC on NS rgate for DOF psi" type="double" value="0" />
       <Parameter name="DBC on NS topgate for DOF psi" type="double" value="0" />
       <Parameter name="DBC on NS sides for DOF psi" type="double" value="0" />
+      <Parameter name="DBC on NS interface for DOF psi" type="double" value="0" />
     </ParameterList>
 
     <ParameterList name="Potential">
@@ -49,7 +50,7 @@
   </ParameterList>
 
   <ParameterList name="Discretization">
-    <Parameter name="Exodus Input File Name" type="string" value="mosDotFine.exo" />
+    <Parameter name="Exodus Input File Name" type="string" value="mosDotQuantum.exo" />
     <Parameter name="Method" type="string" value="Ioss" />
     <Parameter name="Exodus Output File Name" type="string" value="wavefunctions2D.exo" />
   </ParameterList>
@@ -86,12 +87,13 @@
       <ParameterList name="Eigensolver">
         <Parameter name="Method" type="string" value="Anasazi"/>
         <Parameter name="Operator" type="string" value="Shift-Invert"/>
-        <Parameter name="Num Blocks" type="int" value="30"/>
+	<Parameter name="Convergence Tolerance" type="double" value="1e-4"/>
+        <Parameter name="Num Blocks" type="int" value="100"/>
         <Parameter name="Num Eigenvalues" type="int" value="5"/>
         <Parameter name="Save Eigenvectors" type="int" value="5"/>
-        <Parameter name="Block Size" type="int" value="4"/>
+        <Parameter name="Block Size" type="int" value="2"/>
         <Parameter name="Maximum Restarts" type="int" value="2"/>
-        <Parameter name="Shift" type="double" value="0.05"/>
+        <Parameter name="Shift" type="double" value="-0.05"/>
       </ParameterList>
     </ParameterList>
     <ParameterList name="Step Size">

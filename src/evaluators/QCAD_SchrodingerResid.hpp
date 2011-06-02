@@ -51,7 +51,7 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   //! Helper function to compute inverse effective mass (possible position dependent)
-  ScalarT getInvEffMass(const int numDim, const MeshScalarT* coord);
+  ScalarT getInvEffMass(const std::string& EBName, const int numDim, const MeshScalarT* coord);
 
   //! Reference parameter list generator to check xml input file
   Teuchos::RCP<const Teuchos::ParameterList>
@@ -74,7 +74,6 @@ private:
   bool havePotential;
   bool haveMaterial;
   bool bOnlyInQuantumBlocks;
-  std::string materialName;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> psiResidual;

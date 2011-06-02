@@ -12,7 +12,7 @@
       <Parameter name="DBC on NS substrate for DOF Phi" type="double" value="0" />
       <Parameter name="DBC on NS lgate for DOF Phi" type="double" value="-2" />
       <Parameter name="DBC on NS rgate for DOF Phi" type="double" value="-2" />
-      <Parameter name="DBC on NS topgate for DOF Phi" type="double" value="4" />
+      <Parameter name="DBC on NS topgate for DOF Phi" type="double" value="100" />
     </ParameterList>
 
     <ParameterList name="Poisson Source">
@@ -41,7 +41,7 @@
 
 
   <ParameterList name="Discretization">
-    <Parameter name="Exodus Input File Name" type="string" value="mosDotFine.exo" />
+    <Parameter name="Exodus Input File Name" type="string" value="mosDotQuantum.exo" />
     <Parameter name="Method" type="string" value="Ioss" />
     <Parameter name="Exodus Output File Name" type="string" value="initpotential.exo" />
   </ParameterList>
