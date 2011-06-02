@@ -380,6 +380,11 @@ Albany::HeatProblem::constructEvaluators(
 
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);
+    if (params->isType<string>("Convection Velocity"))
+    	p->set<string>("Convection Velocity",
+                       params->get<string>("Convection Velocity"));
+    if (params->isType<bool>("Have Rho Cp"))
+    	p->set<bool>("Have Rho Cp", params->get<bool>("Have Rho Cp"));
 
     //Output
     p->set<string>("Residual Name", "Temperature Residual");
@@ -440,6 +445,8 @@ Albany::HeatProblem::getValidProblemParameters() const
   if (numDim==1)
     validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic BC for 1D problems");
   validPL->sublist("Thermal Conductivity", false, "");
+  validPL->set("Convection Velocity", "{0,0,0}", "");
+  validPL->set<bool>("Have Rho Cp", false, "Flag to indicate if rhoCp is used");
 
   return validPL;
 }

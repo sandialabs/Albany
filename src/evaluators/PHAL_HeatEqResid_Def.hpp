@@ -47,6 +47,7 @@ HeatEqResid(const Teuchos::ParameterList& p) :
   haveSource  (p.get<bool>("Have Source")),
   haveConvection(false),
   haveAbsorption  (p.get<bool>("Have Absorption"))
+  haverhoCp(false)
 {
   if (p.isType<bool>("Disable Transient"))
     enableTransient = !p.get<bool>("Disable Transient");
@@ -77,13 +78,20 @@ HeatEqResid(const Teuchos::ParameterList& p) :
 
   convectionVels = Teuchos::getArrayFromStringParameter<double> (p,
                            "Convection Velocity", numDims, false);
+  if (p.isType<std::string>("Convection Velocity")) {
+    convectionVels = Teuchos::getArrayFromStringParameter<double> (p,
+                             "Convection Velocity", numDims, false);
+  }
   if (convectionVels.size()>0) {
     haveConvection = true;
-    
-    PHX::MDField<ScalarT,Cell,QuadPoint> tmp(p.get<string>("Rho Cp Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"));
-    rhoCp = tmp;
-    this->addDependentField(rhoCp);
+    if (p.isType<bool>("Have Rho Cp"))
+      haverhoCp = p.get<bool>("Have Rho Cp");
+    if (haverhoCp) {
+      PHX::MDField<ScalarT,Cell,QuadPoint> tmp(p.get<string>("Rho Cp Name"),
+            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"));
+      rhoCp = tmp;
+      this->addDependentField(rhoCp);
+    }
   }
 
   this->setName("HeatEqResid"+PHX::TypeString<EvalT>::value);
@@ -103,9 +111,9 @@ postRegistrationSetup(typename Traits::SetupData d,
   if (haveSource)  this->utils.setFieldData(Source,fm);
   if (enableTransient) this->utils.setFieldData(Tdot,fm);
 
-  if (haveConvection)  this->utils.setFieldData(rhoCp,fm);
-  
   if (haveAbsorption)  this->utils.setFieldData(Absorption,fm);
+  
+  if (haveConvection && haverhoCp)  this->utils.setFieldData(rhoCp,fm);
 
   this->utils.setFieldData(TResidual,fm);
 }
@@ -136,7 +144,10 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t qp=0; qp < numQPs; ++qp) {
         convection(cell,qp) = 0.0;
         for (std::size_t i=0; i < numDims; ++i) {
-          convection(cell,qp) += rhoCp(cell,qp) * convectionVels[i] * TGrad(cell,qp,i);
+          if (haverhoCp)
+            convection(cell,qp) += rhoCp(cell,qp) * convectionVels[i] * TGrad(cell,qp,i);
+          else
+            convection(cell,qp) += convectionVels[i] * TGrad(cell,qp,i);
         }
       }
     }

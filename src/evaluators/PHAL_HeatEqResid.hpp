@@ -67,6 +67,7 @@ private:
   bool haveConvection;
   bool haveAbsorption;
   bool enableTransient;
+  bool haverhoCp;
   unsigned int numQPs, numDims;
   Intrepid::FieldContainer<ScalarT> flux;
   Intrepid::FieldContainer<ScalarT> aterm;
