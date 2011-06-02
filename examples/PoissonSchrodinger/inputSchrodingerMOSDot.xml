@@ -19,7 +19,6 @@
       <Parameter name="DBC on NS rgate for DOF psi" type="double" value="0" />
       <Parameter name="DBC on NS topgate for DOF psi" type="double" value="0" />
       <Parameter name="DBC on NS sides for DOF psi" type="double" value="0" />
-      <Parameter name="DBC on NS interface for DOF psi" type="double" value="0" />
     </ParameterList>
 
     <ParameterList name="Potential">

@@ -88,6 +88,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+
   Intrepid::RealSpaceTools<ScalarT>::det(J, defgrad);
 
   if (avgJ)
@@ -148,6 +149,13 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
+  // Since Intrepid will later perform calculations on the entire workset size
+  // and not just the used portion, we must fill the excess with reasonable 
+  // values. Leaving this out leads to inversion of 0 tensors.
+  for (std::size_t cell=workset.numCells; cell < workset.worksetSize; ++cell) 
+    for (std::size_t qp=0; qp < numQPs; ++qp) 
+      for (std::size_t i=0; i < numDims; ++i)
+	defgrad(cell,qp,i,i) += 1.0;
 }
 
 //**********************************************************************

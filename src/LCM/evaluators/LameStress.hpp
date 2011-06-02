@@ -52,7 +52,7 @@ private:
   // Input:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defGradField;
 
-  std::string defgradName, stressName;
+  std::string defGradName, stressName;
   unsigned int numQPs;
   unsigned int numDims;
 

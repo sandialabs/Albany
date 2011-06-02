@@ -86,7 +86,7 @@ evaluateFields(typename Traits::EvalData workset)
   // Get the old and new state data
   // StateVariables is:  typedef std::map<std::string, Teuchos::RCP<Intrepid::FieldContainer<RealType> > >
   Albany::StateVariables oldState = *workset.oldState;
-  const Intrepid::FieldContainer<RealType>& oldDefGrad  = *oldState[defgradName];
+  const Intrepid::FieldContainer<RealType>& oldDefGrad  = *oldState[defGradName];
   const Intrepid::FieldContainer<RealType>& oldStress  = *oldState[stressName];
 
   // \todo Get actual time step for calls to LAME materials.

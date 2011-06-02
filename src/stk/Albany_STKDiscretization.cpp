@@ -144,8 +144,8 @@ Albany::STKDiscretization::STKDiscretization(
      for (unsigned int j=0; j<bpv.size(); j++) {
        if (bpv[j]->primary_entity_rank() == metaData.element_rank()) {
          if (bpv[j]->name()[0] != '{') {
-           cout << "Bucket " << i << " is in Element Block:  " << bpv[j]->name() 
-                << "  and has " << buckets[i]->size() << " elements." << endl;
+           // cout << "Bucket " << i << " is in Element Block:  " << bpv[j]->name() 
+           //      << "  and has " << buckets[i]->size() << " elements." << endl;
            wsEBNames[i]=bpv[j]->name();
          }
        }

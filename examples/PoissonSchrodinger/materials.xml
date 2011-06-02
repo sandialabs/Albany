@@ -31,7 +31,7 @@
 
     <ParameterList name="sio2.quantum">
       <Parameter name="material" type="string" value="SiliconDioxide" />
-      <Parameter name="quantum" type="bool" value="false" />
+      <Parameter name="quantum" type="bool" value="true" />
     </ParameterList>
 
 
@@ -98,7 +98,7 @@
       <Parameter name="Band Gap" type="double" value="9.0" />
 
       <!-- Electron affinity in [eV] -->
-      <Parameter name="Electron Affinity" type="double" value="3.0" />
+      <Parameter name="Electron Affinity" type="double" value="1.0" />
     </ParameterList>
 
 
