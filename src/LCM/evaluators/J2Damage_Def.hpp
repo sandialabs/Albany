@@ -20,6 +20,8 @@
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 
+#include <typeinfo>
+
 namespace LCM {
 
 //**********************************************************************
@@ -50,6 +52,8 @@ J2Damage(const Teuchos::ParameterList& p) :
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   seff             (p.get<std::string>                   ("Effective Stress Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  energy           (p.get<std::string>                   ("Energy Name"),
+	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   Fp               (p.get<std::string>                   ("Fp Name"),
                     p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
   eqps             (p.get<std::string>                   ("Eqps Name"),
@@ -75,12 +79,12 @@ J2Damage(const Teuchos::ParameterList& p) :
   this->addDependentField(satExp);
   this->addDependentField(damage);
 
-
   fpName = p.get<std::string>("Fp Name");
   eqpsName = p.get<std::string>("Eqps Name");
   this->addEvaluatedField(stress);
   this->addEvaluatedField(dp);
   this->addEvaluatedField(seff);
+  this->addEvaluatedField(energy);
   this->addEvaluatedField(Fp);
   this->addEvaluatedField(eqps);
 
@@ -102,6 +106,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(stress,fm);
   this->utils.setFieldData(dp,fm);
   this->utils.setFieldData(seff,fm);
+  this->utils.setFieldData(energy,fm);
   this->utils.setFieldData(defgrad,fm);
   this->utils.setFieldData(J,fm);
   this->utils.setFieldData(bulkModulus,fm);
@@ -120,16 +125,18 @@ template<typename EvalT, typename Traits>
 void J2Damage<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  bool print = false;
+  //if (typeid(ScalarT) == typeid(RealType)) print = true;
+
   typedef Intrepid::FunctionSpaceTools FST;
   typedef Intrepid::RealSpaceTools<ScalarT> RST;
 
-  ScalarT kappa;
+  ScalarT kappa, H, H2, phi, phi_old;
   ScalarT mu, mubar;
   ScalarT K, Y, siginf, delta;
   ScalarT Jm23;
   ScalarT trd3;
   ScalarT smag, f, p, dgam;
-  ScalarT exph;
   ScalarT sq23 = std::sqrt(2./3.);
 
   //bool saveState = (workset.newState != Teuchos::null);
@@ -139,6 +146,7 @@ evaluateFields(typename Traits::EvalData workset)
   Albany::StateVariables  oldState = *workset.oldState;
   Intrepid::FieldContainer<RealType>& Fpold   = *oldState[fpName];
   Intrepid::FieldContainer<RealType>& eqpsold = *oldState[eqpsName];
+  Intrepid::FieldContainer<RealType>& phi_old_FC = *oldState["Damage"];
 
   // compute Cp_{n}^{-1}
   RST::inverse(Fpinv, Fpold);
@@ -197,12 +205,12 @@ evaluateFields(typename Traits::EvalData workset)
       siginf = satMod(cell,qp);
       delta  = satExp(cell,qp);
       Jm23   = std::pow( J(cell,qp), -2./3. );
-      exph   = std::exp( damage(cell,qp) );
+      phi_old = phi_old_FC(cell,qp);
+      //phi    = std::max( phi_old, damage(cell,qp) );
+      phi    = damage(cell,qp);
+      H      = ( 1.0 - phi );
+      H2     = H*H;
 
-      // std::cout << "kappa: " << Sacado::ScalarValue<ScalarT>::eval(kappa) << std::endl;
-      // std::cout << "mu   : " << Sacado::ScalarValue<ScalarT>::eval(mu) << std::endl;
-      // std::cout << "K    : " << Sacado::ScalarValue<ScalarT>::eval(K) << std::endl;
-      // std::cout << "Y    : " << Sacao::ScalarValue<ScalarT>::eval(Y) << std::endl;
       be.clear();
       // Compute Trial State      
       for (std::size_t i=0; i < numDims; ++i)
@@ -230,7 +238,7 @@ evaluateFields(typename Traits::EvalData workset)
       // std::cout << "Y      : " << Sacado::ScalarValue<ScalarT>::eval(Y) << std::endl;
       // std::cout << "f      : " << Sacado::ScalarValue<ScalarT>::eval(f) << std::endl;
 
-      if (f > 1E-12)
+      if (f > 1E-8)
       {
 	// return mapping algorithm
 	bool converged = false;
@@ -261,7 +269,7 @@ evaluateFields(typename Traits::EvalData workset)
 	  dg = -2. * mubar * ( 1. + dH / ( 3. * mubar ) );
 
 	  res = std::abs(g);
-	  if ( res < 1.e-12 || res/f < 1.e-12 )
+	  if ( res < 1.e-8 || res/f < 1.e-8 )
 	    converged = true;
 
 	  TEST_FOR_EXCEPTION( count > 50, std::runtime_error,
@@ -311,6 +319,7 @@ evaluateFields(typename Traits::EvalData workset)
       else
       {
 	// set state variables to old values
+	dp(cell, qp) = 0.0;
 	eqps(cell, qp) = eqpsold(cell,qp);
 	for (std::size_t i=0; i < numDims; ++i)	
 	  for (std::size_t j=0; j < numDims; ++j)
@@ -320,19 +329,47 @@ evaluateFields(typename Traits::EvalData workset)
 
       // compute pressure
       p = kappa * ( J(cell,qp) - 1 / ( J(cell,qp) ) );
-      
+
       // compute stress
       for (std::size_t i=0; i < numDims; ++i)	
       {
 	for (std::size_t j=0; j < numDims; ++j)
 	{
 	  stress(cell,qp,i,j) = s(i,j) / J(cell,qp);
+	  //stress(cell,qp,i,j) = s(i,j) / Je;
 	}
 	stress(cell,qp,i,i) += p;
       }
 
+      // scale stress by damage
+      for (std::size_t i=0; i < numDims; ++i)	
+	for (std::size_t j=0; j < numDims; ++j)	
+	  stress(cell,qp,i,j) *= H2;
+
+      // update be
+      be = ScalarT(1/mu)*s + trd3*eye<ScalarT>();
+
+      // compute energy
+      energy(cell,qp) = 0.5*kappa*(0.5*(J(cell,qp)*J(cell,qp)-1.0)-std::log(J(cell,qp)))
+	+ 0.5*mu*(trace(be) - 3.0);
+
       // compute seff for damage coupling
       seff(cell,qp) = norm( ScalarT( 1.0 / J(cell,qp) ) * s );
+
+      if (print)
+      {
+        cout << "********" << endl;
+	cout << "damage : " << damage(cell,qp) << endl;
+	cout << "phi    : " << phi << endl;
+	cout << "H2     : " << H2 << endl;
+	cout << "stress : ";
+	for (std::size_t i=0; i < numDims; ++i)	
+	  for (std::size_t j=0; j < numDims; ++j)	
+	    cout << stress(cell,qp,i,j) << " ";
+	cout << endl;
+	cout << "energy : " << energy(cell,qp) << endl;
+	cout << "dp     : " << dp(cell,qp) << endl;
+      }
     }
   }
 }

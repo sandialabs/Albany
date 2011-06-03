@@ -65,6 +65,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;
   PHX::MDField<ScalarT,Cell,QuadPoint> dp;
   PHX::MDField<ScalarT,Cell,QuadPoint> seff;
+  PHX::MDField<ScalarT,Cell,QuadPoint> energy;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> Fp;
   PHX::MDField<ScalarT,Cell,QuadPoint> eqps;
 

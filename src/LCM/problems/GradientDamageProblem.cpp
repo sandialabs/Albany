@@ -53,7 +53,7 @@ GradientDamageProblem(
 
   // check matModel
   //if (matModel == "NeoHookean") 
-  this->nstates=2*numDim*numDim+1;
+  this->nstates=2*numDim*numDim+3;
 
   *out << "Num States to Store: " << this->nstates << std::endl;
 
@@ -456,6 +456,7 @@ Albany::GradientDamageProblem::constructEvaluators(
     p->set<string>("Stress Name", "Stress"); //qp_tensor also
     p->set<string>("DP Name", "DP"); // qp_scalar also
     p->set<string>("Effective Stress Name", "Effective Stress"); // qp_scalar also
+    p->set<string>("Energy Name", "Energy"); // qp_scalar also
 
     p->set<string>("Fp Name", "Fp");  // qp_tensor also
     p->set<string>("Eqps Name", "eqps");  // qp_scalar also
@@ -610,16 +611,25 @@ Albany::GradientDamageProblem::constructEvaluators(
     p->set<int>("Type", type);
 
     //Input
+    RealType gc = params->get("gc", 1.0);
+    p->set<RealType>("gc Name", gc);
     p->set<string>("Bulk Modulus Name", "Bulk Modulus");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
     p->set<string>("Damage Name", "Damage");
     p->set<string>("DP Name", "DP");
     p->set<string>("Effective Stress Name", "Effective Stress");
+    p->set<string>("Energy Name", "Energy");
     p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient");
+    p->set<string>("Damage Length Scale Name", "Damage Length Scale");
 
     //Output
     p->set<string>("Damage Source Name", "Damage Source");
 
+    int issf = FactoryTraits<AlbanyTraits>::id_savestatefield;
+    evaluators_to_build["Save Damage Source"] =
+      stateMgr.registerStateVariable("Damage Source",qp_scalar, dummy, issf,"zero");
+    evaluators_to_build["Save Damage"] =
+      stateMgr.registerStateVariable("Damage",qp_scalar, dummy, issf,"zero");
     evaluators_to_build["Damage Source"] = p;
   }
 
@@ -630,6 +640,8 @@ Albany::GradientDamageProblem::constructEvaluators(
     p->set<int>("Type", type);
 
     //Input
+    RealType gc = params->get("gc", 0.0);
+    p->set<RealType>("gc Name", gc);
     p->set<string>("Weighted BF Name", "wBF");
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
     p->set<string>("QP Variable Name", "Damage");
@@ -742,6 +754,7 @@ Albany::GradientDamageProblem::getValidProblemParameters() const
   validPL->sublist("Yield Strength", false, "");
   validPL->sublist("Saturation Modulus", false, "");
   validPL->sublist("Saturation Exponent", false, "");
+  validPL->set<double>("gc", false, "");
   validPL->set<bool>("avgJ", false, "Flag to indicate the J should be averaged");
   validPL->set<bool>("volavgJ", false, "Flag to indicate the J should be volume averaged");
   validPL->set<bool>("Use Composite Tet 10", false, "Flag to use the compostie tet 10 basis in Intrepid");
