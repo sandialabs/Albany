@@ -27,7 +27,8 @@ namespace Albany {
 
     public:
 
-    Line1DSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params);
+    Line1DSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
+                  const Teuchos::RCP<const Epetra_Comm>& comm);
 
     ~Line1DSTKMeshStruct() {};
 
@@ -44,6 +45,8 @@ namespace Albany {
 
     bool periodic;
 
+    int nelem;
+    Teuchos::RCP<Epetra_Map> elem_map;
   };
 
 }

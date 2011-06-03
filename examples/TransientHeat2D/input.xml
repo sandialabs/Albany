@@ -2,7 +2,6 @@
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Heat 2D"/>
     <Parameter name="Solution Method" type="string" value="Transient"/>
-    <Parameter name="Workset Size" type="int" value="50"/>
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS NodeSet0 for DOF T" type="double" value="0.0"/>
       <Parameter name="DBC on NS NodeSet1 for DOF T" type="double" value="0.0"/>
@@ -28,6 +27,7 @@
     <Parameter name="2D Elements" type="int" value="60"/>
     <Parameter name="1D Scale" type="double" value="10.0"/>
     <Parameter name="2D Scale" type="double" value="1.0"/>
+    <Parameter name="Workset Size" type="int" value="50"/>
     <Parameter name="Method" type="string" value="STK2D"/>
     <Parameter name="Exodus Output File Name" type="string" value="tran2d.exo"/>
   </ParameterList>

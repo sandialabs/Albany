@@ -75,12 +75,15 @@ namespace Albany {
   // Container for mesh specification info needed to construct an Albany Problem
   struct MeshSpecsStruct {
     MeshSpecsStruct(const CellTopologyData& ctd_, int numDim_, 
-                    int cubatureDegree_, std::vector<std::string> nsNames_)
-       :  ctd(ctd_), numDim(numDim_), cubatureDegree(cubatureDegree_), nsNames(nsNames_) {}
+                    int cubatureDegree_, std::vector<std::string> nsNames_,
+                    int worsetSize_)
+       :  ctd(ctd_), numDim(numDim_), cubatureDegree(cubatureDegree_),
+          nsNames(nsNames_), worksetSize(worsetSize_) {}
     const CellTopologyData ctd;
     int numDim;
     int cubatureDegree;
     std::vector<std::string> nsNames;  //Node Sets Names
+    int worksetSize;
   };
 
 }

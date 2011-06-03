@@ -35,9 +35,9 @@
 #endif
 
 Albany::Cube3DSTKMeshStruct::Cube3DSTKMeshStruct(
-                  const Teuchos::RCP<Teuchos::ParameterList>& params) :
-  GenericSTKMeshStruct(params,3),
-  periodic(false)
+                  const Teuchos::RCP<Teuchos::ParameterList>& params,
+                  const Teuchos::RCP<const Epetra_Comm>& comm) :
+  GenericSTKMeshStruct(params,3)
 {
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
@@ -54,8 +54,20 @@ Albany::Cube3DSTKMeshStruct::Cube3DSTKMeshStruct(
   stk::mesh::fem::set_cell_topology< shards::Hexahedron<8> >(*partVec[0]);
 
   int cub = params->get("Cubature Degree",3);
+  int worksetSizeMax = params->get("Workset Size",50);
   const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
-  this->meshSpecs = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub, nsNames));
+
+  // Create just enough of the mesh to figure out number of owned elements 
+  // so that the problem setup can know the worksetSize
+  nelem_x = params->get<int>("1D Elements");
+  nelem_y = params->get<int>("2D Elements");
+  nelem_z = params->get<int>("3D Elements");
+  elem_map = Teuchos::rcp(new Epetra_Map(nelem_x * nelem_y * nelem_z, 0, *comm));
+
+  int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_map->NumMyElements());
+
+  // MeshSpecs holds all info needed to set up an Albany problem
+  this->meshSpecs = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub, nsNames, worksetSize));
 }
 
 void
@@ -65,12 +77,7 @@ Albany::Cube3DSTKMeshStruct::setFieldAndBulkData(
                   const unsigned int neq_, const unsigned int nstates_,
                   const unsigned int worksetSize)
 {
-  cout << "XXX Cube3DSTKMeshStruct::setFieldAndBulkData " << endl;
-
   // Create global mesh: 3D structured, rectangular
-  int nelem_x = params->get<int>("1D Elements");
-  int nelem_y = params->get<int>("2D Elements");
-  int nelem_z = params->get<int>("3D Elements");
   double scale_x = params->get("1D Scale",     1.0);
   double scale_y = params->get("2D Scale",     1.0);
   double scale_z = params->get("3D Scale",     1.0);
@@ -92,10 +99,6 @@ Albany::Cube3DSTKMeshStruct::setFieldAndBulkData(
   double h_z = scale_z/nelem_z;
   for (int i=0; i<=nelem_z; i++) z[i] = h_z*i;
 
-  // Distribute rectangle mesh of elements equally among processors
-  Teuchos::RCP<Epetra_Map> elem_map = Teuchos::rcp(new Epetra_Map(nelem_x * nelem_y * nelem_z, 0, *comm));
-  int numMyElements = elem_map->NumMyElements();
-
   this->SetupFieldData(comm, neq_, nstates_, worksetSize);
 
   metaData->commit();
@@ -108,7 +111,7 @@ Albany::Cube3DSTKMeshStruct::setFieldAndBulkData(
   const unsigned int nodes_x = nelem_x + 1;
   const unsigned int nodes_xy = nodes_x*(nelem_y + 1);
   // Create elements and node IDs
-  for (int i=0; i<numMyElements; i++) {
+  for (int i=0; i<elem_map->NumMyElements(); i++) {
     const unsigned int elem_GID = elem_map->GID(i);
     const unsigned int z_GID = elem_GID / (nelem_x*nelem_y); // mesh column number
     const unsigned int xy_plane = elem_GID % (nelem_x*nelem_y); 
@@ -219,8 +222,6 @@ Albany::Cube3DSTKMeshStruct::getValidDiscretizationParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getValidGenericSTKParameters("ValidSTK3D_DiscParams");
-// AGS: 5/10: Periodic not implemented for 3D
-//  validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic a mesh");
   validPL->set<int>("1D Elements", 0, "Number of Elements in X discretization");
   validPL->set<int>("2D Elements", 0, "Number of Elements in Y discretization");
   validPL->set<int>("3D Elements", 0, "Number of Elements in Z discretization");

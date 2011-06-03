@@ -3,7 +3,6 @@
     <Parameter name="Name" type="string" value="GradientDamage"/>
     <Parameter name="Solution Method" type="string" value="Steady"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
-    <Parameter name="Workset Size" type="int" value="1"/>
     <ParameterList name="Dirichlet BCs">
       <!-- Uniaxial Extension Boundary Conditions on a Cube -->
       <Parameter name="DBC on NS NodeSet0 for DOF X" type="double" value="0.0"/>
@@ -40,6 +39,7 @@
     <Parameter name="1D Elements" type="int" value="2"/>
     <Parameter name="2D Elements" type="int" value="2"/>
     <Parameter name="3D Elements" type="int" value="2"/>
+    <Parameter name="Workset Size" type="int" value="10"/>
     <Parameter name="Method" type="string" value="STK3D"/>
     <Parameter name="Exodus Output File Name" type="string" value="cube.e"/>
   </ParameterList>

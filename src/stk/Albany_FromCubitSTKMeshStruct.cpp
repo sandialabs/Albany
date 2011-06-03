@@ -43,8 +43,7 @@ enum { field_data_chunk_size = 1001 };
 Albany::FromCubitSTKMeshStruct::FromCubitSTKMeshStruct(
                   const Teuchos::RCP<CUTR::CubitMeshMover>& meshMover, 
                   const Teuchos::RCP<Teuchos::ParameterList>& params, 
-                  const unsigned int neq_, const unsigned int nstates_,
-                  const unsigned int worksetSize) :
+                  const unsigned int neq_, const unsigned int nstates_) :
   periodic(params->get("Periodic BC", false))
 {
   params->validateParameters(*getValidDiscretizationParameters(),0);

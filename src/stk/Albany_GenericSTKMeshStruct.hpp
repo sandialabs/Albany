@@ -34,7 +34,7 @@ namespace Albany {
                   const Teuchos::RCP<const Epetra_Comm>& comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_, const unsigned int nstates_,
-                  const unsigned int worksetSize) { cout << "Error: In GenericSTKMeshStruct setFieldAndBulkData" << endl; throw 3;};
+                  const unsigned int worksetSize) = 0;
 
     const Teuchos::RCP<Albany::MeshSpecsStruct>& getMeshSpecs() const;
 
@@ -49,6 +49,9 @@ namespace Albany {
                   const int worksetSize_);
 
     void DeclareParts(std::vector<std::string> nsNames);
+
+    //! Utility function that uses some integer arithmetic to choose a good worksetSize
+    int computeWorksetSize(const int worksetSizeMax, const int ebSizeMax) const;
 
     ~GenericSTKMeshStruct();
 

@@ -35,8 +35,8 @@
 #include "Albany_Utils.hpp"
 
 Albany::IossSTKMeshStruct::IossSTKMeshStruct(
-		  const Teuchos::RCP<const Epetra_Comm>& comm,
-                  const Teuchos::RCP<Teuchos::ParameterList>& params) :
+                  const Teuchos::RCP<Teuchos::ParameterList>& params,
+		  const Teuchos::RCP<const Epetra_Comm>& comm) :
   GenericSTKMeshStruct(params),
   periodic(params->get("Periodic BC", false)),
   out(Teuchos::VerboseObjectBase::getDefaultOStream())
@@ -97,10 +97,26 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     }
   }
 
-  // Construct MeshSpecsStruct
   int cub = params->get("Cubature Degree",3);
+  int worksetSizeMax = params->get("Workset Size",50);
   const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
-  this->meshSpecs = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub, nsNames));
+
+  // Get number of elements per element block using Ioss for use
+  // in calculating an upper bound on the worksetSize.
+  std::vector<int> el_blocks;
+  stk::io::get_element_block_sizes(*mesh_data, el_blocks);
+  TEST_FOR_EXCEPT(el_blocks.size() != partVec.size());
+
+for (int i=0; i<el_blocks.size(); i++) cout << "BBB " << comm->MyPID() << "el block size " << el_blocks[i] << endl;
+cout << "BBBBB " <<  comm->MyPID() << " Max is " << *std::max_element(el_blocks.begin(),el_blocks.end()) << endl;;
+
+  int ebSizeMax =  *std::max_element(el_blocks.begin(),el_blocks.end());
+
+  int worksetSize = this->computeWorksetSize(worksetSizeMax, ebSizeMax);
+cout << "BBBCC " <<  comm->MyPID() << " Resized to  " << worksetSize << endl;
+
+  // Construct MeshSpecsStruct
+  this->meshSpecs = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub, nsNames, worksetSize));
 }
 
 void
@@ -110,8 +126,6 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
                   const unsigned int neq_, const unsigned int nstates_,
                   const unsigned int worksetSize)
 {
-  cout << "XXX IossSTKMeshStruct::setFieldAndBulkData " << endl;
-
   this->SetupFieldData(comm, neq_, nstates_, worksetSize);
 
   *out << "IOSS-STK: number of node sets = " << nsPartVec.size() << endl;

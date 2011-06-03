@@ -9,8 +9,6 @@
     <Parameter name="Solution Method" type="string" value="Steady"/>
     <!-- Have Phalanx output a graph of the used evaluators -->
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
-    <!-- Sets the number of elements per workset -->
-    <Parameter name="Workset Size" type="int" value="10"/>
 
     <!-- BOUNDARY CONDITIONS on node sets from the discretization which follows -->
     <ParameterList name="Dirichlet BCs">
@@ -58,6 +56,8 @@
     <Parameter name="Method" type="string" value="Exodus"/>
     <Parameter name="Exodus Input File Name" type="string" value="K_field.g"/>
     <Parameter name="Exodus Output File Name" type="string" value="K_field.e"/>
+    <!-- Sets the number of elements per workset -->
+    <Parameter name="Workset Size" type="int" value="10"/>
   </ParameterList>
   <!-- REGRESSION comparison of the RESPONSE FUNCTION declared above-->
   <ParameterList name="Regression Results">

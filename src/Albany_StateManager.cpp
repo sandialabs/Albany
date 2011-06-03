@@ -85,7 +85,8 @@ Albany::StateManager::allocateStateVariables(const int numWorksets)
     std::vector<PHX::DataLayout::size_type> dims;
     st->second->dimensions(dims);
 
-    *out << "StateManager: allocating space for state:  " << st->first << std::endl;
+    *out << "StateManager: allocating space for state:  " << st->first 
+         << " with Layout " << *st->second << std::endl;
 
     for (int ws = 0; ws < numWorksets; ws++)
     {

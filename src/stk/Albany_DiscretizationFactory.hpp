@@ -41,7 +41,8 @@ namespace Albany {
 
     //! Default constructor
     DiscretizationFactory(
-	      const Teuchos::RCP<Teuchos::ParameterList>& discParams);
+	      const Teuchos::RCP<Teuchos::ParameterList>& discParams,
+              const Teuchos::RCP<const Epetra_Comm>& epetra_comm);
 
     //! Destructor
     ~DiscretizationFactory() {}
@@ -51,20 +52,11 @@ namespace Albany {
     void setMeshMover(const Teuchos::RCP<CUTR::CubitMeshMover>& meshMover_);
 #endif
 
-    Teuchos::RCP<Albany::AbstractDiscretization>
-    create(unsigned int num_equations,unsigned int num_states,
-           unsigned int worksetSize,
-           const Teuchos::RCP<const Epetra_Comm>& epetra_comm);
-
-    const Teuchos::RCP<Albany::MeshSpecsStruct>
-    createMeshSpecs(unsigned int num_equations,unsigned int num_states,
-           unsigned int worksetSize,
-           const Teuchos::RCP<const Epetra_Comm>& epetra_comm);
+    const Teuchos::RCP<Albany::MeshSpecsStruct> createMeshSpecs();
 
     Teuchos::RCP<Albany::AbstractDiscretization>
     createDiscretization(unsigned int num_equations,unsigned int num_states,
-           unsigned int worksetSize,
-           const Teuchos::RCP<const Epetra_Comm>& epetra_comm);
+           unsigned int worksetSize);
 
 
 
@@ -80,6 +72,7 @@ namespace Albany {
 
     //! Parameter list specifying what element to create
     Teuchos::RCP<Teuchos::ParameterList> discParams;
+    Teuchos::RCP<const Epetra_Comm> epetra_comm;
 
 #ifdef ALBANY_CUTR
     Teuchos::RCP<CUTR::CubitMeshMover> meshMover;
