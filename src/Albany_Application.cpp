@@ -112,8 +112,10 @@ Albany::Application::Application(
   const Teuchos::RCP<Albany::MeshSpecsStruct> meshSpecs = discFactory.createMeshSpecs();
   worksetSize = meshSpecs->worksetSize;
 
+  problem->buildProblem(*meshSpecs, stateMgr, responses);
+
   // Create the full mesh
-  disc = discFactory.createDiscretization(neq, problem->numStates(), worksetSize);
+  disc = discFactory.createDiscretization(neq, stateMgr.getStateInfoStruct());
 
   // Load connectivity map and coordinates 
   wsElNodeID = disc->getWsElNodeID();
@@ -151,8 +153,6 @@ Albany::Application::Application(
     initial_x_dot->Export(*overlapped_xdot, *exporter, Insert);
   }
 
-  problem->buildProblem(worksetSize, stateMgr, *disc, responses);
-  
   stateMgr.setDiscretization(disc);
   stateMgr.allocateStateVariables(numWorksets);
   stateMgr.initializeStateVariables(numWorksets);

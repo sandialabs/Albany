@@ -16,7 +16,6 @@
 
 #include "LCM/LCM_FactoryTraits.hpp"
 #include "NonlinearElasticityProblem.hpp"
-#include "Albany_BoundaryFlux1DResponseFunction.hpp"
 #include "Albany_SolutionAverageResponseFunction.hpp"
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
 #include "Albany_Utils.hpp"
@@ -60,18 +59,13 @@ Albany::NonlinearElasticityProblem::
 void
 Albany::NonlinearElasticityProblem::
 buildProblem(
-    const int worksetSize,
+    const Albany::MeshSpecsStruct& meshSpecs,
     Albany::StateManager& stateMgr,
-    const Albany::AbstractDiscretization& disc,
     std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
   /* Construct All Phalanx Evaluators */
-  constructEvaluators(worksetSize, disc.getCubatureDegree(), disc.getCellTopologyData(), stateMgr);
-  constructDirichletEvaluators(disc.getNodeSetIDs());
-
-  const Epetra_Map& dofMap = *(disc.getMap());
-  int left_node = dofMap.MinAllGID();
-  int right_node = dofMap.MaxAllGID();
+  constructEvaluators(meshSpecs, stateMgr);
+  constructDirichletEvaluators(meshSpecs.nsNames);
 
   // Build response functions
   Teuchos::ParameterList& responseList = params->sublist("Response Functions");
@@ -80,17 +74,7 @@ buildProblem(
   for (int i=0; i<num_responses; i++) {
      std::string name = responseList.get(Albany::strint("Response",i), "??");
 
-     if (name == "Boundary Flux 1D") {
-       // Need real size, not 1.0
-       double h =  1.0 / (dofMap.NumGlobalElements() - 1);
-       responses[i] =
-         Teuchos::rcp(new BoundaryFlux1DResponseFunction(left_node,
-                                                         right_node,
-                                                         0, 1, h,
-                                                         dofMap));
-     }
-
-     else if (name == "Solution Average")
+     if (name == "Solution Average")
        responses[i] = Teuchos::rcp(new SolutionAverageResponseFunction());
 
      else if (name == "Solution Two Norm")
@@ -110,8 +94,8 @@ buildProblem(
 
 void
 Albany::NonlinearElasticityProblem::constructEvaluators(
-       const int worksetSize, const int cubDegree,
-       const CellTopologyData& ctd, Albany::StateManager& stateMgr)
+       const Albany::MeshSpecsStruct& meshSpecs,
+       Albany::StateManager& stateMgr)
 {
    using Teuchos::RCP;
    using Teuchos::rcp;
@@ -125,17 +109,18 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
 
    const bool composite = params->get("Use Composite Tet 10", false);
    RCP<shards::CellTopology> comp_cellType = rcp(new shards::CellTopology( shards::getCellTopologyData<shards::Tetrahedron<11> >() ) );
-   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&ctd));
+   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
 
    RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
-     intrepidBasis = this->getIntrepidBasis(ctd, composite);
+     intrepidBasis = this->getIntrepidBasis(meshSpecs.ctd, composite);
 
-   if (composite && ctd.dimension==3 && ctd.node_count==10) cellType = comp_cellType;
+   if (composite && meshSpecs.ctd.dimension==3 && meshSpecs.ctd.node_count==10) cellType = comp_cellType;
 
    numNodes = intrepidBasis->getCardinality();
+   const int worksetSize = meshSpecs.worksetSize;
 
    Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-   RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, cubDegree);
+   RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
 
    numDim = cubature->getDimension();
    numQPts = cubature->getNumPoints();

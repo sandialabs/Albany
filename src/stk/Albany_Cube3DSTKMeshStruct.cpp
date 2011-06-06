@@ -74,7 +74,8 @@ void
 Albany::Cube3DSTKMeshStruct::setFieldAndBulkData(
                   const Teuchos::RCP<const Epetra_Comm>& comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_, const unsigned int nstates_,
+                  const unsigned int neq_,
+                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize)
 {
   // Create global mesh: 3D structured, rectangular
@@ -99,7 +100,7 @@ Albany::Cube3DSTKMeshStruct::setFieldAndBulkData(
   double h_z = scale_z/nelem_z;
   for (int i=0; i<=nelem_z; i++) z[i] = h_z*i;
 
-  this->SetupFieldData(comm, neq_, nstates_, worksetSize);
+  this->SetupFieldData(comm, neq_, sis, worksetSize);
 
   metaData->commit();
 

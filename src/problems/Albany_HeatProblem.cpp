@@ -16,9 +16,9 @@
 
 
 #include "Albany_HeatProblem.hpp"
-#include "Albany_BoundaryFlux1DResponseFunction.hpp"
 #include "Albany_SolutionAverageResponseFunction.hpp"
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
+#include "Albany_SolutionMaxValueResponseFunction.hpp"
 #include "Albany_InitialCondition.hpp"
 
 #include "Intrepid_FieldContainer.hpp"
@@ -55,19 +55,14 @@ Albany::HeatProblem::
 void
 Albany::HeatProblem::
 buildProblem(
-    const int worksetSize,
+    const Albany::MeshSpecsStruct& meshSpecs,
     Albany::StateManager& stateMgr,
-    const Albany::AbstractDiscretization& disc,
     std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
   /* Construct All Phalanx Evaluators */
-  constructEvaluators(worksetSize, disc.getCubatureDegree(), disc.getCellTopologyData());
-  constructDirichletEvaluators(disc.getNodeSetIDs());
+  constructEvaluators(meshSpecs);
+  constructDirichletEvaluators(meshSpecs.nsNames);
  
-  const Epetra_Map& dofMap = *(disc.getMap());
-  int left_node = dofMap.MinAllGID();
-  int right_node = dofMap.MaxAllGID();
-
   // Build response functions
   Teuchos::ParameterList& responseList = params->sublist("Response Functions");
   int num_responses = responseList.get("Number", 0);
@@ -75,21 +70,14 @@ buildProblem(
   for (int i=0; i<num_responses; i++) {
      std::string name = responseList.get(Albany::strint("Response",i), "??");
 
-     if (name == "Boundary Flux 1D" && numDim==1) {
-       // Need real size, not 1.0
-       double h =  1.0 / (dofMap.NumGlobalElements() - 1);
-       responses[i] =
-         Teuchos::rcp(new BoundaryFlux1DResponseFunction(left_node,
-                                                         right_node,
-                                                         0, 1, h,
-                                                         dofMap));
-     }
-
-     else if (name == "Solution Average")
+     if (name == "Solution Average")
        responses[i] = Teuchos::rcp(new SolutionAverageResponseFunction());
 
      else if (name == "Solution Two Norm")
        responses[i] = Teuchos::rcp(new SolutionTwoNormResponseFunction());
+
+     else if (name == "Solution Max Value")
+       responses[i] = Teuchos::rcp(new SolutionMaxValueResponseFunction());
 
      else {
        TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
@@ -104,8 +92,7 @@ buildProblem(
 
 
 void
-Albany::HeatProblem::constructEvaluators(
-       const int worksetSize, const int cubDegree, const CellTopologyData& ctd)
+Albany::HeatProblem::constructEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
 {
    using Teuchos::RCP;
    using Teuchos::rcp;
@@ -118,13 +105,14 @@ Albany::HeatProblem::constructEvaluators(
    using PHAL::AlbanyTraits;
 
    RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
-     intrepidBasis = this->getIntrepidBasis(ctd);
-   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&ctd));
+     intrepidBasis = this->getIntrepidBasis(meshSpecs.ctd);
+   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
 
    const int numNodes = intrepidBasis->getCardinality();
+   const int worksetSize = meshSpecs.worksetSize;
 
    Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-   RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, cubDegree);
+   RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
 
    const int numQPts = cubature->getNumPoints();
    const int numVertices = cellType->getNodeCount();

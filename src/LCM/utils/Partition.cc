@@ -142,7 +142,9 @@ namespace LCM {
 
     // 1 DOF per node
     // 1 internal variable (partition number)
-    discretization_ptr_ = disc_factory.createDiscretization(1, 1, worksetSize);
+    Teuchos::RCP<Albany::StateInfoStruct> sis = Teuchos::rcp(new Albany::StateInfoStruct());
+    sis->nstates = 1;
+    discretization_ptr_ = disc_factory.createDiscretization(1, sis);
 
     dimension_ = discretization_ptr_->getNumDim();
 

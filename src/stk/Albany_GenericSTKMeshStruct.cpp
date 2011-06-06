@@ -54,7 +54,8 @@ Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
 
 void Albany::GenericSTKMeshStruct::SetupFieldData(
 		  const Teuchos::RCP<const Epetra_Comm>& comm,
-                  const int neq_, const int nstates_,
+                  const int neq_,
+                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const int worksetSize) 
 {
   TEST_FOR_EXCEPTION(!metaData->is_FEM_initialized(),
@@ -62,7 +63,7 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
        "LogicError: metaData->FEM_initialize(numDim) not yet called" << std::endl);
 
   neq = neq_;
-  nstates = nstates_;
+  nstates = sis->nstates;
 
   if (bulkData ==  NULL)
   bulkData = new stk::mesh::BulkData(stk::mesh::fem::FEMMetaData::get_meta_data(*metaData),

@@ -32,7 +32,8 @@ namespace Albany {
     FromCubitSTKMeshStruct(
                   const Teuchos::RCP<CUTR::CubitMeshMover>& meshMover,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_, const unsigned int nstates_);
+                  const unsigned int neq_,
+                  const Teuchos::RCP<Albany::StateInfoStruct>& sis);
 
 
     ~FromCubitSTKMeshStruct();

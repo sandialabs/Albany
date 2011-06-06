@@ -47,9 +47,8 @@ namespace QCAD {
 
     //! Build the PDE instantiations, boundary conditions, and initial solution
     void buildProblem(
-       const int worksetSize,
+       const Albany::MeshSpecsStruct& meshSpecs,
        Albany::StateManager& stateMgr,
-       const Albany::AbstractDiscretization& disc,
        std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
 
     //! Each problem must generate it's list of valide parameters
@@ -63,10 +62,9 @@ namespace QCAD {
     //! Private to prohibit copying
     SchrodingerProblem& operator=(const SchrodingerProblem&);
 
-    void constructEvaluators(const int worksetSize,
-                             const int cubDegree,
-                             const CellTopologyData& ctd,
-			     Albany::StateManager& stateMgr);
+    void constructEvaluators(const Albany::MeshSpecsStruct& meshSpecs,
+                             Albany::StateManager& stateMgr);
+
   protected:
 
     bool havePotential;

@@ -55,8 +55,8 @@ namespace Albany {
     const Teuchos::RCP<Albany::MeshSpecsStruct> createMeshSpecs();
 
     Teuchos::RCP<Albany::AbstractDiscretization>
-    createDiscretization(unsigned int num_equations,unsigned int num_states,
-           unsigned int worksetSize);
+    createDiscretization(unsigned int num_equations,
+                         const Teuchos::RCP<Albany::StateInfoStruct>& sis);
 
 
 

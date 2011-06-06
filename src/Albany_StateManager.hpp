@@ -28,6 +28,7 @@
 #include "Albany_DataTypes.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "Albany_AbstractDiscretization.hpp"
+#include "Albany_StateInfoStruct.hpp"
 
 namespace Albany {
 
@@ -108,6 +109,8 @@ public:
   //! Method to set discretization object
   void setDiscretization(const Teuchos::RCP<Albany::AbstractDiscretization>& discObj) { disc = discObj; }
 
+  //! Method to get a StateInfoStruct of info needed by STK to output States as Fields
+  Teuchos::RCP<Albany::StateInfoStruct> getStateInfoStruct();
 
 private:
   //! Private to prohibit copying
@@ -115,6 +118,10 @@ private:
 
   //! Private to prohibit copying
   StateManager& operator=(const StateManager&);
+
+template<typename Tag0, typename Tag1, typename Tag2, typename Tag3,
+         typename Tag4, typename Tag5, typename Tag6, typename Tag7>
+std::string& getTagName(PHX::DataLayout& dl);
 
 private:
 
