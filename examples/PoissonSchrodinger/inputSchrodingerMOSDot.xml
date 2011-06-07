@@ -2,7 +2,6 @@
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Schrodinger 2D" />
     <Parameter name="Solution Method" type="string" value="Continuation"/>
-    <Parameter name="Workset Size" type="int" value="1000" />
 
     <Parameter name="EnergyUnitInElectronVolts" type="double" value="1"/>
     <Parameter name="LengthUnitInMeters" type="double" value="1e-6"/>
@@ -49,6 +48,7 @@
   <ParameterList name="Discretization">
     <Parameter name="Exodus Input File Name" type="string" value="mosDotQuantum.exo" />
     <Parameter name="Method" type="string" value="Ioss" />
+    <Parameter name="Workset Size" type="int" value="100" />
     <Parameter name="Exodus Output File Name" type="string" value="wavefunctions2D.exo" />
   </ParameterList>
 

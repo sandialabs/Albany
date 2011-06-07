@@ -69,8 +69,6 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
                     "Flag to select outpuy of Phalanx Graph and level of detail");
   validPL->set<bool>("Use Physics-Based Preconditioner", false, 
       "Flag to create signal that this problem will creat its own preconditioner");
-  validPL->set<int>("Workset Size", 0,
-                    "Choose size of elements to be processed together (0 for all at once)");
 
   validPL->sublist("Initial Condition", false, "");
   validPL->sublist("Initial Condition Dot", false, "");

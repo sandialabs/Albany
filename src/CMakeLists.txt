@@ -43,6 +43,7 @@ SET(HEADERS
 	Albany_RythmosObserver.hpp 
 	Albany_NOXObserver.hpp 
 	Albany_StateManager.hpp 
+        Albany_StateInfoStruct.hpp
 	Albany_VTK.hpp 
 	Albany_ModelEvaluator.hpp
 	Albany_SaveEigenData.hpp
@@ -73,7 +74,6 @@ SET(HEADERS ${HEADERS}
 
 #responses
 SET(SOURCES ${SOURCES}
-	responses/Albany_BoundaryFlux1DResponseFunction.cpp 
 	responses/Albany_SolutionAverageResponseFunction.cpp 
 	responses/Albany_SolutionMaxValueResponseFunction.cpp
 	responses/Albany_SolutionTwoNormResponseFunction.cpp
@@ -81,7 +81,6 @@ SET(SOURCES ${SOURCES}
   )
 SET(HEADERS ${HEADERS}
 	responses/Albany_AbstractResponseFunction.hpp 
-	responses/Albany_BoundaryFlux1DResponseFunction.hpp 
 	responses/Albany_SolutionAverageResponseFunction.hpp 
 	responses/Albany_SolutionMaxValueResponseFunction.hpp
 	responses/Albany_SolutionTwoNormResponseFunction.hpp
@@ -230,6 +229,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/BulkModulus.cpp
     ${LCM_DIR}/evaluators/ShearModulus.cpp
     ${LCM_DIR}/evaluators/KfieldBC.cpp
+    ${LCM_DIR}/evaluators/DislocationDensity.cpp
   )
 
   SET(HEADERS ${HEADERS}
@@ -283,6 +283,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/ShearModulus_Def.hpp
     ${LCM_DIR}/evaluators/KfieldBC.hpp 
     ${LCM_DIR}/evaluators/KfieldBC_Def.hpp
+    ${LCM_DIR}/evaluators/DislocationDensity.hpp
+    ${LCM_DIR}/evaluators/DislocationDensity_Def.hpp
   )
 
   #LCM utils

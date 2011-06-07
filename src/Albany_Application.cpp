@@ -103,14 +103,19 @@ Albany::Application::Application(
   // Create discretization object
   Teuchos::RCP<Teuchos::ParameterList> discParams = 
     Teuchos::rcpFromRef(params->sublist("Discretization"));
-  Albany::DiscretizationFactory discFactory(discParams);
+  Albany::DiscretizationFactory discFactory(discParams, comm);
 #ifdef ALBANY_CUTR
   discFactory.setMeshMover(meshMover);
 #endif
-  worksetSize = problemParams->get("Workset Size",100);
-  if (worksetSize < 1) { cout << "FIX ME " << endl; worksetSize = 1000;}
 
-  disc = discFactory.create(neq, problem->numStates(), worksetSize, comm);
+  // Get mesh specification object: worksetSize, cell topology, etc
+  const Teuchos::RCP<Albany::MeshSpecsStruct> meshSpecs = discFactory.createMeshSpecs();
+  worksetSize = meshSpecs->worksetSize;
+
+  problem->buildProblem(*meshSpecs, stateMgr, responses);
+
+  // Create the full mesh
+  disc = discFactory.createDiscretization(neq, stateMgr.getStateInfoStruct());
 
   // Load connectivity map and coordinates 
   wsElNodeID = disc->getWsElNodeID();
@@ -148,8 +153,6 @@ Albany::Application::Application(
     initial_x_dot->Export(*overlapped_xdot, *exporter, Insert);
   }
 
-  problem->buildProblem(worksetSize, stateMgr, *disc, responses);
-  
   stateMgr.setDiscretization(disc);
   stateMgr.allocateStateVariables(numWorksets);
   stateMgr.initializeStateVariables(numWorksets);

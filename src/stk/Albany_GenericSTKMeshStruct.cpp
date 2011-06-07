@@ -54,7 +54,8 @@ Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
 
 void Albany::GenericSTKMeshStruct::SetupFieldData(
 		  const Teuchos::RCP<const Epetra_Comm>& comm,
-                  const int neq_, const int nstates_,
+                  const int neq_,
+                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const int worksetSize) 
 {
   TEST_FOR_EXCEPTION(!metaData->is_FEM_initialized(),
@@ -62,7 +63,7 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
        "LogicError: metaData->FEM_initialize(numDim) not yet called" << std::endl);
 
   neq = neq_;
-  nstates = nstates_;
+  nstates = sis->nstates;
 
   if (bulkData ==  NULL)
   bulkData = new stk::mesh::BulkData(stk::mesh::fem::FEMMetaData::get_meta_data(*metaData),
@@ -125,6 +126,18 @@ Albany::GenericSTKMeshStruct::getMeshSpecs() const
   return meshSpecs;
 }
 
+int Albany::GenericSTKMeshStruct::computeWorksetSize(const int worksetSizeMax,
+                                                     const int ebSizeMax) const
+{
+  // Resize workset size down to maximum number in an element block
+  if (worksetSizeMax > ebSizeMax || worksetSizeMax < 1) return ebSizeMax;
+  else {
+     // compute numWorksets, and shrink workset size to minimize padding
+     const int numWorksets = 1 + (ebSizeMax-1) / worksetSizeMax;
+     return (1 + (ebSizeMax-1) /  numWorksets);
+  }
+}
+
 
 Teuchos::RCP<Teuchos::ParameterList>
 Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname) const
@@ -136,6 +149,7 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
   validPL->set<std::string>("Method", "",
     "The discretization method, parsed in the Discretization Factory");
   validPL->set<int>("Cubature Degree", 3, "Integration order sent to Intrepid");
+  validPL->set<int>("Workset Size", 50, "Upper bound on workset (bucket) size");
 
   return validPL;
 }

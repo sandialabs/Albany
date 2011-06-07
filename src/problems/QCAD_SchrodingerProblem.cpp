@@ -17,7 +17,6 @@
 
 #include "QCAD_SchrodingerProblem.hpp"
 #include "QCAD_MaterialDatabase.hpp"
-#include "Albany_BoundaryFlux1DResponseFunction.hpp"
 #include "Albany_SolutionAverageResponseFunction.hpp"
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
 #include "Albany_InitialCondition.hpp"
@@ -106,19 +105,14 @@ QCAD::SchrodingerProblem::
 void
 QCAD::SchrodingerProblem::
 buildProblem(
-    const int worksetSize,
+    const Albany::MeshSpecsStruct& meshSpecs,
     Albany::StateManager& stateMgr,
-    const Albany::AbstractDiscretization& disc,
     std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
   /* Construct All Phalanx Evaluators */
-  constructEvaluators(worksetSize, disc.getCubatureDegree(), disc.getCellTopologyData(),stateMgr);
-  constructDirichletEvaluators(disc.getNodeSetIDs());
+  constructEvaluators(meshSpecs,stateMgr);
+  constructDirichletEvaluators(meshSpecs.nsNames);
  
-  const Epetra_Map& dofMap = *(disc.getMap());
-  int left_node = dofMap.MinAllGID();
-  int right_node = dofMap.MaxAllGID();
-
   // Build response functions
   Teuchos::ParameterList& responseList = params->sublist("Response Functions");
   int num_responses = responseList.get("Number", 0);
@@ -126,17 +120,7 @@ buildProblem(
   for (int i=0; i<num_responses; i++) {
      std::string name = responseList.get(Albany::strint("Response",i), "??");
 
-     if (name == "Boundary Flux 1D" && numDim==1) {
-       // Need real size, not 1.0
-       double h =  1.0 / (dofMap.NumGlobalElements() - 1);
-       responses[i] =
-         Teuchos::rcp(new Albany::BoundaryFlux1DResponseFunction(left_node,
-                                                         right_node,
-                                                         0, 1, h,
-                                                         dofMap));
-     }
-
-     else if (name == "Solution Average")
+     if (name == "Solution Average")
        responses[i] = Teuchos::rcp(new Albany::SolutionAverageResponseFunction());
 
      else if (name == "Solution Two Norm")
@@ -156,8 +140,7 @@ buildProblem(
 
 void
 QCAD::SchrodingerProblem::constructEvaluators(
-       const int worksetSize, const int cubDegree,
-       const CellTopologyData& ctd,
+       const Albany::MeshSpecsStruct& meshSpecs,
        Albany::StateManager& stateMgr)
 {
    using Teuchos::RCP;
@@ -170,14 +153,15 @@ QCAD::SchrodingerProblem::constructEvaluators(
    using PHAL::FactoryTraits;
    using PHAL::AlbanyTraits;
 
-   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&ctd));
+   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
    RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
-     intrepidBasis = this->getIntrepidBasis(ctd);
+     intrepidBasis = this->getIntrepidBasis(meshSpecs.ctd);
 
    const int numNodes = intrepidBasis->getCardinality();
+   const int worksetSize = meshSpecs.worksetSize;
 
    Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-   RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, cubDegree);
+   RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
 
    const int numQPts = cubature->getNumPoints();
    const int numVertices = cellType->getNodeCount();

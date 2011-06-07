@@ -124,18 +124,27 @@ namespace LCM {
     disc_params->set<std::string>("Method", "Exodus");
     disc_params->set<std::string>("Exodus Input File Name", input_file);
     disc_params->set<std::string>("Exodus Output File Name", output_file);
+    // Max of 10000 workset size -- automatically resized down
+    disc_params->set<int>("Workset Size", 10000);
     //disc_params->print(std::cout);
 
     Teuchos::RCP<Epetra_Comm>
     communicator = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
 
     Albany::DiscretizationFactory
-    disc_factory(disc_params);
+    disc_factory(disc_params, communicator);
+
+    const Teuchos::RCP<Albany::MeshSpecsStruct>
+    meshSpecs = disc_factory.createMeshSpecs();
+
+    int 
+    worksetSize = meshSpecs->worksetSize;
 
     // 1 DOF per node
     // 1 internal variable (partition number)
-    // 10000 workset size
-    discretization_ptr_ = disc_factory.create(1, 1, 10000, communicator);
+    Teuchos::RCP<Albany::StateInfoStruct> sis = Teuchos::rcp(new Albany::StateInfoStruct());
+    sis->nstates = 1;
+    discretization_ptr_ = disc_factory.createDiscretization(1, sis);
 
     dimension_ = discretization_ptr_->getNumDim();
 

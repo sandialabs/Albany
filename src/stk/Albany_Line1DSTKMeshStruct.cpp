@@ -42,7 +42,8 @@
 
 
 Albany::Line1DSTKMeshStruct::Line1DSTKMeshStruct(
-		  const Teuchos::RCP<Teuchos::ParameterList>& params) :
+		  const Teuchos::RCP<Teuchos::ParameterList>& params,
+                  const Teuchos::RCP<const Epetra_Comm>& comm) :
   GenericSTKMeshStruct(params,1),
   periodic(params->get("Periodic BC", false))
 {
@@ -57,43 +58,45 @@ Albany::Line1DSTKMeshStruct::Line1DSTKMeshStruct(
 
   // Construct MeshSpecsStruct
   int cub = params->get("Cubature Degree",3);
+  int worksetSizeMax = params->get("Workset Size",50);
   const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
-  this->meshSpecs = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub, nsNames));
+
+  // Create just enough of the mesh to figure out number of owned elements 
+  // so that the problem setup can know the worksetSize
+  nelem = params->get<int>("1D Elements");
+  elem_map = Teuchos::rcp(new Epetra_Map(nelem, 0, *comm));
+
+  int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_map->NumMyElements());
+
+  // MeshSpecs holds all info needed to set up an Albany problem
+  this->meshSpecs = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub, nsNames, worksetSize));
 }
 
 void
 Albany::Line1DSTKMeshStruct::setFieldAndBulkData(
 		  const Teuchos::RCP<const Epetra_Comm>& comm,
 		  const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_, const unsigned int nstates_,
+                  const unsigned int neq_,
+                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize) 
 {
-  cout << "XXX Line1DSTKMeshStruct::setFieldAndBulkData " << endl;
-  this->SetupFieldData(comm, neq_, nstates_, worksetSize);
+  this->SetupFieldData(comm, neq_, sis, worksetSize);
   metaData->commit();
 
   // Create global mesh
-  const int nelem = params->get<int>("1D Elements");
   const double scale = params->get("1D Scale",     1.0);
   std::vector<double> x(nelem+1);
   double h = scale/nelem;
   for (int i=0; i<=nelem; i++) x[i] = h*i;
-
-  // Distribute the elements equally among processors
-  Teuchos::RCP<Epetra_Map> elem_map = Teuchos::rcp(new Epetra_Map(nelem, 0, *comm));
-  int numMyElements = elem_map->NumMyElements();
-
-  // Finished with metaData, now work on bulk data
 
   // STK
   bulkData->modification_begin(); // Begin modifying the mesh
   std::vector<stk::mesh::Part*> noPartVec;
   std::vector<stk::mesh::Part*> singlePartVec(1);
 
-
   unsigned int rightNode=0;
   // Create elements and node IDs
-  for (int i=0; i<numMyElements; i++) {
+  for (int i=0; i<elem_map->NumMyElements(); i++) {
     const unsigned int elem_GID = elem_map->GID(i);
     const unsigned int left_node  = elem_GID;
     unsigned int right_node = left_node+1;

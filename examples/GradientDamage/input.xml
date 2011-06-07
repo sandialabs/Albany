@@ -3,7 +3,6 @@
     <Parameter name="Name" type="string" value="GradientDamage"/>
     <Parameter name="Solution Method" type="string" value="Steady"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
-    <Parameter name="Workset Size" type="int" value="1"/>
     <ParameterList name="Dirichlet BCs">
       <!-- Uniaxial Extension Boundary Conditions on a Cube -->
       <Parameter name="DBC on NS NodeSet0 for DOF X" type="double" value="0.0"/>
@@ -40,12 +39,13 @@
     <Parameter name="1D Elements" type="int" value="2"/>
     <Parameter name="2D Elements" type="int" value="2"/>
     <Parameter name="3D Elements" type="int" value="2"/>
+    <Parameter name="Workset Size" type="int" value="10"/>
     <Parameter name="Method" type="string" value="STK3D"/>
     <Parameter name="Exodus Output File Name" type="string" value="cube.e"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{0.000570436826377}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{0.0246757149365}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-7"/>
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="1"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{0.125}"/>
@@ -143,6 +143,24 @@
       <Parameter name="Output Information" type="int" value="103"/>
       <Parameter name="Output Precision" type="int" value="3"/>
       <Parameter name="Output Processor" type="int" value="0"/>
+    </ParameterList>
+    <ParameterList name="Status Tests">
+      <Parameter name="Test Type" type="string" value="Combo"/>
+      <Parameter name="Combo Type" type="string" value="OR"/>
+      <Parameter name="Number of Tests" type="int" value="3"/>
+      <ParameterList name="Test 0">
+        <Parameter name="Test Type" type="string" value="NormF"/>
+        <Parameter name="Norm Type" type="string" value="Two Norm"/>
+        <Parameter name="Scale Type" type="string" value="Scaled"/>
+        <Parameter name="Tolerance" type="double" value="1e-8"/>
+      </ParameterList>
+      <ParameterList name="Test 1">
+        <Parameter name="Test Type" type="string" value="MaxIters"/>
+        <Parameter name="Maximum Iterations" type="int" value="8"/>
+      </ParameterList>
+      <ParameterList name="Test 2">
+        <Parameter name="Test Type" type="string" value="FiniteValue"/>
+      </ParameterList>
     </ParameterList>
     <ParameterList name="Solver Options">
       <Parameter name="Status Test Check Type" type="string" value="Minimal"/>

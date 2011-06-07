@@ -35,7 +35,8 @@
 #include "Albany_Utils.hpp"
 
 Albany::Rect2DSTKMeshStruct::Rect2DSTKMeshStruct(
-		  const Teuchos::RCP<Teuchos::ParameterList>& params) :
+		  const Teuchos::RCP<Teuchos::ParameterList>& params,
+                  const Teuchos::RCP<const Epetra_Comm>& comm) :
   GenericSTKMeshStruct(params,2),
   periodic(params->get("Periodic BC", false)),
   triangles(false)
@@ -62,22 +63,30 @@ Albany::Rect2DSTKMeshStruct::Rect2DSTKMeshStruct(
     stk::mesh::fem::set_cell_topology< shards::Quadrilateral<4> >(*partVec[0]);
 
   int cub = params->get("Cubature Degree",3);
+  int worksetSizeMax = params->get("Workset Size",50);
   const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
-  this->meshSpecs = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub, nsNames));
+
+  // Create just enough of the mesh to figure out number of owned elements 
+  // so that the problem setup can know the worksetSize
+  nelem_x = params->get<int>("1D Elements");
+  nelem_y = params->get<int>("2D Elements");
+  elem_map = Teuchos::rcp(new Epetra_Map(nelem_x * nelem_y, 0, *comm));
+
+  int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_map->NumMyElements());
+
+  // MeshSpecs holds all info needed to set up an Albany problem
+  this->meshSpecs = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub, nsNames, worksetSize));
 }
 
 void
 Albany::Rect2DSTKMeshStruct::setFieldAndBulkData(
                   const Teuchos::RCP<const Epetra_Comm>& comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_, const unsigned int nstates_,
+                  const unsigned int neq_,
+                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize)
 {
-  cout << "XXX Rect2DSTKMeshStruct::setFieldAndBulkData " << endl;
-
   // Create global mesh: 2D structured, rectangular
-  int nelem_x = params->get<int>("1D Elements");
-  int nelem_y = params->get<int>("2D Elements");
   double scale_x = params->get("1D Scale",     1.0);
   double scale_y = params->get("2D Scale",     1.0);
 
@@ -98,12 +107,7 @@ Albany::Rect2DSTKMeshStruct::setFieldAndBulkData(
   double h_y = scale_y/nelem_y;
   for (int i=0; i<=nelem_y; i++) y[i] = h_y*i;
 
-  // Distribute rectangle mesh of quad elements equally among processors
-  Teuchos::RCP<Epetra_Map> elem_map = Teuchos::rcp(new Epetra_Map(nelem_x * nelem_y, 0, *comm));
-  int numMyElements = elem_map->NumMyElements();
-
-
-  this->SetupFieldData(comm, neq_, nstates_, worksetSize);
+  this->SetupFieldData(comm, neq_, sis, worksetSize);
 
   metaData->commit();
 
@@ -118,7 +122,7 @@ Albany::Rect2DSTKMeshStruct::setFieldAndBulkData(
   const unsigned int nodes_x = periodic ? nelem_x : nelem_x + 1;
   const unsigned int mod_x   = periodic ? nelem_x : std::numeric_limits<unsigned int>::max();
   const unsigned int mod_y   = periodic ? nelem_y : std::numeric_limits<unsigned int>::max();
-  for (int i=0; i<numMyElements; i++) {
+  for (int i=0; i<elem_map->NumMyElements(); i++) {
     const unsigned int elem_GID = elem_map->GID(i);
     const unsigned int x_GID = elem_GID % nelem_x; // mesh column number
     const unsigned int y_GID = elem_GID / nelem_x; // mesh row number

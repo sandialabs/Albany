@@ -31,15 +31,16 @@ namespace Albany {
     public:
 
     IossSTKMeshStruct(
-                  const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
-                  const Teuchos::RCP<Teuchos::ParameterList>& params);
+                  const Teuchos::RCP<Teuchos::ParameterList>& params,
+                  const Teuchos::RCP<const Epetra_Comm>& epetra_comm);
 
     ~IossSTKMeshStruct() {};
 
     void setFieldAndBulkData(
                   const Teuchos::RCP<const Epetra_Comm>& comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_, const unsigned int nstates_,
+                  const unsigned int neq_,
+                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize);
 
     private:

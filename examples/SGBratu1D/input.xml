@@ -3,7 +3,6 @@
     <Parameter name="Stochastic" type="bool" value="false"/>
     <Parameter name="Name" type="string" value="Heat 1D"/>
     <Parameter name="Solution Method" type="string" value="Steady"/>
-    <Parameter name="Workset Size" type="int" value="10"/>
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS NodeSet0 for DOF T" type="double" value="0.0"/>
       <Parameter name="DBC on NS NodeSet1 for DOF T" type="double" value="0.1"/>
@@ -28,6 +27,7 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="1D Elements" type="int" value="100"/>
+    <Parameter name="Workset Size" type="int" value="10"/>
     <Parameter name="Method" type="string" value="STK1D"/>
   </ParameterList>
   <ParameterList name="Regression Results">

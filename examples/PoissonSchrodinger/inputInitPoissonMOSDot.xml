@@ -2,7 +2,6 @@
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Poisson 2D" />
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
-    <Parameter name="Workset Size" type="int" value="1000" />
 
     <Parameter name="LengthUnitInMeters" type="double" value="1e-6"/>
     <Parameter name="Temperature" type="double" value="300"/>
@@ -44,6 +43,7 @@
     <Parameter name="Exodus Input File Name" type="string" value="mosDotQuantum.exo" />
     <Parameter name="Method" type="string" value="Ioss" />
     <Parameter name="Exodus Output File Name" type="string" value="initpotential.exo" />
+    <Parameter name="Workset Size" type="int" value="100" />
   </ParameterList>
 
 

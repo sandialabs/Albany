@@ -15,33 +15,34 @@
 \********************************************************************/
 
 
-#ifndef J2DAMAGE_HPP
-#define J2SDAMAGE_HPP
+#ifndef DISLOCATIONDENSITY_HPP
+#define DISLOCATIONDENSITY_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-#include "Tensor.h"
 
-/** \brief J2Stress with damage dependent response
+#include "Intrepid_CellTools.hpp"
+#include "Intrepid_Cubature.hpp"
 
-    This evaluator computes stress based on a uncoupled J2Stress
-    potential
+/** \brief Dislocation Density Tensor
+
+    This evaluator calculates the dislcation density tensor
 
 */
 namespace LCM {
 
 template<typename EvalT, typename Traits>
-class J2Damage : public PHX::EvaluatorWithBaseImpl<Traits>,
-		 public PHX::EvaluatorDerived<EvalT, Traits>  {
+class DislocationDensity : public PHX::EvaluatorWithBaseImpl<Traits>,
+			   public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
-  J2Damage(const Teuchos::ParameterList& p);
+  DislocationDensity(const Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
+			     PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
@@ -49,41 +50,24 @@ private:
 
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
+  int  numVertices, numDims, numNodes, numQPs;
+  bool square;
 
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defgrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint> J;
-  PHX::MDField<ScalarT,Cell,QuadPoint> bulkModulus;
-  PHX::MDField<ScalarT,Cell,QuadPoint> shearModulus;
-  PHX::MDField<ScalarT,Cell,QuadPoint> yieldStrength;
-  PHX::MDField<ScalarT,Cell,QuadPoint> hardeningModulus;
-  PHX::MDField<ScalarT,Cell,QuadPoint> satMod;
-  PHX::MDField<ScalarT,Cell,QuadPoint> satExp;
-  PHX::MDField<ScalarT,Cell,QuadPoint> damage;
-
-  // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;
-  PHX::MDField<ScalarT,Cell,QuadPoint> dp;
-  PHX::MDField<ScalarT,Cell,QuadPoint> seff;
-  PHX::MDField<ScalarT,Cell,QuadPoint> energy;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> Fp;
-  PHX::MDField<ScalarT,Cell,QuadPoint> eqps;
+  PHX::MDField<ScalarT,Cell,Node,QuadPoint> BF;
+  PHX::MDField<ScalarT,Cell,Node,QuadPoint,Dim> GradBF;
 
-  std::string fpName, eqpsName;
-  unsigned int numQPs;
-  unsigned int numDims;
-
-  // scratch space FCs
-  Tensor<ScalarT> be;
-  Tensor<ScalarT> s;
-  Tensor<ScalarT> N;
-  Tensor<ScalarT> A;
-  Tensor<ScalarT> expA;
-
-  Intrepid::FieldContainer<ScalarT> Fpinv;
-  Intrepid::FieldContainer<ScalarT> FpinvT;
-  Intrepid::FieldContainer<ScalarT> Cpinv;
-
+  // Temporary FieldContainers
+  Intrepid::FieldContainer<ScalarT> BF_operator;
+  Intrepid::FieldContainer<ScalarT> BF_inverse;
+  Intrepid::FieldContainer<ScalarT> nodalFp;
+  Intrepid::FieldContainer<ScalarT> curlFp;
+  Intrepid::FieldContainer<ScalarT> A;
+  Intrepid::FieldContainer<ScalarT> Ainv;
+  
+  // Output:
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> G;
 };
 }
 

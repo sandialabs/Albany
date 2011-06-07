@@ -27,14 +27,16 @@ namespace Albany {
 
     public: 
 
-    Rect2DSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params);
+    Rect2DSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
+                  const Teuchos::RCP<const Epetra_Comm>& comm);
 
     ~Rect2DSTKMeshStruct() {};
 
     void setFieldAndBulkData(
                   const Teuchos::RCP<const Epetra_Comm>& comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_, const unsigned int nstates_,
+                  const unsigned int neq_,
+                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize);
 
     private: 
@@ -45,6 +47,8 @@ namespace Albany {
     bool periodic;
     bool triangles; // Deaults to false, meaning quad elements
 
+    int nelem_x, nelem_y;
+    Teuchos::RCP<Epetra_Map> elem_map;
   };
 
 }
