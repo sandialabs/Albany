@@ -53,8 +53,8 @@ DislocationDensity(const Teuchos::ParameterList& p) :
   // Allocate Temporary FieldContainers
   BF_operator.resize(numQPs,numNodes);
   BF_inverse.resize(numNodes,numQPs);
-  nodalFp.resize(numNodes, numDims, numDims);
-  curlFp.resize(numQPs, numDims, numDims);
+  nodalFp.resize(numNodes,numDims,numDims);
+  curlFp.resize(numQPs,numDims,numDims);
   A.resize(numNodes,numNodes);
   Ainv.resize(numNodes,numNodes);
     
@@ -107,21 +107,35 @@ evaluateFields(typename Traits::EvalData workset)
 //   Intrepid::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
 //     (wGradBF, weighted_measure, GradBF);
 
+  //cout << "In Dislocation Density calculation" << endl;
+
   for (int i=0; i < G.size() ; i++) G[i] = 0.0;
 
 // construct the node --> point operator
-  Intrepid::FieldContainer<double> BF_operator;
   for (std::size_t cell=0; cell < workset.numCells; ++cell)
   {
+    
+    //cout << "Cell: " << cell << endl;
+
+    //cout << " construct BF operator" << endl;
     BF_operator.initialize(0.0);
     for (std::size_t node=0; node < numNodes; ++node) 
+    {
+      //cout << "  node : " << node << endl;
       for (std::size_t qp=0; qp < numQPs; ++qp) 
-	BF_operator(qp,node) += BF(cell,node,qp);
+      {
+	//cout << "  qp : " << qp << endl;
+	//cout << "  BF : " << BF(cell,node,qp) << endl;
+	BF_operator(qp,node) = BF(cell,node,qp);
+	
+      }
+    }
     
+    //cout << " square: " << square << endl;
     if (square) 
     {
       // compute mapping from point --> node
-      Intrepid::RealSpaceTools<double>::inverse(BF_inverse,BF_operator);
+      Intrepid::RealSpaceTools<ScalarT>::inverse(BF_inverse,BF_operator);
     } 
     else 
     {
@@ -131,7 +145,7 @@ evaluateFields(typename Traits::EvalData workset)
 	  for (std::size_t qp=0; qp < numQPs; ++qp) 
 	    A(i,j) = BF_operator(qp,i) * BF_operator(qp,j);
 
-      Intrepid::RealSpaceTools<double>::inverse(Ainv,A);
+      Intrepid::RealSpaceTools<ScalarT>::inverse(Ainv,A);
 
       for (std::size_t i=0; i < numNodes; ++i) 
 	for (std::size_t j=0; j < numNodes; ++j) 
@@ -139,12 +153,16 @@ evaluateFields(typename Traits::EvalData workset)
 	    BF_inverse(i,qp) = Ainv(i,j) * BF_operator(qp,j);
     }
     
+    //cout << " compute nodal Fp " << endl;
+
     nodalFp.initialize(0.0);
     for (std::size_t node=0; node < numNodes; ++node) 
       for (std::size_t qp=0; qp < numQPs; ++qp) 
 	for (std::size_t i=0; i < numDims; ++i) 
 	  for (std::size_t j=0; j < numDims; ++j) 
 	    nodalFp(node,i,j) += BF_inverse(node,qp) * Fp(cell,qp,i,j);
+
+    //cout << " compute curl Fp " << endl;
 
     // compute the curl using nodalFp
     curlFp.initialize(0.0);
@@ -166,11 +184,13 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
 
+    //cout << " compute G " << endl;
+
     for (std::size_t qp=0; qp < numQPs; ++qp) 
       for (std::size_t i=0; i < numDims; ++i) 
 	for (std::size_t j=0; j < numDims; ++j) 
 	  for (std::size_t k=0; k < numDims; ++k) 
-	    G(cell,qp,i,j) += Fp(cell,qp,i,k) * curlFp(qp,k,j);
+	    G(cell,qp,i,j) += Fp(cell,qp,i,k) * ScalarT(curlFp(qp,k,j));
   }
 }
 

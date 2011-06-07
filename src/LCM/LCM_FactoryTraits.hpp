@@ -129,7 +129,7 @@ struct FactoryTraits {
   static const int id_shear_modulus             = 40;
   static const int id_kfield_bc                 = 41;
   static const int id_savestatefield            = 42;
-  static const int id_dislocationDensity        = 43;
+  static const int id_dislocation_density       = 43;
   // JTO - leave lame stress at the bottom for the convention below to be most effective
   static const int id_lame_stress               = 44;
 

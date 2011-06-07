@@ -54,20 +54,20 @@ private:
   bool square;
 
   // Input:
-  PHX::MDField<RealType,Cell,QuadPoint,Dim,Dim> Fp;
-  PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
-  PHX::MDField<RealType,Cell,Node,QuadPoint,Dim> GradBF;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> Fp;
+  PHX::MDField<ScalarT,Cell,Node,QuadPoint> BF;
+  PHX::MDField<ScalarT,Cell,Node,QuadPoint,Dim> GradBF;
 
   // Temporary FieldContainers
-  Intrepid::FieldContainer<double> BF_operator;
-  Intrepid::FieldContainer<double> BF_inverse;
-  Intrepid::FieldContainer<double> nodalFp;
-  Intrepid::FieldContainer<double> curlFp;
-  Intrepid::FieldContainer<double> A;
-  Intrepid::FieldContainer<double> Ainv;
+  Intrepid::FieldContainer<ScalarT> BF_operator;
+  Intrepid::FieldContainer<ScalarT> BF_inverse;
+  Intrepid::FieldContainer<ScalarT> nodalFp;
+  Intrepid::FieldContainer<ScalarT> curlFp;
+  Intrepid::FieldContainer<ScalarT> A;
+  Intrepid::FieldContainer<ScalarT> Ainv;
   
   // Output:
-  PHX::MDField<RealType,Cell,QuadPoint,Dim,Dim> G;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> G;
 };
 }
 
