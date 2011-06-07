@@ -229,6 +229,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/BulkModulus.cpp
     ${LCM_DIR}/evaluators/ShearModulus.cpp
     ${LCM_DIR}/evaluators/KfieldBC.cpp
+    ${LCM_DIR}/evaluators/DislocationDensity.cpp
   )
 
   SET(HEADERS ${HEADERS}
@@ -282,6 +283,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/ShearModulus_Def.hpp
     ${LCM_DIR}/evaluators/KfieldBC.hpp 
     ${LCM_DIR}/evaluators/KfieldBC_Def.hpp
+    ${LCM_DIR}/evaluators/DislocationDensity.hpp
+    ${LCM_DIR}/evaluators/DislocationDensity_Def.hpp
   )
 
   #LCM utils
