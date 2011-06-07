@@ -46,7 +46,12 @@ NonlinearElasticityProblem(
 
   if (matModel == "NeoHookean" || matModel == "NeoHookean AD")
     this->nstates=numDim*numDim;
-  else if (matModel == "J2")  this->nstates=2*numDim*numDim+1;
+  else if (matModel == "J2")  {
+    if ( numDim == 3 && params->get("Compute Dislocation Density Tensor", false) )
+      this->nstates=3*numDim*numDim+1;
+    else
+      this->nstates=2*numDim*numDim+1;
+  }
   *out << "Num States to Store: " << this->nstates << std::endl;
   
 }
@@ -518,6 +523,35 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
       evaluators_to_build["Saturation Exponent"] = p;
     }
 
+    if ( numDim == 3 && params->get("Compute Dislocation Density Tensor", false) )
+    { // Dislocation Density Tensor
+      RCP<ParameterList> p = rcp(new ParameterList("Dislocation Density"));
+      
+      int type = FactoryTraits<AlbanyTraits>::id_dislocation_density;
+      p->set<int>("Type", type);
+    
+      //Input
+      p->set<string>("Fp Name", "Fp");
+      p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
+      p->set<string>("BF Name", "BF");
+      p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
+      p->set<string>("Gradient BF Name", "Grad BF");
+      p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);
+
+      //Output
+      p->set<string>("Dislocation Density Name", "G"); //qp_tensor also
+ 
+      //Declare what state data will need to be saved (name, layout, init_type)
+      evaluators_to_build["Save DislocationDensity"] =
+	stateMgr.registerStateVariable("G",
+				       qp_tensor,
+				       dummy, 
+				       FactoryTraits<AlbanyTraits>::id_savestatefield,
+				       "zero");
+
+      evaluators_to_build["G"] = p;
+    }
+
     {// Stress
       RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
@@ -565,34 +599,6 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
 		       "Unrecognized Material Name: " << matModel 
 		       << "  Recognized names are : NeoHookean and J2");
     
-
-  { // Dislocation Density Tensor
-    RCP<ParameterList> p = rcp(new ParameterList("Dislocation Density"));
-    
-    int type = FactoryTraits<AlbanyTraits>::id_dislocation_density;
-    p->set<int>("Type", type);
-    
-    //Input
-    p->set<string>("Fp Name", "Fp");
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
-    p->set<string>("BF Name", "BF");
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
-    p->set<string>("Gradient BF Name", "Grad BF");
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);
-
-    //Output
-    p->set<string>("Dislocation Density Name", "G"); //qp_tensor also
- 
-    //Declare what state data will need to be saved (name, layout, init_type)
-    evaluators_to_build["Save DislocationDensity"] =
-      stateMgr.registerStateVariable("G",
-				     qp_tensor,
-				     dummy, 
-				     FactoryTraits<AlbanyTraits>::id_savestatefield,
-				     "zero");
-
-      evaluators_to_build["G"] = p;
-  }
 
   { // Residual
     RCP<ParameterList> p = rcp(new ParameterList("Residual"));
@@ -691,6 +697,7 @@ Albany::NonlinearElasticityProblem::getValidProblemParameters() const
   validPL->set<bool>("Use Composite Tet 10", false, "Flag to use the compostie tet 10 basis in Intrepid");
   if (matModel == "J2")
   {
+    validPL->set<bool>("Compute Dislocation Density Tensor", false, "Flag to compute the dislocaiton density tensor (only for 3D)");
     validPL->sublist("Hardening Modulus", false, "");
     validPL->sublist("Yield Strength", false, "");
     validPL->sublist("Saturation Modulus", false, "");
