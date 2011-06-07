@@ -316,6 +316,7 @@ SET(SOURCES ${SOURCES}
        evaluators/QCAD_Permittivity.cpp
        evaluators/QCAD_PoissonResid.cpp
        evaluators/QCAD_PoissonSource.cpp
+       evaluators/QCAD_PoissonDirichlet.cpp
        problems/QCAD_PoissonProblem.cpp
        problems/QCAD_MaterialDatabase.cpp
   )
@@ -327,6 +328,8 @@ SET(HEADERS ${HEADERS}
        evaluators/QCAD_PoissonResid_Def.hpp
        evaluators/QCAD_PoissonSource.hpp
        evaluators/QCAD_PoissonSource_Def.hpp
+       evaluators/QCAD_PoissonDirichlet.hpp
+       evaluators/QCAD_PoissonDirichlet_Def.hpp
        problems/QCAD_PoissonProblem.hpp
   )
 

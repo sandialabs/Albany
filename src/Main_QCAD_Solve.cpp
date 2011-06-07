@@ -123,7 +123,7 @@ int main(int argc, char *argv[]) {
     *out << "QCAD Solve: Beginning Poisson-Schrodinger solve loop" << endl;
     bool bConverged = false; 
     int iter = 0;
-    int maxIter = 0;
+    int maxIter = 1;
     do {
       *out << "QCAD Solve: Schrodinger iteration " << iter << endl;
       SolveModel(schrodingerApp, schrodingerSolver, 
@@ -140,7 +140,11 @@ int main(int argc, char *argv[]) {
       CopyState(lastSavedPotential, statesToLoop, "Electric Potential");
       iter++;
     } while(!bConverged && iter <= maxIter);
-    *out << "QCAD Solve: Completed Poisson-Schrodinger solve loop after " << iter << " iterations." << endl;
+
+    if(bConverged)
+      *out << "QCAD Solve: Converged Poisson-Schrodinger solve loop after " << iter << " iterations." << endl;
+    else
+      *out << "QCAD Solve: Maximum iterations (" << maxIter << ") reached." << endl;
 
     //*out << "Finished eval of first model: Params, Responses " 
     //     << std::setprecision(12) << endl;
@@ -302,21 +306,16 @@ bool checkConvergence(Teuchos::RCP<std::vector<Albany::StateVariables> >& newSta
     oldStateVarsForWorkset[stateNameToCompare]->dimensions(dims);
 
     int size = dims.size();
-    TEST_FOR_EXCEPTION(size != 4, std::logic_error,
+    TEST_FOR_EXCEPTION(size != 2, std::logic_error,
 		       "Something is wrong during copy state variable operation");
     int cells = dims[0];
     int qps = dims[1];
-    int dim = dims[2];
-    int dim2 = dims[3];
-    TEST_FOR_EXCEPT( ! (dim == dim2) );
 
     for (int cell = 0; cell < cells; ++cell)  {
       for (int qp = 0; qp < qps; ++qp)  {
-	for (int i = 0; i < dim; ++i) {
-	  if( fabs( (*(newStateVarsForWorkset[stateNameToCompare]))(cell, qp, i, i) -
-		    (*(oldStateVarsForWorkset[stateNameToCompare]))(cell, qp, i, i) ) > tol )
-	    return false;
-	}
+	if( fabs( (*(newStateVarsForWorkset[stateNameToCompare]))(cell, qp) -
+		  (*(oldStateVarsForWorkset[stateNameToCompare]))(cell, qp) ) > tol )
+	  return false;
       }
     }
   }

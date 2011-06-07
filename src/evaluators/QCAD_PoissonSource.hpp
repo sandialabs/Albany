@@ -90,6 +90,9 @@ namespace QCAD
         //! compute the ionized dopants when incompIonization = True
         ScalarT ionizedDopants(const std::string dopType, const ScalarT &x);
 
+        //! read eigenvalues from a text file (temporary, until we have a better way of passing them)
+        std::vector<double> ReadEigenvaluesFromFile(int numberToRead);
+
   	//! input
   	std::size_t numQPs;
   	std::size_t numDims;
@@ -137,10 +140,10 @@ namespace QCAD
         //! Schrodinger coupling
         bool bSchrodingerInQuantumRegions;
         int  nEigenvectors;
+        std::string eigenValueFilename;
         std::string evecStateRoot;
-        std::vector<double> eigenvals;
 
-	//! Material database - holds permittivity among other quantities
+	//! Material database
         Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
 	};
 }

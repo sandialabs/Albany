@@ -76,35 +76,13 @@ PoissonSource(Teuchos::ParameterList& p) :
   bSchrodingerInQuantumRegions = p.get<bool>("Use Schrodinger source");
 
   if(bSchrodingerInQuantumRegions) {
-    std::string eigenvalFilename = p.get<string>("Eigenvalues file");
+    eigenValueFilename = p.get<string>("Eigenvalues file");
     nEigenvectors = p.get<int>("Schrodinger eigenvectors");
     evecStateRoot = p.get<string>("Eigenvector state name root");
-
-    //Open eigenvalue filename and read into eigenvals vector
-    std::ifstream evalData;
-    evalData.open(eigenvalFilename.c_str());
-    TEST_FOR_EXCEPTION(!evalData.is_open(), Teuchos::Exceptions::InvalidParameter,
-		       std::endl << "Error! Cannot open eigenvalue filename  " 
-		       << eigenvalFilename << std::endl);
-
-    eigenvals.resize(nEigenvectors);
-
-    const double TOL = 1e-6;
-    char buf[100];
-    int index;
-    double RePart, ImPart;
-
-    evalData.getline(buf,100); //skip header
-    while ( !evalData.eof() ) {
-      evalData >> index >> RePart >> ImPart;
-      TEST_FOR_EXCEPT(fabs(ImPart) > TOL);
-      if(index < nEigenvectors) eigenvals[index] = -RePart; //negative b/c of convention
-      //std::cout << "DEBUG eval(" << index << ") = " << RePart << std::endl;
-    }
-    evalData.close();
   }
   else {
     nEigenvectors = 0;
+    eigenValueFilename = "";
     evecStateRoot = "";
   }
 
@@ -226,6 +204,9 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
   //! Schrodinger source
   if(bSchrodingerInQuantumRegions && 
      materialDB->getElementBlockParam<bool>(workset.EBName,"quantum",false)) {
+
+    //read eigenvalues from file
+    std::vector<double> eigenvals = ReadEigenvaluesFromFile(nEigenvectors);
     
     cout << "DEBUG: Using Schrodinger source for element block " << workset.EBName << endl;
     ScalarT scalingFctr = V0*eps0*X0/eleQ; // scaling factor for charge density with dimensions L^-d
@@ -238,10 +219,10 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
     double degeneracyFactor = spinDegeneracyFactor * valleyDegeneracyFactor;
 
     //TODO: Suzey: add 1D and 2D cases where we need integral over k-states - I just include order of magnitude estimate here
-    double dimFactor = 1.0, pi = 3.141592;
+    double dimFactor = 1.0, pi = 3.141592, aSi = 5e-6; // (HACK just for now)
     switch (numDims) {
-    case 1: dimFactor = pow(2*pi,2); break;
-    case 2: dimFactor = pow(2*pi,1); break;
+    case 1: dimFactor = pow(2*pi/aSi,2); break;
+    case 2: dimFactor = pow(2*pi/aSi,1); break;
     }
 
     //! Zero out poisson source field -- there's probably a function call that does this that I don't know about
@@ -254,7 +235,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 
       double Ef = 0.0;  //Fermi energy == 0
       ScalarT fermiFactor = 1.0/( exp( (eigenvals[i]-Ef)/kbT) + 1.0 );
-      cout << "DEBUG: Eigenvector " << i << " with weight " << fermiFactor << endl;
+      cout << "DEBUG: Eigenvector " << i << " (eval=" << eigenvals[i] << "eV) with weight " << fermiFactor << endl;
 
       Albany::StateVariables& newState = *workset.newState;
       sprintf(buf,"%s_Re%d", evecStateRoot.c_str(), i);
@@ -410,7 +391,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
           
         // obtain the ionized donors
         ScalarT ionN, inArg;
-        inArg = phi + Eic/kbT + dopantActE/kbT;
+        inArg = phi + Eic/kbT + dopantActE/kbT;  //Suzey: is this correct for n- and p-type?
         ionN = (this->*ionDopant)(dopantType,inArg)*dopingConc;
           
         // the scaled full RHS
@@ -518,12 +499,13 @@ evaluateFields_default(typename Traits::EvalData workset)
         if (coord[1]<0.8) charge = (coord[1]*coord[1]);
         else charge = 3.0;
         charge *= (1.0 + exp(-phi));
-        chargeDensity(cell, qp) = charge;	// default device has NO scaling
+        chargeDensity(cell, qp) = charge;
         break;
       default: TEST_FOR_EXCEPT(true);
       }
 
-      poissonSource(cell, qp) = factor*charge;
+      // scale even default device since Poisson Dirichlet evaluator always scales DBCs
+      poissonSource(cell, qp) = factor*charge / V0; 
     }
   }
 }
@@ -623,4 +605,38 @@ QCAD::PoissonSource<EvalT,Traits>::ionizedDopants(const std::string dopType, con
   }
    
   return ionDopants; 
+}
+
+
+
+// **********************************************************************
+template<typename EvalT,typename Traits>
+std::vector<double>
+QCAD::PoissonSource<EvalT,Traits>::ReadEigenvaluesFromFile(int numberToRead)
+{
+  std::vector<double> eigenvals;
+
+  //Open eigenvalue filename and read into eigenvals vector
+  std::ifstream evalData;
+  evalData.open(eigenValueFilename.c_str());
+  TEST_FOR_EXCEPTION(!evalData.is_open(), Teuchos::Exceptions::InvalidParameter,
+		     std::endl << "Error! Cannot open eigenvalue filename  " 
+		     << eigenValueFilename << std::endl);
+
+  eigenvals.resize(numberToRead);
+
+  const double TOL = 1e-6;
+  char buf[100];
+  int index;
+  double RePart, ImPart;
+
+  evalData.getline(buf,100); //skip header
+  while ( !evalData.eof() ) {
+    evalData >> index >> RePart >> ImPart;
+    TEST_FOR_EXCEPT(fabs(ImPart) > TOL);
+    if(index < numberToRead) eigenvals[index] = -RePart; //negative b/c of convention
+    //std::cout << "DEBUG eval(" << index << ") = " << RePart << std::endl;
+  }
+  evalData.close();
+  return eigenvals;
 }

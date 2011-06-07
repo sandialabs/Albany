@@ -68,6 +68,8 @@ namespace QCAD {
         const int cubDegree, const CellTopologyData& ctd,
         Albany::StateManager& stateMgr);
 
+    void constructDirichletEvaluators(const std::vector<std::string>& nodeSetIDs);
+
   protected:
 
     //! Boundary conditions on source term
