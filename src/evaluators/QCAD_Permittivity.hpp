@@ -69,7 +69,7 @@ namespace QCAD
   	PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
 
   	//! Define boolean variables to categorize 
-	std::string typ;		// permittivity type
+	  std::string typ;		// permittivity type
   	bool temp_dependent;		// is permittivity temperature dependent ?
   	bool position_dependent;	// is permittivity position dependent ?
 
@@ -77,9 +77,9 @@ namespace QCAD
   	ScalarT constant_value;		// for constant permittivity
   	ScalarT factor;			// for temperature-dependent permittivity
 
-	//! Material database - holds permittivity among other quantities
-        Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
-  	};
+	  //! Material database - holds permittivity among other quantities
+    Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
+  };
 	
 }
 

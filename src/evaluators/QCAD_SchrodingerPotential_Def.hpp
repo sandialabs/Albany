@@ -88,7 +88,7 @@ evaluateFields(typename Traits::EvalData workset)
   {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-	V(cell, qp) = parabolicPotentialValue(numDims, &coordVec(cell,qp,0));
+        V(cell, qp) = parabolicPotentialValue(numDims, &coordVec(cell,qp,0));
       }
     }
   }
@@ -105,8 +105,8 @@ evaluateFields(typename Traits::EvalData workset)
     Intrepid::FieldContainer<RealType>& potentialState = *newState[potentialStateName];
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-	double d =  potentialState(cell, qp);
-	V(cell, qp) = scalingFactor * d;
+        double d =  potentialState(cell, qp);
+        V(cell, qp) = scalingFactor * d;
 
 	//HACK to help anasazi solve
 	//if(workset.EBName == "silicon" || scalingFactor < 0) {
