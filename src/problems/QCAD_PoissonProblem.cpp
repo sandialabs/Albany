@@ -177,7 +177,7 @@ QCAD::PoissonProblem::constructEvaluators(
      rcp(new MDALayout<Cell,Node,QuadPoint,Dim>(worksetSize,numNodes, numQPts,numDim));
 
    RCP<DataLayout> dummy = rcp(new MDALayout<Dummy>(0));
-
+   RCP<DataLayout> shared_param = rcp(new MDALayout<Dim>(1));
 
    // Create Material Database
    RCP<QCAD::MaterialDatabase> materialDB = rcp(new QCAD::MaterialDatabase(mtrlDbFilename));
@@ -321,6 +321,20 @@ QCAD::PoissonProblem::constructEvaluators(
     evaluators_to_build["DOF Grad Potential"] = p;
   }
 
+  { // Temperature shared parameter (single scalar value, not spatially varying)
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    int type = FactoryTraits<AlbanyTraits>::id_sharedparameter;
+    p->set<int>("Type", type);
+
+    p->set<string>("Parameter Name", "Temperature");
+    p->set<double>("Parameter Value", temperature);
+    p->set< RCP<DataLayout> >("Data Layout", shared_param);
+    p->set< RCP<ParamLib> >("Parameter Library", paramLib);
+
+    evaluators_to_build["Temperature"] = p;
+  }
+
   if (haveSource) 
   { // Source
     RCP<ParameterList> p = rcp(new ParameterList);
@@ -345,7 +359,8 @@ QCAD::PoissonProblem::constructEvaluators(
 
     //Global Problem Parameters
     p->set<double>("Length unit in m", length_unit_in_m);
-    p->set<double>("Temperature", temperature);
+    p->set<string>("Temperature Name", "Temperature");
+    p->set< RCP<DataLayout> >("Shared Param Data Layout", shared_param);
     p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
 
     // Schrodinger coupling
@@ -600,6 +615,7 @@ QCAD::PoissonProblem::constructDirichletEvaluators(
 	 //! Additional parameters needed for Poisson Dirichlet BCs
 	 Teuchos::ParameterList& paramList = params->sublist("Poisson Source");
 	 p->set<Teuchos::ParameterList*>("Poisson Source Parameter List", &paramList);
+	 //p->set<string>("Temperature Name", "Temperature");  //to add if use shared param for DBC
 	 p->set<double>("Temperature", temperature);
 	 p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
 

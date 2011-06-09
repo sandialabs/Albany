@@ -135,6 +135,7 @@ SET(SOURCES ${SOURCES}
 	evaluators/PHAL_TEProp.cpp
 	evaluators/PHAL_SaveStateField.cpp
 	evaluators/PHAL_LoadStateField.cpp
+	evaluators/PHAL_SharedParameter.cpp
   )
 SET(HEADERS ${HEADERS}
 	evaluators/PHAL_GatherSolution.hpp 
@@ -177,6 +178,8 @@ SET(HEADERS ${HEADERS}
 	evaluators/PHAL_SaveStateField_Def.hpp
 	evaluators/PHAL_LoadStateField.hpp
 	evaluators/PHAL_LoadStateField_Def.hpp
+	evaluators/PHAL_SharedParameter.hpp
+	evaluators/PHAL_SharedParameter_Def.hpp
   )
 
 # LCM

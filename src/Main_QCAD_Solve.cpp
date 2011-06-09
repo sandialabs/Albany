@@ -36,6 +36,9 @@ void SolveModel(Teuchos::RCP<Albany::Application>& albApp, Teuchos::RCP<EpetraEx
 void CopyState(Teuchos::RCP<std::vector<Albany::StateVariables> >& dest, 
 	       Teuchos::RCP<std::vector<Albany::StateVariables> >& src,
 	       std::string stateNameToCopy);
+void SubtractStateFromState(Teuchos::RCP<std::vector<Albany::StateVariables> >& dest, 
+	       Teuchos::RCP<std::vector<Albany::StateVariables> >& src,
+	       std::string stateNameToSubtract);
 bool checkConvergence(Teuchos::RCP<std::vector<Albany::StateVariables> >& newStates, 
 		      Teuchos::RCP<std::vector<Albany::StateVariables> >& oldStates,
 		      std::string stateNameToCompare, double tol);
@@ -45,6 +48,7 @@ int main(int argc, char *argv[]) {
 
   int status=0;
   bool success = true;
+  int maxIter = 0;
   Teuchos::GlobalMPISession mpiSession(&argc,&argv);
 
   using Teuchos::RCP;
@@ -55,35 +59,40 @@ int main(int argc, char *argv[]) {
   // Command-line argument for input file
   char * InitPoissonXmlFilename=0;
   char * PoissonXmlFilename=0;
+  char * DummyPoissonXmlFilename=0;
   char * SchrodingerXmlFilename=0;
-  if(argc>3){
+  if(argc>5){
     if(!strcmp(argv[1],"--help")){
-      printf("albanyQCAD [InitPoissonInputfile.xml] [PoissonInputfile.xml] [SchrodingerInputfile.xml]\n");
+      printf("albanyQCAD [InitPoissonInputfile.xml] [PoissonInputfile.xml] [DummyPoissonInputfile]\n");
+      printf("           [SchrodingerInputfile.xml] [maxiter]\n");
       exit(1);
     }
     else {
       InitPoissonXmlFilename=argv[1];
       PoissonXmlFilename=argv[2];
-      SchrodingerXmlFilename=argv[3];
+      DummyPoissonXmlFilename=argv[3];
+      SchrodingerXmlFilename=argv[4];
+      maxIter = atoi(argv[5]);
     }
   }
   else {
-    printf("albanyQCAD [InitPoissonInputfile.xml] [PoissonInputfile.xml] [SchrodingerInputfile.xml]\n");
+    printf("albanyQCAD [InitPoissonInputfile.xml] [PoissonInputfile.xml] [DummyPoissonInputfile]\n");
+    printf("           [SchrodingerInputfile.xml] [maxiter]\n");
     exit(1);
   }
   
   try {
     RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
-    RCP<Albany::Application> initPoissonApp, poissonApp, schrodingerApp;
-    RCP<EpetraExt::ModelEvaluator> initPoissonSolver, poissonSolver, schrodingerSolver;
+    RCP<Albany::Application> initPoissonApp, poissonApp, dummyPoissonApp, schrodingerApp;
+    RCP<EpetraExt::ModelEvaluator> initPoissonSolver, poissonSolver, dummyPoissonSolver, schrodingerSolver;
 
     EpetraExt::ModelEvaluator::InArgs initPoisson_params_in, 
-                                      poisson_params_in,
+                                      poisson_params_in,dummy_params_in,
                                       schrodinger_params_in;
 
     EpetraExt::ModelEvaluator::OutArgs initPoisson_responses_out, 
-                                       poisson_responses_out, 
+                                       poisson_responses_out,dummy_responses_out, 
                                        schrodinger_responses_out;
 
     RCP<Teuchos::Time> totalTime = 
@@ -101,6 +110,10 @@ int main(int argc, char *argv[]) {
     CreateSolver(PoissonXmlFilename, poissonApp, poissonSolver, 
 		 poisson_params_in, poisson_responses_out);
 
+    *out << "QCAD Solve: creating dummy Poisson solver using input " << DummyPoissonXmlFilename << endl;
+    CreateSolver(DummyPoissonXmlFilename, dummyPoissonApp, dummyPoissonSolver, 
+		 dummy_params_in, dummy_responses_out);
+
     *out << "QCAD Solve: creating Schrodinger solver using input " << SchrodingerXmlFilename << endl;
     CreateSolver(SchrodingerXmlFilename, schrodingerApp, schrodingerSolver, 
 		 schrodinger_params_in, schrodinger_responses_out);
@@ -109,6 +122,7 @@ int main(int argc, char *argv[]) {
 
     //state variables
     RCP< std::vector<Albany::StateVariables> > statesToPass = Teuchos::null;
+    RCP< std::vector<Albany::StateVariables> > statesFromDummy = Teuchos::null;
     RCP< std::vector<Albany::StateVariables> > statesToLoop = Teuchos::null;
 
     RCP< std::vector<Albany::StateVariables> > lastSavedPotential = 
@@ -123,8 +137,9 @@ int main(int argc, char *argv[]) {
     *out << "QCAD Solve: Beginning Poisson-Schrodinger solve loop" << endl;
     bool bConverged = false; 
     int iter = 0;
-    int maxIter = 1;
     do {
+      iter++;
+
       *out << "QCAD Solve: Schrodinger iteration " << iter << endl;
       SolveModel(schrodingerApp, schrodingerSolver, 
 		 schrodinger_params_in, schrodinger_responses_out,
@@ -135,11 +150,16 @@ int main(int argc, char *argv[]) {
 		 poisson_params_in, poisson_responses_out,
 		 statesToPass, statesToLoop);
 
-      if(iter > 0) 
+      *out << "QCAD Solve: Poisson Dummy iteration " << iter << endl;
+      SolveModel(dummyPoissonApp, dummyPoissonSolver, 
+		 dummy_params_in, dummy_responses_out,
+		 statesToPass, statesFromDummy);
+      SubtractStateFromState(statesToLoop, statesFromDummy, "Conduction Band");
+
+      if(iter > 1) 
 	bConverged = checkConvergence(statesToLoop, lastSavedPotential, "Electric Potential", 1e-3);
       CopyState(lastSavedPotential, statesToLoop, "Electric Potential");
-      iter++;
-    } while(!bConverged && iter <= maxIter);
+    } while(!bConverged && iter < maxIter);
 
     if(bConverged)
       *out << "QCAD Solve: Converged Poisson-Schrodinger solve loop after " << iter << " iterations." << endl;
@@ -259,7 +279,6 @@ void CopyState(Teuchos::RCP<std::vector<Albany::StateVariables> >& dest,
 
       if(srcStateName == stateNameToCopy) {
 
-        // we assume operating on the last two indices is correct
         srcForWorkset[srcStateName]->dimensions(dims);
 
         int size = dims.size();
@@ -287,6 +306,46 @@ void CopyState(Teuchos::RCP<std::vector<Albany::StateVariables> >& dest,
   }
 }
 
+
+// dest[stateNameToSubtract] -= src[stateNameToSubtract]
+void SubtractStateFromState(Teuchos::RCP<std::vector<Albany::StateVariables> >& dest, 
+	       Teuchos::RCP<std::vector<Albany::StateVariables> >& src,
+	       std::string stateNameToSubtract)
+{
+  int numWorksets = src->size();
+  TEST_FOR_EXCEPT( numWorksets != (int)dest->size() );
+
+  std::vector<PHX::DataLayout::size_type> dims;
+
+  for (int ws = 0; ws < numWorksets; ws++)
+  {
+    Albany::StateVariables& srcWorkset = (*src)[ws];
+    Albany::StateVariables::iterator st = srcWorkset.begin();
+
+    while (st != srcWorkset.end())
+    {
+      std::string srcStateName = st->first;
+
+      if(srcStateName == stateNameToSubtract) {
+
+        srcWorkset[srcStateName]->dimensions(dims);
+
+        int size = dims.size();
+        TEST_FOR_EXCEPTION(size != 2, std::logic_error,
+            "Something is wrong during SubtractStateFromStates operation");
+        int cells = dims[0];
+        int qps = dims[1];
+
+        for (int cell = 0; cell < cells; ++cell)  {
+          for (int qp = 0; qp < qps; ++qp) {
+	    (*((*dest)[ws][srcStateName]))(cell, qp) -= (*(st->second))(cell, qp);
+          }
+        }
+      }
+      st++;
+    }
+  }
+}
 
 
 bool checkConvergence(Teuchos::RCP<std::vector<Albany::StateVariables> >& newStates, 

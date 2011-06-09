@@ -90,7 +90,8 @@
         <Parameter name="Save Eigenvectors" type="int" value="5"/>
         <Parameter name="Block Size" type="int" value="2"/>
         <Parameter name="Maximum Restarts" type="int" value="2"/>
-        <Parameter name="Shift" type="double" value="0.1"/>
+        <Parameter name="Shift" type="double" value="0.6"/>
+        <Parameter name="Sorting Order" type="string" value="SR"/>
       </ParameterList>
     </ParameterList>
     <ParameterList name="Step Size">

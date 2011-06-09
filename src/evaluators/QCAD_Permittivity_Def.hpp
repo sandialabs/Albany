@@ -142,7 +142,7 @@ evaluateFields(typename Traits::EvalData workset)
     {	
       for (std::size_t qp=0; qp < numQPs; ++qp) 
       {
-	permittivity(cell,qp) = constant_value;
+        permittivity(cell,qp) = constant_value;
       }
     }
   }
@@ -168,7 +168,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {	
       // loop through the QPs for each element
       for (std::size_t qp=0; qp < numQPs; ++qp)
-	permittivity(cell,qp) = value;
+        permittivity(cell,qp) = value;
     }
   }
   
