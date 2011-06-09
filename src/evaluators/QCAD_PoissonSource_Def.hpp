@@ -187,17 +187,24 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
   ScalarT qPhiRef;
   string refMtrlName = "Silicon"; //hardcoded reference material name - change this later
   {
-    double mdn = materialDB->getMaterialParam<double>(refMtrlName,"Electron DOS Effective Mass");
-    double mdp = materialDB->getMaterialParam<double>(refMtrlName,"Hole DOS Effective Mass");
-    double Chi = materialDB->getMaterialParam<double>(refMtrlName,"Electron Affinity");
-    double Eg0 = materialDB->getMaterialParam<double>(refMtrlName,"Zero Temperature Band Gap");
-    double alpha = materialDB->getMaterialParam<double>(refMtrlName,"Band Gap Alpha Coefficient");
-    double beta = materialDB->getMaterialParam<double>(refMtrlName,"Band Gap Beta Coefficient");
-    ScalarT Eg = Eg0-alpha*pow(temperature,2.0)/(beta+temperature); // in [eV]
+    string refCategory = materialDB->getMaterialParam<string>(refMtrlName,"Category");
+    if(refCategory == "Semiconductor") {
+      double mdn = materialDB->getMaterialParam<double>(refMtrlName,"Electron DOS Effective Mass");
+      double mdp = materialDB->getMaterialParam<double>(refMtrlName,"Hole DOS Effective Mass");
+      double Chi = materialDB->getMaterialParam<double>(refMtrlName,"Electron Affinity");
+      double Eg0 = materialDB->getMaterialParam<double>(refMtrlName,"Zero Temperature Band Gap");
+      double alpha = materialDB->getMaterialParam<double>(refMtrlName,"Band Gap Alpha Coefficient");
+      double beta = materialDB->getMaterialParam<double>(refMtrlName,"Band Gap Beta Coefficient");
+      ScalarT Eg = Eg0-alpha*pow(temperature,2.0)/(beta+temperature); // in [eV]
     
-    ScalarT kbT = kbBoltz*temperature;      // in [eV]
-    ScalarT Eic = -Eg/2. + 3./4.*kbT*log(mdp/mdn);  // (Ei-Ec) in [eV]
-    qPhiRef = Chi - Eic;  // (Evac-Ei) in [eV] where Evac = vacuum level
+      ScalarT kbT = kbBoltz*temperature;      // in [eV]
+      ScalarT Eic = -Eg/2. + 3./4.*kbT*log(mdp/mdn);  // (Ei-Ec) in [eV]
+      qPhiRef = Chi - Eic;  // (Evac-Ei) in [eV] where Evac = vacuum level
+    }
+    else {
+      double Chi = materialDB->getMaterialParam<double>(refMtrlName,"Electron Affinity");
+      qPhiRef = Chi;
+    }
   }  
 
 
@@ -633,7 +640,9 @@ QCAD::PoissonSource<EvalT,Traits>::ReadEigenvaluesFromFile(int numberToRead)
   evalData.getline(buf,100); //skip header
   while ( !evalData.eof() ) {
     evalData >> index >> RePart >> ImPart;
-    TEST_FOR_EXCEPT(fabs(ImPart) > TOL);
+    if(fabs(ImPart) > TOL)
+      std::cout << "WARNING: eigenvalue " << index << " has Im Part: " 
+		<< RePart << " + " << ImPart << "i" << std::endl;
     if(index < numberToRead) eigenvals[index] = -RePart; //negative b/c of convention
     //std::cout << "DEBUG eval(" << index << ") = " << RePart << std::endl;
   }
