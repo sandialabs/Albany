@@ -323,11 +323,16 @@ Albany::LameProblem::constructEvaluators(
     int type = FactoryTraits<AlbanyTraits>::id_defgrad;
     p->set<int>("Type", type);
 
-    // Volumetric averaging flag
+    //Input
+    // If true, compute determinate of deformation gradient at all integration points, then replace all of them with the simple average for the element.  This give a constant volumetric response.
     const bool avgJ = params->get("avgJ", false);
     p->set<bool>("avgJ Name", avgJ);
-
-    //Input
+    // If true, compute determinate of deformation gradient at all integration points, then replace all of them with the volume average for the element (integrate J over volume of element, divide by total volume).  This give a constant volumetric response.
+    const bool volavgJ = params->get("volavgJ", false);
+    p->set<bool>("volavgJ Name", volavgJ);
+    // Integration weights for each quadrature point
+    p->set<string>("Weights Name","Weights");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
     p->set<string>("Gradient QP Variable Name", "Displacement Gradient");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
 
@@ -360,18 +365,16 @@ Albany::LameProblem::constructEvaluators(
     //Output
     p->set<string>("Stress Name", "Stress"); // qp_tensor also
 
-    //Declare what state data will need to be saved (name, layout, init_type)
-    stateMgr.registerStateVariable("stress",qp_tensor,"zero");
-    stateMgr.registerStateVariable("def_grad",qp_tensor,"identity");
-
     evaluators_to_build["Stress"] = p;
 
+    // Declare state data that needs to be saved
+    // (register with state manager and create corresponding evaluator)
     evaluators_to_build["Save Stress"] =
       stateMgr.registerStateVariable("Stress",qp_tensor,
             dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
     evaluators_to_build["Save DefGrad"] =
       stateMgr.registerStateVariable("Deformation Gradient",qp_tensor,
-            dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
+            dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"identity");
   }
 
   { // Displacement Resid
@@ -464,6 +467,8 @@ Albany::LameProblem::getValidProblemParameters() const
 
   validPL->set<string>("Lame Material Model", "", "The name of the LAME material model.");
   validPL->sublist("Lame Material Parameters", false, "");
+  validPL->sublist("aveJ", false, "If true, the determinate of the deformation gradient for each integration point is replaced with the average value over all integration points in the element (produces constant volumetric response).");
+  validPL->sublist("volaveJ", false, "If true, the determinate of the deformation gradient for each integration point is replaced with the volume-averaged value over all integration points in the element (produces constant volumetric response).");
 
   return validPL;
 }

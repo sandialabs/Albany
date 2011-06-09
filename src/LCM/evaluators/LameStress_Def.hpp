@@ -26,7 +26,7 @@ template<typename EvalT, typename Traits>
 LameStress<EvalT, Traits>::
 LameStress(const Teuchos::ParameterList& p) :
   defGradField(p.get<std::string>("DefGrad Name"),
-                           p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
+               p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
   stressField(p.get<std::string>("Stress Name"),
               p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
   lameMaterialModel(Teuchos::RCP<lame::Material>())
