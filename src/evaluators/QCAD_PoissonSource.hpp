@@ -98,6 +98,7 @@ namespace QCAD
   	std::size_t numDims;
   	PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
   	PHX::MDField<ScalarT,Cell,QuadPoint> potential;	// scaled potential (no unit)
+        PHX::MDField<ScalarT,Dim> temperatureField; // lattice temperature [K]
 
   	//! output
         PHX::MDField<ScalarT,Cell,QuadPoint> poissonSource; // scaled RHS (unitless)
@@ -113,7 +114,7 @@ namespace QCAD
   	ScalarT factor;
 
   	//! temperature parameter in source function
-  	ScalarT temperature; //lattice temperature in [K]
+  	ScalarT temperatureName; //name of temperature field
     
   	//! string variable to differ the various devices implementation
   	std::string device;
@@ -132,9 +133,7 @@ namespace QCAD
         
         //! scaling parameters
         double length_unit_in_m; // length unit for input and output mesh
-        double X0;   // length scaling to get to [cm] (input structure is in [um])
         ScalarT C0;  // scaling for conc. [cm^-3]
-        ScalarT V0;  // scaling for potential [V]
         ScalarT Lambda2;  // derived scaling factor (unitless) that appears in the scaled Poisson equation
         
         //! Schrodinger coupling

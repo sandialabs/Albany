@@ -27,6 +27,8 @@ PoissonSource(Teuchos::ParameterList& p) :
      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout")),
   potential(p.get<std::string>("Variable Name"),
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+  temperatureField(p.get<std::string>("Temperature Name"),
+      p.get<Teuchos::RCP<PHX::DataLayout> >("Shared Param Data Layout")),
   poissonSource(p.get<std::string>("Source Name"),
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
   chargeDensity("Charge Density",
@@ -71,7 +73,6 @@ PoissonSource(Teuchos::ParameterList& p) :
   materialDB = p.get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
   
   // passed down from main list
-  temperature = p.get<double>("Temperature");
   length_unit_in_m = p.get<double>("Length unit in m");
   bSchrodingerInQuantumRegions = p.get<bool>("Use Schrodinger source");
 
@@ -86,20 +87,15 @@ PoissonSource(Teuchos::ParameterList& p) :
     evecStateRoot = "";
   }
 
-  // Scaling factors
-  X0 = length_unit_in_m/1e-2; // length scaling to get to [cm] (structure dimension in [um])
-  V0 = kbBoltz*temperature/1.0; // kb*T/q in [V], scaling for potential
-
-  // Add factor  and temperature as a Sacado-ized parameters
+  // Add factor as a Sacado-ized parameter
   Teuchos::RCP<ParamLib> paramLib =
       p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
   new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
       "Poisson Source Factor", this, paramLib);
-  new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-      "Lattice Temperature", this, paramLib);
 
   this->addDependentField(potential);
   this->addDependentField(coordVec);
+  this->addDependentField(temperatureField);
 
   this->addEvaluatedField(poissonSource);
   this->addEvaluatedField(chargeDensity);
@@ -122,6 +118,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(poissonSource,fm);
   this->utils.setFieldData(potential,fm);
   this->utils.setFieldData(coordVec,fm);
+  this->utils.setFieldData(temperatureField,fm);
 
   this->utils.setFieldData(chargeDensity,fm);
   this->utils.setFieldData(electronDensity,fm);
@@ -151,7 +148,6 @@ typename QCAD::PoissonSource<EvalT,Traits>::ScalarT&
 QCAD::PoissonSource<EvalT,Traits>::getValue(const std::string &n)
 {
   if(n == "Poisson Source Factor") return factor;
-  else if(n == "Lattice Temperature") return temperature;
   else TEST_FOR_EXCEPT(true); return factor; //dummy so all control paths return
 }
 
@@ -181,6 +177,12 @@ template<typename EvalT, typename Traits>
 void QCAD::PoissonSource<EvalT, Traits>::
 evaluateFields_elementblocks(typename Traits::EvalData workset)
 {
+  ScalarT temperature = temperatureField(0); //get shared temperature parameter from field
+
+  // Scaling factors
+  double X0 = length_unit_in_m/1e-2; // length scaling to get to [cm] (structure dimension in [um])
+  ScalarT V0 = kbBoltz*temperature/1.0; // kb*T/q in [V], scaling for potential
+
   string matrlCategory = materialDB->getElementBlockParam<string>(workset.EBName,"Category");
 
   //! Constant energy reference for heterogeneous structures
@@ -493,6 +495,9 @@ evaluateFields_default(typename Traits::EvalData workset)
 {
   MeshScalarT* coord;
   ScalarT charge;
+
+  ScalarT temperature = temperatureField(0); //get shared temperature parameter from field
+  ScalarT V0 = kbBoltz*temperature/1.0; // kb*T/q in [V], scaling for potential
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) 
   {
