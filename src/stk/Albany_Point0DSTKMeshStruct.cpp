@@ -53,7 +53,8 @@ void
 Albany::Point0DSTKMeshStruct::setFieldAndBulkData(
                   const Teuchos::RCP<const Epetra_Comm>& comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_, const unsigned int nstates_,
+                  const unsigned int neq_,
+                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize)
 {
   cout << "XXX Point0DSTKMeshStruct::setFieldAndBulkData " << endl;
@@ -64,7 +65,7 @@ Albany::Point0DSTKMeshStruct::setFieldAndBulkData(
   Teuchos::RCP<Epetra_Map> elem_map = Teuchos::rcp(new Epetra_Map(nelem, 0, *comm));
 
 
-  this->SetupFieldData(comm, neq_, nstates_, worksetSize);
+  this->SetupFieldData(comm, neq_, sis, worksetSize);
   
   metaData->commit();
 

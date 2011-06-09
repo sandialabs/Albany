@@ -82,7 +82,8 @@ void
 Albany::Rect2DSTKMeshStruct::setFieldAndBulkData(
                   const Teuchos::RCP<const Epetra_Comm>& comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_, const unsigned int nstates_,
+                  const unsigned int neq_,
+                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize)
 {
   // Create global mesh: 2D structured, rectangular
@@ -106,7 +107,7 @@ Albany::Rect2DSTKMeshStruct::setFieldAndBulkData(
   double h_y = scale_y/nelem_y;
   for (int i=0; i<=nelem_y; i++) y[i] = h_y*i;
 
-  this->SetupFieldData(comm, neq_, nstates_, worksetSize);
+  this->SetupFieldData(comm, neq_, sis, worksetSize);
 
   metaData->commit();
 

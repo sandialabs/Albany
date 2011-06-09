@@ -65,6 +65,7 @@
 #include "LCM/evaluators/ShearModulus.hpp"
 #include "LCM/evaluators/BulkModulus.hpp"
 #include "LCM/evaluators/KfieldBC.hpp"
+#include "LCM/evaluators/DislocationDensity.hpp"
 
 
 #include "boost/mpl/vector/vector50.hpp"
@@ -128,13 +129,14 @@ struct FactoryTraits {
   static const int id_shear_modulus             = 40;
   static const int id_kfield_bc                 = 41;
   static const int id_savestatefield            = 42;
+  static const int id_dislocation_density       = 43;
   // JTO - leave lame stress at the bottom for the convention below to be most effective
-  static const int id_lame_stress               = 43;
+  static const int id_lame_stress               = 44;
 
 #ifndef ALBANY_LAME
-  typedef boost::mpl::vector43<
-#else
   typedef boost::mpl::vector44<
+#else
+  typedef boost::mpl::vector45<
 #endif
     PHAL::Dirichlet<_,Traits>,                //  0
     PHAL::GatherSolution<_,Traits>,           //  1
@@ -178,9 +180,10 @@ struct FactoryTraits {
     LCM::BulkModulus<_,Traits>,               // 39
     LCM::ShearModulus<_,Traits>,              // 40
     LCM::KfieldBC<_,Traits>,                  // 41
-    PHAL::SaveStateField<_,Traits>             // 42
+    PHAL::SaveStateField<_,Traits>,           // 42
+    LCM::DislocationDensity<_,Traits>         // 43
 #ifdef ALBANY_LAME
-    ,LCM::LameStress<_,Traits>                // 43
+    ,LCM::LameStress<_,Traits>                // 44
 #endif
     > EvaluatorTypes;
 };

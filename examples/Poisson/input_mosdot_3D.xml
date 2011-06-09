@@ -9,8 +9,8 @@
 
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS substrate for DOF Phi" type="double" value="0" />
-      <Parameter name="DBC on NS gate for DOF Phi" type="double" value="-4" />
-      <Parameter name="DBC on NS topgate for DOF Phi" type="double" value="10" />
+      <Parameter name="DBC on NS gate for DOF Phi" type="double" value="-0.01" />
+      <Parameter name="DBC on NS topgate for DOF Phi" type="double" value="0.01" />
     </ParameterList>
 
     <ParameterList name="Poisson Source">

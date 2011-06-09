@@ -28,6 +28,7 @@
 
 #include "Albany_AbstractResponseFunction.hpp"
 #include "Albany_StateManager.hpp"
+#include "Albany_StateInfoStruct.hpp" // contains MeshSpecsStuct
 
 #include "Phalanx.hpp"
 #include "Albany_DataTypes.hpp"
@@ -79,9 +80,8 @@ namespace Albany {
     //! Build the PDE instantiations, boundary conditions, and initial solution
     //! And construct the evaluators and field managers
     virtual void buildProblem(
-       const int worksetSize,
+       const Albany::MeshSpecsStruct& meshSpecs,
        StateManager& stateMgr,
-       const Albany::AbstractDiscretization& disc,
        std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses) = 0;
 
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > getFieldManager();

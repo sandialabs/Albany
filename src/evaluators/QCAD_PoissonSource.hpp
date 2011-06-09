@@ -95,29 +95,33 @@ namespace QCAD
     ScalarT computeFDIntMinusOneHalf(const ScalarT x);
     
     //! compute the electron density for Poisson-Schrodinger iteration
-    ScalarT eDensityForPoissonSchrond(typename Traits::EvalData workset, std::size_t cell, std::size_t qp);
+    ScalarT eDensityForPoissonSchrond(typename Traits::EvalData workset, std::size_t cell, std::size_t qp, const std::vector<double> &eigenvals);
     
-    //! input
-    std::size_t numQPs;
-    std::size_t numDims;
-    PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
-    PHX::MDField<ScalarT,Cell,QuadPoint> potential;	// scaled potential (no unit)
+    //! read eigenvalues from a text file (temporary, until we have a better way of passing them)
+    std::vector<double> ReadEigenvaluesFromFile(int numberToRead);
 
-    //! output
-    PHX::MDField<ScalarT,Cell,QuadPoint> poissonSource; // scaled RHS (unitless)
-    PHX::MDField<ScalarT,Cell,QuadPoint> chargeDensity; // space charge density in [cm-3]
-    PHX::MDField<ScalarT,Cell,QuadPoint> electronDensity; // electron density in [cm-3]
-    PHX::MDField<ScalarT,Cell,QuadPoint> holeDensity;   // electron density in [cm-3]
-    PHX::MDField<ScalarT,Cell,QuadPoint> electricPotential;	// phi in [V]
-    PHX::MDField<ScalarT,Cell,QuadPoint> ionizedDopant;    // ionized dopants in [cm-3]
-    PHX::MDField<ScalarT,Cell,QuadPoint> conductionBand; // conduction band in [eV]
-    PHX::MDField<ScalarT,Cell,QuadPoint> valenceBand;   // valence band in [eV]
+  	//! input
+  	std::size_t numQPs;
+  	std::size_t numDims;
+  	PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+  	PHX::MDField<ScalarT,Cell,QuadPoint> potential;	// scaled potential (no unit)
+    PHX::MDField<ScalarT,Dim> temperatureField; // lattice temperature [K]
 
-    //! constant prefactor parameter in source function
-    ScalarT factor;
+  	//! output
+        PHX::MDField<ScalarT,Cell,QuadPoint> poissonSource; // scaled RHS (unitless)
+        PHX::MDField<ScalarT,Cell,QuadPoint> chargeDensity; // space charge density in [cm-3]
+        PHX::MDField<ScalarT,Cell,QuadPoint> electronDensity; // electron density in [cm-3]
+        PHX::MDField<ScalarT,Cell,QuadPoint> holeDensity;   // electron density in [cm-3]
+        PHX::MDField<ScalarT,Cell,QuadPoint> electricPotential;	// phi in [V]
+        PHX::MDField<ScalarT,Cell,QuadPoint> ionizedDopant;    // ionized dopants in [cm-3]
+        PHX::MDField<ScalarT,Cell,QuadPoint> conductionBand; // conduction band in [eV]
+        PHX::MDField<ScalarT,Cell,QuadPoint> valenceBand;   // valence band in [eV]
 
-    //! temperature parameter in source function
-    ScalarT temperature; //lattice temperature in [K]
+  	//! constant prefactor parameter in source function
+  	ScalarT factor;
+
+  	//! temperature parameter in source function
+  	ScalarT temperatureName; //name of temperature field
     
     //! string variable to differ the various devices implementation
     std::string device;
@@ -134,21 +138,19 @@ namespace QCAD
     double donorActE;     // (Ec-Ed) where Ed = donor energy level
     double acceptorActE;  // (Ea-Ev) where Ea = acceptor energy level
         
-    //! scaling parameters
-    double length_unit_in_m; // length unit for input and output mesh
-    double X0;   // length scaling to get to [cm] (input structure is in [um])
-    ScalarT C0;  // scaling for conc. [cm^-3]
-    ScalarT V0;  // scaling for potential [V]
-    ScalarT Lambda2;  // derived scaling factor (unitless) that appears in the scaled Poisson equation
+        //! scaling parameters
+        double length_unit_in_m; // length unit for input and output mesh
+        //ScalarT C0;  // scaling for conc. [cm^-3]
+        //ScalarT Lambda2;  // derived scaling factor (unitless) that appears in the scaled Poisson equation
         
-    //! Schrodinger coupling
-    bool bSchrodingerInQuantumRegions;
-    int  nEigenvectors;
-    std::string evecStateRoot;
-    std::vector<double> eigenvals;
+        //! Schrodinger coupling
+        bool bSchrodingerInQuantumRegions;
+        int  nEigenvectors;
+        std::string eigenValueFilename;
+        std::string evecStateRoot;
 
-    //! Material database - holds permittivity among other quantities
-    Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
+	//! Material database
+        Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
 	};
 }
 

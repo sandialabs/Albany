@@ -94,16 +94,15 @@ Albany::DiscretizationFactory::createMeshSpecs()
 }
 
 Teuchos::RCP<Albany::AbstractDiscretization>
-Albany::DiscretizationFactory::createDiscretization(
-		  unsigned int neq,
-		  unsigned int nstates,
-		  unsigned int worksetSize)
+Albany::DiscretizationFactory::createDiscretization(unsigned int neq,
+                           const Teuchos::RCP<Albany::StateInfoStruct>& sis)
 {
   TEST_FOR_EXCEPTION(stkMeshStruct==Teuchos::null,
        std::logic_error,
        "stkMeshStruct accessed, but it has not been constructed" << std::endl);
 
-  stkMeshStruct->setFieldAndBulkData(epetra_comm, discParams, neq, nstates, worksetSize);
+  stkMeshStruct->setFieldAndBulkData(epetra_comm, discParams, neq,
+                                     sis, stkMeshStruct->getMeshSpecs()->worksetSize);
 
   Teuchos::RCP<Albany::AbstractDiscretization> strategy
     = Teuchos::rcp(new Albany::STKDiscretization(stkMeshStruct, epetra_comm));

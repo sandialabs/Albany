@@ -16,11 +16,12 @@
 #include "Albany_StateManager.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Teuchos_TestForException.hpp"
+#include "Phalanx_DataLayout_MDALayout.hpp"
 
 Albany::StateManager::StateManager() :
   state1_is_old_state(true), stateVarsAreAllocated(false)
 {
-  //Teuchos::RCP<PHX::DataLayout> dummy = Teuchos::rcp(new PHX::MDALayout<Dummy>(0));
+  //Teuchos::RCP<PHX::DataLayout> dummy = Teuchos::rcp(new PHX::DataLayout<Dummy>(0));
 }
 
 Teuchos::RCP<Teuchos::ParameterList>
@@ -64,6 +65,28 @@ Albany::StateManager::registerStateVariable(const std::string &name, const Teuch
   stateInit[name] = init_type;
 }
 
+Teuchos::RCP<Albany::StateInfoStruct>
+Albany::StateManager::getStateInfoStruct()
+{
+  Teuchos::RCP<Albany::StateInfoStruct> sis = Teuchos::rcp(new Albany::StateInfoStruct());
+
+  RegisteredStates::iterator st = statesToStore.begin();
+  while (st != statesToStore.end())
+  {
+    // compute number of scalar states for each state
+    std::vector<PHX::DataLayout::size_type> dims;
+    st->second->dimensions(dims);
+    int s=1;
+    for (int i=2; i< dims.size(); i++)  s *= dims[i];
+
+    sis->nstates += s;
+
+    st++;
+  }
+
+  return sis;
+}
+
 void
 Albany::StateManager::allocateStateVariables(const int numWorksets)
 {
@@ -85,8 +108,8 @@ Albany::StateManager::allocateStateVariables(const int numWorksets)
     std::vector<PHX::DataLayout::size_type> dims;
     st->second->dimensions(dims);
 
-    *out << "StateManager: allocating space for state:  " << st->first 
-         << " with Layout " << *st->second << std::endl;
+    *out << "StateManager: allocating space for state:  " << st->first << "  at "
+         <<  st->second->name(1) << " with Layout of " << *st->second << std::endl;
 
     for (int ws = 0; ws < numWorksets; ws++)
     {
@@ -115,21 +138,21 @@ Albany::StateManager::initializeStateVariables(const int numWorksets)
 
     std::string init_type = st->second;
 
-    *out << "StateManager: initializing state:  " << st->first << std::endl;
+    *out << "StateManager: initializing state:  " << st->first;
 
     for (int ws = 0; ws < numWorksets; ws++)
     {
       if (init_type == "zero")
       {
         if (ws == 0)
-          *out << "initialization type 'zero'" << std::endl;
+          *out << " with initialization type 'zero'" << std::endl;
         state1[ws][st->first]->initialize(0.0);
         state2[ws][st->first]->initialize(0.0);
       }
       else if (init_type == "identity")
       {
         if (ws == 0)
-          *out << "initialization type 'identity'" << std::endl;
+          *out << " with initialization type 'identity'" << std::endl;
         // we assume operating on the last two indices is correct
         std::vector<PHX::DataLayout::size_type> dims;
         state1[ws][st->first]->dimensions(dims);

@@ -15,35 +15,10 @@
 \********************************************************************/
 
 
-#ifndef ALBANY_POINT0D_STKMESHSTRUCT_HPP
-#define ALBANY_POINT0D_STKMESHSTRUCT_HPP
+#include "PHAL_AlbanyTraits.hpp"
 
-#include "Albany_GenericSTKMeshStruct.hpp"
+#include "PHAL_SharedParameter.hpp"
+#include "PHAL_SharedParameter_Def.hpp"
 
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::SharedParameter)
 
-namespace Albany {
-
-  class Point0DSTKMeshStruct : public GenericSTKMeshStruct {
-
-    public:
-
-    Point0DSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params);
-
-    ~Point0DSTKMeshStruct() {};
-
-    void setFieldAndBulkData(
-                  const Teuchos::RCP<const Epetra_Comm>& comm,
-                  const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_,
-                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const unsigned int worksetSize);
-
-    private:
-
-    Teuchos::RCP<const Teuchos::ParameterList>
-      getValidDiscretizationParameters() const;
-
-  };
-}
-
-#endif // ALBANY_POINT0D_STKMESHSTRUCT_HPP

@@ -4,8 +4,8 @@
 #     {wgate = 1.5}
 #     {tgate = 0.03}
 #     {tgateox = 0.03}
-#     {wquantum = 1.5}
-#     {tquantum = 0.2 }
+#     {wquantum = 2}
+#     {tquantum = 1 }
 #     {toxquantum = 0.1}
 
 # vertices for Silicon substrate
@@ -136,10 +136,10 @@ mesh surface all
 # refine mesh in Silicon near the Silicon/SiO2 interface
 # one refinement generates 1800 elements
 #refine curve 42 43 44 numsplit 1 bias 1.2 depth 5 smooth
-refine surface 11 13 numsplit 3 bias 1 depth 0 smooth
-refine surface 11 numsplit 2 bias 1 depth 0 smooth
+refine surface 11 13 numsplit 2 bias 1 depth 0 smooth
+#refine surface 11 numsplit 2 bias 1 depth 0 smooth
 #refine surface 11 numsplit 1 bias 1 depth 3 smooth
-#refine curve 44 numsplit 5 bias 1.2 depth 3 smooth
+refine curve 44 numsplit 2 bias 1.2 depth 2 smooth
 
 ## merge all overlapped elements
 merge all

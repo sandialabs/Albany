@@ -27,6 +27,8 @@ PoissonSource(Teuchos::ParameterList& p) :
      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout")),
   potential(p.get<std::string>("Variable Name"),
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+  temperatureField(p.get<std::string>("Temperature Name"),
+      p.get<Teuchos::RCP<PHX::DataLayout> >("Shared Param Data Layout")),
   poissonSource(p.get<std::string>("Source Name"),
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
   chargeDensity("Charge Density",
@@ -71,57 +73,29 @@ PoissonSource(Teuchos::ParameterList& p) :
   materialDB = p.get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
   
   // passed down from main list
-  temperature = p.get<double>("Temperature");
   length_unit_in_m = p.get<double>("Length unit in m");
   bSchrodingerInQuantumRegions = p.get<bool>("Use Schrodinger source");
 
   if(bSchrodingerInQuantumRegions) {
-    std::string eigenvalFilename = p.get<string>("Eigenvalues file");
+    eigenValueFilename = p.get<string>("Eigenvalues file");
     nEigenvectors = p.get<int>("Schrodinger eigenvectors");
     evecStateRoot = p.get<string>("Eigenvector state name root");
-
-    //Open eigenvalue filename and read into eigenvals vector
-    std::ifstream evalData;
-    evalData.open(eigenvalFilename.c_str());
-    TEST_FOR_EXCEPTION(!evalData.is_open(), Teuchos::Exceptions::InvalidParameter,
-		       std::endl << "Error! Cannot open eigenvalue filename  " 
-		       << eigenvalFilename << std::endl);
-
-    eigenvals.resize(nEigenvectors);
-
-    const double TOL = 1e-6;
-    char buf[100];
-    int index;
-    double RePart, ImPart;
-
-    evalData.getline(buf,100); //skip header
-    while ( !evalData.eof() ) {
-      evalData >> index >> RePart >> ImPart;
-      TEST_FOR_EXCEPT(fabs(ImPart) > TOL);
-      if(index < nEigenvectors) eigenvals[index] = -RePart; //negative b/c of convention
-      //std::cout << "DEBUG eval(" << index << ") = " << RePart << std::endl;
-    }
-    evalData.close();
   }
   else {
     nEigenvectors = 0;
+    eigenValueFilename = "";
     evecStateRoot = "";
   }
 
-  // Scaling factors
-  X0 = length_unit_in_m/1e-2; // length scaling to get to [cm] 
-  V0 = kbBoltz*temperature/1.0; // kb*T/q in [V], scaling for potential
-
-  // Add factor  and temperature as a Sacado-ized parameters
+  // Add factor as a Sacado-ized parameter
   Teuchos::RCP<ParamLib> paramLib =
       p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
   new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
       "Poisson Source Factor", this, paramLib);
-  new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-      "Lattice Temperature", this, paramLib);
 
   this->addDependentField(potential);
   this->addDependentField(coordVec);
+  this->addDependentField(temperatureField);
 
   this->addEvaluatedField(poissonSource);
   this->addEvaluatedField(chargeDensity);
@@ -144,6 +118,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(poissonSource,fm);
   this->utils.setFieldData(potential,fm);
   this->utils.setFieldData(coordVec,fm);
+  this->utils.setFieldData(temperatureField,fm);
 
   this->utils.setFieldData(chargeDensity,fm);
   this->utils.setFieldData(electronDensity,fm);
@@ -172,7 +147,6 @@ typename QCAD::PoissonSource<EvalT,Traits>::ScalarT&
 QCAD::PoissonSource<EvalT,Traits>::getValue(const std::string &n)
 {
   if(n == "Poisson Source Factor") return factor;
-  else if(n == "Lattice Temperature") return temperature;
   else TEST_FOR_EXCEPT(true); return factor; //dummy so all control paths return
 }
 
@@ -202,23 +176,38 @@ template<typename EvalT, typename Traits>
 void QCAD::PoissonSource<EvalT, Traits>::
 evaluateFields_elementblocks(typename Traits::EvalData workset)
 {
+  ScalarT temperature = temperatureField(0); //get shared temperature parameter from field
+
+  // Scaling factors
+  double X0 = length_unit_in_m/1e-2; // length scaling to get to [cm] (structure dimension in [um])
+  ScalarT V0 = kbBoltz*temperature/1.0; // kb*T/q in [V], scaling for potential        
+  ScalarT C0;  // scaling for conc. [cm^-3]
+  ScalarT Lambda2;  // derived scaling factor (unitless) that appears in the scaled Poisson equation
+
   string matrlCategory = materialDB->getElementBlockParam<string>(workset.EBName,"Category");
 
   //! Constant energy reference for heterogeneous structures
   ScalarT qPhiRef;
   string refMtrlName = "Silicon"; //hardcoded reference material name - change this later
   {
-    double mdn = materialDB->getMaterialParam<double>(refMtrlName,"Electron DOS Effective Mass");
-    double mdp = materialDB->getMaterialParam<double>(refMtrlName,"Hole DOS Effective Mass");
-    double Chi = materialDB->getMaterialParam<double>(refMtrlName,"Electron Affinity");
-    double Eg0 = materialDB->getMaterialParam<double>(refMtrlName,"Zero Temperature Band Gap");
-    double alpha = materialDB->getMaterialParam<double>(refMtrlName,"Band Gap Alpha Coefficient");
-    double beta = materialDB->getMaterialParam<double>(refMtrlName,"Band Gap Beta Coefficient");
-    ScalarT Eg = Eg0-alpha*pow(temperature,2.0)/(beta+temperature); // in [eV]
+    string refCategory = materialDB->getMaterialParam<string>(refMtrlName,"Category");
+    if(refCategory == "Semiconductor") {
+      double mdn = materialDB->getMaterialParam<double>(refMtrlName,"Electron DOS Effective Mass");
+      double mdp = materialDB->getMaterialParam<double>(refMtrlName,"Hole DOS Effective Mass");
+      double Chi = materialDB->getMaterialParam<double>(refMtrlName,"Electron Affinity");
+      double Eg0 = materialDB->getMaterialParam<double>(refMtrlName,"Zero Temperature Band Gap");
+      double alpha = materialDB->getMaterialParam<double>(refMtrlName,"Band Gap Alpha Coefficient");
+      double beta = materialDB->getMaterialParam<double>(refMtrlName,"Band Gap Beta Coefficient");
+      ScalarT Eg = Eg0-alpha*pow(temperature,2.0)/(beta+temperature); // in [eV]
     
-    ScalarT kbT = kbBoltz*temperature;      // in [eV]
-    ScalarT Eic = -Eg/2. + 3./4.*kbT*log(mdp/mdn);  // (Ei-Ec) in [eV]
-    qPhiRef = Chi - Eic;  // (Evac-Ei) in [eV] where Evac = vacuum level
+      ScalarT kbT = kbBoltz*temperature;      // in [eV]
+      ScalarT Eic = -Eg/2. + 3./4.*kbT*log(mdp/mdn);  // (Ei-Ec) in [eV]
+      qPhiRef = Chi - Eic;  // (Evac-Ei) in [eV] where Evac = vacuum level
+    }
+    else {
+      double Chi = materialDB->getMaterialParam<double>(refMtrlName,"Electron Affinity");
+      qPhiRef = Chi;
+    }
   }  
 
 
@@ -325,13 +314,17 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
     if(bSchrodingerInQuantumRegions && 
       materialDB->getElementBlockParam<bool>(workset.EBName,"quantum",false)) 
     {
+    
+      // read eigenvalues from file
+      std::vector<double> eigenvals = ReadEigenvaluesFromFile(nEigenvectors);  
+       
       // loop over cells and qps
       for (std::size_t cell=0; cell < workset.numCells; ++cell)
       {
         for (std::size_t qp=0; qp < numQPs; ++qp)
         {
           // compute the electron density using wavefunction
-          ScalarT eDensity = eDensityForPoissonSchrond(workset, cell, qp);
+          ScalarT eDensity = eDensityForPoissonSchrond(workset, cell, qp, eigenvals);
           
           // obtain the scaled potential
           const ScalarT& phi = potential(cell,qp);
@@ -382,7 +375,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
             ionN = (this->*ionDopant)(dopantType,-phi+inArg)*dopingConc;
           else 
             ionN = 0.0; 
-          
+
           // the scaled full RHS
           ScalarT charge; 
           charge = 1.0/Lambda2*(Nv*(this->*carrStat)(-phi+Evi/kbT)- Nc*(this->*carrStat)(phi+Eic/kbT) + ionN)/C0;
@@ -479,6 +472,9 @@ evaluateFields_default(typename Traits::EvalData workset)
   MeshScalarT* coord;
   ScalarT charge;
 
+  ScalarT temperature = temperatureField(0); //get shared temperature parameter from field
+  ScalarT V0 = kbBoltz*temperature/1.0; // kb*T/q in [V], scaling for potential
+
   for (std::size_t cell=0; cell < workset.numCells; ++cell) 
   {
     for (std::size_t qp=0; qp < numQPs; ++qp) 
@@ -491,12 +487,13 @@ evaluateFields_default(typename Traits::EvalData workset)
         if (coord[1]<0.8) charge = (coord[1]*coord[1]);
         else charge = 3.0;
         charge *= (1.0 + exp(-phi));
-        chargeDensity(cell, qp) = charge;	// default device has NO scaling
+        chargeDensity(cell, qp) = charge;
         break;
       default: TEST_FOR_EXCEPT(true);
       }
 
-      poissonSource(cell, qp) = factor*charge;
+      // scale even default device since Poisson Dirichlet evaluator always scales DBCs
+      poissonSource(cell, qp) = factor*charge / V0; 
     }
   }
 }
@@ -669,7 +666,7 @@ QCAD::PoissonSource<EvalT,Traits>::computeFDIntMinusOneHalf(const ScalarT x)
 template<typename EvalT, typename Traits>
 typename QCAD::PoissonSource<EvalT,Traits>::ScalarT
 QCAD::PoissonSource<EvalT,Traits>::
-eDensityForPoissonSchrond(typename Traits::EvalData workset, std::size_t cell, std::size_t qp)
+eDensityForPoissonSchrond(typename Traits::EvalData workset, std::size_t cell, std::size_t qp, const std::vector<double> &eigenvals)
 {
   // unit conversion factor
   double eVPerJ = 1.0/eleQ; 
@@ -678,6 +675,10 @@ eDensityForPoissonSchrond(typename Traits::EvalData workset, std::size_t cell, s
   // For Delta2-band in Silicon, valley degeneracy factor = 2
   int valleyDegeneracyFactor = materialDB->getElementBlockParam<int>(workset.EBName,"Num of conduction band min",2);
 
+  // Scaling factors
+  double X0 = length_unit_in_m/1e-2; // length scaling to get to [cm] (structure dimension in [um])
+
+  ScalarT temperature = temperatureField(0); //get shared temperature parameter from field
   ScalarT kbT = kbBoltz*temperature;  // in [eV]
   ScalarT eDensity = 0.0; 
   double Ef = 0.0;  //Fermi energy == 0
@@ -798,3 +799,36 @@ eDensityForPoissonSchrond(typename Traits::EvalData workset, std::size_t cell, s
 }
 
 
+// **********************************************************************
+template<typename EvalT,typename Traits>
+std::vector<double>
+QCAD::PoissonSource<EvalT,Traits>::ReadEigenvaluesFromFile(int numberToRead)
+{
+  std::vector<double> eigenvals;
+
+  //Open eigenvalue filename and read into eigenvals vector
+  std::ifstream evalData;
+  evalData.open(eigenValueFilename.c_str());
+  TEST_FOR_EXCEPTION(!evalData.is_open(), Teuchos::Exceptions::InvalidParameter,
+		     std::endl << "Error! Cannot open eigenvalue filename  " 
+		     << eigenValueFilename << std::endl);
+
+  eigenvals.resize(numberToRead);
+
+  const double TOL = 1e-6;
+  char buf[100];
+  int index;
+  double RePart, ImPart;
+
+  evalData.getline(buf,100); //skip header
+  while ( !evalData.eof() ) {
+    evalData >> index >> RePart >> ImPart;
+    if(fabs(ImPart) > TOL)
+      std::cout << "WARNING: eigenvalue " << index << " has Im Part: " 
+		<< RePart << " + " << ImPart << "i" << std::endl;
+    if(index < numberToRead) eigenvals[index] = -RePart; //negative b/c of convention
+    //std::cout << "DEBUG eval(" << index << ") = " << RePart << std::endl;
+  }
+  evalData.close();
+  return eigenvals;
+}

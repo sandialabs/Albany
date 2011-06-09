@@ -16,7 +16,6 @@
 
 #include "LCM/LCM_FactoryTraits.hpp"
 #include "GradientDamageProblem.hpp"
-#include "Albany_BoundaryFlux1DResponseFunction.hpp"
 #include "Albany_SolutionAverageResponseFunction.hpp"
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
 #include "Albany_Utils.hpp"
@@ -67,14 +66,13 @@ Albany::GradientDamageProblem::
 void
 Albany::GradientDamageProblem::
 buildProblem(
-    const int worksetSize,
+    const Albany::MeshSpecsStruct& meshSpecs,
     Albany::StateManager& stateMgr,
-    const Albany::AbstractDiscretization& disc,
     std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
   /* Construct All Phalanx Evaluators */
-  constructEvaluators(worksetSize, disc.getCubatureDegree(), disc.getCellTopologyData(), stateMgr);
-  constructDirichletEvaluators(disc.getNodeSetIDs());
+  constructEvaluators(meshSpecs, stateMgr);
+  constructDirichletEvaluators(meshSpecs.nsNames);
 
   // Build response functions
   Teuchos::ParameterList& responseList = params->sublist("Response Functions");
@@ -103,8 +101,8 @@ buildProblem(
 
 void
 Albany::GradientDamageProblem::constructEvaluators(
-       const int worksetSize, const int cubDegree, 
-       const CellTopologyData& ctd, Albany::StateManager& stateMgr)
+       const Albany::MeshSpecsStruct& meshSpecs,
+       Albany::StateManager& stateMgr)
 {
    using Teuchos::RCP;
    using Teuchos::rcp;
@@ -116,14 +114,15 @@ Albany::GradientDamageProblem::constructEvaluators(
    using LCM::FactoryTraits;
    using PHAL::AlbanyTraits;
 
-   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&ctd));
+   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
    RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
-     intrepidBasis = this->getIntrepidBasis(ctd);
+     intrepidBasis = this->getIntrepidBasis(meshSpecs.ctd);
 
    numNodes = intrepidBasis->getCardinality();
+   const int worksetSize = meshSpecs.worksetSize;
 
    Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-   RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, cubDegree);
+   RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
 
    const int numQPts = cubature->getNumPoints();
    const int numVertices = cellType->getVertexCount();

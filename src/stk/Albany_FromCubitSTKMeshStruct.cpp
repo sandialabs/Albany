@@ -43,12 +43,14 @@ enum { field_data_chunk_size = 1001 };
 Albany::FromCubitSTKMeshStruct::FromCubitSTKMeshStruct(
                   const Teuchos::RCP<CUTR::CubitMeshMover>& meshMover, 
                   const Teuchos::RCP<Teuchos::ParameterList>& params, 
-                  const unsigned int neq_, const unsigned int nstates_) :
+                  const unsigned int neq_,
+                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+) :
   periodic(params->get("Periodic BC", false))
 {
   params->validateParameters(*getValidDiscretizationParameters(),0);
   neq=neq_;
-  nstates=nstates_;
+  nstates=sis->nstates;
 
   // Get singleton to STK info as loaded by Cubit MeshMover
   STKMeshData* stkMeshData = STKMeshData::instance();

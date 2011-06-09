@@ -33,7 +33,8 @@ namespace Albany {
     virtual void setFieldAndBulkData(
                   const Teuchos::RCP<const Epetra_Comm>& comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_, const unsigned int nstates_,
+                  const unsigned int neq_,
+                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize) = 0;
 
     const Teuchos::RCP<Albany::MeshSpecsStruct>& getMeshSpecs() const;
@@ -45,7 +46,8 @@ namespace Albany {
 
     void SetupFieldData(
                   const Teuchos::RCP<const Epetra_Comm>& comm,
-                  const int neq_, const int nstates_,
+                  const int neq_,
+                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const int worksetSize_);
 
     void DeclareParts(std::vector<std::string> nsNames);

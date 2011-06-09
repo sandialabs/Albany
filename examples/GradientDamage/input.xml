@@ -144,6 +144,24 @@
       <Parameter name="Output Precision" type="int" value="3"/>
       <Parameter name="Output Processor" type="int" value="0"/>
     </ParameterList>
+    <ParameterList name="Status Tests">
+      <Parameter name="Test Type" type="string" value="Combo"/>
+      <Parameter name="Combo Type" type="string" value="OR"/>
+      <Parameter name="Number of Tests" type="int" value="3"/>
+      <ParameterList name="Test 0">
+        <Parameter name="Test Type" type="string" value="NormF"/>
+        <Parameter name="Norm Type" type="string" value="Two Norm"/>
+        <Parameter name="Scale Type" type="string" value="Scaled"/>
+        <Parameter name="Tolerance" type="double" value="1e-8"/>
+      </ParameterList>
+      <ParameterList name="Test 1">
+        <Parameter name="Test Type" type="string" value="MaxIters"/>
+        <Parameter name="Maximum Iterations" type="int" value="8"/>
+      </ParameterList>
+      <ParameterList name="Test 2">
+        <Parameter name="Test Type" type="string" value="FiniteValue"/>
+      </ParameterList>
+    </ParameterList>
     <ParameterList name="Solver Options">
       <Parameter name="Status Test Check Type" type="string" value="Minimal"/>
     </ParameterList>
