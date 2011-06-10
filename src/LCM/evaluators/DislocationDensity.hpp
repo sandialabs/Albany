@@ -26,6 +26,9 @@
 #include "Intrepid_CellTools.hpp"
 #include "Intrepid_Cubature.hpp"
 
+#include "Teuchos_SerialDenseMatrix.hpp" 
+#include "Teuchos_SerialDenseSolver.hpp"
+
 /** \brief Dislocation Density Tensor
 
     This evaluator calculates the dislcation density tensor
@@ -54,20 +57,17 @@ private:
   bool square;
 
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> Fp;
-  PHX::MDField<ScalarT,Cell,Node,QuadPoint> BF;
-  PHX::MDField<ScalarT,Cell,Node,QuadPoint,Dim> GradBF;
+  PHX::MDField<double,Cell,QuadPoint,Dim,Dim> Fp;
+  PHX::MDField<double,Cell,Node,QuadPoint> BF;
+  PHX::MDField<double,Cell,Node,QuadPoint,Dim> GradBF;
+
+  // Output:
+  PHX::MDField<double,Cell,QuadPoint,Dim,Dim> G;
 
   // Temporary FieldContainers
-  Intrepid::FieldContainer<ScalarT> BF_operator;
-  Intrepid::FieldContainer<ScalarT> BF_inverse;
-  Intrepid::FieldContainer<ScalarT> nodalFp;
-  Intrepid::FieldContainer<ScalarT> curlFp;
-  Intrepid::FieldContainer<ScalarT> A;
-  Intrepid::FieldContainer<ScalarT> Ainv;
-  
-  // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> G;
+  Intrepid::FieldContainer<double> nodalFp;
+  Intrepid::FieldContainer<double> curlFp;
+
 };
 }
 

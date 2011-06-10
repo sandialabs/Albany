@@ -571,11 +571,11 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
       p->set<string>("Saturation Exponent Name", "Saturation Exponent"); // qp_scalar also
       p->set<string>("Yield Strength Name", "Yield Strength"); // qp_scalar also
       p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient");  // qp_scalar also
-      p->set<string>("Fp Name", "Fp");  // qp_tensor also
-      p->set<string>("Eqps Name", "eqps");  // qp_scalar also
 
       //Output
       p->set<string>("Stress Name", matModel); //qp_tensor also
+      p->set<string>("Fp Name", "Fp");  // qp_tensor also
+      p->set<string>("Eqps Name", "eqps");  // qp_scalar also
  
       //Declare what state data will need to be saved (name, layout, init_type)
       //      stateMgr.registerStateVariable("stress",qp_tensor,"zero");
