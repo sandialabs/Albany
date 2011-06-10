@@ -15,22 +15,53 @@
 \********************************************************************/
 
 #include "LameUtils.hpp"
+#include "Teuchos_TestForException.hpp"
+#include <string>
+#include <algorithm>
 
 namespace LameUtils {
 
 Teuchos::RCP<lame::Material> constructLameMaterialModel(const Teuchos::ParameterList& lameMaterialParameters){
 
-  Teuchos::RCP<lame::MatProps> props = Teuchos::rcp(new lame::MatProps());
-  std::vector<double> elasticModulusVector;
-  double elasticModulusValue = lameMaterialParameters.get<double>("Elastic Modulus");
-  elasticModulusVector.push_back(elasticModulusValue);
-  props->insert(std::string("YOUNGS_MODULUS"), elasticModulusVector);
-  std::vector<double> poissonsRatioVector;
-  double poissonsRatioValue = lameMaterialParameters.get<double>("Poissons Ratio");
-  poissonsRatioVector.push_back(poissonsRatioValue);
-  props->insert(std::string("POISSONS_RATIO"), poissonsRatioVector);
-  return Teuchos::rcp(new lame::Elastic(*props));
+  // load the material properties into a lame::MatProps container.
+  // LAME material properties must be of type int, double, or string.
 
+  lame::MatProps props;
+
+  for(Teuchos::ParameterList::ConstIterator it = lameMaterialParameters.begin() ; it != lameMaterialParameters.end() ; ++it){
+
+    // The name should be all upper case with spaces replaced with underscores
+    std::string name = lameMaterialParameters.name(it);
+    std::transform(name.begin(), name.end(), name.begin(), toupper);
+    std::replace(name.begin(), name.end(), ' ', '_');
+
+    const Teuchos::ParameterEntry entry = lameMaterialParameters.entry(it);
+    if(entry.isType<int>()){
+      std::vector<int> propertyVector;
+      propertyVector.push_back(Teuchos::getValue<int>(entry));
+      props.insert(name, propertyVector);
+      //std::cout << "LameUtils processing material property int " << name << " with value " << propertyVector[0] << std::endl;
+    }
+    else if(entry.isType<double>()){
+      std::vector<double> propertyVector;
+      propertyVector.push_back(Teuchos::getValue<double>(entry));
+      props.insert(name, propertyVector);
+      //std::cout << "LameUtils processing material property double " << name << " with value " << propertyVector[0] << std::endl;
+    }
+    else if(entry.isType<std::string>()){
+      std::vector<std::string> propertyVector;
+      propertyVector.push_back(Teuchos::getValue<std::string>(entry));
+      props.insert(name, propertyVector);
+      //std::cout << "LameUtils processing material property string " << name << " with value " << propertyVector[0] << std::endl;
+    }
+    else{
+      TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, " parameters for LAME material models must be of type double, int, or string.");
+    }
+  }
+
+  // \todo Pass in the material model name and instantiate the right material model (with props)
+
+  return Teuchos::rcp(new lame::Elastic(props));
 }
 
 }
