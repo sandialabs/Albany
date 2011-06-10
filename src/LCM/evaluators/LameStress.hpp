@@ -22,10 +22,7 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-
-// LAME includes
-#include <models/Material.h>
-#include <models/Elastic.h>
+#include "LameUtils.hpp"
 
 /** \brief Evaluates stress using the Library for Advanced Materials for Engineering (LAME).
 */

@@ -305,10 +305,12 @@ IF(ALBANY_LCM)
 
 IF(ALBANY_LAME)
   SET(SOURCES ${SOURCES}
+    ${LCM_DIR}/utils/LameUtils.cpp
     ${LCM_DIR}/evaluators/LameStress.cpp 
     ${LCM_DIR}/problems/LameProblem.cpp 
   )
   SET(HEADERS ${HEADERS}
+    ${LCM_DIR}/utils/LameUtils.hpp
     ${LCM_DIR}/evaluators/LameStress.hpp 
     ${LCM_DIR}/evaluators/LameStress_Def.hpp 
     ${LCM_DIR}/problems/LameProblem.hpp

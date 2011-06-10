@@ -54,16 +54,18 @@ LameStress(const Teuchos::ParameterList& p) :
   // This assumes that there is a single material model associated with this
   // evaluator and that the material properties are constant (read directly
   // from input deck parameter list)
-  Teuchos::RCP<lame::MatProps> props = Teuchos::rcp(new lame::MatProps());
-  std::vector<RealType> elasticModulusVector;
-  RealType elasticModulusValue = lameMaterialParameters.get<double>("Elastic Modulus");
-  elasticModulusVector.push_back(elasticModulusValue);
-  props->insert(std::string("YOUNGS_MODULUS"), elasticModulusVector);
-  std::vector<RealType> poissonsRatioVector;
-  RealType poissonsRatioValue = lameMaterialParameters.get<double>("Poissons Ratio");
-  poissonsRatioVector.push_back(poissonsRatioValue);
-  props->insert(std::string("POISSONS_RATIO"), poissonsRatioVector);
-  lameMaterialModel = Teuchos::rcp(new lame::Elastic(*props));
+//   Teuchos::RCP<lame::MatProps> props = Teuchos::rcp(new lame::MatProps());
+//   std::vector<RealType> elasticModulusVector;
+//   RealType elasticModulusValue = lameMaterialParameters.get<double>("Elastic Modulus");
+//   elasticModulusVector.push_back(elasticModulusValue);
+//   props->insert(std::string("YOUNGS_MODULUS"), elasticModulusVector);
+//   std::vector<RealType> poissonsRatioVector;
+//   RealType poissonsRatioValue = lameMaterialParameters.get<double>("Poissons Ratio");
+//   poissonsRatioVector.push_back(poissonsRatioValue);
+//   props->insert(std::string("POISSONS_RATIO"), poissonsRatioVector);
+//   lameMaterialModel = Teuchos::rcp(new lame::Elastic(*props));
+
+  lameMaterialModel = LameUtils::constructLameMaterialModel(lameMaterialParameters);
 
   // \todo Call initialize() on material.
 }
