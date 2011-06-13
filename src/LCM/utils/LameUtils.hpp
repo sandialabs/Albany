@@ -17,12 +17,12 @@
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
-// LAME includes
+// LAME material model base class
 #include <models/Material.h>
-#include <models/Elastic.h>
 
 namespace LameUtils {
 
-Teuchos::RCP<lame::Material> constructLameMaterialModel(const Teuchos::ParameterList& lameMaterialParameters);
+Teuchos::RCP<lame::Material> constructLameMaterialModel(const std::string& lameMaterialModelName,
+                                                        const Teuchos::ParameterList& lameMaterialParameters);
 
 }
