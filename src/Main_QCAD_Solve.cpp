@@ -43,6 +43,11 @@ bool checkConvergence(Teuchos::RCP<std::vector<Albany::StateVariables> >& newSta
 		      Teuchos::RCP<std::vector<Albany::StateVariables> >& oldStates,
 		      std::string stateNameToCompare, double tol);
 
+#include "Teuchos_ParameterList.hpp"
+#include "Piro_Epetra_LOCASolver.hpp"
+void ResetEigensolverShift(Teuchos::RCP<EpetraExt::ModelEvaluator>& Solver, double newShift);
+Teuchos::RCP<Teuchos::ParameterList> eigList;
+
 
 int main(int argc, char *argv[]) {
 
@@ -139,6 +144,10 @@ int main(int argc, char *argv[]) {
     int iter = 0;
     do {
       iter++;
+ 
+      // ERIK: This Code appears to work with fresh Trilinos
+      //double newShift = -0.6 + 0.6*iter;
+      //ResetEigensolverShift(schrodingerSolver, newShift);
 
       *out << "QCAD Solve: Schrodinger iteration " << iter << endl;
       SolveModel(schrodingerApp, schrodingerSolver, 
@@ -380,3 +389,22 @@ bool checkConvergence(Teuchos::RCP<std::vector<Albany::StateVariables> >& newSta
   }
   return true;
 }
+
+void ResetEigensolverShift(Teuchos::RCP<EpetraExt::ModelEvaluator>& Solver, double newShift) {
+  Teuchos::RCP<Piro::Epetra::LOCASolver> pels = Teuchos::rcp_dynamic_cast<Piro::Epetra::LOCASolver>(Solver);
+  TEST_FOR_EXCEPT(pels == Teuchos::null);
+
+  Teuchos::RCP<LOCA::Stepper> stepper =  pels->getLOCAStepperNonConst();
+  const Teuchos::ParameterList& oldEigList = stepper->getList()->sublist("LOCA").sublist("Stepper").sublist("Eigensolver");
+  //Teuchos::RCP<Teuchos::ParameterList> eigList =
+  eigList =
+    Teuchos::rcp(new Teuchos::ParameterList(oldEigList));
+
+cout << " OLD  " << oldEigList << endl;
+cout << " COPY " << *eigList << endl;
+
+  eigList->set("Shift",newShift);
+
+  stepper->eigensolverReset(eigList);
+}
+
