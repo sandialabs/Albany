@@ -361,17 +361,15 @@ Albany::LameProblem::constructEvaluators(
     p->set<string>("Stress Name", "Stress"); // qp_tensor also
 
     //Declare what state data will need to be saved (name, layout, init_type)
-    stateMgr.registerStateVariable("stress",qp_tensor,"zero");
-    stateMgr.registerStateVariable("def_grad",qp_tensor,"identity");
 
     evaluators_to_build["Stress"] = p;
 
     evaluators_to_build["Save Stress"] =
       stateMgr.registerStateVariable("Stress",qp_tensor,
-            dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
+            dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero",true);
     evaluators_to_build["Save DefGrad"] =
       stateMgr.registerStateVariable("Deformation Gradient",qp_tensor,
-            dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
+            dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero",true);
   }
 
   { // Displacement Resid

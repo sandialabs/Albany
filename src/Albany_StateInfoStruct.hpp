@@ -31,6 +31,7 @@
 #include <string>
 #include <vector>
 #include "Shards_CellTopologyData.h"
+#include "Shards_Array.hpp"
 
   //! Container for minimal mesh specification info needed to 
   //  construct an Albany Problem
@@ -55,11 +56,32 @@ namespace Albany {
 //! Container to get state info from StateManager to STK. Made into a struct so
 //  the information can continue to evolve without changing the interfaces.
 
-struct StateInfoStruct {
-  StateInfoStruct () : nstates(0) {};
-  ~StateInfoStruct () {};
 
-  int nstates;
+struct StateStruct {
+  //enum Entity {Node, Element, UndefinedEntity};
+  //enum InitType {Zero, Identity, Restart, UndefinedInit};
+
+   StateStruct (std::string name_): name(name_),output(true), saveOldState(false) {};
+   //StateStruct (std::string name_): name(name_), entity(UndefinedEntity), initType(UndefinedInit), output(true) {};
+  ~StateStruct () {};
+
+  const std::string name;
+  std::vector<int> dim;
+  //std::vector<shards::Array* > wsArray;
+  std::vector<shards::Array<double,shards::NaturalOrder>* > wsArray;
+  std::string entity; //Entity entity;
+  std::string initType; //InitType initType;
+  bool output;
+  bool saveOldState; // Bool that this state is to be copied into name+"_old"
+
+  private:  
+    StateStruct ();
 };
+
+typedef std::vector<Teuchos::RCP<StateStruct> >  StateInfoStruct;
+
+typedef std::map< std::string, shards::Array<double,shards::NaturalOrder> > StateArray;
+typedef std::vector<StateArray> StateArrays;
+
 }
 #endif

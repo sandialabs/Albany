@@ -84,6 +84,8 @@ namespace Albany {
 
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >& getCoords() const;
 
+    Albany::StateArrays& getStateArrays() {return stateArrays;};
+
     //! Retrieve Vector (length num worksets) of element block names
     const Teuchos::ArrayRCP<std::string>&  getWsEBNames() const;
 
@@ -91,15 +93,6 @@ namespace Albany {
     void outputToExodus(const Epetra_Vector& soln,
                         const std::vector<std::vector<double> > states);
  
-    //! Get Cubature Degree from input file
-    int getCubatureDegree() const {return stkMeshStruct->cubatureDegree;};
-
-    //! Get Element Topology Type
-    const CellTopologyData& getCellTopologyData() const;
-
-    //! Get Number of Spatial Dimensions
-    virtual int getNumDim() const {return stkMeshStruct->numDim;};
-
     Teuchos::RCP<Epetra_Vector> getSolutionField() const;
 
     void setResidualField(const Epetra_Vector& residual);
@@ -168,6 +161,9 @@ namespace Albany {
     mutable Teuchos::ArrayRCP<double> coordinates;
     Teuchos::ArrayRCP<std::string> wsEBNames;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords;
+
+    // States: vector of length worksets of a map from field name to shards array
+    Albany::StateArrays stateArrays;
 
     //! list of all owned nodes, saved for setting solution
     std::vector< stk::mesh::Entity * > ownednodes ;

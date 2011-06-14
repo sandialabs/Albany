@@ -43,12 +43,6 @@ NonlinearElasticityProblem(
   dofNames[0] = "X";
   if (neq>1) dofNames[1] = "Y";
   if (neq>2) dofNames[2] = "Z";
-
-  if (matModel == "NeoHookean" || matModel == "NeoHookean AD")
-   this->nstates=numDim*numDim;
-  else if (matModel == "J2")  this->nstates=2*numDim*numDim+1;
-  *out << "Num States to Store: " << this->nstates << std::endl;
-  
 }
 
 Albany::NonlinearElasticityProblem::
@@ -552,10 +546,10 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
             dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
      evaluators_to_build["Save Fp"] =
       stateMgr.registerStateVariable("Fp",qp_tensor,
-            dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"identity");
+            dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"identity", true);
      evaluators_to_build["Save Eqps"] =
       stateMgr.registerStateVariable("eqps",qp_scalar,
-            dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
+            dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero", true);
 
       evaluators_to_build["Stress"] = p;
     }

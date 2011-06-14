@@ -19,30 +19,53 @@
 #include "Phalanx_DataLayout_MDALayout.hpp"
 
 Albany::StateManager::StateManager() :
-  state1_is_old_state(true), stateVarsAreAllocated(false)
+  state1_is_old_state(true), stateVarsAreAllocated(false),
+  stateInfo(Teuchos::rcp(new StateInfoStruct))
 {
-  //Teuchos::RCP<PHX::DataLayout> dummy = Teuchos::rcp(new PHX::DataLayout<Dummy>(0));
 }
 
 Teuchos::RCP<Teuchos::ParameterList>
 Albany::StateManager::registerStateVariable(const std::string &name, const Teuchos::RCP<PHX::DataLayout> &dl,
                                             const Teuchos::RCP<PHX::DataLayout> &dummy,
                                             const int saveOrLoadStateFieldID,
-                                            const std::string &init_type)
+                                            const std::string &init_type,
+                                            const bool registerOldState)
 {
-  return registerStateVariable(name, dl, dummy, saveOrLoadStateFieldID, init_type, name);
+  return registerStateVariable(name, dl, dummy, saveOrLoadStateFieldID, init_type, registerOldState, name);
 }
 
 Teuchos::RCP<Teuchos::ParameterList>
 Albany::StateManager::registerStateVariable(const std::string &stateName, const Teuchos::RCP<PHX::DataLayout> &dl,
                                             const Teuchos::RCP<PHX::DataLayout> &dummy,
                                             const int saveOrLoadStateFieldID,
-                                            const std::string &init_type, const std::string& fieldName)
+                                            const std::string &init_type,
+                                            const bool registerOldState,
+                                            const std::string& fieldName)
 {
   TEST_FOR_EXCEPT(stateVarsAreAllocated);
 
   statesToStore[stateName] = dl;
   stateInit[stateName] = init_type;
+
+  // Load into StateInfo
+  (*stateInfo).push_back(Teuchos::rcp(new Albany::StateStruct(stateName)));
+  Albany::StateStruct& stateRef = *stateInfo->back();
+  stateRef.initType = init_type; 
+  stateRef.entity = dl->name(1); //Tag, should be Node or QuadPoint
+  dl->dimensions(stateRef.dim); 
+
+  // If space is needed for old state
+  if (registerOldState) {
+    stateRef.saveOldState = true; 
+
+    std::string stateName_old = stateName + "_old";
+    (*stateInfo).push_back(Teuchos::rcp(new Albany::StateStruct(stateName_old)));
+    Albany::StateStruct& pstateRef = *stateInfo->back();
+    pstateRef.initType = init_type; 
+    pstateRef.entity = dl->name(1); //Tag, should be Node or QuadPoint
+    pstateRef.output = false; 
+    dl->dimensions(pstateRef.dim); 
+  }
 
   // Create param list for SaveStateField evaluator 
   Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Save or Load State " 
@@ -55,36 +78,96 @@ Albany::StateManager::registerStateVariable(const std::string &stateName, const 
   return p;
 }
 
-void
-Albany::StateManager::registerStateVariable(const std::string &name, const Teuchos::RCP<PHX::DataLayout> &dl,
-                                            const std::string &init_type)
-{
-  TEST_FOR_EXCEPT(stateVarsAreAllocated);
-
-  statesToStore[name] = dl;
-  stateInit[name] = init_type;
-}
-
 Teuchos::RCP<Albany::StateInfoStruct>
 Albany::StateManager::getStateInfoStruct()
 {
-  Teuchos::RCP<Albany::StateInfoStruct> sis = Teuchos::rcp(new Albany::StateInfoStruct());
+  return stateInfo;
+}
 
-  RegisteredStates::iterator st = statesToStore.begin();
-  while (st != statesToStore.end())
-  {
-    // compute number of scalar states for each state
-    std::vector<PHX::DataLayout::size_type> dims;
-    st->second->dimensions(dims);
-    int s=1;
-    for (int i=2; i< dims.size(); i++)  s *= dims[i];
+void
+Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscretization>& disc_)
+{
+  //TEST_FOR_EXCEPT(stateVarsAreAllocated);
+  stateVarsAreAllocated = true;
+  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
-    sis->nstates += s;
+  disc = disc_;
 
-    st++;
+  // Get states from STK mesh 
+  Albany::StateArrays& sa = disc->getStateArrays();
+  cout << "BBBB  num worksets " << sa.size() << endl;
+  for (Albany::StateArray::iterator sta = sa[0].begin(); sta != sa[0].end(); sta++) 
+    cout << "BBBB state name " << sta->first << "  rank  " << sta->second.rank() << "  size  " << sta->second.size() << endl;
+  cout << endl;
+
+  int numWorksets = sa.size();
+
+  // For each workset, loop over registered states
+
+  for (int i=0; i<stateInfo->size(); i++) {
+    const std::string stateName = (*stateInfo)[i]->name;
+    const std::string init_type = (*stateInfo)[i]->initType;
+  
+    *out << "StateManager: initializing state:  " << stateName;
+    if (init_type == "zero")
+          *out << " with initialization type 'zero'" << std::endl;
+    else if (init_type == "identity")
+          *out << " with initialization type 'identity'" << std::endl;
+
+    for (int ws = 0; ws < numWorksets; ws++)
+    {
+      std::vector<int> dims;
+      sa[ws][stateName].dimensions(dims);
+      int size = dims.size();
+
+for (int i = 0; i < size; ++i)
+  cout << "DDD " << stateName << "  dim " << i << "  size " << dims[i] << "  initType " << init_type << endl;
+
+
+      if (init_type == "zero")
+      {
+        switch (size) {
+          case 2:
+            for (int cell = 0; cell < dims[0]; ++cell)
+              for (int qp = 0; qp < dims[1]; ++qp)
+                    sa[ws][stateName](cell, qp) = 0.0;
+            break;
+          case 3:
+            for (int cell = 0; cell < dims[0]; ++cell)
+              for (int qp = 0; qp < dims[1]; ++qp)
+                for (int i = 0; i < dims[2]; ++i)
+                      sa[ws][stateName](cell, qp, i) = 0.0;
+            break;
+          case 4:
+            for (int cell = 0; cell < dims[0]; ++cell)
+              for (int qp = 0; qp < dims[1]; ++qp)
+                for (int i = 0; i < dims[2]; ++i)
+                  for (int j = 0; j < dims[3]; ++j)
+                      sa[ws][stateName](cell, qp, i, j) = 0.0;
+            break;
+          default:
+            TEST_FOR_EXCEPTION(size<2||size>4, std::logic_error,
+                "Something is wrong during zero state variable initialization: " << size);
+        }
+
+      }
+      else if (init_type == "identity")
+      {
+        // we assume operating on the last two indices is correct
+        TEST_FOR_EXCEPTION(size != 4, std::logic_error,
+            "Something is wrong during identity state variable initialization: " << size);
+        TEST_FOR_EXCEPT( ! (dims[2] == dims[3]) );
+
+        for (int cell = 0; cell < dims[0]; ++cell)
+          for (int qp = 0; qp < dims[1]; ++qp)
+            for (int i = 0; i < dims[2]; ++i)
+              for (int j = 0; j < dims[3]; ++j)
+                if (i==j) sa[ws][stateName](cell, qp, i, i) = 1.0;
+                else      sa[ws][stateName](cell, qp, i, j) = 0.0;
+      }
+    }
   }
-
-  return sis;
+  *out << std::endl;
 }
 
 void
@@ -126,13 +209,11 @@ void
 Albany::StateManager::initializeStateVariables(const int numWorksets)
 {
   TEST_FOR_EXCEPT(!stateVarsAreAllocated);
-  stateVarsAreAllocated = true;
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
   // For each workset, loop over registered states
   InitializationType::iterator st = stateInit.begin();
 
-  *out << std::endl;
   while (st != stateInit.end())
   {
 
@@ -248,6 +329,13 @@ Albany::StateManager::reinitializeStateVariables(Teuchos::RCP<std::vector<StateV
   *out << std::endl;
 }
 
+Albany::StateArray&
+Albany::StateManager::getStateArray(const int ws) const
+{
+  TEST_FOR_EXCEPT(!stateVarsAreAllocated);
+  return disc->getStateArrays()[ws];
+}
+
 Teuchos::RCP<const Albany::StateVariables>
 Albany::StateManager::getOldStateVariables(const int ws) const
 {
@@ -306,12 +394,26 @@ Albany::StateManager::getAllNewStateVariables()
 void
 Albany::StateManager::updateStates()
 {
-  if (statesToStore.empty())
-    return;
-
   // Swap boolean that defines old and new (in terms of state1 and 2) in accessors
   TEST_FOR_EXCEPT(!stateVarsAreAllocated);
   state1_is_old_state = !state1_is_old_state;
+
+  // Get states from STK mesh 
+  Albany::StateArrays& sa = disc->getStateArrays();
+  int numWorksets = sa.size();
+
+  // For each workset, loop over registered states
+
+  for (int i=0; i<stateInfo->size(); i++) {
+    if ((*stateInfo)[i]->saveOldState) {
+      const std::string stateName = (*stateInfo)[i]->name;
+      const std::string stateName_old = stateName + "_old";
+  
+      for (int ws = 0; ws < numWorksets; ws++)
+        for (int j = 0; j < sa[ws][stateName].size(); j++)
+          sa[ws][stateName_old][i] = sa[ws][stateName][i];
+    }
+  }
 }
 
 const std::vector<std::vector<double> >
@@ -381,7 +483,6 @@ Albany::StateManager::getElementAveragedStates()
       ;
     }
   }
-
 
 
   std::vector<int> worksetSizes(numWorksets);
@@ -460,8 +561,6 @@ Albany::StateManager::getElementAveragedStates()
   }
   return states;
 }
-
-
 
 
 void

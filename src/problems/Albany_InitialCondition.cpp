@@ -43,7 +43,7 @@ getValidInitialConditionParameters()
 
 void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
                        const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >& wsElNodeID,
-                       const Teuchos::ArrayRCP<double>& coordinates, 
+                       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords,
                        const int neq,
                        const int numDim,
                        Teuchos::ParameterList& icParams)
@@ -68,7 +68,7 @@ void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
        int lid = wsElNodeID[ws][el][ln];
        int coordID = 3*lid;
        double* x = &(*soln)[neq*lid];
-       const double* X = &coordinates[coordID];
+       const double* X = coords[ws][el][ln];
 
        initFunc->compute(x,X);
 

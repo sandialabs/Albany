@@ -48,8 +48,6 @@ Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
   }
 
   bulkData = NULL;
-
-  cubatureDegree = params->get("Cubature Degree", 3);
 }
 
 void Albany::GenericSTKMeshStruct::SetupFieldData(
@@ -63,7 +61,7 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
        "LogicError: metaData->FEM_initialize(numDim) not yet called" << std::endl);
 
   neq = neq_;
-  nstates = sis->nstates;
+  nstates = 4;
 
   if (bulkData ==  NULL)
   bulkData = new stk::mesh::BulkData(stk::mesh::fem::FEMMetaData::get_meta_data(*metaData),
@@ -79,7 +77,7 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
   stk::mesh::put_field( *solution_field , metaData->node_rank() , metaData->universal_part(), neq );
   stk::mesh::put_field( *residual_field , metaData->node_rank() , metaData->universal_part() , neq );
   if (nstates>0) stk::mesh::put_field( *state_field , metaData->element_rank() , metaData->universal_part(), nstates );
-  
+
 #ifdef ALBANY_IOSS
   stk::io::set_field_role(*coordinates_field, Ioss::Field::MESH);
   stk::io::set_field_role(*solution_field, Ioss::Field::TRANSIENT);
@@ -87,6 +85,43 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
   if (nstates>0) stk::io::set_field_role(*state_field, Ioss::Field::TRANSIENT);
 #endif
 
+  // Code to parse the vector of StateStructs and create STK fields
+  for (int i=0; i<sis->size(); i++) {
+      Albany::StateStruct& st = *((*sis)[i]);
+      std::vector<int>& dim = st.dim;
+      if (dim.size() == 2 && st.entity=="QuadPoint") {
+        qpscalar_states.push_back(& metaData->declare_field< QPScalarFieldType >( st.name) );
+        stk::mesh::put_field( *qpscalar_states.back() , metaData->element_rank(),
+                              metaData->universal_part(), dim[1]);
+        cout << "NNNN qps field name " << qpscalar_states.back()->name() << endl;
+#ifdef ALBANY_IOSS
+        if (st.output) stk::io::set_field_role(*qpscalar_states.back(), Ioss::Field::TRANSIENT);
+#endif
+      }
+      else if (dim.size() == 3 && st.entity=="QuadPoint") {
+        qpvector_states.push_back(& metaData->declare_field< QPVectorFieldType >( st.name) );
+        // Multi-dim order is Fortran Ordering, so reversed here
+        stk::mesh::put_field( *qpvector_states.back() , metaData->element_rank(),
+                              metaData->universal_part(), dim[2], dim[1]);
+        cout << "NNNN qpv field name " << qpvector_states.back()->name() << endl;
+#ifdef ALBANY_IOSS
+        if (st.output) stk::io::set_field_role(*qpvector_states.back(), Ioss::Field::TRANSIENT);
+#endif
+      }
+      else if (dim.size() == 4 && st.entity=="QuadPoint") {
+        qptensor_states.push_back(& metaData->declare_field< QPTensorFieldType >( st.name) );
+        // Multi-dim order is Fortran Ordering, so reversed here
+        stk::mesh::put_field( *qptensor_states.back() , metaData->element_rank(),
+                              metaData->universal_part(), dim[3], dim[2], dim[1]);
+        cout << "NNNN qpt field name " << qptensor_states.back()->name() << endl;
+#ifdef ALBANY_IOSS
+     if (st.output) stk::io::set_field_role(*qptensor_states.back(), Ioss::Field::TRANSIENT);
+#endif
+      }
+     else TEST_FOR_EXCEPT(dim.size() < 2 || dim.size()>4 || st.entity!="QuadPoint");
+
+  }
+  
   exoOutput = params->isType<string>("Exodus Output File Name");
   if (exoOutput)
     exoOutFile = params->get<string>("Exodus Output File Name");

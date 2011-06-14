@@ -52,7 +52,8 @@ void Albany_NOXObserver::observeSolution(
   {
     Teuchos::TimeMonitor exooutTimer(*exooutTime); //start timer
 
-    std::vector<std::vector<double> > states = app->getStateMgr().getElementAveragedStates();
+    //std::vector<std::vector<double> > states = app->getStateMgr().getElementAveragedStates();
+    std::vector<std::vector<double> > states;
 
     stkDisc->outputToExodus(solution, states);
   }

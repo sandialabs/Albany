@@ -116,7 +116,6 @@ namespace Albany {
 
     //! Number of equations per node being solved
     unsigned int neq;
-    unsigned int nstates;
 
     //! Problem parameters
     Teuchos::RCP<Teuchos::ParameterList> params;
