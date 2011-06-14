@@ -385,9 +385,7 @@ Albany::LameProblem::constructEvaluators(
     std::vector<std::string> lameMaterialModelStateVariables;
     std::string lameMaterialModelName;
     materialModel->getStateVarListAndName(lameMaterialModelStateVariables, lameMaterialModelName);
-    //std::cout << "LameProblem creating model: " << lameMaterialModelName << "\nMaterial model state variables:" << std::endl;
     for(unsigned int i=0 ; i<lameMaterialModelStateVariables.size() ; ++i){
-      //std::cout << "  " << lameMaterialModelStateVariables[i] << std::endl;
       evaluators_to_build["Save " + lameMaterialModelStateVariables[i]] =
         stateMgr.registerStateVariable(lameMaterialModelStateVariables[i],
                                        qp_scalar,

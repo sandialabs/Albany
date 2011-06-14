@@ -58,6 +58,12 @@ private:
 
   // The LAME material model
   Teuchos::RCP<lame::Material> lameMaterialModel;
+
+  // The LAME material model name
+  std::string lameMaterialModelName;
+
+  // A list of the state variables for the material model (type is always double)
+  std::vector<std::string> lameMaterialModelStateVariables;
 };
 }
 

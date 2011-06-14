@@ -47,19 +47,19 @@ LameStress(const Teuchos::ParameterList& p) :
 
   this->setName("LameStress"+PHX::TypeString<EvalT>::value);
 
-  string lameMaterialModelName = p.get<string>("Lame Material Model");
-  const Teuchos::ParameterList& lameMaterialParameters = p.sublist("Lame Material Parameters");
+  string inputLameMaterialModelName = p.get<string>("Lame Material Model");
+  const Teuchos::ParameterList& inputLameMaterialParameters = p.sublist("Lame Material Parameters");
 
   // Initialize the LAME material model
   // This assumes that there is a single material model associated with this
   // evaluator and that the material properties are constant (read directly
   // from input deck parameter list)
-  lameMaterialModel = LameUtils::constructLameMaterialModel(lameMaterialModelName, lameMaterialParameters);
+  lameMaterialModel = LameUtils::constructLameMaterialModel(inputLameMaterialModelName, inputLameMaterialParameters);
 
-  // Declare the state variables as evaluated fields
-  std::vector<std::string> lameMaterialModelStateVariables;
-  std::string tempLameMaterialModelName;
-  lameMaterialModel->getStateVarListAndName(lameMaterialModelStateVariables, tempLameMaterialModelName);
+  // Query the material model for its name and the list of state variables
+  lameMaterialModel->getStateVarListAndName(lameMaterialModelStateVariables, lameMaterialModelName);
+
+  // Declare the state variables as evaluated fields (type is always double)
   Teuchos::RCP<PHX::DataLayout> dataLayout = p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
   for(unsigned int i=0 ; i<lameMaterialModelStateVariables.size() ; ++i){
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> lameMaterialModelStateVariableField(lameMaterialModelStateVariables[i], dataLayout);
@@ -87,11 +87,14 @@ evaluateFields(typename Traits::EvalData workset)
   // Get the old and new state data
   // StateVariables is:  typedef std::map<std::string, Teuchos::RCP<Intrepid::FieldContainer<RealType> > >
   Albany::StateVariables oldState = *workset.oldState;
+  Albany::StateVariables newState = *workset.newState;
   const Intrepid::FieldContainer<RealType>& oldDefGrad  = *oldState[defGradName];
   const Intrepid::FieldContainer<RealType>& oldStress  = *oldState[stressName];
 
   // \todo Get actual time step for calls to LAME materials.
   RealType deltaT = 1.0;
+
+  int numStateVariables = (int)(lameMaterialModelStateVariables.size());
 
   // Allocate workset space
   // Lame is called one time (called for all material points in the workset at once)
@@ -102,8 +105,9 @@ evaluateFields(typename Traits::EvalData workset)
   std::vector<RealType> rotation(9*numMaterialEvaluations);     // full tensor
   std::vector<RealType> stressOld(6*numMaterialEvaluations);    // symmetric tensor
   std::vector<RealType> stressNew(6*numMaterialEvaluations);    // symmetric tensor
+  std::vector<RealType> stateOld(numStateVariables*numMaterialEvaluations);  // a single double for each state variable
+  std::vector<RealType> stateNew(numStateVariables*numMaterialEvaluations);  // a single double for each state variable
 
-  // \todo Set up state variables for material models.
   // \todo Set up scratch space for material models using getNumScratchVars() and setScratchPtr().
 
   // Create the matParams structure, which is passed to Lame
@@ -115,8 +119,8 @@ evaluateFields(typename Traits::EvalData workset)
   matp->spin = &spin[0];
   matp->left_stretch = &leftStretch[0];
   matp->rotation = &rotation[0];
-  matp->state_old = 0;
-  matp->state_new = 0;
+  matp->state_old = &stateOld[0];
+  matp->state_new = &stateNew[0];
   matp->stress_old = &stressOld[0];
   matp->stress_new = &stressNew[0];
 
@@ -126,7 +130,6 @@ evaluateFields(typename Traits::EvalData workset)
   double* leftStretchPtr = matp->left_stretch;
   double* rotationPtr = matp->rotation;
   double* stateOldPtr = matp->state_old;
-  double* stateNewPtr = matp->state_new;
   double* stressOldPtr = matp->stress_old;
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
@@ -255,9 +258,14 @@ evaluateFields(typename Traits::EvalData workset)
       spinPtr += 3;
       leftStretchPtr += 6;
       rotationPtr += 9;
-      stateOldPtr = 0;
-      stateNewPtr = 0;
       stressOldPtr += 6;
+
+      // copy data from the state manager to the LAME data structure
+      for(int iVar=0 ; iVar<numStateVariables ; iVar++, stateOldPtr++){
+        std::string& variableName = lameMaterialModelStateVariables[iVar];
+        const Intrepid::FieldContainer<RealType>& stateVar = *oldState[variableName];
+        *stateOldPtr = stateVar(cell,qp,0,0);
+      }
     }
   }
 
@@ -266,6 +274,7 @@ evaluateFields(typename Traits::EvalData workset)
   // Get the stress from the LAME material
   lameMaterialModel->getStress(matp.get());
 
+  double* stateNewPtr = matp->state_new;
   double* stressNewPtr = matp->stress_new;
 
   // Post-process data from Lame call
@@ -284,6 +293,13 @@ evaluateFields(typename Traits::EvalData workset)
       stressField(cell,qp,2,0) = stressField(cell,qp,0,2);
 
       stressNewPtr += 6;
+
+      // copy data from the LAME data structure to the state manager
+      for(int iVar=0 ; iVar<numStateVariables ; iVar++, stateNewPtr++){
+        std::string& variableName = lameMaterialModelStateVariables[iVar];
+        Intrepid::FieldContainer<RealType>& stateVar = *newState[variableName];
+        stateVar(cell,qp,0,0) = *stateNewPtr;
+      }
     }
   }
 }
