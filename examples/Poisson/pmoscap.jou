@@ -23,7 +23,7 @@ merge all
 
 # define nodesets for BCs
 nodeset 1 curve 3
-nodeset 1 name "substrate"
+nodeset 1 name "psubstrate"
 color nodeset 1 blue
 
 nodeset 2 curve 6

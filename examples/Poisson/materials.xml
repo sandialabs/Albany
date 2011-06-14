@@ -1,5 +1,51 @@
 <ParameterList>
 
+  <ParameterList name="NodeSets">
+
+    <ParameterList name="lgate">
+      <Parameter name="materialSetByUser" type="string" value="PolySilicon" />
+      <Parameter name="materialOfDOF" type="string" value="SiliconDioxide" />
+    </ParameterList>
+
+    <ParameterList name="rgate">
+      <Parameter name="materialSetByUser" type="string" value="PolySilicon" />
+      <Parameter name="materialOfDOF" type="string" value="SiliconDioxide" />
+    </ParameterList>
+
+    <ParameterList name="gate">
+      <Parameter name="materialSetByUser" type="string" value="PolySilicon" />
+      <Parameter name="materialOfDOF" type="string" value="SiliconDioxide" />
+    </ParameterList>
+
+    <ParameterList name="topgate">
+      <Parameter name="materialSetByUser" type="string" value="Aluminum" />
+      <Parameter name="materialOfDOF" type="string" value="SiliconDioxide" />
+    </ParameterList>
+
+    <ParameterList name="substrate">
+      <Parameter name="materialSetByUser" type="string" value="Silicon" />
+      <Parameter name="materialOfDOF" type="string" value="Silicon" />
+    </ParameterList>
+
+    <ParameterList name="psubstrate">
+      <Parameter name="elementBlockSetByUser" type="string" value="polysilicon" />
+      <Parameter name="elementBlockOfDOF" type="string" value="silicon.ptype" />
+    </ParameterList>
+
+    <ParameterList name="anode">
+      <Parameter name="elementBlockSetByUser" type="string" value="polysilicon" />
+      <Parameter name="elementBlockOfDOF" type="string" value="silicon.ptype" />
+    </ParameterList>
+
+    <ParameterList name="cathode">
+      <Parameter name="elementBlockSetByUser" type="string" value="polysilicon" />
+      <Parameter name="elementBlockOfDOF" type="string" value="silicon.ntype" />
+    </ParameterList>
+
+  </ParameterList>
+
+
+
   <ParameterList name="ElementBlocks">
 
     <ParameterList name="silicon">
@@ -8,7 +54,7 @@
 
     <ParameterList name="silicon.quantum">
       <Parameter name="material" type="string" value="Silicon" />
-      <Parameter name="quantum" type="bool" value="false" />
+      <Parameter name="quantum" type="bool" value="true" />
     </ParameterList>
     
     <ParameterList name="silicon.ntype">
@@ -31,7 +77,7 @@
 
     <ParameterList name="sio2.quantum">
       <Parameter name="material" type="string" value="SiliconDioxide" />
-      <Parameter name="quantum" type="bool" value="false" />
+      <Parameter name="quantum" type="bool" value="true" />
     </ParameterList>
 
     <ParameterList name="polysilicon">
@@ -89,6 +135,9 @@
       <Parameter name="Category" type="string" value="Insulator" />
       <Parameter name="Permittivity" type="double" value="3.9" />
 
+      <!-- Valley information - same as Silicon to avoid charge discontinuity -->
+      <Parameter name="Number of conduction band min" type="int" value="2" />
+
       <!-- Band Gap in [eV] -->
       <Parameter name="Band Gap" type="double" value="9.0" />
 
@@ -103,9 +152,19 @@
       <!-- Band Gap in [eV] -->
       <Parameter name="Band Gap" type="double" value="9.0" />
 
-      <!-- Electron affinity in [eV] -->
-      <Parameter name="Electron Affinity" type="double" value="1.0" />
+      <!-- Electron affinity in [eV] assumes (n+ polysilicon; same as silicon) -->
+      <Parameter name="Electron Affinity" type="double" value="4.05" />
     </ParameterList>
+
+    <ParameterList name="Aluminum">
+      <Parameter name="Category" type="string" value="Metal" />
+      <Parameter name="Permittivity" type="double" value="1.0" />
+
+      <!-- Electron affinity (work function?) in [eV] -->
+      <Parameter name="Electron Affinity" type="double" value="4.186" />
+
+    </ParameterList>
+
 
   </ParameterList>
 

@@ -8,8 +8,9 @@
     <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
 
     <ParameterList name="Dirichlet BCs">
-      <Parameter name="DBC on NS substrate for DOF Phi" type="double" value="-8.8388" />
-      <Parameter name="DBC on NS gate for DOF Phi" type="double" value="74.7291" />
+      <!-- was -8.8388 and 74.7291 respectively -->
+      <Parameter name="DBC on NS psubstrate for DOF Phi" type="double" value="0" />
+      <Parameter name="DBC on NS gate for DOF Phi" type="double" value="-1" />
     </ParameterList>
 
     <ParameterList name="Poisson Source">
@@ -26,7 +27,7 @@
 
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="3" />
-      <Parameter name="Parameter 0" type="string" value="DBC on NS substrate for DOF Phi" />
+      <Parameter name="Parameter 0" type="string" value="DBC on NS psubstrate for DOF Phi" />
       <Parameter name="Parameter 1" type="string" value="DBC on NS gate for DOF Phi" />
       <Parameter name="Parameter 2" type="string" value="Poisson Source Factor" />
     </ParameterList>
@@ -47,11 +48,11 @@
 
   <ParameterList name="Regression Results">
     <Parameter name="Number of Comparisons" type="int" value="1" />
-    <Parameter name="Test Values" type="Array(double)" value="{ 5.01388229357 }" />
-    <Parameter name="Relative Tolerance" type="double" value="1.0e-5" />
+    <Parameter name="Test Values" type="Array(double)" value="{ 5.55512337674 }" />
+    <Parameter name="Relative Tolerance" type="double" value="1.0e-3" />
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="1" />
     <Parameter name="Sensitivity Test Values 0" type="Array(double)"
-     	       value="{0.0306940082241,0.122188696055,-2.08561007748}" />
+     	       value="{1.1527226455,4.60408134171,-2.03048331855}" />
   </ParameterList>
 
 

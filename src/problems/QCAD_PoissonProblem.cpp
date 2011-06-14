@@ -172,7 +172,7 @@ QCAD::PoissonProblem::constructEvaluators(
      rcp(new MDALayout<Cell,Node,QuadPoint,Dim>(worksetSize,numNodes, numQPts,numDim));
 
    RCP<DataLayout> dummy = rcp(new MDALayout<Dummy>(0));
-
+   RCP<DataLayout> shared_param = rcp(new MDALayout<Dim>(1));
 
    // Create Material Database
    RCP<QCAD::MaterialDatabase> materialDB = rcp(new QCAD::MaterialDatabase(mtrlDbFilename));
@@ -316,6 +316,20 @@ QCAD::PoissonProblem::constructEvaluators(
     evaluators_to_build["DOF Grad Potential"] = p;
   }
 
+  { // Temperature shared parameter (single scalar value, not spatially varying)
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    int type = FactoryTraits<AlbanyTraits>::id_sharedparameter;
+    p->set<int>("Type", type);
+
+    p->set<string>("Parameter Name", "Temperature");
+    p->set<double>("Parameter Value", temperature);
+    p->set< RCP<DataLayout> >("Data Layout", shared_param);
+    p->set< RCP<ParamLib> >("Parameter Library", paramLib);
+
+    evaluators_to_build["Temperature"] = p;
+  }
+
   if (haveSource) 
   { // Source
     RCP<ParameterList> p = rcp(new ParameterList);
@@ -340,7 +354,8 @@ QCAD::PoissonProblem::constructEvaluators(
 
     //Global Problem Parameters
     p->set<double>("Length unit in m", length_unit_in_m);
-    p->set<double>("Temperature", temperature);
+    p->set<string>("Temperature Name", "Temperature");
+    p->set< RCP<DataLayout> >("Shared Param Data Layout", shared_param);
     p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
 
     // Schrodinger coupling
@@ -543,6 +558,116 @@ QCAD::PoissonProblem::constructEvaluators(
      st++;
    }
 }
+
+
+void
+QCAD::PoissonProblem::constructDirichletEvaluators(
+  const std::vector<std::string>& nodeSetIDs)
+{
+   using Teuchos::RCP;
+   using Teuchos::rcp;
+   using Teuchos::ParameterList;
+   using PHX::DataLayout;
+   using PHX::MDALayout;
+   using std::vector;
+   using std::map;
+   using std::string;
+
+   using PHAL::FactoryTraits;
+   using PHAL::AlbanyTraits;
+
+   //! DBCparams a member of base class Albany::AbstractProblem, as is getValidDirichletBCParameters
+   DBCparams.validateParameters(*(getValidDirichletBCParameters(nodeSetIDs)),0); //TODO: Poisson version??
+
+   // Create Material Database
+   RCP<QCAD::MaterialDatabase> materialDB = rcp(new QCAD::MaterialDatabase(mtrlDbFilename));
+
+   map<string, RCP<ParameterList> > evaluators_to_build;
+   RCP<DataLayout> dummy = rcp(new MDALayout<Dummy>(0));
+   vector<string> dbcs;
+
+   // Check for all possible standard BCs (every dof on every nodeset) to see which is set
+   for (std::size_t i=0; i<nodeSetIDs.size(); i++) {
+     for (std::size_t j=0; j<dofNames.size(); j++) {
+
+       std::stringstream sstrm; sstrm << "DBC on NS " << nodeSetIDs[i] << " for DOF " << dofNames[j];
+       std::string ss = sstrm.str();
+
+       if (DBCparams.isParameter(ss)) {
+         RCP<ParameterList> p = rcp(new ParameterList);
+         int type = FactoryTraits<AlbanyTraits>::id_qcad_poisson_dirichlet;
+         p->set<int>("Type", type);
+
+         p->set< RCP<DataLayout> >("Data Layout", dummy);
+         p->set< string >  ("Dirichlet Name", ss);
+         p->set< RealType >("Dirichlet Value", DBCparams.get<double>(ss));
+         p->set< string >  ("Node Set ID", nodeSetIDs[i]);
+         p->set< int >     ("Number of Equations", dofNames.size());
+	 p->set< int >     ("Equation Offset", j);
+
+         p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+
+	 //! Additional parameters needed for Poisson Dirichlet BCs
+	 Teuchos::ParameterList& paramList = params->sublist("Poisson Source");
+	 p->set<Teuchos::ParameterList*>("Poisson Source Parameter List", &paramList);
+	 //p->set<string>("Temperature Name", "Temperature");  //to add if use shared param for DBC
+	 p->set<double>("Temperature", temperature);
+	 p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
+
+         std::stringstream ess; ess << "Evaluator for " << ss;
+         evaluators_to_build[ess.str()] = p;
+
+         dbcs.push_back(ss);
+       }
+     }
+   }
+
+   //From here down, identical to Albany::AbstractProblem version of this function
+   string allDBC="Evaluator for all Dirichlet BCs";
+   {
+      RCP<ParameterList> p = rcp(new ParameterList);
+      int type = FactoryTraits<AlbanyTraits>::id_dirichlet_aggregator;
+      p->set<int>("Type", type);
+
+      p->set<vector<string>* >("DBC Names", &dbcs);
+      p->set< RCP<DataLayout> >("Data Layout", dummy);
+      p->set<string>("DBC Aggregator Name", allDBC);
+      evaluators_to_build[allDBC] = p;
+   }
+
+   // Build Field Evaluators for each evaluation type
+   PHX::EvaluatorFactory<AlbanyTraits,FactoryTraits<AlbanyTraits> > factory;
+   RCP< vector< RCP<PHX::Evaluator_TemplateManager<AlbanyTraits> > > > evaluators;
+   evaluators = factory.buildEvaluators(evaluators_to_build);
+
+   // Create a DirichletFieldManager
+   dfm = Teuchos::rcp(new PHX::FieldManager<AlbanyTraits>);
+
+   // Register all Evaluators
+   PHX::registerEvaluators(evaluators, *dfm);
+
+   PHX::Tag<AlbanyTraits::Residual::ScalarT> res_tag0(allDBC, dummy);
+   dfm->requireField<AlbanyTraits::Residual>(res_tag0);
+
+   PHX::Tag<AlbanyTraits::Jacobian::ScalarT> jac_tag0(allDBC, dummy);
+   dfm->requireField<AlbanyTraits::Jacobian>(jac_tag0);
+
+   PHX::Tag<AlbanyTraits::Tangent::ScalarT> tan_tag0(allDBC, dummy);
+   dfm->requireField<AlbanyTraits::Tangent>(tan_tag0);
+
+   PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_tag0(allDBC, dummy);
+   dfm->requireField<AlbanyTraits::SGResidual>(sgres_tag0);
+
+   PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag0(allDBC, dummy);
+   dfm->requireField<AlbanyTraits::SGJacobian>(sgjac_tag0);
+
+   PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag0(allDBC, dummy);
+   dfm->requireField<AlbanyTraits::MPResidual>(mpres_tag0);
+
+   PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag0(allDBC, dummy);
+   dfm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag0);
+}
+
 
 Teuchos::RCP<const Teuchos::ParameterList>
 QCAD::PoissonProblem::getValidProblemParameters() const

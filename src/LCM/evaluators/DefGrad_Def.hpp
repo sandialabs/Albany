@@ -99,8 +99,8 @@ evaluateFields(typename Traits::EvalData workset)
       Jbar = 0.0;
       for (std::size_t qp=0; qp < numQPs; ++qp)
       {
-        TEST_FOR_EXCEPTION(J(cell,qp) < 0, std::runtime_error,
-            " negative volume detected in avgJ routine");
+        //TEST_FOR_EXCEPTION(J(cell,qp) < 0, std::runtime_error,
+        //    " negative volume detected in avgJ routine");
 	Jbar += std::log(J(cell,qp));
         //Jbar += J(cell,qp);
       }
@@ -128,8 +128,8 @@ evaluateFields(typename Traits::EvalData workset)
       vol = 0.0;
       for (std::size_t qp=0; qp < numQPs; ++qp)
       {
-        TEST_FOR_EXCEPTION(J(cell,qp) < 0, std::runtime_error,
-            " negative volume detected in volavgJ routine");
+        //TEST_FOR_EXCEPTION(J(cell,qp) < 0, std::runtime_error,
+        //    " negative volume detected in volavgJ routine");
 	Jbar += weights(cell,qp) * std::log( J(cell,qp) );
 	vol  += weights(cell,qp);
       }

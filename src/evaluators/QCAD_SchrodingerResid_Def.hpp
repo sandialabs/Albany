@@ -186,7 +186,12 @@ QCAD::SchrodingerResid<EvalT, Traits>::getInvEffMass(const std::string& EBName, 
   const double emass = 9.1094e-31; // Electron mass [kg]
 
   //TODO - return tensor instead of scalar - now just return effective mass in X-direction
-  effMass = materialDB->getElementBlockParam<double>(EBName,"Electron Effective Mass X",1.0) * emass;
+  // effMass = materialDB->getElementBlockParam<double>(EBName,"Electron Effective Mass X",1.0) * emass;
+  
+  // effective mass depends on the wafer direction
+  // For SiO2/Si interface parallel to the [100] plane, the mass for Delta2-band is ml (longitudinal)
+  // Consider only the Delta2-band for the time being (need to include Delta4-band later)
+  effMass = materialDB->getElementBlockParam<double>(EBName,"Electron Effective Mass Z",1.0) * emass;
   return 1.0/effMass;
 }
 

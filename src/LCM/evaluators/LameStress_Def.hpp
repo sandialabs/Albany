@@ -26,7 +26,7 @@ template<typename EvalT, typename Traits>
 LameStress<EvalT, Traits>::
 LameStress(const Teuchos::ParameterList& p) :
   defGradField(p.get<std::string>("DefGrad Name"),
-                           p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
+               p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
   stressField(p.get<std::string>("Stress Name"),
               p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
   lameMaterialModel(Teuchos::RCP<lame::Material>())
@@ -40,9 +40,9 @@ LameStress(const Teuchos::ParameterList& p) :
   numDims = dims[2];
 
   defGradName = p.get<std::string>("DefGrad Name");
-  stressName = p.get<std::string>("Stress Name");
   this->addDependentField(defGradField);
 
+  stressName = p.get<std::string>("Stress Name");
   this->addEvaluatedField(stressField);
 
   this->setName("LameStress"+PHX::TypeString<EvalT>::value);
@@ -54,16 +54,17 @@ LameStress(const Teuchos::ParameterList& p) :
   // This assumes that there is a single material model associated with this
   // evaluator and that the material properties are constant (read directly
   // from input deck parameter list)
-  Teuchos::RCP<lame::MatProps> props = Teuchos::rcp(new lame::MatProps());
-  std::vector<RealType> elasticModulusVector;
-  RealType elasticModulusValue = lameMaterialParameters.get<double>("Elastic Modulus");
-  elasticModulusVector.push_back(elasticModulusValue);
-  props->insert(std::string("YOUNGS_MODULUS"), elasticModulusVector);
-  std::vector<RealType> poissonsRatioVector;
-  RealType poissonsRatioValue = lameMaterialParameters.get<double>("Poissons Ratio");
-  poissonsRatioVector.push_back(poissonsRatioValue);
-  props->insert(std::string("POISSONS_RATIO"), poissonsRatioVector);
-  lameMaterialModel = Teuchos::rcp(new lame::Elastic(*props));
+  lameMaterialModel = LameUtils::constructLameMaterialModel(lameMaterialModelName, lameMaterialParameters);
+
+  // Declare the state variables as evaluated fields
+  std::vector<std::string> lameMaterialModelStateVariables;
+  std::string tempLameMaterialModelName;
+  lameMaterialModel->getStateVarListAndName(lameMaterialModelStateVariables, tempLameMaterialModelName);
+  Teuchos::RCP<PHX::DataLayout> dataLayout = p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+  for(unsigned int i=0 ; i<lameMaterialModelStateVariables.size() ; ++i){
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> lameMaterialModelStateVariableField(lameMaterialModelStateVariables[i], dataLayout);
+    this->addEvaluatedField(lameMaterialModelStateVariableField);
+  }
 
   // \todo Call initialize() on material.
 }

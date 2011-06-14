@@ -15,50 +15,50 @@
 \********************************************************************/
 
 
-#ifndef LAMESTRESS_HPP
-#define LAMESTRESS_HPP
+#ifndef PHAL_SHAREDPARAMETER_HPP
+#define PHAL_SHAREDPARAMETER_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-#include "LameUtils.hpp"
+#include "PHAL_Dimension.hpp"
 
-/** \brief Evaluates stress using the Library for Advanced Materials for Engineering (LAME).
+#include "Teuchos_ParameterList.hpp"
+#include "Epetra_Vector.h"
+#include "Sacado_ParameterAccessor.hpp"
+#include "Teuchos_Array.hpp"
+
+
+
+/** \brief SharedParameter
+
 */
-namespace LCM {
+namespace PHAL {
 
-template<typename EvalT, typename Traits>
-class LameStress : public PHX::EvaluatorWithBaseImpl<Traits>,
-		    public PHX::EvaluatorDerived<EvalT, Traits>  {
-
+template<typename EvalT, typename Traits> 
+class SharedParameter : public PHX::EvaluatorWithBaseImpl<Traits>,
+			public PHX::EvaluatorDerived<EvalT, Traits>,
+			public Sacado::ParameterAccessor<EvalT, SPL_Traits>   {
+  
 public:
-
-  LameStress(const Teuchos::ParameterList& p);
-
+  typedef typename EvalT::ScalarT ScalarT;
+  
+  SharedParameter(const Teuchos::ParameterList& p);
+  
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
-
+  
   void evaluateFields(typename Traits::EvalData d);
 
+  ScalarT& getValue(const std::string &n);
+  
 private:
-
-  typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
-
-  // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defGradField;
-
-  std::string defGradName, stressName;
-  unsigned int numQPs;
-  unsigned int numDims;
-
-  // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stressField;
-
-  // The LAME material model
-  Teuchos::RCP<lame::Material> lameMaterialModel;
+  std::string paramName;
+  ScalarT     paramValue;
+  PHX::MDField<ScalarT,Dim> paramAsField;
 };
+
 }
 
 #endif

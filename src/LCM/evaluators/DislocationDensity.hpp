@@ -15,29 +15,37 @@
 \********************************************************************/
 
 
-#ifndef LAMESTRESS_HPP
-#define LAMESTRESS_HPP
+#ifndef DISLOCATIONDENSITY_HPP
+#define DISLOCATIONDENSITY_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-#include "LameUtils.hpp"
 
-/** \brief Evaluates stress using the Library for Advanced Materials for Engineering (LAME).
+#include "Intrepid_CellTools.hpp"
+#include "Intrepid_Cubature.hpp"
+
+#include "Teuchos_SerialDenseMatrix.hpp" 
+#include "Teuchos_SerialDenseSolver.hpp"
+
+/** \brief Dislocation Density Tensor
+
+    This evaluator calculates the dislcation density tensor
+
 */
 namespace LCM {
 
 template<typename EvalT, typename Traits>
-class LameStress : public PHX::EvaluatorWithBaseImpl<Traits>,
-		    public PHX::EvaluatorDerived<EvalT, Traits>  {
+class DislocationDensity : public PHX::EvaluatorWithBaseImpl<Traits>,
+			   public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
-  LameStress(const Teuchos::ParameterList& p);
+  DislocationDensity(const Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
+			     PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
@@ -45,19 +53,21 @@ private:
 
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
+  int  numVertices, numDims, numNodes, numQPs;
+  bool square;
 
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defGradField;
-
-  std::string defGradName, stressName;
-  unsigned int numQPs;
-  unsigned int numDims;
+  PHX::MDField<double,Cell,QuadPoint,Dim,Dim> Fp;
+  PHX::MDField<double,Cell,Node,QuadPoint> BF;
+  PHX::MDField<double,Cell,Node,QuadPoint,Dim> GradBF;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stressField;
+  PHX::MDField<double,Cell,QuadPoint,Dim,Dim> G;
 
-  // The LAME material model
-  Teuchos::RCP<lame::Material> lameMaterialModel;
+  // Temporary FieldContainers
+  Intrepid::FieldContainer<double> nodalFp;
+  Intrepid::FieldContainer<double> curlFp;
+
 };
 }
 

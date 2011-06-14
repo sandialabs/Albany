@@ -323,11 +323,16 @@ Albany::LameProblem::constructEvaluators(
     int type = FactoryTraits<AlbanyTraits>::id_defgrad;
     p->set<int>("Type", type);
 
-    // Volumetric averaging flag
+    //Input
+    // If true, compute determinate of deformation gradient at all integration points, then replace all of them with the simple average for the element.  This give a constant volumetric response.
     const bool avgJ = params->get("avgJ", false);
     p->set<bool>("avgJ Name", avgJ);
-
-    //Input
+    // If true, compute determinate of deformation gradient at all integration points, then replace all of them with the volume average for the element (integrate J over volume of element, divide by total volume).  This give a constant volumetric response.
+    const bool volavgJ = params->get("volavgJ", false);
+    p->set<bool>("volavgJ Name", volavgJ);
+    // Integration weights for each quadrature point
+    p->set<string>("Weights Name","Weights");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
     p->set<string>("Gradient QP Variable Name", "Displacement Gradient");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
 
@@ -339,37 +344,57 @@ Albany::LameProblem::constructEvaluators(
     evaluators_to_build["DefGrad"] = p;
   }
 
-  { //LameStress
+  { // LameStress
     RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
     int type = LCM::FactoryTraits<AlbanyTraits>::id_lame_stress;
     p->set<int>("Type", type);
 
-    //Material properties that will be passed to LAME material model
+    // Material properties that will be passed to LAME material model
     string lameMaterialModel = params->get<string>("Lame Material Model");
     p->set<string>("Lame Material Model", lameMaterialModel);
     Teuchos::ParameterList& lameMaterialParametersList = p->sublist("Lame Material Parameters");
     lameMaterialParametersList = params->sublist("Lame Material Parameters");
 
-    //Input
+    // Input
     p->set<string>("Strain Name", "Strain");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
 
     p->set<string>("DefGrad Name", "Deformation Gradient"); // qp_tensor also
 
-    //Output
+    // Output
     p->set<string>("Stress Name", "Stress"); // qp_tensor also
-
-    //Declare what state data will need to be saved (name, layout, init_type)
 
     evaluators_to_build["Stress"] = p;
 
+    // Declare state data that need to be saved
+    // (register with state manager and create corresponding evaluator)
+
+    // Stress and DefGrad are required at the element level for all LAME models
     evaluators_to_build["Save Stress"] =
       stateMgr.registerStateVariable("Stress",qp_tensor,
             dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero",true);
     evaluators_to_build["Save DefGrad"] =
       stateMgr.registerStateVariable("Deformation Gradient",qp_tensor,
-            dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero",true);
+            dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"identity", true);
+
+    // In addition, a LAME model may register additional state variables (type is always double)
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    Teuchos::RCP<lame::Material> materialModel = 
+      LameUtils::constructLameMaterialModel(lameMaterialModel, lameMaterialParametersList);
+    std::vector<std::string> lameMaterialModelStateVariables;
+    std::string lameMaterialModelName;
+    materialModel->getStateVarListAndName(lameMaterialModelStateVariables, lameMaterialModelName);
+    //std::cout << "LameProblem creating model: " << lameMaterialModelName << "\nMaterial model state variables:" << std::endl;
+    for(unsigned int i=0 ; i<lameMaterialModelStateVariables.size() ; ++i){
+      //std::cout << "  " << lameMaterialModelStateVariables[i] << std::endl;
+      evaluators_to_build["Save " + lameMaterialModelStateVariables[i]] =
+        stateMgr.registerStateVariable(lameMaterialModelStateVariables[i],
+                                       qp_scalar,
+                                       dummy,
+                                       FactoryTraits<AlbanyTraits>::id_savestatefield,
+                                       "zero", true);
+    }
   }
 
   { // Displacement Resid
@@ -462,6 +487,8 @@ Albany::LameProblem::getValidProblemParameters() const
 
   validPL->set<string>("Lame Material Model", "", "The name of the LAME material model.");
   validPL->sublist("Lame Material Parameters", false, "");
+  validPL->sublist("aveJ", false, "If true, the determinate of the deformation gradient for each integration point is replaced with the average value over all integration points in the element (produces constant volumetric response).");
+  validPL->sublist("volaveJ", false, "If true, the determinate of the deformation gradient for each integration point is replaced with the volume-averaged value over all integration points in the element (produces constant volumetric response).");
 
   return validPL;
 }

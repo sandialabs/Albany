@@ -66,6 +66,8 @@ namespace QCAD {
     void constructEvaluators(const Albany::MeshSpecsStruct& meshSpecs,
                              Albany::StateManager& stateMgr);
 
+    void constructDirichletEvaluators(const std::vector<std::string>& nodeSetIDs);
+
   protected:
 
     //! Boundary conditions on source term
