@@ -64,9 +64,8 @@ LameStress(const Teuchos::ParameterList& p) :
   for(unsigned int i=0 ; i<lameMaterialModelStateVariables.size() ; ++i){
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> lameMaterialModelStateVariableField(lameMaterialModelStateVariables[i], dataLayout);
     this->addEvaluatedField(lameMaterialModelStateVariableField);
+    lameMaterialModelStateVariableFields.push_back(lameMaterialModelStateVariableField);
   }
-
-  // \todo Call initialize() on material.
 }
 
 template<typename EvalT, typename Traits>
@@ -87,7 +86,6 @@ evaluateFields(typename Traits::EvalData workset)
   // Get the old and new state data
   // StateVariables is:  typedef std::map<std::string, Teuchos::RCP<Intrepid::FieldContainer<RealType> > >
   Albany::StateVariables oldState = *workset.oldState;
-  Albany::StateVariables newState = *workset.newState;
   const Intrepid::FieldContainer<RealType>& oldDefGrad  = *oldState[defGradName];
   const Intrepid::FieldContainer<RealType>& oldStress  = *oldState[stressName];
 
@@ -294,12 +292,10 @@ evaluateFields(typename Traits::EvalData workset)
 
       stressNewPtr += 6;
 
-      // copy data from the LAME data structure to the state manager
-      for(int iVar=0 ; iVar<numStateVariables ; iVar++, stateNewPtr++){
-        std::string& variableName = lameMaterialModelStateVariables[iVar];
-        Intrepid::FieldContainer<RealType>& stateVar = *newState[variableName];
-        stateVar(cell,qp,0,0) = *stateNewPtr;
-      }
+      // copy state_new data from the LAME data structure to the corresponding state variable field
+      for(int iVar=0 ; iVar<numStateVariables ; iVar++, stateNewPtr++)
+        lameMaterialModelStateVariableFields[iVar](cell,qp,0,0) = *stateNewPtr;
+
     }
   }
 }
