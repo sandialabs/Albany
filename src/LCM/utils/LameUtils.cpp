@@ -79,7 +79,7 @@ Teuchos::RCP<lame::Material> constructLameMaterialModel(const std::string& lameM
     }
   }
 
-  std::cout << "Creating material model " << materialModelName << std::endl;
+  //std::cout << "Creating material model " << materialModelName << std::endl;
 
   Teuchos::RCP<lame::Material> materialModel;
 

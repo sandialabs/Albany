@@ -40,9 +40,9 @@ LameStress(const Teuchos::ParameterList& p) :
   numDims = dims[2];
 
   defGradName = p.get<std::string>("DefGrad Name");
-  stressName = p.get<std::string>("Stress Name");
   this->addDependentField(defGradField);
 
+  stressName = p.get<std::string>("Stress Name");
   this->addEvaluatedField(stressField);
 
   this->setName("LameStress"+PHX::TypeString<EvalT>::value);
@@ -55,6 +55,16 @@ LameStress(const Teuchos::ParameterList& p) :
   // evaluator and that the material properties are constant (read directly
   // from input deck parameter list)
   lameMaterialModel = LameUtils::constructLameMaterialModel(lameMaterialModelName, lameMaterialParameters);
+
+  // Declare the state variables as evaluated fields
+  std::vector<std::string> lameMaterialModelStateVariables;
+  std::string tempLameMaterialModelName;
+  lameMaterialModel->getStateVarListAndName(lameMaterialModelStateVariables, tempLameMaterialModelName);
+  Teuchos::RCP<PHX::DataLayout> dataLayout = p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+  for(unsigned int i=0 ; i<lameMaterialModelStateVariables.size() ; ++i){
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> lameMaterialModelStateVariableField(lameMaterialModelStateVariables[i], dataLayout);
+    this->addEvaluatedField(lameMaterialModelStateVariableField);
+  }
 
   // \todo Call initialize() on material.
 }
