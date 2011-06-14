@@ -66,6 +66,8 @@ LameStress(const Teuchos::ParameterList& p) :
     this->addEvaluatedField(lameMaterialModelStateVariableField);
     lameMaterialModelStateVariableFields.push_back(lameMaterialModelStateVariableField);
   }
+
+  // \todo Need to call initialize() on LAME material model.  This involves writing to stateOld.  Not sure what the best approach is.
 }
 
 template<typename EvalT, typename Traits>
