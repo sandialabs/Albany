@@ -69,7 +69,7 @@ Albany::Application::Application(
   // Create problem object
   Teuchos::RCP<Teuchos::ParameterList> problemParams = 
     Teuchos::sublist(params, "Problem", true);
-  Albany::ProblemFactory problemFactory(problemParams, paramLib);
+  Albany::ProblemFactory problemFactory(problemParams, paramLib, comm);
   Teuchos::RCP<Albany::AbstractProblem> problem = problemFactory.create();
 
   // Validate Problem parameters against list for this specific problem

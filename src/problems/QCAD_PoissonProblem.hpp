@@ -41,7 +41,8 @@ namespace QCAD {
     PoissonProblem(
                          const Teuchos::RCP<Teuchos::ParameterList>& params,
                          const Teuchos::RCP<ParamLib>& paramLib,
-                         const int numDim_);
+                         const int numDim_,
+			 const Teuchos::RCP<const Epetra_Comm>& comm_);
 
     //! Destructor
     ~PoissonProblem();
@@ -74,6 +75,7 @@ namespace QCAD {
     bool periodic;
 
     //! Parameters to use when constructing evaluators
+    Teuchos::RCP<const Epetra_Comm> comm;
     bool haveSource;
     int numDim;
     double length_unit_in_m;
