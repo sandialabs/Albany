@@ -36,7 +36,7 @@
 
 #include <stk_mesh/fem/FEMHelpers.hpp>
 
-#ifdef ALBANY_IOSS
+#ifdef ALBANY_SEACAS
   #include <Ionit_Initializer.h>
 #endif 
 
@@ -249,7 +249,7 @@ for (unsigned int b=0; b < buckets.size(); b++) {
     ns++;
   }
 
-#ifdef ALBANY_IOSS
+#ifdef ALBANY_SEACAS
   if (stkMeshStruct->exoOutput) {
     if (stkMeshStruct->numDim > 1) {
 
@@ -271,7 +271,7 @@ for (unsigned int b=0; b < buckets.size(); b++) {
   }
 #else
   if (stkMeshStruct->exoOutput) 
-    cout << "\nWARNING: exodus output requested but IOSS not compiled in:"
+    cout << "\nWARNING: exodus output requested but SEACAS not compiled in:"
          << " disabling exodus output \n" << endl;
   
 #endif
@@ -279,7 +279,7 @@ for (unsigned int b=0; b < buckets.size(); b++) {
 
 Albany::STKDiscretization::~STKDiscretization()
 {
-#ifdef ALBANY_IOSS
+#ifdef ALBANY_SEACAS
   if (stkMeshStruct->exoOutput) delete mesh_data;
 #endif
 }
@@ -378,7 +378,7 @@ void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln,
  
   if (states.size()>0) setStateField(states);
 
-#ifdef ALBANY_IOSS
+#ifdef ALBANY_SEACAS
   if (stkMeshStruct->exoOutput) {
 
     time+=1.0;

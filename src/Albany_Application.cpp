@@ -36,7 +36,7 @@
 #include "Teko_InverseFactoryOperator.hpp"
 #include "Teko_StridedEpetraOperator.hpp"
 
-#ifdef ALBANY_IOSS
+#ifdef ALBANY_SEACAS
   #include "Albany_STKDiscretization.hpp"
 #endif
 
@@ -377,7 +377,7 @@ Albany::Application::computeGlobalResidual(
 
   f.Export(*overlapped_f, *exporter, Add);
 
-#ifdef ALBANY_IOSS
+#ifdef ALBANY_SEACAS
   Albany::STKDiscretization* stkDisc =
     dynamic_cast<Albany::STKDiscretization*>(disc.get());
   stkDisc->setResidualField(f);

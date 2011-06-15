@@ -30,7 +30,7 @@
 #
 rm CMakeCache.txt
 
-cmake -D CMAKE_INSTALL_PREFIX:PATH=/home/agsalin/Trilinos/jun10 \
+cmake -D CMAKE_INSTALL_PREFIX:PATH=/home/agsalin/Trilinos/build_july10/install \
       -D Boost_INCLUDE_DIRS:FILEPATH="/home/agsalin/install/boost_1_42_0" \
       -D CMAKE_BUILD_TYPE:STRING=NONE \
       -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
@@ -91,12 +91,11 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=/home/agsalin/Trilinos/jun10 \
 #
 #        -D Trilinos_ENABLE_TriKota:BOOL=ON \
 #
-# (2) These 6 lines regarding  Trios/netcdf  are needed
+# (2) These 6 lines regarding  SEACAS/netcdf  are needed
 #     for reading exodus meshes, but require an
 #     installed netcdf. Also used for Pamgen meshes.
-#        -D Trilinos_ENABLE_Trios:BOOL=ON \
+#        -D Trilinos_ENABLE_SEACAS:BOOL=ON \
 #        -D Trilinos_ENABLE_Pamgen:BOOL=ON \
-#        -D Trios_ENABLE_XDMF:BOOL=OFF \
 #        -D TPL_ENABLE_Netcdf:BOOL=ON \
 #        -D TPL_Netcdf_INCLUDE_DIRS:PATH=/home/agsalin/install/netcdf-4.0.1/include \
 #        -D Netcdf_LIBRARY_DIRS:PATH=/home/agsalin/install/netcdf-4.0.1/lib \

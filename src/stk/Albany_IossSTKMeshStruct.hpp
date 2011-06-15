@@ -14,7 +14,7 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
-#ifdef ALBANY_IOSS
+#ifdef ALBANY_SEACAS
 
 #ifndef ALBANY_IOSS_STKMESHSTRUCT_HPP
 #define ALBANY_IOSS_STKMESHSTRUCT_HPP
