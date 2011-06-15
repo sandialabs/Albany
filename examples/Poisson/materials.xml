@@ -149,8 +149,9 @@
       <Parameter name="Category" type="string" value="Insulator" />
       <Parameter name="Permittivity" type="double" value="11.9" />
 
-      <!-- Band Gap in [eV] -->
-      <Parameter name="Band Gap" type="double" value="9.0" />
+      <!-- Band Gap in [eV] (use 0K silicon now?) -->
+      <Parameter name="Band Gap" type="double" value="1.1455" />
+      <!-- Parameter name="Band Gap" type="double" value="9.0" /-->
 
       <!-- Electron affinity in [eV] assumes (n+ polysilicon; same as silicon) -->
       <Parameter name="Electron Affinity" type="double" value="4.05" />

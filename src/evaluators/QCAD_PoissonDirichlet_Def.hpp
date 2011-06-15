@@ -72,7 +72,8 @@ PoissonDirichlet(Teuchos::ParameterList& p) :
     affinityOfDOF = materialDB->getMaterialParam<double>(materialOfDOF,
 							 "Electron Affinity");
 
-  this->offsetDueToAffinity = affinitySetByUser - affinityOfDOF;
+  //I think this is accounted for already (Erik)
+  this->offsetDueToAffinity = 0; //-(affinitySetByUser - affinityOfDOF);
 }
 
 template<typename EvalT,typename Traits>
@@ -100,9 +101,9 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   ScalarT newValue = (user_value + offsetDueToAffinity) * 1.0/V0 + offsetDueToDoping;
   PHAL::DirichletBase<EvalT,Traits>::value = newValue;
 
-  //std::cout << "DEBUG: User value " << user_value << " --> " << newValue
-  //	    << " (V0=" << V0 << ", offsetA="<<offsetDueToAffinity
-  //	    << ", offsetD="<<offsetDueToDoping<<")" << std::endl;
+  std::cout << "DEBUG: User value " << user_value << " --> " << newValue
+  	    << " (V0=" << V0 << ", offsetA="<<offsetDueToAffinity
+  	    << ", offsetD="<<offsetDueToDoping<<")" << std::endl;
 
   //! Call base class evaluateFields, which sets relevant nodes using value member
   PHAL::Dirichlet<EvalT,Traits>::evaluateFields(dirichletWorkset);
