@@ -19,6 +19,7 @@
 #include "Albany_ProblemFactory.hpp"
 #include "Albany_Helmholtz2DProblem.hpp"
 #include "Albany_HeatProblem.hpp"
+#include "Albany_NavierStokes.hpp"
 #include "Albany_ODEProblem.hpp"
 #include "Albany_ThermoElectrostaticsProblem.hpp"
 #include "QCAD_PoissonProblem.hpp"
@@ -73,6 +74,15 @@ Albany::ProblemFactory::create()
   }
   else if (method == "Poisson 3D") {
     strategy = rcp(new QCAD::PoissonProblem(problemParams, paramLib, 3));
+  }
+  else if (method == "NavierStokes 1D") {
+    strategy = rcp(new Albany::NavierStokes(problemParams, paramLib, 1));
+  }
+  else if (method == "NavierStokes 2D") {
+    strategy = rcp(new Albany::NavierStokes(problemParams, paramLib, 2));
+  }
+  else if (method == "NavierStokes 3D") {
+    strategy = rcp(new Albany::NavierStokes(problemParams, paramLib, 3));
   }
   else if (method == "Schrodinger 1D") {
     strategy = rcp(new QCAD::SchrodingerProblem(problemParams, paramLib, 1));

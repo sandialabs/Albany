@@ -54,6 +54,7 @@ SET(SOURCES ${SOURCES}
 	problems/Albany_AbstractProblem.cpp 
 	problems/Albany_ProblemFactory.cpp
 	problems/Albany_HeatProblem.cpp 
+	problems/Albany_NavierStokes.cpp 
 	problems/Albany_ODEProblem.cpp 
 	problems/Albany_Helmholtz2DProblem.cpp 
 	problems/Albany_ThermoElectrostaticsProblem.cpp 
@@ -64,6 +65,7 @@ SET(HEADERS ${HEADERS}
 	problems/Albany_ProblemFactory.hpp 
 	problems/Albany_AbstractProblem.hpp 
 	problems/Albany_HeatProblem.hpp 
+	problems/Albany_NavierStokes.hpp 
 	problems/Albany_ODEProblem.hpp 
 	problems/Albany_Helmholtz2DProblem.hpp 
 	problems/Albany_ThermoElectrostaticsProblem.hpp 
