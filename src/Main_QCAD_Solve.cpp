@@ -27,7 +27,8 @@
 #include "Teuchos_StandardCatchMacros.hpp"
 #include "Epetra_Map.h"  //Needed for serial, somehow
 
-void CreateSolver(char* xmlfilename, Teuchos::RCP<Albany::Application>& albApp, Teuchos::RCP<EpetraExt::ModelEvaluator>& App, 
+void CreateSolver(const std::string& solverType, char* xmlfilename, 
+		  Teuchos::RCP<Albany::Application>& albApp, Teuchos::RCP<EpetraExt::ModelEvaluator>& App, 
 		  EpetraExt::ModelEvaluator::InArgs& params_in, EpetraExt::ModelEvaluator::OutArgs& responses_out);
 void SolveModel(Teuchos::RCP<Albany::Application>& albApp, Teuchos::RCP<EpetraExt::ModelEvaluator>& App, 
 		EpetraExt::ModelEvaluator::InArgs params_in, EpetraExt::ModelEvaluator::OutArgs responses_out,
@@ -42,6 +43,8 @@ void SubtractStateFromState(Teuchos::RCP<std::vector<Albany::StateVariables> >& 
 bool checkConvergence(Teuchos::RCP<std::vector<Albany::StateVariables> >& newStates, 
 		      Teuchos::RCP<std::vector<Albany::StateVariables> >& oldStates,
 		      std::string stateNameToCompare, double tol);
+double GetEigensolverShift(Teuchos::RCP<std::vector<Albany::StateVariables> >& states,
+			   const std::string& stateNameToBaseShiftOn);
 
 #include "Teuchos_ParameterList.hpp"
 #include "Piro_Epetra_LOCASolver.hpp"
@@ -62,27 +65,21 @@ int main(int argc, char *argv[]) {
   RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
   // Command-line argument for input file
-  char * InitPoissonXmlFilename=0;
   char * PoissonXmlFilename=0;
-  char * DummyPoissonXmlFilename=0;
   char * SchrodingerXmlFilename=0;
-  if(argc>5){
+  if(argc>3){
     if(!strcmp(argv[1],"--help")){
-      printf("albanyQCAD [InitPoissonInputfile.xml] [PoissonInputfile.xml] [DummyPoissonInputfile]\n");
-      printf("           [SchrodingerInputfile.xml] [maxiter]\n");
+      printf("albanyQCAD [PoissonInputfile.xml] [SchrodingerInputfile.xml] [maxiter]\n");
       exit(1);
     }
     else {
-      InitPoissonXmlFilename=argv[1];
-      PoissonXmlFilename=argv[2];
-      DummyPoissonXmlFilename=argv[3];
-      SchrodingerXmlFilename=argv[4];
-      maxIter = atoi(argv[5]);
+      PoissonXmlFilename=argv[1];
+      SchrodingerXmlFilename=argv[2];
+      maxIter = atoi(argv[3]);
     }
   }
   else {
-    printf("albanyQCAD [InitPoissonInputfile.xml] [PoissonInputfile.xml] [DummyPoissonInputfile]\n");
-    printf("           [SchrodingerInputfile.xml] [maxiter]\n");
+    printf("albanyQCAD [PoissonInputfile.xml] [SchrodingerInputfile.xml] [maxiter]\n");
     exit(1);
   }
   
@@ -107,20 +104,20 @@ int main(int argc, char *argv[]) {
     Teuchos::TimeMonitor totalTimer(*totalTime); //start timer
     Teuchos::TimeMonitor setupTimer(*setupTime); //start timer
 
-    *out << "QCAD Solve: creating initial Poisson solver using input " << InitPoissonXmlFilename << endl;
-    CreateSolver(InitPoissonXmlFilename, initPoissonApp, initPoissonSolver, 
+    *out << "QCAD Solve: creating initial Poisson solver using input " << PoissonXmlFilename << endl;
+    CreateSolver("initial poisson", PoissonXmlFilename, initPoissonApp, initPoissonSolver, 
 		 initPoisson_params_in, initPoisson_responses_out);
 
     *out << "QCAD Solve: creating Poisson solver using input " << PoissonXmlFilename << endl;
-    CreateSolver(PoissonXmlFilename, poissonApp, poissonSolver, 
+    CreateSolver("poisson", PoissonXmlFilename, poissonApp, poissonSolver, 
 		 poisson_params_in, poisson_responses_out);
 
-    *out << "QCAD Solve: creating dummy Poisson solver using input " << DummyPoissonXmlFilename << endl;
-    CreateSolver(DummyPoissonXmlFilename, dummyPoissonApp, dummyPoissonSolver, 
+    *out << "QCAD Solve: creating dummy Poisson solver using input " << PoissonXmlFilename << endl;
+    CreateSolver("dummy poisson", PoissonXmlFilename, dummyPoissonApp, dummyPoissonSolver, 
 		 dummy_params_in, dummy_responses_out);
 
     *out << "QCAD Solve: creating Schrodinger solver using input " << SchrodingerXmlFilename << endl;
-    CreateSolver(SchrodingerXmlFilename, schrodingerApp, schrodingerSolver, 
+    CreateSolver("schrodinger", SchrodingerXmlFilename, schrodingerApp, schrodingerSolver, 
 		 schrodinger_params_in, schrodinger_responses_out);
 
     setupTimer.~TimeMonitor();
@@ -145,9 +142,8 @@ int main(int argc, char *argv[]) {
     do {
       iter++;
  
-      // ERIK: This Code appears to work with fresh Trilinos
-      //double newShift = -0.6 + 0.6*iter;
-      //ResetEigensolverShift(schrodingerSolver, newShift);
+      double newShift = GetEigensolverShift(statesToLoop, "Conduction Band");
+      ResetEigensolverShift(schrodingerSolver, newShift);
 
       *out << "QCAD Solve: Schrodinger iteration " << iter << endl;
       SolveModel(schrodingerApp, schrodingerSolver, 
@@ -198,56 +194,88 @@ int main(int argc, char *argv[]) {
   return status;
 }
 
-void CreateSolver(char* xmlfilename, Teuchos::RCP<Albany::Application>& albApp, Teuchos::RCP<EpetraExt::ModelEvaluator>& App, 
-		EpetraExt::ModelEvaluator::InArgs& params_in, EpetraExt::ModelEvaluator::OutArgs& responses_out)
+void CreateSolver(const std::string& solverType, char* xmlfilename, 
+		  Teuchos::RCP<Albany::Application>& albApp, Teuchos::RCP<EpetraExt::ModelEvaluator>& App, 
+		  EpetraExt::ModelEvaluator::InArgs& params_in, EpetraExt::ModelEvaluator::OutArgs& responses_out)
 {
   using Teuchos::RCP;
   using Teuchos::rcp;
-
-    Albany::SolverFactory slvrfctry(xmlfilename, Albany_MPI_COMM_WORLD);
-    RCP<Epetra_Comm> appComm = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
-    App = slvrfctry.createAndGetAlbanyApp(albApp, appComm, appComm);
-
-    params_in = App->createInArgs();
-    responses_out = App->createOutArgs();
-    int num_p = params_in.Np();     // Number of *vectors* of parameters
-    int num_g = responses_out.Ng(); // Number of *vectors* of responses
-    RCP<Epetra_Vector> p1;
-    RCP<Epetra_Vector> g1;
-
-    if (num_p > 0)
-      p1 = rcp(new Epetra_Vector(*(App->get_p_init(0))));
-    if (num_g > 1)
-      g1 = rcp(new Epetra_Vector(*(App->get_g_map(0))));
-    RCP<Epetra_Vector> xfinal =
-      rcp(new Epetra_Vector(*(App->get_g_map(num_g-1)),true) );
-
-    // Sensitivity Analysis stuff
-    bool supportsSensitivities = false;
-    RCP<Epetra_MultiVector> dgdp;
-
-    if (num_p>0 && num_g>1) {
-      supportsSensitivities =
-        !responses_out.supports(EpetraExt::ModelEvaluator::OUT_ARG_DgDp, 0, 0).none();
-
-      if (supportsSensitivities) {
-        //*out << "Main: model supports sensitivities, so will request DgDp" << endl;
-        //dgdp = rcp(new Epetra_MultiVector(p1->Map(), g1->GlobalLength() ));
-        //*out << " Num Responses: " << g1->GlobalLength() 
-        //     << ",   Num Parameters: " << p1->GlobalLength() << endl;
-
-        if (p1->GlobalLength() > 0)
-          dgdp = rcp(new Epetra_MultiVector(g1->Map(), p1->GlobalLength() ));
-        else
-          supportsSensitivities = false;
-      }
-    }
+  
+  //! Create solver factory, which reads xml input filen
+  Albany::SolverFactory slvrfctry(xmlfilename, Albany_MPI_COMM_WORLD);
     
-    if (num_p > 0)  params_in.set_p(0,p1);
-    if (num_g > 1)  responses_out.set_g(0,g1);
-    responses_out.set_g(num_g-1,xfinal);
+  //! Process input parameters based on solver type before creating solver & application
+  Teuchos::ParameterList& appParams = slvrfctry.getParameters();
 
-    if (supportsSensitivities) responses_out.set_DgDp(0,0,dgdp);
+  if(solverType == "initial poisson") {
+    //! Turn off schrodinger source
+    appParams.sublist("Problem").sublist("Schrodinger Coupling").set<bool>("Schrodinger source in quantum blocks",false);
+
+    //! Rename output file
+    std::string exoName= "init" + appParams.sublist("Discretization").get<std::string>("Exodus Output File Name");
+    appParams.sublist("Discretization").set("Exodus Output File Name", exoName);
+  }
+
+  else if(solverType == "dummy poisson") {
+    //! Rename materials file
+    std::string mtrlName= "dummy_" + appParams.sublist("Problem").get<std::string>("MaterialDB Filename");
+    appParams.sublist("Problem").set("MaterialDB Filename", mtrlName);
+
+    //! Rename output file
+    std::string exoName= "dummy" + appParams.sublist("Discretization").get<std::string>("Exodus Output File Name");
+    appParams.sublist("Discretization").set("Exodus Output File Name", exoName);
+ 
+    //! Replace Dirichlet BCs and Parameters sublists with dummy versions
+    appParams.sublist("Problem").sublist("Dirichlet BCs") = 
+      appParams.sublist("Problem").sublist("Dummy Dirichlet BCs");
+    appParams.sublist("Problem").sublist("Parameters") = 
+      appParams.sublist("Problem").sublist("Dummy Parameters");
+  }
+
+  //! Create solver and application objects via solver factory
+  RCP<Epetra_Comm> appComm = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
+  App = slvrfctry.createAndGetAlbanyApp(albApp, appComm, appComm);
+
+  params_in = App->createInArgs();
+  responses_out = App->createOutArgs();
+  int num_p = params_in.Np();     // Number of *vectors* of parameters
+  int num_g = responses_out.Ng(); // Number of *vectors* of responses
+  RCP<Epetra_Vector> p1;
+  RCP<Epetra_Vector> g1;
+  
+  if (num_p > 0)
+    p1 = rcp(new Epetra_Vector(*(App->get_p_init(0))));
+  if (num_g > 1)
+    g1 = rcp(new Epetra_Vector(*(App->get_g_map(0))));
+  RCP<Epetra_Vector> xfinal =
+    rcp(new Epetra_Vector(*(App->get_g_map(num_g-1)),true) );
+  
+  // Sensitivity Analysis stuff
+  bool supportsSensitivities = false;
+  RCP<Epetra_MultiVector> dgdp;
+  
+  if (num_p>0 && num_g>1) {
+    supportsSensitivities =
+      !responses_out.supports(EpetraExt::ModelEvaluator::OUT_ARG_DgDp, 0, 0).none();
+    
+    if (supportsSensitivities) {
+      //*out << "Main: model supports sensitivities, so will request DgDp" << endl;
+      //dgdp = rcp(new Epetra_MultiVector(p1->Map(), g1->GlobalLength() ));
+      //*out << " Num Responses: " << g1->GlobalLength() 
+      //     << ",   Num Parameters: " << p1->GlobalLength() << endl;
+      
+      if (p1->GlobalLength() > 0)
+	dgdp = rcp(new Epetra_MultiVector(g1->Map(), p1->GlobalLength() ));
+      else
+	supportsSensitivities = false;
+    }
+  }
+  
+  if (num_p > 0)  params_in.set_p(0,p1);
+  if (num_g > 1)  responses_out.set_g(0,g1);
+  responses_out.set_g(num_g-1,xfinal);
+  
+  if (supportsSensitivities) responses_out.set_DgDp(0,0,dgdp);
 }
 
 void SolveModel(Teuchos::RCP<Albany::Application>& albApp, Teuchos::RCP<EpetraExt::ModelEvaluator>& App, 
@@ -400,11 +428,47 @@ void ResetEigensolverShift(Teuchos::RCP<EpetraExt::ModelEvaluator>& Solver, doub
   eigList =
     Teuchos::rcp(new Teuchos::ParameterList(oldEigList));
 
-cout << " OLD  " << oldEigList << endl;
-cout << " COPY " << *eigList << endl;
-
   eigList->set("Shift",newShift);
 
+  //cout << " OLD Eigensolver list  " << oldEigList << endl;
+  //cout << " NEW Eigensolver list  " << *eigList << endl;
+  std::cout << "DEBUG: new eigensolver shift = " << newShift << std::endl;
   stepper->eigensolverReset(eigList);
 }
 
+double GetEigensolverShift(Teuchos::RCP<std::vector<Albany::StateVariables> >& states,
+			   const std::string& stateNameToBaseShiftOn)
+{
+  int numWorksets = states->size();
+  std::vector<PHX::DataLayout::size_type> dims;
+  const std::string& name = stateNameToBaseShiftOn;
+
+  double val;
+  double minVal, maxVal;
+  minVal = +1e10; maxVal = -1e10;
+
+  for (int ws = 0; ws < numWorksets; ws++)
+  {
+    Albany::StateVariables& statesForWorkset = (*states)[ws];
+
+    statesForWorkset[name]->dimensions(dims);
+    
+    int size = dims.size();
+    TEST_FOR_EXCEPTION(size != 2, std::logic_error, "Unimplemented number of dimensions");
+    int cells = dims[0];
+    int qps = dims[1];
+
+    for (int cell = 0; cell < cells; ++cell)  {
+      for (int qp = 0; qp < qps; ++qp) {
+	val = (*statesForWorkset[name])(cell, qp);
+	if(val < minVal) minVal = val;
+	if(val > maxVal) maxVal = val;
+      }
+    }
+  }
+
+  //set shift to be slightly (5% of range) below minimum value
+  double shift = -(minVal - 0.05*(maxVal-minVal)); //minus sign b/c negative eigenvalue convention
+  return shift;
+}
+  

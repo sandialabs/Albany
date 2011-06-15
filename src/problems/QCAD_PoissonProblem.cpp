@@ -63,6 +63,7 @@ PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     Teuchos::ParameterList& cList = params->sublist("Schrodinger Coupling");
     if(cList.isType<bool>("Schrodinger source in quantum blocks"))
       bUseSchrodingerSource = cList.get<bool>("Schrodinger source in quantum blocks");
+    std::cout << "bSchod in quantum = " << bUseSchrodingerSource << std::endl;
 
     if(cList.isType<int>("Eigenvectors from States"))
       nEigenvectorsToInputFromStates = cList.get<int>("Eigenvectors from States");
@@ -694,6 +695,10 @@ QCAD::PoissonProblem::getValidProblemParameters() const
   validPL->sublist("Schrodinger Coupling").set<bool>("Schrodinger source in quantum blocks",false,"Use eigenvector data to compute charge distribution within quantum blocks");
   validPL->sublist("Schrodinger Coupling").set<int>("Eigenvectors from States",0,"Number of eigenvectors to use for quantum region source");
   validPL->sublist("Schrodinger Coupling").set<string>("Eigenvalues file","evals.txtdump","File specifying eigevalues, output by Schrodinger problem");
+
+  //For poisson schrodinger interations
+  validPL->sublist("Dummy Dirichlet BCs", false, "");
+  validPL->sublist("Dummy Parameters", false, "");
 
   return validPL;
 }

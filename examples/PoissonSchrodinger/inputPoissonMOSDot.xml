@@ -15,9 +15,14 @@
 
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS substrate for DOF Phi" type="double" value="0" />
-      <Parameter name="DBC on NS lgate for DOF Phi" type="double" value="-5" />
-      <Parameter name="DBC on NS rgate for DOF Phi" type="double" value="-5" />
-      <Parameter name="DBC on NS topgate for DOF Phi" type="double" value="-2" />
+      <Parameter name="DBC on NS lgate for DOF Phi" type="double" value="-1" />
+      <Parameter name="DBC on NS rgate for DOF Phi" type="double" value="-1" />
+      <Parameter name="DBC on NS topgate for DOF Phi" type="double" value="+1" />
+    </ParameterList>
+
+    <ParameterList name="Dummy Dirichlet BCs">
+      <Parameter name="DBC on NS substrate for DOF Phi" type="double" value="0" />
+      <Parameter name="DBC on NS topgate for DOF Phi" type="double" value="0" />
     </ParameterList>
 
     <ParameterList name="Poisson Source">
@@ -37,6 +42,14 @@
       <Parameter name="Parameter 3" type="string" value="DBC on NS topgate for DOF Phi" />
       <Parameter name="Parameter 4" type="string" value="Poisson Source Factor" />
     </ParameterList>
+
+    <ParameterList name="Dummy Parameters">
+      <Parameter name="Number" type="int" value="3" />
+      <Parameter name="Parameter 0" type="string" value="DBC on NS substrate for DOF Phi" />
+      <Parameter name="Parameter 1" type="string" value="DBC on NS topgate for DOF Phi" />
+      <Parameter name="Parameter 2" type="string" value="Poisson Source Factor" />
+    </ParameterList>
+
 
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="1" />
