@@ -53,3 +53,19 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mosdot_2D.exo
                ${CMAKE_CURRENT_BINARY_DIR}/mosdot_2D.exo COPYONLY)
 # 3. Create the test with this name and standard executable
 add_test(${testRoot}_mosdot_2D_SERIAL ${SerialAlbany.exe} input_mosdot_2D.xml)
+
+# 1. Copy Input file from source to binary dir
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_mosdot_3D.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_mosdot_3D.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mosdot_3D.exo
+               ${CMAKE_CURRENT_BINARY_DIR}/mosdot_3D.exo COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mosdot_3D.exo.4.0
+               ${CMAKE_CURRENT_BINARY_DIR}/mosdot_3D.exo.4.0 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mosdot_3D.exo.4.1
+               ${CMAKE_CURRENT_BINARY_DIR}/mosdot_3D.exo.4.1 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mosdot_3D.exo.4.2
+               ${CMAKE_CURRENT_BINARY_DIR}/mosdot_3D.exo.4.2 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mosdot_3D.exo.4.3
+               ${CMAKE_CURRENT_BINARY_DIR}/mosdot_3D.exo.4.3 COPYONLY)
+# 3. Create the test with this name and standard executable
+add_test(${testRoot}_mosdot_3D ${Albany.exe} input_mosdot_3D.xml)

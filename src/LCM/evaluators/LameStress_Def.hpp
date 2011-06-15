@@ -40,34 +40,34 @@ LameStress(const Teuchos::ParameterList& p) :
   numDims = dims[2];
 
   defGradName = p.get<std::string>("DefGrad Name");
-  stressName = p.get<std::string>("Stress Name");
   this->addDependentField(defGradField);
 
+  stressName = p.get<std::string>("Stress Name");
   this->addEvaluatedField(stressField);
 
   this->setName("LameStress"+PHX::TypeString<EvalT>::value);
 
-  string lameMaterialModelName = p.get<string>("Lame Material Model");
-  const Teuchos::ParameterList& lameMaterialParameters = p.sublist("Lame Material Parameters");
+  string inputLameMaterialModelName = p.get<string>("Lame Material Model");
+  const Teuchos::ParameterList& inputLameMaterialParameters = p.sublist("Lame Material Parameters");
 
   // Initialize the LAME material model
   // This assumes that there is a single material model associated with this
   // evaluator and that the material properties are constant (read directly
   // from input deck parameter list)
-//   Teuchos::RCP<lame::MatProps> props = Teuchos::rcp(new lame::MatProps());
-//   std::vector<RealType> elasticModulusVector;
-//   RealType elasticModulusValue = lameMaterialParameters.get<double>("Elastic Modulus");
-//   elasticModulusVector.push_back(elasticModulusValue);
-//   props->insert(std::string("YOUNGS_MODULUS"), elasticModulusVector);
-//   std::vector<RealType> poissonsRatioVector;
-//   RealType poissonsRatioValue = lameMaterialParameters.get<double>("Poissons Ratio");
-//   poissonsRatioVector.push_back(poissonsRatioValue);
-//   props->insert(std::string("POISSONS_RATIO"), poissonsRatioVector);
-//   lameMaterialModel = Teuchos::rcp(new lame::Elastic(*props));
+  lameMaterialModel = LameUtils::constructLameMaterialModel(inputLameMaterialModelName, inputLameMaterialParameters);
 
-  lameMaterialModel = LameUtils::constructLameMaterialModel(lameMaterialParameters);
+  // Query the material model for its name and the list of state variables
+  lameMaterialModel->getStateVarListAndName(lameMaterialModelStateVariables, lameMaterialModelName);
 
-  // \todo Call initialize() on material.
+  // Declare the state variables as evaluated fields (type is always double)
+  Teuchos::RCP<PHX::DataLayout> dataLayout = p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+  for(unsigned int i=0 ; i<lameMaterialModelStateVariables.size() ; ++i){
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> lameMaterialModelStateVariableField(lameMaterialModelStateVariables[i], dataLayout);
+    this->addEvaluatedField(lameMaterialModelStateVariableField);
+    lameMaterialModelStateVariableFields.push_back(lameMaterialModelStateVariableField);
+  }
+
+  // \todo Need to call initialize() on LAME material model.  This involves writing to stateOld.  Not sure what the best approach is.
 }
 
 template<typename EvalT, typename Traits>
@@ -94,6 +94,8 @@ evaluateFields(typename Traits::EvalData workset)
   // \todo Get actual time step for calls to LAME materials.
   RealType deltaT = 1.0;
 
+  int numStateVariables = (int)(lameMaterialModelStateVariables.size());
+
   // Allocate workset space
   // Lame is called one time (called for all material points in the workset at once)
   int numMaterialEvaluations = workset.numCells * numQPs;
@@ -103,8 +105,9 @@ evaluateFields(typename Traits::EvalData workset)
   std::vector<RealType> rotation(9*numMaterialEvaluations);     // full tensor
   std::vector<RealType> stressOld(6*numMaterialEvaluations);    // symmetric tensor
   std::vector<RealType> stressNew(6*numMaterialEvaluations);    // symmetric tensor
+  std::vector<RealType> stateOld(numStateVariables*numMaterialEvaluations);  // a single double for each state variable
+  std::vector<RealType> stateNew(numStateVariables*numMaterialEvaluations);  // a single double for each state variable
 
-  // \todo Set up state variables for material models.
   // \todo Set up scratch space for material models using getNumScratchVars() and setScratchPtr().
 
   // Create the matParams structure, which is passed to Lame
@@ -116,8 +119,8 @@ evaluateFields(typename Traits::EvalData workset)
   matp->spin = &spin[0];
   matp->left_stretch = &leftStretch[0];
   matp->rotation = &rotation[0];
-  matp->state_old = 0;
-  matp->state_new = 0;
+  matp->state_old = &stateOld[0];
+  matp->state_new = &stateNew[0];
   matp->stress_old = &stressOld[0];
   matp->stress_new = &stressNew[0];
 
@@ -127,7 +130,6 @@ evaluateFields(typename Traits::EvalData workset)
   double* leftStretchPtr = matp->left_stretch;
   double* rotationPtr = matp->rotation;
   double* stateOldPtr = matp->state_old;
-  double* stateNewPtr = matp->state_new;
   double* stressOldPtr = matp->stress_old;
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
@@ -256,9 +258,14 @@ evaluateFields(typename Traits::EvalData workset)
       spinPtr += 3;
       leftStretchPtr += 6;
       rotationPtr += 9;
-      stateOldPtr = 0;
-      stateNewPtr = 0;
       stressOldPtr += 6;
+
+      // copy data from the state manager to the LAME data structure
+      for(int iVar=0 ; iVar<numStateVariables ; iVar++, stateOldPtr++){
+        std::string& variableName = lameMaterialModelStateVariables[iVar];
+        const Intrepid::FieldContainer<RealType>& stateVar = *oldState[variableName];
+        *stateOldPtr = stateVar(cell,qp,0,0);
+      }
     }
   }
 
@@ -267,6 +274,7 @@ evaluateFields(typename Traits::EvalData workset)
   // Get the stress from the LAME material
   lameMaterialModel->getStress(matp.get());
 
+  double* stateNewPtr = matp->state_new;
   double* stressNewPtr = matp->stress_new;
 
   // Post-process data from Lame call
@@ -285,6 +293,11 @@ evaluateFields(typename Traits::EvalData workset)
       stressField(cell,qp,2,0) = stressField(cell,qp,0,2);
 
       stressNewPtr += 6;
+
+      // copy state_new data from the LAME data structure to the corresponding state variable field
+      for(int iVar=0 ; iVar<numStateVariables ; iVar++, stateNewPtr++)
+        lameMaterialModelStateVariableFields[iVar](cell,qp,0,0) = *stateNewPtr;
+
     }
   }
 }

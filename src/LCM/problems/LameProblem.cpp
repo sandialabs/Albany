@@ -344,37 +344,55 @@ Albany::LameProblem::constructEvaluators(
     evaluators_to_build["DefGrad"] = p;
   }
 
-  { //LameStress
+  { // LameStress
     RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
     int type = LCM::FactoryTraits<AlbanyTraits>::id_lame_stress;
     p->set<int>("Type", type);
 
-    //Material properties that will be passed to LAME material model
+    // Material properties that will be passed to LAME material model
     string lameMaterialModel = params->get<string>("Lame Material Model");
     p->set<string>("Lame Material Model", lameMaterialModel);
     Teuchos::ParameterList& lameMaterialParametersList = p->sublist("Lame Material Parameters");
     lameMaterialParametersList = params->sublist("Lame Material Parameters");
 
-    //Input
+    // Input
     p->set<string>("Strain Name", "Strain");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
 
     p->set<string>("DefGrad Name", "Deformation Gradient"); // qp_tensor also
 
-    //Output
+    // Output
     p->set<string>("Stress Name", "Stress"); // qp_tensor also
 
     evaluators_to_build["Stress"] = p;
 
-    // Declare state data that needs to be saved
+    // Declare state data that need to be saved
     // (register with state manager and create corresponding evaluator)
+
+    // Stress and DefGrad are required at the element level for all LAME models
     evaluators_to_build["Save Stress"] =
       stateMgr.registerStateVariable("Stress",qp_tensor,
             dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
     evaluators_to_build["Save DefGrad"] =
       stateMgr.registerStateVariable("Deformation Gradient",qp_tensor,
             dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"identity");
+
+    // In addition, a LAME model may register additional state variables (type is always double)
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    Teuchos::RCP<lame::Material> materialModel = 
+      LameUtils::constructLameMaterialModel(lameMaterialModel, lameMaterialParametersList);
+    std::vector<std::string> lameMaterialModelStateVariables;
+    std::string lameMaterialModelName;
+    materialModel->getStateVarListAndName(lameMaterialModelStateVariables, lameMaterialModelName);
+    for(unsigned int i=0 ; i<lameMaterialModelStateVariables.size() ; ++i){
+      evaluators_to_build["Save " + lameMaterialModelStateVariables[i]] =
+        stateMgr.registerStateVariable(lameMaterialModelStateVariables[i],
+                                       qp_scalar,
+                                       dummy,
+                                       FactoryTraits<AlbanyTraits>::id_savestatefield,
+                                       "zero");
+    }
   }
 
   { // Displacement Resid

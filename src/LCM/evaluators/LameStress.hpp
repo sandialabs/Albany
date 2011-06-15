@@ -58,6 +58,15 @@ private:
 
   // The LAME material model
   Teuchos::RCP<lame::Material> lameMaterialModel;
+
+  // The LAME material model name
+  std::string lameMaterialModelName;
+
+  // Vector of the state variable names for the LAME material model
+  std::vector<std::string> lameMaterialModelStateVariables;
+
+  // Vector of the fields corresponding to the LAME material model state variables
+  std::vector< PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> > lameMaterialModelStateVariableFields;
 };
 }
 
