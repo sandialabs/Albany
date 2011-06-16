@@ -29,7 +29,7 @@
 
 #include <stk_mesh/fem/FEMHelpers.hpp>
 
-#ifdef ALBANY_IOSS
+#ifdef ALBANY_SEACAS
 #include <stk_io/IossBridge.hpp>
 #endif
 #include "Albany_Utils.hpp"

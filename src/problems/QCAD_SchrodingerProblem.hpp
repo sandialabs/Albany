@@ -40,7 +40,8 @@ namespace QCAD {
     SchrodingerProblem(
                          const Teuchos::RCP<Teuchos::ParameterList>& params,
                          const Teuchos::RCP<ParamLib>& paramLib,
-                         const int numDim_);
+                         const int numDim_,
+			 const Teuchos::RCP<const Epetra_Comm>& comm_);
 
     //! Destructor
     ~SchrodingerProblem();
@@ -66,7 +67,7 @@ namespace QCAD {
                              Albany::StateManager& stateMgr);
 
   protected:
-
+    Teuchos::RCP<const Epetra_Comm> comm;
     bool havePotential;
     bool haveMaterial;
     double energy_unit_in_eV, length_unit_in_m;

@@ -72,7 +72,8 @@ PoissonDirichlet(Teuchos::ParameterList& p) :
     affinityOfDOF = materialDB->getMaterialParam<double>(materialOfDOF,
 							 "Electron Affinity");
 
-  this->offsetDueToAffinity = affinitySetByUser - affinityOfDOF;
+  //I think this is accounted for already (Erik)
+  this->offsetDueToAffinity = 0; //-(affinitySetByUser - affinityOfDOF);
 }
 
 template<typename EvalT,typename Traits>

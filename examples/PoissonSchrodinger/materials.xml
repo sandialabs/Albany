@@ -138,6 +138,12 @@
       <!-- Valley information - same as Silicon to avoid charge discontinuity -->
       <Parameter name="Number of conduction band min" type="int" value="2" />
 
+      <!-- Electron effective mass along coordinate directions in [m0] same as Silicon? -->
+      <Parameter name="Electron Effective Mass X" type="double" value="0.19" />
+      <Parameter name="Electron Effective Mass Y" type="double" value="0.19" />
+      <Parameter name="Electron Effective Mass Z" type="double" value="0.98" />
+
+
       <!-- Band Gap in [eV] -->
       <Parameter name="Band Gap" type="double" value="9.0" />
 

@@ -36,7 +36,7 @@
 #include "Teko_InverseFactoryOperator.hpp"
 #include "Teko_StridedEpetraOperator.hpp"
 
-#ifdef ALBANY_IOSS
+#ifdef ALBANY_SEACAS
   #include "Albany_STKDiscretization.hpp"
 #endif
 
@@ -69,7 +69,7 @@ Albany::Application::Application(
   // Create problem object
   Teuchos::RCP<Teuchos::ParameterList> problemParams = 
     Teuchos::sublist(params, "Problem", true);
-  Albany::ProblemFactory problemFactory(problemParams, paramLib);
+  Albany::ProblemFactory problemFactory(problemParams, paramLib, comm);
   Teuchos::RCP<Albany::AbstractProblem> problem = problemFactory.create();
 
   // Validate Problem parameters against list for this specific problem
@@ -377,7 +377,7 @@ Albany::Application::computeGlobalResidual(
 
   f.Export(*overlapped_f, *exporter, Add);
 
-#ifdef ALBANY_IOSS
+#ifdef ALBANY_SEACAS
   Albany::STKDiscretization* stkDisc =
     dynamic_cast<Albany::STKDiscretization*>(disc.get());
   stkDisc->setResidualField(f);

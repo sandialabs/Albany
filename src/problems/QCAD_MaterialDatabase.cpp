@@ -18,14 +18,13 @@
 #include "QCAD_MaterialDatabase.hpp"
 #include "Teuchos_XMLParameterListHelpers.hpp"
 #include "Teuchos_TestForException.hpp"
-
+#include "Albany_Utils.hpp"
 
 QCAD::MaterialDatabase::
-MaterialDatabase( const std::string& inputFile)
+MaterialDatabase( const std::string& inputFile,
+		  const Teuchos::RCP<const Epetra_Comm>& ecomm)
   : data_("Material Parameters")
 {
-  std::cout << "Initializing material database from " << inputFile << std::endl;
-
   if(inputFile.length() == 0) {
     pMaterialsList_ = NULL;
     pEBList_        = NULL;
@@ -33,7 +32,12 @@ MaterialDatabase( const std::string& inputFile)
     return;
   }
 
-  Teuchos::updateParametersFromXmlFile(inputFile, &data_);
+  const Albany_MPI_Comm& mcomm = Albany::getMpiCommFromEpetraComm(*ecomm);
+  Teuchos::RCP<Teuchos::Comm<int> > tcomm = Albany::createTeuchosCommFromMpiComm(mcomm);
+
+  std::cout << "Initializing material database from " << inputFile << std::endl;
+  Teuchos::updateParametersFromXmlFileAndBroadcast(inputFile, &data_, *tcomm);
+  //Teuchos::updateParametersFromXmlFile(inputFile, &data_);
   
   //Check for and Set element block and materials sublists
   TEST_FOR_EXCEPTION(!data_.isSublist("Materials"), Teuchos::Exceptions::InvalidParameter,
