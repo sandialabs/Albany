@@ -47,27 +47,25 @@ LameStress(const Teuchos::ParameterList& p) :
 
   this->setName("LameStress"+PHX::TypeString<EvalT>::value);
 
-  string inputLameMaterialModelName = p.get<string>("Lame Material Model");
-  const Teuchos::ParameterList& inputLameMaterialParameters = p.sublist("Lame Material Parameters");
+  lameMaterialModelName = p.get<string>("Lame Material Model");
+  const Teuchos::ParameterList& lameMaterialParameters = p.sublist("Lame Material Parameters");
 
   // Initialize the LAME material model
   // This assumes that there is a single material model associated with this
   // evaluator and that the material properties are constant (read directly
   // from input deck parameter list)
-  lameMaterialModel = LameUtils::constructLameMaterialModel(inputLameMaterialModelName, inputLameMaterialParameters);
+  lameMaterialModel = LameUtils::constructLameMaterialModel(lameMaterialModelName, lameMaterialParameters);
 
-  // Query the material model for its name and the list of state variables
-  lameMaterialModel->getStateVarListAndName(lameMaterialModelStateVariables, lameMaterialModelName);
+  // Get a list of the LAME material model state variable names
+  lameMaterialModelStateVariableNames = LameUtils::getStateVariableNames(lameMaterialModelName, lameMaterialParameters);
 
   // Declare the state variables as evaluated fields (type is always double)
   Teuchos::RCP<PHX::DataLayout> dataLayout = p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
-  for(unsigned int i=0 ; i<lameMaterialModelStateVariables.size() ; ++i){
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> lameMaterialModelStateVariableField(lameMaterialModelStateVariables[i], dataLayout);
+  for(unsigned int i=0 ; i<lameMaterialModelStateVariableNames.size() ; ++i){
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> lameMaterialModelStateVariableField(lameMaterialModelStateVariableNames[i], dataLayout);
     this->addEvaluatedField(lameMaterialModelStateVariableField);
     lameMaterialModelStateVariableFields.push_back(lameMaterialModelStateVariableField);
   }
-
-  // \todo Need to call initialize() on LAME material model.  This involves writing to stateOld.  Not sure what the best approach is.
 }
 
 template<typename EvalT, typename Traits>
@@ -77,6 +75,8 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(defGradField,fm);
   this->utils.setFieldData(stressField,fm);
+  for(unsigned int i=0 ; i<lameMaterialModelStateVariableFields.size() ; ++i)
+    this->utils.setFieldData(lameMaterialModelStateVariableFields[i],fm);
 }
 
 template<typename EvalT, typename Traits>
@@ -94,7 +94,7 @@ evaluateFields(typename Traits::EvalData workset)
   // \todo Get actual time step for calls to LAME materials.
   RealType deltaT = 1.0;
 
-  int numStateVariables = (int)(lameMaterialModelStateVariables.size());
+  int numStateVariables = (int)(lameMaterialModelStateVariableNames.size());
 
   // Allocate workset space
   // Lame is called one time (called for all material points in the workset at once)
@@ -123,6 +123,16 @@ evaluateFields(typename Traits::EvalData workset)
   matp->state_new = &stateNew[0];
   matp->stress_old = &stressOld[0];
   matp->stress_new = &stressNew[0];
+  matp->dtrnew = 1.0;  // This is the default value in LAME, only MDCreep and MunsonDawson use it
+  
+  // matParams that still need to be added:
+  // matp->temp_old  (temperature)
+  // matp->temp_new
+  // matp->sound_speed_old
+  // matp->sound_speed_new
+  // matp->volume
+  // scratch pointer
+  // function pointers (lots to be done here)
 
   // Pointers used for filling the matParams structure
   double* strainRatePtr = matp->strain_rate;
@@ -262,14 +272,15 @@ evaluateFields(typename Traits::EvalData workset)
 
       // copy data from the state manager to the LAME data structure
       for(int iVar=0 ; iVar<numStateVariables ; iVar++, stateOldPtr++){
-        std::string& variableName = lameMaterialModelStateVariables[iVar];
+        std::string& variableName = lameMaterialModelStateVariableNames[iVar];
         const Intrepid::FieldContainer<RealType>& stateVar = *oldState[variableName];
-        *stateOldPtr = stateVar(cell,qp,0,0);
+        *stateOldPtr = stateVar(cell,qp);
       }
     }
   }
 
-  // \todo Call loadStepInit();
+  // Make a call to the LAME material model to initialize the load step
+  lameMaterialModel->loadStepInit(matp.get());
 
   // Get the stress from the LAME material
   lameMaterialModel->getStress(matp.get());
@@ -296,7 +307,7 @@ evaluateFields(typename Traits::EvalData workset)
 
       // copy state_new data from the LAME data structure to the corresponding state variable field
       for(int iVar=0 ; iVar<numStateVariables ; iVar++, stateNewPtr++)
-        lameMaterialModelStateVariableFields[iVar](cell,qp,0,0) = *stateNewPtr;
+        lameMaterialModelStateVariableFields[iVar](cell,qp) = *stateNewPtr;
 
     }
   }
