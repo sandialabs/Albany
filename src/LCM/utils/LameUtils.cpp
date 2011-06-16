@@ -115,6 +115,32 @@ Teuchos::RCP<lame::Material> constructLameMaterialModel(const std::string& lameM
   return materialModel;
 }
 
+std::vector<std::string> getStateVariableNames(const std::string& lameMaterialModelName,
+                                               const Teuchos::ParameterList& lameMaterialParameters){
+
+  Teuchos::RCP<lame::Material> materialModel = constructLameMaterialModel(lameMaterialModelName, lameMaterialParameters);
+
+  // Get a list of the state variables, in alphabetical order
+  std::vector<std::string> lameMaterialModelStateVariables;
+  std::string tempLameMaterialModelName;
+  materialModel->getStateVarListAndName(lameMaterialModelStateVariables, tempLameMaterialModelName);
+
+  // Reorder the list to match the order of the variables in the actual state array passed to/from LAME
+  std::map<int, std::string> variableNamesByIndex;
+  for(unsigned int i=0 ; i<lameMaterialModelStateVariables.size() ; ++i){
+    std::string variableName = lameMaterialModelStateVariables[i];
+    int index = materialModel->getStateVariableIndex(variableName);
+    variableNamesByIndex[index] = variableName;
+  }
+
+  std::vector<std::string> sortedVariableNames;
+  for(unsigned int i=0 ; i<lameMaterialModelStateVariables.size() ; ++i){
+    sortedVariableNames.push_back(variableNamesByIndex[(int)i]);
+  }
+
+  return sortedVariableNames;
+}
+
 
 std::vector<double> getStateVariableInitialValues(const std::string& lameMaterialModelName,
                                                   const Teuchos::ParameterList& lameMaterialParameters){

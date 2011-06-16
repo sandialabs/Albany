@@ -188,6 +188,10 @@ Albany::StateManager::initializeStateVariables(const int numWorksets)
         state1[ws][st->first]->initialize(value);
         state2[ws][st->first]->initialize(value);
       }
+      else
+      {
+        *out << " WARNING, ignoring init_type " << init_type << std::endl;
+      }
     }
     st++;
   }

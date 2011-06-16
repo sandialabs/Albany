@@ -70,22 +70,15 @@
     if(pos != 0)
       return false;
 
-    // Make sure the rest of the string has only allowable characters (digits and a decimal place)
+    // Make sure the rest of the string has only allowable characters
     std::string valueString = initString.substr(verbiage.size(), initString.size() - verbiage.size());
     int decimalPointCount = 0;
     for(std::string::iterator it=valueString.begin() ; it!=valueString.end() ; it++){
       std::string charAsString(1, *it);
-      size_t pos = charAsString.find_first_of("0123456789.");
+      size_t pos = charAsString.find_first_of("0123456789.-+eE");
       if(pos == string::npos)
         return false;
-      size_t decimalPointPos = charAsString.find(".");
-      if(decimalPointPos != string::npos)
-        decimalPointCount += 1;
     }
-
-    // There can be at most one decimal point
-    if(decimalPointCount > 1)
-      return false;
 
     return true;
   }
