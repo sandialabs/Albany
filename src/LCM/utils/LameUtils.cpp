@@ -36,18 +36,10 @@
 
 namespace LameUtils {
 
-Teuchos::RCP<lame::Material> constructLameMaterialModel(const std::string& lameMaterialModelName,
-                                                        const Teuchos::ParameterList& lameMaterialParameters){
+void parameterListToMatProps(const Teuchos::ParameterList& lameMaterialParameters, lame::MatProps& matProps){
 
-  // load the material properties into a lame::MatProps container.
+  // load the material properties into the lame::MatProps container.
   // LAME material properties must be of type int, double, or string.
-
-  // Strings should be all upper case with spaces replaced with underscores
-  std::string materialModelName = lameMaterialModelName;
-  std::transform(materialModelName.begin(), materialModelName.end(), materialModelName.begin(), toupper);
-  std::replace(materialModelName.begin(), materialModelName.end(), ' ', '_');
-
-  lame::MatProps props;
 
   for(Teuchos::ParameterList::ConstIterator it = lameMaterialParameters.begin() ; it != lameMaterialParameters.end() ; ++it){
 
@@ -59,27 +51,35 @@ Teuchos::RCP<lame::Material> constructLameMaterialModel(const std::string& lameM
     if(entry.isType<int>()){
       std::vector<int> propertyVector;
       propertyVector.push_back(Teuchos::getValue<int>(entry));
-      props.insert(name, propertyVector);
-      //std::cout << "LameUtils processing material property int " << name << " with value " << propertyVector[0] << std::endl;
+      matProps.insert(name, propertyVector);
     }
     else if(entry.isType<double>()){
       std::vector<double> propertyVector;
       propertyVector.push_back(Teuchos::getValue<double>(entry));
-      props.insert(name, propertyVector);
-      //std::cout << "LameUtils processing material property double " << name << " with value " << propertyVector[0] << std::endl;
+      matProps.insert(name, propertyVector);
     }
     else if(entry.isType<std::string>()){
       std::vector<std::string> propertyVector;
       propertyVector.push_back(Teuchos::getValue<std::string>(entry));
-      props.insert(name, propertyVector);
-      //std::cout << "LameUtils processing material property string " << name << " with value " << propertyVector[0] << std::endl;
+      matProps.insert(name, propertyVector);
     }
     else{
       TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, " parameters for LAME material models must be of type double, int, or string.\n");
     }
   }
+}
 
-  //std::cout << "Creating material model " << materialModelName << std::endl;
+
+Teuchos::RCP<lame::Material> constructLameMaterialModel(const std::string& lameMaterialModelName,
+                                                        const Teuchos::ParameterList& lameMaterialParameters){
+
+  // Strings should be all upper case with spaces replaced with underscores
+  std::string materialModelName = lameMaterialModelName;
+  std::transform(materialModelName.begin(), materialModelName.end(), materialModelName.begin(), toupper);
+  std::replace(materialModelName.begin(), materialModelName.end(), ' ', '_');
+
+  lame::MatProps props;
+  parameterListToMatProps(lameMaterialParameters, props);
 
   Teuchos::RCP<lame::Material> materialModel;
 
@@ -113,6 +113,50 @@ Teuchos::RCP<lame::Material> constructLameMaterialModel(const std::string& lameM
     TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, " unsupported LAME material model: " + lameMaterialModelName + " (" + materialModelName + ")\n");
 
   return materialModel;
+}
+
+
+std::vector<double> getStateVariableInitialValues(const std::string& lameMaterialModelName,
+                                                  const Teuchos::ParameterList& lameMaterialParameters){
+
+  Teuchos::RCP<lame::Material> materialModel = constructLameMaterialModel(lameMaterialModelName, lameMaterialParameters);
+
+  int numStateVariables = materialModel->getNumStateVars();
+
+  // Allocate workset space
+  std::vector<double> strainRate(6);   // symmetric tensor5
+  std::vector<double> spin(3);         // skew-symmetric tensor
+  std::vector<double> leftStretch(6);  // symmetric tensor
+  std::vector<double> rotation(9);     // full tensor
+  std::vector<double> stressOld(6);    // symmetric tensor
+  std::vector<double> stressNew(6);    // symmetric tensor
+  std::vector<double> stateOld(numStateVariables);  // a single double for each state variable
+  std::vector<double> stateNew(numStateVariables);  // a single double for each state variable
+
+  // \todo Set up scratch space for material models using getNumScratchVars() and setScratchPtr().
+
+  // Create the matParams structure, which is passed to LAME
+  Teuchos::RCP<lame::matParams> matp = Teuchos::rcp(new lame::matParams());
+  matp->nelements = 1;
+  matp->dt = 0.0;
+  matp->time = 0.0;
+  matp->strain_rate = &strainRate[0];
+  matp->spin = &spin[0];
+  matp->left_stretch = &leftStretch[0];
+  matp->rotation = &rotation[0];
+  matp->state_old = &stateOld[0];
+  matp->state_new = &stateNew[0];
+  matp->stress_old = &stressOld[0];
+  matp->stress_new = &stressNew[0];
+
+  lame::MatProps props;
+  parameterListToMatProps(lameMaterialParameters, props);
+
+  // todo Check with Bill to see if props can be a null pointer (meaning no changes to the material properties).
+
+  materialModel->initialize(matp.get(), &props);
+
+  return stateOld;
 }
 
 }

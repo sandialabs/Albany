@@ -42,7 +42,16 @@ namespace Albany {
   Teuchos::RCP<Epetra_Comm> createEpetraCommFromMpiComm(const Albany_MPI_Comm& mc);
   Teuchos::RCP<Teuchos::Comm<int> > createTeuchosCommFromMpiComm(const Albany_MPI_Comm& mc);
 
-  // Utility to make a string out of a string + int: strint("dog",2) = "dog 2"
+  //! Utility to make a string out of a string + int: strint("dog",2) = "dog 2"
   std::string strint(const std::string s, const int i);
+
+  //! Returns true of the given string is a valid initialization string of the format "initial value 1.54"
+  bool isValidInitString(const std::string& initString);
+
+  //! Converts a double to an initialization string:  doubleToInitString(1.54) = "initial value 1.54"
+  std::string doubleToInitString(double val);
+
+  //! Converts an init string to a double:  initStringToDouble("initial value 1.54") = 1.54
+  double initStringToDouble(const std::string& initString);
 }
 #endif //ALBANY_UTILS

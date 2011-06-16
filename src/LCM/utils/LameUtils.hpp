@@ -22,7 +22,14 @@
 
 namespace LameUtils {
 
-Teuchos::RCP<lame::Material> constructLameMaterialModel(const std::string& lameMaterialModelName,
-                                                        const Teuchos::ParameterList& lameMaterialParameters);
+  //! Convert a Teuchos::ParameterList into a lame::MatProps structure.
+  void parameterListToMatProps(const Teuchos::ParameterList& lameMaterialParameters, lame::MatProps& matProps);
 
+  //! Instantiate a lame::MaterialModel given the model name and a set of material parameters. 
+  Teuchos::RCP<lame::Material> constructLameMaterialModel(const std::string& lameMaterialModelName,
+                                                          const Teuchos::ParameterList& lameMaterialParameters);
+
+  //! Return a vector containing the initial values for the state variables associated with the given LAME material model and material parameters.
+  std::vector<double> getStateVariableInitialValues(const std::string& lameMaterialModelName,
+                                                    const Teuchos::ParameterList& lameMaterialParameters);
 }

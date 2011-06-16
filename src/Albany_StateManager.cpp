@@ -14,6 +14,7 @@
  *    Questions to Andy Salinger, agsalin@sandia.gov                  *
  \********************************************************************/
 #include "Albany_StateManager.hpp"
+#include "Albany_Utils.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout_MDALayout.hpp"
@@ -77,7 +78,7 @@ Albany::StateManager::getStateInfoStruct()
     std::vector<PHX::DataLayout::size_type> dims;
     st->second->dimensions(dims);
     int s=1;
-    for (int i=2; i< dims.size(); i++)  s *= dims[i];
+    for (unsigned int i=2; i< dims.size(); i++)  s *= dims[i];
 
     sis->nstates += s;
 
@@ -178,6 +179,14 @@ Albany::StateManager::initializeStateVariables(const int numWorksets)
             }
           }
         }
+      }
+      else if (isValidInitString(init_type))
+      {
+        double value = initStringToDouble(init_type); 
+        if (ws == 0)
+          *out << " with initial value " << value << std::endl;
+        state1[ws][st->first]->initialize(value);
+        state2[ws][st->first]->initialize(value);
       }
     }
     st++;

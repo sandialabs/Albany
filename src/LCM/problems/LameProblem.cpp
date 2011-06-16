@@ -378,20 +378,22 @@ Albany::LameProblem::constructEvaluators(
       stateMgr.registerStateVariable("Deformation Gradient",qp_tensor,
             dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"identity");
 
-    // In addition, a LAME model may register additional state variables (type is always double)
+    // A LAME material model may register additional state variables (type is always double)
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
     Teuchos::RCP<lame::Material> materialModel = 
       LameUtils::constructLameMaterialModel(lameMaterialModel, lameMaterialParametersList);
     std::vector<std::string> lameMaterialModelStateVariables;
     std::string lameMaterialModelName;
     materialModel->getStateVarListAndName(lameMaterialModelStateVariables, lameMaterialModelName);
+    std::vector<double> lameMaterialModelStateVariableInitialValues = LameUtils::getStateVariableInitialValues(lameMaterialModel, lameMaterialParametersList);
     for(unsigned int i=0 ; i<lameMaterialModelStateVariables.size() ; ++i){
       evaluators_to_build["Save " + lameMaterialModelStateVariables[i]] =
         stateMgr.registerStateVariable(lameMaterialModelStateVariables[i],
                                        qp_scalar,
                                        dummy,
                                        FactoryTraits<AlbanyTraits>::id_savestatefield,
-                                       "zero");
+                                       doubleToInitString(lameMaterialModelStateVariableInitialValues[i]));
+      std::cout << "CHECK state variable " << lameMaterialModelStateVariables[i] << " has initial value " << lameMaterialModelStateVariableInitialValues[i] << std::endl;
     }
   }
 
