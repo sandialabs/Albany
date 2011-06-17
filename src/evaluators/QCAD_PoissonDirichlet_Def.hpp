@@ -42,61 +42,52 @@ PoissonDirichlet(Teuchos::ParameterList& p) :
  
   temperature = p.get<double>("Temperature"); //To be replaced by SharedParameter evaluator access
 
-
-  double affinitySetByUser, affinityOfDOF;
-  std::string materialSetByUser;
-  std::string materialOfDOF;
+  double affinity;
+  std::string material, category;
   std::string nodeSetName = PHAL::DirichletBase<EvalT,Traits>::nodeSetID;
 
   //! Get offset due to electon affinity difference only once in constructor
-  materialSetByUser = materialDB->getNodeSetParam<string>(nodeSetName,"materialSetByUser","");
-  materialOfDOF = materialDB->getNodeSetParam<string>(nodeSetName,"materialOfDOF","");
-
-  if( materialSetByUser.length() == 0) {
-    this->ebSetByUser = materialDB->getNodeSetParam<string>(nodeSetName,"elementBlockSetByUser","");
-    if( ebSetByUser.length() > 0 )
-      affinitySetByUser = materialDB->getElementBlockParam<double>(ebSetByUser,"Electron Affinity");
-    else affinitySetByUser = 0; //default case when there are no parameters
+  material = materialDB->getNodeSetParam<string>(nodeSetName,"material","");
+  if( material.length() == 0) {
+    this->ebName = materialDB->getNodeSetParam<string>(
+				    nodeSetName,"elementBlock","");
+    if( ebName.length() > 0 ) {
+      affinity = materialDB->getElementBlockParam<double>(ebName,"Electron Affinity");
+      category = materialDB->getElementBlockParam<string>(ebName,"Category");
+    }
+    else {
+      //default case when there are no parameters in materials db file
+      affinity = 0; 
+      category = "";
+    }
   }
-  else 
-    affinitySetByUser = materialDB->getMaterialParam<double>(materialSetByUser,
-							     "Electron Affinity");
-
-  if( materialOfDOF.length() == 0 ) {
-    this->ebOfDOF = materialDB->getNodeSetParam<string>(nodeSetName,"elementBlockOfDOF","");
-    if( ebOfDOF.length() > 0) 
-      affinityOfDOF = materialDB->getElementBlockParam<double>(ebOfDOF,"Electron Affinity");
-    else affinityOfDOF = 0; //default case when there are no parameters
+  else {
+    affinity = materialDB->getMaterialParam<double>(material,"Electron Affinity");
+    category = materialDB->getMaterialParam<string>(material,"Category");
   }
-  else 
-    affinityOfDOF = materialDB->getMaterialParam<double>(materialOfDOF,
-							 "Electron Affinity");
-
-  this->offsetDueToAffinity = affinitySetByUser - affinityOfDOF;
 }
 
 template<typename EvalT,typename Traits>
 void PoissonDirichlet<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
+  //I think this is accounted for already (Erik)
+  // Suzey: may need to get reference material name via:
+  // std::string refMtrlName = materialDB->getParam<string>("Reference Material");
+  double offsetDueToAffinity = 0;
+
   double kbBoltz = 8.617343e-05; //[eV/K]
   ScalarT V0 = kbBoltz*temperature/1.0; // kb*T/q in [V], scaling for potential
   ScalarT phiForIncompleteIon;
 
   //! Get offset due to doping in semiconductors
   ScalarT offsetDueToDoping = 0.0;
-  if( ebSetByUser.length() > 0) {
+  if( ebName.length() > 0) {
     phiForIncompleteIon = user_value/V0;
-    offsetDueToDoping -= ComputeOffsetDueToDoping(ebSetByUser, phiForIncompleteIon); 
-  }
-
-  if( ebOfDOF.length() > 0 ) {
-    phiForIncompleteIon =  (user_value+offsetDueToAffinity)/V0;
-    offsetDueToDoping += ComputeOffsetDueToDoping(ebOfDOF,phiForIncompleteIon);
+    offsetDueToDoping = ComputeOffsetDueToDoping(ebName, phiForIncompleteIon); 
   }
 
   // Suzey: phi values correct?
-
   ScalarT newValue = (user_value + offsetDueToAffinity) * 1.0/V0 + offsetDueToDoping;
   PHAL::DirichletBase<EvalT,Traits>::value = newValue;
 

@@ -19,6 +19,7 @@
 #define QCAD_MATERIALDATABASE_HPP
 
 #include "Teuchos_ParameterList.hpp"
+#include "Albany_Utils.hpp"
 
 namespace QCAD {
 
@@ -30,10 +31,17 @@ namespace QCAD {
   public:
   
     //! Default constructor
-    MaterialDatabase(const std::string& inputFile);
+    MaterialDatabase(const std::string& inputFile,
+		     const Teuchos::RCP<const Epetra_Comm>& ecomm);
 
     //! Destructor
     ~MaterialDatabase();
+
+    //! Get a parameter
+    template<typename T>
+    T getParam(const std::string& paramName);
+    template<typename T>
+    T getParam(const std::string& paramName, T def_val);
 
     //! Get a parameter for a particular material
     template<typename T>

@@ -22,7 +22,7 @@
 #include "Albany_Line1DSTKMeshStruct.hpp"
 #include "Albany_Rect2DSTKMeshStruct.hpp"
 #include "Albany_Cube3DSTKMeshStruct.hpp"
-#ifdef ALBANY_IOSS
+#ifdef ALBANY_SEACAS
 #include "Albany_IossSTKMeshStruct.hpp"
 #endif
 #ifdef ALBANY_CUTR
@@ -62,7 +62,7 @@ Albany::DiscretizationFactory::createMeshSpecs()
     stkMeshStruct = Teuchos::rcp(new Albany::Cube3DSTKMeshStruct(discParams, epetra_comm));
   }
   else if (method == "Ioss" || method == "Exodus" ||  method == "Pamgen") {
-#ifdef ALBANY_IOSS
+#ifdef ALBANY_SEACAS
     stkMeshStruct = Teuchos::rcp(new Albany::IossSTKMeshStruct(discParams, epetra_comm));
 #else
     TEST_FOR_EXCEPTION(method == "Ioss" || method == "Exodus" ||  method == "Pamgen",

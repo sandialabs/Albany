@@ -14,7 +14,7 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
-#ifdef ALBANY_IOSS
+#ifdef ALBANY_SEACAS
 
 #include <iostream>
 

@@ -72,7 +72,7 @@ Albany::FromCubitSTKMeshStruct::FromCubitSTKMeshStruct(
     // Name chosen to be same as Ioss default "nodelist_" + <int>
     std::stringstream ss; ss << "nodelist_" << ns->first;
     nsPartVec[ss.str()] = ns->second;
-#ifdef ALBANY_IOSS
+#ifdef ALBANY_SEACAS
    stk::io::put_io_part_attribute(*ns->second);
 #endif
     ns++;
@@ -83,7 +83,7 @@ Albany::FromCubitSTKMeshStruct::FromCubitSTKMeshStruct(
   if (numDim==2) partVec[0] = stkMeshData->surface_part(0);
   else           partVec[0] = stkMeshData->volume_part(0);
 
-#ifdef ALBANY_IOSS
+#ifdef ALBANY_SEACAS
 /*
   // set all top rank parts as IO parts
   int id=0;
@@ -136,7 +136,7 @@ Albany::FromCubitSTKMeshStruct::getValidDiscretizationParameters() const
   validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic a mesh");
   validPL->set<int>("Morph Method", 0, "Integer flag so select CUTR MeshMover Morph Method");
   validPL->set<std::string>("Exodus Output File Name", "",
-    "Request exodus output to given file name. Requires IOSS build");
+    "Request exodus output to given file name. Requires SEACAS build");
   validPL->set<std::string>("Method", "",
     "The discretization method, parsed in the Discretization Factory");
   validPL->set<int>("Cubature Degree", 3, "Integration order sent to Intrepid");

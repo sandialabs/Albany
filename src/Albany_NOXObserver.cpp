@@ -17,7 +17,7 @@
 
 #include "Albany_NOXObserver.hpp"
 
-#ifdef ALBANY_IOSS
+#ifdef ALBANY_SEACAS
   #include "Albany_STKDiscretization.hpp"
 #endif
 
@@ -42,7 +42,7 @@ void Albany_NOXObserver::observeSolution(
      vtk->visualizeField (solution, disc);
    }
 
-#ifdef ALBANY_IOSS
+#ifdef ALBANY_SEACAS
   // if (solution.Map().Comm().MyPID()==0)
   //   cout << "Albany::NOXObserver calling exodus output " << endl;
 

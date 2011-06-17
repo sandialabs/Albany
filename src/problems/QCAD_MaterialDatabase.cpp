@@ -18,14 +18,13 @@
 #include "QCAD_MaterialDatabase.hpp"
 #include "Teuchos_XMLParameterListHelpers.hpp"
 #include "Teuchos_TestForException.hpp"
-
+#include "Albany_Utils.hpp"
 
 QCAD::MaterialDatabase::
-MaterialDatabase( const std::string& inputFile)
+MaterialDatabase( const std::string& inputFile,
+		  const Teuchos::RCP<const Epetra_Comm>& ecomm)
   : data_("Material Parameters")
 {
-  std::cout << "Initializing material database from " << inputFile << std::endl;
-
   if(inputFile.length() == 0) {
     pMaterialsList_ = NULL;
     pEBList_        = NULL;
@@ -33,7 +32,12 @@ MaterialDatabase( const std::string& inputFile)
     return;
   }
 
-  Teuchos::updateParametersFromXmlFile(inputFile, &data_);
+  const Albany_MPI_Comm& mcomm = Albany::getMpiCommFromEpetraComm(*ecomm);
+  Teuchos::RCP<Teuchos::Comm<int> > tcomm = Albany::createTeuchosCommFromMpiComm(mcomm);
+
+  std::cout << "Initializing material database from " << inputFile << std::endl;
+  Teuchos::updateParametersFromXmlFileAndBroadcast(inputFile, &data_, *tcomm);
+  //Teuchos::updateParametersFromXmlFile(inputFile, &data_);
   
   //Check for and Set element block and materials sublists
   TEST_FOR_EXCEPTION(!data_.isSublist("Materials"), Teuchos::Exceptions::InvalidParameter,
@@ -52,6 +56,22 @@ QCAD::MaterialDatabase::
 ~MaterialDatabase()
 {
 }
+
+
+template<typename T> T 
+QCAD::MaterialDatabase:: 
+getParam(const std::string& paramName)
+{
+  return data_.get<T>(paramName);
+}
+
+template<typename T> T 
+QCAD::MaterialDatabase:: 
+getParam(const std::string& paramName, T def_value)
+{
+  return data_.get<T>(paramName, def_value);
+}
+
 
 template<typename T> T 
 QCAD::MaterialDatabase:: 
@@ -213,6 +233,11 @@ getElementBlockParam(const std::string& ebName, const std::string& paramName, T 
 
 //double
 template double QCAD::MaterialDatabase:: 
+getParam<double>(const std::string& paramName);
+template double QCAD::MaterialDatabase:: 
+getParam<double>(const std::string& paramName, double def_val);
+
+template double QCAD::MaterialDatabase:: 
 getMaterialParam<double>(const std::string& materialName, const std::string& paramName);
 template double QCAD::MaterialDatabase:: 
 getMaterialParam<double>(const std::string& materialName, const std::string& paramName, double def_val);
@@ -228,6 +253,11 @@ template double QCAD::MaterialDatabase::
 getElementBlockParam<double>(const std::string& materialName, const std::string& paramName, double def_val);
 
 //int
+template int QCAD::MaterialDatabase:: 
+getParam<int>(const std::string& paramName);
+template int QCAD::MaterialDatabase:: 
+getParam<int>(const std::string& paramName, int def_val);
+
 template int QCAD::MaterialDatabase:: 
 getMaterialParam<int>(const std::string& materialName, const std::string& paramName);
 template int QCAD::MaterialDatabase:: 
@@ -246,6 +276,11 @@ getElementBlockParam<int>(const std::string& materialName, const std::string& pa
 
 //bool
 template bool QCAD::MaterialDatabase:: 
+getParam<bool>(const std::string& paramName);
+template bool QCAD::MaterialDatabase:: 
+getParam<bool>(const std::string& paramName, bool def_val);
+
+template bool QCAD::MaterialDatabase:: 
 getMaterialParam<bool>(const std::string& materialName, const std::string& paramName);
 template bool QCAD::MaterialDatabase:: 
 getMaterialParam<bool>(const std::string& materialName, const std::string& paramName, bool def_val);
@@ -261,6 +296,11 @@ template bool QCAD::MaterialDatabase::
 getElementBlockParam<bool>(const std::string& materialName, const std::string& paramName, bool def_val);
 
 //string
+template std::string QCAD::MaterialDatabase:: 
+getParam<std::string>(const std::string& paramName);
+template std::string QCAD::MaterialDatabase:: 
+getParam<std::string>(const std::string& paramName, std::string def_val);
+
 template std::string QCAD::MaterialDatabase:: 
 getMaterialParam<std::string>(const std::string& materialName, const std::string& paramName);
 template std::string QCAD::MaterialDatabase:: 

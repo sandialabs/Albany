@@ -15,7 +15,9 @@
 \********************************************************************/
 
 #include "Albany_Utils.hpp"
-
+#include "Teuchos_TestForException.hpp"
+#include <cstdlib>
+#include <stdexcept>
 
   // Start of Utils to do with Communicators
 #ifdef ALBANY_MPI
@@ -58,5 +60,41 @@
     std::ostringstream ss;
     ss << s << " " << i;
     return ss.str();
+  }
+
+  bool Albany::isValidInitString(const std::string& initString) {
+    
+    // Make sure the first part of the string has the correct verbiage
+    std::string verbiage("initial value ");
+    size_t pos = initString.find(verbiage);
+    if(pos != 0)
+      return false;
+
+    // Make sure the rest of the string has only allowable characters
+    std::string valueString = initString.substr(verbiage.size(), initString.size() - verbiage.size());
+    int decimalPointCount = 0;
+    for(std::string::iterator it=valueString.begin() ; it!=valueString.end() ; it++){
+      std::string charAsString(1, *it);
+      size_t pos = charAsString.find_first_of("0123456789.-+eE");
+      if(pos == string::npos)
+        return false;
+    }
+
+    return true;
+  }
+
+  std::string Albany::doubleToInitString(double val) {
+    std::string verbiage("initial value ");
+    std::stringstream ss;
+    ss << verbiage << val;
+    return ss.str();
+  }
+
+  double Albany::initStringToDouble(const std::string& initString) {
+    TEST_FOR_EXCEPTION(!Albany::isValidInitString(initString), std::range_error,
+                       " initStringToDouble() called with invalid initialization string: " + initString + "\n");
+    std::string verbiage("initial value ");
+    std::string valueString = initString.substr(verbiage.size(), initString.size() - verbiage.size());
+    return std::atof(valueString.c_str());
   }
 

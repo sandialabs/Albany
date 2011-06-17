@@ -188,7 +188,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 
   //! Constant energy reference for heterogeneous structures
   ScalarT qPhiRef;
-  string refMtrlName = "Silicon"; //hardcoded reference material name - change this later
+  string refMtrlName = materialDB->getParam<string>("Reference Material");
   {
     string refCategory = materialDB->getMaterialParam<string>(refMtrlName,"Category");
     if(refCategory == "Semiconductor") {
@@ -403,23 +403,65 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
   {
     double Eg = materialDB->getElementBlockParam<double>(workset.EBName,"Band Gap",0.0);
     double Chi = materialDB->getElementBlockParam<double>(workset.EBName,"Electron Affinity",0.0);
+    ScalarT Lambda2C0 = V0*eps0/(eleQ*X0*X0); // derived scaling factor (unitless)
 
-    for (std::size_t cell=0; cell < workset.numCells; ++cell)
+    //! Schrodinger source for electrons
+    if(bSchrodingerInQuantumRegions && 
+      materialDB->getElementBlockParam<bool>(workset.EBName,"quantum",false)) 
     {
-      for (std::size_t qp=0; qp < numQPs; ++qp)
+      // read eigenvalues from file
+      std::vector<double> eigenvals = ReadEigenvaluesFromFile(nEigenvectors);  
+       
+      // loop over cells and qps
+      for (std::size_t cell=0; cell < workset.numCells; ++cell)
       {
-        const ScalarT& phi = potential(cell,qp);
-        ScalarT charge; 
-        charge = 0.0;  // no charge in an insulator
-        poissonSource(cell, qp) = factor*charge;
-        
-        chargeDensity(cell, qp) = 0.0;    // no space charge in an insulator
-        electronDensity(cell, qp) = 0.0;  // no electrons in an insulator
-        holeDensity(cell, qp) = 0.0;      // no holes in an insulator
-        electricPotential(cell, qp) = phi*V0;
-        ionizedDopant(cell, qp) = 0.0;
-        conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
-        valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
+        for (std::size_t qp=0; qp < numQPs; ++qp)
+        {
+          // compute the electron density using wavefunction
+          ScalarT eDensity = eDensityForPoissonSchrond(workset, cell, qp, eigenvals);
+          
+          // obtain the scaled potential
+          const ScalarT& phi = potential(cell,qp);
+
+	  //(No other classical density in insulator)
+              
+          // the scaled full RHS
+          ScalarT charge;
+
+          charge = 1.0/Lambda2C0*(-eDensity);
+          poissonSource(cell, qp) = factor*charge;
+
+          // output states
+	  chargeDensity(cell, qp) = 0.0;    // no space charge in an insulator
+	  electronDensity(cell, qp) = 0.0;  // no electrons in an insulator
+	  holeDensity(cell, qp) = 0.0;      // no holes in an insulator
+	  electricPotential(cell, qp) = phi*V0;
+	  ionizedDopant(cell, qp) = 0.0;
+	  conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
+	  valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
+        }
+      }  // end of loop over cells
+    }
+    
+    else { // use semiclassical source
+
+      for (std::size_t cell=0; cell < workset.numCells; ++cell)
+      {
+	for (std::size_t qp=0; qp < numQPs; ++qp)
+	{
+	  const ScalarT& phi = potential(cell,qp);
+	  ScalarT charge; 
+	  charge = 0.0;  // no charge in an insulator
+	  poissonSource(cell, qp) = factor*charge;
+	  
+	  chargeDensity(cell, qp) = 0.0;    // no space charge in an insulator
+	  electronDensity(cell, qp) = 0.0;  // no electrons in an insulator
+	  holeDensity(cell, qp) = 0.0;      // no holes in an insulator
+	  electricPotential(cell, qp) = phi*V0;
+	  ionizedDopant(cell, qp) = 0.0;
+	  conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
+	  valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
+	}
       }
     }
   }

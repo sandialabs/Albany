@@ -18,7 +18,7 @@
 #include "Albany_RythmosObserver.hpp"
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_VectorBase.hpp"
-#ifdef ALBANY_IOSS
+#ifdef ALBANY_SEACAS
   #include "Albany_STKDiscretization.hpp"
 #endif
 
@@ -60,7 +60,7 @@ void Albany_RythmosObserver::observeCompletedTimeStep(
   const Epetra_Vector soln= *(Thyra::get_Epetra_Vector(*disc->getMap(), solution));
   if (vtk != Teuchos::null) vtk->visualizeField (soln, disc);
 
-#ifdef ALBANY_IOSS
+#ifdef ALBANY_SEACAS
   Albany::STKDiscretization* stkDisc =
     dynamic_cast<Albany::STKDiscretization*>(disc.get());
 

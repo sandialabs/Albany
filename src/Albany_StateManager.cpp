@@ -14,6 +14,7 @@
  *    Questions to Andy Salinger, agsalin@sandia.gov                  *
  \********************************************************************/
 #include "Albany_StateManager.hpp"
+#include "Albany_Utils.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout_MDALayout.hpp"
@@ -259,6 +260,18 @@ Albany::StateManager::initializeStateVariables(const int numWorksets)
             }
           }
         }
+      }
+      else if (isValidInitString(init_type))
+      {
+        double value = initStringToDouble(init_type); 
+        if (ws == 0)
+          *out << " with initial value " << value << std::endl;
+        state1[ws][st->first]->initialize(value);
+        state2[ws][st->first]->initialize(value);
+      }
+      else
+      {
+        *out << " WARNING, ignoring init_type " << init_type << std::endl;
       }
     }
     st++;

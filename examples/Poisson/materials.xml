@@ -1,49 +1,41 @@
 <ParameterList>
+  <Parameter name="Reference Material" type="string" value="Silicon"/>
 
-  <ParameterList name="NodeSets">
+ <ParameterList name="NodeSets">
 
     <ParameterList name="lgate">
-      <Parameter name="materialSetByUser" type="string" value="PolySilicon" />
-      <Parameter name="materialOfDOF" type="string" value="SiliconDioxide" />
+      <Parameter name="material" type="string" value="PolySilicon" />
     </ParameterList>
 
     <ParameterList name="rgate">
-      <Parameter name="materialSetByUser" type="string" value="PolySilicon" />
-      <Parameter name="materialOfDOF" type="string" value="SiliconDioxide" />
+      <Parameter name="material" type="string" value="PolySilicon" />
     </ParameterList>
 
     <ParameterList name="gate">
-      <Parameter name="materialSetByUser" type="string" value="PolySilicon" />
-      <Parameter name="materialOfDOF" type="string" value="SiliconDioxide" />
+      <Parameter name="material" type="string" value="PolySilicon" />
     </ParameterList>
 
     <ParameterList name="topgate">
-      <Parameter name="materialSetByUser" type="string" value="Aluminum" />
-      <Parameter name="materialOfDOF" type="string" value="SiliconDioxide" />
+      <Parameter name="material" type="string" value="Aluminum" />
     </ParameterList>
 
     <ParameterList name="substrate">
-      <Parameter name="materialSetByUser" type="string" value="Silicon" />
-      <Parameter name="materialOfDOF" type="string" value="Silicon" />
+      <Parameter name="material" type="string" value="Silicon" />
     </ParameterList>
 
     <ParameterList name="psubstrate">
-      <Parameter name="elementBlockSetByUser" type="string" value="polysilicon" />
-      <Parameter name="elementBlockOfDOF" type="string" value="silicon.ptype" />
+      <Parameter name="elementBlock" type="string" value="silicon.ptype" />
     </ParameterList>
 
     <ParameterList name="anode">
-      <Parameter name="elementBlockSetByUser" type="string" value="polysilicon" />
-      <Parameter name="elementBlockOfDOF" type="string" value="silicon.ptype" />
+        <Parameter name="elementBlock" type="string" value="silicon.ptype" />
     </ParameterList>
 
     <ParameterList name="cathode">
-      <Parameter name="elementBlockSetByUser" type="string" value="polysilicon" />
-      <Parameter name="elementBlockOfDOF" type="string" value="silicon.ntype" />
+      <Parameter name="elementBlock" type="string" value="silicon.ntype" />
     </ParameterList>
 
   </ParameterList>
-
 
 
   <ParameterList name="ElementBlocks">
@@ -95,7 +87,7 @@
       <Parameter name="Permittivity" type="double" value="11.9" />
 
       <!-- Valley information -->
-      <Parameter name="Number of conduction band min" type="int" value="6" />
+      <Parameter name="Number of conduction band min" type="int" value="2" />
       <Parameter name="Number of valence band max" type="int" value="1" />
 
       <!-- Electron effective mass along coordinate directions in [m0] -->
@@ -138,6 +130,12 @@
       <!-- Valley information - same as Silicon to avoid charge discontinuity -->
       <Parameter name="Number of conduction band min" type="int" value="2" />
 
+      <!-- Electron effective mass along coordinate directions in [m0] same as Silicon? -->
+      <Parameter name="Electron Effective Mass X" type="double" value="0.19" />
+      <Parameter name="Electron Effective Mass Y" type="double" value="0.19" />
+      <Parameter name="Electron Effective Mass Z" type="double" value="0.98" />
+
+
       <!-- Band Gap in [eV] -->
       <Parameter name="Band Gap" type="double" value="9.0" />
 
@@ -149,8 +147,8 @@
       <Parameter name="Category" type="string" value="Insulator" />
       <Parameter name="Permittivity" type="double" value="11.9" />
 
-      <!-- Band Gap in [eV] -->
-      <Parameter name="Band Gap" type="double" value="9.0" />
+      <!-- Band Gap in [eV] (use 0K silicon now?)-->
+      <Parameter name="Band Gap" type="double" value="1.1455" />
 
       <!-- Electron affinity in [eV] assumes (n+ polysilicon; same as silicon) -->
       <Parameter name="Electron Affinity" type="double" value="4.05" />

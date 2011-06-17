@@ -86,16 +86,16 @@ ELSE()
   SET(ALBANY_MPI FALSE)
 ENDIF()
 
-# set optional dependency on Ioss, for I/O via stk_io
-MESSAGE("-- Looking for Ioss:")
-LIST(FIND Trilinos_PACKAGE_LIST Trios Trios_List_ID)
-IF (Trios_List_ID GREATER -1)
-  ADD_DEFINITIONS(-DALBANY_IOSS)
-  MESSAGE("-- Looking for Ioss: -- found, compiling with -DALBANY_IOSS")
-  SET(ALBANY_IOSS TRUE)
+# set optional dependency on SEACAS, for I/O via stk_io
+MESSAGE("-- Looking for SEACAS:")
+LIST(FIND Trilinos_PACKAGE_LIST SEACAS SEACAS_List_ID)
+IF (SEACAS_List_ID GREATER -1)
+  ADD_DEFINITIONS(-DALBANY_SEACAS)
+  MESSAGE("-- Looking for SEACAS: -- found, compiling with -DALBANY_SEACAS")
+  SET(ALBANY_SEACAS TRUE)
 ELSE()
-  MESSAGE("-- Looking for Ioss: -- not found.")
-  SET(ALBANY_IOSS FALSE)
+  MESSAGE("-- Looking for SEACAS: -- not found.")
+  SET(ALBANY_SEACAS FALSE)
 ENDIF()
 
 # set optional dependency on Zoltan, for partitioning

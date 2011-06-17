@@ -36,7 +36,7 @@
 #include <stk_mesh/base/BulkData.hpp>
 #include <stk_mesh/base/Field.hpp>
 #include <stk_mesh/base/FieldTraits.hpp>
-#ifdef ALBANY_IOSS
+#ifdef ALBANY_SEACAS
   #include <stk_io/MeshReadWriteUtils.hpp>
 #endif
 
@@ -175,7 +175,7 @@ namespace Albany {
     Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct;
 
     // Used in Exodus writing capability
-#ifdef ALBANY_IOSS
+#ifdef ALBANY_SEACAS
     stk::io::MeshData* mesh_data;
 #endif
     mutable double time;

@@ -35,9 +35,11 @@
 
 QCAD::SchrodingerProblem::
 SchrodingerProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
-             const Teuchos::RCP<ParamLib>& paramLib_,
-             const int numDim_) :
+		    const Teuchos::RCP<ParamLib>& paramLib_,
+		    const int numDim_,
+		    const Teuchos::RCP<const Epetra_Comm>& comm_) :
   Albany::AbstractProblem(params_, paramLib_, 1),
+  comm(comm_),
   havePotential(false), haveMaterial(false),
   numDim(numDim_)
 {
@@ -189,7 +191,7 @@ QCAD::SchrodingerProblem::constructEvaluators(
    RCP<DataLayout> dummy = rcp(new MDALayout<Dummy>(0));
 
    // Create Material Database
-   RCP<QCAD::MaterialDatabase> materialDB = rcp(new QCAD::MaterialDatabase(mtrlDbFilename));
+   RCP<QCAD::MaterialDatabase> materialDB = rcp(new QCAD::MaterialDatabase(mtrlDbFilename, comm));
 
   { // Gather Solution
    RCP< vector<string> > dof_names = rcp(new vector<string>(neq));
