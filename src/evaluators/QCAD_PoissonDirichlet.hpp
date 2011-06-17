@@ -70,9 +70,9 @@ protected:
 protected:
   ScalarT user_value;    // value entered by user, distinguished from actual DBC value
 
-  std::string ebSetByUser;
-  std::string ebOfDOF;
-  double offsetDueToAffinity;
+  std::string ebName;
+  std::string category;
+  double affinity;
 
   std::string carrierStatistics;
   std::string incompIonization;

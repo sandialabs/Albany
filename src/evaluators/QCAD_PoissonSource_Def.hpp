@@ -188,7 +188,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 
   //! Constant energy reference for heterogeneous structures
   ScalarT qPhiRef;
-  string refMtrlName = "Silicon"; //hardcoded reference material name - change this later
+  string refMtrlName = materialDB->getParam<string>("Reference Material");
   {
     string refCategory = materialDB->getMaterialParam<string>(refMtrlName,"Category");
     if(refCategory == "Semiconductor") {

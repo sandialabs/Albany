@@ -37,6 +37,12 @@ namespace QCAD {
     //! Destructor
     ~MaterialDatabase();
 
+    //! Get a parameter
+    template<typename T>
+    T getParam(const std::string& paramName);
+    template<typename T>
+    T getParam(const std::string& paramName, T def_val);
+
     //! Get a parameter for a particular material
     template<typename T>
     T getMaterialParam(const std::string& materialName, const std::string& paramName);
