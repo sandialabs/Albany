@@ -411,7 +411,7 @@ Albany::StateManager::updateStates()
   
       for (int ws = 0; ws < numWorksets; ws++)
         for (int j = 0; j < sa[ws][stateName].size(); j++)
-          sa[ws][stateName_old][i] = sa[ws][stateName][i];
+          sa[ws][stateName_old][j] = sa[ws][stateName][j];
     }
   }
 }

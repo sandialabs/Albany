@@ -214,17 +214,17 @@ Albany::STKDiscretization::STKDiscretization(
     stk::mesh::Bucket& buck = *buckets[b];
     for (int i=0; i<stkMeshStruct->qpscalar_states.size(); i++) {
       stk::mesh::BucketArray<Albany::AbstractSTKMeshStruct::QPScalarFieldType> array(*stkMeshStruct->qpscalar_states[i], buck);
-      shards::Array<double, shards::NaturalOrder> ar = array;
+      MDArray ar = array;
       stateArrays[b][stkMeshStruct->qpscalar_states[i]->name()] = ar;
     }
     for (int i=0; i<stkMeshStruct->qpvector_states.size(); i++) {
       stk::mesh::BucketArray<Albany::AbstractSTKMeshStruct::QPVectorFieldType> array(*stkMeshStruct->qpvector_states[i], buck);
-      shards::Array<double, shards::NaturalOrder> ar = array;
+      MDArray ar = array;
       stateArrays[b][stkMeshStruct->qpvector_states[i]->name()] = ar;
     }
     for (int i=0; i<stkMeshStruct->qptensor_states.size(); i++) {
       stk::mesh::BucketArray<Albany::AbstractSTKMeshStruct::QPTensorFieldType> array(*stkMeshStruct->qptensor_states[i], buck);
-      shards::Array<double, shards::NaturalOrder> ar = array;
+      MDArray ar = array;
       stateArrays[b][stkMeshStruct->qptensor_states[i]->name()] = ar;
     }
   }

@@ -37,6 +37,11 @@
   //  construct an Albany Problem
 
 namespace Albany {
+
+typedef shards::Array<double, shards::NaturalOrder> MDArray;
+typedef std::map< std::string, MDArray > StateArray;
+typedef std::vector<StateArray> StateArrays;
+
   struct MeshSpecsStruct {
     MeshSpecsStruct(const CellTopologyData& ctd_, int numDim_, 
                     int cubatureDegree_, std::vector<std::string> nsNames_,
@@ -68,7 +73,7 @@ struct StateStruct {
   const std::string name;
   std::vector<int> dim;
   //std::vector<shards::Array* > wsArray;
-  std::vector<shards::Array<double,shards::NaturalOrder>* > wsArray;
+  std::vector<MDArray> wsArray;
   std::string entity; //Entity entity;
   std::string initType; //InitType initType;
   bool output;
@@ -79,9 +84,6 @@ struct StateStruct {
 };
 
 typedef std::vector<Teuchos::RCP<StateStruct> >  StateInfoStruct;
-
-typedef std::map< std::string, shards::Array<double,shards::NaturalOrder> > StateArray;
-typedef std::vector<StateArray> StateArrays;
 
 }
 #endif

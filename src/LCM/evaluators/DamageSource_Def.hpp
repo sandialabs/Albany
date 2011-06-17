@@ -64,8 +64,8 @@ DamageSource(Teuchos::ParameterList& p) :
   this->addDependentField(energy);
   this->addDependentField(damageLS);
 
-  sourceName = p.get<string>("Damage Source Name");
-  damageName = p.get<string>("Damage Name");
+  sourceName = p.get<string>("Damage Source Name")+"_old";
+  damageName = p.get<string>("Damage Name")+"_old";
   this->addEvaluatedField(source);
   this->setName("Damage Source"+PHX::TypeString<EvalT>::value);
 }
@@ -94,14 +94,17 @@ evaluateFields(typename Traits::EvalData workset)
   bool print = false;
   //if (typeid(ScalarT) == typeid(RealType)) print = true;
 
-  Albany::StateVariables  oldState = *workset.oldState;
-  Intrepid::FieldContainer<RealType>& source_old_FC = *oldState[sourceName];
-  Intrepid::FieldContainer<RealType>& damage_old_FC = *oldState[damageName];
+//  Albany::StateVariables  oldState = *workset.oldState;
+//  Intrepid::FieldContainer<RealType>& source_old_FC = *oldState[sourceName];
+//  Intrepid::FieldContainer<RealType>& damage_old_FC = *oldState[damageName];
+  Albany::MDArray source_old_FC = (*workset.stateArrayPtr)[sourceName];
+  Albany::MDArray damage_old_FC = (*workset.stateArrayPtr)[damageName];
+
 
   ScalarT p, triax, source_new, source_old, term;
   ScalarT damage_old;
 
-  for (unsigned int cell=0; cell < workset.numCells; ++cell) 
+  for (std::size_t  cell=0; cell < workset.numCells; ++cell) 
   {
     for (std::size_t qp=0; qp < numQPs; ++qp) 
     {
