@@ -56,6 +56,7 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> damage_grad;
   PHX::MDField<ScalarT,Cell,QuadPoint> source;
+  RealType gc;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> dResidual;

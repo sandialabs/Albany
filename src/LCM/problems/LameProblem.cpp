@@ -16,7 +16,6 @@
 
 #include "LCM/LCM_FactoryTraits.hpp"
 #include "LameProblem.hpp"
-#include "Albany_BoundaryFlux1DResponseFunction.hpp"
 #include "Albany_SolutionAverageResponseFunction.hpp"
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
 #include "Albany_Utils.hpp"
@@ -53,18 +52,13 @@ Albany::LameProblem::
 void
 Albany::LameProblem::
 buildProblem(
-    const int worksetSize,
+    const Albany::MeshSpecsStruct& meshSpecs,
     Albany::StateManager& stateMgr,
-    const Albany::AbstractDiscretization& disc,
     std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
   /* Construct All Phalanx Evaluators */
-  constructEvaluators(worksetSize, disc.getCubatureDegree(), disc.getCellTopologyData(), stateMgr);
-  constructDirichletEvaluators(disc.getNodeSetIDs());
-
-  const Epetra_Map& dofMap = *(disc.getMap());
-  int left_node = dofMap.MinAllGID();
-  int right_node = dofMap.MaxAllGID();
+  constructEvaluators(meshSpecs, stateMgr);
+  constructDirichletEvaluators(meshSpecs.nsNames);
 
   // Build response functions
   Teuchos::ParameterList& responseList = params->sublist("Response Functions");
@@ -73,17 +67,7 @@ buildProblem(
   for (int i=0; i<num_responses; i++) {
      std::string name = responseList.get(Albany::strint("Response",i), "??");
 
-     if (name == "Boundary Flux 1D") {
-       // Need real size, not 1.0
-       double h =  1.0 / (dofMap.NumGlobalElements() - 1);
-       responses[i] =
-         Teuchos::rcp(new BoundaryFlux1DResponseFunction(left_node,
-                                                         right_node,
-                                                         0, 1, h,
-                                                         dofMap));
-     }
-
-     else if (name == "Solution Average")
+     if (name == "Solution Average")
        responses[i] = Teuchos::rcp(new SolutionAverageResponseFunction());
 
      else if (name == "Solution Two Norm")
@@ -102,10 +86,9 @@ buildProblem(
 
 
 void
-Albany::LameProblem::constructEvaluators(const int worksetSize,
-                                         const int cubDegree,
-                                         const CellTopologyData& ctd,
-                                         Albany::StateManager& stateMgr)
+Albany::LameProblem::constructEvaluators(
+       const Albany::MeshSpecsStruct& meshSpecs,
+       Albany::StateManager& stateMgr)
 {
    using Teuchos::RCP;
    using Teuchos::rcp;
@@ -117,14 +100,15 @@ Albany::LameProblem::constructEvaluators(const int worksetSize,
    using LCM::FactoryTraits;
    using PHAL::AlbanyTraits;
 
-   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&ctd));
+   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
    RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
-     intrepidBasis = this->getIntrepidBasis(ctd);
+     intrepidBasis = this->getIntrepidBasis(meshSpecs.ctd);
 
    const int numNodes = intrepidBasis->getCardinality();
+   const int worksetSize = meshSpecs.worksetSize;
 
    Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-   RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, cubDegree);
+   RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
 
    const int numDim = cubature->getDimension();
    const int numQPts = cubature->getNumPoints();
@@ -339,11 +323,16 @@ Albany::LameProblem::constructEvaluators(const int worksetSize,
     int type = FactoryTraits<AlbanyTraits>::id_defgrad;
     p->set<int>("Type", type);
 
-    // Volumetric averaging flag
+    //Input
+    // If true, compute determinate of deformation gradient at all integration points, then replace all of them with the simple average for the element.  This give a constant volumetric response.
     const bool avgJ = params->get("avgJ", false);
     p->set<bool>("avgJ Name", avgJ);
-
-    //Input
+    // If true, compute determinate of deformation gradient at all integration points, then replace all of them with the volume average for the element (integrate J over volume of element, divide by total volume).  This give a constant volumetric response.
+    const bool volavgJ = params->get("volavgJ", false);
+    p->set<bool>("volavgJ Name", volavgJ);
+    // Integration weights for each quadrature point
+    p->set<string>("Weights Name","Weights");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
     p->set<string>("Gradient QP Variable Name", "Displacement Gradient");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
 
@@ -355,39 +344,52 @@ Albany::LameProblem::constructEvaluators(const int worksetSize,
     evaluators_to_build["DefGrad"] = p;
   }
 
-  { //LameStress
+  { // LameStress
     RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
     int type = LCM::FactoryTraits<AlbanyTraits>::id_lame_stress;
     p->set<int>("Type", type);
 
-    //Material properties that will be passed to LAME material model
+    // Material properties that will be passed to LAME material model
     string lameMaterialModel = params->get<string>("Lame Material Model");
     p->set<string>("Lame Material Model", lameMaterialModel);
     Teuchos::ParameterList& lameMaterialParametersList = p->sublist("Lame Material Parameters");
     lameMaterialParametersList = params->sublist("Lame Material Parameters");
 
-    //Input
+    // Input
     p->set<string>("Strain Name", "Strain");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
 
     p->set<string>("DefGrad Name", "Deformation Gradient"); // qp_tensor also
 
-    //Output
+    // Output
     p->set<string>("Stress Name", "Stress"); // qp_tensor also
-
-    //Declare what state data will need to be saved (name, layout, init_type)
-    stateMgr.registerStateVariable("stress",qp_tensor,"zero");
-    stateMgr.registerStateVariable("def_grad",qp_tensor,"identity");
 
     evaluators_to_build["Stress"] = p;
 
+    // Declare state data that need to be saved
+    // (register with state manager and create corresponding evaluator)
+
+    // Stress and DefGrad are required at the element level for all LAME models
     evaluators_to_build["Save Stress"] =
       stateMgr.registerStateVariable("Stress",qp_tensor,
             dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
     evaluators_to_build["Save DefGrad"] =
       stateMgr.registerStateVariable("Deformation Gradient",qp_tensor,
-            dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
+            dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"identity");
+
+    // A LAME material model may register additional state variables (type is always double)
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    std::vector<std::string> lameMaterialModelStateVariableNames = LameUtils::getStateVariableNames(lameMaterialModel, lameMaterialParametersList);
+    std::vector<double> lameMaterialModelStateVariableInitialValues = LameUtils::getStateVariableInitialValues(lameMaterialModel, lameMaterialParametersList);
+    for(unsigned int i=0 ; i<lameMaterialModelStateVariableNames.size() ; ++i){
+      evaluators_to_build["Save " + lameMaterialModelStateVariableNames[i]] =
+        stateMgr.registerStateVariable(lameMaterialModelStateVariableNames[i],
+                                       qp_scalar,
+                                       dummy,
+                                       FactoryTraits<AlbanyTraits>::id_savestatefield,
+                                       doubleToInitString(lameMaterialModelStateVariableInitialValues[i]));
+    }
   }
 
   { // Displacement Resid
@@ -480,6 +482,8 @@ Albany::LameProblem::getValidProblemParameters() const
 
   validPL->set<string>("Lame Material Model", "", "The name of the LAME material model.");
   validPL->sublist("Lame Material Parameters", false, "");
+  validPL->sublist("aveJ", false, "If true, the determinate of the deformation gradient for each integration point is replaced with the average value over all integration points in the element (produces constant volumetric response).");
+  validPL->sublist("volaveJ", false, "If true, the determinate of the deformation gradient for each integration point is replaced with the volume-averaged value over all integration points in the element (produces constant volumetric response).");
 
   return validPL;
 }

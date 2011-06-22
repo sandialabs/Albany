@@ -39,11 +39,13 @@
 #include "QCAD_PoissonSource.hpp"
 #include "QCAD_SchrodingerPotential.hpp"
 #include "QCAD_SchrodingerResid.hpp"
+#include "QCAD_PoissonDirichlet.hpp"
 #include "PHAL_JouleHeating.hpp"
 #include "PHAL_TEProp.hpp"
 #include "PHAL_ODEResid.hpp"
 #include "PHAL_SaveStateField.hpp"
 #include "PHAL_LoadStateField.hpp"
+#include "PHAL_SharedParameter.hpp"
 
 #include "boost/mpl/vector/vector30.hpp"
 #include "boost/mpl/placeholders.hpp"
@@ -79,15 +81,17 @@ struct FactoryTraits {
   static const int id_qcad_permittivity         = 16;
   static const int id_qcad_poisson_resid        = 17;
   static const int id_qcad_poisson_source       = 18;
-  static const int id_jouleheating              = 19;
-  static const int id_teprop                    = 20;
-  static const int id_oderesid                  = 21;
-  static const int id_savestatefield            = 22;
-  static const int id_loadstatefield            = 23;
-  static const int id_schrodinger_potential     = 24;
-  static const int id_schrodinger_resid         = 25;
+  static const int id_qcad_poisson_dirichlet    = 19;
+  static const int id_jouleheating              = 20;
+  static const int id_teprop                    = 21;
+  static const int id_oderesid                  = 22;
+  static const int id_savestatefield            = 23;
+  static const int id_loadstatefield            = 24;
+  static const int id_sharedparameter           = 25;
+  static const int id_schrodinger_potential     = 26;
+  static const int id_schrodinger_resid         = 27;
 
-  typedef boost::mpl::vector26< 
+  typedef boost::mpl::vector28< 
             PHAL::Dirichlet<_,Traits>,                //  0
             PHAL::GatherSolution<_,Traits>,           //  1
             PHAL::GatherCoordinateVector<_,Traits>,   //  2
@@ -107,13 +111,15 @@ struct FactoryTraits {
             QCAD::Permittivity<_,Traits>,             // 16
             QCAD::PoissonResid<_,Traits>,             // 17
             QCAD::PoissonSource<_,Traits>,            // 18
-            PHAL::JouleHeating<_,Traits>,             // 19
-            PHAL::TEProp<_,Traits>,                   // 20
-            PHAL::ODEResid<_,Traits>,                 // 21
-            PHAL::SaveStateField<_,Traits>,           // 22
-            PHAL::LoadStateField<_,Traits>,           // 23
-            QCAD::SchrodingerPotential<_,Traits>,     // 24
-            QCAD::SchrodingerResid<_,Traits>          // 25
+            QCAD::PoissonDirichlet<_,Traits>,         // 19
+            PHAL::JouleHeating<_,Traits>,             // 20
+            PHAL::TEProp<_,Traits>,                   // 21
+            PHAL::ODEResid<_,Traits>,                 // 22
+            PHAL::SaveStateField<_,Traits>,           // 23
+            PHAL::LoadStateField<_,Traits>,           // 24
+            PHAL::SharedParameter<_,Traits>,          // 25
+            QCAD::SchrodingerPotential<_,Traits>,     // 26
+            QCAD::SchrodingerResid<_,Traits>          // 27
   > EvaluatorTypes;
   
 };

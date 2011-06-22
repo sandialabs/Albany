@@ -4,7 +4,7 @@
     <Parameter name="Name" type="string" value="Lame"/>
     <Parameter name="Lame Material Model" type="string" value="Elastic"/>
     <ParameterList name="Lame Material Parameters">
-      <Parameter name="Elastic Modulus" type="double" value="1.0"/>
+      <Parameter name="Youngs Modulus" type="double" value="1.0"/>
       <Parameter name="Poissons Ratio" type="double" value="0.25"/>
     </ParameterList>
     <Parameter name="Solution Method" type="string" value="Steady"/>

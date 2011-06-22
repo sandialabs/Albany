@@ -2,7 +2,6 @@
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Heat 3D"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
-    <Parameter name="Workset Size" type="int" value="100"/>
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS nodelist_1 for DOF T" type="double" value="2.0"/>
       <Parameter name="DBC on NS nodelist_2 for DOF T" type="double" value="2.0"/>
@@ -44,6 +43,7 @@
     <Parameter name="Method" type="string" value="Pamgen"/>
     <Parameter name="Exodus Output File Name" type="string" value="cube_pg.exo"/>
     <Parameter name="Pamgen Input File Name" type="string" value="cube101113.pg"/>
+    <Parameter name="Workset Size" type="int" value="100"/>
     <Parameter name="Cubature Degree" type="int" value="3"/>
   </ParameterList>
   <ParameterList name="Regression Results">

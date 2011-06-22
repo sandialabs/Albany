@@ -1,23 +1,169 @@
 <ParameterList>
+  <Parameter name="Reference Material" type="string" value="Silicon"/>
 
-  <ParameterList name="silicon">
-    <Parameter name="Permittivity" type="double" value="11.9" />
+  <ParameterList name="NodeSets">
+
+    <ParameterList name="lgate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <ParameterList name="rgate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <ParameterList name="gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <ParameterList name="topgate">
+      <Parameter name="material" type="string" value="Aluminum" />
+    </ParameterList>
+
+    <ParameterList name="substrate">
+      <Parameter name="material" type="string" value="Silicon" />
+    </ParameterList>
+
+    <ParameterList name="psubstrate">
+      <Parameter name="elementBlock" type="string" value="silicon.ptype" />
+    </ParameterList>
+
+    <ParameterList name="anode">
+        <Parameter name="elementBlock" type="string" value="silicon.ptype" />
+    </ParameterList>
+
+    <ParameterList name="cathode">
+      <Parameter name="elementBlock" type="string" value="silicon.ntype" />
+    </ParameterList>
+
   </ParameterList>
 
-  <ParameterList name="silicon.ntype">
-    <Parameter name="Permittivity" type="double" value="11.9" />
+
+  <ParameterList name="ElementBlocks">
+
+    <ParameterList name="silicon">
+      <Parameter name="material" type="string" value="Silicon" />
+    </ParameterList>
+
+    <ParameterList name="silicon.quantum">
+      <Parameter name="material" type="string" value="Silicon" />
+      <Parameter name="quantum" type="bool" value="true" />
+    </ParameterList>
+    
+    <ParameterList name="silicon.ntype">
+      <Parameter name="material" type="string" value="Silicon" />
+      <Parameter name="dopantType" type="string" value="Donor" />
+      <Parameter name="dopingProfile" type="string" value="Constant" />
+      <!-- <Parameter name="dopingParamName" type="string" value="Nd" /> -->
+    </ParameterList>
+
+    <ParameterList name="silicon.ptype">
+      <Parameter name="material" type="string" value="Silicon" />
+      <Parameter name="dopantType" type="string" value="Acceptor" />
+      <Parameter name="dopingProfile" type="string" value="Constant" />
+      <!-- <Parameter name="dopingParamName" type="string" value="Na" /> -->
+    </ParameterList>
+    
+    <ParameterList name="sio2">
+      <Parameter name="material" type="string" value="SiliconDioxide" />
+    </ParameterList>
+
+    <ParameterList name="sio2.quantum">
+      <Parameter name="material" type="string" value="SiliconDioxide" />
+      <Parameter name="quantum" type="bool" value="true" />
+    </ParameterList>
+
+    <ParameterList name="polysilicon">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
   </ParameterList>
 
-  <ParameterList name="silicon.ptype">
-    <Parameter name="Permittivity" type="double" value="11.9" />
-  </ParameterList>
 
-  <ParameterList name="sio2">
-    <Parameter name="Permittivity" type="double" value="3.9" />
-  </ParameterList>
 
-  <ParameterList name="polysilicon">
-    <Parameter name="Permittivity" type="double" value="3" />
+  <ParameterList name="Materials">
+
+    <ParameterList name="Silicon">
+      <Parameter name="Category" type="string" value="Semiconductor" />
+      <Parameter name="Permittivity" type="double" value="11.9" />
+
+      <!-- Valley information -->
+      <Parameter name="Number of conduction band min" type="int" value="2" />
+      <Parameter name="Number of valence band max" type="int" value="1" />
+
+      <!-- Electron effective mass along coordinate directions in [m0] -->
+      <Parameter name="Electron Effective Mass X" type="double" value="0.19" />
+      <Parameter name="Electron Effective Mass Y" type="double" value="0.19" />
+      <Parameter name="Electron Effective Mass Z" type="double" value="0.98" />
+
+      <!-- Heavy/Light Hole effective mass in [m0] -->
+      <Parameter name="Light Hole Effective Mass" type="double" value="0.16" />
+      <Parameter name="Heavy Hole Effective Mass" type="double" value="0.56" />
+
+      <!-- Electron/Hole DOS effective mass (valley deg. included) [m0] -->
+      <!-- Electron = pow(6,2./3.)*pow(pow(mt,2)*ml,1./3.) b/c of 6 valleys -->
+      <!-- Hole = pow(pow(mhh,1.5)+pow(mlh,1.5),2./3.) -->
+      <Parameter name="Electron DOS Effective Mass" type="double" value="1.08396" />
+      <Parameter name="Hole DOS Effective Mass" type="double" value="0.61566" />
+      
+      <!-- Electron affinity in [eV] -->
+      <Parameter name="Electron Affinity" type="double" value="4.05" />
+
+      <!-- Band gap at 0 K in [eV] -->
+      <Parameter name="Zero Temperature Band Gap" type="double" value="1.1455" />
+
+      <!-- Temperature coefficient for band gap in [eV/K] -->
+      <Parameter name="Band Gap Alpha Coefficient" type="double" value="4.73e-4" />
+
+      <!-- Temperature coefficient for band gap in [K] -->
+      <Parameter name="Band Gap Beta Coefficient" type="double" value="636.0" />
+
+      <!-- Reference temperature [K] for computing Nc and Nv -->
+      <Parameter name="Reference Temperature" type="double" value="300.0" />
+
+      
+    </ParameterList>
+
+    <ParameterList name="SiliconDioxide">
+      <Parameter name="Category" type="string" value="Insulator" />
+      <Parameter name="Permittivity" type="double" value="3.9" />
+
+      <!-- Valley information - same as Silicon to avoid charge discontinuity -->
+      <Parameter name="Number of conduction band min" type="int" value="2" />
+
+      <!-- Electron effective mass along coordinate directions in [m0] same as Silicon? -->
+      <Parameter name="Electron Effective Mass X" type="double" value="0.19" />
+      <Parameter name="Electron Effective Mass Y" type="double" value="0.19" />
+      <Parameter name="Electron Effective Mass Z" type="double" value="0.98" />
+
+
+      <!-- Band Gap in [eV] -->
+      <Parameter name="Band Gap" type="double" value="9.0" />
+
+      <!-- Electron affinity in [eV] -->
+      <Parameter name="Electron Affinity" type="double" value="1.0" />
+    </ParameterList>
+
+    <ParameterList name="PolySilicon">
+      <Parameter name="Category" type="string" value="Insulator" />
+      <Parameter name="Permittivity" type="double" value="11.9" />
+
+      <!-- Band Gap in [eV] (use 0K silicon now?)-->
+      <Parameter name="Band Gap" type="double" value="1.1455" />
+
+      <!-- Electron affinity in [eV] assumes (n+ polysilicon; same as silicon) -->
+      <Parameter name="Electron Affinity" type="double" value="4.05" />
+    </ParameterList>
+
+    <ParameterList name="Aluminum">
+      <Parameter name="Category" type="string" value="Metal" />
+      <Parameter name="Permittivity" type="double" value="1.0" />
+
+      <!-- Electron affinity (work function?) in [eV] -->
+      <Parameter name="Electron Affinity" type="double" value="4.186" />
+
+    </ParameterList>
+
+
   </ParameterList>
 
 </ParameterList>

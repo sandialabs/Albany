@@ -145,7 +145,7 @@ namespace LCM {
     /// Copy constructor
     /// \param A the values of its componets are copied to the new tensor
     ///
-    Tensor(const Tensor & A);
+    Tensor(Tensor const & A);
 
     ///
     /// Simple destructor
@@ -229,7 +229,7 @@ namespace LCM {
     /// 3rd-order tensor constructor from 3rd-order tensor
     /// \param A from which components are copied
     ///
-    Tensor3(const Tensor3 & A);
+    Tensor3(Tensor3 const & A);
 
     ///
     /// 3rd-order tensor simple destructor
@@ -314,7 +314,7 @@ namespace LCM {
     /// 4th-order tensor constructor with 4th-order tensor
     /// \param A from which components are copied
     ///
-    Tensor4(const Tensor4 & A);
+    Tensor4(Tensor4 const & A);
 
     ///
     /// 4th-order tensor simple destructor

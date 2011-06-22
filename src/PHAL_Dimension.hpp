@@ -21,36 +21,43 @@
 #include "Shards_Array.hpp"
 
 struct Dim : public shards::ArrayDimTag {
+  Dim(){};
   const char * name() const ;
   static const Dim& tag();
 };
 
 struct QuadPoint : public shards::ArrayDimTag {
+  QuadPoint(){};
   const char * name() const ;
   static const QuadPoint& tag();
 };
 
 struct Node : public shards::ArrayDimTag {
+  Node(){};
   const char * name() const ;
   static const Node& tag();
 };
 
 struct Vertex : public shards::ArrayDimTag {
+  Vertex(){};
   const char * name() const ;
   static const Vertex& tag();
 };
 
 struct Point : public shards::ArrayDimTag {
+  Point(){};
   const char * name() const ;
   static const Point& tag();
 };
 
 struct Cell : public shards::ArrayDimTag {
+  Cell(){};
   const char * name() const ;
   static const Cell& tag();
 };
 
 struct Dummy : public shards::ArrayDimTag {
+  Dummy(){};
   const char * name() const ;
   static const Dummy& tag();
 };

@@ -46,17 +46,13 @@ SchrodingerResid(const Teuchos::ParameterList& p) :
   psiResidual (p.get<std::string>                   ("Residual Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") )
 {
-  enableTransient = true; //always true now - problem doesn't seem to make sense otherwise
+  enableTransient = true; //always true - problem doesn't make sense otherwise
   energy_unit_in_eV = p.get<double>("Energy unit in eV");
   length_unit_in_m = p.get<double>("Length unit in m");
+  bOnlyInQuantumBlocks = p.get<bool>("Only solve in quantum blocks");
 
-  if(haveMaterial) {
-     Teuchos::ParameterList* pMatList = p.get<Teuchos::ParameterList*>("Material Parameter List");
-     Teuchos::RCP<const Teuchos::ParameterList> reflist = 
-       this->getValidMaterialParameters();
-     pMatList->validateParameters(*reflist,0);
-     materialName = pMatList->get("Name", "defaultName");
-  }
+  // Material database
+  materialDB = p.get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
 
   Teuchos::RCP<PHX::DataLayout> vector_dl =
       p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
@@ -111,35 +107,58 @@ evaluateFields(typename Traits::EvalData workset)
   /***** define universal constants as double constants *****/
   const double hbar = 1.0546e-34;  // Planck constant [J s]
   const double evPerJ = 6.2415e18; // eV per Joule (J/eV)
+  bool bValidRegion = true;
 
-  //compute inverse effective mass here (no separate evaluator)
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) 
+  if(bOnlyInQuantumBlocks)
+    bValidRegion = materialDB->getElementBlockParam<bool>(workset.EBName,"quantum",false);
+
+  if(bValidRegion)
   {
-    for (std::size_t qp=0; qp < numQPs; ++qp) 
-    {
-      //scaled hbar^2/2m so kinetic energy has specified units (EnergyUnitInEV)
-      invEffMass(cell, qp) =  0.5*pow(hbar,2)*evPerJ / 
-      	(energy_unit_in_eV * pow(length_unit_in_m,2)) *
-	getInvEffMass(numDims, &coordVec(cell,qp,0)); 
-    }
-  }
-
-  //compute hbar^2/2m * Grad(psi)
-  FST::scalarMultiplyDataData<ScalarT> (psiGradWithMass, invEffMass, psiGrad);
-
-  //Kinetic term: add integral( hbar^2/2m * Grad(psi) * Grad(BF)dV ) to residual
-  FST::integrate<ScalarT>(psiResidual, psiGradWithMass, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
   
-  //Potential term: add integral( psi * V * BF dV ) to residual
-  if (havePotential) {
-    FST::scalarMultiplyDataData<ScalarT> (psiV, V, psi);
-    FST::integrate<ScalarT>(psiResidual, psiV, wBF, Intrepid::COMP_CPP, true); // "true" sums into
-  }
+    //compute inverse effective mass here (no separate evaluator)
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+	//scaled hbar^2/2m so kinetic energy has specified units (EnergyUnitInEV)
+	invEffMass(cell, qp) =  0.5*pow(hbar,2)*evPerJ / 
+	  (energy_unit_in_eV * pow(length_unit_in_m,2)) *
+	  getInvEffMass(workset.EBName, numDims, &coordVec(cell,qp,0)); 
+      }
+    }
 
-  //**Note: I think this should always be used with enableTransient = True
-  //psiDot term (to use loca): add integral( psi_dot * BF dV ) to residual
-  if (workset.transientTerms && enableTransient) 
-    FST::integrate<ScalarT>(psiResidual, psiDot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+    //compute hbar^2/2m * Grad(psi)
+    FST::scalarMultiplyDataData<ScalarT> (psiGradWithMass, invEffMass, psiGrad);
+
+    //Kinetic term: add integral( hbar^2/2m * Grad(psi) * Grad(BF)dV ) to residual
+    FST::integrate<ScalarT>(psiResidual, psiGradWithMass, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+  
+    //Potential term: add integral( psi * V * BF dV ) to residual
+    if (havePotential) {
+      FST::scalarMultiplyDataData<ScalarT> (psiV, V, psi);
+      FST::integrate<ScalarT>(psiResidual, psiV, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+    }
+
+    //**Note: I think this should always be used with enableTransient = True
+    //psiDot term (to use loca): add integral( psi_dot * BF dV ) to residual
+    if (workset.transientTerms && enableTransient) 
+      FST::integrate<ScalarT>(psiResidual, psiDot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+  }
+  else { 
+    // Invalid region (don't perform calc here - evectors should all be zero)
+    // So, set psiDot term to zero and set psi term (H) = Identity
+
+    //This doesn't work - results in NaN error
+    /*for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t qp=0; qp < numQPs; ++qp)
+	psiResidual(cell, qp) = 1.0*psi(cell,qp);
+	}*/
+
+    //Potential term: add integral( psi * V * BF dV ) to residual
+    if (havePotential) {
+      FST::scalarMultiplyDataData<ScalarT> (psiV, V, psi);
+      FST::integrate<ScalarT>(psiResidual, psiV, wBF, Intrepid::COMP_CPP, false); // "false" overwrites
+    }
+
+  }
 }
 //**********************************************************************
 
@@ -160,28 +179,19 @@ QCAD::SchrodingerResid<EvalT,Traits>::getValidMaterialParameters() const
 //Inverse effective mass in kg^-1
 template<typename EvalT, typename Traits>
 typename QCAD::SchrodingerResid<EvalT,Traits>::ScalarT
-QCAD::SchrodingerResid<EvalT, Traits>::getInvEffMass(const int numDim, 
+QCAD::SchrodingerResid<EvalT, Traits>::getInvEffMass(const std::string& EBName, const int numDim, 
 						     const MeshScalarT* coord)
 {
   ScalarT effMass;
   const double emass = 9.1094e-31; // Electron mass [kg]
 
-  if(haveMaterial)
-  {
-    if (materialName == "GaAs") {
-      effMass = 0.067 * emass;
-    }
-    else if (materialName == "Vacuum") {
-      effMass = emass;
-    }
-    else {
-      TEST_FOR_EXCEPT(true);
-    }
-  }
-  else
-  {
-    effMass = emass;
-  }
+  //TODO - return tensor instead of scalar - now just return effective mass in X-direction
+  // effMass = materialDB->getElementBlockParam<double>(EBName,"Electron Effective Mass X",1.0) * emass;
+  
+  // effective mass depends on the wafer direction
+  // For SiO2/Si interface parallel to the [100] plane, the mass for Delta2-band is ml (longitudinal)
+  // Consider only the Delta2-band for the time being (need to include Delta4-band later)
+  effMass = materialDB->getElementBlockParam<double>(EBName,"Electron Effective Mass Z",1.0) * emass;
   return 1.0/effMass;
 }
 

@@ -29,7 +29,7 @@
 
 #include <stk_mesh/fem/FEMHelpers.hpp>
 
-#ifdef ALBANY_IOSS
+#ifdef ALBANY_SEACAS
 #include <stk_io/IossBridge.hpp>
 #endif
 #include "Albany_Utils.hpp"
@@ -54,7 +54,8 @@ Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
 
 void Albany::GenericSTKMeshStruct::SetupFieldData(
 		  const Teuchos::RCP<const Epetra_Comm>& comm,
-                  const int neq_, const int nstates_,
+                  const int neq_,
+                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const int worksetSize) 
 {
   TEST_FOR_EXCEPTION(!metaData->is_FEM_initialized(),
@@ -62,7 +63,7 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
        "LogicError: metaData->FEM_initialize(numDim) not yet called" << std::endl);
 
   neq = neq_;
-  nstates = nstates_;
+  nstates = sis->nstates;
 
   if (bulkData ==  NULL)
   bulkData = new stk::mesh::BulkData(stk::mesh::fem::FEMMetaData::get_meta_data(*metaData),
@@ -79,7 +80,7 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
   stk::mesh::put_field( *residual_field , metaData->node_rank() , metaData->universal_part() , neq );
   if (nstates>0) stk::mesh::put_field( *state_field , metaData->element_rank() , metaData->universal_part(), nstates );
   
-#ifdef ALBANY_IOSS
+#ifdef ALBANY_SEACAS
   stk::io::set_field_role(*coordinates_field, Ioss::Field::MESH);
   stk::io::set_field_role(*solution_field, Ioss::Field::TRANSIENT);
   stk::io::set_field_role(*residual_field, Ioss::Field::TRANSIENT);
@@ -95,7 +96,7 @@ void Albany::GenericSTKMeshStruct::DeclareParts(std::vector<std::string> nsNames
 {
   // HandCoded meshes have 1 element block
   partVec[0] = &  metaData->declare_part( "Block_1", metaData->element_rank() );
-#ifdef ALBANY_IOSS
+#ifdef ALBANY_SEACAS
   stk::io::put_io_part_attribute(*partVec[0]);
 #endif
 
@@ -103,7 +104,7 @@ void Albany::GenericSTKMeshStruct::DeclareParts(std::vector<std::string> nsNames
   for (unsigned int i=0; i<nsNames.size(); i++) {
     std::string nsn = nsNames[i];
     nsPartVec[nsn] = & metaData->declare_part(nsn, metaData->node_rank() );
-#ifdef ALBANY_IOSS
+#ifdef ALBANY_SEACAS
     stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
   }
@@ -125,6 +126,18 @@ Albany::GenericSTKMeshStruct::getMeshSpecs() const
   return meshSpecs;
 }
 
+int Albany::GenericSTKMeshStruct::computeWorksetSize(const int worksetSizeMax,
+                                                     const int ebSizeMax) const
+{
+  // Resize workset size down to maximum number in an element block
+  if (worksetSizeMax > ebSizeMax || worksetSizeMax < 1) return ebSizeMax;
+  else {
+     // compute numWorksets, and shrink workset size to minimize padding
+     const int numWorksets = 1 + (ebSizeMax-1) / worksetSizeMax;
+     return (1 + (ebSizeMax-1) /  numWorksets);
+  }
+}
+
 
 Teuchos::RCP<Teuchos::ParameterList>
 Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname) const
@@ -132,10 +145,11 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
   Teuchos::RCP<Teuchos::ParameterList> validPL = rcp(new Teuchos::ParameterList(listname));;
   validPL->set<string>("Cell Topology", "Quad" , "Quad or Tri Cell Topology");
   validPL->set<std::string>("Exodus Output File Name", "",
-    "Request exodus output to given file name. Requires IOSS build");
+    "Request exodus output to given file name. Requires SEACAS build");
   validPL->set<std::string>("Method", "",
     "The discretization method, parsed in the Discretization Factory");
   validPL->set<int>("Cubature Degree", 3, "Integration order sent to Intrepid");
+  validPL->set<int>("Workset Size", 50, "Upper bound on workset (bucket) size");
 
   return validPL;
 }

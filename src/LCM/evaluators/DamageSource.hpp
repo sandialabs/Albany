@@ -56,12 +56,17 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> bulkModulus;
   PHX::MDField<ScalarT,Cell,QuadPoint> dp;
   PHX::MDField<ScalarT,Cell,QuadPoint> seff;
+  PHX::MDField<ScalarT,Cell,QuadPoint> energy;
   PHX::MDField<ScalarT,Cell,QuadPoint> J;
+  PHX::MDField<ScalarT,Cell,QuadPoint> damageLS;
+  RealType gc;
   PHX::MDField<ScalarT,Cell,QuadPoint> damage;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint> source;
 
+  string sourceName;
+  string damageName;
   unsigned int numQPs;
   unsigned int numDims;
 };

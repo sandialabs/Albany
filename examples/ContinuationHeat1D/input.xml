@@ -18,9 +18,8 @@
       <Parameter name="Parameter 2" type="string" value="Quadratic Nonlinear Factor"/>
     </ParameterList>
     <ParameterList name="Response Functions">
-      <Parameter name="Number" type="int" value="2"/>
+      <Parameter name="Number" type="int" value="1"/>
       <Parameter name="Response 0" type="string" value="Solution Average"/>
-      <Parameter name="Response 1" type="string" value="Boundary Flux 1D"/>
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
@@ -28,11 +27,11 @@
     <Parameter name="Method" type="string" value="STK1D"/>
   </ParameterList>
   <ParameterList name="Regression Results">
-    <Parameter  name="Number of Comparisons" type="int" value="3"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{13.8565, 59.6161, -59.6503}"/>
+    <Parameter  name="Number of Comparisons" type="int" value="1"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{13.85649}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
-    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{-0.280512,-0.248869, -28.8848}"/>
+    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{-0.280512, -0.248868505, -28.8848055}"/>
   </ParameterList>
   <ParameterList name="VTK">
     <Parameter name="Do Visualization" type="bool" value="0"/>

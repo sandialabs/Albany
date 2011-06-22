@@ -81,15 +81,15 @@ template<typename Traits>
 void SaveStateField<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 { 
-  cout << "SaveStateField copying off  " << fieldName << " to state " 
-       << stateName << " with size " << state.size() << endl;
+  //cout << "SaveStateField copying off  " << fieldName << " to state " 
+  //     << stateName << " with size " << state.size() << endl;
   
   // Get state field container of same name
   Albany::StateVariables& newState = *workset.newState;
   Intrepid::FieldContainer<RealType>& savedState  = *newState[stateName];
   
   double max = 0;
-  for (std::size_t i=0; i < state.size() ; ++i) {
+  for (int i=0; i < state.size() ; ++i) {
     savedState[i] = state[i];
     if(fabs(state[i]) > max) max = fabs(state[i]);
   }

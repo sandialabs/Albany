@@ -45,19 +45,14 @@ Albany::ODEProblem::
 void
 Albany::ODEProblem::
 buildProblem(
-    const int worksetSize,
+    const Albany::MeshSpecsStruct& meshSpecs,
     Albany::StateManager& stateMgr,
-    const Albany::AbstractDiscretization& disc,
     std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
   /* Construct All Phalanx Evaluators */
-  constructEvaluators(worksetSize, disc.getCubatureDegree(), disc.getCellTopologyData());
-  constructDirichletEvaluators(disc.getNodeSetIDs());
+  constructEvaluators(meshSpecs);
+  constructDirichletEvaluators(meshSpecs.nsNames);
  
-//   const Epetra_Map& dofMap = *(disc.getMap());
-//   int left_node = dofMap.MinAllGID();
-//   int right_node = dofMap.MaxAllGID();
-
   // Build response functions
   Teuchos::ParameterList& responseList = params->sublist("Response Functions");
   int num_responses = responseList.get("Number", 0);
@@ -85,7 +80,7 @@ buildProblem(
 
 void
 Albany::ODEProblem::constructEvaluators(
-       const int worksetSize, const int cubDegree, const CellTopologyData& ctd)
+        const Albany::MeshSpecsStruct& meshSpecs)
 {
    using Teuchos::RCP;
    using Teuchos::rcp;
@@ -100,6 +95,7 @@ Albany::ODEProblem::constructEvaluators(
    const int numNodes = 1;
 
    const int numVertices = 1;
+   const int worksetSize = meshSpecs.worksetSize;
 
    *out << "Field Dimensions: Workset=" << worksetSize 
         << ", Vertices= " << numVertices

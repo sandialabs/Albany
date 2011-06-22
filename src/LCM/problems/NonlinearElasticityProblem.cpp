@@ -1,22 +1,21 @@
 /********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
+ *            Albany, Copyright (2010) Sandia Corporation             *
+ *                                                                    *
+ * Notice: This computer software was prepared by Sandia Corporation, *
+ * hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
+ * the Department of Energy (DOE). All rights in the computer software*
+ * are reserved by DOE on behalf of the United States Government and  *
+ * the Contractor as provided in the Contract. You are authorized to  *
+ * use this computer software for Governmental purposes but it is not *
+ * to be released or distributed to the public. NEITHER THE GOVERNMENT*
+ * NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
+ * ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
+ * including this sentence must appear on any copies of this software.*
+ *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
 #include "LCM/LCM_FactoryTraits.hpp"
 #include "NonlinearElasticityProblem.hpp"
-#include "Albany_BoundaryFlux1DResponseFunction.hpp"
 #include "Albany_SolutionAverageResponseFunction.hpp"
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
 #include "Albany_Utils.hpp"
@@ -25,9 +24,9 @@
 
 Albany::NonlinearElasticityProblem::
 NonlinearElasticityProblem(
-                         const Teuchos::RCP<Teuchos::ParameterList>& params_,
-                         const Teuchos::RCP<ParamLib>& paramLib_,
-                         const int numDim_) :
+			   const Teuchos::RCP<Teuchos::ParameterList>& params_,
+			   const Teuchos::RCP<ParamLib>& paramLib_,
+			   const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_, numDim_),
   haveSource(false),
   numDim(numDim_)
@@ -46,8 +45,13 @@ NonlinearElasticityProblem(
   if (neq>2) dofNames[2] = "Z";
 
   if (matModel == "NeoHookean" || matModel == "NeoHookean AD")
-   this->nstates=numDim*numDim;
-  else if (matModel == "J2")  this->nstates=2*numDim*numDim+1;
+    this->nstates=numDim*numDim;
+  else if (matModel == "J2")  {
+    if ( numDim == 3 && params->get("Compute Dislocation Density Tensor", false) )
+      this->nstates=3*numDim*numDim+1;
+    else
+      this->nstates=2*numDim*numDim+1;
+  }
   *out << "Num States to Store: " << this->nstates << std::endl;
   
 }
@@ -60,49 +64,34 @@ Albany::NonlinearElasticityProblem::
 void
 Albany::NonlinearElasticityProblem::
 buildProblem(
-    const int worksetSize,
-    Albany::StateManager& stateMgr,
-    const Albany::AbstractDiscretization& disc,
-    std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
+	     const Albany::MeshSpecsStruct& meshSpecs,
+	     Albany::StateManager& stateMgr,
+	     std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
   /* Construct All Phalanx Evaluators */
-  constructEvaluators(worksetSize, disc.getCubatureDegree(), disc.getCellTopologyData(), stateMgr);
-  constructDirichletEvaluators(disc.getNodeSetIDs());
-
-  const Epetra_Map& dofMap = *(disc.getMap());
-  int left_node = dofMap.MinAllGID();
-  int right_node = dofMap.MaxAllGID();
+  constructEvaluators(meshSpecs, stateMgr);
+  constructDirichletEvaluators(meshSpecs.nsNames);
 
   // Build response functions
   Teuchos::ParameterList& responseList = params->sublist("Response Functions");
   int num_responses = responseList.get("Number", 0);
   responses.resize(num_responses);
   for (int i=0; i<num_responses; i++) {
-     std::string name = responseList.get(Albany::strint("Response",i), "??");
+    std::string name = responseList.get(Albany::strint("Response",i), "??");
 
-     if (name == "Boundary Flux 1D") {
-       // Need real size, not 1.0
-       double h =  1.0 / (dofMap.NumGlobalElements() - 1);
-       responses[i] =
-         Teuchos::rcp(new BoundaryFlux1DResponseFunction(left_node,
-                                                         right_node,
-                                                         0, 1, h,
-                                                         dofMap));
-     }
+    if (name == "Solution Average")
+      responses[i] = Teuchos::rcp(new SolutionAverageResponseFunction());
 
-     else if (name == "Solution Average")
-       responses[i] = Teuchos::rcp(new SolutionAverageResponseFunction());
+    else if (name == "Solution Two Norm")
+      responses[i] = Teuchos::rcp(new SolutionTwoNormResponseFunction());
 
-     else if (name == "Solution Two Norm")
-       responses[i] = Teuchos::rcp(new SolutionTwoNormResponseFunction());
-
-     else {
-       TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-                          std::endl <<
-                          "Error!  Unknown response function " << name <<
-                          "!" << std::endl << "Supplied parameter list is " <<
-                          std::endl << responseList);
-     }
+    else {
+      TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+			 std::endl <<
+			 "Error!  Unknown response function " << name <<
+			 "!" << std::endl << "Supplied parameter list is " <<
+			 std::endl << responseList);
+    }
 
   }
 }
@@ -110,68 +99,69 @@ buildProblem(
 
 void
 Albany::NonlinearElasticityProblem::constructEvaluators(
-       const int worksetSize, const int cubDegree,
-       const CellTopologyData& ctd, Albany::StateManager& stateMgr)
+							const Albany::MeshSpecsStruct& meshSpecs,
+							Albany::StateManager& stateMgr)
 {
-   using Teuchos::RCP;
-   using Teuchos::rcp;
-   using Teuchos::ParameterList;
-   using PHX::DataLayout;
-   using PHX::MDALayout;
-   using std::vector;
-   using std::map;
-   using LCM::FactoryTraits;
-   using PHAL::AlbanyTraits;
+  using Teuchos::RCP;
+  using Teuchos::rcp;
+  using Teuchos::ParameterList;
+  using PHX::DataLayout;
+  using PHX::MDALayout;
+  using std::vector;
+  using std::map;
+  using LCM::FactoryTraits;
+  using PHAL::AlbanyTraits;
 
-   const bool composite = params->get("Use Composite Tet 10", false);
-   RCP<shards::CellTopology> comp_cellType = rcp(new shards::CellTopology( shards::getCellTopologyData<shards::Tetrahedron<11> >() ) );
-   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&ctd));
+  const bool composite = params->get("Use Composite Tet 10", false);
+  RCP<shards::CellTopology> comp_cellType = rcp(new shards::CellTopology( shards::getCellTopologyData<shards::Tetrahedron<11> >() ) );
+  RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
 
-   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
-     intrepidBasis = this->getIntrepidBasis(ctd, composite);
+  RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
+    intrepidBasis = this->getIntrepidBasis(meshSpecs.ctd, composite);
 
-   if (composite && ctd.dimension==3 && ctd.node_count==10) cellType = comp_cellType;
+  if (composite && meshSpecs.ctd.dimension==3 && meshSpecs.ctd.node_count==10) cellType = comp_cellType;
 
-   numNodes = intrepidBasis->getCardinality();
+  numNodes = intrepidBasis->getCardinality();
+  const int worksetSize = meshSpecs.worksetSize;
 
-   Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-   RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, cubDegree);
+  Intrepid::DefaultCubatureFactory<RealType> cubFactory;
+  RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
 
-   numDim = cubature->getDimension();
-   numQPts = cubature->getNumPoints();
-   //numVertices = cellType->getNodeCount();
-   numVertices = numNodes;
+  numDim = cubature->getDimension();
+  numQPts = cubature->getNumPoints();
+  //numVertices = cellType->getNodeCount();
+  numVertices = numNodes;
 
-   *out << "Field Dimensions: Workset=" << worksetSize 
-        << ", Vertices= " << numVertices
-        << ", Nodes= " << numNodes
-        << ", QuadPts= " << numQPts
-        << ", Dim= " << numDim << endl;
+  *out << "Field Dimensions: Workset=" << worksetSize 
+       << ", Vertices= " << numVertices
+       << ", Nodes= " << numNodes
+       << ", QuadPts= " << numQPts
+       << ", Dim= " << numDim << endl;
 
-   // Parser will build parameter list that determines the field
-   // evaluators to build
-   map<string, RCP<ParameterList> > evaluators_to_build;
+  // Parser will build parameter list that determines the field
+  // evaluators to build
+  map<string, RCP<ParameterList> > evaluators_to_build;
 
-   RCP<DataLayout> node_scalar = rcp(new MDALayout<Cell,Node>(worksetSize,numNodes));
-   RCP<DataLayout> qp_scalar = rcp(new MDALayout<Cell,QuadPoint>(worksetSize,numQPts));
+  RCP<DataLayout> node_scalar = rcp(new MDALayout<Cell,Node>(worksetSize,numNodes));
+  RCP<DataLayout> qp_scalar = rcp(new MDALayout<Cell,QuadPoint>(worksetSize,numQPts));
 
-   RCP<DataLayout> node_vector = rcp(new MDALayout<Cell,Node,Dim>(worksetSize,numNodes,numDim));
-   RCP<DataLayout> qp_vector = rcp(new MDALayout<Cell,QuadPoint,Dim>(worksetSize,numQPts,numDim));
-   RCP<DataLayout> qp_tensor = rcp(new MDALayout<Cell,QuadPoint,Dim,Dim>(worksetSize,numQPts,numDim,numDim));
+  RCP<DataLayout> node_vector = rcp(new MDALayout<Cell,Node,Dim>(worksetSize,numNodes,numDim));
+  RCP<DataLayout> qp_vector = rcp(new MDALayout<Cell,QuadPoint,Dim>(worksetSize,numQPts,numDim));
+  RCP<DataLayout> qp_tensor = rcp(new MDALayout<Cell,QuadPoint,Dim,Dim>(worksetSize,numQPts,numDim,numDim));
 
-   RCP<DataLayout> vertices_vector = 
-     rcp(new MDALayout<Cell,Vertex, Dim>(worksetSize,numVertices,numDim));
-   // Basis functions, Basis function gradient
-   RCP<DataLayout> node_qp_scalar =
-     rcp(new MDALayout<Cell,Node,QuadPoint>(worksetSize,numNodes, numQPts));
-   RCP<DataLayout> node_qp_vector =
-     rcp(new MDALayout<Cell,Node,QuadPoint,Dim>(worksetSize,numNodes, numQPts,numDim));
+  RCP<DataLayout> vertices_vector = 
+    rcp(new MDALayout<Cell,Vertex, Dim>(worksetSize,numVertices,numDim));
+  // Basis functions, Basis function gradient
+  RCP<DataLayout> node_qp_scalar =
+    rcp(new MDALayout<Cell,Node,QuadPoint>(worksetSize,numNodes, numQPts));
+  RCP<DataLayout> node_qp_vector =
+    rcp(new MDALayout<Cell,Node,QuadPoint,Dim>(worksetSize,numNodes, numQPts,numDim));
 
-   RCP<DataLayout> dummy = rcp(new MDALayout<Dummy>(0));
+  RCP<DataLayout> dummy = rcp(new MDALayout<Dummy>(0));
 
   { // Gather Solution
-   RCP< vector<string> > dof_names = rcp(new vector<string>(1));
-     (*dof_names)[0] = "Displacement";
+    RCP< vector<string> > dof_names = rcp(new vector<string>(1));
+    (*dof_names)[0] = "Displacement";
 
     RCP<ParameterList> p = rcp(new ParameterList);
     int type = FactoryTraits<AlbanyTraits>::id_gather_solution;
@@ -181,7 +171,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("Data Layout", node_vector);
 
     RCP< vector<string> > dof_names_dot = rcp(new vector<string>(1));
-     (*dof_names_dot)[0] = "Displacement_dot";
+    (*dof_names_dot)[0] = "Displacement_dot";
 
     p->set< RCP< vector<string> > >("Time Dependent Solution Names", dof_names_dot);
 
@@ -231,7 +221,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
     p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
 
     p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >
-        ("Intrepid Basis", intrepidBasis);
+      ("Intrepid Basis", intrepidBasis);
 
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
 
@@ -307,7 +297,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
   }
 
   {
-   // DOF: Interpolate nodal Displacement Dot  values to quad points
+    // DOF: Interpolate nodal Displacement Dot  values to quad points
     RCP<ParameterList> p = rcp(new ParameterList("NonlinearElasticity DOFVecInterpolation Displacement Dot"));
 
     int type = FactoryTraits<AlbanyTraits>::id_dofvec_interpolation;
@@ -389,71 +379,71 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
     evaluators_to_build["DefGrad"] = p;
   }
 
- if (matModel == "NeoHookean")
- {
-   { // LCG
-     RCP<ParameterList> p = rcp(new ParameterList("LCG"));
+  if (matModel == "NeoHookean")
+  {
+    { // LCG
+      RCP<ParameterList> p = rcp(new ParameterList("LCG"));
 
-     int type = FactoryTraits<AlbanyTraits>::id_lcg;
-     p->set<int>("Type", type);
+      int type = FactoryTraits<AlbanyTraits>::id_lcg;
+      p->set<int>("Type", type);
      
-     //Input
-     p->set<string>("DefGrad Name", "Deformation Gradient");
-     p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
+      //Input
+      p->set<string>("DefGrad Name", "Deformation Gradient");
+      p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
 
-     //Output
-     p->set<string>("LCG Name", "LCG"); //qp_tensor also
+      //Output
+      p->set<string>("LCG Name", "LCG"); //qp_tensor also
 
-     evaluators_to_build["LCG"] = p;
-   }
+      evaluators_to_build["LCG"] = p;
+    }
 
-   { // Stress
-     RCP<ParameterList> p = rcp(new ParameterList("Stress"));
+    { // Stress
+      RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
-     int type = FactoryTraits<AlbanyTraits>::id_neohookean_stress;
-     p->set<int>("Type", type);
+      int type = FactoryTraits<AlbanyTraits>::id_neohookean_stress;
+      p->set<int>("Type", type);
 
-     //Input
-     p->set<string>("LCG Name", "LCG");
-     p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
+      //Input
+      p->set<string>("LCG Name", "LCG");
+      p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
 
-     p->set<string>("Elastic Modulus Name", "Elastic Modulus");
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+      p->set<string>("Elastic Modulus Name", "Elastic Modulus");
+      p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
 
-     p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // qp_scalar also
-     p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient");  // qp_scalar also
+      p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // qp_scalar also
+      p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient");  // qp_scalar also
 
-     //Output
-     p->set<string>("Stress Name", matModel); //qp_tensor also
+      //Output
+      p->set<string>("Stress Name", matModel); //qp_tensor also
 
-     evaluators_to_build["Stress"] = p;
-     evaluators_to_build["Save Stress"] =
-      stateMgr.registerStateVariable(matModel,qp_tensor,
-            dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
-   }
+      evaluators_to_build["Stress"] = p;
+      evaluators_to_build["Save Stress"] =
+	stateMgr.registerStateVariable(matModel,qp_tensor,
+				       dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
+    }
   }
   else if (matModel == "NeoHookean AD")
   {
-     RCP<ParameterList> p = rcp(new ParameterList("Stress"));
+    RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
-     int type = FactoryTraits<AlbanyTraits>::id_pisdwdf_stress;
-     p->set<int>("Type", type);
+    int type = FactoryTraits<AlbanyTraits>::id_pisdwdf_stress;
+    p->set<int>("Type", type);
 
-     //Input
-     p->set<string>("Elastic Modulus Name", "Elastic Modulus");
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
-     p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // qp_scalar also
+    //Input
+    p->set<string>("Elastic Modulus Name", "Elastic Modulus");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // qp_scalar also
 
-     p->set<string>("DefGrad Name", "Deformation Gradient"); 
-     p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
+    p->set<string>("DefGrad Name", "Deformation Gradient"); 
+    p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
 
-     //Output
-     p->set<string>("Stress Name", matModel); //qp_tensor also
+    //Output
+    p->set<string>("Stress Name", matModel); //qp_tensor also
 
-     evaluators_to_build["Stress"] = p;
-     evaluators_to_build["Save Stress"] =
+    evaluators_to_build["Stress"] = p;
+    evaluators_to_build["Save Stress"] =
       stateMgr.registerStateVariable(matModel,qp_tensor,
-            dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
+				     dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
   }
   else if (matModel == "J2")
   { 
@@ -533,6 +523,35 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
       evaluators_to_build["Saturation Exponent"] = p;
     }
 
+    if ( numDim == 3 && params->get("Compute Dislocation Density Tensor", false) )
+    { // Dislocation Density Tensor
+      RCP<ParameterList> p = rcp(new ParameterList("Dislocation Density"));
+      
+      int type = FactoryTraits<AlbanyTraits>::id_dislocation_density;
+      p->set<int>("Type", type);
+    
+      //Input
+      p->set<string>("Fp Name", "Fp");
+      p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
+      p->set<string>("BF Name", "BF");
+      p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
+      p->set<string>("Gradient BF Name", "Grad BF");
+      p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);
+
+      //Output
+      p->set<string>("Dislocation Density Name", "G"); //qp_tensor also
+ 
+      //Declare what state data will need to be saved (name, layout, init_type)
+      evaluators_to_build["Save DislocationDensity"] =
+	stateMgr.registerStateVariable("G",
+				       qp_tensor,
+				       dummy, 
+				       FactoryTraits<AlbanyTraits>::id_savestatefield,
+				       "zero");
+
+      evaluators_to_build["G"] = p;
+    }
+
     {// Stress
       RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
@@ -552,33 +571,33 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
       p->set<string>("Saturation Exponent Name", "Saturation Exponent"); // qp_scalar also
       p->set<string>("Yield Strength Name", "Yield Strength"); // qp_scalar also
       p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient");  // qp_scalar also
-      p->set<string>("Fp Name", "Fp");  // qp_tensor also
-      p->set<string>("Eqps Name", "eqps");  // qp_scalar also
 
       //Output
       p->set<string>("Stress Name", matModel); //qp_tensor also
+      p->set<string>("Fp Name", "Fp");  // qp_tensor also
+      p->set<string>("Eqps Name", "eqps");  // qp_scalar also
  
       //Declare what state data will need to be saved (name, layout, init_type)
-//      stateMgr.registerStateVariable("stress",qp_tensor,"zero");
-//      stateMgr.registerStateVariable("Fp",qp_tensor,"identity");
-//      stateMgr.registerStateVariable("eqps",qp_scalar,"zero");
-     evaluators_to_build["Save Stress"] =
-      stateMgr.registerStateVariable(matModel,qp_tensor,
-            dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
-     evaluators_to_build["Save Fp"] =
-      stateMgr.registerStateVariable("Fp",qp_tensor,
-            dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"identity");
-     evaluators_to_build["Save Eqps"] =
-      stateMgr.registerStateVariable("eqps",qp_scalar,
-            dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
+      //      stateMgr.registerStateVariable("stress",qp_tensor,"zero");
+      //      stateMgr.registerStateVariable("Fp",qp_tensor,"identity");
+      //      stateMgr.registerStateVariable("eqps",qp_scalar,"zero");
+      evaluators_to_build["Save Stress"] =
+	stateMgr.registerStateVariable(matModel,qp_tensor,
+				       dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
+      evaluators_to_build["Save Fp"] =
+	stateMgr.registerStateVariable("Fp",qp_tensor,
+				       dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"identity");
+      evaluators_to_build["Save Eqps"] =
+	stateMgr.registerStateVariable("eqps",qp_scalar,
+				       dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
 
       evaluators_to_build["Stress"] = p;
     }
   }
   else
     TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-       "Unrecognized Material Name: " << matModel 
-        << "  Recognized names are : NeoHookean and J2");
+		       "Unrecognized Material Name: " << matModel 
+		       << "  Recognized names are : NeoHookean and J2");
     
 
   { // Residual
@@ -611,8 +630,8 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
   }
 
   { // Scatter Residual
-   RCP< vector<string> > resid_names = rcp(new vector<string>(1));
-     (*resid_names)[0] = "Residual";
+    RCP< vector<string> > resid_names = rcp(new vector<string>(1));
+    (*resid_names)[0] = "Residual";
 
     RCP<ParameterList> p = rcp(new ParameterList);
     int type = FactoryTraits<AlbanyTraits>::id_scatter_residual;
@@ -626,41 +645,41 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
     evaluators_to_build["Scatter Residual"] = p;
   }
 
-   // Build Field Evaluators for each evaluation type
-   PHX::EvaluatorFactory<AlbanyTraits,FactoryTraits<AlbanyTraits> > factory;
-   RCP< vector< RCP<PHX::Evaluator_TemplateManager<AlbanyTraits> > > >
-     evaluators;
-   evaluators = factory.buildEvaluators(evaluators_to_build);
+  // Build Field Evaluators for each evaluation type
+  PHX::EvaluatorFactory<AlbanyTraits,FactoryTraits<AlbanyTraits> > factory;
+  RCP< vector< RCP<PHX::Evaluator_TemplateManager<AlbanyTraits> > > >
+    evaluators;
+  evaluators = factory.buildEvaluators(evaluators_to_build);
 
-   // Create a FieldManager
-   fm = Teuchos::rcp(new PHX::FieldManager<AlbanyTraits>);
+  // Create a FieldManager
+  fm = Teuchos::rcp(new PHX::FieldManager<AlbanyTraits>);
 
-   // Register all Evaluators
-   PHX::registerEvaluators(evaluators, *fm);
+  // Register all Evaluators
+  PHX::registerEvaluators(evaluators, *fm);
 
-   PHX::Tag<AlbanyTraits::Residual::ScalarT> res_tag("Scatter", dummy);
-   fm->requireField<AlbanyTraits::Residual>(res_tag);
-   PHX::Tag<AlbanyTraits::Jacobian::ScalarT> jac_tag("Scatter", dummy);
-   fm->requireField<AlbanyTraits::Jacobian>(jac_tag);
-   PHX::Tag<AlbanyTraits::Tangent::ScalarT> tan_tag("Scatter", dummy);
-   fm->requireField<AlbanyTraits::Tangent>(tan_tag);
-   PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_tag("Scatter", dummy);
-   fm->requireField<AlbanyTraits::SGResidual>(sgres_tag);
-   PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag("Scatter", dummy);
-   fm->requireField<AlbanyTraits::SGJacobian>(sgjac_tag);
-   PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag("Scatter", dummy);
-   fm->requireField<AlbanyTraits::MPResidual>(mpres_tag);
-   PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag("Scatter", dummy);
-   fm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag);
+  PHX::Tag<AlbanyTraits::Residual::ScalarT> res_tag("Scatter", dummy);
+  fm->requireField<AlbanyTraits::Residual>(res_tag);
+  PHX::Tag<AlbanyTraits::Jacobian::ScalarT> jac_tag("Scatter", dummy);
+  fm->requireField<AlbanyTraits::Jacobian>(jac_tag);
+  PHX::Tag<AlbanyTraits::Tangent::ScalarT> tan_tag("Scatter", dummy);
+  fm->requireField<AlbanyTraits::Tangent>(tan_tag);
+  PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_tag("Scatter", dummy);
+  fm->requireField<AlbanyTraits::SGResidual>(sgres_tag);
+  PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag("Scatter", dummy);
+  fm->requireField<AlbanyTraits::SGJacobian>(sgjac_tag);
+  PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag("Scatter", dummy);
+  fm->requireField<AlbanyTraits::MPResidual>(mpres_tag);
+  PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag("Scatter", dummy);
+  fm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag);
 
-   // Output states as part of Residual Evaluation
-   const Albany::StateManager::RegisteredStates& reg = stateMgr.getRegisteredStates();
-   Albany::StateManager::RegisteredStates::const_iterator st = reg.begin();
-   while (st != reg.end()) {
-     PHX::Tag<AlbanyTraits::Residual::ScalarT> res_out_tag(st->first, dummy);
-     fm->requireField<AlbanyTraits::Residual>(res_out_tag);
-     st++;
-   }
+  // Output states as part of Residual Evaluation
+  const Albany::StateManager::RegisteredStates& reg = stateMgr.getRegisteredStates();
+  Albany::StateManager::RegisteredStates::const_iterator st = reg.begin();
+  while (st != reg.end()) {
+    PHX::Tag<AlbanyTraits::Residual::ScalarT> res_out_tag(st->first, dummy);
+    fm->requireField<AlbanyTraits::Residual>(res_out_tag);
+    st++;
+  }
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
@@ -678,6 +697,7 @@ Albany::NonlinearElasticityProblem::getValidProblemParameters() const
   validPL->set<bool>("Use Composite Tet 10", false, "Flag to use the compostie tet 10 basis in Intrepid");
   if (matModel == "J2")
   {
+    validPL->set<bool>("Compute Dislocation Density Tensor", false, "Flag to compute the dislocaiton density tensor (only for 3D)");
     validPL->sublist("Hardening Modulus", false, "");
     validPL->sublist("Yield Strength", false, "");
     validPL->sublist("Saturation Modulus", false, "");
@@ -689,9 +709,9 @@ Albany::NonlinearElasticityProblem::getValidProblemParameters() const
 
 void
 Albany::NonlinearElasticityProblem::getAllocatedStates(
-   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState_,
-   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState_
-   ) const
+						       Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState_,
+						       Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState_
+						       ) const
 {
   oldState_ = oldState;
   newState_ = newState;
