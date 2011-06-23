@@ -25,6 +25,7 @@
 #include "PHAL_ScatterResidual.hpp"
 #include "PHAL_Source.hpp"
 #include "PHAL_ThermalConductivity.hpp"
+#include "PHAL_Absorption.hpp"
 #include "PHAL_ComputeBasisFunctions.hpp"
 #include "PHAL_DOFInterpolation.hpp"
 #include "PHAL_DOFGradInterpolation.hpp"

@@ -541,6 +541,8 @@ Albany::ThermoElasticityProblem::constructEvaluators(
     p->set<bool>("Have Source", haveSource);
     p->set<string>("Source Name", "Source");
 
+    p->set<bool>("Have Absorption", false);
+
     p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
 

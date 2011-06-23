@@ -73,11 +73,13 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   validPL->sublist("Initial Condition", false, "");
   validPL->sublist("Initial Condition Dot", false, "");
   validPL->sublist("Source Functions", false, "");
+  validPL->sublist("Absorption", false, "");
   validPL->sublist("Response Functions", false, "");
   validPL->sublist("Parameters", false, "");
   validPL->sublist("Stochastic Galerkin", false, "");
   validPL->sublist("Teko", false, "");
   validPL->sublist("Dirichlet BCs", false, "");
+  validPL->set<bool>("Solve Adjoint", false, "");
 
   validPL->set<bool>("Ignore Residual In Jacobian", false, 
 		     "Ignore residual calculations while computing the Jacobian (only generally appropriate for linear problems)");

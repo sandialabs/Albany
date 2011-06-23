@@ -385,6 +385,8 @@ Albany::ThermoElectrostaticsProblem::constructEvaluators(
     p->set<bool>("Have Source", true);
     p->set<string>("Source Name", "Joule");
 
+    p->set<bool>("Have Absorption", false);
+
     p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
 

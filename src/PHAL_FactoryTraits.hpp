@@ -25,6 +25,7 @@
 #include "PHAL_ScatterResidual.hpp"
 #include "PHAL_Source.hpp"
 #include "PHAL_ThermalConductivity.hpp"
+#include "PHAL_Absorption.hpp"
 #include "PHAL_ComputeBasisFunctions.hpp"
 #include "PHAL_DOFInterpolation.hpp"
 #include "PHAL_DOFGradInterpolation.hpp"
@@ -90,8 +91,9 @@ struct FactoryTraits {
   static const int id_sharedparameter           = 25;
   static const int id_schrodinger_potential     = 26;
   static const int id_schrodinger_resid         = 27;
+  static const int id_absorption                = 28;
 
-  typedef boost::mpl::vector28< 
+  typedef boost::mpl::vector29< 
             PHAL::Dirichlet<_,Traits>,                //  0
             PHAL::GatherSolution<_,Traits>,           //  1
             PHAL::GatherCoordinateVector<_,Traits>,   //  2
@@ -119,7 +121,8 @@ struct FactoryTraits {
             PHAL::LoadStateField<_,Traits>,           // 24
             PHAL::SharedParameter<_,Traits>,          // 25
             QCAD::SchrodingerPotential<_,Traits>,     // 26
-            QCAD::SchrodingerResid<_,Traits>          // 27
+            QCAD::SchrodingerResid<_,Traits>,         // 27
+            PHAL::Absorption<_,Traits>                // 28
   > EvaluatorTypes;
   
 };
