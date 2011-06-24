@@ -38,7 +38,16 @@ Albany::AbstractProblem::AbstractProblem(
 
 unsigned int 
 Albany::AbstractProblem::numEquations() const 
-{return neq;}
+{
+  TEST_FOR_EXCEPTION( neq <= 0,
+                    Teuchos::Exceptions::InvalidParameter,
+                    "A Problem must have at least 1 equation: "<<neq);
+  return neq;
+}
+
+void
+Albany::AbstractProblem::setNumEquations(const int neq_)
+{ neq = neq_; }
 
 Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
 Albany::AbstractProblem::getFieldManager()

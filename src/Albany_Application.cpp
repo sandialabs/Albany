@@ -75,9 +75,6 @@ Albany::Application::Application(
   // Validate Problem parameters against list for this specific problem
   problemParams->validateParameters(*(problem->getValidProblemParameters()),0);
 
-  // Get number of equations
-  neq = problem->numEquations();
-
   // Register shape parameters for manipulation by continuation/optimization
   if (problemParams->get("Enable Cubit Shape Parameters",false)) {
 #ifdef ALBANY_CUTR
@@ -115,6 +112,7 @@ Albany::Application::Application(
   problem->buildProblem(*meshSpecs, stateMgr, responses);
 
   // Create the full mesh
+  neq = problem->numEquations();
   disc = discFactory.createDiscretization(neq, stateMgr.getStateInfoStruct());
 
   // Load connectivity map and coordinates 
