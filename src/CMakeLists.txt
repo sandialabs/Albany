@@ -138,6 +138,15 @@ SET(SOURCES ${SOURCES}
 	evaluators/PHAL_TEProp.cpp
 	evaluators/PHAL_SaveStateField.cpp
 	evaluators/PHAL_LoadStateField.cpp
+	evaluators/PHAL_NSContinuityResid.cpp
+	evaluators/PHAL_NSMomentumResid.cpp
+        evaluators/PHAL_NSThermalEqResid.cpp
+        evaluators/PHAL_NSRmEqResid.cpp
+        evaluators/PHAL_ContravarientMetricTensor.cpp
+        evaluators/PHAL_NSTauM.cpp 
+        evaluators/PHAL_NSTauT.cpp
+        evaluators/PHAL_NSMaterialProperty.cpp
+        evaluators/PHAL_NSBodyForce.cpp
   )
 SET(HEADERS ${HEADERS}
 	evaluators/PHAL_GatherSolution.hpp 
@@ -180,6 +189,24 @@ SET(HEADERS ${HEADERS}
 	evaluators/PHAL_SaveStateField_Def.hpp
 	evaluators/PHAL_LoadStateField.hpp
 	evaluators/PHAL_LoadStateField_Def.hpp
+	evaluators/PHAL_NSContinuityResid.hpp
+	evaluators/PHAL_NSContinuityResid_Def.hpp
+	evaluators/PHAL_NSMomentumResid.hpp
+	evaluators/PHAL_NSMomentumResid_Def.hpp
+        evaluators/PHAL_NSThermalEqResid.hpp
+        evaluators/PHAL_NSThermalEqResid_Def.hpp
+        evaluators/PHAL_NSRmEqResid.hpp
+        evaluators/PHAL_NSRmEqResid_Def.hpp
+        evaluators/PHAL_ContravarientMetricTensor.hpp
+        evaluators/PHAL_ContravarientMetricTensor_Def.hpp
+        evaluators/PHAL_NSTauM.hpp 
+        evaluators/PHAL_NSTauM_Def.hpp 
+        evaluators/PHAL_NSTauT.hpp
+        evaluators/PHAL_NSTauT_Def.hpp
+        evaluators/PHAL_NSMaterialProperty.hpp
+        evaluators/PHAL_NSMaterialProperty_Def.hpp 
+        evaluators/PHAL_NSBodyForce.hpp
+        evaluators/PHAL_NSBodyForce_Def.hpp
   )
 
 # LCM

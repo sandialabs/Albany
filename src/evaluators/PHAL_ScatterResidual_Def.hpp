@@ -175,11 +175,16 @@ evaluateFields(typename Traits::EvalData workset)
             firstcol =   nodeID[node_col] * neq;
 
             // Loop over equations per node
-            for (unsigned int eq_col=0; eq_col<numFields; eq_col++) {
-              lcol = neq * node_col + eq_col + this->offset;
+            //for (unsigned int eq_col=0; eq_col<numFields; eq_col++) {
+            for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
+              //lcol = neq * node_col + eq_col + this->offset;
+              lcol = neq * node_col + eq_col;
 
               // Global column
-              col =  firstcol + eq_col + this->offset;
+              //col =  firstcol + eq_col + this->offset;
+              col =  firstcol + eq_col;
+              
+	      //if (!this->vectorField && eq == 1) std::cout << "Jac(" << row << "," << col << ") = " << valptr->fastAccessDx(lcol) << std::endl;
 
               // Sum Jacobian
               Jac->SumIntoMyValues(row, 1, &(valptr->fastAccessDx(lcol)), &col);
