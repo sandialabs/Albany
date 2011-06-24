@@ -57,7 +57,7 @@ ThermalConductivity(Teuchos::ParameterList& p) :
     Teuchos::RCP<ParamLib> paramLib = 
       p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
       new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-	"Thermal Conductivity", this, paramLib);
+    	"Thermal Conductivity", this, paramLib);
   }
   else if (type == "Truncated KL Expansion" || type == "Log Normal RF") {
     is_constant = false;

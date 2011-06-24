@@ -37,9 +37,11 @@
 
 Albany::ProblemFactory::ProblemFactory(
        const Teuchos::RCP<Teuchos::ParameterList>& problemParams_,
-       const Teuchos::RCP<ParamLib>& paramLib_) :
+       const Teuchos::RCP<ParamLib>& paramLib_,
+       const Teuchos::RCP<const Epetra_Comm>& comm_) :
   problemParams(problemParams_),
-  paramLib(paramLib_)
+  paramLib(paramLib_),
+  comm(comm_)
 {
 }
 
@@ -67,13 +69,13 @@ Albany::ProblemFactory::create()
     strategy = rcp(new Albany::Helmholtz2DProblem(problemParams, paramLib));
   }
   else if (method == "Poisson 1D") {
-    strategy = rcp(new QCAD::PoissonProblem(problemParams, paramLib, 1));
+    strategy = rcp(new QCAD::PoissonProblem(problemParams, paramLib, 1, comm));
   }
   else if (method == "Poisson 2D") {
-    strategy = rcp(new QCAD::PoissonProblem(problemParams, paramLib, 2));
+    strategy = rcp(new QCAD::PoissonProblem(problemParams, paramLib, 2, comm));
   }
   else if (method == "Poisson 3D") {
-    strategy = rcp(new QCAD::PoissonProblem(problemParams, paramLib, 3));
+    strategy = rcp(new QCAD::PoissonProblem(problemParams, paramLib, 3, comm));
   }
   else if (method == "NavierStokes 1D") {
     strategy = rcp(new Albany::NavierStokes(problemParams, paramLib, 1));
@@ -85,13 +87,13 @@ Albany::ProblemFactory::create()
     strategy = rcp(new Albany::NavierStokes(problemParams, paramLib, 3));
   }
   else if (method == "Schrodinger 1D") {
-    strategy = rcp(new QCAD::SchrodingerProblem(problemParams, paramLib, 1));
+    strategy = rcp(new QCAD::SchrodingerProblem(problemParams, paramLib, 1, comm));
   }
   else if (method == "Schrodinger 2D") {
-    strategy = rcp(new QCAD::SchrodingerProblem(problemParams, paramLib, 2));
+    strategy = rcp(new QCAD::SchrodingerProblem(problemParams, paramLib, 2, comm));
   }
   else if (method == "Schrodinger 3D") {
-    strategy = rcp(new QCAD::SchrodingerProblem(problemParams, paramLib, 3));
+    strategy = rcp(new QCAD::SchrodingerProblem(problemParams, paramLib, 3, comm));
   }
   else if (method == "ThermoElectrostatics 1D") {
     strategy = rcp(new Albany::ThermoElectrostaticsProblem(problemParams, paramLib, 1));

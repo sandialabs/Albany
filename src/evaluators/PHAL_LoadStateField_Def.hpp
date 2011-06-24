@@ -49,8 +49,8 @@ void LoadStateField<EvalT, Traits>::postRegistrationSetup(typename Traits::Setup
 template<typename EvalT, typename Traits>
 void LoadStateField<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 {
-  cout << "LoadStateField importing state " << stateName << " to field " 
-       << fieldName << " with size " << data.size() << endl;
+  //cout << "LoadStateField importing state " << stateName << " to field " 
+  //     << fieldName << " with size " << data.size() << endl;
 
   //ANDY: use oldState instead?? I don't think it matters - use const then?
   // Get state field container of same name

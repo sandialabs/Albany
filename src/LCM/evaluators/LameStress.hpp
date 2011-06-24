@@ -22,10 +22,7 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-
-// LAME includes
-#include <models/Material.h>
-#include <models/Elastic.h>
+#include "LameUtils.hpp"
 
 /** \brief Evaluates stress using the Library for Advanced Materials for Engineering (LAME).
 */
@@ -52,7 +49,7 @@ private:
   // Input:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defGradField;
 
-  std::string defgradName, stressName;
+  std::string defGradName, stressName;
   unsigned int numQPs;
   unsigned int numDims;
 
@@ -61,6 +58,15 @@ private:
 
   // The LAME material model
   Teuchos::RCP<lame::Material> lameMaterialModel;
+
+  // The LAME material model name
+  std::string lameMaterialModelName;
+
+  // Vector of the state variable names for the LAME material model
+  std::vector<std::string> lameMaterialModelStateVariableNames;
+
+  // Vector of the fields corresponding to the LAME material model state variables
+  std::vector< PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> > lameMaterialModelStateVariableFields;
 };
 }
 

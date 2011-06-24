@@ -60,31 +60,29 @@ namespace QCAD
   	Teuchos::RCP<const Teuchos::ParameterList>
     		getValidSchrodingerPotentialParameters() const;
 
-  	// Suzey: need to assign values to private variables, so remove "const"
   	ScalarT parabolicPotentialValue( const int numDim, const MeshScalarT* coord);
 
   	//! input
   	std::size_t numQPs;
   	std::size_t numDims;
   	PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
-        PHX::MDField<ScalarT,Cell,QuadPoint> psi;  //wavefunction
+    PHX::MDField<ScalarT,Cell,QuadPoint> psi;  //wavefunction
 
   	//! output
-        PHX::MDField<ScalarT,Cell,QuadPoint> V; //potential 
+    PHX::MDField<ScalarT,Cell,QuadPoint> V; //potential 
 
   	//! energy parameter of potential, precise meaning dependent on type of potential:
-        //   Parabolic case -> confinement energy
+    //   Parabolic case -> confinement energy
   	ScalarT E0;
 
-	//! constant scaling of potential
+	  //! constant scaling of potential
   	ScalarT scalingFactor;
   	
-  	//! string variable to differ the various devices implementation
   	std::string potentialType;
-        std::string potentialStateName;
+    std::string potentialStateName;
 
-        //! units
-        double energy_unit_in_eV, length_unit_in_m;
+    //! units
+    double energy_unit_in_eV, length_unit_in_m;
 	};
 }
 

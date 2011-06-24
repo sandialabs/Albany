@@ -16,9 +16,9 @@
 
 
 #include "Albany_HeatProblem.hpp"
-#include "Albany_BoundaryFlux1DResponseFunction.hpp"
 #include "Albany_SolutionAverageResponseFunction.hpp"
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
+#include "Albany_SolutionMaxValueResponseFunction.hpp"
 #include "Albany_InitialCondition.hpp"
 
 #include "Intrepid_FieldContainer.hpp"
@@ -34,6 +34,7 @@ HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_, 1),
   haveSource(false),
+  haveAbsorption(false),
   numDim(numDim_)
 {
   if (numDim==1) periodic = params->get("Periodic BC", false);
@@ -41,7 +42,8 @@ HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   if (periodic) *out <<" Periodic Boundary Conditions being used." <<std::endl;
 
   haveSource =  params->isSublist("Source Functions");
-
+  haveAbsorption =  params->isSublist("Absorption");
+  
   // neq=1 set in AbstractProblem constructor
   dofNames.resize(neq);
   dofNames[0] = "T";
@@ -55,19 +57,14 @@ Albany::HeatProblem::
 void
 Albany::HeatProblem::
 buildProblem(
-    const int worksetSize,
+    const Albany::MeshSpecsStruct& meshSpecs,
     Albany::StateManager& stateMgr,
-    const Albany::AbstractDiscretization& disc,
     std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
   /* Construct All Phalanx Evaluators */
-  constructEvaluators(worksetSize, disc.getCubatureDegree(), disc.getCellTopologyData());
-  constructDirichletEvaluators(disc.getNodeSetIDs());
+  constructEvaluators(meshSpecs);
+  constructDirichletEvaluators(meshSpecs.nsNames);
  
-  const Epetra_Map& dofMap = *(disc.getMap());
-  int left_node = dofMap.MinAllGID();
-  int right_node = dofMap.MaxAllGID();
-
   // Build response functions
   Teuchos::ParameterList& responseList = params->sublist("Response Functions");
   int num_responses = responseList.get("Number", 0);
@@ -75,21 +72,14 @@ buildProblem(
   for (int i=0; i<num_responses; i++) {
      std::string name = responseList.get(Albany::strint("Response",i), "??");
 
-     if (name == "Boundary Flux 1D" && numDim==1) {
-       // Need real size, not 1.0
-       double h =  1.0 / (dofMap.NumGlobalElements() - 1);
-       responses[i] =
-         Teuchos::rcp(new BoundaryFlux1DResponseFunction(left_node,
-                                                         right_node,
-                                                         0, 1, h,
-                                                         dofMap));
-     }
-
-     else if (name == "Solution Average")
+     if (name == "Solution Average")
        responses[i] = Teuchos::rcp(new SolutionAverageResponseFunction());
 
      else if (name == "Solution Two Norm")
        responses[i] = Teuchos::rcp(new SolutionTwoNormResponseFunction());
+
+     else if (name == "Solution Max Value")
+       responses[i] = Teuchos::rcp(new SolutionMaxValueResponseFunction());
 
      else {
        TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
@@ -104,8 +94,7 @@ buildProblem(
 
 
 void
-Albany::HeatProblem::constructEvaluators(
-       const int worksetSize, const int cubDegree, const CellTopologyData& ctd)
+Albany::HeatProblem::constructEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
 {
    using Teuchos::RCP;
    using Teuchos::rcp;
@@ -118,13 +107,14 @@ Albany::HeatProblem::constructEvaluators(
    using PHAL::AlbanyTraits;
 
    RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
-     intrepidBasis = this->getIntrepidBasis(ctd);
-   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&ctd));
+     intrepidBasis = this->getIntrepidBasis(meshSpecs.ctd);
+   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
 
    const int numNodes = intrepidBasis->getCardinality();
+   const int worksetSize = meshSpecs.worksetSize;
 
    Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-   RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, cubDegree);
+   RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
 
    const int numQPts = cubature->getNumPoints();
    const int numVertices = cellType->getNodeCount();
@@ -255,6 +245,25 @@ Albany::HeatProblem::constructEvaluators(
     evaluators_to_build["Thermal Conductivity"] = p;
   }
 
+  if (haveAbsorption) { // Absorption
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    int type = FactoryTraits<AlbanyTraits>::id_absorption;
+    p->set<int>("Type", type);
+
+    p->set<string>("QP Variable Name", "Absorption");
+    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Absorption");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    evaluators_to_build["Absorption"] = p;
+  }
+
   { // DOF: Interpolate nodal Temperature values to quad points
     RCP<ParameterList> p = rcp(new ParameterList("Heat DOFInterpolation Temperature"));
 
@@ -345,11 +354,15 @@ Albany::HeatProblem::constructEvaluators(
     p->set<string>("QP Time Derivative Variable Name", "Temperature_dot");
 
     p->set<bool>("Have Source", haveSource);
+    p->set<bool>("Have Absorption", haveAbsorption);
     p->set<string>("Source Name", "Source");
 
     p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
 
+    p->set<string>("Absorption Name", "Thermal Conductivity");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    
     p->set<string>("Gradient QP Variable Name", "Temperature Gradient");
     p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
 

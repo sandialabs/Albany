@@ -88,6 +88,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+
   Intrepid::RealSpaceTools<ScalarT>::det(J, defgrad);
 
   if (avgJ)
@@ -98,8 +99,8 @@ evaluateFields(typename Traits::EvalData workset)
       Jbar = 0.0;
       for (std::size_t qp=0; qp < numQPs; ++qp)
       {
-        TEST_FOR_EXCEPTION(J(cell,qp) < 0, std::runtime_error,
-            " negative volume detected in avgJ routine");
+        //TEST_FOR_EXCEPTION(J(cell,qp) < 0, std::runtime_error,
+        //    " negative volume detected in avgJ routine");
 	Jbar += std::log(J(cell,qp));
         //Jbar += J(cell,qp);
       }
@@ -127,8 +128,8 @@ evaluateFields(typename Traits::EvalData workset)
       vol = 0.0;
       for (std::size_t qp=0; qp < numQPs; ++qp)
       {
-        TEST_FOR_EXCEPTION(J(cell,qp) < 0, std::runtime_error,
-            " negative volume detected in volavgJ routine");
+        //TEST_FOR_EXCEPTION(J(cell,qp) < 0, std::runtime_error,
+        //    " negative volume detected in volavgJ routine");
 	Jbar += weights(cell,qp) * std::log( J(cell,qp) );
 	vol  += weights(cell,qp);
       }
@@ -148,6 +149,13 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
+  // Since Intrepid will later perform calculations on the entire workset size
+  // and not just the used portion, we must fill the excess with reasonable 
+  // values. Leaving this out leads to inversion of 0 tensors.
+  for (std::size_t cell=workset.numCells; cell < workset.worksetSize; ++cell) 
+    for (std::size_t qp=0; qp < numQPs; ++qp) 
+      for (std::size_t i=0; i < numDims; ++i)
+	defgrad(cell,qp,i,i) = 1.0;
 }
 
 //**********************************************************************

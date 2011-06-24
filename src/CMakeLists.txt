@@ -43,6 +43,7 @@ SET(HEADERS
 	Albany_RythmosObserver.hpp 
 	Albany_NOXObserver.hpp 
 	Albany_StateManager.hpp 
+        Albany_StateInfoStruct.hpp
 	Albany_VTK.hpp 
 	Albany_ModelEvaluator.hpp
 	Albany_SaveEigenData.hpp
@@ -75,7 +76,6 @@ SET(HEADERS ${HEADERS}
 
 #responses
 SET(SOURCES ${SOURCES}
-	responses/Albany_BoundaryFlux1DResponseFunction.cpp 
 	responses/Albany_SolutionAverageResponseFunction.cpp 
 	responses/Albany_SolutionMaxValueResponseFunction.cpp
 	responses/Albany_SolutionTwoNormResponseFunction.cpp
@@ -83,7 +83,6 @@ SET(SOURCES ${SOURCES}
   )
 SET(HEADERS ${HEADERS}
 	responses/Albany_AbstractResponseFunction.hpp 
-	responses/Albany_BoundaryFlux1DResponseFunction.hpp 
 	responses/Albany_SolutionAverageResponseFunction.hpp 
 	responses/Albany_SolutionMaxValueResponseFunction.hpp
 	responses/Albany_SolutionTwoNormResponseFunction.hpp
@@ -125,6 +124,7 @@ SET(SOURCES ${SOURCES}
 	evaluators/PHAL_Constant.cpp 
 	evaluators/PHAL_ODEResid.cpp 
 	evaluators/PHAL_ThermalConductivity.cpp 
+	evaluators/PHAL_Absorption.cpp 
         evaluators/PHAL_HeatEqResid.cpp
         evaluators/PHAL_ComputeBasisFunctions.cpp
         evaluators/PHAL_DOFInterpolation.cpp
@@ -138,6 +138,7 @@ SET(SOURCES ${SOURCES}
 	evaluators/PHAL_TEProp.cpp
 	evaluators/PHAL_SaveStateField.cpp
 	evaluators/PHAL_LoadStateField.cpp
+	evaluators/PHAL_SharedParameter.cpp
 	evaluators/PHAL_NSContinuityResid.cpp
 	evaluators/PHAL_NSMomentumResid.cpp
         evaluators/PHAL_NSThermalEqResid.cpp
@@ -163,6 +164,8 @@ SET(HEADERS ${HEADERS}
 	evaluators/PHAL_ODEResid_Def.hpp 
 	evaluators/PHAL_ThermalConductivity.hpp 
 	evaluators/PHAL_ThermalConductivity_Def.hpp
+	evaluators/PHAL_Absorption.hpp 
+	evaluators/PHAL_Absorption_Def.hpp
         evaluators/PHAL_HeatEqResid.hpp
         evaluators/PHAL_HeatEqResid_Def.hpp
         evaluators/PHAL_ComputeBasisFunctions.hpp
@@ -189,6 +192,8 @@ SET(HEADERS ${HEADERS}
 	evaluators/PHAL_SaveStateField_Def.hpp
 	evaluators/PHAL_LoadStateField.hpp
 	evaluators/PHAL_LoadStateField_Def.hpp
+	evaluators/PHAL_SharedParameter.hpp
+	evaluators/PHAL_SharedParameter_Def.hpp
 	evaluators/PHAL_NSContinuityResid.hpp
 	evaluators/PHAL_NSContinuityResid_Def.hpp
 	evaluators/PHAL_NSMomentumResid.hpp
@@ -259,6 +264,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/BulkModulus.cpp
     ${LCM_DIR}/evaluators/ShearModulus.cpp
     ${LCM_DIR}/evaluators/KfieldBC.cpp
+    ${LCM_DIR}/evaluators/DislocationDensity.cpp
   )
 
   SET(HEADERS ${HEADERS}
@@ -312,6 +318,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/ShearModulus_Def.hpp
     ${LCM_DIR}/evaluators/KfieldBC.hpp 
     ${LCM_DIR}/evaluators/KfieldBC_Def.hpp
+    ${LCM_DIR}/evaluators/DislocationDensity.hpp
+    ${LCM_DIR}/evaluators/DislocationDensity_Def.hpp
   )
 
   #LCM utils
@@ -329,10 +337,12 @@ IF(ALBANY_LCM)
 
 IF(ALBANY_LAME)
   SET(SOURCES ${SOURCES}
+    ${LCM_DIR}/utils/LameUtils.cpp
     ${LCM_DIR}/evaluators/LameStress.cpp 
     ${LCM_DIR}/problems/LameProblem.cpp 
   )
   SET(HEADERS ${HEADERS}
+    ${LCM_DIR}/utils/LameUtils.hpp
     ${LCM_DIR}/evaluators/LameStress.hpp 
     ${LCM_DIR}/evaluators/LameStress_Def.hpp 
     ${LCM_DIR}/problems/LameProblem.hpp
@@ -345,6 +355,7 @@ SET(SOURCES ${SOURCES}
        evaluators/QCAD_Permittivity.cpp
        evaluators/QCAD_PoissonResid.cpp
        evaluators/QCAD_PoissonSource.cpp
+       evaluators/QCAD_PoissonDirichlet.cpp
        problems/QCAD_PoissonProblem.cpp
        problems/QCAD_MaterialDatabase.cpp
   )
@@ -356,6 +367,8 @@ SET(HEADERS ${HEADERS}
        evaluators/QCAD_PoissonResid_Def.hpp
        evaluators/QCAD_PoissonSource.hpp
        evaluators/QCAD_PoissonSource_Def.hpp
+       evaluators/QCAD_PoissonDirichlet.hpp
+       evaluators/QCAD_PoissonDirichlet_Def.hpp
        problems/QCAD_PoissonProblem.hpp
   )
 
@@ -465,6 +478,9 @@ add_library(albanyLib ${SOURCES} ${HEADERS})
 # Now build executables from this library, tailored main()s, and Trilinos
 
 add_executable(Albany Main_Solve.cpp)
+add_executable(AlbanyAdjoint Main_Adjoint.cpp)
+add_executable(AlbanyCoupled Main_Coupled.cpp)
+add_executable(AlbanySGAdjoint Main_SGAdjoint.cpp)
 add_executable(AlbanySG Main_SGSolve.cpp)
 IF (ALBANY_DAKOTA)
   add_executable(AlbanyDakota Main_Dakota.cpp Albany_Dakota.cpp Albany_Dakota.hpp)
@@ -482,6 +498,9 @@ add_executable(UtilsTest LCM/test/utils/UtilsTest.cc)
 
 target_link_libraries(Albany          albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
 target_link_libraries(AlbanySG        albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
+target_link_libraries(AlbanyAdjoint   albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
+target_link_libraries(AlbanyCoupled   albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
+target_link_libraries(AlbanySGAdjoint   albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
 IF (ALBANY_DAKOTA)
   target_link_libraries(AlbanyDakota    albanyLib ${ALB_TRILINOS_LIBS}
                         ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 

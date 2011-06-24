@@ -20,6 +20,7 @@
 #include "PHAL_Dirichlet.hpp"
 #include "PHAL_Dirichlet_Def.hpp"
 
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::DirichletBase)
 PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::Dirichlet)
 PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::DirichletAggregator)
 

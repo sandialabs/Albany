@@ -59,12 +59,20 @@ void GatherCoordinateVector<EvalT, Traits>::evaluateFields(typename Traits::Eval
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > wsCoords = workset.wsCoords;
 
   for (std::size_t cell=0; cell < numCells; ++cell) {
-    //const Teuchos::ArrayRCP<int>& nodeID  = workset.wsElNodeID[cell];
     for (std::size_t node = 0; node < numVertices; ++node) {
-      //const int row_loc = 3*nodeID[node];
-
       for (std::size_t eq=0; eq < numDim; ++eq) { 
         coordVec(cell,node,eq) = wsCoords[cell][node][eq]; 
+      }
+    }
+  }
+
+  // Since Intrepid will later perform calculations on the entire workset size
+  // and not just the used portion, we must fill the excess with reasonable 
+  // values. Leaving this out leads to calculations on singular elements.
+  for (std::size_t cell=numCells; cell < workset.worksetSize; ++cell) {
+    for (std::size_t node = 0; node < numVertices; ++node) {
+      for (std::size_t eq=0; eq < numDim; ++eq) { 
+        coordVec(cell,node,eq) = coordVec(0,node,eq); 
       }
     }
   }
@@ -107,26 +115,34 @@ evaluateFields(typename Traits::EvalData workset)
   const Teuchos::ArrayRCP<double> &coordinates = workset.coordinates;
   unsigned int numCells = workset.numCells;
 
-  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& coord_derivs = workset.coord_derivs;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > wsCoords = workset.wsCoords;
+  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > > & ws_coord_derivs = workset.ws_coord_derivs;
   std::vector<int> *coord_deriv_indices = workset.coord_deriv_indices;
-  int numShapeDerivs = coord_derivs.size();
+  int numShapeDerivs = ws_coord_derivs.size();
   int numParams = workset.num_cols_p;
 
   for (std::size_t cell=0; cell < numCells; ++cell) {
-    const Teuchos::ArrayRCP<int>& nodeID  = workset.wsElNodeID[cell];
     for (std::size_t node = 0; node < numVertices; ++node) {
-      const int row_loc = 3*nodeID[node];
-
       for (std::size_t eq=0; eq < numDim; ++eq) { 
-        coordVec(cell,node,eq) = FadType(numParams, coordinates[row_loc+eq]); 
+        coordVec(cell,node,eq) = FadType(numParams, wsCoords[cell][node][eq]); 
         for (int j=0; j < numShapeDerivs; ++j) { 
           coordVec(cell,node,eq).fastAccessDx((*coord_deriv_indices)[j]) 
-               =  coord_derivs[j][row_loc+eq];
-//               =  ws_coord_derivs[j][cell][node][eq];
+               =  ws_coord_derivs[j][cell][node][eq];
         }
+      }
+    }
+  }
+
+  // Since Intrepid will later perform calculations on the entire workset size
+  // and not just the used portion, we must fill the excess with reasonable 
+  // values. Leaving this out leads to calculations on singular elements.
+  //
+  for (std::size_t cell=numCells; cell < workset.worksetSize; ++cell) {
+    for (std::size_t node = 0; node < numVertices; ++node) {
+      for (std::size_t eq=0; eq < numDim; ++eq) { 
+        coordVec(cell,node,eq) = coordVec(0,node,eq); 
       }
     }
   }
 }
 }
-

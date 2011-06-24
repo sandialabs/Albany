@@ -2,7 +2,6 @@
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Heat 3D"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
-    <Parameter name="Workset Size" type="int" value="100"/>
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS NodeSet0 for DOF T" type="double" value="2.0"/>
       <Parameter name="DBC on NS NodeSet1 for DOF T" type="double" value="2.0"/>
@@ -44,6 +43,7 @@
     <Parameter name="1D Elements" type="int" value="10"/>
     <Parameter name="2D Elements" type="int" value="11"/>
     <Parameter name="3D Elements" type="int" value="13"/>
+    <Parameter name="Workset Size" type="int" value="100"/>
     <Parameter name="Method" type="string" value="STK3D"/>
     <Parameter name="Cubature Degree" type="int" value="3"/>
   </ParameterList>

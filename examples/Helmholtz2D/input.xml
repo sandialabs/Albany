@@ -4,7 +4,6 @@
     <Parameter name="Ksqr" type="double" value="1.100"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="2"/>
-    <Parameter name="Workset Size" type="int" value="100"/>
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS NodeSet0 for DOF U" type="double" value="0.0"/>
       <Parameter name="DBC on NS NodeSet1 for DOF U" type="double" value="0.0"/>
@@ -48,6 +47,7 @@
     <Parameter name="2D Elements" type="int" value="50"/>
     <Parameter name="1D Scale" type="double" value="4.0"/>
     <Parameter name="2D Scale" type="double" value="4.0"/>
+    <Parameter name="Workset Size" type="int" value="100"/>
     <Parameter name="Method" type="string" value="STK2D"/>
     <Parameter name="Exodus Output File Name" type="string" value="helm2d.exo"/>
   </ParameterList>

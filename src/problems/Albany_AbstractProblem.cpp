@@ -69,17 +69,17 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
                     "Flag to select outpuy of Phalanx Graph and level of detail");
   validPL->set<bool>("Use Physics-Based Preconditioner", false, 
       "Flag to create signal that this problem will creat its own preconditioner");
-  validPL->set<int>("Workset Size", 0,
-                    "Choose size of elements to be processed together (0 for all at once)");
 
   validPL->sublist("Initial Condition", false, "");
   validPL->sublist("Initial Condition Dot", false, "");
   validPL->sublist("Source Functions", false, "");
+  validPL->sublist("Absorption", false, "");
   validPL->sublist("Response Functions", false, "");
   validPL->sublist("Parameters", false, "");
   validPL->sublist("Stochastic Galerkin", false, "");
   validPL->sublist("Teko", false, "");
   validPL->sublist("Dirichlet BCs", false, "");
+  validPL->set<bool>("Solve Adjoint", false, "");
 
   validPL->set<bool>("Ignore Residual In Jacobian", false, 
 		     "Ignore residual calculations while computing the Jacobian (only generally appropriate for linear problems)");

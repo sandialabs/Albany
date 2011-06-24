@@ -36,7 +36,7 @@
 #include "Teko_InverseFactoryOperator.hpp"
 #include "Teko_StridedEpetraOperator.hpp"
 
-#ifdef ALBANY_IOSS
+#ifdef ALBANY_SEACAS
   #include "Albany_STKDiscretization.hpp"
 #endif
 
@@ -69,7 +69,7 @@ Albany::Application::Application(
   // Create problem object
   Teuchos::RCP<Teuchos::ParameterList> problemParams = 
     Teuchos::sublist(params, "Problem", true);
-  Albany::ProblemFactory problemFactory(problemParams, paramLib);
+  Albany::ProblemFactory problemFactory(problemParams, paramLib, comm);
   Teuchos::RCP<Albany::AbstractProblem> problem = problemFactory.create();
 
   // Validate Problem parameters against list for this specific problem
@@ -103,14 +103,19 @@ Albany::Application::Application(
   // Create discretization object
   Teuchos::RCP<Teuchos::ParameterList> discParams = 
     Teuchos::rcpFromRef(params->sublist("Discretization"));
-  Albany::DiscretizationFactory discFactory(discParams);
+  Albany::DiscretizationFactory discFactory(discParams, comm);
 #ifdef ALBANY_CUTR
   discFactory.setMeshMover(meshMover);
 #endif
-  worksetSize = problemParams->get("Workset Size",100);
-  if (worksetSize < 1) { cout << "FIX ME " << endl; worksetSize = 1000;}
 
-  disc = discFactory.create(neq, problem->numStates(), worksetSize, comm);
+  // Get mesh specification object: worksetSize, cell topology, etc
+  const Teuchos::RCP<Albany::MeshSpecsStruct> meshSpecs = discFactory.createMeshSpecs();
+  worksetSize = meshSpecs->worksetSize;
+
+  problem->buildProblem(*meshSpecs, stateMgr, responses);
+
+  // Create the full mesh
+  disc = discFactory.createDiscretization(neq, stateMgr.getStateInfoStruct());
 
   // Load connectivity map and coordinates 
   wsElNodeID = disc->getWsElNodeID();
@@ -148,8 +153,6 @@ Albany::Application::Application(
     initial_x_dot->Export(*overlapped_xdot, *exporter, Insert);
   }
 
-  problem->buildProblem(worksetSize, stateMgr, *disc, responses);
-  
   stateMgr.setDiscretization(disc);
   stateMgr.allocateStateVariables(numWorksets);
   stateMgr.initializeStateVariables(numWorksets);
@@ -180,6 +183,9 @@ Albany::Application::Application(
     problemParams->get("Ignore Residual In Jacobian", false);
 
   perturbBetaForDirichlets = problemParams->get("Perturb Dirichlet",0.0);
+
+  is_adjoint = 
+    problemParams->get("Solve Adjoint", false);
 }
 
 Albany::Application::~Application()
@@ -374,7 +380,7 @@ Albany::Application::computeGlobalResidual(
 
   f.Export(*overlapped_f, *exporter, Add);
 
-#ifdef ALBANY_IOSS
+#ifdef ALBANY_SEACAS
   Albany::STKDiscretization* stkDisc =
     dynamic_cast<Albany::STKDiscretization*>(disc.get());
   stkDisc->setResidualField(f);
@@ -469,6 +475,7 @@ Albany::Application::computeGlobalJacobian(
     workset.current_time = current_time;
     workset.ignore_residual = ignore_residual_in_jacobian;
     if (xdot != NULL) workset.transientTerms = true;
+    workset.is_adjoint   = is_adjoint;
 
     workset.worksetSize = worksetSize;
     for (int ws=0; ws < numWorksets; ws++) {

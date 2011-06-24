@@ -2,7 +2,6 @@
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="NonlinearElasticity 2D"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
-    <Parameter name="Workset Size" type="int" value="173"/>
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS NodeSet0 for DOF X" type="double" value="0.0"/>
       <Parameter name="DBC on NS NodeSet0 for DOF Y" type="double" value="0.0"/>
@@ -31,6 +30,7 @@
   <ParameterList name="Discretization">
     <Parameter name="1D Elements" type="int" value="70"/>
     <Parameter name="2D Elements" type="int" value="25"/>
+    <Parameter name="Workset Size" type="int" value="173"/>
     <Parameter name="Cell Topology" type="string" value="Tri"/>
     <Parameter name="Method" type="string" value="STK2D"/>
     <Parameter name="Exodus Output File Name" type="string" value="nleltri2d.exo"/>

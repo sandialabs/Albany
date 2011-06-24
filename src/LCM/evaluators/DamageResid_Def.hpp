@@ -40,6 +40,7 @@ DamageResid(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
   source      (p.get<std::string>                   ("Damage Source Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  gc          (p.get<double>("gc Name")),
   dResidual   (p.get<std::string>                   ("Residual Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") )
 {
@@ -93,12 +94,14 @@ void DamageResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   typedef Intrepid::FunctionSpaceTools FST;
+  typedef Intrepid::RealSpaceTools<ScalarT> RST;
 
   FST::scalarMultiplyDataData<ScalarT> (flux, damageLS, damage_grad);
+  RST::scale(flux,-gc);
 
   FST::integrate<ScalarT>(dResidual, flux, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
 
-  for (int i=0; i < source.size(); i++) source[i] *= -1.0;
+  //for (int i=0; i < source.size(); i++) source[i] *= -1.0;
   FST::integrate<ScalarT>(dResidual, source, wBF, Intrepid::COMP_CPP, true); // "true" sums into
   
   if (workset.transientTerms && enableTransient) 

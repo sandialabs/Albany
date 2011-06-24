@@ -19,14 +19,15 @@
 rm CMakeCache.txt
 
 cmake \
- -D ALBANY_TRILINOS_DIR:FILEPATH=/home/agsalin/Trilinos/build_july10 \
+ -D ALBANY_TRILINOS_DIR:FILEPATH=/home/agsalin/Trilinos/build_july10/install \
  ..
 
 ## Some options (As listed below, they will change the default):
 #
 #  -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
 #  -D ALBANY_ENABLE_CUBIT:BOOL=ON \
-#  -D ENABLE_LCM:BOOL=OFF \
+#  -D ENABLE_LCM:BOOL=ON \
+#  -D ALBANY_QCAD:BOOL=ON \
 
 ## Use this line to override Trilinos CXX Flags:
 #  -D CMAKE_CXX_FLAGS:STRING=" -O3 " \

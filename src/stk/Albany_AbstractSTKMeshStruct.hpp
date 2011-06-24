@@ -23,6 +23,7 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Epetra_Comm.h"
 #include "Epetra_Map.h"
+#include "Albany_StateInfoStruct.hpp"
 
 // Start of STK stuff
 #include <stk_util/parallel/Parallel.hpp>
@@ -44,7 +45,8 @@ namespace Albany {
     virtual void setFieldAndBulkData(
                   const Teuchos::RCP<const Epetra_Comm>& comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_, const unsigned int nstates_,
+                  const unsigned int neq_, 
+                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize) {};
 
 
@@ -71,18 +73,6 @@ namespace Albany {
     // Temporary flag to switch between 2D elements being Rank Elements or Faces
     bool useElementAsTopRank;
   };
-
-  // Container for mesh specification info needed to construct an Albany Problem
-  struct MeshSpecsStruct {
-    MeshSpecsStruct(const CellTopologyData& ctd_, int numDim_, 
-                    int cubatureDegree_, std::vector<std::string> nsNames_)
-       :  ctd(ctd_), numDim(numDim_), cubatureDegree(cubatureDegree_), nsNames(nsNames_) {}
-    const CellTopologyData ctd;
-    int numDim;
-    int cubatureDegree;
-    std::vector<std::string> nsNames;  //Node Sets Names
-  };
-
 }
 
 #endif // ALBANY_ABSTRACTSTKMESHSTRUCT_HPP

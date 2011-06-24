@@ -45,6 +45,7 @@ ScatterResidualBase(const Teuchos::ParameterList& p)
     vectorField = p.get<bool>("Vector Field");
   else vectorField = false;
 
+  
   if (!vectorField) {
     numFieldsBase = names.size();
     const std::size_t num_val = numFieldsBase;
@@ -175,19 +176,20 @@ evaluateFields(typename Traits::EvalData workset)
             firstcol =   nodeID[node_col] * neq;
 
             // Loop over equations per node
-            //for (unsigned int eq_col=0; eq_col<numFields; eq_col++) {
             for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
-              //lcol = neq * node_col + eq_col + this->offset;
               lcol = neq * node_col + eq_col;
 
               // Global column
-              //col =  firstcol + eq_col + this->offset;
               col =  firstcol + eq_col;
               
-	      //if (!this->vectorField && eq == 1) std::cout << "Jac(" << row << "," << col << ") = " << valptr->fastAccessDx(lcol) << std::endl;
-
-              // Sum Jacobian
-              Jac->SumIntoMyValues(row, 1, &(valptr->fastAccessDx(lcol)), &col);
+              if (workset.is_adjoint) {
+                // Sum Jacobian transposed
+                Jac->SumIntoMyValues(col, 1, &(valptr->fastAccessDx(lcol)), &row);
+              }
+              else {
+                // Sum Jacobian
+                Jac->SumIntoMyValues(row, 1, &(valptr->fastAccessDx(lcol)), &col);
+              }
             } // column equations
           } // column nodes
         } // has fast access
@@ -358,7 +360,12 @@ evaluateFields(typename Traits::EvalData workset)
               // Sum Jacobian
 	      for (int block=0; block<nblock_jac; block++) {
 		c = valptr->fastAccessDx(lcol).coeff(block);
-		(*Jac)[block].SumIntoMyValues(row, 1, &c, &col);
+                if (workset.is_adjoint) { 
+		  (*Jac)[block].SumIntoMyValues(col, 1, &c, &row);
+                }
+                else {
+		  (*Jac)[block].SumIntoMyValues(row, 1, &c, &col);
+                }
 	      }
             } // column equations
           } // column nodes

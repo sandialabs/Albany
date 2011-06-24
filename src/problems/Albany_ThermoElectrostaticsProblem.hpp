@@ -47,9 +47,8 @@ namespace Albany {
 
     //! Build the PDE instantiations, boundary conditions, and initial solution
     void buildProblem(
-       const int worksetSize,
+       const Albany::MeshSpecsStruct& meshSpecs,
        StateManager& stateMgr,
-       const Albany::AbstractDiscretization& disc,
        std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
 
     //! Each problem must generate it's list of valide parameters
@@ -63,9 +62,8 @@ namespace Albany {
     //! Private to prohibit copying
     ThermoElectrostaticsProblem& operator=(const ThermoElectrostaticsProblem&);
 
-    void constructEvaluators(const int worksetSize,
-                             const int cubDegree,
-                             const CellTopologyData& ctd);
+    void constructEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
+
   protected:
 
     //! Boundary conditions on source term

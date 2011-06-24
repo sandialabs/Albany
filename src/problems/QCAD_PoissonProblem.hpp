@@ -41,16 +41,16 @@ namespace QCAD {
     PoissonProblem(
                          const Teuchos::RCP<Teuchos::ParameterList>& params,
                          const Teuchos::RCP<ParamLib>& paramLib,
-                         const int numDim_);
+                         const int numDim_,
+			 const Teuchos::RCP<const Epetra_Comm>& comm_);
 
     //! Destructor
     ~PoissonProblem();
 
     //! Build the PDE instantiations, boundary conditions, and initial solution
     void buildProblem(
-       const int worksetSize,
+       const Albany::MeshSpecsStruct& meshSpecs,
        Albany::StateManager& stateMgr,
-       const Albany::AbstractDiscretization& disc,
        std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
 
     //! Each problem must generate it's list of valide parameters
@@ -64,9 +64,10 @@ namespace QCAD {
     //! Private to prohibit copying
     PoissonProblem& operator=(const PoissonProblem&);
 
-    void constructEvaluators(const int worksetSize,
-        const int cubDegree, const CellTopologyData& ctd,
-        Albany::StateManager& stateMgr);
+    void constructEvaluators(const Albany::MeshSpecsStruct& meshSpecs,
+                             Albany::StateManager& stateMgr);
+
+    void constructDirichletEvaluators(const std::vector<std::string>& nodeSetIDs);
 
   protected:
 
@@ -74,11 +75,16 @@ namespace QCAD {
     bool periodic;
 
     //! Parameters to use when constructing evaluators
+    Teuchos::RCP<const Epetra_Comm> comm;
     bool haveSource;
     int numDim;
     double length_unit_in_m;
     double temperature;
     std::string mtrlDbFilename;
+
+    //! Parameters for coupling to Schrodinger
+    bool bUseSchrodingerSource;
+    std::string eigenvalFilename;
     int nEigenvectorsToInputFromStates;
     
   };

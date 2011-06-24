@@ -40,16 +40,16 @@ namespace QCAD {
     SchrodingerProblem(
                          const Teuchos::RCP<Teuchos::ParameterList>& params,
                          const Teuchos::RCP<ParamLib>& paramLib,
-                         const int numDim_);
+                         const int numDim_,
+			 const Teuchos::RCP<const Epetra_Comm>& comm_);
 
     //! Destructor
     ~SchrodingerProblem();
 
     //! Build the PDE instantiations, boundary conditions, and initial solution
     void buildProblem(
-       const int worksetSize,
+       const Albany::MeshSpecsStruct& meshSpecs,
        Albany::StateManager& stateMgr,
-       const Albany::AbstractDiscretization& disc,
        std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
 
     //! Each problem must generate it's list of valide parameters
@@ -63,20 +63,20 @@ namespace QCAD {
     //! Private to prohibit copying
     SchrodingerProblem& operator=(const SchrodingerProblem&);
 
-    void constructEvaluators(const int worksetSize,
-                             const int cubDegree,
-                             const CellTopologyData& ctd,
-			     Albany::StateManager& stateMgr);
-  protected:
+    void constructEvaluators(const Albany::MeshSpecsStruct& meshSpecs,
+                             Albany::StateManager& stateMgr);
 
+  protected:
+    Teuchos::RCP<const Epetra_Comm> comm;
     bool havePotential;
     bool haveMaterial;
     double energy_unit_in_eV, length_unit_in_m;
     std::string potentialStateName;
+    std::string mtrlDbFilename;
 
     int numDim;
     int nEigenvectorsToOuputAsStates;
-
+    bool bOnlySolveInQuantumBlocks;
   };
 
 }

@@ -287,6 +287,8 @@ namespace Albany {
 
     //! Access to number of worksets - needed for working with StateManager
     int getNumWorksets() { return numWorksets;};
+    
+    bool is_adjoint;
 
   private:
 
