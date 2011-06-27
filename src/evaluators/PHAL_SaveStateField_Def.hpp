@@ -54,15 +54,15 @@ SaveStateField(const Teuchos::ParameterList& p)
   fieldName =  p.get<std::string>("Field Name");
   stateName =  p.get<std::string>("State Name");
   PHX::MDField<ScalarT> f(fieldName, p.get<Teuchos::RCP<PHX::DataLayout> >("State Field Layout") );
-  state = f;
+  field = f;
 
   savestate_operation = Teuchos::rcp(new PHX::Tag<ScalarT>
     (fieldName, p.get< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout")));
 
-  this->addDependentField(state);
+  this->addDependentField(field);
   this->addEvaluatedField(*savestate_operation);
 
-  this->setName("Save State " + stateName +" to Field " + fieldName
+  this->setName("Save Field " + fieldName +" to State " + stateName
                 + PHX::TypeString<PHAL::AlbanyTraits::Residual>::value);
 }
 
@@ -72,28 +72,13 @@ void SaveStateField<PHAL::AlbanyTraits::Residual, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(state,fm);
-
-  //state.dimensions(dims); //get dimensions
+  this->utils.setFieldData(field,fm);
 }
 // **********************************************************************
 template<typename Traits>
 void SaveStateField<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 { 
-  //cout << "SaveStateField copying off  " << fieldName << " to state " 
-  //     << stateName << " with size " << state.size() << endl;
-  
-  // Get state field container of same name
-  Albany::StateVariables& newState = *workset.newState;
-  Intrepid::FieldContainer<RealType>& savedState  = *newState[stateName];
-
-  double max = 0;
-  for (int i=0; i < state.size() ; ++i) {
-    savedState[i] = state[i];
-    if(fabs(state[i]) > max) max = fabs(state[i]);
-  }
-
   // Get shards Array (from STK) for this state
   // Need to check if we can just copy full size -- can assiume same ordering?
     Albany::MDArray sta = (*workset.stateArrayPtr)[stateName];
@@ -105,20 +90,20 @@ evaluateFields(typename Traits::EvalData workset)
       case 2:     
         for (int cell = 0; cell < dims[0]; ++cell)
           for (int qp = 0; qp < dims[1]; ++qp)
-                sta(cell, qp) = state(cell,qp);;
+                sta(cell, qp) = field(cell,qp);;
         break;
       case 3:     
         for (int cell = 0; cell < dims[0]; ++cell)
           for (int qp = 0; qp < dims[1]; ++qp)
             for (int i = 0; i < dims[2]; ++i)
-                sta(cell, qp, i) = state(cell,qp,i);
+                sta(cell, qp, i) = field(cell,qp,i);
         break;
       case 4:     
         for (int cell = 0; cell < dims[0]; ++cell)
           for (int qp = 0; qp < dims[1]; ++qp)
             for (int i = 0; i < dims[2]; ++i)
               for (int j = 0; j < dims[3]; ++j)
-                  sta(cell, qp, i, j) = state(cell,qp,i,j);
+                  sta(cell, qp, i, j) = field(cell,qp,i,j);
         break;
       default:
       TEST_FOR_EXCEPTION(size<2||size>4, std::logic_error,
