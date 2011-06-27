@@ -112,6 +112,11 @@ public:
   //! Method to get a StateInfoStruct of info needed by STK to output States as Fields
   Teuchos::RCP<Albany::StateInfoStruct> getStateInfoStruct();
 
+  //! Method to integrate a scalar-valued state over an element block 
+  //  (zero-length ebName integrates over entire mesh)
+  RealType integrateStateVariable(const std::string& stateName, const std::string& ebName,
+				  const std::string& BFName, const std::string& wBFName);
+
 private:
   //! Private to prohibit copying
   StateManager(const StateManager&);

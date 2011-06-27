@@ -1,6 +1,7 @@
 <ParameterList>
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Poisson 2D" />
+    <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
 
     <Parameter name="LengthUnitInMeters" type="double" value="1e-6"/>
@@ -64,16 +65,22 @@
 
 
   <ParameterList name="LOCA">
-    <ParameterList name="Stepper">
-      <ParameterList name="Eigensolver" />
-    </ParameterList>
-    <ParameterList name="Bifurcation" />
-    <ParameterList name="Step Size" />
+    <ParameterList name="Bifurcation"/>
+    <ParameterList name="Constraints"/>
     <ParameterList name="Predictor">
-      <ParameterList name="First Step Predictor" />
-      <ParameterList name="Last Step Predictor" />
+      <Parameter  name="Method" type="string" value="Constant" />
     </ParameterList>
-    <ParameterList name="Constraints" />
+    <ParameterList name="Stepper">
+      <Parameter  name="Initial Value" type="double" value="0"/>
+      <Parameter  name="Continuation Parameter" type="string" value="DBC on NS topgate for DOF Phi"/>
+      <Parameter  name="Max Steps" type="int" value="10"/>
+      <Parameter  name="Max Value" type="double" value="10.0"/>
+      <Parameter  name="Min Value" type="double" value="0"/>
+    </ParameterList>
+    <ParameterList name="Step Size">
+      <Parameter  name="Method" type="string" value="Constant" />
+      <Parameter  name="Initial Step Size" type="double" value="1.0"/>
+    </ParameterList>
   </ParameterList>
 
 

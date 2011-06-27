@@ -21,6 +21,7 @@
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
 #include "Albany_InitialCondition.hpp"
 #include "Albany_Utils.hpp"
+#include "QCAD_ElementBlockIntegralResponseFunction.hpp"
 
 QCAD::PoissonProblem::
 PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
@@ -79,7 +80,7 @@ PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   dofNames[0] = "Phi";
 
   // STATE OUTPUT
-  nstates = 7;
+  nstates = 9;
   nstates += nEigenvectorsToInputFromStates*2; //Re and Im parts (input @ nodes)
   nstates += nEigenvectorsToInputFromStates*2; //Re and Im parts (output @ qps)
 }
@@ -113,6 +114,11 @@ buildProblem(
 
      else if (name == "Solution Two Norm")
        responses[i] = Teuchos::rcp(new Albany::SolutionTwoNormResponseFunction());
+
+     else if (name == "Integrate Charge Density State over silicon.quantum")
+       //TEST CASE - hardcoded state and ebName - TODO: make general
+       responses[i] = Teuchos::rcp(new QCAD::ElementBlockIntegralResponseFunction(
+		"Charge Density", "silicon.quantum", "BF", "wBF", stateMgr));
 
      else 
      {
@@ -410,6 +416,10 @@ QCAD::PoissonProblem::constructEvaluators(
       stateMgr.registerStateVariable("Conduction Band", qp_scalar, dummy, issf);
     evaluators_to_build["Save Valence Band"] =
       stateMgr.registerStateVariable("Valence Band", qp_scalar, dummy, issf);
+    evaluators_to_build["Save Basis Functions"] =
+      stateMgr.registerStateVariable("BF", node_qp_scalar, dummy, issf);
+    evaluators_to_build["Save Weighted Basis Functions"] =
+      stateMgr.registerStateVariable("wBF", node_qp_scalar, dummy, issf);
   }
 
   // Interpolate Input Eigenvectors (if any) to quad points

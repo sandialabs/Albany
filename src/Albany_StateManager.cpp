@@ -518,3 +518,80 @@ Albany::StateManager::saveVectorAsState(const std::string& stateName, const Epet
     }
   }
 }
+
+
+RealType
+Albany::StateManager::integrateStateVariable(const std::string& stateName, const std::string& ebName,
+					     const std::string& BFName, const std::string& wBFName)
+					     
+{
+  TEST_FOR_EXCEPT(!stateVarsAreAllocated);
+  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+
+  // element block names
+  std::string worksetEBName;
+  Teuchos::ArrayRCP<std::string> wsEBNames;
+  wsEBNames = disc->getWsEBNames();
+
+  // here we are getting a pointer to the current state
+  // (we don't need to output oldState
+  std::vector<StateVariables>* stateVarPtr;
+  if (state1_is_old_state)
+    stateVarPtr = &state2;
+  else
+    stateVarPtr = &state1;
+
+  // the number of worksets being used
+  int numWorksets = (*stateVarPtr).size();
+
+  // accumulator for integral
+  RealType integral = 0.0;
+
+  for (int ws = 0; ws < numWorksets; ws++)
+  {
+    worksetEBName = wsEBNames[ws];
+
+    if( ebName.length() == 0 || ebName == worksetEBName ) {
+      Teuchos::RCP<Intrepid::FieldContainer<RealType> > fc = (*stateVarPtr)[ws][stateName];
+      Teuchos::RCP<Intrepid::FieldContainer<RealType> > wBFfc = (*stateVarPtr)[ws][wBFName];
+      Teuchos::RCP<Intrepid::FieldContainer<RealType> > BFfc  = (*stateVarPtr)[ws][BFName];
+  
+      std::vector<PHX::DataLayout::size_type> dims, BFdims;
+      fc->dimensions(dims);
+      BFfc->dimensions(BFdims);
+
+      int size = dims.size();
+      TEST_FOR_EXCEPTION(size != 2, std::logic_error,
+	    "Only scalar fields supported by StateManager integrateStateVariable: size = " << size);
+      int cells = dims[0];
+      int qps = dims[1];
+
+      int BFsize = BFdims.size();
+      TEST_FOR_EXCEPTION(BFsize != 3, std::logic_error,
+	    "BF field should be size 3 in StateManager integrateStateVariable, but size = " << size);
+      TEST_FOR_EXCEPTION(BFdims[0] != cells, std::logic_error,
+			 "integrateStateVariable cell count mismatch: " << BFdims[0] << " != " << cells);
+      TEST_FOR_EXCEPTION(BFdims[2] != qps, std::logic_error,
+			 "integrateStateVariable quad pt count mismatch: " << BFdims[2] << " != " << qps);
+      int nodes = BFdims[1];
+
+      RealType weighted_measure_value; int n;
+      for (int cell = 0; cell < cells; ++cell) {
+	for (int qp = 0; qp < qps; ++qp) {	  
+	  for (n=0, weighted_measure_value=0; n < nodes; ++n) {
+	    if( fabs( (*BFfc)(cell,n,qp) ) > 1e-8 )
+	      weighted_measure_value += (*wBFfc)(cell,n,qp) / (*BFfc)(cell,n,qp);
+	  }
+	  integral += (*fc)(cell,qp) * weighted_measure_value;
+	  //std::cout << "DEBUG Integral: " << integral << " after + " << (*fc)(cell,qp) 
+	  //	    << " * " <<  weighted_measure_value << std::endl;
+	}
+      }
+
+      //TODO - 3,4 dimensions?
+    }
+  }
+
+  return integral;
+}
+  

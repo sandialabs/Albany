@@ -326,6 +326,7 @@ SET(SOURCES ${SOURCES}
        evaluators/QCAD_PoissonDirichlet.cpp
        problems/QCAD_PoissonProblem.cpp
        problems/QCAD_MaterialDatabase.cpp
+       responses/QCAD_ElementBlockIntegralResponseFunction.cpp
   )
 
 SET(HEADERS ${HEADERS}
@@ -338,6 +339,7 @@ SET(HEADERS ${HEADERS}
        evaluators/QCAD_PoissonDirichlet.hpp
        evaluators/QCAD_PoissonDirichlet_Def.hpp
        problems/QCAD_PoissonProblem.hpp
+       responses/QCAD_ElementBlockIntegralResponseFunction.hpp
   )
 
 
