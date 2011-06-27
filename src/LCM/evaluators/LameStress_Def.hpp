@@ -274,8 +274,10 @@ evaluateFields(typename Traits::EvalData workset)
 
       // copy data from the state manager to the LAME data structure
       for(int iVar=0 ; iVar<numStateVariables ; iVar++, stateOldPtr++){
-        std::string& variableName = lameMaterialModelStateVariableNames[iVar];
-        const Intrepid::FieldContainer<RealType>& stateVar = *oldState[variableName];
+        //std::string& variableName = lameMaterialModelStateVariableNames[iVar];
+        //const Intrepid::FieldContainer<RealType>& stateVar = *oldState[variableName];
+        std::string& variableName = lameMaterialModelStateVariableNames[iVar]+"_old";
+        Albany::MDArray stateVar = (*workset.stateArrayPtr)[variableName];
         *stateOldPtr = stateVar(cell,qp);
       }
     }

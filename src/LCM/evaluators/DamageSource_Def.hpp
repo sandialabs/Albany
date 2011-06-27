@@ -101,8 +101,8 @@ evaluateFields(typename Traits::EvalData workset)
   Albany::MDArray damage_old_FC = (*workset.stateArrayPtr)[damageName];
 
 
-  ScalarT p, triax, source_new, source_old, term;
-  ScalarT damage_old;
+  ScalarT p, triax, source_new, term;
+  RealType damage_old, source_old;
 
   for (std::size_t  cell=0; cell < workset.numCells; ++cell) 
   {
