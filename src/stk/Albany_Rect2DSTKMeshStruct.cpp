@@ -91,7 +91,7 @@ Albany::Rect2DSTKMeshStruct::setFieldAndBulkData(
   double scale_y = params->get("2D Scale",     1.0);
 
   if (comm->MyPID()==0) {
-    std::cout<<" Creating 2D Rectanglular mesh of size "
+    std::cout<<":Rect2DSTKMeshStruct: Creating 2D Rectanglular mesh of size "
               <<nelem_x<<"x"<<nelem_y<<" quad elements and scaled to "
               <<scale_x<<"x"<<scale_y<<std::endl;
     if (triangles)

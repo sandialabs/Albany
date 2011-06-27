@@ -373,10 +373,10 @@ Albany::LameProblem::constructEvaluators(
     // Stress and DefGrad are required at the element level for all LAME models
     evaluators_to_build["Save Stress"] =
       stateMgr.registerStateVariable("Stress",qp_tensor,
-            dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
+            dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero",true);
     evaluators_to_build["Save DefGrad"] =
       stateMgr.registerStateVariable("Deformation Gradient",qp_tensor,
-            dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"identity");
+            dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"identity", true);
 
     // A LAME material model may register additional state variables (type is always double)
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
@@ -388,7 +388,7 @@ Albany::LameProblem::constructEvaluators(
                                        qp_scalar,
                                        dummy,
                                        FactoryTraits<AlbanyTraits>::id_savestatefield,
-                                       doubleToInitString(lameMaterialModelStateVariableInitialValues[i]));
+                                       doubleToInitString(lameMaterialModelStateVariableInitialValues[i], true));
     }
   }
 

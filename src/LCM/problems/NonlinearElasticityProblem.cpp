@@ -43,17 +43,6 @@ NonlinearElasticityProblem(
   dofNames[0] = "X";
   if (neq>1) dofNames[1] = "Y";
   if (neq>2) dofNames[2] = "Z";
-
-  if (matModel == "NeoHookean" || matModel == "NeoHookean AD")
-    this->nstates=numDim*numDim;
-  else if (matModel == "J2")  {
-    if ( numDim == 3 && params->get("Compute Dislocation Density Tensor", false) )
-      this->nstates=3*numDim*numDim+1;
-    else
-      this->nstates=2*numDim*numDim+1;
-  }
-  *out << "Num States to Store: " << this->nstates << std::endl;
-  
 }
 
 Albany::NonlinearElasticityProblem::
@@ -578,18 +567,15 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
       p->set<string>("Eqps Name", "eqps");  // qp_scalar also
  
       //Declare what state data will need to be saved (name, layout, init_type)
-      //      stateMgr.registerStateVariable("stress",qp_tensor,"zero");
-      //      stateMgr.registerStateVariable("Fp",qp_tensor,"identity");
-      //      stateMgr.registerStateVariable("eqps",qp_scalar,"zero");
       evaluators_to_build["Save Stress"] =
 	stateMgr.registerStateVariable(matModel,qp_tensor,
 				       dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
       evaluators_to_build["Save Fp"] =
 	stateMgr.registerStateVariable("Fp",qp_tensor,
-				       dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"identity");
+				       dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"identity",true);
       evaluators_to_build["Save Eqps"] =
 	stateMgr.registerStateVariable("eqps",qp_scalar,
-				       dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
+				       dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero",true);
 
       evaluators_to_build["Stress"] = p;
     }

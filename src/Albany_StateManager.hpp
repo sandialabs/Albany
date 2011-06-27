@@ -55,7 +55,8 @@ public:
   registerStateVariable(const std::string &name, const Teuchos::RCP<PHX::DataLayout> &dl, 
                                             const Teuchos::RCP<PHX::DataLayout> &dummy,
                                             const int saveOrLoadStateFieldID,
-                                            const std::string &init_type="zero");
+                                            const std::string &init_type="zero",
+                                            const bool registerOldState=false);
 
   //! If field name to save/load is different from state name
   Teuchos::RCP<Teuchos::ParameterList>
@@ -63,12 +64,9 @@ public:
 			const Teuchos::RCP<PHX::DataLayout> &dummy,
 			const int saveOrLoadStateFieldID,
 			const std::string &init_type,
+                        const bool registerOldState,
 			const std::string &fieldName);
 
-
-  //! Method to call multiple timed (before allocate) to register which states will be saved.
-  void registerStateVariable(const std::string &name, const Teuchos::RCP< PHX::DataLayout > &t, 
-			     const std::string &init_type="zero");
 
   //! Function to allocate storage, called once after registering and before get calls
   void allocateStateVariables(const int numWorksets=1);
@@ -112,10 +110,16 @@ public:
   //! Method to get a StateInfoStruct of info needed by STK to output States as Fields
   Teuchos::RCP<Albany::StateInfoStruct> getStateInfoStruct();
 
+  //! Method to set discretization object
+  void setStateArrays(const Teuchos::RCP<Albany::AbstractDiscretization>& discObj);
+  //! Method to set discretization object
+  Albany::StateArray& getStateArray(int ws) const;
+
   //! Method to integrate a scalar-valued state over an element block 
   //  (zero-length ebName integrates over entire mesh)
   RealType integrateStateVariable(const std::string& stateName, const std::string& ebName,
 				  const std::string& BFName, const std::string& wBFName);
+
 
 private:
   //! Private to prohibit copying
@@ -123,10 +127,6 @@ private:
 
   //! Private to prohibit copying
   StateManager& operator=(const StateManager&);
-
-template<typename Tag0, typename Tag1, typename Tag2, typename Tag3,
-         typename Tag4, typename Tag5, typename Tag6, typename Tag7>
-std::string& getTagName(PHX::DataLayout& dl);
 
 private:
 
@@ -151,6 +151,9 @@ private:
 
   //! Discretization object which allows StateManager to perform input/output with exodus and Epetra vectors
   Teuchos::RCP<Albany::AbstractDiscretization> disc;
+
+  //! NEW WAY
+  Teuchos::RCP<StateInfoStruct> stateInfo;
 };
 
 }

@@ -79,10 +79,12 @@ PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   dofNames.resize(neq);
   dofNames[0] = "Phi";
 
+  //TODO: REMOVE AFTER CONFIRMING W/ANDY
   // STATE OUTPUT
-  nstates = 9;
-  nstates += nEigenvectorsToInputFromStates*2; //Re and Im parts (input @ nodes)
-  nstates += nEigenvectorsToInputFromStates*2; //Re and Im parts (output @ qps)
+  //nstates = 9;
+  //nstates += nEigenvectorsToInputFromStates*2; //Re and Im parts (input @ nodes)
+  //nstates += nEigenvectorsToInputFromStates*2; //Re and Im parts (output @ qps)
+
 }
 
 QCAD::PoissonProblem::
@@ -389,13 +391,13 @@ QCAD::PoissonProblem::constructEvaluators(
         sprintf(evecFieldName,"Evec_Re%d",k);
         sprintf(evalName,"Input Evec_Re%d",k);
         evaluators_to_build[evecStateName] =
-          stateMgr.registerStateVariable(evecStateName, node_scalar, dummy, ilsf, "zero", evecFieldName);
+          stateMgr.registerStateVariable(evecStateName, node_scalar, dummy, ilsf, "zero", false, evecFieldName);
 
         sprintf(evecStateName,"Eigenvector_Im%d",k);
         sprintf(evecFieldName,"Evec_Im%d",k);
         sprintf(evalName,"Input Evec_Im%d",k);
         evaluators_to_build[evecStateName] =
-          stateMgr.registerStateVariable(evecStateName, node_scalar, dummy, ilsf, "zero", evecFieldName);
+          stateMgr.registerStateVariable(evecStateName, node_scalar, dummy, ilsf, "zero", false, evecFieldName);
       }
     }
 
@@ -416,10 +418,12 @@ QCAD::PoissonProblem::constructEvaluators(
       stateMgr.registerStateVariable("Conduction Band", qp_scalar, dummy, issf);
     evaluators_to_build["Save Valence Band"] =
       stateMgr.registerStateVariable("Valence Band", qp_scalar, dummy, issf);
-    evaluators_to_build["Save Basis Functions"] =
-      stateMgr.registerStateVariable("BF", node_qp_scalar, dummy, issf);
-    evaluators_to_build["Save Weighted Basis Functions"] =
-      stateMgr.registerStateVariable("wBF", node_qp_scalar, dummy, issf);
+    
+    // Updates to state manager don't allow non-qp_scalar states
+    //evaluators_to_build["Save Basis Functions"] =
+    //  stateMgr.registerStateVariable("BF", node_qp_scalar, dummy, issf);
+    //evaluators_to_build["Save Weighted Basis Functions"] =
+    //  stateMgr.registerStateVariable("wBF", node_qp_scalar, dummy, issf);
   }
 
   // Interpolate Input Eigenvectors (if any) to quad points

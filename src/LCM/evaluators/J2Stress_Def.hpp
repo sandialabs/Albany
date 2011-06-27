@@ -70,8 +70,8 @@ J2Stress(const Teuchos::ParameterList& p) :
   // PoissonRatio not used in 1D stress calc
   //  if (numDims>1) this->addDependentField(poissonsRatio);
 
-  fpName = p.get<std::string>("Fp Name");
-  eqpsName = p.get<std::string>("Eqps Name");
+  fpName = p.get<std::string>("Fp Name")+"_old";
+  eqpsName = p.get<std::string>("Eqps Name")+"_old";
   this->addEvaluatedField(stress);
   this->addEvaluatedField(Fp);
   this->addEvaluatedField(eqps);
@@ -127,15 +127,16 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT smag2, smag, f, p, dgam;
   ScalarT sq23 = std::sqrt(2./3.);
 
-  //bool saveState = (workset.newState != Teuchos::null);
-  //std::cout << "saveState: " << saveState << std::endl;
-  //saveState = (workset.oldState != Teuchos::null);
-  //std::cout << "saveState: " << saveState << std::endl;
-  Albany::StateVariables  oldState = *workset.oldState;
-  Intrepid::FieldContainer<RealType>& Fpold   = *oldState[fpName];
-  Intrepid::FieldContainer<RealType>& eqpsold = *oldState[eqpsName];
+  //Albany::StateVariables  oldState = *workset.oldState;
+  //Intrepid::FieldContainer<RealType>& Fpold   = *oldState[fpName];
+  //Intrepid::FieldContainer<RealType>& eqpsold = *oldState[eqpsName];
+
+  Albany::MDArray Fpold = (*workset.stateArrayPtr)[fpName];
+  Albany::MDArray eqpsold = (*workset.stateArrayPtr)[eqpsName];
 
   // compute Cp_{n}^{-1}
+  // AGS MAY NEED TO ALLICATE Fpinv FpinvT Cpinv  with actual workse size
+  // to prevent going past the end of Fpold.
   RST::inverse(Fpinv, Fpold);
   RST::transpose(FpinvT, Fpinv);
   FST::tensorMultiplyDataData<ScalarT>(Cpinv, Fpinv, FpinvT);

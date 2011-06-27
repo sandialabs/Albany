@@ -29,6 +29,8 @@
 #include "Epetra_CrsGraph.h"
 
 #include "Shards_CellTopologyData.h"
+#include "Shards_Array.hpp"
+#include "Albany_StateInfoStruct.hpp"
 
 namespace Albany {
 
@@ -76,20 +78,13 @@ namespace Albany {
     virtual Teuchos::ArrayRCP<double>&  getCoordinates() const = 0;
     virtual const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >& getCoords() const = 0;
 
+    virtual Albany::StateArrays& getStateArrays() = 0;
+
     //! Retrieve Vector (length num worksets) of element block names
     virtual const Teuchos::ArrayRCP<std::string>&  getWsEBNames() const = 0;
 
-    //! Get Cubature Degree from input file
-    virtual int getCubatureDegree() const = 0;
-
     //! Get solution vector from mesh database
     virtual Teuchos::RCP<Epetra_Vector> getSolutionField() const = 0;
-
-    //! Get Cell Topology Data (for Element block 0 so far)
-    virtual const CellTopologyData& getCellTopologyData() const = 0;
-
-    //! Get Number of Spatial Dimensions
-    virtual int getNumDim() const = 0;
 
   private:
 

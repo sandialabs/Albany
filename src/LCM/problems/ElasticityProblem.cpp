@@ -33,8 +33,6 @@ ElasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   std::string& method = params->get("Name", "Elasticity ");
   *out << "Problem Name = " << method << std::endl;
 
-  this->nstates=numDim*numDim;
-  
   haveSource =  params->isSublist("Source Functions");
 
   dofNames.resize(neq);

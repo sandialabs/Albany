@@ -84,7 +84,7 @@ Albany::Cube3DSTKMeshStruct::setFieldAndBulkData(
   double scale_z = params->get("3D Scale",     1.0);
 
   if (comm->MyPID()==0)
-    std::cout <<" Creating 3D cube mesh of size "
+    std::cout <<"Cube3DSTKMeshStruct:: Creating 3D cube mesh of size "
               <<nelem_x<<"x"<<nelem_y<<"x"<<nelem_z<<" elements and scaled to "
               <<scale_x<<"x"<<scale_y<<"x"<<scale_z<<std::endl;
 
