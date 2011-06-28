@@ -77,11 +77,6 @@ PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   // neq=1 set in AbstractProblem constructor
   dofNames.resize(neq);
   dofNames[0] = "Phi";
-
-  // STATE OUTPUT
-  nstates = 7;
-  nstates += nEigenvectorsToInputFromStates*2; //Re and Im parts (input @ nodes)
-  nstates += nEigenvectorsToInputFromStates*2; //Re and Im parts (output @ qps)
 }
 
 QCAD::PoissonProblem::
@@ -383,13 +378,13 @@ QCAD::PoissonProblem::constructEvaluators(
         sprintf(evecFieldName,"Evec_Re%d",k);
         sprintf(evalName,"Input Evec_Re%d",k);
         evaluators_to_build[evecStateName] =
-          stateMgr.registerStateVariable(evecStateName, node_scalar, dummy, ilsf, "zero", evecFieldName);
+          stateMgr.registerStateVariable(evecStateName, node_scalar, dummy, ilsf, "zero", false, evecFieldName);
 
         sprintf(evecStateName,"Eigenvector_Im%d",k);
         sprintf(evecFieldName,"Evec_Im%d",k);
         sprintf(evalName,"Input Evec_Im%d",k);
         evaluators_to_build[evecStateName] =
-          stateMgr.registerStateVariable(evecStateName, node_scalar, dummy, ilsf, "zero", evecFieldName);
+          stateMgr.registerStateVariable(evecStateName, node_scalar, dummy, ilsf, "zero", false, evecFieldName);
       }
     }
 

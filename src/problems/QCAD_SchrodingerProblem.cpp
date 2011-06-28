@@ -93,10 +93,6 @@ SchrodingerProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   // neq=1 set in AbstractProblem constructor
   dofNames.resize(neq);
   dofNames[0] = "psi";
-
-  //STATES TO OUTPUT
-  nstates = 1; // Potential energy
-  nstates += nEigenvectorsToOuputAsStates*2; // Re and Im parts of each eigenvector
 }
 
 QCAD::SchrodingerProblem::
@@ -467,9 +463,9 @@ QCAD::SchrodingerProblem::constructEvaluators(
     char evecStateName[100];
     for( int k = 0; k < nEigenvectorsToOuputAsStates; k++) {
       sprintf(evecStateName,"Eigenvector_Re%d",k);
-      stateMgr.registerStateVariable(evecStateName, node_scalar);
+      (void) stateMgr.registerStateVariable(evecStateName, node_scalar, dummy, 0);
       sprintf(evecStateName,"Eigenvector_Im%d",k);
-      stateMgr.registerStateVariable(evecStateName, node_scalar);    
+      (void) stateMgr.registerStateVariable(evecStateName, node_scalar, dummy, 0);    
     }
   }
 

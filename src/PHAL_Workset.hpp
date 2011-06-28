@@ -36,8 +36,8 @@ namespace PHAL {
 
 struct Workset {
   
-  Workset(const Teuchos::ArrayRCP<double> &c) :
-    coordinates(c), transientTerms(false), ignore_residual(false) {}
+  Workset() :
+    transientTerms(false), ignore_residual(false) {}
 
   unsigned int numCells;
   unsigned int worksetSize;
@@ -81,10 +81,8 @@ struct Workset {
   int num_cols_p;
   int param_offset;
 
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > coord_derivs;
   std::vector<int> *coord_deriv_indices;
 
-  const Teuchos::ArrayRCP<double> &coordinates;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >  wsElNodeID;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> >  wsCoords;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > >  ws_coord_derivs;
@@ -92,6 +90,7 @@ struct Workset {
 
   Teuchos::RCP<const Albany::StateVariables> oldState;
   Teuchos::RCP<Albany::StateVariables> newState;
+  Albany::StateArray* stateArrayPtr;
 
   bool transientTerms;
 

@@ -31,7 +31,6 @@ Albany::AbstractProblem::AbstractProblem(
          const int neq_) :
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   neq(neq_),
-  nstates(0),
   params(params_),
   DBCparams(params_->sublist("Dirichlet BCs")),
   paramLib(paramLib_)
@@ -39,11 +38,16 @@ Albany::AbstractProblem::AbstractProblem(
 
 unsigned int 
 Albany::AbstractProblem::numEquations() const 
-{return neq;}
+{
+  TEST_FOR_EXCEPTION( neq <= 0,
+                    Teuchos::Exceptions::InvalidParameter,
+                    "A Problem must have at least 1 equation: "<<neq);
+  return neq;
+}
 
-unsigned int 
-Albany::AbstractProblem::numStates() const 
-{return nstates;}
+void
+Albany::AbstractProblem::setNumEquations(const int neq_)
+{ neq = neq_; }
 
 Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
 Albany::AbstractProblem::getFieldManager()

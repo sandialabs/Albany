@@ -79,7 +79,6 @@ Albany::FromCubitSTKMeshStruct::FromCubitSTKMeshStruct(
   }
 
   numDim = stkMeshData->get_num_dim();
-  cout << "numDim form cubit  " << numDim << endl;
 
   if (numDim==2) partVec[0] = stkMeshData->surface_part(0);
   else           partVec[0] = stkMeshData->volume_part(0);

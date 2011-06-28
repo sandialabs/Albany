@@ -34,12 +34,10 @@
 #include "Phalanx_Allocator_New.hpp"
 #include "Phalanx_TypeStrings.hpp"
 
-
 #include "Albany_DataTypes.hpp"
 #include "PHAL_Dimension.hpp"
 #include "PHAL_Workset.hpp"
 
-#include "Albany_DiscretizationFactory.hpp"
 namespace PHAL {
 
   struct AlbanyTraits : public PHX::TraitsBase {
@@ -112,7 +110,8 @@ namespace PHAL {
     // ******************************************************************
     // *** User Defined Object Passed in for Evaluation Method
     // ******************************************************************
-    typedef const Albany::AbstractDiscretization& SetupData;
+    typedef const std::string& SetupData;
+    //typedef const Albany::AbstractDiscretization& SetupData;
     typedef const Workset& EvalData;
     typedef void* PreEvalData;
     typedef void* PostEvalData;

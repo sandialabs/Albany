@@ -357,7 +357,6 @@ namespace Albany {
     //! Phalanx Field Manager for Dirichlet Conditions
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > dfm;
 
-    Teuchos::ArrayRCP<double> coordinates;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > wsElNodeID;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords;
     Teuchos::ArrayRCP<std::string> wsEBNames;

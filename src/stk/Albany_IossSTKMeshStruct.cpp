@@ -71,7 +71,6 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   }
 
   numDim = metaData->spatial_dimension();
-  *out << "IOSS-STK:  numDim =  " << numDim << endl;
 
   stk::io::put_io_part_attribute(metaData->universal_part());
 
@@ -85,11 +84,11 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     stk::mesh::Part * const part = *i ;
 
     if ( part->primary_entity_rank() == metaData->element_rank()) {
-      *out << "IOSS-STK: Element part found " << endl;
+      //*out << "IOSS-STK: Element part found " << endl;
       if (part->name()[0] != '{') partVec[eb++] = part;
     }
     else if ( part->primary_entity_rank() == metaData->node_rank()) {
-       *out << "Mesh has Node Set ID: " << part->name() << endl;
+       //*out << "Mesh has Node Set ID: " << part->name() << endl;
       if (part->name()[0] != '{') {
          nsPartVec[part->name()]=part;
          nsNames.push_back(part->name());
@@ -107,13 +106,8 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   stk::io::get_element_block_sizes(*mesh_data, el_blocks);
   TEST_FOR_EXCEPT(el_blocks.size() != partVec.size());
 
-for (int i=0; i<el_blocks.size(); i++) cout << "BBB " << comm->MyPID() << "el block size " << el_blocks[i] << endl;
-cout << "BBBBB " <<  comm->MyPID() << " Max is " << *std::max_element(el_blocks.begin(),el_blocks.end()) << endl;;
-
   int ebSizeMax =  *std::max_element(el_blocks.begin(),el_blocks.end());
-
   int worksetSize = this->computeWorksetSize(worksetSizeMax, ebSizeMax);
-cout << "BBBCC " <<  comm->MyPID() << " Resized to  " << worksetSize << endl;
 
   // Construct MeshSpecsStruct
   this->meshSpecs = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub, nsNames, worksetSize));

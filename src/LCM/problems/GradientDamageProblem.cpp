@@ -49,13 +49,6 @@ GradientDamageProblem(
   if (numDim>1) dofNames[X_offset+1] = "Y";
   if (numDim>2) dofNames[X_offset+2] = "Z";
   dofNames[D_offset] = "D";
-
-  // check matModel
-  //if (matModel == "NeoHookean") 
-  this->nstates=2*numDim*numDim+3;
-
-  *out << "Num States to Store: " << this->nstates << std::endl;
-
 }
 
 Albany::GradientDamageProblem::
@@ -462,17 +455,15 @@ Albany::GradientDamageProblem::constructEvaluators(
 
  
     //Declare what state data will need to be saved (name, layout, init_type)
-    //stateMgr.registerStateVariable("stress",qp_tensor,"zero");
-    //stateMgr.registerStateVariable("Fp",qp_tensor,"identity");
-    //stateMgr.registerStateVariable("eqps",qp_scalar,"zero");
+    // A :true: as 5th argument declares that the previous state needs to be saved
 
     int issf = FactoryTraits<AlbanyTraits>::id_savestatefield;
     evaluators_to_build["Save Stress"] =
       stateMgr.registerStateVariable("Stress",qp_tensor, dummy, issf,"zero");
     evaluators_to_build["Save Fp"] =
-      stateMgr.registerStateVariable("Fp",qp_tensor, dummy, issf,"identity");
+      stateMgr.registerStateVariable("Fp",qp_tensor, dummy, issf,"identity",true);
     evaluators_to_build["Save Eqps"] =
-      stateMgr.registerStateVariable("eqps",qp_scalar, dummy, issf,"zero");
+      stateMgr.registerStateVariable("eqps",qp_scalar, dummy, issf,"zero",true);
 
     evaluators_to_build["Stress"] = p;
   }
@@ -628,7 +619,7 @@ Albany::GradientDamageProblem::constructEvaluators(
     evaluators_to_build["Save Damage Source"] =
       stateMgr.registerStateVariable("Damage Source",qp_scalar, dummy, issf,"zero");
     evaluators_to_build["Save Damage"] =
-      stateMgr.registerStateVariable("Damage",qp_scalar, dummy, issf,"zero");
+      stateMgr.registerStateVariable("Damage",qp_scalar, dummy, issf,"zero", true);
     evaluators_to_build["Damage Source"] = p;
   }
 
