@@ -35,8 +35,7 @@ namespace QCAD {
   
     //! Default constructor
     ElementBlockIntegralResponseFunction(const std::string& stateName, const std::string& ebName,
-					 const std::string& BFName, const std::string& wBFName,
-					 Albany::StateManager& stateMgr);
+					 const std::string& weightName, Albany::StateManager& stateMgr);
 
     //! Destructor
     virtual ~ElementBlockIntegralResponseFunction();
@@ -93,9 +92,8 @@ namespace QCAD {
     ElementBlockIntegralResponseFunction& operator=(const ElementBlockIntegralResponseFunction&);
 
     //! Names of relevant quantities
-    std::string stateName_; // state to integrate
-    std::string BFName_;    // basis function state
-    std::string wBFName_;   // weighted basis function state
+    std::string stateName_;  // state to integrate
+    std::string weightName_; // quad-point weights (wBF / BF)
     std::string ebName_;    // element block to integrate over
 
     //! State manager

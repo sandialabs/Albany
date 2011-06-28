@@ -29,6 +29,7 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_StateInfoStruct.hpp"
+#include "Albany_EigendataInfoStruct.hpp"
 
 namespace Albany {
 
@@ -74,8 +75,8 @@ public:
   //! Method to initialize state variables, called once after allocating and before get calls
   void initializeStateVariables(const int numWorksets=1);
 
-  //! Method to re-initialize state variables, which can be called multiplie times after allocating
-  void reinitializeStateVariables(Teuchos::RCP<std::vector<StateVariables> >& stateVarsToCopyFrom, const int numWorksets=1);
+  //! Method to re-initialize state variables, which can be called multiple times after allocating
+  void importStateData(Albany::StateArrays& statesToCopyFrom);
 
   //! Method to get the saved "old" state as a const
   Teuchos::RCP<const StateVariables> getOldStateVariables(const int workset=0) const;
@@ -92,8 +93,9 @@ public:
   //! Method to get the "new" state so that it can be overwritten
   const std::vector<std::vector<double> > getElementAveragedStates();
 
+  //Unused after update to NEW way - Andy: remove this at will
   //! Method to set the "new" and "old" state using an Epetra vector
-  void saveVectorAsState(const std::string& stateName, const Epetra_Vector& vec);
+  //void saveVectorAsState(const std::string& stateName, const Epetra_Vector& vec);
 
   //! Method to get the Names of the state variables
   RegisteredStates& getRegisteredStates(){return statesToStore;};
@@ -112,13 +114,19 @@ public:
 
   //! Method to set discretization object
   void setStateArrays(const Teuchos::RCP<Albany::AbstractDiscretization>& discObj);
-  //! Method to set discretization object
+  //! Method to get state information for a specific workset
   Albany::StateArray& getStateArray(int ws) const;
+  //! Method to get state information for all worksets
+  Albany::StateArrays& getStateArrays() const;
+  
+  //! Methods to get/set the EigendataStruct which holds eigenvalue / eigenvector data
+  Teuchos::RCP<Albany::EigendataStruct> getEigenData();
+  void setEigenData(const Teuchos::RCP<Albany::EigendataStruct>& eigdata);
 
   //! Method to integrate a scalar-valued state over an element block 
   //  (zero-length ebName integrates over entire mesh)
   RealType integrateStateVariable(const std::string& stateName, const std::string& ebName,
-				  const std::string& BFName, const std::string& wBFName);
+				  const std::string& weightName);
 
 
 private:
@@ -154,6 +162,7 @@ private:
 
   //! NEW WAY
   Teuchos::RCP<StateInfoStruct> stateInfo;
+  Teuchos::RCP<EigendataStruct> eigenData;
 };
 
 }

@@ -19,14 +19,12 @@
 
 QCAD::ElementBlockIntegralResponseFunction::
 ElementBlockIntegralResponseFunction(const std::string& stateName, const std::string& ebName,
-				     const std::string& BFName, const std::string& wBFName,
-				     Albany::StateManager& stateMgr)
+				     const std::string& weightName, Albany::StateManager& stateMgr)
   : stateMgr_(stateMgr)
 {
-  stateName_ = stateName;
-  BFName_    = BFName;
-  wBFName_   = wBFName;
-  ebName_    = ebName;
+  stateName_  = stateName;
+  weightName_ = weightName;
+  ebName_     = ebName;
 }
 
 QCAD::ElementBlockIntegralResponseFunction::
@@ -49,7 +47,7 @@ evaluateResponses(const Epetra_Vector* xdot,
 		  Epetra_Vector& g)
 {
   // use state manager to integrate state values over element block
-  RealType result = stateMgr_.integrateStateVariable(stateName_, ebName_, BFName_, wBFName_);
+  RealType result = stateMgr_.integrateStateVariable(stateName_, ebName_, weightName_);
   g[0] = result;
 }
 
@@ -67,7 +65,7 @@ evaluateTangents(
 {
   // Evaluate response g
   if (g != NULL)
-    (*g)[0] = stateMgr_.integrateStateVariable(stateName_, ebName_, BFName_, wBFName_);
+    (*g)[0] = stateMgr_.integrateStateVariable(stateName_, ebName_, weightName_);
 
   // Evaluate tangent of g = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
   for (Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >::size_type j=0; j<gt.size(); j++)
@@ -91,7 +89,7 @@ evaluateGradients(
 
   // Evaluate response g
   if (g != NULL)
-    (*g)[0] = stateMgr_.integrateStateVariable(stateName_, ebName_, BFName_, wBFName_);
+    (*g)[0] = stateMgr_.integrateStateVariable(stateName_, ebName_, weightName_);
 
   // Evaluate dg/dx
   if (dg_dx != NULL)

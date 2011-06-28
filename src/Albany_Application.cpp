@@ -371,6 +371,7 @@ Albany::Application::computeGlobalResidual(
       workset.oldState = stateMgr.getOldStateVariables(ws);
       workset.newState = stateMgr.getNewStateVariables(ws);
       workset.stateArrayPtr = &stateMgr.getStateArray(ws);
+      workset.eigenDataPtr = &(*(stateMgr.getEigenData()));
 
       // FillType template argument used to specialize Sacado
       fm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
@@ -485,6 +486,7 @@ Albany::Application::computeGlobalJacobian(
       workset.oldState = stateMgr.getOldStateVariables(ws);
       workset.newState = stateMgr.getNewStateVariables(ws);
       workset.stateArrayPtr = &stateMgr.getStateArray(ws);
+      workset.eigenDataPtr = &(*(stateMgr.getEigenData()));
 
       // FillType template argument used to specialize Sacado
       fm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
@@ -792,6 +794,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
       workset.oldState = stateMgr.getOldStateVariables(ws);
       workset.newState = stateMgr.getNewStateVariables(ws);
       workset.stateArrayPtr = &stateMgr.getStateArray(ws);
+      workset.eigenDataPtr = &(*(stateMgr.getEigenData()));
 
       // FillType template argument used to specialize Sacado
       fm->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
@@ -1062,6 +1065,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
       workset.oldState = stateMgr.getOldStateVariables(ws);
       workset.newState = stateMgr.getNewStateVariables(ws);
       workset.stateArrayPtr = &stateMgr.getStateArray(ws);
+      workset.eigenDataPtr = &(*(stateMgr.getEigenData()));
 
       // FillType template argument used to specialize Sacado
       fm->evaluateFields<PHAL::AlbanyTraits::SGResidual>(workset);
@@ -1203,6 +1207,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
       workset.oldState = stateMgr.getOldStateVariables(ws);
       workset.newState = stateMgr.getNewStateVariables(ws);
       workset.stateArrayPtr = &stateMgr.getStateArray(ws);
+      workset.eigenDataPtr = &(*(stateMgr.getEigenData()));
 
       // FillType template argument used to specialize Sacado
       fm->evaluateFields<PHAL::AlbanyTraits::SGJacobian>(workset);
@@ -1383,6 +1388,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
       workset.oldState = stateMgr.getOldStateVariables(ws);
       workset.newState = stateMgr.getNewStateVariables(ws);
       workset.stateArrayPtr = &stateMgr.getStateArray(ws);
+      workset.eigenDataPtr = &(*(stateMgr.getEigenData()));
 
       // FillType template argument used to specialize Sacado
       fm->evaluateFields<PHAL::AlbanyTraits::MPResidual>(workset);
@@ -1533,6 +1539,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
       workset.oldState = stateMgr.getOldStateVariables(ws);
       workset.newState = stateMgr.getNewStateVariables(ws);
       workset.stateArrayPtr = &stateMgr.getStateArray(ws);
+      workset.eigenDataPtr = &(*(stateMgr.getEigenData()));
 
       // FillType template argument used to specialize Sacado
       fm->evaluateFields<PHAL::AlbanyTraits::MPJacobian>(workset);

@@ -16,6 +16,7 @@
 
 
 #include "Albany_SaveEigenData.hpp"
+#include "Albany_EigendataInfoStruct.hpp"
 #include "NOX_Abstract_MultiVector.H"
 #include "NOX_Epetra_MultiVector.H"
 #include "Epetra_Vector.h"
@@ -67,31 +68,17 @@ Albany::SaveEigenData::save(
   if (ns > evecs_r->numVectors())
     ns = evecs_r->numVectors();
 
+  // Store in state manager
+  Teuchos::RCP<EigendataStruct> eigenData = Teuchos::rcp( new EigendataStruct );
+  eigenData->eigenvalueRe = evals_r;
+  eigenData->eigenvalueIm = evals_i;
+  eigenData->eigenvectorRe = ne_r;
+  eigenData->eigenvectorIm = ne_i;
 
-  // Output to state manager
-  ns = nSaveAsStates;
-  if (ns > evecs_r->numVectors())
-    ns = evecs_r->numVectors();
-  
-  //Output states to hardcoded "Eigenvector_(Re|Im)<index>" state 
-  // names IF they are present in the state manager
-  for (int i=0; i<ns; i++) {
-    if ( fabs((*evals_i)[i]) == 0 ) {
-      sprintf(buf, "Eigenvector_Re%d", i);
-      if(pAlbStateMgr->containsState(buf)) 
-	pAlbStateMgr->saveVectorAsState(buf, *(e_r(i)));
-    }
-    else {
-      sprintf(buf, "Eigenvector_Re%d", i);
-      if(pAlbStateMgr->containsState(buf)) 
-	pAlbStateMgr->saveVectorAsState(buf, *(e_r(i)));
-      sprintf(buf, "Eigenvector_Im%d", i);
-      if(pAlbStateMgr->containsState(buf)) 
-	pAlbStateMgr->saveVectorAsState(buf, *(e_i(i)));
-    }
-  }
+  pAlbStateMgr->setEigenData(eigenData);
 
 
+  // Output to files
   std::fstream evecFile;
   std::fstream evalFile;
   evalFile.open ("evals.txtdump", fstream::out);

@@ -91,6 +91,7 @@ struct Workset {
   Teuchos::RCP<const Albany::StateVariables> oldState;
   Teuchos::RCP<Albany::StateVariables> newState;
   Albany::StateArray* stateArrayPtr;
+  Albany::EigendataStruct* eigenDataPtr;
 
   bool transientTerms;
 

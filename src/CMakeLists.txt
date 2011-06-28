@@ -44,6 +44,7 @@ SET(HEADERS
 	Albany_NOXObserver.hpp 
 	Albany_StateManager.hpp 
         Albany_StateInfoStruct.hpp
+        Albany_EigendataInfoStruct.hpp
 	Albany_VTK.hpp 
 	Albany_ModelEvaluator.hpp
 	Albany_SaveEigenData.hpp
@@ -116,6 +117,7 @@ SET(HEADERS ${HEADERS}
 #evaluators
 SET(SOURCES ${SOURCES}
 	evaluators/PHAL_GatherSolution.cpp 
+	evaluators/PHAL_GatherEigenvectors.cpp
 	evaluators/PHAL_ScatterResidual.cpp 
 	evaluators/PHAL_Dirichlet.cpp 
 	evaluators/PHAL_Source.cpp 
@@ -140,6 +142,8 @@ SET(SOURCES ${SOURCES}
 SET(HEADERS ${HEADERS}
 	evaluators/PHAL_GatherSolution.hpp 
 	evaluators/PHAL_GatherSolution_Def.hpp 
+	evaluators/PHAL_GatherEigenvectors.hpp 
+	evaluators/PHAL_GatherEigenvectors_Def.hpp 
 	evaluators/PHAL_ScatterResidual.hpp 
 	evaluators/PHAL_ScatterResidual_Def.hpp 
 	evaluators/PHAL_Dirichlet.hpp 

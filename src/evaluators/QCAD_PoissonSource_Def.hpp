@@ -77,14 +77,28 @@ PoissonSource(Teuchos::ParameterList& p) :
   bSchrodingerInQuantumRegions = p.get<bool>("Use Schrodinger source");
 
   if(bSchrodingerInQuantumRegions) {
-    eigenValueFilename = p.get<string>("Eigenvalues file");
+    std::string evecFieldRoot = p.get<string>("Eigenvector field name root");
     nEigenvectors = p.get<int>("Schrodinger eigenvectors");
-    evecStateRoot = p.get<string>("Eigenvector state name root");
+
+    eigenvector_Re.resize(nEigenvectors);
+    eigenvector_Im.resize(nEigenvectors);
+
+    char buf[200];
+    Teuchos::RCP<PHX::DataLayout> dl = 
+      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+
+    for (int k = 0; k < nEigenvectors; ++k) {
+      sprintf(buf, "%s_Re%d", evecFieldRoot.c_str(), k);
+      PHX::MDField<ScalarT,Cell,QuadPoint> fr(buf,dl);
+      eigenvector_Re[k] = fr; this->addDependentField(eigenvector_Re[k]);
+
+      sprintf(buf, "%s_Im%d", evecFieldRoot.c_str(), k);
+      PHX::MDField<ScalarT,Cell,QuadPoint> fi(buf,dl);
+      eigenvector_Im[k] = fi; this->addDependentField(eigenvector_Im[k]);
+    }
   }
   else {
     nEigenvectors = 0;
-    eigenValueFilename = "";
-    evecStateRoot = "";
   }
 
   // Add factor as a Sacado-ized parameter
@@ -128,6 +142,11 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(ionizedDopant,fm);
   this->utils.setFieldData(conductionBand,fm);
   this->utils.setFieldData(valenceBand,fm);
+
+  for (int k = 0; k < nEigenvectors; ++k) {
+    this->utils.setFieldData(eigenvector_Re[k],fm);
+    this->utils.setFieldData(eigenvector_Im[k],fm);
+  }
 }
 
 // **********************************************************************
@@ -314,17 +333,13 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
     if(bSchrodingerInQuantumRegions && 
       materialDB->getElementBlockParam<bool>(workset.EBName,"quantum",false)) 
     {
-    
-      // read eigenvalues from file
-      std::vector<double> eigenvals = ReadEigenvaluesFromFile(nEigenvectors);  
-       
       // loop over cells and qps
       for (std::size_t cell=0; cell < workset.numCells; ++cell)
       {
         for (std::size_t qp=0; qp < numQPs; ++qp)
         {
           // compute the electron density using wavefunction
-          ScalarT eDensity = eDensityForPoissonSchrond(workset, cell, qp, eigenvals);
+          ScalarT eDensity = eDensityForPoissonSchrond(workset, cell, qp);
           
           // obtain the scaled potential
           const ScalarT& phi = potential(cell,qp);
@@ -409,16 +424,13 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
     if(bSchrodingerInQuantumRegions && 
       materialDB->getElementBlockParam<bool>(workset.EBName,"quantum",false)) 
     {
-      // read eigenvalues from file
-      std::vector<double> eigenvals = ReadEigenvaluesFromFile(nEigenvectors);  
-       
       // loop over cells and qps
       for (std::size_t cell=0; cell < workset.numCells; ++cell)
       {
         for (std::size_t qp=0; qp < numQPs; ++qp)
         {
           // compute the electron density using wavefunction
-          ScalarT eDensity = eDensityForPoissonSchrond(workset, cell, qp, eigenvals);
+          ScalarT eDensity = eDensityForPoissonSchrond(workset, cell, qp);
           
           // obtain the scaled potential
           const ScalarT& phi = potential(cell,qp);
@@ -708,7 +720,7 @@ QCAD::PoissonSource<EvalT,Traits>::computeFDIntMinusOneHalf(const ScalarT x)
 template<typename EvalT, typename Traits>
 typename QCAD::PoissonSource<EvalT,Traits>::ScalarT
 QCAD::PoissonSource<EvalT,Traits>::
-eDensityForPoissonSchrond(typename Traits::EvalData workset, std::size_t cell, std::size_t qp, const std::vector<double> &eigenvals)
+eDensityForPoissonSchrond(typename Traits::EvalData workset, std::size_t cell, std::size_t qp)
 {
   // unit conversion factor
   double eVPerJ = 1.0/eleQ; 
@@ -724,8 +736,11 @@ eDensityForPoissonSchrond(typename Traits::EvalData workset, std::size_t cell, s
   ScalarT kbT = kbBoltz*temperature;  // in [eV]
   ScalarT eDensity = 0.0; 
   double Ef = 0.0;  //Fermi energy == 0
-  char buf[100];
 
+  const std::vector<double>& neg_eigenvals = *(workset.eigenDataPtr->eigenvalueRe);
+  std::vector<double> eigenvals( neg_eigenvals );
+  for(unsigned int i=0; i<eigenvals.size(); ++i) eigenvals[i] *= -1; //apply minus sign (b/c of eigenval convention)
+  
   switch (numDims)
   {
     case 1: // 1D wavefunction (1D confinement)
@@ -746,15 +761,10 @@ eDensityForPoissonSchrond(typename Traits::EvalData workset, std::size_t cell, s
       // loop over eigenvalues to compute electron density [cm^-3]
       for(int i = 0; i < nEigenvectors; i++) 
       {
-        Albany::StateVariables& newState = *workset.newState;
-        sprintf(buf,"%s_Re%d", evecStateRoot.c_str(), i);
-        Intrepid::FieldContainer<RealType>& wfRe = *newState[buf];
-        sprintf(buf,"%s_Im%d", evecStateRoot.c_str(), i);
-        Intrepid::FieldContainer<RealType>& wfIm = *newState[buf];
-              
         // note: wavefunctions are assumed normalized here 
         // (need to normalize them in the Schrodinger solver)
-        ScalarT wfSquared = (pow(wfRe(cell,qp),2) + pow(wfIm(cell,qp),2));
+        ScalarT wfSquared = ( eigenvector_Re[i](cell,qp)*eigenvector_Re[i](cell,qp) + 
+ 			      eigenvector_Im[i](cell,qp)*eigenvector_Im[i](cell,qp) );
         eDensity += wfSquared*log(1.+exp((Ef-eigenvals[i])/kbT));
       }
       eDensity = eDenPrefactor*eDensity; // in [cm^-3]
@@ -780,15 +790,10 @@ eDensityForPoissonSchrond(typename Traits::EvalData workset, std::size_t cell, s
       // loop over eigenvalues to compute electron density [cm^-3]
       for(int i=0; i < nEigenvectors; i++) 
       {
-        Albany::StateVariables& newState = *workset.newState;
-        sprintf(buf,"%s_Re%d", evecStateRoot.c_str(), i);
-        Intrepid::FieldContainer<RealType>& wfRe = *newState[buf];
-        sprintf(buf,"%s_Im%d", evecStateRoot.c_str(), i);
-        Intrepid::FieldContainer<RealType>& wfIm = *newState[buf];
-              
         // note: wavefunctions are assumed normalized here 
         // (need to normalize them in the Schrodinger solver)
-        ScalarT wfSquared = (pow(wfRe(cell,qp),2) + pow(wfIm(cell,qp),2));
+        ScalarT wfSquared = ( eigenvector_Re[i](cell,qp)*eigenvector_Re[i](cell,qp) + 
+ 			      eigenvector_Im[i](cell,qp)*eigenvector_Im[i](cell,qp) );
         ScalarT inArg = (Ef-eigenvals[i])/kbT;
         eDensity += wfSquared*computeFDIntMinusOneHalf(inArg); 
       }
@@ -811,18 +816,13 @@ eDensityForPoissonSchrond(typename Traits::EvalData workset, std::size_t cell, s
       // loop over eigenvalues to compute electron density [cm^-3]
       for(int i = 0; i < nEigenvectors; i++) 
       {
-        Albany::StateVariables& newState = *workset.newState;
-        sprintf(buf,"%s_Re%d", evecStateRoot.c_str(), i);
-        Intrepid::FieldContainer<RealType>& wfRe = *newState[buf];
-        sprintf(buf,"%s_Im%d", evecStateRoot.c_str(), i);
-        Intrepid::FieldContainer<RealType>& wfIm = *newState[buf];
-              
         // Fermi-Dirac distribution
         ScalarT fermiFactor = 1.0/( exp((eigenvals[i]-Ef)/kbT) + 1.0 );
               
         // note: wavefunctions are assumed normalized here 
         // (need to normalize them in the Schrodinger solver)
-        ScalarT wfSquared = (pow(wfRe(cell,qp),2) + pow(wfIm(cell,qp),2));
+        ScalarT wfSquared = ( eigenvector_Re[i](cell,qp)*eigenvector_Re[i](cell,qp) + 
+ 			      eigenvector_Im[i](cell,qp)*eigenvector_Im[i](cell,qp) );
         eDensity += wfSquared*fermiFactor; 
       }
       eDensity = eDenPrefactor*eDensity; // in [cm^-3]
@@ -842,7 +842,9 @@ eDensityForPoissonSchrond(typename Traits::EvalData workset, std::size_t cell, s
 
 
 // **********************************************************************
-template<typename EvalT,typename Traits>
+
+//TODO: remove after new version is tested
+/*template<typename EvalT,typename Traits>
 std::vector<double>
 QCAD::PoissonSource<EvalT,Traits>::ReadEigenvaluesFromFile(int numberToRead)
 {
@@ -874,3 +876,4 @@ QCAD::PoissonSource<EvalT,Traits>::ReadEigenvaluesFromFile(int numberToRead)
   evalData.close();
   return eigenvals;
 }
+*/
