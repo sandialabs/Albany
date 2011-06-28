@@ -21,23 +21,17 @@
 #include "Sacado_ParameterRegistration.hpp"
 #include "Albany_Utils.hpp"
 
-//Radom field types
-enum SG_RF {CONSTANT, UNIFORM, LOGNORMAL};
-const int num_sg_rf = 3;
-const SG_RF sg_rf_values[] = {CONSTANT, UNIFORM, LOGNORMAL};
-const char *sg_rf_names[] = {"Constant", "Uniform", "Log-Normal"};
-
-SG_RF randField = CONSTANT;
-
 namespace PHAL {
 
 template<typename EvalT, typename Traits>
-ThermalConductivity<EvalT, Traits>::
-ThermalConductivity(Teuchos::ParameterList& p) :
-  thermalCond(p.get<std::string>("QP Variable Name"),
-	      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"))
+NSMaterialProperty<EvalT, Traits>::
+NSMaterialProperty(Teuchos::ParameterList& p) :
+  name_mp(p.get<std::string>("Material Property Name")),
+  matprop(name_mp,
+	  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+  randField(CONSTANT)
 {
-  Teuchos::ParameterList* cond_list = 
+  Teuchos::ParameterList* mp_list = 
     p.get<Teuchos::ParameterList*>("Parameter List");
 
   Teuchos::RCP<PHX::DataLayout> vector_dl =
@@ -47,17 +41,17 @@ ThermalConductivity(Teuchos::ParameterList& p) :
   numQPs  = dims[1];
   numDims = dims[2];
 
-  std::string type = cond_list->get("Thermal Conductivity Type", "Constant");
+  std::string type = mp_list->get("Type", "Constant");
   if (type == "Constant") {
     is_constant = true;
     randField = CONSTANT;
-    constant_value = cond_list->get("Value", 1.0);
+    constant_value = mp_list->get("Value", 1.0);
 
-    // Add thermal conductivity as a Sacado-ized parameter
+    // Add property as a Sacado-ized parameter
     Teuchos::RCP<ParamLib> paramLib = 
       p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
       new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-    	"Thermal Conductivity", this, paramLib);
+	name_mp, this, paramLib);
   }
   else if (type == "Truncated KL Expansion" || type == "Log Normal RF") {
     is_constant = false;
@@ -74,7 +68,7 @@ ThermalConductivity(Teuchos::ParameterList& p) :
     this->addDependentField(coordVec);
 
     exp_rf_kl = 
-      Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<MeshScalarT>(*cond_list));
+      Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<MeshScalarT>(*mp_list));
     int num_KL = exp_rf_kl->stochasticDimension();
 
     // Add KL random variables as Sacado-ized parameters
@@ -82,39 +76,39 @@ ThermalConductivity(Teuchos::ParameterList& p) :
     Teuchos::RCP<ParamLib> paramLib = 
       p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
     for (int i=0; i<num_KL; i++) {
-      std::string ss = Albany::strint("Thermal Conductivity KL Random Variable",i);
+      std::string ss = Albany::strint(name_mp + " KL Random Variable",i);
       new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss, this, paramLib);
-      rv[i] = cond_list->get(ss, 0.0);
+      rv[i] = mp_list->get(ss, 0.0);
     }
   }
   else {
     TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-		       "Invalid thermal conductivity type " << type);
+		       "Invalid material property type " << type);
   } 
 
-  this->addEvaluatedField(thermalCond);
-  this->setName("Thermal Conductivity"+PHX::TypeString<EvalT>::value);
+  this->addEvaluatedField(matprop);
+  this->setName(name_mp+PHX::TypeString<EvalT>::value);
 }
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
-void ThermalConductivity<EvalT, Traits>::
+void NSMaterialProperty<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(thermalCond,fm);
+  this->utils.setFieldData(matprop,fm);
   if (!is_constant) this->utils.setFieldData(coordVec,fm);
 }
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
-void ThermalConductivity<EvalT, Traits>::
+void NSMaterialProperty<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   if (is_constant) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-	thermalCond(cell,qp) = constant_value;
+	matprop(cell,qp) = constant_value;
       }
     }
   }
@@ -125,9 +119,9 @@ evaluateFields(typename Traits::EvalData workset)
 	for (std::size_t i=0; i<numDims; i++)
 	  point[i] = Sacado::ScalarValue<MeshScalarT>::eval(coordVec(cell,qp,i));
         if (randField == UNIFORM)
-          thermalCond(cell,qp) = exp_rf_kl->evaluate(point, rv);       
+          matprop(cell,qp) = exp_rf_kl->evaluate(point, rv);       
         else if (randField == LOGNORMAL)
-          thermalCond(cell,qp) = std::exp(exp_rf_kl->evaluate(point, rv));       
+          matprop(cell,qp) = std::exp(exp_rf_kl->evaluate(point, rv));       
       }
     }
   }
@@ -135,19 +129,19 @@ evaluateFields(typename Traits::EvalData workset)
 
 // **********************************************************************
 template<typename EvalT,typename Traits>
-typename ThermalConductivity<EvalT,Traits>::ScalarT& 
-ThermalConductivity<EvalT,Traits>::getValue(const std::string &n)
+typename NSMaterialProperty<EvalT,Traits>::ScalarT& 
+NSMaterialProperty<EvalT,Traits>::getValue(const std::string &n)
 {
   if (is_constant)
     return constant_value;
   for (int i=0; i<rv.size(); i++) {
-    if (n == Albany::strint("Thermal Conductivity KL Random Variable",i))
+    if (n == Albany::strint(name_mp + " KL Random Variable",i))
       return rv[i];
   }
   TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		     std::endl <<
 		     "Error! Logic error in getting paramter " << n
-		     << " in ThermalConductivity::getValue()" << std::endl);
+		     << " in NSMaterialProperty::getValue()" << std::endl);
   return constant_value;
 }
 

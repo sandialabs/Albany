@@ -47,8 +47,17 @@
 #include "PHAL_SaveStateField.hpp"
 #include "PHAL_LoadStateField.hpp"
 #include "PHAL_SharedParameter.hpp"
+#include "PHAL_NSContinuityResid.hpp"
+#include "PHAL_NSMomentumResid.hpp"
+#include "PHAL_NSThermalEqResid.hpp"
+#include "PHAL_NSRmEqResid.hpp"
+#include "PHAL_ContravarientMetricTensor.hpp"
+#include "PHAL_NSTauM.hpp"
+#include "PHAL_NSTauT.hpp"
+#include "PHAL_NSMaterialProperty.hpp"
+#include "PHAL_NSBodyForce.hpp"
 
-#include "boost/mpl/vector/vector30.hpp"
+#include "boost/mpl/vector/vector40.hpp"
 #include "boost/mpl/placeholders.hpp"
 using namespace boost::mpl::placeholders;
 
@@ -92,8 +101,17 @@ struct FactoryTraits {
   static const int id_schrodinger_potential     = 26;
   static const int id_schrodinger_resid         = 27;
   static const int id_absorption                = 28;
+  static const int id_continuityeqresid         = 29;
+  static const int id_nsmomentumeqresid         = 30;
+  static const int id_nsthermaleqresid          = 31;
+  static const int id_nsrm                      = 32;
+  static const int id_nsgctensor                = 33;
+  static const int id_nstaum                    = 34;
+  static const int id_nstaut                    = 35;
+  static const int id_nsmatprop                 = 36;
+  static const int id_nsbodyforce               = 37;
 
-  typedef boost::mpl::vector29< 
+  typedef boost::mpl::vector38< 
             PHAL::Dirichlet<_,Traits>,                //  0
             PHAL::GatherSolution<_,Traits>,           //  1
             PHAL::GatherCoordinateVector<_,Traits>,   //  2
@@ -122,7 +140,16 @@ struct FactoryTraits {
             PHAL::SharedParameter<_,Traits>,          // 25
             QCAD::SchrodingerPotential<_,Traits>,     // 26
             QCAD::SchrodingerResid<_,Traits>,         // 27
-            PHAL::Absorption<_,Traits>                // 28
+            PHAL::Absorption<_,Traits>,               // 28
+            PHAL::NSContinuityResid<_,Traits>,        // 29  
+            PHAL::NSMomentumResid<_,Traits>,          // 30
+            PHAL::NSThermalEqResid<_,Traits>,         // 31
+            PHAL::NSRmEqResid<_,Traits>,              // 32
+            PHAL::ContravarientMetricTensor<_,Traits>,// 33
+            PHAL::NSTauM<_,Traits>,                   // 34
+            PHAL::NSTauT<_,Traits>,                   // 35
+            PHAL::NSMaterialProperty<_,Traits>,       // 36
+            PHAL::NSBodyForce<_,Traits>               // 37
   > EvaluatorTypes;
   
 };
