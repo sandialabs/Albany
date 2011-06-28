@@ -3,7 +3,7 @@
     <!--<Parameter name="Solution Method" type="string" value="Transient"/>-->
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
     <Parameter name="Name" type="string" value="NavierStokes 2D"/>
-    <Parameter name="Rayleigh Number" type="double" value="0.0"/>
+    <!--<Parameter name="Rayleigh Number" type="double" value="0.0"/>-->
     <ParameterList name="Initial Condition">
       <Parameter name="Function" type="string" value="Constant"/>
       <Parameter name="Function Data" type="Array(double)" value="{0.0,0.0,0.0,0.0}"/>
