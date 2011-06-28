@@ -20,7 +20,7 @@
     </ParameterList>
 
     <ParameterList name="substrate">
-      <Parameter name="material" type="string" value="Silicon" />
+      <Parameter name="elementBlock" type="string" value="silicon" />
     </ParameterList>
 
     <ParameterList name="psubstrate">
@@ -42,6 +42,7 @@
 
     <ParameterList name="silicon">
       <Parameter name="material" type="string" value="Silicon" />
+      <Parameter name="dopantType" type="string" value="None" />
     </ParameterList>
 
     <ParameterList name="silicon.quantum">
@@ -120,8 +121,8 @@
       <!-- Reference temperature [K] for computing Nc and Nv -->
       <Parameter name="Reference Temperature" type="double" value="300.0" />
 
-      
     </ParameterList>
+
 
     <ParameterList name="SiliconDioxide">
       <Parameter name="Category" type="string" value="Insulator" />
@@ -135,7 +136,6 @@
       <Parameter name="Electron Effective Mass Y" type="double" value="0.19" />
       <Parameter name="Electron Effective Mass Z" type="double" value="0.98" />
 
-
       <!-- Band Gap in [eV] -->
       <Parameter name="Band Gap" type="double" value="9.0" />
 
@@ -143,23 +143,25 @@
       <Parameter name="Electron Affinity" type="double" value="1.0" />
     </ParameterList>
 
+
     <ParameterList name="PolySilicon">
-      <Parameter name="Category" type="string" value="Insulator" />
+      <Parameter name="Category" type="string" value="Metal" />  
       <Parameter name="Permittivity" type="double" value="11.9" />
 
       <!-- Band Gap in [eV] (use 0K silicon now?)-->
       <Parameter name="Band Gap" type="double" value="1.1455" />
 
-      <!-- Electron affinity in [eV] assumes (n+ polysilicon; same as silicon) -->
-      <Parameter name="Electron Affinity" type="double" value="4.05" />
+      <!-- Assume n+ PolySilicon which is true in devices that QCAD team is interested in !-->
+      <Parameter name="Work Function" type="double" value="4.05" /> 
     </ParameterList>
+
 
     <ParameterList name="Aluminum">
       <Parameter name="Category" type="string" value="Metal" />
       <Parameter name="Permittivity" type="double" value="1.0" />
 
-      <!-- Electron affinity (work function?) in [eV] -->
-      <Parameter name="Electron Affinity" type="double" value="4.186" />
+      <!-- Work Function in [eV] -->
+      <Parameter name="Work Function" type="double" value="4.186" /> -->
 
     </ParameterList>
 

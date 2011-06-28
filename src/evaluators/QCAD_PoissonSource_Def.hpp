@@ -184,31 +184,31 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
   ScalarT C0;  // scaling for conc. [cm^-3]
   ScalarT Lambda2;  // derived scaling factor (unitless) that appears in the scaled Poisson equation
 
-  string matrlCategory = materialDB->getElementBlockParam<string>(workset.EBName,"Category");
-
   //! Constant energy reference for heterogeneous structures
   ScalarT qPhiRef;
-  string refMtrlName = materialDB->getParam<string>("Reference Material");
   {
-    string refCategory = materialDB->getMaterialParam<string>(refMtrlName,"Category");
-    if(refCategory == "Semiconductor") {
-      double mdn = materialDB->getMaterialParam<double>(refMtrlName,"Electron DOS Effective Mass");
-      double mdp = materialDB->getMaterialParam<double>(refMtrlName,"Hole DOS Effective Mass");
-      double Chi = materialDB->getMaterialParam<double>(refMtrlName,"Electron Affinity");
-      double Eg0 = materialDB->getMaterialParam<double>(refMtrlName,"Zero Temperature Band Gap");
-      double alpha = materialDB->getMaterialParam<double>(refMtrlName,"Band Gap Alpha Coefficient");
-      double beta = materialDB->getMaterialParam<double>(refMtrlName,"Band Gap Beta Coefficient");
-      ScalarT Eg = Eg0-alpha*pow(temperature,2.0)/(beta+temperature); // in [eV]
+    std::string refMtrlName, category;
+    refMtrlName = materialDB->getParam<std::string>("Reference Material");
+    category = materialDB->getMaterialParam<std::string>(refMtrlName,"Category");
+    if (category != "Semiconductor") 
+      TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+        << "Error!  Reference material must be Semiconductor !" << std::endl);
+        
+    // Same qPhiRef needs to be used for the entire structure
+    double mdn = materialDB->getMaterialParam<double>(refMtrlName,"Electron DOS Effective Mass");
+    double mdp = materialDB->getMaterialParam<double>(refMtrlName,"Hole DOS Effective Mass");
+    double Chi = materialDB->getMaterialParam<double>(refMtrlName,"Electron Affinity");
+    double Eg0 = materialDB->getMaterialParam<double>(refMtrlName,"Zero Temperature Band Gap");
+    double alpha = materialDB->getMaterialParam<double>(refMtrlName,"Band Gap Alpha Coefficient");
+    double beta = materialDB->getMaterialParam<double>(refMtrlName,"Band Gap Beta Coefficient");
+    ScalarT Eg = Eg0-alpha*pow(temperature,2.0)/(beta+temperature); // in [eV]
     
-      ScalarT kbT = kbBoltz*temperature;      // in [eV]
-      ScalarT Eic = -Eg/2. + 3./4.*kbT*log(mdp/mdn);  // (Ei-Ec) in [eV]
-      qPhiRef = Chi - Eic;  // (Evac-Ei) in [eV] where Evac = vacuum level
-    }
-    else {
-      double Chi = materialDB->getMaterialParam<double>(refMtrlName,"Electron Affinity");
-      qPhiRef = Chi;
-    }
+    ScalarT kbT = kbBoltz*temperature;      // in [eV]
+    ScalarT Eic = -Eg/2. + 3./4.*kbT*log(mdp/mdn);  // (Ei-Ec) in [eV]
+    qPhiRef = Chi - Eic;  // (Evac-Ei) in [eV] where Evac = vacuum level
   }  
+
+  string matrlCategory = materialDB->getElementBlockParam<string>(workset.EBName,"Category");
 
 
   //***************************************************************************
@@ -314,7 +314,6 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
     if(bSchrodingerInQuantumRegions && 
       materialDB->getElementBlockParam<bool>(workset.EBName,"quantum",false)) 
     {
-    
       // read eigenvalues from file
       std::vector<double> eigenvals = ReadEigenvaluesFromFile(nEigenvectors);  
        
@@ -423,22 +422,21 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
           // obtain the scaled potential
           const ScalarT& phi = potential(cell,qp);
 
-	  //(No other classical density in insulator)
+          //(No other classical density in insulator)
               
           // the scaled full RHS
           ScalarT charge;
-
           charge = 1.0/Lambda2C0*(-eDensity);
           poissonSource(cell, qp) = factor*charge;
 
           // output states
-	  chargeDensity(cell, qp) = 0.0;    // no space charge in an insulator
-	  electronDensity(cell, qp) = 0.0;  // no electrons in an insulator
-	  holeDensity(cell, qp) = 0.0;      // no holes in an insulator
-	  electricPotential(cell, qp) = phi*V0;
-	  ionizedDopant(cell, qp) = 0.0;
-	  conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
-	  valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
+          chargeDensity(cell, qp) = 0.0;    // no space charge in an insulator
+          electronDensity(cell, qp) = eDensity;  // quantum electrons in an insulator
+          holeDensity(cell, qp) = 0.0;      // no holes in an insulator
+          electricPotential(cell, qp) = phi*V0;
+          ionizedDopant(cell, qp) = 0.0;
+          conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
+          valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
         }
       }  // end of loop over cells
     }
@@ -447,24 +445,24 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 
       for (std::size_t cell=0; cell < workset.numCells; ++cell)
       {
-	for (std::size_t qp=0; qp < numQPs; ++qp)
-	{
-	  const ScalarT& phi = potential(cell,qp);
-	  ScalarT charge; 
-	  charge = 0.0;  // no charge in an insulator
-	  poissonSource(cell, qp) = factor*charge;
+        for (std::size_t qp=0; qp < numQPs; ++qp)
+        {
+          const ScalarT& phi = potential(cell,qp);
+          ScalarT charge; 
+          charge = 0.0;  // no charge in an insulator
+          poissonSource(cell, qp) = factor*charge;
 	  
-	  chargeDensity(cell, qp) = 0.0;    // no space charge in an insulator
-	  electronDensity(cell, qp) = 0.0;  // no electrons in an insulator
-	  holeDensity(cell, qp) = 0.0;      // no holes in an insulator
-	  electricPotential(cell, qp) = phi*V0;
-	  ionizedDopant(cell, qp) = 0.0;
-	  conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
-	  valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
-	}
+          chargeDensity(cell, qp) = 0.0;    // no space charge in an insulator
+          electronDensity(cell, qp) = 0.0;  // no electrons in an insulator
+          holeDensity(cell, qp) = 0.0;      // no holes in an insulator
+          electricPotential(cell, qp) = phi*V0;
+          ionizedDopant(cell, qp) = 0.0;
+          conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
+          valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
+        }
       }
     }
-  }
+  }  // end of else if(matrlCategory == "Insulator")
 
 
   //***************************************************************************
@@ -472,10 +470,9 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
   //***************************************************************************
   else if(matrlCategory == "Metal")
   {
-    double Eg = materialDB->getElementBlockParam<double>(workset.EBName,"Band Gap",0.0);
-    double Chi = materialDB->getElementBlockParam<double>(workset.EBName,"Electron Affinity",0.0);
+    double workFunc = materialDB->getElementBlockParam<double>(workset.EBName,"Work Function");
 
-    // polysilicon needs special considertion and the following is temporary
+    // The following assumes Metal is surrounded by Dirichlet BC
     for (std::size_t cell=0; cell < workset.numCells; ++cell)
     {
       for (std::size_t qp=0; qp < numQPs; ++qp)
@@ -491,8 +488,8 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
         holeDensity(cell, qp) = 0.0;      
         electricPotential(cell, qp) = phi*V0; 
         ionizedDopant(cell, qp) = 0.0;
-        conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
-        valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
+        conductionBand(cell, qp) = qPhiRef-workFunc-phi*V0; // [eV]
+        valenceBand(cell, qp) = conductionBand(cell,qp); // No band gap in metal
       }
     }
   }
@@ -514,8 +511,8 @@ evaluateFields_default(typename Traits::EvalData workset)
   MeshScalarT* coord;
   ScalarT charge;
 
-  ScalarT temperature = temperatureField(0); //get shared temperature parameter from field
-  ScalarT V0 = kbBoltz*temperature/1.0; // kb*T/q in [V], scaling for potential
+  // ScalarT temperature = temperatureField(0); //get shared temperature parameter from field
+  // ScalarT V0 = kbBoltz*temperature/1.0; // kb*T/q in [V], scaling for potential
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) 
   {
@@ -535,7 +532,18 @@ evaluateFields_default(typename Traits::EvalData workset)
       }
 
       // scale even default device since Poisson Dirichlet evaluator always scales DBCs
-      poissonSource(cell, qp) = factor*charge / V0; 
+      // poissonSource(cell, qp) = factor*charge / V0;
+      
+      // Suzey: do not scale the default device since the DBC is not scaled
+      poissonSource(cell, qp) = factor*charge;
+      
+      // set all states to 0 except electricPotential 
+      electronDensity(cell, qp) = 0.0;  
+      holeDensity(cell, qp) = 0.0;      
+      electricPotential(cell, qp) = phi; // no scaling
+      ionizedDopant(cell, qp) = 0.0;
+      conductionBand(cell, qp) = 0.0; 
+      valenceBand(cell, qp) = 0.01; 
     }
   }
 }

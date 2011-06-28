@@ -48,11 +48,11 @@
 
   <ParameterList name="Regression Results">
     <Parameter name="Number of Comparisons" type="int" value="1" />
-    <Parameter name="Test Values" type="Array(double)" value="{ -12.6304978038 }" />
+    <Parameter name="Test Values" type="Array(double)" value="{-10.1079068919}" />
     <Parameter name="Relative Tolerance" type="double" value="1.0e-3" />
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="1" />
     <Parameter name="Sensitivity Test Values 0" type="Array(double)"
-     	       value="{1.15270369574,4.38722640429,0.158194258897}" />
+     	       value="{ 1.1527225498,4.65492927386,0.0745758619996}" />
   </ParameterList>
 
 

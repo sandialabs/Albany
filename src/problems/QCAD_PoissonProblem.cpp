@@ -611,16 +611,16 @@ QCAD::PoissonProblem::constructDirichletEvaluators(
          p->set< RealType >("Dirichlet Value", DBCparams.get<double>(ss));
          p->set< string >  ("Node Set ID", nodeSetIDs[i]);
          p->set< int >     ("Number of Equations", dofNames.size());
-	 p->set< int >     ("Equation Offset", j);
+         p->set< int >     ("Equation Offset", j);
 
          p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
-	 //! Additional parameters needed for Poisson Dirichlet BCs
-	 Teuchos::ParameterList& paramList = params->sublist("Poisson Source");
-	 p->set<Teuchos::ParameterList*>("Poisson Source Parameter List", &paramList);
-	 //p->set<string>("Temperature Name", "Temperature");  //to add if use shared param for DBC
-	 p->set<double>("Temperature", temperature);
-	 p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
+         //! Additional parameters needed for Poisson Dirichlet BCs
+         Teuchos::ParameterList& paramList = params->sublist("Poisson Source");
+         p->set<Teuchos::ParameterList*>("Poisson Source Parameter List", &paramList);
+         //p->set<string>("Temperature Name", "Temperature");  //to add if use shared param for DBC
+         p->set<double>("Temperature", temperature);
+         p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
 
          std::stringstream ess; ess << "Evaluator for " << ss;
          evaluators_to_build[ess.str()] = p;
