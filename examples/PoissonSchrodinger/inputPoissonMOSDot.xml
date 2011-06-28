@@ -10,7 +10,6 @@
     <ParameterList name="Schrodinger Coupling">
       <Parameter name="Schrodinger source in quantum blocks" type="bool" value="true"/>
       <Parameter name="Eigenvectors from States" type="int" value="2"/>
-      <Parameter name="Eigenvalues file" type="string" value="evals.txtdump"/>
     </ParameterList>
 
     <ParameterList name="Dirichlet BCs">

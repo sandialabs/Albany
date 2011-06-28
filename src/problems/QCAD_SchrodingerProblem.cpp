@@ -63,7 +63,7 @@ SchrodingerProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
 
   potentialStateName = "V"; //default name for potential at QPs field
-  nEigenvectorsToOuputAsStates = 0;
+  //nEigenvectorsToOuputAsStates = 0;
   bOnlySolveInQuantumBlocks = false;
 
   //Poisson coupling
@@ -74,8 +74,8 @@ SchrodingerProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     if(cList.isType<string>("Potential State Name"))
     potentialStateName = cList.get<string>("Potential State Name");
 
-    if(cList.isType<int>("Save Eigenvectors as States"))
-      nEigenvectorsToOuputAsStates = cList.get<int>("Save Eigenvectors as States");
+    //if(cList.isType<int>("Save Eigenvectors as States"))
+    //  nEigenvectorsToOuputAsStates = cList.get<int>("Save Eigenvectors as States");
   }
 
   //Check LOCA params to see if eigenvectors will be output to states.
@@ -93,10 +93,6 @@ SchrodingerProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   // neq=1 set in AbstractProblem constructor
   dofNames.resize(neq);
   dofNames[0] = "psi";
-
-  //STATES TO OUTPUT
-  nstates = 1; // Potential energy
-  nstates += nEigenvectorsToOuputAsStates*2; // Re and Im parts of each eigenvector
 }
 
 QCAD::SchrodingerProblem::
@@ -460,18 +456,19 @@ QCAD::SchrodingerProblem::constructEvaluators(
      st++;
    }
 
+   // NOW - SaveEigenData always ouput to statemanager (but epetra vecs, not states)
   // EIGENSTATE OUTPUT - to this registration after above loop because 
   //  we don't want evaluators to fill these states - they get filled 
   //  in SaveEigenData call after LOCA is done.
-  if( nEigenvectorsToOuputAsStates > 0 ) {
+  /*if( nEigenvectorsToOuputAsStates > 0 ) {
     char evecStateName[100];
     for( int k = 0; k < nEigenvectorsToOuputAsStates; k++) {
       sprintf(evecStateName,"Eigenvector_Re%d",k);
-      stateMgr.registerStateVariable(evecStateName, node_scalar);
+      (void) stateMgr.registerStateVariable(evecStateName, node_scalar, dummy, 0);
       sprintf(evecStateName,"Eigenvector_Im%d",k);
-      stateMgr.registerStateVariable(evecStateName, node_scalar);    
+      (void) stateMgr.registerStateVariable(evecStateName, node_scalar, dummy, 0);    
     }
-  }
+    }*/
 
 }
 

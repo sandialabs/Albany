@@ -18,7 +18,6 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
-#include "Albany_AbstractDiscretization.hpp"
 
 // **********************************************************************
 // Genereric Template Code for Constructor and PostRegistrationSetup

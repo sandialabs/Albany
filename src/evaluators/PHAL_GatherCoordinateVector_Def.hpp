@@ -112,7 +112,6 @@ template<typename Traits>
 void GatherCoordinateVector<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 { 
-  const Teuchos::ArrayRCP<double> &coordinates = workset.coordinates;
   unsigned int numCells = workset.numCells;
 
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > wsCoords = workset.wsCoords;

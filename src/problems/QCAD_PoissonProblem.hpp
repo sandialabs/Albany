@@ -84,9 +84,7 @@ namespace QCAD {
 
     //! Parameters for coupling to Schrodinger
     bool bUseSchrodingerSource;
-    std::string eigenvalFilename;
-    int nEigenvectorsToInputFromStates;
-    
+    int nEigenvectors;    
   };
 
 }

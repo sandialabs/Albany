@@ -15,8 +15,8 @@
 \********************************************************************/
 
 
-#ifndef PHAL_SAVESTATEFIELD_HPP
-#define PHAL_SAVESTATEFIELD_HPP
+#ifndef PHAL_GATHER_EIGENVECTORS_HPP
+#define PHAL_GATHER_EIGENVECTORS_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -26,55 +26,43 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Epetra_Vector.h"
 
-/** \brief SaveStateField
+/** \brief Gathers solution values from the Newton solution vector into 
+    the nodal fields of the field manager
+
+    Currently makes an assumption that the stride is constant for dofs
+    and that the nmber of dofs is equal to the size of the solution
+    names vector.
 
 */
+// **************************************************************
+// Base Class with Generic Implementations: Specializations for
+// Automatic Differentiation Below 
+// **************************************************************
 namespace PHAL {
 
-template<typename EvalT, typename Traits> 
-class SaveStateField : public PHX::EvaluatorWithBaseImpl<Traits>,
-                       public PHX::EvaluatorDerived<EvalT, Traits>  {
+template<typename EvalT, typename Traits>
+class GatherEigenvectors
+  : public PHX::EvaluatorWithBaseImpl<Traits>,
+    public PHX::EvaluatorDerived<EvalT, Traits>  {
   
 public:
   
-  SaveStateField(const Teuchos::ParameterList& p);
+  GatherEigenvectors(const Teuchos::ParameterList& p);
   
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
   
-  void evaluateFields(typename Traits::EvalData d);
-  
-private:
+  void evaluateFields(typename Traits::EvalData d);  
+protected:
 
   typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
+  std::vector< PHX::MDField<ScalarT,Cell,Node> > eigenvector_Re;
+  std::vector< PHX::MDField<ScalarT,Cell,Node> > eigenvector_Im;
+  std::size_t numNodes;
+  std::size_t nEigenvectors;
 };
 
-
-template<typename Traits> 
-class SaveStateField<PHAL::AlbanyTraits::Residual, Traits> 
-                    : public PHX::EvaluatorWithBaseImpl<Traits>,
-                      public PHX::EvaluatorDerived<PHAL::AlbanyTraits::Residual, Traits>  {
-  
-public:
-  
-  SaveStateField(const Teuchos::ParameterList& p);
-  
-  void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
-  
-  void evaluateFields(typename Traits::EvalData d);
-  
-private:
-
-  typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
-  typedef typename PHAL::AlbanyTraits::Residual::MeshScalarT MeshScalarT;
-
-  Teuchos::RCP<PHX::FieldTag> savestate_operation;
-  PHX::MDField<ScalarT> field;
-  std::string fieldName;
-  std::string stateName;
-};
+// **************************************************************
 }
 
 #endif

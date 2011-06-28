@@ -15,20 +15,29 @@
 \********************************************************************/
 
 
-#ifndef ALBANY_INITIALCONDITION_HPP
-#define ALBANY_INITIALCONDITION_HPP
+#ifndef ALBANY_EIGENDATASTRUCT
+#define ALBANY_EIGENDATASTRUCT
 
 #include <string>
-#include "Teuchos_ParameterList.hpp"
-#include "Epetra_Vector.h"
+#include <vector>
+#include "Teuchos_RCP.hpp"
+#include "NOX_Epetra_MultiVector.H"
 
 namespace Albany {
 
-void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
-                       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >& wsElNodeID,
-                       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords,
-                       const int neq,
-                       const int numDim,
-                       Teuchos::ParameterList& icParams);
+struct EigendataStruct {
+
+  EigendataStruct () {};
+  ~EigendataStruct () {};
+
+  Teuchos::RCP<std::vector<double> > eigenvalueRe;
+  Teuchos::RCP<std::vector<double> > eigenvalueIm;
+  Teuchos::RCP<NOX::Epetra::MultiVector> eigenvectorRe;
+  Teuchos::RCP<NOX::Epetra::MultiVector> eigenvectorIm;
+};
+
 }
 #endif
+
+
+

@@ -15,20 +15,10 @@
 \********************************************************************/
 
 
-#ifndef ALBANY_INITIALCONDITION_HPP
-#define ALBANY_INITIALCONDITION_HPP
+#include "PHAL_AlbanyTraits.hpp"
 
-#include <string>
-#include "Teuchos_ParameterList.hpp"
-#include "Epetra_Vector.h"
+#include "PHAL_GatherEigenvectors.hpp"
+#include "PHAL_GatherEigenvectors_Def.hpp"
 
-namespace Albany {
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::GatherEigenvectors)
 
-void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
-                       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >& wsElNodeID,
-                       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords,
-                       const int neq,
-                       const int numDim,
-                       Teuchos::ParameterList& icParams);
-}
-#endif

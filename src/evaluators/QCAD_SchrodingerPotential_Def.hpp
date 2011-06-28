@@ -97,12 +97,9 @@ evaluateFields(typename Traits::EvalData workset)
   //Potential taken from input state "Electric Potential" - now hardcoded, maybe allow variable later?
   else if (potentialType == "FromState") 
   {
-    //ANDY - can't access oldState due to const qualifiers, so not just use newstate (since both hold re-init data)
-    //const Albany::StateVariables& oldState = *workset.oldState;
-    //Intrepid::FieldContainer<RealType>& potentialState = *oldState[potentialStateName];
+    Albany::StateArray& states = *workset.stateArrayPtr;
+    Albany::MDArray& potentialState = states[potentialStateName];
 
-    Albany::StateVariables& newState = *workset.newState;
-    Intrepid::FieldContainer<RealType>& potentialState = *newState[potentialStateName];
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
         double d =  potentialState(cell, qp);

@@ -75,9 +75,6 @@ Albany::Application::Application(
   // Validate Problem parameters against list for this specific problem
   problemParams->validateParameters(*(problem->getValidProblemParameters()),0);
 
-  // Get number of equations
-  neq = problem->numEquations();
-
   // Register shape parameters for manipulation by continuation/optimization
   if (problemParams->get("Enable Cubit Shape Parameters",false)) {
 #ifdef ALBANY_CUTR
@@ -115,14 +112,14 @@ Albany::Application::Application(
   problem->buildProblem(*meshSpecs, stateMgr, responses);
 
   // Create the full mesh
+  neq = problem->numEquations();
   disc = discFactory.createDiscretization(neq, stateMgr.getStateInfoStruct());
 
   // Load connectivity map and coordinates 
   wsElNodeID = disc->getWsElNodeID();
   coords = disc->getCoords();
-  coordinates = disc->getCoordinates();
   wsEBNames = disc->getWsEBNames();
-  int numDim = disc->getNumDim();
+  int numDim = meshSpecs->numDim;
   numWorksets = wsElNodeID.size();
 
   // Create Epetra objects
@@ -145,17 +142,21 @@ Albany::Application::Application(
   if (initial_guess != Teuchos::null) *initial_x = *initial_guess;
   else {
     overlapped_x->Import(*initial_x, *importer, Insert);
-    Albany::InitialConditions(overlapped_x, wsElNodeID, coordinates, neq, numDim,
+    Albany::InitialConditions(overlapped_x, wsElNodeID, coords, neq, numDim,
                               problemParams->sublist("Initial Condition"));
-    Albany::InitialConditions(overlapped_xdot,  wsElNodeID, coordinates, neq, numDim,
+    Albany::InitialConditions(overlapped_xdot,  wsElNodeID, coords, neq, numDim,
                               problemParams->sublist("Initial Condition Dot"));
     initial_x->Export(*overlapped_x, *exporter, Insert);
     initial_x_dot->Export(*overlapped_xdot, *exporter, Insert);
   }
 
+  // old way
   stateMgr.setDiscretization(disc);
   stateMgr.allocateStateVariables(numWorksets);
   stateMgr.initializeStateVariables(numWorksets);
+
+  // new way
+  stateMgr.setStateArrays(disc);
 
   // Create response map
   unsigned int total_num_responses = 0;
@@ -307,9 +308,9 @@ Albany::Application::computeGlobalResidual(
 {
   if (!setupCalledResidual) {
     setupCalledResidual=true;
-    fm->postRegistrationSetupForType<PHAL::AlbanyTraits::Residual>(*disc);
+    fm->postRegistrationSetupForType<PHAL::AlbanyTraits::Residual>("Resid");
     if (dfm!=Teuchos::null)
-      dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::Residual>(*disc);
+      dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::Residual>("Resid");
     writeGraphVisFile();
   }
 
@@ -340,7 +341,7 @@ Albany::Application::computeGlobalResidual(
  for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
 *out << endl;
     meshMover->moveMesh(shapeParams, morphFromInit);
-    coordinates = disc->getCoordinates();
+    coords = disc->getCoords();
     shapeParamsHaveBeenReset = false;
   }
 #endif
@@ -351,7 +352,7 @@ Albany::Application::computeGlobalResidual(
 
   // Set data in Workset struct, and perform fill via field manager
   { 
-    PHAL::Workset workset(coordinates);
+    PHAL::Workset workset;
 
     workset.x        = overlapped_x;
     workset.xdot     = overlapped_xdot;
@@ -369,6 +370,8 @@ Albany::Application::computeGlobalResidual(
 
       workset.oldState = stateMgr.getOldStateVariables(ws);
       workset.newState = stateMgr.getNewStateVariables(ws);
+      workset.stateArrayPtr = &stateMgr.getStateArray(ws);
+      workset.eigenDataPtr = &(*(stateMgr.getEigenData()));
 
       // FillType template argument used to specialize Sacado
       fm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
@@ -385,7 +388,7 @@ Albany::Application::computeGlobalResidual(
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (dfm!=Teuchos::null) { 
-    PHAL::Workset workset(coordinates);
+    PHAL::Workset workset;
 
     workset.f = Teuchos::rcpFromRef(f);
     workset.nodeSets = Teuchos::rcpFromRef(disc->getNodeSets());
@@ -412,9 +415,9 @@ Albany::Application::computeGlobalJacobian(
 {
   if (!setupCalledJacobian) {
     setupCalledJacobian=true;
-    fm->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(*disc);
+    fm->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>("Jacobian");
     if (dfm!=Teuchos::null)
-      dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(*disc);
+      dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>("Jacobian");
     writeGraphVisFile();
   }
 
@@ -441,7 +444,7 @@ Albany::Application::computeGlobalJacobian(
  for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
 *out << endl;
     meshMover->moveMesh(shapeParams, morphFromInit);
-    coordinates = disc->getCoordinates();
+    coords = disc->getCoords();
     shapeParamsHaveBeenReset = false;
   }
 #endif
@@ -460,7 +463,7 @@ Albany::Application::computeGlobalJacobian(
 
   // Set data in Workset struct, and perform fill via field manager
   {
-    PHAL::Workset workset(coordinates);
+    PHAL::Workset workset;
 
     workset.x        = overlapped_x;
     workset.xdot     = overlapped_xdot;
@@ -482,6 +485,8 @@ Albany::Application::computeGlobalJacobian(
 
       workset.oldState = stateMgr.getOldStateVariables(ws);
       workset.newState = stateMgr.getNewStateVariables(ws);
+      workset.stateArrayPtr = &stateMgr.getStateArray(ws);
+      workset.eigenDataPtr = &(*(stateMgr.getEigenData()));
 
       // FillType template argument used to specialize Sacado
       fm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
@@ -497,7 +502,7 @@ Albany::Application::computeGlobalJacobian(
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (dfm!=Teuchos::null) {
-    PHAL::Workset workset(coordinates);
+    PHAL::Workset workset;
 
     workset.f = Teuchos::rcp(f,false);
     workset.Jac = Teuchos::rcpFromRef(jac);
@@ -558,9 +563,9 @@ Albany::Application::computeGlobalTangent(
 {
   if (!setupCalledTangent) {
     setupCalledTangent=true;
-    fm->postRegistrationSetupForType<PHAL::AlbanyTraits::Tangent>(*disc);
+    fm->postRegistrationSetupForType<PHAL::AlbanyTraits::Tangent>("Tangent");
     if (dfm!=Teuchos::null)
-      dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::Tangent>(*disc);
+      dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::Tangent>("Tangent");
     writeGraphVisFile();
   }
 
@@ -717,15 +722,11 @@ Albany::Application::computeGlobalTangent(
 
      pert = (fabs(shapeParams[shape_param_indices[i]]) + 1.0e-2) * eps;
 
-       coord_derivs[i].resize(coordinates.size());
        shapeParams[shape_param_indices[i]] += pert;
 *out << " Calling moveMesh with params: " << std::setprecision(8);
 for (unsigned int ii=0; ii<shapeParams.size(); ii++) *out << shapeParams[ii] << "  ";
 *out << endl;
        meshMover->moveMesh(shapeParams, morphFromInit);
-       coordinates = disc->getCoordinates();
-       for (int j=0; j<coordinates.size(); j++)  coord_derivs[i][j] = coordinates[j];
-
        for (int ws=0; ws<coords.size(); ws++) {  //worset
          ws_coord_derivs[ws][i].resize(coords[ws].size());
          for (int e=0; e<coords[ws].size(); e++) { //cell
@@ -742,15 +743,14 @@ for (unsigned int ii=0; ii<shapeParams.size(); ii++) *out << shapeParams[ii] << 
 for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
 *out << endl;
      meshMover->moveMesh(shapeParams, morphFromInit);
-     coordinates = disc->getCoordinates();
+     coords = disc->getCoords();
+
      for (int i=0; i<num_sp; i++) {
        for (int ws=0; ws<coords.size(); ws++)  //worset
          for (int e=0; e<coords[ws].size(); e++)  //cell
            for (int j=0; j<coords[ws][i].size(); j++)  //node
              for (int d=0; d<disc->getNumDim; d++)  //node
                 ws_coord_derivs[ws][i][e][j][d] = (ws_coord_derivs[ws][i][e][j][d] - coords[ws][e][j][d]) / pert;
-       for (int j=0; j<coordinates.size(); j++) {
-          coord_derivs[i][j] = (coord_derivs[i][j] - coordinates[j]) / pert;
        }
      }
      shapeParamsHaveBeenReset = false;
@@ -760,7 +760,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
   // Set data in Workset struct, and perform fill via field manager
   {
-    PHAL::Workset workset(coordinates);
+    PHAL::Workset workset;
 
     workset.x = overlapped_x;
     workset.xdot = overlapped_xdot;
@@ -781,7 +781,6 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     workset.num_cols_p = num_cols_p;
     workset.param_offset = param_offset;
 
-    workset.coord_derivs = coord_derivs;
     workset.coord_deriv_indices = &coord_deriv_indices;
 
     workset.worksetSize = worksetSize;
@@ -794,6 +793,8 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
       workset.oldState = stateMgr.getOldStateVariables(ws);
       workset.newState = stateMgr.getNewStateVariables(ws);
+      workset.stateArrayPtr = &stateMgr.getStateArray(ws);
+      workset.eigenDataPtr = &(*(stateMgr.getEigenData()));
 
       // FillType template argument used to specialize Sacado
       fm->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
@@ -815,7 +816,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (dfm!=Teuchos::null) {
-    PHAL::Workset workset(coordinates);
+    PHAL::Workset workset;
 
     workset.num_cols_x = num_cols_x;
     workset.num_cols_p = num_cols_p;
@@ -993,9 +994,9 @@ Albany::Application::computeGlobalSGResidual(
 {
   if (!setupCalledSGResidual) {
     setupCalledSGResidual=true;
-    fm->postRegistrationSetupForType<PHAL::AlbanyTraits::SGResidual>(*disc);
+    fm->postRegistrationSetupForType<PHAL::AlbanyTraits::SGResidual>("SGResid");
     if (dfm!=Teuchos::null)
-      dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::SGResidual>(*disc);
+      dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::SGResidual>("SGResid");
     writeGraphVisFile();
   }
 
@@ -1030,7 +1031,7 @@ Albany::Application::computeGlobalSGResidual(
 for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
 *out << endl;
     meshMover->moveMesh(shapeParams, morphFromInit);
-    coordinates = disc->getCoordinates();
+    coords = disc->getCoords();
     shapeParamsHaveBeenReset = false;
   }
 #endif
@@ -1044,7 +1045,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
   // Set data in Workset struct, and perform fill via field manager
   {  
-    PHAL::Workset workset(coordinates);
+    PHAL::Workset workset;
 
     workset.sg_expansion = sg_expansion;
     workset.sg_x         = sg_overlapped_x;
@@ -1063,6 +1064,8 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
       workset.oldState = stateMgr.getOldStateVariables(ws);
       workset.newState = stateMgr.getNewStateVariables(ws);
+      workset.stateArrayPtr = &stateMgr.getStateArray(ws);
+      workset.eigenDataPtr = &(*(stateMgr.getEigenData()));
 
       // FillType template argument used to specialize Sacado
       fm->evaluateFields<PHAL::AlbanyTraits::SGResidual>(workset);
@@ -1076,7 +1079,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (dfm!=Teuchos::null) { 
-    PHAL::Workset workset(coordinates);
+    PHAL::Workset workset;
 
     workset.sg_f = Teuchos::rcpFromRef(sg_f);
     workset.nodeSets = Teuchos::rcpFromRef(disc->getNodeSets());
@@ -1104,9 +1107,9 @@ Albany::Application::computeGlobalSGJacobian(
 {
   if (!setupCalledSGJacobian) {
     setupCalledSGJacobian=true;
-    fm->postRegistrationSetupForType<PHAL::AlbanyTraits::SGJacobian>(*disc);
+    fm->postRegistrationSetupForType<PHAL::AlbanyTraits::SGJacobian>("SGJacobian");
     if (dfm!=Teuchos::null)
-      dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::SGJacobian>(*disc);
+      dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::SGJacobian>("SGJacobian");
     writeGraphVisFile();
   }
 
@@ -1162,7 +1165,7 @@ Albany::Application::computeGlobalSGJacobian(
 for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
 *out << endl;
     meshMover->moveMesh(shapeParams, morphFromInit);
-    coordinates = disc->getCoordinates();
+    coords = disc->getCoords();
     shapeParamsHaveBeenReset = false;
   }
 #endif
@@ -1180,7 +1183,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
   // Set data in Workset struct, and perform fill via field manager
   {
-    PHAL::Workset workset(coordinates);
+    PHAL::Workset workset;
 
     workset.sg_expansion = sg_expansion;
     workset.sg_x         = sg_overlapped_x;
@@ -1203,6 +1206,8 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
       workset.oldState = stateMgr.getOldStateVariables(ws);
       workset.newState = stateMgr.getNewStateVariables(ws);
+      workset.stateArrayPtr = &stateMgr.getStateArray(ws);
+      workset.eigenDataPtr = &(*(stateMgr.getEigenData()));
 
       // FillType template argument used to specialize Sacado
       fm->evaluateFields<PHAL::AlbanyTraits::SGJacobian>(workset);
@@ -1225,7 +1230,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (dfm!=Teuchos::null) {
-    PHAL::Workset workset(coordinates);
+    PHAL::Workset workset;
 
     workset.sg_f = Teuchos::rcp(sg_f,false);
     workset.sg_Jac = Teuchos::rcpFromRef(sg_jac);
@@ -1292,9 +1297,9 @@ Albany::Application::computeGlobalMPResidual(
 {
   if (!setupCalledMPResidual) {
     setupCalledMPResidual=true;
-    fm->postRegistrationSetupForType<PHAL::AlbanyTraits::MPResidual>(*disc);
+    fm->postRegistrationSetupForType<PHAL::AlbanyTraits::MPResidual>("MPResid");
     if (dfm!=Teuchos::null)
-      dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::MPResidual>(*disc);
+      dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::MPResidual>("MPResid");
     writeGraphVisFile();
   }
 
@@ -1350,7 +1355,7 @@ Albany::Application::computeGlobalMPResidual(
 for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
 *out << endl;
     meshMover->moveMesh(shapeParams, morphFromInit);
-    coordinates = disc->getCoordinates();
+    coords = disc->getCoords();
     shapeParamsHaveBeenReset = false;
   }
 #endif
@@ -1364,7 +1369,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
   // Set data in Workset struct, and perform fill via field manager
   {  
-    PHAL::Workset workset(coordinates);
+    PHAL::Workset workset;
 
     workset.mp_x         = mp_overlapped_x;
     workset.mp_xdot      = mp_overlapped_xdot;
@@ -1382,6 +1387,8 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
       workset.oldState = stateMgr.getOldStateVariables(ws);
       workset.newState = stateMgr.getNewStateVariables(ws);
+      workset.stateArrayPtr = &stateMgr.getStateArray(ws);
+      workset.eigenDataPtr = &(*(stateMgr.getEigenData()));
 
       // FillType template argument used to specialize Sacado
       fm->evaluateFields<PHAL::AlbanyTraits::MPResidual>(workset);
@@ -1395,7 +1402,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (dfm!=Teuchos::null) { 
-    PHAL::Workset workset(coordinates);
+    PHAL::Workset workset;
 
     workset.mp_f = Teuchos::rcpFromRef(mp_f);
     workset.nodeSets = Teuchos::rcpFromRef(disc->getNodeSets());
@@ -1423,9 +1430,9 @@ Albany::Application::computeGlobalMPJacobian(
 {
   if (!setupCalledMPJacobian) {
     setupCalledMPJacobian=true;
-    fm->postRegistrationSetupForType<PHAL::AlbanyTraits::MPJacobian>(*disc);
+    fm->postRegistrationSetupForType<PHAL::AlbanyTraits::MPJacobian>("MPJacobian");
     if (dfm!=Teuchos::null)
-      dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::MPJacobian>(*disc);
+      dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::MPJacobian>("MPJacobian");
     writeGraphVisFile();
   }
 
@@ -1491,7 +1498,7 @@ Albany::Application::computeGlobalMPJacobian(
 for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
 *out << endl;
     meshMover->moveMesh(shapeParams, morphFromInit);
-    coordinates = disc->getCoordinates();
+    coords = disc->getCoords();
     shapeParamsHaveBeenReset = false;
   }
 #endif
@@ -1509,7 +1516,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
   // Set data in Workset struct, and perform fill via field manager
   {
-    PHAL::Workset workset(coordinates);
+    PHAL::Workset workset;
 
     workset.mp_x         = mp_overlapped_x;
     workset.mp_xdot      = mp_overlapped_xdot;
@@ -1531,6 +1538,8 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
       workset.oldState = stateMgr.getOldStateVariables(ws);
       workset.newState = stateMgr.getNewStateVariables(ws);
+      workset.stateArrayPtr = &stateMgr.getStateArray(ws);
+      workset.eigenDataPtr = &(*(stateMgr.getEigenData()));
 
       // FillType template argument used to specialize Sacado
       fm->evaluateFields<PHAL::AlbanyTraits::MPJacobian>(workset);
@@ -1553,7 +1562,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (dfm!=Teuchos::null) {
-    PHAL::Workset workset(coordinates);
+    PHAL::Workset workset;
 
     workset.mp_f = Teuchos::rcp(mp_f,false);
     workset.mp_Jac = Teuchos::rcpFromRef(mp_jac);

@@ -26,25 +26,20 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Teuchos_StandardCatchMacros.hpp"
 #include "Epetra_Map.h"  //Needed for serial, somehow
+#include "Albany_StateInfoStruct.hpp"
+#include "Albany_EigendataInfoStruct.hpp"
 
 void CreateSolver(const std::string& solverType, char* xmlfilename, 
 		  Teuchos::RCP<Albany::Application>& albApp, Teuchos::RCP<EpetraExt::ModelEvaluator>& App, 
 		  EpetraExt::ModelEvaluator::InArgs& params_in, EpetraExt::ModelEvaluator::OutArgs& responses_out);
 void SolveModel(Teuchos::RCP<Albany::Application>& albApp, Teuchos::RCP<EpetraExt::ModelEvaluator>& App, 
 		EpetraExt::ModelEvaluator::InArgs params_in, EpetraExt::ModelEvaluator::OutArgs responses_out,
-		Teuchos::RCP<std::vector<Albany::StateVariables> >& initialStates, 
-		Teuchos::RCP<std::vector<Albany::StateVariables> >& finalStates);
-void CopyState(Teuchos::RCP<std::vector<Albany::StateVariables> >& dest, 
-	       Teuchos::RCP<std::vector<Albany::StateVariables> >& src,
-	       std::string stateNameToCopy);
-void SubtractStateFromState(Teuchos::RCP<std::vector<Albany::StateVariables> >& dest, 
-	       Teuchos::RCP<std::vector<Albany::StateVariables> >& src,
-	       std::string stateNameToSubtract);
-bool checkConvergence(Teuchos::RCP<std::vector<Albany::StateVariables> >& newStates, 
-		      Teuchos::RCP<std::vector<Albany::StateVariables> >& oldStates,
-		      std::string stateNameToCompare, double tol);
-double GetEigensolverShift(Teuchos::RCP<std::vector<Albany::StateVariables> >& states,
-			   const std::string& stateNameToBaseShiftOn);
+    		Albany::StateArrays*& pInitialStates, Albany::StateArrays*& pFinalStates,
+		Teuchos::RCP<Albany::EigendataStruct>& pInitialEData, Teuchos::RCP<Albany::EigendataStruct>& pFinalEData);
+void CopyState(Albany::StateArrays& dest, Albany::StateArrays& src,  std::string stateNameToCopy);
+void SubtractStateFromState(Albany::StateArrays& dest, Albany::StateArrays& src, std::string stateNameToSubtract);
+bool checkConvergence(Albany::StateArrays& newStates, Albany::StateArrays& oldStates, std::string stateNameToCompare, double tol);
+double GetEigensolverShift(Albany::StateArrays& states, const std::string& stateNameToBaseShiftOn);
 
 #include "Teuchos_ParameterList.hpp"
 #include "Piro_Epetra_LOCASolver.hpp"
@@ -123,47 +118,48 @@ int main(int argc, char *argv[]) {
     setupTimer.~TimeMonitor();
 
     //state variables
-    RCP< std::vector<Albany::StateVariables> > statesToPass = Teuchos::null;
-    RCP< std::vector<Albany::StateVariables> > statesFromDummy = Teuchos::null;
-    RCP< std::vector<Albany::StateVariables> > statesToLoop = Teuchos::null;
-
-    RCP< std::vector<Albany::StateVariables> > lastSavedPotential = 
-      rcp(new std::vector<Albany::StateVariables>);
-
-
+    Albany::StateArrays* pStatesToPass = NULL;
+    Albany::StateArrays* pStatesFromDummy = NULL;
+    Albany::StateArrays* pStatesToLoop = NULL; 
+    Albany::StateArrays* pLastSavedPotential = new Albany::StateArrays;
+    Teuchos::RCP<Albany::EigendataStruct> eigenDataToPass = Teuchos::null;
+    Teuchos::RCP<Albany::EigendataStruct> eigenDataNull = Teuchos::null;
+    
     *out << "QCAD Solve: Initial Poisson solve (no quantum region) " << endl;
     SolveModel(initPoissonApp, initPoissonSolver, 
 	       initPoisson_params_in, initPoisson_responses_out,
-	       statesToPass, statesToLoop);
-
+	       pStatesToPass, pStatesToLoop, eigenDataToPass, eigenDataNull);
+    eigenDataNull = Teuchos::null;
+    
     *out << "QCAD Solve: Beginning Poisson-Schrodinger solve loop" << endl;
     bool bConverged = false; 
     int iter = 0;
     do {
       iter++;
  
-      double newShift = GetEigensolverShift(statesToLoop, "Conduction Band");
+      double newShift = GetEigensolverShift(*pStatesToLoop, "Conduction Band");
       ResetEigensolverShift(schrodingerSolver, newShift);
 
       *out << "QCAD Solve: Schrodinger iteration " << iter << endl;
-      SolveModel(schrodingerApp, schrodingerSolver, 
+      SolveModel(schrodingerApp, schrodingerSolver,
 		 schrodinger_params_in, schrodinger_responses_out,
-		 statesToLoop, statesToPass);
+		 pStatesToLoop, pStatesToPass, eigenDataNull, eigenDataToPass);
 
       *out << "QCAD Solve: Poisson iteration " << iter << endl;
       SolveModel(poissonApp, poissonSolver, 
 		 poisson_params_in, poisson_responses_out,
-		 statesToPass, statesToLoop);
+		 pStatesToPass, pStatesToLoop, eigenDataToPass, eigenDataNull);
 
       *out << "QCAD Solve: Poisson Dummy iteration " << iter << endl;
       SolveModel(dummyPoissonApp, dummyPoissonSolver, 
 		 dummy_params_in, dummy_responses_out,
-		 statesToPass, statesFromDummy);
-      SubtractStateFromState(statesToLoop, statesFromDummy, "Conduction Band");
+		 pStatesToPass, pStatesFromDummy, eigenDataToPass, eigenDataNull);
+      SubtractStateFromState(*pStatesToLoop, *pStatesFromDummy, "Conduction Band");
+      eigenDataNull = Teuchos::null;
 
       if(iter > 1) 
-	bConverged = checkConvergence(statesToLoop, lastSavedPotential, "Electric Potential", 1e-3);
-      CopyState(lastSavedPotential, statesToLoop, "Electric Potential");
+	bConverged = checkConvergence(*pStatesToLoop, *pLastSavedPotential, "Electric Potential", 1e-3);
+      CopyState(*pLastSavedPotential, *pStatesToLoop, "Electric Potential");
     } while(!bConverged && iter < maxIter);
 
     if(bConverged)
@@ -280,139 +276,82 @@ void CreateSolver(const std::string& solverType, char* xmlfilename,
 
 void SolveModel(Teuchos::RCP<Albany::Application>& albApp, Teuchos::RCP<EpetraExt::ModelEvaluator>& App, 
 		EpetraExt::ModelEvaluator::InArgs params_in, EpetraExt::ModelEvaluator::OutArgs responses_out,
-		Teuchos::RCP<std::vector<Albany::StateVariables> >& initialStates, 
-		Teuchos::RCP<std::vector<Albany::StateVariables> >& finalStates)
+		Albany::StateArrays*& pInitialStates, Albany::StateArrays*& pFinalStates,
+		Teuchos::RCP<Albany::EigendataStruct>& pInitialEData, Teuchos::RCP<Albany::EigendataStruct>& pFinalEData)
 {
-  albApp->getStateMgr().reinitializeStateVariables( initialStates, albApp->getNumWorksets() );
+  if(pInitialStates) albApp->getStateMgr().importStateData( *pInitialStates );
+  if(pInitialEData != Teuchos::null) albApp->getStateMgr().setEigenData(pInitialEData);
   App->evalModel(params_in, responses_out);
-  finalStates = albApp->getStateMgr().getAllOldStateVariables();
+  pFinalStates = &(albApp->getStateMgr().getStateArrays());
+  pFinalEData = albApp->getStateMgr().getEigenData();
 }
 
 
 
-void CopyState(Teuchos::RCP<std::vector<Albany::StateVariables> >& dest, 
-	       Teuchos::RCP<std::vector<Albany::StateVariables> >& src,
+void CopyState(Albany::StateArrays& dest, 
+	       Albany::StateArrays& src,
 	       std::string stateNameToCopy)
 {
-  int numWorksets = src->size();
-  std::vector<PHX::DataLayout::size_type> dims;
+  int numWorksets = src.size();
+  int totalSize;
+  std::vector<int> dims;
 
   //allocate destination if necessary
-  if(dest->size() != (unsigned int)numWorksets) {
-    dest->resize(numWorksets);    
-    (*src)[0][stateNameToCopy]->dimensions(dims);
-    for (int ws = 0; ws < numWorksets; ws++)
-      (*dest)[ws][stateNameToCopy] = Teuchos::rcp(new Intrepid::FieldContainer<RealType>(dims));
+  if(dest.size() != (unsigned int)numWorksets) {
+    dest.resize(numWorksets);    
+    for (int ws = 0; ws < numWorksets; ws++) {
+      src[ws][stateNameToCopy].dimensions(dims);
+      totalSize = src[ws][stateNameToCopy].size();
+      double* pData = new double[totalSize];
+
+      TEST_FOR_EXCEPT( dims.size() != 2 );
+      dest[ws][stateNameToCopy].assign<shards::ArrayDimension,shards::ArrayDimension>(pData, dims[0], dims[1]);
+    }
   }
 
   for (int ws = 0; ws < numWorksets; ws++)
   {
-    Albany::StateVariables& srcForWorkset = (*src)[ws];
-    Albany::StateVariables::iterator st = srcForWorkset.begin();
-
-    while (st != srcForWorkset.end())
-    {
-      std::string srcStateName = st->first;
-
-      if(srcStateName == stateNameToCopy) {
-
-        srcForWorkset[srcStateName]->dimensions(dims);
-
-        int size = dims.size();
-        TEST_FOR_EXCEPTION(size != 2, std::logic_error,
-            "Something is wrong during copy state variable operation");
-        int cells = dims[0];
-        int qps = dims[1];
-
-	//allocate space in destination if necessary -- will RCP take care of freeing if assign to already alloc'd?
-	std::vector<PHX::DataLayout::size_type> destDims;
-	(*dest)[ws][srcStateName]->dimensions(destDims);
-	if( dims[0] != destDims[0] || dims[1] != destDims[1] || dims[2] != destDims[2] || dims[3] != destDims[3])
-	  (*dest)[ws][srcStateName] = Teuchos::rcp(new Intrepid::FieldContainer<RealType>(dims));
-
-        for (int cell = 0; cell < cells; ++cell)
-        {
-          for (int qp = 0; qp < qps; ++qp)
-          {
-	    (*((*dest)[ws][srcStateName]))(cell, qp) = (*(st->second))(cell, qp);
-          }
-        }
-      }
-      st++;
-    }
+    totalSize = src[ws][stateNameToCopy].size();
+    
+    for(int i=0; i<totalSize; ++i)
+      dest[ws][stateNameToCopy][i] = src[ws][stateNameToCopy][i];
   }
 }
 
 
 // dest[stateNameToSubtract] -= src[stateNameToSubtract]
-void SubtractStateFromState(Teuchos::RCP<std::vector<Albany::StateVariables> >& dest, 
-	       Teuchos::RCP<std::vector<Albany::StateVariables> >& src,
+void SubtractStateFromState(Albany::StateArrays& dest, 
+	       Albany::StateArrays& src,
 	       std::string stateNameToSubtract)
 {
-  int numWorksets = src->size();
-  TEST_FOR_EXCEPT( numWorksets != (int)dest->size() );
-
-  std::vector<PHX::DataLayout::size_type> dims;
+  int totalSize, numWorksets = src.size();
+  TEST_FOR_EXCEPT( numWorksets != (int)dest.size() );
 
   for (int ws = 0; ws < numWorksets; ws++)
   {
-    Albany::StateVariables& srcWorkset = (*src)[ws];
-    Albany::StateVariables::iterator st = srcWorkset.begin();
-
-    while (st != srcWorkset.end())
-    {
-      std::string srcStateName = st->first;
-
-      if(srcStateName == stateNameToSubtract) {
-
-        srcWorkset[srcStateName]->dimensions(dims);
-
-        int size = dims.size();
-        TEST_FOR_EXCEPTION(size != 2, std::logic_error,
-            "Something is wrong during SubtractStateFromStates operation");
-        int cells = dims[0];
-        int qps = dims[1];
-
-        for (int cell = 0; cell < cells; ++cell)  {
-          for (int qp = 0; qp < qps; ++qp) {
-	    (*((*dest)[ws][srcStateName]))(cell, qp) -= (*(st->second))(cell, qp);
-          }
-        }
-      }
-      st++;
-    }
+    totalSize = src[ws][stateNameToSubtract].size();
+    
+    for(int i=0; i<totalSize; ++i)
+      dest[ws][stateNameToSubtract][i] -= src[ws][stateNameToSubtract][i];
   }
 }
 
 
-bool checkConvergence(Teuchos::RCP<std::vector<Albany::StateVariables> >& newStates, 
-		      Teuchos::RCP<std::vector<Albany::StateVariables> >& oldStates,
+bool checkConvergence(Albany::StateArrays& newStates, 
+		      Albany::StateArrays& oldStates,
 		      std::string stateNameToCompare, double tol)
 {
-  int numWorksets = oldStates->size();
-  TEST_FOR_EXCEPT( ! ((unsigned int)numWorksets == newStates->size()) );
+  int totalSize, numWorksets = oldStates.size();
+  TEST_FOR_EXCEPT( ! (numWorksets == (int)newStates.size()) );
   
   for (int ws = 0; ws < numWorksets; ws++)
   {
-    Albany::StateVariables& newStateVarsForWorkset = (*newStates)[ws];
-    Albany::StateVariables& oldStateVarsForWorkset = (*oldStates)[ws];
-
-    // we assume operating on the last two indices is correct
-    std::vector<PHX::DataLayout::size_type> dims;
-    oldStateVarsForWorkset[stateNameToCompare]->dimensions(dims);
-
-    int size = dims.size();
-    TEST_FOR_EXCEPTION(size != 2, std::logic_error,
-		       "Something is wrong during copy state variable operation");
-    int cells = dims[0];
-    int qps = dims[1];
-
-    for (int cell = 0; cell < cells; ++cell)  {
-      for (int qp = 0; qp < qps; ++qp)  {
-	if( fabs( (*(newStateVarsForWorkset[stateNameToCompare]))(cell, qp) -
-		  (*(oldStateVarsForWorkset[stateNameToCompare]))(cell, qp) ) > tol )
+    totalSize = newStates[ws][stateNameToCompare].size();
+    
+    for(int i=0; i<totalSize; ++i) {
+	if( fabs( newStates[ws][stateNameToCompare][i] -
+		  oldStates[ws][stateNameToCompare][i] ) > tol )
 	  return false;
-      }
     }
   }
   return true;
@@ -436,10 +375,10 @@ void ResetEigensolverShift(Teuchos::RCP<EpetraExt::ModelEvaluator>& Solver, doub
   stepper->eigensolverReset(eigList);
 }
 
-double GetEigensolverShift(Teuchos::RCP<std::vector<Albany::StateVariables> >& states,
+double GetEigensolverShift(Albany::StateArrays& states,
 			   const std::string& stateNameToBaseShiftOn)
 {
-  int numWorksets = states->size();
+  int numWorksets = states.size();
   std::vector<PHX::DataLayout::size_type> dims;
   const std::string& name = stateNameToBaseShiftOn;
 
@@ -449,9 +388,7 @@ double GetEigensolverShift(Teuchos::RCP<std::vector<Albany::StateVariables> >& s
 
   for (int ws = 0; ws < numWorksets; ws++)
   {
-    Albany::StateVariables& statesForWorkset = (*states)[ws];
-
-    statesForWorkset[name]->dimensions(dims);
+    states[ws][name].dimensions(dims);
     
     int size = dims.size();
     TEST_FOR_EXCEPTION(size != 2, std::logic_error, "Unimplemented number of dimensions");
@@ -460,7 +397,7 @@ double GetEigensolverShift(Teuchos::RCP<std::vector<Albany::StateVariables> >& s
 
     for (int cell = 0; cell < cells; ++cell)  {
       for (int qp = 0; qp < qps; ++qp) {
-	val = (*statesForWorkset[name])(cell, qp);
+	val = states[ws][name](cell, qp);
 	if(val < minVal) minVal = val;
 	if(val > maxVal) maxVal = val;
       }

@@ -32,10 +32,12 @@ Albany::HeatProblem::
 HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
              const int numDim_) :
-  Albany::AbstractProblem(params_, paramLib_, 1),
+  Albany::AbstractProblem(params_, paramLib_),
   haveSource(false),
   numDim(numDim_)
 {
+  this->setNumEquations(1);
+
   if (numDim==1) periodic = params->get("Periodic BC", false);
   else           periodic = false;
   if (periodic) *out <<" Periodic Boundary Conditions being used." <<std::endl;
