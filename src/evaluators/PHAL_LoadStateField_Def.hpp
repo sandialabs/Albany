@@ -52,10 +52,8 @@ void LoadStateField<EvalT, Traits>::evaluateFields(typename Traits::EvalData wor
   //cout << "LoadStateField importing state " << stateName << " to field " 
   //     << fieldName << " with size " << data.size() << endl;
 
-  //ANDY: use oldState instead?? I don't think it matters - use const then?
-  // Get state field container of same name
-  Albany::StateVariables& newState = *workset.newState;
-  Intrepid::FieldContainer<RealType>& stateToLoad  = *newState[stateName];
+  Albany::StateArray& states = *workset.stateArrayPtr;
+  Albany::MDArray& stateToLoad  = states[stateName];
 
   for (int i=0; i < data.size() ; ++i) data[i] = stateToLoad[i]; 
 }

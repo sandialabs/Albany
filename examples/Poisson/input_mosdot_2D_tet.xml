@@ -1,6 +1,7 @@
 <ParameterList>
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Poisson 2D" />
+    <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
 
     <Parameter name="LengthUnitInMeters" type="double" value="1e-6"/>
@@ -48,11 +49,11 @@
 
   <ParameterList name="Regression Results">
     <Parameter name="Number of Comparisons" type="int" value="1" />
-    <Parameter name="Test Values" type="Array(double)" value="{0.189538392991}" />
-    <Parameter name="Relative Tolerance" type="double" value="1.0e-5" />
+    <Parameter name="Test Values" type="Array(double)" value="{7.41960403115}" />
+    <Parameter name="Relative Tolerance" type="double" value="1.0e-3" />
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="1" />
     <Parameter name="Sensitivity Test Values 0" type="Array(double)"
-     	       value="{0.379225893689,0.207172909313,0.206789613324,0.184965394754,0.00609867825657}" />
+     	       value="{9.26555100605,4.78581960511,4.7705843145, 4.30772578671,-0.11922992258}" />
   </ParameterList>
 
 
@@ -64,16 +65,22 @@
 
 
   <ParameterList name="LOCA">
-    <ParameterList name="Stepper">
-      <ParameterList name="Eigensolver" />
-    </ParameterList>
-    <ParameterList name="Bifurcation" />
-    <ParameterList name="Step Size" />
+    <ParameterList name="Bifurcation"/>
+    <ParameterList name="Constraints"/>
     <ParameterList name="Predictor">
-      <ParameterList name="First Step Predictor" />
-      <ParameterList name="Last Step Predictor" />
+      <Parameter  name="Method" type="string" value="Constant" />
     </ParameterList>
-    <ParameterList name="Constraints" />
+    <ParameterList name="Stepper">
+      <Parameter  name="Initial Value" type="double" value="0"/>
+      <Parameter  name="Continuation Parameter" type="string" value="DBC on NS topgate for DOF Phi"/>
+      <Parameter  name="Max Steps" type="int" value="10"/>
+      <Parameter  name="Max Value" type="double" value="10.0"/>
+      <Parameter  name="Min Value" type="double" value="0"/>
+    </ParameterList>
+    <ParameterList name="Step Size">
+      <Parameter  name="Method" type="string" value="Constant" />
+      <Parameter  name="Initial Step Size" type="double" value="1.0"/>
+    </ParameterList>
   </ParameterList>
 
 

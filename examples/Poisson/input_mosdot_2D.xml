@@ -11,7 +11,7 @@
       <Parameter name="DBC on NS substrate for DOF Phi" type="double" value="0" />
       <Parameter name="DBC on NS lgate for DOF Phi" type="double" value="-1" />
       <Parameter name="DBC on NS rgate for DOF Phi" type="double" value="-1" />
-      <Parameter name="DBC on NS topgate for DOF Phi" type="double" value="+2" />
+      <Parameter name="DBC on NS topgate for DOF Phi" type="double" value="2" />
     </ParameterList>
 
     <ParameterList name="Poisson Source">
@@ -33,13 +33,15 @@
     </ParameterList>
 
     <ParameterList name="Response Functions">
-      <Parameter name="Number" type="int" value="1" />
+      <Parameter name="Number" type="int" value="2" />
       <Parameter name="Response 0" type="string" value="Solution Average" />
+      <Parameter name="Response 1" type="string" value="Integrate Charge Density State over silicon.quantum" />
     </ParameterList>
   </ParameterList>
 
 
   <ParameterList name="Discretization">
+    <!-- Parameter name="Exodus Input File Name" type="string" value="mosdot_2D.exo" /-->
     <Parameter name="Exodus Input File Name" type="string" value="mosdot_2D.exo" />
     <Parameter name="Method" type="string" value="Ioss" />
     <Parameter name="Exodus Output File Name" type="string" value="potential_mosdot_2D.exo" />
@@ -48,11 +50,11 @@
 
   <ParameterList name="Regression Results">
     <Parameter name="Number of Comparisons" type="int" value="1" />
-    <Parameter name="Test Values" type="Array(double)" value="{4.08883875858}" />
+    <Parameter name="Test Values" type="Array(double)" value="{10.5371769316}" />
     <Parameter name="Relative Tolerance" type="double" value="1.0e-3" />
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="1" />
     <Parameter name="Sensitivity Test Values 0" type="Array(double)"
-     	       value="{8.2638742151,3.20928243985,3.20928515894,5.74442020658,0.132984460689}" />
+     	       value="{9.04874557849,4.50270802598,4.50275162349, 5.52645365813,-0.111128563129}" />
   </ParameterList>
 
 

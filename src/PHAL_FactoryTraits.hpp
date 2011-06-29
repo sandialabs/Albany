@@ -22,6 +22,7 @@
 #include "PHAL_Constant.hpp"
 #include "PHAL_Dirichlet.hpp"
 #include "PHAL_GatherSolution.hpp"
+#include "PHAL_GatherEigenvectors.hpp"
 #include "PHAL_ScatterResidual.hpp"
 #include "PHAL_Source.hpp"
 #include "PHAL_ThermalConductivity.hpp"
@@ -75,81 +76,83 @@ struct FactoryTraits {
   static const int id_dirichlet                 =  0;
   static const int id_gather_solution           =  1;
   static const int id_gather_coordinate_vector  =  2;
-  static const int id_scatter_residual          =  3;
-  static const int id_compute_basis_functions   =  4;
-  static const int id_dof_interpolation         =  5;
-  static const int id_dof_grad_interpolation    =  6;
-  static const int id_dofvec_interpolation      =  7;
-  static const int id_dofvec_grad_interpolation =  8;
-  static const int id_map_to_physical_frame     =  9;
-  static const int id_source                    = 10;
-  static const int id_thermal_conductivity      = 11;
-  static const int id_helmholtzresid            = 12;
-  static const int id_heateqresid               = 13;
-  static const int id_constant                  = 14;
-  static const int id_dirichlet_aggregator      = 15;
-  static const int id_qcad_permittivity         = 16;
-  static const int id_qcad_poisson_resid        = 17;
-  static const int id_qcad_poisson_source       = 18;
-  static const int id_qcad_poisson_dirichlet    = 19;
-  static const int id_jouleheating              = 20;
-  static const int id_teprop                    = 21;
-  static const int id_oderesid                  = 22;
-  static const int id_savestatefield            = 23;
-  static const int id_loadstatefield            = 24;
-  static const int id_sharedparameter           = 25;
-  static const int id_schrodinger_potential     = 26;
-  static const int id_schrodinger_resid         = 27;
-  static const int id_absorption                = 28;
-  static const int id_nscontinuityeqresid       = 29;
-  static const int id_nsmomentumeqresid         = 30;
-  static const int id_nsthermaleqresid          = 31;
-  static const int id_nsrm                      = 32;
-  static const int id_nsgctensor                = 33;
-  static const int id_nstaum                    = 34;
-  static const int id_nstaut                    = 35;
-  static const int id_nsmatprop                 = 36;
-  static const int id_nsbodyforce               = 37;
+  static const int id_gather_eigenvectors       =  3;
+  static const int id_scatter_residual          =  4;
+  static const int id_compute_basis_functions   =  5;
+  static const int id_dof_interpolation         =  6;
+  static const int id_dof_grad_interpolation    =  7;
+  static const int id_dofvec_interpolation      =  8;
+  static const int id_dofvec_grad_interpolation =  9;
+  static const int id_map_to_physical_frame     = 10;
+  static const int id_source                    = 11;
+  static const int id_thermal_conductivity      = 12;
+  static const int id_helmholtzresid            = 13;
+  static const int id_heateqresid               = 14;
+  static const int id_constant                  = 15;
+  static const int id_dirichlet_aggregator      = 16;
+  static const int id_qcad_permittivity         = 17;
+  static const int id_qcad_poisson_resid        = 18;
+  static const int id_qcad_poisson_source       = 19;
+  static const int id_qcad_poisson_dirichlet    = 20;
+  static const int id_jouleheating              = 21;
+  static const int id_teprop                    = 22;
+  static const int id_oderesid                  = 23;
+  static const int id_savestatefield            = 24;
+  static const int id_loadstatefield            = 25;
+  static const int id_sharedparameter           = 26;
+  static const int id_schrodinger_potential     = 27;
+  static const int id_schrodinger_resid         = 28;
+  static const int id_absorption                = 29;
+  static const int id_nscontinuityeqresid       = 30;
+  static const int id_nsmomentumeqresid         = 31;
+  static const int id_nsthermaleqresid          = 32;
+  static const int id_nsrm                      = 33;
+  static const int id_nsgctensor                = 34;
+  static const int id_nstaum                    = 35;
+  static const int id_nstaut                    = 36;
+  static const int id_nsmatprop                 = 37;
+  static const int id_nsbodyforce               = 38;
 
-  typedef boost::mpl::vector38< 
+  typedef boost::mpl::vector39< 
             PHAL::Dirichlet<_,Traits>,                //  0
             PHAL::GatherSolution<_,Traits>,           //  1
             PHAL::GatherCoordinateVector<_,Traits>,   //  2
-            PHAL::ScatterResidual<_,Traits>,          //  3
-            PHAL::ComputeBasisFunctions<_,Traits>,    //  4
-            PHAL::DOFInterpolation<_,Traits>,         //  5
-            PHAL::DOFGradInterpolation<_,Traits>,     //  6
-            PHAL::DOFVecInterpolation<_,Traits>,      //  7
-            PHAL::DOFVecGradInterpolation<_,Traits>,  //  8
-            PHAL::MapToPhysicalFrame<_,Traits>,       //  9
-            PHAL::Source<_,Traits>,                   // 10
-            PHAL::ThermalConductivity<_,Traits>,      // 11
-            PHAL::HelmholtzResid<_,Traits>,           // 12
-            PHAL::HeatEqResid<_,Traits>,              // 13
-            PHAL::Constant<_,Traits>,                 // 14
-            PHAL::DirichletAggregator<_,Traits>,      // 15
-            QCAD::Permittivity<_,Traits>,             // 16
-            QCAD::PoissonResid<_,Traits>,             // 17
-            QCAD::PoissonSource<_,Traits>,            // 18
-            QCAD::PoissonDirichlet<_,Traits>,         // 19
-            PHAL::JouleHeating<_,Traits>,             // 20
-            PHAL::TEProp<_,Traits>,                   // 21
-            PHAL::ODEResid<_,Traits>,                 // 22
-            PHAL::SaveStateField<_,Traits>,           // 23
-            PHAL::LoadStateField<_,Traits>,           // 24
-            PHAL::SharedParameter<_,Traits>,          // 25
-            QCAD::SchrodingerPotential<_,Traits>,     // 26
-            QCAD::SchrodingerResid<_,Traits>,         // 27
-            PHAL::Absorption<_,Traits>,               // 28
-            PHAL::NSContinuityResid<_,Traits>,        // 29  
-            PHAL::NSMomentumResid<_,Traits>,          // 30
-            PHAL::NSThermalEqResid<_,Traits>,         // 31
-            PHAL::NSRm<_,Traits>,                     // 32
-            PHAL::NSContravarientMetricTensor<_,Traits>,// 33
-            PHAL::NSTauM<_,Traits>,                   // 34
-            PHAL::NSTauT<_,Traits>,                   // 35
-            PHAL::NSMaterialProperty<_,Traits>,       // 36
-            PHAL::NSBodyForce<_,Traits>               // 37
+            PHAL::GatherEigenvectors<_,Traits>,       //  3
+            PHAL::ScatterResidual<_,Traits>,          //  4
+            PHAL::ComputeBasisFunctions<_,Traits>,    //  5
+            PHAL::DOFInterpolation<_,Traits>,         //  6
+            PHAL::DOFGradInterpolation<_,Traits>,     //  7
+            PHAL::DOFVecInterpolation<_,Traits>,      //  8
+            PHAL::DOFVecGradInterpolation<_,Traits>,  //  9
+            PHAL::MapToPhysicalFrame<_,Traits>,       // 10
+            PHAL::Source<_,Traits>,                   // 11
+            PHAL::ThermalConductivity<_,Traits>,      // 12
+            PHAL::HelmholtzResid<_,Traits>,           // 13
+            PHAL::HeatEqResid<_,Traits>,              // 14
+            PHAL::Constant<_,Traits>,                 // 15
+            PHAL::DirichletAggregator<_,Traits>,      // 16
+            QCAD::Permittivity<_,Traits>,             // 17
+            QCAD::PoissonResid<_,Traits>,             // 18
+            QCAD::PoissonSource<_,Traits>,            // 19
+            QCAD::PoissonDirichlet<_,Traits>,         // 20
+            PHAL::JouleHeating<_,Traits>,             // 21
+            PHAL::TEProp<_,Traits>,                   // 22
+            PHAL::ODEResid<_,Traits>,                 // 23
+            PHAL::SaveStateField<_,Traits>,           // 24
+            PHAL::LoadStateField<_,Traits>,           // 25
+            PHAL::SharedParameter<_,Traits>,          // 26
+            QCAD::SchrodingerPotential<_,Traits>,     // 27
+            QCAD::SchrodingerResid<_,Traits>          // 28
+            PHAL::Absorption<_,Traits>,               // 29
+            PHAL::NSContinuityResid<_,Traits>,        // 30  
+            PHAL::NSMomentumResid<_,Traits>,          // 31
+            PHAL::NSThermalEqResid<_,Traits>,         // 32
+            PHAL::NSRm<_,Traits>,                     // 33
+            PHAL::NSContravarientMetricTensor<_,Traits>,// 34
+            PHAL::NSTauM<_,Traits>,                   // 35
+            PHAL::NSTauT<_,Traits>,                   // 36
+            PHAL::NSMaterialProperty<_,Traits>,       // 37
+            PHAL::NSBodyForce<_,Traits>               // 38
   > EvaluatorTypes;
   
 };

@@ -105,7 +105,7 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
 
   // For each workset, loop over registered states
 
-  for (int i=0; i<stateInfo->size(); i++) {
+  for (unsigned int i=0; i<stateInfo->size(); i++) {
     const std::string stateName = (*stateInfo)[i]->name;
     const std::string init_type = (*stateInfo)[i]->initType;
   
@@ -280,65 +280,62 @@ Albany::StateManager::initializeStateVariables(const int numWorksets)
 }
 
 void
-Albany::StateManager::reinitializeStateVariables(Teuchos::RCP<std::vector<StateVariables> >& 
-						 stateVarsToCopyFrom, const int numWorksets)
+Albany::StateManager::
+importStateData(Albany::StateArrays& statesToCopyFrom)
 {
   TEST_FOR_EXCEPT(!stateVarsAreAllocated);
-  stateVarsAreAllocated = true;
 
-  if( stateVarsToCopyFrom == Teuchos::null ) return;
+  // Get states from STK mesh 
+  Albany::StateArrays& sa = getStateArrays();
+  int numWorksets = sa.size();
+
+  TEST_FOR_EXCEPT((unsigned int)numWorksets != statesToCopyFrom.size());
 
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
-
   *out << std::endl;
-  for (int ws = 0; ws < numWorksets; ws++)
-  {
-    std::vector<StateVariables>& vec = *stateVarsToCopyFrom;
-    StateVariables& stateVarsForWorkset = vec[ws];
-    StateVariables::iterator st;
 
-    for( st = stateVarsForWorkset.begin(); st != stateVarsForWorkset.end(); st++)
+  for (unsigned int i=0; i<stateInfo->size(); i++) {
+    const std::string stateName = (*stateInfo)[i]->name;
+
+    //check if state exists in statesToCopyFrom (check first workset only)
+    if( statesToCopyFrom[0].find(stateName) == statesToCopyFrom[0].end() ) {
+      //*out << "StateManager: state " << stateName << " not present, so not filled" << std::endl;
+      continue;
+    }
+
+    *out << "StateManager: filling state:  " << stateName << std::endl;
+    for (int ws = 0; ws < numWorksets; ws++)
     {
-      std::string stateName = st->first;
+      std::vector<int> dims;
+      sa[ws][stateName].dimensions(dims);
+      int size = dims.size();
 
-      if( state1[ws].find(stateName) != state1[ws].end() ) {
-	if(ws == 0) *out << "StateManager: reinitializing state:  " << st->first << std::endl;
-
-        // we assume operating on the last two indices is correct
-        std::vector<PHX::DataLayout::size_type> dims;
-        state1[ws][st->first]->dimensions(dims);
-
-        int size = dims.size();
-        TEST_FOR_EXCEPTION(size != 2, std::logic_error,
-	   "Something is wrong during identity state variable reinitialization: size = " << size);
-        int cells = dims[0];
-        int qps = dims[1];
-        //int dim = dims[2];
-        //int dim2 = dims[3];
-
-        //TEST_FOR_EXCEPT( ! (dim == dim2) );
-
-        for (int cell = 0; cell < cells; ++cell)
-        {
-          for (int qp = 0; qp < qps; ++qp)
-          {
-            //for (int i = 0; i < dim; ++i)
-            //{
-            //  (*state1[ws][st->first])(cell, qp, i, i) = (*(st->second))(cell, qp, i, i);
-	    //  (*state2[ws][st->first])(cell, qp, i, i) = (*(st->second))(cell, qp, i, i);
-	    //}
-	    (*state1[ws][st->first])(cell, qp) = (*(st->second))(cell, qp);
-	    (*state2[ws][st->first])(cell, qp) = (*(st->second))(cell, qp);
-          }
-        }
-
-	//TODO - 3,4 dimensions
-      }
-      else {
-	if(ws == 0) *out << "StateManager: state " << st->first << " not present, so not reinitialized" << std::endl;
+      switch (size) {
+      case 2:
+	for (int cell = 0; cell < dims[0]; ++cell)
+	  for (int qp = 0; qp < dims[1]; ++qp)
+	    sa[ws][stateName](cell, qp) = statesToCopyFrom[ws][stateName](cell, qp);
+	break;
+      case 3:
+	for (int cell = 0; cell < dims[0]; ++cell)
+	  for (int qp = 0; qp < dims[1]; ++qp)
+	    for (int i = 0; i < dims[2]; ++i)
+	      sa[ws][stateName](cell, qp, i) = statesToCopyFrom[ws][stateName](cell, qp, i);
+	break;
+      case 4:
+	for (int cell = 0; cell < dims[0]; ++cell)
+	  for (int qp = 0; qp < dims[1]; ++qp)
+	    for (int i = 0; i < dims[2]; ++i)
+	      for (int j = 0; j < dims[3]; ++j)
+		sa[ws][stateName](cell, qp, i, j) = statesToCopyFrom[ws][stateName](cell, qp, i, j);
+	break;
+      default:
+	TEST_FOR_EXCEPTION(size<2||size>4, std::logic_error,
+                "Something is wrong during zero state variable fill: " << size);
       }
     }
   }
+
   *out << std::endl;
 }
 
@@ -347,6 +344,13 @@ Albany::StateManager::getStateArray(const int ws) const
 {
   TEST_FOR_EXCEPT(!stateVarsAreAllocated);
   return disc->getStateArrays()[ws];
+}
+
+Albany::StateArrays&
+Albany::StateManager::getStateArrays() const
+{
+  TEST_FOR_EXCEPT(!stateVarsAreAllocated);
+  return disc->getStateArrays();
 }
 
 Teuchos::RCP<const Albany::StateVariables>
@@ -417,7 +421,7 @@ Albany::StateManager::updateStates()
 
   // For each workset, loop over registered states
 
-  for (int i=0; i<stateInfo->size(); i++) {
+  for (unsigned int i=0; i<stateInfo->size(); i++) {
     if ((*stateInfo)[i]->saveOldState) {
       const std::string stateName = (*stateInfo)[i]->name;
       const std::string stateName_old = stateName + "_old";
@@ -428,6 +432,19 @@ Albany::StateManager::updateStates()
     }
   }
 }
+
+Teuchos::RCP<Albany::EigendataStruct> 
+Albany::StateManager::getEigenData()
+{
+  return eigenData;
+}
+
+void 
+Albany::StateManager::setEigenData(const Teuchos::RCP<Albany::EigendataStruct>& eigdata)
+{
+  eigenData = eigdata;
+}
+
 
 const std::vector<std::vector<double> >
 Albany::StateManager::getElementAveragedStates()
@@ -576,7 +593,8 @@ Albany::StateManager::getElementAveragedStates()
 }
 
 
-void
+//Unused: ANDY: remove at will
+/*void
 Albany::StateManager::saveVectorAsState(const std::string& stateName, const Epetra_Vector& vec)
 {
   // we will be filling up states with QP averaged element quantities
@@ -616,4 +634,65 @@ Albany::StateManager::saveVectorAsState(const std::string& stateName, const Epet
       }
     }
   }
+  }*/
+
+
+RealType
+Albany::StateManager::integrateStateVariable(const std::string& stateName, const std::string& ebName,
+					     const std::string& weightName)
+					     
+{
+  TEST_FOR_EXCEPT(!stateVarsAreAllocated);
+  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+
+  // element block names
+  std::string worksetEBName;
+  Teuchos::ArrayRCP<std::string> wsEBNames;
+  wsEBNames = disc->getWsEBNames();
+
+  Albany::StateArrays& sa = disc->getStateArrays();
+  int numWorksets = sa.size();
+
+  // accumulator for integral
+  RealType integral = 0.0;
+
+  for (int ws = 0; ws < numWorksets; ws++)
+  {
+    worksetEBName = wsEBNames[ws];
+
+    if( ebName.length() == 0 || ebName == worksetEBName ) {
+
+      std::vector<int> dims;
+      sa[ws][stateName].dimensions(dims);
+      int size = dims.size();
+
+      TEST_FOR_EXCEPTION(size != 2, std::logic_error,
+	    "Only scalar fields supported by StateManager integrateStateVariable: size = " << size);
+      int cells = dims[0];
+      int qps = dims[1];
+
+      for (int cell = 0; cell < cells; ++cell) {
+	for (int qp = 0; qp < qps; ++qp) {	  
+	  integral += sa[ws][stateName](cell,qp) * sa[ws][weightName](cell,qp);
+	}
+      }
+	/* OLD FOR REF
+	   RealType weighted_measure_value; int n;
+	   for (int cell = 0; cell < cells; ++cell) {
+	   for (int qp = 0; qp < qps; ++qp) {	  
+	   for (n=0, weighted_measure_value=0; n < nodes; ++n) {
+	   if( fabs( (*BFfc)(cell,n,qp) ) > 1e-8 )
+	   weighted_measure_value += (*wBFfc)(cell,n,qp) / (*BFfc)(cell,n,qp);
+	   }
+	   integral += (*fc)(cell,qp) * weighted_measure_value;
+	   //std::cout << "DEBUG Integral: " << integral << " after + " << (*fc)(cell,qp) 
+	   //	    << " * " <<  weighted_measure_value << std::endl;
+	   }
+	*/
+      //TODO - 3,4 dimensions?
+    }
+  }
+
+  return integral;
 }
+  
