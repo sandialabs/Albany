@@ -142,7 +142,7 @@ struct FactoryTraits {
             PHAL::LoadStateField<_,Traits>,           // 25
             PHAL::SharedParameter<_,Traits>,          // 26
             QCAD::SchrodingerPotential<_,Traits>,     // 27
-            QCAD::SchrodingerResid<_,Traits>          // 28
+            QCAD::SchrodingerResid<_,Traits>,         // 28
             PHAL::Absorption<_,Traits>,               // 29
             PHAL::NSContinuityResid<_,Traits>,        // 30  
             PHAL::NSMomentumResid<_,Traits>,          // 31
