@@ -142,8 +142,8 @@ SET(SOURCES ${SOURCES}
 	evaluators/PHAL_NSContinuityResid.cpp
 	evaluators/PHAL_NSMomentumResid.cpp
         evaluators/PHAL_NSThermalEqResid.cpp
-        evaluators/PHAL_NSRmEqResid.cpp
-        evaluators/PHAL_ContravarientMetricTensor.cpp
+        evaluators/PHAL_NSRm.cpp
+        evaluators/PHAL_NSContravarientMetricTensor.cpp
         evaluators/PHAL_NSTauM.cpp 
         evaluators/PHAL_NSTauT.cpp
         evaluators/PHAL_NSMaterialProperty.cpp
@@ -200,10 +200,10 @@ SET(HEADERS ${HEADERS}
 	evaluators/PHAL_NSMomentumResid_Def.hpp
         evaluators/PHAL_NSThermalEqResid.hpp
         evaluators/PHAL_NSThermalEqResid_Def.hpp
-        evaluators/PHAL_NSRmEqResid.hpp
-        evaluators/PHAL_NSRmEqResid_Def.hpp
-        evaluators/PHAL_ContravarientMetricTensor.hpp
-        evaluators/PHAL_ContravarientMetricTensor_Def.hpp
+        evaluators/PHAL_NSRm.hpp
+        evaluators/PHAL_NSRm_Def.hpp
+        evaluators/PHAL_NSContravarientMetricTensor.hpp
+        evaluators/PHAL_NSContravarientMetricTensor_Def.hpp
         evaluators/PHAL_NSTauM.hpp 
         evaluators/PHAL_NSTauM_Def.hpp 
         evaluators/PHAL_NSTauT.hpp

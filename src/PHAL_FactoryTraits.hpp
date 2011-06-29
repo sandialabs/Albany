@@ -50,8 +50,8 @@
 #include "PHAL_NSContinuityResid.hpp"
 #include "PHAL_NSMomentumResid.hpp"
 #include "PHAL_NSThermalEqResid.hpp"
-#include "PHAL_NSRmEqResid.hpp"
-#include "PHAL_ContravarientMetricTensor.hpp"
+#include "PHAL_NSRm.hpp"
+#include "PHAL_NSContravarientMetricTensor.hpp"
 #include "PHAL_NSTauM.hpp"
 #include "PHAL_NSTauT.hpp"
 #include "PHAL_NSMaterialProperty.hpp"
@@ -101,7 +101,7 @@ struct FactoryTraits {
   static const int id_schrodinger_potential     = 26;
   static const int id_schrodinger_resid         = 27;
   static const int id_absorption                = 28;
-  static const int id_continuityeqresid         = 29;
+  static const int id_nscontinuityeqresid       = 29;
   static const int id_nsmomentumeqresid         = 30;
   static const int id_nsthermaleqresid          = 31;
   static const int id_nsrm                      = 32;
@@ -144,8 +144,8 @@ struct FactoryTraits {
             PHAL::NSContinuityResid<_,Traits>,        // 29  
             PHAL::NSMomentumResid<_,Traits>,          // 30
             PHAL::NSThermalEqResid<_,Traits>,         // 31
-            PHAL::NSRmEqResid<_,Traits>,              // 32
-            PHAL::ContravarientMetricTensor<_,Traits>,// 33
+            PHAL::NSRm<_,Traits>,                     // 32
+            PHAL::NSContravarientMetricTensor<_,Traits>,// 33
             PHAL::NSTauM<_,Traits>,                   // 34
             PHAL::NSTauT<_,Traits>,                   // 35
             PHAL::NSMaterialProperty<_,Traits>,       // 36

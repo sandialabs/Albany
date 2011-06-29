@@ -32,7 +32,7 @@ namespace Albany {
   public:
   
     //! Default constructor
-    SolutionMaxValueResponseFunction();
+    SolutionMaxValueResponseFunction(int neq = 1, int eq = 0);
 
     //! Destructor
     virtual ~SolutionMaxValueResponseFunction();
@@ -87,6 +87,17 @@ namespace Albany {
     
     //! Private to prohibit copying
     SolutionMaxValueResponseFunction& operator=(const SolutionMaxValueResponseFunction&);
+
+  protected:
+
+    //! Number of equations per node
+    int neq;
+
+    //! Equation we want to get the max value from
+    int eq;
+
+    //! Compute max value and index
+    void computeMaxValue(const Epetra_Vector& x, double& val, int& index);
 
   };
 

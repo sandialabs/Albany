@@ -27,7 +27,8 @@ template<typename EvalT, typename Traits>
 NSBodyForce<EvalT, Traits>::
 NSBodyForce(const Teuchos::ParameterList& p) :
   force(p.get<std::string>("Body Force Name"),
- 	p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") )
+ 	p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
+  haveHeat(p.get<bool>("Have Heat"))
 {
 
   Teuchos::ParameterList* bf_list = 
@@ -45,6 +46,10 @@ NSBodyForce(const Teuchos::ParameterList& p) :
     this->addDependentField(rho);
   }
   else if (type == "Boussinesq") {
+    TEST_FOR_EXCEPTION(haveHeat == false, std::logic_error,
+		       std::endl <<
+		       "Error!  Must enable heat equation for Boussinesq " <<
+		       "body force term!");
     bf_type = BOUSSINESQ;
     T = PHX::MDField<ScalarT,Cell,QuadPoint>(
           p.get<std::string>("Temperature QP Variable Name"),
@@ -105,18 +110,17 @@ void NSBodyForce<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < numQPs; ++qp) {      
-      for (std::size_t i=0; i < numDims; ++i) {
-        if (bf_type == NONE)
-          force(cell,qp,i) = 0.0;
-        else if (bf_type == CONSTANT)
-          force(cell,qp,i) = rho(cell,qp)*gravity[i];
-        else if (bf_type == BOUSSINESQ)
-          force(cell,qp,i) = rho(cell,qp)*T(cell,qp)*beta(cell,qp)*gravity[i];
-      }
-    }
-  }
-
+   for (std::size_t qp=0; qp < numQPs; ++qp) {      
+     for (std::size_t i=0; i < numDims; ++i) {
+       if (bf_type == NONE)
+	 force(cell,qp,i) = 0.0;
+       else if (bf_type == CONSTANT)
+	 force(cell,qp,i) = rho(cell,qp)*gravity[i];
+       else if (bf_type == BOUSSINESQ)
+	 force(cell,qp,i) = rho(cell,qp)*T(cell,qp)*beta(cell,qp)*gravity[i];
+     }
+   }
+ }
 }
 
 }

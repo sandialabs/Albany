@@ -64,10 +64,11 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,Node> TResidual;
 
-  bool haveSource; 
+  bool haveSource, haveFlow, haveSUPG; 
   bool enableTransient;
   unsigned int numQPs, numDims, numNodes;
   Intrepid::FieldContainer<ScalarT> flux;
+  Intrepid::FieldContainer<ScalarT> convection;
 
  };
 }

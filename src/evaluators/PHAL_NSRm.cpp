@@ -17,8 +17,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "PHAL_NSRt.hpp"
-#include "PHAL_NSRt_Def.hpp"
+#include "PHAL_NSRm.hpp"
+#include "PHAL_NSRm_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::NSRt)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::NSRm)
 

@@ -55,20 +55,18 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> pGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> VGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> V;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> V_Dot;
-  PHX::MDField<ScalarT,Cell,QuadPoint> T;
   PHX::MDField<ScalarT,Cell,QuadPoint> P;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> acceleration;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> Rm;
   PHX::MDField<ScalarT,Cell,QuadPoint> TauM;
-  PHX::MDField<ScalarT,Cell,QuadPoint> rho;
   PHX::MDField<ScalarT,Cell,QuadPoint> mu;
+  PHX::MDField<ScalarT,Cell,QuadPoint> rho;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> MResidual;
 
   unsigned int numQPs, numDims, numNodes;
-  //Intrepid::FieldContainer<ScalarT> acceleration;
   bool enableTransient;
+  bool haveSUPG;
  
 };
 }

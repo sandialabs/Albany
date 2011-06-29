@@ -15,16 +15,14 @@
 \********************************************************************/
 
 
-#ifndef PHAL_CONTRAVARIENTMETRICTENSOR_HPP
-#define PHAL_CONTRAVARIENTMETRICTENSOR_HPP
+#ifndef PHAL_NSRM_HPP
+#define PHAL_NSRM_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
-#include "Intrepid_CellTools.hpp"
-#include "Intrepid_Cubature.hpp"
 /** \brief Finite Element Interpolation Evaluator
 
     This evaluator interpolates nodal DOF values to quad points.
@@ -33,37 +31,41 @@
 namespace PHAL {
 
 template<typename EvalT, typename Traits>
-class ContravarientMetricTensor : public PHX::EvaluatorWithBaseImpl<Traits>,
- 			 public PHX::EvaluatorDerived<EvalT, Traits>  {
+class NSRm : public PHX::EvaluatorWithBaseImpl<Traits>,
+	     public PHX::EvaluatorDerived<EvalT, Traits> {
 
 public:
 
-  ContravarientMetricTensor(const Teuchos::ParameterList& p);
+  typedef typename EvalT::ScalarT ScalarT;
+
+  NSRm(const Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
-private:
 
+private:
+ 
   typedef typename EvalT::MeshScalarT MeshScalarT;
-  int  numDims, numQPs;
 
   // Input:
-  //! Coordinate vector at vertices
-  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
-  Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
-  Teuchos::RCP<shards::CellTopology> cellType;
-
-  // Temporary FieldContainers
-  Intrepid::FieldContainer<RealType> refPoints;
-  Intrepid::FieldContainer<RealType> refWeights;
-  Intrepid::FieldContainer<MeshScalarT> jacobian;
-  Intrepid::FieldContainer<MeshScalarT> jacobian_inv;
-
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> pGrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> VGrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> V;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> V_Dot;
+  PHX::MDField<ScalarT,Cell,QuadPoint> T;
+  PHX::MDField<ScalarT,Cell,QuadPoint> rho;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> force;
+  
   // Output:
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> Gc;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> Rm;
+
+  unsigned int numQPs, numDims, numNodes;
+  bool enableTransient;
+  bool haveHeat;
+ 
 };
 }
 

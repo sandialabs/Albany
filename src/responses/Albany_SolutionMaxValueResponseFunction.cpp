@@ -19,7 +19,8 @@
 #include "Epetra_Comm.h"
 
 Albany::SolutionMaxValueResponseFunction::
-SolutionMaxValueResponseFunction()
+SolutionMaxValueResponseFunction(int neq_, int eq_) :
+  neq(neq_), eq(eq_)
 {
 }
 
@@ -42,7 +43,8 @@ evaluateResponses(const Epetra_Vector* xdot,
 		  const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
 		  Epetra_Vector& g)
 {
-  x.MaxValue(&g[0]);
+  int index;
+  computeMaxValue(x, g[0], index);
 }
 
 void
@@ -72,17 +74,17 @@ evaluateGradients(
 	  Epetra_MultiVector* dg_dxdot,
 	  const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dg_dp)
 {
+  int global_index;
+  double mxv;
+  computeMaxValue(x, mxv, global_index);
 
   // Evaluate response g
   if (g != NULL)
-    x.MaxValue(&(*g)[0]);
+    (*g)[0] = mxv;
 
   // Evaluate dg/dx
   if (dg_dx != NULL) {
-    double mxv;
     int im = -1;
-    if (g != NULL) mxv = (*g)[0];
-    else x.MaxValue(&mxv);
     for (int i=0; i<x.Map().NumMyElements(); i++) {
        if (x[i] == mxv) { (*dg_dx)[0][i] = 1.0; im = i; }
        else             (*dg_dx)[0][i] = 0.0;
@@ -116,16 +118,57 @@ evaluateSGResponses(const Stokhos::VectorOrthogPoly<Epetra_Vector>* sg_xdot,
 {
 
   // find node im with max value
-    double mxv;
-    int im = -1;
-    sg_x[0].MaxValue(&mxv);
-    for (int i=0; i<sg_x[0].Map().NumMyElements(); i++) {
-       if (sg_x[0][i] == mxv) im = i; 
-    }
+  int global_index;
+  double mxv;
+  computeMaxValue(sg_x[0], mxv, global_index);
 
   // copy its coeffs to g
-  unsigned int sz = sg_x.size();
-  for (unsigned int i=0; i<sz; i++)
-     sg_g[i][0] = sg_x[i][im];
+  if (sg_x[0].Map().MyGID(global_index)) {
+    int im = sg_x[0].Map().LID(global_index);
+    unsigned int sz = sg_x.size();
+    for (unsigned int i=0; i<sz; i++)
+      sg_g[i][0] = sg_x[i][im];
+  }
+  else {
+    // We need to do communication in the parallel case
+    throw 54;
+  }
 
+}
+
+void
+Albany::SolutionMaxValueResponseFunction::
+computeMaxValue(const Epetra_Vector& x, double& global_max, int& global_index)
+{
+  double my_max = -Epetra_MaxDouble;
+  int my_index = -1;
+  
+  // Loop over nodes to find max value for equation eq
+  int num_my_nodes = x.MyLength() / neq;
+  for (int node=0; node<num_my_nodes; node++) {
+    int index = node*neq+eq;
+    if (x[index] > my_max) {
+      my_max = x[index];
+      my_index = index;
+    }
+  }
+
+  // Check remainder
+  if (num_my_nodes*neq+eq < x.MyLength()) {
+    int index = num_my_nodes*neq+eq;
+    if (x[index] > my_max) {
+      my_max = x[index];
+      my_index = index;
+    }
+  }
+
+  // Get max value across all proc's
+  x.Comm().MaxAll(&my_max, &global_max, 1);
+
+  // Compute min of all global indices equal to max value
+  if (my_max == global_max)
+    my_index = x.Map().GID(my_index);
+  else
+    my_index = x.GlobalLength();
+  x.Comm().MinAll(&my_index, &global_index, 1);
 }

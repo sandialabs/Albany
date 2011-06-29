@@ -38,12 +38,6 @@ NSThermalEqResid(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
   TGrad       (p.get<std::string>                   ("Gradient QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  V           (p.get<std::string>                   ("Velocity QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  Source      (p.get<std::string>                   ("Source Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  TauT            (p.get<std::string>                 ("Tau T Name"),  
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   rho       (p.get<std::string>                   ("Density QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   Cp       (p.get<std::string>                  ("Specific Heat QP Variable Name"),
@@ -51,23 +45,43 @@ NSThermalEqResid(const Teuchos::ParameterList& p) :
 
   TResidual   (p.get<std::string>                   ("Residual Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
-  haveSource  (p.get<bool>("Have Source"))
+  haveSource  (p.get<bool>("Have Source")),
+  haveFlow    (p.get<bool>("Have Flow")),
+  haveSUPG    (p.get<bool>("Have SUPG"))
 {
   if (p.isType<bool>("Disable Transient"))
     enableTransient = !p.get<bool>("Disable Transient");
   else enableTransient = true;
 
   this->addDependentField(wBF);
-  this->addDependentField(Temperature);
-  this->addDependentField(ThermalCond);
-  if (enableTransient) this->addDependentField(Tdot);
-  this->addDependentField(TGrad);
-  this->addDependentField(V);
   this->addDependentField(wGradBF);
-  if (haveSource) this->addDependentField(Source);
-  this->addDependentField(TauT);
+  this->addDependentField(Temperature);
+  this->addDependentField(TGrad);
+  if (enableTransient) this->addDependentField(Tdot);
+  this->addDependentField(ThermalCond);
   this->addDependentField(rho);
   this->addDependentField(Cp);
+  
+  if (haveSource) {
+    Source = PHX::MDField<ScalarT,Cell,QuadPoint>(
+      p.get<std::string>("Source Name"),
+      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
+    this->addDependentField(Source);
+  }
+
+  if (haveFlow) {
+    V = PHX::MDField<ScalarT,Cell,QuadPoint,Dim>(
+      p.get<std::string>("Velocity QP Variable Name"),
+      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") );
+    this->addDependentField(V);
+  }
+
+  if (haveSUPG) {
+    TauT = PHX::MDField<ScalarT,Cell,QuadPoint>(
+      p.get<std::string>("Tau T Name"),  
+      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
+    this->addDependentField(TauT);
+  }
 
   this->addEvaluatedField(TResidual);
 
@@ -80,6 +94,7 @@ NSThermalEqResid(const Teuchos::ParameterList& p) :
 
   // Allocate workspace
   flux.resize(dims[0], numQPs, numDims);
+  convection.resize(dims[0], numQPs);
  
   this->setName("NSThermalEqResid"+PHX::TypeString<EvalT>::value);
 }
@@ -91,16 +106,16 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(wBF,fm);
-  this->utils.setFieldData(Temperature,fm);
-  this->utils.setFieldData(ThermalCond,fm);
-  this->utils.setFieldData(TGrad,fm);
-  this->utils.setFieldData(V,fm);
   this->utils.setFieldData(wGradBF,fm);
-  if (haveSource)  this->utils.setFieldData(Source,fm);
+  this->utils.setFieldData(Temperature,fm);
+  this->utils.setFieldData(TGrad,fm);
   if (enableTransient) this->utils.setFieldData(Tdot,fm);
-  this->utils.setFieldData(TauT,fm);
+  this->utils.setFieldData(ThermalCond,fm);
   this->utils.setFieldData(rho,fm);
   this->utils.setFieldData(Cp,fm);
+  if (haveSource)  this->utils.setFieldData(Source,fm);
+  if (haveFlow) this->utils.setFieldData(V,fm);
+  if (haveSUPG) this->utils.setFieldData(TauT,fm);
 
   this->utils.setFieldData(TResidual,fm);
 }
@@ -116,37 +131,36 @@ evaluateFields(typename Traits::EvalData workset)
 
   FST::integrate<ScalarT>(TResidual, flux, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
   
-
-  if (workset.transientTerms && enableTransient) 
-    FST::integrate<ScalarT>(TResidual, Tdot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
-
-  //if (haveConvection)  {
-    Intrepid::FieldContainer<ScalarT> convection(workset.worksetSize, numQPs);
-
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
-        convection(cell,qp) = 0.0;
-	if (haveSource) convection(cell,qp) -= Source(cell,qp);
-        if (workset.transientTerms && enableTransient) 
-          convection(cell,qp) += Tdot(cell,qp);
-        for (std::size_t i=0; i < numDims; ++i) { 
-            convection(cell,qp) += rho(cell,qp) * Cp(cell,qp) * V(cell,qp,i) * TGrad(cell,qp,i);        
-        }
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+    for (std::size_t qp=0; qp < numQPs; ++qp) {
+      convection(cell,qp) = 0.0;
+      if (haveSource) convection(cell,qp) -= Source(cell,qp);
+      if (workset.transientTerms && enableTransient) 
+	convection(cell,qp) += rho(cell,qp) * Cp(cell,qp) * Tdot(cell,qp);
+      if (haveFlow) {
+	for (std::size_t i=0; i < numDims; ++i) { 
+	  convection(cell,qp) += 
+	    rho(cell,qp) * Cp(cell,qp) * V(cell,qp,i) * TGrad(cell,qp,i);
+	}
       }
     }
+  }
 
-    FST::integrate<ScalarT>(TResidual, convection, wBF, Intrepid::COMP_CPP, true); // "true" sums into
-//  }
+  FST::integrate<ScalarT>(TResidual, convection, wBF, Intrepid::COMP_CPP, true); // "true" sums into
 
-   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+  if (haveSUPG) {
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {          
-         for (std::size_t qp=0; qp < numQPs; ++qp) {               
-            for (std::size_t j=0; j < numDims; ++j) { 
-              TResidual(cell,node) += rho(cell,qp)*Cp(cell,qp)*TauT(cell,qp)*convection(cell,qp)*V(cell,qp,j)*wGradBF(cell,node,qp,j);
-            }  
-         }
-       }
+	for (std::size_t qp=0; qp < numQPs; ++qp) {               
+	  for (std::size_t j=0; j < numDims; ++j) { 
+	    TResidual(cell,node) += 
+	      rho(cell,qp) * Cp(cell,qp) * TauT(cell,qp) * convection(cell,qp) *
+	      V(cell,qp,j) * wGradBF(cell,node,qp,j);
+	  }  
+	}
+      }
     }
+  }
 
 }
 

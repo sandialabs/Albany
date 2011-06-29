@@ -64,6 +64,8 @@ private:
   BFTYPE bf_type;
 
   unsigned int numQPs, numDims;
+
+  bool haveHeat;
  
 };
 }

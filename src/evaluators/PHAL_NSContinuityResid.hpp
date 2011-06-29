@@ -62,6 +62,7 @@ private:
 
   unsigned int numQPs, numDims, numNodes;
   Intrepid::FieldContainer<ScalarT> divergence;
+  bool havePSPG;
 };
 }
 

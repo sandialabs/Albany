@@ -17,8 +17,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "PHAL_ContravarientMetricTensor.hpp"
-#include "PHAL_ContravarientMetricTensor_Def.hpp"
+#include "PHAL_NSContravarientMetricTensor.hpp"
+#include "PHAL_NSContravarientMetricTensor_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::ContravarientMetricTensor)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::NSContravarientMetricTensor)
 
