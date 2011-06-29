@@ -60,22 +60,32 @@ PoissonDirichlet(Teuchos::ParameterList& p) :
     std::string refMtrlName, category;
     refMtrlName = materialDB->getParam<std::string>("Reference Material");
     category = materialDB->getMaterialParam<std::string>(refMtrlName,"Category");
-    if (category != "Semiconductor") 
+    if (category == "Semiconductor") {
+      double mdn = materialDB->getMaterialParam<double>(refMtrlName,"Electron DOS Effective Mass");
+      double mdp = materialDB->getMaterialParam<double>(refMtrlName,"Hole DOS Effective Mass");
+      double Chi = materialDB->getMaterialParam<double>(refMtrlName,"Electron Affinity");
+      double Eg0 = materialDB->getMaterialParam<double>(refMtrlName,"Zero Temperature Band Gap");
+      double alpha = materialDB->getMaterialParam<double>(refMtrlName,"Band Gap Alpha Coefficient");
+      double beta = materialDB->getMaterialParam<double>(refMtrlName,"Band Gap Beta Coefficient");
+      
+      ScalarT Eg = Eg0-alpha*pow(temperature,2.0)/(beta+temperature); // in [eV]
+      ScalarT Eic = -Eg/2. + 3./4.*kbT*log(mdp/mdn);  // (Ei-Ec) in [eV]
+      qPhiRef = Chi - Eic;  // (Evac-Ei) in [eV] where Evac = vacuum level
+    }
+    else if (category == "Insulator") {
+      double Chi = materialDB->getMaterialParam<double>(refMtrlName,"Electron Affinity");
+      qPhiRef = Chi;
+    }
+    else if (category == "Metal") {
+      double workFn = materialDB->getMaterialParam<double>(refMtrlName,"Work Function");
+      qPhiRef = workFn;
+    }
+    else {
       TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
-        << "Error!  Reference material must be Semiconductor !" << std::endl);
-    
-    double mdn = materialDB->getMaterialParam<double>(refMtrlName,"Electron DOS Effective Mass");
-    double mdp = materialDB->getMaterialParam<double>(refMtrlName,"Hole DOS Effective Mass");
-    double Chi = materialDB->getMaterialParam<double>(refMtrlName,"Electron Affinity");
-    double Eg0 = materialDB->getMaterialParam<double>(refMtrlName,"Zero Temperature Band Gap");
-    double alpha = materialDB->getMaterialParam<double>(refMtrlName,"Band Gap Alpha Coefficient");
-    double beta = materialDB->getMaterialParam<double>(refMtrlName,"Band Gap Beta Coefficient");
-
-    ScalarT Eg = Eg0-alpha*pow(temperature,2.0)/(beta+temperature); // in [eV]
-    ScalarT Eic = -Eg/2. + 3./4.*kbT*log(mdp/mdn);  // (Ei-Ec) in [eV]
-    qPhiRef = Chi - Eic;  // (Evac-Ei) in [eV] where Evac = vacuum level
+			  << "Error!  Invalid category " << category 
+			  << " for reference material !" << std::endl);
+    }
   }
-
 }
 
 

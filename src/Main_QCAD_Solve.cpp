@@ -30,16 +30,33 @@
 #include "Albany_EigendataInfoStruct.hpp"
 
 void CreateSolver(const std::string& solverType, char* xmlfilename, 
-		  Teuchos::RCP<Albany::Application>& albApp, Teuchos::RCP<EpetraExt::ModelEvaluator>& App, 
-		  EpetraExt::ModelEvaluator::InArgs& params_in, EpetraExt::ModelEvaluator::OutArgs& responses_out);
+		  Teuchos::RCP<Albany::Application>& albApp, 
+		  Teuchos::RCP<EpetraExt::ModelEvaluator>& App, 
+		  EpetraExt::ModelEvaluator::InArgs& params_in, 
+		  EpetraExt::ModelEvaluator::OutArgs& responses_out);
+
 void SolveModel(Teuchos::RCP<Albany::Application>& albApp, Teuchos::RCP<EpetraExt::ModelEvaluator>& App, 
 		EpetraExt::ModelEvaluator::InArgs params_in, EpetraExt::ModelEvaluator::OutArgs responses_out,
     		Albany::StateArrays*& pInitialStates, Albany::StateArrays*& pFinalStates,
-		Teuchos::RCP<Albany::EigendataStruct>& pInitialEData, Teuchos::RCP<Albany::EigendataStruct>& pFinalEData);
+		Teuchos::RCP<Albany::EigendataStruct>& pInitialEData, 
+		Teuchos::RCP<Albany::EigendataStruct>& pFinalEData);
+
 void CopyState(Albany::StateArrays& dest, Albany::StateArrays& src,  std::string stateNameToCopy);
-void SubtractStateFromState(Albany::StateArrays& dest, Albany::StateArrays& src, std::string stateNameToSubtract);
-bool checkConvergence(Albany::StateArrays& newStates, Albany::StateArrays& oldStates, std::string stateNameToCompare, double tol);
+
+void AddStateToState(Albany::StateArrays& dest, Albany::StateArrays& src,
+			    std::string destStateNameToAddTo, 
+			    std::string srcStateNameToAdd);
+
+void SubtractStateFromState(Albany::StateArrays& dest, Albany::StateArrays& src,
+			    std::string destStateNameToSubtractFrom, 
+			    std::string srcStateNameToSubtract);
+
+bool checkConvergence(Albany::StateArrays& newStates, Albany::StateArrays& oldStates, 
+		      std::string stateNameToCompare, double tol);
+
 double GetEigensolverShift(Albany::StateArrays& states, const std::string& stateNameToBaseShiftOn);
+
+
 
 #include "Teuchos_ParameterList.hpp"
 #include "Piro_Epetra_LOCASolver.hpp"
@@ -154,7 +171,7 @@ int main(int argc, char *argv[]) {
       SolveModel(dummyPoissonApp, dummyPoissonSolver, 
 		 dummy_params_in, dummy_responses_out,
 		 pStatesToPass, pStatesFromDummy, eigenDataToPass, eigenDataNull);
-      SubtractStateFromState(*pStatesToLoop, *pStatesFromDummy, "Conduction Band");
+      AddStateToState(*pStatesToLoop, *pStatesFromDummy, "Conduction Band", "Electric Potential");
       eigenDataNull = Teuchos::null;
 
       if(iter > 1) 
@@ -319,20 +336,36 @@ void CopyState(Albany::StateArrays& dest,
 }
 
 
-// dest[stateNameToSubtract] -= src[stateNameToSubtract]
-void SubtractStateFromState(Albany::StateArrays& dest, 
-	       Albany::StateArrays& src,
-	       std::string stateNameToSubtract)
+void AddStateToState(Albany::StateArrays& dest, Albany::StateArrays& src,
+			    std::string destStateNameToAddTo, 
+			    std::string srcStateNameToAdd)
 {
   int totalSize, numWorksets = src.size();
   TEST_FOR_EXCEPT( numWorksets != (int)dest.size() );
 
   for (int ws = 0; ws < numWorksets; ws++)
   {
-    totalSize = src[ws][stateNameToSubtract].size();
+    totalSize = src[ws][srcStateNameToAdd].size();
     
     for(int i=0; i<totalSize; ++i)
-      dest[ws][stateNameToSubtract][i] -= src[ws][stateNameToSubtract][i];
+      dest[ws][destStateNameToAddTo][i] -= src[ws][srcStateNameToAdd][i];
+  }
+}
+
+
+void SubtractStateFromState(Albany::StateArrays& dest, Albany::StateArrays& src,
+			    std::string destStateNameToSubtractFrom, 
+			    std::string srcStateNameToSubtract)
+{
+  int totalSize, numWorksets = src.size();
+  TEST_FOR_EXCEPT( numWorksets != (int)dest.size() );
+
+  for (int ws = 0; ws < numWorksets; ws++)
+  {
+    totalSize = src[ws][srcStateNameToSubtract].size();
+    
+    for(int i=0; i<totalSize; ++i)
+      dest[ws][destStateNameToSubtractFrom][i] -= src[ws][srcStateNameToSubtract][i];
   }
 }
 
