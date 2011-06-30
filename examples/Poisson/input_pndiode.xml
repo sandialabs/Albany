@@ -14,8 +14,6 @@
     <ParameterList name="Poisson Source">
       <Parameter name="Factor" type="double" value="1.0" />
       <Parameter name="Device" type="string" value="elementblocks" />
-      <Parameter name="Acceptor Doping" type="double" value="1e16" />
-      <Parameter name="Donor Doping" type="double" value="1e16" />
     </ParameterList>
 
     <ParameterList name="Permittivity">

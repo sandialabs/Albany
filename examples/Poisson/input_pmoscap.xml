@@ -8,7 +8,6 @@
     <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
 
     <ParameterList name="Dirichlet BCs">
-      <!-- was -8.8388 and 74.7291 respectively -->
       <Parameter name="DBC on NS psubstrate for DOF Phi" type="double" value="0" />
       <Parameter name="DBC on NS gate for DOF Phi" type="double" value="-1" />
     </ParameterList>
@@ -16,9 +15,9 @@
     <ParameterList name="Poisson Source">
       <Parameter name="Factor" type="double" value="1.0" />
       <Parameter name="Device" type="string" value="elementblocks" />
-      <Parameter name="Acceptor Doping" type="double" value="1e14" />
       <Parameter name="Carrier Statistics" type="string" value="Boltzmann Statistics" />
       <Parameter name="Incomplete Ionization" type="string" value="False" />
+      <Parameter name="Oxide Charge" type="double" value="0.0" />
     </ParameterList>
 
     <ParameterList name="Permittivity">

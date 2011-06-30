@@ -674,6 +674,9 @@ Albany::StateManager::integrateStateVariable(const std::string& stateName, const
       for (int cell = 0; cell < cells; ++cell) {
 	for (int qp = 0; qp < qps; ++qp) {	  
 	  integral += sa[ws][stateName](cell,qp) * sa[ws][weightName](cell,qp);
+	  //std::cout << "DEBUG Integral: " << integral << " after + " << sa[ws][stateName](cell,qp)
+	  //	    << " * " << sa[ws][weightName](cell,qp) << std::endl;
+
 	}
       }
 	/* OLD FOR REF

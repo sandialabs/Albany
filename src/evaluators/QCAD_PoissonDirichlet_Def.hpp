@@ -36,10 +36,10 @@ PoissonDirichlet(Teuchos::ParameterList& p) :
 
   carrierStatistics = psList->get("Carrier Statistics", "Boltzmann Statistics");
   incompIonization = psList->get("Incomplete Ionization", "False");
-  dopingDonor = psList->get("Donor Doping", 1e14);
-  dopingAcceptor = psList->get("Acceptor Doping", 1e14);
-  donorActE = psList->get("Donor Activation Energy", 0.040);
-  acceptorActE = psList->get("Acceptor Activation Energy", 0.045);
+  //dopingDonor = psList->get("Donor Doping", 1e14);
+  //dopingAcceptor = psList->get("Acceptor Doping", 1e14);
+  //donorActE = psList->get("Donor Activation Energy", 0.040);
+  //acceptorActE = psList->get("Acceptor Activation Energy", 0.045);
  
   temperature = p.get<double>("Temperature"); //To be replaced by SharedParameter evaluator access
 
@@ -142,7 +142,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     Eg = Eg0-alpha*pow(temperature,2.0)/(beta+temperature); // in [eV]
     
     ScalarT builtinPotential = 0.0; 
-    std::string dopantType = materialDB->getElementBlockParam<std::string>(ebName,"dopantType");
+    std::string dopantType = materialDB->getElementBlockParam<std::string>(ebName,"Dopant Type");
 
     // Intrinsic semiconductor (no doping)
     if (dopantType == "None")  
@@ -160,23 +160,26 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     
     // Extrinsic semiconductor (doped)
     {
+      double dopingConc = materialDB->getElementBlockParam<double>(ebName,"Doping Value");
+      double dopantActE = materialDB->getElementBlockParam<double>(ebName,"Dopant Activation Energy", 0.045);
+
       if ((carrierStatistics=="Boltzmann Statistics") && (incompIonization=="False"))
-        builtinPotential = potentialForMBComplIon(Nc,Nv,Eg,Chi,dopantType);
+        builtinPotential = potentialForMBComplIon(Nc,Nv,Eg,Chi,dopantType,dopingConc);
     
       else if ((carrierStatistics=="Boltzmann Statistics") && (incompIonization=="True"))
-        builtinPotential = potentialForMBIncomplIon(Nc,Nv,Eg,Chi,dopantType);
+        builtinPotential = potentialForMBIncomplIon(Nc,Nv,Eg,Chi,dopantType,dopingConc,dopantActE);
 
       else if ((carrierStatistics=="Fermi-Dirac Statistics") && (incompIonization=="False"))
-        builtinPotential = potentialForFDComplIon(Nc,Nv,Eg,Chi,dopantType);
+        builtinPotential = potentialForFDComplIon(Nc,Nv,Eg,Chi,dopantType,dopingConc);
 
       else if ((carrierStatistics=="0-K Fermi-Dirac Statistics") && (incompIonization=="False"))
-        builtinPotential = potentialForZeroKFDComplIon(Nc,Nv,Eg,Chi,dopantType);
+        builtinPotential = potentialForZeroKFDComplIon(Nc,Nv,Eg,Chi,dopantType,dopingConc);
     
       // For cases of FD and 0-K FD with incompIonization==True, one needs to 
       // numerically solve a non-trivial equation. Since when incompIonization==True
       // is enabled, the MB almost always holds, so use potentialForMBIncomplIon.
       else  
-        builtinPotential = potentialForMBIncomplIon(Nc,Nv,Eg,Chi,dopantType);
+        builtinPotential = potentialForMBIncomplIon(Nc,Nv,Eg,Chi,dopantType,dopingConc,dopantActE);
 
       ScalarT newValue = (user_value + builtinPotential)/V0;
       PHAL::DirichletBase<EvalT,Traits>::value = newValue;
@@ -228,7 +231,7 @@ QCAD::PoissonDirichlet<EvalT,Traits>::inverseFDIntOneHalf(const ScalarT x)
 template<typename EvalT,typename Traits>
 typename QCAD::PoissonDirichlet<EvalT,Traits>::ScalarT
 QCAD::PoissonDirichlet<EvalT,Traits>::potentialForMBComplIon(const ScalarT &Nc, 
-      const ScalarT &Nv, const ScalarT &Eg, const double &Chi, const std::string dopType)
+   const ScalarT &Nv, const ScalarT &Eg, const double &Chi, const std::string dopType, const double &dopingConc)
 {
   ScalarT Cn = Nc*exp((-qPhiRef+Chi)/kbT); 
   ScalarT Cp = Nv*exp((qPhiRef-Chi-Eg)/kbT);
@@ -237,21 +240,17 @@ QCAD::PoissonDirichlet<EvalT,Traits>::potentialForMBComplIon(const ScalarT &Nc,
   // for high-T, include n and p in charge neutrality: p=n+Na or p+Nd=n
   if ((Cn > 0.) && (Cp > 0.))
   {
-    double dopingConc; 
+    double signedDopingConc;
     if(dopType == "Donor") 
-    {
-      dopingConc = dopingDonor;  
-    }
+      signedDopingConc = dopingConc;
     else if(dopType == "Acceptor") 
-    {
-      dopingConc = -dopingAcceptor; 
-    }
+      signedDopingConc = -dopingConc;
     else 
     {
       TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
         << "Error!  Unknown dopant type " << dopType << "!"<< std::endl);
     }
-    ScalarT tmp1 = dopingConc/(2.0*Cn);
+    ScalarT tmp1 = signedDopingConc/(2.0*Cn);
     ScalarT tmp2 = tmp1 + sqrt(pow(tmp1,2.0) + Cp/Cn);
     builtinPotential = V0*log(tmp2); 
   }
@@ -260,9 +259,9 @@ QCAD::PoissonDirichlet<EvalT,Traits>::potentialForMBComplIon(const ScalarT &Nc,
   else
   {
     if(dopType == "Donor") 
-      builtinPotential = (qPhiRef-Chi)/1.0 + V0*log(dopingDonor/Nc);  
+      builtinPotential = (qPhiRef-Chi)/1.0 + V0*log(dopingConc/Nc);  
     else if(dopType == "Acceptor") 
-      builtinPotential = (qPhiRef-Chi-Eg)/1.0 - V0*log(dopingAcceptor/Nv);  
+      builtinPotential = (qPhiRef-Chi-Eg)/1.0 - V0*log(dopingConc/Nv);  
     else 
     {
       TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
@@ -278,16 +277,14 @@ QCAD::PoissonDirichlet<EvalT,Traits>::potentialForMBComplIon(const ScalarT &Nc,
 template<typename EvalT,typename Traits>
 typename QCAD::PoissonDirichlet<EvalT,Traits>::ScalarT
 QCAD::PoissonDirichlet<EvalT,Traits>::potentialForMBIncomplIon(const ScalarT &Nc, 
-      const ScalarT &Nv, const ScalarT &Eg, const double &Chi, const std::string dopType)
+      const ScalarT &Nv, const ScalarT &Eg, const double &Chi, const std::string dopType, 
+      const double &dopingConc, const double &dopantActE )
 {
-  double dopingConc, dopantActE;
   ScalarT builtinPotential;
   
   // assume n = Nd+ to have an analytical expression (neglect p)  
   if(dopType == "Donor") 
   {
-    dopingConc = dopingDonor;
-    dopantActE = donorActE;
     ScalarT tmp = -1./4.+1./4.*sqrt(1.+8.*dopingConc/Nc*exp(dopantActE/kbT));
     builtinPotential = (-dopantActE+qPhiRef-Chi)/1.0 + V0*log(tmp);
   }
@@ -295,8 +292,6 @@ QCAD::PoissonDirichlet<EvalT,Traits>::potentialForMBIncomplIon(const ScalarT &Nc
   // assume p = Na- to have an analytical expression (neglect n)
   else if(dopType == "Acceptor") 
   {
-    dopingConc = dopingAcceptor;  
-    dopantActE = acceptorActE;
     ScalarT tmp = -1./8.+1./8.*sqrt(1.+16.*dopingConc/Nv*exp(dopantActE/kbT));
     builtinPotential = (dopantActE+qPhiRef-Chi-Eg)/1.0 - V0*log(tmp);
   }
@@ -315,15 +310,13 @@ QCAD::PoissonDirichlet<EvalT,Traits>::potentialForMBIncomplIon(const ScalarT &Nc
 template<typename EvalT,typename Traits>
 typename QCAD::PoissonDirichlet<EvalT,Traits>::ScalarT
 QCAD::PoissonDirichlet<EvalT,Traits>::potentialForFDComplIon(const ScalarT &Nc, 
-      const ScalarT &Nv, const ScalarT &Eg, const double &Chi, const std::string dopType)
+    const ScalarT &Nv, const ScalarT &Eg, const double &Chi, const std::string dopType, const double &dopingConc)
 {
-  double dopingConc;
   ScalarT builtinPotential;
     
   // assume n = Nd to have an analytical expression (neglect p)
   if(dopType == "Donor") 
   {
-    dopingConc = dopingDonor;
     ScalarT invFDInt = inverseFDIntOneHalf(dopingConc/Nc);
     builtinPotential = (qPhiRef-Chi)/1.0 + V0*invFDInt;
   }
@@ -331,7 +324,6 @@ QCAD::PoissonDirichlet<EvalT,Traits>::potentialForFDComplIon(const ScalarT &Nc,
   // assume p = Na to have an analytical expression (neglect n)
   else if(dopType == "Acceptor") 
   {
-    dopingConc = dopingAcceptor;  
     ScalarT invFDInt = inverseFDIntOneHalf(dopingConc/Nv);
     builtinPotential = (qPhiRef-Chi-Eg)/1.0 - V0*invFDInt;
   }
@@ -348,19 +340,17 @@ QCAD::PoissonDirichlet<EvalT,Traits>::potentialForFDComplIon(const ScalarT &Nc,
 template<typename EvalT,typename Traits>
 typename QCAD::PoissonDirichlet<EvalT,Traits>::ScalarT
 QCAD::PoissonDirichlet<EvalT,Traits>::potentialForZeroKFDComplIon(const ScalarT &Nc, 
-      const ScalarT &Nv, const ScalarT &Eg, const double &Chi, const std::string dopType)
+    const ScalarT &Nv, const ScalarT &Eg, const double &Chi, const std::string dopType, const double &dopingConc)
 {
   const double pi = 3.1415926536;
 
-  double dopingConc;
   ScalarT builtinPotential;
     
   // assume n = Nd to have an analytical expression (neglect p)
   if(dopType == "Donor") 
   {
-    dopingConc = dopingDonor;
     if (dopingConc < Nc)  // Fermi level is below conduction band
-      builtinPotential = potentialForFDComplIon(Nc,Nv,Eg,Chi,dopType);
+      builtinPotential = potentialForFDComplIon(Nc,Nv,Eg,Chi,dopType,dopingConc);
     else  // Fermi level is in conduction band
     { 
       ScalarT invFDInt = pow(3./4.*sqrt(pi)*(dopingConc/Nc),2./3.);
@@ -371,9 +361,8 @@ QCAD::PoissonDirichlet<EvalT,Traits>::potentialForZeroKFDComplIon(const ScalarT 
   // assume p = Na to have an analytical expression (neglect n)
   else if(dopType == "Acceptor") 
   {
-    dopingConc = dopingAcceptor;
     if (dopingConc < Nv)  // Fermi level is above valence band 
-      builtinPotential = potentialForFDComplIon(Nc,Nv,Eg,Chi,dopType); 
+      builtinPotential = potentialForFDComplIon(Nc,Nv,Eg,Chi,dopType,dopingConc); 
     else  // Fermi level is in valence band
     {  
       ScalarT invFDInt = pow(3./4.*sqrt(pi)*(dopingConc/Nv),2./3.);

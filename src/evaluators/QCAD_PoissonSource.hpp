@@ -149,10 +149,12 @@ namespace QCAD
     int  nEigenvectors;
     std::vector< PHX::MDField<ScalarT,Cell,QuadPoint> > eigenvector_Re;
     std::vector< PHX::MDField<ScalarT,Cell,QuadPoint> > eigenvector_Im;
-
     
     //! Material database
     Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
+
+    //! Material database parameter values
+    std::map< std::string, ScalarT > materialParams;
   };
 }
 

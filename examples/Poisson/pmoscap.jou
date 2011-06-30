@@ -32,7 +32,7 @@ color nodeset 1 red
 
 # define blocks (each block represents one material)
 block 1 surface 1
-block 1 name "silicon.ptype"
+block 1 name "silicon.psubstrate"
 block 1 element type quad4
 
 block 2 surface 2
