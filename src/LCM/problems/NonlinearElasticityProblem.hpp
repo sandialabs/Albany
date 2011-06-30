@@ -38,9 +38,9 @@ namespace Albany {
   
     //! Default constructor
     NonlinearElasticityProblem(
-                         const Teuchos::RCP<Teuchos::ParameterList>& params,
-                         const Teuchos::RCP<ParamLib>& paramLib,
-                         const int numEq);
+                         const Teuchos::RCP<Teuchos::ParameterList>& params_,
+                         const Teuchos::RCP<ParamLib>& paramLib_,
+                         const int numDim_);
 
     //! Destructor
     virtual ~NonlinearElasticityProblem();
