@@ -20,6 +20,15 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 #include "Albany_Utils.hpp"
+
+//Radom field types
+enum SG_RF {CONSTANT, UNIFORM, LOGNORMAL};
+const int num_sg_rf = 3;
+const SG_RF sg_rf_values[] = {CONSTANT, UNIFORM, LOGNORMAL};
+const char *sg_rf_names[] = {"Constant", "Uniform", "Log-Normal"};
+
+SG_RF randField = CONSTANT;
+
 namespace PHAL {
 
 template<typename EvalT, typename Traits>
@@ -41,16 +50,22 @@ ThermalConductivity(Teuchos::ParameterList& p) :
   std::string type = cond_list->get("Thermal Conductivity Type", "Constant");
   if (type == "Constant") {
     is_constant = true;
+    randField = CONSTANT;
     constant_value = cond_list->get("Value", 1.0);
 
     // Add thermal conductivity as a Sacado-ized parameter
     Teuchos::RCP<ParamLib> paramLib = 
       p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
       new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-	"Thermal Conductivity", this, paramLib);
+    	"Thermal Conductivity", this, paramLib);
   }
-  else if (type == "Truncated KL Expansion") {
+  else if (type == "Truncated KL Expansion" || type == "Log Normal RF") {
     is_constant = false;
+    if (type == "Truncated KL Expansion")
+      randField = UNIFORM;
+    else if (type == "Log Normal RF")
+      randField = LOGNORMAL;
+ 
     Teuchos::RCP<PHX::DataLayout> scalar_dl =
       p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>
@@ -109,7 +124,10 @@ evaluateFields(typename Traits::EvalData workset)
 	Teuchos::Array<MeshScalarT> point(numDims);
 	for (std::size_t i=0; i<numDims; i++)
 	  point[i] = Sacado::ScalarValue<MeshScalarT>::eval(coordVec(cell,qp,i));
-	thermalCond(cell,qp) = exp_rf_kl->evaluate(point, rv);
+        if (randField == UNIFORM)
+          thermalCond(cell,qp) = exp_rf_kl->evaluate(point, rv);       
+        else if (randField == LOGNORMAL)
+          thermalCond(cell,qp) = std::exp(exp_rf_kl->evaluate(point, rv));       
       }
     }
   }

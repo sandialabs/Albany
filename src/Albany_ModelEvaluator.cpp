@@ -506,11 +506,18 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
   }
 
   // f
-  if (f_out != Teuchos::null && !f_already_computed) {
-    app->computeGlobalResidual(curr_time, x_dot.get(), *x, 
-			       sacado_param_vec, *f_out);
+  if (app->is_adjoint) {
+      Teuchos::Array< Teuchos::RCP<ParamVec> > empty_vec;
+      Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> > empty_out;
+      app->evaluateResponseGradients(x_dot.get(), *x, sacado_param_vec, 
+                                     empty_vec, NULL, f_out.get(), NULL, empty_out);
   }
-
+  else {
+    if (f_out != Teuchos::null && !f_already_computed) {
+      app->computeGlobalResidual(curr_time, x_dot.get(), *x, 
+  			       sacado_param_vec, *f_out);
+    }
+  }
   // Response functions
   if (outArgs.Ng() > 0 && supports_g) {
     Teuchos::RCP<Epetra_Vector> g_out = outArgs.get_g(0);

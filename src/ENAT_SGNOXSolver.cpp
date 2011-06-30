@@ -24,6 +24,14 @@
 
 #include "NOX_Epetra_LinearSystem_Stratimikos.H"
 #include "NOX_Epetra_LinearSystem_MPBD.hpp"
+#include "NOX_Epetra_LinearSystem_SGGS.hpp"
+#include "NOX_Epetra_LinearSystem_SGJacobi.hpp"
+
+// SG solver approaches
+enum SG_Solver { SG_KRYLOV, SG_GS, SG_JACOBI };
+//const int num_sg_solver = 3;
+//const SG_Solver sg_solver_values[] = { SG_KRYLOV, SG_GS, SG_JACOBI };
+//const char *sg_solver_names[] = { "Krylov", "Gauss-Seidel", "Jacobi" };
 
 ENAT::SGNOXSolver::
 SGNOXSolver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
@@ -283,13 +291,96 @@ SGNOXSolver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
         sg_comm, sg_nonlin_model->get_x_sg_importer(), save_moments));
   }
 
-  // Create SG NOX solver
+  // Get SG solver type
+  std::string solve_type = sgSolverParams->get("SG Solver Algorithm", "Krylov");
+  SG_Solver solve_method;
+  if (solve_type == "Krylov")
+    solve_method = SG_KRYLOV;
+  else if (solve_type ==  "Gauss-Seidel")
+    solve_method = SG_GS;
+  else if (solve_type ==  "Jacobi")
+    solve_method = SG_JACOBI; 
+  else
+    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+		       std::endl << "Error!  ENAT_SGNOXSolver():  " <<
+		       "Invalid Solver Algorithm  " << solve_type << std::endl);
+
   Teuchos::RCP<EpetraExt::ModelEvaluator> sg_block_solver;
   if (sg_method != SG_NI && sg_method != SG_MPNI) {
+    Teuchos::RCP<NOX::Epetra::LinearSystem> sg_linsys = Teuchos::null;
+    if (solve_method==SG_GS || solve_method==SG_JACOBI) {
+      //double outer_tol = 1e-12;
+      //int outer_its = 1000;
+      // Create NOX interface
+      Teuchos::RCP<NOX::Epetra::ModelEvaluatorInterface> det_nox_interface = 
+         Teuchos::rcp(new NOX::Epetra::ModelEvaluatorInterface(model));
+
+      // Create NOX linear system object
+      Teuchos::RCP<const Epetra_Vector> det_u = model->get_x_init();
+      Teuchos::RCP<Epetra_Operator> det_A = model->create_W();
+      Teuchos::RCP<NOX::Epetra::Interface::Required> det_iReq = det_nox_interface;
+      Teuchos::RCP<NOX::Epetra::Interface::Jacobian> det_iJac = det_nox_interface;
+      //Teuchos::ParameterList det_printParams;
+        Teuchos::ParameterList& noxParams = appParams->sublist("NOX");
+      Teuchos::ParameterList& det_printParams = noxParams.sublist("Printing");
+      Teuchos::ParameterList& printParams = noxParams.sublist("Printing");
+      Teuchos::ParameterList& newtonParams = 
+	noxParams.sublist("Direction").sublist("Newton");
+      Teuchos::ParameterList& det_lsParams = 
+	newtonParams.sublist("Stratimikos Linear Solver");
+      //std::cout << det_lsParams << std::endl;
+     // det_printParams.set("MyPID", MyPID); 
+      //det_printParams.set("Output Precision", 3);
+     // det_printParams.set("Output Processor", 0);
+     // det_printParams.set("Output Information", NOX::Utils::Error);
+      Teuchos::RCP<NOX::Epetra::LinearSystem> det_linsys = 
+      	Teuchos::rcp(new NOX::Epetra::LinearSystemStratimikos(
+		     det_printParams, det_lsParams, det_iJac, 
+		     det_A, *det_u));
+
+     // Sublist for linear solver for the Newton method
+      //Teuchos::ParameterList& lsParams = newtonParams.sublist("Linear Solver");
+      Teuchos::ParameterList& sgjacobiParams = 
+                newtonParams.sublist("Linear Solver");
+     // Create NOX interface
+      Teuchos::RCP<NOX::Epetra::ModelEvaluatorInterface> nox_interface =
+        Teuchos::rcp(new NOX::Epetra::ModelEvaluatorInterface(sg_nonlin_model));
+      Teuchos::RCP<const Epetra_Map> base_map = model->get_x_map();
+      Teuchos::RCP<const Epetra_Map> sg_map = sg_nonlin_model->get_x_map();
+      Teuchos::RCP<Epetra_Operator> A = sg_nonlin_model->create_W();
+      Teuchos::RCP<NOX::Epetra::Interface::Required> iReq = nox_interface;
+      Teuchos::RCP<NOX::Epetra::Interface::Jacobian> iJac = nox_interface; 
+    
+      if (solve_method==SG_GS) {
+       sgjacobiParams.sublist("Deterministic Solver Parameters") = det_lsParams;
+       //sgjacobiParams.set("Max Iterations", outer_its);
+       //sgjacobiParams.set("Tolerance", outer_tol);
+       sg_linsys =
+	 Teuchos::rcp(new NOX::Epetra::LinearSystemSGGS(
+	  	       printParams, sgjacobiParams, det_linsys, iReq, iJac, 
+	 	       basis, sg_parallel_data, A, base_map, sg_map));
+      }
+
+      else if (solve_method==SG_JACOBI) {
+       sgjacobiParams.sublist("Deterministic Solver Parameters") = det_lsParams;
+       //sgjacobiParams.set("Max Iterations", outer_its);
+       //sgjacobiParams.set("Tolerance", outer_tol);
+       Teuchos::ParameterList& jacobiOpParams =
+	 sgjacobiParams.sublist("Jacobi SG Operator");
+       jacobiOpParams.set("Only Use Linear Terms", true);
+       sg_linsys =
+	Teuchos::rcp(new NOX::Epetra::LinearSystemSGJacobi(
+		       printParams, sgjacobiParams, det_linsys, iReq, iJac, 
+		       basis, sg_parallel_data, A, base_map, sg_map));
+      }
+    }
+
     // Will find preconditioner for Matrix-Free method
     sg_block_solver = Teuchos::rcp(new Piro::Epetra::NOXSolver(appParams, 
 							       sg_nonlin_model, 
-							       sgnoxObserver));
+							       sgnoxObserver,
+                                                               Teuchos::null,
+                                                               sg_linsys));
   }
   else 
     sg_block_solver = sg_nonlin_model;

@@ -102,6 +102,11 @@ struct Workset {
   // significantly reduce Jacobian calculation cost.
   bool ignore_residual;
 
+  // Flag indicated whether we are solving the adjoint operator or the
+  // forward operator.  This is used in the Albany application when
+  // either the Jacobian or the transpose of the Jacobian is scattered. 
+  bool is_adjoint;
+
 };
 
 }

@@ -58,15 +58,19 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> Source;
   Teuchos::Array<double> convectionVels;
   PHX::MDField<ScalarT,Cell,QuadPoint> rhoCp;
+  PHX::MDField<ScalarT,Cell,QuadPoint> Absorption;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> TResidual;
 
   bool haveSource;
   bool haveConvection;
+  bool haveAbsorption;
   bool enableTransient;
+  bool haverhoCp;
   unsigned int numQPs, numDims;
   Intrepid::FieldContainer<ScalarT> flux;
+  Intrepid::FieldContainer<ScalarT> aterm;
 };
 }
 

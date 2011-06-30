@@ -34,6 +34,7 @@ HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_),
   haveSource(false),
+  haveAbsorption(false),
   numDim(numDim_)
 {
   this->setNumEquations(1);
@@ -43,7 +44,8 @@ HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   if (periodic) *out <<" Periodic Boundary Conditions being used." <<std::endl;
 
   haveSource =  params->isSublist("Source Functions");
-
+  haveAbsorption =  params->isSublist("Absorption");
+  
   // neq=1 set in AbstractProblem constructor
   dofNames.resize(neq);
   dofNames[0] = "T";
@@ -245,6 +247,25 @@ Albany::HeatProblem::constructEvaluators(const Albany::MeshSpecsStruct& meshSpec
     evaluators_to_build["Thermal Conductivity"] = p;
   }
 
+  if (haveAbsorption) { // Absorption
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    int type = FactoryTraits<AlbanyTraits>::id_absorption;
+    p->set<int>("Type", type);
+
+    p->set<string>("QP Variable Name", "Absorption");
+    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Absorption");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    evaluators_to_build["Absorption"] = p;
+  }
+
   { // DOF: Interpolate nodal Temperature values to quad points
     RCP<ParameterList> p = rcp(new ParameterList("Heat DOFInterpolation Temperature"));
 
@@ -335,16 +356,25 @@ Albany::HeatProblem::constructEvaluators(const Albany::MeshSpecsStruct& meshSpec
     p->set<string>("QP Time Derivative Variable Name", "Temperature_dot");
 
     p->set<bool>("Have Source", haveSource);
+    p->set<bool>("Have Absorption", haveAbsorption);
     p->set<string>("Source Name", "Source");
 
     p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
 
+    p->set<string>("Absorption Name", "Thermal Conductivity");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    
     p->set<string>("Gradient QP Variable Name", "Temperature Gradient");
     p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
 
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);
+    if (params->isType<string>("Convection Velocity"))
+    	p->set<string>("Convection Velocity",
+                       params->get<string>("Convection Velocity"));
+    if (params->isType<bool>("Have Rho Cp"))
+    	p->set<bool>("Have Rho Cp", params->get<bool>("Have Rho Cp"));
 
     //Output
     p->set<string>("Residual Name", "Temperature Residual");
@@ -405,6 +435,8 @@ Albany::HeatProblem::getValidProblemParameters() const
   if (numDim==1)
     validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic BC for 1D problems");
   validPL->sublist("Thermal Conductivity", false, "");
+  validPL->set("Convection Velocity", "{0,0,0}", "");
+  validPL->set<bool>("Have Rho Cp", false, "Flag to indicate if rhoCp is used");
 
   return validPL;
 }

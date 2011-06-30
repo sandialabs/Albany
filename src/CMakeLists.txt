@@ -56,6 +56,7 @@ SET(SOURCES ${SOURCES}
 	problems/Albany_AbstractProblem.cpp 
 	problems/Albany_ProblemFactory.cpp
 	problems/Albany_HeatProblem.cpp 
+	problems/Albany_NavierStokes.cpp 
 	problems/Albany_ODEProblem.cpp 
 	problems/Albany_Helmholtz2DProblem.cpp 
 	problems/Albany_ThermoElectrostaticsProblem.cpp 
@@ -66,6 +67,7 @@ SET(HEADERS ${HEADERS}
 	problems/Albany_ProblemFactory.hpp 
 	problems/Albany_AbstractProblem.hpp 
 	problems/Albany_HeatProblem.hpp 
+	problems/Albany_NavierStokes.hpp 
 	problems/Albany_ODEProblem.hpp 
 	problems/Albany_Helmholtz2DProblem.hpp 
 	problems/Albany_ThermoElectrostaticsProblem.hpp 
@@ -124,6 +126,7 @@ SET(SOURCES ${SOURCES}
 	evaluators/PHAL_Constant.cpp 
 	evaluators/PHAL_ODEResid.cpp 
 	evaluators/PHAL_ThermalConductivity.cpp 
+	evaluators/PHAL_Absorption.cpp 
         evaluators/PHAL_HeatEqResid.cpp
         evaluators/PHAL_ComputeBasisFunctions.cpp
         evaluators/PHAL_DOFInterpolation.cpp
@@ -138,6 +141,15 @@ SET(SOURCES ${SOURCES}
 	evaluators/PHAL_SaveStateField.cpp
 	evaluators/PHAL_LoadStateField.cpp
 	evaluators/PHAL_SharedParameter.cpp
+	evaluators/PHAL_NSContinuityResid.cpp
+	evaluators/PHAL_NSMomentumResid.cpp
+        evaluators/PHAL_NSThermalEqResid.cpp
+        evaluators/PHAL_NSRm.cpp
+        evaluators/PHAL_NSContravarientMetricTensor.cpp
+        evaluators/PHAL_NSTauM.cpp 
+        evaluators/PHAL_NSTauT.cpp
+        evaluators/PHAL_NSMaterialProperty.cpp
+        evaluators/PHAL_NSBodyForce.cpp
   )
 SET(HEADERS ${HEADERS}
 	evaluators/PHAL_GatherSolution.hpp 
@@ -156,6 +168,8 @@ SET(HEADERS ${HEADERS}
 	evaluators/PHAL_ODEResid_Def.hpp 
 	evaluators/PHAL_ThermalConductivity.hpp 
 	evaluators/PHAL_ThermalConductivity_Def.hpp
+	evaluators/PHAL_Absorption.hpp 
+	evaluators/PHAL_Absorption_Def.hpp
         evaluators/PHAL_HeatEqResid.hpp
         evaluators/PHAL_HeatEqResid_Def.hpp
         evaluators/PHAL_ComputeBasisFunctions.hpp
@@ -184,6 +198,24 @@ SET(HEADERS ${HEADERS}
 	evaluators/PHAL_LoadStateField_Def.hpp
 	evaluators/PHAL_SharedParameter.hpp
 	evaluators/PHAL_SharedParameter_Def.hpp
+	evaluators/PHAL_NSContinuityResid.hpp
+	evaluators/PHAL_NSContinuityResid_Def.hpp
+	evaluators/PHAL_NSMomentumResid.hpp
+	evaluators/PHAL_NSMomentumResid_Def.hpp
+        evaluators/PHAL_NSThermalEqResid.hpp
+        evaluators/PHAL_NSThermalEqResid_Def.hpp
+        evaluators/PHAL_NSRm.hpp
+        evaluators/PHAL_NSRm_Def.hpp
+        evaluators/PHAL_NSContravarientMetricTensor.hpp
+        evaluators/PHAL_NSContravarientMetricTensor_Def.hpp
+        evaluators/PHAL_NSTauM.hpp 
+        evaluators/PHAL_NSTauM_Def.hpp 
+        evaluators/PHAL_NSTauT.hpp
+        evaluators/PHAL_NSTauT_Def.hpp
+        evaluators/PHAL_NSMaterialProperty.hpp
+        evaluators/PHAL_NSMaterialProperty_Def.hpp 
+        evaluators/PHAL_NSBodyForce.hpp
+        evaluators/PHAL_NSBodyForce_Def.hpp
   )
 
 # LCM
@@ -452,6 +484,9 @@ add_library(albanyLib ${SOURCES} ${HEADERS})
 # Now build executables from this library, tailored main()s, and Trilinos
 
 add_executable(Albany Main_Solve.cpp)
+add_executable(AlbanyAdjoint Main_Adjoint.cpp)
+add_executable(AlbanyCoupled Main_Coupled.cpp)
+add_executable(AlbanySGAdjoint Main_SGAdjoint.cpp)
 add_executable(AlbanySG Main_SGSolve.cpp)
 IF (ALBANY_DAKOTA)
   add_executable(AlbanyDakota Main_Dakota.cpp Albany_Dakota.cpp Albany_Dakota.hpp)
@@ -469,6 +504,9 @@ add_executable(UtilsTest LCM/test/utils/UtilsTest.cc)
 
 target_link_libraries(Albany          albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
 target_link_libraries(AlbanySG        albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
+target_link_libraries(AlbanyAdjoint   albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
+target_link_libraries(AlbanyCoupled   albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
+target_link_libraries(AlbanySGAdjoint   albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
 IF (ALBANY_DAKOTA)
   target_link_libraries(AlbanyDakota    albanyLib ${ALB_TRILINOS_LIBS}
                         ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 

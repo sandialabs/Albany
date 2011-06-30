@@ -69,6 +69,7 @@ namespace Albany {
     //! Boundary conditions on source term
     bool periodic;
     bool haveSource;
+    bool haveAbsorption;
     int numDim;
 
   };
