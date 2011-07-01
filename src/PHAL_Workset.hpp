@@ -88,8 +88,6 @@ struct Workset {
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > >  ws_coord_derivs;
   std::string EBName;
 
-  Teuchos::RCP<const Albany::StateVariables> oldState;
-  Teuchos::RCP<Albany::StateVariables> newState;
   Albany::StateArray* stateArrayPtr;
   Albany::EigendataStruct* eigenDataPtr;
 

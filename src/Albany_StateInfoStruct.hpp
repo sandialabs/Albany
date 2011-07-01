@@ -72,8 +72,7 @@ struct StateStruct {
 
   const std::string name;
   std::vector<int> dim;
-  //std::vector<shards::Array* > wsArray;
-  std::vector<MDArray> wsArray;
+  //std::vector<MDArray> wsArray;
   std::string entity; //Entity entity;
   std::string initType; //InitType initType;
   bool output;

@@ -380,14 +380,11 @@ Albany::STKDiscretization::getNodeSetIDs() const
   return nodeSetIDs;
 }
 
-void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln,
-					       const std::vector<std::vector<double> > states)
+void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln)
 {
   // Put solution as Epetra_Vector into STK Mesh
   setSolutionField(soln);
  
-  if (states.size()>0) setStateField(states);
-
 #ifdef ALBANY_SEACAS
   if (stkMeshStruct->exoOutput) {
 
@@ -401,16 +398,6 @@ void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln,
            << " index " <<out_step<<" to file "<<stkMeshStruct->exoOutFile<< endl;
   }
 #endif
-}
-
-void 
-Albany::STKDiscretization::setStateField(const std::vector<std::vector<double> > states) 
-{
-  for (unsigned int i=0; i < cells.size(); i++)  {
-    double* st = stk::mesh::field_data(*stkMeshStruct->state_field, *cells[i]);
-    for (unsigned int j=0; j<stkMeshStruct->nstates; j++)
-      st[j] = states[i][j];
-  }
 }
 
 void 

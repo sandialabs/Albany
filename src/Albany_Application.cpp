@@ -150,12 +150,7 @@ Albany::Application::Application(
     initial_x_dot->Export(*overlapped_xdot, *exporter, Insert);
   }
 
-  // old way
-  stateMgr.setDiscretization(disc);
-  stateMgr.allocateStateVariables(numWorksets);
-  stateMgr.initializeStateVariables(numWorksets);
-
-  // new way
+  // Now that space is allocated in STK for state fields, initialize states
   stateMgr.setStateArrays(disc);
 
   // Create response map
@@ -371,8 +366,6 @@ Albany::Application::computeGlobalResidual(
       workset.wsCoords = coords[ws];
       workset.EBName = wsEBNames[ws];
 
-      workset.oldState = stateMgr.getOldStateVariables(ws);
-      workset.newState = stateMgr.getNewStateVariables(ws);
       workset.stateArrayPtr = &stateMgr.getStateArray(ws);
       workset.eigenDataPtr = &(*(stateMgr.getEigenData()));
 
@@ -487,8 +480,6 @@ Albany::Application::computeGlobalJacobian(
       workset.wsCoords = coords[ws];
       workset.EBName = wsEBNames[ws];
 
-      workset.oldState = stateMgr.getOldStateVariables(ws);
-      workset.newState = stateMgr.getNewStateVariables(ws);
       workset.stateArrayPtr = &stateMgr.getStateArray(ws);
       workset.eigenDataPtr = &(*(stateMgr.getEigenData()));
 
@@ -795,8 +786,6 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
       workset.EBName = wsEBNames[ws];
       workset.ws_coord_derivs = ws_coord_derivs[ws];
 
-      workset.oldState = stateMgr.getOldStateVariables(ws);
-      workset.newState = stateMgr.getNewStateVariables(ws);
       workset.stateArrayPtr = &stateMgr.getStateArray(ws);
       workset.eigenDataPtr = &(*(stateMgr.getEigenData()));
 
@@ -1066,8 +1055,6 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
       workset.wsCoords = coords[ws];
       workset.EBName = wsEBNames[ws];
 
-      workset.oldState = stateMgr.getOldStateVariables(ws);
-      workset.newState = stateMgr.getNewStateVariables(ws);
       workset.stateArrayPtr = &stateMgr.getStateArray(ws);
       workset.eigenDataPtr = &(*(stateMgr.getEigenData()));
 
@@ -1208,8 +1195,6 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
       workset.wsCoords = coords[ws];
       workset.EBName = wsEBNames[ws];
 
-      workset.oldState = stateMgr.getOldStateVariables(ws);
-      workset.newState = stateMgr.getNewStateVariables(ws);
       workset.stateArrayPtr = &stateMgr.getStateArray(ws);
       workset.eigenDataPtr = &(*(stateMgr.getEigenData()));
 
@@ -1389,8 +1374,6 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
       workset.wsCoords = coords[ws];
       workset.EBName = wsEBNames[ws];
 
-      workset.oldState = stateMgr.getOldStateVariables(ws);
-      workset.newState = stateMgr.getNewStateVariables(ws);
       workset.stateArrayPtr = &stateMgr.getStateArray(ws);
       workset.eigenDataPtr = &(*(stateMgr.getEigenData()));
 
@@ -1540,8 +1523,6 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
       workset.wsCoords = coords[ws];
       workset.EBName = wsEBNames[ws];
 
-      workset.oldState = stateMgr.getOldStateVariables(ws);
-      workset.newState = stateMgr.getNewStateVariables(ws);
       workset.stateArrayPtr = &stateMgr.getStateArray(ws);
       workset.eigenDataPtr = &(*(stateMgr.getEigenData()));
 

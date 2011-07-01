@@ -90,8 +90,7 @@ namespace Albany {
     const Teuchos::ArrayRCP<std::string>&  getWsEBNames() const;
 
     // 
-    void outputToExodus(const Epetra_Vector& soln,
-                        const std::vector<std::vector<double> > states);
+    void outputToExodus(const Epetra_Vector& soln);
  
     Teuchos::RCP<Epetra_Vector> getSolutionField() const;
 
@@ -109,7 +108,6 @@ namespace Albany {
     inline int getDOF(stk::mesh::Entity& node, int eq) const;
 
     // Copy solution vector from Epetra_Vector into STK Mesh
-    void setStateField(const std::vector<std::vector<double> > states);
     void setSolutionField(const Epetra_Vector& soln);
     void zeroSolutionField(const Epetra_Vector& soln);
 

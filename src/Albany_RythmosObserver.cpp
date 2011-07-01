@@ -67,8 +67,7 @@ void Albany_RythmosObserver::observeCompletedTimeStep(
   {
     Teuchos::TimeMonitor exooutTimer(*exooutTime); //start timer
 
-    std::vector<std::vector<double> > states = app->getStateMgr().getElementAveragedStates();
-    stkDisc->outputToExodus(soln,states);
+    stkDisc->outputToExodus(soln);
   }
 #endif
 

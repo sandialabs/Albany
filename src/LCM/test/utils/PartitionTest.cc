@@ -101,6 +101,17 @@ int main(int ac, char* av[])
   const std::map<int, int>
   partitions = connectivity_array.Partition(partition_scheme, length_scale);
 
+  // Get abstract discretization from connectivity array and convert
+  // to stk discretization to use stk-specific methods.
+  Albany::AbstractDiscretization &
+  discretization = connectivity_array.GetDiscretization();
+
+  Albany::STKDiscretization &
+  stk_discretization = static_cast<Albany::STKDiscretization &>(discretization);
+
+  // Get MDArray which is memeopru in stk for "Partition" element variable
+  Albany::MDArray stk_partition = stk_discretization.getStateArrays()[0]["Partition"];
+
   //
   // Output partitions
   //
@@ -109,9 +120,6 @@ int main(int ac, char* av[])
   // Assumption: numbering of elements is contiguous.
   const int
   number_elements = connectivity_array.GetNumberElements();
-
-  std::vector< std::vector< double> >
-  stk_partitions(number_elements);
 
   for (std::map<int, int>::const_iterator
       partitions_iter = partitions.begin();
@@ -124,23 +132,16 @@ int main(int ac, char* av[])
     const int
     partition = (*partitions_iter).second;
 
-    stk_partitions[element].push_back(static_cast<double>(partition));
+    // set partition number in stk field memory
+    stk_partition[element][0] = partition;
 
   }
-
-  // Get abstract discretization from connectivity array and convert
-  // to stk discretization to use stk-specific methods.
-  Albany::AbstractDiscretization &
-  discretization = connectivity_array.GetDiscretization();
-
-  Albany::STKDiscretization &
-  stk_discretization = static_cast<Albany::STKDiscretization &>(discretization);
 
   // Need solution for output call
   Teuchos::RCP<Epetra_Vector>
   solution_field = stk_discretization.getSolutionField();
 
-  stk_discretization.outputToExodus(*solution_field, stk_partitions);
+  stk_discretization.outputToExodus(*solution_field);
 
   return 0;
 

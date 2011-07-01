@@ -140,10 +140,16 @@ namespace LCM {
     int 
     worksetSize = meshSpecs->worksetSize;
 
+    // Create a state field in stick named Partition on elements
     // 1 DOF per node
     // 1 internal variable (partition number)
     Teuchos::RCP<Albany::StateInfoStruct> sis = Teuchos::rcp(new Albany::StateInfoStruct());
-//    sis->nstates = 1;
+    sis->push_back(Teuchos::rcp(new Albany::StateStruct("Partition")));
+    Albany::StateStruct& stateRef = *sis->back();
+    stateRef.entity = "QuadPoint"; //Tag, should be Node or QuadPoint
+    // State has 1 quad point (i.e. element variable)
+    stateRef.dim.push_back(worksetSize); stateRef.dim.push_back(1);
+
     discretization_ptr_ = disc_factory.createDiscretization(1, sis);
 
     dimension_ = meshSpecs->numDim;
