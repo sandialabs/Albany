@@ -144,8 +144,10 @@ evaluateFields(typename Traits::EvalData workset)
   double* stateOldPtr = matp->state_old;
   double* stressOldPtr = matp->stress_old;
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
+  //for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+  //  for (std::size_t qp=0; qp < numQPs; ++qp) {
+  for (int cell=0; cell < workset.numCells; ++cell) {
+    for (int qp=0; qp < numQPs; ++qp) {
 
       // Fill the following entries in matParams for call to LAME
       //
@@ -276,7 +278,7 @@ evaluateFields(typename Traits::EvalData workset)
       for(int iVar=0 ; iVar<numStateVariables ; iVar++, stateOldPtr++){
         //std::string& variableName = lameMaterialModelStateVariableNames[iVar];
         //const Intrepid::FieldContainer<RealType>& stateVar = *oldState[variableName];
-        std::string& variableName = lameMaterialModelStateVariableNames[iVar]+"_old";
+        const std::string& variableName = lameMaterialModelStateVariableNames[iVar]+"_old";
         Albany::MDArray stateVar = (*workset.stateArrayPtr)[variableName];
         *stateOldPtr = stateVar(cell,qp);
       }
