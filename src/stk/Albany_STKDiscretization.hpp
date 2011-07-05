@@ -96,6 +96,12 @@ namespace Albany {
 
     void setResidualField(const Epetra_Vector& residual);
 
+    Teuchos::RCP<Albany::AbstractSTKMeshStruct> getSTKMeshStruct();
+
+    // After mesh modification, need to update the element connectivity and nodal coordinates
+    void updateMesh(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct,
+    		const Teuchos::RCP<const Epetra_Comm>& comm);
+
   private:
 
     //! Private to prohibit copying
