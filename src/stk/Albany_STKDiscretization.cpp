@@ -485,5 +485,6 @@ Albany::STKDiscretization::updateMesh(Teuchos::RCP<Albany::AbstractSTKMeshStruct
          << " disabling exodus output \n" << endl;
   
 #endif
+
   return;
 }
