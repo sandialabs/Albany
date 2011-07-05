@@ -110,7 +110,8 @@ int main(int ac, char* av[])
   stk_discretization = static_cast<Albany::STKDiscretization &>(discretization);
 
   // Get MDArray which is memeopru in stk for "Partition" element variable
-  Albany::MDArray stk_partition = stk_discretization.getStateArrays()[0]["Partition"];
+  Albany::MDArray
+  stk_partition = stk_discretization.getStateArrays()[0]["Partition"];
 
   //
   // Output partitions
@@ -118,9 +119,6 @@ int main(int ac, char* av[])
 
   // Convert partition map to format used by Albany to set internal variables.
   // Assumption: numbering of elements is contiguous.
-  const int
-  number_elements = connectivity_array.GetNumberElements();
-
   for (std::map<int, int>::const_iterator
       partitions_iter = partitions.begin();
       partitions_iter != partitions.end();
@@ -133,7 +131,7 @@ int main(int ac, char* av[])
     partition = (*partitions_iter).second;
 
     // set partition number in stk field memory
-    stk_partition[element][0] = partition;
+    stk_partition[element] = partition;
 
   }
 
