@@ -1,5 +1,5 @@
 /********************************************************************\
- *
+*
 *            Albany, Copyright (2010) Sandia Corporation             *
 *                                                                    *
 * Notice: This computer software was prepared by Sandia Corporation, *
@@ -38,12 +38,11 @@
 #include <stk_mesh/fem/FEMHelpers.hpp>
 
 #ifdef ALBANY_SEACAS
-  #include <Ionit_Initializer.h>
+#include <Ionit_Initializer.h>
 #endif 
 
-Albany::STKDiscretization::STKDiscretization(
-     Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
-     const Teuchos::RCP<const Epetra_Comm>& comm_) :
+Albany::STKDiscretization::STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
+					     const Teuchos::RCP<const Epetra_Comm>& comm_) :
   neq(stkMeshStruct_->neq),
   stkMeshStruct(stkMeshStruct_),
   metaData(*stkMeshStruct_->metaData),
@@ -52,17 +51,7 @@ Albany::STKDiscretization::STKDiscretization(
   time(0.0),
   interleavedOrdering(stkMeshStruct_->interleavedOrdering)
 {
-  computeOwnedNodesAndUnknowns();
-
-  computeOverlapNodesAndUnknowns();
-
-  computeGraphs();
-
-  computeWorksetInfo();
-
-  computeNodeSets();
-
-  setupExodusOutput();
+  Albany::STKDiscretization::updateMesh(stkMeshStruct,comm);
 }
 
 Albany::STKDiscretization::~STKDiscretization()
@@ -121,8 +110,8 @@ Albany::STKDiscretization::getCoordinates() const
   // Coordinates are computed here, and not precomputed,
   // since the mesh can move in shape opt problems
   for (unsigned int i=0; i < numOverlapNodes; i++)  {
-      int node_gid = gid(overlapnodes[i]);
-      int node_lid = overlap_node_map->LID(node_gid);
+    int node_gid = gid(overlapnodes[i]);
+    int node_lid = overlap_node_map->LID(node_gid);
 
     double* x = stk::mesh::field_data(*stkMeshStruct->coordinates_field, *overlapnodes[i]);
     for (int dim=0; dim<stkMeshStruct->numDim; dim++)
@@ -148,14 +137,14 @@ void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln)
 {
   // Put solution as Epetra_Vector into STK Mesh
   setSolutionField(soln);
- 
+
 #ifdef ALBANY_SEACAS
   if (stkMeshStruct->exoOutput) {
 
     time+=1.0;
 
     int out_step = stk::io::process_output_request(
-                   *mesh_data, *stkMeshStruct->bulkData, time);
+						   *mesh_data, *stkMeshStruct->bulkData, time);
 
     if (map->Comm().MyPID()==0)
       cout << "Albany::STKDiscretization::outputToExodus: writing time " << time 
@@ -184,7 +173,7 @@ Albany::STKDiscretization::getSolutionField() const
   for (unsigned int i=0; i < ownednodes.size(); i++)  {
     const double* sol = stk::mesh::field_data(*stkMeshStruct->solution_field, *ownednodes[i]);
     for (unsigned int j=0; j<neq; j++)
-         (*soln)[getOwnedDOF(i,j)] = sol[j];
+      (*soln)[getOwnedDOF(i,j)] = sol[j];
   }
   return soln;
 }
@@ -233,12 +222,12 @@ int Albany::STKDiscretization::nonzeroesPerRow(const int neq) const
   int numDim = stkMeshStruct->numDim;
   int estNonzeroesPerRow;
   switch (numDim) {
-    case 0: estNonzeroesPerRow=1*neq; break;
-    case 1: estNonzeroesPerRow=3*neq; break;
-    case 2: estNonzeroesPerRow=9*neq; break;
-    case 3: estNonzeroesPerRow=27*neq; break;
-    default: TEST_FOR_EXCEPTION(true, std::logic_error,
-        "STKDiscretization:  Bad numDim"<< numDim);
+  case 0: estNonzeroesPerRow=1*neq; break;
+  case 1: estNonzeroesPerRow=3*neq; break;
+  case 2: estNonzeroesPerRow=9*neq; break;
+  case 3: estNonzeroesPerRow=27*neq; break;
+  default: TEST_FOR_EXCEPTION(true, std::logic_error,
+			      "STKDiscretization:  Bad numDim"<< numDim);
   }
   return estNonzeroesPerRow;
 }
@@ -252,18 +241,17 @@ void Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
     stk::mesh::Selector( metaData.locally_owned_part() );
 
   stk::mesh::get_selected_entities( select_owned_in_part ,
-                           bulkData.buckets( metaData.node_rank() ) ,
-                           ownednodes );
+				    bulkData.buckets( metaData.node_rank() ) ,
+				    ownednodes );
 
   numOwnedNodes = ownednodes.size();
   std::vector<int> indices(numOwnedNodes);
   for (int i=0; i < numOwnedNodes; i++) indices[i] = gid(ownednodes[i]);
 
   node_map = Teuchos::rcp(new Epetra_Map(-1, numOwnedNodes,
-                              &(indices[0]), 0, *comm));
+					 &(indices[0]), 0, *comm));
 
   numGlobalNodes = node_map->NumGlobalElements();
-
   indices.resize(numOwnedNodes * neq);
   for (int i=0; i < numOwnedNodes; i++)
     for (unsigned int j=0; j < neq; j++)
@@ -280,13 +268,13 @@ void Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
   stk::mesh::Selector select_overlap_in_part =
     stk::mesh::Selector( metaData.universal_part() ) &
     ( stk::mesh::Selector( metaData.locally_owned_part() )
-     | stk::mesh::Selector( metaData.globally_shared_part() ) );
+      | stk::mesh::Selector( metaData.globally_shared_part() ) );
 
 
   //  overlapnodes used for overlap map -- stored for changing coords
   stk::mesh::get_selected_entities( select_overlap_in_part ,
-                           bulkData.buckets( metaData.node_rank() ) ,
-                           overlapnodes );
+				    bulkData.buckets( metaData.node_rank() ) ,
+				    overlapnodes );
 
   numOverlapNodes = overlapnodes.size();
   indices.resize(numOverlapNodes * neq);
@@ -295,15 +283,15 @@ void Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
       indices[getOverlapDOF(i,j)] = getGlobalDOF(gid(overlapnodes[i]),j);
 
   overlap_map = Teuchos::rcp(new Epetra_Map(-1, indices.size(),
-                              &(indices[0]), 0, *comm));
+					    &(indices[0]), 0, *comm));
 
   // Set up epetra map of node IDs
   indices.resize(numOverlapNodes);
   for (unsigned int i=0; i < numOverlapNodes; i++)
-     indices[i] = gid(overlapnodes[i]);
+    indices[i] = gid(overlapnodes[i]);
 
   overlap_node_map = Teuchos::rcp(new Epetra_Map(-1, indices.size(),
-                                  &(indices[0]), 0, *comm));
+						 &(indices[0]), 0, *comm));
 
   coordinates.resize(3*numOverlapNodes);
  
@@ -321,8 +309,8 @@ void Albany::STKDiscretization::computeGraphs()
     stk::mesh::Selector( metaData.locally_owned_part() );
 
   stk::mesh::get_selected_entities( select_owned_in_part ,
-                           bulkData.buckets( metaData.element_rank() ) ,
-                           cells );
+				    bulkData.buckets( metaData.element_rank() ) ,
+				    cells );
 
 
   if (comm->MyPID()==0)
@@ -378,17 +366,17 @@ void Albany::STKDiscretization::computeWorksetInfo()
 
   wsEBNames.resize(numBuckets);
   for (int i=0; i<numBuckets; i++) {
-     std::vector< stk::mesh::Part * >  bpv;
-     buckets[i]->supersets(bpv);
-     for (unsigned int j=0; j<bpv.size(); j++) {
-       if (bpv[j]->primary_entity_rank() == metaData.element_rank()) {
-         if (bpv[j]->name()[0] != '{') {
-           // cout << "Bucket " << i << " is in Element Block:  " << bpv[j]->name() 
-           //      << "  and has " << buckets[i]->size() << " elements." << endl;
-           wsEBNames[i]=bpv[j]->name();
-         }
-       }
-     }
+    std::vector< stk::mesh::Part * >  bpv;
+    buckets[i]->supersets(bpv);
+    for (unsigned int j=0; j<bpv.size(); j++) {
+      if (bpv[j]->primary_entity_rank() == metaData.element_rank()) {
+	if (bpv[j]->name()[0] != '{') {
+	  // cout << "Bucket " << i << " is in Element Block:  " << bpv[j]->name() 
+	  //      << "  and has " << buckets[i]->size() << " elements." << endl;
+	  wsEBNames[i]=bpv[j]->name();
+	}
+      }
+    }
   }
 
   int nodes_per_element =  metaData.get_cell_topology(*(stkMeshStruct->partVec[0])).getNodeCount(); 
@@ -410,13 +398,13 @@ void Albany::STKDiscretization::computeWorksetInfo()
       wsElNodeEqID[b][i].resize(nodes_per_element);
       coords[b][i].resize(nodes_per_element);
       // loop over local nodes
-        for (unsigned int j=0; j < rel.size(); j++) {
+      for (unsigned int j=0; j < rel.size(); j++) {
         stk::mesh::Entity& rowNode = * rel[j].entity();
         int node_gid = gid(rowNode);
         int node_lid = overlap_node_map->LID(node_gid);
         
         TEST_FOR_EXCEPTION(node_lid<0, std::logic_error,
-            "STK1D_Disc: node_lid out of range " << node_lid << endl);
+			   "STK1D_Disc: node_lid out of range " << node_lid << endl);
         coords[b][i][j] = stk::mesh::field_data(*stkMeshStruct->coordinates_field, rowNode);
         wsElNodeEqID[b][i][j].resize(neq);
         for (unsigned int eq=0; eq < neq; eq++) 
@@ -460,8 +448,8 @@ void Albany::STKDiscretization::computeNodeSets()
 
     std::vector< stk::mesh::Entity * > nodes ;
     stk::mesh::get_selected_entities( select_owned_in_nspart ,
-                             bulkData.buckets( metaData.node_rank() ) ,
-                             nodes );
+				      bulkData.buckets( metaData.node_rank() ) ,
+				      nodes );
 
     nodeSets[ns->first].resize(nodes.size());
     nodeSetCoords[ns->first].resize(nodes.size());
@@ -487,10 +475,9 @@ void Albany::STKDiscretization::setupExodusOutput()
 
       Ioss::Init::Initializer io;
       mesh_data = new stk::io::MeshData();
-      stk::io::create_output_mesh(
-            stkMeshStruct->exoOutFile,
-            Albany::getMpiCommFromEpetraComm(*comm),
-            bulkData, *mesh_data);
+      stk::io::create_output_mesh(stkMeshStruct->exoOutFile,
+				  Albany::getMpiCommFromEpetraComm(*comm),
+				  bulkData, *mesh_data);
 
       stk::io::define_output_fields(*mesh_data, metaData);
 
@@ -507,4 +494,21 @@ void Albany::STKDiscretization::setupExodusOutput()
          << " disabling exodus output \n" << endl;
   
 #endif
+}
+
+void
+Albany::STKDiscretization::updateMesh(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct,
+				      const Teuchos::RCP<const Epetra_Comm>& comm)
+{
+  computeOwnedNodesAndUnknowns();
+
+  computeOverlapNodesAndUnknowns();
+
+  computeGraphs();
+
+  computeWorksetInfo();
+
+  computeNodeSets();
+
+  setupExodusOutput();
 }

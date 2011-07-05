@@ -511,6 +511,7 @@ add_executable(AlbanyAnalysis Main_Analysis.cpp)
 # Tests
 add_executable(PartitionTest LCM/test/utils/PartitionTest.cc)
 add_executable(UtilsTest LCM/test/utils/UtilsTest.cc)
+add_executable(NodeUpdate LCM/test/utils/NodeUpdate.cc)
 
 target_link_libraries(Albany          albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
 target_link_libraries(AlbanySG        albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
@@ -531,4 +532,5 @@ target_link_libraries(AlbanyAnalysis  albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT
 
 #Linking tests
 target_link_libraries(PartitionTest albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
-target_link_libraries(UtilsTest albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
+target_link_libraries(UtilsTest albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
+target_link_libraries(NodeUpdate albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
