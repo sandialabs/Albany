@@ -143,14 +143,16 @@ namespace LCM {
     // Create a state field in stick named Partition on elements
     // 1 DOF per node
     // 1 internal variable (partition number)
-    Teuchos::RCP<Albany::StateInfoStruct> sis = Teuchos::rcp(new Albany::StateInfoStruct());
-    sis->push_back(Teuchos::rcp(new Albany::StateStruct("Partition")));
-    Albany::StateStruct& stateRef = *sis->back();
+    Teuchos::RCP<Albany::StateInfoStruct>
+    stateInfo = Teuchos::rcp(new Albany::StateInfoStruct());
+
+    stateInfo->push_back(Teuchos::rcp(new Albany::StateStruct("Partition")));
+    Albany::StateStruct& stateRef = *stateInfo->back();
     stateRef.entity = "QuadPoint"; //Tag, should be Node or QuadPoint
     // State has 1 quad point (i.e. element variable)
     stateRef.dim.push_back(worksetSize); stateRef.dim.push_back(1);
 
-    discretization_ptr_ = disc_factory.createDiscretization(1, sis);
+    discretization_ptr_ = disc_factory.createDiscretization(1, stateInfo);
 
     dimension_ = meshSpecs->numDim;
 
@@ -365,6 +367,7 @@ namespace LCM {
       default:
         std::cerr << "Unknown element type in calculating volume." << std::endl;
         std::exit(1);
+        break;
 
       }
 
@@ -609,6 +612,7 @@ namespace LCM {
     default:
       std::cerr << "Unknown partitioning scheme." << std::endl;
       std::exit(1);
+      break;
 
     }
 
