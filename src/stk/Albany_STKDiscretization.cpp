@@ -270,7 +270,6 @@ void Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
     ( stk::mesh::Selector( metaData.locally_owned_part() )
       | stk::mesh::Selector( metaData.globally_shared_part() ) );
 
-
   //  overlapnodes used for overlap map -- stored for changing coords
   stk::mesh::get_selected_entities( select_overlap_in_part ,
 				    bulkData.buckets( metaData.node_rank() ) ,
