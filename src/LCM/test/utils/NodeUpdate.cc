@@ -1,5 +1,6 @@
 //
-// Test of mesh manipulation. Separate all elements of a mesh by nodal replacement
+// Test of mesh manipulation.
+// Separate all elements of a mesh by nodal replacement
 //
 
 #if defined (ALBANY_LCM)
@@ -405,24 +406,27 @@ int main(int ac, char* av[])
 	  disc_params = rcp(new Teuchos::ParameterList("params"));
 
   //set Method to Exodus and set input file name
-	  disc_params->set<std::string>("Method", "Exodus");
-	  disc_params->set<std::string>("Exodus Input File Name", input_file);
-	  disc_params->set<std::string>("Exodus Output File Name", output_file);
-	  //disc_params->print(std::cout);
+	disc_params->set<std::string>("Method", "Exodus");
+	disc_params->set<std::string>("Exodus Input File Name", input_file);
+	disc_params->set<std::string>("Exodus Output File Name", output_file);
+	//disc_params->print(std::cout);
 
   Teuchos::RCP<Epetra_Comm>
 	  communicator = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
 
   Albany::DiscretizationFactory
-	  disc_factory(disc_params);
+	  disc_factory(disc_params, communicator);
+
+  const Teuchos::RCP<Albany::MeshSpecsStruct>
+  meshSpecs = disc_factory.createMeshSpecs();
+
+  Teuchos::RCP<Albany::StateInfoStruct>
+  stateInfo = Teuchos::rcp(new Albany::StateInfoStruct());
 
   Teuchos::RCP<Albany::AbstractDiscretization>
-	  discretization_ptr;
+    discretization_ptr;
 
-  // 3 DOF per node
-  // 1 internal variable
-  // 10000 workset size
-  discretization_ptr = disc_factory.create(3, 1, 10000, communicator);
+  discretization_ptr = disc_factory.createDiscretization(1, stateInfo);
 
   // Dimensioned: Workset, Cell, Local Node
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >
@@ -430,15 +434,6 @@ int main(int ac, char* av[])
 
   Teuchos::ArrayRCP<double>
 	  coordinates = discretization_ptr->getCoordinates();
-
-  // For higher-order elements, mid-nodes are ignored and only
-  //   the nodes at the corners of the element are considered
-  //   to define the topology.
-  const CellTopologyData
-  cell_topology = discretization_ptr->getCellTopologyData();
-
-  const int
-  dimension = cell_topology.dimension;
 
   // Need to access the bulkData and metaData classes in the mesh datastructure
   Albany::STKDiscretization &
@@ -561,10 +556,9 @@ int main(int ac, char* av[])
 
   Teuchos::RCP<Epetra_Vector>
   solution_field = stk_discretization.getSolutionField();
-  std::vector<std::vector<double> > dummy;  // No states for this example. Pass dummy array.
 
   // Write final mesh to exodus file
-  stk_discretization.outputToExodus(*solution_field, dummy);
+  stk_discretization.outputToExodus(*solution_field);
 
   return 0;
 
