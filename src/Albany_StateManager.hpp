@@ -49,8 +49,14 @@ public:
 
   typedef std::map<std::string, Teuchos::RCP<PHX::DataLayout> >  RegisteredStates;
 
-  //! Method to call multiple timed (before allocate) to register which states will be saved.
-  //! Now returns param vector with all info to build a SaveStateField or LoadStateField evaluator
+  //! Method to call multiple times (before allocate) to register which states will be saved.
+  void registerStateVariable(const std::string &stateName, 
+			     const Teuchos::RCP<PHX::DataLayout> &dl,
+			     const std::string &init_type="zero",
+			     const bool registerOldState=false);
+
+  //! Method to call multiple times (before allocate) to register which states will be saved.
+  //! Returns param vector with all info to build a SaveStateField or LoadStateField evaluator
   Teuchos::RCP<Teuchos::ParameterList>
   registerStateVariable(const std::string &name, const Teuchos::RCP<PHX::DataLayout> &dl, 
                                             const Teuchos::RCP<PHX::DataLayout> &dummy,
@@ -66,6 +72,8 @@ public:
 			const std::string &init_type,
                         const bool registerOldState,
 			const std::string &fieldName);
+
+
 
 
   //! Method to re-initialize state variables, which can be called multiple times after allocating

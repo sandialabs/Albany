@@ -50,6 +50,7 @@ Albany::Application::Application(
   setupCalledResidual(false), setupCalledJacobian(false), setupCalledTangent(false),
   setupCalledSGResidual(false), setupCalledSGJacobian(false),
   setupCalledMPResidual(false), setupCalledMPJacobian(false),
+  setupCalledResponses(false),
   morphFromInit(true), perturbBetaForDirichlets(0.0)
   //, stateMgr(Albany::StateManager())
 {
@@ -166,6 +167,7 @@ Albany::Application::Application(
   TEST_FOR_EXCEPTION(fm==Teuchos::null, std::logic_error,
                      "getFieldManager not implemented!!!");
   dfm = problem->getDirichletFieldManager();
+  rfm = problem->getResponseFieldManager();
 
   phxGraphVisDetail = problemParams->get("Phalanx Graph Visualization Detail", 0);
 
@@ -842,6 +844,7 @@ evaluateResponses(const Epetra_Vector* xdot,
                   Epetra_Vector& g)
 {
   const Epetra_Comm& comm = x.Map().Comm();
+
   unsigned int offset = 0;
   for (unsigned int i=0; i<responses.size(); i++) {
 
@@ -862,6 +865,114 @@ evaluateResponses(const Epetra_Vector* xdot,
     // Increment offset in combined result
     offset += num_responses;
   }
+
+  if( rfm != Teuchos::null )
+    evaluateResponses_rfm(xdot, x, p, g);
+}
+
+void
+Albany::Application::
+evaluateResponses_rfm(const Epetra_Vector* xdot,
+                  const Epetra_Vector& x,
+                  const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+                  Epetra_Vector& g)
+{  
+  if (!setupCalledResponses) {
+    setupCalledResponses=true;
+    rfm->postRegistrationSetupForType<PHAL::AlbanyTraits::Residual>("Resid");
+    //writeGraphVisFile(); //this writes fm graph; write rfm graph?
+  }
+
+  //No timer for response fill yet - to add later
+  //Teuchos::TimeMonitor Timer(*timers[0]); //start timer
+
+  // Scatter x to the overlapped distrbution
+  overlapped_x->Import(x, *importer, Insert);
+
+  // Scatter xdot to the overlapped distribution
+  if (xdot != NULL)
+    overlapped_xdot->Import(*xdot, *importer, Insert);
+
+  // Set parameters
+  for (Teuchos::Array< Teuchos::RCP<ParamVec> >::size_type i=0; i<p.size(); i++) {
+    if (p[i] != Teuchos::null)
+      for (unsigned int j=0; j<p[i]->size(); j++)
+	(*(p[i]))[j].family->setRealValueForAllTypes((*(p[i]))[j].baseValue);
+  }
+
+  // -- No Mesh motion code --
+
+  // Zero out overlapped residual
+  overlapped_f->PutScalar(0.0);
+
+  //create storage for individual responses, to be placed in workset
+  Teuchos::RCP< Teuchos::Array< std::vector<double> > >
+    wsResponses = rcp(new Teuchos::Array< std::vector<double> >(responses.size()) );
+
+  // Place the single vector of responses into separate vectors
+  for (unsigned int i=0, offset=0; i<responses.size(); i++) {
+      
+    // Used prior combined result to init
+    unsigned int num_responses = responses[i]->numResponses();
+    (*wsResponses)[i].resize( num_responses );
+    for (unsigned int j=0; j<num_responses; j++)
+      (*wsResponses)[i][j] = g[offset+j];
+      
+    // Increment offset in combined result
+    offset += num_responses;
+  }
+
+  // Set data in Workset struct, and perform fill via field manager
+  { 
+    PHAL::Workset workset;
+    
+    workset.x        = overlapped_x;
+    workset.xdot     = overlapped_xdot;
+    workset.f        = overlapped_f;
+    workset.responses = wsResponses;
+    workset.current_time = 0;
+    
+    if (xdot != NULL) workset.transientTerms = true;
+    
+    workset.worksetSize = worksetSize;
+    for (int ws=0; ws < numWorksets; ws++) {
+      workset.numCells = wsElNodeID[ws].size();
+      workset.wsElNodeID = wsElNodeID[ws];
+      workset.wsCoords = coords[ws];
+      workset.EBName = wsEBNames[ws];
+
+      workset.stateArrayPtr = &stateMgr.getStateArray(ws);
+      workset.eigenDataPtr = &(*(stateMgr.getEigenData()));
+      
+      // FillType template argument used to specialize Sacado
+      rfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
+    }    
+  }
+
+  // Place all responses into the single vector g
+  for (unsigned int i=0,offset=0; i<responses.size(); i++) {
+      
+    // Copy result into combined result
+    unsigned int num_responses = responses[i]->numResponses();
+    for (unsigned int j=0; j<num_responses; j++)
+      g[offset+j] = (*wsResponses)[i][j];
+      
+    // Increment offset in combined result
+    offset += num_responses;
+  }
+
+
+  //No need to set residual STK field here - we just compute responses
+  /*f.Export(*overlapped_f, *exporter, Add);
+    
+    #ifdef ALBANY_SEACAS
+    Albany::STKDiscretization* stkDisc =
+    dynamic_cast<Albany::STKDiscretization*>(disc.get());
+    stkDisc->setResidualField(f);
+    #endif*/
+  
+  //Also, I don't think we need to compute DBCs, since responses are already computed
+  // and DBCs just overwrite relevant parts of the fields.
 }
 
 void
@@ -911,6 +1022,14 @@ evaluateResponseTangents(
     // Increment offset in combined result
     offset += num_responses;
   }
+
+  // I only know how to fill responses now (see below)
+  if (g != NULL && rfm != Teuchos::null )
+    evaluateResponses_rfm(xdot, x, p, *g);
+
+  // TODO: create evaluateResponseTangents_rfm(...) function and call the below code - possibly instead of the above call?
+  //if( rfm != Teuchos::null )
+  //  evaluateResponseTangents_rfm(xdot, x, p, deriv_p, dxdot_dp, dx_dp, g, gt);  
 }
 
 void
@@ -973,6 +1092,14 @@ evaluateResponseGradients(
     // Increment offset in combined result
     offset += num_responses;
   }
+
+  // I only know how to fill responses now (see below)
+  if (g != NULL && rfm != Teuchos::null )
+    evaluateResponses_rfm(xdot, x, p, *g);
+
+  // TODO: create evaluateResponseTangents_rfm(...) function and call the below code - possibly instead of the above call?
+  //if( rfm != Teuchos::null )
+  //  evaluateResponseGradients_rfm(xdot, x, p, deriv_p, g, dg_dx, dg_dxdot, dg_dp);
 }
 
 void

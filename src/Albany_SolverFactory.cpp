@@ -466,6 +466,7 @@ Albany::SolverFactory::getValidResponseParameters() const
   const int maxParameters = 100;
   for (int i=0; i<maxParameters; i++) {
     validPL->set<std::string>(Albany::strint("Response",i), "");
+    validPL->sublist(Albany::strint("ResponseParams",i));
   }
   return validPL;
 }

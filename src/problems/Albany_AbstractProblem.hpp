@@ -87,6 +87,7 @@ namespace Albany {
 
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > getFieldManager();
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > getDirichletFieldManager() ;
+    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > getResponseFieldManager();
 
     //! Each problem must generate it's list of valide parameters
     virtual Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const 
@@ -130,6 +131,9 @@ namespace Albany {
 
     //! Field manager for Dirchlet Conditions Fill
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > dfm;
+
+    //! Field manager for Responses 
+    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > rfm;
 
     //! Names of scalar variables in this problem, used in specifying BCs
     std::vector<std::string> dofNames;

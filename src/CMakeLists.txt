@@ -81,6 +81,7 @@ SET(SOURCES ${SOURCES}
 	responses/Albany_SolutionMaxValueResponseFunction.cpp
 	responses/Albany_SolutionTwoNormResponseFunction.cpp
         responses/Albany_SolutionFileL2ResponseFunction.cpp
+	responses/Albany_EvaluatedResponseFunction.cpp
   )
 SET(HEADERS ${HEADERS}
 	responses/Albany_AbstractResponseFunction.hpp 
@@ -88,6 +89,7 @@ SET(HEADERS ${HEADERS}
 	responses/Albany_SolutionMaxValueResponseFunction.hpp
 	responses/Albany_SolutionTwoNormResponseFunction.hpp
         responses/Albany_SolutionFileL2ResponseFunction.hpp
+	responses/Albany_EvaluatedResponseFunction.hpp
   )
 
 #stk
@@ -150,6 +152,7 @@ SET(SOURCES ${SOURCES}
         evaluators/PHAL_NSTauT.cpp
         evaluators/PHAL_NSMaterialProperty.cpp
         evaluators/PHAL_NSBodyForce.cpp
+	evaluators/PHAL_ResponseBase.cpp
   )
 SET(HEADERS ${HEADERS}
 	evaluators/PHAL_GatherSolution.hpp 
@@ -216,6 +219,8 @@ SET(HEADERS ${HEADERS}
         evaluators/PHAL_NSMaterialProperty_Def.hpp 
         evaluators/PHAL_NSBodyForce.hpp
         evaluators/PHAL_NSBodyForce_Def.hpp
+        evaluators/PHAL_ResponseBase.hpp
+	evaluators/PHAL_ResponseBase_Def.hpp
   )
 
 # LCM
@@ -360,9 +365,11 @@ SET(SOURCES ${SOURCES}
        evaluators/QCAD_PoissonResid.cpp
        evaluators/QCAD_PoissonSource.cpp
        evaluators/QCAD_PoissonDirichlet.cpp
+       evaluators/QCAD_ResponseFieldIntegral.cpp
+       evaluators/QCAD_ResponseFieldValue.cpp
+       evaluators/QCAD_ResponseSaveField.cpp
        problems/QCAD_PoissonProblem.cpp
        problems/QCAD_MaterialDatabase.cpp
-       responses/QCAD_ElementBlockIntegralResponseFunction.cpp
   )
 
 SET(HEADERS ${HEADERS}
@@ -374,8 +381,13 @@ SET(HEADERS ${HEADERS}
        evaluators/QCAD_PoissonSource_Def.hpp
        evaluators/QCAD_PoissonDirichlet.hpp
        evaluators/QCAD_PoissonDirichlet_Def.hpp
+       evaluators/QCAD_ResponseFieldIntegral.hpp
+       evaluators/QCAD_ResponseFieldIntegral_Def.hpp
+       evaluators/QCAD_ResponseFieldValue.hpp
+       evaluators/QCAD_ResponseFieldValue_Def.hpp
+       evaluators/QCAD_ResponseSaveField.hpp
+       evaluators/QCAD_ResponseSaveField_Def.hpp
        problems/QCAD_PoissonProblem.hpp
-       responses/QCAD_ElementBlockIntegralResponseFunction.hpp
   )
 
 

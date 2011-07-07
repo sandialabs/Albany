@@ -42,6 +42,9 @@
 #include "QCAD_SchrodingerPotential.hpp"
 #include "QCAD_SchrodingerResid.hpp"
 #include "QCAD_PoissonDirichlet.hpp"
+#include "QCAD_ResponseFieldIntegral.hpp"
+#include "QCAD_ResponseFieldValue.hpp"
+#include "QCAD_ResponseSaveField.hpp"
 #include "PHAL_JouleHeating.hpp"
 #include "PHAL_TEProp.hpp"
 #include "PHAL_ODEResid.hpp"
@@ -58,7 +61,7 @@
 #include "PHAL_NSMaterialProperty.hpp"
 #include "PHAL_NSBodyForce.hpp"
 
-#include "boost/mpl/vector/vector40.hpp"
+#include "boost/mpl/vector/vector50.hpp"
 #include "boost/mpl/placeholders.hpp"
 using namespace boost::mpl::placeholders;
 
@@ -112,8 +115,11 @@ struct FactoryTraits {
   static const int id_nstaut                    = 36;
   static const int id_nsmatprop                 = 37;
   static const int id_nsbodyforce               = 38;
+  static const int id_qcad_response_fieldintegral = 39;
+  static const int id_qcad_response_fieldvalue  = 40;
+  static const int id_qcad_response_savefield   = 41;
 
-  typedef boost::mpl::vector39< 
+  typedef boost::mpl::vector42< 
             PHAL::Dirichlet<_,Traits>,                //  0
             PHAL::GatherSolution<_,Traits>,           //  1
             PHAL::GatherCoordinateVector<_,Traits>,   //  2
@@ -152,7 +158,10 @@ struct FactoryTraits {
             PHAL::NSTauM<_,Traits>,                   // 35
             PHAL::NSTauT<_,Traits>,                   // 36
             PHAL::NSMaterialProperty<_,Traits>,       // 37
-            PHAL::NSBodyForce<_,Traits>               // 38
+            PHAL::NSBodyForce<_,Traits>,              // 38
+            QCAD::ResponseFieldIntegral<_,Traits>,    // 39
+            QCAD::ResponseFieldValue<_,Traits>,       // 40
+            QCAD::ResponseSaveField<_,Traits>         // 41
   > EvaluatorTypes;
   
 };

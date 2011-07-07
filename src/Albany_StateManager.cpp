@@ -43,6 +43,27 @@ Albany::StateManager::registerStateVariable(const std::string &stateName, const 
                                             const bool registerOldState,
                                             const std::string& fieldName)
 {
+  registerStateVariable(stateName, dl, init_type, registerOldState);
+
+  // Create param list for SaveStateField evaluator 
+  Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Save or Load State " 
+							  + stateName + " to/from field " + fieldName));
+  p->set<const int>("Type", saveOrLoadStateFieldID);
+  p->set<const std::string>("State Name", stateName);
+  p->set<const std::string>("Field Name", fieldName);
+  p->set<const Teuchos::RCP<PHX::DataLayout> >("State Field Layout", dl);
+  p->set<const Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout", dummy);
+  return p;
+}
+
+
+void
+Albany::StateManager::registerStateVariable(const std::string &stateName, 
+					    const Teuchos::RCP<PHX::DataLayout> &dl,
+                                            const std::string &init_type,
+                                            const bool registerOldState)
+
+{
   TEST_FOR_EXCEPT(stateVarsAreAllocated);
 
   statesToStore[stateName] = dl;
@@ -66,17 +87,8 @@ Albany::StateManager::registerStateVariable(const std::string &stateName, const 
     pstateRef.output = false; 
     dl->dimensions(pstateRef.dim); 
   }
-
-  // Create param list for SaveStateField evaluator 
-  Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Save or Load State " 
-							  + stateName + " to/from field " + fieldName));
-  p->set<const int>("Type", saveOrLoadStateFieldID);
-  p->set<const std::string>("State Name", stateName);
-  p->set<const std::string>("Field Name", fieldName);
-  p->set<const Teuchos::RCP<PHX::DataLayout> >("State Field Layout", dl);
-  p->set<const Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout", dummy);
-  return p;
 }
+
 
 Teuchos::RCP<Albany::StateInfoStruct>
 Albany::StateManager::getStateInfoStruct()

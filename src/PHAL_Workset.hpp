@@ -105,6 +105,10 @@ struct Workset {
   // either the Jacobian or the transpose of the Jacobian is scattered. 
   bool is_adjoint;
 
+
+  // Responses, stored as a separate std::vector of response values
+  //  for each "Response" requested by user.
+  Teuchos::RCP< Teuchos::Array< std::vector<double> > > responses;
 };
 
 }
