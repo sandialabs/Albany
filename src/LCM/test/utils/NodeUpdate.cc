@@ -6,6 +6,7 @@
 #if defined (ALBANY_LCM)
 
 #include <iostream>
+#include <fstream>
 #include <iomanip>
 #include <Teuchos_CommandLineProcessor.hpp>
 #include <stk_mesh/base/Types.hpp>
@@ -21,7 +22,11 @@
 #include <stk/Albany_STKDiscretization.hpp>
 #include <Albany_Utils.hpp>
 
-//#include <Partition.h>
+typedef stk::mesh::EntityRank EntityRank;
+EntityRank nodeRank;
+EntityRank edgeRank;
+EntityRank faceRank;
+EntityRank elementRank;
 
 // Display the relations to a given entity
 void disp_relation(stk::mesh::Entity & entity)
@@ -49,10 +54,7 @@ void disp_relation(stk::mesh::Entity & entity, stk::mesh::EntityRank entityRank)
 }
 
 // Outputs the element connectivity
-void disp_connectivity(
-		stk::mesh::BulkData & bulkData,
-		const stk::mesh::EntityRank elementRank,
-		const stk::mesh::EntityRank nodeRank)
+void disp_connectivity(stk::mesh::BulkData & bulkData)
 {
 	// Create a list of element entities
 	std::vector<stk::mesh::Entity*> element_lst;
@@ -79,37 +81,137 @@ void disp_connectivity(
 	return;
 }
 
-// Creates the full graph representation of the mesh.
-//   Connectivity data stored in connectivty_temp
-void graph_initialization(stk::mesh::BulkData & bulkData,
-		std::vector<std::vector<stk::mesh::Entity*> >  & connectivity_temp,
-		const stk::mesh::EntityRank elementRank,
-		const stk::mesh::EntityRank nodeRank){
+// Create a graphviz file for visualization of mesh graph
+void output_to_graphviz(stk::mesh::BulkData & bulkData){
+	// Open output file
+		std::ofstream gviz_out;
+		gviz_out.open ("output.dot", std::ios::out);
 
-	stk::mesh::PartVector add_parts;
-	stk::mesh::create_adjacent_entities(bulkData, add_parts);
+	if (gviz_out.is_open()){
+		// Write beginning of file
+		gviz_out << "digraph mesh {\n";
 
-	// Create the temporary connectivity array
+		std::vector<stk::mesh::Entity*> entity_lst;
+		stk::mesh::get_entities(bulkData,elementRank,entity_lst);
+
+		std::vector<std::vector<stk::mesh::Entity*> > relation_lst;
+		std::vector<int> relation_local_id;
+
+		// Elements
+		for (int i = 0; i < entity_lst.size(); ++i){
+			stk::mesh::Entity & entity = *(entity_lst[i]);
+			stk::mesh::PairIterRelation relations = entity.relations();
+
+			gviz_out << "  \"" << entity.identifier() << "_" << entity.entity_rank()
+					 << "\" [label=\"Element " << entity.identifier()
+					 << "\",style=filled,color=\"yellow\"]\n";
+			for (int j = 0; j < relations.size(); ++j){
+				if (relations[j].entity_rank() < entity.entity_rank()){
+					std::vector<stk::mesh::Entity*> temp;
+					temp.push_back(&entity);
+					temp.push_back(relations[j].entity());
+					relation_lst.push_back(temp);
+					relation_local_id.push_back(relations[j].identifier());
+				}
+			}
+		}
+
+		stk::mesh::get_entities(bulkData,faceRank,entity_lst);
+
+		// Faces
+		for (int i = 0; i < entity_lst.size(); ++i){
+			stk::mesh::Entity & entity = *(entity_lst[i]);
+			stk::mesh::PairIterRelation relations = entity.relations();
+
+			gviz_out << "  \"" << entity.identifier() << "_" << entity.entity_rank()
+					 << "\" [label=\"Face " << entity.identifier()
+					 << "\",style=filled,color=\"blue\"]\n";
+			for (int j = 0; j < relations.size(); ++j){
+				if (relations[j].entity_rank() < entity.entity_rank()){
+					std::vector<stk::mesh::Entity*> temp;
+					temp.push_back(&entity);
+					temp.push_back(relations[j].entity());
+					relation_lst.push_back(temp);
+					relation_local_id.push_back(relations[j].identifier());
+				}
+			}
+		}
+
+		stk::mesh::get_entities(bulkData,edgeRank,entity_lst);
+
+		// Edges
+		for (int i = 0; i < entity_lst.size(); ++i){
+			stk::mesh::Entity & entity = *(entity_lst[i]);
+			stk::mesh::PairIterRelation relations = entity.relations();
+
+			gviz_out << "  \"" << entity.identifier() << "_" << entity.entity_rank()
+					 << "\" [label=\"Segment " << entity.identifier()
+					 << "\",style=filled,color=\"green\"]\n";
+			for (int j = 0; j < relations.size(); ++j){
+				if (relations[j].entity_rank() < entity.entity_rank()){
+					std::vector<stk::mesh::Entity*> temp;
+					temp.push_back(&entity);
+					temp.push_back(relations[j].entity());
+					relation_lst.push_back(temp);
+					relation_local_id.push_back(relations[j].identifier());
+				}
+			}
+		}
+
+		stk::mesh::get_entities(bulkData,nodeRank,entity_lst);
+
+		// Nodes
+		for (int i = 0; i < entity_lst.size(); ++i){
+			stk::mesh::Entity & entity = *(entity_lst[i]);
+
+			gviz_out << "  \"" << entity.identifier() << "_" << entity.entity_rank()
+					 << "\" [label=\"Node " << entity.identifier()
+					 << "\",style=filled,color=\"red\"]\n";
+		}
+
+		for (int i = 0; i < relation_lst.size(); ++i){
+			std::vector<stk::mesh::Entity*> temp = relation_lst[i];
+			stk::mesh::Entity& origin = *(temp[0]);
+			stk::mesh::Entity& destination = *(temp[1]);
+			std::string color;
+			switch(relation_local_id[i]){
+			case 0:
+				color = "red";
+				break;
+			case 1:
+				color = "green";
+				break;
+			case 2:
+				color = "blue";
+				break;
+			case 3:
+				color = "yellow";
+				break;
+			default:
+				color = "black";
+			}
+			gviz_out << "  \"" << origin.identifier() << "_" << origin.entity_rank()
+					 << "\" -> \"" << destination.identifier() << "_" << destination.entity_rank()
+					 << "\" [color=\"" << color << "\"]" << "\n";
+		}
+
+		// File end
+		gviz_out << "}";
+		gviz_out.close();
+	}
+	else
+		cout << "Unable to open graphviz output file 'output.dot'\n";
+
+	return;
+}
+
+// Removes extra relations from graph added during stk::mesh::create_adjacent_entities
+//  (connections between entities with rank difference of more than 1 e.g.
+//  element and node)
+void remove_extra_relations(stk::mesh::BulkData & bulkData){
 	std::vector<stk::mesh::Entity*> element_lst;
 	stk::mesh::get_entities(bulkData,elementRank,element_lst);
 
-	for (int i = 0; i < element_lst.size(); ++i){
-		stk::mesh::PairIterRelation nodes = element_lst[i]->relations(nodeRank);
-		std::vector<stk::mesh::Entity*> temp;
-		for (int j = 0; j < nodes.size(); ++j){
-			stk::mesh::Entity* node = nodes[j].entity();
-			temp.push_back(node);
-		}
-		connectivity_temp.push_back(temp);
-	}
-
-	// Allow for mesh adaptation without entire graph algorithm implemented.
-	//   Once done, change to remove_relations = 1
-	int remove_relations = 0;
-	if (remove_relations == 1){
-	// Remove the unneeded relationships (connections between entities with
-	//   rank difference of more than 1 e.g. element and node)
-	bulkData.modification_begin();
 
 	// Remove extra relations from element
 	for (int i = 0; i < element_lst.size(); ++i){
@@ -154,8 +256,38 @@ void graph_initialization(stk::mesh::BulkData & bulkData,
 			}
 		}
 	}
+}
 
-	bulkData.modification_end();
+// Creates the full graph representation of the mesh.
+//   Connectivity data stored in connectivty_temp
+void graph_initialization(stk::mesh::BulkData & bulkData,
+		std::vector<std::vector<stk::mesh::Entity*> >  & connectivity_temp){
+
+	stk::mesh::PartVector add_parts;
+	stk::mesh::create_adjacent_entities(bulkData, add_parts);
+
+	// Create the temporary connectivity array
+	std::vector<stk::mesh::Entity*> element_lst;
+	stk::mesh::get_entities(bulkData,elementRank,element_lst);
+
+	for (int i = 0; i < element_lst.size(); ++i){
+		stk::mesh::PairIterRelation nodes = element_lst[i]->relations(nodeRank);
+		std::vector<stk::mesh::Entity*> temp;
+		for (int j = 0; j < nodes.size(); ++j){
+			stk::mesh::Entity* node = nodes[j].entity();
+			temp.push_back(node);
+		}
+		connectivity_temp.push_back(temp);
+	}
+
+	// Allow for mesh adaptation without entire graph algorithm implemented.
+	//   Once done, change to remove_relations = 1
+	int remove_relations = 0;
+	if (remove_relations == 1){
+		bulkData.modification_begin();
+		remove_extra_relations(bulkData);
+		bulkData.modification_end();
+		//output_to_graphviz(bulkData);
 	}
 
 	return;
@@ -165,11 +297,7 @@ void graph_initialization(stk::mesh::BulkData & bulkData,
 //   Recreates the expected mesh connectivity through relations between
 //   elements and nodes.
 void graph_cleanup(stk::mesh::BulkData & bulkData,
-		std::vector<std::vector<stk::mesh::Entity*> >  & connectivity_temp,
-		const stk::mesh::EntityRank elementRank,
-		const stk::mesh::EntityRank faceRank,
-		const stk::mesh::EntityRank edgeRank,
-		const stk::mesh::EntityRank nodeRank){
+		std::vector<std::vector<stk::mesh::Entity*> >  & connectivity_temp){
 
 	std::vector<stk::mesh::Entity*> element_lst;
 	stk::mesh::get_entities(bulkData,elementRank,element_lst);
@@ -272,7 +400,6 @@ void duplicate_entity(stk::mesh::Entity & in_entity,
 		stk::mesh::Entity & old_entity,
 		stk::mesh::BulkData & bulkData,
 		std::vector<std::vector<stk::mesh::Entity*> > & connectivity_temp,
-		const stk::mesh::EntityRank elementRank,
 		int local_id,
 		stk::mesh::Entity & element)
 {
@@ -333,7 +460,7 @@ void duplicate_entity(stk::mesh::Entity & in_entity,
 				duplicate_entity(new_entity,
 						*(out_edges[i].entity()),
 						bulkData,connectivity_temp,
-						elementRank,i,element);
+						i,element);
 
 			}
 		}
@@ -426,7 +553,7 @@ int main(int ac, char* av[])
   Teuchos::RCP<Albany::AbstractDiscretization>
     discretization_ptr;
 
-  discretization_ptr = disc_factory.createDiscretization(1, stateInfo);
+  discretization_ptr = disc_factory.createDiscretization(3, stateInfo);
 
   // Dimensioned: Workset, Cell, Local Node
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >
@@ -446,10 +573,10 @@ int main(int ac, char* av[])
   stk::mesh::fem::FEMMetaData & metaData = *stkMeshStruct->metaData;
 
   // The entity ranks
-  const stk::mesh::EntityRank nodeRank = metaData.NODE_RANK;
-  const stk::mesh::EntityRank edgeRank = metaData.EDGE_RANK;
-  const stk::mesh::EntityRank faceRank = metaData.FACE_RANK;
-  const stk::mesh::EntityRank elementRank = metaData.element_rank();
+  nodeRank = metaData.NODE_RANK;
+  edgeRank = metaData.EDGE_RANK;
+  faceRank = metaData.FACE_RANK;
+  elementRank = metaData.element_rank();
 
   // Node rank should be 0 and element rank should be equal to the dimension of the
   // system (e.g. 2 for 2D meshes and 3 for 3D meshes)
@@ -459,7 +586,8 @@ int main(int ac, char* av[])
   cout << "*************************\n"
 	   << "Before element separation\n"
 	   << "*************************\n";
-  disp_connectivity(bulkData, elementRank, nodeRank);
+  disp_connectivity(bulkData);
+  output_to_graphviz(bulkData);
 
   // Start the mesh update process
   //   Will fully separate the elements in the mesh by replacing element nodes
@@ -469,7 +597,7 @@ int main(int ac, char* av[])
 
   // Creates the graph
   std::vector<std::vector<stk::mesh::Entity*> > connectivity_temp;
-  graph_initialization(bulkData, connectivity_temp, elementRank, nodeRank);
+  graph_initialization(bulkData, connectivity_temp);
 
   bulkData.modification_begin();
 
@@ -484,21 +612,21 @@ int main(int ac, char* av[])
 	  for (int j = 0; j < face_lst.size(); ++j){
 		  stk::mesh::Entity & current_face = *(face_lst[j].entity());
 		  duplicate_entity(current_element, current_face, bulkData,
-				  connectivity_temp,elementRank,j,current_element);
+				  connectivity_temp,j,current_element);
 	  }
   }
 
-
   // Need to remove added mesh entities before updating Albany stk discretization
-  graph_cleanup(bulkData,connectivity_temp,elementRank,faceRank,edgeRank,nodeRank);
+  graph_cleanup(bulkData,connectivity_temp);
 
   // End mesh update
   bulkData.modification_end();
 
+
   cout << "*************************\n"
 	   << "After element separation\n"
 	   << "*************************\n";
-  disp_connectivity(bulkData, elementRank, nodeRank);
+  disp_connectivity(bulkData);
 
   // Need to update the mesh to reflect changes in duplicate_entity routine.
   //   Redefine connectivity and coordinate arrays with updated values.

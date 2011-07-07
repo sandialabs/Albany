@@ -157,7 +157,7 @@ void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln)
 {
   // Put solution as Epetra_Vector into STK Mesh
   setSolutionField(soln);
- 
+
 #ifdef ALBANY_SEACAS
   if (stkMeshStruct->exoOutput) {
 
@@ -261,7 +261,6 @@ Albany::STKDiscretization::updateMesh(Teuchos::RCP<Albany::AbstractSTKMeshStruct
 					 &(indices[0]), 0, *comm));
 
   numGlobalNodes = node_map->NumGlobalElements();
-
   indices.resize(numOwnedNodes * neq);
   for (int i=0; i < numOwnedNodes; i++)
     for (unsigned int j=0; j < neq; j++)
