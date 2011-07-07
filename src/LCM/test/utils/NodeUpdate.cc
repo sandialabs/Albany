@@ -77,94 +77,24 @@ int main(int ac, char* av[])
   stk::mesh::get_entities(bulkData,topology.elementRank,element_lst);
 
   // Creates the graph
-  std::vector<std::vector<stk::mesh::Entity*> > connectivity_temp;
-  topology.graph_initialization(connectivity_temp);
-
-  // *************
-  // test
-  // *************
-  // Create a subgraph
-  // SubGraph requires two vectors, a list of elements and a list of edges
-  stk::mesh::Entity & node = *(bulkData.get_entity(0,5));
-  std::set<LCM::entityKey> subgraph_entity_lst;
-  std::set<LCM::topology::stkEdge,LCM::topology::EdgeLessThan> subgraph_edge_lst;
-  topology.star(subgraph_entity_lst,subgraph_edge_lst,node);
-  // test of connected components. want more than 1 subgraph
-  stk::mesh::Entity & node2 = *(bulkData.get_entity(0,27));
-  topology.star(subgraph_entity_lst,subgraph_edge_lst,node2);
-
-  // Iterators
-  std::set<LCM::entityKey>::iterator firstEntity = subgraph_entity_lst.begin();
-  std::set<LCM::entityKey>::iterator lastEntity = subgraph_entity_lst.end();
-  std::set<LCM::topology::stkEdge>::iterator firstEdge = subgraph_edge_lst.begin();
-  std::set<LCM::topology::stkEdge>::iterator lastEdge = subgraph_edge_lst.end();
-
-  // create subgrah
-  int numDim = topology.numDim;
-  LCM::Subgraph
-  subgraph(&bulkData,firstEntity,lastEntity,firstEdge,lastEdge,numDim);
-
-  // test the functions of the class
-  bulkData.modification_begin();
-  // add entity
-  LCM::Vertex new_vertex = subgraph.add_vertex(topology.faceRank);
-  LCM::entityKey new_entity_key = subgraph.local_to_global(new_vertex);
-  stk::mesh::Entity & new_entity = *(bulkData.get_entity(new_entity_key));
-  // check that new entity is in stk mesh
-  cout << "new entity: " << new_entity.entity_rank() << "," << new_entity.identifier() << "\n";
-
-  // add edge
-  stk::mesh::Entity & element = *(bulkData.get_entity(topology.elementRank,1));
-  LCM::Vertex source = subgraph.global_to_local(element.key());
-  LCM::Vertex target = subgraph.global_to_local(new_entity.key());
-  subgraph.add_edge(6,source,target);
-  //check that new edge is in the stk mesh
-  stk::mesh::PairIterRelation relations = element.relations(topology.faceRank);
-  cout << "added edge\n";
-  for (int i = 0; i < relations.size(); ++i)
-	  cout << "target: " << relations[i].entity_rank() << "," <<
-	  	  relations[i].entity()->identifier() << " ID: " << relations[i].identifier() << "\n";
-
-  // remove the new edge
-  subgraph.remove_edge(source,target);
-  // check that the edge is no longer in the stk mesh
-  relations = element.relations(topology.faceRank);
-  cout << "removed edge\n";
-  for (int i = 0; i < relations.size(); ++i)
-	  cout << "target: " << relations[i].entity_rank() << "," <<
-	  	  relations[i].entity()->identifier() << " ID: " << relations[i].identifier() << "\n";
-  cout << "remove entity "<< new_entity.entity_rank()  << "," << new_entity.identifier() << "\n";
-  subgraph.remove_vertex(new_vertex);
-  bulkData.modification_end();
+  topology.graph_initialization();
 
   // Check for failure criterion
   std::map<stk::mesh::EntityKey, bool> entity_open;
   topology.set_entities_open(entity_open);
 
-  // Output subgraph to graphviz
-  subgraph.output_to_graphviz(entity_open);
-  subgraph.undirected_graph();
-  // *************
-  // end test
-  // *************
-
+  // test the functions of the class
   bulkData.modification_begin();
 
-  // Loop over the elements
-  for (int i = 0; i < element_lst.size(); ++i){
-	  stk::mesh::Entity & current_element = *(element_lst[i]);
-	  stk::mesh::PairIterRelation face_lst = element_lst[i]->relations(topology.elementRank - 1);
+  // begin mesh fracture
+  cout << "begin mesh fracture\n";
+  topology.fracture_boundary(entity_open);
 
-	  // Loop over faces
-	  for (int j = 0; j < face_lst.size(); ++j){
-		  stk::mesh::Entity & current_face = *(face_lst[j].entity());
-		  topology.duplicate_entity(current_element, current_face,
-				  connectivity_temp,j,current_element);
-	  }
-  }
+  std::string gviz_output = "output.dot";
+  topology.output_to_graphviz(gviz_output,entity_open);
 
   // Need to remove added mesh entities before updating Albany stk discretization
-  topology.graph_cleanup(connectivity_temp);
+  topology.graph_cleanup();
 
   // End mesh update
   bulkData.modification_end();
@@ -174,6 +104,8 @@ int main(int ac, char* av[])
 	   << "After element separation\n"
 	   << "*************************\n";
   topology.disp_connectivity();
+
+  //topology.output_to_graphviz(gviz_output,entity_open);
 
   // Need to update the mesh to reflect changes in duplicate_entity routine.
   //   Redefine connectivity and coordinate arrays with updated values.
