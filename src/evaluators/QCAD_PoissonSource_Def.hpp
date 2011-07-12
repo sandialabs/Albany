@@ -293,9 +293,9 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
     ScalarT Nv;  // valence band effective DOS in [cm-3]
     ScalarT Eg;  // band gap at T [K] in [eV]
     ScalarT ni;  // intrinsic carrier concentration in [cm-3]
-    ScalarT Eic; // intrinsic Fermi level - conduction band edge in [eV]
-    ScalarT Evi; // valence band edge - intrinsic Fermi level in [eV]
-    ScalarT WFintSC;  // semiconductor intrinsic workfunction in [eV]
+    // ScalarT Eic; // intrinsic Fermi level - conduction band edge in [eV]
+    // ScalarT Evi; // valence band edge - intrinsic Fermi level in [eV]
+    // ScalarT WFintSC;  // semiconductor intrinsic workfunction in [eV]
     
     Nc = NcvFactor*pow(mdn,1.5)*pow(temperature/Tref,1.5);  // in [cm-3]
     Nv = NcvFactor*pow(mdp,1.5)*pow(temperature/Tref,1.5); 
@@ -303,10 +303,14 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
     
     ScalarT kbT = kbBoltz*temperature;      // in [eV]
     ni = sqrt(Nc*Nv)*exp(-Eg/(2.0*kbT));    // in [cm-3]
-    Eic = -Eg/2. + 3./4.*kbT*log(mdp/mdn);  // (Ei-Ec) in [eV]
-    Evi = -Eg/2. - 3./4.*kbT*log(mdp/mdn);  // (Ev-Ei) in [eV]
-    WFintSC = Chi - Eic;  // (Evac-Ei) in [eV] where Evac = vacuum level
-
+    // Eic = -Eg/2. + 3./4.*kbT*log(mdp/mdn);  // (Ei-Ec) in [eV]
+    // Evi = -Eg/2. - 3./4.*kbT*log(mdp/mdn);  // (Ev-Ei) in [eV]
+    // WFintSC = Chi - Eic;  // (Evac-Ei) in [eV] where Evac = vacuum level
+    
+    // argument offset in calculating electron and hole density
+    ScalarT eArgOffset = (-qPhiRef+Chi)/kbT;
+    ScalarT hArgOffset = (qPhiRef-Chi-Eg)/kbT;
+    
     //! material parameter dependent scaling factor 
     C0 = (Nc > Nv) ? Nc : Nv;  // scaling for conc. [cm^-3]
     Lambda2 = V0*eps0/(eleQ*X0*X0*C0); // derived scaling factor (unitless)
@@ -352,16 +356,18 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
       dopantActE = materialDB->getElementBlockParam<double>(workset.EBName,"Dopant Activation Energy",0.045);
     
       if( materialDB->isElementBlockParam(workset.EBName, "Doping Value") ) 
-	dopingConc = materialDB->getElementBlockParam<double>(workset.EBName,"Doping Value");
+        dopingConc = materialDB->getElementBlockParam<double>(workset.EBName,"Doping Value");
       else if( materialDB->isElementBlockParam(workset.EBName, "Doping Parameter Name") ) 
-	dopingConc = materialParams[ materialDB->getElementBlockParam<string>(workset.EBName,"Doping Parameter Name") ];
+        dopingConc = materialParams[ materialDB->getElementBlockParam<string>(workset.EBName,"Doping Parameter Name") ];
       else TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
-	       std::endl << "Error!  Unknown dopant concentration for " << workset.EBName << "!"<< std::endl);
+        std::endl << "Error!  Unknown dopant concentration for " << workset.EBName << "!"<< std::endl);
 
       if(dopantType == "Donor") 
-	inArg = (Eic+dopantActE)/kbT;
+        //inArg = (Eic+dopantActE)/kbT;
+        inArg = eArgOffset + dopantActE/kbT;
       else if(dopantType == "Acceptor") 
-	inArg = (Evi+dopantActE)/kbT; 
+        // inArg = (Evi+dopantActE)/kbT; 
+        inArg = hArgOffset + dopantActE/kbT;
       else TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
 	       std::endl << "Error!  Unknown dopant type " << dopantType << "!"<< std::endl);
     }
@@ -391,7 +397,8 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
           const ScalarT& phi = potential(cell,qp);
            
           // compute the hole density treated as classical
-          ScalarT hDensity = Nv*(this->*carrStat)(-phi+Evi/kbT); 
+          // ScalarT hDensity = Nv*(this->*carrStat)(-phi+Evi/kbT); 
+          ScalarT hDensity = Nv*(this->*carrStat)(-phi+hArgOffset); 
 
           // obtain the ionized dopants
           ScalarT ionN  = 0.0;
@@ -439,13 +446,14 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 
           // the scaled full RHS
           ScalarT charge; 
-          charge = 1.0/Lambda2*(Nv*(this->*carrStat)(-phi+Evi/kbT)- Nc*(this->*carrStat)(phi+Eic/kbT) + ionN)/C0;
+          // charge = 1.0/Lambda2*(Nv*(this->*carrStat)(-phi+Evi/kbT)- Nc*(this->*carrStat)(phi+Eic/kbT) + ionN)/C0;
+          charge = 1.0/Lambda2*(Nv*(this->*carrStat)(-phi+hArgOffset)- Nc*(this->*carrStat)(phi+eArgOffset) + ionN)/C0;
           poissonSource(cell, qp) = factor*charge;
           
           // output states
           chargeDensity(cell, qp) = charge*Lambda2*C0;
-          electronDensity(cell, qp) = Nc*(this->*carrStat)(phi+Eic/kbT);
-          holeDensity(cell, qp) = Nv*(this->*carrStat)(-phi+Evi/kbT);
+          electronDensity(cell, qp) = Nc*(this->*carrStat)(phi+eArgOffset);
+          holeDensity(cell, qp) = Nv*(this->*carrStat)(-phi+hArgOffset);
           electricPotential(cell, qp) = phi*V0;
           ionizedDopant(cell, qp) = ionN;
           conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
@@ -579,9 +587,6 @@ evaluateFields_default(typename Traits::EvalData workset)
   MeshScalarT* coord;
   ScalarT charge;
 
-  // ScalarT temperature = temperatureField(0); //get shared temperature parameter from field
-  // ScalarT V0 = kbBoltz*temperature/1.0; // kb*T/q in [V], scaling for potential
-
   for (std::size_t cell=0; cell < workset.numCells; ++cell) 
   {
     for (std::size_t qp=0; qp < numQPs; ++qp) 
@@ -599,10 +604,7 @@ evaluateFields_default(typename Traits::EvalData workset)
       default: TEST_FOR_EXCEPT(true);
       }
 
-      // scale even default device since Poisson Dirichlet evaluator always scales DBCs
-      // poissonSource(cell, qp) = factor*charge / V0;
-      
-      // Suzey: do not scale the default device since the DBC is not scaled
+      // do not scale the default device since the DBC is not scaled
       poissonSource(cell, qp) = factor*charge;
       
       // set all states to 0 except electricPotential 

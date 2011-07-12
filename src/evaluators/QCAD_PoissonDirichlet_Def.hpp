@@ -231,7 +231,7 @@ QCAD::PoissonDirichlet<EvalT,Traits>::inverseFDIntOneHalf(const ScalarT x)
 template<typename EvalT,typename Traits>
 typename QCAD::PoissonDirichlet<EvalT,Traits>::ScalarT
 QCAD::PoissonDirichlet<EvalT,Traits>::potentialForMBComplIon(const ScalarT &Nc, 
-   const ScalarT &Nv, const ScalarT &Eg, const double &Chi, const std::string dopType, const double &dopingConc)
+   const ScalarT &Nv, const ScalarT &Eg, const double &Chi, const std::string &dopType, const double &dopingConc)
 {
   ScalarT Cn = Nc*exp((-qPhiRef+Chi)/kbT); 
   ScalarT Cp = Nv*exp((qPhiRef-Chi-Eg)/kbT);
@@ -277,7 +277,7 @@ QCAD::PoissonDirichlet<EvalT,Traits>::potentialForMBComplIon(const ScalarT &Nc,
 template<typename EvalT,typename Traits>
 typename QCAD::PoissonDirichlet<EvalT,Traits>::ScalarT
 QCAD::PoissonDirichlet<EvalT,Traits>::potentialForMBIncomplIon(const ScalarT &Nc, 
-      const ScalarT &Nv, const ScalarT &Eg, const double &Chi, const std::string dopType, 
+      const ScalarT &Nv, const ScalarT &Eg, const double &Chi, const std::string &dopType, 
       const double &dopingConc, const double &dopantActE )
 {
   ScalarT builtinPotential;
@@ -310,7 +310,7 @@ QCAD::PoissonDirichlet<EvalT,Traits>::potentialForMBIncomplIon(const ScalarT &Nc
 template<typename EvalT,typename Traits>
 typename QCAD::PoissonDirichlet<EvalT,Traits>::ScalarT
 QCAD::PoissonDirichlet<EvalT,Traits>::potentialForFDComplIon(const ScalarT &Nc, 
-    const ScalarT &Nv, const ScalarT &Eg, const double &Chi, const std::string dopType, const double &dopingConc)
+    const ScalarT &Nv, const ScalarT &Eg, const double &Chi, const std::string &dopType, const double &dopingConc)
 {
   ScalarT builtinPotential;
     
@@ -340,7 +340,7 @@ QCAD::PoissonDirichlet<EvalT,Traits>::potentialForFDComplIon(const ScalarT &Nc,
 template<typename EvalT,typename Traits>
 typename QCAD::PoissonDirichlet<EvalT,Traits>::ScalarT
 QCAD::PoissonDirichlet<EvalT,Traits>::potentialForZeroKFDComplIon(const ScalarT &Nc, 
-    const ScalarT &Nv, const ScalarT &Eg, const double &Chi, const std::string dopType, const double &dopingConc)
+    const ScalarT &Nv, const ScalarT &Eg, const double &Chi, const std::string &dopType, const double &dopingConc)
 {
   const double pi = 3.1415926536;
 
@@ -349,7 +349,7 @@ QCAD::PoissonDirichlet<EvalT,Traits>::potentialForZeroKFDComplIon(const ScalarT 
   // assume n = Nd to have an analytical expression (neglect p)
   if(dopType == "Donor") 
   {
-    if (dopingConc < Nc)  // Fermi level is below conduction band
+    if (dopingConc < Nc)  // Fermi level (due to doping) is below conduction band
       builtinPotential = potentialForFDComplIon(Nc,Nv,Eg,Chi,dopType,dopingConc);
     else  // Fermi level is in conduction band
     { 
@@ -361,7 +361,7 @@ QCAD::PoissonDirichlet<EvalT,Traits>::potentialForZeroKFDComplIon(const ScalarT 
   // assume p = Na to have an analytical expression (neglect n)
   else if(dopType == "Acceptor") 
   {
-    if (dopingConc < Nv)  // Fermi level is above valence band 
+    if (dopingConc < Nv)  // Fermi level (due to doping) is above valence band 
       builtinPotential = potentialForFDComplIon(Nc,Nv,Eg,Chi,dopType,dopingConc); 
     else  // Fermi level is in valence band
     {  

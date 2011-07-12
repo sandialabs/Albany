@@ -51,23 +51,24 @@ namespace QCAD
     typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
           ResponseSaveField(Teuchos::ParameterList& p);
   
-	  void postRegistrationSetup(typename Traits::SetupData d,
+    void postRegistrationSetup(typename Traits::SetupData d,
 				     PHX::FieldManager<Traits>& vm);
   
-	  void evaluateFields(typename Traits::EvalData d);
+    void evaluateFields(typename Traits::EvalData d);
 	  
 	private:
-	  Teuchos::RCP<const Teuchos::ParameterList>
-	  getValidResponseParameters() const;
+    Teuchos::RCP<const Teuchos::ParameterList> getValidResponseParameters() const;
 
-          std::string fieldName;
-          std::string stateName;
-	  std::size_t numQPs;
-          std::size_t numDims;
-	  PHX::MDField<ScalarT> field;
-          bool outputToExodus;
-          bool isVectorField;
-          std::string vectorOp;
+    std::string fieldName;
+    std::string stateName;
+    
+    std::size_t numQPs;
+    std::size_t numDims;
+    
+    PHX::MDField<ScalarT> field;
+    bool outputToExodus;
+    bool isVectorField;
+    std::string vectorOp;
   };
 
 	
