@@ -49,6 +49,7 @@ namespace QCAD
 	  PHX::MDField<ScalarT> opField;
 	  PHX::MDField<ScalarT> retField;
 	  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+	  PHX::MDField<ScalarT,Cell,QuadPoint> weights;
           bool bOpFieldIsVector, bRetFieldIsVector;
 
           std::string operation;

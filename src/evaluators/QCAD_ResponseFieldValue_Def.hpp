@@ -25,7 +25,9 @@ QCAD::ResponseFieldValue<EvalT, Traits>::
 ResponseFieldValue(Teuchos::ParameterList& p) :
   PHAL::ResponseBase<EvalT, Traits>(p),
   coordVec(p.get<string>("Coordinate Vector Name"),
-	   p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout"))
+	   p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout")),
+  weights(p.get<std::string>("Weights Name"),
+	p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"))
 {
   //! get and validate Response parameter list
   Teuchos::ParameterList* plist = 
@@ -111,6 +113,7 @@ ResponseFieldValue(Teuchos::ParameterList& p) :
   //! add dependent fields
   this->addDependentField(opField);
   this->addDependentField(coordVec);
+  this->addDependentField(weights);
   if(!bReturnOpField) this->addDependentField(retField); //when return field is *different* from op field
   
   //! set initial values: ( <returnValue>, <opFieldValue>, <x>, <y>, <z> ) for any dimension
@@ -133,6 +136,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(opField,fm);
   this->utils.setFieldData(coordVec,fm);
+  this->utils.setFieldData(weights,fm);
   if(!bReturnOpField) this->utils.setFieldData(retField,fm);
 }
 
@@ -144,8 +148,7 @@ evaluateFields(typename Traits::EvalData workset)
   PHAL::ResponseBase<EvalT, Traits>::beginEvaluateFields(workset);
 
   std::vector<ScalarT>& local_g = PHAL::ResponseBase<EvalT, Traits>::local_g;
-  ScalarT opVal;
-  std::size_t i;
+  ScalarT opVal, qpVal, cellVol;
 
   if(opDomain == "element block" && workset.EBName != ebName) {
       PHAL::ResponseBase<EvalT, Traits>::endEvaluateFields(workset);
@@ -153,46 +156,86 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
 
-      if(opDomain == "box") {
-	if(limitX && (coordVec(cell,qp,0) < xmin || coordVec(cell,qp,0) > xmax))
-	  continue;
-	if(limitY && (coordVec(cell,qp,1) < ymin || coordVec(cell,qp,1) > ymax))
-	  continue;
-	if(limitZ && (coordVec(cell,qp,2) < zmin || coordVec(cell,qp,2) > zmax))
-	  continue;
+    // If operation domain is a "box", check whether the current cell is 
+    //  at least partially contained within the box
+    if(opDomain == "box") {
+      bool cellInBox = false;
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+	if( (!limitX || (coordVec(cell,qp,0) >= xmin && coordVec(cell,qp,0) <= xmax)) &&
+	    (!limitY || (coordVec(cell,qp,1) >= ymin && coordVec(cell,qp,1) <= ymax)) &&
+	    (!limitZ || (coordVec(cell,qp,2) >= zmin && coordVec(cell,qp,2) <= zmax)) ) {
+	  cellInBox = true; break; }
       }
-      
+      if( !cellInBox ) continue;
+    }
+
+    // Get the cell volume, used for averaging over a cell
+    cellVol = 0.0;
+    for (std::size_t qp=0; qp < numQPs; ++qp)
+      cellVol += weights(cell,qp);
+
+    // Get the scalar value of the field being operated on which will be used
+    //  in the operation (all operations just deal with scalar data so far)
+    opVal = 0.0;
+    for (std::size_t qp=0; qp < numQPs; ++qp) {
+      qpVal = 0.0;
       if(bOpFieldIsVector) {
-	opVal = 0.0;
-	if(opX) opVal += opField(cell,qp,0) * opField(cell,qp,0);
-	if(opY) opVal += opField(cell,qp,1) * opField(cell,qp,1);
-	if(opZ) opVal += opField(cell,qp,2) * opField(cell,qp,2);
+	if(opX) qpVal += opField(cell,qp,0) * opField(cell,qp,0);
+	if(opY) qpVal += opField(cell,qp,1) * opField(cell,qp,1);
+	if(opZ) qpVal += opField(cell,qp,2) * opField(cell,qp,2);
       }
-      else opVal = opField(cell,qp);
+      else qpVal = opField(cell,qp);
+      opVal += qpVal * weights(cell,qp);
+    }
+    opVal /= cellVol;  
+    // opVal = the average value of the field operated on over the current cell
+
       
-      if( (operation == "Maximize" && opVal > local_g[1]) ||
-	  (operation == "Minimize" && opVal < local_g[1]) ) {
-	
-	if(bReturnOpField) {
+    // Check if the currently stored min/max value needs to be updated
+    if( (operation == "Maximize" && opVal > local_g[1]) ||
+	(operation == "Minimize" && opVal < local_g[1]) ) {
+
+      // set g[0] = value of return field at the current cell (avg)
+      local_g[0]=0.0;
+      if(bReturnOpField) {
+	for (std::size_t qp=0; qp < numQPs; ++qp) {
+	  qpVal = 0.0;
 	  if(bOpFieldIsVector) {
-	    for(i=0, local_g[0]=0.0; i<numDims; i++) 
-	      local_g[0] += opField(cell,qp,i)*opField(cell,qp,i);
+	    for(std::size_t i=0; i<numDims; i++) {
+	      qpVal += opField(cell,qp,i)*opField(cell,qp,i);
+	    }
 	  }
-	  else local_g[0] = opField(cell,qp);
+	  else qpVal = opField(cell,qp);
+	  local_g[0] += qpVal * weights(cell,qp);
 	}
-	else if(bRetFieldIsVector) {
-	  for(i=0, local_g[0]=0.0; i<numDims; i++) 
-	    local_g[0] += retField(cell,qp,i)*retField(cell,qp,i);
+      }
+      else {
+	for (std::size_t qp=0; qp < numQPs; ++qp) {
+	  qpVal = 0.0;
+	  if(bRetFieldIsVector) {
+	    for(std::size_t i=0; i<numDims; i++) {
+	      qpVal += retField(cell,qp,i)*retField(cell,qp,i);
+	    }
+	  }
+	  else qpVal = retField(cell,qp);
+	  local_g[0] += qpVal * weights(cell,qp);
 	}
-	else local_g[0] = retField(cell,qp);
-	
-	local_g[1] = opVal;
-	for(i=0; i<numDims; i++) local_g[i+2] = coordVec(cell,qp,i);
+      }
+      local_g[0] /= cellVol;
+
+      // set g[1] = value of the field operated on at the current cell (avg)
+      local_g[1] = opVal;
+
+      // set g[2+] = average qp coordinate values of the current cell
+      for(std::size_t i=0; i<numDims; i++) {
+	local_g[i+2] = 0.0;
+	for (std::size_t qp=0; qp < numQPs; ++qp) local_g[i+2] += coordVec(cell,qp,i);
+	local_g[i+2] /= numQPs;
       }
     }
-  }
+
+  } // end of loop over cells
 
   PHAL::ResponseBase<EvalT, Traits>::endEvaluateFields(workset);
 }

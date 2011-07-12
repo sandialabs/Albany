@@ -63,8 +63,11 @@ namespace QCAD
           std::string fieldName;
           std::string stateName;
 	  std::size_t numQPs;
-	  PHX::MDField<ScalarT,Cell,QuadPoint> field;
+          std::size_t numDims;
+	  PHX::MDField<ScalarT> field;
           bool outputToExodus;
+          bool isVectorField;
+          std::string vectorOp;
   };
 
 	

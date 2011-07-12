@@ -524,7 +524,8 @@ QCAD::PoissonProblem::constructEvaluators(
        { 
 	 int type = FactoryTraits<AlbanyTraits>::id_qcad_response_fieldvalue;
 	 p->set<int>("Type", type);
-	 p->set< string >("Coordinate Vector Name", "Coord Vec");
+	 p->set<string>("Coordinate Vector Name", "Coord Vec");
+	 p->set<string>("Weights Name",   "Weights");
 	 p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
 	 p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
        }
@@ -534,13 +535,19 @@ QCAD::PoissonProblem::constructEvaluators(
 	 int type = FactoryTraits<AlbanyTraits>::id_qcad_response_savefield;
 	 p->set<int>("Type", type);
 	 p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+	 p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
 
 	 // Temporary HACK:
 	 // Duplicates logic from ResponseSaveField, and would be nice to put this code in
 	 //  that evaluator class somehow. Pass stateManager in param list? ANDY
-	 std::string fieldName = responseParams.get<string>("Field Name");
+	 std::string fieldName;
+	 if(responseParams.isParameter("Vector Field Name"))
+	   fieldName = responseParams.get<std::string>("Vector Field Name");
+	 else
+	   fieldName = responseParams.get<string>("Field Name");
 	 std::string stateName = responseParams.get<string>("State Name", fieldName);
-	 stateMgr.registerStateVariable(stateName, qp_scalar);
+	 bool bOutToExodus = responseParams.get<bool>("Output to Exodus", true);
+	 stateMgr.registerStateVariable(stateName, qp_scalar, "zero", false, bOutToExodus);
        }
 
        else {

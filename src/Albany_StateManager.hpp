@@ -53,7 +53,8 @@ public:
   void registerStateVariable(const std::string &stateName, 
 			     const Teuchos::RCP<PHX::DataLayout> &dl,
 			     const std::string &init_type="zero",
-			     const bool registerOldState=false);
+			     const bool registerOldState=false,
+			     const bool outputToExodus=true);
 
   //! Method to call multiple times (before allocate) to register which states will be saved.
   //! Returns param vector with all info to build a SaveStateField or LoadStateField evaluator
@@ -98,12 +99,6 @@ public:
   //! Methods to get/set the EigendataStruct which holds eigenvalue / eigenvector data
   Teuchos::RCP<Albany::EigendataStruct> getEigenData();
   void setEigenData(const Teuchos::RCP<Albany::EigendataStruct>& eigdata);
-
-  //! Method to integrate a scalar-valued state over an element block 
-  //  (zero-length ebName integrates over entire mesh)
-  RealType integrateStateVariable(const std::string& stateName, const std::string& ebName,
-				  const std::string& weightName);
-
 
 private:
   //! Private to prohibit copying

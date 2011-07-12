@@ -20,5 +20,6 @@
 #include "PHAL_ResponseBase.hpp"
 #include "PHAL_ResponseBase_Def.hpp"
 
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::ResponseBaseCommon)
 PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::ResponseBase)
 
