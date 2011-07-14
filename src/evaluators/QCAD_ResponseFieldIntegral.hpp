@@ -29,26 +29,27 @@ namespace QCAD
   class ResponseFieldIntegral : 
     public PHAL::ResponseBase<EvalT, Traits>
   {
-     public:
-  	typedef typename EvalT::ScalarT ScalarT;
+  public:
+    typedef typename EvalT::ScalarT ScalarT;
 
-	  ResponseFieldIntegral(Teuchos::ParameterList& p);
+    ResponseFieldIntegral(Teuchos::ParameterList& p);
   
-	  void postRegistrationSetup(typename Traits::SetupData d,
+    void postRegistrationSetup(typename Traits::SetupData d,
 				     PHX::FieldManager<Traits>& vm);
   
-	  void evaluateFields(typename Traits::EvalData d);
+    void evaluateFields(typename Traits::EvalData d);
 	  
-     private:
-	  Teuchos::RCP<const Teuchos::ParameterList>
-	  getValidResponseParameters() const;
+  private:
+    Teuchos::RCP<const Teuchos::ParameterList> getValidResponseParameters() const;
 
-          std::string fieldName;
-          std::string ebName;
-	  std::size_t numQPs;
-	  std::size_t numDims;
-	  PHX::MDField<ScalarT,Cell,QuadPoint> field;
-	  PHX::MDField<ScalarT,Cell,QuadPoint> weights;
+    std::string fieldName;
+    std::string ebName;
+    
+    std::size_t numQPs;
+    std::size_t numDims;
+    
+    PHX::MDField<ScalarT,Cell,QuadPoint> field;
+    PHX::MDField<ScalarT,Cell,QuadPoint> weights;
   };
 	
 }

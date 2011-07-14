@@ -507,55 +507,55 @@ QCAD::PoissonProblem::constructEvaluators(
        p->set<string>("Response ID", responseID);
        p->set<int>   ("Response Index", i);
        p->set< Teuchos::RCP<Albany::EvaluatedResponseFunction> >("Response Function", 
-	 Teuchos::rcp_dynamic_cast< Albany::EvaluatedResponseFunction>(responses[i]));
+         Teuchos::rcp_dynamic_cast< Albany::EvaluatedResponseFunction>(responses[i]));
        p->set<Teuchos::ParameterList*>("Parameter List", &responseParams);
        p->set< RCP<DataLayout> >("Dummy Data Layout", dummy);
 
        // Parameters specific to the particular type of response evaluator
        if (type == "Field Integral")
        { 
-	 int type = FactoryTraits<AlbanyTraits>::id_qcad_response_fieldintegral;
-	 p->set<int>("Type", type);
-	 p->set<string>("Weights Name",   "Weights");
-	 p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+         int type = FactoryTraits<AlbanyTraits>::id_qcad_response_fieldintegral;
+         p->set<int>("Type", type);
+         p->set<string>("Weights Name",   "Weights");
+         p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
        }
 
        else if (type == "Field Value")
        { 
-	 int type = FactoryTraits<AlbanyTraits>::id_qcad_response_fieldvalue;
-	 p->set<int>("Type", type);
-	 p->set<string>("Coordinate Vector Name", "Coord Vec");
-	 p->set<string>("Weights Name",   "Weights");
-	 p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
-	 p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
-       }
+         int type = FactoryTraits<AlbanyTraits>::id_qcad_response_fieldvalue;
+         p->set<int>("Type", type);
+         p->set<string>("Coordinate Vector Name", "Coord Vec");
+         p->set<string>("Weights Name",   "Weights");
+         p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+         p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+      }
 
        else if (type == "Save Field")
        { 
-	 int type = FactoryTraits<AlbanyTraits>::id_qcad_response_savefield;
-	 p->set<int>("Type", type);
-	 p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
-	 p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+         int type = FactoryTraits<AlbanyTraits>::id_qcad_response_savefield;
+         p->set<int>("Type", type);
+         p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+         p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
 
-	 // Temporary HACK:
-	 // Duplicates logic from ResponseSaveField, and would be nice to put this code in
-	 //  that evaluator class somehow. Pass stateManager in param list? ANDY
-	 std::string fieldName;
-	 if(responseParams.isParameter("Vector Field Name"))
-	   fieldName = responseParams.get<std::string>("Vector Field Name");
-	 else
-	   fieldName = responseParams.get<string>("Field Name");
-	 std::string stateName = responseParams.get<string>("State Name", fieldName);
-	 bool bOutToExodus = responseParams.get<bool>("Output to Exodus", true);
-	 stateMgr.registerStateVariable(stateName, qp_scalar, "zero", false, bOutToExodus);
+         // Temporary HACK:
+         // Duplicates logic from ResponseSaveField, and would be nice to put this code in
+         //  that evaluator class somehow. Pass stateManager in param list? ANDY
+         std::string fieldName;
+         if(responseParams.isParameter("Vector Field Name"))
+           fieldName = responseParams.get<std::string>("Vector Field Name");
+         else
+           fieldName = responseParams.get<string>("Field Name");
+         std::string stateName = responseParams.get<string>("State Name", fieldName);
+         bool bOutToExodus = responseParams.get<bool>("Output to Exodus", true);
+         stateMgr.registerStateVariable(stateName, qp_scalar, "zero", false, bOutToExodus);
        }
 
        else {
-	 TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-			    std::endl <<
-			    "Error!  Unknown evaluated response type " << type <<
-			    "!" << std::endl << "Supplied parameter list is " <<
-			    std::endl << responseList);
+         TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+           std::endl <<
+           "Error!  Unknown evaluated response type " << type <<
+           "!" << std::endl << "Supplied parameter list is " <<
+           std::endl << responseList);
        }
 
        response_evaluators_to_build[responseID] = p;
@@ -565,17 +565,17 @@ QCAD::PoissonProblem::constructEvaluators(
      else // Response<i> is not a sublist, so process by just building a response function
      { 
        if (name == "Solution Average")
-	 responses[i] = Teuchos::rcp(new Albany::SolutionAverageResponseFunction());
+         responses[i] = Teuchos::rcp(new Albany::SolutionAverageResponseFunction());
 
        else if (name == "Solution Two Norm")
-	 responses[i] = Teuchos::rcp(new Albany::SolutionTwoNormResponseFunction());
+         responses[i] = Teuchos::rcp(new Albany::SolutionTwoNormResponseFunction());
 
        else {
-	 TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-			    std::endl <<
-			    "Error!  Unknown response function " << name <<
-			    "!" << std::endl << "Supplied parameter list is " <<
-			    std::endl << responseList);
+         TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+           std::endl <<
+           "Error!  Unknown response function " << name <<
+           "!" << std::endl << "Supplied parameter list is " <<
+           std::endl << responseList);
        }
 
      }
