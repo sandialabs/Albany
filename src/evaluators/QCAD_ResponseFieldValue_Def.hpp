@@ -105,9 +105,9 @@ ResponseFieldValue(Teuchos::ParameterList& p) :
 
   if(!bReturnOpField) {
     if(bRetFieldIsVector) {
-      PHX::MDField<ScalarT> f(retFieldName, vector_dl); opField = f; }
+      PHX::MDField<ScalarT> f(retFieldName, vector_dl); retField = f; }
     else {
-      PHX::MDField<ScalarT> f(retFieldName, scalar_dl); opField = f; }
+      PHX::MDField<ScalarT> f(retFieldName, scalar_dl); retField = f; }
   }
 
   //! add dependent fields

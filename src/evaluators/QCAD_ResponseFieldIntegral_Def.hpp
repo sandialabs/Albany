@@ -48,6 +48,7 @@ ResponseFieldIntegral(Teuchos::ParameterList& p) :
   PHX::MDField<ScalarT,Cell,QuadPoint> f(fieldName, scalar_dl); 
   field = f;
   this->addDependentField(field);
+  this->addDependentField(weights);
   
   //! set initial values
   std::vector<double> initVals(1); initVals[0] = 0.0;
