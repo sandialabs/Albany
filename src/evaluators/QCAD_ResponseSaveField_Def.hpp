@@ -94,6 +94,13 @@ ResponseSaveField(Teuchos::ParameterList& p) :
   std::vector<double> initVals(1); initVals[0] = 0.0; //Response is a dummy 0.0
   PHAL::ResponseBase<PHAL::AlbanyTraits::Residual, Traits>::
     setInitialValues(initVals);
+
+  //! set post processing parameters (used to reconcile values across multiple processors)
+  Teuchos::ParameterList ppParams;
+  ppParams.set("Processing Type","None");
+  PHAL::ResponseBase<PHAL::AlbanyTraits::Residual, Traits>::
+    setPostProcessingParams(ppParams);
+
 }
 
 // **********************************************************************

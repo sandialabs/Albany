@@ -319,6 +319,33 @@ namespace Albany {
 			  const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
 			  Epetra_Vector& g);
 
+    //! Evalute response tangents using response field manater (rfm)
+    //  A helper function called by evaluateResponseTangents.
+    virtual void 
+    evaluateResponseTangents_rfm(
+	   const Epetra_Vector* xdot,
+	   const Epetra_Vector& x,
+	   const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+	   const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
+	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dxdot_dp,
+	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dx_dp,
+	   Epetra_Vector* g,
+	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& gt);
+
+    //! Evalute responses gradients using response field manater (rfm)
+    //  A helper function called by evaluateResponseGradients.
+    virtual void 
+    evaluateResponseGradients_rfm(
+	    const Epetra_Vector* xdot,
+	    const Epetra_Vector& x,
+	    const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+	    const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
+	    Epetra_Vector* g,
+	    Epetra_MultiVector* dg_dx,
+	    Epetra_MultiVector* dg_dxdot,
+	    const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dg_dp);
+
+
 
 
   protected:
@@ -439,6 +466,8 @@ namespace Albany {
     bool setupCalledMPResidual;
     bool setupCalledMPJacobian;
     bool setupCalledResponses;
+    bool setupCalledResponseTangents;
+    bool setupCalledResponseGradients;
     mutable int phxGraphVisDetail;
 
     StateManager stateMgr;

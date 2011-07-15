@@ -53,6 +53,11 @@ ResponseFieldIntegral(Teuchos::ParameterList& p) :
   //! set initial values
   std::vector<double> initVals(1); initVals[0] = 0.0;
   PHAL::ResponseBase<EvalT, Traits>::setInitialValues(initVals);
+
+  //! set post processing parameters (used to reconcile values across multiple processors)
+  Teuchos::ParameterList ppParams;
+  ppParams.set("Processing Type","Sum");
+  PHAL::ResponseBase<EvalT, Traits>::setPostProcessingParams(ppParams);
 }
 
 // **********************************************************************
