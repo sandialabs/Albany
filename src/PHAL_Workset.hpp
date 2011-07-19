@@ -106,9 +106,10 @@ struct Workset {
   bool is_adjoint;
 
 
-  // Responses, stored as a separate std::vector of response values
-  //  for each "Response" requested by user.
-  Teuchos::RCP< Teuchos::Array< std::vector<double> > > responses;
+  // Responses and their derivatives, stored as a separate vector 
+  //  or multivector of values for each "Response" requested by user.
+  Teuchos::ArrayRCP< Teuchos::RCP< Epetra_Vector > >      responses;
+  Teuchos::ArrayRCP< Teuchos::RCP< Epetra_MultiVector > > responseDerivatives;
 };
 
 }

@@ -61,7 +61,8 @@ void
 Albany::StateManager::registerStateVariable(const std::string &stateName, 
 					    const Teuchos::RCP<PHX::DataLayout> &dl,
                                             const std::string &init_type,
-                                            const bool registerOldState)
+                                            const bool registerOldState,
+					    const bool outputToExodus)
 
 {
   TEST_FOR_EXCEPT(stateVarsAreAllocated);
@@ -73,6 +74,7 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
   Albany::StateStruct& stateRef = *stateInfo->back();
   stateRef.initType = init_type; 
   stateRef.entity = dl->name(1); //Tag, should be Node or QuadPoint
+  stateRef.output = outputToExodus;
   dl->dimensions(stateRef.dim); 
 
   // If space is needed for old state
@@ -283,67 +285,3 @@ Albany::StateManager::setEigenData(const Teuchos::RCP<Albany::EigendataStruct>& 
 {
   eigenData = eigdata;
 }
-
-
-RealType
-Albany::StateManager::integrateStateVariable(const std::string& stateName, const std::string& ebName,
-					     const std::string& weightName)
-					     
-{
-  TEST_FOR_EXCEPT(!stateVarsAreAllocated);
-  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
-
-  // element block names
-  std::string worksetEBName;
-  Teuchos::ArrayRCP<std::string> wsEBNames;
-  wsEBNames = disc->getWsEBNames();
-
-  Albany::StateArrays& sa = disc->getStateArrays();
-  int numWorksets = sa.size();
-
-  // accumulator for integral
-  RealType integral = 0.0;
-
-  for (int ws = 0; ws < numWorksets; ws++)
-  {
-    worksetEBName = wsEBNames[ws];
-
-    if( ebName.length() == 0 || ebName == worksetEBName ) {
-
-      std::vector<int> dims;
-      sa[ws][stateName].dimensions(dims);
-      int size = dims.size();
-
-      TEST_FOR_EXCEPTION(size != 2, std::logic_error,
-	    "Only scalar fields supported by StateManager integrateStateVariable: size = " << size);
-      int cells = dims[0];
-      int qps = dims[1];
-
-      for (int cell = 0; cell < cells; ++cell) {
-	for (int qp = 0; qp < qps; ++qp) {	  
-	  integral += sa[ws][stateName](cell,qp) * sa[ws][weightName](cell,qp);
-	  //std::cout << "DEBUG Integral: " << integral << " after + " << sa[ws][stateName](cell,qp)
-	  //	    << " * " << sa[ws][weightName](cell,qp) << std::endl;
-
-	}
-      }
-	/* OLD FOR REF
-	   RealType weighted_measure_value; int n;
-	   for (int cell = 0; cell < cells; ++cell) {
-	   for (int qp = 0; qp < qps; ++qp) {	  
-	   for (n=0, weighted_measure_value=0; n < nodes; ++n) {
-	   if( fabs( (*BFfc)(cell,n,qp) ) > 1e-8 )
-	   weighted_measure_value += (*wBFfc)(cell,n,qp) / (*BFfc)(cell,n,qp);
-	   }
-	   integral += (*fc)(cell,qp) * weighted_measure_value;
-	   //std::cout << "DEBUG Integral: " << integral << " after + " << (*fc)(cell,qp) 
-	   //	    << " * " <<  weighted_measure_value << std::endl;
-	   }
-	*/
-      //TODO - 3,4 dimensions?
-    }
-  }
-
-  return integral;
-}
-  

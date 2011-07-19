@@ -33,27 +33,52 @@
     </ParameterList>
 
     <ParameterList name="Response Functions">
-      <Parameter name="Number" type="int" value="4" />
+      <Parameter name="Number" type="int" value="6" />
       <Parameter name="Response 0" type="string" value="Solution Average" />
+      
       <Parameter name="Response 1" type="string" value="See List" />
       <ParameterList name="ResponseParams 1">
-	<Parameter name="Type" type="string" value="Save Field" />
-	<Parameter name="Field Name" type="string" value="Charge Density" />
+        <Parameter name="Type" type="string" value="Save Field" />
+        <Parameter name="Field Name" type="string" value="Charge Density" />
+        <Parameter name="Output to Exodus" type="bool" value="1" />
       </ParameterList>
+      
       <Parameter name="Response 2" type="string" value="See List" />
       <ParameterList name="ResponseParams 2">
-	<Parameter name="Type" type="string" value="Field Integral" />
-	<Parameter name="Field Name" type="string" value="Charge Density" />
-	<Parameter name="Element Block Name" type="string" value="silicon.quantum" />
+        <Parameter name="Type" type="string" value="Save Field" />
+        <Parameter name="Vector Field Name" type="string" value="Potential Gradient" />
       </ParameterList>
+      
       <Parameter name="Response 3" type="string" value="See List" />
       <ParameterList name="ResponseParams 3">
-	<Parameter name="Type" type="string" value="Field Value" />
-	<Parameter name="Operation" type="string" value="Minimize" />
-	<Parameter name="Operation Field Name" type="string" value="Charge Density" />
-	<Parameter name="Operation Domain" type="string" value="element block" />
-	<Parameter name="Element Block Name" type="string" value="silicon.quantum" />
+        <Parameter name="Type" type="string" value="Field Integral" />
+        <Parameter name="Field Name" type="string" value="Charge Density" />
+        <Parameter name="Element Block Name" type="string" value="silicon.quantum" />
       </ParameterList>
+      
+      <Parameter name="Response 4" type="string" value="See List" />
+      <ParameterList name="ResponseParams 4">
+        <Parameter name="Type" type="string" value="Field Value" />
+        <Parameter name="Operation" type="string" value="Minimize" />
+        <Parameter name="Operation Field Name" type="string" value="Charge Density" />
+        <Parameter name="Operation Domain" type="string" value="element block" />
+        <Parameter name="Element Block Name" type="string" value="silicon.quantum" />
+      </ParameterList>
+
+      <Parameter name="Response 5" type="string" value="See List" />
+      <ParameterList name="ResponseParams 5">
+        <Parameter name="Type" type="string" value="Field Value" />
+        <Parameter name="Return Field Name" type="string" value="Charge Density" />
+        <Parameter name="Operation" type="string" value="Minimize" />
+        <Parameter name="Operation Vector Field Name" type="string" value="Potential Gradient" />
+	<Parameter name="Operate on y-component" type="bool" value="0" />
+        <Parameter name="Operation Domain" type="string" value="box" />
+        <Parameter name="x min" type="double" value="-2.5" />
+        <Parameter name="x max" type="double" value="2.5" />
+        <Parameter name="y min" type="double" value="-1.5" />
+        <Parameter name="y max" type="double" value="0.0" />
+      </ParameterList>
+
     </ParameterList>
   </ParameterList>
 
