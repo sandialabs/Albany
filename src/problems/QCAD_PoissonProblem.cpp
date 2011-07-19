@@ -518,6 +518,10 @@ QCAD::PoissonProblem::constructEvaluators(
          p->set<int>("Type", type);
          p->set<string>("Weights Name",   "Weights");
          p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+         p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+         
+         //Global Problem Parameters
+         p->set<double>("Length unit in m", length_unit_in_m);
        }
 
        else if (type == "Field Value")
