@@ -78,6 +78,7 @@ IF(ALBANY_SEACAS)
   add_subdirectory(IossRestart)
   add_subdirectory(NSPoiseuille2D)
   add_subdirectory(NSRayleighBernard2D)
+  add_subdirectory(NSVortexShedding2D)
   
 ENDIF()
 

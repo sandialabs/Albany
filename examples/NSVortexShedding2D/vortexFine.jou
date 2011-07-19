@@ -1,0 +1,31 @@
+## cubitx
+## Cubit Version 12.1
+## Cubit Build 44018
+## Revised 2010-08-12 10:36:21 -0600 (Thu, 12 Aug 2010)
+## Running 07/19/2011 03:23:52 PM
+## Command Options:
+## -warning = On
+## -information = On
+## cubit10.jou 
+brick x 30 y 8 z 1
+volume 1 move x 10
+webcut volume 1 cylinder radius 0.5 z z
+list volume
+delete volume 2
+curve 14 interval 60
+mesh surface 8
+delete mesh
+surface 8 size 0.15
+mesh surface 8
+#refine surface 8 numsplit 2 smooth
+nodeset 1 curve 3
+nodeset 2 curve 1
+nodeset 3 curve 2 4
+nodeset 4 curve 14
+block 1 surface 8
+block 1 element type quad4
+nodeset 1 name "inlet"
+nodeset 2 name "outlet"
+nodeset 3 name "sides"
+nodeset 4 name "cylinder"
+export mesh "vortexFine.exo" overwrite
