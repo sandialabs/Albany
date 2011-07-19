@@ -76,6 +76,7 @@
         <Parameter name="Block Size" type="int" value="4"/>
         <Parameter name="Maximum Restarts" type="int" value="0"/>
         <Parameter name="Shift" type="double" value="10.0"/>
+        <Parameter name="Normalize Eigenvectors with Mass Matrix" type="bool" value="false"/>
       </ParameterList>
     </ParameterList>
     <ParameterList name="Step Size">

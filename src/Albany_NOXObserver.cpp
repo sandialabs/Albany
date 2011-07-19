@@ -63,6 +63,6 @@ void Albany_NOXObserver::observeSolution(
 
    // This must come at the end since it renames the New state 
    // as the Old state in preparation for the next step
-   app->getStateMgr().updateStates();;
+   app->getStateMgr().updateStates();
 
 }
