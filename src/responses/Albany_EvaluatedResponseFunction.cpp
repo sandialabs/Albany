@@ -120,6 +120,55 @@ evaluateSGResponses(const Stokhos::VectorOrthogPoly<Epetra_Vector>* sg_xdot,
 
 void 
 Albany::EvaluatedResponseFunction::
+postProcessResponses(const Epetra_Comm& comm, Teuchos::RCP<Epetra_Vector>& g)
+{
+  std::string type = postProcessingParams.get<std::string>("Processing Type");
+
+  if( type == "Sum" ) {
+    comm.SumAll(g->Values(), g->Values(), g->MyLength());
+  }
+  else if( type == "Min" ) {
+    int indexToMin = postProcessingParams.get<int>("Index");
+    double min;
+    comm.MinAll( &((*g)[indexToMin]), &min, 1);
+    
+    int procToBcast;
+    if( (*g)[indexToMin] == min ) 
+      procToBcast = comm.MyPID();
+    else procToBcast = -1;
+
+    int winner;
+    comm.MaxAll(&procToBcast, &winner, 1);
+    comm.Broadcast( g->Values(), g->MyLength(), winner);
+  }
+  else if( type == "Max") {
+    int indexToMax = postProcessingParams.get<int>("Index");
+    double max;
+    comm.MaxAll(&((*g)[indexToMax]), &max, 1);
+    
+    int procToBcast;
+    if( (*g)[indexToMax] == max ) 
+      procToBcast = comm.MyPID();
+    else procToBcast = -1;
+
+    int winner;
+    comm.MaxAll(&procToBcast, &winner, 1);
+    comm.Broadcast( g->Values(), g->MyLength(), winner);
+  }
+  else if( type == "None") {
+  }
+  else TEST_FOR_EXCEPT(true);
+}
+
+void 
+Albany::EvaluatedResponseFunction::
+postProcessResponseDerivatives(const Epetra_Comm& comm, Teuchos::RCP<Epetra_MultiVector>& gt)
+{
+  //TODO - but maybe there's nothing to do here, since derivative is local to processors?
+}
+
+void 
+Albany::EvaluatedResponseFunction::
 setResponseInitialValues(const std::vector<double>& initVals)
 {
   responseInitVals = initVals;
@@ -132,4 +181,12 @@ setResponseInitialValues(double singleInitValForAll, unsigned int numberOfRespon
   responseInitVals.resize(numberOfResponses);
   for(unsigned int i=0; i < numberOfResponses; ++i)
     responseInitVals[i] = singleInitValForAll;
+}
+
+
+void 
+Albany::EvaluatedResponseFunction::
+setPostProcessingParams(const Teuchos::ParameterList& params)
+{ 
+  postProcessingParams = params;  
 }

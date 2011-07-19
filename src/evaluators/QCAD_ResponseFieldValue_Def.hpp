@@ -126,6 +126,14 @@ ResponseFieldValue(Teuchos::ParameterList& p) :
              << "Error!  Invalid operation type " << operation << std::endl); 
   
   PHAL::ResponseBase<EvalT, Traits>::setInitialValues(initVals);
+
+  //! set post processing parameters (used to reconcile values across multiple processors)
+  Teuchos::ParameterList ppParams;
+  if( operation == "Maximize" ) ppParams.set("Processing Type","Max");
+  else if( operation == "Minimize" ) ppParams.set("Processing Type","Min");
+  ppParams.set("Index",1);
+
+  PHAL::ResponseBase<EvalT, Traits>::setPostProcessingParams(ppParams);
 }
 
 // **********************************************************************

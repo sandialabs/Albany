@@ -39,6 +39,10 @@ namespace PHAL
     public PHX::EvaluatorWithBaseImpl<Traits>,
     public PHX::EvaluatorDerived<EvalT, Traits>
   {
+  public:
+    void setPostProcessingParams(const Teuchos::ParameterList& p) {
+      responseFn->setPostProcessingParams(p); };
+
   protected: 
     typedef typename EvalT::ScalarT ScalarT;
     ResponseBaseCommon(Teuchos::ParameterList& p);
@@ -93,13 +97,11 @@ template<typename EvalT, typename Traits> class ResponseBase;
     : public ResponseBaseCommon<PHAL::AlbanyTraits::Jacobian, Traits>  {
   protected:
     typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
-    ResponseBase(Teuchos::ParameterList& p) 
-      :ResponseBaseCommon<PHAL::AlbanyTraits::Jacobian, Traits>(p) 
-    { }
+    ResponseBase(Teuchos::ParameterList& p); 
     
-    void beginEvaluateFields(typename Traits::EvalData d) {}
-    void endEvaluateFields(typename Traits::EvalData d) {}
-    void setInitialValues(const std::vector<double>& initialVals) {}
+    void beginEvaluateFields(typename Traits::EvalData d);
+    void endEvaluateFields(typename Traits::EvalData d);
+    void setInitialValues(const std::vector<double>& initialVals);
 
     std::vector<ScalarT> local_g;
   };
@@ -113,13 +115,11 @@ template<typename EvalT, typename Traits> class ResponseBase;
     : public ResponseBaseCommon<PHAL::AlbanyTraits::Tangent, Traits>  {
   protected:
     typedef typename PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
-    ResponseBase(Teuchos::ParameterList& p) 
-      :ResponseBaseCommon<PHAL::AlbanyTraits::Tangent, Traits>(p) 
-    { }
+    ResponseBase(Teuchos::ParameterList& p);
     
-    void beginEvaluateFields(typename Traits::EvalData d) {}
-    void endEvaluateFields(typename Traits::EvalData d) {}
-    void setInitialValues(const std::vector<double>& initialVals) {}
+    void beginEvaluateFields(typename Traits::EvalData d);
+    void endEvaluateFields(typename Traits::EvalData d);
+    void setInitialValues(const std::vector<double>& initialVals);
 
     std::vector<ScalarT> local_g;
   };
@@ -134,13 +134,11 @@ template<typename EvalT, typename Traits> class ResponseBase;
     : public ResponseBaseCommon<PHAL::AlbanyTraits::SGResidual, Traits>  {
   protected:
     typedef typename PHAL::AlbanyTraits::SGResidual::ScalarT ScalarT;
-    ResponseBase(Teuchos::ParameterList& p) 
-      :ResponseBaseCommon<PHAL::AlbanyTraits::SGResidual, Traits>(p) 
-    { }
+    ResponseBase(Teuchos::ParameterList& p);
     
-    void beginEvaluateFields(typename Traits::EvalData d) {}
-    void endEvaluateFields(typename Traits::EvalData d) {}
-    void setInitialValues(const std::vector<double>& initialVals) {}
+    void beginEvaluateFields(typename Traits::EvalData d);
+    void endEvaluateFields(typename Traits::EvalData d);
+    void setInitialValues(const std::vector<double>& initialVals);
 
     std::vector<ScalarT> local_g;
   };
@@ -155,13 +153,11 @@ template<typename EvalT, typename Traits> class ResponseBase;
     : public ResponseBaseCommon<PHAL::AlbanyTraits::SGJacobian, Traits>  {
   protected:
     typedef typename PHAL::AlbanyTraits::SGJacobian::ScalarT ScalarT;
-    ResponseBase(Teuchos::ParameterList& p) 
-      :ResponseBaseCommon<PHAL::AlbanyTraits::SGJacobian, Traits>(p) 
-    { }
+    ResponseBase(Teuchos::ParameterList& p);
     
-    void beginEvaluateFields(typename Traits::EvalData d) {}
-    void endEvaluateFields(typename Traits::EvalData d) {}
-    void setInitialValues(const std::vector<double>& initialVals) {}
+    void beginEvaluateFields(typename Traits::EvalData d);
+    void endEvaluateFields(typename Traits::EvalData d);
+    void setInitialValues(const std::vector<double>& initialVals);
 
     std::vector<ScalarT> local_g;
   };
@@ -176,13 +172,11 @@ template<typename EvalT, typename Traits> class ResponseBase;
     : public ResponseBaseCommon<PHAL::AlbanyTraits::MPResidual, Traits>  {
   protected:
     typedef typename PHAL::AlbanyTraits::MPResidual::ScalarT ScalarT;
-    ResponseBase(Teuchos::ParameterList& p) 
-      :ResponseBaseCommon<PHAL::AlbanyTraits::MPResidual, Traits>(p) 
-    { }
+    ResponseBase(Teuchos::ParameterList& p);
     
-    void beginEvaluateFields(typename Traits::EvalData d) {}
-    void endEvaluateFields(typename Traits::EvalData d) {}
-    void setInitialValues(const std::vector<double>& initialVals) {}
+    void beginEvaluateFields(typename Traits::EvalData d);
+    void endEvaluateFields(typename Traits::EvalData d);
+    void setInitialValues(const std::vector<double>& initialVals);
 
     std::vector<ScalarT> local_g;
   };
@@ -197,13 +191,11 @@ template<typename EvalT, typename Traits> class ResponseBase;
     : public ResponseBaseCommon<PHAL::AlbanyTraits::MPJacobian, Traits>  {
   protected:
     typedef typename PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
-    ResponseBase(Teuchos::ParameterList& p) 
-      :ResponseBaseCommon<PHAL::AlbanyTraits::MPJacobian, Traits>(p) 
-    { }
-    
-    void beginEvaluateFields(typename Traits::EvalData d) {}
-    void endEvaluateFields(typename Traits::EvalData d) {}
-    void setInitialValues(const std::vector<double>& initialVals) {}
+    ResponseBase(Teuchos::ParameterList& p);
+ 
+    void beginEvaluateFields(typename Traits::EvalData d);
+    void endEvaluateFields(typename Traits::EvalData d);
+    void setInitialValues(const std::vector<double>& initialVals);
 
     std::vector<ScalarT> local_g;
   };

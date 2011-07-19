@@ -22,6 +22,7 @@
 #include "Epetra_Map.h"
 #include "Epetra_Import.h"
 #include "Epetra_Vector.h"
+#include "EpetraExt_MultiComm.h"
 
 namespace Albany {
 
@@ -81,10 +82,23 @@ namespace Albany {
 			Stokhos::VectorOrthogPoly<Epetra_Vector>& sg_g);
 
 
+    //! Post process responses
+    virtual void 
+    postProcessResponses(const Epetra_Comm& comm, Teuchos::RCP<Epetra_Vector>& g);
+
+    //! Post process response derivatives
+    virtual void 
+    postProcessResponseDerivatives(const Epetra_Comm& comm, Teuchos::RCP<Epetra_MultiVector>& gt);
+
+
     //! Set initial values (and number) of the responses.  This function is called by
     //   response evaluators, which act on a single workset at a time.
     void setResponseInitialValues(const std::vector<double>& initVals);
     void setResponseInitialValues(double singleInitValForAll, unsigned int numberOfResponses);
+
+    //! Set post processing parameter list
+    void setPostProcessingParams(const Teuchos::ParameterList& params);
+
 
   private:
 
@@ -97,6 +111,9 @@ namespace Albany {
     //! initial values for each response.  The length of this
     //  vector determines the number of responses.
     std::vector<double> responseInitVals;
+
+    //! post processing parameter list
+    Teuchos::ParameterList postProcessingParams;
 
   };
 
