@@ -334,12 +334,14 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/utils/Geometry.cc
     ${LCM_DIR}/utils/Partition.cc
     ${LCM_DIR}/utils/Tensor.cc
+    ${LCM_DIR}/utils/Topology.cc
   )
 
   SET(HEADERS ${HEADERS}
     ${LCM_DIR}/utils/Geometry.h
     ${LCM_DIR}/utils/Partition.h
-    ${LCM_DIR}/utils/Tensor.h 
+    ${LCM_DIR}/utils/Tensor.h
+    ${LCM_DIR}/utils/Topology.h 
   )
 
 IF(ALBANY_LAME)
