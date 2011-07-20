@@ -369,7 +369,7 @@ Albany::Application::computeGlobalResidual(
       workset.EBName = wsEBNames[ws];
 
       workset.stateArrayPtr = &stateMgr.getStateArray(ws);
-      workset.eigenDataPtr = &(*(stateMgr.getEigenData()));
+      workset.eigenDataPtr = stateMgr.getEigenData();
 
       // FillType template argument used to specialize Sacado
       fm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
@@ -483,7 +483,7 @@ Albany::Application::computeGlobalJacobian(
       workset.EBName = wsEBNames[ws];
 
       workset.stateArrayPtr = &stateMgr.getStateArray(ws);
-      workset.eigenDataPtr = &(*(stateMgr.getEigenData()));
+      workset.eigenDataPtr = stateMgr.getEigenData();
 
       // FillType template argument used to specialize Sacado
       fm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
@@ -789,7 +789,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
       workset.ws_coord_derivs = ws_coord_derivs[ws];
 
       workset.stateArrayPtr = &stateMgr.getStateArray(ws);
-      workset.eigenDataPtr = &(*(stateMgr.getEigenData()));
+      workset.eigenDataPtr = stateMgr.getEigenData();
 
       // FillType template argument used to specialize Sacado
       fm->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
@@ -1070,7 +1070,7 @@ evaluateResponses_rfm(const Epetra_Vector* xdot,
       workset.EBName = wsEBNames[ws];
 
       workset.stateArrayPtr = &stateMgr.getStateArray(ws);
-      workset.eigenDataPtr = &(*(stateMgr.getEigenData()));
+      workset.eigenDataPtr = stateMgr.getEigenData();
       
       // FillType template argument used to specialize Sacado
       rfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
@@ -1221,7 +1221,7 @@ evaluateResponseGradients_rfm(
 	workset.EBName = wsEBNames[ws];
 
 	workset.stateArrayPtr = &stateMgr.getStateArray(ws);
-	workset.eigenDataPtr = &(*(stateMgr.getEigenData()));
+	workset.eigenDataPtr = stateMgr.getEigenData();
 
 	// FillType template argument used to specialize Sacado
 	rfm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
@@ -1310,7 +1310,7 @@ evaluateResponseGradients_rfm(
 	workset.EBName = wsEBNames[ws];
 
 	workset.stateArrayPtr = &stateMgr.getStateArray(ws);
-	workset.eigenDataPtr = &(*(stateMgr.getEigenData()));
+	workset.eigenDataPtr = stateMgr.getEigenData();
 
 	// FillType template argument used to specialize Sacado
 	rfm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
@@ -1424,7 +1424,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
       workset.EBName = wsEBNames[ws];
 
       workset.stateArrayPtr = &stateMgr.getStateArray(ws);
-      workset.eigenDataPtr = &(*(stateMgr.getEigenData()));
+      workset.eigenDataPtr = stateMgr.getEigenData();
 
       // FillType template argument used to specialize Sacado
       fm->evaluateFields<PHAL::AlbanyTraits::SGResidual>(workset);
@@ -1564,7 +1564,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
       workset.EBName = wsEBNames[ws];
 
       workset.stateArrayPtr = &stateMgr.getStateArray(ws);
-      workset.eigenDataPtr = &(*(stateMgr.getEigenData()));
+      workset.eigenDataPtr = stateMgr.getEigenData();
 
       // FillType template argument used to specialize Sacado
       fm->evaluateFields<PHAL::AlbanyTraits::SGJacobian>(workset);
@@ -1743,7 +1743,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
       workset.EBName = wsEBNames[ws];
 
       workset.stateArrayPtr = &stateMgr.getStateArray(ws);
-      workset.eigenDataPtr = &(*(stateMgr.getEigenData()));
+      workset.eigenDataPtr = stateMgr.getEigenData();
 
       // FillType template argument used to specialize Sacado
       fm->evaluateFields<PHAL::AlbanyTraits::MPResidual>(workset);
@@ -1892,7 +1892,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
       workset.EBName = wsEBNames[ws];
 
       workset.stateArrayPtr = &stateMgr.getStateArray(ws);
-      workset.eigenDataPtr = &(*(stateMgr.getEigenData()));
+      workset.eigenDataPtr = stateMgr.getEigenData();
 
       // FillType template argument used to specialize Sacado
       fm->evaluateFields<PHAL::AlbanyTraits::MPJacobian>(workset);

@@ -617,7 +617,7 @@ Albany::GradientDamageProblem::constructEvaluators(
 
     int issf = FactoryTraits<AlbanyTraits>::id_savestatefield;
     evaluators_to_build["Save Damage Source"] =
-      stateMgr.registerStateVariable("Damage Source",qp_scalar, dummy, issf,"zero");
+      stateMgr.registerStateVariable("Damage Source",qp_scalar, dummy, issf,"zero",true);
     evaluators_to_build["Save Damage"] =
       stateMgr.registerStateVariable("Damage",qp_scalar, dummy, issf,"zero", true);
     evaluators_to_build["Damage Source"] = p;
