@@ -89,7 +89,7 @@ struct Workset {
   std::string EBName;
 
   Albany::StateArray* stateArrayPtr;
-  Albany::EigendataStruct* eigenDataPtr;
+  Teuchos::RCP<Albany::EigendataStruct> eigenDataPtr;
 
   bool transientTerms;
 
