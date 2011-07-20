@@ -71,7 +71,7 @@
         <Parameter name="Return Field Name" type="string" value="Charge Density" />
         <Parameter name="Operation" type="string" value="Minimize" />
         <Parameter name="Operation Vector Field Name" type="string" value="Potential Gradient" />
-	<Parameter name="Operate on y-component" type="bool" value="0" />
+        <Parameter name="Operate on y-component" type="bool" value="0" />
         <Parameter name="Operation Domain" type="string" value="box" />
         <Parameter name="x min" type="double" value="-2.5" />
         <Parameter name="x max" type="double" value="2.5" />
