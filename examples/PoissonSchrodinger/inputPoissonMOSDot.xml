@@ -110,13 +110,6 @@
   </ParameterList>
 
 
-  <ParameterList name="VTK">
-    <Parameter name="Visualize Sensitivities" type="bool" value="0" />
-    <Parameter name="Stagger Windows" type="bool" value="1" />
-    <Parameter name="Do Visualization" type="bool" value="0" />
-  </ParameterList>
-
-
   <ParameterList name="LOCA">
     <ParameterList name="Stepper">
       <ParameterList name="Eigensolver" />

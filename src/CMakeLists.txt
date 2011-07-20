@@ -25,7 +25,6 @@ SET(SOURCES
 	Albany_RythmosObserver.cpp 
 	Albany_NOXObserver.cpp 
 	Albany_StateManager.cpp 
-	Albany_VTK.cpp 
 	Albany_ModelEvaluator.cpp
 	Albany_SaveEigenData.cpp
   )
@@ -45,7 +44,6 @@ SET(HEADERS
 	Albany_StateManager.hpp 
         Albany_StateInfoStruct.hpp
         Albany_EigendataInfoStruct.hpp
-	Albany_VTK.hpp 
 	Albany_ModelEvaluator.hpp
 	Albany_SaveEigenData.hpp
         Albany_DummyParameterAccessor.hpp

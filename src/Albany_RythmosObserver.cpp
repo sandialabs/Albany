@@ -25,15 +25,11 @@
 using namespace std;
 
 Albany_RythmosObserver::Albany_RythmosObserver(
-     const Teuchos::RCP<Albany_VTK> vtk_,
      const Teuchos::RCP<Albany::Application> &app_) : 
   disc(app_->getDiscretization()),
-  app(app_),
-  vtk(vtk_)
+  app(app_)
 {
-   if (vtk != Teuchos::null) { vtk->updateGeometry (disc); }
-
-    exooutTime = Teuchos::TimeMonitor::getNewTimer("Albany: Output to Exodus");
+   exooutTime = Teuchos::TimeMonitor::getNewTimer("Albany: Output to Exodus");
 }
 
 void Albany_RythmosObserver::observeCompletedTimeStep(
@@ -58,7 +54,6 @@ void Albany_RythmosObserver::observeCompletedTimeStep(
   }
 
   const Epetra_Vector soln= *(Thyra::get_Epetra_Vector(*disc->getMap(), solution));
-  if (vtk != Teuchos::null) vtk->visualizeField (soln, disc);
 
 #ifdef ALBANY_SEACAS
   Albany::STKDiscretization* stkDisc =

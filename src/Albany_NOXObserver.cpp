@@ -24,24 +24,16 @@
 using namespace std;
 
 Albany_NOXObserver::Albany_NOXObserver(
-     const Teuchos::RCP<Albany_VTK> vtk_,
      const Teuchos::RCP<Albany::Application> &app_) : 
   app(app_),
-  disc(app_->getDiscretization()),
-  vtk(vtk_)
+  disc(app_->getDiscretization())
 {
-   if (vtk != Teuchos::null) { vtk->updateGeometry (disc); }
-
    exooutTime = Teuchos::TimeMonitor::getNewTimer("Albany: Output to Exodus");
 }
 
 void Albany_NOXObserver::observeSolution(
     const Epetra_Vector& solution)
 {
-   if (vtk != Teuchos::null) {
-     vtk->visualizeField (solution, disc);
-   }
-
 #ifdef ALBANY_SEACAS
   // if (solution.Map().Comm().MyPID()==0)
   //   cout << "Albany::NOXObserver calling exodus output " << endl;

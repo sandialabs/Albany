@@ -94,10 +94,6 @@
     value="{1.1867, -0.02865, -0.007762, 0.008780, 0.002895, 0.0007957, -0.002302, -0.0006913, -0.0009845, -4.562e-05}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-3"/>
   </ParameterList>
-  <ParameterList name="VTK">
-    <Parameter name="Do Visualization" type="bool" value="0"/>
-    <Parameter name="Visualize Sensitivities" type="bool" value="0"/>
-  </ParameterList>
   <ParameterList name="NOX">
     <ParameterList name="Status Tests">
       <Parameter name="Test Type" type="string" value="Combo"/>
