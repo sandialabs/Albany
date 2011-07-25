@@ -41,6 +41,7 @@
         <Parameter name="Type" type="string" value="Save Field" />
         <Parameter name="Field Name" type="string" value="Charge Density" />
         <Parameter name="Output to Exodus" type="bool" value="1" />
+        <Parameter name="Output Cell Average" type="bool" value="1" />
       </ParameterList>
       
       <Parameter name="Response 2" type="string" value="See List" />

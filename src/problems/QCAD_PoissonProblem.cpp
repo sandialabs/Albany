@@ -134,6 +134,7 @@ QCAD::PoissonProblem::constructEvaluators(
 
    RCP<DataLayout> node_scalar = rcp(new MDALayout<Cell,Node>(worksetSize,numNodes));
    RCP<DataLayout> qp_scalar = rcp(new MDALayout<Cell,QuadPoint>(worksetSize,numQPts));
+   RCP<DataLayout> cell_scalar = rcp(new MDALayout<Cell,QuadPoint>(worksetSize,1));
 
    RCP<DataLayout> node_vector = rcp(new MDALayout<Cell,Node,Dim>(worksetSize,numNodes,numDim));
    RCP<DataLayout> qp_vector = rcp(new MDALayout<Cell,QuadPoint,Dim>(worksetSize,numQPts,numDim));
@@ -540,11 +541,14 @@ QCAD::PoissonProblem::constructEvaluators(
          p->set<int>("Type", type);
          p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
          p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+         p->set< RCP<DataLayout> >("Cell Scalar Data Layout", cell_scalar);
+	 p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
+         p->set<string>("Weights Name",   "Weights");
 
          // Temporary HACK:
          // Duplicates logic from ResponseSaveField, and would be nice to put this code in
          //  that evaluator class somehow. Pass stateManager in param list? ANDY
-         std::string fieldName;
+         /*std::string fieldName;
          if(responseParams.isParameter("Vector Field Name"))
            fieldName = responseParams.get<std::string>("Vector Field Name");
          else
@@ -552,6 +556,7 @@ QCAD::PoissonProblem::constructEvaluators(
          std::string stateName = responseParams.get<string>("State Name", fieldName);
          bool bOutToExodus = responseParams.get<bool>("Output to Exodus", true);
          stateMgr.registerStateVariable(stateName, qp_scalar, "zero", false, bOutToExodus);
+         */
        }
 
        else {

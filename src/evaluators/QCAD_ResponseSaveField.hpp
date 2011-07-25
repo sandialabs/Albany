@@ -65,8 +65,10 @@ namespace QCAD
     std::size_t numQPs;
     std::size_t numDims;
     
+    PHX::MDField<ScalarT,Cell,QuadPoint> weights;
     PHX::MDField<ScalarT> field;
     bool outputToExodus;
+    bool outputCellAverage;
     bool isVectorField;
     std::string vectorOp;
   };
