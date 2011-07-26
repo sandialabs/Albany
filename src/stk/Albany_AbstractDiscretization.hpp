@@ -34,7 +34,7 @@
 
 namespace Albany {
 
-  typedef std::map<std::string, std::vector<int> > NodeSetList;
+  typedef std::map<std::string, std::vector<std::vector<int> > > NodeSetList;
   typedef std::map<std::string, std::vector<double*> > NodeSetCoordList;
 
   class AbstractDiscretization {
@@ -71,8 +71,9 @@ namespace Albany {
     virtual const NodeSetCoordList& getNodeSetCoords() const = 0;
     virtual const std::vector<std::string>& getNodeSetIDs() const = 0;
 
-    //! Get map from (Ws, El, Local Node) -> NodeLID
-    virtual const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >& getWsElNodeID() const = 0;
+    //! Get map from (Ws, El, Local Node, Eq) -> unkLID
+    virtual const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >&
+       getWsElNodeEqID() const = 0;
 
     //! Retrieve coodinate ptr_field (ws, el, node)
     virtual Teuchos::ArrayRCP<double>&  getCoordinates() const = 0;

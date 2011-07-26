@@ -68,7 +68,6 @@ public:
 
 protected:
   const int offset;
-  const int neq;
   ScalarT value;
   std::string nodeSetID;
 };

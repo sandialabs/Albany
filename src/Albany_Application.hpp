@@ -398,7 +398,7 @@ namespace Albany {
     //! Phalanx Field Manager for Responses
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > rfm;
 
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > wsElNodeID;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > > wsElNodeEqID;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords;
     Teuchos::ArrayRCP<std::string> wsEBNames;
 

@@ -129,10 +129,10 @@ endEvaluateFields(typename Traits::EvalData workset)
 
   //add derivative information in local_g to workset
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<int>& nodeID  = workset.wsElNodeID[cell];
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
 
     for (std::size_t node = 0; node < numNodes; ++node) {
-      col  = nodeID[node]; // neq assumed == 1, otherwise would be firstCol, then offset by neq index
+      col  = nodeID[node][0]; // neq assumed == 1, otherwise would be firstCol, then offset by neq index
       lcol = node; //local column
 
       for(unsigned int i=0; i<local_g.size(); ++i) 

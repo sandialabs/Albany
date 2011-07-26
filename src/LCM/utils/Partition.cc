@@ -157,8 +157,8 @@ namespace LCM {
     dimension_ = meshSpecs->numDim;
 
     // Dimensioned: Workset, Cell, Local Node
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >
-    element_connectivity = discretization_ptr_->getWsElNodeID();
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >
+    element_connectivity = discretization_ptr_->getWsElNodeEqID();
 
     Teuchos::ArrayRCP<double>
     coordinates = discretization_ptr_->getCoordinates();
@@ -179,9 +179,18 @@ namespace LCM {
 
     type_ = FindType(dimension, vertices_per_element);
 
-    // Assume all the elements have the same number of nodes
+    // Assume all the elements have the same number of nodes and eqs
     Teuchos::ArrayRCP<int>::size_type
     nodes_per_element = element_connectivity[0][0].size();
+
+    // Do some logic so we can get from unknown ID to node ID
+    int neq = element_connectivity[0][0][0].size();
+    int stride=1; 
+    if (neq>1)
+      if (element_connectivity[0][0][0][0] + 1 ==  element_connectivity[0][0][0][1])
+          stride = neq;  // usual interleaved unknowns case
+  
+    
 
     // Build coordinate array.
     // Assume that local numbering of nodes is contiguous.
@@ -226,7 +235,8 @@ namespace LCM {
             node < vertices_per_element;
             ++node) {
 
-          nodes_element[node] = element_connectivity[workset][cell][node];
+          // Get node ID from first unknown ID by dividing by stride
+          nodes_element[node] = element_connectivity[workset][cell][node][0] / stride;
 
         }
 

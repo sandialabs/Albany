@@ -58,7 +58,6 @@ protected:
   std::vector< PHX::MDField<ScalarT,Cell,Node> > val;
   std::vector< PHX::MDField<ScalarT,Cell,Node,Dim> > valVec;
   std::size_t numNodes;
-  std::size_t neqBase;  // Total number of DOF per  node (used as stride)
   std::size_t numFieldsBase; // Number of fields gathered in this call
   std::size_t offset; // Offset of first DOF being gathered when numFields<neq
 
@@ -85,7 +84,6 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
-  const std::size_t neq;
   const std::size_t numFields;
 };
 
@@ -100,7 +98,6 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
-  const std::size_t neq;
   const std::size_t numFields;
 };
 
@@ -115,7 +112,6 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
-  const std::size_t neq;
   const std::size_t numFields;
 };
 
@@ -130,7 +126,6 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::SGResidual::ScalarT ScalarT;
-  const std::size_t neq;
   const std::size_t numFields;
 };
 
@@ -145,7 +140,6 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::SGJacobian::ScalarT ScalarT;
-  const std::size_t neq;
   const std::size_t numFields;
 };
 
@@ -160,7 +154,6 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::MPResidual::ScalarT ScalarT;
-  const std::size_t neq;
   const std::size_t numFields;
 };
 
@@ -175,7 +168,6 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
-  const std::size_t neq;
   const std::size_t numFields;
 };
 

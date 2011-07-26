@@ -45,14 +45,16 @@ typedef std::vector<StateArray> StateArrays;
   struct MeshSpecsStruct {
     MeshSpecsStruct(const CellTopologyData& ctd_, int numDim_, 
                     int cubatureDegree_, std::vector<std::string> nsNames_,
-                    int worsetSize_)
+                    int worsetSize_, bool interleavedOrdering_)
        :  ctd(ctd_), numDim(numDim_), cubatureDegree(cubatureDegree_),
-          nsNames(nsNames_), worksetSize(worsetSize_) {}
+          nsNames(nsNames_), worksetSize(worsetSize_),
+          interleavedOrdering(interleavedOrdering_) {}
     const CellTopologyData ctd;
     int numDim;
     int cubatureDegree;
     std::vector<std::string> nsNames;  //Node Sets Names
     int worksetSize;
+    bool interleavedOrdering;
   };
 }
 

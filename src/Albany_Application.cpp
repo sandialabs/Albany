@@ -117,11 +117,11 @@ Albany::Application::Application(
   disc = discFactory.createDiscretization(neq, stateMgr.getStateInfoStruct());
 
   // Load connectivity map and coordinates 
-  wsElNodeID = disc->getWsElNodeID();
+  wsElNodeEqID = disc->getWsElNodeEqID();
   coords = disc->getCoords();
   wsEBNames = disc->getWsEBNames();
   int numDim = meshSpecs->numDim;
-  numWorksets = wsElNodeID.size();
+  numWorksets = wsElNodeEqID.size();
 
   // Create Epetra objects
   importer = Teuchos::rcp(new Epetra_Import(*(disc->getOverlapMap()), 
@@ -143,9 +143,9 @@ Albany::Application::Application(
   if (initial_guess != Teuchos::null) *initial_x = *initial_guess;
   else {
     overlapped_x->Import(*initial_x, *importer, Insert);
-    Albany::InitialConditions(overlapped_x, wsElNodeID, coords, neq, numDim,
+    Albany::InitialConditions(overlapped_x, wsElNodeEqID, coords, neq, numDim,
                               problemParams->sublist("Initial Condition"));
-    Albany::InitialConditions(overlapped_xdot,  wsElNodeID, coords, neq, numDim,
+    Albany::InitialConditions(overlapped_xdot,  wsElNodeEqID, coords, neq, numDim,
                               problemParams->sublist("Initial Condition Dot"));
     initial_x->Export(*overlapped_x, *exporter, Insert);
     initial_x_dot->Export(*overlapped_xdot, *exporter, Insert);
@@ -363,8 +363,8 @@ Albany::Application::computeGlobalResidual(
 
     workset.worksetSize = worksetSize;
     for (int ws=0; ws < numWorksets; ws++) {
-      workset.numCells = wsElNodeID[ws].size();
-      workset.wsElNodeID = wsElNodeID[ws];
+      workset.numCells = wsElNodeEqID[ws].size();
+      workset.wsElNodeEqID = wsElNodeEqID[ws];
       workset.wsCoords = coords[ws];
       workset.EBName = wsEBNames[ws];
 
@@ -477,8 +477,8 @@ Albany::Application::computeGlobalJacobian(
 
     workset.worksetSize = worksetSize;
     for (int ws=0; ws < numWorksets; ws++) {
-      workset.numCells = wsElNodeID[ws].size();
-      workset.wsElNodeID = wsElNodeID[ws];
+      workset.numCells = wsElNodeEqID[ws].size();
+      workset.wsElNodeEqID = wsElNodeEqID[ws];
       workset.wsCoords = coords[ws];
       workset.EBName = wsEBNames[ws];
 
@@ -782,8 +782,8 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
     workset.worksetSize = worksetSize;
     for (int ws=0; ws < numWorksets; ws++) {
-      workset.numCells = wsElNodeID[ws].size();
-      workset.wsElNodeID = wsElNodeID[ws];
+      workset.numCells = wsElNodeEqID[ws].size();
+      workset.wsElNodeEqID = wsElNodeEqID[ws];
       workset.wsCoords = coords[ws];
       workset.EBName = wsEBNames[ws];
       workset.ws_coord_derivs = ws_coord_derivs[ws];
@@ -1064,8 +1064,8 @@ evaluateResponses_rfm(const Epetra_Vector* xdot,
     
     workset.worksetSize = worksetSize;
     for (int ws=0; ws < numWorksets; ws++) {
-      workset.numCells = wsElNodeID[ws].size();
-      workset.wsElNodeID = wsElNodeID[ws];
+      workset.numCells = wsElNodeEqID[ws].size();
+      workset.wsElNodeEqID = wsElNodeEqID[ws];
       workset.wsCoords = coords[ws];
       workset.EBName = wsEBNames[ws];
 
@@ -1215,8 +1215,8 @@ evaluateResponseGradients_rfm(
       
       workset.worksetSize = worksetSize;
       for (int ws=0; ws < numWorksets; ws++) {
-	workset.numCells = wsElNodeID[ws].size();
-	workset.wsElNodeID = wsElNodeID[ws];
+	workset.numCells = wsElNodeEqID[ws].size();
+	workset.wsElNodeEqID = wsElNodeEqID[ws];
 	workset.wsCoords = coords[ws];
 	workset.EBName = wsEBNames[ws];
 
@@ -1304,8 +1304,8 @@ evaluateResponseGradients_rfm(
       
       workset.worksetSize = worksetSize;
       for (int ws=0; ws < numWorksets; ws++) {
-	workset.numCells = wsElNodeID[ws].size();
-	workset.wsElNodeID = wsElNodeID[ws];
+	workset.numCells = wsElNodeEqID[ws].size();
+	workset.wsElNodeEqID = wsElNodeEqID[ws];
 	workset.wsCoords = coords[ws];
 	workset.EBName = wsEBNames[ws];
 
@@ -1418,8 +1418,8 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
     workset.worksetSize = worksetSize;
     for (int ws=0; ws < numWorksets; ws++) {
-      workset.numCells = wsElNodeID[ws].size();
-      workset.wsElNodeID = wsElNodeID[ws];
+      workset.numCells = wsElNodeEqID[ws].size();
+      workset.wsElNodeEqID = wsElNodeEqID[ws];
       workset.wsCoords = coords[ws];
       workset.EBName = wsEBNames[ws];
 
@@ -1558,8 +1558,8 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
     workset.worksetSize = worksetSize;
     for (int ws=0; ws < numWorksets; ws++) {
-      workset.numCells = wsElNodeID[ws].size();
-      workset.wsElNodeID = wsElNodeID[ws];
+      workset.numCells = wsElNodeEqID[ws].size();
+      workset.wsElNodeEqID = wsElNodeEqID[ws];
       workset.wsCoords = coords[ws];
       workset.EBName = wsEBNames[ws];
 
@@ -1737,8 +1737,8 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
     workset.worksetSize = worksetSize;
     for (int ws=0; ws < numWorksets; ws++) {
-      workset.numCells = wsElNodeID[ws].size();
-      workset.wsElNodeID = wsElNodeID[ws];
+      workset.numCells = wsElNodeEqID[ws].size();
+      workset.wsElNodeEqID = wsElNodeEqID[ws];
       workset.wsCoords = coords[ws];
       workset.EBName = wsEBNames[ws];
 
@@ -1886,8 +1886,8 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
     workset.worksetSize = worksetSize;
     for (int ws=0; ws < numWorksets; ws++) {
-      workset.numCells = wsElNodeID[ws].size();
-      workset.wsElNodeID = wsElNodeID[ws];
+      workset.numCells = wsElNodeEqID[ws].size();
+      workset.wsElNodeEqID = wsElNodeEqID[ws];
       workset.wsCoords = coords[ws];
       workset.EBName = wsEBNames[ws];
 

@@ -11,6 +11,8 @@
 #  5. Several executables (decomp, nem_slice, epu, ..) should now be
 #     in  $PWD/install/bin  and can be copied to a  bin  dir of your choice.
 #
+#   PreProcess:   decomp -p 4 file.exo
+#   PostProcess:  epu -auto file-out.exo.4.0
 
 NETCDF=/home/agsalin/install/netcdf
 PREFIX=$PWD/install

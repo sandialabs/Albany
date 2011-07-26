@@ -32,3 +32,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/vortex.exo.4.3
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 add_test(${testName} ${Albany.exe})
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputBlocked.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputBlocked.xml COPYONLY)
+
+add_test(${testName}_Blocked ${Albany.exe} inputBlocked.xml)

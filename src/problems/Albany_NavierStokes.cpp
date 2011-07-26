@@ -87,6 +87,7 @@ buildProblem(
   Teuchos::ParameterList& responseList = params->sublist("Response Functions");
   int num_responses = responseList.get("Number", 0);
   int eq = responseList.get("Equation", 0);
+  bool inor =  meshSpecs.interleavedOrdering;
   responses.resize(num_responses);
   for (int i=0; i<num_responses; i++) {
      std::string name = responseList.get(Albany::strint("Response",i), "??");
@@ -98,7 +99,7 @@ buildProblem(
        responses[i] = Teuchos::rcp(new SolutionTwoNormResponseFunction());
 
      else if (name == "Solution Max Value")
-       responses[i] = Teuchos::rcp(new SolutionMaxValueResponseFunction(neq, eq));
+       responses[i] = Teuchos::rcp(new SolutionMaxValueResponseFunction(neq, eq, inor));
 
      else {
        TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
@@ -183,7 +184,6 @@ Albany::NavierStokes::constructEvaluators(const Albany::MeshSpecsStruct& meshSpe
 				    dof_names_dot);
      
     p->set<int>("Offset of First DOF", 0);
-    p->set<int>("Number of DOF per Node", neq);
 
     evaluators_to_build["Gather Velocity Solution"] = p;
   }
@@ -205,7 +205,6 @@ Albany::NavierStokes::constructEvaluators(const Albany::MeshSpecsStruct& meshSpe
 				    dof_names_dot);
      
     p->set<int>("Offset of First DOF", numDim);
-    p->set<int>("Number of DOF per Node", neq);
      
     evaluators_to_build["Gather Pressure Solution"] = p;
   }
@@ -230,7 +229,6 @@ Albany::NavierStokes::constructEvaluators(const Albany::MeshSpecsStruct& meshSpe
       p->set<int>("Offset of First DOF", numDim+1);
     else
       p->set<int>("Offset of First DOF", 0);
-    p->set<int>("Number of DOF per Node", neq);
      
     evaluators_to_build["Gather Temperature Solution"] = p;
   }
@@ -827,7 +825,6 @@ Albany::NavierStokes::constructEvaluators(const Albany::MeshSpecsStruct& meshSpe
     p->set< RCP<DataLayout> >("Data Layout", node_vector);
 
     p->set<int>("Offset of First DOF", 0);
-    p->set<int>("Number of DOF per Node", neq);
     p->set<string>("Scatter Field Name", "Scatter Momentum");
 
     evaluators_to_build["Scatter Momentum Residual"] = p;
@@ -846,7 +843,6 @@ Albany::NavierStokes::constructEvaluators(const Albany::MeshSpecsStruct& meshSpe
     p->set< RCP<DataLayout> >("Data Layout", node_scalar);
 
     p->set<int>("Offset of First DOF", numDim);
-    p->set<int>("Number of DOF per Node", neq);
     p->set<string>("Scatter Field Name", "Scatter Continuity");
 
     evaluators_to_build["Scatter Continuity Residual"] = p;
@@ -868,7 +864,6 @@ Albany::NavierStokes::constructEvaluators(const Albany::MeshSpecsStruct& meshSpe
       p->set<int>("Offset of First DOF", numDim+1);
     else
       p->set<int>("Offset of First DOF", 0);
-    p->set<int>("Number of DOF per Node", neq);
     p->set<string>("Scatter Field Name", "Scatter Temperature");
 
     evaluators_to_build["Scatter Temperature Residual"] = p;

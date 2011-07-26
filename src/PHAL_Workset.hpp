@@ -73,7 +73,7 @@ struct Workset {
 
   // Current Time as defined by Rythmos
   double current_time;
-
+ 
   // flag indicating whether to sum tangent derivatives, i.e.,
   // compute alpha*df/dxdot*Vxdot + beta*df/dx*Vx + df/dp*Vp or
   // compute alpha*df/dxdot*Vxdot + beta*df/dx*Vx and df/dp*Vp separately
@@ -83,7 +83,7 @@ struct Workset {
 
   std::vector<int> *coord_deriv_indices;
 
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >  wsElNodeID;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >  wsElNodeEqID;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> >  wsCoords;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > >  ws_coord_derivs;
   std::string EBName;

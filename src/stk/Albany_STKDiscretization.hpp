@@ -77,7 +77,7 @@ namespace Albany {
     const std::vector<std::string>& getNodeSetIDs() const;
 
     //! Get map from (Ws, El, Local Node) -> NodeLID
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >& getWsElNodeID() const;
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >& getWsElNodeEqID() const;
 
     //! Retrieve coodinate vector (num_used_nodes * 3)
     Teuchos::ArrayRCP<double>& getCoordinates() const;
@@ -105,7 +105,12 @@ namespace Albany {
     STKDiscretization& operator=(const STKDiscretization&);
 
     // dof calc  nodeID*neq+eqID
-    inline int getDOF(stk::mesh::Entity& node, int eq) const;
+    inline int gid(const stk::mesh::Entity& node) const;
+    inline int gid(const stk::mesh::Entity* node) const;
+
+    inline int getOwnedDOF(const int inode, const int eq) const;
+    inline int getOverlapDOF(const int inode, const int eq) const;
+    inline int getGlobalDOF(const int inode, const int eq) const;
 
     // Copy solution vector from Epetra_Vector into STK Mesh
     void setSolutionField(const Epetra_Vector& soln);
@@ -125,8 +130,9 @@ namespace Albany {
     //! Unknown Map
     Teuchos::RCP<Epetra_Map> map;
 
-    //! Overlapped unknown map
+    //! Overlapped unknown map, and node map
     Teuchos::RCP<Epetra_Map> overlap_map;
+    Teuchos::RCP<Epetra_Map> overlap_node_map;
 
     //! Jacobian matrix graph
     Teuchos::RCP<Epetra_CrsGraph> graph;
@@ -153,8 +159,8 @@ namespace Albany {
     //! Just the node set ID strings
     std::vector<std::string> nodeSetIDs;
 
-    //! Connectivity array [workset, element, local-node] => LID
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > wsElNodeID;
+    //! Connectivity array [workset, element, local-node, Eq] => LID
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > > wsElNodeEqID;
 
     mutable Teuchos::ArrayRCP<double> coordinates;
     Teuchos::ArrayRCP<std::string> wsEBNames;
@@ -170,6 +176,11 @@ namespace Albany {
     //! list of all overlap nodes, saved for getting coordinates for mesh motion
     std::vector< stk::mesh::Entity * > overlapnodes ;
 
+    //! Number of elements on this processor
+    int numOwnedNodes;
+    int numOverlapNodes;
+    int numGlobalNodes;
+
     Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct;
 
     // Used in Exodus writing capability
@@ -177,7 +188,7 @@ namespace Albany {
     stk::io::MeshData* mesh_data;
 #endif
     mutable double time;
-
+    bool interleavedOrdering;
   };
 
 }
