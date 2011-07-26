@@ -58,7 +58,6 @@ Albany::Line1DSTKMeshStruct::Line1DSTKMeshStruct(
 
   // Construct MeshSpecsStruct
   int cub = params->get("Cubature Degree",3);
-  bool inor =  params->get("Interleaved Ordering",true);
   int worksetSizeMax = params->get("Workset Size",50);
   const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
 
@@ -70,7 +69,8 @@ Albany::Line1DSTKMeshStruct::Line1DSTKMeshStruct(
   int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_map->NumMyElements());
 
   // MeshSpecs holds all info needed to set up an Albany problem
-  this->meshSpecs = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub, nsNames, worksetSize, inor));
+  this->meshSpecs = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
+                             nsNames, worksetSize, this->interleavedOrdering));
 }
 
 void

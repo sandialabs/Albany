@@ -45,9 +45,9 @@ Albany::Point0DSTKMeshStruct::Point0DSTKMeshStruct(
   stk::mesh::fem::set_cell_topology< shards::Particle >(*partVec[0]);
 
   int cub = params->get("Cubature Degree",3);
-  bool inor =  params->get("Interleaved Ordering",true);
   const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
-  this->meshSpecs = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub, nsNames, 1, inor));
+  this->meshSpecs = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
+                                        nsNames, 1, this->interleavedOrdering));
 }
 
 void

@@ -54,7 +54,6 @@ Albany::Cube3DSTKMeshStruct::Cube3DSTKMeshStruct(
   stk::mesh::fem::set_cell_topology< shards::Hexahedron<8> >(*partVec[0]);
 
   int cub = params->get("Cubature Degree",3);
-  bool inor =  params->get("Interleaved Ordering",true);
   int worksetSizeMax = params->get("Workset Size",50);
   const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
 
@@ -68,7 +67,8 @@ Albany::Cube3DSTKMeshStruct::Cube3DSTKMeshStruct(
   int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_map->NumMyElements());
 
   // MeshSpecs holds all info needed to set up an Albany problem
-  this->meshSpecs = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub, nsNames, worksetSize, inor));
+  this->meshSpecs = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
+                              nsNames, worksetSize, this->interleavedOrdering));
 }
 
 void

@@ -109,7 +109,6 @@ Albany::FromCubitSTKMeshStruct::FromCubitSTKMeshStruct(
   meshMover->set_morph_method(params->get("Morph Method", 0));
 
   cubatureDegree = params->get("Cubature Degree", 3);
-  bool inor =  params->get("Interleaved Ordering",true);
 
   cout << "FromCubitSTKMeshStruct: numDim = " << numDim
        << "  nodesets = " << nsPartVec.size() << endl;

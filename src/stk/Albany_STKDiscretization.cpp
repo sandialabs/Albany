@@ -46,7 +46,7 @@ Albany::STKDiscretization::STKDiscretization(
   neq(stkMeshStruct_->neq),
   stkMeshStruct(stkMeshStruct_),
   time(0.0),
-  interleavedOrdering(false)
+  interleavedOrdering(stkMeshStruct_->interleavedOrdering)
 {
   //Unpack mesh data from struct container
   stk::mesh::fem::FEMMetaData& metaData = *stkMeshStruct->metaData;

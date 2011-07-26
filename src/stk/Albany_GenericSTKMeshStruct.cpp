@@ -47,6 +47,8 @@ Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
     metaData->FEM_initialize(numDim_);
   }
 
+  interleavedOrdering = params->get("Interleaved Ordering",true);
+
   bulkData = NULL;
 }
 

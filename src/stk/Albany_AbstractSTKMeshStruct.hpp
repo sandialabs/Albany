@@ -73,6 +73,7 @@ namespace Albany {
 
     int numDim;
     int neq;
+    bool interleavedOrdering;
 
     bool exoOutput;
     std::string exoOutFile;
