@@ -594,8 +594,10 @@ QCAD::PoissonProblem::constructEvaluators(
    // Build Response Evaluators for each evaluation type
    RCP< vector< RCP<PHX::Evaluator_TemplateManager<AlbanyTraits> > > >
      response_evaluators;
+   
+   response_evaluators_to_build.insert(evaluators_to_build.begin(), evaluators_to_build.end());
    response_evaluators = factory.buildEvaluators(response_evaluators_to_build);
-   response_evaluators->insert(response_evaluators->begin(), evaluators->begin(), evaluators->end());
+   //response_evaluators->insert(response_evaluators->begin(), evaluators->begin(), evaluators->end());
 
    // Create a Response FieldManager
    rfm = Teuchos::rcp(new PHX::FieldManager<AlbanyTraits>);
