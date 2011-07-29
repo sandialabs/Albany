@@ -101,11 +101,14 @@ evaluateFields(typename Traits::EvalData workset)
     TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
 			  << "Error! Invalid number of dimensions: " << numDims << std::endl);
     
-  ScalarT val;
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
-      val = field(cell,qp) * weights(cell,qp) * scaling;
-      PHAL::ResponseBase<EvalT, Traits>::local_g[0] += val;
+  if( ebName.length() == 0 || ebName == workset.EBName ) {
+    
+    ScalarT val;
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+        val = field(cell,qp) * weights(cell,qp) * scaling;
+        PHAL::ResponseBase<EvalT, Traits>::local_g[0] += val;
+      }
     }
   }
 

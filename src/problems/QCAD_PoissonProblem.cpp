@@ -499,7 +499,10 @@ QCAD::PoissonProblem::constructEvaluators(
 
      if (name == "See List" && responseList.isSublist(responseParamsID) ) {
 
-       responses[i] = Teuchos::rcp(new Albany::EvaluatedResponseFunction());
+       Teuchos::RCP<Albany::EvaluatedResponseFunction> 
+	 evResponse = Teuchos::rcp(new Albany::EvaluatedResponseFunction());
+       responses[i] = evResponse;
+
        Teuchos::ParameterList& responseParams = responseList.sublist(responseParamsID);
        std::string type = responseParams.get("Type", "??");
 
@@ -507,8 +510,7 @@ QCAD::PoissonProblem::constructEvaluators(
        RCP<ParameterList> p = rcp(new ParameterList);
        p->set<string>("Response ID", responseID);
        p->set<int>   ("Response Index", i);
-       p->set< Teuchos::RCP<Albany::EvaluatedResponseFunction> >("Response Function", 
-         Teuchos::rcp_dynamic_cast< Albany::EvaluatedResponseFunction>(responses[i]));
+       p->set< Teuchos::RCP<Albany::EvaluatedResponseFunction> >("Response Function", evResponse);
        p->set<Teuchos::ParameterList*>("Parameter List", &responseParams);
        p->set< RCP<DataLayout> >("Dummy Data Layout", dummy);
 
@@ -533,7 +535,7 @@ QCAD::PoissonProblem::constructEvaluators(
          p->set<string>("Weights Name",   "Weights");
          p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
          p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
-      }
+       }
 
        else if (type == "Save Field")
        { 
@@ -544,19 +546,6 @@ QCAD::PoissonProblem::constructEvaluators(
          p->set< RCP<DataLayout> >("Cell Scalar Data Layout", cell_scalar);
 	 p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
          p->set<string>("Weights Name",   "Weights");
-
-         // Temporary HACK:
-         // Duplicates logic from ResponseSaveField, and would be nice to put this code in
-         //  that evaluator class somehow. Pass stateManager in param list? ANDY
-         /*std::string fieldName;
-         if(responseParams.isParameter("Vector Field Name"))
-           fieldName = responseParams.get<std::string>("Vector Field Name");
-         else
-           fieldName = responseParams.get<string>("Field Name");
-         std::string stateName = responseParams.get<string>("State Name", fieldName);
-         bool bOutToExodus = responseParams.get<bool>("Output to Exodus", true);
-         stateMgr.registerStateVariable(stateName, qp_scalar, "zero", false, bOutToExodus);
-         */
        }
 
        else {

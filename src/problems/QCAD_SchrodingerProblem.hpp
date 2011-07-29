@@ -64,7 +64,8 @@ namespace QCAD {
     SchrodingerProblem& operator=(const SchrodingerProblem&);
 
     void constructEvaluators(const Albany::MeshSpecsStruct& meshSpecs,
-                             Albany::StateManager& stateMgr);
+                             Albany::StateManager& stateMgr,
+			     std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
 
   protected:
     Teuchos::RCP<const Epetra_Comm> comm;

@@ -817,7 +817,7 @@ eDensityForPoissonSchrond(typename Traits::EvalData workset, std::size_t cell, s
       // subband-independent prefactor in calculating electron density
       // X0 is used to scale wavefunc. squared from [um^-1] or [nm^-1] to [cm^-1]
       ScalarT eDenPrefactor = valleyDegeneracyFactor*dos2D*kbT/X0;
- 
+
       // loop over eigenvalues to compute electron density [cm^-3]
       for(int i = 0; i < nEigenvectors; i++) 
       {
@@ -846,7 +846,16 @@ eDensityForPoissonSchrond(typename Traits::EvalData workset, std::size_t cell, s
       // subband-independent prefactor in calculating electron density
       // X0^2 is used to scale wavefunc. squared from [um^-2] or [nm^-2] to [cm^-2]
       ScalarT eDenPrefactor = valleyDegeneracyFactor*n1D/pow(X0,2.);
- 
+
+      //FOR SUZEY 
+      // Note for Future: I'm not sure if "Previous Poisson Potential" will always exist when
+      //   calling the Poisson solver with a Schrodinger source, so use of this state should be 
+      //   confined to where the user specified a Predictor-Corrector method.
+      Albany::MDArray prevPhi = (*workset.stateArrayPtr)["Previous Poisson Potential"];
+      ScalarT testThatYouCanUsePrevPhi = prevPhi(cell,qp) * prevPhi(cell,qp);
+      if(cell == 0 && qp == 0) 
+	std::cout << "DEBUG: test Prev Phi: " << testThatYouCanUsePrevPhi << std::endl;
+
       // loop over eigenvalues to compute electron density [cm^-3]
       for(int i=0; i < nEigenvectors; i++) 
       {
