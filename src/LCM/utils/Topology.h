@@ -29,9 +29,10 @@
 
 namespace LCM{
 
+typedef stk::mesh::Entity Entity;
 typedef stk::mesh::EntityRank EntityRank;
 typedef stk::mesh::RelationIdentifier EdgeId;
-typedef stk::mesh::EntityKey entityKey;
+typedef stk::mesh::EntityKey EntityKey;
 typedef boost::vertex_name_t VertexName;
 typedef boost::edge_name_t EdgeName;
 typedef boost::property<VertexName, EntityRank> VertexProperty;
@@ -44,6 +45,7 @@ typedef boost::graph_traits<boostGraph>::edge_descriptor Edge;
 typedef boost::graph_traits<boostGraph>::vertex_iterator VertexIterator;
 typedef boost::graph_traits<boostGraph>::edge_iterator EdgeIterator;
 typedef boost::graph_traits<boostGraph>::out_edge_iterator out_edge_iterator;
+typedef boost::graph_traits<boostGraph>::in_edge_iterator in_edge_iterator;
 
 class topology {
 public:
@@ -67,15 +69,15 @@ public:
 	 */
 	void
 	disp_relation(
-			stk::mesh::Entity & entity);
+			Entity & entity);
 
 	/*
 	 * Output relations of rank entityRank associated with entity
 	 */
 	void
 	disp_relation(
-			stk::mesh::Entity & entity,
-			stk::mesh::EntityRank entityRank);
+			Entity & entity,
+			EntityRank entityRank);
 
 	/*
 	 * Output the mesh connectivity
@@ -94,7 +96,7 @@ public:
 	 */
 	bool
 	fracture_criterion(
-			stk::mesh::Entity& entity,
+			Entity& entity,
 			float p);
 
 	/*
@@ -105,7 +107,7 @@ public:
 	 */
 	void
 	set_entities_open(
-			std::map<stk::mesh::EntityKey,bool>& entity_open);
+			std::map<EntityKey,bool>& entity_open);
 
 	/*
 	 * Output the graph associated with the mesh to graphviz .dot
@@ -118,7 +120,8 @@ public:
 	 */
 	void
 	output_to_graphviz(
-			std::map<stk::mesh::EntityKey, bool> & entity_open);
+			std::string & gviz_output,
+			std::map<EntityKey, bool> & entity_open);
 
 	/*
 	 * Creates the full graph representation of the mesh. Default graph has only
@@ -128,8 +131,7 @@ public:
 	 * Note: Function must be called before mesh modification begins
 	 */
 	void
-	graph_initialization(
-			std::vector<std::vector<stk::mesh::Entity*> >  & connectivity_temp);
+	graph_initialization();
 
 	/*
 	 * stk::mesh::create_adjacent_entities creates all entities in
@@ -155,29 +157,7 @@ public:
 	 * Note: must be called before mesh modification has ended
 	 */
 	void
-	graph_cleanup(
-			std::vector<std::vector<stk::mesh::Entity*> >  & connectivity_temp);
-
-	/*
-	 * Used to split elements of a mesh along faces.
-	 *   Duplicates old_entity and removes connection between in_entity and old_entity.
-	 *   A new entity with the same out_edges (i.e. connectivity to lower order
-	 *   entities) is created.
-	 *   old_entity is the original entity before the duplication
-	 *   in_entity is a higher order entity with an out_edge connected to old_entity
-	 *
-	 * Note: Must be called after mesh modification has begun.
-	 *
-	 *       Does *Not* utilize the method from Mota, et al. 2008. Proof of concept for
-	 *       mesh modification only.
-	 */
-	void
-	duplicate_entity(
-			stk::mesh::Entity & in_entity,
-			stk::mesh::Entity & old_entity,
-			std::vector<std::vector<stk::mesh::Entity*> > & connectivity_temp,
-			int local_id,
-			stk::mesh::Entity & element);
+	graph_cleanup();
 
 	Teuchos::RCP<Albany::AbstractDiscretization>
 	get_Discretization(){return discretization_ptr_;};
@@ -203,8 +183,8 @@ public:
 	 *   for creation of an associated edge in a boost graph.
 	 */
 	struct stkEdge {
-		entityKey source;
-		entityKey target;
+		EntityKey source;
+		EntityKey target;
 		EdgeId localId;
 	};
 
@@ -224,17 +204,24 @@ public:
 
 	/*
 	 * Create vectors describing the vertices and edges of the star of an entity
-	 *   in the stk mesh. Currently, only allowed input is a node.
-	 *   TODO: allow arbitrary rank input.
+	 *   in the stk mesh.
 	 *
 	 *   The star of a graph vertex is defined as the vertex and all higher order
 	 *   vertices which are connected to it when traversing up the graph from the
 	 *   input vertex.
+	 *
+	 *   Valid for entities of all ranks
 	 */
 	void
-	star(std::set<entityKey> & subgraph_entity_lst,
+	star(std::set<EntityKey> & subgraph_entity_lst,
 			std::set<stkEdge,EdgeLessThan> & subgraph_edge_lst,
-			stk::mesh::Entity & entity);
+			Entity & entity);
+
+	/*
+	 * Fractures all open boundary entities of the mesh.
+	 */
+	void
+	fracture_boundary(std::map<EntityKey, bool> & entity_open);
 
 private:
 
@@ -245,6 +232,8 @@ private:
 
 	Teuchos::RCP<Albany::AbstractSTKMeshStruct>
 	stkMeshStruct_;
+
+	std::vector<std::vector<Entity*> > connectivity_temp;
 
 
 }; // class topology
@@ -261,27 +250,30 @@ public:
 	 */
 	Subgraph(
 			stk::mesh::BulkData* bulkData,
-			std::set<entityKey>::iterator firstVertex,
-			std::set<entityKey>::iterator lastVertex,
+			std::set<EntityKey>::iterator firstVertex,
+			std::set<EntityKey>::iterator lastVertex,
 			std::set<topology::stkEdge>::iterator firstEdge,
 			std::set<topology::stkEdge>::iterator lastEdge,
 			int numDim);
 
 	/*
-	 * Return the global entity key given a local subgraph vertex.
+	 * Return the global entity key (in the stk mesh) given a local subgraph
+	 *   vertex (in the boost subgraph).
 	 */
-	entityKey
+	EntityKey
 	local_to_global(Vertex localVertex);
 
 	/*
-	 * Return local vertex given global entity key.
+	 * Return local vertex (in the boost graph) given global entity key (in the
+	 *   stk mesh).
 	 */
 	Vertex
-	global_to_local(entityKey globalVertexKey);
+	global_to_local(EntityKey globalVertexKey);
 
 	/*
 	 * Add a vertex in the subgraph.
-	 *   Mirrors the change in the stk mesh
+	 *   Mirrors the change by adding a corresponding entity to the stk mesh.
+	 *     Adds the relationship between the vertex and entity to the maps.
 	 *   Input: rank of vertex (entity) to be created
 	 *   Output: new vertex
 	 */
@@ -290,7 +282,10 @@ public:
 
 	/*
 	 * Remove vertex in subgraph
-	 *   Mirror in stk mesh
+	 *   Also removes the corresponding entity from the stk mesh.
+	 *   Both boost and stk require that all edges to and from the vertex/entity
+	 *   are removed before deletion. If any edges remain, will be removed
+	 *   before the vertex/entity deletion.
 	 */
 	void
 	remove_vertex(Vertex & vertex);
@@ -300,6 +295,9 @@ public:
 	 *   Mirror change in stk mesh
 	 *   Return true if edge inserted in local graph, else false.
 	 *   If false, will not insert edge into stk mesh.
+	 *
+	 *   Requires the source and target vertices as well as the local ordering
+	 *   of the edge with respect to the source vertex.
 	 */
 	std::pair<Edge,bool>
 	add_edge(const EdgeId edge_id,
@@ -310,6 +308,8 @@ public:
 	/*
 	 * Remove edge from graph
 	 *   Mirror change in stk mesh
+	 *
+	 *   Requires the source and target vertices.
 	 */
 	void
 	remove_edge(
@@ -323,12 +323,19 @@ public:
 	get_edge_id(const Edge edge);
 
 	/*
-	 * The connected components boost algorithm requires an undirected graph.
-	 *   Subgraph creates a directed graph. Copy all vertices and edges from the
-	 *   subgraph into the undirected graph.
+	 * Function determines whether the input vertex is an articulation point
+	 *   of the subgraph. This is determined by applying the boost connected
+	 *   components algorithm to a copy of the subgraph without the input
+	 *   vertex included. The copy is an undirected graph as required by the
+	 *   connected components algorithm.
+	 *
+	 *   Returns the number of connected components as well as a map of the
+	 *   vertex in the subgraph and the component number.
 	 */
 	void
-	undirected_graph();
+	undirected_graph(Vertex input_vertex,
+			int & numComponents,
+			std::map<Vertex,int> & subComponent);
 
 	/*
 	 * Clones a boundary entity from the subgraph and separates the in-edges
@@ -336,14 +343,16 @@ public:
 	 *   Boundary entities are on boundary of the elements in the mesh. They
 	 *   will thus have either 1 or 2 in-edges to elements.
 	 *
-	 *   If there is only 1 in-edge, the entity is an exterior entity of the
-	 *   mesh and is not a candidate for fracture. If only 1 in-edge: Return error.
+	 *   If there is only 1 in-edge, the entity may be on the exterior of the
+	 *   mesh and is not a candidate for fracture for this subgraph. The
+	 *   boundary entity may be a valid candidate in another step. If only 1
+	 *   in-edge: Return error.
 	 *
 	 *   Entity must have satisfied the fracture criterion and be labeled open
 	 *   in is_open. If not open: Return error.
 	 */
 	void
-	clone_boundary_entity(Vertex vertex);
+	clone_boundary_entity(Vertex & vertex,std::map<EntityKey,bool> & entity_open);
 
 	/*
 	 * Splits an articulation point.
@@ -353,10 +362,28 @@ public:
 	 *   vertex. Check if vertex is articulation point
 	 *
 	 *   Clones articulation point and splits in-edges between original and new
-	 *   vertices.
+	 *   vertices. The out-edges of the vertex are not in the subgraph. For
+	 *   a consistent global graph, add the out-edges of the vertex to the new
+	 *   vertex/vertices.
+	 *
+	 *   If the vertex is a node, create a map between the element and the new
+	 *   node. If the nodal connectivity of an element does not change, do not
+	 *   add to the map.
+	 */
+	std::map<Entity*,Entity* >
+	split_articulation_point(Vertex vertex,std::map<EntityKey,bool> & entity_open);
+
+	/*
+	 * The global graph must remain consistent when new vertices are added. In
+	 *   split_articulation_point and clone_boundary_entity, all out-edges of
+	 *   the original vertex may not be in the subgraph.
+	 *
+	 *   If there are missing edges, clone them from the original to the new
+	 *   vertex. Edges not originally in the subgraph are added to the global
+	 *   graph only.
 	 */
 	void
-	split_articulation_point(Vertex vertex);
+	clone_out_edges(Vertex & originalVertex, Vertex & newVertex);
 
 	/*
 	 * Similar to the function in the topology class. Will output the subgraph in a
@@ -366,19 +393,22 @@ public:
 	 *   dot -Tpng output.dot -o output.png
 	 */
 	void
-	output_to_graphviz(std::map<entityKey,bool> entity_open);
+	output_to_graphviz(
+			std::string & gviz_output,
+			std::map<EntityKey,bool> entity_open);
 
-	int numDim_;
 
 private:
+	int numDim_;
+
 	// stk mesh data
 	stk::mesh::BulkData* bulkData_;
 
 	// map local vertex -> global entity key
-	std::map<Vertex,stk::mesh::EntityKey> localGlobalVertexMap;
+	std::map<Vertex,EntityKey> localGlobalVertexMap;
 
 	// map global entity key -> local vertex
-	std::map<stk::mesh::EntityKey, Vertex> globalLocalVertexMap;
+	std::map<EntityKey, Vertex> globalLocalVertexMap;
 
 };  // class Subgraph
 
