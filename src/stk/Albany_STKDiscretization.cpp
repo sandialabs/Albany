@@ -43,7 +43,6 @@
 
 Albany::STKDiscretization::STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
 					     const Teuchos::RCP<const Epetra_Comm>& comm_) :
-					     const Teuchos::RCP<const Epetra_Comm>& comm) :
   neq(stkMeshStruct_->neq),
   stkMeshStruct(stkMeshStruct_),
   metaData(*stkMeshStruct_->metaData),

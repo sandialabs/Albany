@@ -52,10 +52,6 @@ topology::topology(
 
 	discretization_ptr_ = disc_factory.createDiscretization(3, stateInfo);
 
-	// Dimensioned: Workset, Cell, Local Node
-	Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >
-	  element_connectivity = discretization_ptr_->getWsElNodeID();
-
 	Teuchos::ArrayRCP<double>
 	  coordinates = discretization_ptr_->getCoordinates();
 
