@@ -96,7 +96,7 @@ namespace Albany {
 
     void setResidualField(const Epetra_Vector& residual);
 
-    Teuchos::RCP<Albany::AbstractSTKMeshStruct> getSTKMeshStruct();
+    Teuchos::RCP<Albany::AbstractSTKMeshStruct> getSTKMeshStruct() {return stkMeshStruct;};
 
     // After mesh modification, need to update the element connectivity and nodal coordinates
     void updateMesh(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct,
@@ -120,10 +120,28 @@ namespace Albany {
 
     // Copy solution vector from Epetra_Vector into STK Mesh
     void setSolutionField(const Epetra_Vector& soln);
-    void zeroSolutionField(const Epetra_Vector& soln);
+    int nonzeroesPerRow(const int neq) const;
+
+    //! Process STK mesh for Owned nodal quantitites 
+    void computeOwnedNodesAndUnknowns();
+    //! Process STK mesh for Overlap nodal quantitites 
+    void computeOverlapNodesAndUnknowns();
+    //! Process STK mesh for CRS Graphs
+    void computeGraphs();
+    //! Process STK mesh for Workset/Bucket Info
+    void computeWorksetInfo();
+    //! Process STK mesh for NodeSets
+    void computeNodeSets();
+    //! Call stk_io for creating exodus output file
+    void setupExodusOutput();
 
   protected:
+
     
+    //! Stk Mesh Objects
+    stk::mesh::fem::FEMMetaData& metaData;
+    stk::mesh::BulkData& bulkData;
+
     //! Epetra communicator
     Teuchos::RCP<const Epetra_Comm> comm;
 
@@ -154,9 +172,6 @@ namespace Albany {
 
     //! Number of elements on this processor
     unsigned int numMyElements;
-
-    //! Number of nodes per element
-    unsigned int nodes_per_element;
 
     //! node sets stored as std::map(string ID, int vector of GIDs)
     Albany::NodeSetList nodeSets;

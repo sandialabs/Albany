@@ -119,8 +119,6 @@ int main(int ac, char* av[])
   stkMeshStruct = topology.get_stkMeshStruct();
 
   stk_discretization.updateMesh(stkMeshStruct,communicator);
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >
-    element_connectivity = discretization_ptr->getWsElNodeID();
   Teuchos::ArrayRCP<double>
     coordinates = stk_discretization.getCoordinates();
 

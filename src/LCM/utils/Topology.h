@@ -165,6 +165,9 @@ public:
 	stk::mesh::BulkData*
 	get_BulkData(){return bulkData_;};
 
+	//void
+	//get_face_nodes(Entity & entity, std::map<Entity*> face_nodes);
+
 	Teuchos::RCP<Albany::AbstractSTKMeshStruct>
 	get_stkMeshStruct(){return stkMeshStruct_;};
 
