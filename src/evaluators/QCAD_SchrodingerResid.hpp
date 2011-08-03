@@ -25,12 +25,12 @@
 
 #include "QCAD_MaterialDatabase.hpp"
 
+namespace QCAD {
 /** \brief Finite Element Interpolation Evaluator
 
     This evaluator interpolates nodal DOF values to quad points.
 
 */
-namespace QCAD {
 
 template<typename EvalT, typename Traits>
 class SchrodingerResid : public PHX::EvaluatorWithBaseImpl<Traits>,

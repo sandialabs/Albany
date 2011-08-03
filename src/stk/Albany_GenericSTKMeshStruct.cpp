@@ -47,6 +47,8 @@ Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
     metaData->FEM_initialize(numDim_);
   }
 
+  interleavedOrdering = params->get("Interleaved Ordering",true);
+
   bulkData = NULL;
 }
 
@@ -181,6 +183,7 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
     "The discretization method, parsed in the Discretization Factory");
   validPL->set<int>("Cubature Degree", 3, "Integration order sent to Intrepid");
   validPL->set<int>("Workset Size", 50, "Upper bound on workset (bucket) size");
+  validPL->set<bool>("Interleaved Ordering", true, "Flag for interleaved or blocked unknown ordering");
 
   return validPL;
 }

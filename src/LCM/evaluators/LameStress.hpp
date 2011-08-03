@@ -24,9 +24,9 @@
 #include "Phalanx_MDField.hpp"
 #include "LameUtils.hpp"
 
+namespace LCM {
 /** \brief Evaluates stress using the Library for Advanced Materials for Engineering (LAME).
 */
-namespace LCM {
 
 template<typename EvalT, typename Traits>
 class LameStress : public PHX::EvaluatorWithBaseImpl<Traits>,

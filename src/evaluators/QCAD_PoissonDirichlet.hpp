@@ -32,10 +32,10 @@
 
 #include "QCAD_MaterialDatabase.hpp"
 
+namespace QCAD {
+
 /** \brief Dirichlet Evaluator for QCAD Poisson Problem
 */
-
-namespace QCAD {
 
 template<typename EvalT, typename Traits>
 class PoissonDirichlet
@@ -56,22 +56,22 @@ protected:
   //! built-in potential for MB statistics and complete ionization
   ScalarT potentialForMBComplIon(const ScalarT &Nc, const ScalarT &Nv, 
 				 const ScalarT &Eg, const double &Chi,
-				 const std::string dopType, const double &dopingConc);
+				 const std::string &dopType, const double &dopingConc);
 
   //! built-in potential for MB statistics and incomplete ionization
   ScalarT potentialForMBIncomplIon(const ScalarT &Nc, const ScalarT &Nv, 
 				   const ScalarT &Eg, const double &Chi, 
-				   const std::string dopType, const double &dopingConc, const double &dopantActE);
+				   const std::string &dopType, const double &dopingConc, const double &dopantActE);
 
   //! built-in potential for FD statistics and complete ionization
   ScalarT potentialForFDComplIon(const ScalarT &Nc, const ScalarT &Nv, 
 				 const ScalarT &Eg, const double &Chi, 
-				 const std::string dopType, const double &dopingConc);
+				 const std::string &dopType, const double &dopingConc);
 
   //! built-in potential for zero-K FD statistics and complete ionization
   ScalarT potentialForZeroKFDComplIon(const ScalarT &Nc, const ScalarT &Nv, 
 				      const ScalarT &Eg, const double &Chi, 
-				      const std::string dopType, const double &dopingConc);
+				      const std::string &dopType, const double &dopingConc);
 
 
 private:

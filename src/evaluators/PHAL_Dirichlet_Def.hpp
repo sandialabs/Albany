@@ -29,7 +29,6 @@ template<typename EvalT,typename Traits>
 DirichletBase<EvalT, Traits>::
 DirichletBase(Teuchos::ParameterList& p) :
   offset(p.get<int>("Equation Offset")),
-  neq(p.get<int>("Number of Equations")),
   nodeSetID(p.get<std::string>("Node Set ID"))
 {
   value = p.get<RealType>("Dirichlet Value");
@@ -73,12 +72,10 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   Teuchos::RCP<Epetra_Vector> f = dirichletWorkset.f;
   Teuchos::RCP<const Epetra_Vector> x = dirichletWorkset.x;
   // Grab the vector off node GIDs for this Node Set ID from the std::map
-  const std::vector<int>& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+  const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
 
-  int gunk, lunk; // global and local indicies into unknown vector
   for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
-      gunk = nsNodes[inode] * this->neq + this->offset;
-      lunk = f->Map().LID(gunk);
+      int lunk = nsNodes[inode][this->offset];
       (*f)[lunk] = ((*x)[lunk] - this->value);
   }
 }
@@ -103,7 +100,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   Teuchos::RCP<Epetra_CrsMatrix> jac = dirichletWorkset.Jac;
   Teuchos::RCP<const Epetra_Vector> x = dirichletWorkset.x;
   const RealType j_coeff = dirichletWorkset.j_coeff;
-  const std::vector<int>& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+  const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
 
   const Epetra_Map& map = jac->RowMap();
 
@@ -114,9 +111,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   bool fillResid = (f != Teuchos::null);
 
   for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
-    const unsigned nodeid = nsNodes[inode];
-      const int gunk = nodeid * this->neq + this->offset;
-      int lunk = map.LID(gunk);
+      int lunk = nsNodes[inode][this->offset];
       jac->ExtractMyRowView(lunk, numEntries, matrixEntries, matrixIndices);
       for (int i=0; i<numEntries; i++) matrixEntries[i]=0;
       jac->ReplaceMyValues(lunk, 1, &diag, &lunk);
@@ -147,15 +142,13 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   Teuchos::RCP<const Epetra_Vector> x = dirichletWorkset.x;
   Teuchos::RCP<const Epetra_MultiVector> Vx = dirichletWorkset.Vx;
   const RealType j_coeff = dirichletWorkset.j_coeff;
-  const std::vector<int>& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+  const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
 
   const Epetra_BlockMap& map = x->Map();
   bool fillResid = (f != Teuchos::null);
 
   for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
-    const unsigned nodeid = nsNodes[inode];
-      const int gunk = nodeid * this->neq + this->offset;
-      int lunk = map.LID(gunk);
+      int lunk = nsNodes[inode][this->offset];
 
       if (fillResid) (*f)[lunk] = ((*x)[lunk] - this->value.val());
 
@@ -186,13 +179,11 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     dirichletWorkset.sg_f;
   Teuchos::RCP< const Stokhos::VectorOrthogPoly<Epetra_Vector> > x = 
     dirichletWorkset.sg_x;
-  const std::vector<int>& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+  const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
 
   int nblock = x->size();
-  int gunk, lunk; // global and local indicies into unknown vector
   for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
-      gunk = nsNodes[inode] * this->neq + this->offset;
-      lunk = (*f)[0].Map().LID(gunk);
+      int lunk = nsNodes[inode][this->offset];
       for (int block=0; block<nblock; block++)
 	(*f)[block][lunk] = ((*x)[block][lunk] - this->value.coeff(block));
   }
@@ -221,7 +212,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   Teuchos::RCP<const Stokhos::VectorOrthogPoly<Epetra_Vector> > x = 
     dirichletWorkset.sg_x;
   const RealType j_coeff = dirichletWorkset.j_coeff;
-  const std::vector<int>& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+  const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
 
   const Epetra_Map& map = (*jac)[0].RowMap();
 
@@ -236,9 +227,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   bool fillResid = (f != Teuchos::null);
 
   for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
-    const unsigned nodeid = nsNodes[inode];
-      const int gunk = nodeid * this->neq + this->offset;
-      int lunk = map.LID(gunk);
+      int lunk = nsNodes[inode][this->offset];
       for (int block=0; block<nblock_jac; block++) {
 	(*jac)[block].ExtractMyRowView(lunk, numEntries, matrixEntries, 
 				       matrixIndices);
@@ -273,13 +262,11 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     dirichletWorkset.mp_f;
   Teuchos::RCP< const Stokhos::ProductContainer<Epetra_Vector> > x = 
     dirichletWorkset.mp_x;
-  const std::vector<int>& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+  const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
 
   int nblock = x->size();
-  int gunk, lunk; // global and local indicies into unknown vector
   for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
-      gunk = nsNodes[inode] * this->neq + this->offset;
-      lunk = (*f)[0].Map().LID(gunk);
+      int lunk = nsNodes[inode][this->offset];
       for (int block=0; block<nblock; block++)
 	(*f)[block][lunk] = ((*x)[block][lunk] - this->value.coeff(block));
   }
@@ -308,7 +295,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   Teuchos::RCP<const Stokhos::ProductContainer<Epetra_Vector> > x = 
     dirichletWorkset.mp_x;
   const RealType j_coeff = dirichletWorkset.j_coeff;
-  const std::vector<int>& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+  const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
 
   const Epetra_Map& map = (*jac)[0].RowMap();
 
@@ -323,9 +310,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   bool fillResid = (f != Teuchos::null);
 
   for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
-    const unsigned nodeid = nsNodes[inode];
-      const int gunk = nodeid * this->neq + this->offset;
-      int lunk = map.LID(gunk);
+      int lunk = nsNodes[inode][this->offset];
       for (int block=0; block<nblock_jac; block++) {
 	(*jac)[block].ExtractMyRowView(lunk, numEntries, matrixEntries, 
 				       matrixIndices);

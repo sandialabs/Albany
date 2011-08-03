@@ -34,6 +34,7 @@
     <Parameter name="2D Elements" type="int" value="12"/>
     <Parameter name="3D Elements" type="int" value="12"/>
     <Parameter name="Method" type="string" value="STK3D"/>
+    <Parameter name="Interleaved Ordering" type="bool" value="true"/>
     <Parameter name="Exodus Output File Name" type="string" value="stel3d.exo"/>
   </ParameterList>
   <ParameterList name="Regression Results">

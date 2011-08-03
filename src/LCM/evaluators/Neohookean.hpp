@@ -23,13 +23,13 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
+namespace LCM {
 /** \brief Neohookean stress response
 
     This evaluator computes stress based on a uncoupled Neohookean
     Helmholtz potential
 
 */
-namespace LCM {
 
 template<typename EvalT, typename Traits>
 class Neohookean : public PHX::EvaluatorWithBaseImpl<Traits>,

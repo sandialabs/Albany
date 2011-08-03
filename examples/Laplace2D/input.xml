@@ -16,11 +16,6 @@
     </ParameterList>
     <ParameterList name="Constraints" />
   </ParameterList>
-  <ParameterList name="VTK">
-    <Parameter name="Visualize Sensitivities" type="bool" value="0" />
-    <Parameter name="Stagger Windows" type="bool" value="1" />
-    <Parameter name="Do Visualization" type="bool" value="0" />
-  </ParameterList>
   <ParameterList name="NOX">
     <ParameterList name="Line Search">
       <Parameter name="Method" type="string" value="Full Step" />

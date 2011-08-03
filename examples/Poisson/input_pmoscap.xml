@@ -32,43 +32,58 @@
     </ParameterList>
 
     <ParameterList name="Response Functions">
-            <Parameter name="Number" type="int" value="8" />
+      <Parameter name="Number" type="int" value="8" />
       <Parameter name="Response 0" type="string" value="Solution Average" />
+      
       <Parameter name="Response 1" type="string" value="See List" />
       <ParameterList name="ResponseParams 1">
-	<Parameter name="Type" type="string" value="Save Field" />
-	<Parameter name="Field Name" type="string" value="Charge Density" />
+        <Parameter name="Type" type="string" value="Save Field" />
+        <Parameter name="Field Name" type="string" value="Charge Density" />
+        <Parameter name="Output to Exodus" type="bool" value="1" />
       </ParameterList>
+      
       <Parameter name="Response 2" type="string" value="See List" />
       <ParameterList name="ResponseParams 2">
-	<Parameter name="Type" type="string" value="Save Field" />
-	<Parameter name="Field Name" type="string" value="Electron Density" />
+        <Parameter name="Type" type="string" value="Save Field" />
+        <Parameter name="Field Name" type="string" value="Electron Density" />
+        <Parameter name="Output to Exodus" type="bool" value="1" />
       </ParameterList>
+      
       <Parameter name="Response 3" type="string" value="See List" />
       <ParameterList name="ResponseParams 3">
-	<Parameter name="Type" type="string" value="Save Field" />
-	<Parameter name="Field Name" type="string" value="Hole Density" />
+        <Parameter name="Type" type="string" value="Save Field" />
+        <Parameter name="Field Name" type="string" value="Hole Density" />
+        <Parameter name="Output to Exodus" type="bool" value="1" />
       </ParameterList>
+      
       <Parameter name="Response 4" type="string" value="See List" />
       <ParameterList name="ResponseParams 4">
-	<Parameter name="Type" type="string" value="Save Field" />
-	<Parameter name="Field Name" type="string" value="Electric Potential" />
+        <Parameter name="Type" type="string" value="Save Field" />
+        <Parameter name="Field Name" type="string" value="Electric Potential" />
+        <Parameter name="Output to Exodus" type="bool" value="1" />
       </ParameterList>
+      
       <Parameter name="Response 5" type="string" value="See List" />
       <ParameterList name="ResponseParams 5">
-	<Parameter name="Type" type="string" value="Save Field" />
-	<Parameter name="Field Name" type="string" value="Ionized Dopant" />
+        <Parameter name="Type" type="string" value="Save Field" />
+        <Parameter name="Field Name" type="string" value="Ionized Dopant" />
+        <Parameter name="Output to Exodus" type="bool" value="1" />
       </ParameterList>
+      
       <Parameter name="Response 6" type="string" value="See List" />
       <ParameterList name="ResponseParams 6">
-	<Parameter name="Type" type="string" value="Save Field" />
-	<Parameter name="Field Name" type="string" value="Conduction Band" />
+        <Parameter name="Type" type="string" value="Save Field" />
+        <Parameter name="Field Name" type="string" value="Conduction Band" />
+        <Parameter name="Output to Exodus" type="bool" value="1" />
       </ParameterList>
+      
       <Parameter name="Response 7" type="string" value="See List" />
       <ParameterList name="ResponseParams 7">
-	<Parameter name="Type" type="string" value="Save Field" />
-	<Parameter name="Field Name" type="string" value="Valence Band" />
+        <Parameter name="Type" type="string" value="Save Field" />
+        <Parameter name="Field Name" type="string" value="Valence Band" />
+        <Parameter name="Output to Exodus" type="bool" value="1" />
       </ParameterList>
+      
     </ParameterList>
   </ParameterList>
 
@@ -87,13 +102,6 @@
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="1" />
     <Parameter name="Sensitivity Test Values 0" type="Array(double)"
      	       value="{ 1.1527225498,4.65492927386,0.0745758619996}" />
-  </ParameterList>
-
-
-  <ParameterList name="VTK">
-    <Parameter name="Visualize Sensitivities" type="bool" value="0" />
-    <Parameter name="Stagger Windows" type="bool" value="1" />
-    <Parameter name="Do Visualization" type="bool" value="0" />
   </ParameterList>
 
 

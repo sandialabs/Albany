@@ -89,15 +89,6 @@
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{0.42088217}"/>
     <Parameter  name="Sensitivity Test Values 1" type="Array(double)" value="{7.3046288}"/>
   </ParameterList>
-  <ParameterList name="VTK">
-    <Parameter name="Do Visualization" type="bool" value="1"/>
-    <Parameter name="Visualize Sensitivities" type="bool" value="1"/>
-    <Parameter name="RotateX" type="double" value="00.0" />
-    <Parameter name="RotateZ" type="double" value="00.0" />
-    <!-- <Parameter name="Window X" type="int" value="512" /> -->
-    <!-- <Parameter name="Window Y" type="int" value="512" /> -->
-    <Parameter name="Stagger Windows" type="bool" value="true" />
-  </ParameterList>
   <ParameterList name="LOCA">
     <ParameterList name="Predictor">
       <Parameter  name="Method" type="string" value="Tangent"/>

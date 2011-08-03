@@ -25,12 +25,13 @@
 
 #include "Intrepid_CellTools.hpp"
 #include "Intrepid_Cubature.hpp"
+
+namespace LCM {
 /** \brief Localization Element Evaluator
 
     This evaluator computes relevant things for the Localization element.
 
 */
-namespace LCM {
 
 template<typename EvalT, typename Traits>
 class Localization : public PHX::EvaluatorWithBaseImpl<Traits>,

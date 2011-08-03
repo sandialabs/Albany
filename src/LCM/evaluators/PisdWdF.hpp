@@ -25,12 +25,12 @@
 
 #include "Sacado_Fad_SLFad.hpp"
 
+namespace LCM {
 /** \brief Nonlinear Elasticity Energy Potential
 
     This evaluator computes a energy density for nonlinear elastic material
 
 */
-namespace LCM {
 
 template<typename EvalT, typename Traits>
 class PisdWdF : public PHX::EvaluatorWithBaseImpl<Traits>,

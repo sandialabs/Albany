@@ -67,10 +67,6 @@ ScatterResidualBase(const Teuchos::ParameterList& p)
   if (p.isType<int>("Offset of First DOF"))
     offset = p.get<int>("Offset of First DOF");
   else offset = 0;
-  if (p.isType<int>("Number of DOF per Node"))
-    neqBase = p.get<int>("Number of DOF per Node");
-  else neqBase = numFieldsBase; // Defaults to all
-
 
   this->addEvaluatedField(*scatter_operation);
 
@@ -101,7 +97,6 @@ template<typename Traits>
 ScatterResidual<PHAL::AlbanyTraits::Residual,Traits>::
 ScatterResidual(const Teuchos::ParameterList& p)
   : ScatterResidualBase<PHAL::AlbanyTraits::Residual,Traits>(p),
-  neq(ScatterResidualBase<PHAL::AlbanyTraits::Residual,Traits>::neqBase),
   numFields(ScatterResidualBase<PHAL::AlbanyTraits::Residual,Traits>::numFieldsBase)
 
 {
@@ -115,15 +110,14 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT *valptr;
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<int>& nodeID  = workset.wsElNodeID[cell];
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      int firstDOF = nodeID[node] * neq + this->offset;
 
       for (std::size_t eq = 0; eq < numFields; eq++) {
         if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
         else                   valptr = &(this->val[eq])(cell,node);
-	(*f)[firstDOF + eq] += *valptr;
+	(*f)[nodeID[node][this->offset + eq]] += *valptr;
       }
     }
   }
@@ -137,7 +131,6 @@ template<typename Traits>
 ScatterResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
 ScatterResidual(const Teuchos::ParameterList& p)
   : ScatterResidualBase<PHAL::AlbanyTraits::Jacobian,Traits>(p),
-  neq(ScatterResidualBase<PHAL::AlbanyTraits::Jacobian,Traits>::neqBase),
   numFields(ScatterResidualBase<PHAL::AlbanyTraits::Jacobian,Traits>::numFieldsBase)
 {
 }
@@ -151,19 +144,19 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<Epetra_CrsMatrix> Jac = workset.Jac;
   ScalarT *valptr;
 
-  int row, lcol, firstcol, col;
+  int row, lcol, col;
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<int>& nodeID  = workset.wsElNodeID[cell];
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      int firstDOF = nodeID[node] * neq + this->offset;
      
       for (std::size_t eq = 0; eq < numFields; eq++) {
         if (this->vectorField) valptr = &((this->valVec[0])(cell,node,eq));
         else                   valptr = &(this->val[eq])(cell,node);
 
-        row = firstDOF + eq;
+        row = nodeID[node][this->offset + eq];
+        int neq = nodeID[node].size();
         if (f != Teuchos::null) {
           f->SumIntoMyValue(row, 0, valptr->val());
         }
@@ -173,14 +166,13 @@ evaluateFields(typename Traits::EvalData workset)
 
           // Loop over nodes in element
           for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
-            firstcol =   nodeID[node_col] * neq;
 
             // Loop over equations per node
             for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
               lcol = neq * node_col + eq_col;
 
               // Global column
-              col =  firstcol + eq_col;
+              col =  nodeID[node_col][eq_col];
               
               if (workset.is_adjoint) {
                 // Sum Jacobian transposed
@@ -206,7 +198,6 @@ template<typename Traits>
 ScatterResidual<PHAL::AlbanyTraits::Tangent, Traits>::
 ScatterResidual(const Teuchos::ParameterList& p)
   : ScatterResidualBase<PHAL::AlbanyTraits::Tangent,Traits>(p),
-  neq(ScatterResidualBase<PHAL::AlbanyTraits::Tangent,Traits>::neqBase),
   numFields(ScatterResidualBase<PHAL::AlbanyTraits::Tangent,Traits>::numFieldsBase)
 {
 }
@@ -233,15 +224,14 @@ evaluateFields(typename Traits::EvalData workset)
                      "One of f, JV, or fp must be non-null! " << std::endl);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<int>& nodeID  = workset.wsElNodeID[cell];
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      int firstDOF = nodeID[node] * neq + this->offset;
       for (std::size_t eq = 0; eq < numFields; eq++) {
         if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
         else                   valptr = &(this->val[eq])(cell,node);
 
-        int row = firstDOF + eq;
+        int row = nodeID[node][this->offset + eq];
 
         if (f != Teuchos::null)
           f->SumIntoMyValue(row, 0, valptr->val());
@@ -266,7 +256,6 @@ template<typename Traits>
 ScatterResidual<PHAL::AlbanyTraits::SGResidual, Traits>::
 ScatterResidual(const Teuchos::ParameterList& p)
   : ScatterResidualBase<PHAL::AlbanyTraits::SGResidual,Traits>(p),
-  neq(ScatterResidualBase<PHAL::AlbanyTraits::SGResidual,Traits>::neqBase),
   numFields(ScatterResidualBase<PHAL::AlbanyTraits::SGResidual,Traits>::numFieldsBase)
 {
 }
@@ -281,16 +270,15 @@ evaluateFields(typename Traits::EvalData workset)
 
   int nblock = f->size();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<int>& nodeID  = workset.wsElNodeID[cell];
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      int firstDOF = nodeID[node] * neq + this->offset;
 
       for (std::size_t eq = 0; eq < numFields; eq++) {
         if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
         else                   valptr = &(this->val[eq])(cell,node);
 	for (int block=0; block<nblock; block++)
-	  (*f)[block][firstDOF + eq] += valptr->coeff(block);
+	  (*f)[block][nodeID[node][this->offset + eq]] += valptr->coeff(block);
       }
     }
   }
@@ -304,7 +292,6 @@ template<typename Traits>
 ScatterResidual<PHAL::AlbanyTraits::SGJacobian, Traits>::
 ScatterResidual(const Teuchos::ParameterList& p)
   : ScatterResidualBase<PHAL::AlbanyTraits::SGJacobian,Traits>(p),
-  neq(ScatterResidualBase<PHAL::AlbanyTraits::SGJacobian,Traits>::neqBase),
   numFields(ScatterResidualBase<PHAL::AlbanyTraits::SGJacobian,Traits>::numFieldsBase)
 {
 }
@@ -319,7 +306,7 @@ evaluateFields(typename Traits::EvalData workset)
     workset.sg_Jac;
   ScalarT *valptr;
 
-  int row, lcol, firstcol, col;
+  int row, lcol, col;
   int nblock = 0;
   if (f != Teuchos::null)
     nblock = f->size();
@@ -327,16 +314,16 @@ evaluateFields(typename Traits::EvalData workset)
   double c; // use double since it goes into CrsMatrix
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<int>& nodeID  = workset.wsElNodeID[cell];
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      int firstDOF = nodeID[node] * neq + this->offset;
 
       for (std::size_t eq = 0; eq < numFields; eq++) {
         if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
         else                   valptr = &(this->val[eq])(cell,node);
 
-        row = firstDOF + eq;
+        row = nodeID[node][this->offset + eq];
+        int neq = nodeID[node].size();
 
         if (f != Teuchos::null) {
 	  for (int block=0; block<nblock; block++)
@@ -348,14 +335,13 @@ evaluateFields(typename Traits::EvalData workset)
 
           // Loop over nodes in element
           for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
-	    firstcol = nodeID[node_col] * neq;
 
             // Loop over equations per node
             for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
               lcol = neq * node_col + eq_col;
 
               // Global column
-              col =  firstcol + eq_col;
+              col =  nodeID[node_col][eq_col];
 
               // Sum Jacobian
 	      for (int block=0; block<nblock_jac; block++) {
@@ -383,7 +369,6 @@ template<typename Traits>
 ScatterResidual<PHAL::AlbanyTraits::MPResidual, Traits>::
 ScatterResidual(const Teuchos::ParameterList& p)
   : ScatterResidualBase<PHAL::AlbanyTraits::MPResidual,Traits>(p),
-  neq(ScatterResidualBase<PHAL::AlbanyTraits::MPResidual,Traits>::neqBase),
   numFields(ScatterResidualBase<PHAL::AlbanyTraits::MPResidual,Traits>::numFieldsBase)
 {
 }
@@ -398,16 +383,15 @@ evaluateFields(typename Traits::EvalData workset)
 
   int nblock = f->size();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<int>& nodeID  = workset.wsElNodeID[cell];
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      int firstDOF = nodeID[node] * neq + this->offset;
 
       for (std::size_t eq = 0; eq < numFields; eq++) {
         if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
         else                   valptr = &(this->val[eq])(cell,node);
 	for (int block=0; block<nblock; block++)
-	  (*f)[block][firstDOF + eq] += valptr->coeff(block);
+	  (*f)[block][nodeID[node][this->offset + eq]] += valptr->coeff(block);
       }
     }
   }
@@ -421,7 +405,6 @@ template<typename Traits>
 ScatterResidual<PHAL::AlbanyTraits::MPJacobian, Traits>::
 ScatterResidual(const Teuchos::ParameterList& p)
   : ScatterResidualBase<PHAL::AlbanyTraits::MPJacobian,Traits>(p),
-  neq(ScatterResidualBase<PHAL::AlbanyTraits::MPJacobian,Traits>::neqBase),
   numFields(ScatterResidualBase<PHAL::AlbanyTraits::MPJacobian,Traits>::numFieldsBase)
 {
 }
@@ -436,7 +419,7 @@ evaluateFields(typename Traits::EvalData workset)
     workset.mp_Jac;
   ScalarT *valptr;
 
-  int row, lcol, firstcol, col;
+  int row, lcol, col;
   int nblock = 0;
   if (f != Teuchos::null)
     nblock = f->size();
@@ -444,16 +427,16 @@ evaluateFields(typename Traits::EvalData workset)
   double c; // use double since it goes into CrsMatrix
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<int>& nodeID  = workset.wsElNodeID[cell];
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      int firstDOF = nodeID[node] * neq + this->offset;
 
       for (std::size_t eq = 0; eq < numFields; eq++) {
         if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
         else                   valptr = &(this->val[eq])(cell,node);
 
-        row = firstDOF + eq;
+        row = nodeID[node][this->offset + eq];
+        int neq = nodeID[node].size();
 
         if (f != Teuchos::null) {
 	  for (int block=0; block<nblock; block++)
@@ -465,14 +448,13 @@ evaluateFields(typename Traits::EvalData workset)
 
           // Loop over nodes in element
           for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
-	    firstcol = nodeID[node_col] * neq;
 
             // Loop over equations per node
             for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
               lcol = neq * node_col + eq_col;
 
               // Global column
-              col =  firstcol + eq_col;
+              col =  nodeID[node_col][eq_col];
 
               // Sum Jacobian
 	      for (int block=0; block<nblock_jac; block++) {

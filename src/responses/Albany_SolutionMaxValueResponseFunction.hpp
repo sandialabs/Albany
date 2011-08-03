@@ -32,7 +32,7 @@ namespace Albany {
   public:
   
     //! Default constructor
-    SolutionMaxValueResponseFunction(int neq = 1, int eq = 0);
+    SolutionMaxValueResponseFunction(int neq = 1, int eq = 0, bool interleavedOrdering=true);
 
     //! Destructor
     virtual ~SolutionMaxValueResponseFunction();
@@ -95,6 +95,9 @@ namespace Albany {
 
     //! Equation we want to get the max value from
     int eq;
+
+    //! Flag for interleaved verus blocked unknown ordering
+    bool interleavedOrdering;
 
     //! Compute max value and index
     void computeMaxValue(const Epetra_Vector& x, double& val, int& index);

@@ -81,6 +81,16 @@ namespace Albany {
 			const Teuchos::Array<SGType>* sg_p_vals,
 			Stokhos::VectorOrthogPoly<Epetra_Vector>& sg_g) = 0;
 
+
+    //! Post process responses
+    virtual void 
+    postProcessResponses(const Epetra_Comm& comm, Teuchos::RCP<Epetra_Vector>& g) {};
+
+    //! Post process response derivatives
+    virtual void 
+    postProcessResponseDerivatives(const Epetra_Comm& comm, Teuchos::RCP<Epetra_MultiVector>& gt) {};
+
+
   private:
 
     //! Private to prohibit copying

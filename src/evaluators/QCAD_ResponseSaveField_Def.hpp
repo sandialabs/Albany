@@ -54,7 +54,9 @@ evaluateFields(typename Traits::EvalData workset)
 template<typename Traits>
 QCAD::ResponseSaveField<PHAL::AlbanyTraits::Residual, Traits>::
 ResponseSaveField(Teuchos::ParameterList& p) :
-  PHAL::ResponseBase<PHAL::AlbanyTraits::Residual, Traits>(p)
+  PHAL::ResponseBase<PHAL::AlbanyTraits::Residual, Traits>(p),
+  weights(p.get<std::string>("Weights Name"),
+	p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"))
 {
   //! get and validate Response parameter list
   Teuchos::ParameterList* plist = 
@@ -75,6 +77,7 @@ ResponseSaveField(Teuchos::ParameterList& p) :
   }
   stateName = plist->get<std::string>("State Name", fieldName);
   outputToExodus = plist->get<bool>("Output to Exodus", true);
+  outputCellAverage = plist->get<bool>("Output Cell Average", true);
   vectorOp = plist->get<std::string>("Vector Operation", "magnitude");
 
   //! number of quad points per cell and dimension
@@ -82,6 +85,8 @@ ResponseSaveField(Teuchos::ParameterList& p) :
     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
   Teuchos::RCP<PHX::DataLayout> vector_dl =
     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
+  Teuchos::RCP<PHX::DataLayout> cell_dl =
+    p.get< Teuchos::RCP<PHX::DataLayout> >("Cell Scalar Data Layout");
   numQPs = vector_dl->dimension(1);
   numDims = vector_dl->dimension(2);
  
@@ -89,11 +94,27 @@ ResponseSaveField(Teuchos::ParameterList& p) :
   Teuchos::RCP<PHX::DataLayout>& field_dl = isVectorField ? vector_dl : scalar_dl;
   PHX::MDField<ScalarT> f(fieldName, field_dl);  field = f;
   this->addDependentField(field);
+  this->addDependentField(weights);
 
   //! set initial values
   std::vector<double> initVals(1); initVals[0] = 0.0; //Response is a dummy 0.0
   PHAL::ResponseBase<PHAL::AlbanyTraits::Residual, Traits>::
     setInitialValues(initVals);
+
+  //! set post processing parameters (used to reconcile values across multiple processors)
+  Teuchos::ParameterList ppParams;
+  ppParams.set("Processing Type","None");
+  PHAL::ResponseBase<PHAL::AlbanyTraits::Residual, Traits>::
+    setPostProcessingParams(ppParams);
+
+  //! Register with state manager
+  Albany::StateManager* pStateMgr = p.get< Albany::StateManager* >("State Manager Ptr");
+  if( outputCellAverage ) {
+    pStateMgr->registerStateVariable(stateName, cell_dl, "zero", false, outputToExodus);
+  }
+  else {
+    pStateMgr->registerStateVariable(stateName, scalar_dl, "zero", false, outputToExodus);
+  }
 }
 
 // **********************************************************************
@@ -103,6 +124,7 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(field,fm);
+  this->utils.setFieldData(weights,fm);
 }
 
 // **********************************************************************
@@ -125,11 +147,22 @@ evaluateFields(typename Traits::EvalData workset)
   int size = dims.size();
 
   if(!isVectorField) {
-    switch (size) {  //Note: size should always == 2 now: qp_scalar type state is always registered
+    switch (size) {  //Note: size should always == 2 now: qp_scalar type or cell_sclar state registered
     case 2:     
-      for (int cell = 0; cell < dims[0]; ++cell)
-	for (int qp = 0; qp < dims[1]; ++qp)
-	  sta(cell, qp) = field(cell,qp);
+      for (int cell = 0; cell < dims[0]; ++cell) {
+        if( outputCellAverage ) {
+          double integral = 0, vol = 0;
+	  for (int qp = 0; qp < dims[1]; ++qp) {
+	    integral += field(cell,qp) * weights(cell,qp);
+            vol += weights(cell, qp);
+          }
+          sta(cell,0) = integral / vol;
+        }
+        else {
+	  for (int qp = 0; qp < dims[1]; ++qp)
+	    sta(cell, qp) = field(cell,qp);
+        }
+      }
       break;
       /*case 3:     
       for (int cell = 0; cell < dims[0]; ++cell)
@@ -218,6 +251,7 @@ QCAD::ResponseSaveField<PHAL::AlbanyTraits::Residual,Traits>::getValidResponsePa
   validPL->set<string>("Vector Operation", "magnitude", "How to convert vector to scalar value, e.g., magnitude, xyMagnitude, xCoord");
   validPL->set<string>("State Name", "<Field Name>", "State name to save field as");
   validPL->set<bool>("Output to Exodus", true, "Whether state should be output in STK dump to exodus");
+  validPL->set<bool>("Output Cell Average", true, "Whether cell average or all quadpoint data should be output to exodus");
 
   return validPL;
 }

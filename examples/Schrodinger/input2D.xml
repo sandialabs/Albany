@@ -48,13 +48,6 @@
      	       value="{0.10713,0.0,0.0}" />
   </ParameterList>
 
-
-  <ParameterList name="VTK">
-    <Parameter name="Visualize Sensitivities" type="bool" value="0" />
-    <Parameter name="Stagger Windows" type="bool" value="1" />
-    <Parameter name="Do Visualization" type="bool" value="0" />
-  </ParameterList>
-
   <ParameterList name="LOCA">
     <ParameterList name="Bifurcation"/>
     <ParameterList name="Constraints"/>
@@ -77,6 +70,7 @@
         <Parameter name="Block Size" type="int" value="4"/>
         <Parameter name="Maximum Restarts" type="int" value="0"/>
         <Parameter name="Shift" type="double" value="10.0"/>
+        <Parameter name="Normalize Eigenvectors with Mass Matrix" type="bool" value="false"/>
       </ParameterList>
     </ParameterList>
     <ParameterList name="Step Size">

@@ -42,10 +42,9 @@ getValidInitialConditionParameters()
 }
 
 void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
-                       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >& wsElNodeID,
+                       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >& wsElNodeEqID,
                        const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords,
-                       const int neq,
-                       const int numDim,
+                       const int neq, const int numDim,
                        Teuchos::ParameterList& icParams)
 {
   // Called twice, with x and xdot. Different param lists are sent in.
@@ -62,18 +61,16 @@ void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
     = createAnalyticFunction(name, neq, numDim, data);
 
   // Loop over all worksets, elements, all local nodes: compute soln as a function of coord
-  for (int ws=0; ws < wsElNodeID.size(); ws++) {
-  for (int el=0; el < wsElNodeID[ws].size(); el++) {
-    for (int ln=0; ln < wsElNodeID[ws][0].size(); ln++) {
-       int lid = wsElNodeID[ws][el][ln];
-       int coordID = 3*lid;
-       double* x = &(*soln)[neq*lid];
-       const double* X = coords[ws][el][ln];
-
-       initFunc->compute(x,X);
-
-    }
-  } }
+  std::vector<double> x; x.resize(neq);
+  for (int ws=0; ws < wsElNodeEqID.size(); ws++) {
+    for (int el=0; el < wsElNodeEqID[ws].size(); el++) {
+      for (int ln=0; ln < wsElNodeEqID[ws][0].size(); ln++) {
+        const double* X = coords[ws][el][ln];
+        Teuchos::ArrayRCP<int> lid = wsElNodeEqID[ws][el][ln];
+        for (int i=0; i<neq; i++) x[i] = (*soln)[lid[i]];
+        initFunc->compute(&x[0],X);
+        for (int i=0; i<neq; i++) (*soln)[lid[i]] = x[i];
+  } } }
 }
 
 }

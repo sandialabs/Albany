@@ -26,6 +26,7 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Epetra_Vector.h"
 
+namespace PHAL {
 /** \brief Gathers Coordinates values from the Newton coordinates vector into 
     the nodal fields of the field manager
 
@@ -34,7 +35,6 @@
     names vector.
 
 */
-namespace PHAL {
 
 template<typename EvalT, typename Traits> 
 class GatherCoordinateVector : public PHX::EvaluatorWithBaseImpl<Traits>,

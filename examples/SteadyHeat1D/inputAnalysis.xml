@@ -35,15 +35,6 @@
     <Parameter  name="Number of Piro Analysis Comparisons" type="int" value="3"/>
     <Parameter  name="Piro Analysis Test Values" type="Array(double)" value="{1.8, 0.2, 1.8}"/>
   </ParameterList>
-  <ParameterList name="VTK">
-    <Parameter name="Do Visualization" type="bool" value="0"/>
-    <Parameter name="Visualize Sensitivities" type="bool" value="0"/>
-    <Parameter name="RotateX" type="double" value="85.0" />
-    <Parameter name="RotateZ" type="double" value="50.0" />
-    <!-- <Parameter name="Window X" type="int" value="512" /> -->
-    <!-- <Parameter name="Window Y" type="int" value="512" /> -->
-    <!-- <Parameter name="Stagger Windows" type="bool" value="true" /> -->
-  </ParameterList>
   <ParameterList name="LOCA">
     <ParameterList name="Bifurcation"/>
     <ParameterList name="Constraints"/>

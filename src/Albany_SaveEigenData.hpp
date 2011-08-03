@@ -24,12 +24,13 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Albany_StateManager.hpp"
 
+namespace Albany {
+
 //! Strategy for saving eigenvector/value data
 /*!
  * Saves eigenvectors and corresponding eigenvalues
  * using a custom strategy.
  */
-namespace Albany {
 
 class SaveEigenData : public LOCA::SaveEigenData::AbstractStrategy {
 

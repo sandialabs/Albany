@@ -70,3 +70,10 @@ if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.xml)
   get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Analysis NAME)
   add_test(${testName} ${AlbanyAnalysis.exe})
 endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.xml)
+
+#7.
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputBlocked.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputBlocked.xml COPYONLY)
+
+add_test(${testName}_Blocked ${Albany.exe} inputBlocked.xml)
+

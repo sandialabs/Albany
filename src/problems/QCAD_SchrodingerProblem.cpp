@@ -108,38 +108,16 @@ buildProblem(
     std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
   /* Construct All Phalanx Evaluators */
-  constructEvaluators(meshSpecs,stateMgr);
+  constructEvaluators(meshSpecs, stateMgr, responses);
   constructDirichletEvaluators(meshSpecs.nsNames);
- 
-  // Build response functions
-  Teuchos::ParameterList& responseList = params->sublist("Response Functions");
-  int num_responses = responseList.get("Number", 0);
-  responses.resize(num_responses);
-  for (int i=0; i<num_responses; i++) {
-     std::string name = responseList.get(Albany::strint("Response",i), "??");
-
-     if (name == "Solution Average")
-       responses[i] = Teuchos::rcp(new Albany::SolutionAverageResponseFunction());
-
-     else if (name == "Solution Two Norm")
-       responses[i] = Teuchos::rcp(new Albany::SolutionTwoNormResponseFunction());
-
-     else {
-       TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-                          std::endl <<
-                          "Error!  Unknown response function " << name <<
-                          "!" << std::endl << "Supplied parameter list is " <<
-                          std::endl << responseList);
-     }
-
-  }
 }
 
 
 void
 QCAD::SchrodingerProblem::constructEvaluators(
        const Albany::MeshSpecsStruct& meshSpecs,
-       Albany::StateManager& stateMgr)
+       Albany::StateManager& stateMgr,
+       std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
    using Teuchos::RCP;
    using Teuchos::rcp;
@@ -176,6 +154,7 @@ QCAD::SchrodingerProblem::constructEvaluators(
 
    RCP<DataLayout> node_scalar = rcp(new MDALayout<Cell,Node>(worksetSize,numNodes));
    RCP<DataLayout> qp_scalar = rcp(new MDALayout<Cell,QuadPoint>(worksetSize,numQPts));
+   RCP<DataLayout> cell_scalar = rcp(new MDALayout<Cell,QuadPoint>(worksetSize,1));
 
    RCP<DataLayout> node_vector = rcp(new MDALayout<Cell,Node,Dim>(worksetSize,numNodes,numDim));
    RCP<DataLayout> qp_vector = rcp(new MDALayout<Cell,QuadPoint,Dim>(worksetSize,numQPts,numDim));
@@ -355,13 +334,13 @@ QCAD::SchrodingerProblem::constructEvaluators(
 
     evaluators_to_build["Potential Energy"] = p;
 
-    
-    std::cout << "DEBUG: potential from state name " << potentialStateName << std::endl;
-
-    // STATE INPUT / OUTPUT
+    //DEBUG: Output potential to check that it is imported properly; but 
+    // this can be done via response evaluators now, so this code is no longer needed
+    /*std::cout << "DEBUG: potential from state name " << potentialStateName << std::endl;
     int issf = FactoryTraits<AlbanyTraits>::id_savestatefield;
     evaluators_to_build["Save Potential"] =
       stateMgr.registerStateVariable(potentialStateName, qp_scalar, dummy, issf);
+    */
   }
 
   { // Wavefunction (psi) Resid
@@ -448,28 +427,139 @@ QCAD::SchrodingerProblem::constructEvaluators(
    PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag("Scatter", dummy);
    fm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag);
 
-   const Albany::StateManager::RegisteredStates& reg = stateMgr.getRegisteredStates();
-   Albany::StateManager::RegisteredStates::const_iterator st = reg.begin();
-   while (st != reg.end()) {
-     PHX::Tag<AlbanyTraits::Residual::ScalarT> res_out_tag(st->first, dummy);
-     fm->requireField<AlbanyTraits::Residual>(res_out_tag);
-     st++;
+   // Parameters for Response Evaluators
+   //  Iterate through list of responses (from input xml file).  For each, create a response
+   //  function and possibly a parameter list to construct a response evaluator.
+   Teuchos::ParameterList& responseList = params->sublist("Response Functions");
+   int num_responses = responseList.get("Number", 0);
+   responses.resize(num_responses);
+
+   map<string, RCP<ParameterList> > response_evaluators_to_build;
+   vector<string> responseIDs_to_require;
+
+   for (int i=0; i<num_responses; i++) 
+   {
+     std::string responseID = Albany::strint("Response",i);
+     std::string responseParamsID = Albany::strint("ResponseParams",i);
+     std::string name = responseList.get(responseID, "??");
+
+     if (name == "See List" && responseList.isSublist(responseParamsID) ) {
+
+       Teuchos::RCP<Albany::EvaluatedResponseFunction> 
+	 evResponse = Teuchos::rcp(new Albany::EvaluatedResponseFunction());
+       responses[i] = evResponse;
+
+       Teuchos::ParameterList& responseParams = responseList.sublist(responseParamsID);
+       std::string type = responseParams.get("Type", "??");
+
+       // Common parameters to all response evaluators
+       RCP<ParameterList> p = rcp(new ParameterList);
+       p->set<string>("Response ID", responseID);
+       p->set<int>   ("Response Index", i);
+       p->set< Teuchos::RCP<Albany::EvaluatedResponseFunction> >("Response Function", evResponse);
+       p->set<Teuchos::ParameterList*>("Parameter List", &responseParams);
+       p->set< RCP<DataLayout> >("Dummy Data Layout", dummy);
+
+       // Parameters specific to the particular type of response evaluator
+       if (type == "Field Integral")
+       { 
+         int type = FactoryTraits<AlbanyTraits>::id_qcad_response_fieldintegral;
+         p->set<int>("Type", type);
+         p->set<string>("Weights Name",   "Weights");
+         p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+         p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+         
+         //Global Problem Parameters
+         p->set<double>("Length unit in m", length_unit_in_m);
+       }
+
+       else if (type == "Field Value")
+       { 
+         int type = FactoryTraits<AlbanyTraits>::id_qcad_response_fieldvalue;
+         p->set<int>("Type", type);
+         p->set<string>("Coordinate Vector Name", "Coord Vec");
+         p->set<string>("Weights Name",   "Weights");
+         p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+         p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+       }
+
+       else if (type == "Save Field")
+       { 
+         int type = FactoryTraits<AlbanyTraits>::id_qcad_response_savefield;
+         p->set<int>("Type", type);
+         p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+         p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+         p->set< RCP<DataLayout> >("Cell Scalar Data Layout", cell_scalar);
+	 p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
+         p->set<string>("Weights Name",   "Weights");
+       }
+
+       else {
+         TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+           std::endl <<
+           "Error!  Unknown evaluated response type " << type <<
+           "!" << std::endl << "Supplied parameter list is " <<
+           std::endl << responseList);
+       }
+
+       response_evaluators_to_build[responseID] = p;
+       responseIDs_to_require.push_back(responseID);
+     }
+
+     else // Response<i> is not a sublist, so process by just building a response function
+     { 
+       if (name == "Solution Average")
+         responses[i] = Teuchos::rcp(new Albany::SolutionAverageResponseFunction());
+
+       else if (name == "Solution Two Norm")
+         responses[i] = Teuchos::rcp(new Albany::SolutionTwoNormResponseFunction());
+
+       else {
+         TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+           std::endl <<
+           "Error!  Unknown response function " << name <<
+           "!" << std::endl << "Supplied parameter list is " <<
+           std::endl << responseList);
+       }
+
+     }
+
+   } // end of loop over responses
+
+   // Build Response Evaluators for each evaluation type
+   RCP< vector< RCP<PHX::Evaluator_TemplateManager<AlbanyTraits> > > >
+     response_evaluators;
+   
+   response_evaluators_to_build.insert(evaluators_to_build.begin(), evaluators_to_build.end());
+   response_evaluators = factory.buildEvaluators(response_evaluators_to_build);
+
+   // Create a Response FieldManager
+   rfm = Teuchos::rcp(new PHX::FieldManager<AlbanyTraits>);
+
+   // Register all Evaluators
+   PHX::registerEvaluators(response_evaluators, *rfm);
+
+   // Set required fields: ( Response<i>, dummy ), for responses evaluated by the response evaluators
+   vector<string>::const_iterator it;
+   for (it = responseIDs_to_require.begin(); it != responseIDs_to_require.end(); it++)
+   {
+     const std::string& responseID = *it;
+
+     PHX::Tag<AlbanyTraits::Residual::ScalarT> res_response_tag(responseID, dummy);
+     rfm->requireField<AlbanyTraits::Residual>(res_response_tag);
+     PHX::Tag<AlbanyTraits::Jacobian::ScalarT> jac_response_tag(responseID, dummy);
+     rfm->requireField<AlbanyTraits::Jacobian>(jac_response_tag);
+     PHX::Tag<AlbanyTraits::Tangent::ScalarT> tan_response_tag(responseID, dummy);
+     rfm->requireField<AlbanyTraits::Tangent>(tan_response_tag);
+     PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_response_tag(responseID, dummy);
+     rfm->requireField<AlbanyTraits::SGResidual>(sgres_response_tag);
+     PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_response_tag(responseID, dummy);
+     rfm->requireField<AlbanyTraits::SGJacobian>(sgjac_response_tag);
+     PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_response_tag(responseID, dummy);
+     rfm->requireField<AlbanyTraits::MPResidual>(mpres_response_tag);
+     PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_response_tag(responseID, dummy);
+     rfm->requireField<AlbanyTraits::MPJacobian>(mpjac_response_tag);
    }
-
-   // NOW - SaveEigenData always ouput to statemanager (but epetra vecs, not states)
-  // EIGENSTATE OUTPUT - to this registration after above loop because 
-  //  we don't want evaluators to fill these states - they get filled 
-  //  in SaveEigenData call after LOCA is done.
-  /*if( nEigenvectorsToOuputAsStates > 0 ) {
-    char evecStateName[100];
-    for( int k = 0; k < nEigenvectorsToOuputAsStates; k++) {
-      sprintf(evecStateName,"Eigenvector_Re%d",k);
-      (void) stateMgr.registerStateVariable(evecStateName, node_scalar, dummy, 0);
-      sprintf(evecStateName,"Eigenvector_Im%d",k);
-      (void) stateMgr.registerStateVariable(evecStateName, node_scalar, dummy, 0);    
-    }
-    }*/
-
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

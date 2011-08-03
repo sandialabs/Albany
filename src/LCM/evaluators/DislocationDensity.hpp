@@ -29,12 +29,12 @@
 #include "Teuchos_SerialDenseMatrix.hpp" 
 #include "Teuchos_SerialDenseSolver.hpp"
 
+namespace LCM {
 /** \brief Dislocation Density Tensor
 
     This evaluator calculates the dislcation density tensor
 
 */
-namespace LCM {
 
 template<typename EvalT, typename Traits>
 class DislocationDensity : public PHX::EvaluatorWithBaseImpl<Traits>,

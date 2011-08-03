@@ -163,8 +163,7 @@ namespace Albany {
     /*!
      * Set xdot to NULL for steady-state problems
      */
-    virtual void 
-    evaluateResponses(const Epetra_Vector* xdot,
+    void evaluateResponses(const Epetra_Vector* xdot,
                       const Epetra_Vector& x,
                       const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
                       Epetra_Vector& g);
@@ -174,8 +173,7 @@ namespace Albany {
     /*!
      * Set xdot, dxdot_dp to NULL for steady-state problems
      */
-    virtual void 
-    evaluateResponseTangents(
+    void evaluateResponseTangents(
 	   const Epetra_Vector* xdot,
 	   const Epetra_Vector& x,
 	   const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
@@ -189,8 +187,7 @@ namespace Albany {
     /*!
      * Set xdot, dg_dxdot to NULL for steady-state problems
      */
-    virtual void 
-    evaluateResponseGradients(
+    void evaluateResponseGradients(
 	    const Epetra_Vector* xdot,
 	    const Epetra_Vector& x,
 	    const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
@@ -232,8 +229,8 @@ namespace Albany {
     /*!
      * Set xdot to NULL for steady-state problems
      */
-    void 
-    evaluateSGResponses(const Stokhos::VectorOrthogPoly<Epetra_Vector>* sg_xdot,
+    void evaluateSGResponses(
+                        const Stokhos::VectorOrthogPoly<Epetra_Vector>* sg_xdot,
 			const Stokhos::VectorOrthogPoly<Epetra_Vector>& sg_x,
 			const ParamVec* p,
 			const ParamVec* sg_p,
@@ -272,8 +269,8 @@ namespace Albany {
     /*!
      * Set xdot to NULL for steady-state problems
      */
-    void 
-    evaluateMPResponses(const Stokhos::ProductContainer<Epetra_Vector>* mp_xdot,
+    void evaluateMPResponses(
+                        const Stokhos::ProductContainer<Epetra_Vector>* mp_xdot,
 			const Stokhos::ProductContainer<Epetra_Vector>& mp_x,
 			ParamVec* p,
 			ParamVec* mp_p,
@@ -293,6 +290,12 @@ namespace Albany {
 
   private:
 
+    //! Private to prohibit copying
+    Application(const Application&);
+
+    //! Private to prohibit copying
+    Application& operator=(const Application&);
+
     //! Call to Teko to build strided block operator
     Teuchos::RCP<Epetra_Operator> buildWrappedOperator(
                            const Teuchos::RCP<Epetra_Operator>& Jac,
@@ -302,24 +305,57 @@ namespace Albany {
     //! Utility function to set up ShapeParameters through Sacado
     void registerShapeParameters();
     
-    //! Utility function write Graph vis file for first fill type called
-    void writeGraphVisFile() const;
-    
-    //! Private to prohibit copying
-    Application(const Application&);
-
-    //! Private to prohibit copying
-    Application& operator=(const Application&);
-
     //! Evalute responses using response field manater (rfm)
     //  A helper function called by evaluateResponses.
-    virtual void 
-    evaluateResponses_rfm(const Epetra_Vector* xdot,
-			  const Epetra_Vector& x,
-			  const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-			  Epetra_Vector& g);
+    void evaluateResponses_rfm(
+           const Epetra_Vector* xdot,
+	   const Epetra_Vector& x,
+	   const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+	   Epetra_Vector& g);
 
+    //! Evalute response tangents using response field manater (rfm)
+    //  A helper function called by evaluateResponseTangents.
+    void evaluateResponseTangents_rfm(
+	   const Epetra_Vector* xdot,
+	   const Epetra_Vector& x,
+	   const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+	   const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
+	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dxdot_dp,
+	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dx_dp,
+	   Epetra_Vector* g,
+	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& gt);
 
+    //! Evalute responses gradients using response field manater (rfm)
+    //  A helper function called by evaluateResponseGradients.
+    void evaluateResponseGradients_rfm(
+	   const Epetra_Vector* xdot,
+	   const Epetra_Vector& x,
+	   const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+	   const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
+	   Epetra_Vector* g,
+	   Epetra_MultiVector* dg_dx,
+	   Epetra_MultiVector* dg_dxdot,
+	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dg_dp);
+
+    void defineTimers();
+
+    //! Routine to get workset (bucket) sized info needed by all Evaluation types
+    void loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws);
+
+    //! Routine to load some basic workset info needed by many Evaluation types
+    void loadBasicWorksetInfo(
+            PHAL::Workset& workset,
+            Teuchos::RCP<Epetra_Vector> overlapped_x,
+            Teuchos::RCP<Epetra_Vector> overlapped_xdot,
+            double current_time);
+
+    void loadWorksetJacobianInfo(PHAL::Workset& workset,
+                const double& alpha, const double& beta);
+
+    //! Routine to load common nodeset info into workset
+    void loadWorksetNodesetInfo(PHAL::Workset& workset);
+
+    void postRegSetup(std::string eval);
 
   protected:
 
@@ -371,7 +407,7 @@ namespace Albany {
     //! Phalanx Field Manager for Responses
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > rfm;
 
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > wsElNodeID;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > > wsElNodeEqID;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords;
     Teuchos::ArrayRCP<std::string> wsEBNames;
 
@@ -431,14 +467,7 @@ namespace Albany {
 
     std::vector<Teuchos::RCP<Teuchos::Time> > timers;
 
-    bool setupCalledResidual;
-    bool setupCalledJacobian;
-    bool setupCalledTangent;
-    bool setupCalledSGResidual;
-    bool setupCalledSGJacobian;
-    bool setupCalledMPResidual;
-    bool setupCalledMPJacobian;
-    bool setupCalledResponses;
+    std::set<string> setupSet;
     mutable int phxGraphVisDetail;
 
     StateManager stateMgr;

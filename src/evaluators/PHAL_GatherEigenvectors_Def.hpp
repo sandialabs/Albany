@@ -79,10 +79,10 @@ evaluateFields(typename Traits::EvalData workset)
   Epetra_MultiVector& e_i = workset.eigenDataPtr->eigenvectorIm->getEpetraMultiVector();
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<int>& nodeID = workset.wsElNodeID[cell];
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID = workset.wsElNodeEqID[cell];
     
     for(std::size_t node =0; node < this->numNodes; ++node) {
-      int offsetIntoVec = nodeID[node];
+      int offsetIntoVec = nodeID[node][0]; // neq==1 hardwired
 
       for (std::size_t k = 0; k < nEigenvectors; ++k) {
 	(this->eigenvector_Re[k])(cell,node) = (*(e_r(k)))[offsetIntoVec];

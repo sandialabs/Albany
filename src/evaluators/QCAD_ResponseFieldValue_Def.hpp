@@ -105,9 +105,9 @@ ResponseFieldValue(Teuchos::ParameterList& p) :
 
   if(!bReturnOpField) {
     if(bRetFieldIsVector) {
-      PHX::MDField<ScalarT> f(retFieldName, vector_dl); opField = f; }
+      PHX::MDField<ScalarT> f(retFieldName, vector_dl); retField = f; }
     else {
-      PHX::MDField<ScalarT> f(retFieldName, scalar_dl); opField = f; }
+      PHX::MDField<ScalarT> f(retFieldName, scalar_dl); retField = f; }
   }
 
   //! add dependent fields
@@ -126,6 +126,14 @@ ResponseFieldValue(Teuchos::ParameterList& p) :
              << "Error!  Invalid operation type " << operation << std::endl); 
   
   PHAL::ResponseBase<EvalT, Traits>::setInitialValues(initVals);
+
+  //! set post processing parameters (used to reconcile values across multiple processors)
+  Teuchos::ParameterList ppParams;
+  if( operation == "Maximize" ) ppParams.set("Processing Type","Max");
+  else if( operation == "Minimize" ) ppParams.set("Processing Type","Min");
+  ppParams.set("Index",1);
+
+  PHAL::ResponseBase<EvalT, Traits>::setPostProcessingParams(ppParams);
 }
 
 // **********************************************************************
@@ -150,22 +158,23 @@ evaluateFields(typename Traits::EvalData workset)
   std::vector<ScalarT>& local_g = PHAL::ResponseBase<EvalT, Traits>::local_g;
   ScalarT opVal, qpVal, cellVol;
 
-  if(opDomain == "element block" && workset.EBName != ebName) {
+  if(opDomain == "element block" && workset.EBName != ebName) 
+  {
       PHAL::ResponseBase<EvalT, Traits>::endEvaluateFields(workset);
       return;
   }
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) 
+  {
     // If operation domain is a "box", check whether the current cell is 
     //  at least partially contained within the box
     if(opDomain == "box") {
       bool cellInBox = false;
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-	if( (!limitX || (coordVec(cell,qp,0) >= xmin && coordVec(cell,qp,0) <= xmax)) &&
-	    (!limitY || (coordVec(cell,qp,1) >= ymin && coordVec(cell,qp,1) <= ymax)) &&
-	    (!limitZ || (coordVec(cell,qp,2) >= zmin && coordVec(cell,qp,2) <= zmax)) ) {
-	  cellInBox = true; break; }
+        if( (!limitX || (coordVec(cell,qp,0) >= xmin && coordVec(cell,qp,0) <= xmax)) &&
+            (!limitY || (coordVec(cell,qp,1) >= ymin && coordVec(cell,qp,1) <= ymax)) &&
+            (!limitZ || (coordVec(cell,qp,2) >= zmin && coordVec(cell,qp,2) <= zmax)) ) {
+          cellInBox = true; break; }
       }
       if( !cellInBox ) continue;
     }
@@ -181,9 +190,9 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       qpVal = 0.0;
       if(bOpFieldIsVector) {
-	if(opX) qpVal += opField(cell,qp,0) * opField(cell,qp,0);
-	if(opY) qpVal += opField(cell,qp,1) * opField(cell,qp,1);
-	if(opZ) qpVal += opField(cell,qp,2) * opField(cell,qp,2);
+        if(opX) qpVal += opField(cell,qp,0) * opField(cell,qp,0);
+        if(opY) qpVal += opField(cell,qp,1) * opField(cell,qp,1);
+        if(opZ) qpVal += opField(cell,qp,2) * opField(cell,qp,2);
       }
       else qpVal = opField(cell,qp);
       opVal += qpVal * weights(cell,qp);
@@ -194,33 +203,33 @@ evaluateFields(typename Traits::EvalData workset)
       
     // Check if the currently stored min/max value needs to be updated
     if( (operation == "Maximize" && opVal > local_g[1]) ||
-	(operation == "Minimize" && opVal < local_g[1]) ) {
+        (operation == "Minimize" && opVal < local_g[1]) ) {
 
       // set g[0] = value of return field at the current cell (avg)
       local_g[0]=0.0;
       if(bReturnOpField) {
-	for (std::size_t qp=0; qp < numQPs; ++qp) {
-	  qpVal = 0.0;
-	  if(bOpFieldIsVector) {
-	    for(std::size_t i=0; i<numDims; i++) {
-	      qpVal += opField(cell,qp,i)*opField(cell,qp,i);
-	    }
-	  }
-	  else qpVal = opField(cell,qp);
-	  local_g[0] += qpVal * weights(cell,qp);
-	}
+        for (std::size_t qp=0; qp < numQPs; ++qp) {
+          qpVal = 0.0;
+          if(bOpFieldIsVector) {
+            for(std::size_t i=0; i<numDims; i++) {
+              qpVal += opField(cell,qp,i)*opField(cell,qp,i);
+            }
+          }
+          else qpVal = opField(cell,qp);
+          local_g[0] += qpVal * weights(cell,qp);
+        }
       }
       else {
-	for (std::size_t qp=0; qp < numQPs; ++qp) {
-	  qpVal = 0.0;
-	  if(bRetFieldIsVector) {
-	    for(std::size_t i=0; i<numDims; i++) {
-	      qpVal += retField(cell,qp,i)*retField(cell,qp,i);
-	    }
-	  }
-	  else qpVal = retField(cell,qp);
-	  local_g[0] += qpVal * weights(cell,qp);
-	}
+        for (std::size_t qp=0; qp < numQPs; ++qp) {
+          qpVal = 0.0;
+          if(bRetFieldIsVector) {
+            for(std::size_t i=0; i<numDims; i++) {
+              qpVal += retField(cell,qp,i)*retField(cell,qp,i);
+            }
+          }
+          else qpVal = retField(cell,qp);
+          local_g[0] += qpVal * weights(cell,qp);
+        }
       }
       local_g[0] /= cellVol;
 
@@ -229,9 +238,9 @@ evaluateFields(typename Traits::EvalData workset)
 
       // set g[2+] = average qp coordinate values of the current cell
       for(std::size_t i=0; i<numDims; i++) {
-	local_g[i+2] = 0.0;
-	for (std::size_t qp=0; qp < numQPs; ++qp) local_g[i+2] += coordVec(cell,qp,i);
-	local_g[i+2] /= numQPs;
+        local_g[i+2] = 0.0;
+        for (std::size_t qp=0; qp < numQPs; ++qp) local_g[i+2] += coordVec(cell,qp,i);
+          local_g[i+2] /= numQPs;
       }
     }
 
