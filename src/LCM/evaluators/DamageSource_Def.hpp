@@ -67,7 +67,7 @@ DamageSource(Teuchos::ParameterList& p) :
   sourceName = p.get<string>("Damage Source Name")+"_old";
   damageName = p.get<string>("Damage Name")+"_old";
   this->addEvaluatedField(source);
-  this->setName("Damage Source"+PHAL::TypeString<EvalT>::value);
+  this->setName("Damage Source"+PHX::TypeString<EvalT>::value);
 }
 
 // **********************************************************************

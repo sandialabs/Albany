@@ -41,7 +41,7 @@ ODEResid<EvalT, Traits>::ODEResid(Teuchos::ParameterList& p) :
   this->addEvaluatedField(Yoderesid);
   
   std::string n = "ODEResid Provider: " + Xoderesid.fieldTag().name();
-  this->setName(n+PHAL::TypeString<EvalT>::value);
+  this->setName(n+PHX::TypeString<EvalT>::value);
 }
 
 //**********************************************************************

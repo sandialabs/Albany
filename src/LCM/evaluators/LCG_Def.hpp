@@ -35,7 +35,7 @@ LCG(const Teuchos::ParameterList& p) :
 
   this->addEvaluatedField(lcg);
 
-  this->setName("LCG"+PHAL::TypeString<EvalT>::value);
+  this->setName("LCG"+PHX::TypeString<EvalT>::value);
 
   Teuchos::RCP<PHX::DataLayout> tensor_dl =
     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");

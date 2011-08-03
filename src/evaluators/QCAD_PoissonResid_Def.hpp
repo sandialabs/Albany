@@ -53,7 +53,7 @@ PoissonResid(const Teuchos::ParameterList& p) :
   this->addEvaluatedField(PhiResidual);
   this->addEvaluatedField(PhiFlux);
 
-  this->setName("PoissonResid"+PHAL::TypeString<EvalT>::value);
+  this->setName("PoissonResid"+PHX::TypeString<EvalT>::value);
 }
 
 //**********************************************************************

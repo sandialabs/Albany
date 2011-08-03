@@ -97,7 +97,7 @@ YieldStrength(Teuchos::ParameterList& p) :
 
 
   this->addEvaluatedField(yieldStrength);
-  this->setName("Yield Strength"+PHAL::TypeString<EvalT>::value);
+  this->setName("Yield Strength"+PHX::TypeString<EvalT>::value);
 }
 
 // **********************************************************************

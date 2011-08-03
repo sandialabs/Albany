@@ -542,25 +542,25 @@ Source<EvalT, Traits>::Source(Teuchos::ParameterList& p)
     Quadratic<EvalT,Traits>    *q = new Quadratic<EvalT,Traits>(p);
     Source_Base<EvalT,Traits> *sb = q;
     m_sources.push_back(sb);
-    this->setName("QuadraticSource"+PHAL::TypeString<EvalT>::value);
+    this->setName("QuadraticSource"+PHX::TypeString<EvalT>::value);
   }
   if (MVQuadratic<EvalT,Traits>::check_for_existance(source_list)) {
     MVQuadratic<EvalT,Traits> *q = new MVQuadratic<EvalT,Traits>(p);
     Source_Base<EvalT,Traits> *sb = q;
     m_sources.push_back(sb);
-    this->setName("MVQuadraticSource"+PHAL::TypeString<EvalT>::value);
+    this->setName("MVQuadraticSource"+PHX::TypeString<EvalT>::value);
   }
   if (MVExponential<EvalT,Traits>::check_for_existance(source_list)) {
     MVExponential<EvalT,Traits> *q = new MVExponential<EvalT,Traits>(p);
     Source_Base<EvalT,Traits> *sb = q;
     m_sources.push_back(sb);
-    this->setName("MVExponentialSource"+PHAL::TypeString<EvalT>::value);
+    this->setName("MVExponentialSource"+PHX::TypeString<EvalT>::value);
   }
   if (PointSource<EvalT,Traits>::check_for_existance(source_list)) {
     PointSource<EvalT,Traits>       *s = new PointSource<EvalT,Traits>(source_list);
     Source_Base<EvalT,Traits> *sb = s;
     m_sources.push_back(sb);
-    this->setName("PointSource"+PHAL::TypeString<EvalT>::value);
+    this->setName("PointSource"+PHX::TypeString<EvalT>::value);
   }
   for (std::size_t i=0; i<m_sources.size(); ++i) {
     Source_Base<EvalT,Traits>* sb =  m_sources[i];

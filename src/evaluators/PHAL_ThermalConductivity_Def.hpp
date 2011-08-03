@@ -93,7 +93,7 @@ ThermalConductivity(Teuchos::ParameterList& p) :
   } 
 
   this->addEvaluatedField(thermalCond);
-  this->setName("Thermal Conductivity"+PHAL::TypeString<EvalT>::value);
+  this->setName("Thermal Conductivity"+PHX::TypeString<EvalT>::value);
 }
 
 // **********************************************************************

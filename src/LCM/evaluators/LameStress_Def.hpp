@@ -45,7 +45,7 @@ LameStress(const Teuchos::ParameterList& p) :
   stressName = p.get<std::string>("Stress Name")+"_old";
   this->addEvaluatedField(stressField);
 
-  this->setName("LameStress"+PHAL::TypeString<EvalT>::value);
+  this->setName("LameStress"+PHX::TypeString<EvalT>::value);
 
   lameMaterialModelName = p.get<string>("Lame Material Model");
   const Teuchos::ParameterList& lameMaterialParameters = p.sublist("Lame Material Parameters");

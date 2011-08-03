@@ -28,7 +28,7 @@ SaveStateField<EvalT, Traits>::
 SaveStateField(const Teuchos::ParameterList& p) 
 {  
   // States Not Saved for Generic Type, only Specializations
-  this->setName("Save State Field"+PHAL::TypeString<EvalT>::value);
+  this->setName("Save State Field"+PHX::TypeString<EvalT>::value);
 }
 
 // **********************************************************************
@@ -63,7 +63,7 @@ SaveStateField(const Teuchos::ParameterList& p)
   this->addEvaluatedField(*savestate_operation);
 
   this->setName("Save Field " + fieldName +" to State " + stateName
-                + PHAL::TypeString<PHAL::AlbanyTraits::Residual>::value);
+                + PHX::TypeString<PHAL::AlbanyTraits::Residual>::value);
 }
 
 // **********************************************************************

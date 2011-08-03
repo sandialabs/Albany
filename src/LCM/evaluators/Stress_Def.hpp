@@ -50,7 +50,7 @@ Stress(const Teuchos::ParameterList& p) :
 
   this->addEvaluatedField(stress);
 
-  this->setName("Stress"+PHAL::TypeString<EvalT>::value);
+  this->setName("Stress"+PHX::TypeString<EvalT>::value);
 
 }
 

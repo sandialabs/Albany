@@ -27,7 +27,7 @@ Constant<EvalT, Traits>::Constant(Teuchos::ParameterList& p) :
   this->addEvaluatedField(constant);
   
   std::string n = "Constant Provider: " + constant.fieldTag().name();
-  this->setName(n+PHAL::TypeString<EvalT>::value);
+  this->setName(n+PHX::TypeString<EvalT>::value);
 }
 
 //**********************************************************************

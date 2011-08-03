@@ -63,7 +63,7 @@ NSRm(const Teuchos::ParameterList& p) :
   numQPs  = dims[2];
   numDims = dims[3];
 
-  this->setName("NSRm"+PHAL::TypeString<EvalT>::value);
+  this->setName("NSRm"+PHX::TypeString<EvalT>::value);
 }
 
 //**********************************************************************

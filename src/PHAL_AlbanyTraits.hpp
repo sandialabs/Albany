@@ -128,7 +128,7 @@ namespace PHAL {
 
 }
 
-namespace PHAL {
+namespace PHX {
   // Evaluation Types
   template<> struct TypeString<PHAL::AlbanyTraits::Residual> 
   { static const std::string value; };

@@ -54,7 +54,7 @@ Neohookean(const Teuchos::ParameterList& p) :
 
   this->addEvaluatedField(stress);
 
-  this->setName("NeoHookean Stress"+PHAL::TypeString<EvalT>::value);
+  this->setName("NeoHookean Stress"+PHX::TypeString<EvalT>::value);
 
 }
 

@@ -17,41 +17,41 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-const std::string PHAL::TypeString<PHAL::AlbanyTraits::Residual>::value = 
+const std::string PHX::TypeString<PHAL::AlbanyTraits::Residual>::value = 
   "<Residual>";
 
-const std::string PHAL::TypeString<PHAL::AlbanyTraits::Jacobian>::value = 
+const std::string PHX::TypeString<PHAL::AlbanyTraits::Jacobian>::value = 
   "<Jacobian>";
 
-const std::string PHAL::TypeString<PHAL::AlbanyTraits::Tangent>::value = 
+const std::string PHX::TypeString<PHAL::AlbanyTraits::Tangent>::value = 
   "<Tangent>";
 
-const std::string PHAL::TypeString<PHAL::AlbanyTraits::SGResidual>::value = 
+const std::string PHX::TypeString<PHAL::AlbanyTraits::SGResidual>::value = 
   "<SGResidual>";
 
-const std::string PHAL::TypeString<PHAL::AlbanyTraits::SGJacobian>::value = 
+const std::string PHX::TypeString<PHAL::AlbanyTraits::SGJacobian>::value = 
   "<SGJacobian>";
 
-const std::string PHAL::TypeString<PHAL::AlbanyTraits::MPResidual>::value = 
+const std::string PHX::TypeString<PHAL::AlbanyTraits::MPResidual>::value = 
   "<MPResidual>";
 
-const std::string PHAL::TypeString<PHAL::AlbanyTraits::MPJacobian>::value = 
+const std::string PHX::TypeString<PHAL::AlbanyTraits::MPJacobian>::value = 
   "<MPJacobian>";
 
-const std::string PHAL::TypeString<RealType>::value = 
+const std::string PHX::TypeString<RealType>::value = 
   "double";
 
-const std::string PHAL::TypeString<FadType>::
+const std::string PHX::TypeString<FadType>::
   value = "Sacado::ELRFad::DFad<double>";
 
-const std::string PHAL::TypeString<SGType>::
+const std::string PHX::TypeString<SGType>::
   value = "Sacado::PCE::OrthogPoly<double>";
 
-const std::string PHAL::TypeString<SGFadType>::
+const std::string PHX::TypeString<SGFadType>::
   value = "Sacado::ELRCacheFad::DFad< Sacado::PCE::OrthogPoly<double> >";
 
-const std::string PHAL::TypeString<MPType>::
+const std::string PHX::TypeString<MPType>::
   value = "Sacado::ETV::Vector<double>";
 
-const std::string PHAL::TypeString<MPFadType>::
+const std::string PHX::TypeString<MPFadType>::
   value = "Sacado::ELRCacheFad::DFad< Sacado::ETV::Vector<double> >";

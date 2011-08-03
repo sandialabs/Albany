@@ -78,7 +78,7 @@ Absorption(Teuchos::ParameterList& p) :
   } 
 
   this->addEvaluatedField(absorption);
-  this->setName("Absorption"+PHAL::TypeString<EvalT>::value);
+  this->setName("Absorption"+PHX::TypeString<EvalT>::value);
 }
 
 // **********************************************************************

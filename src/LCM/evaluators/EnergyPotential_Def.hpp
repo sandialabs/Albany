@@ -52,7 +52,7 @@ EnergyPotential(const Teuchos::ParameterList& p) :
 
   this->addEvaluatedField(energy);
 
-  this->setName("Energy Potential"+PHAL::TypeString<EvalT>::value);
+  this->setName("Energy Potential"+PHX::TypeString<EvalT>::value);
 
 }
 

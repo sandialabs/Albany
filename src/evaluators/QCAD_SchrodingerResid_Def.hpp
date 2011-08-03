@@ -76,7 +76,7 @@ SchrodingerResid(const Teuchos::ParameterList& p) :
   this->addEvaluatedField(psiResidual);
   this->addEvaluatedField(invEffMass);
   
-  this->setName("SchrodingerResid"+PHAL::TypeString<EvalT>::value);
+  this->setName("SchrodingerResid"+PHX::TypeString<EvalT>::value);
 }
 
 //**********************************************************************

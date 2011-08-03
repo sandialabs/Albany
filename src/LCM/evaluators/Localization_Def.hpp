@@ -77,7 +77,7 @@ Localization(const Teuchos::ParameterList& p) :
   intrepidBasis->getValues(val_at_cub_points, refPoints, Intrepid::OPERATOR_VALUE);
   intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid::OPERATOR_GRAD);
 
-  this->setName("Localization"+PHAL::TypeString<EvalT>::value);
+  this->setName("Localization"+PHX::TypeString<EvalT>::value);
 }
 
 //**********************************************************************

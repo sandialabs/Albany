@@ -76,7 +76,7 @@ DamageLS(Teuchos::ParameterList& p) :
   } 
 
   this->addEvaluatedField(damageLS);
-  this->setName("Damage Length Scale"+PHAL::TypeString<EvalT>::value);
+  this->setName("Damage Length Scale"+PHX::TypeString<EvalT>::value);
 }
 
 // **********************************************************************
