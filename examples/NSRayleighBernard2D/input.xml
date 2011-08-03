@@ -1,15 +1,11 @@
 <ParameterList>
   <ParameterList name="Problem">
-    <!--Parameter name="Solution Method" type="string" value="Transient"/-->
+    <Parameter name="Solution Method" type="string" value="Transient"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
     <Parameter name="Name" type="string" value="NavierStokes 2D"/>
     <ParameterList name="Volumetric Expansion Coefficient">
       <Parameter name="Type" type="string" value="Constant"/>
-<<<<<<< HEAD:examples/NavierStokes2D/input_rb.xml
-      <Parameter name="Value" type="double" value="1"/> 
-=======
       <Parameter name="Value" type="double" value="3000"/> 
->>>>>>> 89252f68301cfa60cd86038490196aff2e053749:examples/NSRayleighBernard2D/input.xml
     </ParameterList>
     <ParameterList name="Body Force">
       <Parameter name="Type" type="string" value="Boussinesq"/>
@@ -17,11 +13,7 @@
     </ParameterList>
     <ParameterList name="Initial Condition">
       <Parameter name="Function" type="string" value="Constant"/>
-<<<<<<< HEAD:examples/NavierStokes2D/input_rb.xml
-      <Parameter name="Function Data" type="Array(double)" value="{0.0,0.0,0.0,0.0}"/>
-=======
       <Parameter name="Function Data" type="Array(double)" value="{1.0,1.0,0.0,0.0}"/>
->>>>>>> 89252f68301cfa60cd86038490196aff2e053749:examples/NSRayleighBernard2D/input.xml
     </ParameterList>
     <ParameterList name="Dirichlet BCs">     
       <Parameter name="DBC on NS nodelist_2 for DOF T" type="double" value="1.0"/>
@@ -35,40 +27,6 @@
       <Parameter name="DBC on NS nodelist_2 for DOF uy" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_3 for DOF uy" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_4 for DOF uy" type="double" value="0.0"/>
-<<<<<<< HEAD:examples/NavierStokes2D/input_rb.xml
-      <!--<Parameter name="DBC on NS NodeSet0 for DOF T" type="double" value="0.0"/>-->
-      <!--<Parameter name="DBC on NS NodeSet2 for DOF T" type="double" value="1.0"/>-->
-<!--      <Parameter name="DBC on NS NodeSet2 for DOF T" type="double" value="0.0"/>-->
-      <!--<Parameter name="DBC on NS NodeSet3 for DOF T" type="double" value="0.0"/>--> <!--
-      <Parameter name="DBC on NS NodeSet0 for DOF p" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet1 for DOF p" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet2 for DOF p" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet3 for DOF p" type="double" value="0.0"/>-->
-      <!--<Parameter name="DBC on NS NodeSet0 for DOF ux" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet1 for DOF ux" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet2 for DOF ux" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet3 for DOF ux" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF uy" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet1 for DOF uy" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet2 for DOF uy" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet3 for DOF uy" type="double" value="0.0"/>-->
-    </ParameterList>
-    <ParameterList name="Source Functions">
-      <ParameterList name="Quadratic">
-        <Parameter name="Constant" type="bool" value="1"/>
-        <Parameter name="Nonlinear Factor" type="double" value="0.0"/>
-      </ParameterList>
-    </ParameterList>
-    <ParameterList name="Thermal Conductivity">
-      <Parameter name="Type" type="string" value="Truncated KL Expansion"/>
-      <Parameter name="Number of KL Terms" type="int" value="2"/>
-      <Parameter name="Mean" type="double" value="1.0"/>
-      <Parameter name="Standard Deviation" type="double" value="0.1"/>
-      <Parameter name="Domain Lower Bounds" type="string" value="{0.0, 0.0}"/>
-      <Parameter name="Domain Upper Bounds" type="string" value="{1.0, 1.0}"/>
-      <Parameter name="Correlation Lengths" type="string" value="{1.0, 1.0}"/>
-=======
->>>>>>> 89252f68301cfa60cd86038490196aff2e053749:examples/NSRayleighBernard2D/input.xml
     </ParameterList>
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="1"/>
@@ -77,12 +35,8 @@
     </ParameterList>
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="1"/>
-<<<<<<< HEAD:examples/NavierStokes2D/input_rb.xml
-      <Parameter name="Response 0" type="string" value="Solution Average"/>
-=======
       <Parameter name="Equation" type="int" value="0"/>
       <Parameter name="Response 0" type="string" value="Solution Max Value"/>
->>>>>>> 89252f68301cfa60cd86038490196aff2e053749:examples/NSRayleighBernard2D/input.xml
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
@@ -140,13 +94,8 @@
 	</ParameterList>
 	<ParameterList name="Test 1">
 	  <Parameter name="Test Type" type="string" value="NormWRMS"/>
-<<<<<<< HEAD:examples/NavierStokes2D/input_rb.xml
-	  <Parameter name="Absolute Tolerance" type="double" value="1e-6"/>
-	  <Parameter name="Relative Tolerance" type="double" value="1e-6"/>
-=======
 	  <Parameter name="Absolute Tolerance" type="double" value="1e-4"/>
 	  <Parameter name="Relative Tolerance" type="double" value="1e-8"/>
->>>>>>> 89252f68301cfa60cd86038490196aff2e053749:examples/NSRayleighBernard2D/input.xml
 	</ParameterList>
       </ParameterList>
       <ParameterList name="Test 1">
