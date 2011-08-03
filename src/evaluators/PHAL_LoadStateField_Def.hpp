@@ -34,7 +34,7 @@ LoadStateField(const Teuchos::ParameterList& p)
   data = f;
 
   this->addEvaluatedField(data);
-  this->setName("Load State Field"+PHX::TypeString<EvalT>::value);
+  this->setName("Load State Field"+PHAL::TypeString<EvalT>::value);
 }
 
 // **********************************************************************

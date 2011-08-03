@@ -38,6 +38,7 @@
 #include "PHAL_Dimension.hpp"
 #include "PHAL_Workset.hpp"
 
+//! PHalanx-ALbany Code base: templated evaluators for Sacado AD
 namespace PHAL {
 
   struct AlbanyTraits : public PHX::TraitsBase {
@@ -127,7 +128,7 @@ namespace PHAL {
 
 }
 
-namespace PHX {
+namespace PHAL {
   // Evaluation Types
   template<> struct TypeString<PHAL::AlbanyTraits::Residual> 
   { static const std::string value; };

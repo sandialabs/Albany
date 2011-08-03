@@ -68,7 +68,7 @@ DamageResid(const Teuchos::ParameterList& p) :
   // Allocate workspace
   flux.resize(dims[0], numQPs, numDims);
 
-  this->setName("DamageResid"+PHX::TypeString<EvalT>::value);
+  this->setName("DamageResid"+PHAL::TypeString<EvalT>::value);
 }
 
 //**********************************************************************

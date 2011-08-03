@@ -97,7 +97,7 @@ HardeningModulus(Teuchos::ParameterList& p) :
 
 
   this->addEvaluatedField(hardeningModulus);
-  this->setName("Hardening Modulus"+PHX::TypeString<EvalT>::value);
+  this->setName("Hardening Modulus"+PHAL::TypeString<EvalT>::value);
 }
 
 // **********************************************************************

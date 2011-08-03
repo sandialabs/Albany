@@ -23,12 +23,12 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
+namespace QCAD {
 /** \brief Finite Element Interpolation Evaluator
 
     This evaluator interpolates nodal DOF values to quad points.
 
 */
-namespace QCAD {
 
 template<typename EvalT, typename Traits>
 class PoissonResid : public PHX::EvaluatorWithBaseImpl<Traits>,

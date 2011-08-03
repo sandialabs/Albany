@@ -37,7 +37,7 @@ DOFGradInterpolation(const Teuchos::ParameterList& p) :
   this->addDependentField(GBF);
   this->addEvaluatedField(grad_val_qp);
 
-  this->setName("DOFGradInterpolation"+PHX::TypeString<EvalT>::value);
+  this->setName("DOFGradInterpolation"+PHAL::TypeString<EvalT>::value);
 }
 
 //**********************************************************************

@@ -76,7 +76,7 @@ SaturationModulus(Teuchos::ParameterList& p) :
   } 
 
   this->addEvaluatedField(satMod);
-  this->setName("Saturation Modulus"+PHX::TypeString<EvalT>::value);
+  this->setName("Saturation Modulus"+PHAL::TypeString<EvalT>::value);
 }
 
 // **********************************************************************

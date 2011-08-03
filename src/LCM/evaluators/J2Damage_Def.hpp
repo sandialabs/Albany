@@ -93,7 +93,7 @@ J2Damage(const Teuchos::ParameterList& p) :
   FpinvT.resize(worksetSize, numQPs, numDims, numDims);
   Cpinv.resize(worksetSize, numQPs, numDims, numDims);
 
-  this->setName("Stress"+PHX::TypeString<EvalT>::value);
+  this->setName("Stress"+PHAL::TypeString<EvalT>::value);
 
 }
 

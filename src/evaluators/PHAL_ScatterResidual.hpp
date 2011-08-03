@@ -26,6 +26,7 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Epetra_Vector.h"
 
+namespace PHAL {
 /** \brief Scatters result from the residual fields into the
     global (epetra) data structurs.  This includes the
     post-processing of the AD data type for all evaluation
@@ -35,7 +36,6 @@
 // **************************************************************
 // Base Class for code that is independent of evaluation type
 // **************************************************************
-namespace PHAL {
 
 template<typename EvalT, typename Traits> 
 class ScatterResidualBase

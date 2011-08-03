@@ -80,7 +80,7 @@ NSMomentumResid(const Teuchos::ParameterList& p) :
   numQPs  = dims[2];
   numDims = dims[3];
   
-  this->setName("NSMomentumResid"+PHX::TypeString<EvalT>::value);
+  this->setName("NSMomentumResid"+PHAL::TypeString<EvalT>::value);
 }
 
 //**********************************************************************

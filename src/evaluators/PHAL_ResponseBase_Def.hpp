@@ -34,7 +34,7 @@ ResponseBaseCommon(Teuchos::ParameterList& p)
   responseIndex = p.get<int>("Response Index");
   responseFn    = p.get<Teuchos::RCP<Albany::EvaluatedResponseFunction> >("Response Function");
   
-  this->setName(responseID + PHX::TypeString<EvalT>::value);
+  this->setName(responseID + PHAL::TypeString<EvalT>::value);
 }
 
 

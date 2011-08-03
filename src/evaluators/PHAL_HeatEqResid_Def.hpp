@@ -96,7 +96,7 @@ HeatEqResid(const Teuchos::ParameterList& p) :
     }
   }
 
-  this->setName("HeatEqResid"+PHX::TypeString<EvalT>::value);
+  this->setName("HeatEqResid"+PHAL::TypeString<EvalT>::value);
 }
 
 //**********************************************************************

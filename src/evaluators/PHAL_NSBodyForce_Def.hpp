@@ -83,7 +83,7 @@ NSBodyForce(const Teuchos::ParameterList& p) :
       gravity[numDims-1] = -1.0;
     }
   }
-  this->setName("NSBodyForce"+PHX::TypeString<EvalT>::value);
+  this->setName("NSBodyForce"+PHAL::TypeString<EvalT>::value);
 }
 
 //**********************************************************************

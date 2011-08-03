@@ -79,7 +79,7 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p) :
   intrepidBasis->getValues(val_at_cub_points, refPoints, Intrepid::OPERATOR_VALUE);
   intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid::OPERATOR_GRAD);
 
-  this->setName("ComputeBasisFunctions"+PHX::TypeString<EvalT>::value);
+  this->setName("ComputeBasisFunctions"+PHAL::TypeString<EvalT>::value);
 }
 
 //**********************************************************************

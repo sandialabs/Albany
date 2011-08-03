@@ -35,7 +35,7 @@ Strain(const Teuchos::ParameterList& p) :
 
   this->addEvaluatedField(strain);
 
-  this->setName("Strain"+PHX::TypeString<EvalT>::value);
+  this->setName("Strain"+PHAL::TypeString<EvalT>::value);
 
   Teuchos::RCP<PHX::DataLayout> tensor_dl =
     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");

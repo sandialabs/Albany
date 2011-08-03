@@ -55,7 +55,7 @@ NSTauM(const Teuchos::ParameterList& p) :
   // Allocate workspace
   normGc.resize(dims[0], numQPs);
 
-  this->setName("NSTauM"+PHX::TypeString<EvalT>::value);
+  this->setName("NSTauM"+PHAL::TypeString<EvalT>::value);
 }
 
 //**********************************************************************

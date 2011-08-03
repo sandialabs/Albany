@@ -24,12 +24,12 @@
 #include "Phalanx_MDField.hpp"
 #include "Sacado_ParameterAccessor.hpp"
 
+namespace LCM {
 /** \brief Total Lagrangian (Non-linear) Elasticity Residual
 
     This evaluator computes a nonlinear elasticity residual
 
 */
-namespace LCM {
 
 template<typename EvalT, typename Traits>
 class TLElasResid : public PHX::EvaluatorWithBaseImpl<Traits>,

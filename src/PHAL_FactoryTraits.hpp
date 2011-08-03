@@ -63,15 +63,18 @@
 
 #include "boost/mpl/vector/vector50.hpp"
 #include "boost/mpl/placeholders.hpp"
-using namespace boost::mpl::placeholders;
 
+// \cond  Have doxygern ignore this namespace 
+using namespace boost::mpl::placeholders;
+// \endcond
+
+namespace PHAL {
 /*! \brief Struct to define Evaluator objects for the EvaluatorFactory.
     
     Preconditions:
     - You must provide a boost::mpl::vector named EvaluatorTypes that contain all Evaluator objects that you wish the factory to build.  Do not confuse evaluator types (concrete instances of evaluator objects) with evaluation types (types of evaluations to perform, i.e., Residual, Jacobian). 
 
 */
-namespace PHAL {
 
 template<typename Traits>
 struct FactoryTraits {

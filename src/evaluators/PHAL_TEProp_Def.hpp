@@ -78,7 +78,7 @@ TEProp(Teuchos::ParameterList& p) :
   this->addEvaluatedField(rhoCp);
   this->addEvaluatedField(permittivity);
   this->addEvaluatedField(thermalCond);
-  this->setName("TEProp"+PHX::TypeString<EvalT>::value);
+  this->setName("TEProp"+PHAL::TypeString<EvalT>::value);
 }
 
 // **********************************************************************

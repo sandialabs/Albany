@@ -30,11 +30,11 @@
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_Dirichlet.hpp"
 
+namespace LCM {
 /** \brief KfieldBC Dirichlet evaluator
 
 */
 
-namespace LCM {
 
 // **************************************************************
 // **************************************************************

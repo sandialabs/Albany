@@ -23,13 +23,13 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
+namespace LCM {
 /** \brief Left Cauchy-Green Deformation Tensor
 
     This evaluator computes the Left Cauhcy-Green 
     Deformation Tensor from the Deformation Gradient.
 
 */
-namespace LCM {
 
 template<typename EvalT, typename Traits>
 class LCG : public PHX::EvaluatorWithBaseImpl<Traits>,

@@ -26,6 +26,7 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Epetra_Vector.h"
 
+namespace PHAL {
 /** \brief Gathers solution values from the Newton solution vector into 
     the nodal fields of the field manager
 
@@ -38,7 +39,6 @@
 // Base Class with Generic Implementations: Specializations for
 // Automatic Differentiation Below 
 // **************************************************************
-namespace PHAL {
 
 template<typename EvalT, typename Traits>
 class GatherSolutionBase

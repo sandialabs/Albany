@@ -138,7 +138,7 @@ PoissonSource(Teuchos::ParameterList& p) :
   this->addEvaluatedField(conductionBand);
   this->addEvaluatedField(valenceBand);
   
-  this->setName("Poisson Source"+PHX::TypeString<EvalT>::value);
+  this->setName("Poisson Source"+PHAL::TypeString<EvalT>::value);
 }
 
 // **********************************************************************

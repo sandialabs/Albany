@@ -76,7 +76,7 @@ BulkModulus(Teuchos::ParameterList& p) :
   } 
 
   this->addEvaluatedField(bulkModulus);
-  this->setName("Bulk Modulus"+PHX::TypeString<EvalT>::value);
+  this->setName("Bulk Modulus"+PHAL::TypeString<EvalT>::value);
 }
 
 // **********************************************************************
