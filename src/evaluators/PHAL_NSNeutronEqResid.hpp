@@ -15,8 +15,8 @@
 \********************************************************************/
 
 
-#ifndef PHAL_NSTHERMALEQRESID_HPP
-#define PHAL_NSTHERMALEQRESID_HPP
+#ifndef PHAL_NSNEUTRONEQRESID_HPP
+#define PHAL_NSNEUTRONEQRESID_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -31,12 +31,12 @@
 namespace PHAL {
 
 template<typename EvalT, typename Traits>
-class NSThermalEqResid : public PHX::EvaluatorWithBaseImpl<Traits>,
+class NSNeutronEqResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 		    public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
-  NSThermalEqResid(const Teuchos::ParameterList& p);
+  NSNeutronEqResid(const Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
@@ -50,28 +50,23 @@ private:
 
   // Input:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
-  PHX::MDField<ScalarT,Cell,QuadPoint> Temperature;
-  PHX::MDField<ScalarT,Cell,QuadPoint> Tdot;
-  PHX::MDField<ScalarT,Cell,QuadPoint> ThermalCond;
+  PHX::MDField<ScalarT,Cell,QuadPoint> Neutron;
+  PHX::MDField<ScalarT,Cell,QuadPoint> T;
+  PHX::MDField<ScalarT,Cell,QuadPoint> NeutronDiff;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> TGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> V;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> NGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint> Source;
-  PHX::MDField<ScalarT,Cell,QuadPoint> TauT;
-  PHX::MDField<ScalarT,Cell,QuadPoint> rho;  
-  PHX::MDField<ScalarT,Cell,QuadPoint> Cp;
-  PHX::MDField<ScalarT,Cell,QuadPoint> phi;
-  PHX::MDField<ScalarT,Cell,QuadPoint> Fission;
-  PHX::MDField<ScalarT,Cell,QuadPoint> PropConst;
+  PHX::MDField<ScalarT,Cell,QuadPoint> Absorp;
+  PHX::MDField<ScalarT,Cell,QuadPoint> Fission;  
+  PHX::MDField<ScalarT,Cell,QuadPoint> Tref;  
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> TResidual;
+  PHX::MDField<ScalarT,Cell,Node> NResidual;
 
-  bool haveSource, haveFlow, haveSUPG, haveNeut; 
-  bool enableTransient;
+  bool haveNeutSource, haveHeat, haveFlow;
   unsigned int numQPs, numDims, numNodes;
   Intrepid::FieldContainer<ScalarT> flux;
-  Intrepid::FieldContainer<ScalarT> convection;
+  Intrepid::FieldContainer<ScalarT> abscoeff;
 
  };
 }

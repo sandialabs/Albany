@@ -60,6 +60,7 @@ private:
   std::size_t numDims;
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
   PHX::MDField<ScalarT,Cell,QuadPoint> matprop;
+  PHX::MDField<ScalarT,Cell,QuadPoint> T;
 
   //Radom field types
   enum SG_RF {CONSTANT, UNIFORM, LOGNORMAL};
@@ -68,9 +69,12 @@ private:
 
   //! Is conductivity constant, or random field
   bool is_constant;
+  bool is_sqrttempdep;
+  bool is_invsqrttempdep;
 
   //! Constant value
   ScalarT constant_value;
+  ScalarT ref_temp;
 
   //! Exponential random field
   Teuchos::RCP< Stokhos::KL::ExponentialRandomField<MeshScalarT> > exp_rf_kl;
