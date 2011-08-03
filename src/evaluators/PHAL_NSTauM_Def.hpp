@@ -81,13 +81,18 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t qp=0; qp < numQPs; ++qp) {       
         TauM(cell,qp) = 0.0;
         normGc(cell,qp) = 0.0;
+        double r = Albany::ADValue(rho(cell,qp));
         for (std::size_t i=0; i < numDims; ++i) {
+          double Vi = Albany::ADValue(V(cell,qp,i));
           for (std::size_t j=0; j < numDims; ++j) {
-            TauM(cell,qp) += rho(cell,qp)*rho(cell,qp)*V(cell,qp,i)*Gc(cell,qp,i,j)*V(cell,qp,j);
-            normGc(cell,qp) += Gc(cell,qp,i,j)*Gc(cell,qp,i,j);          
+            double Vj = Albany::ADValue(V(cell,qp,j));
+            double gc = Albany::ADValue(Gc(cell,qp,i,j));
+            TauM(cell,qp) += r*r*Vi*gc*Vj;
+            normGc(cell,qp) += gc*gc;          
           }
         }
-        TauM(cell,qp) += 12*mu(cell,qp)*mu(cell,qp)*std::sqrt(normGc(cell,qp));
+        double m = Albany::ADValue(mu(cell,qp));
+        TauM(cell,qp) += 12*m*m*std::sqrt(normGc(cell,qp));
         TauM(cell,qp) = 1/std::sqrt(TauM(cell,qp));
       }
     }

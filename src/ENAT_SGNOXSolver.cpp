@@ -29,6 +29,7 @@
 
 // SG solver approaches
 enum SG_Solver { SG_KRYLOV, SG_GS, SG_JACOBI };
+//enum SG_Prec {MB, AGS, AJ, GS, KP};
 //const int num_sg_solver = 3;
 //const SG_Solver sg_solver_values[] = { SG_KRYLOV, SG_GS, SG_JACOBI };
 //const char *sg_solver_names[] = { "Krylov", "Gauss-Seidel", "Jacobi" };
@@ -305,10 +306,32 @@ SGNOXSolver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 		       std::endl << "Error!  ENAT_SGNOXSolver():  " <<
 		       "Invalid Solver Algorithm  " << solve_type << std::endl);
 
+  // Get SG preconditioner type
+  Teuchos::ParameterList& sgprecParams = 
+                sgSolverParams->sublist("SG Preconditioner");
+  std::string sg_prec = sgprecParams.get("Preconditioner Method", "Gauss-Seidel");
+/*  SG_Prec prec_method;
+  if (sg_prec == "Mean-based")
+    prec_method = MB;
+  else if (sg_prec == "Approximate Gauss-Seidel")
+    prec_method = AGS;
+  else if (sg_prec ==  "Approximate Jacobi")
+    prec_method = AJ;
+  else if (sg_prec ==  "Gauss-Seidel")
+    prec_method = GS;
+  else if (sg_prec ==  "Kronecker Product")
+    prec_method = KP; 
+  else
+    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+		       std::endl << "Error!  ENAT_SGNOXSolver():  " <<
+		       "Invalid SG Preconditioner  " << sg_prec << std::endl);
+*/
   Teuchos::RCP<EpetraExt::ModelEvaluator> sg_block_solver;
   if (sg_method != SG_NI && sg_method != SG_MPNI) {
     Teuchos::RCP<NOX::Epetra::LinearSystem> sg_linsys = Teuchos::null;
-    if (solve_method==SG_GS || solve_method==SG_JACOBI) {
+    //if (solve_method==SG_GS || solve_method==SG_JACOBI) {
+     //if (solve_method==SG_GS || solve_method==SG_JACOBI || prec_method==GS) {
+     if (solve_method==SG_GS || solve_method==SG_JACOBI || sg_prec ==  "Gauss-Seidel") {
       //double outer_tol = 1e-12;
       //int outer_its = 1000;
       // Create NOX interface
@@ -322,7 +345,8 @@ SGNOXSolver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
       Teuchos::RCP<NOX::Epetra::Interface::Jacobian> det_iJac = det_nox_interface;
       //Teuchos::ParameterList det_printParams;
         Teuchos::ParameterList& noxParams = appParams->sublist("NOX");
-      Teuchos::ParameterList& det_printParams = noxParams.sublist("Printing");
+      //Teuchos::ParameterList& det_printParams = noxParams.sublist("Printing");
+      Teuchos::ParameterList det_printParams = noxParams.sublist("Printing");
       Teuchos::ParameterList& printParams = noxParams.sublist("Printing");
       Teuchos::ParameterList& newtonParams = 
 	noxParams.sublist("Direction").sublist("Newton");
@@ -332,11 +356,17 @@ SGNOXSolver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
      // det_printParams.set("MyPID", MyPID); 
       //det_printParams.set("Output Precision", 3);
      // det_printParams.set("Output Processor", 0);
-     // det_printParams.set("Output Information", NOX::Utils::Error);
+     det_printParams.set("Output Information", NOX::Utils::Error);
       Teuchos::RCP<NOX::Epetra::LinearSystem> det_linsys = 
       	Teuchos::rcp(new NOX::Epetra::LinearSystemStratimikos(
 		     det_printParams, det_lsParams, det_iJac, 
 		     det_A, *det_u));
+       //if (prec_method==GS) {         
+       if (sg_prec ==  "Gauss-Seidel") {         
+         sgprecParams.sublist("Deterministic Solver Parameters") = det_lsParams;
+         sgprecParams.set("Deterministic Solver", det_linsys);
+       }
+     //}
 
      // Sublist for linear solver for the Newton method
       //Teuchos::ParameterList& lsParams = newtonParams.sublist("Linear Solver");
