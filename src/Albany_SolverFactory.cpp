@@ -462,9 +462,11 @@ Albany::SolverFactory::getValidResponseParameters() const
   RCP<ParameterList> validPL = rcp(new ParameterList("ValidResponseParams"));;
 
   validPL->set<int>("Number", 0);
+  validPL->set<int>("Equation", 0);
   const int maxParameters = 100;
   for (int i=0; i<maxParameters; i++) {
     validPL->set<std::string>(Albany::strint("Response",i), "");
+    validPL->sublist(Albany::strint("ResponseParams",i));
   }
   return validPL;
 }

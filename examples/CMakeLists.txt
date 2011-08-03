@@ -76,6 +76,9 @@ IF(ALBANY_SEACAS)
   add_subdirectory(Ioss2D)
   add_subdirectory(Ioss3D)
   add_subdirectory(IossRestart)
+  add_subdirectory(NSPoiseuille2D)
+  add_subdirectory(NSRayleighBernard2D)
+  
 ENDIF()
 
 IF(ALBANY_SEACAS AND ALBANY_LCM)

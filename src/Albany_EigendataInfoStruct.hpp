@@ -15,10 +15,29 @@
 \********************************************************************/
 
 
-#include "PHAL_AlbanyTraits.hpp"
+#ifndef ALBANY_EIGENDATASTRUCT
+#define ALBANY_EIGENDATASTRUCT
 
-#include "PHAL_ContravarientMetricTensor.hpp"
-#include "PHAL_ContravarientMetricTensor_Def.hpp"
+#include <string>
+#include <vector>
+#include "Teuchos_RCP.hpp"
+#include "NOX_Epetra_MultiVector.H"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::ContravarientMetricTensor)
+namespace Albany {
+
+struct EigendataStruct {
+
+  EigendataStruct () {};
+  ~EigendataStruct () {};
+
+  Teuchos::RCP<std::vector<double> > eigenvalueRe;
+  Teuchos::RCP<std::vector<double> > eigenvalueIm;
+  Teuchos::RCP<NOX::Epetra::MultiVector> eigenvectorRe;
+  Teuchos::RCP<NOX::Epetra::MultiVector> eigenvectorIm;
+};
+
+}
+#endif
+
+
 

@@ -24,23 +24,21 @@ namespace PHAL {
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-NSRmEqResid<EvalT, Traits>::
-NSRmEqResid(const Teuchos::ParameterList& p) :
+NSRm<EvalT, Traits>::
+NSRm(const Teuchos::ParameterList& p) :
   pGrad       (p.get<std::string>                   ("Pressure Gradient QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
   VGrad       (p.get<std::string>                   ("Velocity Gradient QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-  V       (p.get<std::string>                   ("Velocity QP Variable Name"),
+  V           (p.get<std::string>                   ("Velocity QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
   V_Dot       (p.get<std::string>                   ("Velocity Dot QP Variable Name"),
                p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  T       (p.get<std::string>                   ("Temperature QP Variable Name"),
+  rho         (p.get<std::string>                   ("Density QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  rho       (p.get<std::string>                   ("Density QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  force      (p.get<std::string>                   ("Body Force QP Variable Name"),
+  force       (p.get<std::string>                   ("Body Force QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  acceleration   (p.get<std::string>                ("Acceleration Residual Name"),
+  Rm   (p.get<std::string>                ("Rm Name"),
  	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") )
  
 {
@@ -52,11 +50,10 @@ NSRmEqResid(const Teuchos::ParameterList& p) :
   this->addDependentField(VGrad);
   this->addDependentField(V);
   if (enableTransient) this->addDependentField(V_Dot);
-  this->addDependentField(T);
   this->addDependentField(rho);
   this->addDependentField(force);
 
-  this->addEvaluatedField(acceleration);
+  this->addEvaluatedField(Rm);
 
   Teuchos::RCP<PHX::DataLayout> vector_dl =
     p.get< Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout");
@@ -66,12 +63,12 @@ NSRmEqResid(const Teuchos::ParameterList& p) :
   numQPs  = dims[2];
   numDims = dims[3];
 
-  this->setName("NSRmEqResid"+PHX::TypeString<EvalT>::value);
+  this->setName("NSRm"+PHX::TypeString<EvalT>::value);
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void NSRmEqResid<EvalT, Traits>::
+void NSRm<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -79,35 +76,31 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(VGrad,fm);
   this->utils.setFieldData(V,fm);
   if (enableTransient) this->utils.setFieldData(V_Dot,fm);
-  this->utils.setFieldData(T,fm);
   this->utils.setFieldData(rho,fm);
   this->utils.setFieldData(force,fm);
 
-  this->utils.setFieldData(acceleration,fm); 
+  this->utils.setFieldData(Rm,fm); 
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void NSRmEqResid<EvalT, Traits>::
+void NSRm<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid::FunctionSpaceTools FST;
-
- for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {      
       for (std::size_t i=0; i < numDims; ++i) {
         if (workset.transientTerms && enableTransient) 
-          acceleration(cell,qp,i) = rho(cell,qp)*V_Dot(cell,qp,i);
+          Rm(cell,qp,i) = rho(cell,qp)*V_Dot(cell,qp,i);
         else
-          acceleration(cell,qp,i) = 0;
-        acceleration(cell,qp,i) += pGrad(cell,qp,i)+force(cell,qp,i);
+          Rm(cell,qp,i) = 0;
+        Rm(cell,qp,i) += pGrad(cell,qp,i)+force(cell,qp,i);
         for (std::size_t j=0; j < numDims; ++j) {
-          acceleration(cell,qp,i) += rho(cell,qp)*V(cell,qp,j)*VGrad(cell,qp,i,j);
+          Rm(cell,qp,i) += rho(cell,qp)*V(cell,qp,j)*VGrad(cell,qp,i,j);
         }
       } 
     }
   }
-
 }
 
 }

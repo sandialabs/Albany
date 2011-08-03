@@ -79,8 +79,8 @@ J2Damage(const Teuchos::ParameterList& p) :
   this->addDependentField(satExp);
   this->addDependentField(damage);
 
-  fpName = p.get<std::string>("Fp Name");
-  eqpsName = p.get<std::string>("Eqps Name");
+  fpName = p.get<std::string>("Fp Name")+"_old";
+  eqpsName = p.get<std::string>("Eqps Name")+"_old";
   this->addEvaluatedField(stress);
   this->addEvaluatedField(dp);
   this->addEvaluatedField(seff);
@@ -139,14 +139,15 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT smag, f, p, dgam;
   ScalarT sq23 = std::sqrt(2./3.);
 
-  //bool saveState = (workset.newState != Teuchos::null);
-  //std::cout << "saveState: " << saveState << std::endl;
-  //saveState = (workset.oldState != Teuchos::null);
-  //std::cout << "saveState: " << saveState << std::endl;
-  Albany::StateVariables  oldState = *workset.oldState;
-  Intrepid::FieldContainer<RealType>& Fpold   = *oldState[fpName];
-  Intrepid::FieldContainer<RealType>& eqpsold = *oldState[eqpsName];
-  Intrepid::FieldContainer<RealType>& phi_old_FC = *oldState["Damage"];
+  //Albany::StateVariables  oldState = *workset.oldState;
+  //Intrepid::FieldContainer<RealType>& Fpold   = *oldState[fpName];
+  //Intrepid::FieldContainer<RealType>& eqpsold = *oldState[eqpsName];
+  //Intrepid::FieldContainer<RealType>& phi_old_FC = *oldState["Damage"];
+
+  Albany::MDArray Fpold = (*workset.stateArrayPtr)[fpName];
+  Albany::MDArray eqpsold = (*workset.stateArrayPtr)[eqpsName];
+  Albany::MDArray phi_old_FC = (*workset.stateArrayPtr)["Damage_old"];
+
 
   // compute Cp_{n}^{-1}
   RST::inverse(Fpinv, Fpold);

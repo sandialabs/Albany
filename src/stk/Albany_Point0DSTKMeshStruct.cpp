@@ -57,8 +57,6 @@ Albany::Point0DSTKMeshStruct::setFieldAndBulkData(
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize)
 {
-  cout << "XXX Point0DSTKMeshStruct::setFieldAndBulkData " << endl;
-
   const int nelem = 1;
 
   // Distribute the elements equally among processors

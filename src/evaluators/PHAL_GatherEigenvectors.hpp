@@ -15,56 +15,54 @@
 \********************************************************************/
 
 
-#ifndef PHAL_CONTRAVARIENTMETRICTENSOR_HPP
-#define PHAL_CONTRAVARIENTMETRICTENSOR_HPP
+#ifndef PHAL_GATHER_EIGENVECTORS_HPP
+#define PHAL_GATHER_EIGENVECTORS_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
-#include "Intrepid_CellTools.hpp"
-#include "Intrepid_Cubature.hpp"
-/** \brief Finite Element Interpolation Evaluator
+#include "Teuchos_ParameterList.hpp"
+#include "Epetra_Vector.h"
 
-    This evaluator interpolates nodal DOF values to quad points.
+/** \brief Gathers solution values from the Newton solution vector into 
+    the nodal fields of the field manager
+
+    Currently makes an assumption that the stride is constant for dofs
+    and that the nmber of dofs is equal to the size of the solution
+    names vector.
 
 */
+// **************************************************************
+// Base Class with Generic Implementations: Specializations for
+// Automatic Differentiation Below 
+// **************************************************************
 namespace PHAL {
 
 template<typename EvalT, typename Traits>
-class ContravarientMetricTensor : public PHX::EvaluatorWithBaseImpl<Traits>,
- 			 public PHX::EvaluatorDerived<EvalT, Traits>  {
-
+class GatherEigenvectors
+  : public PHX::EvaluatorWithBaseImpl<Traits>,
+    public PHX::EvaluatorDerived<EvalT, Traits>  {
+  
 public:
-
-  ContravarientMetricTensor(const Teuchos::ParameterList& p);
-
+  
+  GatherEigenvectors(const Teuchos::ParameterList& p);
+  
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
+  
+  void evaluateFields(typename Traits::EvalData d);  
+protected:
 
-  void evaluateFields(typename Traits::EvalData d);
-
-private:
-
-  typedef typename EvalT::MeshScalarT MeshScalarT;
-  int  numDims, numQPs;
-
-  // Input:
-  //! Coordinate vector at vertices
-  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
-  Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
-  Teuchos::RCP<shards::CellTopology> cellType;
-
-  // Temporary FieldContainers
-  Intrepid::FieldContainer<RealType> refPoints;
-  Intrepid::FieldContainer<RealType> refWeights;
-  Intrepid::FieldContainer<MeshScalarT> jacobian;
-  Intrepid::FieldContainer<MeshScalarT> jacobian_inv;
-
-  // Output:
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> Gc;
+  typedef typename EvalT::ScalarT ScalarT;
+  std::vector< PHX::MDField<ScalarT,Cell,Node> > eigenvector_Re;
+  std::vector< PHX::MDField<ScalarT,Cell,Node> > eigenvector_Im;
+  std::size_t numNodes;
+  std::size_t nEigenvectors;
 };
+
+// **************************************************************
 }
 
 #endif

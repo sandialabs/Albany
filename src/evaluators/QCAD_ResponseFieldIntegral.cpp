@@ -17,8 +17,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "PHAL_NSRmEqResid.hpp"
-#include "PHAL_NSRmEqResid_Def.hpp"
+#include "QCAD_ResponseFieldIntegral.hpp"
+#include "QCAD_ResponseFieldIntegral_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::NSRmEqResid)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(QCAD::ResponseFieldIntegral)
 

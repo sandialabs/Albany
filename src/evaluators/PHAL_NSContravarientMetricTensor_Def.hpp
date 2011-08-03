@@ -24,8 +24,8 @@ namespace PHAL {
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-ContravarientMetricTensor<EvalT, Traits>::
-ContravarientMetricTensor(const Teuchos::ParameterList& p) :
+NSContravarientMetricTensor<EvalT, Traits>::
+NSContravarientMetricTensor(const Teuchos::ParameterList& p) :
   coordVec      (p.get<std::string>                   ("Coordinate Vector Name"),
                  p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout") ),
   cubature      (p.get<Teuchos::RCP <Intrepid::Cubature<RealType> > >("Cubature")),
@@ -53,12 +53,12 @@ ContravarientMetricTensor(const Teuchos::ParameterList& p) :
   // Pre-Calculate reference element quantitites
   cubature->getCubature(refPoints, refWeights);
 
-  this->setName("ContravarientMetricTensor"+PHX::TypeString<EvalT>::value);
+  this->setName("NSContravarientMetricTensor"+PHX::TypeString<EvalT>::value);
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void ContravarientMetricTensor<EvalT, Traits>::
+void NSContravarientMetricTensor<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -68,7 +68,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void ContravarientMetricTensor<EvalT, Traits>::
+void NSContravarientMetricTensor<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 

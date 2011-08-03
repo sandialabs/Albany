@@ -39,10 +39,10 @@ LameStress(const Teuchos::ParameterList& p) :
   numQPs  = dims[1];
   numDims = dims[2];
 
-  defGradName = p.get<std::string>("DefGrad Name");
+  defGradName = p.get<std::string>("DefGrad Name")+"_old";
   this->addDependentField(defGradField);
 
-  stressName = p.get<std::string>("Stress Name");
+  stressName = p.get<std::string>("Stress Name")+"_old";
   this->addEvaluatedField(stressField);
 
   this->setName("LameStress"+PHX::TypeString<EvalT>::value);
@@ -85,11 +85,13 @@ evaluateFields(typename Traits::EvalData workset)
 {
   TEST_FOR_EXCEPTION(numDims != 3, Teuchos::Exceptions::InvalidParameter, " LAME materials enabled only for three-dimensional analyses.");
 
-  // Get the old and new state data
-  // StateVariables is:  typedef std::map<std::string, Teuchos::RCP<Intrepid::FieldContainer<RealType> > >
-  Albany::StateVariables oldState = *workset.oldState;
-  const Intrepid::FieldContainer<RealType>& oldDefGrad  = *oldState[defGradName];
-  const Intrepid::FieldContainer<RealType>& oldStress  = *oldState[stressName];
+  // Get the old state data
+  //Albany::StateVariables oldState = *workset.oldState;
+  //const Intrepid::FieldContainer<RealType>& oldDefGrad  = *oldState[defGradName];
+  //const Intrepid::FieldContainer<RealType>& oldStress  = *oldState[stressName];
+  Albany::MDArray oldDefGrad = (*workset.stateArrayPtr)[defGradName];
+  Albany::MDArray oldStress = (*workset.stateArrayPtr)[stressName];
+
 
   // \todo Get actual time step for calls to LAME materials.
   RealType deltaT = 1.0;
@@ -142,8 +144,10 @@ evaluateFields(typename Traits::EvalData workset)
   double* stateOldPtr = matp->state_old;
   double* stressOldPtr = matp->stress_old;
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
+  //for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+  //  for (std::size_t qp=0; qp < numQPs; ++qp) {
+  for (int cell=0; cell < workset.numCells; ++cell) {
+    for (int qp=0; qp < numQPs; ++qp) {
 
       // Fill the following entries in matParams for call to LAME
       //
@@ -272,8 +276,10 @@ evaluateFields(typename Traits::EvalData workset)
 
       // copy data from the state manager to the LAME data structure
       for(int iVar=0 ; iVar<numStateVariables ; iVar++, stateOldPtr++){
-        std::string& variableName = lameMaterialModelStateVariableNames[iVar];
-        const Intrepid::FieldContainer<RealType>& stateVar = *oldState[variableName];
+        //std::string& variableName = lameMaterialModelStateVariableNames[iVar];
+        //const Intrepid::FieldContainer<RealType>& stateVar = *oldState[variableName];
+        const std::string& variableName = lameMaterialModelStateVariableNames[iVar]+"_old";
+        Albany::MDArray stateVar = (*workset.stateArrayPtr)[variableName];
         *stateOldPtr = stateVar(cell,qp);
       }
     }

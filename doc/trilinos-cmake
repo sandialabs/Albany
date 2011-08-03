@@ -91,7 +91,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=/home/agsalin/Trilinos/build_july10/install \
 #
 #        -D Trilinos_ENABLE_TriKota:BOOL=ON \
 #
-# (2) These 6 lines regarding  SEACAS/netcdf  are needed
+# (2) These 5 lines regarding  SEACAS/netcdf  are needed
 #     for reading exodus meshes, but require an
 #     installed netcdf. Also used for Pamgen meshes.
 #        -D Trilinos_ENABLE_SEACAS:BOOL=ON \

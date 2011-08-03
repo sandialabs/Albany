@@ -50,8 +50,14 @@ namespace Albany {
                   const unsigned int worksetSize) {};
 
 
+    typedef stk::mesh::Field<double,stk::mesh::Cartesian,stk::mesh::Cartesian> TensorFieldType ;
     typedef stk::mesh::Field<double,stk::mesh::Cartesian> VectorFieldType ;
     typedef stk::mesh::Field<double>                      ScalarFieldType ;
+
+    typedef stk::mesh::Cartesian QPTag; // need to invent shards::ArrayDimTag
+    typedef stk::mesh::Field<double,QPTag, stk::mesh::Cartesian,stk::mesh::Cartesian> QPTensorFieldType ;
+    typedef stk::mesh::Field<double,QPTag, stk::mesh::Cartesian > QPVectorFieldType ;
+    typedef stk::mesh::Field<double,QPTag>                      QPScalarFieldType ;
 
     stk::mesh::fem::FEMMetaData* metaData;
     stk::mesh::BulkData* bulkData;
@@ -60,15 +66,16 @@ namespace Albany {
     VectorFieldType* coordinates_field;
     VectorFieldType* solution_field;
     VectorFieldType* residual_field;
-    VectorFieldType* state_field;
+
+    std::vector<QPScalarFieldType*> qpscalar_states;
+    std::vector<QPVectorFieldType*> qpvector_states;
+    std::vector<QPTensorFieldType*> qptensor_states;
+
     int numDim;
     int neq;
-    int nstates;
 
     bool exoOutput;
     std::string exoOutFile;
-
-    int cubatureDegree;
 
     // Temporary flag to switch between 2D elements being Rank Elements or Faces
     bool useElementAsTopRank;

@@ -37,13 +37,15 @@ namespace QCAD {
     //! Destructor
     ~MaterialDatabase();
 
-    //! Get a parameter
+    //! Get a parameter / check existence
+    bool isParam(const std::string& paramName);
     template<typename T>
     T getParam(const std::string& paramName);
     template<typename T>
     T getParam(const std::string& paramName, T def_val);
 
     //! Get a parameter for a particular material
+    bool isMaterialParam(const std::string& materialName, const std::string& paramName);
     template<typename T>
     T getMaterialParam(const std::string& materialName, const std::string& paramName);
     template<typename T>
@@ -51,6 +53,7 @@ namespace QCAD {
 
 
     //! Get a parameter for a particular node set
+    bool isNodeSetParam(const std::string& materialName, const std::string& paramName);
     template<typename T>
     T getNodeSetParam(const std::string& materialName, const std::string& paramName);
     template<typename T>
@@ -58,11 +61,20 @@ namespace QCAD {
 
 
     //! Get a parameter for a particular element block (or assoc. material if paramName is not in element bloc)
+    bool isElementBlockParam(const std::string& ebName, const std::string& paramName);
     template<typename T>
     T getElementBlockParam(const std::string& ebName, const std::string& paramName);
     template<typename T>
     T getElementBlockParam(const std::string& ebName, const std::string& paramName, T def_val);
 
+    //! Get a vector of the value of all parameters in the entire list with name == paramName
+    template<typename T> 
+    std::vector<T> getAllMatchingParams(const std::string& paramName);
+
+  private:
+    template<typename T> 
+    void getAllMatchingParams_helper(const std::string& paramName, 
+				     std::vector<T>& results, Teuchos::ParameterList& pList);
 
   private:
 

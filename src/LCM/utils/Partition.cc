@@ -140,13 +140,21 @@ namespace LCM {
     int 
     worksetSize = meshSpecs->worksetSize;
 
+    // Create a state field in stick named Partition on elements
     // 1 DOF per node
     // 1 internal variable (partition number)
-    Teuchos::RCP<Albany::StateInfoStruct> sis = Teuchos::rcp(new Albany::StateInfoStruct());
-    sis->nstates = 1;
-    discretization_ptr_ = disc_factory.createDiscretization(1, sis);
+    Teuchos::RCP<Albany::StateInfoStruct>
+    stateInfo = Teuchos::rcp(new Albany::StateInfoStruct());
 
-    dimension_ = discretization_ptr_->getNumDim();
+    stateInfo->push_back(Teuchos::rcp(new Albany::StateStruct("Partition")));
+    Albany::StateStruct& stateRef = *stateInfo->back();
+    stateRef.entity = "QuadPoint"; //Tag, should be Node or QuadPoint
+    // State has 1 quad point (i.e. element variable)
+    stateRef.dim.push_back(worksetSize); stateRef.dim.push_back(1);
+
+    discretization_ptr_ = disc_factory.createDiscretization(1, stateInfo);
+
+    dimension_ = meshSpecs->numDim;
 
     // Dimensioned: Workset, Cell, Local Node
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >
@@ -159,7 +167,7 @@ namespace LCM {
     // the nodes at the corners of the element are considered
     // to define the topology.
     const CellTopologyData
-    cell_topology = discretization_ptr_->getCellTopologyData();
+    cell_topology = meshSpecs->ctd;
 
     const int
     dimension = cell_topology.dimension;
@@ -359,6 +367,7 @@ namespace LCM {
       default:
         std::cerr << "Unknown element type in calculating volume." << std::endl;
         std::exit(1);
+        break;
 
       }
 
@@ -603,6 +612,7 @@ namespace LCM {
     default:
       std::cerr << "Unknown partitioning scheme." << std::endl;
       std::exit(1);
+      break;
 
     }
 

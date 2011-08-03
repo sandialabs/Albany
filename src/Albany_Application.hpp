@@ -169,6 +169,7 @@ namespace Albany {
                       const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
                       Epetra_Vector& g);
 
+    
     //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
     /*!
      * Set xdot, dxdot_dp to NULL for steady-state problems
@@ -310,6 +311,16 @@ namespace Albany {
     //! Private to prohibit copying
     Application& operator=(const Application&);
 
+    //! Evalute responses using response field manater (rfm)
+    //  A helper function called by evaluateResponses.
+    virtual void 
+    evaluateResponses_rfm(const Epetra_Vector* xdot,
+			  const Epetra_Vector& x,
+			  const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
+			  Epetra_Vector& g);
+
+
+
   protected:
 
     //! Output stream, defaults to pronting just Proc 0
@@ -357,7 +368,9 @@ namespace Albany {
     //! Phalanx Field Manager for Dirichlet Conditions
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > dfm;
 
-    Teuchos::ArrayRCP<double> coordinates;
+    //! Phalanx Field Manager for Responses
+    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > rfm;
+
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > wsElNodeID;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords;
     Teuchos::ArrayRCP<std::string> wsEBNames;
@@ -425,6 +438,7 @@ namespace Albany {
     bool setupCalledSGJacobian;
     bool setupCalledMPResidual;
     bool setupCalledMPJacobian;
+    bool setupCalledResponses;
     mutable int phxGraphVisDetail;
 
     StateManager stateMgr;

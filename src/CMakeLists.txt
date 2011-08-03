@@ -44,6 +44,7 @@ SET(HEADERS
 	Albany_NOXObserver.hpp 
 	Albany_StateManager.hpp 
         Albany_StateInfoStruct.hpp
+        Albany_EigendataInfoStruct.hpp
 	Albany_VTK.hpp 
 	Albany_ModelEvaluator.hpp
 	Albany_SaveEigenData.hpp
@@ -80,6 +81,7 @@ SET(SOURCES ${SOURCES}
 	responses/Albany_SolutionMaxValueResponseFunction.cpp
 	responses/Albany_SolutionTwoNormResponseFunction.cpp
         responses/Albany_SolutionFileL2ResponseFunction.cpp
+	responses/Albany_EvaluatedResponseFunction.cpp
   )
 SET(HEADERS ${HEADERS}
 	responses/Albany_AbstractResponseFunction.hpp 
@@ -87,6 +89,7 @@ SET(HEADERS ${HEADERS}
 	responses/Albany_SolutionMaxValueResponseFunction.hpp
 	responses/Albany_SolutionTwoNormResponseFunction.hpp
         responses/Albany_SolutionFileL2ResponseFunction.hpp
+	responses/Albany_EvaluatedResponseFunction.hpp
   )
 
 #stk
@@ -118,6 +121,7 @@ SET(HEADERS ${HEADERS}
 #evaluators
 SET(SOURCES ${SOURCES}
 	evaluators/PHAL_GatherSolution.cpp 
+	evaluators/PHAL_GatherEigenvectors.cpp
 	evaluators/PHAL_ScatterResidual.cpp 
 	evaluators/PHAL_Dirichlet.cpp 
 	evaluators/PHAL_Source.cpp 
@@ -142,16 +146,19 @@ SET(SOURCES ${SOURCES}
 	evaluators/PHAL_NSContinuityResid.cpp
 	evaluators/PHAL_NSMomentumResid.cpp
         evaluators/PHAL_NSThermalEqResid.cpp
-        evaluators/PHAL_NSRmEqResid.cpp
-        evaluators/PHAL_ContravarientMetricTensor.cpp
+        evaluators/PHAL_NSRm.cpp
+        evaluators/PHAL_NSContravarientMetricTensor.cpp
         evaluators/PHAL_NSTauM.cpp 
         evaluators/PHAL_NSTauT.cpp
         evaluators/PHAL_NSMaterialProperty.cpp
         evaluators/PHAL_NSBodyForce.cpp
+	evaluators/PHAL_ResponseBase.cpp
   )
 SET(HEADERS ${HEADERS}
 	evaluators/PHAL_GatherSolution.hpp 
 	evaluators/PHAL_GatherSolution_Def.hpp 
+	evaluators/PHAL_GatherEigenvectors.hpp 
+	evaluators/PHAL_GatherEigenvectors_Def.hpp 
 	evaluators/PHAL_ScatterResidual.hpp 
 	evaluators/PHAL_ScatterResidual_Def.hpp 
 	evaluators/PHAL_Dirichlet.hpp 
@@ -200,10 +207,10 @@ SET(HEADERS ${HEADERS}
 	evaluators/PHAL_NSMomentumResid_Def.hpp
         evaluators/PHAL_NSThermalEqResid.hpp
         evaluators/PHAL_NSThermalEqResid_Def.hpp
-        evaluators/PHAL_NSRmEqResid.hpp
-        evaluators/PHAL_NSRmEqResid_Def.hpp
-        evaluators/PHAL_ContravarientMetricTensor.hpp
-        evaluators/PHAL_ContravarientMetricTensor_Def.hpp
+        evaluators/PHAL_NSRm.hpp
+        evaluators/PHAL_NSRm_Def.hpp
+        evaluators/PHAL_NSContravarientMetricTensor.hpp
+        evaluators/PHAL_NSContravarientMetricTensor_Def.hpp
         evaluators/PHAL_NSTauM.hpp 
         evaluators/PHAL_NSTauM_Def.hpp 
         evaluators/PHAL_NSTauT.hpp
@@ -212,6 +219,8 @@ SET(HEADERS ${HEADERS}
         evaluators/PHAL_NSMaterialProperty_Def.hpp 
         evaluators/PHAL_NSBodyForce.hpp
         evaluators/PHAL_NSBodyForce_Def.hpp
+        evaluators/PHAL_ResponseBase.hpp
+	evaluators/PHAL_ResponseBase_Def.hpp
   )
 
 # LCM
@@ -356,6 +365,9 @@ SET(SOURCES ${SOURCES}
        evaluators/QCAD_PoissonResid.cpp
        evaluators/QCAD_PoissonSource.cpp
        evaluators/QCAD_PoissonDirichlet.cpp
+       evaluators/QCAD_ResponseFieldIntegral.cpp
+       evaluators/QCAD_ResponseFieldValue.cpp
+       evaluators/QCAD_ResponseSaveField.cpp
        problems/QCAD_PoissonProblem.cpp
        problems/QCAD_MaterialDatabase.cpp
   )
@@ -369,6 +381,12 @@ SET(HEADERS ${HEADERS}
        evaluators/QCAD_PoissonSource_Def.hpp
        evaluators/QCAD_PoissonDirichlet.hpp
        evaluators/QCAD_PoissonDirichlet_Def.hpp
+       evaluators/QCAD_ResponseFieldIntegral.hpp
+       evaluators/QCAD_ResponseFieldIntegral_Def.hpp
+       evaluators/QCAD_ResponseFieldValue.hpp
+       evaluators/QCAD_ResponseFieldValue_Def.hpp
+       evaluators/QCAD_ResponseSaveField.hpp
+       evaluators/QCAD_ResponseSaveField_Def.hpp
        problems/QCAD_PoissonProblem.hpp
   )
 

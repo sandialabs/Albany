@@ -68,13 +68,14 @@ namespace Albany {
     //! Only constructor
     AbstractProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
                      const Teuchos::RCP<ParamLib>& paramLib_,
-                     const int neq_);
+                     const int neq_ = 0);
 
     //! Destructor
     virtual ~AbstractProblem() {};
 
     //! Get the number of equations
     unsigned int numEquations() const;
+    void setNumEquations(const int neq_);
     unsigned int numStates() const;
 
     //! Build the PDE instantiations, boundary conditions, and initial solution
@@ -86,6 +87,7 @@ namespace Albany {
 
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > getFieldManager();
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > getDirichletFieldManager() ;
+    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > getResponseFieldManager();
 
     //! Each problem must generate it's list of valide parameters
     virtual Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const 
@@ -116,7 +118,6 @@ namespace Albany {
 
     //! Number of equations per node being solved
     unsigned int neq;
-    unsigned int nstates;
 
     //! Problem parameters
     Teuchos::RCP<Teuchos::ParameterList> params;
@@ -130,6 +131,9 @@ namespace Albany {
 
     //! Field manager for Dirchlet Conditions Fill
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > dfm;
+
+    //! Field manager for Responses 
+    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > rfm;
 
     //! Names of scalar variables in this problem, used in specifying BCs
     std::vector<std::string> dofNames;

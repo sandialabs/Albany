@@ -15,8 +15,8 @@
 \********************************************************************/
 
 
-#ifndef PHAL_NSRMEQRESID_HPP
-#define PHAL_NSRMEQRESID_HPP
+#ifndef PHAL_NSRM_HPP
+#define PHAL_NSRM_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -31,14 +31,14 @@
 namespace PHAL {
 
 template<typename EvalT, typename Traits>
-class NSRmEqResid : public PHX::EvaluatorWithBaseImpl<Traits>,
-		    public PHX::EvaluatorDerived<EvalT, Traits> {
+class NSRm : public PHX::EvaluatorWithBaseImpl<Traits>,
+	     public PHX::EvaluatorDerived<EvalT, Traits> {
 
 public:
 
   typedef typename EvalT::ScalarT ScalarT;
 
-  NSRmEqResid(const Teuchos::ParameterList& p);
+  NSRm(const Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
@@ -57,13 +57,14 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> V_Dot;
   PHX::MDField<ScalarT,Cell,QuadPoint> T;
   PHX::MDField<ScalarT,Cell,QuadPoint> rho;
-   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> force;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> force;
   
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> acceleration;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> Rm;
 
   unsigned int numQPs, numDims, numNodes;
   bool enableTransient;
+  bool haveHeat;
  
 };
 }

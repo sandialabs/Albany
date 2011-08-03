@@ -50,7 +50,6 @@ Albany::FromCubitSTKMeshStruct::FromCubitSTKMeshStruct(
 {
   params->validateParameters(*getValidDiscretizationParameters(),0);
   neq=neq_;
-  nstates=sis->nstates;
 
   // Get singleton to STK info as loaded by Cubit MeshMover
   STKMeshData* stkMeshData = STKMeshData::instance();
@@ -60,10 +59,8 @@ Albany::FromCubitSTKMeshStruct::FromCubitSTKMeshStruct(
 
   solution_field = & metaData->declare_field< VectorFieldType >( "solution" );
   residual_field = & metaData->declare_field< VectorFieldType >( "residual" );
-  state_field = & metaData->declare_field< VectorFieldType >( "state" );
   stk::mesh::put_field( *solution_field , metaData->node_rank() , metaData->universal_part(), neq );
   stk::mesh::put_field( *residual_field , metaData->node_rank() , metaData->universal_part() , neq );
-  if (nstates>0) stk::mesh::put_field( *state_field , metaData->element_rank() , metaData->universal_part(), nstates );
 
   // Construct nsPartVec from similar stkMeshData struct
   std::map<int, stk::mesh::Part*> nsList= stkMeshData->get_nodeset_list();
@@ -79,7 +76,6 @@ Albany::FromCubitSTKMeshStruct::FromCubitSTKMeshStruct(
   }
 
   numDim = stkMeshData->get_num_dim();
-  cout << "numDim form cubit  " << numDim << endl;
 
   if (numDim==2) partVec[0] = stkMeshData->surface_part(0);
   else           partVec[0] = stkMeshData->volume_part(0);
@@ -99,7 +95,6 @@ Albany::FromCubitSTKMeshStruct::FromCubitSTKMeshStruct(
   stk::io::set_field_role(*coordinates_field, Ioss::Field::TRANSIENT);
   stk::io::set_field_role(*solution_field, Ioss::Field::TRANSIENT);
   stk::io::set_field_role(*residual_field, Ioss::Field::TRANSIENT);
-  if (nstates>0) stk::io::set_field_role(*state_field, Ioss::Field::TRANSIENT);
 #endif
 
   // This calls metaData->commit()

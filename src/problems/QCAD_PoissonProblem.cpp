@@ -56,20 +56,16 @@ PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     mtrlDbFilename = params->get<string>("MaterialDB Filename");
 
   //Schrodinger coupling
-  nEigenvectorsToInputFromStates = 0;
+  nEigenvectors = 0;
   bUseSchrodingerSource = false;
-  eigenvalFilename = "evals.txtdump";
   if(params->isSublist("Schrodinger Coupling")) {
     Teuchos::ParameterList& cList = params->sublist("Schrodinger Coupling");
     if(cList.isType<bool>("Schrodinger source in quantum blocks"))
       bUseSchrodingerSource = cList.get<bool>("Schrodinger source in quantum blocks");
     std::cout << "bSchod in quantum = " << bUseSchrodingerSource << std::endl;
-
-    if(cList.isType<int>("Eigenvectors from States"))
-      nEigenvectorsToInputFromStates = cList.get<int>("Eigenvectors from States");
-
-    if(cList.isType<string>("Eigenvalues file"))
-      eigenvalFilename = cList.get<string>("Eigenvalues file");
+    
+    if(bUseSchrodingerSource && cList.isType<int>("Eigenvectors from States"))
+      nEigenvectors = cList.get<int>("Eigenvectors from States");
   }
 
   std::cout << "Length unit = " << length_unit_in_m << " meters" << endl;
@@ -77,11 +73,6 @@ PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   // neq=1 set in AbstractProblem constructor
   dofNames.resize(neq);
   dofNames[0] = "Phi";
-
-  // STATE OUTPUT
-  nstates = 7;
-  nstates += nEigenvectorsToInputFromStates*2; //Re and Im parts (input @ nodes)
-  nstates += nEigenvectorsToInputFromStates*2; //Re and Im parts (output @ qps)
 }
 
 QCAD::PoissonProblem::
@@ -97,40 +88,16 @@ buildProblem(
     std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
   /* Construct All Phalanx Evaluators */
-  constructEvaluators(meshSpecs, stateMgr);
+  constructEvaluators(meshSpecs, stateMgr, responses);
   constructDirichletEvaluators(meshSpecs.nsNames);
- 
-  // Build response functions
-  Teuchos::ParameterList& responseList = params->sublist("Response Functions");
-  int num_responses = responseList.get("Number", 0);
-  responses.resize(num_responses);
-  for (int i=0; i<num_responses; i++) 
-  {
-     std::string name = responseList.get(Albany::strint("Response",i), "??");
-
-     if (name == "Solution Average")
-       responses[i] = Teuchos::rcp(new Albany::SolutionAverageResponseFunction());
-
-     else if (name == "Solution Two Norm")
-       responses[i] = Teuchos::rcp(new Albany::SolutionTwoNormResponseFunction());
-
-     else 
-     {
-       TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-                          std::endl <<
-                          "Error!  Unknown response function " << name <<
-                          "!" << std::endl << "Supplied parameter list is " <<
-                          std::endl << responseList);
-     }
-
-  }
 }
 
 
 void
 QCAD::PoissonProblem::constructEvaluators(
        const Albany::MeshSpecsStruct& meshSpecs,
-       Albany::StateManager& stateMgr)
+       Albany::StateManager& stateMgr,
+       std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
    using Teuchos::RCP;
    using Teuchos::rcp;
@@ -199,6 +166,17 @@ QCAD::PoissonProblem::constructEvaluators(
     p->set<bool>("Disable Transient", true);
 
     evaluators_to_build["Gather Solution"] = p;
+  }
+
+  { // Gather Eigenvectors
+    RCP<ParameterList> p = rcp(new ParameterList);
+    int type = FactoryTraits<AlbanyTraits>::id_gather_eigenvectors;
+    p->set<int>("Type", type);
+    p->set<string>("Eigenvector field name root", "Evec");
+    p->set<int>("Number of eigenvectors", nEigenvectors);
+    p->set< RCP<DataLayout> >("Data Layout", node_scalar);
+
+    evaluators_to_build["Gather Eigenvectors"] = p;
   }
 
   { // Gather Coordinate Vector
@@ -368,117 +346,62 @@ QCAD::PoissonProblem::constructEvaluators(
 
     // Schrodinger coupling
     p->set<bool>("Use Schrodinger source", bUseSchrodingerSource);
-    p->set<string>("Eigenvalues file", eigenvalFilename);
-    p->set<int>("Schrodinger eigenvectors", nEigenvectorsToInputFromStates);
-    p->set<string>("Eigenvector state name root", "Evec");
+    p->set<int>("Schrodinger eigenvectors", nEigenvectors);
+    p->set<string>("Eigenvector field name root", "Evec");
 
     evaluators_to_build["Poisson Source"] = p;
-
-    // EIGENSTATE INPUT from states
-    if( nEigenvectorsToInputFromStates > 0 ) {
-      int ilsf = FactoryTraits<AlbanyTraits>::id_loadstatefield;
-      char evecStateName[100]; char evecFieldName[100]; char evalName[100];
-      for( int k = 0; k < nEigenvectorsToInputFromStates; k++) {
-        sprintf(evecStateName,"Eigenvector_Re%d",k);
-        sprintf(evecFieldName,"Evec_Re%d",k);
-        sprintf(evalName,"Input Evec_Re%d",k);
-        evaluators_to_build[evecStateName] =
-          stateMgr.registerStateVariable(evecStateName, node_scalar, dummy, ilsf, "zero", evecFieldName);
-
-        sprintf(evecStateName,"Eigenvector_Im%d",k);
-        sprintf(evecFieldName,"Evec_Im%d",k);
-        sprintf(evalName,"Input Evec_Im%d",k);
-        evaluators_to_build[evecStateName] =
-          stateMgr.registerStateVariable(evecStateName, node_scalar, dummy, ilsf, "zero", evecFieldName);
-      }
-    }
-
-
-    // STATE OUTPUT
-    int issf = FactoryTraits<AlbanyTraits>::id_savestatefield;
-    evaluators_to_build["Save Charge Density"] =
-      stateMgr.registerStateVariable("Charge Density", qp_scalar, dummy, issf);
-    evaluators_to_build["Save Electron Density"] =
-      stateMgr.registerStateVariable("Electron Density", qp_scalar, dummy, issf);
-    evaluators_to_build["Save Hole Density"] =
-      stateMgr.registerStateVariable("Hole Density", qp_scalar, dummy, issf);
-    evaluators_to_build["Save Electric Potential"] =
-      stateMgr.registerStateVariable("Electric Potential", qp_scalar, dummy, issf);
-    evaluators_to_build["Save Ionized Dopant"] =
-      stateMgr.registerStateVariable("Ionized Dopant", qp_scalar, dummy, issf);
-    evaluators_to_build["Save Condution Band"] =
-      stateMgr.registerStateVariable("Conduction Band", qp_scalar, dummy, issf);
-    evaluators_to_build["Save Valence Band"] =
-      stateMgr.registerStateVariable("Valence Band", qp_scalar, dummy, issf);
   }
 
   // Interpolate Input Eigenvectors (if any) to quad points
-  if( nEigenvectorsToInputFromStates > 0 ) {
-    char buf[100];
+  char buf[100];  
+  for( int k = 0; k < nEigenvectors; k++)
+  { 
+    // DOF: Interpolate nodal Eigenvector values to quad points
+    RCP<ParameterList> p;
+    int type;
+
+    //REAL PART
+    sprintf(buf, "Poisson Eigenvector Re %d interpolate to qps", k);
+    p = rcp(new ParameterList(buf));
+
+    type = FactoryTraits<AlbanyTraits>::id_dof_interpolation;
+    p->set<int>   ("Type", type);
+
+    // Input
+    sprintf(buf, "Evec_Re%d", k);
+    p->set<string>("Variable Name", buf);
+    p->set< RCP<DataLayout> >("Node Data Layout",      node_scalar);
     
-    for( int k = 0; k < nEigenvectorsToInputFromStates; k++)
-    { 
-      // DOF: Interpolate nodal Eigenvector values to quad points
-      RCP<ParameterList> p;
-      int type;
-
-      //REAL PART
-      sprintf(buf, "Poisson Eigenvector Re %d interpolate to qps", k);
-      p = rcp(new ParameterList(buf));
-
-      type = FactoryTraits<AlbanyTraits>::id_dof_interpolation;
-      p->set<int>   ("Type", type);
-
-      // Input
-      sprintf(buf, "Evec_Re%d", k);
-      p->set<string>("Variable Name", buf);
-      p->set< RCP<DataLayout> >("Node Data Layout",      node_scalar);
-
-      p->set<string>("BF Name", "BF");
-      p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
-
-      // Output (assumes same Name as input)
-      p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
-
-      sprintf(buf, "Eigenvector Re %d interpolate to qps", k);
-      evaluators_to_build[buf] = p;
-
-
-      //IMAGINARY PART
-      sprintf(buf, "Eigenvector Im %d interpolate to qps", k);
-      p = rcp(new ParameterList(buf));
-
-      type = FactoryTraits<AlbanyTraits>::id_dof_interpolation;
-      p->set<int>   ("Type", type);
-
-      // Input
-      sprintf(buf, "Evec_Im%d", k);
-      p->set<string>("Variable Name", buf);
-      p->set< RCP<DataLayout> >("Node Data Layout",      node_scalar);
-
-      p->set<string>("BF Name", "BF");
-      p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
-
-      // Output (assumes same Name as input)
-      p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
-
-      sprintf(buf, "Eigenvector Im %d interpolate to qps", k);
-      evaluators_to_build[buf] = p;
-
-
-      //Save evaluators - to debug whether evecs has been interpolated to qps correctly
-      char saveName[100];
-      int issf = FactoryTraits<AlbanyTraits>::id_savestatefield;
-      sprintf(saveName, "Save QP Evector Re %d", k);
-      sprintf(buf, "Evec_Re%d", k);
-      evaluators_to_build[saveName] =
-	stateMgr.registerStateVariable(buf, qp_scalar, dummy, issf);
-
-      sprintf(saveName, "Save QP Evector Im %d", k);
-      sprintf(buf, "Evec_Im%d", k);
-      evaluators_to_build[saveName] =
-      	stateMgr.registerStateVariable(buf, qp_scalar, dummy, issf);
-    }
+    p->set<string>("BF Name", "BF");
+    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
+    
+    // Output (assumes same Name as input)
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    
+    sprintf(buf, "Eigenvector Re %d interpolate to qps", k);
+    evaluators_to_build[buf] = p;
+    
+    
+    //IMAGINARY PART
+    sprintf(buf, "Eigenvector Im %d interpolate to qps", k);
+    p = rcp(new ParameterList(buf));
+    
+    type = FactoryTraits<AlbanyTraits>::id_dof_interpolation;
+    p->set<int>   ("Type", type);
+    
+    // Input
+    sprintf(buf, "Evec_Im%d", k);
+    p->set<string>("Variable Name", buf);
+    p->set< RCP<DataLayout> >("Node Data Layout",      node_scalar);
+    
+    p->set<string>("BF Name", "BF");
+    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
+    
+    // Output (assumes same Name as input)
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    
+    sprintf(buf, "Eigenvector Im %d interpolate to qps", k);
+    evaluators_to_build[buf] = p;
   }
 
   { // Potential Resid
@@ -557,13 +480,140 @@ QCAD::PoissonProblem::constructEvaluators(
    fm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag);
 
 
-   const Albany::StateManager::RegisteredStates& reg = stateMgr.getRegisteredStates();
-   Albany::StateManager::RegisteredStates::const_iterator st = reg.begin();
-   while (st != reg.end()) {
-     if( (st->first).find("Eigenvector") == 0 ) { st++; continue; } //skip "EigenvectorX" states since they're inputs
-     PHX::Tag<AlbanyTraits::Residual::ScalarT> res_out_tag(st->first, dummy);
-     fm->requireField<AlbanyTraits::Residual>(res_out_tag);
-     st++;
+   // Parameters for Response Evaluators
+   //  Iterate through list of responses (from input xml file).  For each, create a response
+   //  function and possibly a parameter list to construct a response evaluator.
+   Teuchos::ParameterList& responseList = params->sublist("Response Functions");
+   int num_responses = responseList.get("Number", 0);
+   responses.resize(num_responses);
+
+   map<string, RCP<ParameterList> > response_evaluators_to_build;
+   vector<string> responseIDs_to_require;
+
+   for (int i=0; i<num_responses; i++) 
+   {
+     std::string responseID = Albany::strint("Response",i);
+     std::string responseParamsID = Albany::strint("ResponseParams",i);
+     std::string name = responseList.get(responseID, "??");
+
+     if (name == "See List" && responseList.isSublist(responseParamsID) ) {
+
+       responses[i] = Teuchos::rcp(new Albany::EvaluatedResponseFunction());
+       Teuchos::ParameterList& responseParams = responseList.sublist(responseParamsID);
+       std::string type = responseParams.get("Type", "??");
+
+       // Common parameters to all response evaluators
+       RCP<ParameterList> p = rcp(new ParameterList);
+       p->set<string>("Response ID", responseID);
+       p->set<int>   ("Response Index", i);
+       p->set< Teuchos::RCP<Albany::EvaluatedResponseFunction> >("Response Function", 
+	 Teuchos::rcp_dynamic_cast< Albany::EvaluatedResponseFunction>(responses[i]));
+       p->set<Teuchos::ParameterList*>("Parameter List", &responseParams);
+       p->set< RCP<DataLayout> >("Dummy Data Layout", dummy);
+
+       // Parameters specific to the particular type of response evaluator
+       if (type == "Field Integral")
+       { 
+	 int type = FactoryTraits<AlbanyTraits>::id_qcad_response_fieldintegral;
+	 p->set<int>("Type", type);
+	 p->set<string>("Weights Name",   "Weights");
+	 p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+       }
+
+       else if (type == "Field Value")
+       { 
+	 int type = FactoryTraits<AlbanyTraits>::id_qcad_response_fieldvalue;
+	 p->set<int>("Type", type);
+	 p->set<string>("Coordinate Vector Name", "Coord Vec");
+	 p->set<string>("Weights Name",   "Weights");
+	 p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+	 p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+       }
+
+       else if (type == "Save Field")
+       { 
+	 int type = FactoryTraits<AlbanyTraits>::id_qcad_response_savefield;
+	 p->set<int>("Type", type);
+	 p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+	 p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+
+	 // Temporary HACK:
+	 // Duplicates logic from ResponseSaveField, and would be nice to put this code in
+	 //  that evaluator class somehow. Pass stateManager in param list? ANDY
+	 std::string fieldName;
+	 if(responseParams.isParameter("Vector Field Name"))
+	   fieldName = responseParams.get<std::string>("Vector Field Name");
+	 else
+	   fieldName = responseParams.get<string>("Field Name");
+	 std::string stateName = responseParams.get<string>("State Name", fieldName);
+	 bool bOutToExodus = responseParams.get<bool>("Output to Exodus", true);
+	 stateMgr.registerStateVariable(stateName, qp_scalar, "zero", false, bOutToExodus);
+       }
+
+       else {
+	 TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+			    std::endl <<
+			    "Error!  Unknown evaluated response type " << type <<
+			    "!" << std::endl << "Supplied parameter list is " <<
+			    std::endl << responseList);
+       }
+
+       response_evaluators_to_build[responseID] = p;
+       responseIDs_to_require.push_back(responseID);
+     }
+
+     else // Response<i> is not a sublist, so process by just building a response function
+     { 
+       if (name == "Solution Average")
+	 responses[i] = Teuchos::rcp(new Albany::SolutionAverageResponseFunction());
+
+       else if (name == "Solution Two Norm")
+	 responses[i] = Teuchos::rcp(new Albany::SolutionTwoNormResponseFunction());
+
+       else {
+	 TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+			    std::endl <<
+			    "Error!  Unknown response function " << name <<
+			    "!" << std::endl << "Supplied parameter list is " <<
+			    std::endl << responseList);
+       }
+
+     }
+
+   } // end of loop over responses
+
+   // Build Response Evaluators for each evaluation type
+   RCP< vector< RCP<PHX::Evaluator_TemplateManager<AlbanyTraits> > > >
+     response_evaluators;
+   response_evaluators = factory.buildEvaluators(response_evaluators_to_build);
+   response_evaluators->insert(response_evaluators->begin(), evaluators->begin(), evaluators->end());
+
+   // Create a Response FieldManager
+   rfm = Teuchos::rcp(new PHX::FieldManager<AlbanyTraits>);
+
+   // Register all Evaluators
+   PHX::registerEvaluators(response_evaluators, *rfm);
+
+   // Set required fields: ( Response<i>, dummy ), for responses evaluated by the response evaluators
+   vector<string>::const_iterator it;
+   for (it = responseIDs_to_require.begin(); it != responseIDs_to_require.end(); it++)
+   {
+     const std::string& responseID = *it;
+
+     PHX::Tag<AlbanyTraits::Residual::ScalarT> res_response_tag(responseID, dummy);
+     rfm->requireField<AlbanyTraits::Residual>(res_response_tag);
+     PHX::Tag<AlbanyTraits::Jacobian::ScalarT> jac_response_tag(responseID, dummy);
+     rfm->requireField<AlbanyTraits::Jacobian>(jac_response_tag);
+     PHX::Tag<AlbanyTraits::Tangent::ScalarT> tan_response_tag(responseID, dummy);
+     rfm->requireField<AlbanyTraits::Tangent>(tan_response_tag);
+     PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_response_tag(responseID, dummy);
+     rfm->requireField<AlbanyTraits::SGResidual>(sgres_response_tag);
+     PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_response_tag(responseID, dummy);
+     rfm->requireField<AlbanyTraits::SGJacobian>(sgjac_response_tag);
+     PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_response_tag(responseID, dummy);
+     rfm->requireField<AlbanyTraits::MPResidual>(mpres_response_tag);
+     PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_response_tag(responseID, dummy);
+     rfm->requireField<AlbanyTraits::MPJacobian>(mpjac_response_tag);
    }
 }
 
@@ -611,16 +661,16 @@ QCAD::PoissonProblem::constructDirichletEvaluators(
          p->set< RealType >("Dirichlet Value", DBCparams.get<double>(ss));
          p->set< string >  ("Node Set ID", nodeSetIDs[i]);
          p->set< int >     ("Number of Equations", dofNames.size());
-	 p->set< int >     ("Equation Offset", j);
+         p->set< int >     ("Equation Offset", j);
 
          p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
-	 //! Additional parameters needed for Poisson Dirichlet BCs
-	 Teuchos::ParameterList& paramList = params->sublist("Poisson Source");
-	 p->set<Teuchos::ParameterList*>("Poisson Source Parameter List", &paramList);
-	 //p->set<string>("Temperature Name", "Temperature");  //to add if use shared param for DBC
-	 p->set<double>("Temperature", temperature);
-	 p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
+         //! Additional parameters needed for Poisson Dirichlet BCs
+         Teuchos::ParameterList& paramList = params->sublist("Poisson Source");
+         p->set<Teuchos::ParameterList*>("Poisson Source Parameter List", &paramList);
+         //p->set<string>("Temperature Name", "Temperature");  //to add if use shared param for DBC
+         p->set<double>("Temperature", temperature);
+         p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
 
          std::stringstream ess; ess << "Evaluator for " << ss;
          evaluators_to_build[ess.str()] = p;
@@ -694,8 +744,7 @@ QCAD::PoissonProblem::getValidProblemParameters() const
   validPL->sublist("Schrodinger Coupling", false, "");
   validPL->sublist("Schrodinger Coupling").set<bool>("Schrodinger source in quantum blocks",false,"Use eigenvector data to compute charge distribution within quantum blocks");
   validPL->sublist("Schrodinger Coupling").set<int>("Eigenvectors from States",0,"Number of eigenvectors to use for quantum region source");
-  validPL->sublist("Schrodinger Coupling").set<string>("Eigenvalues file","evals.txtdump","File specifying eigevalues, output by Schrodinger problem");
-
+  
   //For poisson schrodinger interations
   validPL->sublist("Dummy Dirichlet BCs", false, "");
   validPL->sublist("Dummy Parameters", false, "");

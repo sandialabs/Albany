@@ -66,11 +66,16 @@ namespace Albany {
 
   protected:
 
-    //! Boundary conditions on source term
-    bool periodic;
-    bool haveSource;
-    int numDim;
+    
+    bool periodic;     //! periodic BCs
+    int numDim;        //! number of spatial dimensions
 
+    bool haveFlow;     //! have flow equations (momentum+continuity)
+    bool haveHeat;     //! have heat equation (temperature)
+    bool haveSource;   //! have source term in heat equation
+    bool havePSPG;     //! have pressure stabilization
+    bool haveSUPG;     //! have SUPG stabilization
+    
   };
 
 }

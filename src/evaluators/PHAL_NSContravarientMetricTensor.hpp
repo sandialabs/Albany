@@ -15,14 +15,16 @@
 \********************************************************************/
 
 
-#ifndef PHAL_NSRT_HPP
-#define PHAL_NSRT_HPP
+#ifndef PHAL_NSCONTRAVARIENTMETRICTENSOR_HPP
+#define PHAL_NSCONTRAVARIENTMETRICTENSOR_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
+#include "Intrepid_CellTools.hpp"
+#include "Intrepid_Cubature.hpp"
 /** \brief Finite Element Interpolation Evaluator
 
     This evaluator interpolates nodal DOF values to quad points.
@@ -31,12 +33,13 @@
 namespace PHAL {
 
 template<typename EvalT, typename Traits>
-class NSRt : public PHX::EvaluatorWithBaseImpl<Traits>,
-		    public PHX::EvaluatorDerived<EvalT, Traits>  {
+class NSContravarientMetricTensor : 
+    public PHX::EvaluatorWithBaseImpl<Traits>,
+    public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
-  NSRt(const Teuchos::ParameterList& p);
+  NSContravarientMetricTensor(const Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
@@ -45,36 +48,23 @@ public:
 
 private:
 
-  typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
+  int  numDims, numQPs;
 
   // Input:
-  //PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
-  PHX::MDField<ScalarT,Cell,QuadPoint> Temperature;
-  PHX::MDField<ScalarT,Cell,QuadPoint> Tdot;
-  PHX::MDField<ScalarT,Cell,QuadPoint> ThermalCond;
-  //PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> TGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> V;
-  //PHX::MDField<ScalarT,Cell,QuadPoint> Source;
-  //Teuchos::Array<double> convectionVels;
-  PHX::MDField<ScalarT,Cell,QuadPoint> rhoCp;  
+  //! Coordinate vector at vertices
+  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
+  Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
+  Teuchos::RCP<shards::CellTopology> cellType;
+
+  // Temporary FieldContainers
+  Intrepid::FieldContainer<RealType> refPoints;
+  Intrepid::FieldContainer<RealType> refWeights;
+  Intrepid::FieldContainer<MeshScalarT> jacobian;
+  Intrepid::FieldContainer<MeshScalarT> jacobian_inv;
 
   // Output:
-  //PHX::MDField<ScalarT,Cell,Node> TResidual;
-  PHX::MDField<ScalarT,Cell,QuadPoint> Rt;
-
-  bool haveSource;
-  //bool haveConvection;
-  bool enableTransient;
-  bool haverhoCp;
-  unsigned int numQPs, numDims, numNodes;
-  Intrepid::FieldContainer<ScalarT> flux;
-
-  //! Parameter values
-  //ScalarT rho; // density of the fluid
-  //ScalarT Cp; // specific heat
-  //ScalarT lambda; // thermal conducitivity
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> Gc;
 };
 }
 

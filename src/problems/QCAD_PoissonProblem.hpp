@@ -65,7 +65,8 @@ namespace QCAD {
     PoissonProblem& operator=(const PoissonProblem&);
 
     void constructEvaluators(const Albany::MeshSpecsStruct& meshSpecs,
-                             Albany::StateManager& stateMgr);
+                             Albany::StateManager& stateMgr,
+			     std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
 
     void constructDirichletEvaluators(const std::vector<std::string>& nodeSetIDs);
 
@@ -84,9 +85,7 @@ namespace QCAD {
 
     //! Parameters for coupling to Schrodinger
     bool bUseSchrodingerSource;
-    std::string eigenvalFilename;
-    int nEigenvectorsToInputFromStates;
-    
+    int nEigenvectors;    
   };
 
 }

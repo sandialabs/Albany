@@ -26,7 +26,7 @@ namespace Albany {
 
 void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
                        const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >& wsElNodeID,
-                       const Teuchos::ArrayRCP<double>& coordinates,
+                       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords,
                        const int neq,
                        const int numDim,
                        Teuchos::ParameterList& icParams);

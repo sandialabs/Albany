@@ -182,30 +182,52 @@ Albany::STKDiscretization::STKDiscretization(
   wsElNodeID.resize(numBuckets);
   coords.resize(numBuckets);
   int el_lid=0;
-for (unsigned int b=0; b < buckets.size(); b++) {
-  stk::mesh::Bucket& buck = *buckets[b];
-  wsElNodeID[b].resize(buck.size());
-  coords[b].resize(buck.size());
-  for (unsigned int i=0; i < buck.size(); i++, el_lid++) {
+  for (unsigned int b=0; b < buckets.size(); b++) {
+    stk::mesh::Bucket& buck = *buckets[b];
+    wsElNodeID[b].resize(buck.size());
+    coords[b].resize(buck.size());
+    for (unsigned int i=0; i < buck.size(); i++, el_lid++) {
+  
+      stk::mesh::Entity& e = buck[i];
 
-    stk::mesh::Entity& e = buck[i];
+      stk::mesh::PairIterRelation rel = e.relations();
 
-    stk::mesh::PairIterRelation rel = e.relations();
-
-    wsElNodeID[b][i].resize(nodes_per_element);
-    coords[b][i].resize(nodes_per_element);
-    // loop over local nodes
-    for (unsigned int j=0; j < rel.size(); j++) {
-      stk::mesh::Entity& rowNode = * rel[j].entity();
-      int node_gid = rowNode.identifier() - 1;
-      int node_lid = overlap_map->LID(node_gid * neq) / neq;
-      TEST_FOR_EXCEPTION(node_lid<0, std::logic_error,
-          "STK1D_Disc: node_lid out of range " << node_lid << endl);
-      wsElNodeID[b][i][j] = node_lid;
-      coords[b][i][j] = stk::mesh::field_data(*stkMeshStruct->coordinates_field, rowNode);
+      wsElNodeID[b][i].resize(nodes_per_element);
+      coords[b][i].resize(nodes_per_element);
+      // loop over local nodes
+        for (unsigned int j=0; j < rel.size(); j++) {
+        stk::mesh::Entity& rowNode = * rel[j].entity();
+        int node_gid = rowNode.identifier() - 1;
+        int node_lid = overlap_map->LID(node_gid * neq) / neq;
+        TEST_FOR_EXCEPTION(node_lid<0, std::logic_error,
+            "STK1D_Disc: node_lid out of range " << node_lid << endl);
+        wsElNodeID[b][i][j] = node_lid;
+        coords[b][i][j] = stk::mesh::field_data(*stkMeshStruct->coordinates_field, rowNode);
+      }
     }
   }
-}
+
+  // Pull out pointers to shards::Arrays for every bucket, for every state
+  // Code is data-type dependent
+  stateArrays.resize(numBuckets);
+  for (unsigned int b=0; b < buckets.size(); b++) {
+    stk::mesh::Bucket& buck = *buckets[b];
+    for (int i=0; i<stkMeshStruct->qpscalar_states.size(); i++) {
+      stk::mesh::BucketArray<Albany::AbstractSTKMeshStruct::QPScalarFieldType> array(*stkMeshStruct->qpscalar_states[i], buck);
+      MDArray ar = array;
+      stateArrays[b][stkMeshStruct->qpscalar_states[i]->name()] = ar;
+    }
+    for (int i=0; i<stkMeshStruct->qpvector_states.size(); i++) {
+      stk::mesh::BucketArray<Albany::AbstractSTKMeshStruct::QPVectorFieldType> array(*stkMeshStruct->qpvector_states[i], buck);
+      MDArray ar = array;
+      stateArrays[b][stkMeshStruct->qpvector_states[i]->name()] = ar;
+    }
+    for (int i=0; i<stkMeshStruct->qptensor_states.size(); i++) {
+      stk::mesh::BucketArray<Albany::AbstractSTKMeshStruct::QPTensorFieldType> array(*stkMeshStruct->qptensor_states[i], buck);
+      MDArray ar = array;
+      stateArrays[b][stkMeshStruct->qptensor_states[i]->name()] = ar;
+    }
+  }
 
   int estNonzeroesPerRow;
   switch (numDim) {
@@ -358,26 +380,11 @@ Albany::STKDiscretization::getNodeSetIDs() const
   return nodeSetIDs;
 }
 
-const CellTopologyData&
-Albany::STKDiscretization::getCellTopologyData() const
-{
-  if (stkMeshStruct->useElementAsTopRank)
-    return *(stkMeshStruct->metaData->get_cell_topology(*(stkMeshStruct->partVec[0])).getCellTopologyData()); 
-  else { // havn't figured out how to get shards topo from Cubit
-   if (stkMeshStruct->numDim==1) return *(shards::getCellTopologyData<shards::Line<2> >());
-   else if (stkMeshStruct->numDim==2) return *(shards::getCellTopologyData<shards::Quadrilateral<4> >());
-   else                          return *(shards::getCellTopologyData<shards::Hexahedron<8> >());
-  }
-}
-
-void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln,
-					       const std::vector<std::vector<double> > states)
+void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln)
 {
   // Put solution as Epetra_Vector into STK Mesh
   setSolutionField(soln);
  
-  if (states.size()>0) setStateField(states);
-
 #ifdef ALBANY_SEACAS
   if (stkMeshStruct->exoOutput) {
 
@@ -391,16 +398,6 @@ void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln,
            << " index " <<out_step<<" to file "<<stkMeshStruct->exoOutFile<< endl;
   }
 #endif
-}
-
-void 
-Albany::STKDiscretization::setStateField(const std::vector<std::vector<double> > states) 
-{
-  for (unsigned int i=0; i < cells.size(); i++)  {
-    double* st = stk::mesh::field_data(*stkMeshStruct->state_field, *cells[i]);
-    for (unsigned int j=0; j<stkMeshStruct->nstates; j++)
-      st[j] = states[i][j];
-  }
 }
 
 void 

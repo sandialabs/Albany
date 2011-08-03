@@ -72,6 +72,13 @@ getParam(const std::string& paramName, T def_value)
   return data_.get<T>(paramName, def_value);
 }
 
+bool QCAD::MaterialDatabase:: 
+isParam(const std::string& paramName)
+{
+  return data_.isParameter(paramName);
+}
+
+
 
 template<typename T> T 
 QCAD::MaterialDatabase:: 
@@ -110,6 +117,17 @@ getMaterialParam(const std::string& materialName, const std::string& paramName, 
   return subList.get<T>(paramName, def_value);
 }
 
+bool QCAD::MaterialDatabase:: 
+isMaterialParam(const std::string& materialName, const std::string& paramName)
+{
+  TEST_FOR_EXCEPTION(pMaterialsList_ == NULL, Teuchos::Exceptions::InvalidParameter,
+		     std::endl << "MaterialDB Error! param required but no DB." << std::endl);
+  if(!pMaterialsList_->isSublist(materialName)) return false;
+  Teuchos::ParameterList& subList = pMaterialsList_->sublist(materialName);
+  return subList.isParameter(paramName);
+}
+
+
 
 template<typename T> T 
 QCAD::MaterialDatabase:: 
@@ -147,6 +165,18 @@ getNodeSetParam(const std::string& nsName, const std::string& paramName, T def_v
   Teuchos::ParameterList& subList = pNSList_->sublist(nsName);
   return subList.get<T>(paramName, def_value);
 }
+
+bool QCAD::MaterialDatabase:: 
+isNodeSetParam(const std::string& nsName, const std::string& paramName)
+{
+  TEST_FOR_EXCEPTION(pNSList_ == NULL, Teuchos::Exceptions::InvalidParameter,
+		     std::endl << "MaterialDB Error! param required but no DB." << std::endl);
+
+  if(!pNSList_->isSublist(nsName)) return false;
+  Teuchos::ParameterList& subList = pNSList_->sublist(nsName);
+  return subList.isParameter(paramName);
+}
+
 
 
 template<typename T> T 
@@ -225,6 +255,58 @@ getElementBlockParam(const std::string& ebName, const std::string& paramName, T 
   return matSubList.get<T>(paramName, def_value);
 }
 
+bool QCAD::MaterialDatabase:: 
+isElementBlockParam(const std::string& ebName, const std::string& paramName)
+{
+  TEST_FOR_EXCEPTION(pEBList_ == NULL, Teuchos::Exceptions::InvalidParameter,
+		     std::endl << "MaterialDB Error! param required but no DB." << std::endl);
+
+  if(!pEBList_->isSublist(ebName)) return false;
+  Teuchos::ParameterList& subList = pEBList_->sublist(ebName);
+
+  if(subList.isParameter(paramName)) return true;
+
+  //check if related material exists (it always should)
+  if(!subList.isParameter("material")) return false;
+
+  //Parameter not directly in element block sublist, so try related material
+  std::string materialName = subList.get<std::string>("material");
+  if(!pMaterialsList_->isSublist(materialName)) return false;
+
+  Teuchos::ParameterList& matSubList = pMaterialsList_->sublist(materialName);
+  return matSubList.isParameter(paramName);
+}
+
+
+
+template<typename T> std::vector<T>
+QCAD::MaterialDatabase:: 
+getAllMatchingParams(const std::string& paramName)
+{
+  std::vector<T> results;
+  getAllMatchingParams_helper(paramName, results, data_);
+  return results;
+}
+
+template<typename T> void
+QCAD::MaterialDatabase:: 
+getAllMatchingParams_helper(const std::string& paramName, std::vector<T>& results, Teuchos::ParameterList& list)
+{
+  Teuchos::ParameterList::ConstIterator it;
+  Teuchos::ParameterList* list_type = NULL;
+  T* param_type = NULL;
+
+  for(it = list.begin(); it != list.end(); it++) {
+    if( it->second.isList() ) {
+      Teuchos::ParameterList& subList = it->second.getValue(list_type);
+      getAllMatchingParams_helper(paramName, results, subList);
+      continue;
+    }
+
+    if( it->second.isType<T>() && it->first == paramName )
+      results.push_back( it->second.getValue(param_type) );
+  }
+}
 
 
 
@@ -316,4 +398,6 @@ getElementBlockParam<std::string>(const std::string& materialName, const std::st
 template std::string QCAD::MaterialDatabase:: 
 getElementBlockParam<std::string>(const std::string& materialName, const std::string& paramName, std::string def_val);
 
+template std::vector<std::string> QCAD::MaterialDatabase:: 
+getAllMatchingParams(const std::string& paramName);
 

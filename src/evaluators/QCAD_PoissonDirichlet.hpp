@@ -40,6 +40,7 @@ namespace QCAD {
 template<typename EvalT, typename Traits>
 class PoissonDirichlet
   : public PHAL::Dirichlet<EvalT, Traits> {
+
 public:
   typedef typename EvalT::ScalarT ScalarT;
 
@@ -48,41 +49,51 @@ public:
   virtual ScalarT& getValue(const std::string &n) { return user_value; }
 
 protected:
-  //! Compute the (scaled) potential offset due to a doped element block
-  ScalarT ComputeOffsetDueToDoping(const std::string ebName, ScalarT phiForIncompleteIon);
 
-  //! compute the inverse of Maxwell-Boltzmann statistics
-  inline ScalarT invComputeMBStat(const ScalarT x);
-        
   //! compute the inverse of the Fermi-Dirac integral of 1/2 order
-  inline ScalarT invComputeFDIntOneHalf(const ScalarT x);
-        
-  //! compute the inverse of the 0-K Fermi-Dirac integral
-  inline ScalarT invComputeZeroKFDInt(const ScalarT x);
-        
-  //! return the doping value when incompIonization = False
-  inline ScalarT fullDopants(const std::string dopType, const ScalarT &x);
-        
-  //! compute the ionized dopants when incompIonization = True
-  ScalarT ionizedDopants(const std::string dopType, const ScalarT &x);
+  ScalarT inverseFDIntOneHalf(const ScalarT x);
+
+  //! built-in potential for MB statistics and complete ionization
+  ScalarT potentialForMBComplIon(const ScalarT &Nc, const ScalarT &Nv, 
+				 const ScalarT &Eg, const double &Chi,
+				 const std::string dopType, const double &dopingConc);
+
+  //! built-in potential for MB statistics and incomplete ionization
+  ScalarT potentialForMBIncomplIon(const ScalarT &Nc, const ScalarT &Nv, 
+				   const ScalarT &Eg, const double &Chi, 
+				   const std::string dopType, const double &dopingConc, const double &dopantActE);
+
+  //! built-in potential for FD statistics and complete ionization
+  ScalarT potentialForFDComplIon(const ScalarT &Nc, const ScalarT &Nv, 
+				 const ScalarT &Eg, const double &Chi, 
+				 const std::string dopType, const double &dopingConc);
+
+  //! built-in potential for zero-K FD statistics and complete ionization
+  ScalarT potentialForZeroKFDComplIon(const ScalarT &Nc, const ScalarT &Nv, 
+				      const ScalarT &Eg, const double &Chi, 
+				      const std::string dopType, const double &dopingConc);
 
 
-protected:
+private:
   ScalarT user_value;    // value entered by user, distinguished from actual DBC value
 
+  std::string material;
   std::string ebName;
-  std::string category;
-  double affinity;
-
   std::string carrierStatistics;
   std::string incompIonization;
+  
   double dopingDonor;   // in [cm-3]
   double dopingAcceptor;
-  double donorActE;     // (Ec-Ed) where Ed = donor energy level
-  double acceptorActE;  // (Ea-Ev) where Ea = acceptor energy level
+  double donorActE;     // (Ec-Ed) where Ed = donor energy level, [eV]
+  double acceptorActE;  // (Ea-Ev) where Ea = acceptor energy level, [eV]
 
   ScalarT temperature;  // [K]
-
+  
+  // Since kbT, V0, and qPhiRef are used in all member functions, define them as member variables
+  ScalarT kbT;  // [eV]
+  ScalarT V0;   // [V]
+  ScalarT qPhiRef; //! Constant energy reference for heterogeneous structures,[eV]
+  
   //! Material database
   Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
 };

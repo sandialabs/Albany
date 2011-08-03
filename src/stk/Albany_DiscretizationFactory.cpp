@@ -74,7 +74,7 @@ Albany::DiscretizationFactory::createMeshSpecs()
   else if (method == "Cubit") {
 #ifdef ALBANY_CUTR
     AGS"need to inherit from Generic"
-    stkMeshStruct = Teuchos::rcp(new Albany::FromCubitSTKMeshStruct(meshMover, discParams, neq, nstates));
+    stkMeshStruct = Teuchos::rcp(new Albany::FromCubitSTKMeshStruct(meshMover, discParams, neq));
 #else 
     TEST_FOR_EXCEPTION(method == "Cubit", 
           Teuchos::Exceptions::InvalidParameter,

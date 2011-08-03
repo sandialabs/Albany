@@ -29,26 +29,32 @@ NSContinuityResid<EvalT, Traits>::
 NSContinuityResid(const Teuchos::ParameterList& p) :
   wBF         (p.get<std::string>                   ("Weighted BF Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ), 
-  wGradBF     (p.get<std::string>                   ("Weighted Gradient BF Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
   VGrad       (p.get<std::string>                   ("Gradient QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-  TauM            (p.get<std::string>                 ("Tau M Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  Rm   (p.get<std::string>                         ("Rm Name"),
- 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  rho       (p.get<std::string>                   ("Density QP Variable Name"),
+  rho         (p.get<std::string>                   ("Density QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
 
   CResidual   (p.get<std::string>                   ("Residual Name"), 
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") )
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
+  havePSPG(p.get<bool>("Have PSPG"))
 {
   this->addDependentField(wBF);  
   this->addDependentField(VGrad);
-  this->addDependentField(wGradBF);
-  this->addDependentField(TauM);
-  this->addDependentField(Rm);
   this->addDependentField(rho);
+  if (havePSPG) {
+    wGradBF = PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>(
+      p.get<std::string>("Weighted Gradient BF Name"),
+      p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") );
+    TauM = PHX::MDField<ScalarT,Cell,QuadPoint>(
+      p.get<std::string>("Tau M Name"),
+      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
+    Rm = PHX::MDField<ScalarT,Cell,QuadPoint,Dim>(
+      p.get<std::string>("Rm Name"),
+      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") );
+    this->addDependentField(wGradBF);
+    this->addDependentField(TauM);
+    this->addDependentField(Rm);
+  }
    
   this->addEvaluatedField(CResidual);
 
@@ -74,10 +80,12 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(VGrad,fm);
-  this->utils.setFieldData(wGradBF,fm); 
-  this->utils.setFieldData(TauM,fm);
-  this->utils.setFieldData(Rm,fm);
   this->utils.setFieldData(rho,fm);
+  if (havePSPG) {
+    this->utils.setFieldData(wGradBF,fm); 
+    this->utils.setFieldData(TauM,fm);
+    this->utils.setFieldData(Rm,fm);
+  }
 
   this->utils.setFieldData(CResidual,fm);
 }
@@ -89,7 +97,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
   typedef Intrepid::FunctionSpaceTools FST;
 
- for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       divergence(cell,qp) = 0.0;
       for (std::size_t i=0; i < numDims; ++i) {
@@ -97,18 +105,21 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-
+  
   FST::integrate<ScalarT>(CResidual, divergence, wBF, Intrepid::COMP_CPP,  
                           false); // "false" overwrites
 
-   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+  if (havePSPG) {
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {          
-          for (std::size_t qp=0; qp < numQPs; ++qp) {               
-               for (std::size_t j=0; j < numDims; ++j) { 
-                 CResidual(cell,node) += rho(cell,qp)*TauM(cell,qp)*Rm(cell,qp,j)*wGradBF(cell,node,qp,j);
-               }  
-            }    
-       }
+	for (std::size_t qp=0; qp < numQPs; ++qp) {               
+	  for (std::size_t j=0; j < numDims; ++j) { 
+	    CResidual(cell,node) += 
+	      rho(cell,qp)*TauM(cell,qp)*Rm(cell,qp,j)*wGradBF(cell,node,qp,j);
+	  }  
+	}    
+      }
+    }
   }
 
 }
