@@ -29,11 +29,11 @@
 #include "Teuchos_Array.hpp"
 #include "Albany_EvaluatedResponseFunction.hpp"
 
+namespace PHAL
+{
 /** 
  * \brief Base Class for Response evaluators
  */
-namespace PHAL
-{
   template<typename EvalT, typename Traits>
   class ResponseBaseCommon : 
     public PHX::EvaluatorWithBaseImpl<Traits>,

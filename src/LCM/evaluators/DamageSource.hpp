@@ -29,10 +29,10 @@
 #include "Stokhos_KL_ExponentialRandomField.hpp"
 #include "Teuchos_Array.hpp"
 
+namespace LCM {
 /** 
  * \brief Damage Source
  */
-namespace LCM {
 
 template<typename EvalT, typename Traits>
 class DamageSource : 

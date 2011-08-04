@@ -22,8 +22,6 @@
   #include "Albany_STKDiscretization.hpp"
 #endif
 
-using namespace std;
-
 Albany_RythmosObserver::Albany_RythmosObserver(
      const Teuchos::RCP<Albany::Application> &app_) : 
   disc(app_->getDiscretization()),

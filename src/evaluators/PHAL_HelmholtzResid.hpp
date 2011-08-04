@@ -25,12 +25,12 @@
 #include "Sacado_ParameterAccessor.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 
+namespace PHAL {
 /** \brief Finite Element Interpolation Evaluator
 
     This evaluator interpolates nodal DOF values to quad points.
 
 */
-namespace PHAL {
 
 template<typename EvalT, typename Traits>
 class HelmholtzResid : public PHX::EvaluatorWithBaseImpl<Traits>,

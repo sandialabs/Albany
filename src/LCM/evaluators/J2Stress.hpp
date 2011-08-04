@@ -23,13 +23,13 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
+namespace LCM {
 /** \brief J2Stress stress response
 
     This evaluator computes stress based on a uncoupled J2Stress
     potential
 
 */
-namespace LCM {
 
 template<typename EvalT, typename Traits>
 class J2Stress : public PHX::EvaluatorWithBaseImpl<Traits>,

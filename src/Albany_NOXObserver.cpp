@@ -21,8 +21,6 @@
   #include "Albany_STKDiscretization.hpp"
 #endif
 
-using namespace std;
-
 Albany_NOXObserver::Albany_NOXObserver(
      const Teuchos::RCP<Albany::Application> &app_) : 
   app(app_),

@@ -29,6 +29,7 @@
 
 #include "Albany_Application.hpp"
 
+//! Albany driver code, problems, discretizations, and responses
 namespace Albany {
 
   /*!

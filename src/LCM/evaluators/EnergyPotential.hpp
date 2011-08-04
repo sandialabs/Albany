@@ -23,12 +23,12 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
+namespace LCM {
 /** \brief Nonlinear Elasticity Energy Potential
 
     This evaluator computes a energy density for nonlinear elastic material
 
 */
-namespace LCM {
 
 template<typename EvalT, typename Traits>
 class EnergyPotential : public PHX::EvaluatorWithBaseImpl<Traits>,

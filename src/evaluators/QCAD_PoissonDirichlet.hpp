@@ -32,10 +32,10 @@
 
 #include "QCAD_MaterialDatabase.hpp"
 
+namespace QCAD {
+
 /** \brief Dirichlet Evaluator for QCAD Poisson Problem
 */
-
-namespace QCAD {
 
 template<typename EvalT, typename Traits>
 class PoissonDirichlet

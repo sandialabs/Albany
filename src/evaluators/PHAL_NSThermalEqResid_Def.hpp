@@ -47,6 +47,7 @@ NSThermalEqResid(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
   haveSource  (p.get<bool>("Have Source")),
   haveFlow    (p.get<bool>("Have Flow")),
+  haveNeut    (p.get<bool>("Have Neutron")),
   haveSUPG    (p.get<bool>("Have SUPG"))
 {
   if (p.isType<bool>("Disable Transient"))
@@ -74,6 +75,23 @@ NSThermalEqResid(const Teuchos::ParameterList& p) :
       p.get<std::string>("Velocity QP Variable Name"),
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") );
     this->addDependentField(V);
+  }
+
+  if (haveNeut) {
+    phi = PHX::MDField<ScalarT,Cell,QuadPoint>(
+      p.get<std::string>("Neutron QP Variable Name"),
+      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
+    this->addDependentField(phi);
+
+    Fission = PHX::MDField<ScalarT,Cell,QuadPoint>(
+      p.get<std::string>("Neutron Fission Name"),
+      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
+    this->addDependentField(Fission);
+
+    PropConst = PHX::MDField<ScalarT,Cell,QuadPoint>(
+      p.get<std::string>("Proportionality Constant Name"),
+      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
+    this->addDependentField(PropConst);
   }
 
   if (haveSUPG) {
@@ -115,6 +133,9 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(Cp,fm);
   if (haveSource)  this->utils.setFieldData(Source,fm);
   if (haveFlow) this->utils.setFieldData(V,fm);
+  if (haveNeut) this->utils.setFieldData(phi,fm);
+  if (haveNeut) this->utils.setFieldData(Fission,fm);
+  if (haveNeut) this->utils.setFieldData(PropConst,fm);
   if (haveSUPG) this->utils.setFieldData(TauT,fm);
 
   this->utils.setFieldData(TResidual,fm);
@@ -135,6 +156,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       convection(cell,qp) = 0.0;
       if (haveSource) convection(cell,qp) -= Source(cell,qp);
+      if (haveNeut) convection(cell,qp) -= PropConst(cell,qp)*Fission(cell,qp)*phi(cell,qp);
       if (workset.transientTerms && enableTransient) 
 	convection(cell,qp) += rho(cell,qp) * Cp(cell,qp) * Tdot(cell,qp);
       if (haveFlow) {

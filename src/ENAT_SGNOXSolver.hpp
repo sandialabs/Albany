@@ -35,6 +35,8 @@
 #include "Stokhos_CompletePolynomialBasis.hpp"
 #include "Stokhos_Quadrature.hpp"
 
+//! Embedded Nonlinear Analysis Tools: Being replaced by Trilinos::Piro
+namespace ENAT {
 /** \brief Epetra-based Model Evaluator subclass for Charon!
  *
  * This class will support a wide number of different types of abstract
@@ -44,7 +46,6 @@
  * ToDo: Finish documentation!
  */
 
-namespace ENAT {
   class SGNOXSolver : public EpetraExt::ModelEvaluator {
   public:
 

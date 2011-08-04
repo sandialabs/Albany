@@ -26,13 +26,13 @@
 #include "Intrepid_CellTools.hpp"
 #include "Intrepid_Cubature.hpp"
 
+namespace PHAL {
 /** \brief Finite Element Interpolation Evaluator
 
     This evaluator interpolates coordinates at vertices 
     to quad points.
 
 */
-namespace PHAL {
 
 template<typename EvalT, typename Traits>
 class MapToPhysicalFrame : public PHX::EvaluatorWithBaseImpl<Traits>,

@@ -26,10 +26,10 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Epetra_Vector.h"
 
+namespace PHAL {
 /** \brief LoadStateField
 
 */
-namespace PHAL {
 
 template<typename EvalT, typename Traits> 
 class LoadStateField : public PHX::EvaluatorWithBaseImpl<Traits>,
