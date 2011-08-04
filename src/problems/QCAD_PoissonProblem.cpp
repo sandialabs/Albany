@@ -58,6 +58,7 @@ PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   //Schrodinger coupling
   nEigenvectors = 0;
   bUseSchrodingerSource = false;
+  bUsePredictorCorrector = false;
   if(params->isSublist("Schrodinger Coupling")) {
     Teuchos::ParameterList& cList = params->sublist("Schrodinger Coupling");
     if(cList.isType<bool>("Schrodinger source in quantum blocks"))
@@ -66,6 +67,9 @@ PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     
     if(bUseSchrodingerSource && cList.isType<int>("Eigenvectors from States"))
       nEigenvectors = cList.get<int>("Eigenvectors from States");
+    
+    if(bUseSchrodingerSource && cList.isType<bool>("Use predictor-corrector method"))
+      bUsePredictorCorrector = cList.get<bool>("Use predictor-corrector method");
   }
 
   std::cout << "Length unit = " << length_unit_in_m << " meters" << endl;
@@ -349,6 +353,7 @@ QCAD::PoissonProblem::constructEvaluators(
     p->set<bool>("Use Schrodinger source", bUseSchrodingerSource);
     p->set<int>("Schrodinger eigenvectors", nEigenvectors);
     p->set<string>("Eigenvector field name root", "Evec");
+    p->set<bool>("Use predictor-corrector method", bUsePredictorCorrector);
 
     evaluators_to_build["Poisson Source"] = p;
   }

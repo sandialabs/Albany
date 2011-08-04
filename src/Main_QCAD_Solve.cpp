@@ -132,19 +132,19 @@ int main(int argc, char *argv[]) {
 
     *out << "QCAD Solve: creating initial Poisson solver using input " << PoissonXmlFilename << endl;
     CreateSolver("initial poisson", PoissonXmlFilename, initPoissonApp, initPoissonSolver, 
-		 initPoisson_params_in, initPoisson_responses_out);
+      initPoisson_params_in, initPoisson_responses_out);
 
     *out << "QCAD Solve: creating Poisson solver using input " << PoissonXmlFilename << endl;
     CreateSolver("poisson", PoissonXmlFilename, poissonApp, poissonSolver, 
-		 poisson_params_in, poisson_responses_out);
+      poisson_params_in, poisson_responses_out);
 
     *out << "QCAD Solve: creating dummy Poisson solver using input " << PoissonXmlFilename << endl;
     CreateSolver("dummy poisson", PoissonXmlFilename, dummyPoissonApp, dummyPoissonSolver, 
-		 dummy_params_in, dummy_responses_out);
+      dummy_params_in, dummy_responses_out);
 
     *out << "QCAD Solve: creating Schrodinger solver using input " << SchrodingerXmlFilename << endl;
     CreateSolver("schrodinger", SchrodingerXmlFilename, schrodingerApp, schrodingerSolver, 
-		 schrodinger_params_in, schrodinger_responses_out);
+      schrodinger_params_in, schrodinger_responses_out);
 
     setupTimer.~TimeMonitor();
 
@@ -165,8 +165,15 @@ int main(int argc, char *argv[]) {
     *out << "QCAD Solve: Beginning Poisson-Schrodinger solve loop" << endl;
     bool bConverged = false; 
     int iter = 0;
-
-    while(!bConverged && iter < maxIter) {
+    
+    // determine if using predictor-corrector method 
+    bool bPredictorCorrector = false; 
+    Albany::SolverFactory slvrfctry(PoissonXmlFilename, Albany_MPI_COMM_WORLD);
+    Teuchos::ParameterList& appParams = slvrfctry.getParameters();
+    bPredictorCorrector = appParams.sublist("Problem").sublist("Schrodinger Coupling").get<bool>("Use predictor-corrector method",false);
+    
+    while(!bConverged && iter < maxIter) 
+    {
       iter++;
  
       double newShift = GetEigensolverShift(*pStatesToLoop, "Conduction Band");
@@ -174,27 +181,31 @@ int main(int argc, char *argv[]) {
 
       *out << "QCAD Solve: Schrodinger iteration " << iter << endl;
       SolveModel(schrodingerApp, schrodingerSolver,
-		 schrodinger_params_in, schrodinger_responses_out,
-		 pStatesToLoop, pStatesToPass, eigenDataNull, eigenDataToPass);
+        schrodinger_params_in, schrodinger_responses_out,
+        pStatesToLoop, pStatesToPass, eigenDataNull, eigenDataToPass);
 
       CopyStateToContainer(*pStatesToLoop, "Saved Solution", tmpContainer);
       CopyContainerToState(tmpContainer, *pStatesToPass, "Previous Poisson Potential");
 
       *out << "QCAD Solve: Poisson iteration " << iter << endl;
       SolveModel(poissonApp, poissonSolver, 
-		 poisson_params_in, poisson_responses_out,
-		 pStatesToPass, pStatesToLoop, eigenDataToPass, eigenDataNull);
+        poisson_params_in, poisson_responses_out,
+        pStatesToPass, pStatesToLoop, eigenDataToPass, eigenDataNull);
 
-      *out << "QCAD Solve: Poisson Dummy iteration " << iter << endl;
-      SolveModel(dummyPoissonApp, dummyPoissonSolver, 
-		 dummy_params_in, dummy_responses_out,
-		 pStatesToPass, pStatesFromDummy, eigenDataToPass, eigenDataNull);
+      if (!bPredictorCorrector)  // not use the predictor-corrector method
+      {
+        *out << "QCAD Solve: Poisson Dummy iteration " << iter << endl;
+        SolveModel(dummyPoissonApp, dummyPoissonSolver, 
+          dummy_params_in, dummy_responses_out,
+          pStatesToPass, pStatesFromDummy, eigenDataToPass, eigenDataNull);
 
-      AddStateToState(*pStatesFromDummy, "Electric Potential", *pStatesToLoop, "Conduction Band");
+        AddStateToState(*pStatesFromDummy, "Electric Potential", *pStatesToLoop, "Conduction Band");
+      }
+      
       eigenDataNull = Teuchos::null;
-
       if(iter > 1) 
-	bConverged = checkConvergence(*pStatesToLoop, prevElectricPotential, "Electric Potential", 1e-3);
+        bConverged = checkConvergence(*pStatesToLoop, prevElectricPotential, "Electric Potential", 1e-6);
+      
       //CopyState(*pLastSavedPotential, *pStatesToLoop, "Electric Potential");
       CopyStateToContainer(*pStatesToLoop, "Electric Potential", prevElectricPotential);
     } 
@@ -226,6 +237,7 @@ int main(int argc, char *argv[]) {
   //Teuchos::TimeMonitor::summarize(*out,false,true,false/*zero timers*/);
   return status;
 }
+
 
 void CreateSolver(const std::string& solverType, char* xmlfilename, 
 		  Teuchos::RCP<Albany::Application>& albApp, Teuchos::RCP<EpetraExt::ModelEvaluator>& App, 
@@ -298,9 +310,9 @@ void CreateSolver(const std::string& solverType, char* xmlfilename,
       //     << ",   Num Parameters: " << p1->GlobalLength() << endl;
       
       if (p1->GlobalLength() > 0)
-	dgdp = rcp(new Epetra_MultiVector(g1->Map(), p1->GlobalLength() ));
+        dgdp = rcp(new Epetra_MultiVector(g1->Map(), p1->GlobalLength() ));
       else
-	supportsSensitivities = false;
+        supportsSensitivities = false;
     }
   }
   
@@ -310,6 +322,7 @@ void CreateSolver(const std::string& solverType, char* xmlfilename,
   
   if (supportsSensitivities) responses_out.set_DgDp(0,0,dgdp);
 }
+
 
 void SolveModel(Teuchos::RCP<Albany::Application>& albApp, Teuchos::RCP<EpetraExt::ModelEvaluator>& App, 
 		EpetraExt::ModelEvaluator::InArgs params_in, EpetraExt::ModelEvaluator::OutArgs responses_out,
@@ -322,7 +335,6 @@ void SolveModel(Teuchos::RCP<Albany::Application>& albApp, Teuchos::RCP<EpetraEx
   pFinalStates = &(albApp->getStateMgr().getStateArrays());
   pFinalEData = albApp->getStateMgr().getEigenData();
 }
-
 
 
 void CopyStateToContainer(Albany::StateArrays& src,
@@ -348,7 +360,7 @@ void CopyStateToContainer(Albany::StateArrays& src,
     
     for(int cell=0; cell < dims[0]; cell++)
       for(int qp=0; qp < dims[1]; qp++)
-	dest[ws](cell,qp) = src[ws][stateNameToCopy](cell,qp);
+        dest[ws](cell,qp) = src[ws][stateNameToCopy](cell,qp);
   }
 }
 
@@ -368,7 +380,7 @@ void CopyContainerToState(std::vector<Intrepid::FieldContainer<RealType> >& src,
     
     for(int cell=0; cell < dims[0]; cell++)
       for(int qp=0; qp < dims[1]; qp++)
-	dest[ws][stateNameOfCopy](cell,qp) = src[ws](cell,qp);
+        dest[ws][stateNameOfCopy](cell,qp) = src[ws](cell,qp);
   }
 }
 
@@ -440,18 +452,26 @@ bool checkConvergence(Albany::StateArrays& states,
     states[ws][stateName].dimensions(dims);
     TEST_FOR_EXCEPT( dims.size() != 2 );
     
-    for(int cell=0; cell < dims[0]; cell++) {
-      for(int qp=0; qp < dims[1]; qp++) {
-	if( fabs( states[ws][stateName](cell,qp) 
-		  - prevState[ws](cell,qp) ) > tol )
-	  return false;
+    for(int cell=0; cell < dims[0]; cell++) 
+    {
+      for(int qp=0; qp < dims[1]; qp++) 
+      {
+        // std::cout << "prevState = " << prevState[ws](cell,qp) << std::endl;
+        // std::cout << "currState = " << states[ws][stateName](cell,qp) << std::endl;
+        if( fabs( states[ws][stateName](cell,qp) - prevState[ws](cell,qp) ) > tol )
+        {
+          // std::cout << "diff = " << fabs( states[ws][stateName](cell,qp) - prevState[ws](cell,qp) ) << std::endl;
+          return false;
+        }  
       }
     }
   }
   return true;
 }
 
-void ResetEigensolverShift(Teuchos::RCP<EpetraExt::ModelEvaluator>& Solver, double newShift) {
+
+void ResetEigensolverShift(Teuchos::RCP<EpetraExt::ModelEvaluator>& Solver, double newShift) 
+{
   Teuchos::RCP<Piro::Epetra::LOCASolver> pels = Teuchos::rcp_dynamic_cast<Piro::Epetra::LOCASolver>(Solver);
   TEST_FOR_EXCEPT(pels == Teuchos::null);
 
@@ -468,6 +488,7 @@ void ResetEigensolverShift(Teuchos::RCP<EpetraExt::ModelEvaluator>& Solver, doub
   std::cout << "DEBUG: new eigensolver shift = " << newShift << std::endl;
   stepper->eigensolverReset(eigList);
 }
+
 
 double GetEigensolverShift(Albany::StateArrays& states,
 			   const std::string& stateNameToBaseShiftOn)
@@ -491,9 +512,9 @@ double GetEigensolverShift(Albany::StateArrays& states,
 
     for (int cell = 0; cell < cells; ++cell)  {
       for (int qp = 0; qp < qps; ++qp) {
-	val = states[ws][name](cell, qp);
-	if(val < minVal) minVal = val;
-	if(val > maxVal) maxVal = val;
+        val = states[ws][name](cell, qp);
+        if(val < minVal) minVal = val;
+        if(val > maxVal) maxVal = val;
       }
     }
   }

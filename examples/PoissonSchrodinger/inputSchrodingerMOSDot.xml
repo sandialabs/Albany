@@ -45,32 +45,33 @@
 
       <Parameter name="Response 1" type="string" value="See List" />
       <ParameterList name="ResponseParams 1">
-	<Parameter name="Type" type="string" value="Save Field" />
-	<Parameter name="Field Name" type="string" value="Conduction Band" />
-	<Parameter name="State Name" type="string" value="Conduction Band Avg" />
+        <Parameter name="Type" type="string" value="Save Field" />
+        <Parameter name="Field Name" type="string" value="Conduction Band" />
+        <Parameter name="State Name" type="string" value="Conduction Band Avg" />
       </ParameterList>
 
       <!-- Must "save" Conduction Band state so it gets registered and is thereby imported -->
       <Parameter name="Response 2" type="string" value="See List" />
       <ParameterList name="ResponseParams 2">
-	<Parameter name="Type" type="string" value="Save Field" />
-	<Parameter name="Field Name" type="string" value="Conduction Band" />
-	<Parameter name="Output Cell Average" type="bool" value="0" />
-	<Parameter name="Output to Exodus" type="bool" value="0" />
+        <Parameter name="Type" type="string" value="Save Field" />
+        <Parameter name="Field Name" type="string" value="Conduction Band" />
+        <Parameter name="Output Cell Average" type="bool" value="0" />
+        <Parameter name="Output to Exodus" type="bool" value="0" />
       </ParameterList>
 
       <!-- Dummy - in order to allocate state needed for Poisson iteration -->
       <Parameter name="Response 3" type="string" value="See List" />
       <ParameterList name="ResponseParams 3">
-	<Parameter name="Type" type="string" value="Save Field" />
-	<Parameter name="Field Name" type="string" value="Conduction Band" />
-	<Parameter name="State Name" type="string" value="Previous Poisson Potential" />
-	<Parameter name="Output Cell Average" type="bool" value="0" />
-	<Parameter name="Output to Exodus" type="bool" value="0" />
+        <Parameter name="Type" type="string" value="Save Field" />
+        <Parameter name="Field Name" type="string" value="Conduction Band" />
+        <Parameter name="State Name" type="string" value="Previous Poisson Potential" />
+        <Parameter name="Output Cell Average" type="bool" value="0" />
+        <Parameter name="Output to Exodus" type="bool" value="0" />
       </ParameterList>
 
     </ParameterList>
   </ParameterList>
+
 
   <ParameterList name="Discretization">
     <Parameter name="Exodus Input File Name" type="string" value="mosDotQuantum.exo" />
@@ -78,6 +79,7 @@
     <Parameter name="Workset Size" type="int" value="100" />
     <Parameter name="Exodus Output File Name" type="string" value="wavefunctions2D.exo" />
   </ParameterList>
+
 
   <ParameterList name="Regression Results">
     <Parameter name="Number of Comparisons" type="int" value="1" />
@@ -88,12 +90,14 @@
      	       value="{0.0,0.0,0.0,0.0,0.0,0.0,0.0}" />
   </ParameterList>
 
+
   <ParameterList name="LOCA">
     <ParameterList name="Bifurcation"/>
     <ParameterList name="Constraints"/>
     <ParameterList name="Predictor">
       <Parameter  name="Method" type="string" value="Tangent"/>
     </ParameterList>
+    
     <ParameterList name="Stepper">
       <Parameter  name="Initial Value" type="double" value="1.0"/>
       <Parameter  name="Continuation Parameter" type="string" value="Schrodinger Potential Scaling Factor"/>
@@ -104,7 +108,7 @@
       <ParameterList name="Eigensolver">
         <Parameter name="Method" type="string" value="Anasazi"/>
         <Parameter name="Operator" type="string" value="Shift-Invert"/>
-	<Parameter name="Convergence Tolerance" type="double" value="1e-4"/>
+        <Parameter name="Convergence Tolerance" type="double" value="1e-4"/>
         <Parameter name="Num Blocks" type="int" value="100"/>
         <Parameter name="Num Eigenvalues" type="int" value="5"/>
         <Parameter name="Save Eigenvectors" type="int" value="5"/>
@@ -114,10 +118,12 @@
         <Parameter name="Sorting Order" type="string" value="SR"/>
       </ParameterList>
     </ParameterList>
+    
     <ParameterList name="Step Size">
       <Parameter  name="Initial Step Size" type="double" value="1.0"/>
     </ParameterList>
   </ParameterList>
+
 
   <ParameterList name="NOX">
 

@@ -85,7 +85,8 @@ namespace QCAD {
 
     //! Parameters for coupling to Schrodinger
     bool bUseSchrodingerSource;
-    int nEigenvectors;    
+    int nEigenvectors;
+    bool bUsePredictorCorrector;     
   };
 
 }
