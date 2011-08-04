@@ -41,8 +41,8 @@ NavierStokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   if (periodic) *out <<" Periodic Boundary Conditions being used." <<std::endl;
 
   haveFlow = params->get("Have Flow Equations", true);
-  haveHeat = params->get("Have Heat Equation", true);
-  haveNeut = params->get("Have Neutron Equation", true);
+  haveHeat = params->get("Have Heat Equation", false);
+  haveNeut = params->get("Have Neutron Equation", false);
   havePSPG = params->get("Have Pressure Stabilization", true);
   haveSUPG = params->get("Have SUPG Stabilization", true);
   haveSource =  params->isSublist("Source Functions");
