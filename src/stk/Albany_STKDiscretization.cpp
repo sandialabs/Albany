@@ -318,7 +318,7 @@ void Albany::STKDiscretization::computeGraphs()
 
   for (unsigned int i=0; i < cells.size(); i++) {
     stk::mesh::Entity& e = *cells[i];
-    stk::mesh::PairIterRelation rel = e.relations();
+    stk::mesh::PairIterRelation rel = e.relations(metaData.NODE_RANK);
 
     // loop over local nodes
     for (unsigned int j=0; j < rel.size(); j++) {
@@ -392,7 +392,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
   
       stk::mesh::Entity& e = buck[i];
 
-      stk::mesh::PairIterRelation rel = e.relations();
+      stk::mesh::PairIterRelation rel = e.relations(metaData.NODE_RANK);
 
       wsElNodeEqID[b][i].resize(nodes_per_element);
       coords[b][i].resize(nodes_per_element);

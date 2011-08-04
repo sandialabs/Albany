@@ -9,6 +9,9 @@
 
 namespace LCM{
 
+//Teuchos::RCP<Teuchos::Time> FullGraphTime = Teuchos::TimeMonitor::getNewTimer("Full Graph Creation Time");
+//Teuchos::RCP<Teuchos::Time> InitTime = Teuchos::TimeMonitor::getNewTimer("Initialization Time");
+
 /*
  * Default constructor for topology
  */
@@ -38,6 +41,7 @@ topology::topology(
 	disc_params->set<std::string>("Exodus Output File Name", output_file);
 	//disc_params->print(std::cout);
 
+	//Teuchos::TimeMonitor LocalTimer(*InitTime);
 	Teuchos::RCP<Epetra_Comm>
 	  communicator = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
 
@@ -169,8 +173,9 @@ topology::fracture_criterion(
 	bool is_open = false;
 	// Check criterion
 	float random = 0.5 + 0.5*Teuchos::ScalarTraits<double>::random();
-	if (random < p)
+	if (random < p){
 		is_open = true;
+	}
 
 	return is_open;
 }
@@ -404,6 +409,7 @@ topology::output_to_graphviz(
 void
 topology::graph_initialization()
 {
+	//Teuchos::TimeMonitor localTimer(*FullGraphTime);
 	stk::mesh::PartVector add_parts;
 	stk::mesh::create_adjacent_entities(*(bulkData_), add_parts);
 
@@ -507,6 +513,7 @@ topology::graph_cleanup()
 	std::vector<Entity*> element_lst;
 	stk::mesh::get_entities(*(bulkData_),elementRank,element_lst);
 
+	/*
 	// Remove faces from graph
 	std::vector<Entity*> face_lst;
 	stk::mesh::get_entities(*(bulkData_),faceRank,face_lst);
@@ -542,16 +549,64 @@ topology::graph_cleanup()
 		}
 		bulkData_->destroy_entity(edge_lst[i]);
 	}
+	*/
 
 	// Add relations from element to nodes
 	for (int i = 0; i < element_lst.size(); ++i){
 		Entity & element = *(element_lst[i]);
-		for (int j = 0; j < connectivity_temp.size(); ++j){
-			Entity & node = *(connectivity_temp[i][j]);
+		std::vector<Entity*> element_connectivity = connectivity_temp[i];
+		for (int j = 0; j < element_connectivity.size(); ++j){
+			Entity & node = *(element_connectivity[j]);
 			bulkData_->declare_relation(element,node,j);
 		}
 	}
 
+	return;
+}
+
+
+/*
+ * Return an ordered list of nodes which describe the input face.
+ * Valid in 2D and 3D.
+ *
+ * Note: Assumes all mesh elements are same type
+ */
+std::vector<Entity*>
+topology::get_face_nodes(Entity * entity){
+	std::vector<Entity*> face_nodes;
+
+	shards::CellTopology element_topology =
+			shards::getCellTopologyData< shards::Hexahedron<8> >();
+	stk::mesh::PairIterRelation elements = entity->relations(elementRank);
+	unsigned faceId = elements[0].identifier();
+	Entity * element = elements[0].entity();
+	unsigned numFaceNodes = element_topology.getNodeCount(entity->entity_rank(),faceId);
+
+	for (int i = 0; i < numFaceNodes; ++i){
+		unsigned elemNode = element_topology.getNodeMap(entity->entity_rank(),faceId,i);
+		Entity* node = connectivity_temp[element->identifier()-1][elemNode];
+		face_nodes.push_back(node);
+	}
+
+	return face_nodes;
+}
+
+/*
+ * Creates a mesh of the fractured surfaces only. Outputs the mesh as an
+ *   exodus file for visual representation of split faces.
+ */
+void
+topology::output_surface_mesh(){
+	for(std::set<Entity*>::iterator i = fractured_face.begin();
+			i != fractured_face.end(); ++i){
+		std::vector<Entity*> face_nodes =
+				topology::get_face_nodes(*i);
+		cout << "Nodes of Face " << (*i)->identifier() << ": ";
+		for(std::vector<Entity*>::iterator j = face_nodes.begin(); j != face_nodes.end(); ++j){
+			cout << (*j)->identifier() << ":";
+		}
+		cout << "\n";
+	}
 	return;
 }
 
@@ -592,6 +647,7 @@ topology::star(std::set<EntityKey> & subgraph_entity_lst,
  */
 void
 topology::fracture_boundary(std::map<EntityKey, bool> & entity_open){
+	int numfractured = 0; //counter for number of fractured faces
 
 	// Get set of open nodes
 	std::vector<Entity*> node_lst; //all nodes
@@ -656,7 +712,17 @@ topology::fracture_boundary(std::map<EntityKey, bool> & entity_open){
 					k != open_face_lst.end(); ++k){
 				Entity & face = *(*k);
 				Vertex faceVertex = subgraph.global_to_local(face.key());
-				subgraph.clone_boundary_entity(faceVertex,entity_open);
+				Vertex newFaceVertex;
+				subgraph.clone_boundary_entity(faceVertex,newFaceVertex,entity_open);
+
+				EntityKey newFaceKey = subgraph.local_to_global(newFaceVertex);
+				Entity * newFace = bulkData_->get_entity(newFaceKey);
+
+				// add original and new faces to the fractured face list
+				fractured_face.insert(&face);
+				fractured_face.insert(newFace);
+
+				++numfractured;
 			}
 
 			// Split the articulation point (current segment)
@@ -690,11 +756,12 @@ topology::fracture_boundary(std::map<EntityKey, bool> & entity_open){
 			Entity* newNode = (*j).second;
 
 			int id = static_cast<int>(element->identifier());
-			for (int k = 0; k < connectivity_temp.size(); ++k){
+			std::vector<Entity*> & element_connectivity = connectivity_temp[id-1];
+			for (int k = 0; k < element_connectivity.size(); ++k){
 				// Need to subtract 1 from element number as stk indexes from 1
 				//   and connectivity_temp indexes from 0
-				if(connectivity_temp[id-1][k] == entity){
-					connectivity_temp[id-1][k] = newNode;
+				if(element_connectivity[k] == entity){
+					element_connectivity[k] = newNode;
 					// Duplicate the parameters of old node to new node
 					bulkData_->copy_entity_fields(*entity,*newNode);
 				}
@@ -702,6 +769,7 @@ topology::fracture_boundary(std::map<EntityKey, bool> & entity_open){
 		}
 	}
 
+	cout << "Number of fractured faces: " << numfractured << "\n";
 	return;
 }
 
@@ -1065,7 +1133,9 @@ Subgraph::undirected_graph(Vertex input_vertex,
  *   in is_open. If not open: Return error.
  */
 void
-Subgraph::clone_boundary_entity(Vertex & vertex,std::map<EntityKey,bool> & entity_open){
+Subgraph::clone_boundary_entity(Vertex & vertex,
+		Vertex & newVertex,
+		std::map<EntityKey,bool> & entity_open){
 	// Check that number of in_edges = 2
 	boost::graph_traits<boostGraph>::degree_size_type num_in_edges = boost::in_degree(vertex,*this);
 	if (num_in_edges!=2)
@@ -1079,7 +1149,7 @@ Subgraph::clone_boundary_entity(Vertex & vertex,std::map<EntityKey,bool> & entit
 	EntityRank vertexRank = Subgraph::get_vertex_rank(vertex);
 
 	// Create a new vertex of same rank as vertex
-	Vertex newVertex = Subgraph::add_vertex(vertexRank);
+	newVertex = Subgraph::add_vertex(vertexRank);
 
 	// Copy the out_edges of vertex to newVertex
 	out_edge_iterator out_edge_begin;

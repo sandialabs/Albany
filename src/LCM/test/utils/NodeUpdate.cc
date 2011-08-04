@@ -78,6 +78,7 @@ int main(int ac, char* av[])
 
   // Creates the graph
   topology.graph_initialization();
+  //Teuchos::TimeMonitor::summarize();
 
   // Check for failure criterion
   std::map<stk::mesh::EntityKey, bool> entity_open;
@@ -90,8 +91,10 @@ int main(int ac, char* av[])
   cout << "begin mesh fracture\n";
   topology.fracture_boundary(entity_open);
 
-  std::string gviz_output = "output.dot";
-  topology.output_to_graphviz(gviz_output,entity_open);
+  topology.output_surface_mesh();
+
+  //std::string gviz_output = "output.dot";
+  //topology.output_to_graphviz(gviz_output,entity_open);
 
   // Need to remove added mesh entities before updating Albany stk discretization
   topology.graph_cleanup();

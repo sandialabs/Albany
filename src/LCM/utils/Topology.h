@@ -15,6 +15,9 @@
 #include <Teuchos_ArrayRCP.hpp>
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_ScalarTraits.hpp>
+#include <Teuchos_TimeMonitor.hpp>
+#include <Shards_CellTopology.hpp>
+#include <Shards_BasicTopologies.hpp>
 #include <stk/Albany_AbstractDiscretization.hpp>
 #include <stk/Albany_DiscretizationFactory.hpp>
 #include <stk/Albany_STKDiscretization.hpp>
@@ -159,17 +162,23 @@ public:
 	void
 	graph_cleanup();
 
+	std::vector<Entity*>
+	get_face_nodes(Entity * entity);
+
 	Teuchos::RCP<Albany::AbstractDiscretization>
 	get_Discretization(){return discretization_ptr_;};
 
 	stk::mesh::BulkData*
 	get_BulkData(){return bulkData_;};
 
-	//void
-	//get_face_nodes(Entity & entity, std::map<Entity*> face_nodes);
-
 	Teuchos::RCP<Albany::AbstractSTKMeshStruct>
 	get_stkMeshStruct(){return stkMeshStruct_;};
+
+	/*
+	 * Creates a mesh of the fractured surfaces only. Outputs the mesh as an
+	 *   exodus file for visual representation of split faces.
+	 */
+	void output_surface_mesh();
 
 	// Ranks of all entities of the mesh.
 	EntityRank nodeRank;
@@ -237,6 +246,8 @@ private:
 	stkMeshStruct_;
 
 	std::vector<std::vector<Entity*> > connectivity_temp;
+
+	std::set<Entity*> fractured_face;
 
 
 }; // class topology
@@ -355,7 +366,9 @@ public:
 	 *   in is_open. If not open: Return error.
 	 */
 	void
-	clone_boundary_entity(Vertex & vertex,std::map<EntityKey,bool> & entity_open);
+	clone_boundary_entity(Vertex & vertex,
+			Vertex & newVertex,
+			std::map<EntityKey,bool> & entity_open);
 
 	/*
 	 * Splits an articulation point.
