@@ -24,7 +24,7 @@
     </ParameterList>
 
     <ParameterList name="psubstrate">
-      <Parameter name="elementBlock" type="string" value="silicon.ptype" />
+      <Parameter name="elementBlock" type="string" value="silicon.psubstrate" />
     </ParameterList>
 
     <ParameterList name="anode">
@@ -42,7 +42,7 @@
 
     <ParameterList name="silicon">
       <Parameter name="material" type="string" value="Silicon" />
-      <Parameter name="dopantType" type="string" value="None" />
+      <Parameter name="Dopant Type" type="string" value="None" />
     </ParameterList>
 
     <ParameterList name="silicon.quantum">
@@ -52,20 +52,32 @@
     
     <ParameterList name="silicon.ntype">
       <Parameter name="material" type="string" value="Silicon" />
-      <Parameter name="dopantType" type="string" value="Donor" />
-      <Parameter name="dopingProfile" type="string" value="Constant" />
-      <!-- <Parameter name="dopingParamName" type="string" value="Nd" /> -->
+      <Parameter name="Dopant Type" type="string" value="Donor" />
+      <Parameter name="Doping Profile" type="string" value="Constant" />
+      <Parameter name="Doping Value" type="double" value="1e16" />
+      <!-- <Parameter name="Doping Parameter Name" type="string" value="Nd" /> -->
     </ParameterList>
 
     <ParameterList name="silicon.ptype">
       <Parameter name="material" type="string" value="Silicon" />
-      <Parameter name="dopantType" type="string" value="Acceptor" />
-      <Parameter name="dopingProfile" type="string" value="Constant" />
-      <!-- <Parameter name="dopingParamName" type="string" value="Na" /> -->
+      <Parameter name="Dopant Type" type="string" value="Acceptor" />
+      <Parameter name="Doping Profile" type="string" value="Constant" />
+      <Parameter name="Doping Value" type="double" value="1e16" />
+      <!-- <Parameter name="Doping Parameter Name" type="string" value="Na" /> -->
     </ParameterList>
+
+    <ParameterList name="silicon.psubstrate">
+      <Parameter name="material" type="string" value="Silicon" />
+      <Parameter name="Dopant Type" type="string" value="Acceptor" />
+      <Parameter name="Doping Profile" type="string" value="Constant" />
+      <Parameter name="Doping Value" type="double" value="1e14" />
+    </ParameterList>
+
     
     <ParameterList name="sio2">
       <Parameter name="material" type="string" value="SiliconDioxide" />
+      <Parameter name="Charge Parameter Name" type="string" value="Oxide Charge" />
+      <!-- <Parameter name="Charge Value" type="double" value="1e10" /> -->
     </ParameterList>
 
     <ParameterList name="sio2.quantum">

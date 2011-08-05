@@ -11,7 +11,7 @@
       <Parameter name="DBC on NS substrate for DOF Phi" type="double" value="0" />
       <Parameter name="DBC on NS lgate for DOF Phi" type="double" value="-1" />
       <Parameter name="DBC on NS rgate for DOF Phi" type="double" value="-1" />
-      <Parameter name="DBC on NS topgate for DOF Phi" type="double" value="2" />
+      <Parameter name="DBC on NS topgate for DOF Phi" type="double" value="+2" />
     </ParameterList>
 
     <ParameterList name="Poisson Source">
@@ -33,15 +33,58 @@
     </ParameterList>
 
     <ParameterList name="Response Functions">
-      <Parameter name="Number" type="int" value="2" />
+      <Parameter name="Number" type="int" value="6" />
       <Parameter name="Response 0" type="string" value="Solution Average" />
-      <Parameter name="Response 1" type="string" value="Integrate Charge Density State over silicon.quantum" />
+      
+      <Parameter name="Response 1" type="string" value="See List" />
+      <ParameterList name="ResponseParams 1">
+        <Parameter name="Type" type="string" value="Save Field" />
+        <Parameter name="Field Name" type="string" value="Charge Density" />
+        <Parameter name="Output to Exodus" type="bool" value="1" />
+        <Parameter name="Output Cell Average" type="bool" value="1" />
+      </ParameterList>
+      
+      <Parameter name="Response 2" type="string" value="See List" />
+      <ParameterList name="ResponseParams 2">
+        <Parameter name="Type" type="string" value="Save Field" />
+        <Parameter name="Vector Field Name" type="string" value="Potential Gradient" />
+      </ParameterList>
+      
+      <Parameter name="Response 3" type="string" value="See List" />
+      <ParameterList name="ResponseParams 3">
+        <Parameter name="Type" type="string" value="Field Integral" />
+        <Parameter name="Field Name" type="string" value="Charge Density" />
+        <Parameter name="Element Block Name" type="string" value="silicon.quantum" />
+      </ParameterList>
+      
+      <Parameter name="Response 4" type="string" value="See List" />
+      <ParameterList name="ResponseParams 4">
+        <Parameter name="Type" type="string" value="Field Value" />
+        <Parameter name="Operation" type="string" value="Minimize" />
+        <Parameter name="Operation Field Name" type="string" value="Charge Density" />
+        <Parameter name="Operation Domain" type="string" value="element block" />
+        <Parameter name="Element Block Name" type="string" value="silicon.quantum" />
+      </ParameterList>
+
+      <Parameter name="Response 5" type="string" value="See List" />
+      <ParameterList name="ResponseParams 5">
+        <Parameter name="Type" type="string" value="Field Value" />
+        <Parameter name="Return Field Name" type="string" value="Charge Density" />
+        <Parameter name="Operation" type="string" value="Minimize" />
+        <Parameter name="Operation Vector Field Name" type="string" value="Potential Gradient" />
+        <Parameter name="Operate on y-component" type="bool" value="0" />
+        <Parameter name="Operation Domain" type="string" value="box" />
+        <Parameter name="x min" type="double" value="-2.5" />
+        <Parameter name="x max" type="double" value="2.5" />
+        <Parameter name="y min" type="double" value="-1.5" />
+        <Parameter name="y max" type="double" value="0.0" />
+      </ParameterList>
+
     </ParameterList>
   </ParameterList>
 
 
   <ParameterList name="Discretization">
-    <!-- Parameter name="Exodus Input File Name" type="string" value="mosdot_2D.exo" /-->
     <Parameter name="Exodus Input File Name" type="string" value="mosdot_2D.exo" />
     <Parameter name="Method" type="string" value="Ioss" />
     <Parameter name="Exodus Output File Name" type="string" value="potential_mosdot_2D.exo" />
@@ -50,18 +93,11 @@
 
   <ParameterList name="Regression Results">
     <Parameter name="Number of Comparisons" type="int" value="1" />
-    <Parameter name="Test Values" type="Array(double)" value="{10.5371769316}" />
+    <Parameter name="Test Values" type="Array(double)" value="{11.3522536862}" />
     <Parameter name="Relative Tolerance" type="double" value="1.0e-3" />
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="1" />
     <Parameter name="Sensitivity Test Values 0" type="Array(double)"
-     	       value="{9.04874557849,4.50270802598,4.50275162349, 5.52645365813,-0.111128563129}" />
-  </ParameterList>
-
-
-  <ParameterList name="VTK">
-    <Parameter name="Visualize Sensitivities" type="bool" value="0" />
-    <Parameter name="Stagger Windows" type="bool" value="1" />
-    <Parameter name="Do Visualization" type="bool" value="0" />
+     	       value="{9.0001658526,4.26076278891,4.26118228598,5.69965801322,-0.137326394658}" />
   </ParameterList>
 
 

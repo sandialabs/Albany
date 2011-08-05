@@ -15,44 +15,38 @@
 \********************************************************************/
 
 
-#include "QCAD_ElementBlockIntegralResponseFunction.hpp"
+#include "Albany_EvaluatedResponseFunction.hpp"
 
-QCAD::ElementBlockIntegralResponseFunction::
-ElementBlockIntegralResponseFunction(const std::string& stateName, const std::string& ebName,
-				     const std::string& weightName, Albany::StateManager& stateMgr)
-  : stateMgr_(stateMgr)
+Albany::EvaluatedResponseFunction::
+EvaluatedResponseFunction()
 {
-  stateName_  = stateName;
-  weightName_ = weightName;
-  ebName_     = ebName;
 }
 
-QCAD::ElementBlockIntegralResponseFunction::
-~ElementBlockIntegralResponseFunction()
+Albany::EvaluatedResponseFunction::
+~EvaluatedResponseFunction()
 {
 }
 
 unsigned int
-QCAD::ElementBlockIntegralResponseFunction::
+Albany::EvaluatedResponseFunction::
 numResponses() const 
 {
-  return 1;
+  return responseInitVals.size();
 }
 
 void
-QCAD::ElementBlockIntegralResponseFunction::
+Albany::EvaluatedResponseFunction::
 evaluateResponses(const Epetra_Vector* xdot,
 		  const Epetra_Vector& x,
 		  const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
 		  Epetra_Vector& g)
 {
-  // use state manager to integrate state values over element block
-  RealType result = stateMgr_.integrateStateVariable(stateName_, ebName_, weightName_);
-  g[0] = result;
+  for(unsigned int i=0; i < responseInitVals.size(); ++i)
+    g[i] = responseInitVals[i];
 }
 
 void
-QCAD::ElementBlockIntegralResponseFunction::
+Albany::EvaluatedResponseFunction::
 evaluateTangents(
 	   const Epetra_Vector* xdot,
 	   const Epetra_Vector& x,
@@ -64,18 +58,20 @@ evaluateTangents(
 	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& gt)
 {
   // Evaluate response g
-  if (g != NULL)
-    (*g)[0] = stateMgr_.integrateStateVariable(stateName_, ebName_, weightName_);
+  if (g != NULL) {
+    for(unsigned int i=0; i < responseInitVals.size(); ++i)
+      (*g)[i] = responseInitVals[i];
+  }
 
   // Evaluate tangent of g = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
   for (Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >::size_type j=0; j<gt.size(); j++)
     if (gt[j] != Teuchos::null)
       for (int i=0; i<dx_dp[i]->NumVectors(); i++)
-	(*gt[j])[i][0] = 0.0; // set to zero for now, since I don't know how to compute this
+	(*gt[j])[i][0] = 0.0;
 }
 
 void
-QCAD::ElementBlockIntegralResponseFunction::
+Albany::EvaluatedResponseFunction::
 evaluateGradients(
 	  const Epetra_Vector* xdot,
 	  const Epetra_Vector& x,
@@ -86,10 +82,11 @@ evaluateGradients(
 	  Epetra_MultiVector* dg_dxdot,
 	  const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dg_dp)
 {
-
   // Evaluate response g
-  if (g != NULL)
-    (*g)[0] = stateMgr_.integrateStateVariable(stateName_, ebName_, weightName_);
+  if (g != NULL) {
+    for(unsigned int i=0; i < responseInitVals.size(); ++i)
+      (*g)[i] = responseInitVals[i];
+  }
 
   // Evaluate dg/dx
   if (dg_dx != NULL)
@@ -106,7 +103,7 @@ evaluateGradients(
 }
 
 void
-QCAD::ElementBlockIntegralResponseFunction::
+Albany::EvaluatedResponseFunction::
 evaluateSGResponses(const Stokhos::VectorOrthogPoly<Epetra_Vector>* sg_xdot,
 		    const Stokhos::VectorOrthogPoly<Epetra_Vector>& sg_x,
 		    const ParamVec* p,
@@ -117,4 +114,79 @@ evaluateSGResponses(const Stokhos::VectorOrthogPoly<Epetra_Vector>* sg_xdot,
   unsigned int sz = sg_x.size();
   for (unsigned int i=0; i<sz; i++)
     sg_g[i][0] = 0.0;
+}
+
+
+
+void 
+Albany::EvaluatedResponseFunction::
+postProcessResponses(const Epetra_Comm& comm, Teuchos::RCP<Epetra_Vector>& g)
+{
+  std::string type = postProcessingParams.get<std::string>("Processing Type");
+
+  if( type == "Sum" ) {
+    comm.SumAll(g->Values(), g->Values(), g->MyLength());
+  }
+  else if( type == "Min" ) {
+    int indexToMin = postProcessingParams.get<int>("Index");
+    double min;
+    comm.MinAll( &((*g)[indexToMin]), &min, 1);
+    
+    int procToBcast;
+    if( (*g)[indexToMin] == min ) 
+      procToBcast = comm.MyPID();
+    else procToBcast = -1;
+
+    int winner;
+    comm.MaxAll(&procToBcast, &winner, 1);
+    comm.Broadcast( g->Values(), g->MyLength(), winner);
+  }
+  else if( type == "Max") {
+    int indexToMax = postProcessingParams.get<int>("Index");
+    double max;
+    comm.MaxAll(&((*g)[indexToMax]), &max, 1);
+    
+    int procToBcast;
+    if( (*g)[indexToMax] == max ) 
+      procToBcast = comm.MyPID();
+    else procToBcast = -1;
+
+    int winner;
+    comm.MaxAll(&procToBcast, &winner, 1);
+    comm.Broadcast( g->Values(), g->MyLength(), winner);
+  }
+  else if( type == "None") {
+  }
+  else TEST_FOR_EXCEPT(true);
+}
+
+void 
+Albany::EvaluatedResponseFunction::
+postProcessResponseDerivatives(const Epetra_Comm& comm, Teuchos::RCP<Epetra_MultiVector>& gt)
+{
+  //TODO - but maybe there's nothing to do here, since derivative is local to processors?
+}
+
+void 
+Albany::EvaluatedResponseFunction::
+setResponseInitialValues(const std::vector<double>& initVals)
+{
+  responseInitVals = initVals;
+}
+ 
+void 
+Albany::EvaluatedResponseFunction::
+setResponseInitialValues(double singleInitValForAll, unsigned int numberOfResponses)
+{
+  responseInitVals.resize(numberOfResponses);
+  for(unsigned int i=0; i < numberOfResponses; ++i)
+    responseInitVals[i] = singleInitValForAll;
+}
+
+
+void 
+Albany::EvaluatedResponseFunction::
+setPostProcessingParams(const Teuchos::ParameterList& params)
+{ 
+  postProcessingParams = params;  
 }

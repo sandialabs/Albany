@@ -28,18 +28,44 @@
 #include "Epetra_Map.h"  //Needed for serial, somehow
 #include "Albany_StateInfoStruct.hpp"
 #include "Albany_EigendataInfoStruct.hpp"
+#include "Intrepid_FunctionSpaceTools.hpp"
 
 void CreateSolver(const std::string& solverType, char* xmlfilename, 
-		  Teuchos::RCP<Albany::Application>& albApp, Teuchos::RCP<EpetraExt::ModelEvaluator>& App, 
-		  EpetraExt::ModelEvaluator::InArgs& params_in, EpetraExt::ModelEvaluator::OutArgs& responses_out);
+		  Teuchos::RCP<Albany::Application>& albApp, 
+		  Teuchos::RCP<EpetraExt::ModelEvaluator>& App, 
+		  EpetraExt::ModelEvaluator::InArgs& params_in, 
+		  EpetraExt::ModelEvaluator::OutArgs& responses_out);
+
 void SolveModel(Teuchos::RCP<Albany::Application>& albApp, Teuchos::RCP<EpetraExt::ModelEvaluator>& App, 
 		EpetraExt::ModelEvaluator::InArgs params_in, EpetraExt::ModelEvaluator::OutArgs responses_out,
     		Albany::StateArrays*& pInitialStates, Albany::StateArrays*& pFinalStates,
-		Teuchos::RCP<Albany::EigendataStruct>& pInitialEData, Teuchos::RCP<Albany::EigendataStruct>& pFinalEData);
-void CopyState(Albany::StateArrays& dest, Albany::StateArrays& src,  std::string stateNameToCopy);
-void SubtractStateFromState(Albany::StateArrays& dest, Albany::StateArrays& src, std::string stateNameToSubtract);
-bool checkConvergence(Albany::StateArrays& newStates, Albany::StateArrays& oldStates, std::string stateNameToCompare, double tol);
+		Teuchos::RCP<Albany::EigendataStruct>& pInitialEData, 
+		Teuchos::RCP<Albany::EigendataStruct>& pFinalEData);
+
+
+void CopyStateToContainer(Albany::StateArrays& src,
+			  std::string stateNameToCopy,
+			  std::vector<Intrepid::FieldContainer<RealType> >& dest);
+
+void CopyContainerToState(std::vector<Intrepid::FieldContainer<RealType> >& src,
+			  Albany::StateArrays& dest,
+			  std::string stateNameOfCopy);
+
+void CopyState(Albany::StateArrays& src, Albany::StateArrays& dest,  std::string stateNameToCopy);
+
+void AddStateToState(Albany::StateArrays& src, std::string srcStateNameToAdd, 
+		     Albany::StateArrays& dest, std::string destStateNameToAddTo);
+
+void SubtractStateFromState(Albany::StateArrays& src, std::string srcStateNameToSubtract,
+			    Albany::StateArrays& dest, std::string destStateNameToSubtractFrom);
+
+bool checkConvergence(Albany::StateArrays& states, 
+		      std::vector<Intrepid::FieldContainer<RealType> >& prevState,
+		      std::string stateName, double tol);
+
 double GetEigensolverShift(Albany::StateArrays& states, const std::string& stateNameToBaseShiftOn);
+
+
 
 #include "Teuchos_ParameterList.hpp"
 #include "Piro_Epetra_LOCASolver.hpp"
@@ -59,6 +85,10 @@ int main(int argc, char *argv[]) {
 
   RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
+  //Field Containers to store states used in Poisson-Schrodinger loop
+  std::vector<Intrepid::FieldContainer<RealType> > prevElectricPotential;
+  std::vector<Intrepid::FieldContainer<RealType> > tmpContainer;
+
   // Command-line argument for input file
   char * PoissonXmlFilename=0;
   char * SchrodingerXmlFilename=0;
@@ -68,6 +98,7 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
     else {
+
       PoissonXmlFilename=argv[1];
       SchrodingerXmlFilename=argv[2];
       maxIter = atoi(argv[3]);
@@ -134,7 +165,8 @@ int main(int argc, char *argv[]) {
     *out << "QCAD Solve: Beginning Poisson-Schrodinger solve loop" << endl;
     bool bConverged = false; 
     int iter = 0;
-    do {
+
+    while(!bConverged && iter < maxIter) {
       iter++;
  
       double newShift = GetEigensolverShift(*pStatesToLoop, "Conduction Band");
@@ -145,6 +177,9 @@ int main(int argc, char *argv[]) {
 		 schrodinger_params_in, schrodinger_responses_out,
 		 pStatesToLoop, pStatesToPass, eigenDataNull, eigenDataToPass);
 
+      CopyStateToContainer(*pStatesToLoop, "Saved Solution", tmpContainer);
+      CopyContainerToState(tmpContainer, *pStatesToPass, "Previous Poisson Potential");
+
       *out << "QCAD Solve: Poisson iteration " << iter << endl;
       SolveModel(poissonApp, poissonSolver, 
 		 poisson_params_in, poisson_responses_out,
@@ -154,13 +189,15 @@ int main(int argc, char *argv[]) {
       SolveModel(dummyPoissonApp, dummyPoissonSolver, 
 		 dummy_params_in, dummy_responses_out,
 		 pStatesToPass, pStatesFromDummy, eigenDataToPass, eigenDataNull);
-      SubtractStateFromState(*pStatesToLoop, *pStatesFromDummy, "Conduction Band");
+
+      AddStateToState(*pStatesFromDummy, "Electric Potential", *pStatesToLoop, "Conduction Band");
       eigenDataNull = Teuchos::null;
 
       if(iter > 1) 
-	bConverged = checkConvergence(*pStatesToLoop, *pLastSavedPotential, "Electric Potential", 1e-3);
-      CopyState(*pLastSavedPotential, *pStatesToLoop, "Electric Potential");
-    } while(!bConverged && iter < maxIter);
+	bConverged = checkConvergence(*pStatesToLoop, prevElectricPotential, "Electric Potential", 1e-3);
+      //CopyState(*pLastSavedPotential, *pStatesToLoop, "Electric Potential");
+      CopyStateToContainer(*pStatesToLoop, "Electric Potential", prevElectricPotential);
+    } 
 
     if(bConverged)
       *out << "QCAD Solve: Converged Poisson-Schrodinger solve loop after " << iter << " iterations." << endl;
@@ -288,70 +325,127 @@ void SolveModel(Teuchos::RCP<Albany::Application>& albApp, Teuchos::RCP<EpetraEx
 
 
 
-void CopyState(Albany::StateArrays& dest, 
-	       Albany::StateArrays& src,
-	       std::string stateNameToCopy)
+void CopyStateToContainer(Albany::StateArrays& src,
+			  std::string stateNameToCopy,
+			  std::vector<Intrepid::FieldContainer<RealType> >& dest)
 {
   int numWorksets = src.size();
-  int totalSize;
   std::vector<int> dims;
 
-  //allocate destination if necessary
+  //allocate destination container if necessary
   if(dest.size() != (unsigned int)numWorksets) {
     dest.resize(numWorksets);    
     for (int ws = 0; ws < numWorksets; ws++) {
       src[ws][stateNameToCopy].dimensions(dims);
-      totalSize = src[ws][stateNameToCopy].size();
-      double* pData = new double[totalSize];
-
-      TEST_FOR_EXCEPT( dims.size() != 2 );
-      dest[ws][stateNameToCopy].assign<shards::ArrayDimension,shards::ArrayDimension>(pData, dims[0], dims[1]);
+      dest[ws].resize(dims);
     }
   }
 
   for (int ws = 0; ws < numWorksets; ws++)
   {
-    totalSize = src[ws][stateNameToCopy].size();
+    src[ws][stateNameToCopy].dimensions(dims);
+    TEST_FOR_EXCEPT( dims.size() != 2 );
     
+    for(int cell=0; cell < dims[0]; cell++)
+      for(int qp=0; qp < dims[1]; qp++)
+	dest[ws](cell,qp) = src[ws][stateNameToCopy](cell,qp);
+  }
+}
+
+
+//Note: state must be allocated already
+void CopyContainerToState(std::vector<Intrepid::FieldContainer<RealType> >& src,
+			  Albany::StateArrays& dest,
+			  std::string stateNameOfCopy)
+{
+  int numWorksets = src.size();
+  std::vector<int> dims;
+
+  for (int ws = 0; ws < numWorksets; ws++)
+  {
+    dest[ws][stateNameOfCopy].dimensions(dims);
+    TEST_FOR_EXCEPT( dims.size() != 2 );
+    
+    for(int cell=0; cell < dims[0]; cell++)
+      for(int qp=0; qp < dims[1]; qp++)
+	dest[ws][stateNameOfCopy](cell,qp) = src[ws](cell,qp);
+  }
+}
+
+
+//Note: assumes src and dest have allocated states of <stateNameToCopy>
+void CopyState(Albany::StateArrays& src,
+	       Albany::StateArrays& dest,
+	       std::string stateNameToCopy)
+{
+  int numWorksets = src.size();
+  int totalSize;
+
+  for (int ws = 0; ws < numWorksets; ws++)
+  {
+    totalSize = src[ws][stateNameToCopy].size();
     for(int i=0; i<totalSize; ++i)
       dest[ws][stateNameToCopy][i] = src[ws][stateNameToCopy][i];
   }
 }
 
 
-// dest[stateNameToSubtract] -= src[stateNameToSubtract]
-void SubtractStateFromState(Albany::StateArrays& dest, 
-	       Albany::StateArrays& src,
-	       std::string stateNameToSubtract)
+void AddStateToState(Albany::StateArrays& src,
+		     std::string srcStateNameToAdd, 
+		     Albany::StateArrays& dest,
+		     std::string destStateNameToAddTo)
 {
   int totalSize, numWorksets = src.size();
   TEST_FOR_EXCEPT( numWorksets != (int)dest.size() );
 
   for (int ws = 0; ws < numWorksets; ws++)
   {
-    totalSize = src[ws][stateNameToSubtract].size();
+    totalSize = src[ws][srcStateNameToAdd].size();
     
     for(int i=0; i<totalSize; ++i)
-      dest[ws][stateNameToSubtract][i] -= src[ws][stateNameToSubtract][i];
+      dest[ws][destStateNameToAddTo][i] += src[ws][srcStateNameToAdd][i];
   }
 }
 
 
-bool checkConvergence(Albany::StateArrays& newStates, 
-		      Albany::StateArrays& oldStates,
-		      std::string stateNameToCompare, double tol)
+void SubtractStateFromState(Albany::StateArrays& src, 
+			    std::string srcStateNameToSubtract,
+			    Albany::StateArrays& dest,
+			    std::string destStateNameToSubtractFrom)
 {
-  int totalSize, numWorksets = oldStates.size();
-  TEST_FOR_EXCEPT( ! (numWorksets == (int)newStates.size()) );
-  
+  int totalSize, numWorksets = src.size();
+  TEST_FOR_EXCEPT( numWorksets != (int)dest.size() );
+
   for (int ws = 0; ws < numWorksets; ws++)
   {
-    totalSize = newStates[ws][stateNameToCompare].size();
+    totalSize = src[ws][srcStateNameToSubtract].size();
     
-    for(int i=0; i<totalSize; ++i) {
-	if( fabs( newStates[ws][stateNameToCompare][i] -
-		  oldStates[ws][stateNameToCompare][i] ) > tol )
+    for(int i=0; i<totalSize; ++i)
+      dest[ws][destStateNameToSubtractFrom][i] -= src[ws][srcStateNameToSubtract][i];
+  }
+}
+
+
+bool checkConvergence(Albany::StateArrays& states, 
+		      std::vector<Intrepid::FieldContainer<RealType> >& prevState,
+		      std::string stateName, double tol)
+{
+  int totalSize, numWorksets = states.size();
+  std::vector<int> dims;
+
+  TEST_FOR_EXCEPT( ! (numWorksets == (int)prevState.size()) );
+
+  for (int ws = 0; ws < numWorksets; ws++)
+  {
+    states[ws][stateName].dimensions(dims);
+    TEST_FOR_EXCEPT( dims.size() != 2 );
+    
+    for(int cell=0; cell < dims[0]; cell++) {
+      for(int qp=0; qp < dims[1]; qp++) {
+	if( fabs( states[ws][stateName](cell,qp) 
+		  - prevState[ws](cell,qp) ) > tol )
 	  return false;
+      }
     }
   }
   return true;
@@ -409,3 +503,37 @@ double GetEigensolverShift(Albany::StateArrays& states,
   return shift;
 }
   
+
+
+
+//UNUSED - but keeping around for reference for a little while
+/*void CopyState(Albany::StateArrays& dest, 
+	       Albany::StateArrays& src,
+	       std::string stateNameToCopy)
+{
+  int numWorksets = src.size();
+  int totalSize;
+  std::vector<int> dims;
+
+  //allocate destination if necessary
+  if(dest.size() != (unsigned int)numWorksets) {
+    dest.resize(numWorksets);    
+    for (int ws = 0; ws < numWorksets; ws++) {
+      src[ws][stateNameToCopy].dimensions(dims);
+      totalSize = src[ws][stateNameToCopy].size();
+      double* pData = new double[totalSize];
+
+      TEST_FOR_EXCEPT( dims.size() != 2 );
+      dest[ws][stateNameToCopy].assign<shards::ArrayDimension,shards::ArrayDimension>(pData, dims[0], dims[1]);
+    }
+  }
+
+  for (int ws = 0; ws < numWorksets; ws++)
+  {
+    totalSize = src[ws][stateNameToCopy].size();
+    
+    for(int i=0; i<totalSize; ++i)
+      dest[ws][stateNameToCopy][i] = src[ws][stateNameToCopy][i];
+  }
+}
+*/

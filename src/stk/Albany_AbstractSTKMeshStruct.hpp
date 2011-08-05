@@ -66,7 +66,6 @@ namespace Albany {
     VectorFieldType* coordinates_field;
     VectorFieldType* solution_field;
     VectorFieldType* residual_field;
-    VectorFieldType* state_field;
 
     std::vector<QPScalarFieldType*> qpscalar_states;
     std::vector<QPVectorFieldType*> qpvector_states;
@@ -74,7 +73,7 @@ namespace Albany {
 
     int numDim;
     int neq;
-    int nstates;
+    bool interleavedOrdering;
 
     bool exoOutput;
     std::string exoOutFile;

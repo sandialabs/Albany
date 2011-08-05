@@ -140,17 +140,25 @@ namespace LCM {
     int 
     worksetSize = meshSpecs->worksetSize;
 
+    // Create a state field in stick named Partition on elements
     // 1 DOF per node
     // 1 internal variable (partition number)
-    Teuchos::RCP<Albany::StateInfoStruct> sis = Teuchos::rcp(new Albany::StateInfoStruct());
-//    sis->nstates = 1;
-    discretization_ptr_ = disc_factory.createDiscretization(1, sis);
+    Teuchos::RCP<Albany::StateInfoStruct>
+    stateInfo = Teuchos::rcp(new Albany::StateInfoStruct());
+
+    stateInfo->push_back(Teuchos::rcp(new Albany::StateStruct("Partition")));
+    Albany::StateStruct& stateRef = *stateInfo->back();
+    stateRef.entity = "QuadPoint"; //Tag, should be Node or QuadPoint
+    // State has 1 quad point (i.e. element variable)
+    stateRef.dim.push_back(worksetSize); stateRef.dim.push_back(1);
+
+    discretization_ptr_ = disc_factory.createDiscretization(1, stateInfo);
 
     dimension_ = meshSpecs->numDim;
 
     // Dimensioned: Workset, Cell, Local Node
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >
-    element_connectivity = discretization_ptr_->getWsElNodeID();
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >
+    element_connectivity = discretization_ptr_->getWsElNodeEqID();
 
     Teuchos::ArrayRCP<double>
     coordinates = discretization_ptr_->getCoordinates();
@@ -171,9 +179,18 @@ namespace LCM {
 
     type_ = FindType(dimension, vertices_per_element);
 
-    // Assume all the elements have the same number of nodes
+    // Assume all the elements have the same number of nodes and eqs
     Teuchos::ArrayRCP<int>::size_type
     nodes_per_element = element_connectivity[0][0].size();
+
+    // Do some logic so we can get from unknown ID to node ID
+    int neq = element_connectivity[0][0][0].size();
+    int stride=1; 
+    if (neq>1)
+      if (element_connectivity[0][0][0][0] + 1 ==  element_connectivity[0][0][0][1])
+          stride = neq;  // usual interleaved unknowns case
+  
+    
 
     // Build coordinate array.
     // Assume that local numbering of nodes is contiguous.
@@ -218,7 +235,8 @@ namespace LCM {
             node < vertices_per_element;
             ++node) {
 
-          nodes_element[node] = element_connectivity[workset][cell][node];
+          // Get node ID from first unknown ID by dividing by stride
+          nodes_element[node] = element_connectivity[workset][cell][node][0] / stride;
 
         }
 
@@ -359,6 +377,7 @@ namespace LCM {
       default:
         std::cerr << "Unknown element type in calculating volume." << std::endl;
         std::exit(1);
+        break;
 
       }
 
@@ -603,6 +622,7 @@ namespace LCM {
     default:
       std::cerr << "Unknown partitioning scheme." << std::endl;
       std::exit(1);
+      break;
 
     }
 

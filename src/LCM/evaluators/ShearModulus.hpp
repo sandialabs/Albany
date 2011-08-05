@@ -29,11 +29,11 @@
 #include "Stokhos_KL_ExponentialRandomField.hpp"
 #include "Teuchos_Array.hpp"
 
+namespace LCM {
 /** 
  * \brief Evaluates shear modulus, either as a constant or a truncated
  * KL expansion.
  */
-namespace LCM {
 
 template<typename EvalT, typename Traits>
 class ShearModulus : 

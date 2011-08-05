@@ -41,15 +41,18 @@ NavierStokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   if (periodic) *out <<" Periodic Boundary Conditions being used." <<std::endl;
 
   haveFlow = params->get("Have Flow Equations", true);
-  haveHeat = params->get("Have Heat Equation", true);
+  haveHeat = params->get("Have Heat Equation", false);
+  haveNeut = params->get("Have Neutron Equation", false);
   havePSPG = params->get("Have Pressure Stabilization", true);
   haveSUPG = params->get("Have SUPG Stabilization", true);
   haveSource =  params->isSublist("Source Functions");
+  haveNeutSource =  params->isSublist("Neutron Source Functions");
 
   // Compute number of equations
   int num_eq = 0;
   if (haveFlow) num_eq += numDim+1;
   if (haveHeat) num_eq += 1;
+  if (haveNeut) num_eq += 1;
   this->setNumEquations(num_eq);
 
   // Setup DOF names
@@ -65,6 +68,8 @@ NavierStokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   }
   if (haveHeat)
     dofNames[index++] = "T";
+  if (haveNeut)
+    dofNames[index++] = "phi";
 }
 
 Albany::NavierStokes::
@@ -87,6 +92,7 @@ buildProblem(
   Teuchos::ParameterList& responseList = params->sublist("Response Functions");
   int num_responses = responseList.get("Number", 0);
   int eq = responseList.get("Equation", 0);
+  bool inor =  meshSpecs.interleavedOrdering;
   responses.resize(num_responses);
   for (int i=0; i<num_responses; i++) {
      std::string name = responseList.get(Albany::strint("Response",i), "??");
@@ -98,7 +104,7 @@ buildProblem(
        responses[i] = Teuchos::rcp(new SolutionTwoNormResponseFunction());
 
      else if (name == "Solution Max Value")
-       responses[i] = Teuchos::rcp(new SolutionMaxValueResponseFunction(neq, eq));
+       responses[i] = Teuchos::rcp(new SolutionMaxValueResponseFunction(neq, eq, inor));
 
      else {
        TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
@@ -183,7 +189,6 @@ Albany::NavierStokes::constructEvaluators(const Albany::MeshSpecsStruct& meshSpe
 				    dof_names_dot);
      
     p->set<int>("Offset of First DOF", 0);
-    p->set<int>("Number of DOF per Node", neq);
 
     evaluators_to_build["Gather Velocity Solution"] = p;
   }
@@ -205,7 +210,6 @@ Albany::NavierStokes::constructEvaluators(const Albany::MeshSpecsStruct& meshSpe
 				    dof_names_dot);
      
     p->set<int>("Offset of First DOF", numDim);
-    p->set<int>("Number of DOF per Node", neq);
      
     evaluators_to_build["Gather Pressure Solution"] = p;
   }
@@ -230,9 +234,41 @@ Albany::NavierStokes::constructEvaluators(const Albany::MeshSpecsStruct& meshSpe
       p->set<int>("Offset of First DOF", numDim+1);
     else
       p->set<int>("Offset of First DOF", 0);
-    p->set<int>("Number of DOF per Node", neq);
      
     evaluators_to_build["Gather Temperature Solution"] = p;
+  }
+
+  if (haveNeut) { // Gather neutron solution
+    RCP< vector<string> > dof_names = rcp(new vector<string>(1));
+    (*dof_names)[0] = "Neutron";
+     
+    RCP<ParameterList> p = rcp(new ParameterList);
+    int type = FactoryTraits<AlbanyTraits>::id_gather_solution;
+    p->set<int>("Type", type);
+    p->set< RCP< vector<string> > >("Solution Names", dof_names);
+    p->set< RCP<DataLayout> >("Data Layout", node_scalar);
+     
+    RCP< vector<string> > dof_names_dot = rcp(new vector<string>(1));
+    (*dof_names_dot)[0] = "Neutron_dot";
+     
+    p->set< RCP< vector<string> > >("Time Dependent Solution Names", 
+				    dof_names_dot);
+     
+    if (haveFlow) {
+      if (haveHeat)
+         p->set<int>("Offset of First DOF", numDim+2);
+      else
+         p->set<int>("Offset of First DOF", numDim+1);
+    }
+    else {
+      if (haveHeat)
+         p->set<int>("Offset of First DOF", 1);
+      else
+         p->set<int>("Offset of First DOF", 0);
+    }
+    p->set<int>("Number of DOF per Node", neq);
+     
+    evaluators_to_build["Gather Neutron Solution"] = p;
   }
 
   { // Gather Coordinate Vector
@@ -398,6 +434,104 @@ Albany::NavierStokes::constructEvaluators(const Albany::MeshSpecsStruct& meshSpe
     evaluators_to_build["Thermal Conductivity"] = p;
   }
 
+  if (haveNeut) { // Neutron diffusion
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    int type = FactoryTraits<AlbanyTraits>::id_nsmatprop;
+    p->set<int>("Type", type);
+
+    p->set<string>("Material Property Name", "Neutron Diffusion");
+    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set<string>("Temperature QP Variable Name", "Temperature");
+    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Neutron Diffusion");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    evaluators_to_build["Neutron Diffusion"] = p;
+  }
+
+  if (haveNeut) { // Reference temperature
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    int type = FactoryTraits<AlbanyTraits>::id_nsmatprop;
+    p->set<int>("Type", type);
+
+    p->set<string>("Material Property Name", "Reference Temperature");
+    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Reference Temperature");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    evaluators_to_build["Reference Temperature"] = p;
+  }
+
+  if (haveNeut) { // Neutron absorption cross section
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    int type = FactoryTraits<AlbanyTraits>::id_nsmatprop;
+    p->set<int>("Type", type);
+
+    p->set<string>("Material Property Name", "Neutron Absorption");
+    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set<string>("Temperature QP Variable Name", "Temperature");
+    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Neutron Absorption");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    evaluators_to_build["Neutron Absorption"] = p;
+  }
+
+  if (haveNeut) { // Neutron fission cross section
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    int type = FactoryTraits<AlbanyTraits>::id_nsmatprop;
+    p->set<int>("Type", type);
+
+    p->set<string>("Material Property Name", "Neutron Fission");
+    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set<string>("Temperature QP Variable Name", "Temperature");
+    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Neutron Fission");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    evaluators_to_build["Neutron Fission"] = p;
+  }
+
+  if (haveNeut && haveHeat) { // Proportionality constant
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    int type = FactoryTraits<AlbanyTraits>::id_nsmatprop;
+    p->set<int>("Type", type);
+
+    p->set<string>("Material Property Name", "Proportionality Constant");
+    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Proportionality Constant");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    evaluators_to_build["Proportionality Constant"] = p;
+  }
+
   if (haveFlow && haveHeat) { // Volumetric Expansion Coefficient
     RCP<ParameterList> p = rcp(new ParameterList);
 
@@ -478,7 +612,47 @@ Albany::NavierStokes::constructEvaluators(const Albany::MeshSpecsStruct& meshSpe
 
     evaluators_to_build["DOF Grad Temperature"] = p;
   }
-  
+
+  if (haveNeut) { // DOF: Interpolate nodal neutron flux values to quad points
+    RCP<ParameterList> p = 
+      rcp(new ParameterList("Navier-Stokes DOFInterpolation Neutron"));
+
+    int type = FactoryTraits<AlbanyTraits>::id_dof_interpolation;
+    p->set<int>("Type", type);
+
+    // Input
+    p->set<string>("Variable Name", "Neutron");
+    p->set<string>("BF Name", "BF");
+    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
+    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
+
+    // Output (assumes same Name as input)
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+
+    evaluators_to_build["DOF Neutron"] = p;
+  }
+
+  if (haveNeut) { 
+    // DOF: Interpolate nodal neutron flux gradients to quad points
+    RCP<ParameterList> p = 
+      rcp(new ParameterList("Navier-Stokes DOFInterpolation Neutron Grad"));
+
+    int type = FactoryTraits<AlbanyTraits>::id_dof_grad_interpolation;
+    p->set<int>("Type", type);
+
+    // Input
+    p->set<string>("Variable Name", "Neutron");
+    p->set<string>("Gradient BF Name", "Grad BF");
+    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
+    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);
+
+    // Output
+    p->set<string>("Gradient Variable Name", "Neutron Gradient");
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+
+    evaluators_to_build["DOF Grad Neutron"] = p;
+  }
+
   if (haveFlow) { 
     // DOF: Interpolate nodal Pressure values to quad points
     RCP<ParameterList> p = 
@@ -614,6 +788,23 @@ Albany::NavierStokes::constructEvaluators(const Albany::MeshSpecsStruct& meshSpe
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     evaluators_to_build["Source"] = p;
+  }
+
+  if (haveNeut && haveNeutSource) { // Source
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    int type = FactoryTraits<AlbanyTraits>::id_source;
+    p->set<int>("Type", type);
+
+    p->set<string>("Source Name", "Source");
+    p->set<string>("Variable Name", "Neutron");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Source Functions");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    evaluators_to_build["Neutron Source"] = p;
   }
 
   if (haveFlow) { // Body Force
@@ -791,6 +982,8 @@ Albany::NavierStokes::constructEvaluators(const Albany::MeshSpecsStruct& meshSpe
     p->set<string>("Density QP Variable Name", "Density");
     p->set<string>("Specific Heat QP Variable Name", "Specific Heat");
     p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
+    p->set<string>("Proportionality Constant Name", "Proportionality Constant");
+    p->set<string>("Neutron Fission Name", "Neutron Fission");
     
     p->set<bool>("Have Source", haveSource);
     p->set<string>("Source Name", "Source");
@@ -798,6 +991,9 @@ Albany::NavierStokes::constructEvaluators(const Albany::MeshSpecsStruct& meshSpe
     p->set<bool>("Have Flow", haveFlow);
     p->set<string>("Velocity QP Variable Name", "Velocity");
 
+    p->set<bool>("Have Neutron", haveNeut);
+    p->set<string>("Neutron QP Variable Name", "Neutron");
+    
     p->set<bool>("Have SUPG", haveSUPG);
     p->set<string> ("Tau T Name", "Tau T");
  
@@ -811,6 +1007,43 @@ Albany::NavierStokes::constructEvaluators(const Albany::MeshSpecsStruct& meshSpe
     p->set< RCP<DataLayout> >("Node Scalar Data Layout", node_scalar);
 
     evaluators_to_build["Heat Resid"] = p;
+  }
+
+   if (haveNeut) { // Neutron Resid
+    RCP<ParameterList> p = rcp(new ParameterList("Neutron Resid"));
+
+    int type = FactoryTraits<AlbanyTraits>::id_nsneutroneqresid;
+    p->set<int>("Type", type);
+
+    //Input
+    p->set<string>("Weighted BF Name", "wBF");
+    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set<string>("QP Variable Name", "Neutron");
+    p->set<string>("Gradient QP Variable Name", "Neutron Gradient");
+    p->set<string>("Neutron Diffusion Name", "Neutron Diffusion");
+    p->set<string>("Neutron Absorption Name", "Neutron Absorption");
+    p->set<string>("Neutron Fission Name", "Neutron Fission");
+    p->set<string>("Reference Temperature Name", "Reference Temperature");
+    
+    p->set<bool>("Have Neutron Source", haveNeutSource);
+    p->set<string>("Source Name", "Neutron Source");
+
+    p->set<bool>("Have Flow", haveFlow);
+    p->set<string>("Velocity QP Variable Name", "Velocity");
+
+    p->set<bool>("Have Heat", haveHeat);
+    p->set<string> ("Temperature QP Variable Name", "Temperature");
+ 
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
+    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);
+
+    //Output
+    p->set<string>("Residual Name", "Neutron Residual");
+    p->set< RCP<DataLayout> >("Node Scalar Data Layout", node_scalar);
+
+    evaluators_to_build["Neutron Resid"] = p;
   }
 
   if (haveFlow) { // Momentum Scatter Residual
@@ -827,7 +1060,6 @@ Albany::NavierStokes::constructEvaluators(const Albany::MeshSpecsStruct& meshSpe
     p->set< RCP<DataLayout> >("Data Layout", node_vector);
 
     p->set<int>("Offset of First DOF", 0);
-    p->set<int>("Number of DOF per Node", neq);
     p->set<string>("Scatter Field Name", "Scatter Momentum");
 
     evaluators_to_build["Scatter Momentum Residual"] = p;
@@ -846,7 +1078,6 @@ Albany::NavierStokes::constructEvaluators(const Albany::MeshSpecsStruct& meshSpe
     p->set< RCP<DataLayout> >("Data Layout", node_scalar);
 
     p->set<int>("Offset of First DOF", numDim);
-    p->set<int>("Number of DOF per Node", neq);
     p->set<string>("Scatter Field Name", "Scatter Continuity");
 
     evaluators_to_build["Scatter Continuity Residual"] = p;
@@ -868,10 +1099,39 @@ Albany::NavierStokes::constructEvaluators(const Albany::MeshSpecsStruct& meshSpe
       p->set<int>("Offset of First DOF", numDim+1);
     else
       p->set<int>("Offset of First DOF", 0);
-    p->set<int>("Number of DOF per Node", neq);
     p->set<string>("Scatter Field Name", "Scatter Temperature");
 
     evaluators_to_build["Scatter Temperature Residual"] = p;
+  }
+
+  if (haveNeut) { // Neutron Scatter Residual
+    RCP< vector<string> > resid_names = rcp(new vector<string>(1));
+    (*resid_names)[0] = "Neutron Residual";
+   
+    RCP<ParameterList> p = rcp(new ParameterList);
+    int type = FactoryTraits<AlbanyTraits>::id_scatter_residual;
+    p->set<int>("Type", type);
+    p->set< RCP< vector<string> > >("Residual Names", resid_names);
+
+    p->set< RCP<DataLayout> >("Dummy Data Layout", dummy);
+    p->set< RCP<DataLayout> >("Data Layout", node_scalar);
+
+    if (haveFlow) {
+       if (haveHeat)
+          p->set<int>("Offset of First DOF", numDim+2);
+       else
+          p->set<int>("Offset of First DOF", numDim+1);
+    }
+    else {
+       if (haveHeat) 
+          p->set<int>("Offset of First DOF", 1);
+       else
+          p->set<int>("Offset of First DOF", 0);
+    }
+    p->set<int>("Number of DOF per Node", neq);
+    p->set<string>("Scatter Field Name", "Scatter Neutron");
+
+    evaluators_to_build["Scatter Neutron Residual"] = p;
   }
 
   // Build Field Evaluators for each evaluation type
@@ -955,6 +1215,30 @@ Albany::NavierStokes::constructEvaluators(const Albany::MeshSpecsStruct& meshSpe
 							   dummy);
     fm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag);
   }
+
+  if (haveNeut) {
+    PHX::Tag<AlbanyTraits::Residual::ScalarT> res_tag("Scatter Neutron", 
+						       dummy);
+    fm->requireField<AlbanyTraits::Residual>(res_tag);
+    PHX::Tag<AlbanyTraits::Jacobian::ScalarT> jac_tag("Scatter Neutron", 
+						       dummy);
+    fm->requireField<AlbanyTraits::Jacobian>(jac_tag);
+    PHX::Tag<AlbanyTraits::Tangent::ScalarT> tan_tag("Scatter Neutron", 
+						      dummy);
+    fm->requireField<AlbanyTraits::Tangent>(tan_tag);
+    PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_tag("Scatter Neutron",
+							   dummy);
+    fm->requireField<AlbanyTraits::SGResidual>(sgres_tag);
+    PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag("Scatter Neutron",
+							   dummy);
+    fm->requireField<AlbanyTraits::SGJacobian>(sgjac_tag);
+    PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag("Scatter Neutron",
+							   dummy);
+    fm->requireField<AlbanyTraits::MPResidual>(mpres_tag);
+    PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag("Scatter Neutron",
+							   dummy);
+    fm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag);
+  }
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
@@ -967,6 +1251,7 @@ Albany::NavierStokes::getValidProblemParameters() const
     validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic BC for 1D problems");
   validPL->set<bool>("Have Flow Equations", true);
   validPL->set<bool>("Have Heat Equation", true);
+  validPL->set<bool>("Have Neutron Equation", true);
   validPL->set<bool>("Have Pressure Stabilization", true);
   validPL->set<bool>("Have SUPG Stabilization", true);
   validPL->sublist("Thermal Conductivity", false, "");
@@ -975,6 +1260,11 @@ Albany::NavierStokes::getValidProblemParameters() const
   validPL->sublist("Volumetric Expansion Coefficient", false, "");
   validPL->sublist("Specific Heat", false, "");
   validPL->sublist("Body Force", false, "");
+  validPL->sublist("Neutron Source", false, "");
+  validPL->sublist("Neutron Diffusion", false, "");
+  validPL->sublist("Neutron Absorption", false, "");
+  validPL->sublist("Neutron Fission", false, "");
+  validPL->sublist("Proportionality Constant", false, "");
 
   return validPL;
 }

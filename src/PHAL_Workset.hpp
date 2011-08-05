@@ -73,7 +73,7 @@ struct Workset {
 
   // Current Time as defined by Rythmos
   double current_time;
-
+ 
   // flag indicating whether to sum tangent derivatives, i.e.,
   // compute alpha*df/dxdot*Vxdot + beta*df/dx*Vx + df/dp*Vp or
   // compute alpha*df/dxdot*Vxdot + beta*df/dx*Vx and df/dp*Vp separately
@@ -83,15 +83,13 @@ struct Workset {
 
   std::vector<int> *coord_deriv_indices;
 
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >  wsElNodeID;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >  wsElNodeEqID;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> >  wsCoords;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > >  ws_coord_derivs;
   std::string EBName;
 
-  Teuchos::RCP<const Albany::StateVariables> oldState;
-  Teuchos::RCP<Albany::StateVariables> newState;
   Albany::StateArray* stateArrayPtr;
-  Albany::EigendataStruct* eigenDataPtr;
+  Teuchos::RCP<Albany::EigendataStruct> eigenDataPtr;
 
   bool transientTerms;
 
@@ -107,6 +105,11 @@ struct Workset {
   // either the Jacobian or the transpose of the Jacobian is scattered. 
   bool is_adjoint;
 
+
+  // Responses and their derivatives, stored as a separate vector 
+  //  or multivector of values for each "Response" requested by user.
+  Teuchos::ArrayRCP< Teuchos::RCP< Epetra_Vector > >      responses;
+  Teuchos::ArrayRCP< Teuchos::RCP< Epetra_MultiVector > > responseDerivatives;
 };
 
 }

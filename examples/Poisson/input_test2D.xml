@@ -43,13 +43,6 @@
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)" 
                value="{0.479305619185,0.462389378825,-0.464350894829,0.0309567263219 }"/>
   </ParameterList>
-  <ParameterList name="VTK">
-    <Parameter name="Do Visualization" type="bool" value="0"/>
-    <Parameter name="Visualize Sensitivities" type="bool" value="1"/>
-    <Parameter name="RotateX" type="double" value="120.0" />
-    <Parameter name="RotateZ" type="double" value="50.0" />
-    <Parameter name="Stagger Windows" type="bool" value="true" />
-  </ParameterList>
   <ParameterList name="LOCA">
     <ParameterList name="Bifurcation"/>
     <ParameterList name="Constraints"/>

@@ -71,7 +71,12 @@
 
 #include "boost/mpl/vector/vector50.hpp"
 #include "boost/mpl/placeholders.hpp"
+// \cond  Have doxygern ignore this namespace   
 using namespace boost::mpl::placeholders;
+// \endcond
+
+//! Code Base for LCM Project
+namespace LCM {
 
 /*! \brief Struct to define Evaluator objects for the EvaluatorFactory.
     
@@ -82,7 +87,6 @@ using namespace boost::mpl::placeholders;
     to perform, i.e., Residual, Jacobian). 
 
 */
-namespace LCM {
 
 template<typename Traits>
 struct FactoryTraits {

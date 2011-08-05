@@ -15,30 +15,28 @@
 \********************************************************************/
 
 
-#ifndef QCAD_ELEMENTBLOCKINTEGRALRESPONSEFUNCTION_HPP
-#define QCAD_ELEMENTBLOCKINTEGRALRESPONSEFUNCTION_HPP
+#ifndef ALBANY_EVALUATEDRESPONSEFUNCTION_HPP
+#define ALBANY_EVALUATEDRESPONSEFUNCTION_HPP
 
 #include "Albany_AbstractResponseFunction.hpp"
 #include "Epetra_Map.h"
 #include "Epetra_Import.h"
 #include "Epetra_Vector.h"
+#include "EpetraExt_MultiComm.h"
 
-#include "Albany_StateManager.hpp"
-
-namespace QCAD {
+namespace Albany {
 
   /*!
    * \brief Reponse function representing the average of the solution values
    */
-  class ElementBlockIntegralResponseFunction : public Albany::AbstractResponseFunction {
+  class EvaluatedResponseFunction : public AbstractResponseFunction {
   public:
   
     //! Default constructor
-    ElementBlockIntegralResponseFunction(const std::string& stateName, const std::string& ebName,
-					 const std::string& weightName, Albany::StateManager& stateMgr);
+    EvaluatedResponseFunction();
 
     //! Destructor
-    virtual ~ElementBlockIntegralResponseFunction();
+    virtual ~EvaluatedResponseFunction();
 
     //! Get the number of responses
     virtual unsigned int numResponses() const;
@@ -83,23 +81,42 @@ namespace QCAD {
 			const Teuchos::Array<SGType>* sg_p_vals,
 			Stokhos::VectorOrthogPoly<Epetra_Vector>& sg_g);
 
+
+    //! Post process responses
+    virtual void 
+    postProcessResponses(const Epetra_Comm& comm, Teuchos::RCP<Epetra_Vector>& g);
+
+    //! Post process response derivatives
+    virtual void 
+    postProcessResponseDerivatives(const Epetra_Comm& comm, Teuchos::RCP<Epetra_MultiVector>& gt);
+
+
+    //! Set initial values (and number) of the responses.  This function is called by
+    //   response evaluators, which act on a single workset at a time.
+    void setResponseInitialValues(const std::vector<double>& initVals);
+    void setResponseInitialValues(double singleInitValForAll, unsigned int numberOfResponses);
+
+    //! Set post processing parameter list
+    void setPostProcessingParams(const Teuchos::ParameterList& params);
+
+
   private:
 
     //! Private to prohibit copying
-    ElementBlockIntegralResponseFunction(const ElementBlockIntegralResponseFunction&);
+    EvaluatedResponseFunction(const EvaluatedResponseFunction&);
     
     //! Private to prohibit copying
-    ElementBlockIntegralResponseFunction& operator=(const ElementBlockIntegralResponseFunction&);
+    EvaluatedResponseFunction& operator=(const EvaluatedResponseFunction&);
 
-    //! Names of relevant quantities
-    std::string stateName_;  // state to integrate
-    std::string weightName_; // quad-point weights (wBF / BF)
-    std::string ebName_;    // element block to integrate over
+    //! initial values for each response.  The length of this
+    //  vector determines the number of responses.
+    std::vector<double> responseInitVals;
 
-    //! State manager
-    Albany::StateManager& stateMgr_;
+    //! post processing parameter list
+    Teuchos::ParameterList postProcessingParams;
+
   };
 
 }
 
-#endif // QCAD_ELEMENTBLOCKINTEGRALRESPONSEFUNCTION_HPP
+#endif // ALBANY_EVALUATEDRESPONSEFUNCTION_HPP

@@ -163,7 +163,6 @@ Albany::Helmholtz2DProblem::constructEvaluators(
     p->set< RCP< vector<string> > >("Solution Names", dof_names);
     p->set< RCP<DataLayout> >("Data Layout", node_scalar);
     p->set<int>("Offset of First DOF", 0);
-    p->set<int>("Number of DOF per Node", neq);
 
     // Helmholtz solve does not have transient terms
     p->set<bool>("Disable Transient", true);
@@ -180,7 +179,6 @@ Albany::Helmholtz2DProblem::constructEvaluators(
     p->set< RCP< vector<string> > >("Solution Names", dof_names);
     p->set< RCP<DataLayout> >("Data Layout", node_scalar);
     p->set<int>("Offset of First DOF", 1);
-    p->set<int>("Number of DOF per Node", neq);
 
     // Helmholtz solve does not have transient terms
     p->set<bool>("Disable Transient", true);

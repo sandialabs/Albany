@@ -27,6 +27,7 @@
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
 
+//! Code Base for Quantum Device Simulation Tools LDRD
 namespace QCAD {
 
   /*!
@@ -65,7 +66,8 @@ namespace QCAD {
     PoissonProblem& operator=(const PoissonProblem&);
 
     void constructEvaluators(const Albany::MeshSpecsStruct& meshSpecs,
-                             Albany::StateManager& stateMgr);
+                             Albany::StateManager& stateMgr,
+			     std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
 
     void constructDirichletEvaluators(const std::vector<std::string>& nodeSetIDs);
 

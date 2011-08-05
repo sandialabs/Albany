@@ -15,41 +15,10 @@
 \********************************************************************/
 
 
-#ifndef __vtkITAPSUnstructuredSource_h
-#define __vtkITAPSUnstructuredSource_h
+#include "PHAL_AlbanyTraits.hpp"
 
-#ifdef HAVE_VTK
+#include "QCAD_ResponseFieldIntegral.hpp"
+#include "QCAD_ResponseFieldIntegral_Def.hpp"
 
-#include <vtkUnstructuredGridAlgorithm.h>
+PHAL_INSTANTIATE_TEMPLATE_CLASS(QCAD::ResponseFieldIntegral)
 
-#include "iMesh_interface.hpp"
-
-class vtkITAPSUnstructuredSource : public vtkUnstructuredGridAlgorithm
-{
-public:
-  static vtkITAPSUnstructuredSource* New ();
-  vtkTypeRevisionMacro (vtkITAPSUnstructuredSource, vtkUnstructuredGridAlgorithm);
-  void PrintSelf (ostream& os, vtkIndent indent);
-
-  // Description:
-  // Specify the Mesh instance to turn into UnstructuredGrid
-  virtual void SetMesh (iMesh_Instance mesh);
-  vtkGetMacro (Mesh, iMesh_Instance);
-
-protected:
-  vtkITAPSUnstructuredSource ();
-  ~vtkITAPSUnstructuredSource ();
-
-  iMesh_Instance Mesh;
-  bool MeshModified;
-
-  void ExecuteData (vtkDataObject *);
-
-private:
-  vtkITAPSUnstructuredSource (const vtkITAPSUnstructuredSource&); // Not Implemented
-  void operator= (const vtkITAPSUnstructuredSource&); // Not Implemented
-};
-
-#endif /* HAVE_VTK */
-
-#endif /* __vtkITAPSUnstructuredSource_h */

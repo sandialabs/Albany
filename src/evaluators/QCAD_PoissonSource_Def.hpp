@@ -46,6 +46,9 @@ PoissonSource(Teuchos::ParameterList& p) :
   valenceBand("Valence Band",
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"))
 {
+  // Material database
+  materialDB = p.get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
+
   Teuchos::ParameterList* psList = p.get<Teuchos::ParameterList*>("Parameter List");
 
   Teuchos::RCP<const Teuchos::ParameterList> reflist = 
@@ -64,13 +67,10 @@ PoissonSource(Teuchos::ParameterList& p) :
   device = psList->get("Device", "defaultdevice");
   carrierStatistics = psList->get("Carrier Statistics", "Boltzmann Statistics");
   incompIonization = psList->get("Incomplete Ionization", "False");
-  dopingDonor = psList->get("Donor Doping", 1e14);
-  dopingAcceptor = psList->get("Acceptor Doping", 1e14);
-  donorActE = psList->get("Donor Activation Energy", 0.040);
-  acceptorActE = psList->get("Acceptor Activation Energy", 0.045);
-
-  // Material database
-  materialDB = p.get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
+  //dopingDonor = psList->get("Donor Doping", 1e14);
+  //dopingAcceptor = psList->get("Acceptor Doping", 1e14);
+  //donorActE = psList->get("Donor Activation Energy", 0.040);
+  //acceptorActE = psList->get("Acceptor Activation Energy", 0.045);
   
   // passed down from main list
   length_unit_in_m = p.get<double>("Length unit in m");
@@ -106,6 +106,24 @@ PoissonSource(Teuchos::ParameterList& p) :
       p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
   new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
       "Poisson Source Factor", this, paramLib);
+
+  // Add parameters from material database as Sacado params
+  std::vector<string> dopingParamNames = materialDB->getAllMatchingParams<std::string>("Doping Parameter Name");
+  std::vector<string> chargeParamNames = materialDB->getAllMatchingParams<std::string>("Charge Parameter Name");
+  
+  std::vector<string>::iterator s;
+  for(s = dopingParamNames.begin(); s != dopingParamNames.end(); s++) {
+    if( psList->isParameter(*s) ) {
+      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(*s, this, paramLib);
+      materialParams[*s] = psList->get<double>(*s);
+    }
+  }
+  for(s = chargeParamNames.begin(); s != chargeParamNames.end(); s++) {
+    if( psList->isParameter(*s) ) {
+      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(*s, this, paramLib);
+      materialParams[*s] = psList->get<double>(*s);
+    }
+  }
 
   this->addDependentField(potential);
   this->addDependentField(coordVec);
@@ -166,6 +184,7 @@ typename QCAD::PoissonSource<EvalT,Traits>::ScalarT&
 QCAD::PoissonSource<EvalT,Traits>::getValue(const std::string &n)
 {
   if(n == "Poisson Source Factor") return factor;
+  else if( materialParams.find(n) != materialParams.end() ) return materialParams[n];
   else TEST_FOR_EXCEPT(true); return factor; //dummy so all control paths return
 }
 
@@ -179,12 +198,20 @@ QCAD::PoissonSource<EvalT,Traits>::getValidPoissonSourceParameters() const
 
   validPL->set<double>("Factor", 1.0, "Constant multiplier in source term");
   validPL->set<string>("Device", "defaultdevice", "Switch between different device models");
-  validPL->set<double>("Donor Doping", 1e14, "Doping for nsilicon element blocks [cm^-3]");
-  validPL->set<double>("Acceptor Doping", 1e14, "Doping for psilicon element blocks [cm^-3]");
+  //validPL->set<double>("Donor Doping", 1e14, "Doping for nsilicon element blocks [cm^-3]");
+  //validPL->set<double>("Acceptor Doping", 1e14, "Doping for psilicon element blocks [cm^-3]");
   validPL->set<string>("Carrier Statistics", "Boltzmann Statistics", "Carrier statistics");
   validPL->set<string>("Incomplete Ionization", "False", "Partial ionization of dopants");
-  validPL->set<double>("Donor Activation Energy", 0.045, "Donor activation energy [eV]");
-  validPL->set<double>("Acceptor Activation Energy", 0.045, "Acceptor activation energy [eV]");
+  //validPL->set<double>("Donor Activation Energy", 0.045, "Donor activation energy [eV]");
+  //validPL->set<double>("Acceptor Activation Energy", 0.045, "Acceptor activation energy [eV]");
+  
+  std::vector<string> dopingParamNames = materialDB->getAllMatchingParams<std::string>("Doping Parameter Name");
+  std::vector<string> chargeParamNames = materialDB->getAllMatchingParams<std::string>("Charge Parameter Name");
+  std::vector<string>::iterator s;
+  for(s = dopingParamNames.begin(); s != dopingParamNames.end(); s++)
+    validPL->set<double>( *s, 0.0, "Doping Parameter [cm^-3]");
+  for(s = chargeParamNames.begin(); s != chargeParamNames.end(); s++)
+    validPL->set<double>( *s, 0.0, "Charge Parameter [cm^-3]");
   
   return validPL;
 }
@@ -209,22 +236,34 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
     std::string refMtrlName, category;
     refMtrlName = materialDB->getParam<std::string>("Reference Material");
     category = materialDB->getMaterialParam<std::string>(refMtrlName,"Category");
-    if (category != "Semiconductor") 
-      TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
-        << "Error!  Reference material must be Semiconductor !" << std::endl);
+    if (category == "Semiconductor") {
         
-    // Same qPhiRef needs to be used for the entire structure
-    double mdn = materialDB->getMaterialParam<double>(refMtrlName,"Electron DOS Effective Mass");
-    double mdp = materialDB->getMaterialParam<double>(refMtrlName,"Hole DOS Effective Mass");
-    double Chi = materialDB->getMaterialParam<double>(refMtrlName,"Electron Affinity");
-    double Eg0 = materialDB->getMaterialParam<double>(refMtrlName,"Zero Temperature Band Gap");
-    double alpha = materialDB->getMaterialParam<double>(refMtrlName,"Band Gap Alpha Coefficient");
-    double beta = materialDB->getMaterialParam<double>(refMtrlName,"Band Gap Beta Coefficient");
-    ScalarT Eg = Eg0-alpha*pow(temperature,2.0)/(beta+temperature); // in [eV]
+      // Same qPhiRef needs to be used for the entire structure
+      double mdn = materialDB->getMaterialParam<double>(refMtrlName,"Electron DOS Effective Mass");
+      double mdp = materialDB->getMaterialParam<double>(refMtrlName,"Hole DOS Effective Mass");
+      double Chi = materialDB->getMaterialParam<double>(refMtrlName,"Electron Affinity");
+      double Eg0 = materialDB->getMaterialParam<double>(refMtrlName,"Zero Temperature Band Gap");
+      double alpha = materialDB->getMaterialParam<double>(refMtrlName,"Band Gap Alpha Coefficient");
+      double beta = materialDB->getMaterialParam<double>(refMtrlName,"Band Gap Beta Coefficient");
+      ScalarT Eg = Eg0-alpha*pow(temperature,2.0)/(beta+temperature); // in [eV]
     
-    ScalarT kbT = kbBoltz*temperature;      // in [eV]
-    ScalarT Eic = -Eg/2. + 3./4.*kbT*log(mdp/mdn);  // (Ei-Ec) in [eV]
-    qPhiRef = Chi - Eic;  // (Evac-Ei) in [eV] where Evac = vacuum level
+      ScalarT kbT = kbBoltz*temperature;      // in [eV]
+      ScalarT Eic = -Eg/2. + 3./4.*kbT*log(mdp/mdn);  // (Ei-Ec) in [eV]
+      qPhiRef = Chi - Eic;  // (Evac-Ei) in [eV] where Evac = vacuum level
+    }
+    else if (category == "Insulator") {
+      double Chi = materialDB->getMaterialParam<double>(refMtrlName,"Electron Affinity");
+      qPhiRef = Chi;
+    }
+    else if (category == "Metal") {
+      double workFn = materialDB->getMaterialParam<double>(refMtrlName,"Work Function");
+      qPhiRef = workFn;
+    }
+    else {
+      TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+			  << "Error!  Invalid category " << category 
+			  << " for reference material !" << std::endl);
+    }
   }  
 
   string matrlCategory = materialDB->getElementBlockParam<string>(workset.EBName,"Category");
@@ -254,9 +293,6 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
     ScalarT Nv;  // valence band effective DOS in [cm-3]
     ScalarT Eg;  // band gap at T [K] in [eV]
     ScalarT ni;  // intrinsic carrier concentration in [cm-3]
-    ScalarT Eic; // intrinsic Fermi level - conduction band edge in [eV]
-    ScalarT Evi; // valence band edge - intrinsic Fermi level in [eV]
-    ScalarT WFintSC;  // semiconductor intrinsic workfunction in [eV]
     
     Nc = NcvFactor*pow(mdn,1.5)*pow(temperature/Tref,1.5);  // in [cm-3]
     Nv = NcvFactor*pow(mdp,1.5)*pow(temperature/Tref,1.5); 
@@ -264,10 +300,11 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
     
     ScalarT kbT = kbBoltz*temperature;      // in [eV]
     ni = sqrt(Nc*Nv)*exp(-Eg/(2.0*kbT));    // in [cm-3]
-    Eic = -Eg/2. + 3./4.*kbT*log(mdp/mdn);  // (Ei-Ec) in [eV]
-    Evi = -Eg/2. - 3./4.*kbT*log(mdp/mdn);  // (Ev-Ei) in [eV]
-    WFintSC = Chi - Eic;  // (Evac-Ei) in [eV] where Evac = vacuum level
-
+    
+    // argument offset in calculating electron and hole density
+    ScalarT eArgOffset = (-qPhiRef+Chi)/kbT;
+    ScalarT hArgOffset = (qPhiRef-Chi-Eg)/kbT;
+    
     //! material parameter dependent scaling factor 
     C0 = (Nc > Nv) ? Nc : Nv;  // scaling for conc. [cm^-3]
     Lambda2 = V0*eps0/(eleQ*X0*X0*C0); // derived scaling factor (unitless)
@@ -303,29 +340,33 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 
     //! get doping concentration and activation energy
     //** Note: doping profile unused currently
-    //Later: get doping activation energy and concentration from parameter named in material db
-    string dopantType = materialDB->getElementBlockParam<string>(workset.EBName,"dopantType","None");
-    string dopingProfile = materialDB->getElementBlockParam<string>(workset.EBName,"dopingProfile","Constant");
+    string dopantType = materialDB->getElementBlockParam<string>(workset.EBName,"Dopant Type","None");
+    string dopingProfile;
+    ScalarT inArg, dopingConc;
 
-    double dopantActE, dopingConc;
-    ScalarT inArg; 
-    if(dopantType == "Donor") {
-      dopingConc = dopingDonor;  
-      dopantActE = donorActE;
-      inArg = (Eic+dopantActE)/kbT;
-    }
-    else if(dopantType == "Acceptor") {
-      dopingConc = dopingAcceptor;  
-      dopantActE = acceptorActE;
-      inArg = (Evi+dopantActE)/kbT; 
-    }
-    else if(dopantType == "None") {
-      dopingConc = dopantActE = 0.0;
-      inArg = 0.0;
+    if(dopantType != "None") {
+      double dopantActE;
+      dopingProfile = materialDB->getElementBlockParam<string>(workset.EBName,"Doping Profile","Constant");
+      dopantActE = materialDB->getElementBlockParam<double>(workset.EBName,"Dopant Activation Energy",0.045);
+    
+      if( materialDB->isElementBlockParam(workset.EBName, "Doping Value") ) 
+        dopingConc = materialDB->getElementBlockParam<double>(workset.EBName,"Doping Value");
+      else if( materialDB->isElementBlockParam(workset.EBName, "Doping Parameter Name") ) 
+        dopingConc = materialParams[ materialDB->getElementBlockParam<string>(workset.EBName,"Doping Parameter Name") ];
+      else TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
+        std::endl << "Error!  Unknown dopant concentration for " << workset.EBName << "!"<< std::endl);
+
+      if(dopantType == "Donor") 
+        inArg = eArgOffset + dopantActE/kbT;
+      else if(dopantType == "Acceptor") 
+        inArg = hArgOffset + dopantActE/kbT;
+      else TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
+	       std::endl << "Error!  Unknown dopant type " << dopantType << "!"<< std::endl);
     }
     else {
-      TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
-       std::endl << "Error!  Unknown dopant type " << dopantType << "!"<< std::endl);
+      dopingProfile = "Constant";
+      dopingConc = 0.0;
+      inArg = 0.0;
     }
 
 
@@ -348,7 +389,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
           const ScalarT& phi = potential(cell,qp);
            
           // compute the hole density treated as classical
-          ScalarT hDensity = Nv*(this->*carrStat)(-phi+Evi/kbT); 
+          ScalarT hDensity = Nv*(this->*carrStat)(-phi+hArgOffset); 
 
           // obtain the ionized dopants
           ScalarT ionN  = 0.0;
@@ -396,13 +437,13 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 
           // the scaled full RHS
           ScalarT charge; 
-          charge = 1.0/Lambda2*(Nv*(this->*carrStat)(-phi+Evi/kbT)- Nc*(this->*carrStat)(phi+Eic/kbT) + ionN)/C0;
+          charge = 1.0/Lambda2*(Nv*(this->*carrStat)(-phi+hArgOffset)- Nc*(this->*carrStat)(phi+eArgOffset) + ionN)/C0;
           poissonSource(cell, qp) = factor*charge;
           
           // output states
           chargeDensity(cell, qp) = charge*Lambda2*C0;
-          electronDensity(cell, qp) = Nc*(this->*carrStat)(phi+Eic/kbT);
-          holeDensity(cell, qp) = Nv*(this->*carrStat)(-phi+Evi/kbT);
+          electronDensity(cell, qp) = Nc*(this->*carrStat)(phi+eArgOffset);
+          holeDensity(cell, qp) = Nv*(this->*carrStat)(-phi+hArgOffset);
           electricPotential(cell, qp) = phi*V0;
           ionizedDopant(cell, qp) = ionN;
           conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
@@ -423,6 +464,15 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
     double Chi = materialDB->getElementBlockParam<double>(workset.EBName,"Electron Affinity",0.0);
     ScalarT Lambda2C0 = V0*eps0/(eleQ*X0*X0); // derived scaling factor (unitless)
 
+    //! Fixed charge in insulator
+    ScalarT fixedCharge; // [cm^-3]
+    if( materialDB->isElementBlockParam(workset.EBName, "Charge Value") ) 
+      fixedCharge = materialDB->getElementBlockParam<double>(workset.EBName,"Charge Value");
+    else if( materialDB->isElementBlockParam(workset.EBName, "Charge Parameter Name") ) 
+      fixedCharge  = materialParams[ materialDB->getElementBlockParam<string>(workset.EBName,"Charge Parameter Name") ];
+    else fixedCharge = 0.0; 
+
+
     //! Schrodinger source for electrons
     if(bSchrodingerInQuantumRegions && 
       materialDB->getElementBlockParam<bool>(workset.EBName,"quantum",false)) 
@@ -442,13 +492,13 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
               
           // the scaled full RHS
           ScalarT charge;
-          charge = 1.0/Lambda2C0*(-eDensity);
+          charge = 1.0/Lambda2C0*(-eDensity + fixedCharge);
           poissonSource(cell, qp) = factor*charge;
 
           // output states
-          chargeDensity(cell, qp) = 0.0;    // no space charge in an insulator
+          chargeDensity(cell, qp) = -eDensity + fixedCharge; 
           electronDensity(cell, qp) = eDensity;  // quantum electrons in an insulator
-          holeDensity(cell, qp) = 0.0;      // no holes in an insulator
+          holeDensity(cell, qp) = 0.0;           // no holes in an insulator
           electricPotential(cell, qp) = phi*V0;
           ionizedDopant(cell, qp) = 0.0;
           conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
@@ -464,13 +514,15 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
         for (std::size_t qp=0; qp < numQPs; ++qp)
         {
           const ScalarT& phi = potential(cell,qp);
+          
+          // the scaled full RHS
           ScalarT charge; 
-          charge = 0.0;  // no charge in an insulator
+          charge = 1.0/Lambda2C0*fixedCharge;  // only fixed charge in an insulator
           poissonSource(cell, qp) = factor*charge;
 	  
-          chargeDensity(cell, qp) = 0.0;    // no space charge in an insulator
-          electronDensity(cell, qp) = 0.0;  // no electrons in an insulator
-          holeDensity(cell, qp) = 0.0;      // no holes in an insulator
+          chargeDensity(cell, qp) = fixedCharge; // fixed space charge in an insulator
+          electronDensity(cell, qp) = 0.0;       // no electrons in an insulator
+          holeDensity(cell, qp) = 0.0;           // no holes in an insulator
           electricPotential(cell, qp) = phi*V0;
           ionizedDopant(cell, qp) = 0.0;
           conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
@@ -487,13 +539,15 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
   else if(matrlCategory == "Metal")
   {
     double workFunc = materialDB->getElementBlockParam<double>(workset.EBName,"Work Function");
-
+    
     // The following assumes Metal is surrounded by Dirichlet BC
     for (std::size_t cell=0; cell < workset.numCells; ++cell)
     {
       for (std::size_t qp=0; qp < numQPs; ++qp)
       {
         const ScalarT& phi = potential(cell,qp);
+        
+        // the scaled full RHS
         ScalarT charge; 
         charge = 0.0;  // no charge in metal bulk
         poissonSource(cell, qp) = factor*charge;
@@ -527,9 +581,6 @@ evaluateFields_default(typename Traits::EvalData workset)
   MeshScalarT* coord;
   ScalarT charge;
 
-  // ScalarT temperature = temperatureField(0); //get shared temperature parameter from field
-  // ScalarT V0 = kbBoltz*temperature/1.0; // kb*T/q in [V], scaling for potential
-
   for (std::size_t cell=0; cell < workset.numCells; ++cell) 
   {
     for (std::size_t qp=0; qp < numQPs; ++qp) 
@@ -547,10 +598,7 @@ evaluateFields_default(typename Traits::EvalData workset)
       default: TEST_FOR_EXCEPT(true);
       }
 
-      // scale even default device since Poisson Dirichlet evaluator always scales DBCs
-      // poissonSource(cell, qp) = factor*charge / V0;
-      
-      // Suzey: do not scale the default device since the DBC is not scaled
+      // do not scale the default device since the DBC is not scaled
       poissonSource(cell, qp) = factor*charge;
       
       // set all states to 0 except electricPotential 
@@ -769,7 +817,7 @@ eDensityForPoissonSchrond(typename Traits::EvalData workset, std::size_t cell, s
       // subband-independent prefactor in calculating electron density
       // X0 is used to scale wavefunc. squared from [um^-1] or [nm^-1] to [cm^-1]
       ScalarT eDenPrefactor = valleyDegeneracyFactor*dos2D*kbT/X0;
- 
+
       // loop over eigenvalues to compute electron density [cm^-3]
       for(int i = 0; i < nEigenvectors; i++) 
       {
@@ -798,7 +846,16 @@ eDensityForPoissonSchrond(typename Traits::EvalData workset, std::size_t cell, s
       // subband-independent prefactor in calculating electron density
       // X0^2 is used to scale wavefunc. squared from [um^-2] or [nm^-2] to [cm^-2]
       ScalarT eDenPrefactor = valleyDegeneracyFactor*n1D/pow(X0,2.);
- 
+
+      //FOR SUZEY 
+      // Note for Future: I'm not sure if "Previous Poisson Potential" will always exist when
+      //   calling the Poisson solver with a Schrodinger source, so use of this state should be 
+      //   confined to where the user specified a Predictor-Corrector method.
+      Albany::MDArray prevPhi = (*workset.stateArrayPtr)["Previous Poisson Potential"];
+      ScalarT testThatYouCanUsePrevPhi = prevPhi(cell,qp) * prevPhi(cell,qp);
+      if(cell == 0 && qp == 0) 
+	std::cout << "DEBUG: test Prev Phi: " << testThatYouCanUsePrevPhi << std::endl;
+
       // loop over eigenvalues to compute electron density [cm^-3]
       for(int i=0; i < nEigenvectors; i++) 
       {

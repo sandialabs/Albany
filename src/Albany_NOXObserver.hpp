@@ -19,7 +19,6 @@
 #define ALBANY_NOXOBSERVER
 
 
-#include "Albany_VTK.hpp"
 #include "Albany_Application.hpp"
 #include "NOX_Epetra_Observer.H"
 #include "Teuchos_TimeMonitor.hpp"
@@ -29,7 +28,6 @@ class Albany_NOXObserver : public NOX::Epetra::Observer
 {
 public:
    Albany_NOXObserver (
-         const Teuchos::RCP<Albany_VTK> vtk_,
          const Teuchos::RCP<Albany::Application> &app_);
 
    ~Albany_NOXObserver ()
@@ -42,7 +40,6 @@ private:
 
    Teuchos::RCP<Albany::Application> app;
    Teuchos::RCP<Albany::AbstractDiscretization> disc;
-   Teuchos::RCP<Albany_VTK> vtk;
 
    Teuchos::RCP<Teuchos::Time> exooutTime;
 

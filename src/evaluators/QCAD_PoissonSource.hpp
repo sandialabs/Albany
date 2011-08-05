@@ -31,11 +31,10 @@
 
 #include "QCAD_MaterialDatabase.hpp"
 
+namespace QCAD {
 /** 
  * \brief Evaluates Poisson Source Term 
  */
-namespace QCAD 
-{
   template<typename EvalT, typename Traits>
   class PoissonSource : 
   public PHX::EvaluatorWithBaseImpl<Traits>,
@@ -149,10 +148,12 @@ namespace QCAD
     int  nEigenvectors;
     std::vector< PHX::MDField<ScalarT,Cell,QuadPoint> > eigenvector_Re;
     std::vector< PHX::MDField<ScalarT,Cell,QuadPoint> > eigenvector_Im;
-
     
     //! Material database
     Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
+
+    //! Material database parameter values
+    std::map< std::string, ScalarT > materialParams;
   };
 }
 

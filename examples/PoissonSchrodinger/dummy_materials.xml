@@ -3,41 +3,15 @@
 
   <ParameterList name="NodeSets">
 
-    <ParameterList name="lgate">
-      <Parameter name="material" type="string" value="PolySilicon" />
-    </ParameterList>
-
-    <ParameterList name="rgate">
-      <Parameter name="material" type="string" value="PolySilicon" />
-    </ParameterList>
-
-    <ParameterList name="gate">
-      <Parameter name="material" type="string" value="PolySilicon" />
-    </ParameterList>
-
     <ParameterList name="topgate">
-      <Parameter name="material" type="string" value="Aluminum" />
+      <Parameter name="material" type="string" value="" />
     </ParameterList>
 
     <ParameterList name="substrate">
-      <Parameter name="material" type="string" value="Silicon" />
-    </ParameterList>
-
-    <ParameterList name="psubstrate">
-      <Parameter name="elementBlock" type="string" value="silicon.ptype" />
-    </ParameterList>
-
-    <ParameterList name="anode">
-        <Parameter name="elementBlock" type="string" value="silicon.ptype" />
-    </ParameterList>
-
-    <ParameterList name="cathode">
-      <Parameter name="elementBlock" type="string" value="silicon.ntype" />
+      <Parameter name="material" type="string" value="" />
     </ParameterList>
 
   </ParameterList>
-
-
 
   <ParameterList name="ElementBlocks">
 
@@ -80,7 +54,6 @@
   </ParameterList>
 
 
-
   <ParameterList name="Materials">
 
     <ParameterList name="Silicon">
@@ -116,7 +89,6 @@
       <Parameter name="Electron Effective Mass Y" type="double" value="0.19" />
       <Parameter name="Electron Effective Mass Z" type="double" value="0.98" />
 
-
       <!-- Band Gap in [eV] -->
       <Parameter name="Band Gap" type="double" value="9.0" />
 
@@ -125,14 +97,14 @@
     </ParameterList>
 
     <ParameterList name="PolySilicon">
-      <Parameter name="Category" type="string" value="Insulator" />
+      <Parameter name="Category" type="string" value="Metal" />
       <Parameter name="Permittivity" type="double" value="11.9" />
 
       <!-- Band Gap in [eV] (use 0K silicon now?)-->
       <Parameter name="Band Gap" type="double" value="1.1455" />
 
       <!-- Electron affinity in [eV] assumes (n+ polysilicon; same as silicon) -->
-      <Parameter name="Electron Affinity" type="double" value="0.0" />
+      <Parameter name="Work Function" type="double" value="0.0" />
     </ParameterList>
 
     <ParameterList name="Aluminum">
@@ -140,7 +112,7 @@
       <Parameter name="Permittivity" type="double" value="1.0" />
 
       <!-- Electron affinity (work function?) in [eV] -->
-      <Parameter name="Electron Affinity" type="double" value="0.0" />
+      <Parameter name="Work Function" type="double" value="0.0" />
     </ParameterList>
 
 

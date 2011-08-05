@@ -25,7 +25,6 @@ SET(SOURCES
 	Albany_RythmosObserver.cpp 
 	Albany_NOXObserver.cpp 
 	Albany_StateManager.cpp 
-	Albany_VTK.cpp 
 	Albany_ModelEvaluator.cpp
 	Albany_SaveEigenData.cpp
   )
@@ -45,7 +44,6 @@ SET(HEADERS
 	Albany_StateManager.hpp 
         Albany_StateInfoStruct.hpp
         Albany_EigendataInfoStruct.hpp
-	Albany_VTK.hpp 
 	Albany_ModelEvaluator.hpp
 	Albany_SaveEigenData.hpp
         Albany_DummyParameterAccessor.hpp
@@ -81,6 +79,7 @@ SET(SOURCES ${SOURCES}
 	responses/Albany_SolutionMaxValueResponseFunction.cpp
 	responses/Albany_SolutionTwoNormResponseFunction.cpp
         responses/Albany_SolutionFileL2ResponseFunction.cpp
+	responses/Albany_EvaluatedResponseFunction.cpp
   )
 SET(HEADERS ${HEADERS}
 	responses/Albany_AbstractResponseFunction.hpp 
@@ -88,6 +87,7 @@ SET(HEADERS ${HEADERS}
 	responses/Albany_SolutionMaxValueResponseFunction.hpp
 	responses/Albany_SolutionTwoNormResponseFunction.hpp
         responses/Albany_SolutionFileL2ResponseFunction.hpp
+	responses/Albany_EvaluatedResponseFunction.hpp
   )
 
 #stk
@@ -144,12 +144,14 @@ SET(SOURCES ${SOURCES}
 	evaluators/PHAL_NSContinuityResid.cpp
 	evaluators/PHAL_NSMomentumResid.cpp
         evaluators/PHAL_NSThermalEqResid.cpp
+        evaluators/PHAL_NSNeutronEqResid.cpp
         evaluators/PHAL_NSRm.cpp
         evaluators/PHAL_NSContravarientMetricTensor.cpp
         evaluators/PHAL_NSTauM.cpp 
         evaluators/PHAL_NSTauT.cpp
         evaluators/PHAL_NSMaterialProperty.cpp
         evaluators/PHAL_NSBodyForce.cpp
+	evaluators/PHAL_ResponseBase.cpp
   )
 SET(HEADERS ${HEADERS}
 	evaluators/PHAL_GatherSolution.hpp 
@@ -204,6 +206,8 @@ SET(HEADERS ${HEADERS}
 	evaluators/PHAL_NSMomentumResid_Def.hpp
         evaluators/PHAL_NSThermalEqResid.hpp
         evaluators/PHAL_NSThermalEqResid_Def.hpp
+        evaluators/PHAL_NSNeutronEqResid.hpp
+        evaluators/PHAL_NSNeutronEqResid_Def.hpp
         evaluators/PHAL_NSRm.hpp
         evaluators/PHAL_NSRm_Def.hpp
         evaluators/PHAL_NSContravarientMetricTensor.hpp
@@ -216,6 +220,8 @@ SET(HEADERS ${HEADERS}
         evaluators/PHAL_NSMaterialProperty_Def.hpp 
         evaluators/PHAL_NSBodyForce.hpp
         evaluators/PHAL_NSBodyForce_Def.hpp
+        evaluators/PHAL_ResponseBase.hpp
+	evaluators/PHAL_ResponseBase_Def.hpp
   )
 
 # LCM
@@ -331,12 +337,14 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/utils/Geometry.cc
     ${LCM_DIR}/utils/Partition.cc
     ${LCM_DIR}/utils/Tensor.cc
+    ${LCM_DIR}/utils/Topology.cc
   )
 
   SET(HEADERS ${HEADERS}
     ${LCM_DIR}/utils/Geometry.h
     ${LCM_DIR}/utils/Partition.h
-    ${LCM_DIR}/utils/Tensor.h 
+    ${LCM_DIR}/utils/Tensor.h
+    ${LCM_DIR}/utils/Topology.h 
   )
 
 IF(ALBANY_LAME)
@@ -360,9 +368,11 @@ SET(SOURCES ${SOURCES}
        evaluators/QCAD_PoissonResid.cpp
        evaluators/QCAD_PoissonSource.cpp
        evaluators/QCAD_PoissonDirichlet.cpp
+       evaluators/QCAD_ResponseFieldIntegral.cpp
+       evaluators/QCAD_ResponseFieldValue.cpp
+       evaluators/QCAD_ResponseSaveField.cpp
        problems/QCAD_PoissonProblem.cpp
        problems/QCAD_MaterialDatabase.cpp
-       responses/QCAD_ElementBlockIntegralResponseFunction.cpp
   )
 
 SET(HEADERS ${HEADERS}
@@ -374,8 +384,13 @@ SET(HEADERS ${HEADERS}
        evaluators/QCAD_PoissonSource_Def.hpp
        evaluators/QCAD_PoissonDirichlet.hpp
        evaluators/QCAD_PoissonDirichlet_Def.hpp
+       evaluators/QCAD_ResponseFieldIntegral.hpp
+       evaluators/QCAD_ResponseFieldIntegral_Def.hpp
+       evaluators/QCAD_ResponseFieldValue.hpp
+       evaluators/QCAD_ResponseFieldValue_Def.hpp
+       evaluators/QCAD_ResponseSaveField.hpp
+       evaluators/QCAD_ResponseSaveField_Def.hpp
        problems/QCAD_PoissonProblem.hpp
-       responses/QCAD_ElementBlockIntegralResponseFunction.hpp
   )
 
 
@@ -501,6 +516,7 @@ add_executable(AlbanyAnalysis Main_Analysis.cpp)
 # Tests
 add_executable(PartitionTest LCM/test/utils/PartitionTest.cc)
 add_executable(UtilsTest LCM/test/utils/UtilsTest.cc)
+add_executable(NodeUpdate LCM/test/utils/NodeUpdate.cc)
 
 target_link_libraries(Albany          albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
 target_link_libraries(AlbanySG        albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
@@ -521,4 +537,5 @@ target_link_libraries(AlbanyAnalysis  albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT
 
 #Linking tests
 target_link_libraries(PartitionTest albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
-target_link_libraries(UtilsTest albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
+target_link_libraries(UtilsTest albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
+target_link_libraries(NodeUpdate albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 

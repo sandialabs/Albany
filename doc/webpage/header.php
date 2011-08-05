@@ -3,6 +3,6 @@
   setPackageSubtitle('');
   setPackageDirName('Albany');
   setPackageTDirName('epetraext');
-  setIncludeRelease10Docs(true); 
-  setIncludeDevelopmentDocs(true);
+// setIncludeRelease10Docs(true); 
+// setIncludeDevelopmentDocs(true);
 ?>

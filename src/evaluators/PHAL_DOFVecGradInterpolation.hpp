@@ -23,13 +23,13 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
+namespace PHAL {
 /** \brief Finite Element Interpolation Evaluator
 
     This evaluator interpolates nodal DOFVec values to their
     gradients at quad points.
 
 */
-namespace PHAL {
 
 template<typename EvalT, typename Traits>
 class DOFVecGradInterpolation : public PHX::EvaluatorWithBaseImpl<Traits>,

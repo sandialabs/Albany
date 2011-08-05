@@ -47,6 +47,8 @@ Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
     metaData->FEM_initialize(numDim_);
   }
 
+  interleavedOrdering = params->get("Interleaved Ordering",true);
+
   bulkData = NULL;
 }
 
@@ -61,7 +63,6 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
        "LogicError: metaData->FEM_initialize(numDim) not yet called" << std::endl);
 
   neq = neq_;
-  nstates = 4;
 
   if (bulkData ==  NULL)
   bulkData = new stk::mesh::BulkData(stk::mesh::fem::FEMMetaData::get_meta_data(*metaData),
@@ -71,18 +72,15 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
   coordinates_field = & metaData->declare_field< VectorFieldType >( "coordinates" );
   solution_field = & metaData->declare_field< VectorFieldType >( "solution" );
   residual_field = & metaData->declare_field< VectorFieldType >( "residual" );
-  state_field = & metaData->declare_field< VectorFieldType >( "state" );
 
   stk::mesh::put_field( *coordinates_field , metaData->node_rank() , metaData->universal_part(), numDim );
   stk::mesh::put_field( *solution_field , metaData->node_rank() , metaData->universal_part(), neq );
   stk::mesh::put_field( *residual_field , metaData->node_rank() , metaData->universal_part() , neq );
-  if (nstates>0) stk::mesh::put_field( *state_field , metaData->element_rank() , metaData->universal_part(), nstates );
   
 #ifdef ALBANY_SEACAS
   stk::io::set_field_role(*coordinates_field, Ioss::Field::MESH);
   stk::io::set_field_role(*solution_field, Ioss::Field::TRANSIENT);
   stk::io::set_field_role(*residual_field, Ioss::Field::TRANSIENT);
-  if (nstates>0) stk::io::set_field_role(*state_field, Ioss::Field::TRANSIENT);
 #endif
 
   // Code to parse the vector of StateStructs and create STK fields
@@ -185,6 +183,7 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
     "The discretization method, parsed in the Discretization Factory");
   validPL->set<int>("Cubature Degree", 3, "Integration order sent to Intrepid");
   validPL->set<int>("Workset Size", 50, "Upper bound on workset (bucket) size");
+  validPL->set<bool>("Interleaved Ordering", true, "Flag for interleaved or blocked unknown ordering");
 
   return validPL;
 }

@@ -23,12 +23,12 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
+namespace PHAL {
 /** \brief Finite Element Interpolation Evaluator
 
     This evaluator interpolates nodal DOF values to quad points.
 
 */
-namespace PHAL {
 
 template<typename EvalT, typename Traits>
 class NSThermalEqResid : public PHX::EvaluatorWithBaseImpl<Traits>,
@@ -60,11 +60,14 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> TauT;
   PHX::MDField<ScalarT,Cell,QuadPoint> rho;  
   PHX::MDField<ScalarT,Cell,QuadPoint> Cp;
+  PHX::MDField<ScalarT,Cell,QuadPoint> phi;
+  PHX::MDField<ScalarT,Cell,QuadPoint> Fission;
+  PHX::MDField<ScalarT,Cell,QuadPoint> PropConst;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> TResidual;
 
-  bool haveSource, haveFlow, haveSUPG; 
+  bool haveSource, haveFlow, haveSUPG, haveNeut; 
   bool enableTransient;
   unsigned int numQPs, numDims, numNodes;
   Intrepid::FieldContainer<ScalarT> flux;

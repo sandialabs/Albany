@@ -19,7 +19,7 @@
 #include "Albany_Utils.hpp"
 #include "Albany_SolverFactory.hpp"
 #include "Thyra_EpetraModelEvaluator.hpp"
-#include "Piro_Thyra_PerformAnalysis.hpp"
+#include "Piro_PerformAnalysis.hpp"
 #include "Thyra_VectorBase.hpp"
 #include "Teuchos_GlobalMPISession.hpp"
 #include "Teuchos_TimeMonitor.hpp"
@@ -54,9 +54,9 @@ int main(int argc, char *argv[]) {
     Thyra::EpetraModelEvaluator appThyra;
     appThyra.initialize(App, Teuchos::null);
 
-    Teuchos::RCP< ::Thyra::VectorBase<double> > p;
+    Teuchos::RCP< Thyra::VectorBase<double> > p;
 
-    status = Piro::Thyra::PerformAnalysis(appThyra, slvrfctry->getAnalysisParameters(), p); 
+    status = Piro::PerformAnalysis(appThyra, slvrfctry->getAnalysisParameters(), p); 
 
 //    Dakota::RealVector finalValues = dakota.getFinalSolution().continuous_variables();
 //    cout << "\nAlbany_Dakota: Final Values from Dakota = " 

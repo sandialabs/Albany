@@ -40,7 +40,6 @@ namespace Albany {
  * creates the memory for a vector of worksets of these states, which
  * are stored as MDFields.
 */
-typedef std::map<std::string, Teuchos::RCP<Intrepid::FieldContainer<RealType> > >  StateVariables;
 
 class StateManager {
 public:
@@ -50,8 +49,15 @@ public:
 
   typedef std::map<std::string, Teuchos::RCP<PHX::DataLayout> >  RegisteredStates;
 
-  //! Method to call multiple timed (before allocate) to register which states will be saved.
-  //! Now returns param vector with all info to build a SaveStateField or LoadStateField evaluator
+  //! Method to call multiple times (before allocate) to register which states will be saved.
+  void registerStateVariable(const std::string &stateName, 
+			     const Teuchos::RCP<PHX::DataLayout> &dl,
+			     const std::string &init_type="zero",
+			     const bool registerOldState=false,
+			     const bool outputToExodus=true);
+
+  //! Method to call multiple times (before allocate) to register which states will be saved.
+  //! Returns param vector with all info to build a SaveStateField or LoadStateField evaluator
   Teuchos::RCP<Teuchos::ParameterList>
   registerStateVariable(const std::string &name, const Teuchos::RCP<PHX::DataLayout> &dl, 
                                             const Teuchos::RCP<PHX::DataLayout> &dummy,
@@ -69,45 +75,16 @@ public:
 			const std::string &fieldName);
 
 
-  //! Function to allocate storage, called once after registering and before get calls
-  void allocateStateVariables(const int numWorksets=1);
 
-  //! Method to initialize state variables, called once after allocating and before get calls
-  void initializeStateVariables(const int numWorksets=1);
 
   //! Method to re-initialize state variables, which can be called multiple times after allocating
   void importStateData(Albany::StateArrays& statesToCopyFrom);
-
-  //! Method to get the saved "old" state as a const
-  Teuchos::RCP<const StateVariables> getOldStateVariables(const int workset=0) const;
-
-  //! Method to get the "new" state so that it can be overwritten
-  Teuchos::RCP<StateVariables> getNewStateVariables(const int workset=0);
-
-  //! Method to get thesaved "old" state as a vector over worksets
-  Teuchos::RCP<std::vector<StateVariables> > getAllOldStateVariables();
-
-  //! Method to get the "new" state as a vector over worksets
-  Teuchos::RCP<std::vector<StateVariables> > getAllNewStateVariables();
-
-  //! Method to get the "new" state so that it can be overwritten
-  const std::vector<std::vector<double> > getElementAveragedStates();
-
-  //Unused after update to NEW way - Andy: remove this at will
-  //! Method to set the "new" and "old" state using an Epetra vector
-  //void saveVectorAsState(const std::string& stateName, const Epetra_Vector& vec);
 
   //! Method to get the Names of the state variables
   RegisteredStates& getRegisteredStates(){return statesToStore;};
 
   //! Method to make the current newState the oldState, and vice versa
   void updateStates();
-
-  //! Method to test whether a state is present (and allocated)
-  bool containsState(const std::string& stateName) { return state1[0].find(stateName) != state1[0].end(); }
-
-  //! Method to set discretization object
-  void setDiscretization(const Teuchos::RCP<Albany::AbstractDiscretization>& discObj) { disc = discObj; }
 
   //! Method to get a StateInfoStruct of info needed by STK to output States as Fields
   Teuchos::RCP<Albany::StateInfoStruct> getStateInfoStruct();
@@ -123,12 +100,6 @@ public:
   Teuchos::RCP<Albany::EigendataStruct> getEigenData();
   void setEigenData(const Teuchos::RCP<Albany::EigendataStruct>& eigdata);
 
-  //! Method to integrate a scalar-valued state over an element block 
-  //  (zero-length ebName integrates over entire mesh)
-  RealType integrateStateVariable(const std::string& stateName, const std::string& ebName,
-				  const std::string& weightName);
-
-
 private:
   //! Private to prohibit copying
   StateManager(const StateManager&);
@@ -138,24 +109,11 @@ private:
 
 private:
 
-  typedef std::map<std::string, std::string >  InitializationType;
-
-  //! boolean that takes care of swapping new and old state
-  bool state1_is_old_state;
-
   //! boolean to enforce that allocate gets called once, and after registration and befor gets
   bool stateVarsAreAllocated;
 
-  //! Fully allocated memory for states, as a vector over worksets
-  //! One of these is oldState, one is newState, depending on value of bool state1_is_old_state
-  std::vector<StateVariables> state1;
-  std::vector<StateVariables> state2;
-
   //! Container to hold the states that have been registered, to be allocated later
   RegisteredStates statesToStore;
-
-  //! Container to hold the initilization type for each state
-  InitializationType stateInit;
 
   //! Discretization object which allows StateManager to perform input/output with exodus and Epetra vectors
   Teuchos::RCP<Albany::AbstractDiscretization> disc;

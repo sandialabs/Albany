@@ -29,11 +29,11 @@
 #include "Stokhos_KL_ExponentialRandomField.hpp"
 #include "Teuchos_Array.hpp"
 
+namespace PHAL {
 /** 
  * \brief Evaluates thermal conductivity, either as a constant or a truncated
  * KL expansion.
  */
-namespace PHAL {
 
 template<typename EvalT, typename Traits>
 class ThermalConductivity : 

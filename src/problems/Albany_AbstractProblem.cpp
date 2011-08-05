@@ -57,6 +57,10 @@ Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
 Albany::AbstractProblem::getDirichletFieldManager()
 { return dfm; }
 
+Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
+Albany::AbstractProblem::getResponseFieldManager()
+{ return rfm; }
+
 Teuchos::RCP<Teuchos::ParameterList>
 Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
 {
@@ -134,7 +138,7 @@ Albany::AbstractProblem::constructDirichletEvaluators(
          p->set< string >  ("Dirichlet Name", ss);
          p->set< RealType >("Dirichlet Value", DBCparams.get<double>(ss));
          p->set< string >  ("Node Set ID", nodeSetIDs[i]);
-         p->set< int >     ("Number of Equations", dofNames.size());
+        // p->set< int >     ("Number of Equations", dofNames.size());
 	 p->set< int >     ("Equation Offset", j);
 
          p->set<RCP<ParamLib> >("Parameter Library", paramLib);
@@ -193,7 +197,7 @@ Albany::AbstractProblem::constructDirichletEvaluators(
 	 p->set< string >  ("Dirichlet Name", ss);
          p->set< RealType >("Dirichlet Value", 0.0);
 	 p->set< string >  ("Node Set ID", nodeSetIDs[i]);
-         p->set< int >     ("Number of Equations", dofNames.size());
+         //p->set< int >     ("Number of Equations", dofNames.size());
 	 p->set< int >     ("Equation Offset", 0);
 	 
 	 p->set<RCP<ParamLib> >("Parameter Library", paramLib);

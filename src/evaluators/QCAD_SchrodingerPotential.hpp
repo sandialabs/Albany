@@ -29,11 +29,10 @@
 #include "Stokhos_KL_ExponentialRandomField.hpp"
 #include "Teuchos_Array.hpp"
 
+namespace QCAD {
 /** 
  * \brief Evaluates Poisson Source Term 
  */
-namespace QCAD 
-{
 	template<typename EvalT, typename Traits>
 	class SchrodingerPotential : 
   public PHX::EvaluatorWithBaseImpl<Traits>,

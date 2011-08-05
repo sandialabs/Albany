@@ -30,11 +30,10 @@
 #include "Teuchos_Array.hpp"
 
 
-
+namespace PHAL {
 /** \brief SharedParameter
 
 */
-namespace PHAL {
 
 template<typename EvalT, typename Traits> 
 class SharedParameter : public PHX::EvaluatorWithBaseImpl<Traits>,

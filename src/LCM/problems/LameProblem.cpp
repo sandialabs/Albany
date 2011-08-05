@@ -388,7 +388,7 @@ Albany::LameProblem::constructEvaluators(
                                        qp_scalar,
                                        dummy,
                                        FactoryTraits<AlbanyTraits>::id_savestatefield,
-                                       doubleToInitString(lameMaterialModelStateVariableInitialValues[i], true));
+                                       doubleToInitString(lameMaterialModelStateVariableInitialValues[i]),true);
     }
   }
 
