@@ -2,18 +2,29 @@ List of tasks relevant to the LCM project
 
 * Usability issues
 ** Boundary Conditions
-*** TODO Prescribed load stepping
-*** TODO Tractions (Neumann BCs)
-*** TODO Torsion
+*** TODO (FY11) Prescribed load stepping
+*** TODO (FY12) Tractions (Neumann BCs)
+*** TODO (FY12) Torsion
 ** Output
-*** TODO General projectin of QP data to Nodes
-*** TODO Output tensor components
+*** TODO (FY11) General projectin of QP data to Nodes
+*** TODO (FY11) Output tensor components
 ** General
-*** TODO Multiple Materials/Element Blocks
-*** TODO Spatially dependent material parameters
+*** TODO (FY12) Multiple Materials/Element Blocks
+*** TODO (FY12) Spatially dependent material parameters
+*** TODO (FY12) Introdction of time in all problems (some material models need it, could be used for BCs)
 * Mechanics issues
-** TODO Create EnergyPotentialProblem
-** TODO Create ThermoMechanicalProblem
-** TODO Create HydrogenTransportProblem
-* General issues
-** TODO Figure out how to fit adaptivity into the agile components methodology
+** TODO (FY11) Create EnergyPotentialProblem
+** TODO (FY11) Create ThermoMechanicalProblem
+** TODO (FY12) Create HydrogenTransportProblem
+** TODO (FY11) Create GradientPlasticityProblem
+** TODO (FY12) Localization Elements
+** TODO (FY11-12) Verification of transient dynamics
+* General Technical issues
+** TODO (FY??) Figure out how to fit adaptivity into the agile components methodology
+** TODO (FY??) Contact?
+* Documentation issues
+** TODO (FY11) Populate Webpage
+** TODO (FY11) Doxygenize code
+* Collaboration issues
+** TODO (FY12) Determine criterion for developing external collaborations
+** TODO (FY12) Work out a distribution mechanism for external collaborators
