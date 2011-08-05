@@ -19,6 +19,7 @@ List of tasks relevant to the LCM project
 ** TODO (FY11) Create GradientPlasticityProblem
 ** TODO (FY12) Localization Elements
 ** TODO (FY11-12) Verification of transient dynamics
+** TODO (FY12) Polyhedral elements (Joe Bishop)
 * General Technical issues
 ** TODO (FY??) Figure out how to fit adaptivity into the agile components methodology
 ** TODO (FY??) Contact?
