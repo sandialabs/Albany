@@ -27,6 +27,61 @@
 #include "Stokhos.hpp"
 #include "Stokhos_Epetra.hpp"
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+// begin jrr
+//
+// Global function to encapsulate KL solution computation...
+//
+
+bool Stokhos::KL_OnSolutionMultiVector( const Teuchos::RCP<ENAT::SGNOXSolver>& App_sg, 
+					const Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly>& sg_u,
+					const Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> >& basis,
+					const int NumKL,
+					Teuchos::Array<double>& evals,
+					Teuchos::RCP<Epetra_MultiVector>& evecs)
+{
+
+  Teuchos::RCP<EpetraExt::BlockVector> X;
+  X = Teuchos::rcp(new EpetraExt::BlockVector(finalSolution->Map(),
+						    *(App_sg->get_x_map())));
+  sg_u->assignToBlockVector(*X);
+
+  Teuchos::RCP<EpetraExt::BlockVector> X_ov = 
+    App_sg->import_solution(*X);
+  Teuchos::RCP<const EpetraExt::BlockVector> cX_ov = X_ov;
+
+  // pceKL is object with member functions that explicitly call anasazi
+  Stokhos::PCEAnasaziKL pceKL(cX_ov, *basis, NumKL);
+
+  // Set parameters for anasazi
+  Teuchos::ParameterList anasazi_params = pceKL.getDefaultParams();
+  //anasazi_params.set("Num Blocks", 10);
+  //anasazi_params.set("Step Size", 50);
+  anasazi_params.set("Verbosity",  
+		     Anasazi::FinalSummary + 
+		     //Anasazi::StatusTestDetails + 
+		     //Anasazi::IterationDetails + 
+		     Anasazi::Errors + 
+		     Anasazi::Warnings);
+
+  // Self explanatory
+  bool result = pceKL.computeKL(anasazi_params);
+  if (!result)
+    {
+      utils.out() << "KL Eigensolver did not converge!" << std::endl;
+      return result;
+    }
+
+  // Retrieve evals/evectors into return argument slots...
+  evals = pceKL.getEigenvalues();
+  evecs = pceKL.getEigenvectors();
+
+  return result;
+}
+
+// end jrr
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 int main(int argc, char *argv[]) {
 
   int status=0; // 0 = pass, failures are incremented
@@ -148,6 +203,11 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> g_sg =
       App_sg->get_sg_model()->create_g_sg(0);
 
+    // begin jrr
+    Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_u = 
+      App_sg->get_sg_model()->create_x_sg();
+    // end jrr
+
     EpetraExt::ModelEvaluator::InArgs params_in_sg = App_sg->createInArgs();
     EpetraExt::ModelEvaluator::OutArgs responses_out_sg = 
       App_sg->createOutArgs();
@@ -155,6 +215,11 @@ int main(int argc, char *argv[]) {
     // Evaluate sg model
     params_in_sg.set_p_sg(sg_p_index,p_sg);
     responses_out_sg.set_g_sg(0,g_sg);
+
+    // begin jrr
+    responses_out_sg.set_g_sg(1, u_sg);
+    // end jrr
+
     App_sg->evalModel(params_in_sg, responses_out_sg);
 
      // *out << "Finished eval of sg model: Params, Responses " 
@@ -180,7 +245,29 @@ int main(int argc, char *argv[]) {
     *out << setprecision(16) << mean << std::endl;
     *out << "Standard Deviation = " << std::endl;
     *out << setprecision(16) << std_dev << std::endl;
+
+    // begin jrr
+    // Finish setup for, then call KL solver...
+    int NumKL = 5; // Still to do: figure out a way for user to input this
+    Teuchos::Array<double> evals;
+    Teuchos::RCP<Epetra_MultiVector> evecs;
+
+    bool KL_success = Stokhos::KL_OnSolutionMultiVector(App_sg, 
+							sg_u,
+							basis,
+							NumKL,
+							evals,
+							evecs);
+
+    if (!KL_success) 
+      utils.out() << "KL Eigensolver did not converge!" << std::endl;
     
+    *out << "Eigenvalues = " << std::endl;
+    for (int i=0; i< NumKL; i++)
+      *out << evals[i] << std::endl;
+
+    // for now, we'll look at the numbers in a debugger... :)
+    // end jrr
   }
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);
   if (!success) status+=10000;
