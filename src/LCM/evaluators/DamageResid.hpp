@@ -23,12 +23,12 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
+namespace LCM {
 /** \brief Damage Equation Evaluator
 
     This evaluator computes the residual for the damage equation.
 
 */
-namespace LCM {
 
 template<typename EvalT, typename Traits>
 class DamageResid : public PHX::EvaluatorWithBaseImpl<Traits>,

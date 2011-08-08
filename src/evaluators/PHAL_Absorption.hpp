@@ -29,10 +29,10 @@
 #include "Stokhos_KL_ExponentialRandomField.hpp"
 #include "Teuchos_Array.hpp"
 
+namespace PHAL {
 /** 
  * \brief Evaluates absorption - only as a constant for now
  */
-namespace PHAL {
 
 template<typename EvalT, typename Traits>
 class Absorption : 

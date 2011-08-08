@@ -26,10 +26,10 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Epetra_Vector.h"
 
+namespace PHAL {
 /** \brief SaveStateField
 
 */
-namespace PHAL {
 
 template<typename EvalT, typename Traits> 
 class SaveStateField : public PHX::EvaluatorWithBaseImpl<Traits>,

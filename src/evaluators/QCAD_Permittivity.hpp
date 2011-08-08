@@ -31,12 +31,11 @@
 
 #include "QCAD_MaterialDatabase.hpp"
 
+namespace QCAD {
 /** 
  * \brief Evaluates thermal conductivity, either as a constant or a truncated
  * KL expansion.
  */
-namespace QCAD 
-{
 	template<typename EvalT, typename Traits>
 	class Permittivity : 
   	public PHX::EvaluatorWithBaseImpl<Traits>,

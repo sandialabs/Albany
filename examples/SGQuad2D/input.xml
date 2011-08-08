@@ -48,10 +48,6 @@
 		value="{-0.08035, -0.007679}"/>
     <Parameter  name="Number of Dakota Comparisons" type="int" value="0"/>
   </ParameterList>
-  <ParameterList name="VTK">
-    <Parameter name="Do Visualization" type="bool" value="0"/>
-    <Parameter name="Visualize Sensitivities" type="bool" value="0"/>
-  </ParameterList>
   <ParameterList name="NOX">
     <ParameterList name="Status Tests">
       <Parameter name="Test Type" type="string" value="Combo"/>

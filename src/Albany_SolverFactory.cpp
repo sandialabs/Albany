@@ -138,18 +138,14 @@ Albany::SolverFactory::createAndGetAlbanyApp(
       rcp(new Albany::ModelEvaluator(app, free_param_names, sg_param_names));
 
     // Create observer for output from time-stepper
-    RCP<Albany_VTK> vtk;
     typedef double Scalar;
     RCP<Rythmos::IntegrationObserverBase<Scalar> > Rythmos_observer;
     RCP<NOX::Epetra::Observer > NOX_observer;
-    if (appParams->sublist("VTK").get("Do Visualization", false) == true) {
-      vtk = rcp(new Albany_VTK(appParams->sublist("VTK")));
-    }
 
     if (solutionMethod=="Transient" && secondOrder=="No")
-      Rythmos_observer = rcp(new Albany_RythmosObserver(vtk, app));
+      Rythmos_observer = rcp(new Albany_RythmosObserver(app));
     else
-      NOX_observer = rcp(new Albany_NOXObserver(vtk, app));
+      NOX_observer = rcp(new Albany_NOXObserver(app));
 
     TEST_FOR_EXCEPTION(stochastic && solutionMethod!="Steady", std::logic_error,
          "Stochastic problems only implemented for Steady NOX solves so far\n");
@@ -373,7 +369,7 @@ Albany::SolverFactory::getValidAppParameters() const
   validPL->sublist("Discretization",     false, "Discretization sublist");
   validPL->sublist("Quadrature",         false, "Quadrature sublist");
   validPL->sublist("Regression Results", false, "Regression Results sublist");
-  validPL->sublist("VTK",                false, "VTK sublist");
+  validPL->sublist("VTK",                false, "DEPRECATED  VTK sublist");
   validPL->sublist("Rythmos",            false, "Rythmos sublist");
   validPL->sublist("Velocity Verlet",    false, "Piro Velocity Verlet sublist");
   validPL->sublist("Trapezoid Rule",     false, "Piro Trapezoid Rule sublist");

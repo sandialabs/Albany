@@ -39,19 +39,35 @@ ResponseFieldIntegral(Teuchos::ParameterList& p) :
   ebName = plist->get<std::string>("Element Block Name");
   fieldName = plist->get<std::string>("Field Name");
 
+  // passed down from main list
+  length_unit_in_m = p.get<double>("Length unit in m");
+
   //! number of quad points per cell
   Teuchos::RCP<PHX::DataLayout> scalar_dl =
     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
   numQPs = scalar_dl->dimension(1);
+  
+  //! obtain number of dimensions
+  Teuchos::RCP<PHX::DataLayout> vector_dl =
+      p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
+  std::vector<PHX::DataLayout::size_type> dims;
+  vector_dl->dimensions(dims);
+  numDims = dims[2];
 
   //! add dependent fields
   PHX::MDField<ScalarT,Cell,QuadPoint> f(fieldName, scalar_dl); 
   field = f;
   this->addDependentField(field);
+  this->addDependentField(weights);
   
   //! set initial values
   std::vector<double> initVals(1); initVals[0] = 0.0;
   PHAL::ResponseBase<EvalT, Traits>::setInitialValues(initVals);
+
+  //! set post processing parameters (used to reconcile values across multiple processors)
+  Teuchos::ParameterList ppParams;
+  ppParams.set("Processing Type","Sum");
+  PHAL::ResponseBase<EvalT, Traits>::setPostProcessingParams(ppParams);
 }
 
 // **********************************************************************
@@ -71,11 +87,28 @@ evaluateFields(typename Traits::EvalData workset)
 {
   PHAL::ResponseBase<EvalT, Traits>::beginEvaluateFields(workset);
 
-  ScalarT val;
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
-      val = field(cell,qp) * weights(cell,qp);
-      PHAL::ResponseBase<EvalT, Traits>::local_g[0] += val;
+  // Scaling factors
+  double X0 = length_unit_in_m/1e-2; // length scaling to get to [cm]
+  double scaling = 0.0; 
+  
+  if (numDims == 1)
+    scaling = X0; 
+  else if (numDims == 2)
+    scaling = X0*X0; 
+  else if (numDims == 3)
+    scaling = X0*X0*X0; 
+  else      
+    TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+			  << "Error! Invalid number of dimensions: " << numDims << std::endl);
+    
+  if( ebName.length() == 0 || ebName == workset.EBName ) {
+    
+    ScalarT val;
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+        val = field(cell,qp) * weights(cell,qp) * scaling;
+        PHAL::ResponseBase<EvalT, Traits>::local_g[0] += val;
+      }
     }
   }
 

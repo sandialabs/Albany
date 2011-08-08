@@ -33,41 +33,49 @@
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="8" />
       <Parameter name="Response 0" type="string" value="Solution Average" />
+      
       <Parameter name="Response 1" type="string" value="See List" />
       <ParameterList name="ResponseParams 1">
-	<Parameter name="Type" type="string" value="Save Field" />
-	<Parameter name="Field Name" type="string" value="Charge Density" />
+        <Parameter name="Type" type="string" value="Save Field" />
+        <Parameter name="Field Name" type="string" value="Charge Density" />
       </ParameterList>
+      
       <Parameter name="Response 2" type="string" value="See List" />
       <ParameterList name="ResponseParams 2">
-	<Parameter name="Type" type="string" value="Save Field" />
-	<Parameter name="Field Name" type="string" value="Electron Density" />
+        <Parameter name="Type" type="string" value="Save Field" />
+        <Parameter name="Field Name" type="string" value="Electron Density" />
       </ParameterList>
+      
       <Parameter name="Response 3" type="string" value="See List" />
       <ParameterList name="ResponseParams 3">
-	<Parameter name="Type" type="string" value="Save Field" />
-	<Parameter name="Field Name" type="string" value="Hole Density" />
+        <Parameter name="Type" type="string" value="Save Field" />
+        <Parameter name="Field Name" type="string" value="Hole Density" />
       </ParameterList>
+      
       <Parameter name="Response 4" type="string" value="See List" />
       <ParameterList name="ResponseParams 4">
-	<Parameter name="Type" type="string" value="Save Field" />
-	<Parameter name="Field Name" type="string" value="Electric Potential" />
+        <Parameter name="Type" type="string" value="Save Field" />
+        <Parameter name="Field Name" type="string" value="Electric Potential" />
       </ParameterList>
+      
       <Parameter name="Response 5" type="string" value="See List" />
       <ParameterList name="ResponseParams 5">
-	<Parameter name="Type" type="string" value="Save Field" />
-	<Parameter name="Field Name" type="string" value="Ionized Dopant" />
+        <Parameter name="Type" type="string" value="Save Field" />
+        <Parameter name="Field Name" type="string" value="Ionized Dopant" />
       </ParameterList>
+      
       <Parameter name="Response 6" type="string" value="See List" />
       <ParameterList name="ResponseParams 6">
-	<Parameter name="Type" type="string" value="Save Field" />
-	<Parameter name="Field Name" type="string" value="Conduction Band" />
+        <Parameter name="Type" type="string" value="Save Field" />
+        <Parameter name="Field Name" type="string" value="Conduction Band" />
       </ParameterList>
+      
       <Parameter name="Response 7" type="string" value="See List" />
       <ParameterList name="ResponseParams 7">
-	<Parameter name="Type" type="string" value="Save Field" />
-	<Parameter name="Field Name" type="string" value="Valence Band" />
+        <Parameter name="Type" type="string" value="Save Field" />
+        <Parameter name="Field Name" type="string" value="Valence Band" />
       </ParameterList>
+      
     </ParameterList>
   </ParameterList>
 
@@ -86,13 +94,6 @@
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="0" />
     <Parameter name="Sensitivity Test Values 0" type="Array(double)"
      	       value="{0.5020290462,0.305420122391,0.18622906173,0.00205538677619}" />
-  </ParameterList>
-
-
-  <ParameterList name="VTK">
-    <Parameter name="Visualize Sensitivities" type="bool" value="0" />
-    <Parameter name="Stagger Windows" type="bool" value="1" />
-    <Parameter name="Do Visualization" type="bool" value="0" />
   </ParameterList>
 
 

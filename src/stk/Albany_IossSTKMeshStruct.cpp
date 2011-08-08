@@ -110,7 +110,8 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   int worksetSize = this->computeWorksetSize(worksetSizeMax, ebSizeMax);
 
   // Construct MeshSpecsStruct
-  this->meshSpecs = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub, nsNames, worksetSize));
+  this->meshSpecs = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
+                             nsNames, worksetSize, this->interleavedOrdering));
 }
 
 void

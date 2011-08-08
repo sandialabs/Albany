@@ -1,0 +1,36 @@
+#
+#  Sample CMake script for Trilinos to build the SEACAS tools.
+#  These are tools for exodus meshes, particularly partitioning.
+#  They are currently only built for serial (non-mpi) builds so are
+#  not created with the same script as the general Trilinos build.
+#
+#  1. Download Trilinos, make a build directort, e.g.  Trilinos/seacas-build
+#  2. Put this file in that subdirectory of Trilinos
+#  3. Modify the NETCDF path below to point to your installed netcdf
+#  4. Execute this script;  make -j 4; make install
+#  5. Several executables (decomp, nem_slice, epu, ..) should now be
+#     in  $PWD/install/bin  and can be copied to a  bin  dir of your choice.
+#
+#   PreProcess:   decomp -p 4 file.exo
+#   PostProcess:  epu -auto file-out.exo.4.0
+
+NETCDF=/home/agsalin/install/netcdf
+PREFIX=$PWD/install
+
+rm CMakeCache.txt
+
+cmake -D CMAKE_INSTALL_PREFIX:PATH=$PREFIX \
+      -D TPL_ENABLE_MPI:BOOL=OFF \
+\
+      -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
+      -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
+      -D Trilinos_ENABLE_TESTS:BOOL=OFF \
+      -D Trilinos_ENABLE_EXAMPLES:BOOL=OFF \
+\
+      -D Trilinos_ENABLE_SEACAS:BOOL=ON \
+      -D SEACAS_ENABLE_APPLICATIONS:BOOL=ON \
+\
+      -D TPL_ENABLE_Netcdf:BOOL=ON \
+      -D TPL_Netcdf_INCLUDE_DIRS:PATH=$NETCDF/include \
+      -D Netcdf_LIBRARY_DIRS:PATH=$NETCDF/lib \
+       ../

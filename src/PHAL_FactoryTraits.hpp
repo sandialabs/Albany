@@ -62,18 +62,22 @@
 #include "PHAL_NSBodyForce.hpp"
 #include "PHAL_NSPermeabilityTerm.hpp"
 #include "PHAL_NSForchheimerTerm.hpp"
+#include "PHAL_NSNeutronEqResid.hpp"
 
 #include "boost/mpl/vector/vector50.hpp"
 #include "boost/mpl/placeholders.hpp"
-using namespace boost::mpl::placeholders;
 
+// \cond  Have doxygern ignore this namespace 
+using namespace boost::mpl::placeholders;
+// \endcond
+
+namespace PHAL {
 /*! \brief Struct to define Evaluator objects for the EvaluatorFactory.
     
     Preconditions:
     - You must provide a boost::mpl::vector named EvaluatorTypes that contain all Evaluator objects that you wish the factory to build.  Do not confuse evaluator types (concrete instances of evaluator objects) with evaluation types (types of evaluations to perform, i.e., Residual, Jacobian). 
 
 */
-namespace PHAL {
 
 template<typename Traits>
 struct FactoryTraits {
@@ -122,8 +126,9 @@ struct FactoryTraits {
   static const int id_qcad_response_savefield   = 41;
   static const int id_nspermeabilityterm        = 42;
   static const int id_nsforchheimerterm         = 43;
+  static const int id_nsneutroneqresid          = 44;
 
-  typedef boost::mpl::vector44< 
+  typedef boost::mpl::vector45< 
             PHAL::Dirichlet<_,Traits>,                //  0
             PHAL::GatherSolution<_,Traits>,           //  1
             PHAL::GatherCoordinateVector<_,Traits>,   //  2
@@ -168,6 +173,7 @@ struct FactoryTraits {
             QCAD::ResponseSaveField<_,Traits>,        // 41
             PHAL::NSPermeabilityTerm<_,Traits>,       // 42
             PHAL::NSForchheimerTerm<_,Traits>         // 43
+            PHAL::NSNeutronEqResid<_,Traits>,         // 44
   > EvaluatorTypes;
   
 };

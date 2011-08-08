@@ -158,7 +158,6 @@ Albany::ThermoElasticityProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("Data Layout", node_vector);
 
     p->set<int>("Offset of First DOF", X_offset);
-    p->set<int>("Number of DOF per Node", neq);
 
     // Can;t do mixture of dot and dotdot: disabling elasticity time dependence
     p->set<bool>("Disable Transient", true);
@@ -176,7 +175,6 @@ Albany::ThermoElasticityProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("Data Layout", node_scalar);
 
     p->set<int>("Offset of First DOF", T_offset);
-    p->set<int>("Number of DOF per Node", neq);
 
     RCP< vector<string> > dof_names_dot = rcp(new vector<string>(1));
       (*dof_names_dot)[0] = "Temperature_dot";
@@ -426,7 +424,6 @@ Albany::ThermoElasticityProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("Data Layout", node_vector);
 
     p->set<int>("Offset of First DOF", X_offset);
-    p->set<int>("Number of DOF per Node", neq);
 
     evaluators_to_build["Scatter Displacement Residual"] = p;
   }
@@ -571,7 +568,6 @@ Albany::ThermoElasticityProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("Data Layout", node_scalar);
 
     p->set<int>("Offset of First DOF", T_offset);
-    p->set<int>("Number of DOF per Node", neq);
 
     // Give this Scatter evaluator a different evaluatedField then the default
     p->set<string>("Scatter Field Name", fieldName);

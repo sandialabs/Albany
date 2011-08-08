@@ -31,11 +31,10 @@
 
 #include "QCAD_MaterialDatabase.hpp"
 
+namespace QCAD {
 /** 
  * \brief Evaluates Poisson Source Term 
  */
-namespace QCAD 
-{
   template<typename EvalT, typename Traits>
   class PoissonSource : 
   public PHX::EvaluatorWithBaseImpl<Traits>,

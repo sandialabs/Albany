@@ -72,7 +72,9 @@ namespace Albany {
 
     bool haveFlow;     //! have flow equations (momentum+continuity)
     bool haveHeat;     //! have heat equation (temperature)
+    bool haveNeut;     //! have neutron flux equation
     bool haveSource;   //! have source term in heat equation
+    bool haveNeutSource;   //! have source term in neutron flux equation
     bool havePSPG;     //! have pressure stabilization
     bool haveSUPG;     //! have SUPG stabilization
     bool porousMedia;  //! flow through porous media problem

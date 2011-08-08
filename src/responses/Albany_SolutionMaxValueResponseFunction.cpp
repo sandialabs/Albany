@@ -19,8 +19,8 @@
 #include "Epetra_Comm.h"
 
 Albany::SolutionMaxValueResponseFunction::
-SolutionMaxValueResponseFunction(int neq_, int eq_) :
-  neq(neq_), eq(eq_)
+SolutionMaxValueResponseFunction(int neq_, int eq_, bool interleavedOrdering_) :
+  neq(neq_), eq(eq_), interleavedOrdering(interleavedOrdering_)
 {
 }
 
@@ -141,21 +141,23 @@ Albany::SolutionMaxValueResponseFunction::
 computeMaxValue(const Epetra_Vector& x, double& global_max, int& global_index)
 {
   double my_max = -Epetra_MaxDouble;
-  int my_index = -1;
+  int my_index = -1, index;
   
   // Loop over nodes to find max value for equation eq
   int num_my_nodes = x.MyLength() / neq;
   for (int node=0; node<num_my_nodes; node++) {
-    int index = node*neq+eq;
+    if (interleavedOrdering)  index = node*neq+eq;
+    else                      index = node + eq*num_my_nodes;
     if (x[index] > my_max) {
       my_max = x[index];
       my_index = index;
     }
   }
 
-  // Check remainder
+  // Check remainder (AGS: NOT SURE HOW THIS CODE GETS CALLED?)
   if (num_my_nodes*neq+eq < x.MyLength()) {
-    int index = num_my_nodes*neq+eq;
+    if (interleavedOrdering)  index = num_my_nodes*neq+eq;
+    else                      index = num_my_nodes + eq*num_my_nodes;
     if (x[index] > my_max) {
       my_max = x[index];
       my_index = index;

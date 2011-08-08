@@ -20,48 +20,48 @@
 
 #include "PHAL_ResponseBase.hpp"
 
+namespace QCAD {
 /** 
  * \brief Response Description
  */
-namespace QCAD 
-{
   template<typename EvalT, typename Traits>
   class ResponseFieldValue : 
     public PHAL::ResponseBase<EvalT, Traits>
   {
-     public:
-  	  typedef typename EvalT::ScalarT ScalarT;
-  	  typedef typename EvalT::MeshScalarT MeshScalarT;
+  public:
+    typedef typename EvalT::ScalarT ScalarT;
+    typedef typename EvalT::MeshScalarT MeshScalarT;
     
-          ResponseFieldValue(Teuchos::ParameterList& p);
+    ResponseFieldValue(Teuchos::ParameterList& p);
   
-	  void postRegistrationSetup(typename Traits::SetupData d,
+    void postRegistrationSetup(typename Traits::SetupData d,
 				     PHX::FieldManager<Traits>& vm);
   
-	  void evaluateFields(typename Traits::EvalData d);
+    void evaluateFields(typename Traits::EvalData d);
 	  
-	private:
-	  Teuchos::RCP<const Teuchos::ParameterList>
-	  getValidResponseParameters() const;
+  private:
+    Teuchos::RCP<const Teuchos::ParameterList> getValidResponseParameters() const;
 
-	  std::size_t numQPs;
-	  std::size_t numDims;
-	  PHX::MDField<ScalarT> opField;
-	  PHX::MDField<ScalarT> retField;
-	  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
-	  PHX::MDField<ScalarT,Cell,QuadPoint> weights;
-          bool bOpFieldIsVector, bRetFieldIsVector;
+    std::size_t numQPs;
+    std::size_t numDims;
+    
+    PHX::MDField<ScalarT> opField;
+    PHX::MDField<ScalarT> retField;
+    PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+    PHX::MDField<ScalarT,Cell,QuadPoint> weights;
+    
+    bool bOpFieldIsVector, bRetFieldIsVector;
 
-          std::string operation;
-          std::string opFieldName;
-          std::string retFieldName;
-          std::string opDomain;
-          std::string ebName;
+    std::string operation;
+    std::string opFieldName;
+    std::string retFieldName;
+    std::string opDomain;
+    std::string ebName;
 
-          bool bReturnOpField;
-          bool opX, opY, opZ;
-          bool limitX, limitY, limitZ;
-          double xmin, xmax, ymin, ymax, zmin, zmax;
+    bool bReturnOpField;
+    bool opX, opY, opZ;
+    bool limitX, limitY, limitZ;
+    double xmin, xmax, ymin, ymax, zmin, zmax;
   };
 	
 }

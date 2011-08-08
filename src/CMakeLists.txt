@@ -25,7 +25,6 @@ SET(SOURCES
 	Albany_RythmosObserver.cpp 
 	Albany_NOXObserver.cpp 
 	Albany_StateManager.cpp 
-	Albany_VTK.cpp 
 	Albany_ModelEvaluator.cpp
 	Albany_SaveEigenData.cpp
   )
@@ -45,7 +44,6 @@ SET(HEADERS
 	Albany_StateManager.hpp 
         Albany_StateInfoStruct.hpp
         Albany_EigendataInfoStruct.hpp
-	Albany_VTK.hpp 
 	Albany_ModelEvaluator.hpp
 	Albany_SaveEigenData.hpp
         Albany_DummyParameterAccessor.hpp
@@ -146,6 +144,7 @@ SET(SOURCES ${SOURCES}
 	evaluators/PHAL_NSContinuityResid.cpp
 	evaluators/PHAL_NSMomentumResid.cpp
         evaluators/PHAL_NSThermalEqResid.cpp
+        evaluators/PHAL_NSNeutronEqResid.cpp
         evaluators/PHAL_NSRm.cpp
         evaluators/PHAL_NSContravarientMetricTensor.cpp
         evaluators/PHAL_NSTauM.cpp 
@@ -209,6 +208,8 @@ SET(HEADERS ${HEADERS}
 	evaluators/PHAL_NSMomentumResid_Def.hpp
         evaluators/PHAL_NSThermalEqResid.hpp
         evaluators/PHAL_NSThermalEqResid_Def.hpp
+        evaluators/PHAL_NSNeutronEqResid.hpp
+        evaluators/PHAL_NSNeutronEqResid_Def.hpp
         evaluators/PHAL_NSRm.hpp
         evaluators/PHAL_NSRm_Def.hpp
         evaluators/PHAL_NSContravarientMetricTensor.hpp
@@ -342,12 +343,14 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/utils/Geometry.cc
     ${LCM_DIR}/utils/Partition.cc
     ${LCM_DIR}/utils/Tensor.cc
+    ${LCM_DIR}/utils/Topology.cc
   )
 
   SET(HEADERS ${HEADERS}
     ${LCM_DIR}/utils/Geometry.h
     ${LCM_DIR}/utils/Partition.h
-    ${LCM_DIR}/utils/Tensor.h 
+    ${LCM_DIR}/utils/Tensor.h
+    ${LCM_DIR}/utils/Topology.h 
   )
 
 IF(ALBANY_LAME)
@@ -519,6 +522,7 @@ add_executable(AlbanyAnalysis Main_Analysis.cpp)
 # Tests
 add_executable(PartitionTest LCM/test/utils/PartitionTest.cc)
 add_executable(UtilsTest LCM/test/utils/UtilsTest.cc)
+add_executable(NodeUpdate LCM/test/utils/NodeUpdate.cc)
 
 target_link_libraries(Albany          albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
 target_link_libraries(AlbanySG        albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
@@ -539,4 +543,5 @@ target_link_libraries(AlbanyAnalysis  albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT
 
 #Linking tests
 target_link_libraries(PartitionTest albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
-target_link_libraries(UtilsTest albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
+target_link_libraries(UtilsTest albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
+target_link_libraries(NodeUpdate albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 

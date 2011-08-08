@@ -23,13 +23,13 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
+namespace LCM {
 /** \brief Right Cauchy-Green Deformation Tensor
 
     This evaluator computes the Right Cauhcy-Green 
     Deformation Tensor from the Deformation Gradient.
 
 */
-namespace LCM {
 
 template<typename EvalT, typename Traits>
 class RCG : public PHX::EvaluatorWithBaseImpl<Traits>,
