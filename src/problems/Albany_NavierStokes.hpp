@@ -75,6 +75,7 @@ namespace Albany {
     bool haveSource;   //! have source term in heat equation
     bool havePSPG;     //! have pressure stabilization
     bool haveSUPG;     //! have SUPG stabilization
+    bool porousMedia;  //! flow through porous media problem
     
   };
 

@@ -6,7 +6,7 @@
     <Parameter name="Name" type="string" value="NavierStokes 2D"/>
     <ParameterList name="Volumetric Expansion Coefficient">
       <Parameter name="Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="1"/> 
+      <Parameter name="Value" type="double" value="1000"/> 
     </ParameterList>
     <ParameterList name="Body Force">
       <Parameter name="Type" type="string" value="Boussinesq"/>
@@ -53,12 +53,12 @@
     </ParameterList>
     <ParameterList name="Thermal Conductivity">
       <Parameter name="Type" type="string" value="Truncated KL Expansion"/>
-      <Parameter name="Number of KL Terms" type="int" value="2"/>
-      <Parameter name="Mean" type="double" value="0.2"/>
-      <Parameter name="Standard Deviation" type="double" value="0.1"/>
+      <Parameter name="Number of KL Terms" type="int" value="4"/>
+      <Parameter name="Mean" type="double" value="1.0"/>
+      <Parameter name="Standard Deviation" type="double" value="0.5"/>
       <Parameter name="Domain Lower Bounds" type="string" value="{0.0, 0.0}"/>
       <Parameter name="Domain Upper Bounds" type="string" value="{1.0, 1.0}"/>
-      <Parameter name="Correlation Lengths" type="string" value="{1.0, 1.0}"/>
+      <Parameter name="Correlation Lengths" type="string" value="{0.1, 0.1}"/>
     </ParameterList>
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="1"/>
@@ -69,8 +69,9 @@
 		 value="Thermal Conductivity KL Random Variable 1"/>-->
     </ParameterList>
       <ParameterList name="Stochastic Galerkin">
+      <Parameter name="Save Moments" type="int" value="2"/>
       <ParameterList name="SG Parameters">
-	<Parameter name="Number" type="int" value="1"/>
+	<Parameter name="Number" type="int" value="4"/>
 	<Parameter name="Parameter 0" type="string"
 		   value="Thermal Conductivity KL Random Variable 0"/>
 	<Parameter name="Parameter 1" type="string"
@@ -96,7 +97,7 @@
 	<Parameter name="Isotropic" type="bool" value="true"/>
 	<Parameter name="Type" type="string" value="Legendre"/>
 	<!--<Parameter name="Type" type="string" value="Hermite"/>-->
-	<Parameter name="Order" type="int" value="7"/>
+	<Parameter name="Order" type="int" value="3"/>
 	<Parameter name="Cijk Drop Tolerance" type="double" value="1e-12"/>
       </ParameterList>
       <ParameterList name="Quadrature">
@@ -129,6 +130,7 @@
 	    <Parameter name="smoother: type" type="string" 
 		       value="ML symmetric Gauss-Seidel"/>
 	    <Parameter name="coarse: type" type="string" value="Amesos-KLU"/>
+	    <Parameter name="PDE equations" type="int" value="4"/>
 	  </ParameterList>
 	</ParameterList>
       </ParameterList>
@@ -229,7 +231,7 @@
                     <Parameter name="Output Frequency" type="int" value="20"/>
                   </ParameterList>
                   <Parameter name="Max Iterations" type="int" value="250"/>
-                  <Parameter name="Tolerance" type="double" value="1e-12"/>
+                  <Parameter name="Tolerance" type="double" value="1e-6"/>
                 </ParameterList>
               </ParameterList>
             </ParameterList>

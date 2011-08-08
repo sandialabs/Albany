@@ -60,6 +60,8 @@
 #include "PHAL_NSTauT.hpp"
 #include "PHAL_NSMaterialProperty.hpp"
 #include "PHAL_NSBodyForce.hpp"
+#include "PHAL_NSPermeabilityTerm.hpp"
+#include "PHAL_NSForchheimerTerm.hpp"
 
 #include "boost/mpl/vector/vector50.hpp"
 #include "boost/mpl/placeholders.hpp"
@@ -118,8 +120,10 @@ struct FactoryTraits {
   static const int id_qcad_response_fieldintegral = 39;
   static const int id_qcad_response_fieldvalue  = 40;
   static const int id_qcad_response_savefield   = 41;
+  static const int id_nspermeabilityterm        = 42;
+  static const int id_nsforchheimerterm         = 43;
 
-  typedef boost::mpl::vector42< 
+  typedef boost::mpl::vector44< 
             PHAL::Dirichlet<_,Traits>,                //  0
             PHAL::GatherSolution<_,Traits>,           //  1
             PHAL::GatherCoordinateVector<_,Traits>,   //  2
@@ -161,7 +165,9 @@ struct FactoryTraits {
             PHAL::NSBodyForce<_,Traits>,              // 38
             QCAD::ResponseFieldIntegral<_,Traits>,    // 39
             QCAD::ResponseFieldValue<_,Traits>,       // 40
-            QCAD::ResponseSaveField<_,Traits>         // 41
+            QCAD::ResponseSaveField<_,Traits>,        // 41
+            PHAL::NSPermeabilityTerm<_,Traits>,       // 42
+            PHAL::NSForchheimerTerm<_,Traits>         // 43
   > EvaluatorTypes;
   
 };

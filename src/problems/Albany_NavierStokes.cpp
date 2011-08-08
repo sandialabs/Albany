@@ -45,6 +45,8 @@ NavierStokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   havePSPG = params->get("Have Pressure Stabilization", true);
   haveSUPG = params->get("Have SUPG Stabilization", true);
   haveSource =  params->isSublist("Source Functions");
+  porousMedia = params->get("Porous Media",true);
+  
 
   // Compute number of equations
   int num_eq = 0;
@@ -419,6 +421,69 @@ Albany::NavierStokes::constructEvaluators(const Albany::MeshSpecsStruct& meshSpe
     evaluators_to_build["Volumetric Expansion Coefficient"] = p;
   }
 
+  if (porousMedia) { // Porosity, \phi
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    int type = FactoryTraits<AlbanyTraits>::id_nsmatprop;
+    p->set<int>("Type", type);
+
+    p->set<string>("Material Property Name", 
+		   "Porosity");
+    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = 
+      params->sublist("Porosity");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    evaluators_to_build["Porosity"] = p;
+  }
+
+  if (porousMedia) { // Permeability Tensor, K
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    int type = FactoryTraits<AlbanyTraits>::id_nsmatprop;
+    p->set<int>("Type", type);
+
+    p->set<string>("Material Property Name", 
+		   "Permeability");
+    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = 
+      params->sublist("Permeability");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    evaluators_to_build["Permeability"] = p;
+  }
+
+  if (porousMedia) { // Forchheimer Tensor, F
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    int type = FactoryTraits<AlbanyTraits>::id_nsmatprop;
+    p->set<int>("Type", type);
+
+    p->set<string>("Material Property Name", 
+		   "Forchheimer");
+    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = 
+      params->sublist("Forchheimer");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    evaluators_to_build["Forchheimer"] = p;
+  } 
+ 
   if (haveHeat) { // DOF: Interpolate nodal Temperature values to quad points
     RCP<ParameterList> p = 
       rcp(new ParameterList("Navier-Stokes DOFInterpolation Temperature"));
@@ -638,6 +703,60 @@ Albany::NavierStokes::constructEvaluators(const Albany::MeshSpecsStruct& meshSpe
     p->set<string>("Body Force Name", "Body Force");
 
     evaluators_to_build["Body Force"] = p;
+  }
+
+   if (porousMedia) { // Permeability term in momentum equation
+    std::cout <<"This is flow through porous media problem" << std::endl;
+    RCP<ParameterList> p = rcp(new ParameterList("Permeability Term"));
+
+    int type = FactoryTraits<AlbanyTraits>::id_nspermeabilityterm;
+    p->set<int>("Type", type);
+
+    //Input
+    p->set<string>("Velocity QP Variable Name", "Velocity");
+    p->set<string>("Density QP Variable Name", "Density");
+    p->set<string>("Viscosity QP Variable Name", "Viscosity");
+    p->set<string>("Porosity QP Variable Name", "Porosity");
+    p->set<string>("Permeability QP Variable Name", "Permeability");
+
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+    p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
+    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+  
+    //Output
+    p->set<string>("Permeability Term", "Permeability Term");
+
+    evaluators_to_build["Permeability Term"] = p;
+  } 
+
+  if (porousMedia) { // Forchheimer term in momentum equation
+    RCP<ParameterList> p = rcp(new ParameterList("Forchheimer Term"));
+
+    int type = FactoryTraits<AlbanyTraits>::id_nsforchheimerterm;
+    p->set<int>("Type", type);
+
+    //Input
+    p->set<string>("Velocity QP Variable Name", "Velocity");
+    p->set<string>("Density QP Variable Name", "Density");
+    p->set<string>("Viscosity QP Variable Name", "Viscosity");
+    p->set<string>("Porosity QP Variable Name", "Porosity");
+    p->set<string>("Permeability QP Variable Name", "Permeability");
+    p->set<string>("Forchheimer QP Variable Name", "Forchheimer");
+
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+    p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
+    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+  
+    //Output
+    p->set<string>("Forchheimer Term", "Forchheimer Term");
+
+    evaluators_to_build["Forchheimer Term"] = p;
   } 
 
   if (haveFlow) { // Rm
@@ -653,6 +772,11 @@ Albany::NavierStokes::constructEvaluators(const Albany::MeshSpecsStruct& meshSpe
     p->set<string>("Pressure Gradient QP Variable Name", "Pressure Gradient");
     p->set<string>("Density QP Variable Name", "Density");
     p->set<string>("Body Force QP Variable Name", "Body Force");
+    p->set<string>("Porosity QP Variable Name", "Porosity");
+    p->set<string>("Permeability Term", "Permeability Term");
+    p->set<string>("Forchheimer Term", "Forchheimer Term");
+ 
+    p->set<bool>("Porous Media", porousMedia);
 
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
@@ -969,13 +1093,17 @@ Albany::NavierStokes::getValidProblemParameters() const
   validPL->set<bool>("Have Heat Equation", true);
   validPL->set<bool>("Have Pressure Stabilization", true);
   validPL->set<bool>("Have SUPG Stabilization", true);
+  validPL->set<bool>("Porous Media", false, "Flag to use porous media equations");
   validPL->sublist("Thermal Conductivity", false, "");
   validPL->sublist("Density", false, "");
   validPL->sublist("Viscosity", false, "");
   validPL->sublist("Volumetric Expansion Coefficient", false, "");
   validPL->sublist("Specific Heat", false, "");
   validPL->sublist("Body Force", false, "");
-
+  validPL->sublist("Porosity", false, "");
+  validPL->sublist("Permeability", false, "");
+  validPL->sublist("Forchheimer", false, "");
+  
   return validPL;
 }
 
