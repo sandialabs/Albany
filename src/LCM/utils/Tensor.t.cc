@@ -104,8 +104,7 @@ namespace LCM {
   log_rotation(Tensor<ScalarT> const & R)
   {
 
-    Tensor<ScalarT>
-    r;
+    Tensor<ScalarT> r;
 
     // acos requires input between -1 and +1
     ScalarT
@@ -122,14 +121,71 @@ namespace LCM {
 
     if (theta == 0) {
       r = zero<ScalarT>();
-    } else if (cosine == -1.0) {
-      // Rotation angle is PI. Not implemented yet
-      assert(false);
+    } else if (abs(cosine +1.0) < std::numeric_limits<ScalarT>::epsilon()) {
+      // Rotation angle is PI.
+    	r = log_rotation_pi(R);
     } else {
       r = ScalarT(theta/(2.0*sin(theta)))*(R - transpose(R));
     }
 
     return r;
+  }
+
+  // Logarithmic map of a 180-degree rotation
+  //
+  template<typename ScalarT>
+  Tensor<ScalarT>
+  log_rotation_pi(Tensor<ScalarT> const & R)
+  {
+	  ScalarT pi = acos(-1.0);
+
+	  Tensor<ScalarT> r;
+
+	  r = zero<ScalarT>();
+
+	  // Determine the eigenvector corresponding to eigenvalue 1 of R
+	  // by finding out where is the positive 1 in the diagonal term.
+	  // Then use isomorphism to construct the close form for the
+	  // exponential map.
+	  if (abs(R(0,0) - 1.0)  < std::numeric_limits<ScalarT>::epsilon()) {
+		  r(1,2) = -pi;
+		  r(2,1) = pi;
+	  } else if (abs(R(1,1) - 1.0)  < std::numeric_limits<ScalarT>::epsilon())  {
+		  r(0,2) = pi;
+		  r(2,0) = -pi;
+	  } else if (abs(R(2,2) - 1.0)  < std::numeric_limits<ScalarT>::epsilon())  {
+		  r(0,1) = -pi;
+		  r(1,0) = pi;
+	  } else assert(0);
+
+	  return r;
+  }
+  //
+  // Exponential map of a rotation
+  // \param r \f$ r \in so(3) \f$
+  // \return \f$ R = \exp R \f$ with \f$ R \in SO(3) \f$
+  //
+  template<typename ScalarT>
+  Tensor<ScalarT>
+  exp_rotation(Tensor<ScalarT> const & r)
+  {
+	  Tensor<ScalarT> R;
+
+	  // Check whether skew-symmetry holds
+	  assert(norm(r+transpose(r)) < std::numeric_limits<ScalarT>::epsilon());
+	  ScalarT normVector = sqrt(r(2,1)*r(2,1)+r(0,2)*r(0,2)+r(1,0)*r(1,0));
+	  //Check whether norm == 0. If so, return identity.
+	  if (normVector < std::numeric_limits<ScalarT>::epsilon()) {
+		 R = identity<ScalarT>();
+      } else {
+		 // compute the norm of the basis vector
+		 R = identity<ScalarT>() + sin(normVector)/normVector*r+(1-cos(normVector))/(normVector*normVector)*r*r;
+      }
+
+
+
+	  return R;
+
   }
 
   //

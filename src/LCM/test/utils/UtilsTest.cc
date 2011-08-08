@@ -10,10 +10,10 @@ int main(int ac, char* av[])
 {
 
   //
-  // Intializations and parsing of command line
+  // Initializations and parsing of command line
   //
   bool verbose = false;
-  bool debug = false;
+  bool debug = true;
   bool matlab = false;
   bool InvalidCmdLineArgs = false;
 
@@ -63,7 +63,7 @@ int main(int ac, char* av[])
   // The tests
   //
   int PassedTestCount = 0;
-  const int TotalTests = 11;
+  const int TotalTests = 13;
   bool passed = false;
 
   //
@@ -355,6 +355,74 @@ int main(int ac, char* av[])
       std::cout << logV << std::endl;
       std::cout << logR << std::endl;
   }
+
+
+//
+// Test 12
+//
+// Test the log mapping of element from SO(3) group. In this test, a reference solution is
+// calculated by hand. This solution is compared with the solution computed via function log_rotation
+// added by WaiChing Sun 8/4/2011
+
+  //Create a 0.3 rad rotation use Z axis. Store it at R.
+  double theta = 3.141592653589793; // rotation angle
+  R(0,0) =  cos(theta);
+  R(1,1) =  cos(theta);
+  R(0,1) =  sin(theta);
+  R(1,0) = -sin(theta);
+
+  // Compute log R via Rodrigues' rotation formulas
+  logR = log_rotation(R); // reuse logR and reassign component via log_rotation
+
+  // Enter solution computed by hand
+  LCM::Tensor<ScalarT> Rref(0.0); // create 3-by-3 zero tensor
+  Rref(1,0) = 3.141592653589793;
+  Rref(0,1) = -3.141592653589793;
+
+
+  // Compute those two values (if correct, passed == 1)
+  passed = norm(logR - Rref) <= 100*std::numeric_limits<ScalarT>::epsilon();
+  if (passed == true) {
+      PassedTestCount++;
+  } else
+  {
+	  std::cout << "Error in logarithmic mapping for SO(3)" << std::endl;
+	  std::cout << norm(logR - Rref) << std::endl;
+  }
+
+    if(verbose || debug) {
+      std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
+        std::cout << std::endl;
+    }
+
+    if(matlab) {
+        std::cout << logR << std::endl;
+    }
+
+//
+// Test 13
+//
+// Test exp and log mapping between SO(3) and so(3) groups. We check whether
+// exp(log(R)) - R = 0 using the log(R) computed in test 12.
+// added by WaiChing Sun 8/4/2011
+
+    // Compare exp(log(R)) with R
+    passed = norm(exp_rotation(logR) - R) <= 100*std::numeric_limits<ScalarT>::epsilon();
+
+    if (passed == true) {
+          PassedTestCount++;
+    } else
+    {
+        std::cout << "Error in exponential mapping for so(3)" << std::endl;
+    	std::cout << norm(exp_rotation(logR) - R) << std::endl;
+    }
+
+    if(verbose || debug) {
+          std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
+            std::cout << std::endl;
+    }
+
+
 
   return PassedTestCount == TotalTests ? 0 : 1;
 

@@ -882,6 +882,26 @@ namespace LCM {
   log_rotation(Tensor<ScalarT> const & R);
 
   ///
+  /// Logarithmic map of a 180 degree rotation
+  /// \param R with \f$ R \in SO(3) \f$
+  /// \return \f$ r = \log R \f$ with \f$ r \in so(3) \f$
+  ///
+  template<typename ScalarT>
+  Tensor<ScalarT>
+  log_rotation_pi(Tensor<ScalarT> const & R);
+
+
+
+  ///
+  /// Exponential map of a rotation
+  /// \param r \f$ r \in so(3) \f$
+  /// \return \f$ R = \exp R \f$ with \f$ R \in SO(3) \f$
+  ///
+  template<typename ScalarT>
+  Tensor<ScalarT>
+  exp_rotation(Tensor<ScalarT> const & r);
+
+  ///
   /// Left polar decomposition
   /// \param F tensor (often a deformation-gradient-like tensor)
   /// \return \f$ VR = F \f$ with \f$ R \in SO(3) \f$ and V SPD
