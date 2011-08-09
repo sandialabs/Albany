@@ -46,7 +46,7 @@ NavierStokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   havePSPG = params->get("Have Pressure Stabilization", true);
   haveSUPG = params->get("Have SUPG Stabilization", true);
   haveSource =  params->isSublist("Source Functions");
-  porousMedia = params->get("Porous Media",true);
+  porousMedia = params->get("Porous Media",false);
   
   haveNeutSource =  params->isSublist("Neutron Source Functions");
 

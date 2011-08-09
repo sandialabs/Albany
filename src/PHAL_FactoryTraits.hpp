@@ -121,12 +121,12 @@ struct FactoryTraits {
   static const int id_nstaut                    = 36;
   static const int id_nsmatprop                 = 37;
   static const int id_nsbodyforce               = 38;
-  static const int id_qcad_response_fieldintegral = 39;
-  static const int id_qcad_response_fieldvalue  = 40;
-  static const int id_qcad_response_savefield   = 41;
-  static const int id_nspermeabilityterm        = 42;
-  static const int id_nsforchheimerterm         = 43;
-  static const int id_nsneutroneqresid          = 44;
+  static const int id_nsneutroneqresid          = 39;
+  static const int id_qcad_response_fieldintegral = 40;
+  static const int id_qcad_response_fieldvalue  = 41;
+  static const int id_qcad_response_savefield   = 42;
+  static const int id_nspermeabilityterm        = 43;
+  static const int id_nsforchheimerterm         = 44;
 
   typedef boost::mpl::vector45< 
             PHAL::Dirichlet<_,Traits>,                //  0
@@ -168,12 +168,12 @@ struct FactoryTraits {
             PHAL::NSTauT<_,Traits>,                   // 36
             PHAL::NSMaterialProperty<_,Traits>,       // 37
             PHAL::NSBodyForce<_,Traits>,              // 38
-            QCAD::ResponseFieldIntegral<_,Traits>,    // 39
-            QCAD::ResponseFieldValue<_,Traits>,       // 40
-            QCAD::ResponseSaveField<_,Traits>,        // 41
-            PHAL::NSPermeabilityTerm<_,Traits>,       // 42
-            PHAL::NSForchheimerTerm<_,Traits>         // 43
-            PHAL::NSNeutronEqResid<_,Traits>,         // 44
+            PHAL::NSNeutronEqResid<_,Traits>,         // 39
+            QCAD::ResponseFieldIntegral<_,Traits>,    // 40
+            QCAD::ResponseFieldValue<_,Traits>,       // 41
+            QCAD::ResponseSaveField<_,Traits>,        // 42
+            PHAL::NSPermeabilityTerm<_,Traits>,       // 43
+            PHAL::NSForchheimerTerm<_,Traits>         // 44
   > EvaluatorTypes;
   
 };
