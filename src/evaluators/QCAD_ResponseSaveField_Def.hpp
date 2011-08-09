@@ -149,17 +149,17 @@ evaluateFields(typename Traits::EvalData workset)
   if(!isVectorField) {
     switch (size) {  //Note: size should always == 2 now: qp_scalar type or cell_sclar state registered
     case 2:     
-      for (int cell = 0; cell < dims[0]; ++cell) {
+      for (int cell = 0; cell < workset.numCells; ++cell) {
         if( outputCellAverage ) {
           double integral = 0, vol = 0;
-	  for (int qp = 0; qp < dims[1]; ++qp) {
+	  for (int qp = 0; qp < numQPs; ++qp) {
 	    integral += field(cell,qp) * weights(cell,qp);
             vol += weights(cell, qp);
           }
           sta(cell,0) = integral / vol;
         }
         else {
-	  for (int qp = 0; qp < dims[1]; ++qp)
+	  for (int qp = 0; qp < numQPs; ++qp)
 	    sta(cell, qp) = field(cell,qp);
         }
       }
@@ -187,44 +187,79 @@ evaluateFields(typename Traits::EvalData workset)
     double t;
     switch (size) {
     case 2:     
-      for (int cell = 0; cell < dims[0]; ++cell) {
-	for (int qp = 0; qp < dims[1]; ++qp) {
+      for (int cell = 0; cell < workset.numCells; ++cell) {
+
+	ScalarT stateValue = 0.0;
+	double vol = 0.0;
+	if( outputCellAverage ) sta(cell,0) = 0.0;
+
+	for (int qp = 0; qp < numQPs; ++qp) {
 	  t = 0.0;
 
 	  if(vectorOp == "magnitude") {
 	    for (std::size_t i = 0; i < numDims; ++i)
 	      t += field(cell,qp,i)*field(cell,qp,i);
-	    sta(cell, qp) = sqrt(t);
+	    stateValue = sqrt(t);
 	  }
 	  else if(vectorOp == "xyMagnitude") {
 	    if(numDims > iX) t += field(cell,qp,iX)*field(cell,qp,iX);
 	    if(numDims > iY) t += field(cell,qp,iY)*field(cell,qp,iY);
-	    sta(cell, qp) = sqrt(t);
+	    stateValue = sqrt(t);
 	  }
 	  else if(vectorOp == "xzMagnitude") {
 	    if(numDims > iX) t += field(cell,qp,iX)*field(cell,qp,iX);
 	    if(numDims > iZ) t += field(cell,qp,iZ)*field(cell,qp,iZ);
-	    sta(cell, qp) = sqrt(t);
+	    stateValue = sqrt(t);
 	  }
 	  else if(vectorOp == "yzMagnitude") {
 	    if(numDims > iY) t += field(cell,qp,iY)*field(cell,qp,iY);
 	    if(numDims > iZ) t += field(cell,qp,iZ)*field(cell,qp,iZ);
-	    sta(cell, qp) = sqrt(t);
+	    stateValue = sqrt(t);
 	  }
+
+	  if(vectorOp == "magnitude2") {
+	    for (std::size_t i = 0; i < numDims; ++i)
+	      t += field(cell,qp,i)*field(cell,qp,i);
+	    stateValue = t;
+	  }
+	  else if(vectorOp == "xyMagnitude2") {
+	    if(numDims > iX) t += field(cell,qp,iX)*field(cell,qp,iX);
+	    if(numDims > iY) t += field(cell,qp,iY)*field(cell,qp,iY);
+	    stateValue = t;
+	  }
+	  else if(vectorOp == "xzMagnitude2") {
+	    if(numDims > iX) t += field(cell,qp,iX)*field(cell,qp,iX);
+	    if(numDims > iZ) t += field(cell,qp,iZ)*field(cell,qp,iZ);
+	    stateValue = t;
+	  }
+	  else if(vectorOp == "yzMagnitude2") {
+	    if(numDims > iY) t += field(cell,qp,iY)*field(cell,qp,iY);
+	    if(numDims > iZ) t += field(cell,qp,iZ)*field(cell,qp,iZ);
+	    stateValue = t;
+	  }
+
 	  else if(vectorOp == "xCoord") {
-	    if(numDims > iX) sta(cell, qp) = field(cell,qp,iX);
+	    if(numDims > iX) stateValue = field(cell,qp,iX);
 	  }
 	  else if(vectorOp == "yCoord") {
-	    if(numDims > iY) sta(cell, qp) = field(cell,qp,iY);
+	    if(numDims > iY) stateValue = field(cell,qp,iY);
 	  }
 	  else if(vectorOp == "zCoord") {
-	    if(numDims > iZ) sta(cell, qp) = field(cell,qp,iZ);
+	    if(numDims > iZ) stateValue = field(cell,qp,iZ);
 	  }
 	  else {
 	    TEST_FOR_EXCEPTION(true, std::logic_error,
 	       "Unknown vector operation: " << vectorOp);
 	  }
+
+	  if( outputCellAverage ) {
+	    sta(cell, 0) += stateValue * weights(cell,qp);
+	    vol += weights(cell,qp);
+	  }
+	  else sta(cell, qp) = stateValue;
 	}
+
+	if( outputCellAverage ) sta(cell,0) /= vol;
       }
       break;
     default:

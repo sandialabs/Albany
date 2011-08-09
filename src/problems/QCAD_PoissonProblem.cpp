@@ -499,20 +499,38 @@ QCAD::PoissonProblem::constructEvaluators(
 
      if (name == "See List" && responseList.isSublist(responseParamsID) ) {
 
-       Teuchos::RCP<Albany::EvaluatedResponseFunction> 
-	 evResponse = Teuchos::rcp(new Albany::EvaluatedResponseFunction());
-       responses[i] = evResponse;
-
        Teuchos::ParameterList& responseParams = responseList.sublist(responseParamsID);
        std::string type = responseParams.get("Type", "??");
-
-       // Common parameters to all response evaluators
        RCP<ParameterList> p = rcp(new ParameterList);
-       p->set<string>("Response ID", responseID);
-       p->set<int>   ("Response Index", i);
-       p->set< Teuchos::RCP<Albany::EvaluatedResponseFunction> >("Response Function", evResponse);
-       p->set<Teuchos::ParameterList*>("Parameter List", &responseParams);
-       p->set< RCP<DataLayout> >("Dummy Data Layout", dummy);
+
+       if (type == "Saddle Value") {
+	  Teuchos::RCP<QCAD::SaddleValueResponseFunction> 
+	    svResponse = Teuchos::rcp(new QCAD::SaddleValueResponseFunction(numDim)); //responseParams
+	 responses[i] = svResponse;
+
+	 // Common parameters to all response evaluators
+	 p->set<string>("Response ID", responseID);
+	 p->set<int>   ("Response Index", i);
+	 p->set< Teuchos::RCP<QCAD::SaddleValueResponseFunction> >("Response Function", svResponse);
+	 p->set<Teuchos::ParameterList*>("Parameter List", &responseParams);
+	 p->set< RCP<DataLayout> >("Dummy Data Layout", dummy);
+       }
+
+       else { //default is to construct EvaluatedResponseFunction
+
+	 Teuchos::RCP<Albany::EvaluatedResponseFunction> 
+	   evResponse = Teuchos::rcp(new Albany::EvaluatedResponseFunction());
+	 responses[i] = evResponse;
+
+	 // Common parameters to all response evaluators
+	 p->set<string>("Response ID", responseID);
+	 p->set<int>   ("Response Index", i);
+	 p->set< Teuchos::RCP<Albany::EvaluatedResponseFunction> >("Response Function", evResponse);
+	 p->set<Teuchos::ParameterList*>("Parameter List", &responseParams);
+	 p->set< RCP<DataLayout> >("Dummy Data Layout", dummy);
+       }
+
+
 
        // Parameters specific to the particular type of response evaluator
        if (type == "Field Integral")
@@ -530,6 +548,16 @@ QCAD::PoissonProblem::constructEvaluators(
        else if (type == "Field Value")
        { 
          int type = FactoryTraits<AlbanyTraits>::id_qcad_response_fieldvalue;
+         p->set<int>("Type", type);
+         p->set<string>("Coordinate Vector Name", "Coord Vec");
+         p->set<string>("Weights Name",   "Weights");
+         p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+         p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+       }
+
+       else if (type == "Saddle Value")
+       { 
+         int type = FactoryTraits<AlbanyTraits>::id_qcad_response_saddlevalue;
          p->set<int>("Type", type);
          p->set<string>("Coordinate Vector Name", "Coord Vec");
          p->set<string>("Weights Name",   "Weights");

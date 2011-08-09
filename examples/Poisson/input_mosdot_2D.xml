@@ -33,7 +33,7 @@
     </ParameterList>
 
     <ParameterList name="Response Functions">
-      <Parameter name="Number" type="int" value="6" />
+      <Parameter name="Number" type="int" value="7" />
       <Parameter name="Response 0" type="string" value="Solution Average" />
       
       <Parameter name="Response 1" type="string" value="See List" />
@@ -48,6 +48,7 @@
       <ParameterList name="ResponseParams 2">
         <Parameter name="Type" type="string" value="Save Field" />
         <Parameter name="Vector Field Name" type="string" value="Potential Gradient" />
+	<Parameter name="Vector Operation" type="string" value="xyMagnitude2" />
       </ParameterList>
       
       <Parameter name="Response 3" type="string" value="See List" />
@@ -79,6 +80,19 @@
         <Parameter name="y min" type="double" value="-1.5" />
         <Parameter name="y max" type="double" value="0.0" />
       </ParameterList>
+
+      <Parameter name="Response 6" type="string" value="See List" />
+      <ParameterList name="ResponseParams 6">
+        <Parameter name="Type" type="string" value="Saddle Value" />
+        <Parameter name="Field Name" type="string" value="Conduction Band" />
+        <Parameter name="Return Field Name" type="string" value="Charge Density" />
+        <!-- <Parameter name="Domain" type="string" value="box" />
+        <Parameter name="x min" type="double" value="-2.5" />
+        <Parameter name="x max" type="double" value="2.5" />
+        <Parameter name="y min" type="double" value="-1.5" />
+        <Parameter name="y max" type="double" value="0.0" /> -->
+      </ParameterList>
+
 
     </ParameterList>
   </ParameterList>

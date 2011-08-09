@@ -365,9 +365,12 @@ SET(SOURCES ${SOURCES}
        evaluators/QCAD_PoissonDirichlet.cpp
        evaluators/QCAD_ResponseFieldIntegral.cpp
        evaluators/QCAD_ResponseFieldValue.cpp
+       evaluators/QCAD_ResponseSaddleValue.cpp
        evaluators/QCAD_ResponseSaveField.cpp
+       evaluators/QCAD_EvaluatorTools.cpp
        problems/QCAD_PoissonProblem.cpp
        problems/QCAD_MaterialDatabase.cpp
+       responses/QCAD_SaddleValueResponseFunction.cpp
   )
 
 SET(HEADERS ${HEADERS}
@@ -383,9 +386,14 @@ SET(HEADERS ${HEADERS}
        evaluators/QCAD_ResponseFieldIntegral_Def.hpp
        evaluators/QCAD_ResponseFieldValue.hpp
        evaluators/QCAD_ResponseFieldValue_Def.hpp
+       evaluators/QCAD_ResponseSaddleValue.hpp
+       evaluators/QCAD_ResponseSaddleValue_Def.hpp
        evaluators/QCAD_ResponseSaveField.hpp
        evaluators/QCAD_ResponseSaveField_Def.hpp
+       evaluators/QCAD_EvaluatorTools.hpp
+       evaluators/QCAD_EvaluatorTools_Def.hpp
        problems/QCAD_PoissonProblem.hpp
+       responses/QCAD_SaddleValueResponseFunction.hpp
   )
 
 
