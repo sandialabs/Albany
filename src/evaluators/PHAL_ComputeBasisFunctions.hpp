@@ -25,12 +25,14 @@
 
 #include "Intrepid_CellTools.hpp"
 #include "Intrepid_Cubature.hpp"
+
+namespace PHAL {
+
 /** \brief Finite Element Interpolation Evaluator
 
     This evaluator interpolates nodal DOF values to quad points.
 
 */
-namespace PHAL {
 
 template<typename EvalT, typename Traits>
 class ComputeBasisFunctions : public PHX::EvaluatorWithBaseImpl<Traits>,

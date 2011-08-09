@@ -20,11 +20,10 @@
 
 #include "PHAL_ResponseBase.hpp"
 
+namespace QCAD {
 /** 
  * \brief Response Description
  */
-namespace QCAD 
-{
   template<typename EvalT, typename Traits>
   class ResponseFieldValue : 
     public PHAL::ResponseBase<EvalT, Traits>

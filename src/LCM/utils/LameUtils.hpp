@@ -20,6 +20,7 @@
 // LAME material model base class
 #include <models/Material.h>
 
+//! Utility functions for interfacing to LAME material library
 namespace LameUtils {
 
   //! Convert a Teuchos::ParameterList into a lame::MatProps structure.

@@ -2,7 +2,6 @@
   <ParameterList name="Problem">
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
     <Parameter name="Name" type="string" value="NavierStokes 2D"/>
-    <Parameter name="Have Heat Equation" type="bool" value="false"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>
     <ParameterList name="Dirichlet BCs">     
       <Parameter name="DBC on NS inlet for DOF ux" type="double" value="1.0"/>

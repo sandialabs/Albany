@@ -27,6 +27,7 @@
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
 
+//! Code Base for Quantum Device Simulation Tools LDRD
 namespace QCAD {
 
   /*!
@@ -85,7 +86,8 @@ namespace QCAD {
 
     //! Parameters for coupling to Schrodinger
     bool bUseSchrodingerSource;
-    int nEigenvectors;    
+    int nEigenvectors;
+    bool bUsePredictorCorrector;     
   };
 
 }

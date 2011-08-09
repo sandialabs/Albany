@@ -61,18 +61,22 @@
 #include "PHAL_NSTauT.hpp"
 #include "PHAL_NSMaterialProperty.hpp"
 #include "PHAL_NSBodyForce.hpp"
+#include "PHAL_NSNeutronEqResid.hpp"
 
 #include "boost/mpl/vector/vector50.hpp"
 #include "boost/mpl/placeholders.hpp"
-using namespace boost::mpl::placeholders;
 
+// \cond  Have doxygern ignore this namespace 
+using namespace boost::mpl::placeholders;
+// \endcond
+
+namespace PHAL {
 /*! \brief Struct to define Evaluator objects for the EvaluatorFactory.
     
     Preconditions:
     - You must provide a boost::mpl::vector named EvaluatorTypes that contain all Evaluator objects that you wish the factory to build.  Do not confuse evaluator types (concrete instances of evaluator objects) with evaluation types (types of evaluations to perform, i.e., Residual, Jacobian). 
 
 */
-namespace PHAL {
 
 template<typename Traits>
 struct FactoryTraits {
@@ -116,12 +120,13 @@ struct FactoryTraits {
   static const int id_nstaut                    = 36;
   static const int id_nsmatprop                 = 37;
   static const int id_nsbodyforce               = 38;
-  static const int id_qcad_response_fieldintegral = 39;
-  static const int id_qcad_response_fieldvalue  = 40;
-  static const int id_qcad_response_saddlevalue  = 41;
-  static const int id_qcad_response_savefield   = 42;
+  static const int id_nsneutroneqresid          = 39;
+  static const int id_qcad_response_fieldintegral = 40;
+  static const int id_qcad_response_fieldvalue  = 41;
+  static const int id_qcad_response_saddlevalue  = 42;
+  static const int id_qcad_response_savefield   = 43;
 
-  typedef boost::mpl::vector43< 
+  typedef boost::mpl::vector44< 
             PHAL::Dirichlet<_,Traits>,                //  0
             PHAL::GatherSolution<_,Traits>,           //  1
             PHAL::GatherCoordinateVector<_,Traits>,   //  2
@@ -161,10 +166,11 @@ struct FactoryTraits {
             PHAL::NSTauT<_,Traits>,                   // 36
             PHAL::NSMaterialProperty<_,Traits>,       // 37
             PHAL::NSBodyForce<_,Traits>,              // 38
-            QCAD::ResponseFieldIntegral<_,Traits>,    // 39
-            QCAD::ResponseFieldValue<_,Traits>,       // 40
-            QCAD::ResponseSaddleValue<_,Traits>,      // 41
-            QCAD::ResponseSaveField<_,Traits>         // 42
+            PHAL::NSNeutronEqResid<_,Traits>,         // 39
+            QCAD::ResponseFieldIntegral<_,Traits>,    // 40
+            QCAD::ResponseFieldValue<_,Traits>,       // 41
+            QCAD::ResponseSaddleValue<_,Traits>,      // 42
+            QCAD::ResponseSaveField<_,Traits>         // 43
   > EvaluatorTypes;
   
 };

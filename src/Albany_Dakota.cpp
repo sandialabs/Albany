@@ -20,13 +20,13 @@
 #include "Albany_Dakota.hpp"
 #include "Albany_Utils.hpp"
 
-using namespace std;
-
 // Standard use case for TriKota
 //   Dakota is run in library mode with its interface
 //   implemented with an EpetraExt::ModelEvaluator
 int Albany_Dakota()
 { // Assumes MPI_Init() already called, and using MPI_COMM_WORLD
+  using std::cout;
+  using std::endl;
 
   cout << "\nStarting Albany_Dakota!" << endl;
 

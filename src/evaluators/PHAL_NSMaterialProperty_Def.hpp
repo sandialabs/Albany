@@ -44,6 +44,8 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
   std::string type = mp_list->get("Type", "Constant");
   if (type == "Constant") {
     is_constant = true;
+    is_sqrttempdep = false;
+    is_invsqrttempdep = false;
     randField = CONSTANT;
     constant_value = mp_list->get("Value", 1.0);
 
@@ -55,6 +57,8 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
   }
   else if (type == "Truncated KL Expansion" || type == "Log Normal RF") {
     is_constant = false;
+    is_sqrttempdep = false;
+    is_invsqrttempdep = false;
     if (type == "Truncated KL Expansion")
       randField = UNIFORM;
     else if (type == "Log Normal RF")
@@ -81,6 +85,27 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
       rv[i] = mp_list->get(ss, 0.0);
     }
   }
+  else if (type == "SQRT Temperature Dependent") {
+     is_constant = false;
+     is_sqrttempdep = true;
+     is_invsqrttempdep = false;
+     constant_value = mp_list->get("Value",1.0);
+     ref_temp = mp_list->get("Reference Temperature",1.0);
+     T = PHX::MDField<ScalarT,Cell,QuadPoint>(
+         p.get<std::string>("Temperature QP Variable Name"),
+         p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
+     this->addDependentField(T); 
+  }
+  else if (type == "invSQRT Temperature Dependent") {
+     is_constant = false;
+     is_invsqrttempdep = true;
+     constant_value = mp_list->get("Value",1.0);
+     ref_temp = mp_list->get("Reference Temperature",1.0);
+     T = PHX::MDField<ScalarT,Cell,QuadPoint>(
+         p.get<std::string>("Temperature QP Variable Name"),
+         p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
+     this->addDependentField(T); 
+  }
   else {
     TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		       "Invalid material property type " << type);
@@ -97,7 +122,8 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(matprop,fm);
-  if (!is_constant) this->utils.setFieldData(coordVec,fm);
+  if (!is_constant && !is_sqrttempdep && !is_invsqrttempdep) this->utils.setFieldData(coordVec,fm);
+  if (is_sqrttempdep || is_invsqrttempdep) this->utils.setFieldData(T,fm);
 }
 
 // **********************************************************************
@@ -110,6 +136,20 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t qp=0; qp < numQPs; ++qp) {
 	matprop(cell,qp) = constant_value;
       }
+    }
+  }
+  else if (is_sqrttempdep) {
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+	matprop(cell,qp) = constant_value / sqrt(ref_temp) * sqrt(T(cell,qp));
+      } 
+    }
+  }
+  else if (is_invsqrttempdep) {
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+	matprop(cell,qp) = constant_value * sqrt(ref_temp) / sqrt(T(cell,qp));
+      } 
     }
   }
   else {
@@ -132,7 +172,7 @@ template<typename EvalT,typename Traits>
 typename NSMaterialProperty<EvalT,Traits>::ScalarT& 
 NSMaterialProperty<EvalT,Traits>::getValue(const std::string &n)
 {
-  if (is_constant)
+  if (is_constant || is_sqrttempdep || is_invsqrttempdep)
     return constant_value;
   for (int i=0; i<rv.size(); i++) {
     if (n == Albany::strint(name_mp + " KL Random Variable",i))

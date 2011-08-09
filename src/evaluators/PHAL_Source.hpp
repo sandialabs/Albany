@@ -31,6 +31,7 @@
 
 namespace PHAL {
 
+//! Common area for standard source terms.
 namespace Source_Functions { template <typename EvalT, typename Traits> class Source_Base; }
 
 template<typename EvalT, typename Traits>

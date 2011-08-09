@@ -31,11 +31,10 @@
 
 #include "QCAD_MaterialDatabase.hpp"
 
+namespace QCAD {
 /** 
  * \brief Evaluates Poisson Source Term 
  */
-namespace QCAD 
-{
   template<typename EvalT, typename Traits>
   class PoissonSource : 
   public PHX::EvaluatorWithBaseImpl<Traits>,
@@ -95,7 +94,8 @@ namespace QCAD
     ScalarT computeFDIntMinusOneHalf(const ScalarT x);
     
     //! compute the electron density for Poisson-Schrodinger iteration
-    ScalarT eDensityForPoissonSchrond(typename Traits::EvalData workset, std::size_t cell, std::size_t qp);
+    ScalarT eDensityForPoissonSchrond(typename Traits::EvalData workset, 
+      std::size_t cell, std::size_t qp, const ScalarT prevPhi);
     
     //TODO: remove once test new version
     //! read eigenvalues from a text file (temporary, until we have a better way of passing them)
@@ -117,6 +117,7 @@ namespace QCAD
     PHX::MDField<ScalarT,Cell,QuadPoint> ionizedDopant;    // ionized dopants in [cm-3]
     PHX::MDField<ScalarT,Cell,QuadPoint> conductionBand; // conduction band in [eV]
     PHX::MDField<ScalarT,Cell,QuadPoint> valenceBand;   // valence band in [eV]
+    PHX::MDField<ScalarT,Cell,QuadPoint> approxQuantumEDensity;   // approximate quantum electron density [cm-3]
 
     //! constant prefactor parameter in source function
     ScalarT factor;
@@ -146,6 +147,7 @@ namespace QCAD
     
     //! Schrodinger coupling
     bool bSchrodingerInQuantumRegions;
+    bool bUsePredictorCorrector;
     int  nEigenvectors;
     std::vector< PHX::MDField<ScalarT,Cell,QuadPoint> > eigenvector_Re;
     std::vector< PHX::MDField<ScalarT,Cell,QuadPoint> > eigenvector_Im;

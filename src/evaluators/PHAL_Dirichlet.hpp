@@ -29,6 +29,7 @@
 #include "Sacado_ParameterAccessor.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 
+namespace PHAL {
 /** \brief Gathers solution values from the Newton solution vector into 
     the nodal fields of the field manager
 
@@ -40,7 +41,6 @@
 // **************************************************************
 // Generic Template Impelementation for constructor and PostReg
 // **************************************************************
-namespace PHAL {
 
 template<typename EvalT, typename Traits>
 class DirichletBase

@@ -26,12 +26,12 @@
 #include "Intrepid_CellTools.hpp"
 #include "Intrepid_Cubature.hpp"
 
+namespace LCM {
 /** \brief Deformation Gradient
 
     This evaluator computes the deformation gradient
 
 */
-namespace LCM {
 
 template<typename EvalT, typename Traits>
 class DefGrad : public PHX::EvaluatorWithBaseImpl<Traits>,

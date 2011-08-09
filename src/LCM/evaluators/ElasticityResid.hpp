@@ -23,12 +23,12 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
+namespace LCM {
 /** \brief Finite Element Interpolation Evaluator
 
     This evaluator interpolates nodal DOF values to quad points.
 
 */
-namespace LCM {
 
 template<typename EvalT, typename Traits>
 class ElasticityResid : public PHX::EvaluatorWithBaseImpl<Traits>,
