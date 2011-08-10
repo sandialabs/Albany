@@ -1,4 +1,4 @@
-/*
+/**
  * Topology.cc
  *  Set of topology manipulation functions for 2D and 3D stk meshes.
  *  Created on: Jul 11, 2011
