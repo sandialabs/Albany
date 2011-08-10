@@ -927,6 +927,42 @@ namespace LCM {
   }
 
   //
+  // Scalar 3rd-order tensor product
+  // \param s scalar
+  // \param A 3rd-order tensor
+  // \return \f$ s A \f$
+  //
+  template<typename ScalarT>
+  Tensor3<ScalarT>
+  operator*(const ScalarT s, Tensor3<ScalarT> const & A)
+  {
+	Tensor3<ScalarT> B;
+
+	for (Index i = 0; i < MaxDim; ++i) {
+	  for (Index j = 0; j < MaxDim; ++j) {
+	    for (Index k = 0; k < MaxDim; ++k) {
+	    	B(i,j,k) = s * A(i,j,k);
+	    }
+	  }
+	}
+
+	return B;
+  }
+
+  //
+  // 3th-order tensor scalar product
+  // \param A 3th-order tensor
+  // \param s scalar
+  // \return \f$ s A \f$
+  //
+  template<typename ScalarT>
+  Tensor3<ScalarT>
+  operator*(Tensor3<ScalarT> const & A, const ScalarT s)
+  {
+	  return s * A;
+  }
+
+  //
   // 3rd-order tensor input
   // \param A 3rd-order tensor
   // \param is input stream
@@ -1300,6 +1336,45 @@ namespace LCM {
   {
     return !(A==B);
   }
+
+  //
+  // Scalar 4th-order tensor product
+  // \param s scalar
+  // \param A 4th-order tensor
+  // \return \f$ s A \f$
+  //
+  template<typename ScalarT>
+  Tensor4<ScalarT>
+  operator*(const ScalarT s, Tensor4<ScalarT> const & A)
+  {
+    Tensor4<ScalarT> B;
+
+    for (Index i = 0; i < MaxDim; ++i) {
+      for (Index j = 0; j < MaxDim; ++j) {
+        for (Index k = 0; k < MaxDim; ++k) {
+          for (Index l = 0; l < MaxDim; ++l) {
+            B(i,j,k,l)=s * A(i,j,k,l);
+          }
+        }
+      }
+    }
+    return B;
+  }
+
+  //
+  // 4th-order tensor scalar product
+  // \param A 4th-order tensor
+  // \param s scalar
+  // \return \f$ s A \f$
+  //
+  template<typename ScalarT>
+  Tensor4<ScalarT>
+  operator*(Tensor4<ScalarT> const & A, const ScalarT s)
+  {
+	  return s * A;
+  }
+
+
 
   //
   // 4th-order input

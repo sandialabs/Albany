@@ -585,6 +585,46 @@ namespace LCM {
   operator*(Tensor<ScalarT> const & A, const ScalarT s);
 
   ///
+  /// Scalar 3rd-order tensor product
+  /// \param s scalar
+  /// \param A 3rd-order tensor
+  /// \return \f$ s A \f$
+  ///
+  template<typename ScalarT>
+  Tensor3<ScalarT>
+  operator*(const ScalarT s, Tensor3<ScalarT> const & A);
+
+  ///
+  /// 3th-order tensor scalar product
+  /// \param A 3th-order tensor
+  /// \param s scalar
+  /// \return \f$ s A \f$
+  ///
+  template<typename ScalarT>
+  Tensor3<ScalarT>
+  operator*(Tensor3<ScalarT> const & A, const ScalarT s);
+
+  ///
+  /// Scalar 4th-order tensor product
+  /// \param s scalar
+  /// \param A 4th-order tensor
+  /// \return \f$ s A \f$
+  ///
+  template<typename ScalarT>
+  Tensor4<ScalarT>
+  operator*(const ScalarT s, Tensor4<ScalarT> const & A);
+
+  ///
+  /// 4th-order tensor scalar product
+  /// \param A 4th-order tensor
+  /// \param s scalar
+  /// \return \f$ s A \f$
+  ///
+  template<typename ScalarT>
+  Tensor4<ScalarT>
+  operator*(Tensor4<ScalarT> const & A, const ScalarT s);
+
+  ///
   /// Tensor vector product v = A u
   /// \param A tensor
   /// \param u vector
