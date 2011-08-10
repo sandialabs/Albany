@@ -44,6 +44,7 @@
 #include "QCAD_PoissonDirichlet.hpp"
 #include "QCAD_ResponseFieldIntegral.hpp"
 #include "QCAD_ResponseFieldValue.hpp"
+#include "QCAD_ResponseSaddleValue.hpp"
 #include "QCAD_ResponseSaveField.hpp"
 #include "PHAL_JouleHeating.hpp"
 #include "PHAL_TEProp.hpp"
@@ -122,9 +123,10 @@ struct FactoryTraits {
   static const int id_nsneutroneqresid          = 39;
   static const int id_qcad_response_fieldintegral = 40;
   static const int id_qcad_response_fieldvalue  = 41;
-  static const int id_qcad_response_savefield   = 42;
+  static const int id_qcad_response_saddlevalue  = 42;
+  static const int id_qcad_response_savefield   = 43;
 
-  typedef boost::mpl::vector43< 
+  typedef boost::mpl::vector44< 
             PHAL::Dirichlet<_,Traits>,                //  0
             PHAL::GatherSolution<_,Traits>,           //  1
             PHAL::GatherCoordinateVector<_,Traits>,   //  2
@@ -167,7 +169,8 @@ struct FactoryTraits {
             PHAL::NSNeutronEqResid<_,Traits>,         // 39
             QCAD::ResponseFieldIntegral<_,Traits>,    // 40
             QCAD::ResponseFieldValue<_,Traits>,       // 41
-            QCAD::ResponseSaveField<_,Traits>         // 42
+            QCAD::ResponseSaddleValue<_,Traits>,      // 42
+            QCAD::ResponseSaveField<_,Traits>         // 43
   > EvaluatorTypes;
   
 };

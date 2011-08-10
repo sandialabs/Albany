@@ -71,17 +71,20 @@ int main(int ac, char* av[])
   topology.disp_connectivity();
 
   // Start the mesh update process
-  //   Will fully separate the elements in the mesh by replacing element nodes
-  //   Get a vector containing the element set of the mesh.
+  // Will fully separate the elements in the mesh by replacing element nodes
+  // Get a vector containing the element set of the mesh.
   std::vector<stk::mesh::Entity*> element_lst;
   stk::mesh::get_entities(bulkData,topology.elementRank,element_lst);
 
-  // Creates the graph
-  topology.graph_initialization();
+  // Modifies mesh for graph algorithm
+  // Function must be called each time before there are changes to the mesh
+  topology.remove_node_relations();
 
   // Check for failure criterion
   std::map<stk::mesh::EntityKey, bool> entity_open;
   topology.set_entities_open(entity_open);
+  std::string gviz_output = "output.dot";
+  topology.output_to_graphviz(gviz_output,entity_open);
 
   // test the functions of the class
   bulkData.modification_begin();
@@ -90,10 +93,11 @@ int main(int ac, char* av[])
   cout << "begin mesh fracture\n";
   topology.fracture_boundary(entity_open);
 
-  std::string gviz_output = "output.dot";
-  topology.output_to_graphviz(gviz_output,entity_open);
+  //std::string gviz_output = "output.dot";
+  //topology.output_to_graphviz(gviz_output,entity_open);
 
-  // Need to remove added mesh entities before updating Albany stk discretization
+  // Recreates connectivity in stk mesh expected by Albany_STKDiscretization
+  // Must be called each time at conclusion of mesh modification
   topology.graph_cleanup();
 
   // End mesh update
@@ -110,15 +114,11 @@ int main(int ac, char* av[])
   // Need to update the mesh to reflect changes in duplicate_entity routine.
   //   Redefine connectivity and coordinate arrays with updated values.
   //   Mesh must only have relations between elements and nodes.
-  Teuchos::RCP<Albany::AbstractDiscretization> discretization_ptr = topology.get_Discretization();
-  Albany::STKDiscretization & stk_discretization = static_cast<Albany::STKDiscretization &>(*discretization_ptr);
+  Teuchos::RCP<Albany::AbstractDiscretization> discretization_ptr =
+		  topology.get_Discretization();
+  Albany::STKDiscretization & stk_discretization =
+		  static_cast<Albany::STKDiscretization &>(*discretization_ptr);
 
-  Teuchos::RCP<Epetra_Comm>
-    communicator = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
-  Teuchos::RCP<Albany::AbstractSTKMeshStruct>
-  stkMeshStruct = topology.get_stkMeshStruct();
-
-  stk_discretization.updateMesh(stkMeshStruct,communicator);
   Teuchos::ArrayRCP<double>
     coordinates = stk_discretization.getCoordinates();
 

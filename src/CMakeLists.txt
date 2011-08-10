@@ -370,9 +370,12 @@ SET(SOURCES ${SOURCES}
        evaluators/QCAD_PoissonDirichlet.cpp
        evaluators/QCAD_ResponseFieldIntegral.cpp
        evaluators/QCAD_ResponseFieldValue.cpp
+       evaluators/QCAD_ResponseSaddleValue.cpp
        evaluators/QCAD_ResponseSaveField.cpp
+       evaluators/QCAD_EvaluatorTools.cpp
        problems/QCAD_PoissonProblem.cpp
        problems/QCAD_MaterialDatabase.cpp
+       responses/QCAD_SaddleValueResponseFunction.cpp
   )
 
 SET(HEADERS ${HEADERS}
@@ -388,9 +391,14 @@ SET(HEADERS ${HEADERS}
        evaluators/QCAD_ResponseFieldIntegral_Def.hpp
        evaluators/QCAD_ResponseFieldValue.hpp
        evaluators/QCAD_ResponseFieldValue_Def.hpp
+       evaluators/QCAD_ResponseSaddleValue.hpp
+       evaluators/QCAD_ResponseSaddleValue_Def.hpp
        evaluators/QCAD_ResponseSaveField.hpp
        evaluators/QCAD_ResponseSaveField_Def.hpp
+       evaluators/QCAD_EvaluatorTools.hpp
+       evaluators/QCAD_EvaluatorTools_Def.hpp
        problems/QCAD_PoissonProblem.hpp
+       responses/QCAD_SaddleValueResponseFunction.hpp
   )
 
 
@@ -516,7 +524,9 @@ add_executable(AlbanyAnalysis Main_Analysis.cpp)
 # Tests
 add_executable(PartitionTest LCM/test/utils/PartitionTest.cc)
 add_executable(UtilsTest LCM/test/utils/UtilsTest.cc)
+IF (ALBANY_LCM)
 add_executable(NodeUpdate LCM/test/utils/NodeUpdate.cc)
+ENDIF ()
 
 target_link_libraries(Albany          albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
 target_link_libraries(AlbanySG        albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
@@ -538,4 +548,6 @@ target_link_libraries(AlbanyAnalysis  albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT
 #Linking tests
 target_link_libraries(PartitionTest albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
 target_link_libraries(UtilsTest albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
+IF (ALBANY_LCM)
 target_link_libraries(NodeUpdate albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
+ENDIF ()
