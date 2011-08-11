@@ -77,6 +77,7 @@ namespace Albany {
     bool haveNeutSource;   //! have source term in neutron flux equation
     bool havePSPG;     //! have pressure stabilization
     bool haveSUPG;     //! have SUPG stabilization
+    bool porousMedia;  //! flow through porous media problem
     
   };
 

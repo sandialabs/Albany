@@ -57,4 +57,13 @@ struct SPL_Traits {
 typedef Sacado::ScalarParameterLibrary<SPL_Traits> ParamLib;
 typedef Sacado::ScalarParameterVector<SPL_Traits> ParamVec;
 
+namespace Albany {
+
+  // Function to get the underlying value out of a scalar type
+  template <typename T>
+  typename Sacado::ScalarType<T>::type
+  ADValue(const T& x) { return Sacado::ScalarValue<T>::eval(x); }
+
+}
+
 #endif

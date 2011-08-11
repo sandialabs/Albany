@@ -24,82 +24,84 @@ namespace PHAL {
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-NSTauM<EvalT, Traits>::
-NSTauM(const Teuchos::ParameterList& p) :
+NSForchheimerTerm<EvalT, Traits>::
+NSForchheimerTerm(const Teuchos::ParameterList& p) :
   V           (p.get<std::string>                   ("Velocity QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  Gc            (p.get<std::string>                   ("Contravarient Metric Tensor Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-  rho       (p.get<std::string>                   ("Density QP Variable Name"),
+  rho         (p.get<std::string>                   ("Density QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  mu       (p.get<std::string>                   ("Viscosity QP Variable Name"),
-               p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  TauM            (p.get<std::string>                 ("Tau M Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") )
-  
-{
-  this->addDependentField(V);
-  this->addDependentField(Gc);
-  this->addDependentField(rho);
-  this->addDependentField(mu);
+  phi         (p.get<std::string>                   ("Porosity QP Variable Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  K         (p.get<std::string>                   ("Permeability QP Variable Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  F         (p.get<std::string>                   ("Forchheimer QP Variable Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  ForchTerm   (p.get<std::string>                ("Forchheimer Term"),
+ 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") )
  
-  this->addEvaluatedField(TauM);
+{
+  if (p.isType<bool>("Disable Transient"))
+    enableTransient = !p.get<bool>("Disable Transient");
+  else enableTransient = true;
+
+  this->addDependentField(V);
+  this->addDependentField(rho);
+  this->addDependentField(phi);
+  this->addDependentField(K);
+  this->addDependentField(F);
+
+  this->addEvaluatedField(ForchTerm);
 
   Teuchos::RCP<PHX::DataLayout> vector_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
+    p.get< Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
   vector_dl->dimensions(dims);
-  numQPs  = dims[1];
-  numDims = dims[2];
+  numNodes = dims[1];
+  numQPs  = dims[2];
+  numDims = dims[3];
 
   // Allocate workspace
-  normGc.resize(dims[0], numQPs);
+  normV.resize(dims[0], numQPs);
 
-  this->setName("NSTauM"+PHX::TypeString<EvalT>::value);
+  this->setName("NSForchheimerTerm"+PHX::TypeString<EvalT>::value);
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void NSTauM<EvalT, Traits>::
+void NSForchheimerTerm<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(V,fm);
-  this->utils.setFieldData(Gc,fm);
   this->utils.setFieldData(rho,fm);
-  this->utils.setFieldData(mu,fm);
-  
-  this->utils.setFieldData(TauM,fm);
+  this->utils.setFieldData(phi,fm);
+  this->utils.setFieldData(K,fm);
+  this->utils.setFieldData(F,fm);
+
+  this->utils.setFieldData(ForchTerm,fm); 
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void NSTauM<EvalT, Traits>::
+void NSForchheimerTerm<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
-{ 
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {       
-        TauM(cell,qp) = 0.0;
-        normGc(cell,qp) = 0.0;
-        double r = Albany::ADValue(rho(cell,qp));
-        for (std::size_t i=0; i < numDims; ++i) {
-          double Vi = Albany::ADValue(V(cell,qp,i));
-          for (std::size_t j=0; j < numDims; ++j) {
-            double Vj = Albany::ADValue(V(cell,qp,j));
-            double gc = Albany::ADValue(Gc(cell,qp,i,j));
-            TauM(cell,qp) += r*r*Vi*gc*Vj;
-            normGc(cell,qp) += gc*gc;          
-          }
-        }
-        double m = Albany::ADValue(mu(cell,qp));
-        TauM(cell,qp) += 12*m*m*std::sqrt(normGc(cell,qp));
-        TauM(cell,qp) = 1/std::sqrt(TauM(cell,qp));
-      }
+{
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+    for (std::size_t qp=0; qp < numQPs; ++qp) {     
+      normV(cell,qp) = 0.0; 
+      for (std::size_t i=0; i < numDims; ++i) {
+          normV(cell,qp) += V(cell,qp,i)*V(cell,qp,i); 
+      } 
+      if (normV(cell,qp) > 0)
+        normV(cell,qp) = std::sqrt(normV(cell,qp));
+      else
+        normV(cell,qp) = 0.0;
+      for (std::size_t i=0; i < numDims; ++i) {
+          ForchTerm(cell,qp,i) = phi(cell,qp)*rho(cell,qp)*F(cell,qp)*normV(cell,qp)*V(cell,qp,i)/std::sqrt(K(cell,qp));
+      } 
     }
-  
-
+  }
 }
 
-//**********************************************************************
 }
 
