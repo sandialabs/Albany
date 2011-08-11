@@ -525,6 +525,7 @@ ENAT::SGNOXSolver::getValidSGParameters() const
      rcp(new Teuchos::ParameterList("ValidSGParams"));;
   validPL->sublist("SG Parameters", false, "");
   validPL->sublist("SG Solver Parameters", false, "");
+  validPL->sublist("Response KL", false, "");                    
   validPL->sublist("MP Solver Parameters", false, "");
   validPL->sublist("Basis", false, "");
   validPL->sublist("Expansion", false, "");
