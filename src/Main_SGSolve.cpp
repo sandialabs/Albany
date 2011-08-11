@@ -26,6 +26,7 @@
 #include "Teuchos_StandardCatchMacros.hpp"
 #include "Stokhos.hpp"
 #include "Stokhos_Epetra.hpp"
+#include "Stokhos_PCEAnasaziKL.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 // begin jrr
@@ -33,7 +34,7 @@
 // Global function to encapsulate KL solution computation...
 //
 
-bool Stokhos::KL_OnSolutionMultiVector( const Teuchos::RCP<ENAT::SGNOXSolver>& App_sg, 
+bool KL_OnSolutionMultiVector( const Teuchos::RCP<ENAT::SGNOXSolver>& App_sg, 
 					const Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly>& sg_u,
 					const Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> >& basis,
 					const int NumKL,
@@ -41,13 +42,15 @@ bool Stokhos::KL_OnSolutionMultiVector( const Teuchos::RCP<ENAT::SGNOXSolver>& A
 					Teuchos::RCP<Epetra_MultiVector>& evecs)
 {
 
+  /*
   Teuchos::RCP<EpetraExt::BlockVector> X;
-  X = Teuchos::rcp(new EpetraExt::BlockVector(finalSolution->Map(),
-						    *(App_sg->get_x_map())));
+  X = Teuchos::rcp(new EpetraExt::BlockVector((*sg_u)[0].Map(),
+					      sg_u->getBlockVector()->Map()));
   sg_u->assignToBlockVector(*X);
+  */
 
   Teuchos::RCP<EpetraExt::BlockVector> X_ov = 
-    App_sg->import_solution(*X);
+    App_sg->get_sg_model()->import_solution(*(sg_u->getBlockVector()));
   Teuchos::RCP<const EpetraExt::BlockVector> cX_ov = X_ov;
 
   // pceKL is object with member functions that explicitly call anasazi
@@ -66,12 +69,7 @@ bool Stokhos::KL_OnSolutionMultiVector( const Teuchos::RCP<ENAT::SGNOXSolver>& A
 
   // Self explanatory
   bool result = pceKL.computeKL(anasazi_params);
-  if (!result)
-    {
-      utils.out() << "KL Eigensolver did not converge!" << std::endl;
-      return result;
-    }
-
+   
   // Retrieve evals/evectors into return argument slots...
   evals = pceKL.getEigenvalues();
   evecs = pceKL.getEigenvectors();
@@ -130,6 +128,7 @@ int main(int argc, char *argv[]) {
     Albany::SolverFactory sg_slvrfctry(sg_xmlfilename, Albany_MPI_COMM_WORLD);
     Teuchos::ParameterList& appParams = sg_slvrfctry.getParameters();
     Teuchos::ParameterList& problemParams = appParams.sublist("Problem");
+
     Teuchos::ParameterList& sgParams =
       problemParams.sublist("Stochastic Galerkin");
     Teuchos::ParameterList& sg_parameterParams = 
@@ -140,6 +139,18 @@ int main(int argc, char *argv[]) {
       sg_basisParams.set("Dimension", numParameters);
     Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> > basis = 
       Stokhos::BasisFactory<int,double>::create(sgParams);
+
+    //////////////////////////////////////////////////////////////////////
+    // begin jrr
+    // pull out params for Solution KL
+    Teuchos::ParameterList& solKLParams =
+      sgParams.sublist("Response KL");
+    bool computeKLOnResponse = solKLParams.get("ComputeKLOnResponse", 0);
+    int NumKL = solKLParams.get("NumKL", 0);
+    // end jrr
+    //////////////////////////////////////////////////////////////////////
+
+
 
     // Create multi-level comm and spatial comm
     int num_stoch_blocks;
@@ -217,7 +228,7 @@ int main(int argc, char *argv[]) {
     responses_out_sg.set_g_sg(0,g_sg);
 
     // begin jrr
-    responses_out_sg.set_g_sg(1, u_sg);
+    responses_out_sg.set_g_sg(1, sg_u);
     // end jrr
 
     App_sg->evalModel(params_in_sg, responses_out_sg);
@@ -247,25 +258,27 @@ int main(int argc, char *argv[]) {
     *out << setprecision(16) << std_dev << std::endl;
 
     // begin jrr
-    // Finish setup for, then call KL solver...
-    int NumKL = 5; // Still to do: figure out a way for user to input this
-    Teuchos::Array<double> evals;
-    Teuchos::RCP<Epetra_MultiVector> evecs;
-
-    bool KL_success = Stokhos::KL_OnSolutionMultiVector(App_sg, 
-							sg_u,
-							basis,
-							NumKL,
-							evals,
-							evecs);
-
-    if (!KL_success) 
-      utils.out() << "KL Eigensolver did not converge!" << std::endl;
+    // Finish setup for, then call KL solver if asked...
+    if( computeKLOnResponse )
+      {
+	//    int NumKL = 5; // Get this from input xml file parameters
+	Teuchos::Array<double> evals;
+	Teuchos::RCP<Epetra_MultiVector> evecs;
+	
+	bool KL_success = KL_OnSolutionMultiVector(App_sg, 
+						   sg_u,
+						   basis,
+						   NumKL,
+						   evals,
+						   evecs);
+	
+	if (!KL_success) 
+	  *out << "KL Eigensolver did not converge!" << std::endl;
     
-    *out << "Eigenvalues = " << std::endl;
-    for (int i=0; i< NumKL; i++)
-      *out << evals[i] << std::endl;
-
+	*out << "Eigenvalues = " << std::endl;
+	for (int i=0; i< NumKL; i++)
+	  *out << evals[i] << std::endl;
+      }
     // for now, we'll look at the numbers in a debugger... :)
     // end jrr
   }
