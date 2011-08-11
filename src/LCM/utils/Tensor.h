@@ -890,16 +890,22 @@ namespace LCM {
   Tensor<ScalarT>
   log_rotation_pi(Tensor<ScalarT> const & R);
 
-
+  /// Gaussian Elimination with partial pivot
+  /// \param matrix where [A b] used to solve A*xvec=b \f$
+  /// \return \f$ xvec \f$
+  ///
+  template<typename ScalarT>
+  Tensor<ScalarT>
+  GaussianElimination(Tensor<ScalarT> const & R);
 
   ///
-  /// Exponential map of a rotation
+  /// Exponential map of a skew-symmetric tensor
   /// \param r \f$ r \in so(3) \f$
   /// \return \f$ R = \exp R \f$ with \f$ R \in SO(3) \f$
   ///
   template<typename ScalarT>
   Tensor<ScalarT>
-  exp_rotation(Tensor<ScalarT> const & r);
+  exp_skew_symmetry(Tensor<ScalarT> const & r);
 
   ///
   /// Left polar decomposition

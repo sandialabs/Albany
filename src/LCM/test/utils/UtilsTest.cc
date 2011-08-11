@@ -63,7 +63,7 @@ int main(int ac, char* av[])
   // The tests
   //
   int PassedTestCount = 0;
-  const int TotalTests = 13;
+  const int TotalTests = 14;
   bool passed = false;
 
   //
@@ -310,7 +310,8 @@ int main(int ac, char* av[])
   LCM::Tensor<ScalarT> r0 = log_rotation(R0);
 
   passed = LCM::norm(r - LCM::zero<ScalarT>()) <= std::numeric_limits<ScalarT>::epsilon();
-  passed = passed && std::abs(r0(0,1) + 0.785398163397448) <= 10*std::numeric_limits<ScalarT>::epsilon();
+  passed = passed && std::abs(r0(0,1) + 0.785398163397448) <=
+		   10*std::numeric_limits<ScalarT>::epsilon();
   passed = passed && std::abs(r0(0,1) + r0(1,0)) <= 10*std::numeric_limits<ScalarT>::epsilon();
 
   if (passed == true) {
@@ -360,33 +361,39 @@ int main(int ac, char* av[])
 //
 // Test 12
 //
-// Test the log mapping of element from SO(3) group. In this test, a reference solution is
-// calculated by hand. This solution is compared with the solution computed via function log_rotation
+// Test the log mapping of element from SO(3) group. In this test,
+//a reference solution is  calculated by hand. This solution is compared
+//with the solution computed via function log_rotation.
+// rotation angle equal to pi with respect to z axis in this case.
 // added by WaiChing Sun 8/4/2011
 
   //Create a 0.3 rad rotation use Z axis. Store it at R.
-  double theta = 3.141592653589793; // rotation angle
+  double theta = std::acos(-1.0); // rotation angle
+
   R(0,0) =  cos(theta);
   R(1,1) =  cos(theta);
   R(0,1) =  sin(theta);
   R(1,0) = -sin(theta);
+  R(2,2) =  1.0;
 
   // Compute log R via Rodrigues' rotation formulas
   logR = log_rotation(R); // reuse logR and reassign component via log_rotation
 
   // Enter solution computed by hand
   LCM::Tensor<ScalarT> Rref(0.0); // create 3-by-3 zero tensor
-  Rref(1,0) = 3.141592653589793;
-  Rref(0,1) = -3.141592653589793;
+  Rref(0,1) = std::acos(-1.0);
+  Rref(1,0) = -std::acos(-1.0);
+
 
 
   // Compute those two values (if correct, passed == 1)
-  passed = norm(logR - Rref) <= 100*std::numeric_limits<ScalarT>::epsilon();
+  passed =(norm(logR - Rref) <= 100*std::numeric_limits<ScalarT>::epsilon()) ||
+		  ( norm(logR + Rref) <= 100*std::numeric_limits<ScalarT>::epsilon());
   if (passed == true) {
       PassedTestCount++;
   } else
   {
-	  std::cout << "Error in logarithmic mapping for SO(3)" << std::endl;
+	  std::cout << "Error in logarithmic mapping for SO(3) in Test 12" << std::endl;
 	  std::cout << norm(logR - Rref) << std::endl;
   }
 
@@ -402,21 +409,62 @@ int main(int ac, char* av[])
 //
 // Test 13
 //
+// Test the exp mapping from so(3) to SO(3). In this test,
+// a reference solution is  calculated by hand. This solution is compared
+// with the solution computed via function log_rotation.
+// rotation angle equal to pi with respect to z axis in this case.
+// added by WaiChing Sun 8/8/2011.
+   u(0) = std::acos(-1.0)/std::sqrt(2.0); //generate basis vector
+   u(1) = u(0);
+   u(2) = 0.0;
+
+   LCM::Tensor<ScalarT> R1(0.0); // create 3-by-3 zero tensor
+   LCM::Tensor<ScalarT> logR2(0.0); // create 3-by-3 zero tensor
+   logR2(0,2) =  u(1);
+   logR2(1,2) = -u(0);
+   logR2(2,0) = -u(1);
+   logR2(2,1) =  u(0);
+   logR2(0,1) = -u(2);
+   logR2(1,0) =  u(2);
+
+   R1 = exp_skew_symmetry(logR2); // perform log mapping
+   Rref = LCM::zero<ScalarT>();
+   Rref(0,1) = 1.0;
+   Rref(1,0) = 1.0;
+   Rref(2,2) = -1.0;
+   // Compare exp(log(R)) with R
+   passed = norm(Rref- R1) <= 100*std::numeric_limits<ScalarT>::epsilon();
+
+   if (passed == true) {
+       PassedTestCount++;
+   } else {
+	   std::cout << "Error in logarithmic mapping for SO(3) in Test 13" << std::endl;
+	   std::cout << norm(R1 - Rref) << std::endl;
+   }
+
+   if(verbose || debug) {
+		std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
+		  std::cout << std::endl;
+  }
+
+
+//
+// Test 14
+//
 // Test exp and log mapping between SO(3) and so(3) groups. We check whether
 // exp(log(R)) - R = 0 using the log(R) computed in test 12.
 // added by WaiChing Sun 8/4/2011
 
     // Compare exp(log(R)) with R
-    passed = norm(exp_rotation(logR) - R) <= 100*std::numeric_limits<ScalarT>::epsilon();
+    passed = norm(exp_skew_symmetry(logR) - R) <= 100*std::numeric_limits<ScalarT>::epsilon();
 
     if (passed == true) {
           PassedTestCount++;
     } else
     {
-        std::cout << "Error in exponential mapping for so(3)" << std::endl;
-    	std::cout << norm(exp_rotation(logR) - R) << std::endl;
+        std::cout << "Error in exponential mapping for so(3) in Test 14" << std::endl;
+    	std::cout << norm(exp_skew_symmetry(logR) - R) << std::endl;
     }
-
     if(verbose || debug) {
           std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
             std::cout << std::endl;

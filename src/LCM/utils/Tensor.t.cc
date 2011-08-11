@@ -57,6 +57,8 @@ namespace LCM {
   Tensor<ScalarT>
   log(Tensor<ScalarT> const & A)
   {
+	// Check whether skew-symmetric holds
+
     const Index
     maxNumIter = 128;
 
@@ -121,7 +123,7 @@ namespace LCM {
 
     if (theta == 0) {
       r = zero<ScalarT>();
-    } else if (abs(cosine +1.0) < std::numeric_limits<ScalarT>::epsilon()) {
+    } else if (abs(cosine +1.0) < 10.0*std::numeric_limits<ScalarT>::epsilon())  {
       // Rotation angle is PI.
     	r = log_rotation_pi(R);
     } else {
@@ -132,42 +134,119 @@ namespace LCM {
   }
 
   // Logarithmic map of a 180-degree rotation
+  // \param R with \f$ R \in SO(3) \f$
+  // \return \f$ r = \log R \f$ with \f$ r \in so(3) \f$
   //
   template<typename ScalarT>
   Tensor<ScalarT>
   log_rotation_pi(Tensor<ScalarT> const & R)
   {
+	  // set firewall to make sure the rotation is indeed 180 degrees
+	  assert( abs(0.5*(trace(R) - 1.0) + 1.0)
+			  < std::numeric_limits<ScalarT>::epsilon());
 	  ScalarT pi = acos(-1.0);
+	  ScalarT mag;
+	  const ScalarT tol = 10.0*std::numeric_limits<ScalarT>::epsilon();
 
-	  Tensor<ScalarT> r;
+	  Tensor<ScalarT> r= zero<ScalarT>();
+      Vector<ScalarT> normalvector;
+
+      // obtain U from R = LU where size(R)=(3,3)//
+	  r =  GaussianElimination((R-identity<ScalarT>()));
+
+	  // backward substitution (for rotation exp(R) only)
+	  if (abs(r(2,2)) < tol){
+		  normalvector(2) = 1.0;
+	  } else {
+		  normalvector(2) = 0.0;
+	  }
+
+	  if (abs(r(1,1)) < tol){
+		  normalvector(1) = 1.0;
+	  } else {
+		  normalvector(1) = -normalvector(2)*r(1,2)/r(1,1);
+	  }
+
+	  if (abs(r(0,0)) < tol){
+		  normalvector(0) = 1.0;
+	  } else {
+		  normalvector(0) = -normalvector(1)*r(0,1)
+				            -normalvector(2)*r(0,2)/r(0,0);
+	  }
+
+      mag = norm(normalvector);
+	  normalvector(0) = (1.0/mag)*normalvector(0);
+	  normalvector(1) = (1.0/mag)*normalvector(1);
+	  normalvector(2) = (1.0/mag)*normalvector(2);
 
 	  r = zero<ScalarT>();
+	  r(0,1) = -normalvector(2);
+	  r(0,2) =  normalvector(1);
+	  r(1,0) =  normalvector(2);
+	  r(1,2) = -normalvector(0);
+      r(2,0) = -normalvector(1);
+      r(2,1) =  normalvector(0);
 
-	  // Determine the eigenvector corresponding to eigenvalue 1 of R
-	  // by finding out where is the positive 1 in the diagonal term.
-	  // Then use isomorphism to construct the close form for the
-	  // exponential map.
-	  if (abs(R(0,0) - 1.0)  < std::numeric_limits<ScalarT>::epsilon()) {
-		  r(1,2) = -pi;
-		  r(2,1) = pi;
-	  } else if (abs(R(1,1) - 1.0)  < std::numeric_limits<ScalarT>::epsilon())  {
-		  r(0,2) = pi;
-		  r(2,0) = -pi;
-	  } else if (abs(R(2,2) - 1.0)  < std::numeric_limits<ScalarT>::epsilon())  {
-		  r(0,1) = -pi;
-		  r(1,0) = pi;
-	  } else assert(0);
+      r = pi*r;
+	  return r;
+   }
 
+  // Gaussian Elimination with partial pivot
+  // \param matrix where [A b] used to solve A*x=b \f$
+  // \return \f$ U where A = LU \f$
+  //
+  template<typename ScalarT>
+  Tensor<ScalarT>
+  GaussianElimination(Tensor<ScalarT> const & R)
+  {
+	  Tensor<ScalarT> r=R;
+	  ScalarT temp; // temporary storage to swap rows
+	  const ScalarT tol = 10.0*std::numeric_limits<ScalarT>::epsilon();
+	  short int i=0;
+	  short int j=0;
+	  short int maxi=0;
+      while ( (i <  MaxDim) && (j< MaxDim)){
+    	  // find pivot in column j, starting in row i
+    	  maxi = i;
+    	  for (short int k=i+1; k < MaxDim; ++k) {
+    		  if (abs(r(k,j) > abs(r(maxi,j)))) maxi = k;
+    	  }
+
+    	  // Check if A(maxi,j) equal to or very close to 0
+    	  if (abs(r(maxi,j)) > tol){
+    		  // swap rows i and maxi and divide each entry in row i
+    		  // by r(i,j)
+    		  for (Index k=0; k < MaxDim; ++k) {
+    			  temp = r(maxi,k);
+    			  r(maxi,k) = r(i,k);
+    			  r(i,k) = temp;
+    		  }
+    		  for (Index k=0; k < MaxDim; ++k) {
+    			  r(i,k) = r(i,k)/r(i,j);
+    		  }
+    		  for (Index u=i+1; u < MaxDim; ++u){
+    			  for (short int k=0; k < MaxDim; ++k) {
+   				  r(u,k) = r(u,k) - r(u,i)*r(i,k)/r(i,i);
+    			  }
+    		  }
+    		  i = i +1;
+    	  }
+    	  j=j+1;
+
+      }
 	  return r;
   }
+
+
+
   //
-  // Exponential map of a rotation
+  // Exponential map of a skew-symmetric tensor
   // \param r \f$ r \in so(3) \f$
   // \return \f$ R = \exp R \f$ with \f$ R \in SO(3) \f$
   //
   template<typename ScalarT>
   Tensor<ScalarT>
-  exp_rotation(Tensor<ScalarT> const & r)
+  exp_skew_symmetry(Tensor<ScalarT> const & r)
   {
 	  Tensor<ScalarT> R;
 
@@ -179,7 +258,8 @@ namespace LCM {
 		 R = identity<ScalarT>();
       } else {
 		 // compute the norm of the basis vector
-		 R = identity<ScalarT>() + sin(normVector)/normVector*r+(1-cos(normVector))/(normVector*normVector)*r*r;
+		 R = identity<ScalarT>() + sin(normVector)/normVector*r+
+			 (1.0-cos(normVector))/(normVector*normVector)*r*r;
       }
 
 
