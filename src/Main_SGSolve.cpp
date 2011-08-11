@@ -145,7 +145,7 @@ int main(int argc, char *argv[]) {
     // pull out params for Solution KL
     Teuchos::ParameterList& solKLParams =
       sgParams.sublist("Response KL");
-    bool computeKLOnResponse = solKLParams.get("ComputeKLOnResponse", 0);
+    bool computeKLOnResponse = solKLParams.get("ComputeKLOnResponse", false);
     int NumKL = solKLParams.get("NumKL", 0);
     // end jrr
     //////////////////////////////////////////////////////////////////////
