@@ -60,6 +60,9 @@ Albany::Application::Application(
   // Create parameter library
   paramLib = rcp(new ParamLib);
 
+  // Attach paramLib to TimeManager
+  timeMgr.init(paramLib);
+
   // Create problem object
   RCP<Teuchos::ParameterList> problemParams = 
     Teuchos::sublist(params, "Problem", true);
@@ -315,6 +318,10 @@ Albany::Application::computeGlobalResidual(
 	(*(p[i]))[j].family->setRealValueForAllTypes((*(p[i]))[j].baseValue);
   }
 
+  // put current_time (from Rythmos) if this is a transient problem, then compute dt
+  if (xdot != NULL) timeMgr.setTime(current_time);
+  timeMgr.computeDeltaTime();
+  
   // Mesh motion needs to occur here on the global mesh befor
   // it is potentially carved into worksets.
 #ifdef ALBANY_CUTR
@@ -338,7 +345,8 @@ Albany::Application::computeGlobalResidual(
   // Set data in Workset struct, and perform fill via field manager
   { 
     PHAL::Workset workset;
-    loadBasicWorksetInfo(workset, overlapped_x, overlapped_xdot, current_time);
+    loadBasicWorksetInfo(workset, overlapped_x, overlapped_xdot, 
+			 timeMgr.getCurrentTime(), timeMgr.getDeltaTime());
 
     workset.f        = overlapped_f;
 
@@ -398,6 +406,11 @@ Albany::Application::computeGlobalJacobian(
       for (unsigned int j=0; j<p[i]->size(); j++)
 	(*(p[i]))[j].family->setRealValueForAllTypes((*(p[i]))[j].baseValue);
   }
+
+  // put current_time (from Rythmos) if this is a transient problem, then compute dt
+  if (xdot != NULL) timeMgr.setTime(current_time);
+  timeMgr.computeDeltaTime();
+
 #ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
     TimeMonitor Timer(*timers[8]); //start timer
@@ -426,7 +439,8 @@ Albany::Application::computeGlobalJacobian(
   // Set data in Workset struct, and perform fill via field manager
   {
     PHAL::Workset workset;
-    loadBasicWorksetInfo(workset, overlapped_x, overlapped_xdot, current_time);
+    loadBasicWorksetInfo(workset, overlapped_x, overlapped_xdot, 
+			 timeMgr.getCurrentTime(), timeMgr.getDeltaTime());
     workset.f        = overlapped_f;
     workset.Jac      = overlapped_jac;
     loadWorksetJacobianInfo(workset, alpha, beta);
@@ -697,7 +711,8 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
   // Set data in Workset struct, and perform fill via field manager
   {
     PHAL::Workset workset;
-    loadBasicWorksetInfo(workset, overlapped_x, overlapped_xdot, current_time);
+    loadBasicWorksetInfo(workset, overlapped_x, overlapped_xdot, 
+			 timeMgr.getCurrentTime(), timeMgr.getDeltaTime());
 
     workset.params = params;
     workset.Vx = overlapped_Vx;
@@ -976,7 +991,7 @@ evaluateResponses_rfm(const Epetra_Vector* xdot,
   // Set data in Workset struct, and perform fill via field manager
   { 
     PHAL::Workset workset;
-    loadBasicWorksetInfo(workset, overlapped_x, overlapped_xdot, 0.0);
+    loadBasicWorksetInfo(workset, overlapped_x, overlapped_xdot, 0.0, 0.0);
     
     workset.responses = wsResponses;
 
@@ -1099,7 +1114,7 @@ evaluateResponseGradients_rfm(
     beta  = 1;
     {
       PHAL::Workset workset;
-      loadBasicWorksetInfo(workset, overlapped_x, overlapped_xdot, 0.0);
+      loadBasicWorksetInfo(workset, overlapped_x, overlapped_xdot, 0.0, 0.0);
       
       workset.responses           = wsResponses;
       workset.responseDerivatives = wsResponseDerivs;
@@ -1175,7 +1190,7 @@ evaluateResponseGradients_rfm(
     beta  = 0;
     {
       PHAL::Workset workset;
-      loadBasicWorksetInfo(workset, overlapped_x, overlapped_xdot, 0.0);
+      loadBasicWorksetInfo(workset, overlapped_x, overlapped_xdot, 0.0, 0.0);
       
       workset.responses           = wsResponses;
       workset.responseDerivatives = wsResponseDerivs;
@@ -1944,11 +1959,12 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset, const in
 
 void Albany::Application::loadBasicWorksetInfo(
        PHAL::Workset& workset, RCP<Epetra_Vector> overlapped_x,
-       RCP<Epetra_Vector> overlapped_xdot, double current_time)
+       RCP<Epetra_Vector> overlapped_xdot, double current_time, double delta_time)
 {
     workset.x        = overlapped_x;
     workset.xdot     = overlapped_xdot;
     workset.current_time = current_time;
+    workset.delta_time = delta_time;
     if (overlapped_xdot != Teuchos::null) workset.transientTerms = true;
     workset.worksetSize = worksetSize;
 }

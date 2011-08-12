@@ -35,6 +35,7 @@
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_AbstractProblem.hpp"
 #include "Albany_StateManager.hpp"
+#include "Albany_TimeManager.hpp"
 
 #ifdef ALBANY_CUTR
   #include "CUTR_CubitMeshMover.hpp"
@@ -283,6 +284,9 @@ namespace Albany {
     //! Class to manage state variables (a.k.a. history)
     StateManager& getStateMgr() {return stateMgr;};
 
+    //! Class to manage time
+    TimeManager& getTimeMgr() {return timeMgr;};
+
     //! Access to number of worksets - needed for working with StateManager
     int getNumWorksets() { return numWorksets;};
     
@@ -347,7 +351,8 @@ namespace Albany {
             PHAL::Workset& workset,
             Teuchos::RCP<Epetra_Vector> overlapped_x,
             Teuchos::RCP<Epetra_Vector> overlapped_xdot,
-            double current_time);
+            double current_time,
+	    double delta_time);
 
     void loadWorksetJacobianInfo(PHAL::Workset& workset,
                 const double& alpha, const double& beta);
@@ -471,6 +476,8 @@ namespace Albany {
     mutable int phxGraphVisDetail;
 
     StateManager stateMgr;
+
+    TimeManager timeMgr;
 
     bool morphFromInit;
     bool ignore_residual_in_jacobian;
