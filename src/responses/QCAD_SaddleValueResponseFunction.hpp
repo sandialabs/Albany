@@ -34,8 +34,9 @@ namespace QCAD {
   class SaddleValueResponseFunction : public Albany::AbstractResponseFunction {
   public:
   
-    //! Default constructor
-    SaddleValueResponseFunction(const int numDim_);
+    //! Constructor
+    SaddleValueResponseFunction(const int numDim_, 
+				Teuchos::ParameterList& params);
 
     //! Destructor
     virtual ~SaddleValueResponseFunction();
@@ -110,7 +111,9 @@ namespace QCAD {
     std::vector<double> vCoords[MAX_DIMENSION];
     std::size_t numDims;
 
-    Teuchos::RCP<const Epetra_Comm> pcomm;
+    double fieldCutoffFctr;
+    double minPoolDepthFctr;
+    double distanceCutoffFctr;
   };
 
 }

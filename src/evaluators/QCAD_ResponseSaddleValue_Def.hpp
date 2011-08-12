@@ -211,6 +211,10 @@ QCAD::ResponseSaddleValue<EvalT,Traits>::getValidResponseParameters() const
 
   validPL->set<string>("Element Block Name", "", "Element block name that specifies domain");
 
+  validPL->set<double>("Field Cutoff Factor", 1.0, "Fraction of field range to use as cutoff in saddle algorithm");
+  validPL->set<double>("Minimum Pool Depth Factor", 0.1, "Fraction of field range to use as minimum pool depth in saddle algorithm");
+  validPL->set<double>("Distance Cutoff Factor", 0.2, "Fraction of largest coordinate difference to use as cutoff in saddle algorithm");
+
   return validPL;
 }
 

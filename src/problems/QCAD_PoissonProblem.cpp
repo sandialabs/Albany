@@ -543,8 +543,8 @@ QCAD::PoissonProblem::constructResponses(
        RCP<ParameterList> p = rcp(new ParameterList);
        
        RCP<QCAD::SaddleValueResponseFunction> 
-	 svResponse = Teuchos::rcp(new QCAD::SaddleValueResponseFunction(numDim)); 
-       //for erik: add responseParams to constructor
+	 svResponse = Teuchos::rcp(new QCAD::SaddleValueResponseFunction(
+					     numDim, responseParams)); 
        responses[i] = svResponse;
        
        p->set<string>("Response ID", responseID);

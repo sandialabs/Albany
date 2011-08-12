@@ -20,9 +20,12 @@
 
 
 QCAD::SaddleValueResponseFunction::
-SaddleValueResponseFunction(const int numDim_)
+SaddleValueResponseFunction(const int numDim_, Teuchos::ParameterList& params)
   : numDims(numDim_)
 {
+  fieldCutoffFctr = params.get<double>("Field Cutoff Factor", 1.0);
+  minPoolDepthFctr = params.get<double>("Minimum Pool Depth Factor", 0.1);
+  distanceCutoffFctr = params.get<double>("Distance Cutoff Factor", 0.2);
 }
 
 QCAD::SaddleValueResponseFunction::
@@ -178,6 +181,9 @@ void
 QCAD::SaddleValueResponseFunction::
 postProcessResponses(const Epetra_Comm& comm, Teuchos::RCP<Epetra_Vector>& g)
 {
+  bool bDebug = false;
+  bool bShortInfo = true;
+
   //Gather data from different processors
   std::vector<double> allFieldVals;
   std::vector<double> allRetFieldVals;
@@ -199,15 +205,11 @@ postProcessResponses(const Epetra_Comm& comm, Teuchos::RCP<Epetra_Vector>& g)
     return;
   }
 
-  //std::cout << "DEBUG: Response Function -- mySize = " << vFieldValues.size()
-  //	    << ", gatheredSize = " << allFieldVals->MyLength() << std::endl;
-
-  //DEBUG TEST - set responses to average quantities
-  /*(*g)[0] = averageOfVector(allRetFieldVals);
-  (*g)[1] = averageOfVector(allFieldVals);
-  for(std::size_t k=0; k<numDims && k < 3; k++) // 3 hardcoded b/c g has 5 elements (see above)
-    (*g)[2+k] = averageOfVector(allCoords[k]);
-  */
+  if(bShortInfo) {
+    std::cout << std::endl << "--- Begin Saddle Point Response Function ---" << std::endl;
+    std::cout << "--- Saddle: local size (this proc) = " << vFieldValues.size()
+	      << ", gathered size (all procs) = " << allFieldVals.size() << std::endl;
+  }
 
   // Level-set Algorithm for finding saddle point
 
@@ -232,62 +234,115 @@ postProcessResponses(const Epetra_Comm& comm, Teuchos::RCP<Epetra_Vector>& g)
   }
 
   
-  double maxDistanceDelta = 0.0;
+  /*double maxDistanceDelta = 0.0;
   for(std::size_t k=0; k<numDims && k < 3; k++) {
     if( fabs(maxCoords[k] - minCoords[k]) > maxDistanceDelta )
       maxDistanceDelta = fabs(maxCoords[k] - minCoords[k]);
+  }*/
+  double avgCellLength = pow(averageOfVector(allCellVols), 1.0/numDims);
+  double maxFieldDifference = fabs(maxFieldVal - minFieldVal);
+
+  double cutoffDistance, cutoffFieldVal, minDepth;
+  cutoffDistance = avgCellLength * distanceCutoffFctr;
+  cutoffFieldVal = maxFieldDifference * fieldCutoffFctr;
+  minDepth = maxFieldDifference * minPoolDepthFctr;
+
+
+
+  if(bShortInfo) {
+    std::cout << "--- Saddle: distance cutoff = " << cutoffDistance
+	      << ", field cutoff = " << cutoffFieldVal 
+	      << ", min depth = " << minDepth << std::endl;
+    std::cout << "--- Saddle: max field difference = " << maxFieldDifference
+	      << ", avg cell length = " << avgCellLength << std::endl;
   }
 
-  double cutoffDistance, cutoffFieldVal;
-  cutoffDistance = maxDistanceDelta / 5; //hardcoded - variable later
-  cutoffFieldVal = fabs(maxFieldVal - minFieldVal) / 50; //hardcoded - variable later
-  std::cout << "DEBUG: distance cutoff = " << cutoffDistance
-	    << ", field cutoff = " << cutoffFieldVal << std::endl;
 
   // Walk through sorted data.  At current point, walk backward in list 
   //  until either 1) a "close" point is found, as given by tolerance -> join to tree
   //            or 2) the change in field value exceeds some maximium -> new tree
 
-  std::cout << "DEBUG: begin algorithm" << std::endl;
   std::vector<int> treeIDs(N, -1);
-  int nTrees = 0, nextAvailableTreeID = 1, treeIDtoReplace;
+  std::vector<double> minFieldVals; //for each tree
+  std::vector<int> treeSizes; //for each tree
+  int nextAvailableTreeID = 0;
+
+  int nTrees = 0, nDeepTrees=0, lastDeepTrees=0, treeIDtoReplace;
   int I, J, K;
   for(std::size_t i=0; i < N; i++) {
     I = ordering[i];
-    std::cout << "DEBUG: i=" << i << "( I = " << I << "), val="
-	      << allFieldVals[I] << ", loc=(" << allCoords[0][I] 
-	      << "," << allCoords[1][I] << ")" << std::endl;
+
+
+    if(bDebug || bShortInfo) {
+      nDeepTrees = 0;
+      for(std::size_t t=0; t < treeSizes.size(); t++) {
+	if(treeSizes[t] > 0 && (allFieldVals[I]-minFieldVals[t]) > minDepth) nDeepTrees++;
+      }
+    }
+
+    if(bDebug) std::cout << "DEBUG: i=" << i << "( I = " << I << "), val="
+			 << allFieldVals[I] << ", loc=(" << allCoords[0][I] 
+			 << "," << allCoords[1][I] << ")" << " nD=" << nDeepTrees;
+
+    if(bShortInfo && lastDeepTrees != nDeepTrees) {
+      std::cout << "--- Saddle: i=" << i << " nPools=" << nTrees 
+		<< " nDeep=" << nDeepTrees << std::endl;
+      lastDeepTrees = nDeepTrees;
+    }
 
     for(int j=i-1; fabs(allFieldVals[I] - allFieldVals[ordering[j]]) < cutoffFieldVal && j >= 0; j--) {
       J = ordering[j];
-      std::cout << "DEBUG:   j=" << j << "( J = " << J << "), val="
-	      << allFieldVals[J] << ", loc=(" << allCoords[0][J] 
-	      << "," << allCoords[1][J] << ")" << std::endl;
+      //std::cout << "DEBUG:   j=" << j << "( J = " << J << "), val="
+      //      << allFieldVals[J] << ", loc=(" << allCoords[0][J] 
+      //      << "," << allCoords[1][J] << ")" << std::endl;
 
 
       if( distance(allCoords, I, J, numDims) < cutoffDistance ) {
 
-	std::cout << "DEBUG:   > j=" << j << " close to i=" << i 
-		  << " : treeIDs = " << treeIDs[J] << "," << treeIDs[I] << std::endl;
+	//std::cout << "DEBUG:   > j=" << j << " close to i=" << i 
+	//	  << " : treeIDs = " << treeIDs[J] << "," << treeIDs[I] << std::endl;
 
 	if(treeIDs[I] == -1) {
 	  treeIDs[I] = treeIDs[J];
+	  treeSizes[treeIDs[I]]++;
+
+	  if(bDebug) std::cout << " --> tree " << treeIDs[J] 
+			       << " ( size=" << treeSizes[treeIDs[J]] << ", depth=" 
+			       << (allFieldVals[I]-minFieldVals[treeIDs[J]]) << ")" << std::endl;
 	}
 	else if(treeIDs[I] != treeIDs[J]) {
-	  std::cout << "DEBUG:   > merging trees " << treeIDs[I] << " --> " << treeIDs[J]
-		    << " (treecount after merge = " << (nTrees-1) << ")" << std::endl;
 
 	  treeIDtoReplace = treeIDs[I];
+	  if( minFieldVals[treeIDtoReplace] < minFieldVals[treeIDs[J]] )
+	    minFieldVals[treeIDs[J]] = minFieldVals[treeIDtoReplace];
+
 	  for(int k=i; k >=0; k--) {
 	    K = ordering[k];
-	    if(treeIDs[K] == treeIDtoReplace)
+	    if(treeIDs[K] == treeIDtoReplace) {
 	      treeIDs[K] = treeIDs[J];
+	      treeSizes[treeIDs[J]]++;
+	    }
 	  }
+	  treeSizes[treeIDtoReplace] = 0;
 	  nTrees -= 1;
 
+	  //update number of deep trees
+	  nDeepTrees = 0;
+	  for(std::size_t t=0; t < treeSizes.size(); t++) {
+	    if(treeSizes[t] > 0 && (allFieldVals[I]-minFieldVals[t]) > minDepth) nDeepTrees++;
+	  }
 
-	  if(nTrees == 1) {
-	    std::cout << "DEBUG: FOUND SADDLE! exiting." << std::endl;
+	  if(bDebug) std::cout << "DEBUG:   also --> " << treeIDs[J] 
+			       << " [merged] size=" << treeSizes[treeIDs[J]]
+			       << " (treecount after merge = " << nTrees << ")" << std::endl;
+
+	  if(bShortInfo) std::cout << "--- Saddle: i=" << i << " nPools=" << nTrees 
+				   << " nDeep=" << nDeepTrees << std::endl;
+
+
+	  if(nDeepTrees == 1) {
+	    if(bDebug) std::cout << "DEBUG: FOUND SADDLE! exiting." << std::endl;
+	    if(bShortInfo) std::cout << "--- Saddle: i=" << i << " Found saddle." << std::endl;
 
 	    //Found saddle at I
 	    (*g)[0] = allRetFieldVals[I];
@@ -304,16 +359,22 @@ postProcessResponses(const Epetra_Comm& comm, Teuchos::RCP<Epetra_Vector>& g)
     } //end j loop
     
     if(treeIDs[I] == -1) {
-      std::cout << "DEBUG: creating new tree with ID " << nextAvailableTreeID
-		<< " (treecount after new = " << (nTrees+1) << ")" << std::endl;
+      if(bDebug) std::cout << " --> new tree with ID " << nextAvailableTreeID
+			   << " (treecount after new = " << (nTrees+1) << ")" << std::endl;
+      if(bShortInfo) std::cout << "--- Saddle: i=" << i << " nPools=" << nTrees 
+			       << " nDeep=" << nDeepTrees << std::endl;
+
       treeIDs[I] = nextAvailableTreeID++;
+      minFieldVals.push_back(allFieldVals[I]);
+      treeSizes.push_back(1);
+
       nTrees += 1;
     }
 
   } // end i loop
 
   // if no saddle found, return all zeros
-  std::cout << "DEBUG: NO SADDLE. exiting." << std::endl;
+  if(bDebug) std::cout << "DEBUG: NO SADDLE. exiting." << std::endl;
   for(std::size_t k=0; k<5; k++) (*g)[k] = 0;
 }
 
