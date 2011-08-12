@@ -57,6 +57,8 @@ namespace LCM {
   Tensor<ScalarT>
   log(Tensor<ScalarT> const & A)
   {
+	// Check whether skew-symmetric holds
+
     const Index
     maxNumIter = 128;
 
@@ -104,8 +106,7 @@ namespace LCM {
   log_rotation(Tensor<ScalarT> const & R)
   {
 
-    Tensor<ScalarT>
-    r;
+    Tensor<ScalarT> r;
 
     // acos requires input between -1 and +1
     ScalarT
@@ -122,14 +123,149 @@ namespace LCM {
 
     if (theta == 0) {
       r = zero<ScalarT>();
-    } else if (cosine == -1.0) {
-      // Rotation angle is PI. Not implemented yet
-      assert(false);
+    } else if (abs(cosine +1.0) < 10.0*std::numeric_limits<ScalarT>::epsilon())  {
+      // Rotation angle is PI.
+    	r = log_rotation_pi(R);
     } else {
       r = ScalarT(theta/(2.0*sin(theta)))*(R - transpose(R));
     }
 
     return r;
+  }
+
+  // Logarithmic map of a 180-degree rotation
+  // \param R with \f$ R \in SO(3) \f$
+  // \return \f$ r = \log R \f$ with \f$ r \in so(3) \f$
+  //
+  template<typename ScalarT>
+  Tensor<ScalarT>
+  log_rotation_pi(Tensor<ScalarT> const & R)
+  {
+	  // set firewall to make sure the rotation is indeed 180 degrees
+	  assert( abs(0.5*(trace(R) - 1.0) + 1.0)
+			  < std::numeric_limits<ScalarT>::epsilon());
+	  ScalarT pi = acos(-1.0);
+	  ScalarT mag;
+	  const ScalarT tol = 10.0*std::numeric_limits<ScalarT>::epsilon();
+
+	  Tensor<ScalarT> r= zero<ScalarT>();
+      Vector<ScalarT> normalvector;
+
+      // obtain U from R = LU where size(R)=(3,3)//
+	  r =  GaussianElimination((R-identity<ScalarT>()));
+
+	  // backward substitution (for rotation exp(R) only)
+	  if (abs(r(2,2)) < tol){
+		  normalvector(2) = 1.0;
+	  } else {
+		  normalvector(2) = 0.0;
+	  }
+
+	  if (abs(r(1,1)) < tol){
+		  normalvector(1) = 1.0;
+	  } else {
+		  normalvector(1) = -normalvector(2)*r(1,2)/r(1,1);
+	  }
+
+	  if (abs(r(0,0)) < tol){
+		  normalvector(0) = 1.0;
+	  } else {
+		  normalvector(0) = -normalvector(1)*r(0,1)
+				            -normalvector(2)*r(0,2)/r(0,0);
+	  }
+
+      mag = norm(normalvector);
+	  normalvector(0) = (1.0/mag)*normalvector(0);
+	  normalvector(1) = (1.0/mag)*normalvector(1);
+	  normalvector(2) = (1.0/mag)*normalvector(2);
+
+	  r = zero<ScalarT>();
+	  r(0,1) = -normalvector(2);
+	  r(0,2) =  normalvector(1);
+	  r(1,0) =  normalvector(2);
+	  r(1,2) = -normalvector(0);
+      r(2,0) = -normalvector(1);
+      r(2,1) =  normalvector(0);
+
+      r = pi*r;
+	  return r;
+   }
+
+  // Gaussian Elimination with partial pivot
+  // \param matrix where [A b] used to solve A*x=b \f$
+  // \return \f$ U where A = LU \f$
+  //
+  template<typename ScalarT>
+  Tensor<ScalarT>
+  GaussianElimination(Tensor<ScalarT> const & R)
+  {
+	  Tensor<ScalarT> r=R;
+	  ScalarT temp; // temporary storage to swap rows
+	  const ScalarT tol = 10.0*std::numeric_limits<ScalarT>::epsilon();
+	  short int i=0;
+	  short int j=0;
+	  short int maxi=0;
+      while ( (i <  MaxDim) && (j< MaxDim)){
+    	  // find pivot in column j, starting in row i
+    	  maxi = i;
+    	  for (short int k=i+1; k < MaxDim; ++k) {
+    		  if (abs(r(k,j) > abs(r(maxi,j)))) maxi = k;
+    	  }
+
+    	  // Check if A(maxi,j) equal to or very close to 0
+    	  if (abs(r(maxi,j)) > tol){
+    		  // swap rows i and maxi and divide each entry in row i
+    		  // by r(i,j)
+    		  for (Index k=0; k < MaxDim; ++k) {
+    			  temp = r(maxi,k);
+    			  r(maxi,k) = r(i,k);
+    			  r(i,k) = temp;
+    		  }
+    		  for (Index k=0; k < MaxDim; ++k) {
+    			  r(i,k) = r(i,k)/r(i,j);
+    		  }
+    		  for (Index u=i+1; u < MaxDim; ++u){
+    			  for (short int k=0; k < MaxDim; ++k) {
+   				  r(u,k) = r(u,k) - r(u,i)*r(i,k)/r(i,i);
+    			  }
+    		  }
+    		  i = i +1;
+    	  }
+    	  j=j+1;
+
+      }
+	  return r;
+  }
+
+
+
+  //
+  // Exponential map of a skew-symmetric tensor
+  // \param r \f$ r \in so(3) \f$
+  // \return \f$ R = \exp R \f$ with \f$ R \in SO(3) \f$
+  //
+  template<typename ScalarT>
+  Tensor<ScalarT>
+  exp_skew_symmetry(Tensor<ScalarT> const & r)
+  {
+	  Tensor<ScalarT> R;
+
+	  // Check whether skew-symmetry holds
+	  assert(norm(r+transpose(r)) < std::numeric_limits<ScalarT>::epsilon());
+	  ScalarT normVector = sqrt(r(2,1)*r(2,1)+r(0,2)*r(0,2)+r(1,0)*r(1,0));
+	  //Check whether norm == 0. If so, return identity.
+	  if (normVector < std::numeric_limits<ScalarT>::epsilon()) {
+		 R = identity<ScalarT>();
+      } else {
+		 // compute the norm of the basis vector
+		 R = identity<ScalarT>() + sin(normVector)/normVector*r+
+			 (1.0-cos(normVector))/(normVector*normVector)*r*r;
+      }
+
+
+
+	  return R;
+
   }
 
   //
@@ -927,6 +1063,42 @@ namespace LCM {
   }
 
   //
+  // Scalar 3rd-order tensor product
+  // \param s scalar
+  // \param A 3rd-order tensor
+  // \return \f$ s A \f$
+  //
+  template<typename ScalarT>
+  Tensor3<ScalarT>
+  operator*(const ScalarT s, Tensor3<ScalarT> const & A)
+  {
+	Tensor3<ScalarT> B;
+
+	for (Index i = 0; i < MaxDim; ++i) {
+	  for (Index j = 0; j < MaxDim; ++j) {
+	    for (Index k = 0; k < MaxDim; ++k) {
+	    	B(i,j,k) = s * A(i,j,k);
+	    }
+	  }
+	}
+
+	return B;
+  }
+
+  //
+  // 3th-order tensor scalar product
+  // \param A 3th-order tensor
+  // \param s scalar
+  // \return \f$ s A \f$
+  //
+  template<typename ScalarT>
+  Tensor3<ScalarT>
+  operator*(Tensor3<ScalarT> const & A, const ScalarT s)
+  {
+	  return s * A;
+  }
+
+  //
   // 3rd-order tensor input
   // \param A 3rd-order tensor
   // \param is input stream
@@ -1300,6 +1472,45 @@ namespace LCM {
   {
     return !(A==B);
   }
+
+  //
+  // Scalar 4th-order tensor product
+  // \param s scalar
+  // \param A 4th-order tensor
+  // \return \f$ s A \f$
+  //
+  template<typename ScalarT>
+  Tensor4<ScalarT>
+  operator*(const ScalarT s, Tensor4<ScalarT> const & A)
+  {
+    Tensor4<ScalarT> B;
+
+    for (Index i = 0; i < MaxDim; ++i) {
+      for (Index j = 0; j < MaxDim; ++j) {
+        for (Index k = 0; k < MaxDim; ++k) {
+          for (Index l = 0; l < MaxDim; ++l) {
+            B(i,j,k,l)=s * A(i,j,k,l);
+          }
+        }
+      }
+    }
+    return B;
+  }
+
+  //
+  // 4th-order tensor scalar product
+  // \param A 4th-order tensor
+  // \param s scalar
+  // \return \f$ s A \f$
+  //
+  template<typename ScalarT>
+  Tensor4<ScalarT>
+  operator*(Tensor4<ScalarT> const & A, const ScalarT s)
+  {
+	  return s * A;
+  }
+
+
 
   //
   // 4th-order input

@@ -506,44 +506,12 @@ endif (ALBANY_ENABLE_CUBIT)
 add_library(albanyLib ${SOURCES} ${HEADERS})
 # Now build executables from this library, tailored main()s, and Trilinos
 
-add_executable(Albany Main_Solve.cpp)
-add_executable(AlbanyAdjoint Main_Adjoint.cpp)
-add_executable(AlbanyCoupled Main_Coupled.cpp)
-add_executable(AlbanySGAdjoint Main_SGAdjoint.cpp)
-add_executable(AlbanySG Main_SGSolve.cpp)
-IF (ALBANY_DAKOTA)
-  add_executable(AlbanyDakota Main_Dakota.cpp Albany_Dakota.cpp Albany_Dakota.hpp)
-ENDIF ()
-
-IF (ALBANY_QCAD)
-  add_executable(AlbanyQCAD Main_QCAD_Solve.cpp)
-ENDIF ()
-
-add_executable(AlbanyAnalysis Main_Analysis.cpp)
-
 # Tests
 add_executable(PartitionTest LCM/test/utils/PartitionTest.cc)
 add_executable(UtilsTest LCM/test/utils/UtilsTest.cc)
 IF (ALBANY_LCM)
 add_executable(NodeUpdate LCM/test/utils/NodeUpdate.cc)
 ENDIF ()
-
-target_link_libraries(Albany          albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
-target_link_libraries(AlbanySG        albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
-target_link_libraries(AlbanyAdjoint   albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
-target_link_libraries(AlbanyCoupled   albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
-target_link_libraries(AlbanySGAdjoint   albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
-IF (ALBANY_DAKOTA)
-  target_link_libraries(AlbanyDakota    albanyLib ${ALB_TRILINOS_LIBS}
-                        ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
-ENDIF ()
-
-IF (ALBANY_QCAD)
-target_link_libraries(AlbanyQCAD      albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
-ENDIF ()
-
-target_link_libraries(AlbanyAnalysis  albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} 
-                      ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
 
 #Linking tests
 target_link_libraries(PartitionTest albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
