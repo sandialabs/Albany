@@ -65,6 +65,7 @@ namespace QCAD
     bool bReturnSameField;
     bool limitX, limitY, limitZ;
     double xmin, xmax, ymin, ymax, zmin, zmax;
+    double retScaling;
 
     Teuchos::RCP<PHX::FieldTag> response_operation;
   };

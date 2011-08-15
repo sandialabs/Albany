@@ -104,6 +104,12 @@ namespace QCAD {
     //! Private to prohibit copying
     SaddleValueResponseFunction& operator=(const SaddleValueResponseFunction&);
 
+    //! Level-set algorithm for finding a saddle point
+    int FindSaddlePoint(std::vector<double>& allFieldVals, std::vector<double>& allRetFieldVals,
+			std::vector<double>* allCoords, std::vector<int>& ordering,
+			double cutoffDistance, double cutoffFieldVal, double minDepth,
+			bool bShortInfo, Teuchos::RCP<Epetra_Vector>& g);
+
     //! Vectors of cell data, filled by evaluator, processed by response function
     std::vector<double> vFieldValues;
     std::vector<double> vRetFieldValues;
@@ -114,6 +120,9 @@ namespace QCAD {
     double fieldCutoffFctr;
     double minPoolDepthFctr;
     double distanceCutoffFctr;
+
+    bool bRetPosOnFailGiven;
+    double retPosOnFail[MAX_DIMENSION];
   };
 
 }

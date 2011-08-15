@@ -55,6 +55,7 @@ ResponseSaddleValue(Teuchos::ParameterList& p) :
   fieldName  = plist->get<std::string>("Field Name");
   retFieldName = plist->get<std::string>("Return Field Name", fieldName);
   bReturnSameField = (fieldName == retFieldName);
+  retScaling = plist->get<double>("Return Field Scaling Factor",1.0);
 
   domain = plist->get<std::string>("Domain", "box");
 
@@ -162,18 +163,18 @@ evaluateFields(typename Traits::EvalData workset)
 	avgCoord[k] += coordVec(cell,qp,k);
     }
     fieldVal /= cellVol;  
-    for (std::size_t k=0; k < numDims; ++k) avgCoord[k] /= numDims;
+    for (std::size_t k=0; k < numDims; ++k) avgCoord[k] /= numQPs;
 
 
     // Get the cell average of the field to return
     if(bReturnSameField) {
-      retFieldVal = fieldVal;
+      retFieldVal = retScaling * fieldVal;
     }
     else {
       retFieldVal = 0.0;
       for (std::size_t qp=0; qp < numQPs; ++qp)
 	retFieldVal += retField(cell,qp) * weights(cell,qp);
-      retFieldVal /= cellVol;  
+      retFieldVal *= retScaling / cellVol;
     }
 
     // Add data to the response function object
@@ -198,8 +199,8 @@ QCAD::ResponseSaddleValue<EvalT,Traits>::getValidResponseParameters() const
      	rcp(new Teuchos::ParameterList("Valid ResponseSaddleValue Params"));;
 
   validPL->set<string>("Type", "", "Response type");
-  validPL->set<string>("Field Name", "", "Field to find saddle point for");
-  validPL->set<string>("Return Field Name", "<operation field name>",
+  validPL->set<string>("Field Name", "", "Scalar field on which to find saddle point");
+  validPL->set<string>("Return Field Name", "<field name>",
 		       "Scalar field to return value from");
   validPL->set<string>("Domain", "box", "Region to perform operation: 'box' or 'element block'");
   validPL->set<double>("x min", 0.0, "Box domain minimum x coordinate");
@@ -210,10 +211,16 @@ QCAD::ResponseSaddleValue<EvalT,Traits>::getValidResponseParameters() const
   validPL->set<double>("z max", 0.0, "Box domain maximum z coordinate");
 
   validPL->set<string>("Element Block Name", "", "Element block name that specifies domain");
+  validPL->set<double>("Return Field Scaling Factor", 1.0, "Scaling factor for return field");
 
+  // Used by response function (class SaddleResponseFunction)
+  // (would be better if below could be placed in that class instead of here.)
   validPL->set<double>("Field Cutoff Factor", 1.0, "Fraction of field range to use as cutoff in saddle algorithm");
   validPL->set<double>("Minimum Pool Depth Factor", 0.1, "Fraction of field range to use as minimum pool depth in saddle algorithm");
   validPL->set<double>("Distance Cutoff Factor", 0.2, "Fraction of largest coordinate difference to use as cutoff in saddle algorithm");
+  validPL->set<double>("Fallback X", 0.0, "X-value of point to use if saddle algorithm fails.");
+  validPL->set<double>("Fallback Y", 0.0, "Y-value of point to use if saddle algorithm fails.");
+  validPL->set<double>("Fallback Z", 0.0, "Z-value of point to use if saddle algorithm fails.");
 
   return validPL;
 }
