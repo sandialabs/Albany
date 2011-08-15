@@ -234,29 +234,30 @@ postProcessResponses(const Epetra_Comm& comm, Teuchos::RCP<Epetra_Vector>& g)
     nRestarts++;
   } while(result != 0 && nRestarts <= 10);  //i.e while FindSaddlePoint failed
 
-  if(result != 0 && bRetPosOnFailGiven) {
-    double d, minDist=1e80;
-    int minDistIndex = 0;
-    for(std::size_t i=0; i < N; i++) {
-      d = distance(allCoords, i, retPosOnFail, numDims);
-      if( d < minDist ) { minDist = d; minDistIndex = i; }
-    }
-    
-    // Return values at cell closest to retPosOnFail,
-    //  even though a saddle point has not been found
-    (*g)[0] = allRetFieldVals[minDistIndex];
-    (*g)[1] = allFieldVals[minDistIndex];
-    for(std::size_t k=0; k<numDims && k < 3; k++)
-      (*g)[2+k] = allCoords[k][minDistIndex];
+  if(result != 0) {
+    if(bRetPosOnFailGiven) {
+      double d, minDist=1e80;
+      int minDistIndex = 0;
+      for(std::size_t i=0; i < N; i++) {
+	d = distance(allCoords, i, retPosOnFail, numDims);
+	if( d < minDist ) { minDist = d; minDistIndex = i; }
+      }
+      
+      // Return values at cell closest to retPosOnFail,
+      //  even though a saddle point has not been found
+      (*g)[0] = allRetFieldVals[minDistIndex];
+      (*g)[1] = allFieldVals[minDistIndex];
+      for(std::size_t k=0; k<numDims && k < 3; k++)
+	(*g)[2+k] = allCoords[k][minDistIndex];
 
-    if(bShowInfo) std::cout << "--- Saddle not found: "
-			    << "returning user point values.";
+      if(bShowInfo) std::cout << "--- Saddle not found: "
+			      << "returning user point values.";
+    }
+    else {
+      for(std::size_t k=0; k<5; k++) (*g)[k] = 0; //output all zeros
+      if(bShowInfo) std::cout << "--- Saddle not found.";
+    }
   }
-  else {
-    for(std::size_t k=0; k<5; k++) (*g)[k] = 0; //output all zeros
-    if(bShowInfo) std::cout << "--- Saddle not found.";
-  }
-  
 
   return;
 }
