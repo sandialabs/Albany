@@ -88,14 +88,21 @@ ENDIF()
 
 # set optional dependency on SEACAS, for I/O via stk_io
 MESSAGE("-- Looking for SEACAS:")
-LIST(FIND Trilinos_PACKAGE_LIST SEACAS SEACAS_List_ID)
-IF (SEACAS_List_ID GREATER -1)
+LIST(FIND Trilinos_PACKAGE_LIST SEACASIoss SEACASIoss_List_ID)
+IF (SEACASIoss_List_ID GREATER -1)
   ADD_DEFINITIONS(-DALBANY_SEACAS)
-  MESSAGE("-- Looking for SEACAS: -- found, compiling with -DALBANY_SEACAS")
+  MESSAGE("-- Looking for SEACASIoss: -- found, compiling with -DALBANY_SEACAS")
   SET(ALBANY_SEACAS TRUE)
 ELSE()
-  MESSAGE("-- Looking for SEACAS: -- not found.")
+  MESSAGE("-- Looking for SEACASIoss: -- not found.")
   SET(ALBANY_SEACAS FALSE)
+
+# Warning message for 8/15/11 trilinos change -- remove after dust settles
+  LIST(FIND Trilinos_PACKAGE_LIST SEACAS SEACAS_List_ID)
+  IF (SEACAS_List_ID GREATER -1)
+     MESSAGE("TRILINOS HAS CHANGED! Configure with Trilinos_ENABLE_SEACASIoss:BOOL=ON")
+  ENDIF()
+
 ENDIF()
 
 # set optional dependency on Zoltan, for partitioning
