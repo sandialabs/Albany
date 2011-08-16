@@ -60,9 +60,10 @@ void Albany_RythmosObserver::observeCompletedTimeStep(
   {
     Teuchos::TimeMonitor exooutTimer(*exooutTime); //start timer
 
-    stkDisc->outputToExodus(soln);
+    stkDisc->outputToExodus(soln, app->getTimeMgr().getCurrentTime());
   }
 #endif
 
+  app->getTimeMgr().updateTime();
   app->getStateMgr().updateStates();;
 }

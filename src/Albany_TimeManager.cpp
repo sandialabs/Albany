@@ -46,4 +46,14 @@ void Albany::TimeManager::setTime(double current_time)
 void Albany::TimeManager::computeDeltaTime()
 {
   DeltaTime = CurrentTime - PreviousTime;
+
+  // JTO: this is really a hack 
+  // if dt is very small, assume that we are using Continuation and
+  // time is not the continuation parameter, so arbitratily set dt to 0.1
+  // and modify CurrentTime to match
+  if (DeltaTime < 1.0e-16) 
+  {
+    DeltaTime = 0.1;
+    CurrentTime = PreviousTime + DeltaTime;
+  } 
 }
