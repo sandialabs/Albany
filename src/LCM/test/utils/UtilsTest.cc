@@ -80,8 +80,8 @@ int main(int ac, char* av[])
   }
 
   if(verbose || debug) {
-      std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
-      std::cout << std::endl;
+    std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
+    std::cout << std::endl;
   }
 
   //
@@ -100,8 +100,8 @@ int main(int ac, char* av[])
   }
 
   if(verbose || debug) {
-      std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
-      std::cout << std::endl;
+    std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
+    std::cout << std::endl;
   }
 
   //
@@ -121,13 +121,13 @@ int main(int ac, char* av[])
 
   if(verbose || debug) {
     std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
-      std::cout << std::endl;
+    std::cout << std::endl;
   }
 
   if(matlab) {
-      std::cout << u << std::endl;
-      std::cout << v << std::endl;
-      std::cout << w << std::endl;
+    std::cout << u << std::endl;
+    std::cout << v << std::endl;
+    std::cout << w << std::endl;
   }
 
   //
@@ -145,7 +145,7 @@ int main(int ac, char* av[])
 
   if(verbose || debug) {
     std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
-      std::cout << std::endl;
+    std::cout << std::endl;
   }
 
   //
@@ -161,7 +161,7 @@ int main(int ac, char* av[])
   C = A * B;
 
   passed = (LCM::norm(C - LCM::eye<ScalarT>()) <=
-        std::numeric_limits<ScalarT>::epsilon());
+      std::numeric_limits<ScalarT>::epsilon());
 
   if (passed == true) {
     PassedTestCount++;
@@ -169,13 +169,13 @@ int main(int ac, char* av[])
 
   if(verbose || debug) {
     std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
-      std::cout << std::endl;
+    std::cout << std::endl;
   }
 
   if(matlab) {
-      std::cout << A << std::endl;
-      std::cout << B << std::endl;
-      std::cout << C << std::endl;
+    std::cout << A << std::endl;
+    std::cout << B << std::endl;
+    std::cout << C << std::endl;
   }
 
   //
@@ -197,15 +197,15 @@ int main(int ac, char* av[])
 
   if(verbose || debug) {
     std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
-      std::cout << std::endl;
+    std::cout << std::endl;
   }
 
   if(matlab) {
-      std::cout << I1 << std::endl;
-      std::cout << I2 << std::endl;
-      std::cout << I3 << std::endl;
-      std::cout << std::endl;
-      std::cout << std::endl;
+    std::cout << I1 << std::endl;
+    std::cout << I2 << std::endl;
+    std::cout << I3 << std::endl;
+    std::cout << std::endl;
+    std::cout << std::endl;
   }
 
   //
@@ -228,13 +228,13 @@ int main(int ac, char* av[])
 
   if(verbose || debug) {
     std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
-      std::cout << std::endl;
+    std::cout << std::endl;
   }
 
   if(matlab) {
-      std::cout << A << std::endl;
-      std::cout << B << std::endl;
-      std::cout << C << std::endl;
+    std::cout << A << std::endl;
+    std::cout << B << std::endl;
+    std::cout << C << std::endl;
   }
 
   //
@@ -247,9 +247,16 @@ int main(int ac, char* av[])
   LCM::Tensor<ScalarT> eVal;
   boost::tie(eVec,eVal) = LCM::eig_spd(A);
 
-  passed = (std::abs(eVal(0,0) - 1.0) <= std::numeric_limits<ScalarT>::epsilon());
-  passed = passed && (std::abs(eVal(1,1) - 0.9) <= std::numeric_limits<ScalarT>::epsilon());
-  passed = passed && (std::abs(eVal(2,2) - 1.1) <= std::numeric_limits<ScalarT>::epsilon());
+  passed =
+      (std::abs(eVal(0,0) - 1.0) <= std::numeric_limits<ScalarT>::epsilon());
+
+  passed =
+      passed &&
+      (std::abs(eVal(1,1) - 0.9) <= std::numeric_limits<ScalarT>::epsilon());
+
+  passed =
+      passed &&
+      (std::abs(eVal(2,2) - 1.1) <= std::numeric_limits<ScalarT>::epsilon());
 
   if (passed == true) {
     PassedTestCount++;
@@ -257,24 +264,24 @@ int main(int ac, char* av[])
 
   if(verbose || debug) {
     std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
-      std::cout << std::endl;
+    std::cout << std::endl;
   }
 
   if(matlab) {
-      std::cout << A << std::endl;
-      std::cout << eVec << std::endl;
-      std::cout << eVal << std::endl;
+    std::cout << A << std::endl;
+    std::cout << eVec << std::endl;
+    std::cout << eVal << std::endl;
   }
 
   //
   // Test 9
   //
   LCM::Tensor<ScalarT> V0(1.1, 0.2, 0.0,
-			  0.2, 1.0, 0.0,
-			  0.0, 0.0, 1.2);
+      0.2, 1.0, 0.0,
+      0.0, 0.0, 1.2);
   LCM::Tensor<ScalarT> R0(sqrt(2)/2, -sqrt(2)/2, 0.0,
-			  sqrt(2)/2,  sqrt(2)/2, 0.0,
-			  0.0,        0.0,       1.0);
+      sqrt(2)/2,  sqrt(2)/2, 0.0,
+      0.0,        0.0,       1.0);
 
   LCM::Tensor<ScalarT> F = V0*R0;
   LCM::Tensor<ScalarT> V;
@@ -282,7 +289,9 @@ int main(int ac, char* av[])
   boost::tie(V,R) = LCM::polar_left(F);
 
   passed = (LCM::norm(V-V0) <= 10*std::numeric_limits<ScalarT>::epsilon());
-  passed = passed && (LCM::norm(R-R0) <= std::numeric_limits<ScalarT>::epsilon());
+
+  passed =
+      passed && (LCM::norm(R-R0) <= std::numeric_limits<ScalarT>::epsilon());
 
   if (passed == true) {
     PassedTestCount++;
@@ -290,15 +299,15 @@ int main(int ac, char* av[])
 
   if(verbose || debug) {
     std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
-      std::cout << std::endl;
+    std::cout << std::endl;
   }
 
   if(matlab) {
-      std::cout << F << std::endl;
-      std::cout << V0 << std::endl;
-      std::cout << V << std::endl;
-      std::cout << R0 << std::endl;
-      std::cout << R << std::endl;
+    std::cout << F << std::endl;
+    std::cout << V0 << std::endl;
+    std::cout << V << std::endl;
+    std::cout << R0 << std::endl;
+    std::cout << R << std::endl;
   }
 
   //
@@ -309,10 +318,17 @@ int main(int ac, char* av[])
   LCM::Tensor<ScalarT> r  = log_rotation(R);
   LCM::Tensor<ScalarT> r0 = log_rotation(R0);
 
-  passed = LCM::norm(r - LCM::zero<ScalarT>()) <= std::numeric_limits<ScalarT>::epsilon();
-  passed = passed && std::abs(r0(0,1) + 0.785398163397448) <=
-		   10*std::numeric_limits<ScalarT>::epsilon();
-  passed = passed && std::abs(r0(0,1) + r0(1,0)) <= 10*std::numeric_limits<ScalarT>::epsilon();
+  passed =
+      LCM::norm(r - LCM::zero<ScalarT>()) <=
+      std::numeric_limits<ScalarT>::epsilon();
+
+  passed =
+      passed && std::abs(r0(0,1) + 0.785398163397448) <=
+      10*std::numeric_limits<ScalarT>::epsilon();
+
+  passed =
+      passed &&
+      std::abs(r0(0,1) + r0(1,0)) <= 10*std::numeric_limits<ScalarT>::epsilon();
 
   if (passed == true) {
     PassedTestCount++;
@@ -320,12 +336,12 @@ int main(int ac, char* av[])
 
   if(verbose || debug) {
     std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
-      std::cout << std::endl;
+    std::cout << std::endl;
   }
 
   if(matlab) {
-      std::cout << R0 << std::endl;
-      std::cout << r0 << std::endl;
+    std::cout << R0 << std::endl;
+    std::cout << r0 << std::endl;
   }
 
   //
@@ -340,7 +356,9 @@ int main(int ac, char* av[])
 
   LCM::Tensor<ScalarT> f = LCM::bch(logV,logR);
 
-  passed = std::abs(f(0,0) - std::log(3.0)) <= std::numeric_limits<ScalarT>::epsilon();
+  passed =
+      std::abs(f(0,0) - std::log(3.0)) <=
+      std::numeric_limits<ScalarT>::epsilon();
 
   if (passed == true) {
     PassedTestCount++;
@@ -348,24 +366,24 @@ int main(int ac, char* av[])
 
   if(verbose || debug) {
     std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
-      std::cout << std::endl;
+    std::cout << std::endl;
   }
 
   if(matlab) {
-      std::cout << f << std::endl;
-      std::cout << logV << std::endl;
-      std::cout << logR << std::endl;
+    std::cout << f << std::endl;
+    std::cout << logV << std::endl;
+    std::cout << logR << std::endl;
   }
 
 
-//
-// Test 12
-//
-// Test the log mapping of element from SO(3) group. In this test,
-//a reference solution is  calculated by hand. This solution is compared
-//with the solution computed via function log_rotation.
-// rotation angle equal to pi with respect to z axis in this case.
-// added by WaiChing Sun 8/4/2011
+  //
+  // Test 12
+  //
+  // Test the log mapping of element from SO(3) group. In this test,
+  //a reference solution is  calculated by hand. This solution is compared
+  //with the solution computed via function log_rotation.
+  // rotation angle equal to pi with respect to z axis in this case.
+  // added by WaiChing Sun 8/4/2011
 
   //Create a 0.3 rad rotation use Z axis. Store it at R.
   double theta = std::acos(-1.0); // rotation angle
@@ -387,90 +405,95 @@ int main(int ac, char* av[])
 
 
   // Compute those two values (if correct, passed == 1)
-  passed =(norm(logR - Rref) <= 100*std::numeric_limits<ScalarT>::epsilon()) ||
-		  ( norm(logR + Rref) <= 100*std::numeric_limits<ScalarT>::epsilon());
+  passed =
+      (norm(logR - Rref) <= 100*std::numeric_limits<ScalarT>::epsilon()) ||
+      (norm(logR + Rref) <= 100*std::numeric_limits<ScalarT>::epsilon());
+
   if (passed == true) {
-      PassedTestCount++;
+    PassedTestCount++;
   } else
   {
-	  std::cout << "Error in logarithmic mapping for SO(3) in Test 12" << std::endl;
-	  std::cout << norm(logR - Rref) << std::endl;
+    std::cout << "Error in logarithmic mapping for SO(3) in Test 12";
+    std::cout << std::endl;
+    std::cout << norm(logR - Rref) << std::endl;
   }
 
-    if(verbose || debug) {
-      std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
-        std::cout << std::endl;
-    }
+  if(verbose || debug) {
+    std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
+    std::cout << std::endl;
+  }
 
-    if(matlab) {
-        std::cout << logR << std::endl;
-    }
+  if(matlab) {
+    std::cout << logR << std::endl;
+  }
 
-//
-// Test 13
-//
-// Test the exp mapping from so(3) to SO(3). In this test,
-// a reference solution is  calculated by hand. This solution is compared
-// with the solution computed via function log_rotation.
-// rotation angle equal to pi with respect to z axis in this case.
-// added by WaiChing Sun 8/8/2011.
-   u(0) = std::acos(-1.0)/std::sqrt(2.0); //generate basis vector
-   u(1) = u(0);
-   u(2) = 0.0;
+  //
+  // Test 13
+  //
+  // Test the exp mapping from so(3) to SO(3). In this test,
+  // a reference solution is  calculated by hand. This solution is compared
+  // with the solution computed via function log_rotation.
+  // rotation angle equal to pi with respect to z axis in this case.
+  // added by WaiChing Sun 8/8/2011.
+  u(0) = std::acos(-1.0)/std::sqrt(2.0); //generate basis vector
+  u(1) = u(0);
+  u(2) = 0.0;
 
-   LCM::Tensor<ScalarT> R1(0.0); // create 3-by-3 zero tensor
-   LCM::Tensor<ScalarT> logR2(0.0); // create 3-by-3 zero tensor
-   logR2(0,2) =  u(1);
-   logR2(1,2) = -u(0);
-   logR2(2,0) = -u(1);
-   logR2(2,1) =  u(0);
-   logR2(0,1) = -u(2);
-   logR2(1,0) =  u(2);
+  LCM::Tensor<ScalarT> R1(0.0); // create 3-by-3 zero tensor
+  LCM::Tensor<ScalarT> logR2(0.0); // create 3-by-3 zero tensor
+  logR2(0,2) =  u(1);
+  logR2(1,2) = -u(0);
+  logR2(2,0) = -u(1);
+  logR2(2,1) =  u(0);
+  logR2(0,1) = -u(2);
+  logR2(1,0) =  u(2);
 
-   R1 = exp_skew_symmetry(logR2); // perform log mapping
-   Rref = LCM::zero<ScalarT>();
-   Rref(0,1) = 1.0;
-   Rref(1,0) = 1.0;
-   Rref(2,2) = -1.0;
-   // Compare exp(log(R)) with R
-   passed = norm(Rref- R1) <= 100*std::numeric_limits<ScalarT>::epsilon();
+  R1 = exp_skew_symmetric(logR2); // perform log mapping
+  Rref = LCM::zero<ScalarT>();
+  Rref(0,1) = 1.0;
+  Rref(1,0) = 1.0;
+  Rref(2,2) = -1.0;
+  // Compare exp(log(R)) with R
+  passed = norm(Rref- R1) <= 100*std::numeric_limits<ScalarT>::epsilon();
 
-   if (passed == true) {
-       PassedTestCount++;
-   } else {
-	   std::cout << "Error in logarithmic mapping for SO(3) in Test 13" << std::endl;
-	   std::cout << norm(R1 - Rref) << std::endl;
-   }
+  if (passed == true) {
+    PassedTestCount++;
+  } else {
+    std::cout << "Error in logarithmic mapping for SO(3) in Test 13";
+    std::cout << std::endl;
+    std::cout << norm(R1 - Rref) << std::endl;
+  }
 
-   if(verbose || debug) {
-		std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
-		  std::cout << std::endl;
+  if(verbose || debug) {
+    std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
+    std::cout << std::endl;
   }
 
 
-//
-// Test 14
-//
-// Test exp and log mapping between SO(3) and so(3) groups. We check whether
-// exp(log(R)) - R = 0 using the log(R) computed in test 12.
-// added by WaiChing Sun 8/4/2011
+  //
+  // Test 14
+  //
+  // Test exp and log mapping between SO(3) and so(3) groups. We check whether
+  // exp(log(R)) - R = 0 using the log(R) computed in test 12.
+  // added by WaiChing Sun 8/4/2011
 
-    // Compare exp(log(R)) with R
-    passed = norm(exp_skew_symmetry(logR) - R) <= 100*std::numeric_limits<ScalarT>::epsilon();
+  // Compare exp(log(R)) with R
+  passed =
+      norm(exp_skew_symmetric(logR) - R) <=
+      100*std::numeric_limits<ScalarT>::epsilon();
 
-    if (passed == true) {
-          PassedTestCount++;
-    } else
-    {
-        std::cout << "Error in exponential mapping for so(3) in Test 14" << std::endl;
-    	std::cout << norm(exp_skew_symmetry(logR) - R) << std::endl;
-    }
-    if(verbose || debug) {
-          std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
-            std::cout << std::endl;
-    }
+  if (passed == true) {
+    PassedTestCount++;
+  } else {
+    std::cout << "Error in exponential mapping for so(3) in Test 14";
+    std::cout << std::endl;
+    std::cout << norm(exp_skew_symmetric(logR) - R) << std::endl;
+  }
 
-
+  if (verbose || debug) {
+    std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
+    std::cout << std::endl;
+  }
 
   return PassedTestCount == TotalTests ? 0 : 1;
 

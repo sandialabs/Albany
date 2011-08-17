@@ -946,7 +946,7 @@ namespace LCM {
   ///
   template<typename ScalarT>
   Tensor<ScalarT>
-  exp_skew_symmetry(Tensor<ScalarT> const & r);
+  exp_skew_symmetric(Tensor<ScalarT> const & r);
 
   ///
   /// Left polar decomposition
