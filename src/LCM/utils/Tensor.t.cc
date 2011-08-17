@@ -108,8 +108,9 @@ namespace LCM {
 
     //firewalls, make sure R \in SO(3)
     assert(norm(R*transpose(R) - eye<ScalarT>())
-        < std::numeric_limits<ScalarT>::epsilon());
-    assert((det(R) - 1.0)< std::numeric_limits<ScalarT>::epsilon());
+        < 10.0 * std::numeric_limits<ScalarT>::epsilon());
+    assert((det(R) - 1.0)
+        < 10.0 * std::numeric_limits<ScalarT>::epsilon());
 
     Tensor<ScalarT> r;
 
