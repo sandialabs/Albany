@@ -605,6 +605,47 @@ namespace LCM {
   operator*(Tensor3<ScalarT> const & A, const ScalarT s);
 
   ///
+  /// 3th-order tensor vector product
+  /// \param A 3th-order tensor
+  /// \param u vector
+  /// \return \f$ A u \f$
+  ///
+  template<typename ScalarT>
+  Tensor<ScalarT>
+  dot(Tensor3<ScalarT> const & A, const Vector<ScalarT> u);
+
+  ///
+  /// vector 3th-order tensor product
+  /// \param A 3th-order tensor
+  /// \param u vector
+  /// \return \f$ u A \f$
+  ///
+  template<typename ScalarT>
+  Tensor<ScalarT>
+  dot(const Vector<ScalarT> u, Tensor3<ScalarT> const & A);
+
+  ///
+  /// 3th-order tensor vector product2 (contract 2nd index)
+  /// \param A 3th-order tensor
+  /// \param u vector
+  /// \return \f$ A u \f$
+  ///
+  template<typename ScalarT>
+  Tensor<ScalarT>
+  dot2(Tensor3<ScalarT> const & A, const Vector<ScalarT> u);
+
+  ///
+  /// vector 3th-order tensor product2 (contract 2nd index)
+  /// \param A 3th-order tensor
+  /// \param u vector
+  /// \return \f$ u A \f$
+  ///
+  template<typename ScalarT>
+  Tensor<ScalarT>
+  dot2(const Vector<ScalarT> u, Tensor3<ScalarT> const & A);
+
+
+  ///
   /// Scalar 4th-order tensor product
   /// \param s scalar
   /// \param A 4th-order tensor
@@ -976,6 +1017,46 @@ namespace LCM {
   template<typename ScalarT>
   const Tensor4<ScalarT>
   identity_3();
+
+  ///
+  /// 4th-order tensor vector dot product
+  /// \param A 4th-order tensor
+  /// \param u vector
+  /// \return 3rd-order tensor \f$ A dot u \f$ as \f$ B_{ijk}=A_{ijkl}u_{l} \f$
+  ///
+  template<typename ScalarT>
+  Tensor3<ScalarT>
+  dot(Tensor4<ScalarT> const & A, Vector<ScalarT> const & u);
+
+  ///
+  /// vector 4th-order tensor dot product
+  /// \param A 4th-order tensor
+  /// \param u vector
+  /// \return 3rd-order tensor \f$ u dot A \f$ as \f$ B_{jkl}=u_{i} A_{ijkl} \f$
+  ///
+  template<typename ScalarT>
+  Tensor3<ScalarT>
+  dot(Vector<ScalarT> const & u, Tensor4<ScalarT> const & A);
+
+  ///
+  /// 4th-order tensor vector dot2 product
+  /// \param A 4th-order tensor
+  /// \param u vector
+  /// \return 3rd-order tensor \f$ A dot2 u \f$ as \f$ B_{ijl}=A_{ijkl}u_{k} \f$
+  ///
+  template<typename ScalarT>
+  Tensor3<ScalarT>
+  dot2(Tensor4<ScalarT> const & A, Vector<ScalarT> const & u);
+
+  ///
+  /// vector 4th-order tensor dot2 product
+  /// \param A 4th-order tensor
+  /// \param u vector
+  /// \return 3rd-order tensor \f$ u dot2 A \f$ as \f$ B_{ikl}=u_{j}A_{ijkl} \f$
+  ///
+  template<typename ScalarT>
+  Tensor3<ScalarT>
+  dot2(Vector<ScalarT> const & u, Tensor4<ScalarT> const & A);
 
   ///
   /// 4th-order tensor 2nd-order tensor double dot product

@@ -1099,6 +1099,93 @@ namespace LCM {
   }
 
   //
+  // 3th-order tensor vector product
+  // \param A 3th-order tensor
+  // \param u vector
+  // \return \f$ A u \f$
+  //
+  template<typename ScalarT>
+  Tensor<ScalarT>
+  dot(Tensor3<ScalarT> const & A, Vector<ScalarT> const & u)
+  {
+	Tensor<ScalarT> B;
+
+	for (Index j = 0; j < MaxDim; ++j) {
+	  for (Index k = 0; k < MaxDim; ++k) {
+		  B(j,k) = 0.0;
+	    for (Index i = 0; i < MaxDim; ++i) {
+	    	B(j,k) += A(i,j,k) * u(i);
+	    }
+	  }
+	}
+
+	return B;
+  }
+
+  //
+  // vector 3th-order tensor product
+  // \param A 3th-order tensor
+  // \param u vector
+  // \return \f$ u A \f$
+  //
+  template<typename ScalarT>
+  Tensor<ScalarT>
+  dot(Vector<ScalarT> const & u, Tensor3<ScalarT> const & A)
+  {
+	Tensor<ScalarT> B;
+
+	for (Index i = 0; i < MaxDim; ++i) {
+	  for (Index j = 0; j < MaxDim; ++j) {
+		  B(i,j) = 0.0;
+	    for (Index k = 0; k < MaxDim; ++k) {
+	    	B(i,j) += A(i,j,k) * u(k);
+	    }
+	  }
+	}
+
+	return B;
+  }
+
+
+  //
+  // 3th-order tensor vector product2 (contract 2nd index)
+  // \param A 3th-order tensor
+  // \param u vector
+  // \return \f$ A u \f$
+  //
+  template<typename ScalarT>
+  Tensor<ScalarT>
+  dot2(Tensor3<ScalarT> const & A, Vector<ScalarT> const & u)
+  {
+	Tensor<ScalarT> B;
+
+	for (Index i = 0; i < MaxDim; ++i) {
+	  for (Index k = 0; k < MaxDim; ++k) {
+		    B(i,k) = 0.0;
+	    for (Index j = 0; j < MaxDim; ++j) {
+	    	B(i,k) += A(i,j,k) * u(j);
+	    }
+	  }
+	}
+
+	return B;
+  }
+
+  //
+  // vector 3th-order tensor product2 (contract 2nd index)
+  // \param A 3th-order tensor
+  // \param u vector
+  // \return \f$ u A \f$
+  //
+  template<typename ScalarT>
+  Tensor<ScalarT>
+  dot2(Vector<ScalarT> const & u, Tensor3<ScalarT> const & A)
+  {
+	return dot2(A, u);
+  }
+
+
+  //
   // 3rd-order tensor input
   // \param A 3rd-order tensor
   // \param is input stream
@@ -1510,7 +1597,105 @@ namespace LCM {
 	  return s * A;
   }
 
+  //
+  // 4th-order tensor vector dot product
+  // \param A 4th-order tensor
+  // \param u vector
+  // \return 3rd-order tensor \f$ A dot u \f$ as \f$ B_{ijk}=A_{ijkl}u_{l} \f$
+  //
+  template<typename ScalarT>
+  Tensor3<ScalarT>
+  dot(Tensor4<ScalarT> const & A, Vector<ScalarT> const & u)
+  {
+    Tensor3<ScalarT> B;
 
+    for (Index i = 0; i < MaxDim; ++i) {
+      for (Index j = 0; j < MaxDim; ++j) {
+        for (Index k = 0; k < MaxDim; ++k) {
+        	B(i,j,k) = 0.0;
+          for (Index l = 0; l < MaxDim; ++l) {
+            B(i,j,k) = A(i,j,k,l) * u(l);
+          }
+        }
+      }
+    }
+    return B;
+  }
+
+  //
+  // vector 4th-order tensor dot product
+  // \param A 4th-order tensor
+  // \param u vector
+  // \return 3rd-order tensor \f$ u dot A \f$ as \f$ B_{jkl}=u_{i}A_{ijkl} \f$
+  //
+  template<typename ScalarT>
+  Tensor3<ScalarT>
+  dot(Vector<ScalarT> const & u, Tensor4<ScalarT> const & A)
+  {
+    Tensor3<ScalarT> B;
+
+    for (Index j = 0; j < MaxDim; ++j) {
+      for (Index k = 0; k < MaxDim; ++k) {
+        for (Index l = 0; l < MaxDim; ++l) {
+        	B(j,k,l) = 0.0;
+          for (Index i = 0; i < MaxDim; ++i) {
+            B(j,k,l) = u(i) * A(i,j,k,l);
+          }
+        }
+      }
+    }
+    return B;
+  }
+
+  //
+  // 4th-order tensor vector dot2 product
+  // \param A 4th-order tensor
+  // \param u vector
+  // \return 3rd-order tensor \f$ A dot2 u \f$ as \f$ B_{ijl}=A_{ijkl}u_{k} \f$
+  //
+  template<typename ScalarT>
+  Tensor3<ScalarT>
+  dot2(Tensor4<ScalarT> const & A, Vector<ScalarT> const & u)
+  {
+    Tensor3<ScalarT> B;
+
+    for (Index i = 0; i < MaxDim; ++i) {
+      for (Index j = 0; j < MaxDim; ++j) {
+        for (Index l = 0; l < MaxDim; ++l) {
+        	B(i,j,l) = 0.0;
+          for (Index k = 0; k < MaxDim; ++k) {
+            B(i,j,l) = A(i,j,k,l) * u(k);
+          }
+        }
+      }
+    }
+    return B;
+  }
+
+  //
+  // vector 4th-order tensor dot2 product
+  // \param A 4th-order tensor
+  // \param u vector
+  // \return 3rd-order tensor \f$ u dot2 A \f$ as \f$ B_{ikl}=u_{j}A_{ijkl} \f$
+  //
+  template<typename ScalarT>
+  Tensor3<ScalarT>
+  dot2(Vector<ScalarT> const & u, Tensor4<ScalarT> const & A)
+  {
+    Tensor3<ScalarT> B;
+
+    for (Index i = 0; i < MaxDim; ++i) {
+      for (Index k = 0; k < MaxDim; ++k) {
+        for (Index l = 0; l < MaxDim; ++l) {
+        	B(i,k,l) = 0.0;
+          for (Index j = 0; j < MaxDim; ++j) {
+            B(i,k,l) = u(j) * A(i,j,k,l);
+          }
+        }
+      }
+    }
+    return B;
+  }
 
   //
   // 4th-order input
