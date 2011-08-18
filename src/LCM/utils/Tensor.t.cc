@@ -111,8 +111,6 @@ namespace LCM {
     assert((det(R) - 1.0)
         < 10.0 * std::numeric_limits<ScalarT>::epsilon());
 
-    Tensor<ScalarT> r;
-
     // acos requires input between -1 and +1
     ScalarT
     cosine = 0.5*(trace(R) - 1.0);
@@ -126,9 +124,12 @@ namespace LCM {
     ScalarT
     theta = acos(cosine);
 
+    Tensor<ScalarT> r;
+
     if (theta == 0) {
       r = zero<ScalarT>();
-    } else if (abs(cosine +1.0) < 10.0*std::numeric_limits<ScalarT>::epsilon())  {
+    } else if (abs(cosine + 1.0) <
+        10.0*std::numeric_limits<ScalarT>::epsilon())  {
       // Rotation angle is PI.
     	r = log_rotation_pi(R);
     } else {
