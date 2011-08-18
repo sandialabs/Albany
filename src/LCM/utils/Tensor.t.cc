@@ -105,10 +105,9 @@ namespace LCM {
   Tensor<ScalarT>
   log_rotation(Tensor<ScalarT> const & R)
   {
-
     //firewalls, make sure R \in SO(3)
     assert(norm(R*transpose(R) - eye<ScalarT>())
-        < 10.0 * std::numeric_limits<ScalarT>::epsilon());
+        < 20.0 * std::numeric_limits<ScalarT>::epsilon());
     assert((det(R) - 1.0)
         < 10.0 * std::numeric_limits<ScalarT>::epsilon());
 
