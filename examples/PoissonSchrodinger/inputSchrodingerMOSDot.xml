@@ -43,26 +43,23 @@
       <Parameter name="Number" type="int" value="4" />
       <Parameter name="Response 0" type="string" value="Solution Average" />
 
-      <Parameter name="Response 1" type="string" value="See List" />
+      <Parameter name="Response 1" type="string" value="Save Field" />
       <ParameterList name="ResponseParams 1">
-        <Parameter name="Type" type="string" value="Save Field" />
         <Parameter name="Field Name" type="string" value="Conduction Band" />
         <Parameter name="State Name" type="string" value="Conduction Band Avg" />
       </ParameterList>
 
       <!-- Must "save" Conduction Band state so it gets registered and is thereby imported -->
-      <Parameter name="Response 2" type="string" value="See List" />
+      <Parameter name="Response 2" type="string" value="Save Field" />
       <ParameterList name="ResponseParams 2">
-        <Parameter name="Type" type="string" value="Save Field" />
         <Parameter name="Field Name" type="string" value="Conduction Band" />
         <Parameter name="Output Cell Average" type="bool" value="0" />
         <Parameter name="Output to Exodus" type="bool" value="0" />
       </ParameterList>
 
       <!-- Dummy - in order to allocate state needed for Poisson iteration -->
-      <Parameter name="Response 3" type="string" value="See List" />
+      <Parameter name="Response 3" type="string" value="Save Field" />
       <ParameterList name="ResponseParams 3">
-        <Parameter name="Type" type="string" value="Save Field" />
         <Parameter name="Field Name" type="string" value="Conduction Band" />
         <Parameter name="State Name" type="string" value="Previous Poisson Potential" />
         <Parameter name="Output Cell Average" type="bool" value="0" />

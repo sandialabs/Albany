@@ -67,6 +67,37 @@ namespace QCAD {
                              Albany::StateManager& stateMgr,
 			     std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
 
+    void constructResponses(std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
+			    Teuchos::ParameterList& responseList, 
+			    std::map<std::string, Teuchos::RCP<Teuchos::ParameterList> >& evaluators_to_build, 
+			    Albany::StateManager& stateMgr,
+			    Teuchos::RCP<PHX::DataLayout> qp_scalar, Teuchos::RCP<PHX::DataLayout> qp_vector, 
+			    Teuchos::RCP<PHX::DataLayout> cell_scalar, Teuchos::RCP<PHX::DataLayout> dummy);
+
+    // Andy: next three functions or ones similar should probably go in base class
+
+    void createResponseFieldManager(std::map<std::string, Teuchos::RCP<Teuchos::ParameterList> >& response_evaluators_to_build,
+				    std::map<std::string, Teuchos::RCP<Teuchos::ParameterList> >& evaluators_to_build,
+				    const std::vector<std::string>& responseIDs_to_require, Teuchos::RCP<PHX::DataLayout> dummy);
+
+    // - Returns true if responseName was recognized and response function constructed.
+    // - If p is non-Teuchos::null upon exit, then an evaluator should be build using
+    //   p as the parameter list. 
+    bool getStdResponseFn(std::string responseName, int responseIndex,
+			  Teuchos::ParameterList& responseList,
+			  std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
+			  Albany::StateManager& stateMgr,
+			  Teuchos::RCP<PHX::DataLayout> qp_scalar, Teuchos::RCP<PHX::DataLayout> qp_vector, 
+			  Teuchos::RCP<PHX::DataLayout> cell_scalar,  Teuchos::RCP<PHX::DataLayout> dummy,
+			  Teuchos::RCP<Teuchos::ParameterList>& p);
+
+    // Helper function for constructResponses and getStdResponseFn
+    Teuchos::RCP<Teuchos::ParameterList> setupResponseFnForEvaluator(  
+		  Teuchos::ParameterList& responseList, int responseNumber,
+		  std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
+		  Teuchos::RCP<PHX::DataLayout> dummy);
+
+
   protected:
     Teuchos::RCP<const Epetra_Comm> comm;
     bool havePotential;

@@ -55,70 +55,60 @@
       <Parameter name="Number" type="int" value="12" />
       <Parameter name="Response 0" type="string" value="Solution Average" />
       
-      <Parameter name="Response 1" type="string" value="See List" />
+      <Parameter name="Response 1" type="string" value="Save Field" />
       <ParameterList name="ResponseParams 1">
-        <Parameter name="Type" type="string" value="Save Field" />
         <Parameter name="Field Name" type="string" value="Charge Density" />
       </ParameterList>
       
-      <Parameter name="Response 2" type="string" value="See List" />
+      <Parameter name="Response 2" type="string" value="Save Field" />
       <ParameterList name="ResponseParams 2">
-        <Parameter name="Type" type="string" value="Save Field" />
         <Parameter name="Field Name" type="string" value="Electron Density" />
       </ParameterList>
       
-      <Parameter name="Response 3" type="string" value="See List" />
+      <Parameter name="Response 3" type="string" value="Save Field" />
       <ParameterList name="ResponseParams 3">
-        <Parameter name="Type" type="string" value="Save Field" />
         <Parameter name="Field Name" type="string" value="Hole Density" />
       </ParameterList>
       
-      <Parameter name="Response 4" type="string" value="See List" />
+      <Parameter name="Response 4" type="string" value="Save Field" />
       <ParameterList name="ResponseParams 4">
-        <Parameter name="Type" type="string" value="Save Field" />
         <Parameter name="Field Name" type="string" value="Electric Potential" />
         <Parameter name="State Name" type="string" value="Electric Potential Avg" />
       </ParameterList>
       
-      <Parameter name="Response 5" type="string" value="See List" />
+      <Parameter name="Response 5" type="string" value="Save Field" />
       <ParameterList name="ResponseParams 5">
-        <Parameter name="Type" type="string" value="Save Field" />
         <Parameter name="Field Name" type="string" value="Ionized Dopant" />
       </ParameterList>
       
-      <Parameter name="Response 6" type="string" value="See List" />
+      <Parameter name="Response 6" type="string" value="Save Field" />
       <ParameterList name="ResponseParams 6">
-        <Parameter name="Type" type="string" value="Save Field" />
         <Parameter name="Field Name" type="string" value="Conduction Band" />
         <Parameter name="State Name" type="string" value="Conduction Band Avg" />
       </ParameterList>
       
-      <Parameter name="Response 7" type="string" value="See List" />
+      <Parameter name="Response 7" type="string" value="Save Field" />
       <ParameterList name="ResponseParams 7">
-        <Parameter name="Type" type="string" value="Save Field" />
         <Parameter name="Field Name" type="string" value="Valence Band" />
       </ParameterList>
 
       <!-- States used in Schrodinger-Poisson iterations, don't avg and don't output to exo -->
-      <Parameter name="Response 8" type="string" value="See List" />
+      <Parameter name="Response 8" type="string" value="Save Field" />
       <ParameterList name="ResponseParams 8">
-        <Parameter name="Type" type="string" value="Save Field" />
         <Parameter name="Field Name" type="string" value="Electric Potential" />
         <Parameter name="Output Cell Average" type="bool" value="0" />
         <Parameter name="Output to Exodus" type="bool" value="0" />
       </ParameterList>
       
-      <Parameter name="Response 9" type="string" value="See List" />
+      <Parameter name="Response 9" type="string" value="Save Field" />
       <ParameterList name="ResponseParams 9">
-        <Parameter name="Type" type="string" value="Save Field" />
         <Parameter name="Field Name" type="string" value="Conduction Band" />
         <Parameter name="Output Cell Average" type="bool" value="0" />
         <Parameter name="Output to Exodus" type="bool" value="0" />
       </ParameterList>
       
-      <Parameter name="Response 10" type="string" value="See List" />
+      <Parameter name="Response 10" type="string" value="Save Field" />
       <ParameterList name="ResponseParams 10">
-        <Parameter name="Type" type="string" value="Save Field" />
         <Parameter name="Field Name" type="string" value="Potential" />
         <Parameter name="State Name" type="string" value="Saved Solution" />
         <Parameter name="Output Cell Average" type="bool" value="0" />
@@ -126,9 +116,8 @@
       </ParameterList>
 
       <!-- needed so Previous Poisson Poential gets imported -->
-      <Parameter name="Response 11" type="string" value="See List" />
+      <Parameter name="Response 11" type="string" value="Save Field" />
       <ParameterList name="ResponseParams 11">
-        <Parameter name="Type" type="string" value="Save Field" />
         <Parameter name="Field Name" type="string" value="Potential" />
         <Parameter name="State Name" type="string" value="Previous Poisson Potential" />
         <Parameter name="Output Cell Average" type="bool" value="0" />
