@@ -29,6 +29,8 @@
 \usepackage[numbers,sort&compress]{natbib}
 \usepackage[FIGBOTCAP,TABTOPCAP,bf,tight]{subfigure}
 
+
+
 \usepackage[T1]{fontenc}
 \usepackage{ae,aecompl}
 
@@ -1341,12 +1343,44 @@ value decomposition and the Baker-Campbell-Hausdorff formula
 $\bZ \in G$.
 
 \section{Numerical Examples}
-This section showcases four numerical examples concerning polynomial interpolations and transformation of internal variables from a source mesh to a target mesh. In the first example,  we compare the recovered internal variable fields obtained from global and element-wise projections. We then use a kinematics problem to determine the error caused by improper interpolation of internal variables belonging to Lie group and the remedy procedures formulated via Lie algebra. A solution of a large deformation J2 elasto-plasticity problem is presented to demonstrate the error associated with transformation of internal variables from one mesh to a new mesh using Lie algebra and global variational projection operators. We conclude this section with a benchmark example from literature to illustrate the remarkable accuracy of the proposed internal variable recovery procedure. 
+This section showcases four numerical examples concerning polynomial interpolations and transformation of internal variables. In the first example,  we compare the recovered internal variable fields obtained from standard Galerkin and Petrov Galerkin projections. We then use a kinematics problem to determine the error caused by improper interpolation of internal variables belonging to Lie group and the remedy procedures formulated via Lie algebra. A solution of a large deformation J2 elasto-plasticity problem is presented to demonstrate the error associated with transformation of internal variables from one mesh to a new mesh using Lie algebra and global variational projection operators. We conclude this section with a benchmark example from the literature to illustrate the remarkable accuracy of the proposed internal variable recovery procedure. 
 
-\subsection{Projection of Fields with Jump Condition}
+\subsection{Projection of Scalar Fields with Jump Conditions}
+We consider a simple example in which a cubic body centered at the origin of a  Cartesian coordinate system $\{XYZ\}$ is discretized by 8 hexahedron trilinear elements of equal sizes. The following scalar internal variable field is prescribed at the eight standard Gaussian quadrature points, 
+\begin{equation}
+\bar{\bz}(X) = \left\{
+  \begin{array}{l l}
+    X + 1 & \quad \text{if $X \in [-1, 0)$ }\\
+     X & \quad \text{if $X \in [0, 1]$ }\\
+  \end{array} \right.
+  \label{eq:PrescribedScalar}
+\end{equation}
+To generate an interpolated internal variables field $\bar{\bz}_{h} \in V_{h}$, the numerical values from the Gaussian quadrature points are projected onto the nodes via \eqref{eq:BalanceLM}. Two different discretization strategies are used to compute $\bar{\bz}_{h}$. The first strategy is to use standard Galerkin form as expressed in \eqref{eq:DiscreteEquilibrium}. Alternatively, one may also use Dirac delta function $\delta(\bX - \bX_{\alpha})$ as the test function and use the interpolation function $\lambda_{\alpha}(\bX)$ to form a Petrov-Galerkin version of \eqref{eq:DiscreteEquilibrium}. The result is a collocation formulation of \eqref{eq:DiscreteEquilibrium} where the Gaussian quadrature points coincide with the collocation points, but continuity across elements is not guaranteed due to the usage of Lagrangian elements. 
+\begin{figure}[h!]
+  \centering
+  	\subfigure[]{
+    \includegraphics[width=0.47\textwidth]{ExampleCubicG.pdf}
+    }
+    \subfigure[]{
+     \includegraphics[width=0.47\textwidth]{ExampleCubicPG.pdf}
+     }
+    \caption{Projected scalar internal variable field with standard Galerkin method (a) and Petrov-Galerkin method (b).}
+    \label{fig:ExampleCube}
+\end{figure}
+
+The projected scalar internal variable field is shown in Figure \ref{fig:ExampleCube}. The projection based on Galerkin method leads to a smooth linear field $\bz_{h}(X) = X/4 + 1/2$, which is identical to the linear least square regression of the nodal vales of the $\bz(X)$. This result confirms that that the projection defined in \eqref{eq:DiscreteEquilibrium} minimize the error measured by the L2 norm $||\bz_{h} - \bz ||$ and is therefore optimal. Notice that the jump condition vanishes if the Galerkin method is used , because both the trial and weighing space are $C^{0}$ continuous.  
+ 
+The Petrov-Galerkin approach, on the other hand, preserves the jump condition and reproduces the exact field in this example, because the numerical values of the projected field at the collocation points are exact, i.e.,
+\begin{equation}
+\int_{B} (\bar{\bz}_{h}(\bX) - \bz(\bX) \cdot \delta(\bX - \bX_{c}) dV  = \bar{\bz}_{h}(\bX_{c}) - \bar{\bz}(\bX_{c}) = 0
+\label{eq:PGOpmital}
+\end{equation}
+where $\bX_{c}$ is the position vector of the collocation points. In conclusion, this example illustrates that different projection strategies can be derived from the same variational statement. The choice of the trial and weighting space should be made by considering the properties and nature of the internal variables. 
 
 \subsection{Bending of an Annulus}
+
 \subsection{Necking of a Tensile Specimen}
+
 \subsection{Benchmark Problem}
 
 \section{Conclusion}
