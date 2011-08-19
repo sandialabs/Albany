@@ -747,6 +747,21 @@ namespace LCM {
       partitions[vertex] = import_to_part[i];
     }
 
+    // cleanup zoltan pointers
+    // this will free all memory associated with the in and output data
+    // to zoltan
+    zoltan.LB_Free_Part(
+        &import_global_ids,
+        &import_local_ids,
+        &import_procs,
+        &import_to_part );
+
+    zoltan.LB_Free_Part(
+        &export_global_ids,
+        &export_local_ids,
+        &export_procs,
+        &export_to_part );
+
     return partitions;
 
   }

@@ -56,7 +56,7 @@ DislocationDensity(const Teuchos::ParameterList& p) :
     
   square = (numNodes == numQPs);
 
-  TEST_FOR_EXCEPTION( square == true, std::runtime_error, 
+  TEST_FOR_EXCEPTION( square == false, std::runtime_error, 
 		      "Dislocation Density Calculation currently needs numNodes == numQPs" );
 
 

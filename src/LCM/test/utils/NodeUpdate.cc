@@ -68,7 +68,7 @@ int main(int ac, char* av[])
   cout << "*************************\n"
 	   << "Before element separation\n"
 	   << "*************************\n";
-  topology.disp_connectivity();
+  //topology.disp_connectivity();
 
   // Start the mesh update process
   // Will fully separate the elements in the mesh by replacing element nodes
@@ -107,7 +107,7 @@ int main(int ac, char* av[])
   cout << "*************************\n"
 	   << "After element separation\n"
 	   << "*************************\n";
-  topology.disp_connectivity();
+  //topology.disp_connectivity();
 
   //topology.output_to_graphviz(gviz_output,entity_open);
 
@@ -131,6 +131,10 @@ int main(int ac, char* av[])
 
   // Add displacement to nodes
   stk::mesh::get_entities(bulkData,topology.elementRank,element_lst);
+
+  // displacement scale factor
+  double alpha = 0.5;
+
   for (int i = 0; i < element_lst.size(); ++i){
 	  std::vector<double> centroid(3);
 	  std::vector<double> disp(3);
@@ -149,12 +153,7 @@ int main(int ac, char* av[])
 
 	  // Determine displacement
 	  for (int j = 0; j < 3; ++j){
-		  if (centroid[j] < 0)
-			  disp[j] = -0.5;
-		  else if (centroid[j] > 0)
-			  disp[j] =  0.5;
-		  else
-			  disp[j] = 0.0;
+		  disp[j] = alpha*centroid[j];
 	  }
 
 	  // Add displacement to nodes
