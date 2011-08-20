@@ -1424,6 +1424,28 @@ choice of the trial and weighting space should be made by considering
 the properties and nature of the internal variables.
 
 \subsection{Bending of an Annulus}
+This example demonstrates the ability of the logarithmic mapping to handle interpolation of tensor field. An $L \times 0.1 L \times 0.1 L$ initially straight beam is bent into an annulus with average radius of the annulus $R = \pi L /2$, while maintaining the same thickness and depth. In the current configuration, the geometrical centroid of the beam remains at the same position and the two ends of the beam are glued together. The close form of the deformation gradient $\bF^{a}$ expressed in matrix notation reads, 
+\begin{equation}
+[\bF^{exact}(X_{1}, X_{2})] =  \left( \begin{array}{ccc}
+\frac{R-X_{2}}{R} \cos(\frac{X_{1}}{R}) & -\sin(\frac{X_{1}}{R}) & 0 \\
+\frac{R-X_{2}}{R} \sin(\frac{X_{1}}{R}) & \cos(\frac{X_{1}}{R})  & 0\\
+0 & 0 & 1 \end{array} \right)
+\label{eq:DeformGrad} 
+\end{equation}
+Since the exact solution of the deformation gradient is available in this example, we quantify distribution of interpolation error by directly comparing the interpolated deformation gradient $\bF^{h}$ with the exact solution via the Frobenius norm, i.e., 
+\begin{equation}
+ e^{h}(\bX) = || \bF^{exact} (\bX)- \bF^{h}(\bX) ||_{F} = \sqrt{\text{Tr}\big( [\bF^{exact} (\bX)- \bF^{h}(\bX] \cdot [\bF^{exact} (\bX)- \bF^{h}(\bX)] \big) }
+ \label{eq:FrobeniusNormDistribution}
+\end{equation} 
+To illustrate how logarithmic mapping can substantially reduce the error due to remeshing, we discretize the domain with two meshes, one significantly finer than another, then calculate the nodal values of $\bF^{h}$ in the fine mesh by interpolating the nodal values of $\bF^{exact}$ of the coarse mesh. 
+
+Figure ?? depicts the distribution of error defined in \eqref{eq:FrobeniusNormDistribution}
+
+Alternatively, the overall accuracy of the interpolation can be assessed by computing the error over the entire domain, i.e., 
+\begin{equation}
+E^{h} = \int_{B} || \bF^{exact} (\bX)- \bF^{h}(\bX) ||_{F}  dV  \big/ \int_{B} || \bF^{exact} (\bX) ||_{F}  dV 
+\label{eq:FrobeniusNormOverall}
+\end{equation}
 
 \subsection{Necking of a Tensile Specimen}
 
