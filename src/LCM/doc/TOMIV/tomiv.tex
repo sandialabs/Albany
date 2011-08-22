@@ -1424,7 +1424,14 @@ choice of the trial and weighting space should be made by considering
 the properties and nature of the internal variables.
 
 \subsection{Bending of an Annulus}
-This example demonstrates the ability of the logarithmic mapping to handle interpolation of tensor field. An $L \times 0.1 L \times 0.1 L$ initially straight beam is bent into an annulus with average radius of the annulus $R = \pi L /2$, while maintaining the same thickness and depth. In the current configuration, the geometrical centroid of the beam remains at the same position and the two ends of the beam are glued together. The close form of the deformation gradient $\bF^{a}$ expressed in matrix notation reads, 
+This example demonstrates the ability of the logarithmic mapping 
+to handle interpolation of tensor field. An $L \times 0.1 L \times 0.1 L$ 
+initially straight beam is bent into an annulus with average radius of the 
+annulus $R = \pi L /2$, while maintaining the same thickness and depth. 
+In the current configuration, the geometrical centroid of the beam remains 
+at the same position and the two ends of the beam are glued together. The 
+close form of the deformation gradient $\bF^{a}$ expressed in matrix notation
+ reads, 
 \begin{equation}
 [\bF^{exact}(X_{1}, X_{2})] =  \left( \begin{array}{ccc}
 \frac{R-X_{2}}{R} \cos(\frac{X_{1}}{R}) & -\sin(\frac{X_{1}}{R}) & 0 \\
@@ -1432,16 +1439,44 @@ This example demonstrates the ability of the logarithmic mapping to handle inter
 0 & 0 & 1 \end{array} \right)
 \label{eq:DeformGrad} 
 \end{equation}
-Since the exact solution of the deformation gradient is available in this example, we quantify distribution of interpolation error by directly comparing the interpolated deformation gradient $\bF^{h}$ with the exact solution via the Frobenius norm, i.e., 
+Since the exact solution of the deformation gradient is available in this example, 
+we quantify distribution of interpolation error by directly comparing the interpolated 
+deformation gradient $\bF^{h}$ with the exact solution via the Frobenius norm, i.e., 
 \begin{equation}
- e^{h}(\bX) = || \bF^{exact} (\bX)- \bF^{h}(\bX) ||_{F} = \sqrt{\text{Tr}\big( [\bF^{exact} (\bX)- \bF^{h}(\bX] \cdot [\bF^{exact} (\bX)- \bF^{h}(\bX)] \big) }
+ e^{h}(\bX) = || \bF^{exact} (\bX)- \bF^{h}(\bX) ||_{F} 
+ = \sqrt{\text{Tr}\big( [\bF^{exact} (\bX)- \bF^{h}(\bX] 
+     \cdot [\bF^{exact} (\bX)- \bF^{h}(\bX)] \big) }
  \label{eq:FrobeniusNormDistribution}
 \end{equation} 
-To illustrate how logarithmic mapping can substantially reduce the error due to remeshing, we discretize the domain with two meshes, one significantly finer than another, then calculate the nodal values of $\bF^{h}$ in the fine mesh by interpolating the nodal values of $\bF^{exact}$ of the coarse mesh. 
+To illustrate how logarithmic mapping substantially reduces the error due to 
+remeshing, we discretize the same domain twice with two meshes, one significantly finer
+than another, then project the deformation gradient from the coarse mesh to the fine mesh.  
+Specifically, the coarse mesh consists of 16 hexahedron elements, whereas the fine mesh consists of 2500. 
+ 
+Figure \ref{fig:ExampleRing}(a) depicts how the interpolation error $e^{h}(\bX)$ distributes in the current configuration if polynomial interpolation is used to project nodal values from source mesh to the target mesh without the application of Lie Algebra.  In this example, $\bF^{exact}$ is first computed via \eqref{eq:DeformGrad} at the nodes of the coarse mesh. Using the interpolation functions of the hexahedron element, we obtain $F^{h}(X)$  at the nodes of the fine mesh and compare it with the deformation field obtained by exaction solution. The interpolation error measured by the Frobenius norm reaches its maximum, 0.003, at the middle of each coarse hexahedron elements, but decreases to zero at the locations where the nodes of the coarse and fine meshes coincides. This can be explained by the fact that interpolation functions are equal to 1 at the nodes and thus no interpolation is required if the particular nodes are shared by both the coarse and fine meshes. By contrary, the substantial discrepancy between $F^{h}((X)$ and  $F^{h}((X)$ at the edges of the coarse hexahedron element does indicate that the polynomial interpolation may cause significant error when nodal values are interpolated from coarse to fine mesh. Although this error may reduce if the source and target meshes very similar in size, this constraint on the refinement level may severely limit the performance of the remapping algorithm and hence undesirable. 
 
-Figure ?? depicts the distribution of error defined in \eqref{eq:FrobeniusNormDistribution}
+Figure \ref{fig:ExampleRing}(b) shows a significant improvement on accuracy when polynomial interpolation is performed in conjugation with a proper Lie Algebra.  In this example, the same interpolation procedure is repeated. The only exception is that the polynomial interpolation is now conducted on the Lie Algebra rather than on the Lie group itself. This treatment enables the addition operation of the deformation gradient data and thus legitimate the polynomial interpolation. 
 
-Alternatively, the overall accuracy of the interpolation can be assessed by computing the error over the entire domain, i.e., 
+In particular, we employ the procedure   
+
+
+
+\begin{figure}[htbp]
+  \begin{center}
+    \unitlength=1.0mm
+    \subfigure[]{
+      \includegraphics[width=80mm]{RingProjOnly.png}}
+    \subfigure[]{
+      \includegraphics[width=80mm]{RingProjLie.png}}
+    \caption{Frobenious norm of the difference between the deformation gradient 
+    defined in \eqref{eq:DeformGrad} and the interpolated one obtained by 
+    (a) polynomial interpolation without Lie Algebra and (b) polynomial interpolation with Lie Algebra.}
+    \label{fig:ExampleRing}
+  \end{center}
+\end{figure}
+
+Alternatively, the overall accuracy of the interpolation can be assessed 
+by computing the error over the entire domain, i.e., 
 \begin{equation}
 E^{h} = \int_{B} || \bF^{exact} (\bX)- \bF^{h}(\bX) ||_{F}  dV  \big/ \int_{B} || \bF^{exact} (\bX) ||_{F}  dV 
 \label{eq:FrobeniusNormOverall}
