@@ -46,6 +46,14 @@ SchrodingerResid(const Teuchos::ParameterList& p) :
   psiResidual (p.get<std::string>                   ("Residual Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") )
 {
+  // obtain Finite Wall potential parameters
+  Teuchos::ParameterList* psList = p.get<Teuchos::ParameterList*>("Parameter List");
+  potentialType = psList->get<std::string>("Type", "defaultType");
+  barrEffMass = psList->get<double>("Barrier Effective Mass", 1.0);
+  barrWidth = psList->get<double>("Barrier Width", 1.0);
+  wellEffMass = psList->get<double>("Well Effective Mass", 1.0);
+  wellWidth = psList->get<double>("Well Width", 1.0);
+
   enableTransient = true; //always true - problem doesn't make sense otherwise
   energy_unit_in_eV = p.get<double>("Energy unit in eV");
   length_unit_in_m = p.get<double>("Length unit in m");
@@ -106,7 +114,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   /***** define universal constants as double constants *****/
   const double hbar = 1.0546e-34;  // Planck constant [J s]
-  const double evPerJ = 6.2415e18; // eV per Joule (J/eV)
+  const double evPerJ = 6.2415e18; // eV per Joule (eV/J)
   bool bValidRegion = true;
 
   if(bOnlyInQuantumBlocks)
@@ -114,14 +122,17 @@ evaluateFields(typename Traits::EvalData workset)
 
   if(bValidRegion)
   {
-  
     //compute inverse effective mass here (no separate evaluator)
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
-	//scaled hbar^2/2m so kinetic energy has specified units (EnergyUnitInEV)
-	invEffMass(cell, qp) =  0.5*pow(hbar,2)*evPerJ / 
-	  (energy_unit_in_eV * pow(length_unit_in_m,2)) *
-	  getInvEffMass(workset.EBName, numDims, &coordVec(cell,qp,0)); 
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) 
+    {
+      for (std::size_t qp=0; qp < numQPs; ++qp) 
+      {
+        //scaled hbar^2/2m so kinetic energy has specified units (EnergyUnitInEV)
+        invEffMass(cell, qp) =  0.5*pow(hbar,2)*evPerJ / 
+            (energy_unit_in_eV * pow(length_unit_in_m,2)) *
+            getInvEffMass(workset.EBName, numDims, &coordVec(cell,qp,0)); 
+        
+        //std::cout << "hbar^2/2m = " << invEffMass(cell, qp) << std::endl;     
       }
     }
 
@@ -141,16 +152,20 @@ evaluateFields(typename Traits::EvalData workset)
     //psiDot term (to use loca): add integral( psi_dot * BF dV ) to residual
     if (workset.transientTerms && enableTransient) 
       FST::integrate<ScalarT>(psiResidual, psiDot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+      
   }
-  else { 
+  
+  else 
+  { 
     // Invalid region (don't perform calc here - evectors should all be zero)
     // So, set psiDot term to zero and set psi term (H) = Identity
 
     //This doesn't work - results in NaN error
-    /*for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+    /*for (std::size_t cell=0; cell < workset.numCells; ++cell) 
+    {
       for (std::size_t qp=0; qp < numQPs; ++qp)
-	psiResidual(cell, qp) = 1.0*psi(cell,qp);
-	}*/
+        psiResidual(cell, qp) = 1.0*psi(cell,qp);
+    }*/
 
     //Potential term: add integral( psi * V * BF dV ) to residual
     if (havePotential) {
@@ -191,7 +206,45 @@ QCAD::SchrodingerResid<EvalT, Traits>::getInvEffMass(const std::string& EBName, 
   // effective mass depends on the wafer direction
   // For SiO2/Si interface parallel to the [100] plane, the mass for Delta2-band is ml (longitudinal)
   // Consider only the Delta2-band for the time being (need to include Delta4-band later)
-  effMass = materialDB->getElementBlockParam<double>(EBName,"Electron Effective Mass Z",1.0) * emass;
+  
+  if (potentialType == "Finite Wall")
+  {
+    if (numDim == 1)  // 1D
+    {
+      if ( (coord[0] >= barrWidth) && (coord[0] <= (barrWidth+wellWidth)) )
+        effMass = wellEffMass * emass;  // well
+      else
+        effMass = barrEffMass * emass;  // barrier
+    }
+    
+    else if (numDim == 2)  // 2D
+    {
+      if ( (coord[0] >= barrWidth) && (coord[0] <= (barrWidth+wellWidth)) &&
+           (coord[1] >= barrWidth) && (coord[1] <= (barrWidth+wellWidth)) )
+        effMass = wellEffMass * emass;  
+      else
+        effMass = barrEffMass * emass;   
+    }
+    
+    else if (numDim == 3)  // 3D
+    {
+      if ( (coord[0] >= barrWidth) && (coord[0] <= (barrWidth+wellWidth)) &&
+           (coord[1] >= barrWidth) && (coord[1] <= (barrWidth+wellWidth)) && 
+           (coord[2] >= barrWidth) && (coord[2] <= (barrWidth+wellWidth)) )
+        effMass = wellEffMass * emass;   
+      else
+        effMass = barrEffMass * emass;      
+    }
+    
+    else
+      TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+			  << "Error! Invalid numDim = " << numDim << ", must be 1 or 2 or 3 !" << std::endl);
+    
+  }  // end of if (potentialType == "Finite Wall")
+  
+  else
+    effMass = materialDB->getElementBlockParam<double>(EBName,"Electron Effective Mass Z",1.0) * emass;
+  
   return 1.0/effMass;
 }
 

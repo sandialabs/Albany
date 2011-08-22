@@ -93,7 +93,8 @@ Albany::SaveEigenData::save(
       //     << "\n   Has Eigenvector: " << *(e_r(i)) << "\n" << endl;
 
       //write text format to evec<i>.txtdump file
-      sprintf(buf,"evec%d.txtdump",i);
+      // sprintf(buf,"evec%d.txtdump",i);
+      sprintf(buf,"evec%d.csv",i);
       evecFile.open (buf, fstream::out);
       evecFile << setprecision(8) 
            << "# Eigenvalue " << i << " with value: " << (*evals_r)[i] 
@@ -112,7 +113,8 @@ Albany::SaveEigenData::save(
       //     << *(e_r(i)) << "\n" << *(e_i(i)) << endl;
 
       //write text format to evec<i>.txtdump file
-      sprintf(buf,"evec%d.txtdump",i);
+      // sprintf(buf,"evec%d.txtdump",i);
+      sprintf(buf,"evec%d.csv",i);
       evecFile.open (buf, fstream::out);
       evecFile << setprecision(8) 
            << "# Eigenvalue " << i << " with value: " 

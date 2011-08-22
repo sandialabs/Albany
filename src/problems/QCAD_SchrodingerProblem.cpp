@@ -382,6 +382,11 @@ QCAD::SchrodingerProblem::constructEvaluators(
     p->set<bool>("Only solve in quantum blocks", bOnlySolveInQuantumBlocks);
     p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
 
+    //Pass the Potential parameter list to test Finite Wall with different effective mass
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Potential");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
     evaluators_to_build["psi Resid"] = p;
   }
 

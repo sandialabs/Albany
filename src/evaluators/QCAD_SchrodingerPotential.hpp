@@ -60,6 +60,7 @@ namespace QCAD {
     		getValidSchrodingerPotentialParameters() const;
 
   	ScalarT parabolicPotentialValue( const int numDim, const MeshScalarT* coord);
+  	ScalarT finiteWallPotential( const int numDim, const MeshScalarT* coord);
 
   	//! input
   	std::size_t numQPs;
@@ -71,9 +72,16 @@ namespace QCAD {
     PHX::MDField<ScalarT,Cell,QuadPoint> V; //potential 
 
   	//! energy parameter of potential, precise meaning dependent on type of potential:
-    //   Parabolic case -> confinement energy
+    //  Parabolic case -> confinement energy
+    //  Finite Wall case -> barrier height 
   	ScalarT E0;
-
+    
+    //! more parameters for Finite Wall 
+    double barrEffMass; // in [m0]
+    double barrWidth;   // in length_unit_in_m
+    double wellEffMass;
+    double wellWidth; 
+    
 	  //! constant scaling of potential
   	ScalarT scalingFactor;
   	
