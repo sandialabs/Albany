@@ -44,7 +44,7 @@ cmake \
 -D Trilinos_ENABLE_Piro:BOOL=ON \
 -D Trilinos_ENABLE_STK:BOOL=ON \
 -D Trilinos_ENABLE_Teko:BOOL=ON \
--D Trilinos_ENABLE_Trios:BOOL=ON \
+-D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
 -D Trilinos_ENABLE_Pamgen:BOOL=ON \
 -D Trilinos_ENABLE_Zoltan:BOOL=ON \
 -D TPL_ENABLE_BinUtils=OFF \

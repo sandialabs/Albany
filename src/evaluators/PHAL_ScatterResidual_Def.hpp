@@ -35,8 +35,8 @@ ScatterResidualBase(const Teuchos::ParameterList& p)
   scatter_operation = Teuchos::rcp(new PHX::Tag<ScalarT>
     (fieldName, p.get< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout")));
 
-  const std::vector<std::string>& names =
-    *(p.get< Teuchos::RCP< std::vector<std::string> > >("Residual Names"));
+  const Teuchos::ArrayRCP<std::string>& names =
+    p.get< Teuchos::ArrayRCP<std::string> >("Residual Names");
 
   Teuchos::RCP<PHX::DataLayout> dl =
     p.get< Teuchos::RCP<PHX::DataLayout> >("Data Layout");
