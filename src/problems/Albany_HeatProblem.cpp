@@ -129,7 +129,42 @@ Albany::HeatProblem::constructEvaluators(const Albany::MeshSpecsStruct& meshSpec
    RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
    Albany::ProblemUtils probUtils(dl);
 
-/*
+#ifdef USE_PROBLEM_UTILS
+   Teuchos::ArrayRCP<string> dof_names(neq);
+     dof_names[0] = "Temperature";
+   Teuchos::ArrayRCP<string> dof_names_dot(neq);
+     dof_names_dot[0] = "Temperature_dot";
+   Teuchos::ArrayRCP<string> resid_names(neq);
+     resid_names[0] = "Temperature Residual";
+
+   evaluators_to_build["Gather Solution"] = 
+     probUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot);
+
+   evaluators_to_build["Scatter Residual"] = 
+     probUtils.constructScatterResidualEvaluator(false, resid_names);
+
+  evaluators_to_build["Gather Coordinate Vector"] = 
+    probUtils.constructGatherCoordinateVectorEvaluator();
+
+  evaluators_to_build["Map To Physical Frame"] = 
+    probUtils.constructMapToPhysicalFrameEvaluator( cellType, cubature);
+
+  evaluators_to_build["Compute Basis Functions"] =
+    probUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature);
+
+  for (int i=0; i<neq; i++) {
+    evaluators_to_build["DOF "+dof_names[i]] =
+      probUtils.constructDOFInterpolationEvaluator(dof_names[i]);
+
+    evaluators_to_build["DOF "+dof_names_dot[i]] =
+      probUtils.constructDOFInterpolationEvaluator(dof_names_dot[i]);
+
+    evaluators_to_build["DOF Grad "+dof_names[i]] =
+      probUtils.constructDOFGradInterpolationEvaluator(dof_names[i]);
+  }
+
+#else // Construct all evaluators verbosely
+
   { // Gather Solution
    Teuchos::ArrayRCP<string> dof_names(neq);
      dof_names[0] = "Temperature";
@@ -147,22 +182,7 @@ Albany::HeatProblem::constructEvaluators(const Albany::MeshSpecsStruct& meshSpec
 
     evaluators_to_build["Gather Solution"] = p;
   }
-*/
 
-   Teuchos::ArrayRCP<string> dof_names(neq);
-     dof_names[0] = "Temperature";
-   Teuchos::ArrayRCP<string> dof_names_dot(neq);
-     dof_names_dot[0] = "Temperature_dot";
-   Teuchos::ArrayRCP<string> resid_names(neq);
-     resid_names[0] = "Temperature Residual";
-
-   evaluators_to_build["Gather Solution"] = 
-     probUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot);
-
-   evaluators_to_build["Scatter Residual"] = 
-     probUtils.constructScatterResidualEvaluator(false, resid_names);
-
-/*
   { // Gather Coordinate Vector
     RCP<ParameterList> p = rcp(new ParameterList("Heat Gather Coordinate Vector"));
     int type = FactoryTraits<AlbanyTraits>::id_gather_coordinate_vector;
@@ -175,12 +195,7 @@ Albany::HeatProblem::constructEvaluators(const Albany::MeshSpecsStruct& meshSpec
     p->set< string >("Coordinate Vector Name", "Coord Vec");
     evaluators_to_build["Gather Coordinate Vector"] = p;
   }
-*/
 
-  evaluators_to_build["Gather Coordinate Vector"] = 
-    probUtils.constructGatherCoordinateVectorEvaluator();
-
-/*
   { // Map To Physical Frame: Interpolate X, Y to QuadPoints
     RCP<ParameterList> p = rcp(new ParameterList("Heat 1D Map To Physical Frame"));
 
@@ -199,12 +214,7 @@ Albany::HeatProblem::constructEvaluators(const Albany::MeshSpecsStruct& meshSpec
 
     evaluators_to_build["Map To Physical Frame"] = p;
   }
-*/
 
-  evaluators_to_build["Map To Physical Frame"] = 
-    probUtils.constructMapToPhysicalFrameEvaluator( cellType, cubature);
-
-/*
   { // Compute Basis Functions
     RCP<ParameterList> p = rcp(new ParameterList("Heat Compute Basis Functions"));
 
@@ -234,51 +244,7 @@ Albany::HeatProblem::constructEvaluators(const Albany::MeshSpecsStruct& meshSpec
 
     evaluators_to_build["Compute Basis Functions"] = p;
   }
-*/
-  evaluators_to_build["Compute Basis Functions"] =
-    probUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature);
-       
 
-
-  { // Thermal conductivity
-    RCP<ParameterList> p = rcp(new ParameterList);
-
-    int type = FactoryTraits<AlbanyTraits>::id_thermal_conductivity;
-    p->set<int>("Type", type);
-
-    p->set<string>("QP Variable Name", "Thermal Conductivity");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Thermal Conductivity");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-    evaluators_to_build["Thermal Conductivity"] = p;
-  }
-
-  if (haveAbsorption) { // Absorption
-    RCP<ParameterList> p = rcp(new ParameterList);
-
-    int type = FactoryTraits<AlbanyTraits>::id_absorption;
-    p->set<int>("Type", type);
-
-    p->set<string>("QP Variable Name", "Absorption");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Absorption");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-    evaluators_to_build["Absorption"] = p;
-  }
-
-/*
   { // DOF: Interpolate nodal Temperature values to quad points
     RCP<ParameterList> p = rcp(new ParameterList("Heat DOFInterpolation Temperature"));
 
@@ -337,17 +303,59 @@ Albany::HeatProblem::constructEvaluators(const Albany::MeshSpecsStruct& meshSpec
 
     evaluators_to_build["DOF Grad Temperature"] = p;
   }
-*/
 
-  for (int i=0; i<neq; i++) {
-    evaluators_to_build["DOF "+dof_names[i]] =
-      probUtils.constructDOFInterpolationEvaluator(dof_names[i]);
+  { // Scatter Residual
+   Teuchos::ArrayRCP<string> resid_names(neq);
+     resid_names[0] = "Temperature Residual";
 
-    evaluators_to_build["DOF "+dof_names_dot[i]] =
-      probUtils.constructDOFInterpolationEvaluator(dof_names_dot[i]);
+    RCP<ParameterList> p = rcp(new ParameterList);
+    int type = FactoryTraits<AlbanyTraits>::id_scatter_residual;
+    p->set<int>("Type", type);
+    p->set< Teuchos::ArrayRCP<string> >("Residual Names", resid_names);
 
-    evaluators_to_build["DOF Grad "+dof_names[i]] =
-      probUtils.constructDOFGradInterpolationEvaluator(dof_names[i]);
+    p->set< RCP<DataLayout> >("Dummy Data Layout", dl->dummy);
+    p->set< RCP<DataLayout> >("Data Layout", dl->node_scalar);
+
+    evaluators_to_build["Scatter Residual"] = p;
+  }
+#endif
+
+  { // Thermal conductivity
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    int type = FactoryTraits<AlbanyTraits>::id_thermal_conductivity;
+    p->set<int>("Type", type);
+
+    p->set<string>("QP Variable Name", "Thermal Conductivity");
+    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Thermal Conductivity");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    evaluators_to_build["Thermal Conductivity"] = p;
+  }
+
+  if (haveAbsorption) { // Absorption
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    int type = FactoryTraits<AlbanyTraits>::id_absorption;
+    p->set<int>("Type", type);
+
+    p->set<string>("QP Variable Name", "Absorption");
+    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Absorption");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    evaluators_to_build["Absorption"] = p;
   }
 
 
@@ -408,23 +416,6 @@ Albany::HeatProblem::constructEvaluators(const Albany::MeshSpecsStruct& meshSpec
 
     evaluators_to_build["Heat Resid"] = p;
   }
-
-/*
-  { // Scatter Residual
-   Teuchos::ArrayRCP<string> resid_names(neq);
-     resid_names[0] = "Temperature Residual";
-
-    RCP<ParameterList> p = rcp(new ParameterList);
-    int type = FactoryTraits<AlbanyTraits>::id_scatter_residual;
-    p->set<int>("Type", type);
-    p->set< Teuchos::ArrayRCP<string> >("Residual Names", resid_names);
-
-    p->set< RCP<DataLayout> >("Dummy Data Layout", dl->dummy);
-    p->set< RCP<DataLayout> >("Data Layout", dl->node_scalar);
-
-    evaluators_to_build["Scatter Residual"] = p;
-  }
-*/
 
    // Build Field Evaluators for each evaluation type
    PHX::EvaluatorFactory<AlbanyTraits,FactoryTraits<AlbanyTraits> > factory;
