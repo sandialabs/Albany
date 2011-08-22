@@ -139,7 +139,8 @@ int main(int ac, char* av[])
   Teuchos::RCP<Epetra_Vector>
   solution_field = stk_discretization.getSolutionField();
 
-  stk_discretization.outputToExodus(*solution_field);
+  // second arg to output is (pseudo)time
+  stk_discretization.outputToExodus(*solution_field, 1.0);
 
   return 0;
 

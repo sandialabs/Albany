@@ -1,4 +1,4 @@
-/*
+/**
  * Topology.cc
  *  Set of topology manipulation functions for 2D and 3D stk meshes.
  *  Created on: Jul 11, 2011
@@ -238,7 +238,7 @@ topology::set_entities_open(
 	stk::mesh::get_entities(*(bulkData_),numDim-1,boundary_lst);
 
 	// Probability that fracture_criterion will return true.
-	float p = 0.5;
+	float p = 1.0;
 
 	// Iterate over the boundary entities
 	for (int i = 0; i < boundary_lst.size(); ++i){
@@ -854,8 +854,8 @@ topology::fracture_boundary(std::map<EntityKey, bool> & entity_open){
 			// Iterate over the open faces
 			for(std::vector<Entity*>::iterator k = open_face_lst.begin();
 					k != open_face_lst.end(); ++k){
-				Entity & face = *(*k);
-				Vertex faceVertex = subgraph.global_to_local(face.key());
+				Entity * face = *k;
+				Vertex faceVertex = subgraph.global_to_local(face->key());
 				Vertex newFaceVertex;
 				subgraph.clone_boundary_entity(faceVertex,newFaceVertex,entity_open);
 
@@ -863,7 +863,7 @@ topology::fracture_boundary(std::map<EntityKey, bool> & entity_open){
 				Entity * newFace = bulkData_->get_entity(newFaceKey);
 
 				// add original and new faces to the fractured face list
-				fractured_face.insert(std::make_pair(&face,newFace));
+				fractured_face.insert(std::make_pair(face,newFace));
 
 				++numfractured;
 			}

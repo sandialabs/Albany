@@ -20,7 +20,6 @@
 
 // User Defined Evaluator Types
 #include "PHAL_Constant.hpp"
-#include "PHAL_Dirichlet.hpp"
 #include "PHAL_GatherSolution.hpp"
 #include "PHAL_ScatterResidual.hpp"
 #include "PHAL_Source.hpp"
@@ -65,7 +64,6 @@
 #include "LCM/evaluators/DamageSource.hpp"
 #include "LCM/evaluators/ShearModulus.hpp"
 #include "LCM/evaluators/BulkModulus.hpp"
-#include "LCM/evaluators/KfieldBC.hpp"
 #include "LCM/evaluators/DislocationDensity.hpp"
 
 
@@ -91,104 +89,98 @@ namespace LCM {
 template<typename Traits>
 struct FactoryTraits {
   
-  static const int id_dirichlet                 =  0;
-  static const int id_gather_solution           =  1;
-  static const int id_gather_coordinate_vector  =  2;
-  static const int id_scatter_residual          =  3;
-  static const int id_compute_basis_functions   =  4;
-  static const int id_dof_interpolation         =  5;
-  static const int id_dof_grad_interpolation    =  6;
-  static const int id_dofvec_interpolation      =  7;
-  static const int id_dofvec_grad_interpolation =  8;
-  static const int id_map_to_physical_frame     =  9;
-  static const int id_source                    = 10;
-  static const int id_thermal_conductivity      = 11;
-  static const int id_helmholtzresid            = 12;
-  static const int id_heateqresid               = 13;
-  static const int id_constant                  = 14;
-  static const int id_dirichlet_aggregator      = 15;
-  static const int id_jouleheating              = 16;
-  static const int id_elastic_modulus           = 17;
-  static const int id_stress                    = 18;
-  static const int id_strain                    = 19;
-  static const int id_elasticityresid           = 20;
-  static const int id_poissons_ratio            = 21;
-  static const int id_defgrad                   = 22;
-  static const int id_rcg                       = 23;
-  static const int id_lcg                       = 24;
-  static const int id_neohookean_stress         = 25;
-  static const int id_tl_elas_resid             = 26;
-  static const int id_j2_stress                 = 27;
-  static const int id_energy_potential          = 28;
-  static const int id_hardening_modulus         = 29;
-  static const int id_yield_strength            = 30;
-  static const int id_pisdwdf_stress            = 31;
-  static const int id_damage_resid              = 32;
-  static const int id_j2_damage                 = 33;
-  static const int id_damage_ls                 = 34;
-  static const int id_sat_mod                   = 35;
-  static const int id_sat_exp                   = 36;
-  static const int id_localization              = 37;
-  static const int id_damage_source             = 38;
-  static const int id_bulk_modulus              = 39;
-  static const int id_shear_modulus             = 40;
-  static const int id_kfield_bc                 = 41;
-  static const int id_savestatefield            = 42;
-  static const int id_dislocation_density       = 43;
+  static const int id_gather_solution           =  0;
+  static const int id_gather_coordinate_vector  =  1;
+  static const int id_scatter_residual          =  2;
+  static const int id_compute_basis_functions   =  3;
+  static const int id_dof_interpolation         =  4;
+  static const int id_dof_grad_interpolation    =  5;
+  static const int id_dofvec_interpolation      =  6;
+  static const int id_dofvec_grad_interpolation =  7;
+  static const int id_map_to_physical_frame     =  8;
+  static const int id_source                    =  9;
+  static const int id_thermal_conductivity      = 10;
+  static const int id_helmholtzresid            = 11;
+  static const int id_heateqresid               = 12;
+  static const int id_constant                  = 13;
+  static const int id_jouleheating              = 14;
+  static const int id_elastic_modulus           = 15;
+  static const int id_stress                    = 16;
+  static const int id_strain                    = 17;
+  static const int id_elasticityresid           = 18;
+  static const int id_poissons_ratio            = 19;
+  static const int id_defgrad                   = 20;
+  static const int id_rcg                       = 21;
+  static const int id_lcg                       = 22;
+  static const int id_neohookean_stress         = 23;
+  static const int id_tl_elas_resid             = 24;
+  static const int id_j2_stress                 = 25;
+  static const int id_energy_potential          = 26;
+  static const int id_hardening_modulus         = 27;
+  static const int id_yield_strength            = 28;
+  static const int id_pisdwdf_stress            = 29;
+  static const int id_damage_resid              = 30;
+  static const int id_j2_damage                 = 31;
+  static const int id_damage_ls                 = 32;
+  static const int id_sat_mod                   = 33;
+  static const int id_sat_exp                   = 34;
+  static const int id_localization              = 35;
+  static const int id_damage_source             = 36;
+  static const int id_bulk_modulus              = 37;
+  static const int id_shear_modulus             = 38;
+  static const int id_savestatefield            = 39;
+  static const int id_dislocation_density       = 40;
   // JTO - leave lame stress at the bottom for the convention below to be most effective
-  static const int id_lame_stress               = 44;
+  static const int id_lame_stress               = 41;
 
 #ifndef ALBANY_LAME
-  typedef boost::mpl::vector44<
+  typedef boost::mpl::vector41<
 #else
-  typedef boost::mpl::vector45<
+  typedef boost::mpl::vector42<
 #endif
-    PHAL::Dirichlet<_,Traits>,                //  0
-    PHAL::GatherSolution<_,Traits>,           //  1
-    PHAL::GatherCoordinateVector<_,Traits>,   //  2
-    PHAL::ScatterResidual<_,Traits>,          //  3
-    PHAL::ComputeBasisFunctions<_,Traits>,    //  4
-    PHAL::DOFInterpolation<_,Traits>,         //  5
-    PHAL::DOFGradInterpolation<_,Traits>,     //  6
-    PHAL::DOFVecInterpolation<_,Traits>,      //  7
-    PHAL::DOFVecGradInterpolation<_,Traits>,  //  8
-    PHAL::MapToPhysicalFrame<_,Traits>,       //  9
-    PHAL::Source<_,Traits>,                   // 10
-    PHAL::ThermalConductivity<_,Traits>,      // 11
-    PHAL::HelmholtzResid<_,Traits>,           // 12
-    PHAL::HeatEqResid<_,Traits>,              // 13
-    PHAL::Constant<_,Traits>,                 // 14
-    PHAL::DirichletAggregator<_,Traits>,      // 15
-    PHAL::JouleHeating<_,Traits>,             // 16
-    LCM::ElasticModulus<_,Traits>,            // 17
-    LCM::Stress<_,Traits>,                    // 18
-    LCM::Strain<_,Traits>,                    // 19
-    LCM::ElasticityResid<_,Traits>,           // 20
-    LCM::PoissonsRatio<_,Traits>,             // 21
-    LCM::DefGrad<_,Traits>,                   // 22
-    LCM::RCG<_,Traits>,                       // 23
-    LCM::LCG<_,Traits>,                       // 24
-    LCM::Neohookean<_,Traits>,                // 25
-    LCM::TLElasResid<_,Traits>,               // 26
-    LCM::J2Stress<_,Traits>,                  // 27
-    LCM::EnergyPotential<_,Traits>,           // 28
-    LCM::HardeningModulus<_,Traits>,          // 29
-    LCM::YieldStrength<_,Traits>,             // 30
-    LCM::PisdWdF<_,Traits>,                   // 31
-    LCM::DamageResid<_,Traits>,               // 32
-    LCM::J2Damage<_,Traits>,                  // 33
-    LCM::DamageLS<_,Traits>,                  // 34
-    LCM::SaturationModulus<_,Traits>,         // 35
-    LCM::SaturationExponent<_,Traits>,        // 36
-    LCM::Localization<_,Traits>,              // 37
-    LCM::DamageSource<_,Traits>,              // 38
-    LCM::BulkModulus<_,Traits>,               // 39
-    LCM::ShearModulus<_,Traits>,              // 40
-    LCM::KfieldBC<_,Traits>,                  // 41
-    PHAL::SaveStateField<_,Traits>,           // 42
-    LCM::DislocationDensity<_,Traits>         // 43
+    PHAL::GatherSolution<_,Traits>,           //  0
+    PHAL::GatherCoordinateVector<_,Traits>,   //  1
+    PHAL::ScatterResidual<_,Traits>,          //  2
+    PHAL::ComputeBasisFunctions<_,Traits>,    //  3
+    PHAL::DOFInterpolation<_,Traits>,         //  4
+    PHAL::DOFGradInterpolation<_,Traits>,     //  5
+    PHAL::DOFVecInterpolation<_,Traits>,      //  6
+    PHAL::DOFVecGradInterpolation<_,Traits>,  //  7
+    PHAL::MapToPhysicalFrame<_,Traits>,       //  8
+    PHAL::Source<_,Traits>,                   //  9
+    PHAL::ThermalConductivity<_,Traits>,      // 10
+    PHAL::HelmholtzResid<_,Traits>,           // 11
+    PHAL::HeatEqResid<_,Traits>,              // 12
+    PHAL::Constant<_,Traits>,                 // 13
+    PHAL::JouleHeating<_,Traits>,             // 14
+    LCM::ElasticModulus<_,Traits>,            // 15
+    LCM::Stress<_,Traits>,                    // 16
+    LCM::Strain<_,Traits>,                    // 17
+    LCM::ElasticityResid<_,Traits>,           // 18
+    LCM::PoissonsRatio<_,Traits>,             // 19
+    LCM::DefGrad<_,Traits>,                   // 20
+    LCM::RCG<_,Traits>,                       // 21
+    LCM::LCG<_,Traits>,                       // 22
+    LCM::Neohookean<_,Traits>,                // 23
+    LCM::TLElasResid<_,Traits>,               // 24
+    LCM::J2Stress<_,Traits>,                  // 25
+    LCM::EnergyPotential<_,Traits>,           // 26
+    LCM::HardeningModulus<_,Traits>,          // 27
+    LCM::YieldStrength<_,Traits>,             // 28
+    LCM::PisdWdF<_,Traits>,                   // 29
+    LCM::DamageResid<_,Traits>,               // 30
+    LCM::J2Damage<_,Traits>,                  // 31
+    LCM::DamageLS<_,Traits>,                  // 32
+    LCM::SaturationModulus<_,Traits>,         // 33
+    LCM::SaturationExponent<_,Traits>,        // 34
+    LCM::Localization<_,Traits>,              // 35
+    LCM::DamageSource<_,Traits>,              // 36
+    LCM::BulkModulus<_,Traits>,               // 37
+    LCM::ShearModulus<_,Traits>,              // 38
+    PHAL::SaveStateField<_,Traits>,           // 39
+    LCM::DislocationDensity<_,Traits>         // 40
 #ifdef ALBANY_LAME
-    ,LCM::LameStress<_,Traits>                // 44
+    ,LCM::LameStress<_,Traits>                // 41
 #endif
     > EvaluatorTypes;
 };

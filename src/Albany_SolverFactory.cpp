@@ -27,6 +27,7 @@
 #include "Piro_Epetra_RythmosSolver.hpp"
 #include "Piro_Epetra_VelocityVerletSolver.hpp"
 #include "Piro_Epetra_TrapezoidRuleSolver.hpp"
+#include "QCAD_Solver.hpp"
 
 #include "Teuchos_XMLParameterListHelpers.hpp"
 #include "Teuchos_TestForException.hpp"
@@ -79,22 +80,14 @@ Albany::SolverFactory::createAndGetAlbanyApp(
   const Teuchos::RCP<const Epetra_Comm>& solverComm,
   const Teuchos::RCP<const Epetra_Vector>& initial_guess)
 {
-    // Create application
-    Teuchos::RCP<Albany::Application> app = 
-      rcp(new Albany::Application(appComm, appParams, initial_guess));
-
-    //Pass back albany app so that interface beyond ModelEvaluator can be used.
-    // This is essentially a hack to allow additional in/out arguments beyond 
-    //  what ModelEvaluator specifies.
-    albanyApp = app; 
-
     // Get solver type
     ParameterList& problemParams = appParams->sublist("Problem");
     string solutionMethod = problemParams.get("Solution Method", "Steady");
     TEST_FOR_EXCEPTION(solutionMethod != "Steady" &&
-            solutionMethod != "Transient" && solutionMethod != "Continuation", 
+            solutionMethod != "Transient" && solutionMethod != "Continuation" &&
+	    solutionMethod != "Multi-Problem",  
             std::logic_error, "Solution Method must be Steady, Transient, "
-            << "or Continuation, not : " << solutionMethod);
+            << "Continuation, or Multi-Problem not : " << solutionMethod);
     bool stochastic = problemParams.get("Stochastic", false);
     string secondOrder = problemParams.get("Second Order", "No");
 
@@ -133,19 +126,38 @@ Albany::SolverFactory::createAndGetAlbanyApp(
     problemParams.sublist("Response Functions").
       validateParameters(*getValidResponseParameters(),0);
 
-    // Create model evaluator
-    Teuchos::RCP<EpetraExt::ModelEvaluator> model = 
-      rcp(new Albany::ModelEvaluator(app, free_param_names, sg_param_names));
+    
 
-    // Create observer for output from time-stepper
+    Teuchos::RCP<Albany::Application> app;
+    Teuchos::RCP<EpetraExt::ModelEvaluator> model;
+
     typedef double Scalar;
     RCP<Rythmos::IntegrationObserverBase<Scalar> > Rythmos_observer;
     RCP<NOX::Epetra::Observer > NOX_observer;
 
-    if (solutionMethod=="Transient" && secondOrder=="No")
-      Rythmos_observer = rcp(new Albany_RythmosObserver(app));
-    else
-      NOX_observer = rcp(new Albany_NOXObserver(app));
+    // QCAD::Solve is only example of a multi-app solver so far
+    bool bSingleAppSolver = (solutionMethod != "Multi-Problem");
+
+    //If solver uses a single app, create it here along with observer
+    if (bSingleAppSolver) {
+
+      // Create application
+      app = rcp(new Albany::Application(appComm, appParams, initial_guess));
+
+      //Pass back albany app so that interface beyond ModelEvaluator can be used.
+      // This is essentially a hack to allow additional in/out arguments beyond 
+      //  what ModelEvaluator specifies.
+      albanyApp = app; 
+
+      // Create model evaluator
+      model = rcp(new Albany::ModelEvaluator(app, free_param_names, sg_param_names));
+
+      // Create observer for output from time-stepper
+      if (solutionMethod=="Transient" && secondOrder=="No")
+	Rythmos_observer = rcp(new Albany_RythmosObserver(app));
+      else
+	NOX_observer = rcp(new Albany_NOXObserver(app));
+    }
 
     TEST_FOR_EXCEPTION(stochastic && solutionMethod!="Steady", std::logic_error,
          "Stochastic problems only implemented for Steady NOX solves so far\n");
@@ -165,6 +177,8 @@ Albany::SolverFactory::createAndGetAlbanyApp(
       return  rcp(new Piro::Epetra::VelocityVerletSolver(appParams, model, NOX_observer));
     else if (solutionMethod== "Transient" && secondOrder=="Trapezoid Rule")
       return  rcp(new Piro::Epetra::TrapezoidRuleSolver(appParams, model, NOX_observer));
+    else if (solutionMethod== "Multi-Problem")
+      return  rcp(new QCAD::Solver(appParams, solverComm));
     else if (solutionMethod== "Transient") {
       TEST_FOR_EXCEPTION(secondOrder!="No", std::logic_error,
          "Invalid value for Second Order: (No, Velocity Verlet, Trapezoid Rule): "

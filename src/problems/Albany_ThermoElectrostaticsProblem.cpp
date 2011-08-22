@@ -27,6 +27,7 @@
 #include "Shards_CellTopology.hpp"
 #include "PHAL_FactoryTraits.hpp"
 #include "Albany_Utils.hpp"
+#include "Albany_ProblemUtils.hpp"
 
 
 Albany::ThermoElectrostaticsProblem::
@@ -36,10 +37,6 @@ ThermoElectrostaticsProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_
   Albany::AbstractProblem(params_, paramLib_, 2),
   numDim(numDim_)
 {
-  // neq=2 set in AbstractProblem constructor
-  dofNames.resize(neq);
-  dofNames[0] = "Phi";
-  dofNames[1] = "T";
 }
 
 Albany::ThermoElectrostaticsProblem::
@@ -56,7 +53,6 @@ buildProblem(
 {
   /* Construct All Phalanx Evaluators */
   constructEvaluators(meshSpecs);
-  constructDirichletEvaluators(meshSpecs.nsNames);
  
   // Build response functions
   Teuchos::ParameterList& responseList = params->sublist("Response Functions");
@@ -99,13 +95,12 @@ Albany::ThermoElectrostaticsProblem::constructEvaluators(
    using PHX::DataLayout;
    using PHX::MDALayout;
    using std::vector;
-   using std::map;
    using PHAL::FactoryTraits;
    using PHAL::AlbanyTraits;
 
    RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
    RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
-     intrepidBasis = this->getIntrepidBasis(meshSpecs.ctd);
+     intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
 
    const int numNodes = intrepidBasis->getCardinality();
    const int worksetSize = meshSpecs.worksetSize;
@@ -122,103 +117,54 @@ Albany::ThermoElectrostaticsProblem::constructEvaluators(
         << ", QuadPts= " << numQPts
         << ", Dim= " << numDim << endl;
 
-   // Parser will build parameter list that determines the field
-   // evaluators to build
-   map<string, RCP<ParameterList> > evaluators_to_build;
 
-   RCP<DataLayout> node_scalar = rcp(new MDALayout<Cell,Node>(worksetSize,numNodes));
-   RCP<DataLayout> qp_scalar = rcp(new MDALayout<Cell,QuadPoint>(worksetSize,numQPts));
+   // Construct standard FEM evaluators with standard field names                              
+   std::map<string, RCP<ParameterList> > evaluators_to_build;
+   RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
+   Albany::ProblemUtils probUtils(dl);
+   bool supportsTransient=false;
 
-   RCP<DataLayout> node_vector = rcp(new MDALayout<Cell,Node,Dim>(worksetSize,numNodes,numDim));
-   RCP<DataLayout> qp_vector = rcp(new MDALayout<Cell,QuadPoint,Dim>(worksetSize,numQPts,numDim));
+   // Define Field Names
 
-   RCP<DataLayout> vertices_vector = 
-     rcp(new MDALayout<Cell,Vertex, Dim>(worksetSize,numVertices,numDim));
-   // Basis functions, Basis function gradient
-   RCP<DataLayout> node_qp_scalar =
-     rcp(new MDALayout<Cell,Node,QuadPoint>(worksetSize,numNodes, numQPts));
-   RCP<DataLayout> node_qp_vector =
-     rcp(new MDALayout<Cell,Node,QuadPoint,Dim>(worksetSize,numNodes, numQPts,numDim));
+   Teuchos::ArrayRCP<string> dof_names(neq);
+     dof_names[0] = "Potential";
+     dof_names[1] = "Temperature";
 
-   RCP<DataLayout> dummy = rcp(new MDALayout<Dummy>(0));
+   Teuchos::ArrayRCP<string> dof_names_dot(neq);
+   if (supportsTransient) {
+     for (int i=0; i<neq; i++) dof_names_dot[i] = dof_names[i]+"_dot";
+   }
 
-  { // Gather Solution
-   RCP< vector<string> > dof_names = rcp(new vector<string>(neq));
-     (*dof_names)[0] = "Potential";
-     (*dof_names)[1] = "Temperature";
+   Teuchos::ArrayRCP<string> resid_names(neq);
+     for (int i=0; i<neq; i++) resid_names[i] = dof_names[i]+" Residual";
 
-    RCP<ParameterList> p = rcp(new ParameterList);
-    int type = FactoryTraits<AlbanyTraits>::id_gather_solution;
-    p->set<int>("Type", type);
-    p->set< RCP< vector<string> > >("Solution Names", dof_names);
-    p->set< RCP<DataLayout> >("Data Layout", node_scalar);
+   if (supportsTransient) evaluators_to_build["Gather Solution"] =
+       probUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot);
+   else  evaluators_to_build["Gather Solution"] =
+       probUtils.constructGatherSolutionEvaluator_noTransient(false, dof_names);
 
-    // Poisson solve does not have transient terms
-    p->set<bool>("Disable Transient", true);
+   evaluators_to_build["Scatter Residual"] =
+     probUtils.constructScatterResidualEvaluator(false, resid_names);
 
-    evaluators_to_build["Gather Solution"] = p;
-  }
+   evaluators_to_build["Gather Coordinate Vector"] =
+     probUtils.constructGatherCoordinateVectorEvaluator();
 
-  { // Gather Coordinate Vector
-    RCP<ParameterList> p = rcp(new ParameterList("ThermoElectrostatics Gather Coordinate Vector"));
-    int type = FactoryTraits<AlbanyTraits>::id_gather_coordinate_vector;
-    p->set<int>                ("Type", type);
-    // Input: Periodic BC flag
-    p->set<bool>("Periodic BC", false);
+   evaluators_to_build["Map To Physical Frame"] =
+     probUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature);
 
-    // Output:: Coordindate Vector at vertices
-    p->set< RCP<DataLayout> >  ("Coordinate Data Layout",  vertices_vector);
-    p->set< string >("Coordinate Vector Name", "Coord Vec");
-    evaluators_to_build["Gather Coordinate Vector"] = p;
-  }
+   evaluators_to_build["Compute Basis Functions"] =
+     probUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature);
 
-  { // Map To Physical Frame: Interpolate X, Y to QuadPoints
-    RCP<ParameterList> p = rcp(new ParameterList("ThermoElectrostatics 1D Map To Physical Frame"));
+   for (int i=0; i<neq; i++) {
+     evaluators_to_build["DOF "+dof_names[i]] =
+       probUtils.constructDOFInterpolationEvaluator(dof_names[i]);
 
-    int type = FactoryTraits<AlbanyTraits>::id_map_to_physical_frame;
-    p->set<int>   ("Type", type);
+     if (supportsTransient)
+       evaluators_to_build["DOF "+dof_names_dot[i]] =
+         probUtils.constructDOFInterpolationEvaluator(dof_names_dot[i]);
 
-    // Input: X, Y at vertices
-    p->set< string >("Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Coordinate Data Layout", vertices_vector);
-
-    p->set<RCP <Intrepid::Cubature<RealType> > >("Cubature", cubature);
-    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
-
-    // Output: X, Y at Quad Points (same name as input)
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
-
-    evaluators_to_build["Map To Physical Frame"] = p;
-  }
-
-  { // Compute Basis Functions
-    RCP<ParameterList> p = rcp(new ParameterList("ThermoElectrostatics Compute Basis Functions"));
-
-    int type = FactoryTraits<AlbanyTraits>::id_compute_basis_functions;
-    p->set<int>   ("Type", type);
-
-    // Inputs: X, Y at nodes, Cubature, and Basis
-    p->set<string>("Coordinate Vector Name","Coord Vec");
-    p->set< RCP<DataLayout> >("Coordinate Data Layout", vertices_vector);
-    p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
-
-    p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >
-        ("Intrepid Basis", intrepidBasis);
-
-    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
-
-    // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
-    p->set<string>("Weights Name",          "Weights");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
-    p->set<string>("BF Name",          "BF");
-    p->set<string>("Weighted BF Name", "wBF");
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
-
-    p->set<string>("Gradient BF Name",          "Grad BF");
-    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);
-
-    evaluators_to_build["Compute Basis Functions"] = p;
+     evaluators_to_build["DOF Grad "+dof_names[i]] =
+       probUtils.constructDOFGradInterpolationEvaluator(dof_names[i]);
   }
 
 
@@ -233,91 +179,14 @@ Albany::ThermoElectrostaticsProblem::constructEvaluators(
     p->set<string>("QP Variable Name 3", "Rho Cp"); 
     p->set<string>("Coordinate Vector Name", "Coord Vec");
     p->set<string>("Temperature Variable Name", "Temperature");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("TE Properties");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     evaluators_to_build["TE Properties"] = p;
-  }
-
-  { // DOF: Interpolate nodal Potential values to quad points
-    RCP<ParameterList> p = rcp(new ParameterList("Poisson DOFInterpolation Potential"));
-
-    int type = FactoryTraits<AlbanyTraits>::id_dof_interpolation;
-    p->set<int>   ("Type", type);
-
-    // Input
-    p->set<string>("Variable Name", "Potential");
-    p->set< RCP<DataLayout> >("Node Data Layout",      node_scalar);
-
-    p->set<string>("BF Name", "BF");
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
-
-    // Output (assumes same Name as input)
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
-
-    evaluators_to_build["DOF Potential"] = p;
-  }
-
-  { // DOF: Interpolate nodal Potential gradients to quad points
-    RCP<ParameterList> p = rcp(new ParameterList("Poisson DOFInterpolation Potential Grad"));
-
-    int type = FactoryTraits<AlbanyTraits>::id_dof_grad_interpolation;
-    p->set<int>   ("Type", type);
-
-    // Input
-    p->set<string>("Variable Name", "Potential");
-    p->set< RCP<DataLayout> >("Node Data Layout",      node_scalar);
-
-    p->set<string>("Gradient BF Name", "Grad BF");
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);
-
-    // Output
-    p->set<string>("Gradient Variable Name", "Potential Gradient");
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
-
-    evaluators_to_build["DOF Grad Potential"] = p;
-  }
-  { // DOF: Interpolate nodal Temperature values to quad points
-    RCP<ParameterList> p = rcp(new ParameterList("ThermoElectrostatics DOFInterpolation Temperature"));
-
-    int type = FactoryTraits<AlbanyTraits>::id_dof_interpolation;
-    p->set<int>   ("Type", type);
-
-    // Input
-    p->set<string>("Variable Name", "Temperature");
-    p->set< RCP<DataLayout> >("Node Data Layout",      node_scalar);
-
-    p->set<string>("BF Name", "BF");
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
-
-    // Output (assumes same Name as input)
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
-
-    evaluators_to_build["DOF Temperature"] = p;
-  }
-
-  { // DOF: Interpolate nodal Temperature gradients to quad points
-    RCP<ParameterList> p = rcp(new ParameterList("ThermoElectrostatics DOFInterpolation Temperature Grad"));
-
-    int type = FactoryTraits<AlbanyTraits>::id_dof_grad_interpolation;
-    p->set<int>   ("Type", type);
-
-    // Input
-    p->set<string>("Variable Name", "Temperature");
-    p->set< RCP<DataLayout> >("Node Data Layout",      node_scalar);
-
-    p->set<string>("Gradient BF Name", "Grad BF");
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);
-
-    // Output
-    p->set<string>("Gradient Variable Name", "Temperature Gradient");
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
-
-    evaluators_to_build["DOF Grad Temperature"] = p;
   }
 
   {
@@ -329,13 +198,13 @@ Albany::ThermoElectrostaticsProblem::constructEvaluators(
     //Input
     p->set<string>("Gradient Variable Name", "Potential Gradient");
     p->set<string>("Flux Variable Name", "Potential Flux");
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
     //Output
     p->set<string>("Source Name", "Joule");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     evaluators_to_build["Joule Heating"] = p;
   }
@@ -348,25 +217,25 @@ Albany::ThermoElectrostaticsProblem::constructEvaluators(
 
     //Input
     p->set<string>("Weighted BF Name", "wBF");
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
+    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
     p->set<string>("QP Variable Name", "Potential");
 
     p->set<string>("Permittivity Name", "Permittivity");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<string>("Gradient QP Variable Name", "Potential Gradient");
     p->set<string>("Flux QP Variable Name", "Potential Flux");
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);
+    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
     p->set<bool>("Have Source", false);
     p->set<string>("Source Name", "None");
 
     //Output
     p->set<string>("Residual Name", "Potential Residual");
-    p->set< RCP<DataLayout> >("Node Scalar Data Layout", node_scalar);
+    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
 
     evaluators_to_build["Poisson Resid"] = p;
   }
@@ -379,7 +248,7 @@ Albany::ThermoElectrostaticsProblem::constructEvaluators(
 
     //Input
     p->set<string>("Weighted BF Name", "wBF");
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
+    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
     p->set<string>("QP Variable Name", "Temperature");
 
     p->set<bool>("Have Source", true);
@@ -388,13 +257,13 @@ Albany::ThermoElectrostaticsProblem::constructEvaluators(
     p->set<bool>("Have Absorption", false);
 
     p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<string>("Gradient QP Variable Name", "Temperature Gradient");
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);
+    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
  
     // Poisson solve does not have transient terms
     p->set<bool>("Disable Transient", true);
@@ -407,25 +276,9 @@ Albany::ThermoElectrostaticsProblem::constructEvaluators(
 
     //Output
     p->set<string>("Residual Name", "Temperature Residual");
-    p->set< RCP<DataLayout> >("Node Scalar Data Layout", node_scalar);
+    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
 
     evaluators_to_build["ThermoElectrostatics Resid"] = p;
-  }
-
-  { // Scatter Residual
-   RCP< vector<string> > resid_names = rcp(new vector<string>(neq));
-     (*resid_names)[0] = "Potential Residual";
-     (*resid_names)[1] = "Temperature Residual";
-
-    RCP<ParameterList> p = rcp(new ParameterList);
-    int type = FactoryTraits<AlbanyTraits>::id_scatter_residual;
-    p->set<int>("Type", type);
-    p->set< RCP< vector<string> > >("Residual Names", resid_names);
-
-    p->set< RCP<DataLayout> >("Dummy Data Layout", dummy);
-    p->set< RCP<DataLayout> >("Data Layout", node_scalar);
-
-    evaluators_to_build["Scatter Residual"] = p;
   }
 
    // Build Field Evaluators for each evaluation type
@@ -440,20 +293,27 @@ Albany::ThermoElectrostaticsProblem::constructEvaluators(
    // Register all Evaluators
    PHX::registerEvaluators(evaluators, *fm);
 
-   PHX::Tag<AlbanyTraits::Residual::ScalarT> res_tag("Scatter", dummy);
+   PHX::Tag<AlbanyTraits::Residual::ScalarT> res_tag("Scatter", dl->dummy);
    fm->requireField<AlbanyTraits::Residual>(res_tag);
-   PHX::Tag<AlbanyTraits::Jacobian::ScalarT> jac_tag("Scatter", dummy);
+   PHX::Tag<AlbanyTraits::Jacobian::ScalarT> jac_tag("Scatter", dl->dummy);
    fm->requireField<AlbanyTraits::Jacobian>(jac_tag);
-   PHX::Tag<AlbanyTraits::Tangent::ScalarT> tan_tag("Scatter", dummy);
+   PHX::Tag<AlbanyTraits::Tangent::ScalarT> tan_tag("Scatter", dl->dummy);
    fm->requireField<AlbanyTraits::Tangent>(tan_tag);
-   PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_tag("Scatter", dummy);
+   PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_tag("Scatter", dl->dummy);
    fm->requireField<AlbanyTraits::SGResidual>(sgres_tag);
-   PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag("Scatter", dummy);
+   PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag("Scatter", dl->dummy);
    fm->requireField<AlbanyTraits::SGJacobian>(sgjac_tag);
-   PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag("Scatter", dummy);
+   PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag("Scatter", dl->dummy);
    fm->requireField<AlbanyTraits::MPResidual>(mpres_tag);
-   PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag("Scatter", dummy);
+   PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag("Scatter", dl->dummy);
    fm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag);
+
+   // Construct Dirichlet evaluators for all nodesets and names
+   vector<string> dirichletNames(neq);
+   dirichletNames[0] = "Phi";
+   dirichletNames[1] = "T";
+   dfm = probUtils.constructDirichletEvaluators(meshSpecs.nsNames, dirichletNames,
+                                          this->params, this->paramLib);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

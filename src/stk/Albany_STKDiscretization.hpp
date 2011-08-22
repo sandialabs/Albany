@@ -90,7 +90,7 @@ namespace Albany {
     const Teuchos::ArrayRCP<std::string>&  getWsEBNames() const;
 
     // 
-    void outputToExodus(const Epetra_Vector& soln);
+    void outputToExodus(const Epetra_Vector& soln, const double time);
  
     Teuchos::RCP<Epetra_Vector> getSolutionField() const;
 

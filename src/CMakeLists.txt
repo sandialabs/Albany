@@ -27,6 +27,7 @@ SET(SOURCES
 	Albany_StateManager.cpp 
 	Albany_ModelEvaluator.cpp
 	Albany_SaveEigenData.cpp
+	Albany_TimeManager.cpp
   )
 
 SET(HEADERS
@@ -47,11 +48,13 @@ SET(HEADERS
 	Albany_ModelEvaluator.hpp
 	Albany_SaveEigenData.hpp
         Albany_DummyParameterAccessor.hpp
+        Albany_TimeManager.hpp
   )
 
 #problems
 SET(SOURCES ${SOURCES}
 	problems/Albany_AbstractProblem.cpp 
+	problems/Albany_ProblemUtils.cpp 
 	problems/Albany_ProblemFactory.cpp
 	problems/Albany_HeatProblem.cpp 
 	problems/Albany_NavierStokes.cpp 
@@ -64,6 +67,7 @@ SET(SOURCES ${SOURCES}
 SET(HEADERS ${HEADERS}
 	problems/Albany_ProblemFactory.hpp 
 	problems/Albany_AbstractProblem.hpp 
+	problems/Albany_ProblemUtils.hpp 
 	problems/Albany_HeatProblem.hpp 
 	problems/Albany_NavierStokes.hpp 
 	problems/Albany_ODEProblem.hpp 
@@ -364,6 +368,7 @@ ENDIF()
 ENDIF()
 
 SET(SOURCES ${SOURCES}
+       QCAD_Solver.cpp
        evaluators/QCAD_Permittivity.cpp
        evaluators/QCAD_PoissonResid.cpp
        evaluators/QCAD_PoissonSource.cpp
@@ -379,6 +384,7 @@ SET(SOURCES ${SOURCES}
   )
 
 SET(HEADERS ${HEADERS}
+       QCAD_Solver.hpp
        evaluators/QCAD_Permittivity.hpp
        evaluators/QCAD_Permittivity_Def.hpp
        evaluators/QCAD_PoissonResid.hpp
@@ -478,7 +484,7 @@ SET(CUTR_HDRS
 set(ALB_TRILINOS_LIBS ${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES})
 
 include_directories (${Trilinos_INCLUDE_DIRS}
-                     ./ ./evaluators ./problems ./responses ./stk ./LCM/utils
+                     ./ ./evaluators ./problems ./responses ./stk ./LCM/ ./LCM/utils
                      ${Trilinos_TPL_INCLUDE_DIRS})
 
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
@@ -528,26 +534,26 @@ IF (ALBANY_LCM)
 add_executable(NodeUpdate LCM/test/utils/NodeUpdate.cc)
 ENDIF ()
 
-target_link_libraries(Albany          albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
-target_link_libraries(AlbanySG        albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
-target_link_libraries(AlbanyAdjoint   albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
-target_link_libraries(AlbanyCoupled   albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
-target_link_libraries(AlbanySGAdjoint   albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
+set(ALL_LIBRARIES ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES} )
+
+target_link_libraries(Albany          albanyLib ${ALL_LIBRARIES}) 
+target_link_libraries(AlbanySG        albanyLib ${ALL_LIBRARIES})
+target_link_libraries(AlbanyAdjoint   albanyLib ${ALL_LIBRARIES})
+target_link_libraries(AlbanyCoupled   albanyLib ${ALL_LIBRARIES})
+target_link_libraries(AlbanySGAdjoint   albanyLib ${ALL_LIBRARIES})
 IF (ALBANY_DAKOTA)
-  target_link_libraries(AlbanyDakota    albanyLib ${ALB_TRILINOS_LIBS}
-                        ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
+  target_link_libraries(AlbanyDakota    albanyLib ${ALL_LIBRARIES})
 ENDIF ()
 
 IF (ALBANY_QCAD)
-target_link_libraries(AlbanyQCAD      albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
+target_link_libraries(AlbanyQCAD      albanyLib ${ALL_LIBRARIES})
 ENDIF ()
 
-target_link_libraries(AlbanyAnalysis  albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} 
-                      ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
+target_link_libraries(AlbanyAnalysis  albanyLib ${ALL_LIBRARIES})
 
 #Linking tests
-target_link_libraries(PartitionTest albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
-target_link_libraries(UtilsTest albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
+target_link_libraries(PartitionTest albanyLib ${ALL_LIBRARIES})
+target_link_libraries(UtilsTest albanyLib ${ALL_LIBRARIES})
 IF (ALBANY_LCM)
-target_link_libraries(NodeUpdate albanyLib ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}) 
+target_link_libraries(NodeUpdate albanyLib ${ALL_LIBRARIES})
 ENDIF ()

@@ -133,7 +133,7 @@ Albany::STKDiscretization::getNodeSetIDs() const
   return nodeSetIDs;
 }
 
-void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln)
+void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln, const double time)
 {
   // Put solution as Epetra_Vector into STK Mesh
   setSolutionField(soln);
@@ -141,7 +141,7 @@ void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln)
 #ifdef ALBANY_SEACAS
   if (stkMeshStruct->exoOutput) {
 
-    time+=1.0;
+    //time+=1.0;
 
     int out_step = stk::io::process_output_request(
 						   *mesh_data, *stkMeshStruct->bulkData, time);

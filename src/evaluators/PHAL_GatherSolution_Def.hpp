@@ -34,9 +34,9 @@ GatherSolutionBase(const Teuchos::ParameterList& p)
     enableTransient = !p.get<bool>("Disable Transient");
   else enableTransient = true;
 
-  std::vector<std::string> solution_names; 
+  Teuchos::ArrayRCP<std::string> solution_names; 
   if (p.getEntryPtr("Solution Names")) {
-    solution_names = *(p.get< Teuchos::RCP< std::vector<std::string> > >("Solution Names"));
+    solution_names = p.get< Teuchos::ArrayRCP<std::string> >("Solution Names");
   }
   Teuchos::RCP<PHX::DataLayout> dl = 
     p.get< Teuchos::RCP<PHX::DataLayout> >("Data Layout");
@@ -50,8 +50,8 @@ GatherSolutionBase(const Teuchos::ParameterList& p)
     }
     // repeat for xdot if transient is enabled
     if (enableTransient) {
-      const std::vector<std::string>& names_dot = 
-        *(p.get< Teuchos::RCP< std::vector<std::string> > >("Time Dependent Solution Names"));
+      const Teuchos::ArrayRCP<std::string>& names_dot = 
+        p.get< Teuchos::ArrayRCP<std::string> >("Time Dependent Solution Names");
   
       val_dot.resize(names_dot.size());
       for (std::size_t eq = 0; eq < names_dot.size(); ++eq) {
@@ -69,8 +69,8 @@ GatherSolutionBase(const Teuchos::ParameterList& p)
     this->addEvaluatedField(valVec[0]);
     // repeat for xdot if transient is enabled
     if (enableTransient) {
-      const std::vector<std::string>& names_dot = 
-        *(p.get< Teuchos::RCP< std::vector<std::string> > >("Time Dependent Solution Names"));
+      const Teuchos::ArrayRCP<std::string>& names_dot = 
+        p.get< Teuchos::ArrayRCP<std::string> >("Time Dependent Solution Names");
   
       valVec_dot.resize(1);
       PHX::MDField<ScalarT,Cell,Node,Dim> f(names_dot[0],dl);

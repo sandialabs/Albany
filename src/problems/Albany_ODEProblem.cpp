@@ -23,6 +23,7 @@
 #include "Shards_CellTopology.hpp"
 #include "PHAL_FactoryTraits.hpp"
 #include "Albany_Utils.hpp"
+#include "Albany_ProblemUtils.hpp"
 
 
 Albany::ODEProblem::
@@ -32,9 +33,6 @@ ODEProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   Albany::AbstractProblem(params_, paramLib_, 2),
   numDim(numDim_)
 {
-  dofNames.resize(neq);
-  dofNames[0] = "X";
-  dofNames[1] = "Y";
 }
 
 Albany::ODEProblem::
@@ -51,7 +49,6 @@ buildProblem(
 {
   /* Construct All Phalanx Evaluators */
   constructEvaluators(meshSpecs);
-  constructDirichletEvaluators(meshSpecs.nsNames);
  
   // Build response functions
   Teuchos::ParameterList& responseList = params->sublist("Response Functions");
@@ -88,7 +85,6 @@ Albany::ODEProblem::constructEvaluators(
    using PHX::DataLayout;
    using PHX::MDALayout;
    using std::vector;
-   using std::map;
    using PHAL::FactoryTraits;
    using PHAL::AlbanyTraits;
 
@@ -102,34 +98,33 @@ Albany::ODEProblem::constructEvaluators(
         << ", Nodes= " << numNodes
         << ", Dim= " << numDim << endl;
 
-   // Parser will build parameter list that determines the field
-   // evaluators to build
-   map<string, RCP<ParameterList> > evaluators_to_build;
+   // Construct standard FEM evaluators with standard field names                              
+   std::map<string, RCP<ParameterList> > evaluators_to_build;
+   RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,1,numDim)); 
+   Albany::ProblemUtils probUtils(dl);
+   bool supportsTransient=true;
 
-   RCP<DataLayout> node_scalar = rcp(new MDALayout<Cell,Node>(worksetSize,numNodes));
-   RCP<DataLayout> node_vector = rcp(new MDALayout<Cell,Node,Dim>(worksetSize,numNodes,numDim));
+   // Define Field Names
+ 
+   Teuchos::ArrayRCP<string> dof_names(neq);
+     dof_names[0] = "X";
+     dof_names[1] = "Y";
 
-   RCP<DataLayout> dummy = rcp(new MDALayout<Dummy>(0));
+   Teuchos::ArrayRCP<string> dof_names_dot(neq);
+   if (supportsTransient) {
+     for (int i=0; i<neq; i++) dof_names_dot[i] = dof_names[i]+"_dot";
+   }
 
-  { // Gather Solution
-   RCP< vector<string> > dof_names = rcp(new vector<string>(neq));
-     (*dof_names)[0] = "X";
-     (*dof_names)[1] = "Y";
+   Teuchos::ArrayRCP<string> resid_names(neq);
+     for (int i=0; i<neq; i++) resid_names[i] = dof_names[i]+" Residual";
 
-    RCP<ParameterList> p = rcp(new ParameterList);
-    int type = FactoryTraits<AlbanyTraits>::id_gather_solution;
-    p->set<int>("Type", type);
-    p->set< RCP< vector<string> > >("Solution Names", dof_names);
-    p->set< RCP<DataLayout> >("Data Layout", node_scalar);
+   if (supportsTransient) evaluators_to_build["Gather Solution"] =
+       probUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot);
+   else  evaluators_to_build["Gather Solution"] =
+       probUtils.constructGatherSolutionEvaluator_noTransient(false, dof_names);
 
-   RCP< vector<string> > dof_names_dot = rcp(new vector<string>(neq));
-     (*dof_names_dot)[0] = "X_dot";
-     (*dof_names_dot)[1] = "Y_dot";
-
-   p->set< RCP< vector<string> > >("Time Dependent Solution Names", dof_names_dot);
-
-    evaluators_to_build["Gather Solution"] = p;
-  }
+   evaluators_to_build["Scatter Residual"] =
+     probUtils.constructScatterResidualEvaluator(false, resid_names);
 
   { // X Resid
     RCP<ParameterList> p = rcp(new ParameterList("ODE Resid"));
@@ -138,7 +133,7 @@ Albany::ODEProblem::constructEvaluators(
     p->set<int>("Type", type);
 
     //Input
-    p->set< RCP<DataLayout> >("Node Scalar Data Layout", node_scalar);
+    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
     p->set<string>("Variable Name", "X");
     p->set<string>("Time Derivative Variable Name", "X_dot");
     p->set<string>("Y Variable Name", "Y");
@@ -149,22 +144,6 @@ Albany::ODEProblem::constructEvaluators(
     p->set<string>("Y Residual Name", "Y Residual");
 
     evaluators_to_build["Heat Resid"] = p;
-  }
-
-  { // Scatter Residual
-   RCP< vector<string> > resid_names = rcp(new vector<string>(neq));
-     (*resid_names)[0] = "X Residual";
-     (*resid_names)[1] = "Y Residual";
-
-    RCP<ParameterList> p = rcp(new ParameterList);
-    int type = FactoryTraits<AlbanyTraits>::id_scatter_residual;
-    p->set<int>("Type", type);
-    p->set< RCP< vector<string> > >("Residual Names", resid_names);
-
-    p->set< RCP<DataLayout> >("Dummy Data Layout", dummy);
-    p->set< RCP<DataLayout> >("Data Layout", node_scalar);
-
-    evaluators_to_build["Scatter Residual"] = p;
   }
 
    // Build Field Evaluators for each evaluation type
@@ -179,20 +158,27 @@ Albany::ODEProblem::constructEvaluators(
    // Register all Evaluators
    PHX::registerEvaluators(evaluators, *fm);
 
-   PHX::Tag<AlbanyTraits::Residual::ScalarT> res_tag("Scatter", dummy);
+   PHX::Tag<AlbanyTraits::Residual::ScalarT> res_tag("Scatter", dl->dummy);
    fm->requireField<AlbanyTraits::Residual>(res_tag);
-   PHX::Tag<AlbanyTraits::Jacobian::ScalarT> jac_tag("Scatter", dummy);
+   PHX::Tag<AlbanyTraits::Jacobian::ScalarT> jac_tag("Scatter", dl->dummy);
    fm->requireField<AlbanyTraits::Jacobian>(jac_tag);
-   PHX::Tag<AlbanyTraits::Tangent::ScalarT> tan_tag("Scatter", dummy);
+   PHX::Tag<AlbanyTraits::Tangent::ScalarT> tan_tag("Scatter", dl->dummy);
    fm->requireField<AlbanyTraits::Tangent>(tan_tag);
-   PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_tag("Scatter", dummy);
+   PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_tag("Scatter", dl->dummy);
    fm->requireField<AlbanyTraits::SGResidual>(sgres_tag);
-   PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag("Scatter", dummy);
+   PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag("Scatter", dl->dummy);
    fm->requireField<AlbanyTraits::SGJacobian>(sgjac_tag);
-   PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag("Scatter", dummy);
+   PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag("Scatter", dl->dummy);
    fm->requireField<AlbanyTraits::MPResidual>(mpres_tag);
-   PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag("Scatter", dummy);
+   PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag("Scatter", dl->dummy);
    fm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag);
+
+   // Construct Dirichlet evaluators for all nodesets and names
+   vector<string> dirichletNames(neq);
+   dirichletNames[0] = "X";
+   dirichletNames[1] = "Y";
+   dfm = probUtils.constructDirichletEvaluators(meshSpecs.nsNames, dirichletNames,
+                                          this->params, this->paramLib);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
