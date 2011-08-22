@@ -415,6 +415,7 @@ Albany::ProblemUtils::constructDirichletEvaluators(
        // grab the sublist
        ParameterList& sub_list = DBCparams.sublist(ss);
 
+#ifdef ALBANY_LCM
        // Only for LCM problems, but no harm in leaving off ifdefs
        if (sub_list.get<string>("BC Function") == "Kfield" )
        {
@@ -461,6 +462,7 @@ Albany::ProblemUtils::constructDirichletEvaluators(
 
 	 dbcs.push_back(ss);
        }
+#endif
      }
    }
 

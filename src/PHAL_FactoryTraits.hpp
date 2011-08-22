@@ -63,8 +63,9 @@
 #include "PHAL_NSBodyForce.hpp"
 #include "PHAL_NSNeutronEqResid.hpp"
 
-// Even though this is just for LCM, skip ifdefs to keep Dirichlet code clean
+#ifdef ALBANY_LCM
 #include "LCM/evaluators/KfieldBC.hpp"
+#endif
 
 #include "boost/mpl/vector/vector50.hpp"
 #include "boost/mpl/placeholders.hpp"
@@ -178,13 +179,19 @@ struct DirichletFactoryTraits {
   static const int id_dirichlet                 =  0;
   static const int id_dirichlet_aggregator      =  1;
   static const int id_qcad_poisson_dirichlet    =  2;
-  static const int id_kfield_bc                 =  3;
+  static const int id_kfield_bc                 =  3; // Only for LCM probs
 
+#ifdef ALBANY_LCM
   typedef boost::mpl::vector4< 
+#else
+  typedef boost::mpl::vector3< 
+#endif
             PHAL::Dirichlet<_,Traits>,                //  0
             PHAL::DirichletAggregator<_,Traits>,      //  1
-            QCAD::PoissonDirichlet<_,Traits>,         //  2
-            LCM::KfieldBC<_,Traits>                   //  3
+            QCAD::PoissonDirichlet<_,Traits>         //  2
+#ifdef ALBANY_LCM
+            , LCM::KfieldBC<_,Traits>                   //  3
+#endif
   > EvaluatorTypes;
 };
 
