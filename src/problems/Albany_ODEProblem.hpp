@@ -63,6 +63,7 @@ namespace Albany {
     ODEProblem& operator=(const ODEProblem&);
 
     void constructEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
+    void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
 
   protected:
     int numDim;

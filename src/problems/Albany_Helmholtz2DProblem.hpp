@@ -62,6 +62,7 @@ namespace Albany {
     Helmholtz2DProblem& operator=(const Helmholtz2DProblem&);
 
     void constructEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
+    void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
 
   protected:
 

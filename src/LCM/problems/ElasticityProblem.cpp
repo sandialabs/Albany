@@ -51,6 +51,7 @@ buildProblem(
 {
   /* Construct All Phalanx Evaluators */
   constructEvaluators(meshSpecs, stateMgr);
+  constructDirichletEvaluators(meshSpecs);
 
   // Build response functions
   Teuchos::ParameterList& responseList = params->sublist("Response Functions");
@@ -344,13 +345,19 @@ Albany::ElasticityProblem::constructEvaluators(
      fm->requireField<AlbanyTraits::Residual>(res_out_tag);
      st++;
    }
+}
 
+void
+Albany::ElasticityProblem::constructDirichletEvaluators(
+        const Albany::MeshSpecsStruct& meshSpecs)
+{
    // Construct Dirichlet evaluators for all nodesets and names
    vector<string> dirichletNames(neq);
    dirichletNames[0] = "X";
    if (neq>1) dirichletNames[1] = "Y";
    if (neq>2) dirichletNames[2] = "Z";
-   dfm = probUtils.constructDirichletEvaluators(meshSpecs.nsNames, dirichletNames,
+   Albany::DirichletUtils dirUtils;
+   dfm = dirUtils.constructDirichletEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
 }
 

@@ -152,24 +152,6 @@ namespace Albany {
       const Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis,
       const Teuchos::RCP<Intrepid::Cubature<RealType> > cubature);
 
-    //! Generic implementation, can be made virtual if specialization is desired
-    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > 
-    constructDirichletEvaluators(
-       const std::vector<std::string>& nodeSetIDs,
-       const std::vector<std::string>& dirichletNames,
-       Teuchos::RCP<Teuchos::ParameterList> params,
-       Teuchos::RCP<ParamLib> paramLib);
-
-    //! Function to return valid list of parameters in Dirichlet section of input file
-    Teuchos::RCP<const Teuchos::ParameterList> getValidDirichletBCParameters(
-                 const std::vector<std::string>& nodeSetIDs,
-                 const std::vector<std::string>& dirichletNames) const;
-
-  private:
-
-    //! Local utility function to construct unique string from Nodeset name and dof name
-    std::string constructDBCName(const std::string ns, const std::string dof) const;
-
   private:
 
     //! Struct of PHX::DataLayout objects defined all together.

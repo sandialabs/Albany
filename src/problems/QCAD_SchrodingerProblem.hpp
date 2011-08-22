@@ -67,6 +67,7 @@ namespace QCAD {
     void constructEvaluators(const Albany::MeshSpecsStruct& meshSpecs,
                              Albany::StateManager& stateMgr,
 			     std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
+    void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
 
     void constructResponses(std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
 			    Teuchos::ParameterList& responseList, 

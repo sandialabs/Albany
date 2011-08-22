@@ -71,6 +71,7 @@ buildProblem(
 {
  /* Construct All Phalanx Evaluators */
   constructEvaluators(meshSpecs);
+  constructDirichletEvaluators(meshSpecs);
  
   // Build response functions
   Teuchos::ParameterList& responseList = params->sublist("Response Functions");
@@ -844,7 +845,12 @@ Albany::NavierStokes::constructEvaluators(const Albany::MeshSpecsStruct& meshSpe
 							   dl->dummy);
     fm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag);
   }
+}
 
+void
+Albany::NavierStokes::constructDirichletEvaluators(
+        const Albany::MeshSpecsStruct& meshSpecs)
+{
    // Construct Dirichlet evaluators for all nodesets and names
    vector<string> dirichletNames(neq);
    int index = 0;
@@ -856,7 +862,8 @@ Albany::NavierStokes::constructEvaluators(const Albany::MeshSpecsStruct& meshSpe
    }
    if (haveHeat) dirichletNames[index++] = "T";
    if (haveNeut) dirichletNames[index++] = "phi";
-   dfm = probUtils.constructDirichletEvaluators(meshSpecs.nsNames, dirichletNames,
+   Albany::DirichletUtils dirUtils;
+   dfm = dirUtils.constructDirichletEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
 }
 

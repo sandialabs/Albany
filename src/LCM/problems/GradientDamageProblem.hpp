@@ -66,6 +66,7 @@ namespace Albany {
 
     void constructEvaluators(const Albany::MeshSpecsStruct& meshSpecs,
 			     StateManager& stateMgr);
+    void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
   protected:
 
     //! Boundary conditions on source term

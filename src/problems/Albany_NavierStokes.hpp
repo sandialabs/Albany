@@ -63,6 +63,7 @@ namespace Albany {
     NavierStokes& operator=(const NavierStokes&);
 
     void constructEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
+    void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
 
   protected:
 

@@ -63,6 +63,7 @@ namespace Albany {
     HeatProblem& operator=(const HeatProblem&);
 
     void constructEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
+    void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
 
   protected:
 

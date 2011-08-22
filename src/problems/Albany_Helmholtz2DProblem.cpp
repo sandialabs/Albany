@@ -51,6 +51,7 @@ buildProblem(
 {
   /* Construct All Phalanx Evaluators */
   constructEvaluators(meshSpecs);
+  constructDirichletEvaluators(meshSpecs);
 
   // Build response functions
   Teuchos::ParameterList& responseList = params->sublist("Response Functions");
@@ -75,7 +76,6 @@ buildProblem(
 
   }
 }
-
 
 void
 Albany::Helmholtz2DProblem::constructEvaluators(
@@ -262,12 +262,18 @@ Albany::Helmholtz2DProblem::constructEvaluators(
    fm->requireField<AlbanyTraits::MPResidual>(mpres_tag);
    PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag("Scatter", dl->dummy);
    fm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag);
+}
 
+void
+Albany::Helmholtz2DProblem::constructDirichletEvaluators(
+        const Albany::MeshSpecsStruct& meshSpecs)
+{
    // Construct Dirichlet evaluators for all nodesets and names
    vector<string> dirichletNames(neq);
    dirichletNames[0] = "U";
    dirichletNames[1] = "V";
-   dfm = probUtils.constructDirichletEvaluators(meshSpecs.nsNames, dirichletNames,
+   Albany::DirichletUtils dirUtils;
+   dfm = dirUtils.constructDirichletEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
 }
 

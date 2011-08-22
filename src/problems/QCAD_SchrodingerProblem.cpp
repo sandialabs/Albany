@@ -101,6 +101,7 @@ buildProblem(
 {
   /* Construct All Phalanx Evaluators */
   constructEvaluators(meshSpecs, stateMgr, responses);
+  constructDirichletEvaluators(meshSpecs);
 }
 
 
@@ -299,14 +300,19 @@ QCAD::SchrodingerProblem::constructEvaluators(
    //! Construct Responses
    Teuchos::ParameterList& responseList = params->sublist("Response Functions");
    constructResponses(responses, responseList, evaluators_to_build, stateMgr, *dl);
+}
 
+void
+QCAD::SchrodingerProblem::constructDirichletEvaluators(
+        const Albany::MeshSpecsStruct& meshSpecs)
+{
    // Construct Dirichlet evaluators for all nodesets and names
    vector<string> dirichletNames(neq);
    dirichletNames[0] = "psi";
-   dfm = probUtils.constructDirichletEvaluators(meshSpecs.nsNames, dirichletNames,
+   Albany::DirichletUtils dirUtils;
+   dfm = dirUtils.constructDirichletEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
 }
-
 
 void
 QCAD::SchrodingerProblem::constructResponses(

@@ -89,6 +89,7 @@ buildProblem(
 {
   /* Construct All Phalanx Evaluators */
   constructEvaluators(meshSpecs, stateMgr, responses);
+  constructDirichletEvaluators(meshSpecs);
 }
 
 
@@ -377,14 +378,7 @@ QCAD::PoissonProblem::constructEvaluators(
    //! Construct Responses
    Teuchos::ParameterList& responseList = params->sublist("Response Functions");
    constructResponses(responses, responseList, evaluators_to_build, stateMgr, *dl);
-
-   // Construct Dirichlet evaluators for all nodesets and names
-   vector<string> dirichletNames(neq);
-   dirichletNames[0] = "Phi";
-   // Call local version of this function instead of ProblemUtils version
-   constructDirichletEvaluators(meshSpecs.nsNames, dirichletNames, probUtils);
 }
-
 
 void
 QCAD::PoissonProblem::constructResponses(
@@ -631,9 +625,7 @@ QCAD::PoissonProblem::getStdResponseFn(
 
 void
 QCAD::PoissonProblem::constructDirichletEvaluators(
-  const std::vector<std::string>& nodeSetIDs,
-  const std::vector<std::string>& dirichletNames,
-  const Albany::ProblemUtils& probUtils)
+     const Albany::MeshSpecsStruct& meshSpecs)
 {
    using Teuchos::RCP;
    using Teuchos::rcp;
@@ -647,8 +639,15 @@ QCAD::PoissonProblem::constructDirichletEvaluators(
    using PHAL::DirichletFactoryTraits;
    using PHAL::AlbanyTraits;
 
+   // Construct Dirichlet evaluators for all nodesets and names
+   vector<string> dirichletNames(neq);
+   dirichletNames[0] = "Phi";   
+   Albany::DirichletUtils dirUtils;
+
+   const std::vector<std::string>& nodeSetIDs = meshSpecs.nsNames;
+
    Teuchos::ParameterList DBCparams = params->sublist("Dirichlet BCs");
-   DBCparams.validateParameters(*(probUtils.getValidDirichletBCParameters(nodeSetIDs,dirichletNames)),0); //TODO: Poisson version??
+   DBCparams.validateParameters(*(dirUtils.getValidDirichletBCParameters(nodeSetIDs,dirichletNames)),0); //TODO: Poisson version??
 
    // Create Material Database
    RCP<QCAD::MaterialDatabase> materialDB = rcp(new QCAD::MaterialDatabase(mtrlDbFilename, comm));
