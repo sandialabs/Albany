@@ -1344,16 +1344,16 @@ $\bZ \in G$.
 
 \section{Numerical Examples}
 This section showcases four numerical examples concerning polynomial
-interpolations and transformation of internal variables. In the first
+interpolations and transformations of internal variables. In the first
 example, we compare the recovered internal variable fields obtained
 from standard Galerkin and Petrov Galerkin projections. We then use a
-kinematics problem to determine the error caused by improper
+kinematics problem to investigate the error caused by improper
 interpolation of internal variables belonging to Lie group and the
-remedy procedures formulated via Lie algebra. A solution of a large
-deformation J2 elasto-plasticity problem is presented to demonstrate
-the error associated with transformation of internal variables from
-one mesh to a new mesh using Lie algebra and global variational
-projection operators. We conclude this section with a benchmark
+remedy procedures formulated via Lie algebra. A simulation of a large
+deformation J2 elasto-plasticity problem is presented to demonstrate 
+the performance of the variational transfer operator  with the 
+standard internal variable recovery schemes without logarithmoic mapping. 
+We conclude this section with a benchmark
 example from the literature to illustrate the remarkable accuracy of
 the proposed internal variable recovery procedure.
 
@@ -1425,7 +1425,7 @@ the properties and nature of the internal variables.
 
 \subsection{Bending of an Annulus}
 This example demonstrates the ability of the logarithmic mapping 
-to handle interpolation of tensor field. An $L \times 0.025 L \times 0.025 L$ 
+to handle interpolation of tensor field. An $L \times L/16 \times L/16$ 
 initially straight beam is bent into an annulus with average radius of the 
 annulus $R = \pi L /2$, while maintaining the same thickness and depth. 
 In the current configuration, the geometrical centroid of the beam remains 
@@ -1462,7 +1462,7 @@ we quantify distribution of interpolation error by directly comparing the interp
 deformation gradient $\bF^{h}$ with the exact solution via the Frobenius norm, i.e., 
 \begin{equation}
  e^{h}(\bX) = || \bF^{exact} (\bX)- \bF^{h}(\bX) ||_{F} 
- = \sqrt{\text{Tr}\big( [\bF^{exact} (\bX)- \bF^{h}(\bX] 
+ = \sqrt{\text{Tr}\big( [\bF^{exact} (\bX)- \bF^{h}(\bX)] 
      \cdot [\bF^{exact} (\bX)- \bF^{h}(\bX)] \big) }
  \label{eq:FrobeniusNormDistribution}
 \end{equation} 
@@ -1472,7 +1472,7 @@ remeshing, we discretize the same domain twice with two meshes, one significantl
 than another, then project the deformation gradient from the coarse mesh to the fine mesh.  
 Specifically, the coarse mesh consists of 16 hexahedron elements, whereas the fine mesh consists of 2500. 
  
-Figure \ref{fig:ExampleRing}(a) depicts how the interpolation error $e^{h}(\bX)$ distributes in the current configuration if polynomial interpolation is used to project nodal values from source mesh to the target mesh without the application of Lie Algebra.  In this example, $\bF^{exact}$ is first computed via \eqref{eq:DeformGrad} at the nodes of the coarse mesh. Using the interpolation functions of the hexahedron element, we obtain $F^{h}(X)$  at the nodes of the fine mesh and compare it with the deformation field obtained by exaction solution. The interpolation error measured by the Frobenius norm reaches its maximum, 0.11, at the middle of each coarse hexahedron elements, but decreases to zero at the locations where the nodes of the coarse and fine meshes coincides. This can be explained by the fact that interpolation functions are equal to 1 at the nodes and thus no interpolation is required if the particular nodes are shared by both the coarse and fine meshes. By contrary, the substantial discrepancy between $F^{h}((X)$ and  $F^{h}((X)$ at the edges of the coarse hexahedron element does indicate that the polynomial interpolation may cause significant error when nodal values are interpolated from coarse to fine mesh. Although this error may reduce if the source and target meshes very similar in size, this constraint on the refinement level may severely limit the performance of the remapping algorithm and hence undesirable. 
+Figure \ref{fig:ExampleRing}(a) depicts how the interpolation error $e^{h}(\bX)$ distributes in the current configuration if polynomial interpolation is used to project nodal values from source mesh to the target mesh without the application of Lie Algebra.  In this example, $\bF^{exact}$ is first computed via \eqref{eq:DeformGrad} at the nodes of the coarse mesh. Using the interpolation functions of the hexahedron element, we obtain $F^{h}(X)$  at the nodes of the fine mesh and compare it with the deformation field obtained by exaction solution. The interpolation error measured by the Frobenius norm reaches its maximum, 0.12, at the middle of each coarse hexahedron elements, but decreases to zero at the locations where the nodes of the coarse and fine meshes coincides. This can be explained by the fact that interpolation functions are equal to 1 at the nodes and thus no interpolation is required if the particular nodes are shared by both the coarse and fine meshes. By contrary, the substantial discrepancy between $F^{h}((X)$ and  $F^{h}((X)$ at the edges of the coarse hexahedron element does indicate that the polynomial interpolation may cause significant error when nodal values are interpolated from coarse to fine mesh. Although this error may reduce if the source and target meshes very similar in size, this constraint on the refinement level may severely limit the performance of the remapping algorithm and hence undesirable. 
 \begin{figure}[htbp]
   \begin{center}
     \unitlength=1.0mm
@@ -1482,7 +1482,7 @@ Figure \ref{fig:ExampleRing}(a) depicts how the interpolation error $e^{h}(\bX)$
       \includegraphics[width=80mm]{RingProjLieHALF.png}}
       \subfigure[]{
       \includegraphics[width=80mm]{RingProjLieFULL.png}}
-    \caption{Frobenious norm of the difference between the deformation gradient 
+    \caption{Frobenius norm of the difference between the deformation gradient 
     defined in \eqref{eq:DeformGrad} and the interpolated one obtained by 
      polynomial interpolation (a) without Lie Algebra,  (b) with rotation transformed from SO(3) to so(3) and (c) with both rotation and right stretch tensor transformed to the corresponding Lie algebra .}
     \label{fig:ExampleRing}
@@ -1491,16 +1491,34 @@ Figure \ref{fig:ExampleRing}(a) depicts how the interpolation error $e^{h}(\bX)$
 
 Figure \ref{fig:ExampleRing}(b) shows a significant improvement on accuracy when polynomial interpolation is performed in conjugation with a proper Lie Algebra.  In this example, the same interpolation procedure is repeated. The only exception is that the polynomial interpolation of the rotation part of the deformation gradient  is now conducted on the Lie Algebra rather than on the Lie group itself, as discussed in the previous section.  This treatment enables the addition operation of the rotation data and thus legitimate the polynomial interpolation. The resultant interpolation error of the Lie Algebra method reduces the maximum error by 13 orders of magnitude. This negligible error demonstrates that the the remapping with Lie Algebra transformation is accurate even if the source and target mesh are profoundly different in size. 
 
-Notice that, however, if the logarithmic mapping is applied to both the right stretch tensor and the rotation part of the deformation tensor, then the maximum value of the interpolation error would become $7 \times 10^{-4}$, which falls in between the interpolation errors of the two cases discussed above, as shown in Figure \ref{fig:ExampleRing} (c). In this case, the interpolation of deformation gradient on the middle axis does not perform as good as the interpolation on the inner and outer surfaces of the annulus. This is due to the fact that the right stretch tensor varies linearly along the Y direction as shown in \ref{eq:PolarDecomposition} and thus the direct linear interpolation performed on the Lie group is capable of reproducing the exact linear right stretch tensor field while the linear interpolation performed on Lie algebra cannot. This example demonstrates that there is hardly any golden rule on how internal variables should interpolate. The appropriate choice of the interpolation strategy depends on the situations and the prior knowledge one may acquire and take advantage of.  
+Notice that, however, if the logarithmic mapping is applied to both the right stretch tensor and the rotation part of the deformation tensor, then the maximum value of the interpolation error becomes $0.018$, which falls in between the interpolation errors of the two cases discussed above, as shown in Figure \ref{fig:ExampleRing} (c). In this case, the interpolation of deformation gradient on the middle axis does not perform as good as the interpolation on the inner and outer surfaces of the annulus. This is due to the fact that the right stretch tensor varies linearly along the Y direction as shown in \ref{eq:PolarDecomposition} and thus the direct linear interpolation performed on the Lie group is capable of reproducing the exact linear right stretch tensor field while the linear interpolation performed on Lie algebra cannot. This example demonstrates that there is hardly any golden rule on how internal variables should interpolate. The appropriate choice of the interpolation strategy depends on the situations and the prior knowledge one may acquire and take advantage of.  
 
-In addition to the numerical test mentioned above, we also investigate the relation between the mesh refinement and 
-the overall accuracy of the interpolation. In particular, we study the convergent rate of the interpolation by computing the error over the entire domain at a variety of refinement levels, i.e., 
+To investigate the relation between the mesh refinement and the overall accuracy of the interpolation, we conduct a refinement study to obtain the convergence rate and accuracy of the three interpolation strategies mentioned above. In particular,  the error measured the Frobenius norm of the interpolated tensor field $\bA$ is numerically integrated over the entire domain at a variety of refinement levels, i.e., 
 \begin{equation}
-E_{\bA}^{h} =  || \int_{B} \bA^{exact} (\bX)- \bA^{h}(\bX) dV ||_{F}    % \big/      || \int_{B} \bF^{exact} (\bX) dV ||_{F} 
+E_{\bA}^{h} =  || \int_{B} \bA^{exact} (\bX)- \bA^{h}(\bX) dV ||_{F}   
+ \approx || \sum^{nen}_{j=1}\sum^{N}_{i=1}    \lambda_{\alpha} (\bxi_{i}) \bA_{\alpha} - A^{exact}(\bxi_{i})  \; w(\bxi_{i})  J(\bxi_{i}) ||_{F} 
 \label{eq:FrobeniusNormOverall}
 \end{equation}
-where $\bA$ can be $\bF, \bR, \bU$ and $E_{\bA}^{h}$ is the error corresponding to the interpolated second order tensor field $\bA$. 
+where $\bA$ can be $\bF, \bR, \bU$ and $E_{\bA}^{h}$ is the error corresponding to the interpolated second order tensor field $\bA$; $\bxi$ is the Gauss points in the parent domain;  $w(\bxi)$ and $J(\bxi)$ is the weight of the Gauss quadrature and the Jacobian determinant of the isoparametric mapping at the Gauss points; $N$ is the number of Gauss points per element  and $nen$ is the number of elelemts in the mesh. 
 
+The refinement study uses the same bending problem described before. Initially, the domain of the size $L \times L/16 \times L/16$ is meshed by 4 elements along the $X$ direction and 1 element along the $Y$ and $Z$ directions. The aspect ratio of all element are therefore 4. Then, we refine the mesh by increasing the number of element linearly in both $X$ and $Y$ direction, but discretize $Z$ direction with only one element.   During the refinement, the aspect ratio, length/width, remains constant for all elements. 
+\begin{figure}[htbp]
+  \begin{center}
+    \unitlength=1.0mm
+    \subfigure[]{
+      \includegraphics[width=120mm]{RefinementF.eps}}
+    \subfigure[]{
+      \includegraphics[width=120mm]{RefinementR.eps}}
+      \subfigure[]{
+      \includegraphics[width=120mm]{RefinementU.eps}}
+    \caption{Convergence plots for the annulus bending problem: errors of (a) deformation gradient, (b) rotation and (c) right stretch.}
+    \label{fig:RingRefinement}
+  \end{center}
+\end{figure}
+
+Figures \ref{fig:RingRefinement}(a)-(c) show the convergence curves obtained via all three schemes.  Each plot collects three curves, corresponding to the standard polynomial interpolation (red), the polynomial interpolation conducted on Lie algebra of both the rotation and right stretch (green) and a mixed approach in which stretch is linearly interpolated and rotation is interpolated via Lie algebra (blue).  As evident from the convergent plots, the rate of convergence obtained via the Lie algebra is faster than the standard interpolation approach. The Lie algebra approach also exhibits higher accuracy in coarse mesh. However, as demonstrated in the previous example, the linear interpolation of stretch is less accurate when conducted on Lie algebra than in the Lie group due to the linearity of the stretch field as expressed in \eqref{eq:RightPolar}. This causes the error of the interpolated deformation gradient is within the machine error if the mixed approach is used, but also  leads to error when attempting to reproducing linear field with the logarithmic mapping scheme. The resultant convergence rate of stretch field is approximately the same as the that of the deformation gradient --the error measured by the Frobenius norm reduces by roughly two orders when the number of elements increased by two orders.
+
+On the other hand, the interpolation of rotation on $so(3)$ exhibits only machine error. This can be explained by the fact that the rotation described in $so(3)$ actually varies linearly with respect to $X$ as the rotation angle $X/R$ varies linearly with respect to $X$. Therefore, when the the linear rotation is interpolated in $so(3)$ linearly, the interpolation recovers the exact solution. Meanwhile, the convergence rate is very slow if the interpolation is performed on the $SO(3)$. The error of rotation only reduces less than one order when the number of the elements is increased 100 times. 
 
 \subsection{Necking of a Tensile Specimen}
 
