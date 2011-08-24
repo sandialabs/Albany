@@ -22,7 +22,6 @@ void Albany::TimeManager::init(const Teuchos::RCP<ParamLib>& paramLib_)
 
   CurrentTime = 0.0;
   PreviousTime = 0.0;
-  DeltaTime = 0.0;
 
   std::string name = "Time";
   new Sacado::ParameterRegistration<PHAL::AlbanyTraits::Residual, SPL_Traits>(name, this, paramLib);
@@ -41,19 +40,4 @@ void Albany::TimeManager::updateTime()
 void Albany::TimeManager::setTime(double current_time)
 {
   CurrentTime = current_time;
-}
-
-void Albany::TimeManager::computeDeltaTime()
-{
-  DeltaTime = CurrentTime - PreviousTime;
-
-  // JTO: this is really a hack 
-  // if dt is very small, assume that we are using Continuation and
-  // time is not the continuation parameter, so arbitratily set dt to 0.1
-  // and modify CurrentTime to match
-  if (DeltaTime < 1.0e-16) 
-  {
-    DeltaTime = 0.1;
-    CurrentTime = PreviousTime + DeltaTime;
-  } 
 }

@@ -55,6 +55,7 @@ SET(HEADERS
 SET(SOURCES ${SOURCES}
 	problems/Albany_AbstractProblem.cpp 
 	problems/Albany_ProblemUtils.cpp 
+	problems/Albany_ResponseUtils.cpp 
 	problems/Albany_DirichletUtils.cpp 
 	problems/Albany_ProblemFactory.cpp
 	problems/Albany_HeatProblem.cpp 
@@ -69,6 +70,7 @@ SET(HEADERS ${HEADERS}
 	problems/Albany_ProblemFactory.hpp 
 	problems/Albany_AbstractProblem.hpp 
 	problems/Albany_ProblemUtils.hpp 
+	problems/Albany_ResponseUtils.hpp 
 	problems/Albany_DirichletUtils.hpp 
 	problems/Albany_HeatProblem.hpp 
 	problems/Albany_NavierStokes.hpp 

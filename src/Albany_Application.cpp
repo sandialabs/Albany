@@ -320,7 +320,6 @@ Albany::Application::computeGlobalResidual(
 
   // put current_time (from Rythmos) if this is a transient problem, then compute dt
   if (xdot != NULL) timeMgr.setTime(current_time);
-  timeMgr.computeDeltaTime();
   
   // Mesh motion needs to occur here on the global mesh befor
   // it is potentially carved into worksets.
@@ -409,7 +408,6 @@ Albany::Application::computeGlobalJacobian(
 
   // put current_time (from Rythmos) if this is a transient problem, then compute dt
   if (xdot != NULL) timeMgr.setTime(current_time);
-  timeMgr.computeDeltaTime();
 
 #ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {

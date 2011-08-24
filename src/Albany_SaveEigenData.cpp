@@ -103,7 +103,7 @@ Albany::SaveEigenData::save(
       cout << "Saved to " << buf << endl;
 
       //export to exodus
-      noxObserver->observeSolution( *(e_r(i)) );
+      noxObserver->observeSolution( *(e_r(i)) , (*evals_r)[i]);
     }
     else {
       //Print to stdout -- good for debugging but too much output in most cases
@@ -125,8 +125,8 @@ Albany::SaveEigenData::save(
       cout << "Saved Re, Im to " << buf << endl;
 
       //export real and imaginary parts to exodus
-      noxObserver->observeSolution( *(e_r(i)) );
-      noxObserver->observeSolution( *(e_i(i)) );
+      noxObserver->observeSolution( *(e_r(i)), (*evals_r)[i] );
+      noxObserver->observeSolution( *(e_i(i)), (*evals_i)[i] );
     }
   }
   evalFile.close();

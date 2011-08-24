@@ -32,6 +32,14 @@ Albany_NOXObserver::Albany_NOXObserver(
 void Albany_NOXObserver::observeSolution(
 					 const Epetra_Vector& solution)
 {
+  // Use time as time_or_param_val  when none is given
+  observeSolution(solution,  app->getTimeMgr().getCurrentTime());
+}
+
+void Albany_NOXObserver::observeSolution(
+       const Epetra_Vector& solution, double time_or_param_val
+                                         )
+{
 #ifdef ALBANY_SEACAS
   // if (solution.Map().Comm().MyPID()==0)
   //   cout << "Albany::NOXObserver calling exodus output " << endl;
@@ -42,7 +50,7 @@ void Albany_NOXObserver::observeSolution(
   {
     Teuchos::TimeMonitor exooutTimer(*exooutTime); //start timer
 
-    stkDisc->outputToExodus(solution, app->getTimeMgr().getCurrentTime());
+    stkDisc->outputToExodus(solution, time_or_param_val);
   }
 #endif
 

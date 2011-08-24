@@ -46,12 +46,9 @@ namespace Albany {
     //! Set Time, either from Rythmos or from parameter
     void setTime(double current_time);
 
-    //! Compute Delta_Time
-    void computeDeltaTime();
-
     //! Accessors for CurrentTime, DeltaTime
     double getCurrentTime() {return CurrentTime;};
-    double getDeltaTime() {return DeltaTime;};
+    double getDeltaTime() {return CurrentTime - PreviousTime;};
 
   protected:
 
@@ -66,7 +63,7 @@ namespace Albany {
     //! Private to prohibit copying
     TimeManager& operator=(const TimeManager&);
 
-    PHAL::AlbanyTraits::Residual::ScalarT CurrentTime, PreviousTime, DeltaTime;
+    PHAL::AlbanyTraits::Residual::ScalarT CurrentTime, PreviousTime;
   };
 
 }
