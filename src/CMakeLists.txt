@@ -525,10 +525,6 @@ IF (ALBANY_DAKOTA)
   add_executable(AlbanyDakota Main_Dakota.cpp Albany_Dakota.cpp Albany_Dakota.hpp)
 ENDIF ()
 
-IF (ALBANY_QCAD)
-  add_executable(AlbanyQCAD Main_QCAD_Solve.cpp)
-ENDIF ()
-
 add_executable(AlbanyAnalysis Main_Analysis.cpp)
 
 # Tests
@@ -547,10 +543,6 @@ target_link_libraries(AlbanyCoupled   albanyLib ${ALL_LIBRARIES})
 target_link_libraries(AlbanySGAdjoint   albanyLib ${ALL_LIBRARIES})
 IF (ALBANY_DAKOTA)
   target_link_libraries(AlbanyDakota    albanyLib ${ALL_LIBRARIES})
-ENDIF ()
-
-IF (ALBANY_QCAD)
-target_link_libraries(AlbanyQCAD      albanyLib ${ALL_LIBRARIES})
 ENDIF ()
 
 target_link_libraries(AlbanyAnalysis  albanyLib ${ALL_LIBRARIES})
