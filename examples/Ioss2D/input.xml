@@ -31,7 +31,7 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Ioss"/>
-    <Parameter name="Exodus Input File Name" type="string" value="quadQuad-m4-bKL.par"/>
+    <Parameter name="Exodus Input File Name" type="string" value="quadQuad.exo"/>
     <Parameter name="Exodus Output File Name" type="string" value="quadOut.exo"/>
   </ParameterList>
   <ParameterList name="Regression Results">
