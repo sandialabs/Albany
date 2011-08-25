@@ -115,12 +115,13 @@
 
     <ParameterList name="Direction">
       <Parameter name="Method" type="string" value="Newton" />
+      <ParameterList name="Newton">
       <Parameter name="Forcing Term Method" type="string" value="Constant" />
       <Parameter name="Rescue Bad Newton Solve" type="bool" value="1" />
 
       <ParameterList name="Stratimikos Linear Solver">
-        <ParameterList name="NOX Stratrimikos Linear Solver" />
-      </ParameterList>
+        <ParameterList name="NOX Stratimikos Linear Solver">
+        </ParameterList>
 
       <ParameterList name="Stratimikos">
         <Parameter name="Linear Solver Type" type="string" value="Belos" />
@@ -153,6 +154,7 @@
                 <Parameter name="Flexible Gmres" type="bool" value="0" />
               </ParameterList>
             </ParameterList>
+            </ParameterList>
           </ParameterList>
 
           <Parameter name="Preconditioner Type" type="string" value="Ifpack" />
@@ -169,6 +171,7 @@
           </ParameterList>
 
         </ParameterList>
+      </ParameterList>
       </ParameterList>
     </ParameterList>
 
