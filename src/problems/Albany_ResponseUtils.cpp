@@ -134,10 +134,14 @@ Albany::ResponseUtils::createResponseFieldManager(
     rfm->requireField<AlbanyTraits::SGResidual>(sgres_response_tag);
     PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_response_tag(responseID, dl->dummy);
     rfm->requireField<AlbanyTraits::SGJacobian>(sgjac_response_tag);
+    PHX::Tag<AlbanyTraits::SGTangent::ScalarT> sgtan_response_tag(responseID, dl->dummy);
+    rfm->requireField<AlbanyTraits::SGTangent>(sgtan_response_tag);
     PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_response_tag(responseID, dl->dummy);
     rfm->requireField<AlbanyTraits::MPResidual>(mpres_response_tag);
     PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_response_tag(responseID, dl->dummy);
     rfm->requireField<AlbanyTraits::MPJacobian>(mpjac_response_tag);
+    PHX::Tag<AlbanyTraits::MPTangent::ScalarT> mptan_response_tag(responseID, dl->dummy);
+    rfm->requireField<AlbanyTraits::MPTangent>(mptan_response_tag);
   }
 
   return rfm;

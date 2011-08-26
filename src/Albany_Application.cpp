@@ -561,7 +561,6 @@ computeGlobalTangent(const double alpha,
 
   // put current_time (from Rythmos) if this is a transient problem, then compute dt
   if (xdot != NULL) timeMgr.setTime(current_time);
-  timeMgr.computeDeltaTime();
 
   RCP<const Epetra_MultiVector > vp = rcp(Vp, false);
   RCP<ParamVec> params = rcp(deriv_par, false);
@@ -984,7 +983,6 @@ evaluateResponse_rfm(const double current_time,
 
   // put current_time (from Rythmos) if this is a transient problem, then compute dt
   if (xdot != NULL) timeMgr.setTime(current_time);
-  timeMgr.computeDeltaTime();
 
   // -- No Mesh motion code --
 
@@ -1103,7 +1101,6 @@ evaluateResponseGradient_rfm(const double current_time,
 
   // put current_time (from Rythmos) if this is a transient problem, then compute dt
   if (xdot != NULL) timeMgr.setTime(current_time);
-  timeMgr.computeDeltaTime();
 
   // -- No Mesh motion code --
 
@@ -1295,7 +1292,6 @@ computeGlobalSGResidual(
 
   // put current_time (from Rythmos) if this is a transient problem, then compute dt
   if (sg_xdot != NULL) timeMgr.setTime(current_time);
-  timeMgr.computeDeltaTime();
 
 #ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
@@ -1416,7 +1412,6 @@ computeGlobalSGJacobian(
 
   // put current_time (from Rythmos) if this is a transient problem, then compute dt
   if (sg_xdot != NULL) timeMgr.setTime(current_time);
-  timeMgr.computeDeltaTime();
 
 #ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
@@ -1566,7 +1561,6 @@ computeGlobalSGTangent(
 
   // put current_time (from Rythmos) if this is a transient problem, then compute dt
   if (sg_xdot != NULL) timeMgr.setTime(current_time);
-  timeMgr.computeDeltaTime();
 
   RCP<const Epetra_MultiVector > vp = rcp(Vp, false);
   RCP<ParamVec> params = rcp(deriv_par, false);
@@ -2017,7 +2011,6 @@ computeGlobalMPResidual(
 
   // put current_time (from Rythmos) if this is a transient problem, then compute dt
   if (mp_xdot != NULL) timeMgr.setTime(current_time);
-  timeMgr.computeDeltaTime();
 
 #ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
@@ -2147,7 +2140,6 @@ computeGlobalMPJacobian(
 
   // put current_time (from Rythmos) if this is a transient problem, then compute dt
   if (mp_xdot != NULL) timeMgr.setTime(current_time);
-  timeMgr.computeDeltaTime();
 
 #ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
@@ -2315,7 +2307,6 @@ computeGlobalMPTangent(
 
   // put current_time (from Rythmos) if this is a transient problem, then compute dt
   if (mp_xdot != NULL) timeMgr.setTime(current_time);
-  timeMgr.computeDeltaTime();
 
   RCP<const Epetra_MultiVector > vp = rcp(Vp, false);
   RCP<ParamVec> params = rcp(deriv_par, false);
