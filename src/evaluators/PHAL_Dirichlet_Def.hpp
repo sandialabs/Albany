@@ -102,8 +102,6 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   const RealType j_coeff = dirichletWorkset.j_coeff;
   const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
 
-  const Epetra_Map& map = jac->RowMap();
-
   RealType* matrixEntries;
   int*    matrixIndices;
   int     numEntries;
@@ -142,19 +140,20 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   Teuchos::RCP<const Epetra_Vector> x = dirichletWorkset.x;
   Teuchos::RCP<const Epetra_MultiVector> Vx = dirichletWorkset.Vx;
   const RealType j_coeff = dirichletWorkset.j_coeff;
-  const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
-
-  const Epetra_BlockMap& map = x->Map();
-  bool fillResid = (f != Teuchos::null);
+  const std::vector<std::vector<int> >& nsNodes = 
+    dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
 
   for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
-      int lunk = nsNodes[inode][this->offset];
+    int lunk = nsNodes[inode][this->offset];
 
-      if (fillResid) (*f)[lunk] = ((*x)[lunk] - this->value.val());
-
+    if (f != Teuchos::null) 
+      (*f)[lunk] = ((*x)[lunk] - this->value.val());
+    
+    if (JV != Teuchos::null)
       for (int i=0; i<dirichletWorkset.num_cols_x; i++)
 	(*JV)[i][lunk] = j_coeff*(*Vx)[i][lunk];
-
+    
+    if (fp != Teuchos::null)
       for (int i=0; i<dirichletWorkset.num_cols_p; i++)
 	(*fp)[i][lunk] = -this->value.dx(dirichletWorkset.param_offset+i);
   }
@@ -175,11 +174,12 @@ template<typename Traits>
 void Dirichlet<PHAL::AlbanyTraits::SGResidual, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_Vector> > f = 
+  Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> f = 
     dirichletWorkset.sg_f;
-  Teuchos::RCP< const Stokhos::VectorOrthogPoly<Epetra_Vector> > x = 
+  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly> x = 
     dirichletWorkset.sg_x;
-  const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+  const std::vector<std::vector<int> >& nsNodes = 
+    dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
 
   int nblock = x->size();
   for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
@@ -204,17 +204,15 @@ template<typename Traits>
 void Dirichlet<PHAL::AlbanyTraits::SGJacobian, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-
-  Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_Vector> > f = 
+  Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly> f = 
     dirichletWorkset.sg_f;
   Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_CrsMatrix> > jac = 
     dirichletWorkset.sg_Jac;
-  Teuchos::RCP<const Stokhos::VectorOrthogPoly<Epetra_Vector> > x = 
+  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly> x = 
     dirichletWorkset.sg_x;
   const RealType j_coeff = dirichletWorkset.j_coeff;
-  const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
-
-  const Epetra_Map& map = (*jac)[0].RowMap();
+  const std::vector<std::vector<int> >& nsNodes = 
+    dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
 
   RealType* matrixEntries;
   int*    matrixIndices;
@@ -244,6 +242,62 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 }
 
 // **********************************************************************
+// Specialization: Stochastic Galerkin Tangent
+// **********************************************************************
+template<typename Traits>
+Dirichlet<PHAL::AlbanyTraits::SGTangent, Traits>::
+Dirichlet(Teuchos::ParameterList& p) :
+  DirichletBase<PHAL::AlbanyTraits::SGTangent, Traits>(p)
+{
+}
+
+// **********************************************************************
+template<typename Traits>
+void Dirichlet<PHAL::AlbanyTraits::SGTangent, Traits>::
+evaluateFields(typename Traits::EvalData dirichletWorkset)
+{
+
+  Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> f = 
+    dirichletWorkset.sg_f;
+  Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> fp = 
+    dirichletWorkset.sg_fp;
+  Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> JV = 
+    dirichletWorkset.sg_JV;
+  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly> x = 
+    dirichletWorkset.sg_x;
+  Teuchos::RCP<const Epetra_MultiVector> Vx = dirichletWorkset.Vx;
+  const RealType j_coeff = dirichletWorkset.j_coeff;
+  const std::vector<std::vector<int> >& nsNodes = 
+    dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+
+  int nblock = x->size();
+
+  if (JV != Teuchos::null)
+    JV->init(0.0);
+  if (fp != Teuchos::null)
+    fp->init(0.0);
+
+  for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
+    int lunk = nsNodes[inode][this->offset];
+
+    if (f != Teuchos::null) 
+      for (int block=0; block<nblock; block++)
+	(*f)[block][lunk] = 
+	  (*x)[block][lunk] - this->value.val().coeff(block);
+
+    if (JV != Teuchos::null)
+      for (int i=0; i<dirichletWorkset.num_cols_x; i++)
+	(*JV)[0][i][lunk] = j_coeff*(*Vx)[i][lunk];
+
+    if (fp != Teuchos::null)
+      for (int i=0; i<dirichletWorkset.num_cols_p; i++)
+	for (int block=0; block<nblock; block++)
+	  (*fp)[block][i][lunk] = 
+	    -this->value.dx(dirichletWorkset.param_offset+i).coeff(block);
+  }
+}
+
+// **********************************************************************
 // Specialization: Multi-point Residual
 // **********************************************************************
 
@@ -258,11 +312,12 @@ template<typename Traits>
 void Dirichlet<PHAL::AlbanyTraits::MPResidual, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  Teuchos::RCP< Stokhos::ProductContainer<Epetra_Vector> > f = 
+  Teuchos::RCP<Stokhos::ProductEpetraVector> f = 
     dirichletWorkset.mp_f;
-  Teuchos::RCP< const Stokhos::ProductContainer<Epetra_Vector> > x = 
+  Teuchos::RCP<const Stokhos::ProductEpetraVector> x = 
     dirichletWorkset.mp_x;
-  const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+  const std::vector<std::vector<int> >& nsNodes = 
+    dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
 
   int nblock = x->size();
   for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
@@ -288,16 +343,15 @@ void Dirichlet<PHAL::AlbanyTraits::MPJacobian, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
 
-  Teuchos::RCP< Stokhos::ProductContainer<Epetra_Vector> > f = 
+  Teuchos::RCP<Stokhos::ProductEpetraVector> f = 
     dirichletWorkset.mp_f;
   Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix> > jac = 
     dirichletWorkset.mp_Jac;
-  Teuchos::RCP<const Stokhos::ProductContainer<Epetra_Vector> > x = 
+  Teuchos::RCP<const Stokhos::ProductEpetraVector> x = 
     dirichletWorkset.mp_x;
   const RealType j_coeff = dirichletWorkset.j_coeff;
-  const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
-
-  const Epetra_Map& map = (*jac)[0].RowMap();
+  const std::vector<std::vector<int> >& nsNodes = 
+    dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
 
   RealType* matrixEntries;
   int*    matrixIndices;
@@ -323,6 +377,58 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 	  (*f)[block][lunk] = 
 	    (*x)[block][lunk] - this->value.val().coeff(block);
       }
+  }
+}
+
+// **********************************************************************
+// Specialization: Multi-point Tangent
+// **********************************************************************
+template<typename Traits>
+Dirichlet<PHAL::AlbanyTraits::MPTangent, Traits>::
+Dirichlet(Teuchos::ParameterList& p) :
+  DirichletBase<PHAL::AlbanyTraits::MPTangent, Traits>(p)
+{
+}
+
+// **********************************************************************
+template<typename Traits>
+void Dirichlet<PHAL::AlbanyTraits::MPTangent, Traits>::
+evaluateFields(typename Traits::EvalData dirichletWorkset)
+{
+
+  Teuchos::RCP<Stokhos::ProductEpetraVector> f = 
+    dirichletWorkset.mp_f;
+  Teuchos::RCP<Stokhos::ProductEpetraMultiVector> fp = 
+    dirichletWorkset.mp_fp;
+  Teuchos::RCP<Stokhos::ProductEpetraMultiVector> JV = 
+    dirichletWorkset.mp_JV;
+  Teuchos::RCP<const Stokhos::ProductEpetraVector> x = 
+    dirichletWorkset.mp_x;
+  Teuchos::RCP<const Epetra_MultiVector> Vx = dirichletWorkset.Vx;
+  const RealType j_coeff = dirichletWorkset.j_coeff;
+  const std::vector<std::vector<int> >& nsNodes = 
+    dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+
+  int nblock = x->size();
+
+  for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
+    int lunk = nsNodes[inode][this->offset];
+
+    if (f != Teuchos::null) 
+      for (int block=0; block<nblock; block++)
+	(*f)[block][lunk] = 
+	  (*x)[block][lunk] - this->value.val().coeff(block);
+
+    if (JV != Teuchos::null)
+      for (int i=0; i<dirichletWorkset.num_cols_x; i++)
+	for (int block=0; block<nblock; block++)
+	  (*JV)[block][i][lunk] = j_coeff*(*Vx)[i][lunk];
+
+    if (fp != Teuchos::null)
+      for (int i=0; i<dirichletWorkset.num_cols_p; i++)
+	for (int block=0; block<nblock; block++)
+	  (*fp)[block][i][lunk] = 
+	    -this->value.dx(dirichletWorkset.param_offset+i).coeff(block);
   }
 }
 

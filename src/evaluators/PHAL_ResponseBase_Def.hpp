@@ -288,6 +288,50 @@ setInitialValues(const std::vector<double>& initialVals)
 
 // **********************************************************************
 
+// **********************************************************************
+//   STOCHASTIC GALERKIN TANGENT
+// **********************************************************************
+
+template<typename Traits>
+PHAL::ResponseBase<PHAL::AlbanyTraits::SGTangent, Traits>::
+ResponseBase(Teuchos::ParameterList& p)
+  : PHAL::ResponseBaseCommon<PHAL::AlbanyTraits::SGTangent,Traits>(p)
+{
+}
+
+// **********************************************************************
+
+template<typename Traits>
+void PHAL::ResponseBase<PHAL::AlbanyTraits::SGTangent, Traits>::
+beginEvaluateFields(typename Traits::EvalData workset)
+{
+  //transfer workset to local_g
+  unsigned int respIndx = PHAL::ResponseBaseCommon<PHAL::AlbanyTraits::SGTangent, Traits>::responseIndex;
+
+}
+
+// **********************************************************************
+
+template<typename Traits>
+void PHAL::ResponseBase<PHAL::AlbanyTraits::SGTangent, Traits>::
+endEvaluateFields(typename Traits::EvalData workset)
+{
+  //transfer local_g to workset
+  unsigned int respIndx = PHAL::ResponseBaseCommon<PHAL::AlbanyTraits::SGTangent, Traits>::responseIndex;
+
+}
+
+// **********************************************************************
+
+template<typename Traits>
+void PHAL::ResponseBase<PHAL::AlbanyTraits::SGTangent, Traits>::
+setInitialValues(const std::vector<double>& initialVals)
+{
+
+}
+
+// **********************************************************************
+
 
 // **********************************************************************
 //   MULTI-POINT RESIDUAL
@@ -371,6 +415,50 @@ endEvaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 void PHAL::ResponseBase<PHAL::AlbanyTraits::MPJacobian, Traits>::
+setInitialValues(const std::vector<double>& initialVals)
+{
+
+}
+
+// **********************************************************************
+
+// **********************************************************************
+//   MULTI-POINT TANGENT
+// **********************************************************************
+
+template<typename Traits>
+PHAL::ResponseBase<PHAL::AlbanyTraits::MPTangent, Traits>::
+ResponseBase(Teuchos::ParameterList& p)
+  : PHAL::ResponseBaseCommon<PHAL::AlbanyTraits::MPTangent,Traits>(p)
+{
+}
+
+// **********************************************************************
+
+template<typename Traits>
+void PHAL::ResponseBase<PHAL::AlbanyTraits::MPTangent, Traits>::
+beginEvaluateFields(typename Traits::EvalData workset)
+{
+  //transfer workset to local_g
+  unsigned int respIndx = PHAL::ResponseBaseCommon<PHAL::AlbanyTraits::MPTangent, Traits>::responseIndex;
+
+}
+
+// **********************************************************************
+
+template<typename Traits>
+void PHAL::ResponseBase<PHAL::AlbanyTraits::MPTangent, Traits>::
+endEvaluateFields(typename Traits::EvalData workset)
+{
+  //transfer local_g to workset
+  unsigned int respIndx = PHAL::ResponseBaseCommon<PHAL::AlbanyTraits::MPTangent, Traits>::responseIndex;
+
+}
+
+// **********************************************************************
+
+template<typename Traits>
+void PHAL::ResponseBase<PHAL::AlbanyTraits::MPTangent, Traits>::
 setInitialValues(const std::vector<double>& initialVals)
 {
 

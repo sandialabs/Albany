@@ -92,6 +92,18 @@ namespace QCAD
     double getDoubleValue(const ScalarT& t);	  
   };
 
+  // Stochastic Galerkin Tangent
+  template<typename Traits>
+  class EvaluatorTools<PHAL::AlbanyTraits::SGTangent, Traits>
+  {
+  public:
+    typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
+    typedef typename PHAL::AlbanyTraits::SGTangent::MeshScalarT MeshScalarT;
+    
+    EvaluatorTools();  
+    double getDoubleValue(const ScalarT& t);	  
+  };
+
   
   // Multi-point residual
   template<typename Traits>
@@ -118,6 +130,17 @@ namespace QCAD
     double getDoubleValue(const ScalarT& t);	  
   };
 
+  // Multi-point Tangent
+  template<typename Traits>
+  class EvaluatorTools<PHAL::AlbanyTraits::MPTangent, Traits>
+  {
+  public:
+    typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
+    typedef typename PHAL::AlbanyTraits::MPTangent::MeshScalarT MeshScalarT;
+    
+    EvaluatorTools();  
+    double getDoubleValue(const ScalarT& t);	  
+  };
 	
 }
 

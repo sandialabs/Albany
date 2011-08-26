@@ -395,10 +395,14 @@ Albany::ThermoElasticityProblem::constructEvaluators(
    fm->requireField<AlbanyTraits::SGResidual>(sgres_tag);
    PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag("Scatter", dl->dummy);
    fm->requireField<AlbanyTraits::SGJacobian>(sgjac_tag);
+   PHX::Tag<AlbanyTraits::SGTangent::ScalarT> sgtan_tag("Scatter", dl->dummy);
+   fm->requireField<AlbanyTraits::SGTangent>(sgtan_tag);
    PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag("Scatter", dl->dummy);
    fm->requireField<AlbanyTraits::MPResidual>(mpres_tag);
    PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag("Scatter", dl->dummy);
    fm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag);
+   PHX::Tag<AlbanyTraits::MPTangent::ScalarT> mptan_tag("Scatter", dl->dummy);
+   fm->requireField<AlbanyTraits::MPTangent>(mptan_tag);
 
    PHX::Tag<AlbanyTraits::Residual::ScalarT> res_tag2(scatterName, dl->dummy);
    fm->requireField<AlbanyTraits::Residual>(res_tag2);
@@ -410,10 +414,14 @@ Albany::ThermoElasticityProblem::constructEvaluators(
    fm->requireField<AlbanyTraits::SGResidual>(sgres_tag2);
    PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag2(scatterName, dl->dummy);
    fm->requireField<AlbanyTraits::SGJacobian>(sgjac_tag2);
+   PHX::Tag<AlbanyTraits::SGTangent::ScalarT> sgtan_tag2(fieldName, dl->dummy);
+   fm->requireField<AlbanyTraits::SGTangent>(sgtan_tag2);
    PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag2(scatterName, dl->dummy);
    fm->requireField<AlbanyTraits::MPResidual>(mpres_tag2);
    PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag2(scatterName, dl->dummy);
    fm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag2);
+   PHX::Tag<AlbanyTraits::MPTangent::ScalarT> mptan_tag2(fieldName, dl->dummy);
+   fm->requireField<AlbanyTraits::MPTangent>(mptan_tag2);
 
    const Albany::StateManager::RegisteredStates& reg = stateMgr.getRegisteredStates();
    Albany::StateManager::RegisteredStates::const_iterator st = reg.begin();

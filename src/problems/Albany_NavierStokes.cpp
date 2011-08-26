@@ -768,12 +768,18 @@ Albany::NavierStokes::constructEvaluators(const Albany::MeshSpecsStruct& meshSpe
     PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag("Scatter Momentum", 
 							  dl->dummy);
     fm->requireField<AlbanyTraits::SGJacobian>(sgjac_tag);
+    PHX::Tag<AlbanyTraits::SGTangent::ScalarT> sgtan_tag("Scatter Momentum", 
+							 dl->dummy);
+    fm->requireField<AlbanyTraits::SGTangent>(sgtan_tag);
     PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag("Scatter Momentum", 
 							  dl->dummy);
     fm->requireField<AlbanyTraits::MPResidual>(mpres_tag);
     PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag("Scatter Momentum", 
 							  dl->dummy);
     fm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag);
+    PHX::Tag<AlbanyTraits::MPTangent::ScalarT> mptan_tag("Scatter Momentum", 
+							 dl->dummy);
+    fm->requireField<AlbanyTraits::MPTangent>(mptan_tag);
 
     PHX::Tag<AlbanyTraits::Residual::ScalarT> res_tag2("Scatter Continuity", 
 						       dl->dummy);
@@ -790,12 +796,18 @@ Albany::NavierStokes::constructEvaluators(const Albany::MeshSpecsStruct& meshSpe
     PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag2("Scatter Continuity",
 							   dl->dummy);
     fm->requireField<AlbanyTraits::SGJacobian>(sgjac_tag2);
+    PHX::Tag<AlbanyTraits::SGTangent::ScalarT> sgtan_tag2("Scatter Continuity", 
+							  dl->dummy);
+    fm->requireField<AlbanyTraits::SGTangent>(sgtan_tag2);
     PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag2("Scatter Continuity",
 							   dl->dummy);
     fm->requireField<AlbanyTraits::MPResidual>(mpres_tag2);
     PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag2("Scatter Continuity",
 							   dl->dummy);
     fm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag2);
+    PHX::Tag<AlbanyTraits::MPTangent::ScalarT> mptan_tag2("Scatter Continuity", 
+							  dl->dummy);
+    fm->requireField<AlbanyTraits::MPTangent>(mptan_tag2);
   }
 
   if (haveHeat) {
@@ -814,12 +826,18 @@ Albany::NavierStokes::constructEvaluators(const Albany::MeshSpecsStruct& meshSpe
     PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag("Scatter Temperature",
 							   dl->dummy);
     fm->requireField<AlbanyTraits::SGJacobian>(sgjac_tag);
+    PHX::Tag<AlbanyTraits::SGTangent::ScalarT> sgtan_tag("Scatter Temperature", 
+							 dl->dummy);
+    fm->requireField<AlbanyTraits::SGTangent>(sgtan_tag);
     PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag("Scatter Temperature",
 							   dl->dummy);
     fm->requireField<AlbanyTraits::MPResidual>(mpres_tag);
     PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag("Scatter Temperature",
 							   dl->dummy);
     fm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag);
+    PHX::Tag<AlbanyTraits::MPTangent::ScalarT> mptan_tag("Scatter Temperature", 
+							 dl->dummy);
+    fm->requireField<AlbanyTraits::MPTangent>(mptan_tag);
   }
 
   if (haveNeut) {
@@ -838,12 +856,18 @@ Albany::NavierStokes::constructEvaluators(const Albany::MeshSpecsStruct& meshSpe
     PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag("Scatter Neutron",
 							   dl->dummy);
     fm->requireField<AlbanyTraits::SGJacobian>(sgjac_tag);
+    PHX::Tag<AlbanyTraits::SGTangent::ScalarT> sgtan_tag("Scatter Neutron", 
+							 dl->dummy);
+    fm->requireField<AlbanyTraits::SGTangent>(sgtan_tag);
     PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag("Scatter Neutron",
 							   dl->dummy);
     fm->requireField<AlbanyTraits::MPResidual>(mpres_tag);
     PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag("Scatter Neutron",
 							   dl->dummy);
     fm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag);
+    PHX::Tag<AlbanyTraits::MPTangent::ScalarT> mptan_tag("Scatter Neutron", 
+							 dl->dummy);
+    fm->requireField<AlbanyTraits::MPTangent>(mptan_tag);
   }
 }
 

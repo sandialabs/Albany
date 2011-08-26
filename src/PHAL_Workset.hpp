@@ -27,8 +27,8 @@
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_StateManager.hpp"
 #include "Stokhos_OrthogPolyExpansion.hpp"
-#include "Stokhos_VectorOrthogPoly.hpp"
-#include "Stokhos_VectorOrthogPolyTraitsEpetra.hpp"
+#include "Stokhos_EpetraVectorOrthogPoly.hpp"
+#include "Stokhos_EpetraMultiVectorOrthogPoly.hpp"
 #include <Intrepid_FieldContainer.hpp>
 #include "PHAL_AlbanyTraits.hpp"
 
@@ -50,19 +50,23 @@ struct Workset {
   Teuchos::RCP<const Epetra_MultiVector> Vx;
   Teuchos::RCP<const Epetra_MultiVector> Vxdot;
   Teuchos::RCP<const Epetra_MultiVector> Vp;
-  Teuchos::RCP<const Stokhos::VectorOrthogPoly<Epetra_Vector> > sg_x;
-  Teuchos::RCP<const Stokhos::VectorOrthogPoly<Epetra_Vector> > sg_xdot;
-  Teuchos::RCP<const Stokhos::ProductContainer<Epetra_Vector> > mp_x;
-  Teuchos::RCP<const Stokhos::ProductContainer<Epetra_Vector> > mp_xdot;
+  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > sg_x;
+  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > sg_xdot;
+  Teuchos::RCP<const Stokhos::ProductEpetraVector > mp_x;
+  Teuchos::RCP<const Stokhos::ProductEpetraVector > mp_xdot;
 
   Teuchos::RCP<Epetra_Vector> f;
   Teuchos::RCP<Epetra_CrsMatrix> Jac;
   Teuchos::RCP<Epetra_MultiVector> JV;
   Teuchos::RCP<Epetra_MultiVector> fp;
-  Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_Vector> > sg_f;
+  Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > sg_f;
   Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_CrsMatrix> > sg_Jac;
-  Teuchos::RCP< Stokhos::ProductContainer<Epetra_Vector> > mp_f;
+  Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_JV;
+  Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_fp;
+  Teuchos::RCP< Stokhos::ProductEpetraVector > mp_f;
   Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix> > mp_Jac;
+  Teuchos::RCP< Stokhos::ProductEpetraMultiVector > mp_JV;
+  Teuchos::RCP< Stokhos::ProductEpetraMultiVector > mp_fp;
 
   Teuchos::RCP<const Albany::NodeSetList> nodeSets;
   Teuchos::RCP<const Albany::NodeSetCoordList> nodeSetCoords;

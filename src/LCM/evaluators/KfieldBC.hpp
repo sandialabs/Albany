@@ -44,19 +44,29 @@ namespace LCM {
 
 template<typename EvalT, typename Traits> class KfieldBC;
 
+template <typename EvalT, typename Traits> 
+class KfieldBC_Base : public PHAL::DirichletBase<EvalT, Traits> {
+public:
+  typedef typename EvalT::ScalarT ScalarT;
+  KfieldBC_Base(Teuchos::ParameterList& p);
+  ScalarT& getValue(const std::string &n);
+  void computeBCs(double* coord, ScalarT& Xval, ScalarT& Yval);
+
+  RealType mu, nu, KIval, KIIval;
+  ScalarT KI, KII;
+  std::string KI_name, KII_name;
+};
+
 // **************************************************************
 // Residual 
 // **************************************************************
 template<typename Traits>
 class KfieldBC<PHAL::AlbanyTraits::Residual,Traits>
-  : public PHAL::DirichletBase<PHAL::AlbanyTraits::Residual, Traits> {
+  : public KfieldBC_Base<PHAL::AlbanyTraits::Residual, Traits> {
 public:
   KfieldBC(Teuchos::ParameterList& p);
   typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
   void evaluateFields(typename Traits::EvalData d);
-  ScalarT& getValue(const std::string &n);
-  RealType mu, nu, KIval, KIIval;
-  ScalarT KI, KII;
 };
 
 // **************************************************************
@@ -64,14 +74,11 @@ public:
 // **************************************************************
 template<typename Traits>
 class KfieldBC<PHAL::AlbanyTraits::Jacobian,Traits>
-   : public PHAL::DirichletBase<PHAL::AlbanyTraits::Jacobian, Traits> {
+   : public KfieldBC_Base<PHAL::AlbanyTraits::Jacobian, Traits> {
 public:
   KfieldBC(Teuchos::ParameterList& p);
   typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
   void evaluateFields(typename Traits::EvalData d);
-  ScalarT& getValue(const std::string &n);
-  RealType mu, nu, KIval, KIIval;
-  ScalarT KI, KII;
 };
 
 // **************************************************************
@@ -79,14 +86,11 @@ public:
 // **************************************************************
 template<typename Traits>
 class KfieldBC<PHAL::AlbanyTraits::Tangent,Traits>
-   : public PHAL::DirichletBase<PHAL::AlbanyTraits::Tangent, Traits> {
+   : public KfieldBC_Base<PHAL::AlbanyTraits::Tangent, Traits> {
 public:
   KfieldBC(Teuchos::ParameterList& p);
   typedef typename PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
   void evaluateFields(typename Traits::EvalData d);
-  ScalarT& getValue(const std::string &n);
-  RealType mu, nu, KIval, KIIval;
-  ScalarT KI, KII;
 };
 
 // **************************************************************
@@ -94,14 +98,11 @@ public:
 // **************************************************************
 template<typename Traits>
 class KfieldBC<PHAL::AlbanyTraits::SGResidual,Traits>
-   : public PHAL::DirichletBase<PHAL::AlbanyTraits::SGResidual, Traits> {
+   : public KfieldBC_Base<PHAL::AlbanyTraits::SGResidual, Traits> {
 public:
   KfieldBC(Teuchos::ParameterList& p);
   typedef typename PHAL::AlbanyTraits::SGResidual::ScalarT ScalarT;
   void evaluateFields(typename Traits::EvalData d);
-  ScalarT& getValue(const std::string &n);
-  RealType mu, nu, KIval, KIIval;
-  ScalarT KI, KII;
 };
 
 // **************************************************************
@@ -109,14 +110,23 @@ public:
 // **************************************************************
 template<typename Traits>
 class KfieldBC<PHAL::AlbanyTraits::SGJacobian,Traits>
-   : public PHAL::DirichletBase<PHAL::AlbanyTraits::SGJacobian, Traits> {
+   : public KfieldBC_Base<PHAL::AlbanyTraits::SGJacobian, Traits> {
 public:
   KfieldBC(Teuchos::ParameterList& p);
   typedef typename PHAL::AlbanyTraits::SGJacobian::ScalarT ScalarT;
   void evaluateFields(typename Traits::EvalData d);
-  ScalarT& getValue(const std::string &n);
-  RealType mu, nu, KIval, KIIval;
-  ScalarT KI, KII;
+};
+
+// **************************************************************
+// Stochastic Galerkin Tangent
+// **************************************************************
+template<typename Traits>
+class KfieldBC<PHAL::AlbanyTraits::SGTangent,Traits>
+   : public KfieldBC_Base<PHAL::AlbanyTraits::SGTangent, Traits> {
+public:
+  KfieldBC(Teuchos::ParameterList& p);
+  typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
+  void evaluateFields(typename Traits::EvalData d);
 };
 
 // **************************************************************
@@ -124,14 +134,11 @@ public:
 // **************************************************************
 template<typename Traits>
 class KfieldBC<PHAL::AlbanyTraits::MPResidual,Traits>
-   : public PHAL::DirichletBase<PHAL::AlbanyTraits::MPResidual, Traits> {
+   : public KfieldBC_Base<PHAL::AlbanyTraits::MPResidual, Traits> {
 public:
   KfieldBC(Teuchos::ParameterList& p);
   typedef typename PHAL::AlbanyTraits::MPResidual::ScalarT ScalarT;
   void evaluateFields(typename Traits::EvalData d);
-  ScalarT& getValue(const std::string &n);
-  RealType mu, nu, KIval, KIIval;
-  ScalarT KI, KII;
 };
 
 // **************************************************************
@@ -139,14 +146,23 @@ public:
 // **************************************************************
 template<typename Traits>
 class KfieldBC<PHAL::AlbanyTraits::MPJacobian,Traits>
-   : public PHAL::DirichletBase<PHAL::AlbanyTraits::MPJacobian, Traits> {
+   : public KfieldBC_Base<PHAL::AlbanyTraits::MPJacobian, Traits> {
 public:
   KfieldBC(Teuchos::ParameterList& p);
   typedef typename PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
   void evaluateFields(typename Traits::EvalData d);
-  ScalarT& getValue(const std::string &n);
-  RealType mu, nu, KIval, KIIval;
-  ScalarT KI, KII;
+};
+
+// **************************************************************
+// Multi-point Tangent
+// **************************************************************
+template<typename Traits>
+class KfieldBC<PHAL::AlbanyTraits::MPTangent,Traits>
+   : public KfieldBC_Base<PHAL::AlbanyTraits::MPTangent, Traits> {
+public:
+  KfieldBC(Teuchos::ParameterList& p);
+  typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
+  void evaluateFields(typename Traits::EvalData d);
 };
 
 }

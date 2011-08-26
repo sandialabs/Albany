@@ -136,6 +136,17 @@ public:
 };
 
 // **************************************************************
+// Stochastic Galerkin Tangent
+// **************************************************************
+template<typename Traits>
+class Dirichlet<PHAL::AlbanyTraits::SGTangent,Traits>
+   : public DirichletBase<PHAL::AlbanyTraits::SGTangent, Traits> {
+public:
+  Dirichlet(Teuchos::ParameterList& p);
+  void evaluateFields(typename Traits::EvalData d);
+};
+
+// **************************************************************
 // Multi-point Residual 
 // **************************************************************
 template<typename Traits>
@@ -152,6 +163,17 @@ public:
 template<typename Traits>
 class Dirichlet<PHAL::AlbanyTraits::MPJacobian,Traits>
    : public DirichletBase<PHAL::AlbanyTraits::MPJacobian, Traits> {
+public:
+  Dirichlet(Teuchos::ParameterList& p);
+  void evaluateFields(typename Traits::EvalData d);
+};
+
+// **************************************************************
+// Multi-point Tangent
+// **************************************************************
+template<typename Traits>
+class Dirichlet<PHAL::AlbanyTraits::MPTangent,Traits>
+   : public DirichletBase<PHAL::AlbanyTraits::MPTangent, Traits> {
 public:
   Dirichlet(Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);

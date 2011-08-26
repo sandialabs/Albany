@@ -36,10 +36,11 @@ numResponses() const
 
 void
 Albany::EvaluatedResponseFunction::
-evaluateResponses(const Epetra_Vector* xdot,
-		  const Epetra_Vector& x,
-		  const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-		  Epetra_Vector& g)
+evaluateResponse(const double current_time,
+		 const Epetra_Vector* xdot,
+		 const Epetra_Vector& x,
+		 const Teuchos::Array<ParamVec>& p,
+		 Epetra_Vector& g)
 {
   for(unsigned int i=0; i < responseInitVals.size(); ++i)
     g[i] = responseInitVals[i];
@@ -47,15 +48,20 @@ evaluateResponses(const Epetra_Vector* xdot,
 
 void
 Albany::EvaluatedResponseFunction::
-evaluateTangents(
-	   const Epetra_Vector* xdot,
-	   const Epetra_Vector& x,
-	   const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-	   const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
-	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dxdot_dp,
-	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dx_dp,
-	   Epetra_Vector* g,
-	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& gt)
+evaluateTangent(const double alpha, 
+		const double beta,
+		const double current_time,
+		bool sum_derivs,
+		const Epetra_Vector* xdot,
+		const Epetra_Vector& x,
+		const Teuchos::Array<ParamVec>& p,
+		ParamVec* deriv_p,
+		const Epetra_MultiVector* Vxdot,
+		const Epetra_MultiVector* Vx,
+		const Epetra_MultiVector* Vp,
+		Epetra_Vector* g,
+		Epetra_MultiVector* gx,
+		Epetra_MultiVector* gp)
 {
   // Evaluate response g
   if (g != NULL) {
@@ -64,23 +70,23 @@ evaluateTangents(
   }
 
   // Evaluate tangent of g = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
-  for (Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >::size_type j=0; j<gt.size(); j++)
-    if (gt[j] != Teuchos::null)
-      for (int i=0; i<dx_dp[i]->NumVectors(); i++)
-	(*gt[j])[i][0] = 0.0;
+  if (gx != NULL)
+    gx->PutScalar(0.0);
+  if (gp != NULL)
+    gp->PutScalar(0.0);
 }
 
 void
 Albany::EvaluatedResponseFunction::
-evaluateGradients(
-	  const Epetra_Vector* xdot,
-	  const Epetra_Vector& x,
-	  const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-	  const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
-	  Epetra_Vector* g,
-	  Epetra_MultiVector* dg_dx,
-	  Epetra_MultiVector* dg_dxdot,
-	  const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dg_dp)
+evaluateGradient(const double current_time,
+		 const Epetra_Vector* xdot,
+		 const Epetra_Vector& x,
+		 const Teuchos::Array<ParamVec>& p,
+		 ParamVec* deriv_p,
+		 Epetra_Vector* g,
+		 Epetra_MultiVector* dg_dx,
+		 Epetra_MultiVector* dg_dxdot,
+		 Epetra_MultiVector* dg_dp)
 {
   // Evaluate response g
   if (g != NULL) {
@@ -96,27 +102,10 @@ evaluateGradients(
   if (dg_dxdot != NULL)
     dg_dxdot->PutScalar(0.0);
 
-  // Evaluate dg/dp
-  for (Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >::size_type j=0; j<dg_dp.size(); j++)
-    if (dg_dp[j] != Teuchos::null)
-      dg_dp[j]->PutScalar(0.0);
+  // Evaluate dg/dxdot
+  if (dg_dp != NULL)
+    dg_dp->PutScalar(0.0);
 }
-
-void
-Albany::EvaluatedResponseFunction::
-evaluateSGResponses(const Stokhos::VectorOrthogPoly<Epetra_Vector>* sg_xdot,
-		    const Stokhos::VectorOrthogPoly<Epetra_Vector>& sg_x,
-		    const ParamVec* p,
-		    const ParamVec* sg_p,
-		    const Teuchos::Array<SGType>* sg_p_vals,
-		    Stokhos::VectorOrthogPoly<Epetra_Vector>& sg_g)
-{
-  unsigned int sz = sg_x.size();
-  for (unsigned int i=0; i<sz; i++)
-    sg_g[i][0] = 0.0;
-}
-
-
 
 void 
 Albany::EvaluatedResponseFunction::

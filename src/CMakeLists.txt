@@ -16,7 +16,6 @@
 
 #
 SET(SOURCES
-	ENAT_SGNOXSolver.cpp 
 	Albany_SolverFactory.cpp
 	Albany_Utils.cpp
 	PHAL_Dimension.cpp 
@@ -31,7 +30,6 @@ SET(SOURCES
   )
 
 SET(HEADERS
-	ENAT_SGNOXSolver.hpp 
 	Albany_SolverFactory.hpp
 	Albany_Utils.hpp
 	Albany_DataTypes.hpp 

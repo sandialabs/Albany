@@ -86,7 +86,7 @@ template<typename Traits>
 double QCAD::EvaluatorTools<PHAL::AlbanyTraits::SGResidual, Traits>::
 getDoubleValue(const ScalarT& t)
 {
-  return 0;  //TODO - I don't know how to extract SG info from ScalarT
+  return t.val();
 }
 
 // **********************************************************************
@@ -103,7 +103,24 @@ template<typename Traits>
 double QCAD::EvaluatorTools<PHAL::AlbanyTraits::SGJacobian, Traits>::
 getDoubleValue(const ScalarT& t)
 {
-  return 0; //TODO - I don't know how to extract SG info from ScalarT
+  return t.val().val();
+}
+
+// **********************************************************************
+//   STOCHASTIC GALERKIN TANGENT
+// **********************************************************************
+
+template<typename Traits>
+QCAD::EvaluatorTools<PHAL::AlbanyTraits::SGTangent,Traits>::
+EvaluatorTools()
+{
+}
+
+template<typename Traits>
+double QCAD::EvaluatorTools<PHAL::AlbanyTraits::SGTangent, Traits>::
+getDoubleValue(const ScalarT& t)
+{
+  return t.val().val();
 }
 
 // **********************************************************************
@@ -120,7 +137,7 @@ template<typename Traits>
 double QCAD::EvaluatorTools<PHAL::AlbanyTraits::MPResidual, Traits>::
 getDoubleValue(const ScalarT& t)
 {
-  return 0; //TODO - I don't know how to extract MP info from ScalarT
+  return t.val(); 
 }
 
 // **********************************************************************
@@ -137,10 +154,25 @@ template<typename Traits>
 double QCAD::EvaluatorTools<PHAL::AlbanyTraits::MPJacobian, Traits>::
 getDoubleValue(const ScalarT& t)
 {
-  return 0; //TODO - I don't know how to extract MP info from ScalarT
+  return t.val().val(); 
 }
 
+// **********************************************************************
+//   MULTI-POINT TANGENT
+// **********************************************************************
 
+template<typename Traits>
+QCAD::EvaluatorTools<PHAL::AlbanyTraits::MPTangent,Traits>::
+EvaluatorTools()
+{
+}
+
+template<typename Traits>
+double QCAD::EvaluatorTools<PHAL::AlbanyTraits::MPTangent, Traits>::
+getDoubleValue(const ScalarT& t)
+{
+  return t.val().val();
+}
 
 // **********************************************************************
 
