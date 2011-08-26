@@ -72,7 +72,7 @@ namespace Albany {
       const Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly>& g_sg = Teuchos::null) const;
 
     Teuchos::ParameterList& getAnalysisParameters() const
-      { return appParams->sublist("Analysis"); }
+      { return appParams->sublist("Piro").sublist("Analysis"); }
 
     Teuchos::ParameterList& getParameters() const
       { return *appParams; }

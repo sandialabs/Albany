@@ -118,21 +118,24 @@ Albany::SolverFactory::createAndGetAlbanyApp(
 	NOX_observer = rcp(new Albany_NOXObserver(app));
     }
 
+    RCP<Teuchos::ParameterList> piroParams = 
+      rcp(&(appParams->sublist("Piro")),false);
+
     if (solutionMethod== "Continuation") { // add save eigen data here as in Piro test
-      Teuchos::ParameterList& locaParams = (*appParams).sublist("LOCA");
+      Teuchos::ParameterList& locaParams = piroParams->sublist("LOCA");
         RCP<LOCA::SaveEigenData::AbstractStrategy> saveEigs =
 	  rcp(new Albany::SaveEigenData( locaParams, NOX_observer, &app->getStateMgr() ));
-        return  rcp(new Piro::Epetra::LOCASolver(appParams, model, NOX_observer, saveEigs));
-	//return  rcp(new Piro::Epetra::LOCASolver(appParams, model, NOX_observer));
+        return  rcp(new Piro::Epetra::LOCASolver(piroParams, model, NOX_observer, saveEigs));
+	//return  rcp(new Piro::Epetra::LOCASolver(piroParams, model, NOX_observer));
     }
     else if (solutionMethod== "Transient" && secondOrder=="No") 
-      return  rcp(new Piro::Epetra::RythmosSolver(appParams, model, Rythmos_observer));
+      return  rcp(new Piro::Epetra::RythmosSolver(piroParams, model, Rythmos_observer));
     else if (solutionMethod== "Transient" && secondOrder=="Velocity Verlet")
-      return  rcp(new Piro::Epetra::VelocityVerletSolver(appParams, model, NOX_observer));
+      return  rcp(new Piro::Epetra::VelocityVerletSolver(piroParams, model, NOX_observer));
     else if (solutionMethod== "Transient" && secondOrder=="Trapezoid Rule")
-      return  rcp(new Piro::Epetra::TrapezoidRuleSolver(appParams, model, NOX_observer));
+      return  rcp(new Piro::Epetra::TrapezoidRuleSolver(piroParams, model, NOX_observer));
     else if (solutionMethod== "Multi-Problem")
-      return  rcp(new QCAD::Solver(appParams, solverComm));
+      return  rcp(new QCAD::Solver(piroParams, solverComm));
     else if (solutionMethod== "Transient") {
       TEST_FOR_EXCEPTION(secondOrder!="No", std::logic_error,
          "Invalid value for Second Order: (No, Velocity Verlet, Trapezoid Rule): "
@@ -140,7 +143,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
       return Teuchos::null;
       }
     else
-      return  rcp(new Piro::Epetra::NOXSolver(appParams, model, NOX_observer));
+      return  rcp(new Piro::Epetra::NOXSolver(piroParams, model, NOX_observer));
 }
 
 Teuchos::RCP<EpetraExt::ModelEvaluator>  
@@ -297,7 +300,8 @@ void Albany::SolverFactory::setSolverParamDefaults(
               ParameterList* appParams_, int myRank)
 {
     // Set the nonlinear solver method
-    ParameterList& noxParams = appParams_->sublist("NOX");
+    ParameterList& piroParams = appParams_->sublist("Piro");
+    ParameterList& noxParams = piroParams.sublist("NOX");
     noxParams.set("Nonlinear Solver", "Line Search Based");
 
     // Set the printing parameters in the "Printing" sublist
@@ -358,17 +362,10 @@ Albany::SolverFactory::getValidAppParameters() const
   validPL->sublist("Quadrature",         false, "Quadrature sublist");
   validPL->sublist("Regression Results", false, "Regression Results sublist");
   validPL->sublist("VTK",                false, "DEPRECATED  VTK sublist");
-  validPL->sublist("Rythmos",            false, "Rythmos sublist");
-  validPL->sublist("Velocity Verlet",    false, "Piro Velocity Verlet sublist");
-  validPL->sublist("Trapezoid Rule",     false, "Piro Trapezoid Rule sublist");
-  validPL->sublist("LOCA",               false, "LOCA sublist");
-  validPL->sublist("NOX",                false, "NOX sublist");
-  validPL->sublist("Analysis",           false, "Analysis sublist");
-  
   validPL->sublist("Piro",               false, "Piro sublist");
 
-  validPL->set<string>("Jacobian Operator", "Have Jacobian", "Flag to allow Matrix-Free specification in Piro");
-  validPL->set<double>("Matrix-Free Perturbation", 3.0e-7, "delta in matrix-free formula");
+  // validPL->set<string>("Jacobian Operator", "Have Jacobian", "Flag to allow Matrix-Free specification in Piro");
+  // validPL->set<double>("Matrix-Free Perturbation", 3.0e-7, "delta in matrix-free formula");
 
   return validPL;
 }
