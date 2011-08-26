@@ -81,9 +81,10 @@
     <Parameter name="Number of Comparisons" type="int" value="1" />
     <Parameter name="Test Values" type="Array(double)" value="{1.27590778497e-07}" />
     <Parameter name="Relative Tolerance" type="double" value="1.0e-3" />
+    <Parameter name="Absolute Tolerance" type="double" value="1.0e-6" />
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="1" />
     <Parameter name="Sensitivity Test Values 0" type="Array(double)"
-     	       value="{1.7880360171, 1.78803527964, -6.2129922e-08}" />
+     	       value="{1.7880360171, 1.78803527964, -6.21817e-08}" />
   </ParameterList>
 
 
@@ -142,7 +143,7 @@
             <ParameterList name="Solver Types">
               <ParameterList name="Block GMRES">
                 <Parameter name="Num Blocks" type="int" value="50" />
-                <Parameter name="Convergence Tolerance" type="double" value="1e-08" />
+                <Parameter name="Convergence Tolerance" type="double" value="1e-10" />
                 <Parameter name="Output Style" type="int" value="1" />
                 <Parameter name="Output Frequency" type="int" value="20" />
                 <Parameter name="Maximum Iterations" type="int" value="200" />
