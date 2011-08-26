@@ -27,6 +27,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$PREFIX \
       -D Trilinos_ENABLE_TESTS:BOOL=OFF \
       -D Trilinos_ENABLE_EXAMPLES:BOOL=OFF \
 \
+      -D Trilinos_ENABLE_SEACAS:BOOL=ON \
       -D Trilinos_ENABLE_SEACASAprepro:BOOL=ON \
       -D Trilinos_ENABLE_SEACASConjoin:BOOL=ON \
       -D Trilinos_ENABLE_SEACASEjoin:BOOL=ON \
