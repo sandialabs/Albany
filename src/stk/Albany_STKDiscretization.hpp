@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "Teuchos_ParameterList.hpp"
+#include "Teuchos_VerboseObject.hpp"
 #include "Epetra_Comm.h"
 
 #include "Albany_AbstractDiscretization.hpp"
@@ -122,6 +123,7 @@ namespace Albany {
     // Copy solution vector from Epetra_Vector into STK Mesh
     void setSolutionField(const Epetra_Vector& soln);
     int nonzeroesPerRow(const int neq) const;
+    double monotonicTimeLabel(const double time);
 
     //! Process STK mesh for Owned nodal quantitites 
     void computeOwnedNodesAndUnknowns();
@@ -135,6 +137,10 @@ namespace Albany {
     void computeNodeSets();
     //! Call stk_io for creating exodus output file
     void setupExodusOutput();
+    //! Call stk_io for creating exodus output file
+    Teuchos::RCP<Teuchos::FancyOStream> out;
+
+    double previous_time_label;
 
   protected:
 
@@ -209,7 +215,6 @@ namespace Albany {
 #ifdef ALBANY_SEACAS
     stk::io::MeshData* mesh_data;
 #endif
-    mutable double time;
     bool interleavedOrdering;
   };
 
