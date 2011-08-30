@@ -25,6 +25,7 @@
 # Albany automatically queries the Trilinos build to 
 # know if these capabilities are enabled or disabled.
 #
+#
 # All paths must me changed for your build (search "gahanse")
 #
 
@@ -34,6 +35,8 @@ cmake \
       -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D CMAKE_BUILD_TYPE:STRING=NONE \
       -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
+      -D TPL_ENABLE_MPI:BOOL=ON \
+      -D MPI_BASE_DIR:PATH=$MPI_BASE_DIR \
 \
       -D Boost_INCLUDE_DIRS:FILEPATH="$BOOSTDIR" \
       -D Boost_LIBRARY_DIRS:FILEPATH="$BOOSTDIR/stage/lib" \

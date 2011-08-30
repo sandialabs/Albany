@@ -31,7 +31,7 @@ mkdir $ALBOUTDIR
 git clone software.sandia.gov:/space/git/Albany > $ALBOUTDIR/albany_checkout.out 2>&1
 cd Albany
 echo "Switching Albany to branch ", $ALBANY_BRANCH
-eg switch $ALBANY_BRANCH
+git checkout $ALBANY_BRANCH
 
 #-------------------------------------------
 # cmake:  configure and make Albany 
@@ -41,10 +41,17 @@ cd $ALBDIR
 rm -rf $ALBDIR/LINUX_DEBUG
 mkdir $ALBDIR/LINUX_DEBUG
 cd $ALBDIR/LINUX_DEBUG
-cmake \
- -D ALBANY_TRILINOS_DIR:FILEPATH="$TRILINSTALLDIR" \
- -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
- -D ENABLE_LCM:BOOL=ON \
- ..   > $ALBOUTDIR/albany_cmake.out 2>&1
 
-/usr/bin/make -j 4 > $ALBOUTDIR/albany_make.out 2>&1
+echo "    Starting Albany cmake" ; date
+
+if [ $MPI_BUILD ] ; then
+  cp $SCRIPTDIR/do-cmake-albany-mpi .
+  source ./do-cmake-albany-mpi > $ALBOUTDIR/albany_cmake.out 2>&1
+else
+  cp $SCRIPTDIR/do-cmake-albany .
+  source ./do-cmake-albany > $ALBOUTDIR/albany_cmake.out 2>&1
+fi
+
+echo "    Finished Albany cmake, starting make" ; date
+
+/usr/bin/make -j 8 > $ALBOUTDIR/albany_make.out 2>&1
