@@ -95,7 +95,7 @@ namespace QCAD {
     
     //! compute the electron density for Poisson-Schrodinger iteration
     ScalarT eDensityForPoissonSchrond(typename Traits::EvalData workset, 
-      std::size_t cell, std::size_t qp, const ScalarT prevPhi);
+      std::size_t cell, std::size_t qp, const ScalarT prevPhi, const bool bUsePredCorr);
     
     //TODO: remove once test new version
     //! read eigenvalues from a text file (temporary, until we have a better way of passing them)
