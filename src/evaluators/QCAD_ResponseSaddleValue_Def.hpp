@@ -25,8 +25,8 @@ QCAD::ResponseSaddleValue<EvalT, Traits>::
 ResponseSaddleValue(Teuchos::ParameterList& p) :
   coordVec(p.get<string>("Coordinate Vector Name"),
 	   p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout")),
-  coordVec_nodes(p.get<string>("Coordinate Vector Name"),
-	   p.get< Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout")),
+  coordVec_vertices(p.get<string>("Coordinate Vector Name"),
+	   p.get< Teuchos::RCP<PHX::DataLayout> >("Vertices Vector Data Layout")),
   weights(p.get<std::string>("Weights Name"),
 	p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"))
 {
@@ -47,16 +47,16 @@ ResponseSaddleValue(Teuchos::ParameterList& p) :
     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
   Teuchos::RCP<PHX::DataLayout> vector_dl =
     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
-  Teuchos::RCP<PHX::DataLayout> node_vector_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout");
+  Teuchos::RCP<PHX::DataLayout> vertices_vector_dl =
+    p.get< Teuchos::RCP<PHX::DataLayout> >("Vertices Vector Data Layout");
 
 
   std::vector<PHX::DataLayout::size_type> dims;
   vector_dl->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
-  node_vector_dl->dimensions(dims);
-  numNodes = dims[2];
+  vertices_vector_dl->dimensions(dims);
+  numVertices = dims[2];
 
 
   //! User-specified parameters
@@ -103,6 +103,7 @@ ResponseSaddleValue(Teuchos::ParameterList& p) :
   //! add dependent fields
   this->addDependentField(field);
   this->addDependentField(coordVec);
+  this->addDependentField(coordVec_vertices);
   this->addDependentField(weights);
   if(!bReturnSameField) this->addDependentField(retField);
 
@@ -126,6 +127,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(field,fm);
   this->utils.setFieldData(coordVec,fm);
+  this->utils.setFieldData(coordVec_vertices,fm);
   this->utils.setFieldData(weights,fm);
   if(!bReturnSameField) this->utils.setFieldData(retField,fm);
 }
@@ -157,13 +159,13 @@ evaluateFields(typename Traits::EvalData workset)
 
     // Get the cell volume, used for computing an average cell linear size
     if( bLateralVolumes ) {
-      std::vector<ScalarT> maxCoord(3, -1e10);
-      std::vector<ScalarT> minCoord(3, +1e10);
+      std::vector<ScalarT> maxCoord(3,-1e10);
+      std::vector<ScalarT> minCoord(3,+1e10);
 
-      for (std::size_t node=0; node < numNodes; ++node) {
+      for (std::size_t v=0; v < numVertices; ++v) {
 	for (std::size_t k=0; k < numDims; ++k) {
-	  if(maxCoord[k] < coordVec_nodes(cell,node,k)) maxCoord[k] = coordVec_nodes(cell,node,k);
-	  if(minCoord[k] > coordVec_nodes(cell,node,k)) minCoord[k] = coordVec_nodes(cell,node,k);
+	  if(maxCoord[k] < coordVec_vertices(cell,v,k)) maxCoord[k] = coordVec_vertices(cell,v,k);
+	  if(minCoord[k] > coordVec_vertices(cell,v,k)) minCoord[k] = coordVec_vertices(cell,v,k);
 	}
       }
 
