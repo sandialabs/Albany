@@ -49,14 +49,14 @@ namespace QCAD
 
     std::size_t numQPs;
     std::size_t numDims;
-    std::size_t numNodes;
+    std::size_t numVertices;
   
     Teuchos::RCP<QCAD::SaddleValueResponseFunction> svResponseFn;
   
     PHX::MDField<ScalarT> field;
     PHX::MDField<ScalarT> retField;
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
-    PHX::MDField<MeshScalarT,Cell,Node,Dim> coordVec_nodes;
+    PHX::MDField<MeshScalarT,Cell,Node,Dim> coordVec_vertices;
     PHX::MDField<ScalarT,Cell,QuadPoint> weights;
     
     std::string fieldName;

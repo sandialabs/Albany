@@ -452,7 +452,7 @@ QCAD::PoissonProblem::constructResponses(
        p->set<string>("Weights Name",   "Weights");
        p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl.qp_scalar);
        p->set< RCP<DataLayout> >("QP Vector Data Layout", dl.qp_vector);
-       p->set< RCP<DataLayout> >("Node Vector Data Layout", dl.node_vector);
+       p->set< RCP<DataLayout> >("Vertices Vector Data Layout", dl.vertices_vector);
 
        response_evaluators_to_build[responseID] = p;
        responseIDs_to_require.push_back(responseID);
