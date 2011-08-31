@@ -49,12 +49,14 @@ namespace QCAD
 
     std::size_t numQPs;
     std::size_t numDims;
+    std::size_t numNodes;
   
     Teuchos::RCP<QCAD::SaddleValueResponseFunction> svResponseFn;
   
     PHX::MDField<ScalarT> field;
     PHX::MDField<ScalarT> retField;
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+    PHX::MDField<MeshScalarT,Cell,Node,Dim> coordVec_nodes;
     PHX::MDField<ScalarT,Cell,QuadPoint> weights;
     
     std::string fieldName;
@@ -66,6 +68,7 @@ namespace QCAD
     bool limitX, limitY, limitZ;
     double xmin, xmax, ymin, ymax, zmin, zmax;
     double retScaling;
+    bool bLateralVolumes;
 
     Teuchos::RCP<PHX::FieldTag> response_operation;
   };

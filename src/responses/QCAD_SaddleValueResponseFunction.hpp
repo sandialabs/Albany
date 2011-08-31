@@ -120,6 +120,10 @@ namespace QCAD {
 
     bool bRetPosOnFailGiven;
     double retPosOnFail[MAX_DIMENSION];
+
+    bool bDebugMode;
+    bool bPositiveOnly;
+    bool bLateralVolumes;
   };
 
 }

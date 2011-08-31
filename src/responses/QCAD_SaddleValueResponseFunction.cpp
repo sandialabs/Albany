@@ -47,6 +47,10 @@ SaddleValueResponseFunction(const int numDim_, Teuchos::ParameterList& params)
   retPosOnFail[0] = params.get<double>("Fallback X", 0.0);
   retPosOnFail[1] = params.get<double>("Fallback Y", 0.0);
   retPosOnFail[2] = params.get<double>("Fallback Z", 0.0);
+
+  bDebugMode = params.get<bool>("Debug Mode",false);
+  bPositiveOnly = params.get<bool>("Positive Return Only",false);
+  bLateralVolumes = (params.get<std::string>("Distance Cutoff Method", "Volume") == "Lateral Volume");
 }
 
 QCAD::SaddleValueResponseFunction::
@@ -191,7 +195,12 @@ postProcessResponses(const Epetra_Comm& comm, Teuchos::RCP<Epetra_Vector>& g)
   //  if( fabs(maxCoords[k] - minCoords[k]) > maxDistanceDelta )
   //    maxDistanceDelta = fabs(maxCoords[k] - minCoords[k]);
   //}
-  double avgCellLength = pow(averageOfVector(allCellVols), 1.0/numDims);
+
+
+  double power = 1.0/numDims;
+  if( bLateralVolumes && numDims > 2) power = 1.0/2.0;
+
+  double avgCellLength = pow(averageOfVector(allCellVols), power);
   double maxFieldDifference = fabs(maxFieldVal - minFieldVal);
 
   if(bShowInfo) {
@@ -259,7 +268,7 @@ FindSaddlePoint(std::vector<double>& allFieldVals, std::vector<double>& allRetFi
 		double cutoffDistance, double cutoffFieldVal, double minDepth, bool bShortInfo,
 		Teuchos::RCP<Epetra_Vector>& g)
 {
-  bool bDebug = false;
+  bool bDebug = bDebugMode;
 
   if(bShortInfo) {
     std::cout << "--- Saddle: distance cutoff = " << cutoffDistance
@@ -350,13 +359,31 @@ FindSaddlePoint(std::vector<double>& allFieldVals, std::vector<double>& allRetFi
 
 	  if(mergingTwoDeepTrees && nDeepTrees == 1) {
 	    if(bDebug) std::cout << "DEBUG: FOUND SADDLE! exiting." << std::endl;
-	    if(bShortInfo) std::cout << "--- Saddle: i=" << i << " Found saddle." << std::endl;
+	    if(bShortInfo) std::cout << "--- Saddle: i=" << i << " Found saddle at ";
+
+            //Found saddle at I
+            (*g)[0] = allRetFieldVals[I];
+            (*g)[1] = allFieldVals[I];
+            for(std::size_t k=0; k<numDims && k < 3; k++) {
+              (*g)[2+k] = allCoords[k][I];
+              if(bShortInfo) std::cout << allCoords[k][I] << ", ";
+	    }
+
+            if(bPositiveOnly && fabs((*g)[0]) < 1e-6 )
+              (*g)[0] = 1e+100; //huge number to cause optimization line search to avoid flat zero region
+            
+	    if(bShortInfo) std::cout << "ret=" << (*g)[0] << std::endl;
+            return 0; //success
+
 
 	    //Found saddle at I
 	    (*g)[0] = allRetFieldVals[I];
 	    (*g)[1] = allFieldVals[I];
 	    for(std::size_t k=0; k<numDims && k < 3; k++)
 	      (*g)[2+k] = allCoords[k][I];
+
+	    if(bPositiveOnly && fabs((*g)[0]) < 1e-6 )
+	      (*g)[0] = 1e+100; //huge number to cause optimization line search to avoid flat zero region
 
 	    return 0; //success
 	  }

@@ -25,6 +25,8 @@ QCAD::ResponseSaddleValue<EvalT, Traits>::
 ResponseSaddleValue(Teuchos::ParameterList& p) :
   coordVec(p.get<string>("Coordinate Vector Name"),
 	   p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout")),
+  coordVec_nodes(p.get<string>("Coordinate Vector Name"),
+	   p.get< Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout")),
   weights(p.get<std::string>("Weights Name"),
 	p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"))
 {
@@ -45,17 +47,24 @@ ResponseSaddleValue(Teuchos::ParameterList& p) :
     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
   Teuchos::RCP<PHX::DataLayout> vector_dl =
     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
+  Teuchos::RCP<PHX::DataLayout> node_vector_dl =
+    p.get< Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout");
+
 
   std::vector<PHX::DataLayout::size_type> dims;
   vector_dl->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
+  node_vector_dl->dimensions(dims);
+  numNodes = dims[2];
+
 
   //! User-specified parameters
   fieldName  = plist->get<std::string>("Field Name");
   retFieldName = plist->get<std::string>("Return Field Name", fieldName);
-  bReturnSameField = (fieldName == retFieldName);
   retScaling = plist->get<double>("Return Field Scaling Factor",1.0);
+  bReturnSameField = (fieldName == retFieldName);
+  bLateralVolumes = (plist->get<std::string>("Distance Cutoff Method", "Volume") == "Lateral Volume");
 
   domain = plist->get<std::string>("Domain", "box");
 
@@ -146,10 +155,27 @@ evaluateFields(typename Traits::EvalData workset)
       if( !cellInBox ) continue;
     }
 
-    // Get the cell volume, used for averaging over a cell
-    cellVol = 0.0;
-    for (std::size_t qp=0; qp < numQPs; ++qp)
-      cellVol += weights(cell,qp);
+    // Get the cell volume, used for computing an average cell linear size
+    if( bLateralVolumes ) {
+      std::vector<ScalarT> maxCoord(3, -1e10);
+      std::vector<ScalarT> minCoord(3, +1e10);
+
+      for (std::size_t node=0; node < numNodes; ++node) {
+	for (std::size_t k=0; k < numDims; ++k) {
+	  if(maxCoord[k] < coordVec_nodes(cell,node,k)) maxCoord[k] = coordVec_nodes(cell,node,k);
+	  if(minCoord[k] > coordVec_nodes(cell,node,k)) minCoord[k] = coordVec_nodes(cell,node,k);
+	}
+      }
+
+      cellVol = 1.0;
+      for (std::size_t k=0; k < numDims && k < 2; ++k)  //limit to at most 2 dimensions
+	cellVol *= (maxCoord[k] - minCoord[k]);
+    }
+    else {
+      cellVol = 0.0;
+      for (std::size_t qp=0; qp < numQPs; ++qp)
+	cellVol += weights(cell,qp);
+    }
 
     // Get the scalar value of the field being operated on (cell average)
     //  and the average coordinates of the cell (average qp coords)
@@ -221,6 +247,11 @@ QCAD::ResponseSaddleValue<EvalT,Traits>::getValidResponseParameters() const
   validPL->set<double>("Fallback X", 0.0, "X-value of point to use if saddle algorithm fails.");
   validPL->set<double>("Fallback Y", 0.0, "Y-value of point to use if saddle algorithm fails.");
   validPL->set<double>("Fallback Z", 0.0, "Z-value of point to use if saddle algorithm fails.");
+
+  validPL->set<bool>("Debug Mode", false, "Print verbose debug messages to stdout");
+
+  validPL->set<bool>("Positive Return Only", false, "If return value is zero, set to NaN so Dakota stays away");
+  validPL->set<string>("Distance Cutoff Method", "Volume", "Method used to compute average linear size of cell: \"Volume\" or \"Lateral Volume\"");
 
   return validPL;
 }

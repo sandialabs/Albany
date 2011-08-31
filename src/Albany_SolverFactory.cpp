@@ -135,7 +135,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
     else if (solutionMethod== "Transient" && secondOrder=="Trapezoid Rule")
       return  rcp(new Piro::Epetra::TrapezoidRuleSolver(piroParams, model, NOX_observer));
     else if (solutionMethod== "Multi-Problem")
-      return  rcp(new QCAD::Solver(piroParams, solverComm));
+      return  rcp(new QCAD::Solver(appParams, solverComm));
     else if (solutionMethod== "Transient") {
       TEST_FOR_EXCEPTION(secondOrder!="No", std::logic_error,
          "Invalid value for Second Order: (No, Velocity Verlet, Trapezoid Rule): "
