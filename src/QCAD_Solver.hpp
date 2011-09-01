@@ -93,6 +93,8 @@ namespace QCAD {
     Teuchos::RCP<Epetra_LocalMap> epetra_param_map;
     Teuchos::RCP<Epetra_LocalMap> epetra_response_map;
     Teuchos::RCP<Epetra_Map> epetra_x_map;
+
+    bool bVerbose;
   };
 
 

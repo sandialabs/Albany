@@ -104,6 +104,8 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
     inputFilenames[subName] = inputFile;
   }
 
+  // Check if "verbose" mode is enabled
+  bVerbose = (comm->MyPID() == 0) && problemParams.get<bool>("Verbose Output", false);
 
   // Get problem parameters specific to certain problems
   if( problemName == "Poisson Schrodinger" ||
@@ -277,9 +279,16 @@ QCAD::Solver::evalModel(const InArgs& inArgs,
       (*pit)->fillSubSolverParams((*p)[i], subSolvers);
     }
   }
-  
+
+  if(bVerbose) {
+    *out << "BEGIN QCAD Solver Parameters:" << endl;
+    for(std::size_t i=0; i<nParameters; i++)
+      *out << "  Parameter " << i << " = " << (*p)[i] << endl;
+    *out << "END QCAD Solver Parameters" << endl;
+  }
+   
   if( problemName == "Poisson" ) {
-      *out << "QCAD Solve: Simple Poisson solve" << endl;
+      if(bVerbose) *out << "QCAD Solve: Simple Poisson solve" << endl;
       SolveModel(getSubSolver("Poisson"));
   }
 
@@ -299,7 +308,13 @@ QCAD::Solver::evalModel(const InArgs& inArgs,
     (*rit)->fillSolverResponses( *g, offset, subSolvers);
     offset += (*rit)->getNumDoubles();
   }
-  
+
+  if(bVerbose) {
+    *out << "BEGIN QCAD Solver Responses:" << endl;
+    for(std::size_t i=0; i< g->MyLength(); i++)
+      *out << "  Response " << i << " = " << (*g)[i] << endl;
+    *out << "END QCAD Solver Responses" << endl;
+  }
 }
 
 
@@ -319,10 +334,10 @@ QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
   std::vector<Intrepid::FieldContainer<RealType> > prevElectricPotential;
   std::vector<Intrepid::FieldContainer<RealType> > tmpContainer;
   
-  *out << "QCAD Solve: Initial Poisson solve (no quantum region) " << endl;
+  if(bVerbose) *out << "QCAD Solve: Initial Poisson solve (no quantum region) " << endl;
   SolveModel(getSubSolver("InitPoisson"), pStatesToPass, pStatesToLoop);
     
-  *out << "QCAD Solve: Beginning Poisson-Schrodinger solve loop" << endl;
+  if(bVerbose) *out << "QCAD Solve: Beginning Poisson-Schrodinger solve loop" << endl;
   bool bConverged = false; 
   std::size_t iter = 0;
     
@@ -338,14 +353,14 @@ QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
     double newShift = GetEigensolverShift(*pStatesToLoop, "Conduction Band");
     ResetEigensolverShift(getSubSolver("Schrodinger").model, newShift, eigList);
 
-    *out << "QCAD Solve: Schrodinger iteration " << iter << endl;
+    if(bVerbose) *out << "QCAD Solve: Schrodinger iteration " << iter << endl;
     SolveModel(getSubSolver("Schrodinger"), pStatesToLoop, pStatesToPass,
 	       eigenDataNull, eigenDataToPass);
       
     CopyStateToContainer(*pStatesToLoop, "Saved Solution", tmpContainer);
     CopyContainerToState(tmpContainer, *pStatesToPass, "Previous Poisson Potential");
       
-    *out << "QCAD Solve: Poisson iteration " << iter << endl;
+    if(bVerbose) *out << "QCAD Solve: Poisson iteration " << iter << endl;
     SolveModel(getSubSolver("Poisson"), pStatesToPass, pStatesToLoop,
 	       eigenDataToPass, eigenDataNull);
       
@@ -356,10 +371,12 @@ QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
     CopyStateToContainer(*pStatesToLoop, "Electric Potential", prevElectricPotential);
   } 
 
-  if(bConverged)
-    *out << "QCAD Solve: Converged Poisson-Schrodinger solve loop after " << iter << " iterations." << endl;
-  else
-    *out << "QCAD Solve: Maximum iterations (" << maxIter << ") reached." << endl;
+  if(bVerbose) {
+    if(bConverged)
+      *out << "QCAD Solve: Converged Poisson-Schrodinger solve loop after " << iter << " iterations." << endl;
+    else
+      *out << "QCAD Solve: Maximum iterations (" << maxIter << ") reached." << endl;
+  }
 }
 
 
@@ -380,10 +397,10 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
   std::vector<Intrepid::FieldContainer<RealType> > prevElectricPotential;
   std::vector<Intrepid::FieldContainer<RealType> > tmpContainer;
   
-  *out << "QCAD Solve: Initial Poisson solve (no quantum region) " << endl;
+  if(bVerbose) *out << "QCAD Solve: Initial Poisson solve (no quantum region) " << endl;
   SolveModel(getSubSolver("InitPoisson"), pStatesToPass, pStatesToLoop);
     
-  *out << "QCAD Solve: Beginning Poisson-Schrodinger solve loop" << endl;
+  if(bVerbose) *out << "QCAD Solve: Beginning Poisson-Schrodinger solve loop" << endl;
   bool bConverged = false;
   std::size_t iter = 0;
 
@@ -396,18 +413,18 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
     double newShift = GetEigensolverShift(*pStatesToLoop, "Conduction Band");
     ResetEigensolverShift(getSubSolver("Schrodinger").model, newShift, eigList);
 
-    *out << "QCAD Solve: Schrodinger iteration " << iter << endl;
+    if(bVerbose) *out << "QCAD Solve: Schrodinger iteration " << iter << endl;
     SolveModel(getSubSolver("Schrodinger"), pStatesToLoop, pStatesToPass,
 	       eigenDataNull, eigenDataToPass);
       
     CopyStateToContainer(*pStatesToLoop, "Saved Solution", tmpContainer);
     CopyContainerToState(tmpContainer, *pStatesToPass, "Previous Poisson Potential");
       
-    *out << "QCAD Solve: Poisson iteration " << iter << endl;
+    if(bVerbose) *out << "QCAD Solve: Poisson iteration " << iter << endl;
     SolveModel(getSubSolver("Poisson"), pStatesToPass, pStatesToLoop,
 	       eigenDataToPass, eigenDataNull);
 
-    *out << "QCAD Solve: Poisson Dummy iteration " << iter << endl;
+    if(bVerbose) *out << "QCAD Solve: Poisson Dummy iteration " << iter << endl;
     SolveModel(getSubSolver("DummyPoisson"), pStatesToPass, pStatesFromDummy,
 	       eigenDataToPass, eigenDataNull);
     AddStateToState(*pStatesFromDummy, "Electric Potential", *pStatesToLoop, "Conduction Band");
@@ -421,10 +438,12 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
     CopyStateToContainer(*pStatesToLoop, "Electric Potential", prevElectricPotential);
   } 
 
-  if(bConverged)
-    *out << "QCAD Solve: Converged Poisson-CI solve loop after " << iter << " iterations." << endl;
-  else
-    *out << "QCAD Solve: Maximum iterations (" << maxIter << ") reached." << endl;
+  if(bVerbose) {
+    if(bConverged)
+      *out << "QCAD Solve: Converged Poisson-CI solve loop after " << iter << " iterations." << endl;
+    else
+      *out << "QCAD Solve: Maximum iterations (" << maxIter << ") reached." << endl;
+  }
 }
 
 
