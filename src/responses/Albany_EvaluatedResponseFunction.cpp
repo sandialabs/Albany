@@ -144,6 +144,24 @@ postProcessResponses(const Epetra_Comm& comm, Teuchos::RCP<Epetra_Vector>& g)
     comm.MaxAll(&procToBcast, &winner, 1);
     comm.Broadcast( g->Values(), g->MyLength(), winner);
   }
+  else if( type == "SumThenNormalize" ) {
+    std::size_t len = g->MyLength();
+    double* summed = new double[len];
+
+    comm.SumAll(g->Values(), summed, len);    
+    for(std::size_t i=0; i<len; i++) (*g)[i] = summed[i];
+    delete [] summed;
+
+    int iNormalizer = postProcessingParams.get<int>("Normalizer Index");
+
+    if( fabs((*g)[iNormalizer]) > 1e-9 ) {
+      for( int i=0; i < g->MyLength(); i++) {
+	if( i == iNormalizer ) continue;
+	(*g)[i] = (*g)[i] / (*g)[iNormalizer];
+      }
+      (*g)[iNormalizer] = 1.0;
+    }
+  }
   else if( type == "None") {
   }
   else TEST_FOR_EXCEPT(true);

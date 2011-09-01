@@ -35,6 +35,8 @@ PoissonSource(Teuchos::ParameterList& p) :
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
   electronDensity("Electron Density",
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+  artCBDensity("Artificial Conduction Band Density",
+      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
   holeDensity("Hole Density",
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
   electricPotential("Electric Potential",
@@ -135,6 +137,7 @@ PoissonSource(Teuchos::ParameterList& p) :
   this->addEvaluatedField(poissonSource);
   this->addEvaluatedField(chargeDensity);
   this->addEvaluatedField(electronDensity);
+  this->addEvaluatedField(artCBDensity);
   this->addEvaluatedField(holeDensity);
   this->addEvaluatedField(electricPotential);
   this->addEvaluatedField(ionizedDopant);
@@ -158,6 +161,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 
   this->utils.setFieldData(chargeDensity,fm);
   this->utils.setFieldData(electronDensity,fm);
+  this->utils.setFieldData(artCBDensity,fm);
   this->utils.setFieldData(holeDensity,fm);
   this->utils.setFieldData(electricPotential,fm);
 
@@ -424,6 +428,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
           conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
           valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
           approxQuantumEDensity(cell,qp) = approxEDensity;
+	  artCBDensity(cell, qp) = ( eDensity > 1e-6 ? eDensity : -Nc*(this->*carrStat)( -(phi+eArgOffset) ));
         }
       }  // end of loop over cells
     }
@@ -460,6 +465,9 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
           conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
           valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
           approxQuantumEDensity(cell,qp) = 0.0; 
+	  artCBDensity(cell, qp) = ( electronDensity(cell, qp) > 1e-6 ? electronDensity(cell, qp) 
+				     : -Nc*(this->*carrStat)( -(phi+eArgOffset) ));
+
         }
       }
     }
@@ -529,6 +537,8 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
           conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
           valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
           approxQuantumEDensity(cell,qp) = approxEDensity;
+	  artCBDensity(cell, qp) = eDensity;
+
         }
       }  // end of loop over cells
     }
@@ -554,6 +564,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
           conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
           valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
           approxQuantumEDensity(cell,qp) = 0.0;
+	  artCBDensity(cell, qp) = 0.0;
         }
       }
     }
@@ -588,6 +599,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
         conductionBand(cell, qp) = qPhiRef-workFunc-phi*V0; // [eV]
         valenceBand(cell, qp) = conductionBand(cell,qp); // No band gap in metal
         approxQuantumEDensity(cell,qp) = 0.0;
+	artCBDensity(cell, qp) = 0.0;
       }
     }
   }
@@ -638,6 +650,7 @@ evaluateFields_default(typename Traits::EvalData workset)
       conductionBand(cell, qp) = 0.0; 
       valenceBand(cell, qp) = 0.01; 
       approxQuantumEDensity(cell,qp) = 0.0;
+      artCBDensity(cell, qp) = 0.0;
     }
   }
 }

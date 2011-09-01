@@ -112,6 +112,7 @@ namespace QCAD {
     PHX::MDField<ScalarT,Cell,QuadPoint> poissonSource; // scaled RHS (unitless)
     PHX::MDField<ScalarT,Cell,QuadPoint> chargeDensity; // space charge density in [cm-3]
     PHX::MDField<ScalarT,Cell,QuadPoint> electronDensity; // electron density in [cm-3]
+    PHX::MDField<ScalarT,Cell,QuadPoint> artCBDensity; // artificial conduction band density [cm-3]
     PHX::MDField<ScalarT,Cell,QuadPoint> holeDensity;   // electron density in [cm-3]
     PHX::MDField<ScalarT,Cell,QuadPoint> electricPotential;	// phi in [V]
     PHX::MDField<ScalarT,Cell,QuadPoint> ionizedDopant;    // ionized dopants in [cm-3]

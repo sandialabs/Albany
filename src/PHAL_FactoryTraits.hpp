@@ -46,6 +46,7 @@
 #include "QCAD_ResponseFieldValue.hpp"
 #include "QCAD_ResponseSaddleValue.hpp"
 #include "QCAD_ResponseSaveField.hpp"
+#include "QCAD_ResponseCenterOfMass.hpp"
 #include "PHAL_JouleHeating.hpp"
 #include "PHAL_TEProp.hpp"
 #include "PHAL_ODEResid.hpp"
@@ -126,8 +127,9 @@ struct FactoryTraits {
   static const int id_qcad_response_fieldvalue    = 38;
   static const int id_qcad_response_saddlevalue   = 39;
   static const int id_qcad_response_savefield     = 40;
+  static const int id_qcad_response_centerofmass  = 41;
 
-  typedef boost::mpl::vector41< 
+  typedef boost::mpl::vector42< 
             PHAL::GatherSolution<_,Traits>,           //  0
             PHAL::GatherCoordinateVector<_,Traits>,   //  1
             PHAL::GatherEigenvectors<_,Traits>,       //  2
@@ -168,7 +170,8 @@ struct FactoryTraits {
             QCAD::ResponseFieldIntegral<_,Traits>,    // 37
             QCAD::ResponseFieldValue<_,Traits>,       // 38
             QCAD::ResponseSaddleValue<_,Traits>,      // 39
-            QCAD::ResponseSaveField<_,Traits>         // 40
+            QCAD::ResponseSaveField<_,Traits>,        // 40
+            QCAD::ResponseCenterOfMass<_,Traits>      // 41
   > EvaluatorTypes;
   
 };

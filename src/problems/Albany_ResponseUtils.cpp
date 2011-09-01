@@ -234,6 +234,23 @@ double length_unit_in_m=1.0e-6;  cout << "KACK lengthUniot " << endl;
     return true;
   }
 
+  else if (responseName == "Center Of Mass") 
+  { 
+    if (facTraits=="PHAL")     type = PHAL::FactoryTraits<AlbanyTraits>::id_qcad_response_centerofmass;
+#ifdef ALBANY_LCM       
+//    else if (facTraits=="LCM") type =  LCM::FactoryTraits<AlbanyTraits>::id_qcad_response_fieldvalue;
+#endif
+
+    p = setupResponseFnForEvaluator(responseList, responseIndex, responses);
+    p->set<int>("Type", type);
+    p->set<string>("Coordinate Vector Name", "Coord Vec");
+    p->set<string>("Weights Name",   "Weights");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+    return true;
+  }
+
+
   else if (responseName == "Save Field")
   { 
     if (facTraits=="PHAL")     type = PHAL::FactoryTraits<AlbanyTraits>::id_qcad_response_savefield;

@@ -379,6 +379,7 @@ SET(SOURCES ${SOURCES}
        evaluators/QCAD_ResponseFieldValue.cpp
        evaluators/QCAD_ResponseSaddleValue.cpp
        evaluators/QCAD_ResponseSaveField.cpp
+       evaluators/QCAD_ResponseCenterOfMass.cpp
        evaluators/QCAD_EvaluatorTools.cpp
        problems/QCAD_PoissonProblem.cpp
        problems/QCAD_MaterialDatabase.cpp
@@ -403,6 +404,8 @@ SET(HEADERS ${HEADERS}
        evaluators/QCAD_ResponseSaddleValue_Def.hpp
        evaluators/QCAD_ResponseSaveField.hpp
        evaluators/QCAD_ResponseSaveField_Def.hpp
+       evaluators/QCAD_ResponseCenterOfMass.hpp
+       evaluators/QCAD_ResponseCenterOfMass_Def.hpp
        evaluators/QCAD_EvaluatorTools.hpp
        evaluators/QCAD_EvaluatorTools_Def.hpp
        problems/QCAD_PoissonProblem.hpp
