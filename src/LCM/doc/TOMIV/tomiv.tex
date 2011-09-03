@@ -50,7 +50,7 @@
 \def\bM{{\mbs{M}}} \def\bN{{\mbs{N}}} \def\bO{{\mbs{O}}}
 \def\bP{{\mbs{P}}} \def\bQ{{\mbs{Q}}} \def\bR{{\mbs{R}}}
 \def\bS{{\mbs{S}}} \def\bT{{\mbs{T}}} \def\bU{{\mbs{U}}}
-\def\bU{{\mbs{V}}} \def\bW{{\mbs{W}}} \def\bX{{\mbs{X}}}
+\def\bV{{\mbs{V}}} \def\bW{{\mbs{W}}} \def\bX{{\mbs{X}}}
 \def\bY{{\mbs{Y}}} \def\bZ{{\mbs{Z}}}
 
 \def\ba{{\mbs{a}}} \def\bb{{\mbs{b}}} \def\bc{{\mbs{c}}}
@@ -222,7 +222,7 @@ internal variables, which are normally available only at integration
 points.
 
 Different methods have been devised to map internal variables from one
-mesh to another.  \citet{Ortiz.Quigley:1991} propose transfer
+mesh to another. \citet{Ortiz.Quigley:1991} propose transfer
 operators based on a three-field Hu-Washizu formulation. By choosing
 discontinuous interpolation functions for the deformation gradient and
 first Piola-Kirchhoff stress fields, the authors derive transfer
@@ -1343,10 +1343,10 @@ value decomposition and the Baker-Campbell-Hausdorff formula
 $\bZ \in G$.
 
 \section{Numerical Examples}
-This section showcases four numerical examples concerning polynomial
+This section showcases three numerical examples concerning polynomial
 interpolations and transformations of internal variables. In the first
 example, we compare the recovered internal variable fields obtained
-from standard Galerkin and Petrov Galerkin projections. We then use a
+from standard Galerkin and Petrov-Galerkin projections. We then use a
 kinematics problem to investigate the error caused by improper
 interpolation of internal variables belonging to Lie group and the
 remedy procedures formulated via Lie algebra. A simulation of a large
@@ -1360,8 +1360,8 @@ the proposed internal variable recovery procedure.
 \subsection{Projection of Scalar Fields with Jump Conditions}
 We consider a simple example in which a cubic body centered at the
 origin of a Cartesian coordinate system $\{XYZ\}$ is discretized by 8
-hexahedron trilinear elements of equal sizes. The following scalar
-internal variable field is prescribed at the eight standard Gaussian
+hexahedral trilinear elements of equal size. The following scalar
+internal variable field is prescribed at the eight standard Gauss
 quadrature points,
 \begin{equation}
 \bar{\bz}(X) = \left\{
@@ -1432,29 +1432,29 @@ In the current configuration, the geometrical centroid of the beam remains
 at the same position and the two ends of the beam are glued together. The 
 close form of the deformation gradient $\bF^{a}$ expressed in matrix notation
  reads, 
-\begin{equation}
-[\bF^{exact}(X, Y)] =  \left( \begin{array}{ccc}
-\frac{R-Y}{R} \cos(\frac{X}{R}) & -\sin(\frac{X}{R}) & 0 \\
-\frac{R-Y}{R} \sin(\frac{X}{R}) & \cos(\frac{X}{R})  & 0\\
-0 & 0 & 1 \end{array} \right)
+ \begin{equation}
+   [\bF^{exact}(X, Y)] =  \left( \begin{array}{ccc}
+       \frac{R-Y}{R} \cos(X/R) & -\sin(X/R) & 0 \\
+       \frac{R-Y}{R} \sin(X/R) & \cos(X/R)  & 0\\
+       0 & 0 & 1 \end{array} \right)
 \label{eq:DeformGrad} 
 \end{equation}
 The right polar decomposition of the deformation gradient reads,
 \begin{equation}
-\bF^{exact}(X,Y) = \bR^{exact}(X) \cdot \bU^{exact}(Y) 
-\label{eq:RightPolar}
+  \bF^{exact}(X,Y) = \bR^{exact}(X) \cdot \bU^{exact}(Y) 
+  \label{eq:RightPolar}
 \end{equation}
 where,
 \begin{equation}
-[\bR^{exact}(X)] =  \left( \begin{array}{ccc}
- \cos(\frac{X}{R}) & -\sin(\frac{X}{R}) & 0 \\
-\sin(\frac{X}{R}) & \cos(\frac{X}{R})  & 0\\
-0 & 0 & 1 \end{array} \right) \: \: ; \: \:
-[\bU^{exact}(Y)] =  \left( \begin{array}{ccc}
-\frac{R-Y}{R}  & 0 & 0 \\
-0 & 1 & 0\\
-0 & 0 & 1 \end{array} \right)
-\label{eq:PolarDecomposition} 
+  [\bR^{exact}(X)] =  \left( \begin{array}{ccc}
+      \cos(X/R) & -\sin(X/R) & 0 \\
+      \sin(X/R) & \cos(X/R)  & 0\\
+      0 & 0 & 1 \end{array} \right) \: \: ; \: \:
+  [\bU^{exact}(Y)] =  \left( \begin{array}{ccc}
+      \frac{R-Y}{R}  & 0 & 0 \\
+      0 & 1 & 0\\
+      0 & 0 & 1 \end{array} \right)
+  \label{eq:PolarDecomposition} 
 \end{equation}
 
 Since the exact solution of the deformation gradient is available in
@@ -1462,18 +1462,18 @@ this example, we quantify distribution of interpolation error by
 directly comparing the interpolated deformation gradient $\bF^{h}$
 with the exact solution via the Frobenius norm, i.e.,
 \begin{equation}
- e^{h}(\bX) = || \bF^{exact} (\bX)- \bF^{h}(\bX) ||_{F} 
- = \sqrt{\text{Tr}\big( [\bF^{exact} (\bX)- \bF^{h}(\bX)] 
-     \cdot [\bF^{exact} (\bX)- \bF^{h}(\bX)] \big) }
- \label{eq:FrobeniusNormDistribution}
+  e^{h}(\bX) = || \bF^{exact} (\bX)- \bF^{h}(\bX) ||_{F} 
+  = \sqrt{\text{Tr}\big( [\bF^{exact} (\bX)- \bF^{h}(\bX)] 
+    \cdot [\bF^{exact} (\bX)- \bF^{h}(\bX)] \big) }
+  \label{eq:FrobeniusNormDistribution}
 \end{equation} 
 
 To illustrate how logarithmic mapping substantially reduces the error
 due to remeshing, we discretize the same domain twice with two meshes,
 one significantly finer than another, then project the deformation
-gradient from the coarse mesh to the fine mesh.  Specifically, the
-coarse mesh consists of 16 hexahedron elements, whereas the fine mesh
-consists of 2500.
+gradient from the coarse mesh to the fine mesh through linear
+interpolation.  Specifically, the coarse mesh consists of 16
+hexahedral elements, whereas the fine mesh consists of 2500.
  
 Figure \ref{fig:ExampleRing}(a) depicts how the interpolation error
 $e^{h}(\bX)$ distributes in the current configuration if polynomial
@@ -1481,17 +1481,17 @@ interpolation is used to project nodal values from source mesh to the
 target mesh without the application of Lie algebra.  In this example,
 $\bF^{exact}$ is first computed via \eqref{eq:DeformGrad} at the nodes
 of the coarse mesh. Using the interpolation functions of the
-hexahedron element, we obtain $F^{h}(X)$ at the nodes of the fine mesh
+hexahedral element, we obtain $F^{h}(X)$ at the nodes of the fine mesh
 and compare it with the deformation field obtained by exaction
 solution. The interpolation error measured by the Frobenius norm
-reaches its maximum, 0.12, at the middle of each coarse hexahedron
+reaches its maximum, 0.12, at the middle of each coarse hexahedral
 elements, but decreases to zero at the locations where the nodes of
 the coarse and fine meshes coincides. This can be explained by the
 fact that interpolation functions are equal to 1 at the nodes and thus
 no interpolation is required if the particular nodes are shared by
 both the coarse and fine meshes. By contrary, the substantial
-discrepancy between $F^{h}((X)$ and $F^{h}((X)$ at the edges of the
-coarse hexahedron element does indicate that the polynomial
+discrepancy between $F^{exact}((X)$ and $F^{h}((X)$ at the edges of
+the coarse hexahedral element does indicate that the polynomial
 interpolation may cause significant error when nodal values are
 interpolated from coarse to fine mesh. Although this error may reduce
 if the source and target meshes very similar in size, this constraint
@@ -1538,29 +1538,30 @@ cases discussed above, as shown in Figure \ref{fig:ExampleRing}
 (c). In this case, the interpolation of deformation gradient on the
 middle axis does not perform as good as the interpolation on the inner
 and outer surfaces of the annulus. This is due to the fact that the
-right stretch tensor varies linearly along the Y direction as shown in
-\ref{eq:PolarDecomposition} and thus the direct linear interpolation
-performed on the Lie group is capable of reproducing the exact linear
-right stretch tensor field while the linear interpolation performed on
-Lie algebra cannot. This example demonstrates that there is hardly any
-golden rule on how internal variables should interpolate. The
-appropriate choice of the interpolation strategy depends on the
-situations and the prior knowledge one may acquire and take advantage
-of.
+right stretch tensor varies linearly along the $Y$ direction as shown
+in \ref{eq:PolarDecomposition} and thus the direct linear
+interpolation performed on the Lie group is capable of reproducing the
+exact linear right stretch tensor field while the linear interpolation
+performed on Lie algebra cannot. This example demonstrates that there
+is hardly any golden rule on how internal variables should
+interpolate. The appropriate choice of the interpolation strategy
+depends on the situations and the prior knowledge one may acquire and
+take advantage of.
 
 To investigate the relation between the mesh refinement and the
 overall accuracy of the interpolation, we conduct a refinement study
 to obtain the convergence rate and accuracy of the three interpolation
-strategies mentioned above. In particular, the error measured the
+strategies mentioned above. In particular, the error measured by the
 Frobenius norm of the interpolated tensor field $\bA$ is numerically
 integrated over the entire domain at a variety of refinement levels,
 i.e.,
 \begin{equation}
   E_{\bA}^{h} =  || \int_{B} \bA^{exact} (\bX)- \bA^{h}(\bX) dV ||_{F}   
-  \approx || \sum^{nen}_{j=1}\sum^{N}_{i=1}
-  \lambda_{\alpha} (\bxi_{i}) \bA_{\alpha} - A^{exact}(\bxi_{i})  \;
+  \approx || \sum^{nen}_{j=1}\sum^{N}_{i=1} 
+  \big(  \lambda_{\alpha} (\bxi_{i}) \bA_{\alpha} -
+  A^{exact}(\bxi_{i}) \big) \;
   w(\bxi_{i})  J(\bxi_{i}) ||_{F} 
-\label{eq:FrobeniusNormOverall}
+  \label{eq:FrobeniusNormOverall}
 \end{equation}
 where $\bA$ can be $\bF, \bR, \bU$ and $E_{\bA}^{h}$ is the error
 corresponding to the interpolated second order tensor field $\bA$;
@@ -1582,11 +1583,11 @@ ratio, length/width, remains constant for all elements.
   \begin{center}
     \unitlength=1.0mm
     \subfigure[]{
-      \includegraphics[width=120mm]{RefinementF.eps}}
+      \includegraphics[width=80mm]{RefinementF.eps}}
     \subfigure[]{
-      \includegraphics[width=120mm]{RefinementR.eps}}
+      \includegraphics[width=80mm]{RefinementR.eps}}
     \subfigure[]{
-      \includegraphics[width=120mm]{RefinementU.eps}}
+      \includegraphics[width=80mm]{RefinementU.eps}}
     \caption{Convergence plots for the annulus bending problem: errors
       of (a) deformation gradient, (b) rotation and (c) right
       stretch.}
@@ -1625,9 +1626,139 @@ the convergence rate is very slow if the interpolation is performed
 directly on the $SO(3)$. The error of rotation only reduces less than
 one order when the number of the elements is increased 100 times.
 
-\subsection{Necking of a Tensile Specimen}
+\subsection{Elastic-Plastic Upsetting of an Axisymmetric Billet}
+This example demonstrates the outstanding ability of the variational
+transfer operator to project internal variables onto the admissible
+space. We integrate the variational projection operator and the Lie
+algebra interpolation techniques in a framework where projection is
+used in conjugation with logarithmic mapping.  The calculation we
+conducted is proposed as a severe test problem by
+\citet{Taylor.Becker:1983} and \citet{Simo.Hughes:1998}. For
+completeness, we briefly review the problem statement below.
 
-\subsection{Benchmark Problem}
+Consider a cylindrical billet with initial radius = $10mm$ and initial
+height = $30mm$. Due to symmetry with respect to the three Cartesian
+axes, only $1/8$ of the specimen is considered. The top boundary of
+the reference configuration is fixed by a roller such that it does not
+move vertically but is free to expand horizontally. The bottom of the
+reference configuration is fixed horizontally, but is prescribed a
+vertical displacement.  The constitutive response of the specimen is
+simulated via a J2 elasto-plastic model with linear isotropic
+hardening. The material parameters used in this study is identical
+with those in are listed in \citep{Taylor.Becker:1983} and
+\citep{Simo.Hughes:1998} (see Table \ref{tab:UpsetBillet}).
+\begin{table}[htbp]
+  \begin{center}
+    \begin{tabular}{ l l }
+      \toprule
+      
+      Young's modulus
+      &
+      $E = 1000$MPa
+      \\
+      Poisson's ratio
+      &
+      $\nu = 0.3$
+      \\
+      Yield stress  
+      &
+      $\sigma_{y} = 1.00$MPa
+      \\
+      Hardening modulus   
+      &
+      $H=3.0$MPa
+      \\
+      \bottomrule
+    \end{tabular}
+    \caption{Material parameters for the stainless steel.}
+    \label{tab:UpsetBillet}
+  \end{center}
+\end{table}
+
+The simulation is performed with two meshes, consisting of 350 and
+1680 hexahedral trilinear elements respectively. Notice that the 3D
+hexahedral mesh is biased in the cylindrical domain and thus the
+projected $F^{p}$ field may not be rotational symmetric with respect
+to the vertical axis.  During the simulation, $\bF^{p} =
+(\bF^{e})^{-1} \cdot \bF$ is stored. Figure \ref{fig:BilletNOLie}
+illustrates two projections of $\bF^{p}$ calculated from the Gauss
+points of the two meshes via standard Galerkin projection, without the
+application of Lie algebra. Ideally, the plastic deformation of the
+material obeying J2 plasticity must be isochoric, as the plastic flow
+direction is isochoric. However, this is not the case when projection
+is conducted without transforming $\bF^{p}$ to the corresponding Lie
+algebra. Since linear interpolation is only legitimate when addition
+operator is valid, which is not the case for $F^{p}$, projections
+conducted directly on $bF^{p}$ might cause the projected $\bF^{p}$ is
+not being admissible to the special linear group. Consequently, a
+spurious volumetric plastic deformation is created if one attempting
+to directly project $F^{p}$ from Gauss point to nodal points for
+interpolations. This spurious volumetric plastic deformation is
+depicted in Figures \ref{fig:BilletNOLie}(a) and (b) where determinant
+of $\bF^{p}$ is plotted as color contour on the deformed meshes
+corresponding to $57\% $ upsetting.
+
+The determinant of the plastic split of the projected deformation
+gradient ranges from 0.2 to 2.1 in the coarse mesh, and from -2.9 and
+5.8 in the fine mesh at $57\%$ upsetting. This severe error occurs
+when significant amount of distortion of mesh accumulated at the edge
+of the bottom face, as shown in Figure
+\ref{fig:BilletNOLie}(a). Interestingly, this error cannot be
+eliminated by refinement, as the distortion of the finite element is
+inevitable regardless of the mesh size.
+
+\begin{figure}[htbp]
+  \begin{center}
+    \unitlength=1.0mm
+    \subfigure[]{
+      \includegraphics[width=80mm]{medium_wo_lie_step31.eps}}
+    \subfigure[]{
+      \includegraphics[width=80mm]{fine_wo_lie_step31.eps}}
+    \caption{The plastic split of the deformation gradient projected
+      on deformed meshes with (a) 350 and (b) 1680 hexahedral finite
+      elements. Projections are conducted without transformation
+      between Lie group and Lie algebra.}
+    \label{fig:BilletNOLie}
+  \end{center}
+\end{figure}
+
+If the projection of the plastic split $\bF^{p}$ is conducted through
+Lie algebra, then the resultant projected plastic split remains
+isochoric as illustrated in Figure \ref{fig:BilletNOLie}(b).  The
+projected plastic split field shown in Figure \ref{fig:BilletNOLie}(b)
+is obtained through the following procedure.  First, $F^{p}$ is
+decomposed into rotation and right stretch tensors through singular
+value decomposition.  Then, the rotation tensor is mapped from $SO(3)$
+into $so(3)$ and the stretch is mapped from $GL^{+}(3)$ to $gl(3)$.
+By applying \eqref{eq:ProjectionZ} on $so(3)$ and $gl(3)$ where
+addition operation is valid, the projected field is guaranteed to
+remain in the admissible space. The projected fields are then
+transformed back from Lie algebra $so(3)$ and $gl(3)$ back to $SO(3)$
+and $GL^{+}(3)$ at nodes and the projected plastic split field is
+obtained by interpolating $\bF = \bR \cdot \bU$ at nodes of the finite
+element mesh. Results obtained from the calculation show that the
+determinant of the projected plastic split is 1 everywhere in the
+finite element domain and hence there is no spurious dilation and/or
+contraction created due to projection from Gauss points to nodes. This
+feature help preventing non-physical data injected into the simulation
+when remeshing and/or post-processing take place. As indicated in
+Figure \ref{fig:BilletNOLie}(b), this constraint-preserving feature
+holds regardless of mesh size.
+
+\begin{figure}[htbp]
+  \begin{center}
+    \unitlength=1.0mm
+    \subfigure[]{
+      \includegraphics[width=80mm]{medium_w_lie_step31.eps}}
+    \subfigure[]{
+      \includegraphics[width=80mm]{fine_w_lie_step31.eps}}
+    \caption{The plastic split of the deformation gradient projected
+      on deformed meshes with (a) 350 and (b) 1680 hexahedral finite
+      elements. Projections are conducted with transformation between
+      Lie group and Lie algebra.}
+    \label{fig:BilletWLie}
+  \end{center}
+\end{figure}
 
 \section{Conclusion}
 
