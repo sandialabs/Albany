@@ -165,8 +165,10 @@ Application(const RCP<const Epetra_Comm>& comm,
   dfm = problem->getDirichletFieldManager();
   rfm = problem->getResponseFieldManager();
 
-  if (comm->MyPID()==0)
+  if (comm->MyPID()==0) {
     phxGraphVisDetail= problemParams->get("Phalanx Graph Visualization Detail", 0);
+    respGraphVisDetail= phxGraphVisDetail;
+  }
 
   *out << "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"
        << " Sacado ParameterLibrary has been initialized:\n " 
@@ -2717,16 +2719,27 @@ void Albany::Application::postRegSetup(std::string eval)
     if (eval=="Residual") {
       *out << "Phalanx writing graphviz file for graph of Residual fill (detail ="
            << phxGraphVisDetail << ")"<<endl;
-      *out << "Process using 'dot -Tpng -O phalanx_graph' " << endl;
+      *out << "Process using 'dot -Tpng -O phalanx_graph' \n" << endl;
       fm->writeGraphvizFile<PHAL::AlbanyTraits::Residual>("phalanx_graph",detail,detail);
       phxGraphVisDetail = -1;
     }
     else if (eval=="Jacobian") {
       *out << "Phalanx writing graphviz file for graph of Jacobian fill (detail ="
            << phxGraphVisDetail << ")"<<endl;
-      *out << "Process using 'dot -Tpng -O phalanx_graph' " << endl;
+      *out << "Process using 'dot -Tpng -O phalanx_graph' \n" << endl;
       fm->writeGraphvizFile<PHAL::AlbanyTraits::Jacobian>("phalanx_graph",detail,detail);
       phxGraphVisDetail = -2;
+    }
+  }
+  if (respGraphVisDetail>0) {
+    bool detail = false; if (respGraphVisDetail > 1) detail=true;
+
+    if (eval=="Responses") {
+      *out << "Phalanx writing graphviz file for graph of Response fill (detail ="
+           << respGraphVisDetail << ")"<<endl;
+      *out << "Process using 'dot -Tpng -O responses_graph' \n" << endl;
+      rfm->writeGraphvizFile<PHAL::AlbanyTraits::Residual>("responses_graph",detail,detail);
+      respGraphVisDetail = -1;
     }
   }
 }

@@ -17,6 +17,7 @@
 
 #include "Albany_SolutionAverageResponseFunction.hpp"
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
+#include "Albany_SolutionMaxValueResponseFunction.hpp"
 #include "Albany_ResponseUtils.hpp"
 
 #include "PHAL_FactoryTraits.hpp"
@@ -55,6 +56,13 @@ Albany::ResponseUtils::constructResponses(
    std::map<string, RCP<ParameterList> > response_evaluators_to_build;
    std::vector<string> responseIDs_to_require;
 
+   // First, add in responses hardwired into problem setup
+   const Albany::StateManager::RegisteredStates& reg = stateMgr.getRegisteredStates();
+   for (Albany::StateManager::RegisteredStates::const_iterator st = reg.begin(); st!= reg.end(); st++) {
+     responseIDs_to_require.push_back(st->first);
+   }
+
+   // Now, loop over all Responsesin the input file
    for (int i=0; i<num_responses; i++) 
    {
      std::string responseID = Albany::strint("Response",i);
@@ -205,10 +213,10 @@ Albany::ResponseUtils::getStdResponseFn(
   {
     if (facTraits=="PHAL")     type = PHAL::FactoryTraits<AlbanyTraits>::id_qcad_response_fieldintegral;
 #ifdef ALBANY_LCM       
-//    else if (facTraits=="LCM") type =  LCM::FactoryTraits<AlbanyTraits>::id_qcad_response_fieldintegral;
+    else if (facTraits=="LCM") type =  LCM::FactoryTraits<AlbanyTraits>::id_qcad_response_fieldintegral;
 #endif
 
-double length_unit_in_m=1.0e-6;  cout << "KACK lengthUniot " << endl;
+double length_unit_in_m=1.0e-6; 
     p = setupResponseFnForEvaluator(responseList, responseIndex, responses);
     p->set<int>("Type", type);
     p->set<string>("Weights Name",   "Weights");
@@ -222,7 +230,7 @@ double length_unit_in_m=1.0e-6;  cout << "KACK lengthUniot " << endl;
   { 
     if (facTraits=="PHAL")     type = PHAL::FactoryTraits<AlbanyTraits>::id_qcad_response_fieldvalue;
 #ifdef ALBANY_LCM       
-//    else if (facTraits=="LCM") type =  LCM::FactoryTraits<AlbanyTraits>::id_qcad_response_fieldvalue;
+    else if (facTraits=="LCM") type =  LCM::FactoryTraits<AlbanyTraits>::id_qcad_response_fieldvalue;
 #endif
 
     p = setupResponseFnForEvaluator(responseList, responseIndex, responses);
@@ -255,7 +263,7 @@ double length_unit_in_m=1.0e-6;  cout << "KACK lengthUniot " << endl;
   { 
     if (facTraits=="PHAL")     type = PHAL::FactoryTraits<AlbanyTraits>::id_qcad_response_savefield;
 #ifdef ALBANY_LCM       
-//    else if (facTraits=="LCM") type =  LCM::FactoryTraits<AlbanyTraits>::id_qcad_response_savefield;
+    else if (facTraits=="LCM") type =  LCM::FactoryTraits<AlbanyTraits>::id_qcad_response_savefield;
 #endif
        
     p = setupResponseFnForEvaluator(responseList, responseIndex, responses);
@@ -275,6 +283,19 @@ double length_unit_in_m=1.0e-6;  cout << "KACK lengthUniot " << endl;
 
   else if (responseName == "Solution Two Norm") {
     responses[responseIndex] = Teuchos::rcp(new Albany::SolutionTwoNormResponseFunction());
+    return true;
+  }
+
+  else if (responseName == "Solution Max Value") {
+    std::string responseParamsID = Albany::strint("ResponseParams",responseIndex);       
+    Teuchos::ParameterList& responseParams = responseList.sublist(responseParamsID);
+
+    // These are now redundantly specified -- need to fix when moved to evaluators for responses
+    int eq = responseParams.get("Equation", 0);
+    int neq = responseParams.get("Num Equations", 1);
+    bool inor =  responseParams.get("Interleaved Ordering", true);
+    
+    responses[responseIndex] = Teuchos::rcp(new Albany::SolutionMaxValueResponseFunction(neq, eq, inor));
     return true;
   }
 

@@ -61,39 +61,15 @@ buildProblem(
     std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
   /* Construct All Phalanx Evaluators */
-  constructEvaluators(meshSpecs);
+  constructEvaluators(meshSpecs, stateMgr, responses);
   constructDirichletEvaluators(meshSpecs);
- 
-  // Build response functions
-  Teuchos::ParameterList& responseList = params->sublist("Response Functions");
-  int num_responses = responseList.get("Number", 0);
-  responses.resize(num_responses);
-  for (int i=0; i<num_responses; i++) {
-     std::string name = responseList.get(Albany::strint("Response",i), "??");
-
-     if (name == "Solution Average")
-       responses[i] = Teuchos::rcp(new SolutionAverageResponseFunction());
-
-     else if (name == "Solution Two Norm")
-       responses[i] = Teuchos::rcp(new SolutionTwoNormResponseFunction());
-
-     else if (name == "Solution Max Value")
-       responses[i] = Teuchos::rcp(new SolutionMaxValueResponseFunction());
-
-     else {
-       TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-                          std::endl <<
-                          "Error!  Unknown response function " << name <<
-                          "!" << std::endl << "Supplied parameter list is " <<
-                          std::endl << responseList);
-     }
-
-  }
 }
 
-
 void
-Albany::HeatProblem::constructEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
+Albany::HeatProblem::constructEvaluators(
+       const Albany::MeshSpecsStruct& meshSpecs,
+       Albany::StateManager& stateMgr,
+       std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
    using Teuchos::RCP;
    using Teuchos::rcp;
@@ -448,6 +424,11 @@ Albany::HeatProblem::constructEvaluators(const Albany::MeshSpecsStruct& meshSpec
    fm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag);
    PHX::Tag<AlbanyTraits::MPTangent::ScalarT> mptan_tag("Scatter", dl->dummy);
    fm->requireField<AlbanyTraits::MPTangent>(mptan_tag);
+
+   //Construct Rsponses
+   Teuchos::ParameterList& responseList = params->sublist("Response Functions");
+   Albany::ResponseUtils respUtils(dl);
+   rfm = respUtils.constructResponses(responses, responseList, evaluators_to_build, stateMgr);
 }
 
 void

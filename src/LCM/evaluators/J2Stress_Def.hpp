@@ -185,7 +185,7 @@ evaluateFields(typename Traits::EvalData workset)
   {
     for (std::size_t qp=0; qp < numQPs; ++qp) 
     {
-      // local parameters
+ // local parameters
       kappa  = elasticModulus(cell,qp) / ( 3. * ( 1. - 2. * poissonsRatio(cell,qp) ) );
       mu     = elasticModulus(cell,qp) / ( 2. * ( 1. + poissonsRatio(cell,qp) ) );
       K      = hardeningModulus(cell,qp);

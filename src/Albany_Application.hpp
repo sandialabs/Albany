@@ -623,6 +623,7 @@ namespace Albany {
 
     std::set<string> setupSet;
     mutable int phxGraphVisDetail;
+    mutable int respGraphVisDetail;
 
     StateManager stateMgr;
 
