@@ -20,6 +20,8 @@
 
 #include "Albany_Utils.hpp"
 #include "Albany_SolverFactory.hpp"
+#include "Albany_NOXObserver.hpp"
+
 #include "Piro_Epetra_StokhosSolver.hpp"
 #include "Stokhos_EpetraVectorOrthogPoly.hpp"
 #include "Teuchos_VerboseObject.hpp"
@@ -187,7 +189,9 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<Albany::Application> app;
     Teuchos::RCP<EpetraExt::ModelEvaluator> model = 
       sg_slvrfctry.createAlbanyAppAndModel(app, app_comm, ig);
-    sg_solver->setup(model);
+    Teuchos::RCP<NOX::Epetra::Observer > NOX_observer = 
+      Teuchos::rcp(new Albany_NOXObserver(app));
+    sg_solver->setup(model, NOX_observer);
 
     // Evaluate SG responses at SG parameters
     EpetraExt::ModelEvaluator::InArgs sg_inArgs = sg_solver->createInArgs();
@@ -209,6 +213,17 @@ int main(int argc, char *argv[]) {
 	  sg_solver->create_g_sg(i);
 	sg_outArgs.set_g_sg(i, g_sg);
       }
+
+      for (int j=0; j<np; j++) {
+	EpetraExt::ModelEvaluator::DerivativeSupport ds =
+	  sg_outArgs.supports(EpetraExt::ModelEvaluator::OUT_ARG_DgDp_sg,i,j);
+	if (ds.supports(EpetraExt::ModelEvaluator::DERIV_MV_BY_COL)) {
+	  int ncol = sg_solver->get_p_map(j)->NumMyElements();
+	  Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> dgdp_sg =
+	    sg_solver->create_g_mv_sg(i,ncol);
+	  sg_outArgs.set_DgDp_sg(i, j, dgdp_sg);
+	}
+      }
     }
 
     sg_solver->evalModel(sg_inArgs, sg_outArgs);
@@ -225,18 +240,33 @@ int main(int argc, char *argv[]) {
 	// Print mean and standard deviation      
 	Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> g_sg = 
 	  sg_outArgs.get_g_sg(i);
-	Epetra_Vector g_mean(*(sg_solver->get_g_map(i)));
-	Epetra_Vector g_std_dev(*(sg_solver->get_g_map(i)));
-	g_sg->computeMean(g_mean);
-	g_sg->computeStandardDeviation(g_std_dev);
-	out->precision(12);
-	*out << "Response " << i << " Mean =      " << std::endl 
-	     << g_mean << std::endl;
-	*out << "Response " << i << " Std. Dev. = " << std::endl 
-	     << g_std_dev << std::endl;
+	if (g_sg != Teuchos::null) {
+	  Epetra_Vector g_mean(*(sg_solver->get_g_map(i)));
+	  Epetra_Vector g_std_dev(*(sg_solver->get_g_map(i)));
+	  g_sg->computeMean(g_mean);
+	  g_sg->computeStandardDeviation(g_std_dev);
+	  out->precision(12);
+	  *out << "Response " << i << " Mean =      " << std::endl 
+	       << g_mean << std::endl;
+	  *out << "Response " << i << " Std. Dev. = " << std::endl 
+	       << g_std_dev << std::endl;
+	  *out << "Response " << i << "           = " << std::endl 
+	       << *g_sg << std::endl;
+	  for (int j=0; j<np; j++) {
+	    EpetraExt::ModelEvaluator::DerivativeSupport ds =
+	      sg_outArgs.supports(EpetraExt::ModelEvaluator::OUT_ARG_DgDp_sg,i,j);
+	    if (!ds.none()) {
+	      Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> dgdp_sg =
+		sg_outArgs.get_DgDp_sg(i,j).getMultiVector();
+	      if (dgdp_sg != Teuchos::null)
+		*out << "Response " << i << " Derivative " << j << " = " 
+		     << std::endl << *dgdp_sg << std::endl;
+	    }
+	  }
 
-	status += sg_slvrfctry.checkTestResults(NULL, NULL, NULL, Teuchos::null,
-						g_sg);
+	  status += sg_slvrfctry.checkTestResults(NULL, NULL, NULL, 
+						  Teuchos::null, g_sg);
+	}
       }
     }
     *out << "\nNumber of Failed Comparisons: " << status << endl;

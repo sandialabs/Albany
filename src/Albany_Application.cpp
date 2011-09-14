@@ -76,7 +76,7 @@ Application(const RCP<const Epetra_Comm>& comm,
   // Register shape parameters for manipulation by continuation/optimization
   if (problemParams->get("Enable Cubit Shape Parameters",false)) {
 #ifdef ALBANY_CUTR
-    TimeMonitor Timer(*timers[8]); //start timer
+    TimeMonitor Timer(*timers[10]); //start timer
     meshMover = rcp(new CUTR::CubitMeshMover
           (problemParams->get<std::string>("Cubit Base Filename")));
 
@@ -336,7 +336,7 @@ computeGlobalResidual(const double current_time,
 #ifdef ALBANY_CUTR
   static int first=true;
   if (shapeParamsHaveBeenReset) {
-    TimeMonitor cubitTimer(*timers[8]); //start timer
+    TimeMonitor cubitTimer(*timers[10]); //start timer
 
 *out << " Calling moveMesh with params: " << std::setprecision(8);
  for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
@@ -419,7 +419,7 @@ computeGlobalJacobian(const double alpha,
 
 #ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
-    TimeMonitor Timer(*timers[8]); //start timer
+    TimeMonitor Timer(*timers[10]); //start timer
 
 *out << " Calling moveMesh with params: " << std::setprecision(8);
  for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
@@ -642,7 +642,7 @@ computeGlobalTangent(const double alpha,
   std::vector<int> coord_deriv_indices;
 #ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
-    TimeMonitor Timer(*timers[8]); //start timer
+    TimeMonitor Timer(*timers[10]); //start timer
 
      int num_sp = 0;
      std::vector<int> shape_param_indices;
@@ -1295,7 +1295,7 @@ computeGlobalSGResidual(
 
 #ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
-    TimeMonitor Timer(*timers[8]); //start timer
+    TimeMonitor Timer(*timers[10]); //start timer
 *out << " Calling moveMesh with params: " << std::setprecision(8);
 for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
 *out << endl;
@@ -1414,7 +1414,7 @@ computeGlobalSGJacobian(
 
 #ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
-    TimeMonitor Timer(*timers[8]); //start timer
+    TimeMonitor Timer(*timers[10]); //start timer
 *out << " Calling moveMesh with params: " << std::setprecision(8);
 for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
 *out << endl;
@@ -1635,8 +1635,6 @@ computeGlobalSGTangent(
   // Set data in Workset struct, and perform fill via field manager
   {
     PHAL::Workset workset;
-    loadBasicWorksetInfo(workset, overlapped_x, overlapped_xdot, 
-			 timeMgr.getCurrentTime(), timeMgr.getDeltaTime());
 
     workset.params = params;
     workset.sg_expansion = sg_expansion;
@@ -1680,9 +1678,10 @@ computeGlobalSGTangent(
   if (sg_JVx != NULL)
     for (int i=0; i<sg_JVx->size(); i++)
       (*sg_JVx)[i].Export((*sg_overlapped_JVx)[i], *exporter, Add);
-  if (sg_fVp != NULL)
+  if (sg_fVp != NULL) {
     for (int i=0; i<sg_fVp->size(); i++)
       (*sg_fVp)[i].Export((*sg_overlapped_fVp)[i], *exporter, Add);
+  }
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (dfm!=Teuchos::null) {
@@ -1967,7 +1966,7 @@ computeGlobalMPResidual(
 {
   postRegSetup("MPResidual");
 
-  TimeMonitor Timer(*timers[6]); //start timer
+  TimeMonitor Timer(*timers[7]); //start timer
 
   // Create overlapped multi-point Epetra objects
   if (mp_overlapped_x == Teuchos::null || 
@@ -2012,7 +2011,7 @@ computeGlobalMPResidual(
 
 #ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
-    TimeMonitor Timer(*timers[8]); //start timer
+    TimeMonitor Timer(*timers[10]); //start timer
 *out << " Calling moveMesh with params: " << std::setprecision(8);
 for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
 *out << endl;
@@ -2085,7 +2084,7 @@ computeGlobalMPJacobian(
 {
   postRegSetup("MPJacobian");
 
-  TimeMonitor Timer(*timers[7]); //start timer
+  TimeMonitor Timer(*timers[8]); //start timer
 
   // Create overlapped multi-point Epetra objects
   if (mp_overlapped_x == Teuchos::null || 
@@ -2140,7 +2139,7 @@ computeGlobalMPJacobian(
 
 #ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
-    TimeMonitor Timer(*timers[8]); //start timer
+    TimeMonitor Timer(*timers[10]); //start timer
 *out << " Calling moveMesh with params: " << std::setprecision(8);
 for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
 *out << endl;
@@ -2236,7 +2235,7 @@ computeGlobalMPTangent(
 {
   postRegSetup("MPTangent");
 
-  TimeMonitor Timer(*timers[6]); //start timer
+  TimeMonitor Timer(*timers[9]); //start timer
 
   // Create overlapped multi-point Epetra objects
   if (mp_overlapped_x == Teuchos::null || 
@@ -2377,8 +2376,6 @@ computeGlobalMPTangent(
   // Set data in Workset struct, and perform fill via field manager
   {
     PHAL::Workset workset;
-    loadBasicWorksetInfo(workset, overlapped_x, overlapped_xdot, 
-			 timeMgr.getCurrentTime(), timeMgr.getDeltaTime());
 
     workset.params = params;
     workset.mp_x         = mp_overlapped_x;
@@ -2687,6 +2684,11 @@ void Albany::Application::postRegSetup(std::string eval)
     if (dfm!=Teuchos::null)
       dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::SGJacobian>(eval);
   }
+  else if (eval=="SGTangent") {
+    fm->postRegistrationSetupForType<PHAL::AlbanyTraits::SGTangent>(eval);
+    if (dfm!=Teuchos::null)
+      dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::SGTangent>(eval);
+  }
   else if (eval=="MPResidual") {
     for (int ps=0; ps < fm.size(); ps++) 
       fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::MPResidual>(eval);
@@ -2698,6 +2700,11 @@ void Albany::Application::postRegSetup(std::string eval)
       fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::MPJacobian>(eval);
     if (dfm!=Teuchos::null)
       dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::MPJacobian>(eval);
+  }
+  else if (eval=="MPTangent") {
+    fm->postRegistrationSetupForType<PHAL::AlbanyTraits::MPTangent>(eval);
+    if (dfm!=Teuchos::null)
+      dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::MPTangent>(eval);
   }
   else if (eval=="Responses") {
     for (int ps=0; ps < fm.size(); ps++) 
@@ -2800,8 +2807,10 @@ void Albany::Application::defineTimers()
   timers.push_back(TimeMonitor::getNewTimer("> Albany Fill: Tangent"));
   timers.push_back(TimeMonitor::getNewTimer("> Albany Fill: SGResidual"));
   timers.push_back(TimeMonitor::getNewTimer("> Albany Fill: SGJacobian"));
+  timers.push_back(TimeMonitor::getNewTimer("> Albany Fill: SGTangent"));
   timers.push_back(TimeMonitor::getNewTimer("> Albany Fill: MPResidual"));
   timers.push_back(TimeMonitor::getNewTimer("> Albany Fill: MPJacobian"));
+  timers.push_back(TimeMonitor::getNewTimer("> Albany Fill: MPTangent"));
   timers.push_back(TimeMonitor::getNewTimer("Albany-Cubit MeshMover"));
 }
 
