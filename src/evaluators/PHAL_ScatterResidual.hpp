@@ -144,6 +144,20 @@ private:
 };
 
 // **************************************************************
+// Stochastic Galerkin Tangent
+// **************************************************************
+template<typename Traits>
+class ScatterResidual<PHAL::AlbanyTraits::SGTangent,Traits>
+  : public ScatterResidualBase<PHAL::AlbanyTraits::SGTangent, Traits>  {
+public:
+  ScatterResidual(const Teuchos::ParameterList& p);
+  void evaluateFields(typename Traits::EvalData d);
+private:
+  typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
+  const std::size_t numFields;
+};
+
+// **************************************************************
 // Multi-point Residual 
 // **************************************************************
 template<typename Traits>
@@ -168,6 +182,20 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
+  const std::size_t numFields;
+};
+
+// **************************************************************
+// Multi-point Tangent
+// **************************************************************
+template<typename Traits>
+class ScatterResidual<PHAL::AlbanyTraits::MPTangent,Traits>
+  : public ScatterResidualBase<PHAL::AlbanyTraits::MPTangent, Traits>  {
+public:
+  ScatterResidual(const Teuchos::ParameterList& p);
+  void evaluateFields(typename Traits::EvalData d);
+private:
+  typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
   const std::size_t numFields;
 };
 

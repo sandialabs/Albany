@@ -43,44 +43,40 @@ namespace Albany {
 
     //! Evaluate responses
     virtual void 
-    evaluateResponses(const Epetra_Vector* xdot,
-                      const Epetra_Vector& x,
-                      const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-                      Epetra_Vector& g) = 0;
+    evaluateResponse(const double current_time,
+		     const Epetra_Vector* xdot,
+		     const Epetra_Vector& x,
+		     const Teuchos::Array<ParamVec>& p,
+		     Epetra_Vector& g) = 0;
 
     //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
     virtual void 
-    evaluateTangents(
-	   const Epetra_Vector* xdot,
-	   const Epetra_Vector& x,
-	   const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-	   const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
-	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dxdot_dp,
-	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dx_dp,
-	   Epetra_Vector* g,
-	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& gt) = 0;
+    evaluateTangent(const double alpha, 
+		    const double beta,
+		    const double current_time,
+		    bool sum_derivs,
+		    const Epetra_Vector* xdot,
+		    const Epetra_Vector& x,
+		    const Teuchos::Array<ParamVec>& p,
+		    ParamVec* deriv_p,
+		    const Epetra_MultiVector* Vxdot,
+		    const Epetra_MultiVector* Vx,
+		    const Epetra_MultiVector* Vp,
+		    Epetra_Vector* g,
+		    Epetra_MultiVector* gx,
+		    Epetra_MultiVector* gp) = 0;
 
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
     virtual void 
-    evaluateGradients(
-	  const Epetra_Vector* xdot,
-	  const Epetra_Vector& x,
-	  const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-	  const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
-	  Epetra_Vector* g,
-	  Epetra_MultiVector* dg_dx,
-	  Epetra_MultiVector* dg_dxdot,
-	  const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dg_dp) = 0;
-
-    //! Evaluate stochastic Galerkin responses
-    virtual void 
-    evaluateSGResponses(const Stokhos::VectorOrthogPoly<Epetra_Vector>* sg_xdot,
-			const Stokhos::VectorOrthogPoly<Epetra_Vector>& sg_x,
-			const ParamVec* p,
-			const ParamVec* sg_p,
-			const Teuchos::Array<SGType>* sg_p_vals,
-			Stokhos::VectorOrthogPoly<Epetra_Vector>& sg_g) = 0;
-
+    evaluateGradient(const double current_time,
+		     const Epetra_Vector* xdot,
+		     const Epetra_Vector& x,
+		     const Teuchos::Array<ParamVec>& p,
+		     ParamVec* deriv_p,
+		     Epetra_Vector* g,
+		     Epetra_MultiVector* dg_dx,
+		     Epetra_MultiVector* dg_dxdot,
+		     Epetra_MultiVector* dg_dp) = 0;
 
     //! Post process responses
     virtual void 

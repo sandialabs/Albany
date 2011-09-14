@@ -157,6 +157,21 @@ private:
 };
 
 // **************************************************************
+// Stochastic Galerkin Tangent (Jacobian mat-vec + parameter derivatives)
+// **************************************************************
+template<typename Traits>
+class GatherSolution<PHAL::AlbanyTraits::SGTangent,Traits>
+   : public GatherSolutionBase<PHAL::AlbanyTraits::SGTangent, Traits>  {
+  
+public:
+  GatherSolution(const Teuchos::ParameterList& p);
+  void evaluateFields(typename Traits::EvalData d);
+private:
+  typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
+  const std::size_t numFields;
+};
+
+// **************************************************************
 // Multi-point Residual
 // **************************************************************
 
@@ -187,6 +202,22 @@ private:
   typedef typename PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
   const std::size_t numFields;
 };
+
+// **************************************************************
+// Multi-point Tangent (Jacobian mat-vec + parameter derivatives)
+// **************************************************************
+template<typename Traits>
+class GatherSolution<PHAL::AlbanyTraits::MPTangent,Traits>
+   : public GatherSolutionBase<PHAL::AlbanyTraits::MPTangent, Traits>  {
+  
+public:
+  GatherSolution(const Teuchos::ParameterList& p);
+  void evaluateFields(typename Traits::EvalData d);
+private:
+  typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
+  const std::size_t numFields;
+};
+
 // **************************************************************
 }
 

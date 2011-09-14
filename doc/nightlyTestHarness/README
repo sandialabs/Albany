@@ -3,21 +3,38 @@ The scripts in this directory will checkout and build VOTD
 versions of Trilinos, Dakota, and Albany, and run Albany's
 tests. To get this running on your machine takes three steps:
 
-1) Copy "set_andys_env.in" to a new name (e.g. "my_env.in")
+1) Copy "set_glens_env.in" to a new name (e.g. "my_env.in")
 and modify the required environment variables (mostly paths).  
 
-2) ./run_master.sh  my_env.in
+2) To build and test serial versions
+
+    ./run_master.sh  my_env.in
+
+2) To build and test parallel versions
+
+    ./run_master.sh  my_env.in MPI
+
 
 ==============================================================
 
 More details on files:
 
-set_andys_env.in:
+set_glens_env.in (also set_andys_env.in):
 -----------------
 File that sets required paths and environment variables,
-set to those used successfully by Andy. All customizations
+set to those used successfully by Glen. All customizations
 for individual users are in this one place. This filename
-must be given as a command-line argument to run_master.sh.
+must be given as a command-line argument to run_master.sh. 
+This command will build serial versions and run serial
+tests.
+
+    ./run_master.sh set_glens_env.in
+
+Note that specifying an additional argument
+
+    ./run_master.sh set_glens_env.in MPI
+
+will build parallel versions and run parallel tests
 
 run_master.sh
 --------------
@@ -28,7 +45,6 @@ scripts in the order listed.
   trilinos_checkout.sh
   ----------------
   checkout Trilinos votd from  git  repository
-  checkout preCopyrightTrilinos votd from  git  repository
 
   dakota_checkout.sh
   ----------------

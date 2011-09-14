@@ -38,10 +38,11 @@ numResponses() const
 
 void
 Albany::SolutionMaxValueResponseFunction::
-evaluateResponses(const Epetra_Vector* xdot,
-		  const Epetra_Vector& x,
-		  const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-		  Epetra_Vector& g)
+evaluateResponse(const double current_time,
+		 const Epetra_Vector* xdot,
+		 const Epetra_Vector& x,
+		 const Teuchos::Array<ParamVec>& p,
+		 Epetra_Vector& g)
 {
   int index;
   computeMaxValue(x, g[0], index);
@@ -49,30 +50,42 @@ evaluateResponses(const Epetra_Vector* xdot,
 
 void
 Albany::SolutionMaxValueResponseFunction::
-evaluateTangents(
-	   const Epetra_Vector* xdot,
-	   const Epetra_Vector& x,
-	   const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-	   const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
-	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dxdot_dp,
-	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dx_dp,
-	   Epetra_Vector* g,
-	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& gt)
+evaluateTangent(const double alpha, 
+		const double beta,
+		const double current_time,
+		bool sum_derivs,
+		const Epetra_Vector* xdot,
+		const Epetra_Vector& x,
+		const Teuchos::Array<ParamVec>& p,
+		ParamVec* deriv_p,
+		const Epetra_MultiVector* Vxdot,
+		const Epetra_MultiVector* Vx,
+		const Epetra_MultiVector* Vp,
+		Epetra_Vector* g,
+		Epetra_MultiVector* gx,
+		Epetra_MultiVector* gp)
 {
-  throw 54;
+  Teuchos::RCP<Epetra_MultiVector> dgdx;
+  if (gx != NULL && Vx != NULL)
+    dgdx = Teuchos::rcp(new Epetra_MultiVector(x.Map(), 1));
+  else
+    dgdx = Teuchos::rcp(gx,false);
+  evaluateGradient(current_time, xdot, x, p, deriv_p, g, dgdx.get(), NULL, gp);
+  if (gx != NULL && Vx != NULL)
+    gx->Multiply('T', 'N', alpha, *dgdx, *Vx, 0.0);
 }
 
 void
 Albany::SolutionMaxValueResponseFunction::
-evaluateGradients(
-	  const Epetra_Vector* xdot,
-	  const Epetra_Vector& x,
-	  const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-	  const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
-	  Epetra_Vector* g,
-	  Epetra_MultiVector* dg_dx,
-	  Epetra_MultiVector* dg_dxdot,
-	  const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dg_dp)
+evaluateGradient(const double current_time,
+		 const Epetra_Vector* xdot,
+		 const Epetra_Vector& x,
+		 const Teuchos::Array<ParamVec>& p,
+		 ParamVec* deriv_p,
+		 Epetra_Vector* g,
+		 Epetra_MultiVector* dg_dx,
+		 Epetra_MultiVector* dg_dxdot,
+		 Epetra_MultiVector* dg_dp)
 {
   int global_index;
   double mxv;
@@ -90,11 +103,6 @@ evaluateGradients(
        else             (*dg_dx)[0][i] = 0.0;
     }
 
-//DEBUG 3 lines
-    double nrm;
-    (*dg_dx)(0)->Norm1(&nrm);
-    cout << " Max Value Response: grad norm1 =  " << nrm << "  at unk# " << im << endl;
-
   }
 
   // Evaluate dg/dxdot
@@ -102,38 +110,8 @@ evaluateGradients(
     dg_dxdot->PutScalar(0.0);
 
   // Evaluate dg/dp
-  for (Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >::size_type j=0; j<dg_dp.size(); j++)
-    if (dg_dp[j] != Teuchos::null)
-      dg_dp[j]->PutScalar(0.0);
-}
-
-void
-Albany::SolutionMaxValueResponseFunction::
-evaluateSGResponses(const Stokhos::VectorOrthogPoly<Epetra_Vector>* sg_xdot,
-		    const Stokhos::VectorOrthogPoly<Epetra_Vector>& sg_x,
-		    const ParamVec* p,
-		    const ParamVec* sg_p,
-		    const Teuchos::Array<SGType>* sg_p_vals,
-		    Stokhos::VectorOrthogPoly<Epetra_Vector>& sg_g)
-{
-
-  // find node im with max value
-  int global_index;
-  double mxv;
-  computeMaxValue(sg_x[0], mxv, global_index);
-
-  // copy its coeffs to g
-  if (sg_x[0].Map().MyGID(global_index)) {
-    int im = sg_x[0].Map().LID(global_index);
-    unsigned int sz = sg_x.size();
-    for (unsigned int i=0; i<sz; i++)
-      sg_g[i][0] = sg_x[i][im];
-  }
-  else {
-    // We need to do communication in the parallel case
-    throw 54;
-  }
-
+  if (dg_dp != NULL)
+    dg_dp->PutScalar(0.0);
 }
 
 void

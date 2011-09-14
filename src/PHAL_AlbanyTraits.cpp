@@ -32,11 +32,17 @@ const std::string PHX::TypeString<PHAL::AlbanyTraits::SGResidual>::value =
 const std::string PHX::TypeString<PHAL::AlbanyTraits::SGJacobian>::value = 
   "<SGJacobian>";
 
+const std::string PHX::TypeString<PHAL::AlbanyTraits::SGTangent>::value = 
+  "<SGTangent>";
+
 const std::string PHX::TypeString<PHAL::AlbanyTraits::MPResidual>::value = 
   "<MPResidual>";
 
 const std::string PHX::TypeString<PHAL::AlbanyTraits::MPJacobian>::value = 
   "<MPJacobian>";
+
+const std::string PHX::TypeString<PHAL::AlbanyTraits::MPTangent>::value = 
+  "<MPTangent>";
 
 const std::string PHX::TypeString<RealType>::value = 
   "double";

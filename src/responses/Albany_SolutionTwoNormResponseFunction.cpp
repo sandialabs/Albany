@@ -37,48 +37,63 @@ numResponses() const
 
 void
 Albany::SolutionTwoNormResponseFunction::
-evaluateResponses(const Epetra_Vector* xdot,
-		  const Epetra_Vector& x,
-		  const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-		  Epetra_Vector& g)
+evaluateResponse(const double current_time,
+		 const Epetra_Vector* xdot,
+		 const Epetra_Vector& x,
+		 const Teuchos::Array<ParamVec>& p,
+		 Epetra_Vector& g)
 {
   x.Norm2(&g[0]);
 }
 
 void
 Albany::SolutionTwoNormResponseFunction::
-evaluateTangents(
-	   const Epetra_Vector* xdot,
-	   const Epetra_Vector& x,
-	   const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-	   const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
-	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dxdot_dp,
-	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dx_dp,
-	   Epetra_Vector* g,
-	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& gt)
+evaluateTangent(const double alpha, 
+		const double beta,
+		const double current_time,
+		bool sum_derivs,
+		const Epetra_Vector* xdot,
+		const Epetra_Vector& x,
+		const Teuchos::Array<ParamVec>& p,
+		ParamVec* deriv_p,
+		const Epetra_MultiVector* Vxdot,
+		const Epetra_MultiVector* Vx,
+		const Epetra_MultiVector* Vp,
+		Epetra_Vector* g,
+		Epetra_MultiVector* gx,
+		Epetra_MultiVector* gp)
 {
+  double nrm;
+  x.Norm2(&nrm);
+
   // Evaluate response g
   if (g != NULL)
-    x.Norm2(&(*g)[0]);
+    (*g)[0] = nrm;
 
   // Evaluate tangent of g = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
   // dg/dx = 1/||x|| * x^T
-  for (Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >::size_type j=0; j<gt.size(); j++)
-    if (gt[j] != Teuchos::null)
-      gt[j]->Multiply('T','N',1.0,x,*dx_dp[j],0.0);
+  if (gx != NULL) {
+    if (Vx != NULL)
+      gx->Multiply('T','N',alpha/nrm,x,*Vx,0.0);
+    else
+      gx->Update(alpha/nrm, x, 0.0);
+  }
+
+  if (gp != NULL)
+    gp->PutScalar(0.0);
 }
 
 void
 Albany::SolutionTwoNormResponseFunction::
-evaluateGradients(
-	  const Epetra_Vector* xdot,
-	  const Epetra_Vector& x,
-	  const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-	  const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
-	  Epetra_Vector* g,
-	  Epetra_MultiVector* dg_dx,
-	  Epetra_MultiVector* dg_dxdot,
-	  const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dg_dp)
+evaluateGradient(const double current_time,
+		 const Epetra_Vector* xdot,
+		 const Epetra_Vector& x,
+		 const Teuchos::Array<ParamVec>& p,
+		 ParamVec* deriv_p,
+		 Epetra_Vector* g,
+		 Epetra_MultiVector* dg_dx,
+		 Epetra_MultiVector* dg_dxdot,
+		 Epetra_MultiVector* dg_dp)
 {
 
   // Evaluate response g
@@ -100,36 +115,6 @@ evaluateGradients(
     dg_dxdot->PutScalar(0.0);
 
   // Evaluate dg/dp
-  for (Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >::size_type j=0; j<dg_dp.size(); j++)
-    if (dg_dp[j] != Teuchos::null)
-      dg_dp[j]->PutScalar(0.0);
-}
-
-void
-Albany::SolutionTwoNormResponseFunction::
-evaluateSGResponses(const Stokhos::VectorOrthogPoly<Epetra_Vector>* sg_xdot,
-		    const Stokhos::VectorOrthogPoly<Epetra_Vector>& sg_x,
-		    const ParamVec* p,
-		    const ParamVec* sg_p,
-		    const Teuchos::Array<SGType>* sg_p_vals,
-		    Stokhos::VectorOrthogPoly<Epetra_Vector>& sg_g)
-{
-  int sz = sg_x.size();
-  int N = sg_x[0].MyLength();
-  SGType nrm_local = 0.0;
-  SGType x(sz);
-  for (int i=0; i<N; i++) {
-    for (int k=0; k<sz; k++)
-      x.fastAccessCoeff(k) = sg_x[k][i];
-    nrm_local += x*x;
-  }
-#ifdef HAVE_MPI
-  SGType nrm(sz);
-  sg_x[0].Map().Comm().SumAll(nrm_local.coeff(), nrm.coeff(), sz);
-#else
-  SGType& nrm = nrm_local;
-#endif
-  nrm = std::sqrt(nrm);
-  for (int k=0; k<sz; k++)
-    sg_g[k][0] = nrm.fastAccessCoeff(k);
+  if (dg_dp != NULL)
+    dg_dp->PutScalar(0.0);
 }

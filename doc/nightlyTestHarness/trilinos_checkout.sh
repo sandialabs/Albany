@@ -12,6 +12,8 @@
 # BvBW  10/06/08
 #
 # AGS  04/09
+#
+# GAH  08/11
 #-------------------------------------------
 
 #-------------------------------------------
@@ -36,8 +38,4 @@ mkdir $TRILOUTDIR
 #-------------------------------------------
 
 git clone software.sandia.gov:/space/git/Trilinos > $TRILOUTDIR/trilinos_checkout.out 2>&1
-cd Trilinos
-
-git clone software.sandia.gov:/space/git/preCopyrightTrilinos > $TRILOUTDIR/trilinos_preC_checkout.out 2>&1
-cd ..
 

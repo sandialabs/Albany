@@ -20,7 +20,7 @@
 
 #include "Albany_Utils.hpp"
 #include "Albany_SolverFactory.hpp"
-#include "ENAT_SGNOXSolver.hpp"
+#include "Piro_Epetra_StokhosSolver.hpp"
 #include "Stokhos_EpetraVectorOrthogPoly.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Teuchos_StandardCatchMacros.hpp"
@@ -122,150 +122,146 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<Teuchos::Time> totalTime =
       Teuchos::TimeMonitor::getNewTimer("AlbanySG: ***Total Time***");
     Teuchos::TimeMonitor totalTimer(*totalTime); //start timer
-    
-    // First instantiate the stochastic basis 
-    // (we need this to get stochastic parallelism right)
-    Albany::SolverFactory sg_slvrfctry(sg_xmlfilename, Albany_MPI_COMM_WORLD);
-    Teuchos::ParameterList& appParams = sg_slvrfctry.getParameters();
-    Teuchos::ParameterList& problemParams = appParams.sublist("Problem");
 
-    Teuchos::ParameterList& sgParams =
-      problemParams.sublist("Stochastic Galerkin");
-    Teuchos::ParameterList& sg_parameterParams = 
-      sgParams.sublist("SG Parameters");
-    Teuchos::ParameterList& sg_basisParams = sgParams.sublist("Basis");
-    int numParameters = sg_parameterParams.get("Number", 0);
-    if (!sg_basisParams.isParameter("Dimension"))
-      sg_basisParams.set("Dimension", numParameters);
-    Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> > basis = 
-      Stokhos::BasisFactory<int,double>::create(sgParams);
-
-    //////////////////////////////////////////////////////////////////////
-    // begin jrr
-    // pull out params for Solution KL
-    Teuchos::ParameterList& solKLParams =
-      sgParams.sublist("Response KL");
-    bool computeKLOnResponse = solKLParams.get("ComputeKLOnResponse", false);
-    int NumKL = solKLParams.get("NumKL", 0);
-    // end jrr
-    //////////////////////////////////////////////////////////////////////
-
-
-
-    // Create multi-level comm and spatial comm
-    int num_stoch_blocks;
-    std::string sg_type = sgParams.get("SG Method", "AD");
-    if (sg_type == "Multi-point Non-intrusive") {
-      Teuchos::RCP<const Stokhos::Quadrature<int,double> > quad =
-	Stokhos::QuadratureFactory<int,double>::create(sgParams);
-      num_stoch_blocks = quad->size();
-    }
-    else
-      num_stoch_blocks = basis->size();
-    int num_spatial_procs = 
-      problemParams.get("Number of Spatial Processors", -1);
+    // Setup communication objects
     Teuchos::RCP<Epetra_Comm> globalComm = 
       Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
-    Teuchos::RCP<const EpetraExt::MultiComm> sg_comm =
-      Stokhos::buildMultiComm(*globalComm, num_stoch_blocks, num_spatial_procs);
-    Teuchos::RCP<const Epetra_Comm> app_comm = Stokhos::getSpatialComm(sg_comm);
+
+    // Parse parameters
+    Albany::SolverFactory sg_slvrfctry(sg_xmlfilename, Albany_MPI_COMM_WORLD);
+    Teuchos::ParameterList& albanyParams = sg_slvrfctry.getParameters();
+    Teuchos::RCP< Teuchos::ParameterList> piroParams = 
+      Teuchos::rcp(&(albanyParams.sublist("Piro")),false);
+    
+    // Create stochastic Galerkin solver
+    Teuchos::RCP<Piro::Epetra::StokhosSolver> sg_solver =
+      Teuchos::rcp(new Piro::Epetra::StokhosSolver(piroParams, globalComm));
+
+    // Get comm for spatial problem
+    Teuchos::RCP<const Epetra_Comm> app_comm = sg_solver->getSpatialComm();
 
     // Compute initial guess if requested
-    Teuchos::RCP<Epetra_Vector> g2;
+    Teuchos::RCP<Epetra_Vector> ig;
     if (do_initial_guess) {
 
-      Albany::SolverFactory slvrfctry(xmlfilename,
-                                      Albany::getMpiCommFromEpetraComm(*sg_comm));
-      Teuchos::RCP<EpetraExt::ModelEvaluator> App = 
+      // Create solver
+      Albany::SolverFactory slvrfctry(
+	xmlfilename,
+	Albany::getMpiCommFromEpetraComm(*app_comm));
+      Teuchos::RCP<EpetraExt::ModelEvaluator> solver = 
 	slvrfctry.create(app_comm, app_comm);
 
-      Teuchos::RCP<Epetra_Vector> p = 
-	Teuchos::rcp(new Epetra_Vector(*(App->get_p_init(0))));
-      Teuchos::RCP<Epetra_Vector> g1 = 
-	Teuchos::rcp(new Epetra_Vector(*(App->get_g_map(0))));
-      g2 = Teuchos::rcp(new Epetra_Vector(*(App->get_g_map(1))));
-      
-      EpetraExt::ModelEvaluator::InArgs params_in = App->createInArgs();
-      EpetraExt::ModelEvaluator::OutArgs responses_out = App->createOutArgs();
+      // Setup in/out args
+      EpetraExt::ModelEvaluator::InArgs params_in = solver->createInArgs();
+      EpetraExt::ModelEvaluator::OutArgs responses_out = 
+	solver->createOutArgs();
+      int np = params_in.Np();
+      for (int i=0; i<np; i++) {
+	Teuchos::RCP<const Epetra_Vector> p = solver->get_p_init(i);
+	params_in.set_p(i, p);
+      }
+      int ng = responses_out.Ng();
+      for (int i=0; i<ng; i++) {
+	Teuchos::RCP<Epetra_Vector> g = 
+	  Teuchos::rcp(new Epetra_Vector(*(solver->get_g_map(i))));
+	responses_out.set_g(i, g);
+      }
 
-      // Evaluate first model
-      params_in.set_p(0,p);
-      responses_out.set_g(0,g1);
-      responses_out.set_g(1,g2);
-      App->evalModel(params_in, responses_out);
+      // Evaluate model
+      solver->evalModel(params_in, responses_out);
 
-      *out << "Finished eval of first model: Params, Responses " 
-	   << std::setprecision(12) << endl;
-      p->Print(*out << "\nParameters!\n");
-      g1->Print(*out << "\nResponses!\n");
+      // Print responses (not last one since that is x)
+      *out << std::endl;
+      out->precision(8);
+      for (int i=0; i<ng-1; i++) {
+	if (responses_out.get_g(i) != Teuchos::null)
+	  *out << "Response " << i << " = " << std::endl 
+	       << *(responses_out.get_g(i)) << std::endl;
+      }
 
       Teuchos::TimeMonitor::summarize(std::cout,false,true,false);
     }
 
-    Teuchos::RCP<ENAT::SGNOXSolver> App_sg = 
-      Teuchos::rcp_dynamic_cast<ENAT::SGNOXSolver>(sg_slvrfctry.create(app_comm, sg_comm, g2));
-//     Teuchos::ParameterList& params = sg_slvrfctry.getParameters();
-    int sg_p_index = 1;
-    if (sg_type == "AD" || sg_type == "Multi-point Non-intrusive")
-      sg_p_index = 0;
+    // Create SG solver
+    Teuchos::RCP<Albany::Application> app;
+    Teuchos::RCP<EpetraExt::ModelEvaluator> model = 
+      sg_slvrfctry.createAlbanyAppAndModel(app, app_comm, ig);
+    sg_solver->setup(model);
 
-    Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly> p_sg = 
-      App_sg->get_p_sg_init(sg_p_index);
-    Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> g_sg =
-      App_sg->get_sg_model()->create_g_sg(0);
+    // Evaluate SG responses at SG parameters
+    EpetraExt::ModelEvaluator::InArgs sg_inArgs = sg_solver->createInArgs();
+    EpetraExt::ModelEvaluator::OutArgs sg_outArgs = 
+      sg_solver->createOutArgs();
+    int np = sg_inArgs.Np();
+    for (int i=0; i<np; i++) {
+      if (sg_inArgs.supports(EpetraExt::ModelEvaluator::IN_ARG_p_sg, i)) {
+	Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly> p_sg = 
+	  sg_solver->get_p_sg_init(i);
+	sg_inArgs.set_p_sg(i, p_sg);
+      }
+    }
 
-    // begin jrr
-    Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_u = 
-      App_sg->get_sg_model()->create_x_sg();
-    // end jrr
+    int ng = sg_outArgs.Ng();
+    for (int i=0; i<ng; i++) {
+      if (sg_outArgs.supports(EpetraExt::ModelEvaluator::OUT_ARG_g_sg, i)) {
+	Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> g_sg =
+	  sg_solver->create_g_sg(i);
+	sg_outArgs.set_g_sg(i, g_sg);
+      }
+    }
 
-    EpetraExt::ModelEvaluator::InArgs params_in_sg = App_sg->createInArgs();
-    EpetraExt::ModelEvaluator::OutArgs responses_out_sg = 
-      App_sg->createOutArgs();
-
-    // Evaluate sg model
-    params_in_sg.set_p_sg(sg_p_index,p_sg);
-    responses_out_sg.set_g_sg(0,g_sg);
-
-    // begin jrr
-    responses_out_sg.set_g_sg(1, sg_u);
-    // end jrr
-
-    App_sg->evalModel(params_in_sg, responses_out_sg);
-
-     // *out << "Finished eval of sg model: Params, Responses " 
-     //      << std::setprecision(12) << endl;
-     // p_sg->print(*out << "\nParameters!\n");
-     // g_sg->print(*out << "\nResponses!\n");
+    sg_solver->evalModel(sg_inArgs, sg_outArgs);
 
     totalTimer.~TimeMonitor();
     Teuchos::TimeMonitor::summarize(std::cout,false,true,false);
     Teuchos::TimeMonitor::zeroOutTimers();
 
-    status += sg_slvrfctry.checkTestResults(NULL, NULL, NULL, Teuchos::null,
-					    g_sg);
+    for (int i=0; i<ng-1; i++) {
+      // Don't loop over last g which is x, since it is a long vector
+      // to print out.
+      if (sg_outArgs.supports(EpetraExt::ModelEvaluator::OUT_ARG_g_sg, i)) {
+
+	// Print mean and standard deviation      
+	Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> g_sg = 
+	  sg_outArgs.get_g_sg(i);
+	Epetra_Vector g_mean(*(sg_solver->get_g_map(i)));
+	Epetra_Vector g_std_dev(*(sg_solver->get_g_map(i)));
+	g_sg->computeMean(g_mean);
+	g_sg->computeStandardDeviation(g_std_dev);
+	out->precision(12);
+	*out << "Response " << i << " Mean =      " << std::endl 
+	     << g_mean << std::endl;
+	*out << "Response " << i << " Std. Dev. = " << std::endl 
+	     << g_std_dev << std::endl;
+
+	status += sg_slvrfctry.checkTestResults(NULL, NULL, NULL, Teuchos::null,
+						g_sg);
+      }
+    }
     *out << "\nNumber of Failed Comparisons: " << status << endl;
 
-    Epetra_Vector mean(*(App_sg->get_g_sg_map(0)));
-    Epetra_Vector std_dev(*(App_sg->get_g_sg_map(0)));
-    g_sg->computeMean(mean);
-    g_sg->computeStandardDeviation(std_dev);
-
-    // Print out mean & standard deviation
-    *out << "Mean = " << std::endl;
-    *out << setprecision(16) << mean << std::endl;
-    *out << "Standard Deviation = " << std::endl;
-    *out << setprecision(16) << std_dev << std::endl;
-
+    //////////////////////////////////////////////////////////////////////
     // begin jrr
+    // pull out params for Solution KL
+     Teuchos::ParameterList& sgParams =
+       piroParams->sublist("Stochastic Galerkin");
+    Teuchos::ParameterList& solKLParams =
+      sgParams.sublist("Response KL");
+    bool computeKLOnResponse = solKLParams.get("ComputeKLOnResponse", false);
+    int NumKL = solKLParams.get("NumKL", 0);
+    
     // Finish setup for, then call KL solver if asked...
     if( computeKLOnResponse )
       {
-	//    int NumKL = 5; // Get this from input xml file parameters
+	Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_u = 
+	  sg_outArgs.get_g_sg(ng-1);
+	Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> > basis =
+	  sg_u->basis();
+
 	Teuchos::Array<double> evals;
 	Teuchos::RCP<Epetra_MultiVector> evecs;
 	
-	bool KL_success = KL_OnSolutionMultiVector(App_sg, 
+	bool KL_success = KL_OnSolutionMultiVector(app, 
 						   sg_u,
 						   basis,
 						   NumKL,
@@ -281,6 +277,7 @@ int main(int argc, char *argv[]) {
       }
     // for now, we'll look at the numbers in a debugger... :)
     // end jrr
+    //////////////////////////////////////////////////////////////////////
   }
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);
   if (!success) status+=10000;

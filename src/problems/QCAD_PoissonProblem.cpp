@@ -58,21 +58,21 @@ PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   //Schrodinger coupling
   nEigenvectors = 0;
   bUseSchrodingerSource = false;
+  bUsePredictorCorrector = false;
   if(params->isSublist("Schrodinger Coupling")) {
     Teuchos::ParameterList& cList = params->sublist("Schrodinger Coupling");
     if(cList.isType<bool>("Schrodinger source in quantum blocks"))
       bUseSchrodingerSource = cList.get<bool>("Schrodinger source in quantum blocks");
-    std::cout << "bSchod in quantum = " << bUseSchrodingerSource << std::endl;
+    *out << "bSchod in quantum = " << bUseSchrodingerSource << std::endl;
     
     if(bUseSchrodingerSource && cList.isType<int>("Eigenvectors from States"))
       nEigenvectors = cList.get<int>("Eigenvectors from States");
+    
+    if(bUseSchrodingerSource && cList.isType<bool>("Use predictor-corrector method"))
+      bUsePredictorCorrector = cList.get<bool>("Use predictor-corrector method");
   }
 
-  std::cout << "Length unit = " << length_unit_in_m << " meters" << endl;
-
-  // neq=1 set in AbstractProblem constructor
-  dofNames.resize(neq);
-  dofNames[0] = "Phi";
+  *out << "Length unit = " << length_unit_in_m << " meters" << endl;
 }
 
 QCAD::PoissonProblem::
@@ -89,7 +89,7 @@ buildProblem(
 {
   /* Construct All Phalanx Evaluators */
   constructEvaluators(meshSpecs, stateMgr, responses);
-  constructDirichletEvaluators(meshSpecs.nsNames);
+  constructDirichletEvaluators(meshSpecs);
 }
 
 
@@ -105,13 +105,12 @@ QCAD::PoissonProblem::constructEvaluators(
    using PHX::DataLayout;
    using PHX::MDALayout;
    using std::vector;
-   using std::map;
    using PHAL::FactoryTraits;
    using PHAL::AlbanyTraits;
 
    RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
    RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
-     intrepidBasis = this->getIntrepidBasis(meshSpecs.ctd);
+     intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
 
    const int numNodes = intrepidBasis->getCardinality();
    const int worksetSize = meshSpecs.worksetSize;
@@ -128,46 +127,58 @@ QCAD::PoissonProblem::constructEvaluators(
         << ", QuadPts= " << numQPts
         << ", Dim= " << numDim << endl;
 
-   // Parser will build parameter list that determines the field
-   // evaluators to build
-   map<string, RCP<ParameterList> > evaluators_to_build;
-
-   RCP<DataLayout> node_scalar = rcp(new MDALayout<Cell,Node>(worksetSize,numNodes));
-   RCP<DataLayout> qp_scalar = rcp(new MDALayout<Cell,QuadPoint>(worksetSize,numQPts));
-   RCP<DataLayout> cell_scalar = rcp(new MDALayout<Cell,QuadPoint>(worksetSize,1));
-
-   RCP<DataLayout> node_vector = rcp(new MDALayout<Cell,Node,Dim>(worksetSize,numNodes,numDim));
-   RCP<DataLayout> qp_vector = rcp(new MDALayout<Cell,QuadPoint,Dim>(worksetSize,numQPts,numDim));
-
-   RCP<DataLayout> vertices_vector = 
-     rcp(new MDALayout<Cell,Vertex, Dim>(worksetSize,numVertices,numDim));
-   // Basis functions, Basis function gradient
-   RCP<DataLayout> node_qp_scalar =
-     rcp(new MDALayout<Cell,Node,QuadPoint>(worksetSize,numNodes, numQPts));
-   RCP<DataLayout> node_qp_vector =
-     rcp(new MDALayout<Cell,Node,QuadPoint,Dim>(worksetSize,numNodes, numQPts,numDim));
-
-   RCP<DataLayout> dummy = rcp(new MDALayout<Dummy>(0));
    RCP<DataLayout> shared_param = rcp(new MDALayout<Dim>(1));
+
+   // Construct standard FEM evaluators with standard field names                              
+   std::map<string, RCP<ParameterList> > evaluators_to_build;
+   RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
+   Albany::ProblemUtils probUtils(dl);
+   bool supportsTransient=false;
+
+   // Define Field Names
+
+   Teuchos::ArrayRCP<string> dof_names(neq);
+     dof_names[0] = "Potential";
+
+   Teuchos::ArrayRCP<string> dof_names_dot(neq);
+   if (supportsTransient) {
+     for (int i=0; i<neq; i++) dof_names_dot[i] = dof_names[i]+"_dot";
+   }
+
+   Teuchos::ArrayRCP<string> resid_names(neq);
+     for (int i=0; i<neq; i++) resid_names[i] = dof_names[i]+" Residual";
+
+   if (supportsTransient) evaluators_to_build["Gather Solution"] =
+       probUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot);
+   else  evaluators_to_build["Gather Solution"] =
+       probUtils.constructGatherSolutionEvaluator_noTransient(false, dof_names);
+
+   evaluators_to_build["Scatter Residual"] =
+     probUtils.constructScatterResidualEvaluator(false, resid_names);
+
+   evaluators_to_build["Gather Coordinate Vector"] =
+     probUtils.constructGatherCoordinateVectorEvaluator();
+
+   evaluators_to_build["Map To Physical Frame"] =
+     probUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature);
+
+   evaluators_to_build["Compute Basis Functions"] =
+     probUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature);
+
+   for (int i=0; i<neq; i++) {
+     evaluators_to_build["DOF "+dof_names[i]] =
+       probUtils.constructDOFInterpolationEvaluator(dof_names[i]);
+
+     if (supportsTransient)
+       evaluators_to_build["DOF "+dof_names_dot[i]] =
+         probUtils.constructDOFInterpolationEvaluator(dof_names_dot[i]);
+
+     evaluators_to_build["DOF Grad "+dof_names[i]] =
+       probUtils.constructDOFGradInterpolationEvaluator(dof_names[i]);
+  }
 
    // Create Material Database
    RCP<QCAD::MaterialDatabase> materialDB = rcp(new QCAD::MaterialDatabase(mtrlDbFilename, comm));
-
-  { // Gather Solution
-   RCP< vector<string> > dof_names = rcp(new vector<string>(neq));
-     (*dof_names)[0] = "Potential";
-
-    RCP<ParameterList> p = rcp(new ParameterList);
-    int type = FactoryTraits<AlbanyTraits>::id_gather_solution;
-    p->set<int>("Type", type);
-    p->set< RCP< vector<string> > >("Solution Names", dof_names);
-    p->set< RCP<DataLayout> >("Data Layout", node_scalar);
-
-    // Poisson solve does not have transient terms
-    p->set<bool>("Disable Transient", true);
-
-    evaluators_to_build["Gather Solution"] = p;
-  }
 
   { // Gather Eigenvectors
     RCP<ParameterList> p = rcp(new ParameterList);
@@ -175,73 +186,10 @@ QCAD::PoissonProblem::constructEvaluators(
     p->set<int>("Type", type);
     p->set<string>("Eigenvector field name root", "Evec");
     p->set<int>("Number of eigenvectors", nEigenvectors);
-    p->set< RCP<DataLayout> >("Data Layout", node_scalar);
+    p->set< RCP<DataLayout> >("Data Layout", dl->node_scalar);
 
     evaluators_to_build["Gather Eigenvectors"] = p;
   }
-
-  { // Gather Coordinate Vector
-    RCP<ParameterList> p = rcp(new ParameterList("Poisson Gather Coordinate Vector"));
-    int type = FactoryTraits<AlbanyTraits>::id_gather_coordinate_vector;
-    p->set<int>                ("Type", type);
-    // Input: Periodic BC flag
-    p->set<bool>("Periodic BC", false);
-
-    // Output:: Coordindate Vector at vertices
-    p->set< RCP<DataLayout> >  ("Coordinate Data Layout",  vertices_vector);
-    p->set< string >("Coordinate Vector Name", "Coord Vec");
-    evaluators_to_build["Gather Coordinate Vector"] = p;
-  }
-
-  { // Map To Physical Frame: Interpolate X, Y to QuadPoints
-    RCP<ParameterList> p = rcp(new ParameterList("Poisson 1D Map To Physical Frame"));
-
-    int type = FactoryTraits<AlbanyTraits>::id_map_to_physical_frame;
-    p->set<int>   ("Type", type);
-
-    // Input: X, Y at vertices
-    p->set< string >("Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Coordinate Data Layout", vertices_vector);
-
-    p->set<RCP <Intrepid::Cubature<RealType> > >("Cubature", cubature);
-    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
-
-    // Output: X, Y at Quad Points (same name as input)
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
-
-    evaluators_to_build["Map To Physical Frame"] = p;
-  }
-
-  { // Compute Basis Functions
-    RCP<ParameterList> p = rcp(new ParameterList("Poisson Compute Basis Functions"));
-
-    int type = FactoryTraits<AlbanyTraits>::id_compute_basis_functions;
-    p->set<int>   ("Type", type);
-
-    // Inputs: X, Y at nodes, Cubature, and Basis
-    p->set<string>("Coordinate Vector Name","Coord Vec");
-    p->set< RCP<DataLayout> >("Coordinate Data Layout", vertices_vector);
-    p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
-
-    p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >
-        ("Intrepid Basis", intrepidBasis);
-
-    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
-
-    // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
-    p->set<string>("Weights Name",          "Weights");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
-    p->set<string>("BF Name",          "BF");
-    p->set<string>("Weighted BF Name", "wBF");
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
-
-    p->set<string>("Gradient BF Name",          "Grad BF");
-    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);
-
-    evaluators_to_build["Compute Basis Functions"] = p;
-  }
-
 
   { // Permittivity
     RCP<ParameterList> p = rcp(new ParameterList);
@@ -251,9 +199,9 @@ QCAD::PoissonProblem::constructEvaluators(
 
     p->set<string>("QP Variable Name", "Permittivity");
     p->set<string>("Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     p->set< RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Permittivity");
@@ -262,45 +210,6 @@ QCAD::PoissonProblem::constructEvaluators(
     p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
 
     evaluators_to_build["Permittivity"] = p;
-  }
-
-  { // DOF: Interpolate nodal Potential values to quad points
-    RCP<ParameterList> p = rcp(new ParameterList("Poisson DOFInterpolation Potential"));
-
-    int type = FactoryTraits<AlbanyTraits>::id_dof_interpolation;
-    p->set<int>   ("Type", type);
-
-    // Input
-    p->set<string>("Variable Name", "Potential");
-    p->set< RCP<DataLayout> >("Node Data Layout",      node_scalar);
-
-    p->set<string>("BF Name", "BF");
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
-
-    // Output (assumes same Name as input)
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
-
-    evaluators_to_build["DOF Potential"] = p;
-  }
-
-  { // DOF: Interpolate nodal Potential gradients to quad points
-    RCP<ParameterList> p = rcp(new ParameterList("Poisson DOFInterpolation Potential Grad"));
-
-    int type = FactoryTraits<AlbanyTraits>::id_dof_grad_interpolation;
-    p->set<int>   ("Type", type);
-
-    // Input
-    p->set<string>("Variable Name", "Potential");
-    p->set< RCP<DataLayout> >("Node Data Layout",      node_scalar);
-
-    p->set<string>("Gradient BF Name", "Grad BF");
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);
-
-    // Output
-    p->set<string>("Gradient Variable Name", "Potential Gradient");
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
-
-    evaluators_to_build["DOF Grad Potential"] = p;
   }
 
   { // Temperature shared parameter (single scalar value, not spatially varying)
@@ -326,10 +235,10 @@ QCAD::PoissonProblem::constructEvaluators(
 
     //Input
     p->set< string >("Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     p->set<string>("Variable Name", "Potential");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
@@ -349,6 +258,7 @@ QCAD::PoissonProblem::constructEvaluators(
     p->set<bool>("Use Schrodinger source", bUseSchrodingerSource);
     p->set<int>("Schrodinger eigenvectors", nEigenvectors);
     p->set<string>("Eigenvector field name root", "Evec");
+    p->set<bool>("Use predictor-corrector method", bUsePredictorCorrector);
 
     evaluators_to_build["Poisson Source"] = p;
   }
@@ -371,13 +281,13 @@ QCAD::PoissonProblem::constructEvaluators(
     // Input
     sprintf(buf, "Evec_Re%d", k);
     p->set<string>("Variable Name", buf);
-    p->set< RCP<DataLayout> >("Node Data Layout",      node_scalar);
+    p->set< RCP<DataLayout> >("Node Data Layout",      dl->node_scalar);
     
     p->set<string>("BF Name", "BF");
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
+    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
     
     // Output (assumes same Name as input)
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     
     sprintf(buf, "Eigenvector Re %d interpolate to qps", k);
     evaluators_to_build[buf] = p;
@@ -393,13 +303,13 @@ QCAD::PoissonProblem::constructEvaluators(
     // Input
     sprintf(buf, "Evec_Im%d", k);
     p->set<string>("Variable Name", buf);
-    p->set< RCP<DataLayout> >("Node Data Layout",      node_scalar);
+    p->set< RCP<DataLayout> >("Node Data Layout",      dl->node_scalar);
     
     p->set<string>("BF Name", "BF");
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
+    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
     
     // Output (assumes same Name as input)
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     
     sprintf(buf, "Eigenvector Im %d interpolate to qps", k);
     evaluators_to_build[buf] = p;
@@ -413,7 +323,7 @@ QCAD::PoissonProblem::constructEvaluators(
 
     //Input
     p->set<string>("Weighted BF Name", "wBF");
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
+    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
     p->set<string>("QP Variable Name", "Potential");
 
     p->set<string>("QP Time Derivative Variable Name", "Potential_dot");
@@ -422,35 +332,20 @@ QCAD::PoissonProblem::constructEvaluators(
     p->set<string>("Source Name", "Poisson Source");
 
     p->set<string>("Permittivity Name", "Permittivity");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<string>("Gradient QP Variable Name", "Potential Gradient");
     p->set<string>("Flux QP Variable Name", "Potential Flux");
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);
+    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
     //Output
     p->set<string>("Residual Name", "Potential Residual");
-    p->set< RCP<DataLayout> >("Node Scalar Data Layout", node_scalar);
+    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
 
     evaluators_to_build["Poisson Resid"] = p;
-  }
-
-  { // Scatter Residual
-   RCP< vector<string> > resid_names = rcp(new vector<string>(neq));
-     (*resid_names)[0] = "Potential Residual";
-
-    RCP<ParameterList> p = rcp(new ParameterList);
-    int type = FactoryTraits<AlbanyTraits>::id_scatter_residual;
-    p->set<int>("Type", type);
-    p->set< RCP< vector<string> > >("Residual Names", resid_names);
-
-    p->set< RCP<DataLayout> >("Dummy Data Layout", dummy);
-    p->set< RCP<DataLayout> >("Data Layout", node_scalar);
-
-    evaluators_to_build["Scatter Residual"] = p;
   }
 
    // Build Field Evaluators for each evaluation type
@@ -465,162 +360,120 @@ QCAD::PoissonProblem::constructEvaluators(
    // Register all Evaluators
    PHX::registerEvaluators(evaluators, *fm);
 
-   PHX::Tag<AlbanyTraits::Residual::ScalarT> res_tag("Scatter", dummy);
+   PHX::Tag<AlbanyTraits::Residual::ScalarT> res_tag("Scatter", dl->dummy);
    fm->requireField<AlbanyTraits::Residual>(res_tag);
-   PHX::Tag<AlbanyTraits::Jacobian::ScalarT> jac_tag("Scatter", dummy);
+   PHX::Tag<AlbanyTraits::Jacobian::ScalarT> jac_tag("Scatter", dl->dummy);
    fm->requireField<AlbanyTraits::Jacobian>(jac_tag);
-   PHX::Tag<AlbanyTraits::Tangent::ScalarT> tan_tag("Scatter", dummy);
+   PHX::Tag<AlbanyTraits::Tangent::ScalarT> tan_tag("Scatter", dl->dummy);
    fm->requireField<AlbanyTraits::Tangent>(tan_tag);
-   PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_tag("Scatter", dummy);
+   PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_tag("Scatter", dl->dummy);
    fm->requireField<AlbanyTraits::SGResidual>(sgres_tag);
-   PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag("Scatter", dummy);
+   PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag("Scatter", dl->dummy);
    fm->requireField<AlbanyTraits::SGJacobian>(sgjac_tag);
-   PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag("Scatter", dummy);
+   PHX::Tag<AlbanyTraits::SGTangent::ScalarT> sgtan_tag("Scatter", dl->dummy);
+   fm->requireField<AlbanyTraits::SGTangent>(sgtan_tag);
+   PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag("Scatter", dl->dummy);
    fm->requireField<AlbanyTraits::MPResidual>(mpres_tag);
-   PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag("Scatter", dummy);
+   PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag("Scatter", dl->dummy);
    fm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag);
+   PHX::Tag<AlbanyTraits::MPTangent::ScalarT> mptan_tag("Scatter", dl->dummy);
+   fm->requireField<AlbanyTraits::MPTangent>(mptan_tag);
 
+   //! Construct Responses
+   Teuchos::ParameterList& responseList = params->sublist("Response Functions");
+   Albany::ResponseUtils respUtils(dl);
+
+   // Call local version of this function, instead of generic
+   rfm = this->constructResponses(responses, responseList, evaluators_to_build, stateMgr, respUtils);
+}
+
+Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
+QCAD::PoissonProblem::constructResponses(
+  std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
+  Teuchos::ParameterList& responseList, 
+  std::map<string, Teuchos::RCP<Teuchos::ParameterList> >& evaluators_to_build, 
+  Albany::StateManager& stateMgr,
+  Albany::ResponseUtils& respUtils)
+{
+  using Teuchos::RCP;
+  using Teuchos::ParameterList;
+  using PHX::DataLayout;
+  using std::string;
+  using PHAL::FactoryTraits;
+  using PHAL::AlbanyTraits;
+
+  Albany::Layouts& dl = *respUtils.get_dl();
 
    // Parameters for Response Evaluators
    //  Iterate through list of responses (from input xml file).  For each, create a response
    //  function and possibly a parameter list to construct a response evaluator.
-   Teuchos::ParameterList& responseList = params->sublist("Response Functions");
    int num_responses = responseList.get("Number", 0);
    responses.resize(num_responses);
 
-   map<string, RCP<ParameterList> > response_evaluators_to_build;
-   vector<string> responseIDs_to_require;
+   std::map<string, RCP<ParameterList> > response_evaluators_to_build;
+   std::vector<string> responseIDs_to_require;
 
    for (int i=0; i<num_responses; i++) 
    {
      std::string responseID = Albany::strint("Response",i);
-     std::string responseParamsID = Albany::strint("ResponseParams",i);
      std::string name = responseList.get(responseID, "??");
 
-     if (name == "See List" && responseList.isSublist(responseParamsID) ) {
+     RCP<ParameterList> p;
 
-       Teuchos::RCP<Albany::EvaluatedResponseFunction> 
-	 evResponse = Teuchos::rcp(new Albany::EvaluatedResponseFunction());
-       responses[i] = evResponse;
+     if( respUtils.getStdResponseFn(name, i, responseList, responses, stateMgr, p) ) {
+       if(p != Teuchos::null) {
+	 response_evaluators_to_build[responseID] = p;
+	 responseIDs_to_require.push_back(responseID);
+       }
+     }
 
-       Teuchos::ParameterList& responseParams = responseList.sublist(responseParamsID);
-       std::string type = responseParams.get("Type", "??");
+     else if (name == "Saddle Value")
+     { 
+       int type = FactoryTraits<AlbanyTraits>::id_qcad_response_saddlevalue;
 
-       // Common parameters to all response evaluators
+       std::string responseParamsID = Albany::strint("ResponseParams",i);              
+       ParameterList& responseParams = responseList.sublist(responseParamsID);
        RCP<ParameterList> p = rcp(new ParameterList);
+       
+       RCP<QCAD::SaddleValueResponseFunction> 
+	 svResponse = Teuchos::rcp(new QCAD::SaddleValueResponseFunction(
+					     numDim, responseParams)); 
+       responses[i] = svResponse;
+       
        p->set<string>("Response ID", responseID);
        p->set<int>   ("Response Index", i);
-       p->set< Teuchos::RCP<Albany::EvaluatedResponseFunction> >("Response Function", evResponse);
+       p->set< Teuchos::RCP<QCAD::SaddleValueResponseFunction> >
+	 ("Response Function", svResponse);
        p->set<Teuchos::ParameterList*>("Parameter List", &responseParams);
-       p->set< RCP<DataLayout> >("Dummy Data Layout", dummy);
-
-       // Parameters specific to the particular type of response evaluator
-       if (type == "Field Integral")
-       { 
-         int type = FactoryTraits<AlbanyTraits>::id_qcad_response_fieldintegral;
-         p->set<int>("Type", type);
-         p->set<string>("Weights Name",   "Weights");
-         p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
-         p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
-         
-         //Global Problem Parameters
-         p->set<double>("Length unit in m", length_unit_in_m);
-       }
-
-       else if (type == "Field Value")
-       { 
-         int type = FactoryTraits<AlbanyTraits>::id_qcad_response_fieldvalue;
-         p->set<int>("Type", type);
-         p->set<string>("Coordinate Vector Name", "Coord Vec");
-         p->set<string>("Weights Name",   "Weights");
-         p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
-         p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
-       }
-
-       else if (type == "Save Field")
-       { 
-         int type = FactoryTraits<AlbanyTraits>::id_qcad_response_savefield;
-         p->set<int>("Type", type);
-         p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
-         p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
-         p->set< RCP<DataLayout> >("Cell Scalar Data Layout", cell_scalar);
-	 p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
-         p->set<string>("Weights Name",   "Weights");
-       }
-
-       else {
-         TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-           std::endl <<
-           "Error!  Unknown evaluated response type " << type <<
-           "!" << std::endl << "Supplied parameter list is " <<
-           std::endl << responseList);
-       }
+       p->set< RCP<DataLayout> >("Dummy Data Layout", dl.dummy);
+       
+       p->set<int>("Type", type);
+       p->set<string>("Coordinate Vector Name", "Coord Vec");
+       p->set<string>("Weights Name",   "Weights");
+       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl.qp_scalar);
+       p->set< RCP<DataLayout> >("QP Vector Data Layout", dl.qp_vector);
+       p->set< RCP<DataLayout> >("Vertices Vector Data Layout", dl.vertices_vector);
 
        response_evaluators_to_build[responseID] = p;
        responseIDs_to_require.push_back(responseID);
      }
 
-     else // Response<i> is not a sublist, so process by just building a response function
-     { 
-       if (name == "Solution Average")
-         responses[i] = Teuchos::rcp(new Albany::SolutionAverageResponseFunction());
-
-       else if (name == "Solution Two Norm")
-         responses[i] = Teuchos::rcp(new Albany::SolutionTwoNormResponseFunction());
-
-       else {
-         TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-           std::endl <<
-           "Error!  Unknown response function " << name <<
+     else {
+       TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+	  std::endl << "Error!  Unknown response function " << name <<
            "!" << std::endl << "Supplied parameter list is " <<
            std::endl << responseList);
-       }
-
      }
-
    } // end of loop over responses
 
-   // Build Response Evaluators for each evaluation type
-   RCP< vector< RCP<PHX::Evaluator_TemplateManager<AlbanyTraits> > > >
-     response_evaluators;
-   
-   response_evaluators_to_build.insert(evaluators_to_build.begin(), evaluators_to_build.end());
-   response_evaluators = factory.buildEvaluators(response_evaluators_to_build);
-   //response_evaluators->insert(response_evaluators->begin(), evaluators->begin(), evaluators->end());
-
-   // Create a Response FieldManager
-   rfm = Teuchos::rcp(new PHX::FieldManager<AlbanyTraits>);
-
-   // Register all Evaluators
-   PHX::registerEvaluators(response_evaluators, *rfm);
-
-   // Set required fields: ( Response<i>, dummy ), for responses evaluated by the response evaluators
-   vector<string>::const_iterator it;
-   for (it = responseIDs_to_require.begin(); it != responseIDs_to_require.end(); it++)
-   {
-     const std::string& responseID = *it;
-
-     PHX::Tag<AlbanyTraits::Residual::ScalarT> res_response_tag(responseID, dummy);
-     rfm->requireField<AlbanyTraits::Residual>(res_response_tag);
-     PHX::Tag<AlbanyTraits::Jacobian::ScalarT> jac_response_tag(responseID, dummy);
-     rfm->requireField<AlbanyTraits::Jacobian>(jac_response_tag);
-     PHX::Tag<AlbanyTraits::Tangent::ScalarT> tan_response_tag(responseID, dummy);
-     rfm->requireField<AlbanyTraits::Tangent>(tan_response_tag);
-     PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_response_tag(responseID, dummy);
-     rfm->requireField<AlbanyTraits::SGResidual>(sgres_response_tag);
-     PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_response_tag(responseID, dummy);
-     rfm->requireField<AlbanyTraits::SGJacobian>(sgjac_response_tag);
-     PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_response_tag(responseID, dummy);
-     rfm->requireField<AlbanyTraits::MPResidual>(mpres_response_tag);
-     PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_response_tag(responseID, dummy);
-     rfm->requireField<AlbanyTraits::MPJacobian>(mpjac_response_tag);
-   }
+   //! Create field manager for responses
+   return respUtils.createResponseFieldManager(response_evaluators_to_build, 
+			      evaluators_to_build, responseIDs_to_require);
 }
-
 
 void
 QCAD::PoissonProblem::constructDirichletEvaluators(
-  const std::vector<std::string>& nodeSetIDs)
+     const Albany::MeshSpecsStruct& meshSpecs)
 {
    using Teuchos::RCP;
    using Teuchos::rcp;
@@ -631,11 +484,18 @@ QCAD::PoissonProblem::constructDirichletEvaluators(
    using std::map;
    using std::string;
 
-   using PHAL::FactoryTraits;
+   using PHAL::DirichletFactoryTraits;
    using PHAL::AlbanyTraits;
 
-   //! DBCparams a member of base class Albany::AbstractProblem, as is getValidDirichletBCParameters
-   DBCparams.validateParameters(*(getValidDirichletBCParameters(nodeSetIDs)),0); //TODO: Poisson version??
+   // Construct Dirichlet evaluators for all nodesets and names
+   vector<string> dirichletNames(neq);
+   dirichletNames[0] = "Phi";   
+   Albany::DirichletUtils dirUtils;
+
+   const std::vector<std::string>& nodeSetIDs = meshSpecs.nsNames;
+
+   Teuchos::ParameterList DBCparams = params->sublist("Dirichlet BCs");
+   DBCparams.validateParameters(*(dirUtils.getValidDirichletBCParameters(nodeSetIDs,dirichletNames)),0); //TODO: Poisson version??
 
    // Create Material Database
    RCP<QCAD::MaterialDatabase> materialDB = rcp(new QCAD::MaterialDatabase(mtrlDbFilename, comm));
@@ -646,21 +506,21 @@ QCAD::PoissonProblem::constructDirichletEvaluators(
 
    // Check for all possible standard BCs (every dof on every nodeset) to see which is set
    for (std::size_t i=0; i<nodeSetIDs.size(); i++) {
-     for (std::size_t j=0; j<dofNames.size(); j++) {
+     for (std::size_t j=0; j<dirichletNames.size(); j++) {
 
-       std::stringstream sstrm; sstrm << "DBC on NS " << nodeSetIDs[i] << " for DOF " << dofNames[j];
+       std::stringstream sstrm; sstrm << "DBC on NS " << nodeSetIDs[i] << " for DOF " << dirichletNames[j];
        std::string ss = sstrm.str();
 
        if (DBCparams.isParameter(ss)) {
          RCP<ParameterList> p = rcp(new ParameterList);
-         int type = FactoryTraits<AlbanyTraits>::id_qcad_poisson_dirichlet;
+         int type = DirichletFactoryTraits<AlbanyTraits>::id_qcad_poisson_dirichlet;
          p->set<int>("Type", type);
 
          p->set< RCP<DataLayout> >("Data Layout", dummy);
          p->set< string >  ("Dirichlet Name", ss);
          p->set< RealType >("Dirichlet Value", DBCparams.get<double>(ss));
          p->set< string >  ("Node Set ID", nodeSetIDs[i]);
-         p->set< int >     ("Number of Equations", dofNames.size());
+         p->set< int >     ("Number of Equations", dirichletNames.size());
          p->set< int >     ("Equation Offset", j);
 
          p->set<RCP<ParamLib> >("Parameter Library", paramLib);
@@ -684,7 +544,7 @@ QCAD::PoissonProblem::constructDirichletEvaluators(
    string allDBC="Evaluator for all Dirichlet BCs";
    {
       RCP<ParameterList> p = rcp(new ParameterList);
-      int type = FactoryTraits<AlbanyTraits>::id_dirichlet_aggregator;
+      int type = DirichletFactoryTraits<AlbanyTraits>::id_dirichlet_aggregator;
       p->set<int>("Type", type);
 
       p->set<vector<string>* >("DBC Names", &dbcs);
@@ -694,7 +554,7 @@ QCAD::PoissonProblem::constructDirichletEvaluators(
    }
 
    // Build Field Evaluators for each evaluation type
-   PHX::EvaluatorFactory<AlbanyTraits,FactoryTraits<AlbanyTraits> > factory;
+   PHX::EvaluatorFactory<AlbanyTraits,DirichletFactoryTraits<AlbanyTraits> > factory;
    RCP< vector< RCP<PHX::Evaluator_TemplateManager<AlbanyTraits> > > > evaluators;
    evaluators = factory.buildEvaluators(evaluators_to_build);
 
@@ -719,11 +579,17 @@ QCAD::PoissonProblem::constructDirichletEvaluators(
    PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag0(allDBC, dummy);
    dfm->requireField<AlbanyTraits::SGJacobian>(sgjac_tag0);
 
+   PHX::Tag<AlbanyTraits::SGTangent::ScalarT> sgtan_tag0(allDBC, dummy);
+   dfm->requireField<AlbanyTraits::SGTangent>(sgtan_tag0);
+
    PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag0(allDBC, dummy);
    dfm->requireField<AlbanyTraits::MPResidual>(mpres_tag0);
 
    PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag0(allDBC, dummy);
    dfm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag0);
+
+   PHX::Tag<AlbanyTraits::MPTangent::ScalarT> mptan_tag0(allDBC, dummy);
+   dfm->requireField<AlbanyTraits::MPTangent>(mptan_tag0);
 }
 
 

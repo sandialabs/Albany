@@ -32,6 +32,9 @@
 
 #include "Phalanx.hpp"
 #include "Albany_DataTypes.hpp"
+#include "Albany_DirichletUtils.hpp"
+#include "Albany_ResponseUtils.hpp"
+
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
@@ -109,19 +112,11 @@ namespace Albany {
     //! Configurable output stream, defaults to printing on proc=0
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
-    //! Generic implementation, can be made virtual if specialization is desired
-    void constructDirichletEvaluators(
-       const std::vector<std::string>& nodeSetIDs);
-
-    Teuchos::RCP<const Teuchos::ParameterList> getValidDirichletBCParameters(
-                 const std::vector<std::string>& nodeSetIDs) const;
-
     //! Number of equations per node being solved
     unsigned int neq;
 
     //! Problem parameters
     Teuchos::RCP<Teuchos::ParameterList> params;
-    Teuchos::ParameterList& DBCparams;
 
     //! Parameter library
     Teuchos::RCP<ParamLib> paramLib;
@@ -134,14 +129,6 @@ namespace Albany {
 
     //! Field manager for Responses 
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > rfm;
-
-    //! Names of scalar variables in this problem, used in specifying BCs
-    std::vector<std::string> dofNames;
-
-    //! Factory function to construct Intrepid Basis from Shards CellTopologyData
-    Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
-      getIntrepidBasis(const CellTopologyData& ctd, bool compositeTet=false);
-
   private:
 
     //! Private to prohibit default or copy constructor
@@ -150,10 +137,6 @@ namespace Albany {
     
     //! Private to prohibit copying
     AbstractProblem& operator=(const AbstractProblem&);
-
-    //! Local utility function to construct unique string from Nodeset name and dof name
-    std::string constructDBCName(const std::string ns, const std::string dof) const;
-
   };
 
 }

@@ -57,6 +57,8 @@ namespace LCM {
   Tensor<ScalarT>
   log(Tensor<ScalarT> const & A)
   {
+	// Check whether skew-symmetric holds
+
     const Index
     maxNumIter = 128;
 
@@ -103,9 +105,11 @@ namespace LCM {
   Tensor<ScalarT>
   log_rotation(Tensor<ScalarT> const & R)
   {
-
-    Tensor<ScalarT>
-    r;
+    //firewalls, make sure R \in SO(3)
+    assert(norm(R*transpose(R) - eye<ScalarT>())
+        < 100.0 * std::numeric_limits<ScalarT>::epsilon());
+    assert((det(R) - 1.0)
+        < 100.0 * std::numeric_limits<ScalarT>::epsilon());
 
     // acos requires input between -1 and +1
     ScalarT
@@ -120,16 +124,159 @@ namespace LCM {
     ScalarT
     theta = acos(cosine);
 
+    Tensor<ScalarT> r;
+
     if (theta == 0) {
       r = zero<ScalarT>();
-    } else if (cosine == -1.0) {
-      // Rotation angle is PI. Not implemented yet
-      assert(false);
+    } else if (abs(cosine + 1.0) <
+        10.0*std::numeric_limits<ScalarT>::epsilon())  {
+      // Rotation angle is PI.
+    	r = log_rotation_pi(R);
     } else {
       r = ScalarT(theta/(2.0*sin(theta)))*(R - transpose(R));
     }
 
     return r;
+  }
+
+  // Logarithmic map of a 180-degree rotation
+  // \param R with \f$ R \in SO(3) \f$
+  // \return \f$ r = \log R \f$ with \f$ r \in so(3) \f$
+  //
+  template<typename ScalarT>
+  Tensor<ScalarT>
+  log_rotation_pi(Tensor<ScalarT> const & R)
+  {
+    // set firewall to make sure the rotation is indeed 180 degrees
+    assert(abs(0.5 * (trace(R) - 1.0) + 1.0)
+        < std::numeric_limits<ScalarT>::epsilon());
+
+    // obtain U from R = LU
+    Tensor<ScalarT>
+    r = GaussianElimination((R - identity<ScalarT>()));
+
+    // backward substitution (for rotation exp(R) only)
+    const ScalarT tol = 10.0*std::numeric_limits<ScalarT>::epsilon();
+    Vector<ScalarT> normal;
+
+    if (abs(r(2,2)) < tol){
+      normal(2) = 1.0;
+    } else {
+      normal(2) = 0.0;
+    }
+
+    if (abs(r(1,1)) < tol){
+      normal(1) = 1.0;
+    } else {
+      normal(1) = -normal(2)*r(1,2)/r(1,1);
+    }
+
+    if (abs(r(0,0)) < tol){
+      normal(0) = 1.0;
+    } else {
+      normal(0) = -normal(1)*r(0,1) - normal(2)*r(0,2)/r(0,0);
+    }
+
+    normal = normal / norm(normal);
+
+    r.clear();
+    r(0,1) = -normal(2);
+    r(0,2) =  normal(1);
+    r(1,0) =  normal(2);
+    r(1,2) = -normal(0);
+    r(2,0) = -normal(1);
+    r(2,1) =  normal(0);
+
+    const ScalarT pi = acos(-1.0);
+    r = pi * r;
+
+    return r;
+  }
+
+  // Gaussian Elimination with partial pivot
+  // \param matrix \f$ A \f$
+  // \return \f$ U \f$ where \f$ A = LU \f$
+  //
+  template<typename ScalarT>
+  Tensor<ScalarT>
+  GaussianElimination(Tensor<ScalarT> const & A)
+  {
+    Tensor<ScalarT>
+    U = A;
+
+    const ScalarT
+    tol = 10.0 * std::numeric_limits<ScalarT>::epsilon();
+
+    Index i = 0;
+    Index j = 0;
+    Index i_max = 0;
+
+    while ((i <  MaxDim) && (j < MaxDim)) {
+      // find pivot in column j, starting in row i
+      i_max = i;
+      for (Index k = i + 1; k < MaxDim; ++k) {
+        if (abs(U(k,j) > abs(U(i_max,j)))) {
+          i_max = k;
+        }
+      }
+
+      // Check if A(i_max,j) equal to or very close to 0
+      if (abs(U(i_max,j)) > tol){
+        // swap rows i and i_max and divide each entry in row i
+        // by U(i,j)
+        for (Index k = 0; k < MaxDim; ++k) {
+          std::swap(U(i,k), U(i_max,k));
+        }
+
+        for (Index k = 0; k < MaxDim; ++k) {
+          U(i,k) = U(i,k) / U(i,j);
+        }
+
+        for (Index l = i + 1; l < MaxDim; ++l) {
+          for (Index k = 0; k < MaxDim; ++k) {
+            U(l,k) = U(l,k) - U(l,i) * U(i,k) / U(i,i);
+          }
+        }
+
+        ++i;
+      }
+
+      ++j;
+
+    }
+
+    return U;
+  }
+
+
+
+  //
+  // Exponential map of a skew-symmetric tensor
+  // \param r \f$ r \in so(3) \f$
+  // \return \f$ R = \exp R \f$ with \f$ R \in SO(3) \f$
+  //
+  template<typename ScalarT>
+  Tensor<ScalarT>
+  exp_skew_symmetric(Tensor<ScalarT> const & r)
+  {
+	  Tensor<ScalarT> R;
+
+	  // Check whether skew-symmetry holds
+	  assert(norm(r+transpose(r)) < std::numeric_limits<ScalarT>::epsilon());
+	  ScalarT normVector = sqrt(r(2,1)*r(2,1)+r(0,2)*r(0,2)+r(1,0)*r(1,0));
+	  //Check whether norm == 0. If so, return identity.
+	  if (normVector < std::numeric_limits<ScalarT>::epsilon()) {
+		 R = identity<ScalarT>();
+      } else {
+		 // compute the norm of the basis vector
+		 R = identity<ScalarT>() + sin(normVector)/normVector*r+
+			 (1.0-cos(normVector))/(normVector*normVector)*r*r;
+      }
+
+
+
+	  return R;
+
   }
 
   //
@@ -927,6 +1074,129 @@ namespace LCM {
   }
 
   //
+  // Scalar 3rd-order tensor product
+  // \param s scalar
+  // \param A 3rd-order tensor
+  // \return \f$ s A \f$
+  //
+  template<typename ScalarT>
+  Tensor3<ScalarT>
+  operator*(const ScalarT s, Tensor3<ScalarT> const & A)
+  {
+	Tensor3<ScalarT> B;
+
+	for (Index i = 0; i < MaxDim; ++i) {
+	  for (Index j = 0; j < MaxDim; ++j) {
+	    for (Index k = 0; k < MaxDim; ++k) {
+	    	B(i,j,k) = s * A(i,j,k);
+	    }
+	  }
+	}
+
+	return B;
+  }
+
+  //
+  // 3th-order tensor scalar product
+  // \param A 3th-order tensor
+  // \param s scalar
+  // \return \f$ s A \f$
+  //
+  template<typename ScalarT>
+  Tensor3<ScalarT>
+  operator*(Tensor3<ScalarT> const & A, const ScalarT s)
+  {
+	  return s * A;
+  }
+
+  //
+  // 3th-order tensor vector product
+  // \param A 3th-order tensor
+  // \param u vector
+  // \return \f$ A u \f$
+  //
+  template<typename ScalarT>
+  Tensor<ScalarT>
+  dot(Tensor3<ScalarT> const & A, Vector<ScalarT> const & u)
+  {
+	Tensor<ScalarT> B;
+
+	for (Index j = 0; j < MaxDim; ++j) {
+	  for (Index k = 0; k < MaxDim; ++k) {
+		  B(j,k) = 0.0;
+	    for (Index i = 0; i < MaxDim; ++i) {
+	    	B(j,k) += A(i,j,k) * u(i);
+	    }
+	  }
+	}
+
+	return B;
+  }
+
+  //
+  // vector 3th-order tensor product
+  // \param A 3th-order tensor
+  // \param u vector
+  // \return \f$ u A \f$
+  //
+  template<typename ScalarT>
+  Tensor<ScalarT>
+  dot(Vector<ScalarT> const & u, Tensor3<ScalarT> const & A)
+  {
+	Tensor<ScalarT> B;
+
+	for (Index i = 0; i < MaxDim; ++i) {
+	  for (Index j = 0; j < MaxDim; ++j) {
+		  B(i,j) = 0.0;
+	    for (Index k = 0; k < MaxDim; ++k) {
+	    	B(i,j) += A(i,j,k) * u(k);
+	    }
+	  }
+	}
+
+	return B;
+  }
+
+
+  //
+  // 3th-order tensor vector product2 (contract 2nd index)
+  // \param A 3th-order tensor
+  // \param u vector
+  // \return \f$ A u \f$
+  //
+  template<typename ScalarT>
+  Tensor<ScalarT>
+  dot2(Tensor3<ScalarT> const & A, Vector<ScalarT> const & u)
+  {
+	Tensor<ScalarT> B;
+
+	for (Index i = 0; i < MaxDim; ++i) {
+	  for (Index k = 0; k < MaxDim; ++k) {
+		    B(i,k) = 0.0;
+	    for (Index j = 0; j < MaxDim; ++j) {
+	    	B(i,k) += A(i,j,k) * u(j);
+	    }
+	  }
+	}
+
+	return B;
+  }
+
+  //
+  // vector 3th-order tensor product2 (contract 2nd index)
+  // \param A 3th-order tensor
+  // \param u vector
+  // \return \f$ u A \f$
+  //
+  template<typename ScalarT>
+  Tensor<ScalarT>
+  dot2(Vector<ScalarT> const & u, Tensor3<ScalarT> const & A)
+  {
+	return dot2(A, u);
+  }
+
+
+  //
   // 3rd-order tensor input
   // \param A 3rd-order tensor
   // \param is input stream
@@ -1299,6 +1569,143 @@ namespace LCM {
   operator!=(Tensor4<ScalarT> const & A, Tensor4<ScalarT> const & B)
   {
     return !(A==B);
+  }
+
+  //
+  // Scalar 4th-order tensor product
+  // \param s scalar
+  // \param A 4th-order tensor
+  // \return \f$ s A \f$
+  //
+  template<typename ScalarT>
+  Tensor4<ScalarT>
+  operator*(const ScalarT s, Tensor4<ScalarT> const & A)
+  {
+    Tensor4<ScalarT> B;
+
+    for (Index i = 0; i < MaxDim; ++i) {
+      for (Index j = 0; j < MaxDim; ++j) {
+        for (Index k = 0; k < MaxDim; ++k) {
+          for (Index l = 0; l < MaxDim; ++l) {
+            B(i,j,k,l)=s * A(i,j,k,l);
+          }
+        }
+      }
+    }
+    return B;
+  }
+
+  //
+  // 4th-order tensor scalar product
+  // \param A 4th-order tensor
+  // \param s scalar
+  // \return \f$ s A \f$
+  //
+  template<typename ScalarT>
+  Tensor4<ScalarT>
+  operator*(Tensor4<ScalarT> const & A, const ScalarT s)
+  {
+	  return s * A;
+  }
+
+  //
+  // 4th-order tensor vector dot product
+  // \param A 4th-order tensor
+  // \param u vector
+  // \return 3rd-order tensor \f$ A dot u \f$ as \f$ B_{ijk}=A_{ijkl}u_{l} \f$
+  //
+  template<typename ScalarT>
+  Tensor3<ScalarT>
+  dot(Tensor4<ScalarT> const & A, Vector<ScalarT> const & u)
+  {
+    Tensor3<ScalarT> B;
+
+    for (Index i = 0; i < MaxDim; ++i) {
+      for (Index j = 0; j < MaxDim; ++j) {
+        for (Index k = 0; k < MaxDim; ++k) {
+        	B(i,j,k) = 0.0;
+          for (Index l = 0; l < MaxDim; ++l) {
+            B(i,j,k) = A(i,j,k,l) * u(l);
+          }
+        }
+      }
+    }
+    return B;
+  }
+
+  //
+  // vector 4th-order tensor dot product
+  // \param A 4th-order tensor
+  // \param u vector
+  // \return 3rd-order tensor \f$ u dot A \f$ as \f$ B_{jkl}=u_{i}A_{ijkl} \f$
+  //
+  template<typename ScalarT>
+  Tensor3<ScalarT>
+  dot(Vector<ScalarT> const & u, Tensor4<ScalarT> const & A)
+  {
+    Tensor3<ScalarT> B;
+
+    for (Index j = 0; j < MaxDim; ++j) {
+      for (Index k = 0; k < MaxDim; ++k) {
+        for (Index l = 0; l < MaxDim; ++l) {
+        	B(j,k,l) = 0.0;
+          for (Index i = 0; i < MaxDim; ++i) {
+            B(j,k,l) = u(i) * A(i,j,k,l);
+          }
+        }
+      }
+    }
+    return B;
+  }
+
+  //
+  // 4th-order tensor vector dot2 product
+  // \param A 4th-order tensor
+  // \param u vector
+  // \return 3rd-order tensor \f$ A dot2 u \f$ as \f$ B_{ijl}=A_{ijkl}u_{k} \f$
+  //
+  template<typename ScalarT>
+  Tensor3<ScalarT>
+  dot2(Tensor4<ScalarT> const & A, Vector<ScalarT> const & u)
+  {
+    Tensor3<ScalarT> B;
+
+    for (Index i = 0; i < MaxDim; ++i) {
+      for (Index j = 0; j < MaxDim; ++j) {
+        for (Index l = 0; l < MaxDim; ++l) {
+        	B(i,j,l) = 0.0;
+          for (Index k = 0; k < MaxDim; ++k) {
+            B(i,j,l) = A(i,j,k,l) * u(k);
+          }
+        }
+      }
+    }
+    return B;
+  }
+
+  //
+  // vector 4th-order tensor dot2 product
+  // \param A 4th-order tensor
+  // \param u vector
+  // \return 3rd-order tensor \f$ u dot2 A \f$ as \f$ B_{ikl}=u_{j}A_{ijkl} \f$
+  //
+  template<typename ScalarT>
+  Tensor3<ScalarT>
+  dot2(Vector<ScalarT> const & u, Tensor4<ScalarT> const & A)
+  {
+    Tensor3<ScalarT> B;
+
+    for (Index i = 0; i < MaxDim; ++i) {
+      for (Index k = 0; k < MaxDim; ++k) {
+        for (Index l = 0; l < MaxDim; ++l) {
+        	B(i,k,l) = 0.0;
+          for (Index j = 0; j < MaxDim; ++j) {
+            B(i,k,l) = u(j) * A(i,j,k,l);
+          }
+        }
+      }
+    }
+    return B;
   }
 
   //

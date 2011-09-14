@@ -45,10 +45,17 @@ SchrodingerPotential(Teuchos::ParameterList& p) :
 
   energy_unit_in_eV = p.get<double>("Energy unit in eV");
   length_unit_in_m = p.get<double>("Length unit in m");
+  
   potentialType = psList->get("Type", "defaultType");
   E0 = psList->get("E0", 1.0);
   scalingFactor = psList->get("Scaling Factor", 1.0);
-
+  
+  // parameters for Finite Wall 
+  barrEffMass = psList->get<double>("Barrier Effective Mass", 1.0);
+  barrWidth = psList->get<double>("Barrier Width", 1.0);
+  wellEffMass = psList->get<double>("Well Effective Mass", 1.0);
+  wellWidth = psList->get<double>("Well Width", 1.0);
+  
   potentialStateName = p.get<std::string>("QP Potential Name");
 
   // Add E0 as a Sacado-ized parameter
@@ -86,14 +93,31 @@ evaluateFields(typename Traits::EvalData workset)
   //Parabolic potential (test case)
   if (potentialType == "Parabolic") 
   {
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
+    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+      for (std::size_t qp = 0; qp < numQPs; ++qp) {
         V(cell, qp) = parabolicPotentialValue(numDims, &coordVec(cell,qp,0));
       }
     }
   }
+  
+  // Infinite barrier wall
+  else if (potentialType == "Infinite Wall")
+  {
+    for (std::size_t cell = 0; cell < workset.numCells; ++cell)
+      for (std::size_t qp = 0; qp < numQPs; ++qp)
+        V(cell, qp) = 0.0; 
+  } 
 
-
+  // Finite barrier wall
+  else if (potentialType == "Finite Wall")
+  {
+    for (std::size_t cell = 0; cell < workset.numCells; ++cell)
+    {
+      for (std::size_t qp = 0; qp < numQPs; ++qp)
+        V(cell, qp) = finiteWallPotential(numDims, &coordVec(cell,qp,0));
+    }    
+  }
+  
   //Potential taken from input state "Electric Potential" - now hardcoded, maybe allow variable later?
   else if (potentialType == "FromState") 
   {
@@ -145,6 +169,10 @@ QCAD::SchrodingerPotential<EvalT,Traits>::getValidSchrodingerPotentialParameters
   validPL->set<string>("Type", "defaultType", "Switch between different potential types");
   validPL->set<double>("E0", 1.0, "Energy scale - dependent on type");
   validPL->set<double>("Scaling Factor", 1.0, "Constant scaling factor");
+  validPL->set<double>("Barrier Effective Mass", 1.0, "Barrier effective mass in [m0]");
+  validPL->set<double>("Barrier Width", 1.0, "Barrier width in length_unit_in_m");
+  validPL->set<double>("Well Effective Mass", 1.0, "Well effective mass in [m0]");
+  validPL->set<double>("Well Width", 1.0, "Well width in length_unit_in_m");
 
   return validPL;
 }
@@ -177,6 +205,66 @@ QCAD::SchrodingerPotential<EvalT,Traits>::parabolicPotentialValue(
   for(i=0, r2=0.0; i<numDim; i++)
     r2 += (coord[i]-0.5)*(coord[i]-0.5);
   val = prefactor * r2;  
+  
+  return scalingFactor * val;
+}
+
+// **********************************************************************
+
+//Return potential in energy_unit_in_eV * eV units
+template<typename EvalT,typename Traits>
+typename QCAD::SchrodingerPotential<EvalT,Traits>::ScalarT
+QCAD::SchrodingerPotential<EvalT,Traits>::finiteWallPotential(
+    const int numDim, const MeshScalarT* coord)
+{
+  ScalarT val;
+  
+  switch (numDim)
+  {
+    case 1: // 1D: total width = 2*barrWidth + wellWidth
+    {
+      if ( (coord[0] >= 0) && (coord[0] < barrWidth) )
+        val = E0;  // barrier
+      else if ( (coord[0] >= barrWidth) && (coord[0] <= (barrWidth+wellWidth)) )
+        val = 0;   // well
+      else if ( (coord[0] > (barrWidth+wellWidth)) && (coord[0] <= (2*barrWidth+wellWidth)) )
+        val = E0;  // barrier
+      else 
+        TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+			    << "Error! x coordinate is outside [0, 2*barrWidth+wellWidth] range,"
+			    << " make sure 1D Scale in Discretization equal to 2*barrWidth+wellWidth !" << std::endl);
+      break;
+    }
+    
+    case 2: // 2D
+    {
+      if ( (coord[0] >= barrWidth) && (coord[0] <= (barrWidth+wellWidth)) &&
+           (coord[1] >= barrWidth) && (coord[1] <= (barrWidth+wellWidth)) )
+        val = 0.0;  // well
+      else
+        val = E0;   // barrier
+      break;
+    }
+
+    case 3: // 3D
+    {
+      if ( (coord[0] >= barrWidth) && (coord[0] <= (barrWidth+wellWidth)) &&
+           (coord[1] >= barrWidth) && (coord[1] <= (barrWidth+wellWidth)) && 
+           (coord[2] >= barrWidth) && (coord[2] <= (barrWidth+wellWidth)) )
+        val = 0.0;  // well
+      else
+        val = E0;   // barrier
+      break;
+    }
+    
+    default: 
+    {
+      TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+			  << "Error! Invalid numDim = " << numDim << ", must be 1 or 2 or 3 !" << std::endl);
+			break;  
+    }
+    
+  }  // end of switch (numDim)
   
   return scalingFactor * val;
 }

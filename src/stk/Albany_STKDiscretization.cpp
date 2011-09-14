@@ -48,8 +48,9 @@ Albany::STKDiscretization::STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMes
   metaData(*stkMeshStruct_->metaData),
   bulkData(*stkMeshStruct_->bulkData),
   comm(comm_),
-  time(0.0),
-  interleavedOrdering(stkMeshStruct_->interleavedOrdering)
+  previous_time_label(-1.0e32),
+  interleavedOrdering(stkMeshStruct_->interleavedOrdering),
+  out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
   Albany::STKDiscretization::updateMesh(stkMeshStruct,comm);
 }
@@ -133,7 +134,7 @@ Albany::STKDiscretization::getNodeSetIDs() const
   return nodeSetIDs;
 }
 
-void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln)
+void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln, const double time)
 {
   // Put solution as Epetra_Vector into STK Mesh
   setSolutionField(soln);
@@ -141,16 +142,44 @@ void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln)
 #ifdef ALBANY_SEACAS
   if (stkMeshStruct->exoOutput) {
 
-    time+=1.0;
+    double time_label = monotonicTimeLabel(time);
 
-    int out_step = stk::io::process_output_request(
-						   *mesh_data, *stkMeshStruct->bulkData, time);
+    int out_step = stk::io::process_output_request(*mesh_data, *stkMeshStruct->bulkData, time_label);
 
-    if (map->Comm().MyPID()==0)
-      cout << "Albany::STKDiscretization::outputToExodus: writing time " << time 
-           << " index " <<out_step<<" to file "<<stkMeshStruct->exoOutFile<< endl;
+    if (map->Comm().MyPID()==0) {
+      *out << "Albany::STKDiscretization::outputToExodus: writing time " << time;
+      if (time_label != time) *out << " with label " << time_label;
+      *out << " to index " <<out_step<<" in file "<<stkMeshStruct->exoOutFile<< endl;
+    }
   }
 #endif
+}
+
+double
+Albany::STKDiscretization::monotonicTimeLabel(const double time) 
+{
+  // If increasing, then all is good
+  if (time > previous_time_label) {
+    previous_time_label = time;
+    return time;
+  }
+
+  // Try absolute value
+  double time_label = fabs(time);
+  if (time_label > previous_time_label) {
+    previous_time_label = time_label;
+    return time_label;
+  }
+
+  // Try adding 1.0 to time
+  if (time_label+1.0 > previous_time_label) {
+    previous_time_label = time_label+1.0;
+    return time_label+1.0;
+  }
+
+  // Otherwise, just add 1.0 to previous
+  previous_time_label += 1.0;
+  return previous_time_label;
 }
 
 void 
@@ -313,12 +342,12 @@ void Albany::STKDiscretization::computeGraphs()
 
 
   if (comm->MyPID()==0)
-    cout << "STKDisc: " << cells.size() << " elements on Proc 0 " << endl;
+    *out << "STKDisc: " << cells.size() << " elements on Proc 0 " << endl;
   int row, col;
 
   for (unsigned int i=0; i < cells.size(); i++) {
     stk::mesh::Entity& e = *cells[i];
-    stk::mesh::PairIterRelation rel = e.relations();
+    stk::mesh::PairIterRelation rel = e.relations(metaData.NODE_RANK);
 
     // loop over local nodes
     for (unsigned int j=0; j < rel.size(); j++) {
@@ -370,7 +399,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
     for (unsigned int j=0; j<bpv.size(); j++) {
       if (bpv[j]->primary_entity_rank() == metaData.element_rank()) {
 	if (bpv[j]->name()[0] != '{') {
-	  // cout << "Bucket " << i << " is in Element Block:  " << bpv[j]->name() 
+	  // *out << "Bucket " << i << " is in Element Block:  " << bpv[j]->name() 
 	  //      << "  and has " << buckets[i]->size() << " elements." << endl;
 	  wsEBNames[i]=bpv[j]->name();
 	}
@@ -392,7 +421,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
   
       stk::mesh::Entity& e = buck[i];
 
-      stk::mesh::PairIterRelation rel = e.relations();
+      stk::mesh::PairIterRelation rel = e.relations(metaData.NODE_RANK);
 
       wsElNodeEqID[b][i].resize(nodes_per_element);
       coords[b][i].resize(nodes_per_element);
@@ -453,8 +482,7 @@ void Albany::STKDiscretization::computeNodeSets()
     nodeSets[ns->first].resize(nodes.size());
     nodeSetCoords[ns->first].resize(nodes.size());
     nodeSetIDs.push_back(ns->first); // Grab string ID
-    if (comm->MyPID()==0)
-      cout << "STKDisc: nodeset "<< ns->first <<" has size " << nodes.size() << "  on Proc 0." << endl;
+    *out << "STKDisc: nodeset "<< ns->first <<" has size " << nodes.size() << "  on Proc 0." << endl;
     for (unsigned int i=0; i < nodes.size(); i++) {
       int node_gid = gid(nodes[i]);
       int node_lid = node_map->LID(node_gid);
@@ -482,14 +510,14 @@ void Albany::STKDiscretization::setupExodusOutput()
 
     }
     else {
-      cout << "\nWARNING: Exodus output for 1D Meshes not implemented:"
+      *out << "\nWARNING: Exodus output for 1D Meshes not implemented:"
            << " Disabling output \n" << endl;
       stkMeshStruct->exoOutput = false;
     }
   }
 #else
   if (stkMeshStruct->exoOutput) 
-    cout << "\nWARNING: exodus output requested but SEACAS not compiled in:"
+    *out << "\nWARNING: exodus output requested but SEACAS not compiled in:"
          << " disabling exodus output \n" << endl;
   
 #endif

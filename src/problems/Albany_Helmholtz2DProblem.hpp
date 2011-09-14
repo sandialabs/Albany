@@ -61,7 +61,11 @@ namespace Albany {
     //! Private to prohibit copying
     Helmholtz2DProblem& operator=(const Helmholtz2DProblem&);
 
-    void constructEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
+    void constructEvaluators(const Albany::MeshSpecsStruct& meshSpecs,
+                             Albany::StateManager& stateMgr,
+                             std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
+
+    void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
 
   protected:
 

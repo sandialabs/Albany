@@ -33,42 +33,38 @@
     </ParameterList>
 
     <ParameterList name="Response Functions">
-      <Parameter name="Number" type="int" value="6" />
+      <Parameter name="Number" type="int" value="8" />
       <Parameter name="Response 0" type="string" value="Solution Average" />
       
-      <Parameter name="Response 1" type="string" value="See List" />
+      <Parameter name="Response 1" type="string" value="Save Field" />
       <ParameterList name="ResponseParams 1">
-        <Parameter name="Type" type="string" value="Save Field" />
         <Parameter name="Field Name" type="string" value="Charge Density" />
         <Parameter name="Output to Exodus" type="bool" value="1" />
         <Parameter name="Output Cell Average" type="bool" value="1" />
       </ParameterList>
       
-      <Parameter name="Response 2" type="string" value="See List" />
+      <Parameter name="Response 2" type="string" value="Save Field" />
       <ParameterList name="ResponseParams 2">
-        <Parameter name="Type" type="string" value="Save Field" />
         <Parameter name="Vector Field Name" type="string" value="Potential Gradient" />
+	<Parameter name="Vector Operation" type="string" value="xyMagnitude2" />
       </ParameterList>
       
-      <Parameter name="Response 3" type="string" value="See List" />
+      <Parameter name="Response 3" type="string" value="Field Integral" />
       <ParameterList name="ResponseParams 3">
-        <Parameter name="Type" type="string" value="Field Integral" />
         <Parameter name="Field Name" type="string" value="Charge Density" />
         <Parameter name="Element Block Name" type="string" value="silicon.quantum" />
       </ParameterList>
       
-      <Parameter name="Response 4" type="string" value="See List" />
+      <Parameter name="Response 4" type="string" value="Field Value" />
       <ParameterList name="ResponseParams 4">
-        <Parameter name="Type" type="string" value="Field Value" />
         <Parameter name="Operation" type="string" value="Minimize" />
         <Parameter name="Operation Field Name" type="string" value="Charge Density" />
         <Parameter name="Operation Domain" type="string" value="element block" />
         <Parameter name="Element Block Name" type="string" value="silicon.quantum" />
       </ParameterList>
 
-      <Parameter name="Response 5" type="string" value="See List" />
+      <Parameter name="Response 5" type="string" value="Field Value" />
       <ParameterList name="ResponseParams 5">
-        <Parameter name="Type" type="string" value="Field Value" />
         <Parameter name="Return Field Name" type="string" value="Charge Density" />
         <Parameter name="Operation" type="string" value="Minimize" />
         <Parameter name="Operation Vector Field Name" type="string" value="Potential Gradient" />
@@ -78,6 +74,29 @@
         <Parameter name="x max" type="double" value="2.5" />
         <Parameter name="y min" type="double" value="-1.5" />
         <Parameter name="y max" type="double" value="0.0" />
+      </ParameterList>
+
+      <Parameter name="Response 6" type="string" value="Saddle Value" />
+      <ParameterList name="ResponseParams 6">
+        <Parameter name="Field Name" type="string" value="Conduction Band" />
+        <Parameter name="Return Field Name" type="string" value="Charge Density" />
+	<Parameter name="Field Cutoff Factor" type="double" value="1.0" />
+	<Parameter name="Minimum Pool Depth Factor" type="double" value="0.1" />
+	<Parameter name="Distance Cutoff Factor" type="double" value="0.1" />
+
+        <!-- <Parameter name="Domain" type="string" value="box" />
+        <Parameter name="x min" type="double" value="-2.5" />
+        <Parameter name="x max" type="double" value="2.5" />
+        <Parameter name="y min" type="double" value="-1.5" />
+        <Parameter name="y max" type="double" value="0.0" /> -->
+      </ParameterList>
+
+
+      <Parameter name="Response 7" type="string" value="Center Of Mass" />
+      <ParameterList name="ResponseParams 7">
+        <Parameter name="Field Name" type="string" value="Charge Density" />
+        <Parameter name="Operation Domain" type="string" value="element block" />
+        <Parameter name="Element Block Name" type="string" value="silicon.quantum" />
       </ParameterList>
 
     </ParameterList>
@@ -100,111 +119,116 @@
      	       value="{9.0001658526,4.26076278891,4.26118228598,5.69965801322,-0.137326394658}" />
   </ParameterList>
 
-
-  <ParameterList name="LOCA">
-    <ParameterList name="Stepper">
-      <ParameterList name="Eigensolver" />
-    </ParameterList>
-    <ParameterList name="Bifurcation" />
-    <ParameterList name="Step Size" />
-    <ParameterList name="Predictor">
-      <ParameterList name="First Step Predictor" />
-      <ParameterList name="Last Step Predictor" />
-    </ParameterList>
-    <ParameterList name="Constraints" />
-  </ParameterList>
-
-
-  <ParameterList name="NOX">
-    <Parameter name="Nonlinear Solver" type="string" value="Line Search Based" />
-    <ParameterList name="Line Search">
-      <Parameter name="Method" type="string" value="Backtrack" />
-      <ParameterList name="Full Step">
-        <Parameter name="Full Step" type="double" value="1.0" />
+  <ParameterList name="Piro">
+    <ParameterList name="LOCA">
+      <ParameterList name="Stepper">
+	<ParameterList name="Eigensolver" />
       </ParameterList>
+      <ParameterList name="Bifurcation" />
+      <ParameterList name="Step Size" />
+      <ParameterList name="Predictor">
+	<ParameterList name="First Step Predictor" />
+	<ParameterList name="Last Step Predictor" />
+      </ParameterList>
+      <ParameterList name="Constraints" />
     </ParameterList>
 
-    <ParameterList name="Direction">
-      <Parameter name="Method" type="string" value="Newton" />
-      <Parameter name="Forcing Term Method" type="string" value="Constant" />
-      <Parameter name="Rescue Bad Newton Solve" type="bool" value="1" />
 
-      <ParameterList name="Stratimikos Linear Solver">
-        <ParameterList name="NOX Stratrimikos Linear Solver" />
+    <ParameterList name="NOX">
+      <Parameter name="Nonlinear Solver" type="string" value="Line Search Based" />
+      <ParameterList name="Line Search">
+	<Parameter name="Method" type="string" value="Backtrack" />
+	<ParameterList name="Full Step">
+	  <Parameter name="Full Step" type="double" value="1.0" />
+	</ParameterList>
       </ParameterList>
 
-      <ParameterList name="Stratimikos">
-        <Parameter name="Linear Solver Type" type="string" value="Belos" />
-        <ParameterList name="Linear Solver Types">
+      <ParameterList name="Direction">
+	<Parameter name="Method" type="string" value="Newton" />
+	<ParameterList name="Newton">
+	  <Parameter name="Method" type="string" value="Newton" />
+	  <Parameter name="Forcing Term Method" type="string" value="Constant" />
+	  <Parameter name="Rescue Bad Newton Solve" type="bool" value="1" />
 
-          <ParameterList name="AztecOO">
-            <ParameterList name="Forward Solve">
-              <ParameterList name="AztecOO Settings">
-                <Parameter name="Aztec Solver" type="string" value="GMRES" />
-                <Parameter name="Size of Krylov Subspace" type="int" value="500" />
-                <Parameter name="Convergence Test" type="string" value="r0" />
-                <Parameter name="Output Frequency" type="int" value="20" />
-              </ParameterList>
-              <Parameter name="Tolerance" type="double" value="1e-06" />
-              <Parameter name="Max Iterations" type="int" value="800" />
-            </ParameterList>
-          </ParameterList>
+	  <ParameterList name="Stratimikos Linear Solver">
+	    <ParameterList name="NOX Stratimikos Linear Solver">
+	    </ParameterList>
 
-          <ParameterList name="Belos">
-            <Parameter name="Solver Type" type="string" value="Block GMRES" />
-            <ParameterList name="Solver Types">
-              <ParameterList name="Block GMRES">
-                <Parameter name="Num Blocks" type="int" value="50" />
-                <Parameter name="Convergence Tolerance" type="double" value="1e-08" />
-                <Parameter name="Output Style" type="int" value="1" />
-                <Parameter name="Output Frequency" type="int" value="20" />
-                <Parameter name="Maximum Iterations" type="int" value="200" />
-                <Parameter name="Verbosity" type="int" value="33" />
-                <Parameter name="Block Size" type="int" value="1" />
-                <Parameter name="Flexible Gmres" type="bool" value="0" />
-              </ParameterList>
-            </ParameterList>
-          </ParameterList>
+	    <ParameterList name="Stratimikos">
+	      <Parameter name="Linear Solver Type" type="string" value="Belos" />
+	      <ParameterList name="Linear Solver Types">
 
-          <Parameter name="Preconditioner Type" type="string" value="Ifpack" />
-          <ParameterList name="Preconditioner Types">
-            <ParameterList name="Ifpack">
-              <ParameterList name="Ifpack Settings">
-                <Parameter name="fact: level-of-fill" type="int" value="3" />
-                <Parameter name="fact: drop tolerance" type="double" value="0.0" />
-                <Parameter name="fact: ilut level-of-fill" type="double" value="1.0" />
-              </ParameterList>
-              <Parameter name="Overlap" type="int" value="1" />
-              <Parameter name="Prec Type" type="string" value="ILU" />
-            </ParameterList>
-          </ParameterList>
+		<ParameterList name="AztecOO">
+		  <ParameterList name="Forward Solve">
+		    <ParameterList name="AztecOO Settings">
+		      <Parameter name="Aztec Solver" type="string" value="GMRES" />
+		      <Parameter name="Size of Krylov Subspace" type="int" value="500" />
+		      <Parameter name="Convergence Test" type="string" value="r0" />
+		      <Parameter name="Output Frequency" type="int" value="20" />
+		    </ParameterList>
+		    <Parameter name="Tolerance" type="double" value="1e-06" />
+		    <Parameter name="Max Iterations" type="int" value="800" />
+		  </ParameterList>
+		</ParameterList>
 
-        </ParameterList>
+		<ParameterList name="Belos">
+		  <Parameter name="Solver Type" type="string" value="Block GMRES" />
+		  <ParameterList name="Solver Types">
+		    <ParameterList name="Block GMRES">
+		      <Parameter name="Num Blocks" type="int" value="50" />
+		      <Parameter name="Convergence Tolerance" type="double" value="1e-06" />
+		      <Parameter name="Output Style" type="int" value="1" />
+		      <Parameter name="Output Frequency" type="int" value="20" />
+		      <Parameter name="Maximum Iterations" type="int" value="200" />
+		      <Parameter name="Verbosity" type="int" value="33" />
+		      <Parameter name="Block Size" type="int" value="1" />
+		      <Parameter name="Flexible Gmres" type="bool" value="0" />
+		    </ParameterList>
+		  </ParameterList>
+		</ParameterList>
+	      </ParameterList>
+
+	      <Parameter name="Preconditioner Type" type="string" value="Ifpack" />
+	      <ParameterList name="Preconditioner Types">
+		<ParameterList name="Ifpack">
+		  <ParameterList name="Ifpack Settings">
+		    <Parameter name="fact: level-of-fill" type="int" value="3" />
+		    <Parameter name="fact: drop tolerance" type="double" value="0.0" />
+		    <Parameter name="fact: ilut level-of-fill" type="double" value="1.0" />
+		  </ParameterList>
+		  <Parameter name="Overlap" type="int" value="1" />
+		  <Parameter name="Prec Type" type="string" value="ILU" />
+		</ParameterList>
+	      </ParameterList>
+
+	    </ParameterList>
+	  </ParameterList>
+	</ParameterList>
       </ParameterList>
-    </ParameterList>
 
-    <ParameterList name="Printing">
-      <Parameter name="Output Information" type="int" value="103" />
-      <Parameter name="Output Precision" type="int" value="3" />
-    </ParameterList>
-
-    <ParameterList name="Solver Options">
-      <Parameter name="Status Test Check Type" type="string" value="Minimal" />
-    </ParameterList>
-
-    <ParameterList name="Status Tests">
-      <Parameter name="Test Type" type="string" value="Combo"/>
-      <Parameter name="Combo Type" type="string" value="OR"/>
-      <Parameter name="Number of Tests" type="int" value="2"/>
-      <ParameterList name="Test 0">
-        <Parameter name="Test Type" type="string" value="NormF"/>
-        <Parameter name="Tolerance" type="double" value="1.0e-8"/>
+      <ParameterList name="Printing">
+	<Parameter name="Output Information" type="int" value="103" />
+	<Parameter name="Output Precision" type="int" value="3" />
       </ParameterList>
-      <ParameterList name="Test 1">
-        <Parameter name="Test Type" type="string" value="MaxIters"/>
-        <Parameter name="Maximum Iterations" type="int" value="30"/>
-      </ParameterList>
-    </ParameterList>
 
+      <ParameterList name="Solver Options">
+	<Parameter name="Status Test Check Type" type="string" value="Minimal" />
+      </ParameterList>
+
+      <ParameterList name="Status Tests">
+	<Parameter name="Test Type" type="string" value="Combo"/>
+	<Parameter name="Combo Type" type="string" value="OR"/>
+	<Parameter name="Number of Tests" type="int" value="2"/>
+	<ParameterList name="Test 0">
+	  <Parameter name="Test Type" type="string" value="NormF"/>
+	  <Parameter name="Tolerance" type="double" value="1.0e-8"/>
+	</ParameterList>
+	<ParameterList name="Test 1">
+	  <Parameter name="Test Type" type="string" value="MaxIters"/>
+	  <Parameter name="Maximum Iterations" type="int" value="30"/>
+	</ParameterList>
+      </ParameterList>
+
+    </ParameterList>
   </ParameterList>
 </ParameterList>

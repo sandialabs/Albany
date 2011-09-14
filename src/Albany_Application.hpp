@@ -35,6 +35,7 @@
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_AbstractProblem.hpp"
 #include "Albany_StateManager.hpp"
+#include "Albany_TimeManager.hpp"
 
 #ifdef ALBANY_CUTR
   #include "CUTR_CubitMeshMover.hpp"
@@ -50,8 +51,9 @@
 #include "Phalanx.hpp"
 
 #include "Stokhos_OrthogPolyExpansion.hpp"
-#include "Stokhos_VectorOrthogPoly.hpp"
-#include "Stokhos_VectorOrthogPolyTraitsEpetra.hpp"
+#include "Stokhos_Quadrature.hpp"
+#include "Stokhos_EpetraVectorOrthogPoly.hpp"
+#include "Stokhos_EpetraMultiVectorOrthogPoly.hpp"
 #include "EpetraExt_MultiComm.h"
 
 #include "Teko_InverseLibrary.hpp"
@@ -104,6 +106,8 @@ namespace Albany {
 
     //! Intialize stochastic Galerkin method
     void init_sg(
+      const Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> >& basis,
+      const Teuchos::RCP<const Stokhos::Quadrature<int,double> >& quad,
       const Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> >& expansion,
       const Teuchos::RCP<const EpetraExt::MultiComm>& multiComm);
 
@@ -111,177 +115,312 @@ namespace Albany {
     /*!
      * Set xdot to NULL for steady-state problems
      */
-    void computeGlobalResidual(
-			 const double current_time,
-			 const Epetra_Vector* xdot,
-			 const Epetra_Vector& x,
-			 const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-			 Epetra_Vector& f);
+    void computeGlobalResidual(const double current_time,
+			       const Epetra_Vector* xdot,
+			       const Epetra_Vector& x,
+			       const Teuchos::Array<ParamVec>& p,
+			       Epetra_Vector& f);
 
     //! Compute global Jacobian
     /*!
      * Set xdot to NULL for steady-state problems
      */
-    void computeGlobalJacobian(
-			 const double alpha, 
-			 const double beta,  
-			 const double current_time,
-			 const Epetra_Vector* xdot,
-			 const Epetra_Vector& x,
-			 const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-			 Epetra_Vector* f,
-			 Epetra_CrsMatrix& jac);
+    void computeGlobalJacobian(const double alpha, 
+			       const double beta,  
+			       const double current_time,
+			       const Epetra_Vector* xdot,
+			       const Epetra_Vector& x,
+			       const Teuchos::Array<ParamVec>& p,
+			       Epetra_Vector* f,
+			       Epetra_CrsMatrix& jac);
 
     //! Compute global Preconditioner
     /*!
      * Set xdot to NULL for steady-state problems
      */
-    void computeGlobalPreconditioner(
-                             const Teuchos::RCP<Epetra_CrsMatrix>& jac,
-                             const Teuchos::RCP<Epetra_Operator>& prec);
+    void computeGlobalPreconditioner(const Teuchos::RCP<Epetra_CrsMatrix>& jac,
+				     const Teuchos::RCP<Epetra_Operator>& prec);
 
     //! Compute global Tangent
     /*!
      * Set xdot to NULL for steady-state problems
      */
     void computeGlobalTangent(const double alpha, 
-                              const double beta,
-                              const double current_time,
-                              bool sum_derivs,
-                              const Epetra_Vector* xdot,
-                              const Epetra_Vector& x,
-                              const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-                              ParamVec* deriv_p,
-                              const Epetra_MultiVector* Vx,
+			      const double beta,
+			      const double current_time,
+			      bool sum_derivs,
+			      const Epetra_Vector* xdot,
+			      const Epetra_Vector& x,
+			      const Teuchos::Array<ParamVec>& p,
+			      ParamVec* deriv_p,
+			      const Epetra_MultiVector* Vx,
 			      const Epetra_MultiVector* Vxdot,
-                              const Epetra_MultiVector* Vp,
-                              Epetra_Vector* f,
-                              Epetra_MultiVector* JV,
-                              Epetra_MultiVector* fp);
+			      const Epetra_MultiVector* Vp,
+			      Epetra_Vector* f,
+			      Epetra_MultiVector* JV,
+			      Epetra_MultiVector* fp);
 
     //! Evaluate response functions
     /*!
      * Set xdot to NULL for steady-state problems
      */
-    void evaluateResponses(const Epetra_Vector* xdot,
-                      const Epetra_Vector& x,
-                      const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-                      Epetra_Vector& g);
-
+    void evaluateResponse(const double current_time,
+			  const Epetra_Vector* xdot,
+			  const Epetra_Vector& x,
+			  const Teuchos::Array<ParamVec>& p,
+			  Epetra_Vector& g);
     
-    //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
+    //! Evaluate tangent = alpha*dg/dx*Vx + beta*dg/dxdot*Vxdot + dg/dp*Vp
     /*!
      * Set xdot, dxdot_dp to NULL for steady-state problems
      */
-    void evaluateResponseTangents(
-	   const Epetra_Vector* xdot,
-	   const Epetra_Vector& x,
-	   const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-	   const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
-	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dxdot_dp,
-	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dx_dp,
-	   Epetra_Vector* g,
-	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& gt);
+    void evaluateResponseTangent(const double alpha, 
+				 const double beta,
+				 const double current_time,
+				 bool sum_derivs,
+				 const Epetra_Vector* xdot,
+				 const Epetra_Vector& x,
+				 const Teuchos::Array<ParamVec>& p,
+				 ParamVec* deriv_p,
+				 const Epetra_MultiVector* Vxdot,
+				 const Epetra_MultiVector* Vx,
+				 const Epetra_MultiVector* Vp,
+				 Epetra_Vector* g,
+				 Epetra_MultiVector* gx,
+				 Epetra_MultiVector* gp);
 
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
     /*!
      * Set xdot, dg_dxdot to NULL for steady-state problems
      */
-    void evaluateResponseGradients(
-	    const Epetra_Vector* xdot,
-	    const Epetra_Vector& x,
-	    const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-	    const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
-	    Epetra_Vector* g,
-	    Epetra_MultiVector* dg_dx,
-	    Epetra_MultiVector* dg_dxdot,
-	    const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dg_dp);
+    void evaluateResponseGradient(const double current_time,
+				  const Epetra_Vector* xdot,
+				  const Epetra_Vector& x,
+				  const Teuchos::Array<ParamVec>& p,
+				  ParamVec* deriv_p,
+				  Epetra_Vector* g,
+				  Epetra_MultiVector* dg_dx,
+				  Epetra_MultiVector* dg_dxdot,
+				  Epetra_MultiVector* dg_dp);
 
     //! Compute global residual for stochastic Galerkin problem
     /*!
      * Set xdot to NULL for steady-state problems
      */
     void computeGlobalSGResidual(
-			const double current_time,
-		        const Stokhos::VectorOrthogPoly<Epetra_Vector>* sg_xdot,
-			const Stokhos::VectorOrthogPoly<Epetra_Vector>& sg_x,
-			const ParamVec* p,
-			const ParamVec* sg_p,
-			const Teuchos::Array<SGType>* sg_p_vals,
-			Stokhos::VectorOrthogPoly<Epetra_Vector>& sg_f);
+      const double current_time,
+      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+      const Stokhos::EpetraVectorOrthogPoly& sg_x,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& sg_p_index,
+      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+      Stokhos::EpetraVectorOrthogPoly& sg_f);
 
     //! Compute global Jacobian for stochastic Galerkin problem
     /*!
      * Set xdot to NULL for steady-state problems
      */
     void computeGlobalSGJacobian(
-			double alpha, double beta,
-			const double current_time,
-			const Stokhos::VectorOrthogPoly<Epetra_Vector>* sg_xdot,
-			const Stokhos::VectorOrthogPoly<Epetra_Vector>& sg_x,
-			const ParamVec* p,
-			const ParamVec* sg_p,
-			const Teuchos::Array<SGType>* sg_p_vals,
-			Stokhos::VectorOrthogPoly<Epetra_Vector>* sg_f,
-			Stokhos::VectorOrthogPoly<Epetra_CrsMatrix>& sg_jac);
+      const double alpha, 
+      const double beta,
+      const double current_time,
+      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+      const Stokhos::EpetraVectorOrthogPoly& sg_x,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& sg_p_index,
+      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+      Stokhos::EpetraVectorOrthogPoly* sg_f,
+      Stokhos::VectorOrthogPoly<Epetra_CrsMatrix>& sg_jac);
+
+    //! Compute global Tangent for stochastic Galerkin problem
+    /*!
+     * Set xdot to NULL for steady-state problems
+     */
+    void computeGlobalSGTangent(
+      const double alpha, 
+      const double beta, 
+      const double current_time,
+      bool sum_derivs,
+      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+      const Stokhos::EpetraVectorOrthogPoly& sg_x,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& sg_p_index,
+      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+      ParamVec* deriv_p,
+      const Epetra_MultiVector* Vx,
+      const Epetra_MultiVector* Vxdot,
+      const Epetra_MultiVector* Vp,
+      Stokhos::EpetraVectorOrthogPoly* sg_f,
+      Stokhos::EpetraMultiVectorOrthogPoly* sg_JVx,
+      Stokhos::EpetraMultiVectorOrthogPoly* sg_fVp);
 
     //! Evaluate stochastic Galerkin response functions
     /*!
      * Set xdot to NULL for steady-state problems
      */
-    void evaluateSGResponses(
-                        const Stokhos::VectorOrthogPoly<Epetra_Vector>* sg_xdot,
-			const Stokhos::VectorOrthogPoly<Epetra_Vector>& sg_x,
-			const ParamVec* p,
-			const ParamVec* sg_p,
-			const Teuchos::Array<SGType>* sg_p_vals,
-			Stokhos::VectorOrthogPoly<Epetra_Vector>& sg_g);
+    void evaluateSGResponse(
+      const double curr_time,
+      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+      const Stokhos::EpetraVectorOrthogPoly& sg_x,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& sg_p_index,
+      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+      Stokhos::EpetraVectorOrthogPoly& sg_g);
+
+    //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
+    /*!
+     * Set xdot, dxdot_dp to NULL for steady-state problems
+     */
+    void 
+    evaluateSGResponseTangent(
+      const double alpha, 
+      const double beta, 
+      const double current_time,
+      bool sum_derivs,
+      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+      const Stokhos::EpetraVectorOrthogPoly& sg_x,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& sg_p_index,
+      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+      ParamVec* deriv_p,
+      const Epetra_MultiVector* Vx,
+      const Epetra_MultiVector* Vxdot,
+      const Epetra_MultiVector* Vp,
+      Stokhos::EpetraVectorOrthogPoly* sg_g,
+      Stokhos::EpetraMultiVectorOrthogPoly* sg_JV,
+      Stokhos::EpetraMultiVectorOrthogPoly* sg_gp);
+
+    //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
+    /*!
+     * Set xdot, dg_dxdot to NULL for steady-state problems
+     */
+    void 
+    evaluateSGResponseGradient(
+      const double current_time,
+      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+      const Stokhos::EpetraVectorOrthogPoly& sg_x,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& sg_p_index,
+      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+      ParamVec* deriv_p,
+      Stokhos::EpetraVectorOrthogPoly* sg_g,
+      Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dx,
+      Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdot,
+      Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dp);
 
     //! Compute global residual for stochastic Galerkin problem
     /*!
      * Set xdot to NULL for steady-state problems
      */
     void computeGlobalMPResidual(
-			const double current_time,
-		        const Stokhos::ProductContainer<Epetra_Vector>* mp_xdot,
-			const Stokhos::ProductContainer<Epetra_Vector>& mp_x,
-			const ParamVec* p,
-			const ParamVec* mp_p,
-			const Teuchos::Array<MPType>* mp_p_vals,
-			Stokhos::ProductContainer<Epetra_Vector>& mp_f);
+      const double current_time,
+      const Stokhos::ProductEpetraVector* mp_xdot,
+      const Stokhos::ProductEpetraVector& mp_x,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& mp_p_index,
+      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+      Stokhos::ProductEpetraVector& mp_f);
 
     //! Compute global Jacobian for stochastic Galerkin problem
     /*!
      * Set xdot to NULL for steady-state problems
      */
     void computeGlobalMPJacobian(
-			double alpha, double beta,
-			const double current_time,
-			const Stokhos::ProductContainer<Epetra_Vector>* mp_xdot,
-			const Stokhos::ProductContainer<Epetra_Vector>& mp_x,
-			const ParamVec* p,
-			const ParamVec* mp_p,
-			const Teuchos::Array<MPType>* mp_p_vals,
-			Stokhos::ProductContainer<Epetra_Vector>* mp_f,
-			Stokhos::ProductContainer<Epetra_CrsMatrix>& mp_jac);
+      const double alpha, 
+      const double beta,
+      const double current_time,
+      const Stokhos::ProductEpetraVector* mp_xdot,
+      const Stokhos::ProductEpetraVector& mp_x,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& mp_p_index,
+      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+      Stokhos::ProductEpetraVector* mp_f,
+      Stokhos::ProductContainer<Epetra_CrsMatrix>& mp_jac);
+
+    //! Compute global Tangent for multi-point problem
+    /*!
+     * Set xdot to NULL for steady-state problems
+     */
+    void computeGlobalMPTangent(
+      const double alpha, 
+      const double beta, 
+      const double current_time,
+      bool sum_derivs,
+      const Stokhos::ProductEpetraVector* mp_xdot,
+      const Stokhos::ProductEpetraVector& mp_x,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& mp_p_index,
+      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+      ParamVec* deriv_p,
+      const Epetra_MultiVector* Vx,
+      const Epetra_MultiVector* Vxdot,
+      const Epetra_MultiVector* Vp,
+      Stokhos::ProductEpetraVector* mp_f,
+      Stokhos::ProductEpetraMultiVector* mp_JVx,
+      Stokhos::ProductEpetraMultiVector* mp_fVp);
 
     //! Evaluate stochastic Galerkin response functions
     /*!
      * Set xdot to NULL for steady-state problems
      */
-    void evaluateMPResponses(
-                        const Stokhos::ProductContainer<Epetra_Vector>* mp_xdot,
-			const Stokhos::ProductContainer<Epetra_Vector>& mp_x,
-			ParamVec* p,
-			ParamVec* mp_p,
-			const Teuchos::Array<MPType>* mp_p_vals,
-			Stokhos::ProductContainer<Epetra_Vector>& mp_g);
+    void evaluateMPResponse(
+      const double curr_time,
+      const Stokhos::ProductEpetraVector* mp_xdot,
+      const Stokhos::ProductEpetraVector& mp_x,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& mp_p_index,
+      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+      Stokhos::ProductEpetraVector& mp_g);
+
+    //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
+    /*!
+     * Set xdot, dxdot_dp to NULL for steady-state problems
+     */
+    void 
+    evaluateMPResponseTangent(
+      const double alpha, 
+      const double beta, 
+      const double current_time,
+      bool sum_derivs,
+      const Stokhos::ProductEpetraVector* mp_xdot,
+      const Stokhos::ProductEpetraVector& mp_x,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& mp_p_index,
+      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+      ParamVec* deriv_p,
+      const Epetra_MultiVector* Vx,
+      const Epetra_MultiVector* Vxdot,
+      const Epetra_MultiVector* Vp,
+      Stokhos::ProductEpetraVector* mp_g,
+      Stokhos::ProductEpetraMultiVector* mp_JV,
+      Stokhos::ProductEpetraMultiVector* mp_gp);
+
+    //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
+    /*!
+     * Set xdot, dg_dxdot to NULL for steady-state problems
+     */
+    void 
+    evaluateMPResponseGradient(
+      const double current_time,
+      const Stokhos::ProductEpetraVector* mp_xdot,
+      const Stokhos::ProductEpetraVector& mp_x,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& mp_p_index,
+      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+      ParamVec* deriv_p,
+      Stokhos::ProductEpetraVector* mp_g,
+      Stokhos::ProductEpetraMultiVector* mp_dg_dx,
+      Stokhos::ProductEpetraMultiVector* mp_dg_dxdot,
+      Stokhos::ProductEpetraMultiVector* mp_dg_dp);
 
     //! Provide access to shapeParameters -- no AD
     PHAL::AlbanyTraits::Residual::ScalarT& getValue(const std::string &n);
 
     //! Class to manage state variables (a.k.a. history)
     StateManager& getStateMgr() {return stateMgr;};
+
+    //! Class to manage time
+    TimeManager& getTimeMgr() {return timeMgr;};
 
     //! Access to number of worksets - needed for working with StateManager
     int getNumWorksets() { return numWorksets;};
@@ -307,35 +446,40 @@ namespace Albany {
     
     //! Evalute responses using response field manater (rfm)
     //  A helper function called by evaluateResponses.
-    void evaluateResponses_rfm(
-           const Epetra_Vector* xdot,
-	   const Epetra_Vector& x,
-	   const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-	   Epetra_Vector& g);
+    void evaluateResponse_rfm(const double current_time,
+			      const Epetra_Vector* xdot,
+			      const Epetra_Vector& x,
+			      const Teuchos::Array<ParamVec>& p,
+			      Epetra_Vector& g);
 
     //! Evalute response tangents using response field manater (rfm)
     //  A helper function called by evaluateResponseTangents.
-    void evaluateResponseTangents_rfm(
-	   const Epetra_Vector* xdot,
-	   const Epetra_Vector& x,
-	   const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-	   const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
-	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dxdot_dp,
-	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dx_dp,
-	   Epetra_Vector* g,
-	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& gt);
+    void evaluateResponseTangent_rfm(const double alpha, 
+				     const double beta,
+				     const double current_time,
+				     bool sum_derivs,
+				     const Epetra_Vector* xdot,
+				     const Epetra_Vector& x,
+				     const Teuchos::Array<ParamVec>& p,
+				     ParamVec* deriv_p,
+				     const Epetra_MultiVector* Vxdot,
+				     const Epetra_MultiVector* Vx,
+				     const Epetra_MultiVector* Vp,
+				     Epetra_Vector* g,
+				     Epetra_MultiVector* gx,
+				     Epetra_MultiVector* gp);
 
     //! Evalute responses gradients using response field manater (rfm)
     //  A helper function called by evaluateResponseGradients.
-    void evaluateResponseGradients_rfm(
-	   const Epetra_Vector* xdot,
-	   const Epetra_Vector& x,
-	   const Teuchos::Array< Teuchos::RCP<ParamVec> >& p,
-	   const Teuchos::Array< Teuchos::RCP<ParamVec> >& deriv_p,
-	   Epetra_Vector* g,
-	   Epetra_MultiVector* dg_dx,
-	   Epetra_MultiVector* dg_dxdot,
-	   const Teuchos::Array< Teuchos::RCP<Epetra_MultiVector> >& dg_dp);
+    void evaluateResponseGradient_rfm(const double current_time,
+				      const Epetra_Vector* xdot,
+				      const Epetra_Vector& x,
+				      const Teuchos::Array<ParamVec>& p,
+				      ParamVec* deriv_p,
+				      Epetra_Vector* g,
+				      Epetra_MultiVector* dg_dx,
+				      Epetra_MultiVector* dg_dxdot,
+				      Epetra_MultiVector* dg_dp);
 
     void defineTimers();
 
@@ -347,7 +491,8 @@ namespace Albany {
             PHAL::Workset& workset,
             Teuchos::RCP<Epetra_Vector> overlapped_x,
             Teuchos::RCP<Epetra_Vector> overlapped_xdot,
-            double current_time);
+            double current_time,
+	    double delta_time);
 
     void loadWorksetJacobianInfo(PHAL::Workset& workset,
                 const double& alpha, const double& beta);
@@ -411,32 +556,41 @@ namespace Albany {
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords;
     Teuchos::ArrayRCP<std::string> wsEBNames;
 
+    //! Stochastic Galerkin basis
+    Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> > sg_basis;
+
+    //! Stochastic Galerkin quadrature
+    Teuchos::RCP<const Stokhos::Quadrature<int,double> > sg_quad;
+
     //! Stochastic Galerkin expansion
     Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> > sg_expansion;
+
+    //! Product multi-comm
+    Teuchos::RCP<const EpetraExt::MultiComm> product_comm;
 
     //! Overlap stochastic map
     Teuchos::RCP<const Epetra_BlockMap> sg_overlap_map;
 
     //! SG overlapped solution vectors
-    Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_Vector> >  sg_overlapped_x;
+    Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly >  sg_overlapped_x;
 
     //! SG overlapped time derivative vectors
-    Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_Vector> > sg_overlapped_xdot;
+    Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > sg_overlapped_xdot;
 
     //! SG overlapped residual vectors
-    Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_Vector> > sg_overlapped_f;
+    Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > sg_overlapped_f;
 
     //! Overlapped Jacobian matrixs
     Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_CrsMatrix> > sg_overlapped_jac;
 
     //! MP overlapped solution vectors
-    Teuchos::RCP< Stokhos::ProductContainer<Epetra_Vector> >  mp_overlapped_x;
+    Teuchos::RCP< Stokhos::ProductEpetraVector >  mp_overlapped_x;
 
     //! MP overlapped time derivative vectors
-    Teuchos::RCP< Stokhos::ProductContainer<Epetra_Vector> > mp_overlapped_xdot;
+    Teuchos::RCP< Stokhos::ProductEpetraVector > mp_overlapped_xdot;
 
     //! MP overlapped residual vectors
-    Teuchos::RCP< Stokhos::ProductContainer<Epetra_Vector> > mp_overlapped_f;
+    Teuchos::RCP< Stokhos::ProductEpetraVector > mp_overlapped_f;
 
     //! Overlapped Jacobian matrixs
     Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix> > mp_overlapped_jac;
@@ -469,8 +623,11 @@ namespace Albany {
 
     std::set<string> setupSet;
     mutable int phxGraphVisDetail;
+    mutable int respGraphVisDetail;
 
     StateManager stateMgr;
+
+    TimeManager timeMgr;
 
     bool morphFromInit;
     bool ignore_residual_in_jacobian;

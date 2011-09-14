@@ -22,6 +22,7 @@
 #include "Teuchos_ParameterList.hpp"
 
 #include "Albany_AbstractProblem.hpp"
+#include "Albany_ProblemUtils.hpp"
 
 #include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
@@ -66,6 +67,13 @@ namespace QCAD {
     void constructEvaluators(const Albany::MeshSpecsStruct& meshSpecs,
                              Albany::StateManager& stateMgr,
 			     std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
+    void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
+
+    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
+    constructResponses(std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
+			    Teuchos::ParameterList& responseList, 
+			    std::map<std::string, Teuchos::RCP<Teuchos::ParameterList> >& evaluators_to_build, 
+			    Albany::StateManager& stateMgr, Albany::ResponseUtils& respUtils);
 
   protected:
     Teuchos::RCP<const Epetra_Comm> comm;

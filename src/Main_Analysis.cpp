@@ -34,6 +34,21 @@ int main(int argc, char *argv[]) {
   Teuchos::GlobalMPISession mpiSession(&argc,&argv);
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
+  // Command-line argument for input file
+  char * xmlfilename=0;
+  char defaultfile[20]={"inputAnalysis.xml"};
+  if(argc>1){
+    if(!strcmp(argv[1],"--help")){
+      printf("albanyAnalysis [inputfile.xml]\n");
+      exit(1);
+    }
+    else
+      xmlfilename=argv[1];
+  }
+  else
+    xmlfilename=defaultfile;
+
+
   try {
     Teuchos::RCP<Teuchos::Time> totalTime = 
       Teuchos::TimeMonitor::getNewTimer("AlbanyAnalysis: ***Total Time***");
@@ -46,7 +61,7 @@ int main(int argc, char *argv[]) {
     // Construct a ModelEvaluator for your application;
   
     Teuchos::RCP<Albany::SolverFactory> slvrfctry =
-      Teuchos::rcp(new Albany::SolverFactory("inputAnalysis.xml", Albany_MPI_COMM_WORLD));
+      Teuchos::rcp(new Albany::SolverFactory(xmlfilename, Albany_MPI_COMM_WORLD));
     Teuchos::RCP<Epetra_Comm> appComm = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
     Teuchos::RCP<EpetraExt::ModelEvaluator> App = slvrfctry->create(appComm, appComm);
 

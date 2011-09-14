@@ -93,7 +93,8 @@ Albany::SaveEigenData::save(
       //     << "\n   Has Eigenvector: " << *(e_r(i)) << "\n" << endl;
 
       //write text format to evec<i>.txtdump file
-      sprintf(buf,"evec%d.txtdump",i);
+      // sprintf(buf,"evec%d.txtdump",i);
+      sprintf(buf,"evec%d.csv",i);
       evecFile.open (buf, fstream::out);
       evecFile << setprecision(8) 
            << "# Eigenvalue " << i << " with value: " << (*evals_r)[i] 
@@ -102,7 +103,7 @@ Albany::SaveEigenData::save(
       cout << "Saved to " << buf << endl;
 
       //export to exodus
-      noxObserver->observeSolution( *(e_r(i)) );
+      noxObserver->observeSolution( *(e_r(i)) , (*evals_r)[i]);
     }
     else {
       //Print to stdout -- good for debugging but too much output in most cases
@@ -112,7 +113,8 @@ Albany::SaveEigenData::save(
       //     << *(e_r(i)) << "\n" << *(e_i(i)) << endl;
 
       //write text format to evec<i>.txtdump file
-      sprintf(buf,"evec%d.txtdump",i);
+      // sprintf(buf,"evec%d.txtdump",i);
+      sprintf(buf,"evec%d.csv",i);
       evecFile.open (buf, fstream::out);
       evecFile << setprecision(8) 
            << "# Eigenvalue " << i << " with value: " 
@@ -123,8 +125,8 @@ Albany::SaveEigenData::save(
       cout << "Saved Re, Im to " << buf << endl;
 
       //export real and imaginary parts to exodus
-      noxObserver->observeSolution( *(e_r(i)) );
-      noxObserver->observeSolution( *(e_i(i)) );
+      noxObserver->observeSolution( *(e_r(i)), (*evals_r)[i] );
+      noxObserver->observeSolution( *(e_i(i)), (*evals_i)[i] );
     }
   }
   evalFile.close();

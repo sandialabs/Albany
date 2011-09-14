@@ -69,7 +69,9 @@ namespace Albany {
     NonlinearElasticityProblem& operator=(const NonlinearElasticityProblem&);
 
     void constructEvaluators(const Albany::MeshSpecsStruct& meshSpecs,
-			     StateManager& stateMgr);
+                             Albany::StateManager& stateMgr,
+                             std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
+    void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
   protected:
 
     //! Boundary conditions on source term

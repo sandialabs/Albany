@@ -35,8 +35,8 @@ ScatterResidualBase(const Teuchos::ParameterList& p)
   scatter_operation = Teuchos::rcp(new PHX::Tag<ScalarT>
     (fieldName, p.get< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout")));
 
-  const std::vector<std::string>& names =
-    *(p.get< Teuchos::RCP< std::vector<std::string> > >("Residual Names"));
+  const Teuchos::ArrayRCP<std::string>& names =
+    p.get< Teuchos::ArrayRCP<std::string> >("Residual Names");
 
   Teuchos::RCP<PHX::DataLayout> dl =
     p.get< Teuchos::RCP<PHX::DataLayout> >("Data Layout");
@@ -265,7 +265,7 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::SGResidual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_Vector> > f = workset.sg_f;
+  Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
   ScalarT *valptr;
 
   int nblock = f->size();
@@ -301,7 +301,7 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::SGJacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_Vector> > f = workset.sg_f;
+  Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
   Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_CrsMatrix> > Jac = 
     workset.sg_Jac;
   ScalarT *valptr;
@@ -362,6 +362,68 @@ evaluateFields(typename Traits::EvalData workset)
 }
 
 // **********************************************************************
+// Specialization: Stochastic Galerkin Tangent
+// **********************************************************************
+
+template<typename Traits>
+ScatterResidual<PHAL::AlbanyTraits::SGTangent, Traits>::
+ScatterResidual(const Teuchos::ParameterList& p)
+  : ScatterResidualBase<PHAL::AlbanyTraits::SGTangent,Traits>(p),
+  numFields(ScatterResidualBase<PHAL::AlbanyTraits::SGTangent,Traits>::numFieldsBase)
+{
+}
+
+// **********************************************************************
+template<typename Traits>
+void ScatterResidual<PHAL::AlbanyTraits::SGTangent, Traits>::
+evaluateFields(typename Traits::EvalData workset)
+{
+  Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
+  Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > JV = workset.sg_JV;
+  Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > fp = workset.sg_fp;
+  ScalarT *valptr;
+
+  int nblock = 0;
+  if (f != Teuchos::null)
+    nblock = f->size();
+  else if (JV != Teuchos::null)
+    nblock = JV->size();
+  else if (fp != Teuchos::null)
+    nblock = fp->size();
+  else
+    TEST_FOR_EXCEPTION(true, std::logic_error,
+		       "One of sg_f, sg_JV, or sg_fp must be non-null! " << 
+		       std::endl);
+
+  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
+
+    for (std::size_t node = 0; node < this->numNodes; ++node) {
+      for (std::size_t eq = 0; eq < numFields; eq++) {
+        if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+        else                   valptr = &(this->val[eq])(cell,node);
+
+        int row = nodeID[node][this->offset + eq];
+
+        if (f != Teuchos::null)
+	  for (int block=0; block<nblock; block++)
+	    (*f)[block].SumIntoMyValue(row, 0, valptr->val().coeff(block));
+
+	if (JV != Teuchos::null)
+	  for (int col=0; col<workset.num_cols_x; col++)
+	    for (int block=0; block<nblock; block++)
+	      (*JV)[block].SumIntoMyValue(row, col, valptr->dx(col).coeff(block));
+
+	if (fp != Teuchos::null)
+	  for (int col=0; col<workset.num_cols_p; col++)
+	    for (int block=0; block<nblock; block++)
+	      (*fp)[block].SumIntoMyValue(row, col, valptr->dx(col+workset.param_offset).coeff(block));
+      }
+    }
+  }
+}
+
+// **********************************************************************
 // Specialization: Multi-point Residual
 // **********************************************************************
 
@@ -378,7 +440,7 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::MPResidual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Teuchos::RCP< Stokhos::ProductContainer<Epetra_Vector> > f = workset.mp_f;
+  Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
   ScalarT *valptr;
 
   int nblock = f->size();
@@ -414,7 +476,7 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::MPJacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Teuchos::RCP< Stokhos::ProductContainer<Epetra_Vector> > f = workset.mp_f;
+  Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
   Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix> > Jac = 
     workset.mp_Jac;
   ScalarT *valptr;
@@ -464,6 +526,68 @@ evaluateFields(typename Traits::EvalData workset)
             } // column equations
           } // column nodes
         } // has fast access
+      }
+    }
+  }
+}
+
+// **********************************************************************
+// Specialization: Multi-point Tangent
+// **********************************************************************
+
+template<typename Traits>
+ScatterResidual<PHAL::AlbanyTraits::MPTangent, Traits>::
+ScatterResidual(const Teuchos::ParameterList& p)
+  : ScatterResidualBase<PHAL::AlbanyTraits::MPTangent,Traits>(p),
+  numFields(ScatterResidualBase<PHAL::AlbanyTraits::MPTangent,Traits>::numFieldsBase)
+{
+}
+
+// **********************************************************************
+template<typename Traits>
+void ScatterResidual<PHAL::AlbanyTraits::MPTangent, Traits>::
+evaluateFields(typename Traits::EvalData workset)
+{
+  Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
+  Teuchos::RCP< Stokhos::ProductEpetraMultiVector > JV = workset.mp_JV;
+  Teuchos::RCP< Stokhos::ProductEpetraMultiVector > fp = workset.mp_fp;
+  ScalarT *valptr;
+
+  int nblock = 0;
+  if (f != Teuchos::null)
+    nblock = f->size();
+  else if (JV != Teuchos::null)
+    nblock = JV->size();
+  else if (fp != Teuchos::null)
+    nblock = fp->size();
+  else
+    TEST_FOR_EXCEPTION(true, std::logic_error,
+		       "One of mp_f, mp_JV, or mp_fp must be non-null! " << 
+		       std::endl);
+
+  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
+
+    for (std::size_t node = 0; node < this->numNodes; ++node) {
+      for (std::size_t eq = 0; eq < numFields; eq++) {
+        if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+        else                   valptr = &(this->val[eq])(cell,node);
+
+        int row = nodeID[node][this->offset + eq];
+
+        if (f != Teuchos::null)
+	  for (int block=0; block<nblock; block++)
+	    (*f)[block].SumIntoMyValue(row, 0, valptr->val().coeff(block));
+
+	if (JV != Teuchos::null)
+	  for (int col=0; col<workset.num_cols_x; col++)
+	    for (int block=0; block<nblock; block++)
+	      (*JV)[block].SumIntoMyValue(row, col, valptr->dx(col).coeff(block));
+
+	if (fp != Teuchos::null)
+	  for (int col=0; col<workset.num_cols_p; col++)
+	    for (int block=0; block<nblock; block++)
+	      (*fp)[block].SumIntoMyValue(row, col, valptr->dx(col+workset.param_offset).coeff(block));
       }
     }
   }

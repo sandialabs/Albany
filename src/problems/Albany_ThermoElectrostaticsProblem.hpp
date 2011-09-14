@@ -62,7 +62,11 @@ namespace Albany {
     //! Private to prohibit copying
     ThermoElectrostaticsProblem& operator=(const ThermoElectrostaticsProblem&);
 
-    void constructEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
+    void constructEvaluators(const Albany::MeshSpecsStruct& meshSpecs,
+                             Albany::StateManager& stateMgr,
+                             std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
+
+    void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
 
   protected:
 

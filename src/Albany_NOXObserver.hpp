@@ -33,8 +33,13 @@ public:
    ~Albany_NOXObserver ()
    { };
 
+  //! Original version, for steady with no time or param info
   void observeSolution(
     const Epetra_Vector& solution);
+
+  //! Improved version with space for time or parameter value
+  void observeSolution(
+    const Epetra_Vector& solution, double time_or_param_val);
 
 private:
 

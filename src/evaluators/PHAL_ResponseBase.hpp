@@ -162,6 +162,24 @@ template<typename EvalT, typename Traits> class ResponseBase;
     std::vector<ScalarT> local_g;
   };
 
+// **************************************************************
+// Stochastic Galerkin Tangent
+// **************************************************************
+
+  template<typename Traits>
+  class ResponseBase<PHAL::AlbanyTraits::SGTangent,Traits>
+    : public ResponseBaseCommon<PHAL::AlbanyTraits::SGTangent, Traits>  {
+  protected:
+    typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
+    ResponseBase(Teuchos::ParameterList& p);
+    
+    void beginEvaluateFields(typename Traits::EvalData d);
+    void endEvaluateFields(typename Traits::EvalData d);
+    void setInitialValues(const std::vector<double>& initialVals);
+
+    std::vector<ScalarT> local_g;
+  };
+
 
 // **************************************************************
 // Multi-point Residual 
@@ -193,6 +211,24 @@ template<typename EvalT, typename Traits> class ResponseBase;
     typedef typename PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
     ResponseBase(Teuchos::ParameterList& p);
  
+    void beginEvaluateFields(typename Traits::EvalData d);
+    void endEvaluateFields(typename Traits::EvalData d);
+    void setInitialValues(const std::vector<double>& initialVals);
+
+    std::vector<ScalarT> local_g;
+  };
+
+// **************************************************************
+// Multi-point Tangent
+// **************************************************************
+
+  template<typename Traits>
+  class ResponseBase<PHAL::AlbanyTraits::MPTangent,Traits>
+    : public ResponseBaseCommon<PHAL::AlbanyTraits::MPTangent, Traits>  {
+  protected:
+    typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
+    ResponseBase(Teuchos::ParameterList& p);
+    
     void beginEvaluateFields(typename Traits::EvalData d);
     void endEvaluateFields(typename Traits::EvalData d);
     void setInitialValues(const std::vector<double>& initialVals);

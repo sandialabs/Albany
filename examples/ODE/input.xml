@@ -27,24 +27,26 @@
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{0.03053790, 0.33026211}"/>
   </ParameterList>
-  <ParameterList name="Rythmos">
-    <Parameter name="Num Time Steps" type="int" value="200"/>
-    <Parameter name="Final Time" type="double" value="1.0"/>
-    <Parameter name="Max State Error" type="double" value="0.05"/>
-    <Parameter name="Alpha"           type="double" value="0.0"/>
-    <ParameterList name="Rythmos Stepper">
-      <ParameterList name="VerboseObject">
-        <Parameter name="Verbosity Level" type="string" value="low"/>
+  <ParameterList name="Piro">
+    <ParameterList name="Rythmos">
+      <Parameter name="Num Time Steps" type="int" value="200"/>
+      <Parameter name="Final Time" type="double" value="1.0"/>
+      <Parameter name="Max State Error" type="double" value="0.05"/>
+      <Parameter name="Alpha"           type="double" value="0.0"/>
+      <ParameterList name="Rythmos Stepper">
+	<ParameterList name="VerboseObject">
+	  <Parameter name="Verbosity Level" type="string" value="low"/>
+	</ParameterList>
       </ParameterList>
-    </ParameterList>
-    <ParameterList name="Rythmos Integration Control">
-    </ParameterList>
-    <ParameterList name="Rythmos Integrator">
-      <ParameterList name="VerboseObject">
-        <Parameter name="Verbosity Level" type="string" value="none"/>
+      <ParameterList name="Rythmos Integration Control">
       </ParameterList>
-    </ParameterList>
-    <ParameterList name="Stratimikos">
+      <ParameterList name="Rythmos Integrator">
+	<ParameterList name="VerboseObject">
+	  <Parameter name="Verbosity Level" type="string" value="none"/>
+	</ParameterList>
+      </ParameterList>
+      <ParameterList name="Stratimikos">
+      </ParameterList>
     </ParameterList>
   </ParameterList>
 </ParameterList>

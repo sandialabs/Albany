@@ -57,6 +57,11 @@ namespace Albany {
       const Teuchos::RCP<const Epetra_Comm>& solverComm,
       const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null);
 
+    Teuchos::RCP<EpetraExt::ModelEvaluator> createAlbanyAppAndModel(
+      Teuchos::RCP<Application>& albanyApp,
+      const Teuchos::RCP<const Epetra_Comm>& appComm,
+      const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null);
+
     /** \brief Function that does regression testing. */
     // Probably needs to be moved to another class? AGS
     int checkTestResults(
@@ -67,7 +72,7 @@ namespace Albany {
       const Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly>& g_sg = Teuchos::null) const;
 
     Teuchos::ParameterList& getAnalysisParameters() const
-      { return appParams->sublist("Analysis"); }
+      { return appParams->sublist("Piro").sublist("Analysis"); }
 
     Teuchos::ParameterList& getParameters() const
       { return *appParams; }
@@ -102,7 +107,6 @@ namespace Albany {
     //! Parameter list specifying what solver to create
     Teuchos::RCP<Teuchos::ParameterList> appParams;
     
-    int numParameters;
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
   };

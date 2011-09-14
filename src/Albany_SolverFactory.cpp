@@ -16,17 +16,18 @@
 
 
 #include "Albany_SolverFactory.hpp"
-#include "ENAT_SGNOXSolver.hpp"
 #include "Albany_RythmosObserver.hpp"
 #include "Albany_NOXObserver.hpp"
 #include "Thyra_DetachedVectorView.hpp"
 #include "Albany_SaveEigenData.hpp"
+#include "Albany_ModelEvaluator.hpp"
 
 #include "Piro_Epetra_NOXSolver.hpp"
 #include "Piro_Epetra_LOCASolver.hpp"
 #include "Piro_Epetra_RythmosSolver.hpp"
 #include "Piro_Epetra_VelocityVerletSolver.hpp"
 #include "Piro_Epetra_TrapezoidRuleSolver.hpp"
+#include "QCAD_Solver.hpp"
 
 #include "Teuchos_XMLParameterListHelpers.hpp"
 #include "Teuchos_TestForException.hpp"
@@ -71,7 +72,6 @@ Albany::SolverFactory::create(
   return createAndGetAlbanyApp(dummyAlbanyApp, appComm, solverComm, initial_guess);
 }
 
-
 Teuchos::RCP<EpetraExt::ModelEvaluator>  
 Albany::SolverFactory::createAndGetAlbanyApp(
   Teuchos::RCP<Albany::Application>& albanyApp,
@@ -79,92 +79,63 @@ Albany::SolverFactory::createAndGetAlbanyApp(
   const Teuchos::RCP<const Epetra_Comm>& solverComm,
   const Teuchos::RCP<const Epetra_Vector>& initial_guess)
 {
-    // Create application
-    Teuchos::RCP<Albany::Application> app = 
-      rcp(new Albany::Application(appComm, appParams, initial_guess));
-
-    //Pass back albany app so that interface beyond ModelEvaluator can be used.
-    // This is essentially a hack to allow additional in/out arguments beyond 
-    //  what ModelEvaluator specifies.
-    albanyApp = app; 
-
     // Get solver type
     ParameterList& problemParams = appParams->sublist("Problem");
     string solutionMethod = problemParams.get("Solution Method", "Steady");
     TEST_FOR_EXCEPTION(solutionMethod != "Steady" &&
-            solutionMethod != "Transient" && solutionMethod != "Continuation", 
+            solutionMethod != "Transient" && solutionMethod != "Continuation" &&
+	    solutionMethod != "Multi-Problem",  
             std::logic_error, "Solution Method must be Steady, Transient, "
-            << "or Continuation, not : " << solutionMethod);
+            << "Continuation, or Multi-Problem not : " << solutionMethod);
     bool stochastic = problemParams.get("Stochastic", false);
     string secondOrder = problemParams.get("Second Order", "No");
 
-    //set up parameters
-    ParameterList& parameterParams = problemParams.sublist("Parameters");
-    parameterParams.validateParameters(*getValidParameterParameters(),0);
+    Teuchos::RCP<Albany::Application> app;
+    Teuchos::RCP<EpetraExt::ModelEvaluator> model;
 
-    numParameters = parameterParams.get("Number", 0);
-    RCP< Teuchos::Array<std::string> > free_param_names;
-    if (numParameters>0) {
-      free_param_names = rcp(new Teuchos::Array<std::string>);
-      for (int i=0; i<numParameters; i++) {
-        free_param_names->push_back(parameterParams.get(Albany::strint("Parameter",i), "??"));
-      }
-    }
-    *out << "Number of Parameters in ENAT = " << numParameters << endl;
-
-    //set up SG parameters
-    ParameterList& sgParams =
-      problemParams.sublist("Stochastic Galerkin");
-    ParameterList& sg_parameterParams =
-      sgParams.sublist("SG Parameters");
- 
-    sg_parameterParams.validateParameters(*getValidParameterParameters(),0);
-    int sg_numParameters = sg_parameterParams.get("Number", 0);
-    RCP< Teuchos::Array<std::string> > sg_param_names;
-    if (sg_numParameters>0) {
-      sg_param_names = rcp(new Teuchos::Array<std::string>);
-      for (int i=0; i<sg_numParameters; i++) {
-      sg_param_names->push_back(sg_parameterParams.get(Albany::strint("Parameter",i), "??"));
-      }
-    }
-    *out << "Number of SG Parameters in ENAT = " << sg_numParameters << endl;
-
-    // Validate Response list: may move inside individual Problem class
-    problemParams.sublist("Response Functions").
-      validateParameters(*getValidResponseParameters(),0);
-
-    // Create model evaluator
-    Teuchos::RCP<EpetraExt::ModelEvaluator> model = 
-      rcp(new Albany::ModelEvaluator(app, free_param_names, sg_param_names));
-
-    // Create observer for output from time-stepper
     typedef double Scalar;
     RCP<Rythmos::IntegrationObserverBase<Scalar> > Rythmos_observer;
     RCP<NOX::Epetra::Observer > NOX_observer;
 
-    if (solutionMethod=="Transient" && secondOrder=="No")
-      Rythmos_observer = rcp(new Albany_RythmosObserver(app));
-    else
-      NOX_observer = rcp(new Albany_NOXObserver(app));
+    // QCAD::Solve is only example of a multi-app solver so far
+    bool bSingleAppSolver = (solutionMethod != "Multi-Problem");
 
-    TEST_FOR_EXCEPTION(stochastic && solutionMethod!="Steady", std::logic_error,
-         "Stochastic problems only implemented for Steady NOX solves so far\n");
+    //If solver uses a single app, create it here along with observer
+    if (bSingleAppSolver) {
 
-    if (stochastic && solutionMethod=="Steady")
-      return  rcp(new ENAT::SGNOXSolver(appParams, model, solverComm, NOX_observer));
-    else if (solutionMethod== "Continuation") { // add save eigen data here as in Piro test
-      Teuchos::ParameterList& locaParams = (*appParams).sublist("LOCA");
+      // Create application and model evaluator
+      model = createAlbanyAppAndModel(app, appComm, initial_guess);
+
+      //Pass back albany app so that interface beyond ModelEvaluator can be used.
+      // This is essentially a hack to allow additional in/out arguments beyond 
+      //  what ModelEvaluator specifies.
+      albanyApp = app; 
+
+      // Create observer for output from time-stepper
+      if (solutionMethod=="Transient" && secondOrder=="No")
+	Rythmos_observer = rcp(new Albany_RythmosObserver(app));
+      else
+	NOX_observer = rcp(new Albany_NOXObserver(app));
+    }
+
+    RCP<Teuchos::ParameterList> piroParams = 
+      rcp(&(appParams->sublist("Piro")),false);
+
+    if (solutionMethod== "Continuation") { // add save eigen data here as in Piro test
+      Teuchos::ParameterList& locaParams = piroParams->sublist("LOCA");
         RCP<LOCA::SaveEigenData::AbstractStrategy> saveEigs =
 	  rcp(new Albany::SaveEigenData( locaParams, NOX_observer, &app->getStateMgr() ));
-        return  rcp(new Piro::Epetra::LOCASolver(appParams, model, NOX_observer, saveEigs));
-	//return  rcp(new Piro::Epetra::LOCASolver(appParams, model, NOX_observer));
+        return  rcp(new Piro::Epetra::LOCASolver(piroParams, model, NOX_observer, saveEigs));
+	//return  rcp(new Piro::Epetra::LOCASolver(piroParams, model, NOX_observer));
     }
     else if (solutionMethod== "Transient" && secondOrder=="No") 
-      return  rcp(new Piro::Epetra::RythmosSolver(appParams, model, Rythmos_observer));
+      return  rcp(new Piro::Epetra::RythmosSolver(piroParams, model, Rythmos_observer));
     else if (solutionMethod== "Transient" && secondOrder=="Velocity Verlet")
-      return  rcp(new Piro::Epetra::VelocityVerletSolver(appParams, model, NOX_observer));
+      return  rcp(new Piro::Epetra::VelocityVerletSolver(piroParams, model, NOX_observer));
     else if (solutionMethod== "Transient" && secondOrder=="Trapezoid Rule")
-      return  rcp(new Piro::Epetra::TrapezoidRuleSolver(appParams, model, NOX_observer));
+      return  rcp(new Piro::Epetra::TrapezoidRuleSolver(piroParams, model, NOX_observer));
+    else if (solutionMethod== "Multi-Problem")
+      return  rcp(new QCAD::Solver(appParams, solverComm));
     else if (solutionMethod== "Transient") {
       TEST_FOR_EXCEPTION(secondOrder!="No", std::logic_error,
          "Invalid value for Second Order: (No, Velocity Verlet, Trapezoid Rule): "
@@ -172,7 +143,28 @@ Albany::SolverFactory::createAndGetAlbanyApp(
       return Teuchos::null;
       }
     else
-      return  rcp(new Piro::Epetra::NOXSolver(appParams, model, NOX_observer));
+      return  rcp(new Piro::Epetra::NOXSolver(piroParams, model, NOX_observer));
+}
+
+Teuchos::RCP<EpetraExt::ModelEvaluator>  
+Albany::SolverFactory::createAlbanyAppAndModel(
+  Teuchos::RCP<Albany::Application>& albanyApp,
+  const Teuchos::RCP<const Epetra_Comm>& appComm,
+  const Teuchos::RCP<const Epetra_Vector>& initial_guess)
+{
+  // Create application
+  albanyApp = rcp(new Albany::Application(appComm, appParams, initial_guess));
+  
+  // Validate Response list: may move inside individual Problem class
+  ParameterList& problemParams = appParams->sublist("Problem");
+  problemParams.sublist("Response Functions").
+    validateParameters(*getValidResponseParameters(),0);
+  
+  // Create model evaluator
+  Teuchos::RCP<EpetraExt::ModelEvaluator> model = 
+    rcp(new Albany::ModelEvaluator(albanyApp, appParams));
+  
+  return model;
 }
 
 
@@ -215,14 +207,13 @@ int Albany::SolverFactory::checkTestResults(
   int numSensTests = testParams.get<int>("Number of Sensitivity Comparisons");
   if (numSensTests > 0 && dgdp != NULL) {
 
-    if (numSensTests > dgdp->MyLength() ||
-        numParameters != dgdp->NumVectors() ) failures += 10000;
+    if (numSensTests > dgdp->MyLength()) failures += 10000;
     else {
       for (int i=0; i<numSensTests; i++) {
         Teuchos::Array<double> testSensValues =
           testParams.get<Teuchos::Array<double> >(Albany::strint("Sensitivity Test Values",i));
-        TEST_FOR_EXCEPT(numParameters != testSensValues.size());
-        for (int j=0; j<numParameters; j++) {
+        TEST_FOR_EXCEPT(dgdp->NumVectors() != testSensValues.size());
+        for (int j=0; j<dgdp->NumVectors(); j++) {
           failures += scaledCompare((*dgdp)[j][i], testSensValues[j], relTol, absTol);
           comparisons++;
         }
@@ -309,7 +300,8 @@ void Albany::SolverFactory::setSolverParamDefaults(
               ParameterList* appParams_, int myRank)
 {
     // Set the nonlinear solver method
-    ParameterList& noxParams = appParams_->sublist("NOX");
+    ParameterList& piroParams = appParams_->sublist("Piro");
+    ParameterList& noxParams = piroParams.sublist("NOX");
     noxParams.set("Nonlinear Solver", "Line Search Based");
 
     // Set the printing parameters in the "Printing" sublist
@@ -370,15 +362,10 @@ Albany::SolverFactory::getValidAppParameters() const
   validPL->sublist("Quadrature",         false, "Quadrature sublist");
   validPL->sublist("Regression Results", false, "Regression Results sublist");
   validPL->sublist("VTK",                false, "DEPRECATED  VTK sublist");
-  validPL->sublist("Rythmos",            false, "Rythmos sublist");
-  validPL->sublist("Velocity Verlet",    false, "Piro Velocity Verlet sublist");
-  validPL->sublist("Trapezoid Rule",     false, "Piro Trapezoid Rule sublist");
-  validPL->sublist("LOCA",               false, "LOCA sublist");
-  validPL->sublist("NOX",                false, "NOX sublist");
-  validPL->sublist("Analysis",           false, "Analysis sublist");
+  validPL->sublist("Piro",               false, "Piro sublist");
 
-  validPL->set<string>("Jacobian Operator", "Have Jacobian", "Flag to allow Matrix-Free specification in Piro");
-  validPL->set<double>("Matrix-Free Perturbation", 3.0e-7, "delta in matrix-free formula");
+  // validPL->set<string>("Jacobian Operator", "Have Jacobian", "Flag to allow Matrix-Free specification in Piro");
+  // validPL->set<double>("Matrix-Free Perturbation", 3.0e-7, "delta in matrix-free formula");
 
   return validPL;
 }

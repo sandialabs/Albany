@@ -46,3 +46,25 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 add_test(${testName}_3D_SERIAL ${SerialAlbany.exe} input3D.xml)
 
 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/infiniteWall1D.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/infiniteWall1D.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
+get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+add_test(${testName}_infiniteWall1D ${Albany.exe} infiniteWall1D.xml)
+
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/infiniteWall2D.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/infiniteWall2D.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
+get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+add_test(${testName}_infiniteWall2D ${Albany.exe} infiniteWall2D.xml)
+
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/finiteWall1D.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/finiteWall1D.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
+get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+add_test(${testName}_finiteWall1D ${Albany.exe} finiteWall1D.xml)

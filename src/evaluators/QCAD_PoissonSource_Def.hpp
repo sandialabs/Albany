@@ -35,6 +35,8 @@ PoissonSource(Teuchos::ParameterList& p) :
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
   electronDensity("Electron Density",
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+  artCBDensity("Artificial Conduction Band Density",
+      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
   holeDensity("Hole Density",
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
   electricPotential("Electric Potential",
@@ -44,6 +46,8 @@ PoissonSource(Teuchos::ParameterList& p) :
   conductionBand("Conduction Band",
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
   valenceBand("Valence Band",
+      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+  approxQuantumEDensity("Approximate Quantum Electron Density",
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"))
 {
   // Material database
@@ -75,6 +79,7 @@ PoissonSource(Teuchos::ParameterList& p) :
   // passed down from main list
   length_unit_in_m = p.get<double>("Length unit in m");
   bSchrodingerInQuantumRegions = p.get<bool>("Use Schrodinger source");
+  bUsePredictorCorrector = p.get<bool>("Use predictor-corrector method");
 
   if(bSchrodingerInQuantumRegions) {
     std::string evecFieldRoot = p.get<string>("Eigenvector field name root");
@@ -132,11 +137,13 @@ PoissonSource(Teuchos::ParameterList& p) :
   this->addEvaluatedField(poissonSource);
   this->addEvaluatedField(chargeDensity);
   this->addEvaluatedField(electronDensity);
+  this->addEvaluatedField(artCBDensity);
   this->addEvaluatedField(holeDensity);
   this->addEvaluatedField(electricPotential);
   this->addEvaluatedField(ionizedDopant);
   this->addEvaluatedField(conductionBand);
   this->addEvaluatedField(valenceBand);
+  this->addEvaluatedField(approxQuantumEDensity);
   
   this->setName("Poisson Source"+PHX::TypeString<EvalT>::value);
 }
@@ -154,12 +161,14 @@ postRegistrationSetup(typename Traits::SetupData d,
 
   this->utils.setFieldData(chargeDensity,fm);
   this->utils.setFieldData(electronDensity,fm);
+  this->utils.setFieldData(artCBDensity,fm);
   this->utils.setFieldData(holeDensity,fm);
   this->utils.setFieldData(electricPotential,fm);
 
   this->utils.setFieldData(ionizedDopant,fm);
   this->utils.setFieldData(conductionBand,fm);
   this->utils.setFieldData(valenceBand,fm);
+  this->utils.setFieldData(approxQuantumEDensity,fm);
 
   for (int k = 0; k < nEigenvectors; ++k) {
     this->utils.setFieldData(eigenvector_Re[k],fm);
@@ -227,9 +236,8 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
   // Scaling factors
   double X0 = length_unit_in_m/1e-2; // length scaling to get to [cm] (structure dimension in [um])
   ScalarT V0 = kbBoltz*temperature/1.0; // kb*T/q in [V], scaling for potential        
-  ScalarT C0;  // scaling for conc. [cm^-3]
-  ScalarT Lambda2;  // derived scaling factor (unitless) that appears in the scaled Poisson equation
-
+  ScalarT Lambda2C0 = V0*eps0/(eleQ*X0*X0); // derived scaling factor (unitless)
+  
   //! Constant energy reference for heterogeneous structures
   ScalarT qPhiRef;
   {
@@ -305,11 +313,6 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
     ScalarT eArgOffset = (-qPhiRef+Chi)/kbT;
     ScalarT hArgOffset = (qPhiRef-Chi-Eg)/kbT;
     
-    //! material parameter dependent scaling factor 
-    C0 = (Nc > Nv) ? Nc : Nv;  // scaling for conc. [cm^-3]
-    Lambda2 = V0*eps0/(eleQ*X0*X0*C0); // derived scaling factor (unitless)
-
-    
     //! function pointer to carrier statistics member function
     ScalarT (QCAD::PoissonSource<EvalT,Traits>::*carrStat) (const ScalarT);
     
@@ -374,16 +377,27 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
     if(bSchrodingerInQuantumRegions && 
       materialDB->getElementBlockParam<bool>(workset.EBName,"quantum",false)) 
     {
-      // read eigenvalues from file
-      // std::vector<double> eigenvals = ReadEigenvaluesFromFile(nEigenvectors);  
+      // retrieve Previous Poisson Potential
+      Albany::MDArray prevPhiArray = (*workset.stateArrayPtr)["Previous Poisson Potential"];
 
       // loop over cells and qps
       for (std::size_t cell=0; cell < workset.numCells; ++cell)
       {
         for (std::size_t qp=0; qp < numQPs; ++qp)
         {
-          // compute the electron density using wavefunction
-          ScalarT eDensity = eDensityForPoissonSchrond(workset, cell, qp);
+          ScalarT approxEDensity = 0.0;
+          if(bUsePredictorCorrector)
+          {
+            ScalarT prevPhi = prevPhiArray(cell,qp);
+            
+            // compute the approximate quantum electron density using predictor-corrector method
+            approxEDensity = eDensityForPoissonSchrond(workset, cell, qp, prevPhi, true);
+          }
+          else  // otherwise, use the exact quantum density
+            approxEDensity = eDensityForPoissonSchrond(workset, cell, qp, 0.0, false);
+
+          // compute the exact quantum electron density
+          ScalarT eDensity = eDensityForPoissonSchrond(workset, cell, qp, 0.0, false);
           
           // obtain the scaled potential
           const ScalarT& phi = potential(cell,qp);
@@ -402,17 +416,19 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
               
           // the scaled full RHS
           ScalarT charge; 
-          charge = 1.0/Lambda2*(hDensity- eDensity + ionN)/C0;
+          charge = 1.0/Lambda2C0*(hDensity- approxEDensity + ionN);
           poissonSource(cell, qp) = factor*charge;
 
           // output states
-          chargeDensity(cell, qp) = charge*Lambda2*C0;
+          chargeDensity(cell, qp) = charge*Lambda2C0;
           electronDensity(cell, qp) = eDensity;
           holeDensity(cell, qp) = hDensity;
           electricPotential(cell, qp) = phi*V0;
           ionizedDopant(cell, qp) = ionN;
           conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
           valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
+          approxQuantumEDensity(cell,qp) = approxEDensity;
+	  artCBDensity(cell, qp) = ( eDensity > 1e-6 ? eDensity : -Nc*(this->*carrStat)( -(phi+eArgOffset) ));
         }
       }  // end of loop over cells
     }
@@ -437,17 +453,21 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 
           // the scaled full RHS
           ScalarT charge; 
-          charge = 1.0/Lambda2*(Nv*(this->*carrStat)(-phi+hArgOffset)- Nc*(this->*carrStat)(phi+eArgOffset) + ionN)/C0;
+          charge = 1.0/Lambda2C0*(Nv*(this->*carrStat)(-phi+hArgOffset)- Nc*(this->*carrStat)(phi+eArgOffset) + ionN);
           poissonSource(cell, qp) = factor*charge;
           
           // output states
-          chargeDensity(cell, qp) = charge*Lambda2*C0;
+          chargeDensity(cell, qp) = charge*Lambda2C0;
           electronDensity(cell, qp) = Nc*(this->*carrStat)(phi+eArgOffset);
           holeDensity(cell, qp) = Nv*(this->*carrStat)(-phi+hArgOffset);
           electricPotential(cell, qp) = phi*V0;
           ionizedDopant(cell, qp) = ionN;
           conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
           valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
+          approxQuantumEDensity(cell,qp) = 0.0; 
+	  artCBDensity(cell, qp) = ( electronDensity(cell, qp) > 1e-6 ? electronDensity(cell, qp) 
+				     : -Nc*(this->*carrStat)( -(phi+eArgOffset) ));
+
         }
       }
     }
@@ -462,7 +482,6 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
   {
     double Eg = materialDB->getElementBlockParam<double>(workset.EBName,"Band Gap",0.0);
     double Chi = materialDB->getElementBlockParam<double>(workset.EBName,"Electron Affinity",0.0);
-    ScalarT Lambda2C0 = V0*eps0/(eleQ*X0*X0); // derived scaling factor (unitless)
 
     //! Fixed charge in insulator
     ScalarT fixedCharge; // [cm^-3]
@@ -477,14 +496,28 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
     if(bSchrodingerInQuantumRegions && 
       materialDB->getElementBlockParam<bool>(workset.EBName,"quantum",false)) 
     {
+      // retrieve Previous Poisson Potential
+      Albany::MDArray prevPhiArray = (*workset.stateArrayPtr)["Previous Poisson Potential"];
+
       // loop over cells and qps
       for (std::size_t cell=0; cell < workset.numCells; ++cell)
       {
         for (std::size_t qp=0; qp < numQPs; ++qp)
         {
-          // compute the electron density using wavefunction
-          ScalarT eDensity = eDensityForPoissonSchrond(workset, cell, qp);
-          
+          ScalarT approxEDensity = 0.0;
+          if (bUsePredictorCorrector) 
+          {
+            ScalarT prevPhi = prevPhiArray(cell,qp);
+            
+            // compute the approximate quantum electron density using predictor-corrector method
+            approxEDensity = eDensityForPoissonSchrond(workset, cell, qp, prevPhi, true);
+          }
+          else
+            approxEDensity = eDensityForPoissonSchrond(workset, cell, qp, 0.0, false);
+
+          // compute the exact quantum electron density
+          ScalarT eDensity = eDensityForPoissonSchrond(workset, cell, qp, 0.0, false);
+
           // obtain the scaled potential
           const ScalarT& phi = potential(cell,qp);
 
@@ -492,7 +525,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
               
           // the scaled full RHS
           ScalarT charge;
-          charge = 1.0/Lambda2C0*(-eDensity + fixedCharge);
+          charge = 1.0/Lambda2C0*(-approxEDensity + fixedCharge);
           poissonSource(cell, qp) = factor*charge;
 
           // output states
@@ -503,6 +536,9 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
           ionizedDopant(cell, qp) = 0.0;
           conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
           valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
+          approxQuantumEDensity(cell,qp) = approxEDensity;
+	  artCBDensity(cell, qp) = eDensity;
+
         }
       }  // end of loop over cells
     }
@@ -527,6 +563,8 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
           ionizedDopant(cell, qp) = 0.0;
           conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
           valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
+          approxQuantumEDensity(cell,qp) = 0.0;
+	  artCBDensity(cell, qp) = 0.0;
         }
       }
     }
@@ -560,6 +598,8 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
         ionizedDopant(cell, qp) = 0.0;
         conductionBand(cell, qp) = qPhiRef-workFunc-phi*V0; // [eV]
         valenceBand(cell, qp) = conductionBand(cell,qp); // No band gap in metal
+        approxQuantumEDensity(cell,qp) = 0.0;
+	artCBDensity(cell, qp) = 0.0;
       }
     }
   }
@@ -602,12 +642,15 @@ evaluateFields_default(typename Traits::EvalData workset)
       poissonSource(cell, qp) = factor*charge;
       
       // set all states to 0 except electricPotential 
+      chargeDensity(cell, qp) = 0.0;
       electronDensity(cell, qp) = 0.0;  
       holeDensity(cell, qp) = 0.0;      
       electricPotential(cell, qp) = phi; // no scaling
       ionizedDopant(cell, qp) = 0.0;
       conductionBand(cell, qp) = 0.0; 
       valenceBand(cell, qp) = 0.01; 
+      approxQuantumEDensity(cell,qp) = 0.0;
+      artCBDensity(cell, qp) = 0.0;
     }
   }
 }
@@ -779,9 +822,15 @@ QCAD::PoissonSource<EvalT,Traits>::computeFDIntMinusOneHalf(const ScalarT x)
 // *****************************************************************************
 template<typename EvalT, typename Traits>
 typename QCAD::PoissonSource<EvalT,Traits>::ScalarT
-QCAD::PoissonSource<EvalT,Traits>::
-eDensityForPoissonSchrond(typename Traits::EvalData workset, std::size_t cell, std::size_t qp)
+QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrond 
+(typename Traits::EvalData workset, std::size_t cell, std::size_t qp, const ScalarT prevPhi, const bool bUsePredCorr)
 {
+  // Use the predictor-corrector method proposed by A. Trellakis, A. T. Galick,  
+  // and U. Ravaioli, "Iteration scheme for the solution of the two-dimensional  
+  // Schrodinger-Poisson equations in quantum structures", J. Appl. Phys. 81, 7880 (1997). 
+  // If bUsePredCorr = true, use the predictor-corrector approach.
+  // If bUsePredCorr = false, calculate the exact quantum electron density. 
+  
   // unit conversion factor
   double eVPerJ = 1.0/eleQ; 
   double cm2Perm2 = 1.0e4; 
@@ -801,6 +850,21 @@ eDensityForPoissonSchrond(typename Traits::EvalData workset, std::size_t cell, s
   std::vector<double> eigenvals( neg_eigenvals );
   for(unsigned int i=0; i<eigenvals.size(); ++i) eigenvals[i] *= -1; //apply minus sign (b/c of eigenval convention)
   
+  // determine deltaPhi used in computing quantum electron density
+  ScalarT deltaPhi = 0.0;  // 0 by default
+  
+  // if (abs(prevPhi) > 0.0) // for non-zero prevPhi, apply the predictor-corrector method
+  // This is a bad condition since prevPhi can be 0 for given (cell,qp) even when bUsePredCorr = true
+  
+  if (bUsePredCorr)  // true: apply the p-c method
+  {
+    const ScalarT& phi = potential(cell,qp);
+    deltaPhi = phi - prevPhi; 
+  }
+  else
+    deltaPhi = 0.0;  // false: do not apply the p-c method
+  
+  // compute quantum electron density according to dimensionality
   switch (numDims)
   {
     case 1: // 1D wavefunction (1D confinement)
@@ -825,7 +889,7 @@ eDensityForPoissonSchrond(typename Traits::EvalData workset, std::size_t cell, s
         // (need to normalize them in the Schrodinger solver)
         ScalarT wfSquared = ( eigenvector_Re[i](cell,qp)*eigenvector_Re[i](cell,qp) + 
  			      eigenvector_Im[i](cell,qp)*eigenvector_Im[i](cell,qp) );
-        eDensity += wfSquared*log(1.+exp((Ef-eigenvals[i])/kbT));
+        eDensity += wfSquared*log(1. + exp((Ef-eigenvals[i])/kbT + deltaPhi) );
       }
       eDensity = eDenPrefactor*eDensity; // in [cm^-3]
       
@@ -847,15 +911,6 @@ eDensityForPoissonSchrond(typename Traits::EvalData workset, std::size_t cell, s
       // X0^2 is used to scale wavefunc. squared from [um^-2] or [nm^-2] to [cm^-2]
       ScalarT eDenPrefactor = valleyDegeneracyFactor*n1D/pow(X0,2.);
 
-      //FOR SUZEY 
-      // Note for Future: I'm not sure if "Previous Poisson Potential" will always exist when
-      //   calling the Poisson solver with a Schrodinger source, so use of this state should be 
-      //   confined to where the user specified a Predictor-Corrector method.
-      Albany::MDArray prevPhi = (*workset.stateArrayPtr)["Previous Poisson Potential"];
-      ScalarT testThatYouCanUsePrevPhi = prevPhi(cell,qp) * prevPhi(cell,qp);
-      if(cell == 0 && qp == 0) 
-	std::cout << "DEBUG: test Prev Phi: " << testThatYouCanUsePrevPhi << std::endl;
-
       // loop over eigenvalues to compute electron density [cm^-3]
       for(int i=0; i < nEigenvectors; i++) 
       {
@@ -863,7 +918,7 @@ eDensityForPoissonSchrond(typename Traits::EvalData workset, std::size_t cell, s
         // (need to normalize them in the Schrodinger solver)
         ScalarT wfSquared = ( eigenvector_Re[i](cell,qp)*eigenvector_Re[i](cell,qp) + 
  			      eigenvector_Im[i](cell,qp)*eigenvector_Im[i](cell,qp) );
-        ScalarT inArg = (Ef-eigenvals[i])/kbT;
+        ScalarT inArg = (Ef-eigenvals[i])/kbT + deltaPhi;
         eDensity += wfSquared*computeFDIntMinusOneHalf(inArg); 
       }
       eDensity = eDenPrefactor*eDensity; // in [cm^-3]
@@ -886,7 +941,7 @@ eDensityForPoissonSchrond(typename Traits::EvalData workset, std::size_t cell, s
       for(int i = 0; i < nEigenvectors; i++) 
       {
         // Fermi-Dirac distribution
-        ScalarT fermiFactor = 1.0/( exp((eigenvals[i]-Ef)/kbT) + 1.0 );
+        ScalarT fermiFactor = 1.0/( exp((eigenvals[i]-Ef)/kbT + deltaPhi) + 1.0 );
               
         // note: wavefunctions are assumed normalized here 
         // (need to normalize them in the Schrodinger solver)

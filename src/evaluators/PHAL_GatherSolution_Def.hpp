@@ -34,9 +34,9 @@ GatherSolutionBase(const Teuchos::ParameterList& p)
     enableTransient = !p.get<bool>("Disable Transient");
   else enableTransient = true;
 
-  std::vector<std::string> solution_names; 
+  Teuchos::ArrayRCP<std::string> solution_names; 
   if (p.getEntryPtr("Solution Names")) {
-    solution_names = *(p.get< Teuchos::RCP< std::vector<std::string> > >("Solution Names"));
+    solution_names = p.get< Teuchos::ArrayRCP<std::string> >("Solution Names");
   }
   Teuchos::RCP<PHX::DataLayout> dl = 
     p.get< Teuchos::RCP<PHX::DataLayout> >("Data Layout");
@@ -50,8 +50,8 @@ GatherSolutionBase(const Teuchos::ParameterList& p)
     }
     // repeat for xdot if transient is enabled
     if (enableTransient) {
-      const std::vector<std::string>& names_dot = 
-        *(p.get< Teuchos::RCP< std::vector<std::string> > >("Time Dependent Solution Names"));
+      const Teuchos::ArrayRCP<std::string>& names_dot = 
+        p.get< Teuchos::ArrayRCP<std::string> >("Time Dependent Solution Names");
   
       val_dot.resize(names_dot.size());
       for (std::size_t eq = 0; eq < names_dot.size(); ++eq) {
@@ -69,8 +69,8 @@ GatherSolutionBase(const Teuchos::ParameterList& p)
     this->addEvaluatedField(valVec[0]);
     // repeat for xdot if transient is enabled
     if (enableTransient) {
-      const std::vector<std::string>& names_dot = 
-        *(p.get< Teuchos::RCP< std::vector<std::string> > >("Time Dependent Solution Names"));
+      const Teuchos::ArrayRCP<std::string>& names_dot = 
+        p.get< Teuchos::ArrayRCP<std::string> >("Time Dependent Solution Names");
   
       valVec_dot.resize(1);
       PHX::MDField<ScalarT,Cell,Node,Dim> f(names_dot[0],dl);
@@ -284,9 +284,9 @@ evaluateFields(typename Traits::EvalData workset)
 { 
   Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,RealType> > sg_expansion =
     workset.sg_expansion;
-  Teuchos::RCP<const Stokhos::VectorOrthogPoly<Epetra_Vector> > x = 
+  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > x = 
     workset.sg_x;
-  Teuchos::RCP<const Stokhos::VectorOrthogPoly<Epetra_Vector> > xdot = 
+  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > xdot = 
     workset.sg_xdot;
   ScalarT* valptr;
 
@@ -340,9 +340,9 @@ evaluateFields(typename Traits::EvalData workset)
 { 
   Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,RealType> > sg_expansion =
     workset.sg_expansion;
-  Teuchos::RCP<const Stokhos::VectorOrthogPoly<Epetra_Vector> > x = 
+  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > x = 
     workset.sg_x;
-  Teuchos::RCP<const Stokhos::VectorOrthogPoly<Epetra_Vector> > xdot = 
+  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > xdot = 
     workset.sg_xdot;
   ScalarT* valptr;
   
@@ -384,6 +384,82 @@ evaluateFields(typename Traits::EvalData workset)
 // **********************************************************************
 
 // **********************************************************************
+// Specialization: Stochastic Galerkin Tangent
+// **********************************************************************
+
+template<typename Traits>
+GatherSolution<PHAL::AlbanyTraits::SGTangent, Traits>::
+GatherSolution(const Teuchos::ParameterList& p) :
+  GatherSolutionBase<PHAL::AlbanyTraits::SGTangent, Traits>(p),
+  numFields(GatherSolutionBase<PHAL::AlbanyTraits::SGTangent,Traits>::numFieldsBase)
+{ 
+}
+
+// **********************************************************************
+template<typename Traits>
+void GatherSolution<PHAL::AlbanyTraits::SGTangent, Traits>::
+evaluateFields(typename Traits::EvalData workset)
+{ 
+
+  Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,RealType> > sg_expansion =
+    workset.sg_expansion;
+  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > x = 
+    workset.sg_x;
+  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > xdot = 
+    workset.sg_xdot;
+  Teuchos::RCP<const Epetra_MultiVector> Vx = workset.Vx;
+  Teuchos::RCP<const Epetra_MultiVector> Vxdot = workset.Vxdot;
+  Teuchos::RCP<const Epetra_MultiVector> Vp = workset.Vp;
+  Teuchos::RCP<ParamVec> params = workset.params;
+  int num_cols_tot = workset.param_offset + workset.num_cols_p;
+  ScalarT* valptr;
+
+  int nblock = x->size();
+  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
+
+    for (std::size_t node = 0; node < this->numNodes; ++node) {
+      for (std::size_t eq = 0; eq < numFields; eq++) {
+        if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+        else                   valptr = &(this->val[eq])(cell,node);
+	if (Vx != Teuchos::null && workset.j_coeff != 0.0) {
+	  *valptr = SGFadType(num_cols_tot, 0.0);
+	  for (int k=0; k<workset.num_cols_x; k++)
+	    valptr->fastAccessDx(k) = 
+	      workset.j_coeff*(*Vx)[k][nodeID[node][this->offset + eq]];
+	}
+	else
+	  *valptr = SGFadType(0.0);
+	valptr->val().reset(sg_expansion);
+	valptr->val().copyForWrite();
+	for (int block=0; block<nblock; block++)
+	  valptr->val().fastAccessCoeff(block) = (*x)[block][nodeID[node][this->offset + eq]];
+      }
+      if (workset.transientTerms && this->enableTransient) {
+        for (std::size_t eq = 0; eq < numFields; eq++) {
+          if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
+          else                   valptr = &(this->val_dot[eq])(cell,node);
+	  if (Vxdot != Teuchos::null && workset.m_coeff != 0.0) {
+	    *valptr = SGFadType(num_cols_tot, 0.0);
+	    for (int k=0; k<workset.num_cols_x; k++)
+	      valptr->fastAccessDx(k) = 
+		workset.m_coeff*(*Vxdot)[k][nodeID[node][this->offset + eq]];
+	  }
+	  else
+	    *valptr = SGFadType(0.0);
+	  valptr->val().reset(sg_expansion);
+	  valptr->val().copyForWrite();
+	  for (int block=0; block<nblock; block++)
+	    valptr->val().fastAccessCoeff(block) = (*xdot)[block][nodeID[node][this->offset + eq]];
+        }
+      }
+    }
+  }
+}
+
+// **********************************************************************
+
+// **********************************************************************
 // Specialization: Multi-point Residual
 // **********************************************************************
 
@@ -400,9 +476,9 @@ template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::MPResidual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 { 
-  Teuchos::RCP<const Stokhos::ProductContainer<Epetra_Vector> > x = 
+  Teuchos::RCP<const Stokhos::ProductEpetraVector > x = 
     workset.mp_x;
-  Teuchos::RCP<const Stokhos::ProductContainer<Epetra_Vector> > xdot = 
+  Teuchos::RCP<const Stokhos::ProductEpetraVector > xdot = 
     workset.mp_xdot;
   ScalarT* valptr;
 
@@ -454,9 +530,9 @@ template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::MPJacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 { 
-  Teuchos::RCP<const Stokhos::ProductContainer<Epetra_Vector> > x = 
+  Teuchos::RCP<const Stokhos::ProductEpetraVector > x = 
     workset.mp_x;
-  Teuchos::RCP<const Stokhos::ProductContainer<Epetra_Vector> > xdot = 
+  Teuchos::RCP<const Stokhos::ProductEpetraVector > xdot = 
     workset.mp_xdot;
   ScalarT* valptr;
   
@@ -485,6 +561,80 @@ evaluateFields(typename Traits::EvalData workset)
           else                   valptr = &(this->val_dot[eq])(cell,node);
   	  *valptr = MPFadType(num_dof, 0.0);
 	  valptr->fastAccessDx(neq * node + eq + this->offset) = workset.m_coeff;
+	  valptr->val().reset(nblock);
+	  valptr->val().copyForWrite();
+	  for (int block=0; block<nblock; block++)
+	    valptr->val().fastAccessCoeff(block) = (*xdot)[block][nodeID[node][this->offset + eq]];
+        }
+      }
+    }
+  }
+}
+
+// **********************************************************************
+
+// **********************************************************************
+// Specialization: Multi-point Galerkin Tangent
+// **********************************************************************
+
+template<typename Traits>
+GatherSolution<PHAL::AlbanyTraits::MPTangent, Traits>::
+GatherSolution(const Teuchos::ParameterList& p) :
+  GatherSolutionBase<PHAL::AlbanyTraits::MPTangent, Traits>(p),
+  numFields(GatherSolutionBase<PHAL::AlbanyTraits::MPTangent,Traits>::numFieldsBase)
+{ 
+}
+
+// **********************************************************************
+template<typename Traits>
+void GatherSolution<PHAL::AlbanyTraits::MPTangent, Traits>::
+evaluateFields(typename Traits::EvalData workset)
+{ 
+
+  Teuchos::RCP<const Stokhos::ProductEpetraVector > x = 
+    workset.mp_x;
+  Teuchos::RCP<const Stokhos::ProductEpetraVector > xdot = 
+    workset.mp_xdot;
+  Teuchos::RCP<const Epetra_MultiVector> Vx = workset.Vx;
+  Teuchos::RCP<const Epetra_MultiVector> Vxdot = workset.Vxdot;
+  Teuchos::RCP<const Epetra_MultiVector> Vp = workset.Vp;
+  Teuchos::RCP<ParamVec> params = workset.params;
+  int num_cols_tot = workset.param_offset + workset.num_cols_p;
+  ScalarT* valptr;
+
+  int nblock = x->size();
+  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
+
+    for (std::size_t node = 0; node < this->numNodes; ++node) {
+      for (std::size_t eq = 0; eq < numFields; eq++) {
+        if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+        else                   valptr = &(this->val[eq])(cell,node);
+	if (Vx != Teuchos::null && workset.j_coeff != 0.0) {
+	  *valptr = MPFadType(num_cols_tot, 0.0);
+	  for (int k=0; k<workset.num_cols_x; k++)
+	    valptr->fastAccessDx(k) = 
+	      workset.j_coeff*(*Vx)[k][nodeID[node][this->offset + eq]];
+	}
+	else
+	  *valptr = MPFadType(0.0);
+	valptr->val().reset(nblock);
+	valptr->val().copyForWrite();
+	for (int block=0; block<nblock; block++)
+	  valptr->val().fastAccessCoeff(block) = (*x)[block][nodeID[node][this->offset + eq]];
+      }
+      if (workset.transientTerms && this->enableTransient) {
+        for (std::size_t eq = 0; eq < numFields; eq++) {
+          if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
+          else                   valptr = &(this->val_dot[eq])(cell,node);
+	  if (Vxdot != Teuchos::null && workset.m_coeff != 0.0) {
+	    *valptr = MPFadType(num_cols_tot, 0.0);
+	    for (int k=0; k<workset.num_cols_x; k++)
+	      valptr->fastAccessDx(k) = 
+		workset.m_coeff*(*Vxdot)[k][nodeID[node][this->offset + eq]];
+	  }
+	  else
+	    *valptr = MPFadType(0.0);
 	  valptr->val().reset(nblock);
 	  valptr->val().copyForWrite();
 	  for (int block=0; block<nblock; block++)

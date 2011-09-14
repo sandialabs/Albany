@@ -55,11 +55,13 @@ namespace PHAL {
                        // typedef RealType MeshScalarT; }; // Uncomment for no shape opt
     struct SGResidual { typedef SGType    ScalarT; typedef RealType MeshScalarT; };
     struct SGJacobian { typedef SGFadType ScalarT; typedef RealType MeshScalarT; };
+    struct SGTangent  { typedef SGFadType ScalarT; typedef RealType MeshScalarT; };
     struct MPResidual { typedef MPType    ScalarT; typedef RealType MeshScalarT; };
     struct MPJacobian { typedef MPFadType ScalarT; typedef RealType MeshScalarT; };
+    struct MPTangent  { typedef MPFadType ScalarT; typedef RealType MeshScalarT; };
     typedef Sacado::mpl::vector<Residual, Jacobian, Tangent, 
-				SGResidual, SGJacobian, 
-				MPResidual, MPJacobian> EvalTypes;
+				SGResidual, SGJacobian, SGTangent,
+				MPResidual, MPJacobian, MPTangent> EvalTypes;
     
     // ******************************************************************
     // *** Data Types
@@ -85,11 +87,17 @@ namespace PHAL {
     // SG Jacobian (default scalar type is Fad<SGType>)
     typedef Sacado::mpl::vector<SGFadType,RealType> SGJacobianDataTypes;
 
+    // SG Tangent (default scalar type is Fad<SGType>)
+    typedef Sacado::mpl::vector<SGFadType,RealType> SGTangentDataTypes;
+
     // MP Residual (default scalar type is MPType)
     typedef Sacado::mpl::vector<MPType,RealType> MPResidualDataTypes;
   
     // MP Jacobian (default scalar type is Fad<MPType>)
     typedef Sacado::mpl::vector<MPFadType,RealType> MPJacobianDataTypes;
+
+    // MP Tangent (default scalar type is Fad<MPType>)
+    typedef Sacado::mpl::vector<MPFadType,RealType> MPTangentDataTypes;
 
     // Maps the key EvalType a vector of DataTypes
     typedef boost::mpl::map<
@@ -98,8 +106,10 @@ namespace PHAL {
       boost::mpl::pair<Tangent,  TangentDataTypes>,
       boost::mpl::pair<SGResidual, SGResidualDataTypes>,
       boost::mpl::pair<SGJacobian, SGJacobianDataTypes>,
+      boost::mpl::pair<SGTangent,  SGTangentDataTypes>,
       boost::mpl::pair<MPResidual, MPResidualDataTypes>,
-      boost::mpl::pair<MPJacobian, MPJacobianDataTypes>
+      boost::mpl::pair<MPJacobian, MPJacobianDataTypes>,
+      boost::mpl::pair<MPTangent,  MPTangentDataTypes>
     >::type EvalToDataMap;
 
     // ******************************************************************
@@ -145,10 +155,16 @@ namespace PHX {
   template<> struct TypeString<PHAL::AlbanyTraits::SGJacobian> 
   { static const std::string value; };
 
+  template<> struct TypeString<PHAL::AlbanyTraits::SGTangent> 
+  { static const std::string value; };
+
   template<> struct TypeString<PHAL::AlbanyTraits::MPResidual> 
   { static const std::string value; };
 
   template<> struct TypeString<PHAL::AlbanyTraits::MPJacobian> 
+  { static const std::string value; };
+
+  template<> struct TypeString<PHAL::AlbanyTraits::MPTangent> 
   { static const std::string value; };
 
   // Data Types
@@ -183,10 +199,14 @@ namespace PHX {
   template class name<PHAL::AlbanyTraits::SGResidual, PHAL::AlbanyTraits>;
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_SGJACOBIAN(name) \
   template class name<PHAL::AlbanyTraits::SGJacobian, PHAL::AlbanyTraits>;
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_SGTANGENT(name) \
+  template class name<PHAL::AlbanyTraits::SGTangent, PHAL::AlbanyTraits>;
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_MPRESIDUAL(name) \
   template class name<PHAL::AlbanyTraits::MPResidual, PHAL::AlbanyTraits>;
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_MPJACOBIAN(name) \
   template class name<PHAL::AlbanyTraits::MPJacobian, PHAL::AlbanyTraits>;
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_MPTANGENT(name) \
+  template class name<PHAL::AlbanyTraits::MPTangent, PHAL::AlbanyTraits>;
 
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS(name)		 \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_RESIDUAL(name)	 \
@@ -194,7 +214,9 @@ namespace PHX {
   PHAL_INSTANTIATE_TEMPLATE_CLASS_TANGENT(name)		 \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_SGRESIDUAL(name)	 \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_SGJACOBIAN(name)	 \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_SGTANGENT(name)	 \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_MPRESIDUAL(name)	 \
-  PHAL_INSTANTIATE_TEMPLATE_CLASS_MPJACOBIAN(name)
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_MPJACOBIAN(name)	 \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_MPTANGENT(name)
 
 #endif

@@ -24,7 +24,7 @@ fi
 # run tests in Albany
 #-------------------------------------------
 
-cd $ALBDIR/CMAKE_BUILD
+cd $ALBDIR/LINUX_DEBUG
 echo "------------------CTEST----------------------" \
      > $ALBOUTDIR/albany_runtests.out
 

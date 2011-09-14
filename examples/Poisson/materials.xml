@@ -3,6 +3,14 @@
 
   <ParameterList name="NodeSets">
 
+    <ParameterList name="top">
+      <Parameter name="elementBlock" type="string" value="silicon" />
+    </ParameterList>
+
+    <ParameterList name="bottom">
+      <Parameter name="elementBlock" type="string" value="silicon" />
+    </ParameterList>
+
     <ParameterList name="lgate">
       <Parameter name="material" type="string" value="PolySilicon" />
     </ParameterList>

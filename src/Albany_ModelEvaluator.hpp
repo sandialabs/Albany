@@ -34,9 +34,7 @@ namespace Albany {
     // Constructor
     ModelEvaluator(
        const Teuchos::RCP<Albany::Application>& app,
-       const Teuchos::RCP< Teuchos::Array<std::string> >& free_param_names = Teuchos::null,
-       const Teuchos::RCP< Teuchos::Array<std::string> >& sg_param_names = 
-       Teuchos::null);
+       const Teuchos::RCP<Teuchos::ParameterList>& appParams);
 
     /** \name Overridden from EpetraExt::ModelEvaluator . */
     //@{
@@ -50,32 +48,12 @@ namespace Albany {
     //! Return parameter vector map
     Teuchos::RCP<const Epetra_Map> get_p_map(int l) const;
 
-    //! Return parameter vector map
-    Teuchos::RCP<const Epetra_Map> get_p_sg_map(int l) const;
-
-    //! Return parameter vector map
-    Teuchos::RCP<const Epetra_Map> get_p_mp_map(int l) const;
-
     //! Return response function map
     Teuchos::RCP<const Epetra_Map> get_g_map(int j) const;
-
-    //! Return response function map
-    Teuchos::RCP<const Epetra_Map> get_g_sg_map(int j) const;
-
-    //! Return response function map
-    Teuchos::RCP<const Epetra_Map> get_g_mp_map(int j) const;
 
     //! Return array of parameter names
     Teuchos::RCP<const Teuchos::Array<std::string> > 
     get_p_names(int l) const;
-
-    //! Return array of parameter names
-    Teuchos::RCP<const Teuchos::Array<std::string> > 
-    get_p_sg_names(int l) const;
-
-    //! Return array of parameter names
-    Teuchos::RCP<const Teuchos::Array<std::string> > 
-    get_p_mp_names(int l) const;
 
     //! Return initial solution and x_dot init
     Teuchos::RCP<const Epetra_Vector> get_x_init() const;
@@ -110,7 +88,7 @@ namespace Albany {
     Teuchos::Array< Teuchos::RCP< Teuchos::Array<std::string> > > param_names;
 
     //! Sacado parameter vector
-    Teuchos::Array< Teuchos::RCP<ParamVec> > sacado_param_vec;
+    mutable Teuchos::Array<ParamVec> sacado_param_vec;
 
     //! Epetra map for parameter vector
     Teuchos::Array< Teuchos::RCP<Epetra_LocalMap> > epetra_param_map;
@@ -118,26 +96,17 @@ namespace Albany {
     //! Epetra parameter vector
     Teuchos::Array< Teuchos::RCP<Epetra_Vector> > epetra_param_vec;
 
-    //! Whether the problem is transient or not
-    bool transient;
-
-    //! Supports parameters
-    bool supports_p;
-
     //! Supports response functions
     bool supports_g;
-
-    //! Whether we support SG
-    bool supports_sg;
 
     //! Whether the problem supplies its own preconditioner
     bool supplies_prec;
 
     //! Stochastic Galerkin parameters
-    mutable Teuchos::Array<SGType> p_sg_vals;
+    mutable Teuchos::Array< Teuchos::Array<SGType> > p_sg_vals;
 
     //! Multi-point parameters
-    mutable Teuchos::Array<MPType> p_mp_vals;
+    mutable Teuchos::Array< Teuchos::Array<MPType> > p_mp_vals;
 
     //! Allocated Jacobian for sending to user preconditioner
     mutable Teuchos::RCP<Epetra_CrsMatrix> Extra_W_crs;
