@@ -42,7 +42,7 @@ if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputSG_steady.xml)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
                  ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
   get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_SG NAME)
-  add_test(${testName} ${AlbanySG.exe})
+  add_test(${testName} ${AlbanySG.exe} inputSG_steady.xml)
 endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputSG_steady.xml)
 
 # 5. Repeat process for Dakota problems if "dakota.in" exists
