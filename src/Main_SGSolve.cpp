@@ -34,12 +34,13 @@
 // Global function to encapsulate KL solution computation...
 //
 
-bool KL_OnSolutionMultiVector( const Teuchos::RCP<ENAT::SGNOXSolver>& App_sg, 
-					const Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly>& sg_u,
-					const Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> >& basis,
-					const int NumKL,
-					Teuchos::Array<double>& evals,
-					Teuchos::RCP<Epetra_MultiVector>& evecs)
+bool KL_OnSolutionMultiVector( 
+  const Teuchos::RCP<Piro::Epetra::StokhosSolver>& App_sg, 
+  const Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly>& sg_u,
+  const Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> >& basis,
+  const int NumKL,
+  Teuchos::Array<double>& evals,
+  Teuchos::RCP<Epetra_MultiVector>& evecs)
 {
 
   /*
@@ -261,7 +262,7 @@ int main(int argc, char *argv[]) {
 	Teuchos::Array<double> evals;
 	Teuchos::RCP<Epetra_MultiVector> evecs;
 	
-	bool KL_success = KL_OnSolutionMultiVector(app, 
+	bool KL_success = KL_OnSolutionMultiVector(sg_solver, 
 						   sg_u,
 						   basis,
 						   NumKL,

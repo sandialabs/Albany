@@ -453,9 +453,9 @@ Albany::NavierStokes::constructEvaluators(
     p->set<string>("Material Property Name", 
 		   "Porosity");
     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = 
@@ -474,9 +474,9 @@ Albany::NavierStokes::constructEvaluators(
     p->set<string>("Material Property Name", 
 		   "Permeability");
     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = 
@@ -495,9 +495,9 @@ Albany::NavierStokes::constructEvaluators(
     p->set<string>("Material Property Name", 
 		   "Forchheimer");
     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
+    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = 
@@ -506,225 +506,6 @@ Albany::NavierStokes::constructEvaluators(
 
     evaluators_to_build["Forchheimer"] = p;
   } 
- 
-  if (haveHeat) { // DOF: Interpolate nodal Temperature values to quad points
-    RCP<ParameterList> p = 
-      rcp(new ParameterList("Navier-Stokes DOFInterpolation Temperature"));
-
-    int type = FactoryTraits<AlbanyTraits>::id_dof_interpolation;
-    p->set<int>("Type", type);
-
-    // Input
-    p->set<string>("Variable Name", "Temperature");
-    p->set<string>("BF Name", "BF");
-    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
-
-    // Output (assumes same Name as input)
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
-
-    evaluators_to_build["DOF Temperature"] = p;
-  }
-
-  if (haveHeat) {
-    // DOF: Interpolate nodal Temperature Dot  values to quad points
-    RCP<ParameterList> p = 
-      rcp(new ParameterList("Navier-Stokes DOFInterpolation Temperature Dot"));
-
-    int type = FactoryTraits<AlbanyTraits>::id_dof_interpolation;
-    p->set<int>("Type", type);
-
-    // Input
-    p->set<string>("Variable Name", "Temperature_dot");
-    p->set<string>("BF Name", "BF");
-    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
-
-    // Output (assumes same Name as input)
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
-
-    evaluators_to_build["DOF Temperature_dot"] = p;
-  }
-
-  if (haveHeat) { 
-    // DOF: Interpolate nodal Temperature gradients to quad points
-    RCP<ParameterList> p = 
-      rcp(new ParameterList("Navier-Stokes DOFInterpolation Temperature Grad"));
-
-    int type = FactoryTraits<AlbanyTraits>::id_dof_grad_interpolation;
-    p->set<int>("Type", type);
-
-    // Input
-    p->set<string>("Variable Name", "Temperature");
-    p->set<string>("Gradient BF Name", "Grad BF");
-    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);
-
-    // Output
-    p->set<string>("Gradient Variable Name", "Temperature Gradient");
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
-
-    evaluators_to_build["DOF Grad Temperature"] = p;
-  }
-
-  if (haveNeut) { // DOF: Interpolate nodal neutron flux values to quad points
-    RCP<ParameterList> p = 
-      rcp(new ParameterList("Navier-Stokes DOFInterpolation Neutron"));
-
-    int type = FactoryTraits<AlbanyTraits>::id_dof_interpolation;
-    p->set<int>("Type", type);
-
-    // Input
-    p->set<string>("Variable Name", "Neutron");
-    p->set<string>("BF Name", "BF");
-    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
-
-    // Output (assumes same Name as input)
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
-
-    evaluators_to_build["DOF Neutron"] = p;
-  }
-
-  if (haveNeut) { 
-    // DOF: Interpolate nodal neutron flux gradients to quad points
-    RCP<ParameterList> p = 
-      rcp(new ParameterList("Navier-Stokes DOFInterpolation Neutron Grad"));
-
-    int type = FactoryTraits<AlbanyTraits>::id_dof_grad_interpolation;
-    p->set<int>("Type", type);
-
-    // Input
-    p->set<string>("Variable Name", "Neutron");
-    p->set<string>("Gradient BF Name", "Grad BF");
-    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);
-
-    // Output
-    p->set<string>("Gradient Variable Name", "Neutron Gradient");
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
-
-    evaluators_to_build["DOF Grad Neutron"] = p;
-  }
-
-  if (haveFlow) { 
-    // DOF: Interpolate nodal Pressure values to quad points
-    RCP<ParameterList> p = 
-      rcp(new ParameterList("Navier-Stokes DOFInterpolation Pressure"));
-
-    int type = FactoryTraits<AlbanyTraits>::id_dof_interpolation;
-    p->set<int>("Type", type);
-
-    // Input
-    p->set<string>("Variable Name", "Pressure");
-    p->set<string>("BF Name", "BF");
-    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
-
-    // Output (assumes same Name as input)
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
-
-    evaluators_to_build["DOF Pressure"] = p;
-  }
-
-  if (haveFlow) {
-    // DOF: Interpolate nodal Pressure Dot  values to quad points
-    RCP<ParameterList> p = 
-      rcp(new ParameterList("Navier-Stokes DOFInterpolation Pressure Dot"));
-
-    int type = FactoryTraits<AlbanyTraits>::id_dof_interpolation;
-    p->set<int>("Type", type);
-
-    // Input
-    p->set<string>("Variable Name", "Pressure_dot");
-    p->set<string>("BF Name", "BF");
-    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
-
-    // Output (assumes same Name as input)
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
-
-    evaluators_to_build["DOF Pressure_dot"] = p;
-  }
-
-  if (haveFlow) { // DOF: Interpolate nodal Pressure gradients to quad points
-    RCP<ParameterList> p = 
-      rcp(new ParameterList("Navier-Stokes DOFInterpolation Pressure Grad"));
-
-    int type = FactoryTraits<AlbanyTraits>::id_dof_grad_interpolation;
-    p->set<int>("Type", type);
-
-    // Input
-    p->set<string>("Variable Name", "Pressure");
-    p->set<string>("Gradient BF Name", "Grad BF");
-    p->set< RCP<DataLayout> >("Node Data Layout", node_scalar);
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);
-
-    // Output
-    p->set<string>("Gradient Variable Name", "Pressure Gradient");
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
-
-    evaluators_to_build["DOF Grad Pressure"] = p;
-  }
-
-  if (haveFlow) { // DOF: Interpolate nodal Velocity values to quad points
-    RCP<ParameterList> p = 
-      rcp(new ParameterList("Navier-Stokes DOFInterpolation Velocity"));
-
-    int type = FactoryTraits<AlbanyTraits>::id_dofvec_interpolation;
-    p->set<int>("Type", type);
-
-    // Input
-    p->set<string>("Variable Name", "Velocity");
-    p->set<string>("BF Name", "BF");
-    p->set< RCP<DataLayout> >("Node Vector Data Layout", node_vector);
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
-
-    // Output (assumes same Name as input)
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
-
-    evaluators_to_build["DOF Velocity"] = p;
-  }
-
-  if (haveFlow) {
-    // DOF: Interpolate nodal Velocity Dot  values to quad points
-    RCP<ParameterList> p = 
-      rcp(new ParameterList("Navier-Stokes DOFInterpolation Velocity Dot"));
-
-    int type = FactoryTraits<AlbanyTraits>::id_dofvec_interpolation;
-    p->set<int>("Type", type);
-
-    // Input
-    p->set<string>("Variable Name", "Velocity_dot");
-    p->set<string>("BF Name", "BF");
-    p->set< RCP<DataLayout> >("Node Vector Data Layout", node_vector);
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", node_qp_scalar);
-
-    // Output (assumes same Name as input)
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
-
-    evaluators_to_build["DOF Velocity_dot"] = p;
-  }
-
-  if (haveFlow) { // DOF: Interpolate nodal Velocity gradients to quad points
-    RCP<ParameterList> p = 
-      rcp(new ParameterList("Navier-Stokes DOFInterpolation Velocity Grad"));
-
-    int type = FactoryTraits<AlbanyTraits>::id_dofvec_grad_interpolation;
-    p->set<int>("Type", type);
-
-    // Input
-    p->set<string>("Variable Name", "Velocity");
-    p->set<string>("Gradient BF Name", "Grad BF");
-    p->set< RCP<DataLayout> >("Node Vector Data Layout", node_vector);
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);
-
-    // Output
-    p->set<string>("Gradient Variable Name", "Velocity Gradient");
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
-
-    evaluators_to_build["DOF Grad Velocity"] = p;
-  }
 
   if (haveHeat && haveSource) { // Source
     RCP<ParameterList> p = rcp(new ParameterList);
@@ -798,10 +579,10 @@ Albany::NavierStokes::constructEvaluators(
     p->set<string>("Porosity QP Variable Name", "Porosity");
     p->set<string>("Permeability QP Variable Name", "Permeability");
 
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
   
@@ -825,10 +606,10 @@ Albany::NavierStokes::constructEvaluators(
     p->set<string>("Permeability QP Variable Name", "Permeability");
     p->set<string>("Forchheimer QP Variable Name", "Forchheimer");
 
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", qp_vector);
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", qp_tensor);
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", node_qp_vector);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
   

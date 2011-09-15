@@ -125,13 +125,15 @@ struct FactoryTraits {
   static const int id_nsmatprop                 = 34;
   static const int id_nsbodyforce               = 35;
   static const int id_nsneutroneqresid          = 36;
-  static const int id_qcad_response_fieldintegral = 37;
-  static const int id_qcad_response_fieldvalue    = 38;
-  static const int id_qcad_response_saddlevalue   = 39;
-  static const int id_qcad_response_savefield     = 40;
-  static const int id_qcad_response_centerofmass  = 41;
+  static const int id_nspermeabilityterm        = 37;
+  static const int id_nsforchheimerterm         = 38;
+  static const int id_qcad_response_fieldintegral = 39;
+  static const int id_qcad_response_fieldvalue    = 40;
+  static const int id_qcad_response_saddlevalue   = 41;
+  static const int id_qcad_response_savefield     = 42;
+  static const int id_qcad_response_centerofmass  = 43;
 
-  typedef boost::mpl::vector42< 
+  typedef boost::mpl::vector44< 
             PHAL::GatherSolution<_,Traits>,           //  0
             PHAL::GatherCoordinateVector<_,Traits>,   //  1
             PHAL::GatherEigenvectors<_,Traits>,       //  2
@@ -169,11 +171,13 @@ struct FactoryTraits {
             PHAL::NSMaterialProperty<_,Traits>,       // 34
             PHAL::NSBodyForce<_,Traits>,              // 35
             PHAL::NSNeutronEqResid<_,Traits>,         // 36
-            QCAD::ResponseFieldIntegral<_,Traits>,    // 37
-            QCAD::ResponseFieldValue<_,Traits>,       // 38
-            QCAD::ResponseSaddleValue<_,Traits>,      // 39
-            QCAD::ResponseSaveField<_,Traits>,        // 40
-            QCAD::ResponseCenterOfMass<_,Traits>      // 41
+            PHAL::NSPermeabilityTerm<_,Traits>,       // 37
+            PHAL::NSForchheimerTerm<_,Traits>,         // 38
+            QCAD::ResponseFieldIntegral<_,Traits>,    // 39
+            QCAD::ResponseFieldValue<_,Traits>,       // 40
+            QCAD::ResponseSaddleValue<_,Traits>,      // 41
+            QCAD::ResponseSaveField<_,Traits>,        // 42
+            QCAD::ResponseCenterOfMass<_,Traits>      // 43
   > EvaluatorTypes;
   
 };

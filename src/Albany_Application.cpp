@@ -22,7 +22,6 @@
 #include "Epetra_LocalMap.h"
 #include "Stokhos_OrthogPolyBasis.hpp"
 #include "Teuchos_TimeMonitor.hpp"
-#include "EpetraExt_RowMatrixOut.h"
 
 #include<string>
 #include "PHAL_Workset.hpp"
@@ -494,7 +493,6 @@ computeGlobalJacobian(const double alpha,
   jac.FillComplete(true);
   //cout << "f " << *f << endl;;
   //cout << "J " << jac << endl;;
-  EpetraExt::RowMatrixToMatrixMarketFile("massmatrix",jac);
 }
 
 void
@@ -2768,7 +2766,6 @@ Albany::Application::buildWrappedOperator(const RCP<Epetra_Operator>& Jac,
 
      *out << "Teko: Tested operator correctness:  " << (result ? "passed" : "FAILED!") << std::endl;
   }
-  
   return wrappedOp;
 }
 
