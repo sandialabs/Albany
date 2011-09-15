@@ -59,7 +59,7 @@ private:
   PHX::MDField<ScalarT,Cell,Node> TauT;
 
   unsigned int numQPs, numDims;
-  Intrepid::FieldContainer<double> normGc;
+  Intrepid::FieldContainer<ScalarT> normGc;
 
 };
 }

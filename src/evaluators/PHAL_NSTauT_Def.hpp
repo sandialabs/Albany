@@ -85,23 +85,18 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t qp=0; qp < numQPs; ++qp) {       
         TauT(cell,qp) = 0.0;
         normGc(cell,qp) = 0.0;
-        double r = Albany::ADValue(rho(cell,qp));
-        double cp = Albany::ADValue(Cp(cell,qp));
-        double Th = Albany::ADValue(ThermalCond(cell,qp));
         for (std::size_t i=0; i < numDims; ++i) {
-          double Vi = Albany::ADValue(V(cell,qp,i));
           for (std::size_t j=0; j < numDims; ++j) {
-            double Vj = Albany::ADValue(V(cell,qp,j));
-            double gc = Albany::ADValue(Gc(cell,qp,i,j));
-            TauT(cell,qp) += r * cp * r * cp* Vi*gc*Vj;
-            normGc(cell,qp) += gc*gc;          
+            TauT(cell,qp) += rho(cell,qp) * Cp(cell,qp) * rho(cell,qp) * Cp(cell,qp)* V(cell,qp,i)*Gc(cell,qp,i,j)*V(cell,qp,j);
+            normGc(cell,qp) += Gc(cell,qp,i,j)*Gc(cell,qp,i,j);          
           }
         }
-        TauT(cell,qp) += 12*Th*Th*std::sqrt(normGc(cell,qp));
+        TauT(cell,qp) += 12*ThermalCond(cell,qp)*ThermalCond(cell,qp)*std::sqrt(normGc(cell,qp));
         TauT(cell,qp) = 1/std::sqrt(TauT(cell,qp));
       }
     }
   
+
 }
 
 //**********************************************************************
