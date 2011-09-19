@@ -56,6 +56,10 @@
   <ParameterList name="Piro">
     <Parameter name="Solver Type" type="string" value="NOX"/>
     <ParameterList name="Stochastic Galerkin">
+      <ParameterList name="Response KL">
+        <Parameter name="ComputeKLOnResponse" type="bool" value="true"/>
+	<Parameter name="NumKL" type="int" value="5"/>
+      </ParameterList>
       <Parameter name="Save Moments" type="int" value="2"/>
       <ParameterList name="SG Parameters">
 	<Parameter name="Number of SG Parameter Vectors" type="int" value="1"/>
@@ -100,6 +104,7 @@
 	    <Parameter name="coarse: type" type="string" value="Amesos-KLU"/>
 	  </ParameterList>
 	</ParameterList>
+      
       </ParameterList>
     </ParameterList>
     <ParameterList name="NOX">

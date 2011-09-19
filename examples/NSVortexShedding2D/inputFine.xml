@@ -16,8 +16,11 @@
     </ParameterList>
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="1"/>
-      <Parameter name="Equation" type="int" value="0"/>
       <Parameter name="Response 0" type="string" value="Solution Max Value"/>
+      <ParameterList name="ResponseParams 0">
+        <Parameter name="Equation" type="int" value="0" />
+        <Parameter name="Num Equations" type="int" value="3" />
+      </ParameterList>
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">

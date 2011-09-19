@@ -62,7 +62,10 @@ namespace Albany {
     //! Private to prohibit copying
     NavierStokes& operator=(const NavierStokes&);
 
-    void constructEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
+    void constructEvaluators(const Albany::MeshSpecsStruct& meshSpecs,
+                             Albany::StateManager& stateMgr,
+                             std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
+
     void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
 
   protected:
@@ -78,6 +81,7 @@ namespace Albany {
     bool haveNeutSource;   //! have source term in neutron flux equation
     bool havePSPG;     //! have pressure stabilization
     bool haveSUPG;     //! have SUPG stabilization
+    bool porousMedia;  //! flow through porous media problem
     
   };
 

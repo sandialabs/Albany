@@ -53,38 +53,15 @@ buildProblem(
     std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
   /* Construct All Phalanx Evaluators */
-  constructEvaluators(meshSpecs, stateMgr);
+  constructEvaluators(meshSpecs, stateMgr, responses);
   constructDirichletEvaluators(meshSpecs);
-
-  // Build response functions
-  Teuchos::ParameterList& responseList = params->sublist("Response Functions");
-  int num_responses = responseList.get("Number", 0);
-  responses.resize(num_responses);
-  for (int i=0; i<num_responses; i++) {
-     std::string name = responseList.get(Albany::strint("Response",i), "??");
-
-     if (name == "Solution Average")
-       responses[i] = Teuchos::rcp(new SolutionAverageResponseFunction());
-
-     else if (name == "Solution Two Norm")
-       responses[i] = Teuchos::rcp(new SolutionTwoNormResponseFunction());
-
-     else {
-       TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-                          std::endl <<
-                          "Error!  Unknown response function " << name <<
-                          "!" << std::endl << "Supplied parameter list is " <<
-                          std::endl << responseList);
-     }
-
-  }
 }
-
 
 void
 Albany::LameProblem::constructEvaluators(
        const Albany::MeshSpecsStruct& meshSpecs,
-       Albany::StateManager& stateMgr)
+       Albany::StateManager& stateMgr,
+       std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
    using Teuchos::RCP;
    using Teuchos::rcp;
@@ -329,14 +306,10 @@ Albany::LameProblem::constructEvaluators(
    PHX::Tag<AlbanyTraits::MPTangent::ScalarT> mptan_tag("Scatter", dl->dummy);
    fm->requireField<AlbanyTraits::MPTangent>(mptan_tag);
 
-   // States to output every residual fill
-   const Albany::StateManager::RegisteredStates& reg = stateMgr.getRegisteredStates();
-   Albany::StateManager::RegisteredStates::const_iterator st = reg.begin();
-   while (st != reg.end()) {
-     PHX::Tag<AlbanyTraits::Residual::ScalarT> res_out_tag(st->first, dl->dummy);
-     fm->requireField<AlbanyTraits::Residual>(res_out_tag);
-     st++;
-   }
+   //Construct Rsponses
+   Teuchos::ParameterList& responseList = params->sublist("Response Functions");
+   Albany::ResponseUtils respUtils(dl,"LCM");
+   rfm = respUtils.constructResponses(responses, responseList, evaluators_to_build, stateMgr);
 }
 
 void

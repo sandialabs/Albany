@@ -26,6 +26,60 @@
 #include "Teuchos_StandardCatchMacros.hpp"
 #include "Stokhos.hpp"
 #include "Stokhos_Epetra.hpp"
+#include "Stokhos_PCEAnasaziKL.hpp"
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+// begin jrr
+//
+// Global function to encapsulate KL solution computation...
+//
+
+bool KL_OnSolutionMultiVector( 
+  const Teuchos::RCP<Piro::Epetra::StokhosSolver>& App_sg, 
+  const Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly>& sg_u,
+  const Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> >& basis,
+  const int NumKL,
+  Teuchos::Array<double>& evals,
+  Teuchos::RCP<Epetra_MultiVector>& evecs)
+{
+
+  /*
+  Teuchos::RCP<EpetraExt::BlockVector> X;
+  X = Teuchos::rcp(new EpetraExt::BlockVector((*sg_u)[0].Map(),
+					      sg_u->getBlockVector()->Map()));
+  sg_u->assignToBlockVector(*X);
+  */
+
+  Teuchos::RCP<EpetraExt::BlockVector> X_ov = 
+    App_sg->get_sg_model()->import_solution(*(sg_u->getBlockVector()));
+  Teuchos::RCP<const EpetraExt::BlockVector> cX_ov = X_ov;
+
+  // pceKL is object with member functions that explicitly call anasazi
+  Stokhos::PCEAnasaziKL pceKL(cX_ov, *basis, NumKL);
+
+  // Set parameters for anasazi
+  Teuchos::ParameterList anasazi_params = pceKL.getDefaultParams();
+  //anasazi_params.set("Num Blocks", 10);
+  //anasazi_params.set("Step Size", 50);
+  anasazi_params.set("Verbosity",  
+		     Anasazi::FinalSummary + 
+		     //Anasazi::StatusTestDetails + 
+		     //Anasazi::IterationDetails + 
+		     Anasazi::Errors + 
+		     Anasazi::Warnings);
+
+  // Self explanatory
+  bool result = pceKL.computeKL(anasazi_params);
+   
+  // Retrieve evals/evectors into return argument slots...
+  evals = pceKL.getEigenvalues();
+  evecs = pceKL.getEigenvectors();
+
+  return result;
+}
+
+// end jrr
+////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char *argv[]) {
 
@@ -69,7 +123,7 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<Teuchos::Time> totalTime =
       Teuchos::TimeMonitor::getNewTimer("AlbanySG: ***Total Time***");
     Teuchos::TimeMonitor totalTimer(*totalTime); //start timer
-    
+
     // Setup communication objects
     Teuchos::RCP<Epetra_Comm> globalComm = 
       Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
@@ -186,7 +240,45 @@ int main(int argc, char *argv[]) {
       }
     }
     *out << "\nNumber of Failed Comparisons: " << status << endl;
+
+    //////////////////////////////////////////////////////////////////////
+    // begin jrr
+    // pull out params for Solution KL
+     Teuchos::ParameterList& sgParams =
+       piroParams->sublist("Stochastic Galerkin");
+    Teuchos::ParameterList& solKLParams =
+      sgParams.sublist("Response KL");
+    bool computeKLOnResponse = solKLParams.get("ComputeKLOnResponse", false);
+    int NumKL = solKLParams.get("NumKL", 0);
     
+    // Finish setup for, then call KL solver if asked...
+    if( computeKLOnResponse )
+      {
+	Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_u = 
+	  sg_outArgs.get_g_sg(ng-1);
+	Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> > basis =
+	  sg_u->basis();
+
+	Teuchos::Array<double> evals;
+	Teuchos::RCP<Epetra_MultiVector> evecs;
+	
+	bool KL_success = KL_OnSolutionMultiVector(sg_solver, 
+						   sg_u,
+						   basis,
+						   NumKL,
+						   evals,
+						   evecs);
+	
+	if (!KL_success) 
+	  *out << "KL Eigensolver did not converge!" << std::endl;
+    
+	*out << "Eigenvalues = " << std::endl;
+	for (int i=0; i< NumKL; i++)
+	  *out << evals[i] << std::endl;
+      }
+    // for now, we'll look at the numbers in a debugger... :)
+    // end jrr
+    //////////////////////////////////////////////////////////////////////
   }
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);
   if (!success) status+=10000;

@@ -5,7 +5,7 @@
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS NodeSet0 for DOF X" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet1 for DOF X" type="double" value="1.0"/>
+      <Parameter name="DBC on NS NodeSet1 for DOF X" type="double" value="0.0"/>
       <Parameter name="DBC on NS NodeSet2 for DOF Y" type="double" value="0.0"/>
       <Parameter name="DBC on NS NodeSet5 for DOF Z" type="double" value="0.0"/>
     </ParameterList>
@@ -30,9 +30,9 @@
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
-    <Parameter name="1D Elements" type="int" value="12"/>
-    <Parameter name="2D Elements" type="int" value="12"/>
-    <Parameter name="3D Elements" type="int" value="12"/>
+    <Parameter name="1D Elements" type="int" value="16"/>
+    <Parameter name="2D Elements" type="int" value="16"/>
+    <Parameter name="3D Elements" type="int" value="16"/>
     <Parameter name="Method" type="string" value="STK3D"/>
     <Parameter name="Interleaved Ordering" type="bool" value="true"/>
     <Parameter name="Exodus Output File Name" type="string" value="stel3d.exo"/>

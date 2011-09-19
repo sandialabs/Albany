@@ -158,6 +158,8 @@ SET(SOURCES ${SOURCES}
         evaluators/PHAL_NSMaterialProperty.cpp
         evaluators/PHAL_NSBodyForce.cpp
 	evaluators/PHAL_ResponseBase.cpp
+        evaluators/PHAL_NSPermeabilityTerm.cpp
+        evaluators/PHAL_NSForchheimerTerm.cpp
   )
 SET(HEADERS ${HEADERS}
 	evaluators/PHAL_GatherSolution.hpp 
@@ -228,6 +230,10 @@ SET(HEADERS ${HEADERS}
         evaluators/PHAL_NSBodyForce_Def.hpp
         evaluators/PHAL_ResponseBase.hpp
 	evaluators/PHAL_ResponseBase_Def.hpp
+        evaluators/PHAL_NSPermeabilityTerm.hpp
+        evaluators/PHAL_NSPermeabilityTerm_Def.hpp 
+        evaluators/PHAL_NSForchheimerTerm.hpp
+        evaluators/PHAL_NSForchheimerTerm_Def.hpp
   )
 
 # LCM
