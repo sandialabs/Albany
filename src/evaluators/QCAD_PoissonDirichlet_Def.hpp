@@ -142,7 +142,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     Eg = Eg0-alpha*pow(temperature,2.0)/(beta+temperature); // in [eV]
     
     ScalarT builtinPotential = 0.0; 
-    std::string dopantType = materialDB->getElementBlockParam<std::string>(ebName,"Dopant Type");
+    std::string dopantType = materialDB->getElementBlockParam<std::string>(ebName,"Dopant Type","None");
 
     // Intrinsic semiconductor (no doping)
     if (dopantType == "None")  

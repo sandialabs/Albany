@@ -369,7 +369,7 @@ FindSaddlePoint(std::vector<double>& allFieldVals, std::vector<double>& allRetFi
               if(bShortInfo) std::cout << allCoords[k][I] << ", ";
 	    }
 
-            if(bPositiveOnly && fabs((*g)[0]) < 1e-6 )
+            if(bPositiveOnly && (*g)[0] < 1e-6 )
               (*g)[0] = 1e+100; //huge number to cause optimization line search to avoid flat zero region
             
 	    if(bShortInfo) std::cout << "ret=" << (*g)[0] << std::endl;

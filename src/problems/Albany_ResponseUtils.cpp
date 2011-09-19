@@ -211,6 +211,7 @@ Albany::ResponseUtils::getStdResponseFn(
 double length_unit_in_m=1.0e-6;  cout << "KACK lengthUniot " << endl;
     p = setupResponseFnForEvaluator(responseList, responseIndex, responses);
     p->set<int>("Type", type);
+    p->set<string>("Coordinate Vector Name", "Coord Vec");
     p->set<string>("Weights Name",   "Weights");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);

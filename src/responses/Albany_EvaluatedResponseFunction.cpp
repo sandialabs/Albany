@@ -113,8 +113,13 @@ postProcessResponses(const Epetra_Comm& comm, Teuchos::RCP<Epetra_Vector>& g)
 {
   std::string type = postProcessingParams.get<std::string>("Processing Type");
 
-  if( type == "Sum" ) {
-    comm.SumAll(g->Values(), g->Values(), g->MyLength());
+  if( type == "Sum" ) {  //NOTE: assumes MyLength == 1 (SumAll only works then)
+    bool hugeIfNonPos = postProcessingParams.get<bool>("Huge if non-positive", false);
+    comm.SumAll(g->Values(), g->Values(), g->MyLength()); 
+    
+    if(hugeIfNonPos && (*g)[0] < 1e-6) {
+      (*g)[0] = 1e+100;
+    }
   }
   else if( type == "Min" ) {
     int indexToMin = postProcessingParams.get<int>("Index");

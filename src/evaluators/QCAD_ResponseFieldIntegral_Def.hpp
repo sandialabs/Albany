@@ -24,6 +24,8 @@ template<typename EvalT, typename Traits>
 QCAD::ResponseFieldIntegral<EvalT, Traits>::
 ResponseFieldIntegral(Teuchos::ParameterList& p) :
   PHAL::ResponseBase<EvalT, Traits>(p),
+  coordVec(p.get<string>("Coordinate Vector Name"),
+	   p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout")),
   weights(p.get<std::string>("Weights Name"),
 	p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"))
 {
@@ -34,10 +36,6 @@ ResponseFieldIntegral(Teuchos::ParameterList& p) :
   Teuchos::RCP<const Teuchos::ParameterList> reflist = 
     this->getValidResponseParameters();
   plist->validateParameters(*reflist,0);
-
-  //! User-specified parameters
-  ebName = plist->get<std::string>("Element Block Name");
-  fieldName = plist->get<std::string>("Field Name");
 
   // passed down from main list
   length_unit_in_m = p.get<double>("Length unit in m");
@@ -54,10 +52,33 @@ ResponseFieldIntegral(Teuchos::ParameterList& p) :
   vector_dl->dimensions(dims);
   numDims = dims[2];
 
+  //! User-specified parameters
+  ebName = plist->get<std::string>("Element Block Name","");
+  fieldName = plist->get<std::string>("Field Name");
+  bPositiveOnly = plist->get<bool>("Positive Return Only",false);
+
+  limitX = limitY = limitZ = false;
+  if( plist->isParameter("x min") && plist->isParameter("x max") ) {
+    limitX = true; TEST_FOR_EXCEPT(numDims <= 0);
+    xmin = plist->get<double>("x min");
+    xmax = plist->get<double>("x max");
+  }
+  if( plist->isParameter("y min") && plist->isParameter("y max") ) {
+    limitY = true; TEST_FOR_EXCEPT(numDims <= 1);
+    ymin = plist->get<double>("y min");
+    ymax = plist->get<double>("y max");
+  }
+  if( plist->isParameter("z min") && plist->isParameter("z max") ) {
+    limitZ = true; TEST_FOR_EXCEPT(numDims <= 2);
+    zmin = plist->get<double>("z min");
+    zmax = plist->get<double>("z max");
+  }
+
   //! add dependent fields
   PHX::MDField<ScalarT,Cell,QuadPoint> f(fieldName, scalar_dl); 
   field = f;
   this->addDependentField(field);
+  this->addDependentField(coordVec);
   this->addDependentField(weights);
   
   //! set initial values
@@ -67,6 +88,7 @@ ResponseFieldIntegral(Teuchos::ParameterList& p) :
   //! set post processing parameters (used to reconcile values across multiple processors)
   Teuchos::ParameterList ppParams;
   ppParams.set("Processing Type","Sum");
+  ppParams.set("Huge if non-positive",bPositiveOnly);
   PHAL::ResponseBase<EvalT, Traits>::setPostProcessingParams(ppParams);
 }
 
@@ -77,6 +99,7 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(field,fm);
+  this->utils.setFieldData(coordVec,fm);
   this->utils.setFieldData(weights,fm);
 }
 
@@ -102,9 +125,19 @@ evaluateFields(typename Traits::EvalData workset)
 			  << "Error! Invalid number of dimensions: " << numDims << std::endl);
     
   if( ebName.length() == 0 || ebName == workset.EBName ) {
-    
+
     ScalarT val;
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+
+      bool cellInBox = false;
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+        if( (!limitX || (coordVec(cell,qp,0) >= xmin && coordVec(cell,qp,0) <= xmax)) &&
+            (!limitY || (coordVec(cell,qp,1) >= ymin && coordVec(cell,qp,1) <= ymax)) &&
+            (!limitZ || (coordVec(cell,qp,2) >= zmin && coordVec(cell,qp,2) <= zmax)) ) {
+          cellInBox = true; break; }
+      }
+      if( !cellInBox ) continue;
+
       for (std::size_t qp=0; qp < numQPs; ++qp) {
         val = field(cell,qp) * weights(cell,qp) * scaling;
         PHAL::ResponseBase<EvalT, Traits>::local_g[0] += val;
@@ -127,6 +160,15 @@ QCAD::ResponseFieldIntegral<EvalT,Traits>::getValidResponseParameters() const
   validPL->set<string>("Element Block Name", "", 
   		"Name of the element block to use as the integration domain");
   validPL->set<string>("Field Name", "", "Field to integrate");
+  validPL->set<bool>("Positive Return Only",false);
+
+  validPL->set<double>("x min", 0.0, "Integration domain minimum x coordinate");
+  validPL->set<double>("x max", 0.0, "Integration domain maximum x coordinate");
+  validPL->set<double>("y min", 0.0, "Integration domain minimum y coordinate");
+  validPL->set<double>("y max", 0.0, "Integration domain maximum y coordinate");
+  validPL->set<double>("z min", 0.0, "Integration domain minimum z coordinate");
+  validPL->set<double>("z max", 0.0, "Integration domain maximum z coordinate");
+
   return validPL;
 }
 

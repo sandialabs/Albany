@@ -8,6 +8,7 @@ method,
 
 variables,
 	continuous_design = 1
+	cdv_descriptors = 'myParam1'
 
 interface,
 	direct
@@ -18,6 +19,8 @@ interface,
 responses,
 #	num_objective_functions = 1
 	num_least_squares_terms = 2
+	response_descriptors = 'r1' 'r2'
+	least_squares_weights = 1.0 1.0 
 #        analytic_gradients
  	numerical_gradients
  	  fd_gradient_step_size = 1.0e-6

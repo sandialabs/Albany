@@ -30,6 +30,7 @@ namespace QCAD {
   {
   public:
     typedef typename EvalT::ScalarT ScalarT;
+    typedef typename EvalT::MeshScalarT MeshScalarT;
 
     ResponseFieldIntegral(Teuchos::ParameterList& p);
   
@@ -48,9 +49,14 @@ namespace QCAD {
     std::size_t numDims;
     
     PHX::MDField<ScalarT,Cell,QuadPoint> field;
+    PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
     PHX::MDField<ScalarT,Cell,QuadPoint> weights;
     
     double length_unit_in_m; // length unit for input and output mesh
+    bool bPositiveOnly;
+    bool limitX, limitY, limitZ;
+    double xmin, xmax, ymin, ymax, zmin, zmax;
+
   };
 	
 }
