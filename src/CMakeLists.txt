@@ -158,6 +158,8 @@ SET(SOURCES ${SOURCES}
         evaluators/PHAL_NSMaterialProperty.cpp
         evaluators/PHAL_NSBodyForce.cpp
 	evaluators/PHAL_ResponseBase.cpp
+        evaluators/PHAL_NSPermeabilityTerm.cpp
+        evaluators/PHAL_NSForchheimerTerm.cpp
   )
 SET(HEADERS ${HEADERS}
 	evaluators/PHAL_GatherSolution.hpp 
@@ -228,6 +230,10 @@ SET(HEADERS ${HEADERS}
         evaluators/PHAL_NSBodyForce_Def.hpp
         evaluators/PHAL_ResponseBase.hpp
 	evaluators/PHAL_ResponseBase_Def.hpp
+        evaluators/PHAL_NSPermeabilityTerm.hpp
+        evaluators/PHAL_NSPermeabilityTerm_Def.hpp 
+        evaluators/PHAL_NSForchheimerTerm.hpp
+        evaluators/PHAL_NSForchheimerTerm_Def.hpp
   )
 
 # LCM
@@ -243,16 +249,16 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/problems/ElasticityProblem.cpp 
     ${LCM_DIR}/problems/NonlinearElasticityProblem.cpp 
     ${LCM_DIR}/problems/ThermoElasticityProblem.cpp 
-    ${LCM_DIR}/problems/PoroElasticityProblem.cpp 
     ${LCM_DIR}/problems/GradientDamageProblem.cpp 
+    ${LCM_DIR}/problems/PoroElasticityProblem.cpp
   )
 
   SET(HEADERS ${HEADERS}
     ${LCM_DIR}/problems/ElasticityProblem.hpp
     ${LCM_DIR}/problems/NonlinearElasticityProblem.hpp 
     ${LCM_DIR}/problems/ThermoElasticityProblem.hpp 
+    ${LCM_DIR}/problems/GradientDamageProblem.hpp
     ${LCM_DIR}/problems/PoroElasticityProblem.hpp 
-    ${LCM_DIR}/problems/GradientDamageProblem.hpp 
   )
 
   # LCM evaluators
@@ -284,11 +290,9 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/KfieldBC.cpp
     ${LCM_DIR}/evaluators/DislocationDensity.cpp
     ${LCM_DIR}/evaluators/TotalStress.cpp
-    ${LCM_DIR}/evaluators/PoroElasticityResidMomentum.cpp
-    ${LCM_DIR}/evaluators/Porosity.cpp
     ${LCM_DIR}/evaluators/BiotCoefficient.cpp
     ${LCM_DIR}/evaluators/BiotModulus.cpp
-    
+    ${LCM_DIR}/evaluators/PoroElasticityResidMomentum.cpp
   )
 
   SET(HEADERS ${HEADERS}
@@ -346,11 +350,12 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/DislocationDensity_Def.hpp
     ${LCM_DIR}/evaluators/TotalStress.hpp
     ${LCM_DIR}/evaluators/TotalStress_Def.hpp
+    ${LCM_DIR}/evaluators/BiotCoefficient.hpp
+    ${LCM_DIR}/evaluators/BiotCoefficient_Def.hpp
+    ${LCM_DIR}/evaluators/BiotModulus.hpp
+    ${LCM_DIR}/evaluators/BiotModulus_Def.hpp
     ${LCM_DIR}/evaluators/PoroElasticityResidMomentum.hpp
     ${LCM_DIR}/evaluators/PoroElasticityResidMomentum_Def.hpp
-    ${LCM_DIR}/evaluators/Porosity.hpp
-    ${LCM_DIR}/evaluators/BiotCoefficient.hpp
-    ${LCM_DIR}/evaluators/BiotModulus.hpp
   )
 
   #LCM utils
