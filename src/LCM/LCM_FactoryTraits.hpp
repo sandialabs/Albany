@@ -36,11 +36,9 @@
 #include "PHAL_GatherCoordinateVector.hpp"
 #include "PHAL_JouleHeating.hpp"
 #include "PHAL_SaveStateField.hpp"
-
 #include "QCAD_ResponseFieldIntegral.hpp"
 #include "QCAD_ResponseFieldValue.hpp"
 #include "QCAD_ResponseSaveField.hpp"
-
 
 #include "LCM/evaluators/Stress.hpp"
 #ifdef ALBANY_LAME
@@ -70,6 +68,11 @@
 #include "LCM/evaluators/ShearModulus.hpp"
 #include "LCM/evaluators/BulkModulus.hpp"
 #include "LCM/evaluators/DislocationDensity.hpp"
+#include "LCM/evaluators/TotalStress.hpp"
+#include "LCM/evaluators/PoroElasticityResidMomentum.hpp"
+#include "LCM/evaluators/Porosity.hpp"
+#include "LCM/evaluators/BiotCoefficient.hpp"
+#include "LCM/evaluators/BiotModulus.hpp"
 
 
 #include "boost/mpl/vector/vector50.hpp"
@@ -138,14 +141,20 @@ struct FactoryTraits {
   static const int id_shear_modulus             = 41;
   static const int id_savestatefield            = 42;
   static const int id_dislocation_density       = 43;
+  static const int id_total_stress              = 44;
+  static const int id_poroelasticityresidmomentum=45;
+  static const int id_porosty                   = 46;
+  static const int id_biotcoefficient           = 47;
+  static const int id_biotmodulus               = 48;
   // JTO - leave lame stress at the bottom for the convention below to be most effective
-  static const int id_lame_stress               = 44;
+  static const int id_lame_stress               = 49;
 
 #ifndef ALBANY_LAME
-  typedef boost::mpl::vector44<
+  typedef boost::mpl::vector49<
 #else
-  typedef boost::mpl::vector45<
-#endif
+  typedef boost::mpl::vector50<
+#endif  
+
     PHAL::GatherSolution<_,Traits>,           //  0
     PHAL::GatherCoordinateVector<_,Traits>,   //  1
     PHAL::ScatterResidual<_,Traits>,          //  2
@@ -189,9 +198,14 @@ struct FactoryTraits {
     LCM::BulkModulus<_,Traits>,               // 40
     LCM::ShearModulus<_,Traits>,              // 41
     PHAL::SaveStateField<_,Traits>,           // 42
-    LCM::DislocationDensity<_,Traits>         // 43
+    LCM::DislocationDensity<_,Traits>,        // 43
+    LCM::TotalStress<_,Traits>,               // 44
+    LCM::PoroElasticityResidMomentum<_,Traits>,// 45
+    LCM::Porosity<_, Traits>,                   // 46
+    LCM::BiotCoefficient<_,Traits>,            // 47
+    LCM::BiotModulus<_,Traits>                // 48
 #ifdef ALBANY_LAME
-    ,LCM::LameStress<_,Traits>                // 44
+    ,LCM::LameStress<_,Traits>                // 49
 #endif
     > EvaluatorTypes;
 };
