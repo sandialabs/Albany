@@ -293,6 +293,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/BiotCoefficient.cpp
     ${LCM_DIR}/evaluators/BiotModulus.cpp
     ${LCM_DIR}/evaluators/PoroElasticityResidMomentum.cpp
+    ${LCM_DIR}/evaluators/Porosity.cpp
   )
 
   SET(HEADERS ${HEADERS}
@@ -356,6 +357,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/BiotModulus_Def.hpp
     ${LCM_DIR}/evaluators/PoroElasticityResidMomentum.hpp
     ${LCM_DIR}/evaluators/PoroElasticityResidMomentum_Def.hpp
+    ${LCM_DIR}/evaluators/Porosity.hpp
+    ${LCM_DIR}/evaluators/Porosity_Def.hpp
   )
 
   #LCM utils
