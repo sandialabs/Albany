@@ -24,7 +24,6 @@
 namespace LCM {
 
 
-
 template<typename EvalT, typename Traits>
 Porosity<EvalT, Traits>::
 Porosity(Teuchos::ParameterList& p) :
