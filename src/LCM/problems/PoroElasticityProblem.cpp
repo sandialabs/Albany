@@ -25,7 +25,7 @@ Albany::PoroElasticityProblem::
 PoroElasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 			const Teuchos::RCP<ParamLib>& paramLib_,
 			const int numDim_) :
-  Albany::AbstractProblem(params_, paramLib_, numDim_ + 1),
+  Albany::AbstractProblem(params_, paramLib_, numDim_ + 1), // additional DOF for pore pressure
   haveSource(false),
   numDim(numDim_)
 {
@@ -178,6 +178,29 @@ Albany::PoroElasticityProblem::constructEvaluators(
    evaluators_to_build["Compute Basis Functions"] =
      probUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature);
 
+
+   { // Biot Coefficient
+      RCP<ParameterList> p = rcp(new ParameterList);
+
+      int type = FactoryTraits<AlbanyTraits>::id_biotcoefficient;
+      p->set<int>("Type", type);
+
+	  p->set<string>("Biot Coefficient Name", "Biot Coefficient");
+	  p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+	  p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+	  p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+	  p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
+	  p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+	  Teuchos::ParameterList& paramList = params->sublist("Biot Coefficient");
+	  p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+	  // Setting this turns on linear dependence of E on T, E = E_ + dEdT*T)
+	  p->set<string>("QP porePressure Name", "porePressure");
+
+	  evaluators_to_build["Biot Coefficient"] = p;
+     }
+
   { // Thermal conductivity
    RCP<ParameterList> p = rcp(new ParameterList);
 
@@ -293,6 +316,10 @@ Albany::PoroElasticityProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
+
+    p->set<string>("Biot Coefficient Name", "Biot Coefficient");  // dl->qp_scalar also
+
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<string>("Pore Pressure Name", "porePressure");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
@@ -458,7 +485,7 @@ Albany::PoroElasticityProblem::getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidPoroElasticityProblemParams");
-
+  validPL->sublist("Biot Coefficient", false, "");
   validPL->sublist("Thermal Conductivity", false, "");
   validPL->sublist("Elastic Modulus", false, "");
   validPL->sublist("Poissons Ratio", false, "");

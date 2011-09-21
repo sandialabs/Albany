@@ -52,6 +52,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> strain;
   PHX::MDField<ScalarT,Cell,QuadPoint> elasticModulus;
   PHX::MDField<ScalarT,Cell,QuadPoint> poissonsRatio;
+  PHX::MDField<ScalarT,Cell,QuadPoint> biotCoefficient;
   PHX::MDField<ScalarT,Cell,QuadPoint> porePressure;
 
   unsigned int numQPs;

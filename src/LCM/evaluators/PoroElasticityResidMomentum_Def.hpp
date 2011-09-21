@@ -35,7 +35,6 @@ PoroElasticityResidMomentum(const Teuchos::ParameterList& p) :
 {
   this->addDependentField(TotalStress);
   this->addDependentField(wGradBF);
-
   this->addEvaluatedField(ExResidual);
 
   if (p.isType<bool>("Disable Transient"))

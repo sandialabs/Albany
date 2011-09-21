@@ -45,7 +45,7 @@ BiotCoefficient(Teuchos::ParameterList& p) :
   std::string type = elmd_list->get("Biot Coefficient Type", "Constant");
   if (type == "Constant") {
     is_constant = true;
-    constant_value = elmd_list->get("Value", 1.0);
+    constant_value = elmd_list->get("Value", 1.0); // default value=1, identical to Terzaghi stress
 
     // Add Biot Coefficient as a Sacado-ized parameter
     new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
@@ -78,21 +78,25 @@ BiotCoefficient(Teuchos::ParameterList& p) :
   // Optional dependence on Temperature (E = E_ + dEdT * T)
   // Switched ON by sending Temperature field in p
 
-  if ( p.isType<string>("QP Temperature Name") ) {
+  if ( p.isType<string>("QP porePressure Name") ) {
     Teuchos::RCP<PHX::DataLayout> scalar_dl =
       p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
     PHX::MDField<ScalarT,Cell,QuadPoint>
-      tmp(p.get<string>("QP Temperature Name"), scalar_dl);
-    Temperature = tmp;
-    this->addDependentField(Temperature);
-    isThermoElastic = true;
-    dEdT_value = elmd_list->get("dEdT Value", 0.0);
+      tmp(p.get<string>("QP porePressure Name"), scalar_dl);
+    porePressure = tmp;
+    this->addDependentField(porePressure);
+    isPoroElastic = true;
+    Kskeleton_value = elmd_list->get("Skeleton Bulk Modulus Value", 10.0e5);
     new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-                                "dEdT Value", this, paramLib);
+                                "Skeleton Bulk Modulus Value", this, paramLib);
+    Kgrain_value = elmd_list->get("Grain Bulk Modulus Value", 10.0e12); // typically Kgrain >> Kskeleton
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
+                                    "Grain Bulk Modulus Value", this, paramLib);
   }
   else {
-    isThermoElastic=false;
-    dEdT_value=0.0;
+    isPoroElastic=false;
+    Kskeleton_value=10.0e5; // temp value..need to change
+    Kgrain_value = 10.0e12;  // temp value need to change
   }
 
 
@@ -108,7 +112,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(biotCoefficient,fm);
   if (!is_constant) this->utils.setFieldData(coordVec,fm);
-  if (isThermoElastic) this->utils.setFieldData(Temperature,fm);
+  if (isPoroElastic) this->utils.setFieldData(porePressure,fm);
 }
 
 // **********************************************************************
@@ -135,10 +139,10 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-  if (isThermoElastic) {
+  if (isPoroElastic) {
     for (std::size_t cell=0; cell < numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-    	  biotCoefficient(cell,qp) += dEdT_value * Temperature(cell,qp);
+    	  biotCoefficient(cell,qp) = 1 - Kskeleton_value/Kgrain_value;
       }
     }
   }
@@ -151,8 +155,10 @@ BiotCoefficient<EvalT,Traits>::getValue(const std::string &n)
 {
   if (n == "Biot Coefficient")
     return constant_value;
-  else if (n == "dEdT Value")
-    return dEdT_value;
+  else if (n == "Skeleton Bulk Modulus Value")
+    return Kskeleton_value;
+  else if (n == "Grain Bulk Modulus Value")
+      return Kgrain_value;
   for (int i=0; i<rv.size(); i++) {
     if (n == Albany::strint("Biot Coefficient KL Random Variable",i))
       return rv[i];

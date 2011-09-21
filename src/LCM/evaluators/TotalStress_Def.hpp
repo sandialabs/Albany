@@ -32,6 +32,8 @@ TotalStress(const Teuchos::ParameterList& p) :
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   poissonsRatio    (p.get<std::string>                   ("Poissons Ratio Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  biotCoefficient  (p.get<std::string>                   ("Biot Coefficient Name"),
+	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   porePressure    (p.get<std::string>                   ("Pore Pressure Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   stress           (p.get<std::string>                   ("Total Stress Name"),
@@ -49,6 +51,7 @@ TotalStress(const Teuchos::ParameterList& p) :
   this->addDependentField(elasticModulus);
   // PoissonRatio not used in 1D stress calc
   if (numDims>1) this->addDependentField(poissonsRatio);
+  this->addDependentField(biotCoefficient);
   this->addDependentField(porePressure);
 
   this->addEvaluatedField(stress);
@@ -67,6 +70,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(strain,fm);
   this->utils.setFieldData(elasticModulus,fm);
   if (numDims>1) this->utils.setFieldData(poissonsRatio,fm);
+  this->utils.setFieldData(biotCoefficient,fm);
   this->utils.setFieldData(porePressure,fm);
 }
 
@@ -75,8 +79,7 @@ template<typename EvalT, typename Traits>
 void TotalStress<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  ScalarT lambda, mu, bulk, BiotCoeff; // B is the Biot coefficient 1 - K/K(s) where
-  const ScalarT Ks = 10.0e5; // This need to be change to variable later...!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  ScalarT lambda, mu; // B is the Biot coefficient 1 - K/K(s) where
 
   switch (numDims) {
   case 1:
@@ -88,10 +91,8 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t qp=0; qp < numQPs; ++qp) {
 	lambda = ( elasticModulus(cell,qp) * poissonsRatio(cell,qp) ) / ( ( 1 + poissonsRatio(cell,qp) ) * ( 1 - 2 * poissonsRatio(cell,qp) ) );
 	mu = elasticModulus(cell,qp) / ( 2 * ( 1 + poissonsRatio(cell,qp) ) );
-	bulk = lambda + 2.0/3.0*mu;
-	BiotCoeff = 1.0 - bulk*(1 - strain(cell,qp,0,0) - strain(cell,qp,1,1))/Ks;// This need to be change later...!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	stress(cell,qp,0,0) = 2.0 * mu * ( strain(cell,qp,0,0) ) + lambda * ( strain(cell,qp,0,0) + strain(cell,qp,1,1) ) - BiotCoeff*porePressure(cell,qp) ;
-	stress(cell,qp,1,1) = 2.0 * mu * ( strain(cell,qp,1,1) ) + lambda * ( strain(cell,qp,0,0) + strain(cell,qp,1,1) ) - BiotCoeff*porePressure(cell,qp);
+	stress(cell,qp,0,0) = 2.0 * mu * ( strain(cell,qp,0,0) ) + lambda * ( strain(cell,qp,0,0) + strain(cell,qp,1,1) ) - biotCoefficient(cell,qp)*porePressure(cell,qp) ;
+	stress(cell,qp,1,1) = 2.0 * mu * ( strain(cell,qp,1,1) ) + lambda * ( strain(cell,qp,0,0) + strain(cell,qp,1,1) ) - biotCoefficient(cell,qp)*porePressure(cell,qp);
 	stress(cell,qp,0,1) = 2.0 * mu * ( strain(cell,qp,0,1) );
 	stress(cell,qp,1,0) = stress(cell,qp,0,1); 
       }
@@ -103,14 +104,12 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t qp=0; qp < numQPs; ++qp) {
 	lambda = ( elasticModulus(cell,qp) * poissonsRatio(cell,qp) ) / ( ( 1 + poissonsRatio(cell,qp) ) * ( 1 - 2 * poissonsRatio(cell,qp) ) );
 	mu = elasticModulus(cell,qp) / ( 2 * ( 1 + poissonsRatio(cell,qp) ) );
-	bulk = lambda + 2.0/3.0*mu;
-	BiotCoeff = 1.0 - bulk*(1 - strain(cell,qp,0,0) - strain(cell,qp,1,1) - strain(cell,qp,2,2) )/Ks;// This need to be change later...!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	stress(cell,qp,0,0) = 2.0 * mu * ( strain(cell,qp,0,0) ) + lambda * ( strain(cell,qp,0,0) + strain(cell,qp,1,1) + strain(cell,qp,2,2) )
-		                  - BiotCoeff*porePressure(cell,qp);
+		                  - biotCoefficient(cell,qp)*porePressure(cell,qp);
 	stress(cell,qp,1,1) = 2.0 * mu * ( strain(cell,qp,1,1) ) + lambda * ( strain(cell,qp,0,0) + strain(cell,qp,1,1) + strain(cell,qp,2,2) )
-		                  - BiotCoeff*porePressure(cell,qp);
+		                  - biotCoefficient(cell,qp)*porePressure(cell,qp);
 	stress(cell,qp,2,2) = 2.0 * mu * ( strain(cell,qp,2,2) ) + lambda * ( strain(cell,qp,0,0) + strain(cell,qp,1,1) + strain(cell,qp,2,2) )
-		                  - BiotCoeff*porePressure(cell,qp);
+		                  - biotCoefficient(cell,qp)*porePressure(cell,qp);
 	stress(cell,qp,0,1) = 2.0 * mu * ( strain(cell,qp,0,1) );
 	stress(cell,qp,1,2) = 2.0 * mu * ( strain(cell,qp,1,2) );
 	stress(cell,qp,2,0) = 2.0 * mu * ( strain(cell,qp,2,0) );

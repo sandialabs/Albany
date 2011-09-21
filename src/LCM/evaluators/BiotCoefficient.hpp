@@ -67,10 +67,12 @@ private:
   //! Constant value
   ScalarT constant_value;
 
-  //! Optional dependence on Temperature (E = E_const + dEdT * T)
-  PHX::MDField<ScalarT,Cell,QuadPoint> Temperature;
-  bool isThermoElastic;
-  ScalarT dEdT_value;
+  //! Optional dependence on Bulk modulus of the skeleton (Kskeleton) and the solid grains (Kgrain)  (B = 1 - K/K_{s}).
+  //! Notice that K can be dependent of temperature;
+  PHX::MDField<ScalarT,Cell,QuadPoint> porePressure;
+  bool isPoroElastic;
+  ScalarT Kskeleton_value;
+  ScalarT Kgrain_value;
 
   //! Exponential random field
   Teuchos::RCP< Stokhos::KL::ExponentialRandomField<MeshScalarT> > exp_rf_kl;
