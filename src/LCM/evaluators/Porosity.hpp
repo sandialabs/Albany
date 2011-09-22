@@ -31,9 +31,14 @@
 
 namespace LCM {
 /** 
- * \brief Evaluates elastic modulus, either as a constant or a truncated
+ * \brief Evaluates porosity, either as a constant or a truncated
  * KL expansion.
  */
+
+// Porosity update is the most important part for the poromechanics
+// formulation. All poroelasticity parameters (Biot Coefficient,
+// Biot modulus, permeability, and consistent tangential tensor)
+// all depends on porosity.
 
 template<typename EvalT, typename Traits>
 class Porosity :
@@ -69,7 +74,7 @@ private:
 
   //! Optional dependence on strain and porePressure
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> strain; // porosity holds linear relation to volumetric strain
-  PHX::MDField<ScalarT,Cell,QuadPoint> porePressure; // for now, we don't use pore pressure, but later on we do.
+//  PHX::MDField<ScalarT,Cell,QuadPoint> porePressure; // for now, we don't use pore pressure, but later on we do.
 
   bool isPoroElastic;
   ScalarT initialPorosity_value;

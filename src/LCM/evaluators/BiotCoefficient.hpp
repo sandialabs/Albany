@@ -61,7 +61,7 @@ private:
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
   PHX::MDField<ScalarT,Cell,QuadPoint> biotCoefficient;
 
-  //! Is conductivity constant, or random field
+  //! Is Biot Coefficient constant, or random field
   bool is_constant;
 
   //! Constant value
@@ -69,7 +69,9 @@ private:
 
   //! Optional dependence on Bulk modulus of the skeleton (Kskeleton) and the solid grains (Kgrain)  (B = 1 - K/K_{s}).
   //! Notice that K can be dependent of temperature;
-  PHX::MDField<ScalarT,Cell,QuadPoint> porePressure;
+  // PHX::MDField<ScalarT,Cell,QuadPoint> porePressure;
+
+  PHX::MDField<ScalarT,Cell,QuadPoint> porosity;
   bool isPoroElastic;
   ScalarT Kskeleton_value;
   ScalarT Kgrain_value;

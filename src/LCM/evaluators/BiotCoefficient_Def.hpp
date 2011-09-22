@@ -78,17 +78,17 @@ BiotCoefficient(Teuchos::ParameterList& p) :
   // Optional dependence on Temperature (E = E_ + dEdT * T)
   // Switched ON by sending Temperature field in p
 
-  if ( p.isType<string>("QP porePressure Name") ) {
+  if ( p.isType<string>("Porosity Name") ) {
     Teuchos::RCP<PHX::DataLayout> scalar_dl =
       p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
     PHX::MDField<ScalarT,Cell,QuadPoint>
-      tmp(p.get<string>("QP porePressure Name"), scalar_dl);
-    porePressure = tmp;
-    this->addDependentField(porePressure);
+      tp(p.get<string>("Porosity Name"), scalar_dl);
+    porosity = tp;
+    this->addDependentField(porosity);
     isPoroElastic = true;
-    Kskeleton_value = elmd_list->get("Skeleton Bulk Modulus Value", 10.0e5);
+    Kskeleton_value = elmd_list->get("Skeleton Bulk Modulus Parameter Value", 10.0e5);
     new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-                                "Skeleton Bulk Modulus Value", this, paramLib);
+                                "Skeleton Bulk Modulus Parameter Value", this, paramLib);
     Kgrain_value = elmd_list->get("Grain Bulk Modulus Value", 10.0e12); // typically Kgrain >> Kskeleton
     new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
                                     "Grain Bulk Modulus Value", this, paramLib);
@@ -112,7 +112,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(biotCoefficient,fm);
   if (!is_constant) this->utils.setFieldData(coordVec,fm);
-  if (isPoroElastic) this->utils.setFieldData(porePressure,fm);
+  if (isPoroElastic) this->utils.setFieldData(porosity,fm);
 }
 
 // **********************************************************************
@@ -142,7 +142,8 @@ evaluateFields(typename Traits::EvalData workset)
   if (isPoroElastic) {
     for (std::size_t cell=0; cell < numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-    	  biotCoefficient(cell,qp) = 1 - Kskeleton_value/Kgrain_value;
+    	  // assume that bulk modulus is linear with respect to porosity
+    	  biotCoefficient(cell,qp) = 1 - Kskeleton_value*porosity(cell,qp)/Kgrain_value;
       }
     }
   }
@@ -155,7 +156,7 @@ BiotCoefficient<EvalT,Traits>::getValue(const std::string &n)
 {
   if (n == "Biot Coefficient")
     return constant_value;
-  else if (n == "Skeleton Bulk Modulus Value")
+  else if (n == "Skeleton Bulk Modulus Parameter Value")
     return Kskeleton_value;
   else if (n == "Grain Bulk Modulus Value")
       return Kgrain_value;

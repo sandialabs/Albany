@@ -178,6 +178,8 @@ Albany::PoroElasticityProblem::constructEvaluators(
    evaluators_to_build["Compute Basis Functions"] =
      probUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature);
 
+   // Poroelasticity parameter
+
    {  // Porosity
       RCP<ParameterList> p = rcp(new ParameterList);
 
@@ -224,11 +226,11 @@ Albany::PoroElasticityProblem::constructEvaluators(
 	  Teuchos::ParameterList& paramList = params->sublist("Biot Coefficient");
 	  p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-	  // Setting this turns on linear dependence of E on T, E = E_ + dEdT*T)
-	  p->set<string>("QP porePressure Name", "porePressure");
+	  // Setting this turns on linear dependence on porosity
+	  p->set<string>("Porosity Name", "Porosity");
 
 	  evaluators_to_build["Biot Coefficient"] = p;
-     }
+  }
 
   { // Thermal conductivity
    RCP<ParameterList> p = rcp(new ParameterList);
@@ -248,6 +250,8 @@ Albany::PoroElasticityProblem::constructEvaluators(
 
    evaluators_to_build["Thermal Conductivity"] = p;
   }
+
+  // Skeleton parameter
 
   { // Elastic Modulus
     RCP<ParameterList> p = rcp(new ParameterList);

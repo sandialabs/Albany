@@ -33,10 +33,9 @@ Porosity(Teuchos::ParameterList& p) :
   Teuchos::ParameterList* elmd_list = 
     p.get<Teuchos::ParameterList*>("Parameter List");
 
+
   Teuchos::RCP<PHX::DataLayout> vector_dl =
     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
-  Teuchos::RCP<PHX::DataLayout> tensor_dl =
-      p.get< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
   vector_dl->dimensions(dims);
   numQPs  = dims[1];
@@ -75,37 +74,40 @@ Porosity(Teuchos::ParameterList& p) :
   }
   else {
     TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-		       "Invalid porosity modulus type " << type);
+		       "Invalid porosity type " << type);
   } 
 
 
 
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim>
-        ts(p.get<string>("Strain Name"), tensor_dl);
-       strain = ts;
-  this->addDependentField(strain);
+
 
 
   // Optional dependence on porePressure
   // Switched ON by sending porePressure field in p
-  if ( p.isType<string>("QP Pore Pressure Name") ) {
+  if ( p.isType<string>("Strain Name") ) {
 
-    Teuchos::RCP<PHX::DataLayout> scalar_dl =
-      p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
-    PHX::MDField<ScalarT,Cell,QuadPoint>
-      tmp(p.get<string>("QP Pore Pressure Name"), scalar_dl);
-    porePressure = tmp;
-    this->addDependentField(porePressure);
+//    Teuchos::RCP<PHX::DataLayout> scalar_dl =
+//      p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+//    PHX::MDField<ScalarT,Cell,QuadPoint>
+//      tmp(p.get<string>("QP Pore Pressure Name"), scalar_dl);
+//    porePressure = tmp;
+//    this->addDependentField(porePressure);
 
-    isPoroElastic = true;
-    initialPorosity_value = elmd_list->get("Initial Porosity Value", 0.0);
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
+	  Teuchos::RCP<PHX::DataLayout> tensor_dl =
+	        p.get< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
+	  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim>
+	        ts(p.get<string>("Strain Name"), tensor_dl);
+	       strain = ts;
+	  this->addDependentField(strain);
+
+      isPoroElastic = true;
+      initialPorosity_value = elmd_list->get("Initial Porosity Value", 0.0);
+      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
     	 	                                "Initial Porosity Value", this, paramLib);
 
   }
   else {
-
-    isPoroElastic=false;
+    isPoroElastic=false; // porosity will not change in this case.
     initialPorosity_value=0.0;
   }
 
@@ -122,8 +124,9 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(porosity,fm);
   if (!is_constant) this->utils.setFieldData(coordVec,fm);
-  if (isPoroElastic) this->utils.setFieldData(porePressure,fm);
   if (isPoroElastic) this->utils.setFieldData(strain,fm);
+//  if (isPoroElastic) this->utils.setFieldData(porePressure,fm);
+
 }
 
 // **********************************************************************
