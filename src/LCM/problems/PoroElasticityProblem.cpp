@@ -178,6 +178,35 @@ Albany::PoroElasticityProblem::constructEvaluators(
    evaluators_to_build["Compute Basis Functions"] =
      probUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature);
 
+   {  // Porosity
+      RCP<ParameterList> p = rcp(new ParameterList);
+
+      int type = FactoryTraits<AlbanyTraits>::id_porosity;
+      p->set<int>("Type", type);
+
+	  p->set<string>("Porosity Name", "Porosity");
+	  p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+	  p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+	  p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+	  p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
+	  p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+	  Teuchos::ParameterList& paramList = params->sublist("Porosity");
+	  p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+	  // Setting this turns on linear dependence of E on T, E = E_ + dEdT*T)
+	  p->set<string>("Strain Name", "Strain");
+	  p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+	  p->set<string>("QP porePressure Name", "porePressure");
+	  p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+	  evaluators_to_build["Porosity"] = p;
+	  evaluators_to_build["Save Porosity"] =
+	  stateMgr.registerStateVariable("Porosity",dl->qp_scalar,
+	              dl->dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
+     }
+
+
 
    { // Biot Coefficient
       RCP<ParameterList> p = rcp(new ParameterList);
@@ -485,6 +514,7 @@ Albany::PoroElasticityProblem::getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidPoroElasticityProblemParams");
+  validPL->sublist("Porosity", false, "");
   validPL->sublist("Biot Coefficient", false, "");
   validPL->sublist("Thermal Conductivity", false, "");
   validPL->sublist("Elastic Modulus", false, "");

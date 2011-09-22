@@ -142,7 +142,7 @@ struct FactoryTraits {
   static const int id_dislocation_density       = 41;
   static const int id_total_stress              = 42;
   static const int id_poroelasticityresidmomentum=43;
-  static const int id_porosty                   = 44;
+  static const int id_porosity                   = 44;
   static const int id_biotcoefficient           = 45;
   static const int id_biotmodulus               = 46;
   static const int id_poroelasticityresidmass   = 47;

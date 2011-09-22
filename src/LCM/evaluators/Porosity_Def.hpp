@@ -78,14 +78,16 @@ Porosity(Teuchos::ParameterList& p) :
 		       "Invalid porosity modulus type " << type);
   } 
 
-  // Optional dependence on porePressure
-  // Switched ON by sending porePressure field in p
+
 
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim>
-        ts(p.get<string>("QP Strain Name"), tensor_dl);
+        ts(p.get<string>("Strain Name"), tensor_dl);
        strain = ts;
   this->addDependentField(strain);
 
+
+  // Optional dependence on porePressure
+  // Switched ON by sending porePressure field in p
   if ( p.isType<string>("QP Pore Pressure Name") ) {
 
     Teuchos::RCP<PHX::DataLayout> scalar_dl =
@@ -98,9 +100,11 @@ Porosity(Teuchos::ParameterList& p) :
     isPoroElastic = true;
     initialPorosity_value = elmd_list->get("Initial Porosity Value", 0.0);
     new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-                                "Initial Porosity Value", this, paramLib);
+    	 	                                "Initial Porosity Value", this, paramLib);
+
   }
   else {
+
     isPoroElastic=false;
     initialPorosity_value=0.0;
   }
@@ -149,8 +153,10 @@ evaluateFields(typename Traits::EvalData workset)
   if (isPoroElastic) {
     for (std::size_t cell=0; cell < numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-    	  porosity(cell,qp) = initialPorosity_value + ( strain(cell,qp,0,0) + strain(cell,qp,1,1) + strain(cell,qp,2,2) );
+    	  porosity(cell,qp) = initialPorosity_value +
+    			  ( strain(cell,qp,0,0) + strain(cell,qp,1,1) + strain(cell,qp,2,2) );
     	  // This equation is only vaild when that K_s >> K_f >> K
+    	  // for large deformation, \phi = J \dot \phi_{o}
 
       }
     }
