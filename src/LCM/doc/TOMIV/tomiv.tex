@@ -302,7 +302,13 @@ readily available) \citep{Jog:2008} or the inverse scaling and
 squaring algorithm with Pad\'e approximants \citep{Cheng.etal:2001,
   Davies.Higham:2003}.  A fast and accurate method for the computation
 of the exponential map is provided by the scaling and squaring
-algorithm with Pad\'e approximants \citep{Higham:2001,Higham:2005}.
+algorithm with Pad\'e approximants
+\citep{Higham:2001,Higham:2005}. Most fields of interest, however,
+admit a polar decomposition and thus it proves convenient to effect
+the interpolation of these fields by interpolating separately their
+rotational and stretching components. An added benefit of this method
+is that the computation of logarithmic maps for these components is
+relatively straightforward.
 
 
 \section{Finite Element Formulation}
@@ -1630,11 +1636,12 @@ one order when the number of the elements is increased 100 times.
 This example demonstrates the outstanding ability of the variational
 transfer operator to project internal variables onto the admissible
 space. We integrate the variational projection operator and the Lie
-algebra interpolation techniques in a framework where variational projection operator is
-used in conjugation with logarithmic mapping.  The calculation we
-conducted is proposed as a severe test problem by \citet{Krieg.Krieg:1977}, 
-\citet{Taylor.Becker:1983} and \citet{Simo.Hughes:1998}. For
-completeness, we briefly review the problem statement below.
+algebra interpolation techniques in a framework where variational
+projection operator is used in conjugation with logarithmic mapping.
+The calculation we conducted is proposed as a severe test problem by
+\citet{Krieg.Krieg:1977}, \citet{Taylor.Becker:1983} and
+\citet{Simo.Hughes:1998}. For completeness, we briefly review the
+problem statement below.
 
 Consider a cylindrical billet with initial radius = $10mm$ and initial
 height = $30mm$. Due to symmetry with respect to the three Cartesian
@@ -1675,52 +1682,59 @@ with those in are listed in \citep{Taylor.Becker:1983} and
   \end{center}
 \end{table}
 
-Four finite element simulations are performed and compared against the 
-published results in \citep{Krieg.Krieg:1977, Taylor.Becker:1983, Simo.Hughes:1998}. 
-To preserve the radial symmetry of the cylinder, the hexahedral mesh is generated via a 
-radial meshing algorithm in a mesh generation software called CUBIT such that node distribution 
-is unbiased along the radial direction. The 8-node and 27-node Lagrange hexahedral elements are 
-both used on two meshes consisting of 693 and 2175 elements. The final configurations in all four 
-simulations are attained in 120 equal steps. Figure \ref{fig:LoadDeflection} shows the resulting 
-load-deflection curves. Both results obtained from 8-node and 27-node element are  in good agreement with 
-\citep{Krieg.Krieg:1977, Taylor.Becker:1983, Simo.Hughes:1998}. 
+Four finite element simulations are performed and compared against the
+published results in \citep{Krieg.Krieg:1977, Taylor.Becker:1983,
+  Simo.Hughes:1998}.  To preserve the radial symmetry of the cylinder,
+the hexahedral mesh is generated via a radial meshing algorithm in a
+mesh generation software called CUBIT such that node distribution is
+unbiased along the radial direction. The 8-node and 27-node Lagrange
+hexahedral elements are both used on two meshes consisting of 693 and
+2175 elements. The final configurations in all four simulations are
+attained in 120 equal steps. Figure \ref{fig:LoadDeflection} shows the
+resulting load-deflection curves. Both results obtained from 8-node
+and 27-node element are in good agreement with
+\citep{Krieg.Krieg:1977, Taylor.Becker:1983, Simo.Hughes:1998}.
 \begin{figure}[htbp]
   \begin{center}
     \unitlength=1.0mm
       \includegraphics[width=160mm]{Load_Deflection.eps}
-    \caption{Load-deflection curve of the elastic-plastic upsetting of an axisymmetric billet problem. }
+      \caption{Load-deflection curve of the elastic-plastic upsetting
+        of an axisymmetric billet problem. }
     \label{fig:LoadDeflection}
   \end{center}
 \end{figure}
 
-At each time step throughout the simulations, the plastic split of the deformation gradient $\bF^{p} =
-(\bF^{e})^{-1} \cdot \bF$ is stored.  Figure \ref{fig:BilletNOLie}
-illustrates two projections of $\bF^{p}$ calculated from the Gauss
-points of the two 8-node finite element meshes through standard 
-Galerkin projection, without the application of Lie algebra. The color in Figure 
-\ref{fig:BilletNOLie} represents the  determinant of $\bF^{p}$  and the deformed 
-mesh is extracted from the last time step with $53\%$ upsetting. 
+At each time step throughout the simulations, the plastic split of the
+deformation gradient $\bF^{p} = (\bF^{e})^{-1} \cdot \bF$ is stored.
+Figure \ref{fig:BilletNOLie} illustrates two projections of $\bF^{p}$
+calculated from the Gauss points of the two 8-node finite element
+meshes through standard Galerkin projection, without the application
+of Lie algebra. The color in Figure \ref{fig:BilletNOLie} represents
+the determinant of $\bF^{p}$ and the deformed mesh is extracted from
+the last time step with $53\%$ upsetting.
 
-Ideally, the plastic deformation of the material obeying J2 plasticity 
-must be isochoric, as the plastic flow direction is isochoric. However, 
-our results indicate that this is not necessarily the case when projection
-is conducted without transforming $\bF^{p}$ to the corresponding Lie
-algebra. Since linear interpolation is only legitimate when addition
-operator is valid, which is not the case for $F^{p}$, projections
-conducted directly on $\bF^{p}$ might cause the projected $\bF^{p}$ is
-not being admissible to the special linear group. Consequently, a
-spurious volumetric plastic deformation is created if one attempting
-to directly project $\bF^{p}$ from Gauss points to nodal points for
-interpolations. This spurious volumetric plastic deformation caused by 
-inappropriate projection is depicted in Figures \ref{fig:BilletNOLie}(a) and (b).
+Ideally, the plastic deformation of the material obeying J2 plasticity
+must be isochoric, as the plastic flow direction is
+isochoric. However, our results indicate that this is not necessarily
+the case when projection is conducted without transforming $\bF^{p}$
+to the corresponding Lie algebra. Since linear interpolation is only
+legitimate when addition operator is valid, which is not the case for
+$F^{p}$, projections conducted directly on $\bF^{p}$ might cause the
+projected $\bF^{p}$ is not being admissible to the special linear
+group. Consequently, a spurious volumetric plastic deformation is
+created if one attempting to directly project $\bF^{p}$ from Gauss
+points to nodal points for interpolations. This spurious volumetric
+plastic deformation caused by inappropriate projection is depicted in
+Figures \ref{fig:BilletNOLie}(a) and (b).
 
 The determinant of the plastic split of the projected deformation
-gradient ranges from 0.83 to 1.24 in the coarse mesh, and from 0.64 and
-1.40 in the fine mesh at $53\%$ upsetting. This severe error occurs
-when significant amount of distortion of mesh accumulated at the edge
-of the bottom face, as shown in Figure \ref{fig:BilletNOLie}(a). Remarkably, 
-the spurious plastic volumetric strain had not been eliminated through refinement, 
-as the distortion of the finite element mesh is inevitable regardless of the mesh size. 
+gradient ranges from 0.83 to 1.24 in the coarse mesh, and from 0.64
+and 1.40 in the fine mesh at $53\%$ upsetting. This severe error
+occurs when significant amount of distortion of mesh accumulated at
+the edge of the bottom face, as shown in Figure
+\ref{fig:BilletNOLie}(a). Remarkably, the spurious plastic volumetric
+strain had not been eliminated through refinement, as the distortion
+of the finite element mesh is inevitable regardless of the mesh size.
 \begin{figure}[htbp]
   \begin{center}
     \unitlength=1.0mm
