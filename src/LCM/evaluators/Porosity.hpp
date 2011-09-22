@@ -61,16 +61,20 @@ private:
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
   PHX::MDField<ScalarT,Cell,QuadPoint> porosity;
 
-  //! Is conductivity constant, or random field
+  //! Is porosity constant, or random field
   bool is_constant;
 
   //! Constant value
   ScalarT constant_value;
 
-  //! Optional dependence on Temperature (E = E_const + dEdT * T)
-  PHX::MDField<ScalarT,Cell,QuadPoint> Temperature;
-  bool isThermoElastic;
-  ScalarT dEdT_value;
+  //! Optional dependence on strain and porePressure
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> strain; // porosity holds linear relation to volumetric strain
+  PHX::MDField<ScalarT,Cell,QuadPoint> porePressure; // for now, we don't use pore pressure, but later on we do.
+
+  bool isPoroElastic;
+  ScalarT initialPorosity_value;
+
+  // ScalarT dEdT_value;  NOTE: a term needed to be add later on...for now, keep it simple.
 
   //! Exponential random field
   Teuchos::RCP< Stokhos::KL::ExponentialRandomField<MeshScalarT> > exp_rf_kl;

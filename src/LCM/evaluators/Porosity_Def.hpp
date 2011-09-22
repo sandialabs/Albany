@@ -35,6 +35,8 @@ Porosity(Teuchos::ParameterList& p) :
 
   Teuchos::RCP<PHX::DataLayout> vector_dl =
     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
+  Teuchos::RCP<PHX::DataLayout> tensor_dl =
+      p.get< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
   vector_dl->dimensions(dims);
   numQPs  = dims[1];
@@ -46,7 +48,7 @@ Porosity(Teuchos::ParameterList& p) :
   std::string type = elmd_list->get("Porosity Type", "Constant");
   if (type == "Constant") {
     is_constant = true;
-    constant_value = elmd_list->get("Value", 1.0);
+    constant_value = elmd_list->get("Value", 0.0); // Default value =0 means no pores in the material
 
     // Add Porosity as a Sacado-ized parameter
     new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
@@ -76,24 +78,31 @@ Porosity(Teuchos::ParameterList& p) :
 		       "Invalid porosity modulus type " << type);
   } 
 
-  // Optional dependence on Temperature (E = E_ + dEdT * T)
-  // Switched ON by sending Temperature field in p
+  // Optional dependence on porePressure
+  // Switched ON by sending porePressure field in p
 
-  if ( p.isType<string>("QP Temperature Name") ) {
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim>
+        ts(p.get<string>("QP Strain Name"), tensor_dl);
+       strain = ts;
+  this->addDependentField(strain);
+
+  if ( p.isType<string>("QP Pore Pressure Name") ) {
+
     Teuchos::RCP<PHX::DataLayout> scalar_dl =
       p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
     PHX::MDField<ScalarT,Cell,QuadPoint>
-      tmp(p.get<string>("QP Temperature Name"), scalar_dl);
-    Temperature = tmp;
-    this->addDependentField(Temperature);
-    isThermoElastic = true;
-    dEdT_value = elmd_list->get("dEdT Value", 0.0);
+      tmp(p.get<string>("QP Pore Pressure Name"), scalar_dl);
+    porePressure = tmp;
+    this->addDependentField(porePressure);
+
+    isPoroElastic = true;
+    initialPorosity_value = elmd_list->get("Initial Porosity Value", 0.0);
     new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-                                "dEdT Value", this, paramLib);
+                                "Initial Porosity Value", this, paramLib);
   }
   else {
-    isThermoElastic=false;
-    dEdT_value=0.0;
+    isPoroElastic=false;
+    initialPorosity_value=0.0;
   }
 
 
@@ -109,7 +118,8 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(porosity,fm);
   if (!is_constant) this->utils.setFieldData(coordVec,fm);
-  if (isThermoElastic) this->utils.setFieldData(Temperature,fm);
+  if (isPoroElastic) this->utils.setFieldData(porePressure,fm);
+  if (isPoroElastic) this->utils.setFieldData(strain,fm);
 }
 
 // **********************************************************************
@@ -136,10 +146,12 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-  if (isThermoElastic) {
+  if (isPoroElastic) {
     for (std::size_t cell=0; cell < numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-    	  porosity(cell,qp) += dEdT_value * Temperature(cell,qp);
+    	  porosity(cell,qp) = initialPorosity_value + ( strain(cell,qp,0,0) + strain(cell,qp,1,1) + strain(cell,qp,2,2) );
+    	  // This equation is only vaild when that K_s >> K_f >> K
+
       }
     }
   }
@@ -152,8 +164,8 @@ Porosity<EvalT,Traits>::getValue(const std::string &n)
 {
   if (n == "Porosity")
     return constant_value;
-  else if (n == "dEdT Value")
-    return dEdT_value;
+  else if (n == "Initial Porosity Value")
+    return initialPorosity_value;
   for (int i=0; i<rv.size(); i++) {
     if (n == Albany::strint("Porosity KL Random Variable",i))
       return rv[i];
