@@ -250,13 +250,15 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/problems/NonlinearElasticityProblem.cpp 
     ${LCM_DIR}/problems/ThermoElasticityProblem.cpp 
     ${LCM_DIR}/problems/GradientDamageProblem.cpp 
+    ${LCM_DIR}/problems/PoroElasticityProblem.cpp
   )
 
   SET(HEADERS ${HEADERS}
     ${LCM_DIR}/problems/ElasticityProblem.hpp
     ${LCM_DIR}/problems/NonlinearElasticityProblem.hpp 
     ${LCM_DIR}/problems/ThermoElasticityProblem.hpp 
-    ${LCM_DIR}/problems/GradientDamageProblem.hpp 
+    ${LCM_DIR}/problems/GradientDamageProblem.hpp
+    ${LCM_DIR}/problems/PoroElasticityProblem.hpp 
   )
 
   # LCM evaluators
@@ -287,6 +289,12 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/ShearModulus.cpp
     ${LCM_DIR}/evaluators/KfieldBC.cpp
     ${LCM_DIR}/evaluators/DislocationDensity.cpp
+    ${LCM_DIR}/evaluators/TotalStress.cpp
+    ${LCM_DIR}/evaluators/BiotCoefficient.cpp
+    ${LCM_DIR}/evaluators/BiotModulus.cpp
+    ${LCM_DIR}/evaluators/PoroElasticityResidMomentum.cpp
+    ${LCM_DIR}/evaluators/PoroElasticityResidMass.cpp
+    ${LCM_DIR}/evaluators/Porosity.cpp
   )
 
   SET(HEADERS ${HEADERS}
@@ -342,6 +350,18 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/KfieldBC_Def.hpp
     ${LCM_DIR}/evaluators/DislocationDensity.hpp
     ${LCM_DIR}/evaluators/DislocationDensity_Def.hpp
+    ${LCM_DIR}/evaluators/TotalStress.hpp
+    ${LCM_DIR}/evaluators/TotalStress_Def.hpp
+    ${LCM_DIR}/evaluators/BiotCoefficient.hpp
+    ${LCM_DIR}/evaluators/BiotCoefficient_Def.hpp
+    ${LCM_DIR}/evaluators/BiotModulus.hpp
+    ${LCM_DIR}/evaluators/BiotModulus_Def.hpp
+    ${LCM_DIR}/evaluators/PoroElasticityResidMomentum.hpp
+    ${LCM_DIR}/evaluators/PoroElasticityResidMomentum_Def.hpp
+    ${LCM_DIR}/evaluators/PoroElasticityResidMass.hpp
+    ${LCM_DIR}/evaluators/PoroElasticityResidMass_Def.hpp
+    ${LCM_DIR}/evaluators/Porosity.hpp
+    ${LCM_DIR}/evaluators/Porosity_Def.hpp
   )
 
   #LCM utils

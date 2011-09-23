@@ -56,8 +56,7 @@ J2Stress(const Teuchos::ParameterList& p) :
   tensor_dl->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
-  //int worksetSize = dims[0];
-  std::size_t worksetSize = dims[0];
+  worksetSize = dims[0];
 
   this->addDependentField(defgrad);
   this->addDependentField(J);
@@ -356,7 +355,7 @@ evaluateFields(typename Traits::EvalData workset)
   // Since Intrepid will later perform calculations on the entire workset size
   // and not just the used portion, we must fill the excess with reasonable 
   // values. Leaving this out leads to inversion of 0 tensors.
-  for (std::size_t cell=workset.numCells; cell < workset.worksetSize; ++cell)
+  for (std::size_t cell=workset.numCells; cell < worksetSize; ++cell)
     for (std::size_t qp=0; qp < numQPs; ++qp) 
       for (std::size_t i=0; i < numDims; ++i)	
 	  Fp(cell,qp,i,i) = 1.0;

@@ -28,7 +28,7 @@ GatherCoordinateVector<EvalT, Traits>::
 GatherCoordinateVector(const Teuchos::ParameterList& p) :
   coordVec         (p.get<std::string>                   ("Coordinate Vector Name"),
                     p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout") ),
-  numVertices(0), numDim(0)
+  numVertices(0), numDim(0), worksetSize(0)
 {  
   if (p.isType<bool>("Periodic BC")) periodic = p.get<bool>("Periodic BC");
   else periodic = false;
@@ -47,6 +47,7 @@ void GatherCoordinateVector<EvalT, Traits>::postRegistrationSetup(typename Trait
   typename std::vector< typename PHX::template MDField<MeshScalarT,Cell,Vertex,Dim>::size_type > dims;
   coordVec.dimensions(dims); //get dimensions
 
+  worksetSize = dims[0];
   numVertices = dims[1];
   numDim = dims[2];
 }
@@ -69,7 +70,7 @@ void GatherCoordinateVector<EvalT, Traits>::evaluateFields(typename Traits::Eval
   // Since Intrepid will later perform calculations on the entire workset size
   // and not just the used portion, we must fill the excess with reasonable 
   // values. Leaving this out leads to calculations on singular elements.
-  for (std::size_t cell=numCells; cell < workset.worksetSize; ++cell) {
+  for (std::size_t cell=numCells; cell < worksetSize; ++cell) {
     for (std::size_t node = 0; node < numVertices; ++node) {
       for (std::size_t eq=0; eq < numDim; ++eq) { 
         coordVec(cell,node,eq) = coordVec(0,node,eq); 
@@ -83,7 +84,7 @@ GatherCoordinateVector<PHAL::AlbanyTraits::Tangent, Traits>::
 GatherCoordinateVector(const Teuchos::ParameterList& p) :
   coordVec         (p.get<std::string>                   ("Coordinate Vector Name"),
                     p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout") ),
-  numVertices(0), numDim(0)
+  numVertices(0), numDim(0), worksetSize(0)
 {  
   if (p.isType<bool>("Periodic BC")) periodic = p.get<bool>("Periodic BC");
   else periodic = false;
@@ -104,6 +105,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   typename std::vector< typename PHX::template MDField<MeshScalarT,Cell,Vertex,Dim>::size_type > dims;
   coordVec.dimensions(dims); //get dimensions
 
+  worksetSize = dims[0];
   numVertices = dims[1];
   numDim = dims[2];
 }
@@ -136,7 +138,7 @@ evaluateFields(typename Traits::EvalData workset)
   // and not just the used portion, we must fill the excess with reasonable 
   // values. Leaving this out leads to calculations on singular elements.
   //
-  for (std::size_t cell=numCells; cell < workset.worksetSize; ++cell) {
+  for (std::size_t cell=numCells; cell < worksetSize; ++cell) {
     for (std::size_t node = 0; node < numVertices; ++node) {
       for (std::size_t eq=0; eq < numDim; ++eq) { 
         coordVec(cell,node,eq) = coordVec(0,node,eq); 

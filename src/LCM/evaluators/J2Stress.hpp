@@ -70,6 +70,7 @@ private:
   std::string fpName, eqpsName;
   unsigned int numQPs;
   unsigned int numDims;
+  unsigned int worksetSize;
 
   // scratch space FCs
   Intrepid::FieldContainer<ScalarT> be;

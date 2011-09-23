@@ -85,7 +85,7 @@
     <Parameter name="1D Elements" type="int" value="1100"/>
     <Parameter name="1D Scale" type="double" value="11.0"/>
     <Parameter name="Method" type="string" value="STK1D"/>
-    <Parameter name="Exodus Output File Name" type="string" value="potential_1D.exo" />
+    <Parameter name="1D Output File Name" type="string" value="potential_1D.csv" />
   </ParameterList>
 
 

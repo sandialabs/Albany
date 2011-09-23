@@ -21,7 +21,9 @@
 
 #include "Albany_Utils.hpp"
 #include "Albany_STKDiscretization.hpp"
+#include <string>
 #include <iostream>
+#include <fstream>
 
 #include <Shards_BasicTopologies.hpp>
 #include "Shards_CellTopology.hpp"
@@ -153,6 +155,13 @@ void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln, const 
     }
   }
 #endif
+  // First attempt at output for 1D prob. Need to improve.
+  if (stkMeshStruct->oneDOutput) {
+    if (map->Comm().MyPID()==0) 
+      stkMeshStruct->oneDFilestream << "Solution at time stamp  " << time << "  is:" << endl;
+    stkMeshStruct->oneDFilestream << soln << endl;
+    if (map->Comm().MyPID()==0) stkMeshStruct->oneDFilestream << endl;
+  }
 }
 
 double
@@ -163,8 +172,7 @@ Albany::STKDiscretization::monotonicTimeLabel(const double time)
     previous_time_label = time;
     return time;
   }
-
-  // Try absolute value
+// Try absolute value
   double time_label = fabs(time);
   if (time_label > previous_time_label) {
     previous_time_label = time_label;

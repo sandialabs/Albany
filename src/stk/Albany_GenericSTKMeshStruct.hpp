@@ -37,7 +37,7 @@ namespace Albany {
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize) = 0;
 
-    const Teuchos::RCP<Albany::MeshSpecsStruct>& getMeshSpecs() const;
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs();
 
     protected: 
     GenericSTKMeshStruct(
@@ -61,7 +61,7 @@ namespace Albany {
          std::string listname = "Discretization Param Names") const;
 
     Teuchos::RCP<Teuchos::ParameterList> params;
-    Teuchos::RCP<Albany::MeshSpecsStruct> meshSpecs;
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs;
   };
 
 }

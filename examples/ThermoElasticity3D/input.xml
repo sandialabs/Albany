@@ -143,9 +143,6 @@
 	<Parameter name="Output Precision" type="int" value="3"/>
 	<Parameter name="Output Processor" type="int" value="0"/>
       </ParameterList>
-      <ParameterList name="Solver Options">
-	<Parameter name="Status Test Check Type" type="string" value="Minimal"/>
-      </ParameterList>
     </ParameterList>
   </ParameterList>
 </ParameterList>

@@ -302,7 +302,13 @@ readily available) \citep{Jog:2008} or the inverse scaling and
 squaring algorithm with Pad\'e approximants \citep{Cheng.etal:2001,
   Davies.Higham:2003}.  A fast and accurate method for the computation
 of the exponential map is provided by the scaling and squaring
-algorithm with Pad\'e approximants \citep{Higham:2001,Higham:2005}.
+algorithm with Pad\'e approximants
+\citep{Higham:2001,Higham:2005}. Most fields of interest, however,
+admit a polar decomposition and thus it proves convenient to effect
+the interpolation of these fields by interpolating separately their
+rotational and stretching components. An added benefit of this method
+is that the computation of logarithmic maps for these components is
+relatively straightforward.
 
 
 \section{Finite Element Formulation}
@@ -1565,7 +1571,7 @@ i.e.,
 \end{equation}
 where $\bA$ can be $\bF, \bR, \bU$ and $E_{\bA}^{h}$ is the error
 corresponding to the interpolated second order tensor field $\bA$;
-$\bxi$ is the Gauss points in the parent domain; $w(\bxi)$ and
+$\bxi$ is the Gauss point in the parent domain; $w(\bxi)$ and
 $J(\bxi)$ is the weight of the Gauss quadrature and the Jacobian
 determinant of the isoparametric mapping at the Gauss points; $N$ is
 the number of Gauss points per element and $nen$ is the number of
@@ -1577,7 +1583,7 @@ is meshed by 4 elements along the $X$ direction and 1 element along
 the $Y$ and $Z$ directions. The aspect ratio of all element are
 therefore 4. Then, we refine the mesh by increasing the number of
 element linearly in both $X$ and $Y$ direction, but discretize $Z$
-direction with only one element.  During the refinement, the aspect
+direction with only one element.  In each refined mesh, the aspect
 ratio, length/width, remains constant for all elements.
 \begin{figure}[htbp]
   \begin{center}
@@ -1630,11 +1636,12 @@ one order when the number of the elements is increased 100 times.
 This example demonstrates the outstanding ability of the variational
 transfer operator to project internal variables onto the admissible
 space. We integrate the variational projection operator and the Lie
-algebra interpolation techniques in a framework where projection is
-used in conjugation with logarithmic mapping.  The calculation we
-conducted is proposed as a severe test problem by
-\citet{Taylor.Becker:1983} and \citet{Simo.Hughes:1998}. For
-completeness, we briefly review the problem statement below.
+algebra interpolation techniques in a framework where variational
+projection operator is used in conjugation with logarithmic mapping.
+The calculation we conducted is proposed as a severe test problem by
+\citet{Krieg.Krieg:1977}, \citet{Taylor.Becker:1983} and
+\citet{Simo.Hughes:1998}. For completeness, we briefly review the
+problem statement below.
 
 Consider a cylindrical billet with initial radius = $10mm$ and initial
 height = $30mm$. Due to symmetry with respect to the three Cartesian
@@ -1675,47 +1682,68 @@ with those in are listed in \citep{Taylor.Becker:1983} and
   \end{center}
 \end{table}
 
-The simulation is performed with two meshes, consisting of 350 and
-1680 hexahedral trilinear elements respectively. Notice that the 3D
-hexahedral mesh is biased in the cylindrical domain and thus the
-projected $F^{p}$ field may not be rotational symmetric with respect
-to the vertical axis.  During the simulation, $\bF^{p} =
-(\bF^{e})^{-1} \cdot \bF$ is stored. Figure \ref{fig:BilletNOLie}
-illustrates two projections of $\bF^{p}$ calculated from the Gauss
-points of the two meshes via standard Galerkin projection, without the
-application of Lie algebra. Ideally, the plastic deformation of the
-material obeying J2 plasticity must be isochoric, as the plastic flow
-direction is isochoric. However, this is not the case when projection
-is conducted without transforming $\bF^{p}$ to the corresponding Lie
-algebra. Since linear interpolation is only legitimate when addition
-operator is valid, which is not the case for $F^{p}$, projections
-conducted directly on $bF^{p}$ might cause the projected $\bF^{p}$ is
-not being admissible to the special linear group. Consequently, a
-spurious volumetric plastic deformation is created if one attempting
-to directly project $F^{p}$ from Gauss point to nodal points for
-interpolations. This spurious volumetric plastic deformation is
-depicted in Figures \ref{fig:BilletNOLie}(a) and (b) where determinant
-of $\bF^{p}$ is plotted as color contour on the deformed meshes
-corresponding to $57\% $ upsetting.
+Four finite element simulations are performed and compared against the
+published results in \citep{Krieg.Krieg:1977, Taylor.Becker:1983,
+  Simo.Hughes:1998}.  To preserve the radial symmetry of the cylinder,
+the hexahedral mesh is generated via a radial meshing algorithm in a
+mesh generation software called CUBIT such that node distribution is
+unbiased along the radial direction. The 8-node and 27-node Lagrange
+hexahedral elements are both used on two meshes consisting of 693 and
+2175 elements. The final configurations in all four simulations are
+attained in 120 equal steps. Figure \ref{fig:LoadDeflection} shows the
+resulting load-deflection curves. Both results obtained from 8-node
+and 27-node element are in good agreement with
+\citep{Krieg.Krieg:1977, Taylor.Becker:1983, Simo.Hughes:1998}.
+\begin{figure}[htbp]
+  \begin{center}
+    \unitlength=1.0mm
+      \includegraphics[width=160mm]{Load_Deflection.eps}
+      \caption{Load-deflection curve of the elastic-plastic upsetting
+        of an axisymmetric billet problem. }
+    \label{fig:LoadDeflection}
+  \end{center}
+\end{figure}
+
+At each time step throughout the simulations, the plastic split of the
+deformation gradient $\bF^{p} = (\bF^{e})^{-1} \cdot \bF$ is stored.
+Figure \ref{fig:BilletNOLie} illustrates two projections of $\bF^{p}$
+calculated from the Gauss points of the two 8-node finite element
+meshes through standard Galerkin projection, without the application
+of Lie algebra. The color in Figure \ref{fig:BilletNOLie} represents
+the determinant of $\bF^{p}$ and the deformed mesh is extracted from
+the last time step with $53\%$ upsetting.
+
+Ideally, the plastic deformation of the material obeying J2 plasticity
+must be isochoric, as the plastic flow direction is
+isochoric. However, our results indicate that this is not necessarily
+the case when projection is conducted without transforming $\bF^{p}$
+to the corresponding Lie algebra. Since linear interpolation is only
+legitimate when addition operator is valid, which is not the case for
+$F^{p}$, projections conducted directly on $\bF^{p}$ might cause the
+projected $\bF^{p}$ is not being admissible to the special linear
+group. Consequently, a spurious volumetric plastic deformation is
+created if one attempting to directly project $\bF^{p}$ from Gauss
+points to nodal points for interpolations. This spurious volumetric
+plastic deformation caused by inappropriate projection is depicted in
+Figures \ref{fig:BilletNOLie}(a) and (b).
 
 The determinant of the plastic split of the projected deformation
-gradient ranges from 0.2 to 2.1 in the coarse mesh, and from -2.9 and
-5.8 in the fine mesh at $57\%$ upsetting. This severe error occurs
-when significant amount of distortion of mesh accumulated at the edge
-of the bottom face, as shown in Figure
-\ref{fig:BilletNOLie}(a). Interestingly, this error cannot be
-eliminated by refinement, as the distortion of the finite element is
-inevitable regardless of the mesh size.
-
+gradient ranges from 0.83 to 1.24 in the coarse mesh, and from 0.64
+and 1.40 in the fine mesh at $53\%$ upsetting. This severe error
+occurs when significant amount of distortion of mesh accumulated at
+the edge of the bottom face, as shown in Figure
+\ref{fig:BilletNOLie}(a). Remarkably, the spurious plastic volumetric
+strain had not been eliminated through refinement, as the distortion
+of the finite element mesh is inevitable regardless of the mesh size.
 \begin{figure}[htbp]
   \begin{center}
     \unitlength=1.0mm
     \subfigure[]{
-      \includegraphics[width=80mm]{medium_wo_lie_step31.eps}}
+      \includegraphics[width=80mm]{HEX8medium_DIRECT_woLie.eps}}
     \subfigure[]{
-      \includegraphics[width=80mm]{fine_wo_lie_step31.eps}}
+      \includegraphics[width=80mm]{HEX8fine_DIRECT_woLie.eps}}
     \caption{The plastic split of the deformation gradient projected
-      on deformed meshes with (a) 350 and (b) 1680 hexahedral finite
+      on deformed meshes with (a) 693 and (b) 2175 hexahedral finite
       elements. Projections are conducted without transformation
       between Lie group and Lie algebra.}
     \label{fig:BilletNOLie}
@@ -1734,7 +1762,7 @@ By applying \eqref{eq:ProjectionZ} on $so(3)$ and $gl(3)$ where
 addition operation is valid, the projected field is guaranteed to
 remain in the admissible space. The projected fields are then
 transformed back from Lie algebra $so(3)$ and $gl(3)$ back to $SO(3)$
-and $GL^{+}(3)$ at nodes and the projected plastic split field is
+and $GL(3)$ at nodes and the projected plastic split field is
 obtained by interpolating $\bF = \bR \cdot \bU$ at nodes of the finite
 element mesh. Results obtained from the calculation show that the
 determinant of the projected plastic split is 1 everywhere in the
@@ -1749,11 +1777,11 @@ holds regardless of mesh size.
   \begin{center}
     \unitlength=1.0mm
     \subfigure[]{
-      \includegraphics[width=80mm]{medium_w_lie_step31.eps}}
+      \includegraphics[width=80mm]{HEX8medium_DIRECT_wLie.eps}}
     \subfigure[]{
-      \includegraphics[width=80mm]{fine_w_lie_step31.eps}}
+      \includegraphics[width=80mm]{HEX8fine_DIRECT_wLie.eps}}
     \caption{The plastic split of the deformation gradient projected
-      on deformed meshes with (a) 350 and (b) 1680 hexahedral finite
+      on deformed meshes with (a) 693 and (b) 2175 hexahedral finite
       elements. Projections are conducted with transformation between
       Lie group and Lie algebra.}
     \label{fig:BilletWLie}

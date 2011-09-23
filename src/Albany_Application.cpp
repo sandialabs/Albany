@@ -40,6 +40,7 @@
   #include "Albany_STKDiscretization.hpp"
 #endif
 
+using Teuchos::ArrayRCP;
 using Teuchos::RCP;
 using Teuchos::rcp;
 using Teuchos::rcp_dynamic_cast;
@@ -103,10 +104,9 @@ Application(const RCP<const Epetra_Comm>& comm,
 #endif
 
   // Get mesh specification object: worksetSize, cell topology, etc
-  const RCP<Albany::MeshSpecsStruct> meshSpecs = discFactory.createMeshSpecs();
-  worksetSize = meshSpecs->worksetSize;
+  ArrayRCP<RCP<Albany::MeshSpecsStruct> > meshSpecs = discFactory.createMeshSpecs();
 
-  problem->buildProblem(*meshSpecs, stateMgr, responses);
+  problem->buildProblem(*meshSpecs[0], stateMgr, responses);
 
   // Create the full mesh
   neq = problem->numEquations();
@@ -116,21 +116,16 @@ Application(const RCP<const Epetra_Comm>& comm,
   wsElNodeEqID = disc->getWsElNodeEqID();
   coords = disc->getCoords();
   wsEBNames = disc->getWsEBNames();
-  int numDim = meshSpecs->numDim;
+  int numDim = meshSpecs[0]->numDim;
   numWorksets = wsElNodeEqID.size();
 
   // Create Epetra objects
-  importer = rcp(new Epetra_Import(*(disc->getOverlapMap()), 
-                                            *(disc->getMap())));
-  exporter = rcp(new Epetra_Export(*(disc->getOverlapMap()), 
-                                            *(disc->getMap())));
+  importer = rcp(new Epetra_Import(*(disc->getOverlapMap()), *(disc->getMap())));
+  exporter = rcp(new Epetra_Export(*(disc->getOverlapMap()), *(disc->getMap())));
   overlapped_x = rcp(new Epetra_Vector(*(disc->getOverlapMap())));
-  overlapped_xdot = 
-      rcp(new Epetra_Vector(*(disc->getOverlapMap())));
+  overlapped_xdot = rcp(new Epetra_Vector(*(disc->getOverlapMap())));
   overlapped_f = rcp(new Epetra_Vector(*(disc->getOverlapMap())));
-  overlapped_jac = 
-    rcp(new Epetra_CrsMatrix(Copy, 
-                                      *(disc->getOverlapJacobianGraph())));
+  overlapped_jac = rcp(new Epetra_CrsMatrix(Copy, *(disc->getOverlapJacobianGraph())));
 
   // Initialize solution vector and time deriv
   initial_x = disc->getSolutionField();
@@ -639,9 +634,9 @@ computeGlobalTangent(const double alpha,
   }
 
   // Begin shape optimization logic
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > coord_derivs;
+  ArrayRCP<ArrayRCP<double> > coord_derivs;
   // ws, sp, cell, node, dim
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > > > ws_coord_derivs;
+  ArrayRCP<ArrayRCP<ArrayRCP<ArrayRCP<ArrayRCP<double> > > > > ws_coord_derivs;
   ws_coord_derivs.resize(coords.size());
   std::vector<int> coord_deriv_indices;
 #ifdef ALBANY_CUTR
@@ -991,7 +986,7 @@ evaluateResponse_rfm(const double current_time,
 
   //create storage for individual responses and derivatives, to be placed in workset
   // and initialize with current values of the responses & derivatives
-  Teuchos::ArrayRCP< RCP< Epetra_Vector > >
+  ArrayRCP< RCP< Epetra_Vector > >
     wsResponses = Teuchos::arcp(new RCP<Epetra_Vector>[responses.size()], 0, responses.size() );
 
   for (unsigned int i=0, offset=0; i<responses.size(); i++) {
@@ -1110,9 +1105,9 @@ evaluateResponseGradient_rfm(const double current_time,
 
     //create storage for individual responses and derivatives, to be placed in workset
     // and initialize with current values of the responses & derivatives
-    Teuchos::ArrayRCP< RCP< Epetra_Vector > >
+    ArrayRCP< RCP< Epetra_Vector > >
       wsResponses = Teuchos::arcp(new RCP<Epetra_Vector>[responses.size()], 0, responses.size() );
-    Teuchos::ArrayRCP< RCP< Epetra_MultiVector > > 
+    ArrayRCP< RCP< Epetra_MultiVector > > 
       wsResponseDerivs = Teuchos::arcp(new RCP<Epetra_MultiVector>[responses.size()] , 0, responses.size() );
 
     for (unsigned int i=0, offset=0; i<responses.size(); i++) {
@@ -1187,9 +1182,9 @@ evaluateResponseGradient_rfm(const double current_time,
 
     //create storage for individual responses and derivatives, to be placed in workset
     // and initialize with current values of the responses & derivatives
-    Teuchos::ArrayRCP< RCP< Epetra_Vector > >
+    ArrayRCP< RCP< Epetra_Vector > >
       wsResponses = Teuchos::arcp(new RCP<Epetra_Vector>[responses.size()], 0, responses.size() );
-    Teuchos::ArrayRCP< RCP< Epetra_MultiVector > > 
+    ArrayRCP< RCP< Epetra_MultiVector > > 
       wsResponseDerivs = Teuchos::arcp(new RCP<Epetra_MultiVector>[responses.size()] , 0, responses.size() );
 
     for (unsigned int i=0, offset=0; i<responses.size(); i++) {
@@ -1327,7 +1322,6 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     workset.delta_time = timeMgr.getDeltaTime();
     if (sg_xdot != NULL) workset.transientTerms = true;
 
-    workset.worksetSize = worksetSize;
     for (int ws=0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo(workset, ws);
 
@@ -1453,7 +1447,6 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     workset.delta_time = timeMgr.getDeltaTime();
     if (sg_xdot != NULL) workset.transientTerms = true;
 
-    workset.worksetSize = worksetSize;
     for (int ws=0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo(workset, ws);
 
@@ -2045,7 +2038,6 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     workset.delta_time = timeMgr.getDeltaTime();
     if (mp_xdot != NULL) workset.transientTerms = true;
 
-    workset.worksetSize = worksetSize;
     for (int ws=0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo(workset, ws);
 
@@ -2180,7 +2172,6 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     workset.delta_time = timeMgr.getDeltaTime();
     if (mp_xdot != NULL) workset.transientTerms = true;
 
-    workset.worksetSize = worksetSize;
     for (int ws=0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo(workset, ws);
 
@@ -2802,7 +2793,6 @@ void Albany::Application::loadBasicWorksetInfo(
     workset.current_time = current_time;
     workset.delta_time = delta_time;
     if (overlapped_xdot != Teuchos::null) workset.transientTerms = true;
-    workset.worksetSize = worksetSize;
 }
 
 void Albany::Application::loadWorksetJacobianInfo(PHAL::Workset& workset,

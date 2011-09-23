@@ -15,34 +15,31 @@
 \********************************************************************/
 
 
-#ifndef DEFGRAD_HPP
-#define DEFGRAD_HPP
+#ifndef TOTALSTRESS_HPP
+#define TOTALSTRESS_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
-#include "Intrepid_CellTools.hpp"
-#include "Intrepid_Cubature.hpp"
-
 namespace LCM {
-/** \brief Deformation Gradient
+/** \brief Finite Element Interpolation Evaluator
 
-    This evaluator computes the deformation gradient
+    This evaluator interpolates nodal DOF values to quad points.
 
 */
 
 template<typename EvalT, typename Traits>
-class DefGrad : public PHX::EvaluatorWithBaseImpl<Traits>,
-		public PHX::EvaluatorDerived<EvalT, Traits>  {
+class TotalStress : public PHX::EvaluatorWithBaseImpl<Traits>,
+		    public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
-  DefGrad(const Teuchos::ParameterList& p);
+  TotalStress(const Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
-			     PHX::FieldManager<Traits>& vm);
+                      PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
@@ -52,21 +49,18 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> GradU;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
-  
-  // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defgrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint> J;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> strain;
+  PHX::MDField<ScalarT,Cell,QuadPoint> elasticModulus;
+  PHX::MDField<ScalarT,Cell,QuadPoint> poissonsRatio;
+  PHX::MDField<ScalarT,Cell,QuadPoint> biotCoefficient;
+  PHX::MDField<ScalarT,Cell,QuadPoint> porePressure;
 
   unsigned int numQPs;
   unsigned int numDims;
-  unsigned int worksetSize;
 
-  bool avgJ;
-  bool volavgJ;
-
+  // Output:
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;
 };
-
 }
+
 #endif

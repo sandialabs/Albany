@@ -29,6 +29,7 @@
 #include "LCM/problems/ElasticityProblem.hpp"
 #include "LCM/problems/NonlinearElasticityProblem.hpp"
 #include "LCM/problems/ThermoElasticityProblem.hpp"
+#include "LCM/problems/PoroElasticityProblem.hpp"
 #include "LCM/problems/GradientDamageProblem.hpp"
 #ifdef ALBANY_LAME
 #include "LCM/problems/LameProblem.hpp"
@@ -138,6 +139,15 @@ Albany::ProblemFactory::create()
   }
   else if (method == "ThermoElasticity 3D") {
     strategy = rcp(new Albany::ThermoElasticityProblem(problemParams, paramLib, 3));
+  }
+  else if (method == "PoroElasticity 1D") {
+    strategy = rcp(new Albany::PoroElasticityProblem(problemParams, paramLib, 1));
+  }
+  else if (method == "PoroElasticity 2D") {
+    strategy = rcp(new Albany::PoroElasticityProblem(problemParams, paramLib, 2));
+  }
+  else if (method == "PoroElasticity 3D") {
+    strategy = rcp(new Albany::PoroElasticityProblem(problemParams, paramLib, 3));
   }
   else if (method == "GradientDamage") {
     strategy = rcp(new Albany::GradientDamageProblem(problemParams, paramLib, 3));

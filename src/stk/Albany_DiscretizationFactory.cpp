@@ -45,7 +45,7 @@ Albany::DiscretizationFactory::setMeshMover(const Teuchos::RCP<CUTR::CubitMeshMo
 }
 #endif
 
-const Teuchos::RCP<Albany::MeshSpecsStruct>
+Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >
 Albany::DiscretizationFactory::createMeshSpecs()
 {
   std::string& method = discParams->get("Method", "STK1D");
@@ -89,8 +89,7 @@ Albany::DiscretizationFactory::createMeshSpecs()
        << "\nValid Methods are: STK1D, STK2D, STK3D, Ioss, Exodus, Cubit" << std::endl);
   }
 
-  const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs = stkMeshStruct->getMeshSpecs();
-  return meshSpecs;
+  return stkMeshStruct->getMeshSpecs();
 }
 
 Teuchos::RCP<Albany::AbstractDiscretization>
@@ -102,7 +101,7 @@ Albany::DiscretizationFactory::createDiscretization(unsigned int neq,
        "stkMeshStruct accessed, but it has not been constructed" << std::endl);
 
   stkMeshStruct->setFieldAndBulkData(epetra_comm, discParams, neq,
-                                     sis, stkMeshStruct->getMeshSpecs()->worksetSize);
+                                     sis, stkMeshStruct->getMeshSpecs()[0]->worksetSize);
 
   Teuchos::RCP<Albany::AbstractDiscretization> strategy
     = Teuchos::rcp(new Albany::STKDiscretization(stkMeshStruct, epetra_comm));

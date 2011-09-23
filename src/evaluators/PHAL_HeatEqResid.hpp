@@ -68,7 +68,7 @@ private:
   bool haveAbsorption;
   bool enableTransient;
   bool haverhoCp;
-  unsigned int numQPs, numDims;
+  unsigned int numQPs, numDims, worksetSize;
   Intrepid::FieldContainer<ScalarT> flux;
   Intrepid::FieldContainer<ScalarT> aterm;
 };
