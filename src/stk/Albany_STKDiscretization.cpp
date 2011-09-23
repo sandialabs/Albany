@@ -21,7 +21,9 @@
 
 #include "Albany_Utils.hpp"
 #include "Albany_STKDiscretization.hpp"
+#include <string>
 #include <iostream>
+#include <fstream>
 
 #include <Shards_BasicTopologies.hpp>
 #include "Shards_CellTopology.hpp"
@@ -155,8 +157,10 @@ void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln, const 
 #endif
   // First attempt at output for 1D prob. Need to improve.
   if (stkMeshStruct->oneDOutput) {
-    *out << "Solution vector. Need to write this to file  " << stkMeshStruct->exoOutFile << endl;
-    cout << soln << endl;
+    if (map->Comm().MyPID()==0) 
+      stkMeshStruct->oneDFilestream << "Solution at time stamp  " << time << "  is:" << endl;
+    stkMeshStruct->oneDFilestream << soln << endl;
+    if (map->Comm().MyPID()==0) stkMeshStruct->oneDFilestream << endl;
   }
 }
 

@@ -55,6 +55,13 @@ Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
   bulkData = NULL;
 }
 
+Albany::GenericSTKMeshStruct::~GenericSTKMeshStruct()
+{
+  delete metaData;
+  delete bulkData;
+  if (oneDFilestream.is_open())  oneDFilestream.close();
+}
+
 void Albany::GenericSTKMeshStruct::SetupFieldData(
 		  const Teuchos::RCP<const Epetra_Comm>& comm,
                   const int neq_,
@@ -132,8 +139,10 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
   }
   else if (numDim == 1) {
     oneDOutput = params->isType<string>("1D Output File Name");
-    if (oneDOutput)
-      oneDOutFile = params->get<string>("1D Output File Name");
+    if (oneDOutput) {
+      std::string oneDOutFile = params->get<string>("1D Output File Name");
+      oneDFilestream.open(oneDOutFile.c_str(), std::fstream::out);
+    }
     exoOutput = false;
   }
 }
@@ -154,13 +163,6 @@ void Albany::GenericSTKMeshStruct::DeclareParts(std::vector<std::string> nsNames
     stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
   }
-}
-
-
-Albany::GenericSTKMeshStruct::~GenericSTKMeshStruct()
-{
-  delete metaData;
-  delete bulkData;
 }
 
 Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >&
