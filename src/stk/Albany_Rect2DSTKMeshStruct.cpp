@@ -75,7 +75,7 @@ Albany::Rect2DSTKMeshStruct::Rect2DSTKMeshStruct(
   int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_map->NumMyElements());
 
   // MeshSpecs holds all info needed to set up an Albany problem
-  this->meshSpecs = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
+  this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
                               nsNames, worksetSize, this->interleavedOrdering));
 }
 

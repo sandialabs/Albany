@@ -70,6 +70,7 @@ HeatEqResid(const Teuchos::ParameterList& p) :
     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
   vector_dl->dimensions(dims);
+  worksetSize = dims[0];
   numQPs  = dims[1];
   numDims = dims[2];
 
@@ -140,7 +141,7 @@ evaluateFields(typename Traits::EvalData workset)
     FST::integrate<ScalarT>(TResidual, Tdot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
 
   if (haveConvection)  {
-    Intrepid::FieldContainer<ScalarT> convection(workset.worksetSize, numQPs);
+    Intrepid::FieldContainer<ScalarT> convection(worksetSize, numQPs);
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {

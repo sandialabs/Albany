@@ -134,11 +134,11 @@ namespace LCM {
     Albany::DiscretizationFactory
     disc_factory(disc_params, communicator);
 
-    const Teuchos::RCP<Albany::MeshSpecsStruct>
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >
     meshSpecs = disc_factory.createMeshSpecs();
 
     int 
-    worksetSize = meshSpecs->worksetSize;
+    worksetSize = meshSpecs[0]->worksetSize;
 
     // Create a state field in stick named Partition on elements
     // 1 DOF per node
@@ -154,7 +154,7 @@ namespace LCM {
 
     discretization_ptr_ = disc_factory.createDiscretization(1, stateInfo);
 
-    dimension_ = meshSpecs->numDim;
+    dimension_ = meshSpecs[0]->numDim;
 
     // Dimensioned: Workset, Cell, Local Node
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >
@@ -167,7 +167,7 @@ namespace LCM {
     // the nodes at the corners of the element are considered
     // to define the topology.
     const CellTopologyData
-    cell_topology = meshSpecs->ctd;
+    cell_topology = meshSpecs[0]->ctd;
 
     const int
     dimension = cell_topology.dimension;

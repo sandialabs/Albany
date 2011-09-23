@@ -49,6 +49,9 @@ Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
 
   interleavedOrdering = params->get("Interleaved Ordering",true);
 
+  // This is typical, can be resized for multiple material problems
+  meshSpecs.resize(1);
+
   bulkData = NULL;
 }
 
@@ -120,9 +123,19 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
 
   }
   
-  exoOutput = params->isType<string>("Exodus Output File Name");
-  if (exoOutput)
-    exoOutFile = params->get<string>("Exodus Output File Name");
+  // Exodus is only for 2D and 3D. Have 1D version as well
+  if (numDim>1) {
+    exoOutput = params->isType<string>("Exodus Output File Name");
+    if (exoOutput)
+      exoOutFile = params->get<string>("Exodus Output File Name");
+    oneDOutput = false;
+  }
+  else if (numDim == 1) {
+    oneDOutput = params->isType<string>("1D Output File Name");
+    if (oneDOutput)
+      oneDOutFile = params->get<string>("1D Output File Name");
+    exoOutput = false;
+  }
 }
 
 void Albany::GenericSTKMeshStruct::DeclareParts(std::vector<std::string> nsNames)
@@ -150,8 +163,8 @@ Albany::GenericSTKMeshStruct::~GenericSTKMeshStruct()
   delete bulkData;
 }
 
-const Teuchos::RCP<Albany::MeshSpecsStruct>&
-Albany::GenericSTKMeshStruct::getMeshSpecs() const
+Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >&
+Albany::GenericSTKMeshStruct::getMeshSpecs()
 {
   TEST_FOR_EXCEPTION(meshSpecs==Teuchos::null,
        std::logic_error,
@@ -178,7 +191,10 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
   Teuchos::RCP<Teuchos::ParameterList> validPL = rcp(new Teuchos::ParameterList(listname));;
   validPL->set<string>("Cell Topology", "Quad" , "Quad or Tri Cell Topology");
   validPL->set<std::string>("Exodus Output File Name", "",
-    "Request exodus output to given file name. Requires SEACAS build");
+      "Request exodus output to given file name. Requires SEACAS build");
+  if (numDim==1)
+    validPL->set<std::string>("1D Output File Name", "",
+      "Request output of 1D solution and field info to this file.");
   validPL->set<std::string>("Method", "",
     "The discretization method, parsed in the Discretization Factory");
   validPL->set<int>("Cubature Degree", 3, "Integration order sent to Intrepid");

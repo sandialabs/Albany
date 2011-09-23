@@ -40,7 +40,6 @@ struct Workset {
     transientTerms(false), ignore_residual(false) {}
 
   unsigned int numCells;
-  unsigned int worksetSize;
 
   Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> > sg_expansion;
 

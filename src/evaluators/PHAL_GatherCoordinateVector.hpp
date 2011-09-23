@@ -57,6 +57,7 @@ private:
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
  
   bool  periodic;
+  std::size_t worksetSize;
   std::size_t numVertices;
   std::size_t numDim;
 };
@@ -84,6 +85,7 @@ private:
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
  
   bool  periodic;
+  std::size_t worksetSize;
   std::size_t numVertices;
   std::size_t numDim;
 };

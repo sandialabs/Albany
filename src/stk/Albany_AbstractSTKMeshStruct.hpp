@@ -77,6 +77,8 @@ namespace Albany {
 
     bool exoOutput;
     std::string exoOutFile;
+    bool oneDOutput;
+    std::string oneDOutFile;
 
     // Temporary flag to switch between 2D elements being Rank Elements or Faces
     bool useElementAsTopRank;

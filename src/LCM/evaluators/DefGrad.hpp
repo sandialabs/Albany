@@ -61,6 +61,7 @@ private:
 
   unsigned int numQPs;
   unsigned int numDims;
+  unsigned int worksetSize;
 
   bool avgJ;
   bool volavgJ;

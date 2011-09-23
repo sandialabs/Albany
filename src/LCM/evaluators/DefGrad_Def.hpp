@@ -43,6 +43,7 @@ DefGrad(const Teuchos::ParameterList& p) :
 
   std::vector<PHX::DataLayout::size_type> dims;
   tensor_dl->dimensions(dims);
+  worksetSize  = dims[0];
   numQPs  = dims[1];
   numDims = dims[2];
 
@@ -152,7 +153,7 @@ evaluateFields(typename Traits::EvalData workset)
   // Since Intrepid will later perform calculations on the entire workset size
   // and not just the used portion, we must fill the excess with reasonable 
   // values. Leaving this out leads to inversion of 0 tensors.
-  for (std::size_t cell=workset.numCells; cell < workset.worksetSize; ++cell) 
+  for (std::size_t cell=workset.numCells; cell < worksetSize; ++cell) 
     for (std::size_t qp=0; qp < numQPs; ++qp) 
       for (std::size_t i=0; i < numDims; ++i)
 	defgrad(cell,qp,i,i) = 1.0;

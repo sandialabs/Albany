@@ -42,7 +42,7 @@ topology::topology(
 	Albany::DiscretizationFactory
 	  disc_factory(disc_params, communicator);
 
-	const Teuchos::RCP<Albany::MeshSpecsStruct>
+	Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >
 	meshSpecs = disc_factory.createMeshSpecs();
 
 	Teuchos::RCP<Albany::StateInfoStruct>

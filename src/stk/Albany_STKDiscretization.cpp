@@ -153,6 +153,11 @@ void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln, const 
     }
   }
 #endif
+  // First attempt at output for 1D prob. Need to improve.
+  if (stkMeshStruct->oneDOutput) {
+    *out << "Solution vector. Need to write this to file  " << stkMeshStruct->exoOutFile << endl;
+    cout << soln << endl;
+  }
 }
 
 double
@@ -163,8 +168,7 @@ Albany::STKDiscretization::monotonicTimeLabel(const double time)
     previous_time_label = time;
     return time;
   }
-
-  // Try absolute value
+// Try absolute value
   double time_label = fabs(time);
   if (time_label > previous_time_label) {
     previous_time_label = time_label;

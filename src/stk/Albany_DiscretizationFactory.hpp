@@ -52,7 +52,7 @@ namespace Albany {
     void setMeshMover(const Teuchos::RCP<CUTR::CubitMeshMover>& meshMover_);
 #endif
 
-    const Teuchos::RCP<Albany::MeshSpecsStruct> createMeshSpecs();
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > createMeshSpecs();
 
     Teuchos::RCP<Albany::AbstractDiscretization>
     createDiscretization(unsigned int num_equations,

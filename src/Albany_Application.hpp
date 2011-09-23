@@ -609,8 +609,7 @@ namespace Albany {
 
     unsigned int neq;
 
-    //! Size of a chunk of elements to be processed at once, and number of chunks
-    int worksetSize;
+    //! Number of worksets (buckets) to be processed 
     int numWorksets;
 
     //! Teko stuff
