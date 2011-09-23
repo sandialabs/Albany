@@ -68,9 +68,15 @@ private:
   ScalarT constant_value;
 
   //! Optional dependence on Temperature (E = E_const + dEdT * T)
-  PHX::MDField<ScalarT,Cell,QuadPoint> Temperature;
-  bool isThermoElastic;
-  ScalarT dEdT_value;
+  //PHX::MDField<ScalarT,Cell,QuadPoint> Temperature;
+  PHX::MDField<ScalarT,Cell,QuadPoint> porosity;
+  PHX::MDField<ScalarT,Cell,QuadPoint> biotCoefficient;
+  //bool isThermoElastic;
+  bool isPoroElastic;
+  //ScalarT dEdT_value;
+  ScalarT FluidBulkModulus;
+  ScalarT GrainBulkModulus;
+
 
   //! Exponential random field
   Teuchos::RCP< Stokhos::KL::ExponentialRandomField<MeshScalarT> > exp_rf_kl;

@@ -75,24 +75,34 @@ BiotModulus(Teuchos::ParameterList& p) :
 		       "Invalid Biot modulus type " << type);
   } 
 
-  // Optional dependence on Temperature (E = E_ + dEdT * T)
-  // Switched ON by sending Temperature field in p
+  if ( p.isType<string>("Porosity Name") ) {
+     Teuchos::RCP<PHX::DataLayout> scalar_dl =
+       p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+     PHX::MDField<ScalarT,Cell,QuadPoint>
+       tp(p.get<string>("Porosity Name"), scalar_dl);
+     porosity = tp;
+     this->addDependentField(porosity);
+     isPoroElastic = true;
+     FluidBulkModulus = elmd_list->get("Fluid Bulk Modulus Value", 10.0e9);
+     new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
+                                 "Skeleton Bulk Modulus Parameter Value", this, paramLib);
+     GrainBulkModulus = elmd_list->get("Grain Bulk Modulus Value", 10.0e12); // typically Kgrain >> Kskeleton
+     new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
+                                     "Grain Bulk Modulus Value", this, paramLib);
+   }
+   else {
+     isPoroElastic=false;
+     FluidBulkModulus=10.0e9; // temp value..need to change
+     GrainBulkModulus = 10.0e12;  // temp value need to change
+   }
 
-  if ( p.isType<string>("QP Temperature Name") ) {
-    Teuchos::RCP<PHX::DataLayout> scalar_dl =
-      p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
-    PHX::MDField<ScalarT,Cell,QuadPoint>
-      tmp(p.get<string>("QP Temperature Name"), scalar_dl);
-    Temperature = tmp;
-    this->addDependentField(Temperature);
-    isThermoElastic = true;
-    dEdT_value = elmd_list->get("dEdT Value", 0.0);
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-                                "dEdT Value", this, paramLib);
-  }
-  else {
-    isThermoElastic=false;
-    dEdT_value=0.0;
+  if ( p.isType<string>("Biot Coefficient Name") ) {
+     Teuchos::RCP<PHX::DataLayout> scalar_dl =
+       p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+     PHX::MDField<ScalarT,Cell,QuadPoint>
+       btp(p.get<string>("Biot Coefficient Name"), scalar_dl);
+     biotCoefficient = btp;
+     this->addDependentField(biotCoefficient);
   }
 
 
@@ -108,7 +118,9 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(biotModulus,fm);
   if (!is_constant) this->utils.setFieldData(coordVec,fm);
-  if (isThermoElastic) this->utils.setFieldData(Temperature,fm);
+//  if (isThermoElastic) this->utils.setFieldData(Temperature,fm);
+  if(isPoroElastic) this->utils.setFieldData(porosity,fm);
+  if(isPoroElastic) this->utils.setFieldData(biotCoefficient,fm);
 }
 
 // **********************************************************************
@@ -135,10 +147,13 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-  if (isThermoElastic) {
+  if (isPoroElastic) {
     for (std::size_t cell=0; cell < numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-    	    biotModulus(cell,qp) += dEdT_value * Temperature(cell,qp);
+    	    // 1/M = (B-phi)/Ks + phi/Kf
+    	    biotModulus(cell,qp) += 1/((biotCoefficient(cell,qp) - porosity(cell,qp))/GrainBulkModulus
+    	    		                  + porosity(cell,qp)/FluidBulkModulus);
+
       }
     }
   }
@@ -151,8 +166,10 @@ BiotModulus<EvalT,Traits>::getValue(const std::string &n)
 {
   if (n == "Biot Modulus")
     return constant_value;
-  else if (n == "dEdT Value")
-    return dEdT_value;
+  else if (n == "Fluid Bulk Modulus Value")
+     return FluidBulkModulus;
+   else if (n == "Grain Bulk Modulus Value")
+       return GrainBulkModulus;
   for (int i=0; i<rv.size(); i++) {
     if (n == Albany::strint("Biot Modulus KL Random Variable",i))
       return rv[i];

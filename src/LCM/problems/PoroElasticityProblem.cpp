@@ -127,6 +127,9 @@ Albany::PoroElasticityProblem::constructEvaluators(
    Albany::ProblemUtils probUtils(dl,"LCM");
    string scatterName="Scatter PoreFluid";
 
+
+   // ----------------------setup the solution field ---------------//
+
    // Displacement Variable
    Teuchos::ArrayRCP<string> dof_names(1);
      dof_names[0] = "Displacement";
@@ -167,6 +170,10 @@ Albany::PoroElasticityProblem::constructEvaluators(
 
    evaluators_to_build["Scatter porePressure Residual"] =
      probUtils.constructScatterResidualEvaluator(false, tresid_names, T_offset, scatterName);
+
+   // ----------------------setup the solution field ---------------//
+
+
 
    // General FEM stuff
    evaluators_to_build["Gather Coordinate Vector"] =
@@ -231,6 +238,29 @@ Albany::PoroElasticityProblem::constructEvaluators(
 
 	  evaluators_to_build["Biot Coefficient"] = p;
   }
+
+   { // Biot Modulus
+         RCP<ParameterList> p = rcp(new ParameterList);
+
+         int type = FactoryTraits<AlbanyTraits>::id_biotmodulus;
+         p->set<int>("Type", type);
+
+   	  p->set<string>("Biot Modulus Name", "Biot Modulus");
+   	  p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+   	  p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+   	  p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+   	  p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
+   	  p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+   	  Teuchos::ParameterList& paramList = params->sublist("Biot Modulus");
+   	  p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+   	  // Setting this turns on linear dependence on porosity and Biot's coeffcient
+   	  p->set<string>("Porosity Name", "Porosity");
+      p->set<string>("Biot Coefficient Name", "Biot Coefficient");
+
+   	  evaluators_to_build["Biot Modulus"] = p;
+     }
 
   { // Thermal conductivity
    RCP<ParameterList> p = rcp(new ParameterList);
@@ -520,6 +550,7 @@ Albany::PoroElasticityProblem::getValidProblemParameters() const
     this->getGenericProblemParams("ValidPoroElasticityProblemParams");
   validPL->sublist("Porosity", false, "");
   validPL->sublist("Biot Coefficient", false, "");
+  validPL->sublist("Biot Modulus", false, "");
   validPL->sublist("Thermal Conductivity", false, "");
   validPL->sublist("Elastic Modulus", false, "");
   validPL->sublist("Poissons Ratio", false, "");

@@ -38,7 +38,7 @@ namespace LCM {
 // Porosity update is the most important part for the poromechanics
 // formulation. All poroelasticity parameters (Biot Coefficient,
 // Biot modulus, permeability, and consistent tangential tensor)
-// all depends on porosity.
+// all depend on porosity.
 
 template<typename EvalT, typename Traits>
 class Porosity :
