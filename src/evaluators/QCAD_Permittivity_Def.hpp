@@ -89,6 +89,15 @@ Permittivity(Teuchos::ParameterList& p) :
     position_dependent = false; 
     temp_dependent = false; 
   }
+  
+  // for testing 1D PMOSCapacitor
+  else if (typ == "Position Dependent")
+  {
+    position_dependent = true; 
+    temp_dependent = false; 
+    oxideWidth = perm_list->get("Oxide Width", 0.);
+    siliconWidth = perm_list->get("Silicon Width", 0.);
+  }
 
   // Parse for other functional form for permittivity variation here
   // This effectively validates the 2nd argument in perm_list->get (...);
@@ -172,6 +181,41 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
   
+  // for testing 1D PMOSCapacitor
+  else if (typ == "Position Dependent")
+  {
+    MeshScalarT* coord;
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) 
+    {	
+      for (std::size_t qp=0; qp < numQPs; ++qp)
+      {
+        coord = &coordVec(cell,qp,0);
+        
+        // Silicon region
+        if ( (coord[0] > oxideWidth) && (coord[0] <= (oxideWidth + siliconWidth)) )
+        {
+          const std::string matName = "Silicon";
+          const ScalarT& value = materialDB->getMaterialParam<double>(matName,"Permittivity");
+          permittivity(cell,qp) = value;
+        }
+        
+        // Oxide region
+        else if ((coord[0] >= 0) && (coord[0] <= oxideWidth))
+        {
+          const std::string matName = "SiliconDioxide";
+          const ScalarT& value = materialDB->getMaterialParam<double>(matName,"Permittivity");
+          permittivity(cell,qp) = value;
+        }
+        
+        else
+          TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
+	          std::endl << "Error!  x-coord:" << coord[0] << "is outside the oxideWidth" << 
+	          " + siliconWidth range: " << oxideWidth + siliconWidth << "!"<< std::endl);
+        
+      }  // end of loop over QPs
+    }  // end of loop over cells
+  }
+  
   // otherwise, throw out error message and exit the program
   else 
   {
@@ -192,11 +236,11 @@ QCAD::Permittivity<EvalT,Traits>::getValue(const std::string &n)
   if (n == "Permittivity")	
     return constant_value;
   
-        // temperature factor used in the temp-dep permittivity calculation
+  // temperature factor used in the temp-dep permittivity calculation
   else if (n == "Permittivity Factor")
     return factor;
   
-        // otherwise, throw out error message and continue the program
+  // otherwise, throw out error message and continue the program
   else 
   {
     TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
@@ -219,6 +263,10 @@ QCAD::Permittivity<EvalT,Traits>::getValidPermittivityParameters() const
   		"Constant permittivity in the entire device");
   validPL->set<double>("Value", 1.0, "Constant permittivity value");
   validPL->set<double>("Factor", 1.0, "Permittivity temperature factor");
+
+  validPL->set<double>("Oxide Width", 0., "Oxide width for 1D PMOSCapacitor device");
+  validPL->set<double>("Silicon Width", 0., "Silicon width for 1D PMOSCapacitor device");
+
   return validPL;
 }
 
