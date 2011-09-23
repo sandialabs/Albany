@@ -95,6 +95,23 @@ ElasticModulus(Teuchos::ParameterList& p) :
     dEdT_value=0.0;
   }
 
+  // Optional dependence on porosity (E = E_ + dEdT * T)
+    // Switched ON by sending Temperature field in p
+
+  if ( p.isType<string>("Porosity Name") ) {
+      Teuchos::RCP<PHX::DataLayout> scalar_dl =
+        p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+      PHX::MDField<ScalarT,Cell,QuadPoint>
+        tporo(p.get<string>("Porosity Name"), scalar_dl);
+      porosity = tporo;
+      this->addDependentField(porosity);
+      isPoroElastic = true;
+
+    }
+    else {
+      isPoroElastic= false;
+    }
+
 
   this->addEvaluatedField(elasticModulus);
   this->setName("Elastic Modulus"+PHX::TypeString<EvalT>::value);
@@ -107,8 +124,9 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(elasticModulus,fm);
-  if (!is_constant) this->utils.setFieldData(coordVec,fm);
+  if (!is_constant)    this->utils.setFieldData(coordVec,fm);
   if (isThermoElastic) this->utils.setFieldData(Temperature,fm);
+  if (isPoroElastic)   this->utils.setFieldData(porosity,fm);
 }
 
 // **********************************************************************
@@ -142,6 +160,16 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+  if (isPoroElastic) {
+      for (std::size_t cell=0; cell < numCells; ++cell) {
+        for (std::size_t qp=0; qp < numQPs; ++qp) {
+    // porosity dependent Young's Modulus. It will be replaced by
+    // the hyperelasticity model in (Borja, Tamagnini and Amorosi, ASCE JGGE 1997).
+  	elasticModulus(cell,qp) = elasticModulus(cell,qp)*
+  			                 sqrt(1.0 - porosity(cell,qp));
+        }
+      }
+    }
 }
 
 // **********************************************************************

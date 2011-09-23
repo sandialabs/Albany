@@ -299,8 +299,10 @@ Albany::PoroElasticityProblem::constructEvaluators(
     Teuchos::ParameterList& paramList = params->sublist("Elastic Modulus");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-    // Setting this turns on linear dependence of E on T, E = E_ + dEdT*T)
-    p->set<string>("QP porePressure Name", "porePressure");
+
+    p->set<string>("Porosity Name", "Porosity"); // porosity is defined at Cubature points
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
 
     evaluators_to_build["Elastic Modulus"] = p;
   }

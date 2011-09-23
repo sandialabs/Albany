@@ -72,6 +72,12 @@ private:
   bool isThermoElastic;
   ScalarT dEdT_value;
 
+  // ! Optional dependence on porosity (E = E_const *(sqrt(1- porosity))
+  PHX::MDField<ScalarT,Cell,QuadPoint> porosity;
+  bool isPoroElastic;
+
+
+
   //! Exponential random field
   Teuchos::RCP< Stokhos::KL::ExponentialRandomField<MeshScalarT> > exp_rf_kl;
 
