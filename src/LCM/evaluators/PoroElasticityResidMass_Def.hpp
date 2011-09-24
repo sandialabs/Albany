@@ -26,48 +26,78 @@ namespace LCM {
 template<typename EvalT, typename Traits>
 PoroElasticityResidMass<EvalT, Traits>::
 PoroElasticityResidMass(const Teuchos::ParameterList& p) :
-  TotalStress      (p.get<std::string>                   ("Total Stress Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+  wBF         (p.get<std::string>                   ("Weighted BF Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
+  porePressure (p.get<std::string>                   ("QP Variable Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  Tdot        (p.get<std::string>                   ("QP Time Derivative Variable Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  ThermalCond (p.get<std::string>                   ("Thermal Conductivity Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   wGradBF     (p.get<std::string>                   ("Weighted Gradient BF Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
-  ExResidual   (p.get<std::string>                   ("Residual Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") )
+  TGrad       (p.get<std::string>                   ("Gradient QP Variable Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
+  Source      (p.get<std::string>                   ("Source Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  TResidual   (p.get<std::string>                   ("Residual Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
+  haveSource  (p.get<bool>("Have Source")),
+  haveConvection(false),
+  haveAbsorption  (p.get<bool>("Have Absorption")),
+  haverhoCp(false)
 {
-  this->addDependentField(TotalStress);
-  this->addDependentField(wGradBF);
-
-  this->addEvaluatedField(ExResidual);
-
   if (p.isType<bool>("Disable Transient"))
     enableTransient = !p.get<bool>("Disable Transient");
   else enableTransient = true;
 
-  if (enableTransient) {
-    // Two more fields are required for transient capability
-    Teuchos::RCP<PHX::DataLayout> node_qp_scalar_dl =
-       p.get< Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout");
-    Teuchos::RCP<PHX::DataLayout> vector_dl =
-       p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
+  this->addDependentField(wBF);
+  this->addDependentField(porePressure);
+  this->addDependentField(ThermalCond);
+  if (enableTransient) this->addDependentField(Tdot);
+  this->addDependentField(TGrad);
+  this->addDependentField(wGradBF);
+  if (haveSource) this->addDependentField(Source);
+  if (haveAbsorption) {
+    Absorption = PHX::MDField<ScalarT,Cell,QuadPoint>(
+	p.get<std::string>("Absorption Name"),
+	p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"));
+    this->addDependentField(Absorption);
+  }
+  this->addEvaluatedField(TResidual);
 
-    PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF_tmp
-        (p.get<string>("Weighted BF Name"), node_qp_scalar_dl);
-    wBF = wBF_tmp;
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim> uDotDot_tmp
-        (p.get<string>("Time Dependent Variable Name"), vector_dl);
-    uDotDot = uDotDot_tmp;
+  Teuchos::RCP<PHX::DataLayout> vector_dl =
+    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
+  std::vector<PHX::DataLayout::size_type> dims;
+  vector_dl->dimensions(dims);
+  worksetSize = dims[0];
+  numQPs  = dims[1];
+  numDims = dims[2];
 
-   this->addDependentField(wBF);
-   this->addDependentField(uDotDot);
+  // Allocate workspace
+  flux.resize(dims[0], numQPs, numDims);
+
+  if (haveAbsorption)  aterm.resize(dims[0], numQPs);
+
+  convectionVels = Teuchos::getArrayFromStringParameter<double> (p,
+                           "Convection Velocity", numDims, false);
+  if (p.isType<std::string>("Convection Velocity")) {
+    convectionVels = Teuchos::getArrayFromStringParameter<double> (p,
+                             "Convection Velocity", numDims, false);
+  }
+  if (convectionVels.size()>0) {
+    haveConvection = true;
+    if (p.isType<bool>("Have Rho Cp"))
+      haverhoCp = p.get<bool>("Have Rho Cp");
+    if (haverhoCp) {
+      PHX::MDField<ScalarT,Cell,QuadPoint> tmp(p.get<string>("Rho Cp Name"),
+            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"));
+      rhoCp = tmp;
+      this->addDependentField(rhoCp);
+    }
   }
 
-
   this->setName("PoroElasticityResidMass"+PHX::TypeString<EvalT>::value);
-
-  std::vector<PHX::DataLayout::size_type> dims;
-  wGradBF.fieldTag().dataLayout().dimensions(dims);
-  numNodes = dims[1];
-  numQPs   = dims[2];
-  numDims  = dims[3];
 }
 
 //**********************************************************************
@@ -76,14 +106,19 @@ void PoroElasticityResidMass<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(TotalStress,fm);
+  this->utils.setFieldData(wBF,fm);
+  this->utils.setFieldData(porePressure,fm);
+  this->utils.setFieldData(ThermalCond,fm);
+  this->utils.setFieldData(TGrad,fm);
   this->utils.setFieldData(wGradBF,fm);
+  if (haveSource)  this->utils.setFieldData(Source,fm);
+  if (enableTransient) this->utils.setFieldData(Tdot,fm);
 
-  this->utils.setFieldData(ExResidual,fm);
+  if (haveAbsorption)  this->utils.setFieldData(Absorption,fm);
 
-  if (enableTransient) this->utils.setFieldData(uDotDot,fm);
-  if (enableTransient) this->utils.setFieldData(wBF,fm);
+  if (haveConvection && haverhoCp)  this->utils.setFieldData(rhoCp,fm);
 
+  this->utils.setFieldData(TResidual,fm);
 }
 
 //**********************************************************************
@@ -93,29 +128,44 @@ evaluateFields(typename Traits::EvalData workset)
 {
   typedef Intrepid::FunctionSpaceTools FST;
 
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t node=0; node < numNodes; ++node) {
-              for (std::size_t dim=0; dim<numDims; dim++)  ExResidual(cell,node,dim)=0.0;
-          for (std::size_t qp=0; qp < numQPs; ++qp) {
-            for (std::size_t i=0; i<numDims; i++) {
-              for (std::size_t dim=0; dim<numDims; dim++) {
-                ExResidual(cell,node,i) += TotalStress(cell, qp, i, dim) * wGradBF(cell, node, qp, dim);
-    } } } } }
+  FST::scalarMultiplyDataData<ScalarT> (flux, ThermalCond, TGrad);
 
+  FST::integrate<ScalarT>(TResidual, flux, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+
+  if (haveSource) {
+    for (int i=0; i<Source.size(); i++) Source[i] *= -1.0;
+    FST::integrate<ScalarT>(TResidual, Source, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+  }
 
   if (workset.transientTerms && enableTransient)
+    FST::integrate<ScalarT>(TResidual, Tdot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+
+  if (haveConvection)  {
+    Intrepid::FieldContainer<ScalarT> convection(worksetSize, numQPs);
+
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t node=0; node < numNodes; ++node) {
-          for (std::size_t qp=0; qp < numQPs; ++qp) {
-            for (std::size_t i=0; i<numDims; i++) {
-                ExResidual(cell,node,i) += uDotDot(cell, qp, i) * wBF(cell, node, qp);
-    } } } }
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+        convection(cell,qp) = 0.0;
+        for (std::size_t i=0; i < numDims; ++i) {
+          if (haverhoCp)
+            convection(cell,qp) += rhoCp(cell,qp) * convectionVels[i] * TGrad(cell,qp,i);
+          else
+            convection(cell,qp) += convectionVels[i] * TGrad(cell,qp,i);
+        }
+      }
+    }
+
+    FST::integrate<ScalarT>(TResidual, convection, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+  }
 
 
-//  FST::integrate<ScalarT>(ExResidual, Stress, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
-
+  if (haveAbsorption) {
+    FST::scalarMultiplyDataData<ScalarT> (aterm, Absorption, porePressure);
+    FST::integrate<ScalarT>(TResidual, aterm, wBF, Intrepid::COMP_CPP, true);
+  }
 }
 
 //**********************************************************************
 }
+
 

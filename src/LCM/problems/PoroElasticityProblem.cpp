@@ -150,7 +150,7 @@ Albany::PoroElasticityProblem::constructEvaluators(
 
   // Pore Pressure Variable
    Teuchos::ArrayRCP<string> tdof_names(1);
-     tdof_names[0] = "porePressure";
+     tdof_names[0] = "Pore Pressure";
    Teuchos::ArrayRCP<string> tdof_names_dot(1);
      tdof_names_dot[0] = tdof_names[0]+"_dot";
    Teuchos::ArrayRCP<string> tresid_names(1);
@@ -165,10 +165,10 @@ Albany::PoroElasticityProblem::constructEvaluators(
    evaluators_to_build["DOF Grad "+tdof_names[0]] =
      probUtils.constructDOFGradInterpolationEvaluator(tdof_names[0]);
 
-   evaluators_to_build["Gather porePressure Solution"] =
+   evaluators_to_build["Gather Pore Pressure Solution"] =
      probUtils.constructGatherSolutionEvaluator(false, tdof_names, tdof_names_dot, T_offset);
 
-   evaluators_to_build["Scatter porePressure Residual"] =
+   evaluators_to_build["Scatter Pore Pressure Residual"] =
      probUtils.constructScatterResidualEvaluator(false, tresid_names, T_offset, scatterName);
 
    // ----------------------setup the solution field ---------------//
@@ -206,7 +206,7 @@ Albany::PoroElasticityProblem::constructEvaluators(
 	  // Setting this turns on linear dependence of E on T, E = E_ + dEdT*T)
 	  p->set<string>("Strain Name", "Strain");
 	  p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-	  p->set<string>("QP porePressure Name", "porePressure");
+	  p->set<string>("QP Pore Pressure Name", "Pore Pressure");
 	  p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
 	  evaluators_to_build["Porosity"] = p;
@@ -324,7 +324,7 @@ Albany::PoroElasticityProblem::constructEvaluators(
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     // Setting this turns on linear dependence of nu on T, nu = nu_ + dnudT*T)
-    p->set<string>("QP porePressure Name", "porePressure");
+    //p->set<string>("QP Pore Pressure Name", "Pore Pressure");
 
     evaluators_to_build["Poissons Ratio"] = p;
   }
@@ -386,7 +386,7 @@ Albany::PoroElasticityProblem::constructEvaluators(
 
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<string>("Pore Pressure Name", "porePressure");
+    p->set<string>("Pore Pressure Name", "Pore Pressure");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     //Output
@@ -417,7 +417,7 @@ Albany::PoroElasticityProblem::constructEvaluators(
     p->set<string>("Residual Name", "Displacement Residual");
     p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
 
-    evaluators_to_build["PoroElasticity Resid"] = p;
+    evaluators_to_build["PoroElasticity Momentum Resid"] = p;
   }
 
 
@@ -428,7 +428,7 @@ Albany::PoroElasticityProblem::constructEvaluators(
     p->set<int>("Type", type);
 
     p->set<string>("Source Name", "Source");
-    p->set<string>("Variable Name", "porePressure");
+    p->set<string>("QP Variable Name", "Pore Pressure");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
@@ -437,18 +437,18 @@ Albany::PoroElasticityProblem::constructEvaluators(
 
     evaluators_to_build["Source"] = p;
   }
-  { // porePressure Resid
-    RCP<ParameterList> p = rcp(new ParameterList("porePressure Resid"));
+  { // Pore Pressure Resid
+    RCP<ParameterList> p = rcp(new ParameterList("Pore Pressure Resid"));
 
-    int type = FactoryTraits<AlbanyTraits>::id_heateqresid;
+    int type = FactoryTraits<AlbanyTraits>::id_poroelasticityresidmass;
     p->set<int>("Type", type);
 
     //Input
     p->set<string>("Weighted BF Name", "wBF");
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
-    p->set<string>("QP Variable Name", "porePressure");
+    p->set<string>("QP Variable Name", "Pore Pressure"); // NOTE: QP and nodal vaue shares same name
 
-    p->set<string>("QP Time Derivative Variable Name", "porePressure_dot");
+    p->set<string>("QP Time Derivative Variable Name", "Pore Pressure_dot");
 
     p->set<bool>("Have Source", haveSource);
     p->set<string>("Source Name", "Source");
@@ -458,17 +458,17 @@ Albany::PoroElasticityProblem::constructEvaluators(
     p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<string>("Gradient QP Variable Name", "porePressure Gradient");
+    p->set<string>("Gradient QP Variable Name", "Pore Pressure Gradient");
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
     //Output
-    p->set<string>("Residual Name", "porePressure Residual");
+    p->set<string>("Residual Name", "Pore Pressure Residual");
     p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
 
-    evaluators_to_build["PoreFluid2D Resid"] = p;
+    evaluators_to_build["Poroelasticity Mass Resid"] = p;
   }
 
    // Build Field Evaluators for each evaluation type

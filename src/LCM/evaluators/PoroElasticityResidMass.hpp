@@ -32,14 +32,14 @@ namespace LCM {
 
 template<typename EvalT, typename Traits>
 class PoroElasticityResidMass : public PHX::EvaluatorWithBaseImpl<Traits>,
-		        public PHX::EvaluatorDerived<EvalT, Traits>  {
+		    public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
   PoroElasticityResidMass(const Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
-			     PHX::FieldManager<Traits>& vm);
+                      PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
@@ -49,20 +49,28 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> TotalStress;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> uDotDot;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
+  PHX::MDField<ScalarT,Cell,QuadPoint> porePressure;
+  PHX::MDField<ScalarT,Cell,QuadPoint> Tdot;
+  PHX::MDField<ScalarT,Cell,QuadPoint> ThermalCond;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> TGrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint> Source;
+  Teuchos::Array<double> convectionVels;
+  PHX::MDField<ScalarT,Cell,QuadPoint> rhoCp;
+  PHX::MDField<ScalarT,Cell,QuadPoint> Absorption;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node,Dim> ExResidual;
+  PHX::MDField<ScalarT,Cell,Node> TResidual;
 
-  std::size_t numNodes;
-  std::size_t numQPs;
-  std::size_t numDims;
+  bool haveSource;
+  bool haveConvection;
+  bool haveAbsorption;
   bool enableTransient;
-
+  bool haverhoCp;
+  unsigned int numQPs, numDims, worksetSize;
+  Intrepid::FieldContainer<ScalarT> flux;
+  Intrepid::FieldContainer<ScalarT> aterm;
 };
 }
 
