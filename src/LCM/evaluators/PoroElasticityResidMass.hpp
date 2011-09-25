@@ -53,12 +53,16 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> porePressure;
   PHX::MDField<ScalarT,Cell,QuadPoint> Tdot;
   PHX::MDField<ScalarT,Cell,QuadPoint> ThermalCond;
+  PHX::MDField<ScalarT,Cell,QuadPoint> porosity;
+  PHX::MDField<ScalarT,Cell,QuadPoint> biotCoefficient;
+  PHX::MDField<ScalarT,Cell,QuadPoint> biotModulus;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> TGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint> Source;
   Teuchos::Array<double> convectionVels;
   PHX::MDField<ScalarT,Cell,QuadPoint> rhoCp;
   PHX::MDField<ScalarT,Cell,QuadPoint> Absorption;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> strain;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> TResidual;
@@ -68,7 +72,10 @@ private:
   bool haveAbsorption;
   bool enableTransient;
   bool haverhoCp;
-  unsigned int numQPs, numDims, worksetSize;
+  std::size_t numNodes;
+  std::size_t numQPs;
+  std::size_t numDims;
+  unsigned int worksetSize;
   Intrepid::FieldContainer<ScalarT> flux;
   Intrepid::FieldContainer<ScalarT> aterm;
 };

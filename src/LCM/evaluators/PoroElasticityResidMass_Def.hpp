@@ -34,12 +34,20 @@ PoroElasticityResidMass(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   ThermalCond (p.get<std::string>                   ("Thermal Conductivity Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  porosity (p.get<std::string>                   ("Porosity Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  biotCoefficient (p.get<std::string>           ("Biot Coefficient Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  biotModulus (p.get<std::string>                   ("Biot Modulus Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   wGradBF     (p.get<std::string>                   ("Weighted Gradient BF Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
   TGrad       (p.get<std::string>                   ("Gradient QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
   Source      (p.get<std::string>                   ("Source Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  strain      (p.get<std::string>                   ("Strain Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
   TResidual   (p.get<std::string>                   ("Residual Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
   haveSource  (p.get<bool>("Have Source")),
@@ -54,6 +62,9 @@ PoroElasticityResidMass(const Teuchos::ParameterList& p) :
   this->addDependentField(wBF);
   this->addDependentField(porePressure);
   this->addDependentField(ThermalCond);
+  this->addDependentField(porosity);
+  this->addDependentField(biotCoefficient);
+  this->addDependentField(biotModulus);
   if (enableTransient) this->addDependentField(Tdot);
   this->addDependentField(TGrad);
   this->addDependentField(wGradBF);
@@ -64,20 +75,23 @@ PoroElasticityResidMass(const Teuchos::ParameterList& p) :
 	p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"));
     this->addDependentField(Absorption);
   }
+  this->addDependentField(strain);
   this->addEvaluatedField(TResidual);
 
   Teuchos::RCP<PHX::DataLayout> vector_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
+     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
   vector_dl->dimensions(dims);
   worksetSize = dims[0];
   numQPs  = dims[1];
   numDims = dims[2];
 
+
+
   // Allocate workspace
   flux.resize(dims[0], numQPs, numDims);
 
-  if (haveAbsorption)  aterm.resize(dims[0], numQPs);
+   if (haveAbsorption)  aterm.resize(dims[0], numQPs);
 
   convectionVels = Teuchos::getArrayFromStringParameter<double> (p,
                            "Convection Velocity", numDims, false);
@@ -98,6 +112,7 @@ PoroElasticityResidMass(const Teuchos::ParameterList& p) :
   }
 
   this->setName("PoroElasticityResidMass"+PHX::TypeString<EvalT>::value);
+
 }
 
 //**********************************************************************
@@ -109,15 +124,15 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(porePressure,fm);
   this->utils.setFieldData(ThermalCond,fm);
+  this->utils.setFieldData(biotCoefficient,fm);
+  this->utils.setFieldData(biotModulus,fm);
   this->utils.setFieldData(TGrad,fm);
   this->utils.setFieldData(wGradBF,fm);
   if (haveSource)  this->utils.setFieldData(Source,fm);
   if (enableTransient) this->utils.setFieldData(Tdot,fm);
-
   if (haveAbsorption)  this->utils.setFieldData(Absorption,fm);
-
   if (haveConvection && haverhoCp)  this->utils.setFieldData(rhoCp,fm);
-
+  this->utils.setFieldData(strain,fm);
   this->utils.setFieldData(TResidual,fm);
 }
 
@@ -128,41 +143,42 @@ evaluateFields(typename Traits::EvalData workset)
 {
   typedef Intrepid::FunctionSpaceTools FST;
 
+  // Cozeny-Carman relation should be add here
+
+
+
   FST::scalarMultiplyDataData<ScalarT> (flux, ThermalCond, TGrad);
-
+//
   FST::integrate<ScalarT>(TResidual, flux, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
-
+//
   if (haveSource) {
     for (int i=0; i<Source.size(); i++) Source[i] *= -1.0;
     FST::integrate<ScalarT>(TResidual, Source, wBF, Intrepid::COMP_CPP, true); // "true" sums into
   }
-
+//
   if (workset.transientTerms && enableTransient)
     FST::integrate<ScalarT>(TResidual, Tdot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
-
-  if (haveConvection)  {
-    Intrepid::FieldContainer<ScalarT> convection(worksetSize, numQPs);
-
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
-        convection(cell,qp) = 0.0;
-        for (std::size_t i=0; i < numDims; ++i) {
-          if (haverhoCp)
-            convection(cell,qp) += rhoCp(cell,qp) * convectionVels[i] * TGrad(cell,qp,i);
-          else
-            convection(cell,qp) += convectionVels[i] * TGrad(cell,qp,i);
-        }
-      }
-    }
-
-    FST::integrate<ScalarT>(TResidual, convection, wBF, Intrepid::COMP_CPP, true); // "true" sums into
-  }
-
-
+//
+//
   if (haveAbsorption) {
     FST::scalarMultiplyDataData<ScalarT> (aterm, Absorption, porePressure);
     FST::integrate<ScalarT>(TResidual, aterm, wBF, Intrepid::COMP_CPP, true);
   }
+
+//  // Undrained Condition
+//  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+ //      for (std::size_t node=0; node < numNodes; ++node) {
+ //   	   TResidual(cell,node)=0.0;
+//           for (std::size_t qp=0; qp < numQPs; ++qp) {
+//                TResidual(cell,node) += ((( strain(cell,qp,0,0) + strain(cell,qp,1,1) +
+//               		                    strain(cell,qp,2,2))*wBF(cell, node, qp) ));
+//              TResidual(cell,node) +=     -porePressure(cell, node, qp)/biotModulus(cell, node, qp)*
+//                		                    wBF(cell, node, qp);
+//   } } }
+
+
+
+
 }
 
 //**********************************************************************

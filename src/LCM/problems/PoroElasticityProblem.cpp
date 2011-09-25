@@ -444,9 +444,12 @@ Albany::PoroElasticityProblem::constructEvaluators(
     p->set<int>("Type", type);
 
     //Input
+
+    // Input from nodal points
     p->set<string>("Weighted BF Name", "wBF");
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
     p->set<string>("QP Variable Name", "Pore Pressure"); // NOTE: QP and nodal vaue shares same name
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<string>("QP Time Derivative Variable Name", "Pore Pressure_dot");
 
@@ -455,14 +458,23 @@ Albany::PoroElasticityProblem::constructEvaluators(
 
     p->set<bool>("Have Absorption", false);
 
+    // Input from cubature points
     p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+    p->set<string>("Porosity Name", "Porosity");
+    p->set<string>("Biot Coefficient Name", "Biot Coefficient");
+    p->set<string>("Biot Modulus Name", "Biot Modulus");
 
     p->set<string>("Gradient QP Variable Name", "Pore Pressure Gradient");
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+
+    p->set<string>("Strain Name", "Strain");
+    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+
 
     //Output
     p->set<string>("Residual Name", "Pore Pressure Residual");
