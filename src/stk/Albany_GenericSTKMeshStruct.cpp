@@ -188,9 +188,6 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
   validPL->set<string>("Cell Topology", "Quad" , "Quad or Tri Cell Topology");
   validPL->set<std::string>("Exodus Output File Name", "",
       "Request exodus output to given file name. Requires SEACAS build");
-  if (numDim==1)
-    validPL->set<std::string>("1D Output File Name", "",
-      "Request output of 1D solution and field info to this file.");
   validPL->set<std::string>("Method", "",
     "The discretization method, parsed in the Discretization Factory");
   validPL->set<int>("Cubature Degree", 3, "Integration order sent to Intrepid");
