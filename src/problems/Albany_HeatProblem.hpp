@@ -50,7 +50,7 @@ namespace Albany {
 
     //! Build the PDE instantiations, boundary conditions, and initial solution
     void buildProblem(
-       const Albany::MeshSpecsStruct& meshSpecs,
+       Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
        StateManager& stateMgr,
        std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
 

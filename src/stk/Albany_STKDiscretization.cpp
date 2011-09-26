@@ -155,13 +155,6 @@ void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln, const 
     }
   }
 #endif
-  // First attempt at output for 1D prob. Need to improve.
-  if (stkMeshStruct->oneDOutput) {
-    if (map->Comm().MyPID()==0) 
-      stkMeshStruct->oneDFilestream << "Solution at time stamp  " << time << "  is:" << endl;
-    stkMeshStruct->oneDFilestream << soln << endl;
-    if (map->Comm().MyPID()==0) stkMeshStruct->oneDFilestream << endl;
-  }
 }
 
 double
@@ -193,6 +186,7 @@ Albany::STKDiscretization::monotonicTimeLabel(const double time)
 void 
 Albany::STKDiscretization::setResidualField(const Epetra_Vector& residual) 
 {
+#ifdef ALBANY_LCM
   // Copy residual vector into residual field, one node at a time
   for (unsigned int i=0; i < ownednodes.size(); i++)  
   {
@@ -200,6 +194,7 @@ Albany::STKDiscretization::setResidualField(const Epetra_Vector& residual)
     for (unsigned int j=0; j<neq; j++)
       res[j] = residual[getOwnedDOF(i,j)];
   }
+#endif
 }
 
 Teuchos::RCP<Epetra_Vector>
@@ -506,22 +501,15 @@ void Albany::STKDiscretization::setupExodusOutput()
 {
 #ifdef ALBANY_SEACAS
   if (stkMeshStruct->exoOutput) {
-    if (stkMeshStruct->numDim > 1) {
 
-      Ioss::Init::Initializer io;
-      mesh_data = new stk::io::MeshData();
-      stk::io::create_output_mesh(stkMeshStruct->exoOutFile,
-				  Albany::getMpiCommFromEpetraComm(*comm),
-				  bulkData, *mesh_data);
+    Ioss::Init::Initializer io;
+    mesh_data = new stk::io::MeshData();
+    stk::io::create_output_mesh(stkMeshStruct->exoOutFile,
+		  Albany::getMpiCommFromEpetraComm(*comm),
+		  bulkData, *mesh_data);
 
-      stk::io::define_output_fields(*mesh_data, metaData);
+    stk::io::define_output_fields(*mesh_data, metaData);
 
-    }
-    else {
-      *out << "\nWARNING: Exodus output for 1D Meshes not implemented:"
-           << " Disabling output \n" << endl;
-      stkMeshStruct->exoOutput = false;
-    }
   }
 #else
   if (stkMeshStruct->exoOutput) 

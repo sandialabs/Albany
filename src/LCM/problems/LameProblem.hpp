@@ -46,9 +46,10 @@ namespace Albany {
 
     //! Build the PDE instantiations, boundary conditions, and initial solution
     virtual void 
-    buildProblem(const Albany::MeshSpecsStruct& meshSpecs,
-                 StateManager& stateMgr,
-                 std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
+    buildProblem(
+       Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+       StateManager& stateMgr,
+       std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
 
     //! Each problem must generate it's list of valid parameters
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;

@@ -95,13 +95,14 @@ QCAD::SchrodingerProblem::
 void
 QCAD::SchrodingerProblem::
 buildProblem(
-    const Albany::MeshSpecsStruct& meshSpecs,
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
     Albany::StateManager& stateMgr,
     std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
   /* Construct All Phalanx Evaluators */
-  constructEvaluators(meshSpecs, stateMgr, responses);
-  constructDirichletEvaluators(meshSpecs);
+  TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
+  constructEvaluators(*meshSpecs[0], stateMgr, responses);
+  constructDirichletEvaluators(*meshSpecs[0]);
 }
 
 

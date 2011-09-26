@@ -59,7 +59,6 @@ Albany::GenericSTKMeshStruct::~GenericSTKMeshStruct()
 {
   delete metaData;
   delete bulkData;
-  if (oneDFilestream.is_open())  oneDFilestream.close();
 }
 
 void Albany::GenericSTKMeshStruct::SetupFieldData(
@@ -81,16 +80,22 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
   //Start STK stuff
   coordinates_field = & metaData->declare_field< VectorFieldType >( "coordinates" );
   solution_field = & metaData->declare_field< VectorFieldType >( "solution" );
+#ifdef ALBANY_LCM
   residual_field = & metaData->declare_field< VectorFieldType >( "residual" );
+#endif
 
   stk::mesh::put_field( *coordinates_field , metaData->node_rank() , metaData->universal_part(), numDim );
   stk::mesh::put_field( *solution_field , metaData->node_rank() , metaData->universal_part(), neq );
+#ifdef ALBANY_LCM
   stk::mesh::put_field( *residual_field , metaData->node_rank() , metaData->universal_part() , neq );
+#endif
   
 #ifdef ALBANY_SEACAS
   stk::io::set_field_role(*coordinates_field, Ioss::Field::MESH);
   stk::io::set_field_role(*solution_field, Ioss::Field::TRANSIENT);
+#ifdef ALBANY_LCM
   stk::io::set_field_role(*residual_field, Ioss::Field::TRANSIENT);
+#endif
 #endif
 
   // Code to parse the vector of StateStructs and create STK fields
@@ -131,20 +136,9 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
   }
   
   // Exodus is only for 2D and 3D. Have 1D version as well
-  if (numDim>1) {
-    exoOutput = params->isType<string>("Exodus Output File Name");
-    if (exoOutput)
-      exoOutFile = params->get<string>("Exodus Output File Name");
-    oneDOutput = false;
-  }
-  else if (numDim == 1) {
-    oneDOutput = params->isType<string>("1D Output File Name");
-    if (oneDOutput) {
-      std::string oneDOutFile = params->get<string>("1D Output File Name");
-      oneDFilestream.open(oneDOutFile.c_str(), std::fstream::out);
-    }
-    exoOutput = false;
-  }
+  exoOutput = params->isType<string>("Exodus Output File Name");
+  if (exoOutput)
+    exoOutFile = params->get<string>("Exodus Output File Name");
 }
 
 void Albany::GenericSTKMeshStruct::DeclareParts(std::vector<std::string> nsNames)

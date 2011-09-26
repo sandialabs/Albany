@@ -106,7 +106,7 @@ Application(const RCP<const Epetra_Comm>& comm,
   // Get mesh specification object: worksetSize, cell topology, etc
   ArrayRCP<RCP<Albany::MeshSpecsStruct> > meshSpecs = discFactory.createMeshSpecs();
 
-  problem->buildProblem(*meshSpecs[0], stateMgr, responses);
+  problem->buildProblem(meshSpecs, stateMgr, responses);
 
   // Create the full mesh
   neq = problem->numEquations();
