@@ -147,7 +147,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 
 
-  FST::scalarMultiplyDataData<ScalarT> (flux, ThermalCond, TGrad);
+  FST::scalarMultiplyDataData<ScalarT> (flux, ThermalCond, TGrad); // flux_i = k I_ij p_j
 //
   FST::integrate<ScalarT>(TResidual, flux, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
 //
@@ -165,16 +165,16 @@ evaluateFields(typename Traits::EvalData workset)
     FST::integrate<ScalarT>(TResidual, aterm, wBF, Intrepid::COMP_CPP, true);
   }
 
-//  // Undrained Condition
-//  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
- //      for (std::size_t node=0; node < numNodes; ++node) {
+  // Undrained Condition
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+       for (std::size_t node=0; node < numNodes; ++node) {
  //   	   TResidual(cell,node)=0.0;
-//           for (std::size_t qp=0; qp < numQPs; ++qp) {
-//                TResidual(cell,node) += ((( strain(cell,qp,0,0) + strain(cell,qp,1,1) +
-//               		                    strain(cell,qp,2,2))*wBF(cell, node, qp) ));
-//              TResidual(cell,node) +=     -porePressure(cell, node, qp)/biotModulus(cell, node, qp)*
-//                		                    wBF(cell, node, qp);
-//   } } }
+           for (std::size_t qp=0; qp < numQPs; ++qp) {
+              TResidual(cell,node) = biotCoefficient(cell, node, qp)*(  strain(cell,qp,0,0) + strain(cell,qp,1,1) +
+               		                    strain(cell,qp,2,2)                     )*wBF(cell, node, qp) ;
+              TResidual(cell,node) +=     -porePressure(cell, node, qp)/biotModulus(cell, node, qp)*
+                		                    wBF(cell, node, qp);
+   } } }
 
 
 

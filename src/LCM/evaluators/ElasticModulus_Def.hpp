@@ -51,6 +51,16 @@ ElasticModulus(Teuchos::ParameterList& p) :
     new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
 	"Elastic Modulus", this, paramLib);
   }
+//  else if (type == 'Variable') {
+//	  is_constant = true; // this means no stochastic nature
+//	  is_field = true;
+//	  constant_value = elmd_list->get("Value", 1.0);
+//
+//	  // Add Elastic Modulus as a Sacado-ized parameter
+//	  new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
+//	  	"Elastic Modulus", this, paramLib);
+//
+//  }
   else if (type == "Truncated KL Expansion") {
     is_constant = false;
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>
@@ -165,8 +175,8 @@ evaluateFields(typename Traits::EvalData workset)
         for (std::size_t qp=0; qp < numQPs; ++qp) {
     // porosity dependent Young's Modulus. It will be replaced by
     // the hyperelasticity model in (Borja, Tamagnini and Amorosi, ASCE JGGE 1997).
-  	elasticModulus(cell,qp) = elasticModulus(cell,qp)*
-  			                 sqrt(2.0 - porosity(cell,qp));
+  	elasticModulus(cell,qp) = constant_value*
+  			                  sqrt(2.0 - porosity(cell,qp));
         }
       }
     }

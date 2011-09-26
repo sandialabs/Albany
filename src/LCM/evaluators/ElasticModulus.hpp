@@ -61,8 +61,9 @@ private:
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
   PHX::MDField<ScalarT,Cell,QuadPoint> elasticModulus;
 
-  //! Is conductivity constant, or random field
+  //! Is Young's modulus constant, or random field
   bool is_constant;
+
 
   //! Constant value
   ScalarT constant_value;

@@ -151,7 +151,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t cell=0; cell < numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
     	    // 1/M = (B-phi)/Ks + phi/Kf
-    	    biotModulus(cell,qp) += 1/((biotCoefficient(cell,qp) - porosity(cell,qp))/GrainBulkModulus
+    	    biotModulus(cell,qp) = 1/((biotCoefficient(cell,qp) - porosity(cell,qp))/GrainBulkModulus
     	    		                  + porosity(cell,qp)/FluidBulkModulus);
 
       }

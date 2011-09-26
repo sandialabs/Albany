@@ -237,6 +237,9 @@ Albany::PoroElasticityProblem::constructEvaluators(
 	  p->set<string>("Porosity Name", "Porosity");
 
 	  evaluators_to_build["Biot Coefficient"] = p;
+	  evaluators_to_build["Save Biot Coefficient"] =
+	  	  stateMgr.registerStateVariable("Biot Coefficient",dl->qp_scalar,
+	  	              dl->dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
   }
 
    { // Biot Modulus
@@ -260,6 +263,9 @@ Albany::PoroElasticityProblem::constructEvaluators(
       p->set<string>("Biot Coefficient Name", "Biot Coefficient");
 
    	  evaluators_to_build["Biot Modulus"] = p;
+   	  evaluators_to_build["Save Biot Modulus"] =
+   	  stateMgr.registerStateVariable("Biot Modulus",dl->qp_scalar,
+   	   dl->dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
      }
 
   { // Thermal conductivity
