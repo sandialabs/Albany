@@ -842,6 +842,24 @@ namespace LCM {
   skew(Vector<ScalarT> const & u);
 
   ///
+  /// Volumetric part of 2nd-order tensor  
+  /// \param A tensor
+  /// \return \f$ \frac{1}{3} \tr A I \f$
+  ///
+  template<typename ScalarT>
+  Tensor<ScalarT>
+  vol(Tensor<ScalarT> const & A);
+
+  ///
+  /// Deviatoric part of 2nd-order tensor
+  /// \param A tensor
+  /// \return \f$ A - vol(A) \f$
+  ///
+  template<typename ScalarT>
+  Tensor<ScalarT>
+  dev(Tensor<ScalarT> const & A);
+
+  ///
   /// 2nd-order tensor inverse
   /// \param A nonsingular tensor
   /// \return \f$ A^{-1} \f$

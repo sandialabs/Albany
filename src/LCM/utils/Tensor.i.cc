@@ -11,6 +11,7 @@
 #include <cassert>
 #include <cmath>
 #include <limits>
+#include <Sacado_MathFunctions.hpp>
 
 namespace LCM {
 
@@ -1026,6 +1027,31 @@ namespace LCM {
          0.0, -u(2),  u(1),
         u(2),   0.0, -u(0),
        -u(1),  u(0),   0.0);
+  }
+
+  //
+  // Volumetric part of 2nd-order tensor
+  // \return \f$ \frac{1}{3} \tr A I \f$
+  //
+  template<typename ScalarT>
+  inline Tensor<ScalarT>
+  vol(Tensor<ScalarT> const & A)
+  {
+    const ScalarT tr = (1.0*3.0)*trace(A);
+
+    return tr * eye<ScalarT>();
+  }
+
+  //
+  // Deviatoric part of 2nd-order tensor
+  // \return \f$ A - vol(A) \f$
+  //
+  template<typename ScalarT>
+  inline Tensor<ScalarT>
+  dev(Tensor<ScalarT> const & A)
+  {
+    return A - vol(A);
+
   }
 
   //
