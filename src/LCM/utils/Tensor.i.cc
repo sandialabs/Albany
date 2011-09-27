@@ -1037,7 +1037,7 @@ namespace LCM {
   inline Tensor<ScalarT>
   vol(Tensor<ScalarT> const & A)
   {
-    const ScalarT tr = (1.0*3.0)*trace(A);
+    const ScalarT tr = (1.0/3.0)*trace(A);
 
     return tr * eye<ScalarT>();
   }
