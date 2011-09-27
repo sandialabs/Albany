@@ -171,9 +171,10 @@ evaluateFields(typename Traits::EvalData workset)
  //   	   TResidual(cell,node)=0.0;
            for (std::size_t qp=0; qp < numQPs; ++qp) {
               TResidual(cell,node) = biotCoefficient(cell, node, qp)*(  strain(cell,qp,0,0) + strain(cell,qp,1,1) +
-               		                    strain(cell,qp,2,2)                     )*wBF(cell, node, qp) ;
+               		                    strain(cell,qp,2,2) )*wBF(cell, node, qp) ; // Div u solid skeleton constraint
               TResidual(cell,node) +=     -porePressure(cell, node, qp)/biotModulus(cell, node, qp)*
-                		                    wBF(cell, node, qp);
+                		                    wBF(cell, node, qp); // 1/Mp pore pressure constraint
+              // pore-fluid diffusion
    } } }
 
 

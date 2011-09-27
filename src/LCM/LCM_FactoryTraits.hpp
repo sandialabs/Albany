@@ -49,7 +49,6 @@
 #include "LCM/evaluators/ElasticityResid.hpp"
 #include "LCM/evaluators/PoissonsRatio.hpp"
 #include "LCM/evaluators/DefGrad.hpp"
-#include "LCM/evaluators/RCG.hpp"
 #include "LCM/evaluators/LCG.hpp"
 #include "LCM/evaluators/Neohookean.hpp"
 #include "LCM/evaluators/J2Stress.hpp"
@@ -120,40 +119,39 @@ struct FactoryTraits {
   static const int id_elasticityresid           = 19;
   static const int id_poissons_ratio            = 20;
   static const int id_defgrad                   = 21;
-  static const int id_rcg                       = 22;
-  static const int id_lcg                       = 23;
-  static const int id_neohookean_stress         = 24;
-  static const int id_tl_elas_resid             = 25;
-  static const int id_j2_stress                 = 26;
-  static const int id_energy_potential          = 27;
-  static const int id_hardening_modulus         = 28;
-  static const int id_yield_strength            = 29;
-  static const int id_pisdwdf_stress            = 30;
-  static const int id_damage_resid              = 31;
-  static const int id_j2_damage                 = 32;
-  static const int id_damage_ls                 = 33;
-  static const int id_sat_mod                   = 34;
-  static const int id_sat_exp                   = 35;
-  static const int id_localization              = 36;
-  static const int id_damage_source             = 37;
-  static const int id_bulk_modulus              = 38;
-  static const int id_shear_modulus             = 39;
-  static const int id_savestatefield            = 40;
-  static const int id_dislocation_density       = 41;
-  static const int id_total_stress              = 42;
-  static const int id_poroelasticityresidmomentum=43;
-  static const int id_porosity                   = 44;
-  static const int id_biotcoefficient           = 45;
-  static const int id_biotmodulus               = 46;
-  static const int id_poroelasticityresidmass   = 47;
+  static const int id_lcg                       = 22;
+  static const int id_neohookean_stress         = 23;
+  static const int id_tl_elas_resid             = 24;
+  static const int id_j2_stress                 = 25;
+  static const int id_energy_potential          = 26;
+  static const int id_hardening_modulus         = 27;
+  static const int id_yield_strength            = 28;
+  static const int id_pisdwdf_stress            = 29;
+  static const int id_damage_resid              = 30;
+  static const int id_j2_damage                 = 31;
+  static const int id_damage_ls                 = 32;
+  static const int id_sat_mod                   = 33;
+  static const int id_sat_exp                   = 34;
+  static const int id_localization              = 35;
+  static const int id_damage_source             = 36;
+  static const int id_bulk_modulus              = 37;
+  static const int id_shear_modulus             = 38;
+  static const int id_savestatefield            = 39;
+  static const int id_dislocation_density       = 40;
+  static const int id_total_stress              = 41;
+  static const int id_poroelasticityresidmomentum=42;
+  static const int id_porosity                  = 43;
+  static const int id_biotcoefficient           = 44;
+  static const int id_biotmodulus               = 45;
+  static const int id_poroelasticityresidmass   = 46;
   // JTO - leave lame stress at the bottom for the convention below to be most effective
-  static const int id_lame_stress               = 48;
+  static const int id_lame_stress               = 47;
 
 
 #ifndef ALBANY_LAME
-  typedef boost::mpl::vector48<
+  typedef boost::mpl::vector47<
 #else
-  typedef boost::mpl::vector49<
+  typedef boost::mpl::vector48<
 #endif  
 
     PHAL::GatherSolution<_,Traits>,           //  0
@@ -178,34 +176,33 @@ struct FactoryTraits {
     LCM::ElasticityResid<_,Traits>,           // 19
     LCM::PoissonsRatio<_,Traits>,             // 20
     LCM::DefGrad<_,Traits>,                   // 21
-    LCM::RCG<_,Traits>,                       // 22
-    LCM::LCG<_,Traits>,                       // 23
-    LCM::Neohookean<_,Traits>,                // 24
-    LCM::TLElasResid<_,Traits>,               // 25
-    LCM::J2Stress<_,Traits>,                  // 26
-    LCM::EnergyPotential<_,Traits>,           // 27
-    LCM::HardeningModulus<_,Traits>,          // 28
-    LCM::YieldStrength<_,Traits>,             // 29
-    LCM::PisdWdF<_,Traits>,                   // 30
-    LCM::DamageResid<_,Traits>,               // 31
-    LCM::J2Damage<_,Traits>,                  // 32
-    LCM::DamageLS<_,Traits>,                  // 33
-    LCM::SaturationModulus<_,Traits>,         // 34
-    LCM::SaturationExponent<_,Traits>,        // 35
-    LCM::Localization<_,Traits>,              // 36
-    LCM::DamageSource<_,Traits>,              // 37
-    LCM::BulkModulus<_,Traits>,               // 38
-    LCM::ShearModulus<_,Traits>,              // 39
-    PHAL::SaveStateField<_,Traits>,           // 40
-    LCM::DislocationDensity<_,Traits>,        // 41
-    LCM::TotalStress<_,Traits>,               // 42
-    LCM::PoroElasticityResidMomentum<_,Traits>,// 43
-    LCM::Porosity<_, Traits>,                   // 44
-    LCM::BiotCoefficient<_,Traits>,            // 45
-    LCM::BiotModulus<_,Traits>,                // 46
-    LCM::PoroElasticityResidMass<_,Traits>   // 47
+    LCM::LCG<_,Traits>,                       // 22
+    LCM::Neohookean<_,Traits>,                // 23
+    LCM::TLElasResid<_,Traits>,               // 24
+    LCM::J2Stress<_,Traits>,                  // 25
+    LCM::EnergyPotential<_,Traits>,           // 26
+    LCM::HardeningModulus<_,Traits>,          // 27
+    LCM::YieldStrength<_,Traits>,             // 28
+    LCM::PisdWdF<_,Traits>,                   // 29
+    LCM::DamageResid<_,Traits>,               // 30
+    LCM::J2Damage<_,Traits>,                  // 31
+    LCM::DamageLS<_,Traits>,                  // 32
+    LCM::SaturationModulus<_,Traits>,         // 33
+    LCM::SaturationExponent<_,Traits>,        // 34
+    LCM::Localization<_,Traits>,              // 35
+    LCM::DamageSource<_,Traits>,              // 36
+    LCM::BulkModulus<_,Traits>,               // 37
+    LCM::ShearModulus<_,Traits>,              // 38
+    PHAL::SaveStateField<_,Traits>,           // 39
+    LCM::DislocationDensity<_,Traits>,        // 40
+    LCM::TotalStress<_,Traits>,               // 41
+    LCM::PoroElasticityResidMomentum<_,Traits>,// 42
+    LCM::Porosity<_, Traits>,                   // 43
+    LCM::BiotCoefficient<_,Traits>,            // 44
+    LCM::BiotModulus<_,Traits>,                // 45
+    LCM::PoroElasticityResidMass<_,Traits>   // 46
 #ifdef ALBANY_LAME
-    ,LCM::LameStress<_,Traits>                // 48
+    ,LCM::LameStress<_,Traits>                // 47
 #endif
     > EvaluatorTypes;
 };
