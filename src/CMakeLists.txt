@@ -564,8 +564,15 @@ IF (ALBANY_LCM)
   add_executable(NodeUpdate LCM/test/utils/NodeUpdate.cc)
 ENDIF ()
 IF (ALBANY_LAME)
-  add_executable(utLameStress_elastic LCM/test/unit_tests/StandardUnitTestMain.cpp LCM/test/unit_tests/utLameStress_elastic.cpp)
-  target_link_libraries(utLameStress_elastic teuchos)
+  add_executable(utLameStress_elastic
+    PHAL_Dimension.cpp
+    PHAL_AlbanyTraits.cpp
+    ${LCM_DIR}/utils/LameUtils.cpp
+    ${LCM_DIR}/evaluators/LameStress.cpp
+    ${LCM_DIR}/test/unit_tests/StandardUnitTestMain.cpp
+    ${LCM_DIR}/test/unit_tests/utLameStress_elastic.cpp
+  )
+  target_link_libraries(utLameStress_elastic ${LAME_LIB} ${Trilinos_LIBRARIES})
 ENDIF ()
 
 set(ALL_LIBRARIES ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES} )
