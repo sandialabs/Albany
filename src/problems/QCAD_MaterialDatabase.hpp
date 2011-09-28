@@ -67,6 +67,10 @@ namespace QCAD {
     template<typename T>
     T getElementBlockParam(const std::string& ebName, const std::string& paramName, T def_val);
 
+    //! Get a sublist from a particular element block
+    Teuchos::ParameterList&
+    getElementBlockSublist(const std::string& ebName, const std::string& subListName);
+
     //! Get a vector of the value of all parameters in the entire list with name == paramName
     template<typename T> 
     std::vector<T> getAllMatchingParams(const std::string& paramName);
