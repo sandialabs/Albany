@@ -45,7 +45,7 @@ KCPermeability(Teuchos::ParameterList& p) :
   std::string type = elmd_list->get("Kozeny-Carman Permeability Type", "Constant");
   if (type == "Constant") {
     is_constant = true;
-    constant_value = elmd_list->get("Value", 1.0); // default value=1, identical to Terzaghi stress
+    constant_value = elmd_list->get("Value", 1.0e-5); // default value=1, identical to Terzaghi stress
 
     // Add Kozeny-Carman Permeability as a Sacado-ized parameter
     new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
@@ -86,17 +86,11 @@ KCPermeability(Teuchos::ParameterList& p) :
     porosity = tp;
     this->addDependentField(porosity);
     isPoroElastic = true;
-    Kskeleton_value = elmd_list->get("Skeleton Bulk Modulus Parameter Value", 10.0e5);
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-                                "Skeleton Bulk Modulus Parameter Value", this, paramLib);
-    Kgrain_value = elmd_list->get("Grain Bulk Modulus Value", 10.0e12); // typically Kgrain >> Kskeleton
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-                                    "Grain Bulk Modulus Value", this, paramLib);
+
   }
   else {
     isPoroElastic=false;
-    Kskeleton_value=10.0e5; // temp value..need to change
-    Kgrain_value = 10.0e12;  // temp value need to change
+
   }
 
 

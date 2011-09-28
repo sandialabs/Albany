@@ -287,6 +287,25 @@ Albany::PoroElasticityProblem::constructEvaluators(
    evaluators_to_build["Thermal Conductivity"] = p;
   }
 
+  { // Kozeny-Carman Permeaiblity
+     RCP<ParameterList> p = rcp(new ParameterList);
+
+     int type = FactoryTraits<AlbanyTraits>::id_kcpermeability;
+     p->set<int>("Type", type);
+
+     p->set<string>("Kozeny-Carman Permeability Name", "Kozeny-Carman Permeability");
+     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
+     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+     Teuchos::ParameterList& paramList = params->sublist("Kozeny-Carman Permeability");
+     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+     evaluators_to_build["Kozeny-Carman Permeability"] = p;
+    }
+
   // Skeleton parameter
 
   { // Elastic Modulus
@@ -468,6 +487,7 @@ Albany::PoroElasticityProblem::constructEvaluators(
     p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
+    p->set<string>("Kozeny-Carman Permeability Name", "Kozeny-Carman Permeability");
     p->set<string>("Porosity Name", "Porosity");
     p->set<string>("Biot Coefficient Name", "Biot Coefficient");
     p->set<string>("Biot Modulus Name", "Biot Modulus");
@@ -572,6 +592,7 @@ Albany::PoroElasticityProblem::getValidProblemParameters() const
   validPL->sublist("Biot Coefficient", false, "");
   validPL->sublist("Biot Modulus", false, "");
   validPL->sublist("Thermal Conductivity", false, "");
+  validPL->sublist("Kozeny-Carman Permeability", false, "");
   validPL->sublist("Elastic Modulus", false, "");
   validPL->sublist("Poissons Ratio", false, "");
 
