@@ -53,6 +53,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> porePressure;
   PHX::MDField<ScalarT,Cell,QuadPoint> Tdot;
   PHX::MDField<ScalarT,Cell,QuadPoint> ThermalCond;
+  PHX::MDField<ScalarT,Cell,QuadPoint> kcPermeability;
   PHX::MDField<ScalarT,Cell,QuadPoint> porosity;
   PHX::MDField<ScalarT,Cell,QuadPoint> biotCoefficient;
   PHX::MDField<ScalarT,Cell,QuadPoint> biotModulus;

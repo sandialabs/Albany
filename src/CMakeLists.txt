@@ -295,6 +295,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/PoroElasticityResidMomentum.cpp
     ${LCM_DIR}/evaluators/PoroElasticityResidMass.cpp
     ${LCM_DIR}/evaluators/Porosity.cpp
+    ${LCM_DIR}/evaluators/KCPermeability.cpp
   )
 
   SET(HEADERS ${HEADERS}
@@ -362,6 +363,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/PoroElasticityResidMass_Def.hpp
     ${LCM_DIR}/evaluators/Porosity.hpp
     ${LCM_DIR}/evaluators/Porosity_Def.hpp
+    ${LCM_DIR}/evaluators/KCPermeability.hpp
+    ${LCM_DIR}/evaluators/KCPermeability_Def.hpp
   )
 
   #LCM utils

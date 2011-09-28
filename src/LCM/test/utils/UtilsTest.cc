@@ -63,7 +63,7 @@ int main(int ac, char* av[])
   // The tests
   //
   int PassedTestCount = 0;
-  const int TotalTests = 14;
+  const int TotalTests = 16;
   bool passed = false;
 
   //
@@ -488,6 +488,49 @@ int main(int ac, char* av[])
     std::cout << "Error in exponential mapping for so(3) in Test 14";
     std::cout << std::endl;
     std::cout << norm(exp_skew_symmetric(logR) - R) << std::endl;
+  }
+
+  if (verbose || debug) {
+    std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
+    std::cout << std::endl;
+  }
+
+  //
+  // Test 15
+  //
+  // Test vol(A) 
+
+  // Construct A
+  A = 3.0 * LCM::eye<ScalarT>();
+  passed = norm(A - vol(A)) <= 100*std::numeric_limits<ScalarT>::epsilon();
+  
+  if (passed == true) {
+    PassedTestCount++;
+  } else {
+    std::cout << "Error in vol(A) in Test 15" << std::endl;;
+    std::cout << "A:\n" << A << "\nvol(A):\n" << vol(A) << std::endl;
+  }
+
+  if (verbose || debug) {
+    std::cout << "Tensor: passed " << PassedTestCount << " of " << TotalTests;
+    std::cout << std::endl;
+  }
+
+  //
+  // Test 16
+  //
+  // Test dev(A)
+  
+  A = 3.0;
+  B = dev(A);
+  A(0,0) = 0.0; A(1,1) = 0.0; A(2,2) = 0.0;
+  passed = norm(A - B) <= 100*std::numeric_limits<ScalarT>::epsilon();
+  
+  if (passed == true) {
+    PassedTestCount++;
+  } else {
+    std::cout << "Error in dev(A) in Test 16" << std::cout << std::endl;
+    std::cout << "A:\n" << A << "\ndev(A):\n" << B << std::endl;
   }
 
   if (verbose || debug) {

@@ -73,6 +73,7 @@
 #include "LCM/evaluators/Porosity.hpp"
 #include "LCM/evaluators/BiotCoefficient.hpp"
 #include "LCM/evaluators/BiotModulus.hpp"
+#include "LCM/evaluators/KCPermeability.hpp"
 
 
 #include "boost/mpl/vector/vector50.hpp"
@@ -144,14 +145,15 @@ struct FactoryTraits {
   static const int id_biotcoefficient           = 44;
   static const int id_biotmodulus               = 45;
   static const int id_poroelasticityresidmass   = 46;
+  static const int id_kcpermeability            = 47;
   // JTO - leave lame stress at the bottom for the convention below to be most effective
-  static const int id_lame_stress               = 47;
+  static const int id_lame_stress               = 48;
 
 
 #ifndef ALBANY_LAME
-  typedef boost::mpl::vector47<
-#else
   typedef boost::mpl::vector48<
+#else
+  typedef boost::mpl::vector49<
 #endif  
 
     PHAL::GatherSolution<_,Traits>,           //  0
@@ -200,9 +202,10 @@ struct FactoryTraits {
     LCM::Porosity<_, Traits>,                   // 43
     LCM::BiotCoefficient<_,Traits>,            // 44
     LCM::BiotModulus<_,Traits>,                // 45
-    LCM::PoroElasticityResidMass<_,Traits>   // 46
+    LCM::PoroElasticityResidMass<_,Traits>,   // 46
+    LCM::KCPermeability<_,Traits>             // 47
 #ifdef ALBANY_LAME
-    ,LCM::LameStress<_,Traits>                // 47
+    ,LCM::LameStress<_,Traits>                // 48
 #endif
     > EvaluatorTypes;
 };
