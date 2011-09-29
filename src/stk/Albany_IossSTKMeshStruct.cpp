@@ -106,12 +106,13 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   stk::io::get_element_block_sizes(*mesh_data, el_blocks);
   TEST_FOR_EXCEPT(el_blocks.size() != partVec.size());
 
+  int numEB = el_blocks.size();
   int ebSizeMax =  *std::max_element(el_blocks.begin(),el_blocks.end());
   int worksetSize = this->computeWorksetSize(worksetSizeMax, ebSizeMax);
 
   // Construct MeshSpecsStruct
   this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
-                             nsNames, worksetSize, this->interleavedOrdering));
+                             nsNames, worksetSize, numEB, this->interleavedOrdering));
 }
 
 void

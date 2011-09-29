@@ -41,6 +41,8 @@ namespace Albany {
   struct AbstractSTKMeshStruct {
 
     //AbstractSTKMeshStruct();
+  virtual ~AbstractSTKMeshStruct(){}
+
   public:
 
     virtual void setFieldAndBulkData(
