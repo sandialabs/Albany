@@ -76,7 +76,7 @@ namespace QCAD {
     //  Finite Wall case -> barrier height 
   	ScalarT E0;
     
-    //! more parameters for Finite Wall 
+    //! specific parameters for Finite Wall 
     double barrEffMass; // in [m0]
     double barrWidth;   // in length_unit_in_m
     double wellEffMass;

@@ -79,7 +79,7 @@ namespace QCAD {
 	  //! Material database - holds permittivity among other quantities
     Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
     
-    //! specific parameters for 1D PMOSCapacitor
+    //! specific parameters for 1D MOSCapacitor
     double oxideWidth;
     double siliconWidth;
     

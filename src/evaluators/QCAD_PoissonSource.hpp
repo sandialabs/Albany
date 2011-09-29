@@ -73,7 +73,7 @@ namespace QCAD {
     //! evaluateFields functions for different device types (device specified in xml input)
     void evaluateFields_elementblocks(typename Traits::EvalData workset);
     void evaluateFields_default(typename Traits::EvalData workset);
-    void evaluateFields_pmoscap1d(typename Traits::EvalData workset);
+    void evaluateFields_moscap1d(typename Traits::EvalData workset);
         
     //! compute the Maxwell-Boltzmann statistics
     inline ScalarT computeMBStat(const ScalarT x);
@@ -160,7 +160,7 @@ namespace QCAD {
     //! Material database parameter values
     std::map< std::string, ScalarT > materialParams;
     
-    //! specific parameters for "1D PMOSCapacitor"
+    //! specific parameters for "1D MOSCapacitor"
     double oxideWidth;
     double siliconWidth; 
     

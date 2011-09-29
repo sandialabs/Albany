@@ -76,8 +76,8 @@ PoissonSource(Teuchos::ParameterList& p) :
   //donorActE = psList->get("Donor Activation Energy", 0.040);
   //acceptorActE = psList->get("Acceptor Activation Energy", 0.045);
   
-  // specific values for "1D PMOSCapacitor"
-  if (device == "1D PMOSCapacitor") 
+  // specific values for "1D MOSCapacitor"
+  if (device == "1D MOSCapacitor") 
   {
     oxideWidth = psList->get("Oxide Width", 0.);
     siliconWidth = psList->get("Silicon Width", 0.);
@@ -192,7 +192,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
   if (device == "elementblocks") evaluateFields_elementblocks(workset);
   
-  else if (device == "1D PMOSCapacitor") evaluateFields_pmoscap1d(workset);
+  else if (device == "1D MOSCapacitor") evaluateFields_moscap1d(workset);
 
   //! otherwise, run the /examples/Poisson/input_test2D device  
   else evaluateFields_default(workset);
@@ -225,8 +225,8 @@ QCAD::PoissonSource<EvalT,Traits>::getValidPoissonSourceParameters() const
   //validPL->set<double>("Donor Activation Energy", 0.045, "Donor activation energy [eV]");
   validPL->set<double>("Acceptor Activation Energy", 0.045, "Acceptor activation energy [eV]");
   
-  validPL->set<double>("Oxide Width", 0., "Oxide width for 1D PMOSCapacitor device");
-  validPL->set<double>("Silicon Width", 0., "Silicon width for 1D PMOSCapacitor device");
+  validPL->set<double>("Oxide Width", 0., "Oxide width for 1D MOSCapacitor device");
+  validPL->set<double>("Silicon Width", 0., "Silicon width for 1D MOSCapacitor device");
   
   std::vector<string> dopingParamNames = materialDB->getAllMatchingParams<std::string>("Doping Parameter Name");
   std::vector<string> chargeParamNames = materialDB->getAllMatchingParams<std::string>("Charge Parameter Name");
@@ -674,7 +674,7 @@ evaluateFields_default(typename Traits::EvalData workset)
 // **********************************************************************
 template<typename EvalT, typename Traits>
 void QCAD::PoissonSource<EvalT, Traits>::
-evaluateFields_pmoscap1d(typename Traits::EvalData workset)
+evaluateFields_moscap1d(typename Traits::EvalData workset)
 {
   ScalarT temperature = temperatureField(0); //get shared temperature parameter from field
 
@@ -1188,7 +1188,7 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrond
       // m11 = in-plane effective mass (x-y plane when the 1D wavefunc. is along z)
       // For Delta2-band (or valley), m11 is the transverse effective mass (0.19). 
       
-      double m11 = materialDB->getElementBlockParam<double>(workset.EBName,"Electron Effective Mass Y");
+      double m11 = materialDB->getElementBlockParam<double>(workset.EBName,"Transverse Electron Effective Mass");
         
       // 2D density of states in [#/(eV.cm^2)] where 2D is the unconfined x-y plane
       // dos2D below includes the spin degeneracy of 2
@@ -1217,7 +1217,7 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrond
     {
       // mUnconfined = effective mass in the unconfined direction (x dir. when the 2D wavefunc. is in y-z plane)
       // For Delta2-band and assume SiO2/Si interface parallel to [100] plane, mUnconfined=0.19. 
-      double mUnconfined = materialDB->getElementBlockParam<double>(workset.EBName,"Electron Effective Mass X");
+      double mUnconfined = materialDB->getElementBlockParam<double>(workset.EBName,"Transverse Electron Effective Mass");
         
       // n1D below is a factor that is part of the line electron density 
       // in the unconfined dir. and includes spin degeneracy and in unit of [cm^-1]

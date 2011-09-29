@@ -88,13 +88,17 @@ private:
   //! Material database
   Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
   
-  //! parameters for Finite Wall potential
+  //! Parameters for Finite Wall potential
   std::string potentialType;
   double barrEffMass; // in [m0]
   double barrWidth;   // in length_unit_in_m
   double wellEffMass;
   double wellWidth; 
 
+  //! Parameters for 1D MOSCapacitor to set effective mass for oxide and silicon regions
+  double oxideWidth;
+  double siliconWidth; 
+    
 };
 
 }

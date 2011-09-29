@@ -90,7 +90,7 @@ Permittivity(Teuchos::ParameterList& p) :
     temp_dependent = false; 
   }
   
-  // for testing 1D PMOSCapacitor
+  // for testing 1D MOSCapacitor
   else if (typ == "Position Dependent")
   {
     position_dependent = true; 
@@ -181,7 +181,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
   
-  // for testing 1D PMOSCapacitor
+  // for testing 1D MOSCapacitor
   else if (typ == "Position Dependent")
   {
     MeshScalarT* coord;
@@ -264,8 +264,8 @@ QCAD::Permittivity<EvalT,Traits>::getValidPermittivityParameters() const
   validPL->set<double>("Value", 1.0, "Constant permittivity value");
   validPL->set<double>("Factor", 1.0, "Permittivity temperature factor");
 
-  validPL->set<double>("Oxide Width", 0., "Oxide width for 1D PMOSCapacitor device");
-  validPL->set<double>("Silicon Width", 0., "Silicon width for 1D PMOSCapacitor device");
+  validPL->set<double>("Oxide Width", 0., "Oxide width for 1D MOSCapacitor device");
+  validPL->set<double>("Silicon Width", 0., "Silicon width for 1D MOSCapacitor device");
 
   return validPL;
 }

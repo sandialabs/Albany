@@ -15,7 +15,7 @@
     <ParameterList name="Poisson Source">
       <Parameter name="Factor" type="double" value="1.0" />
       
-      <Parameter name="Device" type="string" value="1D PMOSCapacitor" />
+      <Parameter name="Device" type="string" value="1D MOSCapacitor" />
       <Parameter name="Oxide Width" type="double" value="1.0" />
       <Parameter name="Silicon Width" type="double" value="10.0" />
       <Parameter name="Acceptor Doping" type="double" value="1e14" />

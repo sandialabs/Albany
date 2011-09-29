@@ -50,11 +50,11 @@ SchrodingerPotential(Teuchos::ParameterList& p) :
   E0 = psList->get("E0", 1.0);
   scalingFactor = psList->get("Scaling Factor", 1.0);
   
-  // parameters for Finite Wall 
-  barrEffMass = psList->get<double>("Barrier Effective Mass", 1.0);
-  barrWidth = psList->get<double>("Barrier Width", 1.0);
-  wellEffMass = psList->get<double>("Well Effective Mass", 1.0);
-  wellWidth = psList->get<double>("Well Width", 1.0);
+  // Parameters for Finite Wall 
+  barrEffMass = psList->get<double>("Barrier Effective Mass", 0.0);
+  barrWidth = psList->get<double>("Barrier Width", 0.0);
+  wellEffMass = psList->get<double>("Well Effective Mass", 0.0);
+  wellWidth = psList->get<double>("Well Width", 0.0);
   
   potentialStateName = p.get<std::string>("QP Potential Name");
 
@@ -90,7 +90,7 @@ void QCAD::SchrodingerPotential<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 
-  //Parabolic potential (test case)
+  // Parabolic potential (test case)
   if (potentialType == "Parabolic") 
   {
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
@@ -118,7 +118,7 @@ evaluateFields(typename Traits::EvalData workset)
     }    
   }
   
-  //Potential taken from input state "Electric Potential" - now hardcoded, maybe allow variable later?
+  // Potential energy taken from Potential State Name / Poisson Coupling in the Schrodinger input xml
   else if (potentialType == "FromState") 
   {
     Albany::StateArray& states = *workset.stateArrayPtr;
@@ -169,10 +169,20 @@ QCAD::SchrodingerPotential<EvalT,Traits>::getValidSchrodingerPotentialParameters
   validPL->set<string>("Type", "defaultType", "Switch between different potential types");
   validPL->set<double>("E0", 1.0, "Energy scale - dependent on type");
   validPL->set<double>("Scaling Factor", 1.0, "Constant scaling factor");
-  validPL->set<double>("Barrier Effective Mass", 1.0, "Barrier effective mass in [m0]");
-  validPL->set<double>("Barrier Width", 1.0, "Barrier width in length_unit_in_m");
-  validPL->set<double>("Well Effective Mass", 1.0, "Well effective mass in [m0]");
-  validPL->set<double>("Well Width", 1.0, "Well width in length_unit_in_m");
+  
+  // For Finite Wall potential 
+  validPL->set<double>("Barrier Effective Mass", 0.0, "Barrier effective mass in [m0]");
+  validPL->set<double>("Barrier Width", 0.0, "Barrier width in length_unit_in_m");
+  validPL->set<double>("Well Effective Mass", 0.0, "Well effective mass in [m0]");
+  validPL->set<double>("Well Width", 0.0, "Well width in length_unit_in_m");
+
+  // For 1D MOSCapacitor to test the 1D P-S iteration
+  /* specific parameters for 1D MOSCapacitor to set correct effective mass 
+     for oxide and silicon regions (could be given in the Poisson Coupling
+     section, putting here for less perturbation to the main code). */
+
+  validPL->set<double>("Oxide Width", 0.0, "Oxide width in length_unit_in_m");
+  validPL->set<double>("Silicon Width", 0.0, "Silicon width in length_unit_in_m");
 
   return validPL;
 }

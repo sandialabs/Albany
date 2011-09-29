@@ -805,8 +805,18 @@ void preprocessParams(Teuchos::ParameterList& params, std::string preprocessType
     params.sublist("Problem").sublist("Schrodinger Coupling").set<bool>("Schrodinger source in quantum blocks",false);
 
     //! Rename output file
-    std::string exoName= "init" + params.sublist("Discretization").get<std::string>("Exodus Output File Name");
-    params.sublist("Discretization").set("Exodus Output File Name", exoName);
+    if (params.sublist("Discretization").isParameter("Exodus Output File Name"))
+    {
+      std::string exoName= "init" + params.sublist("Discretization").get<std::string>("Exodus Output File Name");
+      params.sublist("Discretization").set("Exodus Output File Name", exoName);
+    }
+    else if (params.sublist("Discretization").isParameter("1D Output File Name"))
+    {
+      std::string exoName= "init" + params.sublist("Discretization").get<std::string>("1D Output File Name");
+      params.sublist("Discretization").set("1D Output File Name", exoName);
+    }
+    else TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+			  "Unknown function Discretization Parameter" << std::endl);
   }
 
   else if(preprocessType == "dummy poisson") {
@@ -1044,7 +1054,8 @@ double GetEigensolverShift(Albany::StateArrays& states,
   }
 
   //set shift to be slightly (5% of range) below minimum value
-  double shift = -(minVal - 0.05*(maxVal-minVal)); //minus sign b/c negative eigenvalue convention
+  // double shift = -(minVal - 0.05*(maxVal-minVal)); //minus sign b/c negative eigenvalue convention
+  double shift = -(minVal - 0.01*(maxVal-minVal));
   return shift;
 }
   

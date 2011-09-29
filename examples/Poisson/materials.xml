@@ -139,9 +139,13 @@
       <Parameter name="Number of valence band max" type="int" value="1" />
 
       <!-- Electron effective mass along coordinate directions in [m0] -->
+      <!-- 
       <Parameter name="Electron Effective Mass X" type="double" value="0.19" />
       <Parameter name="Electron Effective Mass Y" type="double" value="0.19" />
       <Parameter name="Electron Effective Mass Z" type="double" value="0.98" />
+      !-->
+      <Parameter name="Longitudinal Electron Effective Mass" type="double" value="0.98" />
+      <Parameter name="Transverse Electron Effective Mass" type="double" value="0.19" />
 
       <!-- Heavy/Light Hole effective mass in [m0] -->
       <Parameter name="Light Hole Effective Mass" type="double" value="0.16" />
@@ -183,9 +187,8 @@
       <Parameter name="Number of valence band max" type="int" value="1" />
 
       <!-- Electron effective mass along coordinate directions in [m0] -->
-      <Parameter name="Electron Effective Mass X" type="double" value="0.19" />
-      <Parameter name="Electron Effective Mass Y" type="double" value="0.19" />
-      <Parameter name="Electron Effective Mass Z" type="double" value="0.98" />
+      <Parameter name="Longitudinal Electron Effective Mass" type="double" value="0.98" />
+      <Parameter name="Transverse Electron Effective Mass" type="double" value="0.19" />
 
       <!-- Heavy/Light Hole effective mass in [m0] -->
       <Parameter name="Light Hole Effective Mass" type="double" value="0.1252" />
@@ -228,9 +231,8 @@
       <Parameter name="Number of valence band max" type="int" value="1" />
 
       <!-- Electron effective mass along coordinate directions in [m0] -->
-      <Parameter name="Electron Effective Mass X" type="double" value="0.19" />
-      <Parameter name="Electron Effective Mass Y" type="double" value="0.19" />
-      <Parameter name="Electron Effective Mass Z" type="double" value="0.94" />
+      <Parameter name="Longitudinal Electron Effective Mass" type="double" value="0.94" />
+      <Parameter name="Transverse Electron Effective Mass" type="double" value="0.19" />
 
       <!-- Heavy/Light Hole effective mass in [m0]: actually mlh_t=0.18, mlh_l=0.29 -->
       <Parameter name="Light Hole Effective Mass" type="double" value="0.18" />
@@ -268,9 +270,8 @@
       <Parameter name="Number of conduction band min" type="int" value="2" />
 
       <!-- Electron effective mass along coordinate directions in [m0] same as Silicon? -->
-      <Parameter name="Electron Effective Mass X" type="double" value="0.19" />
-      <Parameter name="Electron Effective Mass Y" type="double" value="0.19" />
-      <Parameter name="Electron Effective Mass Z" type="double" value="0.98" />
+      <Parameter name="Longitudinal Electron Effective Mass" type="double" value="0.98" />
+      <Parameter name="Transverse Electron Effective Mass" type="double" value="0.19" />
 
       <!-- Band Gap in [eV] -->
       <Parameter name="Band Gap" type="double" value="9.0" />

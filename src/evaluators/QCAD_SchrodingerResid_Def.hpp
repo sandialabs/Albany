@@ -49,11 +49,15 @@ SchrodingerResid(const Teuchos::ParameterList& p) :
   // obtain Finite Wall potential parameters
   Teuchos::ParameterList* psList = p.get<Teuchos::ParameterList*>("Parameter List");
   potentialType = psList->get<std::string>("Type", "defaultType");
-  barrEffMass = psList->get<double>("Barrier Effective Mass", 1.0);
-  barrWidth = psList->get<double>("Barrier Width", 1.0);
-  wellEffMass = psList->get<double>("Well Effective Mass", 1.0);
-  wellWidth = psList->get<double>("Well Width", 1.0);
+  barrEffMass = psList->get<double>("Barrier Effective Mass", 0.0);
+  barrWidth = psList->get<double>("Barrier Width", 0.0);
+  wellEffMass = psList->get<double>("Well Effective Mass", 0.0);
+  wellWidth = psList->get<double>("Well Width", 0.0);
 
+  // obtain Oxide and Silicon Width for 1D MOSCapacitor
+  oxideWidth = psList->get<double>("Oxide Width", 0.0);
+  siliconWidth = psList->get<double>("Silicon Width", 0.0); 
+  
   enableTransient = true; //always true - problem doesn't make sense otherwise
   energy_unit_in_eV = p.get<double>("Energy unit in eV");
   length_unit_in_m = p.get<double>("Length unit in m");
@@ -203,10 +207,6 @@ QCAD::SchrodingerResid<EvalT, Traits>::getInvEffMass(const std::string& EBName, 
   //TODO - return tensor instead of scalar - now just return effective mass in X-direction
   // effMass = materialDB->getElementBlockParam<double>(EBName,"Electron Effective Mass X",1.0) * emass;
   
-  // effective mass depends on the wafer direction
-  // For SiO2/Si interface parallel to the [100] plane, the mass for Delta2-band is ml (longitudinal)
-  // Consider only the Delta2-band for the time being (need to include Delta4-band later)
-  
   if (potentialType == "Finite Wall")
   {
     if (numDim == 1)  // 1D
@@ -241,9 +241,34 @@ QCAD::SchrodingerResid<EvalT, Traits>::getInvEffMass(const std::string& EBName, 
 			  << "Error! Invalid numDim = " << numDim << ", must be 1 or 2 or 3 !" << std::endl);
     
   }  // end of if (potentialType == "Finite Wall")
+
   
+  // For 1D MOSCapacitor 
+  else if ( (numDim == 1) && (oxideWidth > 0.0) ) 
+  {
+    // Oxide region
+    if ((coord[0] >= 0) && (coord[0] <= oxideWidth))  // Oxide region
+      effMass = materialDB->getMaterialParam<double>("SiliconDioxide","Longitudinal Electron Effective Mass",1.0) * emass;
+    
+    // Silicon region
+    else if ((coord[0] > oxideWidth) && (coord[0] <= oxideWidth+siliconWidth))  
+      effMass = materialDB->getMaterialParam<double>("Silicon","Longitudinal Electron Effective Mass",1.0) * emass;
+    
+    else
+      TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
+	       std::endl << "Error!  x-coord:" << coord[0] << "is outside the oxideWidth" << 
+	       " + siliconWidth range: " << oxideWidth + siliconWidth << "!"<< std::endl);
+  }
+
+  
+  /* Effective mass depends on the wafer orientation and growth direction.
+  For SiO2/Si interface parallel to the [100] plane (growth direction along [001]),
+  the confinement is in [001] direction, and the mass for Delta2-band (along [001])
+  is ml (longitudinal).Consider only the Delta2-band for the time being 
+  (need to include Delta4-band later)
+  */
   else
-    effMass = materialDB->getElementBlockParam<double>(EBName,"Electron Effective Mass Z",1.0) * emass;
+    effMass = materialDB->getElementBlockParam<double>(EBName,"Longitudinal Electron Effective Mass",1.0) * emass;
   
   return 1.0/effMass;
 }
