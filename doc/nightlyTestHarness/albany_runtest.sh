@@ -24,7 +24,7 @@ fi
 # run tests in Albany
 #-------------------------------------------
 
-cd $ALBDIR/LINUX_DEBUG
+cd $ALBDIR/build
 echo "------------------CTEST----------------------" \
      > $ALBOUTDIR/albany_runtests.out
 

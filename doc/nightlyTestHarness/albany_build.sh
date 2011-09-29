@@ -38,9 +38,9 @@ git checkout $ALBANY_BRANCH
 #-------------------------------------------
 
 cd $ALBDIR
-rm -rf $ALBDIR/LINUX_DEBUG
-mkdir $ALBDIR/LINUX_DEBUG
-cd $ALBDIR/LINUX_DEBUG
+rm -rf $ALBDIR/build
+mkdir $ALBDIR/build
+cd $ALBDIR/build
 
 echo "    Starting Albany cmake" ; date
 
