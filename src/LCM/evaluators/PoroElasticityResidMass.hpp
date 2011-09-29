@@ -65,6 +65,9 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> Absorption;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> strain;
 
+  //Data from previus time step
+  std::string Oldstrain, Oldpressure;
+
   // Output:
   PHX::MDField<ScalarT,Cell,Node> TResidual;
 

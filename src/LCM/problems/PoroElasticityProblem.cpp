@@ -211,8 +211,9 @@ Albany::PoroElasticityProblem::constructEvaluators(
 
 	  evaluators_to_build["Porosity"] = p;
 	  evaluators_to_build["Save Porosity"] =
-	  stateMgr.registerStateVariable("Porosity",dl->qp_scalar,
-	              dl->dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
+	      	  stateMgr.registerStateVariable("Porosity",dl->qp_scalar,
+	      	              dl->dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero", true);
+
      }
 
 
@@ -238,8 +239,9 @@ Albany::PoroElasticityProblem::constructEvaluators(
 
 	  evaluators_to_build["Biot Coefficient"] = p;
 	  evaluators_to_build["Save Biot Coefficient"] =
-	  	  stateMgr.registerStateVariable("Biot Coefficient",dl->qp_scalar,
-	  	              dl->dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
+	    	  	  stateMgr.registerStateVariable("Biot Coefficient",dl->qp_scalar,
+	    	  	              dl->dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
+
   }
 
    { // Biot Modulus
@@ -264,8 +266,9 @@ Albany::PoroElasticityProblem::constructEvaluators(
 
    	  evaluators_to_build["Biot Modulus"] = p;
    	  evaluators_to_build["Save Biot Modulus"] =
-   	  stateMgr.registerStateVariable("Biot Modulus",dl->qp_scalar,
-   	   dl->dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
+   		       	  stateMgr.registerStateVariable("Biot Modulus",dl->qp_scalar,
+   		       	   dl->dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
+
      }
 
   { // Thermal conductivity
@@ -390,6 +393,9 @@ Albany::PoroElasticityProblem::constructEvaluators(
     p->set<string>("Strain Name", "Strain"); //dl->qp_tensor also
 
     evaluators_to_build["Strain"] = p;
+    evaluators_to_build["Save Strain"] =
+                      stateMgr.registerStateVariable("Strain",dl->qp_tensor,
+                            dl->dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero",true);
   }
 
   { // Total Stress
@@ -419,8 +425,10 @@ Albany::PoroElasticityProblem::constructEvaluators(
 
     evaluators_to_build["Total Stress"] = p;
     evaluators_to_build["Save Total Stress"] =
-      stateMgr.registerStateVariable("Total Stress",dl->qp_tensor,
-            dl->dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
+              stateMgr.registerStateVariable("Total Stress",dl->qp_tensor,
+                    dl->dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
+
+
   }
 
   { // Displacement Resid
@@ -433,16 +441,28 @@ Albany::PoroElasticityProblem::constructEvaluators(
     p->set<string>("Total Stress Name", "Total Stress");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
+    p->set<string>("Weighted BF Name", "wBF");
+    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
+
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
     p->set<bool>("Disable Transient", true);
+
+
+
+    // A L2 projection or bubble function needed here.
+//    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+//    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+
 
     //Output
     p->set<string>("Residual Name", "Displacement Residual");
     p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
 
     evaluators_to_build["PoroElasticity Momentum Resid"] = p;
+
+
   }
 
 
@@ -473,6 +493,7 @@ Albany::PoroElasticityProblem::constructEvaluators(
     // Input from nodal points
     p->set<string>("Weighted BF Name", "wBF");
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
+
     p->set<string>("QP Variable Name", "Pore Pressure"); // NOTE: QP and nodal vaue shares same name
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
@@ -500,7 +521,6 @@ Albany::PoroElasticityProblem::constructEvaluators(
 
     p->set<string>("Strain Name", "Strain");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
 
     //Output
     p->set<string>("Residual Name", "Pore Pressure Residual");
