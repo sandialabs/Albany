@@ -46,8 +46,9 @@ Albany::Point0DSTKMeshStruct::Point0DSTKMeshStruct(
 
   int cub = params->get("Cubature Degree",3);
   const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
+  int numEB = 1; // only a single element block exists for this case
   this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
-                                        nsNames, 1, this->interleavedOrdering));
+                                        nsNames, 1, numEB, this->interleavedOrdering));
 }
 
 void

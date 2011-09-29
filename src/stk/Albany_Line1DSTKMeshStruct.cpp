@@ -61,6 +61,8 @@ Albany::Line1DSTKMeshStruct::Line1DSTKMeshStruct(
   int worksetSizeMax = params->get("Workset Size",50);
   const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
 
+  int numEB = 1; // Hardcode a single element block for now
+
   // Create just enough of the mesh to figure out number of owned elements 
   // so that the problem setup can know the worksetSize
   nelem = params->get<int>("1D Elements");
@@ -70,7 +72,7 @@ Albany::Line1DSTKMeshStruct::Line1DSTKMeshStruct(
 
   // MeshSpecs holds all info needed to set up an Albany problem
   this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
-                             nsNames, worksetSize, this->interleavedOrdering));
+                             nsNames, worksetSize, numEB, this->interleavedOrdering));
 }
 
 void

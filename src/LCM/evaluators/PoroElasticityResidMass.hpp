@@ -53,6 +53,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> porePressure;
   PHX::MDField<ScalarT,Cell,QuadPoint> Tdot;
   PHX::MDField<ScalarT,Cell,QuadPoint> ThermalCond;
+  PHX::MDField<ScalarT,Cell,QuadPoint> kcPermeability;
   PHX::MDField<ScalarT,Cell,QuadPoint> porosity;
   PHX::MDField<ScalarT,Cell,QuadPoint> biotCoefficient;
   PHX::MDField<ScalarT,Cell,QuadPoint> biotModulus;
@@ -63,6 +64,9 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> rhoCp;
   PHX::MDField<ScalarT,Cell,QuadPoint> Absorption;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> strain;
+
+  //Data from previus time step
+  std::string Oldstrain, Oldpressure;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> TResidual;

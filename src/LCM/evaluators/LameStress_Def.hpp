@@ -146,8 +146,8 @@ evaluateFields(typename Traits::EvalData workset)
 
   //for (std::size_t cell=0; cell < workset.numCells; ++cell) {
   //  for (std::size_t qp=0; qp < numQPs; ++qp) {
-  for (int cell=0; cell < workset.numCells; ++cell) {
-    for (int qp=0; qp < numQPs; ++qp) {
+  for (int cell=0; cell < (int)workset.numCells; ++cell) {
+    for (int qp=0; qp < (int)numQPs; ++qp) {
 
       // Fill the following entries in matParams for call to LAME
       //

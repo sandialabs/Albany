@@ -27,6 +27,8 @@
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
 
+#include "QCAD_MaterialDatabase.hpp"
+
 namespace Albany {
 
   /*!
@@ -40,7 +42,8 @@ namespace Albany {
     HeatProblem(
                          const Teuchos::RCP<Teuchos::ParameterList>& params,
                          const Teuchos::RCP<ParamLib>& paramLib,
-                         const int numDim_);
+                         const int numDim_, 
+                         const Teuchos::RCP<const Epetra_Comm>& comm_);
 
     //! Destructor
     ~HeatProblem();
@@ -74,7 +77,12 @@ namespace Albany {
     bool periodic;
     bool haveSource;
     bool haveAbsorption;
+	bool haveMatDB;
     int numDim;
+
+    std::string mtrlDbFilename;
+    Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
+    Teuchos::RCP<const Epetra_Comm> comm;
 
   };
 

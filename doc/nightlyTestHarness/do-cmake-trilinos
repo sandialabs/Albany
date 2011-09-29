@@ -27,7 +27,12 @@
 #
 # All paths must me changed for your build (search "gahanse")
 #
+# Set some paths if we are not being executed by the build scripts
+# BOOSTDIR=/ascldap/users/gahanse/local/boost_1_47_0
 
+
+
+NETCDF_PATH=/ascldap/users/gahanse/local/
 BUILD_DIR=`pwd`
 
 cmake \
@@ -86,17 +91,19 @@ cmake \
       -D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
       -D Trilinos_ENABLE_Pamgen:BOOL=ON \
       -D TPL_ENABLE_Netcdf:BOOL=ON \
-      -D TPL_Netcdf_INCLUDE_DIRS:PATH=/ascldap/users/gahanse/local/include \
-      -D TPL_Netcdf_LIBRARY_DIRS:PATH=/ascldap/users/gahanse/local/lib \
+      -D TPL_Netcdf_INCLUDE_DIRS:PATH=$NETCDF_PATH/include \
+      -D TPL_Netcdf_LIBRARY_DIRS:PATH=$NETCDF_PATH/lib \
        ../
 
 #
 # Optional build capabilities:
 # (1) TriKota is a Trilinos package that builds the
 #     Dakota libraries, for optimization and UQ. See
-#     TriKota web page for how to unpack Dakota.
+#     TriKota web page for how to unpack Dakota. This also
+#     uses CMAKE to build Dakota
 #
 #        -D Trilinos_ENABLE_TriKota:BOOL=ON \
+#        -D TriKota_ENABLE_DakotaCMake:BOOL=ON \
 #
 # (2) These 5 lines regarding  SEACAS/netcdf  are needed
 #     for reading exodus meshes, but require an

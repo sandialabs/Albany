@@ -295,6 +295,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/PoroElasticityResidMomentum.cpp
     ${LCM_DIR}/evaluators/PoroElasticityResidMass.cpp
     ${LCM_DIR}/evaluators/Porosity.cpp
+    ${LCM_DIR}/evaluators/KCPermeability.cpp
   )
 
   SET(HEADERS ${HEADERS}
@@ -362,6 +363,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/PoroElasticityResidMass_Def.hpp
     ${LCM_DIR}/evaluators/Porosity.hpp
     ${LCM_DIR}/evaluators/Porosity_Def.hpp
+    ${LCM_DIR}/evaluators/KCPermeability.hpp
+    ${LCM_DIR}/evaluators/KCPermeability_Def.hpp
   )
 
   #LCM utils
@@ -558,7 +561,18 @@ add_executable(AlbanyAnalysis Main_Analysis.cpp)
 add_executable(PartitionTest LCM/test/utils/PartitionTest.cc)
 add_executable(UtilsTest LCM/test/utils/UtilsTest.cc)
 IF (ALBANY_LCM)
-add_executable(NodeUpdate LCM/test/utils/NodeUpdate.cc)
+  add_executable(NodeUpdate LCM/test/utils/NodeUpdate.cc)
+ENDIF ()
+IF (ALBANY_LAME)
+  add_executable(utLameStress_elastic
+    PHAL_Dimension.cpp
+    PHAL_AlbanyTraits.cpp
+    ${LCM_DIR}/utils/LameUtils.cpp
+    ${LCM_DIR}/evaluators/LameStress.cpp
+    ${LCM_DIR}/test/unit_tests/StandardUnitTestMain.cpp
+    ${LCM_DIR}/test/unit_tests/utLameStress_elastic.cpp
+  )
+  target_link_libraries(utLameStress_elastic ${LAME_LIB} ${Trilinos_LIBRARIES})
 ENDIF ()
 
 set(ALL_LIBRARIES ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES} )
@@ -578,5 +592,5 @@ target_link_libraries(AlbanyAnalysis  albanyLib ${ALL_LIBRARIES})
 target_link_libraries(PartitionTest albanyLib ${ALL_LIBRARIES})
 target_link_libraries(UtilsTest albanyLib ${ALL_LIBRARIES})
 IF (ALBANY_LCM)
-target_link_libraries(NodeUpdate albanyLib ${ALL_LIBRARIES})
+  target_link_libraries(NodeUpdate albanyLib ${ALL_LIBRARIES})
 ENDIF ()

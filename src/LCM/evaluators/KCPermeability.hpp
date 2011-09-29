@@ -15,59 +15,68 @@
 \********************************************************************/
 
 
-#ifndef LAMESTRESS_HPP
-#define LAMESTRESS_HPP
+#ifndef KC_PERMEABILITY_HPP
+#define KC_PERMEABILITY_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-#include "PHAL_Dimension.hpp"
-#include "LameUtils.hpp"
+
+#include "Teuchos_ParameterList.hpp"
+#include "Epetra_Vector.h"
+#include "Sacado_ParameterAccessor.hpp"
+#include "Stokhos_KL_ExponentialRandomField.hpp"
+#include "Teuchos_Array.hpp"
 
 namespace LCM {
-/** \brief Evaluates stress using the Library for Advanced Materials for Engineering (LAME).
-*/
+/** 
+ * \brief Evaluates elastic modulus, either as a constant or a truncated
+ * KL expansion.
+ */
 
 template<typename EvalT, typename Traits>
-class LameStress : public PHX::EvaluatorWithBaseImpl<Traits>,
-		    public PHX::EvaluatorDerived<EvalT, Traits>  {
-
+class KCPermeability :
+  public PHX::EvaluatorWithBaseImpl<Traits>,
+  public PHX::EvaluatorDerived<EvalT, Traits>,
+  public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+  
 public:
-
-  LameStress(const Teuchos::ParameterList& p);
-
-  void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
-
-  void evaluateFields(typename Traits::EvalData d);
-
-private:
-
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defGradField;
+  KCPermeability(Teuchos::ParameterList& p);
+  
+  void postRegistrationSetup(typename Traits::SetupData d,
+			     PHX::FieldManager<Traits>& vm);
+  
+  void evaluateFields(typename Traits::EvalData d);
+  
+  ScalarT& getValue(const std::string &n);
 
-  std::string defGradName, stressName;
-  unsigned int numQPs;
-  unsigned int numDims;
+private:
 
-  // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stressField;
+  std::size_t numQPs;
+  std::size_t numDims;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+  PHX::MDField<ScalarT,Cell,QuadPoint> kcPermeability;
 
-  // The LAME material model
-  Teuchos::RCP<lame::Material> lameMaterialModel;
+  //! Is Kozeny-Carman Permeability constant, or random field
+  bool is_constant;
 
-  // The LAME material model name
-  std::string lameMaterialModelName;
+  //! Constant value
+  ScalarT constant_value;
 
-  // Vector of the state variable names for the LAME material model
-  std::vector<std::string> lameMaterialModelStateVariableNames;
+  //! Optional dependence on porosity
 
-  // Vector of the fields corresponding to the LAME material model state variables
-  std::vector< PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> > lameMaterialModelStateVariableFields;
+  PHX::MDField<ScalarT,Cell,QuadPoint> porosity;
+  bool isPoroElastic;
+
+  //! Exponential random field
+  Teuchos::RCP< Stokhos::KL::ExponentialRandomField<MeshScalarT> > exp_rf_kl;
+
+  //! Values of the random variables
+  Teuchos::Array<ScalarT> rv;
 };
 }
 
