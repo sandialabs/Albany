@@ -98,7 +98,6 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 
   int cub = params->get("Cubature Degree",3);
   int worksetSizeMax = params->get("Workset Size",50);
-  const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
 
   // Get number of elements per element block using Ioss for use
   // in calculating an upper bound on the worksetSize.
@@ -111,8 +110,21 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   int worksetSize = this->computeWorksetSize(worksetSizeMax, ebSizeMax);
 
   // Construct MeshSpecsStruct
-  this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
-                             nsNames, worksetSize, numEB, this->interleavedOrdering));
+  if (!params->get("Separate Evaluators by Element Block",false)) {
+    const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
+    this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
+                               nsNames, worksetSize, numEB, this->interleavedOrdering));
+  }
+  else {
+    *out << "MULTIPLE Elem Block in Ioss: DO worksetSize[eb] max?? " << endl; 
+    this->meshSpecs.resize(numEB);
+    for (int eb=0; eb<numEB; eb++) {
+      const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[eb]).getCellTopologyData();
+      this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
+                         nsNames, worksetSize, 1, this->interleavedOrdering));
+      *out << "el_block_size[" << eb << "] = " << el_blocks[eb] <<endl; 
+    }
+  }
 }
 
 void

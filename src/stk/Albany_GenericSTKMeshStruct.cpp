@@ -193,6 +193,8 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
   validPL->set<int>("Cubature Degree", 3, "Integration order sent to Intrepid");
   validPL->set<int>("Workset Size", 50, "Upper bound on workset (bucket) size");
   validPL->set<bool>("Interleaved Ordering", true, "Flag for interleaved or blocked unknown ordering");
+  validPL->set<bool>("Separate Evaluators by Element Block", false,
+                     "Flag for different evaluation trees for each Element Block");
 
   return validPL;
 }
