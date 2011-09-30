@@ -295,11 +295,11 @@ Assuming that internal variables belong to Lie groups, the
 corresponding Lie algebras may be obtained using the logarithmic
 map. Upon interpolation in the Lie algebra, the target internal
 variable of interest is recovered by using the exponential map
-\citep{Marsden.Ratiu:1999, Sepanski:2007,
-  Kosmann-Schwarzbach:2009}. The computation of the logarithmic map
-may be effected by using explicit formulae (if the eigenvalues are
-readily available) \citep{Jog:2008} or the inverse scaling and
-squaring algorithm with Pad\'e approximants \citep{Cheng.etal:2001,
+\citep{Marsden.Ratiu:1999, Sepanski:2007, Kosmann-Schwarzbach:2009,
+  Gallier:2011}. The computation of the logarithmic map may be
+effected by using explicit formulae (if the eigenvalues are readily
+available) \citep{Jog:2008} or the inverse scaling and squaring
+algorithm with Pad\'e approximants \citep{Cheng.etal:2001,
   Davies.Higham:2003}.  A fast and accurate method for the computation
 of the exponential map is provided by the scaling and squaring
 algorithm with Pad\'e approximants
@@ -712,6 +712,17 @@ algebras are shown in Table~\ref{tab:LieGroupsLieAlgebras}.
       &
       $sp(n)=\{\bB\in gl(2n) | \bB^T \bJ = -\bJ \bB\}$
       \\
+      \\
+      Affine isometries or rigid body motions
+      &
+      
+      \\
+      $SE(n)=\{[\bA, \bx; \mathbf{0}^T, 1] | \bA \in SO(n); \bx,
+      \mathbf{0} \in \mbb{R}^n\}$
+      &
+      $se(n)=\{[\bB, \bx; \mathbf{0}^T, 0] | \bB \in so(n); \bx,
+      \mathbf{0} \in \mbb{R}^n\}$
+      \\
       \bottomrule
     \end{tabular}
     \caption{Some common Lie groups and their corresponding Lie
@@ -1110,9 +1121,9 @@ It can be shown that a one-parameter curve such as
   \frac{\partial \bZ}{\partial t}(t) \bZ^{-1}(t) \in g,
 \end{equation}
 in which the inverse function $\bZ^{-1}(t)$ exists as that is one of
-the requirements of Lie groups
-\citep{Procesi:2006,Sepanski:2007,Kosmann-Schwarzbach:2009}. Examples
-of kinetic equations that may be written in the form
+the requirements of Lie groups \citep{Procesi:2006, Sepanski:2007,
+  Kosmann-Schwarzbach:2009, Gallier:2011}. Examples of kinetic
+equations that may be written in the form
 (\ref{eq:TimeDerivativeGeneral}) are shown in
 Table~\ref{tab:ExamplesEvolution}.
 
@@ -1217,7 +1228,8 @@ in which $\hat{\bz}$ is known as the \emph{infinitesimal generator} of
 the subgroup $\hat{\bZ}$. For the proofs of
 (\ref{eq:TimeDerivativeGeneral}), (\ref{eq:OneParameterGroup}) and
 (\ref{eq:OneParameterGroupDerivative}), and further discussion see
-\citet*{Procesi:2006,Sepanski:2007,Kosmann-Schwarzbach:2009}.
+\citet*{Procesi:2006, Sepanski:2007, Kosmann-Schwarzbach:2009,
+  Gallier:2011}.
 
 Kinetic equations of the form (\ref{eq:ZEvolution}) are generally
 integrated in time using an incremental solution procedure with time
