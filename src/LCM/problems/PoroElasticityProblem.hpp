@@ -30,17 +30,15 @@
 namespace Albany {
 
   /*!
-   * \brief Abstract interface for representing a 2-D finite element
-   * problem.
+   * \brief Problem definition for Poro-Elasticity
    */
   class PoroElasticityProblem : public Albany::AbstractProblem {
   public:
   
     //! Default constructor
-    PoroElasticityProblem(
-			    const Teuchos::RCP<Teuchos::ParameterList>& params,
-			    const Teuchos::RCP<ParamLib>& paramLib,
-			    const int numEq);
+    PoroElasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
+			  const Teuchos::RCP<ParamLib>& paramLib,
+			  const int numEq);
 
     //! Destructor
     virtual ~PoroElasticityProblem();
@@ -55,9 +53,10 @@ namespace Albany {
     //! Each problem must generate it's list of valid parameters
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
-    void getAllocatedStates(Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState_,
-			    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState_
-			    ) const;
+    void getAllocatedStates(
+         Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState_,
+	 Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState_
+	 ) const;
 
   private:
 
@@ -68,7 +67,8 @@ namespace Albany {
     PoroElasticityProblem& operator=(const PoroElasticityProblem&);
 
     void constructEvaluators(const Albany::MeshSpecsStruct& meshSpecs,
-			     StateManager& stateMgr);
+			     Albany::StateManager& stateMgr,
+			     std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
     void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
   protected:
 

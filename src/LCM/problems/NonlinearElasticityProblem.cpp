@@ -24,8 +24,7 @@
 #include "Shards_CellTopology.hpp"
 
 Albany::NonlinearElasticityProblem::
-NonlinearElasticityProblem(
-			   const Teuchos::RCP<Teuchos::ParameterList>& params_,
+NonlinearElasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 			   const Teuchos::RCP<ParamLib>& paramLib_,
 			   const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_, numDim_),
@@ -48,8 +47,7 @@ Albany::NonlinearElasticityProblem::
 
 void
 Albany::NonlinearElasticityProblem::
-buildProblem(
-             Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
 	     Albany::StateManager& stateMgr,
 	     std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
@@ -61,9 +59,9 @@ buildProblem(
 
 void
 Albany::NonlinearElasticityProblem::constructEvaluators(
-							const Albany::MeshSpecsStruct& meshSpecs,
-							Albany::StateManager& stateMgr,
-       std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
+	const Albany::MeshSpecsStruct& meshSpecs,
+	Albany::StateManager& stateMgr,
+	std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
   using Teuchos::RCP;
   using Teuchos::rcp;
@@ -502,7 +500,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
   PHX::Tag<AlbanyTraits::MPTangent::ScalarT> mptan_tag("Scatter", dl->dummy);
    fm->requireField<AlbanyTraits::MPTangent>(mptan_tag);
 
-   //Construct Rsponses
+   //Construct Responses
    Teuchos::ParameterList& responseList = params->sublist("Response Functions");
    Albany::ResponseUtils respUtils(dl,"LCM");
    rfm = respUtils.constructResponses(responses, responseList, evaluators_to_build, stateMgr);
@@ -550,9 +548,9 @@ Albany::NonlinearElasticityProblem::getValidProblemParameters() const
 
 void
 Albany::NonlinearElasticityProblem::getAllocatedStates(
-						       Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState_,
-						       Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState_
-						       ) const
+   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState_,
+   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState_
+   ) const
 {
   oldState_ = oldState;
   newState_ = newState;

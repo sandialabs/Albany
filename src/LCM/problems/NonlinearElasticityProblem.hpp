@@ -30,8 +30,7 @@
 namespace Albany {
 
   /*!
-   * \brief Abstract interface for representing a 2-D finite element
-   * problem.
+   * \brief Problem definition for Nonlinear Mechanics
    */
   class NonlinearElasticityProblem : public Albany::AbstractProblem {
   public:

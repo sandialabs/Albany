@@ -32,7 +32,7 @@ namespace LCM {
 
 template<typename EvalT, typename Traits>
 class PoroElasticityResidMass : public PHX::EvaluatorWithBaseImpl<Traits>,
-		    public PHX::EvaluatorDerived<EvalT, Traits>  {
+				public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
@@ -76,9 +76,9 @@ private:
   bool haveAbsorption;
   bool enableTransient;
   bool haverhoCp;
-  std::size_t numNodes;
-  std::size_t numQPs;
-  std::size_t numDims;
+  unsigned int numNodes;
+  unsigned int numQPs;
+  unsigned int numDims;
   unsigned int worksetSize;
   Intrepid::FieldContainer<ScalarT> flux;
   Intrepid::FieldContainer<ScalarT> aterm;
