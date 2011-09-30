@@ -232,7 +232,7 @@ Albany::PoroElasticityProblem::constructEvaluators(
 	  evaluators_to_build["Porosity"] = p;
 	  evaluators_to_build["Save Porosity"] =
 	      	  stateMgr.registerStateVariable("Porosity",dl->qp_scalar,
-	      	              dl->dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
+	      	              dl->dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero", true);
 
      }
 

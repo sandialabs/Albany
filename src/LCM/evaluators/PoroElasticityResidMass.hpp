@@ -66,7 +66,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> strain;
 
   //Data from previous time step
-  std::string strainName, pressureName;
+  std::string strainName, porePressureName, porosityName;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> TResidual;
