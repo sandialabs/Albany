@@ -401,7 +401,7 @@ Albany::PoroElasticityProblem::constructEvaluators(
 
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<string>("Pore Pressure Name", "Pore Pressure");
+    p->set<string>("QP Variable Name", "Pore Pressure");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     //Output

@@ -34,7 +34,7 @@ TotalStress(const Teuchos::ParameterList& p) :
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   biotCoefficient  (p.get<std::string>                   ("Biot Coefficient Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  porePressure    (p.get<std::string>                   ("Pore Pressure Name"),
+  porePressure    (p.get<std::string>                   ("QP Variable Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   stress           (p.get<std::string>                   ("Total Stress Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") )
