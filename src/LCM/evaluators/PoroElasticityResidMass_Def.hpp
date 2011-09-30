@@ -90,7 +90,8 @@ PoroElasticityResidMass(const Teuchos::ParameterList& p) :
   vector_dl->dimensions(dims);
 
   // Get data from previous converged time step
-  Oldstrain = p.get<std::string>("Strain Name")+"_old";
+  strainName = p.get<std::string>("Strain Name")+"_old";
+  //this->addEvaluatedField(strain);
 
 
   worksetSize = dims[0];
@@ -156,7 +157,7 @@ evaluateFields(typename Traits::EvalData workset)
   typedef Intrepid::FunctionSpaceTools FST;
 
 
-  Albany::MDArray oldstrain = (*workset.stateArrayPtr)[Oldstrain];
+  Albany::MDArray strainold = (*workset.stateArrayPtr)[strainName];
 
   // Cozeny-Carman relation added. I keep the thermal conductivity for future use. -S Sun
 
@@ -187,10 +188,14 @@ evaluateFields(typename Traits::EvalData workset)
            for (std::size_t qp=0; qp < numQPs; ++qp) {
               TResidual(cell,node) += -biotCoefficient(cell, node, qp)*(  (strain(cell,qp,0,0) + strain(cell,qp,1,1) +
                		                    strain(cell,qp,2,2))   )
-               		                     *wBF(cell, node, qp) ; // Div u solid skeleton constraint
+               		                     *wBF(cell, node, qp)/workset.delta_time ; // Div u solid skeleton constraint
               TResidual(cell,node) += porePressure(cell, node, qp)/biotModulus(cell, node, qp)
-                		                *wBF(cell, node, qp); // 1/Mp pore pressure constraint
+                		                *wBF(cell, node, qp)/workset.delta_time; // 1/Mp pore pressure constraint
               // pore-fluid diffusion
+              TResidual(cell,node) += flux(cell, node, qp)
+                              		                *wGradBF(cell, node, qp); // Darcy's velocity
+
+
    } } }
 
 //  -(oldstrain(cell,qp,0,0) + oldstrain(cell,qp,1,1) +  oldstrain(cell,qp,2,2))

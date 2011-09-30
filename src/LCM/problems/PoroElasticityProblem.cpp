@@ -187,6 +187,25 @@ Albany::PoroElasticityProblem::constructEvaluators(
 
    // Poroelasticity parameter
 
+   { // Strain
+     RCP<ParameterList> p = rcp(new ParameterList("Strain"));
+
+     int type = FactoryTraits<AlbanyTraits>::id_strain;
+     p->set<int>("Type", type);
+
+     //Input
+     p->set<string>("Gradient QP Variable Name", "Displacement Gradient");
+     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+
+     //Output
+     p->set<string>("Strain Name", "Strain"); //dl->qp_tensor also
+
+     evaluators_to_build["Strain"] = p;
+     evaluators_to_build["Save Strain"] =
+                       stateMgr.registerStateVariable("Strain",dl->qp_tensor,
+                            dl->dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero", true);
+   }
+
    {  // Porosity
       RCP<ParameterList> p = rcp(new ParameterList);
 
@@ -212,7 +231,7 @@ Albany::PoroElasticityProblem::constructEvaluators(
 	  evaluators_to_build["Porosity"] = p;
 	  evaluators_to_build["Save Porosity"] =
 	      	  stateMgr.registerStateVariable("Porosity",dl->qp_scalar,
-	      	              dl->dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero", true);
+	      	              dl->dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
 
      }
 
@@ -306,6 +325,10 @@ Albany::PoroElasticityProblem::constructEvaluators(
      Teuchos::ParameterList& paramList = params->sublist("Kozeny-Carman Permeability");
      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
+     // Setting this turns on Kozeny-Carman relation
+     p->set<string>("Porosity Name", "Porosity");
+     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
      evaluators_to_build["Kozeny-Carman Permeability"] = p;
     }
 
@@ -379,24 +402,7 @@ Albany::PoroElasticityProblem::constructEvaluators(
     evaluators_to_build["Source"] = p;
   }
 
-  { // Strain
-    RCP<ParameterList> p = rcp(new ParameterList("Strain"));
 
-    int type = FactoryTraits<AlbanyTraits>::id_strain;
-    p->set<int>("Type", type);
-
-    //Input
-    p->set<string>("Gradient QP Variable Name", "Displacement Gradient");
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
-    //Output
-    p->set<string>("Strain Name", "Strain"); //dl->qp_tensor also
-
-    evaluators_to_build["Strain"] = p;
-    evaluators_to_build["Save Strain"] =
-                      stateMgr.registerStateVariable("Strain",dl->qp_tensor,
-                            dl->dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero",true);
-  }
 
   { // Total Stress
     RCP<ParameterList> p = rcp(new ParameterList("Total Stress"));
@@ -508,8 +514,8 @@ Albany::PoroElasticityProblem::constructEvaluators(
     p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<string>("Kozeny-Carman Permeability Name", "Kozeny-Carman Permeability");
     p->set<string>("Porosity Name", "Porosity");
+    p->set<string>("Kozeny-Carman Permeability Name", "Kozeny-Carman Permeability");
     p->set<string>("Biot Coefficient Name", "Biot Coefficient");
     p->set<string>("Biot Modulus Name", "Biot Modulus");
 
@@ -527,6 +533,7 @@ Albany::PoroElasticityProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
 
     evaluators_to_build["Poroelasticity Mass Resid"] = p;
+
   }
 
    // Build Field Evaluators for each evaluation type
