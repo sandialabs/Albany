@@ -210,8 +210,7 @@ evaluateFields(typename Traits::EvalData workset)
 
    } } }
 
-//  -(strainold(cell,qp,0,0) + strainold(cell,qp,1,1) +  strainold(cell,qp,2,2))
-// /workset.delta_time
+
 
 
 
