@@ -21,8 +21,8 @@
 #include "PHAL_AlbanyTraits.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_StateManager.hpp"
-#include "Albany_DiscretizationFactory.hpp"
-
+#include "Albany_Cube3DSTKMeshStruct.hpp"
+#include "Albany_STKDiscretization.hpp"
 #include "LCM/evaluators/LameStress.hpp"
 #include "Tensor.h"
 
@@ -147,15 +147,15 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
   for(std::vector<Teuchos::RCP<PHX::FieldTag> >::const_iterator it = lameStress->evaluatedFields().begin() ; it != lameStress->evaluatedFields().end() ; it++)
     fieldManager.requireField<PHAL::AlbanyTraits::Residual>(**it);
  
+  // Call postRegistrationSetup on the evaluators
   PHAL::AlbanyTraits::SetupData setupData = "Test String";
   fieldManager.postRegistrationSetup(setupData);
 
+  // Create a state manager with required fields
   Albany::StateManager stateMgr;
-
   // Stress and DefGrad are required for all LAME models
   stateMgr.registerStateVariable("Stress", qp_tensor, "zero", true);
   stateMgr.registerStateVariable("Deformation Gradient", qp_tensor, "identity", true);
-
   // Add material-model specific state variables
   string lameMaterialModelName = lameStressParameterList->get<string>("Lame Material Model");
   std::vector<std::string> lameMaterialModelStateVariableNames = LameUtils::getStateVariableNames(lameMaterialModelName, materialModelParametersList);
@@ -167,43 +167,48 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
                                    true);
   }
 
+  // Create a discretization, as required by the StateManager
   Teuchos::RCP<Teuchos::ParameterList> discretizationParameterList = Teuchos::rcp(new Teuchos::ParameterList("Discretization"));
-  discretizationParameterList->set<int>("1D Elements", 1);
+  discretizationParameterList->set<int>("1D Elements", worksetSize);
   discretizationParameterList->set<int>("2D Elements", 1);
   discretizationParameterList->set<int>("3D Elements", 1);
   discretizationParameterList->set<string>("Method", "STK3D");
   discretizationParameterList->set<string>("Exodus Output File Name", "unitTestOutput.exo"); // Is this required?
-
   Teuchos::RCP<Epetra_Comm> comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
-  Albany::DiscretizationFactory discretizationFactory(discretizationParameterList, comm);
-
-  discretizationFactory.createMeshSpecs();
-
   int numberOfEquations = 3;
-
+  Teuchos::RCP<Albany::GenericSTKMeshStruct> stkMeshStruct = Teuchos::rcp(new Albany::Cube3DSTKMeshStruct(discretizationParameterList, comm));
+  stkMeshStruct->setFieldAndBulkData(comm,
+                                     discretizationParameterList,
+                                     numberOfEquations,
+                                     stateMgr.getStateInfoStruct(),
+                                     stkMeshStruct->getMeshSpecs()[0]->worksetSize);
   Teuchos::RCP<Albany::AbstractDiscretization> discretization =
-    discretizationFactory.createDiscretization(numberOfEquations,
-                                               stateMgr.getStateInfoStruct());
+    Teuchos::rcp(new Albany::STKDiscretization(stkMeshStruct, comm));
 
+  // Associate the discretization with the StateManager
   stateMgr.setStateArrays(discretization);
 
+  // Create a workset
   PHAL::Workset workset;
   workset.numCells = worksetSize;
   workset.stateArrayPtr = &stateMgr.getStateArray(0);
 
   void* voidPtr(0);
 
+  // Call the evaluators, evaluateFields() is the function that computes stress based on deformation gradient
   fieldManager.preEvaluate<PHAL::AlbanyTraits::Residual>(voidPtr);
   fieldManager.evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
   fieldManager.postEvaluate<PHAL::AlbanyTraits::Residual>(voidPtr);
 
+  // Pull the stress from the FieldManager
   PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT,Cell,QuadPoint,Dim,Dim> stressField("Stress", qp_tensor);
   fieldManager.getFieldData<PHAL::AlbanyTraits::Residual::ScalarT, PHAL::AlbanyTraits::Residual, Cell, QuadPoint, Dim, Dim>(stressField);
 
-  typedef PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT>::size_type size_type;
-  std::vector<size_type> stressFieldDimensions;
-  stressField.dimensions(stressFieldDimensions);
+  // Assert the dimensions of the stress field
+//   std::vector<size_type> stressFieldDimensions;
+//   stressField.dimensions(stressFieldDimensions);
 
+  // Record the expected stress, which will be used to check the computed stress
   LCM::Tensor<PHAL::AlbanyTraits::Residual::ScalarT>
     expectedStress(materialModelParametersList.get<double>("Youngs Modulus") * 0.01,
                    0.0,
@@ -215,6 +220,8 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
                    0.0,
                    0.0);
 
+  // Check the computed stresses
+  typedef PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT>::size_type size_type;
   for(size_type cell=0; cell<worksetSize; ++cell){
     for(size_type qp=0; qp<numQPts; ++qp){
 
