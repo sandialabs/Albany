@@ -50,15 +50,37 @@ evaluateResponse(const double current_time,
 		 Epetra_Vector& g)
 {
 
+  int MMFileStatus = 0;
+
+  // Read the reference solution for comparison from "reference_solution.dat"
+
+  // Note that this is of MatrixMarket array real general format
+
   if (!solutionLoaded) {
-    EpetraExt::MatrixMarketFileToVector("reference_solution.dat",x.Map(),RefSoln);
+    MMFileStatus = EpetraExt::MatrixMarketFileToVector("reference_solution.dat",x.Map(),RefSoln);
+
+    TEST_FOR_EXCEPTION(MMFileStatus, std::runtime_error,
+      std::endl << "EpetraExt::MatrixMarketFileToVector, file " __FILE__
+      " line " << __LINE__ << " returned " << MMFileStatus << std::endl);
+
     solutionLoaded = true;
   }
 
+
+  // Build a vector to hold the difference between the actual and reference solutions
   Epetra_Vector diff(x.Map());
+
   double norm2;
+
+  // The diff vector equals 1.0 * soln + -1.0 * reference
   diff.Update(1.0,x,-1.0,*RefSoln,0.0); 
+
+  // Print vector for debugging
+  // diff.Print(std::cout);
+
+  // Get the 2 norm
   diff.Norm2(&norm2);
+
   g[0]=norm2*norm2;
 }
 
@@ -102,17 +124,34 @@ evaluateGradient(const double current_time,
 		 Epetra_MultiVector* dg_dxdot,
 		 Epetra_MultiVector* dg_dp)
 {
+  int MMFileStatus = 0;
+
   if (!solutionLoaded) {
-    EpetraExt::MatrixMarketFileToVector("reference_solution.dat",x.Map(),RefSoln);
+    MMFileStatus = EpetraExt::MatrixMarketFileToVector("reference_solution.dat",x.Map(),RefSoln);
+
+    TEST_FOR_EXCEPTION(MMFileStatus, std::runtime_error,
+      std::endl << "EpetraExt::MatrixMarketFileToVector, file " __FILE__
+      " line " << __LINE__ << " returned " << MMFileStatus << std::endl);
+
     solutionLoaded = true;
   }
 
+
+  // Build a vector to hold the difference between the actual and reference solutions
   Epetra_Vector diff(x.Map());
+
   double norm2;
 
   // Evaluate response g
   if (g != NULL) {
+
+  // The diff vector equals 1.0 * soln + -1.0 * reference
+
     diff.Update(1.0,x,-1.0,*RefSoln,0.0);
+
+    // Print vector for debugging
+    // diff.Print(std::cout);
+
     diff.Norm2(&norm2);
     (*g)[0]=norm2*norm2;
   }
