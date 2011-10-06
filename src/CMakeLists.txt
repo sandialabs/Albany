@@ -577,6 +577,7 @@ IF (ALBANY_LAME)
     stk/Albany_Line1DSTKMeshStruct.cpp
     stk/Albany_STKDiscretization.cpp
     stk/Albany_Point0DSTKMeshStruct.cpp
+    ${LCM_DIR}/utils/Tensor.cc
     ${LCM_DIR}/utils/LameUtils.cpp
     ${LCM_DIR}/evaluators/LameStress.cpp
     ${LCM_DIR}/test/unit_tests/StandardUnitTestMain.cpp

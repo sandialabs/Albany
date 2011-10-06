@@ -19,10 +19,12 @@
 #include <Epetra_MpiComm.h>
 #include <Phalanx.hpp>
 #include "PHAL_AlbanyTraits.hpp"
+#include "Albany_Utils.hpp"
 #include "Albany_StateManager.hpp"
 #include "Albany_DiscretizationFactory.hpp"
 
 #include "LCM/evaluators/LameStress.hpp"
+#include "Tensor.h"
 
 using namespace std;
 
@@ -63,15 +65,18 @@ public:
 
   void evaluateFields(typename Traits::EvalData workset)
   {
-    // Set the deformation gradient to the identity tensor.
+    // Set the deformation gradient
     for(std::size_t cell=0; cell<workset.numCells; ++cell){
       for(std::size_t qp=0; qp<numQPs; ++qp){
-        for(std::size_t i=0; i<numDims; ++i){
-          for(std::size_t j=0; j < numDims; ++j){
-            defgrad(cell,qp,i,j) = 0.0;
-          }
-          defgrad(cell,qp,i,i) += 1.0;
-        }
+        defgrad(cell,qp,0,0) = 1.010050167084168;
+        defgrad(cell,qp,0,1) = 0.0;
+        defgrad(cell,qp,0,2) = 0.0;
+        defgrad(cell,qp,1,0) = 0.0;
+        defgrad(cell,qp,1,1) = 0.99750312239746;
+        defgrad(cell,qp,1,2) = 0.0;
+        defgrad(cell,qp,2,0) = 0.0;
+        defgrad(cell,qp,2,1) = 0.0;
+        defgrad(cell,qp,2,2) = 0.99750312239746;
       }
     }
   }
@@ -151,16 +156,16 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
   stateMgr.registerStateVariable("Stress", qp_tensor, "zero", true);
   stateMgr.registerStateVariable("Deformation Gradient", qp_tensor, "identity", true);
 
-//     std::vector<std::string> lameMaterialModelStateVariableNames = LameUtils::getStateVariableNames(lameMaterialModel, lameMaterialParametersList);
-//     std::vector<double> lameMaterialModelStateVariableInitialValues = LameUtils::getStateVariableInitialValues(lameMaterialModel, lameMaterialParametersList);
-//     for(unsigned int i=0 ; i<lameMaterialModelStateVariableNames.size() ; ++i){
-//       evaluators_to_build["Save " + lameMaterialModelStateVariableNames[i]] =
-//         stateMgr.registerStateVariable(lameMaterialModelStateVariableNames[i],
-//                                        dl->qp_scalar,
-//                                        dl->dummy,
-//                                        FactoryTraits<AlbanyTraits>::id_savestatefield,
-//                                        doubleToInitString(lameMaterialModelStateVariableInitialValues[i]),true);
-//     }
+  // Add material-model specific state variables
+  string lameMaterialModelName = lameStressParameterList->get<string>("Lame Material Model");
+  std::vector<std::string> lameMaterialModelStateVariableNames = LameUtils::getStateVariableNames(lameMaterialModelName, materialModelParametersList);
+  std::vector<double> lameMaterialModelStateVariableInitialValues = LameUtils::getStateVariableInitialValues(lameMaterialModelName, materialModelParametersList);
+  for(unsigned int i=0 ; i<lameMaterialModelStateVariableNames.size() ; ++i){
+    stateMgr.registerStateVariable(lameMaterialModelStateVariableNames[i],
+                                   qp_scalar,
+                                   Albany::doubleToInitString(lameMaterialModelStateVariableInitialValues[i]),
+                                   true);
+  }
 
   Teuchos::RCP<Teuchos::ParameterList> discretizationParameterList = Teuchos::rcp(new Teuchos::ParameterList("Discretization"));
   discretizationParameterList->set<int>("1D Elements", 1);
@@ -182,7 +187,6 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
 
   stateMgr.setStateArrays(discretization);
 
-  // \todo Need workset.stateArrayPtr, which is an Albany::StateArray*; will need a StateManager for this.
   PHAL::Workset workset;
   workset.numCells = worksetSize;
   workset.stateArrayPtr = &stateMgr.getStateArray(0);
@@ -192,6 +196,63 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
   fieldManager.preEvaluate<PHAL::AlbanyTraits::Residual>(voidPtr);
   fieldManager.evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
   fieldManager.postEvaluate<PHAL::AlbanyTraits::Residual>(voidPtr);
+
+  PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT,Cell,QuadPoint,Dim,Dim> stressField("Stress", qp_tensor);
+  fieldManager.getFieldData<PHAL::AlbanyTraits::Residual::ScalarT, PHAL::AlbanyTraits::Residual, Cell, QuadPoint, Dim, Dim>(stressField);
+
+  typedef PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT>::size_type size_type;
+  std::vector<size_type> stressFieldDimensions;
+  stressField.dimensions(stressFieldDimensions);
+
+  LCM::Tensor<PHAL::AlbanyTraits::Residual::ScalarT>
+    expectedStress(materialModelParametersList.get<double>("Youngs Modulus") * 0.01,
+                   0.0,
+                   0.0,
+                   0.0,
+                   0.0,
+                   0.0,
+                   0.0,
+                   0.0,
+                   0.0);
+
+  for(size_type cell=0; cell<worksetSize; ++cell){
+    for(size_type qp=0; qp<numQPts; ++qp){
+
+      std::cout << "Stress tensor at cell " << cell << ", quadrature point " << qp << ":" << endl;
+      std::cout << "  " << stressField(cell, qp, 0, 0);
+      std::cout << "  " << stressField(cell, qp, 0, 1);
+      std::cout << "  " << stressField(cell, qp, 0, 2) << endl;
+      std::cout << "  " << stressField(cell, qp, 1, 0);
+      std::cout << "  " << stressField(cell, qp, 1, 1);
+      std::cout << "  " << stressField(cell, qp, 1, 2) << endl;
+      std::cout << "  " << stressField(cell, qp, 2, 0);
+      std::cout << "  " << stressField(cell, qp, 2, 1);
+      std::cout << "  " << stressField(cell, qp, 2, 2) << endl;
+
+      std::cout << "Expected result:" << endl;
+      std::cout << "  " << expectedStress(0, 0);
+      std::cout << "  " << expectedStress(0, 1);
+      std::cout << "  " << expectedStress(0, 2) << endl;
+      std::cout << "  " << expectedStress(1, 0);
+      std::cout << "  " << expectedStress(1, 1);
+      std::cout << "  " << expectedStress(1, 2) << endl;
+      std::cout << "  " << expectedStress(2, 0);
+      std::cout << "  " << expectedStress(2, 1);
+      std::cout << "  " << expectedStress(2, 2) << endl;
+
+      std::cout << endl;
+
+      double tolerance = 1.0e-15;
+      for(size_type i=0 ; i<numDim ; ++i){
+        for(size_type j=0 ; j<numDim ; ++j){
+          TEST_COMPARE( fabs(stressField(cell, qp, i, j) - expectedStress(i, j)), <=, tolerance );
+        }
+      }
+
+    }
+  }
+  std::cout << endl;
+
 }
 
 } // namespace
