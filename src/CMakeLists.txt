@@ -567,6 +567,16 @@ IF (ALBANY_LAME)
   add_executable(utLameStress_elastic
     PHAL_Dimension.cpp
     PHAL_AlbanyTraits.cpp
+    Albany_Utils.cpp
+    Albany_StateManager.cpp
+    stk/Albany_DiscretizationFactory.cpp
+    stk/Albany_GenericSTKMeshStruct.cpp
+    stk/Albany_Cube3DSTKMeshStruct.cpp
+    stk/Albany_Rect2DSTKMeshStruct.cpp
+    stk/Albany_IossSTKMeshStruct.cpp
+    stk/Albany_Line1DSTKMeshStruct.cpp
+    stk/Albany_STKDiscretization.cpp
+    stk/Albany_Point0DSTKMeshStruct.cpp
     ${LCM_DIR}/utils/LameUtils.cpp
     ${LCM_DIR}/evaluators/LameStress.cpp
     ${LCM_DIR}/test/unit_tests/StandardUnitTestMain.cpp

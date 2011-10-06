@@ -14,11 +14,15 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
-#include "Teuchos_UnitTestHarness.hpp"
-#include "LCM/evaluators/LameStress.hpp"
+#include <Teuchos_UnitTestHarness.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Epetra_MpiComm.h>
+#include <Phalanx.hpp>
 #include "PHAL_AlbanyTraits.hpp"
-#include "Phalanx.hpp"
-#include "Teuchos_ParameterList.hpp"
+#include "Albany_StateManager.hpp"
+#include "Albany_DiscretizationFactory.hpp"
+
+#include "LCM/evaluators/LameStress.hpp"
 
 using namespace std;
 
@@ -141,15 +145,53 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
   PHAL::AlbanyTraits::SetupData setupData = "Test String";
   fieldManager.postRegistrationSetup(setupData);
 
+  Albany::StateManager stateMgr;
+
+  // Stress and DefGrad are required for all LAME models
+  stateMgr.registerStateVariable("Stress", qp_tensor, "zero", true);
+  stateMgr.registerStateVariable("Deformation Gradient", qp_tensor, "identity", true);
+
+//     std::vector<std::string> lameMaterialModelStateVariableNames = LameUtils::getStateVariableNames(lameMaterialModel, lameMaterialParametersList);
+//     std::vector<double> lameMaterialModelStateVariableInitialValues = LameUtils::getStateVariableInitialValues(lameMaterialModel, lameMaterialParametersList);
+//     for(unsigned int i=0 ; i<lameMaterialModelStateVariableNames.size() ; ++i){
+//       evaluators_to_build["Save " + lameMaterialModelStateVariableNames[i]] =
+//         stateMgr.registerStateVariable(lameMaterialModelStateVariableNames[i],
+//                                        dl->qp_scalar,
+//                                        dl->dummy,
+//                                        FactoryTraits<AlbanyTraits>::id_savestatefield,
+//                                        doubleToInitString(lameMaterialModelStateVariableInitialValues[i]),true);
+//     }
+
+  Teuchos::RCP<Teuchos::ParameterList> discretizationParameterList = Teuchos::rcp(new Teuchos::ParameterList("Discretization"));
+  discretizationParameterList->set<int>("1D Elements", 1);
+  discretizationParameterList->set<int>("2D Elements", 1);
+  discretizationParameterList->set<int>("3D Elements", 1);
+  discretizationParameterList->set<string>("Method", "STK3D");
+  discretizationParameterList->set<string>("Exodus Output File Name", "unitTestOutput.exo"); // Is this required?
+
+  Teuchos::RCP<Epetra_Comm> comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
+  Albany::DiscretizationFactory discretizationFactory(discretizationParameterList, comm);
+
+  discretizationFactory.createMeshSpecs();
+
+  int numberOfEquations = 3;
+
+  Teuchos::RCP<Albany::AbstractDiscretization> discretization =
+    discretizationFactory.createDiscretization(numberOfEquations,
+                                               stateMgr.getStateInfoStruct());
+
+  stateMgr.setStateArrays(discretization);
+
   // \todo Need workset.stateArrayPtr, which is an Albany::StateArray*; will need a StateManager for this.
   PHAL::Workset workset;
   workset.numCells = worksetSize;
+  workset.stateArrayPtr = &stateMgr.getStateArray(0);
 
-//   void* voidPtr(0);
+  void* voidPtr(0);
 
-//   fieldManager.preEvaluate<PHAL::AlbanyTraits::Residual>(voidPtr);
-//   fieldManager.evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
-//   fieldManager.postEvaluate<PHAL::AlbanyTraits::Residual>(voidPtr);
+  fieldManager.preEvaluate<PHAL::AlbanyTraits::Residual>(voidPtr);
+  fieldManager.evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
+  fieldManager.postEvaluate<PHAL::AlbanyTraits::Residual>(voidPtr);
 }
 
 } // namespace
