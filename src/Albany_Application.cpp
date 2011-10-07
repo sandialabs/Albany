@@ -116,6 +116,7 @@ Application(const RCP<const Epetra_Comm>& comm,
   wsElNodeEqID = disc->getWsElNodeEqID();
   coords = disc->getCoords();
   wsEBNames = disc->getWsEBNames();
+  wsPhysIndex = disc->getWsPhysIndex();
   int numDim = meshSpecs[0]->numDim;
   numWorksets = wsElNodeEqID.size();
 
@@ -361,6 +362,7 @@ computeGlobalResidual(const double current_time,
     for (int ws=0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo(workset, ws);
 
+  cout << "XXX phys index " << wsPhysIndex[ws] << endl;
       // FillType template argument used to specialize Sacado
       fm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
     }

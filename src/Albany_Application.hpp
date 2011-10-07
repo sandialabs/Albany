@@ -555,6 +555,7 @@ namespace Albany {
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > > wsElNodeEqID;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords;
     Teuchos::ArrayRCP<std::string> wsEBNames;
+    Teuchos::ArrayRCP<int> wsPhysIndex;
 
     //! Stochastic Galerkin basis
     Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> > sg_basis;

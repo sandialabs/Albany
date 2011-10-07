@@ -84,6 +84,9 @@ namespace Albany {
     //! Retrieve Vector (length num worksets) of element block names
     virtual const Teuchos::ArrayRCP<std::string>&  getWsEBNames() const = 0;
 
+    //! Retrieve Vector (length num worksets) of Physics Index
+    virtual const Teuchos::ArrayRCP<int>&  getWsPhysIndex() const = 0;
+
     //! Get solution vector from mesh database
     virtual Teuchos::RCP<Epetra_Vector> getSolutionField() const = 0;
 

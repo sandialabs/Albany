@@ -48,6 +48,7 @@ Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
   }
 
   interleavedOrdering = params->get("Interleaved Ordering",true);
+  allElementBlocksHaveSamePhysics = true; 
 
   // This is typical, can be resized for multiple material problems
   meshSpecs.resize(1);

@@ -130,6 +130,12 @@ Albany::STKDiscretization::getWsEBNames() const
   return wsEBNames;
 }
 
+const Teuchos::ArrayRCP<int>& 
+Albany::STKDiscretization::getWsPhysIndex() const
+{
+  return wsPhysIndex;
+}
+
 const std::vector<std::string>&
 Albany::STKDiscretization::getNodeSetIDs() const
 {
@@ -409,6 +415,11 @@ void Albany::STKDiscretization::computeWorksetInfo()
       }
     }
   }
+  wsPhysIndex.resize(numBuckets);
+  if (stkMeshStruct->allElementBlocksHaveSamePhysics)
+    for (int i=0; i<numBuckets; i++) wsPhysIndex[i]=0;
+  else 
+    for (int i=0; i<numBuckets; i++) wsPhysIndex[i]=stkMeshStruct->ebNameToIndex[wsEBNames[i]];
 
   int nodes_per_element =  metaData.get_cell_topology(*(stkMeshStruct->partVec[0])).getNodeCount(); 
 

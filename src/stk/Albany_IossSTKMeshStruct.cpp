@@ -117,12 +117,14 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   }
   else {
     *out << "MULTIPLE Elem Block in Ioss: DO worksetSize[eb] max?? " << endl; 
+    this->allElementBlocksHaveSamePhysics=false;
     this->meshSpecs.resize(numEB);
     for (int eb=0; eb<numEB; eb++) {
+      this->ebNameToIndex["partVec[eb]->name()"] = eb;
       const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[eb]).getCellTopologyData();
       this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
-                         nsNames, worksetSize, 1, this->interleavedOrdering));
-      *out << "el_block_size[" << eb << "] = " << el_blocks[eb] <<endl; 
+                                                nsNames, worksetSize, 1, this->interleavedOrdering));
+      cout << "el_block_size[" << eb << "] = " << el_blocks[eb] << "   name  " << partVec[eb]->name() << endl; 
     }
   }
 }
