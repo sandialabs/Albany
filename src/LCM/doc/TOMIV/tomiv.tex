@@ -1153,10 +1153,10 @@ Table~\ref{tab:ExamplesEvolution}.
       \ref{tab:ExamplesIV}.
       \\
       \\
-      \multirow{2}{*}{$\begin{aligned}& \dot{\bD}\bD^{-1} =
+      \multirow{2}{*}{$\left.\begin{aligned}& \dot{\bD}\bD^{-1} =
           \fb(\bF,\ldots) \\
           & \dot{\bH}\bH^{-1}
-        \end{aligned}\bigg\} \in g$}
+        \end{aligned}\right\} \in g$}
       &
       $GL^+(3)$
       &
@@ -1355,10 +1355,66 @@ Schur decomposition, which in general is complex.
 
 It is highly desirable to use an algorithm for the computation of the
 logarithmic map that does not require complex arithmetic. One way to
-achieve this is to compute the logarithm by means of the singular
-value decomposition and the Baker-Campbell-Hausdorff formula
-\citep{Kosmann-Schwarzbach:2009}. Consider the internal variable field
-$\bZ \in G$.
+achieve this is to compute the polar decomposition of the tensor and
+obtain the logarithms of the rotation and stretch components
+separately, interpolate these, and then apply the exponential and
+recombine. There exists explicit formulas for computing the logarithm
+of a rotation \citep{Park.Ravani:1997}. The angle of rotation is
+given by
+\begin{equation}
+  \theta = \cos^{-1} \left[  \tfrac{1}{2} (\tr \bR - 1) \right],
+  \quad
+  \bR \in SO(3),
+  \quad
+  \theta \in [0, \pi],
+\end{equation}
+and the logarithm of the rotation is determined by
+\begin{align}
+  \log \bR =
+  \left\{ 
+    \begin{aligned}
+      & \theta = 0, & \quad & \mathbf{0}
+      \\
+      & \theta \in (0, \pi), & \quad &
+      \frac{\theta}{2 \sin \theta} (\bR - \bR^T)
+      \\
+      & \theta = \pi, & \quad & \pm \pi \check{\bv}
+    \end{aligned}
+  \right. \label{eq:log-rotation}
+\end{align}
+in which $\bv$ is the eigenvector corresponding to the eigenvalue of
+1, $\check{\bv}$ is the skew symmetric tensor such that $\check{\bv}
+\cdot \bu \equiv \bv \times \bu \ \forall \ \bv, \bu \in \mbb{R}^3$,
+and the sign is selected according to continuity conditions from the
+surrounding field.
+
+It proves convenient to compute the polar decomposition by means of
+the singular value decomposition (SVD) as follows: given $\bA \in
+GL^+(3)$, then
+\begin{align}
+  \bA & = \bU \bD \bV^T, & \quad & \bU, \bV \in SO(3), \,
+  \bD = \text{diag}(s_1,s_2,s_3), \label{eq:SVD-polar-1}
+  \\
+  \bR & := \bU \bV^T, & \quad & \bR \in SO(3),
+  \\
+  \bS & := \bV \bD \bV^T, & \quad & \bS \in SPD(3)
+  \\
+  \bA & = \bR \bS, & \quad
+  & \text{polar decomposition} \label{eq:SVD-polar-4}
+\end{align}
+in which $s_1,s_2,s_3 \in \mbb{R}^+$ are the singular values of $\bA$,
+and $SPD(3)$ is the space of three-dimensional symmetric positive
+definite tensors. This is a vector space but not a Lie group, since in
+general the product of two symmetric positive definite tensors is not
+symmetric. Nevertheless, one can still use the logarithmic map as
+$\log: SPD(3) \rightarrow S(3)$, where $S(3)$ is the vector space of
+three-dimensional symmetric tensors. It follows that the exponential
+map can be used as well as $\exp: S(3) \rightarrow SPD(3)$
+\citep{Gallier:2011}. The logarithm of the rotation $\bR$ can be
+computed using (\ref{eq:log-rotation}) and the logarithm of the
+stretch tensor $\bS$ is readily obtained as the SVD yields its
+eigenvalue decomposition, i.e. $\log \bS = \bV \bd \bV^T$, where $\bd
+:= \text{diag}(\log s_1, \log s_2, \log s_3)$.
 
 \section{Numerical Examples}
 This section showcases three numerical examples concerning polynomial
