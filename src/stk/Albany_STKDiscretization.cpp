@@ -335,11 +335,11 @@ void Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
 }
 void Albany::STKDiscretization::computeGraphs()
 {
-  int nodes_per_element =  metaData.get_cell_topology(*(stkMeshStruct->partVec[0])).getNodeCount(); 
+  int nodes_per_element_est =  metaData.get_cell_topology(*(stkMeshStruct->partVec[0])).getNodeCount(); 
   // Loads member data:  overlap_graph, numOverlapodes, overlap_node_map, coordinates, graphs
   overlap_graph =
     Teuchos::rcp(new Epetra_CrsGraph(Copy, *overlap_map,
-                                     neq*nodes_per_element, false));
+                                     neq*nodes_per_element_est, false));
 
   stk::mesh::Selector select_owned_in_part =
     stk::mesh::Selector( metaData.universal_part() ) &
@@ -421,8 +421,6 @@ void Albany::STKDiscretization::computeWorksetInfo()
   else 
     for (int i=0; i<numBuckets; i++) wsPhysIndex[i]=stkMeshStruct->ebNameToIndex[wsEBNames[i]];
 
-  int nodes_per_element =  metaData.get_cell_topology(*(stkMeshStruct->partVec[0])).getNodeCount(); 
-
   // Fill  wsElNodeEqID(workset, el_LID, local node, Eq) => unk_LID
   wsElNodeEqID.resize(numBuckets);
   coords.resize(numBuckets);
@@ -437,10 +435,11 @@ void Albany::STKDiscretization::computeWorksetInfo()
 
       stk::mesh::PairIterRelation rel = e.relations(metaData.NODE_RANK);
 
+      int nodes_per_element = rel.size();
       wsElNodeEqID[b][i].resize(nodes_per_element);
       coords[b][i].resize(nodes_per_element);
       // loop over local nodes
-      for (unsigned int j=0; j < rel.size(); j++) {
+      for (unsigned int j=0; j < nodes_per_element; j++) {
         stk::mesh::Entity& rowNode = * rel[j].entity();
         int node_gid = gid(rowNode);
         int node_lid = overlap_node_map->LID(node_gid);

@@ -41,7 +41,7 @@ void
 Albany::AbstractProblem::setNumEquations(const int neq_)
 { neq = neq_; }
 
-Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
+Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > >
 Albany::AbstractProblem::getFieldManager()
 { return fm; }
 
@@ -49,7 +49,7 @@ Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
 Albany::AbstractProblem::getDirichletFieldManager()
 { return dfm; }
 
-Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
+Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > >
 Albany::AbstractProblem::getResponseFieldManager()
 { return rfm; }
 

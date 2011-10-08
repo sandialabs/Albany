@@ -544,13 +544,13 @@ namespace Albany {
     Teuchos::RCP<Epetra_Map> response_map;
 
     //! Phalanx Field Manager for volumetric fills
-    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > fm;
+    Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > fm;
 
     //! Phalanx Field Manager for Dirichlet Conditions
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > dfm;
 
     //! Phalanx Field Manager for Responses
-    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > rfm;
+    Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > rfm;
 
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > > wsElNodeEqID;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords;

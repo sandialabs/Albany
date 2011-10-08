@@ -362,9 +362,8 @@ computeGlobalResidual(const double current_time,
     for (int ws=0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo(workset, ws);
 
-  cout << "XXX phys index " << wsPhysIndex[ws] << endl;
       // FillType template argument used to specialize Sacado
-      fm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
+      fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
     }
   }
 
@@ -456,7 +455,7 @@ computeGlobalJacobian(const double alpha,
       loadWorksetBucketInfo(workset, ws);
 
       // FillType template argument used to specialize Sacado
-      fm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
+      fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
     }
   } 
 
@@ -744,7 +743,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
       workset.ws_coord_derivs = ws_coord_derivs[ws];
 
       // FillType template argument used to specialize Sacado
-      fm->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
+      fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
     }
   }
 
@@ -1018,7 +1017,7 @@ evaluateResponse_rfm(const double current_time,
       loadWorksetBucketInfo(workset, ws);
       
       // FillType template argument used to specialize Sacado
-      rfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
+      rfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
     }    
   }
  
@@ -1150,7 +1149,7 @@ evaluateResponseGradient_rfm(const double current_time,
         loadWorksetBucketInfo(workset, ws);
 
 	// FillType template argument used to specialize Sacado
-	rfm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
+	rfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
       }
     } 
 
@@ -1227,7 +1226,7 @@ evaluateResponseGradient_rfm(const double current_time,
         loadWorksetBucketInfo(workset, ws);
 
 	// FillType template argument used to specialize Sacado
-	rfm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
+	rfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
       }
     } 
 
@@ -1328,7 +1327,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
       loadWorksetBucketInfo(workset, ws);
 
       // FillType template argument used to specialize Sacado
-      fm->evaluateFields<PHAL::AlbanyTraits::SGResidual>(workset);
+      fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::SGResidual>(workset);
     }
   } 
 
@@ -1453,7 +1452,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
       loadWorksetBucketInfo(workset, ws);
 
       // FillType template argument used to specialize Sacado
-      fm->evaluateFields<PHAL::AlbanyTraits::SGJacobian>(workset);
+      fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::SGJacobian>(workset);
     }
   } 
   
@@ -1663,7 +1662,7 @@ computeGlobalSGTangent(
       loadWorksetBucketInfo(workset, ws);
 
       // FillType template argument used to specialize Sacado
-      fm->evaluateFields<PHAL::AlbanyTraits::SGTangent>(workset);
+      fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::SGTangent>(workset);
     }
   }
 
@@ -2044,7 +2043,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
       loadWorksetBucketInfo(workset, ws);
 
       // FillType template argument used to specialize Sacado
-      fm->evaluateFields<PHAL::AlbanyTraits::MPResidual>(workset);
+      fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::MPResidual>(workset);
     }
   } 
 
@@ -2178,7 +2177,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
       loadWorksetBucketInfo(workset, ws);
 
       // FillType template argument used to specialize Sacado
-      fm->evaluateFields<PHAL::AlbanyTraits::MPJacobian>(workset);
+      fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::MPJacobian>(workset);
     }
   } 
   
@@ -2404,7 +2403,7 @@ computeGlobalMPTangent(
       loadWorksetBucketInfo(workset, ws);
 
       // FillType template argument used to specialize Sacado
-      fm->evaluateFields<PHAL::AlbanyTraits::MPTangent>(workset);
+      fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::MPTangent>(workset);
     }
   }
 
@@ -2657,48 +2656,58 @@ void Albany::Application::postRegSetup(std::string eval)
   setupSet.insert(eval);
 
   if (eval=="Residual") {
-    fm->postRegistrationSetupForType<PHAL::AlbanyTraits::Residual>(eval);
+    for (int ps=0; ps < fm.size(); ps++) 
+      fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Residual>(eval);
     if (dfm!=Teuchos::null)
       dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::Residual>(eval);
   }
   else if (eval=="Jacobian") {
-    fm->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(eval);
+    for (int ps=0; ps < fm.size(); ps++) 
+      fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(eval);
     if (dfm!=Teuchos::null)
       dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(eval);
   }
   else if (eval=="Tangent") {
-    fm->postRegistrationSetupForType<PHAL::AlbanyTraits::Tangent>(eval);
+    for (int ps=0; ps < fm.size(); ps++) 
+      fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Tangent>(eval);
     if (dfm!=Teuchos::null)
       dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::Tangent>(eval);
   }
   else if (eval=="SGResidual") {
-    fm->postRegistrationSetupForType<PHAL::AlbanyTraits::SGResidual>(eval);
+    for (int ps=0; ps < fm.size(); ps++) 
+      fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::SGResidual>(eval);
     if (dfm!=Teuchos::null)
       dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::SGResidual>(eval);
   }
   else if (eval=="SGJacobian") {
-    fm->postRegistrationSetupForType<PHAL::AlbanyTraits::SGJacobian>(eval);
+    for (int ps=0; ps < fm.size(); ps++) 
+      fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::SGJacobian>(eval);
     if (dfm!=Teuchos::null)
       dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::SGJacobian>(eval);
   }
   else if (eval=="MPResidual") {
-    fm->postRegistrationSetupForType<PHAL::AlbanyTraits::MPResidual>(eval);
+    for (int ps=0; ps < fm.size(); ps++) 
+      fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::MPResidual>(eval);
     if (dfm!=Teuchos::null)
       dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::MPResidual>(eval);
   }
   else if (eval=="MPJacobian") {
-    fm->postRegistrationSetupForType<PHAL::AlbanyTraits::MPJacobian>(eval);
+    for (int ps=0; ps < fm.size(); ps++) 
+      fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::MPJacobian>(eval);
     if (dfm!=Teuchos::null)
       dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::MPJacobian>(eval);
   }
   else if (eval=="Responses") {
-    rfm->postRegistrationSetupForType<PHAL::AlbanyTraits::Residual>(eval);
+    for (int ps=0; ps < fm.size(); ps++) 
+      rfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Residual>(eval);
   }
   else if (eval=="Response Tangents") {
-    rfm->postRegistrationSetupForType<PHAL::AlbanyTraits::Tangent>(eval);
+    for (int ps=0; ps < fm.size(); ps++) 
+      rfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Tangent>(eval);
   }
   else if (eval=="Response Gradients") {
-    rfm->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(eval);
+    for (int ps=0; ps < fm.size(); ps++) 
+      rfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(eval);
   }
   else 
     TEST_FOR_EXCEPTION(eval!="Known Evaluation Name",  std::logic_error,
@@ -2713,14 +2722,20 @@ void Albany::Application::postRegSetup(std::string eval)
       *out << "Phalanx writing graphviz file for graph of Residual fill (detail ="
            << phxGraphVisDetail << ")"<<endl;
       *out << "Process using 'dot -Tpng -O phalanx_graph' \n" << endl;
-      fm->writeGraphvizFile<PHAL::AlbanyTraits::Residual>("phalanx_graph",detail,detail);
+      for (int ps=0; ps < fm.size(); ps++) {
+        std::stringstream pg; pg << "phalanx_graph_" << ps;
+        fm[ps]->writeGraphvizFile<PHAL::AlbanyTraits::Residual>(pg.str(),detail,detail);
+      }
       phxGraphVisDetail = -1;
     }
     else if (eval=="Jacobian") {
       *out << "Phalanx writing graphviz file for graph of Jacobian fill (detail ="
            << phxGraphVisDetail << ")"<<endl;
       *out << "Process using 'dot -Tpng -O phalanx_graph' \n" << endl;
-      fm->writeGraphvizFile<PHAL::AlbanyTraits::Jacobian>("phalanx_graph",detail,detail);
+      for (int ps=0; ps < fm.size(); ps++) {
+        std::stringstream pg; pg << "phalanx_graph_" << ps;
+        fm[ps]->writeGraphvizFile<PHAL::AlbanyTraits::Jacobian>(pg.str(),detail,detail);
+      }
       phxGraphVisDetail = -2;
     }
   }
@@ -2731,7 +2746,10 @@ void Albany::Application::postRegSetup(std::string eval)
       *out << "Phalanx writing graphviz file for graph of Response fill (detail ="
            << respGraphVisDetail << ")"<<endl;
       *out << "Process using 'dot -Tpng -O responses_graph' \n" << endl;
-      rfm->writeGraphvizFile<PHAL::AlbanyTraits::Residual>("responses_graph",detail,detail);
+      for (int ps=0; ps < rfm.size(); ps++) {
+        std::stringstream pg; pg << "responses_graph_" << ps;
+        rfm[ps]->writeGraphvizFile<PHAL::AlbanyTraits::Residual>(pg.str(),detail,detail);
+      }
       respGraphVisDetail = -1;
     }
   }

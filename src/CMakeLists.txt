@@ -57,6 +57,7 @@ SET(SOURCES ${SOURCES}
 	problems/Albany_DirichletUtils.cpp 
 	problems/Albany_ProblemFactory.cpp
 	problems/Albany_HeatProblem.cpp 
+	problems/Albany_MultiHeatProblem.cpp 
 	problems/Albany_NavierStokes.cpp 
 	problems/Albany_ODEProblem.cpp 
 	problems/Albany_Helmholtz2DProblem.cpp 
@@ -71,6 +72,7 @@ SET(HEADERS ${HEADERS}
 	problems/Albany_ResponseUtils.hpp 
 	problems/Albany_DirichletUtils.hpp 
 	problems/Albany_HeatProblem.hpp 
+	problems/Albany_MultiHeatProblem.hpp 
 	problems/Albany_NavierStokes.hpp 
 	problems/Albany_ODEProblem.hpp 
 	problems/Albany_Helmholtz2DProblem.hpp 

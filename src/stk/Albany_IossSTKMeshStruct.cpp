@@ -120,7 +120,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     this->allElementBlocksHaveSamePhysics=false;
     this->meshSpecs.resize(numEB);
     for (int eb=0; eb<numEB; eb++) {
-      this->ebNameToIndex["partVec[eb]->name()"] = eb;
+      this->ebNameToIndex[partVec[eb]->name()] = eb;
       const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[eb]).getCellTopologyData();
       this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
                                                 nsNames, worksetSize, 1, this->interleavedOrdering));

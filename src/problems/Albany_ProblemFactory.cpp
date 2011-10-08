@@ -19,6 +19,7 @@
 #include "Albany_ProblemFactory.hpp"
 #include "Albany_Helmholtz2DProblem.hpp"
 #include "Albany_HeatProblem.hpp"
+#include "Albany_MultiHeatProblem.hpp"
 #include "Albany_NavierStokes.hpp"
 #include "Albany_ODEProblem.hpp"
 #include "Albany_ThermoElectrostaticsProblem.hpp"
@@ -104,6 +105,15 @@ Albany::ProblemFactory::create()
   }
   else if (method == "ThermoElectrostatics 3D") {
     strategy = rcp(new Albany::ThermoElectrostaticsProblem(problemParams, paramLib, 3));
+  }
+  else if (method == "MultiHeat 1D") {
+    strategy = rcp(new Albany::MultiHeatProblem(problemParams, paramLib, 1, comm));
+  }
+  else if (method == "MultiHeat 2D") {
+    strategy = rcp(new Albany::MultiHeatProblem(problemParams, paramLib, 2, comm));
+  }
+  else if (method == "MultiHeat 3D") {
+    strategy = rcp(new Albany::MultiHeatProblem(problemParams, paramLib, 3, comm));
   }
 #ifdef ALBANY_LCM
   else if (method == "LAME" || method == "Lame" || method == "lame") {

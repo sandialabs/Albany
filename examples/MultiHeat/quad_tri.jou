@@ -1,0 +1,51 @@
+#     {xExtent = 1}
+#     {yExtent = 1}
+
+# vertices for rectangle
+create vertex 0 0 0
+create vertex {xExtent} 0 0
+create vertex {xExtent} {yExtent/2} 0
+create vertex 0 {yExtent/2} 0
+create vertex {xExtent} {yExtent} 0
+create vertex 0 {yExtent} 0
+
+# create the recangle
+create surface vertex 1 2 3 4
+create surface vertex 3 5 6 4
+merge all
+
+# define blocks (each block represents one material)
+block 1 surface 1
+block 1 name "Oil"
+block 1 element type quad4
+block 2 surface 2
+block 2 name "Water"
+block 2 element type tri3
+
+
+# define nodesets for BCs
+nodeset 1 curve 1 2 5 6 7 4
+nodeset 1 name "NodeSetEdge"
+
+
+# define meshing size at the x-direction 
+curve 1 interval 40
+curve 3 interval 40
+curve 6 interval 40
+
+# define meshing size at the y-direction
+curve 2 interval 20
+curve 4 interval 20
+curve 5 interval 20
+curve 7 interval 20
+
+# actually mesh the geometry using the default meshing engine (Map)
+surface 1 scheme map
+surface 2 scheme tridelaunay
+mesh surface all
+
+# dimension size is assumed ?
+# output the Exodus II mesh
+export mesh "quad_tri.exo" dimension 2 block all overwrite
+
+
