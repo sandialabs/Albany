@@ -1420,13 +1420,13 @@ eigenvalue decomposition, i.e. $\log \bS = \bV \bd \bV^T$, where $\bd
 This section showcases three numerical examples concerning polynomial
 interpolations and transformations of internal variables. In the first
 example, we compare the recovered internal variable fields obtained
-from standard Galerkin and Petrov-Galerkin projections. We then use a
+from standard Galerkin and element-by-element projections. We then use a
 kinematics problem to investigate the error caused by improper
 interpolation of internal variables belonging to Lie group and the
-remedy procedures formulated via Lie algebra. A simulation of a large
-deformation J2 elasto-plasticity problem is presented to demonstrate 
-the performance of the variational transfer operator  with the 
-standard internal variable recovery schemes without logarithmoic mapping. 
+remedy procedures formulated via Lie algebra. Simulations of a large
+deformation J2 elasto-plasticity problem are presented to demonstrate 
+the performance of the Lie algebra variational transfer operator  with a 
+number of commonly used  internal variable recovery schemes. 
 We conclude this section with a benchmark
 example from the literature to illustrate the remarkable accuracy of
 the proposed internal variable recovery procedure.
@@ -1434,7 +1434,7 @@ the proposed internal variable recovery procedure.
 \subsection{Projection of Scalar Fields with Jump Conditions}
 We consider a simple example in which a cubic body centered at the
 origin of a Cartesian coordinate system $\{XYZ\}$ is discretized by 8
-hexahedral trilinear elements of equal size. The following scalar
+hexahedral trilinear elements of equal sizes. The following scalar
 internal variable field is prescribed at the eight standard Gauss
 quadrature points,
 \begin{equation}
@@ -1449,15 +1449,27 @@ To generate an interpolated internal variables field $\bar{\bz}_{h}
 \in V_{h}$, the numerical values from the Gaussian quadrature points
 are projected onto the nodes via \eqref{eq:BalanceLM}. Two different
 discretization strategies are used to compute $\bar{\bz}_{h}$. The
-first strategy is to use standard Galerkin form as expressed in
-\eqref{eq:DiscreteEquilibrium}. Alternatively, one may also use Dirac
-delta function $\delta(\bX - \bX_{\alpha})$ as the test function and
-use the interpolation function $\lambda_{\alpha}(\bX)$ to form a
-Petrov-Galerkin version of \eqref{eq:DiscreteEquilibrium}. The result
-is a collocation formulation of \eqref{eq:DiscreteEquilibrium} where
-the Gaussian quadrature points coincide with the collocation points,
-but continuity across elements is not guaranteed due to the usage of
-Lagrangian elements.
+first strategy is to use the standard Galerkin form as expressed in
+\eqref{eq:DiscreteEquilibrium} globally. Alternatively, we restrict the 
+application of the L2 projection to a single element, thus recovering 
+a local projection field where inter-element discontinuity may exist. 
+
+The projected scalar internal variable field is shown in Figure
+\ref{fig:ExampleCube}. The global L2 projection  leads
+to a smooth linear field $\bz_{h}(X) = X/4 + 1/2$, which is identical
+to the linear least square regression of the nodal vales of the
+$\bz(X)$. This result confirms that that the projection defined in
+\eqref{eq:DiscreteEquilibrium} minimize the error measured by the L2
+norm $||\bz_{h} - \bz ||$ and is therefore optimal. Notice that the
+jump condition vanishes when the global L2 projection method is used , because both
+the trial and weighing space are $C^{0}$ continuous.
+ 
+The local element-by-element approach, on the other hand, preserves the jump
+condition and reproduces the exact field in this example. Since the local
+L2 projection minimizes the L2 norm measured in each single element and the 
+linear scalar field can be reproduce exactly with trilinear interpolation function, 
+the error measured by the L2 norm vanished in each element. 
+
 \begin{figure}[htbp]
   \begin{center}
     \unitlength=1.0mm
@@ -1465,34 +1477,12 @@ Lagrangian elements.
       \includegraphics[width=80mm]{ExampleCubicG.eps}}
     \subfigure[]{
       \includegraphics[width=80mm]{ExampleCubicPG.eps}}
-    \caption{Projected scalar internal variable field with (a) standard
-      Galerkin method and (b) Petrov-Galerkin method.}
+    \caption{Projected scalar internal variable field with (a) global L2 projection and (b) local L2 projection.}
     \label{fig:ExampleCube}
   \end{center}
 \end{figure}
 
-The projected scalar internal variable field is shown in Figure
-\ref{fig:ExampleCube}. The projection based on Galerkin method leads
-to a smooth linear field $\bz_{h}(X) = X/4 + 1/2$, which is identical
-to the linear least square regression of the nodal vales of the
-$\bz(X)$. This result confirms that that the projection defined in
-\eqref{eq:DiscreteEquilibrium} minimize the error measured by the L2
-norm $||\bz_{h} - \bz ||$ and is therefore optimal. Notice that the
-jump condition vanishes if the Galerkin method is used , because both
-the trial and weighing space are $C^{0}$ continuous.
- 
-The Petrov-Galerkin approach, on the other hand, preserves the jump
-condition and reproduces the exact field in this example, because the
-numerical values of the projected field at the collocation points are
-exact, i.e.,
-\begin{equation}
-  \int_{B} (\bar{\bz}_{h}(\bX) - \bz(\bX) \cdot \delta(\bX - \bX_{c})dV
-  =
-  \bar{\bz}_{h}(\bX_{c}) - \bar{\bz}(\bX_{c}) = 0
-  \label{eq:PGOpmital}
-\end{equation}
-where $\bX_{c}$ is the position vector of the collocation points. In
-conclusion, this example illustrates that different projection
+This introductory example illustrates that different projection
 strategies can be derived from the same variational statement. The
 choice of the trial and weighting space should be made by considering
 the properties and nature of the internal variables.
@@ -1622,6 +1612,8 @@ interpolate. The appropriate choice of the interpolation strategy
 depends on the situations and the prior knowledge one may acquire and
 take advantage of.
 
+
+\subsubsection{Refinement Study}
 To investigate the relation between the mesh refinement and the
 overall accuracy of the interpolation, we conduct a refinement study
 to obtain the convergence rate and accuracy of the three interpolation
@@ -1630,11 +1622,11 @@ Frobenius norm of the interpolated tensor field $\bA$ is numerically
 integrated over the entire domain at a variety of refinement levels,
 i.e.,
 \begin{equation}
-  E_{\bA}^{h} =  || \int_{B} \bA^{exact} (\bX)- \bA^{h}(\bX) dV ||_{F}   
-  \approx || \sum^{nen}_{j=1}\sum^{N}_{i=1} 
-  \big(  \lambda_{\alpha} (\bxi_{i}) \bA_{\alpha} -
-  A^{exact}(\bxi_{i}) \big) \;
-  w(\bxi_{i})  J(\bxi_{i}) ||_{F} 
+  E_{\bA}^{h} =   \int_{B} ||\bA^{exact} (\bX)- \bA^{h}(\bX) ||_{F}  dV  
+  \approx \sum^{nen}_{j=1}\sum^{N}_{i=1} ||
+    \lambda_{\alpha} (\bxi_{i}) \bA_{\alpha} -
+  A^{exact}(\bxi_{i}) ||_{F} \;
+  w(\bxi_{i})  J(\bxi_{i}) 
   \label{eq:FrobeniusNormOverall}
 \end{equation}
 where $\bA$ can be $\bF, \bR, \bU$ and $E_{\bA}^{h}$ is the error
@@ -1699,6 +1691,98 @@ linearly, the interpolation recovers the exact solution. Meanwhile,
 the convergence rate is very slow if the interpolation is performed
 directly on the $SO(3)$. The error of rotation only reduces less than
 one order when the number of the elements is increased 100 times.
+
+\subsubsection{Comparisons with Other Internal Variable Recovery Schemes}
+To compare the performance of the proposed internal variable recovery procedure
+with other commonly used numericla scheme, we assign the analytical solution of 
+the deformation field at the Gauss points of the 16-element coarse mesh and project 
+it to the node by a variety of recovery methods. The errors defined in 
+\eqref{eq:FrobeniusNormDistribution} and \eqref{eq:FrobeniusNormOverall} 
+are both computed. 
+
+Six internal variable recovery procedures are compared in  Table 
+\ref{tab:RingErrorComparison}. The first method (labeled as direct averaging) 
+employs a searching scheme to determine the closest Gauss points to a node 
+in each element. The value of the closest Gauss point is assigned
+to the node. If the same node is shared by more than one element, then the 
+Gauss point values are averaged among the Gauss points in different elements. 
+In the  extrapolation approach, we establish shape functions using Gauss points 
+as local node, then extrapolate Gauss point data to the actual node of each finite 
+element. The nodal values are then averaged element-wise in a similar fashion of 
+the first method. The next two approaches both employ the variational projection
+operator globally. The only difference between the two is that one projects the polar 
+decomposed deformation field and another one projects the deformation field directly 
+without polar decomposition. The last two approach projects the polar decomposed 
+deformation field globally with variational projection operators that both transfer the 
+rotation field from $SO(3)$ to $so(3)$, but treat the stretch field differently.  
+ 
+\begin{table}[htbp]
+  \begin{center}
+    \begin{tabular}{ l l l }
+      \toprule
+      
+      Method
+      &
+      Range of $e^{h}(\bX)$
+      & 
+      Global Error $E_{F}^{h}$
+      \\
+      \hline
+      Direct Averaging
+      &
+      $0.063-0.14$
+      & 
+      $0.0012$
+      \\
+      Extrapolation   
+      &
+      $0.066-0.70$
+      &
+      $0.0071$
+      \\
+      Variational Projection (with SVD)  
+      &
+      $0.017-0.02$
+      & 
+      $2.8 \times 10^{-5}$
+      \\
+       Variational Projection (w/o SVD)  
+      &
+      $0.017-0.02$
+      & 
+      $2.8 \times 10^{-5}$
+      \\
+       Variational Projection (full Lie Alg)  
+      &
+      $0.0078-0.0087$
+      & 
+      $2.6 \times 10^{-17}$
+      \\
+      Variational Projection (mixed)  
+      &
+      $5.4 \times 10^{-16} - 2.4 \times 10^{-13}$
+      & 
+      $3.3 \times 10^{-17}$
+      \\
+      \bottomrule
+    \end{tabular}
+    \caption{Comparison of various internal variable recovery methods 
+                  for the bending annulus problem.}
+    \label{tab:RingErrorComparison}
+  \end{center}
+\end{table}
+
+Table \ref{tab:RingErrorComparison} demonstrates that the four variational 
+projection cases produce less error than both the direct averaging and 
+extrapolation methods regardless of whether Lie algebra is employed. 
+This result is consistent with the proposition in section 2 where the 
+variational operators are proved to minimize the L2 norm and thus 
+provides further evidence of the superior accuracy of the variational 
+projection method. Furthermore, the global error measured by the $E^{h}_{F}$ 
+is reduced by 12 order when the rotation interpolation is conducted in $so(3)$ 
+instead of $SO(3)$. Even though the $e^{h}(\bX)$ appears to be lower in mixed 
+approach, this reduction in global error is within the same order.   
+
 
 \subsection{Elastic-Plastic Upsetting of an Axisymmetric Billet}
 This example demonstrates the outstanding ability of the variational
@@ -1772,6 +1856,7 @@ and 27-node element are in good agreement with
   \end{center}
 \end{figure}
 
+\subsubsection{Admission Range of Isochoric Plastic Response}
 At each time step throughout the simulations, the plastic split of the
 deformation gradient $\bF^{p} = (\bF^{e})^{-1} \cdot \bF$ is stored.
 Figure \ref{fig:BilletNOLie} illustrates two projections of $\bF^{p}$
@@ -1855,6 +1940,69 @@ holds regardless of mesh size.
     \label{fig:BilletWLie}
   \end{center}
 \end{figure}
+
+\subsubsection{Comparisons with Other Internal Variable Recovery Schemes}
+We compare the performance of the same set of internal variable recovery schemes again using
+the upsetting billet example. Here the Gauss points of the coarse mesh is first projected 
+ to the node. Using the nodal values and the interpolation functions, we compute the nodal 
+ value of $\det(\bF^{p})$ and the errors defined in \eqref{eq:FrobeniusNormOverall}. Table \ref{tab:BilletErrorComparison} demonstrates the properties of the projected plastic deformation. 
+ Among the six internal variable recovery approaches, only the ones applying Lie algebra is able to preserve
+ the isochoric property of the J2 model. Since the mesh with 693 element used in this comparison study is relatively fine, the difference in global error is not significant. Nevertheless,  the variational projections are still the more accurate approaches among all the recovery procedures.  
+ 
+ \begin{table}[htbp]
+  \begin{center}
+    \begin{tabular}{ l l l }
+      \toprule
+      
+      Method
+      &
+      Range of $\det(\bF^{p})$
+      & 
+      Global Error $E_{F}^{h}$
+      \\
+      \hline
+      Direct Averaging
+      &
+      $1-1.25$
+      & 
+      $9.35 \times 10^{-9}$
+      \\
+      Extrapolation   
+      &
+      $0.95-1.1$
+      &
+      $1.56 \times 10^{-8}$
+      \\
+      Variational Projection (with SVD)  
+      &
+      $0.89-1.1$
+      & 
+      $7.36 \times 10^{-9}$
+      \\
+       Variational Projection (w/o SVD)  
+      &
+      $0.83-1.24$
+      & 
+      $7.4017 \times 10^{-9}$
+      \\
+       Variational Projection (full Lie Alg)  
+      &
+      $1$
+      & 
+      $7.07 \times 10^{-9}$
+      \\
+      Variational Projection (mixed)  
+      &
+      $1$
+      & 
+      $7.37 \times 10^{-9}$
+      \\
+      \bottomrule
+    \end{tabular}
+    \caption{Comparison of various internal variable recovery methods for the upsetting billet problem.}
+    \label{tab:BilletErrorComparison}
+  \end{center}
+\end{table}
 
 \section{Conclusion}
 
