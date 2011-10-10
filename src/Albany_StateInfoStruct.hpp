@@ -45,16 +45,19 @@ typedef std::vector<StateArray> StateArrays;
   struct MeshSpecsStruct {
     MeshSpecsStruct(const CellTopologyData& ctd_, int numDim_, 
                     int cubatureDegree_, std::vector<std::string> nsNames_,
-                    int worsetSize_, int numEB_, bool interleavedOrdering_)
+                    int worsetSize_, int numEB_, std::string ebName_,
+                    bool interleavedOrdering_)
        :  ctd(ctd_), numDim(numDim_), cubatureDegree(cubatureDegree_),
-          nsNames(nsNames_), worksetSize(worsetSize_), numEB(numEB_),
+          nsNames(nsNames_), worksetSize(worsetSize_), 
+          numEB(numEB_), ebName(ebName_), 
           interleavedOrdering(interleavedOrdering_) {}
-    const CellTopologyData ctd;
+    const CellTopologyData ctd; 
     int numDim;
     int cubatureDegree;
     std::vector<std::string> nsNames;  //Node Sets Names
     int worksetSize;
-    int numEB;  // Number of element blocks (material regions or parts) in the problem
+    int numEB;           // Total number of EB's in this problem
+    std::string ebName;  //Element block name for the EB that this struct corresponds to
     bool interleavedOrdering;
   };
 }

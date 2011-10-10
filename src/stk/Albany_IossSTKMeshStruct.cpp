@@ -38,8 +38,8 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
 		  const Teuchos::RCP<const Epetra_Comm>& comm) :
   GenericSTKMeshStruct(params),
-  periodic(params->get("Periodic BC", false)),
-  out(Teuchos::VerboseObjectBase::getDefaultOStream())
+  out(Teuchos::VerboseObjectBase::getDefaultOStream()),
+  periodic(params->get("Periodic BC", false))
 {
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
@@ -76,8 +76,9 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 
   // Set element blocks and node sets
   const stk::mesh::PartVector & all_parts = metaData->get_parts();
-  int eb=0;
   std::vector<std::string> nsNames;
+  int numEB = 0;
+
   for (stk::mesh::PartVector::const_iterator i = all_parts.begin();
        i != all_parts.end(); ++i) {
 
@@ -85,7 +86,10 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 
     if ( part->primary_entity_rank() == metaData->element_rank()) {
       //*out << "IOSS-STK: Element part found " << endl;
-      if (part->name()[0] != '{') partVec[eb++] = part;
+      if (part->name()[0] != '{') {
+         partVec[numEB] = part;
+         numEB++;
+      }
     }
     else if ( part->primary_entity_rank() == metaData->node_rank()) {
        //*out << "Mesh has Node Set ID: " << part->name() << endl;
@@ -105,7 +109,6 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   stk::io::get_element_block_sizes(*mesh_data, el_blocks);
   TEST_FOR_EXCEPT(el_blocks.size() != partVec.size());
 
-  int numEB = el_blocks.size();
   int ebSizeMax =  *std::max_element(el_blocks.begin(),el_blocks.end());
   int worksetSize = this->computeWorksetSize(worksetSizeMax, ebSizeMax);
 
@@ -113,7 +116,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   if (!params->get("Separate Evaluators by Element Block",false)) {
     const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
     this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
-                               nsNames, worksetSize, numEB, this->interleavedOrdering));
+                               nsNames, worksetSize, numEB, partVec[0]->name(), this->interleavedOrdering));
   }
   else {
     *out << "MULTIPLE Elem Block in Ioss: DO worksetSize[eb] max?? " << endl; 
@@ -123,7 +126,8 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
       this->ebNameToIndex[partVec[eb]->name()] = eb;
       const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[eb]).getCellTopologyData();
       this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
-                                                nsNames, worksetSize, 1, this->interleavedOrdering));
+                                                nsNames, worksetSize, numEB, partVec[eb]->name(), 
+                                                this->interleavedOrdering));
       cout << "el_block_size[" << eb << "] = " << el_blocks[eb] << "   name  " << partVec[eb]->name() << endl; 
     }
   }
@@ -152,7 +156,7 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
            << index << ")"<< endl;
     else {
       *out << "Restart Index set, reading solution time : " << index << endl;
-       stk::io::process_input_request(*mesh_data, *bulkData, 1.0*index);
+       stk::io::process_input_request(*mesh_data, *bulkData, index);
     }
   }
 

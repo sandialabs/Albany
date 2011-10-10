@@ -44,12 +44,16 @@ Albany::Rect2DSTKMeshStruct::Rect2DSTKMeshStruct(
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
+ // HandCoded meshes have 1 element block for now
+  std::vector<std::string> ebNames;
+  ebNames.push_back("Block0");
+
   std::vector<std::string> nsNames;
   nsNames.push_back("NodeSet0"); 
   nsNames.push_back("NodeSet1"); 
   nsNames.push_back("NodeSet2"); 
   nsNames.push_back("NodeSet3"); 
-  this->DeclareParts(nsNames);
+  this->DeclareParts(ebNames, nsNames);
 
   string cellTopo = params->get("Cell Topology", "Quad");
   if (cellTopo == "Tri" || cellTopo == "Triangle")  triangles = true;
@@ -64,7 +68,6 @@ Albany::Rect2DSTKMeshStruct::Rect2DSTKMeshStruct(
 
   int cub = params->get("Cubature Degree",3);
   int worksetSizeMax = params->get("Workset Size",50);
-  const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
 
   // Create just enough of the mesh to figure out number of owned elements 
   // so that the problem setup can know the worksetSize
@@ -74,11 +77,10 @@ Albany::Rect2DSTKMeshStruct::Rect2DSTKMeshStruct(
 
   int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_map->NumMyElements());
 
-  int numEB = 1; // Hardcode a single element block for now
-
   // MeshSpecs holds all info needed to set up an Albany problem
+  const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
   this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
-                              nsNames, worksetSize, numEB, this->interleavedOrdering));
+                              nsNames, worksetSize, 1, ebNames[0], this->interleavedOrdering));
 }
 
 void

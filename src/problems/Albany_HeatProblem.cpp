@@ -321,14 +321,17 @@ Albany::HeatProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Thermal Conductivity");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+    p->set<bool>("Have MatDB", haveMatDB);
+    // Here we assume that the instance of this problem applies on a single element block
+    p->set<string>("Element Block Name", meshSpecs.ebName);
 
     if(haveMatDB)
      
       p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Thermal Conductivity");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     evaluators_to_build["Thermal Conductivity"] = p;
   }
