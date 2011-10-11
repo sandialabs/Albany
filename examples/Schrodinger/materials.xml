@@ -121,20 +121,24 @@
     <ParameterList name="si3n4">
       <Parameter name="material" type="string" value="SiliconNitride" />
     </ParameterList>
-    
-    
 
   </ParameterList>
 
 
   <ParameterList name="Materials">
 
-    <!-- Unstrained Silicon -->
+    <!-- Unstrained Silicon: Schrodinger equation is solved only for the Delta2-valleys
+    whose longitudinal axis is perpendicular to the Si/SiO2 interface which is 
+    parallel to the (100) crystal plane. In the simulation coordinate system, 
+    a structure should be created such that the Si/SiO2 interface is perpendicular 
+    to x axis in 1D, to y axis in 2D, and to z axis in 3D. -->
+    
     <ParameterList name="Silicon">
       <Parameter name="Category" type="string" value="Semiconductor" />
       <Parameter name="Permittivity" type="double" value="11.9" />
 
       <!-- Valley information -->
+      <Parameter name="Conduction Band Minimum" type="string" value="Delta2 Valley" />
       <Parameter name="Number of conduction band min" type="int" value="2" />
       <Parameter name="Number of valence band max" type="int" value="1" />
 
@@ -183,6 +187,7 @@
       <Parameter name="Permittivity" type="double" value="13.13" />
 
       <!-- Valley information (temporary) -->
+      <Parameter name="Conduction Band Minimum" type="string" value="Delta2 Valley" />
       <Parameter name="Number of conduction band min" type="int" value="2" />
       <Parameter name="Number of valence band max" type="int" value="1" />
 
@@ -227,6 +232,7 @@
       <Parameter name="Permittivity" type="double" value="11.9" />
 
       <!-- Valley information (temporary) -->
+      <Parameter name="Conduction Band Minimum" type="string" value="Delta2 Valley" />
       <Parameter name="Number of conduction band min" type="int" value="2" />
       <Parameter name="Number of valence band max" type="int" value="1" />
 
@@ -269,9 +275,9 @@
       <!-- Valley information - same as Silicon to avoid charge discontinuity -->
       <Parameter name="Number of conduction band min" type="int" value="2" />
 
-      <!-- Electron effective mass along coordinate directions in [m0] same as Silicon? -->
-      <Parameter name="Longitudinal Electron Effective Mass" type="double" value="0.98" />
-      <Parameter name="Transverse Electron Effective Mass" type="double" value="0.19" />
+      <!-- For Insulators, electron effective mass is often assumed 0.5m0 -->
+      <Parameter name="Longitudinal Electron Effective Mass" type="double" value="0.5" />
+      <Parameter name="Transverse Electron Effective Mass" type="double" value="0.5" />
 
       <!-- Band Gap in [eV] -->
       <Parameter name="Band Gap" type="double" value="9.0" />
@@ -284,6 +290,13 @@
     <ParameterList name="SiliconNitride">
       <Parameter name="Category" type="string" value="Insulator" />
       <Parameter name="Permittivity" type="double" value="7.5" />
+
+      <!-- Valley information - same as Silicon to avoid charge discontinuity -->
+      <Parameter name="Number of conduction band min" type="int" value="2" />
+
+      <!-- For Insulators, electron effective mass is often assumed 0.5m0 -->
+      <Parameter name="Longitudinal Electron Effective Mass" type="double" value="0.5" />
+      <Parameter name="Transverse Electron Effective Mass" type="double" value="0.5" />
 
       <!-- Band Gap in [eV] -->
       <Parameter name="Band Gap" type="double" value="5.1" />

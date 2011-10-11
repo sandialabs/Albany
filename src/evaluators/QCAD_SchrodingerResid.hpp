@@ -26,11 +26,6 @@
 #include "QCAD_MaterialDatabase.hpp"
 
 namespace QCAD {
-/** \brief Finite Element Interpolation Evaluator
-
-    This evaluator interpolates nodal DOF values to quad points.
-
-*/
 
 template<typename EvalT, typename Traits>
 class SchrodingerResid : public PHX::EvaluatorWithBaseImpl<Traits>,
@@ -51,8 +46,8 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   //! Helper function to compute inverse effective mass (possible position dependent)
-  ScalarT getInvEffMass(const std::string& EBName, const int numDim, const MeshScalarT* coord);
-
+  ScalarT getInvEffMass(const std::string& EBName, const std::size_t dim, const MeshScalarT* coord);
+  
   //! Reference parameter list generator to check xml input file
   Teuchos::RCP<const Teuchos::ParameterList>
       getValidMaterialParameters() const;
@@ -68,7 +63,9 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> psiGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint> V;
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
-  PHX::MDField<ScalarT,Cell,QuadPoint> invEffMass; //unused, really just intermediate
+  
+  //PHX::MDField<ScalarT,Cell,QuadPoint> invEffMass; //unused, really just intermediate
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> invEffMass;
 
   bool enableTransient;
   bool havePotential;

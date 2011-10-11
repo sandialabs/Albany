@@ -40,7 +40,7 @@ SchrodingerResid(const Teuchos::ParameterList& p) :
   coordVec    (p.get<std::string>                   ("QP Coordinate Vector Name"),
                p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout")),
   invEffMass  (                                      "Intermediate Eff Mass",
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
   havePotential (p.get<bool>("Have Potential")),
   haveMaterial  (p.get<bool>("Have Material")),
   psiResidual (p.get<std::string>                   ("Residual Name"),
@@ -91,6 +91,7 @@ SchrodingerResid(const Teuchos::ParameterList& p) :
   this->setName("SchrodingerResid"+PHX::TypeString<EvalT>::value);
 }
 
+
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void QCAD::SchrodingerResid<EvalT, Traits>::
@@ -109,16 +110,13 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(invEffMass,fm);
 }
 
+
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void QCAD::SchrodingerResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   typedef Intrepid::FunctionSpaceTools FST;
-
-  /***** define universal constants as double constants *****/
-  const double hbar = 1.0546e-34;  // Planck constant [J s]
-  const double evPerJ = 6.2415e18; // eV per Joule (eV/J)
   bool bValidRegion = true;
 
   if(bOnlyInQuantumBlocks)
@@ -127,21 +125,29 @@ evaluateFields(typename Traits::EvalData workset)
   if(bValidRegion)
   {
     //compute inverse effective mass here (no separate evaluator)
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) 
-    {
-      for (std::size_t qp=0; qp < numQPs; ++qp) 
-      {
-        //scaled hbar^2/2m so kinetic energy has specified units (EnergyUnitInEV)
-        invEffMass(cell, qp) =  0.5*pow(hbar,2)*evPerJ / 
-            (energy_unit_in_eV * pow(length_unit_in_m,2)) *
-            getInvEffMass(workset.EBName, numDims, &coordVec(cell,qp,0)); 
-        
-        //std::cout << "hbar^2/2m = " << invEffMass(cell, qp) << std::endl;     
-      }
-    }
+
+    // Define universal constants as double constants
+    const double hbar = 1.0546e-34;  // Planck constant [J s]
+    const double evPerJ = 6.2415e18; // eV per Joule (eV/J)
+  
+    // prefactor for scaled hbar^2/2m so kinetic energy has specified units (EnergyUnitInEV)
+    ScalarT prefactor = 0.5*pow(hbar,2)*evPerJ /(energy_unit_in_eV * pow(length_unit_in_m,2));
+
+    // Reset effective mass tensor to 0.0
+    for (std::size_t cell = 0; cell < workset.numCells; ++cell) 
+      for (std::size_t qp = 0; qp < numQPs; ++qp) 
+        for (std::size_t i = 0; i < numDims; ++i) 
+          for (std::size_t j = 0; j < numDims; ++j)
+            invEffMass(cell,qp,i,j) = 0.0;
+
+    // Set diagonal elements of effective mass tensor
+    for (std::size_t cell = 0; cell < workset.numCells; ++cell) 
+      for (std::size_t qp = 0; qp < numQPs; ++qp) 
+        for (std::size_t i = 0; i < numDims; ++i) 
+          invEffMass(cell,qp,i,i) = prefactor * getInvEffMass(workset.EBName, i, &coordVec(cell,qp,0));
 
     //compute hbar^2/2m * Grad(psi)
-    FST::scalarMultiplyDataData<ScalarT> (psiGradWithMass, invEffMass, psiGrad);
+    FST::tensorMultiplyDataData<ScalarT> (psiGradWithMass, invEffMass, psiGrad);
 
     //Kinetic term: add integral( hbar^2/2m * Grad(psi) * Grad(BF)dV ) to residual
     FST::integrate<ScalarT>(psiResidual, psiGradWithMass, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
@@ -172,15 +178,16 @@ evaluateFields(typename Traits::EvalData workset)
     }*/
 
     //Potential term: add integral( psi * V * BF dV ) to residual
-    if (havePotential) {
+    if (havePotential) 
+    {
       FST::scalarMultiplyDataData<ScalarT> (psiV, V, psi);
       FST::integrate<ScalarT>(psiResidual, psiV, wBF, Intrepid::COMP_CPP, false); // "false" overwrites
     }
-
   }
 }
-//**********************************************************************
 
+
+//**********************************************************************
 template<typename EvalT,typename Traits>
 Teuchos::RCP<const Teuchos::ParameterList>
 QCAD::SchrodingerResid<EvalT,Traits>::getValidMaterialParameters() const
@@ -193,58 +200,57 @@ QCAD::SchrodingerResid<EvalT,Traits>::getValidMaterialParameters() const
   return validPL;
 }
 
-// **********************************************************************
 
-//Inverse effective mass in kg^-1
+// **********************************************************************
 template<typename EvalT, typename Traits>
 typename QCAD::SchrodingerResid<EvalT,Traits>::ScalarT
-QCAD::SchrodingerResid<EvalT, Traits>::getInvEffMass(const std::string& EBName, const int numDim, 
-						     const MeshScalarT* coord)
+QCAD::SchrodingerResid<EvalT, Traits>::getInvEffMass(const std::string& EBName, 
+    const std::size_t dim, const MeshScalarT* coord)
 {
-  ScalarT effMass;
+  ScalarT effMass; 
   const double emass = 9.1094e-31; // Electron mass [kg]
-
-  //TODO - return tensor instead of scalar - now just return effective mass in X-direction
-  // effMass = materialDB->getElementBlockParam<double>(EBName,"Electron Effective Mass X",1.0) * emass;
   
+  // For Finite Wall potential
   if (potentialType == "Finite Wall")
   {
-    if (numDim == 1)  // 1D
+    switch (numDims) 
     {
-      if ( (coord[0] >= barrWidth) && (coord[0] <= (barrWidth+wellWidth)) )
-        effMass = wellEffMass * emass;  // well
-      else
-        effMass = barrEffMass * emass;  // barrier
-    }
-    
-    else if (numDim == 2)  // 2D
-    {
-      if ( (coord[0] >= barrWidth) && (coord[0] <= (barrWidth+wellWidth)) &&
+      case 1:  // 1D
+      {
+        if ( (coord[0] >= barrWidth) && (coord[0] <= (barrWidth+wellWidth)) )
+          effMass = wellEffMass * emass;  // well
+        else
+          effMass = barrEffMass * emass;  // barrier
+        break;  
+      }
+      case 2:  // 2D
+      {
+        if ( (coord[0] >= barrWidth) && (coord[0] <= (barrWidth+wellWidth)) &&
            (coord[1] >= barrWidth) && (coord[1] <= (barrWidth+wellWidth)) )
-        effMass = wellEffMass * emass;  
-      else
-        effMass = barrEffMass * emass;   
-    }
-    
-    else if (numDim == 3)  // 3D
-    {
-      if ( (coord[0] >= barrWidth) && (coord[0] <= (barrWidth+wellWidth)) &&
+          effMass = wellEffMass * emass;  
+        else
+          effMass = barrEffMass * emass;
+        break;   
+      }
+      case 3:  // 3D
+      {
+        if ( (coord[0] >= barrWidth) && (coord[0] <= (barrWidth+wellWidth)) &&
            (coord[1] >= barrWidth) && (coord[1] <= (barrWidth+wellWidth)) && 
            (coord[2] >= barrWidth) && (coord[2] <= (barrWidth+wellWidth)) )
-        effMass = wellEffMass * emass;   
-      else
-        effMass = barrEffMass * emass;      
-    }
+          effMass = wellEffMass * emass;   
+        else
+          effMass = barrEffMass * emass;  
+        break;    
+      }
+    }  // end of switch (numDims) 
     
-    else
-      TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
-			  << "Error! Invalid numDim = " << numDim << ", must be 1 or 2 or 3 !" << std::endl);
+    return 1.0/effMass;
     
   }  // end of if (potentialType == "Finite Wall")
 
-  
+
   // For 1D MOSCapacitor 
-  else if ( (numDim == 1) && (oxideWidth > 0.0) ) 
+  if ( (numDims == 1) && (oxideWidth > 0.0) ) 
   {
     // Oxide region
     if ((coord[0] >= 0) && (coord[0] <= oxideWidth))  // Oxide region
@@ -258,21 +264,62 @@ QCAD::SchrodingerResid<EvalT, Traits>::getInvEffMass(const std::string& EBName, 
       TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
 	       std::endl << "Error!  x-coord:" << coord[0] << "is outside the oxideWidth" << 
 	       " + siliconWidth range: " << oxideWidth + siliconWidth << "!"<< std::endl);
+  
+    return 1.0/effMass;
+    
+  }  // end of 1D MOSCapacitor 
+
+
+  // Effective mass depends on the wafer orientation and growth direction.
+  // Assume SiO2/Si interface is parallel to the [100] plane and consider only the 
+  // Delta2 Valleys whose principal axis is perpendicular to the SiO2/Si interface. 
+  // (need to include Delta4-band for high temperatures).
+
+  // For General Case
+  const string& matrlCategory = materialDB->getElementBlockParam<string>(EBName,"Category","");
+    
+  if (matrlCategory == "Semiconductor") 
+  {
+    const string& condBandMinVal = materialDB->getElementBlockParam<string>(EBName,"Conduction Band Minimum");
+    double ml = materialDB->getElementBlockParam<double>(EBName,"Longitudinal Electron Effective Mass");
+    double mt = materialDB->getElementBlockParam<double>(EBName,"Transverse Electron Effective Mass");
+    
+    if ((condBandMinVal == "Gamma Valley") && (abs(ml-mt) > 1e-10))
+      TEST_FOR_EXCEPTION (true, std::logic_error, "Gamma Valley's longitudinal and "
+        << "transverse electron effective mass must be equal ! "
+        << "Please check the values in materials.xml" << std::endl);
+      
+    if (condBandMinVal == "Delta2 Valley")
+    {
+      if (dim == numDims-1) 
+        effMass = ml*emass;
+      else
+        effMass = mt*emass;
+    }  
+    else if (condBandMinVal == "Gamma Valley")
+      effMass = ml*emass;
+    else
+      TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl
+        << "Invalid Conduction Band Minimum ! Must be Delta2 or Gamma Valley !" << std::endl);
+
+  }  // end of if (matrlCategory == "Semiconductor")
+    
+  else if (matrlCategory == "Insulator")
+  {
+    double ml = materialDB->getElementBlockParam<double>(EBName,"Longitudinal Electron Effective Mass");
+    double mt = materialDB->getElementBlockParam<double>(EBName,"Transverse Electron Effective Mass");
+    if (abs(ml-mt) > 1e-10) 
+      TEST_FOR_EXCEPTION (true, std::logic_error, "Insulator's longitudinal and "
+	       << "transverse electron effective mass must be equal ! "
+	       << "Please check the values in materials.xml" << std::endl);
+    effMass = ml*emass;
   }
-
   
-  /* Effective mass depends on the wafer orientation and growth direction.
-  For SiO2/Si interface parallel to the [100] plane (growth direction along [001]),
-  the confinement is in [001] direction, and the mass for Delta2-band (along [001])
-  is ml (longitudinal).Consider only the Delta2-band for the time being 
-  (need to include Delta4-band later)
-  */
   else
-    effMass = materialDB->getElementBlockParam<double>(EBName,"Longitudinal Electron Effective Mass",1.0) * emass;
-  
-  return 1.0/effMass;
+    effMass = emass;
+   
+  return 1.0/effMass;  
 }
-
 
 
 // **********************************************************************

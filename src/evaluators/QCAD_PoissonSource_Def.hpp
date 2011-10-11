@@ -1145,7 +1145,8 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrond
   // and U. Ravaioli, "Iteration scheme for the solution of the two-dimensional  
   // Schrodinger-Poisson equations in quantum structures", J. Appl. Phys. 81, 7880 (1997). 
   // If bUsePredCorr = true, use the predictor-corrector approach.
-  // If bUsePredCorr = false, calculate the exact quantum electron density. 
+  // If bUsePredCorr = false, calculate the exact quantum electron density.
+  // Fermi-Dirac distribution is used in computing electron density.  
   
   // unit conversion factor
   double eVPerJ = 1.0/eleQ; 
@@ -1185,12 +1186,12 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrond
   {
     case 1: // 1D wavefunction (1D confinement)
     {  
-      // m11 = in-plane effective mass (x-y plane when the 1D wavefunc. is along z)
+      // m11 = in-plane effective mass (y-z plane when the 1D wavefunc. is along x)
       // For Delta2-band (or valley), m11 is the transverse effective mass (0.19). 
       
       double m11 = materialDB->getElementBlockParam<double>(workset.EBName,"Transverse Electron Effective Mass");
         
-      // 2D density of states in [#/(eV.cm^2)] where 2D is the unconfined x-y plane
+      // 2D density of states in [#/(eV.cm^2)] where 2D is the unconfined y-z plane
       // dos2D below includes the spin degeneracy of 2
       double dos2D = m11*m0/(pi*hbar*hbar*eVPerJ*cm2Perm2); 
         
@@ -1202,7 +1203,6 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrond
       for(int i = 0; i < nEigenvectors; i++) 
       {
         // note: wavefunctions are assumed normalized here 
-        // (need to normalize them in the Schrodinger solver)
         ScalarT wfSquared = ( eigenvector_Re[i](cell,qp)*eigenvector_Re[i](cell,qp) + 
  			      eigenvector_Im[i](cell,qp)*eigenvector_Im[i](cell,qp) );
         eDensity += wfSquared*log(1. + exp((Ef-eigenvals[i])/kbT + deltaPhi) );
@@ -1215,7 +1215,7 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrond
 
     case 2: // 2D wavefunction (2D confinement)
     {
-      // mUnconfined = effective mass in the unconfined direction (x dir. when the 2D wavefunc. is in y-z plane)
+      // mUnconfined = effective mass in the unconfined direction (z dir. when the 2D wavefunc. is in x-y plane)
       // For Delta2-band and assume SiO2/Si interface parallel to [100] plane, mUnconfined=0.19. 
       double mUnconfined = materialDB->getElementBlockParam<double>(workset.EBName,"Transverse Electron Effective Mass");
         
@@ -1231,7 +1231,6 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrond
       for(int i=0; i < nEigenvectors; i++) 
       {
         // note: wavefunctions are assumed normalized here 
-        // (need to normalize them in the Schrodinger solver)
         ScalarT wfSquared = ( eigenvector_Re[i](cell,qp)*eigenvector_Re[i](cell,qp) + 
  			      eigenvector_Im[i](cell,qp)*eigenvector_Im[i](cell,qp) );
         ScalarT inArg = (Ef-eigenvals[i])/kbT + deltaPhi;
@@ -1260,7 +1259,6 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrond
         ScalarT fermiFactor = 1.0/( exp((eigenvals[i]-Ef)/kbT + deltaPhi) + 1.0 );
               
         // note: wavefunctions are assumed normalized here 
-        // (need to normalize them in the Schrodinger solver)
         ScalarT wfSquared = ( eigenvector_Re[i](cell,qp)*eigenvector_Re[i](cell,qp) + 
  			      eigenvector_Im[i](cell,qp)*eigenvector_Im[i](cell,qp) );
         eDensity += wfSquared*fermiFactor; 
