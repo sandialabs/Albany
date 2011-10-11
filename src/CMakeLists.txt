@@ -57,6 +57,7 @@ SET(SOURCES ${SOURCES}
 	problems/Albany_DirichletUtils.cpp 
 	problems/Albany_ProblemFactory.cpp
 	problems/Albany_HeatProblem.cpp 
+	problems/Albany_MultiHeatProblem.cpp 
 	problems/Albany_NavierStokes.cpp 
 	problems/Albany_ODEProblem.cpp 
 	problems/Albany_Helmholtz2DProblem.cpp 
@@ -71,6 +72,7 @@ SET(HEADERS ${HEADERS}
 	problems/Albany_ResponseUtils.hpp 
 	problems/Albany_DirichletUtils.hpp 
 	problems/Albany_HeatProblem.hpp 
+	problems/Albany_MultiHeatProblem.hpp 
 	problems/Albany_NavierStokes.hpp 
 	problems/Albany_ODEProblem.hpp 
 	problems/Albany_Helmholtz2DProblem.hpp 
@@ -567,6 +569,12 @@ IF (ALBANY_LAME)
   add_executable(utLameStress_elastic
     PHAL_Dimension.cpp
     PHAL_AlbanyTraits.cpp
+    Albany_Utils.cpp
+    Albany_StateManager.cpp
+    stk/Albany_GenericSTKMeshStruct.cpp
+    stk/Albany_Cube3DSTKMeshStruct.cpp
+    stk/Albany_STKDiscretization.cpp
+    ${LCM_DIR}/utils/Tensor.cc
     ${LCM_DIR}/utils/LameUtils.cpp
     ${LCM_DIR}/evaluators/LameStress.cpp
     ${LCM_DIR}/test/unit_tests/StandardUnitTestMain.cpp

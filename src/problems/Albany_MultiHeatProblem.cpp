@@ -15,7 +15,7 @@
 \********************************************************************/
 
 
-#include "Albany_HeatProblem.hpp"
+#include "Albany_MultiHeatProblem.hpp"
 #include "Albany_SolutionAverageResponseFunction.hpp"
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
 #include "Albany_SolutionMaxValueResponseFunction.hpp"
@@ -29,8 +29,8 @@
 #include "Albany_ProblemUtils.hpp"
 
 
-Albany::HeatProblem::
-HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
+Albany::MultiHeatProblem::
+MultiHeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
              const int numDim_,
              const Teuchos::RCP<const Epetra_Comm>& comm_) :
@@ -59,30 +59,33 @@ HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
 }
 
-Albany::HeatProblem::
-~HeatProblem()
+Albany::MultiHeatProblem::
+~MultiHeatProblem()
 {
 }
 
 void
-Albany::HeatProblem::
+Albany::MultiHeatProblem::
 buildProblem(
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
     Albany::StateManager& stateMgr,
     std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
   /* Construct All Phalanx Evaluators */
-  TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
-  fm.resize(1); rfm.resize(1);
-  constructEvaluators(*meshSpecs[0], stateMgr, responses);
+  int physSets = meshSpecs.size();
+  cout << "MULTIHeat Num MeshSpecs: " << physSets << endl;
+  fm.resize(physSets); rfm.resize(physSets);
+  for (int ps=0; ps<physSets; ps++)
+    constructEvaluators(*meshSpecs[ps], stateMgr, responses, ps);
   constructDirichletEvaluators(*meshSpecs[0]);
 }
 
 void
-Albany::HeatProblem::constructEvaluators(
+Albany::MultiHeatProblem::constructEvaluators(
        const Albany::MeshSpecsStruct& meshSpecs,
        Albany::StateManager& stateMgr,
-       std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
+       std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
+       int ps)
 {
    using Teuchos::RCP;
    using Teuchos::rcp;
@@ -119,7 +122,6 @@ Albany::HeatProblem::constructEvaluators(
    RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
    Albany::ProblemUtils probUtils(dl);
 
-#ifdef USE_PROBLEM_UTILS
    Teuchos::ArrayRCP<string> dof_names(neq);
      dof_names[0] = "Temperature";
    Teuchos::ArrayRCP<string> dof_names_dot(neq);
@@ -153,163 +155,6 @@ Albany::HeatProblem::constructEvaluators(
       probUtils.constructDOFGradInterpolationEvaluator(dof_names[i]);
   }
 
-#else // Construct all evaluators verbosely
-
-  { // Gather Solution
-   Teuchos::ArrayRCP<string> dof_names(neq);
-     dof_names[0] = "Temperature";
-
-    RCP<ParameterList> p = rcp(new ParameterList);
-    int type = FactoryTraits<AlbanyTraits>::id_gather_solution;
-    p->set<int>("Type", type);
-    p->set< Teuchos::ArrayRCP<string> >("Solution Names", dof_names);
-    p->set< RCP<DataLayout> >("Data Layout", dl->node_scalar);
-
-   Teuchos::ArrayRCP<string> dof_names_dot(neq);
-     dof_names_dot[0] = "Temperature_dot";
-
-   p->set< Teuchos::ArrayRCP<std::string> >("Time Dependent Solution Names", dof_names_dot);
-
-    evaluators_to_build["Gather Solution"] = p;
-  }
-
-  { // Gather Coordinate Vector
-    RCP<ParameterList> p = rcp(new ParameterList("Heat Gather Coordinate Vector"));
-    int type = FactoryTraits<AlbanyTraits>::id_gather_coordinate_vector;
-    p->set<int>                ("Type", type);
-    // Input: Periodic BC flag
-    p->set<bool>("Periodic BC", false);
-
-    // Output:: Coordindate Vector at vertices
-    p->set< RCP<DataLayout> >  ("Coordinate Data Layout",  dl->vertices_vector);
-    p->set< string >("Coordinate Vector Name", "Coord Vec");
-    evaluators_to_build["Gather Coordinate Vector"] = p;
-  }
-
-  { // Map To Physical Frame: Interpolate X, Y to QuadPoints
-    RCP<ParameterList> p = rcp(new ParameterList("Heat 1D Map To Physical Frame"));
-
-    int type = FactoryTraits<AlbanyTraits>::id_map_to_physical_frame;
-    p->set<int>   ("Type", type);
-
-    // Input: X, Y at vertices
-    p->set< string >("Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Coordinate Data Layout", dl->vertices_vector);
-
-    p->set<RCP <Intrepid::Cubature<RealType> > >("Cubature", cubature);
-    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
-
-    // Output: X, Y at Quad Points (same name as input)
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-
-    evaluators_to_build["Map To Physical Frame"] = p;
-  }
-
-  { // Compute Basis Functions
-    RCP<ParameterList> p = rcp(new ParameterList("Heat Compute Basis Functions"));
-
-    int type = FactoryTraits<AlbanyTraits>::id_compute_basis_functions;
-    p->set<int>   ("Type", type);
-
-    // Inputs: X, Y at nodes, Cubature, and Basis
-    p->set<string>("Coordinate Vector Name","Coord Vec");
-    p->set< RCP<DataLayout> >("Coordinate Data Layout", dl->vertices_vector);
-    p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
-
-    p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >
-        ("Intrepid Basis", intrepidBasis);
-
-    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
-
-    // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
-    p->set<string>("Weights Name",          "Weights");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set<string>("BF Name",          "BF");
-    p->set<string>("Weighted BF Name", "wBF");
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
-
-    p->set<string>("Gradient BF Name",          "Grad BF");
-    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
-
-    evaluators_to_build["Compute Basis Functions"] = p;
-  }
-
-  { // DOF: Interpolate nodal Temperature values to quad points
-    RCP<ParameterList> p = rcp(new ParameterList("Heat DOFInterpolation Temperature"));
-
-    int type = FactoryTraits<AlbanyTraits>::id_dof_interpolation;
-    p->set<int>   ("Type", type);
-
-    // Input
-    p->set<string>("Variable Name", "Temperature");
-    p->set< RCP<DataLayout> >("Node Data Layout",      dl->node_scalar);
-
-    p->set<string>("BF Name", "BF");
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
-
-    // Output (assumes same Name as input)
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-    evaluators_to_build["DOF Temperature"] = p;
-  }
-
-  {
-   // DOF: Interpolate nodal Temperature Dot  values to quad points
-    RCP<ParameterList> p = rcp(new ParameterList("Heat DOFInterpolation Temperature Dot"));
-
-    int type = FactoryTraits<AlbanyTraits>::id_dof_interpolation;
-    p->set<int>   ("Type", type);
-
-    // Input
-    p->set<string>("Variable Name", "Temperature_dot");
-    p->set< RCP<DataLayout> >("Node Data Layout",      dl->node_scalar);
-
-    p->set<string>("BF Name", "BF");
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
-
-    // Output (assumes same Name as input)
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-    evaluators_to_build["DOF Temperature_dot"] = p;
-  }
-
-  { // DOF: Interpolate nodal Temperature gradients to quad points
-    RCP<ParameterList> p = rcp(new ParameterList("Heat DOFInterpolation Temperature Grad"));
-
-    int type = FactoryTraits<AlbanyTraits>::id_dof_grad_interpolation;
-    p->set<int>   ("Type", type);
-
-    // Input
-    p->set<string>("Variable Name", "Temperature");
-    p->set< RCP<DataLayout> >("Node Data Layout",      dl->node_scalar);
-
-    p->set<string>("Gradient BF Name", "Grad BF");
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
-
-    // Output
-    p->set<string>("Gradient Variable Name", "Temperature Gradient");
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-
-    evaluators_to_build["DOF Grad Temperature"] = p;
-  }
-
-  { // Scatter Residual
-   Teuchos::ArrayRCP<string> resid_names(neq);
-     resid_names[0] = "Temperature Residual";
-
-    RCP<ParameterList> p = rcp(new ParameterList);
-    int type = FactoryTraits<AlbanyTraits>::id_scatter_residual;
-    p->set<int>("Type", type);
-    p->set< Teuchos::ArrayRCP<string> >("Residual Names", resid_names);
-
-    p->set< RCP<DataLayout> >("Dummy Data Layout", dl->dummy);
-    p->set< RCP<DataLayout> >("Data Layout", dl->node_scalar);
-
-    evaluators_to_build["Scatter Residual"] = p;
-  }
-#endif
-
   { // Thermal conductivity
     RCP<ParameterList> p = rcp(new ParameterList);
 
@@ -321,17 +166,14 @@ Albany::HeatProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-    p->set<bool>("Have MatDB", haveMatDB);
-    // Here we assume that the instance of this problem applies on a single element block
-    p->set<string>("Element Block Name", meshSpecs.ebName);
-
-    if(haveMatDB)
-     
-      p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Thermal Conductivity");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    if(haveMatDB)
+     
+      p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
 
     evaluators_to_build["Thermal Conductivity"] = p;
   }
@@ -421,38 +263,38 @@ Albany::HeatProblem::constructEvaluators(
    evaluators = factory.buildEvaluators(evaluators_to_build);
 
    // Create a FieldManager
-   fm[0] = Teuchos::rcp(new PHX::FieldManager<AlbanyTraits>);
+   fm[ps] = Teuchos::rcp(new PHX::FieldManager<AlbanyTraits>);
 
    // Register all Evaluators
-   PHX::registerEvaluators(evaluators, *fm[0]);
+   PHX::registerEvaluators(evaluators, *fm[ps]);
 
    PHX::Tag<AlbanyTraits::Residual::ScalarT> res_tag("Scatter", dl->dummy);
-   fm[0]->requireField<AlbanyTraits::Residual>(res_tag);
+   fm[ps]->requireField<AlbanyTraits::Residual>(res_tag);
    PHX::Tag<AlbanyTraits::Jacobian::ScalarT> jac_tag("Scatter", dl->dummy);
-   fm[0]->requireField<AlbanyTraits::Jacobian>(jac_tag);
+   fm[ps]->requireField<AlbanyTraits::Jacobian>(jac_tag);
    PHX::Tag<AlbanyTraits::Tangent::ScalarT> tan_tag("Scatter", dl->dummy);
-   fm[0]->requireField<AlbanyTraits::Tangent>(tan_tag);
+   fm[ps]->requireField<AlbanyTraits::Tangent>(tan_tag);
    PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_tag("Scatter", dl->dummy);
-   fm[0]->requireField<AlbanyTraits::SGResidual>(sgres_tag);
+   fm[ps]->requireField<AlbanyTraits::SGResidual>(sgres_tag);
    PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag("Scatter", dl->dummy);
-   fm[0]->requireField<AlbanyTraits::SGJacobian>(sgjac_tag);
+   fm[ps]->requireField<AlbanyTraits::SGJacobian>(sgjac_tag);
    PHX::Tag<AlbanyTraits::SGTangent::ScalarT> sgtan_tag("Scatter", dl->dummy);
-   fm[0]->requireField<AlbanyTraits::SGTangent>(sgtan_tag);
+   fm[ps]->requireField<AlbanyTraits::SGTangent>(sgtan_tag);
    PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag("Scatter", dl->dummy);
-   fm[0]->requireField<AlbanyTraits::MPResidual>(mpres_tag);
+   fm[ps]->requireField<AlbanyTraits::MPResidual>(mpres_tag);
    PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag("Scatter", dl->dummy);
-   fm[0]->requireField<AlbanyTraits::MPJacobian>(mpjac_tag);
+   fm[ps]->requireField<AlbanyTraits::MPJacobian>(mpjac_tag);
    PHX::Tag<AlbanyTraits::MPTangent::ScalarT> mptan_tag("Scatter", dl->dummy);
-   fm[0]->requireField<AlbanyTraits::MPTangent>(mptan_tag);
+   fm[ps]->requireField<AlbanyTraits::MPTangent>(mptan_tag);
 
    //Construct Rsponses
    Teuchos::ParameterList& responseList = params->sublist("Response Functions");
    Albany::ResponseUtils respUtils(dl);
-   rfm[0] = respUtils.constructResponses(responses, responseList, evaluators_to_build, stateMgr);
+   rfm[ps] = respUtils.constructResponses(responses, responseList, evaluators_to_build, stateMgr);
 }
 
 void
-Albany::HeatProblem::constructDirichletEvaluators(
+Albany::MultiHeatProblem::constructDirichletEvaluators(
         const Albany::MeshSpecsStruct& meshSpecs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
@@ -464,10 +306,10 @@ Albany::HeatProblem::constructDirichletEvaluators(
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
-Albany::HeatProblem::getValidProblemParameters() const
+Albany::MultiHeatProblem::getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
-    this->getGenericProblemParams("ValidHeatProblemParams");
+    this->getGenericProblemParams("ValidMultiHeatProblemParams");
 
   if (numDim==1)
     validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic BC for 1D problems");

@@ -60,6 +60,7 @@ buildProblem(
 {
   /* Construct All Phalanx Evaluators */
   TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
+  fm.resize(1); rfm.resize(1);
   constructEvaluators(*meshSpecs[0], stateMgr, responses);
   constructDirichletEvaluators(*meshSpecs[0]);
 }
@@ -358,53 +359,53 @@ Albany::ThermoElasticityProblem::constructEvaluators(
    evaluators = factory.buildEvaluators(evaluators_to_build);
 
    // Create a FieldManager
-   fm = Teuchos::rcp(new PHX::FieldManager<AlbanyTraits>);
+   fm[0] = Teuchos::rcp(new PHX::FieldManager<AlbanyTraits>);
 
    // Register all Evaluators
-   PHX::registerEvaluators(evaluators, *fm);
+   PHX::registerEvaluators(evaluators, *fm[0]);
 
    PHX::Tag<AlbanyTraits::Residual::ScalarT> res_tag("Scatter", dl->dummy);
-   fm->requireField<AlbanyTraits::Residual>(res_tag);
+   fm[0]->requireField<AlbanyTraits::Residual>(res_tag);
    PHX::Tag<AlbanyTraits::Jacobian::ScalarT> jac_tag("Scatter", dl->dummy);
-   fm->requireField<AlbanyTraits::Jacobian>(jac_tag);
+   fm[0]->requireField<AlbanyTraits::Jacobian>(jac_tag);
    PHX::Tag<AlbanyTraits::Tangent::ScalarT> tan_tag("Scatter", dl->dummy);
-   fm->requireField<AlbanyTraits::Tangent>(tan_tag);
+   fm[0]->requireField<AlbanyTraits::Tangent>(tan_tag);
    PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_tag("Scatter", dl->dummy);
-   fm->requireField<AlbanyTraits::SGResidual>(sgres_tag);
+   fm[0]->requireField<AlbanyTraits::SGResidual>(sgres_tag);
    PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag("Scatter", dl->dummy);
-   fm->requireField<AlbanyTraits::SGJacobian>(sgjac_tag);
+   fm[0]->requireField<AlbanyTraits::SGJacobian>(sgjac_tag);
    PHX::Tag<AlbanyTraits::SGTangent::ScalarT> sgtan_tag("Scatter", dl->dummy);
-   fm->requireField<AlbanyTraits::SGTangent>(sgtan_tag);
+   fm[0]->requireField<AlbanyTraits::SGTangent>(sgtan_tag);
    PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag("Scatter", dl->dummy);
-   fm->requireField<AlbanyTraits::MPResidual>(mpres_tag);
+   fm[0]->requireField<AlbanyTraits::MPResidual>(mpres_tag);
    PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag("Scatter", dl->dummy);
-   fm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag);
+   fm[0]->requireField<AlbanyTraits::MPJacobian>(mpjac_tag);
    PHX::Tag<AlbanyTraits::MPTangent::ScalarT> mptan_tag("Scatter", dl->dummy);
-   fm->requireField<AlbanyTraits::MPTangent>(mptan_tag);
+   fm[0]->requireField<AlbanyTraits::MPTangent>(mptan_tag);
 
    PHX::Tag<AlbanyTraits::Residual::ScalarT> res_tag2(scatterName, dl->dummy);
-   fm->requireField<AlbanyTraits::Residual>(res_tag2);
+   fm[0]->requireField<AlbanyTraits::Residual>(res_tag2);
    PHX::Tag<AlbanyTraits::Jacobian::ScalarT> jac_tag2(scatterName, dl->dummy);
-   fm->requireField<AlbanyTraits::Jacobian>(jac_tag2);
+   fm[0]->requireField<AlbanyTraits::Jacobian>(jac_tag2);
    PHX::Tag<AlbanyTraits::Tangent::ScalarT> tan_tag2(scatterName, dl->dummy);
-   fm->requireField<AlbanyTraits::Tangent>(tan_tag2);
+   fm[0]->requireField<AlbanyTraits::Tangent>(tan_tag2);
    PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_tag2(scatterName, dl->dummy);
-   fm->requireField<AlbanyTraits::SGResidual>(sgres_tag2);
+   fm[0]->requireField<AlbanyTraits::SGResidual>(sgres_tag2);
    PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag2(scatterName, dl->dummy);
-   fm->requireField<AlbanyTraits::SGJacobian>(sgjac_tag2);
+   fm[0]->requireField<AlbanyTraits::SGJacobian>(sgjac_tag2);
    PHX::Tag<AlbanyTraits::SGTangent::ScalarT> sgtan_tag2(scatterName, dl->dummy);
-   fm->requireField<AlbanyTraits::SGTangent>(sgtan_tag2);
+   fm[0]->requireField<AlbanyTraits::SGTangent>(sgtan_tag2);
    PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag2(scatterName, dl->dummy);
-   fm->requireField<AlbanyTraits::MPResidual>(mpres_tag2);
+   fm[0]->requireField<AlbanyTraits::MPResidual>(mpres_tag2);
    PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag2(scatterName, dl->dummy);
-   fm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag2);
+   fm[0]->requireField<AlbanyTraits::MPJacobian>(mpjac_tag2);
    PHX::Tag<AlbanyTraits::MPTangent::ScalarT> mptan_tag2(scatterName, dl->dummy);
-   fm->requireField<AlbanyTraits::MPTangent>(mptan_tag2);
+   fm[0]->requireField<AlbanyTraits::MPTangent>(mptan_tag2);
 
    //Construct Rsponses
    Teuchos::ParameterList& responseList = params->sublist("Response Functions");
    Albany::ResponseUtils respUtils(dl,"LCM");
-   rfm = respUtils.constructResponses(responses, responseList, evaluators_to_build, stateMgr);
+   rfm[0] = respUtils.constructResponses(responses, responseList, evaluators_to_build, stateMgr);
 }
 
 void

@@ -64,7 +64,7 @@ void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
   std::vector<double> x; x.resize(neq);
   for (int ws=0; ws < wsElNodeEqID.size(); ws++) {
     for (int el=0; el < wsElNodeEqID[ws].size(); el++) {
-      for (int ln=0; ln < wsElNodeEqID[ws][0].size(); ln++) {
+      for (int ln=0; ln < wsElNodeEqID[ws][el].size(); ln++) {
         const double* X = coords[ws][el][ln];
         Teuchos::ArrayRCP<int> lid = wsElNodeEqID[ws][el][ln];
         for (int i=0; i<neq; i++) x[i] = (*soln)[lid[i]];

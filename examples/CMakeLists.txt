@@ -44,6 +44,7 @@ add_subdirectory(ContinuationHeat1D)
 add_subdirectory(Heat1DPeriodic)
 add_subdirectory(Heat2DTriangles)
 add_subdirectory(Heat1DWithSource)
+add_subdirectory(MultiHeat)
 add_subdirectory(Helmholtz2D)
 
 add_subdirectory(ODE)

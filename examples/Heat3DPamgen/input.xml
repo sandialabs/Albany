@@ -15,7 +15,7 @@
        <Parameter name="Function Data" type="Array(double)" value="{1.5}"/>
     </ParameterList>
     <ParameterList name="Thermal Conductivity">
-       <Parameter name="Name" type="string" value="Constant"/>
+       <Parameter name="Thermal Conductivity Type" type="string" value="Constant"/>
        <Parameter name="Value" type="double" value="3.0"/>
     </ParameterList>
     <ParameterList name="Source Functions">

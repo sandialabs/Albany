@@ -89,6 +89,8 @@ namespace Albany {
 
     //! Retrieve Vector (length num worksets) of element block names
     const Teuchos::ArrayRCP<std::string>&  getWsEBNames() const;
+    //! Retrieve Vector (length num worksets) of physics set index
+    const Teuchos::ArrayRCP<int>&  getWsPhysIndex() const;
 
     // 
     void outputToExodus(const Epetra_Vector& soln, const double time);
@@ -192,6 +194,7 @@ namespace Albany {
 
     mutable Teuchos::ArrayRCP<double> coordinates;
     Teuchos::ArrayRCP<std::string> wsEBNames;
+    Teuchos::ArrayRCP<int> wsPhysIndex;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords;
 
     // States: vector of length worksets of a map from field name to shards array

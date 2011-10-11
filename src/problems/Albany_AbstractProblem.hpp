@@ -88,9 +88,9 @@ namespace Albany {
        StateManager& stateMgr,
        std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses) = 0;
 
-    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > getFieldManager();
+    Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > getFieldManager();
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > getDirichletFieldManager() ;
-    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > getResponseFieldManager();
+    Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > getResponseFieldManager();
 
     //! Each problem must generate it's list of valide parameters
     virtual Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const 
@@ -122,13 +122,13 @@ namespace Albany {
     Teuchos::RCP<ParamLib> paramLib;
 
     //! Field manager for Volumettric Fill
-    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > fm;
+    Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > fm;
 
     //! Field manager for Dirchlet Conditions Fill
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > dfm;
 
     //! Field manager for Responses 
-    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > rfm;
+    Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > rfm;
   private:
 
     //! Private to prohibit default or copy constructor

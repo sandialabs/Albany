@@ -45,14 +45,14 @@
 
 Albany::STKDiscretization::STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
 					     const Teuchos::RCP<const Epetra_Comm>& comm_) :
-  neq(stkMeshStruct_->neq),
-  stkMeshStruct(stkMeshStruct_),
+  out(Teuchos::VerboseObjectBase::getDefaultOStream()),
+  previous_time_label(-1.0e32),
   metaData(*stkMeshStruct_->metaData),
   bulkData(*stkMeshStruct_->bulkData),
   comm(comm_),
-  previous_time_label(-1.0e32),
-  interleavedOrdering(stkMeshStruct_->interleavedOrdering),
-  out(Teuchos::VerboseObjectBase::getDefaultOStream())
+  neq(stkMeshStruct_->neq),
+  stkMeshStruct(stkMeshStruct_),
+  interleavedOrdering(stkMeshStruct_->interleavedOrdering)
 {
   Albany::STKDiscretization::updateMesh(stkMeshStruct,comm);
 }
@@ -112,7 +112,7 @@ Albany::STKDiscretization::getCoordinates() const
 {
   // Coordinates are computed here, and not precomputed,
   // since the mesh can move in shape opt problems
-  for (unsigned int i=0; i < numOverlapNodes; i++)  {
+  for (int i=0; i < numOverlapNodes; i++)  {
     int node_gid = gid(overlapnodes[i]);
     int node_lid = overlap_node_map->LID(node_gid);
 
@@ -128,6 +128,12 @@ const Teuchos::ArrayRCP<std::string>&
 Albany::STKDiscretization::getWsEBNames() const
 {
   return wsEBNames;
+}
+
+const Teuchos::ArrayRCP<int>& 
+Albany::STKDiscretization::getWsPhysIndex() const
+{
+  return wsPhysIndex;
 }
 
 const std::vector<std::string>&
@@ -188,10 +194,10 @@ Albany::STKDiscretization::setResidualField(const Epetra_Vector& residual)
 {
 #ifdef ALBANY_LCM
   // Copy residual vector into residual field, one node at a time
-  for (unsigned int i=0; i < ownednodes.size(); i++)  
+  for (std::size_t i=0; i < ownednodes.size(); i++)  
   {
     double* res = stk::mesh::field_data(*stkMeshStruct->residual_field, *ownednodes[i]);
-    for (unsigned int j=0; j<neq; j++)
+    for (std::size_t j=0; j<neq; j++)
       res[j] = residual[getOwnedDOF(i,j)];
   }
 #endif
@@ -202,9 +208,9 @@ Albany::STKDiscretization::getSolutionField() const
 {
   // Copy soln vector into solution field, one node at a time
   Teuchos::RCP<Epetra_Vector> soln = Teuchos::rcp(new Epetra_Vector(*map));
-  for (unsigned int i=0; i < ownednodes.size(); i++)  {
+  for (std::size_t i=0; i < ownednodes.size(); i++)  {
     const double* sol = stk::mesh::field_data(*stkMeshStruct->solution_field, *ownednodes[i]);
-    for (unsigned int j=0; j<neq; j++)
+    for (std::size_t j=0; j<neq; j++)
       (*soln)[getOwnedDOF(i,j)] = sol[j];
   }
   return soln;
@@ -218,9 +224,9 @@ void
 Albany::STKDiscretization::setSolutionField(const Epetra_Vector& soln) 
 {
   // Copy soln vector into solution field, one node at a time
-  for (unsigned int i=0; i < ownednodes.size(); i++)  {
+  for (std::size_t i=0; i < ownednodes.size(); i++)  {
     double* sol = stk::mesh::field_data(*stkMeshStruct->solution_field, *ownednodes[i]);
-    for (unsigned int j=0; j<neq; j++)
+    for (std::size_t j=0; j<neq; j++)
       sol[j] = soln[getOwnedDOF(i,j)];
   }
 }
@@ -286,7 +292,7 @@ void Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
   numGlobalNodes = node_map->NumGlobalElements();
   indices.resize(numOwnedNodes * neq);
   for (int i=0; i < numOwnedNodes; i++)
-    for (unsigned int j=0; j < neq; j++)
+    for (std::size_t j=0; j < neq; j++)
       indices[getOwnedDOF(i,j)] = getGlobalDOF(gid(ownednodes[i]),j);
 
   map = Teuchos::rcp(new Epetra_Map(-1, indices.size(), &(indices[0]), 0, *comm));
@@ -309,8 +315,8 @@ void Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
 
   numOverlapNodes = overlapnodes.size();
   indices.resize(numOverlapNodes * neq);
-  for (unsigned int i=0; i < numOverlapNodes; i++)
-    for (unsigned int j=0; j < neq; j++)
+  for (int i=0; i < numOverlapNodes; i++)
+    for (std::size_t j=0; j < neq; j++)
       indices[getOverlapDOF(i,j)] = getGlobalDOF(gid(overlapnodes[i]),j);
 
   overlap_map = Teuchos::rcp(new Epetra_Map(-1, indices.size(),
@@ -318,7 +324,7 @@ void Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
 
   // Set up epetra map of node IDs
   indices.resize(numOverlapNodes);
-  for (unsigned int i=0; i < numOverlapNodes; i++)
+  for (int i=0; i < numOverlapNodes; i++)
     indices[i] = gid(overlapnodes[i]);
 
   overlap_node_map = Teuchos::rcp(new Epetra_Map(-1, indices.size(),
@@ -327,9 +333,17 @@ void Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
   coordinates.resize(3*numOverlapNodes);
  
 }
+
+
 void Albany::STKDiscretization::computeGraphs()
 {
-  int nodes_per_element =  metaData.get_cell_topology(*(stkMeshStruct->partVec[0])).getNodeCount(); 
+
+  // FIXME - GAH: the following assumes all element blocks in the problem have the same
+  // number of nodes per element and that the cell topologies are the same.
+  std::map<int, stk::mesh::Part*>::iterator pv = stkMeshStruct->partVec.begin();
+  int nodes_per_element =  metaData.get_cell_topology(*(pv->second)).getNodeCount(); 
+// int nodes_per_element_est =  metaData.get_cell_topology(*(stkMeshStruct->partVec[0])).getNodeCount();
+
   // Loads member data:  overlap_graph, numOverlapodes, overlap_node_map, coordinates, graphs
   overlap_graph =
     Teuchos::rcp(new Epetra_CrsGraph(Copy, *overlap_map,
@@ -348,20 +362,20 @@ void Albany::STKDiscretization::computeGraphs()
     *out << "STKDisc: " << cells.size() << " elements on Proc 0 " << endl;
   int row, col;
 
-  for (unsigned int i=0; i < cells.size(); i++) {
+  for (std::size_t i=0; i < cells.size(); i++) {
     stk::mesh::Entity& e = *cells[i];
     stk::mesh::PairIterRelation rel = e.relations(metaData.NODE_RANK);
 
     // loop over local nodes
-    for (unsigned int j=0; j < rel.size(); j++) {
+    for (std::size_t j=0; j < rel.size(); j++) {
       stk::mesh::Entity& rowNode = * rel[j].entity();
 
       // loop over eqs
-      for (unsigned int k=0; k < neq; k++) {
+      for (std::size_t k=0; k < neq; k++) {
         row = getGlobalDOF(gid(rowNode), k);
-        for (unsigned int l=0; l < rel.size(); l++) {
+        for (std::size_t l=0; l < rel.size(); l++) {
           stk::mesh::Entity& colNode = * rel[l].entity();
-          for (unsigned int m=0; m < neq; m++) {
+          for (std::size_t m=0; m < neq; m++) {
             col = getGlobalDOF(gid(colNode), m);
             overlap_graph->InsertGlobalIndices(row, 1, &col);
           }
@@ -399,7 +413,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
   for (int i=0; i<numBuckets; i++) {
     std::vector< stk::mesh::Part * >  bpv;
     buckets[i]->supersets(bpv);
-    for (unsigned int j=0; j<bpv.size(); j++) {
+    for (std::size_t j=0; j<bpv.size(); j++) {
       if (bpv[j]->primary_entity_rank() == metaData.element_rank()) {
 	if (bpv[j]->name()[0] != '{') {
 	  // *out << "Bucket " << i << " is in Element Block:  " << bpv[j]->name() 
@@ -410,26 +424,31 @@ void Albany::STKDiscretization::computeWorksetInfo()
     }
   }
 
-  int nodes_per_element =  metaData.get_cell_topology(*(stkMeshStruct->partVec[0])).getNodeCount(); 
+  wsPhysIndex.resize(numBuckets);
+  if (stkMeshStruct->allElementBlocksHaveSamePhysics)
+    for (int i=0; i<numBuckets; i++) wsPhysIndex[i]=0;
+  else 
+    for (int i=0; i<numBuckets; i++) wsPhysIndex[i]=stkMeshStruct->ebNameToIndex[wsEBNames[i]];
 
   // Fill  wsElNodeEqID(workset, el_LID, local node, Eq) => unk_LID
   wsElNodeEqID.resize(numBuckets);
   coords.resize(numBuckets);
   int el_lid=0;
-  for (unsigned int b=0; b < numBuckets; b++) {
+  for (int b=0; b < numBuckets; b++) {
     stk::mesh::Bucket& buck = *buckets[b];
     wsElNodeEqID[b].resize(buck.size());
     coords[b].resize(buck.size());
-    for (unsigned int i=0; i < buck.size(); i++, el_lid++) {
+    for (std::size_t i=0; i < buck.size(); i++, el_lid++) {
   
       stk::mesh::Entity& e = buck[i];
 
       stk::mesh::PairIterRelation rel = e.relations(metaData.NODE_RANK);
 
+      int nodes_per_element = rel.size();
       wsElNodeEqID[b][i].resize(nodes_per_element);
       coords[b][i].resize(nodes_per_element);
       // loop over local nodes
-      for (unsigned int j=0; j < rel.size(); j++) {
+      for (int j=0; j < nodes_per_element; j++) {
         stk::mesh::Entity& rowNode = * rel[j].entity();
         int node_gid = gid(rowNode);
         int node_lid = overlap_node_map->LID(node_gid);
@@ -438,7 +457,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
 			   "STK1D_Disc: node_lid out of range " << node_lid << endl);
         coords[b][i][j] = stk::mesh::field_data(*stkMeshStruct->coordinates_field, rowNode);
         wsElNodeEqID[b][i][j].resize(neq);
-        for (unsigned int eq=0; eq < neq; eq++) 
+        for (std::size_t eq=0; eq < neq; eq++) 
           wsElNodeEqID[b][i][j][eq] = getOverlapDOF(node_lid,eq);
       }
     }
@@ -447,19 +466,19 @@ void Albany::STKDiscretization::computeWorksetInfo()
   // Pull out pointers to shards::Arrays for every bucket, for every state
   // Code is data-type dependent
   stateArrays.resize(numBuckets);
-  for (unsigned int b=0; b < buckets.size(); b++) {
+  for (std::size_t b=0; b < buckets.size(); b++) {
     stk::mesh::Bucket& buck = *buckets[b];
-    for (int i=0; i<stkMeshStruct->qpscalar_states.size(); i++) {
+    for (std::size_t i=0; i<stkMeshStruct->qpscalar_states.size(); i++) {
       stk::mesh::BucketArray<Albany::AbstractSTKMeshStruct::QPScalarFieldType> array(*stkMeshStruct->qpscalar_states[i], buck);
       MDArray ar = array;
       stateArrays[b][stkMeshStruct->qpscalar_states[i]->name()] = ar;
     }
-    for (int i=0; i<stkMeshStruct->qpvector_states.size(); i++) {
+    for (std::size_t i=0; i<stkMeshStruct->qpvector_states.size(); i++) {
       stk::mesh::BucketArray<Albany::AbstractSTKMeshStruct::QPVectorFieldType> array(*stkMeshStruct->qpvector_states[i], buck);
       MDArray ar = array;
       stateArrays[b][stkMeshStruct->qpvector_states[i]->name()] = ar;
     }
-    for (int i=0; i<stkMeshStruct->qptensor_states.size(); i++) {
+    for (std::size_t i=0; i<stkMeshStruct->qptensor_states.size(); i++) {
       stk::mesh::BucketArray<Albany::AbstractSTKMeshStruct::QPTensorFieldType> array(*stkMeshStruct->qptensor_states[i], buck);
       MDArray ar = array;
       stateArrays[b][stkMeshStruct->qptensor_states[i]->name()] = ar;
@@ -486,11 +505,11 @@ void Albany::STKDiscretization::computeNodeSets()
     nodeSetCoords[ns->first].resize(nodes.size());
     nodeSetIDs.push_back(ns->first); // Grab string ID
     *out << "STKDisc: nodeset "<< ns->first <<" has size " << nodes.size() << "  on Proc 0." << endl;
-    for (unsigned int i=0; i < nodes.size(); i++) {
+    for (std::size_t i=0; i < nodes.size(); i++) {
       int node_gid = gid(nodes[i]);
       int node_lid = node_map->LID(node_gid);
       nodeSets[ns->first][i].resize(neq);
-      for (int eq=0; eq < neq; eq++)  nodeSets[ns->first][i][eq] = getOwnedDOF(node_lid,eq);
+      for (std::size_t eq=0; eq < neq; eq++)  nodeSets[ns->first][i][eq] = getOwnedDOF(node_lid,eq);
       nodeSetCoords[ns->first][i] = stk::mesh::field_data(*stkMeshStruct->coordinates_field, *nodes[i]);
     }
     ns++;

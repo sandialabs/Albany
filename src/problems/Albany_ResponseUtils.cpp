@@ -18,6 +18,7 @@
 #include "Albany_SolutionAverageResponseFunction.hpp"
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
 #include "Albany_SolutionMaxValueResponseFunction.hpp"
+#include "Albany_SolutionFileL2ResponseFunction.hpp"
 #include "Albany_ResponseUtils.hpp"
 
 #include "PHAL_FactoryTraits.hpp"
@@ -297,6 +298,11 @@ double length_unit_in_m=1.0e-6;
     bool inor =  responseParams.get("Interleaved Ordering", true);
     
     responses[responseIndex] = Teuchos::rcp(new Albany::SolutionMaxValueResponseFunction(neq, eq, inor));
+    return true;
+  }
+
+  else if (responseName == "Solution Two Norm File") {
+    responses[responseIndex] = Teuchos::rcp(new Albany::SolutionFileL2ResponseFunction());
     return true;
   }
 

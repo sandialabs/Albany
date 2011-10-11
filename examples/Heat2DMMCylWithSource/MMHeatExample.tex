@@ -1,0 +1,135 @@
+\documentclass[12pt]{article}
+\usepackage{fullpage}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{listings}
+\usepackage{framed}
+\usepackage[pdftex,pdfborder={0 0 0}]{hyperref}
+
+\newcommand{\uo}{\mathrm{UO}_2}
+
+%opening
+\title{2D Multimaterial Heat Conduction in Cylindrical Geometry With Source}
+\author{Glen Hansen}
+
+\begin{document}
+\maketitle
+
+\begin{figure}[!htbp]
+\includegraphics[width=6.5in,trim=100 200 200 100,clip]{cyl}
+\caption{Concentric cylindrical model with multiple regions of different thermal conductivity. Region 1 has
+conductivity $k_1$, radius $r_1$, internal heat generation term $\dot{q}$, and is made of $\uo$.}
+\label{fig:domain}
+\end{figure}
+
+
+This document describes the Albany Heat2DMMCylWithSource test problem. It is a
+simple heat conduction problem, with a constant volumetric source in Region~1
+(shown in Fig.~\ref{fig:domain}), that is surrounded by two different materials
+to form concentric cylinders. Region~1 is meant to be a reactor fuel that
+generates heat by radioactive decay at a constant rate $\dot{q}$. A ceramic
+material of moderate thermal conductivity $k_1$ and made of $\uo$ fills the
+region. The radius is $r_1$, and the outside temperature of this area is $T_1$.
+
+Zircalloy metal, the fuel cladding, surrounds this fuel. The cladding has an outside radius
+$r_2$, a conductivity $k_2$, and an outside temperature $T_2$. Lastly, air (or vacuum) surrounds the
+cladding. The air region has a thermal conductivity $k_3$, radius $r_3$, and outside temperature $T_3$.
+The idea behind this test is to calculate the effective thermal conductivity $k_3$ of the air/vacuum environment
+that surrounds the fuel/cladding while it is ``dryed.'' Given a decay heat $\dot{q}$, what is the thermal
+conductivity of this material needed such that the peak internal temperature of the fuel (Region~1) does not
+exceed $400 C$ given a surrounding environment temperature $T_3$ of $40 C$.
+
+This test is meant to provide a simple steady-state validation of initial capabilities needed to calculate
+such things. Here, we model the concentric cylinders in two stages. The first stage uses a simplified form
+of (3.28) in
+\cite{incropera81}:
+%
+\begin{equation}
+q_r = \frac{T_{\infty,1} - T_{\infty, 4}}{\frac{1}{2\pi r_1 L h_1} + \frac{\ln (r_2 / r_1)}{2\pi k_A L} +
+\frac{\ln (r_3 / r_2)}{2 \pi k_B L} + \frac{\ln(r_4/r_3)}{2\pi k_C L} + \frac{1}{2\pi r_4 L h_4}}
+\end{equation}
+
+For the problem described in Fig.~\ref{fig:domain}, and assuming that the length of the problem $L$ is
+unity, this becomes
+%
+\begin{equation}
+q_r = \frac{T_{1} - T_{3}}{\frac{\ln (r_2 / r_1)}{2\pi k_2} +
+\frac{\ln (r_3 / r_2)}{2 \pi k_3} }
+\label{eq:resist}
+\end{equation}
+
+Now, note that an overall energy balance at a radius of $r_1$ will give
+%
+\begin{equation}
+q_r(r=r_1, \mathrm{inside}) =
+q_r(r=r_1, \mathrm{outside}) 
+\end{equation}
+or
+\begin{equation}
+\dot{q} (\pi r_1^2) =
+\frac{T_{1} - T_{3}}{\frac{\ln (r_2 / r_1)}{2\pi k_2} +
+\frac{\ln (r_3 / r_2)}{2 \pi k_3} }
+\end{equation}
+or
+\begin{equation}
+\frac{\dot{q} r_1^2}{2} \left[
+\frac{\ln (r_2 / r_1)}{k_2} +
+\frac{\ln (r_3 / r_2)}{k_3} \right] =
+T_{1} - T_{3}
+\end{equation}
+or simply
+\begin{equation}
+\frac{\dot{q} r_1^2}{2} \left[ \quad \cdot \quad \right] =
+T_{1} - T_{3}
+\label{eq:bal}
+\end{equation}
+
+Lastly, note that (3.52) in \cite{incropera81}
+%
+\begin{equation}
+T(r) = \frac{\dot{q} r_o^2}{4 k} \left( 1 - \frac{r^2}{r_o^2}\right) + T_s
+\end{equation}
+%
+may be rewritten for our case of the center cylinder $r_1$ as
+%
+\begin{equation}
+T(r) = \frac{\dot{q}}{4 k_1} \left( r_1^2 - r^2\right) + T_1
+\label{eq:fuel_t_1}
+\end{equation}
+
+As one is typically most interested in the temperature profile inside the fuel region~1, we can rewrite
+\eqref{eq:bal} in terms of $T_1$
+%
+\begin{equation}
+T_{1} =
+\frac{\dot{q} r_1^2}{2} \left[ \quad \cdot \quad \right]
++ T_{3}
+\end{equation}
+%
+and substitute this into \eqref{eq:fuel_t_1} to get
+%
+\begin{equation}
+T(r) = \frac{\dot{q}}{4 k_1} \left( r_1^2 - r^2\right) + 
+\frac{\dot{q} r_1^2}{2} \left[
+\frac{\ln (r_2 / r_1)}{k_2} +
+\frac{\ln (r_3 / r_2)}{k_3} \right] + T_3
+\label{eq:fuel_t_2}
+\end{equation}
+
+\section{Use Case}
+
+Here, we will vary $r$ in \eqref{eq:fuel_t_2} to see the temperature variation in region 1, the $\uo$ fuel area. 
+The test case for this code is to compare long-time transient results in this region to this steady derivation.
+
+
+\begin{thebibliography}{10}
+
+\bibitem{incropera81}
+Frank P. Incropera and David P. DeWitt, Fundamentals of Heat Transfer,
+John Wiley \& Sons, New York, NY, ISBN 0-471-42711-X, 1981.
+
+\end{thebibliography}
+
+\end{document}

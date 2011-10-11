@@ -48,6 +48,7 @@ Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
   }
 
   interleavedOrdering = params->get("Interleaved Ordering",true);
+  allElementBlocksHaveSamePhysics = true; 
 
   // This is typical, can be resized for multiple material problems
   meshSpecs.resize(1);
@@ -99,7 +100,7 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
 #endif
 
   // Code to parse the vector of StateStructs and create STK fields
-  for (int i=0; i<sis->size(); i++) {
+  for (std::size_t i=0; i<sis->size(); i++) {
       Albany::StateStruct& st = *((*sis)[i]);
       std::vector<int>& dim = st.dim;
       if (dim.size() == 2 && st.entity=="QuadPoint") {
@@ -141,16 +142,19 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
     exoOutFile = params->get<string>("Exodus Output File Name");
 }
 
-void Albany::GenericSTKMeshStruct::DeclareParts(std::vector<std::string> nsNames)
+void Albany::GenericSTKMeshStruct::DeclareParts(std::vector<std::string> ebNames, std::vector<std::string> nsNames)
 {
-  // HandCoded meshes have 1 element block
-  partVec[0] = &  metaData->declare_part( "Block_1", metaData->element_rank() );
+  // Element blocks
+  for (std::size_t i=0; i<ebNames.size(); i++) {
+    std::string ebn = ebNames[i];
+    partVec[i] = & metaData->declare_part(ebn, metaData->element_rank() );
 #ifdef ALBANY_SEACAS
-  stk::io::put_io_part_attribute(*partVec[0]);
+    stk::io::put_io_part_attribute(*partVec[i]);
 #endif
+  }
 
   // NodeSets
-  for (unsigned int i=0; i<nsNames.size(); i++) {
+  for (std::size_t i=0; i<nsNames.size(); i++) {
     std::string nsn = nsNames[i];
     nsPartVec[nsn] = & metaData->declare_part(nsn, metaData->node_rank() );
 #ifdef ALBANY_SEACAS

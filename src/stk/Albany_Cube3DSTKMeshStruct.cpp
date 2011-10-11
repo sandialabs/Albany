@@ -42,6 +42,10 @@ Albany::Cube3DSTKMeshStruct::Cube3DSTKMeshStruct(
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
+ // HandCoded meshes have 1 element block for now
+  std::vector<std::string> ebNames;
+  ebNames.push_back("Block0");
+
   std::vector<std::string> nsNames;
   nsNames.push_back("NodeSet0");
   nsNames.push_back("NodeSet1");
@@ -49,8 +53,9 @@ Albany::Cube3DSTKMeshStruct::Cube3DSTKMeshStruct(
   nsNames.push_back("NodeSet3");
   nsNames.push_back("NodeSet4");
   nsNames.push_back("NodeSet5");
-  this->DeclareParts(nsNames);
+  this->DeclareParts(ebNames, nsNames);
 
+  // Only have one element block for now
   stk::mesh::fem::set_cell_topology< shards::Hexahedron<8> >(*partVec[0]);
 
   int cub = params->get("Cubature Degree",3);
@@ -66,11 +71,9 @@ Albany::Cube3DSTKMeshStruct::Cube3DSTKMeshStruct(
 
   int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_map->NumMyElements());
 
-  int numEB = 1; // Hardcode a single element block for now
-
   // MeshSpecs holds all info needed to set up an Albany problem
   this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
-                              nsNames, worksetSize, numEB, this->interleavedOrdering));
+                              nsNames, worksetSize, 1, ebNames[0], this->interleavedOrdering));
 }
 
 void

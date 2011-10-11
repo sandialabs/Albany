@@ -40,15 +40,20 @@ Albany::Point0DSTKMeshStruct::Point0DSTKMeshStruct(
 {
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
+
+// A 0D mesh will have  1 element block by convention
+  std::vector<std::string> ebNames;
+  ebNames.push_back("Block0");
+
   std::vector<std::string> nsNames;
-  this->DeclareParts(nsNames);
+  this->DeclareParts(ebNames, nsNames);
   stk::mesh::fem::set_cell_topology< shards::Particle >(*partVec[0]);
 
   int cub = params->get("Cubature Degree",3);
   const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
-  int numEB = 1; // only a single element block exists for this case
+
   this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
-                                        nsNames, 1, numEB, this->interleavedOrdering));
+                                        nsNames, 1, 1, ebNames[0], this->interleavedOrdering));
 }
 
 void
