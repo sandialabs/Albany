@@ -43,7 +43,7 @@ namespace QCAD {
     Teuchos::RCP<const Teuchos::ParameterList> getValidResponseParameters() const;
 
     std::string fieldName;
-    std::string ebName;
+    std::vector<std::string> ebNames;
     
     std::size_t numQPs;
     std::size_t numDims;

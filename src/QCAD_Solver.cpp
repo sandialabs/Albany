@@ -650,6 +650,10 @@ QCAD::SolverResponseFn::SolverResponseFn(const std::string& fnString,
     TEST_FOR_EXCEPT(nParams != 2);
     numDoubles = 1;
   }
+  else if( fnName == "divide") {
+    TEST_FOR_EXCEPT(nParams != 2);
+    numDoubles = 1;
+  }
   else if( fnName == "nop") {
     numDoubles = nParams; 
   }
@@ -706,6 +710,11 @@ void QCAD::SolverResponseFn::fillSolverResponses(Epetra_Vector& g, int offset,
   // multiplicative scaling
   else if( fnName == "scale") {
     g[offset] = pvals[0] * pvals[1];
+  }
+
+  // multiplicative scaling
+  else if( fnName == "divide") {
+    g[offset] = pvals[0] / pvals[1];
   }
 
   // no op (but can pass through multiple doubles)

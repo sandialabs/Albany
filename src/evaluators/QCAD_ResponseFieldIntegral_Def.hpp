@@ -20,6 +20,16 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 
+//Utility function to split a std::string by a delimiter, so far only used here
+void split(const std::string &s, char delim, std::vector<std::string> &elems) {
+    std::stringstream ss(s);
+    std::string item;
+    while(std::getline(ss, item, delim)) {
+        elems.push_back(item);
+    }
+}
+
+
 template<typename EvalT, typename Traits>
 QCAD::ResponseFieldIntegral<EvalT, Traits>::
 ResponseFieldIntegral(Teuchos::ParameterList& p) :
@@ -53,8 +63,9 @@ ResponseFieldIntegral(Teuchos::ParameterList& p) :
   numDims = dims[2];
 
   //! User-specified parameters
-  ebName = plist->get<std::string>("Element Block Name","");
-  fieldName = plist->get<std::string>("Field Name");
+  std::string ebNameStr = plist->get<std::string>("Element Block Name","");
+  if(ebNameStr.length() > 0) split(ebNameStr,',',ebNames);
+  fieldName = plist->get<std::string>("Field Name","");
   bPositiveOnly = plist->get<bool>("Positive Return Only",false);
 
   limitX = limitY = limitZ = false;
@@ -75,9 +86,11 @@ ResponseFieldIntegral(Teuchos::ParameterList& p) :
   }
 
   //! add dependent fields
-  PHX::MDField<ScalarT,Cell,QuadPoint> f(fieldName, scalar_dl); 
-  field = f;
-  this->addDependentField(field);
+  if( fieldName.length() > 0 ) {
+    PHX::MDField<ScalarT,Cell,QuadPoint> f(fieldName, scalar_dl); 
+    field = f;
+    this->addDependentField(field);
+  }
   this->addDependentField(coordVec);
   this->addDependentField(weights);
   
@@ -98,7 +111,8 @@ void QCAD::ResponseFieldIntegral<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(field,fm);
+  if( fieldName.length() > 0 )
+    this->utils.setFieldData(field,fm);
   this->utils.setFieldData(coordVec,fm);
   this->utils.setFieldData(weights,fm);
 }
@@ -124,9 +138,11 @@ evaluateFields(typename Traits::EvalData workset)
     TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
 			  << "Error! Invalid number of dimensions: " << numDims << std::endl);
     
-  if( ebName.length() == 0 || ebName == workset.EBName ) {
+  if( ebNames.size() == 0 || 
+      std::find(ebNames.begin(), ebNames.end(), workset.EBName) != ebNames.end() ) {
 
     ScalarT val;
+    bool bFieldIsValid = (fieldName.length() > 0);
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
       bool cellInBox = false;
@@ -139,7 +155,12 @@ evaluateFields(typename Traits::EvalData workset)
       if( !cellInBox ) continue;
 
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-        val = field(cell,qp) * weights(cell,qp) * scaling;
+	
+	if( bFieldIsValid )
+	  val = field(cell,qp) * weights(cell,qp) * scaling;
+	else
+	  val = weights(cell,qp) * scaling; //integrate volume
+
         PHAL::ResponseBase<EvalT, Traits>::local_g[0] += val;
       }
     }
