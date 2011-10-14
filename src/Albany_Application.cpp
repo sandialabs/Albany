@@ -2733,7 +2733,7 @@ void Albany::Application::postRegSetup(std::string eval)
            << phxGraphVisDetail << ")"<<endl;
       *out << "Process using 'dot -Tpng -O phalanx_graph' \n" << endl;
       for (int ps=0; ps < fm.size(); ps++) {
-        std::stringstream pg; pg << "phalanx_graph_" << ps;
+        std::stringstream pg; pg << "phalanx_graph_jac_" << ps;
         fm[ps]->writeGraphvizFile<PHAL::AlbanyTraits::Jacobian>(pg.str(),detail,detail);
       }
       phxGraphVisDetail = -2;

@@ -53,7 +53,9 @@ SET(HEADERS
 SET(SOURCES ${SOURCES}
 	problems/Albany_AbstractProblem.cpp 
 	problems/Albany_ProblemUtils.cpp 
+	problems/Albany_EvaluatorUtils.cpp 
 	problems/Albany_ResponseUtils.cpp 
+	problems/Albany_ResponseUtilities.cpp 
 	problems/Albany_DirichletUtils.cpp 
 	problems/Albany_ProblemFactory.cpp
 	problems/Albany_HeatProblem.cpp 
@@ -69,7 +71,11 @@ SET(HEADERS ${HEADERS}
 	problems/Albany_ProblemFactory.hpp 
 	problems/Albany_AbstractProblem.hpp 
 	problems/Albany_ProblemUtils.hpp 
+	problems/Albany_EvaluatorUtils.hpp 
+	problems/Albany_EvaluatorUtils_Def.hpp 
 	problems/Albany_ResponseUtils.hpp 
+	problems/Albany_ResponseUtilities.hpp 
+	problems/Albany_ResponseUtilities_Def.hpp 
 	problems/Albany_DirichletUtils.hpp 
 	problems/Albany_HeatProblem.hpp 
 	problems/Albany_MultiHeatProblem.hpp 
@@ -259,6 +265,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/problems/ElasticityProblem.hpp
     ${LCM_DIR}/problems/NonlinearElasticityProblem.hpp 
     ${LCM_DIR}/problems/ThermoElasticityProblem.hpp 
+    ${LCM_DIR}/problems/ThermoElasticityProblem_Def.hpp 
     ${LCM_DIR}/problems/GradientDamageProblem.hpp
     ${LCM_DIR}/problems/PoroElasticityProblem.hpp 
   )
@@ -520,7 +527,8 @@ SET(CUTR_HDRS
 set(ALB_TRILINOS_LIBS ${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES})
 
 include_directories (${Trilinos_INCLUDE_DIRS}
-                     ./ ./evaluators ./problems ./responses ./stk ./LCM/ ./LCM/utils
+                     ./ ./evaluators ./problems ./responses ./stk
+                     ./LCM/ ./LCM/evaluators ./LCM/utils
                      ${Trilinos_TPL_INCLUDE_DIRS})
 
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})

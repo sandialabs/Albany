@@ -15,9 +15,6 @@
 \********************************************************************/
 
 
-#ifndef THERMOELASTICITYPROBLEM_HPP
-#define THERMOELASTICITYPROBLEM_HPP
-
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
@@ -31,72 +28,26 @@
 #include "Albany_EvaluatorUtils.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 
-namespace Albany {
+// Explicity add evaluators defined in the model below
+#include "ElasticModulus.hpp"
+#include "PoissonsRatio.hpp"
+#include "PHAL_Source.hpp"
+#include "Strain.hpp"
+#include "Stress.hpp"
+#include "PHAL_SaveStateField.hpp"
+#include "ElasticityResid.hpp"
+#include "PHAL_ThermalConductivity.hpp"
+#include "PHAL_Source.hpp"
+#include "PHAL_HeatEqResid.hpp"
 
-  /*!
-   * \brief Abstract interface for representing a 2-D finite element
-   * problem.
-   */
-  class ThermoElasticityProblem : public Albany::AbstractProblem {
-  public:
-  
-    //! Default constructor
-    ThermoElasticityProblem(
-			    const Teuchos::RCP<Teuchos::ParameterList>& params,
-			    const Teuchos::RCP<ParamLib>& paramLib,
-			    const int numEq);
 
-    //! Destructor
-    virtual ~ThermoElasticityProblem();
-
-    //! Build the PDE instantiations, boundary conditions, and initial solution
-    virtual void 
-    buildProblem(
-       Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
-       StateManager& stateMgr,
-       std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
-
-    //! Each problem must generate it's list of valid parameters
-    Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
-
-    void getAllocatedStates(Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState_,
-			    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState_
-			    ) const;
-
-  private:
-
-    //! Private to prohibit copying
-    ThermoElasticityProblem(const ThermoElasticityProblem&);
-    
-    //! Private to prohibit copying
-    ThermoElasticityProblem& operator=(const ThermoElasticityProblem&);
-
-//    template <typename EvalT>
-//    void constructEvaluators<EvalT>(const Albany::MeshSpecsStruct& meshSpecs,
-//                             Albany::StateManager& stateMgr,
-//                             std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
-
-    void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
-  protected:
-
-    //! Boundary conditions on source term
-    bool haveSource;
-    int T_offset;  //Position of T unknown in nodal DOFs
-    int X_offset;  //Position of X unknown in nodal DOFs, followed by Y,Z
-    int numDim;    //Number of spatial dimensions and displacement variable 
-
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState;
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState;
-
-  private:
 template <typename EvalT>
-void constructEvaluators(
+void Albany::ThermoElasticityProblem::constructEvaluators(
         PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         const Albany::MeshSpecsStruct& meshSpecs,
         Albany::StateManager& stateMgr,
         std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
-        bool constructResponses=false);
-/**
+        bool constructResponses)
 {
    using Teuchos::RCP;
    using Teuchos::rcp;
@@ -391,9 +342,3 @@ void constructEvaluators(
      respUtils.constructResponses(fm0, responses, responseList, stateMgr);
    }
 }
-**/
-  };
-
-}
-
-#endif // ALBANY_ELASTICITYPROBLEM_HPP
