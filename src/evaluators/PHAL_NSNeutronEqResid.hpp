@@ -51,19 +51,18 @@ private:
   // Input:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<ScalarT,Cell,QuadPoint> Neutron;
-  PHX::MDField<ScalarT,Cell,QuadPoint> T;
   PHX::MDField<ScalarT,Cell,QuadPoint> NeutronDiff;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> NGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint> Source;
   PHX::MDField<ScalarT,Cell,QuadPoint> Absorp;
   PHX::MDField<ScalarT,Cell,QuadPoint> Fission;  
-  PHX::MDField<ScalarT,Cell,QuadPoint> Tref;  
+  PHX::MDField<ScalarT,Cell,QuadPoint> nu;  
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> NResidual;
 
-  bool haveNeutSource, haveHeat, haveFlow;
+  bool haveNeutSource;
   unsigned int numQPs, numDims, numNodes;
   Intrepid::FieldContainer<ScalarT> flux;
   Intrepid::FieldContainer<ScalarT> abscoeff;

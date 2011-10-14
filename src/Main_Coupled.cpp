@@ -25,6 +25,8 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Teuchos_StandardCatchMacros.hpp"
 #include "Epetra_Map.h"  //Needed for serial, somehow
+#include "Piro_Epetra_NECoupledModelEvaluator.hpp"
+#include "Piro_Epetra_Factory.hpp"
 
 int main(int argc, char *argv[]) {
 
@@ -41,32 +43,14 @@ int main(int argc, char *argv[]) {
   // Command-line argument for input file
   //***********************************************************
 
-  char * xmlfilename1=0;
-  char defaultfile[10]={"input.xml"};
-  if(argc>1){
-    if(!strcmp(argv[1],"--help")){
-      printf("albany [inputfile.xml]\n");
-      exit(1);
-    }
-    else
-      xmlfilename1=argv[1];
+  std::string xmlfilename1, xmlfilename2, xmlfilename3;
+  if (argc != 4 || (argc>1 && !strcmp(argv[1],"--help"))) {
+    std::cout << "albany input1.xml input2.xml input_coupled.xml\n";
+    std::exit(1);
   }
-  else
-    xmlfilename1=defaultfile;
-
-  
-  char * xmlfilename2=0;
-  char defaultfile2[11]={"input2.xml"};
-  if(argc>1){
-    if(!strcmp(argv[1],"--help")){
-      printf("albany [inputfile2.xml]\n");
-      exit(1);
-    }
-    else
-      xmlfilename2=argv[2];
-  }
-  else
-    xmlfilename2=defaultfile2;
+  xmlfilename1=argv[1];
+  xmlfilename2=argv[2];
+  xmlfilename3=argv[3];
 
 
 
@@ -85,103 +69,65 @@ int main(int argc, char *argv[]) {
     //***********************************************************
 
     Albany::SolverFactory slvrfctry1(xmlfilename1, Albany_MPI_COMM_WORLD);
-    RCP<Epetra_Comm> appComm1 = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
-    RCP<EpetraExt::ModelEvaluator> App1 = slvrfctry1.create(appComm1, appComm1);
-
-    EpetraExt::ModelEvaluator::InArgs params_in1 = App1->createInArgs();
-    EpetraExt::ModelEvaluator::OutArgs responses_out1 = App1->createOutArgs();
-    int num_p1 = params_in1.Np();     // Number of *vectors* of parameters
-    int num_g1 = responses_out1.Ng(); // Number of *vectors* of responses
-    RCP<Epetra_Vector> p1;
-    RCP<Epetra_Vector> g1;
-
-    if (num_p1 > 0)
-      p1 = rcp(new Epetra_Vector(*(App1->get_p_init(0))));
-    if (num_g1 > 1)
-      g1 = rcp(new Epetra_Vector(*(App1->get_g_map(0))));
-    RCP<Epetra_Vector> xfinal1 =
-      rcp(new Epetra_Vector(*(App1->get_g_map(num_g1-1)),true) );
+    RCP<Epetra_Comm> appComm1 = 
+      Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
+    RCP<Albany::Application> app1;
+    RCP<EpetraExt::ModelEvaluator> model1 = 
+      slvrfctry1.createAlbanyAppAndModel(app1, appComm1);
+    Teuchos::ParameterList& appParams1 = slvrfctry1.getParameters();
+    Teuchos::RCP< Teuchos::ParameterList> piroParams1 = 
+      Teuchos::rcp(&(appParams1.sublist("Piro")),false);
 
     //***********************************************************
     // Set up second model
     //***********************************************************
 
     Albany::SolverFactory slvrfctry2(xmlfilename2, Albany_MPI_COMM_WORLD);
-    RCP<Epetra_Comm> appComm2 = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
-    RCP<EpetraExt::ModelEvaluator> App2 = slvrfctry2.create(appComm2, appComm2);
+    RCP<Epetra_Comm> appComm2 = 
+      Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
+    RCP<Albany::Application> app2;
+    RCP<EpetraExt::ModelEvaluator> model2 = 
+      slvrfctry2.createAlbanyAppAndModel(app2, appComm2);
+    Teuchos::ParameterList& appParams2 = slvrfctry2.getParameters();
+    Teuchos::RCP< Teuchos::ParameterList> piroParams2 = 
+      Teuchos::rcp(&(appParams2.sublist("Piro")),false);
 
-    EpetraExt::ModelEvaluator::InArgs params_in2 = App2->createInArgs();
-    EpetraExt::ModelEvaluator::OutArgs responses_out2 = App2->createOutArgs();
-    int num_p2 = params_in2.Np();     // Number of *vectors* of parameters
-    int num_g2 = responses_out2.Ng(); // Number of *vectors* of responses
-    RCP<Epetra_Vector> p2;
-    RCP<Epetra_Vector> g2;
-
-    if (num_p2 > 0)
-      p2 = rcp(new Epetra_Vector(*(App2->get_p_init(0))));
-    if (num_g2 > 1)
-      g2 = rcp(new Epetra_Vector(*(App2->get_g_map(0))));
-    RCP<Epetra_Vector> xfinal2 =
-      rcp(new Epetra_Vector(*(App2->get_g_map(num_g2-1)),true) );
-
-
-    //***********************************************************
-    // Set up an iteration solution procedure
-    //***********************************************************
- 
-    double mnv1prev; xfinal1->MeanValue(&mnv1prev);
-    double mnv2prev; xfinal2->MeanValue(&mnv2prev);
-    double conv_error = 1;
-    double conv_tol = 1e-6;
-    int max_iter = 25;
-    int iter = 0;
-
-    while ((conv_error > conv_tol) && (iter < max_iter)){
     
-        iter = iter + 1;
-
-        *p1 = *g2;
-
-        // Evaluate first model
-        if (num_p1 > 0)  params_in1.set_p(0,p1);
-    	if (num_g1 > 1)  responses_out1.set_g(0,g1);
-    	responses_out1.set_g(num_g1-1,xfinal1);
-
-    	setupTimer.~TimeMonitor();
-    	App1->evalModel(params_in1, responses_out1);
-
-    	*out << "Finished eval of first model: Params, Responses " 
-        	 << std::setprecision(12) << endl;
-    	if (num_p1>0) p1->Print(*out << "\nParameters!\n");
-    	if (num_g1>1) g1->Print(*out << "\nResponses!\n");
-    	double mnv1; xfinal1->MeanValue(&mnv1);
-    	*out << "Main_Solve: MeanValue of first solution " << mnv1 << endl;
-
-
-    	// Evaluate second model
-    	if (num_p2 > 0)  params_in2.set_p(0,p2);
-    	if (num_g2 > 1)  responses_out2.set_g(0,g2);
-    	responses_out2.set_g(num_g2-1,xfinal2);
-
-        *p2 = *g1;
-
-    	setupTimer.~TimeMonitor();
-    	App2->evalModel(params_in2, responses_out2);
-
-    	*out << "Finished eval of second model: Params, Responses " 
-        	 << std::setprecision(12) << endl;
-    	if (num_p2>0) p2->Print(*out << "\nParameters!\n");
-    	if (num_g2>1) g2->Print(*out << "\nResponses!\n");
-    	double mnv2; xfinal2->MeanValue(&mnv2);
-    	*out << "Main_Solve: MeanValue of second solution " << mnv2 << endl;
- 
-        conv_error = abs(mnv1 - mnv1prev) + abs(mnv2 - mnv2prev);
-        mnv1prev = mnv1;
-        mnv2prev = mnv2;
+    //***********************************************************
+    // Set up coupled model
+    //***********************************************************
+    Albany::SolverFactory coupled_slvrfctry(xmlfilename3, 
+					    Albany_MPI_COMM_WORLD);
+    RCP<Epetra_Comm> coupledComm = 
+      Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
+    Teuchos::ParameterList& coupledParams = coupled_slvrfctry.getParameters();
+    Teuchos::RCP< Teuchos::ParameterList> coupledPiroParams = 
+      Teuchos::rcp(&(coupledParams.sublist("Piro")),false);
+    RCP<EpetraExt::ModelEvaluator> coupledModel =
+      rcp(new Piro::Epetra::NECoupledModelEvaluator(model1, model2,
+						    piroParams1, piroParams2,
+						    coupledPiroParams, 
+						    coupledComm));
+    RCP<EpetraExt::ModelEvaluator> coupledSolver =
+      Piro::Epetra::Factory::createSolver(coupledPiroParams, coupledModel);
+    
+    // Solve coupled system
+    EpetraExt::ModelEvaluator::InArgs inArgs = coupledSolver->createInArgs();
+    EpetraExt::ModelEvaluator::OutArgs outArgs = coupledSolver->createOutArgs();
+    for (int i=0; i<inArgs.Np(); i++)
+      inArgs.set_p(i, coupledSolver->get_p_init(i));
+    for (int i=0; i<outArgs.Ng(); i++) {
+      RCP<Epetra_Vector> g = 
+	rcp(new Epetra_Vector(*(coupledSolver->get_g_map(i))));
+      outArgs.set_g(i, g);
     }
-
-    *out << "Number of iterations " << iter << endl;
-    *out << "Iterative error " << conv_error << endl;
+    coupledSolver->evalModel(inArgs, outArgs);
+    
+    // Print results
+    *out << std::endl
+	 << "Final value of coupling variables:" << std::endl
+	 << *(outArgs.get_g(outArgs.Ng()-1)) << std::endl;
+    
   }
 
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);

@@ -3,8 +3,12 @@
     <Parameter name="Solution Method" type="string" value="Transient"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
     <Parameter name="Name" type="string" value="NavierStokes 2D"/>
-    <Parameter name="Have Heat Equation" type="bool" value="1"/>
-    <Parameter name="Have Neutron Equation" type="bool" value="1"/>
+    <ParameterList name="Heat">
+      <Parameter name="Variable Type" type="string" value="DOF"/>
+    </ParameterList>
+    <ParameterList name="Neutronics">
+      <Parameter name="Variable Type" type="string" value="DOF"/>
+    </ParameterList>
     <ParameterList name="Volumetric Expansion Coefficient">
       <Parameter name="Type" type="string" value="Constant"/>
       <Parameter name="Value" type="double" value="3000"/> 

@@ -1,85 +1,73 @@
 <ParameterList>
   <ParameterList name="Problem">
-    <Parameter name="Solution Method" type="string" value="Transient"/>
-    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
-    <Parameter name="Name" type="string" value="NavierStokes 2D"/>
+    <Parameter name="Name" type="string" value="NavierStokes 1D"/>
+    <ParameterList name="Flow">
+      <Parameter name="Variable Type" type="string" value="None"/>
+    </ParameterList>
     <ParameterList name="Heat">
       <Parameter name="Variable Type" type="string" value="DOF"/>
     </ParameterList>
-    <ParameterList name="Volumetric Expansion Coefficient">
+    <ParameterList name="Neutronics">
+      <Parameter name="Variable Type" type="string" value="Constant"/>
+      <Parameter name="Value" type="double" value="365.0"/>
+    </ParameterList>
+    <ParameterList name="Fission Cross Section">
       <Parameter name="Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="3000"/> 
+      <Parameter name="Value" type="double" value="0.0111"/> 
     </ParameterList>
-    <ParameterList name="Body Force">
-      <Parameter name="Type" type="string" value="Boussinesq"/>
-      <Parameter name="Gravity Vector" type="Array(double)" value="{0.0,-1.0}"/>
+    <ParameterList name="Energy Released per Fission">
+      <Parameter name="Type" type="string" value="Constant"/>
+      <Parameter name="Value" type="double" value="3.20435"/> 
     </ParameterList>
-    <ParameterList name="Initial Condition">
-      <Parameter name="Function" type="string" value="Constant"/>
-      <Parameter name="Function Data" type="Array(double)" value="{1.0,1.0,0.0,0.0}"/>
+    <Parameter name="Have Pressure Stabilization" type="bool" value="0"/>
+    <Parameter name="Have SUPG Stabilization" type="bool" value="0"/>
+    <Parameter name="Solution Method" type="string" value="Steady"/>
+    <ParameterList name="Dirichlet BCs">
+      <Parameter name="DBC on NS NodeSet0 for DOF T" type="double" value="300.0"/>
+      <Parameter name="DBC on NS NodeSet1 for DOF T" type="double" value="300.0"/>
     </ParameterList>
-    <ParameterList name="Dirichlet BCs">     
-      <Parameter name="DBC on NS nodelist_2 for DOF T" type="double" value="1.0"/>
-      <Parameter name="DBC on NS nodelist_4 for DOF T" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_5 for DOF p" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_1 for DOF ux" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_2 for DOF ux" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_3 for DOF ux" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_4 for DOF ux" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_1 for DOF uy" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_2 for DOF uy" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_3 for DOF uy" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_4 for DOF uy" type="double" value="0.0"/>
+    <ParameterList name="Source Functions">
+      <ParameterList name="Neutron Fission">
+      </ParameterList>
+    </ParameterList>
+    <ParameterList name="Thermal Conductivity">
+      <Parameter name="Type" type="string"
+		 value="Truncated KL Expansion"/>
+      <Parameter name="Number of KL Terms" type="int" value="2"/>
+      <Parameter name="Mean" type="double" value="10.0"/>
+      <Parameter name="Standard Deviation" type="double" value="1.0"/>
+      <Parameter name="Domain Lower Bounds" type="string" value="{0.0}"/>
+      <Parameter name="Domain Upper Bounds" type="string" value="{10.0}"/>
+      <Parameter name="Correlation Lengths" type="string" value="{6.0}"/>
     </ParameterList>
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="1"/>
-      <Parameter name="Parameter 0" type="string"
-		 value="Volumetric Expansion Coefficient"/>
-    </ParameterList>
+	<Parameter name="Parameter 0" type="string" value="Neutron Flux"/>
+    </ParameterList>    
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="1"/>
-      <Parameter name="Response 0" type="string" value="Solution Max Value"/>
-      <ParameterList name="ResponseParams 0">
-        <Parameter name="Equation" type="int" value="0" />
-        <Parameter name="Num Equations" type="int" value="4" />
-      </ParameterList>
+      <Parameter name="Response 0" type="string" value="Solution Average"/>
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
-    <Parameter name="Method" type="string" value="Ioss"/>
-    <Parameter name="Exodus Input File Name" type="string" value="ns-m4-bKL.par"/>
-    <Parameter name="Exodus Output File Name" type="string" value="ns_out.exo"/>
+    <Parameter name="1D Elements" type="int" value="100"/>
+    <Parameter name="1D Scale" type="double" value="10.0"/>
+    <Parameter name="Method" type="string" value="STK1D"/>
+    <!--Parameter name="Exodus Output File Name" type="string" value="sgheat_out.exo"/-->
   </ParameterList>
   <ParameterList name="Regression Results">
-    <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{4.0762}"/>
-    <Parameter  name="Relative Tolerance" type="double" value="1.0e-3"/>
-    <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
-    <Parameter  name="Sensitivity Test Values 0" type="Array(double)"
-		value="{0.005014}"/>
+    <Parameter  name="Number of Comparisons" type="int" value="0"/>
+    <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter  name="Number of Dakota Comparisons" type="int" value="0"/>
+    <Parameter  name="Number of Stochastic Galerkin Comparisons" type="int" value="0"/>
+    <Parameter  name="Stochastic Galerkin Expansion Test Values 0" type="Array(double)"
+    value="{1.1867, -0.02865, -0.007762, 0.008780, 0.002895, 0.0007957, -0.002302, -0.0006913, -0.0009845, -4.562e-05}"/>
+    <Parameter  name="Relative Tolerance" type="double" value="1.0e-3"/>
   </ParameterList>
+
   <ParameterList name="Piro">
-    <ParameterList name="Rythmos">
-      <Parameter name="Num Time Steps" type="int" value="100"/>
-      <Parameter name="Final Time" type="double" value="3.0"/>
-      <Parameter name="Max State Error" type="double" value="1e-4"/>
-      <Parameter name="Alpha"           type="double" value="0.0"/>
-      <ParameterList name="Rythmos Stepper">
-	<ParameterList name="VerboseObject">
-	  <Parameter name="Verbosity Level" type="string" value="low"/>
-	</ParameterList>
-      </ParameterList>
-      <ParameterList name="Rythmos Integration Control">
-      </ParameterList>
-      <ParameterList name="Rythmos Integrator">
-	<ParameterList name="VerboseObject">
-	  <Parameter name="Verbosity Level" type="string" value="none"/>
-	</ParameterList>
-      </ParameterList>
-      <ParameterList name="Stratimikos">
-      </ParameterList>
-    </ParameterList>
+    <Parameter name="Solver Type" type="string" value="NOX"/>
+    <Parameter name="Print Convergence Stats" type="bool" value="0"/>
     <ParameterList name="NOX">
       <ParameterList name="Status Tests">
 	<Parameter name="Test Type" type="string" value="Combo"/>
@@ -97,22 +85,23 @@
 	  </ParameterList>
 	  <ParameterList name="Test 1">
 	    <Parameter name="Test Type" type="string" value="NormWRMS"/>
-	    <Parameter name="Absolute Tolerance" type="double" value="1e-4"/>
-	    <Parameter name="Relative Tolerance" type="double" value="1e-8"/>
+	    <Parameter name="Absolute Tolerance" type="double" value="1e-6"/>
+	    <Parameter name="Relative Tolerance" type="double" value="1e-6"/>
 	  </ParameterList>
 	</ParameterList>
 	<ParameterList name="Test 1">
 	  <Parameter name="Test Type" type="string" value="MaxIters"/>
-	  <Parameter name="Maximum Iterations" type="int" value="20"/>
+	  <Parameter name="Maximum Iterations" type="int" value="10"/>
 	</ParameterList>
       </ParameterList>
       <ParameterList name="Direction">
 	<Parameter name="Method" type="string" value="Newton"/>
 	<ParameterList name="Newton">
-	  <Parameter name="Forcing Term Method" type="string" value="Constant"/>
 	  <ParameterList name="Linear Solver">
-	    <Parameter name="Write Linear System" type="bool" value="false"/>
-	  </ParameterList>
+	    <Parameter name="Max Iterations" type="int" value="1000"/>
+	    <Parameter name="Tolerance" type="double" value="1e-12"/>
+	  </ParameterList>       
+	  <Parameter name="Forcing Term Method" type="string" value="Constant"/>
 	  <ParameterList name="Stratimikos Linear Solver">
 	    <ParameterList name="NOX Stratimikos Options">
 	    </ParameterList>
@@ -124,15 +113,19 @@
 		    <ParameterList name="AztecOO Settings">
 		      <Parameter name="Aztec Solver" type="string" value="GMRES"/>
 		      <Parameter name="Convergence Test" type="string" value="r0"/>
-		      <Parameter name="Size of Krylov Subspace" type="int" value="50"/>
+		      <Parameter name="Size of Krylov Subspace" type="int" value="30"/>
 		      <Parameter name="Output Frequency" type="int" value="20"/>
 		    </ParameterList>
 		    <Parameter name="Max Iterations" type="int" value="250"/>
-		    <Parameter name="Tolerance" type="double" value="1e-6"/>
+		    <Parameter name="Tolerance" type="double" value="1e-12"/>
+		  </ParameterList>
+		  <ParameterList name="VerboseObject"> 
+		    <Parameter name="Verbosity Level" type="string" 
+			       value="none"/>
 		  </ParameterList>
 		</ParameterList>
 	      </ParameterList>
-	      <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
+	      <Parameter name="Preconditioner Type" type="string" value="ML"/>
 	      <ParameterList name="Preconditioner Types">
 		<ParameterList name="ML">
 		  <Parameter name="Base Method Defaults" type="string" 
@@ -145,14 +138,11 @@
 			       value="both"/>
 		    <Parameter name="coarse: type" type="string" 
 			       value="Amesos-KLU"/>
-		    <Parameter name="PDE equations" type="int" 
-			       value="4"/>
 		  </ParameterList>
 		</ParameterList>
 	      </ParameterList>
 	    </ParameterList>
 	  </ParameterList>
-
 	  <Parameter name="Rescue Bad Newton Solve" type="bool" value="1"/>
 	</ParameterList>
       </ParameterList>
@@ -164,7 +154,8 @@
       </ParameterList>
       <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
       <ParameterList name="Printing">
-	<Parameter name="Output Information" type="int" value="103"/>
+	<!--Parameter name="Output Information" type="int" value="103"/-->
+	<Parameter name="Output Information" type="int" value="0"/>
 	<!--Parameter name="Output Information" type="int" value="127"/-->
 	<Parameter name="Output Precision" type="int" value="3"/>
 	<Parameter name="Output Processor" type="int" value="0"/>
@@ -174,4 +165,6 @@
       </ParameterList>
     </ParameterList>
   </ParameterList>
+
 </ParameterList>
+

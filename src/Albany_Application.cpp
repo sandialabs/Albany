@@ -1658,6 +1658,7 @@ computeGlobalSGTangent(
     workset.delta_time = timeMgr.getDeltaTime();
     if (sg_xdot != NULL) workset.transientTerms = true;
 
+    workset.worksetSize = worksetSize;
     for (int ws=0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo(workset, ws);
 
@@ -2398,6 +2399,7 @@ computeGlobalMPTangent(
     workset.delta_time = timeMgr.getDeltaTime();
     if (mp_xdot != NULL) workset.transientTerms = true;
 
+    workset.worksetSize = worksetSize;
     for (int ws=0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo(workset, ws);
 

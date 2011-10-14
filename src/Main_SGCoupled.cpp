@@ -141,12 +141,18 @@ int main(int argc, char *argv[]) {
     coupledSolver->evalModel(inArgs, outArgs);
 
     // Print results
-    for (int i=0; i<outArgs.Ng(); i++) {
-      if (outArgs.supports(EpetraExt::ModelEvaluator::OUT_ARG_g_sg, i)) {
-	std::cout << "Response vector " << i << ":" << std::endl
-		  << *(outArgs.get_g_sg(i)) << std::endl;
-      }
-    }
+    int idx = outArgs.Ng()-1;
+    Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> g_sg = 
+      outArgs.get_g_sg(idx);
+    Epetra_Vector g_mean(*(coupledSolver->get_g_map(idx)));
+    Epetra_Vector g_std_dev(*(coupledSolver->get_g_map(idx)));
+    g_sg->computeMean(g_mean);
+    g_sg->computeStandardDeviation(g_std_dev);
+    *out << std::endl
+	 << "Final value of coupling variables:" << std::endl
+	 << "Mean:" << std::endl << g_mean << std::endl
+	 << "Std. Dev.:" << std::endl << g_std_dev << std::endl
+	 << "PCE:" << std::endl << *g_sg << std::endl;
 
   }
 

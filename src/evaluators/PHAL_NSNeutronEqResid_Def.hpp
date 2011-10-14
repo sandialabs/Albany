@@ -40,13 +40,11 @@ NSNeutronEqResid(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   Fission     (p.get<std::string>                  ("Neutron Fission Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  Tref        (p.get<std::string>                  ("Reference Temperature Name"),
+  nu          (p.get<std::string>                  ("Neutrons per Fission Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   NResidual   (p.get<std::string>                   ("Residual Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
-  haveNeutSource  (p.get<bool>("Have Neutron Source")),
-  haveFlow    (p.get<bool>("Have Flow")),
-  haveHeat    (p.get<bool>("Have Heat"))
+  haveNeutSource  (p.get<bool>("Have Neutron Source"))
 {
 
   this->addDependentField(wBF);
@@ -56,20 +54,13 @@ NSNeutronEqResid(const Teuchos::ParameterList& p) :
   this->addDependentField(NeutronDiff);
   this->addDependentField(Absorp);
   this->addDependentField(Fission);
-  this->addDependentField(Tref);
+  this->addDependentField(nu);
   
   if (haveNeutSource) {
     Source = PHX::MDField<ScalarT,Cell,QuadPoint>(
       p.get<std::string>("Source Name"),
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
     this->addDependentField(Source);
-  }
-
-  if (haveHeat) {
-    T = PHX::MDField<ScalarT,Cell,QuadPoint>(
-      p.get<std::string>("Temperature QP Variable Name"),
-      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
-    this->addDependentField(T);
   }
 
   this->addEvaluatedField(NResidual);
@@ -101,9 +92,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(NeutronDiff,fm);
   this->utils.setFieldData(Absorp,fm);
   this->utils.setFieldData(Fission,fm);
-  this->utils.setFieldData(Tref,fm);
+  this->utils.setFieldData(nu,fm);
   if (haveNeutSource)  this->utils.setFieldData(Source,fm);
-  if (haveHeat) this->utils.setFieldData(T,fm);
 
   this->utils.setFieldData(NResidual,fm);
 }
@@ -121,11 +111,9 @@ evaluateFields(typename Traits::EvalData workset)
   
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
-      abscoeff(cell,qp) = 0.0;
+      abscoeff(cell,qp) = 
+	(Absorp(cell,qp) - nu(cell,qp)*Fission(cell,qp)) * Neutron(cell,qp);
       if (haveNeutSource) abscoeff(cell,qp) -= Source(cell,qp);
-         abscoeff(cell,qp) += 
-            //(Absorp(cell,qp) - Fission(cell,qp)) * sqrt(Tref(cell,qp)) / sqrt(T(cell,qp)) * Neutron(cell,qp);
-            (Absorp(cell,qp) - Fission(cell,qp)) * Neutron(cell,qp);
     }
   }
 
