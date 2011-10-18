@@ -225,22 +225,6 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
 
   if (matModel == "NeoHookean")
   {
-    { // LCG
-      RCP<ParameterList> p = rcp(new ParameterList("LCG"));
-
-      int type = FactoryTraits<AlbanyTraits>::id_lcg;
-      p->set<int>("Type", type);
-     
-      //Input
-      p->set<string>("DefGrad Name", "Deformation Gradient");
-      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
-      //Output
-      p->set<string>("LCG Name", "LCG"); //dl->qp_tensor also
-
-      evaluators_to_build["LCG"] = p;
-    }
-
     { // Stress
       RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
@@ -248,7 +232,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
       p->set<int>("Type", type);
 
       //Input
-      p->set<string>("LCG Name", "LCG");
+      p->set<string>("DefGrad Name", "Deformation Gradient");
       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
       p->set<string>("Elastic Modulus Name", "Elastic Modulus");

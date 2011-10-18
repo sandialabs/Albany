@@ -15,48 +15,65 @@
 \********************************************************************/
 
 
-#ifndef LCG_HPP
-#define LCG_HPP
+#ifndef THERMO_MECHANICAL_MOMENTUM_RESIDUAL_HPP
+#define THERMO_MECHANICAL_MOMENTUM_RESIDUAL_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+#include "Sacado_ParameterAccessor.hpp"
 
 namespace LCM {
-/** \brief Left Cauchy-Green Deformation Tensor
+/** \brief Thermo Mechancial Momentum Residual
 
-    This evaluator computes the Left Cauhcy-Green 
-    Deformation Tensor from the Deformation Gradient.
+    This evaluator computes the residual for the ThermoMechanical Problem
 
 */
 
 template<typename EvalT, typename Traits>
-class LCG : public PHX::EvaluatorWithBaseImpl<Traits>,
-		    public PHX::EvaluatorDerived<EvalT, Traits>  {
+class ThermoMechanicalMomentumResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
+					 public PHX::EvaluatorDerived<EvalT, Traits>,
+					 public Sacado::ParameterAccessor<EvalT, SPL_Traits>   {
 
 public:
-
-  LCG(const Teuchos::ParameterList& p);
-
-  void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
-
-  void evaluateFields(typename Traits::EvalData d);
-
-private:
-
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
+  ThermoMechanicalMomentumResidual(const Teuchos::ParameterList& p);
+
+  void postRegistrationSetup(typename Traits::SetupData d,
+			     PHX::FieldManager<Traits>& vm);
+
+  void evaluateFields(typename Traits::EvalData d);
+
+  ScalarT& getValue(const std::string &n);
+
+private:
+
   // Input:
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;
+  PHX::MDField<ScalarT,Cell,QuadPoint> J;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defgrad;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
+  ScalarT zGrav;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> lcg;
+  PHX::MDField<ScalarT,Cell,Node,Dim> Residual;
 
-  unsigned int numQPs;
-  unsigned int numDims;
+  std::size_t numNodes;
+  std::size_t numQPs;
+  std::size_t numDims;
+
+  // Material Name
+  std::string matModel;
+
+  // Work space FCs
+  Intrepid::FieldContainer<ScalarT> F_inv;
+  Intrepid::FieldContainer<ScalarT> F_invT;
+  Intrepid::FieldContainer<ScalarT> JF_invT;
+  Intrepid::FieldContainer<ScalarT> P;
 };
 }
 

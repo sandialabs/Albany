@@ -259,6 +259,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/problems/ThermoElasticityProblem.cpp 
     ${LCM_DIR}/problems/GradientDamageProblem.cpp 
     ${LCM_DIR}/problems/PoroElasticityProblem.cpp
+    ${LCM_DIR}/problems/ThermoMechanicalProblem.cpp
   )
 
   SET(HEADERS ${HEADERS}
@@ -268,6 +269,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/problems/ThermoElasticityProblem_Def.hpp 
     ${LCM_DIR}/problems/GradientDamageProblem.hpp
     ${LCM_DIR}/problems/PoroElasticityProblem.hpp 
+    ${LCM_DIR}/problems/ThermoMechanicalProblem.hpp
+    ${LCM_DIR}/problems/ThermoMechanicalProblem_Def.hpp
   )
 
   # LCM evaluators
@@ -277,8 +280,6 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/ElasticModulus.cpp 
     ${LCM_DIR}/evaluators/PoissonsRatio.cpp 
     ${LCM_DIR}/evaluators/DefGrad.cpp 
-    ${LCM_DIR}/evaluators/RCG.cpp 
-    ${LCM_DIR}/evaluators/LCG.cpp 
     ${LCM_DIR}/evaluators/Neohookean.cpp
     ${LCM_DIR}/evaluators/J2Stress.cpp 
     ${LCM_DIR}/evaluators/ElasticityResid.cpp
@@ -305,6 +306,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/PoroElasticityResidMass.cpp
     ${LCM_DIR}/evaluators/Porosity.cpp
     ${LCM_DIR}/evaluators/KCPermeability.cpp
+    ${LCM_DIR}/evaluators/ThermoMechanicalEnergyResidual.cpp
+    ${LCM_DIR}/evaluators/ThermoMechanicalMomentumResidual.cpp
   )
 
   SET(HEADERS ${HEADERS}
@@ -318,10 +321,6 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/PoissonsRatio_Def.hpp
     ${LCM_DIR}/evaluators/DefGrad.hpp 
     ${LCM_DIR}/evaluators/DefGrad_Def.hpp 
-    ${LCM_DIR}/evaluators/RCG.hpp 
-    ${LCM_DIR}/evaluators/RCG_Def.hpp 
-    ${LCM_DIR}/evaluators/LCG.hpp 
-    ${LCM_DIR}/evaluators/LCG_Def.hpp
     ${LCM_DIR}/evaluators/Neohookean.hpp
     ${LCM_DIR}/evaluators/Neohookean_Def.hpp
     ${LCM_DIR}/evaluators/J2Stress.hpp 
@@ -374,6 +373,10 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/Porosity_Def.hpp
     ${LCM_DIR}/evaluators/KCPermeability.hpp
     ${LCM_DIR}/evaluators/KCPermeability_Def.hpp
+    ${LCM_DIR}/evaluators/ThermoMechanicalEnergyResidual.hpp    
+    ${LCM_DIR}/evaluators/ThermoMechanicalEnergyResidual_Def.hpp
+    ${LCM_DIR}/evaluators/ThermoMechanicalMomentumResidual.hpp
+    ${LCM_DIR}/evaluators/ThermoMechanicalMomentumResidual_Def.hpp
   )
 
   #LCM utils
