@@ -95,5 +95,13 @@
     </ParameterList>
   </ParameterList>
 
+  <ParameterList name="Regression Results">
+    <Parameter  name="Number of Comparisons" type="int" value="2"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{242.131, 307.105}"/>
+    <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
+    <Parameter  name="Number of Dakota Comparisons" type="int" value="0"/>
+    <Parameter  name="Number of Stochastic Galerkin Comparisons" type="int" value="0"/>
+    <Parameter  name="Relative Tolerance" type="double" value="1.0e-3"/>
+  </ParameterList>
 </ParameterList>
 

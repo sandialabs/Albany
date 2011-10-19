@@ -13,31 +13,36 @@
       <Parameter name="Type" type="string" value="Constant"/>
       <Parameter name="Value" type="double" value="3000"/> 
     </ParameterList>
-    <ParameterList name="Neutron Diffusion">
+    <ParameterList name="Neutron Diffusion Coefficient">
       <Parameter name="Type" type="string" value="SQRT Temperature Dependent"/>
       <Parameter name="Value" type="double" value="3000"/> 
       <Parameter name="Reference Temperature" type="double" value="1"/> 
     </ParameterList>
-    <ParameterList name="Neutron Absorption">
+    <ParameterList name="Absorption Cross Section">
       <Parameter name="Type" type="string" value="Constant"/>
       <Parameter name="Value" type="double" value="2"/> 
     </ParameterList>
-    <ParameterList name="Neutron Fission">
+    <ParameterList name="Fission Cross Section">
       <Parameter name="Type" type="string" value="invSQRT Temperature Dependent"/>
       <Parameter name="Value" type="double" value="1"/> 
       <Parameter name="Reference Temperature" type="double" value="1"/> 
     </ParameterList>
     <ParameterList name="Neutron Source">
-      <Parameter name="Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="10"/> 
+      <ParameterList name="Constant">
+	<Parameter name="Value" type="double" value="10"/>
+      </ParameterList>
     </ParameterList>
     <ParameterList name="Body Force">
       <Parameter name="Type" type="string" value="Boussinesq"/>
       <Parameter name="Gravity Vector" type="Array(double)" value="{0.0,-1.0}"/>
     </ParameterList>
-    <ParameterList name="Proportionality Constant">
+    <ParameterList name="Energy Released per Fission">
       <Parameter name="Type" type="string" value="Constant"/>
-      <Parameter name="Proportionality Constant" type="double" value="0.0001"/>
+      <Parameter name="Value" type="double" value="0.0001"/>
+    </ParameterList>
+    <ParameterList name="Source Functions">
+      <ParameterList name="Neutron Fission">
+      </ParameterList>
     </ParameterList>
     <ParameterList name="Initial Condition">
       <Parameter name="Function" type="string" value="Constant"/>
@@ -74,11 +79,11 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{4.8729}"/>
-    <Parameter  name="Relative Tolerance" type="double" value="1.0e-3"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{2366.9875}"/>
+    <Parameter  name="Relative Tolerance" type="double" value="1.0e-2"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)"
-		value="{0.005621}"/>
+		value="{-1.02793}"/>
     <Parameter  name="Number of Dakota Comparisons" type="int" value="0"/>
   </ParameterList>
   <ParameterList name="VTK">

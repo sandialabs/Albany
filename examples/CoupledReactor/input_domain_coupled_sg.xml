@@ -110,8 +110,11 @@
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter  name="Number of Dakota Comparisons" type="int" value="0"/>
     <Parameter  name="Number of Stochastic Galerkin Comparisons" type="int" value="0"/>
-    <Parameter  name="Stochastic Galerkin Expansion Test Values 0" type="Array(double)"
-    value="{1.1867, -0.02865, -0.007762, 0.008780, 0.002895, 0.0007957, -0.002302, -0.0006913, -0.0009845, -4.562e-05}"/>
+    <Parameter  name="Number of Stochastic Galerkin Mean Comparisons" type="int" value="2"/>
+    <Parameter  name="Stochastic Galerkin Mean Test Values" type="Array(double)" value="{0.3085, 0.2441}"/>
+    <Parameter  name="Number of Stochastic Galerkin Standard Deviation Comparisons" type="int" value="2"/>
+    <Parameter  name="Stochastic Galerkin Standard Deviation Test Values" type="Array(double)" value="{0.0005059, 0.01060}"/>
+    <Parameter  name="Absolute Tolerance" type="double" value="1.0e-8"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-3"/>
   </ParameterList>
 
