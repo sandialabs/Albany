@@ -144,16 +144,36 @@ int main(int argc, char *argv[]) {
     int idx = outArgs.Ng()-1;
     Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> g_sg = 
       outArgs.get_g_sg(idx);
-    Epetra_Vector g_mean(*(coupledSolver->get_g_map(idx)));
-    Epetra_Vector g_std_dev(*(coupledSolver->get_g_map(idx)));
+    Teuchos::RCP<Stokhos::SGModelEvaluator> sg_model =
+      coupledSolver->get_sg_model();
+    Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> g_sg_local = 
+      sg_model->import_solution_poly(*(g_sg->getBlockVector()));
+    Epetra_Vector g_mean(*(g_sg->coefficientMap()));
+    Epetra_Vector g_std_dev(*(g_sg->coefficientMap()));
     g_sg->computeMean(g_mean);
     g_sg->computeStandardDeviation(g_std_dev);
+    RCP<Epetra_Vector> g_mean_local = rcp(&g_mean,false);
+    RCP<Epetra_Vector> g_std_dev_local = rcp(&g_std_dev,false);
+    if (g_mean.Map().DistributedGlobal()) {
+      Epetra_LocalMap local_map(g_mean.GlobalLength(), 0, 
+				g_mean.Map().Comm());
+      g_mean_local = rcp(new Epetra_Vector(local_map));
+      g_std_dev_local = rcp(new Epetra_Vector(local_map));
+      Epetra_Import importer(local_map, g_mean.Map());
+      g_mean_local->Import(g_mean, importer, Insert);
+      g_std_dev_local->Import(g_std_dev, importer, Insert);
+    }
     *out << std::endl
 	 << "Final value of coupling variables:" << std::endl
-	 << "Mean:" << std::endl << g_mean << std::endl
-	 << "Std. Dev.:" << std::endl << g_std_dev << std::endl
-	 << "PCE:" << std::endl << *g_sg << std::endl;
+	 << "Mean:" << std::endl << *g_mean_local << std::endl
+	 << "Std. Dev.:" << std::endl << *g_std_dev_local << std::endl
+	 << "PCE:" << std::endl << *g_sg_local << std::endl;
 
+    status += coupled_slvrfctry.checkTestResults(NULL, NULL, NULL, 
+						 Teuchos::null, g_sg_local,
+						 g_mean_local.get(), 
+						 g_std_dev_local.get());
+    *out << "\nNumber of Failed Comparisons: " << status << endl;
   }
 
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);

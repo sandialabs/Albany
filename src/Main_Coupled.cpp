@@ -27,6 +27,8 @@
 #include "Epetra_Map.h"  //Needed for serial, somehow
 #include "Piro_Epetra_NECoupledModelEvaluator.hpp"
 #include "Piro_Epetra_Factory.hpp"
+#include "Epetra_LocalMap.h"
+#include "Epetra_Import.h"
 
 int main(int argc, char *argv[]) {
 
@@ -124,10 +126,21 @@ int main(int argc, char *argv[]) {
     coupledSolver->evalModel(inArgs, outArgs);
     
     // Print results
+    RCP<Epetra_Vector> x_final = outArgs.get_g(outArgs.Ng()-1);
+    RCP<Epetra_Vector> x_final_local = x_final;
+    if (x_final->Map().DistributedGlobal()) {
+      Epetra_LocalMap local_map(x_final->GlobalLength(), 0, 
+				x_final->Map().Comm());
+      x_final_local = rcp(new Epetra_Vector(local_map));
+      Epetra_Import importer(local_map, x_final->Map());
+      x_final_local->Import(*x_final, importer, Insert);
+    }
     *out << std::endl
 	 << "Final value of coupling variables:" << std::endl
-	 << *(outArgs.get_g(outArgs.Ng()-1)) << std::endl;
-    
+	 << *x_final_local << std::endl;
+
+    status += coupled_slvrfctry.checkTestResults(x_final_local.get(), NULL);
+    *out << "\nNumber of Failed Comparisons: " << status << endl;
   }
 
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);
