@@ -206,6 +206,8 @@ int main(int argc, char *argv[]) {
       }
     }
 
+    bool computeSensitivities = 
+      albanyParams.sublist("Problem").get("Compute Sensitivities", true);
     int ng = sg_outArgs.Ng();
     for (int i=0; i<ng; i++) {
       if (sg_outArgs.supports(EpetraExt::ModelEvaluator::OUT_ARG_g_sg, i)) {
@@ -217,7 +219,8 @@ int main(int argc, char *argv[]) {
       for (int j=0; j<np; j++) {
 	EpetraExt::ModelEvaluator::DerivativeSupport ds =
 	  sg_outArgs.supports(EpetraExt::ModelEvaluator::OUT_ARG_DgDp_sg,i,j);
-	if (ds.supports(EpetraExt::ModelEvaluator::DERIV_MV_BY_COL)) {
+	if (computeSensitivities && 
+	    ds.supports(EpetraExt::ModelEvaluator::DERIV_MV_BY_COL)) {
 	  int ncol = sg_solver->get_p_map(j)->NumMyElements();
 	  Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> dgdp_sg =
 	    sg_solver->create_g_mv_sg(i,ncol);
@@ -265,7 +268,8 @@ int main(int argc, char *argv[]) {
 	  }
 
 	  status += sg_slvrfctry.checkTestResults(NULL, NULL, NULL, 
-						  Teuchos::null, g_sg);
+						  Teuchos::null, g_sg,
+						  &g_mean, &g_std_dev);
 	}
       }
     }

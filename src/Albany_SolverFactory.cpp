@@ -173,7 +173,9 @@ int Albany::SolverFactory::checkTestResults(
   const Epetra_MultiVector* dgdp,
   const Teuchos::SerialDenseVector<int,double>* drdv,
   const Teuchos::RCP<Thyra::VectorBase<double> >& tvec,
-  const Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly>& g_sg) const
+  const Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly>& g_sg,
+  const Epetra_Vector* g_mean,
+  const Epetra_Vector* g_std_dev) const
 {
   ParameterList& testParams = appParams->sublist("Regression Results");
   TEST_FOR_EXCEPTION(testParams.isType<string>("Test Values"), std::logic_error,
@@ -261,7 +263,7 @@ int Albany::SolverFactory::checkTestResults(
   }
 
   // Repeat comparisons for SG expansions
-  int numSGTests = testParams.get<int>("Number of Stochastic Galerkin Comparisons");
+  int numSGTests = testParams.get<int>("Number of Stochastic Galerkin Comparisons", 0);
   if (numSGTests > 0 && g_sg != Teuchos::null) {
     if (numSGTests > (*g_sg)[0].MyLength()) failures += 10000;
     else {
@@ -275,6 +277,40 @@ int Albany::SolverFactory::checkTestResults(
 	    scaledCompare((*g_sg)[j][i], testSGValues[j], relTol, absTol);
           comparisons++;
         }
+      }
+    }
+  }
+
+  // Repeat comparisons for SG mean statistics
+  int numMeanResponseTests = testParams.get<int>("Number of Stochastic Galerkin Mean Comparisons", 0);
+  if (numMeanResponseTests > 0 && g_mean != NULL) {
+
+    if (numMeanResponseTests > g_mean->MyLength()) failures +=30000;
+    else { // do comparisons
+      Teuchos::Array<double> testValues =
+        testParams.get<Teuchos::Array<double> >("Stochastic Galerkin Mean Test Values");
+      
+      TEST_FOR_EXCEPT(numMeanResponseTests != testValues.size());
+      for (int i=0; i<testValues.size(); i++) {
+        failures += scaledCompare((*g_mean)[i], testValues[i], relTol, absTol);
+        comparisons++;
+      }
+    }
+  }
+
+  // Repeat comparisons for SG standard deviation statistics
+  int numSDResponseTests = testParams.get<int>("Number of Stochastic Galerkin Standard Deviation Comparisons", 0);
+  if (numSDResponseTests > 0 && g_std_dev != NULL) {
+
+    if (numSDResponseTests > g_std_dev->MyLength()) failures +=50000;
+    else { // do comparisons
+      Teuchos::Array<double> testValues =
+        testParams.get<Teuchos::Array<double> >("Stochastic Galerkin Standard Deviation Test Values");
+      
+      TEST_FOR_EXCEPT(numSDResponseTests != testValues.size());
+      for (int i=0; i<testValues.size(); i++) {
+        failures += scaledCompare((*g_std_dev)[i], testValues[i], relTol, absTol);
+        comparisons++;
       }
     }
   }
@@ -416,6 +452,17 @@ Albany::SolverFactory::getValidRegressionResultsParameters() const
        Albany::strint("Stochastic Galerkin Expansion Test Values",i), ta,
        Albany::strint("Array of regression values for stochastic Galerkin expansions",i));
   }
+
+  validPL->set<int>("Number of Stochastic Galerkin Mean Comparisons", 0,
+          "Number of SG mean responses to regress against");
+  validPL->set<Array<double> >("Stochastic Galerkin Mean Test Values", ta,
+          "Array of regression values for SG mean responses");
+  validPL->set<int>(
+    "Number of Stochastic Galerkin Standard Deviation Comparisons", 0,
+    "Number of SG standard deviation responses to regress against");
+  validPL->set<Array<double> >(
+    "Stochastic Galerkin Standard Deviation Test Values", ta,
+    "Array of regression values for SG standard deviation responses");
 
   // These two are typically not set on input, just output.
   validPL->set<int>("Number of Failures", 0,
