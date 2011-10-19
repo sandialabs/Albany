@@ -243,6 +243,21 @@ void Albany::NavierStokes::constructEvaluators(
        (evalUtils.constructScatterResidualEvaluator(true, resid_names,offset, "Scatter Momentum"));
      offset += numDim;
    }
+   else if (haveFlow) { // Constant velocity
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    p->set<string>("Material Property Name", "Velocity");
+    p->set< RCP<DataLayout> >("Data Layout", dl->qp_vector);
+    p->set<string>("Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Flow");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
 
    if (haveFlowEq) {
      Teuchos::ArrayRCP<string> dof_names(1);
