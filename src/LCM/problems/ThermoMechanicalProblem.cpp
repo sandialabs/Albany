@@ -32,7 +32,7 @@ ThermoMechanicalProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   numDim(numDim_)
 {
  
-  std::string& method = params->get("Name", "ThermoMechanical ");
+  std::string& method = params->get("Name", "ThermoMechanical");
   *out << "Problem Name = " << method << std::endl;
   
   haveSource =  params->isSublist("Source Functions");

@@ -33,10 +33,9 @@ namespace Albany {
   public:
   
     //! Default constructor
-    GradientDamageProblem(
-                         const Teuchos::RCP<Teuchos::ParameterList>& params,
-                         const Teuchos::RCP<ParamLib>& paramLib,
-                         const int numEq);
+    GradientDamageProblem( const Teuchos::RCP<Teuchos::ParameterList>& params,
+                           const Teuchos::RCP<ParamLib>& paramLib,
+                           const int numEq);
 
     //! Destructor
     virtual ~GradientDamageProblem();

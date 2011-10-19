@@ -32,6 +32,7 @@
 #include "LCM/problems/ThermoElasticityProblem.hpp"
 #include "LCM/problems/PoroElasticityProblem.hpp"
 #include "LCM/problems/GradientDamageProblem.hpp"
+#include "LCM/problems/ThermoMechanicalProblem.hpp"
 #ifdef ALBANY_LAME
 #include "LCM/problems/LameProblem.hpp"
 #endif
@@ -161,6 +162,9 @@ Albany::ProblemFactory::create()
   }
   else if (method == "GradientDamage") {
     strategy = rcp(new Albany::GradientDamageProblem(problemParams, paramLib, 3));
+  }
+  else if (method == "ThermoMechanical") {
+    strategy = rcp(new Albany::ThermoMechanicalProblem(problemParams, paramLib, 3));
   }
 #endif
   else {

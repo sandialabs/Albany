@@ -211,7 +211,7 @@ void Albany::ThermoMechanicalProblem::constructEvaluators( PHX::FieldManager<PHA
 
     //Outputs: F, J
     p->set<string>("DefGrad Name", "Deformation Gradient"); //dl->qp_tensor also
-    p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient"); 
+    p->set<string>("DetDefGrad Name", "Determinant of the Deformation Gradient"); 
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     ev = rcp(new LCM::DefGrad<EvalT,AlbanyTraits>(*p));
@@ -229,7 +229,7 @@ void Albany::ThermoMechanicalProblem::constructEvaluators( PHX::FieldManager<PHA
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
-    p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient");  // dl->qp_scalar also
+    p->set<string>("DetDefGrad Name", "Determinant of the Deformation Gradient");  // dl->qp_scalar also
 
     //Output
     p->set<string>("Stress Name", "Stress"); //dl->qp_tensor also
@@ -248,8 +248,15 @@ void Albany::ThermoMechanicalProblem::constructEvaluators( PHX::FieldManager<PHA
     p->set<string>("Stress Name", "Stress");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
+    p->set<string>("DetDefGrad Name", "Determinant of the Deformation Gradient");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+    p->set<string>("DefGrad Name", "Deformation Gradient");
+
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
     p->set<bool>("Disable Transient", true);
 

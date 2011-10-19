@@ -15,8 +15,8 @@
 \********************************************************************/
 
 
-#ifndef THERMOMECHANICALPROBLEM_HPP
-#define THERMOMECHANICALPROBLEM_HPP
+#ifndef THERMO_MECHANICAL_PROBLEM_HPP
+#define THERMO_MECHANICAL_PROBLEM_HPP
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"

@@ -36,8 +36,6 @@ ThermoMechanicalMomentumResidual(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
   wGradBF     (p.get<std::string>                   ("Weighted Gradient BF Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
-  wBF         (p.get<std::string>                   ("Weighted BF Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
   Residual    (p.get<std::string>                   ("Residual Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") )
 {
@@ -45,7 +43,6 @@ ThermoMechanicalMomentumResidual(const Teuchos::ParameterList& p) :
   this->addDependentField(J);
   this->addDependentField(defgrad);
   this->addDependentField(wGradBF);
-  this->addDependentField(wBF);
 
   this->addEvaluatedField(Residual);
 
@@ -83,7 +80,6 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(J,fm);
   this->utils.setFieldData(defgrad,fm);
   this->utils.setFieldData(wGradBF,fm);
-  this->utils.setFieldData(wBF,fm);
 
   this->utils.setFieldData(Residual,fm);
 }
