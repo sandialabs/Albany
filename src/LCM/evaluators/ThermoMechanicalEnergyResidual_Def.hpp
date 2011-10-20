@@ -82,7 +82,7 @@ ThermoMechanicalEnergyResidual(const Teuchos::ParameterList& p) :
   flux.resize(dims[0], numQPs, numDims);
   C.resize(worksetSize, numQPs, numDims, numDims);
   Cinv.resize(worksetSize, numQPs, numDims, numDims);
-  CinvTgrad.resize(worksetSize, numQPs, numDims, numDims);
+  CinvTgrad.resize(worksetSize, numQPs, numDims);
 
   if (haveAbsorption)  aterm.resize(dims[0], numQPs);
 
@@ -117,7 +117,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(Temperature,fm);
   this->utils.setFieldData(ThermalCond,fm);
   this->utils.setFieldData(TGrad,fm);
-  this->utils.setFieldData(wGradBF,fm);
+  this->utils.setFieldData(wGradBF,fm);  
+  this->utils.setFieldData(F,fm);
   if (haveSource)  this->utils.setFieldData(Source,fm);
   if (enableTransient) this->utils.setFieldData(Tdot,fm);
 
@@ -138,7 +139,7 @@ evaluateFields(typename Traits::EvalData workset)
   FST::tensorMultiplyDataData<ScalarT> (C, F, F, 'T');
   Intrepid::RealSpaceTools<ScalarT>::inverse(Cinv, C);
   FST::tensorMultiplyDataData<ScalarT> (CinvTgrad, Cinv, TGrad);
-  FST::scalarMultiplyDataData<ScalarT> (flux, CinvTgrad, ThermalCond);
+  FST::scalarMultiplyDataData<ScalarT> (flux, ThermalCond, CinvTgrad);
 
   FST::integrate<ScalarT>(TResidual, flux, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
 

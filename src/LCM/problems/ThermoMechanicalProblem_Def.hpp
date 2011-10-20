@@ -355,7 +355,7 @@ void Albany::ThermoMechanicalProblem::constructEvaluators( PHX::FieldManager<PHA
   }
 
   else {
-    //Construct Rsponses
+    //Construct Responses
     Teuchos::ParameterList& responseList = params->sublist("Response Functions");
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
     respUtils.constructResponses(fm0, responses, responseList, stateMgr);

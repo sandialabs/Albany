@@ -109,6 +109,7 @@ Albany::ThermoMechanicalProblem::getValidProblemParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidThermoMechanicalProblemParams");
 
+  validPL->sublist("Thermal Conductivity", false, "");
   validPL->sublist("Elastic Modulus", false, "");
   validPL->sublist("Poissons Ratio", false, "");
 
