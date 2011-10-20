@@ -85,7 +85,7 @@ namespace LCM {
     this->addEvaluatedField(TResidual);
 
     Teuchos::RCP<PHX::DataLayout> vector_dl =
-      p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
+      p.get< Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout");
     std::vector<PHX::DataLayout::size_type> dims;
     vector_dl->dimensions(dims);
 
@@ -97,8 +97,9 @@ namespace LCM {
 
 
     worksetSize = dims[0];
-    numQPs  = dims[1];
-    numDims = dims[2];
+    numNodes = dims[1];
+    numQPs  = dims[2];
+    numDims = dims[3];
 
 
 
@@ -167,48 +168,54 @@ evaluateFields(typename Traits::EvalData workset)
   // Cozeny-Carman relation added. I keep the thermal conductivity for future use. -S Sun
 
 
+ // FST::integrate<ScalarT>(TResidual, porosity, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+//  FST::integrate<ScalarT>(TResidual, Tdot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+//
 
-  FST::scalarMultiplyDataData<ScalarT> (flux, kcPermeability, TGrad); // flux_i = k I_ij p_j
-
-  FST::integrate<ScalarT>(TResidual, flux, wGradBF, Intrepid::COMP_CPP, false); // "true" sums into
-//
-//  if (haveSource) {
-//    for (int i=0; i<Source.size(); i++) Source[i] *= -1.0;
-//    FST::integrate<ScalarT>(TResidual, Source, wBF, Intrepid::COMP_CPP, false); // "true" sums into
-//  }
-//
-//  if (workset.transientTerms && enableTransient)
-//    FST::integrate<ScalarT>(TResidual, Tdot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
-//
-//
-//  if (haveAbsorption) {
-//    FST::scalarMultiplyDataData<ScalarT> (aterm, Absorption, porePressure);
-//    FST::integrate<ScalarT>(TResidual, aterm, wBF, Intrepid::COMP_CPP, false);
-//  }
-
-  // Undrained Condition
+  // Pore-fluid diffusion coupling.
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+
        for (std::size_t node=0; node < numNodes; ++node) {
     	   TResidual(cell,node)=0.0;
            for (std::size_t qp=0; qp < numQPs; ++qp) {
-  //            TResidual(cell,node) = biotCoefficient(cell, node, qp)*(  (strain(cell,qp,0,0) + strain(cell,qp,1,1) +
-  //             		                    strain(cell,qp,2,2))
-  //             		                 -(strainold(cell,qp,0,0) + strainold(cell,qp,1,1) +  strainold(cell,qp,2,2))
- //                                     ) *wBF(cell, node, qp)/workset.delta_time ; // Div u solid skeleton constraint
-              TResidual(cell,node) += -biotCoefficient(cell, node, qp)*(
-            		  porosity(cell, node, qp) - porosityold(cell, node, qp)
-                                       ) *wBF(cell, node, qp)/workset.delta_time ; // Div u solid skeleton constraint
-              TResidual(cell,node) += (porePressure(cell, node, qp)
-            		                      -porePressureold(cell, node, qp) )
-           		                  /biotModulus(cell, node, qp)
-		                              /workset.delta_time*wBF(cell, node, qp); // 1/Mp pore pressure constraint
-              // pore-fluid diffusion
-              for (std::size_t dim=0; dim<numDims; dim++) {
-            	  TResidual(cell,node) +=  -kcPermeability(cell, node, qp)*TGrad(cell, node, qp, dim)
-                              		                *wGradBF(cell, node, qp, dim); // Darcy's velocity
-              }
+
+// Transient partiall saturated flow (work in progress)
+//              TResidual(cell,node) = -biotCoefficient(cell, qp)*(  (strain(cell,qp,0,0) + strain(cell,qp,1,1) +
+//               		                    strain(cell,qp,2,2))
+ //              		                 -(strainold(cell,qp,0,0) + strainold(cell,qp,1,1) +  strainold(cell,qp,2,2))
+//                                      ) *wBF(cell, node, qp)/workset.delta_time ; // Div u solid skeleton constraint
+
+
+//              TResidual(cell,node) += -biotCoefficient(cell, qp)*(
+//            		                   porosity(cell, qp) - porosityold(cell, qp)
+//                                        ) *wBF(cell, node, qp)/workset.delta_time  ; // Div u solid skeleton constraint
+               TResidual(cell,node) +=  -(Tdot(cell, qp))
+            		                    /biotModulus(cell, qp)*
+             		                     wBF(cell, node, qp); // 1/Mp pore pressure constraint
+
+
+// Undrained Condition only (not time depdendent)
+
+//        	                 TResidual(cell,node) += -biotCoefficient(cell, qp)*(
+//        	                		 strain(cell,qp,0,0) + strain(cell,qp,1,1) +
+ //       	                		  strain(cell,qp,2,2)) *wBF(cell, node, qp)  ; // Div u solid skeleton constraint
+ //       	                 TResidual(cell,node) +=  -(porePressure(cell, qp))
+ //       	               		                    /biotModulus(cell, qp)*
+ //       	                		                     wBF(cell, node, qp); // 1/Mp pore pressure constraint
+
+
 
    } } }
+
+
+  // Pore-Fluid Diffusion Term
+   FST::scalarMultiplyDataData<ScalarT> (flux, kcPermeability, TGrad); // flux_i = k I_ij p_j
+
+    FST::integrate<ScalarT>(TResidual, flux, wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
+
+
+
+
 
 
 

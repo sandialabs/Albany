@@ -308,6 +308,9 @@ Albany::PoroElasticityProblem::constructEvaluators(
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
      evaluators_to_build["Kozeny-Carman Permeability"] = p;
+     evaluators_to_build["Save KC Permeability"] =
+        		       	  stateMgr.registerStateVariable("Kozeny-Carman Permeability",dl->qp_scalar,
+        		       	   dl->dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
     }
 
   // Skeleton parameter
@@ -466,6 +469,11 @@ Albany::PoroElasticityProblem::constructEvaluators(
 
     evaluators_to_build["Source"] = p;
   }
+
+
+
+
+
   { // Pore Pressure Resid
     RCP<ParameterList> p = rcp(new ParameterList("Pore Pressure Resid"));
 

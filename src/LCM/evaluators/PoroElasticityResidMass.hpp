@@ -81,6 +81,7 @@ private:
   unsigned int numDims;
   unsigned int worksetSize;
   Intrepid::FieldContainer<ScalarT> flux;
+  Intrepid::FieldContainer<ScalarT> pterm;
   Intrepid::FieldContainer<ScalarT> aterm;
 };
 }
