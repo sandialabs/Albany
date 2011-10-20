@@ -174,14 +174,14 @@ evaluateFields(typename Traits::EvalData workset)
     	   TResidual(cell,node)=0.0;
            for (std::size_t qp=0; qp < numQPs; ++qp) {
 
-// Transient partiall saturated flow (work in progress)
+// Transient partial saturated flow (work in progress)
 
         	   // Volumetric Constraint Term
-//              TResidual(cell,node) += -biotCoefficient(cell, qp)*(
-//            		                   porosity(cell, qp) - porosityold(cell, qp)
-//                                        )/workset.delta_time *wBF(cell, node, qp)  ;
+              TResidual(cell,node) += -biotCoefficient(cell, qp)*(
+            		  strain(cell,qp,0,0) + strain(cell,qp,1,1)+strain(cell,qp,2,2) )
+            		  *wBF(cell, node, qp)  ;
         	   // Pore-fluid Resistance Term
-               TResidual(cell,node) +=  -(Tdot(cell, qp))
+               TResidual(cell,node) +=  -(porePressure(cell, qp))
             		                    /biotModulus(cell, qp)*
              		                     wBF(cell, node, qp); // 1/Mp pore pressure constraint
 
@@ -191,9 +191,15 @@ evaluateFields(typename Traits::EvalData workset)
   // Pore-Fluid Diffusion Term
    FST::scalarMultiplyDataData<ScalarT> (flux, kcPermeability, TGrad); // flux_i = k I_ij p_j
 
-    FST::integrate<ScalarT>(TResidual, flux, wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
+   FST::integrate<ScalarT>(TResidual, flux, wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
 
 
+   // Problem here.............
+   // currently workset.delta_time = 0, so it becomes a problem when something is divided by time...
+   // try cout << Tdot(2,3) << '\n'; no effect at all Tdot = 0.
+   // try cout << workset.delta_time << '\n';   time = 0 at all time step
+   // try cout << porosityold(5,3) << '\n'; this one return correct value.
+   // Also check the old data (porePressureold..etc), they lead to segmentation fault for unknown reasons.
 
 
 
