@@ -167,11 +167,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Cozeny-Carman relation added. I keep the thermal conductivity for future use. -S Sun
 
-
- // FST::integrate<ScalarT>(TResidual, porosity, wBF, Intrepid::COMP_CPP, true); // "true" sums into
-//  FST::integrate<ScalarT>(TResidual, Tdot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
-//
-
   // Pore-fluid diffusion coupling.
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
@@ -180,30 +175,15 @@ evaluateFields(typename Traits::EvalData workset)
            for (std::size_t qp=0; qp < numQPs; ++qp) {
 
 // Transient partiall saturated flow (work in progress)
-//              TResidual(cell,node) = -biotCoefficient(cell, qp)*(  (strain(cell,qp,0,0) + strain(cell,qp,1,1) +
-//               		                    strain(cell,qp,2,2))
- //              		                 -(strainold(cell,qp,0,0) + strainold(cell,qp,1,1) +  strainold(cell,qp,2,2))
-//                                      ) *wBF(cell, node, qp)/workset.delta_time ; // Div u solid skeleton constraint
 
-
+        	   // Volumetric Constraint Term
 //              TResidual(cell,node) += -biotCoefficient(cell, qp)*(
 //            		                   porosity(cell, qp) - porosityold(cell, qp)
-//                                        ) *wBF(cell, node, qp)/workset.delta_time  ; // Div u solid skeleton constraint
+//                                        )/workset.delta_time *wBF(cell, node, qp)  ;
+        	   // Pore-fluid Resistance Term
                TResidual(cell,node) +=  -(Tdot(cell, qp))
             		                    /biotModulus(cell, qp)*
              		                     wBF(cell, node, qp); // 1/Mp pore pressure constraint
-
-
-// Undrained Condition only (not time depdendent)
-
-//        	                 TResidual(cell,node) += -biotCoefficient(cell, qp)*(
-//        	                		 strain(cell,qp,0,0) + strain(cell,qp,1,1) +
- //       	                		  strain(cell,qp,2,2)) *wBF(cell, node, qp)  ; // Div u solid skeleton constraint
- //       	                 TResidual(cell,node) +=  -(porePressure(cell, qp))
- //       	               		                    /biotModulus(cell, qp)*
- //       	                		                     wBF(cell, node, qp); // 1/Mp pore pressure constraint
-
-
 
    } } }
 
@@ -212,9 +192,6 @@ evaluateFields(typename Traits::EvalData workset)
    FST::scalarMultiplyDataData<ScalarT> (flux, kcPermeability, TGrad); // flux_i = k I_ij p_j
 
     FST::integrate<ScalarT>(TResidual, flux, wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
-
-
-
 
 
 
