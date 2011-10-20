@@ -908,6 +908,8 @@ evaluateResponseGradient(const double current_time,
     unsigned int num_responses = responses[i]->numResponses();
     Epetra_LocalMap local_response_map(num_responses, 0, comm);
 
+cout << " eeeee  numresponses " << num_responses << endl;
+
     // Create Epetra_Vectors for response function
     RCP<Epetra_Vector> local_g;
     if (g != NULL)
@@ -2749,6 +2751,16 @@ void Albany::Application::postRegSetup(std::string eval)
       for (int ps=0; ps < rfm.size(); ps++) {
         std::stringstream pg; pg << "responses_graph_" << ps;
         rfm[ps]->writeGraphvizFile<PHAL::AlbanyTraits::Residual>(pg.str(),detail,detail);
+      }
+      respGraphVisDetail = -1;
+    }
+    else if (eval=="Response Gradients") {
+      *out << "Phalanx writing graphviz file for graph of Response Gradient fill (detail ="
+           << respGraphVisDetail << ")"<<endl;
+      *out << "Process using 'dot -Tpng -O responses_graph' \n" << endl;
+      for (int ps=0; ps < rfm.size(); ps++) {
+        std::stringstream pg; pg << "responses_graph_" << ps;
+        rfm[ps]->writeGraphvizFile<PHAL::AlbanyTraits::Jacobian>(pg.str(),detail,detail);
       }
       respGraphVisDetail = -1;
     }

@@ -46,7 +46,7 @@ void Albany::ThermoElasticityProblem::constructEvaluators(
         PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         const Albany::MeshSpecsStruct& meshSpecs,
         Albany::StateManager& stateMgr,
-        std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
+        Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
         bool constructResponses)
 {
    using Teuchos::RCP;
@@ -315,16 +315,6 @@ void Albany::ThermoElasticityProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-   // Build Field Evaluators for each evaluation type
-  // PHX::EvaluatorFactory<AlbanyTraits,LCM::FactoryTraits<AlbanyTraits> > factory;
-  // RCP< vector< RCP<PHX::Evaluator_TemplateManager<AlbanyTraits> > > >
-  //   evaluators;
-  // evaluators = factory.buildEvaluators(evaluators_to_build);
-//
-//   // Create a FieldManager
-//
-//   // Register all Evaluators
- //  PHX::registerEvaluators(evaluators, *fm[0]);
 
    if (!constructResponses)  {
      PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter", dl->dummy);
@@ -335,7 +325,6 @@ void Albany::ThermoElasticityProblem::constructEvaluators(
    }
 
    else {
-     //Construct Rsponses
      Teuchos::ParameterList& responseList = params->sublist("Response Functions");
      Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
      respUtils.constructResponses(fm0, responses, responseList, stateMgr);

@@ -36,7 +36,7 @@ Albany::ResponseUtils::ResponseUtils(
 
 Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > 
 Albany::ResponseUtils::constructResponses(
-  std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
+  Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
   Teuchos::ParameterList& responseList, 
   std::map<string, Teuchos::RCP<Teuchos::ParameterList> >& evaluators_to_build, 
   Albany::StateManager& stateMgr)
@@ -160,7 +160,7 @@ Albany::ResponseUtils::createResponseFieldManager(
 Teuchos::RCP<Teuchos::ParameterList>
 Albany::ResponseUtils::setupResponseFnForEvaluator(
   Teuchos::ParameterList& responseList, int responseNumber,
-  std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
+  Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
   using Teuchos::RCP;
   using Teuchos::ParameterList;
@@ -199,7 +199,7 @@ bool
 Albany::ResponseUtils::getStdResponseFn(
     std::string responseName, int responseIndex,
     Teuchos::ParameterList& responseList,
-    std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
+    Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
     Albany::StateManager& stateMgr,    
     Teuchos::RCP<Teuchos::ParameterList>& p)
 {

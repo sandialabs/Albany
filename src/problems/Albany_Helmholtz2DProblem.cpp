@@ -16,6 +16,7 @@
 
 
 #include "Albany_Helmholtz2DProblem.hpp"
+#include "Albany_Helmholtz2DProblem_Def.hpp"
 #include "Albany_SolutionAverageResponseFunction.hpp"
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
 #include "Albany_InitialCondition.hpp"
@@ -47,208 +48,34 @@ Albany::Helmholtz2DProblem::
 buildProblem(
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
     Albany::StateManager& stateMgr,
-    std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
+    Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
   /* Construct All Phalanx Evaluators */
   TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
   fm.resize(1); rfm.resize(1);
-  constructEvaluators(*meshSpecs[0], stateMgr, responses);
+  fm[0]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+  rfm[0] = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+
+  constructEvaluators<PHAL::AlbanyTraits::Residual  >(*fm[0], *meshSpecs[0], stateMgr);
+  constructEvaluators<PHAL::AlbanyTraits::Jacobian  >(*fm[0], *meshSpecs[0], stateMgr);
+  constructEvaluators<PHAL::AlbanyTraits::Tangent   >(*fm[0], *meshSpecs[0], stateMgr);
+  constructEvaluators<PHAL::AlbanyTraits::SGResidual>(*fm[0], *meshSpecs[0], stateMgr);
+  constructEvaluators<PHAL::AlbanyTraits::SGJacobian>(*fm[0], *meshSpecs[0], stateMgr);
+  constructEvaluators<PHAL::AlbanyTraits::SGTangent >(*fm[0], *meshSpecs[0], stateMgr);
+  constructEvaluators<PHAL::AlbanyTraits::MPResidual>(*fm[0], *meshSpecs[0], stateMgr);
+  constructEvaluators<PHAL::AlbanyTraits::MPJacobian>(*fm[0], *meshSpecs[0], stateMgr);
+  constructEvaluators<PHAL::AlbanyTraits::MPTangent >(*fm[0], *meshSpecs[0], stateMgr);
+  constructEvaluators<PHAL::AlbanyTraits::Residual  >(*rfm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RFM, responses);
+  constructEvaluators<PHAL::AlbanyTraits::Jacobian  >(*rfm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RFM);
+  constructEvaluators<PHAL::AlbanyTraits::Tangent   >(*rfm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RFM);
+  constructEvaluators<PHAL::AlbanyTraits::SGResidual>(*rfm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RFM);
+  constructEvaluators<PHAL::AlbanyTraits::SGJacobian>(*rfm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RFM);
+  constructEvaluators<PHAL::AlbanyTraits::SGTangent >(*rfm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RFM);
+  constructEvaluators<PHAL::AlbanyTraits::MPResidual>(*rfm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RFM);
+  constructEvaluators<PHAL::AlbanyTraits::MPJacobian>(*rfm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RFM);
+  constructEvaluators<PHAL::AlbanyTraits::MPTangent >(*rfm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RFM);
+
   constructDirichletEvaluators(*meshSpecs[0]);
-}
-
-void
-Albany::Helmholtz2DProblem::constructEvaluators(
-       const Albany::MeshSpecsStruct& meshSpecs,
-       Albany::StateManager& stateMgr,
-       std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
-{
-   using Teuchos::RCP;
-   using Teuchos::rcp;
-   using Teuchos::ParameterList;
-   using PHX::DataLayout;
-   using PHX::MDALayout;
-   using std::vector;
-   using PHAL::FactoryTraits;
-   using PHAL::AlbanyTraits;
-
-   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology(&meshSpecs.ctd)); 
-   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
-     intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
-
-   const int numNodes = intrepidBasis->getCardinality();
-   const int worksetSize = meshSpecs.worksetSize;
-
-   Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-
-   RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
-
-   const int numDim = cubature->getDimension();
-   const int numQPts = cubature->getNumPoints();
-   const int numVertices = cellType->getVertexCount();
-
-   *out << "Field Dimensions: Workset=" << worksetSize
-        << ", Vertices= " << numVertices
-        << ", Nodes= " << numNodes
-        << ", QuadPts= " << numQPts
-        << ", Dim= " << numDim << endl;
-
-   // Construct standard FEM evaluators with standard field names                              
-   std::map<string, RCP<ParameterList> > evaluators_to_build;
-   RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
-   Albany::ProblemUtils probUtils(dl);
-   bool supportsTransient=false;
-
-   // Define Field Names
-
-   Teuchos::ArrayRCP<string> dof_names(neq);
-     dof_names[0] = "U";
-     dof_names[1] = "V";
-
-   Teuchos::ArrayRCP<string> dof_names_dot(neq);
-   if (supportsTransient) {
-     for (int i=0; i<neq; i++) dof_names_dot[i] = dof_names[i]+"_dot";
-   }
-
-   Teuchos::ArrayRCP<string> resid_names(neq);
-     for (int i=0; i<neq; i++) resid_names[i] = dof_names[i]+" Residual";
-
-   if (supportsTransient) evaluators_to_build["Gather Solution"] =
-       probUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot);
-   else  evaluators_to_build["Gather Solution"] =
-       probUtils.constructGatherSolutionEvaluator_noTransient(false, dof_names);
-
-   evaluators_to_build["Scatter Residual"] =
-     probUtils.constructScatterResidualEvaluator(false, resid_names);
-
-   evaluators_to_build["Gather Coordinate Vector"] =
-     probUtils.constructGatherCoordinateVectorEvaluator();
-
-   evaluators_to_build["Map To Physical Frame"] =
-     probUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature);
-
-   evaluators_to_build["Compute Basis Functions"] =
-     probUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature);
-
-   for (int i=0; i<neq; i++) {
-     evaluators_to_build["DOF "+dof_names[i]] =
-       probUtils.constructDOFInterpolationEvaluator(dof_names[i]);
-
-     if (supportsTransient)
-       evaluators_to_build["DOF "+dof_names_dot[i]] =
-         probUtils.constructDOFInterpolationEvaluator(dof_names_dot[i]);
-
-     evaluators_to_build["DOF Grad "+dof_names[i]] =
-       probUtils.constructDOFGradInterpolationEvaluator(dof_names[i]);
-  }
-
-  if (haveSource) { // Source on U (Real) equation
-    RCP<ParameterList> p = rcp(new ParameterList("Helmholtz Source U"));
-
-    int type = FactoryTraits<AlbanyTraits>::id_source;
-    p->set<int>("Type", type);
-
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-
-    p->set<string>("Pressure Source Name", "U GaussMonotone");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-
-
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Source Functions");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-    evaluators_to_build["Source U"] = p;
-  }
-
-  if (haveSource) { // Source on V (Imag) equation
-    RCP<ParameterList> p = rcp(new ParameterList("Helmholtz Source V"));
-
-    int type = FactoryTraits<AlbanyTraits>::id_source;
-    p->set<int>("Type", type);
-
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-
-    p->set<string>("Pressure Source Name", "V GaussMonotone");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-
-
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Source Functions");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-    evaluators_to_build["Source V"] = p;
-  }
-
-  { // Helmholtz Resid
-    RCP<ParameterList> p = rcp(new ParameterList("Helmholtz Resid"));
-
-    int type = FactoryTraits<AlbanyTraits>::id_helmholtzresid;
-    p->set<int>("Type", type);
-
-    //Input
-    p->set<string>("Weighted BF Name", "wBF");
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
-
-    p->set<string>("U Variable Name", "U");
-    p->set<string>("V Variable Name", "V");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
-
-    p->set<string>("U Gradient Variable Name", "U Gradient");
-    p->set<string>("V Gradient Variable Name", "V Gradient");
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-
-    p->set<bool>("Have Source", haveSource);
-    p->set<string>("U Pressure Source Name", "U GaussMonotone");
-    p->set<string>("V Pressure Source Name", "V GaussMonotone");
-
-    p->set<double>("Ksqr", ksqr);
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-
-    //Output
-    p->set<string>("U Residual Name", "U Residual");
-    p->set<string>("V Residual Name", "V Residual");
-    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
-
-    evaluators_to_build["Helmholtz Resid"] = p;
-  }
-
-   // Build Field Evaluators for each evaluation type
-   PHX::EvaluatorFactory<AlbanyTraits,FactoryTraits<AlbanyTraits> > factory;
-   RCP< vector< RCP<PHX::Evaluator_TemplateManager<AlbanyTraits> > > >
-     evaluators;
-   evaluators = factory.buildEvaluators(evaluators_to_build);
-
-   // Create a FieldManager
-   fm[0] = Teuchos::rcp(new PHX::FieldManager<AlbanyTraits>);
-
-   // Register all Evaluators
-   PHX::registerEvaluators(evaluators, *fm[0]);
-
-   PHX::Tag<AlbanyTraits::Residual::ScalarT> res_tag("Scatter", dl->dummy);
-   fm[0]->requireField<AlbanyTraits::Residual>(res_tag);
-   PHX::Tag<AlbanyTraits::Jacobian::ScalarT> jac_tag("Scatter", dl->dummy);
-   fm[0]->requireField<AlbanyTraits::Jacobian>(jac_tag);
-   PHX::Tag<AlbanyTraits::Tangent::ScalarT> tan_tag("Scatter", dl->dummy);
-   fm[0]->requireField<AlbanyTraits::Tangent>(tan_tag);
-   PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_tag("Scatter", dl->dummy);
-   fm[0]->requireField<AlbanyTraits::SGResidual>(sgres_tag);
-   PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag("Scatter", dl->dummy);
-   fm[0]->requireField<AlbanyTraits::SGJacobian>(sgjac_tag);
-   PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag("Scatter", dl->dummy);
-   fm[0]->requireField<AlbanyTraits::MPResidual>(mpres_tag);
-   PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag("Scatter", dl->dummy);
-   fm[0]->requireField<AlbanyTraits::MPJacobian>(mpjac_tag);
-
-   // Construct Rsponses
-
-   Teuchos::ParameterList& responseList = params->sublist("Response Functions");
-   Albany::ResponseUtils respUtils(dl);
-   rfm[0] = respUtils.constructResponses(responses, responseList, evaluators_to_build, stateMgr);
 }
 
 void

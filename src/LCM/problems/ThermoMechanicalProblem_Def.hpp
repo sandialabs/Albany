@@ -46,7 +46,7 @@ template <typename EvalT>
 void Albany::ThermoMechanicalProblem::constructEvaluators( PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                                            const Albany::MeshSpecsStruct& meshSpecs,
                                                            Albany::StateManager& stateMgr,
-                                                           std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
+                                                           Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
                                                            bool constructResponses )
 {
   using Teuchos::RCP;

@@ -78,11 +78,17 @@ SET(HEADERS ${HEADERS}
 	problems/Albany_ResponseUtilities_Def.hpp 
 	problems/Albany_DirichletUtils.hpp 
 	problems/Albany_HeatProblem.hpp 
+	problems/Albany_HeatProblem_Def.hpp 
 	problems/Albany_MultiHeatProblem.hpp 
+	problems/Albany_MultiHeatProblem_Def.hpp 
 	problems/Albany_NavierStokes.hpp 
+	problems/Albany_NavierStokes_Def.hpp 
 	problems/Albany_ODEProblem.hpp 
+	problems/Albany_ODEProblem_Def.hpp 
 	problems/Albany_Helmholtz2DProblem.hpp 
+	problems/Albany_Helmholtz2DProblem_Def.hpp 
 	problems/Albany_ThermoElectrostaticsProblem.hpp 
+	problems/Albany_ThermoElectrostaticsProblem_Def.hpp 
 	problems/Albany_AnalyticFunction.hpp 
 	problems/Albany_InitialCondition.hpp 
   )

@@ -23,6 +23,7 @@
 
 #include "Albany_AbstractProblem.hpp"
 #include "Albany_ProblemUtils.hpp"
+#include "Albany_ResponseUtilities.hpp"
 
 #include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
@@ -51,7 +52,7 @@ namespace QCAD {
     void buildProblem(
        Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
        Albany::StateManager& stateMgr,
-       std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
+       Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
 
     //! Each problem must generate it's list of valide parameters
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
@@ -64,16 +65,24 @@ namespace QCAD {
     //! Private to prohibit copying
     SchrodingerProblem& operator=(const SchrodingerProblem&);
 
-    void constructEvaluators(const Albany::MeshSpecsStruct& meshSpecs,
-                             Albany::StateManager& stateMgr,
-			     std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
+    template <typename EvalT>
+    void constructEvaluators(
+            PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+            const Albany::MeshSpecsStruct& meshSpecs,
+            Albany::StateManager& stateMgr,
+            Albany::FieldManagerChoice fmchoice = Albany::BUILD_FM,
+            Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> > responses
+             = Teuchos::null);
+
     void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
 
-    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
-    constructResponses(std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
-			    Teuchos::ParameterList& responseList, 
-			    std::map<std::string, Teuchos::RCP<Teuchos::ParameterList> >& evaluators_to_build, 
-			    Albany::StateManager& stateMgr, Albany::ResponseUtils& respUtils);
+    template <typename EvalT>
+    void
+    constructResponses(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                       Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
+		       Teuchos::ParameterList& responseList, 
+		       Albany::StateManager& stateMgr,
+                       Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits>& respUtils);
 
   protected:
     Teuchos::RCP<const Epetra_Comm> comm;

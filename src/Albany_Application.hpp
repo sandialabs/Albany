@@ -538,7 +538,7 @@ namespace Albany {
     Teuchos::RCP<ParamLib> paramLib;
 
     //! Response functions
-    std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> > responses;
+    Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> > responses;
 
     //! Map for combined response functions
     Teuchos::RCP<Epetra_Map> response_map;

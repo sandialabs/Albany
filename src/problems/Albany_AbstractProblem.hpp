@@ -61,6 +61,8 @@
 
 namespace Albany {
 
+  enum FieldManagerChoice {BUILD_FM, BUILD_RFM};
+
   /*!
    * \brief Abstract interface for representing a 1-D finite element
    * problem.
@@ -86,7 +88,7 @@ namespace Albany {
     virtual void buildProblem(
        Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
        StateManager& stateMgr,
-       std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses) = 0;
+       Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses) = 0;
 
     Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > getFieldManager();
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > getDirichletFieldManager() ;

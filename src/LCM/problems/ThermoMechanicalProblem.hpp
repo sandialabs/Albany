@@ -51,7 +51,7 @@ namespace Albany {
     virtual void 
     buildProblem( Teuchos::ArrayRCP<Teuchos::RCP< Albany::MeshSpecsStruct > >  meshSpecs,
 		  StateManager& stateMgr,
-		  std::vector< Teuchos::RCP< Albany::AbstractResponseFunction > >& responses );
+		  Teuchos::ArrayRCP< Teuchos::RCP< Albany::AbstractResponseFunction > >& responses );
 
     //! Each problem must generate it's list of valid parameters
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
@@ -70,7 +70,7 @@ namespace Albany {
     //    template <typename EvalT>
     //    void constructEvaluators<EvalT>(const Albany::MeshSpecsStruct& meshSpecs,
     //                             Albany::StateManager& stateMgr,
-    //                             std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
+    //                             Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
 
     void constructDirichletEvaluators( const Albany::MeshSpecsStruct& meshSpecs );
 
@@ -90,7 +90,7 @@ namespace Albany {
     void constructEvaluators( PHX::FieldManager< PHAL::AlbanyTraits >& fm0,
 			      const Albany::MeshSpecsStruct& meshSpecs,
 			      Albany::StateManager& stateMgr,
-			      std::vector< Teuchos::RCP< Albany::AbstractResponseFunction > >& responses,
+			      Teuchos::ArrayRCP< Teuchos::RCP< Albany::AbstractResponseFunction > >& responses,
 			      bool constructResponses = false);
   };
 

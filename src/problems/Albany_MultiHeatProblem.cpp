@@ -16,6 +16,7 @@
 
 
 #include "Albany_MultiHeatProblem.hpp"
+#include "Albany_MultiHeatProblem_Def.hpp"
 #include "Albany_SolutionAverageResponseFunction.hpp"
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
 #include "Albany_SolutionMaxValueResponseFunction.hpp"
@@ -69,228 +70,37 @@ Albany::MultiHeatProblem::
 buildProblem(
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
     Albany::StateManager& stateMgr,
-    std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
+    Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
   /* Construct All Phalanx Evaluators */
   int physSets = meshSpecs.size();
   cout << "MULTIHeat Num MeshSpecs: " << physSets << endl;
   fm.resize(physSets); rfm.resize(physSets);
-  for (int ps=0; ps<physSets; ps++)
-    constructEvaluators(*meshSpecs[ps], stateMgr, responses, ps);
+  for (int ps=0; ps<physSets; ps++) {
+    fm[ps]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+    rfm[ps] = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+
+    constructEvaluators<PHAL::AlbanyTraits::Residual  >(*fm[ps], *meshSpecs[ps], stateMgr);
+    constructEvaluators<PHAL::AlbanyTraits::Jacobian  >(*fm[ps], *meshSpecs[ps], stateMgr);
+    constructEvaluators<PHAL::AlbanyTraits::Tangent   >(*fm[ps], *meshSpecs[ps], stateMgr);
+    constructEvaluators<PHAL::AlbanyTraits::SGResidual>(*fm[ps], *meshSpecs[ps], stateMgr);
+    constructEvaluators<PHAL::AlbanyTraits::SGJacobian>(*fm[ps], *meshSpecs[ps], stateMgr);
+    constructEvaluators<PHAL::AlbanyTraits::SGTangent >(*fm[ps], *meshSpecs[ps], stateMgr);
+    constructEvaluators<PHAL::AlbanyTraits::MPResidual>(*fm[ps], *meshSpecs[ps], stateMgr);
+    constructEvaluators<PHAL::AlbanyTraits::MPJacobian>(*fm[ps], *meshSpecs[ps], stateMgr);
+    constructEvaluators<PHAL::AlbanyTraits::MPTangent >(*fm[ps], *meshSpecs[ps], stateMgr);
+    constructEvaluators<PHAL::AlbanyTraits::Residual  >(*rfm[ps], *meshSpecs[ps], stateMgr, Albany::BUILD_RFM, responses);
+    constructEvaluators<PHAL::AlbanyTraits::Jacobian  >(*rfm[ps], *meshSpecs[ps], stateMgr, Albany::BUILD_RFM);
+    constructEvaluators<PHAL::AlbanyTraits::Tangent   >(*rfm[ps], *meshSpecs[ps], stateMgr, Albany::BUILD_RFM);
+    constructEvaluators<PHAL::AlbanyTraits::SGResidual>(*rfm[ps], *meshSpecs[ps], stateMgr, Albany::BUILD_RFM);
+    constructEvaluators<PHAL::AlbanyTraits::SGJacobian>(*rfm[ps], *meshSpecs[ps], stateMgr, Albany::BUILD_RFM);
+    constructEvaluators<PHAL::AlbanyTraits::SGTangent >(*rfm[ps], *meshSpecs[ps], stateMgr, Albany::BUILD_RFM);
+    constructEvaluators<PHAL::AlbanyTraits::MPResidual>(*rfm[ps], *meshSpecs[ps], stateMgr, Albany::BUILD_RFM);
+    constructEvaluators<PHAL::AlbanyTraits::MPJacobian>(*rfm[ps], *meshSpecs[ps], stateMgr, Albany::BUILD_RFM);
+    constructEvaluators<PHAL::AlbanyTraits::MPTangent >(*rfm[ps], *meshSpecs[ps], stateMgr, Albany::BUILD_RFM);
+  }
+
   constructDirichletEvaluators(*meshSpecs[0]);
-}
-
-void
-Albany::MultiHeatProblem::constructEvaluators(
-       const Albany::MeshSpecsStruct& meshSpecs,
-       Albany::StateManager& stateMgr,
-       std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
-       int ps)
-{
-   using Teuchos::RCP;
-   using Teuchos::rcp;
-   using Teuchos::ParameterList;
-   using PHX::DataLayout;
-   using PHX::MDALayout;
-   using std::vector;
-   using PHAL::FactoryTraits;
-   using PHAL::AlbanyTraits;
-
-   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
-     intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
-   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
-
-   const int numNodes = intrepidBasis->getCardinality();
-   const int worksetSize = meshSpecs.worksetSize;
-
-   Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-   RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
-
-   const int numQPts = cubature->getNumPoints();
-   const int numVertices = cellType->getNodeCount();
-
-   *out << "Field Dimensions: Workset=" << worksetSize 
-        << ", Vertices= " << numVertices
-        << ", Nodes= " << numNodes
-        << ", QuadPts= " << numQPts
-        << ", Dim= " << numDim << endl;
-
-   // Parser will build parameter list that determines the field
-   // evaluators to build
-   std::map<string, RCP<ParameterList> > evaluators_to_build;
-
-   RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
-   Albany::ProblemUtils probUtils(dl);
-
-   Teuchos::ArrayRCP<string> dof_names(neq);
-     dof_names[0] = "Temperature";
-   Teuchos::ArrayRCP<string> dof_names_dot(neq);
-     dof_names_dot[0] = "Temperature_dot";
-   Teuchos::ArrayRCP<string> resid_names(neq);
-     resid_names[0] = "Temperature Residual";
-
-   evaluators_to_build["Gather Solution"] = 
-     probUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot);
-
-   evaluators_to_build["Scatter Residual"] = 
-     probUtils.constructScatterResidualEvaluator(false, resid_names);
-
-  evaluators_to_build["Gather Coordinate Vector"] = 
-    probUtils.constructGatherCoordinateVectorEvaluator();
-
-  evaluators_to_build["Map To Physical Frame"] = 
-    probUtils.constructMapToPhysicalFrameEvaluator( cellType, cubature);
-
-  evaluators_to_build["Compute Basis Functions"] =
-    probUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature);
-
-  for (int i=0; i<neq; i++) {
-    evaluators_to_build["DOF "+dof_names[i]] =
-      probUtils.constructDOFInterpolationEvaluator(dof_names[i]);
-
-    evaluators_to_build["DOF "+dof_names_dot[i]] =
-      probUtils.constructDOFInterpolationEvaluator(dof_names_dot[i]);
-
-    evaluators_to_build["DOF Grad "+dof_names[i]] =
-      probUtils.constructDOFGradInterpolationEvaluator(dof_names[i]);
-  }
-
-  { // Thermal conductivity
-    RCP<ParameterList> p = rcp(new ParameterList);
-
-    int type = FactoryTraits<AlbanyTraits>::id_thermal_conductivity;
-    p->set<int>("Type", type);
-
-    p->set<string>("QP Variable Name", "Thermal Conductivity");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Thermal Conductivity");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-    if(haveMatDB)
-     
-      p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
-
-    evaluators_to_build["Thermal Conductivity"] = p;
-  }
-
-  if (haveAbsorption) { // Absorption
-    RCP<ParameterList> p = rcp(new ParameterList);
-
-    int type = FactoryTraits<AlbanyTraits>::id_absorption;
-    p->set<int>("Type", type);
-
-    p->set<string>("QP Variable Name", "Absorption");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Absorption");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-    evaluators_to_build["Absorption"] = p;
-  }
-
-
-  if (haveSource) { // Source
-    RCP<ParameterList> p = rcp(new ParameterList);
-
-    int type = FactoryTraits<AlbanyTraits>::id_source;
-    p->set<int>("Type", type);
-
-    p->set<string>("Source Name", "Source");
-    p->set<string>("Variable Name", "Temperature");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Source Functions");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-    evaluators_to_build["Source"] = p;
-  }
-
-  { // Temperature Resid
-    RCP<ParameterList> p = rcp(new ParameterList("Temperature Resid"));
-
-    int type = FactoryTraits<AlbanyTraits>::id_heateqresid;
-    p->set<int>("Type", type);
-
-    //Input
-    p->set<string>("Weighted BF Name", "wBF");
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
-    p->set<string>("QP Variable Name", "Temperature");
-
-    p->set<string>("QP Time Derivative Variable Name", "Temperature_dot");
-
-    p->set<bool>("Have Source", haveSource);
-    p->set<bool>("Have Absorption", haveAbsorption);
-    p->set<string>("Source Name", "Source");
-
-    p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-    p->set<string>("Absorption Name", "Thermal Conductivity");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    
-    p->set<string>("Gradient QP Variable Name", "Temperature Gradient");
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-
-    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
-    if (params->isType<string>("Convection Velocity"))
-    	p->set<string>("Convection Velocity",
-                       params->get<string>("Convection Velocity"));
-    if (params->isType<bool>("Have Rho Cp"))
-    	p->set<bool>("Have Rho Cp", params->get<bool>("Have Rho Cp"));
-
-    //Output
-    p->set<string>("Residual Name", "Temperature Residual");
-    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
-
-    evaluators_to_build["Heat Resid"] = p;
-  }
-
-   // Build Field Evaluators for each evaluation type
-   PHX::EvaluatorFactory<AlbanyTraits,FactoryTraits<AlbanyTraits> > factory;
-   RCP< vector< RCP<PHX::Evaluator_TemplateManager<AlbanyTraits> > > >
-     evaluators;
-   evaluators = factory.buildEvaluators(evaluators_to_build);
-
-   // Create a FieldManager
-   fm[ps] = Teuchos::rcp(new PHX::FieldManager<AlbanyTraits>);
-
-   // Register all Evaluators
-   PHX::registerEvaluators(evaluators, *fm[ps]);
-
-   PHX::Tag<AlbanyTraits::Residual::ScalarT> res_tag("Scatter", dl->dummy);
-   fm[ps]->requireField<AlbanyTraits::Residual>(res_tag);
-   PHX::Tag<AlbanyTraits::Jacobian::ScalarT> jac_tag("Scatter", dl->dummy);
-   fm[ps]->requireField<AlbanyTraits::Jacobian>(jac_tag);
-   PHX::Tag<AlbanyTraits::Tangent::ScalarT> tan_tag("Scatter", dl->dummy);
-   fm[ps]->requireField<AlbanyTraits::Tangent>(tan_tag);
-   PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_tag("Scatter", dl->dummy);
-   fm[ps]->requireField<AlbanyTraits::SGResidual>(sgres_tag);
-   PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag("Scatter", dl->dummy);
-   fm[ps]->requireField<AlbanyTraits::SGJacobian>(sgjac_tag);
-   PHX::Tag<AlbanyTraits::SGTangent::ScalarT> sgtan_tag("Scatter", dl->dummy);
-   fm[ps]->requireField<AlbanyTraits::SGTangent>(sgtan_tag);
-   PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag("Scatter", dl->dummy);
-   fm[ps]->requireField<AlbanyTraits::MPResidual>(mpres_tag);
-   PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag("Scatter", dl->dummy);
-   fm[ps]->requireField<AlbanyTraits::MPJacobian>(mpjac_tag);
-   PHX::Tag<AlbanyTraits::MPTangent::ScalarT> mptan_tag("Scatter", dl->dummy);
-   fm[ps]->requireField<AlbanyTraits::MPTangent>(mptan_tag);
-
-   //Construct Rsponses
-   Teuchos::ParameterList& responseList = params->sublist("Response Functions");
-   Albany::ResponseUtils respUtils(dl);
-   rfm[ps] = respUtils.constructResponses(responses, responseList, evaluators_to_build, stateMgr);
 }
 
 void
