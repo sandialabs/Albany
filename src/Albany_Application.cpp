@@ -1658,7 +1658,6 @@ computeGlobalSGTangent(
     workset.delta_time = timeMgr.getDeltaTime();
     if (sg_xdot != NULL) workset.transientTerms = true;
 
-    workset.worksetSize = worksetSize;
     for (int ws=0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo(workset, ws);
 
@@ -2399,7 +2398,6 @@ computeGlobalMPTangent(
     workset.delta_time = timeMgr.getDeltaTime();
     if (mp_xdot != NULL) workset.transientTerms = true;
 
-    workset.worksetSize = worksetSize;
     for (int ws=0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo(workset, ws);
 
@@ -2687,7 +2685,8 @@ void Albany::Application::postRegSetup(std::string eval)
       dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::SGJacobian>(eval);
   }
   else if (eval=="SGTangent") {
-    fm->postRegistrationSetupForType<PHAL::AlbanyTraits::SGTangent>(eval);
+    for (int ps=0; ps < fm.size(); ps++) 
+      fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::SGTangent>(eval);
     if (dfm!=Teuchos::null)
       dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::SGTangent>(eval);
   }
@@ -2704,7 +2703,8 @@ void Albany::Application::postRegSetup(std::string eval)
       dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::MPJacobian>(eval);
   }
   else if (eval=="MPTangent") {
-    fm->postRegistrationSetupForType<PHAL::AlbanyTraits::MPTangent>(eval);
+    for (int ps=0; ps < fm.size(); ps++) 
+      fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::MPTangent>(eval);
     if (dfm!=Teuchos::null)
       dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::MPTangent>(eval);
   }
