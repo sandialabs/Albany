@@ -62,14 +62,48 @@ namespace Albany {
     //! Private to prohibit copying
     ODEProblem& operator=(const ODEProblem&);
 
+    //! Main problem setup routine. Not directly called, but indirectly by following functions
     template <typename EvalT>
     void constructEvaluators(
             PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
             const Albany::MeshSpecsStruct& meshSpecs,
             Albany::StateManager& stateMgr,
-            Albany::FieldManagerChoice fmchoice = BUILD_FM,
-            Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> > responses
-             = Teuchos::null);
+            Albany::FieldManagerChoice fmchoice,
+            Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
+
+    //! Interface for Residual (PDE) field manager
+    template <typename EvalT>
+    void constructResidEvaluators(
+            PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+            const Albany::MeshSpecsStruct& meshSpecs,
+            Albany::StateManager& stateMgr)
+    {
+      Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> > junk;
+      constructEvaluators<EvalT>(fm0, meshSpecs, stateMgr, BUILD_RESID_FM, junk);
+    }
+
+    //! Interface for Response field manager, except for residual type
+    template <typename EvalT>
+    void constructResponseEvaluators(
+            PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+            const Albany::MeshSpecsStruct& meshSpecs,
+            Albany::StateManager& stateMgr)
+    {
+      Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> > junk;
+      constructEvaluators<EvalT>(fm0, meshSpecs, stateMgr, BUILD_RESPONSE_FM, junk);
+    }
+
+    //! Interface for Response field manager, Residual type.
+    // This version loads the responses variable, that needs to be constructed just once
+    template <typename EvalT>
+    void constructResponseEvaluators(
+            PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+            const Albany::MeshSpecsStruct& meshSpecs,
+            Albany::StateManager& stateMgr,
+            Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
+    {
+      constructEvaluators<EvalT>(fm0, meshSpecs, stateMgr, BUILD_RESPONSE_FM, responses);
+    }
 
     void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
 
@@ -80,4 +114,96 @@ namespace Albany {
 
 }
 
+#include "Shards_CellTopology.hpp"
+#include "Albany_Utils.hpp"
+#include "Albany_ProblemUtils.hpp"
+#include "Albany_EvaluatorUtils.hpp"
+#include "Albany_ResponseUtilities.hpp"
+
+#include "PHAL_ODEResid.hpp"
+
+template <typename EvalT>
+void Albany::ODEProblem::constructEvaluators(
+        PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+        const Albany::MeshSpecsStruct& meshSpecs,
+        Albany::StateManager& stateMgr,
+        Albany::FieldManagerChoice fieldManagerChoice,
+        Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
+{
+   using Teuchos::RCP;
+   using Teuchos::rcp;
+   using Teuchos::ParameterList;
+   using PHX::DataLayout;
+   using PHX::MDALayout;
+   using std::vector;
+   using PHAL::AlbanyTraits;
+
+   const int numNodes = 1;
+
+   const int numVertices = 1;
+   const int worksetSize = meshSpecs.worksetSize;
+
+   *out << "Field Dimensions: Workset=" << worksetSize 
+        << ", Vertices= " << numVertices
+        << ", Nodes= " << numNodes
+        << ", Dim= " << numDim << endl;
+
+   RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,1,numDim)); 
+   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
+   bool supportsTransient=true;
+
+   // Temporary variable used numerous times below
+   Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
+
+   // Define Field Names
+ 
+   Teuchos::ArrayRCP<string> dof_names(neq);
+     dof_names[0] = "X";
+     dof_names[1] = "Y";
+
+   Teuchos::ArrayRCP<string> dof_names_dot(neq);
+   if (supportsTransient) {
+     for (int i=0; i<neq; i++) dof_names_dot[i] = dof_names[i]+"_dot";
+   }
+
+   Teuchos::ArrayRCP<string> resid_names(neq);
+     for (int i=0; i<neq; i++) resid_names[i] = dof_names[i]+" Residual";
+
+   if (supportsTransient) fm0.template registerEvaluator<EvalT>
+       (evalUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot));
+   else fm0.template registerEvaluator<EvalT>
+       (evalUtils.constructGatherSolutionEvaluator_noTransient(false, dof_names));
+
+   fm0.template registerEvaluator<EvalT>
+     (evalUtils.constructScatterResidualEvaluator(false, resid_names));
+
+  { // X Resid
+    RCP<ParameterList> p = rcp(new ParameterList("ODE Resid"));
+
+    //Input
+    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
+    p->set<string>("Variable Name", "X");
+    p->set<string>("Time Derivative Variable Name", "X_dot");
+    p->set<string>("Y Variable Name", "Y");
+    p->set<string>("Y Time Derivative Variable Name", "Y_dot");
+
+    //Output
+    p->set<string>("Residual Name", "X Residual");
+    p->set<string>("Y Residual Name", "Y Residual");
+
+    ev = rcp(new PHAL::ODEResid<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
+    PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter", dl->dummy);
+    fm0.requireField<EvalT>(res_tag);
+  }
+
+  else {
+    Teuchos::ParameterList& responseList = params->sublist("Response Functions");
+    Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
+    respUtils.constructResponses(fm0, responses, responseList, stateMgr);
+  }
+}
 #endif 

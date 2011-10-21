@@ -61,7 +61,7 @@
 
 namespace Albany {
 
-  enum FieldManagerChoice {BUILD_FM, BUILD_RFM};
+  enum FieldManagerChoice {BUILD_RESID_FM, BUILD_RESPONSE_FM};
 
   /*!
    * \brief Abstract interface for representing a 1-D finite element

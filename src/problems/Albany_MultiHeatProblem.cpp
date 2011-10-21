@@ -16,7 +16,6 @@
 
 
 #include "Albany_MultiHeatProblem.hpp"
-#include "Albany_MultiHeatProblem_Def.hpp"
 #include "Albany_SolutionAverageResponseFunction.hpp"
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
 #include "Albany_SolutionMaxValueResponseFunction.hpp"
@@ -80,26 +79,25 @@ buildProblem(
     fm[ps]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
     rfm[ps] = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
 
-    constructEvaluators<PHAL::AlbanyTraits::Residual  >(*fm[ps], *meshSpecs[ps], stateMgr);
-    constructEvaluators<PHAL::AlbanyTraits::Jacobian  >(*fm[ps], *meshSpecs[ps], stateMgr);
-    constructEvaluators<PHAL::AlbanyTraits::Tangent   >(*fm[ps], *meshSpecs[ps], stateMgr);
-    constructEvaluators<PHAL::AlbanyTraits::SGResidual>(*fm[ps], *meshSpecs[ps], stateMgr);
-    constructEvaluators<PHAL::AlbanyTraits::SGJacobian>(*fm[ps], *meshSpecs[ps], stateMgr);
-    constructEvaluators<PHAL::AlbanyTraits::SGTangent >(*fm[ps], *meshSpecs[ps], stateMgr);
-    constructEvaluators<PHAL::AlbanyTraits::MPResidual>(*fm[ps], *meshSpecs[ps], stateMgr);
-    constructEvaluators<PHAL::AlbanyTraits::MPJacobian>(*fm[ps], *meshSpecs[ps], stateMgr);
-    constructEvaluators<PHAL::AlbanyTraits::MPTangent >(*fm[ps], *meshSpecs[ps], stateMgr);
-    constructEvaluators<PHAL::AlbanyTraits::Residual  >(*rfm[ps], *meshSpecs[ps], stateMgr, Albany::BUILD_RFM, responses);
-    constructEvaluators<PHAL::AlbanyTraits::Jacobian  >(*rfm[ps], *meshSpecs[ps], stateMgr, Albany::BUILD_RFM);
-    constructEvaluators<PHAL::AlbanyTraits::Tangent   >(*rfm[ps], *meshSpecs[ps], stateMgr, Albany::BUILD_RFM);
-    constructEvaluators<PHAL::AlbanyTraits::SGResidual>(*rfm[ps], *meshSpecs[ps], stateMgr, Albany::BUILD_RFM);
-    constructEvaluators<PHAL::AlbanyTraits::SGJacobian>(*rfm[ps], *meshSpecs[ps], stateMgr, Albany::BUILD_RFM);
-    constructEvaluators<PHAL::AlbanyTraits::SGTangent >(*rfm[ps], *meshSpecs[ps], stateMgr, Albany::BUILD_RFM);
-    constructEvaluators<PHAL::AlbanyTraits::MPResidual>(*rfm[ps], *meshSpecs[ps], stateMgr, Albany::BUILD_RFM);
-    constructEvaluators<PHAL::AlbanyTraits::MPJacobian>(*rfm[ps], *meshSpecs[ps], stateMgr, Albany::BUILD_RFM);
-    constructEvaluators<PHAL::AlbanyTraits::MPTangent >(*rfm[ps], *meshSpecs[ps], stateMgr, Albany::BUILD_RFM);
+    constructResidEvaluators<PHAL::AlbanyTraits::Residual  >(*fm[ps], *meshSpecs[ps], stateMgr);
+    constructResidEvaluators<PHAL::AlbanyTraits::Jacobian  >(*fm[ps], *meshSpecs[ps], stateMgr);
+    constructResidEvaluators<PHAL::AlbanyTraits::Tangent   >(*fm[ps], *meshSpecs[ps], stateMgr);
+    constructResidEvaluators<PHAL::AlbanyTraits::SGResidual>(*fm[ps], *meshSpecs[ps], stateMgr);
+    constructResidEvaluators<PHAL::AlbanyTraits::SGJacobian>(*fm[ps], *meshSpecs[ps], stateMgr);
+    constructResidEvaluators<PHAL::AlbanyTraits::SGTangent >(*fm[ps], *meshSpecs[ps], stateMgr);
+    constructResidEvaluators<PHAL::AlbanyTraits::MPResidual>(*fm[ps], *meshSpecs[ps], stateMgr);
+    constructResidEvaluators<PHAL::AlbanyTraits::MPJacobian>(*fm[ps], *meshSpecs[ps], stateMgr);
+    constructResidEvaluators<PHAL::AlbanyTraits::MPTangent >(*fm[ps], *meshSpecs[ps], stateMgr);
+    constructResponseEvaluators<PHAL::AlbanyTraits::Residual  >(*rfm[ps], *meshSpecs[ps], stateMgr, responses);
+    constructResponseEvaluators<PHAL::AlbanyTraits::Jacobian  >(*rfm[ps], *meshSpecs[ps], stateMgr);
+    constructResponseEvaluators<PHAL::AlbanyTraits::Tangent   >(*rfm[ps], *meshSpecs[ps], stateMgr);
+    constructResponseEvaluators<PHAL::AlbanyTraits::SGResidual>(*rfm[ps], *meshSpecs[ps], stateMgr);
+    constructResponseEvaluators<PHAL::AlbanyTraits::SGJacobian>(*rfm[ps], *meshSpecs[ps], stateMgr);
+    constructResponseEvaluators<PHAL::AlbanyTraits::SGTangent >(*rfm[ps], *meshSpecs[ps], stateMgr);
+    constructResponseEvaluators<PHAL::AlbanyTraits::MPResidual>(*rfm[ps], *meshSpecs[ps], stateMgr);
+    constructResponseEvaluators<PHAL::AlbanyTraits::MPJacobian>(*rfm[ps], *meshSpecs[ps], stateMgr);
+    constructResponseEvaluators<PHAL::AlbanyTraits::MPTangent >(*rfm[ps], *meshSpecs[ps], stateMgr);
   }
-
   constructDirichletEvaluators(*meshSpecs[0]);
 }
 

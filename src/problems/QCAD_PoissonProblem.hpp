@@ -67,14 +67,48 @@ namespace QCAD {
     //! Private to prohibit copying
     PoissonProblem& operator=(const PoissonProblem&);
 
+    //! Main problem setup routine. Not directly called, but indirectly by following functions
     template <typename EvalT>
     void constructEvaluators(
             PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
             const Albany::MeshSpecsStruct& meshSpecs,
             Albany::StateManager& stateMgr,
-            Albany::FieldManagerChoice fmchoice = Albany::BUILD_FM,
-            Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> > responses
-             = Teuchos::null);
+            Albany::FieldManagerChoice fmchoice,
+            Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
+
+    //! Interface for Residual (PDE) field manager
+    template <typename EvalT>
+    void constructResidEvaluators(
+            PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+            const Albany::MeshSpecsStruct& meshSpecs,
+            Albany::StateManager& stateMgr)
+    {
+      Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> > junk;
+      constructEvaluators<EvalT>(fm0, meshSpecs, stateMgr, Albany::BUILD_RESID_FM, junk);
+    }
+
+    //! Interface for Response field manager, except for residual type
+    template <typename EvalT>
+    void constructResponseEvaluators(
+            PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+            const Albany::MeshSpecsStruct& meshSpecs,
+            Albany::StateManager& stateMgr)
+    {
+      Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> > junk;
+      constructEvaluators<EvalT>(fm0, meshSpecs, stateMgr, Albany::BUILD_RESPONSE_FM, junk);
+    }
+
+    //! Interface for Response field manager, Residual type.
+    // This version loads the responses variable, that needs to be constructed just once
+    template <typename EvalT>
+    void constructResponseEvaluators(
+            PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+            const Albany::MeshSpecsStruct& meshSpecs,
+            Albany::StateManager& stateMgr,
+            Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
+    {
+      constructEvaluators<EvalT>(fm0, meshSpecs, stateMgr, Albany::BUILD_RESPONSE_FM, responses);
+    }
 
     void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
 
@@ -107,4 +141,361 @@ namespace QCAD {
 
 }
 
+#include "QCAD_MaterialDatabase.hpp"
+#include "Albany_ProblemUtils.hpp"
+#include "Albany_EvaluatorUtils.hpp"
+
+#include "PHAL_GatherEigenvectors.hpp"
+#include "QCAD_Permittivity.hpp"
+#include "PHAL_SharedParameter.hpp"
+#include "QCAD_PoissonSource.hpp"
+#include "PHAL_DOFInterpolation.hpp"
+#include "QCAD_PoissonResid.hpp"
+#include "QCAD_ResponseSaddleValue.hpp"
+
+template <typename EvalT>
+void QCAD::PoissonProblem::constructEvaluators(
+        PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+        const Albany::MeshSpecsStruct& meshSpecs,
+        Albany::StateManager& stateMgr,
+        Albany::FieldManagerChoice fieldManagerChoice,
+        Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
+{
+   using Teuchos::RCP;
+   using Teuchos::rcp;
+   using Teuchos::ParameterList;
+   using PHX::DataLayout;
+   using PHX::MDALayout;
+   using std::vector;
+   using PHAL::AlbanyTraits;
+
+   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
+   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
+     intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
+
+   const int numNodes = intrepidBasis->getCardinality();
+   const int worksetSize = meshSpecs.worksetSize;
+
+   Intrepid::DefaultCubatureFactory<RealType> cubFactory;
+   RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+
+   const int numQPts = cubature->getNumPoints();
+   const int numVertices = cellType->getVertexCount();
+
+   *out << "Field Dimensions: Workset=" << worksetSize 
+        << ", Vertices= " << numVertices
+        << ", Nodes= " << numNodes
+        << ", QuadPts= " << numQPts
+        << ", Dim= " << numDim << endl;
+
+   RCP<DataLayout> shared_param = rcp(new MDALayout<Dim>(1));
+
+   RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
+   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
+   bool supportsTransient=false;
+
+   // Temporary variable used numerous times below
+   Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
+
+   // Define Field Names
+
+   Teuchos::ArrayRCP<string> dof_names(neq);
+     dof_names[0] = "Potential";
+
+   Teuchos::ArrayRCP<string> dof_names_dot(neq);
+   if (supportsTransient) {
+     for (int i=0; i<neq; i++) dof_names_dot[i] = dof_names[i]+"_dot";
+   }
+
+   Teuchos::ArrayRCP<string> resid_names(neq);
+     for (int i=0; i<neq; i++) resid_names[i] = dof_names[i]+" Residual";
+
+   if (supportsTransient) fm0.template registerEvaluator<EvalT>
+       (evalUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot));
+   else fm0.template registerEvaluator<EvalT>
+       (evalUtils.constructGatherSolutionEvaluator_noTransient(false, dof_names));
+
+   fm0.template registerEvaluator<EvalT>
+     (evalUtils.constructScatterResidualEvaluator(false, resid_names));
+
+   fm0.template registerEvaluator<EvalT>
+     (evalUtils.constructGatherCoordinateVectorEvaluator());
+
+   fm0.template registerEvaluator<EvalT>
+     (evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
+
+   fm0.template registerEvaluator<EvalT>
+     (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
+
+   for (int i=0; i<neq; i++) {
+     fm0.template registerEvaluator<EvalT>
+       (evalUtils.constructDOFInterpolationEvaluator(dof_names[i]));
+
+     if (supportsTransient)
+     fm0.template registerEvaluator<EvalT>
+         (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[i]));
+
+     fm0.template registerEvaluator<EvalT>
+       (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[i]));
+  }
+
+   // Create Material Database
+   RCP<QCAD::MaterialDatabase> materialDB = rcp(new QCAD::MaterialDatabase(mtrlDbFilename, comm));
+
+  { // Gather Eigenvectors
+    RCP<ParameterList> p = rcp(new ParameterList);
+    p->set<string>("Eigenvector field name root", "Evec");
+    p->set<int>("Number of eigenvectors", nEigenvectors);
+    p->set< RCP<DataLayout> >("Data Layout", dl->node_scalar);
+
+    ev = rcp(new PHAL::GatherEigenvectors<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  { // Permittivity
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    p->set<string>("QP Variable Name", "Permittivity");
+    p->set<string>("Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
+    p->set< RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Permittivity");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
+
+    ev = rcp(new QCAD::Permittivity<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  { // Temperature shared parameter (single scalar value, not spatially varying)
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    p->set<string>("Parameter Name", "Temperature");
+    p->set<double>("Parameter Value", temperature);
+    p->set< RCP<DataLayout> >("Data Layout", shared_param);
+    p->set< RCP<ParamLib> >("Parameter Library", paramLib);
+
+    ev = rcp(new PHAL::SharedParameter<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  if (haveSource) 
+  { // Source
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    //Input
+    p->set< string >("Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
+    p->set<string>("Variable Name", "Potential");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+
+    Teuchos::ParameterList& paramList = params->sublist("Poisson Source");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    //Output
+    p->set<string>("Source Name", "Poisson Source");
+
+    //Global Problem Parameters
+    p->set<double>("Length unit in m", length_unit_in_m);
+    p->set<string>("Temperature Name", "Temperature");
+    p->set< RCP<DataLayout> >("Shared Param Data Layout", shared_param);
+    p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
+
+    // Schrodinger coupling
+    p->set<bool>("Use Schrodinger source", bUseSchrodingerSource);
+    p->set<int>("Schrodinger eigenvectors", nEigenvectors);
+    p->set<string>("Eigenvector field name root", "Evec");
+    p->set<bool>("Use predictor-corrector method", bUsePredictorCorrector);
+
+    ev = rcp(new QCAD::PoissonSource<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  // Interpolate Input Eigenvectors (if any) to quad points
+  char buf[100];  
+  for( int k = 0; k < nEigenvectors; k++)
+  { 
+    // DOF: Interpolate nodal Eigenvector values to quad points
+    RCP<ParameterList> p;
+
+    //REAL PART
+    sprintf(buf, "Poisson Eigenvector Re %d interpolate to qps", k);
+    p = rcp(new ParameterList(buf));
+
+    // Input
+    sprintf(buf, "Evec_Re%d", k);
+    p->set<string>("Variable Name", buf);
+    p->set< RCP<DataLayout> >("Node Data Layout",      dl->node_scalar);
+    
+    p->set<string>("BF Name", "BF");
+    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
+    
+    // Output (assumes same Name as input)
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    
+    sprintf(buf, "Eigenvector Re %d interpolate to qps", k);
+    ev = rcp(new PHAL::DOFInterpolation<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+    
+    
+    //IMAGINARY PART
+    sprintf(buf, "Eigenvector Im %d interpolate to qps", k);
+    p = rcp(new ParameterList(buf));
+    
+    // Input
+    sprintf(buf, "Evec_Im%d", k);
+    p->set<string>("Variable Name", buf);
+    p->set< RCP<DataLayout> >("Node Data Layout",      dl->node_scalar);
+    
+    p->set<string>("BF Name", "BF");
+    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
+    
+    // Output (assumes same Name as input)
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    
+    sprintf(buf, "Eigenvector Im %d interpolate to qps", k);
+    ev = rcp(new PHAL::DOFInterpolation<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  { // Potential Resid
+    RCP<ParameterList> p = rcp(new ParameterList("Potential Resid"));
+
+    //Input
+    p->set<string>("Weighted BF Name", "wBF");
+    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
+    p->set<string>("QP Variable Name", "Potential");
+
+    p->set<string>("QP Time Derivative Variable Name", "Potential_dot");
+
+    p->set<bool>("Have Source", haveSource);
+    p->set<string>("Source Name", "Poisson Source");
+
+    p->set<string>("Permittivity Name", "Permittivity");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+    p->set<string>("Gradient QP Variable Name", "Potential Gradient");
+    p->set<string>("Flux QP Variable Name", "Potential Flux");
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
+    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+
+    //Output
+    p->set<string>("Residual Name", "Potential Residual");
+    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
+
+    ev = rcp(new QCAD::PoissonResid<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+
+  if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
+    PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter", dl->dummy);
+    fm0.requireField<EvalT>(res_tag);
+  }
+
+  else {
+    Teuchos::ParameterList& responseList = params->sublist("Response Functions");
+    Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
+    this->constructResponses(fm0, responses, responseList, stateMgr, respUtils);
+  }
+}
+
+template<typename EvalT>
+void
+QCAD::PoissonProblem::constructResponses(
+  PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+  Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
+  Teuchos::ParameterList& responseList, 
+  Albany::StateManager& stateMgr,
+  Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits>& respUtils)
+{
+  using Teuchos::RCP;
+  using Teuchos::rcp;
+  using Teuchos::ParameterList;
+  using PHX::DataLayout;
+  using std::string;
+  using PHAL::AlbanyTraits;
+
+  Albany::Layouts& dl = *respUtils.get_dl();
+
+   // Parameters for Response Evaluators
+   //  Iterate through list of responses (from input xml file).  For each, create a response
+   //  function and possibly a parameter list to construct a response evaluator.
+   int num_responses = responseList.get("Number", 0);
+   responses.resize(num_responses);
+
+   std::vector<string> responseIDs_to_require;
+
+   // First, add in responses hardwired into problem setup
+   const Albany::StateManager::RegisteredStates& reg = stateMgr.getRegisteredStates();
+   for (Albany::StateManager::RegisteredStates::const_iterator st = reg.begin(); st!= reg.end(); st++) {
+     responseIDs_to_require.push_back(st->first);
+cout << "RRR1  requiring " << st->first << endl;
+   }
+
+   for (int i=0; i<num_responses; i++) 
+   {
+     std::string responseID = Albany::strint("Response",i);
+     std::string name = responseList.get(responseID, "??");
+
+     Teuchos::RCP< PHX::Evaluator<PHAL::AlbanyTraits> > ev;
+     if( respUtils.getStdResponseFn(name, i, responseList, responses, stateMgr, ev) ) {
+       if(ev != Teuchos::null) {
+         fm0.template registerEvaluator<EvalT>(ev);
+cout << "RRR2  requiring " << responseID << endl;
+	 responseIDs_to_require.push_back(responseID);
+       }
+     }
+
+     else if (name == "Saddle Value")
+     { 
+       std::string responseParamsID = Albany::strint("ResponseParams",i);              
+       ParameterList& responseParams = responseList.sublist(responseParamsID);
+       RCP<ParameterList> p = rcp(new ParameterList);
+       
+       RCP<QCAD::SaddleValueResponseFunction> 
+	 svResponse = rcp(new QCAD::SaddleValueResponseFunction(
+					     numDim, responseParams)); 
+       responses[i] = svResponse;
+       
+       p->set<string>("Response ID", responseID);
+       p->set<int>   ("Response Index", i);
+       p->set< Teuchos::RCP<QCAD::SaddleValueResponseFunction> >
+	 ("Response Function", svResponse);
+       p->set<Teuchos::ParameterList*>("Parameter List", &responseParams);
+       p->set< RCP<DataLayout> >("Dummy Data Layout", dl.dummy);
+       
+       p->set<string>("Coordinate Vector Name", "Coord Vec");
+       p->set<string>("Weights Name",   "Weights");
+       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl.qp_scalar);
+       p->set< RCP<DataLayout> >("QP Vector Data Layout", dl.qp_vector);
+       p->set< RCP<DataLayout> >("Vertices Vector Data Layout", dl.vertices_vector);
+
+       ev = rcp(new QCAD::ResponseSaddleValue<EvalT,AlbanyTraits>(*p));
+       fm0.template registerEvaluator<EvalT>(ev);
+
+cout << "RRR3  requiring " << responseID << endl;
+       responseIDs_to_require.push_back(responseID);
+     }
+
+     else {
+       TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+	  std::endl << "Error!  Unknown response function " << name <<
+           "!" << std::endl << "Supplied parameter list is " <<
+           std::endl << responseList);
+     }
+   } // end of loop over responses
+
+   //! Create field manager for responses
+   respUtils.createResponseFieldManager(fm0, responseIDs_to_require);
+}
 #endif

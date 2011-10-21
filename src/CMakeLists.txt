@@ -78,17 +78,11 @@ SET(HEADERS ${HEADERS}
 	problems/Albany_ResponseUtilities_Def.hpp 
 	problems/Albany_DirichletUtils.hpp 
 	problems/Albany_HeatProblem.hpp 
-	problems/Albany_HeatProblem_Def.hpp 
 	problems/Albany_MultiHeatProblem.hpp 
-	problems/Albany_MultiHeatProblem_Def.hpp 
 	problems/Albany_NavierStokes.hpp 
-	problems/Albany_NavierStokes_Def.hpp 
 	problems/Albany_ODEProblem.hpp 
-	problems/Albany_ODEProblem_Def.hpp 
 	problems/Albany_Helmholtz2DProblem.hpp 
-	problems/Albany_Helmholtz2DProblem_Def.hpp 
 	problems/Albany_ThermoElectrostaticsProblem.hpp 
-	problems/Albany_ThermoElectrostaticsProblem_Def.hpp 
 	problems/Albany_AnalyticFunction.hpp 
 	problems/Albany_InitialCondition.hpp 
   )
@@ -272,11 +266,9 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/problems/ElasticityProblem.hpp
     ${LCM_DIR}/problems/NonlinearElasticityProblem.hpp 
     ${LCM_DIR}/problems/ThermoElasticityProblem.hpp 
-    ${LCM_DIR}/problems/ThermoElasticityProblem_Def.hpp 
     ${LCM_DIR}/problems/GradientDamageProblem.hpp
     ${LCM_DIR}/problems/PoroElasticityProblem.hpp 
     ${LCM_DIR}/problems/ThermoMechanicalProblem.hpp
-    ${LCM_DIR}/problems/ThermoMechanicalProblem_Def.hpp
   )
 
   # LCM evaluators
