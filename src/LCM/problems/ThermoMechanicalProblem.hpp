@@ -139,12 +139,11 @@ namespace Albany {
 #include "Albany_EvaluatorUtils.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 
-// Explicity add evaluators defined in the model below
-#include "ElasticModulus.hpp"
-#include "PoissonsRatio.hpp"
+#include "ShearModulus.hpp"
+#include "BulkModulus.hpp"
 #include "PHAL_Source.hpp"
 #include "DefGrad.hpp"
-#include "Neohookean.hpp"
+#include "ThermoMechanicalStress.hpp"
 #include "PHAL_SaveStateField.hpp"
 #include "ThermoMechanicalEnergyResidual.hpp"
 #include "ThermoMechanicalMomentumResidual.hpp"
@@ -199,7 +198,7 @@ void Albany::ThermoMechanicalProblem::constructEvaluators(
   Teuchos::ArrayRCP<string> dof_names(1);
   dof_names[0] = "Displacement";
   Teuchos::ArrayRCP<string> resid_names(1);
-  resid_names[0] = dof_names[0]+" Residual";
+  resid_names[0] = "Thermo Mechanical Momentum Residual";
 
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]));
@@ -219,7 +218,7 @@ void Albany::ThermoMechanicalProblem::constructEvaluators(
   Teuchos::ArrayRCP<string> tdof_names_dot(1);
   tdof_names_dot[0] = tdof_names[0]+"_dot";
   Teuchos::ArrayRCP<string> tresid_names(1);
-  tresid_names[0] = tdof_names[0]+" Residual";
+  tresid_names[0] = "Thermo Mechanical Energy Residual";
 
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructDOFInterpolationEvaluator(tdof_names[0]));
@@ -250,43 +249,47 @@ void Albany::ThermoMechanicalProblem::constructEvaluators(
   // Temporary variable used numerous times below
   Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
 
-  { // Elastic Modulus
+  { // Shear Modulus
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("QP Variable Name", "Elastic Modulus");
+    p->set<string>("QP Variable Name", "Shear Modulus");
     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Elastic Modulus");
+    Teuchos::ParameterList& paramList = params->sublist("Shear Modulus");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-    // Setting this turns on linear dependence of E on T, E = E_ + dEdT*T)
+    // Setting this turns on linear dependence of mu on T, mu = mu_ + dmudT*T)
     p->set<string>("QP Temperature Name", "Temperature");
-
-    ev = rcp(new LCM::ElasticModulus<EvalT,AlbanyTraits>(*p));
+    RealType refTemp = params->get("Reference Temperature", 0.0);
+    p->set<RealType>("Reference Temperature", refTemp);
+ 
+    ev = rcp(new LCM::ShearModulus<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  { // Poissons Ratio 
+  { // Bulk Modulus
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("QP Variable Name", "Poissons Ratio");
+    p->set<string>("QP Variable Name", "Bulk Modulus");
     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Poissons Ratio");
+    Teuchos::ParameterList& paramList = params->sublist("Bulk Modulus");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-    // Setting this turns on linear dependence of nu on T, nu = nu_ + dnudT*T)
+    // Setting this turns on linear dependence of K on T, nu = nu_ + dnudT*T)
     p->set<string>("QP Temperature Name", "Temperature");
-
-    ev = rcp(new LCM::PoissonsRatio<EvalT,AlbanyTraits>(*p));
+    RealType refTemp = params->get("Reference Temperature", 0.0);
+    p->set<RealType>("Reference Temperature", refTemp);
+ 
+    ev = rcp(new LCM::BulkModulus<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -337,16 +340,23 @@ void Albany::ThermoMechanicalProblem::constructEvaluators(
     p->set<string>("DefGrad Name", "Deformation Gradient");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-    p->set<string>("Elastic Modulus Name", "Elastic Modulus");
+    p->set<string>("Shear Modulus Name", "Shear Modulus");
+
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
+    p->set<string>("Bulk Modulus Name", "Bulk Modulus");  // dl->qp_scalar also
     p->set<string>("DetDefGrad Name", "Determinant of the Deformation Gradient");  // dl->qp_scalar also
+
+    p->set<string>("Temperature Name", "Temperature");
+    RealType refTemp = params->get("Reference Temperature", 0.0);
+    p->set<RealType>("Reference Temperature", refTemp);
+    RealType coeff = params->get("Thermal Expansion Coefficient", 0.0);
+    p->set<RealType>("Thermal Expansion Coefficient", coeff);
 
     //Output
     p->set<string>("Stress Name", "Stress"); //dl->qp_tensor also
 
-    ev = rcp(new LCM::Neohookean<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new LCM::ThermoMechanicalStress<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
     p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy, 0,"zero");
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
@@ -354,7 +364,7 @@ void Albany::ThermoMechanicalProblem::constructEvaluators(
   }
 
   { // ThermoMechanical Momentum Residual
-    RCP<ParameterList> p = rcp(new ParameterList("ThermoMechanical Momentum Residual"));
+    RCP<ParameterList> p = rcp(new ParameterList("Thermo Mechanical Momentum Residual"));
 
     //Input
     p->set<string>("Stress Name", "Stress");
@@ -373,7 +383,7 @@ void Albany::ThermoMechanicalProblem::constructEvaluators(
     p->set<bool>("Disable Transient", true);
 
     //Output
-    p->set<string>("Residual Name", "Displacement Residual");
+    p->set<string>("Residual Name", "Thermo Mechanical Momentum Residual");
     p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
 
     ev = rcp(new LCM::ThermoMechanicalMomentumResidual<EvalT,AlbanyTraits>(*p));
@@ -413,7 +423,7 @@ void Albany::ThermoMechanicalProblem::constructEvaluators(
   }
 
   { // ThermoMechanical Energy Residual
-    RCP<ParameterList> p = rcp(new ParameterList("Temperature Resid"));
+    RCP<ParameterList> p = rcp(new ParameterList("Thermo Mechanical Energy Residual"));
 
     //Input
     p->set<string>("Weighted BF Name", "wBF");
@@ -440,7 +450,7 @@ void Albany::ThermoMechanicalProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
     //Output
-    p->set<string>("Residual Name", "Temperature Residual");
+    p->set<string>("Residual Name", "Thermo Mechanical Energy Residual");
     p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
 
     ev = rcp(new LCM::ThermoMechanicalEnergyResidual<EvalT,AlbanyTraits>(*p));

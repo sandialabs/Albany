@@ -300,6 +300,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/KCPermeability.cpp
     ${LCM_DIR}/evaluators/ThermoMechanicalEnergyResidual.cpp
     ${LCM_DIR}/evaluators/ThermoMechanicalMomentumResidual.cpp
+    ${LCM_DIR}/evaluators/ThermoMechanicalStress.cpp
   )
 
   SET(HEADERS ${HEADERS}
@@ -369,6 +370,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/ThermoMechanicalEnergyResidual_Def.hpp
     ${LCM_DIR}/evaluators/ThermoMechanicalMomentumResidual.hpp
     ${LCM_DIR}/evaluators/ThermoMechanicalMomentumResidual_Def.hpp
+    ${LCM_DIR}/evaluators/ThermoMechanicalStress.hpp
+    ${LCM_DIR}/evaluators/ThermoMechanicalStress_Def.hpp
   )
 
   #LCM utils

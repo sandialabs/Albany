@@ -17,8 +17,15 @@
 #include "PoroElasticityProblem.hpp"
 #include "Albany_SolutionAverageResponseFunction.hpp"
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
+#include "Albany_SolutionMaxValueResponseFunction.hpp"
+
+#include "Intrepid_FieldContainer.hpp"
+#include "Intrepid_DefaultCubatureFactory.hpp"
+#include "Shards_CellTopology.hpp"
+
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemUtils.hpp"
+
 
 Albany::PoroElasticityProblem::
 PoroElasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
