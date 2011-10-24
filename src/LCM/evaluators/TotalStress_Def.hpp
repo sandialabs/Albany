@@ -83,7 +83,12 @@ evaluateFields(typename Traits::EvalData workset)
 
   switch (numDims) {
   case 1:
-    Intrepid::FunctionSpaceTools::tensorMultiplyDataData<ScalarT>(stress, elasticModulus, strain); // 1D does not work for this problem
+    Intrepid::FunctionSpaceTools::tensorMultiplyDataData<ScalarT>(stress, elasticModulus, strain);
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+          for (std::size_t qp=0; qp < numQPs; ++qp) {
+        	  stress(cell, qp) = stress(cell, qp) - porePressure(cell,qp);
+          }
+    }
     break;
   case 2:
     // Compute Stress (with the plane strain assumption for now)
