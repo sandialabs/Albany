@@ -15,70 +15,54 @@
 \********************************************************************/
 
 
-#ifndef BULK_MOUDULS_HPP
-#define BULK_MOUDULS_HPP
+#ifndef THERMO_MECHANICAL_STRESS_HPP
+#define THERMO_MECHANICAL_STRESS_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
-#include "Teuchos_ParameterList.hpp"
-#include "Epetra_Vector.h"
-#include "Sacado_ParameterAccessor.hpp"
-#include "Stokhos_KL_ExponentialRandomField.hpp"
-#include "Teuchos_Array.hpp"
-
 namespace LCM {
-/** 
- * \brief Evaluates bulk modulus, either as a constant or a truncated
- * KL expansion.
- */
+/** \brief ThermoMechanical stress response
+
+    This evaluator computes stress based on a uncoupled Neohookean
+    Helmholtz potential with temperature dependence
+
+*/
 
 template<typename EvalT, typename Traits>
-class BulkModulus : 
-  public PHX::EvaluatorWithBaseImpl<Traits>,
-  public PHX::EvaluatorDerived<EvalT, Traits>,
-  public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
-  
-public:
-  typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
+class ThermoMechanicalStress : public PHX::EvaluatorWithBaseImpl<Traits>,
+			       public PHX::EvaluatorDerived<EvalT, Traits>  {
 
-  BulkModulus(Teuchos::ParameterList& p);
-  
+public:
+
+  ThermoMechanicalStress(const Teuchos::ParameterList& p);
+
   void postRegistrationSetup(typename Traits::SetupData d,
 			     PHX::FieldManager<Traits>& vm);
-  
+
   void evaluateFields(typename Traits::EvalData d);
-  
-  ScalarT& getValue(const std::string &n);
 
 private:
 
+  typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
+
+  // Input:
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> F;
+  PHX::MDField<ScalarT,Cell,QuadPoint> J;
+  PHX::MDField<ScalarT,Cell,QuadPoint> shearModulus;
+  PHX::MDField<ScalarT,Cell,QuadPoint> bulkModulus;
+  PHX::MDField<ScalarT,Cell,QuadPoint> temperature;;
+
+  // Output:
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;
+
   unsigned int numQPs;
   unsigned int numDims;
-
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
-  PHX::MDField<ScalarT,Cell,QuadPoint> bulkModulus;
-
-  //! Is the bulk modulus constant, or random field
-  bool is_constant;
-
-  //! Constant value
-  ScalarT constant_value;
-
-  //! Optional dependence on Temperature (K = K_const + dKdT * T)
-  PHX::MDField<ScalarT,Cell,QuadPoint> Temperature;
-  bool isThermoElastic;
-  ScalarT dKdT_value;
-  RealType refTemp;
-
-  //! Exponential random field
-  Teuchos::RCP< Stokhos::KL::ExponentialRandomField<MeshScalarT> > exp_rf_kl;
-
-  //! Values of the random variables
-  Teuchos::Array<ScalarT> rv;
+  RealType thermalExpansionCoeff;
+  RealType refTemperature;
 };
 }
 

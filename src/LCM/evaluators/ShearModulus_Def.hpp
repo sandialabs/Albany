@@ -27,7 +27,7 @@ template<typename EvalT, typename Traits>
 ShearModulus<EvalT, Traits>::
 ShearModulus(Teuchos::ParameterList& p) :
   shearModulus(p.get<std::string>("QP Variable Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"))
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"))
 {
   Teuchos::ParameterList* shmd_list = 
     p.get<Teuchos::ParameterList*>("Parameter List");
@@ -75,6 +75,24 @@ ShearModulus(Teuchos::ParameterList& p) :
 		       "Invalid shear modulus type " << type);
   } 
 
+  if ( p.isType<string>("QP Temperature Name") ) {
+    Teuchos::RCP<PHX::DataLayout> scalar_dl =
+      p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+    PHX::MDField<ScalarT,Cell,QuadPoint>
+      tmp(p.get<string>("QP Temperature Name"), scalar_dl);
+    Temperature = tmp;
+    this->addDependentField(Temperature);
+    isThermoElastic = true;
+    dmudT_value = shmd_list->get("dmudT Value", 0.0);
+    refTemp = shmd_list->get("Reference Temperature", 0.0);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
+                                "dmudT Value", this, paramLib);
+  }
+  else {
+    isThermoElastic=false;
+    dmudT_value=0.0;
+  }
+
   this->addEvaluatedField(shearModulus);
   this->setName("Shear Modulus"+PHX::TypeString<EvalT>::value);
 }
@@ -87,6 +105,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(shearModulus,fm);
   if (!is_constant) this->utils.setFieldData(coordVec,fm);
+  if (isThermoElastic) this->utils.setFieldData(Temperature,fm);
 }
 
 // **********************************************************************
@@ -113,6 +132,13 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+  if (isThermoElastic) {
+    for (std::size_t cell=0; cell < numCells; ++cell) {
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+	shearModulus(cell,qp) += dmudT_value * Temperature(cell,qp);
+      }
+    }
+  }
 }
 
 // **********************************************************************
@@ -122,6 +148,8 @@ ShearModulus<EvalT,Traits>::getValue(const std::string &n)
 {
   if (n == "Shear Modulus")
     return constant_value;
+  else if (n == "dmudT Value")
+    return dmudT_value;
   for (int i=0; i<rv.size(); i++) {
     if (n == Albany::strint("Shear Modulus KL Random Variable",i))
       return rv[i];

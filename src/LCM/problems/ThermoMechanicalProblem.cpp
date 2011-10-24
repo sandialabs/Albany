@@ -110,8 +110,10 @@ Albany::ThermoMechanicalProblem::getValidProblemParameters() const
     this->getGenericProblemParams("ValidThermoMechanicalProblemParams");
 
   validPL->sublist("Thermal Conductivity", false, "");
-  validPL->sublist("Elastic Modulus", false, "");
-  validPL->sublist("Poissons Ratio", false, "");
+  validPL->sublist("Bulk Modulus", false, "");
+  validPL->sublist("Shear Modulus", false, "");
+  validPL->set<RealType>("Reference Temperature", false, "");
+  validPL->set<RealType>("Thermal Expansion Coefficient", false, "");
 
   return validPL;
 }

@@ -67,6 +67,12 @@ private:
   //! Constant value
   ScalarT constant_value;
 
+  //! Optional dependence on Temperature (mu = mu_const + dmudT * T)
+  PHX::MDField<ScalarT,Cell,QuadPoint> Temperature;
+  bool isThermoElastic;
+  ScalarT dmudT_value;
+  RealType refTemp;
+
   //! Exponential random field
   Teuchos::RCP< Stokhos::KL::ExponentialRandomField<MeshScalarT> > exp_rf_kl;
 
