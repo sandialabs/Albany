@@ -50,6 +50,12 @@ namespace LCM {
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     strain      (p.get<std::string>                   ("Strain Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+	coordVec      (p.get<std::string>                   ("Coordinate Vector Name"),
+				 p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout") ),
+    cubature      (p.get<Teuchos::RCP <Intrepid::Cubature<RealType> > >("Cubature")),
+	cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
+	weights       (p.get<std::string>                   ("Weights Name"),
+		         p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     TResidual   (p.get<std::string>                   ("Residual Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
     haveSource  (p.get<bool>("Have Source")),
@@ -61,6 +67,8 @@ namespace LCM {
       enableTransient = !p.get<bool>("Disable Transient");
     else enableTransient = true;
 
+    this->addDependentField(weights);
+    this->addDependentField(coordVec);
     this->addDependentField(wBF);
     this->addDependentField(porePressure);
     this->addDependentField(ThermalCond);
@@ -105,6 +113,7 @@ namespace LCM {
 
     // Allocate workspace
     flux.resize(dims[0], numQPs, numDims);
+    pterm.resize(dims[0], numQPs);
 
     if (haveAbsorption)  aterm.resize(dims[0], numQPs);
 
@@ -136,6 +145,8 @@ namespace LCM {
   postRegistrationSetup(typename Traits::SetupData d,
 			PHX::FieldManager<Traits>& fm)
   {
+	this->utils.setFieldData(weights,fm);
+    this->utils.setFieldData(coordVec,fm);
     this->utils.setFieldData(wBF,fm);
     this->utils.setFieldData(porePressure,fm);
     this->utils.setFieldData(ThermalCond,fm);
@@ -242,6 +253,79 @@ evaluateFields(typename Traits::EvalData workset)
    FST::scalarMultiplyDataData<ScalarT> (flux, kcPermeability, TGrad); // flux_i = k I_ij p_j
 
   // FST::integrate<ScalarT>(TResidual, flux, wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
+
+  //---------------------------------------------------------------------------//
+  // Stabilization Term (only 2D and 3D problem need stabilizer)
+
+
+   // Allocate Temporary FieldContainers
+//   refPoints.resize(numQPs, numDims);
+//   refWeights.resize(numQPs);
+//   jacobian.resize( worksetSize, numQPs, numDims, numDims);
+//   jacobian_inv.resize( worksetSize, numQPs, numDims, numDims);
+//   Gc.resize( worksetSize, numQPs, numDims, numDims);
+
+
+
+   // Pre-Calculate reference element quantitites
+ //  cubature->getCubature(refPoints, refWeights);
+
+ //  Intrepid::CellTools<RealType>::setJacobian(jacobian, refPoints, coordVec, *cellType);
+ //  Intrepid::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
+
+ //  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+ //    for (std::size_t qp=0; qp < numQPs; ++qp) {
+ //      for (std::size_t i=0; i < numDims; ++i) {
+ //        for (std::size_t j=0; j < numDims; ++j) {
+ //          Gc(cell,qp,i,j) = 0.0;
+ //          for (std::size_t alpha=0; alpha < numDims; ++alpha) {
+ //            Gc(cell,qp,i,j) += jacobian_inv(cell,qp,alpha,i)*jacobian_inv(cell,qp,alpha,j);
+ //          }
+ //        }
+ //      }
+ //    }
+ //  }
+
+
+// Penalty Term
+
+
+  for (std::size_t cell=0; cell < workset.numCells; ++cell){
+
+   porePbar = 0.0;
+   vol = 0.0;
+   for (std::size_t qp=0; qp < numQPs; ++qp) {
+	porePbar += weights(cell,qp)*porePressure(cell,qp);
+	vol  += weights(cell,qp);
+   }
+   porePbar /= vol;
+   for (std::size_t qp=0; qp < numQPs; ++qp) {
+   pterm(cell,qp) = porePbar;
+        }
+
+ }
+
+
+
+
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+
+	  for (std::size_t node=0; node < numNodes; ++node) {
+		  for (std::size_t qp=0; qp < numQPs; ++qp) {
+ 				  TResidual(cell,node) -= (porePressure(cell, qp))
+                    		                    		*1000/biotModulus(cell, qp)*
+                    		                    		wBF(cell, node, qp);
+ 				  TResidual(cell,node) += pterm(cell,qp)*1000/biotModulus(cell, qp)*
+                  		wBF(cell, node, qp);
+
+		  }
+	  }
+  }
+
+
+
+
+
 
 
    // Problem here.............

@@ -23,6 +23,9 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
+#include "Intrepid_CellTools.hpp"
+#include "Intrepid_Cubature.hpp"
+
 namespace LCM {
 /** \brief Finite Element Interpolation Evaluator
 
@@ -65,11 +68,15 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> Absorption;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> strain;
 
+  // stabilization term
+  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
+  Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
+  Teuchos::RCP<shards::CellTopology> cellType;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
+
   //Data from previous time step
   std::string strainName, porePressureName, porosityName;
 
-  // Output:
-  PHX::MDField<ScalarT,Cell,Node> TResidual;
 
   bool haveSource;
   bool haveConvection;
@@ -80,9 +87,25 @@ private:
   unsigned int numQPs;
   unsigned int numDims;
   unsigned int worksetSize;
+
+  // Temporary FieldContainers
   Intrepid::FieldContainer<ScalarT> flux;
   Intrepid::FieldContainer<ScalarT> pterm;
   Intrepid::FieldContainer<ScalarT> aterm;
+  // Temporary FieldContainers
+  Intrepid::FieldContainer<RealType> refPoints;
+  Intrepid::FieldContainer<RealType> refWeights;
+  Intrepid::FieldContainer<MeshScalarT> jacobian;
+  Intrepid::FieldContainer<MeshScalarT> jacobian_inv;
+  Intrepid::FieldContainer<MeshScalarT> Gc;
+
+  ScalarT porePbar, vol;
+
+
+  // Output:
+  PHX::MDField<ScalarT,Cell,Node> TResidual;
+
+
 };
 }
 

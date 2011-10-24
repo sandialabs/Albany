@@ -18,8 +18,15 @@
 #include "PoroElasticityProblem.hpp"
 #include "Albany_SolutionAverageResponseFunction.hpp"
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
+#include "Albany_SolutionMaxValueResponseFunction.hpp"
+
+#include "Intrepid_FieldContainer.hpp"
+#include "Intrepid_DefaultCubatureFactory.hpp"
+#include "Shards_CellTopology.hpp"
+
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemUtils.hpp"
+
 
 Albany::PoroElasticityProblem::
 PoroElasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
@@ -163,7 +170,6 @@ Albany::PoroElasticityProblem::constructEvaluators(
    evaluators_to_build["Compute Basis Functions"] =
      probUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature);
 
-   // Poroelasticity parameter
 
    { // Strain
      RCP<ParameterList> p = rcp(new ParameterList("Strain"));
@@ -514,6 +520,14 @@ Albany::PoroElasticityProblem::constructEvaluators(
     p->set<string>("Strain Name", "Strain");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
+    // Inputs: X, Y at nodes, Cubature, and Basis
+    p->set<string>("Coordinate Vector Name","Coord Vec");
+    p->set< RCP<DataLayout> >("Coordinate Data Layout", dl->vertices_vector);
+    p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
+
+    p->set<string>("Weights Name","Weights");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     //Output
     p->set<string>("Residual Name", "Pore Pressure Residual");
     p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
