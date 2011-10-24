@@ -191,7 +191,7 @@ evaluateFields(typename Traits::EvalData workset)
   // Pore-Fluid Diffusion Term
    FST::scalarMultiplyDataData<ScalarT> (flux, kcPermeability, TGrad); // flux_i = k I_ij p_j
 
-   FST::integrate<ScalarT>(TResidual, flux, wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
+  // FST::integrate<ScalarT>(TResidual, flux, wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
 
 
    // Problem here.............
