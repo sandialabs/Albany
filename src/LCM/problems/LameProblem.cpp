@@ -14,7 +14,6 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
-#include "LCM/LCM_FactoryTraits.hpp"
 #include "LameProblem.hpp"
 #include "Albany_SolutionAverageResponseFunction.hpp"
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
@@ -55,263 +54,29 @@ buildProblem(
   /* Construct All Phalanx Evaluators */
   TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
   fm.resize(1); rfm.resize(1);
-  constructEvaluators(*meshSpecs[0], stateMgr, responses);
+  fm[0]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+  rfm[0] = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+ 
+  constructResidEvaluators<PHAL::AlbanyTraits::Residual  >(*fm[0], *meshSpecs[0], stateMgr);
+  constructResidEvaluators<PHAL::AlbanyTraits::Jacobian  >(*fm[0], *meshSpecs[0], stateMgr);
+  constructResidEvaluators<PHAL::AlbanyTraits::Tangent   >(*fm[0], *meshSpecs[0], stateMgr);
+  constructResidEvaluators<PHAL::AlbanyTraits::SGResidual>(*fm[0], *meshSpecs[0], stateMgr);
+  constructResidEvaluators<PHAL::AlbanyTraits::SGJacobian>(*fm[0], *meshSpecs[0], stateMgr);
+  constructResidEvaluators<PHAL::AlbanyTraits::SGTangent >(*fm[0], *meshSpecs[0], stateMgr);
+  constructResidEvaluators<PHAL::AlbanyTraits::MPResidual>(*fm[0], *meshSpecs[0], stateMgr);
+  constructResidEvaluators<PHAL::AlbanyTraits::MPJacobian>(*fm[0], *meshSpecs[0], stateMgr);
+  constructResidEvaluators<PHAL::AlbanyTraits::MPTangent >(*fm[0], *meshSpecs[0], stateMgr);
+  constructResponseEvaluators<PHAL::AlbanyTraits::Residual  >(*rfm[0], *meshSpecs[0], stateMgr, responses);
+  constructResponseEvaluators<PHAL::AlbanyTraits::Jacobian  >(*rfm[0], *meshSpecs[0], stateMgr);
+  constructResponseEvaluators<PHAL::AlbanyTraits::Tangent   >(*rfm[0], *meshSpecs[0], stateMgr);
+  constructResponseEvaluators<PHAL::AlbanyTraits::SGResidual>(*rfm[0], *meshSpecs[0], stateMgr);
+  constructResponseEvaluators<PHAL::AlbanyTraits::SGJacobian>(*rfm[0], *meshSpecs[0], stateMgr);
+  constructResponseEvaluators<PHAL::AlbanyTraits::SGTangent >(*rfm[0], *meshSpecs[0], stateMgr);
+  constructResponseEvaluators<PHAL::AlbanyTraits::MPResidual>(*rfm[0], *meshSpecs[0], stateMgr);
+  constructResponseEvaluators<PHAL::AlbanyTraits::MPJacobian>(*rfm[0], *meshSpecs[0], stateMgr);
+  constructResponseEvaluators<PHAL::AlbanyTraits::MPTangent >(*rfm[0], *meshSpecs[0], stateMgr);
+
   constructDirichletEvaluators(*meshSpecs[0]);
-}
-
-void
-Albany::LameProblem::constructEvaluators(
-       const Albany::MeshSpecsStruct& meshSpecs,
-       Albany::StateManager& stateMgr,
-       Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
-{
-   using Teuchos::RCP;
-   using Teuchos::rcp;
-   using Teuchos::ParameterList;
-   using PHX::DataLayout;
-   using PHX::MDALayout;
-   using std::vector;
-   using LCM::FactoryTraits;
-   using PHAL::AlbanyTraits;
-
-   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
-   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
-     intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
-
-   const int numNodes = intrepidBasis->getCardinality();
-   const int worksetSize = meshSpecs.worksetSize;
-
-   Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-   RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
-
-   const int numDim = cubature->getDimension();
-   const int numQPts = cubature->getNumPoints();
-   const int numVertices = cellType->getNodeCount();
-   //   const int numVertices = cellType->getVertexCount();
-
-   *out << "Field Dimensions: Workset=" << worksetSize 
-        << ", Vertices= " << numVertices
-        << ", Nodes= " << numNodes
-        << ", QuadPts= " << numQPts
-        << ", Dim= " << numDim << endl;
-
-   // Construct standard FEM evaluators with standard field names                              
-   std::map<string, RCP<ParameterList> > evaluators_to_build;
-   RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
-   Albany::ProblemUtils probUtils(dl,"LCM");
-   bool supportsTransient=true;
-
-   // Define Field Names
-   Teuchos::ArrayRCP<string> dof_names(1);
-     dof_names[0] = "Displacement";
-   Teuchos::ArrayRCP<string> dof_names_dotdot(1);
-   if (supportsTransient)
-     dof_names_dotdot[0] = dof_names[0]+"_dotdot";
-   Teuchos::ArrayRCP<string> resid_names(1);
-     resid_names[0] = dof_names[0]+" Residual";
-
-   evaluators_to_build["DOF "+dof_names[0]] =
-     probUtils.constructDOFVecInterpolationEvaluator(dof_names[0]);
-
-   if (supportsTransient)
-     evaluators_to_build["DOF "+dof_names_dotdot[0]] =
-       probUtils.constructDOFVecInterpolationEvaluator(dof_names_dotdot[0]);
-
-   evaluators_to_build["DOF Grad "+dof_names[0]] =
-     probUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]);
-
-   if (supportsTransient) evaluators_to_build["Gather Solution"] =
-       probUtils.constructGatherSolutionEvaluator(true, dof_names, dof_names_dotdot);
-   else  evaluators_to_build["Gather Solution"] =
-       probUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names);
-
-   evaluators_to_build["Scatter Residual"] =
-     probUtils.constructScatterResidualEvaluator(true, resid_names);
-
-   evaluators_to_build["Gather Coordinate Vector"] =
-     probUtils.constructGatherCoordinateVectorEvaluator();
-
-   evaluators_to_build["Map To Physical Frame"] =
-     probUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature);
-
-   evaluators_to_build["Compute Basis Functions"] =
-     probUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature);
-
-  if (haveSource) { // Source
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-                       "Error!  Sources not implemented in Elasticity yet!");
-
-    RCP<ParameterList> p = rcp(new ParameterList);
-
-    int type = FactoryTraits<AlbanyTraits>::id_source;
-    p->set<int>("Type", type);
-
-    p->set<string>("Source Name", "Source");
-    p->set<string>("Variable Name", "Displacement");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Source Functions");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-    evaluators_to_build["Source"] = p;
-  }
-
-  { // Strain
-    RCP<ParameterList> p = rcp(new ParameterList("Strain"));
-
-    int type = LCM::FactoryTraits<AlbanyTraits>::id_strain;
-    p->set<int>("Type", type);
-
-    //Input
-    p->set<string>("Gradient QP Variable Name", "Displacement Gradient");
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
-    //Output
-    p->set<string>("Strain Name", "Strain"); //dl->qp_tensor also
-
-    evaluators_to_build["Strain"] = p;
-  }
-
-  { // Deformation Gradient
-    RCP<ParameterList> p = rcp(new ParameterList("DefGrad"));
-
-    int type = FactoryTraits<AlbanyTraits>::id_defgrad;
-    p->set<int>("Type", type);
-
-    //Input
-    // If true, compute determinate of deformation gradient at all integration points, then replace all of them with the simple average for the element.  This give a constant volumetric response.
-    const bool avgJ = params->get("avgJ", false);
-    p->set<bool>("avgJ Name", avgJ);
-    // If true, compute determinate of deformation gradient at all integration points, then replace all of them with the volume average for the element (integrate J over volume of element, divide by total volume).  This give a constant volumetric response.
-    const bool volavgJ = params->get("volavgJ", false);
-    p->set<bool>("volavgJ Name", volavgJ);
-    // Integration weights for each quadrature point
-    p->set<string>("Weights Name","Weights");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set<string>("Gradient QP Variable Name", "Displacement Gradient");
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
-    //Output
-    p->set<string>("DefGrad Name", "Deformation Gradient"); //dl->qp_tensor also
-    p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient"); 
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-    evaluators_to_build["DefGrad"] = p;
-  }
-
-  { // LameStress
-    RCP<ParameterList> p = rcp(new ParameterList("Stress"));
-
-    int type = LCM::FactoryTraits<AlbanyTraits>::id_lame_stress;
-    p->set<int>("Type", type);
-
-    // Material properties that will be passed to LAME material model
-    string lameMaterialModel = params->get<string>("Lame Material Model");
-    p->set<string>("Lame Material Model", lameMaterialModel);
-    Teuchos::ParameterList& lameMaterialParametersList = p->sublist("Lame Material Parameters");
-    lameMaterialParametersList = params->sublist("Lame Material Parameters");
-
-    // Input
-    p->set<string>("Strain Name", "Strain");
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
-    p->set<string>("DefGrad Name", "Deformation Gradient"); // dl->qp_tensor also
-
-    // Output
-    p->set<string>("Stress Name", "Stress"); // dl->qp_tensor also
-
-    evaluators_to_build["Stress"] = p;
-
-    // Declare state data that need to be saved
-    // (register with state manager and create corresponding evaluator)
-
-    // Stress and DefGrad are required at the element level for all LAME models
-    evaluators_to_build["Save Stress"] =
-      stateMgr.registerStateVariable("Stress",dl->qp_tensor,
-            dl->dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"zero",true);
-    evaluators_to_build["Save DefGrad"] =
-      stateMgr.registerStateVariable("Deformation Gradient",dl->qp_tensor,
-            dl->dummy, FactoryTraits<AlbanyTraits>::id_savestatefield,"identity", true);
-
-    // A LAME material model may register additional state variables (type is always double)
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    std::vector<std::string> lameMaterialModelStateVariableNames = LameUtils::getStateVariableNames(lameMaterialModel, lameMaterialParametersList);
-    std::vector<double> lameMaterialModelStateVariableInitialValues = LameUtils::getStateVariableInitialValues(lameMaterialModel, lameMaterialParametersList);
-    for(unsigned int i=0 ; i<lameMaterialModelStateVariableNames.size() ; ++i){
-      evaluators_to_build["Save " + lameMaterialModelStateVariableNames[i]] =
-        stateMgr.registerStateVariable(lameMaterialModelStateVariableNames[i],
-                                       dl->qp_scalar,
-                                       dl->dummy,
-                                       FactoryTraits<AlbanyTraits>::id_savestatefield,
-                                       doubleToInitString(lameMaterialModelStateVariableInitialValues[i]),true);
-    }
-  }
-
-  { // Displacement Resid
-    RCP<ParameterList> p = rcp(new ParameterList("Displacement Resid"));
-
-    int type = LCM::FactoryTraits<AlbanyTraits>::id_elasticityresid;
-    p->set<int>("Type", type);
-
-    //Input
-    p->set<string>("Stress Name", "Stress");
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
-    // \todo Is the required?
-    p->set<string>("DefGrad Name", "Deformation Gradient"); //dl->qp_tensor also
-
-    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
-
-    // extra input for time dependent term
-    p->set<string>("Weighted BF Name", "wBF");
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
-    p->set<string>("Time Dependent Variable Name", "Displacement_dotdot");
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-
-    //Output
-    p->set<string>("Residual Name", "Displacement Residual");
-    p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
-
-    evaluators_to_build["Elasticity Resid"] = p;
-  }
-
-   // Build Field Evaluators for each evaluation type
-   PHX::EvaluatorFactory<AlbanyTraits,FactoryTraits<AlbanyTraits> > factory;
-   RCP< vector< RCP<PHX::Evaluator_TemplateManager<AlbanyTraits> > > >
-     evaluators;
-   evaluators = factory.buildEvaluators(evaluators_to_build);
-
-   // Create a FieldManager
-   fm[0] = Teuchos::rcp(new PHX::FieldManager<AlbanyTraits>);
-
-   // Register all Evaluators
-   PHX::registerEvaluators(evaluators, *fm[0]);
-
-   PHX::Tag<AlbanyTraits::Residual::ScalarT> res_tag("Scatter", dl->dummy);
-   fm[0]->requireField<AlbanyTraits::Residual>(res_tag);
-   PHX::Tag<AlbanyTraits::Jacobian::ScalarT> jac_tag("Scatter", dl->dummy);
-   fm[0]->requireField<AlbanyTraits::Jacobian>(jac_tag);
-   PHX::Tag<AlbanyTraits::Tangent::ScalarT> tan_tag("Scatter", dl->dummy);
-   fm[0]->requireField<AlbanyTraits::Tangent>(tan_tag);
-   PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_tag("Scatter", dl->dummy);
-   fm[0]->requireField<AlbanyTraits::SGResidual>(sgres_tag);
-   PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag("Scatter", dl->dummy);
-   fm[0]->requireField<AlbanyTraits::SGJacobian>(sgjac_tag);
-   PHX::Tag<AlbanyTraits::SGTangent::ScalarT> sgtan_tag("Scatter", dl->dummy);
-   fm[0]->requireField<AlbanyTraits::SGTangent>(sgtan_tag);
-   PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag("Scatter", dl->dummy);
-   fm[0]->requireField<AlbanyTraits::MPResidual>(mpres_tag);
-   PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag("Scatter", dl->dummy);
-   fm[0]->requireField<AlbanyTraits::MPJacobian>(mpjac_tag);
-   PHX::Tag<AlbanyTraits::MPTangent::ScalarT> mptan_tag("Scatter", dl->dummy);
-   fm[0]->requireField<AlbanyTraits::MPTangent>(mptan_tag);
-
-   //Construct Rsponses
-   Teuchos::ParameterList& responseList = params->sublist("Response Functions");
-   Albany::ResponseUtils respUtils(dl,"LCM");
-   rfm[0] = respUtils.constructResponses(responses, responseList, evaluators_to_build, stateMgr);
 }
 
 void
