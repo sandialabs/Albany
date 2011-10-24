@@ -28,17 +28,15 @@ Albany::StateManager::StateManager() :
 Teuchos::RCP<Teuchos::ParameterList>
 Albany::StateManager::registerStateVariable(const std::string &name, const Teuchos::RCP<PHX::DataLayout> &dl,
                                             const Teuchos::RCP<PHX::DataLayout> &dummy,
-                                            const int saveOrLoadStateFieldID,
                                             const std::string &init_type,
                                             const bool registerOldState)
 {
-  return registerStateVariable(name, dl, dummy, saveOrLoadStateFieldID, init_type, registerOldState, name);
+  return registerStateVariable(name, dl, dummy, init_type, registerOldState, name);
 }
 
 Teuchos::RCP<Teuchos::ParameterList>
 Albany::StateManager::registerStateVariable(const std::string &stateName, const Teuchos::RCP<PHX::DataLayout> &dl,
                                             const Teuchos::RCP<PHX::DataLayout> &dummy,
-                                            const int saveOrLoadStateFieldID,
                                             const std::string &init_type,
                                             const bool registerOldState,
                                             const std::string& fieldName)
@@ -48,7 +46,6 @@ Albany::StateManager::registerStateVariable(const std::string &stateName, const 
   // Create param list for SaveStateField evaluator 
   Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Save or Load State " 
 							  + stateName + " to/from field " + fieldName));
-  p->set<const int>("Type", saveOrLoadStateFieldID);
   p->set<const std::string>("State Name", stateName);
   p->set<const std::string>("Field Name", fieldName);
   p->set<const Teuchos::RCP<PHX::DataLayout> >("State Field Layout", dl);

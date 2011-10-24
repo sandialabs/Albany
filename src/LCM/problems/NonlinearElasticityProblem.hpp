@@ -328,7 +328,7 @@ void Albany::NonlinearElasticityProblem::constructEvaluators(
 
       ev = rcp(new LCM::Neohookean<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy, 0,"zero");
+      p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy,"zero");
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
@@ -350,7 +350,7 @@ void Albany::NonlinearElasticityProblem::constructEvaluators(
 
     ev = rcp(new LCM::PisdWdF<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy, 0,"zero");
+    p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy,"zero");
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -442,7 +442,7 @@ void Albany::NonlinearElasticityProblem::constructEvaluators(
       //Declare what state data will need to be saved (name, layout, init_type)
       ev = rcp(new LCM::DislocationDensity<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("G",dl->qp_tensor, dl->dummy, 0,"zero");
+      p = stateMgr.registerStateVariable("G",dl->qp_tensor, dl->dummy,"zero");
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
@@ -473,13 +473,13 @@ void Albany::NonlinearElasticityProblem::constructEvaluators(
 
       ev = rcp(new LCM::J2Stress<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy, 0,"zero");
+      p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy,"zero");
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy, 0,"identity", true);
+      p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy,"identity", true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy, 0,"zero", true);
+      p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy,"zero", true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }

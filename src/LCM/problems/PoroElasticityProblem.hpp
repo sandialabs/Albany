@@ -254,7 +254,7 @@ void Albany::PoroElasticityProblem::constructEvaluators(
 
      ev = rcp(new LCM::Strain<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
-     p = stateMgr.registerStateVariable("Strain",dl->qp_tensor, dl->dummy, 0,"zero",true);
+     p = stateMgr.registerStateVariable("Strain",dl->qp_tensor, dl->dummy,"zero",true);
      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
    }
@@ -280,7 +280,7 @@ void Albany::PoroElasticityProblem::constructEvaluators(
 
           ev = rcp(new LCM::Porosity<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
-          p = stateMgr.registerStateVariable("Porosity",dl->qp_tensor, dl->dummy, 0,"zero", true);
+          p = stateMgr.registerStateVariable("Porosity",dl->qp_tensor, dl->dummy,"zero", true);
           ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
      }
@@ -305,7 +305,7 @@ void Albany::PoroElasticityProblem::constructEvaluators(
 
           ev = rcp(new LCM::BiotCoefficient<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
-          p = stateMgr.registerStateVariable("Biot Coefficient",dl->qp_scalar, dl->dummy, 0,"zero");
+          p = stateMgr.registerStateVariable("Biot Coefficient",dl->qp_scalar, dl->dummy,"zero");
           ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -329,7 +329,7 @@ void Albany::PoroElasticityProblem::constructEvaluators(
 
           ev = rcp(new LCM::BiotModulus<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
-          p = stateMgr.registerStateVariable("Biot Modulus",dl->qp_scalar, dl->dummy, 0,"zero");
+          p = stateMgr.registerStateVariable("Biot Modulus",dl->qp_scalar, dl->dummy,"zero");
           ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
      }
@@ -370,7 +370,7 @@ void Albany::PoroElasticityProblem::constructEvaluators(
 
      ev = rcp(new LCM::KCPermeability<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
-     p = stateMgr.registerStateVariable("Kozeny-Carman Permeability",dl->qp_scalar, dl->dummy, 0,"zero");
+     p = stateMgr.registerStateVariable("Kozeny-Carman Permeability",dl->qp_scalar, dl->dummy,"zero");
      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
     }
@@ -464,7 +464,7 @@ void Albany::PoroElasticityProblem::constructEvaluators(
 
     ev = rcp(new LCM::TotalStress<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Total Stress",dl->qp_tensor, dl->dummy, 0,"zero");
+    p = stateMgr.registerStateVariable("Total Stress",dl->qp_tensor, dl->dummy,"zero");
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 

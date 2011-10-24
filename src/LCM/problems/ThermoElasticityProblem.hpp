@@ -341,7 +341,7 @@ void Albany::ThermoElasticityProblem::constructEvaluators(
 
     ev = rcp(new LCM::Stress<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy, 0,"zero");
+    p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy,"zero");
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }

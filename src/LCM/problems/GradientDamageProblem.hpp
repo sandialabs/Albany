@@ -422,13 +422,13 @@ void Albany::GradientDamageProblem::constructEvaluators(
 
     ev = rcp(new LCM::J2Damage<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy, 0,"zero");
+    p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy,"zero");
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy, 0,"identity",true);
+    p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy,"identity",true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy, 0,"zero",true);
+    p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy,"zero",true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -497,10 +497,10 @@ void Albany::GradientDamageProblem::constructEvaluators(
 
     ev = rcp(new LCM::DamageSource<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Damage Source",dl->qp_scalar, dl->dummy, 0,"zero",true);
+    p = stateMgr.registerStateVariable("Damage Source",dl->qp_scalar, dl->dummy,"zero",true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Damage",dl->qp_scalar, dl->dummy, 0,"zero",true);
+    p = stateMgr.registerStateVariable("Damage",dl->qp_scalar, dl->dummy,"zero",true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }

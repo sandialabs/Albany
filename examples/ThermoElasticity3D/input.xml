@@ -122,7 +122,6 @@
 		  <Parameter name="Prec Type" type="string" value="ILU"/>
 		  <ParameterList name="Ifpack Settings">
 		    <Parameter name="fact: drop tolerance" type="double" value="0"/>
-		    <Parameter name="fact: ilut level-of-fill" type="double" value="1"/>
 		    <Parameter name="fact: level-of-fill" type="int" value="1"/>
 		  </ParameterList>
 		</ParameterList>
@@ -137,12 +136,12 @@
 	</ParameterList>
 	<Parameter name="Method" type="string" value="Full Step"/>
       </ParameterList>
-      <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
       <ParameterList name="Printing">
 	<Parameter name="Output Information" type="int" value="103"/>
 	<Parameter name="Output Precision" type="int" value="3"/>
 	<Parameter name="Output Processor" type="int" value="0"/>
       </ParameterList>
+      <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
     </ParameterList>
   </ParameterList>
 </ParameterList>
