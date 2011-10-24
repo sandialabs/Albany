@@ -54,7 +54,6 @@ SET(SOURCES ${SOURCES}
 	problems/Albany_AbstractProblem.cpp 
 	problems/Albany_ProblemUtils.cpp 
 	problems/Albany_EvaluatorUtils.cpp 
-	problems/Albany_ResponseUtils.cpp 
 	problems/Albany_ResponseUtilities.cpp 
 	problems/Albany_DirichletUtils.cpp 
 	problems/Albany_ProblemFactory.cpp
@@ -73,7 +72,6 @@ SET(HEADERS ${HEADERS}
 	problems/Albany_ProblemUtils.hpp 
 	problems/Albany_EvaluatorUtils.hpp 
 	problems/Albany_EvaluatorUtils_Def.hpp 
-	problems/Albany_ResponseUtils.hpp 
 	problems/Albany_ResponseUtilities.hpp 
 	problems/Albany_ResponseUtilities_Def.hpp 
 	problems/Albany_DirichletUtils.hpp 
@@ -248,10 +246,6 @@ SET(HEADERS ${HEADERS}
 IF(ALBANY_LCM)
   SET(LCM_DIR ${Albany_SOURCE_DIR}/src/LCM)
 
-  SET(HEADERS ${HEADERS}
-    ${LCM_DIR}/LCM_FactoryTraits.hpp
-  )
-  
   # LCM problems
   SET(SOURCES ${SOURCES}
     ${LCM_DIR}/problems/ElasticityProblem.cpp 

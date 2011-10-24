@@ -473,13 +473,13 @@ void Albany::NonlinearElasticityProblem::constructEvaluators(
 
       ev = rcp(new LCM::J2Stress<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("matModel",dl->qp_tensor, dl->dummy, 0,"zero");
+      p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy, 0,"zero");
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy, 0,"zero");
+      p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy, 0,"identity", true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy, 0,"zero");
+      p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy, 0,"zero", true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }

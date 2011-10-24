@@ -287,31 +287,34 @@ void Albany::LameProblem::constructEvaluators(
     // Output
     p->set<string>("Stress Name", "Stress"); // dl->qp_tensor also
 
+    // A LAME material model may register additional state variables (type is always double)
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
     ev = rcp(new LCM::LameStress<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
     // Declare state data that need to be saved
     // (register with state manager and create corresponding evaluator)
-
-    p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy, 0,"zero");
-    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+    RCP<ParameterList> p2;
+    p2 = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy, 0,"zero", true);
+    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p2));
     fm0.template registerEvaluator<EvalT>(ev);
 
-    p = stateMgr.registerStateVariable("Deformation Gradient",dl->qp_tensor, dl->dummy, 0,"zero");
-    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+    p2 = stateMgr.registerStateVariable("Deformation Gradient",dl->qp_tensor, dl->dummy, 0,"identity", true);
+    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p2));
     fm0.template registerEvaluator<EvalT>(ev);
 
-    // A LAME material model may register additional state variables (type is always double)
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    std::vector<std::string> lameMaterialModelStateVariableNames = LameUtils::getStateVariableNames(lameMaterialModel, lameMaterialParametersList);
-    std::vector<double> lameMaterialModelStateVariableInitialValues = LameUtils::getStateVariableInitialValues(lameMaterialModel, lameMaterialParametersList);
+    std::vector<std::string> lameMaterialModelStateVariableNames
+       = LameUtils::getStateVariableNames(lameMaterialModel, lameMaterialParametersList);
+    std::vector<double> lameMaterialModelStateVariableInitialValues
+       = LameUtils::getStateVariableInitialValues(lameMaterialModel, lameMaterialParametersList);
     for(unsigned int i=0 ; i<lameMaterialModelStateVariableNames.size() ; ++i){
-      p = stateMgr.registerStateVariable(lameMaterialModelStateVariableNames[i],
+      p2 = stateMgr.registerStateVariable(lameMaterialModelStateVariableNames[i],
                                        dl->qp_scalar,
                                        dl->dummy,
                                        0,
                                        doubleToInitString(lameMaterialModelStateVariableInitialValues[i]),true);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p2));
       fm0.template registerEvaluator<EvalT>(ev);
     }
   }

@@ -123,8 +123,6 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
 
   // LameStress evaluator
   Teuchos::RCP<Teuchos::ParameterList> lameStressParameterList = Teuchos::rcp(new Teuchos::ParameterList("Stress"));
-  //int type = LameStressUnitTestFactoryTraits<PHAL::AlbanyTraits>::id_lame_stress;
-  //lameStressParameterList->set<int>("Type", type);
   lameStressParameterList->set<string>("DefGrad Name", "Deformation Gradient");
   lameStressParameterList->set<string>("Stress Name", "Stress");
   lameStressParameterList->set< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout", qp_scalar);

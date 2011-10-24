@@ -256,7 +256,7 @@ void Albany::PoroElasticityProblem::constructEvaluators(
 
      ev = rcp(new LCM::Strain<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
-     p = stateMgr.registerStateVariable("Strain",dl->qp_tensor, dl->dummy, 0,"zero");
+     p = stateMgr.registerStateVariable("Strain",dl->qp_tensor, dl->dummy, 0,"zero",true);
      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
    }
@@ -282,7 +282,7 @@ void Albany::PoroElasticityProblem::constructEvaluators(
 
           ev = rcp(new LCM::Porosity<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
-          p = stateMgr.registerStateVariable("Porosity",dl->qp_tensor, dl->dummy, 0,"zero");
+          p = stateMgr.registerStateVariable("Porosity",dl->qp_tensor, dl->dummy, 0,"zero", true);
           ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
      }
@@ -372,7 +372,7 @@ void Albany::PoroElasticityProblem::constructEvaluators(
 
      ev = rcp(new LCM::KCPermeability<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
-     p = stateMgr.registerStateVariable("Kozeny-carman Permeability",dl->qp_scalar, dl->dummy, 0,"zero");
+     p = stateMgr.registerStateVariable("Kozeny-Carman Permeability",dl->qp_scalar, dl->dummy, 0,"zero");
      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
     }
