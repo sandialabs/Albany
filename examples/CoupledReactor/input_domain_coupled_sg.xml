@@ -90,12 +90,10 @@
       <Parameter name="Response 0" type="string" value="Field Integral" />
       <ParameterList name="ResponseParams 0">
         <Parameter name="Field Name" type="string" value="Temperature" />
-        <Parameter name="Element Block Name" type="string" value="Block_1" />
       </ParameterList>
       <Parameter name="Response 1" type="string" value="Field Integral" />
       <ParameterList name="ResponseParams 1">
         <Parameter name="Field Name" type="string" value="Neutron Flux" />
-        <Parameter name="Element Block Name" type="string" value="Block_1" />
       </ParameterList>
     </ParameterList>
   </ParameterList>
