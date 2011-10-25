@@ -525,9 +525,10 @@ void Albany::PoroElasticityProblem::constructEvaluators(
     p->set<string>("QP Variable Name", "Pore Pressure"); // NOTE: QP and nodal vaue shares same name
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    // p->set<string>("QP Time Derivative Variable Name", "Pore Pressure_dot");
+    p->set<string>("QP Time Derivative Variable Name", "Pore Pressure_dot");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<bool>("Have Source", haveSource);
+    p->set<bool>("Have Source", false);
     p->set<string>("Source Name", "Source");
 
     p->set<bool>("Have Absorption", false);
