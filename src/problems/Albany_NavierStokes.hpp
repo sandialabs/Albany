@@ -531,7 +531,7 @@ void Albany::NavierStokes::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (haveNeutEq) { // Neutron fission cross section
+  if (haveNeutEq || (haveNeut && haveHeatEq)) { // Neutron fission cross section
     RCP<ParameterList> p = rcp(new ParameterList);
 
     p->set<string>("Material Property Name", "Fission Cross Section");
@@ -586,7 +586,7 @@ void Albany::NavierStokes::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (haveNeutEq && haveHeatEq) { // Energy released per fission
+  if (haveNeut && haveHeatEq) { // Energy released per fission
     RCP<ParameterList> p = rcp(new ParameterList);
 
     p->set<string>("Material Property Name", "Energy Released per Fission");
@@ -990,7 +990,7 @@ void Albany::NavierStokes::constructEvaluators(
       PHX::Tag<typename EvalT::ScalarT> heat_tag("Scatter Temperature", dl->dummy);
       fm0.requireField<EvalT>(heat_tag);
     }
-    if (haveNeuEqt) {
+    if (haveNeutEq) {
       PHX::Tag<typename EvalT::ScalarT> neut_tag("Scatter Neutron", dl->dummy);
       fm0.requireField<EvalT>(neut_tag);
     }
