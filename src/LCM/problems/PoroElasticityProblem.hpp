@@ -26,6 +26,9 @@
 #include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
+#include "Albany_ProblemUtils.hpp"
+#include "Albany_ResponseUtilities.hpp"
+#include "Albany_EvaluatorUtils.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 
 namespace Albany {
@@ -124,6 +127,15 @@ namespace Albany {
   };
 }
 
+#include "Teuchos_RCP.hpp"
+#include "Teuchos_ParameterList.hpp"
+
+#include "Albany_AbstractProblem.hpp"
+
+#include "Phalanx.hpp"
+#include "PHAL_Workset.hpp"
+#include "PHAL_Dimension.hpp"
+#include "PHAL_AlbanyTraits.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_ResponseUtilities.hpp"
@@ -522,11 +534,10 @@ void Albany::PoroElasticityProblem::constructEvaluators(
     p->set<string>("Weighted BF Name", "wBF");
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
 
-    p->set<string>("QP Variable Name", "Pore Pressure"); // NOTE: QP and nodal vaue shares same name
+    p->set<string>("QP Pore Pressure Name", "Pore Pressure"); // NOTE: QP and nodal vaue shares same name
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<string>("QP Time Derivative Variable Name", "Pore Pressure_dot");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set<string>("QP Time Derivative Variable Name", "Pore Pressure");
 
     p->set<bool>("Have Source", false);
     p->set<string>("Source Name", "Source");
@@ -535,8 +546,6 @@ void Albany::PoroElasticityProblem::constructEvaluators(
 
     // Input from cubature points
     p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
     p->set<string>("Porosity Name", "Porosity");
     p->set<string>("Kozeny-Carman Permeability Name", "Kozeny-Carman Permeability");
     p->set<string>("Biot Coefficient Name", "Biot Coefficient");
@@ -558,7 +567,6 @@ void Albany::PoroElasticityProblem::constructEvaluators(
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
 
     p->set<string>("Weights Name","Weights");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     //Output
     p->set<string>("Residual Name", "Pore Pressure Residual");

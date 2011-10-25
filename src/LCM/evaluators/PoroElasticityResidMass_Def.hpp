@@ -28,7 +28,7 @@ namespace LCM {
   PoroElasticityResidMass(const Teuchos::ParameterList& p) :
     wBF         (p.get<std::string>                   ("Weighted BF Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
-    porePressure (p.get<std::string>                   ("QP Variable Name"),
+    porePressure (p.get<std::string>                   ("QP Pore Pressure Name"),
 		  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     Tdot        (p.get<std::string>                   ("QP Time Derivative Variable Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
@@ -100,7 +100,7 @@ namespace LCM {
     // Get data from previous converged time step
     strainName = p.get<std::string>("Strain Name")+"_old";
     porosityName = p.get<std::string>("Porosity Name")+"_old";
-    porePressureName = p.get<std::string>("QP Variable Name")+"_old";
+    porePressureName = p.get<std::string>("QP Pore Pressure Name")+"_old";
     //this->addEvaluatedField(strain);
 
 
