@@ -30,8 +30,8 @@ namespace LCM {
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
     porePressure (p.get<std::string>                   ("QP Variable Name"),
 		  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-    Tdot        (p.get<std::string>                   ("QP Time Derivative Variable Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+//    Tdot        (p.get<std::string>                   ("QP Time Derivative Variable Name"),
+//		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     ThermalCond (p.get<std::string>                   ("Thermal Conductivity Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     kcPermeability (p.get<std::string>            ("Kozeny-Carman Permeability Name"),
@@ -76,7 +76,7 @@ namespace LCM {
     this->addDependentField(porosity);
     this->addDependentField(biotCoefficient);
     this->addDependentField(biotModulus);
-    if (enableTransient) this->addDependentField(Tdot);
+   // if (enableTransient) this->addDependentField(Tdot);
     this->addDependentField(TGrad);
     this->addDependentField(wGradBF);
     if (haveSource) this->addDependentField(Source);
@@ -157,7 +157,7 @@ namespace LCM {
     this->utils.setFieldData(TGrad,fm);
     this->utils.setFieldData(wGradBF,fm);
     if (haveSource)  this->utils.setFieldData(Source,fm);
-    if (enableTransient) this->utils.setFieldData(Tdot,fm);
+    // if (enableTransient) this->utils.setFieldData(Tdot,fm);
     if (haveAbsorption)  this->utils.setFieldData(Absorption,fm);
     if (haveConvection && haverhoCp)  this->utils.setFieldData(rhoCp,fm);
     this->utils.setFieldData(strain,fm);

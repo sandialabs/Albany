@@ -130,12 +130,12 @@ namespace Albany {
 #include "Albany_EvaluatorUtils.hpp"
 
 #include "Strain.hpp"
+#include "PHAL_SaveStateField.hpp"
 #include "Porosity.hpp"
 #include "BiotCoefficient.hpp"
 #include "BiotModulus.hpp"
 #include "PHAL_ThermalConductivity.hpp"
 #include "KCPermeability.hpp"
-#include "PHAL_SaveStateField.hpp"
 #include "ElasticModulus.hpp"
 #include "PoissonsRatio.hpp"
 #include "TotalStress.hpp"
@@ -280,7 +280,7 @@ void Albany::PoroElasticityProblem::constructEvaluators(
 
           ev = rcp(new LCM::Porosity<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
-          p = stateMgr.registerStateVariable("Porosity",dl->qp_tensor, dl->dummy,"zero", true);
+          p = stateMgr.registerStateVariable("Porosity",dl->qp_scalar, dl->dummy,"zero", true);
           ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
      }
@@ -390,7 +390,6 @@ void Albany::PoroElasticityProblem::constructEvaluators(
     Teuchos::ParameterList& paramList = params->sublist("Elastic Modulus");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-
     p->set<string>("Porosity Name", "Porosity"); // porosity is defined at Cubature points
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
@@ -420,23 +419,23 @@ void Albany::PoroElasticityProblem::constructEvaluators(
 
 
 
-  if (haveSource) { // Source
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-                       "Error!  Sources not implemented in Elasticity yet!");
-
-    RCP<ParameterList> p = rcp(new ParameterList);
-
-    p->set<string>("Source Name", "Source");
-    p->set<string>("Variable Name", "Displacement");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Source Functions");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-    ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
+//  if (haveSource) { // Source
+ //   TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+ //                      "Error!  Sources not implemented in Elasticity yet!");
+//
+  //  RCP<ParameterList> p = rcp(new ParameterList);
+//
+  //  p->set<string>("Source Name", "Source");
+ //   p->set<string>("Variable Name", "Displacement");
+ //   p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+//
+ //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+ //   Teuchos::ParameterList& paramList = params->sublist("Source Functions");
+ //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+//
+ //   ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p));
+ //   fm0.template registerEvaluator<EvalT>(ev);
+//  }
 
 
 
@@ -486,12 +485,6 @@ void Albany::PoroElasticityProblem::constructEvaluators(
     p->set<bool>("Disable Transient", true);
 
 
-
-    // A L2 projection or bubble function needed here.
-//    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-//    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
-
-
     //Output
     p->set<string>("Residual Name", "Displacement Residual");
     p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
@@ -532,7 +525,7 @@ void Albany::PoroElasticityProblem::constructEvaluators(
     p->set<string>("QP Variable Name", "Pore Pressure"); // NOTE: QP and nodal vaue shares same name
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<string>("QP Time Derivative Variable Name", "Pore Pressure_dot");
+    // p->set<string>("QP Time Derivative Variable Name", "Pore Pressure_dot");
 
     p->set<bool>("Have Source", haveSource);
     p->set<string>("Source Name", "Source");
