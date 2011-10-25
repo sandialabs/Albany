@@ -69,6 +69,56 @@ Albany::DirichletUtils::constructDirichletEvaluators(
      }
    }
 
+#ifdef ALBANY_LCM
+   ///
+   /// Time dependent Dirichlet BC specific
+   ///
+   for (std::size_t i=0; i<nodeSetIDs.size(); i++) 
+   {
+     for (std::size_t j=0; j<dirichletNames.size(); j++) 
+     {
+       std::string ss = constructTimeDepDBCName(nodeSetIDs[i],dirichletNames[j]);
+       
+       if (DBCparams.isSublist(ss)) 
+       {
+	 // grab the sublist 
+         ParameterList& sub_list = DBCparams.sublist(ss);
+	 RCP<ParameterList> p = rcp(new ParameterList);
+	 type = PHAL::DirichletFactoryTraits<AlbanyTraits>::id_timedep_bc;
+	 p->set<int>("Type", type);
+	   
+	 // Extract the time values into a vector
+	 //vector<RealType> timeValues = sub_list.get<Teuchos::Array<RealType> >("Time Values").toVector();
+	 //RCP< vector<RealType> > t_ptr = Teuchos::rcpFromRef(timeValues); 
+	 //p->set< RCP< vector<RealType> > >("Time Values", t_ptr);
+	 p->set< Teuchos::Array<RealType> >("Time Values", sub_list.get<Teuchos::Array<RealType> >("Time Values"));
+
+	 //cout << "timeValues: " << timeValues[0] << " " << timeValues[1] << endl;
+
+	 // Extract the BC values into a vector
+	 //vector<RealType> BCValues = sub_list.get<Teuchos::Array<RealType> >("BC Values").toVector();
+	 //RCP< vector<RealType> > b_ptr = Teuchos::rcpFromRef(BCValues); 
+	 //p->set< RCP< vector<RealType> > >("BC Values", b_ptr);
+	 //p->set< vector<RealType> >("BC Values", BCValues);
+	 p->set< Teuchos::Array<RealType> >("BC Values", sub_list.get<Teuchos::Array<RealType> >("BC Values"));
+         p->set< RCP<DataLayout> >("Data Layout", dummy);
+	 p->set< string >  ("Dirichlet Name", ss);
+         p->set< RealType >("Dirichlet Value", 0.0);
+	 p->set< int >     ("Equation Offset", j);
+	 p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+	 p->set< string >  ("Node Set ID", nodeSetIDs[i]);
+
+         std::stringstream ess; ess << "Evaluator for " << ss;
+         evaluators_to_build[ess.str()] = p;
+
+	 dbcs.push_back(ss);
+       }
+     }
+   }
+
+   ///
+   /// Kfield BC specific
+   ///
    for (std::size_t i=0; i<nodeSetIDs.size(); i++) 
    {
      std::string ss = constructDBCName(nodeSetIDs[i],"K");
@@ -78,8 +128,6 @@ Albany::DirichletUtils::constructDirichletEvaluators(
        // grab the sublist
        ParameterList& sub_list = DBCparams.sublist(ss);
 
-#ifdef ALBANY_LCM
-       // Only for LCM problems, but no harm in leaving off ifdefs
        if (sub_list.get<string>("BC Function") == "Kfield" )
        {
 	 RCP<ParameterList> p = rcp(new ParameterList);
@@ -125,9 +173,9 @@ Albany::DirichletUtils::constructDirichletEvaluators(
 
 	 dbcs.push_back(ss);
        }
-#endif
      }
    }
+#endif
 
    string allDBC="Evaluator for all Dirichlet BCs";
    {
@@ -194,7 +242,9 @@ Albany::DirichletUtils::getValidDirichletBCParameters(
   for (std::size_t i=0; i<nodeSetIDs.size(); i++) {
     for (std::size_t j=0; j<dirichletNames.size(); j++) {
       std::string ss = constructDBCName(nodeSetIDs[i],dirichletNames[j]);
+      std::string tt = constructTimeDepDBCName(nodeSetIDs[i],dirichletNames[j]);
       validPL->set<double>(ss, 0.0, "Value of BC corresponding to nodeSetID and dofName");
+      validPL->sublist(tt, false, "SubList of BC corresponding to nodeSetID and dofName");
     }
   }
   
@@ -209,8 +259,16 @@ Albany::DirichletUtils::getValidDirichletBCParameters(
 
 std::string
 Albany::DirichletUtils::constructDBCName(const std::string ns,
-                                       const std::string dof) const
+					 const std::string dof) const
 {
   std::stringstream ss; ss << "DBC on NS " << ns << " for DOF " << dof;
+  return ss.str();
+}
+
+std::string
+Albany::DirichletUtils::constructTimeDepDBCName(const std::string ns,
+						const std::string dof) const
+{
+  std::stringstream ss; ss << "Time Dependent " << constructDBCName(ns, dof);
   return ss.str();
 }

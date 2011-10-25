@@ -119,6 +119,10 @@ private:
   //! NEW WAY
   Teuchos::RCP<StateInfoStruct> stateInfo;
   Teuchos::RCP<EigendataStruct> eigenData;
+
+  // Experiment in dealing with Time
+  double time;
+  double timeOld;
 };
 
 }

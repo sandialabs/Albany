@@ -56,6 +56,9 @@ namespace Albany {
 
     //! Local utility function to construct unique string from Nodeset name and dof name
     std::string constructDBCName(const std::string ns, const std::string dof) const;
+
+    //! Local utility function to construct unique string from Nodeset name and dof name
+    std::string constructTimeDepDBCName(const std::string ns, const std::string dof) const;
   };
 }
 

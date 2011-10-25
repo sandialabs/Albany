@@ -26,7 +26,6 @@ SET(SOURCES
 	Albany_StateManager.cpp 
 	Albany_ModelEvaluator.cpp
 	Albany_SaveEigenData.cpp
-	Albany_TimeManager.cpp
   )
 
 SET(HEADERS
@@ -46,7 +45,6 @@ SET(HEADERS
 	Albany_ModelEvaluator.hpp
 	Albany_SaveEigenData.hpp
         Albany_DummyParameterAccessor.hpp
-        Albany_TimeManager.hpp
   )
 
 #problems
@@ -303,6 +301,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/ThermoMechanicalEnergyResidual.cpp
     ${LCM_DIR}/evaluators/ThermoMechanicalMomentumResidual.cpp
     ${LCM_DIR}/evaluators/ThermoMechanicalStress.cpp
+    ${LCM_DIR}/evaluators/Time.cpp
+    ${LCM_DIR}/evaluators/TimeDepBC.cpp
   )
 
   SET(HEADERS ${HEADERS}
@@ -374,6 +374,10 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/ThermoMechanicalMomentumResidual_Def.hpp
     ${LCM_DIR}/evaluators/ThermoMechanicalStress.hpp
     ${LCM_DIR}/evaluators/ThermoMechanicalStress_Def.hpp
+    ${LCM_DIR}/evaluators/Time.hpp
+    ${LCM_DIR}/evaluators/Time_Def.hpp
+    ${LCM_DIR}/evaluators/TimeDepBC.hpp
+    ${LCM_DIR}/evaluators/TimeDepBC_Def.hpp
   )
 
   #LCM utils

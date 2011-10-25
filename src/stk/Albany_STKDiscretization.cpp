@@ -37,6 +37,9 @@
 #include <stk_mesh/base/FieldData.hpp>
 #include <stk_mesh/base/Selector.hpp>
 
+//#include <Intrepid_FieldContainer.hpp>
+#include <PHAL_Dimension.hpp>
+
 #include <stk_mesh/fem/FEMHelpers.hpp>
 
 #ifdef ALBANY_SEACAS
@@ -482,6 +485,12 @@ void Albany::STKDiscretization::computeWorksetInfo()
       stk::mesh::BucketArray<Albany::AbstractSTKMeshStruct::QPTensorFieldType> array(*stkMeshStruct->qptensor_states[i], buck);
       MDArray ar = array;
       stateArrays[b][stkMeshStruct->qptensor_states[i]->name()] = ar;
+    }    
+    for (std::size_t i=0; i<stkMeshStruct->scalarValue_states.size(); i++) {      
+      const int size = 1;
+      shards::Array<double, shards::NaturalOrder, Cell> array(&(stkMeshStruct->time), size);
+      MDArray ar = array;
+      stateArrays[b][stkMeshStruct->scalarValue_states[i]] = ar;
     }
   }
 }

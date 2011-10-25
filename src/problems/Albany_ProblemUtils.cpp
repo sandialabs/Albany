@@ -48,6 +48,8 @@ Albany::Layouts::Layouts (int worksetSize, int  numVertices,
   node_qp_scalar = rcp(new MDALayout<Cell,Node,QuadPoint>(worksetSize,numNodes, numQPts));
   node_qp_vector = rcp(new MDALayout<Cell,Node,QuadPoint,Dim>(worksetSize,numNodes, numQPts,numDim));
 
+  workset_scalar = rcp(new MDALayout<Dummy>(1));
+
   dummy = rcp(new MDALayout<Dummy>(0));
 }
 

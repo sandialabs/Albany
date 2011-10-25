@@ -61,9 +61,6 @@ Application(const RCP<const Epetra_Comm>& comm,
   // Create parameter library
   paramLib = rcp(new ParamLib);
 
-  // Attach paramLib to TimeManager
-  timeMgr.init(paramLib);
-
   // Create problem object
   RCP<Teuchos::ParameterList> problemParams = 
     Teuchos::sublist(params, "Problem", true);
@@ -328,9 +325,6 @@ computeGlobalResidual(const double current_time,
     for (unsigned int j=0; j<p[i].size(); j++)
       p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
 
-  // put current_time (from Rythmos) if this is a transient problem, then compute dt
-  if (xdot != NULL) timeMgr.setTime(current_time);
-  
   // Mesh motion needs to occur here on the global mesh befor
   // it is potentially carved into worksets.
 #ifdef ALBANY_CUTR
@@ -354,8 +348,13 @@ computeGlobalResidual(const double current_time,
   // Set data in Workset struct, and perform fill via field manager
   { 
     PHAL::Workset workset;
-    loadBasicWorksetInfo(workset, overlapped_x, overlapped_xdot, 
-			 timeMgr.getCurrentTime(), timeMgr.getDeltaTime());
+
+    if (!paramLib->isParameter("Time"))
+      loadBasicWorksetInfo( workset, overlapped_x, overlapped_xdot, current_time );
+    else 
+      loadBasicWorksetInfo( workset, overlapped_x, overlapped_xdot,
+			    paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time") );
+    
 
     workset.f        = overlapped_f;
 
@@ -381,7 +380,11 @@ computeGlobalResidual(const double current_time,
 
     workset.f = Teuchos::rcpFromRef(f);
     loadWorksetNodesetInfo(workset);
-    workset.x = Teuchos::rcpFromRef(x);;
+    workset.x = Teuchos::rcpFromRef(x);
+    if ( paramLib->isParameter("Time") )
+      workset.current_time = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+    else
+      workset.current_time = current_time;
     if (xdot != NULL) workset.transientTerms = true;
 
     // FillType template argument used to specialize Sacado
@@ -414,9 +417,6 @@ computeGlobalJacobian(const double alpha,
     for (unsigned int j=0; j<p[i].size(); j++)
       p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
 
-  // put current_time (from Rythmos) if this is a transient problem, then compute dt
-  if (xdot != NULL) timeMgr.setTime(current_time);
-
 #ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
     TimeMonitor Timer(*timers[10]); //start timer
@@ -445,8 +445,12 @@ computeGlobalJacobian(const double alpha,
   // Set data in Workset struct, and perform fill via field manager
   {
     PHAL::Workset workset;
-    loadBasicWorksetInfo(workset, overlapped_x, overlapped_xdot, 
-			 timeMgr.getCurrentTime(), timeMgr.getDeltaTime());
+    if (!paramLib->isParameter("Time"))
+      loadBasicWorksetInfo( workset, overlapped_x, overlapped_xdot, current_time );
+    else 
+      loadBasicWorksetInfo( workset, overlapped_x, overlapped_xdot,
+			    paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time") );
+
     workset.f        = overlapped_f;
     workset.Jac      = overlapped_jac;
     loadWorksetJacobianInfo(workset, alpha, beta);
@@ -474,6 +478,11 @@ computeGlobalJacobian(const double alpha,
     workset.Jac = Teuchos::rcpFromRef(jac);
     workset.m_coeff = alpha;
     workset.j_coeff = beta;
+
+    if ( paramLib->isParameter("Time") )
+      workset.current_time = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+    else
+      workset.current_time = current_time;
 
     if (beta==0.0 && perturbBetaForDirichlets>0.0) workset.j_coeff = perturbBetaForDirichlets;
 
@@ -556,9 +565,6 @@ computeGlobalTangent(const double alpha,
   for (int i=0; i<par.size(); i++)
     for (unsigned int j=0; j<par[i].size(); j++)
       par[i][j].family->setRealValueForAllTypes(par[i][j].baseValue);
-
-  // put current_time (from Rythmos) if this is a transient problem, then compute dt
-  if (xdot != NULL) timeMgr.setTime(current_time);
 
   RCP<const Epetra_MultiVector > vp = rcp(Vp, false);
   RCP<ParamVec> params = rcp(deriv_par, false);
@@ -718,8 +724,11 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
   // Set data in Workset struct, and perform fill via field manager
   {
     PHAL::Workset workset;
-    loadBasicWorksetInfo(workset, overlapped_x, overlapped_xdot, 
-			 timeMgr.getCurrentTime(), timeMgr.getDeltaTime());
+    if (!paramLib->isParameter("Time"))
+      loadBasicWorksetInfo( workset, overlapped_x, overlapped_xdot, current_time );
+    else 
+      loadBasicWorksetInfo( workset, overlapped_x, overlapped_xdot,
+			    paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time") );
 
     workset.params = params;
     workset.Vx = overlapped_Vx;
@@ -778,6 +787,11 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
     loadWorksetNodesetInfo(workset);
 
+    if ( paramLib->isParameter("Time") )
+      workset.current_time = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+    else
+      workset.current_time = current_time;
+
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
   }
@@ -796,6 +810,11 @@ evaluateResponse(const double current_time,
 {  
   const Epetra_Comm& comm = x.Map().Comm();
   unsigned int offset = 0;
+
+  double t = current_time;
+  if ( paramLib->isParameter("Time") ) 
+    t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+
   for (unsigned int i=0; i<responses.size(); i++) {
 
     // Create Epetra_Map for response function
@@ -806,8 +825,8 @@ evaluateResponse(const double current_time,
     Epetra_Vector local_g(local_response_map);
 
     // Evaluate response function
-    responses[i]->evaluateResponse(current_time, xdot, x, p, local_g);
-
+    responses[i]->evaluateResponse(t, xdot, x, p, local_g);
+    
     // Copy result into combined result
     for (unsigned int j=0; j<num_responses; j++)
       g[offset+j] = local_g[j];
@@ -817,7 +836,7 @@ evaluateResponse(const double current_time,
   }
 
   if( rfm != Teuchos::null )
-    evaluateResponse_rfm(current_time, xdot, x, p, g);  
+    evaluateResponse_rfm(t, xdot, x, p, g);  
 }
 
 void
@@ -981,9 +1000,6 @@ evaluateResponse_rfm(const double current_time,
     for (unsigned int j=0; j<p[i].size(); j++)
       p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
 
-  // put current_time (from Rythmos) if this is a transient problem, then compute dt
-  if (xdot != NULL) timeMgr.setTime(current_time);
-
   // -- No Mesh motion code --
 
 
@@ -1010,8 +1026,7 @@ evaluateResponse_rfm(const double current_time,
   // Set data in Workset struct, and perform fill via field manager
   { 
     PHAL::Workset workset;
-    loadBasicWorksetInfo(workset, overlapped_x, overlapped_xdot, 
-			 timeMgr.getCurrentTime(), timeMgr.getDeltaTime());
+    loadBasicWorksetInfo(workset, overlapped_x, overlapped_xdot, current_time);
     
     workset.responses = wsResponses;
 
@@ -1099,9 +1114,6 @@ evaluateResponseGradient_rfm(const double current_time,
     for (unsigned int j=0; j<p[i].size(); j++)
       p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
 
-  // put current_time (from Rythmos) if this is a transient problem, then compute dt
-  if (xdot != NULL) timeMgr.setTime(current_time);
-
   // -- No Mesh motion code --
 
   if (dg_dx != NULL) {
@@ -1139,8 +1151,7 @@ evaluateResponseGradient_rfm(const double current_time,
     beta  = 1;
     {
       PHAL::Workset workset;
-      loadBasicWorksetInfo(workset, overlapped_x, overlapped_xdot, 
-			   timeMgr.getCurrentTime(), timeMgr.getDeltaTime());
+      loadBasicWorksetInfo(workset, overlapped_x, overlapped_xdot, current_time);
       
       workset.responses           = wsResponses;
       workset.responseDerivatives = wsResponseDerivs;
@@ -1216,8 +1227,8 @@ evaluateResponseGradient_rfm(const double current_time,
     beta  = 0;
     {
       PHAL::Workset workset;
-      loadBasicWorksetInfo(workset, overlapped_x, overlapped_xdot, 
-			   timeMgr.getCurrentTime(), timeMgr.getDeltaTime());
+      loadBasicWorksetInfo(workset, overlapped_x, overlapped_xdot, current_time);
+      //      timeMgr.getCurrentTime(), timeMgr.getDeltaTime());
       
       workset.responses           = wsResponses;
       workset.responseDerivatives = wsResponseDerivs;
@@ -1291,7 +1302,7 @@ computeGlobalSGResidual(
       p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
 
   // put current_time (from Rythmos) if this is a transient problem, then compute dt
-  if (sg_xdot != NULL) timeMgr.setTime(current_time);
+  //  if (sg_xdot != NULL) timeMgr.setTime(current_time);
 
 #ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
@@ -1321,8 +1332,8 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     workset.sg_xdot      = sg_overlapped_xdot;
     workset.sg_f         = sg_overlapped_f;
 
-    workset.current_time = timeMgr.getCurrentTime();
-    workset.delta_time = timeMgr.getDeltaTime();
+    workset.current_time = current_time;
+    //workset.delta_time = timeMgr.getDeltaTime();
     if (sg_xdot != NULL) workset.transientTerms = true;
 
     for (int ws=0; ws < numWorksets; ws++) {
@@ -1346,6 +1357,11 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     loadWorksetNodesetInfo(workset);
     workset.sg_x = Teuchos::rcpFromRef(sg_x);
     if (sg_xdot != NULL) workset.transientTerms = true;
+
+    if ( paramLib->isParameter("Time") )
+      workset.current_time = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+    else
+      workset.current_time = current_time;
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::SGResidual>(workset);
@@ -1410,7 +1426,7 @@ computeGlobalSGJacobian(
       p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
 
   // put current_time (from Rythmos) if this is a transient problem, then compute dt
-  if (sg_xdot != NULL) timeMgr.setTime(current_time);
+  //  if (sg_xdot != NULL) timeMgr.setTime(current_time);
 
 #ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
@@ -1446,8 +1462,8 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
     workset.sg_Jac       = sg_overlapped_jac;
     loadWorksetJacobianInfo(workset, alpha, beta);
-    workset.current_time = timeMgr.getCurrentTime();
-    workset.delta_time = timeMgr.getDeltaTime();
+    workset.current_time = current_time;
+    //workset.delta_time = timeMgr.getDeltaTime();
     if (sg_xdot != NULL) workset.transientTerms = true;
 
     for (int ws=0; ws < numWorksets; ws++) {
@@ -1558,7 +1574,7 @@ computeGlobalSGTangent(
   }
 
   // put current_time (from Rythmos) if this is a transient problem, then compute dt
-  if (sg_xdot != NULL) timeMgr.setTime(current_time);
+  //  if (sg_xdot != NULL) timeMgr.setTime(current_time);
 
   RCP<const Epetra_MultiVector > vp = rcp(Vp, false);
   RCP<ParamVec> params = rcp(deriv_par, false);
@@ -1654,8 +1670,8 @@ computeGlobalSGTangent(
     workset.num_cols_p = num_cols_p;
     workset.param_offset = param_offset;
 
-    workset.current_time = timeMgr.getCurrentTime();
-    workset.delta_time = timeMgr.getDeltaTime();
+    workset.current_time = current_time; //timeMgr.getCurrentTime();
+    //    workset.delta_time = timeMgr.getDeltaTime();
     if (sg_xdot != NULL) workset.transientTerms = true;
 
     for (int ws=0; ws < numWorksets; ws++) {
@@ -2007,7 +2023,7 @@ computeGlobalMPResidual(
       p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
 
   // put current_time (from Rythmos) if this is a transient problem, then compute dt
-  if (mp_xdot != NULL) timeMgr.setTime(current_time);
+  //  if (mp_xdot != NULL) timeMgr.setTime(current_time);
 
 #ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
@@ -2036,8 +2052,8 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     workset.mp_xdot      = mp_overlapped_xdot;
     workset.mp_f         = mp_overlapped_f;
 
-    workset.current_time = timeMgr.getCurrentTime();
-    workset.delta_time = timeMgr.getDeltaTime();
+    workset.current_time = current_time; //timeMgr.getCurrentTime();
+    //    workset.delta_time = timeMgr.getDeltaTime();
     if (mp_xdot != NULL) workset.transientTerms = true;
 
     for (int ws=0; ws < numWorksets; ws++) {
@@ -2135,7 +2151,7 @@ computeGlobalMPJacobian(
       p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
 
   // put current_time (from Rythmos) if this is a transient problem, then compute dt
-  if (mp_xdot != NULL) timeMgr.setTime(current_time);
+  //  if (mp_xdot != NULL) timeMgr.setTime(current_time);
 
 #ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
@@ -2170,8 +2186,8 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
     workset.mp_Jac       = mp_overlapped_jac;
     loadWorksetJacobianInfo(workset, alpha, beta);
-    workset.current_time = timeMgr.getCurrentTime();
-    workset.delta_time = timeMgr.getDeltaTime();
+    workset.current_time = current_time; //timeMgr.getCurrentTime();
+    //    workset.delta_time = timeMgr.getDeltaTime();
     if (mp_xdot != NULL) workset.transientTerms = true;
 
     for (int ws=0; ws < numWorksets; ws++) {
@@ -2301,7 +2317,7 @@ computeGlobalMPTangent(
   }
 
   // put current_time (from Rythmos) if this is a transient problem, then compute dt
-  if (mp_xdot != NULL) timeMgr.setTime(current_time);
+  //  if (mp_xdot != NULL) timeMgr.setTime(current_time);
 
   RCP<const Epetra_MultiVector > vp = rcp(Vp, false);
   RCP<ParamVec> params = rcp(deriv_par, false);
@@ -2394,8 +2410,8 @@ computeGlobalMPTangent(
     workset.num_cols_p = num_cols_p;
     workset.param_offset = param_offset;
 
-    workset.current_time = timeMgr.getCurrentTime();
-    workset.delta_time = timeMgr.getDeltaTime();
+    workset.current_time = current_time; //timeMgr.getCurrentTime();
+    //    workset.delta_time = timeMgr.getDeltaTime();
     if (mp_xdot != NULL) workset.transientTerms = true;
 
     for (int ws=0; ws < numWorksets; ws++) {
@@ -2829,12 +2845,12 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset, const in
 
 void Albany::Application::loadBasicWorksetInfo(
        PHAL::Workset& workset, RCP<Epetra_Vector> overlapped_x,
-       RCP<Epetra_Vector> overlapped_xdot, double current_time, double delta_time)
+       RCP<Epetra_Vector> overlapped_xdot, double current_time)
 {
     workset.x        = overlapped_x;
     workset.xdot     = overlapped_xdot;
     workset.current_time = current_time;
-    workset.delta_time = delta_time;
+    //workset.delta_time = delta_time;
     if (overlapped_xdot != Teuchos::null) workset.transientTerms = true;
 }
 

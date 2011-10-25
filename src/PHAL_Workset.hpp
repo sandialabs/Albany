@@ -76,7 +76,7 @@ struct Workset {
 
   // Current Time as defined by Rythmos
   double current_time;
-  double delta_time;
+  double previous_time;
  
   // flag indicating whether to sum tangent derivatives, i.e.,
   // compute alpha*df/dxdot*Vxdot + beta*df/dx*Vx + df/dp*Vp or

@@ -22,6 +22,8 @@
 
 #ifdef ALBANY_LCM
 #include "LCM/evaluators/KfieldBC.hpp"
+#include "LCM/evaluators/TimeDepBC.hpp"
+#include "LCM/evaluators/Time.hpp"
 #endif
 #include "QCAD_PoissonDirichlet.hpp"
 #include "PHAL_Dirichlet.hpp"
@@ -42,26 +44,30 @@ namespace PHAL {
 
 */
 
-template<typename Traits>
-struct DirichletFactoryTraits {
+  template<typename Traits>
+  struct DirichletFactoryTraits {
   
-  static const int id_dirichlet                 =  0;
-  static const int id_dirichlet_aggregator      =  1;
-  static const int id_qcad_poisson_dirichlet    =  2;
-  static const int id_kfield_bc                 =  3; // Only for LCM probs
+    static const int id_dirichlet                 =  0;
+    static const int id_dirichlet_aggregator      =  1;
+    static const int id_qcad_poisson_dirichlet    =  2;
+    static const int id_kfield_bc                 =  3; // Only for LCM probs
+    static const int id_timedep_bc                =  4; // Only for LCM probs
+    static const int id_time                      =  5; // Only for LCM probs
 
 #ifdef ALBANY_LCM
-  typedef boost::mpl::vector4< 
+    typedef boost::mpl::vector6< 
 #else
-  typedef boost::mpl::vector3< 
+      typedef boost::mpl::vector3< 
 #endif
-            PHAL::Dirichlet<_,Traits>,                //  0
-            PHAL::DirichletAggregator<_,Traits>,      //  1
-            QCAD::PoissonDirichlet<_,Traits>         //  2
+	PHAL::Dirichlet<_,Traits>,                //  0
+	PHAL::DirichletAggregator<_,Traits>,      //  1
+	QCAD::PoissonDirichlet<_,Traits>          //  2
 #ifdef ALBANY_LCM
-            , LCM::KfieldBC<_,Traits>                   //  3
+	, LCM::KfieldBC<_,Traits>,                //  3
+	LCM::TimeDepBC<_, Traits>,                //  4 
+	LCM::Time<_, Traits>                      //  5 
 #endif
-  > EvaluatorTypes;
+	> EvaluatorTypes;
 };
 
 }

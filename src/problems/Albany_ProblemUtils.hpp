@@ -62,6 +62,8 @@ namespace Albany {
     Teuchos::RCP<PHX::DataLayout> node_qp_scalar;
     //! Data Layout for vector basis functions
     Teuchos::RCP<PHX::DataLayout> node_qp_vector;
+    //! Data Layout for scalar quantity on workset
+    Teuchos::RCP<PHX::DataLayout> workset_scalar;
     /*!
      * \brief Dummy Data Layout where one is needed but not accessed
      * For instance, the action of scattering residual data from a

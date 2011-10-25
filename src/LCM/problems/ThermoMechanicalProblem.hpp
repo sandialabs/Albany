@@ -150,6 +150,7 @@ namespace Albany {
 #include "PHAL_ThermalConductivity.hpp"
 #include "PHAL_Source.hpp"
 #include "PHAL_HeatEqResid.hpp"
+#include "Time.hpp"
 
 
 template <typename EvalT>
@@ -248,6 +249,22 @@ void Albany::ThermoMechanicalProblem::constructEvaluators(
 
   // Temporary variable used numerous times below
   Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
+
+  { // Time
+    RCP<ParameterList> p = rcp(new ParameterList);
+    
+    p->set<string>("Time Name", "Time");
+    p->set<string>("Delta Time Name", " Delta Time");
+    p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    p->set<bool>("Disable Transient", true);
+
+    ev = rcp(new LCM::Time<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+    p = stateMgr.registerStateVariable("Time",dl->workset_scalar, dl->dummy,"zero", true);
+    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
 
   { // Shear Modulus
     RCP<ParameterList> p = rcp(new ParameterList);
@@ -458,18 +475,21 @@ void Albany::ThermoMechanicalProblem::constructEvaluators(
   }
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
+    cout << "build resid" << endl;
     PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter", dl->dummy);
     fm0.requireField<EvalT>(res_tag);
 
     PHX::Tag<typename EvalT::ScalarT> res_tag2(scatterName, dl->dummy);
     fm0.requireField<EvalT>(res_tag2);
+    cout << "end build resid" << endl;
   }
 
   else {
-    //Construct Responses
+    cout << "//Construct Responses" << endl;
     Teuchos::ParameterList& responseList = params->sublist("Response Functions");
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
     respUtils.constructResponses(fm0, responses, responseList, stateMgr);
+    cout << "end //Construct Responses" << endl;
   }
 }
 #endif // ALBANY_ELASTICITYPROBLEM_HPP
