@@ -89,6 +89,7 @@ evaluateFields(typename Traits::EvalData workset)
     switch (size) {
     case 1:
       sta(0) = field(0);
+      break;
     case 2:     
       for (int cell = 0; cell < dims[0]; ++cell)
 	for (int qp = 0; qp < dims[1]; ++qp)
@@ -108,8 +109,8 @@ evaluateFields(typename Traits::EvalData workset)
 	      sta(cell, qp, i, j) = field(cell,qp,i,j);
       break;
     default:
-      TEST_FOR_EXCEPTION(size<1||size>4, std::logic_error,
-			 "Unexpected Array dimensions in SaveStateField: " << size);
+      TEST_FOR_EXCEPT_MSG(size<1||size>4, 
+                          "Unexpected Array dimensions in SaveStateField: " << size);
     }
 }
 
