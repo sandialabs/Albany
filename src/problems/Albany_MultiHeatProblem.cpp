@@ -75,6 +75,7 @@ buildProblem(
   int physSets = meshSpecs.size();
   cout << "MULTIHeat Num MeshSpecs: " << physSets << endl;
   fm.resize(physSets); rfm.resize(physSets);
+
   for (int ps=0; ps<physSets; ps++) {
     fm[ps]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
     rfm[ps] = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
@@ -97,7 +98,9 @@ buildProblem(
     constructResponseEvaluators<PHAL::AlbanyTraits::MPResidual>(*rfm[ps], *meshSpecs[ps], stateMgr);
     constructResponseEvaluators<PHAL::AlbanyTraits::MPJacobian>(*rfm[ps], *meshSpecs[ps], stateMgr);
     constructResponseEvaluators<PHAL::AlbanyTraits::MPTangent >(*rfm[ps], *meshSpecs[ps], stateMgr);
+
   }
+
   constructDirichletEvaluators(*meshSpecs[0]);
 }
 

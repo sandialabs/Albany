@@ -44,12 +44,15 @@ MaterialDatabase( const std::string& inputFile,
 	  std::endl << "Material Database Error: Materials sublist required" << std::endl);
   TEST_FOR_EXCEPTION(!data_.isSublist("ElementBlocks"), Teuchos::Exceptions::InvalidParameter,
 	  std::endl << "Material Database Error: ElementBlocks sublist required" << std::endl);
-  TEST_FOR_EXCEPTION(!data_.isSublist("NodeSets"), Teuchos::Exceptions::InvalidParameter,
-	  std::endl << "Material Database Error: NodeSets sublist required" << std::endl);
+  // Make the presence of NodeSet info in the material database optional
+  //TEST_FOR_EXCEPTION(!data_.isSublist("NodeSets"), Teuchos::Exceptions::InvalidParameter,
+	//  std::endl << "Material Database Error: NodeSets sublist required" << std::endl);
 
   pMaterialsList_ = &(data_.sublist("Materials"));
   pEBList_        = &(data_.sublist("ElementBlocks"));
-  pNSList_        = &(data_.sublist("NodeSets"));
+
+  if(data_.isSublist("NodeSets"))
+    pNSList_        = &(data_.sublist("NodeSets"));
 }
 
 QCAD::MaterialDatabase::

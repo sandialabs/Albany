@@ -32,14 +32,11 @@
 Albany::HeatProblem::
 HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
-             const int numDim_,
-             const Teuchos::RCP<const Epetra_Comm>& comm_) :
+             const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_),
   haveSource(false),
   haveAbsorption(false),
-  haveMatDB(false),
-  numDim(numDim_),
-  comm(comm_)
+  numDim(numDim_)
 {
   this->setNumEquations(1);
 
@@ -49,13 +46,6 @@ HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   haveSource =  params->isSublist("Source Functions");
   haveAbsorption =  params->isSublist("Absorption");
-
-  if(params->isType<string>("MaterialDB Filename")){
-	haveMatDB = true;
-    mtrlDbFilename = params->get<string>("MaterialDB Filename");
- // Create Material Database
-    materialDB = Teuchos::rcp(new QCAD::MaterialDatabase(mtrlDbFilename, comm));
-  }
 
 }
 
@@ -97,6 +87,7 @@ buildProblem(
   constructResponseEvaluators<PHAL::AlbanyTraits::MPTangent >(*rfm[0], *meshSpecs[0], stateMgr);
 
   constructDirichletEvaluators(*meshSpecs[0]);
+
 }
 
 void
@@ -122,7 +113,6 @@ Albany::HeatProblem::getValidProblemParameters() const
   validPL->sublist("Thermal Conductivity", false, "");
   validPL->set("Convection Velocity", "{0,0,0}", "");
   validPL->set<bool>("Have Rho Cp", false, "Flag to indicate if rhoCp is used");
-  validPL->set<string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
 
   return validPL;
 }

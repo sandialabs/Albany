@@ -116,7 +116,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   if (!params->get("Separate Evaluators by Element Block",false)) {
     const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
     this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
-                               nsNames, worksetSize, numEB, partVec[0]->name(), this->interleavedOrdering));
+                               nsNames, worksetSize, partVec[0]->name(), this->interleavedOrdering));
   }
   else {
     *out << "MULTIPLE Elem Block in Ioss: DO worksetSize[eb] max?? " << endl; 
@@ -126,7 +126,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
       this->ebNameToIndex[partVec[eb]->name()] = eb;
       const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[eb]).getCellTopologyData();
       this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
-                                                nsNames, worksetSize, numEB, partVec[eb]->name(), 
+                                                nsNames, worksetSize, partVec[eb]->name(), 
                                                 this->interleavedOrdering));
       cout << "el_block_size[" << eb << "] = " << el_blocks[eb] << "   name  " << partVec[eb]->name() << endl; 
     }

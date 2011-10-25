@@ -27,8 +27,6 @@
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
 
-#include "QCAD_MaterialDatabase.hpp"
-
 namespace Albany {
 
   /*!
@@ -42,8 +40,7 @@ namespace Albany {
     HeatProblem(
                          const Teuchos::RCP<Teuchos::ParameterList>& params,
                          const Teuchos::RCP<ParamLib>& paramLib,
-                         const int numDim_, 
-                         const Teuchos::RCP<const Epetra_Comm>& comm_);
+                         const int numDim_);
 
     //! Destructor
     ~HeatProblem();
@@ -116,12 +113,7 @@ namespace Albany {
     bool periodic;
     bool haveSource;
     bool haveAbsorption;
-	bool haveMatDB;
     int numDim;
-
-    std::string mtrlDbFilename;
-    Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
-    Teuchos::RCP<const Epetra_Comm> comm;
 
   };
 
@@ -204,7 +196,7 @@ void Albany::HeatProblem::constructEvaluators(
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
 
-  for (int i=0; i<neq; i++) {
+  for (unsigned int i=0; i<neq; i++) {
     fm0.template registerEvaluator<EvalT>
       (evalUtils.constructDOFInterpolationEvaluator(dof_names[i]));
 
@@ -223,13 +215,6 @@ void Albany::HeatProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-    p->set<bool>("Have MatDB", haveMatDB);
-    // Here we assume that the instance of this problem applies on a single element block
-    p->set<string>("Element Block Name", meshSpecs.ebName);
-
-    if(haveMatDB)
-     
-      p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Thermal Conductivity");

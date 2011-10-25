@@ -21,7 +21,7 @@
 #include "PHAL_AlbanyTraits.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_StateManager.hpp"
-#include "Albany_Cube3DSTKMeshStruct.hpp"
+#include "Albany_TmplSTKMeshStruct.hpp"
 #include "Albany_STKDiscretization.hpp"
 #include "LCM/evaluators/LameStress.hpp"
 #include "Tensor.h"

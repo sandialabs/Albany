@@ -54,7 +54,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> J;
   PHX::MDField<ScalarT,Cell,QuadPoint> shearModulus;
   PHX::MDField<ScalarT,Cell,QuadPoint> bulkModulus;
-  PHX::MDField<ScalarT,Cell,QuadPoint> temperature;;
+  PHX::MDField<ScalarT,Cell,QuadPoint> temperature;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;
