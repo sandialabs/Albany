@@ -69,7 +69,9 @@ namespace Albany {
     VectorFieldType* coordinates_field;
     VectorFieldType* solution_field;
     VectorFieldType* residual_field;
+    double time;
 
+    std::vector<std::string> scalarValue_states;
     std::vector<QPScalarFieldType*> qpscalar_states;
     std::vector<QPVectorFieldType*> qpvector_states;
     std::vector<QPTensorFieldType*> qptensor_states;

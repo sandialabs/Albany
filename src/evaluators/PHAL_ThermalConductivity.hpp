@@ -68,6 +68,8 @@ public:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   ThermalConductivity(Teuchos::ParameterList& p);
+//  ThermalConductivity(){ cout << "In default const" << endl;}
+//  ~ThermalConductivity(){ cout << "In destructor" << endl;}
   
   void postRegistrationSetup(typename Traits::SetupData d,
 			     PHX::FieldManager<Traits>& vm);

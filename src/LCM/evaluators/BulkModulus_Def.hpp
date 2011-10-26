@@ -23,6 +23,7 @@
 
 namespace LCM {
 
+//**********************************************************************
 template<typename EvalT, typename Traits>
 BulkModulus<EvalT, Traits>::
 BulkModulus(Teuchos::ParameterList& p) :
@@ -75,6 +76,24 @@ BulkModulus(Teuchos::ParameterList& p) :
 		       "Invalid bulk modulus type " << type);
   } 
 
+  if ( p.isType<string>("QP Temperature Name") ) {
+    Teuchos::RCP<PHX::DataLayout> scalar_dl =
+      p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+    PHX::MDField<ScalarT,Cell,QuadPoint>
+      tmp(p.get<string>("QP Temperature Name"), scalar_dl);
+    Temperature = tmp;
+    this->addDependentField(Temperature);
+    isThermoElastic = true;
+    dKdT_value = bmd_list->get("dKdT Value", 0.0);
+    refTemp = p.get("Reference Temperature", 0.0);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
+                                "dKdT Value", this, paramLib);
+  }
+  else {
+    isThermoElastic=false;
+    dKdT_value=0.0;
+  }
+
   this->addEvaluatedField(bulkModulus);
   this->setName("Bulk Modulus"+PHX::TypeString<EvalT>::value);
 }
@@ -87,6 +106,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(bulkModulus,fm);
   if (!is_constant) this->utils.setFieldData(coordVec,fm);
+  if (isThermoElastic) this->utils.setFieldData(Temperature,fm);
 }
 
 // **********************************************************************
@@ -111,6 +131,13 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+  if (isThermoElastic) {
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+	bulkModulus(cell,qp) += dKdT_value * Temperature(cell,qp);
+      }
+    }
+  }
 }
 
 // **********************************************************************
@@ -120,6 +147,8 @@ BulkModulus<EvalT,Traits>::getValue(const std::string &n)
 {
   if (n == "Bulk Modulus")
     return constant_value;
+  else if (n == "dKdT Value")
+    return dKdT_value;
   for (int i=0; i<rv.size(); i++) {
     if (n == Albany::strint("Bulk Modulus KL Random Variable",i))
       return rv[i];

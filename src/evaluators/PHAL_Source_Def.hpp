@@ -21,6 +21,10 @@
 #include "Sacado_ParameterRegistration.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Albany_Utils.hpp"
+#include "Stokhos_KL_ExponentialRandomField.hpp"
+#include "Teuchos_Array.hpp"
+#include "Teuchos_TestForException.hpp"
+
 namespace PHAL {
 
 namespace Source_Functions {
@@ -36,18 +40,112 @@ public :
   virtual void evaluateFields (typename Traits::EvalData workset)                                         = 0;
 };
 
+///////////////////////////////////////////////////////////////////////////////
 
 template<typename EvalT, typename Traits>
-class Quadratic : public Source_Base<EvalT,Traits>, public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+class Constant : 
+    public Source_Base<EvalT,Traits>, 
+    public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+public :
+  typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
+  static bool check_for_existance(Teuchos::ParameterList* source_list);
+  Constant(Teuchos::ParameterList& p);
+  virtual ~Constant(){}
+  virtual void EvaluatedFields(Source<EvalT,Traits> &source, 
+			       Teuchos::ParameterList& p);
+  virtual void DependentFields(Source<EvalT,Traits> &source, 
+			       Teuchos::ParameterList& p);
+  virtual void FieldData(PHX::EvaluatorUtilities<EvalT,Traits> &utils, 
+			 PHX::FieldManager<Traits>& fm);
+  virtual void evaluateFields (typename Traits::EvalData workset);
+  virtual ScalarT & getValue(const std::string &n) { return m_constant;};
+private :
+  ScalarT     m_constant;
+  std::size_t m_num_qp;
+  Teuchos::ParameterList* m_source_list;
+  PHX::MDField<ScalarT,Cell,Point> m_source;
+};
+
+template<typename EvalT,typename Traits>
+bool 
+Constant<EvalT,Traits>::
+check_for_existance(Teuchos::ParameterList* source_list)
+{
+  const bool exists = source_list->getEntryPtr("Constant");
+  return exists;
+}
+
+template<typename EvalT,typename Traits>
+Constant<EvalT,Traits>::
+Constant(Teuchos::ParameterList& p) {
+  m_source_list = p.get<Teuchos::ParameterList*>("Parameter List", NULL);
+  Teuchos::ParameterList& paramList = m_source_list->sublist("Constant");
+  m_constant = paramList.get("Value", 0.0);
+  // Add the factor as a Sacado-ized parameter
+  Teuchos::RCP<ParamLib> paramLib = 
+    p.get< Teuchos::RCP<ParamLib> > ("Parameter Library", Teuchos::null);
+  new Sacado::ParameterRegistration<EvalT, SPL_Traits> ("Constant Source Value",
+							this, paramLib);
+}
+
+template<typename EvalT,typename Traits>
+void Constant<EvalT,Traits>::
+EvaluatedFields(Source<EvalT,Traits> &source, Teuchos::ParameterList& p) {
+  Teuchos::RCP<PHX::DataLayout> dl = 
+    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+  PHX::MDField<ScalarT,Cell,Point> f(p.get<std::string>("Source Name"), dl);
+  m_source = f ;
+  source.addEvaluatedField(m_source);
+}
+
+template<typename EvalT,typename Traits>
+void 
+Constant<EvalT,Traits>::
+DependentFields(Source<EvalT,Traits> &source, Teuchos::ParameterList& p) {
+}
+
+template<typename EvalT,typename Traits>
+void 
+Constant<EvalT,Traits>::
+FieldData(PHX::EvaluatorUtilities<EvalT,Traits> &utils, 
+	  PHX::FieldManager<Traits>& fm){
+  utils.setFieldData(m_source, fm);
+  typename std::vector< typename PHX::template MDField<ScalarT,Cell,Node>::size_type > dims;
+  m_source.dimensions(dims);
+  m_num_qp = dims[1];
+}
+
+template<typename EvalT,typename Traits>
+void 
+Constant<EvalT,Traits>::
+evaluateFields(typename Traits::EvalData workset){
+
+  // Loop over cells, quad points: compute Constant Source Term
+  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+    for (std::size_t iqp=0; iqp<m_num_qp; iqp++)
+      m_source(cell, iqp) = m_constant;
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+template<typename EvalT, typename Traits>
+class Quadratic : 
+    public Source_Base<EvalT,Traits>, 
+    public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
 public :
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
   static bool check_for_existance(Teuchos::ParameterList* source_list);
   Quadratic(Teuchos::ParameterList& p);
   virtual ~Quadratic(){}
-  virtual void EvaluatedFields(Source<EvalT,Traits> &source, Teuchos::ParameterList& p);
-  virtual void DependentFields(Source<EvalT,Traits> &source, Teuchos::ParameterList& p);
-  virtual void FieldData      (PHX::EvaluatorUtilities<EvalT,Traits> &utils, PHX::FieldManager<Traits>& fm);
+  virtual void EvaluatedFields(Source<EvalT,Traits> &source, 
+			       Teuchos::ParameterList& p);
+  virtual void DependentFields(Source<EvalT,Traits> &source, 
+			       Teuchos::ParameterList& p);
+  virtual void FieldData(PHX::EvaluatorUtilities<EvalT,Traits> &utils, 
+			 PHX::FieldManager<Traits>& fm);
   virtual void evaluateFields (typename Traits::EvalData workset);
   virtual ScalarT & getValue(const std::string &n) { return m_factor;};
 private :
@@ -60,41 +158,53 @@ private :
 };
 
 template<typename EvalT,typename Traits>
-bool Quadratic<EvalT,Traits>::check_for_existance(Teuchos::ParameterList* source_list)
+bool 
+Quadratic<EvalT,Traits>::
+check_for_existance(Teuchos::ParameterList* source_list)
 {
   const bool exists = source_list->getEntryPtr("Quadratic");
   return exists;
 }
 
 template<typename EvalT,typename Traits>
-Quadratic<EvalT,Traits>::Quadratic(Teuchos::ParameterList& p) {
+Quadratic<EvalT,Traits>::
+Quadratic(Teuchos::ParameterList& p) {
   m_source_list = p.get<Teuchos::ParameterList*>("Parameter List", NULL);
   Teuchos::ParameterList& paramList = m_source_list->sublist("Quadratic");
   m_factor   = paramList.get("Nonlinear Factor", 0.0);
   m_constant = paramList.get("Constant", false);
   // Add the factor as a Sacado-ized parameter
-  Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib> > ("Parameter Library", Teuchos::null);
-  new Sacado::ParameterRegistration<EvalT, SPL_Traits> ("Quadratic Nonlinear Factor", this, paramLib);
+  Teuchos::RCP<ParamLib> paramLib = 
+    p.get< Teuchos::RCP<ParamLib> > ("Parameter Library", Teuchos::null);
+  new Sacado::ParameterRegistration<EvalT, SPL_Traits> (
+    "Quadratic Nonlinear Factor", this, paramLib);
 }
 
 template<typename EvalT,typename Traits>
-void Quadratic<EvalT,Traits>::EvaluatedFields(Source<EvalT,Traits> &source, Teuchos::ParameterList& p) {
-  //Teuchos::ParameterList& paramList = m_source_list->sublist("Quadratic");
-  Teuchos::RCP<PHX::DataLayout> dl = p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+void 
+Quadratic<EvalT,Traits>::
+EvaluatedFields(Source<EvalT,Traits> &source, Teuchos::ParameterList& p) {
+  Teuchos::RCP<PHX::DataLayout> dl = 
+    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
   PHX::MDField<ScalarT,Cell,Point> f(p.get<std::string>("Source Name"), dl);
   m_source = f ;
   source.addEvaluatedField(m_source);
 }
 template<typename EvalT,typename Traits>
-void Quadratic<EvalT,Traits>::DependentFields(Source<EvalT,Traits> &source, Teuchos::ParameterList& p) {
-  //Teuchos::ParameterList& paramList = m_source_list->sublist("Quadratic");
-  Teuchos::RCP<PHX::DataLayout> dl = p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+void 
+Quadratic<EvalT,Traits>::
+DependentFields(Source<EvalT,Traits> &source, Teuchos::ParameterList& p) {
+  Teuchos::RCP<PHX::DataLayout> dl = 
+    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
   PHX::MDField<ScalarT,Cell,Point> f(p.get<std::string>("Variable Name"), dl);
   m_baseField = f;
   source.addDependentField(m_baseField);
 }
 template<typename EvalT,typename Traits>
-void Quadratic<EvalT,Traits>::FieldData(PHX::EvaluatorUtilities<EvalT,Traits> &utils, PHX::FieldManager<Traits>& fm){
+void 
+Quadratic<EvalT,Traits>::
+FieldData(PHX::EvaluatorUtilities<EvalT,Traits> &utils, 
+	  PHX::FieldManager<Traits>& fm){
   utils.setFieldData(m_source,   fm);
   utils.setFieldData(m_baseField,fm);
   typename std::vector< typename PHX::template MDField<ScalarT,Cell,Node>::size_type > dims;
@@ -103,7 +213,9 @@ void Quadratic<EvalT,Traits>::FieldData(PHX::EvaluatorUtilities<EvalT,Traits> &u
 }
 
 template<typename EvalT,typename Traits>
-void Quadratic<EvalT,Traits>::evaluateFields(typename Traits::EvalData workset){
+void 
+Quadratic<EvalT,Traits>::
+evaluateFields(typename Traits::EvalData workset){
 
   // Loop over cells, quad points: compute Quadratic Source Term
   if (m_constant) {
@@ -111,13 +223,219 @@ void Quadratic<EvalT,Traits>::evaluateFields(typename Traits::EvalData workset){
       for (std::size_t iqp=0; iqp<m_num_qp; iqp++)
         m_source(cell, iqp) = m_factor;
     }
-  } else {
+  } 
+  else {
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
       for (std::size_t iqp=0; iqp<m_num_qp; iqp++)
-        m_source(cell, iqp) = m_factor * m_baseField(cell,iqp) * m_baseField(cell,iqp);
+        m_source(cell, iqp) = 
+	  m_factor * m_baseField(cell,iqp) * m_baseField(cell,iqp);
     }
   }
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+template<typename EvalT, typename Traits>
+class TruncatedKL : 
+    public Source_Base<EvalT,Traits>, 
+    public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+public :
+  typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
+  static bool check_for_existance(Teuchos::ParameterList* source_list);
+  TruncatedKL(Teuchos::ParameterList& p);
+  virtual ~TruncatedKL(){}
+  virtual void EvaluatedFields(Source<EvalT,Traits> &source, 
+			       Teuchos::ParameterList& p);
+  virtual void DependentFields(Source<EvalT,Traits> &source, 
+			       Teuchos::ParameterList& p);
+  virtual void FieldData(PHX::EvaluatorUtilities<EvalT,Traits> &utils, 
+			 PHX::FieldManager<Traits>& fm);
+  virtual void evaluateFields (typename Traits::EvalData workset);
+  virtual ScalarT & getValue(const std::string &n);
+private :
+  std::size_t m_num_qp;
+  std::size_t m_num_dims;
+  Teuchos::ParameterList* m_source_list;
+  PHX::MDField<ScalarT,Cell,Point>   m_source;
+  PHX::MDField<MeshScalarT,Cell,Point,Dim> m_coordVec;
+  Teuchos::RCP< Stokhos::KL::ExponentialRandomField<MeshScalarT> > m_exp_rf_kl;
+  Teuchos::Array<ScalarT> m_rv;
+  Teuchos::Array<MeshScalarT> m_point;
+  std::string param_name_base;
+};
+
+template<typename EvalT,typename Traits>
+bool 
+TruncatedKL<EvalT,Traits>::
+check_for_existance(Teuchos::ParameterList* source_list)
+{
+  const bool exists = source_list->getEntryPtr("Truncated KL Expansion");
+  return exists;
+}
+
+template<typename EvalT,typename Traits>
+TruncatedKL<EvalT,Traits>::
+TruncatedKL(Teuchos::ParameterList& p) {
+  m_source_list = p.get<Teuchos::ParameterList*>("Parameter List", NULL);
+  Teuchos::ParameterList& paramList = 
+    m_source_list->sublist("Truncated KL Expansion");
+  
+  m_exp_rf_kl = 
+      Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<MeshScalarT>(paramList));
+  int num_KL = m_exp_rf_kl->stochasticDimension();
+
+  param_name_base = p.get<std::string>("Source Name") + " KL Random Variable";
+
+  // Add KL random variables as Sacado-ized parameters
+  m_rv.resize(num_KL);
+  Teuchos::RCP<ParamLib> paramLib = 
+    p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
+  for (int i=0; i<num_KL; i++) {
+    std::string ss = Albany::strint(param_name_base,i);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss, this, paramLib);
+    m_rv[i] = paramList.get(ss, 0.0);
+  }
+}
+
+template<typename EvalT,typename Traits>
+void 
+TruncatedKL<EvalT,Traits>::
+EvaluatedFields(Source<EvalT,Traits> &source, Teuchos::ParameterList& p) {
+  Teuchos::RCP<PHX::DataLayout> dl = 
+    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+  PHX::MDField<ScalarT,Cell,Point> f(p.get<std::string>("Source Name"), dl);
+  m_source = f ;
+  source.addEvaluatedField(m_source);
+}
+
+template<typename EvalT,typename Traits>
+void 
+TruncatedKL<EvalT,Traits>::
+DependentFields(Source<EvalT,Traits> &source, Teuchos::ParameterList& p) {
+  Teuchos::RCP<PHX::DataLayout> vector_dl =
+    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
+  PHX::MDField<MeshScalarT,Cell,Point,Dim>
+    fx(p.get<string>("QP Coordinate Vector Name"), vector_dl);
+  m_coordVec = fx;
+  source.addDependentField(m_coordVec);
+}
+
+template<typename EvalT,typename Traits>
+void 
+TruncatedKL<EvalT,Traits>::
+FieldData(PHX::EvaluatorUtilities<EvalT,Traits> &utils, 
+	  PHX::FieldManager<Traits>& fm){
+  utils.setFieldData(m_source,   fm);
+  utils.setFieldData(m_coordVec,fm);
+  typename std::vector< typename PHX::template MDField<ScalarT,Cell,Node>::size_type > dims;
+  m_coordVec.dimensions(dims);
+  m_num_qp = dims[1];
+  m_num_dims = dims[2];
+  m_point.resize(m_num_dims);
+}
+
+template<typename EvalT,typename Traits>
+void 
+TruncatedKL<EvalT,Traits>::
+evaluateFields(typename Traits::EvalData workset){
+
+  // Loop over cells, quad points: compute TruncatedKL Source Term
+  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+    for (std::size_t qp=0; qp<m_num_qp; qp++) {
+      for (std::size_t i=0; i<m_num_dims; i++)
+	m_point[i] = 
+	  Sacado::ScalarValue<MeshScalarT>::eval(m_coordVec(cell,qp,i));
+        m_source(cell, qp) = m_exp_rf_kl->evaluate(m_point, m_rv);
+    }
+  }
+}
+
+template<typename EvalT,typename Traits>
+typename TruncatedKL<EvalT,Traits>::ScalarT& 
+TruncatedKL<EvalT,Traits>::
+getValue(const std::string &n) {
+  for (int i=0; i<m_rv.size(); i++) {
+    if (n == Albany::strint(param_name_base,i))
+      return m_rv[i];
+  }
+  TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+		     std::endl <<
+		     "Error! Logic error in getting paramter " << n
+		     << " in TruncatedKL::getValue()" << std::endl);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+template<typename EvalT, typename Traits>
+class NeutronFission : 
+    public Source_Base<EvalT,Traits> {
+public :
+  typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
+
+  static bool check_for_existance(Teuchos::ParameterList* source_list) {
+    return source_list->isSublist("Neutron Fission");
+  }
+
+  NeutronFission(Teuchos::ParameterList& p) {
+    m_source_list = p.get<Teuchos::ParameterList*>("Parameter List", NULL);
+  }
+
+  virtual ~NeutronFission() {}
+
+  virtual void EvaluatedFields(Source<EvalT,Traits> &source, 
+			       Teuchos::ParameterList& p) {
+    Teuchos::RCP<PHX::DataLayout> dl = 
+      p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+    PHX::MDField<ScalarT,Cell,Point> f(p.get<std::string>("Source Name"), dl);
+    m_source = f ;
+    source.addEvaluatedField(m_source);
+  }
+
+  virtual void DependentFields(Source<EvalT,Traits> &source, 
+			       Teuchos::ParameterList& p) {
+    Teuchos::RCP<PHX::DataLayout> dl = 
+      p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+    m_phi = PHX::MDField<ScalarT,Cell,Point>(
+      p.get<std::string>("Neutron Flux Name"), dl);
+    m_sigma_f = PHX::MDField<ScalarT,Cell,Point>(
+      p.get<std::string>("Fission Cross Section Name"), dl);
+    m_E_f = PHX::MDField<ScalarT,Cell,Point>(
+      p.get<std::string>("Energy Released per Fission Name"), dl);
+    source.addDependentField(m_phi);
+    source.addDependentField(m_sigma_f);
+    source.addDependentField(m_E_f);
+  }
+
+  virtual void FieldData(PHX::EvaluatorUtilities<EvalT,Traits> &utils, 
+			 PHX::FieldManager<Traits>& fm) {
+    utils.setFieldData(m_source,   fm);
+    utils.setFieldData(m_phi,fm);
+    utils.setFieldData(m_sigma_f,fm);
+    utils.setFieldData(m_E_f,fm);
+    typename std::vector< typename PHX::template MDField<ScalarT,Cell,Node>::size_type > dims;
+    m_source.dimensions(dims);
+    m_num_qp = dims[1];
+  }
+
+  virtual void evaluateFields (typename Traits::EvalData workset) {
+    for (std::size_t cell = 0; cell < workset.numCells; ++cell)
+      for (std::size_t iqp=0; iqp<m_num_qp; iqp++)
+        m_source(cell, iqp) = 
+	  m_phi(cell,iqp) * m_sigma_f(cell,iqp) * m_E_f(cell,iqp);
+  }
+
+private :
+  std::size_t m_num_qp;
+  Teuchos::ParameterList* m_source_list;
+  PHX::MDField<ScalarT,Cell,Point>   m_source;
+  PHX::MDField<ScalarT,Cell,Point>   m_phi;
+  PHX::MDField<ScalarT,Cell,Point>   m_sigma_f;
+  PHX::MDField<ScalarT,Cell,Point>   m_E_f;
+};
+
+////////////////////////////////////////////////////////////////////////////////
 
 template<typename EvalT, typename Traits>
 class MVQuadratic : public Source_Base<EvalT,Traits>, public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
@@ -538,11 +856,29 @@ Source<EvalT, Traits>::Source(Teuchos::ParameterList& p)
 {
 
   Teuchos::ParameterList* source_list = p.get<Teuchos::ParameterList*>("Parameter List", NULL);
+  if (Constant<EvalT,Traits>::check_for_existance(source_list)) {
+    Constant<EvalT,Traits>    *q = new Constant<EvalT,Traits>(p);
+    Source_Base<EvalT,Traits> *sb = q;
+    m_sources.push_back(sb);
+    this->setName("ConstantSource"+PHX::TypeString<EvalT>::value);
+  }
+  if (TruncatedKL<EvalT,Traits>::check_for_existance(source_list)) {
+    TruncatedKL<EvalT,Traits>    *q = new TruncatedKL<EvalT,Traits>(p);
+    Source_Base<EvalT,Traits> *sb = q;
+    m_sources.push_back(sb);
+    this->setName("TruncatedKLSource"+PHX::TypeString<EvalT>::value);
+  }
   if (Quadratic<EvalT,Traits>::check_for_existance(source_list)) {
     Quadratic<EvalT,Traits>    *q = new Quadratic<EvalT,Traits>(p);
     Source_Base<EvalT,Traits> *sb = q;
     m_sources.push_back(sb);
     this->setName("QuadraticSource"+PHX::TypeString<EvalT>::value);
+  }
+  if (NeutronFission<EvalT,Traits>::check_for_existance(source_list)) {
+    NeutronFission<EvalT,Traits>    *q = new NeutronFission<EvalT,Traits>(p);
+    Source_Base<EvalT,Traits> *sb = q;
+    m_sources.push_back(sb);
+    this->setName("NeutronFissionSource"+PHX::TypeString<EvalT>::value);
   }
   if (MVQuadratic<EvalT,Traits>::check_for_existance(source_list)) {
     MVQuadratic<EvalT,Traits> *q = new MVQuadratic<EvalT,Traits>(p);

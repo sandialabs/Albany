@@ -15,41 +15,10 @@
 \********************************************************************/
 
 
-#ifndef ALBANY_LINE1D_STKMESHSTRUCT_HPP
-#define ALBANY_LINE1D_STKMESHSTRUCT_HPP
+#include "PHAL_AlbanyTraits.hpp"
 
-#include "Albany_GenericSTKMeshStruct.hpp"
+#include "Time.hpp"
+#include "Time_Def.hpp"
 
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::Time)
 
-namespace Albany {
-
-  class Line1DSTKMeshStruct : public GenericSTKMeshStruct {
-
-    public:
-
-    Line1DSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const Teuchos::RCP<const Epetra_Comm>& comm);
-
-    ~Line1DSTKMeshStruct() {};
-
-    void setFieldAndBulkData(
-                  const Teuchos::RCP<const Epetra_Comm>& comm,
-                  const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_,
-                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const unsigned int worksetSize);
-
-    private:
-
-    Teuchos::RCP<const Teuchos::ParameterList>
-      getValidDiscretizationParameters() const;
-
-    bool periodic;
-
-    int nelem;
-    Teuchos::RCP<Epetra_Map> elem_map;
-  };
-
-}
-
-#endif // ALBANY_LINE1D_STKMESHSTRUCT_HPP

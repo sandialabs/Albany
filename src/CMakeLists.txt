@@ -26,7 +26,6 @@ SET(SOURCES
 	Albany_StateManager.cpp 
 	Albany_ModelEvaluator.cpp
 	Albany_SaveEigenData.cpp
-	Albany_TimeManager.cpp
   )
 
 SET(HEADERS
@@ -46,7 +45,6 @@ SET(HEADERS
 	Albany_ModelEvaluator.hpp
 	Albany_SaveEigenData.hpp
         Albany_DummyParameterAccessor.hpp
-        Albany_TimeManager.hpp
   )
 
 #problems
@@ -54,7 +52,6 @@ SET(SOURCES ${SOURCES}
 	problems/Albany_AbstractProblem.cpp 
 	problems/Albany_ProblemUtils.cpp 
 	problems/Albany_EvaluatorUtils.cpp 
-	problems/Albany_ResponseUtils.cpp 
 	problems/Albany_ResponseUtilities.cpp 
 	problems/Albany_DirichletUtils.cpp 
 	problems/Albany_ProblemFactory.cpp
@@ -73,7 +70,6 @@ SET(HEADERS ${HEADERS}
 	problems/Albany_ProblemUtils.hpp 
 	problems/Albany_EvaluatorUtils.hpp 
 	problems/Albany_EvaluatorUtils_Def.hpp 
-	problems/Albany_ResponseUtils.hpp 
 	problems/Albany_ResponseUtilities.hpp 
 	problems/Albany_ResponseUtilities_Def.hpp 
 	problems/Albany_DirichletUtils.hpp 
@@ -109,10 +105,11 @@ SET(SOURCES ${SOURCES}
         stk/Albany_STKDiscretization.cpp
 	stk/Albany_DiscretizationFactory.cpp
         stk/Albany_GenericSTKMeshStruct.cpp
-        stk/Albany_Point0DSTKMeshStruct.cpp
-        stk/Albany_Line1DSTKMeshStruct.cpp
-        stk/Albany_Rect2DSTKMeshStruct.cpp
-        stk/Albany_Cube3DSTKMeshStruct.cpp
+#        stk/Albany_Point0DSTKMeshStruct.cpp
+#        stk/Albany_Line1DSTKMeshStruct.cpp
+#        stk/Albany_Rect2DSTKMeshStruct.cpp
+#        stk/Albany_Cube3DSTKMeshStruct.cpp
+        stk/Albany_TmplSTKMeshStruct.cpp
         stk/Albany_FromCubitSTKMeshStruct.cpp
         stk/Albany_IossSTKMeshStruct.cpp
   )
@@ -122,10 +119,11 @@ SET(HEADERS ${HEADERS}
 	stk/Albany_DiscretizationFactory.hpp
         stk/Albany_AbstractSTKMeshStruct.hpp
         stk/Albany_GenericSTKMeshStruct.hpp
-        stk/Albany_Point0DSTKMeshStruct.hpp
-        stk/Albany_Line1DSTKMeshStruct.hpp
-        stk/Albany_Rect2DSTKMeshStruct.hpp
-        stk/Albany_Cube3DSTKMeshStruct.hpp
+#        stk/Albany_Point0DSTKMeshStruct.hpp
+#        stk/Albany_Line1DSTKMeshStruct.hpp
+#        stk/Albany_Rect2DSTKMeshStruct.hpp
+#        stk/Albany_Cube3DSTKMeshStruct.hpp
+        stk/Albany_TmplSTKMeshStruct.hpp
         stk/Albany_FromCubitSTKMeshStruct.hpp
         stk/Albany_IossSTKMeshStruct.hpp
   )
@@ -248,10 +246,6 @@ SET(HEADERS ${HEADERS}
 IF(ALBANY_LCM)
   SET(LCM_DIR ${Albany_SOURCE_DIR}/src/LCM)
 
-  SET(HEADERS ${HEADERS}
-    ${LCM_DIR}/LCM_FactoryTraits.hpp
-  )
-  
   # LCM problems
   SET(SOURCES ${SOURCES}
     ${LCM_DIR}/problems/ElasticityProblem.cpp 
@@ -259,15 +253,16 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/problems/ThermoElasticityProblem.cpp 
     ${LCM_DIR}/problems/GradientDamageProblem.cpp 
     ${LCM_DIR}/problems/PoroElasticityProblem.cpp
+    ${LCM_DIR}/problems/ThermoMechanicalProblem.cpp
   )
 
   SET(HEADERS ${HEADERS}
     ${LCM_DIR}/problems/ElasticityProblem.hpp
     ${LCM_DIR}/problems/NonlinearElasticityProblem.hpp 
     ${LCM_DIR}/problems/ThermoElasticityProblem.hpp 
-    ${LCM_DIR}/problems/ThermoElasticityProblem_Def.hpp 
     ${LCM_DIR}/problems/GradientDamageProblem.hpp
     ${LCM_DIR}/problems/PoroElasticityProblem.hpp 
+    ${LCM_DIR}/problems/ThermoMechanicalProblem.hpp
   )
 
   # LCM evaluators
@@ -277,8 +272,6 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/ElasticModulus.cpp 
     ${LCM_DIR}/evaluators/PoissonsRatio.cpp 
     ${LCM_DIR}/evaluators/DefGrad.cpp 
-    ${LCM_DIR}/evaluators/RCG.cpp 
-    ${LCM_DIR}/evaluators/LCG.cpp 
     ${LCM_DIR}/evaluators/Neohookean.cpp
     ${LCM_DIR}/evaluators/J2Stress.cpp 
     ${LCM_DIR}/evaluators/ElasticityResid.cpp
@@ -305,6 +298,11 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/PoroElasticityResidMass.cpp
     ${LCM_DIR}/evaluators/Porosity.cpp
     ${LCM_DIR}/evaluators/KCPermeability.cpp
+    ${LCM_DIR}/evaluators/ThermoMechanicalEnergyResidual.cpp
+    ${LCM_DIR}/evaluators/ThermoMechanicalMomentumResidual.cpp
+    ${LCM_DIR}/evaluators/ThermoMechanicalStress.cpp
+    ${LCM_DIR}/evaluators/Time.cpp
+    ${LCM_DIR}/evaluators/TimeDepBC.cpp
   )
 
   SET(HEADERS ${HEADERS}
@@ -318,10 +316,6 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/PoissonsRatio_Def.hpp
     ${LCM_DIR}/evaluators/DefGrad.hpp 
     ${LCM_DIR}/evaluators/DefGrad_Def.hpp 
-    ${LCM_DIR}/evaluators/RCG.hpp 
-    ${LCM_DIR}/evaluators/RCG_Def.hpp 
-    ${LCM_DIR}/evaluators/LCG.hpp 
-    ${LCM_DIR}/evaluators/LCG_Def.hpp
     ${LCM_DIR}/evaluators/Neohookean.hpp
     ${LCM_DIR}/evaluators/Neohookean_Def.hpp
     ${LCM_DIR}/evaluators/J2Stress.hpp 
@@ -374,6 +368,16 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/Porosity_Def.hpp
     ${LCM_DIR}/evaluators/KCPermeability.hpp
     ${LCM_DIR}/evaluators/KCPermeability_Def.hpp
+    ${LCM_DIR}/evaluators/ThermoMechanicalEnergyResidual.hpp    
+    ${LCM_DIR}/evaluators/ThermoMechanicalEnergyResidual_Def.hpp
+    ${LCM_DIR}/evaluators/ThermoMechanicalMomentumResidual.hpp
+    ${LCM_DIR}/evaluators/ThermoMechanicalMomentumResidual_Def.hpp
+    ${LCM_DIR}/evaluators/ThermoMechanicalStress.hpp
+    ${LCM_DIR}/evaluators/ThermoMechanicalStress_Def.hpp
+    ${LCM_DIR}/evaluators/Time.hpp
+    ${LCM_DIR}/evaluators/Time_Def.hpp
+    ${LCM_DIR}/evaluators/TimeDepBC.hpp
+    ${LCM_DIR}/evaluators/TimeDepBC_Def.hpp
   )
 
   #LCM utils
@@ -557,10 +561,13 @@ add_library(albanyLib ${SOURCES} ${HEADERS})
 # Now build executables from this library, tailored main()s, and Trilinos
 
 add_executable(Albany Main_Solve.cpp)
-add_executable(AlbanyAdjoint Main_Adjoint.cpp)
-add_executable(AlbanyCoupled Main_Coupled.cpp)
-add_executable(AlbanySGAdjoint Main_SGAdjoint.cpp)
 add_executable(AlbanySG Main_SGSolve.cpp)
+if (ALBANY_ASCR)
+  add_executable(AlbanyAdjoint Main_Adjoint.cpp)
+  add_executable(AlbanySGAdjoint Main_SGAdjoint.cpp)
+  add_executable(AlbanyCoupled Main_Coupled.cpp)
+  add_executable(AlbanySGCoupled Main_SGCoupled.cpp)
+endif()
 IF (ALBANY_DAKOTA)
   add_executable(AlbanyDakota Main_Dakota.cpp Albany_Dakota.cpp Albany_Dakota.hpp)
 ENDIF ()
@@ -580,7 +587,8 @@ IF (ALBANY_LAME)
     Albany_Utils.cpp
     Albany_StateManager.cpp
     stk/Albany_GenericSTKMeshStruct.cpp
-    stk/Albany_Cube3DSTKMeshStruct.cpp
+#    stk/Albany_Cube3DSTKMeshStruct.cpp
+    stk/Albany_TmplSTKMeshStruct.cpp
     stk/Albany_STKDiscretization.cpp
     ${LCM_DIR}/utils/Tensor.cc
     ${LCM_DIR}/utils/LameUtils.cpp
@@ -595,9 +603,12 @@ set(ALL_LIBRARIES ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_For
 
 target_link_libraries(Albany          albanyLib ${ALL_LIBRARIES}) 
 target_link_libraries(AlbanySG        albanyLib ${ALL_LIBRARIES})
-target_link_libraries(AlbanyAdjoint   albanyLib ${ALL_LIBRARIES})
-target_link_libraries(AlbanyCoupled   albanyLib ${ALL_LIBRARIES})
-target_link_libraries(AlbanySGAdjoint   albanyLib ${ALL_LIBRARIES})
+if (ALBANY_ASCR)
+  target_link_libraries(AlbanyAdjoint   albanyLib ${ALL_LIBRARIES})
+  target_link_libraries(AlbanySGAdjoint   albanyLib ${ALL_LIBRARIES})
+  target_link_libraries(AlbanyCoupled   albanyLib ${ALL_LIBRARIES})
+  target_link_libraries(AlbanySGCoupled   albanyLib ${ALL_LIBRARIES})
+endif()
 IF (ALBANY_DAKOTA)
   target_link_libraries(AlbanyDakota    albanyLib ${ALL_LIBRARIES})
 ENDIF ()

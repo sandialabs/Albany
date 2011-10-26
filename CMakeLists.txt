@@ -149,6 +149,16 @@ ELSE()
   SET(ALBANY_LAME FALSE)
 ENDIF()
 
+# Add option for ASCR work, defaults to disabled
+IF (ENABLE_ASCR)
+  ADD_DEFINITIONS(-DALBANY_ASCR)
+  MESSAGE("-- ASCR is Enabled, compiling with -DALBANY_ASCR")
+  SET(ALBANY_ASCR TRUE)
+ELSE()
+  MESSAGE("-- ASCR is NOT Enabled.")
+  SET(ALBANY_ASCR FALSE)
+ENDIF()
+
 add_subdirectory(src)
 
 enable_testing()

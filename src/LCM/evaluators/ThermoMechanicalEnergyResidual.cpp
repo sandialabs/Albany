@@ -17,8 +17,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "LCG.hpp"
-#include "LCG_Def.hpp"
+#include "ThermoMechanicalEnergyResidual.hpp"
+#include "ThermoMechanicalEnergyResidual_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::LCG)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::ThermoMechanicalEnergyResidual)
 

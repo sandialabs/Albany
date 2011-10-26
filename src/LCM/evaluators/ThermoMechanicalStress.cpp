@@ -15,39 +15,10 @@
 \********************************************************************/
 
 
-#ifndef ALBANY_CUBE3DSTKMESHSTRUCT_HPP
-#define ALBANY_CUBE3DSTKMESHSTRUCT_HPP
+#include "PHAL_AlbanyTraits.hpp"
 
-#include "Albany_GenericSTKMeshStruct.hpp"
+#include "ThermoMechanicalStress.hpp"
+#include "ThermoMechanicalStress_Def.hpp"
 
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::ThermoMechanicalStress)
 
-namespace Albany {
-
-  class Cube3DSTKMeshStruct : public GenericSTKMeshStruct {
-
-    public:
-
-    Cube3DSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const Teuchos::RCP<const Epetra_Comm>& comm);
-
-    ~Cube3DSTKMeshStruct() {};
-
-    void setFieldAndBulkData(
-                  const Teuchos::RCP<const Epetra_Comm>& comm,
-                  const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_,
-                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const unsigned int worksetSize);
-
-    private:
-
-    Teuchos::RCP<const Teuchos::ParameterList>
-      getValidDiscretizationParameters() const;
-
-    int nelem_x, nelem_y, nelem_z;
-    Teuchos::RCP<Epetra_Map> elem_map;
-  };
-
-}
-
-#endif // ALBANY_CUBE3DSTKMESHSTRUCT_HPP

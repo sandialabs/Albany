@@ -11,39 +11,11 @@
 * NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
 * ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
 * including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
+*    Questions to Glen Hansen, gahanse@sandia.gov                    *
 \********************************************************************/
 
+#include "Albany_TmplSTKMeshStruct.hpp"
+#include "Albany_TmplSTKMeshStruct_Def.hpp"
 
-#ifndef ALBANY_POINT0D_STKMESHSTRUCT_HPP
-#define ALBANY_POINT0D_STKMESHSTRUCT_HPP
+TMPLSTK_INSTANTIATE_TEMPLATE_CLASS(Albany::TmplSTKMeshStruct)
 
-#include "Albany_GenericSTKMeshStruct.hpp"
-
-
-namespace Albany {
-
-  class Point0DSTKMeshStruct : public GenericSTKMeshStruct {
-
-    public:
-
-    Point0DSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params);
-
-    ~Point0DSTKMeshStruct() {};
-
-    void setFieldAndBulkData(
-                  const Teuchos::RCP<const Epetra_Comm>& comm,
-                  const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_,
-                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const unsigned int worksetSize);
-
-    private:
-
-    Teuchos::RCP<const Teuchos::ParameterList>
-      getValidDiscretizationParameters() const;
-
-  };
-}
-
-#endif // ALBANY_POINT0D_STKMESHSTRUCT_HPP

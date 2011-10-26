@@ -411,11 +411,6 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 
   int nblock = x->size();
 
-  if (JV != Teuchos::null)
-    JV->init(0.0);
-  if (fp != Teuchos::null)
-    fp->init(0.0);
-
   int xlunk, ylunk; // global and local indicies into unknown vector
   double* coord;
   ScalarT Xval, Yval;

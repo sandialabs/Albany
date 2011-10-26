@@ -28,6 +28,7 @@
 #include "Sacado_ParameterAccessor.hpp"
 #include "Stokhos_KL_ExponentialRandomField.hpp"
 #include "Teuchos_Array.hpp"
+#include "Teuchos_TwoDArray.hpp"
 
 namespace PHAL {
 /** 
@@ -56,24 +57,33 @@ public:
 
 private:
   std::string name_mp;
-  std::size_t numQPs;
-  std::size_t numDims;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
-  PHX::MDField<ScalarT,Cell,QuadPoint> matprop;
-  PHX::MDField<ScalarT,Cell,QuadPoint> T;
+  Teuchos::RCP<PHX::DataLayout> layout;
+  PHX::MDField<MeshScalarT> coordVec;
+  PHX::MDField<ScalarT> matprop;
+  PHX::MDField<ScalarT> T;
+  PHX::MDField<ScalarT> sigma_a;
+  PHX::MDField<ScalarT> sigma_s;
+  PHX::MDField<ScalarT> mu;
+  PHX::DataLayout::size_type rank;
+  std::vector<PHX::DataLayout::size_type> dims;
 
-  //Radom field types
-  enum SG_RF {CONSTANT, UNIFORM, LOGNORMAL};
-  SG_RF randField;
-  
-
-  //! Is conductivity constant, or random field
-  bool is_constant;
-  bool is_sqrttempdep;
-  bool is_invsqrttempdep;
+  // material property types
+  enum MAT_PROP_TYPE {
+    SCALAR_CONSTANT,
+    VECTOR_CONSTANT,
+    TENSOR_CONSTANT,
+    KL_RAND_FIELD, 
+    EXP_KL_RAND_FIELD,
+    SQRT_TEMP,
+    INV_SQRT_TEMP,
+    NEUTRON_DIFFUSION
+  };
+  MAT_PROP_TYPE matPropType;
 
   //! Constant value
-  ScalarT constant_value;
+  ScalarT scalar_constant_value;
+  Teuchos::Array<ScalarT> vector_constant_value;
+  Teuchos::TwoDArray<ScalarT> tensor_constant_value;
   ScalarT ref_temp;
 
   //! Exponential random field
@@ -81,6 +91,7 @@ private:
 
   //! Values of the random variables
   Teuchos::Array<ScalarT> rv;
+  Teuchos::Array<MeshScalarT> point;
 };
 }
 

@@ -69,7 +69,9 @@ namespace Albany {
       const Epetra_MultiVector* dgdp,
       const Teuchos::SerialDenseVector<int,double>* drdv = NULL,
       const Teuchos::RCP<Thyra::VectorBase<double> >& tvec = Teuchos::null,
-      const Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly>& g_sg = Teuchos::null) const;
+      const Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly>& g_sg = Teuchos::null,
+      const Epetra_Vector* g_mean = NULL,
+      const Epetra_Vector* g_std_dev = NULL) const;
 
     Teuchos::ParameterList& getAnalysisParameters() const
       { return appParams->sublist("Piro").sublist("Analysis"); }

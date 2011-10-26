@@ -62,6 +62,8 @@ namespace Albany {
     Teuchos::RCP<PHX::DataLayout> node_qp_scalar;
     //! Data Layout for vector basis functions
     Teuchos::RCP<PHX::DataLayout> node_qp_vector;
+    //! Data Layout for scalar quantity on workset
+    Teuchos::RCP<PHX::DataLayout> workset_scalar;
     /*!
      * \brief Dummy Data Layout where one is needed but not accessed
      * For instance, the action of scattering residual data from a
@@ -77,92 +79,6 @@ namespace Albany {
   //! Helper Factory function to construct Intrepid Basis from Shards CellTopologyData
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
     getIntrepidBasis(const CellTopologyData& ctd, bool compositeTet=false);
-}
-
-namespace Albany {
-  /*!
-   * \brief Generic Functions to help define evaluators and problems more succinctly
-   */
-  class ProblemUtils {
-
-   public:
-
-    ProblemUtils(Teuchos::RCP<Albany::Layouts> dl, std::string facTraits="PHAL");
-
-    //! Function to create parameter list for construction of GatherSolution
-    //! evaluator with standard Field names
-    Teuchos::RCP<Teuchos::ParameterList> 
-    constructGatherSolutionEvaluator(
-       bool isVectorField,
-       Teuchos::ArrayRCP<std::string> dof_names,
-       Teuchos::ArrayRCP<std::string> dof_names_dot,
-       int offsetToFirstDOF=0);
-
-    //! Same as above, but no ability to gather time dependent x_dot field
-    Teuchos::RCP<Teuchos::ParameterList> 
-    constructGatherSolutionEvaluator_noTransient(
-       bool isVectorField,
-       Teuchos::ArrayRCP<std::string> dof_names,
-       int offsetToFirstDOF=0);
-
-    //! Function to create parameter list for construction of ScatterResidual
-    //! evaluator with standard Field names
-    Teuchos::RCP<Teuchos::ParameterList> 
-    constructScatterResidualEvaluator(
-       bool isVectorField,
-       Teuchos::ArrayRCP<std::string> resid_names,
-       int offsetToFirstDOF=0, std::string scatterName="Scatter");
-
-    //! Function to create parameter list for construction of DOFInterpolation 
-    //! evaluator with standard field names
-    Teuchos::RCP<Teuchos::ParameterList> 
-    constructDOFInterpolationEvaluator(
-       std::string& dof_names);
-    //! Same as above, for Interpolating the Gradient
-    Teuchos::RCP<Teuchos::ParameterList> 
-    constructDOFGradInterpolationEvaluator(
-       std::string& dof_names);
-
-    //! Interpolation functions for vector quantities
-    Teuchos::RCP<Teuchos::ParameterList> 
-    constructDOFVecInterpolationEvaluator(
-       std::string& dof_names);
-    //! Same as above, for Interpolating the Gradient for Vector quantities
-    Teuchos::RCP<Teuchos::ParameterList> 
-    constructDOFVecGradInterpolationEvaluator(
-       std::string& dof_names);
-
-    //! Function to create parameter list for construction of GatherCoordinateVector
-    //! evaluator with standard Field names
-    Teuchos::RCP<Teuchos::ParameterList> 
-    constructGatherCoordinateVectorEvaluator();
-
-    //! Function to create parameter list for construction of MapToPhysicalFrame
-    //! evaluator with standard Field names
-    Teuchos::RCP<Teuchos::ParameterList> 
-    constructMapToPhysicalFrameEvaluator(
-      const Teuchos::RCP<shards::CellTopology>& cellType,
-      const Teuchos::RCP<Intrepid::Cubature<RealType> > cubature);
-
-    //! Function to create parameter list for construction of ComputeBasisFunctions
-    //! evaluator with standard Field names
-    Teuchos::RCP<Teuchos::ParameterList> 
-    constructComputeBasisFunctionsEvaluator(
-      const Teuchos::RCP<shards::CellTopology>& cellType,
-      const Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis,
-      const Teuchos::RCP<Intrepid::Cubature<RealType> > cubature);
-
-  private:
-
-    //! Struct of PHX::DataLayout objects defined all together.
-    Teuchos::RCP<Albany::Layouts> dl;
-
-    //! Temporary variable inside most methods, defined just once for convenience.
-    mutable int type;
-
-    //! String flag to switch between FactorTraits structs, currently PHAL and LCM
-    std::string facTraits;
-  };
 }
 
 #endif 

@@ -14,6 +14,9 @@
 *    Questions to David Littlewood, djlittl@sandia.gov               *
 \********************************************************************/
 
+#ifndef LAME_UTILS_HPP
+#define LAME_UTILS_HPP
+
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
@@ -38,3 +41,5 @@ namespace LameUtils {
   std::vector<double> getStateVariableInitialValues(const std::string& lameMaterialModelName,
                                                     const Teuchos::ParameterList& lameMaterialParameters);
 }
+
+#endif

@@ -32,6 +32,7 @@
 #include "LCM/problems/ThermoElasticityProblem.hpp"
 #include "LCM/problems/PoroElasticityProblem.hpp"
 #include "LCM/problems/GradientDamageProblem.hpp"
+#include "LCM/problems/ThermoMechanicalProblem.hpp"
 #ifdef ALBANY_LAME
 #include "LCM/problems/LameProblem.hpp"
 #endif
@@ -56,13 +57,13 @@ Albany::ProblemFactory::create()
   std::string& method = problemParams->get("Name", "Heat 1D");
 
   if (method == "Heat 1D") {
-    strategy = rcp(new Albany::HeatProblem(problemParams, paramLib, 1, comm));
+    strategy = rcp(new Albany::HeatProblem(problemParams, paramLib, 1));
   }
   else if (method == "Heat 2D") {
-    strategy = rcp(new Albany::HeatProblem(problemParams, paramLib, 2, comm));
+    strategy = rcp(new Albany::HeatProblem(problemParams, paramLib, 2));
   }
   else if (method == "Heat 3D") {
-    strategy = rcp(new Albany::HeatProblem(problemParams, paramLib, 3, comm));
+    strategy = rcp(new Albany::HeatProblem(problemParams, paramLib, 3));
   }
   else if (method == "ODE") {
     strategy = rcp(new Albany::ODEProblem(problemParams, paramLib, 0));
@@ -161,6 +162,9 @@ Albany::ProblemFactory::create()
   }
   else if (method == "GradientDamage") {
     strategy = rcp(new Albany::GradientDamageProblem(problemParams, paramLib, 3));
+  }
+  else if (method == "ThermoMechanical") {
+    strategy = rcp(new Albany::ThermoMechanicalProblem(problemParams, paramLib, 3));
   }
 #endif
   else {

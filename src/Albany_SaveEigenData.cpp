@@ -24,7 +24,8 @@
 
 Albany::SaveEigenData::
 SaveEigenData(Teuchos::ParameterList& locaParams, Teuchos::RCP<NOX::Epetra::Observer> observer, Albany::StateManager* pStateMgr)
-   :  nsave(0)
+  :  nsave(0),
+     nSaveAsStates(0)
 {
   bool doEig = locaParams.sublist("Stepper").get("Compute Eigenvalues", false);
   if (doEig) {

@@ -33,7 +33,6 @@
 #include "Phalanx.hpp"
 #include "Albany_DataTypes.hpp"
 #include "Albany_DirichletUtils.hpp"
-#include "Albany_ResponseUtils.hpp"
 
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_Workset.hpp"
@@ -61,6 +60,8 @@
 
 namespace Albany {
 
+  enum FieldManagerChoice {BUILD_RESID_FM, BUILD_RESPONSE_FM};
+
   /*!
    * \brief Abstract interface for representing a 1-D finite element
    * problem.
@@ -86,7 +87,7 @@ namespace Albany {
     virtual void buildProblem(
        Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
        StateManager& stateMgr,
-       std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses) = 0;
+       Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses) = 0;
 
     Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > getFieldManager();
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > getDirichletFieldManager() ;

@@ -19,56 +19,15 @@
 #define PHAL_FACTORY_TRAITS_HPP
 
 // User Defined Evaluator Types
-#include "PHAL_Constant.hpp"
-#include "PHAL_Dirichlet.hpp"
-#include "PHAL_GatherSolution.hpp"
-#include "PHAL_GatherEigenvectors.hpp"
-#include "PHAL_ScatterResidual.hpp"
-#include "PHAL_Source.hpp"
-#include "PHAL_ThermalConductivity.hpp"
-#include "PHAL_Absorption.hpp"
-#include "PHAL_ComputeBasisFunctions.hpp"
-#include "PHAL_DOFInterpolation.hpp"
-#include "PHAL_DOFGradInterpolation.hpp"
-#include "PHAL_DOFVecInterpolation.hpp"
-#include "PHAL_DOFVecGradInterpolation.hpp"
-#include "PHAL_MapToPhysicalFrame.hpp"
-#include "PHAL_HelmholtzResid.hpp"
-#include "PHAL_HeatEqResid.hpp"
-#include "PHAL_GatherCoordinateVector.hpp"
-#include "QCAD_Permittivity.hpp"
-#include "QCAD_PoissonResid.hpp"
-#include "QCAD_PoissonSource.hpp"
-#include "QCAD_SchrodingerPotential.hpp"
-#include "QCAD_SchrodingerResid.hpp"
-#include "QCAD_PoissonDirichlet.hpp"
-#include "QCAD_ResponseFieldIntegral.hpp"
-#include "QCAD_ResponseFieldValue.hpp"
-#include "QCAD_ResponseSaddleValue.hpp"
-#include "QCAD_ResponseSaveField.hpp"
-#include "QCAD_ResponseCenterOfMass.hpp"
-#include "PHAL_JouleHeating.hpp"
-#include "PHAL_TEProp.hpp"
-#include "PHAL_ODEResid.hpp"
-#include "PHAL_SaveStateField.hpp"
-#include "PHAL_LoadStateField.hpp"
-#include "PHAL_SharedParameter.hpp"
-#include "PHAL_NSContinuityResid.hpp"
-#include "PHAL_NSMomentumResid.hpp"
-#include "PHAL_NSThermalEqResid.hpp"
-#include "PHAL_NSRm.hpp"
-#include "PHAL_NSContravarientMetricTensor.hpp"
-#include "PHAL_NSTauM.hpp"
-#include "PHAL_NSTauT.hpp"
-#include "PHAL_NSMaterialProperty.hpp"
-#include "PHAL_NSBodyForce.hpp"
-#include "PHAL_NSPermeabilityTerm.hpp"
-#include "PHAL_NSForchheimerTerm.hpp"
-#include "PHAL_NSNeutronEqResid.hpp"
 
 #ifdef ALBANY_LCM
 #include "LCM/evaluators/KfieldBC.hpp"
+#include "LCM/evaluators/TimeDepBC.hpp"
+#include "LCM/evaluators/Time.hpp"
 #endif
+#include "QCAD_PoissonDirichlet.hpp"
+#include "PHAL_Dirichlet.hpp"
+
 
 #include "boost/mpl/vector/vector50.hpp"
 #include "boost/mpl/placeholders.hpp"
@@ -85,123 +44,30 @@ namespace PHAL {
 
 */
 
-template<typename Traits>
-struct FactoryTraits {
+  template<typename Traits>
+  struct DirichletFactoryTraits {
   
-  static const int id_gather_solution           =  0;
-  static const int id_gather_coordinate_vector  =  1;
-  static const int id_gather_eigenvectors       =  2;
-  static const int id_scatter_residual          =  3;
-  static const int id_compute_basis_functions   =  4;
-  static const int id_dof_interpolation         =  5;
-  static const int id_dof_grad_interpolation    =  6;
-  static const int id_dofvec_interpolation      =  7;
-  static const int id_dofvec_grad_interpolation =  8;
-  static const int id_map_to_physical_frame     =  9;
-  static const int id_source                    = 10;
-  static const int id_thermal_conductivity      = 11;
-  static const int id_helmholtzresid            = 12;
-  static const int id_heateqresid               = 13;
-  static const int id_constant                  = 14;
-  static const int id_qcad_permittivity         = 15;
-  static const int id_qcad_poisson_resid        = 16;
-  static const int id_qcad_poisson_source       = 17;
-  static const int id_jouleheating              = 18;
-  static const int id_teprop                    = 19;
-  static const int id_oderesid                  = 20;
-  static const int id_savestatefield            = 21;
-  static const int id_loadstatefield            = 22;
-  static const int id_sharedparameter           = 23;
-  static const int id_schrodinger_potential     = 24;
-  static const int id_schrodinger_resid         = 25;
-  static const int id_absorption                = 26;
-  static const int id_nscontinuityeqresid       = 27;
-  static const int id_nsmomentumeqresid         = 28;
-  static const int id_nsthermaleqresid          = 29;
-  static const int id_nsrm                      = 30;
-  static const int id_nsgctensor                = 31;
-  static const int id_nstaum                    = 32;
-  static const int id_nstaut                    = 33;
-  static const int id_nsmatprop                 = 34;
-  static const int id_nsbodyforce               = 35;
-  static const int id_nsneutroneqresid          = 36;
-  static const int id_nspermeabilityterm        = 37;
-  static const int id_nsforchheimerterm         = 38;
-  static const int id_qcad_response_fieldintegral = 39;
-  static const int id_qcad_response_fieldvalue    = 40;
-  static const int id_qcad_response_saddlevalue   = 41;
-  static const int id_qcad_response_savefield     = 42;
-  static const int id_qcad_response_centerofmass  = 43;
-
-  typedef boost::mpl::vector44< 
-            PHAL::GatherSolution<_,Traits>,           //  0
-            PHAL::GatherCoordinateVector<_,Traits>,   //  1
-            PHAL::GatherEigenvectors<_,Traits>,       //  2
-            PHAL::ScatterResidual<_,Traits>,          //  3
-            PHAL::ComputeBasisFunctions<_,Traits>,    //  4
-            PHAL::DOFInterpolation<_,Traits>,         //  5
-            PHAL::DOFGradInterpolation<_,Traits>,     //  6
-            PHAL::DOFVecInterpolation<_,Traits>,      //  7
-            PHAL::DOFVecGradInterpolation<_,Traits>,  //  8
-            PHAL::MapToPhysicalFrame<_,Traits>,       //  9
-            PHAL::Source<_,Traits>,                   // 10
-            PHAL::ThermalConductivity<_,Traits>,      // 11
-            PHAL::HelmholtzResid<_,Traits>,           // 12
-            PHAL::HeatEqResid<_,Traits>,              // 13
-            PHAL::Constant<_,Traits>,                 // 14
-            QCAD::Permittivity<_,Traits>,             // 15
-            QCAD::PoissonResid<_,Traits>,             // 16
-            QCAD::PoissonSource<_,Traits>,            // 17
-            PHAL::JouleHeating<_,Traits>,             // 18
-            PHAL::TEProp<_,Traits>,                   // 19
-            PHAL::ODEResid<_,Traits>,                 // 20
-            PHAL::SaveStateField<_,Traits>,           // 21
-            PHAL::LoadStateField<_,Traits>,           // 22
-            PHAL::SharedParameter<_,Traits>,          // 23
-            QCAD::SchrodingerPotential<_,Traits>,     // 24
-            QCAD::SchrodingerResid<_,Traits>,         // 25
-            PHAL::Absorption<_,Traits>,               // 26
-            PHAL::NSContinuityResid<_,Traits>,        // 27  
-            PHAL::NSMomentumResid<_,Traits>,          // 28
-            PHAL::NSThermalEqResid<_,Traits>,         // 29
-            PHAL::NSRm<_,Traits>,                     // 30
-            PHAL::NSContravarientMetricTensor<_,Traits>,// 31
-            PHAL::NSTauM<_,Traits>,                   // 32
-            PHAL::NSTauT<_,Traits>,                   // 33
-            PHAL::NSMaterialProperty<_,Traits>,       // 34
-            PHAL::NSBodyForce<_,Traits>,              // 35
-            PHAL::NSNeutronEqResid<_,Traits>,         // 36
-            PHAL::NSPermeabilityTerm<_,Traits>,       // 37
-            PHAL::NSForchheimerTerm<_,Traits>,         // 38
-            QCAD::ResponseFieldIntegral<_,Traits>,    // 39
-            QCAD::ResponseFieldValue<_,Traits>,       // 40
-            QCAD::ResponseSaddleValue<_,Traits>,      // 41
-            QCAD::ResponseSaveField<_,Traits>,        // 42
-            QCAD::ResponseCenterOfMass<_,Traits>      // 43
-  > EvaluatorTypes;
-  
-};
-
-template<typename Traits>
-struct DirichletFactoryTraits {
-  
-  static const int id_dirichlet                 =  0;
-  static const int id_dirichlet_aggregator      =  1;
-  static const int id_qcad_poisson_dirichlet    =  2;
-  static const int id_kfield_bc                 =  3; // Only for LCM probs
+    static const int id_dirichlet                 =  0;
+    static const int id_dirichlet_aggregator      =  1;
+    static const int id_qcad_poisson_dirichlet    =  2;
+    static const int id_kfield_bc                 =  3; // Only for LCM probs
+    static const int id_timedep_bc                =  4; // Only for LCM probs
+    static const int id_time                      =  5; // Only for LCM probs
 
 #ifdef ALBANY_LCM
-  typedef boost::mpl::vector4< 
+    typedef boost::mpl::vector6< 
 #else
-  typedef boost::mpl::vector3< 
+      typedef boost::mpl::vector3< 
 #endif
-            PHAL::Dirichlet<_,Traits>,                //  0
-            PHAL::DirichletAggregator<_,Traits>,      //  1
-            QCAD::PoissonDirichlet<_,Traits>         //  2
+	PHAL::Dirichlet<_,Traits>,                //  0
+	PHAL::DirichletAggregator<_,Traits>,      //  1
+	QCAD::PoissonDirichlet<_,Traits>          //  2
 #ifdef ALBANY_LCM
-            , LCM::KfieldBC<_,Traits>                   //  3
+	, LCM::KfieldBC<_,Traits>,                //  3
+	LCM::TimeDepBC<_, Traits>,                //  4 
+	LCM::Time<_, Traits>                      //  5 
 #endif
-  > EvaluatorTypes;
+	> EvaluatorTypes;
 };
 
 }

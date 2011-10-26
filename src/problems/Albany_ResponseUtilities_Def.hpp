@@ -39,7 +39,7 @@ template<typename EvalT, typename Traits>
 void
 Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-  std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
+  Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
   Teuchos::ParameterList& responseList, 
   Albany::StateManager& stateMgr)
 {
@@ -70,12 +70,9 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
      std::string responseID = Albany::strint("Response",i);
      std::string name = responseList.get(responseID, "??");
 
-     RCP<ParameterList> p;
-
      Teuchos::RCP< PHX::Evaluator<Traits> > ev;
      if( getStdResponseFn(name, i, responseList, responses, stateMgr, ev) ) {
        if(ev != Teuchos::null) {
-	 // response_evaluators_to_build[responseID] = p;
          fm0.template registerEvaluator<EvalT>(ev);
 	 responseIDs_to_require.push_back(responseID);
        }
@@ -90,7 +87,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
    } // end of loop over responses
 
    //! Create field manager for responses
-   return createResponseFieldManager(fm0, responseIDs_to_require);
+   createResponseFieldManager(fm0, responseIDs_to_require);
 }
 
 template<typename EvalT, typename Traits>
@@ -99,9 +96,7 @@ Albany::ResponseUtilities<EvalT,Traits>::createResponseFieldManager(
     PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     const std::vector<std::string>& responseIDs_to_require)
 {
-  using Teuchos::RCP;
   using std::string;
-  using PHAL::AlbanyTraits;
 
   // Set required fields: ( Response<i>, dl->dummy ), for responses 
   //  evaluated by the response evaluators
@@ -109,7 +104,7 @@ Albany::ResponseUtilities<EvalT,Traits>::createResponseFieldManager(
   for (it = responseIDs_to_require.begin(); it != responseIDs_to_require.end(); it++)
   {
     const string& responseID = *it;
-
+cout << "RRRQ requiring: " << responseID << endl;
     PHX::Tag<typename EvalT::ScalarT> res_response_tag(responseID, dl->dummy);
     fm0.requireField<EvalT>(res_response_tag);
   }
@@ -120,7 +115,7 @@ template<typename EvalT, typename Traits>
 Teuchos::RCP<Teuchos::ParameterList>
 Albany::ResponseUtilities<EvalT,Traits>::setupResponseFnForEvaluator(
   Teuchos::ParameterList& responseList, int responseNumber,
-  std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
+  Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
   using Teuchos::RCP;
   using Teuchos::ParameterList;
@@ -160,7 +155,7 @@ bool
 Albany::ResponseUtilities<EvalT,Traits>::getStdResponseFn(
     std::string responseName, int responseIndex,
     Teuchos::ParameterList& responseList,
-    std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
+    Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
     Albany::StateManager& stateMgr,    
     Teuchos::RCP< PHX::Evaluator<PHAL::AlbanyTraits> >& ev)
 {

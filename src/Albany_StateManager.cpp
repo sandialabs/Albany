@@ -21,24 +21,24 @@
 
 Albany::StateManager::StateManager() :
   stateVarsAreAllocated(false),
-  stateInfo(Teuchos::rcp(new StateInfoStruct))
+  stateInfo(Teuchos::rcp(new StateInfoStruct)),
+  time(0.0),
+  timeOld(0.0)
 {
 }
 
 Teuchos::RCP<Teuchos::ParameterList>
 Albany::StateManager::registerStateVariable(const std::string &name, const Teuchos::RCP<PHX::DataLayout> &dl,
                                             const Teuchos::RCP<PHX::DataLayout> &dummy,
-                                            const int saveOrLoadStateFieldID,
                                             const std::string &init_type,
                                             const bool registerOldState)
 {
-  return registerStateVariable(name, dl, dummy, saveOrLoadStateFieldID, init_type, registerOldState, name);
+  return registerStateVariable(name, dl, dummy, init_type, registerOldState, name);
 }
 
 Teuchos::RCP<Teuchos::ParameterList>
 Albany::StateManager::registerStateVariable(const std::string &stateName, const Teuchos::RCP<PHX::DataLayout> &dl,
                                             const Teuchos::RCP<PHX::DataLayout> &dummy,
-                                            const int saveOrLoadStateFieldID,
                                             const std::string &init_type,
                                             const bool registerOldState,
                                             const std::string& fieldName)
@@ -48,7 +48,6 @@ Albany::StateManager::registerStateVariable(const std::string &stateName, const 
   // Create param list for SaveStateField evaluator 
   Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Save or Load State " 
 							  + stateName + " to/from field " + fieldName));
-  p->set<const int>("Type", saveOrLoadStateFieldID);
   p->set<const std::string>("State Name", stateName);
   p->set<const std::string>("Field Name", fieldName);
   p->set<const Teuchos::RCP<PHX::DataLayout> >("State Field Layout", dl);
@@ -66,14 +65,18 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
 
 {
   TEST_FOR_EXCEPT(stateVarsAreAllocated);
-
   statesToStore[stateName] = dl;
+
+  
 
   // Load into StateInfo
   (*stateInfo).push_back(Teuchos::rcp(new Albany::StateStruct(stateName)));
   Albany::StateStruct& stateRef = *stateInfo->back();
   stateRef.initType = init_type; 
-  stateRef.entity = dl->name(1); //Tag, should be Node or QuadPoint
+  if ( dl->rank() > 1 )
+    stateRef.entity = dl->name(1); //Tag, should be Node or QuadPoint
+  else if ( dl->rank() == 1 )
+    stateRef.entity = "ScalarValue";
   stateRef.output = outputToExodus;
   dl->dimensions(stateRef.dim); 
 
@@ -85,12 +88,14 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
     (*stateInfo).push_back(Teuchos::rcp(new Albany::StateStruct(stateName_old)));
     Albany::StateStruct& pstateRef = *stateInfo->back();
     pstateRef.initType = init_type; 
-    pstateRef.entity = dl->name(1); //Tag, should be Node or QuadPoint
+    if ( dl->rank() > 1 )
+      pstateRef.entity = dl->name(1); //Tag, should be Node or QuadPoint
+    else if ( dl->rank() == 1 )
+      pstateRef.entity = "ScalarValue";
     pstateRef.output = false; 
     dl->dimensions(pstateRef.dim); 
   }
 }
-
 
 Teuchos::RCP<Albany::StateInfoStruct>
 Albany::StateManager::getStateInfoStruct()
@@ -133,27 +138,30 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
       if (init_type == "zero")
       {
         switch (size) {
-          case 2:
-            for (int cell = 0; cell < dims[0]; ++cell)
-              for (int qp = 0; qp < dims[1]; ++qp)
-                    sa[ws][stateName](cell, qp) = 0.0;
-            break;
-          case 3:
-            for (int cell = 0; cell < dims[0]; ++cell)
-              for (int qp = 0; qp < dims[1]; ++qp)
-                for (int i = 0; i < dims[2]; ++i)
-                      sa[ws][stateName](cell, qp, i) = 0.0;
-            break;
-          case 4:
-            for (int cell = 0; cell < dims[0]; ++cell)
-              for (int qp = 0; qp < dims[1]; ++qp)
-                for (int i = 0; i < dims[2]; ++i)
-                  for (int j = 0; j < dims[3]; ++j)
-                      sa[ws][stateName](cell, qp, i, j) = 0.0;
-            break;
-          default:
-            TEST_FOR_EXCEPTION(size<2||size>4, std::logic_error,
-                "Something is wrong during zero state variable initialization: " << size);
+	case 1:
+	  sa[ws][stateName](0) = 0.0;
+	  break;
+	case 2:
+	  for (int cell = 0; cell < dims[0]; ++cell)
+	    for (int qp = 0; qp < dims[1]; ++qp)
+	      sa[ws][stateName](cell, qp) = 0.0;
+	  break;
+	case 3:
+	  for (int cell = 0; cell < dims[0]; ++cell)
+	    for (int qp = 0; qp < dims[1]; ++qp)
+	      for (int i = 0; i < dims[2]; ++i)
+		sa[ws][stateName](cell, qp, i) = 0.0;
+	  break;
+	case 4:
+	  for (int cell = 0; cell < dims[0]; ++cell)
+	    for (int qp = 0; qp < dims[1]; ++qp)
+	      for (int i = 0; i < dims[2]; ++i)
+		for (int j = 0; j < dims[3]; ++j)
+		  sa[ws][stateName](cell, qp, i, j) = 0.0;
+	  break;
+	default:
+	  TEST_FOR_EXCEPTION(size<2||size>4, std::logic_error,
+			     "Something is wrong during zero state variable initialization: " << size);
         }
 
       }
@@ -161,7 +169,7 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
       {
         // we assume operating on the last two indices is correct
         TEST_FOR_EXCEPTION(size != 4, std::logic_error,
-            "Something is wrong during identity state variable initialization: " << size);
+			   "Something is wrong during identity state variable initialization: " << size);
         TEST_FOR_EXCEPT( ! (dims[2] == dims[3]) );
 
         for (int cell = 0; cell < dims[0]; ++cell)
@@ -208,6 +216,9 @@ importStateData(Albany::StateArrays& statesToCopyFrom)
       int size = dims.size();
 
       switch (size) {
+      case 1:
+	sa[ws][stateName](0) = statesToCopyFrom[ws][stateName](0);
+	break;
       case 2:
 	for (int cell = 0; cell < dims[0]; ++cell)
 	  for (int qp = 0; qp < dims[1]; ++qp)

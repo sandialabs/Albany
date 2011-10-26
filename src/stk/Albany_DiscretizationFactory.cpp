@@ -18,10 +18,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Albany_DiscretizationFactory.hpp"
 #include "Albany_STKDiscretization.hpp"
-#include "Albany_Point0DSTKMeshStruct.hpp"
-#include "Albany_Line1DSTKMeshStruct.hpp"
-#include "Albany_Rect2DSTKMeshStruct.hpp"
-#include "Albany_Cube3DSTKMeshStruct.hpp"
+#include "Albany_TmplSTKMeshStruct.hpp"
 #ifdef ALBANY_SEACAS
 #include "Albany_IossSTKMeshStruct.hpp"
 #endif
@@ -50,16 +47,17 @@ Albany::DiscretizationFactory::createMeshSpecs()
 {
   std::string& method = discParams->get("Method", "STK1D");
   if (method == "STK1D") {
-    stkMeshStruct = Teuchos::rcp(new Albany::Line1DSTKMeshStruct(discParams, epetra_comm));
+    stkMeshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<1>(discParams, epetra_comm));
+    //stkMeshStruct = Teuchos::rcp(new Albany::Line1DSTKMeshStruct(discParams, epetra_comm));
   }
   else if (method == "STK0D") {
-    stkMeshStruct = Teuchos::rcp(new Albany::Point0DSTKMeshStruct(discParams));
+    stkMeshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<0>(discParams, epetra_comm));
   }
   else if (method == "STK2D") {
-    stkMeshStruct = Teuchos::rcp(new Albany::Rect2DSTKMeshStruct(discParams, epetra_comm));
+    stkMeshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<2>(discParams, epetra_comm));
   }
   else if (method == "STK3D") {
-    stkMeshStruct = Teuchos::rcp(new Albany::Cube3DSTKMeshStruct(discParams, epetra_comm));
+    stkMeshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(discParams, epetra_comm));
   }
   else if (method == "Ioss" || method == "Exodus" ||  method == "Pamgen") {
 #ifdef ALBANY_SEACAS

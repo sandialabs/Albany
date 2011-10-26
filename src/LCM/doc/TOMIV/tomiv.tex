@@ -1420,23 +1420,20 @@ eigenvalue decomposition, i.e. $\log \bS = \bV \bd \bV^T$, where $\bd
 This section showcases three numerical examples concerning polynomial
 interpolations and transformations of internal variables. In the first
 example, we compare the recovered internal variable fields obtained
-from standard Galerkin and element-by-element projections. We then use a
-kinematics problem to investigate the error caused by improper
+from global and element-by-element Galerkin L2 projections. A 
+kinematics example is added to investigate the error caused by improper
 interpolation of internal variables belonging to Lie group and the
-remedy procedures formulated via Lie algebra. Simulations of a large
-deformation J2 elasto-plasticity problem are presented to demonstrate 
-the performance of the Lie algebra variational transfer operator  with a 
+remedy procedures formulated via Lie algebra. Finally, simulations of a large
+deformation J2 elasto-plasticity classical problem are presented to demonstrate 
+the performance of the Lie algebra variational transfer operator with a 
 number of commonly used  internal variable recovery schemes. 
-We conclude this section with a benchmark
-example from the literature to illustrate the remarkable accuracy of
-the proposed internal variable recovery procedure.
 
 \subsection{Projection of Scalar Fields with Jump Conditions}
 We consider a simple example in which a cubic body centered at the
 origin of a Cartesian coordinate system $\{XYZ\}$ is discretized by 8
 hexahedral trilinear elements of equal sizes. The following scalar
 internal variable field is prescribed at the eight standard Gauss
-quadrature points,
+quadrature points in each finite element,
 \begin{equation}
 \bar{\bz}(X) = \left\{
   \begin{array}{l l}
@@ -1446,23 +1443,24 @@ quadrature points,
   \label{eq:PrescribedScalar}
 \end{equation}
 To generate an interpolated internal variables field $\bar{\bz}_{h}
-\in V_{h}$, the numerical values from the Gaussian quadrature points
+\in V_{h}$, the numerical values from the Gauss quadrature points
 are projected onto the nodes via \eqref{eq:BalanceLM}. Two different
-discretization strategies are used to compute $\bar{\bz}_{h}$. The
-first strategy is to use the standard Galerkin form as expressed in
-\eqref{eq:DiscreteEquilibrium} globally. Alternatively, we restrict the 
-application of the L2 projection to a single element, thus recovering 
+projection method are used to obtained the interpolation $\bar{\bz}_{h}$
+from the Gauss points. The first strategy is to apply global L2 projection 
+as expressed in \eqref{eq:DiscreteEquilibrium} globally. Alternatively, we also 
+restrict the application of the L2 projection to a single element, thus recovering 
 a local projection field where inter-element discontinuity may exist. 
 
 The projected scalar internal variable field is shown in Figure
 \ref{fig:ExampleCube}. The global L2 projection  leads
 to a smooth linear field $\bz_{h}(X) = X/4 + 1/2$, which is identical
-to the linear least square regression of the nodal vales of the
+to the linear least square regression of the nodal values of the
 $\bz(X)$. This result confirms that that the projection defined in
 \eqref{eq:DiscreteEquilibrium} minimize the error measured by the L2
-norm $||\bz_{h} - \bz ||$ and is therefore optimal. Notice that the
-jump condition vanishes when the global L2 projection method is used , because both
-the trial and weighing space are $C^{0}$ continuous.
+norm $||\bz_{h} - \bz ||$ and is therefore optimal (in the sense of minimizing the 
+error measured by L2 norm). Notice that the jump condition vanishes when the 
+global L2 projection method is used, because both the trial and weighing space are 
+$C^{0}$ continuous globally. 
  
 The local element-by-element approach, on the other hand, preserves the jump
 condition and reproduces the exact field in this example. Since the local
@@ -1483,19 +1481,19 @@ the error measured by the L2 norm vanished in each element.
 \end{figure}
 
 This introductory example illustrates that different projection
-strategies can be derived from the same variational statement. The
+strategies may be derived from the same variational statement. The
 choice of the trial and weighting space should be made by considering
 the properties and nature of the internal variables.
 
 \subsection{Bending of an Annulus}
-This example demonstrates the ability of the logarithmic mapping 
-to handle interpolation of tensor field. An $L \times L/16 \times L/16$ 
+This example demonstrates how the logarithmic mapping can be applied 
+as an aid to improve the interpolations of a tensor field. An $L \times L/16 \times L/16$ 
 initially straight beam is bent into an annulus with average radius of the 
 annulus $R = \pi L /2$, while maintaining the same thickness and depth. 
 In the current configuration, the geometrical centroid of the beam remains 
 at the same position and the two ends of the beam are glued together. The 
-close form of the deformation gradient $\bF^{a}$ expressed in matrix notation
- reads, 
+close form of the deformation gradient $\bF^{a}$ expressed in matrix notation 
+reads, 
  \begin{equation}
    [\bF^{exact}(X, Y)] =  \left( \begin{array}{ccc}
        \frac{R-Y}{R} \cos(X/R) & -\sin(X/R) & 0 \\
@@ -1503,7 +1501,7 @@ close form of the deformation gradient $\bF^{a}$ expressed in matrix notation
        0 & 0 & 1 \end{array} \right)
 \label{eq:DeformGrad} 
 \end{equation}
-The right polar decomposition of the deformation gradient reads,
+The right polar decomposition of the deformation gradient is,
 \begin{equation}
   \bF^{exact}(X,Y) = \bR^{exact}(X) \cdot \bU^{exact}(Y) 
   \label{eq:RightPolar}
@@ -1612,7 +1610,6 @@ interpolate. The appropriate choice of the interpolation strategy
 depends on the situations and the prior knowledge one may acquire and
 take advantage of.
 
-
 \subsubsection{Refinement Study}
 To investigate the relation between the mesh refinement and the
 overall accuracy of the interpolation, we conduct a refinement study
@@ -1662,10 +1659,11 @@ ratio, length/width, remains constant for all elements.
 \end{figure}
 
 Figures \ref{fig:RingRefinement}(a)-(c) show the convergence curves
-obtained via all three schemes.  Each plot collects three curves,
-corresponding to the standard polynomial interpolation (red), the
-polynomial interpolation conducted on Lie algebra of both the rotation
-and right stretch (green) and a mixed approach in which stretch is
+obtained via all three schemes.  The errors of the deformation gradient,
+rotation and right stretch tensor are computed with mesh of different 
+sizes. Each plot collects three curves, corresponding to the standard 
+polynomial interpolation (red), the polynomial interpolation conducted on 
+Lie algebra of both the rotation and right stretch (green) and a mixed approach in which stretch is
 linearly interpolated and rotation is interpolated via Lie algebra
 (blue).  As evident from the convergent plots, the rate of convergence
 obtained via the Lie algebra is faster than the standard interpolation
@@ -1705,16 +1703,17 @@ Six internal variable recovery procedures are compared in  Table
 employs a searching scheme to determine the closest Gauss points to a node 
 in each element. The value of the closest Gauss point is assigned
 to the node. If the same node is shared by more than one element, then the 
-Gauss point values are averaged among the Gauss points in different elements. 
-In the  extrapolation approach, we establish shape functions using Gauss points 
-as local node, then extrapolate Gauss point data to the actual node of each finite 
+Gauss point values are averaged among the Gauss points that shared the same node
+ in different elements. In the  extrapolation approach, we establish shape functions 
+ using Gauss points as local node, then extrapolate Gauss point data to the actual node of each finite 
 element. The nodal values are then averaged element-wise in a similar fashion of 
 the first method. The next two approaches both employ the variational projection
 operator globally. The only difference between the two is that one projects the polar 
 decomposed deformation field and another one projects the deformation field directly 
 without polar decomposition. The last two approach projects the polar decomposed 
-deformation field globally with variational projection operators that both transfer the 
-rotation field from $SO(3)$ to $so(3)$, but treat the stretch field differently.  
+rotation and right stretch tensor field globally with variational projection operators. 
+While both of them  transfer the rotation field from $SO(3)$ to $so(3)$, only the second last 
+approach (denoted as full Lie Alg) transfer the right stretch tensor from $GL(3)$ to $gl(3)$.  
  
 \begin{table}[htbp]
   \begin{center}
@@ -1942,12 +1941,16 @@ holds regardless of mesh size.
 \end{figure}
 
 \subsubsection{Comparisons with Other Internal Variable Recovery Schemes}
-We compare the performance of the same set of internal variable recovery schemes again using
-the upsetting billet example. Here the Gauss points of the coarse mesh is first projected 
- to the node. Using the nodal values and the interpolation functions, we compute the nodal 
- value of $\det(\bF^{p})$ and the errors defined in \eqref{eq:FrobeniusNormOverall}. Table \ref{tab:BilletErrorComparison} demonstrates the properties of the projected plastic deformation. 
- Among the six internal variable recovery approaches, only the ones applying Lie algebra is able to preserve
- the isochoric property of the J2 model. Since the mesh with 693 element used in this comparison study is relatively fine, the difference in global error is not significant. Nevertheless,  the variational projections are still the more accurate approaches among all the recovery procedures.  
+We compare the performance of the same set of internal variable recovery schemes 
+again using the upsetting billet example. Here the Gauss points of the coarse mesh 
+is first projected to the node. Using the nodal values and the interpolation functions, 
+we compute the nodal value of $\det(\bF^{p})$ and the errors defined in 
+\eqref{eq:FrobeniusNormOverall}.  Table \ref{tab:BilletErrorComparison} demonstrates 
+the properties of the projected plastic deformation. Among the six internal variable recovery 
+approaches, only the ones applying Lie algebra is able to preserve the isochoric property of 
+the J2 model. Since the mesh with 693 element used in this comparison study is 
+relatively fine, the difference in global error is not significant. Nevertheless,  the variational projections 
+are still the more accurate approaches among all the recovery procedures.  
  
  \begin{table}[htbp]
   \begin{center}

@@ -27,6 +27,7 @@
 
 namespace Albany {
 
+
   class GenericSTKMeshStruct : public AbstractSTKMeshStruct {
 
     public:

@@ -27,7 +27,7 @@ namespace LCM {
 template<typename EvalT, typename Traits>
 Neohookean<EvalT, Traits>::
 Neohookean(const Teuchos::ParameterList& p) :
-  lcg              (p.get<std::string>                   ("LCG Name"),
+  F                (p.get<std::string>                   ("DefGrad Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
   J                (p.get<std::string>                   ("DetDefGrad Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
@@ -46,7 +46,7 @@ Neohookean(const Teuchos::ParameterList& p) :
   numQPs  = dims[1];
   numDims = dims[2];
 
-  this->addDependentField(lcg);
+  this->addDependentField(F);
   this->addDependentField(J);
   this->addDependentField(elasticModulus);
   // PoissonRatio not used in 1D stress calc
@@ -65,7 +65,7 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(stress,fm);
-  this->utils.setFieldData(lcg,fm);
+  this->utils.setFieldData(F,fm);
   this->utils.setFieldData(J,fm);
   this->utils.setFieldData(elasticModulus,fm);
   if (numDims>1) this->utils.setFieldData(poissonsRatio,fm);
@@ -82,9 +82,13 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT Jm53;
   ScalarT trace;
 
+  Intrepid::FieldContainer<ScalarT> C(workset.numCells, numQPs, numDims, numDims);
+  Intrepid::FunctionSpaceTools::tensorMultiplyDataData<ScalarT> (C, F, F, 'T');
+  
+  
   switch (numDims) {
   case 1:
-    Intrepid::FunctionSpaceTools::tensorMultiplyDataData<ScalarT>(stress, elasticModulus, lcg);
+    Intrepid::FunctionSpaceTools::tensorMultiplyDataData<ScalarT>(stress, elasticModulus, C);
     break;
   case 2:
   case 3:
@@ -94,10 +98,10 @@ evaluateFields(typename Traits::EvalData workset)
 	mu    = elasticModulus(cell,qp) / ( 2. * ( 1. + poissonsRatio(cell,qp) ) );
 	Jm53  = std::pow(J(cell,qp), -5./3.);
 	trace = 0.0;
-	for (std::size_t i=0; i < numDims; ++i) trace += (1./numDims) * lcg(cell,qp,i,i);
+	for (std::size_t i=0; i < numDims; ++i) trace += (1./numDims) * C(cell,qp,i,i);
 	for (std::size_t i=0; i < numDims; ++i) {
 	  for (std::size_t j=0; j < numDims; ++j) {
-	    stress(cell,qp,i,j) = mu * Jm53 * ( lcg(cell,qp,i,j) );
+	    stress(cell,qp,i,j) = mu * Jm53 * ( C(cell,qp,i,j) );
 	  }
 	  stress(cell,qp,i,i) += 0.5 * kappa * ( J(cell,qp) - 1. / J(cell,qp) ) - mu * Jm53 * trace;
 	}

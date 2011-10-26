@@ -61,7 +61,6 @@ public:
   Teuchos::RCP<Teuchos::ParameterList>
   registerStateVariable(const std::string &name, const Teuchos::RCP<PHX::DataLayout> &dl, 
                                             const Teuchos::RCP<PHX::DataLayout> &dummy,
-                                            const int saveOrLoadStateFieldID,
                                             const std::string &init_type="zero",
                                             const bool registerOldState=false);
 
@@ -69,7 +68,6 @@ public:
   Teuchos::RCP<Teuchos::ParameterList>
   registerStateVariable(const std::string &stateName, const Teuchos::RCP<PHX::DataLayout> &dl, 
 			const Teuchos::RCP<PHX::DataLayout> &dummy,
-			const int saveOrLoadStateFieldID,
 			const std::string &init_type,
                         const bool registerOldState,
 			const std::string &fieldName);
@@ -121,6 +119,10 @@ private:
   //! NEW WAY
   Teuchos::RCP<StateInfoStruct> stateInfo;
   Teuchos::RCP<EigendataStruct> eigenData;
+
+  // Experiment in dealing with Time
+  double time;
+  double timeOld;
 };
 
 }

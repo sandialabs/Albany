@@ -21,7 +21,7 @@
 #include "PHAL_AlbanyTraits.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_StateManager.hpp"
-#include "Albany_Cube3DSTKMeshStruct.hpp"
+#include "Albany_TmplSTKMeshStruct.hpp"
 #include "Albany_STKDiscretization.hpp"
 #include "LCM/evaluators/LameStress.hpp"
 #include "Tensor.h"
@@ -123,8 +123,6 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
 
   // LameStress evaluator
   Teuchos::RCP<Teuchos::ParameterList> lameStressParameterList = Teuchos::rcp(new Teuchos::ParameterList("Stress"));
-  //int type = LameStressUnitTestFactoryTraits<PHAL::AlbanyTraits>::id_lame_stress;
-  //lameStressParameterList->set<int>("Type", type);
   lameStressParameterList->set<string>("DefGrad Name", "Deformation Gradient");
   lameStressParameterList->set<string>("Stress Name", "Stress");
   lameStressParameterList->set< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout", qp_scalar);

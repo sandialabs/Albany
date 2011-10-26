@@ -54,7 +54,7 @@ namespace Albany {
     buildProblem(
        Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
        StateManager& stateMgr,
-       std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
+       Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
 
     //! Each problem must generate it's list of valid parameters
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
@@ -71,10 +71,48 @@ namespace Albany {
     //! Private to prohibit copying
     ThermoElasticityProblem& operator=(const ThermoElasticityProblem&);
 
-//    template <typename EvalT>
-//    void constructEvaluators<EvalT>(const Albany::MeshSpecsStruct& meshSpecs,
-//                             Albany::StateManager& stateMgr,
-//                             std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
+    //! Main problem setup routine. Not directly called, but indirectly by following functions
+    template <typename EvalT>
+    void constructEvaluators(
+            PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+            const Albany::MeshSpecsStruct& meshSpecs,
+            Albany::StateManager& stateMgr,
+            Albany::FieldManagerChoice fmchoice,
+            Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
+
+    //! Interface for Residual (PDE) field manager
+    template <typename EvalT>
+    void constructResidEvaluators(
+            PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+            const Albany::MeshSpecsStruct& meshSpecs,
+            Albany::StateManager& stateMgr)
+    {
+      Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> > junk;
+      constructEvaluators<EvalT>(fm0, meshSpecs, stateMgr, BUILD_RESID_FM, junk);
+    }
+
+    //! Interface for Response field manager, except for residual type
+    template <typename EvalT>
+    void constructResponseEvaluators(
+            PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+            const Albany::MeshSpecsStruct& meshSpecs,
+            Albany::StateManager& stateMgr)
+    {
+      Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> > junk;
+      constructEvaluators<EvalT>(fm0, meshSpecs, stateMgr, BUILD_RESPONSE_FM, junk);
+    }
+
+    //! Interface for Response field manager, Residual type.
+    // This version loads the responses variable, that needs to be constructed just once
+    template <typename EvalT>
+    void constructResponseEvaluators(
+            PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+            const Albany::MeshSpecsStruct& meshSpecs,
+            Albany::StateManager& stateMgr,
+            Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
+    {
+      constructEvaluators<EvalT>(fm0, meshSpecs, stateMgr, BUILD_RESPONSE_FM, responses);
+    }
 
     void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
   protected:
@@ -88,15 +126,42 @@ namespace Albany {
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState;
 
-  private:
+  };
+}
+
+#include "Teuchos_RCP.hpp"
+#include "Teuchos_ParameterList.hpp"
+
+#include "Albany_AbstractProblem.hpp"
+
+#include "Phalanx.hpp"
+#include "PHAL_Workset.hpp"
+#include "PHAL_Dimension.hpp"
+#include "Albany_ProblemUtils.hpp"
+#include "Albany_ResponseUtilities.hpp"
+#include "Albany_EvaluatorUtils.hpp"
+#include "PHAL_AlbanyTraits.hpp"
+
+// Explicity add evaluators defined in the model below
+#include "ElasticModulus.hpp"
+#include "PoissonsRatio.hpp"
+#include "PHAL_Source.hpp"
+#include "Strain.hpp"
+#include "Stress.hpp"
+#include "PHAL_SaveStateField.hpp"
+#include "ElasticityResid.hpp"
+#include "PHAL_ThermalConductivity.hpp"
+#include "PHAL_Source.hpp"
+#include "PHAL_HeatEqResid.hpp"
+
+
 template <typename EvalT>
-void constructEvaluators(
+void Albany::ThermoElasticityProblem::constructEvaluators(
         PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         const Albany::MeshSpecsStruct& meshSpecs,
         Albany::StateManager& stateMgr,
-        std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
-        bool constructResponses=false);
-/**
+        Albany::FieldManagerChoice fieldManagerChoice,
+        Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
    using Teuchos::RCP;
    using Teuchos::rcp;
@@ -276,8 +341,7 @@ void constructEvaluators(
 
     ev = rcp(new LCM::Stress<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Stress",dl->qp_tensor,
-            dl->dummy, LCM::FactoryTraits<AlbanyTraits>::id_savestatefield,"zero");
+    p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy,"zero");
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -365,18 +429,8 @@ void constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-   // Build Field Evaluators for each evaluation type
-  // PHX::EvaluatorFactory<AlbanyTraits,LCM::FactoryTraits<AlbanyTraits> > factory;
-  // RCP< vector< RCP<PHX::Evaluator_TemplateManager<AlbanyTraits> > > >
-  //   evaluators;
-  // evaluators = factory.buildEvaluators(evaluators_to_build);
-//
-//   // Create a FieldManager
-//
-//   // Register all Evaluators
- //  PHX::registerEvaluators(evaluators, *fm[0]);
 
-   if (!constructResponses)  {
+  if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
      PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter", dl->dummy);
      fm0.requireField<EvalT>(res_tag);
 
@@ -385,15 +439,9 @@ void constructEvaluators(
    }
 
    else {
-     //Construct Rsponses
      Teuchos::ParameterList& responseList = params->sublist("Response Functions");
      Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
      respUtils.constructResponses(fm0, responses, responseList, stateMgr);
    }
 }
-**/
-  };
-
-}
-
 #endif // ALBANY_ELASTICITYPROBLEM_HPP

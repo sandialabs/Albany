@@ -47,7 +47,7 @@ namespace Albany {
     //! Utility for parsing response requests and creating response field manager
     void
     constructResponses(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                       std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
+                       Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
   		       Teuchos::ParameterList& responseList, 
 	               Albany::StateManager& stateMgr);
 
@@ -62,7 +62,7 @@ namespace Albany {
     //!   p as the parameter list. 
     bool getStdResponseFn(std::string responseName, int responseIndex,
 			  Teuchos::ParameterList& responseList,
-			  std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
+			  Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
 			  Albany::StateManager& stateMgr,
 			  Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> >& ev);
 
@@ -70,7 +70,7 @@ namespace Albany {
     //! Helper function for constructResponses and getStdResponseFn
     Teuchos::RCP<Teuchos::ParameterList> setupResponseFnForEvaluator(  
 		  Teuchos::ParameterList& responseList, int responseNumber,
-		  std::vector< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
+		  Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
 
  
     //! Accessor 

@@ -33,14 +33,14 @@ namespace LCM {
 
 template<typename EvalT, typename Traits>
 class Neohookean : public PHX::EvaluatorWithBaseImpl<Traits>,
-		    public PHX::EvaluatorDerived<EvalT, Traits>  {
+		   public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
   Neohookean(const Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
+			     PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
@@ -50,7 +50,7 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> lcg;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> F;
   PHX::MDField<ScalarT,Cell,QuadPoint> J;
   PHX::MDField<ScalarT,Cell,QuadPoint> elasticModulus;
   PHX::MDField<ScalarT,Cell,QuadPoint> poissonsRatio;

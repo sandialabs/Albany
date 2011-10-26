@@ -15,42 +15,10 @@
 \********************************************************************/
 
 
-#ifndef ALBANY_RECT2DSTKMESHSTRUCT_HPP
-#define ALBANY_RECT2DSTKMESHSTRUCT_HPP
+#include "PHAL_AlbanyTraits.hpp"
 
-#include "Albany_GenericSTKMeshStruct.hpp"
+#include "TimeDepBC.hpp"
+#include "TimeDepBC_Def.hpp"
 
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::TimeDepBC)
 
-namespace Albany {
-
-  class Rect2DSTKMeshStruct : public GenericSTKMeshStruct {
-
-    public: 
-
-    Rect2DSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const Teuchos::RCP<const Epetra_Comm>& comm);
-
-    ~Rect2DSTKMeshStruct() {};
-
-    void setFieldAndBulkData(
-                  const Teuchos::RCP<const Epetra_Comm>& comm,
-                  const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_,
-                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const unsigned int worksetSize);
-
-    private: 
-
-    Teuchos::RCP<const Teuchos::ParameterList>
-      getValidDiscretizationParameters() const;
-
-    bool periodic;
-    bool triangles; // Deaults to false, meaning quad elements
-
-    int nelem_x, nelem_y;
-    Teuchos::RCP<Epetra_Map> elem_map;
-  };
-
-}
-
-#endif
