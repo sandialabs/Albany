@@ -71,7 +71,7 @@ BiotCoefficient(Teuchos::ParameterList& p) :
     }
   }
   else {
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+	  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		       "Invalid Biot coefficient type " << type);
   } 
 
@@ -164,7 +164,7 @@ BiotCoefficient<EvalT,Traits>::getValue(const std::string &n)
     if (n == Albany::strint("Biot Coefficient KL Random Variable",i))
       return rv[i];
   }
-  TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		     std::endl <<
 		     "Error! Logic error in getting paramter " << n
 		     << " in BiotCoefficient::getValue()" << std::endl);

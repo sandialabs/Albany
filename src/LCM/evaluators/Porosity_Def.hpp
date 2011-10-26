@@ -73,7 +73,7 @@ Porosity(Teuchos::ParameterList& p) :
     }
   }
   else {
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+	  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		       "Invalid porosity type " << type);
   } 
 
@@ -179,7 +179,7 @@ Porosity<EvalT,Traits>::getValue(const std::string &n)
     if (n == Albany::strint("Porosity KL Random Variable",i))
       return rv[i];
   }
-  TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		     std::endl <<
 		     "Error! Logic error in getting parameter " << n
 		     << " in Porosity::getValue()" << std::endl);
