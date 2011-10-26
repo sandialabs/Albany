@@ -92,9 +92,11 @@ namespace QCAD {
     std::string mtrlDbFilename;
 
     //! Parameters for coupling to Schrodinger
-    bool bUseSchrodingerSource;
     int nEigenvectors;
-    bool bUsePredictorCorrector;     
+    bool bUseSchrodingerSource;
+    bool bUsePredictorCorrector;
+    bool bIncludeVxc; 
+         
   };
 
 }

@@ -47,7 +47,7 @@ PoissonSource(Teuchos::ParameterList& p) :
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
   valenceBand("Valence Band",
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-  approxQuantumEDensity("Approximate Quantum Electron Density",
+  approxQuanEDen("Approx Quantum EDensity",
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"))
 {
   // Material database
@@ -89,6 +89,7 @@ PoissonSource(Teuchos::ParameterList& p) :
   length_unit_in_m = p.get<double>("Length unit in m");
   bSchrodingerInQuantumRegions = p.get<bool>("Use Schrodinger source");
   bUsePredictorCorrector = p.get<bool>("Use predictor-corrector method");
+  bIncludeVxc = p.get<bool>("Include exchange-correlation potential"); 
 
   if(bSchrodingerInQuantumRegions) {
     std::string evecFieldRoot = p.get<string>("Eigenvector field name root");
@@ -152,7 +153,7 @@ PoissonSource(Teuchos::ParameterList& p) :
   this->addEvaluatedField(ionizedDopant);
   this->addEvaluatedField(conductionBand);
   this->addEvaluatedField(valenceBand);
-  this->addEvaluatedField(approxQuantumEDensity);
+  this->addEvaluatedField(approxQuanEDen);
   
   this->setName("Poisson Source"+PHX::TypeString<EvalT>::value);
 }
@@ -177,7 +178,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(ionizedDopant,fm);
   this->utils.setFieldData(conductionBand,fm);
   this->utils.setFieldData(valenceBand,fm);
-  this->utils.setFieldData(approxQuantumEDensity,fm);
+  this->utils.setFieldData(approxQuanEDen,fm);
 
   for (int k = 0; k < nEigenvectors; ++k) {
     this->utils.setFieldData(eigenvector_Re[k],fm);
@@ -306,10 +307,10 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
     double alpha = materialDB->getElementBlockParam<double>(workset.EBName,"Band Gap Alpha Coefficient");
     double beta = materialDB->getElementBlockParam<double>(workset.EBName,"Band Gap Beta Coefficient");
     
-    // constant prefactor in calculating Nc and Nv in [cm-3]
+    //! constant prefactor in calculating Nc and Nv in [cm-3]
     double NcvFactor = 2.0*pow((kbBoltz*eleQ*m0*Tref)/(2*pi*pow(hbar,2)),3./2.)*1e-6;
             // eleQ converts kbBoltz in [eV/K] to [J/K], 1e-6 converts [m-3] to [cm-3]
-    
+            
     //! strong temperature-dependent material parameters
     ScalarT Nc;  // conduction band effective DOS in [cm-3]
     ScalarT Nv;  // valence band effective DOS in [cm-3]
@@ -322,8 +323,15 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
     
     ScalarT kbT = kbBoltz*temperature;      // in [eV]
     ni = sqrt(Nc*Nv)*exp(-Eg/(2.0*kbT));    // in [cm-3]
+
+    //! parameters for computing exchange-correlation potential
+    double ml = materialDB->getElementBlockParam<double>(workset.EBName,"Longitudinal Electron Effective Mass");
+    double mt = materialDB->getElementBlockParam<double>(workset.EBName,"Transverse Electron Effective Mass");        
+    double invEffMass = (2.0/mt + 1.0/ml) / 3.0;
+    double averagedEffMass = 1.0 / invEffMass; 
+    double relPerm = materialDB->getElementBlockParam<double>(workset.EBName,"Permittivity");
     
-    // argument offset in calculating electron and hole density
+    //! argument offset in calculating electron and hole density
     ScalarT eArgOffset = (-qPhiRef+Chi)/kbT;
     ScalarT hArgOffset = (qPhiRef-Chi-Eg)/kbT;
     
@@ -439,10 +447,19 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
           holeDensity(cell, qp) = hDensity;
           electricPotential(cell, qp) = phi*V0;
           ionizedDopant(cell, qp) = ionN;
-          conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
-          valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
-          approxQuantumEDensity(cell,qp) = approxEDensity;
+          approxQuanEDen(cell,qp) = approxEDensity;
           artCBDensity(cell, qp) = ( eDensity > 1e-6 ? eDensity : -Nc*(this->*carrStat)( -(phi+eArgOffset) ));
+          
+          if (bIncludeVxc)  // include Vxc
+          {
+            ScalarT Vxc = computeVxcLDA(relPerm, averagedEffMass, approxEDensity);
+            conductionBand(cell, qp) = qPhiRef-Chi-phi*V0 +Vxc; // [eV]
+          }
+          else  // not include Vxc
+            conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
+          
+          valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
+          
         }
       }  // end of loop over cells
     }
@@ -478,7 +495,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
           ionizedDopant(cell, qp) = ionN;
           conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
           valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
-          approxQuantumEDensity(cell,qp) = 0.0; 
+          approxQuanEDen(cell,qp) = 0.0; 
           artCBDensity(cell, qp) = ( electronDensity(cell, qp) > 1e-6 ? electronDensity(cell, qp) 
 				     : -Nc*(this->*carrStat)( -(phi+eArgOffset) ));
 
@@ -505,6 +522,12 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
       fixedCharge  = materialParams[ materialDB->getElementBlockParam<string>(workset.EBName,"Charge Parameter Name") ];
     else fixedCharge = 0.0; 
 
+    //! parameters for computing exchange-correlation potential
+    double ml = materialDB->getElementBlockParam<double>(workset.EBName,"Longitudinal Electron Effective Mass");
+    double mt = materialDB->getElementBlockParam<double>(workset.EBName,"Transverse Electron Effective Mass");        
+    double invEffMass = (2.0/mt + 1.0/ml) / 3.0;
+    double averagedEffMass = 1.0 / invEffMass; 
+    double relPerm = materialDB->getElementBlockParam<double>(workset.EBName,"Permittivity");
 
     //! Schrodinger source for electrons
     if(bSchrodingerInQuantumRegions && 
@@ -548,11 +571,18 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
           holeDensity(cell, qp) = 0.0;           // no holes in an insulator
           electricPotential(cell, qp) = phi*V0;
           ionizedDopant(cell, qp) = 0.0;
-          conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
-          valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
-          approxQuantumEDensity(cell,qp) = approxEDensity;
+          approxQuanEDen(cell,qp) = approxEDensity;
           artCBDensity(cell, qp) = eDensity;
 
+          if (bIncludeVxc)  // include Vxc
+          {
+            ScalarT Vxc = computeVxcLDA(relPerm, averagedEffMass, approxEDensity);
+            conductionBand(cell, qp) = qPhiRef-Chi-phi*V0 +Vxc; // [eV]
+          }
+          else  // not include Vxc
+            conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
+          
+          valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
         }
       }  // end of loop over cells
     }
@@ -577,7 +607,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
           ionizedDopant(cell, qp) = 0.0;
           conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
           valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
-          approxQuantumEDensity(cell,qp) = 0.0;
+          approxQuanEDen(cell,qp) = 0.0;
           artCBDensity(cell, qp) = 0.0;
         }
       }
@@ -612,7 +642,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
         ionizedDopant(cell, qp) = 0.0;
         conductionBand(cell, qp) = qPhiRef-workFunc-phi*V0; // [eV]
         valenceBand(cell, qp) = conductionBand(cell,qp); // No band gap in metal
-        approxQuantumEDensity(cell,qp) = 0.0;
+        approxQuanEDen(cell,qp) = 0.0;
         artCBDensity(cell, qp) = 0.0;
       }
     }
@@ -664,7 +694,7 @@ evaluateFields_default(typename Traits::EvalData workset)
       ionizedDopant(cell, qp) = 0.0;
       conductionBand(cell, qp) = 0.0; 
       valenceBand(cell, qp) = 0.01; 
-      approxQuantumEDensity(cell,qp) = 0.0;
+      approxQuanEDen(cell,qp) = 0.0;
       artCBDensity(cell, qp) = 0.0;
     }
   }
@@ -755,7 +785,14 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
       // argument offset in calculating electron and hole density
       ScalarT eArgOffset = (-qPhiRef+Chi)/kbT;
       ScalarT hArgOffset = (qPhiRef-Chi-Eg)/kbT;
-    
+ 
+      //! parameters for computing exchange-correlation potential
+      double ml = materialDB->getMaterialParam<double>(matName,"Longitudinal Electron Effective Mass");
+      double mt = materialDB->getMaterialParam<double>(matName,"Transverse Electron Effective Mass");        
+      double invEffMass = (2.0/mt + 1.0/ml) / 3.0;
+      double averagedEffMass = 1.0 / invEffMass;
+      double relPerm = materialDB->getMaterialParam<double>(matName,"Permittivity");
+   
       //! function pointer to carrier statistics member function
       ScalarT (QCAD::PoissonSource<EvalT,Traits>::*carrStat) (const ScalarT);
     
@@ -806,6 +843,7 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
         if(bUsePredictorCorrector)
         {
           ScalarT prevPhi = prevPhiArray(cell,qp);
+          // std::cout << "cell = " << cell << ", qp = " << qp << ", prevPhi = " << prevPhi << std::endl;
             
           // compute the approximate quantum electron density using predictor-corrector method
           approxEDensity = eDensityForPoissonSchrond(workset, cell, qp, prevPhi, true);
@@ -818,6 +856,7 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
           
         // obtain the scaled potential
         const ScalarT& phi = potential(cell,qp);
+        // std::cout << "cell = " << cell << ", qp = " << qp << ", currPhi = " << phi << std::endl;
            
         // compute the hole density treated as classical
         ScalarT hDensity = Nv*(this->*carrStat)(-phi+hArgOffset); 
@@ -842,10 +881,21 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
         holeDensity(cell, qp) = hDensity;
         electricPotential(cell, qp) = phi*V0;
         ionizedDopant(cell, qp) = ionN;
-        conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
-        valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
-        approxQuantumEDensity(cell,qp) = approxEDensity;
+        approxQuanEDen(cell,qp) = approxEDensity;
         artCBDensity(cell, qp) = ( eDensity > 1e-6 ? eDensity : -Nc*(this->*carrStat)( -(phi+eArgOffset) ));
+        
+        if (bIncludeVxc)  // include Vxc
+        {
+          ScalarT Vxc = computeVxcLDA(relPerm, averagedEffMass, approxEDensity);
+          conductionBand(cell, qp) = qPhiRef-Chi-phi*V0 +Vxc; // [eV]
+        }
+        else  // not include Vxc
+          conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
+        
+        valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
+
+        //std::cout << "cell = " << cell << ", qp = " << qp << ", approxEDensity = " << approxEDensity << std::endl;
+        //std::cout << "cell = " << cell << ", qp = " << qp << ", exactEDensity = " << eDensity << std::endl;
         
       } // end of if (bSchrodingerInQuantumRegions) 
 
@@ -877,7 +927,7 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
         ionizedDopant(cell, qp) = ionN;
         conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
         valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
-        approxQuantumEDensity(cell,qp) = 0.0; 
+        approxQuanEDen(cell,qp) = 0.0; 
         artCBDensity(cell, qp) = ( electronDensity(cell, qp) > 1e-6 ? electronDensity(cell, qp) 
 				     : -Nc*(this->*carrStat)( -(phi+eArgOffset) ));
       }
@@ -891,7 +941,13 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
       const std::string matName = "SiliconDioxide" ;  
       double Eg = materialDB->getMaterialParam<double>(matName,"Band Gap",0.0);
       double Chi = materialDB->getMaterialParam<double>(matName,"Electron Affinity",0.0);
-      // std::cout << "Eg = " << Eg << ", Chi = " << Chi << std::endl;
+
+      //! parameters for computing exchange-correlation potential
+      double ml = materialDB->getMaterialParam<double>(matName,"Longitudinal Electron Effective Mass");
+      double mt = materialDB->getMaterialParam<double>(matName,"Transverse Electron Effective Mass");        
+      double invEffMass = (2.0/mt + 1.0/ml) / 3.0;
+      double averagedEffMass = 1.0 / invEffMass; 
+      double relPerm = materialDB->getMaterialParam<double>(matName,"Permittivity");
      
       ScalarT fixedCharge = 0.0; // [cm^-3]
       
@@ -905,6 +961,7 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
         if (bUsePredictorCorrector) 
         {
           ScalarT prevPhi = prevPhiArray(cell,qp);
+          // std::cout << "cell = " << cell << ", qp = " << qp << ", prevPhi = " << prevPhi << std::endl;
             
           // compute the approximate quantum electron density using predictor-corrector method
           approxEDensity = eDensityForPoissonSchrond(workset, cell, qp, prevPhi, true);
@@ -917,6 +974,7 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
 
         // obtain the scaled potential
         const ScalarT& phi = potential(cell,qp);
+        // std::cout << "cell = " << cell << ", qp = " << qp << ", currPhi = " << phi << std::endl;
 
         //(No other classical density in insulator)
               
@@ -931,10 +989,21 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
         holeDensity(cell, qp) = 0.0;           // no holes in an insulator
         electricPotential(cell, qp) = phi*V0;
         ionizedDopant(cell, qp) = 0.0;
-        conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
-        valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
-        approxQuantumEDensity(cell,qp) = approxEDensity;
+        approxQuanEDen(cell,qp) = approxEDensity;
         artCBDensity(cell, qp) = eDensity;
+
+        if (bIncludeVxc)  // include Vxc
+        {
+          ScalarT Vxc = computeVxcLDA(relPerm, averagedEffMass, approxEDensity);
+          conductionBand(cell, qp) = qPhiRef-Chi-phi*V0 +Vxc; // [eV]
+        }
+        else  // not include Vxc
+          conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
+        
+        valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
+
+        //std::cout << "cell = " << cell << ", qp = " << qp << ", approxEDensity = " << approxEDensity << std::endl;
+        //std::cout << "cell = " << cell << ", qp = " << qp << ", exactEDensity = " << eDensity << std::endl;
 
       }
     
@@ -954,7 +1023,7 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
         ionizedDopant(cell, qp) = 0.0;
         conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
         valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
-        approxQuantumEDensity(cell,qp) = 0.0;
+        approxQuanEDen(cell,qp) = 0.0;
         artCBDensity(cell, qp) = 0.0;
       }
      
@@ -1276,6 +1345,43 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrond
   }  // end of switch (numDims) 
 
   return eDensity; 
+}
+
+
+// *****************************************************************************
+template<typename EvalT, typename Traits>
+typename QCAD::PoissonSource<EvalT,Traits>::ScalarT
+QCAD::PoissonSource<EvalT,Traits>::computeVxcLDA (const double & relPerm, 
+      const double & effMass, const ScalarT& eDensity)
+{
+  // Compute the exchange-correlation potential energy within the Local Density
+  // Approximation. Use the parameterized expression from: 
+  // [1] L. Hedin and B. I. Lundqvist, J. Phys. C 4, 2064 (1971);
+  // [2] F. Stern and S. Das Sarma, Phys. Rev. B 30, 840 (1984);
+  // [3] Dragical Vasileska, "Solving the Effective Mass Schrodinger Equation 
+  // in State-of-the-Art Devices", http://nanohub.org. 
+  
+  // first 100.0 converts eps0 from [C/(V.cm)] to [C/(V.m)],
+  // second 100.0 converts b from [m] to [cm]. 
+  ScalarT b = (eps0*100.0)*hbar*hbar / (m0*eleQ*eleQ) * 100.0;  // [cm]
+  b = b * (4.0*pi*relPerm/effMass); 
+  
+  double eVPerJ = 1.0/eleQ; 
+  ScalarT Ry = eleQ*eleQ / (eps0*b) * eVPerJ / (8.*pi*relPerm);  // [eV]
+  
+  double alpha = pow(4.0/9.0/pi, 1./3.);
+  ScalarT Vxc; 
+  
+  if (eDensity <= 1.0) 
+    Vxc = 0.0; 
+  else
+  {
+    ScalarT rs = pow(4.0*pi*eDensity*pow(b,3.0)/3.0, -1./3.);  // [unitless]
+    ScalarT x = rs / 21.0; 
+    Vxc = -2.0/(pi*alpha*rs) * Ry * (1.0+ 0.7734*x*log(1.+1.0/x)); // [eV]
+  }
+  
+  return Vxc; 
 }
 
 
