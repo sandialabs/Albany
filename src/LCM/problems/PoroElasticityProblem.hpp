@@ -141,6 +141,7 @@ namespace Albany {
 #include "Albany_ResponseUtilities.hpp"
 #include "Albany_EvaluatorUtils.hpp"
 
+#include "Time.hpp"
 #include "Strain.hpp"
 #include "PHAL_SaveStateField.hpp"
 #include "Porosity.hpp"
@@ -154,6 +155,7 @@ namespace Albany {
 #include "PoroElasticityResidMomentum.hpp"
 #include "PHAL_Source.hpp"
 #include "PoroElasticityResidMass.hpp"
+
 
 template <typename EvalT>
 void Albany::PoroElasticityProblem::constructEvaluators(
@@ -253,6 +255,23 @@ void Albany::PoroElasticityProblem::constructEvaluators(
 
    // Temporary variable used numerous times below
    Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
+
+   { // Time
+     RCP<ParameterList> p = rcp(new ParameterList);
+
+     p->set<string>("Time Name", "Time");
+     p->set<string>("Delta Time Name", " Delta Time");
+     p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
+     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+     p->set<bool>("Disable Transient", true);
+
+     ev = rcp(new LCM::Time<EvalT,AlbanyTraits>(*p));
+     fm0.template registerEvaluator<EvalT>(ev);
+     p = stateMgr.registerStateVariable("Time",dl->workset_scalar, dl->dummy,"zero", true);
+     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+     fm0.template registerEvaluator<EvalT>(ev);
+   }
+
 
    { // Strain
      RCP<ParameterList> p = rcp(new ParameterList("Strain"));
@@ -478,6 +497,9 @@ void Albany::PoroElasticityProblem::constructEvaluators(
     p = stateMgr.registerStateVariable("Total Stress",dl->qp_tensor, dl->dummy,"zero");
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+    p = stateMgr.registerStateVariable("Pore Pressure",dl->qp_scalar, dl->dummy,"zero", true);
+	ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+	fm0.template registerEvaluator<EvalT>(ev);
 
   }
 
@@ -534,7 +556,7 @@ void Albany::PoroElasticityProblem::constructEvaluators(
     p->set<string>("Weighted BF Name", "wBF");
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
 
-    p->set<string>("QP Pore Pressure Name", "Pore Pressure"); // NOTE: QP and nodal vaue shares same name
+    p->set<string>("QP Pore Pressure Name", "Pore Pressure");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<string>("QP Time Derivative Variable Name", "Pore Pressure");
@@ -568,13 +590,15 @@ void Albany::PoroElasticityProblem::constructEvaluators(
 
     p->set<string>("Weights Name","Weights");
 
+    p->set<string>("Delta Time Name", " Delta Time");
+    p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
+
     //Output
     p->set<string>("Residual Name", "Pore Pressure Residual");
     p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
 
     ev = rcp(new LCM::PoroElasticityResidMass<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-
   }
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {

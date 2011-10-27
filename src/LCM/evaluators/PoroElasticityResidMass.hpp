@@ -74,8 +74,12 @@ private:
   Teuchos::RCP<shards::CellTopology> cellType;
   PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
 
+  // Time
+  PHX::MDField<ScalarT,Dummy> deltaTime;
+
   //Data from previous time step
   std::string strainName, porePressureName, porosityName;
+
 
 
   bool haveSource;
@@ -90,6 +94,7 @@ private:
 
   // Temporary FieldContainers
   Intrepid::FieldContainer<ScalarT> flux;
+  Intrepid::FieldContainer<ScalarT> fluxdt;
   Intrepid::FieldContainer<ScalarT> pterm;
   Intrepid::FieldContainer<ScalarT> aterm;
   // Temporary FieldContainers
