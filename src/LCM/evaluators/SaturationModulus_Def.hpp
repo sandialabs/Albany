@@ -71,8 +71,8 @@ SaturationModulus(Teuchos::ParameterList& p) :
     }
   }
   else {
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-		       "Invalid saturation modulus type " << type);
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+			       "Invalid saturation modulus type " << type);
   } 
 
   this->addEvaluatedField(satMod);
@@ -126,10 +126,10 @@ SaturationModulus<EvalT,Traits>::getValue(const std::string &n)
     if (n == Albany::strint("Saturation Modulus KL Random Variable",i))
       return rv[i];
   }
-  TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-		     std::endl <<
-		     "Error! Logic error in getting paramter " << n
-		     << " in SaturationModulus::getValue()" << std::endl);
+  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+			     std::endl <<
+			     "Error! Logic error in getting paramter " << n
+			     << " in SaturationModulus::getValue()" << std::endl);
   return constant_value;
 }
 

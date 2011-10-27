@@ -32,14 +32,14 @@ namespace LCM {
 
 template<typename EvalT, typename Traits>
 class Strain : public PHX::EvaluatorWithBaseImpl<Traits>,
-		    public PHX::EvaluatorDerived<EvalT, Traits>  {
+	       public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
   Strain(const Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
+			     PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 

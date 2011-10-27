@@ -491,10 +491,10 @@ cout << "RRR3  requiring " << responseID << endl;
      }
 
      else {
-       TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-	  std::endl << "Error!  Unknown response function " << name <<
-           "!" << std::endl << "Supplied parameter list is " <<
-           std::endl << responseList);
+       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+				  std::endl << "Error!  Unknown response function " << name <<
+				  "!" << std::endl << "Supplied parameter list is " <<
+				  std::endl << responseList);
      }
    } // end of loop over responses
 

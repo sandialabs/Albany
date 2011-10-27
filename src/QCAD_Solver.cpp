@@ -133,9 +133,9 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
     subSolvers["Schrodinger"] = CreateSubSolver(inputFilenames["Schrodinger"], "none", *comm);
   }
 
-  else TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-                     std::endl << "Error in QCAD::Solver constructor:  " <<
-                     "Invalid problem name " << problemName << std::endl);
+  else TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+				  std::endl << "Error in QCAD::Solver constructor:  " <<
+				  "Invalid problem name " << problemName << std::endl);
 
 
   //Setup Parameter and responses maps
@@ -164,7 +164,7 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   // Create Epetra map for solution vector (second response vector).  Assume 
   //  each subSolver has the same map, so just get the first one.
   Teuchos::RCP<const Epetra_Map> sub_x_map = (subSolvers.begin()->second).app->getMap();
-  TEST_FOR_EXCEPT( sub_x_map == Teuchos::null );
+  TEUCHOS_TEST_FOR_EXCEPT( sub_x_map == Teuchos::null );
   epetra_x_map = Teuchos::rcp(new Epetra_Map( *sub_x_map ));
 }
 
@@ -187,7 +187,7 @@ Teuchos::RCP<const Epetra_Map> QCAD::Solver::get_f_map() const
 
 Teuchos::RCP<const Epetra_Map> QCAD::Solver::get_p_map(int l) const
 {
-  TEST_FOR_EXCEPTION(l >= num_p || l < 0, Teuchos::Exceptions::InvalidParameter,
+  TEUCHOS_TEST_FOR_EXCEPTION(l >= num_p || l < 0, Teuchos::Exceptions::InvalidParameter,
                      std::endl <<
                      "Error in QCAD::Solver::get_p_map():  " <<
                      "Invalid parameter index l = " <<
@@ -198,7 +198,7 @@ Teuchos::RCP<const Epetra_Map> QCAD::Solver::get_p_map(int l) const
 
 Teuchos::RCP<const Epetra_Map> QCAD::Solver::get_g_map(int j) const
 {
-  TEST_FOR_EXCEPTION(j > num_g || j < 0, Teuchos::Exceptions::InvalidParameter,
+  TEUCHOS_TEST_FOR_EXCEPTION(j > num_g || j < 0, Teuchos::Exceptions::InvalidParameter,
                      std::endl <<
                      "Error in QCAD::Solver::get_g_map():  " <<
                      "Invalid response index j = " <<
@@ -217,7 +217,7 @@ Teuchos::RCP<const Epetra_Vector> QCAD::Solver::get_x_init() const
 
 Teuchos::RCP<const Epetra_Vector> QCAD::Solver::get_p_init(int l) const
 {
-  TEST_FOR_EXCEPTION(l >= num_p || l < 0, Teuchos::Exceptions::InvalidParameter,
+  TEUCHOS_TEST_FOR_EXCEPTION(l >= num_p || l < 0, Teuchos::Exceptions::InvalidParameter,
                      std::endl <<
                      "Error in QCAD::Solver::get_p_init():  " <<
                      "Invalid parameter index l = " <<
@@ -535,10 +535,10 @@ void QCAD::SolverParamFn::fillSubSolverParams(double parameterValue,
     //perform function operation
     std::string fnName = (*fit)[0];
     if( fnName == "scale" ) {
-      TEST_FOR_EXCEPT( fit->size() != 1+1 ); // "scale" should have 1 parameter
+      TEUCHOS_TEST_FOR_EXCEPT( fit->size() != 1+1 ); // "scale" should have 1 parameter
       parameterValue *= atof( (*fit)[1].c_str() );
     }
-    else TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+    else TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 	      "Unknown function " << (*fit)[0] << " for given type." << std::endl);
   }
 
@@ -563,7 +563,7 @@ getInitialParam(const std::map<std::string, QCAD::SolverSubSolver>& subSolvers) 
   Teuchos::RCP<const Epetra_Vector> p_init = 
     (subSolvers.find(targetName)->second).model->get_p_init(0); //only one p vector used
 
-  TEST_FOR_EXCEPT(targetIndices.size() == 0);
+  TEUCHOS_TEST_FOR_EXCEPT(targetIndices.size() == 0);
   initVal = (*p_init)[ targetIndices[0] ];
 
   std::vector< std::vector<std::string> >::const_iterator fit;
@@ -572,10 +572,10 @@ getInitialParam(const std::map<std::string, QCAD::SolverSubSolver>& subSolvers) 
     //perform INVERSE function operation to back out initial value
     std::string fnName = (*fit)[0];
     if( fnName == "scale" ) {
-      TEST_FOR_EXCEPT( fit->size() != 1+1 ); // "scale" should have 1 parameter
+      TEUCHOS_TEST_FOR_EXCEPT( fit->size() != 1+1 ); // "scale" should have 1 parameter
       initVal /= atof( (*fit)[1].c_str() );
     }
-    else TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+    else TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 	      "Unknown function " << (*fit)[0] << " for given type." << std::endl);
   }
 
@@ -639,25 +639,25 @@ QCAD::SolverResponseFn::SolverResponseFn(const std::string& fnString,
 
   // validate: check number of params and set numDoubles
   if( fnName == "min" || fnName == "max") {
-    TEST_FOR_EXCEPT(nParams != 2);
+    TEUCHOS_TEST_FOR_EXCEPT(nParams != 2);
     numDoubles = 1;
   }
   else if( fnName == "dist") {
-    TEST_FOR_EXCEPT( !(nParams == 2 || nParams == 4 || nParams == 6));
+    TEUCHOS_TEST_FOR_EXCEPT( !(nParams == 2 || nParams == 4 || nParams == 6));
     numDoubles = 1;
   }
   else if( fnName == "scale") {
-    TEST_FOR_EXCEPT(nParams != 2);
+    TEUCHOS_TEST_FOR_EXCEPT(nParams != 2);
     numDoubles = 1;
   }
   else if( fnName == "divide") {
-    TEST_FOR_EXCEPT(nParams != 2);
+    TEUCHOS_TEST_FOR_EXCEPT(nParams != 2);
     numDoubles = 1;
   }
   else if( fnName == "nop") {
     numDoubles = nParams; 
   }
-  else TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+  else TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
      "Unknown function " << fnName << " for QCAD solver response." << std::endl);
 
 }
@@ -723,7 +723,7 @@ void QCAD::SolverResponseFn::fillSolverResponses(Epetra_Vector& g, int offset,
       g[offset+i] = pvals[i];
   }
 
-  else TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+  else TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 			  "Unknown function " << fnName << " for QCAD solver response." << std::endl);
 }
 
@@ -824,7 +824,7 @@ void preprocessParams(Teuchos::ParameterList& params, std::string preprocessType
       std::string exoName= "init" + params.sublist("Discretization").get<std::string>("1D Output File Name");
       params.sublist("Discretization").set("1D Output File Name", exoName);
     }
-    else TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+    else TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 			  "Unknown function Discretization Parameter" << std::endl);
   }
 
@@ -899,7 +899,7 @@ void CopyStateToContainer(Albany::StateArrays& src,
   for (int ws = 0; ws < numWorksets; ws++)
   {
     src[ws][stateNameToCopy].dimensions(dims);
-    TEST_FOR_EXCEPT( dims.size() != 2 );
+    TEUCHOS_TEST_FOR_EXCEPT( dims.size() != 2 );
     
     for(int cell=0; cell < dims[0]; cell++)
       for(int qp=0; qp < dims[1]; qp++)
@@ -919,7 +919,7 @@ void CopyContainerToState(std::vector<Intrepid::FieldContainer<RealType> >& src,
   for (int ws = 0; ws < numWorksets; ws++)
   {
     dest[ws][stateNameOfCopy].dimensions(dims);
-    TEST_FOR_EXCEPT( dims.size() != 2 );
+    TEUCHOS_TEST_FOR_EXCEPT( dims.size() != 2 );
     
     for(int cell=0; cell < dims[0]; cell++)
       for(int qp=0; qp < dims[1]; qp++)
@@ -951,7 +951,7 @@ void AddStateToState(Albany::StateArrays& src,
 		     std::string destStateNameToAddTo)
 {
   int totalSize, numWorksets = src.size();
-  TEST_FOR_EXCEPT( numWorksets != (int)dest.size() );
+  TEUCHOS_TEST_FOR_EXCEPT( numWorksets != (int)dest.size() );
 
   for (int ws = 0; ws < numWorksets; ws++)
   {
@@ -969,7 +969,7 @@ void SubtractStateFromState(Albany::StateArrays& src,
 			    std::string destStateNameToSubtractFrom)
 {
   int totalSize, numWorksets = src.size();
-  TEST_FOR_EXCEPT( numWorksets != (int)dest.size() );
+  TEUCHOS_TEST_FOR_EXCEPT( numWorksets != (int)dest.size() );
 
   for (int ws = 0; ws < numWorksets; ws++)
   {
@@ -988,12 +988,12 @@ bool checkConvergence(Albany::StateArrays& states,
   int numWorksets = states.size();
   std::vector<int> dims;
 
-  TEST_FOR_EXCEPT( ! (numWorksets == (int)prevState.size()) );
+  TEUCHOS_TEST_FOR_EXCEPT( ! (numWorksets == (int)prevState.size()) );
 
   for (int ws = 0; ws < numWorksets; ws++)
   {
     states[ws][stateName].dimensions(dims);
-    TEST_FOR_EXCEPT( dims.size() != 2 );
+    TEUCHOS_TEST_FOR_EXCEPT( dims.size() != 2 );
     
     for(int cell=0; cell < dims[0]; cell++) 
     {
@@ -1017,7 +1017,7 @@ void ResetEigensolverShift(const Teuchos::RCP<EpetraExt::ModelEvaluator>& Solver
 			   Teuchos::RCP<Teuchos::ParameterList>& eigList) 
 {
   Teuchos::RCP<Piro::Epetra::LOCASolver> pels = Teuchos::rcp_dynamic_cast<Piro::Epetra::LOCASolver>(Solver);
-  TEST_FOR_EXCEPT(pels == Teuchos::null);
+  TEUCHOS_TEST_FOR_EXCEPT(pels == Teuchos::null);
 
   Teuchos::RCP<LOCA::Stepper> stepper =  pels->getLOCAStepperNonConst();
   const Teuchos::ParameterList& oldEigList = stepper->getList()->sublist("LOCA").sublist(
@@ -1049,7 +1049,7 @@ double GetEigensolverShift(Albany::StateArrays& states,
     states[ws][name].dimensions(dims);
     
     int size = dims.size();
-    TEST_FOR_EXCEPTION(size != 2, std::logic_error, "Unimplemented number of dimensions");
+    TEUCHOS_TEST_FOR_EXCEPTION(size != 2, std::logic_error, "Unimplemented number of dimensions");
     int cells = dims[0];
     int qps = dims[1];
 
@@ -1119,7 +1119,7 @@ std::vector<std::string> string_parse_function(const std::string& s)
   lastCloseParen = s.find_last_of(')');
 
   if(firstOpenParen == string::npos || lastCloseParen == string::npos) {
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		       "Malformed function string: " << s << std::endl);
   }
 
@@ -1141,7 +1141,7 @@ std::map<std::string,std::string> string_parse_arrayref(const std::string& s)
   lastCloseBracket = s.find_last_of(']');
 
   if(firstOpenBracket == string::npos || lastCloseBracket == string::npos) {
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		       "Malformed array string: " << s << std::endl);
   }
 
@@ -1169,7 +1169,7 @@ std::vector<int> string_expand_compoundindex(const std::string& indexStr, int mi
       if(endpts[1] != "") b = atoi(endpts[1].c_str());
       for(int i=a; i<b; i++) ret.push_back(i);
     }
-    else TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+    else TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		       "Malformed array index: " << indexStr << std::endl);
   }
   return ret;

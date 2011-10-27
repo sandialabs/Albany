@@ -448,27 +448,23 @@ void Albany::PoroElasticityProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-
-
-//  if (haveSource) { // Source
- //   TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
- //                      "Error!  Sources not implemented in Elasticity yet!");
-//
+  //  if (haveSource) { // Source
+  //   TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+  //                      "Error!  Sources not implemented in Elasticity yet!");
+  //
   //  RCP<ParameterList> p = rcp(new ParameterList);
-//
+  //
   //  p->set<string>("Source Name", "Source");
- //   p->set<string>("Variable Name", "Displacement");
- //   p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-//
- //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
- //   Teuchos::ParameterList& paramList = params->sublist("Source Functions");
- //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-//
- //   ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p));
- //   fm0.template registerEvaluator<EvalT>(ev);
-//  }
-
-
+  //   p->set<string>("Variable Name", "Displacement");
+  //   p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+  //
+  //   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+  //   Teuchos::ParameterList& paramList = params->sublist("Source Functions");
+  //   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+  //
+  //   ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p));
+  //   fm0.template registerEvaluator<EvalT>(ev);
+  //  }
 
   { // Total Stress
     RCP<ParameterList> p = rcp(new ParameterList("Total Stress"));

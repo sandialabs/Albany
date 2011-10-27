@@ -67,10 +67,11 @@ private:
   //! Constant value
   ScalarT constant_value;
 
-  //! Optional dependence on Temperature (E = E_const + dYdT * T)
+  //! Optional dependence on Temperature (Y = Y_const + dYdT * DT)
   PHX::MDField<ScalarT,Cell,QuadPoint> Temperature;
   bool isThermoElastic;
   ScalarT dYdT_value;
+  RealType refTemp;
 
   //! Exponential random field
   Teuchos::RCP< Stokhos::KL::ExponentialRandomField<MeshScalarT> > exp_rf_kl;

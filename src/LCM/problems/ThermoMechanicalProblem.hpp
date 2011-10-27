@@ -141,6 +141,8 @@ namespace Albany {
 
 #include "ShearModulus.hpp"
 #include "BulkModulus.hpp"
+#include "YieldStrength.hpp"
+#include "HardeningModulus.hpp"
 #include "PHAL_Source.hpp"
 #include "DefGrad.hpp"
 #include "ThermoMechanicalStress.hpp"
@@ -151,7 +153,6 @@ namespace Albany {
 #include "PHAL_Source.hpp"
 #include "PHAL_HeatEqResid.hpp"
 #include "Time.hpp"
-
 
 template <typename EvalT>
 void Albany::ThermoMechanicalProblem::constructEvaluators(
@@ -254,7 +255,7 @@ void Albany::ThermoMechanicalProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList);
     
     p->set<string>("Time Name", "Time");
-    p->set<string>("Delta Time Name", " Delta Time");
+    p->set<string>("Delta Time Name", "Delta Time");
     p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     p->set<bool>("Disable Transient", true);
@@ -279,7 +280,7 @@ void Albany::ThermoMechanicalProblem::constructEvaluators(
     Teuchos::ParameterList& paramList = params->sublist("Shear Modulus");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-    // Setting this turns on linear dependence of mu on T, mu = mu_ + dmudT*T)
+    // Setting this turns on linear dependence of mu on T, mu = mu + dmudT*(T - Tref)
     p->set<string>("QP Temperature Name", "Temperature");
     RealType refTemp = params->get("Reference Temperature", 0.0);
     p->set<RealType>("Reference Temperature", refTemp);
@@ -301,7 +302,7 @@ void Albany::ThermoMechanicalProblem::constructEvaluators(
     Teuchos::ParameterList& paramList = params->sublist("Bulk Modulus");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-    // Setting this turns on linear dependence of K on T, nu = nu_ + dnudT*T)
+    // Setting this turns on linear dependence of K on T, K = K + dKdT*(T - Tref)
     p->set<string>("QP Temperature Name", "Temperature");
     RealType refTemp = params->get("Reference Temperature", 0.0);
     p->set<RealType>("Reference Temperature", refTemp);
@@ -310,8 +311,52 @@ void Albany::ThermoMechanicalProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+  { // Yield Strength
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    p->set<string>("QP Variable Name", "Yield Strength");
+    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Yield Strength");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    // Setting this turns on linear dependence of Y on T, Y = Y + dYdT*(T - Tref)
+    p->set<string>("QP Temperature Name", "Temperature");
+    RealType refTemp = params->get("Reference Temperature", 0.0);
+    p->set<RealType>("Reference Temperature", refTemp);
+
+    ev = rcp(new LCM::YieldStrength<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  { // Hardening Modulus
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    p->set<string>("QP Variable Name", "Hardening Modulus");
+    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Hardening Modulus");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    // Setting this turns on linear dependence of H on T, H = H + dHdT*(T - Tref)
+    p->set<string>("QP Temperature Name", "Temperature");
+    RealType refTemp = params->get("Reference Temperature", 0.0);
+    p->set<RealType>("Reference Temperature", refTemp);
+
+    ev = rcp(new LCM::HardeningModulus<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
   if (haveSource) { // Source
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                        "Error!  Sources not implemented in Mechanical yet!");
 
     RCP<ParameterList> p = rcp(new ParameterList);
@@ -370,8 +415,13 @@ void Albany::ThermoMechanicalProblem::constructEvaluators(
     RealType coeff = params->get("Thermal Expansion Coefficient", 0.0);
     p->set<RealType>("Thermal Expansion Coefficient", coeff);
 
+    p->set<string>("Delta Time Name", "Delta Time");
+    p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
+
     //Output
     p->set<string>("Stress Name", "Stress"); //dl->qp_tensor also
+    p->set<string>("Fp Name", "Fp");
+    p->set<string>("eqps Name", "eqps");
 
     ev = rcp(new LCM::ThermoMechanicalStress<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);

@@ -206,7 +206,7 @@ QCAD::PoissonSource<EvalT,Traits>::getValue(const std::string &n)
 {
   if(n == "Poisson Source Factor") return factor;
   else if( materialParams.find(n) != materialParams.end() ) return materialParams[n];
-  else TEST_FOR_EXCEPT(true); return factor; //dummy so all control paths return
+  else TEUCHOS_TEST_FOR_EXCEPT(true); return factor; //dummy so all control paths return
 }
 
 // **********************************************************************
@@ -283,7 +283,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
       qPhiRef = workFn;
     }
     else {
-      TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
 			  << "Error!  Invalid category " << category 
 			  << " for reference material !" << std::endl);
     }
@@ -347,7 +347,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
     else if (carrierStatistics == "0-K Fermi-Dirac Statistics")
       carrStat = &QCAD::PoissonSource<EvalT,Traits>::computeZeroKFDInt;
 
-    else TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
+    else TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
         std::endl << "Error!  Unknown carrier statistics ! " << std::endl);
 
     //! function pointer to ionized dopants member function
@@ -359,7 +359,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
     else if (incompIonization == "True")
       ionDopant = &QCAD::PoissonSource<EvalT,Traits>::ionizedDopants;
     
-    else TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
+    else TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
         std::endl << "Error!  Invalid incomplete ionization option ! " << std::endl);
 
 
@@ -378,14 +378,14 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
         dopingConc = materialDB->getElementBlockParam<double>(workset.EBName,"Doping Value");
       else if( materialDB->isElementBlockParam(workset.EBName, "Doping Parameter Name") ) 
         dopingConc = materialParams[ materialDB->getElementBlockParam<string>(workset.EBName,"Doping Parameter Name") ];
-      else TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
+      else TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
         std::endl << "Error!  Unknown dopant concentration for " << workset.EBName << "!"<< std::endl);
 
       if(dopantType == "Donor") 
         inArg = eArgOffset + dopantActE/kbT;
       else if(dopantType == "Acceptor") 
         inArg = hArgOffset + dopantActE/kbT;
-      else TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
+      else TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
 	       std::endl << "Error!  Unknown dopant type " << dopantType << "!"<< std::endl);
     }
     else {
@@ -651,7 +651,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
   //! invalid material category
   else
   {
-    TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
 			std::endl << "Error!  Unknown material category " 
 			<< matrlCategory << "!" << std::endl);
   }  
@@ -680,7 +680,7 @@ evaluateFields_default(typename Traits::EvalData workset)
         charge *= (1.0 + exp(-phi));
         chargeDensity(cell, qp) = charge;
         break;
-      default: TEST_FOR_EXCEPT(true);
+      default: TEUCHOS_TEST_FOR_EXCEPT(true);
       }
 
       // do not scale the default device since the DBC is not scaled
@@ -736,7 +736,7 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
     }
     else 
     {
-      TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
 			  << "Error!  Invalid category " << category 
 			  << " for reference material !" << std::endl);
     }
@@ -805,7 +805,7 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
       else if (carrierStatistics == "0-K Fermi-Dirac Statistics")
         carrStat = &QCAD::PoissonSource<EvalT,Traits>::computeZeroKFDInt;
 
-      else TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
+      else TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
         std::endl << "Error!  Unknown carrier statistics ! " << std::endl);
 
       //! function pointer to ionized dopants member function
@@ -817,7 +817,7 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
       else if (incompIonization == "True")
         ionDopant = &QCAD::PoissonSource<EvalT,Traits>::ionizedDopants;
     
-      else TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
+      else TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
         std::endl << "Error!  Invalid incomplete ionization option ! " << std::endl);
 
       //! get doping concentration and activation energy
@@ -830,7 +830,7 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
         inArg = eArgOffset + dopantActE/kbT;
       else if(dopantType == "Acceptor") 
         inArg = hArgOffset + dopantActE/kbT;
-      else TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
+      else TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
 	       std::endl << "Error!  Unknown dopant type " << dopantType << "!"<< std::endl);
 
       //! Schrodinger source for electrons
@@ -1030,7 +1030,7 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
      } // end of else if ((coord[0] >= 0) ...)
      
      else 
-      TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
+      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
 	       std::endl << "Error!  x-coord:" << coord[0] << "is outside the oxideWidth" << 
 	       " + siliconWidth range: " << oxideWidth + siliconWidth << "!"<< std::endl);
 
@@ -1105,7 +1105,7 @@ QCAD::PoissonSource<EvalT,Traits>::fullDopants(const std::string dopType, const 
   else
   {
     ionDopants = 0.0;
-    TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
        std::endl << "Error!  Unknown dopant type " << dopType << "!"<< std::endl);
   }
 
@@ -1129,7 +1129,7 @@ QCAD::PoissonSource<EvalT,Traits>::ionizedDopants(const std::string dopType, con
   else
   {
     ionDopants = 0.0;
-    TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
        std::endl << "Error!  Unknown dopant type " << dopType << "!"<< std::endl);
   }
    
@@ -1338,7 +1338,7 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrond
     }  // end of case 3 block 
       
     default:
-      TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
+      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
         std::endl << "Error!  Invalid number of dimensions " << numDims << "!"<< std::endl);
       break; 
       
@@ -1397,7 +1397,7 @@ QCAD::PoissonSource<EvalT,Traits>::ReadEigenvaluesFromFile(int numberToRead)
   //Open eigenvalue filename and read into eigenvals vector
   std::ifstream evalData;
   evalData.open(eigenValueFilename.c_str());
-  TEST_FOR_EXCEPTION(!evalData.is_open(), Teuchos::Exceptions::InvalidParameter,
+  TEUCHOS_TEST_FOR_EXCEPTION(!evalData.is_open(), Teuchos::Exceptions::InvalidParameter,
 		     std::endl << "Error! Cannot open eigenvalue filename  " 
 		     << eigenValueFilename << std::endl);
 

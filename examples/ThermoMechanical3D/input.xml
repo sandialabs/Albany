@@ -8,7 +8,7 @@
       <ParameterList name="Time Dependent DBC on NS NodeSet1 for DOF X">
         <Parameter name="Number of points" type="int" value="3"/>
         <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 0.5, 1.0 }"/>
-        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0.5, 1.0 }"/>
+        <Parameter name="BC Values" type="Array(double)"   value="{ 0.0, 0.5, 1.0 }"/>
       </ParameterList>
       <Parameter name="DBC on NS NodeSet2 for DOF Y" type="double" value="0.0"/>
       <Parameter name="DBC on NS NodeSet5 for DOF Z" type="double" value="0.0"/>

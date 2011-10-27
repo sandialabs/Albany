@@ -144,7 +144,7 @@ evaluateFields(typename Traits::EvalData workset)
   /***** otherwise error? ******/
   else 
   {
-    TEST_FOR_EXCEPT(true);
+    TEUCHOS_TEST_FOR_EXCEPT(true);
   }
 }
 
@@ -155,7 +155,7 @@ QCAD::SchrodingerPotential<EvalT,Traits>::getValue(const std::string &n)
 {
   if(n == "Schrodinger Potential Scaling Factor") return scalingFactor;
   else if(n == "Schrodinger Potential E0") return E0;
-  else TEST_FOR_EXCEPT(true); return E0; //dummy so all control paths return
+  else TEUCHOS_TEST_FOR_EXCEPT(true); return E0; //dummy so all control paths return
 }
 
 // **********************************************************************
@@ -240,7 +240,7 @@ QCAD::SchrodingerPotential<EvalT,Traits>::finiteWallPotential(
       else if ( (coord[0] > (barrWidth+wellWidth)) && (coord[0] <= (2*barrWidth+wellWidth)) )
         val = E0;  // barrier
       else 
-        TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+        TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
 			    << "Error! x coordinate is outside [0, 2*barrWidth+wellWidth] range,"
 			    << " make sure 1D Scale in Discretization equal to 2*barrWidth+wellWidth !" << std::endl);
       break;
@@ -269,7 +269,7 @@ QCAD::SchrodingerPotential<EvalT,Traits>::finiteWallPotential(
     
     default: 
     {
-      TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
 			  << "Error! Invalid numDim = " << numDim << ", must be 1 or 2 or 3 !" << std::endl);
 			break;  
     }

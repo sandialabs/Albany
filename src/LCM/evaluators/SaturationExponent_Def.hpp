@@ -71,8 +71,8 @@ SaturationExponent(Teuchos::ParameterList& p) :
     }
   }
   else {
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-		       "Invalid saturation exponent type " << type);
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+			       "Invalid saturation exponent type " << type);
   } 
 
   this->addEvaluatedField(satExp);
@@ -126,10 +126,10 @@ SaturationExponent<EvalT,Traits>::getValue(const std::string &n)
     if (n == Albany::strint("Saturation Exponent KL Random Variable",i))
       return rv[i];
   }
-  TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-		     std::endl <<
-		     "Error! Logic error in getting paramter " << n
-		     << " in SaturationExponent::getValue()" << std::endl);
+  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+			     std::endl <<
+			     "Error! Logic error in getting paramter " << n
+			     << " in SaturationExponent::getValue()" << std::endl);
   return constant_value;
 }
 

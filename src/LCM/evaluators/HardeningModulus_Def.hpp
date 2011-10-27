@@ -71,13 +71,12 @@ HardeningModulus(Teuchos::ParameterList& p) :
     }
   }
   else {
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-		       "Invalid hardening modulus type " << type);
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+			       "Invalid hardening modulus type " << type);
   } 
 
-  // Optional dependence on Temperature (E = E_ + dHdT * T)
+  // Optional dependence on Temperature
   // Switched ON by sending Temperature field in p
-
   if ( p.isType<string>("QP Temperature Name") ) {
     Teuchos::RCP<PHX::DataLayout> scalar_dl =
       p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
@@ -87,8 +86,8 @@ HardeningModulus(Teuchos::ParameterList& p) :
     this->addDependentField(Temperature);
     isThermoElastic = true;
     dHdT_value = elmd_list->get("dHdT Value", 0.0);
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-                                "dHdT Value", this, paramLib);
+    refTemp = p.get<RealType>("Reference Temperature", 0.0);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>("dHdT Value", this, paramLib);
   }
   else {
     isThermoElastic=false;
@@ -138,7 +137,7 @@ evaluateFields(typename Traits::EvalData workset)
   if (isThermoElastic) {
     for (std::size_t cell=0; cell < numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-	hardeningModulus(cell,qp) += dHdT_value * Temperature(cell,qp);
+	hardeningModulus(cell,qp) += dHdT_value * (Temperature(cell,qp) - refTemp);
       }
     }
   }
@@ -157,10 +156,10 @@ HardeningModulus<EvalT,Traits>::getValue(const std::string &n)
     if (n == Albany::strint("Hardening Modulus KL Random Variable",i))
       return rv[i];
   }
-  TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-		     std::endl <<
-		     "Error! Logic error in getting paramter " << n
-		     << " in HardeningModulus::getValue()" << std::endl);
+  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+			     std::endl <<
+			     "Error! Logic error in getting paramter " << n
+			     << " in HardeningModulus::getValue()" << std::endl);
   return constant_value;
 }
 

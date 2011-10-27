@@ -269,8 +269,8 @@ void Albany::NonlinearElasticityProblem::constructEvaluators(
   }
 
   if (haveSource) { // Source
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-                       "Error!  Sources not implemented in Elasticity yet!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+			       "Error!  Sources not implemented in Elasticity yet!");
 
     RCP<ParameterList> p = rcp(new ParameterList);
 
@@ -485,9 +485,9 @@ void Albany::NonlinearElasticityProblem::constructEvaluators(
     }
   }
   else
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-		       "Unrecognized Material Name: " << matModel 
-		       << "  Recognized names are : NeoHookean and J2");
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+			       "Unrecognized Material Name: " << matModel 
+			       << "  Recognized names are : NeoHookean and J2");
     
 
   { // Residual

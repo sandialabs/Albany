@@ -121,7 +121,7 @@ Albany::ProblemFactory::create()
 #ifdef ALBANY_LAME
     strategy = rcp(new Albany::LameProblem(problemParams, paramLib, 3));
 #else
-    TEST_FOR_EXCEPTION(true, std::runtime_error, " **** LAME materials not enabled, recompile with -DENABLE_LAME ****\n");
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, " **** LAME materials not enabled, recompile with -DENABLE_LAME ****\n");
 #endif
   }
   else if (method == "Elasticity 1D") {
@@ -168,7 +168,7 @@ Albany::ProblemFactory::create()
   }
 #endif
   else {
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                        std::endl << 
                        "Error!  Unknown problem " << method << 
                        "!" << std::endl << "Supplied parameter list is " << 
