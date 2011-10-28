@@ -7,7 +7,12 @@
     <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>	
     <ParameterList name="Dirichlet BCs">
-      <Parameter name="DBC on NS NodeSet1 for DOF Z" type="double" value="1.0"/>
+      	<Parameter name="DBC on NS NodeSet1 for DOF Z" type="double" value="1.0"/>
+      <ParameterList name="Time Dependent DBC on NS NodeSet1 for DOF Z">
+        <Parameter name="Number of points" type="int" value="4"/>
+        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0 ,2.0 3.0}"/>
+        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0.5, 1.0 1.0}"/>
+      </ParameterList>
 	  <Parameter name="DBC on NS NodeSet4 for DOF Z" type="double" value="0.0"/>
     </ParameterList>
 	
@@ -37,7 +42,7 @@
 	</ParameterList>  
 	<ParameterList name="Kozeny-Carman Permeability">
       <Parameter name="Kozeny-Carman Permeability Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="1.0e-9"/>    
+      <Parameter name="Value" type="double" value="1.0e-6"/>    
 	</ParameterList> 
 	<!-- Skeleton Elasticity Parameter -->
 	<ParameterList name="Elastic Modulus">
@@ -50,9 +55,7 @@
     </ParameterList>
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="1"/>
-      <Parameter name="Parameter 0" type="string" value="DBC on NS NodeSet1 for DOF Z"/>
-      <!-- <Parameter name="Parameter 1" type="string" value="dEdT Value"/>
-           <Parameter name="Parameter 2" type="string" value="dnudT Value"/> -->
+	  <Parameter name="Parameter 0" type="string" value="Time"/>
     </ParameterList>
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="1"/>
@@ -68,7 +71,7 @@
   </ParameterList>
   <ParameterList name="Regression Results">
 	<Parameter  name="Number of Comparisons" type="int" value="1"/>    
-    <Parameter  name="Test Values" type="Array(double)" value="{-10832.7368582}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{-13225.396926}"/>
     <Parameter  name="Relative Tolerance" type="double" value="5.0e2"/>
     <Parameter  name="Absolute Tolerance" type="double" value="5.0e2"/>
   </ParameterList>
@@ -84,11 +87,11 @@
     <ParameterList name="Stepper">
       <Parameter  name="Initial Value" type="double" value="0.0"/>
       <!-- Repeat the boundary condition (just one) that is to be loaded -->
-      <Parameter  name="Continuation Parameter" type="string" value="DBC on NS NodeSet1 for DOF Z"/>
+      <Parameter  name="Continuation Parameter" type="string" value="Time"/>
       <!-- The number of steps in the problem -->
       <Parameter  name="Max Steps" type="int" value="200"/>         
       <!-- Final value of the parameter, here it is a Dirichlet BC on displacement -->
-      <Parameter  name="Max Value" type="double" value="0.04"/>
+      <Parameter  name="Max Value" type="double" value="0.2"/>
       <!-- Initial value of the parameter, here it is a Dirichlet BC on displacement -->
       <Parameter  name="Min Value" type="double" value="0.0"/>    
       <!-- Compute eigenvalues of the global stiffness -->
@@ -101,7 +104,7 @@
     </ParameterList>
     <ParameterList name="Step Size">
       <!-- Control the actual parameter incrementation, here it is the displacement increment on the BC -->
-      <Parameter  name="Initial Step Size" type="double" value="0.0025"/> 
+      <Parameter  name="Initial Step Size" type="double" value="0.025"/> 
       <Parameter name="Method" type="string" value="Constant"/>
     </ParameterList>
   </ParameterList>

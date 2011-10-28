@@ -67,6 +67,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   Albany::MDArray timeOld = (*workset.stateArrayPtr)[timeName];
   deltaTime(0) = time(0) - timeOld(0);
+
 }
 
 // **********************************************************************
