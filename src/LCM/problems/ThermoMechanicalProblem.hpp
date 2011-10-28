@@ -408,7 +408,8 @@ void Albany::ThermoMechanicalProblem::constructEvaluators(
 
     p->set<string>("Bulk Modulus Name", "Bulk Modulus");  // dl->qp_scalar also
     p->set<string>("DetDefGrad Name", "Determinant of the Deformation Gradient");  // dl->qp_scalar also
-
+    p->set<string>("Yield Strength Name", "Yield Strength");
+    p->set<string>("Hardening Modulus Name", "Hardening Modulus");
     p->set<string>("Temperature Name", "Temperature");
     RealType refTemp = params->get("Reference Temperature", 0.0);
     p->set<RealType>("Reference Temperature", refTemp);
@@ -426,6 +427,12 @@ void Albany::ThermoMechanicalProblem::constructEvaluators(
     ev = rcp(new LCM::ThermoMechanicalStress<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
     p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy,"zero");
+    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+    p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy,"identity",true);
+    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+    p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy,"zero",true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }

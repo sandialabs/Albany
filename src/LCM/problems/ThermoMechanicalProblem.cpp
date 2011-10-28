@@ -110,6 +110,8 @@ Albany::ThermoMechanicalProblem::getValidProblemParameters() const
   validPL->sublist("Thermal Conductivity", false, "");
   validPL->sublist("Bulk Modulus", false, "");
   validPL->sublist("Shear Modulus", false, "");
+  validPL->sublist("Hardening Modulus", false, "");
+  validPL->sublist("Yield Strength", false, "");
   validPL->set<RealType>("Reference Temperature", false, "");
   validPL->set<RealType>("Thermal Expansion Coefficient", false, "");
 

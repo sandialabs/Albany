@@ -83,8 +83,8 @@ Application(const RCP<const Epetra_Comm>& comm,
     registerShapeParameters();
 
 #else
-  TEST_FOR_EXCEPTION(problemParams->get("Enable Cubit Shape Parameters",false), std::logic_error,
-                     "Cubit requested but not Compiled in!");
+  TEUCHOS_TEST_FOR_EXCEPTION(problemParams->get("Enable Cubit Shape Parameters",false), std::logic_error,
+			     "Cubit requested but not Compiled in!");
 #endif
   }
 
@@ -139,7 +139,7 @@ Application(const RCP<const Epetra_Comm>& comm,
     initial_x->Export(*overlapped_x, *exporter, Insert);
     initial_x_dot->Export(*overlapped_xdot, *exporter, Insert);
   }
-
+  
   // Now that space is allocated in STK for state fields, initialize states
   stateMgr.setStateArrays(disc);
 
@@ -153,8 +153,8 @@ Application(const RCP<const Epetra_Comm>& comm,
   // Set up memory for workset
 
   fm = problem->getFieldManager();
-  TEST_FOR_EXCEPTION(fm==Teuchos::null, std::logic_error,
-                     "getFieldManager not implemented!!!");
+  TEUCHOS_TEST_FOR_EXCEPTION(fm==Teuchos::null, std::logic_error,
+			     "getFieldManager not implemented!!!");
   dfm = problem->getDirichletFieldManager();
   rfm = problem->getResponseFieldManager();
 
@@ -314,6 +314,7 @@ computeGlobalResidual(const double current_time,
 {
   postRegSetup("Residual");
 
+  std::cout << "x:\n" << x << std::endl;
   TimeMonitor Timer(*timers[0]); //start timer
 
   // Scatter x and xdot to the overlapped distrbution
@@ -355,7 +356,6 @@ computeGlobalResidual(const double current_time,
       loadBasicWorksetInfo( workset, overlapped_x, overlapped_xdot,
 			    paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time") );
     
-
     workset.f        = overlapped_f;
 
     for (int ws=0; ws < numWorksets; ws++) {
@@ -616,14 +616,14 @@ computeGlobalTangent(const double alpha,
   if (!sum_derivs) 
     param_offset = num_cols_x;  // offset of parameter derivs in deriv array
 
-  TEST_FOR_EXCEPTION(sum_derivs && 
-		     (num_cols_x != 0) && 
-		     (num_cols_p != 0) && 
-                     (num_cols_x != num_cols_p),
-                     std::logic_error,
-                     "Seed matrices Vx and Vp must have the same number " << 
-                     " of columns when sum_derivs is true and both are "
-                     << "non-null!" << std::endl);
+  TEUCHOS_TEST_FOR_EXCEPTION(sum_derivs && 
+			     (num_cols_x != 0) && 
+			     (num_cols_p != 0) && 
+			     (num_cols_x != num_cols_p),
+			     std::logic_error,
+			     "Seed matrices Vx and Vp must have the same number " << 
+			     " of columns when sum_derivs is true and both are "
+			     << "non-null!" << std::endl);
 
   // Initialize 
   if (params != Teuchos::null) {
@@ -666,11 +666,11 @@ computeGlobalTangent(const double alpha,
        }
      }
 
-    TEST_FOR_EXCEPTION( Vp != NULL, std::logic_error,
-                       "Derivatives with respect to a vector of shape\n " << 
-                       "parameters has not been implemented. Need to write\n" <<
-                       "directional derivative perturbation through meshMover!" <<
-                       std::endl);
+    TEUCHOS_TEST_FOR_EXCEPTION( Vp != NULL, std::logic_error,
+				"Derivatives with respect to a vector of shape\n " << 
+				"parameters has not been implemented. Need to write\n" <<
+				"directional derivative perturbation through meshMover!" <<
+				std::endl);
 
      // Compute FD derivs of coordinate vector w.r.t. shape params
      double eps = 1.0e-4;
@@ -1082,9 +1082,9 @@ evaluateResponseTangent_rfm(const double alpha,
       p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
 
   //TODO - but not urgent because this function is never called
-  TEST_FOR_EXCEPTION(true,  std::logic_error,
-     "Error: Albany::Application::evaluateResponseTangents_rfm\n" <<
-     "         called but not implemented." << endl);
+  TEUCHOS_TEST_FOR_EXCEPTION(true,  std::logic_error,
+			     "Error: Albany::Application::evaluateResponseTangents_rfm\n" <<
+			     "         called but not implemented." << endl);
 }
 
 
@@ -1624,7 +1624,7 @@ computeGlobalSGTangent(
   if (!sum_derivs) 
     param_offset = num_cols_x;  // offset of parameter derivs in deriv array
 
-  TEST_FOR_EXCEPTION(sum_derivs && 
+  TEUCHOS_TEST_FOR_EXCEPTION(sum_derivs && 
 		     (num_cols_x != 0) && 
 		     (num_cols_p != 0) && 
                      (num_cols_x != num_cols_p),
@@ -2365,14 +2365,14 @@ computeGlobalMPTangent(
   if (!sum_derivs) 
     param_offset = num_cols_x;  // offset of parameter derivs in deriv array
 
-  TEST_FOR_EXCEPTION(sum_derivs && 
-		     (num_cols_x != 0) && 
-		     (num_cols_p != 0) && 
-                     (num_cols_x != num_cols_p),
-                     std::logic_error,
-                     "Seed matrices Vx and Vp must have the same number " << 
-                     " of columns when sum_derivs is true and both are "
-                     << "non-null!" << std::endl);
+  TEUCHOS_TEST_FOR_EXCEPTION(sum_derivs && 
+			     (num_cols_x != 0) && 
+			     (num_cols_p != 0) && 
+			     (num_cols_x != num_cols_p),
+			     std::logic_error,
+			     "Seed matrices Vx and Vp must have the same number " << 
+			     " of columns when sum_derivs is true and both are "
+			     << "non-null!" << std::endl);
 
   // Initialize 
   if (params != Teuchos::null) {
@@ -2654,9 +2654,9 @@ Albany::Application::getValue(const std::string& name)
   for (unsigned int i=0; i<shapeParamNames.size(); i++) {
     if (name == shapeParamNames[i]) index = i;
   }
-  TEST_FOR_EXCEPTION(index==-1,  std::logic_error,
-        "Error in GatherCoordinateVector::getValue, \n" <<
-        "   Unrecognized param name: " << name << endl);
+  TEUCHOS_TEST_FOR_EXCEPTION(index==-1,  std::logic_error,
+			     "Error in GatherCoordinateVector::getValue, \n" <<
+			     "   Unrecognized param name: " << name << endl);
 
   shapeParamsHaveBeenReset = true;
 
@@ -2737,8 +2737,8 @@ void Albany::Application::postRegSetup(std::string eval)
       rfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(eval);
   }
   else 
-    TEST_FOR_EXCEPTION(eval!="Known Evaluation Name",  std::logic_error,
-        "Error in setup call \n" << " Unrecognized name: " << eval << endl);
+    TEUCHOS_TEST_FOR_EXCEPTION(eval!="Known Evaluation Name",  std::logic_error,
+			       "Error in setup call \n" << " Unrecognized name: " << eval << endl);
 
 
   // Write out Phalanx Graph if requested, on Proc 0, for Resid or Jacobian

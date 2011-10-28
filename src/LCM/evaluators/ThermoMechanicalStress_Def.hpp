@@ -68,6 +68,8 @@ ThermoMechanicalStress(const Teuchos::ParameterList& p) :
   this->addDependentField(J_array);
   this->addDependentField(shearModulus);
   this->addDependentField(bulkModulus);
+  this->addDependentField(yieldStrength);
+  this->addDependentField(hardeningModulus);
   this->addDependentField(temperature);
   this->addDependentField(deltaTime);
 
