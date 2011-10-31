@@ -107,7 +107,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   // in calculating an upper bound on the worksetSize.
   std::vector<int> el_blocks;
   stk::io::get_element_block_sizes(*mesh_data, el_blocks);
-  TEST_FOR_EXCEPT(el_blocks.size() != partVec.size());
+  TEUCHOS_TEST_FOR_EXCEPT(el_blocks.size() != partVec.size());
 
   int ebSizeMax =  *std::max_element(el_blocks.begin(),el_blocks.end());
   int worksetSize = this->computeWorksetSize(worksetSizeMax, ebSizeMax);

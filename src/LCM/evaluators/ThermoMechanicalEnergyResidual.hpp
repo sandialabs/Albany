@@ -61,7 +61,7 @@ namespace LCM {
     PHX::MDField<ScalarT,Cell,QuadPoint> rhoCp;
     PHX::MDField<ScalarT,Cell,QuadPoint> Absorption;
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> F; // deformation gradient
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> mechSource; // mechanical heat source
+    PHX::MDField<ScalarT,Cell,QuadPoint> mechSource; // mechanical heat source
 
     // Output:
     PHX::MDField<ScalarT,Cell,Node> TResidual;

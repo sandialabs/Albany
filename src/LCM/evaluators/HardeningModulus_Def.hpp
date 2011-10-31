@@ -137,7 +137,7 @@ evaluateFields(typename Traits::EvalData workset)
   if (isThermoElastic) {
     for (std::size_t cell=0; cell < numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-	hardeningModulus(cell,qp) += dHdT_value * (Temperature(cell,qp) - refTemp);
+	hardeningModulus(cell,qp) -= dHdT_value * (Temperature(cell,qp) - refTemp);
       }
     }
   }

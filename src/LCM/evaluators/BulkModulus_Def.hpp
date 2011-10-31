@@ -134,7 +134,7 @@ evaluateFields(typename Traits::EvalData workset)
   if (isThermoElastic) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-	bulkModulus(cell,qp) += dKdT_value * (Temperature(cell,qp) - refTemp);
+	bulkModulus(cell,qp) -= dKdT_value * (Temperature(cell,qp) - refTemp);
       }
     }
   }

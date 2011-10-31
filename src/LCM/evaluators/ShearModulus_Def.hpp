@@ -135,7 +135,7 @@ evaluateFields(typename Traits::EvalData workset)
   if (isThermoElastic) {
     for (std::size_t cell=0; cell < numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-	shearModulus(cell,qp) += dmudT_value * (Temperature(cell,qp) - refTemp);
+	shearModulus(cell,qp) -= dmudT_value * (Temperature(cell,qp) - refTemp);
       }
     }
   }

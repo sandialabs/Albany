@@ -38,7 +38,7 @@ PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   haveSource =  params->isSublist("Poisson Source");
 
-  TEST_FOR_EXCEPTION(params->isSublist("Source Functions"), Teuchos::Exceptions::InvalidParameter,
+  TEUCHOS_TEST_FOR_EXCEPTION(params->isSublist("Source Functions"), Teuchos::Exceptions::InvalidParameter,
 		     "\nError! Poisson problem does not parse Source Functions sublist\n" 
                      << "\tjust Poisson Source sublist " << std::endl);
 
@@ -93,7 +93,7 @@ buildProblem(
     Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
   /* Construct All Phalanx Evaluators */
-  TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
+  TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
   fm.resize(1); rfm.resize(1);
   fm[0]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
   rfm[0] = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);

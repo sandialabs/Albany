@@ -139,7 +139,7 @@ evaluateFields(typename Traits::EvalData workset)
   if (isThermoElastic) {
     for (std::size_t cell=0; cell < numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-	yieldStrength(cell,qp) += dYdT_value * (Temperature(cell,qp) - refTemp);
+	yieldStrength(cell,qp) -= dYdT_value * (Temperature(cell,qp) - refTemp);
       }
     }
   }

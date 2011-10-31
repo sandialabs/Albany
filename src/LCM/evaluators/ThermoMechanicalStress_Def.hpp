@@ -53,6 +53,8 @@ ThermoMechanicalStress(const Teuchos::ParameterList& p) :
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
   eqps             (p.get<std::string>                   ("eqps Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  mechSource       (p.get<std::string>                   ("Mechanical Source Name"),
+		    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   thermalExpansionCoeff (p.get<RealType>("Thermal Expansion Coefficient") ),
   refTemperature (p.get<RealType>("Reference Temperature") )
 {
@@ -78,6 +80,7 @@ ThermoMechanicalStress(const Teuchos::ParameterList& p) :
   this->addEvaluatedField(stress);
   this->addEvaluatedField(Fp);
   this->addEvaluatedField(eqps);
+  this->addEvaluatedField(mechSource);
 
   this->setName("ThermoMechanical Stress"+PHX::TypeString<EvalT>::value);
 
@@ -99,6 +102,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(temperature,fm);
   this->utils.setFieldData(hardeningModulus,fm);
   this->utils.setFieldData(yieldStrength,fm);
+  this->utils.setFieldData(mechSource,fm);
   this->utils.setFieldData(deltaTime,fm);
 }
 
@@ -108,7 +112,7 @@ void ThermoMechanicalStress<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   bool print = false;
-  //if (typeid(ScalarT) == typeid(RealType)) print = true;
+  if (typeid(ScalarT) == typeid(RealType)) print = true;
 
   // declare some ScalarT's to be used later
   ScalarT J, Jm23, K, H, Y;
@@ -207,8 +211,6 @@ evaluateFields(typename Traits::EvalData workset)
 
 	}
 	
-	// set dp
-
 	// plastic direction
 	N = ScalarT(1/smag) * s;
 
@@ -257,9 +259,13 @@ evaluateFields(typename Traits::EvalData workset)
       // update be
       be = ScalarT(1/mu)*s + ScalarT(trace(be)/3)*eye<ScalarT>();
 
+      // plastic work
+      mechSource(cell,qp) = dgam*norm(s);
+
       if (print)
       {
         cout << "********" << endl;
+	cout << "work   : " << mechSource(cell,qp) << endl;
 	cout << "stress : ";
 	for (std::size_t i=0; i < numDims; ++i)	
 	  for (std::size_t j=0; j < numDims; ++j)	

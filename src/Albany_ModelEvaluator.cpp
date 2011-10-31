@@ -55,7 +55,7 @@ Albany::ModelEvaluator::ModelEvaluator(
     else
       pList = &(parameterParams.sublist(Albany::strint("Parameter Vector",i)));
     int numParameters = pList->get<int>("Number");
-    TEST_FOR_EXCEPTION(
+    TEUCHOS_TEST_FOR_EXCEPTION(
       numParameters == 0, 
       Teuchos::Exceptions::InvalidParameter,
       std::endl << "Error!  FEApp::ModelEvaluator::ModelEvaluator():  " <<
@@ -119,7 +119,7 @@ Albany::ModelEvaluator::get_f_map() const
 Teuchos::RCP<const Epetra_Map>
 Albany::ModelEvaluator::get_p_map(int l) const
 {
-  TEST_FOR_EXCEPTION(l >= static_cast<int>(epetra_param_map.size()) || l < 0, 
+  TEUCHOS_TEST_FOR_EXCEPTION(l >= static_cast<int>(epetra_param_map.size()) || l < 0, 
 		     Teuchos::Exceptions::InvalidParameter,
                      std::endl << 
                      "Error!  Albany::ModelEvaluator::get_p_map():  " <<
@@ -131,13 +131,13 @@ Albany::ModelEvaluator::get_p_map(int l) const
 Teuchos::RCP<const Epetra_Map>
 Albany::ModelEvaluator::get_g_map(int l) const
 {
-  TEST_FOR_EXCEPTION(supports_g == false, 
+  TEUCHOS_TEST_FOR_EXCEPTION(supports_g == false, 
                      Teuchos::Exceptions::InvalidParameter,
                      std::endl << 
                      "Error!  Albany::ModelEvaluator::get_g_map():  " <<
                      "No response functions have been supplied.  " <<
                      "Supplied index l = " << l << std::endl);
-  TEST_FOR_EXCEPTION(l != 0, Teuchos::Exceptions::InvalidParameter,
+  TEUCHOS_TEST_FOR_EXCEPTION(l != 0, Teuchos::Exceptions::InvalidParameter,
                      std::endl << 
                      "Error!  Albany::ModelEvaluator::get_g_map() only " <<
                      " supports 1 response vector.  Supplied index l = " << 
@@ -149,7 +149,7 @@ Albany::ModelEvaluator::get_g_map(int l) const
 Teuchos::RCP<const Teuchos::Array<std::string> >
 Albany::ModelEvaluator::get_p_names(int l) const
 {
-  TEST_FOR_EXCEPTION(l >= static_cast<int>(param_names.size()) || l < 0, 
+  TEUCHOS_TEST_FOR_EXCEPTION(l >= static_cast<int>(param_names.size()) || l < 0, 
 		     Teuchos::Exceptions::InvalidParameter,
                      std::endl << 
                      "Error!  Albany::ModelEvaluator::get_p_names():  " <<
@@ -173,7 +173,7 @@ Albany::ModelEvaluator::get_x_dot_init() const
 Teuchos::RCP<const Epetra_Vector>
 Albany::ModelEvaluator::get_p_init(int l) const
 {
-  TEST_FOR_EXCEPTION(l >= static_cast<int>(param_names.size()) || l < 0, 
+  TEUCHOS_TEST_FOR_EXCEPTION(l >= static_cast<int>(param_names.size()) || l < 0, 
 		     Teuchos::Exceptions::InvalidParameter,
                      std::endl << 
                      "Error!  Albany::ModelEvaluator::get_p_init():  " <<

@@ -63,7 +63,7 @@ Albany::DiscretizationFactory::createMeshSpecs()
 #ifdef ALBANY_SEACAS
     stkMeshStruct = Teuchos::rcp(new Albany::IossSTKMeshStruct(discParams, epetra_comm));
 #else
-    TEST_FOR_EXCEPTION(method == "Ioss" || method == "Exodus" ||  method == "Pamgen",
+    TEUCHOS_TEST_FOR_EXCEPTION(method == "Ioss" || method == "Exodus" ||  method == "Pamgen",
           Teuchos::Exceptions::InvalidParameter,
          "Error: Discretization method " << method 
           << " requested, but not compiled in" << std::endl);
@@ -74,14 +74,14 @@ Albany::DiscretizationFactory::createMeshSpecs()
     AGS"need to inherit from Generic"
     stkMeshStruct = Teuchos::rcp(new Albany::FromCubitSTKMeshStruct(meshMover, discParams, neq));
 #else 
-    TEST_FOR_EXCEPTION(method == "Cubit", 
+    TEUCHOS_TEST_FOR_EXCEPTION(method == "Cubit", 
           Teuchos::Exceptions::InvalidParameter,
          "Error: Discretization method " << method 
           << " requested, but not compiled in" << std::endl);
 #endif
   }
   else {
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, std::endl << 
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, std::endl << 
        "Error!  Unknown discretization method in DiscretizationFactory: " << method << 
        "!" << std::endl << "Supplied parameter list is " << std::endl << *discParams 
        << "\nValid Methods are: STK1D, STK2D, STK3D, Ioss, Exodus, Cubit" << std::endl);
@@ -94,7 +94,7 @@ Teuchos::RCP<Albany::AbstractDiscretization>
 Albany::DiscretizationFactory::createDiscretization(unsigned int neq,
                            const Teuchos::RCP<Albany::StateInfoStruct>& sis)
 {
-  TEST_FOR_EXCEPTION(stkMeshStruct==Teuchos::null,
+  TEUCHOS_TEST_FOR_EXCEPTION(stkMeshStruct==Teuchos::null,
        std::logic_error,
        "stkMeshStruct accessed, but it has not been constructed" << std::endl);
 

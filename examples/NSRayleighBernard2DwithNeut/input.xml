@@ -46,7 +46,7 @@
     </ParameterList>
     <ParameterList name="Initial Condition">
       <Parameter name="Function" type="string" value="Constant"/>
-      <Parameter name="Function Data" type="Array(double)" value="{1.0,1.0,0.0,0.0}"/>
+      <Parameter name="Function Data" type="Array(double)" value="{1.0,1.0,1.0,1.0}"/>
     </ParameterList>
     <ParameterList name="Dirichlet BCs">     
       <Parameter name="DBC on NS nodelist_2 for DOF T" type="double" value="1.0"/>

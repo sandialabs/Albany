@@ -423,6 +423,7 @@ void Albany::ThermoMechanicalProblem::constructEvaluators(
     p->set<string>("Stress Name", "Stress"); //dl->qp_tensor also
     p->set<string>("Fp Name", "Fp");
     p->set<string>("eqps Name", "eqps");
+    p->set<string>("Mechanical Source Name", "Mechanical Source");
 
     ev = rcp(new LCM::ThermoMechanicalStress<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -522,6 +523,8 @@ void Albany::ThermoMechanicalProblem::constructEvaluators(
 
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+
+    p->set<string>("Mechanical Source Name", "Mechanical Source");
 
     //Output
     p->set<string>("Residual Name", "Thermo Mechanical Energy Residual");

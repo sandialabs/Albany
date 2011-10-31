@@ -43,6 +43,8 @@ ThermoMechanicalEnergyResidual(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   F           (p.get<std::string>                   ("Deformation Gradient Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+  mechSource  (p.get<std::string>                   ("Mechanical Source Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   TResidual   (p.get<std::string>                   ("Residual Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
   haveSource  (p.get<bool>("Have Source")),
@@ -61,6 +63,7 @@ ThermoMechanicalEnergyResidual(const Teuchos::ParameterList& p) :
   this->addDependentField(TGrad);
   this->addDependentField(wGradBF);
   this->addDependentField(F);
+  this->addDependentField(mechSource);
   if (haveSource) this->addDependentField(Source);
   if (haveAbsorption) {
     Absorption = PHX::MDField<ScalarT,Cell,QuadPoint>(
@@ -119,6 +122,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(TGrad,fm);
   this->utils.setFieldData(wGradBF,fm);  
   this->utils.setFieldData(F,fm);
+  this->utils.setFieldData(mechSource,fm);
   if (haveSource)  this->utils.setFieldData(Source,fm);
   if (enableTransient) this->utils.setFieldData(Tdot,fm);
 
@@ -147,6 +151,9 @@ evaluateFields(typename Traits::EvalData workset)
     for (int i=0; i<Source.size(); i++) Source[i] *= -1.0;
     FST::integrate<ScalarT>(TResidual, Source, wBF, Intrepid::COMP_CPP, true); // "true" sums into
   }
+
+  for (int i=0; i<mechSource.size(); i++) mechSource[i] *= -1.0;
+  FST::integrate<ScalarT>(TResidual, mechSource, wBF, Intrepid::COMP_CPP, true); // "true" sums into
 
   if (workset.transientTerms && enableTransient) 
     FST::integrate<ScalarT>(TResidual, Tdot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
