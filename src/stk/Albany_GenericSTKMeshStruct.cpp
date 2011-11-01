@@ -68,7 +68,7 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const int worksetSize) 
 {
-  TEST_FOR_EXCEPTION(!metaData->is_FEM_initialized(),
+  TEUCHOS_TEST_FOR_EXCEPTION(!metaData->is_FEM_initialized(),
        std::logic_error,
        "LogicError: metaData->FEM_initialize(numDim) not yet called" << std::endl);
 
@@ -135,7 +135,7 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
     else if ( dim.size() == 1 && st.entity=="ScalarValue" ) {
       scalarValue_states.push_back(st.name);
     }
-    else TEST_FOR_EXCEPT(dim.size() < 2 || dim.size()>4 || st.entity!="QuadPoint");
+    else TEUCHOS_TEST_FOR_EXCEPT(dim.size() < 2 || dim.size()>4 || st.entity!="QuadPoint");
 
   }
   
@@ -170,7 +170,7 @@ void Albany::GenericSTKMeshStruct::DeclareParts(std::vector<std::string> ebNames
 Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >&
 Albany::GenericSTKMeshStruct::getMeshSpecs()
 {
-  TEST_FOR_EXCEPTION(meshSpecs==Teuchos::null,
+  TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs==Teuchos::null,
        std::logic_error,
        "meshSpecs accessed, but it has not been constructed" << std::endl);
   return meshSpecs;

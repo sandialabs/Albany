@@ -109,7 +109,7 @@ evaluateFields(typename Traits::EvalData workset)
 	      sta(cell, qp, i, j) = field(cell,qp,i,j);
       break;
     default:
-      TEST_FOR_EXCEPT_MSG(size<1||size>4, 
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(size<1||size>4, 
                           "Unexpected Array dimensions in SaveStateField: " << size);
     }
 }

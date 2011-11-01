@@ -73,7 +73,7 @@ Absorption(Teuchos::ParameterList& p) :
     }
   }
   else {
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		       "Invalid absorption type " << type);
   } 
 
@@ -126,7 +126,7 @@ Absorption<EvalT,Traits>::getValue(const std::string &n)
     if (n == Albany::strint("Thermal Conductivity KL Random Variable",i))
       return rv[i];
   }*/
-  TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		     std::endl <<
 		     "Error! Logic error in getting paramter " << n
 		     << " in Absorption::getValue()" << std::endl);

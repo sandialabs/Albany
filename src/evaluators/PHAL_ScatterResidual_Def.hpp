@@ -220,7 +220,7 @@ evaluateFields(typename Traits::EvalData workset)
   else if (fp != Teuchos::null)
     row_map = &(fp->Map());
   else
-    TEST_FOR_EXCEPTION(true, std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
                      "One of f, JV, or fp must be non-null! " << std::endl);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
@@ -391,7 +391,7 @@ evaluateFields(typename Traits::EvalData workset)
   else if (fp != Teuchos::null)
     nblock = fp->size();
   else
-    TEST_FOR_EXCEPTION(true, std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
 		       "One of sg_f, sg_JV, or sg_fp must be non-null! " << 
 		       std::endl);
 
@@ -561,7 +561,7 @@ evaluateFields(typename Traits::EvalData workset)
   else if (fp != Teuchos::null)
     nblock = fp->size();
   else
-    TEST_FOR_EXCEPTION(true, std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
 		       "One of mp_f, mp_JV, or mp_fp must be non-null! " << 
 		       std::endl);
 

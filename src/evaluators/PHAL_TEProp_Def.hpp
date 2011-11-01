@@ -116,11 +116,11 @@ template<typename EvalT, typename Traits>
 int PHAL::TEProp<EvalT, Traits>::
 whichMat(const MeshScalarT& x)
 {
-  TEST_FOR_EXCEPTION(x<xBounds[0] || x>xBounds[mats], std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION(x<xBounds[0] || x>xBounds[mats], std::logic_error,
      "Quadrature point " << x << " not within bounds \n");
   for (int i=0; i<mats; i++) 
      if (x<xBounds[i+1]) return i;
-  TEST_FOR_EXCEPTION(true, std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
      "Quadrature point " << x << " not within bounds \n");
   return -1;
 }

@@ -86,7 +86,7 @@ ThermalConductivity(Teuchos::ParameterList& p) :
        materialDB = p.get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
     }
     else {
-       TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		     std::endl <<
 		     "Error! Must specify a material database if using block dependent " << 
 		     "thermal conductivity" << std::endl);
@@ -114,7 +114,7 @@ ThermalConductivity(Teuchos::ParameterList& p) :
   } // Block dependent
 
   else {
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		       "Invalid thermal conductivity type " << type);
   } 
 
@@ -235,7 +235,7 @@ ThermalConductivity<EvalT,Traits>::getValue(const std::string &n)
     if (n == Albany::strint("Thermal Conductivity KL Random Variable",i))
       return rv[i];
   }
-  TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		     std::endl <<
 		     "Error! Logic error in getting paramter " << n
 		     << " in ThermalConductivity::getValue()" << std::endl);

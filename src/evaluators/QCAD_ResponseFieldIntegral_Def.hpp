@@ -70,17 +70,17 @@ ResponseFieldIntegral(Teuchos::ParameterList& p) :
 
   limitX = limitY = limitZ = false;
   if( plist->isParameter("x min") && plist->isParameter("x max") ) {
-    limitX = true; TEST_FOR_EXCEPT(numDims <= 0);
+    limitX = true; TEUCHOS_TEST_FOR_EXCEPT(numDims <= 0);
     xmin = plist->get<double>("x min");
     xmax = plist->get<double>("x max");
   }
   if( plist->isParameter("y min") && plist->isParameter("y max") ) {
-    limitY = true; TEST_FOR_EXCEPT(numDims <= 1);
+    limitY = true; TEUCHOS_TEST_FOR_EXCEPT(numDims <= 1);
     ymin = plist->get<double>("y min");
     ymax = plist->get<double>("y max");
   }
   if( plist->isParameter("z min") && plist->isParameter("z max") ) {
-    limitZ = true; TEST_FOR_EXCEPT(numDims <= 2);
+    limitZ = true; TEUCHOS_TEST_FOR_EXCEPT(numDims <= 2);
     zmin = plist->get<double>("z min");
     zmax = plist->get<double>("z max");
   }
@@ -135,7 +135,7 @@ evaluateFields(typename Traits::EvalData workset)
   else if (numDims == 3)
     scaling = X0*X0*X0; 
   else      
-    TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+    TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
 			  << "Error! Invalid number of dimensions: " << numDims << std::endl);
     
   if( ebNames.size() == 0 || 

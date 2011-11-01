@@ -267,7 +267,7 @@ int Albany::STKDiscretization::nonzeroesPerRow(const int neq) const
   case 1: estNonzeroesPerRow=3*neq; break;
   case 2: estNonzeroesPerRow=9*neq; break;
   case 3: estNonzeroesPerRow=27*neq; break;
-  default: TEST_FOR_EXCEPTION(true, std::logic_error,
+  default: TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
 			      "STKDiscretization:  Bad numDim"<< numDim);
   }
   return estNonzeroesPerRow;
@@ -456,7 +456,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
         int node_gid = gid(rowNode);
         int node_lid = overlap_node_map->LID(node_gid);
         
-        TEST_FOR_EXCEPTION(node_lid<0, std::logic_error,
+        TEUCHOS_TEST_FOR_EXCEPTION(node_lid<0, std::logic_error,
 			   "STK1D_Disc: node_lid out of range " << node_lid << endl);
         coords[b][i][j] = stk::mesh::field_data(*stkMeshStruct->coordinates_field, rowNode);
         wsElNodeEqID[b][i][j].resize(neq);

@@ -31,7 +31,7 @@ Albany::AbstractProblem::AbstractProblem(
 unsigned int 
 Albany::AbstractProblem::numEquations() const 
 {
-  TEST_FOR_EXCEPTION( neq <= 0,
+  TEUCHOS_TEST_FOR_EXCEPTION( neq <= 0,
                     Teuchos::Exceptions::InvalidParameter,
                     "A Problem must have at least 1 equation: "<<neq);
   return neq;

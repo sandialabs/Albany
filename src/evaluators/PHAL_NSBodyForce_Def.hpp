@@ -46,7 +46,7 @@ NSBodyForce(const Teuchos::ParameterList& p) :
     this->addDependentField(rho);
   }
   else if (type == "Boussinesq") {
-    TEST_FOR_EXCEPTION(haveHeat == false, std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION(haveHeat == false, std::logic_error,
 		       std::endl <<
 		       "Error!  Must enable heat equation for Boussinesq " <<
 		       "body force term!");

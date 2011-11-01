@@ -81,7 +81,7 @@ PoissonDirichlet(Teuchos::ParameterList& p) :
       qPhiRef = workFn;
     }
     else {
-      TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
 			  << "Error!  Invalid category " << category 
 			  << " for reference material !" << std::endl);
     }
@@ -220,7 +220,7 @@ QCAD::PoissonDirichlet<EvalT,Traits>::inverseFDIntOneHalf(const ScalarT x)
   if (x > 0.)
     invFDInt = log(x)/(1.-pow(x,2.)) + nu/(1.+pow(a+b*nu,-2.));
   else
-    TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+    TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
       << "Error! x in inverseFDIntOneHalf(x) must be greater than 0 " << std::endl);
 
   return invFDInt;
@@ -247,7 +247,7 @@ QCAD::PoissonDirichlet<EvalT,Traits>::potentialForMBComplIon(const ScalarT &Nc,
       signedDopingConc = -dopingConc;
     else 
     {
-      TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
         << "Error!  Unknown dopant type " << dopType << "!"<< std::endl);
     }
     ScalarT tmp1 = signedDopingConc/(2.0*Cn);
@@ -264,7 +264,7 @@ QCAD::PoissonDirichlet<EvalT,Traits>::potentialForMBComplIon(const ScalarT &Nc,
       builtinPotential = (qPhiRef-Chi-Eg)/1.0 - V0*log(dopingConc/Nv);  
     else 
     {
-      TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
         << "Error!  Unknown dopant type " << dopType << "!"<< std::endl);
     }
   }
@@ -298,7 +298,7 @@ QCAD::PoissonDirichlet<EvalT,Traits>::potentialForMBIncomplIon(const ScalarT &Nc
 
   else 
   {
-    TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+    TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
       << "Error!  Unknown dopant type " << dopType << "!"<< std::endl);
   }
 
@@ -328,7 +328,7 @@ QCAD::PoissonDirichlet<EvalT,Traits>::potentialForFDComplIon(const ScalarT &Nc,
     builtinPotential = (qPhiRef-Chi-Eg)/1.0 - V0*invFDInt;
   }
   else {
-    TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+    TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
       << "Error!  Unknown dopant type " << dopType << "!"<< std::endl);
   }
     
@@ -372,7 +372,7 @@ QCAD::PoissonDirichlet<EvalT,Traits>::potentialForZeroKFDComplIon(const ScalarT 
   
   else 
   {
-    TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+    TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
       << "Error!  Unknown dopant type " << dopType << "!"<< std::endl);
   }
     

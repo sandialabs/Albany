@@ -59,7 +59,7 @@ evaluateResponse(const double current_time,
   if (!solutionLoaded) {
     MMFileStatus = EpetraExt::MatrixMarketFileToVector("reference_solution.dat",x.Map(),RefSoln);
 
-    TEST_FOR_EXCEPTION(MMFileStatus, std::runtime_error,
+    TEUCHOS_TEST_FOR_EXCEPTION(MMFileStatus, std::runtime_error,
       std::endl << "EpetraExt::MatrixMarketFileToVector, file " __FILE__
       " line " << __LINE__ << " returned " << MMFileStatus << std::endl);
 
@@ -129,7 +129,7 @@ evaluateGradient(const double current_time,
   if (!solutionLoaded) {
     MMFileStatus = EpetraExt::MatrixMarketFileToVector("reference_solution.dat",x.Map(),RefSoln);
 
-    TEST_FOR_EXCEPTION(MMFileStatus, std::runtime_error,
+    TEUCHOS_TEST_FOR_EXCEPTION(MMFileStatus, std::runtime_error,
       std::endl << "EpetraExt::MatrixMarketFileToVector, file " __FILE__
       " line " << __LINE__ << " returned " << MMFileStatus << std::endl);
 

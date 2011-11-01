@@ -261,7 +261,7 @@ QCAD::SchrodingerResid<EvalT, Traits>::getInvEffMass(const std::string& EBName,
       effMass = materialDB->getMaterialParam<double>("Silicon","Longitudinal Electron Effective Mass",1.0) * emass;
     
     else
-      TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
+      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
 	       std::endl << "Error!  x-coord:" << coord[0] << "is outside the oxideWidth" << 
 	       " + siliconWidth range: " << oxideWidth + siliconWidth << "!"<< std::endl);
   
@@ -285,7 +285,7 @@ QCAD::SchrodingerResid<EvalT, Traits>::getInvEffMass(const std::string& EBName,
     double mt = materialDB->getElementBlockParam<double>(EBName,"Transverse Electron Effective Mass");
     
     if ((condBandMinVal == "Gamma Valley") && (abs(ml-mt) > 1e-10))
-      TEST_FOR_EXCEPTION (true, std::logic_error, "Gamma Valley's longitudinal and "
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Gamma Valley's longitudinal and "
         << "transverse electron effective mass must be equal ! "
         << "Please check the values in materials.xml" << std::endl);
       
@@ -299,7 +299,7 @@ QCAD::SchrodingerResid<EvalT, Traits>::getInvEffMass(const std::string& EBName,
     else if (condBandMinVal == "Gamma Valley")
       effMass = ml*emass;
     else
-      TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl
+      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl
         << "Invalid Conduction Band Minimum ! Must be Delta2 or Gamma Valley !" << std::endl);
 
   }  // end of if (matrlCategory == "Semiconductor")
@@ -309,7 +309,7 @@ QCAD::SchrodingerResid<EvalT, Traits>::getInvEffMass(const std::string& EBName,
     double ml = materialDB->getElementBlockParam<double>(EBName,"Longitudinal Electron Effective Mass");
     double mt = materialDB->getElementBlockParam<double>(EBName,"Transverse Electron Effective Mass");
     if (abs(ml-mt) > 1e-10) 
-      TEST_FOR_EXCEPTION (true, std::logic_error, "Insulator's longitudinal and "
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Insulator's longitudinal and "
 	       << "transverse electron effective mass must be equal ! "
 	       << "Please check the values in materials.xml" << std::endl);
     effMass = ml*emass;

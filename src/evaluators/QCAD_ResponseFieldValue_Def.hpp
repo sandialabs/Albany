@@ -75,17 +75,17 @@ ResponseFieldValue(Teuchos::ParameterList& p) :
     limitX = limitY = limitZ = false;
 
     if( plist->isParameter("x min") && plist->isParameter("x max") ) {
-      limitX = true; TEST_FOR_EXCEPT(numDims <= 0);
+      limitX = true; TEUCHOS_TEST_FOR_EXCEPT(numDims <= 0);
       xmin = plist->get<double>("x min");
       xmax = plist->get<double>("x max");
     }
     if( plist->isParameter("y min") && plist->isParameter("y max") ) {
-      limitY = true; TEST_FOR_EXCEPT(numDims <= 1);
+      limitY = true; TEUCHOS_TEST_FOR_EXCEPT(numDims <= 1);
       ymin = plist->get<double>("y min");
       ymax = plist->get<double>("y max");
     }
     if( plist->isParameter("z min") && plist->isParameter("z max") ) {
-      limitZ = true; TEST_FOR_EXCEPT(numDims <= 2);
+      limitZ = true; TEUCHOS_TEST_FOR_EXCEPT(numDims <= 2);
       zmin = plist->get<double>("z min");
       zmax = plist->get<double>("z max");
     }
@@ -93,7 +93,7 @@ ResponseFieldValue(Teuchos::ParameterList& p) :
   else if(opDomain == "element block") {
     ebName = plist->get<string>("Element Block Name");
   }
-  else TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+  else TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
              << "Error!  Invalid operation domain type " << opDomain << std::endl); 
 
 
@@ -122,7 +122,7 @@ ResponseFieldValue(Teuchos::ParameterList& p) :
   // Set sentinal values for max/min problems 
   if( operation == "Maximize" ) initVals[1] = -1e200;
   else if( operation == "Minimize" ) initVals[1] = 1e100;
-  else TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+  else TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
              << "Error!  Invalid operation type " << operation << std::endl); 
   
   PHAL::ResponseBase<EvalT, Traits>::setInitialValues(initVals);

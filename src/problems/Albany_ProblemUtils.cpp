@@ -89,7 +89,7 @@ Albany::getIntrepidBasis(const CellTopologyData& ctd, bool compositeTet)
    else if (name == "Tetrahedron_10" && compositeTet )
            intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TET_COMP12_FEM<RealType, FieldContainer<RealType> >() );
    else
-     TEST_FOR_EXCEPTION( //JTO compiler doesn't like this --> ctd.name != "Recognized Element Name", 
+     TEUCHOS_TEST_FOR_EXCEPTION( //JTO compiler doesn't like this --> ctd.name != "Recognized Element Name", 
 			true,
 			Teuchos::Exceptions::InvalidParameter,
 			"Albany::ProblemUtils::getIntrepidBasis did not recognize element name: "

@@ -79,7 +79,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
      }
 
      else {
-       TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 	  std::endl << "Error!  Unknown response function " << name <<
            "!" << std::endl << "Supplied parameter list is " <<
            std::endl << responseList);
@@ -124,7 +124,7 @@ Albany::ResponseUtilities<EvalT,Traits>::setupResponseFnForEvaluator(
 
   std::string responseID = Albany::strint("Response",responseNumber);       
   std::string responseParamsID = Albany::strint("ResponseParams",responseNumber);       
-  TEST_FOR_EXCEPTION(!responseList.isSublist(responseParamsID), 
+  TEUCHOS_TEST_FOR_EXCEPTION(!responseList.isSublist(responseParamsID), 
 		     Teuchos::Exceptions::InvalidParameter,
 		     std::endl << Albany::strint("Response",responseNumber) <<
 		     " requires a parameter list" << std::endl);

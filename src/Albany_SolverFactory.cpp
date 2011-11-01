@@ -82,7 +82,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
     // Get solver type
     ParameterList& problemParams = appParams->sublist("Problem");
     string solutionMethod = problemParams.get("Solution Method", "Steady");
-    TEST_FOR_EXCEPTION(solutionMethod != "Steady" &&
+    TEUCHOS_TEST_FOR_EXCEPTION(solutionMethod != "Steady" &&
             solutionMethod != "Transient" && solutionMethod != "Continuation" &&
 	    solutionMethod != "Multi-Problem",  
             std::logic_error, "Solution Method must be Steady, Transient, "
@@ -137,7 +137,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
     else if (solutionMethod== "Multi-Problem")
       return  rcp(new QCAD::Solver(appParams, solverComm));
     else if (solutionMethod== "Transient") {
-      TEST_FOR_EXCEPTION(secondOrder!="No", std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(secondOrder!="No", std::logic_error,
          "Invalid value for Second Order: (No, Velocity Verlet, Trapezoid Rule): "
          << secondOrder << "\n");
       return Teuchos::null;
@@ -178,7 +178,7 @@ int Albany::SolverFactory::checkTestResults(
   const Epetra_Vector* g_std_dev) const
 {
   ParameterList& testParams = appParams->sublist("Regression Results");
-  TEST_FOR_EXCEPTION(testParams.isType<string>("Test Values"), std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION(testParams.isType<string>("Test Values"), std::logic_error,
     "Array information in XML file must now be of type Array(double)\n");
   testParams.validateParametersAndSetDefaults(*getValidRegressionResultsParameters(),0);
 
@@ -197,7 +197,7 @@ int Albany::SolverFactory::checkTestResults(
       Teuchos::Array<double> testValues =
         testParams.get<Teuchos::Array<double> >("Test Values");
       
-      TEST_FOR_EXCEPT(numResponseTests != testValues.size());
+      TEUCHOS_TEST_FOR_EXCEPT(numResponseTests != testValues.size());
       for (int i=0; i<testValues.size(); i++) {
         failures += scaledCompare((*g)[i], testValues[i], relTol, absTol);
         comparisons++;
@@ -214,7 +214,7 @@ int Albany::SolverFactory::checkTestResults(
       for (int i=0; i<numSensTests; i++) {
         Teuchos::Array<double> testSensValues =
           testParams.get<Teuchos::Array<double> >(Albany::strint("Sensitivity Test Values",i));
-        TEST_FOR_EXCEPT(dgdp->NumVectors() != testSensValues.size());
+        TEUCHOS_TEST_FOR_EXCEPT(dgdp->NumVectors() != testSensValues.size());
         for (int j=0; j<dgdp->NumVectors(); j++) {
           failures += scaledCompare((*dgdp)[j][i], testSensValues[j], relTol, absTol);
           comparisons++;
@@ -233,7 +233,7 @@ int Albany::SolverFactory::checkTestResults(
       Teuchos::Array<double> testValues =
         testParams.get<Teuchos::Array<double> >("Dakota Test Values");
 
-      TEST_FOR_EXCEPT(numDakotaTests != testValues.size());
+      TEUCHOS_TEST_FOR_EXCEPT(numDakotaTests != testValues.size());
       for (int i=0; i<numDakotaTests; i++) {
         failures += scaledCompare((*drdv)[i], testValues[i], relTol, absTol);
         comparisons++;
@@ -254,7 +254,7 @@ int Albany::SolverFactory::checkTestResults(
       Teuchos::Array<double> testValues =
         testParams.get<Teuchos::Array<double> >("Piro Analysis Test Values");
 
-      TEST_FOR_EXCEPT(numPiroTests != testValues.size());
+      TEUCHOS_TEST_FOR_EXCEPT(numPiroTests != testValues.size());
       for (int i=0; i<numPiroTests; i++) {
         failures += scaledCompare(p[i], testValues[i], relTol, absTol);
         comparisons++;
@@ -271,7 +271,7 @@ int Albany::SolverFactory::checkTestResults(
         Teuchos::Array<double> testSGValues = 
           testParams.get<Teuchos::Array<double> >
             (Albany::strint("Stochastic Galerkin Expansion Test Values",i));
-        TEST_FOR_EXCEPT(g_sg->size() != testSGValues.size());
+        TEUCHOS_TEST_FOR_EXCEPT(g_sg->size() != testSGValues.size());
 	for (int j=0; j<g_sg->size(); j++) {
 	  failures += 
 	    scaledCompare((*g_sg)[j][i], testSGValues[j], relTol, absTol);
@@ -290,7 +290,7 @@ int Albany::SolverFactory::checkTestResults(
       Teuchos::Array<double> testValues =
         testParams.get<Teuchos::Array<double> >("Stochastic Galerkin Mean Test Values");
       
-      TEST_FOR_EXCEPT(numMeanResponseTests != testValues.size());
+      TEUCHOS_TEST_FOR_EXCEPT(numMeanResponseTests != testValues.size());
       for (int i=0; i<testValues.size(); i++) {
         failures += scaledCompare((*g_mean)[i], testValues[i], relTol, absTol);
         comparisons++;
@@ -307,7 +307,7 @@ int Albany::SolverFactory::checkTestResults(
       Teuchos::Array<double> testValues =
         testParams.get<Teuchos::Array<double> >("Stochastic Galerkin Standard Deviation Test Values");
       
-      TEST_FOR_EXCEPT(numSDResponseTests != testValues.size());
+      TEUCHOS_TEST_FOR_EXCEPT(numSDResponseTests != testValues.size());
       for (int i=0; i<testValues.size(); i++) {
         failures += scaledCompare((*g_std_dev)[i], testValues[i], relTol, absTol);
         comparisons++;

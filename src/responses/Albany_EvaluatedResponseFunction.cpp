@@ -169,7 +169,7 @@ postProcessResponses(const Epetra_Comm& comm, Teuchos::RCP<Epetra_Vector>& g)
   }
   else if( type == "None") {
   }
-  else TEST_FOR_EXCEPT(true);
+  else TEUCHOS_TEST_FOR_EXCEPT(true);
 }
 
 void 
