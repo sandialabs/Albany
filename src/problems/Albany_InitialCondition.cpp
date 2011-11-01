@@ -60,10 +60,6 @@ void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
   Teuchos::RCP<Albany::AnalyticFunction> initFunc
     = createAnalyticFunction(name, neq, numDim, data);
 
-  cout << "*****\nI am in Initial conditions\n*****\n";
-  cout << "Data: " << data << endl;
-  cout << "neq : " << neq << endl;
-
   // Loop over all worksets, elements, all local nodes: compute soln as a function of coord
   std::vector<double> x; x.resize(neq);
   for (int ws=0; ws < wsElNodeEqID.size(); ws++) {
@@ -76,7 +72,6 @@ void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
         for (int i=0; i<neq; i++) (*soln)[lid[i]] = x[i];
   } } }
 
-  std::cout << "solution: " << *soln << std::endl;
 }
 
 }

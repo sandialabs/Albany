@@ -135,22 +135,22 @@ Albany::DirichletUtils::constructDirichletEvaluators(
 	 p->set<int>("Type", type);
 
 	 // This BC needs a shear modulus and poissons ratio defined
-	 TEST_FOR_EXCEPTION(!params->isSublist("Shear Modulus"), 
-			    Teuchos::Exceptions::InvalidParameter, 
-			    "This BC needs a Shear Modulus");
+	 TEUCHOS_TEST_FOR_EXCEPTION(!params->isSublist("Shear Modulus"), 
+				    Teuchos::Exceptions::InvalidParameter, 
+				    "This BC needs a Shear Modulus");
 	 ParameterList& shmd_list = params->sublist("Shear Modulus");
-	 TEST_FOR_EXCEPTION(!(shmd_list.get("Shear Modulus Type","") == "Constant"), 
-			    Teuchos::Exceptions::InvalidParameter,
-			    "Invalid Shear Modulus type");
+	 TEUCHOS_TEST_FOR_EXCEPTION(!(shmd_list.get("Shear Modulus Type","") == "Constant"), 
+				    Teuchos::Exceptions::InvalidParameter,
+				    "Invalid Shear Modulus type");
 	 p->set< RealType >("Shear Modulus", shmd_list.get("Value", 1.0));
 
-	 TEST_FOR_EXCEPTION(!params->isSublist("Poissons Ratio"), 
-			    Teuchos::Exceptions::InvalidParameter, 
-			    "This BC needs a Poissons Ratio");
+	 TEUCHOS_TEST_FOR_EXCEPTION(!params->isSublist("Poissons Ratio"), 
+				    Teuchos::Exceptions::InvalidParameter, 
+				    "This BC needs a Poissons Ratio");
 	 ParameterList& pr_list = params->sublist("Poissons Ratio");
-	 TEST_FOR_EXCEPTION(!(pr_list.get("Poissons Ratio Type","") == "Constant"), 
-			    Teuchos::Exceptions::InvalidParameter,
-			    "Invalid Poissons Ratio type");
+	 TEUCHOS_TEST_FOR_EXCEPTION(!(pr_list.get("Poissons Ratio Type","") == "Constant"), 
+				    Teuchos::Exceptions::InvalidParameter,
+				    "Invalid Poissons Ratio type");
 	 p->set< RealType >("Poissons Ratio", pr_list.get("Value", 1.0));
 
 	 // Extract BC parameters

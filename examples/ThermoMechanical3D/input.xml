@@ -1,20 +1,23 @@
 <ParameterList>
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="ThermoMechanical"/>
+    <!--    <Parameter name="Solution Method" type="string" value="Transient"/>-->
     <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS NodeSet0 for DOF X" type="double" value="0.0"/>
       <Parameter name="DBC on NS NodeSet0 for DOF Y" type="double" value="0.0"/>
       <Parameter name="DBC on NS NodeSet0 for DOF Z" type="double" value="0.0"/>
+      <Parameter name="DBC on NS NodeSet1 for DOF Y" type="double" value="0.0"/>
+      <Parameter name="DBC on NS NodeSet1 for DOF Z" type="double" value="0.0"/>
       <ParameterList name="Time Dependent DBC on NS NodeSet1 for DOF X">
         <Parameter name="Number of points" type="int" value="3"/>
-        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 0.5, 1.0 }"/>
-        <Parameter name="BC Values" type="Array(double)"   value="{ 0.0, 0.1, 0.2 }"/>
+        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 0.01 }"/>
+        <Parameter name="BC Values" type="Array(double)"   value="{ 0.0, 0.1 }"/>
       </ParameterList>
       <Parameter name="DBC on NS NodeSet2 for DOF Y" type="double" value="0.0"/>
       <Parameter name="DBC on NS NodeSet5 for DOF Z" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet2 for DOF T" type="double" value="293.0"/>
+      <!--<Parameter name="DBC on NS NodeSet2 for DOF T" type="double" value="293.0"/> -->
       <!--<Parameter name="DBC on NS NodeSet3 for DOF T" type="double" value="293.0"/> -->
     </ParameterList>
     <ParameterList name="Initial Condition">
@@ -29,7 +32,7 @@
     <ParameterList name="Bulk Modulus">
       <Parameter name="Bulk Modulus Type" type="string" value="Constant"/>
       <Parameter name="Value" type="double" value="160.e3"/>
-      <Parameter name="dnudT Value" type="double" value="0.01"/>
+      <Parameter name="dKdT Value" type="double" value="0.01"/>
     </ParameterList>
     <ParameterList name="Thermal Conductivity">
       <Parameter name="Thermal Conductivity Type" type="string" value="Constant"/>
@@ -38,15 +41,17 @@
     <ParameterList name="Yield Strength">
       <Parameter name="Yield Strength Type" type="string" value="Constant"/>
       <Parameter name="Value" type="double" value="450.0"/>
-      <Parameter name="dYdT" type="double" value="1.0"/>
+      <Parameter name="dYdT" type="double" value="0.002"/>
     </ParameterList>
     <ParameterList name="Hardening Modulus">
       <Parameter name="Hardening Modulus Type" type="string" value="Constant"/>
       <Parameter name="Value" type="double" value="129.24"/>
-      <Parameter name="dHdT" type="double" value="1.0"/>
+      <Parameter name="dHdT" type="double" value="0.002"/>
     </ParameterList>
     <Parameter name="Reference Temperature" type="double" value="293.0"/>
     <Parameter name="Thermal Expansion Coefficient" type="double" value="1.e-5"/>
+    <Parameter name="Density" type="double" value="7.8e-9"/>
+    <Parameter name="Heat Capacity" type="double" value="0.46e9"/>
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="1"/>
       <Parameter name="Parameter 0" type="string" value="Time"/>
@@ -57,19 +62,39 @@
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
-    <Parameter name="1D Elements" type="int" value="1"/>
-    <Parameter name="2D Elements" type="int" value="1"/>
-    <Parameter name="3D Elements" type="int" value="1"/>
+    <Parameter name="1D Elements" type="int" value="5"/>
+    <Parameter name="2D Elements" type="int" value="5"/>
+    <Parameter name="3D Elements" type="int" value="5"/>
     <Parameter name="Method" type="string" value="STK3D"/>
     <Parameter name="Exodus Output File Name" type="string" value="tm.exo"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>    
-    <Parameter  name="Test Values" type="Array(double)" value="{75.1106468781}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{77.228207537}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>
   </ParameterList>
   <ParameterList name="Piro">
+    <ParameterList name="Rythmos">
+      <Parameter name="Num Time Steps" type="int" value="100"/>
+      <Parameter name="Final Time" type="double" value="1.0"/>
+      <Parameter name="Max State Error" type="double" value="1e-4"/>
+      <Parameter name="Alpha"           type="double" value="0.0"/>
+      <ParameterList name="Rythmos Stepper">
+	<ParameterList name="VerboseObject">
+	  <Parameter name="Verbosity Level" type="string" value="low"/>
+	</ParameterList>
+      </ParameterList>
+      <ParameterList name="Rythmos Integration Control">
+      </ParameterList>
+      <ParameterList name="Rythmos Integrator">
+	<ParameterList name="VerboseObject">
+	  <Parameter name="Verbosity Level" type="string" value="none"/>
+	</ParameterList>
+      </ParameterList>
+      <ParameterList name="Stratimikos">
+      </ParameterList>
+    </ParameterList>
     <ParameterList name="LOCA">
       <ParameterList name="Bifurcation"/>
       <ParameterList name="Constraints"/>
@@ -82,9 +107,9 @@
 	<!-- Repeat the boundary condition (just one) that is to be loaded -->
 	<Parameter  name="Continuation Parameter" type="string" value="Time"/>
 	<!-- The number of steps in the problem -->
-	<Parameter  name="Max Steps" type="int" value="10"/>         
+	<Parameter  name="Max Steps" type="int" value="200"/>         
 	<!-- Final value of the parameter, here it is a Dirichlet BC on displacement -->
-	<Parameter  name="Max Value" type="double" value="1.0"/>
+	<Parameter  name="Max Value" type="double" value="0.01"/>
 	<!-- Initial value of the parameter, here it is a Dirichlet BC on displacement -->
 	<Parameter  name="Min Value" type="double" value="0.0"/>    
 	<!-- Compute eigenvalues of the global stiffness -->
@@ -97,7 +122,7 @@
       </ParameterList>
       <ParameterList name="Step Size">
 	<!-- Control the actual parameter incrementation, here it is the displacement increment on the BC -->
-	<Parameter  name="Initial Step Size" type="double" value="0.2"/> 
+	<Parameter  name="Initial Step Size" type="double" value="0.01"/> 
 	<Parameter name="Method" type="string" value="Constant"/>
       </ParameterList>
     </ParameterList>
@@ -111,7 +136,7 @@
 	    <ParameterList name="NOX Stratimikos Options">
 	    </ParameterList>
 	    <ParameterList name="Stratimikos">
-	      <Parameter name="Linear Solver Type" type="string" value="AztecOO"/>
+	      <Parameter name="Linear Solver Type" type="string" value="Belos"/>
 	      <ParameterList name="Linear Solver Types">
 		<ParameterList name="AztecOO">
 		  <ParameterList name="Forward Solve"> 
@@ -141,7 +166,7 @@
 		  </ParameterList>
 		</ParameterList>
 	      </ParameterList>
-	      <Parameter name="Preconditioner Type" type="string" value="ML"/>
+	      <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
 	      <ParameterList name="Preconditioner Types">
 		<ParameterList name="ML">
 		  <Parameter name="Base Method Defaults" type="string" value="SA"/>
@@ -174,9 +199,51 @@
       </ParameterList>
       <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
       <ParameterList name="Printing">
-	<Parameter name="Output Information" type="int" value="103"/>
+	<ParameterList name="Output Information">
+          <Parameter name="Error" type="bool" value="1"/>
+          <Parameter name="Warning" type="bool" value="1"/>
+          <Parameter name="Outer Iteration" type="bool" value="1"/>
+          <Parameter name="Parameters" type="bool" value="0"/>
+          <Parameter name="Details" type="bool" value="0"/>
+          <Parameter name="Linear Solver Details" type="bool" value="0"/>
+          <Parameter name="Stepper Iteration" type="bool" value="1"/>
+          <Parameter name="Stepper Details" type="bool" value="1"/>
+          <Parameter name="Stepper Parameters" type="bool" value="1"/>
+        </ParameterList>
 	<Parameter name="Output Precision" type="int" value="3"/>
 	<Parameter name="Output Processor" type="int" value="0"/>
+      </ParameterList>
+      <!-- Checking for residual convergence (rel, abs, inc) -->
+      <ParameterList name="Solver Options">
+        <Parameter name="Status Test Check Type" type="string" value="Complete"/>
+      </ParameterList>
+      <ParameterList name="Status Tests">
+        <Parameter name="Test Type" type="string" value="Combo"/>
+        <Parameter name="Combo Type" type="string" value="OR"/>
+        <Parameter name="Number of Tests" type="int" value="5"/>
+        <ParameterList name="Test 0">
+          <Parameter name="Test Type" type="string" value="NormF"/>
+          <Parameter name="Norm Type" type="string" value="Two Norm"/>
+          <Parameter name="Scale Type" type="string" value="Scaled"/>
+          <Parameter name="Tolerance" type="double" value="1e-10"/>
+        </ParameterList>
+        <ParameterList name="Test 1">
+          <Parameter name="Test Type" type="string" value="MaxIters"/>
+          <Parameter name="Maximum Iterations" type="int" value="10"/>
+        </ParameterList>
+        <ParameterList name="Test 2">
+          <Parameter name="Test Type" type="string" value="NormF"/>
+          <Parameter name="Scale Type" type="string" value="Unscaled"/>
+          <Parameter name="Tolerance" type="double" value="1e-7"/>
+        </ParameterList>
+        <ParameterList name="Test 3">
+          <Parameter name="Test Type" type="string" value="NormUpdate"/>
+          <Parameter name="Scale Type" type="string" value="Unscaled"/>
+          <Parameter name="Tolerance" type="double" value="1e-12"/>
+        </ParameterList>
+        <ParameterList name="Test 4">
+          <Parameter name="Test Type" type="string" value="FiniteValue"/>
+        </ParameterList>
       </ParameterList>
     </ParameterList>
   </ParameterList>

@@ -112,7 +112,12 @@ void ThermoMechanicalStress<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   bool print = false;
-  if (typeid(ScalarT) == typeid(RealType)) print = true;
+  //if (typeid(ScalarT) == typeid(RealType)) print = true;
+
+  if (print)
+  {
+    cout << " *** ThermoMechanicalStress *** " << endl;
+  }
 
   // declare some ScalarT's to be used later
   ScalarT J, Jm23, K, H, Y;
@@ -167,8 +172,12 @@ evaluateFields(typename Traits::EvalData workset)
       s = mu * dev(be);
 
       // check for yielding
+      //smag = 0.0;
+      //if ( norm(s) > 1.e-15 )
       smag = norm(s);
       f = smag - sq23 * ( Y + H * eqpsold(cell,qp) );
+
+      dgam = 0.0;
      
       if (f > 1E-8)
       {
@@ -181,7 +190,6 @@ evaluateFields(typename Traits::EvalData workset)
         ScalarT alpha = 0.0;
         ScalarT res = 0.0;
         int count = 0;
-        dgam = 0.0;
 
         while (!converged)
         {
@@ -260,17 +268,28 @@ evaluateFields(typename Traits::EvalData workset)
       be = ScalarT(1/mu)*s + ScalarT(trace(be)/3)*eye<ScalarT>();
 
       // plastic work
-      mechSource(cell,qp) = dgam*norm(s);
+      mechSource(cell,qp) = 0.0;
+      if ( norm(s) > 1.e-15 && dt > 0.0 )
+        mechSource(cell,qp) = dgam * norm(s) / dt;
 
       if (print)
       {
-        cout << "********" << endl;
-	cout << "work   : " << mechSource(cell,qp) << endl;
-	cout << "stress : ";
-	for (std::size_t i=0; i < numDims; ++i)	
-	  for (std::size_t j=0; j < numDims; ++j)	
-	    cout << stress(cell,qp,i,j) << " ";
-	cout << endl;
+        cout << "    sig : ";
+        for (unsigned int i(0); i < numDims; ++i)
+          for (unsigned int j(0); j < numDims; ++j)
+            cout << stress(cell,qp,i,j) << " ";
+        cout << endl;
+
+        cout << "    s   : ";
+        for (unsigned int i(0); i < numDims; ++i)
+          for (unsigned int j(0); j < numDims; ++j)
+            cout << s(i,j) << " ";
+        cout << endl;
+
+        cout << "    work: " << mechSource(cell,qp) << endl;
+        cout << "    dgam: " << dgam << endl;
+        cout << "    smag: " << smag << endl;
+        cout << "    n(s): " << norm(s) << endl;
       }
     }
   }

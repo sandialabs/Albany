@@ -52,31 +52,28 @@ namespace LCM {
     // Input:
     PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
     PHX::MDField<ScalarT,Cell,QuadPoint> Temperature;
-    PHX::MDField<ScalarT,Cell,QuadPoint> Tdot;
     PHX::MDField<ScalarT,Cell,QuadPoint> ThermalCond;
     PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim> TGrad;
     PHX::MDField<ScalarT,Cell,QuadPoint> Source;
-    Teuchos::Array<double> convectionVels;
-    PHX::MDField<ScalarT,Cell,QuadPoint> rhoCp;
     PHX::MDField<ScalarT,Cell,QuadPoint> Absorption;
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> F; // deformation gradient
     PHX::MDField<ScalarT,Cell,QuadPoint> mechSource; // mechanical heat source
+    PHX::MDField<ScalarT,Cell,Dummy> deltaTime; // time step
+    RealType density;
+    RealType Cv;
 
     // Output:
     PHX::MDField<ScalarT,Cell,Node> TResidual;
 
     bool haveSource;
-    bool haveConvection;
-    bool haveAbsorption;
-    bool enableTransient;
-    bool haverhoCp;
+    std::string tempName;
     unsigned int numQPs, numDims, worksetSize;
     Intrepid::FieldContainer<ScalarT> flux;
-    Intrepid::FieldContainer<ScalarT> aterm;
     Intrepid::FieldContainer<ScalarT> C;
     Intrepid::FieldContainer<ScalarT> Cinv;
     Intrepid::FieldContainer<ScalarT> CinvTgrad;
+    Intrepid::FieldContainer<ScalarT> Tdot;
   };
 }
 

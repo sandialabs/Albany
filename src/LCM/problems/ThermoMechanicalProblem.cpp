@@ -114,6 +114,8 @@ Albany::ThermoMechanicalProblem::getValidProblemParameters() const
   validPL->sublist("Yield Strength", false, "");
   validPL->set<RealType>("Reference Temperature", false, "");
   validPL->set<RealType>("Thermal Expansion Coefficient", false, "");
+  validPL->set<RealType>("Density", false, "");
+  validPL->set<RealType>("Heat Capacity", false, "");
 
   return validPL;
 }

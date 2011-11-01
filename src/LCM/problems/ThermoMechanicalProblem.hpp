@@ -505,12 +505,8 @@ void Albany::ThermoMechanicalProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
     p->set<string>("QP Variable Name", "Temperature");
 
-    p->set<string>("QP Time Derivative Variable Name", "Temperature_dot");
-
     p->set<bool>("Have Source", haveSource);
     p->set<string>("Source Name", "Source");
-
-    p->set<bool>("Have Absorption", false);
 
     p->set<string>("Deformation Gradient Name", "Deformation Gradient");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
@@ -525,6 +521,12 @@ void Albany::ThermoMechanicalProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
     p->set<string>("Mechanical Source Name", "Mechanical Source");
+    p->set<string>("Delta Time Name", "Delta Time");
+    p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
+    RealType density = params->get("Density", 1.0);
+    p->set<RealType>("Density", density);
+    RealType Cv = params->get("Heat Capacity", 1.0);
+    p->set<RealType>("Heat Capacity", Cv);
 
     //Output
     p->set<string>("Residual Name", "Thermo Mechanical Energy Residual");
@@ -532,24 +534,23 @@ void Albany::ThermoMechanicalProblem::constructEvaluators(
 
     ev = rcp(new LCM::ThermoMechanicalEnergyResidual<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+    p = stateMgr.registerStateVariable("Temperature",dl->qp_scalar, dl->dummy,"zero",true);
+    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
   }
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
-    cout << "build resid" << endl;
     PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter", dl->dummy);
     fm0.requireField<EvalT>(res_tag);
 
     PHX::Tag<typename EvalT::ScalarT> res_tag2(scatterName, dl->dummy);
     fm0.requireField<EvalT>(res_tag2);
-    cout << "end build resid" << endl;
   }
 
   else {
-    cout << "//Construct Responses" << endl;
     Teuchos::ParameterList& responseList = params->sublist("Response Functions");
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
     respUtils.constructResponses(fm0, responses, responseList, stateMgr);
-    cout << "end //Construct Responses" << endl;
   }
 }
 #endif // ALBANY_ELASTICITYPROBLEM_HPP

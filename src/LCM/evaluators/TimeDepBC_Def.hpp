@@ -35,9 +35,9 @@ TimeDepBC_Base(Teuchos::ParameterList& p) :
   timeValues = p.get<Teuchos::Array<RealType> >("Time Values").toVector();
   BCValues = p.get<Teuchos::Array<RealType> >("BC Values").toVector();
 
-  TEST_FOR_EXCEPTION( !(timeValues.size() == BCValues.size()),
-		      Teuchos::Exceptions::InvalidParameter,
-		      "Dimension of \"Time Values\" and \"BC Values\" do not match" );
+  TEUCHOS_TEST_FOR_EXCEPTION( !(timeValues.size() == BCValues.size()),
+			      Teuchos::Exceptions::InvalidParameter,
+			      "Dimension of \"Time Values\" and \"BC Values\" do not match" );
 }
 
 // **********************************************************************
@@ -46,9 +46,9 @@ typename TimeDepBC_Base<EvalT, Traits>::ScalarT
 TimeDepBC_Base<EvalT, Traits>::
 computeVal(RealType time)
 {
-  TEST_FOR_EXCEPTION( time > timeValues.back(),
-		      Teuchos::Exceptions::InvalidParameter,
-		      "Time is growing unbounded!" );
+  TEUCHOS_TEST_FOR_EXCEPTION( time > timeValues.back(),
+			      Teuchos::Exceptions::InvalidParameter,
+			      "Time is growing unbounded!" );
   ScalarT Val;
   RealType slope;
   unsigned int Index(0);

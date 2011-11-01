@@ -64,7 +64,7 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
 					    const bool outputToExodus)
 
 {
-  TEST_FOR_EXCEPT(stateVarsAreAllocated);
+  TEUCHOS_TEST_FOR_EXCEPT(stateVarsAreAllocated);
   statesToStore[stateName] = dl;
 
   
@@ -106,7 +106,7 @@ Albany::StateManager::getStateInfoStruct()
 void
 Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscretization>& disc_)
 {
-  TEST_FOR_EXCEPT(stateVarsAreAllocated);
+  TEUCHOS_TEST_FOR_EXCEPT(stateVarsAreAllocated);
   stateVarsAreAllocated = true;
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
@@ -160,17 +160,17 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
 		  sa[ws][stateName](cell, qp, i, j) = 0.0;
 	  break;
 	default:
-	  TEST_FOR_EXCEPTION(size<2||size>4, std::logic_error,
-			     "Something is wrong during zero state variable initialization: " << size);
+	  TEUCHOS_TEST_FOR_EXCEPTION(size<2||size>4, std::logic_error,
+				     "Something is wrong during zero state variable initialization: " << size);
         }
 
       }
       else if (init_type == "identity")
       {
         // we assume operating on the last two indices is correct
-        TEST_FOR_EXCEPTION(size != 4, std::logic_error,
-			   "Something is wrong during identity state variable initialization: " << size);
-        TEST_FOR_EXCEPT( ! (dims[2] == dims[3]) );
+        TEUCHOS_TEST_FOR_EXCEPTION(size != 4, std::logic_error,
+				   "Something is wrong during identity state variable initialization: " << size);
+        TEUCHOS_TEST_FOR_EXCEPT( ! (dims[2] == dims[3]) );
 
         for (int cell = 0; cell < dims[0]; ++cell)
           for (int qp = 0; qp < dims[1]; ++qp)
@@ -188,13 +188,13 @@ void
 Albany::StateManager::
 importStateData(Albany::StateArrays& statesToCopyFrom)
 {
-  TEST_FOR_EXCEPT(!stateVarsAreAllocated);
+  TEUCHOS_TEST_FOR_EXCEPT(!stateVarsAreAllocated);
 
   // Get states from STK mesh 
   Albany::StateArrays& sa = getStateArrays();
   int numWorksets = sa.size();
 
-  TEST_FOR_EXCEPT((unsigned int)numWorksets != statesToCopyFrom.size());
+  TEUCHOS_TEST_FOR_EXCEPT((unsigned int)numWorksets != statesToCopyFrom.size());
 
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   *out << std::endl;
@@ -238,8 +238,8 @@ importStateData(Albany::StateArrays& statesToCopyFrom)
 		sa[ws][stateName](cell, qp, i, j) = statesToCopyFrom[ws][stateName](cell, qp, i, j);
 	break;
       default:
-	TEST_FOR_EXCEPTION(size<2||size>4, std::logic_error,
-                "Something is wrong during zero state variable fill: " << size);
+	TEUCHOS_TEST_FOR_EXCEPTION(size<2||size>4, std::logic_error,
+				   "Something is wrong during zero state variable fill: " << size);
       }
     }
   }
@@ -250,14 +250,14 @@ importStateData(Albany::StateArrays& statesToCopyFrom)
 Albany::StateArray&
 Albany::StateManager::getStateArray(const int ws) const
 {
-  TEST_FOR_EXCEPT(!stateVarsAreAllocated);
+  TEUCHOS_TEST_FOR_EXCEPT(!stateVarsAreAllocated);
   return disc->getStateArrays()[ws];
 }
 
 Albany::StateArrays&
 Albany::StateManager::getStateArrays() const
 {
-  TEST_FOR_EXCEPT(!stateVarsAreAllocated);
+  TEUCHOS_TEST_FOR_EXCEPT(!stateVarsAreAllocated);
   return disc->getStateArrays();
 }
 
@@ -265,7 +265,7 @@ void
 Albany::StateManager::updateStates()
 {
   // Swap boolean that defines old and new (in terms of state1 and 2) in accessors
-  TEST_FOR_EXCEPT(!stateVarsAreAllocated);
+  TEUCHOS_TEST_FOR_EXCEPT(!stateVarsAreAllocated);
 
   // Get states from STK mesh 
   Albany::StateArrays& sa = disc->getStateArrays();
