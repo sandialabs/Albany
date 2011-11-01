@@ -156,8 +156,10 @@ evaluateFields(typename Traits::EvalData workset)
   if (isPoroElastic) {
     for (std::size_t cell=0; cell < numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-    	  porosity(cell,qp) = initialPorosity_value +
-    			  ( strain(cell,qp,0,0) + strain(cell,qp,1,1) + strain(cell,qp,2,2) );
+    	  porosity(cell,qp) = initialPorosity_value;
+    	  Teuchos::Array<MeshScalarT> point(numDims);
+    	  	for (std::size_t i=0; i<numDims; i++)
+    	  		porosity(cell,qp) += strain(cell,qp,i,i);
     	  // This equation is only vaild when that K_s >> K_f >> K
     	  // for large deformation, \phi = J \dot \phi_{o}
 

@@ -288,7 +288,7 @@ evaluateFields(typename Traits::EvalData workset)
    for (std::size_t cell=0; cell < workset.numCells; ++cell){
       for (std::size_t qp=0; qp < numQPs; ++qp) {
     	  for (std::size_t dim=0; dim <numDims; ++dim){
-    		  fluxdt(cell, qp, dim) = flux(cell,qp,dim)*dt;
+    		  fluxdt(cell, qp, dim) = flux(cell,qp,dim)*100.00; // should replace the number with dt
     	  }
       }
   }
