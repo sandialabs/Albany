@@ -105,11 +105,33 @@ Porosity(Teuchos::ParameterList& p) :
       new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
     	 	                                "Initial Porosity Value", this, paramLib);
 
+  //    GrainBulkModulus = elmd_list->get("Grain Bulk Modulus Value", 10.0e12); // typically Kgrain >> Kskeleton
+  //         new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
+  //                                         "Grain Bulk Modulus Value", this, paramLib);
+
   }
   else {
     isPoroElastic=false; // porosity will not change in this case.
     initialPorosity_value=0.0;
   }
+
+ // if ( p.isType<string>("Biot Coefficient Name") ) {
+ //      Teuchos::RCP<PHX::DataLayout> scalar_dl =
+ //        p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+  //     PHX::MDField<ScalarT,Cell,QuadPoint>
+ //        btp(p.get<string>("Biot Coefficient Name"), scalar_dl);
+ //      biotCoefficient = btp;
+ //      this->addDependentField(biotCoefficient);
+ //   }
+
+ // if ( p.isType<string>("QP Pore Pressure Name") ) {
+ //        Teuchos::RCP<PHX::DataLayout> scalar_dl =
+ //          p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+ //        PHX::MDField<ScalarT,Cell,QuadPoint>
+ //          ppn(p.get<string>("QP Pore Pressure Name"), scalar_dl);
+ //        biotCoefficient = ppn;
+ //        this->addDependentField(porePressure);
+//  }
 
 
   this->addEvaluatedField(porosity);
@@ -125,6 +147,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(porosity,fm);
   if (!is_constant) this->utils.setFieldData(coordVec,fm);
   if (isPoroElastic) this->utils.setFieldData(strain,fm);
+//  if (isPoroElastic) this->utils.setFieldData(biotCoefficient,fm);
 //  if (isPoroElastic) this->utils.setFieldData(porePressure,fm);
 
 }
@@ -157,10 +180,13 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t cell=0; cell < numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
     	  porosity(cell,qp) = initialPorosity_value;
+
     	  Teuchos::Array<MeshScalarT> point(numDims);
-    	  	for (std::size_t i=0; i<numDims; i++)
+    	  	for (std::size_t i=0; i<numDims; i++) {
     	  		porosity(cell,qp) += strain(cell,qp,i,i);
-    	  // This equation is only vaild when that K_s >> K_f >> K
+    	  	}
+//			porosity(cell,qp) += (1.0 - initialPorosity_value)
+//								  /GrainBulkModulus*porePressure(cell,qp);
     	  // for large deformation, \phi = J \dot \phi_{o}
 
       }
@@ -177,6 +203,8 @@ Porosity<EvalT,Traits>::getValue(const std::string &n)
     return constant_value;
   else if (n == "Initial Porosity Value")
     return initialPorosity_value;
+//  else if (n == "Grain Bulk Modulus Value")
+ //        return GrainBulkModulus;
   for (int i=0; i<rv.size(); i++) {
     if (n == Albany::strint("Porosity KL Random Variable",i))
       return rv[i];

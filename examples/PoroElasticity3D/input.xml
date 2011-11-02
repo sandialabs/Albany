@@ -18,6 +18,11 @@
 	
 	
 	<!-- MATERIAL MODEL/PROPERTIES -->
+		<!--Stabilization Parameter -->
+	<ParameterList name="Stabilization Parameter">
+	 <Parameter name="Type" type="string" value="Constant"/>
+	 <Parameter name="Value" type="double" value="100.0"/>
+	</ParameterList>
 	<!-- Pore Fluid Diffusion Parameter -->
 	<ParameterList name="Porosity">
     <Parameter name="Porosity Type" type="string" value="Constant"/>

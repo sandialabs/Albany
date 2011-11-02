@@ -156,6 +156,8 @@ namespace Albany {
 #include "PHAL_Source.hpp"
 #include "PoroElasticityResidMass.hpp"
 
+#include "PHAL_NSMaterialProperty.hpp"
+
 
 template <typename EvalT>
 void Albany::PoroElasticityProblem::constructEvaluators(
@@ -272,6 +274,21 @@ void Albany::PoroElasticityProblem::constructEvaluators(
      fm0.template registerEvaluator<EvalT>(ev);
    }
 
+   { // Constant Stabilization Parameter
+        RCP<ParameterList> p = rcp(new ParameterList);
+
+        p->set<string>("Material Property Name", "Stabilization Parameter");
+        p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+        p->set<string>("Coordinate Vector Name", "Coord Vec");
+        p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
+        p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+        Teuchos::ParameterList& paramList = params->sublist("Stabilization Parameter");
+        p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+        ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+      }
+
 
    { // Strain
      RCP<ParameterList> p = rcp(new ParameterList("Strain"));
@@ -303,11 +320,12 @@ void Albany::PoroElasticityProblem::constructEvaluators(
 	  Teuchos::ParameterList& paramList = params->sublist("Porosity");
 	  p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-	  // Setting this turns on linear dependence of E on T, E = E_ + dEdT*T)
+	  // Setting this turns on dependence of strain and pore pressure)
 	  p->set<string>("Strain Name", "Strain");
 	  p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-	  p->set<string>("QP Pore Pressure Name", "Pore Pressure");
-	  p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+//	  p->set<string>("QP Pore Pressure Name", "Pore Pressure");
+//	  p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+//	  p->set<string>("Biot Coefficient Name", "Biot Coefficient");
 
           ev = rcp(new LCM::Porosity<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
@@ -532,17 +550,18 @@ void Albany::PoroElasticityProblem::constructEvaluators(
     p->set<string>("Weighted BF Name", "wBF");
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
 
-    p->set<string>("QP Pore Pressure Name", "Pore Pressure");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-    p->set<string>("QP Time Derivative Variable Name", "Pore Pressure");
-
     p->set<bool>("Have Source", false);
     p->set<string>("Source Name", "Source");
 
     p->set<bool>("Have Absorption", false);
 
     // Input from cubature points
+    p->set<string>("QP Pore Pressure Name", "Pore Pressure");
+	p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+	p->set<string>("QP Time Derivative Variable Name", "Pore Pressure");
+
+	p->set<string>("Material Property Name", "Stabilization Parameter");
     p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
     p->set<string>("Porosity Name", "Porosity");
     p->set<string>("Kozeny-Carman Permeability Name", "Kozeny-Carman Permeability");

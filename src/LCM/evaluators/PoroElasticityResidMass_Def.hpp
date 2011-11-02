@@ -32,6 +32,8 @@ namespace LCM {
 		  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     Tdot        (p.get<std::string>                   ("QP Time Derivative Variable Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	stabParameter        (p.get<std::string>                   ("Material Property Name"),
+		 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     ThermalCond (p.get<std::string>                   ("Thermal Conductivity Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     kcPermeability (p.get<std::string>            ("Kozeny-Carman Permeability Name"),
@@ -69,6 +71,7 @@ namespace LCM {
       enableTransient = !p.get<bool>("Disable Transient");
     else enableTransient = true;
 
+    this->addDependentField(stabParameter);
     this->addDependentField(deltaTime);
     this->addDependentField(weights);
     this->addDependentField(coordVec);
@@ -149,6 +152,7 @@ namespace LCM {
   postRegistrationSetup(typename Traits::SetupData d,
 			PHX::FieldManager<Traits>& fm)
   {
+	this->utils.setFieldData(stabParameter,fm);
 	this->utils.setFieldData(deltaTime,fm);
 	this->utils.setFieldData(weights,fm);
     this->utils.setFieldData(coordVec,fm);
@@ -288,7 +292,7 @@ evaluateFields(typename Traits::EvalData workset)
    for (std::size_t cell=0; cell < workset.numCells; ++cell){
       for (std::size_t qp=0; qp < numQPs; ++qp) {
     	  for (std::size_t dim=0; dim <numDims; ++dim){
-    		  fluxdt(cell, qp, dim) = flux(cell,qp,dim)*100.00; // should replace the number with dt
+    		  fluxdt(cell, qp, dim) = -flux(cell,qp,dim)*dt; // should replace the number with dt
     	  }
       }
   }
@@ -326,22 +330,15 @@ evaluateFields(typename Traits::EvalData workset)
  				  TResidual(cell,node) -= (porePressure(cell, qp)
  						                  -porePressureold(cell, qp)
  						                               )
-                    		                    		*1000.0/biotModulus(cell, qp)*
+                    		                    		*stabParameter(cell, qp)/biotModulus(cell, qp)*
                     		                    		wBF(cell, node, qp);
- 				  TResidual(cell,node) += pterm(cell,qp)*1000.0/biotModulus(cell, qp)*
+ 				  TResidual(cell,node) += pterm(cell,qp)*stabParameter(cell, qp)/biotModulus(cell, qp)*
                   		wBF(cell, node, qp);
 
 
 		  }
 	  }
   }
-
-//cout << deltaTime(0) << " dt \n";
-//cout << porePressureold(2,2) << "Pore Pressure at Previous Step \n";
-//cout << porosityold(2,2) << "Porosity at Previous Step \n";
-//cout << porePressure(2,2) << "Pore Pressure at Current Step \n";
-//cout << porosity(2,2) << "Porosity at Current Step \n";
-
 
 
 
