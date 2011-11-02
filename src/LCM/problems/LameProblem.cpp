@@ -15,8 +15,7 @@
 \********************************************************************/
 
 #include "LameProblem.hpp"
-#include "Albany_SolutionAverageResponseFunction.hpp"
-#include "Albany_SolutionTwoNormResponseFunction.hpp"
+#include "Albany_ResponseFactory.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemUtils.hpp"
 
@@ -54,40 +53,46 @@ Albany::LameProblem::
 void
 Albany::LameProblem::
 buildProblem(
-    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
-    Albany::StateManager& stateMgr,
-    Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
+  const Teuchos::RCP<Albany::Application>& app,
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+  Albany::StateManager& stateMgr,
+  Teuchos::Array< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
   /* Construct All Phalanx Evaluators */
   int physSets = meshSpecs.size();
-  cout << "Lame Problem: Num MeshSpecs: " << physSets << endl;
-  fm.resize(physSets); rfm.resize(physSets);
+  cout << "Lame Num MeshSpecs: " << physSets << endl;
+  fm.resize(physSets);
 
   for (int ps=0; ps<physSets; ps++) {
     fm[ps]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-    rfm[ps] = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-
-    constructResidEvaluators<PHAL::AlbanyTraits::Residual  >(*fm[ps], *meshSpecs[ps], stateMgr);
-    constructResidEvaluators<PHAL::AlbanyTraits::Jacobian  >(*fm[ps], *meshSpecs[ps], stateMgr);
-    constructResidEvaluators<PHAL::AlbanyTraits::Tangent   >(*fm[ps], *meshSpecs[ps], stateMgr);
-    constructResidEvaluators<PHAL::AlbanyTraits::SGResidual>(*fm[ps], *meshSpecs[ps], stateMgr);
-    constructResidEvaluators<PHAL::AlbanyTraits::SGJacobian>(*fm[ps], *meshSpecs[ps], stateMgr);
-    constructResidEvaluators<PHAL::AlbanyTraits::SGTangent >(*fm[ps], *meshSpecs[ps], stateMgr);
-    constructResidEvaluators<PHAL::AlbanyTraits::MPResidual>(*fm[ps], *meshSpecs[ps], stateMgr);
-    constructResidEvaluators<PHAL::AlbanyTraits::MPJacobian>(*fm[ps], *meshSpecs[ps], stateMgr);
-    constructResidEvaluators<PHAL::AlbanyTraits::MPTangent >(*fm[ps], *meshSpecs[ps], stateMgr);
-    constructResponseEvaluators<PHAL::AlbanyTraits::Residual  >(*rfm[ps], *meshSpecs[ps], stateMgr, responses);
-    constructResponseEvaluators<PHAL::AlbanyTraits::Jacobian  >(*rfm[ps], *meshSpecs[ps], stateMgr);
-    constructResponseEvaluators<PHAL::AlbanyTraits::Tangent   >(*rfm[ps], *meshSpecs[ps], stateMgr);
-    constructResponseEvaluators<PHAL::AlbanyTraits::SGResidual>(*rfm[ps], *meshSpecs[ps], stateMgr);
-    constructResponseEvaluators<PHAL::AlbanyTraits::SGJacobian>(*rfm[ps], *meshSpecs[ps], stateMgr);
-    constructResponseEvaluators<PHAL::AlbanyTraits::SGTangent >(*rfm[ps], *meshSpecs[ps], stateMgr);
-    constructResponseEvaluators<PHAL::AlbanyTraits::MPResidual>(*rfm[ps], *meshSpecs[ps], stateMgr);
-    constructResponseEvaluators<PHAL::AlbanyTraits::MPJacobian>(*rfm[ps], *meshSpecs[ps], stateMgr);
-    constructResponseEvaluators<PHAL::AlbanyTraits::MPTangent >(*rfm[ps], *meshSpecs[ps], stateMgr);
+    buildEvaluators(*fm[ps], *meshSpecs[ps], stateMgr, BUILD_RESID_FM, 
+		    Teuchos::null);
   }
-
   constructDirichletEvaluators(*meshSpecs[0]);
+
+  // Construct responses
+  Teuchos::ParameterList& responseList = 
+    params->sublist("Response Functions");
+  ResponseFactory responseFactory(app, Teuchos::rcp(this,false), meshSpecs, 
+				  Teuchos::rcp(&stateMgr,false));
+  responses = responseFactory.createResponseFunctions(responseList);
+}
+
+Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
+Albany::LameProblem::
+buildEvaluators(
+  PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+  const Albany::MeshSpecsStruct& meshSpecs,
+  Albany::StateManager& stateMgr,
+  Albany::FieldManagerChoice fmchoice,
+  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+{
+  // Call constructeEvaluators<EvalT>(*rfm[0], meshSpecs, stateMgr);
+  // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
+  ConstructEvaluatorsOp<LameProblem> op(
+    *this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
+  boost::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(op);
+  return *op.tags;
 }
 
 void

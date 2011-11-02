@@ -1,0 +1,410 @@
+/********************************************************************\
+*            Albany, Copyright (2010) Sandia Corporation             *
+*                                                                    *
+* Notice: This computer software was prepared by Sandia Corporation, *
+* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
+* the Department of Energy (DOE). All rights in the computer software*
+* are reserved by DOE on behalf of the United States Government and  *
+* the Contractor as provided in the Contract. You are authorized to  *
+* use this computer software for Governmental purposes but it is not *
+* to be released or distributed to the public. NEITHER THE GOVERNMENT*
+* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
+* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
+* including this sentence must appear on any copies of this software.*
+*    Questions to Andy Salinger, agsalin@sandia.gov                  *
+\********************************************************************/
+
+#include "Albany_SamplingBasedScalarResponseFunction.hpp"
+
+using Teuchos::RCP;
+using Teuchos::rcp;
+
+void
+Albany::SamplingBasedScalarResponseFunction::
+init_sg(
+  const Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> >& basis_,
+  const Teuchos::RCP<const Stokhos::Quadrature<int,double> >& quad_,
+  const Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> >& expansion_,
+  const Teuchos::RCP<const EpetraExt::MultiComm>& multiComm_)
+{
+  basis = basis_;
+  quad = quad_;
+}
+
+void
+Albany::SamplingBasedScalarResponseFunction::
+evaluateSGResponse(
+  const double curr_time,
+  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+  const Stokhos::EpetraVectorOrthogPoly& sg_x,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& sg_p_index,
+  const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+  Stokhos::EpetraVectorOrthogPoly& sg_g)
+{
+  RCP<const Epetra_BlockMap> x_map = sg_x.coefficientMap();
+  RCP<Epetra_Vector> xdot;
+  if (sg_xdot != NULL)
+    xdot = rcp(new Epetra_Vector(*x_map));
+  Epetra_Vector x(*x_map);
+  Teuchos::Array<ParamVec> pp = p;
+  
+  RCP<const Epetra_BlockMap> g_map = sg_g.coefficientMap();
+  Epetra_Vector g(*g_map);
+
+  // Get quadrature data
+  const Teuchos::Array<double>& norms = basis->norm_squared();
+  const Teuchos::Array< Teuchos::Array<double> >& points = 
+    quad->getQuadPoints();
+  const Teuchos::Array<double>& weights = quad->getQuadWeights();
+  const Teuchos::Array< Teuchos::Array<double> >& vals = 
+    quad->getBasisAtQuadPoints();
+  int nqp = points.size();
+
+  // Compute sg_g via quadrature
+  sg_g.init(0.0);
+  for (int qp=0; qp<nqp; qp++) {
+
+    // Evaluate sg_x, sg_xdot at quadrature point
+    sg_x.evaluate(vals[qp], x);
+    if (sg_xdot != NULL)
+      sg_xdot->evaluate(vals[qp], *xdot);
+
+    // Evaluate parameters at quadrature point
+    for (int i=0; i<sg_p_index.size(); i++) {
+      int ii = sg_p_index[i];
+      for (unsigned int j=0; j<pp[ii].size(); j++)
+	pp[ii][j].baseValue = sg_p_vals[ii][j].evaluate(points[qp], vals[qp]);
+    }
+
+    // Compute response at quadrature point
+    evaluateResponse(curr_time, xdot.get(), x, pp, g);
+
+    // Add result into integral
+    sg_g.sumIntoAllTerms(weights[qp], vals[qp], norms, g);
+  }
+}
+
+void
+Albany::SamplingBasedScalarResponseFunction::
+evaluateSGTangent(
+  const double alpha, 
+  const double beta, 
+  const double current_time,
+  bool sum_derivs,
+  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+  const Stokhos::EpetraVectorOrthogPoly& sg_x,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& sg_p_index,
+  const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+  ParamVec* deriv_p,
+  const Epetra_MultiVector* Vx,
+  const Epetra_MultiVector* Vxdot,
+  const Epetra_MultiVector* Vp,
+  Stokhos::EpetraVectorOrthogPoly* sg_g,
+  Stokhos::EpetraMultiVectorOrthogPoly* sg_JV,
+  Stokhos::EpetraMultiVectorOrthogPoly* sg_gp)
+{
+  RCP<const Epetra_BlockMap> x_map = sg_x.coefficientMap();
+  RCP<Epetra_Vector> xdot;
+  if (sg_xdot != NULL)
+    xdot = rcp(new Epetra_Vector(*x_map));
+  Epetra_Vector x(*x_map);
+  Teuchos::Array<ParamVec> pp = p;
+  
+  RCP<Epetra_Vector> g;
+  if (sg_g != NULL) {
+    sg_g->init(0.0);
+    g = rcp(new Epetra_Vector(*(sg_g->coefficientMap())));
+  }
+
+  RCP<Epetra_MultiVector> JV;
+  if (sg_JV != NULL) {
+    sg_JV->init(0.0);
+    JV = rcp(new Epetra_MultiVector(*(sg_JV->coefficientMap()), 
+				    sg_JV->numVectors()));
+  }
+
+  RCP<Epetra_MultiVector> gp;
+  if (sg_gp != NULL) {
+    sg_gp->init(0.0);
+    gp = rcp(new Epetra_MultiVector(*(sg_gp->coefficientMap()), 
+				    sg_gp->numVectors()));
+  }
+
+  // Get quadrature data
+  const Teuchos::Array<double>& norms = basis->norm_squared();
+  const Teuchos::Array< Teuchos::Array<double> >& points = 
+    quad->getQuadPoints();
+  const Teuchos::Array<double>& weights = quad->getQuadWeights();
+  const Teuchos::Array< Teuchos::Array<double> >& vals = 
+    quad->getBasisAtQuadPoints();
+  int nqp = points.size();
+
+  // Compute sg_g via quadrature
+  for (int qp=0; qp<nqp; qp++) {
+
+    // Evaluate sg_x, sg_xdot at quadrature point
+    sg_x.evaluate(vals[qp], x);
+    if (sg_xdot != NULL)
+      sg_xdot->evaluate(vals[qp], *xdot);
+
+    // Evaluate parameters at quadrature point
+    for (int i=0; i<sg_p_index.size(); i++) {
+      int ii = sg_p_index[i];
+      for (unsigned int j=0; j<pp[ii].size(); j++) {
+	pp[ii][j].baseValue = sg_p_vals[ii][j].evaluate(points[qp], vals[qp]);
+	if (deriv_p != NULL) {
+	  for (unsigned int k=0; k<deriv_p->size(); k++)
+	    if ((*deriv_p)[k].family->getName() == pp[ii][j].family->getName())
+	      (*deriv_p)[k].baseValue = pp[ii][j].baseValue;
+	}
+      }
+    }
+
+    // Compute response at quadrature point
+    evaluateTangent(alpha, beta, current_time, sum_derivs, 
+		    xdot.get(), x, pp, deriv_p, Vx, Vxdot, Vp,
+		    g.get(), JV.get(), gp.get());
+
+    // Add result into integral
+    if (sg_g != NULL)
+      sg_g->sumIntoAllTerms(weights[qp], vals[qp], norms, *g);
+    if (sg_JV != NULL)
+      sg_JV->sumIntoAllTerms(weights[qp], vals[qp], norms, *JV);
+    if (sg_gp != NULL)
+      sg_gp->sumIntoAllTerms(weights[qp], vals[qp], norms, *gp);
+  }
+}
+
+void
+Albany::SamplingBasedScalarResponseFunction::
+evaluateSGGradient(
+  const double current_time,
+  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+  const Stokhos::EpetraVectorOrthogPoly& sg_x,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& sg_p_index,
+  const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+  ParamVec* deriv_p,
+  Stokhos::EpetraVectorOrthogPoly* sg_g,
+  Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dx,
+  Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdot,
+  Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dp)
+{
+  RCP<const Epetra_BlockMap> x_map = sg_x.coefficientMap();
+  RCP<Epetra_Vector> xdot;
+  if (sg_xdot != NULL)
+    xdot = rcp(new Epetra_Vector(*x_map));
+  Epetra_Vector x(*x_map);
+  Teuchos::Array<ParamVec> pp = p;
+
+  RCP<Epetra_Vector> g;
+  if (sg_g != NULL) {
+    sg_g->init(0.0);
+    g = rcp(new Epetra_Vector(*(sg_g->coefficientMap())));
+  }
+
+  RCP<Epetra_MultiVector> dg_dx;
+  if (sg_dg_dx != NULL) {
+    sg_dg_dx->init(0.0);
+    dg_dx = rcp(new Epetra_MultiVector(*(sg_dg_dx->coefficientMap()), 
+				       sg_dg_dx->numVectors()));
+  }
+
+  RCP<Epetra_MultiVector> dg_dxdot;
+  if (sg_dg_dxdot != NULL) {
+    sg_dg_dxdot->init(0.0);
+    dg_dxdot = rcp(new Epetra_MultiVector(*(sg_dg_dxdot->coefficientMap()), 
+					  sg_dg_dxdot->numVectors()));
+  }
+
+  RCP<Epetra_MultiVector> dg_dp;
+  if (sg_dg_dp != NULL) {
+    sg_dg_dp->init(0.0);
+    dg_dp = rcp(new Epetra_MultiVector(*(sg_dg_dp->coefficientMap()), 
+				       sg_dg_dp->numVectors()));
+  }
+
+  // Get quadrature data
+  const Teuchos::Array<double>& norms = basis->norm_squared();
+  const Teuchos::Array< Teuchos::Array<double> >& points = 
+    quad->getQuadPoints();
+  const Teuchos::Array<double>& weights = quad->getQuadWeights();
+  const Teuchos::Array< Teuchos::Array<double> >& vals = 
+    quad->getBasisAtQuadPoints();
+  int nqp = points.size();
+
+  // Compute sg_g via quadrature
+  for (int qp=0; qp<nqp; qp++) {
+
+    // Evaluate sg_x, sg_xdot at quadrature point
+    sg_x.evaluate(vals[qp], x);
+    if (sg_xdot != NULL)
+      sg_xdot->evaluate(vals[qp], *xdot);
+
+    // Evaluate parameters at quadrature point
+    for (int i=0; i<sg_p_index.size(); i++) {
+      int ii = sg_p_index[i];
+      for (unsigned int j=0; j<pp[ii].size(); j++) {
+	pp[ii][j].baseValue = sg_p_vals[ii][j].evaluate(points[qp], vals[qp]);
+	if (deriv_p != NULL) {
+	  for (unsigned int k=0; k<deriv_p->size(); k++)
+	    if ((*deriv_p)[k].family->getName() == pp[ii][j].family->getName())
+	      (*deriv_p)[k].baseValue = pp[ii][j].baseValue;
+	}
+      }
+    }
+
+    // Compute response at quadrature point
+    evaluateGradient(current_time, xdot.get(), x, pp, deriv_p,
+		     g.get(), dg_dx.get(), dg_dxdot.get(), dg_dp.get());
+
+    // Add result into integral
+    if (sg_g != NULL)
+      sg_g->sumIntoAllTerms(weights[qp], vals[qp], norms, *g);
+    if (sg_dg_dx != NULL)
+      sg_dg_dx->sumIntoAllTerms(weights[qp], vals[qp], norms, *dg_dx);
+    if (sg_dg_dxdot != NULL)
+      sg_dg_dxdot->sumIntoAllTerms(weights[qp], vals[qp], norms, *dg_dxdot);
+    if (sg_dg_dp != NULL)
+      sg_dg_dp->sumIntoAllTerms(weights[qp], vals[qp], norms, *dg_dp);
+  }
+}
+
+void
+Albany::SamplingBasedScalarResponseFunction::
+evaluateMPResponse(
+  const double curr_time,
+  const Stokhos::ProductEpetraVector* mp_xdot,
+  const Stokhos::ProductEpetraVector& mp_x,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& mp_p_index,
+  const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+  Stokhos::ProductEpetraVector& mp_g)
+{
+  Teuchos::Array<ParamVec> pp = p;
+  const Epetra_Vector* xdot = NULL;
+
+  for (int i=0; i<mp_x.size(); i++) {
+
+    for (int k=0; k<mp_p_index.size(); k++) {
+      int kk = mp_p_index[k];
+      for (unsigned int j=0; j<pp[kk].size(); j++)
+	pp[kk][j].baseValue = mp_p_vals[kk][j].coeff(i);
+    }
+
+    if (mp_xdot != NULL)
+      xdot = mp_xdot->getCoeffPtr(i).get();
+    
+    // Evaluate response function
+    evaluateResponse(curr_time, xdot, mp_x[i], pp, mp_g[i]);
+  }
+}
+
+void
+Albany::SamplingBasedScalarResponseFunction::
+evaluateMPTangent(
+  const double alpha, 
+  const double beta, 
+  const double current_time,
+  bool sum_derivs,
+  const Stokhos::ProductEpetraVector* mp_xdot,
+  const Stokhos::ProductEpetraVector& mp_x,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& mp_p_index,
+  const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+  ParamVec* deriv_p,
+  const Epetra_MultiVector* Vx,
+  const Epetra_MultiVector* Vxdot,
+  const Epetra_MultiVector* Vp,
+  Stokhos::ProductEpetraVector* mp_g,
+  Stokhos::ProductEpetraMultiVector* mp_JV,
+  Stokhos::ProductEpetraMultiVector* mp_gp)
+{
+  Teuchos::Array<ParamVec> pp = p;
+  const Epetra_Vector* xdot = NULL;
+  Epetra_Vector* g = NULL;
+  Epetra_MultiVector* JV = NULL;
+  Epetra_MultiVector* gp = NULL;
+  for (int i=0; i<mp_x.size(); i++) {
+
+    for (int k=0; k<mp_p_index.size(); k++) {
+      int kk = mp_p_index[k];
+      for (unsigned int j=0; j<pp[kk].size(); j++) {
+	pp[kk][j].baseValue = mp_p_vals[kk][j].coeff(i);
+	if (deriv_p != NULL) {
+	  for (unsigned int l=0; l<deriv_p->size(); l++)
+	    if ((*deriv_p)[l].family->getName() == pp[kk][j].family->getName())
+	      (*deriv_p)[l].baseValue = pp[kk][j].baseValue;
+	}
+      }
+    }
+
+    if (mp_xdot != NULL)
+      xdot = mp_xdot->getCoeffPtr(i).get();
+    if (mp_g != NULL)
+      g = mp_g->getCoeffPtr(i).get();
+    if (mp_JV != NULL)
+      JV = mp_JV->getCoeffPtr(i).get();
+    if(mp_gp != NULL)
+      gp = mp_gp->getCoeffPtr(i).get();
+    
+    // Evaluate response function
+    evaluateTangent(alpha, beta, current_time, sum_derivs,
+		    xdot, mp_x[i], pp, deriv_p, Vx, Vxdot, Vp,
+		    g, JV, gp);
+  }
+}
+
+void
+Albany::SamplingBasedScalarResponseFunction::
+evaluateMPGradient(
+  const double current_time,
+  const Stokhos::ProductEpetraVector* mp_xdot,
+  const Stokhos::ProductEpetraVector& mp_x,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& mp_p_index,
+  const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+  ParamVec* deriv_p,
+  Stokhos::ProductEpetraVector* mp_g,
+  Stokhos::ProductEpetraMultiVector* mp_dg_dx,
+  Stokhos::ProductEpetraMultiVector* mp_dg_dxdot,
+  Stokhos::ProductEpetraMultiVector* mp_dg_dp)
+{
+  Teuchos::Array<ParamVec> pp = p;
+  const Epetra_Vector* xdot = NULL;
+  Epetra_Vector* g = NULL;
+  Epetra_MultiVector* dg_dx = NULL;
+  Epetra_MultiVector* dg_dxdot = NULL;
+  Epetra_MultiVector* dg_dp = NULL;
+  for (int i=0; i<mp_x.size(); i++) {
+
+    for (int k=0; k<mp_p_index.size(); k++) {
+      int kk = mp_p_index[k];
+      for (unsigned int j=0; j<pp[kk].size(); j++) {
+	pp[kk][j].baseValue = mp_p_vals[kk][j].coeff(i);
+	if (deriv_p != NULL) {
+	  for (unsigned int l=0; l<deriv_p->size(); l++)
+	    if ((*deriv_p)[l].family->getName() == pp[kk][j].family->getName())
+	      (*deriv_p)[l].baseValue = pp[kk][j].baseValue;
+	}
+      }
+    }
+
+    if (mp_xdot != NULL)
+      xdot = mp_xdot->getCoeffPtr(i).get();
+    if (mp_g != NULL)
+      g = mp_g->getCoeffPtr(i).get();
+    if (mp_dg_dx != NULL)
+      dg_dx = mp_dg_dx->getCoeffPtr(i).get();
+    if(mp_dg_dxdot != NULL)
+      dg_dxdot = mp_dg_dxdot->getCoeffPtr(i).get();
+    if (mp_dg_dp != NULL)
+      dg_dp = mp_dg_dp->getCoeffPtr(i).get();
+    
+    // Evaluate response function
+    evaluateGradient(current_time, xdot, mp_x[i], pp, deriv_p, 
+		     g, dg_dx, dg_dxdot, dg_dp);
+  }
+}

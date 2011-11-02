@@ -37,19 +37,31 @@ namespace Albany {
   public:
   
     //! Default constructor
-    NavierStokes(
-                         const Teuchos::RCP<Teuchos::ParameterList>& params,
-                         const Teuchos::RCP<ParamLib>& paramLib,
-                         const int numDim_);
+    NavierStokes(const Teuchos::RCP<Teuchos::ParameterList>& params,
+		 const Teuchos::RCP<ParamLib>& paramLib,
+		 const int numDim_);
 
     //! Destructor
     ~NavierStokes();
 
-     //! Build the PDE instantiations, boundary conditions, and initial solution
-    void buildProblem(
-       Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
-       StateManager& stateMgr,
-       Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
+    //! Return number of spatial dimensions
+    virtual int spatialDimension() const { return numDim; }
+
+    //! Build the PDE instantiations, boundary conditions, and initial solution
+    virtual void buildProblem(
+      const Teuchos::RCP<Albany::Application>& app,
+      Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+      StateManager& stateMgr,
+      Teuchos::Array< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
+
+    // Build evaluators
+    virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
+    buildEvaluators(
+      PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+      const Albany::MeshSpecsStruct& meshSpecs,
+      Albany::StateManager& stateMgr,
+      Albany::FieldManagerChoice fmchoice,
+      const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
     //! Each problem must generate it's list of valide parameters
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
@@ -62,48 +74,16 @@ namespace Albany {
     //! Private to prohibit copying
     NavierStokes& operator=(const NavierStokes&);
 
+  public:
+
     //! Main problem setup routine. Not directly called, but indirectly by following functions
-    template <typename EvalT>
-    void constructEvaluators(
-            PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-            const Albany::MeshSpecsStruct& meshSpecs,
-            Albany::StateManager& stateMgr,
-            Albany::FieldManagerChoice fmchoice,
-            Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
-
-    //! Interface for Residual (PDE) field manager
-    template <typename EvalT>
-    void constructResidEvaluators(
-            PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-            const Albany::MeshSpecsStruct& meshSpecs,
-            Albany::StateManager& stateMgr)
-    {
-      Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> > junk;
-      constructEvaluators<EvalT>(fm0, meshSpecs, stateMgr, BUILD_RESID_FM, junk);
-    }
-
-    //! Interface for Response field manager, except for residual type
-    template <typename EvalT>
-    void constructResponseEvaluators(
-            PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-            const Albany::MeshSpecsStruct& meshSpecs,
-            Albany::StateManager& stateMgr)
-    {
-      Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> > junk;
-      constructEvaluators<EvalT>(fm0, meshSpecs, stateMgr, BUILD_RESPONSE_FM, junk);
-    }
-
-    //! Interface for Response field manager, Residual type.
-    // This version loads the responses variable, that needs to be constructed just once
-    template <typename EvalT>
-    void constructResponseEvaluators(
-            PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-            const Albany::MeshSpecsStruct& meshSpecs,
-            Albany::StateManager& stateMgr,
-            Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
-    {
-      constructEvaluators<EvalT>(fm0, meshSpecs, stateMgr, BUILD_RESPONSE_FM, responses);
-    }
+    template <typename EvalT> Teuchos::RCP<const PHX::FieldTag>
+    constructEvaluators(
+      PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+      const Albany::MeshSpecsStruct& meshSpecs,
+      Albany::StateManager& stateMgr,
+      Albany::FieldManagerChoice fmchoice,
+      const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
     void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
 
@@ -174,12 +154,13 @@ namespace Albany {
 #include "PHAL_NSNeutronEqResid.hpp"
 
 template <typename EvalT>
-void Albany::NavierStokes::constructEvaluators(
-        PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-        const Albany::MeshSpecsStruct& meshSpecs,
-        Albany::StateManager& stateMgr,
-        Albany::FieldManagerChoice fieldManagerChoice,
-        Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
+Teuchos::RCP<const PHX::FieldTag>
+Albany::NavierStokes::constructEvaluators(
+  PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+  const Albany::MeshSpecsStruct& meshSpecs,
+  Albany::StateManager& stateMgr,
+  Albany::FieldManagerChoice fieldManagerChoice,
+  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   using Teuchos::RCP;
   using Teuchos::rcp;
@@ -980,26 +961,31 @@ void Albany::NavierStokes::constructEvaluators(
   }
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
+    Teuchos::RCP<const PHX::FieldTag> ret_tag;
     if (haveFlowEq) {
       PHX::Tag<typename EvalT::ScalarT> mom_tag("Scatter Momentum", dl->dummy);
       fm0.requireField<EvalT>(mom_tag);
       PHX::Tag<typename EvalT::ScalarT> con_tag("Scatter Continuity", dl->dummy);
       fm0.requireField<EvalT>(con_tag);
+      ret_tag = mom_tag.clone();
     }
     if (haveHeatEq) {
       PHX::Tag<typename EvalT::ScalarT> heat_tag("Scatter Temperature", dl->dummy);
       fm0.requireField<EvalT>(heat_tag);
+      ret_tag = heat_tag.clone();
     }
     if (haveNeutEq) {
       PHX::Tag<typename EvalT::ScalarT> neut_tag("Scatter Neutron", dl->dummy);
       fm0.requireField<EvalT>(neut_tag);
+      ret_tag = neut_tag.clone();
     }
+    return ret_tag;
   }
-  else {
-    Teuchos::ParameterList& responseList = params->sublist("Response Functions");
+  else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
-    respUtils.constructResponses(fm0, responses, responseList, stateMgr);
+    return respUtils.constructResponses(fm0, *responseList, stateMgr);
   }
 
+  return Teuchos::null;
 }
 #endif // ALBANY_NAVIERSTOKES_HPP

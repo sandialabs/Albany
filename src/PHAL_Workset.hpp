@@ -30,11 +30,18 @@
 #include "Stokhos_EpetraVectorOrthogPoly.hpp"
 #include "Stokhos_EpetraMultiVectorOrthogPoly.hpp"
 #include <Intrepid_FieldContainer.hpp>
+
 #include "PHAL_AlbanyTraits.hpp"
+#include "PHAL_TypeKeyMap.hpp"
+#include "Teuchos_RCP.hpp"
+#include "Teuchos_Comm.hpp"
+#include "Epetra_Import.h"
 
 namespace PHAL {
 
 struct Workset {
+
+  typedef AlbanyTraits::EvalTypes ET;
   
   Workset() :
     transientTerms(false), ignore_residual(false) {}
@@ -114,6 +121,59 @@ struct Workset {
   //  or multivector of values for each "Response" requested by user.
   Teuchos::ArrayRCP< Teuchos::RCP< Epetra_Vector > >      responses;
   Teuchos::ArrayRCP< Teuchos::RCP< Epetra_MultiVector > > responseDerivatives;
+
+
+  // New field manager response stuff
+  Teuchos::RCP<const Teuchos::Comm<int> > comm;
+  Teuchos::RCP<const Epetra_Import> x_importer;
+  Teuchos::RCP<Epetra_Vector> g;
+  Teuchos::RCP<Epetra_MultiVector> dgdx;
+  Teuchos::RCP<Epetra_MultiVector> dgdxdot;
+  Teuchos::RCP<Epetra_MultiVector> overlapped_dgdx;
+  Teuchos::RCP<Epetra_MultiVector> overlapped_dgdxdot;
+  Teuchos::RCP<Epetra_MultiVector> dgdp;
+  Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > sg_g;
+  Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_dgdx;
+  Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_dgdxdot;
+  Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > overlapped_sg_dgdx;
+  Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > overlapped_sg_dgdxdot;
+  Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_dgdp;
+  Teuchos::RCP< Stokhos::ProductEpetraVector > mp_g;
+  Teuchos::RCP< Stokhos::ProductEpetraMultiVector > mp_dgdx;
+  Teuchos::RCP< Stokhos::ProductEpetraMultiVector > mp_dgdxdot;
+  Teuchos::RCP< Stokhos::ProductEpetraMultiVector > overlapped_mp_dgdx;
+  Teuchos::RCP< Stokhos::ProductEpetraMultiVector > overlapped_mp_dgdxdot;
+  Teuchos::RCP< Stokhos::ProductEpetraMultiVector > mp_dgdp;
+
+  // Meta-function class encoding T<EvalT::ScalarT> given EvalT
+  // where T is any lambda expression (typically a placeholder expression)
+  template <typename T>
+  struct ApplyEvalT {
+    template <typename EvalT> struct apply {
+      typedef typename boost::mpl::apply<T, typename EvalT::ScalarT>::type type;
+    };
+  };
+
+  // Meta-function class encoding RCP<ValueTypeSerializer<int,T> > for a given
+  // type T.  This is to eliminate an error when using a placeholder expression
+  // for the same thing in CreateLambdaKeyMap below
+  struct ApplyVTS {
+    template <typename T>
+    struct apply {
+      typedef Teuchos::RCP< Teuchos::ValueTypeSerializer<int,T> > type;
+    };
+  };
+
+  // mpl::vector mapping evaluation type EvalT to serialization class
+  // ValueTypeSerializer<int, EvalT::ScalarT>, which is used for MPI
+  // communication of scalar types.
+  typedef typename 
+    PHAL::CreateLambdaKeyMap<AlbanyTraits::BEvalTypes,
+			     ApplyEvalT<ApplyVTS> >::type SerializerMap;
+
+  // Container storing serializers for each evaluation type
+  PHAL::TypeKeyMap<SerializerMap> serializerManager;
+  
 };
 
 }

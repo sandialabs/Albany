@@ -18,7 +18,7 @@
 #ifndef QCAD_RESPONSECENTEROFMASS_HPP
 #define QCAD_RESPONSECENTEROFMASS_HPP
 
-#include "PHAL_ResponseBase.hpp"
+#include "PHAL_SeparableScatterScalarResponse.hpp"
 
 namespace QCAD {
 /** 
@@ -26,18 +26,23 @@ namespace QCAD {
  */
   template<typename EvalT, typename Traits>
   class ResponseCenterOfMass : 
-    public PHAL::ResponseBase<EvalT, Traits>
+    public PHAL::SeparableScatterScalarResponse<EvalT,Traits>
   {
   public:
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
     
-    ResponseCenterOfMass(Teuchos::ParameterList& p);
+    ResponseCenterOfMass(Teuchos::ParameterList& p,
+			 const Teuchos::RCP<Albany::Layouts>& dl);
   
     void postRegistrationSetup(typename Traits::SetupData d,
 				     PHX::FieldManager<Traits>& vm);
+
+    void preEvaluate(typename Traits::PreEvalData d);
   
     void evaluateFields(typename Traits::EvalData d);
+
+    void postEvaluate(typename Traits::PostEvalData d);
 	  
   private:
     Teuchos::RCP<const Teuchos::ParameterList> getValidResponseParameters() const;

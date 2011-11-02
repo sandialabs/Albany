@@ -36,6 +36,7 @@ SET(HEADERS
 	PHAL_FactoryTraits.hpp 
 	PHAL_AlbanyTraits.hpp 
 	PHAL_Workset.hpp 
+	PHAL_TypeKeyMap.hpp
 	Albany_Application.hpp 
 	Albany_RythmosObserver.hpp 
 	Albany_NOXObserver.hpp 
@@ -86,19 +87,27 @@ SET(HEADERS ${HEADERS}
 
 #responses
 SET(SOURCES ${SOURCES}
+        responses/Albany_ScalarResponseFunction.cpp
+	responses/Albany_AggregateScalarResponseFunction.cpp
+	responses/Albany_SamplingBasedScalarResponseFunction.cpp
 	responses/Albany_SolutionAverageResponseFunction.cpp 
 	responses/Albany_SolutionMaxValueResponseFunction.cpp
 	responses/Albany_SolutionTwoNormResponseFunction.cpp
         responses/Albany_SolutionFileResponseFunction.cpp
-	responses/Albany_EvaluatedResponseFunction.cpp
+	responses/Albany_FieldManagerScalarResponseFunction.cpp
+	responses/Albany_ResponseFactory.cpp
   )
 SET(HEADERS ${HEADERS}
 	responses/Albany_AbstractResponseFunction.hpp 
+	responses/Albany_ScalarResponseFunction.hpp
+	responses/Albany_AggregateScalarResponseFunction.hpp
+	responses/Albany_SamplingBasedScalarResponseFunction.hpp
 	responses/Albany_SolutionAverageResponseFunction.hpp 
 	responses/Albany_SolutionMaxValueResponseFunction.hpp
 	responses/Albany_SolutionTwoNormResponseFunction.hpp
         responses/Albany_SolutionFileResponseFunction.hpp
-	responses/Albany_EvaluatedResponseFunction.hpp
+	responses/Albany_FieldManagerScalarResponseFunction.hpp
+	responses/Albany_ResponseFactory.hpp
   )
 
 #stk
@@ -156,9 +165,11 @@ SET(SOURCES ${SOURCES}
         evaluators/PHAL_NSTauT.cpp
         evaluators/PHAL_NSMaterialProperty.cpp
         evaluators/PHAL_NSBodyForce.cpp
-	evaluators/PHAL_ResponseBase.cpp
         evaluators/PHAL_NSPermeabilityTerm.cpp
         evaluators/PHAL_NSForchheimerTerm.cpp
+	evaluators/PHAL_ResponseFieldIntegral.cpp
+	evaluators/PHAL_ScatterScalarResponse.cpp
+	evaluators/PHAL_SeparableScatterScalarResponse.cpp
   )
 SET(HEADERS ${HEADERS}
 	evaluators/PHAL_GatherSolution.hpp 
@@ -227,12 +238,16 @@ SET(HEADERS ${HEADERS}
         evaluators/PHAL_NSMaterialProperty_Def.hpp 
         evaluators/PHAL_NSBodyForce.hpp
         evaluators/PHAL_NSBodyForce_Def.hpp
-        evaluators/PHAL_ResponseBase.hpp
-	evaluators/PHAL_ResponseBase_Def.hpp
         evaluators/PHAL_NSPermeabilityTerm.hpp
         evaluators/PHAL_NSPermeabilityTerm_Def.hpp 
         evaluators/PHAL_NSForchheimerTerm.hpp
         evaluators/PHAL_NSForchheimerTerm_Def.hpp
+	evaluators/PHAL_ResponseFieldIntegral.hpp
+	evaluators/PHAL_ResponseFieldIntegral_Def.hpp
+	evaluators/PHAL_ScatterScalarResponse.hpp
+	evaluators/PHAL_ScatterScalarResponse_Def.hpp
+	evaluators/PHAL_SeparableScatterScalarResponse.hpp
+	evaluators/PHAL_SeparableScatterScalarResponse_Def.hpp
   )
 
 # LCM

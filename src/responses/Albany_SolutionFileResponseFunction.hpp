@@ -18,10 +18,7 @@
 #ifndef ALBANY_SOLUTIONFILERESPONSEFUNCTION_HPP
 #define ALBANY_SOLUTIONFILERESPONSEFUNCTION_HPP
 
-#include "Albany_AbstractResponseFunction.hpp"
-#include "Epetra_Map.h"
-#include "Epetra_Import.h"
-#include "Epetra_Vector.h"
+#include "Albany_SamplingBasedScalarResponseFunction.hpp"
 
 namespace Albany {
 
@@ -29,11 +26,12 @@ namespace Albany {
    * \brief Response function representing the difference from a stored vector on disk
    */
   template<class VectorNorm>
-  class SolutionFileResponseFunction : public AbstractResponseFunction {
+  class SolutionFileResponseFunction : 
+    public SamplingBasedScalarResponseFunction {
   public:
   
     //! Default constructor
-    SolutionFileResponseFunction();
+    SolutionFileResponseFunction(const Teuchos::RCP<const Epetra_Comm>& comm);
 
     //! Destructor
     virtual ~SolutionFileResponseFunction();

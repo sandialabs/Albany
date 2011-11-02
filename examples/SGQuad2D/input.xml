@@ -31,7 +31,10 @@
     </ParameterList>
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="1"/>
-      <Parameter name="Response 0" type="string" value="Solution Average"/>
+      <Parameter name="Response 0" type="string" value="PHAL Field Integral"/>
+      <ParameterList name="ResponseParams 0">
+        <Parameter name="Field Name" type="string" value="Temperature"/>
+     </ParameterList>
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
@@ -41,11 +44,11 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{1.2696}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{1.2854}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)"
-		value="{-0.08035, -0.007679}"/>
+		value="{-0.08859, -0.008466}"/>
     <Parameter  name="Number of Dakota Comparisons" type="int" value="0"/>
   </ParameterList>
   <ParameterList name="Piro">

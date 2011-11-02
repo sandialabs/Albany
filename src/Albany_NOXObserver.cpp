@@ -62,6 +62,9 @@ void Albany_NOXObserver::observeSolution(
   //solution.MaxValue(&mx);
   //cout << setprecision(9) << "MaxValue " << mx << endl;
 
+  // Evaluate state field manager
+  app->evaluateStateFieldManager(time_or_param_val, NULL, solution);
+
   // This must come at the end since it renames the New state 
   // as the Old state in preparation for the next step
   app->getStateMgr().updateStates();

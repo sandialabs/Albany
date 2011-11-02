@@ -17,9 +17,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "PHAL_ResponseBase.hpp"
-#include "PHAL_ResponseBase_Def.hpp"
+#include "PHAL_SeparableScatterScalarResponse.hpp"
+#include "PHAL_SeparableScatterScalarResponse_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::ResponseBaseCommon)
-PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::ResponseBase)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::SeparableScatterScalarResponse)
 

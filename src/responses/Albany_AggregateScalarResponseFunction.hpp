@@ -15,28 +15,29 @@
 \********************************************************************/
 
 
-#ifndef ALBANY_EVALUATEDRESPONSEFUNCTION_HPP
-#define ALBANY_EVALUATEDRESPONSEFUNCTION_HPP
+#ifndef ALBANY_AGGREGATE_SCALAR_RESPONSE_FUNCTION_HPP
+#define ALBANY_AGGREGATE_SCALAR_RESPONSE_FUNCTION_HPP
 
-#include "Albany_AbstractResponseFunction.hpp"
-#include "Epetra_Map.h"
-#include "Epetra_Import.h"
-#include "Epetra_Vector.h"
-#include "EpetraExt_MultiComm.h"
+#include "Albany_SamplingBasedScalarResponseFunction.hpp"
+#include "Teuchos_Array.hpp"
 
 namespace Albany {
 
   /*!
-   * \brief Reponse function representing the average of the solution values
+   * \brief A response function that aggregates together multiple response
+   * functions into one.
    */
-  class EvaluatedResponseFunction : public AbstractResponseFunction {
+  class AggregateScalarResponseFunction : 
+    public SamplingBasedScalarResponseFunction {
   public:
   
     //! Default constructor
-    EvaluatedResponseFunction();
+    AggregateScalarResponseFunction(
+      const Teuchos::RCP<const Epetra_Comm>& comm,
+      const Teuchos::Array< Teuchos::RCP<ScalarResponseFunction> >& responses);
 
     //! Destructor
-    virtual ~EvaluatedResponseFunction();
+    virtual ~AggregateScalarResponseFunction();
 
     //! Get the number of responses
     virtual unsigned int numResponses() const;
@@ -78,42 +79,21 @@ namespace Albany {
 		     Epetra_MultiVector* dg_dxdot,
 		     Epetra_MultiVector* dg_dp);
 
-
-    //! Post process responses
-    virtual void 
-    postProcessResponses(const Epetra_Comm& comm, Teuchos::RCP<Epetra_Vector>& g);
-
-    //! Post process response derivatives
-    virtual void 
-    postProcessResponseDerivatives(const Epetra_Comm& comm, Teuchos::RCP<Epetra_MultiVector>& gt);
-
-
-    //! Set initial values (and number) of the responses.  This function is called by
-    //   response evaluators, which act on a single workset at a time.
-    void setResponseInitialValues(const std::vector<double>& initVals);
-    void setResponseInitialValues(double singleInitValForAll, unsigned int numberOfResponses);
-
-    //! Set post processing parameter list
-    void setPostProcessingParams(const Teuchos::ParameterList& params);
-
-
   private:
 
     //! Private to prohibit copying
-    EvaluatedResponseFunction(const EvaluatedResponseFunction&);
+    AggregateScalarResponseFunction(const AggregateScalarResponseFunction&);
     
     //! Private to prohibit copying
-    EvaluatedResponseFunction& operator=(const EvaluatedResponseFunction&);
+    AggregateScalarResponseFunction& operator=(const AggregateScalarResponseFunction&);
 
-    //! initial values for each response.  The length of this
-    //  vector determines the number of responses.
-    std::vector<double> responseInitVals;
+  protected:
 
-    //! post processing parameter list
-    Teuchos::ParameterList postProcessingParams;
+    //! Response functions to aggregate
+    Teuchos::Array< Teuchos::RCP<ScalarResponseFunction> > responses;
 
   };
 
 }
 
-#endif // ALBANY_EVALUATEDRESPONSEFUNCTION_HPP
+#endif // ALBANY_AGGREGATE_SCALAR_RESPONSE_FUNCTION_HPP

@@ -96,9 +96,6 @@ namespace Albany {
     //! Epetra parameter vector
     Teuchos::Array< Teuchos::RCP<Epetra_Vector> > epetra_param_vec;
 
-    //! Supports response functions
-    bool supports_g;
-
     //! Whether the problem supplies its own preconditioner
     bool supplies_prec;
 

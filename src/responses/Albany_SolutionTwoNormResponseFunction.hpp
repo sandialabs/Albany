@@ -18,21 +18,20 @@
 #ifndef ALBANY_SOLUTIONTWONORMRESPONSEFUNCTION_HPP
 #define ALBANY_SOLUTIONTWONORMRESPONSEFUNCTION_HPP
 
-#include "Albany_AbstractResponseFunction.hpp"
-#include "Epetra_Map.h"
-#include "Epetra_Import.h"
-#include "Epetra_Vector.h"
+#include "Albany_SamplingBasedScalarResponseFunction.hpp"
 
 namespace Albany {
 
   /*!
    * \brief Reponse function representing the average of the solution values
    */
-  class SolutionTwoNormResponseFunction : public AbstractResponseFunction {
+  class SolutionTwoNormResponseFunction : 
+    public SamplingBasedScalarResponseFunction {
   public:
   
     //! Default constructor
-    SolutionTwoNormResponseFunction();
+    SolutionTwoNormResponseFunction(
+      const Teuchos::RCP<const Epetra_Comm>& comm);
 
     //! Destructor
     virtual ~SolutionTwoNormResponseFunction();

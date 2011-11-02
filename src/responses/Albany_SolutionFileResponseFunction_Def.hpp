@@ -24,8 +24,9 @@
 
 template<class Norm>
 Albany::SolutionFileResponseFunction<Norm>::
-SolutionFileResponseFunction()
-  : RefSoln(NULL), solutionLoaded(false)
+SolutionFileResponseFunction(const Teuchos::RCP<const Epetra_Comm>& comm)
+  : SamplingBasedScalarResponseFunction(comm),
+    RefSoln(NULL), solutionLoaded(false)
 {
 }
 
