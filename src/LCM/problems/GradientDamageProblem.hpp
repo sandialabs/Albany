@@ -358,7 +358,7 @@ void Albany::GradientDamageProblem::constructEvaluators(
   { // Saturation Modulus
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("QP Variable Name", "Saturation Modulus");
+    p->set<string>("Saturation Modulus Name", "Saturation Modulus");
     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
@@ -375,7 +375,7 @@ void Albany::GradientDamageProblem::constructEvaluators(
   { // Saturation Exponent
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("QP Variable Name", "Saturation Exponent");
+    p->set<string>("Saturation Exponent Name", "Saturation Exponent");
     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
