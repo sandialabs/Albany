@@ -20,6 +20,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 #include "Albany_Utils.hpp"
+#include <typeinfo>
 
 namespace LCM {
 
@@ -75,7 +76,7 @@ YieldStrength(Teuchos::ParameterList& p) :
 		       "Invalid yield strength type " << type);
   } 
 
-  // Optional dependence on Temperature (E = E_ + dYdT * T)
+  // Optional dependence on Temperature (Y = Y + dYdT * T)
   // Switched ON by sending Temperature field in p
 
   if ( p.isType<string>("QP Temperature Name") ) {
@@ -117,6 +118,12 @@ template<typename EvalT, typename Traits>
 void YieldStrength<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  bool print = false;
+  //if (typeid(ScalarT) == typeid(RealType)) print = true;
+
+  if (print)
+    cout << " *** YieldStrength *** " << endl;
+
   std::size_t numCells = workset.numCells;
 
   if (is_constant) {
@@ -140,6 +147,14 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t cell=0; cell < numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
 	yieldStrength(cell,qp) -= dYdT_value * (Temperature(cell,qp) - refTemp);
+
+        if (print)
+        {
+          cout << "    Y   : " << yieldStrength(cell,qp) << endl;
+          cout << "    temp: " << Temperature(cell,qp) << endl;
+          cout << "    dYdT: " << dYdT_value << endl;
+          cout << "    refT: " << refTemp << endl;
+        }
       }
     }
   }

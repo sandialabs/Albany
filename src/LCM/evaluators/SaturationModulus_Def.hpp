@@ -20,13 +20,14 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 #include "Albany_Utils.hpp"
+#include <typeinfo>
 
 namespace LCM {
 
 template<typename EvalT, typename Traits>
 SaturationModulus<EvalT, Traits>::
 SaturationModulus(Teuchos::ParameterList& p) :
-  satMod(p.get<std::string>("QP Variable Name"),
+  satMod(p.get<std::string>("Saturation Modulus Name"),
 	 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"))
 {
   Teuchos::ParameterList* satmod_list = 
@@ -75,6 +76,25 @@ SaturationModulus(Teuchos::ParameterList& p) :
 			       "Invalid saturation modulus type " << type);
   } 
 
+  // Optional dependence on Temperature
+  // Switched ON by sending Temperature field in p
+  if ( p.isType<string>("QP Temperature Name") ) {
+    Teuchos::RCP<PHX::DataLayout> scalar_dl =
+      p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+    PHX::MDField<ScalarT,Cell,QuadPoint>
+      tmp(p.get<string>("QP Temperature Name"), scalar_dl);
+    Temperature = tmp;
+    this->addDependentField(Temperature);
+    isThermoElastic = true;
+    dSdT_value = satmod_list->get("dSdT Value", 0.0);
+    refTemp = p.get<RealType>("Reference Temperature", 0.0);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>("dSdT Value", this, paramLib);
+  }
+  else {
+    isThermoElastic=false;
+    dSdT_value=0.0;
+  }
+
   this->addEvaluatedField(satMod);
   this->setName("Saturation Modulus"+PHX::TypeString<EvalT>::value);
 }
@@ -87,6 +107,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(satMod,fm);
   if (!is_constant) this->utils.setFieldData(coordVec,fm);
+  if (isThermoElastic) this->utils.setFieldData(Temperature,fm);
 }
 
 // **********************************************************************
@@ -94,6 +115,12 @@ template<typename EvalT, typename Traits>
 void SaturationModulus<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  bool print = false;
+  //if (typeid(ScalarT) == typeid(RealType)) print = true;
+
+  if (print)
+    cout << " *** SaturatioModulus *** " << endl;
+
   std::size_t numCells = workset.numCells;
 
   if (is_constant) {
@@ -113,6 +140,21 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+  if (isThermoElastic) {
+    for (std::size_t cell=0; cell < numCells; ++cell) {
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+	satMod(cell,qp) -= dSdT_value * (Temperature(cell,qp) - refTemp);
+        if (print)
+        {
+          cout << "    S   : " << satMod(cell,qp) << endl;
+          cout << "    temp: " << Temperature(cell,qp) << endl;
+          cout << "    dSdT: " << dSdT_value << endl;
+          cout << "    refT: " << refTemp << endl;
+        }
+
+      }
+    }
+  }
 }
 
 // **********************************************************************
@@ -122,6 +164,8 @@ SaturationModulus<EvalT,Traits>::getValue(const std::string &n)
 {
   if (n == "Saturation Modulus")
     return constant_value;
+  else if (n == "dSdT Value")
+    return dSdT_value;
   for (int i=0; i<rv.size(); i++) {
     if (n == Albany::strint("Saturation Modulus KL Random Variable",i))
       return rv[i];

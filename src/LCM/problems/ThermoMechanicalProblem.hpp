@@ -143,6 +143,8 @@ namespace Albany {
 #include "BulkModulus.hpp"
 #include "YieldStrength.hpp"
 #include "HardeningModulus.hpp"
+#include "SaturationModulus.hpp"
+#include "SaturationExponent.hpp"
 #include "PHAL_Source.hpp"
 #include "DefGrad.hpp"
 #include "ThermoMechanicalStress.hpp"
@@ -355,6 +357,45 @@ void Albany::ThermoMechanicalProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+  { // Saturation Modulus
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    p->set<string>("Saturation Modulus Name", "Saturation Modulus");
+    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Saturation Modulus");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    // Setting this turns on linear dependence of S on T, S = S + dSdT*(T - Tref)
+    p->set<string>("QP Temperature Name", "Temperature");
+    RealType refTemp = params->get("Reference Temperature", 0.0);
+    p->set<RealType>("Reference Temperature", refTemp);
+
+    ev = rcp(new LCM::SaturationModulus<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  { // Saturation Exponent
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    p->set<string>("Saturation Exponent Name", "Saturation Exponent");
+    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Saturation Exponent");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    ev = rcp(new LCM::SaturationExponent<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
   if (haveSource) { // Source
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                        "Error!  Sources not implemented in Mechanical yet!");
@@ -410,6 +451,8 @@ void Albany::ThermoMechanicalProblem::constructEvaluators(
     p->set<string>("DetDefGrad Name", "Determinant of the Deformation Gradient");  // dl->qp_scalar also
     p->set<string>("Yield Strength Name", "Yield Strength");
     p->set<string>("Hardening Modulus Name", "Hardening Modulus");
+    p->set<string>("Saturation Modulus Name", "Saturation Modulus"); // dl->qp_scalar also
+    p->set<string>("Saturation Exponent Name", "Saturation Exponent"); // dl->qp_scalar also
     p->set<string>("Temperature Name", "Temperature");
     RealType refTemp = params->get("Reference Temperature", 0.0);
     p->set<RealType>("Reference Temperature", refTemp);

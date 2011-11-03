@@ -111,6 +111,8 @@ Albany::ThermoMechanicalProblem::getValidProblemParameters() const
   validPL->sublist("Bulk Modulus", false, "");
   validPL->sublist("Shear Modulus", false, "");
   validPL->sublist("Hardening Modulus", false, "");
+  validPL->sublist("Saturation Modulus", false, "");
+  validPL->sublist("Saturation Exponent", false, "");
   validPL->sublist("Yield Strength", false, "");
   validPL->set<RealType>("Reference Temperature", false, "");
   validPL->set<RealType>("Thermal Expansion Coefficient", false, "");

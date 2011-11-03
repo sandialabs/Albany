@@ -45,6 +45,10 @@ ThermoMechanicalStress(const Teuchos::ParameterList& p) :
 		    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   hardeningModulus (p.get<std::string>                   ("Hardening Modulus Name"),
 		    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  satMod           (p.get<std::string>                   ("Saturation Modulus Name"),
+                    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  satExp           (p.get<std::string>                   ("Saturation Exponent Name"),
+                    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   deltaTime        (p.get<std::string>                   ("Delta Time Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("Workset Scalar Data Layout")),
   stress           (p.get<std::string>                   ("Stress Name"),
@@ -72,6 +76,8 @@ ThermoMechanicalStress(const Teuchos::ParameterList& p) :
   this->addDependentField(bulkModulus);
   this->addDependentField(yieldStrength);
   this->addDependentField(hardeningModulus);
+  this->addDependentField(satMod);  
+  this->addDependentField(satExp);
   this->addDependentField(temperature);
   this->addDependentField(deltaTime);
 
@@ -101,6 +107,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(bulkModulus,fm);
   this->utils.setFieldData(temperature,fm);
   this->utils.setFieldData(hardeningModulus,fm);
+  this->utils.setFieldData(satMod,fm);
+  this->utils.setFieldData(satExp,fm);
   this->utils.setFieldData(yieldStrength,fm);
   this->utils.setFieldData(mechSource,fm);
   this->utils.setFieldData(deltaTime,fm);
@@ -115,12 +123,10 @@ evaluateFields(typename Traits::EvalData workset)
   //if (typeid(ScalarT) == typeid(RealType)) print = true;
 
   if (print)
-  {
     cout << " *** ThermoMechanicalStress *** " << endl;
-  }
 
   // declare some ScalarT's to be used later
-  ScalarT J, Jm23, K, H, Y;
+  ScalarT J, Jm23, K, H, Y, siginf, delta;
   ScalarT f, dgam;
   ScalarT deltaTemp;
   ScalarT mu, mubar;
@@ -156,11 +162,16 @@ evaluateFields(typename Traits::EvalData workset)
       K     = bulkModulus(cell,qp);
       H     = hardeningModulus(cell,qp);
       Y     = yieldStrength(cell,qp);
+      siginf = satMod(cell,qp);
+      delta  = satExp(cell,qp);
       deltaTemp = temperature(cell,qp) - refTemperature;
 
+      // initialize plastic work
+      mechSource(cell,qp) = 0.0;
+
       // compute the pressure
-      pressure = 0.5 * K * ( J - 1/J )
-	- 3 * thermalExpansionCoeff * deltaTemp * ( 1 + 1 / ( J * J ) );
+      pressure = 0.5 * K * ( ( J - 1 / J )
+                             - 3 * thermalExpansionCoeff * deltaTemp * ( 1 + 1 / ( J * J ) ) );
       
       // compute trial intermediate configuration
       Fpinv = inverse(Fpold);
@@ -175,7 +186,7 @@ evaluateFields(typename Traits::EvalData workset)
       //smag = 0.0;
       //if ( norm(s) > 1.e-15 )
       smag = norm(s);
-      f = smag - sq23 * ( Y + H * eqpsold(cell,qp) );
+      f = smag - sq23 * ( Y + H * eqpsold(cell,qp) + siginf * ( 1. - std::exp( -delta * eqpsold(cell,qp) ) ) );
 
       dgam = 0.0;
      
@@ -184,7 +195,7 @@ evaluateFields(typename Traits::EvalData workset)
         // return mapping algorithm
         bool converged = false;
         ScalarT g = f;
-        ScalarT G = H * eqpsold(cell,qp);
+        ScalarT G = H * eqpsold(cell,qp) + siginf*( 1. - std::exp( -delta * eqpsold(cell,qp) ) );
         ScalarT dg = ( -2. * mubar ) * ( 1. + H / ( 3. * mubar ) );
         ScalarT dG = 0.0;;
         ScalarT alpha = 0.0;
@@ -199,8 +210,8 @@ evaluateFields(typename Traits::EvalData workset)
 
           alpha = eqpsold(cell,qp) + sq23 * dgam;
 
-          G = H * alpha;
-          dG = H;
+          G = H * alpha + siginf * ( 1. - std::exp( -delta * alpha ) );;
+          dG = H + delta * siginf * std::exp( -delta * alpha );;
 
           g = smag -  ( 2. * mubar * dgam + sq23 * ( Y + G ) );
           dg = -2. * mubar * ( 1. + dG / ( 3. * mubar ) );
@@ -231,6 +242,10 @@ evaluateFields(typename Traits::EvalData workset)
 	// exponential map to get Fp
 	A = dgam * N;
 	expA = LCM::exp<ScalarT>(A);
+
+        // set plastic work
+        if ( dt > 0.0 )
+          mechSource(cell,qp) = sq23 * dgam / dt * ( Y + G + temperature(cell,qp) * 1.0 );
 
 	for (std::size_t i=0; i < numDims; ++i)	
 	{
@@ -267,11 +282,6 @@ evaluateFields(typename Traits::EvalData workset)
       // update be
       be = ScalarT(1/mu)*s + ScalarT(trace(be)/3)*eye<ScalarT>();
 
-      // plastic work
-      mechSource(cell,qp) = 0.0;
-      if ( norm(s) > 1.e-15 && dt > 0.0 )
-        mechSource(cell,qp) = dgam * norm(s) / dt;
-
       if (print)
       {
         cout << "    sig : ";
@@ -290,6 +300,11 @@ evaluateFields(typename Traits::EvalData workset)
         cout << "    dgam: " << dgam << endl;
         cout << "    smag: " << smag << endl;
         cout << "    n(s): " << norm(s) << endl;
+        cout << "    temp: " << temperature(cell,qp) << endl;
+        cout << "    Dtem: " << deltaTemp << endl;
+        cout << "       Y: " << yieldStrength(cell,qp) << endl;
+        cout << "       H: " << hardeningModulus(cell,qp) << endl;
+        cout << "       S: " << satMod(cell,qp) << endl;
       }
     }
   }

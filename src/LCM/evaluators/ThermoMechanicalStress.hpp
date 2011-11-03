@@ -57,6 +57,8 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> temperature;
   PHX::MDField<ScalarT,Cell,QuadPoint> yieldStrength;
   PHX::MDField<ScalarT,Cell,QuadPoint> hardeningModulus;
+  PHX::MDField<ScalarT,Cell,QuadPoint> satMod;
+  PHX::MDField<ScalarT,Cell,QuadPoint> satExp;
   PHX::MDField<ScalarT,Dummy> deltaTime;
 
   // Output:

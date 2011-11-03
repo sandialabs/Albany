@@ -26,7 +26,7 @@ namespace LCM {
 template<typename EvalT, typename Traits>
 SaturationExponent<EvalT, Traits>::
 SaturationExponent(Teuchos::ParameterList& p) :
-  satExp(p.get<std::string>("QP Variable Name"),
+  satExp(p.get<std::string>("Saturation Exponent Name"),
 	 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"))
 {
   Teuchos::ParameterList* satExp_list = 
