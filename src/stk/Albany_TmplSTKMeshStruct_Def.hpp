@@ -117,7 +117,17 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
   int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_map->NumMyElements());
 
+  // Construct MeshSpecsStruct
+  if (!params->get("Separate Evaluators by Element Block",false)) {
+    const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
+    this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
+                               nsNames, worksetSize, partVec[0]->name(), this->interleavedOrdering));
+  }
+  else {
+
   meshSpecs.resize(numEB);
+
+  this->allElementBlocksHaveSamePhysics=false;
 
   for (unsigned int eb=0; eb<numEB; eb++) {
 
@@ -129,6 +139,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
     this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
                               nsNames, worksetSize, partVec[eb]->name(), this->interleavedOrdering));
   }
+ }
 }
 
 template<int Dim, class traits>

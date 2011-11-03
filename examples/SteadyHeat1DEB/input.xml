@@ -29,12 +29,14 @@
     <Parameter name="Element Blocks" type="int" value="2"/>
     <Parameter name="Block 0" type="string" value="begins at 0 ends at 0.5 named MatA"/>
     <Parameter name="Block 1" type="string" value="begins at 0.5 ends at 1.0 named MatB"/>
+<!-- should this go away? -->
+    <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
     <Parameter name="Method" type="string" value="STK1D"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter name="Number of Comparisons" type="int" value="4"/>
-    <Parameter name="Test Values" type="Array(double)" value="{0.5, 5.816786, 1.0, 0.0}"/>
-    <Parameter name="Relative Tolerance" type="double" value="1.0e-4"/>
+    <Parameter name="Test Values" type="Array(double)" value="{0.29748, 4.35432, 1.0, 0.0}"/>
+    <Parameter name="Absolute Tolerance" type="double" value="1.0e-6"/>
   </ParameterList>
   <ParameterList name="Piro">
     <ParameterList name="NOX">

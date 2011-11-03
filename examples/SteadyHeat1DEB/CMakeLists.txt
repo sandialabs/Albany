@@ -33,4 +33,4 @@ add_test(${testName}_Prep HeatProfile)
 
 # 5. Create the test with this name and standard executable
 
-#add_test(${testName} ${Albany.exe})
+add_test(${testName} ${Albany.exe})

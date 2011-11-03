@@ -11,7 +11,7 @@
 * NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
 * ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
 * including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
+*    Questions to Glen Hansen, gahanse@sandia.gov                    *
 \********************************************************************/
 
 
@@ -37,7 +37,6 @@ ThermalConductivity(Teuchos::ParameterList& p) :
   thermalCond(p.get<std::string>("QP Variable Name"),
 	      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"))
 {
-//cout << "In constructor ThermalCond" << endl;
 
   Teuchos::ParameterList* cond_list = 
     p.get<Teuchos::ParameterList*>("Parameter List");
@@ -79,10 +78,8 @@ ThermalConductivity(Teuchos::ParameterList& p) :
   else if (type == "Block Dependent") 
   {
     // We have a multiple material problem and need to map element blocks to material data
-//cout << "Block Dependent" << endl;
 
     if(haveMatDB){
-//cout << "haveMatDB" << endl;
        materialDB = p.get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
     }
     else {
@@ -102,7 +99,6 @@ ThermalConductivity(Teuchos::ParameterList& p) :
     if (typ == "Constant") {
 
        ScalarT value = subList.get("Value", 1.0);
-//cout << "Block Def TC = " << value << endl;
        init_constant(value, p);
 
     }
@@ -131,7 +127,6 @@ init_constant(ScalarT value, Teuchos::ParameterList& p){
     randField = CONSTANT;
 
     constant_value = value;
-//cout << "setting constant_value = " << constant_value << endl;
 
     // Add thermal conductivity as a Sacado-ized parameter
     Teuchos::RCP<ParamLib> paramLib = 
@@ -196,7 +191,6 @@ void ThermalConductivity<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   if (is_constant) {
-//cout << "TC is constant = " << constant_value << endl;
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
          thermalCond(cell,qp) = constant_value;
@@ -217,7 +211,6 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-//cout << "TC is not constant ACK " << endl;
 }
 
 // **********************************************************************
@@ -226,11 +219,9 @@ typename ThermalConductivity<EvalT,Traits>::ScalarT&
 ThermalConductivity<EvalT,Traits>::getValue(const std::string &n)
 {
   if (is_constant) {
-//cout << "TC2 is constant = " << constant_value << endl;
     return constant_value;
   }
 
-//cout << "not here " << endl;
   for (int i=0; i<rv.size(); i++) {
     if (n == Albany::strint("Thermal Conductivity KL Random Variable",i))
       return rv[i];
