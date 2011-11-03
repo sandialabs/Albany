@@ -176,8 +176,8 @@ evaluateFields(typename Traits::EvalData workset)
         for (std::size_t qp=0; qp < numQPs; ++qp) {
     // porosity dependent Young's Modulus. It will be replaced by
     // the hyperelasticity model in (Borja, Tamagnini and Amorosi, ASCE JGGE 1997).
-  	elasticModulus(cell,qp) = constant_value*
-  			                  sqrt(2.0 - porosity(cell,qp));
+  	elasticModulus(cell,qp) = constant_value;
+ // 			*sqrt(2.0 - porosity(cell,qp));
         }
       }
     }
