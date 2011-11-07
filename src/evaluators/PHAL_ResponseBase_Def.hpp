@@ -123,20 +123,30 @@ endEvaluateFields(typename Traits::EvalData workset)
 
   //transfer local_g to workset
   unsigned int respIndx = PHAL::ResponseBaseCommon<PHAL::AlbanyTraits::Jacobian, Traits>::responseIndex;
-  std::size_t numNodes = workset.responseDerivatives[respIndx]->GlobalLength(); //ANDY - check this vs. MyLength() ?
+
   for(unsigned int i=0; i<local_g.size(); ++i)
     (*(workset.responses[respIndx]))[i] = local_g[i].val();
 
   //add derivative information in local_g to workset
-  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
+//std::cout << "XXX " << local_g.size() << " local gs" << std::endl;
+  for(unsigned int i=0; i<local_g.size(); ++i) {
+    std::size_t numNodes = local_g[i].size(); 
+//std::cout << "XXX " << i << ": " << numNodes << " nodes per element" << std::endl;
 
-    for (std::size_t node = 0; node < numNodes; ++node) {
-      col  = nodeID[node][0]; // neq assumed == 1, otherwise would be firstCol, then offset by neq index
-      lcol = node; //local column
+    if( local_g[i].hasFastAccess() ) {
+//std::cout << "XXX " << i << ": has fast access" << std::endl;
+      for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+	const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
 
-      for(unsigned int i=0; i<local_g.size(); ++i) 
-	workset.responseDerivatives[respIndx]->SumIntoMyValue(i, col, local_g[i].fastAccessDx(lcol));
+	for (std::size_t node = 0; node < numNodes; ++node) {
+	  col  = nodeID[node][0]; // neq assumed == 1, otherwise would be firstCol, then offset by neq index
+	  lcol = node; //local column
+
+//std::cout << "XXX " << i << ": cell " << cell << " summing " << 
+// local_g[i].fastAccessDx(lcol) << ": lcol=" << lcol << " to col=" << col << std::endl;
+	  workset.responseDerivatives[respIndx]->SumIntoMyValue(i, col, local_g[i].fastAccessDx(lcol));
+	}
+      }
     }
   }
 }

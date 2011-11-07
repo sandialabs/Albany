@@ -47,7 +47,7 @@ namespace QCAD {
     
     PHX::MDField<ScalarT> field;
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
-    PHX::MDField<ScalarT,Cell,QuadPoint> weights;
+    PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
     
     std::string fieldName;
     std::string opDomain;

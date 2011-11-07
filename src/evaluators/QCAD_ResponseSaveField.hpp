@@ -68,7 +68,9 @@ namespace QCAD {
     PHX::MDField<ScalarT> field;
     bool outputToExodus;
     bool outputCellAverage;
+    bool memoryHolderOnly;
     bool isVectorField;
+
     std::string vectorOp;
   };
 

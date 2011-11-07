@@ -78,6 +78,7 @@ ResponseSaveField(Teuchos::ParameterList& p) :
   stateName = plist->get<std::string>("State Name", fieldName);
   outputToExodus = plist->get<bool>("Output to Exodus", true);
   outputCellAverage = plist->get<bool>("Output Cell Average", true);
+  memoryHolderOnly = plist->get<bool>("Memory Placeholder Only", false);
   vectorOp = plist->get<std::string>("Vector Operation", "magnitude");
 
   //! number of quad points per cell and dimension
@@ -135,6 +136,10 @@ evaluateFields(typename Traits::EvalData workset)
   const std::size_t iX=0; //index for x coordinate
   const std::size_t iY=1; //index for y coordinate
   const std::size_t iZ=2; //index for z coordinate
+
+  //Don't do anything if this response is just used to allocate 
+  // and hold a block of memory (the state)
+  if(memoryHolderOnly) return 
 
   PHAL::ResponseBase<PHAL::AlbanyTraits::Residual, Traits>::
     beginEvaluateFields(workset);
@@ -287,6 +292,7 @@ QCAD::ResponseSaveField<PHAL::AlbanyTraits::Residual,Traits>::getValidResponsePa
   validPL->set<string>("State Name", "<Field Name>", "State name to save field as");
   validPL->set<bool>("Output to Exodus", true, "Whether state should be output in STK dump to exodus");
   validPL->set<bool>("Output Cell Average", true, "Whether cell average or all quadpoint data should be output to exodus");
+  validPL->set<bool>("Memory Placeholder Only", false, "True if data should not actually be transferred to this state, i.e., the state is just used as a memory container and should not be overwritten when responses are computed");
 
   return validPL;
 }

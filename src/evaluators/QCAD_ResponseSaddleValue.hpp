@@ -57,7 +57,7 @@ namespace QCAD
     PHX::MDField<ScalarT> retField;
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
     PHX::MDField<MeshScalarT,Cell,Node,Dim> coordVec_vertices;
-    PHX::MDField<ScalarT,Cell,QuadPoint> weights;
+    PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
     
     std::string fieldName;
     std::string retFieldName;

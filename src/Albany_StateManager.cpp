@@ -43,7 +43,8 @@ Albany::StateManager::registerStateVariable(const std::string &stateName, const 
                                             const bool registerOldState,
                                             const std::string& fieldName)
 {
-  registerStateVariable(stateName, dl, init_type, registerOldState);
+  const bool bOutputToExodus = true;
+  registerStateVariable(stateName, dl, init_type, registerOldState, bOutputToExodus, fieldName);
 
   // Create param list for SaveStateField evaluator 
   Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Save or Load State " 
@@ -61,13 +62,22 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
 					    const Teuchos::RCP<PHX::DataLayout> &dl,
                                             const std::string &init_type,
                                             const bool registerOldState,
-					    const bool outputToExodus)
+					    const bool outputToExodus,
+					    const std::string &responseIDtoRequire)
 
 {
   TEUCHOS_TEST_FOR_EXCEPT(stateVarsAreAllocated);
-  statesToStore[stateName] = dl;
 
-  
+  if( statesToStore.find(stateName) != statesToStore.end() ) {
+    //Duplicate registration.  This will occur when a problem's 
+    // constructEvaluators function (templated) registers state variables.
+
+    //Perform a check here that dl and statesToStore[stateName] are the same:
+    //TEUCHOS_TEST_FOR_EXCEPT(dl != statesToStore[stateName]);  //I don't know how to do this correctly (erik)
+    return;  // Don't re-register the same state name
+  }
+
+  statesToStore[stateName] = dl;
 
   // Load into StateInfo
   (*stateInfo).push_back(Teuchos::rcp(new Albany::StateStruct(stateName)));
@@ -78,6 +88,7 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
   else if ( dl->rank() == 1 )
     stateRef.entity = "ScalarValue";
   stateRef.output = outputToExodus;
+  stateRef.responseIDtoRequire = responseIDtoRequire;
   dl->dimensions(stateRef.dim); 
 
   // If space is needed for old state
@@ -296,3 +307,26 @@ Albany::StateManager::setEigenData(const Teuchos::RCP<Albany::EigendataStruct>& 
 {
   eigenData = eigdata;
 }
+
+std::vector<std::string>
+Albany::StateManager::getResidResponseIDsToRequire()
+{
+  std::string id, name;
+  std::vector<std::string> idsToRequire; 
+
+  int i = 0;
+  for (Albany::StateInfoStruct::const_iterator st = stateInfo->begin(); st!= stateInfo->end(); st++) {
+    name = (*st)->name;
+    id = (*st)->responseIDtoRequire;
+    if(id.length() > 0) {
+      idsToRequire.push_back(id);
+cout << "RRR1  " << name << " requiring " << id << " (" << i << ")" << endl;
+    }
+    else {
+cout << "RRR1  " << name << " empty (" << i << ")" << endl;
+    }
+    i++;
+  }
+  return idsToRequire;
+}
+

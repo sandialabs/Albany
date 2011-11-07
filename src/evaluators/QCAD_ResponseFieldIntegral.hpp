@@ -50,7 +50,7 @@ namespace QCAD {
     
     PHX::MDField<ScalarT,Cell,QuadPoint> field;
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
-    PHX::MDField<ScalarT,Cell,QuadPoint> weights;
+    PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
     
     double length_unit_in_m; // length unit for input and output mesh
     bool bPositiveOnly;

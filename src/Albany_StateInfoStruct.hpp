@@ -71,7 +71,7 @@ struct StateStruct {
   //enum Entity {Node, Element, UndefinedEntity};
   //enum InitType {Zero, Identity, Restart, UndefinedInit};
 
-   StateStruct (std::string name_): name(name_),output(true), saveOldState(false) {};
+  StateStruct (std::string name_): name(name_),output(true), saveOldState(false), responseIDtoRequire("") {};
    //StateStruct (std::string name_): name(name_), entity(UndefinedEntity), initType(UndefinedInit), output(true) {};
   ~StateStruct () {};
 
@@ -80,6 +80,10 @@ struct StateStruct {
   //std::vector<MDArray> wsArray;
   std::string entity; //Entity entity;
   std::string initType; //InitType initType;
+
+  //For proper PHAL_SaveStateField functionality - maybe only needed temporarily?
+  std::string responseIDtoRequire; //If nonzero length, the responseID for response 
+                                   // field manager to require (assume dummy data layout)
   bool output;
   bool saveOldState; // Bool that this state is to be copied into name+"_old"
 

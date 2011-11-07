@@ -897,8 +897,8 @@ evaluateResponseTangent(const double alpha,
     offset += num_responses;
   }
 
-  // if( rfm != Teuchos::null )
-  //   evaluateResponseTangent_rfm(alpha, beta, current_time, sum_derivs,
+  //if( rfm != Teuchos::null )
+  //  evaluateResponseTangent_rfm(alpha, beta, current_time, sum_derivs,
   // 				xdot, x, p, deriv_p, Vx, Vxdot, Vp, g, gx, gp);
 
   // OLD: TO REMOVE
@@ -966,12 +966,12 @@ cout << " eeeee  numresponses " << num_responses << endl;
     offset += num_responses;
   }
 
-  //if( rfm != Teuchos::null )
-  //  evaluateResponseGradients_rfm(xdot, x, p, deriv_p, g, dg_dx, dg_dxdot, dg_dp);
+  if( rfm != Teuchos::null )
+    evaluateResponseGradient_rfm(current_time, xdot, x, p, deriv_p, g, dg_dx, dg_dxdot, dg_dp);
 
   // OLD: TO REMOVE
-  if (g != NULL && rfm != Teuchos::null )
-    evaluateResponse_rfm(current_time, xdot, x, p, *g);
+  //if (g != NULL && rfm != Teuchos::null )
+  //  evaluateResponse_rfm(current_time, xdot, x, p, *g);
 }
 
 

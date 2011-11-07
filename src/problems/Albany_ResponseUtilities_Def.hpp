@@ -58,11 +58,10 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
 
    std::vector<string> responseIDs_to_require;
 
-   // First, add in responses hardwired into problem setup
-   const Albany::StateManager::RegisteredStates& reg = stateMgr.getRegisteredStates();
-   for (Albany::StateManager::RegisteredStates::const_iterator st = reg.begin(); st!= reg.end(); st++) {
-     responseIDs_to_require.push_back(st->first);
-   }
+   // First, add in response targets for PHAL_SaveStateField evaluators created
+   //  during problem setup (these evaluators only act for residual type)
+   if(typeid(EvalT) == typeid(PHAL::AlbanyTraits::Residual))
+     responseIDs_to_require = stateMgr.getResidResponseIDsToRequire();
 
    // Now, loop over all Responses in the input file
    for (int i=0; i<num_responses; i++) 
