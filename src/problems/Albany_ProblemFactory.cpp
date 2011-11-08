@@ -33,6 +33,7 @@
 #include "LCM/problems/PoroElasticityProblem.hpp"
 #include "LCM/problems/GradientDamageProblem.hpp"
 #include "LCM/problems/ThermoMechanicalProblem.hpp"
+#include "LCM/problems/HDiffusionDeformationProblem.hpp"
 #ifdef ALBANY_LAME
 #include "LCM/problems/LameProblem.hpp"
 #endif
@@ -166,6 +167,9 @@ Albany::ProblemFactory::create()
   else if (method == "ThermoMechanical") {
     strategy = rcp(new Albany::ThermoMechanicalProblem(problemParams, paramLib, 3));
   }
+  else if (method == "Hydrogen Diffusion-Deformation") {
+      strategy = rcp(new Albany::HDiffusionDeformationProblem(problemParams, paramLib, 3));
+    }
 #endif
   else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,

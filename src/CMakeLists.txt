@@ -254,6 +254,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/problems/GradientDamageProblem.cpp 
     ${LCM_DIR}/problems/PoroElasticityProblem.cpp
     ${LCM_DIR}/problems/ThermoMechanicalProblem.cpp
+    ${LCM_DIR}/problems/HDiffusionDeformationProblem.cpp
   )
 
   SET(HEADERS ${HEADERS}
@@ -263,6 +264,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/problems/GradientDamageProblem.hpp
     ${LCM_DIR}/problems/PoroElasticityProblem.hpp 
     ${LCM_DIR}/problems/ThermoMechanicalProblem.hpp
+    ${LCM_DIR}/problems/HDiffusionDeformationProblem.hpp
   )
 
   # LCM evaluators
