@@ -305,6 +305,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/ThermoMechanicalStress.cpp
     ${LCM_DIR}/evaluators/Time.cpp
     ${LCM_DIR}/evaluators/TimeDepBC.cpp
+    ${LCM_DIR}/evaluators/DiffusionCoefficient.cpp
   )
 
   SET(HEADERS ${HEADERS}
@@ -380,6 +381,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/Time_Def.hpp
     ${LCM_DIR}/evaluators/TimeDepBC.hpp
     ${LCM_DIR}/evaluators/TimeDepBC_Def.hpp
+    ${LCM_DIR}/evaluators/DiffusionCoefficient.hpp
+    ${LCM_DIR}/evaluators/DiffusionCoefficient_Def.hpp
   )
 
   #LCM utils

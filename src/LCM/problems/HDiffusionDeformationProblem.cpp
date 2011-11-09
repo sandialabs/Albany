@@ -31,7 +31,7 @@ HDiffusionDeformationProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_
   numDim(numDim_)
 {
  
-  std::string& method = params->get("Name", "ThermoMechanical");
+  std::string& method = params->get("Name", "Hydrogen Diffusion-Deformation");
   *out << "Problem Name = " << method << std::endl;
   
   haveSource =  params->isSublist("Source Functions");
@@ -118,6 +118,13 @@ Albany::HDiffusionDeformationProblem::getValidProblemParameters() const
   validPL->set<RealType>("Thermal Expansion Coefficient", false, "");
   validPL->set<RealType>("Density", false, "");
   validPL->set<RealType>("Heat Capacity", false, "");
+  validPL->sublist("Temperature", false, "");
+  validPL->sublist("Avogadro Number", false, "");
+  validPL->sublist("Trap Binding Energy", false, "");
+  validPL->sublist("Ideal Gas Constant", false, "");
+  validPL->sublist("Diffusion Activation Enthalpy", false, "");
+  validPL->sublist("Pre Exponential Factor", false, "");
+  validPL->sublist("Diffusion Coefficient", false, "");
 
   return validPL;
 }
