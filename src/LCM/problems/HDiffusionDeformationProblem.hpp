@@ -158,6 +158,9 @@ namespace Albany {
 
 #include "PHAL_NSMaterialProperty.hpp"
 #include "DiffusionCoefficient.hpp"
+#include "EffectiveDiffusivity.hpp"
+#include "EquilibriumConstant.hpp"
+#include "TrappedSolvent.hpp"
 
 template <typename EvalT>
 void Albany::HDiffusionDeformationProblem::constructEvaluators(
@@ -287,6 +290,21 @@ void Albany::HDiffusionDeformationProblem::constructEvaluators(
        fm0.template registerEvaluator<EvalT>(ev);
   }
 
+  { // Constant Molar Volume
+         RCP<ParameterList> p = rcp(new ParameterList);
+
+         p->set<string>("Material Property Name", "Molar Volume");
+         p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+         p->set<string>("Coordinate Vector Name", "Coord Vec");
+         p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
+         p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+         Teuchos::ParameterList& paramList = params->sublist("Molar Volume");
+         p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+         ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
+         fm0.template registerEvaluator<EvalT>(ev);
+    }
+
   { // Constant Avogadro Number
        RCP<ParameterList> p = rcp(new ParameterList);
 
@@ -362,6 +380,30 @@ void Albany::HDiffusionDeformationProblem::constructEvaluators(
                fm0.template registerEvaluator<EvalT>(ev);
           }
 
+  { // Trapped Solvent
+        RCP<ParameterList> p = rcp(new ParameterList);
+
+  	  p->set<string>("Trapped Solvent Name", "Trapped Solvent");
+  	  p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+  	  p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+  	  p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+  	  p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
+  	  p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+  	  Teuchos::ParameterList& paramList = params->sublist("Trapped Solvent");
+  	  p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+  	  // Setting this turns on dependence on plastic multipler for J2 plasticity
+  	  p->set<string>("eqps Name", "eqps");
+  	  p->set<string>("Avogadro Number Name", "Avogadro Number");
+
+            ev = rcp(new LCM::TrappedSolvent<EvalT,AlbanyTraits>(*p));
+            fm0.template registerEvaluator<EvalT>(ev);
+            p = stateMgr.registerStateVariable("Trapped Solvent",dl->qp_scalar, dl->dummy,"zero");
+            ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+            fm0.template registerEvaluator<EvalT>(ev);
+    }
+
   { // Diffusion Coefficient
        RCP<ParameterList> p = rcp(new ParameterList("Diffusion Coefficient"));
 
@@ -381,6 +423,48 @@ void Albany::HDiffusionDeformationProblem::constructEvaluators(
        ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
        fm0.template registerEvaluator<EvalT>(ev);
      }
+
+
+  { // Equilibrium Constant
+         RCP<ParameterList> p = rcp(new ParameterList("Equilibrium Constant"));
+
+         //Input
+         p->set<string>("Ideal Gas Constant Name", "Ideal Gas Constant");
+         p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+         p->set<string>("Temperature Name", "Temperature");
+         p->set<string>("Trap Binding Energy Name", "Trap Binding Energy");
+
+         //Output
+         p->set<string>("Equilibrium Constant Name", "Equilibrium Constant");
+
+         ev = rcp(new LCM::EquilibriumConstant<EvalT,AlbanyTraits>(*p));
+         fm0.template registerEvaluator<EvalT>(ev);
+         p = stateMgr.registerStateVariable("Equilibrium Constant",dl->qp_scalar, dl->dummy,"zero",true);
+         ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+         fm0.template registerEvaluator<EvalT>(ev);
+       }
+
+  { // Effective Diffusivity
+           RCP<ParameterList> p = rcp(new ParameterList("Effective Diffusivity"));
+
+           //Input
+           p->set<string>("Equilibrium Constant Name", "Equilibrium Constant");
+           p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+           p->set<string>("Lattice Concentration Name", "Lattice Concentration");
+           p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+           p->set<string>("Avogadro Number Name", "Avogadro Number");
+           p->set<string>("Trapped Solvent Name", "Trapped Solvent");
+           p->set<string>("Molar Volume Name", "Molar Volume");
+
+           //Output
+           p->set<string>("Effective Diffusivity Name", "Effective Diffusivity");
+
+           ev = rcp(new LCM::EffectiveDiffusivity<EvalT,AlbanyTraits>(*p));
+           fm0.template registerEvaluator<EvalT>(ev);
+           p = stateMgr.registerStateVariable("Effective Diffusivity",dl->qp_scalar, dl->dummy,"zero",true);
+           ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+           fm0.template registerEvaluator<EvalT>(ev);
+         }
 
   { // Shear Modulus
     RCP<ParameterList> p = rcp(new ParameterList);

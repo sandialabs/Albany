@@ -306,6 +306,9 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/Time.cpp
     ${LCM_DIR}/evaluators/TimeDepBC.cpp
     ${LCM_DIR}/evaluators/DiffusionCoefficient.cpp
+    ${LCM_DIR}/evaluators/EffectiveDiffusivity.cpp
+    ${LCM_DIR}/evaluators/EquilibriumConstant.cpp
+    ${LCM_DIR}/evaluators/TrappedSolvent.cpp
   )
 
   SET(HEADERS ${HEADERS}
@@ -383,6 +386,12 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/TimeDepBC_Def.hpp
     ${LCM_DIR}/evaluators/DiffusionCoefficient.hpp
     ${LCM_DIR}/evaluators/DiffusionCoefficient_Def.hpp
+    ${LCM_DIR}/evaluators/EquilibriumConstant.hpp
+    ${LCM_DIR}/evaluators/EquilibriumConstant_Def.hpp
+    ${LCM_DIR}/evaluators/TrappedSolvent.hpp
+    ${LCM_DIR}/evaluators/TrappedSolvent_Def.hpp
+    ${LCM_DIR}/evaluators/EffectiveDiffusivity.hpp
+    ${LCM_DIR}/evaluators/EffectiveDiffusivity_Def.hpp
   )
 
   #LCM utils
