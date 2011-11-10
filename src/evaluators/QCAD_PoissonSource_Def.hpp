@@ -250,8 +250,8 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 
   // Scaling factors
   double X0 = length_unit_in_m/1e-2; // length scaling to get to [cm] (structure dimension in [um])
-  ScalarT V0 = kbBoltz*temperature/1.0; // kb*T/q in [V], scaling for potential        
-  ScalarT Lambda2C0 = V0*eps0/(eleQ*X0*X0); // derived scaling factor (unitless)
+  ScalarT V0 = kbBoltz*temperature/1.0; // kb*T/q in [V]
+  ScalarT Lambda2 = eps0/(eleQ*X0*X0); // derived scaling factor
   
   //! Constant energy reference for heterogeneous structures
   ScalarT qPhiRef;
@@ -325,8 +325,14 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
     ni = sqrt(Nc*Nv)*exp(-Eg/(2.0*kbT));    // in [cm-3]
 
     //! parameters for computing exchange-correlation potential
+    const string& condBandMin = materialDB->getElementBlockParam<string>(workset.EBName,"Conduction Band Minimum");
     double ml = materialDB->getElementBlockParam<double>(workset.EBName,"Longitudinal Electron Effective Mass");
     double mt = materialDB->getElementBlockParam<double>(workset.EBName,"Transverse Electron Effective Mass");        
+    if ((condBandMin == "Gamma Valley") && (abs(ml-mt) > 1e-10))
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Gamma Valley's longitudinal and "
+        << "transverse electron effective mass must be equal ! "
+        << "Please check the values in materials.xml" << std::endl);
+    
     double invEffMass = (2.0/mt + 1.0/ml) / 3.0;
     double averagedEffMass = 1.0 / invEffMass; 
     double relPerm = materialDB->getElementBlockParam<double>(workset.EBName,"Permittivity");
@@ -422,7 +428,8 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
           ScalarT eDensity = eDensityForPoissonSchrond(workset, cell, qp, 0.0, false);
           
           // obtain the scaled potential
-          const ScalarT& phi = potential(cell,qp);
+          const ScalarT& unscaled_phi = potential(cell,qp); //[V]
+          ScalarT phi = unscaled_phi / V0; 
            
           // compute the hole density treated as classical
           ScalarT hDensity = Nv*(this->*carrStat)(-phi+hArgOffset); 
@@ -438,11 +445,11 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
               
           // the scaled full RHS
           ScalarT charge; 
-          charge = 1.0/Lambda2C0*(hDensity- approxEDensity + ionN);
+          charge = 1.0/Lambda2*(hDensity- approxEDensity + ionN);
           poissonSource(cell, qp) = factor*charge;
 
           // output states
-          chargeDensity(cell, qp) = charge*Lambda2C0;
+          chargeDensity(cell, qp) = hDensity -eDensity +ionN;
           electronDensity(cell, qp) = eDensity;
           holeDensity(cell, qp) = hDensity;
           electricPotential(cell, qp) = phi*V0;
@@ -471,7 +478,8 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
       {
         for (std::size_t qp=0; qp < numQPs; ++qp)
         {
-          const ScalarT& phi = potential(cell,qp);
+          const ScalarT& unscaled_phi = potential(cell,qp);  // [V]
+          ScalarT phi = unscaled_phi / V0; 
           
           // obtain the ionized dopants
           ScalarT ionN;
@@ -483,20 +491,22 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
             ionN = 0.0; 
 
           // the scaled full RHS
-          ScalarT charge; 
-          charge = 1.0/Lambda2C0*(Nv*(this->*carrStat)(-phi+hArgOffset)- Nc*(this->*carrStat)(phi+eArgOffset) + ionN);
+          ScalarT charge, eDensity, hDensity; 
+          eDensity = Nc*(this->*carrStat)(phi+eArgOffset);
+          hDensity = Nv*(this->*carrStat)(-phi+hArgOffset);
+          charge = 1.0/Lambda2 * (hDensity - eDensity + ionN);
           poissonSource(cell, qp) = factor*charge;
           
           // output states
-          chargeDensity(cell, qp) = charge*Lambda2C0;
-          electronDensity(cell, qp) = Nc*(this->*carrStat)(phi+eArgOffset);
-          holeDensity(cell, qp) = Nv*(this->*carrStat)(-phi+hArgOffset);
+          chargeDensity(cell, qp) = charge*Lambda2;
+          electronDensity(cell, qp) = eDensity;
+          holeDensity(cell, qp) = hDensity;
           electricPotential(cell, qp) = phi*V0;
           ionizedDopant(cell, qp) = ionN;
           conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
           valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
           approxQuanEDen(cell,qp) = 0.0; 
-          artCBDensity(cell, qp) = ( electronDensity(cell, qp) > 1e-6 ? electronDensity(cell, qp) 
+          artCBDensity(cell, qp) = ( eDensity > 1e-6 ? eDensity 
 				     : -Nc*(this->*carrStat)( -(phi+eArgOffset) ));
 
         }
@@ -525,6 +535,11 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
     //! parameters for computing exchange-correlation potential
     double ml = materialDB->getElementBlockParam<double>(workset.EBName,"Longitudinal Electron Effective Mass");
     double mt = materialDB->getElementBlockParam<double>(workset.EBName,"Transverse Electron Effective Mass");        
+    if (abs(ml-mt) > 1e-10) 
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Insulator's longitudinal and "
+	       << "transverse electron effective mass must be equal ! "
+	       << "Please check the values in materials.xml" << std::endl);
+
     double invEffMass = (2.0/mt + 1.0/ml) / 3.0;
     double averagedEffMass = 1.0 / invEffMass; 
     double relPerm = materialDB->getElementBlockParam<double>(workset.EBName,"Permittivity");
@@ -556,13 +571,14 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
           ScalarT eDensity = eDensityForPoissonSchrond(workset, cell, qp, 0.0, false);
 
           // obtain the scaled potential
-          const ScalarT& phi = potential(cell,qp);
+          const ScalarT& unscaled_phi = potential(cell,qp); //[V]
+          ScalarT phi = unscaled_phi / V0; 
 
           //(No other classical density in insulator)
               
           // the scaled full RHS
           ScalarT charge;
-          charge = 1.0/Lambda2C0*(-approxEDensity + fixedCharge);
+          charge = 1.0/Lambda2 * (-approxEDensity + fixedCharge);
           poissonSource(cell, qp) = factor*charge;
 
           // output states
@@ -593,11 +609,12 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
       {
         for (std::size_t qp=0; qp < numQPs; ++qp)
         {
-          const ScalarT& phi = potential(cell,qp);
+          const ScalarT& unscaled_phi = potential(cell,qp);  //[V]
+          ScalarT phi = unscaled_phi / V0;  //[unitless]
           
           // the scaled full RHS
           ScalarT charge; 
-          charge = 1.0/Lambda2C0*fixedCharge;  // only fixed charge in an insulator
+          charge = 1.0/Lambda2*fixedCharge;  // only fixed charge in an insulator
           poissonSource(cell, qp) = factor*charge;
 	  
           chargeDensity(cell, qp) = fixedCharge; // fixed space charge in an insulator
@@ -627,7 +644,8 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
     {
       for (std::size_t qp=0; qp < numQPs; ++qp)
       {
-        const ScalarT& phi = potential(cell,qp);
+        const ScalarT& unscaled_phi = potential(cell,qp); //[V]
+        ScalarT phi = unscaled_phi / V0; 
         
         // the scaled full RHS
         ScalarT charge; 
@@ -711,7 +729,7 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
   // Scaling factors
   double X0 = length_unit_in_m/1e-2; // length scaling to get to [cm] (structure dimension in [um])
   ScalarT V0 = kbBoltz*temperature/1.0; // kb*T/q in [V], scaling for potential        
-  ScalarT Lambda2C0 = V0*eps0/(eleQ*X0*X0); // derived scaling factor
+  ScalarT Lambda2 = eps0/(eleQ*X0*X0); // derived scaling factor
   
   //! Constant energy reference for heterogeneous structures
   ScalarT qPhiRef;
@@ -843,7 +861,6 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
         if(bUsePredictorCorrector)
         {
           ScalarT prevPhi = prevPhiArray(cell,qp);
-          // std::cout << "cell = " << cell << ", qp = " << qp << ", prevPhi = " << prevPhi << std::endl;
             
           // compute the approximate quantum electron density using predictor-corrector method
           approxEDensity = eDensityForPoissonSchrond(workset, cell, qp, prevPhi, true);
@@ -855,8 +872,8 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
         ScalarT eDensity = eDensityForPoissonSchrond(workset, cell, qp, 0.0, false);
           
         // obtain the scaled potential
-        const ScalarT& phi = potential(cell,qp);
-        // std::cout << "cell = " << cell << ", qp = " << qp << ", currPhi = " << phi << std::endl;
+        const ScalarT& unscaled_phi = potential(cell,qp);
+        ScalarT phi = unscaled_phi / V0; 
            
         // compute the hole density treated as classical
         ScalarT hDensity = Nv*(this->*carrStat)(-phi+hArgOffset); 
@@ -872,11 +889,11 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
               
         // the scaled full RHS
         ScalarT charge; 
-        charge = 1.0/Lambda2C0*(hDensity- approxEDensity + ionN);
+        charge = 1.0/Lambda2 * (hDensity- approxEDensity + ionN);
         poissonSource(cell, qp) = factor*charge;
 
         // output states
-        chargeDensity(cell, qp) = charge*Lambda2C0;
+        chargeDensity(cell, qp) = hDensity -eDensity +ionN;
         electronDensity(cell, qp) = eDensity;
         holeDensity(cell, qp) = hDensity;
         electricPotential(cell, qp) = phi*V0;
@@ -894,16 +911,14 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
         
         valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
 
-        //std::cout << "cell = " << cell << ", qp = " << qp << ", approxEDensity = " << approxEDensity << std::endl;
-        //std::cout << "cell = " << cell << ", qp = " << qp << ", exactEDensity = " << eDensity << std::endl;
-        
       } // end of if (bSchrodingerInQuantumRegions) 
 
       //! calculate the classical charge (RHS) for Poisson equation
       else
       {
         // obtain the scaled potential
-        const ScalarT& phi = potential(cell,qp);
+        const ScalarT& unscaled_phi = potential(cell,qp);  //[V]
+        ScalarT phi = unscaled_phi / V0; 
           
         // obtain the ionized dopants
         ScalarT ionN;
@@ -915,20 +930,22 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
           ionN = 0.0; 
 
         // the scaled full RHS
-        ScalarT charge; 
-        charge = 1.0/Lambda2C0*(Nv*(this->*carrStat)(-phi+hArgOffset)- Nc*(this->*carrStat)(phi+eArgOffset) + ionN);
+        ScalarT charge, eDensity, hDensity;
+        eDensity = Nc*(this->*carrStat)(phi+eArgOffset);
+        hDensity = Nv*(this->*carrStat)(-phi+hArgOffset);
+        charge = 1.0/Lambda2 * (hDensity - eDensity + ionN);
         poissonSource(cell, qp) = factor*charge;
           
         // output states
-        chargeDensity(cell, qp) = charge*Lambda2C0;
-        electronDensity(cell, qp) = Nc*(this->*carrStat)(phi+eArgOffset);
-        holeDensity(cell, qp) = Nv*(this->*carrStat)(-phi+hArgOffset);
+        chargeDensity(cell, qp) = charge*Lambda2;
+        electronDensity(cell, qp) = eDensity;
+        holeDensity(cell, qp) = hDensity;
         electricPotential(cell, qp) = phi*V0;
         ionizedDopant(cell, qp) = ionN;
         conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
         valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
         approxQuanEDen(cell,qp) = 0.0; 
-        artCBDensity(cell, qp) = ( electronDensity(cell, qp) > 1e-6 ? electronDensity(cell, qp) 
+        artCBDensity(cell, qp) = ( eDensity > 1e-6 ? eDensity 
 				     : -Nc*(this->*carrStat)( -(phi+eArgOffset) ));
       }
       
@@ -961,7 +978,6 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
         if (bUsePredictorCorrector) 
         {
           ScalarT prevPhi = prevPhiArray(cell,qp);
-          // std::cout << "cell = " << cell << ", qp = " << qp << ", prevPhi = " << prevPhi << std::endl;
             
           // compute the approximate quantum electron density using predictor-corrector method
           approxEDensity = eDensityForPoissonSchrond(workset, cell, qp, prevPhi, true);
@@ -973,14 +989,14 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
         ScalarT eDensity = eDensityForPoissonSchrond(workset, cell, qp, 0.0, false);
 
         // obtain the scaled potential
-        const ScalarT& phi = potential(cell,qp);
-        // std::cout << "cell = " << cell << ", qp = " << qp << ", currPhi = " << phi << std::endl;
+        const ScalarT& unscaled_phi = potential(cell,qp);
+        ScalarT phi = unscaled_phi / V0; 
 
         //(No other classical density in insulator)
               
         // the scaled full RHS
         ScalarT charge;
-        charge = 1.0/Lambda2C0*(-approxEDensity + fixedCharge);
+        charge = 1.0/Lambda2 * (-approxEDensity + fixedCharge);
         poissonSource(cell, qp) = factor*charge;
 
         // output states
@@ -1001,19 +1017,16 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
           conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
         
         valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
-
-        //std::cout << "cell = " << cell << ", qp = " << qp << ", approxEDensity = " << approxEDensity << std::endl;
-        //std::cout << "cell = " << cell << ", qp = " << qp << ", exactEDensity = " << eDensity << std::endl;
-
       }
     
       else  // use semiclassical source
       { 
-        const ScalarT& phi = potential(cell,qp);
+        const ScalarT& unscaled_phi = potential(cell,qp);
+        ScalarT phi = unscaled_phi / V0; 
           
         // the scaled full RHS
         ScalarT charge; 
-        charge = 1.0/Lambda2C0*fixedCharge;  // only fixed charge in an insulator
+        charge = 1.0/Lambda2 * fixedCharge;  // only fixed charge in an insulator
         poissonSource(cell, qp) = factor*charge;
 	  
         chargeDensity(cell, qp) = fixedCharge; // fixed space charge in an insulator
@@ -1238,14 +1251,10 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrond
   
   // determine deltaPhi used in computing quantum electron density
   ScalarT deltaPhi = 0.0;  // 0 by default
-  
-  // if (abs(prevPhi) > 0.0) // for non-zero prevPhi, apply the predictor-corrector method
-  // This is a bad condition since prevPhi can be 0 for given (cell,qp) even when bUsePredCorr = true
-  
   if (bUsePredCorr)  // true: apply the p-c method
   {
-    const ScalarT& phi = potential(cell,qp);
-    deltaPhi = phi - prevPhi; 
+    const ScalarT& phi = potential(cell,qp); //[V]
+    deltaPhi = (phi - prevPhi) / (kbT /1.0);  //[unitless]
   }
   else
     deltaPhi = 0.0;  // false: do not apply the p-c method
@@ -1274,6 +1283,7 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrond
         // note: wavefunctions are assumed normalized here 
         ScalarT wfSquared = ( eigenvector_Re[i](cell,qp)*eigenvector_Re[i](cell,qp) + 
  			      eigenvector_Im[i](cell,qp)*eigenvector_Im[i](cell,qp) );
+ 			      
         eDensity += wfSquared*log(1. + exp((Ef-eigenvals[i])/kbT + deltaPhi) );
       }
       eDensity = eDenPrefactor*eDensity; // in [cm^-3]
@@ -1302,8 +1312,9 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrond
         // note: wavefunctions are assumed normalized here 
         ScalarT wfSquared = ( eigenvector_Re[i](cell,qp)*eigenvector_Re[i](cell,qp) + 
  			      eigenvector_Im[i](cell,qp)*eigenvector_Im[i](cell,qp) );
+ 			      
         ScalarT inArg = (Ef-eigenvals[i])/kbT + deltaPhi;
-        eDensity += wfSquared*computeFDIntMinusOneHalf(inArg); 
+        eDensity += wfSquared * computeFDIntMinusOneHalf(inArg); 
       }
       eDensity = eDenPrefactor*eDensity; // in [cm^-3]
 
@@ -1330,6 +1341,7 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrond
         // note: wavefunctions are assumed normalized here 
         ScalarT wfSquared = ( eigenvector_Re[i](cell,qp)*eigenvector_Re[i](cell,qp) + 
  			      eigenvector_Im[i](cell,qp)*eigenvector_Im[i](cell,qp) );
+ 			      
         eDensity += wfSquared*fermiFactor; 
       }
       eDensity = eDenPrefactor*eDensity; // in [cm^-3]

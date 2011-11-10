@@ -100,7 +100,8 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     double metalWorkFunc = materialDB->getMaterialParam<double>(material,"Work Function");
     ScalarT offsetDueToWorkFunc = (metalWorkFunc-qPhiRef)/1.0;  // 1.0 converts from [eV] to [V]
     
-    ScalarT newValue = (user_value - offsetDueToWorkFunc)/V0;
+    // ScalarT newValue = (user_value - offsetDueToWorkFunc)/V0;
+    ScalarT newValue = (user_value - offsetDueToWorkFunc);  //[V]
     PHAL::DirichletBase<EvalT,Traits>::value = newValue;
     
     //! Call base class evaluateFields, which sets relevant nodes using value member
@@ -150,7 +151,8 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
       // apply charge neutrality (p=n) and MB statistics
       builtinPotential = (qPhiRef-Chi-0.5*Eg)/1.0 + 0.5*kbT*log(Nv/Nc)/1.0;
       
-      ScalarT newValue = (user_value + builtinPotential)/V0;
+      // ScalarT newValue = (user_value + builtinPotential)/V0; 
+      ScalarT newValue = (user_value + builtinPotential);  //[V]
       PHAL::DirichletBase<EvalT,Traits>::value = newValue;
     
       //! Call base class evaluateFields, which sets relevant nodes using value member
@@ -181,7 +183,8 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
       else  
         builtinPotential = potentialForMBIncomplIon(Nc,Nv,Eg,Chi,dopantType,dopingConc,dopantActE);
 
-      ScalarT newValue = (user_value + builtinPotential)/V0;
+      // ScalarT newValue = (user_value + builtinPotential)/V0;
+      ScalarT newValue = (user_value + builtinPotential);  // [V]
       PHAL::DirichletBase<EvalT,Traits>::value = newValue;
     
       //! Call base class evaluateFields, which sets relevant nodes using value member
@@ -349,9 +352,9 @@ QCAD::PoissonDirichlet<EvalT,Traits>::potentialForZeroKFDComplIon(const ScalarT 
   // assume n = Nd to have an analytical expression (neglect p)
   if(dopType == "Donor") 
   {
-    if (dopingConc < Nc)  // Fermi level (due to doping) is below conduction band
+    if (dopingConc < Nc)  // Fermi level is below conduction band (due to doping)
       builtinPotential = potentialForFDComplIon(Nc,Nv,Eg,Chi,dopType,dopingConc);
-    else  // Fermi level is in conduction band
+    else  // Fermi level is in conduction band (degenerate)
     { 
       ScalarT invFDInt = pow(3./4.*sqrt(pi)*(dopingConc/Nc),2./3.);
       builtinPotential = (qPhiRef-Chi)/1.0+ V0*invFDInt;
@@ -361,9 +364,9 @@ QCAD::PoissonDirichlet<EvalT,Traits>::potentialForZeroKFDComplIon(const ScalarT 
   // assume p = Na to have an analytical expression (neglect n)
   else if(dopType == "Acceptor") 
   {
-    if (dopingConc < Nv)  // Fermi level (due to doping) is above valence band 
+    if (dopingConc < Nv)  // Fermi level is above valence band (due to doping) 
       builtinPotential = potentialForFDComplIon(Nc,Nv,Eg,Chi,dopType,dopingConc); 
-    else  // Fermi level is in valence band
+    else  // Fermi level is in valence band (degenerate)
     {  
       ScalarT invFDInt = pow(3./4.*sqrt(pi)*(dopingConc/Nv),2./3.);
       builtinPotential = (qPhiRef-Chi-Eg)/1.0- V0*invFDInt;
