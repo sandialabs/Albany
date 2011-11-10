@@ -118,6 +118,7 @@ Albany::ThermoMechanicalProblem::getValidProblemParameters() const
   validPL->set<RealType>("Thermal Expansion Coefficient", false, "");
   validPL->set<RealType>("Density", false, "");
   validPL->set<RealType>("Heat Capacity", false, "");
+  validPL->set<bool>("volavgJ", false, "Flag to indicate the J should be volume averaged");
 
   return validPL;
 }
