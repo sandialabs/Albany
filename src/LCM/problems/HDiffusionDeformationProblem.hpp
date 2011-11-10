@@ -149,7 +149,7 @@ namespace Albany {
 #include "DefGrad.hpp"
 #include "ThermoMechanicalStress.hpp"
 #include "PHAL_SaveStateField.hpp"
-#include "ThermoMechanicalEnergyResidual.hpp"
+#include "HDiffusionDeformationMatterResidual.hpp"
 #include "ThermoMechanicalMomentumResidual.hpp"
 #include "PHAL_ThermalConductivity.hpp"
 #include "PHAL_Source.hpp"
@@ -228,7 +228,7 @@ void Albany::HDiffusionDeformationProblem::constructEvaluators(
   Teuchos::ArrayRCP<string> tdof_names_dot(1);
   tdof_names_dot[0] = tdof_names[0]+"_dot";
   Teuchos::ArrayRCP<string> tresid_names(1);
-  tresid_names[0] = "Thermo Mechanical Energy Residual";
+  tresid_names[0] = "Hydrogen Transport Matter Residual";
 
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructDOFInterpolationEvaluator(tdof_names[0]));
@@ -721,47 +721,52 @@ void Albany::HDiffusionDeformationProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  { // ThermoMechanical Energy Residual
-    RCP<ParameterList> p = rcp(new ParameterList("Thermo Mechanical Energy Residual"));
+  { // Hydrogen Transport model proposed in Foulk et al 2012
+    RCP<ParameterList> p = rcp(new ParameterList("Hydrogen Transport Matter Residual"));
 
     //Input
     p->set<string>("Weighted BF Name", "wBF");
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
     p->set<string>("QP Variable Name", "Lattice Concentration");
 
+    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+
     p->set<bool>("Have Source", haveSource);
     p->set<string>("Source Name", "Source");
+
 
     p->set<string>("Deformation Gradient Name", "Deformation Gradient");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-    p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
+    p->set<string>("Effective Diffusivity Name", "Effective Diffusivity");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+    p->set<string>("Diffusion Coefficient Name", "Diffusion Coefficient");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+    p->set<string>("QP Variable Name", "Lattice Concentration");
+    	p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<string>("Gradient QP Variable Name", "Lattice Concentration Gradient");
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
-    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
-
-    p->set<string>("Mechanical Source Name", "Mechanical Source");
     p->set<string>("Delta Time Name", "Delta Time");
     p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
-    RealType density = params->get("Density", 1.0);
-    p->set<RealType>("Density", density);
-    RealType Cv = params->get("Heat Capacity", 1.0);
-    p->set<RealType>("Heat Capacity", Cv);
 
     //Output
-    p->set<string>("Residual Name", "Thermo Mechanical Energy Residual");
+    p->set<string>("Residual Name", "Hydrogen Transport Matter Residual");
     p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
 
-    ev = rcp(new LCM::ThermoMechanicalEnergyResidual<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new LCM::HDiffusionDeformationMatterResidual<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
     p = stateMgr.registerStateVariable("Lattice Concentration",dl->qp_scalar, dl->dummy,"zero",true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+
+
+  // Setting up field manager
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
     PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter", dl->dummy);
@@ -777,4 +782,4 @@ void Albany::HDiffusionDeformationProblem::constructEvaluators(
     respUtils.constructResponses(fm0, responses, responseList, stateMgr);
   }
 }
-#endif // ALBANY_ELASTICITYPROBLEM_HPP
+#endif // ALBANY_HDIFFUSION_DEFORMATION_PROBLEM_HPP
