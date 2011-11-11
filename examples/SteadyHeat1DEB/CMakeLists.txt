@@ -34,3 +34,4 @@ add_test(${testName}_Prep HeatProfile)
 # 5. Create the test with this name and standard executable
 
 add_test(${testName} ${Albany.exe})
+set_tests_properties(${testName}  PROPERTIES DEPENDS ${testName}_Prep)
