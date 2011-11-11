@@ -17,8 +17,15 @@
 #include "HDiffusionDeformationProblem.hpp"
 #include "Albany_SolutionAverageResponseFunction.hpp"
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
+#include "Albany_SolutionMaxValueResponseFunction.hpp"
+
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemUtils.hpp"
+
+#include "Intrepid_FieldContainer.hpp"
+#include "Intrepid_DefaultCubatureFactory.hpp"
+#include "Shards_CellTopology.hpp"
+
 #include "Albany_EvaluatorUtils.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 
@@ -128,7 +135,7 @@ Albany::HDiffusionDeformationProblem::getValidProblemParameters() const
   validPL->sublist("Equilibrium Constant", false, "");
   validPL->sublist("Trapped Solvent", false, "");
   validPL->sublist("Molar Volume", false, "");
-  validPL->sublist("EffectiveDiffusivity", false, "");
+  validPL->sublist("Effective Diffusivity", false, "");
 
   return validPL;
 }

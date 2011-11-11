@@ -419,7 +419,7 @@ void Albany::HDiffusionDeformationProblem::constructEvaluators(
 
        ev = rcp(new LCM::DiffusionCoefficient<EvalT,AlbanyTraits>(*p));
        fm0.template registerEvaluator<EvalT>(ev);
-       p = stateMgr.registerStateVariable("Diffusion Coefficient",dl->qp_scalar, dl->dummy,"zero",true);
+       p = stateMgr.registerStateVariable("Diffusion Coefficient",dl->qp_scalar, dl->dummy,"zero");
        ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
        fm0.template registerEvaluator<EvalT>(ev);
      }
@@ -439,7 +439,7 @@ void Albany::HDiffusionDeformationProblem::constructEvaluators(
 
          ev = rcp(new LCM::EquilibriumConstant<EvalT,AlbanyTraits>(*p));
          fm0.template registerEvaluator<EvalT>(ev);
-         p = stateMgr.registerStateVariable("Equilibrium Constant",dl->qp_scalar, dl->dummy,"zero",true);
+         p = stateMgr.registerStateVariable("Equilibrium Constant",dl->qp_scalar, dl->dummy,"zero");
          ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
          fm0.template registerEvaluator<EvalT>(ev);
        }
@@ -461,7 +461,7 @@ void Albany::HDiffusionDeformationProblem::constructEvaluators(
 
            ev = rcp(new LCM::EffectiveDiffusivity<EvalT,AlbanyTraits>(*p));
            fm0.template registerEvaluator<EvalT>(ev);
-           p = stateMgr.registerStateVariable("Effective Diffusivity",dl->qp_scalar, dl->dummy,"zero",true);
+           p = stateMgr.registerStateVariable("Effective Diffusivity",dl->qp_scalar, dl->dummy,"zero");
            ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
            fm0.template registerEvaluator<EvalT>(ev);
          }
@@ -710,7 +710,7 @@ void Albany::HDiffusionDeformationProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList);
 
     p->set<string>("Source Name", "Source");
-    p->set<string>("Variable Name", "Temperature");
+    p->set<string>("Variable Name", "Lattice Concentration");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
@@ -746,7 +746,7 @@ void Albany::HDiffusionDeformationProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<string>("QP Variable Name", "Lattice Concentration");
-    	p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<string>("Gradient QP Variable Name", "Lattice Concentration Gradient");
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);

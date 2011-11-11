@@ -19,6 +19,9 @@
 #include "Phalanx_DataLayout.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid_RealSpaceTools.hpp"
+
+#include <typeinfo>
 
 namespace LCM {
 
@@ -38,8 +41,8 @@ namespace LCM {
          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     CLGrad       (p.get<std::string>               ("Gradient QP Variable Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-    Source      (p.get<std::string>                ("Source Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+//    Source      (p.get<std::string>                ("Source Name"),
+//		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
 //	MechSource      (p.get<std::string>            ("Mechanical Source Name"),
 //		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     DefGrad      (p.get<std::string>               ("Deformation Gradient Name"),
@@ -47,8 +50,8 @@ namespace LCM {
 	deltaTime (p.get<std::string>                  ("Delta Time Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("Workset Scalar Data Layout")),
     TResidual   (p.get<std::string>                ("Residual Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
-    haveSource  (p.get<bool>("Have Source"))
+		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") )
+ //   haveSource  (p.get<bool>("Have Source"))
  //   ,haveMechSource  (p.get<bool>("Have Mechanical Source"))
   {
     if (p.isType<bool>("Disable Transient"))
@@ -109,6 +112,7 @@ namespace LCM {
 	this->utils.setFieldData(DL,fm);
 	this->utils.setFieldData(Clattice,fm);
 	this->utils.setFieldData(CLGrad,fm);
+	this->utils.setFieldData(DefGrad,fm);
 	this->utils.setFieldData(deltaTime,fm);
 
 //    if (haveSource) this->utils.setFieldData(Source);
@@ -127,10 +131,19 @@ evaluateFields(typename Traits::EvalData workset)
 
   Albany::MDArray Clatticeold = (*workset.stateArrayPtr)[ClatticeName];
 
+  ScalarT dt = deltaTime(0);
+
   // Set Warning message
   if (Clatticeold(1,1) < 0 || Clattice(1,1) < 0 ) {
 	  cout << "negative lattice concentration detected. Error! \n";
   }
+
+  if (dt == 0 ) {
+  	  cout << "Not a transient problem. Error! \n";
+    }
+
+
+
 
 	  // Pore-fluid diffusion coupling.
 	  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
@@ -139,10 +152,9 @@ evaluateFields(typename Traits::EvalData workset)
 			  TResidual(cell,node)=0.0;
 			  for (std::size_t qp=0; qp < numQPs; ++qp) {
 
-
 				  // Transient Term
-				  TResidual(cell,node) += Dstar(cell, qp)*(
-						     Clattice(cell,qp) - Clatticeold(cell, qp)
+				  TResidual(cell,node) += Dstar(cell, qp)/dt*(
+						     Clattice(cell,qp)- Clatticeold(cell, qp)
 						    ) *wBF(cell, node, qp)  ;
 
 			  }
@@ -150,7 +162,7 @@ evaluateFields(typename Traits::EvalData workset)
 	  }
 
 
-   ScalarT dt = deltaTime(0);
+
 
    // compute the 'material' flux
    FST::tensorMultiplyDataData<ScalarT> (C, DefGrad, DefGrad, 'T');
@@ -159,16 +171,16 @@ evaluateFields(typename Traits::EvalData workset)
    FST::scalarMultiplyDataData<ScalarT> (Hflux, DL, CinvTgrad);
 
 
-   for (std::size_t cell=0; cell < workset.numCells; ++cell){
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
-    	  for (std::size_t dim=0; dim <numDims; ++dim){
-    		  Hfluxdt(cell, qp, dim) = Hflux(cell,qp,dim)*dt;
-    	  }
-      }
-  }
+//   for (std::size_t cell=0; cell < workset.numCells; ++cell){
+//      for (std::size_t qp=0; qp < numQPs; ++qp) {
+//    	  for (std::size_t dim=0; dim <numDims; ++dim){
+//    		  Hfluxdt(cell, qp, dim) = Hflux(cell,qp,dim)*dt;
+//    	  }
+//      }
+//  }
 
 
-  FST::integrate<ScalarT>(TResidual, Hfluxdt, wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
+  FST::integrate<ScalarT>(TResidual, Hflux, wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
 
 
 

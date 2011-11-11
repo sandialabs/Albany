@@ -69,8 +69,6 @@ private:
   //Data from previous time step
   std::string ClatticeName;
 
-
-
   bool haveSource;
   bool haveMechSource;
   bool enableTransient;
