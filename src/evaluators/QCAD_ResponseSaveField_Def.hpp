@@ -184,7 +184,7 @@ evaluateFields(typename Traits::EvalData workset)
       break;
       */
     default:
-      TEST_FOR_EXCEPTION(true, std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
        "Unexpected dimensions in SaveField response Evaluator: " << size);
     }
   }
@@ -253,7 +253,7 @@ evaluateFields(typename Traits::EvalData workset)
 	    if(numDims > iZ) stateValue = field(cell,qp,iZ);
 	  }
 	  else {
-	    TEST_FOR_EXCEPTION(true, std::logic_error,
+	    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
 	       "Unknown vector operation: " << vectorOp);
 	  }
 
@@ -268,7 +268,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
       break;
     default:
-      TEST_FOR_EXCEPTION(true, std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
        "Unexpected dimensions in SaveField response Evaluator: " << size);
     }
   }

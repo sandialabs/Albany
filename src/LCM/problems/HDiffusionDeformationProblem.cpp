@@ -125,6 +125,10 @@ Albany::HDiffusionDeformationProblem::getValidProblemParameters() const
   validPL->sublist("Diffusion Activation Enthalpy", false, "");
   validPL->sublist("Pre Exponential Factor", false, "");
   validPL->sublist("Diffusion Coefficient", false, "");
+  validPL->sublist("Equilibrium Constant", false, "");
+  validPL->sublist("Trapped Solvent", false, "");
+  validPL->sublist("Molar Volume", false, "");
+  validPL->sublist("EffectiveDiffusivity", false, "");
 
   return validPL;
 }
