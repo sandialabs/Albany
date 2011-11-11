@@ -129,18 +129,22 @@ evaluateFields(typename Traits::EvalData workset)
   typedef Intrepid::FunctionSpaceTools FST;
 
 
-  Albany::MDArray Clatticeold = (*workset.stateArrayPtr)[ClatticeName];
+  Albany::MDArray Clattice_old = (*workset.stateArrayPtr)[ClatticeName];
 
   ScalarT dt = deltaTime(0);
+  ScalarT fac(0.0);
 
   // Set Warning message
-  if (Clatticeold(1,1) < 0 || Clattice(1,1) < 0 ) {
-	  cout << "negative lattice concentration detected. Error! \n";
-  }
+//  if (Clattice_old(1,1) <= 0 || Clattice(1,1) <= 0 ) {
+//	  cout << "negative or zero lattice concentration detected. Error! \n";
+//  }
 
   if (dt == 0 ) {
-  	  cout << "Not a transient problem. Error! \n";
-    }
+ // 	  cout << "Not a transient problem. Error! \n";
+  } else if(dt > 0) {
+	  fac = 1/dt;
+//	  cout << fac;
+  }
 
 
 
@@ -153,8 +157,8 @@ evaluateFields(typename Traits::EvalData workset)
 			  for (std::size_t qp=0; qp < numQPs; ++qp) {
 
 				  // Transient Term
-				  TResidual(cell,node) += Dstar(cell, qp)/dt*(
-						     Clattice(cell,qp)- Clatticeold(cell, qp)
+				  TResidual(cell,node) += Dstar(cell, qp)*fac*(
+						     Clattice(cell,qp)- Clattice_old(cell, qp)
 						    ) *wBF(cell, node, qp)  ;
 
 			  }
