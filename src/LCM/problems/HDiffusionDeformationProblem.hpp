@@ -161,6 +161,8 @@ namespace Albany {
 #include "EffectiveDiffusivity.hpp"
 #include "EquilibriumConstant.hpp"
 #include "TrappedSolvent.hpp"
+#include "TrappedConcentration.hpp"
+#include "StrainRateFactor.hpp"
 
 template <typename EvalT>
 void Albany::HDiffusionDeformationProblem::constructEvaluators(
@@ -404,6 +406,31 @@ void Albany::HDiffusionDeformationProblem::constructEvaluators(
             fm0.template registerEvaluator<EvalT>(ev);
     }
 
+  { // Strain Rate Factor
+        RCP<ParameterList> p = rcp(new ParameterList);
+
+  	  p->set<string>("Strain Rate Factor Name", "Strain Rate Factor");
+  	  p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+  	  p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+  	  p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+  	  p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
+  	  p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+  	  Teuchos::ParameterList& paramList = params->sublist("Trapped Solvent");
+  	  p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+  	  // Setting this turns on dependence on plastic multipler for J2 plasticity
+  	  p->set<string>("eqps Name", "eqps");
+      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+  	  p->set<string>("Trapped Solvent Name", "Trapped Solvent");
+
+            ev = rcp(new LCM::StrainRateFactor<EvalT,AlbanyTraits>(*p));
+            fm0.template registerEvaluator<EvalT>(ev);
+            p = stateMgr.registerStateVariable("Strain Rate Factor",dl->qp_scalar, dl->dummy,"zero");
+            ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+            fm0.template registerEvaluator<EvalT>(ev);
+  	  }
+
   { // Diffusion Coefficient
        RCP<ParameterList> p = rcp(new ParameterList("Diffusion Coefficient"));
 
@@ -465,6 +492,26 @@ void Albany::HDiffusionDeformationProblem::constructEvaluators(
            ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
            fm0.template registerEvaluator<EvalT>(ev);
          }
+
+  { // Trapped Concentration
+             RCP<ParameterList> p = rcp(new ParameterList("Trapped Concentration"));
+
+             //Input
+             p->set<string>("Trapped Solvent Name", "Trapped Solvent");
+             p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+             p->set<string>("Lattice Concentration Name", "Lattice Concentration");
+             p->set<string>("Equilibrium Constant Name", "Equilibrium Constant");
+             p->set<string>("Molar Volume Name", "Molar Volume");
+
+             //Output
+             p->set<string>("Trapped Concentration Name", "Trapped Concentration");
+
+             ev = rcp(new LCM::TrappedConcentration<EvalT,AlbanyTraits>(*p));
+             fm0.template registerEvaluator<EvalT>(ev);
+             p = stateMgr.registerStateVariable("Trapped Concentration",dl->qp_scalar, dl->dummy,"zero");
+             ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+             fm0.template registerEvaluator<EvalT>(ev);
+           }
 
   { // Shear Modulus
     RCP<ParameterList> p = rcp(new ParameterList);
@@ -735,6 +782,17 @@ void Albany::HDiffusionDeformationProblem::constructEvaluators(
     p->set<bool>("Have Source", haveSource);
     p->set<string>("Source Name", "Source");
 
+    p->set<string>("eqps Name", "eqps");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+    p->set<string>("Strain Rate Factor Name", "Strain Rate Factor");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+    p->set<string>("Trapped Concentration Name", "Trapped Concentration");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+    p->set<string>("Trapped Solvent Name", "Trapped Solvent");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<string>("Deformation Gradient Name", "Deformation Gradient");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);

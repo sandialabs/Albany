@@ -62,6 +62,14 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> CLGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint> MechSource;
 
+  // Input for the strain rate effect
+  PHX::MDField<ScalarT,Cell,QuadPoint> Ctrapped;
+  PHX::MDField<ScalarT,Cell,QuadPoint> Ntrapped;
+  PHX::MDField<ScalarT,Cell,QuadPoint> eqps;
+  PHX::MDField<ScalarT,Cell,QuadPoint> eqpsFactor;
+  std::string eqpsName;
+
+
 
   // Time
   PHX::MDField<ScalarT,Dummy> deltaTime;

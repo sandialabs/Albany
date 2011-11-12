@@ -39,6 +39,14 @@ namespace LCM {
          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     Clattice (p.get<std::string>                   ("QP Variable Name"),
          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	eqps (p.get<std::string>                   ("eqps Name"),
+		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+    eqpsFactor (p.get<std::string>                   ("Strain Rate Factor Name"),
+	     p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	Ctrapped (p.get<std::string>                   ("Trapped Concentration Name"),
+         p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	Ntrapped (p.get<std::string>                   ("Trapped Solvent Name"),
+         p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     CLGrad       (p.get<std::string>               ("Gradient QP Variable Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
 //    Source      (p.get<std::string>                ("Source Name"),
@@ -63,6 +71,10 @@ namespace LCM {
     this->addDependentField(Dstar);
     this->addDependentField(DL);
     this->addDependentField(Clattice);
+    this->addDependentField(eqps);
+    this->addDependentField(eqpsFactor);
+    this->addDependentField(Ctrapped);
+    this->addDependentField(Ntrapped);
     this->addDependentField(CLGrad);
     this->addDependentField(DefGrad);
     this->addDependentField(deltaTime);
@@ -81,6 +93,7 @@ namespace LCM {
 
     // Get data from previous converged time step
     ClatticeName = p.get<std::string>("QP Variable Name")+"_old";
+    eqpsName = p.get<std::string>("eqps Name")+"_old";
 
     worksetSize = dims[0];
     numNodes = dims[1];
@@ -111,6 +124,10 @@ namespace LCM {
 	this->utils.setFieldData(Dstar,fm);
 	this->utils.setFieldData(DL,fm);
 	this->utils.setFieldData(Clattice,fm);
+	this->utils.setFieldData(eqps,fm);
+	this->utils.setFieldData(eqpsFactor,fm);
+	this->utils.setFieldData(Ctrapped,fm);
+	this->utils.setFieldData(Ntrapped,fm);
 	this->utils.setFieldData(CLGrad,fm);
 	this->utils.setFieldData(DefGrad,fm);
 	this->utils.setFieldData(deltaTime,fm);
@@ -130,6 +147,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 
   Albany::MDArray Clattice_old = (*workset.stateArrayPtr)[ClatticeName];
+  Albany::MDArray eqps_old = (*workset.stateArrayPtr)[eqpsName];
 
   ScalarT dt = deltaTime(0);
   ScalarT fac(0.0);
@@ -149,7 +167,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 
 
-	  // Pore-fluid diffusion coupling.
+
 	  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
 		  for (std::size_t node=0; node < numNodes; ++node) {
@@ -160,6 +178,13 @@ evaluateFields(typename Traits::EvalData workset)
 				  TResidual(cell,node) += Dstar(cell, qp)*fac*(
 						     Clattice(cell,qp)- Clattice_old(cell, qp)
 						    ) *wBF(cell, node, qp)  ;
+
+
+				  // Strain Rate Term
+				  TResidual(cell,node) += Ctrapped(cell, qp)/Ntrapped(cell, qp)*
+						                  eqpsFactor(cell,qp)*fac*(
+				  						     eqps(cell,qp)- eqps_old(cell, qp)
+				  						    ) *wBF(cell, node, qp)  ;
 
 			  }
 		  }
@@ -173,15 +198,6 @@ evaluateFields(typename Traits::EvalData workset)
    Intrepid::RealSpaceTools<ScalarT>::inverse(Cinv, C);
    FST::tensorMultiplyDataData<ScalarT> (CinvTgrad, Cinv, CLGrad);
    FST::scalarMultiplyDataData<ScalarT> (Hflux, DL, CinvTgrad);
-
-
-//   for (std::size_t cell=0; cell < workset.numCells; ++cell){
-//      for (std::size_t qp=0; qp < numQPs; ++qp) {
-//    	  for (std::size_t dim=0; dim <numDims; ++dim){
-//    		  Hfluxdt(cell, qp, dim) = Hflux(cell,qp,dim)*dt;
-//    	  }
-//      }
-//  }
 
 
   FST::integrate<ScalarT>(TResidual, Hflux, wGradBF, Intrepid::COMP_CPP, true); // "true" sums into

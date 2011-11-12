@@ -309,7 +309,9 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/EffectiveDiffusivity.cpp
     ${LCM_DIR}/evaluators/EquilibriumConstant.cpp
     ${LCM_DIR}/evaluators/TrappedSolvent.cpp
+    ${LCM_DIR}/evaluators/TrappedConcentration.cpp
     ${LCM_DIR}/evaluators/HDiffusionDeformationMatterResidual.cpp
+    ${LCM_DIR}/evaluators/StrainRateFactor.cpp
   )
 
   SET(HEADERS ${HEADERS}
@@ -393,8 +395,12 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/TrappedSolvent_Def.hpp
     ${LCM_DIR}/evaluators/EffectiveDiffusivity.hpp
     ${LCM_DIR}/evaluators/EffectiveDiffusivity_Def.hpp
+    ${LCM_DIR}/evaluators/TrappedConcentration.hpp
+    ${LCM_DIR}/evaluators/TrappedConcentration_Def.hpp
     ${LCM_DIR}/evaluators/HDiffusionDeformationMatterResidual.hpp
     ${LCM_DIR}/evaluators/HDiffusionDeformationMatterResidual_Def.hpp
+    ${LCM_DIR}/evaluators/StrainRateFactor.hpp
+    ${LCM_DIR}/evaluators/StrainRateFactor_Def.hpp
   )
 
   #LCM utils
