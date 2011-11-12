@@ -163,6 +163,7 @@ namespace Albany {
 #include "TrappedSolvent.hpp"
 #include "TrappedConcentration.hpp"
 #include "StrainRateFactor.hpp"
+#include "TauContribution.hpp"
 
 template <typename EvalT>
 void Albany::HDiffusionDeformationProblem::constructEvaluators(
@@ -416,7 +417,7 @@ void Albany::HDiffusionDeformationProblem::constructEvaluators(
   	  p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
   	  p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-  	  Teuchos::ParameterList& paramList = params->sublist("Trapped Solvent");
+  	  Teuchos::ParameterList& paramList = params->sublist("Strain Rate Factor");
   	  p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
   	  // Setting this turns on dependence on plastic multipler for J2 plasticity
@@ -512,6 +513,34 @@ void Albany::HDiffusionDeformationProblem::constructEvaluators(
              ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
              fm0.template registerEvaluator<EvalT>(ev);
            }
+
+  { // Tau Factor
+          RCP<ParameterList> p = rcp(new ParameterList);
+
+    	  p->set<string>("Tau Contribution Name", "Tau Contribution");
+    	  p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    	  p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+    	  p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    	  p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
+    	  p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    	  Teuchos::ParameterList& paramList = params->sublist("Tau Contribution");
+    	  p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+     	  // Input
+    	  p->set<string>("Diffusion Coefficient Name", "Diffusion Coefficient");
+          p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+          p->set<string>("QP Variable Name", "Lattice Concentration");
+          p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+          p->set<string>("Ideal Gas Constant Name", "Ideal Gas Constant");
+          p->set<string>("Material Property Name", "Temperature");
+
+              ev = rcp(new LCM::TauContribution<EvalT,AlbanyTraits>(*p));
+              fm0.template registerEvaluator<EvalT>(ev);
+
+    	  }
 
   { // Shear Modulus
     RCP<ParameterList> p = rcp(new ParameterList);
@@ -808,6 +837,15 @@ void Albany::HDiffusionDeformationProblem::constructEvaluators(
 
     p->set<string>("Gradient QP Variable Name", "Lattice Concentration Gradient");
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
+    p->set<string>("Stress Name", "Stress");
+    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+
+    p->set<string>("Tau Contribution Name", "Tau Contribution");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+//    p->set<string>("Weights Name","Weights");
+
 
     p->set<string>("Delta Time Name", "Delta Time");
     p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);

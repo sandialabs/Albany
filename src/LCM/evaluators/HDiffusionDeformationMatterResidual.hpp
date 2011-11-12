@@ -69,6 +69,11 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> eqpsFactor;
   std::string eqpsName;
 
+  // Input for hydro-static stress effect
+  PHX::MDField<ScalarT,Cell,QuadPoint> Pstress;
+  PHX::MDField<ScalarT,Cell,QuadPoint> tauFactor;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint> weight;
+
 
 
   // Time
@@ -93,10 +98,16 @@ private:
   Intrepid::FieldContainer<ScalarT> Cinv;
   Intrepid::FieldContainer<ScalarT> CinvTgrad;
 
+  Intrepid::FieldContainer<ScalarT> tauStress;
+
+
   Intrepid::FieldContainer<ScalarT> pterm;
   Intrepid::FieldContainer<ScalarT> aterm;
 
-  ScalarT CLbar, vol;
+  Intrepid::FieldContainer<ScalarT> tauH;
+  Intrepid::FieldContainer<ScalarT> CinvTaugrad;
+
+  ScalarT CLbar, vol ;
 
 
   // Output:

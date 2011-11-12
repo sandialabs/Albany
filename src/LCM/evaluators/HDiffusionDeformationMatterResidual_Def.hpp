@@ -55,6 +55,12 @@ namespace LCM {
 //		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     DefGrad      (p.get<std::string>               ("Deformation Gradient Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+	Pstress      (p.get<std::string>               ("Stress Name"),
+		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+//	weight       (p.get<std::string>                   ("Weights Name"),
+//		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	tauFactor  (p.get<std::string>                   ("Tau Contribution Name"),
+		 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
 	deltaTime (p.get<std::string>                  ("Delta Time Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("Workset Scalar Data Layout")),
     TResidual   (p.get<std::string>                ("Residual Name"),
@@ -77,6 +83,9 @@ namespace LCM {
     this->addDependentField(Ntrapped);
     this->addDependentField(CLGrad);
     this->addDependentField(DefGrad);
+    this->addDependentField(Pstress);
+ //   this->addDependentField(weight);
+    this->addDependentField(tauFactor);
     this->addDependentField(deltaTime);
 
  //   if (haveSource) this->addDependentField(Source);
@@ -109,6 +118,11 @@ namespace LCM {
     Cinv.resize(worksetSize, numQPs, numDims, numDims);
     CinvTgrad.resize(worksetSize, numQPs, numDims);
 
+    tauStress.resize(worksetSize, numQPs, numDims, numDims);
+    CinvTaugrad.resize(worksetSize, numQPs, numDims);
+
+    tauH.resize(dims[0], numQPs);
+
     this->setName("HDiffusionDeformationMatterResidual"+PHX::TypeString<EvalT>::value);
 
   }
@@ -130,6 +144,9 @@ namespace LCM {
 	this->utils.setFieldData(Ntrapped,fm);
 	this->utils.setFieldData(CLGrad,fm);
 	this->utils.setFieldData(DefGrad,fm);
+	this->utils.setFieldData(Pstress,fm);
+	this->utils.setFieldData(tauFactor,fm);
+//	this->utils.setFieldData(weight,fm);
 	this->utils.setFieldData(deltaTime,fm);
 
 //    if (haveSource) this->utils.setFieldData(Source);
@@ -168,7 +185,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 
 
-	  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
 		  for (std::size_t node=0; node < numNodes; ++node) {
 			  TResidual(cell,node)=0.0;
@@ -188,7 +205,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 			  }
 		  }
-	  }
+  }
 
 
 
@@ -201,6 +218,36 @@ evaluateFields(typename Traits::EvalData workset)
 
 
   FST::integrate<ScalarT>(TResidual, Hflux, wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
+
+
+  // hydrostatic stress term
+ // FST::tensorMultiplyDataData<ScalarT> (tauStress, Pstress, DefGrad, 'T');
+//
+ // for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+//	  for (std::size_t qp=0; qp < numQPs; ++qp) {
+//		  tauH(cell,qp) = 0.0;
+//	  for (std::size_t dim=0; dim < numDims; ++qp) {
+	//		  tauH(cell,qp) += tauStress(cell, qp,dim, dim)/3.0;
+	//	  }
+	//  }
+//  }
+
+//  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+  //	  for (std::size_t qp=0; qp < numQPs; ++qp) {
+  	//	  tauH(cell,qp) = 0.0;
+  	//	  for (std::size_t dim=0; dim < numDims; ++qp) {
+  	//		  CinvTaugrad(cell,qp, dim) += tauH(cell, qp);
+
+  			  // NEED PROJECTION
+  	//		 CinvTaugrad(cell,qp, dim) = 0.0 ;
+  	//	  }
+  	//  }
+  //  }
+
+
+
+
+//  FST::integrate<ScalarT>(TResidual, CinvTaugrad, wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
 
 
 

@@ -138,6 +138,7 @@ Albany::HDiffusionDeformationProblem::getValidProblemParameters() const
   validPL->sublist("Molar Volume", false, "");
   validPL->sublist("Effective Diffusivity", false, "");
   validPL->sublist("Strain Rate Factor", false, "");
+  validPL->sublist("Tau Contribution", false, "");
 
   return validPL;
 }

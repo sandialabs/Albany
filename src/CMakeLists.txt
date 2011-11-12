@@ -311,6 +311,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/TrappedSolvent.cpp
     ${LCM_DIR}/evaluators/TrappedConcentration.cpp
     ${LCM_DIR}/evaluators/HDiffusionDeformationMatterResidual.cpp
+    ${LCM_DIR}/evaluators/TauContribution.cpp
     ${LCM_DIR}/evaluators/StrainRateFactor.cpp
   )
 
@@ -401,6 +402,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/HDiffusionDeformationMatterResidual_Def.hpp
     ${LCM_DIR}/evaluators/StrainRateFactor.hpp
     ${LCM_DIR}/evaluators/StrainRateFactor_Def.hpp
+    ${LCM_DIR}/evaluators/TauContribution.hpp
+    ${LCM_DIR}/evaluators/TauContribution_Def.hpp
   )
 
   #LCM utils

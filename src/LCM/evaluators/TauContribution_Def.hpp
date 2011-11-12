@@ -25,9 +25,9 @@
 namespace LCM {
 
 template<typename EvalT, typename Traits>
-StrainRateFactor<EvalT, Traits>::
-StrainRateFactor(Teuchos::ParameterList& p) :
-eqpsFactor(p.get<std::string>("Strain Rate Factor Name"),
+TauContribution<EvalT, Traits>::
+TauContribution(Teuchos::ParameterList& p) :
+tauFactor(p.get<std::string>("Tau Contribution Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"))
 {
   Teuchos::ParameterList* elmd_list = 
@@ -43,14 +43,14 @@ eqpsFactor(p.get<std::string>("Strain Rate Factor Name"),
   Teuchos::RCP<ParamLib> paramLib = 
     p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
 
-  std::string type = elmd_list->get("Strain Rate Factor Type", "Constant");
+  std::string type = elmd_list->get("Tau Contribution Type", "Constant");
   if (type == "Constant") {
     is_constant = true;
     constant_value = elmd_list->get("Value", 0.0);
 
-    // Strain Rate Factor as a Sacado-ized parameter
+    // Add Trapped Solvent as a Sacado-ized parameter
     new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-	"Strain Rate Factor", this, paramLib);
+	"Tau Contribution", this, paramLib);
   }
   else if (type == "Truncated KL Expansion") {
     is_constant = false;
@@ -76,62 +76,76 @@ eqpsFactor(p.get<std::string>("Strain Rate Factor Name"),
 		       "Invalid Trapped Solvent type " << type);
   } 
 
-  if ( p.isType<string>("eqps Name") ) {
+  if ( p.isType<string>("QP Variable Name") ) {
      Teuchos::RCP<PHX::DataLayout> scalar_dl =
        p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
      PHX::MDField<ScalarT,Cell,QuadPoint>
-       tp(p.get<string>("eqps Name"), scalar_dl);
-     eqps = tp;
-     this->addDependentField(eqps);
-     AConstant = elmd_list->get("A Constant Value", 23.30);
+       tp(p.get<string>("QP Variable Name"), scalar_dl);
+     Clattice = tp;
+     this->addDependentField(Clattice);
+     VmPartial = elmd_list->get("Partial Molar Volume Value", 2.0e-6);
      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-                                 "A Constant Value", this, paramLib);
-     BConstant = elmd_list->get("B Constant Value", 2.330);
-          new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-                                      "B Constant Value", this, paramLib);
-     CConstant = elmd_list->get("C Constant Value", 0.0);
-               new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-                                           "C Constant Value", this, paramLib);
+                                 "Partial Molar Volume Value", this, paramLib);
 
    }
    else {
-     AConstant=23.3;
-     BConstant=2.33;
-     CConstant=0.0;
+     VmPartial = 2.0e-6;
    }
 
-  if ( p.isType<string>("Trapped Solvent Name") ) {
+  if ( p.isType<string>("Diffusion Coefficient Name") ) {
        Teuchos::RCP<PHX::DataLayout> scalar_dl =
          p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
        PHX::MDField<ScalarT,Cell,QuadPoint>
-         ap(p.get<string>("Trapped Solvent Name"), scalar_dl);
-       Ntrapped = ap;
-       this->addDependentField(Ntrapped);
+         ap(p.get<string>("Diffusion Coefficient Name"), scalar_dl);
+       DL = ap;
+       this->addDependentField(DL);
 
   }
 
+  if ( p.isType<string>("Ideal Gas Constant Name") ) {
+           Teuchos::RCP<PHX::DataLayout> scalar_dl =
+             p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+           PHX::MDField<ScalarT,Cell,QuadPoint>
+             idg(p.get<string>("Ideal Gas Constant Name"), scalar_dl);
+           Rideal = idg;
+           this->addDependentField(Rideal);
+
+      }
+
+  if ( p.isType<string>("Material Property Name") ) {
+         Teuchos::RCP<PHX::DataLayout> scalar_dl =
+           p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+         PHX::MDField<ScalarT,Cell,QuadPoint>
+           tep(p.get<string>("Material Property Name"), scalar_dl);
+         temperature = tep;
+         this->addDependentField(temperature);
+
+    }
 
 
 
-  this->addEvaluatedField(eqpsFactor);
-  this->setName("Strain Rate Factor"+PHX::TypeString<EvalT>::value);
+
+  this->addEvaluatedField(tauFactor);
+  this->setName("Tau Contribution"+PHX::TypeString<EvalT>::value);
 }
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
-void StrainRateFactor<EvalT, Traits>::
+void TauContribution<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(eqpsFactor,fm);
+  this->utils.setFieldData(tauFactor,fm);
   if (!is_constant) this->utils.setFieldData(coordVec,fm);
-  this->utils.setFieldData(Ntrapped,fm);
-  this->utils.setFieldData(eqps,fm);
+  this->utils.setFieldData(Rideal,fm);
+  this->utils.setFieldData(temperature,fm);
+  this->utils.setFieldData(DL,fm);
+  this->utils.setFieldData(Clattice,fm);
 }
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
-void StrainRateFactor<EvalT, Traits>::
+void TauContribution<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   std::size_t numCells = workset.numCells;
@@ -139,7 +153,7 @@ evaluateFields(typename Traits::EvalData workset)
   if (is_constant) {
     for (std::size_t cell=0; cell < numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-    	  eqpsFactor(cell,qp) = constant_value;
+    	  tauFactor(cell,qp) = constant_value;
       }
     }
   }
@@ -149,14 +163,14 @@ evaluateFields(typename Traits::EvalData workset)
 	Teuchos::Array<MeshScalarT> point(numDims);
 	for (std::size_t i=0; i<numDims; i++)
 	  point[i] = Sacado::ScalarValue<MeshScalarT>::eval(coordVec(cell,qp,i));
-		eqpsFactor(cell,qp) = exp_rf_kl->evaluate(point, rv);
+		tauFactor(cell,qp) = exp_rf_kl->evaluate(point, rv);
       }
     }
   }
   for (std::size_t cell=0; cell < numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-    	  eqpsFactor(cell,qp) = Ntrapped(cell,qp)*log(10.0)*BConstant*CConstant*
-    			                exp(-1.0*CConstant*eqps(cell,qp));
+    	  tauFactor(cell,qp) = DL(cell,qp)*Clattice(cell,qp)*VmPartial/
+    			               ( Rideal(cell,qp)*temperature(cell,qp) );
 
 
       }
@@ -166,25 +180,21 @@ evaluateFields(typename Traits::EvalData workset)
 
 // **********************************************************************
 template<typename EvalT,typename Traits>
-typename StrainRateFactor<EvalT,Traits>::ScalarT&
-StrainRateFactor<EvalT,Traits>::getValue(const std::string &n)
+typename TauContribution<EvalT,Traits>::ScalarT&
+TauContribution<EvalT,Traits>::getValue(const std::string &n)
 {
-  if (n == "Strain Rate Factor")
+  if (n == "Tau Contribution")
     return constant_value;
-  else if (n == "A Constant Value")
-     return AConstant;
-  else if (n == "B Constant Value")
-       return BConstant;
-  else if (n == "C Constant Value")
-       return CConstant;
+  else if (n == "Partial Molar Volume Value")
+     return VmPartial;
   for (int i=0; i<rv.size(); i++) {
-    if (n == Albany::strint("Strain Rate Factor KL Random Variable",i))
+    if (n == Albany::strint("Tau Contribution KL Random Variable",i))
       return rv[i];
   }
   TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		     std::endl <<
-		     "Error! Logic error in getting paramter " << n
-		     << " in StrainRateFactor::getValue()" << std::endl);
+		     "Error! Logic error in getting parameter " << n
+		     << " in TauContribution::getValue()" << std::endl);
   return constant_value;
 }
 
