@@ -18,6 +18,7 @@
 #include "Albany_SolutionAverageResponseFunction.hpp"
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
 #include "Albany_SolutionMaxValueResponseFunction.hpp"
+#include "Albany_InitialCondition.hpp"
 
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemUtils.hpp"

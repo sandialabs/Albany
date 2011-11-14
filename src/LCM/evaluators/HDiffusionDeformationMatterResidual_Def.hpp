@@ -33,6 +33,8 @@ namespace LCM {
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
 	wGradBF     (p.get<std::string>                ("Weighted Gradient BF Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
+	GradBF      (p.get<std::string>                   ("Gradient BF Name"),
+		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
     Dstar (p.get<std::string>                   ("Effective Diffusivity Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     DL   (p.get<std::string>                       ("Diffusion Coefficient Name"),
@@ -74,6 +76,7 @@ namespace LCM {
 
     this->addDependentField(wBF);
     this->addDependentField(wGradBF);
+    this->addDependentField(GradBF);
     this->addDependentField(Dstar);
     this->addDependentField(DL);
     this->addDependentField(Clattice);
@@ -109,6 +112,8 @@ namespace LCM {
     numQPs  = dims[2];
     numDims = dims[3];
 
+    GradBF.fieldTag().dataLayout().dimensions(dims);
+
     // Allocate workspace for temporary variables
     Hflux.resize(dims[0], numQPs, numDims);
     Hfluxdt.resize(dims[0], numQPs, numDims);
@@ -135,6 +140,7 @@ namespace LCM {
   {
 	this->utils.setFieldData(wBF,fm);
 	this->utils.setFieldData(wGradBF,fm);
+	this->utils.setFieldData(GradBF,fm);
 	this->utils.setFieldData(Dstar,fm);
 	this->utils.setFieldData(DL,fm);
 	this->utils.setFieldData(Clattice,fm);
@@ -221,33 +227,49 @@ evaluateFields(typename Traits::EvalData workset)
 
 
   // hydrostatic stress term
- // FST::tensorMultiplyDataData<ScalarT> (tauStress, Pstress, DefGrad, 'T');
-//
- // for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-//	  for (std::size_t qp=0; qp < numQPs; ++qp) {
-//		  tauH(cell,qp) = 0.0;
-//	  for (std::size_t dim=0; dim < numDims; ++qp) {
-	//		  tauH(cell,qp) += tauStress(cell, qp,dim, dim)/3.0;
-	//	  }
-	//  }
-//  }
+  FST::tensorMultiplyDataData<ScalarT> (tauStress, Pstress, DefGrad, 'T');
 
-//  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-  //	  for (std::size_t qp=0; qp < numQPs; ++qp) {
-  	//	  tauH(cell,qp) = 0.0;
-  	//	  for (std::size_t dim=0; dim < numDims; ++qp) {
-  	//		  CinvTaugrad(cell,qp, dim) += tauH(cell, qp);
+  for (std::size_t cell=0; cell < workset.numCells; ++cell)
+  {
+	  for (std::size_t qp=0; qp < numQPs; ++qp)
+	  {
+		  tauH(cell,qp) = 0.0;
+		  for (std::size_t i=0; i<numDims; i++){
+			  tauH(cell,qp) += tauStress(cell, qp, i,i)/3.0;
+//			  cout << tauH(cell,qp) << endl;
+		  }
 
-  			  // NEED PROJECTION
-  	//		 CinvTaugrad(cell,qp, dim) = 0.0 ;
-  	//	  }
-  	//  }
-  //  }
+
+	  }
+
+  }
 
 
 
+  for (std::size_t cell=0; cell < workset.numCells; ++cell)
+  {
+    for (std::size_t qp=0; qp < numQPs; ++qp)
+    {
+      {
+      for (std::size_t node=0; node < numNodes; ++node)
+        {
+    	  for (std::size_t i=0; i<numDims; i++)
+			{
+    		  for (std::size_t j=0; j<numDims; j++)
+    		  			{
+    		  TResidual(cell,node) += tauFactor(cell,qp)*
+	                		          tauH(cell, qp)/3.0*
+    		  	                	  wGradBF(cell, node, qp, i)*
+    		  	                	  Cinv(cell,qp,i,j)*
+    		  	                	  GradBF(cell, node, qp, j);
+    		  			}
 
-//  FST::integrate<ScalarT>(TResidual, CinvTaugrad, wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
+			}
+        }
+      }
+    }
+  }
+
 
 
 

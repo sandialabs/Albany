@@ -149,13 +149,14 @@ namespace Albany {
 #include "DefGrad.hpp"
 #include "ThermoMechanicalStress.hpp"
 #include "PHAL_SaveStateField.hpp"
-#include "HDiffusionDeformationMatterResidual.hpp"
 #include "ThermoMechanicalMomentumResidual.hpp"
 #include "PHAL_ThermalConductivity.hpp"
 #include "PHAL_Source.hpp"
 #include "PHAL_HeatEqResid.hpp"
 #include "Time.hpp"
 
+// Header files for hydrogen transport
+#include "HDiffusionDeformationMatterResidual.hpp"
 #include "PHAL_NSMaterialProperty.hpp"
 #include "DiffusionCoefficient.hpp"
 #include "EffectiveDiffusivity.hpp"
@@ -537,8 +538,11 @@ void Albany::HDiffusionDeformationProblem::constructEvaluators(
           p->set<string>("Ideal Gas Constant Name", "Ideal Gas Constant");
           p->set<string>("Material Property Name", "Temperature");
 
-              ev = rcp(new LCM::TauContribution<EvalT,AlbanyTraits>(*p));
-              fm0.template registerEvaluator<EvalT>(ev);
+		  ev = rcp(new LCM::TauContribution<EvalT,AlbanyTraits>(*p));
+		  fm0.template registerEvaluator<EvalT>(ev);
+		  p = stateMgr.registerStateVariable("Tau Contribution",dl->qp_scalar, dl->dummy,"zero");
+		  ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+	      fm0.template registerEvaluator<EvalT>(ev);
 
     	  }
 
@@ -803,12 +807,17 @@ void Albany::HDiffusionDeformationProblem::constructEvaluators(
     //Input
     p->set<string>("Weighted BF Name", "wBF");
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
-    p->set<string>("QP Variable Name", "Lattice Concentration");
 
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
-    p->set<bool>("Have Source", haveSource);
+    p->set<string>("Gradient BF Name", "Grad BF");
+	p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
+
+    p->set<string>("QP Variable Name", "Lattice Concentration");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+    p->set<bool>("Have Source", false);
     p->set<string>("Source Name", "Source");
 
     p->set<string>("eqps Name", "eqps");
@@ -843,9 +852,6 @@ void Albany::HDiffusionDeformationProblem::constructEvaluators(
 
     p->set<string>("Tau Contribution Name", "Tau Contribution");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-//    p->set<string>("Weights Name","Weights");
-
 
     p->set<string>("Delta Time Name", "Delta Time");
     p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);

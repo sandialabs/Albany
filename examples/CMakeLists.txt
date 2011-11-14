@@ -68,6 +68,7 @@ add_subdirectory(HeatEigenvalues)
 
 IF(ALBANY_LCM)
   add_subdirectory(PoroElasticity3D)
+  add_subdirectory(DiffusionDeformation3D)
   add_subdirectory(StaticElasticity1D)
   add_subdirectory(StaticElasticity2D)
   add_subdirectory(StaticElasticity3D)
