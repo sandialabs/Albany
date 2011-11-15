@@ -257,7 +257,7 @@ evaluateFields(typename Traits::EvalData workset)
 			{
     		  for (std::size_t j=0; j<numDims; j++)
     		  			{
-    		  TResidual(cell,node) += tauFactor(cell,qp)*
+    		  TResidual(cell,node) -= tauFactor(cell,qp)*
 	                		          tauH(cell, qp)/3.0*
     		  	                	  wGradBF(cell, node, qp, i)*
     		  	                	  Cinv(cell,qp,i,j)*
