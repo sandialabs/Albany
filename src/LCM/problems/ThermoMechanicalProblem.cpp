@@ -45,6 +45,8 @@ ThermoMechanicalProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   X_offset=0;
   T_offset=numDim;
 #endif
+
+  model = params->sublist("Material Model").get("Model Name","ThermoMechanial");
 }
 
 Albany::ThermoMechanicalProblem::
@@ -118,6 +120,7 @@ Albany::ThermoMechanicalProblem::getValidProblemParameters() const
   validPL->set<RealType>("Thermal Expansion Coefficient", false, "");
   validPL->set<RealType>("Density", false, "");
   validPL->set<RealType>("Heat Capacity", false, "");
+  validPL->sublist("Material Model", false, "");
   validPL->set<bool>("volavgJ", false, "Flag to indicate the J should be volume averaged");
 
   return validPL;
