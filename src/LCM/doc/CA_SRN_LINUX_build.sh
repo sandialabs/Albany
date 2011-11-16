@@ -3,7 +3,7 @@
 # set these!
 
 # root dir of the installation
-HOME_DIR=/localhome/jtostie/LCM_TEST
+HOME_DIR=/localhome/jtostie/TEST
 echo " HOME_DIR set to $HOME_DIR " 
 
 # number of processes
@@ -56,7 +56,7 @@ if [ ! -d "$SOFT_DIR/$TARGET" ]; then
         ABI=64 \
         &> config_gmp.log
     echo " -- building $TARGET"
-    make -j 8 &> make_gmp.log
+    make -j $N &> make_gmp.log
     echo " -- checking $TARGET"
     make check &> check_gmp.log
     echo " -- installing $TARGET"
@@ -64,7 +64,7 @@ if [ ! -d "$SOFT_DIR/$TARGET" ]; then
 fi
 
 # get mpfr
-TARGET=mpfr-3.0.1
+TARGET=mpfr-3.1.0
 cd $SOFT_DIR
 if [ ! -d "$SOFT_DIR/$TARGET" ]; then
     echo ""
