@@ -490,35 +490,35 @@ void Albany::ThermoMechanicalProblem::constructEvaluators(
     // put BCJ specific things here
 
     { // Stress
-      RCP<ParameterList> p = rcp(new ParameterList("Stress"));
+      // RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
-      //Input
-      p->set<string>("DefGrad Name", "Deformation Gradient");
-      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+      // //Input
+      // p->set<string>("DefGrad Name", "Deformation Gradient");
+      // p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-      p->set<string>("Shear Modulus Name", "Shear Modulus");
+      // p->set<string>("Shear Modulus Name", "Shear Modulus");
 
-      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+      // p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-      p->set<string>("Bulk Modulus Name", "Bulk Modulus");  // dl->qp_scalar also
-      p->set<string>("DetDefGrad Name", "Determinant of the Deformation Gradient");  // dl->qp_scalar also
-      p->set<string>("Yield Strength Name", "Yield Strength");
-      p->set<string>("Hardening Modulus Name", "Hardening Modulus");
-      p->set<string>("Temperature Name", "Temperature");
+      // p->set<string>("Bulk Modulus Name", "Bulk Modulus");  // dl->qp_scalar also
+      // p->set<string>("DetDefGrad Name", "Determinant of the Deformation Gradient");  // dl->qp_scalar also
+      // p->set<string>("Yield Strength Name", "Yield Strength");
+      // p->set<string>("Hardening Modulus Name", "Hardening Modulus");
+      // p->set<string>("Temperature Name", "Temperature");
 
-      RealType refTemp = params->get("Reference Temperature", 0.0);
-      p->set<RealType>("Reference Temperature", refTemp);
-      RealType coeff = params->get("Thermal Expansion Coefficient", 0.0);
-      p->set<RealType>("Thermal Expansion Coefficient", coeff);
+      // RealType refTemp = params->get("Reference Temperature", 0.0);
+      // p->set<RealType>("Reference Temperature", refTemp);
+      // RealType coeff = params->get("Thermal Expansion Coefficient", 0.0);
+      // p->set<RealType>("Thermal Expansion Coefficient", coeff);
 
-      p->set<string>("Delta Time Name", "Delta Time");
-      p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
+      // p->set<string>("Delta Time Name", "Delta Time");
+      // p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
       
-      // Output
-      p->set<string>("Stress Name", "Stress"); //dl->qp_tensor also
-      p->set<string>("Fp Name", "Fp");
-      p->set<string>("eqps Name", "eqps");
-      p->set<string>("Mechanical Source Name", "Mechanical Source");
+      // // Output
+      // p->set<string>("Stress Name", "Stress"); //dl->qp_tensor also
+      // p->set<string>("Fp Name", "Fp");
+      // p->set<string>("eqps Name", "eqps");
+      // p->set<string>("Mechanical Source Name", "Mechanical Source");
 
       // ev = rcp(new LCM::BCJ<EvalT,AlbanyTraits>(*p));
       // fm0.template registerEvaluator<EvalT>(ev);

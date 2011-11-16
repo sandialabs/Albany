@@ -46,7 +46,7 @@ ThermoMechanicalProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   T_offset=numDim;
 #endif
 
-  model = params->sublist("Material Model").get("Model Name","ThermoMechanial");
+  model = params->sublist("Material Model").get("Model Name","ThermoMechanical");
 }
 
 Albany::ThermoMechanicalProblem::
