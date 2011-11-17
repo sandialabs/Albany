@@ -413,6 +413,61 @@ namespace LCM {
   }
 
   //
+  // \return Partitions when partitioned
+  //
+  std::map<int, int>
+  ConnectivityArray::GetPartitions() const
+  {
+    return partitions_;
+  }
+
+  //
+  // \return Volume for each partition when partitioned
+  //
+  ScalarMap
+  ConnectivityArray::GetPartitionVolumes() const
+  {
+    std::map<int, int>
+    partitions = GetPartitions();
+
+    ScalarMap
+    volumes = GetVolumes();
+
+    ScalarMap
+    partition_volumes;
+
+    for (std::map<int, int>::const_iterator part_iter = partitions.begin();
+        part_iter != partitions.end();
+        ++part_iter) {
+
+      int element = (*part_iter).first;
+      int partition = (*part_iter).second;
+
+      ScalarMap::const_iterator
+      volumes_iterator = volumes.find(element);
+
+      if (volumes_iterator == volumes.end()) {
+        std::cout << "Cannot find volume for element " << element << std::endl;
+        std::exit(1);
+      }
+
+      double volume = (*volumes_iterator).second;
+
+      ScalarMap::const_iterator
+      partition_volumes_iter = partition_volumes.find(partition);
+
+      if (partition_volumes_iter == partition_volumes.end()) {
+        partition_volumes[partition] = volume;
+      } else {
+        partition_volumes[partition] += volume;
+      }
+
+    }
+
+    return partition_volumes;
+  }
+
+  //
   // \return Centroids for each element
   //
   PointMap
@@ -625,6 +680,9 @@ namespace LCM {
       break;
 
     }
+
+    // Store for use by other methods
+    partitions_ = partitions;
 
     return partitions;
 

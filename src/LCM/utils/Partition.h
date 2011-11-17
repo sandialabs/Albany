@@ -146,6 +146,18 @@ namespace LCM {
     GetVolume() const;
 
     ///
+    /// \return Partitions when partitioned
+    ///
+    std::map<int, int>
+    GetPartitions() const;
+
+    ///
+    /// \return Volume for each partition when partitioned
+    ///
+    ScalarMap
+    GetPartitionVolumes() const;
+
+    ///
     /// \return Centroids for each element
     ///
     PointMap
@@ -366,6 +378,12 @@ namespace LCM {
     //
     Teuchos::RCP<Albany::AbstractDiscretization>
     discretization_ptr_;
+
+    //
+    // Partitions if mesh is partioned; otherwise empty
+    //
+    std::map<int, int>
+    partitions_;
 
   };
 
