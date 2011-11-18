@@ -189,6 +189,9 @@ int main(int ac, char* av[])
   std::cout << "==========================================";
   std::cout << std::endl;
 
+  LCM::DualGraph dual_graph(connectivity_array);
+  dual_graph.Print();
+
   return 0;
 
 }

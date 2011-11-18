@@ -442,6 +442,12 @@ namespace LCM {
     AdjacencyMap
     GetGraph() const;
 
+    ///
+    /// Print graph for debugging
+    ///
+    void
+    Print() const;
+
   private:
 
     //

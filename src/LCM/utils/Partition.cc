@@ -447,7 +447,7 @@ namespace LCM {
       volumes_iterator = volumes.find(element);
 
       if (volumes_iterator == volumes.end()) {
-        std::cout << "Cannot find volume for element " << element << std::endl;
+        std::cerr << "Cannot find volume for element " << element << std::endl;
         std::exit(1);
       }
 
@@ -1413,6 +1413,75 @@ namespace LCM {
   DualGraph::GetVertexWeights() const
   {
     return vertex_weights_;
+  }
+
+  //
+  // Print graph for debugging
+  //
+  void
+  DualGraph::Print() const
+  {
+
+    ScalarMap
+    vertex_weights = GetVertexWeights();
+
+    AdjacencyMap
+    graph = GetGraph();
+
+    const int
+    number_vertices = GetNumberVertices();
+
+    const int
+    number_edges = GetNumberEdges();
+
+    std::cout << std::endl;
+    std::cout << "============================================================";
+    std::cout << std::endl;
+    std::cout << "Number of Vertices : " << number_vertices << std::endl;
+    std::cout << "Number of Edges    : " << number_edges << std::endl;
+    std::cout << "------------------------------------------------------------";
+    std::cout << std::endl;
+    std::cout << "Vertex  Weight          Edges" << std::endl;
+    std::cout << "------------------------------------------------------------";
+    std::cout << std::endl;
+
+    for (ScalarMap::const_iterator vw_iter = vertex_weights.begin();
+        vw_iter != vertex_weights.end();
+        ++vw_iter) {
+
+      const int vertex = (*vw_iter).first;
+      const double weight = (*vw_iter).second;
+
+      std::cout << std::setw(8) << vertex;
+      std::cout << std::scientific << std::setw(16) << std::setprecision(8);
+      std::cout << weight;
+
+      AdjacencyMap::const_iterator
+      graph_iter = graph.find(vertex);
+
+      if (graph_iter == graph.end()) {
+        std::cerr << "Cannot find vertex " << vertex << std::endl;
+        std::exit(1);
+      }
+
+      IDList
+      edges = graph[vertex];
+
+      for (IDList::const_iterator edges_iter = edges.begin();
+           edges_iter != edges.end();
+           ++edges_iter) {
+        const int edge = *edges_iter;
+        std::cout << std::setw(8) << edge;
+      }
+
+      std::cout << std::endl;
+
+    }
+
+    std::cout << "============================================================";
+    std::cout << std::endl;
+
+    return;
   }
 
   //
