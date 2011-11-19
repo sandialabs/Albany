@@ -142,6 +142,53 @@ int main(int ac, char* av[])
   // second arg to output is (pseudo)time
   stk_discretization.outputToExodus(*solution_field, 1.0);
 
+  // Write report
+  const double
+  volume = connectivity_array.GetVolume();
+
+  const LCM::ScalarMap
+  partition_volumes = connectivity_array.GetPartitionVolumes();
+
+  const double
+  length_scale_cubed = length_scale * length_scale * length_scale;
+
+  std::cout << std::endl;
+  std::cout << "==========================================";
+  std::cout << std::endl;
+  std::cout << "Total Mesh Volume (V)    : ";
+  std::cout << std::scientific << std::setw(14) << std::setprecision(8);
+  std::cout << volume << std::endl;
+  std::cout << "Length Scale             : ";
+  std::cout << std::scientific << std::setw(14) << std::setprecision(8);
+  std::cout << length_scale << std::endl;
+  std::cout << "Length Scale Cubed (L^3) : ";
+  std::cout << std::scientific << std::setw(14) << std::setprecision(8);
+  std::cout << length_scale_cubed << std::endl;
+  std::cout << "V/L^3                    : ";
+  std::cout << std::scientific << std::setw(14) << std::setprecision(8);
+  std::cout << volume / length_scale_cubed << std::endl;
+  std::cout << "Number of Partitions     : " << partition_volumes.size();
+  std::cout << std::endl;
+  std::cout << "------------------------------------------";
+  std::cout << std::endl;
+  std::cout << "Partition      Volume (Vi)          Vi/L^3";
+  std::cout << std::endl;
+  std::cout << "------------------------------------------";
+  std::cout << std::endl;
+  for (LCM::ScalarMap::const_iterator iter = partition_volumes.begin();
+      iter != partition_volumes.end();
+      ++iter) {
+    int partition = (*iter).first;
+    double volume = (*iter).second;
+    std::cout << std::setw(10) << partition;
+    std::cout << std::scientific << std::setw(16) << std::setprecision(8);
+    std::cout << volume;
+    std::cout << std::scientific << std::setw(16) << std::setprecision(8);
+    std::cout << volume / length_scale_cubed << std::endl;
+  }
+  std::cout << "==========================================";
+  std::cout << std::endl;
+
   return 0;
 
 }
