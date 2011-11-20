@@ -15,8 +15,8 @@
 \********************************************************************/
 
 
-#ifndef POROELASTICITYRESIDMOMRNTUM_HPP
-#define POROELASTICITYRESIDMOMENTUM_HPP
+#ifndef TLPOROPLASTICITYRESIDMOMRNTUM_HPP
+#define TLPOROPLASTICITYRESIDMOMENTUM_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -32,12 +32,12 @@ namespace LCM {
 */
 
 template<typename EvalT, typename Traits>
-class PoroElasticityResidMomentum : public PHX::EvaluatorWithBaseImpl<Traits>,
+class TLPoroPlasticityResidMomentum : public PHX::EvaluatorWithBaseImpl<Traits>,
 		        public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
-  PoroElasticityResidMomentum(const Teuchos::ParameterList& p);
+  TLPoroPlasticityResidMomentum(const Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
 			     PHX::FieldManager<Traits>& vm);
@@ -51,6 +51,8 @@ private:
 
   // Input:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> TotalStress;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defgrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint> J;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
 
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> uDotDot;
@@ -63,6 +65,12 @@ private:
   std::size_t numQPs;
   std::size_t numDims;
   bool enableTransient;
+
+  // Work space FCs
+  Intrepid::FieldContainer<ScalarT> F_inv;
+  Intrepid::FieldContainer<ScalarT> F_invT;
+  Intrepid::FieldContainer<ScalarT> JF_invT;
+  Intrepid::FieldContainer<ScalarT> P;
 
 };
 }

@@ -695,6 +695,9 @@ void Albany::HDiffusionDeformationProblem::constructEvaluators(
 
     ev = rcp(new LCM::DefGrad<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+
+
+
   }
 
   { // Stress
