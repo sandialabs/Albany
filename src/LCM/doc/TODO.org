@@ -2,7 +2,7 @@ List of tasks relevant to the LCM project
 
 * Usability issues
 ** Boundary Conditions
-*** TODO (FY11) Prescribed load stepping
+*** DONE (FY11) Prescribed load stepping
 *** TODO (FY12) Tractions (Neumann BCs)
 *** TODO (FY12) Torsion
 ** Output
@@ -11,17 +11,17 @@ List of tasks relevant to the LCM project
 ** General
 *** TODO (FY12) Multiple Materials/Element Blocks
 *** TODO (FY12) Spatially dependent material parameters
-*** TODO (FY12) Introdction of time in all problems (some material models need it, could be used for BCs)
+*** DONE (FY12) Introdction of time in all problems (some material models need it, could be used for BCs)
 * Mechanics issues
 ** TODO (FY11) Create EnergyPotentialProblem (QC)
-** TODO (FY11) Create ThermoMechanicalProblem (JTO)
+** DONE (FY11) Create ThermoMechanicalProblem (JTO)
 ** TODO (FY12) Create HydrogenTransportProblem
 ** TODO (FY11) Create GradientPlasticityProblem (JTO)
 ** TODO (FY12) Localization Elements (QC)
 ** TODO (FY11-12) Verification of transient dynamics
 ** TODO (FY12) Polyhedral elements (Joe Bishop)
 ** TODO (FY12) Geo-material models (e.g Drucker-Prager, CAP) (QC)
-** TODO (FY12) PoromechanicsProblem (SS)
+** DONE (FY12) PoromechanicsProblem (SS)
 ** TODO (FY??) Variational Level Set (SS) 
 * General Technical issues
 ** TODO (FY??) Figure out how to fit adaptivity into the agile components methodology
