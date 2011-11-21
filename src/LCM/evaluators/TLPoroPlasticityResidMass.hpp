@@ -82,7 +82,8 @@ private:
   PHX::MDField<ScalarT,Dummy> deltaTime;
 
   //Data from previous time step
-  std::string strainName, porePressureName, porosityName;
+  std::string strainName, porePressureName, porosityName,
+              JName;
 
 
 
@@ -111,6 +112,8 @@ private:
   // Work space FCs
   Intrepid::FieldContainer<ScalarT> F_inv;
   Intrepid::FieldContainer<ScalarT> F_invT;
+  Intrepid::FieldContainer<ScalarT> C;
+  Intrepid::FieldContainer<ScalarT> Cinv;
   Intrepid::FieldContainer<ScalarT> JF_invT;
   Intrepid::FieldContainer<ScalarT> KJF_invT;
   Intrepid::FieldContainer<ScalarT> Kref;

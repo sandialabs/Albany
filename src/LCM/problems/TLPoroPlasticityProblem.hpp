@@ -540,7 +540,7 @@ void Albany::TLPoroPlasticityProblem::constructEvaluators(
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
     p = stateMgr.registerStateVariable("Jacobian",
-    		                           dl->qp_scalar, dl->dummy,"one",true);
+    		                           dl->qp_scalar, dl->dummy,"zero",true);
 	ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
