@@ -321,6 +321,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/HDiffusionDeformationMatterResidual.cpp
     ${LCM_DIR}/evaluators/TauContribution.cpp
     ${LCM_DIR}/evaluators/StrainRateFactor.cpp
+    ${LCM_DIR}/evaluators/MixtureThermalExpansion.cpp
+    ${LCM_DIR}/evaluators/MixtureSpecificHeat.cpp
   )
 
   SET(HEADERS ${HEADERS}
@@ -420,6 +422,10 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/StrainRateFactor_Def.hpp
     ${LCM_DIR}/evaluators/TauContribution.hpp
     ${LCM_DIR}/evaluators/TauContribution_Def.hpp
+    ${LCM_DIR}/evaluators/MixtureThermalExpansion.hpp
+    ${LCM_DIR}/evaluators/MixtureThermalExpansion_Def.hpp
+    ${LCM_DIR}/evaluators/MixtureSpecificHeat.hpp
+    ${LCM_DIR}/evaluators/MixtureSpecificHeat_Def.hpp
   )
 
   #LCM utils

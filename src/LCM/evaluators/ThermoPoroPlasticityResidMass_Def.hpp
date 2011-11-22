@@ -41,6 +41,8 @@ namespace LCM {
 		    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     porosity (p.get<std::string>                   ("Porosity Name"),
 	      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	alphaMixture (p.get<std::string>           ("Mixture Thermal Expansion Name"),
+	      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     biotCoefficient (p.get<std::string>           ("Biot Coefficient Name"),
 		     p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     biotModulus (p.get<std::string>                   ("Biot Modulus Name"),
@@ -87,6 +89,7 @@ namespace LCM {
     this->addDependentField(porosity);
     this->addDependentField(biotCoefficient);
     this->addDependentField(biotModulus);
+
     if (enableTransient) this->addDependentField(Tdot);
     this->addDependentField(TGrad);
     this->addDependentField(wGradBF);
@@ -103,6 +106,7 @@ namespace LCM {
     this->addDependentField(strain);
     this->addDependentField(J);
     this->addDependentField(defgrad);
+    this->addDependentField(alphaMixture);
     this->addEvaluatedField(TResidual);
 
     Teuchos::RCP<PHX::DataLayout> vector_dl =
@@ -178,6 +182,7 @@ namespace LCM {
     this->utils.setFieldData(ThermalCond,fm);
     this->utils.setFieldData(kcPermeability,fm);
     this->utils.setFieldData(porosity,fm);
+    this->utils.setFieldData(alphaMixture,fm);
     this->utils.setFieldData(biotCoefficient,fm);
     this->utils.setFieldData(biotModulus,fm);
     this->utils.setFieldData(TGrad,fm);
@@ -245,6 +250,16 @@ evaluateFields(typename Traits::EvalData workset)
  						                				  )
              		                    		/biotModulus(cell, qp)*
              		                    		wBF(cell, node, qp);
+
+ 				 // Thermal Expansion
+ 				 TResidual(cell,node) +=  -(
+ 				  						 -(J(cell,qp)-Jold(cell,qp))*0 +
+ 				  						 J(cell,qp)*(0-0 )
+ 				  						                  /
+ 				  						                		  (J(cell,qp)*J(cell,qp))
+ 				  						                				  )
+ 				              		                    		*3.0*alphaMixture(cell, qp)*
+ 				              		                    		wBF(cell, node, qp);
 			  }
 		  }
 	  }

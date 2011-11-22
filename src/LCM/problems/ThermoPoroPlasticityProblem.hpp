@@ -158,6 +158,8 @@ namespace Albany {
 #include "ThermoPoroPlasticityResidMomentum.hpp"
 #include "PHAL_NSMaterialProperty.hpp"
 
+#include "MixtureThermalExpansion.hpp"
+#include "MixtureSpecificHeat.hpp"
 // #include "ShearModulus.hpp"
 #include "BulkModulus.hpp"
 // #include "YieldStrength.hpp"
@@ -311,6 +313,9 @@ void Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
         ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
+        p = stateMgr.registerStateVariable("Temperature",dl->qp_scalar, dl->dummy,"zero", true);
+        ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
    }
 
    { // Constant Reference Temperature
@@ -416,6 +421,52 @@ void Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
                        ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
                        fm0.template registerEvaluator<EvalT>(ev);
+   }
+
+   { // Mixture Specific Heat
+          RCP<ParameterList> p = rcp(new ParameterList("Mixture Specific Heat"));
+
+          //Input
+          p->set<string>("Pore-Fluid Specific Heat Name", "Pore-Fluid Specific Heat");
+          p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+          p->set<string>("Skeleton Specific Heat Name", "Skeleton Specific Heat");
+
+          p->set<string>("Pore-Fluid Density Name", "Pore-Fluid Density");
+          p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+          p->set<string>("Skeleton Density Name", "Skeleton Density");
+
+          p->set<string>("Porosity Name", "Porosity");
+
+          //Output
+          p->set<string>("Mixture Specific Heat Name", "Mixture Specific Heat");
+
+          ev = rcp(new LCM::MixtureSpecificHeat<EvalT,AlbanyTraits>(*p));
+          fm0.template registerEvaluator<EvalT>(ev);
+          p = stateMgr.registerStateVariable("Mixture Specific Heat",dl->qp_scalar, dl->dummy,"zero");
+          ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+          fm0.template registerEvaluator<EvalT>(ev);
+        }
+
+   { // Mixture Thermal Expansion
+             RCP<ParameterList> p = rcp(new ParameterList("Mixture Thermal Expansion"));
+
+             //Input
+             p->set<string>("Pore-Fluid Thermal Expansion Name", "Pore-Fluid Thermal Expansion");
+             p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+             p->set<string>("Skeleton Thermal Expansion Name", "Skeleton Thermal Expansion");
+
+
+             p->set<string>("Porosity Name", "Porosity");
+             p->set<string>("Biot Coefficient Name", "Biot Coefficient");
+
+             //Output
+             p->set<string>("Mixture Thermal Expansion Name", "Mixture Thermal Expansion");
+
+             ev = rcp(new LCM::MixtureThermalExpansion<EvalT,AlbanyTraits>(*p));
+             fm0.template registerEvaluator<EvalT>(ev);
+             p = stateMgr.registerStateVariable("Mixture Thermal Expansion",dl->qp_scalar, dl->dummy,"zero");
+             ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+             fm0.template registerEvaluator<EvalT>(ev);
    }
 
 
@@ -765,6 +816,8 @@ void Albany::ThermoPoroPlasticityProblem::constructEvaluators(
     p->set<string>("Kozeny-Carman Permeability Name", "Kozeny-Carman Permeability");
     p->set<string>("Biot Coefficient Name", "Biot Coefficient");
     p->set<string>("Biot Modulus Name", "Biot Modulus");
+
+    p->set<string>("Mixture Thermal Expansion Name", "Mixture Thermal Expansion");
 
     p->set<string>("Gradient QP Variable Name", "Pore Pressure Gradient");
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);

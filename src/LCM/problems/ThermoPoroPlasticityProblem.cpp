@@ -128,6 +128,8 @@ Albany::ThermoPoroPlasticityProblem::getValidProblemParameters() const
   validPL->sublist("Skeleton Specific Heat", false, "");
   validPL->sublist("Pore-Fluid Specific Heat", false, "");
   validPL->sublist("Bulk Modulus", false, "");
+  validPL->sublist("Mixture Thermal Expansion", false, "");
+  validPL->sublist("Mixture Specific Heat", false, "");
 
   return validPL;
 }

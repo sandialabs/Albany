@@ -63,6 +63,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> biotModulus;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> TGrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint> alphaMixture;
   PHX::MDField<ScalarT,Cell,QuadPoint> Source;
   Teuchos::Array<double> convectionVels;
   PHX::MDField<ScalarT,Cell,QuadPoint> rhoCp;
