@@ -26,6 +26,26 @@
 #include "Teuchos_StandardCatchMacros.hpp"
 #include "Epetra_Map.h"  //Needed for serial, somehow
 
+/////////////////////////////////////////////////////////////
+// begin jrr: Now cull solution, xfinal, using assumptions on
+// various size and location parameters 
+
+// Setting for function definition; parameters for now look like:
+// RCP<Epetra_Vector>& xfinal (input)
+// Epetra_Vector& xfinal_map (input)
+// int ndim (input - physical dimension, 2d, 3d, etc)
+// int neq  (input - number of equations/node; phys dim+temp+pressure, e.g.)
+// RCP<Epetra_Vector>& xfinal_new (output - new, culled solution vector)
+
+void cullDistributedResponse( Teuchos::RCP<Epetra_Vector>& xfinal,
+			      Epetra_Map& xfinal_map,
+			      int ndim,
+			      int neq,
+			      int offset,
+			      Teuchos::RCP<Epetra_Vector>& xfinal_new );
+// end jrr
+////////////////////////////////////////////////
+
 int main(int argc, char *argv[]) {
 
   int status=0; // 0 = pass, failures are incremented
@@ -68,6 +88,7 @@ int main(int argc, char *argv[]) {
     EpetraExt::ModelEvaluator::OutArgs responses_out = App->createOutArgs();
     int num_p = params_in.Np();     // Number of *vectors* of parameters
     int num_g = responses_out.Ng(); // Number of *vectors* of responses
+
     RCP<Epetra_Vector> p1;
     RCP<Epetra_Vector> g1;
 
@@ -75,6 +96,7 @@ int main(int argc, char *argv[]) {
       p1 = rcp(new Epetra_Vector(*(App->get_p_init(0))));
     if (num_g > 1)
       g1 = rcp(new Epetra_Vector(*(App->get_g_map(0))));
+
     RCP<Epetra_Vector> xfinal =
       rcp(new Epetra_Vector(*(App->get_g_map(num_g-1)),true) );
 
@@ -110,6 +132,43 @@ int main(int argc, char *argv[]) {
 
     *out << "Finished eval of first model: Params, Responses " 
          << std::setprecision(12) << endl;
+
+    /////////////////////////////////////////////////////////////////
+    // begin jrr: Need the map for our global function call to cull
+    //            the solution vector, which for this case is xfinal;
+    //            resulting object is xfinal_new
+
+    Epetra_Map xfinal_map = *(App->get_g_map(num_g-1));
+    RCP<Epetra_Vector> xfinal_new; // placeholder for now; filled in function
+  
+    // Assume ndim for now; manually change when going from 2d to
+    // 3d, etc
+    int ndim = 3;     // For thermoelasticity2d problem, it's 2
+    int neq = ndim+1; // Again, for thermoelasticity problem,
+                      // there's a temperature variable on each node
+    int offset = 0;   // Locate the vector components we want to keep
+  
+    cullDistributedResponse( xfinal, xfinal_map, ndim, neq, offset, xfinal_new );
+
+    cout << "First 3*neq values of xfinal and xfinal_new:" << endl;
+    {
+      for ( int i=0; i < 3*neq; i++ )
+	cout << "xfinal[" << i << "] = " << (*xfinal)[i] << "    " 
+	     <<"xfinal_new[" << i << "] = " << (*xfinal_new)[i] << endl;
+    }
+
+    cout << "Last 3*neq values of xfinal and xfinal_new:" << endl;
+    {
+      int N = xfinal_map.NumMyElements();
+      for ( int i=0; i < 3*neq; i++ )
+	cout << "xfinal[" << N-i-1 << "] = " << (*xfinal)[N - (i+1)] << "    " 
+	     <<"xfinal_new[" << ndim*N/neq - (i+1) << "] = " << (*xfinal_new)[ndim*N/neq - (i+1)] << endl;
+    }
+
+    // end jrr
+    /////////////////////////////////////////////////////////////////
+
+    
     if (num_p>0) p1->Print(*out << "\nParameters!\n");
     if (num_g>1) g1->Print(*out << "\nResponses!\n");
     if (supportsSensitivities)
@@ -128,3 +187,60 @@ int main(int argc, char *argv[]) {
   Teuchos::TimeMonitor::summarize(*out,false,true,false/*zero timers*/);
   return status;
 }
+/////////////////////////////////////////////////////////////
+// begin jrr: Now cull solution, xfinal, using assumptions on
+// various size and location parameters 
+
+// Setting for function definition; parameters for now look like:
+// RCP<Epetra_Vector>& xfinal (input)
+// Epetra_Vector& xfinal_map (input)
+// int ndim (input - physical dimension, 2d, 3d, etc)
+// int neq  (input - number of equations/node; phys dim+temp+pressure, e.g.)
+// RCP<Epetra_Vector>& xfinal_new (output - new, culled solution vector)
+
+void cullDistributedResponse( Teuchos::RCP<Epetra_Vector>& xfinal,
+			      Epetra_Map& xfinal_map,
+			      int ndim,
+			      int neq,
+			      int offset,
+			      Teuchos::RCP<Epetra_Vector>& xfinal_new )
+{
+  int numToErase = neq - ndim; // number of dof to erase/node
+                               // Assume these dof reside either at the
+                               // or the bottom of the nodes dof
+
+  int N = xfinal_map.NumMyElements(); // xfinal_map def'd above, outside block
+  std::vector<int> gids(N);
+
+  xfinal_map.MyGlobalElements(&gids[0]);
+  
+  // cull using criteria and STL entities
+  // Have to go from the back of the vector to the front
+  {
+    std::vector<int>::iterator gids_begin = gids.begin();
+    for ( std::vector<int>::iterator gids_iter = gids.end(); gids_iter >  gids_begin ; --gids_iter)
+      {
+	if ( ((int)( gids_iter - gids_begin) + 1) % neq  == 0 )
+	  for (int icount = 0; icount < numToErase; ++icount ) // solution vector contains auxiliary info;
+	    {                                                  // may need to erase more than one dof/node
+
+	      gids.erase( gids_iter - offset*ndim - icount);  // crude start to the
+		   				              // offset problem: Assumes what we want
+	                                                      // to keep is either at the top or the
+	                                                      // bottom of the dof vector/node
+						              // (Note: still need to
+						              // check this out more carefully!)
+	    }
+      }
+  }
+  // end cull
+  
+  Epetra_Map xfinal_map_new( -1, gids.size(), &gids[0], 0, xfinal_map.Comm() );
+  Epetra_Import importer( xfinal_map_new, xfinal_map );
+
+  xfinal_new = Teuchos::rcp(new Epetra_Vector( xfinal_map_new ));
+  xfinal_new->Import( *xfinal, importer, Insert );
+}
+// end jrr
+////////////////////////////////////////////////
+
