@@ -53,7 +53,7 @@ SET(SOURCES ${SOURCES}
 	problems/Albany_ProblemUtils.cpp 
 	problems/Albany_EvaluatorUtils.cpp 
 	problems/Albany_ResponseUtilities.cpp 
-	problems/Albany_DirichletUtils.cpp 
+	problems/Albany_BCUtils.cpp 
 	problems/Albany_ProblemFactory.cpp
 	problems/Albany_HeatProblem.cpp 
 	problems/Albany_MultiHeatProblem.cpp 
@@ -72,7 +72,8 @@ SET(HEADERS ${HEADERS}
 	problems/Albany_EvaluatorUtils_Def.hpp 
 	problems/Albany_ResponseUtilities.hpp 
 	problems/Albany_ResponseUtilities_Def.hpp 
-	problems/Albany_DirichletUtils.hpp 
+	problems/Albany_BCUtils.hpp 
+	problems/Albany_BCUtils_Def.hpp 
 	problems/Albany_HeatProblem.hpp 
 	problems/Albany_MultiHeatProblem.hpp 
 	problems/Albany_NavierStokes.hpp 

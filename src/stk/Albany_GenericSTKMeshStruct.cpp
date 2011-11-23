@@ -145,7 +145,8 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
     exoOutFile = params->get<string>("Exodus Output File Name");
 }
 
-void Albany::GenericSTKMeshStruct::DeclareParts(std::vector<std::string> ebNames, std::vector<std::string> nsNames)
+void Albany::GenericSTKMeshStruct::DeclareParts(std::vector<std::string> ebNames, std::vector<std::string> ssNames,
+  std::vector<std::string> nsNames)
 {
   // Element blocks
   for (std::size_t i=0; i<ebNames.size(); i++) {
@@ -153,6 +154,15 @@ void Albany::GenericSTKMeshStruct::DeclareParts(std::vector<std::string> ebNames
     partVec[i] = & metaData->declare_part(ebn, metaData->element_rank() );
 #ifdef ALBANY_SEACAS
     stk::io::put_io_part_attribute(*partVec[i]);
+#endif
+  }
+
+  // SideSets
+  for (std::size_t i=0; i<ssNames.size(); i++) {
+    std::string ssn = ssNames[i];
+    ssPartVec[ssn] = & metaData->declare_part(ssn, metaData->side_rank() );
+#ifdef ALBANY_SEACAS
+    stk::io::put_io_part_attribute(*ssPartVec[ssn]);
 #endif
   }
 

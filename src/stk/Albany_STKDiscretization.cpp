@@ -98,6 +98,12 @@ Albany::STKDiscretization::getNodeMap() const
   return node_map;
 }
 
+Teuchos::RCP<const Epetra_Map>
+Albany::STKDiscretization::getSideMap() const
+{
+  return side_map;
+}
+
 const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >&
 Albany::STKDiscretization::getWsElNodeEqID() const
 {
@@ -143,6 +149,12 @@ const std::vector<std::string>&
 Albany::STKDiscretization::getNodeSetIDs() const
 {
   return nodeSetIDs;
+}
+
+const std::vector<std::string>&
+Albany::STKDiscretization::getSideSetIDs() const
+{
+  return sideSetIDs;
 }
 
 void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln, const double time)
@@ -301,6 +313,7 @@ void Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
   map = Teuchos::rcp(new Epetra_Map(-1, indices.size(), &(indices[0]), 0, *comm));
 
 }
+
 void Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
 {
   // Loads member data:  overlapodes, numOverlapodes, overlap_node_map, coordinates
@@ -495,6 +508,36 @@ void Albany::STKDiscretization::computeWorksetInfo()
   }
 }
 
+void Albany::STKDiscretization::computeSideSets()
+{
+
+  std::map<std::string, stk::mesh::Part*>::iterator ss = stkMeshStruct->ssPartVec.begin();
+  while ( ss != stkMeshStruct->ssPartVec.end() ) { // Iterate over Side Sets
+    // Get all owned nodes in this side set
+    stk::mesh::Selector select_owned_in_sspart =
+      stk::mesh::Selector( *(ss->second) ) &
+      stk::mesh::Selector( metaData.locally_owned_part() );
+
+    std::vector< stk::mesh::Entity * > sides ;
+    stk::mesh::get_selected_entities( select_owned_in_sspart ,
+				      bulkData.buckets( metaData.side_rank() ) ,
+				      sides );
+
+    sideSets[ss->first].resize(sides.size());
+    sideSetCoords[ss->first].resize(sides.size());
+    sideSetIDs.push_back(ss->first); // Grab string ID
+    *out << "STKDisc: sideset "<< ss->first <<" has size " << sides.size() << "  on Proc 0." << endl;
+    for (std::size_t i=0; i < sides.size(); i++) {
+      int side_gid = gid(sides[i]);
+      int side_lid = side_map->LID(side_gid);
+      sideSets[ss->first][i].resize(neq);
+      for (std::size_t eq=0; eq < neq; eq++)  sideSets[ss->first][i][eq] = getOwnedDOF(side_lid,eq);
+      sideSetCoords[ss->first][i] = stk::mesh::field_data(*stkMeshStruct->coordinates_field, *sides[i]);
+    }
+    ss++;
+  }
+}
+
 void Albany::STKDiscretization::computeNodeSets()
 {
 
@@ -560,6 +603,8 @@ Albany::STKDiscretization::updateMesh(Teuchos::RCP<Albany::AbstractSTKMeshStruct
   computeWorksetInfo();
 
   computeNodeSets();
+
+  computeSideSets();
 
   setupExodusOutput();
 }

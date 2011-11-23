@@ -66,6 +66,7 @@ namespace Albany {
     stk::mesh::BulkData* bulkData;
     std::map<int, stk::mesh::Part*> partVec;    //Element blocks
     std::map<std::string, stk::mesh::Part*> nsPartVec;  //Node Sets
+    std::map<std::string, stk::mesh::Part*> ssPartVec;  //Side Sets
     VectorFieldType* coordinates_field;
     VectorFieldType* solution_field;
     VectorFieldType* residual_field;
