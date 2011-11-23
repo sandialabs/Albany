@@ -18,6 +18,7 @@
 #include <iostream>
 #include <string>
 
+
 #include "Albany_Utils.hpp"
 #include "Albany_SolverFactory.hpp"
 #include "Teuchos_GlobalMPISession.hpp"
@@ -31,18 +32,47 @@
 // various size and location parameters 
 
 // Setting for function definition; parameters for now look like:
-// RCP<Epetra_Vector>& xfinal (input)
-// Epetra_Vector& xfinal_map (input)
-// int ndim (input - physical dimension, 2d, 3d, etc)
-// int neq  (input - number of equations/node; phys dim+temp+pressure, e.g.)
+// RCP<Epetra_Vector>& x (input)
+// Epetra_Vector& x_map  (input)
+// vector<int>& keepDOF   (input - vector of length total number dof/node in
+//                                the solution vector; for now, number of equations
+//                                per node. keepDOF[i]={0 - delete; 1 - keep})
 // RCP<Epetra_Vector>& xfinal_new (output - new, culled solution vector)
 
-void cullDistributedResponse( Teuchos::RCP<Epetra_Vector>& xfinal,
-			      Epetra_Map& xfinal_map,
-			      int ndim,
-			      int neq,
-			      int offset,
-			      Teuchos::RCP<Epetra_Vector>& xfinal_new );
+void cullDistributedResponse( Teuchos::RCP<Epetra_Vector>& x,
+			      Epetra_Map& x_map,
+			      vector<int>& keepDOF,
+			      Teuchos::RCP<Epetra_Vector>& x_new )
+{
+
+  int numKeepDOF = accumulate(keepDOF.begin(), keepDOF.end(), 0);
+  int Neqns = keepDOF.size();
+  int N = x_map.NumMyElements(); // x_map is map for solution vector
+
+  TEUCHOS_ASSERT( !(N % Neqns) ); // Need to be sure that N is exactly Neqns-divisible
+
+  int nnodes = N / Neqns; // number of fem nodes
+  int N_new = nnodes * numKeepDOF; // length of local x_new 
+
+  std::vector<int> gids(N);
+  std::vector<int> gids_new;
+
+  x_map.MyGlobalElements(&gids[0]); // Fill local x_map into gids array
+  
+  for ( int inode = 0; inode < N/Neqns ; ++inode) // 
+    {
+      for ( int ieqn = 0; ieqn < Neqns; ++ieqn )
+	if( keepDOF[ieqn] == 1 )  // then want to keep this dof
+	  gids_new.push_back( gids[(inode*Neqns)+ieqn] );
+    }
+  // end cull
+  
+  Epetra_Map x_map_new( -1, gids_new.size(), &gids_new[0], 0, x_map.Comm() );
+  Epetra_Import importer( x_map_new, x_map );
+
+  x_new = Teuchos::rcp(new Epetra_Vector( x_map_new ));
+  x_new->Import( *x, importer, Insert );
+}
 // end jrr
 ////////////////////////////////////////////////
 
@@ -141,14 +171,18 @@ int main(int argc, char *argv[]) {
     Epetra_Map xfinal_map = *(App->get_g_map(num_g-1));
     RCP<Epetra_Vector> xfinal_new; // placeholder for now; filled in function
   
-    // Assume ndim for now; manually change when going from 2d to
-    // 3d, etc
-    int ndim = 3;     // For thermoelasticity2d problem, it's 2
-    int neq = ndim+1; // Again, for thermoelasticity problem,
-                      // there's a temperature variable on each node
-    int offset = 0;   // Locate the vector components we want to keep
+    // Locate the vector components we want to keep manually.
+    // For thermoelasticity2d problem, it's 2 and we want to
+    // cull a temperature variable on each node in
+    // the 3rd dof.
+
+    int neq = 3;
+    vector<int> keepDOF(neq, 1); // Initialize to keep all dof, then,
+    keepDOF[2] = 0;              // as stated, cull the 3rd dof
+
+    int ndim = accumulate(keepDOF.begin(), keepDOF.end(), 0);
   
-    cullDistributedResponse( xfinal, xfinal_map, ndim, neq, offset, xfinal_new );
+    cullDistributedResponse( xfinal, xfinal_map, keepDOF, xfinal_new );
 
     cout << "First 3*neq values of xfinal and xfinal_new:" << endl;
     {
@@ -187,60 +221,4 @@ int main(int argc, char *argv[]) {
   Teuchos::TimeMonitor::summarize(*out,false,true,false/*zero timers*/);
   return status;
 }
-/////////////////////////////////////////////////////////////
-// begin jrr: Now cull solution, xfinal, using assumptions on
-// various size and location parameters 
-
-// Setting for function definition; parameters for now look like:
-// RCP<Epetra_Vector>& xfinal (input)
-// Epetra_Vector& xfinal_map (input)
-// int ndim (input - physical dimension, 2d, 3d, etc)
-// int neq  (input - number of equations/node; phys dim+temp+pressure, e.g.)
-// RCP<Epetra_Vector>& xfinal_new (output - new, culled solution vector)
-
-void cullDistributedResponse( Teuchos::RCP<Epetra_Vector>& xfinal,
-			      Epetra_Map& xfinal_map,
-			      int ndim,
-			      int neq,
-			      int offset,
-			      Teuchos::RCP<Epetra_Vector>& xfinal_new )
-{
-  int numToErase = neq - ndim; // number of dof to erase/node
-                               // Assume these dof reside either at the
-                               // or the bottom of the nodes dof
-
-  int N = xfinal_map.NumMyElements(); // xfinal_map def'd above, outside block
-  std::vector<int> gids(N);
-
-  xfinal_map.MyGlobalElements(&gids[0]);
-  
-  // cull using criteria and STL entities
-  // Have to go from the back of the vector to the front
-  {
-    std::vector<int>::iterator gids_begin = gids.begin();
-    for ( std::vector<int>::iterator gids_iter = gids.end(); gids_iter >  gids_begin ; --gids_iter)
-      {
-	if ( ((int)( gids_iter - gids_begin) + 1) % neq  == 0 )
-	  for (int icount = 0; icount < numToErase; ++icount ) // solution vector contains auxiliary info;
-	    {                                                  // may need to erase more than one dof/node
-
-	      gids.erase( gids_iter - offset*ndim - icount);  // crude start to the
-		   				              // offset problem: Assumes what we want
-	                                                      // to keep is either at the top or the
-	                                                      // bottom of the dof vector/node
-						              // (Note: still need to
-						              // check this out more carefully!)
-	    }
-      }
-  }
-  // end cull
-  
-  Epetra_Map xfinal_map_new( -1, gids.size(), &gids[0], 0, xfinal_map.Comm() );
-  Epetra_Import importer( xfinal_map_new, xfinal_map );
-
-  xfinal_new = Teuchos::rcp(new Epetra_Vector( xfinal_map_new ));
-  xfinal_new->Import( *xfinal, importer, Insert );
-}
-// end jrr
-////////////////////////////////////////////////
 
