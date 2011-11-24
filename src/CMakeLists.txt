@@ -624,10 +624,11 @@ ENDIF ()
 add_executable(AlbanyAnalysis Main_Analysis.cpp)
 
 # Tests
-add_executable(PartitionTest LCM/test/utils/PartitionTest.cc)
-add_executable(UtilsTest LCM/test/utils/UtilsTest.cc)
 IF (ALBANY_LCM)
+  add_executable(PartitionTest LCM/test/utils/PartitionTest.cc)
+  add_executable(UtilsTest LCM/test/utils/UtilsTest.cc)
   add_executable(NodeUpdate LCM/test/utils/NodeUpdate.cc)
+  add_executable(MeshComponents LCM/test/utils/MeshComponents.cc)
 ENDIF ()
 IF (ALBANY_LAME)
   add_executable(utLameStress_elastic
@@ -665,8 +666,9 @@ ENDIF ()
 target_link_libraries(AlbanyAnalysis  albanyLib ${ALL_LIBRARIES})
 
 #Linking tests
-target_link_libraries(PartitionTest albanyLib ${ALL_LIBRARIES})
-target_link_libraries(UtilsTest albanyLib ${ALL_LIBRARIES})
 IF (ALBANY_LCM)
+  target_link_libraries(PartitionTest albanyLib ${ALL_LIBRARIES})
+  target_link_libraries(UtilsTest albanyLib ${ALL_LIBRARIES})
   target_link_libraries(NodeUpdate albanyLib ${ALL_LIBRARIES})
+  target_link_libraries(MeshComponents albanyLib ${ALL_LIBRARIES})
 ENDIF ()

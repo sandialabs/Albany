@@ -15,6 +15,9 @@
 #include <sstream>
 #include <string>
 
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/connected_components.hpp>
+
 #include "Partition.h"
 
 namespace LCM {
@@ -1397,6 +1400,36 @@ namespace LCM {
   }
 
   //
+  // \return Edge list to create boost graph
+  //
+  AdjacencyMap
+  DualGraph::GetEdgeList() const
+  {
+    AdjacencyMap edge_list;
+
+    for (AdjacencyMap::const_iterator graph_iter = graph_.begin();
+        graph_iter != graph_.end();
+        ++graph_iter) {
+      const int vertex = (*graph_iter).first;
+      const IDList edges = (*graph_iter).second;
+
+      for (IDList::const_iterator edges_iter = edges.begin();
+          edges_iter != edges.end();
+          ++edges_iter) {
+
+        const int edge = (*edges_iter);
+
+        IDList & vertices = edge_list[edge];
+
+        vertices.push_back(vertex);
+
+      }
+
+    }
+
+    return edge_list;
+  }
+  //
   //
   //
   void
@@ -1413,6 +1446,65 @@ namespace LCM {
   DualGraph::GetVertexWeights() const
   {
     return vertex_weights_;
+  }
+
+  //
+  // \return Connected components in the dual graph
+  //
+  int
+  DualGraph::GetConnectedComponents(std::vector<int> & components) const
+  {
+    // Create boost graph from edge list
+    typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS>
+    UndirectedGraph;
+
+    typedef boost::graph_traits<UndirectedGraph>::vertex_descriptor Vertex;
+    typedef boost::graph_traits<UndirectedGraph>::edge_descriptor Edge;
+
+    UndirectedGraph graph;
+
+    // Add vertices
+    std::map<int, Vertex> dual_2_boost;
+    AdjacencyMap dual_graph = GetGraph();
+
+    for (AdjacencyMap::const_iterator graph_iter = dual_graph.begin();
+        graph_iter != dual_graph.end();
+        ++graph_iter) {
+
+      Vertex boost_vertex = boost::add_vertex(graph);
+      int dual_vertex = (*graph_iter).first;
+
+      dual_2_boost.insert(std::make_pair(dual_vertex, boost_vertex));
+
+    }
+
+    // Add edges
+    AdjacencyMap
+    edge_list = GetEdgeList();
+
+    for (AdjacencyMap::const_iterator edges_iter = edge_list.begin();
+        edges_iter != edge_list.end();
+        ++edges_iter) {
+
+      const IDList vertices = (*edges_iter).second;
+
+      int source_vertex = vertices[0];
+      int target_vertex = vertices[1];
+
+      Vertex source_boost_vertex = dual_2_boost[source_vertex];
+      Vertex target_boost_vertex = dual_2_boost[target_vertex];
+
+      boost::add_edge(source_boost_vertex, target_boost_vertex, graph);
+
+    }
+
+    const int number_vertices = GetNumberVertices();
+    components.resize(number_vertices);
+
+    int number_components =
+        boost::connected_components(graph, &components[0]);
+
+    return number_components;
   }
 
   //
@@ -1434,6 +1526,8 @@ namespace LCM {
     const int
     number_edges = GetNumberEdges();
 
+    std::cout << std::endl;
+    std::cout << "Vertex - Edge Format:" << std::endl;
     std::cout << std::endl;
     std::cout << "============================================================";
     std::cout << std::endl;
@@ -1472,6 +1566,41 @@ namespace LCM {
            ++edges_iter) {
         const int edge = *edges_iter;
         std::cout << std::setw(8) << edge;
+      }
+
+      std::cout << std::endl;
+
+    }
+
+    std::cout << "============================================================";
+    std::cout << std::endl;
+
+    std::cout << std::endl;
+    std::cout << "Edge - Vertex Format:" << std::endl;
+    std::cout << std::endl;
+
+    AdjacencyMap
+    edge_list = GetEdgeList();
+
+    std::cout << "------------------------------------------------------------";
+    std::cout << std::endl;
+    std::cout << "Edge    Vertices" << std::endl;
+    std::cout << "------------------------------------------------------------";
+    std::cout << std::endl;
+
+    for (AdjacencyMap::const_iterator edges_iter = edge_list.begin();
+        edges_iter != edge_list.end();
+        ++edges_iter) {
+
+      const int edge = (*edges_iter).first;
+      std::cout << std::setw(8) << edge;
+      const IDList vertices = (*edges_iter).second;
+
+      for (IDList::const_iterator vertices_iter = vertices.begin();
+          vertices_iter != vertices.end();
+          ++vertices_iter) {
+        const int vertex = (*vertices_iter);
+        std::cout << std::setw(8) << vertex;
       }
 
       std::cout << std::endl;
