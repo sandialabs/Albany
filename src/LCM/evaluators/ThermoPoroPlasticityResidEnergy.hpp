@@ -15,8 +15,8 @@
 \********************************************************************/
 
 
-#ifndef THERMOPOROPLASTICITYRESIDMASS_HPP
-#define THERMOPOROPLASTICITYRESIDMASS_HPP
+#ifndef THERMOPOROPLASTICITYRESIDENERGY_HPP
+#define THERMOPOROPLASTICITYRESIDENERGY_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -28,18 +28,18 @@
 
 namespace LCM {
 /** \brief
- *   Balance of energy residual for large deformation
+ *   Balance of mass residual for large deformation
  *   thermoporomechanics problem.
 
 */
 
 template<typename EvalT, typename Traits>
-class ThermoPoroPlasticityResidMass : public PHX::EvaluatorWithBaseImpl<Traits>,
+class ThermoPoroPlasticityResidEnergy : public PHX::EvaluatorWithBaseImpl<Traits>,
 				public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
-  ThermoPoroPlasticityResidMass(const Teuchos::ParameterList& p);
+  ThermoPoroPlasticityResidEnergy(const Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
