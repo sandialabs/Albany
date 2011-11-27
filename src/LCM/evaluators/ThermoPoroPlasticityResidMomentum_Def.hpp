@@ -136,6 +136,10 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t node=0; node < numNodes; ++node) {
               for (std::size_t dim=0; dim<numDims; dim++)  ExResidual(cell,node,dim)=0.0;
           for (std::size_t qp=0; qp < numQPs; ++qp) {
+
+		      if (Temp(cell,qp) == 0)
+		      		  Temp(cell,qp) = 300.0;
+
             for (std::size_t i=0; i<numDims; i++) {
               for (std::size_t dim=0; dim<numDims; dim++) {
                 ExResidual(cell,node,i) += (

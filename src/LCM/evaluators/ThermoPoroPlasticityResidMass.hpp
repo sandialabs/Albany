@@ -54,7 +54,7 @@ private:
   // Input:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<ScalarT,Cell,QuadPoint> porePressure;
-  PHX::MDField<ScalarT,Cell,QuadPoint> Tdot;
+  PHX::MDField<ScalarT,Cell,QuadPoint> Temp;
   PHX::MDField<ScalarT,Cell,QuadPoint> stabParameter;
   PHX::MDField<ScalarT,Cell,QuadPoint> ThermalCond;
   PHX::MDField<ScalarT,Cell,QuadPoint> kcPermeability;
@@ -84,7 +84,7 @@ private:
 
   //Data from previous time step
   std::string strainName, porePressureName, porosityName,
-              JName;
+              JName, TempName;
 
 
 
@@ -102,6 +102,7 @@ private:
   Intrepid::FieldContainer<ScalarT> flux;
   Intrepid::FieldContainer<ScalarT> fluxdt;
   Intrepid::FieldContainer<ScalarT> pterm;
+  Intrepid::FieldContainer<ScalarT> Tterm;
   Intrepid::FieldContainer<ScalarT> aterm;
   // Temporary FieldContainers
   Intrepid::FieldContainer<RealType> refPoints;
@@ -119,7 +120,7 @@ private:
   Intrepid::FieldContainer<ScalarT> KJF_invT;
   Intrepid::FieldContainer<ScalarT> Kref;
 
-  ScalarT porePbar, vol;
+  ScalarT porePbar, Tempbar, vol;
 
 
 

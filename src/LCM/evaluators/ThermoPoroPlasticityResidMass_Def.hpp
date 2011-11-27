@@ -31,7 +31,7 @@ namespace LCM {
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
     porePressure (p.get<std::string>                   ("QP Pore Pressure Name"),
 		  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-    Tdot        (p.get<std::string>                   ("QP Time Derivative Variable Name"),
+    Temp        (p.get<std::string>                   ("QP Temperature Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
 	stabParameter        (p.get<std::string>                   ("Material Property Name"),
 		 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
@@ -90,7 +90,7 @@ namespace LCM {
     this->addDependentField(biotCoefficient);
     this->addDependentField(biotModulus);
 
-    if (enableTransient) this->addDependentField(Tdot);
+    this->addDependentField(Temp);
     this->addDependentField(TGrad);
     this->addDependentField(wGradBF);
     if (haveSource) this->addDependentField(Source);
@@ -119,6 +119,7 @@ namespace LCM {
     porosityName = p.get<std::string>("Porosity Name")+"_old";
     porePressureName = p.get<std::string>("QP Pore Pressure Name")+"_old";
     JName =p.get<std::string>("DetDefGrad Name")+"_old";
+    TempName =p.get<std::string>("QP Temperature Name")+"_old";
 
 
 
@@ -142,6 +143,7 @@ namespace LCM {
     flux.resize(dims[0], numQPs, numDims);
     fluxdt.resize(dims[0], numQPs, numDims);
     pterm.resize(dims[0], numQPs);
+    Tterm.resize(dims[0], numQPs);
 
     if (haveAbsorption)  aterm.resize(dims[0], numQPs);
 
@@ -188,7 +190,7 @@ namespace LCM {
     this->utils.setFieldData(TGrad,fm);
     this->utils.setFieldData(wGradBF,fm);
     if (haveSource)  this->utils.setFieldData(Source,fm);
-    if (enableTransient) this->utils.setFieldData(Tdot,fm);
+    this->utils.setFieldData(Temp,fm);
     if (haveAbsorption)  this->utils.setFieldData(Absorption,fm);
     if (haveConvection && haverhoCp)  this->utils.setFieldData(rhoCp,fm);
     this->utils.setFieldData(strain,fm);
@@ -210,6 +212,7 @@ evaluateFields(typename Traits::EvalData workset)
   Albany::MDArray porosityold = (*workset.stateArrayPtr)[porosityName];
   Albany::MDArray porePressureold = (*workset.stateArrayPtr)[porePressureName];
   Albany::MDArray Jold = (*workset.stateArrayPtr)[JName];
+  Albany::MDArray Tempold = (*workset.stateArrayPtr)[TempName];
 
   // Set Warning message
   if (porosityold(1,1) < 0 || porosity(1,1) < 0 ) {
@@ -230,6 +233,11 @@ evaluateFields(typename Traits::EvalData workset)
 			    		  J(cell,qp) = 1.0;
 			      if (Jold(cell,qp) == 0)
 			      		  Jold(cell,qp) = 1.0;
+
+			      if (Temp(cell,qp) == 0)
+			      	      Temp(cell,qp) = 300.0;
+			      if (Tempold(cell,qp) == 0)
+			      	      Tempold(cell,qp) = 300.0;
 
 
 
@@ -252,9 +260,9 @@ evaluateFields(typename Traits::EvalData workset)
              		                    		wBF(cell, node, qp);
 
  				 // Thermal Expansion
- 				 TResidual(cell,node) +=  -(
- 				  						 -(J(cell,qp)-Jold(cell,qp))*0 +
- 				  						 J(cell,qp)*(0-0 )
+ 				 TResidual(cell,node) +=  (
+ 				  						 -(J(cell,qp)-Jold(cell,qp))*Temp(cell,qp) +
+ 				  						 J(cell,qp)*(Temp(cell,qp)-Tempold(cell,qp) )
  				  						                  /
  				  						                		  (J(cell,qp)*J(cell,qp))
  				  						                				  )
@@ -315,6 +323,28 @@ evaluateFields(typename Traits::EvalData workset)
 
  }
 
+  for (std::size_t cell=0; cell < workset.numCells; ++cell){
+
+     Tempbar = 0.0;
+     vol = 0.0;
+     for (std::size_t qp=0; qp < numQPs; ++qp) {
+  	 Tempbar += weights(cell,qp)*(
+  			-(J(cell,qp)-Jold(cell,qp))*Temp(cell,qp) +
+  			  J(cell,qp)*(Temp(cell,qp)-Tempold(cell,qp) )
+  			 / (J(cell,qp)*J(cell,qp))
+  			                      );
+  	  vol  += weights(cell,qp);
+
+     }
+     Tempbar /= vol;
+     for (std::size_t qp=0; qp < numQPs; ++qp) {
+     Tterm(cell,qp) = Tempbar;
+          }
+
+   }
+
+
+
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
 	  for (std::size_t node=0; node < numNodes; ++node) {
@@ -328,6 +358,18 @@ evaluateFields(typename Traits::EvalData workset)
                     		                    		wBF(cell, node, qp);
  				  TResidual(cell,node) += pterm(cell,qp)*stabParameter(cell, qp)/biotModulus(cell, qp)*
                   		wBF(cell, node, qp);
+
+
+
+ 				 TResidual(cell,node) += (
+ 						-(J(cell,qp)-Jold(cell,qp))*Temp(cell,qp) +
+ 						  			  J(cell,qp)*(Temp(cell,qp)-Tempold(cell,qp) )
+ 						  			 / (J(cell,qp)*J(cell,qp))
+ 				  						                               )
+ 				                     *stabParameter(cell, qp)*3.0*alphaMixture(cell, qp)*
+ 				                     		                    		wBF(cell, node, qp);
+ 				 TResidual(cell,node) -= Tterm(cell,qp)*stabParameter(cell, qp)
+ 				  				      *3.0*alphaMixture(cell, qp)*wBF(cell, node, qp);
 
 
 		  }

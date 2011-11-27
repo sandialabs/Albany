@@ -120,6 +120,7 @@ namespace Albany {
     bool haveSource;
     int T_offset;  //Position of T unknown in nodal DOFs
     int X_offset;  //Position of X unknown in nodal DOFs, followed by Y,Z
+    int TEMP_offset; // Position of TEMP unknown in nodal DOFs
     int numDim;    //Number of spatial dimensions and displacement variable 
 
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState;
@@ -156,6 +157,7 @@ namespace Albany {
 #include "PHAL_Source.hpp"
 #include "ThermoPoroPlasticityResidMass.hpp"
 #include "ThermoPoroPlasticityResidMomentum.hpp"
+#include "ThermoPoroPlasticityResidEnergy.hpp"
 #include "PHAL_NSMaterialProperty.hpp"
 
 #include "MixtureThermalExpansion.hpp"
@@ -252,6 +254,28 @@ void Albany::ThermoPoroPlasticityProblem::constructEvaluators(
    fm0.template registerEvaluator<EvalT>
      (evalUtils.constructScatterResidualEvaluator(false, tresid_names, T_offset, scatterName));
 
+   // Temperature Variable
+    Teuchos::ArrayRCP<string> tempdof_names(1);
+      tempdof_names[0] = "Temperature";
+    Teuchos::ArrayRCP<string> tempdof_names_dot(1);
+      tempdof_names_dot[0] = tempdof_names[0]+"_dot";
+    Teuchos::ArrayRCP<string> tempresid_names(1);
+      tempresid_names[0] = tempdof_names[0]+" Residual";
+
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructDOFInterpolationEvaluator(tempdof_names[0]));
+
+      (evalUtils.constructDOFInterpolationEvaluator(tempdof_names_dot[0]));
+
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructDOFGradInterpolationEvaluator(tempdof_names[0]));
+
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructGatherSolutionEvaluator(false, tempdof_names, tempdof_names_dot, TEMP_offset));
+
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructScatterResidualEvaluator(false, tempresid_names, TEMP_offset, "Scatter Temperature"));
+
    // ----------------------setup the solution field ---------------//
 
    // General FEM stuff
@@ -299,24 +323,24 @@ void Albany::ThermoPoroPlasticityProblem::constructEvaluators(
       }
 
 
-   /// Temporary constant setting
-   { // Constant Temperature
-        RCP<ParameterList> p = rcp(new ParameterList);
-
-        p->set<string>("Material Property Name", "Temperature");
-        p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
-        p->set<string>("Coordinate Vector Name", "Coord Vec");
-        p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
-        p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-        Teuchos::ParameterList& paramList = params->sublist("Temperature");
-        p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-        ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
-        fm0.template registerEvaluator<EvalT>(ev);
-        p = stateMgr.registerStateVariable("Temperature",dl->qp_scalar, dl->dummy,"zero", true);
-        ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-        fm0.template registerEvaluator<EvalT>(ev);
-   }
+ //  /// Temporary constant setting
+ //  { // Constant Temperature
+ //       RCP<ParameterList> p = rcp(new ParameterList);
+//
+  //      p->set<string>("Material Property Name", "Temperature");
+  //      p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+  //      p->set<string>("Coordinate Vector Name", "Coord Vec");
+  //      p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
+  //      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+   //     Teuchos::ParameterList& paramList = params->sublist("Temperature");
+   //     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+//
+   //     ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
+   //     fm0.template registerEvaluator<EvalT>(ev);
+   //     p = stateMgr.registerStateVariable("Temperature",dl->qp_scalar, dl->dummy,"zero", true);
+   //     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+  //      fm0.template registerEvaluator<EvalT>(ev);
+//   }
 
    { // Constant Reference Temperature
            RCP<ParameterList> p = rcp(new ParameterList);
@@ -698,6 +722,7 @@ void Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 	ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
 	fm0.template registerEvaluator<EvalT>(ev);
 
+
   }
 
   if (haveSource) { // Source
@@ -786,6 +811,10 @@ void Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
     ev = rcp(new LCM::ThermoPoroPlasticityResidMomentum<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+
+	p = stateMgr.registerStateVariable("Temperature",dl->qp_scalar, dl->dummy,"zero", true);
+	ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+	fm0.template registerEvaluator<EvalT>(ev);
   }
 
 
@@ -808,7 +837,7 @@ void Albany::ThermoPoroPlasticityProblem::constructEvaluators(
     p->set<string>("QP Pore Pressure Name", "Pore Pressure");
 	p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-	p->set<string>("QP Time Derivative Variable Name", "Pore Pressure");
+	p->set<string>("QP Temperature Name", "Temperature");
 
 	p->set<string>("Material Property Name", "Stabilization Parameter");
     p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
@@ -853,12 +882,86 @@ void Albany::ThermoPoroPlasticityProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+  { // Temperature Resid
+     RCP<ParameterList> p = rcp(new ParameterList("Temperature Resid"));
+
+     //Input
+
+     // Input from nodal points
+     p->set<string>("Weighted BF Name", "wBF");
+     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
+
+     p->set<bool>("Have Source", false);
+     p->set<string>("Source Name", "Source");
+
+     p->set<bool>("Have Absorption", false);
+
+     // Input from cubature points
+     p->set<string>("QP Pore Pressure Name", "Pore Pressure");
+ 	 p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+ 	 p->set<string>("Bulk Modulus Name", "Bulk Modulus");
+     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+ 	 p->set<string>("QP Temperature Name", "Temperature");
+
+  	 p->set<string>("Mixture Specific Heat Name", "Mixture Specific Heat");
+  	 p->set<string>("Skeleton Thermal Expansion Name", "Skeleton Thermal Expansion");
+  	 p->set<string>("Reference Temperature Name", "Reference Temperature");
+
+ 	 p->set<string>("Material Property Name", "Stabilization Parameter");
+     p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
+     p->set<string>("Porosity Name", "Porosity");
+     p->set<string>("Kozeny-Carman Permeability Name", "Kozeny-Carman Permeability");
+     p->set<string>("Biot Coefficient Name", "Biot Coefficient");
+     p->set<string>("Biot Modulus Name", "Biot Modulus");
+
+     p->set<string>("Mixture Thermal Expansion Name", "Mixture Thermal Expansion");
+
+     p->set<string>("Gradient QP Variable Name", "Temperature Gradient");
+     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
+     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+
+     p->set<string>("Strain Name", "Strain");
+     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+
+     // Inputs: X, Y at nodes, Cubature, and Basis
+     p->set<string>("Coordinate Vector Name","Coord Vec");
+     p->set< RCP<DataLayout> >("Coordinate Data Layout", dl->vertices_vector);
+     p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
+
+     p->set<string>("Weights Name","Weights");
+
+     p->set<string>("Delta Time Name", " Delta Time");
+     p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
+
+     p->set<string>("DefGrad Name", "Deformation Gradient");
+     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+
+     p->set<string>("DetDefGrad Name", "Jacobian");
+     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+     //Output
+     p->set<string>("Residual Name", "Temperature Residual");
+     p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
+
+     ev = rcp(new LCM::ThermoPoroPlasticityResidEnergy<EvalT,AlbanyTraits>(*p));
+     fm0.template registerEvaluator<EvalT>(ev);
+   }
+
+
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
     PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter", dl->dummy);
     fm0.requireField<EvalT>(res_tag);
 
     PHX::Tag<typename EvalT::ScalarT> res_tag2(scatterName, dl->dummy);
     fm0.requireField<EvalT>(res_tag2);
+
+    PHX::Tag<typename EvalT::ScalarT> res_tag3("Scatter Temperature", dl->dummy);
+    fm0.requireField<EvalT>(res_tag3);
   }
   else {
     //Construct Responses

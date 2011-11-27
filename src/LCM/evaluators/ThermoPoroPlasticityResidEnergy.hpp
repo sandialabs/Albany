@@ -54,13 +54,17 @@ private:
   // Input:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<ScalarT,Cell,QuadPoint> porePressure;
-  PHX::MDField<ScalarT,Cell,QuadPoint> Tdot;
+  PHX::MDField<ScalarT,Cell,QuadPoint> refTemp;
+  PHX::MDField<ScalarT,Cell,QuadPoint> alphaSkeleton;
+  PHX::MDField<ScalarT,Cell,QuadPoint> gammaMixture;
+  PHX::MDField<ScalarT,Cell,QuadPoint> Temp;
   PHX::MDField<ScalarT,Cell,QuadPoint> stabParameter;
   PHX::MDField<ScalarT,Cell,QuadPoint> ThermalCond;
   PHX::MDField<ScalarT,Cell,QuadPoint> kcPermeability;
   PHX::MDField<ScalarT,Cell,QuadPoint> porosity;
   PHX::MDField<ScalarT,Cell,QuadPoint> biotCoefficient;
   PHX::MDField<ScalarT,Cell,QuadPoint> biotModulus;
+  PHX::MDField<ScalarT,Cell,QuadPoint> bulk;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> TGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint> alphaMixture;
@@ -84,7 +88,7 @@ private:
 
   //Data from previous time step
   std::string strainName, porePressureName, porosityName,
-              JName;
+              JName, tempName;
 
 
 
@@ -103,6 +107,7 @@ private:
   Intrepid::FieldContainer<ScalarT> fluxdt;
   Intrepid::FieldContainer<ScalarT> pterm;
   Intrepid::FieldContainer<ScalarT> aterm;
+  Intrepid::FieldContainer<ScalarT> tterm;
   // Temporary FieldContainers
   Intrepid::FieldContainer<RealType> refPoints;
   Intrepid::FieldContainer<RealType> refWeights;
@@ -119,7 +124,7 @@ private:
   Intrepid::FieldContainer<ScalarT> KJF_invT;
   Intrepid::FieldContainer<ScalarT> Kref;
 
-  ScalarT porePbar, vol;
+  ScalarT porePbar, Tempbar, vol;
 
 
 

@@ -18,6 +18,7 @@
 #include "Albany_SolutionAverageResponseFunction.hpp"
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
 #include "Albany_SolutionMaxValueResponseFunction.hpp"
+#include "Albany_InitialCondition.hpp"
 
 #include "Intrepid_FieldContainer.hpp"
 #include "Intrepid_DefaultCubatureFactory.hpp"
@@ -31,7 +32,9 @@ Albany::ThermoPoroPlasticityProblem::
 ThermoPoroPlasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 			const Teuchos::RCP<ParamLib>& paramLib_,
 			const int numDim_) :
-  Albany::AbstractProblem(params_, paramLib_, numDim_ + 1), // additional DOF for pore pressure
+  Albany::AbstractProblem(params_, paramLib_, numDim_ + 2), // additional DOFs
+                                                            // one for pore pressure
+                                                            // one for temperature
   haveSource(false),
   numDim(numDim_)
 {
@@ -45,10 +48,12 @@ ThermoPoroPlasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 //#define NUMBER_T_FIRST
 #ifdef NUMBER_T_FIRST
   T_offset=0;
-  X_offset=1;
+  TEMP_offset = 1;
+  X_offset=2;
 #else
   X_offset=0;
   T_offset=numDim;
+  TEMP_offset = numDim + 1;
 #endif
 }
 
@@ -101,6 +106,7 @@ Albany::ThermoPoroPlasticityProblem::constructDirichletEvaluators(
    if (numDim>1) dirichletNames[X_offset+1] = "Y";
    if (numDim>2) dirichletNames[X_offset+2] = "Z";
    dirichletNames[T_offset] = "T";
+   dirichletNames[TEMP_offset] = "TEMP";
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
@@ -119,7 +125,6 @@ Albany::ThermoPoroPlasticityProblem::getValidProblemParameters() const
   validPL->sublist("Elastic Modulus", false, "");
   validPL->sublist("Poissons Ratio", false, "");
   validPL->sublist("Stabilization Parameter", false, "");
-  validPL->sublist("Temperature", false, "");
   validPL->sublist("Reference Temperature", false, "");
   validPL->sublist("Skeleton Thermal Expansion", false, "");
   validPL->sublist("Pore-Fluid Thermal Expansion", false, "");
