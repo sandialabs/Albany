@@ -350,8 +350,11 @@ QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
   {
     iter++;
  
-    double newShift = GetEigensolverShift(*pStatesToLoop, "Conduction Band");
-    ResetEigensolverShift(getSubSolver("Schrodinger").model, newShift, eigList);
+    if (iter > 1) 
+    {
+      double newShift = GetEigensolverShift(*pStatesToLoop, "Conduction Band");
+      ResetEigensolverShift(getSubSolver("Schrodinger").model, newShift, eigList);
+    }  
 
     if(bVerbose) *out << "QCAD Solve: Schrodinger iteration " << iter << endl;
     SolveModel(getSubSolver("Schrodinger"), pStatesToLoop, pStatesToPass,
@@ -366,7 +369,7 @@ QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
       
     eigenDataNull = Teuchos::null;
     if(iter > 1) 
-      bConverged = checkConvergence(*pStatesToLoop, prevElectricPotential, "Electric Potential", 1e-6);
+      bConverged = checkConvergence(*pStatesToLoop, prevElectricPotential, "Electric Potential", 1e-5);
       
     CopyStateToContainer(*pStatesToLoop, "Electric Potential", prevElectricPotential);
   } 
@@ -433,7 +436,7 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
       
     eigenDataNull = Teuchos::null;
     if(iter > 1) 
-      bConverged = checkConvergence(*pStatesToLoop, prevElectricPotential, "Electric Potential", 1e-6);
+      bConverged = checkConvergence(*pStatesToLoop, prevElectricPotential, "Electric Potential", 1e-5);
       
     CopyStateToContainer(*pStatesToLoop, "Electric Potential", prevElectricPotential);
   } 
@@ -1003,7 +1006,8 @@ bool checkConvergence(Albany::StateArrays& states,
         // std::cout << "currState = " << states[ws][stateName](cell,qp) << std::endl;
         if( fabs( states[ws][stateName](cell,qp) - prevState[ws](cell,qp) ) > tol )
         {
-          // std::cout << "diff = " << fabs( states[ws][stateName](cell,qp) - prevState[ws](cell,qp) ) << std::endl;
+          std::cout << "ws = " << ws << ", cell = " << cell << ", qp = " << qp << std::endl; 
+          std::cout << "diff = " << fabs( states[ws][stateName](cell,qp) - prevState[ws](cell,qp) ) << std::endl;
           return false;
         }  
       }
@@ -1039,8 +1043,9 @@ double GetEigensolverShift(Albany::StateArrays& states,
   int numWorksets = states.size();
   std::vector<PHX::DataLayout::size_type> dims;
   const std::string& name = stateNameToBaseShiftOn;
+  const std::string auxName = "Approx Quantum EDensity";
 
-  double val;
+  double val, approxQuanEDen;
   double minVal, maxVal;
   minVal = +1e10; maxVal = -1e10;
 
@@ -1053,18 +1058,25 @@ double GetEigensolverShift(Albany::StateArrays& states,
     int cells = dims[0];
     int qps = dims[1];
 
-    for (int cell = 0; cell < cells; ++cell)  {
-      for (int qp = 0; qp < qps; ++qp) {
-        val = states[ws][name](cell, qp);
-        if(val < minVal) minVal = val;
-        if(val > maxVal) maxVal = val;
+    for (int cell = 0; cell < cells; ++cell)  
+    {
+      for (int qp = 0; qp < qps; ++qp) 
+      {
+        approxQuanEDen = states[ws][auxName](cell, qp); 
+        if (approxQuanEDen > 1e-5)  // approxQuanEDen is computed only in quantum regions
+        {
+          val = states[ws][name](cell, qp);
+          if(val < minVal) minVal = val;
+          if(val > maxVal) maxVal = val;
+        }  
       }
     }
   }
 
   //set shift to be slightly (5% of range) below minimum value
   // double shift = -(minVal - 0.05*(maxVal-minVal)); //minus sign b/c negative eigenvalue convention
-  double shift = -(minVal - 0.01*(maxVal-minVal));
+  
+  double shift = -minVal*1.1;  // 10% below minimum value
   return shift;
 }
   
