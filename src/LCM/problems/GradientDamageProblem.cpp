@@ -96,8 +96,8 @@ Albany::GradientDamageProblem::constructDirichletEvaluators(
    if (numDim>1) dirichletNames[X_offset+1] = "Y";
    if (numDim>2) dirichletNames[X_offset+2] = "Z";
    dirichletNames[D_offset] = "D";
-   Albany::DirichletUtils dirUtils;
-   dfm = dirUtils.constructDirichletEvaluators(meshSpecs.nsNames, dirichletNames,
+   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
+   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
 }
 

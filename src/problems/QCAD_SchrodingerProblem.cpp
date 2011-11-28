@@ -134,8 +134,8 @@ QCAD::SchrodingerProblem::constructDirichletEvaluators(
    // Construct Dirichlet evaluators for all nodesets and names
    vector<string> dirichletNames(neq);
    dirichletNames[0] = "psi";
-   Albany::DirichletUtils dirUtils;
-   dfm = dirUtils.constructDirichletEvaluators(meshSpecs.nsNames, dirichletNames,
+   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
+   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
 }
 

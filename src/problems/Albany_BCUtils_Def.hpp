@@ -14,13 +14,13 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
-#include "Albany_DirichletUtils.hpp"
-#include "PHAL_FactoryTraits.hpp"
+#include "Albany_BCUtils.hpp"
 
+template<typename BCTraits>
 Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > 
-Albany::DirichletUtils::constructDirichletEvaluators(
-      const std::vector<std::string>& nodeSetIDs,
-      const std::vector<std::string>& dirichletNames,
+Albany::BCUtils<BCTraits>::constructBCEvaluators(
+      const std::vector<std::string>& nodeorsideSetIDs,
+      const std::vector<std::string>& bcNames,
       Teuchos::RCP<Teuchos::ParameterList> params,
       Teuchos::RCP<ParamLib> paramLib)
 {
@@ -34,28 +34,26 @@ Albany::DirichletUtils::constructDirichletEvaluators(
 
    using PHAL::AlbanyTraits;
 
-   int type = PHAL::DirichletFactoryTraits<AlbanyTraits>::id_dirichlet;
-   
-   Teuchos::ParameterList DBCparams = params->sublist("Dirichlet BCs");
-   DBCparams.validateParameters(*(getValidDirichletBCParameters(nodeSetIDs,dirichletNames)),0);
+   Teuchos::ParameterList BCparams = params->sublist(traits_type::bcParamsPl);
+   BCparams.validateParameters(*(getValidBCParameters(nodeorsideSetIDs, bcNames)),0);
 
    std::map<string, RCP<ParameterList> > evaluators_to_build;
    RCP<DataLayout> dummy = rcp(new MDALayout<Dummy>(0));
-   vector<string> dbcs;
+   vector<string> bcs;
 
-   // Check for all possible standard BCs (every dof on every nodeset) to see which is set
-   for (std::size_t i=0; i<nodeSetIDs.size(); i++) {
-     for (std::size_t j=0; j<dirichletNames.size(); j++) {
-       std::string ss = constructDBCName(nodeSetIDs[i],dirichletNames[j]);
+   // Check for all possible standard BCs (every dof on every nodeorsideset) to see which is set
+   for (std::size_t i=0; i<nodeorsideSetIDs.size(); i++) {
+     for (std::size_t j=0; j<bcNames.size(); j++) {
+       std::string ss = constructBCName(nodeorsideSetIDs[i],bcNames[j]);
 
-       if (DBCparams.isParameter(ss)) {
+       if (BCparams.isParameter(ss)) {
          RCP<ParameterList> p = rcp(new ParameterList);
-         p->set<int>("Type", type);
+         p->set<int>("Type", traits_type::type);
 
          p->set< RCP<DataLayout> >("Data Layout", dummy);
          p->set< string >  ("Dirichlet Name", ss);
-         p->set< RealType >("Dirichlet Value", DBCparams.get<double>(ss));
-         p->set< string >  ("Node Set ID", nodeSetIDs[i]);
+         p->set< RealType >("Dirichlet Value", BCparams.get<double>(ss));
+         p->set< string >  ("Node Set ID", nodeorsideSetIDs[i]);
         // p->set< int >     ("Number of Equations", dirichletNames.size());
 	 p->set< int >     ("Equation Offset", j);
 
@@ -64,28 +62,27 @@ Albany::DirichletUtils::constructDirichletEvaluators(
          std::stringstream ess; ess << "Evaluator for " << ss;
          evaluators_to_build[ess.str()] = p;
 
-         dbcs.push_back(ss);
+         bcs.push_back(ss);
        }
      }
    }
 
 #ifdef ALBANY_LCM
    ///
-   /// Time dependent Dirichlet BC specific
+   /// Time dependent BC specific
    ///
-   for (std::size_t i=0; i<nodeSetIDs.size(); i++) 
+   for (std::size_t i=0; i<nodeorsideSetIDs.size(); i++) 
    {
-     for (std::size_t j=0; j<dirichletNames.size(); j++) 
+     for (std::size_t j=0; j<bcNames.size(); j++) 
      {
-       std::string ss = constructTimeDepDBCName(nodeSetIDs[i],dirichletNames[j]);
+       std::string ss = constructTimeDepBCName(nodeorsideSetIDs[i],bcNames[j]);
        
-       if (DBCparams.isSublist(ss)) 
+       if (BCparams.isSublist(ss)) 
        {
 	 // grab the sublist 
-         ParameterList& sub_list = DBCparams.sublist(ss);
+         ParameterList& sub_list = BCparams.sublist(ss);
 	 RCP<ParameterList> p = rcp(new ParameterList);
-	 type = PHAL::DirichletFactoryTraits<AlbanyTraits>::id_timedep_bc;
-	 p->set<int>("Type", type);
+	 p->set<int>("Type", traits_type::typeTd);
 	   
 	 // Extract the time values into a vector
 	 //vector<RealType> timeValues = sub_list.get<Teuchos::Array<RealType> >("Time Values").toVector();
@@ -106,12 +103,12 @@ Albany::DirichletUtils::constructDirichletEvaluators(
          p->set< RealType >("Dirichlet Value", 0.0);
 	 p->set< int >     ("Equation Offset", j);
 	 p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-	 p->set< string >  ("Node Set ID", nodeSetIDs[i]);
+	 p->set< string >  ("Node Set ID", nodeorsideSetIDs[i]);
 
          std::stringstream ess; ess << "Evaluator for " << ss;
          evaluators_to_build[ess.str()] = p;
 
-	 dbcs.push_back(ss);
+	 bcs.push_back(ss);
        }
      }
    }
@@ -119,20 +116,19 @@ Albany::DirichletUtils::constructDirichletEvaluators(
    ///
    /// Kfield BC specific
    ///
-   for (std::size_t i=0; i<nodeSetIDs.size(); i++) 
+   for (std::size_t i=0; i<nodeorsideSetIDs.size(); i++) 
    {
-     std::string ss = constructDBCName(nodeSetIDs[i],"K");
+     std::string ss = constructBCName(nodeorsideSetIDs[i],"K");
      
-     if (DBCparams.isSublist(ss)) 
+     if (BCparams.isSublist(ss)) 
      {
        // grab the sublist
-       ParameterList& sub_list = DBCparams.sublist(ss);
+       ParameterList& sub_list = BCparams.sublist(ss);
 
        if (sub_list.get<string>("BC Function") == "Kfield" )
        {
 	 RCP<ParameterList> p = rcp(new ParameterList);
-	 type = PHAL::DirichletFactoryTraits<AlbanyTraits>::id_kfield_bc;
-	 p->set<int>("Type", type);
+	 p->set<int>("Type", traits_type::typeKf);
 
 	 // This BC needs a shear modulus and poissons ratio defined
 	 TEUCHOS_TEST_FOR_EXCEPTION(!params->isSublist("Shear Modulus"), 
@@ -163,7 +159,7 @@ Albany::DirichletUtils::constructDirichletEvaluators(
 	 p->set< RCP<DataLayout> >("Data Layout", dummy);
 	 p->set< string >  ("Dirichlet Name", ss);
          p->set< RealType >("Dirichlet Value", 0.0);
-	 p->set< string >  ("Node Set ID", nodeSetIDs[i]);
+	 p->set< string >  ("Node Set ID", nodeorsideSetIDs[i]);
          //p->set< int >     ("Number of Equations", dirichletNames.size());
 	 p->set< int >     ("Equation Offset", 0);
 	 
@@ -171,22 +167,21 @@ Albany::DirichletUtils::constructDirichletEvaluators(
 	 std::stringstream ess; ess << "Evaluator for " << ss;
 	 evaluators_to_build[ess.str()] = p;
 
-	 dbcs.push_back(ss);
+	 bcs.push_back(ss);
        }
      }
    }
 #endif
 
-   string allDBC="Evaluator for all Dirichlet BCs";
+   string allBC="Evaluator for all Dirichlet BCs";
    {
       RCP<ParameterList> p = rcp(new ParameterList);
-      type = PHAL::DirichletFactoryTraits<AlbanyTraits>::id_dirichlet_aggregator;
-      p->set<int>("Type", type);
+      p->set<int>("Type", traits_type::typeDa);
 
-      p->set<vector<string>* >("DBC Names", &dbcs);
+      p->set<vector<string>* >("DBC Names", &bcs);
       p->set< RCP<DataLayout> >("Data Layout", dummy);
-      p->set<string>("DBC Aggregator Name", allDBC);
-      evaluators_to_build[allDBC] = p;
+      p->set<string>("DBC Aggregator Name", allBC);
+      evaluators_to_build[allBC] = p;
    }
 
    // Build Field Evaluators for each evaluation type
@@ -201,74 +196,77 @@ Albany::DirichletUtils::constructDirichletEvaluators(
    // Register all Evaluators
    PHX::registerEvaluators(evaluators, *dfm);
 
-   PHX::Tag<AlbanyTraits::Residual::ScalarT> res_tag0(allDBC, dummy);
+   PHX::Tag<AlbanyTraits::Residual::ScalarT> res_tag0(allBC, dummy);
    dfm->requireField<AlbanyTraits::Residual>(res_tag0);
 
-   PHX::Tag<AlbanyTraits::Jacobian::ScalarT> jac_tag0(allDBC, dummy);
+   PHX::Tag<AlbanyTraits::Jacobian::ScalarT> jac_tag0(allBC, dummy);
    dfm->requireField<AlbanyTraits::Jacobian>(jac_tag0);
 
-   PHX::Tag<AlbanyTraits::Tangent::ScalarT> tan_tag0(allDBC, dummy);
+   PHX::Tag<AlbanyTraits::Tangent::ScalarT> tan_tag0(allBC, dummy);
    dfm->requireField<AlbanyTraits::Tangent>(tan_tag0);
 
-   PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_tag0(allDBC, dummy);
+   PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_tag0(allBC, dummy);
    dfm->requireField<AlbanyTraits::SGResidual>(sgres_tag0);
 
-   PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag0(allDBC, dummy);
+   PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag0(allBC, dummy);
    dfm->requireField<AlbanyTraits::SGJacobian>(sgjac_tag0);
 
-   PHX::Tag<AlbanyTraits::SGTangent::ScalarT> sgtan_tag0(allDBC, dummy);
+   PHX::Tag<AlbanyTraits::SGTangent::ScalarT> sgtan_tag0(allBC, dummy);
    dfm->requireField<AlbanyTraits::SGTangent>(sgtan_tag0);
 
-   PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag0(allDBC, dummy);
+   PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag0(allBC, dummy);
    dfm->requireField<AlbanyTraits::MPResidual>(mpres_tag0);
 
-   PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag0(allDBC, dummy);
+   PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag0(allBC, dummy);
    dfm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag0);
 
-   PHX::Tag<AlbanyTraits::MPTangent::ScalarT> mptan_tag0(allDBC, dummy);
+   PHX::Tag<AlbanyTraits::MPTangent::ScalarT> mptan_tag0(allBC, dummy);
    dfm->requireField<AlbanyTraits::MPTangent>(mptan_tag0);
 
    return dfm;
 }
 
+template<typename BCTraits>
 Teuchos::RCP<const Teuchos::ParameterList>
-Albany::DirichletUtils::getValidDirichletBCParameters(
-  const std::vector<std::string>& nodeSetIDs,
-  const std::vector<std::string>& dirichletNames) const
+Albany::BCUtils<BCTraits>::getValidBCParameters(
+  const std::vector<std::string>& nodeorsideSetIDs,
+  const std::vector<std::string>& bcNames) const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
      Teuchos::rcp(new Teuchos::ParameterList("Valid Dirichlet BC List"));;
 
-  for (std::size_t i=0; i<nodeSetIDs.size(); i++) {
-    for (std::size_t j=0; j<dirichletNames.size(); j++) {
-      std::string ss = constructDBCName(nodeSetIDs[i],dirichletNames[j]);
-      std::string tt = constructTimeDepDBCName(nodeSetIDs[i],dirichletNames[j]);
+  for (std::size_t i=0; i<nodeorsideSetIDs.size(); i++) {
+    for (std::size_t j=0; j<bcNames.size(); j++) {
+      std::string ss = constructBCName(nodeorsideSetIDs[i],bcNames[j]);
+      std::string tt = constructTimeDepBCName(nodeorsideSetIDs[i],bcNames[j]);
       validPL->set<double>(ss, 0.0, "Value of BC corresponding to nodeSetID and dofName");
       validPL->sublist(tt, false, "SubList of BC corresponding to nodeSetID and dofName");
     }
   }
   
-  for (std::size_t i=0; i<nodeSetIDs.size(); i++) 
+  for (std::size_t i=0; i<nodeorsideSetIDs.size(); i++) 
   {
-    std::string ss = constructDBCName(nodeSetIDs[i],"K");
+    std::string ss = constructBCName(nodeorsideSetIDs[i],"K");
     validPL->sublist(ss, false, "");
   }
 
   return validPL;
 }
 
+template<typename BCTraits>
 std::string
-Albany::DirichletUtils::constructDBCName(const std::string ns,
+Albany::BCUtils<BCTraits>::constructBCName(const std::string ns,
 					 const std::string dof) const
 {
   std::stringstream ss; ss << "DBC on NS " << ns << " for DOF " << dof;
   return ss.str();
 }
 
+template<typename BCTraits>
 std::string
-Albany::DirichletUtils::constructTimeDepDBCName(const std::string ns,
+Albany::BCUtils<BCTraits>::constructTimeDepBCName(const std::string ns,
 						const std::string dof) const
 {
-  std::stringstream ss; ss << "Time Dependent " << constructDBCName(ns, dof);
+  std::stringstream ss; ss << "Time Dependent " << constructBCName(ns, dof);
   return ss.str();
 }

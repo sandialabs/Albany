@@ -54,6 +54,7 @@ private:
   // Input:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
   PHX::MDField<ScalarT,Cell,QuadPoint> Source;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> DefGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint> Dstar;
@@ -70,9 +71,9 @@ private:
   std::string eqpsName;
 
   // Input for hydro-static stress effect
-  PHX::MDField<ScalarT,Cell,QuadPoint> Pstress;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> Pstress;
   PHX::MDField<ScalarT,Cell,QuadPoint> tauFactor;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint> weight;
+
 
 
 

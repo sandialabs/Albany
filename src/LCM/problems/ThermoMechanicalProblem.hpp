@@ -116,6 +116,7 @@ namespace Albany {
 
     //! Boundary conditions on source term
     bool haveSource;
+    std::string model;
     int T_offset;  //Position of T unknown in nodal DOFs
     int X_offset;  //Position of X unknown in nodal DOFs, followed by Y,Z
     int numDim;    //Number of spatial dimensions and displacement variable 
@@ -269,6 +270,46 @@ void Albany::ThermoMechanicalProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+  if (haveSource) { // Source
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+                               "Error!  Sources not implemented in Mechanical yet!");
+
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    p->set<string>("Source Name", "Source");
+    p->set<string>("Variable Name", "Displacement");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Source Functions");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  { // Deformation Gradient
+    RCP<ParameterList> p = rcp(new ParameterList("Deformation Gradient"));
+
+    //Inputs: flags, weights, GradU
+    const bool avgJ = params->get("avgJ", false);
+    p->set<bool>("avgJ Name", avgJ);
+    const bool volavgJ = params->get("volavgJ", false);
+    p->set<bool>("volavgJ Name", volavgJ);
+    p->set<string>("Weights Name","Weights");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set<string>("Gradient QP Variable Name", "Displacement Gradient");
+    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+
+    //Outputs: F, J
+    p->set<string>("DefGrad Name", "Deformation Gradient"); //dl->qp_tensor also
+    p->set<string>("DetDefGrad Name", "Determinant of the Deformation Gradient"); 
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+    ev = rcp(new LCM::DefGrad<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
   { // Shear Modulus
     RCP<ParameterList> p = rcp(new ParameterList);
 
@@ -357,128 +398,140 @@ void Albany::ThermoMechanicalProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  { // Saturation Modulus
-    RCP<ParameterList> p = rcp(new ParameterList);
+  if ( model == "ThermoMechanical" )
+  {
+    { // Saturation Modulus
+      RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("Saturation Modulus Name", "Saturation Modulus");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+      p->set<string>("Saturation Modulus Name", "Saturation Modulus");
+      p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+      p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Saturation Modulus");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+      Teuchos::ParameterList& paramList = params->sublist("Saturation Modulus");
+      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-    // Setting this turns on linear dependence of S on T, S = S + dSdT*(T - Tref)
-    p->set<string>("QP Temperature Name", "Temperature");
-    RealType refTemp = params->get("Reference Temperature", 0.0);
-    p->set<RealType>("Reference Temperature", refTemp);
+      // Setting this turns on linear dependence of S on T, S = S + dSdT*(T - Tref)
+      p->set<string>("QP Temperature Name", "Temperature");
+      RealType refTemp = params->get("Reference Temperature", 0.0);
+      p->set<RealType>("Reference Temperature", refTemp);
 
-    ev = rcp(new LCM::SaturationModulus<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
+      ev = rcp(new LCM::SaturationModulus<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+
+    { // Saturation Exponent
+      RCP<ParameterList> p = rcp(new ParameterList);
+
+      p->set<string>("Saturation Exponent Name", "Saturation Exponent");
+      p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+      p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
+      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+      Teuchos::ParameterList& paramList = params->sublist("Saturation Exponent");
+      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+      ev = rcp(new LCM::SaturationExponent<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+
+    { // Stress
+      RCP<ParameterList> p = rcp(new ParameterList("Stress"));
+
+      //Input
+      p->set<string>("DefGrad Name", "Deformation Gradient");
+      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+
+      p->set<string>("Shear Modulus Name", "Shear Modulus");
+
+      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+      p->set<string>("Bulk Modulus Name", "Bulk Modulus");  // dl->qp_scalar also
+      p->set<string>("DetDefGrad Name", "Determinant of the Deformation Gradient");  // dl->qp_scalar also
+      p->set<string>("Yield Strength Name", "Yield Strength");
+      p->set<string>("Hardening Modulus Name", "Hardening Modulus");
+      p->set<string>("Saturation Modulus Name", "Saturation Modulus"); // dl->qp_scalar also
+      p->set<string>("Saturation Exponent Name", "Saturation Exponent"); // dl->qp_scalar also
+      p->set<string>("Temperature Name", "Temperature");
+      RealType refTemp = params->get("Reference Temperature", 0.0);
+      p->set<RealType>("Reference Temperature", refTemp);
+      RealType coeff = params->get("Thermal Expansion Coefficient", 0.0);
+      p->set<RealType>("Thermal Expansion Coefficient", coeff);
+
+      p->set<string>("Delta Time Name", "Delta Time");
+      p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
+
+      //Output
+      p->set<string>("Stress Name", "Stress"); //dl->qp_tensor also
+      p->set<string>("Fp Name", "Fp");
+      p->set<string>("eqps Name", "eqps");
+      p->set<string>("Mechanical Source Name", "Mechanical Source");
+
+      ev = rcp(new LCM::ThermoMechanicalStress<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy,"zero");
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy,"identity",true);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy,"zero",true);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
   }
 
-  { // Saturation Exponent
-    RCP<ParameterList> p = rcp(new ParameterList);
+  else if ( model == "BCJ" )
+  {
+    // put BCJ specific things here
 
-    p->set<string>("Saturation Exponent Name", "Saturation Exponent");
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+    { // Stress
+      // RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Saturation Exponent");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+      // //Input
+      // p->set<string>("DefGrad Name", "Deformation Gradient");
+      // p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-    ev = rcp(new LCM::SaturationExponent<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
+      // p->set<string>("Shear Modulus Name", "Shear Modulus");
 
-  if (haveSource) { // Source
-    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-                       "Error!  Sources not implemented in Mechanical yet!");
+      // p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    RCP<ParameterList> p = rcp(new ParameterList);
+      // p->set<string>("Bulk Modulus Name", "Bulk Modulus");  // dl->qp_scalar also
+      // p->set<string>("DetDefGrad Name", "Determinant of the Deformation Gradient");  // dl->qp_scalar also
+      // p->set<string>("Yield Strength Name", "Yield Strength");
+      // p->set<string>("Hardening Modulus Name", "Hardening Modulus");
+      // p->set<string>("Temperature Name", "Temperature");
 
-    p->set<string>("Source Name", "Source");
-    p->set<string>("Variable Name", "Displacement");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+      // RealType refTemp = params->get("Reference Temperature", 0.0);
+      // p->set<RealType>("Reference Temperature", refTemp);
+      // RealType coeff = params->get("Thermal Expansion Coefficient", 0.0);
+      // p->set<RealType>("Thermal Expansion Coefficient", coeff);
 
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Source Functions");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+      // p->set<string>("Delta Time Name", "Delta Time");
+      // p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
+      
+      // // Output
+      // p->set<string>("Stress Name", "Stress"); //dl->qp_tensor also
+      // p->set<string>("Fp Name", "Fp");
+      // p->set<string>("eqps Name", "eqps");
+      // p->set<string>("Mechanical Source Name", "Mechanical Source");
 
-    ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
-
-  { // Deformation Gradient
-    RCP<ParameterList> p = rcp(new ParameterList("Deformation Gradient"));
-
-    //Inputs: flags, weights, GradU
-    const bool avgJ = params->get("avgJ", false);
-    p->set<bool>("avgJ Name", avgJ);
-    const bool volavgJ = params->get("volavgJ", false);
-    p->set<bool>("volavgJ Name", volavgJ);
-    p->set<string>("Weights Name","Weights");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set<string>("Gradient QP Variable Name", "Displacement Gradient");
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
-    //Outputs: F, J
-    p->set<string>("DefGrad Name", "Deformation Gradient"); //dl->qp_tensor also
-    p->set<string>("DetDefGrad Name", "Determinant of the Deformation Gradient"); 
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-    ev = rcp(new LCM::DefGrad<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
-
-  { // Stress
-    RCP<ParameterList> p = rcp(new ParameterList("Stress"));
-
-    //Input
-    p->set<string>("DefGrad Name", "Deformation Gradient");
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
-    p->set<string>("Shear Modulus Name", "Shear Modulus");
-
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-    p->set<string>("Bulk Modulus Name", "Bulk Modulus");  // dl->qp_scalar also
-    p->set<string>("DetDefGrad Name", "Determinant of the Deformation Gradient");  // dl->qp_scalar also
-    p->set<string>("Yield Strength Name", "Yield Strength");
-    p->set<string>("Hardening Modulus Name", "Hardening Modulus");
-    p->set<string>("Saturation Modulus Name", "Saturation Modulus"); // dl->qp_scalar also
-    p->set<string>("Saturation Exponent Name", "Saturation Exponent"); // dl->qp_scalar also
-    p->set<string>("Temperature Name", "Temperature");
-    RealType refTemp = params->get("Reference Temperature", 0.0);
-    p->set<RealType>("Reference Temperature", refTemp);
-    RealType coeff = params->get("Thermal Expansion Coefficient", 0.0);
-    p->set<RealType>("Thermal Expansion Coefficient", coeff);
-
-    p->set<string>("Delta Time Name", "Delta Time");
-    p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
-
-    //Output
-    p->set<string>("Stress Name", "Stress"); //dl->qp_tensor also
-    p->set<string>("Fp Name", "Fp");
-    p->set<string>("eqps Name", "eqps");
-    p->set<string>("Mechanical Source Name", "Mechanical Source");
-
-    ev = rcp(new LCM::ThermoMechanicalStress<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy,"zero");
-    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy,"identity",true);
-    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy,"zero",true);
-    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
+      // ev = rcp(new LCM::BCJ<EvalT,AlbanyTraits>(*p));
+      // fm0.template registerEvaluator<EvalT>(ev);
+      // p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy,"zero");
+      // ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      // fm0.template registerEvaluator<EvalT>(ev);
+      // p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy,"identity",true);
+      // ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      // fm0.template registerEvaluator<EvalT>(ev);
+      // p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy,"zero",true);
+      // ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      // fm0.template registerEvaluator<EvalT>(ev);
+    }
   }
 
   { // ThermoMechanical Momentum Residual

@@ -89,6 +89,7 @@ template<int Dim, class traits = albany_stk_mesh_traits<Dim> >
 
     //! Build STK parts and nodesets that correspond to the dimension of the problem and input values
     void DeclareParts(std::vector<EBSpecsStruct<Dim> > ebStructArray, 
+         std::vector<std::string> ssNames,
          std::vector<std::string> nsNames);
 
     unsigned int nelem[traits_type::size];

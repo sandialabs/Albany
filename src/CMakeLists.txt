@@ -53,7 +53,7 @@ SET(SOURCES ${SOURCES}
 	problems/Albany_ProblemUtils.cpp 
 	problems/Albany_EvaluatorUtils.cpp 
 	problems/Albany_ResponseUtilities.cpp 
-	problems/Albany_DirichletUtils.cpp 
+	problems/Albany_BCUtils.cpp 
 	problems/Albany_ProblemFactory.cpp
 	problems/Albany_HeatProblem.cpp 
 	problems/Albany_MultiHeatProblem.cpp 
@@ -72,7 +72,8 @@ SET(HEADERS ${HEADERS}
 	problems/Albany_EvaluatorUtils_Def.hpp 
 	problems/Albany_ResponseUtilities.hpp 
 	problems/Albany_ResponseUtilities_Def.hpp 
-	problems/Albany_DirichletUtils.hpp 
+	problems/Albany_BCUtils.hpp 
+	problems/Albany_BCUtils_Def.hpp 
 	problems/Albany_HeatProblem.hpp 
 	problems/Albany_MultiHeatProblem.hpp 
 	problems/Albany_NavierStokes.hpp 
@@ -253,6 +254,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/problems/ThermoElasticityProblem.cpp 
     ${LCM_DIR}/problems/GradientDamageProblem.cpp 
     ${LCM_DIR}/problems/PoroElasticityProblem.cpp
+    ${LCM_DIR}/problems/TLPoroPlasticityProblem.cpp
+    ${LCM_DIR}/problems/ThermoPoroPlasticityProblem.cpp
     ${LCM_DIR}/problems/ThermoMechanicalProblem.cpp
     ${LCM_DIR}/problems/HDiffusionDeformationProblem.cpp
   )
@@ -263,6 +266,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/problems/ThermoElasticityProblem.hpp 
     ${LCM_DIR}/problems/GradientDamageProblem.hpp
     ${LCM_DIR}/problems/PoroElasticityProblem.hpp 
+    ${LCM_DIR}/problems/TLPoroPlasticityProblem.hpp
+    ${LCM_DIR}/problems/ThermoPoroPlasticityProblem.hpp
     ${LCM_DIR}/problems/ThermoMechanicalProblem.hpp
     ${LCM_DIR}/problems/HDiffusionDeformationProblem.hpp
   )
@@ -296,8 +301,13 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/TotalStress.cpp
     ${LCM_DIR}/evaluators/BiotCoefficient.cpp
     ${LCM_DIR}/evaluators/BiotModulus.cpp
-    ${LCM_DIR}/evaluators/PoroElasticityResidMomentum.cpp
+    ${LCM_DIR}/evaluators/PoroElasticityResidMomentum.cpp    
     ${LCM_DIR}/evaluators/PoroElasticityResidMass.cpp
+    ${LCM_DIR}/evaluators/TLPoroPlasticityResidMomentum.cpp
+    ${LCM_DIR}/evaluators/TLPoroPlasticityResidMass.cpp
+    ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidMomentum.cpp
+    ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidMass.cpp
+    ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidEnergy.cpp
     ${LCM_DIR}/evaluators/Porosity.cpp
     ${LCM_DIR}/evaluators/KCPermeability.cpp
     ${LCM_DIR}/evaluators/ThermoMechanicalEnergyResidual.cpp
@@ -313,6 +323,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/HDiffusionDeformationMatterResidual.cpp
     ${LCM_DIR}/evaluators/TauContribution.cpp
     ${LCM_DIR}/evaluators/StrainRateFactor.cpp
+    ${LCM_DIR}/evaluators/MixtureThermalExpansion.cpp
+    ${LCM_DIR}/evaluators/MixtureSpecificHeat.cpp
   )
 
   SET(HEADERS ${HEADERS}
@@ -374,6 +386,16 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/PoroElasticityResidMomentum_Def.hpp
     ${LCM_DIR}/evaluators/PoroElasticityResidMass.hpp
     ${LCM_DIR}/evaluators/PoroElasticityResidMass_Def.hpp
+    ${LCM_DIR}/evaluators/TLPoroPlasticityResidMomentum.hpp    
+    ${LCM_DIR}/evaluators/TLPoroPlasticityResidMomentum_Def.hpp
+    ${LCM_DIR}/evaluators/TLPoroPlasticityResidMass.hpp
+    ${LCM_DIR}/evaluators/TLPoroPlasticityResidMass_Def.hpp
+    ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidMomentum.hpp    
+    ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidMomentum_Def.hpp
+    ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidMass.hpp
+    ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidMass_Def.hpp
+    ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidEnergy.hpp
+    ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidEnergy_Def.hpp
     ${LCM_DIR}/evaluators/Porosity.hpp
     ${LCM_DIR}/evaluators/Porosity_Def.hpp
     ${LCM_DIR}/evaluators/KCPermeability.hpp
@@ -404,6 +426,10 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/StrainRateFactor_Def.hpp
     ${LCM_DIR}/evaluators/TauContribution.hpp
     ${LCM_DIR}/evaluators/TauContribution_Def.hpp
+    ${LCM_DIR}/evaluators/MixtureThermalExpansion.hpp
+    ${LCM_DIR}/evaluators/MixtureThermalExpansion_Def.hpp
+    ${LCM_DIR}/evaluators/MixtureSpecificHeat.hpp
+    ${LCM_DIR}/evaluators/MixtureSpecificHeat_Def.hpp
   )
 
   #LCM utils
@@ -601,10 +627,11 @@ ENDIF ()
 add_executable(AlbanyAnalysis Main_Analysis.cpp)
 
 # Tests
-add_executable(PartitionTest LCM/test/utils/PartitionTest.cc)
-add_executable(UtilsTest LCM/test/utils/UtilsTest.cc)
 IF (ALBANY_LCM)
+  add_executable(PartitionTest LCM/test/utils/PartitionTest.cc)
+  add_executable(UtilsTest LCM/test/utils/UtilsTest.cc)
   add_executable(NodeUpdate LCM/test/utils/NodeUpdate.cc)
+  add_executable(MeshComponents LCM/test/utils/MeshComponents.cc)
 ENDIF ()
 IF (ALBANY_LAME)
   add_executable(utLameStress_elastic
@@ -642,8 +669,9 @@ ENDIF ()
 target_link_libraries(AlbanyAnalysis  albanyLib ${ALL_LIBRARIES})
 
 #Linking tests
-target_link_libraries(PartitionTest albanyLib ${ALL_LIBRARIES})
-target_link_libraries(UtilsTest albanyLib ${ALL_LIBRARIES})
 IF (ALBANY_LCM)
+  target_link_libraries(PartitionTest albanyLib ${ALL_LIBRARIES})
+  target_link_libraries(UtilsTest albanyLib ${ALL_LIBRARIES})
   target_link_libraries(NodeUpdate albanyLib ${ALL_LIBRARIES})
+  target_link_libraries(MeshComponents albanyLib ${ALL_LIBRARIES})
 ENDIF ()

@@ -24,9 +24,10 @@
 #include "Phalanx_MDField.hpp"
 
 namespace LCM {
-/** \brief Finite Element Interpolation Evaluator
+/** \brief
 
-    This evaluator interpolates nodal DOF values to quad points.
+    This evaluator calculate residual of the mass balance equation
+    for the poromechanics problem.
 
 */
 

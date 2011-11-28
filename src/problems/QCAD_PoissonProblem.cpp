@@ -139,12 +139,12 @@ QCAD::PoissonProblem::constructDirichletEvaluators(
    // Construct Dirichlet evaluators for all nodesets and names
    vector<string> dirichletNames(neq);
    dirichletNames[0] = "Phi";   
-   Albany::DirichletUtils dirUtils;
+   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
 
    const std::vector<std::string>& nodeSetIDs = meshSpecs.nsNames;
 
    Teuchos::ParameterList DBCparams = params->sublist("Dirichlet BCs");
-   DBCparams.validateParameters(*(dirUtils.getValidDirichletBCParameters(nodeSetIDs,dirichletNames)),0); //TODO: Poisson version??
+   DBCparams.validateParameters(*(dirUtils.getValidBCParameters(nodeSetIDs,dirichletNames)),0); //TODO: Poisson version??
 
    // Create Material Database
    RCP<QCAD::MaterialDatabase> materialDB = rcp(new QCAD::MaterialDatabase(mtrlDbFilename, comm));
