@@ -81,8 +81,8 @@ int main(int ac, char* av[])
   stk_discretization = static_cast<Albany::STKDiscretization &>(discretization);
 
   // Get MDArray which is memeopru in stk for "Partition" element variable
-  //Albany::MDArray
-  //stk_partition = stk_discretization.getStateArrays()[0]["Partition"];
+  Albany::MDArray
+  stk_component = stk_discretization.getStateArrays()[0]["Partition"];
 
   //
   // Output components
@@ -95,16 +95,16 @@ int main(int ac, char* av[])
     const int component = components[element];
 
     // set component number in stk field memory
-    //stk_partition[element] = component;
+    stk_component[element] = component;
 
   }
 
   // Need solution for output call
-  //Teuchos::RCP<Epetra_Vector>
-  //solution_field = stk_discretization.getSolutionField();
+  Teuchos::RCP<Epetra_Vector>
+  solution_field = stk_discretization.getSolutionField();
 
   // second arg to output is (pseudo)time
-  //stk_discretization.outputToExodus(*solution_field, 1.0);
+  stk_discretization.outputToExodus(*solution_field, 1.0);
 
   const int
   number_elements = connectivity_array.GetNumberElements();
