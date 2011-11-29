@@ -251,7 +251,7 @@ evaluateFields(typename Traits::EvalData workset)
 			      		  Jold(cell,qp) = 1.0;
 
 			      if (Temp(cell,qp) == 0)
-			      		  Temp(cell,qp) = refTemp(cell,qp);
+			      		  Temp(cell,qp) = 300.00;
 			      if (tempold(cell,qp) == 0)
 			      		  tempold(cell,qp) = 300.0;
 
@@ -267,18 +267,15 @@ evaluateFields(typename Traits::EvalData workset)
  				  // Pore-fluid Resistance Term
  				  TResidual(cell,node) +=  (
  						                  -(J(cell,qp)-Jold(cell,qp))*porePressure(cell,qp) +
- 						                    J(cell,qp)*(porePressure(cell,qp)-porePressureold(cell, qp) )
- 						                  /
- 						                   (J(cell,qp)*J(cell,qp)))
+ 						                    J(cell,qp)*(porePressure(cell,qp)-porePressureold(cell, qp) ))
+ 						                  / (J(cell,qp)*J(cell,qp))
              		                      *3.00*alphaMixture(cell,qp)*refTemp(cell,qp)
              		                      *wBF(cell, node, qp);
 
  				 // Thermal Expansion
- 				 TResidual(cell,node) += -(
- 				  						 -(J(cell,qp)-Jold(cell,qp))*Temp(cell,qp) +
- 				  						   J(cell,qp)*(Temp(cell,qp)-tempold(cell,qp ))
- 				  						 /
- 				  						  (J(cell,qp)*J(cell,qp)))
+ 				 TResidual(cell,node) -= ( -( J(cell,qp)-Jold(cell,qp) )*Temp(cell,qp) +
+ 				  						   J(cell,qp)*( Temp(cell,qp)-tempold(cell,qp ) ) )
+ 				  						 /(J(cell,qp)*J(cell,qp))
  				              		     *gammaMixture(cell, qp)*wBF(cell, node, qp);
 			  }
 		  }
@@ -323,9 +320,8 @@ evaluateFields(typename Traits::EvalData workset)
    for (std::size_t qp=0; qp < numQPs; ++qp) {
 	porePbar += weights(cell,qp)*(
 			-(J(cell,qp)-Jold(cell,qp))*porePressure(cell,qp)
-			 						 +  J(cell,qp)*(porePressure(cell,qp)-porePressureold(cell, qp) )
-			 						 / (J(cell,qp)*J(cell,qp))
-			                      );
+			 						 +  J(cell,qp)*(porePressure(cell,qp)-porePressureold(cell, qp)))
+			 						 / ( J(cell,qp)*J(cell,qp) );
 	vol  += weights(cell,qp);
    }
    porePbar /= vol;
@@ -355,15 +351,19 @@ evaluateFields(typename Traits::EvalData workset)
 
    }
 
+
+
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
 	  for (std::size_t node=0; node < numNodes; ++node) {
 		  for (std::size_t qp=0; qp < numQPs; ++qp) {
+//			      corrTerm = refTemp(cell,qp)*3.00*alphaSkeleton(cell,qp)*bulk(cell,qp);
+
  				  TResidual(cell,node) += (
  						 -(J(cell,qp)-Jold(cell,qp))*porePressure(cell,qp)
- 						 +  J(cell,qp)*(porePressure(cell,qp)-porePressureold(cell, qp) )
+ 						 +  J(cell,qp)*(porePressure(cell,qp)-porePressureold(cell, qp) ))
  						 / (J(cell,qp)*J(cell,qp))
- 						                               )
+
                     	*stabParameter(cell, qp)*alphaMixture(cell,qp)*refTemp(cell,qp)*3.00
                     	*wBF(cell, node, qp);
  				  TResidual(cell,node) -= pterm(cell,qp)*stabParameter(cell, qp)
@@ -373,9 +373,8 @@ evaluateFields(typename Traits::EvalData workset)
 
  				 TResidual(cell,node) -= (
  				  						-(J(cell,qp)-Jold(cell,qp))*Temp(cell,qp) +
- 				  						  			  J(cell,qp)*(Temp(cell,qp)-tempold(cell,qp) )
- 				  						  			 / (J(cell,qp)*J(cell,qp))
- 				  				  						                               )
+ 				  						  			  J(cell,qp)*(Temp(cell,qp)-tempold(cell,qp) ))
+ 				  						  			 / ( J(cell,qp)*J(cell,qp) )
  				  				                     *stabParameter(cell, qp)*gammaMixture(cell, qp)*
  				  				                     		                    		wBF(cell, node, qp);
  				  TResidual(cell,node) += tterm(cell,qp)*stabParameter(cell, qp)

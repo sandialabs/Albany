@@ -55,6 +55,7 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<ScalarT,Cell,QuadPoint> porePressure;
   PHX::MDField<ScalarT,Cell,QuadPoint> Temp;
+  PHX::MDField<ScalarT,Cell,QuadPoint> RefTemp;
   PHX::MDField<ScalarT,Cell,QuadPoint> stabParameter;
   PHX::MDField<ScalarT,Cell,QuadPoint> ThermalCond;
   PHX::MDField<ScalarT,Cell,QuadPoint> kcPermeability;

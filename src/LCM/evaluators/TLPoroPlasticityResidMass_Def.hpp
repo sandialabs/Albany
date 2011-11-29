@@ -315,9 +315,16 @@ evaluateFields(typename Traits::EvalData workset)
                   		wBF(cell, node, qp);
 
 
+//                  // Use biotModulus as pre-conditioner
+// 				  TResidual(cell,node) = biotModulus(cell,qp)*TResidual(cell,node);
+
+
 		  }
 	  }
   }
+
+
+
 
 
 

@@ -138,12 +138,13 @@ evaluateFields(typename Traits::EvalData workset)
           for (std::size_t qp=0; qp < numQPs; ++qp) {
 
 		      if (Temp(cell,qp) == 0)
-		      		  Temp(cell,qp) = 300.0;
+		      		  Temp(cell,qp) = TempRef(cell,qp);
 
             for (std::size_t i=0; i<numDims; i++) {
               for (std::size_t dim=0; dim<numDims; dim++) {
                 ExResidual(cell,node,i) += (
                 		                     P(cell, qp, i, dim)
+
                 		                   - 3.0*Bulk(cell,qp)*thermoEPS(cell, qp, i, dim)
                 		                        *(Temp(cell,qp) - TempRef(cell,qp))
                                              )

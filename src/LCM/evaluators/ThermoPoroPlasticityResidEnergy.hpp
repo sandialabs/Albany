@@ -124,7 +124,7 @@ private:
   Intrepid::FieldContainer<ScalarT> KJF_invT;
   Intrepid::FieldContainer<ScalarT> Kref;
 
-  ScalarT porePbar, Tempbar, vol;
+  ScalarT porePbar, Tempbar, vol, corrTerm;
 
 
 

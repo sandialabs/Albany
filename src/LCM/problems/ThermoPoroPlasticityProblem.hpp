@@ -839,6 +839,9 @@ void Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
 	p->set<string>("QP Temperature Name", "Temperature");
 
+	p->set<string>("Reference Temperature Name", "Reference Temperature");
+	p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
 	p->set<string>("Material Property Name", "Stabilization Parameter");
     p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
     p->set<string>("Porosity Name", "Porosity");

@@ -33,6 +33,8 @@ namespace LCM {
 		  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     Temp        (p.get<std::string>                   ("QP Temperature Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+    RefTemp        (p.get<std::string>                   ("Reference Temperature Name"),
+		 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
 	stabParameter        (p.get<std::string>                   ("Material Property Name"),
 		 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     ThermalCond (p.get<std::string>                   ("Thermal Conductivity Name"),
@@ -91,6 +93,7 @@ namespace LCM {
     this->addDependentField(biotModulus);
 
     this->addDependentField(Temp);
+    this->addDependentField(RefTemp);
     this->addDependentField(TGrad);
     this->addDependentField(wGradBF);
     if (haveSource) this->addDependentField(Source);
@@ -191,6 +194,7 @@ namespace LCM {
     this->utils.setFieldData(wGradBF,fm);
     if (haveSource)  this->utils.setFieldData(Source,fm);
     this->utils.setFieldData(Temp,fm);
+    this->utils.setFieldData(RefTemp,fm);
     if (haveAbsorption)  this->utils.setFieldData(Absorption,fm);
     if (haveConvection && haverhoCp)  this->utils.setFieldData(rhoCp,fm);
     this->utils.setFieldData(strain,fm);
@@ -235,7 +239,7 @@ evaluateFields(typename Traits::EvalData workset)
 			      		  Jold(cell,qp) = 1.0;
 
 			      if (Temp(cell,qp) == 0)
-			      	      Temp(cell,qp) = 300.0;
+			      	      Temp(cell,qp) = 300.00;
 			      if (Tempold(cell,qp) == 0)
 			      	      Tempold(cell,qp) = 300.0;
 
@@ -243,29 +247,25 @@ evaluateFields(typename Traits::EvalData workset)
 
  				  // Volumetric Constraint Term
  				  TResidual(cell,node) += -biotCoefficient(cell, qp)*(
-
  					 (J(cell,qp)-Jold(cell,qp))
-
  						  )
              		  *wBF(cell, node, qp)  ;
 
  				  // Pore-fluid Resistance Term
  				  TResidual(cell,node) +=  -(
  						 -(J(cell,qp)-Jold(cell,qp))*porePressure(cell,qp) +
- 						 J(cell,qp)*(porePressure(cell,qp)-porePressureold(cell, qp) )
+ 						 J(cell,qp)*(porePressure(cell,qp)-porePressureold(cell, qp) ))
  						                  /
  						                		  (J(cell,qp)*J(cell,qp))
- 						                				  )
              		                    		/biotModulus(cell, qp)*
              		                    		wBF(cell, node, qp);
 
  				 // Thermal Expansion
  				 TResidual(cell,node) +=  (
  				  						 -(J(cell,qp)-Jold(cell,qp))*Temp(cell,qp) +
- 				  						 J(cell,qp)*(Temp(cell,qp)-Tempold(cell,qp) )
+ 				  						 J(cell,qp)*(Temp(cell,qp)-Tempold(cell,qp) ))
  				  						                  /
  				  						                		  (J(cell,qp)*J(cell,qp))
- 				  						                				  )
  				              		                    		*3.0*alphaMixture(cell, qp)*
  				              		                    		wBF(cell, node, qp);
 			  }
@@ -311,9 +311,8 @@ evaluateFields(typename Traits::EvalData workset)
    for (std::size_t qp=0; qp < numQPs; ++qp) {
 	porePbar += weights(cell,qp)*(
 			-(J(cell,qp)-Jold(cell,qp))*porePressure(cell,qp)
-			 						 +  J(cell,qp)*(porePressure(cell,qp)-porePressureold(cell, qp) )
-			 						 / (J(cell,qp)*J(cell,qp))
-			                      );
+			 						 +  J(cell,qp)*(porePressure(cell,qp)-porePressureold(cell, qp) ))
+			 						 / (J(cell,qp)*J(cell,qp));
 	vol  += weights(cell,qp);
    }
    porePbar /= vol;
@@ -330,9 +329,8 @@ evaluateFields(typename Traits::EvalData workset)
      for (std::size_t qp=0; qp < numQPs; ++qp) {
   	 Tempbar += weights(cell,qp)*(
   			-(J(cell,qp)-Jold(cell,qp))*Temp(cell,qp) +
-  			  J(cell,qp)*(Temp(cell,qp)-Tempold(cell,qp) )
-  			 / (J(cell,qp)*J(cell,qp))
-  			                      );
+  			  J(cell,qp)*(Temp(cell,qp)-Tempold(cell,qp) ))
+  			 / (J(cell,qp)*J(cell,qp));
   	  vol  += weights(cell,qp);
 
      }
@@ -351,23 +349,20 @@ evaluateFields(typename Traits::EvalData workset)
 		  for (std::size_t qp=0; qp < numQPs; ++qp) {
  				  TResidual(cell,node) -= (
  						 -(J(cell,qp)-Jold(cell,qp))*porePressure(cell,qp)
- 						 +  J(cell,qp)*(porePressure(cell,qp)-porePressureold(cell, qp) )
- 						 / (J(cell,qp)*J(cell,qp))
- 						                               )
-                    		                    		*stabParameter(cell, qp)/biotModulus(cell, qp)*
-                    		                    		wBF(cell, node, qp);
- 				  TResidual(cell,node) += pterm(cell,qp)*stabParameter(cell, qp)/biotModulus(cell, qp)*
-                  		wBF(cell, node, qp);
+ 						 +  J(cell,qp)*(porePressure(cell,qp)-porePressureold(cell, qp) ))
+ 						 / (J(cell,qp)*J(cell,qp))*stabParameter(cell, qp)/biotModulus(cell, qp)
+                    		                    		*wBF(cell, node, qp);
+ 				  TResidual(cell,node) += pterm(cell,qp)*stabParameter(cell, qp)/biotModulus(cell, qp)
+ 						                  *wBF(cell, node, qp);
 
 
 
  				 TResidual(cell,node) += (
  						-(J(cell,qp)-Jold(cell,qp))*Temp(cell,qp) +
- 						  			  J(cell,qp)*(Temp(cell,qp)-Tempold(cell,qp) )
+ 						  			  J(cell,qp)*(Temp(cell,qp)-Tempold(cell,qp) ))
  						  			 / (J(cell,qp)*J(cell,qp))
- 				  						                               )
  				                     *stabParameter(cell, qp)*3.0*alphaMixture(cell, qp)*
- 				                     		                    		wBF(cell, node, qp);
+ 				                     wBF(cell, node, qp);
  				 TResidual(cell,node) -= Tterm(cell,qp)*stabParameter(cell, qp)
  				  				      *3.0*alphaMixture(cell, qp)*wBF(cell, node, qp);
 
