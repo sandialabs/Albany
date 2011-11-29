@@ -251,7 +251,7 @@ evaluateFields(typename Traits::EvalData workset)
 			      		  Jold(cell,qp) = 1.0;
 
 			      if (Temp(cell,qp) == 0)
-			      		  Temp(cell,qp) = 300.0;
+			      		  Temp(cell,qp) = refTemp(cell,qp);
 			      if (tempold(cell,qp) == 0)
 			      		  tempold(cell,qp) = 300.0;
 
