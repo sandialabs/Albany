@@ -28,26 +28,24 @@
 #include "Epetra_Map.h"  //Needed for serial, somehow
 
 /////////////////////////////////////////////////////////////
-// begin jrr: Now cull solution, xfinal, using assumptions on
-// various size and location parameters 
+// begin jrr: Now cull solution vector's (x) map using
+// assumptions on various size and location parameters 
 
 // Setting for function definition; parameters for now look like:
-// RCP<Epetra_Vector>& x (input)
-// Epetra_Vector& x_map  (input)
+// RCP<Epetra_Vector>& x_map  (input)
 // vector<int>& keepDOF   (input - vector of length total number dof/node in
 //                                the solution vector; for now, number of equations
 //                                per node. keepDOF[i]={0 - delete; 1 - keep})
-// RCP<Epetra_Vector>& xfinal_new (output - new, culled solution vector)
+// RCP<Epetra_Vector>& x_new_map (output - new map for culled solution vector)
 
-void cullDistributedResponse( Teuchos::RCP<Epetra_Vector>& x,
-			      Epetra_Map& x_map,
-			      vector<int>& keepDOF,
-			      Teuchos::RCP<Epetra_Vector>& x_new )
+void cullDistributedResponseMap( Teuchos::RCP<Epetra_Map>& x_map,
+				 vector<int>& keepDOF,
+				 Teuchos::RCP<Epetra_Map>& x_new_map )
 {
 
   int numKeepDOF = accumulate(keepDOF.begin(), keepDOF.end(), 0);
   int Neqns = keepDOF.size();
-  int N = x_map.NumMyElements(); // x_map is map for solution vector
+  int N = x_map->NumMyElements(); // x_map is map for solution vector
 
   TEUCHOS_ASSERT( !(N % Neqns) ); // Need to be sure that N is exactly Neqns-divisible
 
@@ -57,7 +55,7 @@ void cullDistributedResponse( Teuchos::RCP<Epetra_Vector>& x,
   std::vector<int> gids(N);
   std::vector<int> gids_new;
 
-  x_map.MyGlobalElements(&gids[0]); // Fill local x_map into gids array
+  x_map->MyGlobalElements(&gids[0]); // Fill local x_map into gids array
   
   for ( int inode = 0; inode < N/Neqns ; ++inode) // 
     {
@@ -67,12 +65,21 @@ void cullDistributedResponse( Teuchos::RCP<Epetra_Vector>& x,
     }
   // end cull
   
-  Epetra_Map x_map_new( -1, gids_new.size(), &gids_new[0], 0, x_map.Comm() );
-  Epetra_Import importer( x_map_new, x_map );
+  x_new_map = Teuchos::rcp( new Epetra_Map( -1, gids_new.size(), &gids_new[0], 0, x_map->Comm() ) );
+}
 
-  x_new = Teuchos::rcp(new Epetra_Vector( x_map_new ));
+// now cull the response vector itself
+void cullDistributedResponse( Teuchos::RCP<Epetra_Vector>& x,
+			      Teuchos::RCP<Epetra_Map>& x_map,
+			      Teuchos::RCP<Epetra_Vector>& x_new,
+			      Teuchos::RCP<Epetra_Map>& x_new_map )
+{
+  Epetra_Import importer( *x_new_map, *x_map );
+  Epetra_Vector x_new( *x_new_map );
+
   x_new->Import( *x, importer, Insert );
 }
+
 // end jrr
 ////////////////////////////////////////////////
 
@@ -168,21 +175,27 @@ int main(int argc, char *argv[]) {
     //            the solution vector, which for this case is xfinal;
     //            resulting object is xfinal_new
 
-    Epetra_Map xfinal_map = *(App->get_g_map(num_g-1));
-    RCP<Epetra_Vector> xfinal_new; // placeholder for now; filled in function
-  
+    Teuchos::RCP<Epetra_Map> xfinal_map =
+      rcp(new Epetra_Map( *(App->get_g_map(num_g-1)) );
+    Teuchos::RCP<Epetra_Vector> xfinal_new;  // placeholder for culled response vector
+    Teuchos::RCP<Epetra_Map> xfinal_new_map; // placeholder for culled map
+
     // Locate the vector components we want to keep manually.
     // For thermoelasticity2d problem, it's 2 and we want to
     // cull a temperature variable on each node in
     // the 3rd dof.
 
-    int neq = 3;
+    int neq = 4;                 // thermoelasticity3d
     vector<int> keepDOF(neq, 1); // Initialize to keep all dof, then,
-    keepDOF[2] = 0;              // as stated, cull the 3rd dof
+    keepDOF[3] = 0;              // as stated, cull the 4th dof
 
     int ndim = accumulate(keepDOF.begin(), keepDOF.end(), 0);
   
-    cullDistributedResponse( xfinal, xfinal_map, keepDOF, xfinal_new );
+    // Now, create the new, culled map...
+    cullDistributedResponseMap( xfinal_map, keepDOF, xfinal_new_map );
+
+    // ...and with the new map, create culled solution vector:
+    cullDistributedResponse( xfinal, xfinal_map, xfinal_new, xfinal_new_map )
 
     cout << "First 3*neq values of xfinal and xfinal_new:" << endl;
     {
