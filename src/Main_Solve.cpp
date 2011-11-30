@@ -75,7 +75,7 @@ void cullDistributedResponse( Teuchos::RCP<Epetra_Vector>& x,
 			      Teuchos::RCP<Epetra_Map>& x_new_map )
 {
   Epetra_Import importer( *x_new_map, *x_map );
-  Epetra_Vector x_new( *x_new_map );
+  x_new = Teuchos::rcp( new Epetra_Vector( *x_new_map ) );
 
   x_new->Import( *x, importer, Insert );
 }
@@ -176,7 +176,7 @@ int main(int argc, char *argv[]) {
     //            resulting object is xfinal_new
 
     Teuchos::RCP<Epetra_Map> xfinal_map =
-      rcp(new Epetra_Map( *(App->get_g_map(num_g-1)) );
+      rcp(new Epetra_Map( *(App->get_g_map(num_g-1)) ) );
     Teuchos::RCP<Epetra_Vector> xfinal_new;  // placeholder for culled response vector
     Teuchos::RCP<Epetra_Map> xfinal_new_map; // placeholder for culled map
 
@@ -195,7 +195,7 @@ int main(int argc, char *argv[]) {
     cullDistributedResponseMap( xfinal_map, keepDOF, xfinal_new_map );
 
     // ...and with the new map, create culled solution vector:
-    cullDistributedResponse( xfinal, xfinal_map, xfinal_new, xfinal_new_map )
+    cullDistributedResponse( xfinal, xfinal_map, xfinal_new, xfinal_new_map );
 
     cout << "First 3*neq values of xfinal and xfinal_new:" << endl;
     {
@@ -206,7 +206,7 @@ int main(int argc, char *argv[]) {
 
     cout << "Last 3*neq values of xfinal and xfinal_new:" << endl;
     {
-      int N = xfinal_map.NumMyElements();
+      int N = xfinal_map->NumMyElements();
       for ( int i=0; i < 3*neq; i++ )
 	cout << "xfinal[" << N-i-1 << "] = " << (*xfinal)[N - (i+1)] << "    " 
 	     <<"xfinal_new[" << ndim*N/neq - (i+1) << "] = " << (*xfinal_new)[ndim*N/neq - (i+1)] << endl;
