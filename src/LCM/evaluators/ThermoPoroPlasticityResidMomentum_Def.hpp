@@ -137,16 +137,16 @@ evaluateFields(typename Traits::EvalData workset)
               for (std::size_t dim=0; dim<numDims; dim++)  ExResidual(cell,node,dim)=0.0;
           for (std::size_t qp=0; qp < numQPs; ++qp) {
 
-		      if (Temp(cell,qp) == 0)
-		      		  Temp(cell,qp) = TempRef(cell,qp);
+        	  if (Temp(cell,qp) == 0) dTemp = 0.0; // first time step
+		      dTemp = Temp(cell,qp) - TempRef(cell,qp);
 
             for (std::size_t i=0; i<numDims; i++) {
               for (std::size_t dim=0; dim<numDims; dim++) {
                 ExResidual(cell,node,i) += (
                 		                     P(cell, qp, i, dim)
 
-                		                   - 3.0*Bulk(cell,qp)*thermoEPS(cell, qp, i, dim)
-                		                        *(Temp(cell,qp) - TempRef(cell,qp))
+                		                   - Bulk(cell,qp)*thermoEPS(cell, qp, i, dim)
+                		                        *dTemp
                                              )
                 		                   * wGradBF(cell, node, qp, dim);
     } } } } }

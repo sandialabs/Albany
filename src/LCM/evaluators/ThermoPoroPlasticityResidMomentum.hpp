@@ -73,6 +73,7 @@ private:
   std::size_t numQPs;
   std::size_t numDims;
   bool enableTransient;
+  ScalarT dTemp;
 
   // Work space FCs
   Intrepid::FieldContainer<ScalarT> F_inv;
