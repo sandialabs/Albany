@@ -726,8 +726,8 @@ namespace LCM {
     zoltan.Set_Param("HYPERGRAPH_PACKAGE", "PHG");
     zoltan.Set_Param("PHG_MULTILEVEL", "1");
     zoltan.Set_Param("PHG_EDGE_WEIGHT_OPERATION", "ERROR");
-    zoltan.Set_Param("IMBALANCE_TOL", "1.01");
-    zoltan.Set_Param("PHG_CUT_OBJECTIVE", "HYPEREDGES");
+    zoltan.Set_Param("IMBALANCE_TOL", "1.02");
+    //zoltan.Set_Param("PHG_CUT_OBJECTIVE", "HYPEREDGES");
 
     //
     // Partition
