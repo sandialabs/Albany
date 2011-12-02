@@ -145,6 +145,7 @@ namespace Albany {
 #include "PHAL_SaveStateField.hpp"
 #include "ElasticityResid.hpp"
 
+#include "Time.hpp"
 #include "CapModelStress.hpp"
 
 template <typename EvalT>
@@ -228,6 +229,22 @@ void Albany::ElasticityProblem::constructEvaluators(
 
   // Temporary variable used numerous times below
   Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
+
+  { // Time
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    p->set<string>("Time Name", "Time");
+    p->set<string>("Delta Time Name", "Delta Time");
+    p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    p->set<bool>("Disable Transient", true);
+
+    ev = rcp(new LCM::Time<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+    p = stateMgr.registerStateVariable("Time",dl->workset_scalar, dl->dummy,"zero", true);
+    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
 
   { // Elastic Modulus
     RCP<ParameterList> p = rcp(new ParameterList);
