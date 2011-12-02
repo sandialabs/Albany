@@ -239,10 +239,8 @@ evaluateFields(typename Traits::EvalData workset)
  				  // Pore-fluid Resistance Term
  				  TResidual(cell,node) +=  -(
  						 -(J(cell,qp)-Jold(cell,qp))*porePressure(cell,qp) +
- 						 J(cell,qp)*(porePressure(cell,qp)-porePressureold(cell, qp) )
- 						                  /
- 						                		  (J(cell,qp)*J(cell,qp))
- 						                				  )
+ 						 J(cell,qp)*(porePressure(cell,qp)-porePressureold(cell, qp) ))
+ 						                  /  (J(cell,qp)*J(cell,qp))
              		                    		/biotModulus(cell, qp)*
              		                    		wBF(cell, node, qp);
 			  }

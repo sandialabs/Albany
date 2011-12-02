@@ -73,6 +73,13 @@ private:
   ScalarT dYdT_value;
   RealType refTemp;
 
+  //! Optional dependence on Trapped concentration for hydrogen transport
+  PHX::MDField<ScalarT,Cell,QuadPoint> CL;
+  bool isDiffuseDeformation;
+  std::string CLname;
+  ScalarT zeta;
+
+
   //! Exponential random field
   Teuchos::RCP< Stokhos::KL::ExponentialRandomField<MeshScalarT> > exp_rf_kl;
 
