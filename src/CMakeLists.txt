@@ -306,6 +306,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/PoroElasticityResidMass.cpp
     ${LCM_DIR}/evaluators/TLPoroPlasticityResidMomentum.cpp
     ${LCM_DIR}/evaluators/TLPoroPlasticityResidMass.cpp
+    ${LCM_DIR}/evaluators/TLPoroStress.cpp
     ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidMomentum.cpp
     ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidMass.cpp
     ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidEnergy.cpp
@@ -381,6 +382,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/DislocationDensity_Def.hpp
     ${LCM_DIR}/evaluators/TotalStress.hpp
     ${LCM_DIR}/evaluators/TotalStress_Def.hpp
+    ${LCM_DIR}/evaluators/TLPoroStress.hpp
+    ${LCM_DIR}/evaluators/TLPoroStress_Def.hpp
     ${LCM_DIR}/evaluators/BiotCoefficient.hpp
     ${LCM_DIR}/evaluators/BiotCoefficient_Def.hpp
     ${LCM_DIR}/evaluators/BiotModulus.hpp

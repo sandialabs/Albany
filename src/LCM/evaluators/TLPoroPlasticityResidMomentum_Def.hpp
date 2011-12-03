@@ -81,7 +81,7 @@ TLPoroPlasticityResidMomentum(const Teuchos::ParameterList& p) :
   F_inv.resize(worksetSize, numQPs, numDims, numDims);
   F_invT.resize(worksetSize, numQPs, numDims, numDims);
   JF_invT.resize(worksetSize, numQPs, numDims, numDims);
-  P.resize(worksetSize, numQPs, numDims, numDims);
+
 }
 
 //**********************************************************************
@@ -109,10 +109,10 @@ evaluateFields(typename Traits::EvalData workset)
   typedef Intrepid::FunctionSpaceTools FST;
   typedef Intrepid::RealSpaceTools<ScalarT> RST;
 
-  RST::inverse(F_inv, defgrad);
-  RST::transpose(F_invT, F_inv);
-  FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
-  FST::tensorMultiplyDataData<ScalarT>(P, TotalStress, JF_invT);
+ // RST::inverse(F_inv, defgrad);
+ // RST::transpose(F_invT, F_inv);
+ // FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
+ // FST::tensorMultiplyDataData<ScalarT>(P, TotalStress, JF_invT);
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {
@@ -120,7 +120,7 @@ evaluateFields(typename Traits::EvalData workset)
           for (std::size_t qp=0; qp < numQPs; ++qp) {
             for (std::size_t i=0; i<numDims; i++) {
               for (std::size_t dim=0; dim<numDims; dim++) {
-                ExResidual(cell,node,i) += P(cell, qp, i, dim) * wGradBF(cell, node, qp, dim);
+                ExResidual(cell,node,i) += TotalStress(cell, qp, i, dim) * wGradBF(cell, node, qp, dim);
     } } } } }
 
 
