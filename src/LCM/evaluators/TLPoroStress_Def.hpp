@@ -113,7 +113,7 @@ evaluateFields(typename Traits::EvalData workset)
 	  FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
 	  FST::scalarMultiplyDataData<ScalarT>(JpF_invT, porePressure,JF_invT);
 	  FST::scalarMultiplyDataData<ScalarT>(JBpF_invT, biotCoefficient, JpF_invT);
-//	  FST::tensorMultiplyDataData<ScalarT>(totstress, stress,JF_invT);
+	  FST::tensorMultiplyDataData<ScalarT>(totstress, stress,JF_invT); // Cauchy to 1st PK
 
 
 
@@ -125,7 +125,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t qp=0; qp < numQPs; ++qp) {
     	  for (std::size_t dim=0; dim<numDims; ++ dim) {
     		  for (std::size_t j=0; j<numDims; ++ j) {
-	         totstress(cell,qp,dim,j) =  stress(cell,qp, dim,j) - JBpF_invT(cell,qp, dim,j);
+	         totstress(cell,qp,dim,j) -= JBpF_invT(cell,qp, dim,j);
     		  }
     	  }
       }

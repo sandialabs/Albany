@@ -190,6 +190,9 @@ Albany::ProblemFactory::create()
   else if (method == "Hydrogen Diffusion-Deformation") {
       strategy = rcp(new Albany::HDiffusionDeformationProblem(problemParams, paramLib, 3));
     }
+  else if (method == "Hydrogen Diffusion-Deformation 2D") {
+        strategy = rcp(new Albany::HDiffusionDeformationProblem(problemParams, paramLib, 2));
+      }
 #endif
   else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
