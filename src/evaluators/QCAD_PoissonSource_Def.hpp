@@ -967,7 +967,7 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
       double relPerm = materialDB->getMaterialParam<double>(matName,"Permittivity");
      
       ScalarT fixedCharge = 0.0; // [cm^-3]
-      
+
       //! Schrodinger source for electrons
       if( bSchrodingerInQuantumRegions ) 
       {
@@ -1020,7 +1020,7 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
       }
     
       else  // use semiclassical source
-      { 
+      {  
         const ScalarT& unscaled_phi = potential(cell,qp);
         ScalarT phi = unscaled_phi / V0; 
           
