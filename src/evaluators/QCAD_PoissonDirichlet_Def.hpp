@@ -241,7 +241,7 @@ QCAD::PoissonDirichlet<EvalT,Traits>::potentialForMBComplIon(const ScalarT &Nc,
   ScalarT builtinPotential = 0.0; 
   
   // for high-T, include n and p in charge neutrality: p=n+Na or p+Nd=n
-  if ((Cn > 0.) && (Cp > 0.))
+  if ((Cn > 1.e-5) && (Cp > 1.e-5))
   {
     double signedDopingConc;
     if(dopType == "Donor") 
@@ -255,7 +255,15 @@ QCAD::PoissonDirichlet<EvalT,Traits>::potentialForMBComplIon(const ScalarT &Nc,
     }
     ScalarT tmp1 = signedDopingConc/(2.0*Cn);
     ScalarT tmp2 = tmp1 + sqrt(pow(tmp1,2.0) + Cp/Cn);
-    builtinPotential = V0*log(tmp2); 
+    if (tmp2 <= 0.0)
+    {
+      if(dopType == "Donor") 
+        builtinPotential = (qPhiRef-Chi)/1.0 + V0*log(dopingConc/Nc);  
+      else if(dopType == "Acceptor") 
+        builtinPotential = (qPhiRef-Chi-Eg)/1.0 - V0*log(dopingConc/Nv);  
+    }
+    else
+      builtinPotential = V0*log(tmp2); 
   }
   
   // for low-T (where Cn=0, Cp=0), consider only p=Na or n=Nd
@@ -289,14 +297,28 @@ QCAD::PoissonDirichlet<EvalT,Traits>::potentialForMBIncomplIon(const ScalarT &Nc
   if(dopType == "Donor") 
   {
     ScalarT tmp = -1./4.+1./4.*sqrt(1.+8.*dopingConc/Nc*exp(dopantActE/kbT));
-    builtinPotential = (-dopantActE+qPhiRef-Chi)/1.0 + V0*log(tmp);
+    if (tmp <= 0.)
+    {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
+        std::endl << "Error ! Argument of log() function <= 0.0" 
+        << " in potentialForMBIncomplIon() function" << std::endl);
+    }
+    else
+      builtinPotential = (-dopantActE+qPhiRef-Chi)/1.0 + V0*log(tmp);
   }
   
   // assume p = Na- to have an analytical expression (neglect n)
   else if(dopType == "Acceptor") 
   {
     ScalarT tmp = -1./8.+1./8.*sqrt(1.+16.*dopingConc/Nv*exp(dopantActE/kbT));
-    builtinPotential = (dopantActE+qPhiRef-Chi-Eg)/1.0 - V0*log(tmp);
+    if (tmp <= 0.)
+    {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
+        std::endl << "Error ! Argument of log() function <= 0.0" 
+        << " in potentialForMBIncomplIon() function" << std::endl);
+    }
+    else
+      builtinPotential = (dopantActE+qPhiRef-Chi-Eg)/1.0 - V0*log(tmp);
   }
 
   else 
