@@ -15,8 +15,8 @@
 \********************************************************************/
 
 
-#ifndef THERMOPOROPLASTICITYRESIDMOMRNTUM_HPP
-#define THERMOPOROPLASTICITYRESIDMOMENTUM_HPP
+#ifndef TLPOROSTRESS_HPP
+#define TLPOROSTRESS_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -26,22 +26,22 @@
 namespace LCM {
 /** \brief
 
-    This evaluator calculate residual of the linear
-    momentum balance equation
-    for the thermoporomechanics problem.
+    This evaluator obtains effective stress and return
+    total stress (i.e. with pore-fluid contribution)
+    For now, it does not work for NeoHookean AD
 
 */
 
 template<typename EvalT, typename Traits>
-class ThermoPoroPlasticityResidMomentum : public PHX::EvaluatorWithBaseImpl<Traits>,
-		        public PHX::EvaluatorDerived<EvalT, Traits>  {
+class TLPoroStress : public PHX::EvaluatorWithBaseImpl<Traits>,
+		    public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
-  ThermoPoroPlasticityResidMomentum(const Teuchos::ParameterList& p);
+  TLPoroStress(const Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
-			     PHX::FieldManager<Traits>& vm);
+                      PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
@@ -51,37 +51,28 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> TotalStress;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defgrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint> J;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+  PHX::MDField<ScalarT,Cell,QuadPoint> stress;
+  PHX::MDField<ScalarT,Cell,QuadPoint> biotCoefficient;
+  PHX::MDField<ScalarT,Cell,QuadPoint> porePressure;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> uDotDot;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
-
-  PHX::MDField<ScalarT,Cell,QuadPoint> Bulk;
-  PHX::MDField<ScalarT,Cell,QuadPoint> alphaSkeleton;
-
-  PHX::MDField<ScalarT,Cell,QuadPoint> Temp;
-  PHX::MDField<ScalarT,Cell,QuadPoint> TempRef;
-
-
-  // Output:
-  PHX::MDField<ScalarT,Cell,Node,Dim> ExResidual;
-
-  std::size_t numNodes;
-  std::size_t numQPs;
-  std::size_t numDims;
-  bool enableTransient;
-  ScalarT dTemp;
+  unsigned int numQPs;
+  unsigned int numDims;
 
   // Work space FCs
   Intrepid::FieldContainer<ScalarT> F_inv;
   Intrepid::FieldContainer<ScalarT> F_invT;
   Intrepid::FieldContainer<ScalarT> JF_invT;
-  Intrepid::FieldContainer<ScalarT> P;
-  Intrepid::FieldContainer<ScalarT> thermoEPS;
+  Intrepid::FieldContainer<ScalarT> JpF_invT;
+  Intrepid::FieldContainer<ScalarT> JBpF_invT;
 
+  // Material Name
+    std::string matModel;
+
+
+  // Output:
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> totstress;
 };
 }
 
