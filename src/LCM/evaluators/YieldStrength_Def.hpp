@@ -192,7 +192,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t cell=0; cell < numCells; ++cell) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
  //       	yieldStrength(cell,qp) = constant_value*( 1.0 + (zeta-1.0)*CL(cell,qp)   );
-        	yieldStrength(cell,qp) -= constant_value* (zeta-1.0)*(CL(cell,qp) -CLold(cell,qp)  );
+        	yieldStrength(cell,qp) -= constant_value*(zeta-1.0)*(CL(cell,qp) -CLold(cell,qp)  );
 
           if (print)
           {
