@@ -75,8 +75,10 @@ private:
 
   //! Optional dependence on Trapped concentration for hydrogen transport
   PHX::MDField<ScalarT,Cell,QuadPoint> CL;
+  PHX::MDField<ScalarT,Cell,QuadPoint> CT;
   bool isDiffuseDeformation;
   std::string CLname;
+  std::string CTname;
   ScalarT zeta;
 
 
