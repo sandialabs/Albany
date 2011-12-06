@@ -33,6 +33,60 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 // begin jrr
 //
+
+// Functions to cull solution vector's (sg_u) map using
+// assumptions on various size and location parameters 
+//
+// Setting for function definition; parameters for now look like:
+// RCP<Epetra_Vector>& x_map  (input)
+// vector<int>& keepDOF   (input - vector of length total number dof/node in
+//                                the solution vector; for now, number of equations
+//                                per node. keepDOF[i]={0 - delete; 1 - keep})
+// RCP<Epetra_Vector>& x_new_map (output - new map for culled solution vector)
+
+void cullDistributedResponseMap( Teuchos::RCP<const Epetra_BlockMap>& x_map,
+				 vector<int>& keepDOF,
+				 Teuchos::RCP<Epetra_BlockMap>& x_new_map )
+{
+
+  int numKeepDOF = accumulate(keepDOF.begin(), keepDOF.end(), 0);
+  int Neqns = keepDOF.size();
+  int N = x_map->NumMyElements(); // x_map is map for solution vector
+
+  TEUCHOS_ASSERT( !(N % Neqns) ); // Need to be sure that N is exactly Neqns-divisible
+
+  int nnodes = N / Neqns; // number of fem nodes
+  int N_new = nnodes * numKeepDOF; // length of local x_new 
+
+  std::vector<int> gids(N);
+  std::vector<int> gids_new;
+
+  x_map->MyGlobalElements(&gids[0]); // Fill local x_map into gids array
+  
+  for ( int inode = 0; inode < N/Neqns ; ++inode) // 
+    {
+      for ( int ieqn = 0; ieqn < Neqns; ++ieqn )
+	if( keepDOF[ieqn] == 1 )  // then want to keep this dof
+	  gids_new.push_back( gids[(inode*Neqns)+ieqn] );
+    }
+  // end cull
+  
+  x_new_map = Teuchos::rcp( new Epetra_Map( -1, gids_new.size(), &gids_new[0], 0, x_map->Comm() ) );
+}
+
+// now cull the response vector itself
+void cullDistributedResponse( Teuchos::RCP<Epetra_Vector>& x,
+			      Teuchos::RCP<Epetra_Map>& x_map,
+			      Teuchos::RCP<Epetra_Vector>& x_new,
+			      Teuchos::RCP<Epetra_Map>& x_new_map )
+{
+  Epetra_Import importer( *x_new_map, *x_map );
+  x_new = Teuchos::rcp( new Epetra_Vector( *x_new_map ) );
+
+  x_new->Import( *x, importer, Insert );
+}
+
+
 // Global function to encapsulate KL solution computation...
 //
 
@@ -277,8 +331,9 @@ int main(int argc, char *argv[]) {
 
     //////////////////////////////////////////////////////////////////////
     // begin jrr
+
     // pull out params for Solution KL
-     Teuchos::ParameterList& sgParams =
+    Teuchos::ParameterList& sgParams =
        piroParams->sublist("Stochastic Galerkin");
     Teuchos::ParameterList& solKLParams =
       sgParams.sublist("Response KL");
@@ -292,12 +347,56 @@ int main(int argc, char *argv[]) {
 	  sg_outArgs.get_g_sg(ng-1);
 	Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> > basis =
 	  sg_u->basis();
+    
+	// Assume we want to cull the solution expansion...
+	
+	Teuchos::RCP<const Epetra_BlockMap> sg_u_block_map = sg_u->map(); 
+	Teuchos::RCP<const Epetra_BlockMap> sg_u_coeff_map = sg_u->coefficientMap();
+	Teuchos::RCP<Epetra_BlockMap> sg_u_new_coeff_map; // placeholder for culled coeff map
+    
+	// Locate the vector components we want to keep manually.
+	// For quad2d problem, it's 2 and we want to
+	// cull the second variable on each node in
+
+	int neq = 2;                 // quad2d
+	vector<int> keepDOF(neq, 1); // Initialize to keep all dof, then,
+	keepDOF[2] = 0;              // as stated, cull the 2nd dof
+	
+	int ndim = accumulate(keepDOF.begin(), keepDOF.end(), 0);
+	
+	// Now, create the new, culled coefficient map...
+	cullDistributedResponseMap( sg_u_coeff_map, keepDOF, sg_u_new_coeff_map );
+
+	// ...and with the new map, create culled solution vector:
+	Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_u_new =
+	  Teuchos::rcp( new Stokhos::EpetraVectorOrthogPoly( basis,
+						    sg_u_block_map,
+						    sg_u_new_coeff_map,
+						    sg_u->productComm() ) );
+
+// 	cout << "First 3*neq values of sg_u and sg_u_new:" << endl;
+// 	{
+// 	  for ( int i=0; i < 3*neq; i++ )
+// 	    cout << "sg_u[" << i << "] = " << (*sg_u)[i] << "    " 
+// 		 <<"sg_u_new[" << i << "] = " << (*sg_u_new)[i] << endl;
+// 	}
+	
+// 	cout << "Last 3*neq values of sg_u and sg_u_new:" << endl;
+// 	{
+// 	  int N = sg_u_map->NumMyElements();
+// 	  for ( int i=0; i < 3*neq; i++ )
+// 	    cout << "sg_u[" << N-i-1 << "] = " << (*sg_u)[N - (i+1)] << "    " 
+// 		 <<"sg_u_new[" << ndim*N/neq - (i+1) << "] = " << (*sg_u_new)[ndim*N/neq - (i+1)] << endl;
+// 	}
+
+
+	// containers for KL solution (get filled in function)
 
 	Teuchos::Array<double> evals;
 	Teuchos::RCP<Epetra_MultiVector> evecs;
 	
 	bool KL_success = KL_OnSolutionMultiVector(sg_solver, 
-						   sg_u,
+						   sg_u_new,
 						   basis,
 						   NumKL,
 						   evals,
