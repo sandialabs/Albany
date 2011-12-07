@@ -726,8 +726,8 @@ namespace LCM {
     zoltan.Set_Param("HYPERGRAPH_PACKAGE", "PHG");
     zoltan.Set_Param("PHG_MULTILEVEL", "1");
     zoltan.Set_Param("PHG_EDGE_WEIGHT_OPERATION", "ERROR");
-    zoltan.Set_Param("IMBALANCE_TOL", "1.02");
-    //zoltan.Set_Param("PHG_CUT_OBJECTIVE", "HYPEREDGES");
+    zoltan.Set_Param("IMBALANCE_TOL", "1.01");
+    zoltan.Set_Param("PHG_CUT_OBJECTIVE", "HYPEREDGES");
 
     //
     // Partition
@@ -861,10 +861,11 @@ namespace LCM {
     zoltan.Set_Param("OBJ_WEIGHT_DIM", "1");
     zoltan.Set_Param("NUM_LOCAL_PARTS", zoltan_number_parts.c_str());
     zoltan.Set_Param("REMAP", "0");
+    zoltan.Set_Param("IMBALANCE_TOL", "1.01");
     zoltan.Set_Param("CHECK_GEOM", "1");
     zoltan.Set_Param("AVERAGE_CUTS", "1");
     zoltan.Set_Param("REDUCE_DIMENSIONS", "1");
-    zoltan.Set_Param("DEGENERATE_RATIO", "25");
+    zoltan.Set_Param("DEGENERATE_RATIO", "10");
 
     //
     // Partition
