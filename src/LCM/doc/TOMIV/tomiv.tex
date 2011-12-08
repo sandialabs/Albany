@@ -180,7 +180,7 @@ Variables}
   A mapping procedure for the transfer of internal variables from one finite
   element mesh (\emph{source}) to another (\emph{target}) is proposed. The
   objective is to perform the transfer with minimum error and at the same time
-  guarantee that the mapped variables remain in their admissible space.
+  guarantee that the mapped variables remain in their admissible spaces.
 
   The minimization of the error is achieved by a three-field finite element
   formulation. The fields in the formulation are the deformation mapping, the
@@ -208,7 +208,7 @@ method \citep{Ortiz.Quigley:1991, Peric.etal:1996,
   Bucher.etal:2007}. Field data that are available
 at the nodes may be directly mapped by using the interpolation functions
 corresponding to each field. The situation is more complicated, however, in
-simulations that carry state information in internal variables, which are
+simulations that carry state information in internal variables, as these are
 normally available only at integration points.
 
 Different methods have been devised to map internal variables from one mesh to
@@ -242,7 +242,7 @@ transfer internal variables with the addition operator, typically via Lagrange
 interpolation. This operator, however, may not be admissible in the spaces in
 which these variables exist, and as a consequence such procedures do not, in
 general, guarantee that transferred internal variables remain in their
-appropriate spaces. For example, a scalar, isotropic damage parameter might be
+appropriate spaces. For example, a scalar isotropic damage parameter might be
 extrapolated outside of its admissible range, $[0,1)$.
 
 We propose a three-field finite element formulation as a method for transferring
@@ -250,27 +250,27 @@ internal variables from one finite element mesh to another. The additional
 fields in the formulation are the target field of internal variables and a
 Lagrange multiplier that enforces the equality between the source and target
 internal variables. The Lagrange multiplier is subsequently identified as the
-corresponding conjugate thermodynamic forces. The formulation leads to
+corresponding conjugate thermodynamic force. The formulation leads to
 expressions for the target internal variables that are $L_2$ projections of the
 source internal variables onto the space spanned by the interpolation functions
 selected for the extra fields. By using a variational approach, the distance
 between the source and target internal variable fields is minimized in the $L_2$
 norm of their space, and thus the projection is orthogonal and the corresponding
 operator is self-adjoint. The matrices that results from the operator are
-positive definite, sparse and of narrow band.
+symmetric positive definite, sparse and of narrow band.
 
 Next it is shown that for a set of common internal variables, the Lie algebras
 corresponding to these variables lie in linear spaces and are therefore suitable
-for polynomial interpolation.  We adhere to the classical definition of internal
-variables as fields that are endowed with their own evolution equations as to
-eliminate the explicit dependence of the stored energy function from the history
-of deformation \citep{Muschik:2001, Antman:2005}. The proposed mapping scheme
-preserves the constraints imposed on the internal variables as long as they
-belong to a Lie group. The corresponding variational principle states that
-thermodynamic forces conjugate to the internal variables (such as stresses) are
-not mapped, but are computed instead based on the target internal variables,
-thereby satisfying their own constraints (such as that stresses be within the
-elastic domain) and balance laws.
+for polynomial interpolation.  The proposed mapping scheme preserves the
+constraints imposed on the internal variables as long as they belong to a Lie
+group. We adhere to the classical definition of internal variables as fields
+that are endowed with their own evolution equations as to eliminate the explicit
+dependence of the stored energy function from the history of deformation
+\citep{Muschik:2001, Antman:2005}. Thus, the proposed variational principle
+states that thermodynamic forces conjugate to the internal variables (such as
+stresses) are not mapped, but are computed instead based on the target internal
+variables, thereby satisfying their own constraints (such as that stresses be
+within the elastic domain) and balance laws.
 
 Assuming that internal variables belong to Lie groups, the corresponding Lie
 algebras may be obtained using the logarithmic map. Upon interpolation in the
@@ -290,8 +290,8 @@ stretch components. An added benefit of this method is that the computation of
 logarithmic maps for these components is relatively straightforward.
 
 Finally, the $L_2$ projection and Lie algebra interpolation are applied first
-separately and then in conjuction to selected numerical examples to demonstrate
-their effect on mapping.
+separately and then concurrently to selected numerical examples to demonstrate
+their effect on the mapping of internal variables.
 
 
 \section{Finite Element Formulation}
@@ -581,38 +581,37 @@ the source field of internal variables $\bz$.
 \label{sec:interpolation}
 
 The interpolation of internal variables using standard finite element
-interpolation functions may lead to values that are outside the
-admissible spaces. To ensure that polynomial interpolation yields
-reasonable results, the internal variables must belong to a
-\emph{vector space} over the field of scalars. A vector space is
-defined as a \emph{abelian group} together with the field of scalars
-and scalar multiplication. A \emph{group} in turn is defined as a set
-$G$ and a binary operation that satisfy the following group axioms:
+interpolation functions may lead to values that are outside their admissible
+spaces. To ensure that polynomial interpolation yields reasonable results, the
+internal variables must belong to a \emph{vector space} over the field of
+scalars. A vector space is defined as a \emph{abelian group} together with the
+field of scalars and scalar multiplication. A \emph{group} in turn is defined as
+a set $G$ and a binary operation that satisfy the following group axioms:
 \begin{enumerate}
-  \item The operation is closed on the set $G$;
-  \item The operation is associative;
-  \item The operation admits the identity element;
+  \item The operation is closed on the set $G$.
+  \item The operation is associative.
+  \item The operation admits the identity element.
   \item The operation admits the inverse for every element of $G$.
 \end{enumerate}
 If the operation is also commutative, the group is said to be
 \emph{abelian}. Polynomial interpolation requires addition as the
 group operation, but many internal variables of interest, such as
-damage, descompositions of the deformation gradient and others do not
-belong to additive abelian groups. Polynomial interpolation, however,
-may still be applied if these variables are transformed to additive
-abelian groups, and this may be effected by recourse to \emph{Lie
+damage, tensor fields and others do not belong to additive abelian groups.
+Polynomial interpolation, however, may still be applied if these variables are
+transformed to additive abelian groups, and this may be effected by recourse to
+\emph{Lie
   groups} and \emph{Lie algebras}. A Lie group $G$ is defined as a
 multiplicative group, which is also a manifold, that has the following
 properties:
 \begin{enumerate}
-  \item The multiplication operation is smooth on the set $G$;
+  \item The multiplication operation is smooth on the set $G$.
   \item The inverse operation is smooth on the set $G$.
 \end{enumerate}
 A Lie algebra is a vector space $g$ with a bilinear operation $[u,v]
 := uv - vu \: \forall \: u,v \in g$, called the \emph{Lie bracket}, that
 satisfies:
 \begin{enumerate}
-  \item Antisymmetry: $[u,v] = - [v,u] \: \forall \: u,v \in g$;
+  \item Antisymmetry: $[u,v] = - [v,u] \: \forall \: u,v \in g$.
   \item The Jacobi identity: $[u,[v,w]] + [v,[w,u]] + [w,[u,v]] = 0 \:
     \forall \: u,v,w \in g$.
 \end{enumerate}
@@ -759,7 +758,7 @@ Table~\ref{tab:examples-IV}.
 
 \begin{table}[htbp]
   \begin{center}
-    \begin{tabular}{ p{64mm} p{88mm} }
+    \begin{tabular}{ p{48mm} p{108mm} }
       \toprule
       Internal variable
       &
@@ -768,33 +767,32 @@ Table~\ref{tab:examples-IV}.
       \hline
       Scalar damage
       &
-      A scalar variable $D \in [0,1)$ with an
-      independent evolution equation is widely used for modeling damage.
-      It is evident that polynomial interpolation may lead to damage
+      Scalar variable $D \in [0,1)$ with an
+      independent evolution equation.
+      Polynomial interpolation may lead to
       values outside the admissible range. Define $H := 1 - D$ and assume
-      that $H \in \mbb{R}^+ = \{ a \in (0,+\infty) \}$, which is a Lie
+      $H \in \mbb{R}^+ = \{ a \in (0,+\infty) \}$, a Lie
       group from Table~\ref{tab:Lie-groups-and-algebras}. Then $h := \log(H)
       \in \mbb{R}$ is in the corresponding Lie algebra and may be
-      interpolated with conventional interpolation functions. The damage
-      may be recovered with $D = 1 - \exp(h)$ as in
+      interpolated directly. The damage
+      is recovered with $D = 1 - \exp(h)$ as in
       \eqref{eq:interpolation-begin} - \eqref{eq:interpolation-end},
-      ensuring that $D \in [0,1)$, provided that the corresponding
-      evolution equation also satisfies the constraint.
+      ensuring that $D \in [0,1)$, provided that the
+      evolution equation satisfies the constraint.
       \\
       \\
       Tensor damage
       &
-      A tensor variable $\bD, \det\bD \in [0,1)$
-      with an independent evolution equation is used for modeling
+      Tensor variable $\bD, \det\bD \in [0,1)$
+      with an independent evolution equation for
       anisotropic damage. Define $\bH := \bI - \bD$, thus $\bH \in
-      GL^+(3)$, which is a Lie group from
+      GL^+(3)$, a Lie group from
       Table~\ref{tab:Lie-groups-and-algebras}. Then $\bh := \log(\bH) \in
       gl(3)$ is in the corresponding Lie algebra, and the interpolated
       damage tensor may be recovered using the same procedure as before.
       \\
       \\
-      Decompositions of the deformation gradient or other
-      finite-deformation strain measures
+      Tensor variables
       &      
       In general, these are
       elements of $GL(3)$, interpolated by $gl(3)$.
@@ -825,10 +823,10 @@ Table~\ref{tab:examples-IV}.
 \end{table}
 
 Failure to perform interpolation, extrapolation or linear combinations with a
-scheme that keeps the variables in their original space leads to severe error,
-as illustrated in Table~\ref{tab:examples-interpolation} with some examples that
-compare the results of interpolation and extrapolation with and without the use
-of Lie algebras.
+scheme that preserves the variables in their original space leads to severe
+error, as illustrated in Table~\ref{tab:examples-interpolation} with some
+examples that compare the results of interpolation and extrapolation with and
+without the use of Lie algebras.
 
 \begin{table}[htbp]
   \begin{center}
@@ -1430,11 +1428,11 @@ other commonly-used internal variable recovery schemes.
 
 \subsection{Projection of Discontinuous Scalar Fields}
 
-We consider a simple example in which a cubic body of size $2 \times 2
-\times 2$ is centered at the origin of a Cartesian coordinate system
-$\{XYZ\}$. The cube is discretized by 8 hexahedral trilinear elements
-of equal size. The following scalar field is prescribed at the eight
-standard Gauss quadrature points in each finite element,
+We consider a simple example in which a cubic body of size $2 \times 2 \times 2$
+is centered at the origin of a Cartesian coordinate system $\{XYZ\}$. The cube
+is discretized by 8 hexahedral trilinear elements of equal size. The following
+scalar field is prescribed at the eight standard Gauss quadrature points in each
+finite element,
 \begin{align}
   z(X) =
   \left\{
@@ -1447,7 +1445,7 @@ standard Gauss quadrature points in each finite element,
 \end{align}
 The values of the field at the quadrature points are projected onto
 the nodes to obtain a mapped field $\bar{z}_{h}(X)$. Two different
-projection methods are used: the first is to apply a global $L_2$
+projection methods are used: the first is to apply the global $L_2$
 projection as expressed in \eqref{eq:projection-z}; the second is to
 restrict the application of this projection to a single element, thus
 recovering a local projection field where inter-element
@@ -1455,12 +1453,12 @@ discontinuities may exist.
 
 The projected field is shown in Figure~\ref{fig:example-cube}. The global $L_2$
 projection leads to a smooth linear field $\bar{z}_{h}(X) = \frac{X}{4} +
-\frac{1}{2}$, which is identical to the linear least square regression of the
+\frac{1}{2}$, which is identical to the linear least squares regression of the
 nodal values of the original field $z(X)$. This confirms that the projection
 defined in \eqref{eq:projection-z} minimizes the error measured by the $L_2$
 norm $||\bar{z}_{h} - z||$ and is therefore optimal in this norm. Note that the
 jump condition is not preserved when the global $L_2$ projection method is used,
-as both the trial and weighing space are $C^{0}$ continuous globally.
+as both the trial and weighing space are $C^{0}$-continuous globally.
  
 The local element-by-element approach, on the other hand, preserves the jump
 condition and reproduces the exact field in this example, as the local
@@ -1497,7 +1495,7 @@ depth remaining constant throughout the deformation. In the deformed
 configuration, the original centroid of the beam remains at the same
 position and the two ends meet, forming a ring. The exact deformation
 gradient $\bF$ expressed in matrix notation with respect to the
-canonical basis $\be_i$ reads,
+canonical basis $\be_i$ reads
 \begin{equation}
   [\bF(X, Y)]_{\be_i} =
   \begin{pmatrix}
@@ -1556,7 +1554,7 @@ The exact form of the deformation gradient is available, therefore it
 is possible to quantify the distribution of the interpolation error by
 comparing directly the interpolated deformation gradient
 $\bF^{h}(X,Y)$ with the exact solution $\bF(X,Y)$ via the Frobenius
-norm, \emph{i.e.},
+norm, \emph{i.e.}
 \begin{align}
   e(X,Y) & =
   ||\bF^{h}(X,Y) - \bF(X,Y)||_{F} \nonumber
@@ -1575,7 +1573,7 @@ The results of using direct interpolation for both the rotation and the stretch
 are shown in Figure~\ref{fig:example-ring}(a). The interpolation error $e(X,Y)$
 is zero at the locations where the nodes of the coarse and fine meshes coincide,
 as expected. By contrast, there is substantial discrepancy between
-$\bF^{h}(X,Y)$ and $\bF(X,Y)$ away from these locations, and the error reaches a
+$\bF^{h}(X,Y)$ and $\bF(X,Y)$ away from these locations and the error reaches a
 maximum $e_{\text{max}} = 0.12$ at radial planes that pass through the center of
 each coarse hexahedral element.
 
@@ -1597,22 +1595,22 @@ each coarse hexahedral element.
   \end{center}
 \end{figure}
 
-Next are the results of using Lie algebra interpolation of the rotation and
-direct interpolation of the stretch, shown in Figure \ref{fig:example-ring}(b).
+Next are the results of using Lie algebra interpolation for the rotation and
+direct interpolation for the stretch, shown in Figure \ref{fig:example-ring}(b).
 There is a significant improvement of accuracy when using this scheme, as the
 maximum error $e_{\text{max}} = 1.2 \times 10^{-15}$ is reduced by $14$ orders
 of magnitude.
 
 Finally, Figure~\ref{fig:example-ring}(c) shows the results of applying Lie
-algebra interpolation on both the rotation and the stretch. The maximum value of
-the interpolation error now becomes $e_{\text{max}} = 0.018$, which falls in
+algebra interpolation for both the rotation and the stretch. The maximum value
+of the interpolation error now becomes $e_{\text{max}} = 0.018$, which falls in
 between the values of the two cases discussed above. This is due to the fact
 that the stretch given by \eqref{eq:polar-decomposition} varies linearly along
 the $Y$ direction. Thus, the direct linear interpolation can reproduce the
 stretch exactly, while the Lie algebra interpolation cannot. This example
 demonstrates that the appropriate choice of interpolation scheme depends on the
 nature of the field. Note that in general, however, the stretch is unlikely to
-have this simple form and linear extrapolation may result in streches that are
+have this simple form and linear extrapolation may result in stretches that are
 not positive definite.
 
 \subsubsection{The Effect of Mesh Refinement}
@@ -1620,7 +1618,7 @@ not positive definite.
 We investigate the effect of mesh refinement on the overall accuracy of the
 three interpolation schemes mentioned above. The error measure defined by the
 norm \eqref{eq:norm} on the tensor field $\bA$ is evaluated numerically at a
-variety of refinement levels, \emph{i.e.},
+variety of refinement levels, \emph{i.e.}
 \begin{align}
   E_{\bA} & =
   \left(
@@ -1643,12 +1641,12 @@ isoparametric mapping, $N_G$ is the number of integration points per
 element, and $N_E$ is the number of elements in the mesh.
 
 Initially, the domain of size $L \times \frac{L}{16} \times \frac{L}{16}$ is
-meshed by four elements along the $X$ direction and one element along the $Y$
-and $Z$ directions. The aspect ratio of all the elements is therefore
-$\frac{l}{h}=4$. Then, we refine the mesh by increasing the number of elements
-in both the $X$ and $Y$ directions, but maintain the number of elements along
-the $Z$ direction equal to one.  In each refined mesh, the aspect ratio
-$\frac{l}{h}=4$ of length/height remains constant and equal to four for all
+meshed by four elements along the $X$ (length) direction and one element along
+the $Y$ (height) and $Z$ (width) directions. The aspect ratio of length divided
+by height of all the elements is therefore $\frac{l}{h}=4$. Then, we refine the
+mesh by increasing the number of elements in both the $X$ and $Y$ directions,
+but maintain the number of elements along the $Z$ direction equal to one. In
+each refined mesh, the aspect ratio remains constant and equal to four for all
 elements.
 
 \begin{figure}[htbp]
@@ -1731,8 +1729,8 @@ deformation gradient \eqref{eq:deformation-gradient} are computed at the
 integration points of a $16$-element coarse mesh and then transferred to the
 nodes by means of various recovery methods. The assumption is that once nodal
 values are obtained, the element interpolation functions are used to extend the
-field over the entire domain for the purpose of mapping to a different mesh. The
-schemes are summarized as follows:
+field over the entire domain for the purpose of mapping it to a different mesh.
+The schemes are summarized as follows:
 \begin{enumerate}
   \item Direct averaging that employs a searching scheme to determine
   the closest integration point to a node in each element. The value
@@ -1977,9 +1975,8 @@ element mesh is present regardless of mesh size.
       \includegraphics[width=80mm]{HEX8medium_DIRECT_woLie.pdf}}
     \subfigure[]{
       \includegraphics[width=80mm]{HEX8fine_DIRECT_woLie.pdf}}
-    \caption{Projected plastic part of the deformation gradient: (a)
-      $693$-element mesh and (b) $2175$-element mesh. The field is projected
-      using direct interpolation.}
+    \caption{Plastic part of the deformation gradient by  direct interpolation:
+    (a) $693$-element mesh and (b) $2175$-element mesh.}
     \label{fig:billet-no-Lie}
   \end{center}
 \end{figure}
@@ -2015,9 +2012,8 @@ preserved for both the coarse and the fine meshes.
       \includegraphics[width=80mm]{HEX8medium_DIRECT_wLie.pdf}}
     \subfigure[]{
       \includegraphics[width=80mm]{HEX8fine_DIRECT_wLie.pdf}}
-    \caption{Projected plastic part of the deformation gradient: (a)
-      $693$-element mesh and (b) $2175$-element mesh. The field is projected
-      using Lie group and Lie algebra interpolation.}
+    \caption{Plastic part of the deformation gradient by Lie group and Lie
+    algebra interpolation: (a) $693$-element mesh and (b) $2175$-element mesh.}
     \label{fig:billet-Lie}
   \end{center}
 \end{figure}
@@ -2042,9 +2038,9 @@ error.
 Despite low values of the global error, it is clear that using direct
 interpolation leads to large errors in the range of $\det \bF^p$, and therefore
 any mapping of $\bF^p$ to a new mesh that relies in direct interpolation will
-introduce large errors into the field. Only by using Lie algebra interpolation
-there is a guarantee that the isochoric constraint will be preserved when
-mapping the field to a new mesh.
+introduce large errors into the field. Only the use of Lie algebra interpolation
+guarantees that the isochoric constraint will be preserved when mapping the
+field to a new mesh.
  
 \begin{table}[htbp]
   \begin{center}
@@ -2121,9 +2117,9 @@ mapping the field to a new mesh.
 
 \section{Conclusion}
 
-The proposed transfer operator is composed of two parts: 1) The variational
-$L_2$ projection that minimizes the error. 2) The mapping of fields to Lie
-algebras for interpolation and back to Lie groups.
+The proposed transfer operator is composed of two parts: 1) the variational
+$L_2$ projection that minimizes the error; 2) the mapping of fields to Lie
+algebras for interpolation and mapping back to Lie groups.
 
 We prove that the $L_2$ projection minimizes the error and that using Lie
 algebras many of the common tensor fields can be interpolated while remaining in
@@ -2136,9 +2132,9 @@ to a different finite element mesh of the same domain. It is shown in the
 numerical examples that the $L_2$ projection minimizes the error.
 It is also shown that using direct interpolation leads to severe error when the
 fields have constraints, such as the isochoric condition for $J_2$ plasticity.
-The use of Lie algebras for interpolation completely eliminates the problem.
+The use of Lie algebras for interpolation avoids this situation altogether.
 
-The computation of the logarithmic map leads to complex arithmetic for tensor
+The computation of the logarithmic map leads to complex arithmetic for tensors
 with negative eigenvalues. The proposed technique of using the singular value
 decomposition to compute the polar decomposition, and then apply the logarithmic
 map separately for the rotational and strech components of a tensor field proves
