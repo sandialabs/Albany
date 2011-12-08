@@ -97,23 +97,30 @@ YieldStrength(Teuchos::ParameterList& p) :
     dYdT_value=0.0;
   }
 
-//  if ( p.isType<string>("Lattice Concentration Name") ) {
-//      Teuchos::RCP<PHX::DataLayout> scalar_dl =
-//        p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
-//      PHX::MDField<ScalarT,Cell,QuadPoint>
-//        tmp(p.get<string>("Lattice Concentration Name"), scalar_dl);
-//      CL = tmp;
-//      this->addDependentField(CL);
-//      CLname = p.get<string>("Lattice Concentration Name")+"_old";
-//      isDiffuseDeformation = true;
-//      zeta = elmd_list->get("zeta Value", 1.0);
-//      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-//                                  "zeta Value", this, paramLib);
-//    }
-//    else {
-//     isDiffuseDeformation=false;
-//      zeta=0.0;
-//    }
+  if ( p.isType<string>("Lattice Concentration Name") ) {
+      Teuchos::RCP<PHX::DataLayout> scalar_dl =
+        p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+      PHX::MDField<ScalarT,Cell,QuadPoint>
+        tmp(p.get<string>("Lattice Concentration Name"), scalar_dl);
+      CL = tmp;
+      this->addDependentField(CL);
+      CLname = p.get<string>("Lattice Concentration Name")+"_old";
+  //    PHX::MDField<ScalarT,Cell,QuadPoint>
+  //      tmp(p.get<string>("Trapped Concentration Name_old"), scalar_dl);
+  //    CT = tmp;
+  //    this->addDependentField(CT);
+  //    CTname = p.get<string>("Trapped Concentration Name")+"_old";
+
+
+      isDiffuseDeformation = true;
+      zeta = elmd_list->get("zeta Value", 1.0);
+      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
+                                  "zeta Value", this, paramLib);
+    }
+    else {
+     isDiffuseDeformation=false;
+      zeta=1.0;
+    }
 
 
   this->addEvaluatedField(yieldStrength);
@@ -129,7 +136,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(yieldStrength,fm);
   if (!is_constant) this->utils.setFieldData(coordVec,fm);
   if (isThermoElastic) this->utils.setFieldData(Temperature,fm);
-//  if (isDiffuseDeformation) this->utils.setFieldData(CL,fm);
+  if (isDiffuseDeformation) this->utils.setFieldData(CL,fm);
+//  if (isDiffuseDeformation) this->utils.setFieldData(CT,fm);
 }
 
 // **********************************************************************
@@ -177,23 +185,24 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-//  if (isDiffuseDeformation) {
-//
-//	  Albany::MDArray Fpold_array   = (*workset.stateArrayPtr)[fpName];
-//
-//      for (std::size_t cell=0; cell < numCells; ++cell) {
-//        for (std::size_t qp=0; qp < numQPs; ++qp) {
-//        	yieldStrength(cell,qp) = constant_value*( 1.0 + (zeta-1.0)*CT(cell,qp)   );
-//
-//          if (print)
-//          {
-//            cout << "    Y   : " << yieldStrength(cell,qp) << endl;
-//            cout << "    CT  : " << CT(cell,qp) << endl;
-//            cout << "   zeta : " << zeta << endl;
-//          }
-//        }
-//      }
-//    }
+  if (isDiffuseDeformation) {
+
+	  Albany::MDArray CLold   = (*workset.stateArrayPtr)[CLname];
+
+      for (std::size_t cell=0; cell < numCells; ++cell) {
+        for (std::size_t qp=0; qp < numQPs; ++qp) {
+ //       	yieldStrength(cell,qp) = constant_value*( 1.0 + (zeta-1.0)*CL(cell,qp)   );
+        	yieldStrength(cell,qp) -= constant_value*(zeta-1.0)*(CL(cell,qp) -CLold(cell,qp)  );
+
+          if (print)
+          {
+            cout << "    Y   : " << yieldStrength(cell,qp) << endl;
+            cout << "    CT  : " << CT(cell,qp) << endl;
+            cout << "   zeta : " << zeta << endl;
+          }
+        }
+      }
+    }
 }
 
 // **********************************************************************
@@ -205,8 +214,8 @@ YieldStrength<EvalT,Traits>::getValue(const std::string &n)
     return constant_value;
   else if (n == "dYdT Value")
     return dYdT_value;
-//  else if (n == "zeta Value")
-//      return zeta;
+  else if (n == "zeta Value")
+      return zeta;
   for (int i=0; i<rv.size(); i++) {
     if (n == Albany::strint("Yield Strength KL Random Variable",i))
       return rv[i];

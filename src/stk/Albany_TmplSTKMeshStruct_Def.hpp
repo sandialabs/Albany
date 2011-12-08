@@ -164,21 +164,6 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
 
   // Create global mesh: Dim-D structured, rectangular
 
-  double scale[traits_type::size];
-
-  // Read the scale parameters from the parameter file, one for each dimension
-
-  for(int idx=0; idx < Dim; idx++){ // Not reached for 0D problems
-
-    std::stringstream buf;
-    buf << idx + 1 << "D Scale";
-
-    // Read the values for "1D Scale", "2D Scale", "3D Scale"
-
-    scale[idx] = params->get(buf.str(),     1.0);
-
-  }
-
   // Format and print out information about the mesh that is being generated
 
   if (comm->MyPID()==0 && Dim > 0){ // Not reached for 0D problems
@@ -190,12 +175,12 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
     for(int idx=0; idx < Dim - 1; idx++){
 
       nelem_txt << nelem[idx] << "x";
-      scale_txt << scale[idx] << "x";
+      scale_txt << EBSpecs[0].scale[idx] << "x";
 
     }
 
     nelem_txt << nelem[Dim - 1];
-    scale_txt << scale[Dim - 1];
+    scale_txt << EBSpecs[0].scale[Dim - 1];
 
     std::cout << nelem_txt.str() << " elements and scaled to " <<
                  scale_txt.str() << std::endl;
@@ -213,7 +198,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
   for(int idx=0; idx < Dim; idx++){ // Not reached for 0D problems
 
     x[idx].resize(nelem[idx] + 1);
-    h_dim = scale[idx] / nelem[idx];
+    h_dim = EBSpecs[0].scale[idx] / nelem[idx];
 
     for(unsigned int i=0; i <= nelem[idx]; i++)
 
@@ -312,6 +297,10 @@ namespace Albany { // Need to wrap all these specializations in the Albany names
   
       //       "begins"  "at"          0          "ends"   "at"          1         "named"     "Bck0"
       parsess >> junk >> junk >> min[0] >> junk >> junk >> max[0] >> junk >> name;
+
+    // Read the values for "1D Scale", "2D Scale", "3D Scale"
+
+     scale[0] = params->get("1D Scale",     1.0);  // Save the scale in the element block structures
   
   }
   
@@ -338,6 +327,11 @@ namespace Albany { // Need to wrap all these specializations in the Albany names
 
       name = buf;
 
+    // Read the values for "1D Scale", "2D Scale", "3D Scale"
+
+      scale[0] = params->get("1D Scale",     1.0);  // Save the scale in the element block structures
+      scale[1] = params->get("2D Scale",     1.0);  // Save the scale in the element block structures
+
   }
   
   template<>
@@ -362,6 +356,12 @@ namespace Albany { // Need to wrap all these specializations in the Albany names
         &min[0], &min[1], &min[2], &max[0], &max[1], &max[2], buf);
 
       name = buf;
+
+    // Read the values for "1D Scale", "2D Scale", "3D Scale"
+
+      scale[0] = params->get("1D Scale",     1.0);  // Save the scale in the element block structures
+      scale[1] = params->get("2D Scale",     1.0);
+      scale[2] = params->get("3D Scale",     1.0);
 
   }
   
@@ -426,6 +426,15 @@ namespace Albany { // Need to wrap all these specializations in the Albany names
          // Does the centroid lie in the EB?
          if(EBSpecs[ebNo].inEB(centroid))
            break;
+
+        if(ebNo == numEB){ // error, we didn't find an element block that this element
+                            // should fit in
+
+            TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+              std::endl << "Error: Could not place element " << elem_GID << 
+              " in its corresponding element block." << std::endl);
+
+        }
       }
 
       singlePartVec[0] = partVec[ebNo];
@@ -511,6 +520,15 @@ namespace Albany { // Need to wrap all these specializations in the Albany names
          // Does the centroid lie in the EB?
          if(EBSpecs[ebNo].inEB(centroid))
            break;
+
+        if(ebNo == numEB){ // error, we didn't find an element block that this element
+                            // should fit in
+
+            TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+              std::endl << "Error: Could not place element " << elem_GID << 
+              " in its corresponding element block." << std::endl);
+
+        }
       }
 
       singlePartVec[0] = partVec[ebNo];
@@ -621,6 +639,15 @@ namespace Albany { // Need to wrap all these specializations in the Albany names
          // Does the centroid lie in the EB?
          if(EBSpecs[ebNo].inEB(centroid))
            break;
+
+        if(ebNo == numEB){ // error, we didn't find an element block that this element
+                            // should fit in
+
+            TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+              std::endl << "Error: Could not place element " << elem_GID << 
+              " in its corresponding element block." << std::endl);
+
+        }
       }
 
       singlePartVec[0] = partVec[ebNo];

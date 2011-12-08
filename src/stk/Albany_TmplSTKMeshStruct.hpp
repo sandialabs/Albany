@@ -39,8 +39,8 @@ struct EBSpecsStruct {
     void Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params);
 
     bool inEB(const std::vector<double>& centroid){ for(std::size_t i = 0; i < centroid.size(); i++){
-          if(centroid[i] < min[i]) return false;
-          if(centroid[i] > max[i]) return false;
+          if(centroid[i] < scale[i] * min[i]) return false;
+          if(centroid[i] > scale[i] * max[i]) return false;
         }
         return true;
     }
@@ -48,6 +48,7 @@ struct EBSpecsStruct {
     std::string name;      // Name of element block
     double min[Dim];       // Minimum parametric coordinate of the block (0 to 1, unscaled)
     double max[Dim];       // Maximum parametric coordinate of the block (0 to 1 unscaled)
+    double scale[Dim];       // Maximum parametric coordinate of the block (0 to 1 unscaled)
 };
 
 //! Template for STK internal mesh generation classes
@@ -114,9 +115,11 @@ template<int Dim, class traits = albany_stk_mesh_traits<Dim> >
     void Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params){
       // Never more than one element block in a 0D problem
       name = "Block0";
+      scale[0] = 1.0;
     }
 
     std::string name;      // Name of element block
+    double scale[0];       // Maximum parametric coordinate of the block (0 to 1 unscaled)
   };
 
   template <>

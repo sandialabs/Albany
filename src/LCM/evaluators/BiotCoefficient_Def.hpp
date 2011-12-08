@@ -78,13 +78,13 @@ BiotCoefficient(Teuchos::ParameterList& p) :
   // Optional dependence on Temperature (E = E_ + dEdT * T)
   // Switched ON by sending Temperature field in p
 
-  if ( p.isType<string>("Porosity Name") ) {
-    Teuchos::RCP<PHX::DataLayout> scalar_dl =
-      p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
-    PHX::MDField<ScalarT,Cell,QuadPoint>
-      tp(p.get<string>("Porosity Name"), scalar_dl);
-    porosity = tp;
-    this->addDependentField(porosity);
+ // if ( p.isType<string>("Porosity Name") ) {
+//    Teuchos::RCP<PHX::DataLayout> scalar_dl =
+//      p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+//    PHX::MDField<ScalarT,Cell,QuadPoint>
+ //     tp(p.get<string>("Porosity Name"), scalar_dl);
+ //   porosity = tp;
+ //   this->addDependentField(porosity);
     isPoroElastic = true;
     Kskeleton_value = elmd_list->get("Skeleton Bulk Modulus Parameter Value", 10.0e5);
     new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
@@ -92,12 +92,12 @@ BiotCoefficient(Teuchos::ParameterList& p) :
     Kgrain_value = elmd_list->get("Grain Bulk Modulus Value", 10.0e12); // typically Kgrain >> Kskeleton
     new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
                                     "Grain Bulk Modulus Value", this, paramLib);
-  }
-  else {
-    isPoroElastic=false;
-    Kskeleton_value=10.0e5; // temp value..need to change
-    Kgrain_value = 10.0e12;  // temp value need to change
-  }
+//  }
+//  else {
+//    isPoroElastic=false;
+//    Kskeleton_value=10.0e5; // temp value..need to change
+//    Kgrain_value = 10.0e12;  // temp value need to change
+// }
 
 
   this->addEvaluatedField(biotCoefficient);
@@ -112,7 +112,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(biotCoefficient,fm);
   if (!is_constant) this->utils.setFieldData(coordVec,fm);
-  if (isPoroElastic) this->utils.setFieldData(porosity,fm);
+//  if (isPoroElastic) this->utils.setFieldData(porosity,fm);
 }
 
 // **********************************************************************
@@ -143,7 +143,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t cell=0; cell < numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
     	  // assume that bulk modulus is linear with respect to porosity
-    	  biotCoefficient(cell,qp) = 1 - Kskeleton_value*porosity(cell,qp)/Kgrain_value;
+    	  biotCoefficient(cell,qp) = 1.0 - Kskeleton_value/Kgrain_value;
       }
     }
   }

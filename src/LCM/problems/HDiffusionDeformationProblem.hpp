@@ -511,7 +511,7 @@ void Albany::HDiffusionDeformationProblem::constructEvaluators(
 
              ev = rcp(new LCM::TrappedConcentration<EvalT,AlbanyTraits>(*p));
              fm0.template registerEvaluator<EvalT>(ev);
-             p = stateMgr.registerStateVariable("Trapped Concentration",dl->qp_scalar, dl->dummy,"zero");
+             p = stateMgr.registerStateVariable("Trapped Concentration",dl->qp_scalar, dl->dummy,"zero", true);
              ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
              fm0.template registerEvaluator<EvalT>(ev);
            }
@@ -602,7 +602,10 @@ void Albany::HDiffusionDeformationProblem::constructEvaluators(
     RealType refTemp = params->get("Reference Temperature", 0.0);
     p->set<RealType>("Reference Temperature", refTemp);
 
- //   p->set<string>("Lattice Concentration Name", "Lattice Concentration");
+
+//    p->set<string>("Trapped Concentration Name", "Trapped Concentration");
+
+    p->set<string>("Lattice Concentration Name", "Lattice Concentration");
 
     ev = rcp(new LCM::YieldStrength<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
