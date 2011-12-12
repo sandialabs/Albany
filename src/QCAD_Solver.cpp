@@ -413,13 +413,32 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
     double newShift = GetEigensolverShift(*pStatesToLoop, "Conduction Band");
     ResetEigensolverShift(getSubSolver("Schrodinger").model, newShift, eigList);
 
+    // Schrodinger Solve -> eigenstates
     if(bVerbose) *out << "QCAD Solve: Schrodinger iteration " << iter << endl;
     SolveModel(getSubSolver("Schrodinger"), pStatesToLoop, pStatesToPass,
 	       eigenDataNull, eigenDataToPass);
-      
+     
+    // Save solution for predictory-corrector outer iterations
     CopyStateToContainer(*pStatesToLoop, "Saved Solution", tmpContainer);
     CopyContainerToState(tmpContainer, *pStatesToPass, "Previous Poisson Potential");
       
+    // Construct CI matrices:
+    // For N eigenvectors:
+    //  1) a NxN matrix of the single particle hamiltonian: H1P. Derivation:
+    //    H1P = diag(E) - delta, where delta_ij = int( [i(r)j(r)] F(r) dr)
+    //    - no actual poisson solve needed, but need framework to integrate?
+    //    - could we save a state containing weights and then integrate outside of NOX?
+    //
+    //  2) a matrix of all pair integrals.  Derivation:
+    //    <12|1/r|34> = int( 1(r1) 2(r2) 1/(r1-r2) 3(r1) 4(r2) dr1 dr2)
+    //                = int( 1(r1) 3(r1) [ int( 2(r2) 1/(r1-r2) 4(r2) dr2) ] dr1 )
+    //                = int( 1(r1) 3(r1) [ soln of Poisson, rho(r1), with src = 2(r) 4(r) ] dr1 )
+    //    - so use dummy poisson solve which has i(r)j(r) as only RHS term, for each pair <ij>,
+    //       and as output of each Solve integrate wrt each other potential pair 1(r) 3(r)
+    //       to generate all the elements.
+
+
+    // Poisson Solve
     if(bVerbose) *out << "QCAD Solve: Poisson iteration " << iter << endl;
     SolveModel(getSubSolver("Poisson"), pStatesToPass, pStatesToLoop,
 	       eigenDataToPass, eigenDataNull);
@@ -429,7 +448,6 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
 	       eigenDataToPass, eigenDataNull);
     AddStateToState(*pStatesFromDummy, "Electric Potential", *pStatesToLoop, "Conduction Band");
 
-    //TODO: insert CI here
       
     eigenDataNull = Teuchos::null;
     if(iter > 1) 
