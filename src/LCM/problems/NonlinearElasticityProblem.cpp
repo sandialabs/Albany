@@ -88,8 +88,8 @@ Albany::NonlinearElasticityProblem::constructDirichletEvaluators(
    dirichletNames[0] = "X";
    if (neq>1) dirichletNames[1] = "Y";
    if (neq>2) dirichletNames[2] = "Z";
-   Albany::DirichletUtils dirUtils;
-   dfm = dirUtils.constructDirichletEvaluators(meshSpecs.nsNames, dirichletNames,
+   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
+   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
 }
 

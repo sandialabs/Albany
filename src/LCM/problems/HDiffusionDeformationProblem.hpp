@@ -193,7 +193,7 @@ void Albany::HDiffusionDeformationProblem::constructEvaluators(
   RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
 
   const int numQPts = cubature->getNumPoints();
-  const int numVertices = cellType->getVertexCount();
+  const int numVertices = cellType->getNodeCount();
 
   *out << "Field Dimensions: Workset=" << worksetSize 
        << ", Vertices= " << numVertices
@@ -508,9 +508,10 @@ void Albany::HDiffusionDeformationProblem::constructEvaluators(
              //Output
              p->set<string>("Trapped Concentration Name", "Trapped Concentration");
 
+
              ev = rcp(new LCM::TrappedConcentration<EvalT,AlbanyTraits>(*p));
              fm0.template registerEvaluator<EvalT>(ev);
-             p = stateMgr.registerStateVariable("Trapped Concentration",dl->qp_scalar, dl->dummy,"zero");
+             p = stateMgr.registerStateVariable("Trapped Concentration",dl->qp_scalar, dl->dummy,"zero", true);
              ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
              fm0.template registerEvaluator<EvalT>(ev);
            }
@@ -596,7 +597,15 @@ void Albany::HDiffusionDeformationProblem::constructEvaluators(
     Teuchos::ParameterList& paramList = params->sublist("Yield Strength");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
+    // Setting this turns on linear dependence of Y on T, Y = Y + dYdT*(T - Tref)
+    p->set<string>("QP Temperature Name", "Temperature");
+    RealType refTemp = params->get("Reference Temperature", 0.0);
+    p->set<RealType>("Reference Temperature", refTemp);
 
+
+//    p->set<string>("Trapped Concentration Name", "Trapped Concentration");
+
+    p->set<string>("Lattice Concentration Name", "Lattice Concentration");
 
     ev = rcp(new LCM::YieldStrength<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -695,6 +704,9 @@ void Albany::HDiffusionDeformationProblem::constructEvaluators(
 
     ev = rcp(new LCM::DefGrad<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+
+
+
   }
 
   { // Stress

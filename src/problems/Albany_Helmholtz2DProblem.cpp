@@ -85,8 +85,8 @@ Albany::Helmholtz2DProblem::constructDirichletEvaluators(
    vector<string> dirichletNames(neq);
    dirichletNames[0] = "U";
    dirichletNames[1] = "V";
-   Albany::DirichletUtils dirUtils;
-   dfm = dirUtils.constructDirichletEvaluators(meshSpecs.nsNames, dirichletNames,
+   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
+   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
 }
 

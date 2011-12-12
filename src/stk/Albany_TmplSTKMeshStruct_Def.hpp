@@ -71,7 +71,17 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
     nsNames.push_back(buf.str());
   }
 
-  DeclareParts(EBSpecs, nsNames);
+  std::vector<std::string> ssNames;
+
+  // Construct the sideset names
+
+  for(int idx=0; idx < Dim*2; idx++){ // 2 sidesets per dimension (one at beginning, one at end)
+    std::stringstream buf;
+    buf << "SideSet" << idx;
+    ssNames.push_back(buf.str());
+  }
+
+  DeclareParts(EBSpecs, ssNames, nsNames);
 
   // Different element topologies. Note that there is only a choice for triangles/quads in 2D
   // (all other dimensions select the default element type for now)
@@ -154,21 +164,6 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
 
   // Create global mesh: Dim-D structured, rectangular
 
-  double scale[traits_type::size];
-
-  // Read the scale parameters from the parameter file, one for each dimension
-
-  for(int idx=0; idx < Dim; idx++){ // Not reached for 0D problems
-
-    std::stringstream buf;
-    buf << idx + 1 << "D Scale";
-
-    // Read the values for "1D Scale", "2D Scale", "3D Scale"
-
-    scale[idx] = params->get(buf.str(),     1.0);
-
-  }
-
   // Format and print out information about the mesh that is being generated
 
   if (comm->MyPID()==0 && Dim > 0){ // Not reached for 0D problems
@@ -180,12 +175,12 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
     for(int idx=0; idx < Dim - 1; idx++){
 
       nelem_txt << nelem[idx] << "x";
-      scale_txt << scale[idx] << "x";
+      scale_txt << EBSpecs[0].scale[idx] << "x";
 
     }
 
     nelem_txt << nelem[Dim - 1];
-    scale_txt << scale[Dim - 1];
+    scale_txt << EBSpecs[0].scale[Dim - 1];
 
     std::cout << nelem_txt.str() << " elements and scaled to " <<
                  scale_txt.str() << std::endl;
@@ -203,7 +198,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
   for(int idx=0; idx < Dim; idx++){ // Not reached for 0D problems
 
     x[idx].resize(nelem[idx] + 1);
-    h_dim = scale[idx] / nelem[idx];
+    h_dim = EBSpecs[0].scale[idx] / nelem[idx];
 
     for(unsigned int i=0; i <= nelem[idx]; i++)
 
@@ -240,6 +235,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
 template <int Dim, class traits>
 void Albany::TmplSTKMeshStruct<Dim, traits>::DeclareParts(
               std::vector<EBSpecsStruct<Dim> > ebStructArray, 
+              std::vector<std::string> ssNames,
               std::vector<std::string> nsNames)
 {
   // Element blocks
@@ -250,6 +246,17 @@ void Albany::TmplSTKMeshStruct<Dim, traits>::DeclareParts(
     stk::io::put_io_part_attribute(*partVec[i]);
 #endif
   }
+
+/*
+  // SideSets
+  for (std::size_t i=0; i<ssNames.size(); i++) {
+    std::string ssn = ssNames[i];
+    ssPartVec[ssn] = & metaData->declare_part(ssn, metaData->side_rank() );
+#ifdef ALBANY_SEACAS
+    stk::io::put_io_part_attribute(*ssPartVec[ssn]);
+#endif
+  }
+*/
 
   // NodeSets
   for (std::size_t i=0; i<nsNames.size(); i++) {
@@ -290,6 +297,10 @@ namespace Albany { // Need to wrap all these specializations in the Albany names
   
       //       "begins"  "at"          0          "ends"   "at"          1         "named"     "Bck0"
       parsess >> junk >> junk >> min[0] >> junk >> junk >> max[0] >> junk >> name;
+
+    // Read the values for "1D Scale", "2D Scale", "3D Scale"
+
+     scale[0] = params->get("1D Scale",     1.0);  // Save the scale in the element block structures
   
   }
   
@@ -316,6 +327,11 @@ namespace Albany { // Need to wrap all these specializations in the Albany names
 
       name = buf;
 
+    // Read the values for "1D Scale", "2D Scale", "3D Scale"
+
+      scale[0] = params->get("1D Scale",     1.0);  // Save the scale in the element block structures
+      scale[1] = params->get("2D Scale",     1.0);  // Save the scale in the element block structures
+
   }
   
   template<>
@@ -341,6 +357,12 @@ namespace Albany { // Need to wrap all these specializations in the Albany names
 
       name = buf;
 
+    // Read the values for "1D Scale", "2D Scale", "3D Scale"
+
+      scale[0] = params->get("1D Scale",     1.0);  // Save the scale in the element block structures
+      scale[1] = params->get("2D Scale",     1.0);
+      scale[2] = params->get("3D Scale",     1.0);
+
   }
   
   // Specializations to build the mesh for each dimension
@@ -352,14 +374,22 @@ namespace Albany { // Need to wrap all these specializations in the Albany names
     // Note: periodic flag just ignored for this case if it is present
   
     // STK
-    std::vector<stk::mesh::Part*> noPartVec;
+    std::vector<stk::mesh::Part*> nodePartVec;
     std::vector<stk::mesh::Part*> singlePartVec(1);
   
-      singlePartVec[0] = partVec[0]; // Only one block in 0D mesh
+      singlePartVec[0] = partVec[0]; // Get the element block part to put the element in.
+                                      // Only one block in 0D mesh
   
+      // Declare element 1 is in that block
       stk::mesh::Entity& pt  = bulkData->declare_entity(metaData->element_rank(), 1, singlePartVec);
-      stk::mesh::Entity& node = bulkData->declare_entity(metaData->node_rank(), 1, noPartVec);
+      // Declare node 1 is in the node part vector
+      stk::mesh::Entity& node = bulkData->declare_entity(metaData->node_rank(), 1, nodePartVec);
+      // Declare that the node belongs to the element "pt"
+      // "node" is the zeroth node of this element
       bulkData->declare_relation(pt, node, 0);
+
+      // No node sets or side sets in 0D
+
   }
   
   template<>
@@ -368,7 +398,7 @@ namespace Albany { // Need to wrap all these specializations in the Albany names
   {
   
     // STK
-    std::vector<stk::mesh::Part*> noPartVec;
+    std::vector<stk::mesh::Part*> nodePartVec;
     std::vector<stk::mesh::Part*> singlePartVec(1);
   
     std::vector<double> centroid(1);
@@ -396,30 +426,55 @@ namespace Albany { // Need to wrap all these specializations in the Albany names
          // Does the centroid lie in the EB?
          if(EBSpecs[ebNo].inEB(centroid))
            break;
+
+        if(ebNo == numEB){ // error, we didn't find an element block that this element
+                            // should fit in
+
+            TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+              std::endl << "Error: Could not place element " << elem_GID << 
+              " in its corresponding element block." << std::endl);
+
+        }
       }
 
       singlePartVec[0] = partVec[ebNo];
   
+      // Build element "1+elem_id" and put it in the element block
       stk::mesh::Entity& edge  = bulkData->declare_entity(metaData->element_rank(), 1+elem_id, singlePartVec);
-      stk::mesh::Entity& lnode = bulkData->declare_entity(metaData->node_rank(), 1+left_node, noPartVec);
-      stk::mesh::Entity& rnode = bulkData->declare_entity(metaData->node_rank(), 1+right_node, noPartVec);
+      // Build the left and right nodes of this element and put them in the node part Vec
+      stk::mesh::Entity& lnode = bulkData->declare_entity(metaData->node_rank(), 1+left_node, nodePartVec);
+      stk::mesh::Entity& rnode = bulkData->declare_entity(metaData->node_rank(), 1+right_node, nodePartVec);
+      // node number 0 of this element
       bulkData->declare_relation(edge, lnode, 0);
+      // node number 1 of this element
       bulkData->declare_relation(edge, rnode, 1);
   
+      // set the coordinate values for these nodes
       double* lnode_coord = stk::mesh::field_data(*coordinates_field, lnode);
       lnode_coord[0] = x[0][elem_GID];
       double* rnode_coord = stk::mesh::field_data(*coordinates_field, rnode);
       rnode_coord[0] = x[0][elem_GID+1];
   
-      // Set node sets
+      // Set node and side sets
       if (elem_GID==0) {
          singlePartVec[0] = nsPartVec["NodeSet0"];
          bulkData->change_entity_parts(lnode, singlePartVec);
+
+/*
+         singlePartVec[0] = ssPartVec["SideSet0"];
+         bulkData->change_entity_parts(lnode, singlePartVec);
+*/
       }
       if ((elem_GID+1)==(unsigned int)elem_map->NumGlobalElements()) {
         singlePartVec[0] = nsPartVec["NodeSet1"];
         bulkData->change_entity_parts(rnode, singlePartVec);
+
+/*
+        singlePartVec[0] = ssPartVec["SideSet1"];
+        bulkData->change_entity_parts(rnode, singlePartVec);
+*/
       }
+
     }
   }
   
@@ -429,9 +484,9 @@ namespace Albany { // Need to wrap all these specializations in the Albany names
   {
   
     // STK
-    //std::vector<stk::mesh::Part*> noPartVec;
+    //std::vector<stk::mesh::Part*> nodePartVec;
     //std::vector<stk::mesh::Part*> singlePartVec(1);
-    stk::mesh::PartVector noPartVec;
+    stk::mesh::PartVector nodePartVec;
     stk::mesh::PartVector singlePartVec(1);
     std::vector<double> centroid(2);
     unsigned int ebNo;
@@ -465,15 +520,24 @@ namespace Albany { // Need to wrap all these specializations in the Albany names
          // Does the centroid lie in the EB?
          if(EBSpecs[ebNo].inEB(centroid))
            break;
+
+        if(ebNo == numEB){ // error, we didn't find an element block that this element
+                            // should fit in
+
+            TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+              std::endl << "Error: Could not place element " << elem_GID << 
+              " in its corresponding element block." << std::endl);
+
+        }
       }
 
       singlePartVec[0] = partVec[ebNo];
   
       // Declare NodesL= (Add one to IDs because STK requires 1-based
-      stk::mesh::Entity& llnode = bulkData->declare_entity(metaData->node_rank(), 1+lower_left, noPartVec);
-      stk::mesh::Entity& lrnode = bulkData->declare_entity(metaData->node_rank(), 1+lower_right, noPartVec);
-      stk::mesh::Entity& urnode = bulkData->declare_entity(metaData->node_rank(), 1+upper_right, noPartVec);
-      stk::mesh::Entity& ulnode = bulkData->declare_entity(metaData->node_rank(), 1+upper_left, noPartVec);
+      stk::mesh::Entity& llnode = bulkData->declare_entity(metaData->node_rank(), 1+lower_left, nodePartVec);
+      stk::mesh::Entity& lrnode = bulkData->declare_entity(metaData->node_rank(), 1+lower_right, nodePartVec);
+      stk::mesh::Entity& urnode = bulkData->declare_entity(metaData->node_rank(), 1+upper_right, nodePartVec);
+      stk::mesh::Entity& ulnode = bulkData->declare_entity(metaData->node_rank(), 1+upper_left, nodePartVec);
   
       if (triangles) { // pair of 3-node triangles
         stk::mesh::Entity& face  = bulkData->declare_entity(metaData->element_rank(), 1+2*elem_id, singlePartVec);
@@ -530,7 +594,7 @@ namespace Albany { // Need to wrap all these specializations in the Albany names
   TmplSTKMeshStruct<3>::buildMesh()
   {
   
-    std::vector<stk::mesh::Part*> noPartVec;
+    std::vector<stk::mesh::Part*> nodePartVec;
     std::vector<stk::mesh::Part*> singlePartVec(1);
     std::vector<double> centroid(3);
     unsigned int ebNo;
@@ -575,20 +639,29 @@ namespace Albany { // Need to wrap all these specializations in the Albany names
          // Does the centroid lie in the EB?
          if(EBSpecs[ebNo].inEB(centroid))
            break;
+
+        if(ebNo == numEB){ // error, we didn't find an element block that this element
+                            // should fit in
+
+            TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+              std::endl << "Error: Could not place element " << elem_GID << 
+              " in its corresponding element block." << std::endl);
+
+        }
       }
 
       singlePartVec[0] = partVec[ebNo];
   
       // Add one to IDs because STK requires 1-based
       stk::mesh::Entity& elem  = bulkData->declare_entity(metaData->element_rank(), 1+elem_id, singlePartVec);
-      stk::mesh::Entity& llnode = bulkData->declare_entity(metaData->node_rank(), 1+lower_left, noPartVec);
-      stk::mesh::Entity& lrnode = bulkData->declare_entity(metaData->node_rank(), 1+lower_right, noPartVec);
-      stk::mesh::Entity& urnode = bulkData->declare_entity(metaData->node_rank(), 1+upper_right, noPartVec);
-      stk::mesh::Entity& ulnode = bulkData->declare_entity(metaData->node_rank(), 1+upper_left, noPartVec);
-      stk::mesh::Entity& llnodeb = bulkData->declare_entity(metaData->node_rank(), 1+lower_left_back, noPartVec);
-      stk::mesh::Entity& lrnodeb = bulkData->declare_entity(metaData->node_rank(), 1+lower_right_back, noPartVec);
-      stk::mesh::Entity& urnodeb = bulkData->declare_entity(metaData->node_rank(), 1+upper_right_back, noPartVec);
-      stk::mesh::Entity& ulnodeb = bulkData->declare_entity(metaData->node_rank(), 1+upper_left_back, noPartVec);
+      stk::mesh::Entity& llnode = bulkData->declare_entity(metaData->node_rank(), 1+lower_left, nodePartVec);
+      stk::mesh::Entity& lrnode = bulkData->declare_entity(metaData->node_rank(), 1+lower_right, nodePartVec);
+      stk::mesh::Entity& urnode = bulkData->declare_entity(metaData->node_rank(), 1+upper_right, nodePartVec);
+      stk::mesh::Entity& ulnode = bulkData->declare_entity(metaData->node_rank(), 1+upper_left, nodePartVec);
+      stk::mesh::Entity& llnodeb = bulkData->declare_entity(metaData->node_rank(), 1+lower_left_back, nodePartVec);
+      stk::mesh::Entity& lrnodeb = bulkData->declare_entity(metaData->node_rank(), 1+lower_right_back, nodePartVec);
+      stk::mesh::Entity& urnodeb = bulkData->declare_entity(metaData->node_rank(), 1+upper_right_back, nodePartVec);
+      stk::mesh::Entity& ulnodeb = bulkData->declare_entity(metaData->node_rank(), 1+upper_left_back, nodePartVec);
       bulkData->declare_relation(elem, llnode, 0);
       bulkData->declare_relation(elem, lrnode, 1);
       bulkData->declare_relation(elem, urnode, 2);

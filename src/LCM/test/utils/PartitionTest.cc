@@ -5,6 +5,7 @@
 // Define only if Zoltan is enabled
 #if defined (ALBANY_LCM) && defined(ALBANY_ZOLTAN)
 
+#include <algorithm>
 #include <iomanip>
 #include <Teuchos_CommandLineProcessor.hpp>
 
@@ -117,6 +118,25 @@ int main(int ac, char* av[])
   // Output partitions
   //
 
+  // For better color contrast in visualization programs, shuffle
+  // the partition number so that it is less likely that partitions
+  // with very close numbers are next to each other, leading to almost
+  // the same color in output.
+  const LCM::ScalarMap
+  partition_volumes = connectivity_array.GetPartitionVolumes();
+
+  const unsigned int
+  number_partitions = partition_volumes.size();
+
+  LCM::IDList
+  partition_shuffle(number_partitions);
+
+  for (LCM::IDList::size_type i = 0; i < number_partitions; ++i) {
+    partition_shuffle[i] = i;
+  }
+
+  std::random_shuffle(partition_shuffle.begin(), partition_shuffle.end());
+
   // Convert partition map to format used by Albany to set internal variables.
   // Assumption: numbering of elements is contiguous.
   for (std::map<int, int>::const_iterator
@@ -131,7 +151,7 @@ int main(int ac, char* av[])
     partition = (*partitions_iter).second;
 
     // set partition number in stk field memory
-    stk_partition[element] = partition;
+    stk_partition[element] = partition_shuffle[partition];
 
   }
 
@@ -145,9 +165,6 @@ int main(int ac, char* av[])
   // Write report
   const double
   volume = connectivity_array.GetVolume();
-
-  const LCM::ScalarMap
-  partition_volumes = connectivity_array.GetPartitionVolumes();
 
   const double
   length_scale_cubed = length_scale * length_scale * length_scale;
@@ -167,7 +184,7 @@ int main(int ac, char* av[])
   std::cout << "V/L^3                    : ";
   std::cout << std::scientific << std::setw(14) << std::setprecision(8);
   std::cout << volume / length_scale_cubed << std::endl;
-  std::cout << "Number of Partitions     : " << partition_volumes.size();
+  std::cout << "Number of Partitions     : " << number_partitions;
   std::cout << std::endl;
   std::cout << "------------------------------------------";
   std::cout << std::endl;
@@ -188,6 +205,9 @@ int main(int ac, char* av[])
   }
   std::cout << "==========================================";
   std::cout << std::endl;
+
+  LCM::DualGraph dual_graph(connectivity_array);
+  dual_graph.Print();
 
   return 0;
 

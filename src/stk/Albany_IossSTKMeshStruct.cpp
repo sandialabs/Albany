@@ -74,8 +74,9 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 
   stk::io::put_io_part_attribute(metaData->universal_part());
 
-  // Set element blocks and node sets
+  // Set element blocks, side sets and node sets
   const stk::mesh::PartVector & all_parts = metaData->get_parts();
+  std::vector<std::string> ssNames;
   std::vector<std::string> nsNames;
   int numEB = 0;
 
@@ -96,6 +97,13 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
       if (part->name()[0] != '{') {
          nsPartVec[part->name()]=part;
          nsNames.push_back(part->name());
+      }
+    }
+    else if ( part->primary_entity_rank() == metaData->side_rank()) {
+      if (part->name()[0] != '{') {
+         *out << "Mesh has Side Set ID: " << part->name() << endl;
+         ssPartVec[part->name()]=part;
+         ssNames.push_back(part->name());
       }
     }
   }
@@ -144,6 +152,7 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
   this->SetupFieldData(comm, neq_, sis, worksetSize);
 
   *out << "IOSS-STK: number of node sets = " << nsPartVec.size() << endl;
+  *out << "IOSS-STK: number of side sets = " << ssPartVec.size() << endl;
 
   metaData->commit();
 

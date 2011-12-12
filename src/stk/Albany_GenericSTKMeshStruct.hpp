@@ -51,7 +51,8 @@ namespace Albany {
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const int worksetSize_);
 
-    void DeclareParts(std::vector<std::string> ebNames, std::vector<std::string> nsNames);
+    void DeclareParts(std::vector<std::string> ebNames, std::vector<std::string> ssNames,
+      std::vector<std::string> nsNames);
 
     //! Utility function that uses some integer arithmetic to choose a good worksetSize
     int computeWorksetSize(const int worksetSizeMax, const int ebSizeMax) const;

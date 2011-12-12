@@ -180,8 +180,8 @@ Albany::NavierStokes::constructDirichletEvaluators(
    }
    if (haveHeatEq) dirichletNames[index++] = "T";
    if (haveNeutEq) dirichletNames[index++] = "phi";
-   Albany::DirichletUtils dirUtils;
-   dfm = dirUtils.constructDirichletEvaluators(meshSpecs.nsNames, dirichletNames,
+   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
+   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
 }
 

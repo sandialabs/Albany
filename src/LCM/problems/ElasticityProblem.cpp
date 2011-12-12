@@ -34,6 +34,9 @@ ElasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   *out << "Problem Name = " << method << std::endl;
 
   haveSource =  params->isSublist("Source Functions");
+
+  matModel = params->sublist("Material Model").get("Model Name", "LinearElasticity");
+
 }
 
 Albany::ElasticityProblem::
@@ -85,8 +88,8 @@ Albany::ElasticityProblem::constructDirichletEvaluators(
    dirichletNames[0] = "X";
    if (neq>1) dirichletNames[1] = "Y";
    if (neq>2) dirichletNames[2] = "Z";
-   Albany::DirichletUtils dirUtils;
-   dfm = dirUtils.constructDirichletEvaluators(meshSpecs.nsNames, dirichletNames,
+   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
+   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
 }
 
@@ -98,6 +101,26 @@ Albany::ElasticityProblem::getValidProblemParameters() const
 
   validPL->sublist("Elastic Modulus", false, "");
   validPL->sublist("Poissons Ratio", false, "");
+  validPL->sublist("Material Model", false, "");
+
+  if (matModel == "CapModel")
+  {
+	validPL->set<double>("A", false, "");
+	validPL->set<double>("B", false, "");
+	validPL->set<double>("C", false, "");
+	validPL->set<double>("theta", false, "");
+	validPL->set<double>("R", false, "");
+	validPL->set<double>("kappa0", false, "");
+	validPL->set<double>("W", false, "");
+	validPL->set<double>("D1", false, "");
+	validPL->set<double>("D2", false, "");
+	validPL->set<double>("calpha", false, "");
+	validPL->set<double>("psi", false, "");
+	validPL->set<double>("N", false, "");
+	validPL->set<double>("L", false, "");
+	validPL->set<double>("phi", false, "");
+	validPL->set<double>("Q", false, "");
+  }
 
   return validPL;
 }

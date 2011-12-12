@@ -77,6 +77,8 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> strain; // porosity holds linear relation to volumetric strain
 
   bool isPoroElastic;
+  bool isCompressibleSolidPhase;
+  bool isCompressibleFluidPhase;
   ScalarT initialPorosity_value;
 
   // For compressible grain

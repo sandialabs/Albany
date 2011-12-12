@@ -442,6 +442,24 @@ namespace LCM {
     AdjacencyMap
     GetGraph() const;
 
+    ///
+    /// \return Edge list to create boost graph
+    ///
+    AdjacencyMap
+    GetEdgeList() const;
+
+    ///
+    /// \return Connected components in the dual graph
+    ///
+    int
+    GetConnectedComponents(std::vector<int> & components) const;
+
+    ///
+    /// Print graph for debugging
+    ///
+    void
+    Print() const;
+
   private:
 
     //
