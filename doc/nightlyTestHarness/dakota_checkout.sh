@@ -29,7 +29,7 @@ cd $NIGHTLYDIR
 #-------------------------------------------
 
 wget -nv --no-check-certificate \
- https://development.sandia.gov/DAKOTA/licensing/votd/Dakota_votd.src.tar.gz \
+ https://development.sandia.gov/dakota/distributions/dakota/votd/Dakota_votd.src.tar.gz \
  >  $DAKOUTDIR/dakota_wget.out 
 gunzip Dakota_votd.src.tar.gz
 

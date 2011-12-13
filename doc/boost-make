@@ -9,6 +9,9 @@
 # The following 2 lines should build these libraries and install
 # them in a lib subdirectory. 
 #
+# The Trilinos script should include this line:
+#    -D Boost_LIBRARY_DIRS:FILEPATH="$BOOSTDIR/lib" \
+#
 # This file should be copied to the top "boost" directory and executed.
 #
  
