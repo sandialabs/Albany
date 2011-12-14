@@ -3,7 +3,7 @@
 # set these!
 
 # root dir of the installation
-HOME_DIR=/localhome/jtostie/TEST
+HOME_DIR=/scratch/jtostie/LCM_TEST
 echo " HOME_DIR set to $HOME_DIR " 
 
 # number of processes
@@ -11,7 +11,7 @@ echo " input the number of processors: "
 read N
 
 # set the proxy server
-export http_proxy=wwwproxy.ran.sandia.gov:80
+export http_proxy=wwwproxy.sandia.gov:80
 
 echo " http_proxy set to $http_proxy "
 
@@ -298,7 +298,6 @@ cmake  \\
     -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \\
     -D TPL_ENABLE_MPI:BOOL=ON \\
     -D MPI_BASE_DIR:PATH=$INSTALL_DIR \\
-    -D TPL_BLAS_LIBRARIES:FILEPATH=/usr/lib64/libblas.so.3 \\
     -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \\
     -D Trilinos_VERBOSE_CONFIGURE:BOOL=OFF \\
     -D Trilinos_ENABLE_DEBUG:BOOL=OFF \\
