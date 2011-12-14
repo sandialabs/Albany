@@ -213,7 +213,7 @@ void Albany::LameProblem::constructEvaluators(
   Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
 
   if (haveSource) { // Source
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                        "Error!  Sources not implemented in Elasticity yet!");
 
     RCP<ParameterList> p = rcp(new ParameterList);

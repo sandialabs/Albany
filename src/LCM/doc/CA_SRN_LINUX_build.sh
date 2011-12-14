@@ -141,7 +141,7 @@ fi
 echo ""
 echo " Set compiler variables to use $TARGET"
 echo ""
-export cc=$INSTALL_DIR/bin/gcc
+export CC=$INSTALL_DIR/bin/gcc
 export CXX=$INSTALL_DIR/bin/g++
 export FC=$INSTALL_DIR/bin/gfortran
 export F77=$INSTALL_DIR/bin/gfortran
@@ -252,16 +252,16 @@ export PATH=$INSTALL_DIR/bin:$PATH
 
 echo "**** these need to be added to your path for future use ****"
 echo ""
-echo " export LD_LIBRARY_PATH=$INSTALL_DIR/lib:$LD_LIBRARY_PATH"
-echo " export LD_LIBRARY_PATH=$INSTALL_DIR/lib64:$LD_LIBRARY_PATH"
-echo " export PATH=$INSTALL_DIR/bin:$PATH"
+echo " export LD_LIBRARY_PATH=$INSTALL_DIR/lib:\$LD_LIBRARY_PATH"
+echo " export LD_LIBRARY_PATH=$INSTALL_DIR/lib64:\$LD_LIBRARY_PATH"
+echo " export PATH=$INSTALL_DIR/bin:\$PATH"
 echo ""
 
 cd $HOME_DIR
 echo " 
-export LD_LIBRARY_PATH=$INSTALL_DIR/lib:$LD_LIBRARY_PATH \\
-export LD_LIBRARY_PATH=$INSTALL_DIR/lib64:$LD_LIBRARY_PATH \\
-export PATH=$INSTALL_DIR/bin:$PATH" > LCM.conf
+export LD_LIBRARY_PATH=$INSTALL_DIR/lib:\$LD_LIBRARY_PATH \\
+export LD_LIBRARY_PATH=$INSTALL_DIR/lib64:\$LD_LIBRARY_PATH \\
+export PATH=$INSTALL_DIR/bin:\$PATH" > LCM.conf
 
 source LCM.conf
 

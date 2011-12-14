@@ -197,7 +197,7 @@ void Albany::ThermoPoroPlasticityProblem::constructEvaluators(
    RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
 
    const int numQPts = cubature->getNumPoints();
-   const int numVertices = cellType->getVertexCount();
+   const int numVertices = cellType->getNodeCount();
 
    *out << "Field Dimensions: Workset=" << worksetSize 
         << ", Vertices= " << numVertices

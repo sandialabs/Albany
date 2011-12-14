@@ -327,6 +327,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/StrainRateFactor.cpp
     ${LCM_DIR}/evaluators/MixtureThermalExpansion.cpp
     ${LCM_DIR}/evaluators/MixtureSpecificHeat.cpp
+    ${LCM_DIR}/evaluators/SetField.cpp
   )
 
   SET(HEADERS ${HEADERS}
@@ -436,6 +437,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/MixtureThermalExpansion_Def.hpp
     ${LCM_DIR}/evaluators/MixtureSpecificHeat.hpp
     ${LCM_DIR}/evaluators/MixtureSpecificHeat_Def.hpp
+    ${LCM_DIR}/evaluators/SetField.hpp 
+    ${LCM_DIR}/evaluators/SetField_Def.hpp 
   )
 
   #LCM utils
@@ -646,12 +649,12 @@ IF (ALBANY_LAME)
     Albany_Utils.cpp
     Albany_StateManager.cpp
     stk/Albany_GenericSTKMeshStruct.cpp
-#    stk/Albany_Cube3DSTKMeshStruct.cpp
     stk/Albany_TmplSTKMeshStruct.cpp
     stk/Albany_STKDiscretization.cpp
     ${LCM_DIR}/utils/Tensor.cc
     ${LCM_DIR}/utils/LameUtils.cpp
     ${LCM_DIR}/evaluators/LameStress.cpp
+    ${LCM_DIR}/evaluators/SetField.cpp
     ${LCM_DIR}/test/unit_tests/StandardUnitTestMain.cpp
     ${LCM_DIR}/test/unit_tests/utLameStress_elastic.cpp
   )

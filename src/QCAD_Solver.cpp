@@ -57,14 +57,13 @@ void AddStateToState(Albany::StateArrays& src, std::string srcStateNameToAdd,
 void SubtractStateFromState(Albany::StateArrays& src, std::string srcStateNameToSubtract,
 			    Albany::StateArrays& dest, std::string destStateNameToSubtractFrom);
 
-bool checkConvergence(Albany::StateArrays& states, 
-		      std::vector<Intrepid::FieldContainer<RealType> >& prevState,
-		      std::string stateName, double tol);
+double getMaxDifference(Albany::StateArrays& states, 
+			std::vector<Intrepid::FieldContainer<RealType> >& prevState,
+			std::string stateName);
 
 void ResetEigensolverShift(const Teuchos::RCP<EpetraExt::ModelEvaluator>& Solver, double newShift,
 			   Teuchos::RCP<Teuchos::ParameterList>& eigList);
-double GetEigensolverShift(Albany::StateArrays& states, const std::string& stateNameToBaseShiftOn);
-
+double GetEigensolverShift(const QCAD::SolverSubSolver& ss, int minPotentialResponseIndex);
 
 
 //String processing helper functions
@@ -136,6 +135,9 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   else TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 				  std::endl << "Error in QCAD::Solver constructor:  " <<
 				  "Invalid problem name " << problemName << std::endl);
+
+  //Save comm for evaluation
+  solverComm = comm;
 
 
   //Setup Parameter and responses maps
@@ -311,7 +313,7 @@ QCAD::Solver::evalModel(const InArgs& inArgs,
 
   if(bVerbose) {
     *out << "BEGIN QCAD Solver Responses:" << endl;
-    for(std::size_t i=0; i< g->MyLength(); i++)
+    for(int i=0; i< g->MyLength(); i++)
       *out << "  Response " << i << " = " << (*g)[i] << endl;
     *out << "END QCAD Solver Responses" << endl;
   }
@@ -322,6 +324,7 @@ void
 QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
 					  const OutArgs& outArgs ) const
 {
+  const double CONVERGE_TOL = 1e-5;
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
   //state variables
@@ -340,6 +343,7 @@ QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
   if(bVerbose) *out << "QCAD Solve: Beginning Poisson-Schrodinger solve loop" << endl;
   bool bConverged = false; 
   std::size_t iter = 0;
+  double newShift;
     
   // determine if using predictor-corrector method
   //bool bPredictorCorrector = (iterationMethod == "Predictor Corrector");
@@ -349,27 +353,37 @@ QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
   while(!bConverged && iter < maxIter) 
   {
     iter++;
- 
-    if (iter > 1) 
-    {
-      double newShift = GetEigensolverShift(*pStatesToLoop, "Conduction Band");
-      ResetEigensolverShift(getSubSolver("Schrodinger").model, newShift, eigList);
-    }  
 
+    if (iter == 1) 
+      newShift = GetEigensolverShift(getSubSolver("InitPoisson"), 0);
+    else
+      newShift = GetEigensolverShift(getSubSolver("Poisson"), 0);
+    ResetEigensolverShift(getSubSolver("Schrodinger").model, newShift, eigList);
+
+    // Schrodinger Solve -> eigenstates
     if(bVerbose) *out << "QCAD Solve: Schrodinger iteration " << iter << endl;
     SolveModel(getSubSolver("Schrodinger"), pStatesToLoop, pStatesToPass,
 	       eigenDataNull, eigenDataToPass);
-      
+
+    // Save solution for predictory-corrector outer iterations      
     CopyStateToContainer(*pStatesToLoop, "Saved Solution", tmpContainer);
     CopyContainerToState(tmpContainer, *pStatesToPass, "Previous Poisson Potential");
-      
+
+    // Poisson Solve
     if(bVerbose) *out << "QCAD Solve: Poisson iteration " << iter << endl;
     SolveModel(getSubSolver("Poisson"), pStatesToPass, pStatesToLoop,
 	       eigenDataToPass, eigenDataNull);
-      
+
     eigenDataNull = Teuchos::null;
-    if(iter > 1) 
-      bConverged = checkConvergence(*pStatesToLoop, prevElectricPotential, "Electric Potential", 1e-5);
+
+    if(iter > 1) {
+      double local_maxDiff = getMaxDifference(*pStatesToLoop, prevElectricPotential, "Electric Potential");
+      double global_maxDiff;
+      solverComm->MaxAll(&local_maxDiff, &global_maxDiff, 1);
+      bConverged = (global_maxDiff < CONVERGE_TOL);
+      if(bVerbose) *out << "QCAD Solve: Electric Potential max diff=" 
+			<< global_maxDiff << " (tol=" << CONVERGE_TOL << ")" << std::endl;
+    }
       
     CopyStateToContainer(*pStatesToLoop, "Electric Potential", prevElectricPotential);
   } 
@@ -387,6 +401,7 @@ void
 QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
 				 const OutArgs& outArgs ) const
 {
+  const double CONVERGE_TOL = 1e-5;
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
   //state variables
@@ -399,13 +414,14 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
   //Field Containers to store states used in Poisson-Schrodinger loop
   std::vector<Intrepid::FieldContainer<RealType> > prevElectricPotential;
   std::vector<Intrepid::FieldContainer<RealType> > tmpContainer;
-  
+ 
   if(bVerbose) *out << "QCAD Solve: Initial Poisson solve (no quantum region) " << endl;
   SolveModel(getSubSolver("InitPoisson"), pStatesToPass, pStatesToLoop);
     
-  if(bVerbose) *out << "QCAD Solve: Beginning Poisson-Schrodinger solve loop" << endl;
+  if(bVerbose) *out << "QCAD Solve: Beginning Poisson-CI solve loop" << endl;
   bool bConverged = false;
   std::size_t iter = 0;
+  double newShift;
 
   Teuchos::RCP<Teuchos::ParameterList> eigList; //used to hold memory I think - maybe unneeded?
     
@@ -413,30 +429,59 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
   {
     iter++;
  
-    double newShift = GetEigensolverShift(*pStatesToLoop, "Conduction Band");
+    if (iter == 1) 
+      newShift = GetEigensolverShift(getSubSolver("InitPoisson"), 0);
+    else
+      newShift = GetEigensolverShift(getSubSolver("Poisson"), 0);
     ResetEigensolverShift(getSubSolver("Schrodinger").model, newShift, eigList);
 
+    // Schrodinger Solve -> eigenstates
     if(bVerbose) *out << "QCAD Solve: Schrodinger iteration " << iter << endl;
     SolveModel(getSubSolver("Schrodinger"), pStatesToLoop, pStatesToPass,
 	       eigenDataNull, eigenDataToPass);
-      
+     
+    // Save solution for predictory-corrector outer iterations
     CopyStateToContainer(*pStatesToLoop, "Saved Solution", tmpContainer);
     CopyContainerToState(tmpContainer, *pStatesToPass, "Previous Poisson Potential");
       
+    // Construct CI matrices:
+    // For N eigenvectors:
+    //  1) a NxN matrix of the single particle hamiltonian: H1P. Derivation:
+    //    H1P = diag(E) - delta, where delta_ij = int( [i(r)j(r)] F(r) dr)
+    //    - no actual poisson solve needed, but need framework to integrate?
+    //    - could we save a state containing weights and then integrate outside of NOX?
+    //
+    //  2) a matrix of all pair integrals.  Derivation:
+    //    <12|1/r|34> = int( 1(r1) 2(r2) 1/(r1-r2) 3(r1) 4(r2) dr1 dr2)
+    //                = int( 1(r1) 3(r1) [ int( 2(r2) 1/(r1-r2) 4(r2) dr2) ] dr1 )
+    //                = int( 1(r1) 3(r1) [ soln of Poisson, rho(r1), with src = 2(r) 4(r) ] dr1 )
+    //    - so use dummy poisson solve which has i(r)j(r) as only RHS term, for each pair <ij>,
+    //       and as output of each Solve integrate wrt each other potential pair 1(r) 3(r)
+    //       to generate all the elements.
+
+
+    // Poisson Solve
     if(bVerbose) *out << "QCAD Solve: Poisson iteration " << iter << endl;
     SolveModel(getSubSolver("Poisson"), pStatesToPass, pStatesToLoop,
 	       eigenDataToPass, eigenDataNull);
 
+    // Dummy Solve (needed?)
     if(bVerbose) *out << "QCAD Solve: Poisson Dummy iteration " << iter << endl;
     SolveModel(getSubSolver("DummyPoisson"), pStatesToPass, pStatesFromDummy,
 	       eigenDataToPass, eigenDataNull);
     AddStateToState(*pStatesFromDummy, "Electric Potential", *pStatesToLoop, "Conduction Band");
-
-    //TODO: insert CI here
       
     eigenDataNull = Teuchos::null;
-    if(iter > 1) 
-      bConverged = checkConvergence(*pStatesToLoop, prevElectricPotential, "Electric Potential", 1e-5);
+
+    if(iter > 1) {
+      double local_maxDiff = getMaxDifference(*pStatesToLoop, prevElectricPotential, "Electric Potential");
+      double global_maxDiff;
+      solverComm->MaxAll(&local_maxDiff, &global_maxDiff, 1);
+      bConverged = (global_maxDiff < CONVERGE_TOL);
+
+      if(bVerbose) *out << "QCAD Solve: Electric Potential max diff=" 
+			<< global_maxDiff << " (tol=" << CONVERGE_TOL << ")" << std::endl;
+    }
       
     CopyStateToContainer(*pStatesToLoop, "Electric Potential", prevElectricPotential);
   } 
@@ -924,9 +969,12 @@ void CopyContainerToState(std::vector<Intrepid::FieldContainer<RealType> >& src,
     dest[ws][stateNameOfCopy].dimensions(dims);
     TEUCHOS_TEST_FOR_EXCEPT( dims.size() != 2 );
     
-    for(int cell=0; cell < dims[0]; cell++)
-      for(int qp=0; qp < dims[1]; qp++)
+    for(int cell=0; cell < dims[0]; cell++) {
+      for(int qp=0; qp < dims[1]; qp++) {
+	TEUCHOS_TEST_FOR_EXCEPT( isnan(src[ws](cell,qp)) );
         dest[ws][stateNameOfCopy](cell,qp) = src[ws](cell,qp);
+      }
+    }
   }
 }
 
@@ -983,11 +1031,11 @@ void SubtractStateFromState(Albany::StateArrays& src,
   }
 }
 
-
-bool checkConvergence(Albany::StateArrays& states, 
+double getMaxDifference(Albany::StateArrays& states, 
 		      std::vector<Intrepid::FieldContainer<RealType> >& prevState,
-		      std::string stateName, double tol)
+		      std::string stateName)
 {
+  double maxDiff = 0.0;
   int numWorksets = states.size();
   std::vector<int> dims;
 
@@ -1004,16 +1052,12 @@ bool checkConvergence(Albany::StateArrays& states,
       {
         // std::cout << "prevState = " << prevState[ws](cell,qp) << std::endl;
         // std::cout << "currState = " << states[ws][stateName](cell,qp) << std::endl;
-        if( fabs( states[ws][stateName](cell,qp) - prevState[ws](cell,qp) ) > tol )
-        {
-          std::cout << "ws = " << ws << ", cell = " << cell << ", qp = " << qp << std::endl; 
-          std::cout << "diff = " << fabs( states[ws][stateName](cell,qp) - prevState[ws](cell,qp) ) << std::endl;
-          return false;
-        }  
+        if( fabs( states[ws][stateName](cell,qp) - prevState[ws](cell,qp) ) > maxDiff ) 
+	  maxDiff = fabs( states[ws][stateName](cell,qp) - prevState[ws](cell,qp) );
       }
     }
   }
-  return true;
+  return maxDiff;
 }
 
 
@@ -1032,46 +1076,23 @@ void ResetEigensolverShift(const Teuchos::RCP<EpetraExt::ModelEvaluator>& Solver
 
   //cout << " OLD Eigensolver list  " << oldEigList << endl;
   //cout << " NEW Eigensolver list  " << *eigList << endl;
-  std::cout << "DEBUG: new eigensolver shift = " << newShift << std::endl;
+  std::cout << "QCAD Solver: setting eigensolver shift = " 
+	    << std::setprecision(5) << newShift << std::endl;
+
   stepper->eigensolverReset(eigList);
 }
 
 
-double GetEigensolverShift(Albany::StateArrays& states,
-			   const std::string& stateNameToBaseShiftOn)
+double GetEigensolverShift(const QCAD::SolverSubSolver& ss, 
+			   int minPotentialResponseIndex)
 {
-  int numWorksets = states.size();
-  std::vector<PHX::DataLayout::size_type> dims;
-  const std::string& name = stateNameToBaseShiftOn;
-  const std::string auxName = "Approx Quantum EDensity";
+  int Ng = ss.responses_out->Ng();
+  TEUCHOS_TEST_FOR_EXCEPT( Ng <= 0 );
 
-  double val, approxQuanEDen;
-  double minVal, maxVal;
-  minVal = +1e10; maxVal = -1e10;
-
-  for (int ws = 0; ws < numWorksets; ws++)
-  {
-    states[ws][name].dimensions(dims);
-    
-    int size = dims.size();
-    TEUCHOS_TEST_FOR_EXCEPTION(size != 2, std::logic_error, "Unimplemented number of dimensions");
-    int cells = dims[0];
-    int qps = dims[1];
-
-    for (int cell = 0; cell < cells; ++cell)  
-    {
-      for (int qp = 0; qp < qps; ++qp) 
-      {
-        approxQuanEDen = states[ws][auxName](cell, qp); 
-        if (approxQuanEDen > 1e-5)  // approxQuanEDen is computed only in quantum regions
-        {
-          val = states[ws][name](cell, qp);
-          if(val < minVal) minVal = val;
-          if(val > maxVal) maxVal = val;
-        }  
-      }
-    }
-  }
+  Teuchos::RCP<Epetra_Vector> gVector = ss.responses_out->get_g(0);
+  
+  TEUCHOS_TEST_FOR_EXCEPT( gVector->GlobalLength() <= minPotentialResponseIndex);
+  double minVal = (*gVector)[minPotentialResponseIndex];
 
   //set shift to be slightly (5% of range) below minimum value
   // double shift = -(minVal - 0.05*(maxVal-minVal)); //minus sign b/c negative eigenvalue convention

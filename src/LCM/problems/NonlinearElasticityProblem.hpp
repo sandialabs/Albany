@@ -300,8 +300,8 @@ void Albany::NonlinearElasticityProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
     //Outputs: F, J
-    p->set<string>("DefGrad Name", "Deformation Gradient"); //dl->qp_tensor also
-    p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient"); 
+    p->set<string>("DefGrad Name", "F"); //dl->qp_tensor also
+    p->set<string>("DetDefGrad Name", "J"); 
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     ev = rcp(new LCM::DefGrad<EvalT,AlbanyTraits>(*p));
@@ -314,14 +314,14 @@ void Albany::NonlinearElasticityProblem::constructEvaluators(
       RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
       //Input
-      p->set<string>("DefGrad Name", "Deformation Gradient");
+      p->set<string>("DefGrad Name", "F");
       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
       p->set<string>("Elastic Modulus Name", "Elastic Modulus");
       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
       p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
-      p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient");  // dl->qp_scalar also
+      p->set<string>("DetDefGrad Name", "J");  // dl->qp_scalar also
 
       //Output
       p->set<string>("Stress Name", matModel); //dl->qp_tensor also
@@ -329,6 +329,9 @@ void Albany::NonlinearElasticityProblem::constructEvaluators(
       ev = rcp(new LCM::Neohookean<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
       p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy,"zero");
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      p = stateMgr.registerStateVariable("F",dl->qp_tensor, dl->dummy,"identity");
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
@@ -342,7 +345,7 @@ void Albany::NonlinearElasticityProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
 
-    p->set<string>("DefGrad Name", "Deformation Gradient"); 
+    p->set<string>("DefGrad Name", "F"); 
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
     //Output
@@ -451,7 +454,7 @@ void Albany::NonlinearElasticityProblem::constructEvaluators(
       RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
       //Input
-      p->set<string>("DefGrad Name", "Deformation Gradient");
+      p->set<string>("DefGrad Name", "F");
       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
       p->set<string>("Elastic Modulus Name", "Elastic Modulus");
@@ -462,7 +465,7 @@ void Albany::NonlinearElasticityProblem::constructEvaluators(
       p->set<string>("Saturation Modulus Name", "Saturation Modulus"); // dl->qp_scalar also
       p->set<string>("Saturation Exponent Name", "Saturation Exponent"); // dl->qp_scalar also
       p->set<string>("Yield Strength Name", "Yield Strength"); // dl->qp_scalar also
-      p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient");  // dl->qp_scalar also
+      p->set<string>("DetDefGrad Name", "J");  // dl->qp_scalar also
 
       //Output
       p->set<string>("Stress Name", matModel); //dl->qp_tensor also
@@ -497,9 +500,9 @@ void Albany::NonlinearElasticityProblem::constructEvaluators(
     p->set<string>("Stress Name", matModel);
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-    p->set<string>("DefGrad Name", "Deformation Gradient"); //dl->qp_tensor also
+    p->set<string>("DefGrad Name", "F"); //dl->qp_tensor also
 
-    p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient");
+    p->set<string>("DetDefGrad Name", "J");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");

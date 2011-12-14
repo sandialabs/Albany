@@ -184,7 +184,7 @@ void QCAD::PoissonProblem::constructEvaluators(
    RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
 
    const int numQPts = cubature->getNumPoints();
-   const int numVertices = cellType->getVertexCount();
+   const int numVertices = cellType->getNodeCount();
 
    *out << "Field Dimensions: Workset=" << worksetSize 
         << ", Vertices= " << numVertices
@@ -208,11 +208,11 @@ void QCAD::PoissonProblem::constructEvaluators(
 
    Teuchos::ArrayRCP<string> dof_names_dot(neq);
    if (supportsTransient) {
-     for (int i=0; i<neq; i++) dof_names_dot[i] = dof_names[i]+"_dot";
+     for (unsigned int i=0; i<neq; i++) dof_names_dot[i] = dof_names[i]+"_dot";
    }
 
    Teuchos::ArrayRCP<string> resid_names(neq);
-     for (int i=0; i<neq; i++) resid_names[i] = dof_names[i]+" Residual";
+     for (unsigned int i=0; i<neq; i++) resid_names[i] = dof_names[i]+" Residual";
 
    if (supportsTransient) fm0.template registerEvaluator<EvalT>
        (evalUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot));
@@ -231,7 +231,7 @@ void QCAD::PoissonProblem::constructEvaluators(
    fm0.template registerEvaluator<EvalT>
      (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
 
-   for (int i=0; i<neq; i++) {
+   for (unsigned int i=0; i<neq; i++) {
      fm0.template registerEvaluator<EvalT>
        (evalUtils.constructDOFInterpolationEvaluator(dof_names[i]));
 

@@ -71,7 +71,7 @@ struct StateStruct {
   //enum Entity {Node, Element, UndefinedEntity};
   //enum InitType {Zero, Identity, Restart, UndefinedInit};
 
-  StateStruct (std::string name_): name(name_),output(true), saveOldState(false), responseIDtoRequire("") {};
+  StateStruct (std::string name_): name(name_), responseIDtoRequire(""), output(true), saveOldState(false) {};
    //StateStruct (std::string name_): name(name_), entity(UndefinedEntity), initType(UndefinedInit), output(true) {};
   ~StateStruct () {};
 

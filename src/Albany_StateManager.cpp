@@ -195,6 +195,15 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
   *out << std::endl;
 }
 
+
+Teuchos::RCP<Albany::AbstractDiscretization> 
+Albany::StateManager::
+getDiscretization()
+{ 
+  return disc;
+}
+
+
 void
 Albany::StateManager::
 importStateData(Albany::StateArrays& statesToCopyFrom)

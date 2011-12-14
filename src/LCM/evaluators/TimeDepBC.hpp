@@ -53,8 +53,8 @@ public:
 
 protected:
   const int offset;
-  vector< RealType > timeValues;
-  vector< RealType > BCValues;
+  std::vector< RealType > timeValues;
+  std::vector< RealType > BCValues;
 };
 
 // **************************************************************

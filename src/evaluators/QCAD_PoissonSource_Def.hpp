@@ -1399,37 +1399,3 @@ QCAD::PoissonSource<EvalT,Traits>::computeVxcLDA (const double & relPerm,
 
 // **********************************************************************
 
-//TODO: remove after new version is tested
-/*template<typename EvalT,typename Traits>
-std::vector<double>
-QCAD::PoissonSource<EvalT,Traits>::ReadEigenvaluesFromFile(int numberToRead)
-{
-  std::vector<double> eigenvals;
-
-  //Open eigenvalue filename and read into eigenvals vector
-  std::ifstream evalData;
-  evalData.open(eigenValueFilename.c_str());
-  TEUCHOS_TEST_FOR_EXCEPTION(!evalData.is_open(), Teuchos::Exceptions::InvalidParameter,
-		     std::endl << "Error! Cannot open eigenvalue filename  " 
-		     << eigenValueFilename << std::endl);
-
-  eigenvals.resize(numberToRead);
-
-  const double TOL = 1e-6;
-  char buf[100];
-  int index;
-  double RePart, ImPart;
-
-  evalData.getline(buf,100); //skip header
-  while ( !evalData.eof() ) {
-    evalData >> index >> RePart >> ImPart;
-    if(fabs(ImPart) > TOL)
-      std::cout << "WARNING: eigenvalue " << index << " has Im Part: " 
-		<< RePart << " + " << ImPart << "i" << std::endl;
-    if(index < numberToRead) eigenvals[index] = -RePart; //negative b/c of convention
-    //std::cout << "DEBUG eval(" << index << ") = " << RePart << std::endl;
-  }
-  evalData.close();
-  return eigenvals;
-}
-*/

@@ -94,6 +94,10 @@ public:
 
   //! Method to set discretization object
   void setStateArrays(const Teuchos::RCP<Albany::AbstractDiscretization>& discObj);
+
+  //! Method to get discretization object
+  Teuchos::RCP<Albany::AbstractDiscretization> getDiscretization();
+
   //! Method to get state information for a specific workset
   Albany::StateArray& getStateArray(int ws) const;
   //! Method to get state information for all worksets

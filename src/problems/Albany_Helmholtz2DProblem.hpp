@@ -153,7 +153,7 @@ void Albany::Helmholtz2DProblem::constructEvaluators(
 
    const int numDim = cubature->getDimension();
    const int numQPts = cubature->getNumPoints();
-   const int numVertices = cellType->getVertexCount();
+   const int numVertices = cellType->getNodeCount();
 
    *out << "Field Dimensions: Workset=" << worksetSize
         << ", Vertices= " << numVertices

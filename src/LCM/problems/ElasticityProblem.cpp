@@ -83,14 +83,14 @@ void
 Albany::ElasticityProblem::constructDirichletEvaluators(
         const Albany::MeshSpecsStruct& meshSpecs)
 {
-   // Construct Dirichlet evaluators for all nodesets and names
-   vector<string> dirichletNames(neq);
-   dirichletNames[0] = "X";
-   if (neq>1) dirichletNames[1] = "Y";
-   if (neq>2) dirichletNames[2] = "Z";
-   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
-   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
-                                          this->params, this->paramLib);
+  // Construct Dirichlet evaluators for all nodesets and names
+  std::vector<string> dirichletNames(neq);
+  dirichletNames[0] = "X";
+  if (neq>1) dirichletNames[1] = "Y";
+  if (neq>2) dirichletNames[2] = "Z";
+  Albany::BCUtils<Albany::DirichletTraits> dirUtils;
+  dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
+                                       this->params, this->paramLib);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

@@ -100,8 +100,8 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
       }
     }
     else if ( part->primary_entity_rank() == metaData->side_rank()) {
-       *out << "Mesh has Side Set ID: " << part->name() << endl;
       if (part->name()[0] != '{') {
+         *out << "Mesh has Side Set ID: " << part->name() << endl;
          ssPartVec[part->name()]=part;
          ssNames.push_back(part->name());
       }
