@@ -82,7 +82,7 @@ Albany::Helmholtz2DProblem::constructDirichletEvaluators(
         const Albany::MeshSpecsStruct& meshSpecs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
-   vector<string> dirichletNames(neq);
+   std::vector<string> dirichletNames(neq);
    dirichletNames[0] = "U";
    dirichletNames[1] = "V";
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;

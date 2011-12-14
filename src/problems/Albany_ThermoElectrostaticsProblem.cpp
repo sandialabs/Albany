@@ -85,7 +85,7 @@ Albany::ThermoElectrostaticsProblem::constructDirichletEvaluators(
 {
 
    // Construct Dirichlet evaluators for all nodesets and names
-   vector<string> dirichletNames(neq);
+   std::vector<string> dirichletNames(neq);
    dirichletNames[0] = "Phi";
    dirichletNames[1] = "T";
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;

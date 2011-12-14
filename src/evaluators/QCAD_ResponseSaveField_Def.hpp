@@ -154,17 +154,17 @@ evaluateFields(typename Traits::EvalData workset)
   if(!isVectorField) {
     switch (size) {  //Note: size should always == 2 now: qp_scalar type or cell_sclar state registered
     case 2:     
-      for (int cell = 0; cell < workset.numCells; ++cell) {
+      for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
         if( outputCellAverage ) {
           double integral = 0, vol = 0;
-	  for (int qp = 0; qp < numQPs; ++qp) {
+	  for (std::size_t qp = 0; qp < numQPs; ++qp) {
 	    integral += field(cell,qp) * weights(cell,qp);
             vol += weights(cell, qp);
           }
-          sta(cell,0) = integral / vol;
+          sta(cell,(std::size_t)0) = integral / vol;
         }
         else {
-	  for (int qp = 0; qp < numQPs; ++qp)
+	  for (std::size_t qp = 0; qp < numQPs; ++qp)
 	    sta(cell, qp) = field(cell,qp);
         }
       }
@@ -192,13 +192,13 @@ evaluateFields(typename Traits::EvalData workset)
     double t;
     switch (size) {
     case 2:     
-      for (int cell = 0; cell < workset.numCells; ++cell) {
+      for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
 
 	ScalarT stateValue = 0.0;
 	double vol = 0.0;
-	if( outputCellAverage ) sta(cell,0) = 0.0;
+	if( outputCellAverage ) sta(cell,(std::size_t)0) = 0.0;
 
-	for (int qp = 0; qp < numQPs; ++qp) {
+	for (std::size_t qp = 0; qp < numQPs; ++qp) {
 	  t = 0.0;
 
 	  if(vectorOp == "magnitude") {
@@ -258,13 +258,13 @@ evaluateFields(typename Traits::EvalData workset)
 	  }
 
 	  if( outputCellAverage ) {
-	    sta(cell, 0) += stateValue * weights(cell,qp);
+	    sta(cell, (std::size_t)0) += stateValue * weights(cell,qp);
 	    vol += weights(cell,qp);
 	  }
 	  else sta(cell, qp) = stateValue;
 	}
 
-	if( outputCellAverage ) sta(cell,0) /= vol;
+	if( outputCellAverage ) sta(cell,(std::size_t)0) /= vol;
       }
       break;
     default:

@@ -242,6 +242,11 @@ QCAD::SchrodingerResid<EvalT, Traits>::getInvEffMass(const std::string& EBName,
           effMass = barrEffMass * emass;  
         break;    
       }
+      default:
+      {
+	effMass = 0; // should never get here (suppresses uninitialized warning)
+	TEUCHOS_TEST_FOR_EXCEPT( effMass == 0 );
+      }
     }  // end of switch (numDims) 
     
     return 1.0/effMass;

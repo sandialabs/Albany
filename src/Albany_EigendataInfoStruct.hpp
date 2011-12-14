@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 #include "Teuchos_RCP.hpp"
-#include "NOX_Epetra_MultiVector.H"
+#include "Epetra_Vector.h"
 
 namespace Albany {
 
@@ -32,8 +32,8 @@ struct EigendataStruct {
 
   Teuchos::RCP<std::vector<double> > eigenvalueRe;
   Teuchos::RCP<std::vector<double> > eigenvalueIm;
-  Teuchos::RCP<NOX::Epetra::MultiVector> eigenvectorRe;
-  Teuchos::RCP<NOX::Epetra::MultiVector> eigenvectorIm;
+  Teuchos::RCP<Epetra_MultiVector> eigenvectorRe;
+  Teuchos::RCP<Epetra_MultiVector> eigenvectorIm;
 };
 
 }

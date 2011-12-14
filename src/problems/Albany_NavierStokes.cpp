@@ -170,7 +170,7 @@ Albany::NavierStokes::constructDirichletEvaluators(
         const Albany::MeshSpecsStruct& meshSpecs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
-   vector<string> dirichletNames(neq);
+   std::vector<string> dirichletNames(neq);
    int index = 0;
    if (haveFlowEq) {
      dirichletNames[index++] = "ux";
