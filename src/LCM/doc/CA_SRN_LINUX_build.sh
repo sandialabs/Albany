@@ -141,7 +141,7 @@ fi
 echo ""
 echo " Set compiler variables to use $TARGET"
 echo ""
-export cc=$INSTALL_DIR/bin/gcc
+export CC=$INSTALL_DIR/bin/gcc
 export CXX=$INSTALL_DIR/bin/g++
 export FC=$INSTALL_DIR/bin/gfortran
 export F77=$INSTALL_DIR/bin/gfortran
