@@ -62,7 +62,7 @@ int Albany_Dakota()
   if (dakota.rankZero()) {
     Dakota::RealVector finalValues = dakota.getFinalSolution().continuous_variables();
     cout << "\nAlbany_Dakota: Final Values from Dakota = " 
-         << setprecision(8) << finalValues << endl;
+         << std::setprecision(8) << finalValues << endl;
 
     return slvrfctry->checkTestResults(NULL, NULL, &finalValues);
   }

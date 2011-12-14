@@ -34,7 +34,7 @@ LameProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   haveSource =  params->isSublist("Source Functions");
 
   // currently only support 3D analyses
-  TEST_FOR_EXCEPTION(neq != 3,
+  TEUCHOS_TEST_FOR_EXCEPTION(neq != 3,
                      Teuchos::Exceptions::InvalidParameter,
                      "\nOnly three-dimensional analyses are suppored when using the Library of Advanced Materials for Engineering (LAME)\n");
 }
@@ -52,7 +52,7 @@ buildProblem(
     Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
   /* Construct All Phalanx Evaluators */
-  TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
+  TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
   fm.resize(1); rfm.resize(1);
   fm[0]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
   rfm[0] = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
@@ -84,7 +84,7 @@ Albany::LameProblem::constructDirichletEvaluators(
         const Albany::MeshSpecsStruct& meshSpecs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
-   vector<string> dirichletNames(neq);
+   std::vector<std::string> dirichletNames(neq);
    dirichletNames[0] = "X";
    if (neq>1) dirichletNames[1] = "Y";
    if (neq>2) dirichletNames[2] = "Z";
