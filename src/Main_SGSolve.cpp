@@ -58,7 +58,7 @@ void cullDistributedResponseMap( Teuchos::RCP<const Epetra_BlockMap>& x_map,
                                   // processor. I.e. need to ensure
                                   // that N is exactly Neqns-divisible
 
-  int nnodes = N / Neqns; // number of fem nodes
+  int nnodes = N / Neqns;          // number of fem nodes
   int N_new = nnodes * numKeepDOF; // length of local x_new 
 
   std::vector<int> gids(N);
@@ -66,9 +66,9 @@ void cullDistributedResponseMap( Teuchos::RCP<const Epetra_BlockMap>& x_map,
 
   x_map->MyGlobalElements(&gids[0]); // Fill local x_map into gids array
   
-  for ( int inode = 0; inode < N/Neqns ; ++inode) // 
+  for ( int inode = 0; inode < N/Neqns ; ++inode) // For every node 
     {
-      for ( int ieqn = 0; ieqn < Neqns; ++ieqn )
+      for ( int ieqn = 0; ieqn < Neqns; ++ieqn )  // Check every dof on the node
 	if( keepDOF[ieqn] == 1 )  // then want to keep this dof
 	  gids_new.push_back( gids[(inode*Neqns)+ieqn] );
     }
@@ -78,15 +78,23 @@ void cullDistributedResponseMap( Teuchos::RCP<const Epetra_BlockMap>& x_map,
 }
 
 // now cull the response vector itself
-void cullDistributedResponse( Teuchos::RCP<Epetra_Vector>& x,
-			      Teuchos::RCP<Epetra_Map>& x_map,
-			      Teuchos::RCP<Epetra_Vector>& x_new,
-			      Teuchos::RCP<Epetra_Map>& x_new_map )
+void cullDistributedResponse( Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly>& sg_u,
+			      Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly>& sg_u_new,
+			      Teuchos::RCP<Epetra_BlockMap>& sg_u_new_coeff_map )
 {
-  Epetra_Import importer( *x_new_map, *x_map );
-  x_new = Teuchos::rcp( new Epetra_Vector( *x_new_map ) );
 
-  x_new->Import( *x, importer, Insert );
+  // Create the new object, sg_u_new, using pertinent stuff from the
+  // original object, sg_u, and the culled coeff_mapp...
+  sg_u_new = Teuchos::rcp( new Stokhos::EpetraVectorOrthogPoly( sg_u->basis(),
+								sg_u->map(),
+								sg_u_new_coeff_map,
+								sg_u->productComm() ) );
+
+  // ...then, finally, import the data from sg_u into new object,
+  // sg_u_new:
+  Epetra_Import importer( *(sg_u_new->productMap()), *(sg_u->productMap()));
+  sg_u_new->getBlockVector()->Import(*(sg_u->getBlockVector()), importer,
+					       Insert);
 }
 
 
@@ -96,7 +104,6 @@ void cullDistributedResponse( Teuchos::RCP<Epetra_Vector>& x,
 bool KL_OnSolutionMultiVector( 
   const Teuchos::RCP<Piro::Epetra::StokhosSolver>& App_sg, 
   const Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly>& sg_u,
-  const Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> >& basis,
   const int NumKL,
   Teuchos::Array<double>& evals,
   Teuchos::RCP<Epetra_MultiVector>& evecs)
@@ -110,11 +117,11 @@ bool KL_OnSolutionMultiVector(
   */
 
   Teuchos::RCP<EpetraExt::BlockVector> X_ov = 
-    App_sg->get_sg_model()->import_solution(*(sg_u->getBlockVector()));
+    App_sg->get_sg_model()->import_solution( *(sg_u->getBlockVector()) );
   Teuchos::RCP<const EpetraExt::BlockVector> cX_ov = X_ov;
 
   // pceKL is object with member functions that explicitly call anasazi
-  Stokhos::PCEAnasaziKL pceKL(cX_ov, *basis, NumKL);
+  Stokhos::PCEAnasaziKL pceKL(cX_ov, *(sg_u->basis()), NumKL);
 
   // Set parameters for anasazi
   Teuchos::ParameterList anasazi_params = pceKL.getDefaultParams();
@@ -352,8 +359,6 @@ int main(int argc, char *argv[]) {
       {
 	Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_u = 
 	  sg_outArgs.get_g_sg(ng-1);
-	Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> > basis =
-	  sg_u->basis();
 	
 	// Boolean return value for KL solution function call 
 	bool KL_Success;	    
@@ -367,10 +372,11 @@ int main(int argc, char *argv[]) {
 	  {
 	    // Assume we want to cull the solution expansion...
 	    
-	    Teuchos::RCP<const Epetra_BlockMap> sg_u_block_map = sg_u->map(); 
 	    Teuchos::RCP<const Epetra_BlockMap> sg_u_coeff_map = sg_u->coefficientMap();
+	    Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_u_new; // placeholder for culled coeffs
 	    Teuchos::RCP<Epetra_BlockMap> sg_u_new_coeff_map; // placeholder for culled coeff map
 	    
+
 	    // Locate the vector components we want to keep manually.
 	    // For quad2d problem, it's 2 and we want to
 	    // cull the second variable on each node in
@@ -378,28 +384,17 @@ int main(int argc, char *argv[]) {
 	    int neq = 4;                 // NSRayleighBernard2D
 	    vector<int> keepDOF(neq, 1); // Initialize to keep all dof, then,
 	    keepDOF[3] = 0;              // as stated, cull the 2nd
-					 // and 3rd dof (temp and
+	    keepDOF[4] =0;	         // and 3rd dof (temp and
 					 // pressure)
-	    keepDOF[4] =0
 
 	    int ndim = accumulate(keepDOF.begin(), keepDOF.end(), 0);
 	    
 	    // Now, create the new, culled coefficient map...
 	    cullDistributedResponseMap( sg_u_coeff_map, keepDOF, sg_u_new_coeff_map );
 	    
-	    // ...and with the new map, create the object for culled
-	    // solution vector with the new map...
-	    Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> sg_u_new =
-	      Teuchos::rcp( new Stokhos::EpetraVectorOrthogPoly( basis,
-								 sg_u_block_map,
-								 sg_u_new_coeff_map,
-								 sg_u->productComm() ) );
-	    //...then, finally, import the data from sg_u into new object,
-	    //sg_u_new:
-	    Epetra_Import importer( *(sg_u_new->productMap()), *(sg_u->productMap()));
-	    sg_u_new->getBlockVector()->Import(*(sg_u->getBlockVector()), importer,
-					       Insert);
-	
+	    // ...and import the correct data from sg_u into sg_u_new
+	    cullDistributedResponse( sg_u, sg_u_new, sg_u_new_coeff_map );
+	    
 	    // 	cout << "First 3*neq values of sg_u and sg_u_new:" << endl;
 	    // 	{
 	    // 	  for ( int i=0; i < 3*neq; i++ )
@@ -417,7 +412,6 @@ int main(int argc, char *argv[]) {
 	    
 	    KL_Success = KL_OnSolutionMultiVector(sg_solver, 
 						  sg_u_new,
-						  basis,
 						  NumKL,
 						  evals,
 						  evecs);
@@ -426,7 +420,6 @@ int main(int argc, char *argv[]) {
 	  {
 	    KL_Success = KL_OnSolutionMultiVector(sg_solver, 
 						  sg_u,
-						  basis,
 						  NumKL,
 						  evals,
 						  evecs);
