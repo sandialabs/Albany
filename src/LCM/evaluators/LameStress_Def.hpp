@@ -83,7 +83,7 @@ template<typename EvalT, typename Traits>
 void LameStress<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  TEST_FOR_EXCEPTION(numDims != 3, Teuchos::Exceptions::InvalidParameter, " LAME materials enabled only for three-dimensional analyses.");
+  TEUCHOS_TEST_FOR_EXCEPTION(numDims != 3, Teuchos::Exceptions::InvalidParameter, " LAME materials enabled only for three-dimensional analyses.");
 
   // Get the old state data
   //Albany::StateVariables oldState = *workset.oldState;

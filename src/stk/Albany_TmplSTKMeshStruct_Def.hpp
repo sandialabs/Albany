@@ -89,7 +89,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
   std::string cellTopo = params->get("Cell Topology", "Quad");
   if (cellTopo == "Tri" || cellTopo == "Triangle")  
     triangles = true;
-  // else TEST_FOR_EXCEPTION (cellTopo != "Quad", std::logic_error,
+  // else TEUCHOS_TEST_FOR_EXCEPTION (cellTopo != "Quad", std::logic_error,
   //    "\nUnknown Cell Topology entry in STK2D(not \'Tri\' or \'Quad\'): "
   //     << cellTopo);
 
