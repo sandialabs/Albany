@@ -55,7 +55,8 @@ Albany::STKDiscretization::STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMes
   comm(comm_),
   neq(stkMeshStruct_->neq),
   stkMeshStruct(stkMeshStruct_),
-  interleavedOrdering(stkMeshStruct_->interleavedOrdering)
+  interleavedOrdering(stkMeshStruct_->interleavedOrdering),
+  allocated_xyz(false)
 {
   Albany::STKDiscretization::updateMesh(stkMeshStruct,comm);
 }
@@ -65,6 +66,7 @@ Albany::STKDiscretization::~STKDiscretization()
 #ifdef ALBANY_SEACAS
   if (stkMeshStruct->exoOutput) delete mesh_data;
 #endif
+  if (allocated_xyz) { delete [] xx; delete [] yy; delete [] zz; allocated_xyz=false;} 
 }
 
 	    
@@ -132,6 +134,35 @@ Albany::STKDiscretization::getCoordinates() const
 
   return coordinates;
 }
+
+void
+Albany::STKDiscretization::getOwned_xyz(double** x, double** y, double** z) 
+{
+  // Function to return x,y,z at owned nodes as double*, specifically for ML
+  int numDim = stkMeshStruct->numDim;
+
+  if (allocated_xyz) { delete [] xx; delete [] yy; delete [] zz;} 
+  xx = new double[numOwnedNodes];
+  yy = new double[numOwnedNodes];
+  zz = new double[numOwnedNodes];
+  allocated_xyz = true;
+
+  for (int i=0; i < numOwnedNodes; i++)  {
+    int node_gid = gid(ownednodes[i]);
+    int node_lid = node_map->LID(node_gid);
+
+    double* X = stk::mesh::field_data(*stkMeshStruct->coordinates_field, *overlapnodes[i]);
+    if (numDim > 0) xx[node_lid] = X[0];
+    if (numDim > 1) yy[node_lid] = X[1];
+    if (numDim > 2) zz[node_lid] = X[2];
+  }
+
+  // Leave unused dim as null pointers.
+  if (numDim > 0) *x = xx;
+  if (numDim > 1) *y = yy;
+  if (numDim > 2) *z = zz;
+}
+
 
 const Teuchos::ArrayRCP<std::string>& 
 Albany::STKDiscretization::getWsEBNames() const

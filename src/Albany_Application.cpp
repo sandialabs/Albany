@@ -926,8 +926,6 @@ evaluateResponseGradient(const double current_time,
     unsigned int num_responses = responses[i]->numResponses();
     Epetra_LocalMap local_response_map(num_responses, 0, comm);
 
-cout << " eeeee  numresponses " << num_responses << endl;
-
     // Create Epetra_Vectors for response function
     RCP<Epetra_Vector> local_g;
     if (g != NULL)
