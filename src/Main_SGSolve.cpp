@@ -74,7 +74,8 @@ void cullDistributedResponseMap( Teuchos::RCP<const Epetra_BlockMap>& x_map,
     }
   // end cull
   
-  x_new_map = Teuchos::rcp( new Epetra_Map( -1, gids_new.size(), &gids_new[0], 0, x_map->Comm() ) );
+  x_new_map = Teuchos::rcp( new Epetra_BlockMap( -1, gids_new.size(), &gids_new[0],
+						  1, 0, x_map->Comm() ) );
 }
 
 // now cull the response vector itself
@@ -347,7 +348,7 @@ int main(int argc, char *argv[]) {
        piroParams->sublist("Stochastic Galerkin");
     Teuchos::ParameterList& solKLParams =
       sgParams.sublist("Response KL");
-    bool computeKLOnResponse = solKLParams.get("ComputeKLOnResponse", false);
+    bool computeKLOnResponse = solKLParams.get("ComputeKLOnResponse", true);
     int NumKL = solKLParams.get("NumKL", 0);
     
     // Tim, this is a new parameter in the Response KL section:
@@ -383,8 +384,8 @@ int main(int argc, char *argv[]) {
 	    
 	    int neq = 4;                 // NSRayleighBernard2D
 	    vector<int> keepDOF(neq, 1); // Initialize to keep all dof, then,
-	    keepDOF[3] = 0;              // as stated, cull the 2nd
-	    keepDOF[4] =0;	         // and 3rd dof (temp and
+	    keepDOF[2] = 0;              // as stated, cull the 2nd
+	    keepDOF[3] = 0;	         // and 3rd dof (temp and
 					 // pressure)
 
 	    int ndim = accumulate(keepDOF.begin(), keepDOF.end(), 0);
@@ -395,20 +396,24 @@ int main(int argc, char *argv[]) {
 	    // ...and import the correct data from sg_u into sg_u_new
 	    cullDistributedResponse( sg_u, sg_u_new, sg_u_new_coeff_map );
 	    
-	    // 	cout << "First 3*neq values of sg_u and sg_u_new:" << endl;
-	    // 	{
-	    // 	  for ( int i=0; i < 3*neq; i++ )
-	    // 	    cout << "sg_u[" << i << "] = " << (*sg_u)[i] << "    " 
-	    // 		 <<"sg_u_new[" << i << "] = " << (*sg_u_new)[i] << endl;
-	    // 	}
+	    cout << "First 3*neq values of sg_u and sg_u_new:" << endl;
+	    {
+	      for ( int i=0; i < 3*neq; i++ )
+		cout << "sg_u->getBlockVector()[" << i << "] = " <<
+		  (*(sg_u->getBlockVector()))[i] << "    " 
+		     <<"sg_u_new->getBlockVector()[" << i << "] = " <<
+		  (*(sg_u_new->getBlockVector()))[i] << endl;
+	    }
 	    
-	    // 	cout << "Last 3*neq values of sg_u and sg_u_new:" << endl;
-	    // 	{
-	    // 	  int N = sg_u_map->NumMyElements();
-	    // 	  for ( int i=0; i < 3*neq; i++ )
-	    // 	    cout << "sg_u[" << N-i-1 << "] = " << (*sg_u)[N - (i+1)] << "    " 
-	    // 		 <<"sg_u_new[" << ndim*N/neq - (i+1) << "] = " << (*sg_u_new)[ndim*N/neq - (i+1)] << endl;
-	    // 	}
+	    cout << "Last 3*neq values of sg_u and sg_u_new:" << endl;
+	    {
+	      int N = sg_u->productMap()->NumMyElements();
+	      for ( int i=0; i < 3*neq; i++ )
+		cout << "sg_u->getBlockVector()[" << N-i-1 << "] = " <<
+		  (*(sg_u->getBlockVector()))[N - (i+1)] << "    " 
+		     <<"sg_u_new->getBlockVector()[" << ndim*N/neq - (i+1) << "] = " <<
+		  (*(sg_u_new->getBlockVector()))[ndim*N/neq - (i+1)] << endl;
+	    }
 	    
 	    KL_Success = KL_OnSolutionMultiVector(sg_solver, 
 						  sg_u_new,
