@@ -1,20 +1,33 @@
 <ParameterList>
   <ParameterList name="Problem">
-    <Parameter name="Name" type="string" value="MultiHeat 1D"/>
+    <Parameter name="Name" type="string" value="MultiHeat 2D"/>
     <Parameter name="Solution Method" type="string" value="Steady"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
     <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
     <ParameterList name="Dirichlet BCs">
-      <Parameter name="DBC on NS NodeSet0 for DOF T" type="double" value="1.0"/>
-      <Parameter name="DBC on NS NodeSet1 for DOF T" type="double" value="0.0"/>
+      <Parameter name="DBC on NS Ambient for DOF T" type="double" value="40.0"/>
     </ParameterList>
+<!--
+    <ParameterList name="Decay Source">
+      <Parameter name="Factor" type="double" value="1.0" />
+      <Parameter name="Device" type="string" value="elementblocks" />
+    </ParameterList>
+-->
+<!-- The fuel generates decay heat as a function of time -->
+    <ParameterList name="Source Functions">
+      <Parameter name="Element Block" type="string" value="Fuel"/>
+      <ParameterList name="Quadratic">
+        <Parameter name="Nonlinear Factor" type="double" value="0.75"/>
+        <Parameter name="Constant"         type="bool" value="1"/>
+      </ParameterList>
+    </ParameterList>
+
     <ParameterList name="Thermal Conductivity">
        <Parameter name="Thermal Conductivity Type" type="string" value="Block Dependent" />
     </ParameterList>
     <ParameterList name="Parameters">
-      <Parameter name="Number" type="int" value="2"/>
-      <Parameter name="Parameter 0" type="string" value="DBC on NS NodeSet0 for DOF T"/>
-      <Parameter name="Parameter 1" type="string" value="DBC on NS NodeSet1 for DOF T"/>
+      <Parameter name="Number" type="int" value="1"/>
+      <Parameter name="Parameter 0" type="string" value="DBC on NS Ambient for DOF T"/>
     </ParameterList>
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="4"/>
@@ -25,11 +38,9 @@
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
-    <Parameter name="Method" type="string" value="STK1D"/>
-    <Parameter name="Element Blocks" type="int" value="2"/>
-    <Parameter name="Block 0" type="string" value="begins at 0 ends at 50 length 1.0 named MatA"/>
-    <Parameter name="Block 1" type="string" value="begins at 50 ends at 100 length 1.0 named MatB"/>
-<!-- should this go away? -->
+    <Parameter name="Method" type="string" value="Exodus"/>
+    <Parameter name="Exodus Input File Name" type="string" value="fuel_volume.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="fuel_volume-out.exo"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
   </ParameterList>
   <ParameterList name="Regression Results">

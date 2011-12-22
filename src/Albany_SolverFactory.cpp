@@ -511,14 +511,15 @@ setCoordinatesForML(const string& solutionMethod,
                     RCP<Albany::Application>& app) 
 {
     // If ML preconditioner is used, get nodal coordinates from application
-    ParameterList* stratList;
+    ParameterList* stratList = NULL;
+
     if (solutionMethod=="Steady" || solutionMethod=="Continuation")
       stratList = & piroParams->sublist("NOX").sublist("Direction").sublist("Newton").
                     sublist("Stratimikos Linear Solver").sublist("Stratimikos");
     else if (solutionMethod=="Transient"  && secondOrder=="No")
       stratList = & piroParams->sublist("Rythmos").sublist("Stratimikos");
 
-    if (stratList->isParameter("Preconditioner Type"))
+    if (stratList && stratList->isParameter("Preconditioner Type")) // Make sure stratList is set before dereference
       if ("ML" == stratList->get<string>("Preconditioner Type")) {
          ParameterList& mlList = 
             stratList->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings");
