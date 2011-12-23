@@ -76,6 +76,7 @@ SchrodingerResid(const Teuchos::ParameterList& p) :
   // Allocate workspace
   psiGradWithMass.resize(dims[0], numQPs, numDims);
   psiV.resize(dims[0], numQPs);
+  V_barrier.resize(dims[0], numQPs);
 
   this->addDependentField(wBF);
   this->addDependentField(psi);
@@ -124,6 +125,8 @@ evaluateFields(typename Traits::EvalData workset)
 
   if(bValidRegion)
   {
+    // std::cout << "eb name = " << workset.EBName << ", bValidRegion = " << bValidRegion << std::endl; 
+    
     //compute inverse effective mass here (no separate evaluator)
 
     // Define universal constants as double constants
@@ -177,10 +180,17 @@ evaluateFields(typename Traits::EvalData workset)
         psiResidual(cell, qp) = 1.0*psi(cell,qp);
     }*/
 
+    // std::cout << "eb name = " << workset.EBName << ", bValidRegion = " << bValidRegion << std::endl; 
+
     //Potential term: add integral( psi * V * BF dV ) to residual
     if (havePotential) 
     {
-      FST::scalarMultiplyDataData<ScalarT> (psiV, V, psi);
+      for (std::size_t cell = 0; cell < workset.numCells; ++cell)
+        for (std::size_t qp = 0; qp < numQPs; ++qp)
+          V_barrier(cell,qp) = 100.0;
+          
+      FST::scalarMultiplyDataData<ScalarT> (psiV, V_barrier, psi);
+      // FST::scalarMultiplyDataData<ScalarT> (psiV, V, psi);
       FST::integrate<ScalarT>(psiResidual, psiV, wBF, Intrepid::COMP_CPP, false); // "false" overwrites
     }
   }

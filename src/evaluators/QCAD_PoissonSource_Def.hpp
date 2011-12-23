@@ -1336,7 +1336,8 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrond
       for(int i = 0; i < nEigenvectors; i++) 
       {
         // Fermi-Dirac distribution
-        ScalarT fermiFactor = 1.0/( exp((eigenvals[i]-Ef)/kbT + deltaPhi) + 1.0 );
+        // ScalarT fermiFactor = 1.0/( exp((eigenvals[i]-Ef)/kbT + deltaPhi) + 1.0 );
+        ScalarT fermiFactor = 1.0/( exp((eigenvals[i]-Ef)/kbT - deltaPhi) + 1.0 );
               
         // note: wavefunctions are assumed normalized here 
         ScalarT wfSquared = ( eigenvector_Re[i](cell,qp)*eigenvector_Re[i](cell,qp) + 
