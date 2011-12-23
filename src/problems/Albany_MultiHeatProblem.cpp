@@ -47,7 +47,6 @@ MultiHeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   else           periodic = false;
   if (periodic) *out <<" Periodic Boundary Conditions being used." <<std::endl;
 
-  haveSource =  params->isSublist("Source Functions");
   haveAbsorption =  params->isSublist("Absorption");
 
   if(params->isType<string>("MaterialDB Filename")){

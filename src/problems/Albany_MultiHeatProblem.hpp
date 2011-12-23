@@ -263,6 +263,31 @@ void Albany::MultiHeatProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+// Check and see if a source term is specified for this problem. 
+  bool problemSpecifiesASource = params->isSublist("Source Functions");
+
+  if(problemSpecifiesASource){
+
+    Teuchos::ParameterList& sourceSublist = params->sublist("Source Functions");
+
+    if(sourceSublist.isType<string>("Element Block")){
+
+      std::string inputEBName = sourceSublist.get<string>("Element Block");
+
+// Is the source function active for "this" element block?
+
+      if(inputEBName == meshSpecs.ebName)
+
+        haveSource = true;
+
+    }
+    else // No element block specialization, so the source applies across all
+
+        haveSource = true;
+
+  }
+
+
   if (haveSource) { // Source
     RCP<ParameterList> p = rcp(new ParameterList);
 

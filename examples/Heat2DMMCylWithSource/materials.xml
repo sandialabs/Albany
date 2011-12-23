@@ -1,0 +1,48 @@
+<ParameterList>
+  <Parameter name="Reference Material" type="string" value="Environ"/>
+
+  <ParameterList name="ElementBlocks">
+
+    <ParameterList name="Fuel">
+      <Parameter name="material" type="string" value="UO2" />
+    </ParameterList>
+
+    <ParameterList name="Clad">
+      <Parameter name="material" type="string" value="ZR4" />
+    </ParameterList>
+
+    <ParameterList name="Environ">
+      <Parameter name="material" type="string" value="INERT" />
+    </ParameterList>
+
+  </ParameterList>
+
+  <ParameterList name="Materials">
+
+    <ParameterList name="UO2">
+      <Parameter name="Category" type="string" value="UraniumDioxide" />
+      <ParameterList name="Thermal Conductivity">
+        <Parameter name="Name" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="1.0"/>
+      </ParameterList>
+    </ParameterList>
+
+    <ParameterList name="ZR4">
+      <Parameter name="Category" type="string" value="Zircalloy" />
+      <ParameterList name="Thermal Conductivity">
+        <Parameter name="Name" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="10.0"/>
+      </ParameterList>
+    </ParameterList>
+
+    <ParameterList name="INERT">
+      <Parameter name="Category" type="string" value="Cask plus He" />
+      <ParameterList name="Thermal Conductivity">
+        <Parameter name="Name" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="10.0"/>
+      </ParameterList>
+    </ParameterList>
+
+  </ParameterList>
+
+</ParameterList>

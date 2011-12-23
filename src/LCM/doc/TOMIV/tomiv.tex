@@ -147,10 +147,10 @@
 {\fancyplain{}{\emph{A.Mota, W.Sun, J.Ostien, J.Foulk, K.Long}}}
 
 \rhead
-[\fancyplain{} {\emph{Transfer Operator for Internal Variables}}]
-{\fancyplain{} {\emph{Transfer Operator for Internal Variables}}}
+[\fancyplain{} {\emph{Projection Operator for Internal Variables}}]
+{\fancyplain{} {\emph{Projection Operator for Internal Variables}}}
 
-\title{A Variational Transfer Operator for Mapping of Internal
+\title{A Variational Projection Operator for Mapping of Internal
 Variables}
 
 \author{
@@ -179,18 +179,18 @@ Variables}
 
 \begin{abstract}
 
-  A mapping procedure for the transfer of internal variables from one finite
-  element mesh (\emph{source}) to another (\emph{target}) is proposed. The
-  objective is to perform the transfer with minimum error and at the same time
-  guarantee that the mapped variables remain in their admissible spaces.
+  A procedure for the mapping of internal variables from one finite element mesh
+  to another is proposed. The objective is to perform the mapping with minimum
+  error and at the same time guarantee that the mapped variables remain in their
+  admissible spaces.
 
   The minimization of the error is achieved by a three-field finite element
   formulation. The fields in the formulation are the deformation mapping, the
-  \emph{target} (mapped) internal variables and a Lagrange multiplier that
-  enforces the equality between the \emph{source} (original) and target internal
-  variables. This formulation leads to a transfer operator that is an $L_2$
-  projection that minimizes the distance between the source and target internal
-  variables as measured in the $L_2$ norm of the internal variable space.
+  \emph{target} or mapped internal variables and a Lagrange multiplier that
+  enforces the equality between the \emph{source} and target internal variables.
+  This formulation leads to an $L_2$ projection that minimizes the distance
+  between the source and target internal variables as measured in the $L_2$ norm
+  of the internal variable space.
 
   To ensure that the target internal variables remain in their original space,
   their interpolation is performed by recourse to Lie groups, which allow for
@@ -253,15 +253,18 @@ extrapolated outside of its admissible range, $[0,1)$.
 
 \subsection{Proposed Method}
 
-We advance a three-field finite element formulation as a method for transferring
+We advance a three-field finite element formulation as a method for mapping
 internal variables from one finite element mesh to another. The additional
-fields in the formulation are the target field of internal variables and a
-Lagrange multiplier that enforces the equality between the source and target
-internal variables. The Lagrange multiplier is subsequently identified as the
-corresponding conjugate thermodynamic force. The formulation leads to
-expressions for the target internal variables that are $L_2$ projections of the
+fields in the formulation are the \emph{target} field of internal variables and
+a Lagrange multiplier that enforces the equality between the \emph{source} and
+target internal variables. The Lagrange multiplier is subsequently identified as
+the corresponding conjugate thermodynamic force. The formulation leads to an
+expression for the target internal variables that is an $L_2$ projection of the
 source internal variables onto the space spanned by the interpolation functions
-selected for the extra fields. By using a variational approach, the distance
+selected for the extra fields. In effect, the projection extends the field of
+internal variables from the integration points to the entire domain, from which
+values at any arbitrary point may be computed as the means of transferring the
+variables to a different mesh. By using a variational approach, the distance
 between the source and target internal variable fields is minimized in the $L_2$
 norm of their space, and thus the projection is orthogonal and the corresponding
 operator is self-adjoint. The matrices that results from the operator are

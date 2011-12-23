@@ -121,6 +121,9 @@ Albany::SolverFactory::createAndGetAlbanyApp(
     RCP<Teuchos::ParameterList> piroParams = 
       rcp(&(appParams->sublist("Piro")),false);
 
+    // Get coordinates from the mesh a insert into param list if using ML preconditioner
+    setCoordinatesForML(solutionMethod, secondOrder, piroParams, app);
+
     if (solutionMethod== "Continuation") { // add save eigen data here as in Piro test
       Teuchos::ParameterList& locaParams = piroParams->sublist("LOCA");
         RCP<LOCA::SaveEigenData::AbstractStrategy> saveEigs =
@@ -499,4 +502,34 @@ Albany::SolverFactory::getValidResponseParameters() const
     validPL->sublist(Albany::strint("ResponseParams",i));
   }
   return validPL;
+}
+    
+void Albany::SolverFactory::
+setCoordinatesForML(const string& solutionMethod,
+                    const string& secondOrder,
+                    RCP<ParameterList>& piroParams,
+                    RCP<Albany::Application>& app) 
+{
+    // If ML preconditioner is used, get nodal coordinates from application
+    ParameterList* stratList = NULL;
+
+    if (solutionMethod=="Steady" || solutionMethod=="Continuation")
+      stratList = & piroParams->sublist("NOX").sublist("Direction").sublist("Newton").
+                    sublist("Stratimikos Linear Solver").sublist("Stratimikos");
+    else if (solutionMethod=="Transient"  && secondOrder=="No")
+      stratList = & piroParams->sublist("Rythmos").sublist("Stratimikos");
+
+    if (stratList && stratList->isParameter("Preconditioner Type")) // Make sure stratList is set before dereference
+      if ("ML" == stratList->get<string>("Preconditioner Type")) {
+         ParameterList& mlList = 
+            stratList->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings");
+         double *x, *y, *z;
+
+         // Get coordinate vectors from mesh
+         app->getDiscretization()->getOwned_xyz(&x,&y,&z);
+        
+         mlList.set("x-coordinates",x); 
+         mlList.set("y-coordinates",y); 
+         mlList.set("z-coordinates",z); 
+      }
 }
