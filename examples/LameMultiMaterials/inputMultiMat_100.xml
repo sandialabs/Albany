@@ -3,7 +3,7 @@
     <Parameter name="Name" type="string" value="Lame"/>
     <Parameter name="MaterialDB Filename" type="string" value="materials_100.xml"/>
     <Parameter name="Solution Method" type="string" value="Steady"/>
-    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
+    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
 
     <ParameterList name="Lame Material Parameters">
       <Parameter name="Material Dependent Data Source" type="bool" value="true"/>
@@ -27,12 +27,12 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
     <Parameter name="Exodus Input File Name" type="string" value="100_blocks_1.0_size_1.0_meshSize.g"/>
-    <Parameter name="Exodus Output File Name" type="string" value="out_multimat_100.exo"/>
+    <!--Parameter name="Exodus Output File Name" type="string" value="out_multimat_100.exo"/ WRITING FILE FAILS INSIDE EXODUS-->
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{0.147555169919}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{0.164688531688}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-7"/>
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{ 0.16666666, 0.16666666, 0.33333333, 0.33333333}"/>
