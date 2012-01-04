@@ -63,6 +63,9 @@ void parameterListToMatProps(const Teuchos::ParameterList& lameMaterialParameter
       propertyVector.push_back(Teuchos::getValue<std::string>(entry));
       matProps.insert(name, propertyVector);
     }
+    else if(entry.isType<bool>()){
+      // Flag for reading from xml materials database is a bool -- not sent to Lame
+    }
     else{
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, " parameters for LAME material models must be of type double, int, or string.\n");
     }

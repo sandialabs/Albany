@@ -651,6 +651,7 @@ IF (ALBANY_LAME)
     stk/Albany_GenericSTKMeshStruct.cpp
     stk/Albany_TmplSTKMeshStruct.cpp
     stk/Albany_STKDiscretization.cpp
+    problems/QCAD_MaterialDatabase.cpp
     ${LCM_DIR}/utils/Tensor.cc
     ${LCM_DIR}/utils/LameUtils.cpp
     ${LCM_DIR}/evaluators/LameStress.cpp

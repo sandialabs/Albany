@@ -18,13 +18,14 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Intrepid_FunctionSpaceTools.hpp"
+#include "QCAD_MaterialDatabase.hpp"
 #include "Tensor.h"
 
 namespace LCM {
 
 template<typename EvalT, typename Traits>
 LameStress<EvalT, Traits>::
-LameStress(const Teuchos::ParameterList& p) :
+LameStress(Teuchos::ParameterList& p) :
   defGradField(p.get<std::string>("DefGrad Name"),
                p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
   stressField(p.get<std::string>("Stress Name"),
@@ -47,8 +48,28 @@ LameStress(const Teuchos::ParameterList& p) :
 
   this->setName("LameStress"+PHX::TypeString<EvalT>::value);
 
-  lameMaterialModelName = p.get<string>("Lame Material Model");
-  const Teuchos::ParameterList& lameMaterialParameters = p.sublist("Lame Material Parameters");
+  // Default to getting material infor form base input file (possibley overwritten later)
+  lameMaterialModelName = p.get<string>("Lame Material Model", "Elastic");
+  Teuchos::ParameterList& lameMaterialParameters = p.sublist("Lame Material Parameters");
+
+  // Code to allow material data to come from materials.xml data file
+  int haveMatDB = p.get<bool>("Have MatDB", false);
+
+  std::string ebName = p.get<std::string>("Element Block Name", "Missing");
+
+  // Check for material databas file
+  if (haveMatDB) {
+    // Check if material database will be supplying the data
+    bool dataFromDatabase = lameMaterialParameters.get<bool>("Material Dependent Data Source",false);
+
+    // If so, overwrite material model and data from database file
+    if (dataFromDatabase) {
+       Teuchos::RCP<QCAD::MaterialDatabase> materialDB = p.get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
+
+       lameMaterialModelName = materialDB->getElementBlockParam<std::string>(ebName, "Lame Material Model");
+       lameMaterialParameters = materialDB->getElementBlockSublist(ebName, "Lame Material Parameters");
+     }
+  }
 
   // Initialize the LAME material model
   // This assumes that there is a single material model associated with this

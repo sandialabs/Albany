@@ -23,15 +23,22 @@
 Albany::LameProblem::
 LameProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
             const Teuchos::RCP<ParamLib>& paramLib_,
-            const int numDim_) :
+            const int numDim_,
+            const Teuchos::RCP<const Epetra_Comm>& comm) :
   Albany::AbstractProblem(params_, paramLib_, numDim_),
-  haveSource(false)
+  haveSource(false), haveMatDB(false)
 {
  
   std::string& method = params->get("Name", "Library of Advanced Materials for Engineering (LAME) ");
   *out << "Problem Name = " << method << std::endl;
   
   haveSource =  params->isSublist("Source Functions");
+
+  if(params->isType<string>("MaterialDB Filename")){
+        haveMatDB = true;
+    mtrlDbFilename = params->get<string>("MaterialDB Filename");
+    materialDB = Teuchos::rcp(new QCAD::MaterialDatabase(mtrlDbFilename, comm));
+  }
 
   // currently only support 3D analyses
   TEUCHOS_TEST_FOR_EXCEPTION(neq != 3,
@@ -52,29 +59,33 @@ buildProblem(
     Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
   /* Construct All Phalanx Evaluators */
-  TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
-  fm.resize(1); rfm.resize(1);
-  fm[0]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-  rfm[0] = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
- 
-  constructResidEvaluators<PHAL::AlbanyTraits::Residual  >(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::Jacobian  >(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::Tangent   >(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::SGResidual>(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::SGJacobian>(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::SGTangent >(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::MPResidual>(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::MPJacobian>(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::MPTangent >(*fm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::Residual  >(*rfm[0], *meshSpecs[0], stateMgr, responses);
-  constructResponseEvaluators<PHAL::AlbanyTraits::Jacobian  >(*rfm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::Tangent   >(*rfm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::SGResidual>(*rfm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::SGJacobian>(*rfm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::SGTangent >(*rfm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::MPResidual>(*rfm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::MPJacobian>(*rfm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::MPTangent >(*rfm[0], *meshSpecs[0], stateMgr);
+  int physSets = meshSpecs.size();
+  cout << "Lame Problem: Num MeshSpecs: " << physSets << endl;
+  fm.resize(physSets); rfm.resize(physSets);
+
+  for (int ps=0; ps<physSets; ps++) {
+    fm[ps]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+    rfm[ps] = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+
+    constructResidEvaluators<PHAL::AlbanyTraits::Residual  >(*fm[ps], *meshSpecs[ps], stateMgr);
+    constructResidEvaluators<PHAL::AlbanyTraits::Jacobian  >(*fm[ps], *meshSpecs[ps], stateMgr);
+    constructResidEvaluators<PHAL::AlbanyTraits::Tangent   >(*fm[ps], *meshSpecs[ps], stateMgr);
+    constructResidEvaluators<PHAL::AlbanyTraits::SGResidual>(*fm[ps], *meshSpecs[ps], stateMgr);
+    constructResidEvaluators<PHAL::AlbanyTraits::SGJacobian>(*fm[ps], *meshSpecs[ps], stateMgr);
+    constructResidEvaluators<PHAL::AlbanyTraits::SGTangent >(*fm[ps], *meshSpecs[ps], stateMgr);
+    constructResidEvaluators<PHAL::AlbanyTraits::MPResidual>(*fm[ps], *meshSpecs[ps], stateMgr);
+    constructResidEvaluators<PHAL::AlbanyTraits::MPJacobian>(*fm[ps], *meshSpecs[ps], stateMgr);
+    constructResidEvaluators<PHAL::AlbanyTraits::MPTangent >(*fm[ps], *meshSpecs[ps], stateMgr);
+    constructResponseEvaluators<PHAL::AlbanyTraits::Residual  >(*rfm[ps], *meshSpecs[ps], stateMgr, responses);
+    constructResponseEvaluators<PHAL::AlbanyTraits::Jacobian  >(*rfm[ps], *meshSpecs[ps], stateMgr);
+    constructResponseEvaluators<PHAL::AlbanyTraits::Tangent   >(*rfm[ps], *meshSpecs[ps], stateMgr);
+    constructResponseEvaluators<PHAL::AlbanyTraits::SGResidual>(*rfm[ps], *meshSpecs[ps], stateMgr);
+    constructResponseEvaluators<PHAL::AlbanyTraits::SGJacobian>(*rfm[ps], *meshSpecs[ps], stateMgr);
+    constructResponseEvaluators<PHAL::AlbanyTraits::SGTangent >(*rfm[ps], *meshSpecs[ps], stateMgr);
+    constructResponseEvaluators<PHAL::AlbanyTraits::MPResidual>(*rfm[ps], *meshSpecs[ps], stateMgr);
+    constructResponseEvaluators<PHAL::AlbanyTraits::MPJacobian>(*rfm[ps], *meshSpecs[ps], stateMgr);
+    constructResponseEvaluators<PHAL::AlbanyTraits::MPTangent >(*rfm[ps], *meshSpecs[ps], stateMgr);
+  }
 
   constructDirichletEvaluators(*meshSpecs[0]);
 }
@@ -103,6 +114,7 @@ Albany::LameProblem::getValidProblemParameters() const
   validPL->sublist("Lame Material Parameters", false, "");
   validPL->sublist("aveJ", false, "If true, the determinate of the deformation gradient for each integration point is replaced with the average value over all integration points in the element (produces constant volumetric response).");
   validPL->sublist("volaveJ", false, "If true, the determinate of the deformation gradient for each integration point is replaced with the volume-averaged value over all integration points in the element (produces constant volumetric response).");
+  validPL->set<string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
 
   return validPL;
 }

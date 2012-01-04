@@ -35,7 +35,7 @@ class LameStress : public PHX::EvaluatorWithBaseImpl<Traits>,
 
 public:
 
-  LameStress(const Teuchos::ParameterList& p);
+  LameStress(Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);

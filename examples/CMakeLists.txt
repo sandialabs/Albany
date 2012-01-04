@@ -86,6 +86,7 @@ IF(ALBANY_LCM)
   add_subdirectory(GradientDamage)
   IF(ALBANY_LAME)
     add_subdirectory(LameStaticElasticity3D)
+    add_subdirectory(LameMultiMaterials)
   ENDIF()
 ENDIF()
 

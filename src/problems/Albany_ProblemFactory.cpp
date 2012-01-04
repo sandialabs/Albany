@@ -122,7 +122,7 @@ Albany::ProblemFactory::create()
 #ifdef ALBANY_LCM
   else if (method == "LAME" || method == "Lame" || method == "lame") {
 #ifdef ALBANY_LAME
-    strategy = rcp(new Albany::LameProblem(problemParams, paramLib, 3));
+    strategy = rcp(new Albany::LameProblem(problemParams, paramLib, 3, comm));
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, " **** LAME materials not enabled, recompile with -DENABLE_LAME ****\n");
 #endif

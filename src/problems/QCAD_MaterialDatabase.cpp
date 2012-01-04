@@ -279,7 +279,6 @@ getElementBlockSublist(const std::string& ebName, const std::string& subListName
 
 }
 
-
 template<typename T> T 
 QCAD::MaterialDatabase:: 
 getElementBlockParam(const std::string& ebName, const std::string& paramName, T def_value)
