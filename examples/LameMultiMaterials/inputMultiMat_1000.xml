@@ -1,13 +1,14 @@
 <ParameterList>
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Lame"/>
-    <Parameter name="Lame Material Model" type="string" value="Elastic"/>
-    <ParameterList name="Lame Material Parameters">
-      <Parameter name="Youngs Modulus" type="double" value="1.0"/>
-      <Parameter name="Poissons Ratio" type="double" value="0.25"/>
-    </ParameterList>
+    <Parameter name="MaterialDB Filename" type="string" value="materials_1000.xml"/>
     <Parameter name="Solution Method" type="string" value="Steady"/>
-    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
+    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
+
+    <ParameterList name="Lame Material Parameters">
+      <Parameter name="Material Dependent Data Source" type="bool" value="true"/>
+    </ParameterList>
+
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS nodelist_1 for DOF X" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_1 for DOF Y" type="double" value="0.0"/>
@@ -25,12 +26,13 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
-    <Parameter name="Exodus Input File Name" type="string" value="10_blocks_1.0_size_1.0_meshSize.g"/>
-    <Parameter name="Exodus Output File Name" type="string" value="out_singlematerial_10.exo"/>
+    <Parameter name="Exodus Input File Name" type="string" value="1000_blocks_1.0_size_1.0_meshSize.g"/>
+    <!--Parameter name="Exodus Output File Name" type="string" value="out_multimat_1000.exo"/-->
+    <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{0.1657956}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{0.166464380771}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{ 0.16666666, 0.16666666, 0.33333333, 0.33333333}"/>
@@ -76,9 +78,6 @@
 		  </ParameterList>
 		</ParameterList>
 		<ParameterList name="Belos">
-	          <ParameterList name="VerboseObject">
-	            <Parameter name="Verbosity Level" type="string" value="medium"/>
-	          </ParameterList>
 		  <Parameter name="Solver Type" type="string" value="Block GMRES"/>
 		  <ParameterList name="Solver Types">
 		    <ParameterList name="Block GMRES">
@@ -86,9 +85,9 @@
 		      <Parameter name="Output Frequency" type="int" value="10"/>
 		      <Parameter name="Output Style" type="int" value="1"/>
 		      <Parameter name="Verbosity" type="int" value="33"/>
-		      <Parameter name="Maximum Iterations" type="int" value="200"/>
+		      <Parameter name="Maximum Iterations" type="int" value="700"/>
 		      <Parameter name="Block Size" type="int" value="1"/>
-		      <Parameter name="Num Blocks" type="int" value="200"/>
+		      <Parameter name="Num Blocks" type="int" value="700"/>
 		      <Parameter name="Flexible Gmres" type="bool" value="0"/>
 		    </ParameterList>
 		  </ParameterList>

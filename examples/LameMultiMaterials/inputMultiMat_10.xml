@@ -117,9 +117,19 @@
       </ParameterList>
       <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
       <ParameterList name="Printing">
-	<Parameter name="Output Information" type="int" value="103"/>
 	<Parameter name="Output Precision" type="int" value="3"/>
 	<Parameter name="Output Processor" type="int" value="0"/>
+        <ParameterList name="Output Information">
+          <Parameter name="Error" type="bool" value="1"/>
+          <Parameter name="Warning" type="bool" value="1"/>
+          <Parameter name="Outer Iteration" type="bool" value="1"/>
+          <Parameter name="Parameters" type="bool" value="0"/>
+          <Parameter name="Details" type="bool" value="0"/>
+          <Parameter name="Linear Solver Details" type="bool" value="0"/>
+          <Parameter name="Stepper Iteration" type="bool" value="1"/>
+          <Parameter name="Stepper Details" type="bool" value="1"/>
+          <Parameter name="Stepper Parameters" type="bool" value="1"/>
+        </ParameterList>
       </ParameterList>
       <ParameterList name="Solver Options">
 	<Parameter name="Status Test Check Type" type="string" value="Minimal"/>
