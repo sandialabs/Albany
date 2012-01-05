@@ -25,8 +25,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/10_blocks_1.0_size_1.0_meshSize.g
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMultiMat_10.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputMultiMat_10.xml COPYONLY)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials_100.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/materials_100.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials_10.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/materials_10.xml COPYONLY)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/100_blocks_1.0_size_1.0_meshSize.g
                ${CMAKE_CURRENT_BINARY_DIR}/100_blocks_1.0_size_1.0_meshSize.g COPYONLY)
