@@ -16,8 +16,11 @@
       <Parameter name="DBC on NS nodelist_2 for DOF X" type="double" value="1.0"/>
     </ParameterList>
     <ParameterList name="Parameters">
-      <Parameter name="Number" type="int" value="0"/>
-      <Parameter name="Parameter 0" type="string" value="DBC on NS nodelist_2 for DOF X"/>
+      <Parameter name="Number" type="int" value="4"/>
+      <Parameter name="Parameter 0" type="string" value="DBC on NS nodelist_1 for DOF X"/>
+      <Parameter name="Parameter 1" type="string" value="DBC on NS nodelist_2 for DOF X"/>
+      <Parameter name="Parameter 2" type="string" value="DBC on NS nodelist_1 for DOF Y"/>
+      <Parameter name="Parameter 3" type="string" value="DBC on NS nodelist_1 for DOF Z"/>
     </ParameterList>
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="1"/>
@@ -33,8 +36,8 @@
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
     <Parameter  name="Test Values" type="Array(double)" value="{0.147555169919}"/>
-    <Parameter  name="Relative Tolerance" type="double" value="1.0e-7"/>
-    <Parameter name="Number of Sensitivity Comparisons" type="int" value="0"/>
+    <Parameter  name="Relative Tolerance" type="double" value="1.0e0"/>
+    <Parameter name="Number of Sensitivity Comparisons" type="int" value="1"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{ 0.16666666, 0.16666666, 0.33333333, 0.33333333}"/>
     <Parameter name="Number of Dakota Comparisons" type="int" value="0"/>
     <Parameter  name="Dakota Test Values" type="Array(double)" value="{ 1.0, 1.0}"/>
