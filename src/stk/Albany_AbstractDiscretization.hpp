@@ -104,7 +104,7 @@ namespace Albany {
 
     //! Accessor function to get coordinates for ML. Memory controlled here.
     virtual void getOwned_xyz(double **x, double **y, double **z, double **rbm,
-                              int& nNodes, int numPDEs, int nullSpaceDim);
+                              int& nNodes, int numPDEs, int nullSpaceDim) = 0;
 
   private:
 
