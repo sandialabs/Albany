@@ -103,7 +103,8 @@ namespace Albany {
     virtual Teuchos::RCP<Epetra_Vector> getSolutionField() const = 0;
 
     //! Accessor function to get coordinates for ML. Memory controlled here.
-    virtual void getOwned_xyz(double **x, double **y, double **z) = 0;
+    virtual void getOwned_xyz(double **x, double **y, double **z, double **rbm,
+                              int& nNodes, int numPDEs, int nullSpaceDim);
 
   private:
 

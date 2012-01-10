@@ -66,7 +66,7 @@ Albany::STKDiscretization::~STKDiscretization()
 #ifdef ALBANY_SEACAS
   if (stkMeshStruct->exoOutput) delete mesh_data;
 #endif
-  if (allocated_xyz) { delete [] xx; delete [] yy; delete [] zz; allocated_xyz=false;} 
+  if (allocated_xyz) { delete [] xx; delete [] yy; delete [] zz; delete [] rr; allocated_xyz=false;} 
 }
 
 	    
@@ -136,15 +136,19 @@ Albany::STKDiscretization::getCoordinates() const
 }
 
 void
-Albany::STKDiscretization::getOwned_xyz(double** x, double** y, double** z) 
+Albany::STKDiscretization::getOwned_xyz(double** x, double** y, double** z,
+                                        double **rbm, int& nNodes, int numPDEs, int nullSpaceDim)
 {
   // Function to return x,y,z at owned nodes as double*, specifically for ML
   int numDim = stkMeshStruct->numDim;
+  nNodes = numOwnedNodes;
 
   if (allocated_xyz) { delete [] xx; delete [] yy; delete [] zz;} 
   xx = new double[numOwnedNodes];
   yy = new double[numOwnedNodes];
   zz = new double[numOwnedNodes];
+  if (nullSpaceDim>0) rr = new double[nullSpaceDim * numPDEs*nNodes];
+  else                rr = new double[1]; // Just so there is something to delete in destructor
   allocated_xyz = true;
 
   for (int i=0; i < numOwnedNodes; i++)  {
@@ -161,6 +165,7 @@ Albany::STKDiscretization::getOwned_xyz(double** x, double** y, double** z)
   if (numDim > 0) *x = xx;
   if (numDim > 1) *y = yy;
   if (numDim > 2) *z = zz;
+  *rbm = rr;
 }
 
 

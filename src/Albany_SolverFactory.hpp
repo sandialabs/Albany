@@ -107,7 +107,8 @@ namespace Albany {
     void setCoordinatesForML(const string& solutionMethod, 
                     const string& secondOrder,
                     Teuchos::RCP<Teuchos::ParameterList>& piroParams,
-                    Teuchos::RCP<Albany::Application>& app);
+                    Teuchos::RCP<Albany::Application>& app,
+                    std::string& problemName);
 
   protected:
 
