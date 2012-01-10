@@ -139,6 +139,8 @@ namespace LCM {
     fluxdt.resize(dims[0], numQPs, numDims);
     pterm.resize(dims[0], numQPs);
 
+    tpterm.resize(dims[0], numNodes, numQPs);
+
     if (haveAbsorption)  aterm.resize(dims[0], numQPs);
 
     convectionVels = Teuchos::getArrayFromStringParameter<double> (p,
@@ -296,6 +298,18 @@ evaluateFields(typename Traits::EvalData workset)
    pterm(cell,qp) = porePbar;
         }
 
+   for (std::size_t node=0; node < numNodes; ++node) {
+  	     trialPbar = 0.0;
+   		 for (std::size_t qp=0; qp < numQPs; ++qp) {
+   			  trialPbar += wBF(cell,node,qp);
+   		 }
+   		 trialPbar /= vol;
+   		 for (std::size_t qp=0; qp < numQPs; ++qp) {
+   		 		   tpterm(cell,node,qp) = trialPbar;
+  		 }
+
+  }
+
  }
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
@@ -308,9 +322,11 @@ evaluateFields(typename Traits::EvalData workset)
  						 / (J(cell,qp)*J(cell,qp))
  						                               )
                     		                    		*stabParameter(cell, qp)/biotModulus(cell, qp)*
-                    		                    		wBF(cell, node, qp);
+                    		                    		( wBF(cell, node, qp) -tpterm(cell,node,qp)
+                    		                    		 								 );
  				  TResidual(cell,node) += pterm(cell,qp)*stabParameter(cell, qp)/biotModulus(cell, qp)*
-                  		wBF(cell, node, qp);
+ 						 ( wBF(cell, node, qp) -tpterm(cell,node,qp)
+ 						  								 );
 
 
 //                  // Use biotModulus as pre-conditioner
