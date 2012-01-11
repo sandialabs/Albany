@@ -262,8 +262,7 @@ evaluateFields(typename Traits::EvalData workset)
  						                   )*wBF(cell, node, qp)  ;
 
  				  // Pore-fluid Resistance Term
- 				  TResidual(cell,node) +=  (
- 						                  -(J(cell,qp)-Jold(cell,qp))*porePressure(cell,qp) +
+ 				  TResidual(cell,node) +=  (-(J(cell,qp)-Jold(cell,qp))*porePressure(cell,qp) +
  						                    J(cell,qp)*dporePressure)
  						                  / (J(cell,qp)*J(cell,qp))
              		                      *3.00*alphaMixture(cell,qp)*refTemp(cell,qp)
