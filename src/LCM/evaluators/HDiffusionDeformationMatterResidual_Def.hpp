@@ -59,8 +59,8 @@ namespace LCM {
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
 	Pstress      (p.get<std::string>               ("Stress Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-//	weight       (p.get<std::string>                   ("Weights Name"),
-//		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	weights       (p.get<std::string>                   ("Weights Name"),
+		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
 	tauFactor  (p.get<std::string>                   ("Tau Contribution Name"),
 		 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
 	deltaTime (p.get<std::string>                  ("Delta Time Name"),
@@ -87,7 +87,7 @@ namespace LCM {
     this->addDependentField(CLGrad);
     this->addDependentField(DefGrad);
     this->addDependentField(Pstress);
- //   this->addDependentField(weight);
+    this->addDependentField(weights);
     this->addDependentField(tauFactor);
     this->addDependentField(deltaTime);
 
@@ -128,6 +128,9 @@ namespace LCM {
 
     tauH.resize(dims[0], numQPs);
 
+    pTTterm.resize(dims[0], numQPs);
+    pBterm.resize(dims[0], numNodes, numQPs);
+
     this->setName("HDiffusionDeformationMatterResidual"+PHX::TypeString<EvalT>::value);
 
   }
@@ -152,7 +155,7 @@ namespace LCM {
 	this->utils.setFieldData(DefGrad,fm);
 	this->utils.setFieldData(Pstress,fm);
 	this->utils.setFieldData(tauFactor,fm);
-//	this->utils.setFieldData(weight,fm);
+	this->utils.setFieldData(weights,fm);
 	this->utils.setFieldData(deltaTime,fm);
 
 //    if (haveSource) this->utils.setFieldData(Source);
@@ -188,6 +191,47 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
 
+  //---------------------------------------------------------------------------//
+  // Stabilization Term (only 2D and 3D problem need stabilizer)
+
+// Bochev-Dohrmann-Gunzburger Stabilization
+
+  for (std::size_t cell=0; cell < workset.numCells; ++cell){
+
+   pTranTerm=0.0;
+   //pStrainRateTerm=0.0;
+
+   vol = 0.0;
+   for (std::size_t qp=0; qp < numQPs; ++qp) {
+	   pTranTerm += weights(cell,qp)*Dstar(cell, qp)*fac*(
+			     Clattice(cell,qp)- Clattice_old(cell, qp) );
+
+	 //  pStrainRateTerm += weights(cell,qp)*Ctrapped(cell, qp)/
+	//		     Ntrapped(cell, qp)*  eqpsFactor(cell,qp)*fac*(
+	//			     eqps(cell,qp)- eqps_old(cell, qp) );
+
+	vol  += weights(cell,qp);
+   }
+   pTranTerm  /= vol;
+   //pStrainRateTerm /= vol;
+
+   for (std::size_t qp=0; qp < numQPs; ++qp) {
+	   pTTterm(cell,qp) = pTranTerm;
+   }
+
+   for (std::size_t node=0; node < numNodes; ++node) {
+	     trialPbar = 0.0;
+ 		 for (std::size_t qp=0; qp < numQPs; ++qp) {
+ 			  trialPbar += wBF(cell,node,qp);
+ 		 }
+ 		 trialPbar /= vol;
+ 		 for (std::size_t qp=0; qp < numQPs; ++qp) {
+ 		 		   pBterm(cell,node,qp) = trialPbar;
+		 }
+
+   }
+
+ }
 
 
 
@@ -198,9 +242,11 @@ evaluateFields(typename Traits::EvalData workset)
 			  for (std::size_t qp=0; qp < numQPs; ++qp) {
 
 				  // Transient Term
+
 				  TResidual(cell,node) += Dstar(cell, qp)*fac*(
 						     Clattice(cell,qp)- Clattice_old(cell, qp)
 						    ) *wBF(cell, node, qp)  ;
+
 
 
 				  // Strain Rate Term
@@ -212,6 +258,75 @@ evaluateFields(typename Traits::EvalData workset)
 			  }
 		  }
   }
+
+/*
+  //---------------------------------------------------------------------------//
+  // Stabilization Term (only 2D and 3D problem need stabilizer)
+
+// Bochev-Dohrmann-Gunzburger Stabilization
+
+  for (std::size_t cell=0; cell < workset.numCells; ++cell){
+
+   pTranTerm=0.0;
+   //pStrainRateTerm=0.0;
+
+   vol = 0.0;
+   for (std::size_t qp=0; qp < numQPs; ++qp) {
+	   pTranTerm += weights(cell,qp)*Dstar(cell, qp)*fac*(
+			     Clattice(cell,qp)- Clattice_old(cell, qp) );
+
+	 //  pStrainRateTerm += weights(cell,qp)*Ctrapped(cell, qp)/
+	//		     Ntrapped(cell, qp)*  eqpsFactor(cell,qp)*fac*(
+	//			     eqps(cell,qp)- eqps_old(cell, qp) );
+
+	vol  += weights(cell,qp);
+   }
+   pTranTerm  /= vol;
+   //pStrainRateTerm /= vol;
+
+   for (std::size_t qp=0; qp < numQPs; ++qp) {
+	   pTTterm(cell,qp) = pTranTerm;
+   }
+
+   for (std::size_t node=0; node < numNodes; ++node) {
+	     trialPbar = 0.0;
+ 		 for (std::size_t qp=0; qp < numQPs; ++qp) {
+ 			  trialPbar += wBF(cell,node,qp);
+ 		 }
+ 		 trialPbar /= vol;
+ 		 for (std::size_t qp=0; qp < numQPs; ++qp) {
+ 		 		   pBterm(cell,node,qp) = trialPbar;
+		 }
+
+   }
+
+ }
+
+  ScalarT stabParameter(1e-10);
+
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+
+	  for (std::size_t node=0; node < numNodes; ++node) {
+		  for (std::size_t qp=0; qp < numQPs; ++qp) {
+			  if (eqps(cell,qp)- eqps_old(cell, qp)==0){
+ 				  TResidual(cell,node) -= Dstar(cell, qp)*(
+						     Clattice(cell,qp)- Clattice_old(cell, qp) )*stabParameter
+                    		                    		*( wBF(cell, node, qp)
+                    		                    				-pBterm(cell,node,qp)
+                    		                    				);
+ 				  TResidual(cell,node) += pTTterm(cell,qp)*stabParameter*
+ 						 ( wBF(cell, node, qp)
+ 								 -pBterm(cell,node,qp)
+ 								 );
+			  }
+
+
+		  }
+	  }
+  }
+
+  */
+
 
 
 
