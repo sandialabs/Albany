@@ -308,7 +308,7 @@ FindSaddlePoint(std::vector<double>& allFieldVals, std::vector<double>& allRetFi
       lastDeepTrees = nDeepTrees;
     }
 
-    for(int j=i-1; fabs(allFieldVals[I] - allFieldVals[ordering[j]]) < cutoffFieldVal && j >= 0; j--) {
+    for(int j=i-1; j >= 0 && fabs(allFieldVals[I] - allFieldVals[ordering[j]]) < cutoffFieldVal; j--) {
       J = ordering[j];
 
       if( distance(allCoords, I, J, numDims) < cutoffDistance ) {
