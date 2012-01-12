@@ -7,18 +7,22 @@
 ## -warning = On
 ## -information = On
 #
+cd '/Volumes/ascldap/Codes/Albany/examples/Heat2DMMCylWithSource'
 # Build the cylinder that represents the cask and inert gas, one pellet high (inch dimensions)
 # volume 1
-create cylinder height 0.6 radius 0.5
+#create cylinder height 0.6 (inches) 
+#create cylinder height 0.01524 (meters) radius 0.01
+# meter dimensions
+create cylinder height 0.01524 radius 0.01
 #
 # Build cladding OR
 # volume 2
-create cylinder height 0.6 radius 0.211
+create cylinder height 0.01524 radius 0.0051562
 #
 # cladding is 0.0243" thick, gives IR of 0.1867
 # but pellet swells. Assume pellet OR is 0.1867. New pellet OR is 0.183, gap is 0.008
 # volume 3
-create cylinder height 0.6 radius 0.1867
+create cylinder height 0.01524 radius 0.0046482
 #
 subtract volume 2 from volume 1 keep
 delete volume 1
@@ -31,10 +35,10 @@ merge volume all
 surface 9 13 17 sizing function none
 #surface 9 13 17 size auto factor 1
 # Fine
-#surface 9 13 17 size 0.01
+#surface 9 13 17 size 0.00025
 # Coarse
 #surface 9 13 17 size 0.05
-surface 9 13 17 size 0.025
+surface 9 13 17 size 0.0005
 mesh surface 9 13 17
 # block it
 block 1 surface 9

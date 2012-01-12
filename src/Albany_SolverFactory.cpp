@@ -206,6 +206,10 @@ int Albany::SolverFactory::checkTestResults(
       TEUCHOS_TEST_FOR_EXCEPT(numResponseTests != testValues.size());
       for (int i=0; i<testValues.size(); i++) {
         failures += scaledCompare((*g)[i], testValues[i], relTol, absTol);
+
+        // debug print
+//        std::cout << "Failures = " << failures << " computed val = " << (*g)[i] << " test val = " 
+//          << testValues[i] << " reltol = " << relTol << " abstol = " << absTol << std::endl;
         comparisons++;
       }
     }

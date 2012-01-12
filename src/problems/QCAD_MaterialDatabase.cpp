@@ -233,11 +233,11 @@ getElementBlockSublist(const std::string& ebName, const std::string& subListName
                     std::endl << "MaterialDB Error! material subList requested but no DB." << std::endl);
 
   TEUCHOS_TEST_FOR_EXCEPTION(ebName.length() == 0, Teuchos::Exceptions::InvalidParameter,
-                    std::endl << "MaterialDB Error! Empty element block name" << std::endl);
+                    std::endl << "MaterialDB Error! Empty element block name." << std::endl);
 
   TEUCHOS_TEST_FOR_EXCEPTION(!pEBList_->isSublist(ebName), Teuchos::Exceptions::InvalidParameter,
-                    std::endl << "MaterialDB Error! Invalid element block name " 
-                    << ebName << std::endl);
+                    std::endl << "MaterialDB Error! Invalid element block name \"" 
+                    << ebName << "\"."<< std::endl);
 
   // This call returns the sublist for the particular EB within the "ElementBlocks" list
   Teuchos::ParameterList& subList = pEBList_->sublist(ebName);
@@ -331,6 +331,28 @@ isElementBlockParam(const std::string& ebName, const std::string& paramName)
 
   Teuchos::ParameterList& matSubList = pMaterialsList_->sublist(materialName);
   return matSubList.isParameter(paramName);
+}
+
+bool QCAD::MaterialDatabase:: 
+isElementBlockSublist(const std::string& ebName, const std::string& subListName)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(pEBList_ == NULL, Teuchos::Exceptions::InvalidParameter,
+		     std::endl << "MaterialDB Error! param required but no DB." << std::endl);
+
+  if(!pEBList_->isSublist(ebName)) return false;
+  Teuchos::ParameterList& subList = pEBList_->sublist(ebName);
+
+  if(subList.isParameter(subListName)) return true;
+
+  //check if related material exists (it always should)
+  if(!subList.isParameter("material")) return false;
+
+  //Parameter not directly in element block sublist, so try related material
+  std::string materialName = subList.get<std::string>("material");
+  if(!pMaterialsList_->isSublist(materialName)) return false;
+
+  Teuchos::ParameterList& matSubList = pMaterialsList_->sublist(materialName);
+  return matSubList.isSublist(subListName);
 }
 
 

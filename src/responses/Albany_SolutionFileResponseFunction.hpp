@@ -11,12 +11,12 @@
 * NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
 * ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
 * including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
+*    Questions to Glen Hansen, gahanse@sandia.gov                    *
 \********************************************************************/
 
 
-#ifndef ALBANY_SOLUTIONFILEL2SPONSEFUNCTION_HPP
-#define ALBANY_SOLUTIONFILEL2SPONSEFUNCTION_HPP
+#ifndef ALBANY_SOLUTIONFILERESPONSEFUNCTION_HPP
+#define ALBANY_SOLUTIONFILERESPONSEFUNCTION_HPP
 
 #include "Albany_AbstractResponseFunction.hpp"
 #include "Epetra_Map.h"
@@ -26,16 +26,17 @@
 namespace Albany {
 
   /*!
-   * \brief Reponse function representing the difference from a stored vector on disk
+   * \brief Response function representing the difference from a stored vector on disk
    */
-  class SolutionFileL2ResponseFunction : public AbstractResponseFunction {
+  template<class VectorNorm>
+  class SolutionFileResponseFunction : public AbstractResponseFunction {
   public:
   
     //! Default constructor
-    SolutionFileL2ResponseFunction();
+    SolutionFileResponseFunction();
 
     //! Destructor
-    virtual ~SolutionFileL2ResponseFunction();
+    virtual ~SolutionFileResponseFunction();
 
     //! Get the number of responses
     virtual unsigned int numResponses() const;
@@ -80,18 +81,47 @@ namespace Albany {
   private:
 
     //! Private to prohibit copying
-    SolutionFileL2ResponseFunction(const SolutionFileL2ResponseFunction&);
+    SolutionFileResponseFunction(const SolutionFileResponseFunction&);
     
     //! Private to prohibit copying
-    SolutionFileL2ResponseFunction& operator=(const SolutionFileL2ResponseFunction&);
+    SolutionFileResponseFunction& operator=(const SolutionFileResponseFunction&);
 
     //! Reference Vector
     Epetra_Vector* RefSoln;
 
     bool solutionLoaded;
 
+    //! Basic idea borrowed from EpetraExt - TO DO: put it back there?
+    int MatrixMarketFileToVector( const char *filename, const Epetra_BlockMap & map, Epetra_Vector * & A);
+    int MatrixMarketFileToMultiVector( const char *filename, const Epetra_BlockMap & map, Epetra_MultiVector * & A);
+
   };
+
+//	namespace SolutionFileResponseFunction {
+	
+	  struct NormTwo {
+	
+	    double Norm(const Epetra_Vector& vec){ double norm; vec.Norm2(&norm); return norm * norm;}
+	
+	  };
+	
+	  struct NormInf {
+	
+	    double Norm(const Epetra_Vector& vec){ double norm; vec.NormInf(&norm); return norm;}
+	
+	  };
+//	}
 
 }
 
-#endif // ALBANY_SOLUTIONFILEL2RESPONSEFUNCTION_HPP
+// Define macro for explicit template instantiation
+#define SOLFILERESP_INSTANTIATE_TEMPLATE_CLASS_NORMTWO(name) \
+  template class name<Albany::NormTwo>;
+#define SOLFILERESP_INSTANTIATE_TEMPLATE_CLASS_NORMINF(name) \
+  template class name<Albany::NormInf>;
+
+#define SOLFILERESP_INSTANTIATE_TEMPLATE_CLASS(name) \
+  SOLFILERESP_INSTANTIATE_TEMPLATE_CLASS_NORMTWO(name) \
+  SOLFILERESP_INSTANTIATE_TEMPLATE_CLASS_NORMINF(name)
+
+#endif // ALBANY_SOLUTIONFILERESPONSEFUNCTION_HPP
