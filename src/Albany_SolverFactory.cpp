@@ -527,7 +527,7 @@ setCoordinatesForML(const string& solutionMethod,
       if ("ML" == stratList->get<string>("Preconditioner Type")) {
          ParameterList& mlList = 
             stratList->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings");
-         double *x, *y, *z, *rbm;
+         double *x = NULL, *y = NULL, *z = NULL, *rbm = NULL;
 
          // This block of code needs to be repalced with a function call to the problem for every problem!
          int numElasticityDim = 0; int nullSpaceDim = 0; int numPDEs=1;
