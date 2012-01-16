@@ -25,13 +25,12 @@
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
-    <Parameter name="1D Elements" type="int" value="100"/>
+    <Parameter name="Method" type="string" value="STK1D"/>
     <Parameter name="Element Blocks" type="int" value="2"/>
-    <Parameter name="Block 0" type="string" value="begins at 0 ends at 0.5 named MatA"/>
-    <Parameter name="Block 1" type="string" value="begins at 0.5 ends at 1.0 named MatB"/>
+    <Parameter name="Block 0" type="string" value="begins at 0 ends at 50 length 1.0 named MatA"/>
+    <Parameter name="Block 1" type="string" value="begins at 50 ends at 100 length 1.0 named MatB"/>
 <!-- should this go away? -->
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
-    <Parameter name="Method" type="string" value="STK1D"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter name="Number of Comparisons" type="int" value="4"/>

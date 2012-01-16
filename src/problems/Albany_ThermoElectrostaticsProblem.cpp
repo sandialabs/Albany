@@ -19,7 +19,7 @@
 #include "Albany_SolutionAverageResponseFunction.hpp"
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
 #include "Albany_SolutionMaxValueResponseFunction.hpp"
-#include "Albany_SolutionFileL2ResponseFunction.hpp"
+#include "Albany_SolutionFileResponseFunction.hpp"
 #include "Albany_InitialCondition.hpp"
 
 #include "Intrepid_FieldContainer.hpp"

@@ -121,6 +121,9 @@ namespace LCM {
     flux.resize(dims[0], numQPs, numDims);
     fluxdt.resize(dims[0], numQPs, numDims);
     pterm.resize(dims[0], numQPs);
+    tpterm.resize(dims[0], numNodes, numQPs);
+
+
 
     if (haveAbsorption)  aterm.resize(dims[0], numQPs);
 
@@ -305,23 +308,42 @@ evaluateFields(typename Traits::EvalData workset)
 
 // Penalty Term
 
-
   for (std::size_t cell=0; cell < workset.numCells; ++cell){
 
    porePbar = 0.0;
+
    vol = 0.0;
    for (std::size_t qp=0; qp < numQPs; ++qp) {
 	porePbar += weights(cell,qp)*(porePressure(cell,qp)
 			                     -porePressureold(cell, qp)
 			                      );
+
 	vol  += weights(cell,qp);
    }
-   porePbar /= vol;
+   porePbar  /= vol;
+
    for (std::size_t qp=0; qp < numQPs; ++qp) {
-   pterm(cell,qp) = porePbar;
-        }
+	   pterm(cell,qp) = porePbar;
+   }
+
+   for (std::size_t node=0; node < numNodes; ++node) {
+	     trialPbar = 0.0;
+ 		 for (std::size_t qp=0; qp < numQPs; ++qp) {
+ 			  trialPbar += wBF(cell,node,qp);
+ 		 }
+ 		 trialPbar /= vol;
+ 		 for (std::size_t qp=0; qp < numQPs; ++qp) {
+ 		 		   tpterm(cell,node,qp) = trialPbar;
+		 }
+
+   }
 
  }
+
+
+
+
+
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
@@ -331,9 +353,13 @@ evaluateFields(typename Traits::EvalData workset)
  						                  -porePressureold(cell, qp)
  						                               )
                     		                    		*stabParameter(cell, qp)/biotModulus(cell, qp)*
-                    		                    		wBF(cell, node, qp);
+                    		                    		( wBF(cell, node, qp)
+                    		                    				-tpterm(cell,node,qp)
+                    		                    				);
  				  TResidual(cell,node) += pterm(cell,qp)*stabParameter(cell, qp)/biotModulus(cell, qp)*
-                  		wBF(cell, node, qp);
+ 						 ( wBF(cell, node, qp)
+ 								 -tpterm(cell,node,qp)
+ 								 );
 
 
 		  }

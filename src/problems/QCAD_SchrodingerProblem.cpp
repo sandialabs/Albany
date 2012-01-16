@@ -151,6 +151,7 @@ QCAD::SchrodingerProblem::getValidProblemParameters() const
   validPL->sublist("Potential", false, "");
   validPL->set<double>("EnergyUnitInElectronVolts",1e-3,"Energy unit in electron volts");
   validPL->set<double>("LengthUnitInMeters",1e-9,"Length unit in meters");
+  validPL->set<string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
 
   validPL->sublist("Poisson Coupling", false, "");
 

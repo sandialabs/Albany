@@ -36,22 +36,42 @@ struct EBSpecsStruct {
 
     EBSpecsStruct(){}
 
+    //! Single element block initializer
+    void Initialize(unsigned int nnelems[], double blLength[]);
+
+    //! Multiple element block initializer
     void Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params);
 
-    bool inEB(const std::vector<double>& centroid){ for(std::size_t i = 0; i < centroid.size(); i++){
-          if(centroid[i] < scale[i] * min[i]) return false;
-          if(centroid[i] > scale[i] * max[i]) return false;
+    //! Query function to determine if a given i, j, k value is in this element block
+    // Note that elemNo is the logical lower left corner of the element being queried
+    bool inEB(const std::vector<int>& elemNo){ for(std::size_t i = 0; i < elemNo.size(); i++){
+          if(elemNo[i] < min[i]) return false;
+          if(elemNo[i] >= max[i]) return false;
         }
         return true;
     }
 
+    //! Calculate the number of elements in this block on the given dimension
+    int numElems(int dim){ return (max[dim] - min[dim]);}
+
+    //! Calculate the sizes of the elements in this element block
+//    void calcElemSizes(std::vector<std::vector<double> > &h){ 
+    void calcElemSizes(std::vector<double> h[]){ 
+//        for(std::size_t i = 0; i < h.size(); i++)
+        for(std::size_t i = 0; i < Dim; i++)
+          for(unsigned j = min[i]; j < max[i]; j++)
+            h[i][j] = blLength[i] / double(max[i] - min[i]);
+    }
+
     std::string name;      // Name of element block
-    double min[Dim];       // Minimum parametric coordinate of the block (0 to 1, unscaled)
-    double max[Dim];       // Maximum parametric coordinate of the block (0 to 1 unscaled)
-    double scale[Dim];       // Maximum parametric coordinate of the block (0 to 1 unscaled)
+    int min[Dim];       // Minimum logical coordinate of the block 
+    int max[Dim];       // Maximum logical coordinate of the block 
+    double blLength[Dim];      
+
 };
 
 //! Template for STK internal mesh generation classes
+
 template<int Dim, class traits = albany_stk_mesh_traits<Dim> >
 
   class TmplSTKMeshStruct : public GenericSTKMeshStruct {
@@ -94,8 +114,10 @@ template<int Dim, class traits = albany_stk_mesh_traits<Dim> >
          std::vector<std::string> nsNames);
 
     unsigned int nelem[traits_type::size];
+    double scale[traits_type::size];
     unsigned int numEB;
     std::vector<double> x[traits_type::size];
+//    std::vector<std::vector<double> > x;
     Teuchos::RCP<Epetra_Map> elem_map;
     std::vector<EBSpecsStruct<Dim> > EBSpecs;
 
@@ -104,23 +126,7 @@ template<int Dim, class traits = albany_stk_mesh_traits<Dim> >
 
   };
 
-
-// Explicit template signatures needed for the above
-
-  template <>
-  struct EBSpecsStruct<0> {
-
-    EBSpecsStruct(){}
-
-    void Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params){
-      // Never more than one element block in a 0D problem
-      name = "Block0";
-      scale[0] = 1.0;
-    }
-
-    std::string name;      // Name of element block
-    double scale[0];       // Maximum parametric coordinate of the block (0 to 1 unscaled)
-  };
+// Explicit template definitions in support of the above
 
   template <>
   struct albany_stk_mesh_traits<0> { 
@@ -157,14 +163,6 @@ template<int Dim, class traits = albany_stk_mesh_traits<Dim> >
     typedef shards::Hexahedron<8> optional_element_type;
 
   };
-
-// Specific template instantiations for convenience
-
-  typedef TmplSTKMeshStruct<0> Point0DSTKMeshStruct;
-  typedef TmplSTKMeshStruct<1> Line1DSTKMeshStruct;
-  typedef TmplSTKMeshStruct<2> Rect2DSTKMeshStruct;
-  typedef TmplSTKMeshStruct<3> Cube3DSTKMeshStruct;
-
 
 } // namespace Albany
 

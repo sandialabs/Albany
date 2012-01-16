@@ -68,6 +68,7 @@ namespace QCAD {
     T getElementBlockParam(const std::string& ebName, const std::string& paramName, T def_val);
 
     //! Get a sublist from a particular element block
+    bool isElementBlockSublist(const std::string& ebName, const std::string& subListName);
     Teuchos::ParameterList&
     getElementBlockSublist(const std::string& ebName, const std::string& subListName);
 

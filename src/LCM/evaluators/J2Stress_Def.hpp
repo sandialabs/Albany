@@ -276,7 +276,7 @@ evaluateFields(typename Traits::EvalData workset)
 	  dg = -2. * mubar * ( 1. + dH / ( 3. * mubar ) );
 
 	  res = std::abs(g);
-	  if ( res < 1.e-12 || res/f < 1.E-12 )
+	  if ( res < 1.e-11 || res/f < 1.E-11 )
 	    converged = true;
 
 	  TEUCHOS_TEST_FOR_EXCEPTION( count > 20, std::runtime_error,

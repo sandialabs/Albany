@@ -6,12 +6,12 @@ List of tasks relevant to the LCM project
 *** TODO (FY12) Tractions (Neumann BCs)
 *** TODO (FY12) Torsion
 ** Output
-*** TODO (FY11) General projectin of QP data to Nodes (SS)
+*** TODO (FY11) General projection of QP data to Nodes (SS)
 *** TODO (FY11) Output tensor components
 ** General
 *** TODO (FY12) Multiple Materials/Element Blocks
 *** TODO (FY12) Spatially dependent material parameters
-*** DONE (FY12) Introdction of time in all problems (some material models need it, could be used for BCs)
+*** DONE (FY12) Introduction of time in all problems (some material models need it, could be used for BCs)
 * Mechanics issues
 ** TODO (FY11) Create EnergyPotentialProblem (QC)
 ** DONE (FY11) Create ThermoMechanicalProblem (JTO)

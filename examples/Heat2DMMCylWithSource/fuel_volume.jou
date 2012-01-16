@@ -1,0 +1,60 @@
+## /Applications/Cubit-13.0/Cubit.app/Contents/MacOS/Cubitx
+## Cubit Version 13.0
+## Cubit Build 46708
+## Revised 2011-08-17 15:39:00 -0600 (Wed, 17 Aug 2011)
+## Running 09/13/2011 09:15:23 AM
+## Command Options:
+## -warning = On
+## -information = On
+#
+cd '/Volumes/ascldap/Codes/Albany/examples/Heat2DMMCylWithSource'
+# Build the cylinder that represents the cask and inert gas, one pellet high (inch dimensions)
+# volume 1
+#create cylinder height 0.6 (inches) 
+#create cylinder height 0.01524 (meters) radius 0.01
+# meter dimensions
+create cylinder height 0.01524 radius 0.01
+#
+# Build cladding OR
+# volume 2
+create cylinder height 0.01524 radius 0.0051562
+#
+# cladding is 0.0243" thick, gives IR of 0.1867
+# but pellet swells. Assume pellet OR is 0.1867. New pellet OR is 0.183, gap is 0.008
+# volume 3
+create cylinder height 0.01524 radius 0.0046482
+#
+subtract volume 2 from volume 1 keep
+delete volume 1
+subtract volume 3 from volume 2 keep
+delete volume 2
+# imprint and merge
+imprint volume all
+merge volume all
+# mesh it
+surface 9 13 17 sizing function none
+#surface 9 13 17 size auto factor 1
+# Fine
+#surface 9 13 17 size 0.00025
+# Coarse
+#surface 9 13 17 size 0.05
+surface 9 13 17 size 0.0005
+mesh surface 9 13 17
+# block it
+block 1 surface 9
+block 1 element type QUAD4
+block 1 name "Fuel"
+block 2 surface 17
+block 2 element type QUAD4
+block 2 name "Clad"
+block 3 surface 13
+block 3 element type QUAD4
+block 3 name "Environ"
+# Outside of cask
+nodeset 1 curve 10
+nodeset 1 name "Ambient"
+# Output
+save as "fuel_volume.cub" overwrite
+set large exodus file off
+export mesh "fuel_volume.exo" overwrite
+

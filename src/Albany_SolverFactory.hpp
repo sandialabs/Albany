@@ -82,8 +82,7 @@ namespace Albany {
   private:
 
     // Private functions to set deafult parameter values
-    void setSolverParamDefaults(Teuchos::ParameterList* appParams,
-                                int myRank);
+    void setSolverParamDefaults(Teuchos::ParameterList* appParams, int myRank);
 
     // Functions to generate reference parameter lists for validation
     Teuchos::RCP<const Teuchos::ParameterList>
@@ -104,7 +103,15 @@ namespace Albany {
     /** \brief Testing utility that compares two numbers using two tolerances */
     int scaledCompare(double x1, double x2, double relTol, double absTol) const;
 
+    //! Function to get coodinates from the mesh and insert to ML precond list
+    void setCoordinatesForML(const string& solutionMethod, 
+                    const string& secondOrder,
+                    Teuchos::RCP<Teuchos::ParameterList>& piroParams,
+                    Teuchos::RCP<Albany::Application>& app,
+                    std::string& problemName);
+
   protected:
+
 
     //! Parameter list specifying what solver to create
     Teuchos::RCP<Teuchos::ParameterList> appParams;

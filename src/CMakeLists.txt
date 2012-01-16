@@ -89,7 +89,7 @@ SET(SOURCES ${SOURCES}
 	responses/Albany_SolutionAverageResponseFunction.cpp 
 	responses/Albany_SolutionMaxValueResponseFunction.cpp
 	responses/Albany_SolutionTwoNormResponseFunction.cpp
-        responses/Albany_SolutionFileL2ResponseFunction.cpp
+        responses/Albany_SolutionFileResponseFunction.cpp
 	responses/Albany_EvaluatedResponseFunction.cpp
   )
 SET(HEADERS ${HEADERS}
@@ -97,7 +97,7 @@ SET(HEADERS ${HEADERS}
 	responses/Albany_SolutionAverageResponseFunction.hpp 
 	responses/Albany_SolutionMaxValueResponseFunction.hpp
 	responses/Albany_SolutionTwoNormResponseFunction.hpp
-        responses/Albany_SolutionFileL2ResponseFunction.hpp
+        responses/Albany_SolutionFileResponseFunction.hpp
 	responses/Albany_EvaluatedResponseFunction.hpp
   )
 
@@ -106,10 +106,6 @@ SET(SOURCES ${SOURCES}
         stk/Albany_STKDiscretization.cpp
 	stk/Albany_DiscretizationFactory.cpp
         stk/Albany_GenericSTKMeshStruct.cpp
-#        stk/Albany_Point0DSTKMeshStruct.cpp
-#        stk/Albany_Line1DSTKMeshStruct.cpp
-#        stk/Albany_Rect2DSTKMeshStruct.cpp
-#        stk/Albany_Cube3DSTKMeshStruct.cpp
         stk/Albany_TmplSTKMeshStruct.cpp
         stk/Albany_FromCubitSTKMeshStruct.cpp
         stk/Albany_IossSTKMeshStruct.cpp
@@ -120,10 +116,6 @@ SET(HEADERS ${HEADERS}
 	stk/Albany_DiscretizationFactory.hpp
         stk/Albany_AbstractSTKMeshStruct.hpp
         stk/Albany_GenericSTKMeshStruct.hpp
-#        stk/Albany_Point0DSTKMeshStruct.hpp
-#        stk/Albany_Line1DSTKMeshStruct.hpp
-#        stk/Albany_Rect2DSTKMeshStruct.hpp
-#        stk/Albany_Cube3DSTKMeshStruct.hpp
         stk/Albany_TmplSTKMeshStruct.hpp
         stk/Albany_FromCubitSTKMeshStruct.hpp
         stk/Albany_IossSTKMeshStruct.hpp
@@ -651,6 +643,7 @@ IF (ALBANY_LAME)
     stk/Albany_GenericSTKMeshStruct.cpp
     stk/Albany_TmplSTKMeshStruct.cpp
     stk/Albany_STKDiscretization.cpp
+    problems/QCAD_MaterialDatabase.cpp
     ${LCM_DIR}/utils/Tensor.cc
     ${LCM_DIR}/utils/LameUtils.cpp
     ${LCM_DIR}/evaluators/LameStress.cpp

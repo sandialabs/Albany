@@ -52,6 +52,7 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
+  PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
@@ -109,6 +110,16 @@ private:
   Intrepid::FieldContainer<ScalarT> CinvTaugrad;
 
   ScalarT CLbar, vol ;
+
+  // Temporary Field Containers for stabilization
+
+  Intrepid::FieldContainer<ScalarT> pTTterm;
+  Intrepid::FieldContainer<ScalarT> pBterm;
+
+
+  ScalarT pTranTerm, trialPbar;
+ // ScalarT pStrainRateTerm;
+
 
 
   // Output:

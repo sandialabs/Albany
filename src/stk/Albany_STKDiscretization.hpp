@@ -116,6 +116,11 @@ namespace Albany {
     void updateMesh(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct,
     		const Teuchos::RCP<const Epetra_Comm>& comm);
 
+    //! Accessor function to get coordinates for ML. Memory controlled here.
+    void getOwned_xyz(double **x, double **y, double **z, double **rbm,
+                      int& nNodes, int numPDEs, int nullSpaceDim);
+
+
   private:
 
     //! Private to prohibit copying
@@ -233,6 +238,10 @@ namespace Albany {
     int numOwnedNodes;
     int numOverlapNodes;
     int numGlobalNodes;
+
+    // Coordinate vector in format needed by ML. Need to own memory here.
+    double *xx, *yy, *zz, *rr;
+    bool allocated_xyz;
 
     Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct;
 

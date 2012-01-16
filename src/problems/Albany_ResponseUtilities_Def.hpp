@@ -18,7 +18,7 @@
 #include "Albany_SolutionAverageResponseFunction.hpp"
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
 #include "Albany_SolutionMaxValueResponseFunction.hpp"
-#include "Albany_SolutionFileL2ResponseFunction.hpp"
+#include "Albany_SolutionFileResponseFunction.hpp"
 #include "Albany_ResponseUtilities.hpp"
 #include "Albany_Utils.hpp"
 
@@ -239,7 +239,14 @@ Albany::ResponseUtilities<EvalT,Traits>::getStdResponseFn(
   }
 
   else if (responseName == "Solution Two Norm File") {
-    responses[responseIndex] = rcp(new Albany::SolutionFileL2ResponseFunction());
+    responses[responseIndex] = 
+      rcp(new Albany::SolutionFileResponseFunction<Albany::NormTwo>());
+    return true;
+  }
+
+  else if (responseName == "Solution Inf Norm File") {
+    responses[responseIndex] = 
+      rcp(new Albany::SolutionFileResponseFunction<Albany::NormInf>());
     return true;
   }
 

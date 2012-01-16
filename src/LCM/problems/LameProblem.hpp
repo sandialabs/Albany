@@ -41,7 +41,8 @@ namespace Albany {
     //! Default constructor
     LameProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
                 const Teuchos::RCP<ParamLib>& paramLib,
-                const int numEq);
+                const int numEqm,
+                const Teuchos::RCP<const Epetra_Comm>& comm);
 
     //! Destructor
     virtual ~LameProblem();
@@ -113,6 +114,10 @@ namespace Albany {
 
     //! Boundary conditions on source term
     bool haveSource;
+
+    bool haveMatDB;
+    std::string mtrlDbFilename;
+    Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
 
   };
 
@@ -213,7 +218,7 @@ void Albany::LameProblem::constructEvaluators(
   Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
 
   if (haveSource) { // Source
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                        "Error!  Sources not implemented in Elasticity yet!");
 
     RCP<ParameterList> p = rcp(new ParameterList);
@@ -273,8 +278,17 @@ void Albany::LameProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
     // Material properties that will be passed to LAME material model
-    string lameMaterialModel = params->get<string>("Lame Material Model");
+    string lameMaterialModel = params->get("Lame Material Model","Elastic");
     p->set<string>("Lame Material Model", lameMaterialModel);
+
+    // Info to get material data from materials xml database file
+    p->set<bool>("Have MatDB", haveMatDB);
+        p->set<string>("Element Block Name", meshSpecs.ebName);
+
+    if(haveMatDB)
+      p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
+
+    // Materials specification
     Teuchos::ParameterList& lameMaterialParametersList = p->sublist("Lame Material Parameters");
     lameMaterialParametersList = params->sublist("Lame Material Parameters");
 

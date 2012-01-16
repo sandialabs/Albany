@@ -63,8 +63,11 @@ void parameterListToMatProps(const Teuchos::ParameterList& lameMaterialParameter
       propertyVector.push_back(Teuchos::getValue<std::string>(entry));
       matProps.insert(name, propertyVector);
     }
+    else if(entry.isType<bool>()){
+      // Flag for reading from xml materials database is a bool -- not sent to Lame
+    }
     else{
-      TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, " parameters for LAME material models must be of type double, int, or string.\n");
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, " parameters for LAME material models must be of type double, int, or string.\n");
     }
   }
 }
@@ -110,7 +113,7 @@ Teuchos::RCP<lame::Material> constructLameMaterialModel(const std::string& lameM
   else if(materialModelName == "CRYSTAL_PLASTICITY")
     materialModel = Teuchos::rcp(new lame::CrystalPlasticity(props));
   else
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, " unsupported LAME material model: " + lameMaterialModelName + " (" + materialModelName + ")\n");
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, " unsupported LAME material model: " + lameMaterialModelName + " (" + materialModelName + ")\n");
 
   return materialModel;
 }

@@ -78,6 +78,7 @@ private:
   // Intermediate workspace
   Intrepid::FieldContainer<ScalarT> psiGradWithMass;
   Intrepid::FieldContainer<ScalarT> psiV;
+  Intrepid::FieldContainer<ScalarT> V_barrier;
 
   //! units
   double energy_unit_in_eV, length_unit_in_m;

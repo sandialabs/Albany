@@ -86,7 +86,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     stk::mesh::Part * const part = *i ;
 
     if ( part->primary_entity_rank() == metaData->element_rank()) {
-      //*out << "IOSS-STK: Element part found " << endl;
+      //*out << "IOSS-STK: Element part \"" << part->name() << "\" found " << endl;
       if (part->name()[0] != '{') {
          partVec[numEB] = part;
          numEB++;
@@ -117,7 +117,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   stk::io::get_element_block_sizes(*mesh_data, el_blocks);
   TEUCHOS_TEST_FOR_EXCEPT(el_blocks.size() != partVec.size());
 
-  int ebSizeMax =  *std::max_element(el_blocks.begin(),el_blocks.end());
+  int ebSizeMax =  *std::max_element(el_blocks.begin(), el_blocks.end());
   int worksetSize = this->computeWorksetSize(worksetSizeMax, ebSizeMax);
 
   // Construct MeshSpecsStruct

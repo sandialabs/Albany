@@ -105,6 +105,8 @@ private:
   Intrepid::FieldContainer<ScalarT> pterm;
   Intrepid::FieldContainer<ScalarT> Tterm;
   Intrepid::FieldContainer<ScalarT> aterm;
+  Intrepid::FieldContainer<ScalarT> tpterm;
+
   // Temporary FieldContainers
   Intrepid::FieldContainer<RealType> refPoints;
   Intrepid::FieldContainer<RealType> refWeights;
@@ -122,6 +124,7 @@ private:
   Intrepid::FieldContainer<ScalarT> Kref;
 
   ScalarT porePbar, Tempbar, vol;
+  ScalarT trialPbar;
 
 
 

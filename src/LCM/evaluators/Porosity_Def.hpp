@@ -82,8 +82,14 @@ Porosity(Teuchos::ParameterList& p) :
 
 
 
-  // Optional dependence on porePressure
+  // Optional dependence on porePressure and Biot coefficient
   // Switched ON by sending porePressure field in p
+
+  // initialize the bool variables
+  isCompressibleSolidPhase = false;
+  isCompressibleFluidPhase = false;
+  isPoroElastic = false;
+
   if ( p.isType<string>("Strain Name") ) {
 
  //   Teuchos::RCP<PHX::DataLayout> scalar_dl =
@@ -120,6 +126,8 @@ Porosity(Teuchos::ParameterList& p) :
          btp(p.get<string>("Biot Coefficient Name"), scalar_dl);
        biotCoefficient = btp;
        isCompressibleSolidPhase = true;
+       isCompressibleFluidPhase = true;
+       isPoroElastic = true;
        this->addDependentField(biotCoefficient);
     }
 
@@ -129,7 +137,9 @@ Porosity(Teuchos::ParameterList& p) :
          PHX::MDField<ScalarT,Cell,QuadPoint>
            ppn(p.get<string>("QP Pore Pressure Name"), scalar_dl);
          porePressure = ppn;
+         isCompressibleSolidPhase = true;
          isCompressibleFluidPhase = true;
+         isPoroElastic = true;
          this->addDependentField(porePressure);
 
          GrainBulkModulus = elmd_list->get("Grain Bulk Modulus Value", 10.0e12); // typically Kgrain >> Kskeleton
@@ -191,6 +201,13 @@ evaluateFields(typename Traits::EvalData workset)
     	  				             + porePressure(cell,qp)
     	  				             *(biotCoefficient(cell,qp)-initialPorosity_value)/GrainBulkModulus;
     	  	}
+
+//    	  	// for debug
+//    	  	std::cout << "initial Porosity: " << initialPorosity_value << endl;
+//    	  	std::cout << "Pore Pressure: " << porePressure << endl;
+//    	  	std::cout << "Biot Coefficient: " << biotCoefficient << endl;
+//    	  	std::cout << "Grain Bulk Modulus " << GrainBulkModulus << endl;
+
 //			porosity(cell,qp) += (1.0 - initialPorosity_value)
 //								  /GrainBulkModulus*porePressure(cell,qp);
     	  // for large deformation, \phi = J \dot \phi_{o}

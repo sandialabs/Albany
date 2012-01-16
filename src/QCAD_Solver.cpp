@@ -872,8 +872,16 @@ void preprocessParams(Teuchos::ParameterList& params, std::string preprocessType
       std::string exoName= "init" + params.sublist("Discretization").get<std::string>("1D Output File Name");
       params.sublist("Discretization").set("1D Output File Name", exoName);
     }
+    
     else TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 			  "Unknown function Discretization Parameter" << std::endl);
+
+    // temporary set Restart Index = 1 for initial poisson
+    if (params.sublist("Discretization").isParameter("Restart Index"))
+    {
+      params.sublist("Discretization").set("Restart Index", 1); 
+    }
+
   }
 
   else if(preprocessType == "dummy poisson") {
