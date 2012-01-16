@@ -96,6 +96,7 @@
     <ParameterList name="sio2">
       <Parameter name="material" type="string" value="SiliconDioxide" />
       <Parameter name="Charge Parameter Name" type="string" value="Oxide Charge" />
+      <Parameter name="Charge Parameter Scaling" type="double" value="1e18" />
       <!-- <Parameter name="Charge Value" type="double" value="1e10" /> -->
     </ParameterList>
 
