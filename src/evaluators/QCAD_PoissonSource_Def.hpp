@@ -129,14 +129,14 @@ PoissonSource(Teuchos::ParameterList& p) :
   std::vector<string>::iterator s;
   for(s = dopingParamNames.begin(); s != dopingParamNames.end(); s++) {
     if( psList->isParameter(*s) ) {
-      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(*s, this, paramLib);
       materialParams[*s] = psList->get<double>(*s);
+      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(*s, this, paramLib);
     }
   }
   for(s = chargeParamNames.begin(); s != chargeParamNames.end(); s++) {
     if( psList->isParameter(*s) ) {
-      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(*s, this, paramLib);
       materialParams[*s] = psList->get<double>(*s);
+      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(*s, this, paramLib);
     }
   }
 
@@ -382,8 +382,10 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
     
       if( materialDB->isElementBlockParam(workset.EBName, "Doping Value") ) 
         dopingConc = materialDB->getElementBlockParam<double>(workset.EBName,"Doping Value");
-      else if( materialDB->isElementBlockParam(workset.EBName, "Doping Parameter Name") ) 
-        dopingConc = materialParams[ materialDB->getElementBlockParam<string>(workset.EBName,"Doping Parameter Name") ];
+      else if( materialDB->isElementBlockParam(workset.EBName, "Doping Parameter Name") ) {
+        double scl = materialDB->getElementBlockParam<double>(workset.EBName,"Doping Parameter Scaling", 1.0);
+        dopingConc = materialParams[ materialDB->getElementBlockParam<string>(workset.EBName,"Doping Parameter Name") ] * scl;
+      }
       else TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
         std::endl << "Error!  Unknown dopant concentration for " << workset.EBName << "!"<< std::endl);
 
@@ -528,8 +530,10 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
     ScalarT fixedCharge; // [cm^-3]
     if( materialDB->isElementBlockParam(workset.EBName, "Charge Value") ) 
       fixedCharge = materialDB->getElementBlockParam<double>(workset.EBName,"Charge Value");
-    else if( materialDB->isElementBlockParam(workset.EBName, "Charge Parameter Name") ) 
-      fixedCharge  = materialParams[ materialDB->getElementBlockParam<string>(workset.EBName,"Charge Parameter Name") ];
+    else if( materialDB->isElementBlockParam(workset.EBName, "Charge Parameter Name") ) { 
+      double scl = materialDB->getElementBlockParam<double>(workset.EBName,"Charge Parameter Scaling", 1.0);
+      fixedCharge = materialParams[ materialDB->getElementBlockParam<string>(workset.EBName,"Charge Parameter Name") ] * scl;
+    }
     else fixedCharge = 0.0; 
 
     //! parameters for computing exchange-correlation potential
