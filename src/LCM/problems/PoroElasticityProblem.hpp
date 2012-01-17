@@ -143,6 +143,7 @@ namespace Albany {
 
 #include "Time.hpp"
 #include "Strain.hpp"
+#include "StabParameter.hpp"
 #include "PHAL_SaveStateField.hpp"
 #include "Porosity.hpp"
 #include "BiotCoefficient.hpp"
@@ -274,18 +275,32 @@ void Albany::PoroElasticityProblem::constructEvaluators(
      fm0.template registerEvaluator<EvalT>(ev);
    }
 
-   { // Constant Stabilization Parameter
+   { // Spatial Stabilization Parameter Field
         RCP<ParameterList> p = rcp(new ParameterList);
 
-        p->set<string>("Material Property Name", "Stabilization Parameter");
-        p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
-        p->set<string>("Coordinate Vector Name", "Coord Vec");
-        p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
+        p->set<string>("Stabilization Parameter Name", "Stabilization Parameter");
+        p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
         p->set<RCP<ParamLib> >("Parameter Library", paramLib);
         Teuchos::ParameterList& paramList = params->sublist("Stabilization Parameter");
         p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-        ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
+
+        // Additional information to construct stabilization parameter field
+        p->set<string>("Gradient QP Variable Name", "Pore Pressure Gradient");
+		p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
+		p->set<string>("Gradient BF Name", "Grad BF");
+		p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+
+		p->set<string>("Diffusive Parameter Name", "Kozeny-Carman Permeability");
+		p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+        ev = rcp(new LCM::StabParameter<EvalT,AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+
+        p = stateMgr.registerStateVariable("Stabilization Parameter",dl->qp_scalar, dl->dummy,"zero", true);
+        ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
       }
 
