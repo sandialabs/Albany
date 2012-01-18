@@ -84,8 +84,9 @@ void cullDistributedResponse( Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly>& sg_
 			      Teuchos::RCP<Epetra_BlockMap>& sg_u_new_coeff_map )
 {
 
-  // Create the new object, sg_u_new, using pertinent stuff from the
-  // original object, sg_u, and the culled coeff_mapp...
+  // Fill in basic info for the RCP<Stokhos::EpetraVectorOrthogPoly>
+  // object, sg_u_new, using pertinent stuff from the original object,
+  // sg_u, and the culled coeff_mapp...
   sg_u_new = Teuchos::rcp( new Stokhos::EpetraVectorOrthogPoly( sg_u->basis(),
 								sg_u->map(),
 								sg_u_new_coeff_map,
@@ -94,6 +95,9 @@ void cullDistributedResponse( Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly>& sg_
   // ...then, finally, import the data from sg_u into new object,
   // sg_u_new:
   Epetra_Import importer( *(sg_u_new->productMap()), *(sg_u->productMap()));
+
+  importer.Print(std::cout);
+
   sg_u_new->getBlockVector()->Import(*(sg_u->getBlockVector()), importer,
 					       Insert);
 }
@@ -348,11 +352,16 @@ int main(int argc, char *argv[]) {
        piroParams->sublist("Stochastic Galerkin");
     Teuchos::ParameterList& solKLParams =
       sgParams.sublist("Response KL");
-    bool computeKLOnResponse = solKLParams.get("ComputeKLOnResponse", true);
+    bool computeKLOnResponse = solKLParams.get("ComputeKLOnResponse", false);
     int NumKL = solKLParams.get("NumKL", 0);
     
     // Tim, this is a new parameter in the Response KL section:
     //bool CullResponse = solKLParams.get("CullResponse", true);
+
+    // Let's set some temporary overrides to parameters that we just
+    // got since they're not in the xml file for the NS solution
+    computeKLOnResponse = true;
+    NumKL = 2; // max 4 kl terms in input xml file(?)
     bool CullResponse = true;
 
     // Finish setup for, then call KL solver if asked...
@@ -396,19 +405,23 @@ int main(int argc, char *argv[]) {
 	    // ...and import the correct data from sg_u into sg_u_new
 	    cullDistributedResponse( sg_u, sg_u_new, sg_u_new_coeff_map );
 	    
-	    cout << "First 3*neq values of sg_u and sg_u_new:" << endl;
+	    cout << "First 5*neq values of sg_u and sg_u_new:" << endl;
 	    {
-	      for ( int i=0; i < 3*neq; i++ )
+	      for ( int i=0; i < 5*neq; i++ )
 		cout << "sg_u->getBlockVector()[" << i << "] = " <<
 		  (*(sg_u->getBlockVector()))[i] << "    " 
 		     <<"sg_u_new->getBlockVector()[" << i << "] = " <<
 		  (*(sg_u_new->getBlockVector()))[i] << endl;
 	    }
 	    
-	    cout << "Last 3*neq values of sg_u and sg_u_new:" << endl;
+	    cout << "Last 5*neq values of sg_u and sg_u_new:" << endl;
 	    {
 	      int N = sg_u->productMap()->NumMyElements();
-	      for ( int i=0; i < 3*neq; i++ )
+	      cout << "Number of elements in sg_u BlockVector: " << N << std::endl;
+	      cout << "Number of elements in sg_u_new BlockVector: " << 
+		sg_u_new->productMap()->NumMyElements() << std::endl;
+
+	      for ( int i=0; i < 5*neq; i++ )
 		cout << "sg_u->getBlockVector()[" << N-i-1 << "] = " <<
 		  (*(sg_u->getBlockVector()))[N - (i+1)] << "    " 
 		     <<"sg_u_new->getBlockVector()[" << ndim*N/neq - (i+1) << "] = " <<
