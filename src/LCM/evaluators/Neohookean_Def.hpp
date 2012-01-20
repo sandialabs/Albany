@@ -45,6 +45,7 @@ Neohookean(const Teuchos::ParameterList& p) :
   tensor_dl->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
+  worksetSize = dims[0];
 
   this->addDependentField(F);
   this->addDependentField(J);
@@ -53,6 +54,9 @@ Neohookean(const Teuchos::ParameterList& p) :
   if (numDims>1) this->addDependentField(poissonsRatio);
 
   this->addEvaluatedField(stress);
+
+  // scratch space FCs
+  FT.resize(worksetSize, numQPs, numDims, numDims);
 
   this->setName("NeoHookean Stress"+PHX::TypeString<EvalT>::value);
 
@@ -81,14 +85,14 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT mu;
   ScalarT Jm53;
   ScalarT trace;
+  
+  Intrepid::FieldContainer<ScalarT> b(workset.numCells, numQPs, numDims, numDims);
+  Intrepid::RealSpaceTools<ScalarT>::transpose(FT, F);
+  Intrepid::FunctionSpaceTools::tensorMultiplyDataData<ScalarT> (b, F, FT, 'N');
 
-  Intrepid::FieldContainer<ScalarT> C(workset.numCells, numQPs, numDims, numDims);
-  Intrepid::FunctionSpaceTools::tensorMultiplyDataData<ScalarT> (C, F, F, 'T');
-  
-  
   switch (numDims) {
   case 1:
-    Intrepid::FunctionSpaceTools::tensorMultiplyDataData<ScalarT>(stress, elasticModulus, C);
+    Intrepid::FunctionSpaceTools::tensorMultiplyDataData<ScalarT>(stress, elasticModulus, b);
     break;
   case 2:
   case 3:
@@ -98,10 +102,10 @@ evaluateFields(typename Traits::EvalData workset)
 	mu    = elasticModulus(cell,qp) / ( 2. * ( 1. + poissonsRatio(cell,qp) ) );
 	Jm53  = std::pow(J(cell,qp), -5./3.);
 	trace = 0.0;
-	for (std::size_t i=0; i < numDims; ++i) trace += (1./numDims) * C(cell,qp,i,i);
+	for (std::size_t i=0; i < numDims; ++i) trace += (1./numDims) * b(cell,qp,i,i);
 	for (std::size_t i=0; i < numDims; ++i) {
 	  for (std::size_t j=0; j < numDims; ++j) {
-	    stress(cell,qp,i,j) = mu * Jm53 * ( C(cell,qp,i,j) );
+	    stress(cell,qp,i,j) = mu * Jm53 * ( b(cell,qp,i,j) );
 	  }
 	  stress(cell,qp,i,i) += 0.5 * kappa * ( J(cell,qp) - 1. / J(cell,qp) ) - mu * Jm53 * trace;
 	}
