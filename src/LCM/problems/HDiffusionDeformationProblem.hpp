@@ -141,6 +141,7 @@ namespace Albany {
 
 #include "ShearModulus.hpp"
 #include "BulkModulus.hpp"
+#include "PoissonsRatio.hpp"
 #include "YieldStrength.hpp"
 #include "HardeningModulus.hpp"
 #include "SaturationModulus.hpp"
@@ -581,6 +582,26 @@ void Albany::HDiffusionDeformationProblem::constructEvaluators(
 
  
     ev = rcp(new LCM::BulkModulus<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  { // Poissons Ratio
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    p->set<string>("QP Variable Name", "Poissons Ratio");
+    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Poissons Ratio");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    // Setting this turns on linear dependence of nu on T, nu = nu_ + dnudT*T)
+    //p->set<string>("QP Pore Pressure Name", "Pore Pressure");
+
+    ev = rcp(new LCM::PoissonsRatio<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 

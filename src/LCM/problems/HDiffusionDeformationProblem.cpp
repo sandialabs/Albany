@@ -118,6 +118,7 @@ Albany::HDiffusionDeformationProblem::getValidProblemParameters() const
   validPL->sublist("Thermal Conductivity", false, "");
   validPL->sublist("Bulk Modulus", false, "");
   validPL->sublist("Shear Modulus", false, "");
+  validPL->sublist("Poissons Ratio", false, "");
   validPL->sublist("Hardening Modulus", false, "");
   validPL->sublist("Saturation Modulus", false, "");
   validPL->sublist("Saturation Exponent", false, "");
