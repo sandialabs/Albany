@@ -167,9 +167,8 @@ struct Workset {
   // mpl::vector mapping evaluation type EvalT to serialization class
   // ValueTypeSerializer<int, EvalT::ScalarT>, which is used for MPI
   // communication of scalar types.
-  typedef typename 
-    PHAL::CreateLambdaKeyMap<AlbanyTraits::BEvalTypes,
-			     ApplyEvalT<ApplyVTS> >::type SerializerMap;
+  typedef PHAL::CreateLambdaKeyMap<AlbanyTraits::BEvalTypes,
+				   ApplyEvalT<ApplyVTS> >::type SerializerMap;
 
   // Container storing serializers for each evaluation type
   PHAL::TypeKeyMap<SerializerMap> serializerManager;

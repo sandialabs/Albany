@@ -126,7 +126,7 @@ Application(const RCP<const Epetra_Comm>& comm_,
 	 it != responseIDs_to_require.end(); 
 	 it++) {
       const string& responseID = *it;
-      PHX::Tag<typename PHAL::AlbanyTraits::Residual::ScalarT> res_response_tag(
+      PHX::Tag<PHAL::AlbanyTraits::Residual::ScalarT> res_response_tag(
 	responseID, dummy);
       sfm[ps]->requireField<PHAL::AlbanyTraits::Residual>(res_response_tag);
     }
