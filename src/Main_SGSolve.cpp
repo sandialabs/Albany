@@ -29,10 +29,10 @@
 #include "Stokhos.hpp"
 #include "Stokhos_Epetra.hpp"
 #include "Stokhos_PCEAnasaziKL.hpp"
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 // begin jrr
 //
+#include "EpetraExt_BlockUtility.h"
 
 // Functions to cull solution vector's (sg_u) map using
 // assumptions on various size and location parameters 
@@ -76,6 +76,19 @@ void cullDistributedResponseMap( Teuchos::RCP<const Epetra_BlockMap>& x_map,
   
   x_new_map = Teuchos::rcp( new Epetra_BlockMap( -1, gids_new.size(), &gids_new[0],
 						  1, 0, x_map->Comm() ) );
+
+//   int N_new_map = x_new_map->NumMyElements();
+//   int MinG_new = x_new_map->MinMyGID();
+//   int MaxG_new = x_new_map->MaxMyGID();
+//   int MaxG1_new = x_new_map->MaxMyGID();
+
+//   int N_map2 = x_map->NumMyElements();
+//   int MinG = x_map->MinMyGID();
+//   int MaxG = x_map->MaxMyGID();
+//   int MaxG1 = x_map->MaxMyGID();
+
+
+  //
 }
 
 // now cull the response vector itself
@@ -87,16 +100,27 @@ void cullDistributedResponse( Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly>& sg_
   // Fill in basic info for the RCP<Stokhos::EpetraVectorOrthogPoly>
   // object, sg_u_new, using pertinent stuff from the original object,
   // sg_u, and the culled coeff_mapp...
+
+  int offset = 
+    EpetraExt::BlockUtility::CalculateOffset( *(sg_u->coefficientMap()) );
+
+  Teuchos::RCP<Epetra_Map> product_map = 
+    Teuchos::rcp( EpetraExt::BlockUtility::GenerateBlockMap( *sg_u_new_coeff_map,
+							     *(sg_u->map()),
+							     *(sg_u->productComm()),
+							     offset ) );
+
   sg_u_new = Teuchos::rcp( new Stokhos::EpetraVectorOrthogPoly( sg_u->basis(),
 								sg_u->map(),
 								sg_u_new_coeff_map,
+								product_map,
 								sg_u->productComm() ) );
 
   // ...then, finally, import the data from sg_u into new object,
   // sg_u_new:
   Epetra_Import importer( *(sg_u_new->productMap()), *(sg_u->productMap()));
 
-  importer.Print(std::cout);
+  //  importer.Print(std::cout);
 
   sg_u_new->getBlockVector()->Import(*(sg_u->getBlockVector()), importer,
 					       Insert);
@@ -405,28 +429,28 @@ int main(int argc, char *argv[]) {
 	    // ...and import the correct data from sg_u into sg_u_new
 	    cullDistributedResponse( sg_u, sg_u_new, sg_u_new_coeff_map );
 	    
-	    cout << "First 5*neq values of sg_u and sg_u_new:" << endl;
-	    {
-	      for ( int i=0; i < 5*neq; i++ )
-		cout << "sg_u->getBlockVector()[" << i << "] = " <<
-		  (*(sg_u->getBlockVector()))[i] << "    " 
-		     <<"sg_u_new->getBlockVector()[" << i << "] = " <<
-		  (*(sg_u_new->getBlockVector()))[i] << endl;
-	    }
+// 	    cout << "First 5*neq values of sg_u and sg_u_new:" << endl;
+// 	    {
+// 	      for ( int i=0; i < 5*neq; i++ )
+// 		cout << "sg_u->getBlockVector()[" << i << "] = " <<
+// 		  (*(sg_u->getBlockVector()))[i] << "    " 
+// 		     <<"sg_u_new->getBlockVector()[" << i << "] = " <<
+// 		  (*(sg_u_new->getBlockVector()))[i] << endl;
+// 	    }
 	    
-	    cout << "Last 5*neq values of sg_u and sg_u_new:" << endl;
-	    {
-	      int N = sg_u->productMap()->NumMyElements();
-	      cout << "Number of elements in sg_u BlockVector: " << N << std::endl;
-	      cout << "Number of elements in sg_u_new BlockVector: " << 
-		sg_u_new->productMap()->NumMyElements() << std::endl;
+// 	    cout << "Last 5*neq values of sg_u and sg_u_new:" << endl;
+// 	    {
+// 	      int N = sg_u->productMap()->NumMyElements();
+// 	      cout << "Number of elements in sg_u BlockVector: " << N << std::endl;
+// 	      cout << "Number of elements in sg_u_new BlockVector: " << 
+// 		sg_u_new->productMap()->NumMyElements() << std::endl;
 
-	      for ( int i=0; i < 5*neq; i++ )
-		cout << "sg_u->getBlockVector()[" << N-i-1 << "] = " <<
-		  (*(sg_u->getBlockVector()))[N - (i+1)] << "    " 
-		     <<"sg_u_new->getBlockVector()[" << ndim*N/neq - (i+1) << "] = " <<
-		  (*(sg_u_new->getBlockVector()))[ndim*N/neq - (i+1)] << endl;
-	    }
+// 	      for ( int i=0; i < 5*neq; i++ )
+// 		cout << "sg_u->getBlockVector()[" << N-i-1 << "] = " <<
+// 		  (*(sg_u->getBlockVector()))[N - (i+1)] << "    " 
+// 		     <<"sg_u_new->getBlockVector()[" << ndim*N/neq - (i+1) << "] = " <<
+// 		  (*(sg_u_new->getBlockVector()))[ndim*N/neq - (i+1)] << endl;
+// 	    }
 	    
 	    KL_Success = KL_OnSolutionMultiVector(sg_solver, 
 						  sg_u_new,
