@@ -373,7 +373,6 @@ evaluateFields(typename Traits::EvalData workset)
    }
 
 
-
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
 	  for (std::size_t node=0; node < numNodes; ++node) {
@@ -384,13 +383,13 @@ evaluateFields(typename Traits::EvalData workset)
 			  	dporePressure = porePressure(cell,qp)-porePressureold(cell, qp);
 
 
- 				  TResidual(cell,node) += (
+ 				  TResidual(cell,node) -= (
  						 -(J(cell,qp)-Jold(cell,qp))*porePressure(cell,qp)
  						 +  J(cell,qp)*dporePressure)
  						 / (J(cell,qp)*J(cell,qp))
                     	*stabParameter(cell, qp)*alphaMixture(cell,qp)*refTemp(cell,qp)*3.00
                     	*(wBF(cell, node, qp) -tpterm(cell,node,qp));
- 				  TResidual(cell,node) -= pterm(cell,qp)*stabParameter(cell, qp)
+ 				  TResidual(cell,node) += pterm(cell,qp)*stabParameter(cell, qp)
  						                  *alphaMixture(cell,qp)*refTemp(cell,qp)*3.00*
                   		                  (wBF(cell, node, qp) -tpterm(cell,node,qp));
 

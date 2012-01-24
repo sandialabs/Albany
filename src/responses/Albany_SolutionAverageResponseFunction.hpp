@@ -18,21 +18,20 @@
 #ifndef ALBANY_SOLUTIONAVERAGERESPONSEFUNCTION_HPP
 #define ALBANY_SOLUTIONAVERAGERESPONSEFUNCTION_HPP
 
-#include "Albany_AbstractResponseFunction.hpp"
-#include "Epetra_Map.h"
-#include "Epetra_Import.h"
-#include "Epetra_Vector.h"
+#include "Albany_SamplingBasedScalarResponseFunction.hpp"
 
 namespace Albany {
 
   /*!
    * \brief Reponse function representing the average of the solution values
    */
-  class SolutionAverageResponseFunction : public AbstractResponseFunction {
+  class SolutionAverageResponseFunction : 
+    public SamplingBasedScalarResponseFunction {
   public:
   
     //! Default constructor
-    SolutionAverageResponseFunction();
+    SolutionAverageResponseFunction(
+      const Teuchos::RCP<const Epetra_Comm>& comm);
 
     //! Destructor
     virtual ~SolutionAverageResponseFunction();

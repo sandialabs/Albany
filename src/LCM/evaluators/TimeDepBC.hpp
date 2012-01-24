@@ -29,6 +29,7 @@
 #include "Sacado_ParameterAccessor.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_Dirichlet.hpp"
+#include <vector>
 
 namespace LCM {
 /** \brief Time Dependent BC Dirichlet evaluator

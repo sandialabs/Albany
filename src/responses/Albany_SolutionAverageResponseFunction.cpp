@@ -18,7 +18,8 @@
 #include "Albany_SolutionAverageResponseFunction.hpp"
 
 Albany::SolutionAverageResponseFunction::
-SolutionAverageResponseFunction()
+SolutionAverageResponseFunction(const Teuchos::RCP<const Epetra_Comm>& comm) :
+  SamplingBasedScalarResponseFunction(comm)
 {
 }
 

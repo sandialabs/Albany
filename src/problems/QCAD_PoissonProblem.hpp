@@ -41,20 +41,32 @@ namespace QCAD {
   public:
   
     //! Default constructor
-    PoissonProblem(
-                         const Teuchos::RCP<Teuchos::ParameterList>& params,
-                         const Teuchos::RCP<ParamLib>& paramLib,
-                         const int numDim_,
-			 const Teuchos::RCP<const Epetra_Comm>& comm_);
+    PoissonProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
+		   const Teuchos::RCP<ParamLib>& paramLib,
+		   const int numDim_,
+		   const Teuchos::RCP<const Epetra_Comm>& comm_);
 
     //! Destructor
     ~PoissonProblem();
 
+    //! Return number of spatial dimensions
+    virtual int spatialDimension() const { return numDim; }
+
     //! Build the PDE instantiations, boundary conditions, and initial solution
-    void buildProblem(
-       Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
-       Albany::StateManager& stateMgr,
-       Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
+    virtual void buildProblem(
+      const Teuchos::RCP<Albany::Application>& app,
+      Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+      Albany::StateManager& stateMgr,
+      Teuchos::Array< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
+
+    // Build evaluators
+    virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
+    buildEvaluators(
+      PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+      const Albany::MeshSpecsStruct& meshSpecs,
+      Albany::StateManager& stateMgr,
+      Albany::FieldManagerChoice fmchoice,
+      const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
     //! Each problem must generate it's list of valide parameters
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
@@ -67,58 +79,19 @@ namespace QCAD {
     //! Private to prohibit copying
     PoissonProblem& operator=(const PoissonProblem&);
 
+  public:
+
     //! Main problem setup routine. Not directly called, but indirectly by following functions
     template <typename EvalT>
-    void constructEvaluators(
-            PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-            const Albany::MeshSpecsStruct& meshSpecs,
-            Albany::StateManager& stateMgr,
-            Albany::FieldManagerChoice fmchoice,
-            Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
-
-    //! Interface for Residual (PDE) field manager
-    template <typename EvalT>
-    void constructResidEvaluators(
-            PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-            const Albany::MeshSpecsStruct& meshSpecs,
-            Albany::StateManager& stateMgr)
-    {
-      Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> > junk;
-      constructEvaluators<EvalT>(fm0, meshSpecs, stateMgr, Albany::BUILD_RESID_FM, junk);
-    }
-
-    //! Interface for Response field manager, except for residual type
-    template <typename EvalT>
-    void constructResponseEvaluators(
-            PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-            const Albany::MeshSpecsStruct& meshSpecs,
-            Albany::StateManager& stateMgr)
-    {
-      Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> > junk;
-      constructEvaluators<EvalT>(fm0, meshSpecs, stateMgr, Albany::BUILD_RESPONSE_FM, junk);
-    }
-
-    //! Interface for Response field manager, Residual type.
-    // This version loads the responses variable, that needs to be constructed just once
-    template <typename EvalT>
-    void constructResponseEvaluators(
-            PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-            const Albany::MeshSpecsStruct& meshSpecs,
-            Albany::StateManager& stateMgr,
-            Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
-    {
-      constructEvaluators<EvalT>(fm0, meshSpecs, stateMgr, Albany::BUILD_RESPONSE_FM, responses);
-    }
+    Teuchos::RCP<const PHX::FieldTag>
+    constructEvaluators(
+      PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+      const Albany::MeshSpecsStruct& meshSpecs,
+      Albany::StateManager& stateMgr,
+      Albany::FieldManagerChoice fmchoice,
+      const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
     void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
-
-    template <typename EvalT>
-    void
-    constructResponses(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                       Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
-                       Teuchos::ParameterList& responseList,
-                       Albany::StateManager& stateMgr,
-                       Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits>& respUtils);
 
   protected:
 
@@ -158,12 +131,13 @@ namespace QCAD {
 #include "PHAL_SaveStateField.hpp"
 
 template <typename EvalT>
-void QCAD::PoissonProblem::constructEvaluators(
-        PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-        const Albany::MeshSpecsStruct& meshSpecs,
-        Albany::StateManager& stateMgr,
-        Albany::FieldManagerChoice fieldManagerChoice,
-        Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
+Teuchos::RCP<const PHX::FieldTag>
+QCAD::PoissonProblem::constructEvaluators(
+  PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+  const Albany::MeshSpecsStruct& meshSpecs,
+  Albany::StateManager& stateMgr,
+  Albany::FieldManagerChoice fieldManagerChoice,
+  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
    using Teuchos::RCP;
    using Teuchos::rcp;
@@ -405,100 +379,14 @@ void QCAD::PoissonProblem::constructEvaluators(
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
     PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter", dl->dummy);
     fm0.requireField<EvalT>(res_tag);
+    return res_tag.clone();
   }
 
-  else {
-    Teuchos::ParameterList& responseList = params->sublist("Response Functions");
+  else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
-    this->constructResponses(fm0, responses, responseList, stateMgr, respUtils);
+    return respUtils.constructResponses(fm0, *responseList, stateMgr);
   }
-}
 
-template<typename EvalT>
-void
-QCAD::PoissonProblem::constructResponses(
-  PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-  Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
-  Teuchos::ParameterList& responseList, 
-  Albany::StateManager& stateMgr,
-  Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits>& respUtils)
-{
-  using Teuchos::RCP;
-  using Teuchos::rcp;
-  using Teuchos::ParameterList;
-  using PHX::DataLayout;
-  using std::string;
-  using PHAL::AlbanyTraits;
-
-  Albany::Layouts& dl = *respUtils.get_dl();
-
-   // Parameters for Response Evaluators
-   //  Iterate through list of responses (from input xml file).  For each, create a response
-   //  function and possibly a parameter list to construct a response evaluator.
-   int num_responses = responseList.get("Number", 0);
-   responses.resize(num_responses);
-
-   std::vector<string> responseIDs_to_require;
-
-   // First, add in response targets for PHAL_SaveStateField evaluators created
-   //  during problem setup (these evaluators only act for residual type)
-   if(typeid(EvalT) == typeid(PHAL::AlbanyTraits::Residual))
-     responseIDs_to_require = stateMgr.getResidResponseIDsToRequire();
-
-   for (int i=0; i<num_responses; i++) 
-   {
-     std::string responseID = Albany::strint("Response",i);
-     std::string name = responseList.get(responseID, "??");
-
-     Teuchos::RCP< PHX::Evaluator<PHAL::AlbanyTraits> > ev;
-     if( respUtils.getStdResponseFn(name, i, responseList, responses, stateMgr, ev) ) {
-       if(ev != Teuchos::null) {
-         fm0.template registerEvaluator<EvalT>(ev);
-cout << "RRR2  requiring " << responseID << endl;
-	 responseIDs_to_require.push_back(responseID);
-       }
-     }
-
-     else if (name == "Saddle Value")
-     { 
-       std::string responseParamsID = Albany::strint("ResponseParams",i);              
-       ParameterList& responseParams = responseList.sublist(responseParamsID);
-       RCP<ParameterList> p = rcp(new ParameterList);
-       
-       RCP<QCAD::SaddleValueResponseFunction> 
-	 svResponse = rcp(new QCAD::SaddleValueResponseFunction(
-					     numDim, responseParams)); 
-       responses[i] = svResponse;
-       
-       p->set<string>("Response ID", responseID);
-       p->set<int>   ("Response Index", i);
-       p->set< Teuchos::RCP<QCAD::SaddleValueResponseFunction> >
-	 ("Response Function", svResponse);
-       p->set<Teuchos::ParameterList*>("Parameter List", &responseParams);
-       p->set< RCP<DataLayout> >("Dummy Data Layout", dl.dummy);
-       
-       p->set<string>("Coordinate Vector Name", "Coord Vec");
-       p->set<string>("Weights Name",   "Weights");
-       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl.qp_scalar);
-       p->set< RCP<DataLayout> >("QP Vector Data Layout", dl.qp_vector);
-       p->set< RCP<DataLayout> >("Vertices Vector Data Layout", dl.vertices_vector);
-
-       ev = rcp(new QCAD::ResponseSaddleValue<EvalT,AlbanyTraits>(*p));
-       fm0.template registerEvaluator<EvalT>(ev);
-
-cout << "RRR3  requiring " << responseID << endl;
-       responseIDs_to_require.push_back(responseID);
-     }
-
-     else {
-       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-				  std::endl << "Error!  Unknown response function " << name <<
-				  "!" << std::endl << "Supplied parameter list is " <<
-				  std::endl << responseList);
-     }
-   } // end of loop over responses
-
-   //! Create field manager for responses
-   respUtils.createResponseFieldManager(fm0, responseIDs_to_require);
+  return Teuchos::null;
 }
 #endif

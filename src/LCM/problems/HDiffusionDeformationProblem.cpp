@@ -15,9 +15,7 @@
 \********************************************************************/
 
 #include "HDiffusionDeformationProblem.hpp"
-#include "Albany_SolutionAverageResponseFunction.hpp"
-#include "Albany_SolutionTwoNormResponseFunction.hpp"
-#include "Albany_SolutionMaxValueResponseFunction.hpp"
+#include "Albany_ResponseFactory.hpp"
 #include "Albany_InitialCondition.hpp"
 
 #include "Albany_Utils.hpp"
@@ -63,35 +61,42 @@ Albany::HDiffusionDeformationProblem::
 void
 Albany::HDiffusionDeformationProblem::
 buildProblem(
-    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
-    Albany::StateManager& stateMgr,
-    Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
+  const Teuchos::RCP<Albany::Application>& app,
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+  Albany::StateManager& stateMgr,
+  Teuchos::Array< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
+  /* Construct All Phalanx Evaluators */
   TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
-  fm.resize(1); rfm.resize(1);
+  fm.resize(1);
   fm[0]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-  rfm[0] = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-
-  constructResidEvaluators<PHAL::AlbanyTraits::Residual  >(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::Jacobian  >(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::Tangent   >(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::SGResidual>(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::SGJacobian>(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::SGTangent >(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::MPResidual>(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::MPJacobian>(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::MPTangent >(*fm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::Residual  >(*rfm[0], *meshSpecs[0], stateMgr, responses);
-  constructResponseEvaluators<PHAL::AlbanyTraits::Jacobian  >(*rfm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::Tangent   >(*rfm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::SGResidual>(*rfm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::SGJacobian>(*rfm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::SGTangent >(*rfm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::MPResidual>(*rfm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::MPJacobian>(*rfm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::MPTangent >(*rfm[0], *meshSpecs[0], stateMgr);
-
+  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, BUILD_RESID_FM, 
+		  Teuchos::null);
   constructDirichletEvaluators(*meshSpecs[0]);
+
+  // Construct responses
+  Teuchos::ParameterList& responseList = params->sublist("Response Functions");
+  ResponseFactory responseFactory(app, Teuchos::rcp(this,false), meshSpecs, 
+				  Teuchos::rcp(&stateMgr,false));
+  responses = responseFactory.createResponseFunctions(responseList);
+
+}
+
+Teuchos::Array<Teuchos::RCP<const PHX::FieldTag> >
+Albany::HDiffusionDeformationProblem::
+buildEvaluators(
+  PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+  const Albany::MeshSpecsStruct& meshSpecs,
+  Albany::StateManager& stateMgr,
+  Albany::FieldManagerChoice fmchoice,
+  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+{
+  // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
+  // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
+  ConstructEvaluatorsOp<HDiffusionDeformationProblem> op(
+    *this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
+  boost::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(op);
+  return *op.tags;
 }
 
 void
@@ -118,6 +123,7 @@ Albany::HDiffusionDeformationProblem::getValidProblemParameters() const
   validPL->sublist("Thermal Conductivity", false, "");
   validPL->sublist("Bulk Modulus", false, "");
   validPL->sublist("Shear Modulus", false, "");
+  validPL->sublist("Poissons Ratio", false, "");
   validPL->sublist("Hardening Modulus", false, "");
   validPL->sublist("Saturation Modulus", false, "");
   validPL->sublist("Saturation Exponent", false, "");

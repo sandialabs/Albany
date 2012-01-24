@@ -24,6 +24,7 @@
 #include "Sacado_mpl_find.hpp"
 #include "boost/mpl/map.hpp"
 #include "boost/mpl/find.hpp"
+#include "boost/mpl/vector.hpp"
 
 // traits Base Class
 #include "Phalanx_Traits_Base.hpp"
@@ -36,10 +37,12 @@
 
 #include "Albany_DataTypes.hpp"
 #include "PHAL_Dimension.hpp"
-#include "PHAL_Workset.hpp"
 
 //! PHalanx-ALbany Code base: templated evaluators for Sacado AD
 namespace PHAL {
+
+  // Forward declaration since Workset needs AlbanyTraits
+  struct Workset;
 
   struct AlbanyTraits : public PHX::TraitsBase {
 
@@ -62,6 +65,9 @@ namespace PHAL {
     typedef Sacado::mpl::vector<Residual, Jacobian, Tangent, 
 				SGResidual, SGJacobian, SGTangent,
 				MPResidual, MPJacobian, MPTangent> EvalTypes;
+    typedef boost::mpl::vector<Residual, Jacobian, Tangent, 
+			       SGResidual, SGJacobian, SGTangent,
+			       MPResidual, MPJacobian, MPTangent> BEvalTypes;
     
     // ******************************************************************
     // *** Data Types
@@ -123,9 +129,9 @@ namespace PHAL {
     // ******************************************************************
     typedef const std::string& SetupData;
     //typedef const Albany::AbstractDiscretization& SetupData;
-    typedef const Workset& EvalData;
-    typedef void* PreEvalData;
-    typedef void* PostEvalData;
+    typedef Workset& EvalData;
+    typedef Workset& PreEvalData;
+    typedef Workset& PostEvalData;
 
   };
  
@@ -218,5 +224,7 @@ namespace PHX {
   PHAL_INSTANTIATE_TEMPLATE_CLASS_MPRESIDUAL(name)	 \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_MPJACOBIAN(name)	 \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_MPTANGENT(name)
+
+#include "PHAL_Workset.hpp"
 
 #endif

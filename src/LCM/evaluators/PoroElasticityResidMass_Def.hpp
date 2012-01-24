@@ -341,14 +341,11 @@ evaluateFields(typename Traits::EvalData workset)
  }
 
 
-
-
-
-
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
 	  for (std::size_t node=0; node < numNodes; ++node) {
 		  for (std::size_t qp=0; qp < numQPs; ++qp) {
+
  				  TResidual(cell,node) -= (porePressure(cell, qp)
  						                  -porePressureold(cell, qp)
  						                               )
@@ -360,6 +357,10 @@ evaluateFields(typename Traits::EvalData workset)
  						 ( wBF(cell, node, qp)
  								 -tpterm(cell,node,qp)
  								 );
+
+
+
+
 
 
 		  }

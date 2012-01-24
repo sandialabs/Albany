@@ -138,9 +138,9 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
   void* voidPtr(0);
 
   // Call the evaluators, evaluateFields() is the function that computes stress based on deformation gradient
-  fieldManager.preEvaluate<PHAL::AlbanyTraits::Residual>(voidPtr);
+  fieldManager.preEvaluate<PHAL::AlbanyTraits::Residual>(workset);
   fieldManager.evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
-  fieldManager.postEvaluate<PHAL::AlbanyTraits::Residual>(voidPtr);
+  fieldManager.postEvaluate<PHAL::AlbanyTraits::Residual>(workset);
 
   // Pull the stress from the FieldManager
   PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT,Cell,QuadPoint,Dim,Dim> stressField("Stress", qp_tensor);

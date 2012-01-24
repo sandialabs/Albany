@@ -386,13 +386,13 @@ evaluateFields(typename Traits::EvalData workset)
 
 
 
- 				 TResidual(cell,node) += (
+ 				 TResidual(cell,node) -= (
  						-(J(cell,qp)-Jold(cell,qp))*Temp(cell,qp) +
  						  			  J(cell,qp)*dTemperature)
  						  			 / (J(cell,qp)*J(cell,qp))
  				                     *stabParameter(cell, qp)*3.0*alphaMixture(cell, qp)
  				                     *(wBF(cell, node, qp) -tpterm(cell,node,qp));
- 				 TResidual(cell,node) -= Tterm(cell,qp)*stabParameter(cell, qp)
+ 				 TResidual(cell,node) += Tterm(cell,qp)*stabParameter(cell, qp)
  				  				      *3.0*alphaMixture(cell, qp)*(wBF(cell, node, qp) -tpterm(cell,node,qp));
 
 

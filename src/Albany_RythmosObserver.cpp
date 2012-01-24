@@ -42,16 +42,27 @@ void Albany_RythmosObserver::observeCompletedTimeStep(
   Teuchos::RCP<const Thyra::DefaultProductVector<double> > solnandsens = 
     Teuchos::rcp_dynamic_cast<const Thyra::DefaultProductVector<double> >
       (stepper.getStepStatus().solution);
+  Teuchos::RCP<const Thyra::DefaultProductVector<double> > solnandsens_dot = 
+    Teuchos::rcp_dynamic_cast<const Thyra::DefaultProductVector<double> >
+      (stepper.getStepStatus().solutionDot);
 
   Teuchos::RCP<const Thyra::VectorBase<double> > solution;
+  Teuchos::RCP<const Thyra::VectorBase<double> > solution_dot;
   if (solnandsens != Teuchos::null) {
     solution = solnandsens->getVectorBlock(0);
+    solution_dot = solnandsens_dot->getVectorBlock(0);
   }
   else {
     solution = stepper.getStepStatus().solution;
+    solution_dot = stepper.getStepStatus().solutionDot;
   }
 
   const Epetra_Vector soln= *(Thyra::get_Epetra_Vector(*disc->getMap(), solution));
+  const Epetra_Vector soln_dot= *(Thyra::get_Epetra_Vector(*disc->getMap(), solution_dot));
+
+  double t = stepper.getStepStatus().time;
+  if ( app->getParamLib()->isParameter("Time") )
+    t = app->getParamLib()->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
 
 #ifdef ALBANY_SEACAS
   Albany::STKDiscretization* stkDisc =
@@ -59,13 +70,12 @@ void Albany_RythmosObserver::observeCompletedTimeStep(
 
   {
     Teuchos::TimeMonitor exooutTimer(*exooutTime); //start timer
-
-    if ( app->getParamLib()->isParameter("Time") )
-      stkDisc->outputToExodus(soln, app->getParamLib()->getRealValue<PHAL::AlbanyTraits::Residual>("Time"));
-    else
-      stkDisc->outputToExodus(soln, 0.0);
+    stkDisc->outputToExodus(soln, t);
   }
 #endif
+
+  // Evaluate state field manager
+  app->evaluateStateFieldManager(t, &soln_dot, soln);
 
   app->getStateMgr().updateStates();;
 }
