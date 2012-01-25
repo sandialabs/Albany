@@ -49,7 +49,7 @@
 // RCP<Epetra_Vector>& x_new_map (output - new map for culled solution vector)
 
 void cullDistributedResponseMap( Teuchos::RCP<Epetra_Map>& x_map,
-				 vector<int>& keepDOF,
+				 std::vector<int>& keepDOF,
 				 Teuchos::RCP<Epetra_Map>& x_new_map )
 {
 
@@ -201,10 +201,10 @@ int main(int argc, char *argv[]) {
     // the 3rd dof.
 
     int neq = 4;                 // thermoelasticity3d
-    vector<int> keepDOF(neq, 1); // Initialize to keep all dof, then,
+    std::vector<int> keepDOF(neq, 1); // Initialize to keep all dof, then,
     keepDOF[3] = 0;              // as stated, cull the 4th dof
 
-    int ndim = accumulate(keepDOF.begin(), keepDOF.end(), 0);
+    int ndim = std::accumulate(keepDOF.begin(), keepDOF.end(), 0);
   
     // Now, create the new, culled map...
     cullDistributedResponseMap( xfinal_map, keepDOF, xfinal_new_map );
