@@ -71,7 +71,7 @@ KCPermeability(Teuchos::ParameterList& p) :
     }
   }
   else {
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+	  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		       "Invalid Kozeny-Carman Permeability type " << type);
   } 
 
@@ -155,7 +155,7 @@ KCPermeability<EvalT,Traits>::getValue(const std::string &n)
     if (n == Albany::strint("Kozeny-Carman Permeability KL Random Variable",i))
       return rv[i];
   }
-  TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		     std::endl <<
 		     "Error! Logic error in getting paramter " << n
 		     << " in KCPermeability::getValue()" << std::endl);

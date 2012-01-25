@@ -26,10 +26,10 @@
 #include "TriKota_DirectApplicInterface.hpp"
 
 /** \brief Main routine to drive ModelEvaluator application with Dakota */
-int Albany_Dakota();
+int Albany_Dakota(int argc, char *argv[]);
 
 #else // ALBANY_DAKOTA
-int Albany_Dakota()
+int Albany_Dakota(int argc, char *argv[])
 {
   std::cout << "\nDakota requested but not compiled in!\n" << std::endl;
   return 999;

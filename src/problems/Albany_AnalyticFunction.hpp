@@ -46,7 +46,6 @@ class ConstantFunction : public AnalyticFunction {
     int numDim; // size of coordinate vector X
     int neq;    // size of solution vector x
     Teuchos::Array<double> data;  
-    double val;
 };
 
 class GaussSin : public AnalyticFunction {

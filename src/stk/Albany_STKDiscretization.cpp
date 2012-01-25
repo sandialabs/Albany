@@ -37,6 +37,9 @@
 #include <stk_mesh/base/FieldData.hpp>
 #include <stk_mesh/base/Selector.hpp>
 
+//#include <Intrepid_FieldContainer.hpp>
+#include <PHAL_Dimension.hpp>
+
 #include <stk_mesh/fem/FEMHelpers.hpp>
 
 #ifdef ALBANY_SEACAS
@@ -52,7 +55,8 @@ Albany::STKDiscretization::STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMes
   comm(comm_),
   neq(stkMeshStruct_->neq),
   stkMeshStruct(stkMeshStruct_),
-  interleavedOrdering(stkMeshStruct_->interleavedOrdering)
+  interleavedOrdering(stkMeshStruct_->interleavedOrdering),
+  allocated_xyz(false)
 {
   Albany::STKDiscretization::updateMesh(stkMeshStruct,comm);
 }
@@ -62,6 +66,7 @@ Albany::STKDiscretization::~STKDiscretization()
 #ifdef ALBANY_SEACAS
   if (stkMeshStruct->exoOutput) delete mesh_data;
 #endif
+  if (allocated_xyz) { delete [] xx; delete [] yy; delete [] zz; delete [] rr; allocated_xyz=false;} 
 }
 
 	    
@@ -95,6 +100,12 @@ Albany::STKDiscretization::getNodeMap() const
   return node_map;
 }
 
+Teuchos::RCP<const Epetra_Map>
+Albany::STKDiscretization::getSideMap() const
+{
+  return side_map;
+}
+
 const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >&
 Albany::STKDiscretization::getWsElNodeEqID() const
 {
@@ -124,6 +135,40 @@ Albany::STKDiscretization::getCoordinates() const
   return coordinates;
 }
 
+void
+Albany::STKDiscretization::getOwned_xyz(double** x, double** y, double** z,
+                                        double **rbm, int& nNodes, int numPDEs, int nullSpaceDim)
+{
+  // Function to return x,y,z at owned nodes as double*, specifically for ML
+  int numDim = stkMeshStruct->numDim;
+  nNodes = numOwnedNodes;
+
+  if (allocated_xyz) { delete [] xx; delete [] yy; delete [] zz;} 
+  xx = new double[numOwnedNodes];
+  yy = new double[numOwnedNodes];
+  zz = new double[numOwnedNodes];
+  if (nullSpaceDim>0) rr = new double[nullSpaceDim * numPDEs*nNodes];
+  else                rr = new double[1]; // Just so there is something to delete in destructor
+  allocated_xyz = true;
+
+  for (int i=0; i < numOwnedNodes; i++)  {
+    int node_gid = gid(ownednodes[i]);
+    int node_lid = node_map->LID(node_gid);
+
+    double* X = stk::mesh::field_data(*stkMeshStruct->coordinates_field, *overlapnodes[i]);
+    if (numDim > 0) xx[node_lid] = X[0];
+    if (numDim > 1) yy[node_lid] = X[1];
+    if (numDim > 2) zz[node_lid] = X[2];
+  }
+
+  // Leave unused dim as null pointers.
+  if (numDim > 0) *x = xx;
+  if (numDim > 1) *y = yy;
+  if (numDim > 2) *z = zz;
+  *rbm = rr;
+}
+
+
 const Teuchos::ArrayRCP<std::string>& 
 Albany::STKDiscretization::getWsEBNames() const
 {
@@ -140,6 +185,12 @@ const std::vector<std::string>&
 Albany::STKDiscretization::getNodeSetIDs() const
 {
   return nodeSetIDs;
+}
+
+const std::vector<std::string>&
+Albany::STKDiscretization::getSideSetIDs() const
+{
+  return sideSetIDs;
 }
 
 void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln, const double time)
@@ -264,7 +315,7 @@ int Albany::STKDiscretization::nonzeroesPerRow(const int neq) const
   case 1: estNonzeroesPerRow=3*neq; break;
   case 2: estNonzeroesPerRow=9*neq; break;
   case 3: estNonzeroesPerRow=27*neq; break;
-  default: TEST_FOR_EXCEPTION(true, std::logic_error,
+  default: TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
 			      "STKDiscretization:  Bad numDim"<< numDim);
   }
   return estNonzeroesPerRow;
@@ -298,6 +349,7 @@ void Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
   map = Teuchos::rcp(new Epetra_Map(-1, indices.size(), &(indices[0]), 0, *comm));
 
 }
+
 void Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
 {
   // Loads member data:  overlapodes, numOverlapodes, overlap_node_map, coordinates
@@ -453,7 +505,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
         int node_gid = gid(rowNode);
         int node_lid = overlap_node_map->LID(node_gid);
         
-        TEST_FOR_EXCEPTION(node_lid<0, std::logic_error,
+        TEUCHOS_TEST_FOR_EXCEPTION(node_lid<0, std::logic_error,
 			   "STK1D_Disc: node_lid out of range " << node_lid << endl);
         coords[b][i][j] = stk::mesh::field_data(*stkMeshStruct->coordinates_field, rowNode);
         wsElNodeEqID[b][i][j].resize(neq);
@@ -482,7 +534,43 @@ void Albany::STKDiscretization::computeWorksetInfo()
       stk::mesh::BucketArray<Albany::AbstractSTKMeshStruct::QPTensorFieldType> array(*stkMeshStruct->qptensor_states[i], buck);
       MDArray ar = array;
       stateArrays[b][stkMeshStruct->qptensor_states[i]->name()] = ar;
+    }    
+    for (std::size_t i=0; i<stkMeshStruct->scalarValue_states.size(); i++) {      
+      const int size = 1;
+      shards::Array<double, shards::NaturalOrder, Cell> array(&(stkMeshStruct->time), size);
+      MDArray ar = array;
+      stateArrays[b][stkMeshStruct->scalarValue_states[i]] = ar;
     }
+  }
+}
+
+void Albany::STKDiscretization::computeSideSets()
+{
+
+  std::map<std::string, stk::mesh::Part*>::iterator ss = stkMeshStruct->ssPartVec.begin();
+  while ( ss != stkMeshStruct->ssPartVec.end() ) { // Iterate over Side Sets
+    // Get all owned nodes in this side set
+    stk::mesh::Selector select_owned_in_sspart =
+      stk::mesh::Selector( *(ss->second) ) &
+      stk::mesh::Selector( metaData.locally_owned_part() );
+
+    std::vector< stk::mesh::Entity * > sides ;
+    stk::mesh::get_selected_entities( select_owned_in_sspart ,
+				      bulkData.buckets( metaData.side_rank() ) ,
+				      sides );
+
+    sideSets[ss->first].resize(sides.size());
+    sideSetCoords[ss->first].resize(sides.size());
+    sideSetIDs.push_back(ss->first); // Grab string ID
+    *out << "STKDisc: sideset "<< ss->first <<" has size " << sides.size() << "  on Proc 0." << endl;
+    for (std::size_t i=0; i < sides.size(); i++) {
+      int side_gid = gid(sides[i]);
+      int side_lid = side_map->LID(side_gid);
+      sideSets[ss->first][i].resize(neq);
+      for (std::size_t eq=0; eq < neq; eq++)  sideSets[ss->first][i][eq] = getOwnedDOF(side_lid,eq);
+      sideSetCoords[ss->first][i] = stk::mesh::field_data(*stkMeshStruct->coordinates_field, *sides[i]);
+    }
+    ss++;
   }
 }
 
@@ -551,6 +639,8 @@ Albany::STKDiscretization::updateMesh(Teuchos::RCP<Albany::AbstractSTKMeshStruct
   computeWorksetInfo();
 
   computeNodeSets();
+
+  computeSideSets();
 
   setupExodusOutput();
 }

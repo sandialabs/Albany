@@ -55,6 +55,7 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<ScalarT,Cell,QuadPoint> porePressure;
   PHX::MDField<ScalarT,Cell,QuadPoint> Tdot;
+  PHX::MDField<ScalarT,Cell,QuadPoint> stabParameter;
   PHX::MDField<ScalarT,Cell,QuadPoint> ThermalCond;
   PHX::MDField<ScalarT,Cell,QuadPoint> kcPermeability;
   PHX::MDField<ScalarT,Cell,QuadPoint> porosity;
@@ -74,8 +75,12 @@ private:
   Teuchos::RCP<shards::CellTopology> cellType;
   PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
 
+  // Time
+  PHX::MDField<ScalarT,Dummy> deltaTime;
+
   //Data from previous time step
   std::string strainName, porePressureName, porosityName;
+
 
 
   bool haveSource;
@@ -90,7 +95,9 @@ private:
 
   // Temporary FieldContainers
   Intrepid::FieldContainer<ScalarT> flux;
+  Intrepid::FieldContainer<ScalarT> fluxdt;
   Intrepid::FieldContainer<ScalarT> pterm;
+  Intrepid::FieldContainer<ScalarT> tpterm;
   Intrepid::FieldContainer<ScalarT> aterm;
   // Temporary FieldContainers
   Intrepid::FieldContainer<RealType> refPoints;
@@ -99,7 +106,9 @@ private:
   Intrepid::FieldContainer<MeshScalarT> jacobian_inv;
   Intrepid::FieldContainer<MeshScalarT> Gc;
 
+
   ScalarT porePbar, vol;
+  ScalarT trialPbar;
 
 
   // Output:

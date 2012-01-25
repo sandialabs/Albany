@@ -15,17 +15,17 @@
 \********************************************************************/
 
 #include "LameProblem.hpp"
-#include "Albany_SolutionAverageResponseFunction.hpp"
-#include "Albany_SolutionTwoNormResponseFunction.hpp"
+#include "Albany_ResponseFactory.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemUtils.hpp"
 
 Albany::LameProblem::
 LameProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
             const Teuchos::RCP<ParamLib>& paramLib_,
-            const int numDim_) :
+            const int numDim_,
+            const Teuchos::RCP<const Epetra_Comm>& comm) :
   Albany::AbstractProblem(params_, paramLib_, numDim_),
-  haveSource(false)
+  haveSource(false), haveMatDB(false)
 {
  
   std::string& method = params->get("Name", "Library of Advanced Materials for Engineering (LAME) ");
@@ -33,8 +33,14 @@ LameProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   
   haveSource =  params->isSublist("Source Functions");
 
+  if(params->isType<string>("MaterialDB Filename")){
+        haveMatDB = true;
+    mtrlDbFilename = params->get<string>("MaterialDB Filename");
+    materialDB = Teuchos::rcp(new QCAD::MaterialDatabase(mtrlDbFilename, comm));
+  }
+
   // currently only support 3D analyses
-  TEST_FOR_EXCEPTION(neq != 3,
+  TEUCHOS_TEST_FOR_EXCEPTION(neq != 3,
                      Teuchos::Exceptions::InvalidParameter,
                      "\nOnly three-dimensional analyses are suppored when using the Library of Advanced Materials for Engineering (LAME)\n");
 }
@@ -47,36 +53,46 @@ Albany::LameProblem::
 void
 Albany::LameProblem::
 buildProblem(
-    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
-    Albany::StateManager& stateMgr,
-    Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
+  const Teuchos::RCP<Albany::Application>& app,
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+  Albany::StateManager& stateMgr,
+  Teuchos::Array< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
   /* Construct All Phalanx Evaluators */
-  TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
-  fm.resize(1); rfm.resize(1);
-  fm[0]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-  rfm[0] = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
- 
-  constructResidEvaluators<PHAL::AlbanyTraits::Residual  >(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::Jacobian  >(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::Tangent   >(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::SGResidual>(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::SGJacobian>(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::SGTangent >(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::MPResidual>(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::MPJacobian>(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::MPTangent >(*fm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::Residual  >(*rfm[0], *meshSpecs[0], stateMgr, responses);
-  constructResponseEvaluators<PHAL::AlbanyTraits::Jacobian  >(*rfm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::Tangent   >(*rfm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::SGResidual>(*rfm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::SGJacobian>(*rfm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::SGTangent >(*rfm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::MPResidual>(*rfm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::MPJacobian>(*rfm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::MPTangent >(*rfm[0], *meshSpecs[0], stateMgr);
+  int physSets = meshSpecs.size();
+  cout << "Lame Num MeshSpecs: " << physSets << endl;
+  fm.resize(physSets);
 
+  for (int ps=0; ps<physSets; ps++) {
+    fm[ps]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+    buildEvaluators(*fm[ps], *meshSpecs[ps], stateMgr, BUILD_RESID_FM, 
+		    Teuchos::null);
+  }
   constructDirichletEvaluators(*meshSpecs[0]);
+
+  // Construct responses
+  Teuchos::ParameterList& responseList = 
+    params->sublist("Response Functions");
+  ResponseFactory responseFactory(app, Teuchos::rcp(this,false), meshSpecs, 
+				  Teuchos::rcp(&stateMgr,false));
+  responses = responseFactory.createResponseFunctions(responseList);
+}
+
+Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
+Albany::LameProblem::
+buildEvaluators(
+  PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+  const Albany::MeshSpecsStruct& meshSpecs,
+  Albany::StateManager& stateMgr,
+  Albany::FieldManagerChoice fmchoice,
+  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+{
+  // Call constructeEvaluators<EvalT>(*rfm[0], meshSpecs, stateMgr);
+  // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
+  ConstructEvaluatorsOp<LameProblem> op(
+    *this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
+  boost::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(op);
+  return *op.tags;
 }
 
 void
@@ -84,12 +100,12 @@ Albany::LameProblem::constructDirichletEvaluators(
         const Albany::MeshSpecsStruct& meshSpecs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
-   vector<string> dirichletNames(neq);
+   std::vector<std::string> dirichletNames(neq);
    dirichletNames[0] = "X";
    if (neq>1) dirichletNames[1] = "Y";
    if (neq>2) dirichletNames[2] = "Z";
-   Albany::DirichletUtils dirUtils;
-   dfm = dirUtils.constructDirichletEvaluators(meshSpecs.nsNames, dirichletNames,
+   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
+   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
 }
 
@@ -103,6 +119,7 @@ Albany::LameProblem::getValidProblemParameters() const
   validPL->sublist("Lame Material Parameters", false, "");
   validPL->sublist("aveJ", false, "If true, the determinate of the deformation gradient for each integration point is replaced with the average value over all integration points in the element (produces constant volumetric response).");
   validPL->sublist("volaveJ", false, "If true, the determinate of the deformation gradient for each integration point is replaced with the volume-averaged value over all integration points in the element (produces constant volumetric response).");
+  validPL->set<string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
 
   return validPL;
 }

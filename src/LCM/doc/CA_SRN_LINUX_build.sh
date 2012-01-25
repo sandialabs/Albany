@@ -3,11 +3,12 @@
 # set these!
 
 # root dir of the installation
-HOME_DIR=/localhome/jtostie/LCM_TEST
+HOME_DIR=/localhome/jtostie/TEST
 echo " HOME_DIR set to $HOME_DIR " 
 
 # number of processes
-N=8
+echo " input the number of processors: "
+read N
 
 # set the proxy server
 export http_proxy=wwwproxy.ran.sandia.gov:80
@@ -50,9 +51,12 @@ if [ ! -d "$SOFT_DIR/$TARGET" ]; then
     tar xjf $TARGET.tar.bz2
     cd $TARGET
     echo " -- configuring $TARGET"
-    ./configure --prefix=$INSTALL_DIR &> config_gmp.log
+    ./configure \
+        --prefix=$INSTALL_DIR \
+        ABI=64 \
+        &> config_gmp.log
     echo " -- building $TARGET"
-    make -j 8 &> make_gmp.log
+    make -j $N &> make_gmp.log
     echo " -- checking $TARGET"
     make check &> check_gmp.log
     echo " -- installing $TARGET"
@@ -60,7 +64,7 @@ if [ ! -d "$SOFT_DIR/$TARGET" ]; then
 fi
 
 # get mpfr
-TARGET=mpfr-3.0.1
+TARGET=mpfr-3.1.0
 cd $SOFT_DIR
 if [ ! -d "$SOFT_DIR/$TARGET" ]; then
     echo ""
@@ -134,7 +138,9 @@ if [ ! -d "$SOFT_DIR/$TARGET" ]; then
     make install &> install_gcc.log
 fi
 
-echo  "set compiler variables to use $TARGET"
+echo ""
+echo " Set compiler variables to use $TARGET"
+echo ""
 export CC=$INSTALL_DIR/bin/gcc
 export CXX=$INSTALL_DIR/bin/g++
 export FC=$INSTALL_DIR/bin/gfortran
@@ -227,20 +233,37 @@ if [ ! -d "$SOFT_DIR/$TARGET" ]; then
     make install &> install_cmake.log
 fi
 
+# get eg
+TARGET=eg
+cd $INSTALL_DIR
+if [ ! -d "bin" ]; then
+    mkdir bin
+fi
+cd bin
+if [ ! -e "eg" ]; then
+    echo ""
+    echo " Fetching $TARGET "
+    echo ""
+    curl -O http://people.gnome.org/~newren/eg/download/1.7.3/eg
+    chmod a+x eg
+fi
+
 export PATH=$INSTALL_DIR/bin:$PATH
 
 echo "**** these need to be added to your path for future use ****"
 echo ""
-echo " export LD_LIBRARY_PATH=$INSTALL_DIR/lib:$LD_LIBRARY_PATH"
-echo " export LD_LIBRARY_PATH=$INSTALL_DIR/lib64:$LD_LIBRARY_PATH"
-echo " export PATH=$INSTALL_DIR/bin:$PATH"
+echo " export LD_LIBRARY_PATH=$INSTALL_DIR/lib:\$LD_LIBRARY_PATH"
+echo " export LD_LIBRARY_PATH=$INSTALL_DIR/lib64:\$LD_LIBRARY_PATH"
+echo " export PATH=$INSTALL_DIR/bin:\$PATH"
 echo ""
 
 cd $HOME_DIR
 echo " 
-export LD_LIBRARY_PATH=$INSTALL_DIR/lib:$LD_LIBRARY_PATH \\
-export LD_LIBRARY_PATH=$INSTALL_DIR/lib64:$LD_LIBRARY_PATH \\
-export PATH=$INSTALL_DIR/bin:$PATH" > LCM.conf
+export LD_LIBRARY_PATH=$INSTALL_DIR/lib:\$LD_LIBRARY_PATH \\
+export LD_LIBRARY_PATH=$INSTALL_DIR/lib64:\$LD_LIBRARY_PATH \\
+export PATH=$INSTALL_DIR/bin:\$PATH" > LCM.conf
+
+source LCM.conf
 
 echo " Moving on to LCM installation "
 # Set up LCM dirs
@@ -254,12 +277,16 @@ echo " LCM_DIR is $LCM_DIR"
 # get Trilinos
 TARGET=TRILINOS
 cd $LCM_DIR
-echo ""
-echo " Fetching $TARGET "
-echo ""
-eg clone software.sandia.gov:/space/git/Trilinos
+if [ ! -d "Trilinos" ]; then
+    echo ""
+    echo " Fetching $TARGET "
+    echo ""
+    eg clone software.sandia.gov:/space/git/Trilinos
+fi
 cd Trilinos
-mkdir build
+if [ ! -d "build" ]; then
+    mkdir build
+fi
 cd build
 echo "#!/bin/bash
 rm CMakeCache.txt
@@ -323,7 +350,9 @@ make install -j $N &> make_tri.log
 # We already have Albany
 TARGET=ALBANY
 cd $LCM_DIR/Albany
-mkdir build
+if [ ! -d "build" ]; then
+    mkdir build
+fi
 cd build
 echo "#!/bin/bash
 rm CMakeCache.txt

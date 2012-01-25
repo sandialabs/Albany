@@ -91,8 +91,8 @@
   }
 
   double Albany::initStringToDouble(const std::string& initString) {
-    TEST_FOR_EXCEPTION(!Albany::isValidInitString(initString), std::range_error,
-                       " initStringToDouble() called with invalid initialization string: " + initString + "\n");
+    TEUCHOS_TEST_FOR_EXCEPTION(!Albany::isValidInitString(initString), std::range_error,
+			       " initStringToDouble() called with invalid initialization string: " + initString + "\n");
     std::string verbiage("initial value ");
     std::string valueString = initString.substr(verbiage.size(), initString.size() - verbiage.size());
     return std::atof(valueString.c_str());

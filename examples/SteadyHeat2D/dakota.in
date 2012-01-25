@@ -23,4 +23,4 @@ responses,
  	numerical_gradients
  	  fd_gradient_step_size = 1.0e-6
 	no_hessians
-    least_squares_data_file = 'dakota_nls.data'
+    least_squares_data_file = 'dakota_nls.data' freeform

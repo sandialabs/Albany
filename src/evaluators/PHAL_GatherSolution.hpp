@@ -87,6 +87,7 @@ class GatherSolution<PHAL::AlbanyTraits::Residual,Traits>
   
 public:
   GatherSolution(const Teuchos::ParameterList& p);
+  void preEvaluate(typename Traits::PreEvalData d);
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
@@ -102,6 +103,7 @@ class GatherSolution<PHAL::AlbanyTraits::Jacobian,Traits>
   
 public:
   GatherSolution(const Teuchos::ParameterList& p);
+  void preEvaluate(typename Traits::PreEvalData d);
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
@@ -118,6 +120,7 @@ class GatherSolution<PHAL::AlbanyTraits::Tangent,Traits>
   
 public:
   GatherSolution(const Teuchos::ParameterList& p);
+  void preEvaluate(typename Traits::PreEvalData d);
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
@@ -134,6 +137,7 @@ class GatherSolution<PHAL::AlbanyTraits::SGResidual,Traits>
   
 public:
   GatherSolution(const Teuchos::ParameterList& p);
+  void preEvaluate(typename Traits::PreEvalData d);
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::SGResidual::ScalarT ScalarT;
@@ -150,6 +154,7 @@ class GatherSolution<PHAL::AlbanyTraits::SGJacobian,Traits>
   
 public:
   GatherSolution(const Teuchos::ParameterList& p);
+  void preEvaluate(typename Traits::PreEvalData d);
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::SGJacobian::ScalarT ScalarT;
@@ -165,6 +170,7 @@ class GatherSolution<PHAL::AlbanyTraits::SGTangent,Traits>
   
 public:
   GatherSolution(const Teuchos::ParameterList& p);
+  void preEvaluate(typename Traits::PreEvalData d);
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
@@ -181,6 +187,7 @@ class GatherSolution<PHAL::AlbanyTraits::MPResidual,Traits>
   
 public:
   GatherSolution(const Teuchos::ParameterList& p);
+  void preEvaluate(typename Traits::PreEvalData d);
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::MPResidual::ScalarT ScalarT;
@@ -197,6 +204,7 @@ class GatherSolution<PHAL::AlbanyTraits::MPJacobian,Traits>
   
 public:
   GatherSolution(const Teuchos::ParameterList& p);
+  void preEvaluate(typename Traits::PreEvalData d);
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
@@ -212,6 +220,7 @@ class GatherSolution<PHAL::AlbanyTraits::MPTangent,Traits>
   
 public:
   GatherSolution(const Teuchos::ParameterList& p);
+  void preEvaluate(typename Traits::PreEvalData d);
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;

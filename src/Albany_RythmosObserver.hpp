@@ -41,7 +41,7 @@ public:
 
   Teuchos::RCP<Rythmos::IntegrationObserverBase<Scalar> >
     cloneIntegrationObserver() const
-  {  TEST_FOR_EXCEPT(true);};
+  {  TEUCHOS_TEST_FOR_EXCEPT(true);};
 
   void resetIntegrationObserver(
     const Rythmos::TimeRange<Scalar> &integrationTimeDomain

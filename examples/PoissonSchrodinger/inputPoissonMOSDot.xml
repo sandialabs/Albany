@@ -11,6 +11,7 @@
       <Parameter name="Schrodinger source in quantum blocks" type="bool" value="true"/>
       <Parameter name="Eigenvectors from States" type="int" value="2"/>
       <Parameter name="Use predictor-corrector method" type="bool" value="true"/>
+      <Parameter name="Include exchange-correlation potential" type="bool" value="false" />
     </ParameterList>
 
     <ParameterList name="Dirichlet BCs">
@@ -53,7 +54,16 @@
 
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="12" />
-      <Parameter name="Response 0" type="string" value="Solution Average" />
+
+     <Parameter name="Response 0" type="string" value="Field Value" />
+      <ParameterList name="ResponseParams 0">
+        <Parameter name="Operation" type="string" value="Minimize" />
+        <Parameter name="Operation Field Name" type="string" value="Conduction Band" />
+        <Parameter name="Operation Domain" type="string" value="element block" />
+        <Parameter name="Element Block Name" type="string" value="silicon.quantum" />
+      </ParameterList>
+
+      <!-- <Parameter name="Response 0" type="string" value="Solution Average" /> -->
       
       <Parameter name="Response 1" type="string" value="Save Field" />
       <ParameterList name="ResponseParams 1">
@@ -122,6 +132,7 @@
         <Parameter name="State Name" type="string" value="Previous Poisson Potential" />
         <Parameter name="Output Cell Average" type="bool" value="0" />
         <Parameter name="Output to Exodus" type="bool" value="0" />
+        <Parameter name="Memory Placeholder Only" type="bool" value="1" />
       </ParameterList>
 
     </ParameterList>

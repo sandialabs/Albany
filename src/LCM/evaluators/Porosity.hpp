@@ -38,7 +38,8 @@ namespace LCM {
 // Porosity update is the most important part for the poromechanics
 // formulation. All poroelasticity parameters (Biot Coefficient,
 // Biot modulus, permeability, and consistent tangential tensor)
-// all depend on porosity.
+// depend on porosity. The definition we used here is from
+// Coussy's poromechanics p.85.
 
 template<typename EvalT, typename Traits>
 class Porosity :
@@ -74,10 +75,16 @@ private:
 
   //! Optional dependence on strain and porePressure
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> strain; // porosity holds linear relation to volumetric strain
-//  PHX::MDField<ScalarT,Cell,QuadPoint> porePressure; // for now, we don't use pore pressure, but later on we do.
 
   bool isPoroElastic;
+  bool isCompressibleSolidPhase;
+  bool isCompressibleFluidPhase;
   ScalarT initialPorosity_value;
+
+  // For compressible grain
+  PHX::MDField<ScalarT,Cell,QuadPoint> biotCoefficient;
+  PHX::MDField<ScalarT,Cell,QuadPoint> porePressure;
+  ScalarT GrainBulkModulus;
 
   // ScalarT dEdT_value;  NOTE: a term needed to be add later on...for now, keep it simple.
 

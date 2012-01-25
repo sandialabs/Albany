@@ -81,8 +81,8 @@ ElasticModulus(Teuchos::ParameterList& p) :
     }
   }
   else {
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-		       "Invalid elastic modulus type " << type);
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+			       "Invalid elastic modulus type " << type);
   } 
 
   // Optional dependence on Temperature (E = E_ + dEdT * T)
@@ -97,6 +97,7 @@ ElasticModulus(Teuchos::ParameterList& p) :
     this->addDependentField(Temperature);
     isThermoElastic = true;
     dEdT_value = elmd_list->get("dEdT Value", 0.0);
+    refTemp = p.get<RealType>("Reference Temperature", 0.0);
     new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
                                 "dEdT Value", this, paramLib);
   }
@@ -166,7 +167,7 @@ evaluateFields(typename Traits::EvalData workset)
   if (isThermoElastic) {
     for (std::size_t cell=0; cell < numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-	elasticModulus(cell,qp) += dEdT_value * Temperature(cell,qp);
+	elasticModulus(cell,qp) += dEdT_value * (Temperature(cell,qp) - refTemp);
       }
     }
   }
@@ -175,8 +176,8 @@ evaluateFields(typename Traits::EvalData workset)
         for (std::size_t qp=0; qp < numQPs; ++qp) {
     // porosity dependent Young's Modulus. It will be replaced by
     // the hyperelasticity model in (Borja, Tamagnini and Amorosi, ASCE JGGE 1997).
-  	elasticModulus(cell,qp) = constant_value*
-  			                  sqrt(2.0 - porosity(cell,qp));
+  	elasticModulus(cell,qp) = constant_value;
+ // 			*sqrt(2.0 - porosity(cell,qp));
         }
       }
     }
@@ -195,10 +196,10 @@ ElasticModulus<EvalT,Traits>::getValue(const std::string &n)
     if (n == Albany::strint("Elastic Modulus KL Random Variable",i))
       return rv[i];
   }
-  TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-		     std::endl <<
-		     "Error! Logic error in getting paramter " << n
-		     << " in ElasticModulus::getValue()" << std::endl);
+  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+			     std::endl <<
+			     "Error! Logic error in getting paramter " << n
+			     << " in ElasticModulus::getValue()" << std::endl);
   return constant_value;
 }
 

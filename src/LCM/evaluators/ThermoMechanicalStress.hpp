@@ -22,6 +22,7 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+#include "Tensor.h"
 
 namespace LCM {
 /** \brief ThermoMechanical stress response
@@ -47,22 +48,33 @@ public:
 private:
 
   typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> F;
-  PHX::MDField<ScalarT,Cell,QuadPoint> J;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> F_array;
+  PHX::MDField<ScalarT,Cell,QuadPoint> J_array;
   PHX::MDField<ScalarT,Cell,QuadPoint> shearModulus;
   PHX::MDField<ScalarT,Cell,QuadPoint> bulkModulus;
-  PHX::MDField<ScalarT,Cell,QuadPoint> temperature;;
+  PHX::MDField<ScalarT,Cell,QuadPoint> temperature;
+  PHX::MDField<ScalarT,Cell,QuadPoint> yieldStrength;
+  PHX::MDField<ScalarT,Cell,QuadPoint> hardeningModulus;
+  PHX::MDField<ScalarT,Cell,QuadPoint> satMod;
+  PHX::MDField<ScalarT,Cell,QuadPoint> satExp;
+  PHX::MDField<ScalarT,Dummy> deltaTime;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> Fp;
+  PHX::MDField<ScalarT,Cell,QuadPoint> eqps;
+  PHX::MDField<ScalarT,Cell,QuadPoint> mechSource;
 
+  std::string fpName, eqpsName;
   unsigned int numQPs;
   unsigned int numDims;
   RealType thermalExpansionCoeff;
   RealType refTemperature;
+
+  // local Tensors
+  Tensor<ScalarT> F, Fpold, Fpinv, Cpinv, be, s, N, A, expA;
 };
 }
 

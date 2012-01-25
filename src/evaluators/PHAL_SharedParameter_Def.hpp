@@ -68,7 +68,7 @@ template<typename EvalT,typename Traits>
 typename SharedParameter<EvalT,Traits>::ScalarT& 
 SharedParameter<EvalT,Traits>::getValue(const std::string &n)
 {
-  TEST_FOR_EXCEPT(n != paramName);
+  TEUCHOS_TEST_FOR_EXCEPT(n != paramName);
   return paramValue;
 }
 

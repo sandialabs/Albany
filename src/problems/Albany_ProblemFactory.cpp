@@ -31,8 +31,11 @@
 #include "LCM/problems/NonlinearElasticityProblem.hpp"
 #include "LCM/problems/ThermoElasticityProblem.hpp"
 #include "LCM/problems/PoroElasticityProblem.hpp"
+#include "LCM/problems/TLPoroPlasticityProblem.hpp"
+#include "LCM/problems/ThermoPoroPlasticityProblem.hpp"
 #include "LCM/problems/GradientDamageProblem.hpp"
 #include "LCM/problems/ThermoMechanicalProblem.hpp"
+#include "LCM/problems/HDiffusionDeformationProblem.hpp"
 #ifdef ALBANY_LAME
 #include "LCM/problems/LameProblem.hpp"
 #endif
@@ -57,13 +60,13 @@ Albany::ProblemFactory::create()
   std::string& method = problemParams->get("Name", "Heat 1D");
 
   if (method == "Heat 1D") {
-    strategy = rcp(new Albany::HeatProblem(problemParams, paramLib, 1, comm));
+    strategy = rcp(new Albany::HeatProblem(problemParams, paramLib, 1));
   }
   else if (method == "Heat 2D") {
-    strategy = rcp(new Albany::HeatProblem(problemParams, paramLib, 2, comm));
+    strategy = rcp(new Albany::HeatProblem(problemParams, paramLib, 2));
   }
   else if (method == "Heat 3D") {
-    strategy = rcp(new Albany::HeatProblem(problemParams, paramLib, 3, comm));
+    strategy = rcp(new Albany::HeatProblem(problemParams, paramLib, 3));
   }
   else if (method == "ODE") {
     strategy = rcp(new Albany::ODEProblem(problemParams, paramLib, 0));
@@ -119,9 +122,9 @@ Albany::ProblemFactory::create()
 #ifdef ALBANY_LCM
   else if (method == "LAME" || method == "Lame" || method == "lame") {
 #ifdef ALBANY_LAME
-    strategy = rcp(new Albany::LameProblem(problemParams, paramLib, 3));
+    strategy = rcp(new Albany::LameProblem(problemParams, paramLib, 3, comm));
 #else
-    TEST_FOR_EXCEPTION(true, std::runtime_error, " **** LAME materials not enabled, recompile with -DENABLE_LAME ****\n");
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, " **** LAME materials not enabled, recompile with -DENABLE_LAME ****\n");
 #endif
   }
   else if (method == "Elasticity 1D") {
@@ -160,15 +163,39 @@ Albany::ProblemFactory::create()
   else if (method == "PoroElasticity 3D") {
     strategy = rcp(new Albany::PoroElasticityProblem(problemParams, paramLib, 3));
   }
+  else if (method == "Total Lagrangian PoroPlasticity 1D") {
+        strategy = rcp(new Albany::TLPoroPlasticityProblem(problemParams, paramLib, 1));
+    }
+  else if (method == "Total Lagrangian PoroPlasticity 2D") {
+        strategy = rcp(new Albany::TLPoroPlasticityProblem(problemParams, paramLib, 2));
+    }
+  else if (method == "Total Lagrangian PoroPlasticity 3D") {
+      strategy = rcp(new Albany::TLPoroPlasticityProblem(problemParams, paramLib, 3));
+  }
+  else if (method == "Total Lagrangian ThermoPoroPlasticity 1D") {
+        strategy = rcp(new Albany::ThermoPoroPlasticityProblem(problemParams, paramLib, 1));
+    }
+  else if (method == "Total Lagrangian ThermoPoroPlasticity 2D") {
+        strategy = rcp(new Albany::ThermoPoroPlasticityProblem(problemParams, paramLib, 2));
+    }
+  else if (method == "Total Lagrangian ThermoPoroPlasticity 3D") {
+      strategy =   rcp(new Albany::ThermoPoroPlasticityProblem(problemParams, paramLib, 3));
+  }
   else if (method == "GradientDamage") {
     strategy = rcp(new Albany::GradientDamageProblem(problemParams, paramLib, 3));
   }
   else if (method == "ThermoMechanical") {
     strategy = rcp(new Albany::ThermoMechanicalProblem(problemParams, paramLib, 3));
   }
+  else if (method == "Hydrogen Diffusion-Deformation") {
+      strategy = rcp(new Albany::HDiffusionDeformationProblem(problemParams, paramLib, 3));
+    }
+  else if (method == "Hydrogen Diffusion-Deformation 2D") {
+        strategy = rcp(new Albany::HDiffusionDeformationProblem(problemParams, paramLib, 2));
+      }
 #endif
   else {
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                        std::endl << 
                        "Error!  Unknown problem " << method << 
                        "!" << std::endl << "Supplied parameter list is " << 

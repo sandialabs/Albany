@@ -72,8 +72,8 @@ BulkModulus(Teuchos::ParameterList& p) :
     }
   }
   else {
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-		       "Invalid bulk modulus type " << type);
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+			       "Invalid bulk modulus type " << type);
   } 
 
   if ( p.isType<string>("QP Temperature Name") ) {
@@ -85,7 +85,7 @@ BulkModulus(Teuchos::ParameterList& p) :
     this->addDependentField(Temperature);
     isThermoElastic = true;
     dKdT_value = bmd_list->get("dKdT Value", 0.0);
-    refTemp = p.get("Reference Temperature", 0.0);
+    refTemp = p.get<RealType>("Reference Temperature", 0.0);
     new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
                                 "dKdT Value", this, paramLib);
   }
@@ -134,7 +134,7 @@ evaluateFields(typename Traits::EvalData workset)
   if (isThermoElastic) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-	bulkModulus(cell,qp) += dKdT_value * Temperature(cell,qp);
+	bulkModulus(cell,qp) -= dKdT_value * (Temperature(cell,qp) - refTemp);
       }
     }
   }
@@ -153,10 +153,10 @@ BulkModulus<EvalT,Traits>::getValue(const std::string &n)
     if (n == Albany::strint("Bulk Modulus KL Random Variable",i))
       return rv[i];
   }
-  TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-		     std::endl <<
-		     "Error! Logic error in getting paramter " << n
-		     << " in BulkModulus::getValue()" << std::endl);
+  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+			     std::endl <<
+			     "Error! Logic error in getting paramter " << n
+			     << " in BulkModulus::getValue()" << std::endl);
   return constant_value;
 }
 

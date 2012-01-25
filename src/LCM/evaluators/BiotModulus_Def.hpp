@@ -71,7 +71,7 @@ BiotModulus(Teuchos::ParameterList& p) :
     }
   }
   else {
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+	  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		       "Invalid Biot modulus type " << type);
   } 
 
@@ -174,7 +174,7 @@ BiotModulus<EvalT,Traits>::getValue(const std::string &n)
     if (n == Albany::strint("Biot Modulus KL Random Variable",i))
       return rv[i];
   }
-  TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		     std::endl <<
 		     "Error! Logic error in getting paramter " << n
 		     << " in BiotModulus::getValue()" << std::endl);

@@ -146,6 +146,18 @@ namespace LCM {
     GetVolume() const;
 
     ///
+    /// \return Partitions when partitioned
+    ///
+    std::map<int, int>
+    GetPartitions() const;
+
+    ///
+    /// \return Volume for each partition when partitioned
+    ///
+    ScalarMap
+    GetPartitionVolumes() const;
+
+    ///
     /// \return Centroids for each element
     ///
     PointMap
@@ -367,6 +379,12 @@ namespace LCM {
     Teuchos::RCP<Albany::AbstractDiscretization>
     discretization_ptr_;
 
+    //
+    // Partitions if mesh is partioned; otherwise empty
+    //
+    std::map<int, int>
+    partitions_;
+
   };
 
   ///
@@ -423,6 +441,24 @@ namespace LCM {
     ///
     AdjacencyMap
     GetGraph() const;
+
+    ///
+    /// \return Edge list to create boost graph
+    ///
+    AdjacencyMap
+    GetEdgeList() const;
+
+    ///
+    /// \return Connected components in the dual graph
+    ///
+    int
+    GetConnectedComponents(std::vector<int> & components) const;
+
+    ///
+    /// Print graph for debugging
+    ///
+    void
+    Print() const;
 
   private:
 

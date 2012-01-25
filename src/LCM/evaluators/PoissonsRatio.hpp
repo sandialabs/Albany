@@ -71,6 +71,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> Temperature;
   bool isThermoElastic;
   ScalarT dnudT_value;
+  RealType refTemp;
 
   //! Exponential random field
   Teuchos::RCP< Stokhos::KL::ExponentialRandomField<MeshScalarT> > exp_rf_kl;

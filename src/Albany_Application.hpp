@@ -27,6 +27,7 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 
+#include "Epetra_Map.h"
 #include "Epetra_Vector.h"
 #include "Epetra_CrsMatrix.h"
 #include "Epetra_Import.h"
@@ -35,7 +36,6 @@
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_AbstractProblem.hpp"
 #include "Albany_StateManager.hpp"
-#include "Albany_TimeManager.hpp"
 
 #ifdef ALBANY_CUTR
   #include "CUTR_CubitMeshMover.hpp"
@@ -76,6 +76,9 @@ namespace Albany {
     //! Get underlying abstract discretization
     Teuchos::RCP<Albany::AbstractDiscretization> getDiscretization() const;
 
+    //! Get communicator
+    Teuchos::RCP<const Epetra_Comm> getComm() const;
+
     //! Get DOF map
     Teuchos::RCP<const Epetra_Map> getMap() const;
 
@@ -94,8 +97,14 @@ namespace Albany {
     //! Get parameter library
     Teuchos::RCP<ParamLib> getParamLib();
 
+    //! Get number of responses
+    int getNumResponses() const;
+
     //! Get response map
-    Teuchos::RCP<const Epetra_Map> getResponseMap() const;
+    Teuchos::RCP<const Epetra_Map> getResponseMap(int i) const;
+
+    //! Return whether response is distributed
+    bool isResponseDistributed(int i) const;
 
     //! Return whether problem wants to use its own preconditioner
     bool suppliesPreconditioner() const;
@@ -110,6 +119,9 @@ namespace Albany {
       const Teuchos::RCP<const Stokhos::Quadrature<int,double> >& quad,
       const Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> >& expansion,
       const Teuchos::RCP<const EpetraExt::MultiComm>& multiComm);
+
+    //! Get number of worksets
+    int getNumWorksets() const { return numWorksets; }
 
     //! Compute global residual
     /*!
@@ -164,44 +176,50 @@ namespace Albany {
     /*!
      * Set xdot to NULL for steady-state problems
      */
-    void evaluateResponse(const double current_time,
-			  const Epetra_Vector* xdot,
-			  const Epetra_Vector& x,
-			  const Teuchos::Array<ParamVec>& p,
-			  Epetra_Vector& g);
+    void evaluateResponse(
+      int response_index,
+      const double current_time,
+      const Epetra_Vector* xdot,
+      const Epetra_Vector& x,
+      const Teuchos::Array<ParamVec>& p,
+      Epetra_Vector& g);
     
     //! Evaluate tangent = alpha*dg/dx*Vx + beta*dg/dxdot*Vxdot + dg/dp*Vp
     /*!
      * Set xdot, dxdot_dp to NULL for steady-state problems
      */
-    void evaluateResponseTangent(const double alpha, 
-				 const double beta,
-				 const double current_time,
-				 bool sum_derivs,
-				 const Epetra_Vector* xdot,
-				 const Epetra_Vector& x,
-				 const Teuchos::Array<ParamVec>& p,
-				 ParamVec* deriv_p,
-				 const Epetra_MultiVector* Vxdot,
-				 const Epetra_MultiVector* Vx,
-				 const Epetra_MultiVector* Vp,
-				 Epetra_Vector* g,
-				 Epetra_MultiVector* gx,
-				 Epetra_MultiVector* gp);
+    void evaluateResponseTangent(
+      int response_index,
+      const double alpha, 
+      const double beta,
+      const double current_time,
+      bool sum_derivs,
+      const Epetra_Vector* xdot,
+      const Epetra_Vector& x,
+      const Teuchos::Array<ParamVec>& p,
+      ParamVec* deriv_p,
+      const Epetra_MultiVector* Vxdot,
+      const Epetra_MultiVector* Vx,
+      const Epetra_MultiVector* Vp,
+      Epetra_Vector* g,
+      Epetra_MultiVector* gx,
+      Epetra_MultiVector* gp);
 
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
     /*!
      * Set xdot, dg_dxdot to NULL for steady-state problems
      */
-    void evaluateResponseGradient(const double current_time,
-				  const Epetra_Vector* xdot,
-				  const Epetra_Vector& x,
-				  const Teuchos::Array<ParamVec>& p,
-				  ParamVec* deriv_p,
-				  Epetra_Vector* g,
-				  Epetra_MultiVector* dg_dx,
-				  Epetra_MultiVector* dg_dxdot,
-				  Epetra_MultiVector* dg_dp);
+    void evaluateResponseDerivative(
+      int response_index,
+      const double current_time,
+      const Epetra_Vector* xdot,
+      const Epetra_Vector& x,
+      const Teuchos::Array<ParamVec>& p,
+      ParamVec* deriv_p,
+      Epetra_Vector* g,
+      const EpetraExt::ModelEvaluator::Derivative& dg_dx,
+      const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
+      const EpetraExt::ModelEvaluator::Derivative& dg_dp);
 
     //! Compute global residual for stochastic Galerkin problem
     /*!
@@ -259,6 +277,7 @@ namespace Albany {
      * Set xdot to NULL for steady-state problems
      */
     void evaluateSGResponse(
+      int response_index,
       const double curr_time,
       const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
       const Stokhos::EpetraVectorOrthogPoly& sg_x,
@@ -273,6 +292,7 @@ namespace Albany {
      */
     void 
     evaluateSGResponseTangent(
+      int response_index,
       const double alpha, 
       const double beta, 
       const double current_time,
@@ -295,7 +315,8 @@ namespace Albany {
      * Set xdot, dg_dxdot to NULL for steady-state problems
      */
     void 
-    evaluateSGResponseGradient(
+    evaluateSGResponseDerivative(
+      int response_index,
       const double current_time,
       const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
       const Stokhos::EpetraVectorOrthogPoly& sg_x,
@@ -304,9 +325,9 @@ namespace Albany {
       const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
       ParamVec* deriv_p,
       Stokhos::EpetraVectorOrthogPoly* sg_g,
-      Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dx,
-      Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdot,
-      Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dp);
+      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dx,
+      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdot,
+      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dp);
 
     //! Compute global residual for stochastic Galerkin problem
     /*!
@@ -364,6 +385,7 @@ namespace Albany {
      * Set xdot to NULL for steady-state problems
      */
     void evaluateMPResponse(
+      int response_index,
       const double curr_time,
       const Stokhos::ProductEpetraVector* mp_xdot,
       const Stokhos::ProductEpetraVector& mp_x,
@@ -378,6 +400,7 @@ namespace Albany {
      */
     void 
     evaluateMPResponseTangent(
+      int response_index,
       const double alpha, 
       const double beta, 
       const double current_time,
@@ -400,7 +423,8 @@ namespace Albany {
      * Set xdot, dg_dxdot to NULL for steady-state problems
      */
     void 
-    evaluateMPResponseGradient(
+    evaluateMPResponseDerivative(
+      int response_index,
       const double current_time,
       const Stokhos::ProductEpetraVector* mp_xdot,
       const Stokhos::ProductEpetraVector& mp_x,
@@ -409,9 +433,9 @@ namespace Albany {
       const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
       ParamVec* deriv_p,
       Stokhos::ProductEpetraVector* mp_g,
-      Stokhos::ProductEpetraMultiVector* mp_dg_dx,
-      Stokhos::ProductEpetraMultiVector* mp_dg_dxdot,
-      Stokhos::ProductEpetraMultiVector* mp_dg_dp);
+      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dx,
+      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdot,
+      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dp);
 
     //! Provide access to shapeParameters -- no AD
     PHAL::AlbanyTraits::Residual::ScalarT& getValue(const std::string &n);
@@ -419,8 +443,10 @@ namespace Albany {
     //! Class to manage state variables (a.k.a. history)
     StateManager& getStateMgr() {return stateMgr;};
 
-    //! Class to manage time
-    TimeManager& getTimeMgr() {return timeMgr;};
+    //! Evaluate state field manager
+    void evaluateStateFieldManager(const double current_time,
+				   const Epetra_Vector* xdot,
+				   const Epetra_Vector& x);
 
     //! Access to number of worksets - needed for working with StateManager
     int getNumWorksets() { return numWorksets;};
@@ -443,45 +469,10 @@ namespace Albany {
 
     //! Utility function to set up ShapeParameters through Sacado
     void registerShapeParameters();
-    
-    //! Evalute responses using response field manater (rfm)
-    //  A helper function called by evaluateResponses.
-    void evaluateResponse_rfm(const double current_time,
-			      const Epetra_Vector* xdot,
-			      const Epetra_Vector& x,
-			      const Teuchos::Array<ParamVec>& p,
-			      Epetra_Vector& g);
-
-    //! Evalute response tangents using response field manater (rfm)
-    //  A helper function called by evaluateResponseTangents.
-    void evaluateResponseTangent_rfm(const double alpha, 
-				     const double beta,
-				     const double current_time,
-				     bool sum_derivs,
-				     const Epetra_Vector* xdot,
-				     const Epetra_Vector& x,
-				     const Teuchos::Array<ParamVec>& p,
-				     ParamVec* deriv_p,
-				     const Epetra_MultiVector* Vxdot,
-				     const Epetra_MultiVector* Vx,
-				     const Epetra_MultiVector* Vp,
-				     Epetra_Vector* g,
-				     Epetra_MultiVector* gx,
-				     Epetra_MultiVector* gp);
-
-    //! Evalute responses gradients using response field manater (rfm)
-    //  A helper function called by evaluateResponseGradients.
-    void evaluateResponseGradient_rfm(const double current_time,
-				      const Epetra_Vector* xdot,
-				      const Epetra_Vector& x,
-				      const Teuchos::Array<ParamVec>& p,
-				      ParamVec* deriv_p,
-				      Epetra_Vector* g,
-				      Epetra_MultiVector* dg_dx,
-				      Epetra_MultiVector* dg_dxdot,
-				      Epetra_MultiVector* dg_dp);
 
     void defineTimers();
+
+  public:
 
     //! Routine to get workset (bucket) sized info needed by all Evaluation types
     void loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws);
@@ -491,8 +482,7 @@ namespace Albany {
             PHAL::Workset& workset,
             Teuchos::RCP<Epetra_Vector> overlapped_x,
             Teuchos::RCP<Epetra_Vector> overlapped_xdot,
-            double current_time,
-	    double delta_time);
+            double current_time);
 
     void loadWorksetJacobianInfo(PHAL::Workset& workset,
                 const double& alpha, const double& beta);
@@ -500,9 +490,31 @@ namespace Albany {
     //! Routine to load common nodeset info into workset
     void loadWorksetNodesetInfo(PHAL::Workset& workset);
 
+    void setupBasicWorksetInfo(
+      PHAL::Workset& workset,
+      double current_time,
+      const Epetra_Vector* xdot, 
+      const Epetra_Vector* x,
+      const Teuchos::Array<ParamVec>& p);
+
+    void setupTangentWorksetInfo(
+      PHAL::Workset& workset, 
+      double current_time,
+      bool sum_derivs,
+      const Epetra_Vector* xdot, 
+      const Epetra_Vector* x,
+      const Teuchos::Array<ParamVec>& p,
+      ParamVec* deriv_p,
+      const Epetra_MultiVector* Vxdot,
+      const Epetra_MultiVector* Vx,
+      const Epetra_MultiVector* Vp);
+      
     void postRegSetup(std::string eval);
 
   protected:
+
+    //! Communicator
+    Teuchos::RCP<const Epetra_Comm> comm;
 
     //! Output stream, defaults to pronting just Proc 0
     Teuchos::RCP<Teuchos::FancyOStream> out;
@@ -538,10 +550,7 @@ namespace Albany {
     Teuchos::RCP<ParamLib> paramLib;
 
     //! Response functions
-    Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> > responses;
-
-    //! Map for combined response functions
-    Teuchos::RCP<Epetra_Map> response_map;
+    Teuchos::Array< Teuchos::RCP<Albany::AbstractResponseFunction> > responses;
 
     //! Phalanx Field Manager for volumetric fills
     Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > fm;
@@ -549,8 +558,8 @@ namespace Albany {
     //! Phalanx Field Manager for Dirichlet Conditions
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > dfm;
 
-    //! Phalanx Field Manager for Responses
-    Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > rfm;
+    //! Phalanx Field Manager for states
+    Teuchos::Array< Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > sfm;
 
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > > wsElNodeEqID;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords;
@@ -623,11 +632,9 @@ namespace Albany {
 
     std::set<string> setupSet;
     mutable int phxGraphVisDetail;
-    mutable int respGraphVisDetail;
+    mutable int stateGraphVisDetail;
 
     StateManager stateMgr;
-
-    TimeManager timeMgr;
 
     bool morphFromInit;
     bool ignore_residual_in_jacobian;

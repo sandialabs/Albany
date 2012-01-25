@@ -75,8 +75,8 @@ evaluateFields(typename Traits::EvalData workset)
 { 
   if(nEigenvectors == 0) return;
 
-  Epetra_MultiVector& e_r = workset.eigenDataPtr->eigenvectorRe->getEpetraMultiVector();
-  Epetra_MultiVector& e_i = workset.eigenDataPtr->eigenvectorIm->getEpetraMultiVector();
+  const Epetra_MultiVector& e_r = *(workset.eigenDataPtr->eigenvectorRe);
+  const Epetra_MultiVector& e_i = *(workset.eigenDataPtr->eigenvectorIm);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID = workset.wsElNodeEqID[cell];

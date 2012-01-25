@@ -45,18 +45,17 @@ typedef std::vector<StateArray> StateArrays;
   struct MeshSpecsStruct {
     MeshSpecsStruct(const CellTopologyData& ctd_, int numDim_, 
                     int cubatureDegree_, std::vector<std::string> nsNames_,
-                    int worsetSize_, int numEB_, std::string ebName_,
+                    int worsetSize_, std::string ebName_,
                     bool interleavedOrdering_)
        :  ctd(ctd_), numDim(numDim_), cubatureDegree(cubatureDegree_),
           nsNames(nsNames_), worksetSize(worsetSize_), 
-          numEB(numEB_), ebName(ebName_), 
+          ebName(ebName_), 
           interleavedOrdering(interleavedOrdering_) {}
     const CellTopologyData ctd; 
     int numDim;
     int cubatureDegree;
     std::vector<std::string> nsNames;  //Node Sets Names
     int worksetSize;
-    int numEB;           // Total number of EB's in this problem
     std::string ebName;  //Element block name for the EB that this struct corresponds to
     bool interleavedOrdering;
   };
@@ -72,7 +71,7 @@ struct StateStruct {
   //enum Entity {Node, Element, UndefinedEntity};
   //enum InitType {Zero, Identity, Restart, UndefinedInit};
 
-   StateStruct (std::string name_): name(name_),output(true), saveOldState(false) {};
+  StateStruct (std::string name_): name(name_), responseIDtoRequire(""), output(true), saveOldState(false) {};
    //StateStruct (std::string name_): name(name_), entity(UndefinedEntity), initType(UndefinedInit), output(true) {};
   ~StateStruct () {};
 
@@ -81,6 +80,10 @@ struct StateStruct {
   //std::vector<MDArray> wsArray;
   std::string entity; //Entity entity;
   std::string initType; //InitType initType;
+
+  //For proper PHAL_SaveStateField functionality - maybe only needed temporarily?
+  std::string responseIDtoRequire; //If nonzero length, the responseID for response 
+                                   // field manager to require (assume dummy data layout)
   bool output;
   bool saveOldState; // Bool that this state is to be copied into name+"_old"
 

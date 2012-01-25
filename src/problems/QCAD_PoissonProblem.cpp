@@ -17,8 +17,7 @@
 
 #include "QCAD_PoissonProblem.hpp"
 #include "QCAD_MaterialDatabase.hpp"
-#include "Albany_SolutionAverageResponseFunction.hpp"
-#include "Albany_SolutionTwoNormResponseFunction.hpp"
+#include "Albany_ResponseFactory.hpp"
 #include "Albany_InitialCondition.hpp"
 #include "Albany_Utils.hpp"
 
@@ -38,7 +37,7 @@ PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   haveSource =  params->isSublist("Poisson Source");
 
-  TEST_FOR_EXCEPTION(params->isSublist("Source Functions"), Teuchos::Exceptions::InvalidParameter,
+  TEUCHOS_TEST_FOR_EXCEPTION(params->isSublist("Source Functions"), Teuchos::Exceptions::InvalidParameter,
 		     "\nError! Poisson problem does not parse Source Functions sublist\n" 
                      << "\tjust Poisson Source sublist " << std::endl);
 
@@ -59,6 +58,8 @@ PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   nEigenvectors = 0;
   bUseSchrodingerSource = false;
   bUsePredictorCorrector = false;
+  bIncludeVxc = false; 
+  
   if(params->isSublist("Schrodinger Coupling")) {
     Teuchos::ParameterList& cList = params->sublist("Schrodinger Coupling");
     if(cList.isType<bool>("Schrodinger source in quantum blocks"))
@@ -70,6 +71,9 @@ PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     
     if(bUseSchrodingerSource && cList.isType<bool>("Use predictor-corrector method"))
       bUsePredictorCorrector = cList.get<bool>("Use predictor-corrector method");
+
+    if(bUseSchrodingerSource && cList.isType<bool>("Include exchange-correlation potential"))
+      bIncludeVxc = cList.get<bool>("Include exchange-correlation potential");
   }
 
   *out << "Length unit = " << length_unit_in_m << " meters" << endl;
@@ -83,36 +87,42 @@ QCAD::PoissonProblem::
 void
 QCAD::PoissonProblem::
 buildProblem(
-    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
-    Albany::StateManager& stateMgr,
-    Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
+  const Teuchos::RCP<Albany::Application>& app,
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+  Albany::StateManager& stateMgr,
+  Teuchos::Array< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
   /* Construct All Phalanx Evaluators */
-  TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
-  fm.resize(1); rfm.resize(1);
+  TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
+  fm.resize(1);
   fm[0]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-  rfm[0] = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-
-  constructResidEvaluators<PHAL::AlbanyTraits::Residual  >(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::Jacobian  >(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::Tangent   >(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::SGResidual>(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::SGJacobian>(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::SGTangent >(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::MPResidual>(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::MPJacobian>(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::MPTangent >(*fm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::Residual  >(*rfm[0], *meshSpecs[0], stateMgr, responses);
-  constructResponseEvaluators<PHAL::AlbanyTraits::Jacobian  >(*rfm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::Tangent   >(*rfm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::SGResidual>(*rfm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::SGJacobian>(*rfm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::SGTangent >(*rfm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::MPResidual>(*rfm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::MPJacobian>(*rfm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::MPTangent >(*rfm[0], *meshSpecs[0], stateMgr);
-
+  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RESID_FM, 
+		  Teuchos::null);
   constructDirichletEvaluators(*meshSpecs[0]);
+
+  // Construct responses
+  Teuchos::ParameterList& responseList = params->sublist("Response Functions");
+  Albany::ResponseFactory responseFactory(app, Teuchos::rcp(this,false), 
+					  meshSpecs, 
+					  Teuchos::rcp(&stateMgr,false));
+  responses = responseFactory.createResponseFunctions(responseList);
+}
+
+Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
+QCAD::PoissonProblem::
+buildEvaluators(
+  PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+  const Albany::MeshSpecsStruct& meshSpecs,
+  Albany::StateManager& stateMgr,
+  Albany::FieldManagerChoice fmchoice,
+  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+{
+  // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
+  // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
+  Albany::ConstructEvaluatorsOp<PoissonProblem> op(
+    *this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
+  boost::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(op);
+  return *op.tags;
 }
 
 void
@@ -134,12 +144,12 @@ QCAD::PoissonProblem::constructDirichletEvaluators(
    // Construct Dirichlet evaluators for all nodesets and names
    vector<string> dirichletNames(neq);
    dirichletNames[0] = "Phi";   
-   Albany::DirichletUtils dirUtils;
+   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
 
    const std::vector<std::string>& nodeSetIDs = meshSpecs.nsNames;
 
    Teuchos::ParameterList DBCparams = params->sublist("Dirichlet BCs");
-   DBCparams.validateParameters(*(dirUtils.getValidDirichletBCParameters(nodeSetIDs,dirichletNames)),0); //TODO: Poisson version??
+   DBCparams.validateParameters(*(dirUtils.getValidBCParameters(nodeSetIDs,dirichletNames)),0); //TODO: Poisson version??
 
    // Create Material Database
    RCP<QCAD::MaterialDatabase> materialDB = rcp(new QCAD::MaterialDatabase(mtrlDbFilename, comm));

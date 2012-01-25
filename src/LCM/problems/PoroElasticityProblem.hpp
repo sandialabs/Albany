@@ -26,6 +26,9 @@
 #include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
+#include "Albany_ProblemUtils.hpp"
+#include "Albany_ResponseUtilities.hpp"
+#include "Albany_EvaluatorUtils.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 
 namespace Albany {
@@ -44,12 +47,24 @@ namespace Albany {
     //! Destructor
     virtual ~PoroElasticityProblem();
 
+    //! Return number of spatial dimensions
+    virtual int spatialDimension() const { return numDim; }
+
     //! Build the PDE instantiations, boundary conditions, and initial solution
-    virtual void 
-    buildProblem(
-       Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
-       StateManager& stateMgr,
-       Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
+    virtual void buildProblem(
+      const Teuchos::RCP<Albany::Application>& app,
+      Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+      StateManager& stateMgr,
+      Teuchos::Array< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
+
+    // Build evaluators
+    virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
+    buildEvaluators(
+      PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+      const Albany::MeshSpecsStruct& meshSpecs,
+      Albany::StateManager& stateMgr,
+      Albany::FieldManagerChoice fmchoice,
+      const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
     //! Each problem must generate it's list of valid parameters
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
@@ -67,48 +82,18 @@ namespace Albany {
     //! Private to prohibit copying
     PoroElasticityProblem& operator=(const PoroElasticityProblem&);
 
+  public:
+
     //! Main problem setup routine. Not directly called, but indirectly by following functions
-    template <typename EvalT>
-    void constructEvaluators(
-            PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-            const Albany::MeshSpecsStruct& meshSpecs,
-            Albany::StateManager& stateMgr,
-            Albany::FieldManagerChoice fmchoice,
-            Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
+    template <typename EvalT> 
+    Teuchos::RCP<const PHX::FieldTag>
+    constructEvaluators(
+      PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+      const Albany::MeshSpecsStruct& meshSpecs,
+      Albany::StateManager& stateMgr,
+      Albany::FieldManagerChoice fmchoice,
+      const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
-    //! Interface for Residual (PDE) field manager
-    template <typename EvalT>
-    void constructResidEvaluators(
-            PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-            const Albany::MeshSpecsStruct& meshSpecs,
-            Albany::StateManager& stateMgr)
-    {
-      Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> > junk;
-      constructEvaluators<EvalT>(fm0, meshSpecs, stateMgr, BUILD_RESID_FM, junk);
-    }
-
-    //! Interface for Response field manager, except for residual type
-    template <typename EvalT>
-    void constructResponseEvaluators(
-            PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-            const Albany::MeshSpecsStruct& meshSpecs,
-            Albany::StateManager& stateMgr)
-    {
-      Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> > junk;
-      constructEvaluators<EvalT>(fm0, meshSpecs, stateMgr, BUILD_RESPONSE_FM, junk);
-    }
-
-    //! Interface for Response field manager, Residual type.
-    // This version loads the responses variable, that needs to be constructed just once
-    template <typename EvalT>
-    void constructResponseEvaluators(
-            PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-            const Albany::MeshSpecsStruct& meshSpecs,
-            Albany::StateManager& stateMgr,
-            Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
-    {
-      constructEvaluators<EvalT>(fm0, meshSpecs, stateMgr, BUILD_RESPONSE_FM, responses);
-    }
     void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
 
   protected:
@@ -124,18 +109,29 @@ namespace Albany {
   };
 }
 
+#include "Teuchos_RCP.hpp"
+#include "Teuchos_ParameterList.hpp"
+
+#include "Albany_AbstractProblem.hpp"
+
+#include "Phalanx.hpp"
+#include "PHAL_Workset.hpp"
+#include "PHAL_Dimension.hpp"
+#include "PHAL_AlbanyTraits.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_ResponseUtilities.hpp"
 #include "Albany_EvaluatorUtils.hpp"
 
+#include "Time.hpp"
 #include "Strain.hpp"
+#include "StabParameter.hpp"
+#include "PHAL_SaveStateField.hpp"
 #include "Porosity.hpp"
 #include "BiotCoefficient.hpp"
 #include "BiotModulus.hpp"
 #include "PHAL_ThermalConductivity.hpp"
 #include "KCPermeability.hpp"
-#include "PHAL_SaveStateField.hpp"
 #include "ElasticModulus.hpp"
 #include "PoissonsRatio.hpp"
 #include "TotalStress.hpp"
@@ -143,13 +139,17 @@ namespace Albany {
 #include "PHAL_Source.hpp"
 #include "PoroElasticityResidMass.hpp"
 
+#include "PHAL_NSMaterialProperty.hpp"
+
+
 template <typename EvalT>
-void Albany::PoroElasticityProblem::constructEvaluators(
-        PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-        const Albany::MeshSpecsStruct& meshSpecs,
-        Albany::StateManager& stateMgr,
-        Albany::FieldManagerChoice fieldManagerChoice,
-        Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
+Teuchos::RCP<const PHX::FieldTag>
+Albany::PoroElasticityProblem::constructEvaluators(
+  PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+  const Albany::MeshSpecsStruct& meshSpecs,
+  Albany::StateManager& stateMgr,
+  Albany::FieldManagerChoice fieldManagerChoice,
+  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
    using Teuchos::RCP;
    using Teuchos::rcp;
@@ -170,7 +170,7 @@ void Albany::PoroElasticityProblem::constructEvaluators(
    RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
 
    const int numQPts = cubature->getNumPoints();
-   const int numVertices = cellType->getVertexCount();
+   const int numVertices = cellType->getNodeCount();
 
    *out << "Field Dimensions: Workset=" << worksetSize 
         << ", Vertices= " << numVertices
@@ -242,6 +242,52 @@ void Albany::PoroElasticityProblem::constructEvaluators(
    // Temporary variable used numerous times below
    Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
 
+   { // Time
+     RCP<ParameterList> p = rcp(new ParameterList);
+
+     p->set<string>("Time Name", "Time");
+     p->set<string>("Delta Time Name", " Delta Time");
+     p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
+     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+     p->set<bool>("Disable Transient", true);
+
+     ev = rcp(new LCM::Time<EvalT,AlbanyTraits>(*p));
+     fm0.template registerEvaluator<EvalT>(ev);
+     p = stateMgr.registerStateVariable("Time",dl->workset_scalar, dl->dummy,"zero", true);
+     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+     fm0.template registerEvaluator<EvalT>(ev);
+   }
+
+   { // Spatial Stabilization Parameter Field
+        RCP<ParameterList> p = rcp(new ParameterList);
+
+        p->set<string>("Stabilization Parameter Name", "Stabilization Parameter");
+        p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+        p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+        Teuchos::ParameterList& paramList = params->sublist("Stabilization Parameter");
+        p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+
+        // Additional information to construct stabilization parameter field
+        p->set<string>("Gradient QP Variable Name", "Pore Pressure Gradient");
+		p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
+		p->set<string>("Gradient BF Name", "Grad BF");
+		p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+
+		p->set<string>("Diffusive Parameter Name", "Kozeny-Carman Permeability");
+		p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+        ev = rcp(new LCM::StabParameter<EvalT,AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+
+        p = stateMgr.registerStateVariable("Stabilization Parameter",dl->qp_scalar, dl->dummy,"zero", true);
+        ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+      }
+
+
    { // Strain
      RCP<ParameterList> p = rcp(new ParameterList("Strain"));
 
@@ -272,15 +318,16 @@ void Albany::PoroElasticityProblem::constructEvaluators(
 	  Teuchos::ParameterList& paramList = params->sublist("Porosity");
 	  p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-	  // Setting this turns on linear dependence of E on T, E = E_ + dEdT*T)
+	  // Setting this turns on dependence of strain and pore pressure)
 	  p->set<string>("Strain Name", "Strain");
 	  p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-	  p->set<string>("QP Pore Pressure Name", "Pore Pressure");
-	  p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+//	  p->set<string>("QP Pore Pressure Name", "Pore Pressure");
+//	  p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+//	  p->set<string>("Biot Coefficient Name", "Biot Coefficient");
 
           ev = rcp(new LCM::Porosity<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
-          p = stateMgr.registerStateVariable("Porosity",dl->qp_tensor, dl->dummy,"zero", true);
+          p = stateMgr.registerStateVariable("Porosity",dl->qp_scalar, dl->dummy,"zero", true);
           ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
      }
@@ -390,7 +437,6 @@ void Albany::PoroElasticityProblem::constructEvaluators(
     Teuchos::ParameterList& paramList = params->sublist("Elastic Modulus");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-
     p->set<string>("Porosity Name", "Porosity"); // porosity is defined at Cubature points
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
@@ -417,27 +463,6 @@ void Albany::PoroElasticityProblem::constructEvaluators(
     ev = rcp(new LCM::PoissonsRatio<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
-
-
-
-  if (haveSource) { // Source
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-                       "Error!  Sources not implemented in Elasticity yet!");
-
-    RCP<ParameterList> p = rcp(new ParameterList);
-
-    p->set<string>("Source Name", "Source");
-    p->set<string>("Variable Name", "Displacement");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Source Functions");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-    ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
-
 
 
   { // Total Stress
@@ -467,7 +492,25 @@ void Albany::PoroElasticityProblem::constructEvaluators(
     p = stateMgr.registerStateVariable("Total Stress",dl->qp_tensor, dl->dummy,"zero");
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+    p = stateMgr.registerStateVariable("Pore Pressure",dl->qp_scalar, dl->dummy,"zero", true);
+	ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+	fm0.template registerEvaluator<EvalT>(ev);
 
+  }
+
+  if (haveSource) { // Source
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    p->set<string>("Source Name", "Source");
+    p->set<string>("QP Variable Name", "Pore Pressure");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Source Functions");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
   }
 
   { // Displacement Resid
@@ -486,12 +529,6 @@ void Albany::PoroElasticityProblem::constructEvaluators(
     p->set<bool>("Disable Transient", true);
 
 
-
-    // A L2 projection or bubble function needed here.
-//    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-//    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
-
-
     //Output
     p->set<string>("Residual Name", "Displacement Residual");
     p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
@@ -499,24 +536,6 @@ void Albany::PoroElasticityProblem::constructEvaluators(
     ev = rcp(new LCM::PoroElasticityResidMomentum<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
-
-
-  if (haveSource) { // Source
-    RCP<ParameterList> p = rcp(new ParameterList);
-
-    p->set<string>("Source Name", "Source");
-    p->set<string>("QP Variable Name", "Pore Pressure");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Source Functions");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-    ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
-
-
 
 
 
@@ -529,20 +548,19 @@ void Albany::PoroElasticityProblem::constructEvaluators(
     p->set<string>("Weighted BF Name", "wBF");
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
 
-    p->set<string>("QP Variable Name", "Pore Pressure"); // NOTE: QP and nodal vaue shares same name
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-    p->set<string>("QP Time Derivative Variable Name", "Pore Pressure_dot");
-
-    p->set<bool>("Have Source", haveSource);
+    p->set<bool>("Have Source", false);
     p->set<string>("Source Name", "Source");
 
     p->set<bool>("Have Absorption", false);
 
     // Input from cubature points
-    p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set<string>("QP Pore Pressure Name", "Pore Pressure");
+	p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
+	p->set<string>("QP Time Derivative Variable Name", "Pore Pressure");
+
+	p->set<string>("Material Property Name", "Stabilization Parameter");
+    p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
     p->set<string>("Porosity Name", "Porosity");
     p->set<string>("Kozeny-Carman Permeability Name", "Kozeny-Carman Permeability");
     p->set<string>("Biot Coefficient Name", "Biot Coefficient");
@@ -564,7 +582,9 @@ void Albany::PoroElasticityProblem::constructEvaluators(
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
 
     p->set<string>("Weights Name","Weights");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+    p->set<string>("Delta Time Name", " Delta Time");
+    p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
 
     //Output
     p->set<string>("Residual Name", "Pore Pressure Residual");
@@ -572,7 +592,6 @@ void Albany::PoroElasticityProblem::constructEvaluators(
 
     ev = rcp(new LCM::PoroElasticityResidMass<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-
   }
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
@@ -581,13 +600,15 @@ void Albany::PoroElasticityProblem::constructEvaluators(
 
     PHX::Tag<typename EvalT::ScalarT> res_tag2(scatterName, dl->dummy);
     fm0.requireField<EvalT>(res_tag2);
+
+    return res_tag.clone();
   }
-  else {
-    //Construct Responses
-    Teuchos::ParameterList& responseList = params->sublist("Response Functions");
+  else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
-    respUtils.constructResponses(fm0, responses, responseList, stateMgr);
+    return respUtils.constructResponses(fm0, *responseList, stateMgr);
   }
+
+  return Teuchos::null;
 }
 
 #endif // POROELASTICITYPROBLEM_HPP

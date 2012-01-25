@@ -57,7 +57,7 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
       PHX::DataLayout::size_type numDims = dims[2];
       Teuchos::Array<double> tmp = 
 	mp_list->get< Teuchos::Array<double> >("Value");
-      TEST_FOR_EXCEPTION(vector_constant_value.size() != numDims,
+      TEUCHOS_TEST_FOR_EXCEPTION(vector_constant_value.size() != numDims,
 			 std::logic_error,
 			 "Vector constant value for material property " <<
 			 name_mp << " has size " << 
@@ -78,7 +78,7 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
       PHX::DataLayout::size_type numCols = dims[3];
       Teuchos::TwoDArray<double> tmp = 
 	mp_list->get< Teuchos::TwoDArray<double> >("Value");
-      TEST_FOR_EXCEPTION(tensor_constant_value.getNumRows() != numRows ||
+      TEUCHOS_TEST_FOR_EXCEPTION(tensor_constant_value.getNumRows() != numRows ||
 			 tensor_constant_value.getNumCols() != numCols,
 			 std::logic_error,
 			 "Tensor constant value for material property " <<
@@ -99,7 +99,7 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
 	    Albany::strint(Albany::strint(name_mp,i),j), this, paramLib);
     }
     else
-      TEST_FOR_EXCEPTION(true, std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
 			 "Invalid material property rank " << rank << 
 			 ".  Acceptable values are 2 (scalar), " << 
 			 "3 (vector), or 4 (tensor)");
@@ -177,7 +177,7 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
     this->addDependentField(mu);
   }
   else {
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		       "Invalid material property type " << type);
   } 
 
@@ -297,7 +297,7 @@ NSMaterialProperty<EvalT,Traits>::getValue(const std::string &n)
       if (n == Albany::strint(name_mp + " KL Random Variable",i))
 	return rv[i];
   }
-  TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		     std::endl <<
 		     "Error! Logic error in getting paramter " << n
 		     << " in NSMaterialProperty::getValue()" << std::endl);

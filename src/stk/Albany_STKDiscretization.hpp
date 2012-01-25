@@ -71,11 +71,21 @@ namespace Albany {
     //! Get Node map
     Teuchos::RCP<const Epetra_Map> getNodeMap() const; 
 
+    //! Get Side map
+    Teuchos::RCP<const Epetra_Map> getSideMap() const; 
+
+
     //! Get Node set lists (typdef in Albany_AbstractDiscretization.hpp)
     const NodeSetList& getNodeSets() const { return nodeSets; };
     const NodeSetCoordList& getNodeSetCoords() const { return nodeSetCoords; };
 
     const std::vector<std::string>& getNodeSetIDs() const;
+
+    //! Get Side set lists 
+    const SideSetList& getSideSets() const { return sideSets; };
+    const SideSetCoordList& getSideSetCoords() const { return sideSetCoords; };
+
+    const std::vector<std::string>& getSideSetIDs() const;
 
     //! Get map from (Ws, El, Local Node) -> NodeLID
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >& getWsElNodeEqID() const;
@@ -105,6 +115,11 @@ namespace Albany {
     // After mesh modification, need to update the element connectivity and nodal coordinates
     void updateMesh(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct,
     		const Teuchos::RCP<const Epetra_Comm>& comm);
+
+    //! Accessor function to get coordinates for ML. Memory controlled here.
+    void getOwned_xyz(double **x, double **y, double **z, double **rbm,
+                      int& nNodes, int numPDEs, int nullSpaceDim);
+
 
   private:
 
@@ -137,6 +152,8 @@ namespace Albany {
     void computeWorksetInfo();
     //! Process STK mesh for NodeSets
     void computeNodeSets();
+    //! Process STK mesh for SideSets
+    void computeSideSets();
     //! Call stk_io for creating exodus output file
     void setupExodusOutput();
     //! Call stk_io for creating exodus output file
@@ -159,6 +176,9 @@ namespace Albany {
 
     //! Node map
     Teuchos::RCP<Epetra_Map> node_map;
+
+    //! Side map
+    Teuchos::RCP<Epetra_Map> side_map;
 
     //! Unknown Map
     Teuchos::RCP<Epetra_Map> map;
@@ -189,6 +209,13 @@ namespace Albany {
     //! Just the node set ID strings
     std::vector<std::string> nodeSetIDs;
 
+    //! side sets stored as std::map(string ID, int vector of GIDs)
+    Albany::SideSetList sideSets;
+    Albany::SideSetCoordList sideSetCoords;
+
+    //! Just the node set ID strings
+    std::vector<std::string> sideSetIDs;
+
     //! Connectivity array [workset, element, local-node, Eq] => LID
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > > wsElNodeEqID;
 
@@ -211,6 +238,10 @@ namespace Albany {
     int numOwnedNodes;
     int numOverlapNodes;
     int numGlobalNodes;
+
+    // Coordinate vector in format needed by ML. Need to own memory here.
+    double *xx, *yy, *zz, *rr;
+    bool allocated_xyz;
 
     Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct;
 

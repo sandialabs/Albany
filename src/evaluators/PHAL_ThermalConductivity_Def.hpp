@@ -11,7 +11,7 @@
 * NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
 * ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
 * including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
+*    Questions to Glen Hansen, gahanse@sandia.gov                    *
 \********************************************************************/
 
 
@@ -83,7 +83,7 @@ ThermalConductivity(Teuchos::ParameterList& p) :
        materialDB = p.get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
     }
     else {
-       TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		     std::endl <<
 		     "Error! Must specify a material database if using block dependent " << 
 		     "thermal conductivity" << std::endl);
@@ -110,7 +110,7 @@ ThermalConductivity(Teuchos::ParameterList& p) :
   } // Block dependent
 
   else {
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		       "Invalid thermal conductivity type " << type);
   } 
 
@@ -125,6 +125,7 @@ init_constant(ScalarT value, Teuchos::ParameterList& p){
 
     is_constant = true;
     randField = CONSTANT;
+
     constant_value = value;
 
     // Add thermal conductivity as a Sacado-ized parameter
@@ -200,13 +201,13 @@ evaluateFields(typename Traits::EvalData workset)
   else {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-	Teuchos::Array<MeshScalarT> point(numDims);
-	for (std::size_t i=0; i<numDims; i++)
-	  point[i] = Sacado::ScalarValue<MeshScalarT>::eval(coordVec(cell,qp,i));
-        if (randField == UNIFORM)
-          thermalCond(cell,qp) = exp_rf_kl->evaluate(point, rv);       
-        else if (randField == LOGNORMAL)
-          thermalCond(cell,qp) = std::exp(exp_rf_kl->evaluate(point, rv));       
+          Teuchos::Array<MeshScalarT> point(numDims);
+          for (std::size_t i=0; i<numDims; i++)
+              point[i] = Sacado::ScalarValue<MeshScalarT>::eval(coordVec(cell,qp,i));
+          if (randField == UNIFORM)
+              thermalCond(cell,qp) = exp_rf_kl->evaluate(point, rv);       
+          else if (randField == LOGNORMAL)
+              thermalCond(cell,qp) = std::exp(exp_rf_kl->evaluate(point, rv));       
       }
     }
   }
@@ -217,14 +218,15 @@ template<typename EvalT,typename Traits>
 typename ThermalConductivity<EvalT,Traits>::ScalarT& 
 ThermalConductivity<EvalT,Traits>::getValue(const std::string &n)
 {
-  if (is_constant) 
+  if (is_constant) {
     return constant_value;
+  }
 
   for (int i=0; i<rv.size(); i++) {
     if (n == Albany::strint("Thermal Conductivity KL Random Variable",i))
       return rv[i];
   }
-  TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		     std::endl <<
 		     "Error! Logic error in getting paramter " << n
 		     << " in ThermalConductivity::getValue()" << std::endl);

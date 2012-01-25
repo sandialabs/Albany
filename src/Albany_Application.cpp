@@ -40,6 +40,9 @@
   #include "Albany_STKDiscretization.hpp"
 #endif
 
+#include "Teuchos_DefaultMpiComm.hpp" 
+#include "Albany_ScalarResponseFunction.hpp"
+
 using Teuchos::ArrayRCP;
 using Teuchos::RCP;
 using Teuchos::rcp;
@@ -47,9 +50,10 @@ using Teuchos::rcp_dynamic_cast;
 using Teuchos::TimeMonitor;
 
 Albany::Application::
-Application(const RCP<const Epetra_Comm>& comm,
+Application(const RCP<const Epetra_Comm>& comm_,
 	    const RCP<Teuchos::ParameterList>& params,
 	    const RCP<const Epetra_Vector>& initial_guess) :
+  comm(comm_),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   physicsBasedPreconditioner(false),
   shapeParamsHaveBeenReset(false),
@@ -60,9 +64,6 @@ Application(const RCP<const Epetra_Comm>& comm,
 
   // Create parameter library
   paramLib = rcp(new ParamLib);
-
-  // Attach paramLib to TimeManager
-  timeMgr.init(paramLib);
 
   // Create problem object
   RCP<Teuchos::ParameterList> problemParams = 
@@ -86,8 +87,8 @@ Application(const RCP<const Epetra_Comm>& comm,
     registerShapeParameters();
 
 #else
-  TEST_FOR_EXCEPTION(problemParams->get("Enable Cubit Shape Parameters",false), std::logic_error,
-                     "Cubit requested but not Compiled in!");
+  TEUCHOS_TEST_FOR_EXCEPTION(problemParams->get("Enable Cubit Shape Parameters",false), std::logic_error,
+			     "Cubit requested but not Compiled in!");
 #endif
   }
 
@@ -104,9 +105,34 @@ Application(const RCP<const Epetra_Comm>& comm,
 #endif
 
   // Get mesh specification object: worksetSize, cell topology, etc
-  ArrayRCP<RCP<Albany::MeshSpecsStruct> > meshSpecs = discFactory.createMeshSpecs();
+  ArrayRCP<RCP<Albany::MeshSpecsStruct> > meshSpecs = 
+    discFactory.createMeshSpecs();
 
-  problem->buildProblem(meshSpecs, stateMgr, responses);
+  problem->buildProblem(rcp(this,false), meshSpecs, stateMgr, responses);
+
+  // Build state field manager
+  sfm.resize(meshSpecs.size());
+  Teuchos::RCP<PHX::DataLayout> dummy =
+    Teuchos::rcp(new PHX::MDALayout<Dummy>(0));
+  std::vector<string>responseIDs_to_require = 
+    stateMgr.getResidResponseIDsToRequire();
+  for (int ps=0; ps<meshSpecs.size(); ps++) {
+    sfm[ps] = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+    Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> > tags = 
+      problem->buildEvaluators(*sfm[ps], *meshSpecs[ps], stateMgr, 
+			       BUILD_STATE_FM, Teuchos::null);
+    std::vector<string>::const_iterator it;
+    for (it = responseIDs_to_require.begin(); 
+	 it != responseIDs_to_require.end(); 
+	 it++) {
+      const string& responseID = *it;
+      PHX::Tag<PHAL::AlbanyTraits::Residual::ScalarT> res_response_tag(
+	responseID, dummy);
+      sfm[ps]->requireField<PHAL::AlbanyTraits::Residual>(res_response_tag);
+    }
+    sfm[ps]->postRegistrationSetup("");
+  }
+  
 
   // Create the full mesh
   neq = problem->numEquations();
@@ -142,28 +168,20 @@ Application(const RCP<const Epetra_Comm>& comm,
     initial_x->Export(*overlapped_x, *exporter, Insert);
     initial_x_dot->Export(*overlapped_xdot, *exporter, Insert);
   }
-
+  
   // Now that space is allocated in STK for state fields, initialize states
   stateMgr.setStateArrays(disc);
 
-  // Create response map
-  unsigned int total_num_responses = 0;
-  for (unsigned int i=0; i<responses.size(); i++)
-    total_num_responses += responses[i]->numResponses();
-  if (total_num_responses > 0)
-    response_map = rcp(new Epetra_LocalMap(total_num_responses, 0,
-                                                    *comm));
   // Set up memory for workset
 
   fm = problem->getFieldManager();
-  TEST_FOR_EXCEPTION(fm==Teuchos::null, std::logic_error,
-                     "getFieldManager not implemented!!!");
+  TEUCHOS_TEST_FOR_EXCEPTION(fm==Teuchos::null, std::logic_error,
+			     "getFieldManager not implemented!!!");
   dfm = problem->getDirichletFieldManager();
-  rfm = problem->getResponseFieldManager();
 
   if (comm->MyPID()==0) {
     phxGraphVisDetail= problemParams->get("Phalanx Graph Visualization Detail", 0);
-    respGraphVisDetail= phxGraphVisDetail;
+    stateGraphVisDetail= phxGraphVisDetail;
   }
 
   *out << "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"
@@ -191,6 +209,13 @@ Albany::Application::
 getDiscretization() const
 {
   return disc;
+}
+
+RCP<const Epetra_Comm>
+Albany::Application::
+getComm() const
+{
+  return comm;
 }
 
 RCP<const Epetra_Map>
@@ -255,11 +280,26 @@ getParamLib()
   return paramLib;
 }
 
+int
+Albany::Application::
+getNumResponses() const {
+  return responses.size();
+}
+
 RCP<const Epetra_Map>
 Albany::Application::
-getResponseMap() const
+getResponseMap(int i) const
 {
-  return response_map;
+  return responses[i]->responseMap();
+}
+
+bool
+Albany::Application::
+isResponseDistributed(int i) const
+{
+  RCP<ScalarResponseFunction> scalar_res = 
+    Teuchos::rcp_dynamic_cast<ScalarResponseFunction>(responses[i]);
+  return (scalar_res == Teuchos::null);
 }
 
 bool
@@ -305,6 +345,10 @@ init_sg(const RCP<const Stokhos::OrthogPolyBasis<int,double> >& basis,
 	    sg_basis, sg_overlap_map, disc->getOverlapMap(), product_comm));
     // Delay creation of sg_overlapped_jac until needed
   }
+
+  // Initialize responses
+  for (int i=0; i<responses.size(); i++)
+    responses[i]->init_sg(basis, quad, expansion, multiComm);
 }
 
 void
@@ -328,9 +372,6 @@ computeGlobalResidual(const double current_time,
     for (unsigned int j=0; j<p[i].size(); j++)
       p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
 
-  // put current_time (from Rythmos) if this is a transient problem, then compute dt
-  if (xdot != NULL) timeMgr.setTime(current_time);
-  
   // Mesh motion needs to occur here on the global mesh befor
   // it is potentially carved into worksets.
 #ifdef ALBANY_CUTR
@@ -354,9 +395,13 @@ computeGlobalResidual(const double current_time,
   // Set data in Workset struct, and perform fill via field manager
   { 
     PHAL::Workset workset;
-    loadBasicWorksetInfo(workset, overlapped_x, overlapped_xdot, 
-			 timeMgr.getCurrentTime(), timeMgr.getDeltaTime());
 
+    if (!paramLib->isParameter("Time"))
+      loadBasicWorksetInfo( workset, overlapped_x, overlapped_xdot, current_time );
+    else 
+      loadBasicWorksetInfo( workset, overlapped_x, overlapped_xdot,
+			    paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time") );
+    
     workset.f        = overlapped_f;
 
     for (int ws=0; ws < numWorksets; ws++) {
@@ -381,7 +426,11 @@ computeGlobalResidual(const double current_time,
 
     workset.f = Teuchos::rcpFromRef(f);
     loadWorksetNodesetInfo(workset);
-    workset.x = Teuchos::rcpFromRef(x);;
+    workset.x = Teuchos::rcpFromRef(x);
+    if ( paramLib->isParameter("Time") )
+      workset.current_time = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+    else
+      workset.current_time = current_time;
     if (xdot != NULL) workset.transientTerms = true;
 
     // FillType template argument used to specialize Sacado
@@ -414,9 +463,6 @@ computeGlobalJacobian(const double alpha,
     for (unsigned int j=0; j<p[i].size(); j++)
       p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
 
-  // put current_time (from Rythmos) if this is a transient problem, then compute dt
-  if (xdot != NULL) timeMgr.setTime(current_time);
-
 #ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
     TimeMonitor Timer(*timers[10]); //start timer
@@ -445,8 +491,12 @@ computeGlobalJacobian(const double alpha,
   // Set data in Workset struct, and perform fill via field manager
   {
     PHAL::Workset workset;
-    loadBasicWorksetInfo(workset, overlapped_x, overlapped_xdot, 
-			 timeMgr.getCurrentTime(), timeMgr.getDeltaTime());
+    if (!paramLib->isParameter("Time"))
+      loadBasicWorksetInfo( workset, overlapped_x, overlapped_xdot, current_time );
+    else 
+      loadBasicWorksetInfo( workset, overlapped_x, overlapped_xdot,
+			    paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time") );
+
     workset.f        = overlapped_f;
     workset.Jac      = overlapped_jac;
     loadWorksetJacobianInfo(workset, alpha, beta);
@@ -474,6 +524,11 @@ computeGlobalJacobian(const double alpha,
     workset.Jac = Teuchos::rcpFromRef(jac);
     workset.m_coeff = alpha;
     workset.j_coeff = beta;
+
+    if ( paramLib->isParameter("Time") )
+      workset.current_time = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+    else
+      workset.current_time = current_time;
 
     if (beta==0.0 && perturbBetaForDirichlets>0.0) workset.j_coeff = perturbBetaForDirichlets;
 
@@ -557,9 +612,6 @@ computeGlobalTangent(const double alpha,
     for (unsigned int j=0; j<par[i].size(); j++)
       par[i][j].family->setRealValueForAllTypes(par[i][j].baseValue);
 
-  // put current_time (from Rythmos) if this is a transient problem, then compute dt
-  if (xdot != NULL) timeMgr.setTime(current_time);
-
   RCP<const Epetra_MultiVector > vp = rcp(Vp, false);
   RCP<ParamVec> params = rcp(deriv_par, false);
 
@@ -610,14 +662,14 @@ computeGlobalTangent(const double alpha,
   if (!sum_derivs) 
     param_offset = num_cols_x;  // offset of parameter derivs in deriv array
 
-  TEST_FOR_EXCEPTION(sum_derivs && 
-		     (num_cols_x != 0) && 
-		     (num_cols_p != 0) && 
-                     (num_cols_x != num_cols_p),
-                     std::logic_error,
-                     "Seed matrices Vx and Vp must have the same number " << 
-                     " of columns when sum_derivs is true and both are "
-                     << "non-null!" << std::endl);
+  TEUCHOS_TEST_FOR_EXCEPTION(sum_derivs && 
+			     (num_cols_x != 0) && 
+			     (num_cols_p != 0) && 
+			     (num_cols_x != num_cols_p),
+			     std::logic_error,
+			     "Seed matrices Vx and Vp must have the same number " << 
+			     " of columns when sum_derivs is true and both are "
+			     << "non-null!" << std::endl);
 
   // Initialize 
   if (params != Teuchos::null) {
@@ -660,11 +712,11 @@ computeGlobalTangent(const double alpha,
        }
      }
 
-    TEST_FOR_EXCEPTION( Vp != NULL, std::logic_error,
-                       "Derivatives with respect to a vector of shape\n " << 
-                       "parameters has not been implemented. Need to write\n" <<
-                       "directional derivative perturbation through meshMover!" <<
-                       std::endl);
+    TEUCHOS_TEST_FOR_EXCEPTION( Vp != NULL, std::logic_error,
+				"Derivatives with respect to a vector of shape\n " << 
+				"parameters has not been implemented. Need to write\n" <<
+				"directional derivative perturbation through meshMover!" <<
+				std::endl);
 
      // Compute FD derivs of coordinate vector w.r.t. shape params
      double eps = 1.0e-4;
@@ -718,8 +770,11 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
   // Set data in Workset struct, and perform fill via field manager
   {
     PHAL::Workset workset;
-    loadBasicWorksetInfo(workset, overlapped_x, overlapped_xdot, 
-			 timeMgr.getCurrentTime(), timeMgr.getDeltaTime());
+    if (!paramLib->isParameter("Time"))
+      loadBasicWorksetInfo( workset, overlapped_x, overlapped_xdot, current_time );
+    else 
+      loadBasicWorksetInfo( workset, overlapped_x, overlapped_xdot,
+			    paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time") );
 
     workset.params = params;
     workset.Vx = overlapped_Vx;
@@ -778,6 +833,11 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
     loadWorksetNodesetInfo(workset);
 
+    if ( paramLib->isParameter("Time") )
+      workset.current_time = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+    else
+      workset.current_time = current_time;
+
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
   }
@@ -788,41 +848,24 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
 void
 Albany::Application::
-evaluateResponse(const double current_time,
+evaluateResponse(int response_index,
+		 const double current_time,
 		 const Epetra_Vector* xdot,
 		 const Epetra_Vector& x,
 		 const Teuchos::Array<ParamVec>& p,
 		 Epetra_Vector& g)
 {  
-  const Epetra_Comm& comm = x.Map().Comm();
-  unsigned int offset = 0;
-  for (unsigned int i=0; i<responses.size(); i++) {
+  double t = current_time;
+  if ( paramLib->isParameter("Time") ) 
+    t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
 
-    // Create Epetra_Map for response function
-    unsigned int num_responses = responses[i]->numResponses();
-    Epetra_LocalMap local_response_map(num_responses, 0, comm);
-
-    // Create Epetra_Vector for response function
-    Epetra_Vector local_g(local_response_map);
-
-    // Evaluate response function
-    responses[i]->evaluateResponse(current_time, xdot, x, p, local_g);
-
-    // Copy result into combined result
-    for (unsigned int j=0; j<num_responses; j++)
-      g[offset+j] = local_g[j];
-
-    // Increment offset in combined result
-    offset += num_responses;
-  }
-
-  if( rfm != Teuchos::null )
-    evaluateResponse_rfm(current_time, xdot, x, p, g);  
+  responses[response_index]->evaluateResponse(t, xdot, x, p, g);
 }
 
 void
 Albany::Application::
-evaluateResponseTangent(const double alpha, 
+evaluateResponseTangent(int response_index,
+			const double alpha, 
 			const double beta,
 			const double current_time,
 			bool sum_derivs,
@@ -837,426 +880,35 @@ evaluateResponseTangent(const double alpha,
 			Epetra_MultiVector* gx,
 			Epetra_MultiVector* gp)
 {
-  const Epetra_Comm& comm = x.Map().Comm();
-  unsigned int offset = 0;
-  for (unsigned int i=0; i<responses.size(); i++) {
+  double t = current_time;
+  if ( paramLib->isParameter("Time") ) 
+    t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
 
-    // Create Epetra_Map for response function
-    unsigned int num_responses = responses[i]->numResponses();
-    Epetra_LocalMap local_response_map(num_responses, 0, comm);
-
-    // Create Epetra_Vectors for response function
-    RCP<Epetra_Vector> local_g;
-    RCP<Epetra_MultiVector> local_gx, local_gp;
-    if (g != NULL)
-      local_g = rcp(new Epetra_Vector(local_response_map));
-    if (gx != NULL)
-      local_gx = rcp(new Epetra_MultiVector(local_response_map, 
-					    gx->NumVectors()));
-    if (gp != NULL)
-      local_gp = rcp(new Epetra_MultiVector(local_response_map, 
-					    gp->NumVectors()));
-
-    // Evaluate response function
-    responses[i]->evaluateTangent(alpha, beta, current_time, sum_derivs,
-				  xdot, x, p, deriv_p, Vxdot, Vx, Vp, 
-				  local_g.get(), local_gx.get(), 
-				  local_gp.get());
-
-    // Copy results into combined result
-    for (unsigned int j=0; j<num_responses; j++) {
-      if (g != NULL)
-        (*g)[offset+j] = (*local_g)[j];
-      if (gx != NULL)
-	for (int k=0; k<gx->NumVectors(); k++)
-	  (*gx)[k][offset+j] = (*local_gx)[k][j];
-      if (gp != NULL)
-	for (int k=0; k<gp->NumVectors(); k++)
-	  (*gp)[k][offset+j] = (*local_gp)[k][j];
-    }
-
-    // Increment offset in combined result
-    offset += num_responses;
-  }
-
-  // if( rfm != Teuchos::null )
-  //   evaluateResponseTangent_rfm(alpha, beta, current_time, sum_derivs,
-  // 				xdot, x, p, deriv_p, Vx, Vxdot, Vp, g, gx, gp);
-
-  // OLD: TO REMOVE
-  if (g != NULL && rfm != Teuchos::null )
-    evaluateResponse_rfm(current_time, xdot, x, p, *g);
+  responses[response_index]->evaluateTangent(
+    alpha, beta, t, sum_derivs, xdot, x, p, deriv_p, Vxdot, Vx, Vp, g, gx, gp);
 }
 
 void
 Albany::Application::
-evaluateResponseGradient(const double current_time,
-			 const Epetra_Vector* xdot,
-			 const Epetra_Vector& x,
-			 const Teuchos::Array<ParamVec>& p,
-			 ParamVec* deriv_p,
-			 Epetra_Vector* g,
-			 Epetra_MultiVector* dg_dx,
-			 Epetra_MultiVector* dg_dxdot,
-			 Epetra_MultiVector* dg_dp)
+evaluateResponseDerivative(
+  int response_index,
+  const double current_time,
+  const Epetra_Vector* xdot,
+  const Epetra_Vector& x,
+  const Teuchos::Array<ParamVec>& p,
+  ParamVec* deriv_p,
+  Epetra_Vector* g,
+  const EpetraExt::ModelEvaluator::Derivative& dg_dx,
+  const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
+  const EpetraExt::ModelEvaluator::Derivative& dg_dp)
 {
-  const Epetra_Comm& comm = x.Map().Comm();
-  unsigned int offset = 0;
-  for (unsigned int i=0; i<responses.size(); i++) {
+  double t = current_time;
+  if ( paramLib->isParameter("Time") ) 
+    t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
 
-    // Create Epetra_Map for response function
-    unsigned int num_responses = responses[i]->numResponses();
-    Epetra_LocalMap local_response_map(num_responses, 0, comm);
-
-cout << " eeeee  numresponses " << num_responses << endl;
-
-    // Create Epetra_Vectors for response function
-    RCP<Epetra_Vector> local_g;
-    if (g != NULL)
-      local_g = rcp(new Epetra_Vector(local_response_map));
-    RCP<Epetra_MultiVector> local_dgdx;
-    if (dg_dx != NULL)
-      local_dgdx = rcp(new Epetra_MultiVector(dg_dx->Map(), num_responses));
-    RCP<Epetra_MultiVector> local_dgdxdot;
-    if (dg_dxdot != NULL)
-      local_dgdxdot = rcp(new Epetra_MultiVector(dg_dxdot->Map(), 
-						 num_responses));
-    RCP<Epetra_MultiVector> local_dgdp;
-    if (dg_dp != NULL)
-      local_dgdp = rcp(new Epetra_MultiVector(local_response_map, 
-					      dg_dp->NumVectors()));
-
-    // Evaluate response function
-    responses[i]->evaluateGradient(current_time, xdot, x, p, deriv_p, 
-				   local_g.get(), local_dgdx.get(), 
-				   local_dgdxdot.get(), local_dgdp.get());
-
-    // Copy results into combined result
-    for (unsigned int j=0; j<num_responses; j++) {
-      if (g != NULL)
-        (*g)[offset+j] = (*local_g)[j];
-      if (dg_dx != NULL)
-        (*dg_dx)(offset+j)->Update(1.0, *((*local_dgdx)(j)), 0.0);
-      if (dg_dxdot != NULL)
-        (*dg_dxdot)(offset+j)->Update(1.0, *((*local_dgdxdot)(j)), 0.0);
-      if (dg_dp != NULL)
-	for (int k=0; k<dg_dp->NumVectors(); k++)
-	  (*dg_dp)[k][offset+j] = (*local_dgdp)[k][j];
-    }
-
-    // Increment offset in combined result
-    offset += num_responses;
-  }
-
-  //if( rfm != Teuchos::null )
-  //  evaluateResponseGradients_rfm(xdot, x, p, deriv_p, g, dg_dx, dg_dxdot, dg_dp);
-
-  // OLD: TO REMOVE
-  if (g != NULL && rfm != Teuchos::null )
-    evaluateResponse_rfm(current_time, xdot, x, p, *g);
+  responses[response_index]->evaluateDerivative(
+    t, xdot, x, p, deriv_p, g, dg_dx, dg_dxdot, dg_dp);
 }
-
-
-void
-Albany::Application::
-evaluateResponse_rfm(const double current_time,
-		     const Epetra_Vector* xdot,
-		     const Epetra_Vector& x,
-		     const Teuchos::Array<ParamVec>& p,
-		     Epetra_Vector& g)
-{  
-  const Epetra_Comm& comm = x.Map().Comm();
-  
-  postRegSetup("Responses");
-
-  //No timer for response fill yet - to add later
-  //TimeMonitor Timer(*timers[0]); //start timer
-
-  // Scatter x and xdot to the overlapped distrbution
-  overlapped_x->Import(x, *importer, Insert);
-  if (xdot != NULL) overlapped_xdot->Import(*xdot, *importer, Insert);
-
-  // Set parameters
-  for (int i=0; i<p.size(); i++)
-    for (unsigned int j=0; j<p[i].size(); j++)
-      p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
-
-  // put current_time (from Rythmos) if this is a transient problem, then compute dt
-  if (xdot != NULL) timeMgr.setTime(current_time);
-
-  // -- No Mesh motion code --
-
-
-  //create storage for individual responses and derivatives, to be placed in workset
-  // and initialize with current values of the responses & derivatives
-  ArrayRCP< RCP< Epetra_Vector > >
-    wsResponses = Teuchos::arcp(new RCP<Epetra_Vector>[responses.size()], 0, responses.size() );
-
-  for (unsigned int i=0, offset=0; i<responses.size(); i++) {
-      
-    // Create Epetra_Map for response values
-    unsigned int num_responses = responses[i]->numResponses();
-    Epetra_LocalMap local_response_map(num_responses, 0, comm);
-
-    // Create Epetra_Vectors for response values and derivatives
-    wsResponses[i] = rcp(new Epetra_Vector(local_response_map));
-    for (unsigned int j=0; j<num_responses; j++)
-      (*wsResponses[i])[j] = g[offset+j];
-    
-    // Increment offset in combined result
-    offset += num_responses;
-  }
-
-  // Set data in Workset struct, and perform fill via field manager
-  { 
-    PHAL::Workset workset;
-    loadBasicWorksetInfo(workset, overlapped_x, overlapped_xdot, 
-			 timeMgr.getCurrentTime(), timeMgr.getDeltaTime());
-    
-    workset.responses = wsResponses;
-
-    for (int ws=0; ws < numWorksets; ws++) {
-      loadWorksetBucketInfo(workset, ws);
-      
-      // FillType template argument used to specialize Sacado
-      rfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
-    }    
-  }
- 
-  // Post process using response function
-  for (unsigned int i=0; i<responses.size(); i++)
-    responses[i]->postProcessResponses(comm, wsResponses[i]);
-
-  // Copy values out of workset into function arguments to fill (return)
-  for (unsigned int i=0, offset=0; i<responses.size(); i++) {      
-    unsigned int num_responses = responses[i]->numResponses();
-    for (unsigned int j=0; j<num_responses; j++)
-      g[offset+j] = (*wsResponses[i])[j];
-
-    // Increment offset in combined result
-    offset += num_responses;
-  }
-}
-
-void
-Albany::Application::
-evaluateResponseTangent_rfm(const double alpha, 
-			    const double beta,
-			    const double current_time,
-			    bool sum_derivs,
-			    const Epetra_Vector* xdot,
-			    const Epetra_Vector& x,
-			    const Teuchos::Array<ParamVec>& p,
-			    ParamVec* deriv_p,
-			    const Epetra_MultiVector* Vxdot,
-			    const Epetra_MultiVector* Vx,
-			    const Epetra_MultiVector* Vp,
-			    Epetra_Vector* g,
-			    Epetra_MultiVector* gx,
-			    Epetra_MultiVector* gp)
-{  
-  postRegSetup("Response Tangents");
-
-  // Scatter x and xdot to the overlapped distrbution
-  overlapped_x->Import(x, *importer, Insert);
-  if (xdot != NULL) overlapped_xdot->Import(*xdot, *importer, Insert);
-
-  // Set parameters
-  for (int i=0; i<p.size(); i++)
-    for (unsigned int j=0; j<p[i].size(); j++)
-      p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
-
-  //TODO - but not urgent because this function is never called
-  TEST_FOR_EXCEPTION(true,  std::logic_error,
-     "Error: Albany::Application::evaluateResponseTangents_rfm\n" <<
-     "         called but not implemented." << endl);
-}
-
-
-void
-Albany::Application::
-evaluateResponseGradient_rfm(const double current_time,
-			     const Epetra_Vector* xdot,
-			     const Epetra_Vector& x,
-			     const Teuchos::Array<ParamVec>& p,
-			     ParamVec* deriv_p,
-			     Epetra_Vector* g,
-			     Epetra_MultiVector* dg_dx,
-			     Epetra_MultiVector* dg_dxdot,
-			     Epetra_MultiVector* dg_dp)
-{  
-  double alpha, beta;
-  const Epetra_Comm& comm = x.Map().Comm();
-
-  postRegSetup("Response Gradients");
-
-  // Scatter x and xdot to the overlapped distrbution
-  overlapped_x->Import(x, *importer, Insert);
-  if (xdot != NULL) overlapped_xdot->Import(*xdot, *importer, Insert);
-
-  // Set parameters
-  for (int i=0; i<p.size(); i++)
-    for (unsigned int j=0; j<p[i].size(); j++)
-      p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
-
-  // put current_time (from Rythmos) if this is a transient problem, then compute dt
-  if (xdot != NULL) timeMgr.setTime(current_time);
-
-  // -- No Mesh motion code --
-
-  if (dg_dx != NULL) {
-
-    //create storage for individual responses and derivatives, to be placed in workset
-    // and initialize with current values of the responses & derivatives
-    ArrayRCP< RCP< Epetra_Vector > >
-      wsResponses = Teuchos::arcp(new RCP<Epetra_Vector>[responses.size()], 0, responses.size() );
-    ArrayRCP< RCP< Epetra_MultiVector > > 
-      wsResponseDerivs = Teuchos::arcp(new RCP<Epetra_MultiVector>[responses.size()] , 0, responses.size() );
-
-    for (unsigned int i=0, offset=0; i<responses.size(); i++) {
-      
-      // Create Epetra_Map for response values
-      unsigned int num_responses = responses[i]->numResponses();
-      Epetra_LocalMap local_response_map(num_responses, 0, comm);
-
-      // Create Epetra_Vectors for response values and derivatives
-      if (g != NULL) {
-	wsResponses[i] = rcp(new Epetra_Vector(local_response_map));
-	for (unsigned int j=0; j<num_responses; j++)
-	  (*wsResponses[i])[j] = (*g)[offset+j];
-      }
-      
-      wsResponseDerivs[i] = rcp(new Epetra_MultiVector(dg_dx->Map(), num_responses));
-      for (unsigned int j=0; j<num_responses; j++)
-	(*wsResponseDerivs[i])(j)->Update(1.0, *((*dg_dx)(offset+j)), 0.0);
-
-      // Increment offset in combined result
-      offset += num_responses;
-    }
-
-    // Set data in Workset struct, and perform fill via field manager
-    alpha = 0;
-    beta  = 1;
-    {
-      PHAL::Workset workset;
-      loadBasicWorksetInfo(workset, overlapped_x, overlapped_xdot, 
-			   timeMgr.getCurrentTime(), timeMgr.getDeltaTime());
-      
-      workset.responses           = wsResponses;
-      workset.responseDerivatives = wsResponseDerivs;
-      
-      loadWorksetJacobianInfo(workset, alpha, beta);
-      
-      for (int ws=0; ws < numWorksets; ws++) {
-        loadWorksetBucketInfo(workset, ws);
-
-	// FillType template argument used to specialize Sacado
-	rfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
-      }
-    } 
-
-    // Post process using response function
-    for (unsigned int i=0; i<responses.size(); i++) {
-      responses[i]->postProcessResponses(comm, wsResponses[i]);
-      responses[i]->postProcessResponseDerivatives(comm, wsResponseDerivs[i]);
-    }
-
-    // Copy values out of workset into function arguments to fill (return)
-    for (unsigned int i=0, offset=0; i<responses.size(); i++) {      
-      unsigned int num_responses = responses[i]->numResponses();
-
-      if (g != NULL) {
-	for (unsigned int j=0; j<num_responses; j++)
-	  (*g)[offset+j] = (*wsResponses[i])[j];
-      }
-      
-      for (unsigned int j=0; j<num_responses; j++)
-	(*dg_dx)(offset+j)->Update(1.0, *((*wsResponseDerivs[i])(j)), 0.0);
-
-      // Increment offset in combined result
-      offset += num_responses;
-    }
-  }
-
-
-
-  // SAME logic as above, but alpha=1, beta=0 and replace fill of dg_dx with dg_dxdot
-  if (dg_dxdot != NULL) {
-
-    //create storage for individual responses and derivatives, to be placed in workset
-    // and initialize with current values of the responses & derivatives
-    ArrayRCP< RCP< Epetra_Vector > >
-      wsResponses = Teuchos::arcp(new RCP<Epetra_Vector>[responses.size()], 0, responses.size() );
-    ArrayRCP< RCP< Epetra_MultiVector > > 
-      wsResponseDerivs = Teuchos::arcp(new RCP<Epetra_MultiVector>[responses.size()] , 0, responses.size() );
-
-    for (unsigned int i=0, offset=0; i<responses.size(); i++) {
-      
-      // Create Epetra_Map for response values
-      unsigned int num_responses = responses[i]->numResponses();
-      Epetra_LocalMap local_response_map(num_responses, 0, comm);
-
-      // Create Epetra_Vectors for response values and derivatives
-      if (g != NULL) {
-	wsResponses[i] = rcp(new Epetra_Vector(local_response_map));
-	for (unsigned int j=0; j<num_responses; j++)
-	  (*wsResponses[i])[j] = (*g)[offset+j];
-      }
-      
-      wsResponseDerivs[i] = rcp(new Epetra_MultiVector(dg_dxdot->Map(), num_responses));
-      for (unsigned int j=0; j<num_responses; j++)
-	(*wsResponseDerivs[i])(j)->Update(1.0, *((*dg_dxdot)(offset+j)), 0.0);
-
-      // Increment offset in combined result
-      offset += num_responses;
-    }
-
-    // Set data in Workset struct, and perform fill via field manager
-    alpha = 1;
-    beta  = 0;
-    {
-      PHAL::Workset workset;
-      loadBasicWorksetInfo(workset, overlapped_x, overlapped_xdot, 
-			   timeMgr.getCurrentTime(), timeMgr.getDeltaTime());
-      
-      workset.responses           = wsResponses;
-      workset.responseDerivatives = wsResponseDerivs;
-      
-      loadWorksetJacobianInfo(workset, alpha, beta);
-      
-      for (int ws=0; ws < numWorksets; ws++) {
-        loadWorksetBucketInfo(workset, ws);
-
-	// FillType template argument used to specialize Sacado
-	rfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
-      }
-    } 
-
-    // Post process using response function
-    for (unsigned int i=0; i<responses.size(); i++) {
-      responses[i]->postProcessResponses(comm, wsResponses[i]);
-      responses[i]->postProcessResponseDerivatives(comm, wsResponseDerivs[i]);
-    }
-
-    // Copy values out of workset into function arguments to fill (return)
-    for (unsigned int i=0, offset=0; i<responses.size(); i++) {      
-      unsigned int num_responses = responses[i]->numResponses();
-
-      if (g != NULL) {
-	for (unsigned int j=0; j<num_responses; j++)
-	  (*g)[offset+j] = (*wsResponses[i])[j];
-      }
-      
-      for (unsigned int j=0; j<num_responses; j++)
-	(*dg_dxdot)(offset+j)->Update(1.0, *((*wsResponseDerivs[i])(j)), 0.0);
-
-      // Increment offset in combined result
-      offset += num_responses;
-    }
-  }
-
-}
-
 
 void
 Albany::Application::
@@ -1291,7 +943,7 @@ computeGlobalSGResidual(
       p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
 
   // put current_time (from Rythmos) if this is a transient problem, then compute dt
-  if (sg_xdot != NULL) timeMgr.setTime(current_time);
+  //  if (sg_xdot != NULL) timeMgr.setTime(current_time);
 
 #ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
@@ -1321,8 +973,8 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     workset.sg_xdot      = sg_overlapped_xdot;
     workset.sg_f         = sg_overlapped_f;
 
-    workset.current_time = timeMgr.getCurrentTime();
-    workset.delta_time = timeMgr.getDeltaTime();
+    workset.current_time = current_time;
+    //workset.delta_time = timeMgr.getDeltaTime();
     if (sg_xdot != NULL) workset.transientTerms = true;
 
     for (int ws=0; ws < numWorksets; ws++) {
@@ -1346,6 +998,11 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     loadWorksetNodesetInfo(workset);
     workset.sg_x = Teuchos::rcpFromRef(sg_x);
     if (sg_xdot != NULL) workset.transientTerms = true;
+
+    if ( paramLib->isParameter("Time") )
+      workset.current_time = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+    else
+      workset.current_time = current_time;
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::SGResidual>(workset);
@@ -1410,7 +1067,7 @@ computeGlobalSGJacobian(
       p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
 
   // put current_time (from Rythmos) if this is a transient problem, then compute dt
-  if (sg_xdot != NULL) timeMgr.setTime(current_time);
+  //  if (sg_xdot != NULL) timeMgr.setTime(current_time);
 
 #ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
@@ -1446,8 +1103,8 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
     workset.sg_Jac       = sg_overlapped_jac;
     loadWorksetJacobianInfo(workset, alpha, beta);
-    workset.current_time = timeMgr.getCurrentTime();
-    workset.delta_time = timeMgr.getDeltaTime();
+    workset.current_time = current_time;
+    //workset.delta_time = timeMgr.getDeltaTime();
     if (sg_xdot != NULL) workset.transientTerms = true;
 
     for (int ws=0; ws < numWorksets; ws++) {
@@ -1558,7 +1215,7 @@ computeGlobalSGTangent(
   }
 
   // put current_time (from Rythmos) if this is a transient problem, then compute dt
-  if (sg_xdot != NULL) timeMgr.setTime(current_time);
+  //  if (sg_xdot != NULL) timeMgr.setTime(current_time);
 
   RCP<const Epetra_MultiVector > vp = rcp(Vp, false);
   RCP<ParamVec> params = rcp(deriv_par, false);
@@ -1608,7 +1265,7 @@ computeGlobalSGTangent(
   if (!sum_derivs) 
     param_offset = num_cols_x;  // offset of parameter derivs in deriv array
 
-  TEST_FOR_EXCEPTION(sum_derivs && 
+  TEUCHOS_TEST_FOR_EXCEPTION(sum_derivs && 
 		     (num_cols_x != 0) && 
 		     (num_cols_p != 0) && 
                      (num_cols_x != num_cols_p),
@@ -1654,8 +1311,8 @@ computeGlobalSGTangent(
     workset.num_cols_p = num_cols_p;
     workset.param_offset = param_offset;
 
-    workset.current_time = timeMgr.getCurrentTime();
-    workset.delta_time = timeMgr.getDeltaTime();
+    workset.current_time = current_time; //timeMgr.getCurrentTime();
+    //    workset.delta_time = timeMgr.getDeltaTime();
     if (sg_xdot != NULL) workset.transientTerms = true;
 
     for (int ws=0; ws < numWorksets; ws++) {
@@ -1709,62 +1366,26 @@ computeGlobalSGTangent(
 
 void
 Albany::Application::
-evaluateSGResponse(const double curr_time,
-		   const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
-		   const Stokhos::EpetraVectorOrthogPoly& sg_x,
-		   const Teuchos::Array<ParamVec>& p,
-		   const Teuchos::Array<int>& sg_p_index,
-		   const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
-		   Stokhos::EpetraVectorOrthogPoly& sg_g)
+evaluateSGResponse(
+  int response_index,
+  const double curr_time,
+  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+  const Stokhos::EpetraVectorOrthogPoly& sg_x,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& sg_p_index,
+  const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+  Stokhos::EpetraVectorOrthogPoly& sg_g)
 {
   TEUCHOS_FUNC_TIME_MONITOR("Albany::Application::evaluateSGResponses");
 
-  RCP<const Epetra_BlockMap> x_map = sg_x.coefficientMap();
-  RCP<Epetra_Vector> xdot;
-  if (sg_xdot != NULL)
-    xdot = rcp(new Epetra_Vector(*x_map));
-  Epetra_Vector x(*x_map);
-  Teuchos::Array<ParamVec> pp = p;
-  
-  RCP<const Epetra_BlockMap> g_map = sg_g.coefficientMap();
-  Epetra_Vector g(*g_map);
-
-  // Get quadrature data
-  const Teuchos::Array<double>& norms = sg_basis->norm_squared();
-  const Teuchos::Array< Teuchos::Array<double> >& points = 
-    sg_quad->getQuadPoints();
-  const Teuchos::Array<double>& weights = sg_quad->getQuadWeights();
-  const Teuchos::Array< Teuchos::Array<double> >& vals = 
-    sg_quad->getBasisAtQuadPoints();
-  int nqp = points.size();
-
-  // Compute sg_g via quadrature
-  sg_g.init(0.0);
-  for (int qp=0; qp<nqp; qp++) {
-
-    // Evaluate sg_x, sg_xdot at quadrature point
-    sg_x.evaluate(vals[qp], x);
-    if (sg_xdot != NULL)
-      sg_xdot->evaluate(vals[qp], *xdot);
-
-    // Evaluate parameters at quadrature point
-    for (int i=0; i<sg_p_index.size(); i++) {
-      int ii = sg_p_index[i];
-      for (unsigned int j=0; j<pp[ii].size(); j++)
-	pp[ii][j].baseValue = sg_p_vals[ii][j].evaluate(points[qp], vals[qp]);
-    }
-
-    // Compute response at quadrature point
-    evaluateResponse(curr_time, xdot.get(), x, pp, g);
-
-    // Add result into integral
-    sg_g.sumIntoAllTerms(weights[qp], vals[qp], norms, g);
-  }
+  responses[response_index]->evaluateSGResponse(
+    curr_time, sg_xdot, sg_x, p, sg_p_index, sg_p_vals, sg_g);
 }
 
 void
 Albany::Application::
 evaluateSGResponseTangent(
+  int response_index,
   const double alpha, 
   const double beta, 
   const double current_time,
@@ -1784,81 +1405,15 @@ evaluateSGResponseTangent(
 {
   TEUCHOS_FUNC_TIME_MONITOR("Albany::Application::evaluateSGResponses");
 
-  RCP<const Epetra_BlockMap> x_map = sg_x.coefficientMap();
-  RCP<Epetra_Vector> xdot;
-  if (sg_xdot != NULL)
-    xdot = rcp(new Epetra_Vector(*x_map));
-  Epetra_Vector x(*x_map);
-  Teuchos::Array<ParamVec> pp = p;
-  
-  RCP<Epetra_Vector> g;
-  if (sg_g != NULL) {
-    sg_g->init(0.0);
-    g = rcp(new Epetra_Vector(*(sg_g->coefficientMap())));
-  }
-
-  RCP<Epetra_MultiVector> JV;
-  if (sg_JV != NULL) {
-    sg_JV->init(0.0);
-    JV = rcp(new Epetra_MultiVector(*(sg_JV->coefficientMap()), 
-				    sg_JV->numVectors()));
-  }
-
-  RCP<Epetra_MultiVector> gp;
-  if (sg_gp != NULL) {
-    sg_gp->init(0.0);
-    gp = rcp(new Epetra_MultiVector(*(sg_gp->coefficientMap()), 
-				    sg_gp->numVectors()));
-  }
-
-  // Get quadrature data
-  const Teuchos::Array<double>& norms = sg_basis->norm_squared();
-  const Teuchos::Array< Teuchos::Array<double> >& points = 
-    sg_quad->getQuadPoints();
-  const Teuchos::Array<double>& weights = sg_quad->getQuadWeights();
-  const Teuchos::Array< Teuchos::Array<double> >& vals = 
-    sg_quad->getBasisAtQuadPoints();
-  int nqp = points.size();
-
-  // Compute sg_g via quadrature
-  for (int qp=0; qp<nqp; qp++) {
-
-    // Evaluate sg_x, sg_xdot at quadrature point
-    sg_x.evaluate(vals[qp], x);
-    if (sg_xdot != NULL)
-      sg_xdot->evaluate(vals[qp], *xdot);
-
-    // Evaluate parameters at quadrature point
-    for (int i=0; i<sg_p_index.size(); i++) {
-      int ii = sg_p_index[i];
-      for (unsigned int j=0; j<pp[ii].size(); j++) {
-	pp[ii][j].baseValue = sg_p_vals[ii][j].evaluate(points[qp], vals[qp]);
-	if (deriv_p != NULL) {
-	  for (unsigned int k=0; k<deriv_p->size(); k++)
-	    if ((*deriv_p)[k].family->getName() == pp[ii][j].family->getName())
-	      (*deriv_p)[k].baseValue = pp[ii][j].baseValue;
-	}
-      }
-    }
-
-    // Compute response at quadrature point
-    evaluateResponseTangent(alpha, beta, current_time, sum_derivs, 
-			    xdot.get(), x, pp, deriv_p, Vx, Vxdot, Vp,
-			    g.get(), JV.get(), gp.get());
-
-    // Add result into integral
-    if (sg_g != NULL)
-      sg_g->sumIntoAllTerms(weights[qp], vals[qp], norms, *g);
-    if (sg_JV != NULL)
-      sg_JV->sumIntoAllTerms(weights[qp], vals[qp], norms, *JV);
-    if (sg_gp != NULL)
-      sg_gp->sumIntoAllTerms(weights[qp], vals[qp], norms, *gp);
-  }
+  responses[response_index]->evaluateSGTangent(
+    alpha, beta, current_time, sum_derivs, sg_xdot, sg_x, p, sg_p_index, 
+    sg_p_vals, deriv_p, Vx, Vxdot, Vp, sg_g, sg_JV, sg_gp);
 }
 
 void
 Albany::Application::
-evaluateSGResponseGradient(
+evaluateSGResponseDerivative(
+  int response_index,
   const double current_time,
   const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
   const Stokhos::EpetraVectorOrthogPoly& sg_x,
@@ -1867,90 +1422,15 @@ evaluateSGResponseGradient(
   const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
   ParamVec* deriv_p,
   Stokhos::EpetraVectorOrthogPoly* sg_g,
-  Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dx,
-  Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdot,
-  Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dp)
+  const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dx,
+  const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdot,
+  const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dp)
 {
   TEUCHOS_FUNC_TIME_MONITOR("Albany::Application::evaluateSGResponses");
 
-  RCP<const Epetra_BlockMap> x_map = sg_x.coefficientMap();
-  RCP<Epetra_Vector> xdot;
-  if (sg_xdot != NULL)
-    xdot = rcp(new Epetra_Vector(*x_map));
-  Epetra_Vector x(*x_map);
-  Teuchos::Array<ParamVec> pp = p;
-
-  RCP<Epetra_Vector> g;
-  if (sg_g != NULL) {
-    sg_g->init(0.0);
-    g = rcp(new Epetra_Vector(*(sg_g->coefficientMap())));
-  }
-
-  RCP<Epetra_MultiVector> dg_dx;
-  if (sg_dg_dx != NULL) {
-    sg_dg_dx->init(0.0);
-    dg_dx = rcp(new Epetra_MultiVector(*(sg_dg_dx->coefficientMap()), 
-				       sg_dg_dx->numVectors()));
-  }
-
-  RCP<Epetra_MultiVector> dg_dxdot;
-  if (sg_dg_dxdot != NULL) {
-    sg_dg_dxdot->init(0.0);
-    dg_dxdot = rcp(new Epetra_MultiVector(*(sg_dg_dxdot->coefficientMap()), 
-					  sg_dg_dxdot->numVectors()));
-  }
-
-  RCP<Epetra_MultiVector> dg_dp;
-  if (sg_dg_dp != NULL) {
-    sg_dg_dp->init(0.0);
-    dg_dp = rcp(new Epetra_MultiVector(*(sg_dg_dp->coefficientMap()), 
-				       sg_dg_dp->numVectors()));
-  }
-
-  // Get quadrature data
-  const Teuchos::Array<double>& norms = sg_basis->norm_squared();
-  const Teuchos::Array< Teuchos::Array<double> >& points = 
-    sg_quad->getQuadPoints();
-  const Teuchos::Array<double>& weights = sg_quad->getQuadWeights();
-  const Teuchos::Array< Teuchos::Array<double> >& vals = 
-    sg_quad->getBasisAtQuadPoints();
-  int nqp = points.size();
-
-  // Compute sg_g via quadrature
-  for (int qp=0; qp<nqp; qp++) {
-
-    // Evaluate sg_x, sg_xdot at quadrature point
-    sg_x.evaluate(vals[qp], x);
-    if (sg_xdot != NULL)
-      sg_xdot->evaluate(vals[qp], *xdot);
-
-    // Evaluate parameters at quadrature point
-    for (int i=0; i<sg_p_index.size(); i++) {
-      int ii = sg_p_index[i];
-      for (unsigned int j=0; j<pp[ii].size(); j++) {
-	pp[ii][j].baseValue = sg_p_vals[ii][j].evaluate(points[qp], vals[qp]);
-	if (deriv_p != NULL) {
-	  for (unsigned int k=0; k<deriv_p->size(); k++)
-	    if ((*deriv_p)[k].family->getName() == pp[ii][j].family->getName())
-	      (*deriv_p)[k].baseValue = pp[ii][j].baseValue;
-	}
-      }
-    }
-
-    // Compute response at quadrature point
-    evaluateResponseGradient(current_time, xdot.get(), x, pp, deriv_p,
-			    g.get(), dg_dx.get(), dg_dxdot.get(), dg_dp.get());
-
-    // Add result into integral
-    if (sg_g != NULL)
-      sg_g->sumIntoAllTerms(weights[qp], vals[qp], norms, *g);
-    if (sg_dg_dx != NULL)
-      sg_dg_dx->sumIntoAllTerms(weights[qp], vals[qp], norms, *dg_dx);
-    if (sg_dg_dxdot != NULL)
-      sg_dg_dxdot->sumIntoAllTerms(weights[qp], vals[qp], norms, *dg_dxdot);
-    if (sg_dg_dp != NULL)
-      sg_dg_dp->sumIntoAllTerms(weights[qp], vals[qp], norms, *dg_dp);
-  }
+  responses[response_index]->evaluateSGDerivative(
+    current_time, sg_xdot, sg_x, p, sg_p_index, sg_p_vals, deriv_p,
+    sg_g, sg_dg_dx, sg_dg_dxdot, sg_dg_dp);
 }
 
 void
@@ -2007,7 +1487,7 @@ computeGlobalMPResidual(
       p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
 
   // put current_time (from Rythmos) if this is a transient problem, then compute dt
-  if (mp_xdot != NULL) timeMgr.setTime(current_time);
+  //  if (mp_xdot != NULL) timeMgr.setTime(current_time);
 
 #ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
@@ -2036,8 +1516,8 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     workset.mp_xdot      = mp_overlapped_xdot;
     workset.mp_f         = mp_overlapped_f;
 
-    workset.current_time = timeMgr.getCurrentTime();
-    workset.delta_time = timeMgr.getDeltaTime();
+    workset.current_time = current_time; //timeMgr.getCurrentTime();
+    //    workset.delta_time = timeMgr.getDeltaTime();
     if (mp_xdot != NULL) workset.transientTerms = true;
 
     for (int ws=0; ws < numWorksets; ws++) {
@@ -2135,7 +1615,7 @@ computeGlobalMPJacobian(
       p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
 
   // put current_time (from Rythmos) if this is a transient problem, then compute dt
-  if (mp_xdot != NULL) timeMgr.setTime(current_time);
+  //  if (mp_xdot != NULL) timeMgr.setTime(current_time);
 
 #ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
@@ -2170,8 +1650,8 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
     workset.mp_Jac       = mp_overlapped_jac;
     loadWorksetJacobianInfo(workset, alpha, beta);
-    workset.current_time = timeMgr.getCurrentTime();
-    workset.delta_time = timeMgr.getDeltaTime();
+    workset.current_time = current_time; //timeMgr.getCurrentTime();
+    //    workset.delta_time = timeMgr.getDeltaTime();
     if (mp_xdot != NULL) workset.transientTerms = true;
 
     for (int ws=0; ws < numWorksets; ws++) {
@@ -2301,7 +1781,7 @@ computeGlobalMPTangent(
   }
 
   // put current_time (from Rythmos) if this is a transient problem, then compute dt
-  if (mp_xdot != NULL) timeMgr.setTime(current_time);
+  //  if (mp_xdot != NULL) timeMgr.setTime(current_time);
 
   RCP<const Epetra_MultiVector > vp = rcp(Vp, false);
   RCP<ParamVec> params = rcp(deriv_par, false);
@@ -2349,14 +1829,14 @@ computeGlobalMPTangent(
   if (!sum_derivs) 
     param_offset = num_cols_x;  // offset of parameter derivs in deriv array
 
-  TEST_FOR_EXCEPTION(sum_derivs && 
-		     (num_cols_x != 0) && 
-		     (num_cols_p != 0) && 
-                     (num_cols_x != num_cols_p),
-                     std::logic_error,
-                     "Seed matrices Vx and Vp must have the same number " << 
-                     " of columns when sum_derivs is true and both are "
-                     << "non-null!" << std::endl);
+  TEUCHOS_TEST_FOR_EXCEPTION(sum_derivs && 
+			     (num_cols_x != 0) && 
+			     (num_cols_p != 0) && 
+			     (num_cols_x != num_cols_p),
+			     std::logic_error,
+			     "Seed matrices Vx and Vp must have the same number " << 
+			     " of columns when sum_derivs is true and both are "
+			     << "non-null!" << std::endl);
 
   // Initialize 
   if (params != Teuchos::null) {
@@ -2394,8 +1874,8 @@ computeGlobalMPTangent(
     workset.num_cols_p = num_cols_p;
     workset.param_offset = param_offset;
 
-    workset.current_time = timeMgr.getCurrentTime();
-    workset.delta_time = timeMgr.getDeltaTime();
+    workset.current_time = current_time; //timeMgr.getCurrentTime();
+    //    workset.delta_time = timeMgr.getDeltaTime();
     if (mp_xdot != NULL) workset.transientTerms = true;
 
     for (int ws=0; ws < numWorksets; ws++) {
@@ -2449,6 +1929,7 @@ computeGlobalMPTangent(
 void
 Albany::Application::
 evaluateMPResponse(
+  int response_index,
   const double curr_time,
   const Stokhos::ProductEpetraVector* mp_xdot,
   const Stokhos::ProductEpetraVector& mp_x,
@@ -2459,28 +1940,14 @@ evaluateMPResponse(
 {
   TEUCHOS_FUNC_TIME_MONITOR("Albany::Application::evaluateMPResponses");
   
-  Teuchos::Array<ParamVec> pp = p;
-  const Epetra_Vector* xdot = NULL;
-
-  for (int i=0; i<mp_x.size(); i++) {
-
-    for (int k=0; k<mp_p_index.size(); k++) {
-      int kk = mp_p_index[k];
-      for (unsigned int j=0; j<pp[kk].size(); j++)
-	pp[kk][j].baseValue = mp_p_vals[kk][j].coeff(i);
-    }
-
-    if (mp_xdot != NULL)
-      xdot = mp_xdot->getCoeffPtr(i).get();
-    
-    // Evaluate response function
-    evaluateResponse(curr_time, xdot, mp_x[i], pp, mp_g[i]);
-  }
+  responses[response_index]->evaluateMPResponse(
+    curr_time, mp_xdot, mp_x, p, mp_p_index, mp_p_vals, mp_g);
 }
 
 void
 Albany::Application::
 evaluateMPResponseTangent(
+  int response_index,
   const double alpha, 
   const double beta, 
   const double current_time,
@@ -2500,44 +1967,15 @@ evaluateMPResponseTangent(
 {
   TEUCHOS_FUNC_TIME_MONITOR("Albany::Application::evaluateMPResponseTangent");
   
-  Teuchos::Array<ParamVec> pp = p;
-  const Epetra_Vector* xdot = NULL;
-  Epetra_Vector* g = NULL;
-  Epetra_MultiVector* JV = NULL;
-  Epetra_MultiVector* gp = NULL;
-  for (int i=0; i<mp_x.size(); i++) {
-
-    for (int k=0; k<mp_p_index.size(); k++) {
-      int kk = mp_p_index[k];
-      for (unsigned int j=0; j<pp[kk].size(); j++) {
-	pp[kk][j].baseValue = mp_p_vals[kk][j].coeff(i);
-	if (deriv_p != NULL) {
-	  for (unsigned int l=0; l<deriv_p->size(); l++)
-	    if ((*deriv_p)[l].family->getName() == pp[kk][j].family->getName())
-	      (*deriv_p)[l].baseValue = pp[kk][j].baseValue;
-	}
-      }
-    }
-
-    if (mp_xdot != NULL)
-      xdot = mp_xdot->getCoeffPtr(i).get();
-    if (mp_g != NULL)
-      g = mp_g->getCoeffPtr(i).get();
-    if (mp_JV != NULL)
-      JV = mp_JV->getCoeffPtr(i).get();
-    if(mp_gp != NULL)
-      gp = mp_gp->getCoeffPtr(i).get();
-    
-    // Evaluate response function
-    evaluateResponseTangent(alpha, beta, current_time, sum_derivs,
-			    xdot, mp_x[i], pp, deriv_p, Vx, Vxdot, Vp,
-			    g, JV, gp);
-  }
+  responses[response_index]->evaluateMPTangent(
+    alpha, beta, current_time, sum_derivs, mp_xdot, mp_x, p, mp_p_index, 
+    mp_p_vals, deriv_p, Vx, Vxdot, Vp, mp_g, mp_JV, mp_gp);
 }
 
 void
 Albany::Application::
-evaluateMPResponseGradient(
+evaluateMPResponseDerivative(
+  int response_index,
   const double current_time,
   const Stokhos::ProductEpetraVector* mp_xdot,
   const Stokhos::ProductEpetraVector& mp_x,
@@ -2546,46 +1984,49 @@ evaluateMPResponseGradient(
   const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
   ParamVec* deriv_p,
   Stokhos::ProductEpetraVector* mp_g,
-  Stokhos::ProductEpetraMultiVector* mp_dg_dx,
-  Stokhos::ProductEpetraMultiVector* mp_dg_dxdot,
-  Stokhos::ProductEpetraMultiVector* mp_dg_dp)
+  const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dx,
+  const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdot,
+  const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dp)
 {
   TEUCHOS_FUNC_TIME_MONITOR("Albany::Application::evaluateMPResponseGradient");
   
-  Teuchos::Array<ParamVec> pp = p;
-  const Epetra_Vector* xdot = NULL;
-  Epetra_Vector* g = NULL;
-  Epetra_MultiVector* dg_dx = NULL;
-  Epetra_MultiVector* dg_dxdot = NULL;
-  Epetra_MultiVector* dg_dp = NULL;
-  for (int i=0; i<mp_x.size(); i++) {
+  responses[response_index]->evaluateMPDerivative(
+    current_time, mp_xdot, mp_x, p, mp_p_index, mp_p_vals, deriv_p,
+    mp_g, mp_dg_dx, mp_dg_dxdot, mp_dg_dp);
+}
 
-    for (int k=0; k<mp_p_index.size(); k++) {
-      int kk = mp_p_index[k];
-      for (unsigned int j=0; j<pp[kk].size(); j++) {
-	pp[kk][j].baseValue = mp_p_vals[kk][j].coeff(i);
-	if (deriv_p != NULL) {
-	  for (unsigned int l=0; l<deriv_p->size(); l++)
-	    if ((*deriv_p)[l].family->getName() == pp[kk][j].family->getName())
-	      (*deriv_p)[l].baseValue = pp[kk][j].baseValue;
-	}
-      }
+void
+Albany::Application::
+evaluateStateFieldManager(const double current_time,
+			  const Epetra_Vector* xdot,
+			  const Epetra_Vector& x)
+{
+  // visualize state field manager
+  if (stateGraphVisDetail>0) {
+    bool detail = false; if (stateGraphVisDetail > 1) detail=true;
+    *out << "Phalanx writing graphviz file for graph of Residual fill (detail ="
+	 << stateGraphVisDetail << ")"<<endl;
+    *out << "Process using 'dot -Tpng -O state_phalanx_graph' \n" << endl;
+    for (int ps=0; ps < sfm.size(); ps++) {
+      std::stringstream pg; pg << "state_phalanx_graph_" << ps;
+      sfm[ps]->writeGraphvizFile<PHAL::AlbanyTraits::Residual>(pg.str(),detail,detail);
     }
+    stateGraphVisDetail = -1;
+  }
 
-    if (mp_xdot != NULL)
-      xdot = mp_xdot->getCoeffPtr(i).get();
-    if (mp_g != NULL)
-      g = mp_g->getCoeffPtr(i).get();
-    if (mp_dg_dx != NULL)
-      dg_dx = mp_dg_dx->getCoeffPtr(i).get();
-    if(mp_dg_dxdot != NULL)
-      dg_dxdot = mp_dg_dxdot->getCoeffPtr(i).get();
-    if (mp_dg_dp != NULL)
-      dg_dp = mp_dg_dp->getCoeffPtr(i).get();
-    
-    // Evaluate response function
-    evaluateResponseGradient(current_time, xdot, mp_x[i], pp, deriv_p, 
-			     g, dg_dx, dg_dxdot, dg_dp);
+  // Scatter x and xdot to the overlapped distrbution
+  overlapped_x->Import(x, *importer, Insert);
+  if (xdot != NULL) overlapped_xdot->Import(*xdot, *importer, Insert);
+
+  // Set data in Workset struct
+  PHAL::Workset workset;
+  loadBasicWorksetInfo( workset, overlapped_x, overlapped_xdot, current_time );
+  workset.f = overlapped_f;
+
+  // Perform fill via field manager
+  for (int ws=0; ws < numWorksets; ws++) {
+    loadWorksetBucketInfo(workset, ws);
+    sfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
   }
 }
 
@@ -2638,9 +2079,9 @@ Albany::Application::getValue(const std::string& name)
   for (unsigned int i=0; i<shapeParamNames.size(); i++) {
     if (name == shapeParamNames[i]) index = i;
   }
-  TEST_FOR_EXCEPTION(index==-1,  std::logic_error,
-        "Error in GatherCoordinateVector::getValue, \n" <<
-        "   Unrecognized param name: " << name << endl);
+  TEUCHOS_TEST_FOR_EXCEPTION(index==-1,  std::logic_error,
+			     "Error in GatherCoordinateVector::getValue, \n" <<
+			     "   Unrecognized param name: " << name << endl);
 
   shapeParamsHaveBeenReset = true;
 
@@ -2708,21 +2149,9 @@ void Albany::Application::postRegSetup(std::string eval)
     if (dfm!=Teuchos::null)
       dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::MPTangent>(eval);
   }
-  else if (eval=="Responses") {
-    for (int ps=0; ps < fm.size(); ps++) 
-      rfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Residual>(eval);
-  }
-  else if (eval=="Response Tangents") {
-    for (int ps=0; ps < fm.size(); ps++) 
-      rfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Tangent>(eval);
-  }
-  else if (eval=="Response Gradients") {
-    for (int ps=0; ps < fm.size(); ps++) 
-      rfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(eval);
-  }
   else 
-    TEST_FOR_EXCEPTION(eval!="Known Evaluation Name",  std::logic_error,
-        "Error in setup call \n" << " Unrecognized name: " << eval << endl);
+    TEUCHOS_TEST_FOR_EXCEPTION(eval!="Known Evaluation Name",  std::logic_error,
+			       "Error in setup call \n" << " Unrecognized name: " << eval << endl);
 
 
   // Write out Phalanx Graph if requested, on Proc 0, for Resid or Jacobian
@@ -2748,30 +2177,6 @@ void Albany::Application::postRegSetup(std::string eval)
         fm[ps]->writeGraphvizFile<PHAL::AlbanyTraits::Jacobian>(pg.str(),detail,detail);
       }
       phxGraphVisDetail = -2;
-    }
-  }
-  if (respGraphVisDetail>0) {
-    bool detail = false; if (respGraphVisDetail > 1) detail=true;
-
-    if (eval=="Responses") {
-      *out << "Phalanx writing graphviz file for graph of Response fill (detail ="
-           << respGraphVisDetail << ")"<<endl;
-      *out << "Process using 'dot -Tpng -O responses_graph' \n" << endl;
-      for (int ps=0; ps < rfm.size(); ps++) {
-        std::stringstream pg; pg << "responses_graph_" << ps;
-        rfm[ps]->writeGraphvizFile<PHAL::AlbanyTraits::Residual>(pg.str(),detail,detail);
-      }
-      respGraphVisDetail = -1;
-    }
-    else if (eval=="Response Gradients") {
-      *out << "Phalanx writing graphviz file for graph of Response Gradient fill (detail ="
-           << respGraphVisDetail << ")"<<endl;
-      *out << "Process using 'dot -Tpng -O responses_graph' \n" << endl;
-      for (int ps=0; ps < rfm.size(); ps++) {
-        std::stringstream pg; pg << "responses_graph_" << ps;
-        rfm[ps]->writeGraphvizFile<PHAL::AlbanyTraits::Jacobian>(pg.str(),detail,detail);
-      }
-      respGraphVisDetail = -1;
     }
   }
 }
@@ -2829,12 +2234,12 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset, const in
 
 void Albany::Application::loadBasicWorksetInfo(
        PHAL::Workset& workset, RCP<Epetra_Vector> overlapped_x,
-       RCP<Epetra_Vector> overlapped_xdot, double current_time, double delta_time)
+       RCP<Epetra_Vector> overlapped_xdot, double current_time)
 {
     workset.x        = overlapped_x;
     workset.xdot     = overlapped_xdot;
     workset.current_time = current_time;
-    workset.delta_time = delta_time;
+    //workset.delta_time = delta_time;
     if (overlapped_xdot != Teuchos::null) workset.transientTerms = true;
 }
 
@@ -2851,4 +2256,130 @@ void Albany::Application::loadWorksetNodesetInfo(PHAL::Workset& workset)
 {
     workset.nodeSets = Teuchos::rcpFromRef(disc->getNodeSets());
     workset.nodeSetCoords = Teuchos::rcpFromRef(disc->getNodeSetCoords());
+}
+
+void Albany::Application::setupBasicWorksetInfo(
+  PHAL::Workset& workset,
+  double current_time,
+  const Epetra_Vector* xdot, 
+  const Epetra_Vector* x,
+  const Teuchos::Array<ParamVec>& p
+  )
+{
+  // Scatter x and xdot to the overlapped distrbution
+  overlapped_x->Import(*x, *importer, Insert);
+  if (xdot != NULL) overlapped_xdot->Import(*xdot, *importer, Insert);
+
+  // Set parameters
+  for (int i=0; i<p.size(); i++)
+    for (unsigned int j=0; j<p[i].size(); j++)
+      p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
+
+  workset.x = overlapped_x;
+  workset.xdot = overlapped_xdot;
+  if (!paramLib->isParameter("Time"))
+    workset.current_time = current_time;
+  else 
+    workset.current_time = 
+      paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+  if (overlapped_xdot != Teuchos::null) workset.transientTerms = true;
+
+  // Create Teuchos::Comm from Epetra_Comm
+  const Epetra_Comm& comm = x->Map().Comm();
+  const Epetra_MpiComm& mpi_comm = dynamic_cast<const Epetra_MpiComm&>(comm);
+  Teuchos::RCP<const Teuchos::OpaqueWrapper<MPI_Comm> > raw_mpi_comm = 
+    Teuchos::opaqueWrapper(mpi_comm.Comm());
+  workset.comm = Teuchos::rcp(new Teuchos::MpiComm<int>(raw_mpi_comm));
+
+  workset.x_importer = importer;
+}
+
+void Albany::Application::setupTangentWorksetInfo(
+  PHAL::Workset& workset, 
+  double current_time,
+  bool sum_derivs,
+  const Epetra_Vector* xdot, 
+  const Epetra_Vector* x,
+  const Teuchos::Array<ParamVec>& p,
+  ParamVec* deriv_p,
+  const Epetra_MultiVector* Vxdot,
+  const Epetra_MultiVector* Vx,
+  const Epetra_MultiVector* Vp)
+{
+  setupBasicWorksetInfo(workset, current_time, xdot, x, p);
+
+  // Scatter Vx dot the overlapped distribution
+  RCP<Epetra_MultiVector> overlapped_Vx;
+  if (Vx != NULL) {
+    overlapped_Vx = 
+      rcp(new Epetra_MultiVector(*(disc->getOverlapMap()), 
+					  Vx->NumVectors()));
+    overlapped_Vx->Import(*Vx, *importer, Insert);
+  }
+
+  // Scatter Vx dot the overlapped distribution
+  RCP<Epetra_MultiVector> overlapped_Vxdot;
+  if (Vxdot != NULL) {
+    overlapped_Vxdot = 
+      rcp(new Epetra_MultiVector(*(disc->getOverlapMap()), 
+				 Vxdot->NumVectors()));
+    overlapped_Vxdot->Import(*Vxdot, *importer, Insert);
+  }
+
+  RCP<const Epetra_MultiVector > vp = rcp(Vp, false);
+  RCP<ParamVec> params = rcp(deriv_p, false);
+
+  // Number of x & xdot tangent directions
+  int num_cols_x = 0;
+  if (Vx != NULL)
+    num_cols_x = Vx->NumVectors();
+  else if (Vxdot != NULL)
+    num_cols_x = Vxdot->NumVectors();
+
+  // Number of parameter tangent directions
+  int num_cols_p = 0;
+  if (params != Teuchos::null) {
+    if (Vp != NULL)
+      num_cols_p = Vp->NumVectors();
+    else
+      num_cols_p = params->size();
+  }
+
+  // Whether x and param tangent components are added or separate
+  int param_offset = 0;
+  if (!sum_derivs) 
+    param_offset = num_cols_x;  // offset of parameter derivs in deriv array
+
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    sum_derivs && 
+    (num_cols_x != 0) && 
+    (num_cols_p != 0) && 
+    (num_cols_x != num_cols_p),
+    std::logic_error,
+    "Seed matrices Vx and Vp must have the same number " << 
+    " of columns when sum_derivs is true and both are "
+    << "non-null!" << std::endl);
+
+  // Initialize 
+  if (params != Teuchos::null) {
+    FadType p;
+    int num_cols_tot = param_offset + num_cols_p;
+    for (unsigned int i=0; i<params->size(); i++) {
+      p = FadType(num_cols_tot, (*params)[i].baseValue);
+      if (Vp != NULL) 
+        for (int k=0; k<num_cols_p; k++)
+          p.fastAccessDx(param_offset+k) = (*Vp)[k][i];
+      else
+        p.fastAccessDx(param_offset+i) = 1.0;
+      (*params)[i].family->setValue<PHAL::AlbanyTraits::Tangent>(p);
+    }
+  }
+
+  workset.params = params;
+  workset.Vx = overlapped_Vx;
+  workset.Vxdot = overlapped_Vxdot;
+  workset.Vp = vp;
+  workset.num_cols_x = num_cols_x;
+  workset.num_cols_p = num_cols_p;
+  workset.param_offset = param_offset;
 }

@@ -72,6 +72,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> Temperature;
   bool isThermoElastic;
   ScalarT dEdT_value;
+  RealType refTemp;
 
   // ! Optional dependence on porosity (E = E_const *(sqrt(1- porosity))
   PHX::MDField<ScalarT,Cell,QuadPoint> porosity;

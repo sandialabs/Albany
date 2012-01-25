@@ -26,7 +26,6 @@ Albany::ModelEvaluator::ModelEvaluator(
   const Teuchos::RCP<Albany::Application>& app_,
   const Teuchos::RCP<Teuchos::ParameterList>& appParams) 
   : app(app_),
-    supports_g(false),
     supplies_prec(app_->suppliesPreconditioner())
 {
   Teuchos::RCP<Teuchos::FancyOStream> out = 
@@ -55,7 +54,7 @@ Albany::ModelEvaluator::ModelEvaluator(
     else
       pList = &(parameterParams.sublist(Albany::strint("Parameter Vector",i)));
     int numParameters = pList->get<int>("Number");
-    TEST_FOR_EXCEPTION(
+    TEUCHOS_TEST_FOR_EXCEPTION(
       numParameters == 0, 
       Teuchos::Exceptions::InvalidParameter,
       std::endl << "Error!  FEApp::ModelEvaluator::ModelEvaluator():  " <<
@@ -97,8 +96,6 @@ Albany::ModelEvaluator::ModelEvaluator(
     p_mp_vals[i].resize(sacado_param_vec[i].size());
   }  
 
-  supports_g = (app->getResponseMap() != Teuchos::null);
-
   timer = Teuchos::TimeMonitor::getNewTimer("Albany: **Total Fill Time**");
 }
 
@@ -119,11 +116,12 @@ Albany::ModelEvaluator::get_f_map() const
 Teuchos::RCP<const Epetra_Map>
 Albany::ModelEvaluator::get_p_map(int l) const
 {
-  TEST_FOR_EXCEPTION(l >= static_cast<int>(epetra_param_map.size()) || l < 0, 
-		     Teuchos::Exceptions::InvalidParameter,
-                     std::endl << 
-                     "Error!  Albany::ModelEvaluator::get_p_map():  " <<
-                     "Invalid parameter index l = " << l << std::endl);
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    l >= static_cast<int>(epetra_param_map.size()) || l < 0, 
+    Teuchos::Exceptions::InvalidParameter,
+    std::endl << 
+    "Error!  Albany::ModelEvaluator::get_p_map():  " <<
+    "Invalid parameter index l = " << l << std::endl);
 
   return epetra_param_map[l];
 }
@@ -131,25 +129,20 @@ Albany::ModelEvaluator::get_p_map(int l) const
 Teuchos::RCP<const Epetra_Map>
 Albany::ModelEvaluator::get_g_map(int l) const
 {
-  TEST_FOR_EXCEPTION(supports_g == false, 
-                     Teuchos::Exceptions::InvalidParameter,
-                     std::endl << 
-                     "Error!  Albany::ModelEvaluator::get_g_map():  " <<
-                     "No response functions have been supplied.  " <<
-                     "Supplied index l = " << l << std::endl);
-  TEST_FOR_EXCEPTION(l != 0, Teuchos::Exceptions::InvalidParameter,
-                     std::endl << 
-                     "Error!  Albany::ModelEvaluator::get_g_map() only " <<
-                     " supports 1 response vector.  Supplied index l = " << 
-                     l << std::endl);
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    l >= app->getNumResponses() || l < 0, 
+    Teuchos::Exceptions::InvalidParameter,
+    std::endl << 
+    "Error!  Albany::ModelEvaluator::get_g_map():  " << 
+    "Invalid parameter index l = " << l << std::endl);
 
-  return app->getResponseMap();
+  return app->getResponseMap(l);
 }
 
 Teuchos::RCP<const Teuchos::Array<std::string> >
 Albany::ModelEvaluator::get_p_names(int l) const
 {
-  TEST_FOR_EXCEPTION(l >= static_cast<int>(param_names.size()) || l < 0, 
+  TEUCHOS_TEST_FOR_EXCEPTION(l >= static_cast<int>(param_names.size()) || l < 0, 
 		     Teuchos::Exceptions::InvalidParameter,
                      std::endl << 
                      "Error!  Albany::ModelEvaluator::get_p_names():  " <<
@@ -173,7 +166,7 @@ Albany::ModelEvaluator::get_x_dot_init() const
 Teuchos::RCP<const Epetra_Vector>
 Albany::ModelEvaluator::get_p_init(int l) const
 {
-  TEST_FOR_EXCEPTION(l >= static_cast<int>(param_names.size()) || l < 0, 
+  TEUCHOS_TEST_FOR_EXCEPTION(l >= static_cast<int>(param_names.size()) || l < 0, 
 		     Teuchos::Exceptions::InvalidParameter,
                      std::endl << 
                      "Error!  Albany::ModelEvaluator::get_p_init():  " <<
@@ -236,9 +229,7 @@ Albany::ModelEvaluator::createOutArgs() const
   OutArgsSetup outArgs;
   outArgs.setModelEvalDescription(this->description());
 
-  int n_g = 0;
-  if (supports_g)
-    n_g = 1;
+  int n_g = app->getNumResponses();
 
   // Deterministic
   outArgs.setSupports(OUT_ARG_f,true);
@@ -250,13 +241,21 @@ Albany::ModelEvaluator::createOutArgs() const
   
   for (int i=0; i<param_names.size(); i++)
     outArgs.setSupports(OUT_ARG_DfDp, i, DerivativeSupport(DERIV_MV_BY_COL));
-  if (supports_g) {
-    outArgs.setSupports(OUT_ARG_DgDx, 0, 
-			DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
-    outArgs.setSupports(OUT_ARG_DgDx_dot, 0, 
-			DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
-    for (int i=0; i<param_names.size(); i++)
-      outArgs.setSupports(OUT_ARG_DgDp, 0, i, 
+  for (int i=0; i<n_g; i++) {
+    if (!app->isResponseDistributed(i)) {
+      outArgs.setSupports(OUT_ARG_DgDx, i, 
+			  DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
+      outArgs.setSupports(OUT_ARG_DgDx_dot, i, 
+			  DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
+    }
+    else {
+       outArgs.setSupports(OUT_ARG_DgDx, i, 
+			   DerivativeSupport(DERIV_LINEAR_OP));
+       outArgs.setSupports(OUT_ARG_DgDx_dot, i, 
+			   DerivativeSupport(DERIV_LINEAR_OP));
+    }
+    for (int j=0; j<param_names.size(); j++)
+      outArgs.setSupports(OUT_ARG_DgDp, i, j, 
 			  DerivativeSupport(DERIV_MV_BY_COL));
   }
 
@@ -266,14 +265,22 @@ Albany::ModelEvaluator::createOutArgs() const
   outArgs.setSupports(OUT_ARG_W_sg,true);
   for (int i=0; i<param_names.size(); i++)
     outArgs.setSupports(OUT_ARG_DfDp_sg, i, DerivativeSupport(DERIV_MV_BY_COL));
-  if (supports_g) {
-    outArgs.setSupports(OUT_ARG_g_sg, 0, true);
-    outArgs.setSupports(OUT_ARG_DgDx_sg, 0, 
-			DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
-    outArgs.setSupports(OUT_ARG_DgDx_dot_sg, 0, 
-			DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
-    for (int i=0; i<param_names.size(); i++)
-      outArgs.setSupports(OUT_ARG_DgDp_sg, 0, i, 
+  for (int i=0; i<n_g; i++) {
+    outArgs.setSupports(OUT_ARG_g_sg, i, true);
+    if (!app->isResponseDistributed(i)) {
+      outArgs.setSupports(OUT_ARG_DgDx_sg, i, 
+			  DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
+      outArgs.setSupports(OUT_ARG_DgDx_dot_sg, i, 
+			  DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
+    }
+    else {
+       outArgs.setSupports(OUT_ARG_DgDx_sg, i, 
+			   DerivativeSupport(DERIV_LINEAR_OP));
+       outArgs.setSupports(OUT_ARG_DgDx_dot_sg, i, 
+			   DerivativeSupport(DERIV_LINEAR_OP));
+    }
+    for (int j=0; j<param_names.size(); j++)
+      outArgs.setSupports(OUT_ARG_DgDp_sg, i, j, 
 			  DerivativeSupport(DERIV_MV_BY_COL));
   }
       
@@ -282,14 +289,22 @@ Albany::ModelEvaluator::createOutArgs() const
   outArgs.setSupports(OUT_ARG_W_mp,true);
   for (int i=0; i<param_names.size(); i++)
     outArgs.setSupports(OUT_ARG_DfDp_mp, i, DerivativeSupport(DERIV_MV_BY_COL));
-  if (supports_g) {
-    outArgs.setSupports(OUT_ARG_g_mp, 0, true);
-    outArgs.setSupports(OUT_ARG_DgDx_mp, 0, 
-			DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
-    outArgs.setSupports(OUT_ARG_DgDx_dot_mp, 0, 
-			DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
-    for (int i=0; i<param_names.size(); i++)
-      outArgs.setSupports(OUT_ARG_DgDp_mp, 0, i, 
+  for (int i=0; i<n_g; i++) {
+    outArgs.setSupports(OUT_ARG_g_mp, i, true);
+    if (!app->isResponseDistributed(i)) {
+      outArgs.setSupports(OUT_ARG_DgDx_mp, i, 
+			  DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
+      outArgs.setSupports(OUT_ARG_DgDx_dot_mp, i, 
+			  DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
+    }
+    else {
+       outArgs.setSupports(OUT_ARG_DgDx_mp, i, 
+			   DerivativeSupport(DERIV_LINEAR_OP));
+       outArgs.setSupports(OUT_ARG_DgDx_dot_mp, i, 
+			   DerivativeSupport(DERIV_LINEAR_OP));
+    }
+    for (int j=0; j<param_names.size(); j++)
+      outArgs.setSupports(OUT_ARG_DgDp_mp, i, j, 
 			  DerivativeSupport(DERIV_MV_BY_COL));
   }
 
@@ -386,9 +401,11 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
 
   // f
   if (app->is_adjoint) {
-      app->evaluateResponseGradient(curr_time, x_dot.get(), *x, 
+    Derivative f_deriv(f_out, DERIV_TRANS_MV_BY_ROW);
+    int response_index = 0; // need to add capability for sending this in
+    app->evaluateResponseDerivative(response_index, curr_time, x_dot.get(), *x, 
 				    sacado_param_vec, NULL, 
-				    NULL, f_out.get(), NULL, NULL);
+				    NULL, f_deriv, Derivative(), Derivative());
   }
   else {
     if (f_out != Teuchos::null && !f_already_computed) {
@@ -397,40 +414,38 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
     }
   }
   // Response functions
-  if (outArgs.Ng() > 0 && supports_g) {
-    Teuchos::RCP<Epetra_Vector> g_out = outArgs.get_g(0);
-    Teuchos::RCP<Epetra_MultiVector> dgdx_out = 
-      outArgs.get_DgDx(0).getMultiVector();
-    Teuchos::RCP<Epetra_MultiVector> dgdxdot_out = 
-      outArgs.get_DgDx_dot(0).getMultiVector();
+  for (int i=0; i<outArgs.Ng(); i++) {
+    Teuchos::RCP<Epetra_Vector> g_out = outArgs.get_g(i);
+    Derivative dgdx_out = outArgs.get_DgDx(i);
+    Derivative dgdxdot_out = outArgs.get_DgDx_dot(i);
     bool g_computed = false;
 
     // dg/dx, dg/dxdot
-    if (dgdx_out != Teuchos::null || dgdxdot_out != Teuchos::null) {
-      app->evaluateResponseGradient(curr_time, x_dot.get(), *x, 
-				    sacado_param_vec, NULL,
-				    g_out.get(), dgdx_out.get(), 
-				    dgdxdot_out.get(), NULL);
+    if (!dgdx_out.isEmpty() || !dgdxdot_out.isEmpty()) {
+      app->evaluateResponseDerivative(i, curr_time, x_dot.get(), *x, 
+				      sacado_param_vec, NULL,
+				      g_out.get(), dgdx_out, 
+				      dgdxdot_out, Derivative());
       g_computed = true;
     }
     
     // dg/dp
-    for (int i=0; i<outArgs.Np(); i++) {
+    for (int j=0; j<outArgs.Np(); j++) {
       Teuchos::RCP<Epetra_MultiVector> dgdp_out = 
-	outArgs.get_DgDp(0,i).getMultiVector();
+	outArgs.get_DgDp(i,j).getMultiVector();
       if (dgdp_out != Teuchos::null) {
 	Teuchos::Array<int> p_indexes = 
-	  outArgs.get_DgDp(0,i).getDerivativeMultiVector().getParamIndexes();
+	  outArgs.get_DgDp(i,j).getDerivativeMultiVector().getParamIndexes();
 	Teuchos::RCP<ParamVec> p_vec;
 	if (p_indexes.size() == 0)
-	  p_vec = Teuchos::rcp(&sacado_param_vec[i],false);
+	  p_vec = Teuchos::rcp(&sacado_param_vec[j],false);
 	else {
 	  p_vec = Teuchos::rcp(new ParamVec);
-	  for (int j=0; j<p_indexes.size(); j++)
-	    p_vec->addParam(sacado_param_vec[i][p_indexes[j]].family, 
-			    sacado_param_vec[i][p_indexes[j]].baseValue);
+	  for (int k=0; k<p_indexes.size(); k++)
+	    p_vec->addParam(sacado_param_vec[j][p_indexes[k]].family, 
+			    sacado_param_vec[j][p_indexes[k]].baseValue);
 	}
-	app->evaluateResponseTangent(alpha, beta, curr_time, false,
+	app->evaluateResponseTangent(i, alpha, beta, curr_time, false,
 				     x_dot.get(), *x, 
 				     sacado_param_vec, p_vec.get(),
 				     NULL, NULL, NULL, g_out.get(), NULL,
@@ -441,7 +456,7 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
 
     
     if (g_out != Teuchos::null && !g_computed)
-      app->evaluateResponse(curr_time, x_dot.get(), *x, sacado_param_vec, 
+      app->evaluateResponse(i, curr_time, x_dot.get(), *x, sacado_param_vec, 
 			    *g_out);
   }
 
@@ -524,40 +539,39 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
 				   *f_sg);
 
     // Response functions
-    if (outArgs.Ng() > 0 && supports_g) {
+    for (int i=0; i<outArgs.Ng(); i++) {
       OutArgs::sg_vector_t g_sg = outArgs.get_g_sg(0);
-      Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > dgdx_sg = 
-	outArgs.get_DgDx_sg(0).getMultiVector();
-      Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > dgdxdot_sg = 
-	outArgs.get_DgDx_dot_sg(0).getMultiVector();
+      SGDerivative dgdx_sg = outArgs.get_DgDx_sg(i);
+      SGDerivative dgdxdot_sg = outArgs.get_DgDx_dot_sg(i);
       bool g_sg_computed = false;
 
       // dg/dx, dg/dxdot
-      if (dgdx_sg != Teuchos::null ||  dgdxdot_sg != Teuchos::null) {
-	app->evaluateSGResponseGradient(curr_time, x_dot_sg.get(), *x_sg, 
-					sacado_param_vec, p_sg_index, p_sg_vals,
-					NULL, g_sg.get(), dgdx_sg.get(), 
-					dgdxdot_sg.get(), NULL);
+      if (!dgdx_sg.isEmpty() || !dgdxdot_sg.isEmpty()) {
+	app->evaluateSGResponseDerivative(
+	  i, curr_time, x_dot_sg.get(), *x_sg, 
+	  sacado_param_vec, p_sg_index, p_sg_vals,
+	  NULL, g_sg.get(), dgdx_sg, 
+	  dgdxdot_sg, SGDerivative());
 	g_sg_computed = true;
       }
     
       // dg/dp
-      for (int i=0; i<outArgs.Np(); i++) {
+      for (int j=0; j<outArgs.Np(); j++) {
 	Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > dgdp_sg = 
-	  outArgs.get_DgDp_sg(0,i).getMultiVector();
+	  outArgs.get_DgDp_sg(i,j).getMultiVector();
 	if (dgdp_sg != Teuchos::null) {
 	  Teuchos::Array<int> p_indexes = 
-	    outArgs.get_DgDp_sg(0,i).getDerivativeMultiVector().getParamIndexes();
+	    outArgs.get_DgDp_sg(i,j).getDerivativeMultiVector().getParamIndexes();
 	  Teuchos::RCP<ParamVec> p_vec;
 	  if (p_indexes.size() == 0)
-	    p_vec = Teuchos::rcp(&sacado_param_vec[i],false);
+	    p_vec = Teuchos::rcp(&sacado_param_vec[j],false);
 	  else {
 	    p_vec = Teuchos::rcp(new ParamVec);
-	    for (int j=0; j<p_indexes.size(); j++)
-	      p_vec->addParam(sacado_param_vec[i][p_indexes[j]].family, 
-			      sacado_param_vec[i][p_indexes[j]].baseValue);
+	    for (int k=0; k<p_indexes.size(); k++)
+	      p_vec->addParam(sacado_param_vec[j][p_indexes[k]].family, 
+			      sacado_param_vec[j][p_indexes[k]].baseValue);
 	  }
-	  app->evaluateSGResponseTangent(0.0, 0.0, curr_time, false,
+	  app->evaluateSGResponseTangent(i, alpha, beta, curr_time, false,
 					 x_dot_sg.get(), *x_sg, 
 					 sacado_param_vec, p_sg_index, 
 					 p_sg_vals, p_vec.get(), 
@@ -569,7 +583,7 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
       }
       
       if (g_sg != Teuchos::null && !g_sg_computed)
-	app->evaluateSGResponse(curr_time, x_dot_sg.get(), *x_sg, 
+	app->evaluateSGResponse(i, curr_time, x_dot_sg.get(), *x_sg, 
 				sacado_param_vec, p_sg_index, p_sg_vals, 
 				*g_sg);
     }
@@ -648,40 +662,39 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
 				   *f_mp);
 
     // Response functions
-    if (outArgs.Ng() > 0 && supports_g) {
+    for (int i=0; i<outArgs.Ng(); i++) {
       mp_vector_t g_mp = outArgs.get_g_mp(0);
-      Teuchos::RCP< Stokhos::ProductEpetraMultiVector > dgdx_mp = 
-	outArgs.get_DgDx_mp(0).getMultiVector();
-      Teuchos::RCP< Stokhos::ProductEpetraMultiVector > dgdxdot_mp = 
-	outArgs.get_DgDx_dot_mp(0).getMultiVector();
+      MPDerivative dgdx_mp = outArgs.get_DgDx_mp(0);
+      MPDerivative dgdxdot_mp = outArgs.get_DgDx_dot_mp(0);
       bool g_mp_computed = false;
 
       // dg/dx, dg/dxdot
-      if (dgdx_mp != Teuchos::null || dgdxdot_mp != Teuchos::null) {
-	app->evaluateMPResponseGradient(curr_time, x_dot_mp.get(), *x_mp, 
-					sacado_param_vec, p_mp_index, p_mp_vals,
-					NULL, g_mp.get(), dgdx_mp.get(), 
-					dgdxdot_mp.get(), NULL);
+      if (!dgdx_mp.isEmpty() || !dgdxdot_mp.isEmpty()) {
+	app->evaluateMPResponseDerivative(
+	  i, curr_time, x_dot_mp.get(), *x_mp, 
+	  sacado_param_vec, p_mp_index, p_mp_vals,
+	  NULL, g_mp.get(), dgdx_mp, 
+	  dgdxdot_mp, MPDerivative());
 	g_mp_computed = true;
       }
       
       // dg/dp
-      for (int i=0; i<outArgs.Np(); i++) {
+      for (int j=0; j<outArgs.Np(); j++) {
 	Teuchos::RCP< Stokhos::ProductEpetraMultiVector > dgdp_mp = 
-	  outArgs.get_DgDp_mp(0,i).getMultiVector();
+	  outArgs.get_DgDp_mp(i,j).getMultiVector();
 	if (dgdp_mp != Teuchos::null) {
 	  Teuchos::Array<int> p_indexes = 
-	    outArgs.get_DgDp_mp(0,i).getDerivativeMultiVector().getParamIndexes();
+	    outArgs.get_DgDp_mp(i,j).getDerivativeMultiVector().getParamIndexes();
 	  Teuchos::RCP<ParamVec> p_vec;
 	  if (p_indexes.size() == 0)
-	    p_vec = Teuchos::rcp(&sacado_param_vec[i],false);
+	    p_vec = Teuchos::rcp(&sacado_param_vec[j],false);
 	  else {
 	    p_vec = Teuchos::rcp(new ParamVec);
-	    for (int j=0; j<p_indexes.size(); j++)
-	      p_vec->addParam(sacado_param_vec[i][p_indexes[j]].family, 
-			      sacado_param_vec[i][p_indexes[j]].baseValue);
+	    for (int k=0; k<p_indexes.size(); k++)
+	      p_vec->addParam(sacado_param_vec[j][p_indexes[k]].family, 
+			      sacado_param_vec[j][p_indexes[k]].baseValue);
 	  }
-	  app->evaluateMPResponseTangent(0.0, 0.0, curr_time, false,
+	  app->evaluateMPResponseTangent(i, alpha, beta, curr_time, false,
 					 x_dot_mp.get(), *x_mp, 
 					 sacado_param_vec, p_mp_index, 
 					 p_mp_vals, p_vec.get(), 
@@ -692,7 +705,7 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
       }
           
       if (g_mp != Teuchos::null && !g_mp_computed)
-	app->evaluateMPResponse(curr_time, x_dot_mp.get(), *x_mp, 
+	app->evaluateMPResponse(i, curr_time, x_dot_mp.get(), *x_mp, 
 				sacado_param_vec, p_mp_index, p_mp_vals, 
 				*g_mp);
     }

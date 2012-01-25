@@ -15,6 +15,9 @@
 #include <sstream>
 #include <string>
 
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/connected_components.hpp>
+
 #include "Partition.h"
 
 namespace LCM {
@@ -413,6 +416,61 @@ namespace LCM {
   }
 
   //
+  // \return Partitions when partitioned
+  //
+  std::map<int, int>
+  ConnectivityArray::GetPartitions() const
+  {
+    return partitions_;
+  }
+
+  //
+  // \return Volume for each partition when partitioned
+  //
+  ScalarMap
+  ConnectivityArray::GetPartitionVolumes() const
+  {
+    std::map<int, int>
+    partitions = GetPartitions();
+
+    ScalarMap
+    volumes = GetVolumes();
+
+    ScalarMap
+    partition_volumes;
+
+    for (std::map<int, int>::const_iterator part_iter = partitions.begin();
+        part_iter != partitions.end();
+        ++part_iter) {
+
+      int element = (*part_iter).first;
+      int partition = (*part_iter).second;
+
+      ScalarMap::const_iterator
+      volumes_iterator = volumes.find(element);
+
+      if (volumes_iterator == volumes.end()) {
+        std::cerr << "Cannot find volume for element " << element << std::endl;
+        std::exit(1);
+      }
+
+      double volume = (*volumes_iterator).second;
+
+      ScalarMap::const_iterator
+      partition_volumes_iter = partition_volumes.find(partition);
+
+      if (partition_volumes_iter == partition_volumes.end()) {
+        partition_volumes[partition] = volume;
+      } else {
+        partition_volumes[partition] += volume;
+      }
+
+    }
+
+    return partition_volumes;
+  }
+
+  //
   // \return Centroids for each element
   //
   PointMap
@@ -626,6 +684,9 @@ namespace LCM {
 
     }
 
+    // Store for use by other methods
+    partitions_ = partitions;
+
     return partitions;
 
   }
@@ -665,6 +726,8 @@ namespace LCM {
     zoltan.Set_Param("HYPERGRAPH_PACKAGE", "PHG");
     zoltan.Set_Param("PHG_MULTILEVEL", "1");
     zoltan.Set_Param("PHG_EDGE_WEIGHT_OPERATION", "ERROR");
+    zoltan.Set_Param("IMBALANCE_TOL", "1.01");
+    zoltan.Set_Param("PHG_CUT_OBJECTIVE", "HYPEREDGES");
 
     //
     // Partition
@@ -798,10 +861,11 @@ namespace LCM {
     zoltan.Set_Param("OBJ_WEIGHT_DIM", "1");
     zoltan.Set_Param("NUM_LOCAL_PARTS", zoltan_number_parts.c_str());
     zoltan.Set_Param("REMAP", "0");
+    zoltan.Set_Param("IMBALANCE_TOL", "1.01");
     zoltan.Set_Param("CHECK_GEOM", "1");
     zoltan.Set_Param("AVERAGE_CUTS", "1");
     zoltan.Set_Param("REDUCE_DIMENSIONS", "1");
-    zoltan.Set_Param("DEGENERATE_RATIO", "25");
+    zoltan.Set_Param("DEGENERATE_RATIO", "10");
 
     //
     // Partition
@@ -1339,6 +1403,36 @@ namespace LCM {
   }
 
   //
+  // \return Edge list to create boost graph
+  //
+  AdjacencyMap
+  DualGraph::GetEdgeList() const
+  {
+    AdjacencyMap edge_list;
+
+    for (AdjacencyMap::const_iterator graph_iter = graph_.begin();
+        graph_iter != graph_.end();
+        ++graph_iter) {
+      const int vertex = (*graph_iter).first;
+      const IDList edges = (*graph_iter).second;
+
+      for (IDList::const_iterator edges_iter = edges.begin();
+          edges_iter != edges.end();
+          ++edges_iter) {
+
+        const int edge = (*edges_iter);
+
+        IDList & vertices = edge_list[edge];
+
+        vertices.push_back(vertex);
+
+      }
+
+    }
+
+    return edge_list;
+  }
+  //
   //
   //
   void
@@ -1355,6 +1449,171 @@ namespace LCM {
   DualGraph::GetVertexWeights() const
   {
     return vertex_weights_;
+  }
+
+  //
+  // \return Connected components in the dual graph
+  //
+  int
+  DualGraph::GetConnectedComponents(std::vector<int> & components) const
+  {
+    // Create boost graph from edge list
+    typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS>
+    UndirectedGraph;
+
+    typedef boost::graph_traits<UndirectedGraph>::vertex_descriptor Vertex;
+    typedef boost::graph_traits<UndirectedGraph>::edge_descriptor Edge;
+
+    UndirectedGraph graph;
+
+    // Add vertices
+    std::map<int, Vertex> dual_2_boost;
+    AdjacencyMap dual_graph = GetGraph();
+
+    for (AdjacencyMap::const_iterator graph_iter = dual_graph.begin();
+        graph_iter != dual_graph.end();
+        ++graph_iter) {
+
+      Vertex boost_vertex = boost::add_vertex(graph);
+      int dual_vertex = (*graph_iter).first;
+
+      dual_2_boost.insert(std::make_pair(dual_vertex, boost_vertex));
+
+    }
+
+    // Add edges
+    AdjacencyMap
+    edge_list = GetEdgeList();
+
+    for (AdjacencyMap::const_iterator edges_iter = edge_list.begin();
+        edges_iter != edge_list.end();
+        ++edges_iter) {
+
+      const IDList vertices = (*edges_iter).second;
+
+      int source_vertex = vertices[0];
+      int target_vertex = vertices[1];
+
+      Vertex source_boost_vertex = dual_2_boost[source_vertex];
+      Vertex target_boost_vertex = dual_2_boost[target_vertex];
+
+      boost::add_edge(source_boost_vertex, target_boost_vertex, graph);
+
+    }
+
+    const int number_vertices = GetNumberVertices();
+    components.resize(number_vertices);
+
+    int number_components =
+        boost::connected_components(graph, &components[0]);
+
+    return number_components;
+  }
+
+  //
+  // Print graph for debugging
+  //
+  void
+  DualGraph::Print() const
+  {
+
+    ScalarMap
+    vertex_weights = GetVertexWeights();
+
+    AdjacencyMap
+    graph = GetGraph();
+
+    const int
+    number_vertices = GetNumberVertices();
+
+    const int
+    number_edges = GetNumberEdges();
+
+    std::cout << std::endl;
+    std::cout << "Vertex - Edge Format:" << std::endl;
+    std::cout << std::endl;
+    std::cout << "============================================================";
+    std::cout << std::endl;
+    std::cout << "Number of Vertices : " << number_vertices << std::endl;
+    std::cout << "Number of Edges    : " << number_edges << std::endl;
+    std::cout << "------------------------------------------------------------";
+    std::cout << std::endl;
+    std::cout << "Vertex  Weight          Edges" << std::endl;
+    std::cout << "------------------------------------------------------------";
+    std::cout << std::endl;
+
+    for (ScalarMap::const_iterator vw_iter = vertex_weights.begin();
+        vw_iter != vertex_weights.end();
+        ++vw_iter) {
+
+      const int vertex = (*vw_iter).first;
+      const double weight = (*vw_iter).second;
+
+      std::cout << std::setw(8) << vertex;
+      std::cout << std::scientific << std::setw(16) << std::setprecision(8);
+      std::cout << weight;
+
+      AdjacencyMap::const_iterator
+      graph_iter = graph.find(vertex);
+
+      if (graph_iter == graph.end()) {
+        std::cerr << "Cannot find vertex " << vertex << std::endl;
+        std::exit(1);
+      }
+
+      IDList
+      edges = graph[vertex];
+
+      for (IDList::const_iterator edges_iter = edges.begin();
+           edges_iter != edges.end();
+           ++edges_iter) {
+        const int edge = *edges_iter;
+        std::cout << std::setw(8) << edge;
+      }
+
+      std::cout << std::endl;
+
+    }
+
+    std::cout << "============================================================";
+    std::cout << std::endl;
+
+    std::cout << std::endl;
+    std::cout << "Edge - Vertex Format:" << std::endl;
+    std::cout << std::endl;
+
+    AdjacencyMap
+    edge_list = GetEdgeList();
+
+    std::cout << "------------------------------------------------------------";
+    std::cout << std::endl;
+    std::cout << "Edge    Vertices" << std::endl;
+    std::cout << "------------------------------------------------------------";
+    std::cout << std::endl;
+
+    for (AdjacencyMap::const_iterator edges_iter = edge_list.begin();
+        edges_iter != edge_list.end();
+        ++edges_iter) {
+
+      const int edge = (*edges_iter).first;
+      std::cout << std::setw(8) << edge;
+      const IDList vertices = (*edges_iter).second;
+
+      for (IDList::const_iterator vertices_iter = vertices.begin();
+          vertices_iter != vertices.end();
+          ++vertices_iter) {
+        const int vertex = (*vertices_iter);
+        std::cout << std::setw(8) << vertex;
+      }
+
+      std::cout << std::endl;
+
+    }
+
+    std::cout << "============================================================";
+    std::cout << std::endl;
+
+    return;
   }
 
   //

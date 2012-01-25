@@ -54,7 +54,8 @@ public:
 			     const Teuchos::RCP<PHX::DataLayout> &dl,
 			     const std::string &init_type="zero",
 			     const bool registerOldState=false,
-			     const bool outputToExodus=true);
+			     const bool outputToExodus=true,
+			     const std::string &responseIDtoRequire="");
 
   //! Method to call multiple times (before allocate) to register which states will be saved.
   //! Returns param vector with all info to build a SaveStateField or LoadStateField evaluator
@@ -81,6 +82,10 @@ public:
   //! Method to get the Names of the state variables
   RegisteredStates& getRegisteredStates(){return statesToStore;};
 
+  //! Method to get the ResponseIDs for states which have been registered and (should)
+  //!  have a SaveStateField evaluator associated with them that evaluates the responseID
+  std::vector<std::string> getResidResponseIDsToRequire();
+
   //! Method to make the current newState the oldState, and vice versa
   void updateStates();
 
@@ -89,6 +94,10 @@ public:
 
   //! Method to set discretization object
   void setStateArrays(const Teuchos::RCP<Albany::AbstractDiscretization>& discObj);
+
+  //! Method to get discretization object
+  Teuchos::RCP<Albany::AbstractDiscretization> getDiscretization();
+
   //! Method to get state information for a specific workset
   Albany::StateArray& getStateArray(int ws) const;
   //! Method to get state information for all worksets
@@ -119,6 +128,10 @@ private:
   //! NEW WAY
   Teuchos::RCP<StateInfoStruct> stateInfo;
   Teuchos::RCP<EigendataStruct> eigenData;
+
+  // Experiment in dealing with Time
+  double time;
+  double timeOld;
 };
 
 }

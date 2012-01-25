@@ -16,9 +16,7 @@
 
 
 #include "Albany_HeatProblem.hpp"
-#include "Albany_SolutionAverageResponseFunction.hpp"
-#include "Albany_SolutionTwoNormResponseFunction.hpp"
-#include "Albany_SolutionMaxValueResponseFunction.hpp"
+#include "Albany_ResponseFactory.hpp"
 #include "Albany_InitialCondition.hpp"
 
 #include "Intrepid_FieldContainer.hpp"
@@ -32,14 +30,11 @@
 Albany::HeatProblem::
 HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
-             const int numDim_,
-             const Teuchos::RCP<const Epetra_Comm>& comm_) :
+             const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_),
   haveSource(false),
   haveAbsorption(false),
-  haveMatDB(false),
-  numDim(numDim_),
-  comm(comm_)
+  numDim(numDim_)
 {
   this->setNumEquations(1);
 
@@ -49,13 +44,6 @@ HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   haveSource =  params->isSublist("Source Functions");
   haveAbsorption =  params->isSublist("Absorption");
-
-  if(params->isType<string>("MaterialDB Filename")){
-	haveMatDB = true;
-    mtrlDbFilename = params->get<string>("MaterialDB Filename");
- // Create Material Database
-    materialDB = Teuchos::rcp(new QCAD::MaterialDatabase(mtrlDbFilename, comm));
-  }
 
 }
 
@@ -67,36 +55,42 @@ Albany::HeatProblem::
 void
 Albany::HeatProblem::
 buildProblem(
-    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
-    Albany::StateManager& stateMgr,
-    Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
+  const Teuchos::RCP<Albany::Application>& app,
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+  Albany::StateManager& stateMgr,
+  Teuchos::Array< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
 {
   /* Construct All Phalanx Evaluators */
-  TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
-  fm.resize(1); rfm.resize(1);
+  TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
+  fm.resize(1);
   fm[0]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-  rfm[0] = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-
-  constructResidEvaluators<PHAL::AlbanyTraits::Residual  >(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::Jacobian  >(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::Tangent   >(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::SGResidual>(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::SGJacobian>(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::SGTangent >(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::MPResidual>(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::MPJacobian>(*fm[0], *meshSpecs[0], stateMgr);
-  constructResidEvaluators<PHAL::AlbanyTraits::MPTangent >(*fm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::Residual  >(*rfm[0], *meshSpecs[0], stateMgr, responses);
-  constructResponseEvaluators<PHAL::AlbanyTraits::Jacobian  >(*rfm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::Tangent   >(*rfm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::SGResidual>(*rfm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::SGJacobian>(*rfm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::SGTangent >(*rfm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::MPResidual>(*rfm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::MPJacobian>(*rfm[0], *meshSpecs[0], stateMgr);
-  constructResponseEvaluators<PHAL::AlbanyTraits::MPTangent >(*rfm[0], *meshSpecs[0], stateMgr);
-
+  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, BUILD_RESID_FM, 
+		  Teuchos::null);
   constructDirichletEvaluators(*meshSpecs[0]);
+
+  // Construct responses
+  Teuchos::ParameterList& responseList = params->sublist("Response Functions");
+  ResponseFactory responseFactory(app, Teuchos::rcp(this,false), meshSpecs, 
+				  Teuchos::rcp(&stateMgr,false));
+  responses = responseFactory.createResponseFunctions(responseList);
+
+}
+
+Teuchos::Array<Teuchos::RCP<const PHX::FieldTag> >
+Albany::HeatProblem::
+buildEvaluators(
+  PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+  const Albany::MeshSpecsStruct& meshSpecs,
+  Albany::StateManager& stateMgr,
+  Albany::FieldManagerChoice fmchoice,
+  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+{
+  // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
+  // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
+  ConstructEvaluatorsOp<HeatProblem> op(
+    *this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
+  boost::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(op);
+  return *op.tags;
 }
 
 void
@@ -104,10 +98,10 @@ Albany::HeatProblem::constructDirichletEvaluators(
         const Albany::MeshSpecsStruct& meshSpecs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
-   vector<string> dirichletNames(neq);
+   std::vector<string> dirichletNames(neq);
    dirichletNames[0] = "T";
-   Albany::DirichletUtils dirUtils;
-   dfm = dirUtils.constructDirichletEvaluators(meshSpecs.nsNames, dirichletNames,
+   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
+   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
 }
 
@@ -122,7 +116,6 @@ Albany::HeatProblem::getValidProblemParameters() const
   validPL->sublist("Thermal Conductivity", false, "");
   validPL->set("Convection Velocity", "{0,0,0}", "");
   validPL->set<bool>("Have Rho Cp", false, "Flag to indicate if rhoCp is used");
-  validPL->set<string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
 
   return validPL;
 }

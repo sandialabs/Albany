@@ -20,6 +20,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 #include "Albany_Utils.hpp"
+#include <typeinfo>
 
 namespace LCM {
 
@@ -71,11 +72,11 @@ YieldStrength(Teuchos::ParameterList& p) :
     }
   }
   else {
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		       "Invalid yield strength type " << type);
   } 
 
-  // Optional dependence on Temperature (E = E_ + dYdT * T)
+  // Optional dependence on Temperature (Y = Y + dYdT * T)
   // Switched ON by sending Temperature field in p
 
   if ( p.isType<string>("QP Temperature Name") ) {
@@ -87,6 +88,7 @@ YieldStrength(Teuchos::ParameterList& p) :
     this->addDependentField(Temperature);
     isThermoElastic = true;
     dYdT_value = elmd_list->get("dYdT Value", 0.0);
+    refTemp = p.get<RealType>("Reference Temperature", 0.0);
     new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
                                 "dYdT Value", this, paramLib);
   }
@@ -94,6 +96,31 @@ YieldStrength(Teuchos::ParameterList& p) :
     isThermoElastic=false;
     dYdT_value=0.0;
   }
+
+  if ( p.isType<string>("Lattice Concentration Name") ) {
+      Teuchos::RCP<PHX::DataLayout> scalar_dl =
+        p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+      PHX::MDField<ScalarT,Cell,QuadPoint>
+        tmp(p.get<string>("Lattice Concentration Name"), scalar_dl);
+      CL = tmp;
+      this->addDependentField(CL);
+      CLname = p.get<string>("Lattice Concentration Name")+"_old";
+  //    PHX::MDField<ScalarT,Cell,QuadPoint>
+  //      tmp(p.get<string>("Trapped Concentration Name_old"), scalar_dl);
+  //    CT = tmp;
+  //    this->addDependentField(CT);
+  //    CTname = p.get<string>("Trapped Concentration Name")+"_old";
+
+
+      isDiffuseDeformation = true;
+      zeta = elmd_list->get("zeta Value", 1.0);
+      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
+                                  "zeta Value", this, paramLib);
+    }
+    else {
+     isDiffuseDeformation=false;
+      zeta=1.0;
+    }
 
 
   this->addEvaluatedField(yieldStrength);
@@ -109,6 +136,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(yieldStrength,fm);
   if (!is_constant) this->utils.setFieldData(coordVec,fm);
   if (isThermoElastic) this->utils.setFieldData(Temperature,fm);
+  if (isDiffuseDeformation) this->utils.setFieldData(CL,fm);
+//  if (isDiffuseDeformation) this->utils.setFieldData(CT,fm);
 }
 
 // **********************************************************************
@@ -116,6 +145,12 @@ template<typename EvalT, typename Traits>
 void YieldStrength<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  bool print = false;
+  //if (typeid(ScalarT) == typeid(RealType)) print = true;
+
+  if (print)
+    cout << " *** YieldStrength *** " << endl;
+
   std::size_t numCells = workset.numCells;
 
   if (is_constant) {
@@ -138,10 +173,36 @@ evaluateFields(typename Traits::EvalData workset)
   if (isThermoElastic) {
     for (std::size_t cell=0; cell < numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-	yieldStrength(cell,qp) += dYdT_value * Temperature(cell,qp);
+	yieldStrength(cell,qp) -= dYdT_value * (Temperature(cell,qp) - refTemp);
+
+        if (print)
+        {
+          cout << "    Y   : " << yieldStrength(cell,qp) << endl;
+          cout << "    temp: " << Temperature(cell,qp) << endl;
+          cout << "    dYdT: " << dYdT_value << endl;
+          cout << "    refT: " << refTemp << endl;
+        }
       }
     }
   }
+  if (isDiffuseDeformation) {
+
+	  Albany::MDArray CLold   = (*workset.stateArrayPtr)[CLname];
+
+      for (std::size_t cell=0; cell < numCells; ++cell) {
+        for (std::size_t qp=0; qp < numQPs; ++qp) {
+ //       	yieldStrength(cell,qp) = constant_value*( 1.0 + (zeta-1.0)*CL(cell,qp)   );
+        	yieldStrength(cell,qp) -= constant_value*(zeta-1.0)*(CL(cell,qp) -CLold(cell,qp)  );
+
+          if (print)
+          {
+            cout << "    Y   : " << yieldStrength(cell,qp) << endl;
+            cout << "    CT  : " << CT(cell,qp) << endl;
+            cout << "   zeta : " << zeta << endl;
+          }
+        }
+      }
+    }
 }
 
 // **********************************************************************
@@ -153,14 +214,16 @@ YieldStrength<EvalT,Traits>::getValue(const std::string &n)
     return constant_value;
   else if (n == "dYdT Value")
     return dYdT_value;
+  else if (n == "zeta Value")
+      return zeta;
   for (int i=0; i<rv.size(); i++) {
     if (n == Albany::strint("Yield Strength KL Random Variable",i))
       return rv[i];
   }
-  TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-		     std::endl <<
-		     "Error! Logic error in getting paramter " << n
-		     << " in YieldStrength::getValue()" << std::endl);
+  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+			     std::endl <<
+			     "Error! Logic error in getting paramter " << n
+			     << " in YieldStrength::getValue()" << std::endl);
   return constant_value;
 }
 

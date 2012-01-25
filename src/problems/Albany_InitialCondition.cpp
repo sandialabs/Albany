@@ -71,6 +71,7 @@ void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
         initFunc->compute(&x[0],X);
         for (int i=0; i<neq; i++) (*soln)[lid[i]] = x[i];
   } } }
+
 }
 
 }

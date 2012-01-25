@@ -44,12 +44,24 @@ namespace Albany {
     //! Destructor
     virtual ~NonlinearElasticityProblem();
 
+    //! Return number of spatial dimensions
+    virtual int spatialDimension() const { return numDim; }
+
     //! Build the PDE instantiations, boundary conditions, and initial solution
-    virtual void 
-    buildProblem(
-       Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
-       StateManager& stateMgr,
-       Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
+    virtual void buildProblem(
+      const Teuchos::RCP<Albany::Application>& app,
+      Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+      StateManager& stateMgr,
+      Teuchos::Array< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
+
+    // Build evaluators
+    virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
+    buildEvaluators(
+      PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+      const Albany::MeshSpecsStruct& meshSpecs,
+      Albany::StateManager& stateMgr,
+      Albany::FieldManagerChoice fmchoice,
+      const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
     //! Each problem must generate it's list of valid parameters
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
@@ -67,48 +79,17 @@ namespace Albany {
     //! Private to prohibit copying
     NonlinearElasticityProblem& operator=(const NonlinearElasticityProblem&);
 
+  public:
+
     //! Main problem setup routine. Not directly called, but indirectly by following functions
-    template <typename EvalT>
-    void constructEvaluators(
-            PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-            const Albany::MeshSpecsStruct& meshSpecs,
-            Albany::StateManager& stateMgr,
-            Albany::FieldManagerChoice fmchoice,
-            Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
-
-    //! Interface for Residual (PDE) field manager
-    template <typename EvalT>
-    void constructResidEvaluators(
-            PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-            const Albany::MeshSpecsStruct& meshSpecs,
-            Albany::StateManager& stateMgr)
-    {
-      Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> > junk;
-      constructEvaluators<EvalT>(fm0, meshSpecs, stateMgr, BUILD_RESID_FM, junk);
-    }
-
-    //! Interface for Response field manager, except for residual type
-    template <typename EvalT>
-    void constructResponseEvaluators(
-            PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-            const Albany::MeshSpecsStruct& meshSpecs,
-            Albany::StateManager& stateMgr)
-    {
-      Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> > junk;
-      constructEvaluators<EvalT>(fm0, meshSpecs, stateMgr, BUILD_RESPONSE_FM, junk);
-    }
-
-    //! Interface for Response field manager, Residual type.
-    // This version loads the responses variable, that needs to be constructed just once
-    template <typename EvalT>
-    void constructResponseEvaluators(
-            PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-            const Albany::MeshSpecsStruct& meshSpecs,
-            Albany::StateManager& stateMgr,
-            Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
-    {
-      constructEvaluators<EvalT>(fm0, meshSpecs, stateMgr, BUILD_RESPONSE_FM, responses);
-    }
+    template <typename EvalT> 
+    Teuchos::RCP<const PHX::FieldTag>
+    constructEvaluators(
+      PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+      const Albany::MeshSpecsStruct& meshSpecs,
+      Albany::StateManager& stateMgr,
+      Albany::FieldManagerChoice fmchoice,
+      const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
     void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
 
@@ -148,14 +129,16 @@ namespace Albany {
 #include "SaturationExponent.hpp"
 #include "DislocationDensity.hpp"
 #include "TLElasResid.hpp"
+#include "Time.hpp"
 
 template <typename EvalT>
-void Albany::NonlinearElasticityProblem::constructEvaluators(
-        PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-        const Albany::MeshSpecsStruct& meshSpecs,
-        Albany::StateManager& stateMgr,
-        Albany::FieldManagerChoice fieldManagerChoice,
-        Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
+Teuchos::RCP<const PHX::FieldTag>
+Albany::NonlinearElasticityProblem::constructEvaluators(
+  PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+  const Albany::MeshSpecsStruct& meshSpecs,
+  Albany::StateManager& stateMgr,
+  Albany::FieldManagerChoice fieldManagerChoice,
+  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   using Teuchos::RCP;
   using Teuchos::rcp;
@@ -234,6 +217,22 @@ void Albany::NonlinearElasticityProblem::constructEvaluators(
   // Temporary variable used numerous times below
   Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
 
+  { // Time
+    RCP<ParameterList> p = rcp(new ParameterList);
+    
+    p->set<string>("Time Name", "Time");
+    p->set<string>("Delta Time Name", "Delta Time");
+    p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    p->set<bool>("Disable Transient", true);
+
+    ev = rcp(new LCM::Time<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+    p = stateMgr.registerStateVariable("Time",dl->workset_scalar, dl->dummy,"zero", true);
+    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
   { // Elastic Modulus
     RCP<ParameterList> p = rcp(new ParameterList);
 
@@ -269,8 +268,8 @@ void Albany::NonlinearElasticityProblem::constructEvaluators(
   }
 
   if (haveSource) { // Source
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-                       "Error!  Sources not implemented in Elasticity yet!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+			       "Error!  Sources not implemented in Elasticity yet!");
 
     RCP<ParameterList> p = rcp(new ParameterList);
 
@@ -300,8 +299,8 @@ void Albany::NonlinearElasticityProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
     //Outputs: F, J
-    p->set<string>("DefGrad Name", "Deformation Gradient"); //dl->qp_tensor also
-    p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient"); 
+    p->set<string>("DefGrad Name", "F"); //dl->qp_tensor also
+    p->set<string>("DetDefGrad Name", "J"); 
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     ev = rcp(new LCM::DefGrad<EvalT,AlbanyTraits>(*p));
@@ -314,14 +313,14 @@ void Albany::NonlinearElasticityProblem::constructEvaluators(
       RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
       //Input
-      p->set<string>("DefGrad Name", "Deformation Gradient");
+      p->set<string>("DefGrad Name", "F");
       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
       p->set<string>("Elastic Modulus Name", "Elastic Modulus");
       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
       p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
-      p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient");  // dl->qp_scalar also
+      p->set<string>("DetDefGrad Name", "J");  // dl->qp_scalar also
 
       //Output
       p->set<string>("Stress Name", matModel); //dl->qp_tensor also
@@ -329,6 +328,9 @@ void Albany::NonlinearElasticityProblem::constructEvaluators(
       ev = rcp(new LCM::Neohookean<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
       p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy,"zero");
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      p = stateMgr.registerStateVariable("F",dl->qp_tensor, dl->dummy,"identity");
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
@@ -342,7 +344,7 @@ void Albany::NonlinearElasticityProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
 
-    p->set<string>("DefGrad Name", "Deformation Gradient"); 
+    p->set<string>("DefGrad Name", "F"); 
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
     //Output
@@ -393,7 +395,7 @@ void Albany::NonlinearElasticityProblem::constructEvaluators(
     { // Saturation Modulus
       RCP<ParameterList> p = rcp(new ParameterList);
 
-      p->set<string>("QP Variable Name", "Saturation Modulus");
+      p->set<string>("Saturation Modulus Name", "Saturation Modulus");
       p->set<string>("QP Coordinate Vector Name", "Coord Vec");
       p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
@@ -410,7 +412,7 @@ void Albany::NonlinearElasticityProblem::constructEvaluators(
     { // Saturation Exponent
       RCP<ParameterList> p = rcp(new ParameterList);
 
-      p->set<string>("QP Variable Name", "Saturation Exponent");
+      p->set<string>("Saturation Exponent Name", "Saturation Exponent");
       p->set<string>("QP Coordinate Vector Name", "Coord Vec");
       p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
@@ -451,7 +453,7 @@ void Albany::NonlinearElasticityProblem::constructEvaluators(
       RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
       //Input
-      p->set<string>("DefGrad Name", "Deformation Gradient");
+      p->set<string>("DefGrad Name", "F");
       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
       p->set<string>("Elastic Modulus Name", "Elastic Modulus");
@@ -462,7 +464,7 @@ void Albany::NonlinearElasticityProblem::constructEvaluators(
       p->set<string>("Saturation Modulus Name", "Saturation Modulus"); // dl->qp_scalar also
       p->set<string>("Saturation Exponent Name", "Saturation Exponent"); // dl->qp_scalar also
       p->set<string>("Yield Strength Name", "Yield Strength"); // dl->qp_scalar also
-      p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient");  // dl->qp_scalar also
+      p->set<string>("DetDefGrad Name", "J");  // dl->qp_scalar also
 
       //Output
       p->set<string>("Stress Name", matModel); //dl->qp_tensor also
@@ -485,9 +487,9 @@ void Albany::NonlinearElasticityProblem::constructEvaluators(
     }
   }
   else
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-		       "Unrecognized Material Name: " << matModel 
-		       << "  Recognized names are : NeoHookean and J2");
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+			       "Unrecognized Material Name: " << matModel 
+			       << "  Recognized names are : NeoHookean and J2");
     
 
   { // Residual
@@ -497,9 +499,9 @@ void Albany::NonlinearElasticityProblem::constructEvaluators(
     p->set<string>("Stress Name", matModel);
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-    p->set<string>("DefGrad Name", "Deformation Gradient"); //dl->qp_tensor also
+    p->set<string>("DefGrad Name", "F"); //dl->qp_tensor also
 
-    p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient");
+    p->set<string>("DetDefGrad Name", "J");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
@@ -520,13 +522,14 @@ void Albany::NonlinearElasticityProblem::constructEvaluators(
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
     PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter", dl->dummy);
     fm0.requireField<EvalT>(res_tag);
+    return res_tag.clone();
   }
-  else {
-    //Construct Responses
-    Teuchos::ParameterList& responseList = params->sublist("Response Functions");
+  else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
-    respUtils.constructResponses(fm0, responses, responseList, stateMgr);
+    return respUtils.constructResponses(fm0, *responseList, stateMgr);
   }
+
+  return Teuchos::null;
 }
 
 #endif // ALBANY_NONLINEARELASTICITYPROBLEM_HPP

@@ -29,31 +29,31 @@ template<typename EvalT, typename Traits>
 J2Damage<EvalT, Traits>::
 J2Damage(const Teuchos::ParameterList& p) :
   defgrad          (p.get<std::string>                   ("DefGrad Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+                    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
   J                (p.get<std::string>                   ("DetDefGrad Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+                    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   bulkModulus      (p.get<std::string>                   ("Bulk Modulus Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+                    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   shearModulus     (p.get<std::string>                   ("Shear Modulus Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+                    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   yieldStrength    (p.get<std::string>                   ("Yield Strength Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+                    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   hardeningModulus (p.get<std::string>                   ("Hardening Modulus Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+                    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   satMod           (p.get<std::string>                   ("Saturation Modulus Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+                    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   satExp           (p.get<std::string>                   ("Saturation Exponent Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+                    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   damage           (p.get<std::string>                   ("Damage Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+                    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   stress           (p.get<std::string>                   ("Stress Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+                    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
   dp               (p.get<std::string>                   ("DP Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+                    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   seff             (p.get<std::string>                   ("Effective Stress Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+                    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   energy           (p.get<std::string>                   ("Energy Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+                    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   Fp               (p.get<std::string>                   ("Fp Name"),
                     p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
   eqps             (p.get<std::string>                   ("Eqps Name"),
@@ -160,8 +160,8 @@ evaluateFields(typename Traits::EvalData workset)
   //   for (std::size_t qp=0; qp < numQPs; ++qp)
   //   {
   //     for (std::size_t i=0; i < numDims; ++i)
-  // 	for (std::size_t j=0; j < numDims; ++j)
-  // 	  std::cout << Sacado::ScalarValue<ScalarT>::eval(defgrad(cell,qp,i,j)) << " ";
+  //    for (std::size_t j=0; j < numDims; ++j)
+  //      std::cout << Sacado::ScalarValue<ScalarT>::eval(defgrad(cell,qp,i,j)) << " ";
   //   }
   //   std::cout << std::endl;      
   // }
@@ -173,8 +173,8 @@ evaluateFields(typename Traits::EvalData workset)
   //   for (std::size_t qp=0; qp < numQPs; ++qp)
   //   {
   //     for (std::size_t i=0; i < numDims; ++i)
-  // 	for (std::size_t j=0; j < numDims; ++j)
-  // 	  std::cout << Sacado::ScalarValue<ScalarT>::eval(Fpold(cell,qp,i,j)) << " ";
+  //    for (std::size_t j=0; j < numDims; ++j)
+  //      std::cout << Sacado::ScalarValue<ScalarT>::eval(Fpold(cell,qp,i,j)) << " ";
   //   }
   //   std::cout << std::endl;      
   // }
@@ -186,8 +186,8 @@ evaluateFields(typename Traits::EvalData workset)
   //   for (std::size_t qp=0; qp < numQPs; ++qp)
   //   {
   //     for (std::size_t i=0; i < numDims; ++i)
-  // 	for (std::size_t j=0; j < numDims; ++j)
-  // 	  std::cout << Sacado::ScalarValue<ScalarT>::eval(Cpinv(cell,qp,i,j)) << " ";
+  //    for (std::size_t j=0; j < numDims; ++j)
+  //      std::cout << Sacado::ScalarValue<ScalarT>::eval(Cpinv(cell,qp,i,j)) << " ";
   //   }
   //   std::cout << std::endl;      
   // }
@@ -215,10 +215,10 @@ evaluateFields(typename Traits::EvalData workset)
       be.clear();
       // Compute Trial State      
       for (std::size_t i=0; i < numDims; ++i)
-	for (std::size_t j=0; j < numDims; ++j)
-	  for (std::size_t p=0; p < numDims; ++p)
-	    for (std::size_t q=0; q < numDims; ++q)
-	      be(i,j) += Jm23 * defgrad(cell,qp,i,p) * Cpinv(cell,qp,p,q) * defgrad(cell,qp,j,q);
+        for (std::size_t j=0; j < numDims; ++j)
+          for (std::size_t p=0; p < numDims; ++p)
+            for (std::size_t q=0; q < numDims; ++q)
+              be(i,j) += Jm23 * defgrad(cell,qp,i,p) * Cpinv(cell,qp,p,q) * defgrad(cell,qp,j,q);
       
       // std::cout << "be: \n" << be;
       
@@ -241,45 +241,45 @@ evaluateFields(typename Traits::EvalData workset)
 
       if (f > 1E-8)
       {
-	// return mapping algorithm
-	bool converged = false;
-	ScalarT g = f;
-	ScalarT H = K * eqpsold(cell,qp) + siginf*( 1. - std::exp( -delta * eqpsold(cell,qp) ) );
-	ScalarT dg = ( -2. * mubar ) * ( 1. + H / ( 3. * mubar ) );
-	ScalarT dH = 0.0;;
-	ScalarT alpha = 0.0;
-	ScalarT res = 0.0;
-	int count = 0;
-	dgam = 0.0;
+        // return mapping algorithm
+        bool converged = false;
+        ScalarT g = f;
+        ScalarT H = K * eqpsold(cell,qp) + siginf*( 1. - std::exp( -delta * eqpsold(cell,qp) ) );
+        ScalarT dg = ( -2. * mubar ) * ( 1. + H / ( 3. * mubar ) );
+        ScalarT dH = 0.0;;
+        ScalarT alpha = 0.0;
+        ScalarT res = 0.0;
+        int count = 0;
+        dgam = 0.0;
 
-	while (!converged)
-	{
-	  count++;
+        while (!converged)
+        {
+          count++;
 
-	  //dgam = ( f / ( 2. * mubar) ) / ( 1. + K / ( 3. * mubar ) );
-	  dgam -= g/dg;
+          //dgam = ( f / ( 2. * mubar) ) / ( 1. + K / ( 3. * mubar ) );
+          dgam -= g/dg;
 
-	  alpha = eqpsold(cell,qp) + sq23 * dgam;
+          alpha = eqpsold(cell,qp) + sq23 * dgam;
 
-	  //H = K * alpha + exph * siginf * ( 1. - std::exp( -delta * alpha ) );
-	  //dH = K + exph * delta * siginf * std::exp( -delta * alpha );
-	  H = K * alpha + siginf * ( 1. - std::exp( -delta * alpha ) );
-	  dH = K + delta * siginf * std::exp( -delta * alpha );
+          //H = K * alpha + exph * siginf * ( 1. - std::exp( -delta * alpha ) );
+          //dH = K + exph * delta * siginf * std::exp( -delta * alpha );
+          H = K * alpha + siginf * ( 1. - std::exp( -delta * alpha ) );
+          dH = K + delta * siginf * std::exp( -delta * alpha );
 
-	  g = smag -  ( 2. * mubar * dgam + sq23 * ( Y + H ) );
-	  dg = -2. * mubar * ( 1. + dH / ( 3. * mubar ) );
+          g = smag -  ( 2. * mubar * dgam + sq23 * ( Y + H ) );
+          dg = -2. * mubar * ( 1. + dH / ( 3. * mubar ) );
 
-	  res = std::abs(g);
-	  if ( res < 1.e-8 || res/f < 1.e-8 )
-	    converged = true;
+          res = std::abs(g);
+          if ( res < 1.e-8 || res/f < 1.e-8 )
+            converged = true;
 
-	  TEST_FOR_EXCEPTION( count > 50, std::runtime_error,
-			      std::endl << "Error in return mapping, count = " << count << 			
-			      "\nres = " << res <<
-			      "\nrelres = " << res/f <<
-			      "\ng = " << g <<
-			      "\ndg = " << dg <<
-			      "\nalpha = " << alpha << std::endl);
+          TEUCHOS_TEST_FOR_EXCEPTION( count > 50, std::runtime_error,
+                                      std::endl << "Error in return mapping, count = " << count <<
+				      "\nres = " << res <<
+				      "\nrelres = " << res/f <<
+				      "\ng = " << g <<
+				      "\ndg = " << dg <<
+				      "\nalpha = " << alpha << std::endl);
 
 	}
 	

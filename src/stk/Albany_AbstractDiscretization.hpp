@@ -37,6 +37,9 @@ namespace Albany {
   typedef std::map<std::string, std::vector<std::vector<int> > > NodeSetList;
   typedef std::map<std::string, std::vector<double*> > NodeSetCoordList;
 
+  typedef std::map<std::string, std::vector<std::vector<int> > > SideSetList;
+  typedef std::map<std::string, std::vector<double*> > SideSetCoordList;
+
   class AbstractDiscretization {
   public:
 
@@ -66,10 +69,19 @@ namespace Albany {
     virtual Teuchos::RCP<const Epetra_Map>
     getNodeMap() const = 0;
 
+    //! Get Side map
+    virtual Teuchos::RCP<const Epetra_Map>
+    getSideMap() const = 0;
+
     //! Get Node set lists (typdef in Albany_Discretization.hpp)
     virtual const NodeSetList& getNodeSets() const = 0;
     virtual const NodeSetCoordList& getNodeSetCoords() const = 0;
     virtual const std::vector<std::string>& getNodeSetIDs() const = 0;
+
+    //! Get Side set lists
+    virtual const SideSetList& getSideSets() const = 0;
+    virtual const SideSetCoordList& getSideSetCoords() const = 0;
+    virtual const std::vector<std::string>& getSideSetIDs() const = 0;
 
     //! Get map from (Ws, El, Local Node, Eq) -> unkLID
     virtual const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >&
@@ -89,6 +101,10 @@ namespace Albany {
 
     //! Get solution vector from mesh database
     virtual Teuchos::RCP<Epetra_Vector> getSolutionField() const = 0;
+
+    //! Accessor function to get coordinates for ML. Memory controlled here.
+    virtual void getOwned_xyz(double **x, double **y, double **z, double **rbm,
+                              int& nNodes, int numPDEs, int nullSpaceDim) = 0;
 
   private:
 

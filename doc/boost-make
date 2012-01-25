@@ -1,0 +1,20 @@
+#!/bin/bash
+#
+# This is a configure/make script for  boost  needed for Dakota builds.
+#
+# When building Albany without Dakota (i.e. without TriKota being
+# enabled in Trilinos), a simple download of boost will suffice.
+#
+# Dakota has a dependency (as of 11/2011) on four boost libraries.
+# The following 2 lines should build these libraries and install
+# them in a lib subdirectory. 
+#
+# The Trilinos script should include this line:
+#    -D Boost_LIBRARY_DIRS:FILEPATH="$BOOSTDIR/lib" \
+#
+# This file should be copied to the top "boost" directory and executed.
+#
+ 
+./bootstrap.sh --with-libraries=signals,regex,system,filesystem  --prefix=.
+
+./bjam install

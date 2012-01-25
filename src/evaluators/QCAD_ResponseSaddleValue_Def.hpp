@@ -39,7 +39,7 @@ ResponseSaddleValue(Teuchos::ParameterList& p) :
   plist->validateParameters(*reflist,0);
 
   //! get pointer to response function object
-  svResponseFn = p.get<Teuchos::RCP<QCAD::SaddleValueResponseFunction> >
+  svResponseFn = plist->get<Teuchos::RCP<QCAD::SaddleValueResponseFunction> >
     ("Response Function");
 
   //! number of quad points per cell and dimension of space
@@ -72,17 +72,17 @@ ResponseSaddleValue(Teuchos::ParameterList& p) :
     limitX = limitY = limitZ = false;
 
     if( plist->isParameter("x min") && plist->isParameter("x max") ) {
-      limitX = true; TEST_FOR_EXCEPT(numDims <= 0);
+      limitX = true; TEUCHOS_TEST_FOR_EXCEPT(numDims <= 0);
       xmin = plist->get<double>("x min");
       xmax = plist->get<double>("x max");
     }
     if( plist->isParameter("y min") && plist->isParameter("y max") ) {
-      limitY = true; TEST_FOR_EXCEPT(numDims <= 1);
+      limitY = true; TEUCHOS_TEST_FOR_EXCEPT(numDims <= 1);
       ymin = plist->get<double>("y min");
       ymax = plist->get<double>("y max");
     }
     if( plist->isParameter("z min") && plist->isParameter("z max") ) {
-      limitZ = true; TEST_FOR_EXCEPT(numDims <= 2);
+      limitZ = true; TEUCHOS_TEST_FOR_EXCEPT(numDims <= 2);
       zmin = plist->get<double>("z min");
       zmax = plist->get<double>("z max");
     }
@@ -90,7 +90,7 @@ ResponseSaddleValue(Teuchos::ParameterList& p) :
   else if(domain == "element block") {
     ebName = plist->get<string>("Element Block Name");
   }
-  else TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+  else TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
              << "Error!  Invalid domain type " << domain << std::endl); 
 
 
@@ -109,7 +109,7 @@ ResponseSaddleValue(Teuchos::ParameterList& p) :
 
   
   //! response evaluator must evaluate dummy operation
-  std::string responseID = p.get<string>("Response ID");
+  std::string responseID = "QCAD Saddle Value";
   Teuchos::RCP<PHX::DataLayout> dummy_dl =
     p.get< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout");
   
@@ -228,6 +228,8 @@ QCAD::ResponseSaddleValue<EvalT,Traits>::getValidResponseParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
      	rcp(new Teuchos::ParameterList("Valid ResponseSaddleValue Params"));;
 
+  validPL->set<string>("Name", "", "Name of response function");
+  validPL->set<int>("Phalanx Graph Visualization Detail", 0, "Make dot file to visualize phalanx graph");
   validPL->set<string>("Type", "", "Response type");
   validPL->set<string>("Field Name", "", "Scalar field on which to find saddle point");
   validPL->set<string>("Return Field Name", "<field name>",
@@ -256,6 +258,7 @@ QCAD::ResponseSaddleValue<EvalT,Traits>::getValidResponseParameters() const
 
   validPL->set<bool>("Positive Return Only", false, "If return value is zero, set to NaN so Dakota stays away");
   validPL->set<string>("Distance Cutoff Method", "Volume", "Method used to compute average linear size of cell: \"Volume\" or \"Lateral Volume\"");
+  validPL->set< Teuchos::RCP<QCAD::SaddleValueResponseFunction> >("Response Function", Teuchos::null, "Saddle value response function");
 
   return validPL;
 }

@@ -17,8 +17,7 @@
 
 #include <fstream>
 #include "Teuchos_TestForException.hpp"
-#include "Phalanx_DataLayout.hpp"
-#include "Sacado_ParameterRegistration.hpp"
+#include "Teuchos_CommHelpers.hpp"
 
 //Utility function to split a std::string by a delimiter, so far only used here
 void split(const std::string &s, char delim, std::vector<std::string> &elems) {
@@ -32,17 +31,14 @@ void split(const std::string &s, char delim, std::vector<std::string> &elems) {
 
 template<typename EvalT, typename Traits>
 QCAD::ResponseFieldIntegral<EvalT, Traits>::
-ResponseFieldIntegral(Teuchos::ParameterList& p) :
-  PHAL::ResponseBase<EvalT, Traits>(p),
-  coordVec(p.get<string>("Coordinate Vector Name"),
-	   p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout")),
-  weights(p.get<std::string>("Weights Name"),
-	p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"))
+ResponseFieldIntegral(Teuchos::ParameterList& p,
+		      const Teuchos::RCP<Albany::Layouts>& dl) :
+  coordVec("Coord Vec", dl->qp_vector),
+  weights("Weights", dl->qp_scalar)
 {
   //! get and validate Response parameter list
   Teuchos::ParameterList* plist = 
     p.get<Teuchos::ParameterList*>("Parameter List");
-
   Teuchos::RCP<const Teuchos::ParameterList> reflist = 
     this->getValidResponseParameters();
   plist->validateParameters(*reflist,0);
@@ -51,13 +47,11 @@ ResponseFieldIntegral(Teuchos::ParameterList& p) :
   length_unit_in_m = p.get<double>("Length unit in m");
 
   //! number of quad points per cell
-  Teuchos::RCP<PHX::DataLayout> scalar_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+  Teuchos::RCP<PHX::DataLayout> scalar_dl = dl->qp_scalar;
   numQPs = scalar_dl->dimension(1);
   
   //! obtain number of dimensions
-  Teuchos::RCP<PHX::DataLayout> vector_dl =
-      p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
+  Teuchos::RCP<PHX::DataLayout> vector_dl = dl->qp_vector;
   std::vector<PHX::DataLayout::size_type> dims;
   vector_dl->dimensions(dims);
   numDims = dims[2];
@@ -70,17 +64,17 @@ ResponseFieldIntegral(Teuchos::ParameterList& p) :
 
   limitX = limitY = limitZ = false;
   if( plist->isParameter("x min") && plist->isParameter("x max") ) {
-    limitX = true; TEST_FOR_EXCEPT(numDims <= 0);
+    limitX = true; TEUCHOS_TEST_FOR_EXCEPT(numDims <= 0);
     xmin = plist->get<double>("x min");
     xmax = plist->get<double>("x max");
   }
   if( plist->isParameter("y min") && plist->isParameter("y max") ) {
-    limitY = true; TEST_FOR_EXCEPT(numDims <= 1);
+    limitY = true; TEUCHOS_TEST_FOR_EXCEPT(numDims <= 1);
     ymin = plist->get<double>("y min");
     ymax = plist->get<double>("y max");
   }
   if( plist->isParameter("z min") && plist->isParameter("z max") ) {
-    limitZ = true; TEST_FOR_EXCEPT(numDims <= 2);
+    limitZ = true; TEUCHOS_TEST_FOR_EXCEPT(numDims <= 2);
     zmin = plist->get<double>("z min");
     zmax = plist->get<double>("z max");
   }
@@ -93,16 +87,21 @@ ResponseFieldIntegral(Teuchos::ParameterList& p) :
   }
   this->addDependentField(coordVec);
   this->addDependentField(weights);
+  this->setName(fieldName+" Response Field Integral"+PHX::TypeString<EvalT>::value);
   
-  //! set initial values
-  std::vector<double> initVals(1); initVals[0] = 0.0;
-  PHAL::ResponseBase<EvalT, Traits>::setInitialValues(initVals);
-
-  //! set post processing parameters (used to reconcile values across multiple processors)
-  Teuchos::ParameterList ppParams;
-  ppParams.set("Processing Type","Sum");
-  ppParams.set("Huge if non-positive",bPositiveOnly);
-  PHAL::ResponseBase<EvalT, Traits>::setPostProcessingParams(ppParams);
+  // Setup scatter evaluator
+  p.set("Stand-alone Evaluator", false);
+  std::string local_response_name = 
+    fieldName + " Local Response Field Integral";
+  std::string global_response_name = 
+    fieldName + " Global Response Field Integral";
+  PHX::Tag<ScalarT> local_response_tag(local_response_name, 
+				       dl->cell_scalar);
+  PHX::Tag<ScalarT> global_response_tag(global_response_name, 
+					dl->workset_scalar);
+  p.set("Local Response Field Tag", local_response_tag);
+  p.set("Global Response Field Tag", global_response_tag);
+  PHAL::SeparableScatterScalarResponse<EvalT,Traits>::setup(p,dl);
 }
 
 // **********************************************************************
@@ -115,6 +114,20 @@ postRegistrationSetup(typename Traits::SetupData d,
     this->utils.setFieldData(field,fm);
   this->utils.setFieldData(coordVec,fm);
   this->utils.setFieldData(weights,fm);
+  PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postRegistrationSetup(d,fm);
+}
+
+// **********************************************************************
+template<typename EvalT, typename Traits>
+void QCAD::ResponseFieldIntegral<EvalT, Traits>::
+preEvaluate(typename Traits::PreEvalData workset)
+{
+  for (typename PHX::MDField<ScalarT>::size_type i=0; 
+       i<this->global_response.size(); i++)
+    this->global_response[i] = 0.0;
+
+  // Do global initialization
+  PHAL::SeparableScatterScalarResponse<EvalT,Traits>::preEvaluate(workset);
 }
 
 // **********************************************************************
@@ -122,7 +135,10 @@ template<typename EvalT, typename Traits>
 void QCAD::ResponseFieldIntegral<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  PHAL::ResponseBase<EvalT, Traits>::beginEvaluateFields(workset);
+  // Zero out local response
+  for (typename PHX::MDField<ScalarT>::size_type i=0; 
+       i<this->local_response.size(); i++)
+    this->local_response[i] = 0.0;
 
   // Scaling factors
   double X0 = length_unit_in_m/1e-2; // length scaling to get to [cm]
@@ -135,7 +151,7 @@ evaluateFields(typename Traits::EvalData workset)
   else if (numDims == 3)
     scaling = X0*X0*X0; 
   else      
-    TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+    TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
 			  << "Error! Invalid number of dimensions: " << numDims << std::endl);
     
   if( ebNames.size() == 0 || 
@@ -161,12 +177,35 @@ evaluateFields(typename Traits::EvalData workset)
 	else
 	  val = weights(cell,qp) * scaling; //integrate volume
 
-        PHAL::ResponseBase<EvalT, Traits>::local_g[0] += val;
+        this->local_response(cell) += val;
+	this->global_response(0) += val;
       }
     }
   }
 
-  PHAL::ResponseBase<EvalT, Traits>::endEvaluateFields(workset);
+  // Do any local-scattering necessary
+  PHAL::SeparableScatterScalarResponse<EvalT,Traits>::evaluateFields(workset);
+}
+
+// **********************************************************************
+template<typename EvalT, typename Traits>
+void QCAD::ResponseFieldIntegral<EvalT, Traits>::
+postEvaluate(typename Traits::PostEvalData workset)
+{
+  // Add contributions across processors
+  Teuchos::RCP< Teuchos::ValueTypeSerializer<int,ScalarT> > serializer =
+    workset.serializerManager.template getValue<EvalT>();
+  Teuchos::reduceAll(
+    *workset.comm, *serializer, Teuchos::REDUCE_SUM,
+    this->global_response.size(), &this->global_response[0], 
+    &this->global_response[0]);
+
+  if (bPositiveOnly && this->global_response[0] < 1e-6) {
+    this->global_response[0] = 1e+100;
+  }
+  
+  // Do global scattering
+  PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postEvaluate(workset);
 }
 
 // **********************************************************************
@@ -176,7 +215,12 @@ QCAD::ResponseFieldIntegral<EvalT,Traits>::getValidResponseParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
      	rcp(new Teuchos::ParameterList("Valid ResponseFieldIntegral Params"));;
+  Teuchos::RCP<const Teuchos::ParameterList> baseValidPL =
+    PHAL::SeparableScatterScalarResponse<EvalT,Traits>::getValidResponseParameters();
+  validPL->setParameters(*baseValidPL);
 
+  validPL->set<string>("Name", "", "Name of response function");
+  validPL->set<int>("Phalanx Graph Visualization Detail", 0, "Make dot file to visualize phalanx graph");
   validPL->set<string>("Type", "", "Response type");
   validPL->set<string>("Element Block Name", "", 
   		"Name of the element block to use as the integration domain");

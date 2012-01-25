@@ -71,8 +71,8 @@ PoissonsRatio(Teuchos::ParameterList& p) :
     }
   }
   else {
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-		       "Invalid Poissons ratio type " << type);
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+			       "Invalid Poissons ratio type " << type);
   } 
 
   // Optional dependence on Temperature (nu = nu_ + dnudT * T)
@@ -87,6 +87,7 @@ PoissonsRatio(Teuchos::ParameterList& p) :
     this->addDependentField(Temperature);
     isThermoElastic = true;
     dnudT_value = pr_list->get("dnudT Value", 0.0);
+    refTemp = p.get<RealType>("Reference Temperature", 0.0);
     new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
                                 "dnudT Value", this, paramLib);
   }
@@ -138,7 +139,7 @@ evaluateFields(typename Traits::EvalData workset)
   if (isThermoElastic) {
     for (std::size_t cell=0; cell < numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-        poissonsRatio(cell,qp) += dnudT_value * Temperature(cell,qp);
+        poissonsRatio(cell,qp) += dnudT_value * (Temperature(cell,qp) - refTemp);;
       }
     }
   }
@@ -157,10 +158,10 @@ PoissonsRatio<EvalT,Traits>::getValue(const std::string &n)
     if (n == Albany::strint("Poissons Ratio KL Random Variable",i))
       return rv[i];
   }
-  TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-		     std::endl <<
-		     "Error! Logic error in getting paramter " << n
-		     << " in PoissonsRatio::getValue()" << std::endl);
+  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+			     std::endl <<
+			     "Error! Logic error in getting paramter " << n
+			     << " in PoissonsRatio::getValue()" << std::endl);
   return constant_value;
 }
 

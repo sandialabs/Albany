@@ -56,8 +56,8 @@ DislocationDensity(const Teuchos::ParameterList& p) :
     
   square = (numNodes == numQPs);
 
-  TEST_FOR_EXCEPTION( square == false, std::runtime_error, 
-		      "Dislocation Density Calculation currently needs numNodes == numQPs" );
+  TEUCHOS_TEST_FOR_EXCEPTION( square == false, std::runtime_error, 
+			      "Dislocation Density Calculation currently needs numNodes == numQPs" );
 
 
   this->setName("DislocationDensity"+PHX::TypeString<EvalT>::value);

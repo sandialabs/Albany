@@ -34,9 +34,17 @@ double distance(const std::vector<double>* vCoords,
 
 
 QCAD::SaddleValueResponseFunction::
-SaddleValueResponseFunction(const int numDim_, Teuchos::ParameterList& params)
-  : numDims(numDim_)
+SaddleValueResponseFunction(
+  const Teuchos::RCP<Albany::Application>& application,
+  const Teuchos::RCP<Albany::AbstractProblem>& problem,
+  const Teuchos::RCP<Albany::MeshSpecsStruct>&  ms,
+  const Teuchos::RCP<Albany::StateManager>& stateMgr,
+  Teuchos::ParameterList& params) : 
+  Albany::FieldManagerScalarResponseFunction(application, problem, ms, stateMgr),
+  numDims(problem->spatialDimension())
 {
+  params.set("Response Function", Teuchos::rcp(this,false));
+
   fieldCutoffFctr = params.get<double>("Field Cutoff Factor", 1.0);
   minPoolDepthFctr = params.get<double>("Minimum Pool Depth Factor", 0.1);
   distanceCutoffFctr = params.get<double>("Distance Cutoff Factor", 0.2);
@@ -51,6 +59,9 @@ SaddleValueResponseFunction(const int numDim_, Teuchos::ParameterList& params)
   bDebugMode = params.get<bool>("Debug Mode",false);
   bPositiveOnly = params.get<bool>("Positive Return Only",false);
   bLateralVolumes = (params.get<std::string>("Distance Cutoff Method", "Volume") == "Lateral Volume");
+
+  this->setup(params);
+  this->num_responses = 5;
 }
 
 QCAD::SaddleValueResponseFunction::
@@ -79,6 +90,13 @@ evaluateResponse(const double current_time,
   
   for(std::size_t k = 0; k < numDims; k++)
     vCoords[k].clear();
+
+  // Evaluate response through field manager
+  Albany::FieldManagerScalarResponseFunction::evaluateResponse(
+    current_time, xdot, x, p, g);
+
+  // Post-process
+  postProcessResponses(x.Map().Comm(), Teuchos::rcp(&g,false));
 }
 
 void
@@ -138,7 +156,7 @@ evaluateGradient(const double current_time,
 
 void 
 QCAD::SaddleValueResponseFunction::
-postProcessResponses(const Epetra_Comm& comm, Teuchos::RCP<Epetra_Vector>& g)
+postProcessResponses(const Epetra_Comm& comm, const Teuchos::RCP<Epetra_Vector>& g)
 {
   bool bShowInfo = (comm.MyPID() == 0);
 
@@ -266,7 +284,7 @@ int QCAD::SaddleValueResponseFunction::
 FindSaddlePoint(std::vector<double>& allFieldVals, std::vector<double>& allRetFieldVals,
 		std::vector<double>* allCoords, std::vector<int>& ordering,
 		double cutoffDistance, double cutoffFieldVal, double minDepth, bool bShortInfo,
-		Teuchos::RCP<Epetra_Vector>& g)
+		const Teuchos::RCP<Epetra_Vector>& g)
 {
   bool bDebug = bDebugMode;
 
@@ -308,7 +326,7 @@ FindSaddlePoint(std::vector<double>& allFieldVals, std::vector<double>& allRetFi
       lastDeepTrees = nDeepTrees;
     }
 
-    for(int j=i-1; fabs(allFieldVals[I] - allFieldVals[ordering[j]]) < cutoffFieldVal && j >= 0; j--) {
+    for(int j=i-1; j >= 0 && fabs(allFieldVals[I] - allFieldVals[ordering[j]]) < cutoffFieldVal; j--) {
       J = ordering[j];
 
       if( distance(allCoords, I, J, numDims) < cutoffDistance ) {
@@ -423,7 +441,7 @@ FindSaddlePoint(std::vector<double>& allFieldVals, std::vector<double>& allRetFi
 
 void 
 QCAD::SaddleValueResponseFunction::
-postProcessResponseDerivatives(const Epetra_Comm& comm, Teuchos::RCP<Epetra_MultiVector>& gt)
+postProcessResponseDerivatives(const Epetra_Comm& comm, const Teuchos::RCP<Epetra_MultiVector>& gt)
 {
 }
 

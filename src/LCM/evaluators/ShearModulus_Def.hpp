@@ -71,8 +71,8 @@ ShearModulus(Teuchos::ParameterList& p) :
     }
   }
   else {
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-		       "Invalid shear modulus type " << type);
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+			       "Invalid shear modulus type " << type);
   } 
 
   if ( p.isType<string>("QP Temperature Name") ) {
@@ -84,7 +84,7 @@ ShearModulus(Teuchos::ParameterList& p) :
     this->addDependentField(Temperature);
     isThermoElastic = true;
     dmudT_value = shmd_list->get("dmudT Value", 0.0);
-    refTemp = shmd_list->get("Reference Temperature", 0.0);
+    refTemp = p.get<RealType>("Reference Temperature", 0.0);
     new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
                                 "dmudT Value", this, paramLib);
   }
@@ -135,7 +135,7 @@ evaluateFields(typename Traits::EvalData workset)
   if (isThermoElastic) {
     for (std::size_t cell=0; cell < numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-	shearModulus(cell,qp) += dmudT_value * Temperature(cell,qp);
+	shearModulus(cell,qp) -= dmudT_value * (Temperature(cell,qp) - refTemp);
       }
     }
   }
@@ -154,10 +154,10 @@ ShearModulus<EvalT,Traits>::getValue(const std::string &n)
     if (n == Albany::strint("Shear Modulus KL Random Variable",i))
       return rv[i];
   }
-  TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-		     std::endl <<
-		     "Error! Logic error in getting paramter " << n
-		     << " in ShearModulus::getValue()" << std::endl);
+  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+			     std::endl <<
+			     "Error! Logic error in getting paramter " << n
+			     << " in ShearModulus::getValue()" << std::endl);
   return constant_value;
 }
 

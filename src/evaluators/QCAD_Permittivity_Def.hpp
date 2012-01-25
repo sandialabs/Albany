@@ -103,7 +103,7 @@ Permittivity(Teuchos::ParameterList& p) :
   // This effectively validates the 2nd argument in perm_list->get (...);
   else 
   {
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		       "Invalid Permittivity Type: " << typ);
   } 
 
@@ -208,7 +208,7 @@ evaluateFields(typename Traits::EvalData workset)
         }
         
         else
-          TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
+          TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
 	          std::endl << "Error!  x-coord:" << coord[0] << "is outside the oxideWidth" << 
 	          " + siliconWidth range: " << oxideWidth + siliconWidth << "!"<< std::endl);
         
@@ -243,7 +243,7 @@ QCAD::Permittivity<EvalT,Traits>::getValue(const std::string &n)
   // otherwise, throw out error message and continue the program
   else 
   {
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 				std::endl <<
 				"Error! Logic error in getting paramter " << n <<
 				" in Permittivity::getValue()" << std::endl);

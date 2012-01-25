@@ -19,7 +19,8 @@
 #include "Epetra_Comm.h"
 
 Albany::SolutionTwoNormResponseFunction::
-SolutionTwoNormResponseFunction()
+SolutionTwoNormResponseFunction(const Teuchos::RCP<const Epetra_Comm>& comm) :
+  SamplingBasedScalarResponseFunction(comm)
 {
 }
 

@@ -159,6 +159,16 @@ ELSE()
   SET(ALBANY_ASCR FALSE)
 ENDIF()
 
+# Add option to check for hardware floating point exceptions using SSE, defaults to disabled
+IF (ENABLE_CHECK_FPE)
+  ADD_DEFINITIONS(-DALBANY_CHECK_FPE)
+  MESSAGE("-- FPE checking is Enabled, compiling with -DALBANY_CHECK_FPE")
+  SET(ALBANY_CHECK_FPE TRUE)
+ELSE()
+  MESSAGE("-- FPE checking is NOT Enabled.")
+  SET(ALBANY_CHECK_FPE FALSE)
+ENDIF()
+
 add_subdirectory(src)
 
 enable_testing()

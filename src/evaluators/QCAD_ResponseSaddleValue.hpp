@@ -18,7 +18,6 @@
 #ifndef QCAD_RESPONSESADDLEVALUE_HPP
 #define QCAD_RESPONSESADDLEVALUE_HPP
 
-#include "PHAL_ResponseBase.hpp"
 #include "QCAD_EvaluatorTools.hpp"
 #include "QCAD_SaddleValueResponseFunction.hpp"
 
@@ -43,6 +42,18 @@ namespace QCAD
 				     PHX::FieldManager<Traits>& vm);
   
     void evaluateFields(typename Traits::EvalData d);
+
+    Teuchos::RCP<const PHX::FieldTag> getEvaluatedFieldTag() const {
+      return response_operation;
+    }
+
+    Teuchos::RCP<const PHX::FieldTag> getResponseFieldTag() const {
+      return response_operation;
+    }
+
+    int numResponses() const { 
+      return 5; 
+    }
 	  
   private:
     Teuchos::RCP<const Teuchos::ParameterList> getValidResponseParameters() const;
@@ -57,7 +68,7 @@ namespace QCAD
     PHX::MDField<ScalarT> retField;
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
     PHX::MDField<MeshScalarT,Cell,Node,Dim> coordVec_vertices;
-    PHX::MDField<ScalarT,Cell,QuadPoint> weights;
+    PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
     
     std::string fieldName;
     std::string retFieldName;

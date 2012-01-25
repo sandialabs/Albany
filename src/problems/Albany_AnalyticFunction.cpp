@@ -40,7 +40,7 @@ Teuchos::RCP<Albany::AnalyticFunction> Albany::createAnalyticFunction(
   else if (name=="Linear Y")
     F = Teuchos::rcp(new Albany::LinearY(neq, numDim, data));
   else
-    TEST_FOR_EXCEPTION(name != "Valid Initial Condition Function",
+    TEUCHOS_TEST_FOR_EXCEPTION(name != "Valid Initial Condition Function",
                        std::logic_error,
                        "Unrecognized initial condition function name: " << name);
   return F;
@@ -51,22 +51,22 @@ Teuchos::RCP<Albany::AnalyticFunction> Albany::createAnalyticFunction(
 Albany::ConstantFunction::ConstantFunction(int neq_, int numDim_,
    Teuchos::Array<double> data_) : numDim(numDim_), neq(neq_), data(data_)
 {
-  if (data.size()>0) val=data[0];
-  else val = 0.0;
 }
 void Albany::ConstantFunction::compute(double* x, const double *X) 
 {
-  for (int i=0; i<neq; i++) x[i]=val;
+  if (data.size()>0)
+    for (int i=0; i<neq; i++) 
+      x[i]=data[i];
 }
 
 //*****************************************************************************
 Albany::GaussSin::GaussSin(int neq_, int numDim_, Teuchos::Array<double> data_)
  : numDim(numDim_), neq(neq_), data(data_)
 {
-  TEST_FOR_EXCEPTION((neq!=1) || (numDim!=1) || (data.size()!=1),
-                      std::logic_error,
-                     "Error! Invalid call of GaussSin with " <<neq
-                    <<" "<< numDim <<"  "<< data.size() << std::endl);
+  TEUCHOS_TEST_FOR_EXCEPTION((neq!=1) || (numDim!=1) || (data.size()!=1),
+			     std::logic_error,
+			     "Error! Invalid call of GaussSin with " <<neq
+			     <<" "<< numDim <<"  "<< data.size() << std::endl);
 }
 void Albany::GaussSin::compute(double* x, const double *X) 
 {
@@ -77,10 +77,10 @@ void Albany::GaussSin::compute(double* x, const double *X)
 Albany::GaussCos::GaussCos(int neq_, int numDim_, Teuchos::Array<double> data_)
  : numDim(numDim_), neq(neq_), data(data_)
 {
-  TEST_FOR_EXCEPTION((neq!=1) || (numDim!=1) || (data.size()!=1),
-                      std::logic_error,
-                     "Error! Invalid call of GaussCos with " <<neq
-                    <<" "<< numDim <<"  "<< data.size() << std::endl);
+  TEUCHOS_TEST_FOR_EXCEPTION((neq!=1) || (numDim!=1) || (data.size()!=1),
+			     std::logic_error,
+			     "Error! Invalid call of GaussCos with " <<neq
+			     <<" "<< numDim <<"  "<< data.size() << std::endl);
 }
 void Albany::GaussCos::compute(double* x, const double *X) 
 {
@@ -90,10 +90,10 @@ void Albany::GaussCos::compute(double* x, const double *X)
 Albany::LinearY::LinearY(int neq_, int numDim_, Teuchos::Array<double> data_)
  : numDim(numDim_), neq(neq_), data(data_)
 {
-  TEST_FOR_EXCEPTION((neq<2) || (numDim<2) || (data.size()!=1),
-                      std::logic_error,
-                     "Error! Invalid call of LinearY with " <<neq
-                    <<" "<< numDim <<"  "<< data.size() << std::endl);
+  TEUCHOS_TEST_FOR_EXCEPTION((neq<2) || (numDim<2) || (data.size()!=1),
+			     std::logic_error,
+			     "Error! Invalid call of LinearY with " <<neq
+			     <<" "<< numDim <<"  "<< data.size() << std::endl);
 }
 void Albany::LinearY::compute(double* x, const double *X) 
 {

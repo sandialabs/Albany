@@ -79,12 +79,12 @@
 
   <ParameterList name="Regression Results">
     <Parameter name="Number of Comparisons" type="int" value="1" />
-    <Parameter name="Test Values" type="Array(double)" value="{1.27590778497e-07}" />
+    <Parameter name="Test Values" type="Array(double)" value="{3.2984725473e-09}" />
     <Parameter name="Relative Tolerance" type="double" value="1.0e-3" />
     <Parameter name="Absolute Tolerance" type="double" value="1.0e-6" />
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="1" />
     <Parameter name="Sensitivity Test Values 0" type="Array(double)"
-     	       value="{1.7880360171, 1.78803527964, -6.21817e-08}" />
+     	       value="{ 0.0462243589677, 0.0462243399027, -1.60846141235e-09 }" />
   </ParameterList>
 
   <ParameterList name="Piro">

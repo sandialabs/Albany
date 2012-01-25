@@ -19,12 +19,14 @@
 #include "Albany_EigendataInfoStruct.hpp"
 #include "NOX_Abstract_MultiVector.H"
 #include "NOX_Epetra_MultiVector.H"
+#include "Epetra_Import.h"
 #include "Epetra_Vector.h"
 #include <string>
 
 Albany::SaveEigenData::
 SaveEigenData(Teuchos::ParameterList& locaParams, Teuchos::RCP<NOX::Epetra::Observer> observer, Albany::StateManager* pStateMgr)
-   :  nsave(0)
+  :  nsave(0),
+     nSaveAsStates(0)
 {
   bool doEig = locaParams.sublist("Stepper").get("Compute Eigenvalues", false);
   if (doEig) {
@@ -64,16 +66,31 @@ Albany::SaveEigenData::save(
 
   char buf[100];
 
-  int ns = nsave;
-  if (ns > evecs_r->numVectors())
-    ns = evecs_r->numVectors();
+  int ns = std::min(nsave, evecs_r->numVectors());
 
-  // Store in state manager
+  // Store *overlapped* eigenvectors in state manager
   Teuchos::RCP<EigendataStruct> eigenData = Teuchos::rcp( new EigendataStruct );
+
+  Teuchos::RCP<Albany::AbstractDiscretization> disc = 
+    pAlbStateMgr->getDiscretization();
+
   eigenData->eigenvalueRe = evals_r;
   eigenData->eigenvalueIm = evals_i;
-  eigenData->eigenvectorRe = ne_r;
-  eigenData->eigenvectorIm = ne_i;
+
+  eigenData->eigenvectorRe = 
+    Teuchos::rcp(new Epetra_MultiVector(*(disc->getOverlapMap()), ns));
+  eigenData->eigenvectorIm =
+    Teuchos::rcp(new Epetra_MultiVector(*(disc->getOverlapMap()), ns));
+
+  // Importer for overlapped data
+  Teuchos::RCP<Epetra_Import> importer =
+    Teuchos::rcp(new Epetra_Import(*(disc->getOverlapMap()), *(disc->getMap())));
+
+  // Overlapped eigenstate vectors
+  for(int i=0; i<ns; i++) {
+    (*(eigenData->eigenvectorRe))(i)->Import( *(e_r(i)), *importer, Insert );
+    (*(eigenData->eigenvectorIm))(i)->Import( *(e_i(i)), *importer, Insert );
+  }
 
   pAlbStateMgr->setEigenData(eigenData);
 

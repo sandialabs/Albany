@@ -18,37 +18,33 @@
 #include <fstream>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Sacado_ParameterRegistration.hpp"
+#include "Teuchos_CommHelpers.hpp"
+#include "Phalanx.hpp"
 
 template<typename EvalT, typename Traits>
 QCAD::ResponseCenterOfMass<EvalT, Traits>::
-ResponseCenterOfMass(Teuchos::ParameterList& p) :
-  PHAL::ResponseBase<EvalT, Traits>(p),
-  coordVec(p.get<string>("Coordinate Vector Name"),
-	   p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout")),
-  weights(p.get<std::string>("Weights Name"),
-	p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"))
+ResponseCenterOfMass(Teuchos::ParameterList& p,
+		     const Teuchos::RCP<Albany::Layouts>& dl) :
+  coordVec("Coord Vec", dl->qp_vector),
+  weights("Weights", dl->qp_scalar)
 {
-  //! get and validate Response parameter list
+  // get and validate Response parameter list
   Teuchos::ParameterList* plist = 
     p.get<Teuchos::ParameterList*>("Parameter List");
-
   Teuchos::RCP<const Teuchos::ParameterList> reflist = 
     this->getValidResponseParameters();
   plist->validateParameters(*reflist,0);
 
-  //! number of quad points per cell and dimension of space
-  Teuchos::RCP<PHX::DataLayout> scalar_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
-  Teuchos::RCP<PHX::DataLayout> vector_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
+  // number of quad points per cell and dimension of space
+  Teuchos::RCP<PHX::DataLayout> scalar_dl = dl->qp_scalar;
+  Teuchos::RCP<PHX::DataLayout> vector_dl = dl->qp_vector;
   
   std::vector<PHX::DataLayout::size_type> dims;
   vector_dl->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
 
-  //! User-specified parameters
+  // User-specified parameters
   fieldName  = plist->get<std::string>("Field Name");
   opDomain     = plist->get<std::string>("Operation Domain", "box");
 
@@ -56,17 +52,17 @@ ResponseCenterOfMass(Teuchos::ParameterList& p) :
     limitX = limitY = limitZ = false;
 
     if( plist->isParameter("x min") && plist->isParameter("x max") ) {
-      limitX = true; TEST_FOR_EXCEPT(numDims <= 0);
+      limitX = true; TEUCHOS_TEST_FOR_EXCEPT(numDims <= 0);
       xmin = plist->get<double>("x min");
       xmax = plist->get<double>("x max");
     }
     if( plist->isParameter("y min") && plist->isParameter("y max") ) {
-      limitY = true; TEST_FOR_EXCEPT(numDims <= 1);
+      limitY = true; TEUCHOS_TEST_FOR_EXCEPT(numDims <= 1);
       ymin = plist->get<double>("y min");
       ymax = plist->get<double>("y max");
     }
     if( plist->isParameter("z min") && plist->isParameter("z max") ) {
-      limitZ = true; TEST_FOR_EXCEPT(numDims <= 2);
+      limitZ = true; TEUCHOS_TEST_FOR_EXCEPT(numDims <= 2);
       zmin = plist->get<double>("z min");
       zmax = plist->get<double>("z max");
     }
@@ -74,28 +70,40 @@ ResponseCenterOfMass(Teuchos::ParameterList& p) :
   else if(opDomain == "element block") {
     ebName = plist->get<string>("Element Block Name");
   }
-  else TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+  else TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
              << "Error!  Invalid operation domain type " << opDomain << std::endl); 
 
 
-  //! setup field
+  // setup field
   PHX::MDField<ScalarT> f(fieldName, scalar_dl); field = f;
 
-  //! add dependent fields
+  // add dependent fields
   this->addDependentField(field);
   this->addDependentField(coordVec);
   this->addDependentField(weights);
+  this->setName(fieldName+" Response Center of Mass"+PHX::TypeString<EvalT>::value);
 
-  //! set initial values: ( <com_x>, <com_y>, <com_z>, <field integral normalized (=1) > )
-  std::vector<double> initVals(4, 0.0); 
-  PHAL::ResponseBase<EvalT, Traits>::setInitialValues(initVals);
+  using PHX::MDALayout;
 
-  //! set post processing parameters (used to reconcile values across multiple processors)
-  Teuchos::ParameterList ppParams;
-  ppParams.set("Processing Type","SumThenNormalize");
-  ppParams.set("Normalizer Index",3);
-
-  PHAL::ResponseBase<EvalT, Traits>::setPostProcessingParams(ppParams);
+  // Setup scatter evaluator
+  p.set("Stand-alone Evaluator", false);
+  std::string local_response_name = 
+    fieldName + " Local Response Center of Mass";
+  std::string global_response_name = 
+    fieldName + " Global Response Center of Mass";
+  int worksetSize = scalar_dl->dimension(0);
+  int responseSize = 4;
+  Teuchos::RCP<PHX::DataLayout> local_response_layout =
+    Teuchos::rcp(new MDALayout<Cell,Dim>(worksetSize, responseSize));
+  Teuchos::RCP<PHX::DataLayout> global_response_layout =
+    Teuchos::rcp(new MDALayout<Dim>(responseSize));
+  PHX::Tag<ScalarT> local_response_tag(local_response_name, 
+				       local_response_layout);
+  PHX::Tag<ScalarT> global_response_tag(global_response_name, 
+					global_response_layout);
+  p.set("Local Response Field Tag", local_response_tag);
+  p.set("Global Response Field Tag", global_response_tag);
+  PHAL::SeparableScatterScalarResponse<EvalT,Traits>::setup(p,dl);
 }
 
 // **********************************************************************
@@ -107,6 +115,20 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(field,fm);
   this->utils.setFieldData(coordVec,fm);
   this->utils.setFieldData(weights,fm);
+  PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postRegistrationSetup(d,fm);
+}
+
+// **********************************************************************
+template<typename EvalT, typename Traits>
+void QCAD::ResponseCenterOfMass<EvalT, Traits>::
+preEvaluate(typename Traits::PreEvalData workset)
+{
+  for (typename PHX::MDField<ScalarT>::size_type i=0; 
+       i<this->global_response.size(); i++)
+    this->global_response[i] = 0.0;
+
+  // Do global initialization
+  PHAL::SeparableScatterScalarResponse<EvalT,Traits>::preEvaluate(workset);
 }
 
 // **********************************************************************
@@ -114,14 +136,15 @@ template<typename EvalT, typename Traits>
 void QCAD::ResponseCenterOfMass<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  PHAL::ResponseBase<EvalT, Traits>::beginEvaluateFields(workset);
+  // Zero out local response
+  for (typename PHX::MDField<ScalarT>::size_type i=0; 
+       i<this->local_response.size(); i++)
+    this->local_response[i] = 0.0;
 
-  std::vector<ScalarT>& local_g = PHAL::ResponseBase<EvalT, Traits>::local_g;
   ScalarT integral, moment;
 
   if(opDomain == "element block" && workset.EBName != ebName) 
   {
-      PHAL::ResponseBase<EvalT, Traits>::endEvaluateFields(workset);
       return;
   }
 
@@ -143,17 +166,46 @@ evaluateFields(typename Traits::EvalData workset)
     // Add to running total volume and mass moment
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       integral = field(cell,qp) * weights(cell,qp);
-      local_g[3] += integral;
+      this->local_response(cell,3) += integral;
+      this->global_response(3) += integral;
 
       for(std::size_t i=0; i<numDims && i<3; i++) {
 	moment = field(cell,qp) * weights(cell,qp) * coordVec(cell,qp,i);
-	local_g[i] += moment;
+	this->local_response(cell,i) += moment;
+	this->global_response(i) += moment;
       }
     }
 
   }
 
-  PHAL::ResponseBase<EvalT, Traits>::endEvaluateFields(workset);
+  // Do any local-scattering necessary
+  PHAL::SeparableScatterScalarResponse<EvalT,Traits>::evaluateFields(workset);
+}
+
+// **********************************************************************
+template<typename EvalT, typename Traits>
+void QCAD::ResponseCenterOfMass<EvalT, Traits>::
+postEvaluate(typename Traits::PostEvalData workset)
+{
+  // Add contributions across processors
+  Teuchos::RCP< Teuchos::ValueTypeSerializer<int,ScalarT> > serializer =
+    workset.serializerManager.template getValue<EvalT>();
+  Teuchos::reduceAll(
+    *workset.comm, *serializer, Teuchos::REDUCE_SUM,
+    this->global_response.size(), &this->global_response[0], 
+    &this->global_response[0]);
+
+  int iNormalizer = 3;
+  if( fabs(this->global_response[iNormalizer]) > 1e-9 ) {
+    for( int i=0; i < this->global_response.size(); i++) {
+      if( i == iNormalizer ) continue;
+      this->global_response[i] /= this->global_response[iNormalizer];
+    }
+    this->global_response[iNormalizer] = 1.0;
+  }
+
+  // Do global scattering
+  PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postEvaluate(workset);
 }
 
 // **********************************************************************
@@ -163,7 +215,12 @@ QCAD::ResponseCenterOfMass<EvalT,Traits>::getValidResponseParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
      	rcp(new Teuchos::ParameterList("Valid ResponseCenterOfMass Params"));;
+  Teuchos::RCP<const Teuchos::ParameterList> baseValidPL =
+    PHAL::SeparableScatterScalarResponse<EvalT,Traits>::getValidResponseParameters();
+  validPL->setParameters(*baseValidPL);
 
+  validPL->set<string>("Name", "", "Name of response function");
+  validPL->set<int>("Phalanx Graph Visualization Detail", 0, "Make dot file to visualize phalanx graph");
   validPL->set<string>("Field Name", "", "Scalar field from which to compute center of mass");
   validPL->set<string>("Operation Domain", "box", "Region to perform operation: 'box' or 'element block'");
 

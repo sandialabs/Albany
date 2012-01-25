@@ -68,7 +68,7 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const int worksetSize) 
 {
-  TEST_FOR_EXCEPTION(!metaData->is_FEM_initialized(),
+  TEUCHOS_TEST_FOR_EXCEPTION(!metaData->is_FEM_initialized(),
        std::logic_error,
        "LogicError: metaData->FEM_initialize(numDim) not yet called" << std::endl);
 
@@ -101,38 +101,41 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
 
   // Code to parse the vector of StateStructs and create STK fields
   for (std::size_t i=0; i<sis->size(); i++) {
-      Albany::StateStruct& st = *((*sis)[i]);
-      std::vector<int>& dim = st.dim;
-      if (dim.size() == 2 && st.entity=="QuadPoint") {
-        qpscalar_states.push_back(& metaData->declare_field< QPScalarFieldType >( st.name) );
-        stk::mesh::put_field( *qpscalar_states.back() , metaData->element_rank(),
-                              metaData->universal_part(), dim[1]);
-        cout << "NNNN qps field name " << qpscalar_states.back()->name() << endl;
+    Albany::StateStruct& st = *((*sis)[i]);
+    std::vector<int>& dim = st.dim;
+    if (dim.size() == 2 && st.entity=="QuadPoint") {
+      qpscalar_states.push_back(& metaData->declare_field< QPScalarFieldType >( st.name) );
+      stk::mesh::put_field( *qpscalar_states.back() , metaData->element_rank(),
+			    metaData->universal_part(), dim[1]);
+      cout << "NNNN qps field name " << qpscalar_states.back()->name() << endl;
 #ifdef ALBANY_SEACAS
-        if (st.output) stk::io::set_field_role(*qpscalar_states.back(), Ioss::Field::TRANSIENT);
+      if (st.output) stk::io::set_field_role(*qpscalar_states.back(), Ioss::Field::TRANSIENT);
 #endif
-      }
-      else if (dim.size() == 3 && st.entity=="QuadPoint") {
-        qpvector_states.push_back(& metaData->declare_field< QPVectorFieldType >( st.name) );
-        // Multi-dim order is Fortran Ordering, so reversed here
-        stk::mesh::put_field( *qpvector_states.back() , metaData->element_rank(),
-                              metaData->universal_part(), dim[2], dim[1]);
-        cout << "NNNN qpv field name " << qpvector_states.back()->name() << endl;
+    }
+    else if (dim.size() == 3 && st.entity=="QuadPoint") {
+      qpvector_states.push_back(& metaData->declare_field< QPVectorFieldType >( st.name) );
+      // Multi-dim order is Fortran Ordering, so reversed here
+      stk::mesh::put_field( *qpvector_states.back() , metaData->element_rank(),
+			    metaData->universal_part(), dim[2], dim[1]);
+      cout << "NNNN qpv field name " << qpvector_states.back()->name() << endl;
 #ifdef ALBANY_SEACAS
-        if (st.output) stk::io::set_field_role(*qpvector_states.back(), Ioss::Field::TRANSIENT);
+      if (st.output) stk::io::set_field_role(*qpvector_states.back(), Ioss::Field::TRANSIENT);
 #endif
-      }
-      else if (dim.size() == 4 && st.entity=="QuadPoint") {
-        qptensor_states.push_back(& metaData->declare_field< QPTensorFieldType >( st.name) );
-        // Multi-dim order is Fortran Ordering, so reversed here
-        stk::mesh::put_field( *qptensor_states.back() , metaData->element_rank(),
-                              metaData->universal_part(), dim[3], dim[2], dim[1]);
-        cout << "NNNN qpt field name " << qptensor_states.back()->name() << endl;
+    }
+    else if (dim.size() == 4 && st.entity=="QuadPoint") {
+      qptensor_states.push_back(& metaData->declare_field< QPTensorFieldType >( st.name) );
+      // Multi-dim order is Fortran Ordering, so reversed here
+      stk::mesh::put_field( *qptensor_states.back() , metaData->element_rank(),
+			    metaData->universal_part(), dim[3], dim[2], dim[1]);
+      cout << "NNNN qpt field name " << qptensor_states.back()->name() << endl;
 #ifdef ALBANY_SEACAS
-     if (st.output) stk::io::set_field_role(*qptensor_states.back(), Ioss::Field::TRANSIENT);
+      if (st.output) stk::io::set_field_role(*qptensor_states.back(), Ioss::Field::TRANSIENT);
 #endif
-      }
-     else TEST_FOR_EXCEPT(dim.size() < 2 || dim.size()>4 || st.entity!="QuadPoint");
+    }
+    else if ( dim.size() == 1 && st.entity=="ScalarValue" ) {
+      scalarValue_states.push_back(st.name);
+    }
+    else TEUCHOS_TEST_FOR_EXCEPT(dim.size() < 2 || dim.size()>4 || st.entity!="QuadPoint");
 
   }
   
@@ -142,7 +145,8 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
     exoOutFile = params->get<string>("Exodus Output File Name");
 }
 
-void Albany::GenericSTKMeshStruct::DeclareParts(std::vector<std::string> ebNames, std::vector<std::string> nsNames)
+void Albany::GenericSTKMeshStruct::DeclareParts(std::vector<std::string> ebNames, std::vector<std::string> ssNames,
+  std::vector<std::string> nsNames)
 {
   // Element blocks
   for (std::size_t i=0; i<ebNames.size(); i++) {
@@ -150,6 +154,15 @@ void Albany::GenericSTKMeshStruct::DeclareParts(std::vector<std::string> ebNames
     partVec[i] = & metaData->declare_part(ebn, metaData->element_rank() );
 #ifdef ALBANY_SEACAS
     stk::io::put_io_part_attribute(*partVec[i]);
+#endif
+  }
+
+  // SideSets
+  for (std::size_t i=0; i<ssNames.size(); i++) {
+    std::string ssn = ssNames[i];
+    ssPartVec[ssn] = & metaData->declare_part(ssn, metaData->side_rank() );
+#ifdef ALBANY_SEACAS
+    stk::io::put_io_part_attribute(*ssPartVec[ssn]);
 #endif
   }
 
@@ -163,10 +176,11 @@ void Albany::GenericSTKMeshStruct::DeclareParts(std::vector<std::string> ebNames
   }
 }
 
+
 Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >&
 Albany::GenericSTKMeshStruct::getMeshSpecs()
 {
-  TEST_FOR_EXCEPTION(meshSpecs==Teuchos::null,
+  TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs==Teuchos::null,
        std::logic_error,
        "meshSpecs accessed, but it has not been constructed" << std::endl);
   return meshSpecs;

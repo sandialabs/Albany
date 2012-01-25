@@ -33,7 +33,10 @@ void Albany_NOXObserver::observeSolution(
 					 const Epetra_Vector& solution)
 {
   // Use time as time_or_param_val  when none is given
-  observeSolution(solution,  app->getTimeMgr().getCurrentTime());
+  if ( app->getParamLib()->isParameter("Time") )
+    observeSolution(solution,  app->getParamLib()->getRealValue<PHAL::AlbanyTraits::Residual>("Time"));
+  else
+    observeSolution(solution,  0.0);
 }
 
 void Albany_NOXObserver::observeSolution(
@@ -59,8 +62,8 @@ void Albany_NOXObserver::observeSolution(
   //solution.MaxValue(&mx);
   //cout << setprecision(9) << "MaxValue " << mx << endl;
 
-  // keep track of (pseudo)time
-  app->getTimeMgr().updateTime();
+  // Evaluate state field manager
+  app->evaluateStateFieldManager(time_or_param_val, NULL, solution);
 
   // This must come at the end since it renames the New state 
   // as the Old state in preparation for the next step

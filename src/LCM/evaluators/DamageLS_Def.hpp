@@ -71,8 +71,8 @@ DamageLS(Teuchos::ParameterList& p) :
     }
   }
   else {
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-		       "Invalid damage length scale type " << type);
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+			       "Invalid damage length scale type " << type);
   } 
 
   this->addEvaluatedField(damageLS);
@@ -126,10 +126,10 @@ DamageLS<EvalT,Traits>::getValue(const std::string &n)
     if (n == Albany::strint("Damage Length Scale KL Random Variable",i))
       return rv[i];
   }
-  TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-		     std::endl <<
-		     "Error! Logic error in getting paramter " << n
-		     << " in DamageLS::getValue()" << std::endl);
+  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+			     std::endl <<
+			     "Error! Logic error in getting paramter " << n
+			     << " in DamageLS::getValue()" << std::endl);
   return constant_value;
 }
 

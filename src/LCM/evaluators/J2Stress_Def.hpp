@@ -276,64 +276,64 @@ evaluateFields(typename Traits::EvalData workset)
 	  dg = -2. * mubar * ( 1. + dH / ( 3. * mubar ) );
 
 	  res = std::abs(g);
-	  if ( res < 1.e-12 || res/f < 1.E-12 )
+	  if ( res < 1.e-11 || res/f < 1.E-11 )
 	    converged = true;
 
-	  TEST_FOR_EXCEPTION( count > 20, std::runtime_error,
-			      std::endl << "Error in return mapping, count = " << count << 			
-			      "\nres = " << res <<
-			      "\nrelres = " << res/f <<
-			      "\ng = " << g <<
-			      "\ndg = " << dg <<
-			      "\nalpha = " << alpha << std::endl);
+	  TEUCHOS_TEST_FOR_EXCEPTION( count > 20, std::runtime_error,
+				      std::endl << "Error in return mapping, count = " << count <<
+                                      "\nres = " << res <<
+                                      "\nrelres = " << res/f <<
+                                      "\ng = " << g <<
+                                      "\ndg = " << dg <<
+                                      "\nalpha = " << alpha << std::endl);
 
-	}
+        }
 
-	// plastic direction
-	for (std::size_t i=0; i < numDims; ++i)	
-	  for (std::size_t j=0; j < numDims; ++j)
-	    N(i,j) = (1/smag) * s(i,j);
+        // plastic direction
+        for (std::size_t i=0; i < numDims; ++i) 
+          for (std::size_t j=0; j < numDims; ++j)
+            N(i,j) = (1/smag) * s(i,j);
 
-	for (std::size_t i=0; i < numDims; ++i)	
-	  for (std::size_t j=0; j < numDims; ++j)
-	    s(i,j) -= 2. * mubar * dgam * N(i,j);
+        for (std::size_t i=0; i < numDims; ++i) 
+          for (std::size_t j=0; j < numDims; ++j)
+            s(i,j) -= 2. * mubar * dgam * N(i,j);
 
-	// update eqps
-	//eqps(cell,qp) = eqpsold(cell,qp) + sqrt(2./3.) * dgam;
-	eqps(cell,qp) = alpha;
+        // update eqps
+        //eqps(cell,qp) = eqpsold(cell,qp) + sqrt(2./3.) * dgam;
+        eqps(cell,qp) = alpha;
 
-	// exponential map to get Fp
-	for (std::size_t i=0; i < numDims; ++i)	
-	  for (std::size_t j=0; j < numDims; ++j)
-	    A(i,j) = dgam * N(i,j);
+        // exponential map to get Fp
+        for (std::size_t i=0; i < numDims; ++i) 
+          for (std::size_t j=0; j < numDims; ++j)
+            A(i,j) = dgam * N(i,j);
 
-	exponential_map(expA, A);
+        exponential_map(expA, A);
 
-	// std::cout << "expA: \n";
-	// for (std::size_t i=0; i < numDims; ++i)	
-	//   for (std::size_t j=0; j < numDims; ++j)
-	//     std::cout << Sacado::ScalarValue<ScalarT>::eval(expA(i,j)) << " ";
-	// std::cout << std::endl;
-		  
-	for (std::size_t i=0; i < numDims; ++i)	
-	{
-	  for (std::size_t j=0; j < numDims; ++j)
-	  {
-	    Fp(cell,qp,i,j) = 0.0;
-	    for (std::size_t p=0; p < numDims; ++p)
-	    {
-	      Fp(cell,qp,i,j) += expA(i,p) * Fpold(cell,qp,p,j);
-	    }
-	  }
-	}
+        // std::cout << "expA: \n";
+        // for (std::size_t i=0; i < numDims; ++i)      
+        //   for (std::size_t j=0; j < numDims; ++j)
+        //     std::cout << Sacado::ScalarValue<ScalarT>::eval(expA(i,j)) << " ";
+        // std::cout << std::endl;
+                  
+        for (std::size_t i=0; i < numDims; ++i) 
+        {
+          for (std::size_t j=0; j < numDims; ++j)
+          {
+            Fp(cell,qp,i,j) = 0.0;
+            for (std::size_t p=0; p < numDims; ++p)
+            {
+              Fp(cell,qp,i,j) += expA(i,p) * Fpold(cell,qp,p,j);
+            }
+          }
+        }
       } 
       else
       {
-	// set state variables to old values
-	eqps(cell, qp) = eqpsold(cell,qp);
-	for (std::size_t i=0; i < numDims; ++i)	
-	  for (std::size_t j=0; j < numDims; ++j)
-	    Fp(cell,qp,i,j) = Fpold(cell,qp,i,j);
+        // set state variables to old values
+        eqps(cell, qp) = eqpsold(cell,qp);
+        for (std::size_t i=0; i < numDims; ++i) 
+          for (std::size_t j=0; j < numDims; ++j)
+            Fp(cell,qp,i,j) = Fpold(cell,qp,i,j);
       }
       
 
@@ -341,13 +341,13 @@ evaluateFields(typename Traits::EvalData workset)
       p = kappa * ( J(cell,qp) - 1 / ( J(cell,qp) ) );
       
       // compute stress
-      for (std::size_t i=0; i < numDims; ++i)	
+      for (std::size_t i=0; i < numDims; ++i)   
       {
-	for (std::size_t j=0; j < numDims; ++j)
-	{
-	  stress(cell,qp,i,j) = s(i,j) / J(cell,qp);
-	}
-	stress(cell,qp,i,i) += p;
+        for (std::size_t j=0; j < numDims; ++j)
+        {
+          stress(cell,qp,i,j) = s(i,j) / J(cell,qp);
+        }
+        stress(cell,qp,i,i) += p;
       }
     }
   }
@@ -357,8 +357,8 @@ evaluateFields(typename Traits::EvalData workset)
   // values. Leaving this out leads to inversion of 0 tensors.
   for (std::size_t cell=workset.numCells; cell < worksetSize; ++cell)
     for (std::size_t qp=0; qp < numQPs; ++qp) 
-      for (std::size_t i=0; i < numDims; ++i)	
-	  Fp(cell,qp,i,i) = 1.0;
+      for (std::size_t i=0; i < numDims; ++i)   
+          Fp(cell,qp,i,i) = 1.0;
 }
 //**********************************************************************
 template<typename EvalT, typename Traits>
@@ -382,27 +382,27 @@ J2Stress<EvalT, Traits>::exponential_map(Intrepid::FieldContainer<ScalarT> & exp
     // expA += tmp
     for (std::size_t i=0; i < numDims; ++i)
       for (std::size_t j=0; j < numDims; ++j)
-	expA(i,j) += tmp(i,j);
+        expA(i,j) += tmp(i,j);
 
     tmp2.initialize(0.0);
     for (std::size_t i=0; i < numDims; ++i)
       for (std::size_t j=0; j < numDims; ++j)
-	for (std::size_t p=0; p < numDims; ++p)
-	  tmp2(i,j) += A(i,p) * tmp(p,j);
+        for (std::size_t p=0; p < numDims; ++p)
+          tmp2(i,j) += A(i,p) * tmp(p,j);
 
     // tmp = tmp2
     k = k + 1.0;
     for (std::size_t i=0; i < numDims; ++i)
       for (std::size_t j=0; j < numDims; ++j)
-	tmp(i,j) = (1/k) * tmp2(i,j);
+        tmp(i,j) = (1/k) * tmp2(i,j);
 
     if (norm(tmp)/norm0 < 1.E-14 ) converged = true;
     
-    TEST_FOR_EXCEPTION( k > 50.0, std::runtime_error,
-			std::endl << "Error in exponential map, k = " << k << 
-			"\nnorm0 = " << norm0 <<
-			"\nnorm = " << norm(tmp)/norm0 <<
-			"\nA = \n" << A << std::endl);
+    TEUCHOS_TEST_FOR_EXCEPTION( k > 50.0, std::runtime_error,
+                                std::endl << "Error in exponential map, k = " << k << 
+                                "\nnorm0 = " << norm0 <<
+                                "\nnorm = " << norm(tmp)/norm0 <<
+                                "\nA = \n" << A << std::endl);
     
   }
 }

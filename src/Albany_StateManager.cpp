@@ -21,7 +21,9 @@
 
 Albany::StateManager::StateManager() :
   stateVarsAreAllocated(false),
-  stateInfo(Teuchos::rcp(new StateInfoStruct))
+  stateInfo(Teuchos::rcp(new StateInfoStruct)),
+  time(0.0),
+  timeOld(0.0)
 {
 }
 
@@ -41,7 +43,8 @@ Albany::StateManager::registerStateVariable(const std::string &stateName, const 
                                             const bool registerOldState,
                                             const std::string& fieldName)
 {
-  registerStateVariable(stateName, dl, init_type, registerOldState);
+  const bool bOutputToExodus = true;
+  registerStateVariable(stateName, dl, init_type, registerOldState, bOutputToExodus, fieldName);
 
   // Create param list for SaveStateField evaluator 
   Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Save or Load State " 
@@ -59,10 +62,20 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
 					    const Teuchos::RCP<PHX::DataLayout> &dl,
                                             const std::string &init_type,
                                             const bool registerOldState,
-					    const bool outputToExodus)
+					    const bool outputToExodus,
+					    const std::string &responseIDtoRequire)
 
 {
-  TEST_FOR_EXCEPT(stateVarsAreAllocated);
+  TEUCHOS_TEST_FOR_EXCEPT(stateVarsAreAllocated);
+
+  if( statesToStore.find(stateName) != statesToStore.end() ) {
+    //Duplicate registration.  This will occur when a problem's 
+    // constructEvaluators function (templated) registers state variables.
+
+    //Perform a check here that dl and statesToStore[stateName] are the same:
+    //TEUCHOS_TEST_FOR_EXCEPT(dl != statesToStore[stateName]);  //I don't know how to do this correctly (erik)
+    return;  // Don't re-register the same state name
+  }
 
   statesToStore[stateName] = dl;
 
@@ -70,8 +83,12 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
   (*stateInfo).push_back(Teuchos::rcp(new Albany::StateStruct(stateName)));
   Albany::StateStruct& stateRef = *stateInfo->back();
   stateRef.initType = init_type; 
-  stateRef.entity = dl->name(1); //Tag, should be Node or QuadPoint
+  if ( dl->rank() > 1 )
+    stateRef.entity = dl->name(1); //Tag, should be Node or QuadPoint
+  else if ( dl->rank() == 1 )
+    stateRef.entity = "ScalarValue";
   stateRef.output = outputToExodus;
+  stateRef.responseIDtoRequire = responseIDtoRequire;
   dl->dimensions(stateRef.dim); 
 
   // If space is needed for old state
@@ -82,12 +99,14 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
     (*stateInfo).push_back(Teuchos::rcp(new Albany::StateStruct(stateName_old)));
     Albany::StateStruct& pstateRef = *stateInfo->back();
     pstateRef.initType = init_type; 
-    pstateRef.entity = dl->name(1); //Tag, should be Node or QuadPoint
+    if ( dl->rank() > 1 )
+      pstateRef.entity = dl->name(1); //Tag, should be Node or QuadPoint
+    else if ( dl->rank() == 1 )
+      pstateRef.entity = "ScalarValue";
     pstateRef.output = false; 
     dl->dimensions(pstateRef.dim); 
   }
 }
-
 
 Teuchos::RCP<Albany::StateInfoStruct>
 Albany::StateManager::getStateInfoStruct()
@@ -98,7 +117,7 @@ Albany::StateManager::getStateInfoStruct()
 void
 Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscretization>& disc_)
 {
-  TEST_FOR_EXCEPT(stateVarsAreAllocated);
+  TEUCHOS_TEST_FOR_EXCEPT(stateVarsAreAllocated);
   stateVarsAreAllocated = true;
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
@@ -130,36 +149,39 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
       if (init_type == "zero")
       {
         switch (size) {
-          case 2:
-            for (int cell = 0; cell < dims[0]; ++cell)
-              for (int qp = 0; qp < dims[1]; ++qp)
-                    sa[ws][stateName](cell, qp) = 0.0;
-            break;
-          case 3:
-            for (int cell = 0; cell < dims[0]; ++cell)
-              for (int qp = 0; qp < dims[1]; ++qp)
-                for (int i = 0; i < dims[2]; ++i)
-                      sa[ws][stateName](cell, qp, i) = 0.0;
-            break;
-          case 4:
-            for (int cell = 0; cell < dims[0]; ++cell)
-              for (int qp = 0; qp < dims[1]; ++qp)
-                for (int i = 0; i < dims[2]; ++i)
-                  for (int j = 0; j < dims[3]; ++j)
-                      sa[ws][stateName](cell, qp, i, j) = 0.0;
-            break;
-          default:
-            TEST_FOR_EXCEPTION(size<2||size>4, std::logic_error,
-                "Something is wrong during zero state variable initialization: " << size);
+	case 1:
+	  sa[ws][stateName](0) = 0.0;
+	  break;
+	case 2:
+	  for (int cell = 0; cell < dims[0]; ++cell)
+	    for (int qp = 0; qp < dims[1]; ++qp)
+	      sa[ws][stateName](cell, qp) = 0.0;
+	  break;
+	case 3:
+	  for (int cell = 0; cell < dims[0]; ++cell)
+	    for (int qp = 0; qp < dims[1]; ++qp)
+	      for (int i = 0; i < dims[2]; ++i)
+		sa[ws][stateName](cell, qp, i) = 0.0;
+	  break;
+	case 4:
+	  for (int cell = 0; cell < dims[0]; ++cell)
+	    for (int qp = 0; qp < dims[1]; ++qp)
+	      for (int i = 0; i < dims[2]; ++i)
+		for (int j = 0; j < dims[3]; ++j)
+		  sa[ws][stateName](cell, qp, i, j) = 0.0;
+	  break;
+	default:
+	  TEUCHOS_TEST_FOR_EXCEPTION(size<2||size>4, std::logic_error,
+				     "Something is wrong during zero state variable initialization: " << size);
         }
 
       }
       else if (init_type == "identity")
       {
         // we assume operating on the last two indices is correct
-        TEST_FOR_EXCEPTION(size != 4, std::logic_error,
-            "Something is wrong during identity state variable initialization: " << size);
-        TEST_FOR_EXCEPT( ! (dims[2] == dims[3]) );
+        TEUCHOS_TEST_FOR_EXCEPTION(size != 4, std::logic_error,
+				   "Something is wrong during identity state variable initialization: " << size);
+        TEUCHOS_TEST_FOR_EXCEPT( ! (dims[2] == dims[3]) );
 
         for (int cell = 0; cell < dims[0]; ++cell)
           for (int qp = 0; qp < dims[1]; ++qp)
@@ -173,17 +195,26 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
   *out << std::endl;
 }
 
+
+Teuchos::RCP<Albany::AbstractDiscretization> 
+Albany::StateManager::
+getDiscretization()
+{ 
+  return disc;
+}
+
+
 void
 Albany::StateManager::
 importStateData(Albany::StateArrays& statesToCopyFrom)
 {
-  TEST_FOR_EXCEPT(!stateVarsAreAllocated);
+  TEUCHOS_TEST_FOR_EXCEPT(!stateVarsAreAllocated);
 
   // Get states from STK mesh 
   Albany::StateArrays& sa = getStateArrays();
   int numWorksets = sa.size();
 
-  TEST_FOR_EXCEPT((unsigned int)numWorksets != statesToCopyFrom.size());
+  TEUCHOS_TEST_FOR_EXCEPT((unsigned int)numWorksets != statesToCopyFrom.size());
 
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   *out << std::endl;
@@ -205,6 +236,9 @@ importStateData(Albany::StateArrays& statesToCopyFrom)
       int size = dims.size();
 
       switch (size) {
+      case 1:
+	sa[ws][stateName](0) = statesToCopyFrom[ws][stateName](0);
+	break;
       case 2:
 	for (int cell = 0; cell < dims[0]; ++cell)
 	  for (int qp = 0; qp < dims[1]; ++qp)
@@ -224,8 +258,8 @@ importStateData(Albany::StateArrays& statesToCopyFrom)
 		sa[ws][stateName](cell, qp, i, j) = statesToCopyFrom[ws][stateName](cell, qp, i, j);
 	break;
       default:
-	TEST_FOR_EXCEPTION(size<2||size>4, std::logic_error,
-                "Something is wrong during zero state variable fill: " << size);
+	TEUCHOS_TEST_FOR_EXCEPTION(size<2||size>4, std::logic_error,
+				   "Something is wrong during zero state variable fill: " << size);
       }
     }
   }
@@ -236,14 +270,14 @@ importStateData(Albany::StateArrays& statesToCopyFrom)
 Albany::StateArray&
 Albany::StateManager::getStateArray(const int ws) const
 {
-  TEST_FOR_EXCEPT(!stateVarsAreAllocated);
+  TEUCHOS_TEST_FOR_EXCEPT(!stateVarsAreAllocated);
   return disc->getStateArrays()[ws];
 }
 
 Albany::StateArrays&
 Albany::StateManager::getStateArrays() const
 {
-  TEST_FOR_EXCEPT(!stateVarsAreAllocated);
+  TEUCHOS_TEST_FOR_EXCEPT(!stateVarsAreAllocated);
   return disc->getStateArrays();
 }
 
@@ -251,7 +285,7 @@ void
 Albany::StateManager::updateStates()
 {
   // Swap boolean that defines old and new (in terms of state1 and 2) in accessors
-  TEST_FOR_EXCEPT(!stateVarsAreAllocated);
+  TEUCHOS_TEST_FOR_EXCEPT(!stateVarsAreAllocated);
 
   // Get states from STK mesh 
   Albany::StateArrays& sa = disc->getStateArrays();
@@ -282,3 +316,26 @@ Albany::StateManager::setEigenData(const Teuchos::RCP<Albany::EigendataStruct>& 
 {
   eigenData = eigdata;
 }
+
+std::vector<std::string>
+Albany::StateManager::getResidResponseIDsToRequire()
+{
+  std::string id, name;
+  std::vector<std::string> idsToRequire; 
+
+  int i = 0;
+  for (Albany::StateInfoStruct::const_iterator st = stateInfo->begin(); st!= stateInfo->end(); st++) {
+    name = (*st)->name;
+    id = (*st)->responseIDtoRequire;
+    if(id.length() > 0) {
+      idsToRequire.push_back(id);
+cout << "RRR1  " << name << " requiring " << id << " (" << i << ")" << endl;
+    }
+    else {
+cout << "RRR1  " << name << " empty (" << i << ")" << endl;
+    }
+    i++;
+  }
+  return idsToRequire;
+}
+

@@ -39,22 +39,34 @@ namespace Albany {
   public:
   
     //! Default constructor
-    MultiHeatProblem(
-                         const Teuchos::RCP<Teuchos::ParameterList>& params,
-                         const Teuchos::RCP<ParamLib>& paramLib,
-                         const int numDim_, 
-                         const Teuchos::RCP<const Epetra_Comm>& comm_);
+    MultiHeatProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
+		     const Teuchos::RCP<ParamLib>& paramLib,
+		     const int numDim_, 
+		     const Teuchos::RCP<const Epetra_Comm>& comm_);
 
     //! Destructor
     ~MultiHeatProblem();
 
-    //! Build the PDE instantiations, boundary conditions, and initial solution
-    void buildProblem(
-       Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
-       StateManager& stateMgr,
-       Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
+    //! Return number of spatial dimensions
+    virtual int spatialDimension() const { return numDim; }
 
-    //! Each problem must generate it's list of valide parameters
+    //! Build the PDE instantiations, boundary conditions, and initial solution
+    virtual void buildProblem(
+      const Teuchos::RCP<Albany::Application>& app,
+      Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+      StateManager& stateMgr,
+      Teuchos::Array< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
+
+    // Build evaluators
+    virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
+    buildEvaluators(
+      PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+      const Albany::MeshSpecsStruct& meshSpecs,
+      Albany::StateManager& stateMgr,
+      Albany::FieldManagerChoice fmchoice,
+      const Teuchos::RCP<Teuchos::ParameterList>& responseList);
+
+    //! Each problem must generate it's list of valid parameters
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
   private:
@@ -65,48 +77,16 @@ namespace Albany {
     //! Private to prohibit copying
     MultiHeatProblem& operator=(const MultiHeatProblem&);
 
+  public:
+
     //! Main problem setup routine. Not directly called, but indirectly by following functions
-    template <typename EvalT>
-    void constructEvaluators(
-            PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-            const Albany::MeshSpecsStruct& meshSpecs,
-            Albany::StateManager& stateMgr,
-            Albany::FieldManagerChoice fmchoice,
-            Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
-
-    //! Interface for Residual (PDE) field manager
-    template <typename EvalT>
-    void constructResidEvaluators(
-            PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-            const Albany::MeshSpecsStruct& meshSpecs,
-            Albany::StateManager& stateMgr)
-    {
-      Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> > junk;
-      constructEvaluators<EvalT>(fm0, meshSpecs, stateMgr, BUILD_RESID_FM, junk);
-    }
-
-    //! Interface for Response field manager, except for residual type
-    template <typename EvalT>
-    void constructResponseEvaluators(
-            PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-            const Albany::MeshSpecsStruct& meshSpecs,
-            Albany::StateManager& stateMgr)
-    {
-      Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> > junk;
-      constructEvaluators<EvalT>(fm0, meshSpecs, stateMgr, BUILD_RESPONSE_FM, junk);
-    }
-
-    //! Interface for Response field manager, Residual type.
-    // This version loads the responses variable, that needs to be constructed just once
-    template <typename EvalT>
-    void constructResponseEvaluators(
-            PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-            const Albany::MeshSpecsStruct& meshSpecs,
-            Albany::StateManager& stateMgr,
-            Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
-    {
-      constructEvaluators<EvalT>(fm0, meshSpecs, stateMgr, BUILD_RESPONSE_FM, responses);
-    }
+    template <typename EvalT> Teuchos::RCP<const PHX::FieldTag>
+    constructEvaluators(
+      PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+      const Albany::MeshSpecsStruct& meshSpecs,
+      Albany::StateManager& stateMgr,
+      Albany::FieldManagerChoice fmchoice,
+      const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
     void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
 
@@ -116,7 +96,7 @@ namespace Albany {
     bool periodic;
     bool haveSource;
     bool haveAbsorption;
-	bool haveMatDB;
+    bool haveMatDB;
     int numDim;
 
     std::string mtrlDbFilename;
@@ -147,12 +127,13 @@ namespace Albany {
 
 
 template <typename EvalT>
-void Albany::MultiHeatProblem::constructEvaluators(
-        PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-        const Albany::MeshSpecsStruct& meshSpecs,
-        Albany::StateManager& stateMgr,
-        Albany::FieldManagerChoice fieldManagerChoice,
-        Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
+Teuchos::RCP<const PHX::FieldTag>
+Albany::MultiHeatProblem::constructEvaluators(
+  PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+  const Albany::MeshSpecsStruct& meshSpecs,
+  Albany::StateManager& stateMgr,
+  Albany::FieldManagerChoice fieldManagerChoice,
+  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
    using Teuchos::RCP;
    using Teuchos::rcp;
@@ -208,7 +189,7 @@ void Albany::MultiHeatProblem::constructEvaluators(
    fm0.template registerEvaluator<EvalT>
      (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
 
-  for (int i=0; i<neq; i++) {
+  for (unsigned int i=0; i<neq; i++) {
     fm0.template registerEvaluator<EvalT>
       (evalUtils.constructDOFInterpolationEvaluator(dof_names[i]));
 
@@ -235,6 +216,10 @@ void Albany::MultiHeatProblem::constructEvaluators(
     Teuchos::ParameterList& paramList = params->sublist("Thermal Conductivity");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
+    p->set<bool>("Have MatDB", haveMatDB);
+    // Here we assume that the instance of this problem applies on a single element block
+    p->set<string>("Element Block Name", meshSpecs.ebName);
+
     if(haveMatDB)
       p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
 
@@ -259,19 +244,49 @@ void Albany::MultiHeatProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (haveSource) { // Source
-    RCP<ParameterList> p = rcp(new ParameterList);
+// Check and see if a source term is specified for this problem in the main input file. 
+  bool problemSpecifiesASource = params->isSublist("Source Functions");
 
-    p->set<string>("Source Name", "Source");
-    p->set<string>("Variable Name", "Temperature");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+  if(problemSpecifiesASource){
 
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Source Functions");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+      // Sources the same everywhere if they are present at all
 
-    ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
+      haveSource = true;
+      RCP<ParameterList> p = rcp(new ParameterList);
+
+      p->set<string>("Source Name", "Source");
+      p->set<string>("Variable Name", "Temperature");
+      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+      Teuchos::ParameterList& paramList = params->sublist("Source Functions");
+      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+      ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+
+  }
+  else if(haveMatDB){ // Sources can be specified in terms of materials or element blocks
+
+      // Is the source function active for "this" element block?
+
+      haveSource =  materialDB->isElementBlockSublist(meshSpecs.ebName, "Source Functions");
+
+      if(haveSource){
+
+        RCP<ParameterList> p = rcp(new ParameterList);
+
+        p->set<string>("Source Name", "Source");
+        p->set<string>("Variable Name", "Temperature");
+        p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+        p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+        Teuchos::ParameterList& paramList = materialDB->getElementBlockSublist(meshSpecs.ebName, "Source Functions");
+        p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+        ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+    }
   }
 
   { // Temperature Resid
@@ -316,11 +331,13 @@ void Albany::MultiHeatProblem::constructEvaluators(
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
      PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter", dl->dummy);
      fm0.requireField<EvalT>(res_tag);
+     return res_tag.clone();
    }
-   else {
-     Teuchos::ParameterList& responseList = params->sublist("Response Functions");
+   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
      Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
-     respUtils.constructResponses(fm0, responses, responseList, stateMgr);
+     return respUtils.constructResponses(fm0, *responseList, stateMgr);
    }
+
+  return Teuchos::null;
 }
 #endif // ALBANY_HEATNONLINEARSOURCEPROBLEM_HPP

@@ -96,7 +96,11 @@ namespace QCAD {
     
     //! compute the electron density for Poisson-Schrodinger iteration
     ScalarT eDensityForPoissonSchrond(typename Traits::EvalData workset, 
-      std::size_t cell, std::size_t qp, const ScalarT prevPhi, const bool bUsePredCorr);
+        std::size_t cell, std::size_t qp, const ScalarT prevPhi, const bool bUsePredCorr);
+    
+    //! compute exchange-correlation potential energy within Local Density Approximation
+    ScalarT computeVxcLDA(const double& relPerm, const double& effMass, 
+        const ScalarT& eDensity); 
     
     //TODO: remove once test new version
     //! read eigenvalues from a text file (temporary, until we have a better way of passing them)
@@ -119,7 +123,7 @@ namespace QCAD {
     PHX::MDField<ScalarT,Cell,QuadPoint> ionizedDopant;    // ionized dopants in [cm-3]
     PHX::MDField<ScalarT,Cell,QuadPoint> conductionBand; // conduction band in [eV]
     PHX::MDField<ScalarT,Cell,QuadPoint> valenceBand;   // valence band in [eV]
-    PHX::MDField<ScalarT,Cell,QuadPoint> approxQuantumEDensity;   // approximate quantum electron density [cm-3]
+    PHX::MDField<ScalarT,Cell,QuadPoint> approxQuanEDen;   // approximate quantum electron density [cm-3]
 
     //! constant prefactor parameter in source function
     ScalarT factor;
@@ -150,6 +154,7 @@ namespace QCAD {
     //! Schrodinger coupling
     bool bSchrodingerInQuantumRegions;
     bool bUsePredictorCorrector;
+    bool bIncludeVxc; 
     int  nEigenvectors;
     std::vector< PHX::MDField<ScalarT,Cell,QuadPoint> > eigenvector_Re;
     std::vector< PHX::MDField<ScalarT,Cell,QuadPoint> > eigenvector_Im;

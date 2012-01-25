@@ -76,6 +76,7 @@ SchrodingerResid(const Teuchos::ParameterList& p) :
   // Allocate workspace
   psiGradWithMass.resize(dims[0], numQPs, numDims);
   psiV.resize(dims[0], numQPs);
+  V_barrier.resize(dims[0], numQPs);
 
   this->addDependentField(wBF);
   this->addDependentField(psi);
@@ -124,6 +125,8 @@ evaluateFields(typename Traits::EvalData workset)
 
   if(bValidRegion)
   {
+    // std::cout << "eb name = " << workset.EBName << ", bValidRegion = " << bValidRegion << std::endl; 
+    
     //compute inverse effective mass here (no separate evaluator)
 
     // Define universal constants as double constants
@@ -177,10 +180,17 @@ evaluateFields(typename Traits::EvalData workset)
         psiResidual(cell, qp) = 1.0*psi(cell,qp);
     }*/
 
+    // std::cout << "eb name = " << workset.EBName << ", bValidRegion = " << bValidRegion << std::endl; 
+
     //Potential term: add integral( psi * V * BF dV ) to residual
     if (havePotential) 
     {
-      FST::scalarMultiplyDataData<ScalarT> (psiV, V, psi);
+      for (std::size_t cell = 0; cell < workset.numCells; ++cell)
+        for (std::size_t qp = 0; qp < numQPs; ++qp)
+          V_barrier(cell,qp) = 100.0;
+          
+      FST::scalarMultiplyDataData<ScalarT> (psiV, V_barrier, psi);
+      // FST::scalarMultiplyDataData<ScalarT> (psiV, V, psi);
       FST::integrate<ScalarT>(psiResidual, psiV, wBF, Intrepid::COMP_CPP, false); // "false" overwrites
     }
   }
@@ -242,6 +252,11 @@ QCAD::SchrodingerResid<EvalT, Traits>::getInvEffMass(const std::string& EBName,
           effMass = barrEffMass * emass;  
         break;    
       }
+      default:
+      {
+	effMass = 0; // should never get here (suppresses uninitialized warning)
+	TEUCHOS_TEST_FOR_EXCEPT( effMass == 0 );
+      }
     }  // end of switch (numDims) 
     
     return 1.0/effMass;
@@ -261,7 +276,7 @@ QCAD::SchrodingerResid<EvalT, Traits>::getInvEffMass(const std::string& EBName,
       effMass = materialDB->getMaterialParam<double>("Silicon","Longitudinal Electron Effective Mass",1.0) * emass;
     
     else
-      TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
+      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
 	       std::endl << "Error!  x-coord:" << coord[0] << "is outside the oxideWidth" << 
 	       " + siliconWidth range: " << oxideWidth + siliconWidth << "!"<< std::endl);
   
@@ -285,7 +300,7 @@ QCAD::SchrodingerResid<EvalT, Traits>::getInvEffMass(const std::string& EBName,
     double mt = materialDB->getElementBlockParam<double>(EBName,"Transverse Electron Effective Mass");
     
     if ((condBandMinVal == "Gamma Valley") && (abs(ml-mt) > 1e-10))
-      TEST_FOR_EXCEPTION (true, std::logic_error, "Gamma Valley's longitudinal and "
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Gamma Valley's longitudinal and "
         << "transverse electron effective mass must be equal ! "
         << "Please check the values in materials.xml" << std::endl);
       
@@ -299,7 +314,7 @@ QCAD::SchrodingerResid<EvalT, Traits>::getInvEffMass(const std::string& EBName,
     else if (condBandMinVal == "Gamma Valley")
       effMass = ml*emass;
     else
-      TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl
+      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl
         << "Invalid Conduction Band Minimum ! Must be Delta2 or Gamma Valley !" << std::endl);
 
   }  // end of if (matrlCategory == "Semiconductor")
@@ -309,7 +324,7 @@ QCAD::SchrodingerResid<EvalT, Traits>::getInvEffMass(const std::string& EBName,
     double ml = materialDB->getElementBlockParam<double>(EBName,"Longitudinal Electron Effective Mass");
     double mt = materialDB->getElementBlockParam<double>(EBName,"Transverse Electron Effective Mass");
     if (abs(ml-mt) > 1e-10) 
-      TEST_FOR_EXCEPTION (true, std::logic_error, "Insulator's longitudinal and "
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Insulator's longitudinal and "
 	       << "transverse electron effective mass must be equal ! "
 	       << "Please check the values in materials.xml" << std::endl);
     effMass = ml*emass;

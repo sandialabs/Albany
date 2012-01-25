@@ -21,15 +21,19 @@
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "LCM/utils/Tensor.h"
 
+#include <Sacado_MathFunctions.hpp>
+
+#include <typeinfo>
+
 namespace LCM {
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
 ThermoMechanicalStress<EvalT, Traits>::
 ThermoMechanicalStress(const Teuchos::ParameterList& p) :
-  F                (p.get<std::string>                   ("DefGrad Name"),
+  F_array          (p.get<std::string>                   ("DefGrad Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-  J                (p.get<std::string>                   ("DetDefGrad Name"),
+  J_array          (p.get<std::string>                   ("DetDefGrad Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   shearModulus     (p.get<std::string>                   ("Shear Modulus Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
@@ -37,8 +41,24 @@ ThermoMechanicalStress(const Teuchos::ParameterList& p) :
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   temperature      (p.get<std::string>                   ("Temperature Name"),
 		    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  yieldStrength    (p.get<std::string>                   ("Yield Strength Name"),
+		    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  hardeningModulus (p.get<std::string>                   ("Hardening Modulus Name"),
+		    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  satMod           (p.get<std::string>                   ("Saturation Modulus Name"),
+                    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  satExp           (p.get<std::string>                   ("Saturation Exponent Name"),
+                    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  deltaTime        (p.get<std::string>                   ("Delta Time Name"),
+	            p.get<Teuchos::RCP<PHX::DataLayout> >("Workset Scalar Data Layout")),
   stress           (p.get<std::string>                   ("Stress Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+  Fp               (p.get<std::string>                   ("Fp Name"),
+	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+  eqps             (p.get<std::string>                   ("eqps Name"),
+	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  mechSource       (p.get<std::string>                   ("Mechanical Source Name"),
+		    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   thermalExpansionCoeff (p.get<RealType>("Thermal Expansion Coefficient") ),
   refTemperature (p.get<RealType>("Reference Temperature") )
 {
@@ -50,13 +70,23 @@ ThermoMechanicalStress(const Teuchos::ParameterList& p) :
   numQPs  = dims[1];
   numDims = dims[2];
 
-  this->addDependentField(F);
-  this->addDependentField(J);
+  this->addDependentField(F_array);
+  this->addDependentField(J_array);
   this->addDependentField(shearModulus);
   this->addDependentField(bulkModulus);
+  this->addDependentField(yieldStrength);
+  this->addDependentField(hardeningModulus);
+  this->addDependentField(satMod);  
+  this->addDependentField(satExp);
   this->addDependentField(temperature);
+  this->addDependentField(deltaTime);
 
+  fpName = p.get<std::string>("Fp Name")+"_old";
+  eqpsName = p.get<std::string>("eqps Name")+"_old";
   this->addEvaluatedField(stress);
+  this->addEvaluatedField(Fp);
+  this->addEvaluatedField(eqps);
+  this->addEvaluatedField(mechSource);
 
   this->setName("ThermoMechanical Stress"+PHX::TypeString<EvalT>::value);
 
@@ -69,11 +99,19 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(stress,fm);
-  this->utils.setFieldData(F,fm);
-  this->utils.setFieldData(J,fm);
+  this->utils.setFieldData(Fp,fm);
+  this->utils.setFieldData(eqps,fm);
+  this->utils.setFieldData(F_array,fm);
+  this->utils.setFieldData(J_array,fm);
   this->utils.setFieldData(shearModulus,fm);
   this->utils.setFieldData(bulkModulus,fm);
   this->utils.setFieldData(temperature,fm);
+  this->utils.setFieldData(hardeningModulus,fm);
+  this->utils.setFieldData(satMod,fm);
+  this->utils.setFieldData(satExp,fm);
+  this->utils.setFieldData(yieldStrength,fm);
+  this->utils.setFieldData(mechSource,fm);
+  this->utils.setFieldData(deltaTime,fm);
 }
 
 //**********************************************************************
@@ -81,31 +119,192 @@ template<typename EvalT, typename Traits>
 void ThermoMechanicalStress<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  ScalarT Jm53;
-  ScalarT trace;
-  ScalarT deltaTemp;
+  bool print = false;
+  //if (typeid(ScalarT) == typeid(RealType)) print = true;
 
-  Intrepid::FieldContainer<ScalarT> C(workset.numCells, numQPs, numDims, numDims);
-  Intrepid::FunctionSpaceTools::tensorMultiplyDataData<ScalarT> (C, F, F, 'T');
-  
+  if (print)
+    cout << " *** ThermoMechanicalStress *** " << endl;
+
+  // declare some ScalarT's to be used later
+  ScalarT J, Jm23, K, H, Y, siginf, delta;
+  ScalarT f, dgam;
+  ScalarT deltaTemp;
+  ScalarT mu, mubar;
+  ScalarT smag;
+  ScalarT pressure;
+  ScalarT sq23 = std::sqrt(2./3.);
+
+  // grab the time step
+  ScalarT dt = deltaTime(0);
+
+  // get old state variables
+  Albany::MDArray Fpold_array   = (*workset.stateArrayPtr)[fpName];
+  Albany::MDArray eqpsold       = (*workset.stateArrayPtr)[eqpsName];
+
   for (std::size_t cell=0; cell < workset.numCells; ++cell) 
   {
     for (std::size_t qp=0; qp < numQPs; ++qp) 
     {
-      Jm53  = std::pow(J(cell,qp), -5./3.);
-      trace = 0.0;
-      deltaTemp = temperature(cell,qp) - refTemperature;
-      for (std::size_t i=0; i < numDims; ++i) 
-	trace += (1./numDims) * C(cell,qp,i,i);
-      for (std::size_t i=0; i < numDims; ++i) 
+      // Fill in tensors from MDArray data
+      for (std::size_t i=0; i < numDims; ++i)
       {
-	for (std::size_t j=0; j < numDims; ++j) 
+	for (std::size_t j=0; j < numDims; ++j)
 	{
-	  stress(cell,qp,i,j) = shearModulus(cell,qp) * Jm53 * ( C(cell,qp,i,j) );
+	  Fpold(i,j) = Fpold_array(cell,qp,i,j);
+	  F(i,j)     = F_array(cell,qp,i,j);
 	}
-	stress(cell,qp,i,i) += 0.5 * bulkModulus(cell,qp)
-	  * ( J(cell,qp) - 1. / J(cell,qp) - 6. * thermalExpansionCoeff * deltaTemp )
-	  - shearModulus(cell,qp) * Jm53 * trace;
+      }
+
+      // local qp values (for readibility)
+      J     = J_array(cell,qp);
+      Jm23  = std::pow(J, -2./3.);
+      mu    = shearModulus(cell,qp);
+      K     = bulkModulus(cell,qp);
+      H     = hardeningModulus(cell,qp);
+      Y     = yieldStrength(cell,qp);
+      siginf = satMod(cell,qp);
+      delta  = satExp(cell,qp);
+      deltaTemp = temperature(cell,qp) - refTemperature;
+
+      // initialize plastic work
+      mechSource(cell,qp) = 0.0;
+
+      // compute the pressure
+      pressure = 0.5 * K * ( ( J - 1 / J )
+                             - 3 * thermalExpansionCoeff * deltaTemp * ( 1 + 1 / ( J * J ) ) );
+      
+      // compute trial intermediate configuration
+      Fpinv = inverse(Fpold);
+      Cpinv = Fpinv*transpose(Fpinv);
+      be = F*Cpinv*transpose(F);
+
+      // compute the trial deviatoric stress
+      mubar = ScalarT(trace(be)/3.) * mu;
+      s = mu * dev(be);
+
+      // check for yielding
+      //smag = 0.0;
+      //if ( norm(s) > 1.e-15 )
+      smag = norm(s);
+      f = smag - sq23 * ( Y + H * eqpsold(cell,qp) + siginf * ( 1. - std::exp( -delta * eqpsold(cell,qp) ) ) );
+
+      dgam = 0.0;
+     
+      if (f > 1E-8)
+      {
+        // return mapping algorithm
+        bool converged = false;
+        ScalarT g = f;
+        ScalarT G = H * eqpsold(cell,qp) + siginf*( 1. - std::exp( -delta * eqpsold(cell,qp) ) );
+        ScalarT dg = ( -2. * mubar ) * ( 1. + H / ( 3. * mubar ) );
+        ScalarT dG = 0.0;;
+        ScalarT alpha = 0.0;
+        ScalarT res = 0.0;
+        int count = 0;
+
+        while (!converged)
+        {
+          count++;
+
+          dgam -= g/dg;
+
+          alpha = eqpsold(cell,qp) + sq23 * dgam;
+
+          G = H * alpha + siginf * ( 1. - std::exp( -delta * alpha ) );;
+          dG = H + delta * siginf * std::exp( -delta * alpha );;
+
+          g = smag -  ( 2. * mubar * dgam + sq23 * ( Y + G ) );
+          dg = -2. * mubar * ( 1. + dG / ( 3. * mubar ) );
+
+          res = std::abs(g);
+          if ( res < 1.e-8 || res/f < 1.e-8 )
+            converged = true;
+
+          TEUCHOS_TEST_FOR_EXCEPTION( count > 50, std::runtime_error,
+                                      std::endl << "Error in return mapping, count = " << count <<
+				      "\nres = " << res <<
+				      "\nrelres = " << res/f <<
+				      "\ng = " << g <<
+				      "\ndg = " << dg <<
+				      "\nalpha = " << alpha << std::endl);
+
+	}
+	
+	// plastic direction
+	N = ScalarT(1/smag) * s;
+
+	// updated deviatoric stress
+	s -= ScalarT(2. * mubar * dgam) * N;
+
+	// update eqps
+	eqps(cell,qp) = alpha;
+
+	// exponential map to get Fp
+	A = dgam * N;
+	expA = LCM::exp<ScalarT>(A);
+
+        // set plastic work
+        if ( dt > 0.0 )
+          mechSource(cell,qp) = sq23 * dgam / dt * ( Y + G + temperature(cell,qp) * 1.0 );
+
+	for (std::size_t i=0; i < numDims; ++i)	
+	{
+	  for (std::size_t j=0; j < numDims; ++j)
+	  {
+	    Fp(cell,qp,i,j) = 0.0;
+	    for (std::size_t p=0; p < numDims; ++p)
+	    {
+	      Fp(cell,qp,i,j) += expA(i,p) * Fpold(p,j);
+	    }
+	  }
+	}
+      } 
+      else
+      {
+	// set state variables to old values
+	//dp(cell, qp) = 0.0;
+	eqps(cell, qp) = eqpsold(cell,qp);
+	for (std::size_t i=0; i < numDims; ++i)	
+	  for (std::size_t j=0; j < numDims; ++j)
+	    Fp(cell,qp,i,j) = Fpold_array(cell,qp,i,j);
+      }
+
+      // compute stress
+      for (std::size_t i=0; i < numDims; ++i)	
+      {
+	for (std::size_t j=0; j < numDims; ++j)
+	{
+	  stress(cell,qp,i,j) = s(i,j) / J;
+	}
+	stress(cell,qp,i,i) += pressure;
+      }
+
+      // update be
+      be = ScalarT(1/mu)*s + ScalarT(trace(be)/3)*eye<ScalarT>();
+
+      if (print)
+      {
+        cout << "    sig : ";
+        for (unsigned int i(0); i < numDims; ++i)
+          for (unsigned int j(0); j < numDims; ++j)
+            cout << stress(cell,qp,i,j) << " ";
+        cout << endl;
+
+        cout << "    s   : ";
+        for (unsigned int i(0); i < numDims; ++i)
+          for (unsigned int j(0); j < numDims; ++j)
+            cout << s(i,j) << " ";
+        cout << endl;
+
+        cout << "    work: " << mechSource(cell,qp) << endl;
+        cout << "    dgam: " << dgam << endl;
+        cout << "    smag: " << smag << endl;
+        cout << "    n(s): " << norm(s) << endl;
+        cout << "    temp: " << temperature(cell,qp) << endl;
+        cout << "    Dtem: " << deltaTemp << endl;
+        cout << "       Y: " << yieldStrength(cell,qp) << endl;
+        cout << "       H: " << hardeningModulus(cell,qp) << endl;
+        cout << "       S: " << satMod(cell,qp) << endl;
       }
     }
   }

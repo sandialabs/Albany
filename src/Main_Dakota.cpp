@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
       Teuchos::TimeMonitor::getNewTimer("AlbanyDakota: ***Total Time***");
     Teuchos::TimeMonitor totalTimer(*totalTime); //start timer
 
-    status += Albany_Dakota();
+    status += Albany_Dakota(argc, argv);
 
     // Regression comparisons fopr Dakota runs only valid on Proc 0.
     if (mpiSession.getRank() > 0) status=0;

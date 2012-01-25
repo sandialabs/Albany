@@ -359,7 +359,7 @@ getValue(const std::string &n) {
     if (n == Albany::strint(param_name_base,i))
       return m_rv[i];
   }
-  TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		     std::endl <<
 		     "Error! Logic error in getting paramter " << n
 		     << " in TruncatedKL::getValue()" << std::endl);
@@ -770,7 +770,7 @@ PointSource<EvalT,Traits>::PointSource(Teuchos::ParameterList* source_list) :
       m_spatials.push_back(s);
     }
   } else {
-    TEST_FOR_EXCEPTION(m_spatials.empty(), std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION(m_spatials.empty(), std::logic_error,
                        "Point: Did not find a single spatial component.  Specify Gaussian.");
   }
   Teuchos::ParameterList& wavelet_param = paramList.sublist("Time Wavelet",true);
@@ -778,7 +778,7 @@ PointSource<EvalT,Traits>::PointSource(Teuchos::ParameterList* source_list) :
     Monotone *monotone = new Monotone(wavelet_param);
     m_wavelet = monotone;
   } else {
-    TEST_FOR_EXCEPTION(!m_wavelet, std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION(!m_wavelet, std::logic_error,
                        "Point: Did not find a single wavelet component. Specify Monotone.");
   }
 }

@@ -17,16 +17,33 @@
 
 #include <fstream>
 #include "Teuchos_TestForException.hpp"
-#include "Phalanx_DataLayout.hpp"
-#include "Sacado_ParameterRegistration.hpp"
 
 
 template<typename EvalT, typename Traits>
 QCAD::ResponseSaveField<EvalT, Traits>::
-ResponseSaveField(Teuchos::ParameterList& p) :
-  PHAL::ResponseBase<EvalT, Traits>(p)
+ResponseSaveField(Teuchos::ParameterList& p,
+		  const Teuchos::RCP<Albany::Layouts>& dl) 
 {
   // States Not Saved for Generic Type, only Specializations
+
+  //! get parameter list
+  Teuchos::ParameterList* plist = 
+    p.get<Teuchos::ParameterList*>("Parameter List");
+
+  //! User-specified parameters
+  std::string fieldName;
+  if(plist->isParameter("Vector Field Name")) {
+    fieldName = plist->get<std::string>("Vector Field Name");
+  }
+  else {
+    fieldName = plist->get<std::string>("Field Name");
+  }
+
+  // Create field tag
+  response_field_tag = 
+    Teuchos::rcp(new PHX::Tag<ScalarT>(fieldName + " Save Field Response",
+				       dl->dummy));
+  this->addEvaluatedField(*response_field_tag);
 }
 
 // **********************************************************************
@@ -53,15 +70,13 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 QCAD::ResponseSaveField<PHAL::AlbanyTraits::Residual, Traits>::
-ResponseSaveField(Teuchos::ParameterList& p) :
-  PHAL::ResponseBase<PHAL::AlbanyTraits::Residual, Traits>(p),
-  weights(p.get<std::string>("Weights Name"),
-	p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"))
+ResponseSaveField(Teuchos::ParameterList& p,
+		  const Teuchos::RCP<Albany::Layouts>& dl) :
+  weights("Weights", dl->qp_scalar)
 {
   //! get and validate Response parameter list
   Teuchos::ParameterList* plist = 
     p.get<Teuchos::ParameterList*>("Parameter List");
-
   Teuchos::RCP<const Teuchos::ParameterList> reflist = 
     this->getValidResponseParameters();
   plist->validateParameters(*reflist,0);
@@ -78,15 +93,13 @@ ResponseSaveField(Teuchos::ParameterList& p) :
   stateName = plist->get<std::string>("State Name", fieldName);
   outputToExodus = plist->get<bool>("Output to Exodus", true);
   outputCellAverage = plist->get<bool>("Output Cell Average", true);
+  memoryHolderOnly = plist->get<bool>("Memory Placeholder Only", false);
   vectorOp = plist->get<std::string>("Vector Operation", "magnitude");
 
   //! number of quad points per cell and dimension
-  Teuchos::RCP<PHX::DataLayout> scalar_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
-  Teuchos::RCP<PHX::DataLayout> vector_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
-  Teuchos::RCP<PHX::DataLayout> cell_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("Cell Scalar Data Layout");
+  Teuchos::RCP<PHX::DataLayout> scalar_dl = dl->qp_scalar;
+  Teuchos::RCP<PHX::DataLayout> vector_dl = dl->qp_vector;
+  Teuchos::RCP<PHX::DataLayout> cell_dl = dl->cell_scalar;
   numQPs = vector_dl->dimension(1);
   numDims = vector_dl->dimension(2);
  
@@ -96,17 +109,6 @@ ResponseSaveField(Teuchos::ParameterList& p) :
   this->addDependentField(field);
   this->addDependentField(weights);
 
-  //! set initial values
-  std::vector<double> initVals(1); initVals[0] = 0.0; //Response is a dummy 0.0
-  PHAL::ResponseBase<PHAL::AlbanyTraits::Residual, Traits>::
-    setInitialValues(initVals);
-
-  //! set post processing parameters (used to reconcile values across multiple processors)
-  Teuchos::ParameterList ppParams;
-  ppParams.set("Processing Type","None");
-  PHAL::ResponseBase<PHAL::AlbanyTraits::Residual, Traits>::
-    setPostProcessingParams(ppParams);
-
   //! Register with state manager
   Albany::StateManager* pStateMgr = p.get< Albany::StateManager* >("State Manager Ptr");
   if( outputCellAverage ) {
@@ -115,6 +117,12 @@ ResponseSaveField(Teuchos::ParameterList& p) :
   else {
     pStateMgr->registerStateVariable(stateName, scalar_dl, "zero", false, outputToExodus);
   }
+
+  // Create field tag
+  response_field_tag = 
+    Teuchos::rcp(new PHX::Tag<ScalarT>(fieldName + " Save Field Response",
+				       dl->dummy));
+  this->addEvaluatedField(*response_field_tag);
 }
 
 // **********************************************************************
@@ -136,8 +144,9 @@ evaluateFields(typename Traits::EvalData workset)
   const std::size_t iY=1; //index for y coordinate
   const std::size_t iZ=2; //index for z coordinate
 
-  PHAL::ResponseBase<PHAL::AlbanyTraits::Residual, Traits>::
-    beginEvaluateFields(workset);
+  //Don't do anything if this response is just used to allocate 
+  // and hold a block of memory (the state)
+  if(memoryHolderOnly) return;
 
   // Get shards Array (from STK) for this state
   // Need to check if we can just copy full size -- can assume same ordering?
@@ -149,17 +158,17 @@ evaluateFields(typename Traits::EvalData workset)
   if(!isVectorField) {
     switch (size) {  //Note: size should always == 2 now: qp_scalar type or cell_sclar state registered
     case 2:     
-      for (int cell = 0; cell < workset.numCells; ++cell) {
+      for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
         if( outputCellAverage ) {
           double integral = 0, vol = 0;
-	  for (int qp = 0; qp < numQPs; ++qp) {
+	  for (std::size_t qp = 0; qp < numQPs; ++qp) {
 	    integral += field(cell,qp) * weights(cell,qp);
             vol += weights(cell, qp);
           }
-          sta(cell,0) = integral / vol;
+          sta(cell,(std::size_t)0) = integral / vol;
         }
         else {
-	  for (int qp = 0; qp < numQPs; ++qp)
+	  for (std::size_t qp = 0; qp < numQPs; ++qp)
 	    sta(cell, qp) = field(cell,qp);
         }
       }
@@ -179,7 +188,7 @@ evaluateFields(typename Traits::EvalData workset)
       break;
       */
     default:
-      TEST_FOR_EXCEPTION(true, std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
        "Unexpected dimensions in SaveField response Evaluator: " << size);
     }
   }
@@ -187,13 +196,13 @@ evaluateFields(typename Traits::EvalData workset)
     double t;
     switch (size) {
     case 2:     
-      for (int cell = 0; cell < workset.numCells; ++cell) {
+      for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
 
 	ScalarT stateValue = 0.0;
 	double vol = 0.0;
-	if( outputCellAverage ) sta(cell,0) = 0.0;
+	if( outputCellAverage ) sta(cell,(std::size_t)0) = 0.0;
 
-	for (int qp = 0; qp < numQPs; ++qp) {
+	for (std::size_t qp = 0; qp < numQPs; ++qp) {
 	  t = 0.0;
 
 	  if(vectorOp == "magnitude") {
@@ -248,28 +257,25 @@ evaluateFields(typename Traits::EvalData workset)
 	    if(numDims > iZ) stateValue = field(cell,qp,iZ);
 	  }
 	  else {
-	    TEST_FOR_EXCEPTION(true, std::logic_error,
+	    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
 	       "Unknown vector operation: " << vectorOp);
 	  }
 
 	  if( outputCellAverage ) {
-	    sta(cell, 0) += stateValue * weights(cell,qp);
+	    sta(cell, (std::size_t)0) += stateValue * weights(cell,qp);
 	    vol += weights(cell,qp);
 	  }
 	  else sta(cell, qp) = stateValue;
 	}
 
-	if( outputCellAverage ) sta(cell,0) /= vol;
+	if( outputCellAverage ) sta(cell,(std::size_t)0) /= vol;
       }
       break;
     default:
-      TEST_FOR_EXCEPTION(true, std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
        "Unexpected dimensions in SaveField response Evaluator: " << size);
     }
   }
-
-  PHAL::ResponseBase<PHAL::AlbanyTraits::Residual, Traits>::
-    endEvaluateFields(workset);
 }
 
 // **********************************************************************
@@ -280,6 +286,8 @@ QCAD::ResponseSaveField<PHAL::AlbanyTraits::Residual,Traits>::getValidResponsePa
   Teuchos::RCP<Teuchos::ParameterList> validPL =
      	rcp(new Teuchos::ParameterList("Valid ResponseSaveField Params"));;
 
+  validPL->set<string>("Name", "", "Name of response function");
+  validPL->set<int>("Phalanx Graph Visualization Detail", 0, "Make dot file to visualize phalanx graph");
   validPL->set<string>("Type", "", "Response type");
   validPL->set<string>("Field Name", "", "Field to save");
   validPL->set<string>("Vector Field Name", "", "Vector field to save");
@@ -287,6 +295,7 @@ QCAD::ResponseSaveField<PHAL::AlbanyTraits::Residual,Traits>::getValidResponsePa
   validPL->set<string>("State Name", "<Field Name>", "State name to save field as");
   validPL->set<bool>("Output to Exodus", true, "Whether state should be output in STK dump to exodus");
   validPL->set<bool>("Output Cell Average", true, "Whether cell average or all quadpoint data should be output to exodus");
+  validPL->set<bool>("Memory Placeholder Only", false, "True if data should not actually be transferred to this state, i.e., the state is just used as a memory container and should not be overwritten when responses are computed");
 
   return validPL;
 }

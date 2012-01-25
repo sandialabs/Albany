@@ -28,10 +28,12 @@ namespace LCM {
   PoroElasticityResidMass(const Teuchos::ParameterList& p) :
     wBF         (p.get<std::string>                   ("Weighted BF Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
-    porePressure (p.get<std::string>                   ("QP Variable Name"),
+    porePressure (p.get<std::string>                   ("QP Pore Pressure Name"),
 		  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     Tdot        (p.get<std::string>                   ("QP Time Derivative Variable Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	stabParameter        (p.get<std::string>                   ("Material Property Name"),
+		 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     ThermalCond (p.get<std::string>                   ("Thermal Conductivity Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     kcPermeability (p.get<std::string>            ("Kozeny-Carman Permeability Name"),
@@ -56,6 +58,8 @@ namespace LCM {
 	cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
 	weights       (p.get<std::string>                   ("Weights Name"),
 		         p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	deltaTime (p.get<std::string>("Delta Time Name"),
+		       p.get<Teuchos::RCP<PHX::DataLayout> >("Workset Scalar Data Layout")),
     TResidual   (p.get<std::string>                   ("Residual Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
     haveSource  (p.get<bool>("Have Source")),
@@ -67,6 +71,8 @@ namespace LCM {
       enableTransient = !p.get<bool>("Disable Transient");
     else enableTransient = true;
 
+    this->addDependentField(stabParameter);
+    this->addDependentField(deltaTime);
     this->addDependentField(weights);
     this->addDependentField(coordVec);
     this->addDependentField(wBF);
@@ -100,8 +106,8 @@ namespace LCM {
     // Get data from previous converged time step
     strainName = p.get<std::string>("Strain Name")+"_old";
     porosityName = p.get<std::string>("Porosity Name")+"_old";
-    porePressureName = p.get<std::string>("QP Variable Name")+"_old";
-    //this->addEvaluatedField(strain);
+    porePressureName = p.get<std::string>("QP Pore Pressure Name")+"_old";
+
 
 
     worksetSize = dims[0];
@@ -113,7 +119,11 @@ namespace LCM {
 
     // Allocate workspace
     flux.resize(dims[0], numQPs, numDims);
+    fluxdt.resize(dims[0], numQPs, numDims);
     pterm.resize(dims[0], numQPs);
+    tpterm.resize(dims[0], numNodes, numQPs);
+
+
 
     if (haveAbsorption)  aterm.resize(dims[0], numQPs);
 
@@ -145,6 +155,8 @@ namespace LCM {
   postRegistrationSetup(typename Traits::SetupData d,
 			PHX::FieldManager<Traits>& fm)
   {
+	this->utils.setFieldData(stabParameter,fm);
+	this->utils.setFieldData(deltaTime,fm);
 	this->utils.setFieldData(weights,fm);
     this->utils.setFieldData(coordVec,fm);
     this->utils.setFieldData(wBF,fm);
@@ -176,9 +188,14 @@ evaluateFields(typename Traits::EvalData workset)
   Albany::MDArray porosityold = (*workset.stateArrayPtr)[porosityName];
   Albany::MDArray porePressureold = (*workset.stateArrayPtr)[porePressureName];
 
-  // Cozeny-Carman relation added. I keep the thermal conductivity for future use. -S Sun
+  // Set Warning message
+  if (porosityold(1,1) < 0 || porosity(1,1) < 0 ) {
+	  cout << "negative porosity detected. Error! \n";
+  }
+
   switch (numDims) {
   case 3:
+
 	  // Pore-fluid diffusion coupling.
 	  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
@@ -186,16 +203,25 @@ evaluateFields(typename Traits::EvalData workset)
 			  TResidual(cell,node)=0.0;
 			  for (std::size_t qp=0; qp < numQPs; ++qp) {
 
-				  // Transient partial saturated flow (work in progress)
-
+				  // Transient partial saturated flow
+				  ScalarT trstrain = 0.0;
+				  for (std::size_t i(0); i < numDims; ++i){
+					  trstrain += strainold(cell,qp,i,i);
+				  }
 				  // Volumetric Constraint Term
 				  TResidual(cell,node) += -biotCoefficient(cell, qp)*(
-						  strain(cell,qp,0,0) + strain(cell,qp,1,1)+strain(cell,qp,2,2) )
+
+						  strain(cell,qp,0,0) + strain(cell,qp,1,1)+strain(cell,qp,2,2) - trstrain
+						  )
             		  *wBF(cell, node, qp)  ;
+
 				  // Pore-fluid Resistance Term
-				  TResidual(cell,node) +=  -(porePressure(cell, qp))
+				  TResidual(cell,node) +=  -(porePressure(cell, qp)
+						                   -porePressureold(cell, qp)
+						                  )
             		                    		/biotModulus(cell, qp)*
             		                    		wBF(cell, node, qp);
+
 			  }
 		  }
 	  }
@@ -208,14 +234,20 @@ evaluateFields(typename Traits::EvalData workset)
 			  TResidual(cell,node)=0.0;
 			  for (std::size_t qp=0; qp < numQPs; ++qp) {
 
-				  // Transient partial saturated flow (work in progress)
-
+				  // Transient partial saturated flow
+				  ScalarT trstrain = 0.0;
+				  for (std::size_t i(0); i < numDims; ++i){
+					  trstrain += strainold(cell,qp,i,i);
+				  }
 				  // Volumetric Constraint Term
 				  TResidual(cell,node) += -biotCoefficient(cell, qp)*(
-						  strain(cell,qp,0,0) + strain(cell,qp,1,1) )
-            		  *wBF(cell, node, qp)  ;
+					              	  strain(cell,qp,0,0) + strain(cell,qp,1,1) - trstrain
+						              )*wBF(cell, node, qp)  ;
+
 				  // Pore-fluid Resistance Term
-				  TResidual(cell,node) +=  -(porePressure(cell, qp))
+				  TResidual(cell,node) +=  -(porePressure(cell, qp)
+						                   -porePressureold(cell, qp)
+						                  )
             		                    		/biotModulus(cell, qp)*
             		                    		wBF(cell, node, qp);
 			  }
@@ -224,117 +256,116 @@ evaluateFields(typename Traits::EvalData workset)
 	  break;
   case 1:
 	  // Pore-fluid diffusion coupling.
-	  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+	  	  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
-		  for (std::size_t node=0; node < numNodes; ++node) {
-			  TResidual(cell,node)=0.0;
-			  for (std::size_t qp=0; qp < numQPs; ++qp) {
+	  		  for (std::size_t node=0; node < numNodes; ++node) {
+	  			  TResidual(cell,node)=0.0;
+	  			  for (std::size_t qp=0; qp < numQPs; ++qp) {
 
-				  // Transient partial saturated flow (work in progress)
+	  				  // Transient partial saturated flow
+	  				  ScalarT trstrain = 0.0;
+	  				  for (std::size_t i(0); i < numDims; ++i){
+	  					  trstrain += strainold(cell,qp,i,i);
+	  				  }
+	  				  // Volumetric Constraint Term
+	  				  TResidual(cell,node) += -biotCoefficient(cell, qp)*(
+	  					              	  strain(cell,qp,0,0) - trstrain
+	  						              )*wBF(cell, node, qp)  ;
 
-				  // Volumetric Constraint Term
-				  TResidual(cell,node) += -biotCoefficient(cell, qp)*(
-						  strain(cell,qp))
-            		  *wBF(cell, node, qp)  ;
-				  // Pore-fluid Resistance Term
-				  TResidual(cell,node) +=  -(porePressure(cell, qp))
-            		                    		/biotModulus(cell, qp)*
-            		                    		wBF(cell, node, qp);
-			  }
-		  }
-	  }
-	  break;
-
+	  				  // Pore-fluid Resistance Term
+	  				  TResidual(cell,node) +=  -(porePressure(cell, qp)
+	  						                   -porePressureold(cell, qp)
+	  						                  )
+	              		                    		/biotModulus(cell, qp)*
+	              		                    		wBF(cell, node, qp);
+	  			  }
+	  		  }
+	  	  }
+	  	  break;
 
    }
 
 
   // Pore-Fluid Diffusion Term
+
+   ScalarT dt = deltaTime(0);
+
    FST::scalarMultiplyDataData<ScalarT> (flux, kcPermeability, TGrad); // flux_i = k I_ij p_j
 
-  // FST::integrate<ScalarT>(TResidual, flux, wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
+   for (std::size_t cell=0; cell < workset.numCells; ++cell){
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+    	  for (std::size_t dim=0; dim <numDims; ++dim){
+    		  fluxdt(cell, qp, dim) = -flux(cell,qp,dim)*dt; // should replace the number with dt
+    	  }
+      }
+  }
+
+
+  FST::integrate<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
 
   //---------------------------------------------------------------------------//
   // Stabilization Term (only 2D and 3D problem need stabilizer)
 
-
-   // Allocate Temporary FieldContainers
-//   refPoints.resize(numQPs, numDims);
-//   refWeights.resize(numQPs);
-//   jacobian.resize( worksetSize, numQPs, numDims, numDims);
-//   jacobian_inv.resize( worksetSize, numQPs, numDims, numDims);
-//   Gc.resize( worksetSize, numQPs, numDims, numDims);
-
-
-
-   // Pre-Calculate reference element quantitites
- //  cubature->getCubature(refPoints, refWeights);
-
- //  Intrepid::CellTools<RealType>::setJacobian(jacobian, refPoints, coordVec, *cellType);
- //  Intrepid::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
-
- //  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
- //    for (std::size_t qp=0; qp < numQPs; ++qp) {
- //      for (std::size_t i=0; i < numDims; ++i) {
- //        for (std::size_t j=0; j < numDims; ++j) {
- //          Gc(cell,qp,i,j) = 0.0;
- //          for (std::size_t alpha=0; alpha < numDims; ++alpha) {
- //            Gc(cell,qp,i,j) += jacobian_inv(cell,qp,alpha,i)*jacobian_inv(cell,qp,alpha,j);
- //          }
- //        }
- //      }
- //    }
- //  }
-
-
 // Penalty Term
-
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell){
 
    porePbar = 0.0;
+
    vol = 0.0;
    for (std::size_t qp=0; qp < numQPs; ++qp) {
-	porePbar += weights(cell,qp)*porePressure(cell,qp);
+	porePbar += weights(cell,qp)*(porePressure(cell,qp)
+			                     -porePressureold(cell, qp)
+			                      );
+
 	vol  += weights(cell,qp);
    }
-   porePbar /= vol;
+   porePbar  /= vol;
+
    for (std::size_t qp=0; qp < numQPs; ++qp) {
-   pterm(cell,qp) = porePbar;
-        }
+	   pterm(cell,qp) = porePbar;
+   }
+
+   for (std::size_t node=0; node < numNodes; ++node) {
+	     trialPbar = 0.0;
+ 		 for (std::size_t qp=0; qp < numQPs; ++qp) {
+ 			  trialPbar += wBF(cell,node,qp);
+ 		 }
+ 		 trialPbar /= vol;
+ 		 for (std::size_t qp=0; qp < numQPs; ++qp) {
+ 		 		   tpterm(cell,node,qp) = trialPbar;
+		 }
+
+   }
 
  }
-
-
 
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
 	  for (std::size_t node=0; node < numNodes; ++node) {
 		  for (std::size_t qp=0; qp < numQPs; ++qp) {
- 				  TResidual(cell,node) -= (porePressure(cell, qp))
-                    		                    		*1000/biotModulus(cell, qp)*
-                    		                    		wBF(cell, node, qp);
- 				  TResidual(cell,node) += pterm(cell,qp)*1000/biotModulus(cell, qp)*
-                  		wBF(cell, node, qp);
+
+ 				  TResidual(cell,node) -= (porePressure(cell, qp)
+ 						                  -porePressureold(cell, qp)
+ 						                               )
+                    		                    		*stabParameter(cell, qp)/biotModulus(cell, qp)*
+                    		                    		( wBF(cell, node, qp)
+                    		                    				-tpterm(cell,node,qp)
+                    		                    				);
+ 				  TResidual(cell,node) += pterm(cell,qp)*stabParameter(cell, qp)/biotModulus(cell, qp)*
+ 						 ( wBF(cell, node, qp)
+ 								 -tpterm(cell,node,qp)
+ 								 );
+
+
+
+
+
 
 		  }
 	  }
   }
-
-
-
-
-
-
-
-   // Problem here.............
-   // currently workset.delta_time = 0, so it becomes a problem when something is divided by time...
-   // try cout << Tdot(2,3) << '\n'; no effect at all Tdot = 0.
-   // try cout << workset.delta_time << '\n';   time = 0 at all time step
-   // try cout << porosityold(5,3) << '\n'; this one return correct value.
-   // Also check the old data (porePressureold..etc), they lead to segmentation fault for unknown reasons.
-
 
 
 

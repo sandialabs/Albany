@@ -40,16 +40,19 @@ MaterialDatabase( const std::string& inputFile,
   //Teuchos::updateParametersFromXmlFile(inputFile, &data_);
   
   //Check for and Set element block and materials sublists
-  TEST_FOR_EXCEPTION(!data_.isSublist("Materials"), Teuchos::Exceptions::InvalidParameter,
+  TEUCHOS_TEST_FOR_EXCEPTION(!data_.isSublist("Materials"), Teuchos::Exceptions::InvalidParameter,
 	  std::endl << "Material Database Error: Materials sublist required" << std::endl);
-  TEST_FOR_EXCEPTION(!data_.isSublist("ElementBlocks"), Teuchos::Exceptions::InvalidParameter,
+  TEUCHOS_TEST_FOR_EXCEPTION(!data_.isSublist("ElementBlocks"), Teuchos::Exceptions::InvalidParameter,
 	  std::endl << "Material Database Error: ElementBlocks sublist required" << std::endl);
-  TEST_FOR_EXCEPTION(!data_.isSublist("NodeSets"), Teuchos::Exceptions::InvalidParameter,
-	  std::endl << "Material Database Error: NodeSets sublist required" << std::endl);
+  // Make the presence of NodeSet info in the material database optional
+  //TEUCHOS_TEST_FOR_EXCEPTION(!data_.isSublist("NodeSets"), Teuchos::Exceptions::InvalidParameter,
+	//  std::endl << "Material Database Error: NodeSets sublist required" << std::endl);
 
   pMaterialsList_ = &(data_.sublist("Materials"));
   pEBList_        = &(data_.sublist("ElementBlocks"));
-  pNSList_        = &(data_.sublist("NodeSets"));
+
+  if(data_.isSublist("NodeSets"))
+    pNSList_        = &(data_.sublist("NodeSets"));
 }
 
 QCAD::MaterialDatabase::
@@ -84,13 +87,13 @@ template<typename T> T
 QCAD::MaterialDatabase:: 
 getMaterialParam(const std::string& materialName, const std::string& paramName)
 {
-  TEST_FOR_EXCEPTION(pMaterialsList_ == NULL, Teuchos::Exceptions::InvalidParameter,
+  TEUCHOS_TEST_FOR_EXCEPTION(pMaterialsList_ == NULL, Teuchos::Exceptions::InvalidParameter,
 		     std::endl << "MaterialDB Error! param required but no DB." << std::endl);
 
-  TEST_FOR_EXCEPTION(materialName.length() == 0, Teuchos::Exceptions::InvalidParameter,
+  TEUCHOS_TEST_FOR_EXCEPTION(materialName.length() == 0, Teuchos::Exceptions::InvalidParameter,
 		     std::endl << "MaterialDB Error! Empty material name" << std::endl);
 
-  TEST_FOR_EXCEPTION(!pMaterialsList_->isSublist(materialName), 
+  TEUCHOS_TEST_FOR_EXCEPTION(!pMaterialsList_->isSublist(materialName), 
 		     Teuchos::Exceptions::InvalidParameter, std::endl 
 		     << "MaterialDB Error! Invalid material name " 
 		     << materialName <<  std::endl);
@@ -105,10 +108,10 @@ getMaterialParam(const std::string& materialName, const std::string& paramName, 
 {
   if(pMaterialsList_ == NULL) return def_value;
 
-  TEST_FOR_EXCEPTION(materialName.length() == 0, Teuchos::Exceptions::InvalidParameter,
+  TEUCHOS_TEST_FOR_EXCEPTION(materialName.length() == 0, Teuchos::Exceptions::InvalidParameter,
 		     std::endl << "MaterialDB Error! Empty material name" << std::endl);
 
-  TEST_FOR_EXCEPTION(!pMaterialsList_->isSublist(materialName), 
+  TEUCHOS_TEST_FOR_EXCEPTION(!pMaterialsList_->isSublist(materialName), 
 		     Teuchos::Exceptions::InvalidParameter, std::endl 
 		     << "MaterialDB Error! Invalid material name " 
 		     << materialName <<  std::endl);
@@ -120,7 +123,7 @@ getMaterialParam(const std::string& materialName, const std::string& paramName, 
 bool QCAD::MaterialDatabase:: 
 isMaterialParam(const std::string& materialName, const std::string& paramName)
 {
-  TEST_FOR_EXCEPTION(pMaterialsList_ == NULL, Teuchos::Exceptions::InvalidParameter,
+  TEUCHOS_TEST_FOR_EXCEPTION(pMaterialsList_ == NULL, Teuchos::Exceptions::InvalidParameter,
 		     std::endl << "MaterialDB Error! param required but no DB." << std::endl);
   if(!pMaterialsList_->isSublist(materialName)) return false;
   Teuchos::ParameterList& subList = pMaterialsList_->sublist(materialName);
@@ -133,13 +136,13 @@ template<typename T> T
 QCAD::MaterialDatabase:: 
 getNodeSetParam(const std::string& nsName, const std::string& paramName)
 {
-  TEST_FOR_EXCEPTION(pNSList_ == NULL, Teuchos::Exceptions::InvalidParameter,
+  TEUCHOS_TEST_FOR_EXCEPTION(pNSList_ == NULL, Teuchos::Exceptions::InvalidParameter,
 		     std::endl << "MaterialDB Error! param required but no DB." << std::endl);
 
-  TEST_FOR_EXCEPTION(nsName.length() == 0, Teuchos::Exceptions::InvalidParameter,
+  TEUCHOS_TEST_FOR_EXCEPTION(nsName.length() == 0, Teuchos::Exceptions::InvalidParameter,
 		     std::endl << "MaterialDB Error! Empty nodeset name" << std::endl);
 
-  TEST_FOR_EXCEPTION(!pNSList_->isSublist(nsName), 
+  TEUCHOS_TEST_FOR_EXCEPTION(!pNSList_->isSublist(nsName), 
 		     Teuchos::Exceptions::InvalidParameter, std::endl 
 		     << "MaterialDB Error! Invalid nodeset name " 
 		     << nsName <<  std::endl);
@@ -154,10 +157,10 @@ getNodeSetParam(const std::string& nsName, const std::string& paramName, T def_v
 {
   if(pNSList_ == NULL) return def_value;
 
-  TEST_FOR_EXCEPTION(nsName.length() == 0, Teuchos::Exceptions::InvalidParameter,
+  TEUCHOS_TEST_FOR_EXCEPTION(nsName.length() == 0, Teuchos::Exceptions::InvalidParameter,
 		     std::endl << "MaterialDB Error! Empty nodeset name" << std::endl);
 
-  TEST_FOR_EXCEPTION(!pNSList_->isSublist(nsName), 
+  TEUCHOS_TEST_FOR_EXCEPTION(!pNSList_->isSublist(nsName), 
 		     Teuchos::Exceptions::InvalidParameter, std::endl 
 		     << "MaterialDB Error! Invalid nodeset name " 
 		     << nsName <<  std::endl);
@@ -169,7 +172,7 @@ getNodeSetParam(const std::string& nsName, const std::string& paramName, T def_v
 bool QCAD::MaterialDatabase:: 
 isNodeSetParam(const std::string& nsName, const std::string& paramName)
 {
-  TEST_FOR_EXCEPTION(pNSList_ == NULL, Teuchos::Exceptions::InvalidParameter,
+  TEUCHOS_TEST_FOR_EXCEPTION(pNSList_ == NULL, Teuchos::Exceptions::InvalidParameter,
 		     std::endl << "MaterialDB Error! param required but no DB." << std::endl);
 
   if(!pNSList_->isSublist(nsName)) return false;
@@ -183,13 +186,13 @@ template<typename T> T
 QCAD::MaterialDatabase:: 
 getElementBlockParam(const std::string& ebName, const std::string& paramName)
 {
-  TEST_FOR_EXCEPTION(pEBList_ == NULL, Teuchos::Exceptions::InvalidParameter,
+  TEUCHOS_TEST_FOR_EXCEPTION(pEBList_ == NULL, Teuchos::Exceptions::InvalidParameter,
 		     std::endl << "MaterialDB Error! param required but no DB." << std::endl);
 
-  TEST_FOR_EXCEPTION(ebName.length() == 0, Teuchos::Exceptions::InvalidParameter,
+  TEUCHOS_TEST_FOR_EXCEPTION(ebName.length() == 0, Teuchos::Exceptions::InvalidParameter,
 		     std::endl << "MaterialDB Error! Empty element block name" << std::endl);
 
-  TEST_FOR_EXCEPTION(!pEBList_->isSublist(ebName), Teuchos::Exceptions::InvalidParameter,
+  TEUCHOS_TEST_FOR_EXCEPTION(!pEBList_->isSublist(ebName), Teuchos::Exceptions::InvalidParameter,
 		     std::endl << "MaterialDB Error! Invalid element block name " 
 		     << ebName << std::endl);
 
@@ -199,7 +202,7 @@ getElementBlockParam(const std::string& ebName, const std::string& paramName)
     return subList.get<T>(paramName);
 
   //check if related material exists (it always should)
-  TEST_FOR_EXCEPTION(!subList.isParameter("material"), 
+  TEUCHOS_TEST_FOR_EXCEPTION(!subList.isParameter("material"), 
 		     Teuchos::Exceptions::InvalidParameter, std::endl 
 		     << "MaterialDB Error! Param " << paramName
 		     << " not found in " << ebName << " list and there"
@@ -207,14 +210,14 @@ getElementBlockParam(const std::string& ebName, const std::string& paramName)
 
   //Parameter not directly in element block sublist, so try related material
   std::string materialName = subList.get<std::string>("material");
-  TEST_FOR_EXCEPTION(!pMaterialsList_->isSublist(materialName), 
+  TEUCHOS_TEST_FOR_EXCEPTION(!pMaterialsList_->isSublist(materialName), 
 		     Teuchos::Exceptions::InvalidParameter, std::endl 
 		     << "MaterialDB Error! Param " << paramName
 		     << " not found in " << ebName << " list, and related"
 		     << " material " << materialName << "is invalid." << std::endl);
 
   Teuchos::ParameterList& matSubList = pMaterialsList_->sublist(materialName);
-  TEST_FOR_EXCEPTION(!matSubList.isParameter(paramName), 
+  TEUCHOS_TEST_FOR_EXCEPTION(!matSubList.isParameter(paramName), 
 		     Teuchos::Exceptions::InvalidParameter, std::endl 
 		     << "MaterialDB Error! Param " << paramName
 		     << " not found in " << ebName << " list or related"
@@ -226,15 +229,15 @@ Teuchos::ParameterList&
 QCAD::MaterialDatabase:: 
 getElementBlockSublist(const std::string& ebName, const std::string& subListName)
 {
-  TEST_FOR_EXCEPTION(pEBList_ == NULL, Teuchos::Exceptions::InvalidParameter,
+  TEUCHOS_TEST_FOR_EXCEPTION(pEBList_ == NULL, Teuchos::Exceptions::InvalidParameter,
                     std::endl << "MaterialDB Error! material subList requested but no DB." << std::endl);
 
-  TEST_FOR_EXCEPTION(ebName.length() == 0, Teuchos::Exceptions::InvalidParameter,
-                    std::endl << "MaterialDB Error! Empty element block name" << std::endl);
+  TEUCHOS_TEST_FOR_EXCEPTION(ebName.length() == 0, Teuchos::Exceptions::InvalidParameter,
+                    std::endl << "MaterialDB Error! Empty element block name." << std::endl);
 
-  TEST_FOR_EXCEPTION(!pEBList_->isSublist(ebName), Teuchos::Exceptions::InvalidParameter,
-                    std::endl << "MaterialDB Error! Invalid element block name " 
-                    << ebName << std::endl);
+  TEUCHOS_TEST_FOR_EXCEPTION(!pEBList_->isSublist(ebName), Teuchos::Exceptions::InvalidParameter,
+                    std::endl << "MaterialDB Error! Invalid element block name \"" 
+                    << ebName << "\"."<< std::endl);
 
   // This call returns the sublist for the particular EB within the "ElementBlocks" list
   Teuchos::ParameterList& subList = pEBList_->sublist(ebName);
@@ -245,7 +248,7 @@ getElementBlockSublist(const std::string& ebName, const std::string& subListName
   // Didn't find the requested sublist directly in the EB sublist. Drill down to the material next.
 
   //check if related material exists (it always should)
-  TEST_FOR_EXCEPTION(!subList.isParameter("material"), 
+  TEUCHOS_TEST_FOR_EXCEPTION(!subList.isParameter("material"), 
                     Teuchos::Exceptions::InvalidParameter, std::endl 
                     << "MaterialDB Error! Param " << subListName
                     << " not found in " << ebName << " list and there"
@@ -254,7 +257,7 @@ getElementBlockSublist(const std::string& ebName, const std::string& subListName
   //Parameter not directly in element block sublist, so try related material
   std::string materialName = subList.get<std::string>("material");
 
-  TEST_FOR_EXCEPTION(!pMaterialsList_->isSublist(materialName), 
+  TEUCHOS_TEST_FOR_EXCEPTION(!pMaterialsList_->isSublist(materialName), 
                     Teuchos::Exceptions::InvalidParameter, std::endl 
                     << "MaterialDB Error! Param " << subListName
                     << " not found in " << ebName << " list, and related"
@@ -264,7 +267,7 @@ getElementBlockSublist(const std::string& ebName, const std::string& subListName
 
   // Does the requested sublist appear in the material sublist?
 
-  TEST_FOR_EXCEPTION(!matSubList.isParameter(subListName), 
+  TEUCHOS_TEST_FOR_EXCEPTION(!matSubList.isParameter(subListName), 
                     Teuchos::Exceptions::InvalidParameter, std::endl 
                     << "MaterialDB Error! Param " << subListName
                     << " not found in " << ebName << " list or related"
@@ -276,14 +279,13 @@ getElementBlockSublist(const std::string& ebName, const std::string& subListName
 
 }
 
-
 template<typename T> T 
 QCAD::MaterialDatabase:: 
 getElementBlockParam(const std::string& ebName, const std::string& paramName, T def_value)
 {
   if(pEBList_ == NULL) return def_value;
 
-  TEST_FOR_EXCEPTION(ebName.length() == 0, Teuchos::Exceptions::InvalidParameter,
+  TEUCHOS_TEST_FOR_EXCEPTION(ebName.length() == 0, Teuchos::Exceptions::InvalidParameter,
 		     std::endl << "MaterialDB Error! Empty element block name" << std::endl);
 
   //check if element block exists - if not return default
@@ -299,7 +301,7 @@ getElementBlockParam(const std::string& ebName, const std::string& paramName, T 
 
   //Parameter not directly in element block sublist, so try related material
   std::string materialName = subList.get<std::string>("material");
-  TEST_FOR_EXCEPTION(!pMaterialsList_->isSublist(materialName), 
+  TEUCHOS_TEST_FOR_EXCEPTION(!pMaterialsList_->isSublist(materialName), 
 		     Teuchos::Exceptions::InvalidParameter, std::endl 
 		     << "MaterialDB Error! Param " << paramName
 		     << " not found in " << ebName << " list, and related"
@@ -312,7 +314,7 @@ getElementBlockParam(const std::string& ebName, const std::string& paramName, T 
 bool QCAD::MaterialDatabase:: 
 isElementBlockParam(const std::string& ebName, const std::string& paramName)
 {
-  TEST_FOR_EXCEPTION(pEBList_ == NULL, Teuchos::Exceptions::InvalidParameter,
+  TEUCHOS_TEST_FOR_EXCEPTION(pEBList_ == NULL, Teuchos::Exceptions::InvalidParameter,
 		     std::endl << "MaterialDB Error! param required but no DB." << std::endl);
 
   if(!pEBList_->isSublist(ebName)) return false;
@@ -329,6 +331,28 @@ isElementBlockParam(const std::string& ebName, const std::string& paramName)
 
   Teuchos::ParameterList& matSubList = pMaterialsList_->sublist(materialName);
   return matSubList.isParameter(paramName);
+}
+
+bool QCAD::MaterialDatabase:: 
+isElementBlockSublist(const std::string& ebName, const std::string& subListName)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(pEBList_ == NULL, Teuchos::Exceptions::InvalidParameter,
+		     std::endl << "MaterialDB Error! param required but no DB." << std::endl);
+
+  if(!pEBList_->isSublist(ebName)) return false;
+  Teuchos::ParameterList& subList = pEBList_->sublist(ebName);
+
+  if(subList.isParameter(subListName)) return true;
+
+  //check if related material exists (it always should)
+  if(!subList.isParameter("material")) return false;
+
+  //Parameter not directly in element block sublist, so try related material
+  std::string materialName = subList.get<std::string>("material");
+  if(!pMaterialsList_->isSublist(materialName)) return false;
+
+  Teuchos::ParameterList& matSubList = pMaterialsList_->sublist(materialName);
+  return matSubList.isSublist(subListName);
 }
 
 

@@ -9,7 +9,7 @@
 
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS psubstrate for DOF Phi" type="double" value="0" />
-      <Parameter name="DBC on NS gate for DOF Phi" type="double" value="-1" />
+      <Parameter name="DBC on NS gate for DOF Phi" type="double" value="2" />
     </ParameterList>
 
     <ParameterList name="Poisson Source">
@@ -83,11 +83,11 @@
 
   <ParameterList name="Regression Results">
     <Parameter name="Number of Comparisons" type="int" value="1" />
-    <Parameter name="Test Values" type="Array(double)" value="{-10.1079068919}" />
+    <Parameter name="Test Values" type="Array(double)" value="{0.202477054853}" />
     <Parameter name="Relative Tolerance" type="double" value="1.0e-3" />
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="1" />
     <Parameter name="Sensitivity Test Values 0" type="Array(double)"
-     	       value="{ 1.1527225498,4.65492927386,0.0745758619996}" />
+     	       value="{ 0.0298002187588, 0.112594623901, -0.0498017492457}" />
   </ParameterList>
 
 

@@ -26,7 +26,6 @@ SET(SOURCES
 	Albany_StateManager.cpp 
 	Albany_ModelEvaluator.cpp
 	Albany_SaveEigenData.cpp
-	Albany_TimeManager.cpp
   )
 
 SET(HEADERS
@@ -37,6 +36,7 @@ SET(HEADERS
 	PHAL_FactoryTraits.hpp 
 	PHAL_AlbanyTraits.hpp 
 	PHAL_Workset.hpp 
+	PHAL_TypeKeyMap.hpp
 	Albany_Application.hpp 
 	Albany_RythmosObserver.hpp 
 	Albany_NOXObserver.hpp 
@@ -46,7 +46,6 @@ SET(HEADERS
 	Albany_ModelEvaluator.hpp
 	Albany_SaveEigenData.hpp
         Albany_DummyParameterAccessor.hpp
-        Albany_TimeManager.hpp
   )
 
 #problems
@@ -55,7 +54,7 @@ SET(SOURCES ${SOURCES}
 	problems/Albany_ProblemUtils.cpp 
 	problems/Albany_EvaluatorUtils.cpp 
 	problems/Albany_ResponseUtilities.cpp 
-	problems/Albany_DirichletUtils.cpp 
+	problems/Albany_BCUtils.cpp 
 	problems/Albany_ProblemFactory.cpp
 	problems/Albany_HeatProblem.cpp 
 	problems/Albany_MultiHeatProblem.cpp 
@@ -74,7 +73,8 @@ SET(HEADERS ${HEADERS}
 	problems/Albany_EvaluatorUtils_Def.hpp 
 	problems/Albany_ResponseUtilities.hpp 
 	problems/Albany_ResponseUtilities_Def.hpp 
-	problems/Albany_DirichletUtils.hpp 
+	problems/Albany_BCUtils.hpp 
+	problems/Albany_BCUtils_Def.hpp 
 	problems/Albany_HeatProblem.hpp 
 	problems/Albany_MultiHeatProblem.hpp 
 	problems/Albany_NavierStokes.hpp 
@@ -87,19 +87,27 @@ SET(HEADERS ${HEADERS}
 
 #responses
 SET(SOURCES ${SOURCES}
+        responses/Albany_ScalarResponseFunction.cpp
+	responses/Albany_AggregateScalarResponseFunction.cpp
+	responses/Albany_SamplingBasedScalarResponseFunction.cpp
 	responses/Albany_SolutionAverageResponseFunction.cpp 
 	responses/Albany_SolutionMaxValueResponseFunction.cpp
 	responses/Albany_SolutionTwoNormResponseFunction.cpp
-        responses/Albany_SolutionFileL2ResponseFunction.cpp
-	responses/Albany_EvaluatedResponseFunction.cpp
+        responses/Albany_SolutionFileResponseFunction.cpp
+	responses/Albany_FieldManagerScalarResponseFunction.cpp
+	responses/Albany_ResponseFactory.cpp
   )
 SET(HEADERS ${HEADERS}
 	responses/Albany_AbstractResponseFunction.hpp 
+	responses/Albany_ScalarResponseFunction.hpp
+	responses/Albany_AggregateScalarResponseFunction.hpp
+	responses/Albany_SamplingBasedScalarResponseFunction.hpp
 	responses/Albany_SolutionAverageResponseFunction.hpp 
 	responses/Albany_SolutionMaxValueResponseFunction.hpp
 	responses/Albany_SolutionTwoNormResponseFunction.hpp
-        responses/Albany_SolutionFileL2ResponseFunction.hpp
-	responses/Albany_EvaluatedResponseFunction.hpp
+        responses/Albany_SolutionFileResponseFunction.hpp
+	responses/Albany_FieldManagerScalarResponseFunction.hpp
+	responses/Albany_ResponseFactory.hpp
   )
 
 #stk
@@ -107,10 +115,7 @@ SET(SOURCES ${SOURCES}
         stk/Albany_STKDiscretization.cpp
 	stk/Albany_DiscretizationFactory.cpp
         stk/Albany_GenericSTKMeshStruct.cpp
-        stk/Albany_Point0DSTKMeshStruct.cpp
-        stk/Albany_Line1DSTKMeshStruct.cpp
-        stk/Albany_Rect2DSTKMeshStruct.cpp
-        stk/Albany_Cube3DSTKMeshStruct.cpp
+        stk/Albany_TmplSTKMeshStruct.cpp
         stk/Albany_FromCubitSTKMeshStruct.cpp
         stk/Albany_IossSTKMeshStruct.cpp
   )
@@ -120,10 +125,7 @@ SET(HEADERS ${HEADERS}
 	stk/Albany_DiscretizationFactory.hpp
         stk/Albany_AbstractSTKMeshStruct.hpp
         stk/Albany_GenericSTKMeshStruct.hpp
-        stk/Albany_Point0DSTKMeshStruct.hpp
-        stk/Albany_Line1DSTKMeshStruct.hpp
-        stk/Albany_Rect2DSTKMeshStruct.hpp
-        stk/Albany_Cube3DSTKMeshStruct.hpp
+        stk/Albany_TmplSTKMeshStruct.hpp
         stk/Albany_FromCubitSTKMeshStruct.hpp
         stk/Albany_IossSTKMeshStruct.hpp
   )
@@ -163,9 +165,11 @@ SET(SOURCES ${SOURCES}
         evaluators/PHAL_NSTauT.cpp
         evaluators/PHAL_NSMaterialProperty.cpp
         evaluators/PHAL_NSBodyForce.cpp
-	evaluators/PHAL_ResponseBase.cpp
         evaluators/PHAL_NSPermeabilityTerm.cpp
         evaluators/PHAL_NSForchheimerTerm.cpp
+	evaluators/PHAL_ResponseFieldIntegral.cpp
+	evaluators/PHAL_ScatterScalarResponse.cpp
+	evaluators/PHAL_SeparableScatterScalarResponse.cpp
   )
 SET(HEADERS ${HEADERS}
 	evaluators/PHAL_GatherSolution.hpp 
@@ -234,12 +238,16 @@ SET(HEADERS ${HEADERS}
         evaluators/PHAL_NSMaterialProperty_Def.hpp 
         evaluators/PHAL_NSBodyForce.hpp
         evaluators/PHAL_NSBodyForce_Def.hpp
-        evaluators/PHAL_ResponseBase.hpp
-	evaluators/PHAL_ResponseBase_Def.hpp
         evaluators/PHAL_NSPermeabilityTerm.hpp
         evaluators/PHAL_NSPermeabilityTerm_Def.hpp 
         evaluators/PHAL_NSForchheimerTerm.hpp
         evaluators/PHAL_NSForchheimerTerm_Def.hpp
+	evaluators/PHAL_ResponseFieldIntegral.hpp
+	evaluators/PHAL_ResponseFieldIntegral_Def.hpp
+	evaluators/PHAL_ScatterScalarResponse.hpp
+	evaluators/PHAL_ScatterScalarResponse_Def.hpp
+	evaluators/PHAL_SeparableScatterScalarResponse.hpp
+	evaluators/PHAL_SeparableScatterScalarResponse_Def.hpp
   )
 
 # LCM
@@ -253,7 +261,10 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/problems/ThermoElasticityProblem.cpp 
     ${LCM_DIR}/problems/GradientDamageProblem.cpp 
     ${LCM_DIR}/problems/PoroElasticityProblem.cpp
+    ${LCM_DIR}/problems/TLPoroPlasticityProblem.cpp
+    ${LCM_DIR}/problems/ThermoPoroPlasticityProblem.cpp
     ${LCM_DIR}/problems/ThermoMechanicalProblem.cpp
+    ${LCM_DIR}/problems/HDiffusionDeformationProblem.cpp
   )
 
   SET(HEADERS ${HEADERS}
@@ -262,12 +273,16 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/problems/ThermoElasticityProblem.hpp 
     ${LCM_DIR}/problems/GradientDamageProblem.hpp
     ${LCM_DIR}/problems/PoroElasticityProblem.hpp 
+    ${LCM_DIR}/problems/TLPoroPlasticityProblem.hpp
+    ${LCM_DIR}/problems/ThermoPoroPlasticityProblem.hpp
     ${LCM_DIR}/problems/ThermoMechanicalProblem.hpp
+    ${LCM_DIR}/problems/HDiffusionDeformationProblem.hpp
   )
 
   # LCM evaluators
   SET(SOURCES ${SOURCES}
-    ${LCM_DIR}/evaluators/Stress.cpp 
+    ${LCM_DIR}/evaluators/Stress.cpp
+    ${LCM_DIR}/evaluators/CapModelStress.cpp  
     ${LCM_DIR}/evaluators/Strain.cpp 
     ${LCM_DIR}/evaluators/ElasticModulus.cpp 
     ${LCM_DIR}/evaluators/PoissonsRatio.cpp 
@@ -294,18 +309,40 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/TotalStress.cpp
     ${LCM_DIR}/evaluators/BiotCoefficient.cpp
     ${LCM_DIR}/evaluators/BiotModulus.cpp
-    ${LCM_DIR}/evaluators/PoroElasticityResidMomentum.cpp
+    ${LCM_DIR}/evaluators/PoroElasticityResidMomentum.cpp    
     ${LCM_DIR}/evaluators/PoroElasticityResidMass.cpp
+    ${LCM_DIR}/evaluators/TLPoroPlasticityResidMomentum.cpp
+    ${LCM_DIR}/evaluators/TLPoroPlasticityResidMass.cpp
+    ${LCM_DIR}/evaluators/TLPoroStress.cpp
+    ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidMomentum.cpp
+    ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidMass.cpp
+    ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidEnergy.cpp
     ${LCM_DIR}/evaluators/Porosity.cpp
     ${LCM_DIR}/evaluators/KCPermeability.cpp
     ${LCM_DIR}/evaluators/ThermoMechanicalEnergyResidual.cpp
     ${LCM_DIR}/evaluators/ThermoMechanicalMomentumResidual.cpp
     ${LCM_DIR}/evaluators/ThermoMechanicalStress.cpp
+    ${LCM_DIR}/evaluators/Time.cpp
+    ${LCM_DIR}/evaluators/TimeDepBC.cpp
+    ${LCM_DIR}/evaluators/DiffusionCoefficient.cpp
+    ${LCM_DIR}/evaluators/EffectiveDiffusivity.cpp
+    ${LCM_DIR}/evaluators/EquilibriumConstant.cpp
+    ${LCM_DIR}/evaluators/TrappedSolvent.cpp
+    ${LCM_DIR}/evaluators/TrappedConcentration.cpp
+    ${LCM_DIR}/evaluators/HDiffusionDeformationMatterResidual.cpp
+    ${LCM_DIR}/evaluators/TauContribution.cpp
+    ${LCM_DIR}/evaluators/StrainRateFactor.cpp
+    ${LCM_DIR}/evaluators/MixtureThermalExpansion.cpp
+    ${LCM_DIR}/evaluators/MixtureSpecificHeat.cpp
+    ${LCM_DIR}/evaluators/StabParameter.cpp
+    ${LCM_DIR}/evaluators/SetField.cpp
   )
 
   SET(HEADERS ${HEADERS}
     ${LCM_DIR}/evaluators/Stress.hpp 
     ${LCM_DIR}/evaluators/Stress_Def.hpp
+    ${LCM_DIR}/evaluators/CapModelStress.hpp 
+    ${LCM_DIR}/evaluators/CapModelStress_Def.hpp
     ${LCM_DIR}/evaluators/Strain.hpp 
     ${LCM_DIR}/evaluators/Strain_Def.hpp 
     ${LCM_DIR}/evaluators/ElasticModulus.hpp 
@@ -354,6 +391,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/DislocationDensity_Def.hpp
     ${LCM_DIR}/evaluators/TotalStress.hpp
     ${LCM_DIR}/evaluators/TotalStress_Def.hpp
+    ${LCM_DIR}/evaluators/TLPoroStress.hpp
+    ${LCM_DIR}/evaluators/TLPoroStress_Def.hpp
     ${LCM_DIR}/evaluators/BiotCoefficient.hpp
     ${LCM_DIR}/evaluators/BiotCoefficient_Def.hpp
     ${LCM_DIR}/evaluators/BiotModulus.hpp
@@ -362,6 +401,16 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/PoroElasticityResidMomentum_Def.hpp
     ${LCM_DIR}/evaluators/PoroElasticityResidMass.hpp
     ${LCM_DIR}/evaluators/PoroElasticityResidMass_Def.hpp
+    ${LCM_DIR}/evaluators/TLPoroPlasticityResidMomentum.hpp    
+    ${LCM_DIR}/evaluators/TLPoroPlasticityResidMomentum_Def.hpp
+    ${LCM_DIR}/evaluators/TLPoroPlasticityResidMass.hpp
+    ${LCM_DIR}/evaluators/TLPoroPlasticityResidMass_Def.hpp
+    ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidMomentum.hpp    
+    ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidMomentum_Def.hpp
+    ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidMass.hpp
+    ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidMass_Def.hpp
+    ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidEnergy.hpp
+    ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidEnergy_Def.hpp
     ${LCM_DIR}/evaluators/Porosity.hpp
     ${LCM_DIR}/evaluators/Porosity_Def.hpp
     ${LCM_DIR}/evaluators/KCPermeability.hpp
@@ -372,6 +421,34 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/ThermoMechanicalMomentumResidual_Def.hpp
     ${LCM_DIR}/evaluators/ThermoMechanicalStress.hpp
     ${LCM_DIR}/evaluators/ThermoMechanicalStress_Def.hpp
+    ${LCM_DIR}/evaluators/Time.hpp
+    ${LCM_DIR}/evaluators/Time_Def.hpp
+    ${LCM_DIR}/evaluators/TimeDepBC.hpp
+    ${LCM_DIR}/evaluators/TimeDepBC_Def.hpp
+    ${LCM_DIR}/evaluators/DiffusionCoefficient.hpp
+    ${LCM_DIR}/evaluators/DiffusionCoefficient_Def.hpp
+    ${LCM_DIR}/evaluators/EquilibriumConstant.hpp
+    ${LCM_DIR}/evaluators/EquilibriumConstant_Def.hpp
+    ${LCM_DIR}/evaluators/TrappedSolvent.hpp
+    ${LCM_DIR}/evaluators/TrappedSolvent_Def.hpp
+    ${LCM_DIR}/evaluators/EffectiveDiffusivity.hpp
+    ${LCM_DIR}/evaluators/EffectiveDiffusivity_Def.hpp
+    ${LCM_DIR}/evaluators/TrappedConcentration.hpp
+    ${LCM_DIR}/evaluators/TrappedConcentration_Def.hpp
+    ${LCM_DIR}/evaluators/HDiffusionDeformationMatterResidual.hpp
+    ${LCM_DIR}/evaluators/HDiffusionDeformationMatterResidual_Def.hpp
+    ${LCM_DIR}/evaluators/StrainRateFactor.hpp
+    ${LCM_DIR}/evaluators/StrainRateFactor_Def.hpp
+    ${LCM_DIR}/evaluators/TauContribution.hpp
+    ${LCM_DIR}/evaluators/TauContribution_Def.hpp
+    ${LCM_DIR}/evaluators/MixtureThermalExpansion.hpp
+    ${LCM_DIR}/evaluators/MixtureThermalExpansion_Def.hpp
+    ${LCM_DIR}/evaluators/MixtureSpecificHeat.hpp
+    ${LCM_DIR}/evaluators/MixtureSpecificHeat_Def.hpp
+    ${LCM_DIR}/evaluators/StabParameter.hpp
+    ${LCM_DIR}/evaluators/StabParameter_Def.hpp
+    ${LCM_DIR}/evaluators/SetField.hpp 
+    ${LCM_DIR}/evaluators/SetField_Def.hpp 
   )
 
   #LCM utils
@@ -569,10 +646,11 @@ ENDIF ()
 add_executable(AlbanyAnalysis Main_Analysis.cpp)
 
 # Tests
-add_executable(PartitionTest LCM/test/utils/PartitionTest.cc)
-add_executable(UtilsTest LCM/test/utils/UtilsTest.cc)
 IF (ALBANY_LCM)
+  add_executable(PartitionTest LCM/test/utils/PartitionTest.cc)
+  add_executable(UtilsTest LCM/test/utils/UtilsTest.cc)
   add_executable(NodeUpdate LCM/test/utils/NodeUpdate.cc)
+  add_executable(MeshComponents LCM/test/utils/MeshComponents.cc)
 ENDIF ()
 IF (ALBANY_LAME)
   add_executable(utLameStress_elastic
@@ -581,11 +659,13 @@ IF (ALBANY_LAME)
     Albany_Utils.cpp
     Albany_StateManager.cpp
     stk/Albany_GenericSTKMeshStruct.cpp
-    stk/Albany_Cube3DSTKMeshStruct.cpp
+    stk/Albany_TmplSTKMeshStruct.cpp
     stk/Albany_STKDiscretization.cpp
+    problems/QCAD_MaterialDatabase.cpp
     ${LCM_DIR}/utils/Tensor.cc
     ${LCM_DIR}/utils/LameUtils.cpp
     ${LCM_DIR}/evaluators/LameStress.cpp
+    ${LCM_DIR}/evaluators/SetField.cpp
     ${LCM_DIR}/test/unit_tests/StandardUnitTestMain.cpp
     ${LCM_DIR}/test/unit_tests/utLameStress_elastic.cpp
   )
@@ -609,8 +689,9 @@ ENDIF ()
 target_link_libraries(AlbanyAnalysis  albanyLib ${ALL_LIBRARIES})
 
 #Linking tests
-target_link_libraries(PartitionTest albanyLib ${ALL_LIBRARIES})
-target_link_libraries(UtilsTest albanyLib ${ALL_LIBRARIES})
 IF (ALBANY_LCM)
+  target_link_libraries(PartitionTest albanyLib ${ALL_LIBRARIES})
+  target_link_libraries(UtilsTest albanyLib ${ALL_LIBRARIES})
   target_link_libraries(NodeUpdate albanyLib ${ALL_LIBRARIES})
+  target_link_libraries(MeshComponents albanyLib ${ALL_LIBRARIES})
 ENDIF ()

@@ -38,6 +38,8 @@
 
 #include "NOX_Epetra_Observer.H"
 
+int Albany_ML_Coord2RBM(int Nnodes, double x[], double y[], double z[], double rbm[], int Ndof, int NSdim);
+
 
 using Teuchos::RCP;
 using Teuchos::rcp;
@@ -82,7 +84,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
     // Get solver type
     ParameterList& problemParams = appParams->sublist("Problem");
     string solutionMethod = problemParams.get("Solution Method", "Steady");
-    TEST_FOR_EXCEPTION(solutionMethod != "Steady" &&
+    TEUCHOS_TEST_FOR_EXCEPTION(solutionMethod != "Steady" &&
             solutionMethod != "Transient" && solutionMethod != "Continuation" &&
 	    solutionMethod != "Multi-Problem",  
             std::logic_error, "Solution Method must be Steady, Transient, "
@@ -121,6 +123,10 @@ Albany::SolverFactory::createAndGetAlbanyApp(
     RCP<Teuchos::ParameterList> piroParams = 
       rcp(&(appParams->sublist("Piro")),false);
 
+    // Get coordinates from the mesh a insert into param list if using ML preconditioner
+    setCoordinatesForML(solutionMethod, secondOrder, piroParams,
+                        app, problemParams.get("Name", "Heat 1D"));
+
     if (solutionMethod== "Continuation") { // add save eigen data here as in Piro test
       Teuchos::ParameterList& locaParams = piroParams->sublist("LOCA");
         RCP<LOCA::SaveEigenData::AbstractStrategy> saveEigs =
@@ -137,7 +143,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
     else if (solutionMethod== "Multi-Problem")
       return  rcp(new QCAD::Solver(appParams, solverComm));
     else if (solutionMethod== "Transient") {
-      TEST_FOR_EXCEPTION(secondOrder!="No", std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(secondOrder!="No", std::logic_error,
          "Invalid value for Second Order: (No, Velocity Verlet, Trapezoid Rule): "
          << secondOrder << "\n");
       return Teuchos::null;
@@ -178,7 +184,7 @@ int Albany::SolverFactory::checkTestResults(
   const Epetra_Vector* g_std_dev) const
 {
   ParameterList& testParams = appParams->sublist("Regression Results");
-  TEST_FOR_EXCEPTION(testParams.isType<string>("Test Values"), std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION(testParams.isType<string>("Test Values"), std::logic_error,
     "Array information in XML file must now be of type Array(double)\n");
   testParams.validateParametersAndSetDefaults(*getValidRegressionResultsParameters(),0);
 
@@ -197,9 +203,13 @@ int Albany::SolverFactory::checkTestResults(
       Teuchos::Array<double> testValues =
         testParams.get<Teuchos::Array<double> >("Test Values");
       
-      TEST_FOR_EXCEPT(numResponseTests != testValues.size());
+      TEUCHOS_TEST_FOR_EXCEPT(numResponseTests != testValues.size());
       for (int i=0; i<testValues.size(); i++) {
         failures += scaledCompare((*g)[i], testValues[i], relTol, absTol);
+
+        // debug print
+//        std::cout << "Failures = " << failures << " computed val = " << (*g)[i] << " test val = " 
+//          << testValues[i] << " reltol = " << relTol << " abstol = " << absTol << std::endl;
         comparisons++;
       }
     }
@@ -214,7 +224,7 @@ int Albany::SolverFactory::checkTestResults(
       for (int i=0; i<numSensTests; i++) {
         Teuchos::Array<double> testSensValues =
           testParams.get<Teuchos::Array<double> >(Albany::strint("Sensitivity Test Values",i));
-        TEST_FOR_EXCEPT(dgdp->NumVectors() != testSensValues.size());
+        TEUCHOS_TEST_FOR_EXCEPT(dgdp->NumVectors() != testSensValues.size());
         for (int j=0; j<dgdp->NumVectors(); j++) {
           failures += scaledCompare((*dgdp)[j][i], testSensValues[j], relTol, absTol);
           comparisons++;
@@ -233,7 +243,7 @@ int Albany::SolverFactory::checkTestResults(
       Teuchos::Array<double> testValues =
         testParams.get<Teuchos::Array<double> >("Dakota Test Values");
 
-      TEST_FOR_EXCEPT(numDakotaTests != testValues.size());
+      TEUCHOS_TEST_FOR_EXCEPT(numDakotaTests != testValues.size());
       for (int i=0; i<numDakotaTests; i++) {
         failures += scaledCompare((*drdv)[i], testValues[i], relTol, absTol);
         comparisons++;
@@ -254,7 +264,7 @@ int Albany::SolverFactory::checkTestResults(
       Teuchos::Array<double> testValues =
         testParams.get<Teuchos::Array<double> >("Piro Analysis Test Values");
 
-      TEST_FOR_EXCEPT(numPiroTests != testValues.size());
+      TEUCHOS_TEST_FOR_EXCEPT(numPiroTests != testValues.size());
       for (int i=0; i<numPiroTests; i++) {
         failures += scaledCompare(p[i], testValues[i], relTol, absTol);
         comparisons++;
@@ -271,7 +281,7 @@ int Albany::SolverFactory::checkTestResults(
         Teuchos::Array<double> testSGValues = 
           testParams.get<Teuchos::Array<double> >
             (Albany::strint("Stochastic Galerkin Expansion Test Values",i));
-        TEST_FOR_EXCEPT(g_sg->size() != testSGValues.size());
+        TEUCHOS_TEST_FOR_EXCEPT(g_sg->size() != testSGValues.size());
 	for (int j=0; j<g_sg->size(); j++) {
 	  failures += 
 	    scaledCompare((*g_sg)[j][i], testSGValues[j], relTol, absTol);
@@ -290,7 +300,7 @@ int Albany::SolverFactory::checkTestResults(
       Teuchos::Array<double> testValues =
         testParams.get<Teuchos::Array<double> >("Stochastic Galerkin Mean Test Values");
       
-      TEST_FOR_EXCEPT(numMeanResponseTests != testValues.size());
+      TEUCHOS_TEST_FOR_EXCEPT(numMeanResponseTests != testValues.size());
       for (int i=0; i<testValues.size(); i++) {
         failures += scaledCompare((*g_mean)[i], testValues[i], relTol, absTol);
         comparisons++;
@@ -307,7 +317,7 @@ int Albany::SolverFactory::checkTestResults(
       Teuchos::Array<double> testValues =
         testParams.get<Teuchos::Array<double> >("Stochastic Galerkin Standard Deviation Test Values");
       
-      TEST_FOR_EXCEPT(numSDResponseTests != testValues.size());
+      TEUCHOS_TEST_FOR_EXCEPT(numSDResponseTests != testValues.size());
       for (int i=0; i<testValues.size(); i++) {
         failures += scaledCompare((*g_std_dev)[i], testValues[i], relTol, absTol);
         comparisons++;
@@ -500,3 +510,116 @@ Albany::SolverFactory::getValidResponseParameters() const
   }
   return validPL;
 }
+    
+void Albany::SolverFactory::
+setCoordinatesForML(const string& solutionMethod,
+                    const string& secondOrder,
+                    RCP<ParameterList>& piroParams,
+                    RCP<Albany::Application>& app,
+                    std::string& problemName) 
+{
+    // If ML preconditioner is used, get nodal coordinates from application
+    ParameterList* stratList = NULL;
+
+    if (solutionMethod=="Steady" || solutionMethod=="Continuation")
+      stratList = & piroParams->sublist("NOX").sublist("Direction").sublist("Newton").
+                    sublist("Stratimikos Linear Solver").sublist("Stratimikos");
+    else if (solutionMethod=="Transient"  && secondOrder=="No")
+      stratList = & piroParams->sublist("Rythmos").sublist("Stratimikos");
+
+    if (stratList && stratList->isParameter("Preconditioner Type")) // Make sure stratList is set before dereference
+      if ("ML" == stratList->get<string>("Preconditioner Type")) {
+         ParameterList& mlList = 
+            stratList->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings");
+         double *x = NULL, *y = NULL, *z = NULL, *rbm = NULL;
+
+         // This block of code needs to be repalced with a function call to the problem for every problem!
+         int numElasticityDim = 0; int nullSpaceDim = 0; int numPDEs=1;
+         if (problemName == "Elasticity 3D" || problemName == "Nonlinear Elasticity 3D" || problemName == "Lame" || problemName == "LAME" || problemName == "lame"  )
+           {  numPDEs = 3; numElasticityDim = 3; nullSpaceDim = 6;}
+         else if (problemName == "Elasticity 2D" || problemName == "Nonlinear Elasticity 2D")
+           {  numPDEs = 3; numElasticityDim = 2; nullSpaceDim = 3;}
+         // End block of code to get integers from problem setup
+
+         // Get coordinate vectors from mesh
+         int nNodes;
+         app->getDiscretization()->getOwned_xyz(&x,&y,&z,&rbm,nNodes,numPDEs,nullSpaceDim);
+        
+         mlList.set("x-coordinates",x); 
+         mlList.set("y-coordinates",y); 
+         mlList.set("z-coordinates",z); 
+
+         mlList.set("PDE equations", numPDEs); 
+
+         if (numElasticityDim > 0 ) {
+           cout << "\nEEEEE setting ML Null Space for Elasticity-type problem of Dimension: " << numElasticityDim <<  " nodes  " << nNodes << " nullspace  " << nullSpaceDim << endl;
+           
+           (void) Albany_ML_Coord2RBM(nNodes, x, y, z, rbm, numElasticityDim, nullSpaceDim);
+           mlList.set("null space: type","pre-computed"); 
+           mlList.set("null space: dimension",nullSpaceDim); 
+           mlList.set("null space: vectors",rbm); 
+           mlList.set("null space: add default vectors",false); 
+
+         }  
+
+      }
+}
+
+int Albany_ML_Coord2RBM(int Nnodes, double x[], double y[], double z[], double rbm[], int Ndof, int NSdim)
+{
+   int vec_leng, ii, jj, offset, node, dof;
+
+   vec_leng = Nnodes*Ndof;
+
+   for( node = 0 ; node < Nnodes; node++ )
+   {
+      dof = node*Ndof;
+      switch( NSdim )
+      {
+         case 6:
+            for(ii=3;ii<6;ii++){ /* lower half = [ 0 I ] */
+              for(jj=0;jj<6;jj++){
+                offset = dof+(ii-3)+jj*vec_leng;
+    // BUG!!!!!            offset = dof+ii+jj*vec_leng;
+                rbm[offset] = (ii==jj) ? 1.0 : 0.0;
+              }
+            }
+
+         case 3:
+            for(ii=0;ii<3;ii++){ /* upper left = [ I ] */
+              for(jj=0;jj<3;jj++){
+                offset = dof+ii+jj*vec_leng;
+                rbm[offset] = (ii==jj) ? 1.0 : 0.0;
+              }
+            }
+            for(ii=0;ii<3;ii++){ /* upper right = [ Q ] */
+              for(jj=3;jj<6;jj++){
+                offset = dof+ii+jj*vec_leng;
+                if( ii == jj-3 ) rbm[offset] = 0.0;
+                else {
+                  if (ii+jj == 4) rbm[offset] = z[node];
+                  else if ( ii+jj == 5 ) rbm[offset] = y[node];
+                  else if ( ii+jj == 6 ) rbm[offset] = x[node];
+                  else rbm[offset] = 0.0;
+                }
+              }
+            }
+            ii = 0; jj = 5;
+            offset = dof+ii+jj*vec_leng; rbm[offset] *= -1.0;
+            ii = 1; jj = 3;
+            offset = dof+ii+jj*vec_leng; rbm[offset] *= -1.0;
+            ii = 2; jj = 4;
+            offset = dof+ii+jj*vec_leng; rbm[offset] *= -1.0;
+            break;
+
+         default:
+            printf("ML_Coord2RBM: Ndof = %d not implemented\n",Ndof);
+            exit(1);
+      } /*switch*/
+
+  } /*for( node = 0 ; node < Nnodes; node++ )*/
+
+  return 1;
+
+} /*ML_Coord2RBM*/
+
