@@ -34,38 +34,9 @@ namespace QCAD {
     public PHX::EvaluatorWithBaseImpl<Traits>,
     public PHX::EvaluatorDerived<EvalT, Traits>
   {
-     public:
-    typedef typename EvalT::ScalarT ScalarT;
-    ResponseSaveField(Teuchos::ParameterList& p,
-		      const Teuchos::RCP<Albany::Layouts>& dl);
-  
-    void postRegistrationSetup(typename Traits::SetupData d,
-			       PHX::FieldManager<Traits>& vm);
-  
-    void evaluateFields(typename Traits::EvalData d);
-
-    Teuchos::RCP<const PHX::FieldTag> getEvaluatedFieldTag() const {
-      return response_field_tag;
-    }
-
-    Teuchos::RCP<const PHX::FieldTag> getResponseFieldTag() const {
-      return response_field_tag;
-    }
-    
-  private:
-    Teuchos::RCP<const Teuchos::ParameterList>
-    getValidResponseParameters() const;
-
-    Teuchos::RCP< PHX::Tag<ScalarT> > response_field_tag;
-  };
-
-  template<typename Traits>
-  class ResponseSaveField<PHAL::AlbanyTraits::Residual, Traits> : 
-    public PHX::EvaluatorWithBaseImpl<Traits>,
-    public PHX::EvaluatorDerived<PHAL::AlbanyTraits::Residual, Traits>
-  {
   public:
-    typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
+    typedef typename EvalT::ScalarT ScalarT;
+    typedef typename EvalT::MeshScalarT MeshScalarT;
     ResponseSaveField(Teuchos::ParameterList& p,
 		      const Teuchos::RCP<Albany::Layouts>& dl);
   
@@ -91,7 +62,7 @@ namespace QCAD {
     std::size_t numQPs;
     std::size_t numDims;
     
-    PHX::MDField<ScalarT,Cell,QuadPoint> weights;
+    PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
     PHX::MDField<ScalarT> field;
 
     bool outputToExodus;
