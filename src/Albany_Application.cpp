@@ -69,7 +69,7 @@ Application(const RCP<const Epetra_Comm>& comm_,
   RCP<Teuchos::ParameterList> problemParams = 
     Teuchos::sublist(params, "Problem", true);
   Albany::ProblemFactory problemFactory(problemParams, paramLib, comm);
-  RCP<Albany::AbstractProblem> problem = problemFactory.create();
+  problem = problemFactory.create();
 
   // Validate Problem parameters against list for this specific problem
   problemParams->validateParameters(*(problem->getValidProblemParameters()),0);
@@ -209,6 +209,13 @@ Albany::Application::
 getDiscretization() const
 {
   return disc;
+}
+
+RCP<Albany::AbstractProblem>
+Albany::Application::
+getProblem() const
+{
+  return problem;
 }
 
 RCP<const Epetra_Comm>

@@ -76,6 +76,9 @@ namespace Albany {
     //! Get underlying abstract discretization
     Teuchos::RCP<Albany::AbstractDiscretization> getDiscretization() const;
 
+    //! Get problem object
+    Teuchos::RCP<Albany::AbstractProblem> getProblem() const;
+
     //! Get communicator
     Teuchos::RCP<const Epetra_Comm> getComm() const;
 
@@ -521,6 +524,9 @@ namespace Albany {
 
     //! Element discretization
     Teuchos::RCP<Albany::AbstractDiscretization> disc;
+
+    //! Problem class
+    Teuchos::RCP<Albany::AbstractProblem> problem;
 
     //! Initial solution vector
     Teuchos::RCP<Epetra_Vector> initial_x;

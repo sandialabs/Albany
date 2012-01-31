@@ -95,6 +95,9 @@ SET(SOURCES ${SOURCES}
 	responses/Albany_SolutionTwoNormResponseFunction.cpp
         responses/Albany_SolutionFileResponseFunction.cpp
 	responses/Albany_FieldManagerScalarResponseFunction.cpp
+	responses/Albany_DistributedResponseFunction.cpp
+	responses/Albany_SolutionResponseFunction.cpp
+	responses/Albany_KLResponseFunction.cpp
 	responses/Albany_ResponseFactory.cpp
   )
 SET(HEADERS ${HEADERS}
@@ -107,6 +110,9 @@ SET(HEADERS ${HEADERS}
 	responses/Albany_SolutionTwoNormResponseFunction.hpp
         responses/Albany_SolutionFileResponseFunction.hpp
 	responses/Albany_FieldManagerScalarResponseFunction.hpp
+	responses/Albany_DistributedResponseFunction.hpp
+	responses/Albany_SolutionResponseFunction.hpp
+	responses/Albany_KLResponseFunction.hpp
 	responses/Albany_ResponseFactory.hpp
   )
 

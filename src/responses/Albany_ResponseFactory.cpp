@@ -23,6 +23,7 @@
 #include "Albany_SolutionFileResponseFunction.hpp"
 #include "Albany_AggregateScalarResponseFunction.hpp"
 #include "Albany_FieldManagerScalarResponseFunction.hpp"
+#include "Albany_SolutionResponseFunction.hpp"
 #include "QCAD_SaddleValueResponseFunction.hpp"
 
 #include "Teuchos_TestForException.hpp"
@@ -60,11 +61,13 @@ createResponseFunction(
   }
 
   else if (name == "Solution Two Norm File") {
-    responses.push_back(rcp(new Albany::SolutionFileResponseFunction<Albany::NormTwo>(comm)));
+    responses.push_back(
+      rcp(new Albany::SolutionFileResponseFunction<Albany::NormTwo>(comm)));
   }
 
   else if (name == "Solution Inf Norm File") {
-    responses.push_back(rcp(new Albany::SolutionFileResponseFunction<Albany::NormInf>(comm)));
+    responses.push_back(
+      rcp(new Albany::SolutionFileResponseFunction<Albany::NormInf>(comm)));
   }
 
   else if (name == "Aggregated") {
@@ -99,6 +102,11 @@ createResponseFunction(
 	rcp(new Albany::FieldManagerScalarResponseFunction(
 	      app, prob, meshSpecs[i], stateMgr, responseParams)));
     }
+  }
+
+  else if (name == "Solution") {
+    responses.push_back(
+      rcp(new Albany::SolutionResponseFunction(app, responseParams)));
   }
 
   else if (name == "Saddle Value") {

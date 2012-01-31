@@ -37,62 +37,6 @@
 #include <xmmintrin.h>
 #endif
 
-/////////////////////////////////////////////////////////////
-// begin jrr: Now cull solution vector's (x) map using
-// assumptions on various size and location parameters 
-
-// Setting for function definition; parameters for now look like:
-// RCP<Epetra_Vector>& x_map  (input)
-// vector<int>& keepDOF   (input - vector of length total number dof/node in
-//                                the solution vector; for now, number of equations
-//                                per node. keepDOF[i]={0 - delete; 1 - keep})
-// RCP<Epetra_Vector>& x_new_map (output - new map for culled solution vector)
-
-void cullDistributedResponseMap( Teuchos::RCP<Epetra_Map>& x_map,
-				 std::vector<int>& keepDOF,
-				 Teuchos::RCP<Epetra_Map>& x_new_map )
-{
-
-  int numKeepDOF = accumulate(keepDOF.begin(), keepDOF.end(), 0);
-  int Neqns = keepDOF.size();
-  int N = x_map->NumMyElements(); // x_map is map for solution vector
-
-  TEUCHOS_ASSERT( !(N % Neqns) ); // Need to be sure that N is exactly Neqns-divisible
-
-  int nnodes = N / Neqns; // number of fem nodes
-  int N_new = nnodes * numKeepDOF; // length of local x_new 
-
-  std::vector<int> gids(N);
-  std::vector<int> gids_new;
-
-  x_map->MyGlobalElements(&gids[0]); // Fill local x_map into gids array
-  
-  for ( int inode = 0; inode < N/Neqns ; ++inode) // 
-    {
-      for ( int ieqn = 0; ieqn < Neqns; ++ieqn )
-	if( keepDOF[ieqn] == 1 )  // then want to keep this dof
-	  gids_new.push_back( gids[(inode*Neqns)+ieqn] );
-    }
-  // end cull
-  
-  x_new_map = Teuchos::rcp( new Epetra_Map( -1, gids_new.size(), &gids_new[0], 0, x_map->Comm() ) );
-}
-
-// now cull the response vector itself
-void cullDistributedResponse( Teuchos::RCP<Epetra_Vector>& x,
-			      Teuchos::RCP<Epetra_Map>& x_map,
-			      Teuchos::RCP<Epetra_Vector>& x_new,
-			      Teuchos::RCP<Epetra_Map>& x_new_map )
-{
-  Epetra_Import importer( *x_new_map, *x_map );
-  x_new = Teuchos::rcp( new Epetra_Vector( *x_new_map ) );
-
-  x_new->Import( *x, importer, Insert );
-}
-
-// end jrr
-////////////////////////////////////////////////
-
 int main(int argc, char *argv[]) {
 
   int status=0; // 0 = pass, failures are incremented
@@ -184,52 +128,6 @@ int main(int argc, char *argv[]) {
 
     *out << "Finished eval of first model: Params, Responses " 
          << std::setprecision(12) << endl;
-
-    /////////////////////////////////////////////////////////////////
-    // begin jrr: Need the map for our global function call to cull
-    //            the solution vector, which for this case is xfinal;
-    //            resulting object is xfinal_new
-
-    Teuchos::RCP<Epetra_Map> xfinal_map =
-      rcp(new Epetra_Map( *(App->get_g_map(num_g-1)) ) );
-    Teuchos::RCP<Epetra_Vector> xfinal_new;  // placeholder for culled response vector
-    Teuchos::RCP<Epetra_Map> xfinal_new_map; // placeholder for culled map
-
-    // Locate the vector components we want to keep manually.
-    // For thermoelasticity2d problem, it's 2 and we want to
-    // cull a temperature variable on each node in
-    // the 3rd dof.
-
-    int neq = 4;                 // thermoelasticity3d
-    std::vector<int> keepDOF(neq, 1); // Initialize to keep all dof, then,
-    keepDOF[3] = 0;              // as stated, cull the 4th dof
-
-    int ndim = std::accumulate(keepDOF.begin(), keepDOF.end(), 0);
-  
-    // Now, create the new, culled map...
-    cullDistributedResponseMap( xfinal_map, keepDOF, xfinal_new_map );
-
-    // ...and with the new map, create culled solution vector:
-    cullDistributedResponse( xfinal, xfinal_map, xfinal_new, xfinal_new_map );
-
-    cout << "First 3*neq values of xfinal and xfinal_new:" << endl;
-    {
-      for ( int i=0; i < 3*neq; i++ )
-	cout << "xfinal[" << i << "] = " << (*xfinal)[i] << "    " 
-	     <<"xfinal_new[" << i << "] = " << (*xfinal_new)[i] << endl;
-    }
-
-    cout << "Last 3*neq values of xfinal and xfinal_new:" << endl;
-    {
-      int N = xfinal_map->NumMyElements();
-      for ( int i=0; i < 3*neq; i++ )
-	cout << "xfinal[" << N-i-1 << "] = " << (*xfinal)[N - (i+1)] << "    " 
-	     <<"xfinal_new[" << ndim*N/neq - (i+1) << "] = " << (*xfinal_new)[ndim*N/neq - (i+1)] << endl;
-    }
-
-    // end jrr
-    /////////////////////////////////////////////////////////////////
-
     
     if (num_p>0) p1->Print(*out << "\nParameters!\n");
     if (num_g>1) g1->Print(*out << "\nResponses!\n");
