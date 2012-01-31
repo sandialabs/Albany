@@ -1,0 +1,28 @@
+digraph G {
+0 [fontcolor="", label="Gather Coordinate Vector<Residual>"];
+1 [fontcolor="", label="ComputeBasisFunctions<Residual>"];
+2 [fontcolor="", label="MapToPhysicalFrame<Residual>"];
+3 [fontcolor="", label="Permittivity<Residual>"];
+4 [fontcolor="", label="Gather Solution<Residual>"];
+5 [fontcolor="", label="DOFGradInterpolation<Residual>"];
+6 [fontcolor="", label="DOFInterpolation<Residual>"];
+7 [fontcolor="", label="Shared Parameter<Residual>"];
+8 [fontcolor="", label="Poisson Source<Residual>"];
+9 [fontcolor="", label="PoissonResid<Residual>"];
+10 [fontcolor="", label="Scatter<Residual>"];
+1->0  [label="1:0"];
+2->0  [label="2:0"];
+3->2  [label="3:2"];
+5->1  [label="5:1"];
+5->4  [label="5:4"];
+6->1  [label="6:1"];
+6->4  [label="6:4"];
+8->2  [label="8:2"];
+8->6  [label="8:6"];
+8->7  [label="8:7"];
+9->1  [label="9:1"];
+9->3  [label="9:3"];
+9->5  [label="9:5"];
+9->8  [label="9:8"];
+10->9  [label="10:9"];
+}
