@@ -60,7 +60,9 @@
 
 namespace Albany {
 
-  enum FieldManagerChoice {BUILD_RESID_FM, BUILD_RESPONSE_FM};
+  class Application;
+
+  enum FieldManagerChoice {BUILD_RESID_FM, BUILD_RESPONSE_FM, BUILD_STATE_FM};
 
   /*!
    * \brief Abstract interface for representing a 1-D finite element
@@ -82,16 +84,28 @@ namespace Albany {
     void setNumEquations(const int neq_);
     unsigned int numStates() const;
 
+    //! Get spatial dimension
+    virtual int spatialDimension() const = 0;
+
     //! Build the PDE instantiations, boundary conditions, and initial solution
     //! And construct the evaluators and field managers
     virtual void buildProblem(
-       Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
-       StateManager& stateMgr,
-       Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses) = 0;
+      const Teuchos::RCP<Albany::Application>& app,
+      Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+      StateManager& stateMgr,
+      Teuchos::Array< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses) = 0;
+
+    // Build evaluators
+    virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> > 
+    buildEvaluators(
+      PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+      const Albany::MeshSpecsStruct& meshSpecs,
+      Albany::StateManager& stateMgr,
+      Albany::FieldManagerChoice fmchoice,
+      const Teuchos::RCP<Teuchos::ParameterList>& responseList) = 0;
 
     Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > getFieldManager();
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > getDirichletFieldManager() ;
-    Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > getResponseFieldManager();
 
     //! Each problem must generate it's list of valide parameters
     virtual Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const 
@@ -128,8 +142,6 @@ namespace Albany {
     //! Field manager for Dirchlet Conditions Fill
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > dfm;
 
-    //! Field manager for Responses 
-    Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > rfm;
   private:
 
     //! Private to prohibit default or copy constructor
@@ -138,6 +150,34 @@ namespace Albany {
     
     //! Private to prohibit copying
     AbstractProblem& operator=(const AbstractProblem&);
+  };
+
+  template <typename ProblemType>
+  struct ConstructEvaluatorsOp {
+    ProblemType& prob;
+    PHX::FieldManager<PHAL::AlbanyTraits>& fm;
+    const Albany::MeshSpecsStruct& meshSpecs;
+    Albany::StateManager& stateMgr;
+    Albany::FieldManagerChoice fmchoice;
+    Teuchos::RCP<Teuchos::ParameterList> responseList;
+    Teuchos::RCP< Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> > > tags;
+    ConstructEvaluatorsOp(
+      ProblemType& prob_,
+      PHX::FieldManager<PHAL::AlbanyTraits>& fm_,
+      const Albany::MeshSpecsStruct& meshSpecs_,
+      Albany::StateManager& stateMgr_,
+      Albany::FieldManagerChoice fmchoice_ = BUILD_RESID_FM,
+      const Teuchos::RCP<Teuchos::ParameterList>& responseList_ = Teuchos::null)
+      : prob(prob_), fm(fm_), meshSpecs(meshSpecs_), 
+	stateMgr(stateMgr_), fmchoice(fmchoice_), responseList(responseList_) {
+      tags = 
+	Teuchos::rcp(new Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >);
+    }
+    template <typename T> void operator() (T x) {
+      tags->push_back(
+	prob.template constructEvaluators<T>(fm, meshSpecs, stateMgr, 
+					     fmchoice, responseList));
+    }
   };
 
 }

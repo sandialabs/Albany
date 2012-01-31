@@ -18,11 +18,7 @@
 #ifndef QCAD_SADDLEVALUERESPONSEFUNCTION_HPP
 #define QCAD_SADDLEVALUERESPONSEFUNCTION_HPP
 
-#include "Albany_AbstractResponseFunction.hpp"
-#include "Epetra_Map.h"
-#include "Epetra_Import.h"
-#include "Epetra_Vector.h"
-#include "EpetraExt_MultiComm.h"
+#include "Albany_FieldManagerScalarResponseFunction.hpp"
 
 #define MAX_DIMENSION 3
 
@@ -31,12 +27,17 @@ namespace QCAD {
   /*!
    * \brief Reponse function for finding saddle point values of a field
    */
-  class SaddleValueResponseFunction : public Albany::AbstractResponseFunction {
+  class SaddleValueResponseFunction : 
+    public Albany::FieldManagerScalarResponseFunction {
   public:
   
     //! Constructor
-    SaddleValueResponseFunction(const int numDim_, 
-				Teuchos::ParameterList& params);
+    SaddleValueResponseFunction(
+      const Teuchos::RCP<Albany::Application>& application,
+      const Teuchos::RCP<Albany::AbstractProblem>& problem,
+      const Teuchos::RCP<Albany::MeshSpecsStruct>&  ms,
+      const Teuchos::RCP<Albany::StateManager>& stateMgr,
+      Teuchos::ParameterList& responseParams);
 
     //! Destructor
     virtual ~SaddleValueResponseFunction();
@@ -84,11 +85,11 @@ namespace QCAD {
 
     //! Post process responses
     virtual void 
-    postProcessResponses(const Epetra_Comm& comm, Teuchos::RCP<Epetra_Vector>& g);
+    postProcessResponses(const Epetra_Comm& comm, const Teuchos::RCP<Epetra_Vector>& g);
 
     //! Post process response derivatives
     virtual void 
-    postProcessResponseDerivatives(const Epetra_Comm& comm, Teuchos::RCP<Epetra_MultiVector>& gt);
+    postProcessResponseDerivatives(const Epetra_Comm& comm, const Teuchos::RCP<Epetra_MultiVector>& gt);
 
     //! Called by response evaluator to accumulate info to process later
     void addFieldData(double fieldValue, double retFieldValue, double* coords, double cellVolume);
@@ -105,7 +106,7 @@ namespace QCAD {
     int FindSaddlePoint(std::vector<double>& allFieldVals, std::vector<double>& allRetFieldVals,
 			std::vector<double>* allCoords, std::vector<int>& ordering,
 			double cutoffDistance, double cutoffFieldVal, double minDepth,
-			bool bShortInfo, Teuchos::RCP<Epetra_Vector>& g);
+			bool bShortInfo, const Teuchos::RCP<Epetra_Vector>& g);
 
     //! Vectors of cell data, filled by evaluator, processed by response function
     std::vector<double> vFieldValues;

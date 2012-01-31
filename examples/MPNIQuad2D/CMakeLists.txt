@@ -47,6 +47,15 @@ if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
   get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Dakota NAME)
   add_test(${testName} ${AlbanyDakota.exe})
 endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
+
+if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota_mp.in)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota_mp.in
+                 ${CMAKE_CURRENT_BINARY_DIR}/dakota_mp.in COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMPDakota.xml
+                 ${CMAKE_CURRENT_BINARY_DIR}/inputMPDakota.xml COPYONLY)
+  get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_DakotaMP NAME)
+  #add_test(${testName} ${AlbanyDakota.exe} inputMPDakota.xml)
+endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota_mp.in)
 endif()
 
 # 6. Repeat process for Analysis problems if "inputAnalysis.xml" exists

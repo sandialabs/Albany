@@ -49,10 +49,6 @@ Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
 Albany::AbstractProblem::getDirichletFieldManager()
 { return dfm; }
 
-Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > >
-Albany::AbstractProblem::getResponseFieldManager()
-{ return rfm; }
-
 Teuchos::RCP<Teuchos::ParameterList>
 Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
 {

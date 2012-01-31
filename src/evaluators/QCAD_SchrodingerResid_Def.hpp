@@ -385,7 +385,8 @@ QCAD::SchrodingerResid<EvalT, Traits>::getInvEffMass1DMosCap(const MeshScalarT* 
 
 
 // **********************************************************************
-/*
+/* temporarily keep it
+
 template<typename EvalT, typename Traits>
 typename QCAD::SchrodingerResid<EvalT,Traits>::ScalarT
 QCAD::SchrodingerResid<EvalT, Traits>::getInvEffMass(const std::string& EBName, 

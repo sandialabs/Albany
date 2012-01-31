@@ -259,6 +259,65 @@ evaluateFields(typename Traits::EvalData workset)
 		  }
   }
 
+
+
+
+  // compute the 'material' flux
+  FST::tensorMultiplyDataData<ScalarT> (C, DefGrad, DefGrad, 'T');
+  Intrepid::RealSpaceTools<ScalarT>::inverse(Cinv, C);
+  FST::tensorMultiplyDataData<ScalarT> (CinvTgrad, Cinv, CLGrad);
+  FST::scalarMultiplyDataData<ScalarT> (Hflux, DL, CinvTgrad);
+
+
+  FST::integrate<ScalarT>(TResidual, Hflux, wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
+
+
+  // hydrostatic stress term
+  FST::tensorMultiplyDataData<ScalarT> (tauStress, Pstress, DefGrad, 'T');
+
+  for (std::size_t cell=0; cell < workset.numCells; ++cell)
+  {
+	  for (std::size_t qp=0; qp < numQPs; ++qp)
+	  {
+		  tauH(cell,qp) = 0.0;
+		  for (std::size_t i=0; i<numDims; i++){
+			  tauH(cell,qp) += tauStress(cell, qp, i,i)/3.0;
+//			  cout << tauH(cell,qp) << endl;
+		  }
+
+
+	  }
+
+  }
+
+
+
+  for (std::size_t cell=0; cell < workset.numCells; ++cell)
+  {
+	  for (std::size_t qp=0; qp < numQPs; ++qp)
+	  {
+		  {
+			  for (std::size_t node=0; node < numNodes; ++node)
+			  {
+				  for (std::size_t i=0; i<numDims; i++)
+				  {
+					  for (std::size_t j=0; j<numDims; j++)
+					  {
+						  TResidual(cell,node) -= tauFactor(cell,qp)*
+	                		          tauH(cell, qp)/3.0*
+	                		          wGradBF(cell, node, qp, i)*
+	                		          Cinv(cell,qp,i,j)*
+	                		          GradBF(cell, node, qp, j);
+					  }
+
+				  }
+			  }
+		  }
+	  }
+  }
+
+
+
 /*
   //---------------------------------------------------------------------------//
   // Stabilization Term (only 2D and 3D problem need stabilizer)
@@ -329,61 +388,6 @@ evaluateFields(typename Traits::EvalData workset)
 
 
 
-
-
-   // compute the 'material' flux
-   FST::tensorMultiplyDataData<ScalarT> (C, DefGrad, DefGrad, 'T');
-   Intrepid::RealSpaceTools<ScalarT>::inverse(Cinv, C);
-   FST::tensorMultiplyDataData<ScalarT> (CinvTgrad, Cinv, CLGrad);
-   FST::scalarMultiplyDataData<ScalarT> (Hflux, DL, CinvTgrad);
-
-
-  FST::integrate<ScalarT>(TResidual, Hflux, wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
-
-
-  // hydrostatic stress term
-  FST::tensorMultiplyDataData<ScalarT> (tauStress, Pstress, DefGrad, 'T');
-
-  for (std::size_t cell=0; cell < workset.numCells; ++cell)
-  {
-	  for (std::size_t qp=0; qp < numQPs; ++qp)
-	  {
-		  tauH(cell,qp) = 0.0;
-		  for (std::size_t i=0; i<numDims; i++){
-			  tauH(cell,qp) += tauStress(cell, qp, i,i)/3.0;
-//			  cout << tauH(cell,qp) << endl;
-		  }
-
-
-	  }
-
-  }
-
-
-
-  for (std::size_t cell=0; cell < workset.numCells; ++cell)
-  {
-    for (std::size_t qp=0; qp < numQPs; ++qp)
-    {
-      {
-      for (std::size_t node=0; node < numNodes; ++node)
-        {
-    	  for (std::size_t i=0; i<numDims; i++)
-			{
-    		  for (std::size_t j=0; j<numDims; j++)
-    		  			{
-    		  TResidual(cell,node) -= tauFactor(cell,qp)*
-	                		          tauH(cell, qp)/3.0*
-    		  	                	  wGradBF(cell, node, qp, i)*
-    		  	                	  Cinv(cell,qp,i,j)*
-    		  	                	  GradBF(cell, node, qp, j);
-    		  			}
-
-			}
-        }
-      }
-    }
-  }
 
 
 

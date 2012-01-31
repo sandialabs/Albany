@@ -19,7 +19,9 @@
 #include "Epetra_Comm.h"
 
 Albany::SolutionMaxValueResponseFunction::
-SolutionMaxValueResponseFunction(int neq_, int eq_, bool interleavedOrdering_) :
+SolutionMaxValueResponseFunction(const Teuchos::RCP<const Epetra_Comm>& comm,
+				 int neq_, int eq_, bool interleavedOrdering_) :
+  SamplingBasedScalarResponseFunction(comm),
   neq(neq_), eq(eq_), interleavedOrdering(interleavedOrdering_)
 {
 }

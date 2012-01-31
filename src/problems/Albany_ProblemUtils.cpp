@@ -34,12 +34,15 @@ Albany::Layouts::Layouts (int worksetSize, int  numVertices,
   node_scalar = rcp(new MDALayout<Cell,Node>(worksetSize,numNodes));
   qp_scalar   = rcp(new MDALayout<Cell,QuadPoint>(worksetSize,numQPts));
   cell_scalar = rcp(new MDALayout<Cell,QuadPoint>(worksetSize,1));
+  cell_scalar2 = rcp(new MDALayout<Cell>(worksetSize));
 
   node_vector = rcp(new MDALayout<Cell,Node,Dim>(worksetSize,numNodes,numDim));
   qp_vector   = rcp(new MDALayout<Cell,QuadPoint,Dim>(worksetSize,numQPts,numDim));
+  cell_vector   = rcp(new MDALayout<Cell,Dim>(worksetSize,numDim));
 
   node_tensor = rcp(new MDALayout<Cell,Node,Dim,Dim>(worksetSize,numNodes,numDim,numDim));
   qp_tensor   = rcp(new MDALayout<Cell,QuadPoint,Dim,Dim>(worksetSize,numQPts,numDim,numDim));
+  cell_tensor   = rcp(new MDALayout<Cell,Dim,Dim>(worksetSize,numDim,numDim));
 
   // Coordinates
   vertices_vector = rcp(new MDALayout<Cell,Vertex, Dim>(worksetSize,numVertices,numDim));
@@ -49,6 +52,8 @@ Albany::Layouts::Layouts (int worksetSize, int  numVertices,
   node_qp_vector = rcp(new MDALayout<Cell,Node,QuadPoint,Dim>(worksetSize,numNodes, numQPts,numDim));
 
   workset_scalar = rcp(new MDALayout<Dummy>(1));
+  workset_vector = rcp(new MDALayout<Dim>(numDim));
+  workset_tensor = rcp(new MDALayout<Dim,Dim>(numDim,numDim));
 
   dummy = rcp(new MDALayout<Dummy>(0));
 }

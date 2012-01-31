@@ -18,21 +18,21 @@
 #ifndef ALBANY_SOLUTIONMAXVALUERESPONSEFUNCTION_HPP
 #define ALBANY_SOLUTIONMAXVALUERESPONSEFUNCTION_HPP
 
-#include "Albany_AbstractResponseFunction.hpp"
-#include "Epetra_Map.h"
-#include "Epetra_Import.h"
-#include "Epetra_Vector.h"
+#include "Albany_SamplingBasedScalarResponseFunction.hpp"
 
 namespace Albany {
 
   /*!
    * \brief Reponse function representing the average of the solution values
    */
-  class SolutionMaxValueResponseFunction : public AbstractResponseFunction {
+  class SolutionMaxValueResponseFunction : 
+    public SamplingBasedScalarResponseFunction {
   public:
   
     //! Default constructor
-    SolutionMaxValueResponseFunction(int neq = 1, int eq = 0, bool interleavedOrdering=true);
+    SolutionMaxValueResponseFunction(
+      const Teuchos::RCP<const Epetra_Comm>& comm, 
+      int neq = 1, int eq = 0, bool interleavedOrdering=true);
 
     //! Destructor
     virtual ~SolutionMaxValueResponseFunction();

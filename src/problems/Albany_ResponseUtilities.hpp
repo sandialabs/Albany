@@ -23,11 +23,9 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 #include "Albany_ProblemUtils.hpp"
-#include "Albany_AbstractResponseFunction.hpp"
 
 #include "Phalanx.hpp"
-#include "PHAL_Workset.hpp"
-#include "PHAL_Dimension.hpp"
+
 
 //! Code Base for Quantum Device Simulation Tools LDRD
 namespace Albany {
@@ -45,32 +43,11 @@ namespace Albany {
     ResponseUtilities(Teuchos::RCP<Albany::Layouts> dl);
   
     //! Utility for parsing response requests and creating response field manager
-    void
-    constructResponses(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                       Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
-  		       Teuchos::ParameterList& responseList, 
-	               Albany::StateManager& stateMgr);
-
-
-    //! Utility for creating response field manager from responses
-    void
-    createResponseFieldManager(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-			       const std::vector<std::string>& responseIDs_to_require);
-
-    //! - Returns true if responseName was recognized and response function constructed.
-    //! - If p is non-Teuchos::null upon exit, then an evaluator should be build using
-    //!   p as the parameter list. 
-    bool getStdResponseFn(std::string responseName, int responseIndex,
-			  Teuchos::ParameterList& responseList,
-			  Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses,
-			  Albany::StateManager& stateMgr,
-			  Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> >& ev);
-
-
-    //! Helper function for constructResponses and getStdResponseFn
-    Teuchos::RCP<Teuchos::ParameterList> setupResponseFnForEvaluator(  
-		  Teuchos::ParameterList& responseList, int responseNumber,
-		  Teuchos::ArrayRCP< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
+    Teuchos::RCP<const PHX::FieldTag>
+    constructResponses(
+      PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+      Teuchos::ParameterList& responseList, 
+      Albany::StateManager& stateMgr);
 
  
     //! Accessor 
