@@ -1133,6 +1133,12 @@ QCAD::PoissonSource<EvalT,Traits>::ionizedDopants(const std::string dopType, con
 {
   ScalarT ionDopants;
    
+  if (x > MAX_EXPONENT)
+  {
+    ionDopants = 0.0;
+    return ionDopants; 
+  } 
+  
   if (dopType == "Donor")
     ionDopants = 1.0 / (1. + 2.*exp(x));  
   else if (dopType == "Acceptor")
@@ -1283,8 +1289,15 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrond
         // note: wavefunctions are assumed normalized here 
         ScalarT wfSquared = ( eigenvector_Re[i](cell,qp)*eigenvector_Re[i](cell,qp) + 
  			      eigenvector_Im[i](cell,qp)*eigenvector_Im[i](cell,qp) );
+ 			  
+ 			  ScalarT tmpArg = (Ef-eigenvals[i])/kbT + deltaPhi;
+ 			  ScalarT logFunc; 
+ 			  if (tmpArg > MAX_EXPONENT)
+ 			    logFunc = tmpArg;  // exp(tmpArg) blows up for large tmpArg, leading to bad derivative
+ 			  else
+ 			    logFunc = log(1.0 + exp(tmpArg));
  			      
-        eDensity += wfSquared*log(1. + exp((Ef-eigenvals[i])/kbT + deltaPhi) );
+        eDensity += wfSquared*logFunc;
       }
       eDensity = eDenPrefactor*eDensity; // in [cm^-3]
       
@@ -1336,9 +1349,13 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrond
       for(int i = 0; i < nEigenvectors; i++) 
       {
         // Fermi-Dirac distribution
-        // ScalarT fermiFactor = 1.0/( exp((eigenvals[i]-Ef)/kbT + deltaPhi) + 1.0 );
-        ScalarT fermiFactor = 1.0/( exp((eigenvals[i]-Ef)/kbT - deltaPhi) + 1.0 );
-              
+        ScalarT tmpArg = (eigenvals[i]-Ef)/kbT + deltaPhi;
+        ScalarT fermiFactor; 
+        if (tmpArg > MAX_EXPONENT) 
+          fermiFactor = 0.0; // not function of phi, no derivative 
+        else
+          fermiFactor = 1.0/( exp(tmpArg) + 1.0 ); 
+
         // note: wavefunctions are assumed normalized here 
         ScalarT wfSquared = ( eigenvector_Re[i](cell,qp)*eigenvector_Re[i](cell,qp) + 
  			      eigenvector_Im[i](cell,qp)*eigenvector_Im[i](cell,qp) );

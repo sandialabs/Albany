@@ -63,6 +63,7 @@ namespace QCAD {
     static const double m0;   // vacuum electron mass in [kg]
     static const double hbar; // reduced planck constant in [J.s]
     static const double pi;   // pi constant (unitless)
+    static const double MAX_EXPONENT;  // max. exponent in an exponential function [1]
 
   private:
 
