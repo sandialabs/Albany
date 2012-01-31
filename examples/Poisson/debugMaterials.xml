@@ -1,0 +1,535 @@
+<ParameterList>
+  <Parameter name="Reference Material" type="string" value="Silicon"/>
+
+  <ParameterList name="NodeSets">
+
+    <!-- Accumulation gate (top gate) -->
+    <ParameterList name="ag_gate">
+      <Parameter name="material" type="string" value="Aluminum" />
+    </ParameterList>
+    <ParameterList name="ag2_gate">
+      <Parameter name="material" type="string" value="Aluminum" />
+    </ParameterList>
+
+    <!-- Left Top Metal -->
+    <ParameterList name="ltm_gate">
+      <Parameter name="material" type="string" value="Aluminum" />
+    </ParameterList>
+
+    <!-- Right Top Metal -->
+    <ParameterList name="rtm_gate">
+      <Parameter name="material" type="string" value="Aluminum" />
+    </ParameterList>
+
+    <!-- Left Bottom Metal -->
+    <ParameterList name="lbm_gate">
+      <Parameter name="material" type="string" value="Aluminum" />
+    </ParameterList>
+
+    <!-- Right Bottom Metal -->
+    <ParameterList name="rbm_gate">
+      <Parameter name="material" type="string" value="Aluminum" />
+    </ParameterList>
+
+    <!-- Top Plunger -->
+    <ParameterList name="tp_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <!-- Center Plunger -->
+    <ParameterList name="cp_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <!-- Left Plunger -->
+    <ParameterList name="lp_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <!-- Right Plunger -->
+    <ParameterList name="rp_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <!-- Left tunnel (upper wire) -->
+    <ParameterList name="lt_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <!-- Left (lower wire or entire wire) -->
+    <ParameterList name="l_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <!-- Left QPC -->
+    <ParameterList name="lqpc_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <!-- Right tunnel (upper wire) -->
+    <ParameterList name="rt_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <!-- Right (lower wire or entire wire) -->
+    <ParameterList name="r_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <!-- Right QPC -->
+    <ParameterList name="rqpc_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <!-- Left Charge Sensor -->
+    <ParameterList name="lcs_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <!--Left Charge Sensor Top -->
+    <ParameterList name="lcst_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <!--Left Charge Sensor Bottom -->
+    <ParameterList name="lcsb_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <!-- Charge Sensor Plunger -->
+    <ParameterList name="csp_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <!--Right Charge Sensor -->
+    <ParameterList name="rcs_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <!--Right Charge Sensor Top -->
+    <ParameterList name="rcst_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <!--Right Charge Sensor Bottom -->
+    <ParameterList name="rcsb_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+
+
+
+    <!-- Left Ohmic -->
+    <ParameterList name="lo_contact">
+      <Parameter name="elementBlock" type="string" value="eb_nplussilicon" />
+    </ParameterList>
+
+    <!-- Right Ohmic -->
+    <ParameterList name="ro_contact">
+      <Parameter name="elementBlock" type="string" value="eb_nplussilicon" />
+    </ParameterList>
+
+    <!-- Left Dot Ohmic -->
+    <ParameterList name="ldo_contact">
+      <Parameter name="elementBlock" type="string" value="eb_nplussilicon" />
+    </ParameterList>
+
+    <!-- Right Dot Ohmic -->
+    <ParameterList name="rdo_contact">
+      <Parameter name="elementBlock" type="string" value="eb_nplussilicon" />
+    </ParameterList>
+
+    <!-- Left Charge Sensor Top Ohmic -->
+    <ParameterList name="lcsto_contact">
+      <Parameter name="elementBlock" type="string" value="eb_nplussilicon" />
+    </ParameterList>
+
+    <!-- Left Charge Sensor Bottom Ohmic -->
+    <ParameterList name="lcsbo_contact">
+      <Parameter name="elementBlock" type="string" value="eb_nplussilicon" />
+    </ParameterList>
+
+    <!-- Right Charge Sensor Top Ohmic -->
+    <ParameterList name="rcsto_contact">
+      <Parameter name="elementBlock" type="string" value="eb_nplussilicon" />
+    </ParameterList>
+
+    <!-- Right Charge Sensor Bottom Ohmic -->
+    <ParameterList name="rcsbo_contact">
+      <Parameter name="elementBlock" type="string" value="eb_nplussilicon" />
+    </ParameterList>
+
+    <!-- Ground (usually bottom of device substrate) -->
+    <ParameterList name="ground">
+      <Parameter name="elementBlock" type="string" value="eb_substrate" />
+    </ParameterList>
+
+  </ParameterList>
+
+
+
+  <ParameterList name="ElementBlocks">
+
+    <ParameterList name="eb_substrate">
+      <Parameter name="material" type="string" value="Silicon" />
+      <Parameter name="Dopant Type" type="string" value="Acceptor" />
+      <Parameter name="Doping Profile" type="string" value="Constant" />
+      <Parameter name="Doping Value" type="double" value="2e14" />
+    </ParameterList>
+
+    <ParameterList name="eb_left_quantum_region">
+      <Parameter name="material" type="string" value="Silicon" />
+      <Parameter name="quantum" type="bool" value="true" />
+      <Parameter name="Dopant Type" type="string" value="Acceptor" />
+      <Parameter name="Doping Profile" type="string" value="Constant" />
+      <Parameter name="Doping Value" type="double" value="2e14" />
+    </ParameterList>
+
+    <ParameterList name="eb_right_quantum_region">
+      <Parameter name="material" type="string" value="Silicon" />
+      <Parameter name="quantum" type="bool" value="true" />
+      <Parameter name="Dopant Type" type="string" value="Acceptor" />
+      <Parameter name="Doping Profile" type="string" value="Constant" />
+      <Parameter name="Doping Value" type="double" value="2e14" />
+    </ParameterList>
+    
+    <ParameterList name="eb_cs_quantum_region">
+      <Parameter name="material" type="string" value="Silicon" />
+      <Parameter name="quantum" type="bool" value="false" />
+      <Parameter name="Dopant Type" type="string" value="Acceptor" />
+      <Parameter name="Doping Profile" type="string" value="Constant" />
+      <Parameter name="Doping Value" type="double" value="2e14" />
+    </ParameterList>
+
+    <ParameterList name="eb_gate_oxide">
+      <Parameter name="material" type="string" value="SiliconDioxide" />
+    </ParameterList>
+
+    <ParameterList name="eb_gate_oxide_surface">
+      <Parameter name="material" type="string" value="SiliconDioxide" />
+      <Parameter name="Charge Parameter Name" type="string" value="Oxide Interface Charge" />
+      <Parameter name="Charge Parameter Scaling" type="double" value="1e18" />
+      <!-- <Parameter name="Charge Value" type="double" value="1e10" /> -->
+    </ParameterList>
+
+    <ParameterList name="eb_poly_reox">
+      <Parameter name="material" type="string" value="SiliconDioxide" />
+      <Parameter name="Charge Parameter Name" type="string" value="PolyReox Charge" />
+      <Parameter name="Charge Parameter Scaling" type="double" value="1e18" />
+    </ParameterList>
+
+    <ParameterList name="eb_ald">
+      <Parameter name="material" type="string" value="PolySilicon" />
+      <Parameter name="Charge Parameter Name" type="string" value="Ald Oxide Charge" />
+      <Parameter name="Charge Parameter Scaling" type="double" value="1e18" />
+    </ParameterList>
+
+    <ParameterList name="eb_ag_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <ParameterList name="eb_ag2_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <ParameterList name="eb_tp_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <ParameterList name="eb_cp_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <ParameterList name="eb_lp_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <ParameterList name="eb_rp_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <ParameterList name="eb_lt_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <ParameterList name="eb_l_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <ParameterList name="eb_lqpc_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <ParameterList name="eb_rt_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <ParameterList name="eb_r_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <ParameterList name="eb_rqpc_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <ParameterList name="eb_csp_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <ParameterList name="eb_lcs_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <ParameterList name="eb_lcst_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <ParameterList name="eb_lcsb_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <ParameterList name="eb_rcs_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <ParameterList name="eb_rcst_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+    <ParameterList name="eb_rcsb_gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+    </ParameterList>
+
+
+
+    <ParameterList name="eb_ltm_gate">
+      <Parameter name="material" type="string" value="Aluminum" />
+    </ParameterList>
+
+    <ParameterList name="eb_rtm_gate">
+      <Parameter name="material" type="string" value="Aluminum" />
+    </ParameterList>
+
+    <ParameterList name="eb_lbm_gate">
+      <Parameter name="material" type="string" value="Aluminum" />
+    </ParameterList>
+
+    <ParameterList name="eb_rbm_gate">
+      <Parameter name="material" type="string" value="Aluminum" />
+    </ParameterList>
+
+    <ParameterList name="eb_ground">
+      <Parameter name="material" type="string" value="Aluminum" />
+    </ParameterList>
+
+    <ParameterList name="eb_nplussilicon">
+      <Parameter name="material" type="string" value="Silicon" />
+      <Parameter name="Dopant Type" type="string" value="Donor" />
+      <Parameter name="Doping Profile" type="string" value="Constant" />
+      <Parameter name="Doping Value" type="double" value="6e18" />
+    </ParameterList>
+
+  </ParameterList>
+
+
+
+  <ParameterList name="Materials">
+
+    <!-- Unstrained Silicon -->
+    <ParameterList name="Silicon">
+      <Parameter name="Category" type="string" value="Semiconductor" />
+      <Parameter name="Permittivity" type="double" value="11.9" />
+
+      <!-- Valley information -->
+      <Parameter name="Conduction Band Minimum" type="string" value="Delta2 Valley" />
+      <Parameter name="Number of conduction band min" type="int" value="2" />
+      <Parameter name="Number of valence band max" type="int" value="1" />
+
+      <!-- Electron effective mass along coordinate directions in [m0] -->
+      <!-- 
+      <Parameter name="Electron Effective Mass X" type="double" value="0.19" />
+      <Parameter name="Electron Effective Mass Y" type="double" value="0.19" />
+      <Parameter name="Electron Effective Mass Z" type="double" value="0.98" />
+      !-->
+      <Parameter name="Longitudinal Electron Effective Mass" type="double" value="0.98" />
+      <Parameter name="Transverse Electron Effective Mass" type="double" value="0.19" />
+
+      <!-- Heavy/Light Hole effective mass in [m0] -->
+      <Parameter name="Light Hole Effective Mass" type="double" value="0.16" />
+      <Parameter name="Heavy Hole Effective Mass" type="double" value="0.56" />
+
+      <!-- Electron/Hole DOS effective mass (valley deg. included) [m0] -->
+      <!-- Electron = pow(6,2./3.)*pow(pow(mt,2)*ml,1./3.) b/c of 6 valleys -->
+      <!-- Hole = pow(pow(mhh,1.5)+pow(mlh,1.5),2./3.) -->
+      <Parameter name="Electron DOS Effective Mass" type="double" value="1.08396" />
+      <Parameter name="Hole DOS Effective Mass" type="double" value="0.61566" />
+      
+      <!-- Electron affinity in [eV] -->
+      <Parameter name="Electron Affinity" type="double" value="4.05" />
+
+      <!-- Band gap at 0 K in [eV] -->
+      <Parameter name="Zero Temperature Band Gap" type="double" value="1.1455" />
+
+      <!-- Temperature coefficient for band gap in [eV/K] -->
+      <Parameter name="Band Gap Alpha Coefficient" type="double" value="4.73e-4" />
+
+      <!-- Temperature coefficient for band gap in [K] -->
+      <Parameter name="Band Gap Beta Coefficient" type="double" value="636.0" />
+
+      <!-- Reference temperature [K] for computing Nc and Nv -->
+      <Parameter name="Reference Temperature" type="double" value="300.0" />
+
+    </ParameterList>
+
+
+    <!-- Relaxed Si(0.7)Ge(0.3): conduction band minima (CBM) are six-fold deg 
+    Delta valleys, and VBM is the deg LH-HH Gamma-valley.  -->
+    
+    <ParameterList name="Si0.7Ge0.3">
+      <Parameter name="Category" type="string" value="Semiconductor" />
+      <Parameter name="Permittivity" type="double" value="13.13" />
+
+      <!-- Valley information (temporary) -->
+      <Parameter name="Conduction Band Minimum" type="string" value="Delta2 Valley" />
+      <Parameter name="Number of conduction band min" type="int" value="2" />
+      <Parameter name="Number of valence band max" type="int" value="1" />
+
+      <!-- Electron effective mass along coordinate directions in [m0] -->
+      <Parameter name="Longitudinal Electron Effective Mass" type="double" value="0.98" />
+      <Parameter name="Transverse Electron Effective Mass" type="double" value="0.19" />
+
+      <!-- Heavy/Light Hole effective mass in [m0] -->
+      <Parameter name="Light Hole Effective Mass" type="double" value="0.1252" />
+      <Parameter name="Heavy Hole Effective Mass" type="double" value="0.45" />
+
+      <!-- Electron/Hole DOS effective mass (valley deg. included) [m0] -->
+      <!-- Electron = pow(6,2./3.)*pow(pow(mt,2)*ml,1./3.) b/c of 6 valleys -->
+      <!-- Hole = pow(pow(mhh,1.5)+pow(mlh,1.5),2./3.) -->
+      <Parameter name="Electron DOS Effective Mass" type="double" value="1.08396" />
+      <Parameter name="Hole DOS Effective Mass" type="double" value="0.4930" />
+      
+      <!-- Electron affinity in [eV] -->
+      <Parameter name="Electron Affinity" type="double" value="4.035" />
+
+      <!-- Band gap at 0 K in [eV] -->
+      <Parameter name="Zero Temperature Band Gap" type="double" value="1.03" />
+
+      <!-- Temperature coefficient for band gap in [eV/K] -->
+      <Parameter name="Band Gap Alpha Coefficient" type="double" value="4.751e-4" />
+
+      <!-- Temperature coefficient for band gap in [K] -->
+      <Parameter name="Band Gap Beta Coefficient" type="double" value="515.7" />
+
+      <!-- Reference temperature [K] for computing Nc and Nv -->
+      <Parameter name="Reference Temperature" type="double" value="300.0" />
+
+    </ParameterList>
+    
+
+    <!-- Strained Si on Si(0.7)Ge(0.3) substrate: CBM are two-fold deg Delta2 valleys,
+    four-fold deg Delta4 valleys are about 190 meV above Delta2, so not occupied.
+    Gamma-valley LH and HH bands are split due to strain and VBM is the LH band. -->
+    
+    <ParameterList name="Strained Silicon">
+      <Parameter name="Category" type="string" value="Semiconductor" />
+      <Parameter name="Permittivity" type="double" value="11.9" />
+
+      <!-- Valley information (temporary) -->
+      <Parameter name="Conduction Band Minimum" type="string" value="Delta2 Valley" />
+      <Parameter name="Number of conduction band min" type="int" value="2" />
+      <Parameter name="Number of valence band max" type="int" value="1" />
+
+      <!-- Electron effective mass along coordinate directions in [m0] -->
+      <Parameter name="Longitudinal Electron Effective Mass" type="double" value="0.94" />
+      <Parameter name="Transverse Electron Effective Mass" type="double" value="0.19" />
+
+      <!-- Heavy/Light Hole effective mass in [m0]: actually mlh_t=0.18, mlh_l=0.29 -->
+      <Parameter name="Light Hole Effective Mass" type="double" value="0.18" />
+      <Parameter name="Heavy Hole Effective Mass" type="double" value="0.29" />
+
+      <!-- Electron/Hole DOS effective mass (valley deg. included) [m0] -->
+      <!-- Electron = pow(2,2./3.)*pow(pow(mt,2)*ml,1./3.) b/c of two Delta2 valleys -->
+      <!-- Hole = pow(mlh_l*pow(mlh_t,2),1./3.), only LH band is occupied. -->
+      <Parameter name="Electron DOS Effective Mass" type="double" value="0.5139" />
+      <Parameter name="Hole DOS Effective Mass" type="double" value="0.2110" />
+      
+      <!-- Electron affinity in [eV] -->
+      <Parameter name="Electron Affinity" type="double" value="4.185" />
+
+      <!-- Band gap at 0 K in [eV] -->
+      <Parameter name="Zero Temperature Band Gap" type="double" value="0.93" />
+
+      <!-- Temperature coefficient for band gap in [eV/K] -->
+      <Parameter name="Band Gap Alpha Coefficient" type="double" value="4.73e-4" />
+
+      <!-- Temperature coefficient for band gap in [K] -->
+      <Parameter name="Band Gap Beta Coefficient" type="double" value="636" />
+
+      <!-- Reference temperature [K] for computing Nc and Nv -->
+      <Parameter name="Reference Temperature" type="double" value="300.0" />
+
+    </ParameterList>
+
+
+    <ParameterList name="SiliconDioxide">
+      <Parameter name="Category" type="string" value="Insulator" />
+      <Parameter name="Permittivity" type="double" value="3.9" />
+
+      <!-- Valley information - same as Silicon to avoid charge discontinuity -->
+      <Parameter name="Number of conduction band min" type="int" value="2" />
+
+      <!-- For Insulators, electron effective mass is often assumed 0.5m0 -->
+      <Parameter name="Longitudinal Electron Effective Mass" type="double" value="0.5" />
+      <Parameter name="Transverse Electron Effective Mass" type="double" value="0.5" />
+
+      <!-- Band Gap in [eV] -->
+      <Parameter name="Band Gap" type="double" value="9.0" />
+
+      <!-- Electron affinity in [eV] -->
+      <Parameter name="Electron Affinity" type="double" value="1.0" />
+    </ParameterList>
+
+
+    <ParameterList name="SiliconNitride">
+      <Parameter name="Category" type="string" value="Insulator" />
+      <Parameter name="Permittivity" type="double" value="7.5" />
+
+      <!-- Valley information - same as Silicon to avoid charge discontinuity -->
+      <Parameter name="Number of conduction band min" type="int" value="2" />
+
+      <!-- For Insulators, electron effective mass is often assumed 0.5m0 -->
+      <Parameter name="Longitudinal Electron Effective Mass" type="double" value="0.5" />
+      <Parameter name="Transverse Electron Effective Mass" type="double" value="0.5" />
+
+      <!-- Band Gap in [eV] -->
+      <Parameter name="Band Gap" type="double" value="5.1" />
+
+      <!-- Electron affinity in [eV] -->
+      <Parameter name="Electron Affinity" type="double" value="1.85" />
+    </ParameterList>
+
+
+    <ParameterList name="PolySilicon">
+      <Parameter name="Category" type="string" value="Metal" />  
+      <Parameter name="Permittivity" type="double" value="11.9" />
+
+      <!-- Band Gap in [eV] (use 0K silicon now?)-->
+      <Parameter name="Band Gap" type="double" value="1.1455" />
+
+      <!-- Assume n+ PolySilicon which is true in devices that QCAD team is interested in !-->
+      <Parameter name="Work Function" type="double" value="4.05" /> 
+    </ParameterList>
+
+
+    <ParameterList name="Aluminum">
+      <Parameter name="Category" type="string" value="Metal" />
+      <Parameter name="Permittivity" type="double" value="1.0" />
+
+      <!-- Work Function in [eV] -->
+      <Parameter name="Work Function" type="double" value="4.186" /> -->
+
+    </ParameterList>
+
+  </ParameterList>
+
+</ParameterList>
