@@ -715,13 +715,14 @@ namespace LCM {
     ioss >> zoltan_number_parts;
 
     Zoltan
-    zoltan(MPI::COMM_WORLD);
+    zoltan(MPI::COMM_SELF);
 
     zoltan.Set_Param("LB_METHOD", "HYPERGRAPH");
     zoltan.Set_Param("LB_APPROACH", "PARTITION");
     zoltan.Set_Param("DEBUG_LEVEL", "0");
     zoltan.Set_Param("OBJ_WEIGHT_DIM", "1");
-    zoltan.Set_Param("NUM_LOCAL_PARTS", zoltan_number_parts.c_str());
+    zoltan.Set_Param("NUM_GLOBAL_PARTS", zoltan_number_parts.c_str());
+    //zoltan.Set_Param("NUM_LOCAL_PARTS", zoltan_number_parts.c_str());
     zoltan.Set_Param("REMAP", "0");
     zoltan.Set_Param("HYPERGRAPH_PACKAGE", "PHG");
     zoltan.Set_Param("PHG_MULTILEVEL", "1");
@@ -853,13 +854,14 @@ namespace LCM {
     ioss >> zoltan_number_parts;
 
     Zoltan
-    zoltan(MPI::COMM_WORLD);
+    zoltan(MPI::COMM_SELF);
 
     zoltan.Set_Param("LB_METHOD", "RIB");
     zoltan.Set_Param("LB_APPROACH", "PARTITION");
     zoltan.Set_Param("DEBUG_LEVEL", "0");
     zoltan.Set_Param("OBJ_WEIGHT_DIM", "1");
-    zoltan.Set_Param("NUM_LOCAL_PARTS", zoltan_number_parts.c_str());
+    zoltan.Set_Param("NUM_GLOBAL_PARTS", zoltan_number_parts.c_str());
+    //zoltan.Set_Param("NUM_LOCAL_PARTS", zoltan_number_parts.c_str());
     zoltan.Set_Param("REMAP", "0");
     zoltan.Set_Param("IMBALANCE_TOL", "1.01");
     zoltan.Set_Param("CHECK_GEOM", "1");
