@@ -22,22 +22,22 @@ namespace LCM {
   exp(Tensor<ScalarT> const & A)
   {
     const Index
-      maxNumIter = 128;
+    maxNumIter = 128;
 
     const ScalarT
-      tol = std::numeric_limits<ScalarT>::epsilon();
+    tol = std::numeric_limits<ScalarT>::epsilon();
 
     Index k = 0;
 
     Tensor<ScalarT>
-      term = identity<ScalarT>();
+    term = identity<ScalarT>();
 
     // Relative error taken wrt to the first term, which is I and norm = 1
     ScalarT
-      relError = 1.0;
+    relError = 1.0;
 
     Tensor<ScalarT>
-      B = term;
+    B = term;
 
     while (relError > tol && k < maxNumIter) {
       term = ScalarT(1.0 / (k + 1.0)) * term * A;
@@ -61,30 +61,30 @@ namespace LCM {
     // Check whether skew-symmetric holds
 
     const Index
-      maxNumIter = 128;
+    maxNumIter = 128;
 
     const ScalarT
-      tol = std::numeric_limits<ScalarT>::epsilon();
+    tol = std::numeric_limits<ScalarT>::epsilon();
 
     Index k = 1;
 
     const ScalarT
-      normA = norm_1(A);
+    normA = norm_1(A);
 
     const Tensor<ScalarT>
-      Am1 = A - identity<ScalarT>();
+    Am1 = A - identity<ScalarT>();
 
     Tensor<ScalarT>
-      term = Am1;
+    term = Am1;
 
     ScalarT
-      normTerm = norm_1(term);
+    normTerm = norm_1(term);
 
     ScalarT
-      relError = normTerm / normA;
+    relError = normTerm / normA;
 
     Tensor<ScalarT>
-      B = term;
+    B = term;
 
     while (relError > tol && k < maxNumIter) {
       term = - (k / (k + 1.0)) * term * Am1;
@@ -108,13 +108,13 @@ namespace LCM {
   {
     //firewalls, make sure R \in SO(3)
     assert(norm(R*transpose(R) - eye<ScalarT>())
-	   < 100.0 * std::numeric_limits<ScalarT>::epsilon());
+        < 100.0 * std::numeric_limits<ScalarT>::epsilon());
     assert((det(R) - 1.0)
-	   < 100.0 * std::numeric_limits<ScalarT>::epsilon());
+        < 100.0 * std::numeric_limits<ScalarT>::epsilon());
 
     // acos requires input between -1 and +1
     ScalarT
-      cosine = 0.5*(trace(R) - 1.0);
+    cosine = 0.5*(trace(R) - 1.0);
 
     if (cosine < -1.0) {
       cosine = -1.0;
@@ -123,14 +123,14 @@ namespace LCM {
     }
 
     ScalarT
-      theta = acos(cosine);
+    theta = acos(cosine);
 
     Tensor<ScalarT> r;
 
     if (theta == 0) {
       r = zero<ScalarT>();
     } else if (abs(cosine + 1.0) <
-	       10.0*std::numeric_limits<ScalarT>::epsilon())  {
+        10.0*std::numeric_limits<ScalarT>::epsilon())  {
       // Rotation angle is PI.
       r = log_rotation_pi(R);
     } else {
@@ -150,11 +150,11 @@ namespace LCM {
   {
     // set firewall to make sure the rotation is indeed 180 degrees
     assert(abs(0.5 * (trace(R) - 1.0) + 1.0)
-	   < std::numeric_limits<ScalarT>::epsilon());
+        < std::numeric_limits<ScalarT>::epsilon());
 
     // obtain U from R = LU
     Tensor<ScalarT>
-      r = GaussianElimination((R - identity<ScalarT>()));
+    r = gaussian_elimination((R - identity<ScalarT>()));
 
     // backward substitution (for rotation exp(R) only)
     const ScalarT tol = 10.0*std::numeric_limits<ScalarT>::epsilon();
@@ -200,13 +200,13 @@ namespace LCM {
   //
   template<typename ScalarT>
   Tensor<ScalarT>
-  GaussianElimination(Tensor<ScalarT> const & A)
+  gaussian_elimination(Tensor<ScalarT> const & A)
   {
     Tensor<ScalarT>
-      U = A;
+    U = A;
 
     const ScalarT
-      tol = 10.0 * std::numeric_limits<ScalarT>::epsilon();
+    tol = 10.0 * std::numeric_limits<ScalarT>::epsilon();
 
     Index i = 0;
     Index j = 0;
@@ -271,10 +271,8 @@ namespace LCM {
     } else {
       // compute the norm of the basis vector
       R = identity<ScalarT>() + sin(normVector)/normVector*r+
-	(1.0-cos(normVector))/(normVector*normVector)*r*r;
+          (1.0-cos(normVector))/(normVector*normVector)*r*r;
     }
-
-
 
     return R;
 
@@ -424,11 +422,11 @@ namespace LCM {
     Tensor<ScalarT> f;
 
     return f =
-      v + r // term 1
-      + ScalarT(0.5)*(v*r - r*v) // term 2
-      + ScalarT(1.0/12.0)*
-      (v*v*r - ScalarT(2.0)*v*r*v +
-       v*r*r + r*v*v - ScalarT(2.0)*r*v*r + r*r*v); // term 3
+        v + r // term 1
+        + ScalarT(0.5)*(v*r - r*v) // term 2
+        + ScalarT(1.0/12.0)*
+        (v*v*r - ScalarT(2.0)*v*r*v +
+            v*r*r + r*v*v - ScalarT(2.0)*r*v*r + r*r*v); // term 3
   }
 
   //
@@ -581,15 +579,15 @@ namespace LCM {
       rm(0,0) = dot(rk,ak);
       rm(0,1) = dot(rk,ak2);
       rm(1,1) = dot(rk2,ak2);
-     
+
       // compute eigenvalues 2 and 3
       ScalarT b = 0.5*(rm(0,0) - rm(1,1));
       ScalarT fac = (b < 0 ? -1.0 : 1.0);
       ScalarT arg = b*b+rm(0,1)*rm(0,1);
       if (arg == 0) 
-	D(0,0) = rm(1,1) + b;
+        D(0,0) = rm(1,1) + b;
       else
-	D(0,0) = rm(1,1) + b - fac*std::sqrt(b*b+rm(0,1)*rm(0,1));
+        D(0,0) = rm(1,1) + b - fac*std::sqrt(b*b+rm(0,1)*rm(0,1));
       D(1,1) = rm(0,0) + rm(1,1) - D(0,0);
 
       // update reduced remainder matrix
@@ -606,8 +604,8 @@ namespace LCM {
       if ( a(1) > a(0) ) k3 = 1;
       if ( a(k3) == 0.0 )
       {
-	rm(0,k3) = 1.0;
-	rm(1,k3) = 0.0;
+        rm(0,k3) = 1.0;
+        rm(1,k3) = 0.0;
       }
 
       // set 2nd eigenvector via cross product
@@ -1090,9 +1088,9 @@ namespace LCM {
 
     for (Index i = 0; i < MaxDim; ++i) {
       for (Index j = 0; j < MaxDim; ++j) {
-	for (Index k = 0; k < MaxDim; ++k) {
-	  B(i,j,k) = s * A(i,j,k);
-	}
+        for (Index k = 0; k < MaxDim; ++k) {
+          B(i,j,k) = s * A(i,j,k);
+        }
       }
     }
 
@@ -1100,8 +1098,8 @@ namespace LCM {
   }
 
   //
-  // 3th-order tensor scalar product
-  // \param A 3th-order tensor
+  // 3rd-order tensor scalar product
+  // \param A 3rd-order tensor
   // \param s scalar
   // \return \f$ s A \f$
   //
@@ -1113,8 +1111,8 @@ namespace LCM {
   }
 
   //
-  // 3th-order tensor vector product
-  // \param A 3th-order tensor
+  // 3rd-order tensor vector product
+  // \param A 3rd-order tensor
   // \param u vector
   // \return \f$ A u \f$
   //
@@ -1126,10 +1124,10 @@ namespace LCM {
 
     for (Index j = 0; j < MaxDim; ++j) {
       for (Index k = 0; k < MaxDim; ++k) {
-	B(j,k) = 0.0;
-	for (Index i = 0; i < MaxDim; ++i) {
-	  B(j,k) += A(i,j,k) * u(i);
-	}
+        B(j,k) = 0.0;
+        for (Index i = 0; i < MaxDim; ++i) {
+          B(j,k) += A(i,j,k) * u(i);
+        }
       }
     }
 
@@ -1137,8 +1135,8 @@ namespace LCM {
   }
 
   //
-  // vector 3th-order tensor product
-  // \param A 3th-order tensor
+  // vector 3rd-order tensor product
+  // \param A 3rd-order tensor
   // \param u vector
   // \return \f$ u A \f$
   //
@@ -1150,10 +1148,10 @@ namespace LCM {
 
     for (Index i = 0; i < MaxDim; ++i) {
       for (Index j = 0; j < MaxDim; ++j) {
-	B(i,j) = 0.0;
-	for (Index k = 0; k < MaxDim; ++k) {
-	  B(i,j) += A(i,j,k) * u(k);
-	}
+        B(i,j) = 0.0;
+        for (Index k = 0; k < MaxDim; ++k) {
+          B(i,j) += A(i,j,k) * u(k);
+        }
       }
     }
 
@@ -1162,8 +1160,8 @@ namespace LCM {
 
 
   //
-  // 3th-order tensor vector product2 (contract 2nd index)
-  // \param A 3th-order tensor
+  // 3rd-order tensor vector product2 (contract 2nd index)
+  // \param A 3rd-order tensor
   // \param u vector
   // \return \f$ A u \f$
   //
@@ -1175,10 +1173,10 @@ namespace LCM {
 
     for (Index i = 0; i < MaxDim; ++i) {
       for (Index k = 0; k < MaxDim; ++k) {
-	B(i,k) = 0.0;
-	for (Index j = 0; j < MaxDim; ++j) {
-	  B(i,k) += A(i,j,k) * u(j);
-	}
+        B(i,k) = 0.0;
+        for (Index j = 0; j < MaxDim; ++j) {
+          B(i,k) += A(i,j,k) * u(j);
+        }
       }
     }
 
@@ -1186,8 +1184,8 @@ namespace LCM {
   }
 
   //
-  // vector 3th-order tensor product2 (contract 2nd index)
-  // \param A 3th-order tensor
+  // vector 3rd-order tensor product2 (contract 2nd index)
+  // \param A 3rd-order tensor
   // \param u vector
   // \return \f$ u A \f$
   //
@@ -1626,7 +1624,7 @@ namespace LCM {
     for (Index i = 0; i < MaxDim; ++i) {
       for (Index j = 0; j < MaxDim; ++j) {
         for (Index k = 0; k < MaxDim; ++k) {
-	  B(i,j,k) = 0.0;
+          B(i,j,k) = 0.0;
           for (Index l = 0; l < MaxDim; ++l) {
             B(i,j,k) = A(i,j,k,l) * u(l);
           }
@@ -1651,7 +1649,7 @@ namespace LCM {
     for (Index j = 0; j < MaxDim; ++j) {
       for (Index k = 0; k < MaxDim; ++k) {
         for (Index l = 0; l < MaxDim; ++l) {
-	  B(j,k,l) = 0.0;
+          B(j,k,l) = 0.0;
           for (Index i = 0; i < MaxDim; ++i) {
             B(j,k,l) = u(i) * A(i,j,k,l);
           }
@@ -1676,7 +1674,7 @@ namespace LCM {
     for (Index i = 0; i < MaxDim; ++i) {
       for (Index j = 0; j < MaxDim; ++j) {
         for (Index l = 0; l < MaxDim; ++l) {
-	  B(i,j,l) = 0.0;
+          B(i,j,l) = 0.0;
           for (Index k = 0; k < MaxDim; ++k) {
             B(i,j,l) = A(i,j,k,l) * u(k);
           }
@@ -1701,7 +1699,7 @@ namespace LCM {
     for (Index i = 0; i < MaxDim; ++i) {
       for (Index k = 0; k < MaxDim; ++k) {
         for (Index l = 0; l < MaxDim; ++l) {
-	  B(i,k,l) = 0.0;
+          B(i,k,l) = 0.0;
           for (Index j = 0; j < MaxDim; ++j) {
             B(i,k,l) = u(j) * A(i,j,k,l);
           }

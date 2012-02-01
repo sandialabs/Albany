@@ -595,8 +595,8 @@ namespace LCM {
   operator*(const ScalarT s, Tensor3<ScalarT> const & A);
 
   ///
-  /// 3th-order tensor scalar product
-  /// \param A 3th-order tensor
+  /// 3rd-order tensor scalar product
+  /// \param A 3rd-order tensor
   /// \param s scalar
   /// \return \f$ s A \f$
   ///
@@ -605,8 +605,8 @@ namespace LCM {
   operator*(Tensor3<ScalarT> const & A, const ScalarT s);
 
   ///
-  /// 3th-order tensor vector product
-  /// \param A 3th-order tensor
+  /// 3rd-order tensor vector product
+  /// \param A 3rd-order tensor
   /// \param u vector
   /// \return \f$ A u \f$
   ///
@@ -615,8 +615,8 @@ namespace LCM {
   dot(Tensor3<ScalarT> const & A, const Vector<ScalarT> u);
 
   ///
-  /// vector 3th-order tensor product
-  /// \param A 3th-order tensor
+  /// vector 3rd-order tensor product
+  /// \param A 3rd-order tensor
   /// \param u vector
   /// \return \f$ u A \f$
   ///
@@ -625,8 +625,8 @@ namespace LCM {
   dot(const Vector<ScalarT> u, Tensor3<ScalarT> const & A);
 
   ///
-  /// 3th-order tensor vector product2 (contract 2nd index)
-  /// \param A 3th-order tensor
+  /// 3rd-order tensor vector product2 (contract 2nd index)
+  /// \param A 3rd-order tensor
   /// \param u vector
   /// \return \f$ A u \f$
   ///
@@ -635,8 +635,8 @@ namespace LCM {
   dot2(Tensor3<ScalarT> const & A, const Vector<ScalarT> u);
 
   ///
-  /// vector 3th-order tensor product2 (contract 2nd index)
-  /// \param A 3th-order tensor
+  /// vector 3rd-order tensor product2 (contract 2nd index)
+  /// \param A 3rd-order tensor
   /// \param u vector
   /// \return \f$ u A \f$
   ///
@@ -955,7 +955,7 @@ namespace LCM {
   ///
   template<typename ScalarT>
   Tensor<ScalarT>
-  GaussianElimination(Tensor<ScalarT> const & R);
+  gaussian_elimination(Tensor<ScalarT> const & R);
 
   ///
   /// Exponential map of a skew-symmetric tensor

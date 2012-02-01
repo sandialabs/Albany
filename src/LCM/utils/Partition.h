@@ -89,8 +89,8 @@ namespace LCM {
 
     ///
     /// Build array specifying input and output
-    /// \param input_file Exodus II input fine name
-    /// \param output_file Exodus II output fine name
+    /// \param input_file Exodus II input file name
+    /// \param output_file Exodus II output file name
     ///
     ConnectivityArray(
         std::string const & input_file,

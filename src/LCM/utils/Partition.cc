@@ -160,7 +160,9 @@ namespace LCM {
     dimension_ = meshSpecs[0]->numDim;
 
     // Dimensioned: Workset, Cell, Local Node
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >
+    Teuchos::ArrayRCP<
+      Teuchos::ArrayRCP<
+        Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >
     element_connectivity = discretization_ptr_->getWsElNodeEqID();
 
     Teuchos::ArrayRCP<double>
@@ -187,12 +189,15 @@ namespace LCM {
     nodes_per_element = element_connectivity[0][0].size();
 
     // Do some logic so we can get from unknown ID to node ID
-    int neq = element_connectivity[0][0][0].size();
-    int stride=1; 
-    if (neq>1)
-      if (element_connectivity[0][0][0][0] + 1 ==  element_connectivity[0][0][0][1])
-          stride = neq;  // usual interleaved unknowns case
-  
+    const int number_equations = element_connectivity[0][0][0].size();
+    int stride = 1;
+    if (number_equations > 1) {
+      if (element_connectivity[0][0][0][0] + 1 ==
+          element_connectivity[0][0][0][1]) {
+          // usual interleaved unknowns case
+          stride = number_equations;
+      }
+    }
     
 
     // Build coordinate array.
@@ -239,7 +244,8 @@ namespace LCM {
             ++node) {
 
           // Get node ID from first unknown ID by dividing by stride
-          nodes_element[node] = element_connectivity[workset][cell][node][0] / stride;
+          nodes_element[node] =
+              element_connectivity[workset][cell][node][0] / stride;
 
         }
 
@@ -379,7 +385,7 @@ namespace LCM {
 
       default:
         std::cerr << "Unknown element type in calculating volume." << std::endl;
-        std::exit(1);
+        exit(1);
         break;
 
       }
@@ -451,7 +457,7 @@ namespace LCM {
 
       if (volumes_iterator == volumes.end()) {
         std::cerr << "Cannot find volume for element " << element << std::endl;
-        std::exit(1);
+        exit(1);
       }
 
       double volume = (*volumes_iterator).second;
@@ -627,7 +633,7 @@ namespace LCM {
       std::cerr << dimension << std::endl;
       std::cerr << "Vertices per element: ";
       std::cerr << nodes << std::endl;
-      std::exit(1);
+      exit(1);
     }
 
     return type;
@@ -679,7 +685,7 @@ namespace LCM {
 
     default:
       std::cerr << "Unknown partitioning scheme." << std::endl;
-      std::exit(1);
+      exit(1);
       break;
 
     }
@@ -788,15 +794,18 @@ namespace LCM {
 
     if (rc != ZOLTAN_OK) {
       std::cerr << "Partitioning failed" << std::endl;
-      std::exit(1);
+      exit(1);
     }
 
     // Set up partition map initializing all partitions to zero
     std::map<int, int> partitions;
 
+    // Initialize with zeros the partition map for all elements.
     const ScalarMap
     vertex_weights = zoltan_hypergraph.GetVertexWeights();
 
+    // Fill up with results from Zoltan, which returns partitions for all
+    // elements that belong to a partition > 0
     for (ScalarMap::const_iterator
         weights_iter = vertex_weights.begin();
         weights_iter != vertex_weights.end();
@@ -911,7 +920,7 @@ namespace LCM {
 
     if (rc != ZOLTAN_OK) {
       std::cerr << "Partitioning failed" << std::endl;
-      std::exit(1);
+      exit(1);
     }
 
     // Set up partition map initializing all partitions to zero
@@ -920,6 +929,7 @@ namespace LCM {
     const ScalarMap
     element_volumes = GetVolumes();
 
+    // Initialize with zeros the partition map for all elements.
     for (ScalarMap::const_iterator
         volumes_iter = element_volumes.begin();
         volumes_iter != element_volumes.end();
@@ -928,7 +938,8 @@ namespace LCM {
       partitions[element] = 0;
     }
 
-    // Fill up with results from Zoltan
+    // Fill up with results from Zoltan, which returns partitions for all
+    // elements that belong to a partition > 0
     for (int i = 0; i < num_import; ++i) {
       const int element = static_cast<int>(import_local_ids[i]);
       partitions[element] = import_to_part[i];
@@ -1325,7 +1336,7 @@ namespace LCM {
 
       default:
         std::cerr << "Bad number of faces adjacent to element." << std::endl;
-        std::exit(1);
+        exit(1);
         break;
 
       }
@@ -1560,7 +1571,7 @@ namespace LCM {
 
       if (graph_iter == graph.end()) {
         std::cerr << "Cannot find vertex " << vertex << std::endl;
-        std::exit(1);
+        exit(1);
       }
 
       IDList
@@ -1665,7 +1676,7 @@ namespace LCM {
 
     default:
       std::cerr << "Unknown element type in face connectivity." << std::endl;
-      std::exit(1);
+      exit(1);
       break;
 
     }
@@ -1717,7 +1728,7 @@ namespace LCM {
 
     default:
       std::cerr << "Unknown element type in face connectivity." << std::endl;
-      std::exit(1);
+      exit(1);
       break;
 
     }
