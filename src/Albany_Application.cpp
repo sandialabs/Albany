@@ -40,7 +40,6 @@
   #include "Albany_STKDiscretization.hpp"
 #endif
 
-#include "Teuchos_DefaultMpiComm.hpp" 
 #include "Albany_ScalarResponseFunction.hpp"
 
 using Teuchos::ArrayRCP;
