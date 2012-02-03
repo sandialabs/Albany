@@ -94,11 +94,8 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     p->set< RCP<DataLayout> >("Dummy Data Layout", dl->dummy);  
     p->set<string>("Coordinate Vector Name", "Coord Vec");
     p->set<string>("Weights Name",   "Weights");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-    p->set< RCP<DataLayout> >("Vertices Vector Data Layout", dl->vertices_vector);
     RCP<QCAD::ResponseSaddleValue<EvalT,Traits> > res_ev = 
-      rcp(new QCAD::ResponseSaddleValue<EvalT,Traits>(*p));
+      rcp(new QCAD::ResponseSaddleValue<EvalT,Traits>(*p, dl));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));

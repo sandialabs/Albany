@@ -80,17 +80,24 @@
 
       <Parameter name="Response 6" type="string" value="Saddle Value" />
       <ParameterList name="ResponseParams 6">
-        <Parameter name="Field Name" type="string" value="Conduction Band" />
+        <Parameter name="Field Name" type="string" value="Potential" />
+        <Parameter name="Field Gradient Name" type="string" value="Potential Gradient" />
         <Parameter name="Return Field Name" type="string" value="Charge Density" />
-	<Parameter name="Field Cutoff Factor" type="double" value="1.0" />
-	<Parameter name="Minimum Pool Depth Factor" type="double" value="0.1" />
-	<Parameter name="Distance Cutoff Factor" type="double" value="0.1" />
+	<Parameter name="Field Scaling Factor" type="double" value="-1.0" />
+	<Parameter name="Number of Image Points" type="int" value="11" />
+	<Parameter name="Image Point Size" type="double" value="0.5" />
+	<Parameter name="Maximum Iterations" type="int" value="100" />
+	<Parameter name="Time Step" type="double" value="0.1" />
+	<Parameter name="Base Spring Constant" type="double" value="1e-2" />
+	<Parameter name="Convergence Threshold" type="double" value="1e-5" />
+	<Parameter name="Debug Mode" type="int" value="1" />
+	<Parameter name="Begin Point" type="Array(double)" value="{3.0, 4.1, 5.2}" />
 
-        <!-- <Parameter name="Domain" type="string" value="box" />
+        <Parameter name="Domain" type="string" value="box" />
         <Parameter name="x min" type="double" value="-2.5" />
         <Parameter name="x max" type="double" value="2.5" />
         <Parameter name="y min" type="double" value="-1.5" />
-        <Parameter name="y max" type="double" value="0.0" /> -->
+        <Parameter name="y max" type="double" value="0.0" />
       </ParameterList>
 
 
