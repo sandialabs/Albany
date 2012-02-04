@@ -195,7 +195,7 @@ evaluateFields(typename Traits::EvalData workset)
 				F = compute_F(sigmaD, fvoidD, sigmaMD);
 
 				if (std::abs(F) < 1.0e-10) break;
-				if (iteration > 15){
+				if (iteration > 20){
 					//std::cout << "no convergence in stress correction after " << iteration << " iterations" << std::endl;
 					//std::cout << "F= " << F.val() << std::endl;
 					break;
@@ -254,9 +254,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   	  voidVolume(cell,qp) = fvoidVal - f0;
   	  yieldStrength(cell,qp) = sigmaMVal - sigmaY;
-
-  	  //voidVolume(cell,qp) = fvoidVal;
-  	  //yieldStrength(cell,qp) = sigmaMVal;
 
 	} //loop over qps
 
