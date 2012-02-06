@@ -609,7 +609,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
 //    p->set<string>("Trapped Concentration Name", "Trapped Concentration");
 
-    p->set<string>("Lattice Concentration Name", "Lattice Concentration");
+ //   p->set<string>("Lattice Concentration Name", "Lattice Concentration");
 
     ev = rcp(new LCM::YieldStrength<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
