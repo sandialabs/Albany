@@ -2285,10 +2285,8 @@ void Albany::Application::setupBasicWorksetInfo(
 
   // Create Teuchos::Comm from Epetra_Comm
   const Epetra_Comm& comm = x->Map().Comm();
-  const Epetra_MpiComm& mpi_comm = dynamic_cast<const Epetra_MpiComm&>(comm);
-  Teuchos::RCP<const Teuchos::OpaqueWrapper<MPI_Comm> > raw_mpi_comm = 
-    Teuchos::opaqueWrapper(mpi_comm.Comm());
-  workset.comm = Teuchos::rcp(new Teuchos::MpiComm<int>(raw_mpi_comm));
+  workset.comm = Albany::createTeuchosCommFromMpiComm(
+                  Albany::getMpiCommFromEpetraComm(comm));
 
   workset.x_importer = importer;
 }

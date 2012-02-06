@@ -285,7 +285,7 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
      ev = rcp(new LCM::Time<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
-     p = stateMgr.registerStateVariable("Time",dl->workset_scalar, dl->dummy,"zero", true);
+     p = stateMgr.registerStateVariable("Time",dl->workset_scalar, dl->dummy,"scalar", 0.0, true);
      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
    }
@@ -320,7 +320,7 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 //
    //     ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
    //     fm0.template registerEvaluator<EvalT>(ev);
-   //     p = stateMgr.registerStateVariable("Temperature",dl->qp_scalar, dl->dummy,"zero", true);
+   //     p = stateMgr.registerStateVariable("Temperature",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
    //     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
   //      fm0.template registerEvaluator<EvalT>(ev);
 //   }
@@ -449,7 +449,7 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
           ev = rcp(new LCM::MixtureSpecificHeat<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
-          p = stateMgr.registerStateVariable("Mixture Specific Heat",dl->qp_scalar, dl->dummy,"zero");
+          p = stateMgr.registerStateVariable("Mixture Specific Heat",dl->qp_scalar, dl->dummy,"scalar", 0.0);
           ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
         }
@@ -471,7 +471,7 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
              ev = rcp(new LCM::MixtureThermalExpansion<EvalT,AlbanyTraits>(*p));
              fm0.template registerEvaluator<EvalT>(ev);
-             p = stateMgr.registerStateVariable("Mixture Thermal Expansion",dl->qp_scalar, dl->dummy,"zero");
+             p = stateMgr.registerStateVariable("Mixture Thermal Expansion",dl->qp_scalar, dl->dummy,"scalar", 0.0);
              ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
              fm0.template registerEvaluator<EvalT>(ev);
    }
@@ -491,7 +491,7 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
      ev = rcp(new LCM::Strain<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
-     p = stateMgr.registerStateVariable("Strain",dl->qp_tensor, dl->dummy,"zero",true);
+     p = stateMgr.registerStateVariable("Strain",dl->qp_tensor, dl->dummy,"scalar", 0.0,true);
      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
    }
@@ -518,7 +518,7 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
           ev = rcp(new LCM::Porosity<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
-          p = stateMgr.registerStateVariable("Porosity",dl->qp_scalar, dl->dummy,"zero", true);
+          p = stateMgr.registerStateVariable("Porosity",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
           ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
      }
@@ -543,7 +543,7 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
           ev = rcp(new LCM::BiotCoefficient<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
-          p = stateMgr.registerStateVariable("Biot Coefficient",dl->qp_scalar, dl->dummy,"zero");
+          p = stateMgr.registerStateVariable("Biot Coefficient",dl->qp_scalar, dl->dummy,"scalar", 0.0);
           ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -567,7 +567,7 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
           ev = rcp(new LCM::BiotModulus<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
-          p = stateMgr.registerStateVariable("Biot Modulus",dl->qp_scalar, dl->dummy,"zero");
+          p = stateMgr.registerStateVariable("Biot Modulus",dl->qp_scalar, dl->dummy,"scalar", 0.0);
           ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
      }
@@ -608,7 +608,7 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
      ev = rcp(new LCM::KCPermeability<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
-     p = stateMgr.registerStateVariable("Kozeny-Carman Permeability",dl->qp_scalar, dl->dummy,"zero");
+     p = stateMgr.registerStateVariable("Kozeny-Carman Permeability",dl->qp_scalar, dl->dummy,"scalar", 0.0);
      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
     }
@@ -698,10 +698,10 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
     ev = rcp(new LCM::TotalStress<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Total Stress",dl->qp_tensor, dl->dummy,"zero");
+    p = stateMgr.registerStateVariable("Total Stress",dl->qp_tensor, dl->dummy,"scalar", 0.0);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Pore Pressure",dl->qp_scalar, dl->dummy,"zero", true);
+    p = stateMgr.registerStateVariable("Pore Pressure",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
 	ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
 	fm0.template registerEvaluator<EvalT>(ev);
 
@@ -744,11 +744,11 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
     ev = rcp(new LCM::DefGrad<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
     p = stateMgr.registerStateVariable("Displacement Gradient",dl->qp_tensor,
-    		                            dl->dummy,"identity",true);
+                                       dl->dummy,"identity",1.0,true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
     p = stateMgr.registerStateVariable("Jacobian",
-    		                           dl->qp_scalar, dl->dummy,"zero",true);
+    		                           dl->qp_scalar, dl->dummy,"scalar", 0.0,true);
 	ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -795,7 +795,7 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
     ev = rcp(new LCM::ThermoPoroPlasticityResidMomentum<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
-	p = stateMgr.registerStateVariable("Temperature",dl->qp_scalar, dl->dummy,"zero", true);
+	p = stateMgr.registerStateVariable("Temperature",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
 	ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
 	fm0.template registerEvaluator<EvalT>(ev);
   }
