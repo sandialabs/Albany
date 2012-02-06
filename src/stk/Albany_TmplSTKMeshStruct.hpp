@@ -31,10 +31,13 @@ template<int Dim>
 struct albany_stk_mesh_traits { };
 
 //! Element block specs
-template<int Dim>
+template<int Dim, class traits = albany_stk_mesh_traits<Dim> >
 struct EBSpecsStruct {
 
     EBSpecsStruct(){}
+
+    //! Type of traits class being used
+    typedef traits traits_type;
 
     //! Single element block initializer
     void Initialize(unsigned int nnelems[], double blLength[]);
@@ -64,9 +67,9 @@ struct EBSpecsStruct {
     }
 
     std::string name;      // Name of element block
-    int min[Dim];       // Minimum logical coordinate of the block 
-    int max[Dim];       // Maximum logical coordinate of the block 
-    double blLength[Dim];      
+    int min[traits_type::size];       // Minimum logical coordinate of the block 
+    int max[traits_type::size];       // Maximum logical coordinate of the block 
+    double blLength[traits_type::size];      
 
 };
 
@@ -109,7 +112,7 @@ template<int Dim, class traits = albany_stk_mesh_traits<Dim> >
       getValidDiscretizationParameters() const;
 
     //! Build STK parts and nodesets that correspond to the dimension of the problem and input values
-    void DeclareParts(std::vector<EBSpecsStruct<Dim> > ebStructArray, 
+    void DeclareParts(std::vector<EBSpecsStruct<Dim, traits>  > ebStructArray, 
          std::vector<std::string> ssNames,
          std::vector<std::string> nsNames);
 
@@ -119,7 +122,7 @@ template<int Dim, class traits = albany_stk_mesh_traits<Dim> >
     std::vector<double> x[traits_type::size];
 //    std::vector<std::vector<double> > x;
     Teuchos::RCP<Epetra_Map> elem_map;
-    std::vector<EBSpecsStruct<Dim> > EBSpecs;
+    std::vector<EBSpecsStruct<Dim, traits> > EBSpecs;
 
     bool periodic;
     bool triangles; // Defaults to false, meaning quad elements
