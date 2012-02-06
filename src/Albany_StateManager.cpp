@@ -31,20 +31,22 @@ Teuchos::RCP<Teuchos::ParameterList>
 Albany::StateManager::registerStateVariable(const std::string &name, const Teuchos::RCP<PHX::DataLayout> &dl,
                                             const Teuchos::RCP<PHX::DataLayout> &dummy,
                                             const std::string &init_type,
+                                            const double init_val,
                                             const bool registerOldState)
 {
-  return registerStateVariable(name, dl, dummy, init_type, registerOldState, name);
+  return registerStateVariable(name, dl, dummy, init_type, init_val, registerOldState, name);
 }
 
 Teuchos::RCP<Teuchos::ParameterList>
 Albany::StateManager::registerStateVariable(const std::string &stateName, const Teuchos::RCP<PHX::DataLayout> &dl,
                                             const Teuchos::RCP<PHX::DataLayout> &dummy,
                                             const std::string &init_type,
+                                            const double init_val,
                                             const bool registerOldState,
                                             const std::string& fieldName)
 {
   const bool bOutputToExodus = true;
-  registerStateVariable(stateName, dl, init_type, registerOldState, bOutputToExodus, fieldName);
+  registerStateVariable(stateName, dl, init_type, init_val, registerOldState, bOutputToExodus, fieldName);
 
   // Create param list for SaveStateField evaluator 
   Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Save or Load State " 
@@ -60,7 +62,8 @@ Albany::StateManager::registerStateVariable(const std::string &stateName, const 
 void
 Albany::StateManager::registerStateVariable(const std::string &stateName, 
 					    const Teuchos::RCP<PHX::DataLayout> &dl,
-                                            const std::string &init_type,
+                                            const std::string &init_type,                                            
+                                            const double init_val,
                                             const bool registerOldState,
 					    const bool outputToExodus,
 					    const std::string &responseIDtoRequire)
@@ -82,7 +85,8 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
   // Load into StateInfo
   (*stateInfo).push_back(Teuchos::rcp(new Albany::StateStruct(stateName)));
   Albany::StateStruct& stateRef = *stateInfo->back();
-  stateRef.initType = init_type; 
+  stateRef.initType  = init_type; 
+  stateRef.initValue = init_val; 
   if ( dl->rank() > 1 )
     stateRef.entity = dl->name(1); //Tag, should be Node or QuadPoint
   else if ( dl->rank() == 1 )
@@ -98,7 +102,8 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
     std::string stateName_old = stateName + "_old";
     (*stateInfo).push_back(Teuchos::rcp(new Albany::StateStruct(stateName_old)));
     Albany::StateStruct& pstateRef = *stateInfo->back();
-    pstateRef.initType = init_type; 
+    pstateRef.initType  = init_type; 
+    pstateRef.initValue = init_val; 
     if ( dl->rank() > 1 )
       pstateRef.entity = dl->name(1); //Tag, should be Node or QuadPoint
     else if ( dl->rank() == 1 )
@@ -133,12 +138,20 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
   for (unsigned int i=0; i<stateInfo->size(); i++) {
     const std::string stateName = (*stateInfo)[i]->name;
     const std::string init_type = (*stateInfo)[i]->initType;
-  
+    const double init_val       = (*stateInfo)[i]->initValue;
+
+    // JTO: specifying zero recovers previous behavior
+    // if (stateName == "zero")
+    // { 
+    //   init_val = 0.0;
+    //   init_type = "scalar";
+    // }
+
     *out << "StateManager: initializing state:  " << stateName;
-    if (init_type == "zero")
-          *out << " with initialization type 'zero'" << std::endl;
+    if (init_type == "scalar")
+      *out << " with initialization type 'scalar' and value: " << init_val << std::endl;
     else if (init_type == "identity")
-          *out << " with initialization type 'identity'" << std::endl;
+      *out << " with initialization type 'identity'" << std::endl;
 
     for (int ws = 0; ws < numWorksets; ws++)
     {
@@ -146,33 +159,33 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
       sa[ws][stateName].dimensions(dims);
       int size = dims.size();
 
-      if (init_type == "zero")
+      if (init_type == "scalar")
       {
         switch (size) {
 	case 1:
-	  sa[ws][stateName](0) = 0.0;
+	  sa[ws][stateName](0) = init_val;
 	  break;
 	case 2:
 	  for (int cell = 0; cell < dims[0]; ++cell)
 	    for (int qp = 0; qp < dims[1]; ++qp)
-	      sa[ws][stateName](cell, qp) = 0.0;
+	      sa[ws][stateName](cell, qp) = init_val;
 	  break;
 	case 3:
 	  for (int cell = 0; cell < dims[0]; ++cell)
 	    for (int qp = 0; qp < dims[1]; ++qp)
 	      for (int i = 0; i < dims[2]; ++i)
-		sa[ws][stateName](cell, qp, i) = 0.0;
+		sa[ws][stateName](cell, qp, i) = init_val;
 	  break;
 	case 4:
 	  for (int cell = 0; cell < dims[0]; ++cell)
 	    for (int qp = 0; qp < dims[1]; ++qp)
 	      for (int i = 0; i < dims[2]; ++i)
 		for (int j = 0; j < dims[3]; ++j)
-		  sa[ws][stateName](cell, qp, i, j) = 0.0;
+		  sa[ws][stateName](cell, qp, i, j) = init_val;
 	  break;
 	default:
 	  TEUCHOS_TEST_FOR_EXCEPTION(size<2||size>4, std::logic_error,
-				     "Something is wrong during zero state variable initialization: " << size);
+				     "Something is wrong during scalar state variable initialization: " << size);
         }
 
       }
@@ -180,7 +193,7 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
       {
         // we assume operating on the last two indices is correct
         TEUCHOS_TEST_FOR_EXCEPTION(size != 4, std::logic_error,
-				   "Something is wrong during identity state variable initialization: " << size);
+				   "Something is wrong during tensor state variable initialization: " << size);
         TEUCHOS_TEST_FOR_EXCEPT( ! (dims[2] == dims[3]) );
 
         for (int cell = 0; cell < dims[0]; ++cell)

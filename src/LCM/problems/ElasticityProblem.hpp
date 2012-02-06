@@ -223,7 +223,7 @@ Albany::ElasticityProblem::constructEvaluators(
 
     ev = rcp(new LCM::Time<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Time",dl->workset_scalar, dl->dummy,"zero", true);
+    p = stateMgr.registerStateVariable("Time",dl->workset_scalar, dl->dummy,"scalar", 0.0, true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -294,7 +294,7 @@ Albany::ElasticityProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
 
     if(matModel == "CapModel"){
-    	p = stateMgr.registerStateVariable("Strain", dl->qp_tensor, dl->dummy,"zero",true);
+      p = stateMgr.registerStateVariable("Strain", dl->qp_tensor, dl->dummy,"scalar", 0.0, true);
     	ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     	fm0.template registerEvaluator<EvalT>(ev);
     }
@@ -376,13 +376,13 @@ Albany::ElasticityProblem::constructEvaluators(
       //Declare what state data will need to be saved (name, layout, init_type)
       ev = rcp(new LCM::CapModelStress<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy,"zero", true);
+      p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy,"scalar", 0.0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("backStress",dl->qp_tensor, dl->dummy,"zero", true);
+      p = stateMgr.registerStateVariable("backStress",dl->qp_tensor, dl->dummy,"scalar", 0.0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("capParameter",dl->qp_scalar, dl->dummy,"zero", true);
+      p = stateMgr.registerStateVariable("capParameter",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
 	}
@@ -407,7 +407,7 @@ Albany::ElasticityProblem::constructEvaluators(
 
       ev = rcp(new LCM::Stress<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy,"zero");
+      p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy,"scalar", 0.0);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
 	}

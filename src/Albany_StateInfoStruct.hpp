@@ -80,6 +80,7 @@ struct StateStruct {
   //std::vector<MDArray> wsArray;
   std::string entity; //Entity entity;
   std::string initType; //InitType initType;
+  double initValue;
 
   //For proper PHAL_SaveStateField functionality - maybe only needed temporarily?
   std::string responseIDtoRequire; //If nonzero length, the responseID for response 
