@@ -37,7 +37,7 @@ namespace QCAD
     typedef typename PHAL::AlbanyTraits::Residual::MeshScalarT MeshScalarT;
     
     EvaluatorTools();  
-    double getDoubleValue(const ScalarT& t);	  
+    double getDoubleValue(const ScalarT& t) const;	  
   };
 
 
@@ -50,7 +50,7 @@ namespace QCAD
     typedef typename PHAL::AlbanyTraits::Jacobian::MeshScalarT MeshScalarT;
     
     EvaluatorTools();  
-    double getDoubleValue(const ScalarT& t);	  
+    double getDoubleValue(const ScalarT& t) const;	  
   };
 
   
@@ -63,7 +63,7 @@ namespace QCAD
     typedef typename PHAL::AlbanyTraits::Tangent::MeshScalarT MeshScalarT;
     
     EvaluatorTools();  
-    double getDoubleValue(const ScalarT& t);	  
+    double getDoubleValue(const ScalarT& t) const;	  
   };
 
 
@@ -76,7 +76,7 @@ namespace QCAD
     typedef typename PHAL::AlbanyTraits::SGResidual::MeshScalarT MeshScalarT;
     
     EvaluatorTools();  
-    double getDoubleValue(const ScalarT& t);	  
+    double getDoubleValue(const ScalarT& t) const;	  
   };
 
   
@@ -89,7 +89,7 @@ namespace QCAD
     typedef typename PHAL::AlbanyTraits::SGJacobian::MeshScalarT MeshScalarT;
     
     EvaluatorTools();  
-    double getDoubleValue(const ScalarT& t);	  
+    double getDoubleValue(const ScalarT& t) const;	  
   };
 
   // Stochastic Galerkin Tangent
@@ -101,7 +101,7 @@ namespace QCAD
     typedef typename PHAL::AlbanyTraits::SGTangent::MeshScalarT MeshScalarT;
     
     EvaluatorTools();  
-    double getDoubleValue(const ScalarT& t);	  
+    double getDoubleValue(const ScalarT& t) const;	  
   };
 
   
@@ -114,7 +114,7 @@ namespace QCAD
     typedef typename PHAL::AlbanyTraits::MPResidual::MeshScalarT MeshScalarT;
     
     EvaluatorTools();  
-    double getDoubleValue(const ScalarT& t);	  
+    double getDoubleValue(const ScalarT& t) const;	  
   };
 
 
@@ -127,7 +127,7 @@ namespace QCAD
     typedef typename PHAL::AlbanyTraits::MPJacobian::MeshScalarT MeshScalarT;
     
     EvaluatorTools();  
-    double getDoubleValue(const ScalarT& t);	  
+    double getDoubleValue(const ScalarT& t) const;	  
   };
 
   // Multi-point Tangent
@@ -139,7 +139,7 @@ namespace QCAD
     typedef typename PHAL::AlbanyTraits::MPTangent::MeshScalarT MeshScalarT;
     
     EvaluatorTools();  
-    double getDoubleValue(const ScalarT& t);	  
+    double getDoubleValue(const ScalarT& t) const;	  
   };
 	
 }

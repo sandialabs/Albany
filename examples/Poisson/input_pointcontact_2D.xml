@@ -29,7 +29,7 @@
     </ParameterList>
 
     <ParameterList name="Response Functions">
-      <Parameter name="Number" type="int" value="4" />
+      <Parameter name="Number" type="int" value="6" />
       <Parameter name="Response 0" type="string" value="Solution Average" />
       
       <Parameter name="Response 1" type="string" value="Save Field" />
@@ -45,27 +45,80 @@
         <Parameter name="Output to Exodus" type="bool" value="1" />
         <Parameter name="Output Cell Average" type="bool" value="1" />
       </ParameterList>
-      
+
       <Parameter name="Response 3" type="string" value="Saddle Value" />
       <ParameterList name="ResponseParams 3">
+	<Parameter name="Debug Mode" type="int" value="1" />
+
         <Parameter name="Field Name" type="string" value="Potential" />
         <Parameter name="Field Gradient Name" type="string" value="Potential Gradient" />
         <Parameter name="Return Field Name" type="string" value="Charge Density" />
 	<Parameter name="Field Scaling Factor" type="double" value="-1.0" />
-	<Parameter name="Number of Image Points" type="int" value="11" />
-	<Parameter name="Image Point Size" type="double" value="0.5" />
-	<Parameter name="Maximum Iterations" type="int" value="100" />
-	<Parameter name="Time Step" type="double" value="0.1" />
-	<Parameter name="Base Spring Constant" type="double" value="1e-2" />
-	<Parameter name="Convergence Threshold" type="double" value="1e-5" />
-	<Parameter name="Debug Mode" type="int" value="3" />
-	<Parameter name="Begin Point" type="Array(double)" value="{3.0, 4.1, 5.2}" />
 
-        <Parameter name="Domain" type="string" value="box" />
-        <Parameter name="x min" type="double" value="-8" />
-        <Parameter name="x max" type="double" value="8" />
-        <Parameter name="y min" type="double" value="-8" />
-        <Parameter name="y max" type="double" value="8" />
+        <Parameter name="Output Filename" type="string" value="saddlePath.dat" />
+        <Parameter name="Output Interval" type="int" value="20" />
+        <Parameter name="Debug Filename" type="string" value="saddleDebug.dat" />
+
+	<Parameter name="Number of Image Points" type="int" value="21" />
+	<Parameter name="Image Point Size" type="double" value="0.4" />
+	<Parameter name="Maximum Iterations" type="int" value="100" />
+	<Parameter name="Max Time Step" type="double" value="1" />
+	<Parameter name="Min Time Step" type="double" value="0.001" />
+	<Parameter name="Min Spring Constant" type="double" value="1" />
+	<Parameter name="Max Spring Constant" type="double" value="1" />
+	<Parameter name="Convergence Tolerance" type="double" value="1e-6" />
+	<Parameter name="Climbing NEB" type="bool" value="1" />
+	<Parameter name="Anti-Kink Factor" type="double" value="1" />
+
+	<!-- Specify Begin and/or End points -->
+	<Parameter name="Begin Point" type="Array(double)" value="{-5, +8.0}" />
+	<Parameter name="End Point"   type="Array(double)" value="{-1, -10.0}" />
+	<!-- <Parameter name="Saddle Point Guess" type="Array(double)" value="{0.1, 0.1}" /> -->
+
+	<!-- OR Specify Begin and/or End polygons (point taken as min within polygon) -->
+	<!--
+	<ParameterList name="Begin Polygon">
+	  <Parameter name="Number of Points" type="int" value="4" />	  
+	  <Parameter name="Point 0" type="Array(double)" value="{ -1, +7}" />
+	  <Parameter name="Point 1" type="Array(double)" value="{ +1, +7}" />
+	  <Parameter name="Point 2" type="Array(double)" value="{ +1, +9}" />
+	  <Parameter name="Point 3" type="Array(double)" value="{ -1, +9}" />
+	</ParameterList>
+
+	<ParameterList name="End Polygon">
+	  <Parameter name="Number of Points" type="int" value="4" />	  
+	  <Parameter name="Point 0" type="Array(double)" value="{ -1, -7}" />
+	  <Parameter name="Point 1" type="Array(double)" value="{ +1, -7}" />
+	  <Parameter name="Point 2" type="Array(double)" value="{ +1, -9}" />
+	  <Parameter name="Point 3" type="Array(double)" value="{ -1, -9}" />
+	</ParameterList>
+	-->
+
+	<!-- OR Specify Begin and/or End element blocks (point taken as min within block) -->
+	<!-- 
+	<Parameter name="Begin Element Block" type="string" value="Begin EB Name" />
+	<Parameter name="End Element Block" type="string" value="End EB Name" /> 
+	-->
+
+	<!-- For 3D -->
+        <!-- 
+	<Parameter name="z min" type="double" value="0" />
+	<Parameter name="z max" type="double" value="0" /> 
+	-->
+      </ParameterList>
+
+      <Parameter name="Response 4" type="string" value="Save Field" />
+      <ParameterList name="ResponseParams 4">
+        <Parameter name="Vector Field Name" type="string" value="Potential Gradient" />
+        <Parameter name="State Name" type="string" value="XGrad" />
+	<Parameter name="Vector Operation" type="string" value="xCoord" />
+      </ParameterList>
+
+      <Parameter name="Response 5" type="string" value="Save Field" />
+      <ParameterList name="ResponseParams 5">
+        <Parameter name="Vector Field Name" type="string" value="Potential Gradient" />
+        <Parameter name="State Name" type="string" value="YGrad" />
+	<Parameter name="Vector Operation" type="string" value="yCoord" />
       </ParameterList>
 
     </ParameterList>

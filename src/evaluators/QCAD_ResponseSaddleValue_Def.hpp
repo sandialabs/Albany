@@ -149,50 +149,41 @@ evaluateFields(typename Traits::EvalData workset)
 
   const int MAX_DIMS = 3;
   ScalarT fieldVal, retFieldVal, cellVol; //, retCellVol;
-  double dblAvgCoords[MAX_DIMS], dblFieldGrad[MAX_DIMS];
   std::vector<ScalarT> fieldGrad(numDims, 0.0);
-  std::vector<MeshScalarT> avgCoord(numDims, 0.0);
-  //std::vector<ScalarT> avgCoord(numDims, 0.0);
-  
-  //if(domain == "element block" && workset.EBName != ebName) return;
+  double dblAvgCoords[MAX_DIMS], dblFieldGrad[MAX_DIMS], dblFieldVal;
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) 
-  {	
-    //Get average cell coordinate (avg of qps)
-    for (std::size_t k=0; k < numDims; ++k) avgCoord[k] = 0.0;
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
-      for (std::size_t k=0; k < numDims; ++k) 
-	avgCoord[k] += coordVec(cell,qp,k);
-    }
-    for (std::size_t k=0; k < numDims; ++k) {
-      avgCoord[k] /= numQPs;
-      dblAvgCoords[k] = QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue(avgCoord[k]);
-    }
+  if(svResponseFn->getMode() == "Point location") {    
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
-    // TODO LATER - move string comparisons outside cell loop later
-    if(svResponseFn->getMode() == "Minima on boundary") {    
-      if(svResponseFn->checkIfPointIsOnBoundary(dblAvgCoords) >= 0) {
-	
-	getCellQuantities(cell, cellVol, fieldVal, retFieldVal, fieldGrad);
-	svResponseFn->addBoundaryData(dblAvgCoords, 
-	     QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue(fieldVal));
-      }
+      getAvgCellCoordinates(coordVec, cell, dblAvgCoords);
+      getCellQuantities(cell, cellVol, fieldVal, retFieldVal, fieldGrad);
+      dblFieldVal = QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue(fieldVal);
+      svResponseFn->addBeginPointData(workset.EBName, dblAvgCoords, dblFieldVal);
+      svResponseFn->addEndPointData(workset.EBName, dblAvgCoords, dblFieldVal);
     }
-    else if(svResponseFn->getMode() == "Collect image point data") {
-      if(svResponseFn->checkIfPointIsWithinBoundary(dblAvgCoords)) {
-	
+  }
+  else if(svResponseFn->getMode() == "Collect image point data") {
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      getAvgCellCoordinates(coordVec, cell, dblAvgCoords);
+
+      if(svResponseFn->pointIsInImagePtRegion(dblAvgCoords)) {	
 	getCellQuantities(cell, cellVol, fieldVal, retFieldVal, fieldGrad);
+
+	dblFieldVal = QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue(fieldVal);
 	for (std::size_t k=0; k < numDims; ++k)
 	  dblFieldGrad[k] = QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue(fieldGrad[k]);
 
-	svResponseFn->addImagePointData(dblAvgCoords, 
-	    QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue(fieldVal), dblFieldGrad);
+	svResponseFn->addImagePointData(dblAvgCoords, dblFieldVal, dblFieldGrad);
       }
     }
-    else if(svResponseFn->getMode() == "Fill saddle point") {
-      double wt;
+  }
+  else if(svResponseFn->getMode() == "Fill saddle point") {
+    double wt;
+
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      getAvgCellCoordinates(coordVec, cell, dblAvgCoords);
+
       if( (wt = svResponseFn->getSaddlePointWeight(dblAvgCoords)) > 0.0) {
-	
 	getCellQuantities(cell, cellVol, fieldVal, retFieldVal, fieldGrad);
 
 	this->global_response[0] += wt*retFieldVal;
@@ -202,10 +193,15 @@ evaluateFields(typename Traits::EvalData workset)
 	this->global_response[4] = 0.0;
       }
     }
-    else TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
-		     << "Error!  Invalid mode: " << svResponseFn->getMode() << std::endl); 
+  }
+  else TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+		      << "Error!  Invalid mode: " << svResponseFn->getMode() << std::endl); 
 
+  // Do any local-scattering necessary
+  PHAL::SeparableScatterScalarResponse<EvalT,Traits>::evaluateFields(workset);
+}
 
+//OLD: Keep for reference for now:
     // get a volume or area used for computing an average cell linear size
     /*if( bLateralVolumes ) {
       std::vector<ScalarT> maxCoord(3,-1e10);
@@ -224,13 +220,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
     else retCellVol = cellVol;
     */
-    
-  } // end of loop over cells
 
-  // Do any local-scattering necessary
-  PHAL::SeparableScatterScalarResponse<EvalT,Traits>::evaluateFields(workset);
-
-}
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
@@ -277,26 +267,35 @@ QCAD::ResponseSaddleValue<EvalT,Traits>::getValidResponseParameters() const
   validPL->set<string>("Field Name", "", "Scalar field on which to find saddle point");
   validPL->set<string>("Field Gradient Name", "", "Gradient of field on which to find saddle point");
   validPL->set<string>("Return Field Name", "<field name>", "Scalar field to return value from");
-  validPL->set<string>("Domain", "box", "Region to perform operation: 'box' or 'element block'");
-  validPL->set<double>("x min", 0.0, "Box domain minimum x coordinate");
-  validPL->set<double>("x max", 0.0, "Box domain maximum x coordinate");
-  validPL->set<double>("y min", 0.0, "Box domain minimum y coordinate");
-  validPL->set<double>("y max", 0.0, "Box domain maximum y coordinate");
-  validPL->set<double>("z min", 0.0, "Box domain minimum z coordinate");
-  validPL->set<double>("z max", 0.0, "Box domain maximum z coordinate");
+  validPL->set<double>("Field Scaling Factor", 1.0, "Scaling factor for field on which to find saddle point");
+  validPL->set<double>("Return Field Scaling Factor", 1.0, "Scaling factor for return field");
 
   validPL->set<int>("Number of Image Points", 10, "Number of image points to use, including the two endpoints");
   validPL->set<double>("Image Point Size", 1.0, "Size of image points, modeled as gaussian weight distribution");
   validPL->set<int>("Maximum Iterations", 100, "Maximum number of NEB iterations");
-  validPL->set<double>("Time Step", 1.0, "Initial time step");
-  validPL->set<double>("Convergence Threshold", 1e-3, "Convergence threshold for maximum of update vector lengths");
-  validPL->set<double>("Base Spring Constant", 1.0, "Base spring constant used between image points");
+  validPL->set<double>("Max Time Step", 1.0, "Maximum (and initial) time step");
+  validPL->set<double>("Min Time Step", 0.002, "Minimum time step");
+  validPL->set<double>("Convergence Tolerance", 1e-5, "Convergence criterion when |grad| of saddle is below this number");
+  validPL->set<double>("Min Spring Constant", 1.0, "Minimum spring constant used between image points (initial time)");
+  validPL->set<double>("Max Spring Constant", 1.0, "Maximum spring constant used between image points (final time)");
+  validPL->set<string>("Output Filename", "", "Filename to receive elastic band points and values at given interval");
+  validPL->set<int>("Output Interval", 0, "Output elastic band points every <output interval> iterations");
+  validPL->set<string>("Debug Filename", "", "Filename for algorithm debug info");
+  validPL->set<bool>("Climbing NEB", true, "Whether or not to use the climbing NEB algorithm");
+  validPL->set<double>("Anti-Kink Factor", 0.0, "Factor between 0 and 1 giving about of perpendicular spring force to inclue");
 
-  validPL->set<string>("Element Block Name", "", "Element block name that specifies domain");
-  validPL->set<double>("Field Scaling Factor", 1.0, "Scaling factor for field on which to find saddle point");
-  validPL->set<double>("Return Field Scaling Factor", 1.0, "Scaling factor for return field");
+  validPL->set<double>("z min", 0.0, "Box domain minimum z coordinate");
+  validPL->set<double>("z max", 0.0, "Box domain maximum z coordinate");
 
   validPL->set<Teuchos::Array<double> >("Begin Point", Teuchos::Array<double>(), "Beginning point of elastic band");
+  validPL->set<string>("Begin Element Block", "", "Element block name whose minimum marks the elastic band's beginning");
+  validPL->sublist("Begin Polygon", false, "Beginning polygon sublist");
+
+  validPL->set<Teuchos::Array<double> >("End Point", Teuchos::Array<double>(), "Ending point of elastic band");
+  validPL->set<string>("End Element Block", "", "Element block name whose minimum marks the elastic band's ending");
+  validPL->sublist("End Polygon", false, "Ending polygon sublist");
+
+  validPL->set<Teuchos::Array<double> >("Saddle Point Guess", Teuchos::Array<double>(), "Estimate of where the saddle point lies");
 
   validPL->set<int>("Debug Mode", 0, "Print verbose debug messages to stdout");
   validPL->set<bool>("Positive Return Only", false, "If return value is zero, set to NaN so Dakota stays away");
@@ -343,4 +342,25 @@ getCellQuantities(const std::size_t cell, typename EvalT::ScalarT& cellVol, type
   for (std::size_t k=0; k < numDims; ++k) fieldGrad[k] *= scaling / cellVol; 
 
   return;
+}
+
+
+// **********************************************************************
+template<typename EvalT, typename Traits>
+void QCAD::ResponseSaddleValue<EvalT, Traits>::
+  getAvgCellCoordinates(PHX::MDField<typename EvalT::MeshScalarT,Cell,QuadPoint,Dim> coordVec,
+			const std::size_t cell, double* dblAvgCoords) const
+{
+  std::vector<MeshScalarT> avgCoord(numDims, 0.0); //just a double?
+
+  //Get average cell coordinate (avg of qps)
+  for (std::size_t k=0; k < numDims; ++k) avgCoord[k] = 0.0;
+  for (std::size_t qp=0; qp < numQPs; ++qp) {
+    for (std::size_t k=0; k < numDims; ++k) 
+      avgCoord[k] += coordVec(cell,qp,k);
+  }
+  for (std::size_t k=0; k < numDims; ++k) {
+    avgCoord[k] /= numQPs;
+    dblAvgCoords[k] = QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue(avgCoord[k]);
+  }
 }

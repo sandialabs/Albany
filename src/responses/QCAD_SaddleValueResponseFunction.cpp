@@ -16,11 +16,13 @@
 
 #include <Teuchos_Array.hpp>
 #include <Epetra_LocalMap.h>
+#include "Albany_Utils.hpp"
 #include "QCAD_SaddleValueResponseFunction.hpp"
-
+#include <fstream>
 
 //! Helper function prototypes
-double distanceFromLineSegment(const double* p, const double* p1, const double* p2, int dims);
+bool ptInPolygon(const std::vector<QCAD::mathVector>& polygon, const QCAD::mathVector& pt);
+bool ptInPolygon(const std::vector<QCAD::mathVector>& polygon, const double* pt);
 
 
 QCAD::SaddleValueResponseFunction::
@@ -37,34 +39,113 @@ SaddleValueResponseFunction(
 	      << "Saddle Point not implemented for " << numDims << " dimensions." << std::endl); 
 
   params.set("Response Function", Teuchos::rcp(this,false));
+
+  Teuchos::Array<double> ar;
+
   imagePtSize   = params.get<double>("Image Point Size", 0.01);
   nImagePts     = params.get<int>("Number of Image Points", 10);
+  maxTimeStep   = params.get<double>("Max Time Step", 1.0);
+  minTimeStep   = params.get<double>("Min Time Step", 0.002);
   maxIterations = params.get<int>("Maximum Iterations", 100);
-  timeStep      = params.get<double>("Time Step", 1.0);
-  baseSpringConstant   = params.get<double>("Base Spring Constant", 1.0);
-  convergenceThreshold = params.get<double>("Convergence Threshold", 1e-3);
+  convergeTolerance = params.get<double>("Convergence Tolerance", 1e-5);
+  minSpringConstant = params.get<double>("Min Spring Constant", 1.0);
+  maxSpringConstant = params.get<double>("Max Spring Constant", 1.0);
+  outputFilename = params.get<std::string>("Output Filename", "");
+  debugFilename  = params.get<std::string>("Debug Filename", "");
+  nEvery         = params.get<int>("Output Interval", 0);
+  bClimbing      = params.get<bool>("Climbing NEB", true);
+  antiKinkFactor = params.get<double>("Anti-Kink Factor", 0.0);
 
-  /*Teuchos::Array<double> beginPt;
-  beginPt = params.get<Teuchos::Array<double> >("Begin Point");
-  for(int i=0; i<beginPt.size(); i++) {
-    std::cout << "BEGIN POINT: " << beginPt[i] << std::endl;
-    }*/
-  //beginRegionType = params.get<std::string>("Begin Region Type");
-  //endRegionType   = params.get<std::string>("End Region Type");
-  //if(beginRegionType == "Point")
+  //Beginning target region
+  if(params.isParameter("Begin Point")) {
+    beginRegionType = "Point";
+    ar = params.get<Teuchos::Array<double> >("Begin Point");
+    TEUCHOS_TEST_FOR_EXCEPTION (ar.size() != (int)numDims, Teuchos::Exceptions::InvalidParameter, std::endl 
+				<< "Begin Point does not have " << numDims << " elements" << std::endl); 
+    beginPolygon.resize(1); beginPolygon[0].resize(numDims);
+    for(std::size_t i=0; i<numDims; i++) beginPolygon[0][i] = ar[i];
+  }
+  else if(params.isParameter("Begin Element Block")) {
+    beginRegionType = "Element Block";
+    beginElementBlock = params.get<std::string>("Begin Element Block");
+  }
+  else if(params.isSublist("Begin Polygon")) {
+    beginRegionType = "Polygon";
 
-    //else
-    //beginEB = params.get<std::string>("Begin Element Block");
+    Teuchos::ParameterList& polyList = params.sublist("Begin Polygon");
+    int nPts = polyList.get<int>("Number of Points");
+    beginPolygon.resize(nPts); 
 
-      
+    for(int i=0; i<nPts; i++) {
+      beginPolygon[i].resize(numDims);
+      ar = polyList.get<Teuchos::Array<double> >( Albany::strint("Point",i) );
+      TEUCHOS_TEST_FOR_EXCEPTION (ar.size() != (int)numDims, Teuchos::Exceptions::InvalidParameter, std::endl 
+				  << "Begin polygon point does not have " << numDims << " elements" << std::endl); 
+      for(std::size_t k=0; k<numDims; k++) beginPolygon[i][k] = ar[k];
+    }
+  }
+  else TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+				  << "No beginning region specified for saddle pt" << std::endl); 
+
+  
+
+  //Ending target region
+  if(params.isParameter("End Point")) {
+    endRegionType = "Point";
+    ar = params.get<Teuchos::Array<double> >("End Point");
+    TEUCHOS_TEST_FOR_EXCEPTION (ar.size() != (int)numDims, Teuchos::Exceptions::InvalidParameter, std::endl 
+				<< "End Point does not have " << numDims << " elements" << std::endl); 
+    endPolygon.resize(1); endPolygon[0].resize(numDims);
+    for(std::size_t i=0; i<numDims; i++) endPolygon[0][i] = ar[i];
+  }
+  else if(params.isParameter("End Element Block")) {
+    endRegionType = "Element Block";
+    endElementBlock = params.get<std::string>("End Element Block");
+  }
+  else if(params.isSublist("End Polygon")) {
+    endRegionType = "Polygon";
+    
+    Teuchos::ParameterList& polyList = params.sublist("End Polygon");
+    int nPts = polyList.get<int>("Number of Points");
+    endPolygon.resize(nPts); 
+    
+    for(int i=0; i<nPts; i++) {
+      endPolygon[i].resize(numDims);
+      ar = polyList.get<Teuchos::Array<double> >( Albany::strint("Point",i) );
+      TEUCHOS_TEST_FOR_EXCEPTION (ar.size() != (int)numDims, Teuchos::Exceptions::InvalidParameter, std::endl 
+				  << "End polygon point does not have " << numDims << " elements" << std::endl); 
+      for(std::size_t k=0; k<numDims; k++) endPolygon[i][k] = ar[k];
+    }
+  }
+  else TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+				  << "No ending region specified for saddle pt" << std::endl); 
+  
+
+  //Guess at the saddle point
+  saddleGuessGiven = false;
+  if(params.isParameter("Saddle Point Guess")) {
+    saddleGuessGiven = true;
+    ar = params.get<Teuchos::Array<double> >("Saddle Point Guess");
+    TEUCHOS_TEST_FOR_EXCEPTION (ar.size() != (int)numDims, Teuchos::Exceptions::InvalidParameter, std::endl 
+				<< "Saddle point guess does not have " << numDims << " elements" << std::endl); 
+    saddlePointGuess.resize(numDims);
+    for(std::size_t i=0; i<numDims; i++) saddlePointGuess[i] = ar[i];
+  }
 
   debugMode = params.get<int>("Debug Mode",0);
   bPositiveOnly = params.get<bool>("Positive Return Only",false);
-  bLateralVolumes = true; //TODO - add as a param
 
   imagePts.resize(nImagePts);
+  imagePtValues.resize(nImagePts);
+  imagePtWeights.resize(nImagePts);
+  imagePtGradComps.resize(nImagePts*numDims);
 
-  setupBoundary(params);
+  // Add allowed z-range if in 3D (lateral volume assumed)
+  //  - rest (xmin, etc) computed dynamically
+  if(numDims > 2) {
+    zmin = params.get<double>("z min");
+    zmax = params.get<double>("z max");
+  }  
 
   this->setup(params);
   this->num_responses = 5;
@@ -91,158 +172,227 @@ evaluateResponse(const double current_time,
 		     Epetra_Vector& g)
 {
   const Epetra_Comm& comm = x.Map().Comm();
+
   int dbMode = (comm.MyPID() == 0) ? debugMode : 0;
-  bool bClimbing = true;
+  if(comm.MyPID() != 0) outputFilename = ""; //Only root process outputs to files
+  if(comm.MyPID() != 0) debugFilename = ""; //Only root process outputs to files
+  
+
+  TEUCHOS_TEST_FOR_EXCEPTION (nImagePts < 2, Teuchos::Exceptions::InvalidParameter, std::endl 
+	      << "Saddle Point needs more than 2 image pts (" << nImagePts << " given)" << std::endl); 
 
   // Find saddle point in stages:
 
-  // 1) Determine initial and final points which lie on the edge
-  //      of the bounding polygon (now just a 2D polygon since lateral volume required)
+  // 1) Determine initial and final points depending on region type
+  //     - Point: take point given directly
+  //     - Element Block: take minimum point within the specified element block (and allowed z-range)
+  //     - Polygon: take minimum point within specified 2D polygon and allowed z-range
   
-  if(dbMode > 1) std::cout << "Saddle Point:  Beginning minimization over boundary" << std::endl;
-  mode = "Minima on boundary";
+  if(dbMode > 1) std::cout << "Saddle Point:  Beginning end point location" << std::endl;
+
+    // Initialize intial/final points
+  imagePts[0].init(numDims);
+  imagePts[nImagePts-1].init(numDims);
+
+  mode = "Point location";
   Albany::FieldManagerScalarResponseFunction::evaluateResponse(
 	current_time, xdot, x, p, g);
   if(dbMode > 2) std::cout << "Saddle Point:   -- done evaluation" << std::endl;
 
-    //MPI: get global min for each boundary piece
-  double* localMinima = new double[boundaryMinima.size()];
-  double* globalMinima = new double[boundaryMinima.size()];
-  for(std::size_t i=0; i<boundaryMinima.size(); i++)
-    localMinima[i] = boundaryMinima[i].value;
-  comm.MinAll( localMinima, globalMinima, boundaryMinima.size() );
-
-  for(std::size_t i=0; i<boundaryMinima.size(); i++) {
-    int procToBcast;
-    if( fabs(boundaryMinima[i].value - globalMinima[i]) < 1e-8 ) 
+  if(beginRegionType == "Point") {
+    imagePts[0].coords = beginPolygon[0];
+  }
+  else { //MPI: get global min for begin point
+    double globalMin; int procToBcast, winner;
+    comm.MinAll( &imagePts[0].value, &globalMin, 1);
+    if( fabs(imagePts[0].value - globalMin) < 1e-8 ) 
       procToBcast = comm.MyPID();
     else procToBcast = -1;
 
-    int winner;
     comm.MaxAll( &procToBcast, &winner, 1 );
-    comm.Broadcast( boundaryMinima[i].coords.data(), numDims, winner); //broadcast winner's min position to others
-    boundaryMinima[i].value = globalMinima[i];                         //no need to broadcast min value
+    comm.Broadcast( imagePts[0].coords.data(), numDims, winner); //broadcast winner's min position to others
+    imagePts[0].value = globalMin;                               //no need to broadcast winner's value
   }
 
-  if(dbMode > 2) std::cout << "Saddle Point:   -- done MPI communication" << std::endl;
+  if(endRegionType   == "Point") {
+    imagePts[nImagePts-1].coords = endPolygon[0];
+  }
+  else { //MPI: get global min for end point
+    double globalMin; int procToBcast, winner;
+    comm.MinAll( &imagePts[nImagePts-1].value, &globalMin, 1);
+    if( fabs(imagePts[nImagePts-1].value - globalMin) < 1e-8 ) 
+      procToBcast = comm.MyPID();
+    else procToBcast = -1;
 
-  delete [] localMinima; localMinima = NULL;
-  delete [] globalMinima; globalMinima = NULL;
-
-
-    // Choose initial point as minimum of minimums along boundary pieces,
-    //  then choose final point as next lowest minimum from among the 
-    //  rest of the boundary pieces *not adjacent* to the piece with the global min.
-  int imin = 0;
-  for(std::size_t i=1; i<boundaryMinima.size(); i++) {
-    if( boundaryMinima[i].value < boundaryMinima[imin].value ) imin = (int)i;
+    comm.MaxAll( &procToBcast, &winner, 1 );
+    comm.Broadcast( imagePts[nImagePts-1].coords.data(), numDims, winner); //broadcast winner's min position to others
+    imagePts[nImagePts-1].value = globalMin;                               //no need to broadcast winner's value
   }
 
-  int imin2 = (imin == 0) ? 2 : 0;
-  for(int i=0; i <= imin-2; i++) {
-    if( boundaryMinima[i].value < boundaryMinima[imin2].value ) imin2 = i;
+  if(dbMode > 2) std::cout << "Saddle Point:   -- done begin/end point initialization" << std::endl;
+
+
+  // Initialize Image Points:  interpolate between initial and final points (and possibly guess point) to get all the image points
+  const mathVector& initialPt = imagePts[0].coords;
+  const mathVector& finalPt   = imagePts[nImagePts-1].coords;
+  if(saddleGuessGiven) {
+    // two line segements (legs) initialPt -> guess, guess -> finalPt
+    int nFirstLeg = (nImagePts+1)/2, nSecondLeg = nImagePts - nFirstLeg + 1; // +1 because both legs include middle pt
+    for(int i=1; i<nFirstLeg-1; i++) {
+      double s = i * 1.0/(nFirstLeg-1);
+      imagePts[i].init(initialPt + (saddlePointGuess - initialPt) * s);
+    }
+    for(int i=0; i<nSecondLeg-1; i++) {
+      double s = i * 1.0/(nSecondLeg-1);
+      imagePts[i+nFirstLeg-1].init(saddlePointGuess + (finalPt - saddlePointGuess) * s);
+    }
   }
-  for(std::size_t i=imin+2; i < boundaryMinima.size(); i++) {
-    if( boundaryMinima[i].value < boundaryMinima[imin2].value ) imin2 = i;
+  else {
+    // one line segment initialPt -> finalPt
+    for(std::size_t i=1; i<nImagePts-1; i++) {
+      double s = i * 1.0/(nImagePts-1);   // nIntervals = nImagePts-1
+      imagePts[i].init(initialPt + (finalPt - initialPt) * s);
+    }     
   }
-
-  mathVector& initialPt = boundaryMinima[imin].coords;
-  mathVector& finalPt = boundaryMinima[imin2].coords;
-  mathVector pt(numDims);
-
-    // Initialize Image Points:  interpolate between initial and final points to get all the image points
-  TEUCHOS_TEST_FOR_EXCEPTION (nImagePts < 2, Teuchos::Exceptions::InvalidParameter, std::endl 
-	      << "Saddle Point needs more than 2 image pts (" << nImagePts << " given)" << std::endl); 
-
-  imagePts[0].init(initialPt);
-  imagePts[nImagePts-1].init(finalPt);
-
-  for(std::size_t i=1; i<nImagePts-1; i++) {
-    double s = i * 1.0/(nImagePts-1);   // nIntervals = nImagePts-1
-    imagePts[i].init(initialPt + (finalPt - initialPt) * s);
-  }
-    // Note: all procs compute the same image points - no need for MPI communication here
-      
+ 
   if(dbMode > 1) {
     for(std::size_t i=0; i<nImagePts; i++)
       std::cout << "Saddle Point:   -- imagePt[" << i << "] = " << imagePts[i].coords << std::endl;
   }
-
+  
   //  2) Perform Nudged Elastic Band Algorithm to find saddle point.
   //      Iterate over field manager fills of each image point's value and gradient
   //       then update image point positions user Verlet algorithm
   
   mode = "Collect image point data";
-  std::size_t nIters;
-  mathVector tangent(numDims), springForce(numDims), dNext(numDims), dPrev(numDims);
-  double mag, dp, maxUpdate, dValuePrev, dValueNext;
-  std::vector<mathVector> force(nImagePts);
-  std::vector<double> springConstants(nImagePts-1, baseSpringConstant);
+  std::size_t nIters, nInitialIterations, nDecreases=0;
+  mathVector tangent(numDims), springForce(numDims), parallelSpringForce(numDims), perpSpringForce(numDims), dNext(numDims), dPrev(numDims);
+  double mag, dp, maxUpdate, dValuePrev, dValueNext, lastHighestVal=0, avgForce=0, avgOpposingForce=0;
+  int nConsecHighForceDiff=0, nConsecLowForceDiff=0;
+  std::vector<mathVector> force(nImagePts), lastForce(nImagePts), lastPositions(nImagePts);
+  std::vector<double> springConstants(nImagePts-1, minSpringConstant);
   for(std::size_t i=0; i<nImagePts; i++) force[i].resize(numDims);
 
-  double dt = timeStep;
+  double dt = maxTimeStep;
   double dt2 = dt*dt;
+  double gradScale   = 1.0;
+  double springScale = 1.0;
+  double springBase = 1.0;
   nIters = 0;
-
+  nInitialIterations = 20;
+  bool decreaseMode = true; // start by waiting until highest point does not decrease in value
   
   //Allocate storage for aggrecated image point data (needed for MPI)
-  double*  imagePtValues  = new double [nImagePts];
-  double*  imagePtWeights = new double [nImagePts];
-  double*  imagePtGrads   = new double [nImagePts*numDims];
   double*  globalPtValues   = new double [nImagePts];
   double*  globalPtWeights  = new double [nImagePts];
   double*  globalPtGrads    = new double [nImagePts*numDims];
-  double*  lastImagePtValues  = new double [nImagePts];
 
+  //Write initial header to output file
+  if( outputFilename.length() > 0) {
+    std::fstream out;
+    out.open(outputFilename.c_str(), std::fstream::out);
+    out << "# Saddle point path" << std::endl;
+    out << "# index xCoord yCoord value" << std::endl;
+    out.close();
+  }
+
+  std::fstream fDebug;
+  if(debugFilename.length() > 0) {
+    fDebug.open(debugFilename.c_str(), std::fstream::out);
+    fDebug << "# HighestValue  HighestIndex  AverageForce  TimeStep"
+	   << "  HighestPtGradNorm  AverageOpposingForce  SpringBase" << std::endl;
+  }
+  
   while( ++nIters <= maxIterations) {
 
+    // Write output every nEvery iterations
+    if( (nEvery > 0) && (nIters % nEvery == 1) && (outputFilename.length() > 0)) {
+      std::fstream out;
+      out.open(outputFilename.c_str(), std::fstream::out | std::fstream::app);
+      out << "# Iteration " << nIters << std::endl;
+      for(std::size_t i=0; i<nImagePts; i++) {
+	out << i << " " << imagePts[i].coords[0] << " " << imagePts[i].coords[1]
+	    << " " << imagePts[i].value << std::endl;
+      }    
+      out << std::endl << std::endl; //dataset separation
+      out.close();
+    }
+    
     if(dbMode > 1) std::cout << "Saddle Point:  NEB Algorithm iteration " << nIters << " -----------------------" << std::endl;
+    
+    //Set xmax,xmin,ymax,ymin based on points
+    xmax = xmin = imagePts[0].coords[0];
+    ymax = ymin = imagePts[0].coords[1];
+    for(std::size_t i=1; i<nImagePts; i++) {
+      xmin = std::min(imagePts[i].coords[0],xmin);
+      xmax = std::max(imagePts[i].coords[0],xmax);
+      ymin = std::min(imagePts[i].coords[1],ymin);
+      ymax = std::max(imagePts[i].coords[1],ymax);
+    }
+    xmin -= 5*imagePtSize; xmax += 5*imagePtSize;
+    ymin -= 5*imagePtSize; ymax += 5*imagePtSize;
 
     //Reset value, weight, and gradient of image points as these are accumulated by evaluator fill
-    for(std::size_t i=0; i<nImagePts; i++) {
-      lastImagePtValues[i] = imagePts[i].value;
-      imagePts[i].value = imagePts[i].weight = 0.0;
-      imagePts[i].grad.fill(0.0);
-    }
+    imagePtValues.fill(0.0);
+    imagePtWeights.fill(0.0);
+    imagePtGradComps.fill(0.0);
 
     Albany::FieldManagerScalarResponseFunction::evaluateResponse(
-				    current_time, xdot, x, p, g);
+				       current_time, xdot, x, p, g);
 
     //MPI -- sum weights, value, and gradient for each image pt
-    for(std::size_t i=0; i<nImagePts; i++) {
-      imagePtValues[i]  = imagePts[i].value;
-      imagePtWeights[i] = imagePts[i].weight;
-      for(std::size_t k=0; k<numDims; k++) imagePtGrads[k*nImagePts+i] = imagePts[i].grad[k];
-    }
-    comm.SumAll( imagePtValues,  globalPtValues,    nImagePts );
-    comm.SumAll( imagePtWeights, globalPtWeights, nImagePts );
-    comm.SumAll( imagePtGrads,   globalPtGrads,   nImagePts*numDims );
+    comm.SumAll( imagePtValues.data(),    globalPtValues,  nImagePts );
+    comm.SumAll( imagePtWeights.data(),   globalPtWeights, nImagePts );
+    comm.SumAll( imagePtGradComps.data(), globalPtGrads,   nImagePts*numDims );
 
-    // Put summed data back std::size_to imagePts
+    // Put summed data into imagePts, normalizing value and 
+    //   gradient from different cell contributions
     for(std::size_t i=0; i<nImagePts; i++) {
-      imagePts[i].value = globalPtValues[i];
       imagePts[i].weight = globalPtWeights[i];
-      for(std::size_t k=0; k<numDims; k++) imagePts[i].grad[k] = globalPtGrads[k*nImagePts+i];
-    }
-
-    // Normalize value and gradient from different cell contributions
-    for(std::size_t i=1; i<nImagePts-1; i++) {
-      if( imagePts[i].weight > 1e-6 ) {
-	imagePts[i].value /= imagePts[i].weight;
-	imagePts[i].grad  /= imagePts[i].weight;
+      if(globalPtWeights[i] > 1e-6) {
+	imagePts[i].value = globalPtValues[i] / imagePts[i].weight;
+	for(std::size_t k=0; k<numDims; k++) 
+	  imagePts[i].grad[k] = globalPtGrads[k*nImagePts+i] / imagePts[i].weight;
       }
-      else { //assume point has drifted off region: reset value and set gradient to zero
-	imagePts[i].value = lastImagePtValues[i];
+      else { 
+	//assume point has drifted off region: leave value as, set gradient to zero, and reset position
 	imagePts[i].grad.fill(0.0);
+	imagePts[i].coords = lastPositions[i];
       }
     }
+      
+      //on first iteration adjust gradient scaling
+    if(nIters == 1) { 
+      double maxGradMag = 0.0, avgWeight = 0.0, ifDist;
+      for(std::size_t i=0; i<nImagePts; i++) {
+	maxGradMag = std::max(maxGradMag, imagePts[i].grad.norm());
+	avgWeight += imagePts[i].weight;
+      }
+      ifDist = initialPt.distanceTo(finalPt);
+      avgWeight /= nImagePts;
+      gradScale = ifDist / maxGradMag;  // want scale*maxGradMag*(dt=1.0) = distance btw initial & final pts
 
+      // want springScale * (baseSpringConst=1.0) * (initial distance btwn pts) = scale*maxGradMag = distance btwn initial & final pts
+      //  so springScale = (nImagePts-1)
+      springScale = (double) (nImagePts-1);
+
+      if(dbMode > 2) std::cout << "Saddle Point:  First iteration:  maxGradMag=" << maxGradMag
+			       << " |init-final|=" << ifDist << " gradScale=" << gradScale 
+			       << " springScale=" << springScale << " avgWeight=" << avgWeight << std::endl;
+
+      for(std::size_t i=1; i<nImagePts-1; i++) lastForce[i] = force[i]; //initialize last force
+    }
+
+    // Compute spring base constant for this run
+    double s = ((double)nIters-1.0)/maxIterations;    
+    springBase = springScale * ( (1.0-s)*minSpringConstant + s*maxSpringConstant ); 
+    for(std::size_t i=0; i<nImagePts-1; i++) springConstants[i] = springBase;
+	  
+      
     // Find highest point if using the climbing NEB technique
     int iHighestPt = 0; //effectively a null since loops below begin at 1
-    if(bClimbing && nIters > 20) {
-      for(std::size_t i=2, iHightestPt=1; i<nImagePts-1; i++) {
-	if(imagePts[i].value > imagePts[iHighestPt].value) iHightestPt = i;
-      }
+    for(std::size_t i=1; i<nImagePts-1; i++) {
+      if(imagePts[i].value > imagePts[iHighestPt].value) iHighestPt = i;
     }
 
     // Compute tangents between points and project gradient and elastic forces appropriately
@@ -271,11 +421,18 @@ evaluateResponse(const double current_time,
       tangent.normalize();
 	
 
-      if((int)i == iHighestPt) {
+      if((int)i == iHighestPt && bClimbing && nIters > nInitialIterations) {
 	// Special case for highest point in climbing-NEB: force has full -Grad(V) but with parallel 
 	//    component reversed and no force from springs
 	dp = imagePts[i].grad.dot( tangent );
-	force[i] = (imagePts[i].grad * -1.0 + (tangent*dp) * 2); // force += -Grad(V) + 2*Grad(V)_parallel
+	force[i] = (imagePts[i].grad * -1.0 + (tangent*dp) * 2) * gradScale; // force += -Grad(V) + 2*Grad(V)_parallel
+
+	/*dPrev = imagePts[i-1].coords - imagePts[i].coords;
+	dNext = imagePts[i+1].coords - imagePts[i].coords;
+	double perpFactor = 0.5 * (1 + cos(3.141592 * fabs(dPrev.dot(dNext) / (dPrev.norm() * dNext.norm()))));
+	springForce = ((dNext * springConstants[i]) + (dPrev * springConstants[i-1]));
+	dp = springForce.dot(tangent);
+	force[i] += (springForce - tangent*dp) * perpFactor * antiKinkFactor; */
 
 	if(dbMode > 2) {
 	  std::cout << "Saddle Point:  --   tangent = " << tangent << std::endl;
@@ -285,10 +442,10 @@ evaluateResponse(const double current_time,
       }
       else {
 	force[i].fill(0.0);
-
+	
 	// Get gradient projected perpendicular to the tangent and add to the force
 	dp = imagePts[i].grad.dot( tangent );
-	force[i] -= (imagePts[i].grad - tangent * dp); // force += -Grad(V)_perp
+	force[i] -= (imagePts[i].grad - tangent * dp) * gradScale; // force += -Grad(V)_perp
 
 	if(dbMode > 2) {
 	  std::cout << "Saddle Point:  --   tangent = " << tangent << std::endl;
@@ -299,8 +456,21 @@ evaluateResponse(const double current_time,
 	// Get spring force projected parallel to the tangent and add to the force
 	dPrev = imagePts[i-1].coords - imagePts[i].coords;
 	dNext = imagePts[i+1].coords - imagePts[i].coords;
-	springForce = tangent * ((dNext.norm() * springConstants[i]) - (dPrev.norm() * springConstants[i-1]));
-	force[i] += springForce;  // force += springForce_parallel
+
+	double perpFactor = 0.5 * (1 + cos(3.141592 * fabs(dPrev.dot(dNext) / (dPrev.norm() * dNext.norm()))));
+	springForce = ((dNext * springConstants[i]) + (dPrev * springConstants[i-1]));
+	parallelSpringForce = tangent * springForce.dot(tangent);
+	//parallelSpringForce = tangent * ((dNext.norm() * springConstants[i]) - (dPrev.norm() * springConstants[i-1]));
+	//  Note: this expression can be problematic when distance to lower neighbor is much larger than higher neighbor (tangent dir)
+	perpSpringForce = (springForce - tangent * springForce.dot(tangent) );
+	
+	springForce = parallelSpringForce + perpSpringForce * (perpFactor * antiKinkFactor);  
+	while(springForce.norm() * dt2 > std::max(dPrev.norm(),dNext.norm()) && dt > minTimeStep) {
+	  dt /= 2; dt2=dt*dt;
+	  if(dbMode > 2) std::cout << "Saddle Point:  ** Warning: spring forces seem too large: dt => " << dt << std::endl;
+	}
+
+	force[i] += springForce; // force += springForce_parallel + part of springForce_perp
 
 	if(dbMode > 2) {
 	  std::cout << "Saddle Point:  --   spring force = " << springForce << std::endl;
@@ -311,37 +481,127 @@ evaluateResponse(const double current_time,
       if(dbMode > 2) std::cout << "Saddle Point:  --   Force on pt[" << i << "] = " << imagePts[i].value 
 				  << " : " << imagePts[i].coords << " is " << force[i] << std::endl;
     }
-
-    maxUpdate=0;
+      
+    if(dbMode > 1) std::cout << "Saddle Point:  ** Summary:"
+			     << "  highest val[" << iHighestPt << "] = " << imagePts[iHighestPt].value
+			     << "  AverageForce = " << avgForce << "  dt = " << dt 
+			     << "  gradNorm = " << imagePts[iHighestPt].grad.norm() 
+			     << "  AvgOpposingForce = " << avgOpposingForce 
+			     << "  SpringBase = " << springBase << std::endl;
     
+    if(debugFilename.length() > 0) {
+      fDebug << imagePts[iHighestPt].value << "  "
+	     << iHighestPt << "  "
+	     << avgForce << "  "
+	     << dt << "  "
+	     << imagePts[iHighestPt].grad.norm() << "  "
+	     << avgOpposingForce << "  "
+	     << springBase << std::endl;
+    }
+
+    if(imagePts[iHighestPt].grad.norm() < convergeTolerance) {
+      if(dbMode > 2) std::cout << "Saddle Point:  ** Converged (grad norm " << 
+	       imagePts[iHighestPt].grad.norm() << " < " << convergeTolerance << ")" << std::endl;
+      break; // exit iterations loop
+    }
+
+    // Check for convergence and modify dt if necessary
+    /*if(decreaseMode == true) { // modify dt to get to point where even a small dt results in the highest point increasing in value
+      if(nIters > nInitialIterations) {
+	if(imagePts[iHighestPt].value <= lastHighestVal ) nDecreases++;
+	else { // increase in highest point value => decrease dt
+	  dt /= 2; dt2 = dt*dt;
+	  if(dbMode > 2) std::cout << "Saddle Point:  ** Increase in max-point => dt = " << dt << std::endl;
+	  if(dt < minTimeStep) {
+	    if(dbMode > 2) std::cout << "Saddle Point:  ** dt below min time step => decrease mode done!" << std::endl;
+	    decreaseMode = false;
+	  }
+	  nDecreases = 0;
+	}
+	
+	if(nDecreases >= 10) {
+	  if( dt * 2 < maxTimeStep ) {
+	    dt *= 2; dt2 = dt*dt;
+	  }
+	  if(dbMode > 2) std::cout << "Saddle Point:  ** 10 consecutive decreases => dt = " << dt << std::endl;
+	  nDecreases = 0;
+	}
+      }
+      }*/
+	  
+    // in the case of climbing NEB, we want to allow the highest point to increase (b/c it climbs)
+    /*if(!decreaseMode) {
+      dt = minTimeStep; dt2 = dt*dt;
+      if(dbMode > 2) std::cout << "Saddle Point:  ** Climbing mode => dt = " << dt << std::endl;
+      if(imagePts[iHighestPt].grad.norm() < gradTolerance) {
+	if(dbMode > 2) std::cout << "Saddle Point:  ** Converged (grad norm < " << gradTolerance << ")" << std::endl;
+	break; // exit loop: no decrease in highest point even using smallest time step
+      }
+    }
+    lastHighestVal = imagePts[iHighestPt].value;*/
+       
+    avgOpposingForce = 0.0;
+    for(std::size_t i=1; i<nImagePts-1; i++) {
+      dp = force[i].dot(lastForce[i]); //see if current force and last force point in the same direction
+      dp /= (force[i].norm() * lastForce[i].norm()); // dot product btwn unit vectors => angle
+      if( dp < 0 ) {//avgOpposingForce += dp;
+	mathVector v = force[i] - lastForce[i];
+	avgOpposingForce += v.norm() / (force[i].norm() + lastForce[i].norm());
+      }
+    }
+    avgOpposingForce /= (nImagePts-2);
+    for(std::size_t i=1; i<nImagePts-1; i++) lastForce[i] = force[i];
+
+    //if(avgOpposingForce > 0.1) nConsecHighForceDiff++;
+    /*if(avgOpposingForce > std::max( 0.2*(1.0 - nIters / ((double)maxIterations)), 0.01)) nConsecHighForceDiff++;
+    else nConsecHighForceDiff = 0;
+
+    if(nConsecHighForceDiff >= 1 && dt > minTimeStep) { 
+      dt /= 2; dt2=dt*dt;
+      nConsecHighForceDiff = 0;
+      if(dbMode > 2) std::cout << "Saddle Point:  ** Consecutive high dForce => dt = " << dt << std::endl;
+      }*/
+
+    //if(avgOpposingForce < std::max( 0.01*(1.0 - nIters / ((double)maxIterations)), 0.0)) nConsecLowForceDiff++;
+    if(avgOpposingForce < 1e-6) nConsecLowForceDiff++;
+    else nConsecLowForceDiff = 0;
+
+    if(nConsecLowForceDiff >= 3 && dt < maxTimeStep) { 
+      dt *= 2; dt2=dt*dt;
+      nConsecLowForceDiff = 0;
+      if(dbMode > 2) std::cout << "Saddle Point:  ** Consecutive low dForce => dt = " << dt << std::endl;
+    }
+	  
+    
+    avgForce = 0.0;
+
     //Update points using precomputed forces
     for(std::size_t i=1; i<nImagePts-1; i++) {
 
-      //Update coordinates using Verlet integration
-      mathVector dCoords = imagePts[i].velocity * dt + force[i] * dt2;
-      imagePts[i].coords += dCoords;
+      //Update coordinates and velocity using (modified) Verlet integration
 
-      //Update velocity similarly, but reset to zero if current velocity 
-      // is directed opposite to force (reduces overshoot)
+      //Reset velocity to zero if it is directed opposite to force (reduces overshoot)
       dp = imagePts[i].velocity.dot(force[i]);
-      if(dp >= 0) imagePts[i].velocity += force[i] * dt;
-      else imagePts[i].velocity.fill(0.0);  
+      if(dp < 0) imagePts[i].velocity.fill(0.0);  
 
-      mag = dCoords.norm();
-      if(mag > maxUpdate) maxUpdate = mag;
+      mathVector dCoords = imagePts[i].velocity * dt + force[i] * dt2;
+      lastPositions[i] = imagePts[i].coords; //save last position in case the new position brings us outside the mesh
+      imagePts[i].coords += dCoords;
+      imagePts[i].velocity += force[i] * dt;
+
+      //weight average force by distance from highest pt
+      avgForce += (1.0 - fabs((double)i-(double)iHighestPt)/((double)nImagePts)) * force[i].norm(); 
     }
+    avgForce /= nImagePts;
 
-    if(dbMode > 1) std::cout << "Saddle Point:  >> Max Update magnitude " << maxUpdate 
-			    << " < " << convergenceThreshold << std::endl;
-
-    //Check convergence
-    if(maxUpdate < convergenceThreshold) break;    
+    /*//Check for convergence
+    if(avgForce < convergeTolerance) {
+      if(dbMode > 2) std::cout << "Saddle Point:  ** Converged (avg force " << avgForce << " < " << convergeTolerance << ")" << std::endl;
+      break; // exit loop: no decrease in highest point even using smallest time step
+    }*/
   }
 
   //deallocate storage used for MPI communication
-  delete [] imagePtValues;  
-  delete [] imagePtWeights; 
-  delete [] imagePtGrads;   
   delete [] globalPtValues; 
   delete [] globalPtWeights;
   delete [] globalPtGrads;  
@@ -381,6 +641,21 @@ evaluateResponse(const double current_time,
     for(std::size_t i=0; i<numDims; i++)
       std::cout << "Saddle Point:         Coord[" << i << "] = " << g[2+i] << std::endl;
   }
+
+  if( outputFilename.length() > 0) {
+    std::fstream out;
+    out.open(outputFilename.c_str(), std::fstream::out | std::fstream::app);
+    out << "# Final image points" << std::endl;
+    for(std::size_t i=0; i<nImagePts; i++) {
+      out << i << " " << imagePts[i].coords[0] << " " << imagePts[i].coords[1]
+	  << " " << imagePts[i].value << std::endl;
+    }    
+    out.close();
+  }
+
+  if(debugFilename.length() > 0) fDebug.close();
+
+  return;
 }
 
 void
@@ -450,7 +725,7 @@ postProcessResponseDerivatives(const Epetra_Comm& comm, const Teuchos::RCP<Epetr
 {
 }
 
-void QCAD::SaddleValueResponseFunction::
+/*void QCAD::SaddleValueResponseFunction::
 setupBoundary(Teuchos::ParameterList& params)
 {
   //Extension to non-lateral volumes will require computing distances btwn points and segement of a plane,
@@ -510,6 +785,7 @@ setupBoundary(Teuchos::ParameterList& params)
 
   return;
 }
+*/
 
 
 std::string QCAD::SaddleValueResponseFunction::getMode()
@@ -520,7 +796,7 @@ std::string QCAD::SaddleValueResponseFunction::getMode()
 
 //Returns the boundary index (>=0) if point lies on 
 // a boundary, otherwise -1
-int QCAD::SaddleValueResponseFunction::
+/*int QCAD::SaddleValueResponseFunction::
 checkIfPointIsOnBoundary(const double* p)
 {
   double d;
@@ -530,59 +806,98 @@ checkIfPointIsOnBoundary(const double* p)
     if(d < imagePtSize) return i;
   }
   return -1;
+  }*/
+
+bool QCAD::SaddleValueResponseFunction::
+pointIsInImagePtRegion(const double* p)
+{
+  //assumes at least 2 dimensions
+  if(numDims > 2 && (p[2] < zmin || p[2] > zmax)) return false;
+  return !(p[0] < xmin || p[1] < ymin || p[0] > xmax || p[1] > ymax);
 }
 
 void QCAD::SaddleValueResponseFunction::
-addBoundaryData(const double* p, double value)
+addBeginPointData(const std::string& elementBlock, const double* p, double value)
 {
-  int iBd = checkIfPointIsOnBoundary(p);
-  if( iBd >= 0 ) { 
-    if( value < boundaryMinima[iBd].value ) {
-      boundaryMinima[iBd].value = value;
-      boundaryMinima[iBd].coords.fill(p);
-      if(debugMode) std::cout << "DEBUG: found point on boundary edge " << iBd << std::endl;
+  //"Point" case: no need to process anything
+  if( beginRegionType == "Point" ) return;
+
+  //"Element Block" case: keep track of point with minimum value
+  if( beginRegionType == "Element Block" ) {
+    if(elementBlock == beginElementBlock) {
+      if( value < imagePts[0].value || imagePts[0].weight == 0 ) {
+	imagePts[0].value = value;
+	imagePts[0].weight = 1.0; //positive weight flags initialization
+	imagePts[0].coords.fill(p);
+      }
     }
+    return;
   }
+
+  //"Polygon" case: keep track of point with minimum value
+  if( beginRegionType == "Polygon" ) {
+    if( ptInPolygon(beginPolygon, p) ) {
+      if( value < imagePts[0].value || imagePts[0].weight == 0 ) {
+	imagePts[0].value = value;
+	imagePts[0].weight = 1.0; //positive weight flags initialization
+	imagePts[0].coords.fill(p);
+      }
+    }
+    return;
+  }
+
+  TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+      << "Invalid region type: " << beginRegionType << " for begin pt" << std::endl); 
   return;
 }
 
-
-bool QCAD::SaddleValueResponseFunction::
-checkIfPointIsWithinBoundary(const double* p)
+void QCAD::SaddleValueResponseFunction::
+addEndPointData(const std::string& elementBlock, const double* p, double value)
 {
-  //Note: assumes lateral volume with at least 2 dimensions
-  bool c = false;
-  double x = p[0], y = p[1];
+  //"Point" case: no need to process anything
+  if( endRegionType == "Point" ) return;
 
-  // check z-coordinate if its present
-  if(numDims > 2) {  
-    if(p[2] > zmax || p[2] < zmin) return false;
+  //"Element Block" case: keep track of point with minimum value
+  if( endRegionType == "Element Block" ) {
+    if(elementBlock == endElementBlock) {
+      if( value < imagePts[nImagePts-1].value || imagePts[nImagePts-1].weight == 0 ) {
+	imagePts[nImagePts-1].value = value;
+	imagePts[nImagePts-1].weight = 1.0; //positive weight flags initialization
+	imagePts[nImagePts-1].coords.fill(p);
+      }
+    }
+    return;
   }
 
-  // check that x,y is within 2D boundary
-  for(std::size_t i=0; i<boundary.size(); i++) {
-    if ((((boundary[i].p1[1] <= y) && (y < boundary[i].p2[1])) ||
-	 ((boundary[i].p2[1] <= y) && (y < boundary[i].p1[1]))) &&
-	(x < (boundary[i].p2[0] - boundary[i].p1[0]) * (y - boundary[i].p1[1]) /
-	 (boundary[i].p2[1] - boundary[i].p1[1]) + boundary[i].p1[0]))
-      c = !c;
+  //"Polygon" case: keep track of point with minimum value
+  if( endRegionType == "Polygon" ) {
+    if( ptInPolygon(endPolygon, p) ) {
+      if( value < imagePts[nImagePts-1].value || imagePts[nImagePts-1].weight == 0 ) {
+	imagePts[nImagePts-1].value = value;
+	imagePts[nImagePts-1].weight = 1.0; //positive weight flags initialization
+	imagePts[nImagePts-1].coords.fill(p);
+      }
+    }
+    return;
   }
-  return c;
+
+  TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+      << "Invalid region type: " << endRegionType << " for end pt" << std::endl); 
+  return;
 }
 
 
 void QCAD::SaddleValueResponseFunction::
 addImagePointData(const double* p, double value, double* grad)
 {
-  double d, w, N=1.0;
+  double w;
   for(std::size_t i=0; i<nImagePts; i++) {
-    d = imagePts[i].coords.distanceTo(p);
-    w = N*exp(-d*d / (2*imagePtSize*imagePtSize));
-    if(w > 1e-2) {
-      imagePts[i].weight += w;
-      imagePts[i].value += w*value;
+    w = pointFn( imagePts[i].coords.distanceTo(p) );
+    if(w > 0) {
+      imagePtWeights[i] += w;
+      imagePtValues[i] += w*value;
       for(std::size_t k=0; k<numDims; k++)
-	imagePts[i].grad[k] += w*grad[k];
+	imagePtGradComps[k*nImagePts+i] += w*grad[k];
     }
   }
   return;
@@ -592,10 +907,14 @@ addImagePointData(const double* p, double value, double* grad)
 double QCAD::SaddleValueResponseFunction::
 getSaddlePointWeight(const double* p)
 {
-  double w, d = saddlePt.distanceTo(p), N=1.0;
-  w = N*exp(-d*d / (2*imagePtSize*imagePtSize));
-  if(w > 1e-2) return w;
-  else return 0.0;
+  return pointFn( saddlePt.distanceTo(p) );
+}
+
+double QCAD::SaddleValueResponseFunction::
+pointFn(double d) {
+  const double N = 1.0;
+  double val = N*exp(-d*d / (2*imagePtSize*imagePtSize));
+  return (val >= 1e-2) ? val : 0.0;
 }
 
 
@@ -603,7 +922,7 @@ getSaddlePointWeight(const double* p)
 //! Helper functions
 /*************************************************************/
 
-double distanceFromLineSegment(const double* p, const double* p1, const double* p2, int dims)
+/*double distanceFromLineSegment(const double* p, const double* p1, const double* p2, int dims)
 {
   //get pt c, the point along the full line p1->p2 closest to p
   double s, dp = 0, mag2 = 0; 
@@ -624,11 +943,38 @@ double distanceFromLineSegment(const double* p, const double* p1, const double* 
     if(d1 < d2) return sqrt(d1);
     else return sqrt(d2);
   }
+  }*/
+
+// Returns true if point is inside polygon, false otherwise
+//  Assumes 2D points (more dims ok, but uses only first two components)
+//  Algorithm = ray trace along positive x-axis
+bool ptInPolygon(const std::vector<QCAD::mathVector>& polygon, const QCAD::mathVector& pt) 
+{
+  return ptInPolygon(polygon, pt.data());
 }
+
+bool ptInPolygon(const std::vector<QCAD::mathVector>& polygon, const double* pt)
+{
+  bool c = false;
+  int n = (int)polygon.size();
+  double x=pt[0], y=pt[1];
+  const int X=0,Y=1;
+
+  for (int i = 0, j = n-1; i < n; j = i++) {
+    const QCAD::mathVector& pi = polygon[i];
+    const QCAD::mathVector& pj = polygon[j];
+    if ((((pi[Y] <= y) && (y < pj[Y])) ||
+	 ((pj[Y] <= y) && (y < pi[Y]))) &&
+	(x < (pj[X] - pi[X]) * (y - pi[Y]) / (pj[Y] - pi[Y]) + pi[X]))
+      c = !c;
+  }
+  return c;
+}
+
 
 //Not used - but keep for reference
 // Returns true if point is inside polygon, false otherwise
-bool ptInPolygon(int npol, float *xp, float *yp, float x, float y)
+bool orig_ptInPolygon(int npol, float *xp, float *yp, float x, float y)
 {
   int i, j; bool c = false;
   for (i = 0, j = npol-1; i < npol; j = i++) {
@@ -639,7 +985,6 @@ bool ptInPolygon(int npol, float *xp, float *yp, float x, float y)
   }
   return c;
 }
-
 
 
 
@@ -796,17 +1141,31 @@ QCAD::mathVector::norm() const
   return sqrt(dot(*this)); 
 }
 
+double 
+QCAD::mathVector::norm2() const
+{ 
+  return dot(*this); 
+}
+
+
 void 
 QCAD::mathVector::normalize() 
 {
   (*this) /= norm(); 
 }
 
-double* 
-QCAD::mathVector::data() 
+const double* 
+QCAD::mathVector::data() const
 { 
   return data_.data();
 }
+
+double* 
+QCAD::mathVector::data()
+{ 
+  return data_.data();
+}
+
 
 std::size_t 
 QCAD::mathVector::size() const
@@ -824,7 +1183,7 @@ std::ostream& QCAD::operator<<(std::ostream& os, const QCAD::mathVector& mv)
   return os;
 }
 
-std::ostream& QCAD::operator<<(std::ostream& os, const QCAD::nebPt& np)
+std::ostream& QCAD::operator<<(std::ostream& os, const QCAD::nebImagePt& np)
 {
   os << std::endl;
   os << "coords = " << np.coords << std::endl;

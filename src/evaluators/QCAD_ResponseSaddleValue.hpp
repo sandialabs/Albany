@@ -49,7 +49,7 @@ namespace QCAD
 
     void postEvaluate(typename Traits::PostEvalData d);
 
-    /*int numResponses() const { 
+    /*int numResponses() const {  // I don't think this is needed anymore (egn)
       return 5; 
       }*/
 	  
@@ -58,6 +58,8 @@ namespace QCAD
     void getCellQuantities(const std::size_t cell, ScalarT& cellVol, 
 			   typename EvalT::ScalarT& fieldVal, typename EvalT::ScalarT& retFieldVal, 
 			   std::vector<typename EvalT::ScalarT>& fieldGrad) const;
+    void getAvgCellCoordinates(PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec,
+			       const std::size_t cell, double* dblAvgCoords) const;
 
     std::size_t numQPs;
     std::size_t numDims;
@@ -78,9 +80,6 @@ namespace QCAD
     
     bool bReturnSameField;
     double scaling, retScaling;
-    
-
-    Teuchos::RCP<PHX::FieldTag> response_operation;
   };
 	
 }

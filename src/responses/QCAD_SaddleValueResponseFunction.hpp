@@ -39,9 +39,11 @@ namespace QCAD {
     double distanceTo(const double* p) const;
 
     double norm() const;
+    double norm2() const;
     void normalize();
 
     double* data();
+    const double* data() const;
     std::size_t size() const;
 
     mathVector& operator=(const mathVector& rhs);
@@ -64,7 +66,7 @@ namespace QCAD {
   };
 
   // Data Structure for an image point
-  struct nebPt {
+  struct nebImagePt {
     void init(int nDims) {
       coords.resize(nDims); coords.fill(0.0);
       velocity.resize(nDims); velocity.fill(0.0);
@@ -84,18 +86,8 @@ namespace QCAD {
     double weight;
   };
 
-
-  // Data structure for a piece of the searched-region boundary
-  // Now only holds line segments.  For non-lateral volume support 
-  //  this needs to hold segments of planes.
-  struct nebBoundaryPiece {
-    nebBoundaryPiece(int dim) :p1(dim), p2(dim) {}
-    mathVector p1;
-    mathVector p2;
-  };
-
   std::ostream& operator<<(std::ostream& os, const mathVector& mv);
-  std::ostream& operator<<(std::ostream& os, const nebPt& np);
+  std::ostream& operator<<(std::ostream& os, const nebImagePt& np);
  
  
   /*!
@@ -167,10 +159,9 @@ namespace QCAD {
 
     //! Called by evaluator to interface with class data that persists across worksets
     std::string getMode();
-    int checkIfPointIsOnBoundary(const double* p);
-    bool checkIfPointIsWithinBoundary(const double* p);
-
-    void addBoundaryData(const double* p, double value);
+    bool pointIsInImagePtRegion(const double* p);
+    void addBeginPointData(const std::string& elementBlock, const double* p, double value);
+    void addEndPointData(const std::string& elementBlock, const double* p, double value);
     void addImagePointData(const double* p, double value, double* grad);
     double getSaddlePointWeight(const double* p);
 
@@ -183,34 +174,47 @@ namespace QCAD {
     //! Private to prohibit copying
     SaddleValueResponseFunction& operator=(const SaddleValueResponseFunction&);
 
-    //! Setup boundary variables given input parameter list
-    void setupBoundary(Teuchos::ParameterList& params);
+    //! function giving distribution of weights for "point"
+    double pointFn(double d);
 
     //! data used across worksets and processors in saddle point algorithm
     std::size_t numDims;
     std::size_t nImagePts;
-    std::vector<nebPt> imagePts;
+    std::vector<nebImagePt> imagePts;
     double imagePtSize;
     mathVector saddlePt;
+    bool bClimbing;
+    double antiKinkFactor;
 
-    double timeStep;
-    double convergenceThreshold;
-    double baseSpringConstant;
+    double maxTimeStep, minTimeStep;
+    double minSpringConstant, maxSpringConstant;
     std::size_t maxIterations;
+    double convergeTolerance;
 
-    //! data for region to be searched and its boundary
-    //std::string ebName;
-    bool bLateralVolumes;
+    //! data for beginning and ending regions
+    std::string beginRegionType, endRegionType; // "Point", "Element Block", or "Polygon"
+    std::string beginElementBlock, endElementBlock;
+    std::vector<mathVector> beginPolygon, endPolygon;
+    bool saddleGuessGiven;
+    mathVector saddlePointGuess;
 
-    double zmin, zmax;  //for lateral-volume regions (where z-coord is separated out)
-    std::vector<nebBoundaryPiece> boundary;
-    std::vector<nebPt> boundaryMinima;
+    double zmin, zmax;  //defines lateral-volume region when numDims == 3
+    double xmin, xmax, ymin, ymax; // dynamically adjusted box marking region containing image points
+
+    //! accumulation vectors for evaluator to fill
+    mathVector imagePtValues;
+    mathVector imagePtWeights;
+    mathVector imagePtGradComps;
 
     //! mode of current evaluator operation (maybe not thread safe?)
     std::string mode;
 
     int  debugMode;
     bool bPositiveOnly;
+
+    std::string outputFilename;
+    std::string debugFilename;
+    int nEvery;
   };
 
   

@@ -31,7 +31,7 @@ EvaluatorTools()
 
 template<typename Traits>
 double QCAD::EvaluatorTools<PHAL::AlbanyTraits::Residual, Traits>::
-getDoubleValue(const ScalarT& t)
+getDoubleValue(const ScalarT& t) const
 {
   return t;
 }
@@ -49,7 +49,7 @@ EvaluatorTools()
 
 template<typename Traits>
 double QCAD::EvaluatorTools<PHAL::AlbanyTraits::Jacobian, Traits>::
-getDoubleValue(const ScalarT& t)
+getDoubleValue(const ScalarT& t) const
 {
   return t.val();
 }
@@ -67,7 +67,7 @@ EvaluatorTools()
 
 template<typename Traits>
 double QCAD::EvaluatorTools<PHAL::AlbanyTraits::Tangent, Traits>::
-getDoubleValue(const ScalarT& t)
+getDoubleValue(const ScalarT& t) const
 {
   return t.val();
 }
@@ -84,7 +84,7 @@ EvaluatorTools()
 
 template<typename Traits>
 double QCAD::EvaluatorTools<PHAL::AlbanyTraits::SGResidual, Traits>::
-getDoubleValue(const ScalarT& t)
+getDoubleValue(const ScalarT& t) const
 {
   return t.val();
 }
@@ -101,7 +101,7 @@ EvaluatorTools()
 
 template<typename Traits>
 double QCAD::EvaluatorTools<PHAL::AlbanyTraits::SGJacobian, Traits>::
-getDoubleValue(const ScalarT& t)
+getDoubleValue(const ScalarT& t) const
 {
   return t.val().val();
 }
@@ -118,7 +118,7 @@ EvaluatorTools()
 
 template<typename Traits>
 double QCAD::EvaluatorTools<PHAL::AlbanyTraits::SGTangent, Traits>::
-getDoubleValue(const ScalarT& t)
+getDoubleValue(const ScalarT& t) const
 {
   return t.val().val();
 }
@@ -135,7 +135,7 @@ EvaluatorTools()
 
 template<typename Traits>
 double QCAD::EvaluatorTools<PHAL::AlbanyTraits::MPResidual, Traits>::
-getDoubleValue(const ScalarT& t)
+getDoubleValue(const ScalarT& t) const
 {
   return t.val(); 
 }
@@ -152,7 +152,7 @@ EvaluatorTools()
 
 template<typename Traits>
 double QCAD::EvaluatorTools<PHAL::AlbanyTraits::MPJacobian, Traits>::
-getDoubleValue(const ScalarT& t)
+getDoubleValue(const ScalarT& t) const
 {
   return t.val().val(); 
 }
@@ -169,7 +169,7 @@ EvaluatorTools()
 
 template<typename Traits>
 double QCAD::EvaluatorTools<PHAL::AlbanyTraits::MPTangent, Traits>::
-getDoubleValue(const ScalarT& t)
+getDoubleValue(const ScalarT& t) const
 {
   return t.val().val();
 }
