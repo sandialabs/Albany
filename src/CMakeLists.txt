@@ -289,6 +289,7 @@ IF(ALBANY_LCM)
   SET(SOURCES ${SOURCES}
     ${LCM_DIR}/evaluators/Stress.cpp
     ${LCM_DIR}/evaluators/CapModelStress.cpp  
+    ${LCM_DIR}/evaluators/GursonSDStress.cpp  
     ${LCM_DIR}/evaluators/Strain.cpp 
     ${LCM_DIR}/evaluators/ElasticModulus.cpp 
     ${LCM_DIR}/evaluators/PoissonsRatio.cpp 
@@ -349,6 +350,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/Stress_Def.hpp
     ${LCM_DIR}/evaluators/CapModelStress.hpp 
     ${LCM_DIR}/evaluators/CapModelStress_Def.hpp
+    ${LCM_DIR}/evaluators/GursonSDStress.hpp 
+    ${LCM_DIR}/evaluators/GursonSDStress_Def.hpp
     ${LCM_DIR}/evaluators/Strain.hpp 
     ${LCM_DIR}/evaluators/Strain_Def.hpp 
     ${LCM_DIR}/evaluators/ElasticModulus.hpp 

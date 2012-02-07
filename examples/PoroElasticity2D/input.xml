@@ -77,8 +77,8 @@
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
-    <Parameter name="1D Elements" type="int" value="55"/>
-    <Parameter name="2D Elements" type="int" value="20"/>
+    <Parameter name="1D Elements" type="int" value="11"/>
+    <Parameter name="2D Elements" type="int" value="4"/>
     <Parameter name="2D Scale" type="double" value="0.25"/>
     <Parameter name="Method" type="string" value="STK2D"/>
     <Parameter name="Exodus Output File Name" type="string" value="thel2d.exo"/>

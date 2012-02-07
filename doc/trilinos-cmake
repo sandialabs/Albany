@@ -64,7 +64,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=/home/agsalin/Trilinos/build_july10/install \
       -D Trilinos_ENABLE_Teko:BOOL=ON \
 \
       -D Trilinos_ENABLE_Mesquite:BOOL=OFF\
-      -D Trilinos_ENABLE_Zoltan:BOOL=OFF\
+      -D Trilinos_ENABLE_Zoltan:BOOL=ON\
       -D Trilinos_ENABLE_FEI:BOOL=OFF\
 \
       -D Trilinos_ENABLE_TESTS:BOOL=OFF \

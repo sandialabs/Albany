@@ -309,7 +309,7 @@ TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
 template <int Dim, class traits>
 void 
 TmplSTKMeshStruct<Dim, traits>::DeclareParts(
-              std::vector<EBSpecsStruct<Dim> > ebStructArray, 
+              std::vector<EBSpecsStruct<Dim, traits> > ebStructArray, 
               std::vector<std::string> ssNames,
               std::vector<std::string> nsNames)
 {
@@ -343,9 +343,9 @@ TmplSTKMeshStruct<Dim, traits>::DeclareParts(
   }
 }
 
-template<int Dim>
+template<int Dim, class traits>
 void
-EBSpecsStruct<Dim>::Initialize(unsigned int nnelems[], double blLen[]){
+EBSpecsStruct<Dim, traits>::Initialize(unsigned int nnelems[], double blLen[]){
 
     name = "Block0";
 

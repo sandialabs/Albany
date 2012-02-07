@@ -677,7 +677,7 @@ namespace LCM {
   inline bool
   operator!=(Tensor<ScalarT> const & A, Tensor<ScalarT> const & B)
   {
-    return !(A==B);
+    return !(A == B);
   }
 
   //
@@ -1051,7 +1051,6 @@ namespace LCM {
   dev(Tensor<ScalarT> const & A)
   {
     return A - vol(A);
-
   }
 
   //

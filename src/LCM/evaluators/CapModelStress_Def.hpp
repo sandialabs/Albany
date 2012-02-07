@@ -143,19 +143,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   	  ScalarT kappaVal = capParameterold(cell,qp);
 
-  	  // output for debug
-//  	  std::cout<< "In CapModelStress, dstrain= " << std::endl;
-//  	  std::cout<< depsilon << std::endl;
-//  	  std::cout<< "In CapModelStress, old strain= " << std::endl;
-//  	  std::cout<< strainN << std::endl;
-//  	  std::cout<< "In CapModelStress, old stress= " << std::endl;
-//  	  std::cout<< sigmaN << std::endl;
-//  	  std::cout<< "In CapModelStress, old back stress= " << std::endl;
-//  	  std::cout<< alphaVal << std::endl;
-//  	  std::cout<< "In CapModelStress, old kappa= " << std::endl;
-//  	  std::cout<< kappaVal << std::endl;
-
-
   	  // make sure the cap starts from kappa0, and monotonically hardening (decreasing, more negative)
   	  if(kappaVal > kappa0){
   		  kappaVal = ScalarT(kappa0);
@@ -164,11 +151,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   	  // check yielding
   	  ScalarT f = compute_f(sigmaVal, alphaVal, kappaVal);
-  	  //std::cout<< "In CapModelStress, fTrial= " << std::endl;
-  	  //std::cout<< fTrial << std::endl;
-
-  	  // for debug
-  	  //fTrial = 0;
 
   	  // plastic correction
   	  ScalarT dgamma = 0.0;
@@ -294,15 +276,6 @@ evaluateFields(typename Traits::EvalData workset)
 		}// end of stress correction
 
   	  }// end of plastic correction
-
-  	  // output for debug
-//	   std::cout<< "In CapModelStress, updated stress= " << std::endl;
-//	   std::cout<< sigmaVal << std::endl;
-//	   std::cout<< "In CapModelStress, updated back stress= " << std::endl;
-//	   std::cout<< alphaVal << std::endl;
-//	   std::cout<< "In CapModelStress, updated kappa= " << std::endl;
-//	   std::cout<< kappaVal << std::endl;
-
 
   	  // update
   	  for (std::size_t i = 0; i < numDims; ++i){

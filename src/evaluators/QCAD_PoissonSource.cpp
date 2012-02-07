@@ -44,5 +44,9 @@ const double QCAD::PoissonSource<EvalT, Traits>::hbar = 1.054571628e-34;
 template<typename EvalT, typename Traits>
 const double QCAD::PoissonSource<EvalT, Traits>::pi = 3.141592654; 
 
+// aaximum allowed exponent in an exponential function (unitless)
+template<typename EvalT, typename Traits>
+const double QCAD::PoissonSource<EvalT, Traits>::MAX_EXPONENT = 100.0; 
+
 PHAL_INSTANTIATE_TEMPLATE_CLASS(QCAD::PoissonSource)
 

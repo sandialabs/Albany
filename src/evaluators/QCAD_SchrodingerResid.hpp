@@ -46,7 +46,10 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   //! Helper function to compute inverse effective mass (possible position dependent)
-  ScalarT getInvEffMass(const std::string& EBName, const std::size_t dim, const MeshScalarT* coord);
+  // ScalarT getInvEffMass(const std::string& EBName, const std::size_t dim, const MeshScalarT* coord);
+  
+  double getInvEffMassFiniteWall(const MeshScalarT* coord);
+  double getInvEffMass1DMosCap(const MeshScalarT* coord);
   
   //! Reference parameter list generator to check xml input file
   Teuchos::RCP<const Teuchos::ParameterList>
@@ -65,7 +68,7 @@ private:
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
   
   //PHX::MDField<ScalarT,Cell,QuadPoint> invEffMass; //unused, really just intermediate
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> invEffMass;
+  //PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> invEffMass;
 
   bool enableTransient;
   bool havePotential;
@@ -95,7 +98,9 @@ private:
 
   //! Parameters for 1D MOSCapacitor to set effective mass for oxide and silicon regions
   double oxideWidth;
-  double siliconWidth; 
+  double siliconWidth;
+  
+  double hbar2_over_2m0;  // in energy_unit_in_eV
     
 };
 

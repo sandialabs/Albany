@@ -258,7 +258,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
     ev = rcp(new LCM::Time<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Time",dl->workset_scalar, dl->dummy,"zero", true);
+    p = stateMgr.registerStateVariable("Time",dl->workset_scalar, dl->dummy,"scalar", 0.0, true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -387,7 +387,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
             ev = rcp(new LCM::TrappedSolvent<EvalT,AlbanyTraits>(*p));
             fm0.template registerEvaluator<EvalT>(ev);
-            p = stateMgr.registerStateVariable("Trapped Solvent",dl->qp_scalar, dl->dummy,"zero");
+            p = stateMgr.registerStateVariable("Trapped Solvent",dl->qp_scalar, dl->dummy,"scalar", 0.0);
             ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
             fm0.template registerEvaluator<EvalT>(ev);
     }
@@ -412,7 +412,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
             ev = rcp(new LCM::StrainRateFactor<EvalT,AlbanyTraits>(*p));
             fm0.template registerEvaluator<EvalT>(ev);
-            p = stateMgr.registerStateVariable("Strain Rate Factor",dl->qp_scalar, dl->dummy,"zero");
+            p = stateMgr.registerStateVariable("Strain Rate Factor",dl->qp_scalar, dl->dummy,"scalar", 0.0);
             ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
             fm0.template registerEvaluator<EvalT>(ev);
   	  }
@@ -432,7 +432,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
        ev = rcp(new LCM::DiffusionCoefficient<EvalT,AlbanyTraits>(*p));
        fm0.template registerEvaluator<EvalT>(ev);
-       p = stateMgr.registerStateVariable("Diffusion Coefficient",dl->qp_scalar, dl->dummy,"zero");
+       p = stateMgr.registerStateVariable("Diffusion Coefficient",dl->qp_scalar, dl->dummy,"scalar", 0.0);
        ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
        fm0.template registerEvaluator<EvalT>(ev);
      }
@@ -452,7 +452,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
          ev = rcp(new LCM::EquilibriumConstant<EvalT,AlbanyTraits>(*p));
          fm0.template registerEvaluator<EvalT>(ev);
-         p = stateMgr.registerStateVariable("Equilibrium Constant",dl->qp_scalar, dl->dummy,"zero");
+         p = stateMgr.registerStateVariable("Equilibrium Constant",dl->qp_scalar, dl->dummy,"scalar", 0.0);
          ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
          fm0.template registerEvaluator<EvalT>(ev);
        }
@@ -474,7 +474,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
            ev = rcp(new LCM::EffectiveDiffusivity<EvalT,AlbanyTraits>(*p));
            fm0.template registerEvaluator<EvalT>(ev);
-           p = stateMgr.registerStateVariable("Effective Diffusivity",dl->qp_scalar, dl->dummy,"zero");
+           p = stateMgr.registerStateVariable("Effective Diffusivity",dl->qp_scalar, dl->dummy,"scalar", 0.0);
            ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
            fm0.template registerEvaluator<EvalT>(ev);
          }
@@ -495,7 +495,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
              ev = rcp(new LCM::TrappedConcentration<EvalT,AlbanyTraits>(*p));
              fm0.template registerEvaluator<EvalT>(ev);
-             p = stateMgr.registerStateVariable("Trapped Concentration",dl->qp_scalar, dl->dummy,"zero", true);
+             p = stateMgr.registerStateVariable("Trapped Concentration",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
              ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
              fm0.template registerEvaluator<EvalT>(ev);
            }
@@ -525,7 +525,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
 		  ev = rcp(new LCM::TauContribution<EvalT,AlbanyTraits>(*p));
 		  fm0.template registerEvaluator<EvalT>(ev);
-		  p = stateMgr.registerStateVariable("Tau Contribution",dl->qp_scalar, dl->dummy,"zero");
+		  p = stateMgr.registerStateVariable("Tau Contribution",dl->qp_scalar, dl->dummy,"scalar", 0.0);
 		  ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
 	      fm0.template registerEvaluator<EvalT>(ev);
 
@@ -609,7 +609,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
 //    p->set<string>("Trapped Concentration Name", "Trapped Concentration");
 
-    p->set<string>("Lattice Concentration Name", "Lattice Concentration");
+ //   p->set<string>("Lattice Concentration Name", "Lattice Concentration");
 
     ev = rcp(new LCM::YieldStrength<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -747,13 +747,13 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
     ev = rcp(new LCM::ThermoMechanicalStress<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy,"zero");
+    p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy,"scalar", 0.0);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy,"identity",true);
+    p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy,"identity", 1.0, true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy,"zero",true);
+    p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy,"scalar", 0.0,true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -881,7 +881,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
     ev = rcp(new LCM::HDiffusionDeformationMatterResidual<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Lattice Concentration",dl->qp_scalar, dl->dummy,"zero",true);
+    p = stateMgr.registerStateVariable("Lattice Concentration",dl->qp_scalar, dl->dummy,"scalar", 0.0,true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }

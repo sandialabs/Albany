@@ -22,55 +22,6 @@
 template<typename EvalT, typename Traits>
 QCAD::ResponseSaveField<EvalT, Traits>::
 ResponseSaveField(Teuchos::ParameterList& p,
-		  const Teuchos::RCP<Albany::Layouts>& dl) 
-{
-  // States Not Saved for Generic Type, only Specializations
-
-  //! get parameter list
-  Teuchos::ParameterList* plist = 
-    p.get<Teuchos::ParameterList*>("Parameter List");
-
-  //! User-specified parameters
-  std::string fieldName;
-  if(plist->isParameter("Vector Field Name")) {
-    fieldName = plist->get<std::string>("Vector Field Name");
-  }
-  else {
-    fieldName = plist->get<std::string>("Field Name");
-  }
-
-  // Create field tag
-  response_field_tag = 
-    Teuchos::rcp(new PHX::Tag<ScalarT>(fieldName + " Save Field Response",
-				       dl->dummy));
-  this->addEvaluatedField(*response_field_tag);
-}
-
-// **********************************************************************
-template<typename EvalT, typename Traits>
-void QCAD::ResponseSaveField<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& fm)
-{
-  // States Not Saved for Generic Type, only Specializations
-}
-
-// **********************************************************************
-template<typename EvalT, typename Traits>
-void QCAD::ResponseSaveField<EvalT, Traits>::
-evaluateFields(typename Traits::EvalData workset)
-{
-  // States Not Saved for Generic Type, only Specializations
-}
-
-
-// **********************************************************************
-// RESIDUAL specialization
-// **********************************************************************
-
-template<typename Traits>
-QCAD::ResponseSaveField<PHAL::AlbanyTraits::Residual, Traits>::
-ResponseSaveField(Teuchos::ParameterList& p,
 		  const Teuchos::RCP<Albany::Layouts>& dl) :
   weights("Weights", dl->qp_scalar)
 {
@@ -112,10 +63,10 @@ ResponseSaveField(Teuchos::ParameterList& p,
   //! Register with state manager
   Albany::StateManager* pStateMgr = p.get< Albany::StateManager* >("State Manager Ptr");
   if( outputCellAverage ) {
-    pStateMgr->registerStateVariable(stateName, cell_dl, "zero", false, outputToExodus);
+    pStateMgr->registerStateVariable(stateName, cell_dl, "scalar", 0.0, false, outputToExodus);
   }
   else {
-    pStateMgr->registerStateVariable(stateName, scalar_dl, "zero", false, outputToExodus);
+    pStateMgr->registerStateVariable(stateName, scalar_dl, "scalar", 0.0, false, outputToExodus);
   }
 
   // Create field tag
@@ -126,8 +77,8 @@ ResponseSaveField(Teuchos::ParameterList& p,
 }
 
 // **********************************************************************
-template<typename Traits>
-void QCAD::ResponseSaveField<PHAL::AlbanyTraits::Residual, Traits>::
+template<typename EvalT, typename Traits>
+void QCAD::ResponseSaveField<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -136,10 +87,12 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 // **********************************************************************
-template<typename Traits>
-void QCAD::ResponseSaveField<PHAL::AlbanyTraits::Residual, Traits>::
+template<typename EvalT, typename Traits>
+void QCAD::ResponseSaveField<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  using Albany::ADValue;
+
   const std::size_t iX=0; //index for x coordinate
   const std::size_t iY=1; //index for y coordinate
   const std::size_t iZ=2; //index for z coordinate
@@ -162,14 +115,14 @@ evaluateFields(typename Traits::EvalData workset)
         if( outputCellAverage ) {
           double integral = 0, vol = 0;
 	  for (std::size_t qp = 0; qp < numQPs; ++qp) {
-	    integral += field(cell,qp) * weights(cell,qp);
-            vol += weights(cell, qp);
+	    integral += ADValue(field(cell,qp)) * ADValue(weights(cell,qp));
+            vol += ADValue(weights(cell, qp));
           }
           sta(cell,(std::size_t)0) = integral / vol;
         }
         else {
 	  for (std::size_t qp = 0; qp < numQPs; ++qp)
-	    sta(cell, qp) = field(cell,qp);
+	    sta(cell, qp) = ADValue(field(cell,qp));
         }
       }
       break;
@@ -193,7 +146,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
   else {
-    double t;
+    ScalarT t;
     switch (size) {
     case 2:     
       for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
@@ -262,10 +215,10 @@ evaluateFields(typename Traits::EvalData workset)
 	  }
 
 	  if( outputCellAverage ) {
-	    sta(cell, (std::size_t)0) += stateValue * weights(cell,qp);
-	    vol += weights(cell,qp);
+	    sta(cell, (std::size_t)0) += ADValue(stateValue) * ADValue(weights(cell,qp));
+	    vol += ADValue(weights(cell,qp));
 	  }
-	  else sta(cell, qp) = stateValue;
+	  else sta(cell, qp) = ADValue(stateValue);
 	}
 
 	if( outputCellAverage ) sta(cell,(std::size_t)0) /= vol;
@@ -279,9 +232,9 @@ evaluateFields(typename Traits::EvalData workset)
 }
 
 // **********************************************************************
-template<typename Traits>
+template<typename EvalT, typename Traits>
 Teuchos::RCP<const Teuchos::ParameterList>
-QCAD::ResponseSaveField<PHAL::AlbanyTraits::Residual,Traits>::getValidResponseParameters() const
+QCAD::ResponseSaveField<EvalT,Traits>::getValidResponseParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
      	rcp(new Teuchos::ParameterList("Valid ResponseSaveField Params"));;
