@@ -296,7 +296,7 @@ Albany::LameProblem::constructEvaluators(
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p2));
     fm0.template registerEvaluator<EvalT>(ev);
 
-    p2 = stateMgr.registerStateVariable("Deformation Gradient",dl->qp_tensor, dl->dummy,"identity", true);
+    p2 = stateMgr.registerStateVariable("Deformation Gradient",dl->qp_tensor, dl->dummy,"identity", 1.0, true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p2));
     fm0.template registerEvaluator<EvalT>(ev);
 
