@@ -404,7 +404,7 @@ computeGlobalResidual(const double current_time,
     workset.f        = overlapped_f;
 
     for (int ws=0; ws < numWorksets; ws++) {
-      loadWorksetBucketInfo(workset, ws);
+      loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
 
       // FillType template argument used to specialize Sacado
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
@@ -501,7 +501,7 @@ computeGlobalJacobian(const double alpha,
     loadWorksetJacobianInfo(workset, alpha, beta);
 
     for (int ws=0; ws < numWorksets; ws++) {
-      loadWorksetBucketInfo(workset, ws);
+      loadWorksetBucketInfo<PHAL::AlbanyTraits::Jacobian>(workset, ws);
 
       // FillType template argument used to specialize Sacado
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
@@ -793,7 +793,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     workset.coord_deriv_indices = &coord_deriv_indices;
 
     for (int ws=0; ws < numWorksets; ws++) {
-      loadWorksetBucketInfo(workset, ws);
+      loadWorksetBucketInfo<PHAL::AlbanyTraits::Tangent>(workset, ws);
       workset.ws_coord_derivs = ws_coord_derivs[ws];
 
       // FillType template argument used to specialize Sacado
@@ -977,7 +977,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     if (sg_xdot != NULL) workset.transientTerms = true;
 
     for (int ws=0; ws < numWorksets; ws++) {
-      loadWorksetBucketInfo(workset, ws);
+      loadWorksetBucketInfo<PHAL::AlbanyTraits::SGResidual>(workset, ws);
 
       // FillType template argument used to specialize Sacado
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::SGResidual>(workset);
@@ -1107,7 +1107,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     if (sg_xdot != NULL) workset.transientTerms = true;
 
     for (int ws=0; ws < numWorksets; ws++) {
-      loadWorksetBucketInfo(workset, ws);
+      loadWorksetBucketInfo<PHAL::AlbanyTraits::SGJacobian>(workset, ws);
 
       // FillType template argument used to specialize Sacado
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::SGJacobian>(workset);
@@ -1315,7 +1315,7 @@ computeGlobalSGTangent(
     if (sg_xdot != NULL) workset.transientTerms = true;
 
     for (int ws=0; ws < numWorksets; ws++) {
-      loadWorksetBucketInfo(workset, ws);
+      loadWorksetBucketInfo<PHAL::AlbanyTraits::SGTangent>(workset, ws);
 
       // FillType template argument used to specialize Sacado
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::SGTangent>(workset);
@@ -1520,7 +1520,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     if (mp_xdot != NULL) workset.transientTerms = true;
 
     for (int ws=0; ws < numWorksets; ws++) {
-      loadWorksetBucketInfo(workset, ws);
+      loadWorksetBucketInfo<PHAL::AlbanyTraits::MPResidual>(workset, ws);
 
       // FillType template argument used to specialize Sacado
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::MPResidual>(workset);
@@ -1654,7 +1654,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     if (mp_xdot != NULL) workset.transientTerms = true;
 
     for (int ws=0; ws < numWorksets; ws++) {
-      loadWorksetBucketInfo(workset, ws);
+      loadWorksetBucketInfo<PHAL::AlbanyTraits::MPJacobian>(workset, ws);
 
       // FillType template argument used to specialize Sacado
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::MPJacobian>(workset);
@@ -1878,7 +1878,7 @@ computeGlobalMPTangent(
     if (mp_xdot != NULL) workset.transientTerms = true;
 
     for (int ws=0; ws < numWorksets; ws++) {
-      loadWorksetBucketInfo(workset, ws);
+      loadWorksetBucketInfo<PHAL::AlbanyTraits::MPTangent>(workset, ws);
 
       // FillType template argument used to specialize Sacado
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::MPTangent>(workset);
@@ -2024,7 +2024,7 @@ evaluateStateFieldManager(const double current_time,
 
   // Perform fill via field manager
   for (int ws=0; ws < numWorksets; ws++) {
-    loadWorksetBucketInfo(workset, ws);
+    loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
     sfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
   }
 }
@@ -2220,6 +2220,7 @@ void Albany::Application::defineTimers()
   timers.push_back(TimeMonitor::getNewTimer("Albany-Cubit MeshMover"));
 }
 
+template <typename EvalT>
 void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws)
 {
   workset.numCells = wsElNodeEqID[ws].size();
@@ -2229,6 +2230,8 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset, const in
 
   workset.stateArrayPtr = &stateMgr.getStateArray(ws);
   workset.eigenDataPtr = stateMgr.getEigenData();
+
+  PHAL::BuildSerializer<EvalT> bs(workset);
 }
 
 void Albany::Application::loadBasicWorksetInfo(

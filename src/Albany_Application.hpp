@@ -475,6 +475,7 @@ namespace Albany {
   public:
 
     //! Routine to get workset (bucket) sized info needed by all Evaluation types
+    template <typename EvalT>
     void loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws);
 
     //! Routine to load some basic workset info needed by many Evaluation types

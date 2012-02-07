@@ -154,17 +154,6 @@ evaluateFields(typename Traits::EvalData workset)
 }
 
 // **********************************************************************
-template<typename Traits>
-void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
-preEvaluate(typename Traits::PreEvalData workset) 
-{
-  Teuchos::RCP< Teuchos::ValueTypeSerializer<int,RealType> > serializer =
-    Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,RealType>);
-  workset.serializerManager.template 
-    setValue<PHAL::AlbanyTraits::Residual>(serializer);
-}
-
-// **********************************************************************
 // Specialization: Jacobian
 // **********************************************************************
 
@@ -191,7 +180,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       int neq = nodeID[node].size();
-      const std::size_t num_dof = neq * this->numNodes;
+      std::size_t num_dof = neq * this->numNodes;
       for (std::size_t eq = 0; eq < numFields; eq++) {
         if (this->vectorField) valptr = &((this->valVec[0])(cell,node,eq));
         else                   valptr = &(this->val[eq])(cell,node);
@@ -210,19 +199,6 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
-}
-
-// **********************************************************************
-template<typename Traits>
-void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
-preEvaluate(typename Traits::PreEvalData workset) 
-{
-  Teuchos::RCP< Teuchos::ValueTypeSerializer<int,RealType> > real_serializer =
-    Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,RealType>);
-  Teuchos::RCP< Teuchos::ValueTypeSerializer<int,FadType> > serializer =
-    Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,FadType>(real_serializer));
-  workset.serializerManager.template 
-    setValue<PHAL::AlbanyTraits::Jacobian>(serializer);
 }
 
 // **********************************************************************
@@ -290,19 +266,6 @@ evaluateFields(typename Traits::EvalData workset)
 }
 
 // **********************************************************************
-template<typename Traits>
-void GatherSolution<PHAL::AlbanyTraits::Tangent, Traits>::
-preEvaluate(typename Traits::PreEvalData workset) 
-{
-  Teuchos::RCP< Teuchos::ValueTypeSerializer<int,RealType> > real_serializer =
-    Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,RealType>);
-  Teuchos::RCP< Teuchos::ValueTypeSerializer<int,FadType> > serializer =
-    Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,FadType>(real_serializer));
-  workset.serializerManager.template 
-    setValue<PHAL::AlbanyTraits::Tangent>(serializer);
-}
-
-// **********************************************************************
 
 // **********************************************************************
 // Specialization: Stochastic Galerkin Residual
@@ -360,20 +323,6 @@ evaluateFields(typename Traits::EvalData workset)
 }
 
 // **********************************************************************
-template<typename Traits>
-void GatherSolution<PHAL::AlbanyTraits::SGResidual, Traits>::
-preEvaluate(typename Traits::PreEvalData workset) 
-{
-  Teuchos::RCP< Teuchos::ValueTypeSerializer<int,RealType> > real_serializer =
-    Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,RealType>);
-  Teuchos::RCP< Teuchos::ValueTypeSerializer<int,SGType> > serializer =
-    Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,SGType>(
-		   workset.sg_expansion, real_serializer));
-  workset.serializerManager.template 
-    setValue<PHAL::AlbanyTraits::SGResidual>(serializer);
-}
-
-// **********************************************************************
 
 // **********************************************************************
 // Specialization: Stochastic Galerkin Jacobian
@@ -406,7 +355,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       int neq = nodeID[node].size();
-      const std::size_t num_dof = neq * this->numNodes;
+      std::size_t num_dof = neq * this->numNodes;
 
       for (std::size_t eq = 0; eq < numFields; eq++) {
         if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
@@ -434,22 +383,6 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
-}
-
-// **********************************************************************
-template<typename Traits>
-void GatherSolution<PHAL::AlbanyTraits::SGJacobian, Traits>::
-preEvaluate(typename Traits::PreEvalData workset) 
-{
-  Teuchos::RCP< Teuchos::ValueTypeSerializer<int,RealType> > real_serializer =
-    Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,RealType>);
-  Teuchos::RCP< Teuchos::ValueTypeSerializer<int,SGType> > sg_serializer =
-    Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,SGType>(
-		   workset.sg_expansion, real_serializer));
-  Teuchos::RCP< Teuchos::ValueTypeSerializer<int,SGFadType> > serializer =
-    Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,SGFadType>(sg_serializer));
-  workset.serializerManager.template 
-  setValue<PHAL::AlbanyTraits::SGJacobian>(serializer);
 }
 
 // **********************************************************************
@@ -530,22 +463,6 @@ evaluateFields(typename Traits::EvalData workset)
 }
 
 // **********************************************************************
-template<typename Traits>
-void GatherSolution<PHAL::AlbanyTraits::SGTangent, Traits>::
-preEvaluate(typename Traits::PreEvalData workset) 
-{
-  Teuchos::RCP< Teuchos::ValueTypeSerializer<int,RealType> > real_serializer =
-    Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,RealType>);
-  Teuchos::RCP< Teuchos::ValueTypeSerializer<int,SGType> > sg_serializer =
-    Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,SGType>(
-		   workset.sg_expansion, real_serializer));
-  Teuchos::RCP< Teuchos::ValueTypeSerializer<int,SGFadType> > serializer =
-    Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,SGFadType>(sg_serializer));
-  workset.serializerManager.template 
-    setValue<PHAL::AlbanyTraits::SGTangent>(serializer);
-}
-
-// **********************************************************************
 
 // **********************************************************************
 // Specialization: Multi-point Residual
@@ -601,19 +518,6 @@ evaluateFields(typename Traits::EvalData workset)
 }
 
 // **********************************************************************
-template<typename Traits>
-void GatherSolution<PHAL::AlbanyTraits::MPResidual, Traits>::
-preEvaluate(typename Traits::PreEvalData workset) 
-{
-  Teuchos::RCP< Teuchos::ValueTypeSerializer<int,RealType> > real_serializer =
-    Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,RealType>);
-  Teuchos::RCP< Teuchos::ValueTypeSerializer<int,MPType> > serializer =
-    Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,MPType>(real_serializer));
-  workset.serializerManager.template 
-    setValue<PHAL::AlbanyTraits::MPResidual>(serializer);
-}
-
-// **********************************************************************
 
 // **********************************************************************
 // Specialization: Mulit-point Jacobian
@@ -644,7 +548,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       int neq = nodeID[node].size();
-      const std::size_t num_dof = neq * this->numNodes;
+      std::size_t num_dof = neq * this->numNodes;
 
       for (std::size_t eq = 0; eq < numFields; eq++) {
         if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
@@ -672,21 +576,6 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
-}
-
-// **********************************************************************
-template<typename Traits>
-void GatherSolution<PHAL::AlbanyTraits::MPJacobian, Traits>::
-preEvaluate(typename Traits::PreEvalData workset) 
-{
-  Teuchos::RCP< Teuchos::ValueTypeSerializer<int,RealType> > real_serializer =
-    Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,RealType>);
-  Teuchos::RCP< Teuchos::ValueTypeSerializer<int,MPType> > mp_serializer =
-    Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,MPType>(real_serializer));
-  Teuchos::RCP< Teuchos::ValueTypeSerializer<int,MPFadType> > serializer =
-    Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,MPFadType>(mp_serializer));
-  workset.serializerManager.template 
-    setValue<PHAL::AlbanyTraits::MPJacobian>(serializer);
 }
 
 // **********************************************************************
@@ -762,21 +651,6 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
-}
-
-// **********************************************************************
-template<typename Traits>
-void GatherSolution<PHAL::AlbanyTraits::MPTangent, Traits>::
-preEvaluate(typename Traits::PreEvalData workset) 
-{
-  Teuchos::RCP< Teuchos::ValueTypeSerializer<int,RealType> > real_serializer =
-    Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,RealType>);
-  Teuchos::RCP< Teuchos::ValueTypeSerializer<int,MPType> > mp_serializer =
-    Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,MPType>(real_serializer));
-  Teuchos::RCP< Teuchos::ValueTypeSerializer<int,MPFadType> > serializer =
-    Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,MPFadType>(mp_serializer));
-  workset.serializerManager.template 
-    setValue<PHAL::AlbanyTraits::MPTangent>(serializer);
 }
 
 }

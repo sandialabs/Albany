@@ -507,7 +507,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::reduceAll(
     *workset.comm, Teuchos::REDUCE_MAX, 1, &procToBcast, &winner);
   Teuchos::broadcast(
-    *workset.comm, winner, this->global_response.size(), 
+    *workset.comm, *serializer, winner, this->global_response.size(), 
     &this->global_response[0]);
 
   // Do global scattering

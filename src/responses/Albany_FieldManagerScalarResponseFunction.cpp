@@ -111,7 +111,8 @@ evaluateResponse(const double current_time,
   int numWorksets = application->getNumWorksets();
   rfm->preEvaluate<PHAL::AlbanyTraits::Residual>(workset);
   for (int ws=0; ws < numWorksets; ws++) {
-    application->loadWorksetBucketInfo(workset, ws);
+    application->loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(
+      workset, ws);
     rfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
   }
   rfm->postEvaluate<PHAL::AlbanyTraits::Residual>(workset);
@@ -149,7 +150,8 @@ evaluateTangent(const double alpha,
   int numWorksets = application->getNumWorksets();
   rfm->preEvaluate<PHAL::AlbanyTraits::Tangent>(workset);
   for (int ws=0; ws < numWorksets; ws++) {
-    application->loadWorksetBucketInfo(workset, ws);
+    application->loadWorksetBucketInfo<PHAL::AlbanyTraits::Tangent>(
+      workset, ws);
     rfm->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
   }
   rfm->postEvaluate<PHAL::AlbanyTraits::Tangent>(workset);
@@ -185,7 +187,8 @@ evaluateGradient(const double current_time,
 					  dg_dx->NumVectors()));
     rfm->preEvaluate<PHAL::AlbanyTraits::Jacobian>(workset);
     for (int ws=0; ws < numWorksets; ws++) {
-      application->loadWorksetBucketInfo(workset, ws);
+      application->loadWorksetBucketInfo<PHAL::AlbanyTraits::Jacobian>(
+	workset, ws);
       rfm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
     }
     rfm->postEvaluate<PHAL::AlbanyTraits::Jacobian>(workset);
@@ -202,7 +205,8 @@ evaluateGradient(const double current_time,
 					  dg_dxdot->NumVectors()));
     rfm->preEvaluate<PHAL::AlbanyTraits::Jacobian>(workset);
     for (int ws=0; ws < numWorksets; ws++) {
-      application->loadWorksetBucketInfo(workset, ws);
+      application->loadWorksetBucketInfo<PHAL::AlbanyTraits::Jacobian>(
+	workset, ws);
       rfm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
     }
     rfm->postEvaluate<PHAL::AlbanyTraits::Jacobian>(workset);
