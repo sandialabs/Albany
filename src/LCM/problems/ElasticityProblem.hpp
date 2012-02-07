@@ -294,7 +294,7 @@ Albany::ElasticityProblem::constructEvaluators(
     ev = rcp(new LCM::Strain<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
-    if(matModel == "CapModel" || || matModel == "GursonSD"){
+    if(matModel == "CapModel" || matModel == "GursonSD"){
       p = stateMgr.registerStateVariable("Strain", dl->qp_tensor, dl->dummy,"scalar", 0.0, true);
     	ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     	fm0.template registerEvaluator<EvalT>(ev);
@@ -383,7 +383,7 @@ Albany::ElasticityProblem::constructEvaluators(
       p = stateMgr.registerStateVariable("backStress",dl->qp_tensor, dl->dummy,"scalar", 0.0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("capParameter",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+      p = stateMgr.registerStateVariable("capParameter",dl->qp_scalar, dl->dummy,"scalar", kappa0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
 	}

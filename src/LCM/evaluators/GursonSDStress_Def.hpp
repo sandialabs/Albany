@@ -127,29 +127,16 @@ evaluateFields(typename Traits::EvalData workset)
 		}
 
 		// trial state
-		// to correctly initialize fvoid and sigmaM to nonzero values?
-		// use voidVolumeold and yieldStrengthold to store incremental values
 		LCM::Tensor<ScalarT> sigmaVal = sigmaN + LCM::dotdot(Celastic, depsilon);
 
-		ScalarT fvoid_Delta = voidVolumeold(cell,qp);
-		ScalarT sigmaM_Delta = yieldStrengthold(cell,qp);
-
-		ScalarT fvoidN = f0 + fvoid_Delta;
-		ScalarT sigmaMN = sigmaY + sigmaM_Delta;
+		ScalarT fvoidN = voidVolumeold(cell,qp);
+		ScalarT sigmaMN = yieldStrengthold(cell,qp);
 
 		ScalarT fvoidVal  = fvoidN;
 		ScalarT sigmaMVal = sigmaMN;
 
-		//std::cout << "fvoidN = " << fvoidN << std::endl;
-		//std::cout << "sigmaMN =" << sigmaMN << std::endl;
-
 		// check yielding
 		ScalarT FVal = compute_F(sigmaVal, fvoidVal, sigmaMVal);
-		//std::cout << "stress old = " << sigmaN << std::endl;
-
-		//std::cout << "depsilon = " << depsilon << std::endl;
-		//std::cout << "Ftrial = " << FVal << std::endl;
-
 
 		ScalarT dgamma = 0.0;
 		if(FVal > 1.0e-10){
@@ -252,8 +239,8 @@ evaluateFields(typename Traits::EvalData workset)
   	  	  for (std::size_t j = 0; j < numDims; ++j)
   	  		  stress(cell,qp,i,j) = sigmaVal(i,j);
 
-  	  voidVolume(cell,qp) = fvoidVal - f0;
-  	  yieldStrength(cell,qp) = sigmaMVal - sigmaY;
+  	  voidVolume(cell,qp) = fvoidVal;
+  	  yieldStrength(cell,qp) = sigmaMVal;
 
 	} //loop over qps
 
