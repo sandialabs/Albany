@@ -164,9 +164,36 @@ namespace QCAD {
     void addEndPointData(const std::string& elementBlock, const double* p, double value);
     void addImagePointData(const double* p, double value, double* grad);
     double getSaddlePointWeight(const double* p);
-
     
   private:
+
+    //! Helper functions for Nudged Elastic Band (NEB) algorithm, perfomred in evaluateResponse
+    void initializeImagePoints(const double current_time, const Epetra_Vector* xdot,
+			       const Epetra_Vector& x, const Teuchos::Array<ParamVec>& p,
+			       Epetra_Vector& g, int dbMode);
+    void doNudgedElasticBand(const double current_time, const Epetra_Vector* xdot,
+			     const Epetra_Vector& x, const Teuchos::Array<ParamVec>& p,
+			     Epetra_Vector& g, int dbMode);
+    void fillSaddlePointData(const double current_time, const Epetra_Vector* xdot,
+			     const Epetra_Vector& x, const Teuchos::Array<ParamVec>& p,
+			     Epetra_Vector& g, int dbMode);
+
+
+    //! Helper functions for doNudgedElasticBand(...)
+    void getImagePointValues(const double current_time, const Epetra_Vector* xdot,
+			     const Epetra_Vector& x, const Teuchos::Array<ParamVec>& p,
+			     Epetra_Vector& g, double* globalPtValues, double* globalPtWeights,
+			     double* globalPtGrads, std::vector<mathVector> lastPositions, int dbMode);
+    void writeOutput(int nIters);
+    void initialIterationSetup(double& gradScale, double& springScale, int dbMode);
+    void computeTangent(std::size_t i, mathVector& tangent, int dbMode);
+    void computeClimbingForce(std::size_t i, const QCAD::mathVector& tangent, 
+			      const double& gradScale, QCAD::mathVector& force, int dbMode);
+    void computeForce(std::size_t i, const QCAD::mathVector& tangent, 
+		      const std::vector<double>& springConstants,
+		      const double& gradScale,  const double& springScale, 
+		      QCAD::mathVector& force, double& dt, double& dt2, int dbMode);
+
 
     //! Private to prohibit copying
     SaddleValueResponseFunction(const SaddleValueResponseFunction&);
@@ -210,7 +237,6 @@ namespace QCAD {
     std::string mode;
 
     int  debugMode;
-    bool bPositiveOnly;
 
     std::string outputFilename;
     std::string debugFilename;

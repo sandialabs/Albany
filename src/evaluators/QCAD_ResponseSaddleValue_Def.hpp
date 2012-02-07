@@ -240,10 +240,6 @@ postEvaluate(typename Traits::PostEvalData workset)
     this->global_response[0] /= this->global_response[2];
     this->global_response[1] /= this->global_response[2];
   }
-
-  /*if (bPositiveOnly && this->global_response[0] < 1e-6) {
-    this->global_response[0] = 1e+100;
-    }*/
   
   // Do global scattering
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postEvaluate(workset);
@@ -298,7 +294,6 @@ QCAD::ResponseSaddleValue<EvalT,Traits>::getValidResponseParameters() const
   validPL->set<Teuchos::Array<double> >("Saddle Point Guess", Teuchos::Array<double>(), "Estimate of where the saddle point lies");
 
   validPL->set<int>("Debug Mode", 0, "Print verbose debug messages to stdout");
-  validPL->set<bool>("Positive Return Only", false, "If return value is zero, set to NaN so Dakota stays away");
   validPL->set< Teuchos::RCP<QCAD::SaddleValueResponseFunction> >("Response Function", Teuchos::null, "Saddle value response function");
 
   return validPL;
