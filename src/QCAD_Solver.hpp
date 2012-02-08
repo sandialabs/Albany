@@ -112,6 +112,11 @@ namespace QCAD {
 
     double getInitialParam(const std::map<std::string, SolverSubSolver>& subSolvers) const;
 
+    std::string getTargetName() const { return targetName; }
+    std::vector<int> getTargetIndices() const { return targetIndices; }
+    std::size_t getNumFilters() const { return filters.size(); }
+    double getFilterScaling() const;
+
   protected:
     std::string targetName;
     std::vector<int> targetIndices;
@@ -124,8 +129,9 @@ namespace QCAD {
 		     const std::map<std::string, SolverSubSolver>& subSolvers);
     ~SolverResponseFn() {};
 
-    void fillSolverResponses(Epetra_Vector& g, int offset,
-			const std::map<std::string, SolverSubSolver>& subSolvers) const;
+    void fillSolverResponses(Epetra_Vector& g, Teuchos::RCP<Epetra_MultiVector>& dgdp, int offset,
+			     const std::map<std::string, SolverSubSolver>& subSolvers,
+			     const std::vector<std::vector<Teuchos::RCP<SolverParamFn> > >& paramFnVecs) const;
 
     std::size_t getNumDoubles() const { return numDoubles; }
 

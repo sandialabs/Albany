@@ -248,21 +248,27 @@ EpetraExt::ModelEvaluator::InArgs QCAD::Solver::createInArgs() const
 EpetraExt::ModelEvaluator::OutArgs QCAD::Solver::createOutArgs() const
 {
   EpetraExt::ModelEvaluator::OutArgsSetup outArgs;
-  outArgs.setModelEvalDescription("QCAD Solver Model Evaluator Description");
+  outArgs.setModelEvalDescription("QCAD Solver Multipurpose Model Evaluator");
   // Ng is 1 bigger then model-Ng so that the solution vector can be an outarg
   outArgs.set_Np_Ng(num_p, num_g+1);
 
-  //Derivative info - todo later. Erik talk w/ ANDY
-  /*EpetraExt::ModelEvaluator::OutArgs model_outargs = model->createOutArgs();
-  for (int i=0; i<num_g; i++) {
-    for (int j=0; j<num_p; j++) {
-      
-      //TODO - check if param j and response i have simple relationships to 
-      // the *same* underlying albany app, in which case derivative info is available...
-      if (!model_outargs.supports(OUT_ARG_DgDp, i, j).none())
-	outArgs.setSupports(OUT_ARG_DgDp, i, j, 
-			    DerivativeSupport(DERIV_MV_BY_COL));
-  */
+  bool bSupportDpDg = true;  // all sub-solvers must support DpDg for QCAD::Solver to
+  std::map<std::string, SolverSubSolver>::const_iterator it;
+  for(it = subSolvers.begin(); it != subSolvers.end(); ++it) {
+    EpetraExt::ModelEvaluator::OutArgs model_outargs = (it->second.model)->createOutArgs();
+    if( model_outargs.supports(OUT_ARG_DgDp, 0, 0).none() ) { //just test if p=0, g=0 DgDp is supported
+      bSupportDpDg = false;
+      break;
+    }
+  }
+
+  //Derivative info 
+  if(bSupportDpDg) {
+    for (int i=0; i<num_g; i++) {
+      for (int j=0; j<num_p; j++)
+	outArgs.setSupports(OUT_ARG_DgDp, i, j, DerivativeSupport(DERIV_MV_BY_COL));
+    }
+  }
 
   return outArgs;
 }
@@ -275,7 +281,7 @@ QCAD::Solver::evalModel(const InArgs& inArgs,
 
   // update sub-solver parameters using the main solver's parameter values
   Teuchos::RCP<const Epetra_Vector> p = inArgs.get_p(0); //only use *first* param vector
-  std::vector<Teuchos::RCP<QCAD::SolverParamFn> >::const_iterator pit; //XXX const??
+  std::vector<Teuchos::RCP<QCAD::SolverParamFn> >::const_iterator pit;
   for(std::size_t i=0; i<nParameters; i++) {
     for(pit = paramFnVecs[i].begin(); pit != paramFnVecs[i].end(); pit++) {
       (*pit)->fillSubSolverParams((*p)[i], subSolvers);
@@ -303,11 +309,16 @@ QCAD::Solver::evalModel(const InArgs& inArgs,
 
   // update main solver's responses using sub-solver response values
   Teuchos::RCP<Epetra_Vector> g = outArgs.get_g(0); //only use *first* response vector
-  std::vector<Teuchos::RCP<QCAD::SolverResponseFn> >::const_iterator rit;
+  Teuchos::RCP<Epetra_MultiVector> dgdp = Teuchos::null;
+
+  if(!outArgs.supports(OUT_ARG_DgDp, 0, 0).none()) 
+    dgdp = outArgs.get_DgDp(0,0).getMultiVector();
+
   int offset = 0;
+  std::vector<Teuchos::RCP<QCAD::SolverResponseFn> >::const_iterator rit;
 
   for(rit = responseFns.begin(); rit != responseFns.end(); rit++) {
-    (*rit)->fillSolverResponses( *g, offset, subSolvers);
+    (*rit)->fillSolverResponses( *g, dgdp, offset, subSolvers, paramFnVecs);
     offset += (*rit)->getNumDoubles();
   }
 
@@ -316,6 +327,13 @@ QCAD::Solver::evalModel(const InArgs& inArgs,
     for(int i=0; i< g->MyLength(); i++)
       *out << "  Response " << i << " = " << (*g)[i] << endl;
     *out << "END QCAD Solver Responses" << endl;
+
+    //Seems to be a problem with print and MPI calls...
+    /*if(!outArgs.supports(OUT_ARG_DgDp, 0, 0).none()) {
+      *out << "BEGIN QCAD Solver Sensitivities:" << endl;
+      dgdp->Print(*out);
+      *out << "END QCAD Solver Sensitivities" << endl;
+      }*/
   }
 }
 
@@ -630,6 +648,24 @@ getInitialParam(const std::map<std::string, QCAD::SolverSubSolver>& subSolvers) 
   return initVal;
 }
 
+double QCAD::SolverParamFn::
+getFilterScaling() const
+{
+  double scaling = 1.0;
+
+  std::vector< std::vector<std::string> >::const_iterator fit;
+  for(fit = filters.end(); fit != filters.begin(); --fit) {
+
+    //perform INVERSE function operation to back out initial value
+    std::string fnName = (*fit)[0];
+    if( fnName == "scale" ) {
+      TEUCHOS_TEST_FOR_EXCEPT( fit->size() != 1+1 ); // "scale" should have 1 parameter
+      scaling *= atof( (*fit)[1].c_str() );
+    }
+  }
+  return scaling;
+}
+
 
 
 // Response Function object
@@ -705,72 +741,206 @@ QCAD::SolverResponseFn::SolverResponseFn(const std::string& fnString,
   else if( fnName == "nop") {
     numDoubles = nParams; 
   }
+  else if( fnName == "DgDp") {  //params = subSolverName, gIndex, pIndex
+    TEUCHOS_TEST_FOR_EXCEPT(nParams != 3);
+    numDoubles = 3; 
+  }
   else TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
      "Unknown function " << fnName << " for QCAD solver response." << std::endl);
 
 }
 
 
-void QCAD::SolverResponseFn::fillSolverResponses(Epetra_Vector& g, int offset,
-	   const std::map<std::string, QCAD::SolverSubSolver>& subSolvers) const
+void QCAD::SolverResponseFn::fillSolverResponses(Epetra_Vector& g, Teuchos::RCP<Epetra_MultiVector>& dgdp, int offset,
+				 const std::map<std::string, QCAD::SolverSubSolver>& subSolvers,
+				 const std::vector<std::vector<Teuchos::RCP<QCAD::SolverParamFn> > >& paramFnVecs) const
 {
-  //Collect parameters
-  std::vector< double > pvals; //paramter values
-  std::vector< ArrayRef >::const_iterator pit;
-  for(pit = params.begin(); pit != params.end(); ++pit) {
-    
-    if( pit->indices.size() == 0 )
-      pvals.push_back( atof(pit->name.c_str()) ); //if no indices, "array name" is a double param value
+  std::size_t nParameters = paramFnVecs.size();
 
-    else {
-      std::vector<int>::const_iterator it;
-      Teuchos::RCP<Epetra_Vector> sub_g = 
-	(subSolvers.find(pit->name)->second).responses_out->get_g(0); // only use first g vector
-    
-      for(it = pit->indices.begin(); it != pit->indices.end(); ++it)
-	pvals.push_back( (*sub_g)[ *it ]);
+  //Note: for now assume vectors use a local map (later fix using import to local map)
+  TEUCHOS_TEST_FOR_EXCEPTION(g.DistributedGlobal(), Teuchos::Exceptions::InvalidParameter,
+			       "Error! Solvers's g response vector is distributed.  No implementation for this yet."
+			       << std::endl);
+  if(dgdp != Teuchos::null)
+    TEUCHOS_TEST_FOR_EXCEPTION(dgdp->DistributedGlobal(), Teuchos::Exceptions::InvalidParameter,
+			       "Error! Solvers's DgDp multivector is distributed.  No implementation for this yet."
+			       << std::endl);
+
+  //Collect values and derivatives (wrt parameters) of function arguments
+  std::vector< double > arg_vals; // argument values
+  std::vector< std::vector<double> > arg_DgDps; // derivs of arguments (w/possibly mulitple parts) wrt params    
+
+  // Note: arg_DgDps is transposed from Multivector dgdp objects:  
+  //   arg_DgDps[ responseIndex ][ paramIndex ]  where dgdp_MultiVector(vectorIndex=paramIndex) [ rowIndex=responseIndex ] 
+
+  std::vector< ArrayRef >::const_iterator arg_it;
+  std::string dgdpName;
+
+  //Note "params" == arguments to response function
+  for(arg_it = params.begin(); arg_it != params.end(); ++arg_it) {
+
+    if( fnName == "DgDp" && arg_it == params.begin() ) {  //special: string as first parameter to dgdp function
+      dgdpName = arg_it->name; continue;
     }
-  }
-  
-  std::size_t nParams = pvals.size();
+
+    if( arg_it->indices.size() == 0 ){     //if no indices, "array name" is a double param value
+
+      //single response with double value and zero deriviative  
+      arg_vals.push_back( atof(arg_it->name.c_str()) ); 
+
+      if(dgdp != Teuchos::null) {
+	std::vector<double> dgdp_accum(nParameters,0.0);
+	arg_DgDps.push_back( dgdp_accum );
+      }
+    }
+    else {  // indices => this argument is of form subSolverName[possiblyCompoundIndex]
+
+      std::string solverName = arg_it->name;
+      const QCAD::SolverSubSolver& solver = subSolvers.find(solverName)->second;
+
+      Teuchos::RCP<Epetra_Vector> sub_g = 
+	solver.responses_out->get_g(0); // only use first g vector
+
+      Teuchos::RCP<Epetra_MultiVector> sub_dgdp;
+      if(dgdp != Teuchos::null)
+	 sub_dgdp = solver.responses_out->get_DgDp(0,0).getMultiVector(); // only use first g & p vectors
+      
+      // for each index (i.e. double response value) 
+      std::vector<int>::const_iterator it; int iIndx;
+      for(it = arg_it->indices.begin(), iIndx=0; it != arg_it->indices.end(); ++it, ++iIndx) {
+	int gIndex = *it;
+	arg_vals.push_back( (*sub_g)[ gIndex ]); // append response value
+	
+	// append response derivative wrt to each parameter
+	if(dgdp != Teuchos::null) {
+	  std::vector<double> dgdp_accum(nParameters,0.0);
+	  for(std::size_t i=0; i<nParameters; i++) {
+	    const std::vector<Teuchos::RCP<QCAD::SolverParamFn> >& paramFnVec = paramFnVecs[i];
+	    for(std::size_t j=0; j<paramFnVec.size(); j++) {
+	      const QCAD::SolverParamFn& paramFn = *(paramFnVec[j]);
+	      
+	      std::string paramTargetName = paramFn.getTargetName();
+	      const std::vector<int>& paramTargetIndices = paramFn.getTargetIndices();
+	      double scaling = paramFn.getFilterScaling(); // Later: something more general?
+	      
+	      if(paramTargetName != solverName) continue;	
+	      
+	      //for each index of the jth element of the ith parameter
+	      std::vector<int>::const_iterator vit;
+	      for(vit = paramTargetIndices.begin(); vit != paramTargetIndices.end(); ++vit)
+		dgdp_accum[ i ] += (*((*sub_dgdp)( *vit )))[ gIndex ] * scaling;
+	    }
+	  }
+	  arg_DgDps.push_back( dgdp_accum );
+	}
+      }
+    }
+  } //end of loop over arguments
+
+  // Loop (Pseudocode)
+  //for(i=0; i<nParameters; i++) {
+  //  dgdp_vecs[iArgument][ i ] = targetSubSolver.DgDp(0,0)[argument_gIndex][ paramIndices[argumentTargetName][i] ];
+  //}
+
+
+  //! Process functions using arg_vals and arg_DpDgs
+  std::size_t nArgs = arg_vals.size();
 
   // minimum
   if( fnName == "min" ) {
-    g[offset] = (pvals[0] < pvals[1]) ? pvals[0] : pvals[1];
+    int winIndex = (arg_vals[0] <= arg_vals[1]) ? 0 : 1;      
+    g[offset] = arg_vals[winIndex]; //set value
+
+    if(dgdp != Teuchos::null) { //set derivative
+      for(std::size_t i=0; i < arg_DgDps[winIndex].size(); i++) 
+	dgdp->ReplaceGlobalValue(offset, i, arg_DgDps[winIndex][i]);
+    }
   }
 
   // maximum
   else if(fnName == "max") {
-    g[offset] = (pvals[0] >= pvals[1]) ? pvals[0] : pvals[1];
+    int winIndex = (arg_vals[0] >= arg_vals[1]) ? 0 : 1;      
+    g[offset] = arg_vals[winIndex]; //set value
+
+    if(dgdp != Teuchos::null) { //set derivative
+      for(std::size_t i=0; i < arg_DgDps[winIndex].size(); i++) 
+	dgdp->ReplaceGlobalValue(offset, i, arg_DgDps[winIndex][i]);
+    }
   }
 
   // distance btwn 1D, 2D or 3D points (params ordered as (x1,y1,z1,x2,y2,z2) )
   else if( fnName == "dist") { 
-    if(nParams == 2) 
-      g[offset] = abs(pvals[0]-pvals[1]);
-    else if(nParams == 4) 
-      g[offset] = sqrt( pow(pvals[0]-pvals[2],2) + pow(pvals[1]-pvals[3],2));
-    else if(nParams == 6) 
-      g[offset] = sqrt( pow(pvals[0]-pvals[3],2) + 
-			pow(pvals[1]-pvals[4],2) + pow(pvals[2]-pvals[5],2) );
+    if(nArgs == 2) 
+      g[offset] = abs(arg_vals[0]-arg_vals[1]);
+    else if(nArgs == 4) 
+      g[offset] = sqrt( pow(arg_vals[0]-arg_vals[2],2) + pow(arg_vals[1]-arg_vals[3],2));
+    else if(nArgs == 6) 
+      g[offset] = sqrt( pow(arg_vals[0]-arg_vals[3],2) + 
+			pow(arg_vals[1]-arg_vals[4],2) + pow(arg_vals[2]-arg_vals[5],2) );
+
+    if(dgdp != Teuchos::null) {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+			       "Error! No implementation of derivatives for distance function yet." << std::endl);
+    }
   }
 
   // multiplicative scaling
   else if( fnName == "scale") {
-    g[offset] = pvals[0] * pvals[1];
+    g[offset] = arg_vals[0] * arg_vals[1]; //set value
+
+    if(dgdp != Teuchos::null) { //set derivative (muliplication rule)
+      for(std::size_t i=0; i < nParameters; i++) { 
+	// g = f1(p) * f2(p) ==> dgdpi = f1(p) * d(f2)/dpi + d(f1)/dpi * f2(p)
+	dgdp->ReplaceGlobalValue(offset, i, arg_vals[0] * arg_DgDps[1][i] + arg_DgDps[0][i] * arg_vals[1]);
+      }
+    }
   }
 
   // multiplicative scaling
   else if( fnName == "divide") {
-    g[offset] = pvals[0] / pvals[1];
+    g[offset] = arg_vals[0] / arg_vals[1]; //set value
+
+    if(dgdp != Teuchos::null) { //set derivative (quotient rule)
+      for(std::size_t i=0; i < nParameters; i++) { 
+	// g = f1(p) / f2(p)  ==> dgdpi =  [ d(f1)/dpi * f2(p) - f1(p) * d(f2)/dpi ] / f2(p)^2
+	dgdp->ReplaceGlobalValue(offset, i, (arg_DgDps[0][i] * arg_vals[1] - arg_vals[0] * arg_DgDps[1][i]) / pow(arg_vals[1],2) );
+      }
+    }
   }
 
   // no op (but can pass through multiple doubles)
   else if( fnName == "nop") {
-    for(std::size_t i=0; i < nParams; i++)
-      g[offset+i] = pvals[i];
+    for(std::size_t i=0; i < nArgs; i++) {
+      g[offset+i] = arg_vals[i]; //set value
+
+      if(dgdp != Teuchos::null) { //set derivative
+	for(std::size_t k=0; k < arg_DgDps[i].size(); k++) //set derivative
+	  dgdp->ReplaceGlobalValue(offset+i, k, arg_DgDps[i][k]);
+      }
+    }
   }
 
+  // sensitivity element: dgdp[ gIndex, pIndex ]
+  else if( fnName == "DgDp") {
+
+    if(dgdp != Teuchos::null) { //set derivative
+      int gIndex = (int)arg_vals[0], pIndex = (int)arg_vals[1];
+      Teuchos::RCP<Epetra_MultiVector> sub_dgdp = 
+	(subSolvers.find(dgdpName)->second).responses_out->get_DgDp(0,0).getMultiVector(); // only use first g & p vectors
+
+    
+      //Note: this assumes vectors use a local map so [pIndex] element exists on all procs (later fix using import to local map)
+      TEUCHOS_TEST_FOR_EXCEPTION(sub_dgdp->DistributedGlobal(), Teuchos::Exceptions::InvalidParameter,
+				 "Error! sub-solvers's DgDp multivector is distributed.  No implementation for this yet."
+				 << std::endl);
+
+      g[offset] = (*((*sub_dgdp)(gIndex)))[pIndex]; 
+      for(std::size_t k=0; k < nParameters; k++) //set derivative to zero
+	dgdp->ReplaceGlobalValue(offset,k, 0.0); // (no derivatives of derivatives)
+    }
+    else g[offset] = 0.0; // just set response as zero if dgdp isn't supported
+  }
+ 
   else TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 			  "Unknown function " << fnName << " for QCAD solver response." << std::endl);
 }
@@ -833,11 +1003,6 @@ QCAD::SolverSubSolver CreateSubSolver(const std::string xmlfilename,
       !ret.responses_out->supports(EpetraExt::ModelEvaluator::OUT_ARG_DgDp, 0, 0).none();
     
     if (supportsSensitivities) {
-      //*out << "Main: model supports sensitivities, so will request DgDp" << endl;
-      //dgdp = rcp(new Epetra_MultiVector(p1->Map(), g1->GlobalLength() ));
-      //*out << " Num Responses: " << g1->GlobalLength() 
-      //     << ",   Num Parameters: " << p1->GlobalLength() << endl;
-      
       if (p1->GlobalLength() > 0)
         dgdp = rcp(new Epetra_MultiVector(g1->Map(), p1->GlobalLength() ));
       else
