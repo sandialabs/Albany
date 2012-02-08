@@ -129,7 +129,7 @@ public:
 			float p);
 
 	/**
-	 * \briefIterates over the boundary entities of the mesh of (all entities
+	 * \brief Iterates over the boundary entities of the mesh of (all entities
 	 * of rank dimension-1) and checks fracture criterion.
 	 *
 	 * \param map of entity and boolean value is entity open

@@ -844,7 +844,7 @@ namespace LCM {
   ///
   /// Volumetric part of 2nd-order tensor  
   /// \param A tensor
-  /// \return \f$ \frac{1}{3} \tr A I \f$
+  /// \return \f$ \frac{1}{3} \mathrm{tr}\:A I \f$
   ///
   template<typename ScalarT>
   Tensor<ScalarT>
@@ -950,12 +950,12 @@ namespace LCM {
   log_rotation_pi(Tensor<ScalarT> const & R);
 
   /// Gaussian Elimination with partial pivot
-  /// \param matrix where [A b] used to solve A*xvec=b \f$
+  /// \param A
   /// \return \f$ xvec \f$
   ///
   template<typename ScalarT>
   Tensor<ScalarT>
-  gaussian_elimination(Tensor<ScalarT> const & R);
+  gaussian_elimination(Tensor<ScalarT> const & A);
 
   ///
   /// Exponential map of a skew-symmetric tensor
