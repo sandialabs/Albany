@@ -56,6 +56,9 @@ SaddleValueResponseFunction(
   bClimbing      = params.get<bool>("Climbing NEB", true);
   antiKinkFactor = params.get<double>("Anti-Kink Factor", 0.0);
 
+  saddlePt.resize(numDims); saddlePt.fill(0.0);
+  saddlePtWeight = saddlePtVal = returnFieldVal = -1.0; //init to nonzero is important - so doesn't "match" default init
+
   //Beginning target region
   if(params.isParameter("Begin Point")) {
     beginRegionType = "Point";
@@ -469,6 +472,7 @@ doNudgedElasticBand(const double current_time,
       if(imagePts[i].value > imagePts[imax].value) imax = i;
     }
     saddlePt = imagePts[imax].coords;
+    saddlePtWeight = imagePts[imax].weight;
   }
 
   if(debugFilename.length() > 0) fDebug.close();
@@ -492,6 +496,9 @@ fillSaddlePointData(const double current_time,
   //Note: MPI: saddle weight is already summed in evaluator's 
   //   postEvaluate, so no need to do anything here
 
+  returnFieldVal = g[0];
+  saddlePtVal = g[1];
+  
   // Overwrite response indices 2+ with saddle point coordinates
   for(std::size_t i=0; i<numDims; i++) g[2+i] = saddlePt[i]; 
 
@@ -535,14 +542,33 @@ evaluateTangent(const double alpha,
 		Epetra_MultiVector* gx,
 		Epetra_MultiVector* gp)
 {
-  // Evaluate response g
-  if (g != NULL) evaluateResponse(current_time, xdot, x, p, *g);
 
-  if (gx != NULL)
-    gx->PutScalar(0.0);
-  
-  if (gp != NULL)
-    gp->PutScalar(0.0);
+  // Require that g be computed to get tangent info 
+  if(g != NULL) {
+    
+    // HACK: for now do not evaluate response when tangent is requested,
+    //   as it is assumed that evaluateResponse has already been called
+    //   directly or by evaluateGradient.  This prevents repeated calling 
+    //   of evaluateResponse within the dg/dp loop of Albany::ModelEvaluator's
+    //   evalModel(...) function.  matchesCurrentResults(...) would be able to 
+    //   determine if evaluateResponse needs to be run, but 
+    //   Albany::AggregateScalarReponseFunction does not copy from global g 
+    //   to local g so the g parameter passed to this function will always 
+    //   be zeros when used in an aggregate response fn.  Change this?
+
+    // Evaluate response g and run algorithm (if it hasn't run already)
+    //if(!matchesCurrentResults(*g)) 
+    //  evaluateResponse(current_time, xdot, x, p, *g);
+
+    mode = "Fill saddle point";
+    Albany::FieldManagerScalarResponseFunction::evaluateTangent(
+                alpha, beta, current_time, sum_derivs, xdot,
+  	        x, p, deriv_p, Vxdot, Vx, Vp, g, gx, gp);
+  }
+  else {
+    if (gx != NULL) gx->PutScalar(0.0);
+    if (gp != NULL) gp->PutScalar(0.0);
+  }
 }
 
 void
@@ -557,20 +583,23 @@ evaluateGradient(const double current_time,
 		 Epetra_MultiVector* dg_dxdot,
 		 Epetra_MultiVector* dg_dp)
 {
-  // Evaluate response g
-  if (g != NULL) evaluateResponse(current_time, xdot, x, p, *g);
 
-  // Evaluate dg/dx
-  if (dg_dx != NULL)
-    dg_dx->PutScalar(0.0);
+  // Require that g be computed to get gradient info 
+  if(g != NULL) {
 
-  // Evaluate dg/dxdot
-  if (dg_dxdot != NULL)
-    dg_dxdot->PutScalar(0.0);
+    // Evaluate response g and run algorithm (if it hasn't run already)
+    if(!matchesCurrentResults(*g)) 
+      evaluateResponse(current_time, xdot, x, p, *g);
 
-  // Evaluate dg/dp
-  if (dg_dp != NULL)
-    dg_dp->PutScalar(0.0);
+    mode = "Fill saddle point";
+    Albany::FieldManagerScalarResponseFunction::evaluateGradient(
+	   current_time, xdot, x, p, deriv_p, g, dg_dx, dg_dxdot, dg_dp);
+  }
+  else {
+    if (dg_dx != NULL)    dg_dx->PutScalar(0.0);
+    if (dg_dxdot != NULL) dg_dxdot->PutScalar(0.0);
+    if (dg_dp != NULL)    dg_dp->PutScalar(0.0);
+  }
 }
 
 void 
@@ -888,13 +917,41 @@ addImagePointData(const double* p, double value, double* grad)
 
 //Adds and returns the weight of a point relative to the saddle point position.
 double QCAD::SaddleValueResponseFunction::
-getSaddlePointWeight(const double* p)
+getSaddlePointWeight(const double* p) const
 {
   return pointFn( saddlePt.distanceTo(p) );
 }
 
 double QCAD::SaddleValueResponseFunction::
-pointFn(double d) {
+getTotalSaddlePointWeight() const
+{
+  return saddlePtWeight;
+}
+
+const double* QCAD::SaddleValueResponseFunction::
+getSaddlePointPosition() const
+{
+  return saddlePt.data();
+}
+
+bool QCAD::SaddleValueResponseFunction::
+matchesCurrentResults(Epetra_Vector& g) const
+{
+  const double TOL = 1e-8;
+
+  if( fabs(g[0] - returnFieldVal) > TOL || fabs(g[1] - saddlePtVal) > TOL)
+    return false;
+
+  for(std::size_t i=0; i<numDims; i++) {
+    if(  fabs(g[2+i] - saddlePt[i]) > TOL ) return false;
+  }
+
+  return true;
+}
+
+
+double QCAD::SaddleValueResponseFunction::
+pointFn(double d) const {
   const double N = 1.0;
   double val = N*exp(-d*d / (2*imagePtSize*imagePtSize));
   return (val >= 1e-2) ? val : 0.0;
