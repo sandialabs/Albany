@@ -139,7 +139,8 @@ int main(int argc, char *argv[]) {
 	 << "Final value of coupling variables:" << std::endl
 	 << *x_final_local << std::endl;
 
-    status += coupled_slvrfctry.checkTestResults(x_final_local.get(), NULL);
+    status += coupled_slvrfctry.checkTestResults(0, 0, x_final_local.get(), 
+						 NULL);
     *out << "\nNumber of Failed Comparisons: " << status << endl;
   }
 

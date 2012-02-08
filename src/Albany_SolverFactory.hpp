@@ -65,6 +65,8 @@ namespace Albany {
     /** \brief Function that does regression testing. */
     // Probably needs to be moved to another class? AGS
     int checkTestResults(
+      int response_index,
+      int parameter_index,
       const Epetra_Vector* g,
       const Epetra_MultiVector* dgdp,
       const Teuchos::SerialDenseVector<int,double>* drdv = NULL,

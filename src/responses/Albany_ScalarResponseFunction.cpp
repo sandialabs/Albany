@@ -16,6 +16,7 @@
 
 
 #include "Albany_ScalarResponseFunction.hpp"
+#include "Teuchos_TestForException.hpp"
 #include "Epetra_LocalMap.h"
 
 Teuchos::RCP<const Epetra_Map> 
@@ -26,6 +27,17 @@ responseMap() const
   Teuchos::RCP<const Epetra_LocalMap> response_map =
     Teuchos::rcp(new Epetra_LocalMap(num_responses, 0, *comm));
   return response_map;
+}
+
+Teuchos::RCP<Epetra_Operator> 
+Albany::ScalarResponseFunction::
+createGradientOp() const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    true, std::logic_error,
+    "Error!  Albany::ScalarResponseFunction::createGradientOp():  " << 
+    "Operator form of dg/dx is not supported for scalar responses.");
+  return Teuchos::null;
 }
 
 void

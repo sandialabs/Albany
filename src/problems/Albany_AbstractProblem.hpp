@@ -26,7 +26,6 @@
 #include "Epetra_Map.h"
 #include "Epetra_Vector.h"
 
-#include "Albany_AbstractResponseFunction.hpp"
 #include "Albany_StateManager.hpp"
 #include "Albany_StateInfoStruct.hpp" // contains MeshSpecsStuct
 
@@ -90,10 +89,8 @@ namespace Albany {
     //! Build the PDE instantiations, boundary conditions, and initial solution
     //! And construct the evaluators and field managers
     virtual void buildProblem(
-      const Teuchos::RCP<Albany::Application>& app,
       Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
-      StateManager& stateMgr,
-      Teuchos::Array< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses) = 0;
+      StateManager& stateMgr) = 0;
 
     // Build evaluators
     virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> > 

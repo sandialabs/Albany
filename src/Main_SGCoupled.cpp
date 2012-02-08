@@ -169,7 +169,7 @@ int main(int argc, char *argv[]) {
 	 << "Std. Dev.:" << std::endl << *g_std_dev_local << std::endl
 	 << "PCE:" << std::endl << *g_sg_local << std::endl;
 
-    status += coupled_slvrfctry.checkTestResults(NULL, NULL, NULL, 
+    status += coupled_slvrfctry.checkTestResults(0, 0, NULL, NULL, NULL, 
 						 Teuchos::null, g_sg_local,
 						 g_mean_local.get(), 
 						 g_std_dev_local.get());

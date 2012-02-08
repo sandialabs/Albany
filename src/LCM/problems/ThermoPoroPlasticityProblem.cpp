@@ -15,7 +15,6 @@
 \********************************************************************/
 
 #include "ThermoPoroPlasticityProblem.hpp"
-#include "Albany_ResponseFactory.hpp"
 #include "Albany_InitialCondition.hpp"
 
 #include "Intrepid_FieldContainer.hpp"
@@ -63,10 +62,8 @@ Albany::ThermoPoroPlasticityProblem::
 void
 Albany::ThermoPoroPlasticityProblem::
 buildProblem(
-  const Teuchos::RCP<Albany::Application>& app,
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
-  Albany::StateManager& stateMgr,
-  Teuchos::Array< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses)
+  Albany::StateManager& stateMgr)
 {
   /* Construct All Phalanx Evaluators */
   TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
@@ -75,13 +72,6 @@ buildProblem(
   buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, BUILD_RESID_FM, 
 		  Teuchos::null);
   constructDirichletEvaluators(*meshSpecs[0]);
-
-  // Construct responses
-  Teuchos::ParameterList& responseList = params->sublist("Response Functions");
-  ResponseFactory responseFactory(app, Teuchos::rcp(this,false), meshSpecs, 
-				  Teuchos::rcp(&stateMgr,false));
-  responses = responseFactory.createResponseFunctions(responseList);
-
 }
 
 Teuchos::Array<Teuchos::RCP<const PHX::FieldTag> >

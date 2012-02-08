@@ -134,7 +134,7 @@ int main(int argc, char *argv[]) {
 
     //cout << "Final Solution \n" << *xfinal << endl;
 
-    status += slvrfctry.checkTestResults(g1.get(), dgdp.get());
+    status += slvrfctry.checkTestResults(0, 0, g1.get(), dgdp.get());
     *out << "\nNumber of Failed Comparisons: " << status << endl;
 
     // write out the current mesh to an exodus file
@@ -225,7 +225,7 @@ int main(int argc, char *argv[]) {
 
     //cout << "Final Solution \n" << *xfinal << endl;
 
-    status += adjslvrfctry.checkTestResults(adj_g1.get(), adj_dgdp.get());
+    status += adjslvrfctry.checkTestResults(0, 0, adj_g1.get(), adj_dgdp.get());
     *out << "\nNumber of Failed Comparisons: " << status << endl;
   }
 

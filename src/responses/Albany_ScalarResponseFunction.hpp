@@ -92,6 +92,22 @@ namespace Albany {
     //! \name Implementation of AbstractResponseFunction virtual methods
     //@{
 
+    //! Setup response function
+    virtual void setup() {}
+
+    /*! 
+     * \brief Is this response function "scalar" valued, i.e., has a replicated
+     * local response map.
+     */
+    virtual bool isScalarResponse() const { return true; }
+    
+    //! Create operator for gradient
+    /*!
+     * Here we just throw an error.  We could actually support this a coupled
+     * of ways if we wanted to.
+     */
+    virtual Teuchos::RCP<Epetra_Operator> createGradientOp() const;
+
     //! Get the map associate with this response
     virtual Teuchos::RCP<const Epetra_Map> responseMap() const;
 

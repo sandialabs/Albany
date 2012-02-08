@@ -68,6 +68,12 @@ namespace Albany {
     //! Create preconditioner operator
     Teuchos::RCP<EpetraExt::ModelEvaluator::Preconditioner> create_WPrec() const;
 
+    //! Create operator form of dg/dx for distributed responses
+    Teuchos::RCP<Epetra_Operator> create_DgDx_op(int j) const;
+
+    //! Create operator form of dg/dx_dot for distributed responses
+    Teuchos::RCP<Epetra_Operator> create_DgDx_dot_op(int j) const;
+    
     //! Create InArgs
     InArgs createInArgs() const;
 

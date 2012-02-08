@@ -134,9 +134,9 @@ Albany::ModelEvaluator::get_g_map(int l) const
     Teuchos::Exceptions::InvalidParameter,
     std::endl << 
     "Error!  Albany::ModelEvaluator::get_g_map():  " << 
-    "Invalid parameter index l = " << l << std::endl);
+    "Invalid response index l = " << l << std::endl);
 
-  return app->getResponseMap(l);
+  return app->getResponse(l)->responseMap();
 }
 
 Teuchos::RCP<const Teuchos::Array<std::string> >
@@ -194,6 +194,32 @@ Albany::ModelEvaluator::create_WPrec() const
   return Teuchos::rcp(new EpetraExt::ModelEvaluator::Preconditioner(precOp,true));
 }
 
+Teuchos::RCP<Epetra_Operator>
+Albany::ModelEvaluator::create_DgDx_op(int j) const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    j >= app->getNumResponses() || j < 0, 
+    Teuchos::Exceptions::InvalidParameter,
+    std::endl << 
+    "Error!  Albany::ModelEvaluator::create_DgDx_op():  " << 
+    "Invalid response index j = " << j << std::endl);
+  
+  return app->getResponse(j)->createGradientOp();
+}
+
+Teuchos::RCP<Epetra_Operator>
+Albany::ModelEvaluator::create_DgDx_dot_op(int j) const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    j >= app->getNumResponses() || j < 0, 
+    Teuchos::Exceptions::InvalidParameter,
+    std::endl << 
+    "Error!  Albany::ModelEvaluator::create_DgDx_dot_op():  " << 
+    "Invalid response index j = " << j << std::endl);
+  
+  return app->getResponse(j)->createGradientOp();
+}
+
 EpetraExt::ModelEvaluator::InArgs
 Albany::ModelEvaluator::createInArgs() const
 {
@@ -242,7 +268,7 @@ Albany::ModelEvaluator::createOutArgs() const
   for (int i=0; i<param_names.size(); i++)
     outArgs.setSupports(OUT_ARG_DfDp, i, DerivativeSupport(DERIV_MV_BY_COL));
   for (int i=0; i<n_g; i++) {
-    if (!app->isResponseDistributed(i)) {
+    if (app->getResponse(i)->isScalarResponse()) {
       outArgs.setSupports(OUT_ARG_DgDx, i, 
 			  DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
       outArgs.setSupports(OUT_ARG_DgDx_dot, i, 
@@ -267,7 +293,7 @@ Albany::ModelEvaluator::createOutArgs() const
     outArgs.setSupports(OUT_ARG_DfDp_sg, i, DerivativeSupport(DERIV_MV_BY_COL));
   for (int i=0; i<n_g; i++) {
     outArgs.setSupports(OUT_ARG_g_sg, i, true);
-    if (!app->isResponseDistributed(i)) {
+    if (app->getResponse(i)->isScalarResponse()) {
       outArgs.setSupports(OUT_ARG_DgDx_sg, i, 
 			  DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
       outArgs.setSupports(OUT_ARG_DgDx_dot_sg, i, 
@@ -291,7 +317,7 @@ Albany::ModelEvaluator::createOutArgs() const
     outArgs.setSupports(OUT_ARG_DfDp_mp, i, DerivativeSupport(DERIV_MV_BY_COL));
   for (int i=0; i<n_g; i++) {
     outArgs.setSupports(OUT_ARG_g_mp, i, true);
-    if (!app->isResponseDistributed(i)) {
+    if (app->getResponse(i)->isScalarResponse()) {
       outArgs.setSupports(OUT_ARG_DgDx_mp, i, 
 			  DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
       outArgs.setSupports(OUT_ARG_DgDx_dot_mp, i, 
@@ -540,7 +566,7 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
 
     // Response functions
     for (int i=0; i<outArgs.Ng(); i++) {
-      OutArgs::sg_vector_t g_sg = outArgs.get_g_sg(0);
+      OutArgs::sg_vector_t g_sg = outArgs.get_g_sg(i);
       SGDerivative dgdx_sg = outArgs.get_DgDx_sg(i);
       SGDerivative dgdxdot_sg = outArgs.get_DgDx_dot_sg(i);
       bool g_sg_computed = false;
@@ -663,9 +689,9 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
 
     // Response functions
     for (int i=0; i<outArgs.Ng(); i++) {
-      mp_vector_t g_mp = outArgs.get_g_mp(0);
-      MPDerivative dgdx_mp = outArgs.get_DgDx_mp(0);
-      MPDerivative dgdxdot_mp = outArgs.get_DgDx_dot_mp(0);
+      mp_vector_t g_mp = outArgs.get_g_mp(i);
+      MPDerivative dgdx_mp = outArgs.get_DgDx_mp(i);
+      MPDerivative dgdxdot_mp = outArgs.get_DgDx_dot_mp(i);
       bool g_mp_computed = false;
 
       // dg/dx, dg/dxdot

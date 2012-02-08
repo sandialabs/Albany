@@ -24,6 +24,7 @@
 #include "Albany_AggregateScalarResponseFunction.hpp"
 #include "Albany_FieldManagerScalarResponseFunction.hpp"
 #include "Albany_SolutionResponseFunction.hpp"
+#include "Albany_KLResponseFunction.hpp"
 #include "QCAD_SaddleValueResponseFunction.hpp"
 
 #include "Teuchos_TestForException.hpp"
@@ -83,10 +84,17 @@ createResponseFunction(
 
     }
     scalar_responses.resize(aggregated_responses.size());
-    for (int i=0; i<aggregated_responses.size(); i++)
+    for (int i=0; i<aggregated_responses.size(); i++) {
+      TEUCHOS_TEST_FOR_EXCEPTION(
+	aggregated_responses[i]->isScalarResponse() != true, std::logic_error,
+	"Response function " << i << " is not a scalar response function." << 
+	std::endl << 
+	"The aggregated response can only aggregate scalar response " << 
+	"functions!");
       scalar_responses[i] = 
 	Teuchos::rcp_dynamic_cast<ScalarResponseFunction>(
 	  aggregated_responses[i]);
+    }
     responses.push_back(
       rcp(new Albany::AggregateScalarResponseFunction(comm, scalar_responses)));
   }
@@ -107,6 +115,16 @@ createResponseFunction(
   else if (name == "Solution") {
     responses.push_back(
       rcp(new Albany::SolutionResponseFunction(app, responseParams)));
+  }
+
+  else if (name == "KL") {
+    Array< RCP<AbstractResponseFunction> > base_responses;
+    std::string name = responseParams.get<std::string>("Response");
+    createResponseFunction(name, responseParams.sublist("ResponseParams"),
+			   base_responses);
+    for (int i=0; i<base_responses.size(); i++)
+      responses.push_back(
+	rcp(new Albany::KLResponseFunction(base_responses[i], responseParams)));
   }
 
   else if (name == "Saddle Value") {

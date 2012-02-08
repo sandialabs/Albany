@@ -49,10 +49,8 @@ namespace Albany {
 
     //! Build the PDE instantiations, boundary conditions, and initial solution
     virtual void buildProblem(
-      const Teuchos::RCP<Albany::Application>& app,
       Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
-      StateManager& stateMgr,
-      Teuchos::Array< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
+      StateManager& stateMgr);
 
     // Build evaluators
     virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >

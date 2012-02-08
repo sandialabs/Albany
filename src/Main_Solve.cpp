@@ -78,67 +78,77 @@ int main(int argc, char *argv[]) {
 
     Albany::SolverFactory slvrfctry(xmlfilename, Albany_MPI_COMM_WORLD);
     RCP<Epetra_Comm> appComm = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
-    RCP<EpetraExt::ModelEvaluator> App = slvrfctry.create(appComm, appComm);
+    RCP<Albany::Application> app;
+    RCP<EpetraExt::ModelEvaluator> solver = 
+      slvrfctry.createAndGetAlbanyApp(app, appComm, appComm);
 
-    EpetraExt::ModelEvaluator::InArgs params_in = App->createInArgs();
-    EpetraExt::ModelEvaluator::OutArgs responses_out = App->createOutArgs();
+    EpetraExt::ModelEvaluator::InArgs params_in = solver->createInArgs();
+    EpetraExt::ModelEvaluator::OutArgs responses_out = solver->createOutArgs();
     int num_p = params_in.Np();     // Number of *vectors* of parameters
     int num_g = responses_out.Ng(); // Number of *vectors* of responses
 
-    RCP<Epetra_Vector> p1;
-    RCP<Epetra_Vector> g1;
-
-    if (num_p > 0)
-      p1 = rcp(new Epetra_Vector(*(App->get_p_init(0))));
-    if (num_g > 1)
-      g1 = rcp(new Epetra_Vector(*(App->get_g_map(0))));
-
-    RCP<Epetra_Vector> xfinal =
-      rcp(new Epetra_Vector(*(App->get_g_map(num_g-1)),true) );
-
-    // Sensitivity Analysis stuff
-    bool supportsSensitivities = false;
-    RCP<Epetra_MultiVector> dgdp;
-
-    if (num_p>0 && num_g>1) {
-      supportsSensitivities =
-        !responses_out.supports(EpetraExt::ModelEvaluator::OUT_ARG_DgDp, 0, 0).none();
-
-      if (supportsSensitivities) {
-        *out << "Main: model supports sensitivities, so will request DgDp" << endl;
-        //dgdp = rcp(new Epetra_MultiVector(p1->Map(), g1->GlobalLength() ));
-        *out << " Num Responses: " << g1->GlobalLength() 
-             << ",   Num Parameters: " << p1->GlobalLength() << endl;
-
-        if (p1->GlobalLength() > 0)
-          dgdp = rcp(new Epetra_MultiVector(g1->Map(), p1->GlobalLength() ));
-        else
-          supportsSensitivities = false;
-      }
+    // Set input parameters
+    for (int i=0; i<num_p; i++) {
+      RCP<Epetra_Vector> p = rcp(new Epetra_Vector(*(solver->get_p_init(i))));
+       params_in.set_p(i,p);
     }
 
-    // Evaluate first model
-    if (num_p > 0)  params_in.set_p(0,p1);
-    if (num_g > 1)  responses_out.set_g(0,g1);
-    responses_out.set_g(num_g-1,xfinal);
+    // Set output responses and derivatives
+    for (int i=0; i<num_g-1; i++) {
+      RCP<const Epetra_Map> g_map = solver->get_g_map(i);
+      RCP<Epetra_Vector> g = rcp(new Epetra_Vector(*g_map));
+      responses_out.set_g(i,g);
 
-    if (supportsSensitivities) responses_out.set_DgDp(0,0,dgdp);
+      for (int j=0; j<num_p; j++) {
+	RCP<const Epetra_Map> p_map = solver->get_p_map(j);
+	if (!responses_out.supports(EpetraExt::ModelEvaluator::OUT_ARG_DgDp, 
+				    i, j).none()) {
+	  *out << "Main: model supports sensitivities, so will request DgDp" << endl;
+	  *out << " Num Responses: " << g_map->NumGlobalElements()
+	       << ",   Num Parameters: " << p_map->NumGlobalElements() << endl;
+
+	  if (p_map->NumGlobalElements() > 0) {
+	    RCP<Epetra_MultiVector> dgdp = 
+	      rcp(new Epetra_MultiVector(*g_map, p_map->NumGlobalElements()));
+	    responses_out.set_DgDp(i,j,dgdp);
+	  }
+	}
+      }
+    }
+    RCP<Epetra_Vector> xfinal =
+      rcp(new Epetra_Vector(*(solver->get_g_map(num_g-1)),true) );
+    responses_out.set_g(num_g-1,xfinal);
+    
     setupTimer.~TimeMonitor();
-    App->evalModel(params_in, responses_out);
+    solver->evalModel(params_in, responses_out);
 
     *out << "Finished eval of first model: Params, Responses " 
          << std::setprecision(12) << endl;
     
-    if (num_p>0) p1->Print(*out << "\nParameters!\n");
-    if (num_g>1) g1->Print(*out << "\nResponses!\n");
-    if (supportsSensitivities)
-      dgdp->Print(*out << "\nSensitivities!\n");
+    for (int i=0; i<num_p; i++)
+      params_in.get_p(i)->Print(*out << "\nParameter vector " << i << ":\n");
+
+    for (int i=0; i<num_g-1; i++) {
+      RCP<Epetra_Vector> g = responses_out.get_g(i);
+      bool is_scalar = true;
+      if (app != Teuchos::null)
+	is_scalar = app->getResponse(i)->isScalarResponse();
+      if (is_scalar) {
+	g->Print(*out << "\nResponse vector " << i << ":\n");
+	for (int j=0; j<num_p; j++) {
+	  if (!responses_out.supports(EpetraExt::ModelEvaluator::OUT_ARG_DgDp, 
+				      i, j).none()) {
+	    RCP<Epetra_MultiVector> dgdp = 
+	      responses_out.get_DgDp(i,j).getMultiVector();
+	    if (dgdp != Teuchos::null)
+	      dgdp->Print(*out << "\nSensitivities (" << i << "," << j << "):!\n");
+	    status += slvrfctry.checkTestResults(i, j, g.get(), dgdp.get());
+	  }
+	}
+      }
+    }
     double mnv; xfinal->MeanValue(&mnv);
     *out << "Main_Solve: MeanValue of final solution " << mnv << endl;
-
-    //cout << "Final Solution \n" << *xfinal << endl;
-
-    status += slvrfctry.checkTestResults(g1.get(), dgdp.get());
     *out << "\nNumber of Failed Comparisons: " << status << endl;
   }
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);

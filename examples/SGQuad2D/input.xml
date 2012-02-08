@@ -30,11 +30,18 @@
 		 value="Thermal Conductivity KL Random Variable 1"/>
     </ParameterList>
     <ParameterList name="Response Functions">
-      <Parameter name="Number" type="int" value="1"/>
-      <Parameter name="Response 0" type="string" value="PHAL Field Integral"/>
-      <ParameterList name="ResponseParams 0">
-        <Parameter name="Field Name" type="string" value="Temperature"/>
-     </ParameterList>
+      <Parameter name="Number of Response Vectors" type="int" value="2"/>
+      <ParameterList name="Response Vector 0">
+	<Parameter name="Name" type="string" value="Aggregated"/>
+	<Parameter name="Number" type="int" value="1"/>
+	<Parameter name="Response 0" type="string" value="PHAL Field Integral"/>
+	<ParameterList name="ResponseParams 0">
+	  <Parameter name="Field Name" type="string" value="Temperature"/>
+	</ParameterList>
+      </ParameterList>
+      <ParameterList name="Response Vector 1">
+	<Parameter name="Name" type="string" value="Solution"/>
+      </ParameterList>
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">

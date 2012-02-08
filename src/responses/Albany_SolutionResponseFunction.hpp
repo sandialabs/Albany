@@ -44,6 +44,9 @@ namespace Albany {
     //! Destructor
     virtual ~SolutionResponseFunction();
 
+    //! Setup response function
+    virtual void setup();
+
     //! Get the map associate with this response
     virtual Teuchos::RCP<const Epetra_Map> responseMap() const;
 
@@ -213,6 +216,12 @@ namespace Albany {
 		      Epetra_MultiVector& x_culled) const;
 
   protected:
+
+    //! Application to get global maps
+    Teuchos::RCP<Albany::Application> application;
+
+    //! Mask for DOFs to keep
+    Teuchos::Array<int> keepDOF;
 
     //! Epetra map for response
     Teuchos::RCP<const Epetra_Map> culled_map;

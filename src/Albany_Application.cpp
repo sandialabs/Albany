@@ -18,6 +18,7 @@
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemFactory.hpp"
 #include "Albany_DiscretizationFactory.hpp"
+#include "Albany_ResponseFactory.hpp"
 #include "Albany_InitialCondition.hpp"
 #include "Epetra_LocalMap.h"
 #include "Stokhos_OrthogPolyBasis.hpp"
@@ -107,7 +108,19 @@ Application(const RCP<const Epetra_Comm>& comm_,
   ArrayRCP<RCP<Albany::MeshSpecsStruct> > meshSpecs = 
     discFactory.createMeshSpecs();
 
-  problem->buildProblem(rcp(this,false), meshSpecs, stateMgr, responses);
+  problem->buildProblem(meshSpecs, stateMgr);
+
+  // Construct responses
+  // This really needs to happen after the discretization is created for
+  // distributed responses, but currently it can't be moved because there
+  // are responses that setup states, which has to happen before the 
+  // discreatization is created.  We will delay setup of the distributed
+  // responses to deal with this temporarily.
+  Teuchos::ParameterList& responseList = 
+    problemParams->sublist("Response Functions");
+  ResponseFactory responseFactory(Teuchos::rcp(this,false), problem, meshSpecs, 
+				  Teuchos::rcp(&stateMgr,false));
+  responses = responseFactory.createResponseFunctions(responseList);
 
   // Build state field manager
   sfm.resize(meshSpecs.size());
@@ -167,9 +180,13 @@ Application(const RCP<const Epetra_Comm>& comm_,
     initial_x->Export(*overlapped_x, *exporter, Insert);
     initial_x_dot->Export(*overlapped_xdot, *exporter, Insert);
   }
-  
+
   // Now that space is allocated in STK for state fields, initialize states
   stateMgr.setStateArrays(disc);
+
+  // Now setup response functions (see note above)
+  for (int i=0; i<responses.size(); i++)
+    responses[i]->setup();
 
   // Set up memory for workset
 
@@ -292,20 +309,11 @@ getNumResponses() const {
   return responses.size();
 }
 
-RCP<const Epetra_Map>
+Teuchos::RCP<Albany::AbstractResponseFunction>
 Albany::Application::
-getResponseMap(int i) const
+getResponse(int i) const
 {
-  return responses[i]->responseMap();
-}
-
-bool
-Albany::Application::
-isResponseDistributed(int i) const
-{
-  RCP<ScalarResponseFunction> scalar_res = 
-    Teuchos::rcp_dynamic_cast<ScalarResponseFunction>(responses[i]);
-  return (scalar_res == Teuchos::null);
+  return responses[i];
 }
 
 bool

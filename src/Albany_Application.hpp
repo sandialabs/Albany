@@ -35,6 +35,7 @@
 
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_AbstractProblem.hpp"
+#include "Albany_AbstractResponseFunction.hpp"
 #include "Albany_StateManager.hpp"
 
 #ifdef ALBANY_CUTR
@@ -103,11 +104,8 @@ namespace Albany {
     //! Get number of responses
     int getNumResponses() const;
 
-    //! Get response map
-    Teuchos::RCP<const Epetra_Map> getResponseMap(int i) const;
-
-    //! Return whether response is distributed
-    bool isResponseDistributed(int i) const;
+    //! Get response function
+    Teuchos::RCP<AbstractResponseFunction> getResponse(int i) const;
 
     //! Return whether problem wants to use its own preconditioner
     bool suppliesPreconditioner() const;

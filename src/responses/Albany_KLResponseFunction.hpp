@@ -18,7 +18,7 @@
 #ifndef ALBANY_KL_RESPONSE_FUNCTION_HPP
 #define ALBANY_KL_RESPONSE_FUNCTION_HPP
 
-#include "Albany_DistributedResponseFunction.hpp"
+#include "Albany_AbstractResponseFunction.hpp"
 #include "Albany_Application.hpp"
 
 #include "Teuchos_ParameterList.hpp"
@@ -36,21 +36,30 @@ namespace Albany {
    * 
    * It only defines the SG methods.
    */
-  class KLResponseFunction : public DistributedResponseFunction {
+  class KLResponseFunction : public AbstractResponseFunction {
   public:
   
     //! Default constructor
     KLResponseFunction(
-      const Teuchos::RCP<DistributedResponseFunction>& response,
+      const Teuchos::RCP<AbstractResponseFunction>& response,
       Teuchos::ParameterList& responseParams);
 
     //! Destructor
     virtual ~KLResponseFunction();
 
+    //! Setup response function
+    virtual void setup() { response->setup(); }
+
     //! Get the map associate with this response
     virtual Teuchos::RCP<const Epetra_Map> responseMap() const;
 
-    //! Create operator for gradient
+    /*! 
+     * \brief Is this response function "scalar" valued, i.e., has a replicated
+     * local response map.
+     */
+    virtual bool isScalarResponse() const;
+
+    //! Create operator for gradient (e.g., dg/dx)
     virtual Teuchos::RCP<Epetra_Operator> createGradientOp() const;
 
     //! \name Deterministic evaluation functions
@@ -82,16 +91,16 @@ namespace Albany {
       Epetra_MultiVector* gp);
 
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
-    virtual void evaluateGradient(
+    virtual void evaluateDerivative(
       const double current_time,
       const Epetra_Vector* xdot,
       const Epetra_Vector& x,
       const Teuchos::Array<ParamVec>& p,
       ParamVec* deriv_p,
       Epetra_Vector* g,
-      Epetra_Operator* dg_dx,
-      Epetra_Operator* dg_dxdot,
-      Epetra_MultiVector* dg_dp);
+      const EpetraExt::ModelEvaluator::Derivative& dg_dx,
+      const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
+      const EpetraExt::ModelEvaluator::Derivative& dg_dp);
 
     //@}
 
@@ -135,7 +144,7 @@ namespace Albany {
       Stokhos::EpetraMultiVectorOrthogPoly* sg_gp);
 
     //! Evaluate stochastic Galerkin derivative
-    virtual void evaluateSGGradient(
+    virtual void evaluateSGDerivative(
       const double current_time,
       const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
       const Stokhos::EpetraVectorOrthogPoly& sg_x,
@@ -144,9 +153,9 @@ namespace Albany {
       const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
       ParamVec* deriv_p,
       Stokhos::EpetraVectorOrthogPoly* sg_g,
-      Stokhos::EpetraOperatorOrthogPoly* sg_dg_dx,
-      Stokhos::EpetraOperatorOrthogPoly* sg_dg_dxdot,
-      Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dp);
+      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dx,
+      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdot,
+      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dp);
 
     //@}
 
@@ -183,7 +192,7 @@ namespace Albany {
       Stokhos::ProductEpetraMultiVector* mp_gp);
 
     //! Evaluate stochastic Galerkin derivative
-    virtual void evaluateMPGradient(
+    virtual void evaluateMPDerivative(
       const double current_time,
       const Stokhos::ProductEpetraVector* mp_xdot,
       const Stokhos::ProductEpetraVector& mp_x,
@@ -192,9 +201,9 @@ namespace Albany {
       const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
       ParamVec* deriv_p,
       Stokhos::ProductEpetraVector* mp_g,
-      Stokhos::ProductEpetraOperator* mp_dg_dx,
-      Stokhos::ProductEpetraOperator* mp_dg_dxdot,
-      Stokhos::ProductEpetraMultiVector* mp_dg_dp);
+      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dx,
+      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdot,
+      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dp);
 
     //@}
 
@@ -216,7 +225,7 @@ namespace Albany {
   protected:
 
     //! Response function we work with
-    Teuchos::RCP<DistributedResponseFunction> response;
+    Teuchos::RCP<AbstractResponseFunction> response;
 
     //! Response parameters
     Teuchos::ParameterList responseParams;

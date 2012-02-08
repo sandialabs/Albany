@@ -52,10 +52,8 @@ namespace QCAD {
 
     //! Build the PDE instantiations, boundary conditions, and initial solution
     virtual void buildProblem(
-      const Teuchos::RCP<Albany::Application>& app,
       Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
-      Albany::StateManager& stateMgr,
-      Teuchos::Array< Teuchos::RCP<Albany::AbstractResponseFunction> >& responses);
+      Albany::StateManager& stateMgr);
 
     // Build evaluators
     virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >

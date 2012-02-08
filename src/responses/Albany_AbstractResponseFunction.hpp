@@ -48,8 +48,20 @@ namespace Albany {
     //! Destructor
     virtual ~AbstractResponseFunction() {};
 
+    //! Setup response function
+    virtual void setup() = 0;
+
     //! Get the map associate with this response
     virtual Teuchos::RCP<const Epetra_Map> responseMap() const = 0;
+
+    /*! 
+     * \brief Is this response function "scalar" valued, i.e., has a replicated
+     * local response map.
+     */
+    virtual bool isScalarResponse() const = 0;
+
+    //! Create operator for gradient (e.g., dg/dx)
+    virtual Teuchos::RCP<Epetra_Operator> createGradientOp() const = 0;
 
     //! \name Deterministic evaluation functions
     //@{

@@ -189,7 +189,7 @@ int main(int argc, char *argv[]) {
 	// Print mean and standard deviation      
 	Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> g_sg = 
 	  sg_outArgs.get_g_sg(i);
-	if (g_sg != Teuchos::null) {
+	if (g_sg != Teuchos::null && app->getResponse(i)->isScalarResponse()) {
 	  Epetra_Vector g_mean(*(sg_solver->get_g_map(i)));
 	  Epetra_Vector g_std_dev(*(sg_solver->get_g_map(i)));
 	  g_sg->computeMean(g_mean);
@@ -213,7 +213,7 @@ int main(int argc, char *argv[]) {
 	    }
 	  }
 
-	  status += sg_slvrfctry.checkTestResults(NULL, NULL, NULL, 
+	  status += sg_slvrfctry.checkTestResults(i, 0, NULL, NULL, NULL, 
 						  Teuchos::null, g_sg,
 						  &g_mean, &g_std_dev);
 	}

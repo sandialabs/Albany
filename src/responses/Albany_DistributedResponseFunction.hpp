@@ -40,9 +40,6 @@ namespace Albany {
     //! Destructor
     virtual ~DistributedResponseFunction() {};
 
-    //! Create operator for gradient
-    virtual Teuchos::RCP<Epetra_Operator> createGradientOp() const = 0;
-
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
     virtual void evaluateGradient(
       const double current_time,
@@ -85,6 +82,12 @@ namespace Albany {
 
     //! \name Implementation of AbstractResponseFunction virtual methods
     //@{
+
+    /*! 
+     * \brief Is this response function "scalar" valued, i.e., has a replicated
+     * local response map.
+     */
+    virtual bool isScalarResponse() const { return false; }
 
     //! Evaluate derivative dg/dx, dg/dxdot, dg/dp
     virtual void evaluateDerivative(

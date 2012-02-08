@@ -22,7 +22,7 @@
 
 Albany::KLResponseFunction::
 KLResponseFunction(
-  const Teuchos::RCP<DistributedResponseFunction>& response_,
+  const Teuchos::RCP<Albany::AbstractResponseFunction>& response_,
   Teuchos::ParameterList& responseParams) :
   response(response_),
   responseParams(responseParams),
@@ -43,11 +43,18 @@ responseMap() const
   return response->responseMap();
 }
 
-Teuchos::RCP<Epetra_Operator>
+Teuchos::RCP<Epetra_Operator> 
 Albany::KLResponseFunction::
 createGradientOp() const
 {
   return response->createGradientOp();
+}
+
+bool
+Albany::KLResponseFunction::
+isScalarResponse() const
+{
+  return response->isScalarResponse();
 }
 
 void
@@ -85,18 +92,18 @@ evaluateTangent(const double alpha,
 
 void
 Albany::KLResponseFunction::
-evaluateGradient(const double current_time,
-		 const Epetra_Vector* xdot,
-		 const Epetra_Vector& x,
-		 const Teuchos::Array<ParamVec>& p,
-		 ParamVec* deriv_p,
-		 Epetra_Vector* g,
-		 Epetra_Operator* dg_dx,
-		 Epetra_Operator* dg_dxdot,
-		 Epetra_MultiVector* dg_dp)
+evaluateDerivative(const double current_time,
+		   const Epetra_Vector* xdot,
+		   const Epetra_Vector& x,
+		   const Teuchos::Array<ParamVec>& p,
+		   ParamVec* deriv_p,
+		   Epetra_Vector* g,
+		   const EpetraExt::ModelEvaluator::Derivative& dg_dx,
+		   const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
+		   const EpetraExt::ModelEvaluator::Derivative& dg_dp)
 {
-  response->evaluateGradient(current_time, xdot, x, p, deriv_p, 
-			     g, dg_dx, dg_dxdot, dg_dp);
+  response->evaluateDerivative(current_time, xdot, x, p, deriv_p, 
+			       g, dg_dx, dg_dxdot, dg_dp);
 }
 
 void
@@ -119,9 +126,14 @@ evaluateSGResponse(const double curr_time,
 		   const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
 		   Stokhos::EpetraVectorOrthogPoly& sg_g)
 {
+  // Compute base response
+  response->evaluateSGResponse(curr_time, sg_xdot, sg_x, p, sg_p_index,
+			       sg_p_vals, sg_g);
+
+  // Compute KL of that response
   Teuchos::Array<double> evals;
   Teuchos::RCP<Epetra_MultiVector> evecs;
-  bool success = computeKL(sg_x, num_kl, evals, evecs);
+  bool success = computeKL(sg_g, num_kl, evals, evecs);
 
   if (!success) 
     *out << "KL Eigensolver did not converge!" << std::endl;
@@ -150,29 +162,39 @@ evaluateSGTangent(const double alpha,
 		  Stokhos::EpetraMultiVectorOrthogPoly* sg_JV,
 		  Stokhos::EpetraMultiVectorOrthogPoly* sg_gp)
 {
+  // Currently we only know how to do KL on response
   response->evaluateSGTangent(alpha, beta, current_time, sum_derivs, 
 			      sg_xdot, sg_x, p, sg_p_index, sg_p_vals, deriv_p, 
 			      Vxdot, Vx, Vp,
 			      sg_g, sg_JV, sg_gp);
+  if (sg_g)
+    evaluateSGResponse(current_time, sg_xdot, sg_x, p, sg_p_index, sg_p_vals, 
+		       *sg_g);
 }
 
 void
 Albany::KLResponseFunction::
-evaluateSGGradient(const double current_time,
-		   const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
-		   const Stokhos::EpetraVectorOrthogPoly& sg_x,
-		   const Teuchos::Array<ParamVec>& p,
-		   const Teuchos::Array<int>& sg_p_index,
-		   const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
-		   ParamVec* deriv_p,
-		   Stokhos::EpetraVectorOrthogPoly* sg_g,
-		   Stokhos::EpetraOperatorOrthogPoly* sg_dg_dx,
-		   Stokhos::EpetraOperatorOrthogPoly* sg_dg_dxdot,
-		   Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dp)
+evaluateSGDerivative(
+  const double current_time,
+  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+  const Stokhos::EpetraVectorOrthogPoly& sg_x,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& sg_p_index,
+  const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+  ParamVec* deriv_p,
+  Stokhos::EpetraVectorOrthogPoly* sg_g,
+  const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dx,
+  const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdot,
+  const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dp)
 {
-  response->evaluateSGGradient(current_time, sg_xdot, sg_x, p, sg_p_index, 
-			       sg_p_vals, deriv_p, 
-			       sg_g, sg_dg_dx, sg_dg_dxdot, sg_dg_dp);
+  // Currently we only know how to do KL on response
+  response->evaluateSGDerivative(current_time, sg_xdot, sg_x, p, sg_p_index, 
+				 sg_p_vals, deriv_p, 
+				 sg_g, sg_dg_dx, sg_dg_dxdot, sg_dg_dp);
+
+  if (sg_g)
+    evaluateSGResponse(current_time, sg_xdot, sg_x, p, sg_p_index, sg_p_vals, 
+		       *sg_g);
 }
 
 void
@@ -217,21 +239,22 @@ evaluateMPTangent(const double alpha,
 
 void
 Albany::KLResponseFunction::
-evaluateMPGradient(const double current_time,
-		   const Stokhos::ProductEpetraVector* mp_xdot,
-		   const Stokhos::ProductEpetraVector& mp_x,
-		   const Teuchos::Array<ParamVec>& p,
-		   const Teuchos::Array<int>& mp_p_index,
-		   const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
-		   ParamVec* deriv_p,
-		   Stokhos::ProductEpetraVector* mp_g,
-		   Stokhos::ProductEpetraOperator* mp_dg_dx,
-		   Stokhos::ProductEpetraOperator* mp_dg_dxdot,
-		   Stokhos::ProductEpetraMultiVector* mp_dg_dp)
+evaluateMPDerivative(
+  const double current_time,
+  const Stokhos::ProductEpetraVector* mp_xdot,
+  const Stokhos::ProductEpetraVector& mp_x,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& mp_p_index,
+  const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+  ParamVec* deriv_p,
+  Stokhos::ProductEpetraVector* mp_g,
+  const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dx,
+  const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdot,
+  const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dp)
 {
-  response->evaluateMPGradient(current_time, mp_xdot, mp_x, p, mp_p_index, 
-			       mp_p_vals, deriv_p, 
-			       mp_g, mp_dg_dx, mp_dg_dxdot, mp_dg_dp);
+  response->evaluateMPDerivative(current_time, mp_xdot, mp_x, p, mp_p_index, 
+				 mp_p_vals, deriv_p, 
+				 mp_g, mp_dg_dx, mp_dg_dxdot, mp_dg_dp);
 }
 
 bool

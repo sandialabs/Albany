@@ -21,13 +21,29 @@
 
 Albany::SolutionResponseFunction::
 SolutionResponseFunction(
-  const Teuchos::RCP<Albany::Application>& application,
-  Teuchos::ParameterList& responseParams)
+  const Teuchos::RCP<Albany::Application>& application_,
+  Teuchos::ParameterList& responseParams) : 
+  application(application_)
 {
-  // Build list of DOFs we want to keep -- currently all of them
+  // Build list of DOFs we want to keep
+  // This should be replaced by DOF names eventually
   int numDOF = application->getProblem()->numEquations();
-  Teuchos::Array<int> keepDOF(numDOF, 1);
+  if (responseParams.isType< Teuchos::Array<int> >("Keep DOF Indices")) {
+    Teuchos::Array<int> dofs = 
+      responseParams.get< Teuchos::Array<int> >("Keep DOF Indices");
+    keepDOF = Teuchos::Array<int>(numDOF, 0);
+    for (int i=0; i<dofs.size(); i++)
+      keepDOF[dofs[i]] = 1;
+  }
+  else {
+    keepDOF = Teuchos::Array<int>(numDOF, 1);
+  }
+}
 
+void
+Albany::SolutionResponseFunction::
+setup()
+{
   // Build culled map and importer
   Teuchos::RCP<const Epetra_Map> x_map = application->getMap();
   culled_map = buildCulledMap(*x_map, keepDOF);
@@ -63,6 +79,7 @@ createGradientOp() const
   Teuchos::RCP<Epetra_CrsMatrix> G =
     Teuchos::rcp(new Epetra_CrsMatrix(Copy, *gradient_graph));
   G->FillComplete();
+  return G;
 }
 
 void
@@ -125,13 +142,13 @@ evaluateGradient(const double current_time,
 
   if (dg_dx) {
     Epetra_CrsMatrix *dg_dx_crs = dynamic_cast<Epetra_CrsMatrix*>(dg_dx);
-    TEUCHOS_TEST_FOR_EXCEPT(dg_dx_crs != NULL);
+    TEUCHOS_TEST_FOR_EXCEPT(dg_dx_crs == NULL);
     dg_dx_crs->PutScalar(1.0); // matrix only stores the diagonal
   }
 
   if (dg_dxdot) {
     Epetra_CrsMatrix *dg_dxdot_crs = dynamic_cast<Epetra_CrsMatrix*>(dg_dxdot);
-    TEUCHOS_TEST_FOR_EXCEPT(dg_dxdot_crs != NULL);
+    TEUCHOS_TEST_FOR_EXCEPT(dg_dxdot_crs == NULL);
     dg_dxdot_crs->PutScalar(0.0); // matrix only stores the diagonal
   }
 
