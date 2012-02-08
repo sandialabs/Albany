@@ -91,8 +91,12 @@ ResponseSaddleValue(Teuchos::ParameterList& p,
   p.set("Stand-alone Evaluator", false);
 
   int responseSize = 5;
+  int worksetSize = dl->qp_scalar->dimension(0);
   Teuchos::RCP<PHX::DataLayout> global_response_layout =
     Teuchos::rcp(new PHX::MDALayout<Dim>(responseSize));
+  Teuchos::RCP<PHX::DataLayout> local_response_layout =
+    Teuchos::rcp(new PHX::MDALayout<Cell,Dim>(worksetSize, responseSize));
+
 
   std::string local_response_name = 
     fieldName + " Local Response Saddle Value";
@@ -100,7 +104,7 @@ ResponseSaddleValue(Teuchos::ParameterList& p,
     fieldName + " Global Response Saddle Value";
 
   PHX::Tag<ScalarT> local_response_tag(local_response_name, 
-				       dl->cell_scalar);
+				       local_response_layout);
   PHX::Tag<ScalarT> global_response_tag(global_response_name, 
 					global_response_layout);
   p.set("Local Response Field Tag", local_response_tag);
@@ -179,18 +183,26 @@ evaluateFields(typename Traits::EvalData workset)
   }
   else if(svResponseFn->getMode() == "Fill saddle point") {
     double wt;
+    double totalWt = svResponseFn->getTotalSaddlePointWeight();
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       getAvgCellCoordinates(coordVec, cell, dblAvgCoords);
 
       if( (wt = svResponseFn->getSaddlePointWeight(dblAvgCoords)) > 0.0) {
 	getCellQuantities(cell, cellVol, fieldVal, retFieldVal, fieldGrad);
+	wt /= totalWt;
 
+	// Return field value
+	this->local_response(cell,0) += wt*retFieldVal;
 	this->global_response[0] += wt*retFieldVal;
+
+	// Field value (field searched for saddle point)
+	this->local_response(cell,1) += wt*fieldVal;
 	this->global_response[1] += wt*fieldVal;
-	this->global_response[2] += wt; // use this temporarily for weight accumulation.  Overwritten by x-coord of saddle later
-	this->global_response[3] = 0.0;
-	this->global_response[4] = 0.0;
+
+	this->global_response[2] = 0.0; // x-coord -- written later: would just be a MeshScalar anyway
+	this->global_response[3] = 0.0; // y-coord -- written later: would just be a MeshScalar anyway
+	this->global_response[4] = 0.0; // z-coord -- written later: would just be a MeshScalar anyway
       }
     }
   }
@@ -235,11 +247,10 @@ postEvaluate(typename Traits::PostEvalData workset)
     this->global_response.size(), &this->global_response[0], 
     &this->global_response[0]);
 
-  // Divide by accumulated weight value using global_response[2] as tmp storage
-  if(this->global_response[2] > 1e-8) {
-    this->global_response[0] /= this->global_response[2];
-    this->global_response[1] /= this->global_response[2];
-  }
+  // Copy in position of saddle point here (no derivative info yet)
+  const double* pt = svResponseFn->getSaddlePointPosition();
+  for(std::size_t i=0; i<numDims; i++) 
+    this->global_response[2+i] = pt[i];
   
   // Do global scattering
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postEvaluate(workset);

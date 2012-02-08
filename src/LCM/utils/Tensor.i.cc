@@ -1031,7 +1031,7 @@ namespace LCM {
 
   //
   // Volumetric part of 2nd-order tensor
-  // \return \f$ \frac{1}{3} \tr A I \f$
+  // \return \f$ \frac{1}{3} \mathrm{tr}\:(A) I \f$
   //
   template<typename ScalarT>
   inline Tensor<ScalarT>

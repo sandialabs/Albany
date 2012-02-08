@@ -4,6 +4,7 @@
     <Parameter name="Solution Method" type="string" value="Multi-Problem" />
 
     <Parameter name="Number of Problems" type="int" value="1" />
+    <Parameter name="Verbose Output" type="bool" value="1" />
 
     <ParameterList name="Subproblem 0">
       <Parameter name="Name" type="string" value="Poisson" />
