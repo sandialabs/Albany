@@ -649,4 +649,20 @@ namespace Albany {
     double perturbBetaForDirichlets;
   };
 }
+
+template <typename EvalT>
+void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset, 
+						const int& ws)
+{
+  workset.numCells = wsElNodeEqID[ws].size();
+  workset.wsElNodeEqID = wsElNodeEqID[ws];
+  workset.wsCoords = coords[ws];
+  workset.EBName = wsEBNames[ws];
+
+  workset.stateArrayPtr = &stateMgr.getStateArray(ws);
+  workset.eigenDataPtr = stateMgr.getEigenData();
+
+  PHAL::BuildSerializer<EvalT> bs(workset);
+}
+
 #endif // ALBANY_APPLICATION_HPP

@@ -2235,20 +2235,6 @@ void Albany::Application::defineTimers()
   timers.push_back(TimeMonitor::getNewTimer("Albany-Cubit MeshMover"));
 }
 
-template <typename EvalT>
-void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws)
-{
-  workset.numCells = wsElNodeEqID[ws].size();
-  workset.wsElNodeEqID = wsElNodeEqID[ws];
-  workset.wsCoords = coords[ws];
-  workset.EBName = wsEBNames[ws];
-
-  workset.stateArrayPtr = &stateMgr.getStateArray(ws);
-  workset.eigenDataPtr = stateMgr.getEigenData();
-
-  PHAL::BuildSerializer<EvalT> bs(workset);
-}
-
 void Albany::Application::loadBasicWorksetInfo(
        PHAL::Workset& workset, RCP<Epetra_Vector> overlapped_x,
        RCP<Epetra_Vector> overlapped_xdot, double current_time)
