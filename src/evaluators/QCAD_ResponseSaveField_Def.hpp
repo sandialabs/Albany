@@ -249,6 +249,7 @@ QCAD::ResponseSaveField<EvalT,Traits>::getValidResponseParameters() const
   validPL->set<bool>("Output to Exodus", true, "Whether state should be output in STK dump to exodus");
   validPL->set<bool>("Output Cell Average", true, "Whether cell average or all quadpoint data should be output to exodus");
   validPL->set<bool>("Memory Placeholder Only", false, "True if data should not actually be transferred to this state, i.e., the state is just used as a memory container and should not be overwritten when responses are computed");
+  validPL->set<string>("Description", "", "Description of this response used by post processors");
 
   return validPL;
 }

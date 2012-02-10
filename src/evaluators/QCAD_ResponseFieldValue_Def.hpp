@@ -555,6 +555,8 @@ QCAD::ResponseFieldValue<EvalT,Traits>::getValidResponseParameters() const
 
   validPL->set<string>("Element Block Name", "", "Element block name that specifies domain");
 
+  validPL->set<string>("Description", "", "Description of this response used by post processors");
+
   return validPL;
 }
 

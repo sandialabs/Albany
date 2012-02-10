@@ -234,6 +234,8 @@ QCAD::ResponseFieldIntegral<EvalT,Traits>::getValidResponseParameters() const
   validPL->set<double>("z min", 0.0, "Integration domain minimum z coordinate");
   validPL->set<double>("z max", 0.0, "Integration domain maximum z coordinate");
 
+  validPL->set<string>("Description", "", "Description of this response used by post processors");
+
   return validPL;
 }
 
