@@ -236,6 +236,8 @@ namespace QCAD {
 
     double zmin, zmax;  //defines lateral-volume region when numDims == 3
     double xmin, xmax, ymin, ymax; // dynamically adjusted box marking region containing image points
+    bool bLockToPlane;
+    double lockedZ;
 
     //! accumulation vectors for evaluator to fill
     mathVector imagePtValues;

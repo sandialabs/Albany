@@ -293,6 +293,7 @@ QCAD::ResponseSaddleValue<EvalT,Traits>::getValidResponseParameters() const
 
   validPL->set<double>("z min", 0.0, "Box domain minimum z coordinate");
   validPL->set<double>("z max", 0.0, "Box domain maximum z coordinate");
+  validPL->set<double>("Lock to z-coord", 0.0, "z-coordinate to lock elastic band to, making a 3D problem into 2D");
 
   validPL->set<Teuchos::Array<double> >("Begin Point", Teuchos::Array<double>(), "Beginning point of elastic band");
   validPL->set<string>("Begin Element Block", "", "Element block name whose minimum marks the elastic band's beginning");

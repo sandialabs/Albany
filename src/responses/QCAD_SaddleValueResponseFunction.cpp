@@ -56,6 +56,12 @@ SaddleValueResponseFunction(
   bClimbing      = params.get<bool>("Climbing NEB", true);
   antiKinkFactor = params.get<double>("Anti-Kink Factor", 0.0);
 
+  bLockToPlane = false;
+  if(params.isParameter("Lock to z-coord")) {
+    bLockToPlane = true;
+    lockedZ = params.get<double>("Lock to z-coord");
+  }
+
   saddlePt.resize(numDims); saddlePt.fill(0.0);
   saddlePtWeight = saddlePtVal = returnFieldVal = -1.0; //init to nonzero is important - so doesn't "match" default init
 
@@ -263,6 +269,11 @@ initializeImagePoints(const double current_time,
   //   to get all the image points
   const mathVector& initialPt = imagePts[0].coords;
   const mathVector& finalPt   = imagePts[nImagePts-1].coords;
+
+  // Lock z-coordinate of initial and final points (and therefore of the rest of the points) if requested
+  if(bLockToPlane && numDims > 2)
+    imagePts[0].coords[2] = imagePts[nImagePts-1].coords[2] = lockedZ;
+
   if(saddleGuessGiven) {
 
     // two line segements (legs) initialPt -> guess, guess -> finalPt
@@ -434,6 +445,12 @@ doNudgedElasticBand(const double current_time,
     if(nConsecLowForceDiff >= 3 && dt < maxTimeStep) { 
       dt *= 2; dt2=dt*dt; nConsecLowForceDiff = 0;
       if(dbMode > 2) std::cout << "Saddle Point:  ** Consecutive low dForce => dt = " << dt << std::endl;
+    }
+
+    //Shouldn't be necessary since grad_z == 0, but just to be sure all points 
+    //  are locked to their given (initial) z-coordinate
+    if(bLockToPlane && numDims > 2) {
+      for(std::size_t i=1; i<nImagePts-1; i++) force[i][2] = 0.0;
     }
 	  
     //Update coordinates and velocity using (modified) Verlet integration. Reset
@@ -902,13 +919,13 @@ addEndPointData(const std::string& elementBlock, const double* p, double value)
 void QCAD::SaddleValueResponseFunction::
 addImagePointData(const double* p, double value, double* grad)
 {
-  double w;
+  double w, effDims = (bLockToPlane && numDims > 2) ? 2 : numDims;
   for(std::size_t i=0; i<nImagePts; i++) {
     w = pointFn( imagePts[i].coords.distanceTo(p) );
     if(w > 0) {
       imagePtWeights[i] += w;
       imagePtValues[i] += w*value;
-      for(std::size_t k=0; k<numDims; k++)
+      for(std::size_t k=0; k<effDims; k++)
 	imagePtGradComps[k*nImagePts+i] += w*grad[k];
     }
   }
