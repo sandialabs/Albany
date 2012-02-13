@@ -55,6 +55,8 @@ SaddleValueResponseFunction(
   nEvery         = params.get<int>("Output Interval", 0);
   bClimbing      = params.get<bool>("Climbing NEB", true);
   antiKinkFactor = params.get<double>("Anti-Kink Factor", 0.0);
+  bAggregateWorksets = params.get<bool>("Aggregate Worksets", false);
+  bAdaptivePointSize = params.get<bool>("Adaptive Image Point Size", false);
 
   bLockToPlane = false;
   if(params.isParameter("Lock to z-coord")) {
@@ -62,8 +64,8 @@ SaddleValueResponseFunction(
     lockedZ = params.get<double>("Lock to z-coord");
   }
 
-  saddlePt.resize(numDims); saddlePt.fill(0.0);
-  saddlePtWeight = saddlePtVal = returnFieldVal = -1.0; //init to nonzero is important - so doesn't "match" default init
+  iSaddlePt = -1;        //clear "found" saddle point index
+  returnFieldVal = -1.0; //init to nonzero is important - so doesn't "match" default init
 
   //Beginning target region
   if(params.isParameter("Begin Point")) {
@@ -219,8 +221,8 @@ initializeImagePoints(const double current_time,
   if(dbMode > 1) std::cout << "Saddle Point:  Beginning end point location" << std::endl;
 
     // Initialize intial/final points
-  imagePts[0].init(numDims);
-  imagePts[nImagePts-1].init(numDims);
+  imagePts[0].init(numDims, imagePtSize);
+  imagePts[nImagePts-1].init(numDims, imagePtSize);
 
   mode = "Point location";
   Albany::FieldManagerScalarResponseFunction::evaluateResponse(
@@ -280,11 +282,11 @@ initializeImagePoints(const double current_time,
     int nFirstLeg = (nImagePts+1)/2, nSecondLeg = nImagePts - nFirstLeg + 1; // +1 because both legs include middle pt
     for(int i=1; i<nFirstLeg-1; i++) {
       double s = i * 1.0/(nFirstLeg-1);
-      imagePts[i].init(initialPt + (saddlePointGuess - initialPt) * s);
+      imagePts[i].init(initialPt + (saddlePointGuess - initialPt) * s, imagePtSize);
     }
     for(int i=0; i<nSecondLeg-1; i++) {
       double s = i * 1.0/(nSecondLeg-1);
-      imagePts[i+nFirstLeg-1].init(saddlePointGuess + (finalPt - saddlePointGuess) * s);
+      imagePts[i+nFirstLeg-1].init(saddlePointGuess + (finalPt - saddlePointGuess) * s, imagePtSize);
     }
   }
   else {
@@ -292,7 +294,7 @@ initializeImagePoints(const double current_time,
     // one line segment initialPt -> finalPt
     for(std::size_t i=1; i<nImagePts-1; i++) {
       double s = i * 1.0/(nImagePts-1);   // nIntervals = nImagePts-1
-      imagePts[i].init(initialPt + (finalPt - initialPt) * s);
+      imagePts[i].init(initialPt + (finalPt - initialPt) * s, imagePtSize);
     }     
   }
  
@@ -301,6 +303,20 @@ initializeImagePoints(const double current_time,
     for(std::size_t i=0; i<nImagePts; i++)
       std::cout << "Saddle Point:   -- imagePt[" << i << "] = " << imagePts[i].coords << std::endl;
   }
+
+  // If we aggregate workset data then call evaluator once more to accumulate 
+  //  field and coordinate data into vFieldValues and vCoords members.
+  if(bAggregateWorksets) {
+    vFieldValues.clear();
+    vCoords.clear();
+    vGrads.clear();
+
+    mode = "Accumulate all field data";
+    Albany::FieldManagerScalarResponseFunction::evaluateResponse(
+				    current_time, xdot, x, p, g);
+    //No MPI here - each proc only holds all of it's worksets -- not other procs worksets
+  }
+
 
   return;
 }
@@ -329,10 +345,11 @@ doNudgedElasticBand(const double current_time,
   std::vector<mathVector> force(nImagePts), lastForce(nImagePts), lastPositions(nImagePts);
   std::vector<double> springConstants(nImagePts-1, minSpringConstant);
 
-  //initialize force variables
+  //initialize force variables and last positions
   for(std::size_t i=0; i<nImagePts; i++) {
     force[i].resize(numDims); force[i].fill(0.0);
     lastForce[i] = force[i];
+    lastPositions[i] = imagePts[i].coords;
   }
 
   nIters = 0;
@@ -350,7 +367,7 @@ doNudgedElasticBand(const double current_time,
     std::fstream out;
     out.open(outputFilename.c_str(), std::fstream::out);
     out << "# Saddle point path" << std::endl;
-    out << "# index xCoord yCoord value" << std::endl;
+    out << "# index xCoord yCoord value pathLength pointRadius" << std::endl;
     out.close();
   }
   if(debugFilename.length() > 0) {
@@ -480,17 +497,20 @@ doNudgedElasticBand(const double current_time,
 
     for(std::size_t i=0; i<nImagePts; i++) {
       std::cout << "Saddle Point:  --   Final pt[" << i << "] = " << imagePts[i].value 
-		<< " : " << imagePts[i].coords << std::endl;
+		<< " : " << imagePts[i].coords << "  (wt = " << imagePts[i].weight << " )" 
+		<< "  (r= " << imagePts[i].radius << " )" << std::endl;
     }
-
-    // Choose image point with highest value as saddle point
-    std::size_t imax = 0;
-    for(std::size_t i=1; i<nImagePts; i++) {
-      if(imagePts[i].value > imagePts[imax].value) imax = i;
-    }
-    saddlePt = imagePts[imax].coords;
-    saddlePtWeight = imagePts[imax].weight;
   }
+
+  // Choose image point with highest value (and positive weight) as saddle point
+  std::size_t imax = 0;
+  for(std::size_t i=0; i<nImagePts; i++) {
+    if(imagePts[i].weight > 0) { imax = i; break; }
+  }
+  for(std::size_t i=imax+1; i<nImagePts; i++) {
+    if(imagePts[i].value > imagePts[imax].value && imagePts[i].weight > 0) imax = i;
+  }
+  iSaddlePt = imax;
 
   if(debugFilename.length() > 0) fDebug.close();
   return;
@@ -514,10 +534,10 @@ fillSaddlePointData(const double current_time,
   //   postEvaluate, so no need to do anything here
 
   returnFieldVal = g[0];
-  saddlePtVal = g[1];
+  imagePts[iSaddlePt].value = g[1];
   
   // Overwrite response indices 2+ with saddle point coordinates
-  for(std::size_t i=0; i<numDims; i++) g[2+i] = saddlePt[i]; 
+  for(std::size_t i=0; i<numDims; i++) g[2+i] = imagePts[iSaddlePt].coords[i]; 
 
   if(dbMode) {
     std::cout << "Saddle Point:  Return Field value = " << g[0] << std::endl;
@@ -527,12 +547,13 @@ fillSaddlePointData(const double current_time,
   }
 
   if( outputFilename.length() > 0) {
-    std::fstream out;
+    std::fstream out; double pathLength = 0.0;
     out.open(outputFilename.c_str(), std::fstream::out | std::fstream::app);
     out << "# Final image points" << std::endl;
     for(std::size_t i=0; i<nImagePts; i++) {
       out << i << " " << imagePts[i].coords[0] << " " << imagePts[i].coords[1]
-	  << " " << imagePts[i].value << std::endl;
+	  << " " << imagePts[i].value << " " << pathLength << " " << imagePts[i].radius << std::endl;
+      if(i<nImagePts-1) pathLength += imagePts[i].coords.distanceTo(imagePts[i+1].coords);
     }    
     out.close();
   }
@@ -658,15 +679,23 @@ getImagePointValues(const double current_time,
   }
   xmin -= 5*imagePtSize; xmax += 5*imagePtSize;
   ymin -= 5*imagePtSize; ymax += 5*imagePtSize;
-
+    
   //Reset value, weight, and gradient of image points as these are accumulated by evaluator fill
   imagePtValues.fill(0.0);
   imagePtWeights.fill(0.0);
   imagePtGradComps.fill(0.0);
 
-  mode = "Collect image point data";
-  Albany::FieldManagerScalarResponseFunction::evaluateResponse(
-				    current_time, xdot, x, p, g);
+  if(bAggregateWorksets) {
+    //Use cached field and coordinate values to perform fill
+    for(std::size_t i=0; i<vFieldValues.size(); i++) {
+      addImagePointData( vCoords[i].data, vFieldValues[i], vGrads[i].data );
+    } 
+  }
+  else {
+    mode = "Collect image point data";
+    Albany::FieldManagerScalarResponseFunction::evaluateResponse(
+				     current_time, xdot, x, p, g);
+  }
 
   //MPI -- sum weights, value, and gradient for each image pt
   comm.SumAll( imagePtValues.data(),    globalPtValues,  nImagePts );
@@ -687,6 +716,13 @@ getImagePointValues(const double current_time,
       imagePts[i].grad.fill(0.0);
       imagePts[i].coords = lastPositions[i];
     }
+
+    // adjust image point size based on weight (if requested)
+    //  --> try to get weight between 5 and 50 by varying image pt size
+    if(bAdaptivePointSize) {
+      if(imagePts[i].weight < 5) imagePts[i].radius *= 2;
+      else if(imagePts[i].weight > 50) imagePts[i].radius /= 2;
+    }
   }
 
   return;
@@ -699,12 +735,13 @@ writeOutput(int nIters)
 {
   // Write output every nEvery iterations
   if( (nEvery > 0) && (nIters % nEvery == 1) && (outputFilename.length() > 0)) {
-    std::fstream out;
+    std::fstream out; double pathLength = 0.0;
     out.open(outputFilename.c_str(), std::fstream::out | std::fstream::app);
     out << "# Iteration " << nIters << std::endl;
     for(std::size_t i=0; i<nImagePts; i++) {
       out << i << " " << imagePts[i].coords[0] << " " << imagePts[i].coords[1]
-	  << " " << imagePts[i].value << std::endl;
+	  << " " << imagePts[i].value << " " << pathLength << " " << imagePts[i].radius << std::endl;
+      if(i<nImagePts-1) pathLength += imagePts[i].coords.distanceTo(imagePts[i+1].coords);
     }    
     out << std::endl << std::endl; //dataset separation
     out.close();
@@ -731,9 +768,9 @@ initialIterationSetup(double& gradScale, double& springScale, int dbMode)
   //  so springScale = (nImagePts-1)
   springScale = (double) (nImagePts-1);
 
-  if(dbMode > 2) std::cout << "Saddle Point:  First iteration:  maxGradMag=" << maxGradMag
-			   << " |init-final|=" << ifDist << " gradScale=" << gradScale 
-			   << " springScale=" << springScale << " avgWeight=" << avgWeight << std::endl;
+  if(dbMode) std::cout << "Saddle Point:  First iteration:  maxGradMag=" << maxGradMag
+		       << " |init-final|=" << ifDist << " gradScale=" << gradScale 
+		       << " springScale=" << springScale << " avgWeight=" << avgWeight << std::endl;
   return;
 }
 
@@ -838,12 +875,21 @@ std::string QCAD::SaddleValueResponseFunction::getMode()
 
 
 bool QCAD::SaddleValueResponseFunction::
-pointIsInImagePtRegion(const double* p)
+pointIsInImagePtRegion(const double* p) const
 {
   //assumes at least 2 dimensions
   if(numDims > 2 && (p[2] < zmin || p[2] > zmax)) return false;
   return !(p[0] < xmin || p[1] < ymin || p[0] > xmax || p[1] > ymax);
 }
+
+bool QCAD::SaddleValueResponseFunction::
+pointIsInAccumRegion(const double* p) const
+{
+  //assumes at least 2 dimensions
+  if(numDims > 2 && (p[2] < zmin || p[2] > zmax)) return false;
+  return true;
+}
+
 
 void QCAD::SaddleValueResponseFunction::
 addBeginPointData(const std::string& elementBlock, const double* p, double value)
@@ -921,34 +967,47 @@ addImagePointData(const double* p, double value, double* grad)
 {
   double w, effDims = (bLockToPlane && numDims > 2) ? 2 : numDims;
   for(std::size_t i=0; i<nImagePts; i++) {
-    w = pointFn( imagePts[i].coords.distanceTo(p) );
+    w = pointFn( imagePts[i].coords.distanceTo(p), imagePts[i].radius );
     if(w > 0) {
       imagePtWeights[i] += w;
       imagePtValues[i] += w*value;
       for(std::size_t k=0; k<effDims; k++)
 	imagePtGradComps[k*nImagePts+i] += w*grad[k];
+      //std::cout << "DEBUG Image Pt " << i << " close to (" << p[0] << "," << p[1] << "," << p[2] << ")=" << value
+      //	<< "  wt=" << w << "  totalW=" << imagePtWeights[i] << "  totalVal=" << imagePtValues[i]
+      //	<< "  val=" << imagePtValues[i] / imagePtWeights[i] << std::endl;
     }
   }
   return;
 }
 
+void QCAD::SaddleValueResponseFunction::
+accumulatePointData(const double* p, double value, double* grad)
+{
+  vFieldValues.push_back(value);
+  vCoords.push_back( QCAD::maxDimPt(p,numDims) );
+  vGrads.push_back( QCAD::maxDimPt(grad,numDims) );
+}
+ 
+
+
 //Adds and returns the weight of a point relative to the saddle point position.
 double QCAD::SaddleValueResponseFunction::
 getSaddlePointWeight(const double* p) const
 {
-  return pointFn( saddlePt.distanceTo(p) );
+  return pointFn( imagePts[iSaddlePt].coords.distanceTo(p), imagePts[iSaddlePt].radius );
 }
 
 double QCAD::SaddleValueResponseFunction::
 getTotalSaddlePointWeight() const
 {
-  return saddlePtWeight;
+  return imagePts[iSaddlePt].weight;
 }
 
 const double* QCAD::SaddleValueResponseFunction::
 getSaddlePointPosition() const
 {
-  return saddlePt.data();
+  return imagePts[iSaddlePt].coords.data();
 }
 
 bool QCAD::SaddleValueResponseFunction::
@@ -956,11 +1015,13 @@ matchesCurrentResults(Epetra_Vector& g) const
 {
   const double TOL = 1e-8;
 
-  if( fabs(g[0] - returnFieldVal) > TOL || fabs(g[1] - saddlePtVal) > TOL)
+  if(iSaddlePt < 0) return false;
+
+  if( fabs(g[0] - returnFieldVal) > TOL || fabs(g[1] - imagePts[iSaddlePt].value) > TOL)
     return false;
 
   for(std::size_t i=0; i<numDims; i++) {
-    if(  fabs(g[2+i] - saddlePt[i]) > TOL ) return false;
+    if(  fabs(g[2+i] - imagePts[iSaddlePt].coords[i]) > TOL ) return false;
   }
 
   return true;
@@ -968,9 +1029,9 @@ matchesCurrentResults(Epetra_Vector& g) const
 
 
 double QCAD::SaddleValueResponseFunction::
-pointFn(double d) const {
+pointFn(double d, double radius) const {
   const double N = 1.0;
-  double val = N*exp(-d*d / (2*imagePtSize*imagePtSize));
+  double val = N*exp(-d*d / (2*radius*radius));
   return (val >= 1e-2) ? val : 0.0;
 }
 
