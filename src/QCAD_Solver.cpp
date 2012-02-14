@@ -743,7 +743,7 @@ QCAD::SolverResponseFn::SolverResponseFn(const std::string& fnString,
   }
   else if( fnName == "DgDp") {  //params = subSolverName, gIndex, pIndex
     TEUCHOS_TEST_FOR_EXCEPT(nParams != 3);
-    numDoubles = 3; 
+    numDoubles = 1; 
   }
   else TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
      "Unknown function " << fnName << " for QCAD solver response." << std::endl);
@@ -920,7 +920,7 @@ void QCAD::SolverResponseFn::fillSolverResponses(Epetra_Vector& g, Teuchos::RCP<
     }
   }
 
-  // sensitivity element: dgdp[ gIndex, pIndex ]
+  // sensitivity element: DgDp( SolverName, gIndex, pIndex )
   else if( fnName == "DgDp") {
 
     if(dgdp != Teuchos::null) { //set derivative
