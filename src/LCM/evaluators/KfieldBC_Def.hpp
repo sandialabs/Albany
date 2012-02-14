@@ -74,6 +74,8 @@ getValue(const std::string &n)
 {
   if (n == KI_name)
     return KI;
+ // else if (n== timeValues)
+//	  return timeValues;
   else
 	return KII;
 }
@@ -131,22 +133,26 @@ computeBCs(double* coord, ScalarT& Xval, ScalarT& Yval, RealType time)
   Xval = KI_X + KII_X;
   Yval = KI_Y + KII_Y;
 
+/*
 //  JTO: I am going to leave this here for now...
-//     std::cout << "================" << std::endl;
-//     std::cout.precision(15);
-//     std::cout << "X : " << X << ", Y: " << Y << ", R: " << R << std::endl;
+     std::cout << "================" << std::endl;
+     std::cout.precision(15);
+     std::cout << "X : " << X << ", Y: " << Y << ", R: " << R << std::endl;
 //     std::cout << "Node : " << nsNodes[inode] << std::endl;
-//     std::cout << "KI : " << KI << ", KII: " << KII << std::endl;
-//     std::cout << "theta: " << theta << std::endl;
-//     std::cout << "coeff_1: " << coeff_1 << ", coeff_2: " << coeff_2 << std::endl;
-//     std::cout << "KI_X: " << KI_X << ", KI_Y: " << KI_Y << std::endl;
-//     std::cout << "Xval: " << Xval << ", Yval: " << Yval << std::endl;
+     std::cout << "KI : " << KI << ", KII: " << KII << std::endl;
+     std::cout << "theta: " << theta << std::endl;
+     std::cout << "coeff_1: " << coeff_1 << ", coeff_2: " << coeff_2 << std::endl;
+     std::cout << "KI_X: " << KI_X << ", KI_Y: " << KI_Y << std::endl;
+     std::cout << "Xval: " << Xval << ", Yval: " << Yval << std::endl;
+     std::cout << "nu: " << nu << std::endl;
 //     std::cout << "dx: " << (*x)[xlunk] << std::endl;
 //     std::cout << "dy: " << (*x)[ylunk] << std::endl;
 //     std::cout << "fx: " << ((*x)[xlunk] - Xval) << std::endl;
 //     std::cout << "fy: " << ((*x)[ylunk] - Yval) << std::endl;
-//     std::cout << "sin(theta/2): " << std::sin( theta / 2.0 ) << std::endl;
-//     std::cout << "cos(theta/2): " << std::cos( theta / 2.0 ) << std::endl;
+     std::cout << "sin(theta/2): " << std::sin( theta / 2.0 ) << std::endl;
+     std::cout << "cos(theta/2): " << std::cos( theta / 2.0 ) << std::endl;
+
+     */
 }
 
 // **********************************************************************
@@ -193,6 +199,8 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 
     (*f)[xlunk] = ((*x)[xlunk] - Xval);
     (*f)[ylunk] = ((*x)[ylunk] - Yval);
+
+
   }
 
 //  std::cout<< "time is  " << time << endl;

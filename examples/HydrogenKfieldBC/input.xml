@@ -95,6 +95,10 @@
       <Parameter name="Value" type="double" value="160.e3"/>
       <Parameter name="dKdT Value" type="double" value="0.00"/>
     </ParameterList>
+	  <ParameterList name="Poissons Ratio">
+      <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
+      <Parameter name="Value" type="double" value="0.285714"/>
+    </ParameterList>
     <ParameterList name="Thermal Conductivity">
       <Parameter name="Thermal Conductivity Type" type="string" value="Constant"/>
       <Parameter name="Value" type="double" value="0.0"/>
