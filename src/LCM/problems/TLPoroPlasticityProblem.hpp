@@ -313,6 +313,7 @@ Albany::TLPoroPlasticityProblem::constructEvaluators(
 	  p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 	  Teuchos::ParameterList& paramList = params->sublist("Porosity");
 	  p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+	  double initPorosity = paramList.get("Value", 0.0);
 
 	  // Setting this turns on dependence of strain and pore pressure)
 	  p->set<string>("Strain Name", "Strain");
@@ -326,7 +327,7 @@ Albany::TLPoroPlasticityProblem::constructEvaluators(
 
           ev = rcp(new LCM::Porosity<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
-          p = stateMgr.registerStateVariable("Porosity",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+          p = stateMgr.registerStateVariable("Porosity",dl->qp_scalar, dl->dummy,"scalar", initPorosity, true);
           ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
      }

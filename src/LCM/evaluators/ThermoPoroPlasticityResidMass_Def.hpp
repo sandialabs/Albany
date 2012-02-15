@@ -232,10 +232,10 @@ evaluateFields(typename Traits::EvalData workset)
 		  TResidual(cell,node)=0.0;
 		  for (std::size_t qp=0; qp < numQPs; ++qp) {
 
-			  // Set Warning message
-			  if (porosityold(cell,qp) < 0 || porosity(cell,qp) < 0 ) {
-				  cout << "negative porosity detected. Error! \n";
-			  }
+//			  // Set Warning message
+//			  if (porosityold(cell,qp) < 0 || porosity(cell,qp) < 0 ) {
+//				  cout << "negative porosity detected. Error! \n";
+//			  }
 
 			      // set correction for 1st time step
 			      if (J(cell,qp) == 0)

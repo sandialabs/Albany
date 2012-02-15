@@ -41,6 +41,8 @@ ThermoPoroPlasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   
   haveSource =  params->isSublist("Source Functions");
 
+  matModel = params->sublist("Material Model").get("Model Name", "NeoHookean");
+
 // Changing this ifdef changes ordering from  (X,Y,T) to (T,X,Y)
 //#define NUMBER_T_FIRST
 #ifdef NUMBER_T_FIRST
@@ -112,6 +114,7 @@ Albany::ThermoPoroPlasticityProblem::getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidThermoPoroPlasticityProblemParams");
+  validPL->sublist("Material Model", false, "");
   validPL->sublist("Porosity", false, "");
   validPL->sublist("Biot Coefficient", false, "");
   validPL->sublist("Biot Modulus", false, "");
@@ -131,6 +134,12 @@ Albany::ThermoPoroPlasticityProblem::getValidProblemParameters() const
   validPL->sublist("Bulk Modulus", false, "");
   validPL->sublist("Mixture Thermal Expansion", false, "");
   validPL->sublist("Mixture Specific Heat", false, "");
+  if (matModel=="J2"){
+   validPL->sublist("Hardening Modulus", false, "");
+   validPL->sublist("Saturation Modulus", false, "");
+   validPL->sublist("Saturation Exponent", false, "");
+   validPL->sublist("Yield Strength", false, "");
+  }
 
   return validPL;
 }
