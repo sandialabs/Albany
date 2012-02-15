@@ -142,7 +142,7 @@ namespace Albany {
 
 #include "MixtureThermalExpansion.hpp"
 #include "MixtureSpecificHeat.hpp"
-// #include "ShearModulus.hpp"
+#include "ShearModulus.hpp"
 #include "BulkModulus.hpp"
 // #include "YieldStrength.hpp"
 // #include "HardeningModulus.hpp"
@@ -649,6 +649,23 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
     ev = rcp(new LCM::ElasticModulus<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  { // Shear Modulus
+      RCP<ParameterList> p = rcp(new ParameterList);
+
+      p->set<string>("QP Variable Name", "Shear Modulus");
+      p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+      p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
+      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+      Teuchos::ParameterList& paramList = params->sublist("Shear Modulus");
+      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+      ev = rcp(new LCM::ShearModulus<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
   }
 
   { // Poissons Ratio 
