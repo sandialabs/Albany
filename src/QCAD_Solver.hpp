@@ -97,6 +97,7 @@ namespace QCAD {
     Teuchos::RCP<const Epetra_Comm> solverComm;
 
     bool bVerbose;
+    bool bSupportDpDg;
   };
 
 
@@ -131,7 +132,8 @@ namespace QCAD {
 
     void fillSolverResponses(Epetra_Vector& g, Teuchos::RCP<Epetra_MultiVector>& dgdp, int offset,
 			     const std::map<std::string, SolverSubSolver>& subSolvers,
-			     const std::vector<std::vector<Teuchos::RCP<SolverParamFn> > >& paramFnVecs) const;
+			     const std::vector<std::vector<Teuchos::RCP<SolverParamFn> > >& paramFnVecs,
+			     bool bSupportDpDg) const;
 
     std::size_t getNumDoubles() const { return numDoubles; }
 

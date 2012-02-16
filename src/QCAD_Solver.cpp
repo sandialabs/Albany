@@ -136,6 +136,17 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 				  std::endl << "Error in QCAD::Solver constructor:  " <<
 				  "Invalid problem name " << problemName << std::endl);
 
+  //Determine whether we should support DgDp (all sub-solvers must support DpDg for QCAD::Solver to)
+  bSupportDpDg = true;  
+  std::map<std::string, SolverSubSolver>::const_iterator it;
+  for(it = subSolvers.begin(); it != subSolvers.end(); ++it) {
+    EpetraExt::ModelEvaluator::OutArgs model_outargs = (it->second.model)->createOutArgs();
+    if( model_outargs.supports(OUT_ARG_DgDp, 0, 0).none() ) { //just test if p=0, g=0 DgDp is supported
+      bSupportDpDg = false;
+      break;
+    }
+  }
+
   //Save comm for evaluation
   solverComm = comm;
 
@@ -252,15 +263,6 @@ EpetraExt::ModelEvaluator::OutArgs QCAD::Solver::createOutArgs() const
   // Ng is 1 bigger then model-Ng so that the solution vector can be an outarg
   outArgs.set_Np_Ng(num_p, num_g+1);
 
-  bool bSupportDpDg = true;  // all sub-solvers must support DpDg for QCAD::Solver to
-  std::map<std::string, SolverSubSolver>::const_iterator it;
-  for(it = subSolvers.begin(); it != subSolvers.end(); ++it) {
-    EpetraExt::ModelEvaluator::OutArgs model_outargs = (it->second.model)->createOutArgs();
-    if( model_outargs.supports(OUT_ARG_DgDp, 0, 0).none() ) { //just test if p=0, g=0 DgDp is supported
-      bSupportDpDg = false;
-      break;
-    }
-  }
 
   //Derivative info 
   if(bSupportDpDg) {
@@ -318,7 +320,7 @@ QCAD::Solver::evalModel(const InArgs& inArgs,
   std::vector<Teuchos::RCP<QCAD::SolverResponseFn> >::const_iterator rit;
 
   for(rit = responseFns.begin(); rit != responseFns.end(); rit++) {
-    (*rit)->fillSolverResponses( *g, dgdp, offset, subSolvers, paramFnVecs);
+    (*rit)->fillSolverResponses( *g, dgdp, offset, subSolvers, paramFnVecs, bSupportDpDg);
     offset += (*rit)->getNumDoubles();
   }
 
@@ -333,7 +335,7 @@ QCAD::Solver::evalModel(const InArgs& inArgs,
       *out << "BEGIN QCAD Solver Sensitivities:" << endl;
       dgdp->Print(*out);
       *out << "END QCAD Solver Sensitivities" << endl;
-      }*/
+    }*/
   }
 }
 
@@ -753,7 +755,8 @@ QCAD::SolverResponseFn::SolverResponseFn(const std::string& fnString,
 
 void QCAD::SolverResponseFn::fillSolverResponses(Epetra_Vector& g, Teuchos::RCP<Epetra_MultiVector>& dgdp, int offset,
 				 const std::map<std::string, QCAD::SolverSubSolver>& subSolvers,
-				 const std::vector<std::vector<Teuchos::RCP<QCAD::SolverParamFn> > >& paramFnVecs) const
+				 const std::vector<std::vector<Teuchos::RCP<QCAD::SolverParamFn> > >& paramFnVecs,
+				 bool bSupportDpDg) const
 {
   std::size_t nParameters = paramFnVecs.size();
 
@@ -923,7 +926,7 @@ void QCAD::SolverResponseFn::fillSolverResponses(Epetra_Vector& g, Teuchos::RCP<
   // sensitivity element: DgDp( SolverName, gIndex, pIndex )
   else if( fnName == "DgDp") {
 
-    if(dgdp != Teuchos::null) { //set derivative
+    if(bSupportDpDg) {
       int gIndex = (int)arg_vals[0], pIndex = (int)arg_vals[1];
       Teuchos::RCP<Epetra_MultiVector> sub_dgdp = 
 	(subSolvers.find(dgdpName)->second).responses_out->get_DgDp(0,0).getMultiVector(); // only use first g & p vectors
@@ -935,8 +938,11 @@ void QCAD::SolverResponseFn::fillSolverResponses(Epetra_Vector& g, Teuchos::RCP<
 				 << std::endl);
 
       g[offset] = (*((*sub_dgdp)(gIndex)))[pIndex]; 
-      for(std::size_t k=0; k < nParameters; k++) //set derivative to zero
-	dgdp->ReplaceGlobalValue(offset,k, 0.0); // (no derivatives of derivatives)
+
+      if(dgdp != Teuchos::null) { //set QCAD::Solver derivative to zero (no derivatives of derivatives)
+	for(std::size_t k=0; k < nParameters; k++)
+	  dgdp->ReplaceGlobalValue(offset,k, 0.0); 
+      }
     }
     else g[offset] = 0.0; // just set response as zero if dgdp isn't supported
   }
