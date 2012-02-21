@@ -120,7 +120,7 @@ Albany::ElasticityProblem::getValidProblemParameters() const
   if (matModel == "GursonSD")
   {
 	validPL->set<double>("f0", false, "");
-	validPL->set<double>("sigmaY", false, "");
+	validPL->set<double>("Y0", false, "");
 	validPL->set<double>("kw", false, "");
 	validPL->set<double>("N", false, "");
 	validPL->set<double>("q1", false, "");
@@ -131,6 +131,7 @@ Albany::ElasticityProblem::getValidProblemParameters() const
 	validPL->set<double>("fN", false, "");
 	validPL->set<double>("fc", false, "");
 	validPL->set<double>("ff", false, "");
+	validPL->set<double>("flag", false, "");
   }  
 
   return validPL;

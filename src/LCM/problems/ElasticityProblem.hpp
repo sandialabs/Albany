@@ -402,7 +402,7 @@ Albany::ElasticityProblem::constructEvaluators(
       p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
 
       double f0 = params->get("f0", 0.0);
-      double sigmaY = params->get("sigmaY", 100.0);
+      double Y0 = params->get("Y0", 100.0);
       double kw = params->get("kw", 0.0);
       double N = params->get("N", 1.0);
       double q1 = params->get("q1", 1.0);
@@ -413,9 +413,10 @@ Albany::ElasticityProblem::constructEvaluators(
       double fN = params->get("fN", 0.1);
       double fc = params->get("fc", 1.0);
       double ff = params->get("ff", 1.0);
+      double flag = params->get("flag", 1.0);
 
       p->set<double>("f0 Name", f0);
-      p->set<double>("sigmaY Name", sigmaY);
+      p->set<double>("Y0 Name", Y0);
       p->set<double>("kw Name", kw);
       p->set<double>("N Name", N);
       p->set<double>("q1 Name", q1);
@@ -426,11 +427,12 @@ Albany::ElasticityProblem::constructEvaluators(
       p->set<double>("fN Name", fN);
       p->set<double>("fc Name", fc);
       p->set<double>("ff Name", ff);
-
+      p->set<double>("flag Name", flag);
 
       //Output
       p->set<string>("Stress Name", "Stress"); //dl->qp_tensor also
       p->set<string>("Void Volume Name", "voidVolume"); //dl->qp_scalar also
+      p->set<string>("ep Name", "ep"); //dl->qp_scalar also
       p->set<string>("Yield Strength Name", "yieldStrength"); //dl->qp_scalar also
 
       //Declare what state data will need to be saved (name, layout, init_type)
@@ -442,7 +444,10 @@ Albany::ElasticityProblem::constructEvaluators(
       p = stateMgr.registerStateVariable("voidVolume",dl->qp_scalar, dl->dummy,"scalar", f0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("yieldStrength",dl->qp_scalar, dl->dummy,"scalar", sigmaY, true);
+      p = stateMgr.registerStateVariable("ep",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      p = stateMgr.registerStateVariable("yieldStrength",dl->qp_scalar, dl->dummy,"scalar", Y0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
 	}

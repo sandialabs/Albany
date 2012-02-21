@@ -50,18 +50,13 @@ private:
 
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
-  typedef typename Sacado::Fad::DFad<ScalarT> DFadType;
 
   // all local functions used in computing GursonSD model stress:
-  ScalarT compute_F(LCM::Tensor<ScalarT> & sigmaVal, ScalarT & fvoidVal, ScalarT & sigmaMVal);
-  void  getDFadType(LCM::Tensor<ScalarT> & sigmaVal, ScalarT & fvoidVal,ScalarT & sigmaMVal,
-  		LCM::Tensor<DFadType> & sigmaD, DFadType & fvoidD, DFadType & sigmaMD);
-  DFadType compute_F(LCM::Tensor<DFadType> & sigma, DFadType & fvoid, DFadType & sigmaM);
-  LCM::Tensor<ScalarT> compute_dFdsigma(DFadType & F);
-  ScalarT compute_hsigmaM(LCM::Tensor<ScalarT> & sigma, ScalarT & fvoid, ScalarT & sigmaM,
-		LCM::Tensor<ScalarT> & dFdsigma, ScalarT & mu);
-  ScalarT compute_hfvoid(LCM::Tensor<ScalarT> & sigma,	ScalarT & fvoid, ScalarT & sigmaM,
-  		LCM::Tensor<ScalarT> & dFdsigma, ScalarT & mu);
+  ScalarT compute_Y(ScalarT & epVal, ScalarT & Eor3mu);
+  ScalarT compute_Phi(LCM::Tensor<ScalarT> & devVal, ScalarT & pVal, ScalarT & fvoidVal, ScalarT & epVal, ScalarT & Eor3mu);
+  ScalarT compute_dPhidep(ScalarT & tmp, ScalarT & pN, ScalarT & fvoidN, ScalarT & epN, ScalarT & YN, ScalarT & Eor3mu);
+  ScalarT compute_dfdgam(ScalarT & depdgam, ScalarT & tmp, ScalarT & pN, ScalarT & sigeN, ScalarT & J3N,
+		ScalarT & fvoidN, ScalarT & epN, ScalarT & YN);
 
   //Input
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> strain;
@@ -72,7 +67,7 @@ private:
   unsigned int numDims;
 
   double f0;
-  double sigmaY;
+  double Y0;
   double kw;
   double N;
   double q1;
@@ -83,13 +78,15 @@ private:
   double fN;
   double fc;
   double ff;
+  double flag;
 
   std::string strainName, stressName;
-  std::string voidVolumeName, yieldStrengthName;
+  std::string voidVolumeName, epName, yieldStrengthName;
 
   //output
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;
   PHX::MDField<ScalarT,Cell,QuadPoint> voidVolume;
+  PHX::MDField<ScalarT,Cell,QuadPoint> ep;
   PHX::MDField<ScalarT,Cell,QuadPoint> yieldStrength;
 
 };
