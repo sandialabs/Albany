@@ -71,21 +71,14 @@ namespace Albany {
     //! Get Node map
     Teuchos::RCP<const Epetra_Map> getNodeMap() const; 
 
-    //! Get Side map
-    Teuchos::RCP<const Epetra_Map> getSideMap() const; 
-
-
-    //! Get Node set lists (typdef in Albany_AbstractDiscretization.hpp)
+    //! Get Node set lists (typedef in Albany_AbstractDiscretization.hpp)
     const NodeSetList& getNodeSets() const { return nodeSets; };
     const NodeSetCoordList& getNodeSetCoords() const { return nodeSetCoords; };
 
-    const std::vector<std::string>& getNodeSetIDs() const;
+//    const std::vector<std::string>& getNodeSetIDs() const;
 
-    //! Get Side set lists 
+    //! Get Side set lists (typedef in Albany_AbstractDiscretization.hpp)
     const SideSetList& getSideSets() const { return sideSets; };
-    const SideSetCoordList& getSideSetCoords() const { return sideSetCoords; };
-
-    const std::vector<std::string>& getSideSetIDs() const;
 
     //! Get map from (Ws, El, Local Node) -> NodeLID
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >& getWsElNodeEqID() const;
@@ -156,6 +149,8 @@ namespace Albany {
     void computeSideSets();
     //! Call stk_io for creating exodus output file
     void setupExodusOutput();
+    //! Find the local side id number within parent element
+    unsigned determine_local_side_id( const stk::mesh::Entity & elem , stk::mesh::Entity & side );
     //! Call stk_io for creating exodus output file
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
@@ -176,9 +171,6 @@ namespace Albany {
 
     //! Node map
     Teuchos::RCP<Epetra_Map> node_map;
-
-    //! Side map
-    Teuchos::RCP<Epetra_Map> side_map;
 
     //! Unknown Map
     Teuchos::RCP<Epetra_Map> map;
@@ -207,14 +199,10 @@ namespace Albany {
     Albany::NodeSetCoordList nodeSetCoords;
 
     //! Just the node set ID strings
-    std::vector<std::string> nodeSetIDs;
+//    std::vector<std::string> nodeSetIDs;
 
-    //! side sets stored as std::map(string ID, int vector of GIDs)
+    //! side sets stored as std::map(string ID, SideArray classes)
     Albany::SideSetList sideSets;
-    Albany::SideSetCoordList sideSetCoords;
-
-    //! Just the node set ID strings
-    std::vector<std::string> sideSetIDs;
 
     //! Connectivity array [workset, element, local-node, Eq] => LID
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > > wsElNodeEqID;

@@ -34,6 +34,14 @@ Albany::BCUtils<BCTraits>::constructBCEvaluators(
 
    using PHAL::AlbanyTraits;
 
+   if(!params->isSublist(traits_type::bcParamsPl)){ // If the BC sublist is not in the input file, this means that
+      // node or side sets are in the Exodus file but not defined in the problem statement.This is OK, we
+      // just don't build a bc field manager
+
+      return Teuchos::null;
+
+    }
+
    Teuchos::ParameterList BCparams = params->sublist(traits_type::bcParamsPl);
    BCparams.validateParameters(*(getValidBCParameters(nodeorsideSetIDs, bcNames)),0);
 
@@ -55,7 +63,7 @@ Albany::BCUtils<BCTraits>::constructBCEvaluators(
          p->set< RealType >("Dirichlet Value", BCparams.get<double>(ss));
          p->set< string >  ("Node Set ID", nodeorsideSetIDs[i]);
         // p->set< int >     ("Number of Equations", dirichletNames.size());
-	 p->set< int >     ("Equation Offset", j);
+         p->set< int >     ("Equation Offset", j);
 
          p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 

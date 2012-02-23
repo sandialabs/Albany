@@ -48,7 +48,6 @@ namespace Albany {
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParameters() const;
 
-
     Teuchos::RCP<Teuchos::FancyOStream> out;
     bool usePamgen;
     bool periodic;

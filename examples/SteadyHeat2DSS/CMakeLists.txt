@@ -18,17 +18,21 @@
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/quadQuadSS.exo
+               ${CMAKE_CURRENT_BINARY_DIR}/quadQuadSS.exo COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/quadQuadSS.exo.4.0
+               ${CMAKE_CURRENT_BINARY_DIR}/quadQuadSS.exo.4.0 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/quadQuadSS.exo.4.1
+               ${CMAKE_CURRENT_BINARY_DIR}/quadQuadSS.exo.4.1 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/quadQuadSS.exo.4.2
+               ${CMAKE_CURRENT_BINARY_DIR}/quadQuadSS.exo.4.2 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/quadQuadSS.exo.4.3
+               ${CMAKE_CURRENT_BINARY_DIR}/quadQuadSS.exo.4.3 COPYONLY)
+
 
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
-# 5. Create the test (actually the data for the test) with this name and standard executable
-
-add_executable(HeatProfile HeatProfile.C)
-
-add_test(${testName}_Prep HeatProfile)
-
-# 5. Create the test with this name and standard executable
+# 3. Create the test with this name and standard executable
 
 add_test(${testName} ${Albany.exe})
-set_tests_properties(${testName}  PROPERTIES DEPENDS ${testName}_Prep)

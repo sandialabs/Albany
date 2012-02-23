@@ -86,6 +86,7 @@ template<int Dim, class traits = albany_stk_mesh_traits<Dim> >
     //! Default and optional element types created by the class (only meaningful in 2D - quads and tris)
     typedef typename traits_type::default_element_type default_element_type;
     typedef typename traits_type::optional_element_type optional_element_type;
+    typedef typename traits_type::default_element_side_type default_element_side_type;
 
     //! Default constructor
     TmplSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
@@ -137,6 +138,7 @@ template<int Dim, class traits = albany_stk_mesh_traits<Dim> >
     enum { size = 1 }; // stk wants one dimension
     typedef shards::Particle default_element_type;
     typedef shards::Particle optional_element_type;
+    typedef shards::Particle default_element_side_type; // No sides in 0D
 
   };
 
@@ -146,6 +148,7 @@ template<int Dim, class traits = albany_stk_mesh_traits<Dim> >
     enum { size = 1 };
     typedef shards::Line<2> default_element_type;
     typedef shards::Line<2> optional_element_type;
+    typedef shards::Particle default_element_side_type; // No sides in 1D
 
   };
 
@@ -155,6 +158,7 @@ template<int Dim, class traits = albany_stk_mesh_traits<Dim> >
     enum { size = 2 };
     typedef shards::Quadrilateral<4> default_element_type;
     typedef shards::Triangle<3> optional_element_type;
+    typedef shards::Line<2> default_element_side_type;
 
   };
 
@@ -164,6 +168,7 @@ template<int Dim, class traits = albany_stk_mesh_traits<Dim> >
     enum { size = 3 };
     typedef shards::Hexahedron<8> default_element_type;
     typedef shards::Hexahedron<8> optional_element_type;
+    typedef shards::Quadrilateral<4> default_element_side_type;
 
   };
 

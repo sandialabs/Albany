@@ -37,9 +37,22 @@ namespace Albany {
   typedef std::map<std::string, std::vector<std::vector<int> > > NodeSetList;
   typedef std::map<std::string, std::vector<double*> > NodeSetCoordList;
 
-  typedef std::map<std::string, std::vector<std::vector<int> > > SideSetList;
-  typedef std::map<std::string, std::vector<double*> > SideSetCoordList;
+  class SideArray {
 
+    public:
+
+    std::vector<int> elem_GID; // the global id of the element containing the side
+    std::vector<int> elem_LID; // the local id of the element containing the side
+    std::vector<unsigned> side_local_id; // The local id of the side relative to the owning element
+
+    void resize(const unsigned size){ elem_GID.resize(size); elem_LID.resize(size); side_local_id.resize(size);}
+    unsigned size() const { return elem_GID.size();}
+
+  };
+
+  typedef std::map<std::string, SideArray > SideSetList;
+
+ 
   class AbstractDiscretization {
   public:
 
@@ -69,19 +82,13 @@ namespace Albany {
     virtual Teuchos::RCP<const Epetra_Map>
     getNodeMap() const = 0;
 
-    //! Get Side map
-    virtual Teuchos::RCP<const Epetra_Map>
-    getSideMap() const = 0;
-
     //! Get Node set lists (typdef in Albany_Discretization.hpp)
     virtual const NodeSetList& getNodeSets() const = 0;
     virtual const NodeSetCoordList& getNodeSetCoords() const = 0;
-    virtual const std::vector<std::string>& getNodeSetIDs() const = 0;
+//    virtual const std::vector<std::string>& getNodeSetIDs() const = 0;
 
     //! Get Side set lists
     virtual const SideSetList& getSideSets() const = 0;
-    virtual const SideSetCoordList& getSideSetCoords() const = 0;
-    virtual const std::vector<std::string>& getSideSetIDs() const = 0;
 
     //! Get map from (Ws, El, Local Node, Eq) -> unkLID
     virtual const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >&

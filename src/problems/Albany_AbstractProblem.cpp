@@ -86,6 +86,7 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   validPL->sublist("Stochastic Galerkin", false, "");
   validPL->sublist("Teko", false, "");
   validPL->sublist("Dirichlet BCs", false, "");
+  validPL->sublist("Neumann BCs", false, "");
   validPL->set<bool>("Solve Adjoint", false, "");
   validPL->set<bool>("Compute Sensitivities", false, "");
 

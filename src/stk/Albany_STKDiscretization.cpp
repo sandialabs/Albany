@@ -100,12 +100,6 @@ Albany::STKDiscretization::getNodeMap() const
   return node_map;
 }
 
-Teuchos::RCP<const Epetra_Map>
-Albany::STKDiscretization::getSideMap() const
-{
-  return side_map;
-}
-
 const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >&
 Albany::STKDiscretization::getWsElNodeEqID() const
 {
@@ -181,17 +175,13 @@ Albany::STKDiscretization::getWsPhysIndex() const
   return wsPhysIndex;
 }
 
+/*
 const std::vector<std::string>&
 Albany::STKDiscretization::getNodeSetIDs() const
 {
   return nodeSetIDs;
 }
-
-const std::vector<std::string>&
-Albany::STKDiscretization::getSideSetIDs() const
-{
-  return sideSetIDs;
-}
+*/
 
 void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln, const double time)
 {
@@ -482,6 +472,10 @@ void Albany::STKDiscretization::computeWorksetInfo()
   else 
     for (int i=0; i<numBuckets; i++) wsPhysIndex[i]=stkMeshStruct->ebNameToIndex[wsEBNames[i]];
 
+  // Temp array to construct elem_map
+
+  std::vector<int> emap;
+
   // Fill  wsElNodeEqID(workset, el_LID, local node, Eq) => unk_LID
   wsElNodeEqID.resize(numBuckets);
   coords.resize(numBuckets);
@@ -490,9 +484,13 @@ void Albany::STKDiscretization::computeWorksetInfo()
     stk::mesh::Bucket& buck = *buckets[b];
     wsElNodeEqID[b].resize(buck.size());
     coords[b].resize(buck.size());
+    emap.resize(el_lid + buck.size()); 
     for (std::size_t i=0; i < buck.size(); i++, el_lid++) {
   
       stk::mesh::Entity& e = buck[i];
+
+      // e is the element GID. Save a map from lid to GID
+      emap[el_lid] = gid(e);
 
       stk::mesh::PairIterRelation rel = e.relations(metaData.NODE_RANK);
 
@@ -514,6 +512,8 @@ void Albany::STKDiscretization::computeWorksetInfo()
       }
     }
   }
+
+  elem_map = Teuchos::rcp(new Epetra_Map(-1, emap.size(), &(emap[0]), 0, *comm));
 
   // Pull out pointers to shards::Arrays for every bucket, for every state
   // Code is data-type dependent
@@ -544,14 +544,21 @@ void Albany::STKDiscretization::computeWorksetInfo()
   }
 }
 
-void Albany::STKDiscretization::computeSideSets()
-{
+void Albany::STKDiscretization::computeSideSets(){
 
+  const stk::mesh::EntityRank element_rank = metaData.element_rank();
+
+  // iterator over all side_rank parts found in the mesh
   std::map<std::string, stk::mesh::Part*>::iterator ss = stkMeshStruct->ssPartVec.begin();
-  while ( ss != stkMeshStruct->ssPartVec.end() ) { // Iterate over Side Sets
-    // Get all owned nodes in this side set
+
+  while ( ss != stkMeshStruct->ssPartVec.end() ) { 
+
+    // Get all owned sides in this side set
     stk::mesh::Selector select_owned_in_sspart =
+
+      // get only entities in the ss part
       stk::mesh::Selector( *(ss->second) ) &
+      // and only if the part is local
       stk::mesh::Selector( metaData.locally_owned_part() );
 
     std::vector< stk::mesh::Entity * > sides ;
@@ -559,20 +566,115 @@ void Albany::STKDiscretization::computeSideSets()
 				      bulkData.buckets( metaData.side_rank() ) ,
 				      sides );
 
-    sideSets[ss->first].resize(sides.size());
-    sideSetCoords[ss->first].resize(sides.size());
-    sideSetIDs.push_back(ss->first); // Grab string ID
     *out << "STKDisc: sideset "<< ss->first <<" has size " << sides.size() << "  on Proc 0." << endl;
-    for (std::size_t i=0; i < sides.size(); i++) {
-      int side_gid = gid(sides[i]);
-      int side_lid = side_map->LID(side_gid);
-      sideSets[ss->first][i].resize(neq);
-      for (std::size_t eq=0; eq < neq; eq++)  sideSets[ss->first][i][eq] = getOwnedDOF(side_lid,eq);
-      sideSetCoords[ss->first][i] = stk::mesh::field_data(*stkMeshStruct->coordinates_field, *sides[i]);
+
+    sideSets[ss->first].resize(sides.size()); // build the data holder
+
+    // loop over the sides to see what they are, then fill in the data holder
+    // for side set options, look at $TRILINOS_DIR/packages/stk/stk_usecases/mesh/UseCase_13.cpp
+
+    for (std::size_t localSideID=0; localSideID < sides.size(); localSideID++) {
+
+      stk::mesh::Entity &sidee = *sides[localSideID];
+
+      const stk::mesh::PairIterRelation side_elems = sidee.relations(element_rank); // get the elements
+            // containing the side. Should be only one for external boundaries. Need to fix for internal
+            // flux conditions
+
+      TEUCHOS_TEST_FOR_EXCEPTION(side_elems.size() != 1, std::logic_error,
+			   "STKDisc: cannot figure out side set topology for side set " << ss->first << endl);
+
+      const stk::mesh::Entity & elem = *side_elems[0].entity();
+
+      // Save elem id. This is the global element id
+      sideSets[ss->first].elem_GID[localSideID] = gid(elem);
+      // Save elem id. This is the local element id
+      sideSets[ss->first].elem_LID[localSideID] = elem_map->LID(gid(elem));
+      // Save the side identifier inside of the element. This starts at zero here.
+      sideSets[ss->first].side_local_id[localSideID] = determine_local_side_id(elem, sidee);
+
+/*
+      *out << "Sideset: " << ss->first << " entry " 
+          << localSideID << " elem_GID " << sideSets[ss->first].elem_GID[localSideID]
+          << " elem_LID " << sideSets[ss->first].elem_LID[localSideID]
+          << " side_local_id " <<  sideSets[ss->first].side_local_id[localSideID] << endl;
+*/
+
+/*
+      *out << print_entity_key(sides[i]) << endl;
+      *out << sides[i]->identifier() - 1 << endl;
+      *out << sides[i]->log_query() << endl;
+      *out << sides[i]->entity_rank() << endl;
+      *out << "Relating to " << side_elems.size() << endl;
+*/
+
     }
+
     ss++;
   }
 }
+
+// From $TRILINOS_DIR/packages/stk/stk_usecases/mesh/UseCase_13.cpp
+
+unsigned 
+Albany::STKDiscretization::determine_local_side_id( const stk::mesh::Entity & elem , stk::mesh::Entity & side ) {
+
+  using namespace stk;
+
+  const CellTopologyData * const elem_top = mesh::fem::get_cell_topology( elem ).getCellTopologyData();
+
+  const mesh::PairIterRelation elem_nodes = elem.relations( mesh::fem::FEMMetaData::NODE_RANK );
+  const mesh::PairIterRelation side_nodes = side.relations( mesh::fem::FEMMetaData::NODE_RANK );
+
+  int side_id = -1 ;
+
+  for ( unsigned i = 0 ; side_id == -1 && i < elem_top->side_count ; ++i ) {
+    const CellTopologyData & side_top = * elem_top->side[i].topology ;
+    const unsigned     * side_map =   elem_top->side[i].node ;
+
+    if ( side_nodes.size() == side_top.node_count ) {
+
+      side_id = i ;
+
+      for ( unsigned j = 0 ;
+            side_id == static_cast<int>(i) && j < side_top.node_count ; ++j ) {
+
+        mesh::Entity * const elem_node = elem_nodes[ side_map[j] ].entity();
+
+        bool found = false ;
+
+        for ( unsigned k = 0 ; ! found && k < side_top.node_count ; ++k ) {
+          found = elem_node == side_nodes[k].entity();
+        }
+
+        if ( ! found ) { side_id = -1 ; }
+      }
+    }
+  }
+
+  if ( side_id < 0 ) {
+    std::ostringstream msg ;
+    msg << "determine_local_side_id( " ;
+    msg << elem_top->name ;
+    msg << " , Element[ " ;
+    msg << elem.identifier();
+    msg << " ]{" ;
+    for ( unsigned i = 0 ; i < elem_nodes.size() ; ++i ) {
+      msg << " " << elem_nodes[i].entity()->identifier();
+    }
+    msg << " } , Side[ " ;
+    msg << side.identifier();
+    msg << " ]{" ;
+    for ( unsigned i = 0 ; i < side_nodes.size() ; ++i ) {
+      msg << " " << side_nodes[i].entity()->identifier();
+    }
+    msg << " } ) FAILED" ;
+    throw std::runtime_error( msg.str() );
+  }
+
+  return static_cast<unsigned>(side_id) ;
+}
+
 
 void Albany::STKDiscretization::computeNodeSets()
 {
@@ -591,7 +693,7 @@ void Albany::STKDiscretization::computeNodeSets()
 
     nodeSets[ns->first].resize(nodes.size());
     nodeSetCoords[ns->first].resize(nodes.size());
-    nodeSetIDs.push_back(ns->first); // Grab string ID
+//    nodeSetIDs.push_back(ns->first); // Grab string ID
     *out << "STKDisc: nodeset "<< ns->first <<" has size " << nodes.size() << "  on Proc 0." << endl;
     for (std::size_t i=0; i < nodes.size(); i++) {
       int node_gid = gid(nodes[i]);
