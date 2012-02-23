@@ -30,7 +30,9 @@ namespace LCM {
     wBF         (p.get<std::string>                   ("Weighted BF Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
     porePressure (p.get<std::string>                   ("QP Pore Pressure Name"),
-		  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	densityPoreFluid       (p.get<std::string>      ("Pore-Fluid Density Name"),
+	     p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     Temp        (p.get<std::string>                   ("QP Temperature Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     RefTemp        (p.get<std::string>                   ("Reference Temperature Name"),
@@ -44,6 +46,8 @@ namespace LCM {
     porosity (p.get<std::string>                   ("Porosity Name"),
 	      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
 	alphaMixture (p.get<std::string>           ("Mixture Thermal Expansion Name"),
+	      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+    alphaPoreFluid       (p.get<std::string>      ("Pore-Fluid Thermal Expansion Name"),
 	      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     biotCoefficient (p.get<std::string>           ("Biot Coefficient Name"),
 		     p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
@@ -91,6 +95,7 @@ namespace LCM {
     this->addDependentField(porosity);
     this->addDependentField(biotCoefficient);
     this->addDependentField(biotModulus);
+    this->addDependentField(densityPoreFluid);
 
     this->addDependentField(Temp);
     this->addDependentField(RefTemp);
@@ -110,6 +115,7 @@ namespace LCM {
     this->addDependentField(J);
     this->addDependentField(defgrad);
     this->addDependentField(alphaMixture);
+    this->addDependentField(alphaPoreFluid);
     this->addEvaluatedField(TResidual);
 
     Teuchos::RCP<PHX::DataLayout> vector_dl =
@@ -144,6 +150,7 @@ namespace LCM {
 
     // Allocate workspace
     flux.resize(dims[0], numQPs, numDims);
+    fgravity.resize(dims[0], numQPs, numDims);
     fluxdt.resize(dims[0], numQPs, numDims);
     pterm.resize(dims[0], numQPs);
     Tterm.resize(dims[0], numQPs);
@@ -202,6 +209,8 @@ namespace LCM {
     this->utils.setFieldData(strain,fm);
     this->utils.setFieldData(J,fm);
     this->utils.setFieldData(defgrad,fm);
+    this->utils.setFieldData(densityPoreFluid,fm);
+    this->utils.setFieldData(alphaPoreFluid,fm);
     this->utils.setFieldData(TResidual,fm);
   }
 
@@ -287,7 +296,23 @@ evaluateFields(typename Traits::EvalData workset)
    FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
    FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
 
-   FST::tensorMultiplyDataData<ScalarT> (flux, Kref, TGrad); // flux_i = k I_ij p_j
+
+   // gravity or other potential term
+   for (std::size_t cell=0; cell < workset.numCells; ++cell){
+         for (std::size_t qp=0; qp < numQPs; ++qp) {
+        	 for (std::size_t dim=0; dim <numDims; ++dim){
+        	  fgravity(cell,qp, dim) = TGrad(cell,qp,dim);
+         }
+        fgravity(cell, qp, numDims) -=  9.81*(densityPoreFluid(cell, qp))*
+        		                     (1.0 + alphaPoreFluid(cell,qp)*
+        		                     (Temp(cell,qp) - RefTemp(cell,qp))); //assume g is 8.81
+     }
+   }
+
+   // Pore pressure gradient contribution
+   // FST::tensorMultiplyDataData<ScalarT> (flux, Kref, TGrad); // flux_i = k I_ij p_j
+   FST::tensorMultiplyDataData<ScalarT> (flux, Kref, fgravity); // flux_i = k I_ij p_j
+
 
    for (std::size_t cell=0; cell < workset.numCells; ++cell){
       for (std::size_t qp=0; qp < numQPs; ++qp) {

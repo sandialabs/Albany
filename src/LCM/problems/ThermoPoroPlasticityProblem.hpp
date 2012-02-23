@@ -986,6 +986,9 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
     p->set<string>("QP Pore Pressure Name", "Pore Pressure");
 	p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
+	p->set<string>("Pore-Fluid Density Name", "Pore-Fluid Density");
+	p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
 	p->set<string>("QP Temperature Name", "Temperature");
 
 	p->set<string>("Reference Temperature Name", "Reference Temperature");
@@ -999,6 +1002,8 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
     p->set<string>("Biot Modulus Name", "Biot Modulus");
 
     p->set<string>("Mixture Thermal Expansion Name", "Mixture Thermal Expansion");
+
+    p->set<string>("Pore-Fluid Thermal Expansion Name", "Pore-Fluid Thermal Expansion");
 
     p->set<string>("Gradient QP Variable Name", "Pore Pressure Gradient");
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
