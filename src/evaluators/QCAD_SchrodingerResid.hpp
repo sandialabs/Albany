@@ -45,9 +45,7 @@ private:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  //! Helper function to compute inverse effective mass (possible position dependent)
-  // ScalarT getInvEffMass(const std::string& EBName, const std::size_t dim, const MeshScalarT* coord);
-  
+  //! Helper function to compute inverse effective mass
   double getInvEffMassFiniteWall(const MeshScalarT* coord);
   double getInvEffMass1DMosCap(const MeshScalarT* coord);
   
@@ -67,9 +65,6 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> V;
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
   
-  //PHX::MDField<ScalarT,Cell,QuadPoint> invEffMass; //unused, really just intermediate
-  //PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> invEffMass;
-
   bool enableTransient;
   bool havePotential;
   bool haveMaterial;

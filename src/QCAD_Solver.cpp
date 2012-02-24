@@ -78,7 +78,7 @@ std::vector<int> string_expand_compoundindex(const std::string& indexStr, int mi
 QCAD::Solver::
 Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
        const Teuchos::RCP<const Epetra_Comm>& comm) :
-  maxIter(0)
+  maxIter(0),CONVERGE_TOL(1e-6)
 {
   using std::string;
 
@@ -111,6 +111,7 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
       problemName == "Poisson CI") {
     maxIter = problemParams.get<int>("Maximum Iterations", 100);
     iterationMethod = problemParams.get<string>("Iteration Method", "Picard");
+    CONVERGE_TOL = problemParams.get<double>("Convergence Tolerance", 1e-6);
   }
 
   // Create Solver(s) based on problem name
@@ -342,7 +343,6 @@ void
 QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
 					  const OutArgs& outArgs ) const
 {
-  const double CONVERGE_TOL = 1e-5;
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
   //state variables
@@ -419,7 +419,7 @@ void
 QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
 				 const OutArgs& outArgs ) const
 {
-  const double CONVERGE_TOL = 1e-5;
+  // const double CONVERGE_TOL = 1e-5;
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
   //state variables
@@ -1270,7 +1270,8 @@ double GetEigensolverShift(const QCAD::SolverSubSolver& ss,
   //set shift to be slightly (5% of range) below minimum value
   // double shift = -(minVal - 0.05*(maxVal-minVal)); //minus sign b/c negative eigenvalue convention
   
-  double shift = -minVal*1.1;  // 10% below minimum value
+  // double shift = -minVal*1.1;  // 10% below minimum value
+  double shift = -minVal*1.2;
   return shift;
 }
   

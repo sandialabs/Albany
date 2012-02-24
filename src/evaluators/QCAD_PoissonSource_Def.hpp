@@ -416,13 +416,12 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
         for (std::size_t qp=0; qp < numQPs; ++qp)
         {
           ScalarT approxEDensity = 0.0;
+          ScalarT prevPhi = prevPhiArray(cell,qp); 
+          
           if(bUsePredictorCorrector)
-          {
-            ScalarT prevPhi = prevPhiArray(cell,qp);
-            
             // compute the approximate quantum electron density using predictor-corrector method
             approxEDensity = eDensityForPoissonSchrond(workset, cell, qp, prevPhi, true);
-          }
+
           else  // otherwise, use the exact quantum density
             approxEDensity = eDensityForPoissonSchrond(workset, cell, qp, 0.0, false);
 
@@ -462,10 +461,12 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
           if (bIncludeVxc)  // include Vxc
           {
             ScalarT Vxc = computeVxcLDA(relPerm, averagedEffMass, approxEDensity);
-            conductionBand(cell, qp) = qPhiRef-Chi-phi*V0 +Vxc; // [eV]
+            conductionBand(cell, qp) = qPhiRef -Chi -phi*V0 +Vxc; // [eV]
+            // conductionBand(cell, qp) = qPhiRef -Chi -0.5*(phi*V0 +prevPhi) +Vxc; 
           }
           else  // not include Vxc
-            conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
+            conductionBand(cell, qp) = qPhiRef -Chi -phi*V0; // [eV]
+            // conductionBand(cell, qp) = qPhiRef -Chi -0.5*(phi*V0 +prevPhi);
           
           valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
           
@@ -561,13 +562,12 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
         for (std::size_t qp=0; qp < numQPs; ++qp)
         {
           ScalarT approxEDensity = 0.0;
+          ScalarT prevPhi = prevPhiArray(cell,qp);
+          
           if (bUsePredictorCorrector) 
-          {
-            ScalarT prevPhi = prevPhiArray(cell,qp);
-            
             // compute the approximate quantum electron density using predictor-corrector method
             approxEDensity = eDensityForPoissonSchrond(workset, cell, qp, prevPhi, true);
-          }
+
           else
             approxEDensity = eDensityForPoissonSchrond(workset, cell, qp, 0.0, false);
 
@@ -598,9 +598,11 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
           {
             ScalarT Vxc = computeVxcLDA(relPerm, averagedEffMass, approxEDensity);
             conductionBand(cell, qp) = qPhiRef-Chi-phi*V0 +Vxc; // [eV]
+            // conductionBand(cell, qp) = qPhiRef -Chi -0.5*(phi*V0 +prevPhi) +Vxc;
           }
           else  // not include Vxc
             conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
+            // conductionBand(cell, qp) = qPhiRef -Chi -0.5*(phi*V0 +prevPhi);
           
           valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
         }
@@ -860,15 +862,13 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
       {
         // retrieve Previous Poisson Potential
         Albany::MDArray prevPhiArray = (*workset.stateArrayPtr)["Previous Poisson Potential"];
-
+        ScalarT prevPhi = prevPhiArray(cell,qp);
         ScalarT approxEDensity = 0.0;
+        
         if(bUsePredictorCorrector)
-        {
-          ScalarT prevPhi = prevPhiArray(cell,qp);
-            
           // compute the approximate quantum electron density using predictor-corrector method
           approxEDensity = eDensityForPoissonSchrond(workset, cell, qp, prevPhi, true);
-        }
+
         else  // otherwise, use the exact quantum density
           approxEDensity = eDensityForPoissonSchrond(workset, cell, qp, 0.0, false);
 
@@ -909,9 +909,11 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
         {
           ScalarT Vxc = computeVxcLDA(relPerm, averagedEffMass, approxEDensity);
           conductionBand(cell, qp) = qPhiRef-Chi-phi*V0 +Vxc; // [eV]
+          // conductionBand(cell, qp) = qPhiRef -Chi -0.5*(phi*V0 +prevPhi) +Vxc; // [eV]
         }
         else  // not include Vxc
           conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
+          // conductionBand(cell, qp) = qPhiRef -Chi -0.5*(phi*V0 +prevPhi); // [eV]
         
         valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
 
@@ -977,15 +979,13 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
       {
         // retrieve Previous Poisson Potential
         Albany::MDArray prevPhiArray = (*workset.stateArrayPtr)["Previous Poisson Potential"];
-
+        ScalarT prevPhi = prevPhiArray(cell,qp);
         ScalarT approxEDensity = 0.0;
+        
         if (bUsePredictorCorrector) 
-        {
-          ScalarT prevPhi = prevPhiArray(cell,qp);
-            
           // compute the approximate quantum electron density using predictor-corrector method
           approxEDensity = eDensityForPoissonSchrond(workset, cell, qp, prevPhi, true);
-        }
+
         else
           approxEDensity = eDensityForPoissonSchrond(workset, cell, qp, 0.0, false);
 
@@ -1016,9 +1016,11 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
         {
           ScalarT Vxc = computeVxcLDA(relPerm, averagedEffMass, approxEDensity);
           conductionBand(cell, qp) = qPhiRef-Chi-phi*V0 +Vxc; // [eV]
+          // conductionBand(cell, qp) = qPhiRef -Chi -0.5*(phi*V0 +prevPhi) +Vxc; // [eV]
         }
         else  // not include Vxc
           conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
+          // conductionBand(cell, qp) = qPhiRef -Chi -0.5*(phi*V0 +prevPhi); // [eV]
         
         valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
       }
@@ -1136,17 +1138,23 @@ typename QCAD::PoissonSource<EvalT,Traits>::ScalarT
 QCAD::PoissonSource<EvalT,Traits>::ionizedDopants(const std::string dopType, const ScalarT &x)
 {
   ScalarT ionDopants;
-   
-  if (x > MAX_EXPONENT)
-  {
-    ionDopants = 0.0;
-    return ionDopants; 
-  } 
   
   if (dopType == "Donor")
-    ionDopants = 1.0 / (1. + 2.*exp(x));  
+  {
+    if (x > MAX_EXPONENT)
+      ionDopants = 0.5 * exp(-x);  // use Boltzman statistics for large positive x, 
+    else                           // as the Fermi statistics leads to bad derivative.
+      ionDopants = 1.0 / (1. + 2.*exp(x));  
+  }  
+
   else if (dopType == "Acceptor")
-    ionDopants = -1.0 / (1. + 4.*exp(x));
+  {
+    if (x > MAX_EXPONENT)
+      ionDopants = -0.25 * exp(-x);
+    else
+      ionDopants = -1.0 / (1. + 4.*exp(x));
+  }  
+
   else if (dopType == "None")
     ionDopants = 0.0;
   else
@@ -1258,7 +1266,7 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrond
   const std::vector<double>& neg_eigenvals = *(workset.eigenDataPtr->eigenvalueRe);
   std::vector<double> eigenvals( neg_eigenvals );
   for(unsigned int i=0; i<eigenvals.size(); ++i) eigenvals[i] *= -1; //apply minus sign (b/c of eigenval convention)
-  
+
   // determine deltaPhi used in computing quantum electron density
   ScalarT deltaPhi = 0.0;  // 0 by default
   if (bUsePredCorr)  // true: apply the p-c method
@@ -1297,7 +1305,7 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrond
  			  ScalarT tmpArg = (Ef-eigenvals[i])/kbT + deltaPhi;
  			  ScalarT logFunc; 
  			  if (tmpArg > MAX_EXPONENT)
- 			    logFunc = tmpArg;  // exp(tmpArg) blows up for large tmpArg, leading to bad derivative
+ 			    logFunc = tmpArg;  // exp(tmpArg) blows up for large positive tmpArg, leading to bad derivative
  			  else
  			    logFunc = log(1.0 + exp(tmpArg));
  			      
@@ -1352,12 +1360,16 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrond
       // loop over eigenvalues to compute electron density [cm^-3]
       for(int i = 0; i < nEigenvectors; i++) 
       {
-        // Fermi-Dirac distribution
-        ScalarT tmpArg = (eigenvals[i]-Ef)/kbT + deltaPhi;
+        // ScalarT tmpArg = (eigenvals[i]-Ef)/kbT + deltaPhi;
+        // It is critical to use -deltaPhi for 3D (while +deltaPhi for 1D and 2D) as 
+        // derived theoretically. +deltaPhi leads to serious oscillations (tested).  
+        
+        ScalarT tmpArg = (eigenvals[i]-Ef)/kbT - deltaPhi;
         ScalarT fermiFactor; 
+        
         if (tmpArg > MAX_EXPONENT) 
-          fermiFactor = 0.0; // not function of phi, no derivative 
-        else
+          fermiFactor = exp(-tmpArg);  // use Boltzmann statistics for large positive tmpArg,
+        else                           // as the Fermi statistics leads to bad derivative        
           fermiFactor = 1.0/( exp(tmpArg) + 1.0 ); 
 
         // note: wavefunctions are assumed normalized here 

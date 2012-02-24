@@ -97,6 +97,7 @@ namespace QCAD {
     Teuchos::RCP<const Epetra_Comm> solverComm;
 
     bool bVerbose;
+    double CONVERGE_TOL;
   };
 
 
