@@ -112,6 +112,7 @@ Albany::PoroElasticityProblem::getValidProblemParameters() const
   validPL->sublist("Thermal Conductivity", false, "");
   validPL->sublist("Kozeny-Carman Permeability", false, "");
   validPL->sublist("Elastic Modulus", false, "");
+  validPL->sublist("Shear Modulus", false, "");
   validPL->sublist("Poissons Ratio", false, "");
   validPL->sublist("Stabilization Parameter", false, "");
 

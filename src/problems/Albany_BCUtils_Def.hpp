@@ -130,6 +130,10 @@ Albany::BCUtils<BCTraits>::constructBCEvaluators(
 	 RCP<ParameterList> p = rcp(new ParameterList);
 	 p->set<int>("Type", traits_type::typeKf);
 
+	 p->set< Teuchos::Array<RealType> >("Time Values", sub_list.get<Teuchos::Array<RealType> >("Time Values"));
+	 p->set< Teuchos::Array<RealType> >("KI Values", sub_list.get<Teuchos::Array<RealType> >("KI Values"));
+	 p->set< Teuchos::Array<RealType> >("KII Values", sub_list.get<Teuchos::Array<RealType> >("KII Values"));
+
 	 // This BC needs a shear modulus and poissons ratio defined
 	 TEUCHOS_TEST_FOR_EXCEPTION(!params->isSublist("Shear Modulus"), 
 				    Teuchos::Exceptions::InvalidParameter, 
@@ -148,6 +152,10 @@ Albany::BCUtils<BCTraits>::constructBCEvaluators(
 				    Teuchos::Exceptions::InvalidParameter,
 				    "Invalid Poissons Ratio type");
 	 p->set< RealType >("Poissons Ratio", pr_list.get("Value", 1.0));
+
+
+//	 p->set< Teuchos::Array<RealType> >("BC Values", sub_list.get<Teuchos::Array<RealType> >("BC Values"));
+//	 p->set< RCP<DataLayout> >("Data Layout", dummy);
 
 	 // Extract BC parameters
 	 p->set< string >("Kfield KI Name", "Kfield KI");

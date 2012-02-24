@@ -681,7 +681,7 @@ IF (ALBANY_LAME)
   target_link_libraries(utLameStress_elastic ${LAME_LIB} ${Trilinos_LIBRARIES})
 ENDIF ()
 
-set(ALL_LIBRARIES ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES} )
+set(ALL_LIBRARIES ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${Trilinos_EXTRA_LD_FLAGS} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES} )
 
 target_link_libraries(Albany          albanyLib ${ALL_LIBRARIES}) 
 target_link_libraries(AlbanySG        albanyLib ${ALL_LIBRARIES})

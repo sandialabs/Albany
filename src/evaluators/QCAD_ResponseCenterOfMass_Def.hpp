@@ -232,6 +232,7 @@ QCAD::ResponseCenterOfMass<EvalT,Traits>::getValidResponseParameters() const
   validPL->set<double>("z max", 0.0, "Box domain maximum z coordinate");
 
   validPL->set<string>("Element Block Name", "", "Element block name that specifies domain");
+  validPL->set<string>("Description", "", "Description of this response used by post processors");
 
   return validPL;
 }

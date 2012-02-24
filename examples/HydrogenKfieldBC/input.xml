@@ -13,16 +13,21 @@
     <!-- BOUNDARY CONDITIONS on node sets from the discretization which follows -->
     <ParameterList name="Dirichlet BCs">
       <!-- Kfield Boundary Conditions -->
+	  <Parameter name="DBC on NS nodelist_2 for DOF T" type="double" value="0.000000346992"/>
       <Parameter name="DBC on NS nodelist_3 for DOF Z" type="double" value="0.0"/>
 	  <ParameterList name="Time Dependent DBC on NS nodelist_4 for DOF Z">
         <Parameter name="Number of points" type="int" value="3"/>
-        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 0.1000 ,3153600000.0}"/>
+        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 0.001000 ,500.0}"/>
         <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0, 0.0}"/>
       </ParameterList>
       <ParameterList name="DBC on NS nodelist_1 for DOF K">
 	<Parameter name="BC Function" type="string" value="Kfield"/>
-	<Parameter name="Kfield KI" type="double" value="5.0"/>
+	<Parameter name="Kfield KI" type="double" value="1.0"/>
 	<Parameter name="Kfield KII" type="double" value="0.0"/>
+	<Parameter name="Number of points" type="int" value="3"/>
+	<Parameter name="Time Values" type="Array(double)" value="{ 0.0, 0.001000 ,500.0}"/>
+	<Parameter name="KI Values" type="Array(double)" value="{   0.0, 0.001000 ,500.0}"/>
+	<Parameter name="KII Values" type="Array(double)" value="{  0.0, 0.001000 ,500.0}"/>
       </ParameterList>
     </ParameterList>
     
@@ -90,6 +95,10 @@
       <Parameter name="Value" type="double" value="160.e3"/>
       <Parameter name="dKdT Value" type="double" value="0.00"/>
     </ParameterList>
+	  <ParameterList name="Poissons Ratio">
+      <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
+      <Parameter name="Value" type="double" value="0.285714"/>
+    </ParameterList>
     <ParameterList name="Thermal Conductivity">
       <Parameter name="Thermal Conductivity Type" type="string" value="Constant"/>
       <Parameter name="Value" type="double" value="0.0"/>
@@ -109,14 +118,10 @@
     <Parameter name="Thermal Expansion Coefficient" type="double" value="0.e-5"/>
     <Parameter name="Density" type="double" value="7.8e-9"/>
     <Parameter name="Heat Capacity" type="double" value="0.46e9"/>
-    <ParameterList name="Parameters">
-      <Parameter name="Number" type="int" value="1"/>
-      <Parameter name="Parameter 0" type="string" value="Time"/>
-    </ParameterList>    
     <!-- PARAMETER -->
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="1"/>
-      <Parameter name="Parameter 0" type="string" value="Kfield KI"/>
+	  <Parameter name="Parameter 0" type="string" value="Time"/>
     </ParameterList>
     <!-- RESPONSE FUNCTION used for regression testing -->
     <ParameterList name="Response Functions">
@@ -136,7 +141,7 @@
   <!-- REGRESSION comparison of the RESPONSE FUNCTION declared above-->
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{-1.50319421564e-07}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{8.6748e-08}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-6"/>
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{0.0}"/>
@@ -154,10 +159,10 @@
       <ParameterList name="Stepper">
 	<Parameter  name="Initial Value" type="double" value="0.0"/>
 	<!-- Repeat the boundary condition (just one) that is to be loaded -->
-	<Parameter  name="Continuation Parameter" type="string" value="Kfield KI"/>
+	<Parameter  name="Continuation Parameter" type="string" value="Time"/>
 	<!-- The number of steps in the problem -->
 	<Parameter  name="Max Steps" type="int" value="2"/>         
-	<Parameter  name="Max Value" type="double" value="5.0"/>
+	<Parameter  name="Max Value" type="double" value="5000.0"/>
 	<Parameter  name="Min Value" type="double" value="0.0"/>    
 	<!-- Compute eigenvalues of the global stiffness -->
 	<Parameter  name="Compute Eigenvalues" type="bool" value="0"/> 
@@ -169,8 +174,8 @@
       </ParameterList>
       <ParameterList name="Step Size">
 	<!-- Control the actual parameter incrementation, here it is the displacement increment on the BC -->
-	<Parameter  name="Initial Step Size" type="double" value="0.5"/> 
-	<Parameter name="Method" type="string" value="Constant"/>
+	<Parameter  name="Initial Step Size" type="double" value="0.00005"/> 
+	<Parameter name="Method" type="string" value="Adaptive"/>
       </ParameterList>
     </ParameterList>
     <!-- BEGIN SOLVER CONTROLS. IN GENERAL, The defaults need not be changed. -->
@@ -203,7 +208,7 @@
 		  <Parameter name="Solver Type" type="string" value="Block GMRES"/>
 		  <ParameterList name="Solver Types">
 		    <ParameterList name="Block GMRES">
-		      <Parameter name="Convergence Tolerance" type="double" value="1e-6"/>
+		      <Parameter name="Convergence Tolerance" type="double" value="1e-8"/>
 		      <Parameter name="Output Frequency" type="int" value="10"/>
 		      <Parameter name="Output Style" type="int" value="1"/>
 		      <Parameter name="Verbosity" type="int" value="33"/>

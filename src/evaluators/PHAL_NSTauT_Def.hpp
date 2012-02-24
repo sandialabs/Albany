@@ -91,8 +91,8 @@ evaluateFields(typename Traits::EvalData workset)
             normGc(cell,qp) += Gc(cell,qp,i,j)*Gc(cell,qp,i,j);          
           }
         }
-        TauT(cell,qp) += 12*ThermalCond(cell,qp)*ThermalCond(cell,qp)*std::sqrt(normGc(cell,qp));
-        TauT(cell,qp) = 1/std::sqrt(TauT(cell,qp));
+        TauT(cell,qp) += 12.*ThermalCond(cell,qp)*ThermalCond(cell,qp)*std::sqrt(normGc(cell,qp));
+        TauT(cell,qp) = 1./std::sqrt(TauT(cell,qp));
       }
     }
   

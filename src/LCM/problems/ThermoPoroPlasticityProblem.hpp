@@ -103,6 +103,8 @@ namespace Albany {
     int TEMP_offset; // Position of TEMP unknown in nodal DOFs
     int numDim;    //Number of spatial dimensions and displacement variable 
 
+    std::string matModel;
+
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState;
   };
@@ -142,12 +144,18 @@ namespace Albany {
 
 #include "MixtureThermalExpansion.hpp"
 #include "MixtureSpecificHeat.hpp"
-// #include "ShearModulus.hpp"
+#include "ShearModulus.hpp"
 #include "BulkModulus.hpp"
-// #include "YieldStrength.hpp"
-// #include "HardeningModulus.hpp"
-// #include "SaturationModulus.hpp"
-// #include "SaturationExponent.hpp"
+
+#include "J2Stress.hpp"
+#include "Neohookean.hpp"
+#include "PisdWdF.hpp"
+#include "HardeningModulus.hpp"
+#include "YieldStrength.hpp"
+#include "SaturationModulus.hpp"
+#include "SaturationExponent.hpp"
+#include "DislocationDensity.hpp"
+#include "TLPoroStress.hpp"
 
 
 template <typename EvalT>
@@ -506,17 +514,18 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 	  p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 	  Teuchos::ParameterList& paramList = params->sublist("Porosity");
 	  p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+	  double initPorosity = paramList.get("Value", 0.0);
 
 	  // Setting this turns on dependence of strain and pore pressure)
 	  p->set<string>("Strain Name", "Strain");
 	  p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-//	  p->set<string>("QP Pore Pressure Name", "Pore Pressure");
-//	  p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-//	  p->set<string>("Biot Coefficient Name", "Biot Coefficient");
+	  p->set<string>("QP Pore Pressure Name", "Pore Pressure");
+	  p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+	  p->set<string>("Biot Coefficient Name", "Biot Coefficient");
 
           ev = rcp(new LCM::Porosity<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
-          p = stateMgr.registerStateVariable("Porosity",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+          p = stateMgr.registerStateVariable("Porosity",dl->qp_scalar, dl->dummy,"scalar", initPorosity, true);
           ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
      }
@@ -541,7 +550,7 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
           ev = rcp(new LCM::BiotCoefficient<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
-          p = stateMgr.registerStateVariable("Biot Coefficient",dl->qp_scalar, dl->dummy,"scalar", 0.0);
+          p = stateMgr.registerStateVariable("Biot Coefficient",dl->qp_scalar, dl->dummy,"scalar", 1.0);
           ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -565,7 +574,7 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
           ev = rcp(new LCM::BiotModulus<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
-          p = stateMgr.registerStateVariable("Biot Modulus",dl->qp_scalar, dl->dummy,"scalar", 0.0);
+          p = stateMgr.registerStateVariable("Biot Modulus",dl->qp_scalar, dl->dummy,"scalar", 1.0e12);
           ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
      }
@@ -651,6 +660,23 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+  { // Shear Modulus
+      RCP<ParameterList> p = rcp(new ParameterList);
+
+      p->set<string>("QP Variable Name", "Shear Modulus");
+      p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+      p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
+      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+      Teuchos::ParameterList& paramList = params->sublist("Shear Modulus");
+      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+      ev = rcp(new LCM::ShearModulus<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+  }
+
   { // Poissons Ratio 
     RCP<ParameterList> p = rcp(new ParameterList);
 
@@ -671,40 +697,182 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+  if (matModel == "NeoHookean")
+    {
+      { // Stress
+        RCP<ParameterList> p = rcp(new ParameterList("Stress"));
+
+        //Input
+        p->set<string>("DefGrad Name", "Deformation Gradient");
+        p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+
+        p->set<string>("Elastic Modulus Name", "Elastic Modulus");
+        p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+        p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
+        p->set<string>("DetDefGrad Name", "Jacobian");  // dl->qp_scalar also
+
+        //Output
+        p->set<string>("Stress Name", matModel); //dl->qp_tensor also
+
+        ev = rcp(new LCM::Neohookean<EvalT,AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+        p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy,"scalar", 0.0);
+        ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+      }
+    }
+    else if (matModel == "NeoHookean AD")
+    {
+      RCP<ParameterList> p = rcp(new ParameterList("Stress"));
+
+      //Input
+      p->set<string>("Elastic Modulus Name", "Elastic Modulus");
+      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+      p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
+
+      p->set<string>("DefGrad Name", "Deformation Gradient");
+      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+
+      //Output
+      p->set<string>("Stress Name", matModel); //dl->qp_tensor also
+
+      ev = rcp(new LCM::PisdWdF<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy,"scalar", 0.0);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+    else if (matModel == "J2")
+    {
+      { // Hardening Modulus
+        RCP<ParameterList> p = rcp(new ParameterList);
+
+        p->set<string>("QP Variable Name", "Hardening Modulus");
+        p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+        p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+        p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+        p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
+        p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+        Teuchos::ParameterList& paramList = params->sublist("Hardening Modulus");
+        p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+        ev = rcp(new LCM::HardeningModulus<EvalT,AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+      }
+
+      { // Yield Strength
+        RCP<ParameterList> p = rcp(new ParameterList);
+
+        p->set<string>("QP Variable Name", "Yield Strength");
+        p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+        p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+        p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+        p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
+        p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+        Teuchos::ParameterList& paramList = params->sublist("Yield Strength");
+        p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+        ev = rcp(new LCM::YieldStrength<EvalT,AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+      }
+
+      { // Saturation Modulus
+        RCP<ParameterList> p = rcp(new ParameterList);
+
+        p->set<string>("Saturation Modulus Name", "Saturation Modulus");
+        p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+        p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+        p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+        p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
+        p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+        Teuchos::ParameterList& paramList = params->sublist("Saturation Modulus");
+        p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+        ev = rcp(new LCM::SaturationModulus<EvalT,AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+      }
+
+      { // Saturation Exponent
+        RCP<ParameterList> p = rcp(new ParameterList);
+
+        p->set<string>("Saturation Exponent Name", "Saturation Exponent");
+        p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+        p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+        p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+        p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
+        p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+        Teuchos::ParameterList& paramList = params->sublist("Saturation Exponent");
+        p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+        ev = rcp(new LCM::SaturationExponent<EvalT,AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+      }
+
+      if ( numDim == 3 && params->get("Compute Dislocation Density Tensor", false) )
+      { // Dislocation Density Tensor
+        RCP<ParameterList> p = rcp(new ParameterList("Dislocation Density"));
+
+        //Input
+        p->set<string>("Fp Name", "Fp");
+        p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+        p->set<string>("BF Name", "BF");
+        p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
+        p->set<string>("Gradient BF Name", "Grad BF");
+        p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+
+        //Output
+        p->set<string>("Dislocation Density Name", "G"); //dl->qp_tensor also
+
+        //Declare what state data will need to be saved (name, layout, init_type)
+        ev = rcp(new LCM::DislocationDensity<EvalT,AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+        p = stateMgr.registerStateVariable("G",dl->qp_tensor, dl->dummy,"scalar", 0.0);
+        ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+      }
+    }
+
 
   { // Total Stress
-    RCP<ParameterList> p = rcp(new ParameterList("Total Stress"));
+     RCP<ParameterList> p = rcp(new ParameterList("Total Stress"));
 
-    //Input
-    p->set<string>("Strain Name", "Strain");
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+     //Input
+     p->set<string>("Stress Name", matModel);
+     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-    p->set<string>("Elastic Modulus Name", "Elastic Modulus");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-    p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
-
-    p->set<string>("Biot Coefficient Name", "Biot Coefficient");  // dl->qp_scalar also
-
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-    p->set<string>("QP Variable Name", "Pore Pressure");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-    //Output
-    p->set<string>("Total Stress Name", "Total Stress"); //dl->qp_tensor also
-
-    ev = rcp(new LCM::TotalStress<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Total Stress",dl->qp_tensor, dl->dummy,"scalar", 0.0);
-    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Pore Pressure",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
-	ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-	fm0.template registerEvaluator<EvalT>(ev);
+     p->set<string>("DefGrad Name", "Deformation Gradient");
+     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
 
-  }
+     p->set<string>("Biot Coefficient Name", "Biot Coefficient");  // dl->qp_scalar also
+     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+     p->set<string>("QP Variable Name", "Pore Pressure");
+     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+
+     p->set<string>("DetDefGrad Name", "Jacobian");  // dl->qp_scalar also
+
+     //Output
+     p->set<string>("Total Stress Name", "Total Stress"); //dl->qp_tensor also
+
+
+     ev = rcp(new LCM::TLPoroStress<EvalT,AlbanyTraits>(*p));
+     fm0.template registerEvaluator<EvalT>(ev);
+     p = stateMgr.registerStateVariable("Total Stress",dl->qp_tensor, dl->dummy,"scalar", 0.0);
+     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+     fm0.template registerEvaluator<EvalT>(ev);
+     p = stateMgr.registerStateVariable("Pore Pressure",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+ 	ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+ 	fm0.template registerEvaluator<EvalT>(ev);
+
+
+   }
 
   if (haveSource) { // Source
     RCP<ParameterList> p = rcp(new ParameterList);
@@ -793,7 +961,7 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
     ev = rcp(new LCM::ThermoPoroPlasticityResidMomentum<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
-	p = stateMgr.registerStateVariable("Temperature",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+	p = stateMgr.registerStateVariable("Temperature",dl->qp_scalar, dl->dummy,"scalar", 300.0, true);
 	ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
 	fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -818,6 +986,9 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
     p->set<string>("QP Pore Pressure Name", "Pore Pressure");
 	p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
+	p->set<string>("Pore-Fluid Density Name", "Pore-Fluid Density");
+	p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
 	p->set<string>("QP Temperature Name", "Temperature");
 
 	p->set<string>("Reference Temperature Name", "Reference Temperature");
@@ -831,6 +1002,8 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
     p->set<string>("Biot Modulus Name", "Biot Modulus");
 
     p->set<string>("Mixture Thermal Expansion Name", "Mixture Thermal Expansion");
+
+    p->set<string>("Pore-Fluid Thermal Expansion Name", "Pore-Fluid Thermal Expansion");
 
     p->set<string>("Gradient QP Variable Name", "Pore Pressure Gradient");
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);

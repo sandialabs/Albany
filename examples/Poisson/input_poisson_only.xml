@@ -26,6 +26,7 @@
       <Parameter name="Response 1" type="string" value="Poisson[3]" />
       <Parameter name="Response 2" type="string" value="Poisson[4]" />
       <Parameter name="Response 3" type="string" value="Poisson[9]" />
+      <!-- <Parameter name="Response 0" type="string" value="DgDp(Poisson,0,0)" />  example DgDp(solverName,gIndex,pIndex) **Note gIndex,pIndex are wrt sub-solver** -->
     </ParameterList>
 
   </ParameterList>

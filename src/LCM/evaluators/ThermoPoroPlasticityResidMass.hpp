@@ -54,6 +54,7 @@ private:
   // Input:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<ScalarT,Cell,QuadPoint> porePressure;
+  PHX::MDField<ScalarT,Cell,QuadPoint> densityPoreFluid;
   PHX::MDField<ScalarT,Cell,QuadPoint> Temp;
   PHX::MDField<ScalarT,Cell,QuadPoint> RefTemp;
   PHX::MDField<ScalarT,Cell,QuadPoint> stabParameter;
@@ -65,12 +66,12 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> TGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint> alphaMixture;
+  PHX::MDField<ScalarT,Cell,QuadPoint> alphaPoreFluid;
   PHX::MDField<ScalarT,Cell,QuadPoint> Source;
   Teuchos::Array<double> convectionVels;
   PHX::MDField<ScalarT,Cell,QuadPoint> rhoCp;
   PHX::MDField<ScalarT,Cell,QuadPoint> Absorption;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> strain;
-
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defgrad;
   PHX::MDField<ScalarT,Cell,QuadPoint> J;
 
@@ -101,6 +102,7 @@ private:
 
   // Temporary FieldContainers
   Intrepid::FieldContainer<ScalarT> flux;
+  Intrepid::FieldContainer<ScalarT> fgravity;
   Intrepid::FieldContainer<ScalarT> fluxdt;
   Intrepid::FieldContainer<ScalarT> pterm;
   Intrepid::FieldContainer<ScalarT> Tterm;

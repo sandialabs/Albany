@@ -280,7 +280,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 
 
-  // Pore-Fluid Diffusion Term
+  // Heat Diffusion Term
 
    ScalarT dt = deltaTime(0);
 

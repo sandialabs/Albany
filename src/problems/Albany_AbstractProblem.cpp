@@ -76,6 +76,7 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   validPL->sublist("Teko", false, "");
   validPL->sublist("Dirichlet BCs", false, "");
   validPL->set<bool>("Solve Adjoint", false, "");
+  validPL->set<bool>("Compute Sensitivities", false, "");
 
   validPL->set<bool>("Ignore Residual In Jacobian", false, 
 		     "Ignore residual calculations while computing the Jacobian (only generally appropriate for linear problems)");

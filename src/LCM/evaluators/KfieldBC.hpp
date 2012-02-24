@@ -29,6 +29,8 @@
 #include "Sacado_ParameterAccessor.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_Dirichlet.hpp"
+#include <vector>
+
 
 namespace LCM {
 /** \brief KfieldBC Dirichlet evaluator
@@ -50,11 +52,18 @@ public:
   typedef typename EvalT::ScalarT ScalarT;
   KfieldBC_Base(Teuchos::ParameterList& p);
   ScalarT& getValue(const std::string &n);
-  void computeBCs(double* coord, ScalarT& Xval, ScalarT& Yval);
+  void computeBCs(double* coord, ScalarT& Xval, ScalarT& Yval,
+		          RealType time);
 
   RealType mu, nu, KIval, KIIval;
   ScalarT KI, KII;
   std::string KI_name, KII_name;
+
+protected:
+  const int offset;
+  std::vector< RealType > timeValues;
+  std::vector< RealType > KIValues;
+  std::vector< RealType > KIIValues;
 };
 
 // **************************************************************

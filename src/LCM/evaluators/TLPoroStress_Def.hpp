@@ -115,10 +115,6 @@ evaluateFields(typename Traits::EvalData workset)
 	  FST::scalarMultiplyDataData<ScalarT>(JBpF_invT, biotCoefficient, JpF_invT);
 	  FST::tensorMultiplyDataData<ScalarT>(totstress, stress,JF_invT); // Cauchy to 1st PK
 
-
-
-
-
     // Compute Stress
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {

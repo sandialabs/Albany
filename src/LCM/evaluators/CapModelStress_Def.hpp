@@ -144,10 +144,10 @@ evaluateFields(typename Traits::EvalData workset)
   	  ScalarT kappaVal = capParameterold(cell,qp);
 
   	  // make sure the cap starts from kappa0, and monotonically hardening (decreasing, more negative)
-  	  if(kappaVal > kappa0){
-  		  kappaVal = ScalarT(kappa0);
+  	  //if(kappaVal > kappa0){
+  		  //kappaVal = ScalarT(kappa0);
   		  //std::cout << "kappaVal > kappa0, make kappaVal = kappa0" << std::endl;
-  	  }
+  	  //}
 
   	  // check yielding
   	  ScalarT f = compute_f(sigmaVal, alphaVal, kappaVal);

@@ -28,6 +28,7 @@ namespace LCM {
 template <typename EvalT, typename Traits> 
 KfieldBC_Base<EvalT, Traits>::
 KfieldBC_Base(Teuchos::ParameterList& p) :
+offset(p.get<int>("Equation Offset")),
   PHAL::DirichletBase<EvalT, Traits>(p),
   mu(p.get<RealType>("Shear Modulus")),
   nu(p.get<RealType>("Poissons Ratio"))
@@ -35,7 +36,7 @@ KfieldBC_Base(Teuchos::ParameterList& p) :
   KIval  = p.get<RealType>("KI Value");
   KIIval = p.get<RealType>("KII Value");
 
-  KI = KIval;
+  KI  =  KIval;
   KII = KIIval;
 
   KI_name  = p.get< std::string >("Kfield KI Name");
@@ -47,6 +48,22 @@ KfieldBC_Base(Teuchos::ParameterList& p) :
   
   new Sacado::ParameterRegistration<EvalT, SPL_Traits> (KI_name, this, paramLib);
   new Sacado::ParameterRegistration<EvalT, SPL_Traits> (KII_name, this, paramLib);
+
+  timeValues = p.get<Teuchos::Array<RealType> >("Time Values").toVector();
+  KIValues = p.get<Teuchos::Array<RealType> >("KI Values").toVector();
+  KIIValues = p.get<Teuchos::Array<RealType> >("KII Values").toVector();
+
+
+  TEUCHOS_TEST_FOR_EXCEPTION( !(timeValues.size() == KIValues.size()),
+			      Teuchos::Exceptions::InvalidParameter,
+			      "Dimension of \"Time Values\" and \"KI Values\" do not match" );
+
+  TEUCHOS_TEST_FOR_EXCEPTION( !(timeValues.size() == KIIValues.size()),
+			      Teuchos::Exceptions::InvalidParameter,
+			      "Dimension of \"Time Values\" and \"KII Values\" do not match" );
+
+
+
 }
 
 // **********************************************************************
@@ -57,15 +74,23 @@ getValue(const std::string &n)
 {
   if (n == KI_name)
     return KI;
-  return KII;
+ // else if (n== timeValues)
+//	  return timeValues;
+  else
+	return KII;
 }
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
 void
 KfieldBC_Base<EvalT, Traits>::
-computeBCs(double* coord, ScalarT& Xval, ScalarT& Yval)
+computeBCs(double* coord, ScalarT& Xval, ScalarT& Yval, RealType time)
 {
+
+  TEUCHOS_TEST_FOR_EXCEPTION( time > timeValues.back(),
+				      Teuchos::Exceptions::InvalidParameter,
+				      "Time is growing unbounded!" );
+
   RealType X, Y, R, theta;
   ScalarT coeff_1, coeff_2;
   RealType tau = 6.283185307179586;
@@ -75,9 +100,29 @@ computeBCs(double* coord, ScalarT& Xval, ScalarT& Yval)
   Y = coord[1];
   R = std::sqrt(X*X + Y*Y);
   theta = std::atan2(Y,X);
+
+  ScalarT KIFunctionVal, KIIFunctionVal;
+  RealType KIslope, KIIslope;
+  unsigned int Index(0);
+
+  while( timeValues[Index] < time )
+    Index++;
+
+  if (Index == 0) {
+    KIFunctionVal  = KIValues[Index];
+    KIIFunctionVal = KIIValues[Index];
+  }
+  else
+  {
+    KIslope = ( KIValues[Index] - KIValues[Index - 1] ) / ( timeValues[Index] - timeValues[Index - 1] );
+    KIFunctionVal = KIValues[Index-1] + KIslope * ( time - timeValues[Index - 1] );
+
+    KIIslope = ( KIIValues[Index] - KIIValues[Index - 1] ) / ( timeValues[Index] - timeValues[Index - 1] );
+    KIIFunctionVal = KIIValues[Index-1] + KIIslope * ( time - timeValues[Index - 1] );
+  }
     
-  coeff_1 = ( KI / mu ) * std::sqrt( R / tau );
-  coeff_2 = ( KII / mu ) * std::sqrt( R / tau );
+  coeff_1 = ( KI*KIFunctionVal / mu ) * std::sqrt( R / tau );
+  coeff_2 = ( KII*KIIFunctionVal / mu ) * std::sqrt( R / tau );
     
   KI_X  = coeff_1 * ( 1.0 - 2.0 * nu + std::sin( theta / 2.0 ) * std::sin( theta / 2.0 ) ) * std::cos( theta / 2.0 );  
   KI_Y  = coeff_1 * ( 2.0 - 2.0 * nu - std::cos( theta / 2.0 ) * std::cos( theta / 2.0 ) ) * std::sin( theta / 2.0 );  
@@ -88,22 +133,26 @@ computeBCs(double* coord, ScalarT& Xval, ScalarT& Yval)
   Xval = KI_X + KII_X;
   Yval = KI_Y + KII_Y;
 
+/*
 //  JTO: I am going to leave this here for now...
-//     std::cout << "================" << std::endl;
-//     std::cout.precision(15);
-//     std::cout << "X : " << X << ", Y: " << Y << ", R: " << R << std::endl;
+     std::cout << "================" << std::endl;
+     std::cout.precision(15);
+     std::cout << "X : " << X << ", Y: " << Y << ", R: " << R << std::endl;
 //     std::cout << "Node : " << nsNodes[inode] << std::endl;
-//     std::cout << "KI : " << KI << ", KII: " << KII << std::endl;
-//     std::cout << "theta: " << theta << std::endl;
-//     std::cout << "coeff_1: " << coeff_1 << ", coeff_2: " << coeff_2 << std::endl;
-//     std::cout << "KI_X: " << KI_X << ", KI_Y: " << KI_Y << std::endl;
-//     std::cout << "Xval: " << Xval << ", Yval: " << Yval << std::endl;
+     std::cout << "KI : " << KI << ", KII: " << KII << std::endl;
+     std::cout << "theta: " << theta << std::endl;
+     std::cout << "coeff_1: " << coeff_1 << ", coeff_2: " << coeff_2 << std::endl;
+     std::cout << "KI_X: " << KI_X << ", KI_Y: " << KI_Y << std::endl;
+     std::cout << "Xval: " << Xval << ", Yval: " << Yval << std::endl;
+     std::cout << "nu: " << nu << std::endl;
 //     std::cout << "dx: " << (*x)[xlunk] << std::endl;
 //     std::cout << "dy: " << (*x)[ylunk] << std::endl;
 //     std::cout << "fx: " << ((*x)[xlunk] - Xval) << std::endl;
 //     std::cout << "fy: " << ((*x)[ylunk] - Yval) << std::endl;
-//     std::cout << "sin(theta/2): " << std::sin( theta / 2.0 ) << std::endl;
-//     std::cout << "cos(theta/2): " << std::cos( theta / 2.0 ) << std::endl;
+     std::cout << "sin(theta/2): " << std::sin( theta / 2.0 ) << std::endl;
+     std::cout << "cos(theta/2): " << std::cos( theta / 2.0 ) << std::endl;
+
+     */
 }
 
 // **********************************************************************
@@ -124,11 +173,17 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
   Teuchos::RCP<Epetra_Vector> f = dirichletWorkset.f;
   Teuchos::RCP<const Epetra_Vector> x = dirichletWorkset.x;
+
+
+
   // Grab the vector off node GIDs for this Node Set ID from the std::map
   const std::vector<std::vector<int> >& nsNodes = 
     dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
   const std::vector<double*>& nsNodeCoords = 
     dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
+
+
+  RealType time = dirichletWorkset.current_time;
 
   int xlunk, ylunk; // global and local indicies into unknown vector
   double* coord;
@@ -139,11 +194,17 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     ylunk = nsNodes[inode][1];
     coord = nsNodeCoords[inode];
 
-    this->computeBCs(coord, Xval, Yval);
+    this->computeBCs(coord, Xval, Yval, time);
+
 
     (*f)[xlunk] = ((*x)[xlunk] - Xval);
     (*f)[ylunk] = ((*x)[ylunk] - Yval);
+
+
   }
+
+//  std::cout<< "time is  " << time << endl;
+
 }
 
 // **********************************************************************
@@ -164,6 +225,9 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   Teuchos::RCP<Epetra_Vector> f = dirichletWorkset.f;
   Teuchos::RCP<Epetra_CrsMatrix> jac = dirichletWorkset.Jac;
   Teuchos::RCP<const Epetra_Vector> x = dirichletWorkset.x;
+
+  RealType time = dirichletWorkset.current_time;
+
   const RealType j_coeff = dirichletWorkset.j_coeff;
   const std::vector<std::vector<int> >& nsNodes = 
     dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
@@ -185,7 +249,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     ylunk = nsNodes[inode][1];
     coord = nsNodeCoords[inode];
     
-    this->computeBCs(coord, Xval, Yval);
+    this->computeBCs(coord, Xval, Yval, time);
     
     // replace jac values for the X dof 
     jac->ExtractMyRowView(xlunk, numEntries, matrixEntries, matrixIndices);
@@ -224,6 +288,9 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   Teuchos::RCP<Epetra_MultiVector> JV = dirichletWorkset.JV;
   Teuchos::RCP<const Epetra_Vector> x = dirichletWorkset.x;
   Teuchos::RCP<const Epetra_MultiVector> Vx = dirichletWorkset.Vx;
+
+  RealType time = dirichletWorkset.current_time;
+
   const RealType j_coeff = dirichletWorkset.j_coeff;
   const std::vector<std::vector<int> >& nsNodes = 
     dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
@@ -239,7 +306,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     ylunk = nsNodes[inode][1];
     coord = nsNodeCoords[inode];
     
-    this->computeBCs(coord, Xval, Yval);
+    this->computeBCs(coord, Xval, Yval, time);
 
     if (f != Teuchos::null)
     {
@@ -289,6 +356,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
  const std::vector<double*>& nsNodeCoords = 
    dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
 
+  RealType time = dirichletWorkset.current_time;
   int xlunk, ylunk; // global and local indicies into unknown vector
   double* coord;
   ScalarT Xval, Yval;
@@ -299,7 +367,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     ylunk = nsNodes[inode][1];
     coord = nsNodeCoords[inode];
 
-    this->computeBCs(coord, Xval, Yval);
+    this->computeBCs(coord, Xval, Yval, time);
 
     for (int block=0; block<nblock; block++) {
       (*f)[block][xlunk] = ((*x)[block][xlunk] - Xval.coeff(block));
@@ -345,6 +413,8 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     nblock = f->size();
   int nblock_jac = jac->size();
 
+  RealType time = dirichletWorkset.current_time;
+
   int xlunk, ylunk; // local indicies into unknown vector
   double* coord;
   ScalarT Xval, Yval; 
@@ -354,7 +424,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     ylunk = nsNodes[inode][1];
     coord = nsNodeCoords[inode];
     
-    this->computeBCs(coord, Xval, Yval);
+    this->computeBCs(coord, Xval, Yval, time);
     
     // replace jac values for the X dof 
     for (int block=0; block<nblock_jac; block++) {
@@ -411,6 +481,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 
   int nblock = x->size();
 
+  RealType time = dirichletWorkset.current_time;
   int xlunk, ylunk; // global and local indicies into unknown vector
   double* coord;
   ScalarT Xval, Yval;
@@ -420,7 +491,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     ylunk = nsNodes[inode][1];
     coord = nsNodeCoords[inode];
     
-    this->computeBCs(coord, Xval, Yval);
+    this->computeBCs(coord, Xval, Yval, time);
 
     if (f != Teuchos::null)
     {
@@ -477,6 +548,8 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   const std::vector<double*>& nsNodeCoords = 
     dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
 
+
+  RealType time = dirichletWorkset.current_time;
   int xlunk, ylunk; // global and local indicies into unknown vector
   double* coord;
   ScalarT Xval, Yval;
@@ -487,7 +560,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     ylunk = nsNodes[inode][1];
     coord = nsNodeCoords[inode];
 
-    this->computeBCs(coord, Xval, Yval);
+    this->computeBCs(coord, Xval, Yval, time);
 
     for (int block=0; block<nblock; block++) {
       (*f)[block][xlunk] = ((*x)[block][xlunk] - Xval.coeff(block));
@@ -533,6 +606,8 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     nblock = f->size();
   int nblock_jac = jac->size();
 
+  RealType time = dirichletWorkset.current_time;
+
   int xlunk, ylunk; // local indicies into unknown vector
   double* coord;
   ScalarT Xval, Yval; 
@@ -542,7 +617,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     ylunk = nsNodes[inode][1];
     coord = nsNodeCoords[inode];
     
-    this->computeBCs(coord, Xval, Yval);
+    this->computeBCs(coord, Xval, Yval, time);
     
     // replace jac values for the X dof 
     for (int block=0; block<nblock_jac; block++) {
@@ -598,6 +673,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
 
   int nblock = x->size();
+  RealType time = dirichletWorkset.current_time;
 
   int xlunk, ylunk; // global and local indicies into unknown vector
   double* coord;
@@ -608,7 +684,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     ylunk = nsNodes[inode][1];
     coord = nsNodeCoords[inode];
     
-    this->computeBCs(coord, Xval, Yval);
+    this->computeBCs(coord, Xval, Yval, time);
 
     if (f != Teuchos::null)
     {

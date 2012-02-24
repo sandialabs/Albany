@@ -20,6 +20,8 @@
 
 #include "Albany_FieldManagerScalarResponseFunction.hpp"
 
+#define MAX_DIMENSIONS 3
+
 namespace QCAD {
 
   // Helper class: a vector with math operators
@@ -67,15 +69,16 @@ namespace QCAD {
 
   // Data Structure for an image point
   struct nebImagePt {
-    void init(int nDims) {
+    void init(int nDims, double ptRadius) {
       coords.resize(nDims); coords.fill(0.0);
       velocity.resize(nDims); velocity.fill(0.0);
       grad.resize(nDims); grad.fill(0.0);
       value = weight = 0.0;
+      radius = ptRadius;
     }
 
-    void init(const mathVector& coordPt) {
-      init(coordPt.size());
+    void init(const mathVector& coordPt, double ptRadius) {
+      init(coordPt.size(), ptRadius);
       coords = coordPt;
     }
       
@@ -84,11 +87,20 @@ namespace QCAD {
     mathVector grad;
     double value;
     double weight;
+    double radius;
   };
 
   std::ostream& operator<<(std::ostream& os, const mathVector& mv);
   std::ostream& operator<<(std::ostream& os, const nebImagePt& np);
- 
+
+  // a double array with maximal dimension
+  struct maxDimPt { 
+    maxDimPt(const double* p, int numDims) {
+      for(int i=0; i<numDims; i++) data[i] = p[i];
+    }
+    double data[MAX_DIMENSIONS];
+  };
+
  
   /*!
    * \brief Reponse function for finding saddle point values of a field
@@ -159,10 +171,12 @@ namespace QCAD {
 
     //! Called by evaluator to interface with class data that persists across worksets
     std::string getMode();
-    bool pointIsInImagePtRegion(const double* p);
+    bool pointIsInImagePtRegion(const double* p) const;
+    bool pointIsInAccumRegion(const double* p) const;
     void addBeginPointData(const std::string& elementBlock, const double* p, double value);
     void addEndPointData(const std::string& elementBlock, const double* p, double value);
     void addImagePointData(const double* p, double value, double* grad);
+    void accumulatePointData(const double* p, double value, double* grad);
     double getSaddlePointWeight(const double* p) const;
     double getTotalSaddlePointWeight() const;
     const double* getSaddlePointPosition() const;
@@ -207,20 +221,26 @@ namespace QCAD {
     SaddleValueResponseFunction& operator=(const SaddleValueResponseFunction&);
 
     //! function giving distribution of weights for "point"
-    double pointFn(double d) const;
+    double pointFn(double d, double radius) const;
 
     //! data used across worksets and processors in saddle point algorithm
     std::size_t numDims;
     std::size_t nImagePts;
     std::vector<nebImagePt> imagePts;
     double imagePtSize;
-    bool bClimbing;
+    bool bClimbing, bAdaptivePointSize;
     double antiKinkFactor;
 
-    // just store a nebImagePt or index instead?
-    mathVector saddlePt; 
-    double saddlePtWeight; 
-    double saddlePtVal, returnFieldVal;
+    //! data for memory-intensive but fast mode (hold entire proc's data)
+    bool bAggregateWorksets;
+    std::vector<double> vFieldValues;
+    std::vector<maxDimPt> vCoords;
+    std::vector<maxDimPt> vGrads;
+    
+
+    // index into imagePts of the "found" saddle point
+    int iSaddlePt;
+    double returnFieldVal;  // value of the return field at the "found" saddle point
 
     double maxTimeStep, minTimeStep;
     double minSpringConstant, maxSpringConstant;
@@ -236,6 +256,8 @@ namespace QCAD {
 
     double zmin, zmax;  //defines lateral-volume region when numDims == 3
     double xmin, xmax, ymin, ymax; // dynamically adjusted box marking region containing image points
+    bool bLockToPlane;
+    double lockedZ;
 
     //! accumulation vectors for evaluator to fill
     mathVector imagePtValues;

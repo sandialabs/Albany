@@ -1,27 +1,90 @@
 <?php 
-  include './common/webroot_common/header.php';
-  include './common/header.php';
-  include 'header.php';
-  setFilename('lcm.html');
-  setTitle('LCM: Laboratory for Computational Mechanics');
-  setDir('./');
-  include './common/header.html'; 
-?>
+   include './common/webroot_common/header.php';
+   include './common/header.php';
+   include 'header.php';
+   setFilename('lcm.html');
+   setTitle('LCM: Laboratory for Computational Mechanics');
+   setDir('./');
+   include './common/header.html'; 
+   ?>
 
 <!-- begin content ######################################################### -->
+
+<p class="heading"> Laboratory for Computational Mechanics </p>
 
 The Laboratory for Computational Mechanics (LCM) is an R&D effort
 built on the Albany code base. The purpose of the LCM is to develop a
 computational mechanics research environment that facilitates
 collaboration and impacts the Sandia production analysis codes.
 
+<p class="section"><b> Getting Started </b></p>
+
+Development within the LCM environment requires an installation of
+Trilinos and a few TPLs. To facilitate a common environment setup,
+there are a couple of build scripts in the Albany repository that
+fetch and build Trilinos and the required TPLs. They can be found at the location
+<tt>Albany/src/LCM/doc/*_build.sh</tt>. These scripts build a recent
+version of the GCC compiler, including its dependencies, and proceed
+to fetch and build current version of NetCDF, Boost, CMake, and
+OpenMPI. Prereq's for the script are an installation of git and the
+standard BLAS and LAPACK libraries. If everything goes smoothly, you
+will have a clean installation of Trilinos and Albany's tests will
+pass.
+
+<p class="section"><b> Fracture and Failure </b></p>
+
 The focus of the LCM is on developing mechanics algorithms related to
 modeling fracture and failure of materials. For more information, see
-the <a href="http://firebird.ran.sandia.gov/solid-mechanics/"><span>solid mechanics
-    collaboration website</span></a>. 
+the <a href="http://firebird.ran.sandia.gov/solid-mechanics/"><span>solid
+    mechanics collaboration website</span></a>.
 
+<p class="section"><b> Multiphysics </b></p>
+
+The design of Albany allows for the rapid prototyping of multiphysics
+systems, as evident by a number of ongoing efforts underneath the LCM
+umbrella. Each of these efforts involves the solution of multiple
+balance laws with coupled solution fields, in the context of fully
+nonlinear, finite deformation continuum mechanics. A few represented
+examples will be discussed.
+
+<p class="sub section"><i> Thermomechanics </i></p>
+
+The treatment of thermomechanics includes a formulation of the balance
+of energy, in temperature form, coupled with the balance of linear
+momentum. Implicit, quasi-static time integration applies to the
+equilibrium equations, with transient heat conduction stemming from
+the balance of energy. Finite deformation kinematics leads to a
+description of physics in the reference configuration, with
+temperature dependent material parameters and constitutive response,
+including J<sub>2</sub> inelasticity. Finally, mechanical source terms
+are present in the energy equation describing structural elastic and
+inelastic heating as well as internal dissipation.
+<table class="image">
+  <caption align="bottom"> Demonstration Calculation for the Thermomechanical Problem </caption>
+  <tr><td><img src="images/ThermoMechanicalPic.png" height="720" width="1200" alt="" name="thermo-mech"/></tr></td>
+</table>
+
+<p class="sub section"><i> Poromechancis </i></p>
+
+<p class="sub section"><i> Hydrogen Transport</i></p>
+
+<p class="section"><b> Organization and Project Management </b></p>
+
+The LCM project leverages existing research projects in the areas of
+computational mechanics. The stated objective is to provide an
+environment whereby a researcher can focus on the new idea and/or
+algorithm, and not be responsible for re-implementing functionality
+required for simulation, but outside the scope of the research. For
+example, existing parsing, I/O, parallel communication functionality
+can be leveraged and reused seamlessly. A schmatic of the operational
+space of the LCM project can be seen in the figure below.
+
+<table class="image">
+  <caption align="bottom"> Schematic of the LCM </caption>
+  <tr><td><img src="images/LCMSchematic.png" alt=""  name="lcm_schematic"/></tr></td>
+</table>
 
 
 <!-- end content ########################################################### -->
-      
+
 <?php include './common/footer.html'; ?>

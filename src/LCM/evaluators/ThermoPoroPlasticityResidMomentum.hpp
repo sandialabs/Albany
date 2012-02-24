@@ -79,7 +79,7 @@ private:
   Intrepid::FieldContainer<ScalarT> F_inv;
   Intrepid::FieldContainer<ScalarT> F_invT;
   Intrepid::FieldContainer<ScalarT> JF_invT;
-  Intrepid::FieldContainer<ScalarT> P;
+//  Intrepid::FieldContainer<ScalarT> P;
   Intrepid::FieldContainer<ScalarT> thermoEPS;
 
 };

@@ -32,7 +32,7 @@ MixtureThermalExpansion(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   alphaSkeleton  (p.get<std::string>                   ("Skeleton Thermal Expansion Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  alphaPoreFluid       (p.get<std::string>                   ("Pore-Fluid Thermal Expansion Name"),
+  alphaPoreFluid       (p.get<std::string>      ("Pore-Fluid Thermal Expansion Name"),
 	       	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   mixtureThermalExpansion      (p.get<std::string>    ("Mixture Thermal Expansion Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") )

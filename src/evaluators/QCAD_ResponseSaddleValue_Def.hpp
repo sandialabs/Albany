@@ -181,6 +181,20 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+  else if(svResponseFn->getMode() == "Accumulate all field data") {
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      getAvgCellCoordinates(coordVec, cell, dblAvgCoords);
+
+      if(svResponseFn->pointIsInAccumRegion(dblAvgCoords)) {	
+	getCellQuantities(cell, cellVol, fieldVal, retFieldVal, fieldGrad);
+
+	dblFieldVal = QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue(fieldVal);
+	for (std::size_t k=0; k < numDims; ++k)
+	  dblFieldGrad[k] = QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue(fieldGrad[k]);
+	svResponseFn->accumulatePointData(dblAvgCoords, dblFieldVal, dblFieldGrad);
+      }
+    }
+  }
   else if(svResponseFn->getMode() == "Fill saddle point") {
     double wt;
     double totalWt = svResponseFn->getTotalSaddlePointWeight();
@@ -188,21 +202,24 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       getAvgCellCoordinates(coordVec, cell, dblAvgCoords);
 
-      if( (wt = svResponseFn->getSaddlePointWeight(dblAvgCoords)) > 0.0) {
-	getCellQuantities(cell, cellVol, fieldVal, retFieldVal, fieldGrad);
-	wt /= totalWt;
+      if(svResponseFn->pointIsInImagePtRegion(dblAvgCoords)) {	
 
-	// Return field value
-	this->local_response(cell,0) += wt*retFieldVal;
-	this->global_response[0] += wt*retFieldVal;
+	if( (wt = svResponseFn->getSaddlePointWeight(dblAvgCoords)) > 0.0) {
+	  getCellQuantities(cell, cellVol, fieldVal, retFieldVal, fieldGrad);
+	  wt /= totalWt;
 
-	// Field value (field searched for saddle point)
-	this->local_response(cell,1) += wt*fieldVal;
-	this->global_response[1] += wt*fieldVal;
+	  // Return field value
+	  this->local_response(cell,0) += wt*retFieldVal;
+	  this->global_response[0] += wt*retFieldVal;
 
-	this->global_response[2] = 0.0; // x-coord -- written later: would just be a MeshScalar anyway
-	this->global_response[3] = 0.0; // y-coord -- written later: would just be a MeshScalar anyway
-	this->global_response[4] = 0.0; // z-coord -- written later: would just be a MeshScalar anyway
+	  // Field value (field searched for saddle point)
+	  this->local_response(cell,1) += wt*fieldVal;
+	  this->global_response[1] += wt*fieldVal;
+
+	  this->global_response[2] = 0.0; // x-coord -- written later: would just be a MeshScalar anyway
+	  this->global_response[3] = 0.0; // y-coord -- written later: would just be a MeshScalar anyway
+	  this->global_response[4] = 0.0; // z-coord -- written later: would just be a MeshScalar anyway
+	}
       }
     }
   }
@@ -239,21 +256,25 @@ template<typename EvalT, typename Traits>
 void QCAD::ResponseSaddleValue<EvalT, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
-  // Add contributions across processors
-  Teuchos::RCP< Teuchos::ValueTypeSerializer<int,ScalarT> > serializer =
-    workset.serializerManager.template getValue<EvalT>();
-  Teuchos::reduceAll(
-    *workset.comm, *serializer, Teuchos::REDUCE_SUM,
-    this->global_response.size(), &this->global_response[0], 
-    &this->global_response[0]);
+  // only care about global response in "Fill saddle point" mode
+  if(svResponseFn->getMode() == "Fill saddle point") {
 
-  // Copy in position of saddle point here (no derivative info yet)
-  const double* pt = svResponseFn->getSaddlePointPosition();
-  for(std::size_t i=0; i<numDims; i++) 
-    this->global_response[2+i] = pt[i];
+    // Add contributions across processors
+    Teuchos::RCP< Teuchos::ValueTypeSerializer<int,ScalarT> > serializer =
+      workset.serializerManager.template getValue<EvalT>();
+    Teuchos::reduceAll(
+      *workset.comm, *serializer, Teuchos::REDUCE_SUM,
+      this->global_response.size(), &this->global_response[0], 
+      &this->global_response[0]);
+
+    // Copy in position of saddle point here (no derivative info yet)
+    const double* pt = svResponseFn->getSaddlePointPosition();
+    for(std::size_t i=0; i<numDims; i++) 
+      this->global_response[2+i] = pt[i];
   
-  // Do global scattering
-  PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postEvaluate(workset);
+    // Do global scattering
+    PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postEvaluate(workset);
+  }
 }
 
 
@@ -290,9 +311,12 @@ QCAD::ResponseSaddleValue<EvalT,Traits>::getValidResponseParameters() const
   validPL->set<string>("Debug Filename", "", "Filename for algorithm debug info");
   validPL->set<bool>("Climbing NEB", true, "Whether or not to use the climbing NEB algorithm");
   validPL->set<double>("Anti-Kink Factor", 0.0, "Factor between 0 and 1 giving about of perpendicular spring force to inclue");
+  validPL->set<bool>("Aggregate Worksets", false, "Whether or not to store off a proc's worksets locally.  Increased speed but requires more memory");
+  validPL->set<bool>("Adaptive Image Point Size", false, "Whether or not image point sizes should adapt to local mesh density");
 
   validPL->set<double>("z min", 0.0, "Box domain minimum z coordinate");
   validPL->set<double>("z max", 0.0, "Box domain maximum z coordinate");
+  validPL->set<double>("Lock to z-coord", 0.0, "z-coordinate to lock elastic band to, making a 3D problem into 2D");
 
   validPL->set<Teuchos::Array<double> >("Begin Point", Teuchos::Array<double>(), "Beginning point of elastic band");
   validPL->set<string>("Begin Element Block", "", "Element block name whose minimum marks the elastic band's beginning");
@@ -306,6 +330,8 @@ QCAD::ResponseSaddleValue<EvalT,Traits>::getValidResponseParameters() const
 
   validPL->set<int>("Debug Mode", 0, "Print verbose debug messages to stdout");
   validPL->set< Teuchos::RCP<QCAD::SaddleValueResponseFunction> >("Response Function", Teuchos::null, "Saddle value response function");
+
+  validPL->set<string>("Description", "", "Description of this response used by post processors");
 
   return validPL;
 }
