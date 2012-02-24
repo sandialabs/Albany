@@ -352,6 +352,9 @@ doNudgedElasticBand(const double current_time,
     lastPositions[i] = imagePts[i].coords;
   }
 
+  //get distance between initial and final points
+  double max_dCoords = imagePts[0].coords.distanceTo( imagePts[nImagePts-1].coords ) / nImagePts;
+
   nIters = 0;
   nInitialIterations = 20; // TODO: make into parameter?
   
@@ -377,6 +380,7 @@ doNudgedElasticBand(const double current_time,
   }
 
 
+
   // Begin NEB iteration loop
   while( ++nIters <= maxIterations) {
 
@@ -397,8 +401,8 @@ doNudgedElasticBand(const double current_time,
     for(std::size_t i=0; i<nImagePts-1; i++) springConstants[i] = springBase;
 	  
     // Find highest point if using the climbing NEB technique
-    iHighestPt = 0; //effectively a null since loops below begin at 1
-    for(std::size_t i=1; i<nImagePts-1; i++) {
+    iHighestPt = 0; // init to the first point being the highest
+    for(std::size_t i=1; i<nImagePts; i++) {
       if(imagePts[i].value > imagePts[iHighestPt].value) iHighestPt = i;
     }
 
@@ -452,6 +456,8 @@ doNudgedElasticBand(const double current_time,
 	       imagePts[iHighestPt].grad.norm() << " < " << convergeTolerance << ")" << std::endl;
       break; // exit iterations loop
     }
+    else if(nIters == maxIterations) break; //max iterations reached -- exit iterations loop now
+                                            // (important so coords & radii don't get updated)
 
     // Save last force for next iteration
     for(std::size_t i=1; i<nImagePts-1; i++) lastForce[i] = force[i];
@@ -469,6 +475,20 @@ doNudgedElasticBand(const double current_time,
     if(bLockToPlane && numDims > 2) {
       for(std::size_t i=1; i<nImagePts-1; i++) force[i][2] = 0.0;
     }
+
+    //Here - reduce dt if movement of any point exceeds initial average distance btwn pts
+    bool reduce_dt = true;
+    while(reduce_dt) {
+      reduce_dt = false;
+      for(std::size_t i=1; i<nImagePts-1; i++) {
+	if(imagePts[i].velocity.norm() * dt > max_dCoords) { reduce_dt = true; break; }
+	if(0.5 * force[i].norm() * dt2 > max_dCoords) { reduce_dt = true; break; }
+      }
+      if(reduce_dt) { 
+	dt /= 2; dt2=dt*dt;
+	if(dbMode > 2) std::cout << "Saddle Point:  ** Warning: dCoords too large: dt => " << dt << std::endl;
+      }
+    }
 	  
     //Update coordinates and velocity using (modified) Verlet integration. Reset
     // the velocity to zero if it is directed opposite to force (reduces overshoot)
@@ -476,11 +496,24 @@ doNudgedElasticBand(const double current_time,
       dp = imagePts[i].velocity.dot(force[i]);
       if(dp < 0) imagePts[i].velocity.fill(0.0);  
 
-      mathVector dCoords = imagePts[i].velocity * dt + force[i] * dt2;
+      mathVector dCoords = imagePts[i].velocity * dt + force[i] * dt2 * 0.5;
       lastPositions[i] = imagePts[i].coords; //save last position in case the new position brings us outside the mesh
       imagePts[i].coords += dCoords;
       imagePts[i].velocity += force[i] * dt;
     }
+
+    // adjust image point size based on weight (if requested)
+    //  --> try to get weight between MIN/MAX target weights by varying image pt size
+    const double MIN_ADJUST_WEIGHT = 0.5;
+    const double MAX_ADJUST_WEIGHT = 5;
+
+    if(bAdaptivePointSize) {
+      for(std::size_t i=0; i<nImagePts; i++) {
+	if(imagePts[i].weight < MIN_ADJUST_WEIGHT) imagePts[i].radius *= 2;
+	else if(imagePts[i].weight > MAX_ADJUST_WEIGHT) imagePts[i].radius /= 2;
+      }
+    }
+
   }  // end of NEB iteration loops
 
   //deallocate storage used for MPI communication
@@ -525,6 +558,11 @@ fillSaddlePointData(const double current_time,
 		    Epetra_Vector& g, int dbMode)
 {
   if(dbMode > 1) std::cout << "Saddle Point:  Begin filling saddle point data" << std::endl;
+
+  if(bAggregateWorksets) {  //in aggregate workset mode, there are currently no x-y cutoffs imposed on points in getImagePointValues
+    xmin = -1e10; xmax = 1e10; ymin = -1e10; ymax = 1e10;
+  }
+
   mode = "Fill saddle point";
   Albany::FieldManagerScalarResponseFunction::evaluateResponse(
 				   current_time, xdot, x, p, g);
@@ -686,7 +724,7 @@ getImagePointValues(const double current_time,
   imagePtGradComps.fill(0.0);
 
   if(bAggregateWorksets) {
-    //Use cached field and coordinate values to perform fill
+    //Use cached field and coordinate values to perform fill    
     for(std::size_t i=0; i<vFieldValues.size(); i++) {
       addImagePointData( vCoords[i].data, vFieldValues[i], vGrads[i].data );
     } 
@@ -715,13 +753,6 @@ getImagePointValues(const double current_time,
       //assume point has drifted off region: leave value as, set gradient to zero, and reset position
       imagePts[i].grad.fill(0.0);
       imagePts[i].coords = lastPositions[i];
-    }
-
-    // adjust image point size based on weight (if requested)
-    //  --> try to get weight between 5 and 50 by varying image pt size
-    if(bAdaptivePointSize) {
-      if(imagePts[i].weight < 5) imagePts[i].radius *= 2;
-      else if(imagePts[i].weight > 50) imagePts[i].radius /= 2;
     }
   }
 
@@ -965,9 +996,10 @@ addEndPointData(const std::string& elementBlock, const double* p, double value)
 void QCAD::SaddleValueResponseFunction::
 addImagePointData(const double* p, double value, double* grad)
 {
+  double d;
   double w, effDims = (bLockToPlane && numDims > 2) ? 2 : numDims;
   for(std::size_t i=0; i<nImagePts; i++) {
-    w = pointFn( imagePts[i].coords.distanceTo(p), imagePts[i].radius );
+    w = pointFn(imagePts[i].coords.distanceTo(p) , imagePts[i].radius );
     if(w > 0) {
       imagePtWeights[i] += w;
       imagePtValues[i] += w*value;
@@ -995,7 +1027,7 @@ accumulatePointData(const double* p, double value, double* grad)
 double QCAD::SaddleValueResponseFunction::
 getSaddlePointWeight(const double* p) const
 {
-  return pointFn( imagePts[iSaddlePt].coords.distanceTo(p), imagePts[iSaddlePt].radius );
+  return pointFn(imagePts[iSaddlePt].coords.distanceTo(p) , imagePts[iSaddlePt].radius );
 }
 
 double QCAD::SaddleValueResponseFunction::
@@ -1030,6 +1062,8 @@ matchesCurrentResults(Epetra_Vector& g) const
 
 double QCAD::SaddleValueResponseFunction::
 pointFn(double d, double radius) const {
+  //return ( d < radius ) ? 1.0 : 0.0;  //alternative?
+
   const double N = 1.0;
   double val = N*exp(-d*d / (2*radius*radius));
   return (val >= 1e-2) ? val : 0.0;

@@ -203,7 +203,7 @@ evaluateFields(typename Traits::EvalData workset)
       getAvgCellCoordinates(coordVec, cell, dblAvgCoords);
 
       if(svResponseFn->pointIsInImagePtRegion(dblAvgCoords)) {	
-
+	
 	if( (wt = svResponseFn->getSaddlePointWeight(dblAvgCoords)) > 0.0) {
 	  getCellQuantities(cell, cellVol, fieldVal, retFieldVal, fieldGrad);
 	  wt /= totalWt;
