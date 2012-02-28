@@ -517,10 +517,6 @@ namespace Albany {
 
   protected:
 
-    // Problem object (member function for computation of RBMs)
-    //IK, Feb. 2012
-    Teuchos::RCP<Albany::AbstractProblem> problem;
-
     //! Communicator
     Teuchos::RCP<const Epetra_Comm> comm;
 
