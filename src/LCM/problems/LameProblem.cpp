@@ -49,6 +49,24 @@ Albany::LameProblem::
 {
 }
 
+//the following function returns the problem information required for setting the rigid body modes (RBMs) for elasticity problems (in src/Albany_SolverFactory.cpp)
+//written by IK, Feb. 2012 
+void
+Albany::LameProblem::getRBMInfoForML(
+   int& numPDEs, int& numElasticityDim, int& numScalar, int& nullSpaceDim)
+{
+  //number of PDEs and number of elastic equations is the number of spatial dimensions
+  numPDEs = numDim;
+  numElasticityDim = numDim;
+  numScalar = 0;
+  if (numDim == 1) {nullSpaceDim = 0; }
+  else {
+    if (numDim == 2) {nullSpaceDim = 3; }
+    if (numDim == 3) {nullSpaceDim = 6; }
+  }
+}
+
+
 void
 Albany::LameProblem::
 buildProblem(

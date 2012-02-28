@@ -41,6 +41,17 @@ void
 Albany::AbstractProblem::setNumEquations(const int neq_)
 { neq = neq_; }
 
+
+void
+Albany::AbstractProblem::getRBMInfoForML(int& numPDEs, int& numElasticityDim, int& numScalar, int& nullSpaceDim)
+{
+  numPDEs = neq;
+  numElasticityDim = 0;
+  nullSpaceDim = 0;
+  numScalar = 0;
+}
+
+
 Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > >
 Albany::AbstractProblem::getFieldManager()
 { return fm; }

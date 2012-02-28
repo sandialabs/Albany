@@ -220,6 +220,15 @@ Albany::Application::
 {
 }
 
+//the following function sets the problem required for computing rigid body modes for elasticity
+//added by IK, Feb. 2012
+void
+Albany::Application::getRBMInfo(int& numPDEs, int& numElasticityDim, int& numScalar, int& nullSpaceDim)
+{
+  problem->getRBMInfoForML(numPDEs, numElasticityDim, numScalar, nullSpaceDim);
+}
+
+
 RCP<Albany::AbstractDiscretization>
 Albany::Application::
 getDiscretization() const

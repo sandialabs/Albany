@@ -54,6 +54,22 @@ Albany::PoroElasticityProblem::
 {
 }
 
+//the following function returns the problem information required for setting the rigid body modes (RBMs) for elasticity problems (in src/Albany_SolverFactory.cpp)
+//written by IK, Feb. 2012 
+void Albany::PoroElasticityProblem::getRBMInfoForML(
+   int& numPDEs, int& numElasticityDim, int& numScalar,  int& nullSpaceDim)
+{
+  numPDEs = numDim + 1;
+  numElasticityDim = numDim;
+  numScalar = 1;
+  if (numDim == 1) {nullSpaceDim = 0; }
+  else {
+    if (numDim == 2) {nullSpaceDim = 3; }
+    if (numDim == 3) {nullSpaceDim = 6; }
+  }
+}
+
+
 void
 Albany::PoroElasticityProblem::
 buildProblem(

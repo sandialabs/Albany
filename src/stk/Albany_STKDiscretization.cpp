@@ -137,7 +137,7 @@ Albany::STKDiscretization::getCoordinates() const
 
 void
 Albany::STKDiscretization::getOwned_xyz(double** x, double** y, double** z,
-                                        double **rbm, int& nNodes, int numPDEs, int nullSpaceDim)
+                                        double **rbm, int& nNodes, int numPDEs, int numScalar,  int nullSpaceDim)
 {
   // Function to return x,y,z at owned nodes as double*, specifically for ML
   int numDim = stkMeshStruct->numDim;
@@ -147,7 +147,7 @@ Albany::STKDiscretization::getOwned_xyz(double** x, double** y, double** z,
   xx = new double[numOwnedNodes];
   yy = new double[numOwnedNodes];
   zz = new double[numOwnedNodes];
-  if (nullSpaceDim>0) rr = new double[nullSpaceDim * numPDEs*nNodes];
+  if (nullSpaceDim>0) rr = new double[(nullSpaceDim + numScalar)*numPDEs*nNodes];
   else                rr = new double[1]; // Just so there is something to delete in destructor
   allocated_xyz = true;
 

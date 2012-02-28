@@ -74,6 +74,8 @@ namespace Albany {
     //! Destructor
     ~Application();
 
+    void getRBMInfo(int& numPDEs, int& numElasticityDim, int& numScalar, int& nullSpaceDim);
+
     //! Get underlying abstract discretization
     Teuchos::RCP<Albany::AbstractDiscretization> getDiscretization() const;
 
@@ -514,6 +516,10 @@ namespace Albany {
     void postRegSetup(std::string eval);
 
   protected:
+
+    // Problem object (member function for computation of RBMs)
+    //IK, Feb. 2012
+    Teuchos::RCP<Albany::AbstractProblem> problem;
 
     //! Communicator
     Teuchos::RCP<const Epetra_Comm> comm;
