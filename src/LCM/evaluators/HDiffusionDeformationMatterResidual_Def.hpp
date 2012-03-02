@@ -51,6 +51,8 @@ namespace LCM {
          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     CLGrad       (p.get<std::string>               ("Gradient QP Variable Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
+	stressGrad       (p.get<std::string>               ("Gradient Hydrostatic Stress Name"),
+		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
 //    Source      (p.get<std::string>                ("Source Name"),
 //		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
 //	MechSource      (p.get<std::string>            ("Mechanical Source Name"),
@@ -85,6 +87,7 @@ namespace LCM {
     this->addDependentField(Ctrapped);
     this->addDependentField(Ntrapped);
     this->addDependentField(CLGrad);
+    this->addDependentField(stressGrad);
     this->addDependentField(DefGrad);
     this->addDependentField(Pstress);
     this->addDependentField(weights);
@@ -122,11 +125,7 @@ namespace LCM {
     C.resize(worksetSize, numQPs, numDims, numDims);
     Cinv.resize(worksetSize, numQPs, numDims, numDims);
     CinvTgrad.resize(worksetSize, numQPs, numDims);
-
-    tauStress.resize(worksetSize, numQPs, numDims, numDims);
     CinvTaugrad.resize(worksetSize, numQPs, numDims);
-
-    tauH.resize(dims[0], numQPs);
 
     pTTterm.resize(dims[0], numQPs);
     pBterm.resize(dims[0], numNodes, numQPs);
@@ -152,6 +151,7 @@ namespace LCM {
 	this->utils.setFieldData(Ctrapped,fm);
 	this->utils.setFieldData(Ntrapped,fm);
 	this->utils.setFieldData(CLGrad,fm);
+	this->utils.setFieldData(stressGrad,fm);
 	this->utils.setFieldData(DefGrad,fm);
 	this->utils.setFieldData(Pstress,fm);
 	this->utils.setFieldData(tauFactor,fm);
@@ -194,7 +194,7 @@ evaluateFields(typename Traits::EvalData workset)
   //---------------------------------------------------------------------------//
   // Stabilization Term (only 2D and 3D problem need stabilizer)
 
-// Bochev-Dohrmann-Gunzburger Stabilization
+// Bochev-Dohrmann-Gunzburger Stabilization (work in progress)
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell){
 
@@ -228,12 +228,9 @@ evaluateFields(typename Traits::EvalData workset)
  		 for (std::size_t qp=0; qp < numQPs; ++qp) {
  		 		   pBterm(cell,node,qp) = trialPbar;
 		 }
-
    }
 
  }
-
-
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
@@ -242,12 +239,9 @@ evaluateFields(typename Traits::EvalData workset)
 			  for (std::size_t qp=0; qp < numQPs; ++qp) {
 
 				  // Transient Term
-
 				  TResidual(cell,node) += Dstar(cell, qp)*fac*(
 						     Clattice(cell,qp)- Clattice_old(cell, qp)
 						    ) *wBF(cell, node, qp)  ;
-
-
 
 				  // Strain Rate Term
 				  TResidual(cell,node) += Ctrapped(cell, qp)/Ntrapped(cell, qp)*
@@ -258,9 +252,6 @@ evaluateFields(typename Traits::EvalData workset)
 			  }
 		  }
   }
-
-
-
 
   // compute the 'material' flux
   FST::tensorMultiplyDataData<ScalarT> (C, DefGrad, DefGrad, 'T');
@@ -273,25 +264,6 @@ evaluateFields(typename Traits::EvalData workset)
 
 
   // hydrostatic stress term
-  FST::tensorMultiplyDataData<ScalarT> (tauStress, Pstress, DefGrad, 'T');
-
-  for (std::size_t cell=0; cell < workset.numCells; ++cell)
-  {
-	  for (std::size_t qp=0; qp < numQPs; ++qp)
-	  {
-		  tauH(cell,qp) = 0.0;
-		  for (std::size_t i=0; i<numDims; i++){
-			  tauH(cell,qp) += tauStress(cell, qp, i,i)/numDims;
-			 // cout << tauH(cell,qp) << endl;
-		  }
-
-
-	  }
-
-  }
-
-
-
   for (std::size_t cell=0; cell < workset.numCells; ++cell)
   {
 	  for (std::size_t qp=0; qp < numQPs; ++qp)
@@ -306,8 +278,7 @@ evaluateFields(typename Traits::EvalData workset)
 						  TResidual(cell,node) -= tauFactor(cell,qp)*
 	                		          wGradBF(cell, node, qp, i)*
 	                		          Cinv(cell,qp,i,j)*
-	                		          GradBF(cell, node, qp, j)*
-	                		          tauH(cell, qp);
+	                		          stressGrad(cell, qp, j);
 					  }
 
 				  }

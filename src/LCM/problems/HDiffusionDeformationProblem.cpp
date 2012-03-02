@@ -31,7 +31,7 @@ Albany::HDiffusionDeformationProblem::
 HDiffusionDeformationProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 			const Teuchos::RCP<ParamLib>& paramLib_,
 			const int numDim_) :
-  Albany::AbstractProblem(params_, paramLib_, numDim_ + 1),
+  Albany::AbstractProblem(params_, paramLib_, numDim_ + 2),
   haveSource(false),
   numDim(numDim_)
 {
@@ -49,6 +49,7 @@ HDiffusionDeformationProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_
 #else
   X_offset=0;
   T_offset=numDim;
+  Thydro_offset= numDim+1;
 #endif
 }
 
@@ -62,9 +63,9 @@ Albany::HDiffusionDeformationProblem::
 void Albany::HDiffusionDeformationProblem::getRBMInfoForML(
    int& numPDEs, int& numElasticityDim, int& numScalar,  int& nullSpaceDim)
 {
-  numPDEs = numDim + 1;
+  numPDEs = numDim + 2;
   numElasticityDim = numDim;
-  numScalar = 1;
+  numScalar = 2;
   if (numDim == 1) {nullSpaceDim = 0; }
   else {
     if (numDim == 2) {nullSpaceDim = 3; }
@@ -115,6 +116,7 @@ Albany::HDiffusionDeformationProblem::constructDirichletEvaluators(
   if (numDim>1) dirichletNames[X_offset+1] = "Y";
   if (numDim>2) dirichletNames[X_offset+2] = "Z";
   dirichletNames[T_offset] = "T";
+  dirichletNames[Thydro_offset] = "Thydro";
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                        this->params, this->paramLib);
