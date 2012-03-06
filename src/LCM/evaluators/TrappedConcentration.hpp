@@ -24,7 +24,7 @@
 #include "Phalanx_MDField.hpp"
 
 namespace LCM {
-/** \brief Finite Element Interpolation Evaluator
+/** \brief
 
     This evaluator computes the hydrogen concentration at trapped site
     through conservation of hydrogen atom

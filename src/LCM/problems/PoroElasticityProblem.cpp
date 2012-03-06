@@ -38,6 +38,8 @@ PoroElasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   
   haveSource =  params->isSublist("Source Functions");
 
+  matModel = params->sublist("Material Model").get("Model Name", "LinearElasticity");
+
 // Changing this ifdef changes ordering from  (X,Y,T) to (T,X,Y)
 //#define NUMBER_T_FIRST
 #ifdef NUMBER_T_FIRST
@@ -122,6 +124,7 @@ Albany::PoroElasticityProblem::getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidPoroElasticityProblemParams");
+  validPL->sublist("Material Model", false, "");
   validPL->sublist("Porosity", false, "");
   validPL->sublist("Biot Coefficient", false, "");
   validPL->sublist("Biot Modulus", false, "");
@@ -131,6 +134,43 @@ Albany::PoroElasticityProblem::getValidProblemParameters() const
   validPL->sublist("Shear Modulus", false, "");
   validPL->sublist("Poissons Ratio", false, "");
   validPL->sublist("Stabilization Parameter", false, "");
+
+
+  if (matModel == "CapModel")
+    {
+  	validPL->set<double>("A", false, "");
+  	validPL->set<double>("B", false, "");
+  	validPL->set<double>("C", false, "");
+  	validPL->set<double>("theta", false, "");
+  	validPL->set<double>("R", false, "");
+  	validPL->set<double>("kappa0", false, "");
+  	validPL->set<double>("W", false, "");
+  	validPL->set<double>("D1", false, "");
+  	validPL->set<double>("D2", false, "");
+  	validPL->set<double>("calpha", false, "");
+  	validPL->set<double>("psi", false, "");
+  	validPL->set<double>("N", false, "");
+  	validPL->set<double>("L", false, "");
+  	validPL->set<double>("phi", false, "");
+  	validPL->set<double>("Q", false, "");
+    }
+
+    if (matModel == "GursonSD")
+    {
+  	validPL->set<double>("f0", false, "");
+  	validPL->set<double>("Y0", false, "");
+  	validPL->set<double>("kw", false, "");
+  	validPL->set<double>("N", false, "");
+  	validPL->set<double>("q1", false, "");
+  	validPL->set<double>("q2", false, "");
+  	validPL->set<double>("q3", false, "");
+  	validPL->set<double>("eN", false, "");
+  	validPL->set<double>("sN", false, "");
+  	validPL->set<double>("fN", false, "");
+  	validPL->set<double>("fc", false, "");
+  	validPL->set<double>("ff", false, "");
+  	validPL->set<double>("flag", false, "");
+    }
 
   return validPL;
 }

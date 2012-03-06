@@ -106,6 +106,8 @@ namespace Albany {
     int X_offset;  //Position of X unknown in nodal DOFs, followed by Y,Z
     int numDim;    //Number of spatial dimensions and displacement variable 
 
+    std::string matModel;
+
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState;
   };
@@ -138,11 +140,16 @@ namespace Albany {
 #include "ShearModulus.hpp"
 #include "PoissonsRatio.hpp"
 #include "TotalStress.hpp"
+#include "Stress.hpp"
 #include "PoroElasticityResidMomentum.hpp"
 #include "PHAL_Source.hpp"
 #include "PoroElasticityResidMass.hpp"
 
 #include "PHAL_NSMaterialProperty.hpp"
+
+// Plasticity model from Q.Chen
+#include "CapModelStress.hpp"
+#include "GursonSDStress.hpp"
 
 
 template <typename EvalT>
@@ -484,21 +491,172 @@ Albany::PoroElasticityProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+  if (matModel == "CapModel")
+  {
+	{ // Cap model stress
+	  RCP<ParameterList> p = rcp(new ParameterList("Stress"));
+
+      //Input
+      p->set<string>("Strain Name", "Strain");
+      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+
+      p->set<string>("Elastic Modulus Name", "Elastic Modulus");
+      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+      p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
+
+      double A = params->get("A", 1.0);
+      double B = params->get("B", 1.0);
+      double C = params->get("C", 1.0);
+      double theta = params->get("theta", 1.0);
+      double R = params->get("R", 1.0);
+      double kappa0 = params->get("kappa0", 1.0);
+      double W = params->get("W", 1.0);
+      double D1 = params->get("D1", 1.0);
+      double D2 = params->get("D2", 1.0);
+      double calpha = params->get("calpha", 1.0);
+      double psi = params->get("psi", 1.0);
+      double N = params->get("N", 1.0);
+      double L = params->get("L", 1.0);
+      double phi = params->get("phi", 1.0);
+      double Q = params->get("Q", 1.0);
+
+      p->set<double>("A Name", A);
+      p->set<double>("B Name", B);
+      p->set<double>("C Name", C);
+      p->set<double>("Theta Name", theta);
+      p->set<double>("R Name", R);
+      p->set<double>("Kappa0 Name", kappa0);
+      p->set<double>("W Name", W);
+      p->set<double>("D1 Name", D1);
+      p->set<double>("D2 Name", D2);
+      p->set<double>("Calpha Name", calpha);
+      p->set<double>("Psi Name", psi);
+      p->set<double>("N Name", N);
+      p->set<double>("L Name", L);
+      p->set<double>("Phi Name", phi);
+      p->set<double>("Q Name", Q);
+
+
+      //Output
+      p->set<string>("Stress Name", "Stress"); //dl->qp_tensor also
+      p->set<string>("Back Stress Name", "backStress"); //dl->qp_tensor also
+      p->set<string>("Cap Parameter Name", "capParameter"); //dl->qp_tensor also
+
+      //Declare what state data will need to be saved (name, layout, init_type)
+      ev = rcp(new LCM::CapModelStress<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy,"scalar", 0.0, true);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      p = stateMgr.registerStateVariable("backStress",dl->qp_tensor, dl->dummy,"scalar", 0.0, true);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      p = stateMgr.registerStateVariable("capParameter",dl->qp_scalar, dl->dummy,"scalar", kappa0, true);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+	}
+  }
+
+  else if (matModel == "GursonSD")
+  {
+	{ // Gurson small deformation stress
+	  RCP<ParameterList> p = rcp(new ParameterList("Stress"));
+
+      //Input
+      p->set<string>("Strain Name", "Strain");
+      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+
+      p->set<string>("Elastic Modulus Name", "Elastic Modulus");
+      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+      p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
+
+      double f0 = params->get("f0", 0.0);
+      double Y0 = params->get("Y0", 100.0);
+      double kw = params->get("kw", 0.0);
+      double N = params->get("N", 1.0);
+      double q1 = params->get("q1", 1.0);
+      double q2 = params->get("q2", 1.0);
+      double q3 = params->get("q3", 1.0);
+      double eN = params->get("eN", 0.1);
+      double sN = params->get("sN", 0.1);
+      double fN = params->get("fN", 0.1);
+      double fc = params->get("fc", 1.0);
+      double ff = params->get("ff", 1.0);
+      double flag = params->get("flag", 1.0);
+
+      p->set<double>("f0 Name", f0);
+      p->set<double>("Y0 Name", Y0);
+      p->set<double>("kw Name", kw);
+      p->set<double>("N Name", N);
+      p->set<double>("q1 Name", q1);
+      p->set<double>("q2 Name", q2);
+      p->set<double>("q3 Name", q3);
+      p->set<double>("eN Name", eN);
+      p->set<double>("sN Name", sN);
+      p->set<double>("fN Name", fN);
+      p->set<double>("fc Name", fc);
+      p->set<double>("ff Name", ff);
+      p->set<double>("flag Name", flag);
+
+      //Output
+      p->set<string>("Stress Name", "Stress"); //dl->qp_tensor also
+      p->set<string>("Void Volume Name", "voidVolume"); //dl->qp_scalar also
+      p->set<string>("ep Name", "ep"); //dl->qp_scalar also
+      p->set<string>("Yield Strength Name", "yieldStrength"); //dl->qp_scalar also
+
+      //Declare what state data will need to be saved (name, layout, init_type)
+      ev = rcp(new LCM::GursonSDStress<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy,"scalar", 0.0, true);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      p = stateMgr.registerStateVariable("voidVolume",dl->qp_scalar, dl->dummy,"scalar", f0, true);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      p = stateMgr.registerStateVariable("ep",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      p = stateMgr.registerStateVariable("yieldStrength",dl->qp_scalar, dl->dummy,"scalar", Y0, true);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+	}
+  }
+
+  else
+  {
+	{ // Linear elasticity stress
+      RCP<ParameterList> p = rcp(new ParameterList("Stress"));
+
+      //Input
+      p->set<string>("Strain Name", "Strain");
+      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+
+      p->set<string>("Elastic Modulus Name", "Elastic Modulus");
+      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+      p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
+
+      //Output
+      p->set<string>("Stress Name", "Stress"); //dl->qp_tensor also
+
+      ev = rcp(new LCM::Stress<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy,"scalar", 0.0);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+	}
+  }
 
   { // Total Stress
     RCP<ParameterList> p = rcp(new ParameterList("Total Stress"));
 
     //Input
-    p->set<string>("Strain Name", "Strain");
+    p->set<string>("Effective Stress Name", "Stress");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-    p->set<string>("Elastic Modulus Name", "Elastic Modulus");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-    p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
-
     p->set<string>("Biot Coefficient Name", "Biot Coefficient");  // dl->qp_scalar also
-
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<string>("QP Variable Name", "Pore Pressure");
@@ -517,6 +675,39 @@ Albany::PoroElasticityProblem::constructEvaluators(
 	fm0.template registerEvaluator<EvalT>(ev);
 
   }
+
+
+/*  { // Total Stress
+    RCP<ParameterList> p = rcp(new ParameterList("Total Stress"));
+
+    //Input
+    p->set<string>("Strain Name", "Strain");
+    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+
+    p->set<string>("Elastic Modulus Name", "Elastic Modulus");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+    p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
+
+    p->set<string>("Biot Coefficient Name", "Biot Coefficient");  // dl->qp_scalar also
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+    p->set<string>("QP Variable Name", "Pore Pressure");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+    //Output
+    p->set<string>("Total Stress Name", "Total Stress"); //dl->qp_tensor also
+
+    ev = rcp(new LCM::TotalStress<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+    p = stateMgr.registerStateVariable("Total Stress",dl->qp_tensor, dl->dummy,"scalar", 0.0);
+    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+    p = stateMgr.registerStateVariable("Pore Pressure",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+	ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+	fm0.template registerEvaluator<EvalT>(ev);
+
+  } */
 
   if (haveSource) { // Source
     RCP<ParameterList> p = rcp(new ParameterList);
