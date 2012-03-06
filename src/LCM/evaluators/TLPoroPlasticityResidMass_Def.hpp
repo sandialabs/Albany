@@ -228,8 +228,6 @@ evaluateFields(typename Traits::EvalData workset)
 			      if (Jold(cell,qp) == 0)
 			      		  Jold(cell,qp) = 1.0;
 
-
-
  				  // Volumetric Constraint Term
  				  TResidual(cell,node) += -biotCoefficient(cell, qp)*(
 

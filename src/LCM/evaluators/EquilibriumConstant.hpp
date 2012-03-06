@@ -24,9 +24,10 @@
 #include "Phalanx_MDField.hpp"
 
 namespace LCM {
-/** \brief Finite Element Interpolation Evaluator
+/** \brief
 
-    This evaluator interpolates nodal DOF values to quad points.
+    This evaluator computes equilibrium constant at intergration points.
+    K_{T} = \exp(W_{B} / RT)
 
 */
 

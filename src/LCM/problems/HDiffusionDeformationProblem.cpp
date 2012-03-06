@@ -128,6 +128,8 @@ Albany::HDiffusionDeformationProblem::getValidProblemParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidHDiffusionDeformationProblemParams");
 
+  validPL->set<bool>("avgJ", false, "Flag to indicate the J should be averaged");
+  validPL->set<bool>("volavgJ", false, "Flag to indicate the J should be volume averaged");
   validPL->sublist("Thermal Conductivity", false, "");
   validPL->sublist("Bulk Modulus", false, "");
   validPL->sublist("Shear Modulus", false, "");

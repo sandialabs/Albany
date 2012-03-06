@@ -24,9 +24,9 @@
 #include "Phalanx_MDField.hpp"
 
 namespace LCM {
-/** \brief Finite Element Interpolation Evaluator
-
-    This evaluator interpolates nodal DOF values to quad points.
+/** \brief
+ *
+ *   evaulate diffusion coefficient D_{o} \exp(-Q/RT)
 
 */
 

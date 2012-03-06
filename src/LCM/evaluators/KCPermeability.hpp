@@ -31,8 +31,10 @@
 
 namespace LCM {
 /** 
- * \brief Evaluates elastic modulus, either as a constant or a truncated
- * KL expansion.
+ * \brief Evaluates permeability based on porosity
+ *  through the Kozeny-Carman relation, either as
+ *  a constant or a truncated KL expansion.The permeability
+ *  is divided by viscosity.
  */
 
 template<typename EvalT, typename Traits>

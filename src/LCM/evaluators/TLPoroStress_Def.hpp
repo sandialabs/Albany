@@ -57,11 +57,6 @@ TLPoroStress(const Teuchos::ParameterList& p) :
   JpF_invT.resize(worksetSize, numQPs, numDims, numDims);
   JBpF_invT.resize(worksetSize, numQPs, numDims, numDims);
 
-
-
-
-
-
   this->addDependentField(stress);
   this->addDependentField(defGrad);
   this->addDependentField(J);

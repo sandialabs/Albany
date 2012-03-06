@@ -24,9 +24,9 @@
 #include "Phalanx_MDField.hpp"
 
 namespace LCM {
-/** \brief Finite Element Interpolation Evaluator
+/** \brief
 
-    This evaluator interpolates nodal DOF values to quad points.
+    This evaluator compute total stress for poroelasticity problem.
 
 */
 

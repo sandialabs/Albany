@@ -31,7 +31,7 @@
 
 namespace LCM {
 /** 
- * \brief Evaluates Biot modulus, either as a constant or a truncated
+ * \brief Evaluates trapped solvent, either as a constant or a truncated
  * KL expansion.
  */
 

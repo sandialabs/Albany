@@ -31,7 +31,7 @@
 
 namespace LCM {
 /** 
- * \brief Evaluates elastic modulus, either as a constant or a truncated
+ * \brief Evaluates Biot's Coefficient, either as a constant or a truncated
  * KL expansion.
  */
 

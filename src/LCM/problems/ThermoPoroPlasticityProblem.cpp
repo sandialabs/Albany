@@ -131,6 +131,8 @@ Albany::ThermoPoroPlasticityProblem::getValidProblemParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidThermoPoroPlasticityProblemParams");
   validPL->sublist("Material Model", false, "");
+  validPL->set<bool>("avgJ", false, "Flag to indicate the J should be averaged");
+  validPL->set<bool>("volavgJ", false, "Flag to indicate the J should be volume averaged");
   validPL->sublist("Porosity", false, "");
   validPL->sublist("Biot Coefficient", false, "");
   validPL->sublist("Biot Modulus", false, "");

@@ -31,8 +31,9 @@
 
 namespace LCM {
 /** 
- * \brief Evaluates Biot modulus, either as a constant or a truncated
- * KL expansion.
+ * \brief
+ * Evaluates strain rate factor for the hydrogen transport problem.
+ * \partial N_{T} / \partial \epsilon_{p}
  */
 
 template<typename EvalT, typename Traits>

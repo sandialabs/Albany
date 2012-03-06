@@ -27,9 +27,10 @@
 #include "Intrepid_Cubature.hpp"
 
 namespace LCM {
-/** \brief Finite Element Interpolation Evaluator
+/** \brief
 
-    This evaluator interpolates nodal DOF values to quad points.
+    This evaluator computes the residue of the hydrogen concentration
+    equilibrium equation.
 
 */
 

@@ -28,7 +28,7 @@
 
 namespace LCM {
 /** \brief
- *   Balance of mass residual for large deformation
+ *   Balance of energy residual for large deformation
  *   thermoporomechanics problem.
 
 */
