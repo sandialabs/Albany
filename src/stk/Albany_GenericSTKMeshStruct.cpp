@@ -176,6 +176,54 @@ void Albany::GenericSTKMeshStruct::DeclareParts(std::vector<std::string> ebNames
   }
 }
 
+void 
+Albany::GenericSTKMeshStruct::cullSubsetParts(std::vector<std::string>& ssNames, 
+    std::map<std::string, stk::mesh::Part*>& partVec){
+
+/*
+When dealing with sideset lists, it is common to have parts that are subsets of other parts, like:
+Part[ surface_12 , 18 ] {
+  Supersets { {UNIVERSAL} }
+  Intersection_Of { } }
+  Subsets { surface_quad4_edge2d2_12 }
+
+Part[ surface_quad4_edge2d2_12 , 19 ] {
+  Supersets { {UNIVERSAL} {FEM_ROOT_CELL_TOPOLOGY_PART_Line_2} surface_12 }
+  Intersection_Of { } }
+  Subsets { }
+
+This function gets rid of the subset in the list. 
+*/
+
+  using std::map;
+
+  map<std::string, stk::mesh::Part*>::iterator it;
+  std::vector<stk::mesh::Part*>::const_iterator p;
+
+  for(it = partVec.begin(); it != partVec.end(); ++it){ // loop over the parts in the map
+
+    // for each part in turn, get the name of parts that are a subset of it
+
+    const stk::mesh::PartVector & subsets   = it->second->subsets();
+
+    for ( p = subsets.begin() ; p != subsets.end() ; ++p ) {
+      const std::string & n = (*p)->name();
+//      std::cout << "Erasing: " << n << std::endl;
+      partVec.erase(n); // erase it if it is in the base map
+    }
+  }
+
+//  ssNames.clear();
+
+  // Build the remaining data structures
+  for(it = partVec.begin(); it != partVec.end(); ++it){ // loop over the parts in the map
+
+    std::string ssn = it->first;
+    ssNames.push_back(ssn);
+
+  }
+}
+
 
 Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >&
 Albany::GenericSTKMeshStruct::getMeshSpecs()

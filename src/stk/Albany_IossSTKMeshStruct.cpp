@@ -86,27 +86,29 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     stk::mesh::Part * const part = *i ;
 
     if ( part->primary_entity_rank() == metaData->element_rank()) {
-      //*out << "IOSS-STK: Element part \"" << part->name() << "\" found " << endl;
       if (part->name()[0] != '{') {
+      //*out << "IOSS-STK: Element part \"" << part->name() << "\" found " << endl;
          partVec[numEB] = part;
          numEB++;
       }
     }
     else if ( part->primary_entity_rank() == metaData->node_rank()) {
-       //*out << "Mesh has Node Set ID: " << part->name() << endl;
       if (part->name()[0] != '{') {
+       //*out << "Mesh has Node Set ID: " << part->name() << endl;
          nsPartVec[part->name()]=part;
          nsNames.push_back(part->name());
       }
     }
     else if ( part->primary_entity_rank() == metaData->side_rank()) {
       if (part->name()[0] != '{') {
-         *out << "Mesh has Side Set ID: " << part->name() << endl;
+        //print(*out, "Found side_rank entity:\n", *part);
          ssPartVec[part->name()]=part;
-         ssNames.push_back(part->name());
+//         ssNames.push_back(part->name());
       }
     }
   }
+
+  cullSubsetParts(ssNames, ssPartVec); // Eliminate sidesets that are subsets of other sidesets
 
   int cub = params->get("Cubature Degree",3);
   int worksetSizeMax = params->get("Workset Size",50);
@@ -122,11 +124,14 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 
   // Construct MeshSpecsStruct
   if (!params->get("Separate Evaluators by Element Block",false)) {
+
     const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
     this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
-                               nsNames, worksetSize, partVec[0]->name(), this->interleavedOrdering));
+                               nsNames, ssNames, worksetSize, partVec[0]->name(), this->interleavedOrdering));
+
   }
   else {
+
     *out << "MULTIPLE Elem Block in Ioss: DO worksetSize[eb] max?? " << endl; 
     this->allElementBlocksHaveSamePhysics=false;
     this->meshSpecs.resize(numEB);
@@ -134,10 +139,11 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
       this->ebNameToIndex[partVec[eb]->name()] = eb;
       const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[eb]).getCellTopologyData();
       this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
-                                                nsNames, worksetSize, partVec[eb]->name(), 
+                                                nsNames, ssNames, worksetSize, partVec[eb]->name(), 
                                                 this->interleavedOrdering));
       cout << "el_block_size[" << eb << "] = " << el_blocks[eb] << "   name  " << partVec[eb]->name() << endl; 
     }
+
   }
 }
 
@@ -175,6 +181,18 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
 
   delete mesh_data;
   useElementAsTopRank = true;
+
+  // What is in the sideset parts now?
+
+/*
+  std::map<std::string, stk::mesh::Part*>::iterator it;
+
+ for(it = ssPartVec.begin(); it != ssPartVec.end(); ++it){
+
+      std::cout << "Topology is = " << metaData->get_cell_topology(*it->second) << std::endl;
+  }
+*/
+
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

@@ -54,6 +54,10 @@ namespace Albany {
     void DeclareParts(std::vector<std::string> ebNames, std::vector<std::string> ssNames,
       std::vector<std::string> nsNames);
 
+
+    void cullSubsetParts(std::vector<std::string>& ssNames,
+        std::map<std::string, stk::mesh::Part*>& partVec);
+
     //! Utility function that uses some integer arithmetic to choose a good worksetSize
     int computeWorksetSize(const int worksetSizeMax, const int ebSizeMax) const;
 
@@ -64,6 +68,7 @@ namespace Albany {
 
     Teuchos::RCP<Teuchos::ParameterList> params;
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs;
+
   };
 
 }

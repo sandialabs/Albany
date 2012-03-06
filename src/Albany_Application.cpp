@@ -427,6 +427,7 @@ computeGlobalResidual(const double current_time,
     
     workset.f        = overlapped_f;
 
+
     for (int ws=0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
 
@@ -2253,6 +2254,7 @@ void Albany::Application::loadBasicWorksetInfo(
     workset.current_time = current_time;
     //workset.delta_time = delta_time;
     if (overlapped_xdot != Teuchos::null) workset.transientTerms = true;
+  loadWorksetSidesetInfo(workset);
 }
 
 void Albany::Application::loadWorksetJacobianInfo(PHAL::Workset& workset,
@@ -2268,6 +2270,14 @@ void Albany::Application::loadWorksetNodesetInfo(PHAL::Workset& workset)
 {
     workset.nodeSets = Teuchos::rcpFromRef(disc->getNodeSets());
     workset.nodeSetCoords = Teuchos::rcpFromRef(disc->getNodeSetCoords());
+
+}
+
+void Albany::Application::loadWorksetSidesetInfo(PHAL::Workset& workset)
+{
+
+    workset.sideSets = Teuchos::rcpFromRef(disc->getSideSets());
+
 }
 
 void Albany::Application::setupBasicWorksetInfo(

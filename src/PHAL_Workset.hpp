@@ -77,6 +77,8 @@ struct Workset {
   Teuchos::RCP<const Albany::NodeSetList> nodeSets;
   Teuchos::RCP<const Albany::NodeSetCoordList> nodeSetCoords;
 
+  Teuchos::RCP<const Albany::SideSetList> sideSets;
+
   // jacobian and mass matrix coefficients for matrix fill
   double j_coeff;
   double m_coeff;

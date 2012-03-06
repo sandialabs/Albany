@@ -32,6 +32,7 @@ HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_),
   haveSource(false),
+  haveNeumann(false),
   haveAbsorption(false),
   numDim(numDim_)
 {
@@ -42,6 +43,7 @@ HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   if (periodic) *out <<" Periodic Boundary Conditions being used." <<std::endl;
 
   haveSource =  params->isSublist("Source Functions");
+  haveNeumann =  params->isSublist("Neumann BCs");
   haveAbsorption =  params->isSublist("Absorption");
 
 }
@@ -59,11 +61,22 @@ buildProblem(
 {
   /* Construct All Phalanx Evaluators */
   TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
+
+  if(meshSpecs[0]->ssNames.size() <= 0 && haveNeumann) haveNeumann = false;
+
   fm.resize(1);
   fm[0]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
   buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, BUILD_RESID_FM, 
 		  Teuchos::null);
-  constructDirichletEvaluators(*meshSpecs[0]);
+
+  if(meshSpecs[0]->nsNames.size() > 0) // Build a nodeset evaluator if nodesets are present
+
+    constructBCEvaluators<DirichletTraits>(meshSpecs[0]->nsNames);
+
+//  if(meshSpecs[0]->sides.size() > 0) // Build a sideset evaluator if sidesets are present
+
+//    constructBCEvaluators<NeumannTraits>(meshSpecs[0]->ssNames);
+
 }
 
 Teuchos::Array<Teuchos::RCP<const PHX::FieldTag> >
@@ -83,15 +96,15 @@ buildEvaluators(
   return *op.tags;
 }
 
+template<typename BCTraits>
 void
-Albany::HeatProblem::constructDirichletEvaluators(
-        const Albany::MeshSpecsStruct& meshSpecs)
+Albany::HeatProblem::constructBCEvaluators(const std::vector<std::string>& nodeorsideSetIDs)
 {
-   // Construct Dirichlet evaluators for all nodesets and names
-   std::vector<string> dirichletNames(neq);
-   dirichletNames[0] = "T";
-   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
-   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
+   // Construct BC evaluators for all node/side sets and names
+   std::vector<string> bcNames(neq);
+   bcNames[0] = "T";
+   Albany::BCUtils<BCTraits> bcUtils;
+   dfm = bcUtils.constructBCEvaluators(nodeorsideSetIDs, bcNames,
                                           this->params, this->paramLib);
 }
 

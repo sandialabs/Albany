@@ -84,13 +84,15 @@ namespace Albany {
       Albany::FieldManagerChoice fmchoice,
       const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
-    void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
+    template<typename BCTraits>
+    void constructBCEvaluators(const std::vector<std::string>& nodeorsideSetIDs);
 
   protected:
 
     //! Boundary conditions on source term
     bool periodic;
     bool haveSource;
+    bool haveNeumann;
     bool haveAbsorption;
     int numDim;
 
@@ -109,6 +111,7 @@ namespace Albany {
 #include "PHAL_ThermalConductivity.hpp"
 #include "PHAL_Absorption.hpp"
 #include "PHAL_Source.hpp"
+#include "PHAL_Neumann.hpp"
 #include "PHAL_HeatEqResid.hpp"
 
 
@@ -129,26 +132,30 @@ Albany::HeatProblem::constructEvaluators(
    using std::vector;
    using PHAL::AlbanyTraits;
 
+   const CellTopologyData * const elem_top = &meshSpecs.ctd;
+
    RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
-     intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
-   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
+     intrepidBasis = Albany::getIntrepidBasis(*elem_top);
+   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (elem_top));
+
 
    const int numNodes = intrepidBasis->getCardinality();
    const int worksetSize = meshSpecs.worksetSize;
 
    Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-   RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+   RCP <Intrepid::Cubature<RealType> > cellCubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
 
-   const int numQPts = cubature->getNumPoints();
+   const int numQPtsCell = cellCubature->getNumPoints();
    const int numVertices = cellType->getNodeCount();
+
 
    *out << "Field Dimensions: Workset=" << worksetSize 
         << ", Vertices= " << numVertices
         << ", Nodes= " << numNodes
-        << ", QuadPts= " << numQPts
+        << ", QuadPts= " << numQPtsCell
         << ", Dim= " << numDim << endl;
 
-   RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
+   RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPtsCell,numDim));
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
 
   // Temporary variable used numerous times below
@@ -171,10 +178,10 @@ Albany::HeatProblem::constructEvaluators(
     (evalUtils.constructGatherCoordinateVectorEvaluator());
 
   fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructMapToPhysicalFrameEvaluator( cellType, cubature));
+    (evalUtils.constructMapToPhysicalFrameEvaluator( cellType, cellCubature));
 
   fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
+    (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cellCubature));
 
   for (unsigned int i=0; i<neq; i++) {
     fm0.template registerEvaluator<EvalT>
@@ -209,7 +216,7 @@ Albany::HeatProblem::constructEvaluators(
 
     p->set<string>("QP Variable Name", "Absorption");
     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+//    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
@@ -237,6 +244,54 @@ Albany::HeatProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+  if (haveNeumann) { // Neumann BC's listed in input file and sidesets are present
+
+
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    // cell side
+
+/*
+ * Note that constructEvaluators is called once per PE and once per elem block. All elements in an elem block
+ * are of the same topology. Thus, we assume all sides are of the same topology (as elem_top->side[0]),
+ * at least for now GAH
+ */
+
+    const CellTopologyData * const side_top = elem_top->side[0].topology;
+
+    p->set<string>("Side Set ID", meshSpecs.ssNames[0]);
+
+    RCP<shards::CellTopology> sideType = rcp(new shards::CellTopology(side_top)); 
+    RCP <Intrepid::Cubature<RealType> > sideCubature = cubFactory.create(*sideType, meshSpecs.cubatureDegree);
+
+    // Inputs: X, Y at nodes, Cubature, and Basis
+    p->set<string>("Node Variable Name", "Neumann");
+    p->set<string>("Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("Coordinate Data Layout", dl->vertices_vector);
+    p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cellCubature);
+
+    p->set< RCP<Intrepid::Cubature<RealType> > >("Side Cubature", sideCubature);
+ 
+    p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >
+        ("Intrepid Basis", intrepidBasis);
+ 
+    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
+    p->set<RCP<shards::CellTopology> >("Side Type", sideType);
+
+    // Output
+    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
+
+//    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Neumann BCs");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    ev = rcp(new PHAL::Neumann<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
   { // Temperature Resid
     RCP<ParameterList> p = rcp(new ParameterList("Temperature Resid"));
 
@@ -249,6 +304,7 @@ Albany::HeatProblem::constructEvaluators(
 
     p->set<bool>("Have Source", haveSource);
     p->set<bool>("Have Absorption", haveAbsorption);
+    p->set<bool>("Have Neumann", haveNeumann);
     p->set<string>("Source Name", "Source");
 
     p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
@@ -256,6 +312,9 @@ Albany::HeatProblem::constructEvaluators(
 
     p->set<string>("Absorption Name", "Thermal Conductivity");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+    p->set<string>("Neumann Name", "Neumann");
+    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
     
     p->set<string>("Gradient QP Variable Name", "Temperature Gradient");
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);

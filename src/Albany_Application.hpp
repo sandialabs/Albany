@@ -494,6 +494,9 @@ namespace Albany {
     //! Routine to load common nodeset info into workset
     void loadWorksetNodesetInfo(PHAL::Workset& workset);
 
+    //! Routine to load common sideset info into workset
+    void loadWorksetSidesetInfo(PHAL::Workset& workset);
+
     void setupBasicWorksetInfo(
       PHAL::Workset& workset,
       double current_time,

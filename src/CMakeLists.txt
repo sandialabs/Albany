@@ -142,6 +142,7 @@ SET(SOURCES ${SOURCES}
 	evaluators/PHAL_GatherEigenvectors.cpp
 	evaluators/PHAL_ScatterResidual.cpp 
 	evaluators/PHAL_Dirichlet.cpp 
+  evaluators/PHAL_Neumann.cpp
 	evaluators/PHAL_Source.cpp 
 	evaluators/PHAL_Constant.cpp 
 	evaluators/PHAL_ODEResid.cpp 
@@ -186,6 +187,8 @@ SET(HEADERS ${HEADERS}
 	evaluators/PHAL_ScatterResidual_Def.hpp 
 	evaluators/PHAL_Dirichlet.hpp 
 	evaluators/PHAL_Dirichlet_Def.hpp 
+  evaluators/PHAL_Neumann.hpp
+  evaluators/PHAL_Neumann_Def.hpp
 	evaluators/PHAL_Source.hpp 
 	evaluators/PHAL_Source_Def.hpp 
 	evaluators/PHAL_Constant.hpp 
