@@ -171,20 +171,21 @@ namespace QCAD {
 
     //! Called by evaluator to interface with class data that persists across worksets
     std::string getMode();
-    bool pointIsInImagePtRegion(const double* p) const;
-    bool pointIsInAccumRegion(const double* p) const;
+    bool pointIsInImagePtRegion(const double* p, double refZ) const;
+    bool pointIsInAccumRegion(const double* p, double refZ) const;
+    bool pointIsInLevelSetRegion(const double* p, double refZ) const;
     void addBeginPointData(const std::string& elementBlock, const double* p, double value);
     void addEndPointData(const std::string& elementBlock, const double* p, double value);
     void addImagePointData(const double* p, double value, double* grad);
     void accumulatePointData(const double* p, double value, double* grad);
+    void accumulateLevelSetData(const double* p, double value, double cellArea);
     double getSaddlePointWeight(const double* p) const;
     double getTotalSaddlePointWeight() const;
     const double* getSaddlePointPosition() const;
-
     
   private:
 
-    //! Helper functions for Nudged Elastic Band (NEB) algorithm, perfomred in evaluateResponse
+    //! Helper functions for Nudged Elastic Band (NEB) algorithm, performed in evaluateResponse
     void initializeImagePoints(const double current_time, const Epetra_Vector* xdot,
 			       const Epetra_Vector& x, const Teuchos::Array<ParamVec>& p,
 			       Epetra_Vector& g, int dbMode);
@@ -195,6 +196,14 @@ namespace QCAD {
 			     const Epetra_Vector& x, const Teuchos::Array<ParamVec>& p,
 			     Epetra_Vector& g, int dbMode);
 
+    //! Helper functions for level-set algorithm, performed in evaluateResponse
+    void doLevelSet(const double current_time,  const Epetra_Vector* xdot,
+		    const Epetra_Vector& x,  const Teuchos::Array<ParamVec>& p,
+		    Epetra_Vector& g, int dbMode);
+    int FindSaddlePoint_LevelSet(std::vector<double>& allFieldVals,
+			     std::vector<double>* allCoords, std::vector<int>& ordering,
+			     double cutoffDistance, double cutoffFieldVal, double minDepth, int dbMode,
+			     Epetra_Vector& g);
 
     //! Helper functions for doNudgedElasticBand(...)
     void getImagePointValues(const double current_time, const Epetra_Vector* xdot,
@@ -223,12 +232,17 @@ namespace QCAD {
     //! function giving distribution of weights for "point"
     double pointFn(double d, double radius) const;
 
+    //! helper function to get the highest image point (the one with the largest value)
+    int getHighestPtIndex() const;
+
+
     //! data used across worksets and processors in saddle point algorithm
     std::size_t numDims;
     std::size_t nImagePts;
     std::vector<nebImagePt> imagePts;
     double imagePtSize;
     bool bClimbing, bAdaptivePointSize;
+    double minAdaptivePointWt, maxAdaptivePointWt;
     double antiKinkFactor;
 
     //! data for memory-intensive but fast mode (hold entire proc's data)
@@ -236,7 +250,15 @@ namespace QCAD {
     std::vector<double> vFieldValues;
     std::vector<maxDimPt> vCoords;
     std::vector<maxDimPt> vGrads;
-    
+
+    //! data for level set method
+    std::vector<double> vlsFieldValues;
+    std::vector<double> vlsCellAreas;
+    std::vector<double> vlsCoords[MAX_DIMENSIONS];
+    double fieldCutoffFctr;
+    double minPoolDepthFctr;
+    double distanceCutoffFctr;
+    double levelSetRadius;
 
     // index into imagePts of the "found" saddle point
     int iSaddlePt;
@@ -245,6 +267,7 @@ namespace QCAD {
     double maxTimeStep, minTimeStep;
     double minSpringConstant, maxSpringConstant;
     std::size_t maxIterations;
+    std::size_t backtraceAfterIters;
     double convergeTolerance;
 
     //! data for beginning and ending regions

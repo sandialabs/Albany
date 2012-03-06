@@ -152,14 +152,14 @@ evaluateFields(typename Traits::EvalData workset)
     this->local_response[i] = 0.0;
 
   const int MAX_DIMS = 3;
-  ScalarT fieldVal, retFieldVal, cellVol; //, retCellVol;
+  ScalarT fieldVal, retFieldVal, cellVol, cellArea;
   std::vector<ScalarT> fieldGrad(numDims, 0.0);
-  double dblAvgCoords[MAX_DIMS], dblFieldGrad[MAX_DIMS], dblFieldVal;
+  double dblAvgCoords[MAX_DIMS], dblFieldGrad[MAX_DIMS], dblFieldVal, dblCellArea, dblMaxZ;
 
   if(svResponseFn->getMode() == "Point location") {    
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
-      getAvgCellCoordinates(coordVec, cell, dblAvgCoords);
+      getAvgCellCoordinates(coordVec, cell, dblAvgCoords, dblMaxZ);
       getCellQuantities(cell, cellVol, fieldVal, retFieldVal, fieldGrad);
       dblFieldVal = QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue(fieldVal);
       svResponseFn->addBeginPointData(workset.EBName, dblAvgCoords, dblFieldVal);
@@ -168,9 +168,9 @@ evaluateFields(typename Traits::EvalData workset)
   }
   else if(svResponseFn->getMode() == "Collect image point data") {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      getAvgCellCoordinates(coordVec, cell, dblAvgCoords);
+      getAvgCellCoordinates(coordVec, cell, dblAvgCoords, dblMaxZ);
 
-      if(svResponseFn->pointIsInImagePtRegion(dblAvgCoords)) {	
+      if(svResponseFn->pointIsInImagePtRegion(dblAvgCoords, dblMaxZ)) {	
 	getCellQuantities(cell, cellVol, fieldVal, retFieldVal, fieldGrad);
 
 	dblFieldVal = QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue(fieldVal);
@@ -183,9 +183,9 @@ evaluateFields(typename Traits::EvalData workset)
   }
   else if(svResponseFn->getMode() == "Accumulate all field data") {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      getAvgCellCoordinates(coordVec, cell, dblAvgCoords);
+      getAvgCellCoordinates(coordVec, cell, dblAvgCoords, dblMaxZ);
 
-      if(svResponseFn->pointIsInAccumRegion(dblAvgCoords)) {	
+      if(svResponseFn->pointIsInAccumRegion(dblAvgCoords, dblMaxZ)) {	
 	getCellQuantities(cell, cellVol, fieldVal, retFieldVal, fieldGrad);
 
 	dblFieldVal = QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue(fieldVal);
@@ -200,9 +200,9 @@ evaluateFields(typename Traits::EvalData workset)
     double totalWt = svResponseFn->getTotalSaddlePointWeight();
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      getAvgCellCoordinates(coordVec, cell, dblAvgCoords);
+      getAvgCellCoordinates(coordVec, cell, dblAvgCoords, dblMaxZ);
 
-      if(svResponseFn->pointIsInImagePtRegion(dblAvgCoords)) {	
+      if(svResponseFn->pointIsInImagePtRegion(dblAvgCoords, dblMaxZ)) {	
 	
 	if( (wt = svResponseFn->getSaddlePointWeight(dblAvgCoords)) > 0.0) {
 	  getCellQuantities(cell, cellVol, fieldVal, retFieldVal, fieldGrad);
@@ -220,6 +220,22 @@ evaluateFields(typename Traits::EvalData workset)
 	  this->global_response[3] = 0.0; // y-coord -- written later: would just be a MeshScalar anyway
 	  this->global_response[4] = 0.0; // z-coord -- written later: would just be a MeshScalar anyway
 	}
+      }
+    }
+  }
+  else if(svResponseFn->getMode() == "Level set data collection") {
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      getAvgCellCoordinates(coordVec, cell, dblAvgCoords, dblMaxZ);
+
+      if(svResponseFn->pointIsInLevelSetRegion(dblAvgCoords,dblMaxZ)) {	
+	getCellQuantities(cell, cellVol, fieldVal, retFieldVal, fieldGrad);
+	getCellArea(cell, cellArea);
+
+	dblFieldVal = QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue(fieldVal);
+	dblCellArea  = QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue(cellVol);
+	for (std::size_t k=0; k < numDims; ++k)
+	  dblFieldGrad[k] = QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue(fieldGrad[k]);
+	svResponseFn->accumulateLevelSetData(dblAvgCoords, dblFieldVal, dblCellArea);
       }
     }
   }
@@ -301,6 +317,7 @@ QCAD::ResponseSaddleValue<EvalT,Traits>::getValidResponseParameters() const
   validPL->set<int>("Number of Image Points", 10, "Number of image points to use, including the two endpoints");
   validPL->set<double>("Image Point Size", 1.0, "Size of image points, modeled as gaussian weight distribution");
   validPL->set<int>("Maximum Iterations", 100, "Maximum number of NEB iterations");
+  validPL->set<int>("Backtrace After Iteration", 10000000, "Backtrace, i.e., don't let grad(highest pt) increase, after this iteration");
   validPL->set<double>("Max Time Step", 1.0, "Maximum (and initial) time step");
   validPL->set<double>("Min Time Step", 0.002, "Minimum time step");
   validPL->set<double>("Convergence Tolerance", 1e-5, "Convergence criterion when |grad| of saddle is below this number");
@@ -313,9 +330,16 @@ QCAD::ResponseSaddleValue<EvalT,Traits>::getValidResponseParameters() const
   validPL->set<double>("Anti-Kink Factor", 0.0, "Factor between 0 and 1 giving about of perpendicular spring force to inclue");
   validPL->set<bool>("Aggregate Worksets", false, "Whether or not to store off a proc's worksets locally.  Increased speed but requires more memory");
   validPL->set<bool>("Adaptive Image Point Size", false, "Whether or not image point sizes should adapt to local mesh density");
+  validPL->set<double>("Adaptive Min Point Weight", 0.5, "Minimum desirable point weight when adaptively choosing image point sizes");
+  validPL->set<double>("Adaptive Max Point Weight", 5.0, "Maximum desirable point weight when adaptively choosing image point sizes");
 
-  validPL->set<double>("z min", 0.0, "Box domain minimum z coordinate");
-  validPL->set<double>("z max", 0.0, "Box domain maximum z coordinate");
+  validPL->set<double>("Levelset Field Cutoff Factor", 1.0, "Fraction of field range to use as cutoff in level set algorithm");
+  validPL->set<double>("Levelset Minimum Pool Depth Factor", 1.0, "Fraction of automatic value to use as minimum pool depth level set algorithm");
+  validPL->set<double>("Levelset Distance Cutoff Factor", 1.0, "Fraction of avg cell length to use as cutoff in level set algorithm");
+  validPL->set<double>("Levelset Radius", 0.0, "Radius around image point to use as level-set domain (zero == don't use level set");
+
+  validPL->set<double>("z min", 0.0, "Domain minimum z coordinate");
+  validPL->set<double>("z max", 0.0, "Domain maximum z coordinate");
   validPL->set<double>("Lock to z-coord", 0.0, "z-coordinate to lock elastic band to, making a 3D problem into 2D");
 
   validPL->set<Teuchos::Array<double> >("Begin Point", Teuchos::Array<double>(), "Beginning point of elastic band");
@@ -376,14 +400,35 @@ getCellQuantities(const std::size_t cell, typename EvalT::ScalarT& cellVol, type
   return;
 }
 
+template<typename EvalT, typename Traits>
+void QCAD::ResponseSaddleValue<EvalT, Traits>::
+getCellArea(const std::size_t cell, typename EvalT::ScalarT& cellArea) const
+{
+  std::vector<ScalarT> maxCoord(3,-1e10);
+  std::vector<ScalarT> minCoord(3,+1e10);
+
+  for (std::size_t v=0; v < numVertices; ++v) {
+    for (std::size_t k=0; k < numDims; ++k) {
+      if(maxCoord[k] < coordVec_vertices(cell,v,k)) maxCoord[k] = coordVec_vertices(cell,v,k);
+      if(minCoord[k] > coordVec_vertices(cell,v,k)) minCoord[k] = coordVec_vertices(cell,v,k);
+    }
+  }
+
+  cellArea = 1.0;
+  for (std::size_t k=0; k < numDims && k < 2; ++k)  //limit to at most 2 dimensions
+    cellArea *= (maxCoord[k] - minCoord[k]);
+}
+
+
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
 void QCAD::ResponseSaddleValue<EvalT, Traits>::
   getAvgCellCoordinates(PHX::MDField<typename EvalT::MeshScalarT,Cell,QuadPoint,Dim> coordVec,
-			const std::size_t cell, double* dblAvgCoords) const
+			const std::size_t cell, double* dblAvgCoords, double& dblMaxZ) const
 {
   std::vector<MeshScalarT> avgCoord(numDims, 0.0); //just a double?
+  
 
   //Get average cell coordinate (avg of qps)
   for (std::size_t k=0; k < numDims; ++k) avgCoord[k] = 0.0;
@@ -395,4 +440,15 @@ void QCAD::ResponseSaddleValue<EvalT, Traits>::
     avgCoord[k] /= numQPs;
     dblAvgCoords[k] = QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue(avgCoord[k]);
   }
+
+  //Get maximium z-coordinate in cell
+  if(numDims > 2) {
+    MeshScalarT maxZ = -1e10;
+    for (std::size_t v=0; v < numVertices; ++v) {
+      if(maxZ < coordVec_vertices(cell,v,2)) maxZ = coordVec_vertices(cell,v,2);
+    }
+    dblMaxZ = QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue(maxZ);
+  }
+  else dblMaxZ = 0.0;  //Just set maximum Z-coord to zero if < 3 dimensions
+
 }

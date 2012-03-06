@@ -58,8 +58,9 @@ namespace QCAD
     void getCellQuantities(const std::size_t cell, ScalarT& cellVol, 
 			   typename EvalT::ScalarT& fieldVal, typename EvalT::ScalarT& retFieldVal, 
 			   std::vector<typename EvalT::ScalarT>& fieldGrad) const;
+    void getCellArea(const std::size_t cell, typename EvalT::ScalarT& cellArea) const;
     void getAvgCellCoordinates(PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec,
-			       const std::size_t cell, double* dblAvgCoords) const;
+			       const std::size_t cell, double* dblAvgCoords, double& dblMaxZ) const;
 
     std::size_t numQPs;
     std::size_t numDims;
