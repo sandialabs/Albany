@@ -605,17 +605,26 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
 	getSubSolver("DeltaPoisson").responses_out->get_g(0); //only use *first* response vector    
       int rIndx = 0 ;// offset to the responses corresponding to delta_ij values == 0 by construction
       for(int i=0; i<nEigenvectors; i++) {
-	for(int j=i; j<nEigenvectors; j++) {
+	assert(rIndx < g->MyLength()); //make sure g-vector is long enough
+	blockU->el(i,i) = (*(eigenDataToPass->eigenvalueRe))[i] - (*g)[rIndx];
+	blockD->el(i,i) = (*(eigenDataToPass->eigenvalueRe))[i] - (*g)[rIndx];
+
+	for(int j=i+1; j<nEigenvectors; j++) {
 	  assert(rIndx < g->MyLength()); //make sure g-vector is long enough
-	  blockU->el(i,j) = (*g)[rIndx]; blockU->el(j,i) = (*g)[rIndx];
-	  blockD->el(i,j) = (*g)[rIndx]; blockD->el(j,i) = (*g)[rIndx];
+	  blockU->el(i,j) = (*g)[rIndx]; blockU->el(j,i) = -(*g)[rIndx];
+	  blockD->el(i,j) = (*g)[rIndx]; blockD->el(j,i) = -(*g)[rIndx];
 	  rIndx++;
 	}
       }
+
+      //DEBUG
+      *out << "DEBUG: g vector:" << endl;
+      for(int i=0; i< g->MyLength(); i++)
+	*out << "  g[" << i << "] = " << (*g)[i] << endl;
       
       Teuchos::RCP<AlbanyCI::BlockTensor<AlbanyCI::dcmplx> > mx1P =
 	Teuchos::rcp(new AlbanyCI::BlockTensor<AlbanyCI::dcmplx>(basis1P, blocks1P, 1));
-      //mx1P->print(out); //DEBUG
+      *out << std::endl << "DEBUG CI mx1P:"; mx1P->print(out); //DEBUG
       
       
       // fill in mx2P (4 blocks, each n1PperBlock x n1PperBlock x n1PperBlock x n1PperBlock )
@@ -627,6 +636,11 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
 	  SetCoulombParams( getSubSolver("CoulombPoisson").params_in, i2,i4 ); 
 	  QCAD::SolveModel(getSubSolver("CoulombPoisson"), pStatesToPass, pStatesToLoop,
 		     eigenDataToPass, eigenDataNull);
+
+	  //DEBUG
+	  *out << "DEBUG: g vector:" << endl;
+	  for(int i=0; i< g->MyLength(); i++)
+	    *out << "  g[" << i << "] = " << (*g)[i] << endl;
 	  
 	  // transfer responses to H2P matrix blocks
 	  Teuchos::RCP<Epetra_Vector> g =
@@ -663,10 +677,11 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
       
       Teuchos::RCP<AlbanyCI::BlockTensor<AlbanyCI::dcmplx> > mx2P =
 	Teuchos::rcp(new AlbanyCI::BlockTensor<AlbanyCI::dcmplx>(basis1P, blocks2P, 2));
-      // mx2P->print(out); //DEBUG
+      *out << std::endl << "DEBUG CI mx2P:"; mx2P->print(out); //DEBUG
       
       
       //Now should have H1P and H2P - run CI:
+      if(bVerbose) *out << "QCAD Solve: CI solve" << endl;
       AlbanyCI::Solver solver;
       Teuchos::RCP<AlbanyCI::Solution> soln;
       soln = solver.solve(MyPL, mx1P, mx2P, tcomm, out); //Note: out cannot be null
@@ -723,14 +738,6 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
 		 eigenDataToPass, eigenDataNull);
     }
 
-    //NOT NEEDED - REMOVE LATER
-    /* // Dummy Solve (needed?)
-    if(bVerbose) *out << "QCAD Solve: Poisson Dummy iteration " << iter << endl;
-    QCAD::SolveModel(getSubSolver("DummyPoisson"), pStatesToPass, pStatesFromDummy,
-	       eigenDataToPass, eigenDataNull);
-    QCAD::AddStateToState(*pStatesFromDummy, "Electric Potential", *pStatesToLoop, "Conduction Band");
-    */
-      
     eigenDataNull = Teuchos::null;
 
     if(iter > 1) {
@@ -896,12 +903,12 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
     responseList.set("Number", initial_nResponses + added_nResponses);
 
     //shift response indices of existing responses by added_responses so added responses index from zero
-    for(int i=0; i<initial_nResponses; i++) {       
+    for(int i=initial_nResponses-1; i >= 0; i--) {       
       std::string respType = responseList.get<std::string>(Albany::strint("Response",i));
       responseList.set(Albany::strint("Response",i + added_nResponses), respType);
       responseList.sublist( Albany::strint("ResponseParams",i + added_nResponses) ) = 
-	responseList.sublist( Albany::strint("ResponseParams",i) ); 
-      responseList.sublist( Albany::strint("ResponseParams",i) ) = emptyParamlist; //clear sublist i
+	Teuchos::ParameterList(responseList.sublist( Albany::strint("ResponseParams",i) ) ); //create new copy of list
+      responseList.sublist( Albany::strint("ResponseParams",i) ) = Teuchos::ParameterList(Albany::strint("ResponseParams",i)); //clear sublist i
     }
 
     iResponse = 0;
@@ -912,7 +919,7 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
 
 	responseList.set(Albany::strint("Response",iResponse), "Field Integral");
 	Teuchos::ParameterList& responseParams = responseList.sublist(Albany::strint("ResponseParams",iResponse));
-	responseParams.set("Field Name", "solution");
+	responseParams.set("Field Name", "Electric Potential");  // same as solution, but must be at quad points
 	responseParams.set("Field Name 1", buf1);
 	responseParams.set("Field Name 2", buf2);
 	
@@ -947,12 +954,12 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
     responseList.set("Number", initial_nResponses + nEigenvectors * (nEigenvectors + 1) / 2);
 
     //shift response indices of existing responses by added_responses so added responses index from zero
-    for(int i=0; i<initial_nResponses; i++) {       
+    for(int i=initial_nResponses-1; i >= 0; i--) {       
       std::string respType = responseList.get<std::string>(Albany::strint("Response",i));
       responseList.set(Albany::strint("Response",i + added_nResponses), respType);
       responseList.sublist( Albany::strint("ResponseParams",i + added_nResponses) ) = 
-	responseList.sublist( Albany::strint("ResponseParams",i) ); 
-      responseList.sublist( Albany::strint("ResponseParams",i) ) = emptyParamlist; //clear sublist i
+	Teuchos::ParameterList(responseList.sublist( Albany::strint("ResponseParams",i)) ); 
+      responseList.sublist( Albany::strint("ResponseParams",i) ) = Teuchos::ParameterList(Albany::strint("ResponseParams",i)); //clear sublist i
     }
 
     iResponse = 0;
@@ -963,7 +970,7 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
 
 	responseList.set(Albany::strint("Response",iResponse), "Field Integral");
 	Teuchos::ParameterList& responseParams = responseList.sublist(Albany::strint("ResponseParams",iResponse));
-	responseParams.set("Field Name", "solution");
+	responseParams.set("Field Name", "Electric Potential");  // same as solution, but must be at quad points
 	responseParams.set("Field Name 1", buf1);
 	responseParams.set("Field Name 2", buf2);
 	
@@ -1007,6 +1014,10 @@ QCAD::Solver::CreateSubSolver(const std::string xmlfilename,
   Teuchos::ParameterList& appParams = slvrfctry.getParameters();
 
   preprocessParams(appParams, xmlPreprocessType);
+
+  //DEBUG processed xml:
+  //std::string debugXmlName = "debug_"; debugXmlName += xmlPreprocessType; debugXmlName += ".xml";
+  //Teuchos::writeParameterListToXmlFile(appParams, debugXmlName);
 
   //! Create solver and application objects via solver factory
   RCP<Epetra_Comm> appComm = Albany::createEpetraCommFromMpiComm(mpiComm);

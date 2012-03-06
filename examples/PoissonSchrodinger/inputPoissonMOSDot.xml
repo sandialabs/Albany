@@ -18,7 +18,7 @@
       <Parameter name="Factor" type="double" value="1.0" />
       <Parameter name="Device" type="string" value="elementblocks" />
       <Parameter name="Quantum Region Source" type="string" value="schrodinger"/>
-      <Parameter name="Non Quantum Region Source" type="string" value="normal"/>
+      <Parameter name="Non Quantum Region Source" type="string" value="semiclassical"/>
       <Parameter name="Eigenvectors from States" type="int" value="2"/>
       <Parameter name="Use predictor-corrector method" type="bool" value="true"/>
       <Parameter name="Include exchange-correlation potential" type="bool" value="false" />

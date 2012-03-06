@@ -486,11 +486,14 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 	    {
 	      ScalarT Vxc = computeVxcLDA(relPerm, averagedEffMass, approxEDensity);
 	      conductionBand(cell, qp) = qPhiRef -Chi -phi*V0 +Vxc; // [eV]
+	      electricPotential(cell, qp) = phi*V0 + Vxc; //add xc correction to electric potential (used in CI delta_ij computation)
 	      // conductionBand(cell, qp) = qPhiRef -Chi -0.5*(phi*V0 +prevPhi) +Vxc; 
 	    }
-	    else  // not include Vxc
+	    else { // not include Vxc
 	      conductionBand(cell, qp) = qPhiRef -Chi -phi*V0; // [eV]
+	      electricPotential(cell, qp) = phi*V0;
               // conductionBand(cell, qp) = qPhiRef -Chi -0.5*(phi*V0 +prevPhi);
+	    }
           
 	    valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
 	  }
@@ -501,6 +504,10 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 	//RHS == evec[i] * evec[j]
 	int i = (int)QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue( sourceEvecInds[0] );
 	int j = (int)QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue( sourceEvecInds[1] );
+
+	//int valleyDegeneracyFactor = materialDB->getElementBlockParam<int>(workset.EBName,"Num of conduction band min",2);
+	// scale so electron density is in [cm^-3] (assume 3D? Suzey?) as expected of RHS of Poisson eqn
+	ScalarT eDenPrefactor = 1.0/pow(X0,3.);
 	
 	// loop over cells and qps
 	for (std::size_t cell=0; cell < workset.numCells; ++cell) {
@@ -511,7 +518,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 	    ScalarT phi = unscaled_phi / V0; 
 
 	    // the scaled full RHS   note: wavefunctions are assumed normalized and **REAL** here 
-	    ScalarT charge = ( eigenvector_Re[i](cell,qp) * eigenvector_Re[j](cell,qp) );
+	    ScalarT charge = 1.0/Lambda2 * eDenPrefactor * ( eigenvector_Re[i](cell,qp) * eigenvector_Re[j](cell,qp) );
 	    poissonSource(cell, qp) = factor*charge;
 
 	    chargeDensity(cell, qp) = charge;
@@ -693,11 +700,14 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 	    {
 	      ScalarT Vxc = computeVxcLDA(relPerm, averagedEffMass, approxEDensity);
 	      conductionBand(cell, qp) = qPhiRef-Chi-phi*V0 +Vxc; // [eV]
+	      electricPotential(cell, qp) = phi*V0 + Vxc; //add xc correction to electric potential (used in CI delta_ij computation)
 	      // conductionBand(cell, qp) = qPhiRef -Chi -0.5*(phi*V0 +prevPhi) +Vxc;
 	    }
-	    else  // not include Vxc
+	    else { // not include Vxc
 	      conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
+	      electricPotential(cell, qp) = phi*V0;
               // conductionBand(cell, qp) = qPhiRef -Chi -0.5*(phi*V0 +prevPhi);
+	    }
           
 	    valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
 	  }
@@ -1073,11 +1083,14 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
         {
           ScalarT Vxc = computeVxcLDA(relPerm, averagedEffMass, approxEDensity);
           conductionBand(cell, qp) = qPhiRef-Chi-phi*V0 +Vxc; // [eV]
+	  electricPotential(cell, qp) = phi*V0 + Vxc; //add xc correction to electric potential (used in CI delta_ij computation)
           // conductionBand(cell, qp) = qPhiRef -Chi -0.5*(phi*V0 +prevPhi) +Vxc; // [eV]
         }
-        else  // not include Vxc
+        else { // not include Vxc
           conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
+	  electricPotential(cell, qp) = phi*V0;
           // conductionBand(cell, qp) = qPhiRef -Chi -0.5*(phi*V0 +prevPhi); // [eV]
+	}
         
         valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
 
@@ -1171,7 +1184,6 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
         chargeDensity(cell, qp) = -eDensity + fixedCharge; 
         electronDensity(cell, qp) = eDensity;  // quantum electrons in an insulator
         holeDensity(cell, qp) = 0.0;           // no holes in an insulator
-        electricPotential(cell, qp) = phi*V0;
         ionizedDopant(cell, qp) = 0.0;
         approxQuanEDen(cell,qp) = approxEDensity;
         artCBDensity(cell, qp) = eDensity;
@@ -1180,11 +1192,14 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
         {
           ScalarT Vxc = computeVxcLDA(relPerm, averagedEffMass, approxEDensity);
           conductionBand(cell, qp) = qPhiRef-Chi-phi*V0 +Vxc; // [eV]
+	  electricPotential(cell, qp) = phi*V0 + Vxc; //add xc correction to electric potential (used in CI delta_ij computation)
           // conductionBand(cell, qp) = qPhiRef -Chi -0.5*(phi*V0 +prevPhi) +Vxc; // [eV]
         }
-        else  // not include Vxc
+        else  { // not include Vxc
           conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
+	  electricPotential(cell, qp) = phi*V0;
           // conductionBand(cell, qp) = qPhiRef -Chi -0.5*(phi*V0 +prevPhi); // [eV]
+	}
         
         valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
       }
