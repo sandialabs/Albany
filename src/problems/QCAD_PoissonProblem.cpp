@@ -53,6 +53,14 @@ PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   if(params->isType<string>("MaterialDB Filename"))
     mtrlDbFilename = params->get<string>("MaterialDB Filename");
 
+
+  //Pull number of eigenvectors from poisson params list
+  nEigenvectors = 0;
+  Teuchos::ParameterList& psList = params->sublist("Poisson Source");
+  if(psList.isType<int>("Eigenvectors from States"))
+    nEigenvectors = psList.get<int>("Eigenvectors from States");
+
+  /* Now just Poisson source params
   //Schrodinger coupling
   nEigenvectors = 0;
   bUseSchrodingerSource = false;
@@ -73,7 +81,7 @@ PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
     if(bUseSchrodingerSource && cList.isType<bool>("Include exchange-correlation potential"))
       bIncludeVxc = cList.get<bool>("Include exchange-correlation potential");
-  }
+  }*/
 
   *out << "Length unit = " << length_unit_in_m << " meters" << endl;
 }
@@ -251,9 +259,9 @@ QCAD::PoissonProblem::getValidProblemParameters() const
   validPL->set<double>("Temperature",300,"Temperature in Kelvin");
   validPL->set<string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
 
-  validPL->sublist("Schrodinger Coupling", false, "");
-  validPL->sublist("Schrodinger Coupling").set<bool>("Schrodinger source in quantum blocks",false,"Use eigenvector data to compute charge distribution within quantum blocks");
-  validPL->sublist("Schrodinger Coupling").set<int>("Eigenvectors from States",0,"Number of eigenvectors to use for quantum region source");
+  //validPL->sublist("Schrodinger Coupling", false, "");
+  //validPL->sublist("Schrodinger Coupling").set<bool>("Schrodinger source in quantum blocks",false,"Use eigenvector data to compute charge distribution within quantum blocks");
+  //validPL->sublist("Schrodinger Coupling").set<int>("Eigenvectors from States",0,"Number of eigenvectors to use for quantum region source");
   
   //For poisson schrodinger interations
   validPL->sublist("Dummy Dirichlet BCs", false, "");

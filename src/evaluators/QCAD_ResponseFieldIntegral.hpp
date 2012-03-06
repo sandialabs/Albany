@@ -21,6 +21,8 @@
 #include "PHAL_SeparableScatterScalarResponse.hpp"
 
 namespace QCAD {
+
+  const int MAX_FIELDNAMES_IN_INTEGRAL = 10;
 /** 
  * \brief Response Description
  */
@@ -47,13 +49,13 @@ namespace QCAD {
   private:
     Teuchos::RCP<const Teuchos::ParameterList> getValidResponseParameters() const;
 
-    std::string fieldName;
+    std::vector<std::string> fieldNames;
     std::vector<std::string> ebNames;
     
     std::size_t numQPs;
     std::size_t numDims;
     
-    PHX::MDField<ScalarT,Cell,QuadPoint> field;
+    std::vector<PHX::MDField<ScalarT,Cell,QuadPoint> > fields;
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
     PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
     

@@ -106,9 +106,12 @@ namespace QCAD {
 
     //! Parameters for coupling to Schrodinger
     int nEigenvectors;
+
+    /* Now Poisson source Params
     bool bUseSchrodingerSource;
     bool bUsePredictorCorrector;
     bool bIncludeVxc; 
+    */
          
   };
 
@@ -285,11 +288,14 @@ QCAD::PoissonProblem::constructEvaluators(
     p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
 
     // Schrodinger coupling
+    p->set<string>("Eigenvector field name root", "Evec");
+
+    /* Now Poisson source params
     p->set<bool>("Use Schrodinger source", bUseSchrodingerSource);
     p->set<int>("Schrodinger eigenvectors", nEigenvectors);
-    p->set<string>("Eigenvector field name root", "Evec");
     p->set<bool>("Use predictor-corrector method", bUsePredictorCorrector);
     p->set<bool>("Include exchange-correlation potential", bIncludeVxc); 
+    */
 
     ev = rcp(new QCAD::PoissonSource<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);

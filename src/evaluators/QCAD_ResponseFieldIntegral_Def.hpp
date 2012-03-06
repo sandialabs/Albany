@@ -18,6 +18,7 @@
 #include <fstream>
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_CommHelpers.hpp"
+#include "Albany_Utils.hpp"
 
 //Utility function to split a std::string by a delimiter, so far only used here
 void split(const std::string &s, char delim, std::vector<std::string> &elems) {
@@ -57,9 +58,17 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
   numDims = dims[2];
 
   //! User-specified parameters
+  std::string fieldName;
   std::string ebNameStr = plist->get<std::string>("Element Block Name","");
   if(ebNameStr.length() > 0) split(ebNameStr,',',ebNames);
   fieldName = plist->get<std::string>("Field Name","");
+  if(fieldName.length() > 0) fieldNames.push_back(fieldName);
+  for(int i=1; i < QCAD::MAX_FIELDNAMES_IN_INTEGRAL; i++) {
+    fieldName = plist->get<std::string>(Albany::strint("Field Name",i),"");
+    if(fieldName.length() > 0) fieldNames.push_back(fieldName);
+    else break;
+  }
+
   bPositiveOnly = plist->get<bool>("Positive Return Only",false);
 
   limitX = limitY = limitZ = false;
@@ -79,12 +88,13 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
     zmax = plist->get<double>("z max");
   }
 
-  //! add dependent fields
-  if( fieldName.length() > 0 ) {
-    PHX::MDField<ScalarT,Cell,QuadPoint> f(fieldName, scalar_dl); 
-    field = f;
-    this->addDependentField(field);
+  //! add dependent fields (all fields assumed scalar qp)
+  std::vector<std::string>::const_iterator it;
+  for(it = fieldNames.begin(); it != fieldNames.end(); ++it) {
+    PHX::MDField<ScalarT,Cell,QuadPoint> f(*it, scalar_dl);
+    fields.push_back(f); this->addDependentField(f);
   }
+
   this->addDependentField(coordVec);
   this->addDependentField(weights);
   this->setName(fieldName+" Response Field Integral"+PHX::TypeString<EvalT>::value);
@@ -110,8 +120,10 @@ void QCAD::ResponseFieldIntegral<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  if( fieldName.length() > 0 )
-    this->utils.setFieldData(field,fm);
+  typename std::vector<PHX::MDField<ScalarT,Cell,QuadPoint> >::iterator it;
+  for(it = fields.begin(); it != fields.end(); ++it)
+    this->utils.setFieldData(*it,fm);
+
   this->utils.setFieldData(coordVec,fm);
   this->utils.setFieldData(weights,fm);
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postRegistrationSetup(d,fm);
@@ -140,6 +152,8 @@ evaluateFields(typename Traits::EvalData workset)
        i<this->local_response.size(); i++)
     this->local_response[i] = 0.0;
 
+  typename std::vector<PHX::MDField<ScalarT,Cell,QuadPoint> >::const_iterator it;
+
   // Scaling factors
   double X0 = length_unit_in_m/1e-2; // length scaling to get to [cm]
   double scaling = 0.0; 
@@ -158,7 +172,6 @@ evaluateFields(typename Traits::EvalData workset)
       std::find(ebNames.begin(), ebNames.end(), workset.EBName) != ebNames.end() ) {
 
     ScalarT val;
-    bool bFieldIsValid = (fieldName.length() > 0);
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
       bool cellInBox = false;
@@ -171,11 +184,10 @@ evaluateFields(typename Traits::EvalData workset)
       if( !cellInBox ) continue;
 
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-	
-	if( bFieldIsValid )
-	  val = field(cell,qp) * weights(cell,qp) * scaling;
-	else
-	  val = weights(cell,qp) * scaling; //integrate volume
+
+	val = weights(cell,qp) * scaling; //volume	
+	for(it = fields.begin(); it != fields.end(); ++it)
+	  val *= (*it)(cell,qp); //multiply each field
 
         this->local_response(cell) += val;
 	this->global_response(0) += val;
@@ -224,7 +236,9 @@ QCAD::ResponseFieldIntegral<EvalT,Traits>::getValidResponseParameters() const
   validPL->set<string>("Type", "", "Response type");
   validPL->set<string>("Element Block Name", "", 
   		"Name of the element block to use as the integration domain");
-  validPL->set<string>("Field Name", "", "Field to integrate");
+  for(int i=1; i < QCAD::MAX_FIELDNAMES_IN_INTEGRAL; i++)
+    validPL->set<string>(Albany::strint("Field Name",i), "", "Name of Field to integrate (multiplied into integrand)");
+
   validPL->set<bool>("Positive Return Only",false);
 
   validPL->set<double>("x min", 0.0, "Integration domain minimum x coordinate");
@@ -235,7 +249,7 @@ QCAD::ResponseFieldIntegral<EvalT,Traits>::getValidResponseParameters() const
   validPL->set<double>("z max", 0.0, "Integration domain maximum z coordinate");
 
   validPL->set<string>("Description", "", "Description of this response used by post processors");
-
+  
   return validPL;
 }
 

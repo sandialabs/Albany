@@ -96,17 +96,16 @@ namespace QCAD {
     ScalarT computeFDIntMinusOneHalf(const ScalarT x);
     
     //! compute the electron density for Poisson-Schrodinger iteration
-    ScalarT eDensityForPoissonSchrond(typename Traits::EvalData workset, 
+    ScalarT eDensityForPoissonSchrodinger(typename Traits::EvalData workset, 
+        std::size_t cell, std::size_t qp, const ScalarT prevPhi, const bool bUsePredCorr);
+
+    ScalarT eDensityForPoissonCI(typename Traits::EvalData workset, 
         std::size_t cell, std::size_t qp, const ScalarT prevPhi, const bool bUsePredCorr);
     
     //! compute exchange-correlation potential energy within Local Density Approximation
     ScalarT computeVxcLDA(const double& relPerm, const double& effMass, 
         const ScalarT& eDensity); 
     
-    //TODO: remove once test new version
-    //! read eigenvalues from a text file (temporary, until we have a better way of passing them)
-    //std::vector<double> ReadEigenvaluesFromFile(int numberToRead);
-
     //! input
     std::size_t numQPs;
     std::size_t numDims;
@@ -134,6 +133,11 @@ namespace QCAD {
     
     //! string variable to differ the various devices implementation
     std::string device;
+
+    //! strings specifing the how the source term inside and outside the quantum regions are computed:
+    std::string nonQuantumRegionSource;
+    std::string quantumRegionSource;
+    int sourceEvecInds[2];
     
     //! specify carrier statistics and incomplete ionization
     std::string carrierStatistics;

@@ -73,6 +73,12 @@ namespace QCAD {
     void setupParameterMapping(const Teuchos::ParameterList& list);
     void setupResponseMapping(const Teuchos::ParameterList& list);
 
+    void preprocessParams(Teuchos::ParameterList& params, std::string preprocessType);
+    SolverSubSolver CreateSubSolver(const std::string xmlfilename, 
+				    const std::string& xmlPreprocessType, const Epetra_Comm& comm);
+    void SetCoulombParams(const Teuchos::RCP<EpetraExt::ModelEvaluator::InArgs> inArgs, int i2, int i4) const;
+
+
     const SolverSubSolver& getSubSolver(const std::string& name) const;
     
   private:
@@ -88,6 +94,7 @@ namespace QCAD {
     std::size_t nResponseDoubles;
 
     std::string iterationMethod;
+    int nEigenvectors; //used in Poisson-CI coupling
 
     int num_p, num_g;
     Teuchos::RCP<Epetra_LocalMap> epetra_param_map;

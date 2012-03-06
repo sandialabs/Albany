@@ -610,7 +610,7 @@ SET(CUTR_HDRS
 
 set(ALB_TRILINOS_LIBS ${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES})
 
-include_directories (${Trilinos_INCLUDE_DIRS}
+include_directories (${Trilinos_INCLUDE_DIRS} 
                      ./ ./evaluators ./problems ./responses ./stk
                      ./LCM/ ./LCM/evaluators ./LCM/utils
                      ${Trilinos_TPL_INCLUDE_DIRS})
@@ -624,6 +624,16 @@ IF(ALBANY_LAME)
   set(LAME_LIB lame)
 ELSE()
   set(LAME_LIB )
+ENDIF()
+
+
+# Albany CI (Configuration Interaction)
+IF(ALBANY_CI)
+  include_directories (${ALBANY_CI_INCLUDE_DIR})
+  link_directories (${ALBANY_CI_LIBRARY_DIR})
+  set(ALBANY_CI_LIB albanyCILib)
+ELSE()
+  set(ALBANY_CI_LIB )
 ENDIF()
 
 if (ALBANY_ENABLE_CUBIT)
@@ -681,7 +691,7 @@ IF (ALBANY_LAME)
   target_link_libraries(utLameStress_elastic ${LAME_LIB} ${Trilinos_LIBRARIES})
 ENDIF ()
 
-set(ALL_LIBRARIES ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${Trilinos_EXTRA_LD_FLAGS} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES} )
+set(ALL_LIBRARIES ${ALBANY_CI_LIB} ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${Trilinos_EXTRA_LD_FLAGS} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES} )
 
 target_link_libraries(Albany          albanyLib ${ALL_LIBRARIES}) 
 target_link_libraries(AlbanySG        albanyLib ${ALL_LIBRARIES})
