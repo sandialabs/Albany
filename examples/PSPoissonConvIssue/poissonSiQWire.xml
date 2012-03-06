@@ -7,13 +7,6 @@
     <Parameter name="Temperature" type="double" value="10"/>
     <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
 
-    <ParameterList name="Schrodinger Coupling">
-      <Parameter name="Schrodinger source in quantum blocks" type="bool" value="true"/>
-      <Parameter name="Eigenvectors from States" type="int" value="5"/>
-      <Parameter name="Use predictor-corrector method" type="bool" value="true"/>
-      <Parameter name="Include exchange-correlation potential" type="bool" value="false" />
-    </ParameterList>
-
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS psubstrate for DOF Phi" type="double" value="0" />
       <Parameter name="DBC on NS topgate for DOF Phi" type="double" value="5.5" />
@@ -27,6 +20,12 @@
       <Parameter name="Carrier Statistics" type="string" value="Fermi-Dirac Statistics" />
       <Parameter name="Incomplete Ionization" type="string" value="True" />
       <Parameter name="Oxide Charge" type="double" value="0.0" />
+
+      <Parameter name="Quantum Region Source" type="string" value="schrodinger"/>
+      <Parameter name="Non Quantum Region Source" type="string" value="normal"/>
+      <Parameter name="Eigenvectors from States" type="int" value="5"/>
+      <Parameter name="Use predictor-corrector method" type="bool" value="true"/>
+      <Parameter name="Include exchange-correlation potential" type="bool" value="false" />
     </ParameterList>
 
     <ParameterList name="Permittivity">

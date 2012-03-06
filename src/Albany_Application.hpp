@@ -74,6 +74,8 @@ namespace Albany {
     //! Destructor
     ~Application();
 
+    void getRBMInfo(int& numPDEs, int& numElasticityDim, int& numScalar, int& nullSpaceDim);
+
     //! Get underlying abstract discretization
     Teuchos::RCP<Albany::AbstractDiscretization> getDiscretization() const;
 

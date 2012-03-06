@@ -38,8 +38,7 @@
 
 #include "NOX_Epetra_Observer.H"
 
-int Albany_ML_Coord2RBM(int Nnodes, double x[], double y[], double z[], double rbm[], int Ndof, int NSdim);
-
+int Albany_ML_Coord2RBM(int Nnodes, double x[], double y[], double z[], double rbm[], int Ndof, int NscalarDof, int NSdim);
 
 using Teuchos::RCP;
 using Teuchos::rcp;
@@ -551,83 +550,122 @@ setCoordinatesForML(const string& solutionMethod,
             stratList->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings");
          double *x = NULL, *y = NULL, *z = NULL, *rbm = NULL;
 
-         // This block of code needs to be repalced with a function call to the problem for every problem!
-         int numElasticityDim = 0; int nullSpaceDim = 0; int numPDEs=1;
-         if (problemName == "Elasticity 3D" || problemName == "Nonlinear Elasticity 3D" || problemName == "Lame" || problemName == "LAME" || problemName == "lame"  )
-           {  numPDEs = 3; numElasticityDim = 3; nullSpaceDim = 6;}
-         else if (problemName == "Elasticity 2D" || problemName == "Nonlinear Elasticity 2D")
-           {  numPDEs = 3; numElasticityDim = 2; nullSpaceDim = 3;}
-         // End block of code to get integers from problem setup
+         //numPDEs = # PDEs
+         //numElasticityDim = # elasticity dofs
+         //nullSpaceDim = dimension of elasticity nullspace
+         //numScalar = # scalar dofs coupled to elasticity 
+
+         //get problem info for computing rigid body modes (RBMs) for elasticity 
+         int numPDEs, numElasticityDim, nullSpaceDim, numScalar;
+         app->getRBMInfo(numPDEs, numElasticityDim, numScalar, nullSpaceDim);
 
          // Get coordinate vectors from mesh
          int nNodes;
-         app->getDiscretization()->getOwned_xyz(&x,&y,&z,&rbm,nNodes,numPDEs,nullSpaceDim);
-        
-         mlList.set("x-coordinates",x); 
-         mlList.set("y-coordinates",y); 
-         mlList.set("z-coordinates",z); 
+         app->getDiscretization()->getOwned_xyz(&x,&y,&z,&rbm,nNodes,numPDEs,numScalar,nullSpaceDim);
 
-         mlList.set("PDE equations", numPDEs); 
+         mlList.set("x-coordinates",x);
+         mlList.set("y-coordinates",y);
+         mlList.set("z-coordinates",z);
+
+         mlList.set("PDE equations", numPDEs);
 
          if (numElasticityDim > 0 ) {
            cout << "\nEEEEE setting ML Null Space for Elasticity-type problem of Dimension: " << numElasticityDim <<  " nodes  " << nNodes << " nullspace  " << nullSpaceDim << endl;
-           
-           (void) Albany_ML_Coord2RBM(nNodes, x, y, z, rbm, numElasticityDim, nullSpaceDim);
-           mlList.set("null space: type","pre-computed"); 
-           mlList.set("null space: dimension",nullSpaceDim); 
-           mlList.set("null space: vectors",rbm); 
-           mlList.set("null space: add default vectors",false); 
+           cout << "\nIKIKIK number scalar dofs: " <<numScalar <<  ", number PDEs  " << numPDEs << endl;
+           (void) Albany_ML_Coord2RBM(nNodes, x, y, z, rbm, numPDEs, numScalar, nullSpaceDim);
+           //const Epetra_Comm &comm = app->getMap()->Comm();
+           //Epetra_Map map(nNodes*numPDEs, 0, comm);
+           //Epetra_MultiVector rbm_mv(Copy, map, rbm, nNodes*numPDEs, nullSpaceDim + numScalar);
+           //cout << "rbm: " << rbm_mv << endl;
+           //for (int i = 0; i<nNodes*numPDEs*(nullSpaceDim+numScalar); i++)
+           //   cout << rbm[i] << endl;
+           //EpetraExt::MultiVectorToMatrixMarketFile("rbm.mm", rbm_mv);
+           mlList.set("null space: type","pre-computed");
+           mlList.set("null space: dimension",nullSpaceDim);
+           mlList.set("null space: vectors",rbm);
+           mlList.set("null space: add default vectors",false);
 
          }  
 
       }
 }
 
-int Albany_ML_Coord2RBM(int Nnodes, double x[], double y[], double z[], double rbm[], int Ndof, int NSdim)
+//The following function returns the rigid body modes for elasticity problems.
+//It is a modification of the ML function ml_rbm.c, extended to the case that NscalarDof scalar PDEs are coupled to an elasticity problem
+//Extended by IK, Feb. 2012
+
+int Albany_ML_Coord2RBM(int Nnodes, double x[], double y[], double z[], double rbm[], int Ndof, int NscalarDof, int NSdim)
 {
-   int vec_leng, ii, jj, offset, node, dof;
+
+    int vec_leng, ii, jj, offset, node, dof;
 
    vec_leng = Nnodes*Ndof;
+   for (int i = 0; i < Nnodes*Ndof*(NSdim + NscalarDof); i++)
+       rbm[i] = 0.0;
+
 
    for( node = 0 ; node < Nnodes; node++ )
    {
       dof = node*Ndof;
-      switch( NSdim )
+      switch( Ndof - NscalarDof )
       {
          case 6:
-            for(ii=3;ii<6;ii++){ /* lower half = [ 0 I ] */
-              for(jj=0;jj<6;jj++){
-                offset = dof+(ii-3)+jj*vec_leng;
-    // BUG!!!!!            offset = dof+ii+jj*vec_leng;
+            for(ii=3;ii<6+NscalarDof;ii++){ /* lower half = [ 0 I ] */
+              for(jj=0;jj<6+NscalarDof;jj++){
+                offset = dof+ii+jj*vec_leng;
                 rbm[offset] = (ii==jj) ? 1.0 : 0.0;
               }
             }
 
          case 3:
-            for(ii=0;ii<3;ii++){ /* upper left = [ I ] */
-              for(jj=0;jj<3;jj++){
+            for(ii=0;ii<3+NscalarDof;ii++){ /* upper left = [ I ] */
+              for(jj=0;jj<3+NscalarDof;jj++){
                 offset = dof+ii+jj*vec_leng;
                 rbm[offset] = (ii==jj) ? 1.0 : 0.0;
               }
             }
             for(ii=0;ii<3;ii++){ /* upper right = [ Q ] */
-              for(jj=3;jj<6;jj++){
+              for(jj=3+NscalarDof;jj<6+NscalarDof;jj++){
                 offset = dof+ii+jj*vec_leng;
-                if( ii == jj-3 ) rbm[offset] = 0.0;
+               // cout <<"jj " << jj << " " << ii + jj << endl;
+           if(ii == jj-3-NscalarDof) rbm[offset] = 0.0;
                 else {
-                  if (ii+jj == 4) rbm[offset] = z[node];
-                  else if ( ii+jj == 5 ) rbm[offset] = y[node];
-                  else if ( ii+jj == 6 ) rbm[offset] = x[node];
+                     if (ii+jj == 4+NscalarDof) rbm[offset] = z[node];
+                     else if ( ii+jj == 5+NscalarDof ) rbm[offset] = y[node];
+                     else if ( ii+jj == 6+NscalarDof ) rbm[offset] = x[node];
+                    else rbm[offset] = 0.0;
+                }
+              }
+            }
+            ii = 0; jj = 5+NscalarDof; offset = dof+ii+jj*vec_leng; rbm[offset] *= -1.0;
+            ii = 1; jj = 3+NscalarDof; offset = dof+ii+jj*vec_leng; rbm[offset] *= -1.0;
+            ii = 2; jj = 4+NscalarDof; offset = dof+ii+jj*vec_leng; rbm[offset] *= -1.0;
+         break;
+ case 2:
+            for(ii=0;ii<2+NscalarDof;ii++){ /* upper left = [ I ] */
+              for(jj=0;jj<2+NscalarDof;jj++){
+                offset = dof+ii+jj*vec_leng;
+                rbm[offset] = (ii==jj) ? 1.0 : 0.0;
+              }
+            }
+            for(ii=0;ii<2+NscalarDof;ii++){ /* upper right = [ Q ] */
+              for(jj=2+NscalarDof;jj<3+NscalarDof;jj++){
+                offset = dof+ii+jj*vec_leng;
+                if (ii == 0) rbm[offset] = -y[node];
+                else {
+                  if (ii == 1){  rbm[offset] =  x[node];}
                   else rbm[offset] = 0.0;
                 }
               }
             }
-            ii = 0; jj = 5;
-            offset = dof+ii+jj*vec_leng; rbm[offset] *= -1.0;
-            ii = 1; jj = 3;
-            offset = dof+ii+jj*vec_leng; rbm[offset] *= -1.0;
-            ii = 2; jj = 4;
-            offset = dof+ii+jj*vec_leng; rbm[offset] *= -1.0;
+            break;
+         case 1:
+             for (ii = 0; ii<1+NscalarDof; ii++) {
+               for (jj=0; jj<1+NscalarDof; jj++) {
+                  offset = dof+ii+jj*vec_leng;
+                  rbm[offset] = (ii == jj) ? 1.0 : 0.0;
+                }
+             }
             break;
 
          default:
@@ -638,6 +676,7 @@ int Albany_ML_Coord2RBM(int Nnodes, double x[], double y[], double z[], double r
   } /*for( node = 0 ; node < Nnodes; node++ )*/
 
   return 1;
+
 
 } /*ML_Coord2RBM*/
 

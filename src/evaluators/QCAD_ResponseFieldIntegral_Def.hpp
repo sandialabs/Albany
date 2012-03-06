@@ -234,8 +234,9 @@ QCAD::ResponseFieldIntegral<EvalT,Traits>::getValidResponseParameters() const
   validPL->set<string>("Name", "", "Name of response function");
   validPL->set<int>("Phalanx Graph Visualization Detail", 0, "Make dot file to visualize phalanx graph");
   validPL->set<string>("Type", "", "Response type");
-  validPL->set<string>("Element Block Name", "", 
-  		"Name of the element block to use as the integration domain");
+  validPL->set<string>("Element Block Name", "", "Name of the element block to use as the integration domain");
+
+  validPL->set<string>("Field Name", "", "Name of Field to integrate");
   for(int i=1; i < QCAD::MAX_FIELDNAMES_IN_INTEGRAL; i++)
     validPL->set<string>(Albany::strint("Field Name",i), "", "Name of Field to integrate (multiplied into integrand)");
 

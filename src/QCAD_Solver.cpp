@@ -843,7 +843,6 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
     //! Set poisson parameters
     params.sublist("Problem").sublist("Poisson Source").set("Quantum Region Source", "semiclassical");
     params.sublist("Problem").sublist("Poisson Source").set("Non Quantum Region Source", "semiclassical");
-    params.sublist("Problem").sublist("Schrodinger Coupling").set<bool>("Schrodinger source in quantum blocks",false);
 
     //! Rename output file
     if (params.sublist("Discretization").isParameter("Exodus Output File Name"))

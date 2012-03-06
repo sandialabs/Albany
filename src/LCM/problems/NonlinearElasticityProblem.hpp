@@ -44,6 +44,11 @@ namespace Albany {
     //! Destructor
     virtual ~NonlinearElasticityProblem();
 
+    //Set problem information for computation of rigid body modes (in src/Albany_SolverFactory.cpp)
+    void getRBMInfoForML(
+         int& numPDEs, int& numElasticityDim, int& numScalar, int& nullSpaceDim);
+
+
     //! Return number of spatial dimensions
     virtual int spatialDimension() const { return numDim; }
 

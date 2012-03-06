@@ -31,7 +31,7 @@ Albany::HDiffusionDeformationProblem::
 HDiffusionDeformationProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 			const Teuchos::RCP<ParamLib>& paramLib_,
 			const int numDim_) :
-  Albany::AbstractProblem(params_, paramLib_, numDim_ + 1),
+  Albany::AbstractProblem(params_, paramLib_, numDim_ + 2),
   haveSource(false),
   numDim(numDim_)
 {
@@ -49,6 +49,7 @@ HDiffusionDeformationProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_
 #else
   X_offset=0;
   T_offset=numDim;
+  Thydro_offset= numDim+1;
 #endif
 }
 
@@ -56,6 +57,22 @@ Albany::HDiffusionDeformationProblem::
 ~HDiffusionDeformationProblem()
 {
 }
+
+//the following function returns the problem information required for setting the rigid body modes (RBMs) for elasticity problems (in src/Albany_SolverFactory.cpp)
+//written by IK, Feb. 2012 
+void Albany::HDiffusionDeformationProblem::getRBMInfoForML(
+   int& numPDEs, int& numElasticityDim, int& numScalar,  int& nullSpaceDim)
+{
+  numPDEs = numDim + 2;
+  numElasticityDim = numDim;
+  numScalar = 2;
+  if (numDim == 1) {nullSpaceDim = 0; }
+  else {
+    if (numDim == 2) {nullSpaceDim = 3; }
+    if (numDim == 3) {nullSpaceDim = 6; }
+  }
+}
+
 
 void
 Albany::HDiffusionDeformationProblem::
@@ -99,6 +116,7 @@ Albany::HDiffusionDeformationProblem::constructDirichletEvaluators(
   if (numDim>1) dirichletNames[X_offset+1] = "Y";
   if (numDim>2) dirichletNames[X_offset+2] = "Z";
   dirichletNames[T_offset] = "T";
+  dirichletNames[Thydro_offset] = "Thydro";
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                        this->params, this->paramLib);

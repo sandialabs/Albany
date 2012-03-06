@@ -30,6 +30,7 @@
 #include "Teuchos_Array.hpp"
 
 #include "QCAD_MaterialDatabase.hpp"
+#include "QCAD_EvaluatorTools.hpp"
 
 namespace QCAD {
 /** 
@@ -39,7 +40,8 @@ namespace QCAD {
   class PoissonSource : 
   public PHX::EvaluatorWithBaseImpl<Traits>,
   public PHX::EvaluatorDerived<EvalT, Traits>,
-  public Sacado::ParameterAccessor<EvalT, SPL_Traits> 
+  public Sacado::ParameterAccessor<EvalT, SPL_Traits>,
+  public EvaluatorTools<EvalT, Traits>
   {
   public:
     typedef typename EvalT::ScalarT ScalarT;
@@ -137,7 +139,7 @@ namespace QCAD {
     //! strings specifing the how the source term inside and outside the quantum regions are computed:
     std::string nonQuantumRegionSource;
     std::string quantumRegionSource;
-    int sourceEvecInds[2];
+    ScalarT sourceEvecInds[2];
     
     //! specify carrier statistics and incomplete ionization
     std::string carrierStatistics;
@@ -157,7 +159,6 @@ namespace QCAD {
     //ScalarT Lambda2;  // derived scaling factor (unitless) that appears in the scaled Poisson equation
     
     //! Schrodinger coupling
-    bool bSchrodingerInQuantumRegions;
     bool bUsePredictorCorrector;
     bool bIncludeVxc; 
     int  nEigenvectors;

@@ -34,7 +34,7 @@
 namespace Albany {
 
   /*!
-   * \brief ThermoMechanical Coupling Problem
+   * \brief Diffusion-deformation Coupling Problem for Hydrogen Embrittlement
    */
   class HDiffusionDeformationProblem : public Albany::AbstractProblem {
   public:
@@ -46,6 +46,10 @@ namespace Albany {
 
     //! Destructor
     virtual ~HDiffusionDeformationProblem();
+
+     //Set problem information for computation of rigid body modes (in src/Albany_SolverFactory.cpp)
+    void getRBMInfoForML(
+         int& numPDEs, int& numElasticityDim, int& numScalar, int& nullSpaceDim);
 
     //! Return number of spatial dimensions
     virtual int spatialDimension() const { return numDim; }
@@ -97,6 +101,7 @@ namespace Albany {
     //! Boundary conditions on source term
     bool haveSource;
     int T_offset;  //Position of T unknown in nodal DOFs
+    int Thydro_offset; //Position of the hydrostatic stress in nodal DOFs
     int X_offset;  //Position of X unknown in nodal DOFs, followed by Y,Z
     int numDim;    //Number of spatial dimensions and displacement variable 
 
@@ -137,6 +142,7 @@ namespace Albany {
 #include "Time.hpp"
 
 // Header files for hydrogen transport
+#include "ScalarL2ProjectionResidual.hpp"
 #include "HDiffusionDeformationMatterResidual.hpp"
 #include "PHAL_NSMaterialProperty.hpp"
 #include "DiffusionCoefficient.hpp"
@@ -188,6 +194,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
   RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
   string scatterName="Scatter Lattice Concentration";
+  string stressScatterName="Scatter Hydrostatic Stress";
 
 
   // Displacement Variable
@@ -230,6 +237,29 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructScatterResidualEvaluator(false, tresid_names, T_offset, scatterName));
+
+  // Hydrostatic Stress Variable
+  Teuchos::ArrayRCP<string> thydrodof_names(1);
+  thydrodof_names[0] = "Hydrostatic Stress";
+  Teuchos::ArrayRCP<string> thydrodof_names_dot(1);
+  thydrodof_names_dot[0] = thydrodof_names[0]+"_dot";
+  Teuchos::ArrayRCP<string> thydroresid_names(1);
+  thydroresid_names[0] = "Hydrostatic Stress Projection Residual";
+
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructDOFInterpolationEvaluator(thydrodof_names[0]));
+
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructDOFInterpolationEvaluator(thydrodof_names_dot[0]));
+
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructDOFGradInterpolationEvaluator(thydrodof_names[0]));
+
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructGatherSolutionEvaluator(false, thydrodof_names, thydrodof_names_dot, Thydro_offset));
+
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructScatterResidualEvaluator(false, thydroresid_names, Thydro_offset, stressScatterName));
 
   // General FEM stuff
   fm0.template registerEvaluator<EvalT>
@@ -864,6 +894,9 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     p->set<string>("Gradient QP Variable Name", "Lattice Concentration Gradient");
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
+    p->set<string>("Gradient Hydrostatic Stress Name", "Hydrostatic Stress Gradient");
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
     p->set<string>("Stress Name", "Stress");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
@@ -885,6 +918,40 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
   }
 
 
+  { // L2 hydrostatic stress projection
+     RCP<ParameterList> p = rcp(new ParameterList("Hydrostatic Stress Projection Residual"));
+
+     //Input
+     p->set<string>("Weighted BF Name", "wBF");
+     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
+
+     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+
+     p->set<bool>("Have Source", false);
+     p->set<string>("Source Name", "Source");
+
+     p->set<string>("Deformation Gradient Name", "Deformation Gradient");
+     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+
+     p->set<string>("QP Variable Name", "Hydrostatic Stress");
+     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+     p->set<string>("Stress Name", "Stress");
+     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+
+     //Output
+     p->set<string>("Residual Name", "Hydrostatic Stress Projection Residual");
+     p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
+
+     ev = rcp(new LCM::ScalarL2ProjectionResidual<EvalT,AlbanyTraits>(*p));
+     fm0.template registerEvaluator<EvalT>(ev);
+     p = stateMgr.registerStateVariable("Hydrostatic Stress",dl->qp_scalar, dl->dummy,"scalar", 0.0,true);
+     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+     fm0.template registerEvaluator<EvalT>(ev);
+   }
+
+
   // Setting up field manager
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
@@ -893,6 +960,9 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
     PHX::Tag<typename EvalT::ScalarT> res_tag2(scatterName, dl->dummy);
     fm0.requireField<EvalT>(res_tag2);
+
+    PHX::Tag<typename EvalT::ScalarT> res_tag3(stressScatterName, dl->dummy);
+    fm0.requireField<EvalT>(res_tag3);
 
     return res_tag.clone();
   }

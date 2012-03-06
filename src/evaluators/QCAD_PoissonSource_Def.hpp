@@ -211,6 +211,8 @@ QCAD::PoissonSource<EvalT,Traits>::getValue(const std::string &n)
 {
   if(n == "Poisson Source Factor") return factor;
   else if( materialParams.find(n) != materialParams.end() ) return materialParams[n];
+  else if( n == "Source Eigenvector 1") return sourceEvecInds[0];
+  else if( n == "Source Eigenvector 2") return sourceEvecInds[1];
   else TEUCHOS_TEST_FOR_EXCEPT(true); return factor; //dummy so all control paths return
 }
 
@@ -232,6 +234,7 @@ QCAD::PoissonSource<EvalT,Traits>::getValidPoissonSourceParameters() const
   validPL->set<string>("Incomplete Ionization", "False", "Partial ionization of dopants");
   //validPL->set<double>("Donor Activation Energy", 0.045, "Donor activation energy [eV]");
   validPL->set<double>("Acceptor Activation Energy", 0.045, "Acceptor activation energy [eV]");
+  validPL->set<int>("Eigenvectors from States", 0, "Number of eigenvectors to take from eigendata information");
   validPL->set<bool>("Use predictor-corrector method",false, "Enable use of predictor-corrector method for S-P iterations");
   validPL->set<bool>("Include exchange-correlation potential",false, "Include the exchange correlation term in the output potential state");
   
@@ -496,7 +499,8 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
       }
       else if(quantumRegionSource == "coulomb") {
 	//RHS == evec[i] * evec[j]
-	int i = sourceEvecInds[0], j = sourceEvecInds[1];
+	int i = (int)QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue( sourceEvecInds[0] );
+	int j = (int)QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue( sourceEvecInds[1] );
 	
 	// loop over cells and qps
 	for (std::size_t cell=0; cell < workset.numCells; ++cell) {
@@ -701,7 +705,8 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
       }
       else if(quantumRegionSource == "coulomb") {
 	//RHS == evec[i] * evec[j]
-	int i = sourceEvecInds[0], j = sourceEvecInds[1];
+	int i = (int)QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue( sourceEvecInds[0] );
+	int j = (int)QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue( sourceEvecInds[1] );
 	
 	// loop over cells and qps
 	for (std::size_t cell=0; cell < workset.numCells; ++cell) {
@@ -1017,7 +1022,7 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
 	       std::endl << "Error!  Unknown dopant type " << dopantType << "!"<< std::endl);
 
       //! Schrodinger source for electrons
-      if (bSchrodingerInQuantumRegions) 
+      if(quantumRegionSource == "schrodinger")
       {
         // retrieve Previous Poisson Potential
         Albany::MDArray prevPhiArray = (*workset.stateArrayPtr)["Previous Poisson Potential"];
@@ -1076,7 +1081,7 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
         
         valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
 
-      } // end of if (bSchrodingerInQuantumRegions) 
+      }
 
       //! calculate the classical charge (RHS) for Poisson equation
       else
@@ -1134,7 +1139,7 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
       ScalarT fixedCharge = 0.0; // [cm^-3]
 
       //! Schrodinger source for electrons
-      if( bSchrodingerInQuantumRegions ) 
+      if(quantumRegionSource == "schrodinger")
       {
         // retrieve Previous Poisson Potential
         Albany::MDArray prevPhiArray = (*workset.stateArrayPtr)["Previous Poisson Potential"];

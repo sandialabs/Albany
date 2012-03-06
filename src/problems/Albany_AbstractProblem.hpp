@@ -78,6 +78,12 @@ namespace Albany {
     //! Destructor
     virtual ~AbstractProblem() {};
 
+     virtual void getRBMInfoForML(
+       int& numPDEs,
+       int& numElasticityDim,
+       int& numScalar,
+       int& nullSpaceDim);
+
     //! Get the number of equations
     unsigned int numEquations() const;
     void setNumEquations(const int neq_);

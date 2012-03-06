@@ -298,7 +298,9 @@ evaluateFields(typename Traits::EvalData workset)
 
 
    // gravity or other potential term
-   for (std::size_t cell=0; cell < workset.numCells; ++cell){
+  /*
+   *
+     for (std::size_t cell=0; cell < workset.numCells; ++cell){
          for (std::size_t qp=0; qp < numQPs; ++qp) {
         	 for (std::size_t dim=0; dim <numDims; ++dim){
         	  fgravity(cell,qp, dim) = TGrad(cell,qp,dim);
@@ -308,10 +310,11 @@ evaluateFields(typename Traits::EvalData workset)
         		                     (Temp(cell,qp) - RefTemp(cell,qp))); //assume g is 8.81
      }
    }
+   */
 
    // Pore pressure gradient contribution
-   // FST::tensorMultiplyDataData<ScalarT> (flux, Kref, TGrad); // flux_i = k I_ij p_j
-   FST::tensorMultiplyDataData<ScalarT> (flux, Kref, fgravity); // flux_i = k I_ij p_j
+   FST::tensorMultiplyDataData<ScalarT> (flux, Kref, TGrad); // flux_i = k I_ij p_j
+  // FST::tensorMultiplyDataData<ScalarT> (flux, Kref, fgravity); // flux_i = k I_ij p_j
 
 
    for (std::size_t cell=0; cell < workset.numCells; ++cell){
