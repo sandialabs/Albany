@@ -49,9 +49,7 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> strain;
-  PHX::MDField<ScalarT,Cell,QuadPoint> elasticModulus;
-  PHX::MDField<ScalarT,Cell,QuadPoint> poissonsRatio;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> effStress;
   PHX::MDField<ScalarT,Cell,QuadPoint> biotCoefficient;
   PHX::MDField<ScalarT,Cell,QuadPoint> porePressure;
 

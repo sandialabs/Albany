@@ -26,12 +26,8 @@ namespace LCM {
 template<typename EvalT, typename Traits>
 TotalStress<EvalT, Traits>::
 TotalStress(const Teuchos::ParameterList& p) :
-  strain           (p.get<std::string>                   ("Strain Name"),
+  effStress           (p.get<std::string>                   ("Effective Stress Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-  elasticModulus   (p.get<std::string>                   ("Elastic Modulus Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  poissonsRatio    (p.get<std::string>                   ("Poissons Ratio Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   biotCoefficient  (p.get<std::string>                   ("Biot Coefficient Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   porePressure    (p.get<std::string>                   ("QP Variable Name"),
@@ -47,10 +43,7 @@ TotalStress(const Teuchos::ParameterList& p) :
   numQPs  = dims[1];
   numDims = dims[2];
 
-  this->addDependentField(strain);
-  this->addDependentField(elasticModulus);
-  // PoissonRatio not used in 1D stress calc
-  if (numDims>1) this->addDependentField(poissonsRatio);
+  this->addDependentField(effStress);
   this->addDependentField(biotCoefficient);
   this->addDependentField(porePressure);
 
@@ -67,9 +60,7 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(stress,fm);
-  this->utils.setFieldData(strain,fm);
-  this->utils.setFieldData(elasticModulus,fm);
-  if (numDims>1) this->utils.setFieldData(poissonsRatio,fm);
+  this->utils.setFieldData(effStress,fm);
   this->utils.setFieldData(biotCoefficient,fm);
   this->utils.setFieldData(porePressure,fm);
 }
@@ -79,7 +70,28 @@ template<typename EvalT, typename Traits>
 void TotalStress<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  ScalarT lambda, mu; // B is the Biot coefficient 1 - K/K(s) where
+
+
+
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+    	  for (std::size_t dim=0; dim<numDims; ++ dim) {
+    		  for (std::size_t j=0; j<numDims; ++ j) {
+	              stress(cell,qp,dim,j) = effStress(cell,qp, dim,j);
+    		  }
+    	  }
+      }
+    }
+
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+    	  for (std::size_t dim=0; dim<numDims; ++ dim) {
+	              stress(cell,qp,dim,dim) -= biotCoefficient(cell,qp)*
+	            		                     porePressure(cell,qp);
+    	  }
+      }
+    }
+/*  ScalarT lambda, mu; // B is the Biot coefficient 1 - K/K(s) where
 
   switch (numDims) {
   case 1:
@@ -125,6 +137,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
     break;
   }
+  */
 }
 
 //**********************************************************************
