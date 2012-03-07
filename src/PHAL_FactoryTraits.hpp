@@ -24,6 +24,7 @@
 #include "LCM/evaluators/KfieldBC.hpp"
 #include "LCM/evaluators/TimeDepBC.hpp"
 #include "LCM/evaluators/Time.hpp"
+#include "LCM/evaluators/TorsionBC.hpp"
 #endif
 #include "QCAD_PoissonDirichlet.hpp"
 #include "PHAL_Dirichlet.hpp"
@@ -38,7 +39,7 @@ using namespace boost::mpl::placeholders;
 
 namespace PHAL {
 /*! \brief Struct to define Evaluator objects for the EvaluatorFactory.
-    
+
     Preconditions:
     - You must provide a boost::mpl::vector named EvaluatorTypes that contain all Evaluator objects that you wish the factory to build.  Do not confuse evaluator types (concrete instances of evaluator objects) with evaluation types (types of evaluations to perform, i.e., Residual, Jacobian). 
 
@@ -46,31 +47,32 @@ namespace PHAL {
 
   template<typename Traits>
   struct DirichletFactoryTraits {
-  
+
     static const int id_dirichlet                 =  0;
     static const int id_dirichlet_aggregator      =  1;
     static const int id_qcad_poisson_dirichlet    =  2;
     static const int id_kfield_bc                 =  3; // Only for LCM probs
     static const int id_timedep_bc                =  4; // Only for LCM probs
     static const int id_time                      =  5; // Only for LCM probs
+    static const int id_torsion_bc                =  6; // Only for LCM probs
 
 #ifdef ALBANY_LCM
-    typedef boost::mpl::vector6< 
+    typedef boost::mpl::vector7<
 #else
-      typedef boost::mpl::vector3< 
+      typedef boost::mpl::vector3<
 #endif
-	PHAL::Dirichlet<_,Traits>,                //  0
-	PHAL::DirichletAggregator<_,Traits>,      //  1
-	QCAD::PoissonDirichlet<_,Traits>          //  2
+        PHAL::Dirichlet<_,Traits>,                //  0
+        PHAL::DirichletAggregator<_,Traits>,      //  1
+        QCAD::PoissonDirichlet<_,Traits>          //  2
 #ifdef ALBANY_LCM
-	, LCM::KfieldBC<_,Traits>,                //  3
-	LCM::TimeDepBC<_, Traits>,                //  4 
-	LCM::Time<_, Traits>                      //  5 
+        , LCM::KfieldBC<_,Traits>,                //  3
+        LCM::TimeDepBC<_, Traits>,                //  4
+        LCM::Time<_, Traits>,                     //  5
+        LCM::TorsionBC<_, Traits>                 //  6
 #endif
-	> EvaluatorTypes;
+        > EvaluatorTypes;
 };
 
 }
 
 #endif
-

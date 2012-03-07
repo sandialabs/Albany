@@ -122,6 +122,42 @@ Albany::BCUtils<BCTraits>::constructBCEvaluators(
    }
 
    ///
+   /// Torsion BC specific
+   ///
+   for (std::size_t i=0; i<nodeorsideSetIDs.size(); i++) 
+   {
+     std::string ss = constructBCName(nodeorsideSetIDs[i],"twist");
+     
+     if (BCparams.isSublist(ss)) 
+     {
+       // grab the sublist
+       ParameterList& sub_list = BCparams.sublist(ss);
+
+       if (sub_list.get<string>("BC Function") == "Torsion" )
+       {
+	 RCP<ParameterList> p = rcp(new ParameterList);
+	 p->set<int>("Type", traits_type::typeTo);
+
+         p->set< RealType >("Theta Dot", sub_list.get< RealType >("Theta Dot"));
+
+	 // Fill up ParameterList with things DirichletBase wants
+	 p->set< RCP<DataLayout> >("Data Layout", dummy);
+	 p->set< string >  ("Dirichlet Name", ss);
+         p->set< RealType >("Dirichlet Value", 0.0);
+	 p->set< string >  ("Node Set ID", nodeorsideSetIDs[i]);
+         //p->set< int >     ("Number of Equations", dirichletNames.size());
+	 p->set< int >     ("Equation Offset", 0);
+	 
+	 p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+	 std::stringstream ess; ess << "Evaluator for " << ss;
+	 evaluators_to_build[ess.str()] = p;
+
+	 bcs.push_back(ss);
+       }
+     }
+   }
+
+   ///
    /// Kfield BC specific
    ///
    for (std::size_t i=0; i<nodeorsideSetIDs.size(); i++) 
