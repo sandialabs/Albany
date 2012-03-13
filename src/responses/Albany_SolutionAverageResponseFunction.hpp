@@ -18,7 +18,7 @@
 #ifndef ALBANY_SOLUTIONAVERAGERESPONSEFUNCTION_HPP
 #define ALBANY_SOLUTIONAVERAGERESPONSEFUNCTION_HPP
 
-#include "Albany_SamplingBasedScalarResponseFunction.hpp"
+#include "Albany_ScalarResponseFunction.hpp"
 
 namespace Albany {
 
@@ -26,7 +26,7 @@ namespace Albany {
    * \brief Reponse function representing the average of the solution values
    */
   class SolutionAverageResponseFunction : 
-    public SamplingBasedScalarResponseFunction {
+    public ScalarResponseFunction {
   public:
   
     //! Default constructor
@@ -75,6 +75,109 @@ namespace Albany {
 		     Epetra_MultiVector* dg_dx,
 		     Epetra_MultiVector* dg_dxdot,
 		     Epetra_MultiVector* dg_dp);
+
+    //! \name Stochastic Galerkin evaluation functions
+    //@{
+
+    //! Intialize stochastic Galerkin method
+    virtual void init_sg(
+      const Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> >& basis,
+      const Teuchos::RCP<const Stokhos::Quadrature<int,double> >& quad,
+      const Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> >& expansion,
+      const Teuchos::RCP<const EpetraExt::MultiComm>& multiComm) {}
+
+    //! Evaluate stochastic Galerkin response
+    virtual void evaluateSGResponse(
+      const double curr_time,
+      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+      const Stokhos::EpetraVectorOrthogPoly& sg_x,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& sg_p_index,
+      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+      Stokhos::EpetraVectorOrthogPoly& sg_g);
+
+    //! Evaluate stochastic Galerkin tangent
+    virtual void evaluateSGTangent(
+      const double alpha, 
+      const double beta, 
+      const double current_time,
+      bool sum_derivs,
+      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+      const Stokhos::EpetraVectorOrthogPoly& sg_x,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& sg_p_index,
+      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+      ParamVec* deriv_p,
+      const Epetra_MultiVector* Vx,
+      const Epetra_MultiVector* Vxdot,
+      const Epetra_MultiVector* Vp,
+      Stokhos::EpetraVectorOrthogPoly* sg_g,
+      Stokhos::EpetraMultiVectorOrthogPoly* sg_JV,
+      Stokhos::EpetraMultiVectorOrthogPoly* sg_gp);
+
+    //! Evaluate stochastic Galerkin derivative
+    virtual void evaluateSGGradient(
+      const double current_time,
+      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+      const Stokhos::EpetraVectorOrthogPoly& sg_x,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& sg_p_index,
+      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+      ParamVec* deriv_p,
+      Stokhos::EpetraVectorOrthogPoly* sg_g,
+      Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dx,
+      Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdot,
+      Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dp);
+
+    //@}
+
+    //! \name Multi-point evaluation functions
+    //@{
+
+    //! Evaluate multi-point response functions
+    virtual void evaluateMPResponse(
+      const double curr_time,
+      const Stokhos::ProductEpetraVector* mp_xdot,
+      const Stokhos::ProductEpetraVector& mp_x,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& mp_p_index,
+      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+      Stokhos::ProductEpetraVector& mp_g);
+
+    //! Evaluate multi-point tangent
+    virtual void evaluateMPTangent(
+      const double alpha, 
+      const double beta, 
+      const double current_time,
+      bool sum_derivs,
+      const Stokhos::ProductEpetraVector* mp_xdot,
+      const Stokhos::ProductEpetraVector& mp_x,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& mp_p_index,
+      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+      ParamVec* deriv_p,
+      const Epetra_MultiVector* Vx,
+      const Epetra_MultiVector* Vxdot,
+      const Epetra_MultiVector* Vp,
+      Stokhos::ProductEpetraVector* mp_g,
+      Stokhos::ProductEpetraMultiVector* mp_JV,
+      Stokhos::ProductEpetraMultiVector* mp_gp);
+
+    //! Evaluate multi-point derivative
+    virtual void evaluateMPGradient(
+      const double current_time,
+      const Stokhos::ProductEpetraVector* mp_xdot,
+      const Stokhos::ProductEpetraVector& mp_x,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& mp_p_index,
+      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+      ParamVec* deriv_p,
+      Stokhos::ProductEpetraVector* mp_g,
+      Stokhos::ProductEpetraMultiVector* mp_dg_dx,
+      Stokhos::ProductEpetraMultiVector* mp_dg_dxdot,
+      Stokhos::ProductEpetraMultiVector* mp_dg_dp);
+
+    //@}
 
   private:
 

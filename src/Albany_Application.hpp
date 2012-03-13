@@ -504,6 +504,24 @@ namespace Albany {
       const Epetra_Vector* x,
       const Teuchos::Array<ParamVec>& p);
 
+    void setupBasicWorksetInfo(
+      PHAL::Workset& workset,
+      double current_time,
+      const Stokhos::EpetraVectorOrthogPoly* sg_xdot, 
+      const Stokhos::EpetraVectorOrthogPoly* sg_x,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& sg_p_index,
+      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals);
+
+    void setupBasicWorksetInfo(
+      PHAL::Workset& workset,
+      double current_time,
+      const Stokhos::ProductEpetraVector* mp_xdot, 
+      const Stokhos::ProductEpetraVector* mp_x,
+      const Teuchos::Array<ParamVec>& p,
+      const Teuchos::Array<int>& mp_p_index,
+      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals);
+
     void setupTangentWorksetInfo(
       PHAL::Workset& workset, 
       double current_time,
@@ -512,6 +530,34 @@ namespace Albany {
       const Epetra_Vector* x,
       const Teuchos::Array<ParamVec>& p,
       ParamVec* deriv_p,
+      const Epetra_MultiVector* Vxdot,
+      const Epetra_MultiVector* Vx,
+      const Epetra_MultiVector* Vp);
+
+    void setupTangentWorksetInfo(
+      PHAL::Workset& workset, 
+      double current_time,
+      bool sum_derivs,
+      const Stokhos::EpetraVectorOrthogPoly* sg_xdot, 
+      const Stokhos::EpetraVectorOrthogPoly* sg_x,
+      const Teuchos::Array<ParamVec>& p,
+      ParamVec* deriv_p,
+      const Teuchos::Array<int>& sg_p_index,
+      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+      const Epetra_MultiVector* Vxdot,
+      const Epetra_MultiVector* Vx,
+      const Epetra_MultiVector* Vp);
+
+    void setupTangentWorksetInfo(
+      PHAL::Workset& workset, 
+      double current_time,
+      bool sum_derivs,
+      const Stokhos::ProductEpetraVector* mp_xdot, 
+      const Stokhos::ProductEpetraVector* mp_x,
+      const Teuchos::Array<ParamVec>& p,
+      ParamVec* deriv_p,
+      const Teuchos::Array<int>& mp_p_index,
+      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
       const Epetra_MultiVector* Vxdot,
       const Epetra_MultiVector* Vx,
       const Epetra_MultiVector* Vp);

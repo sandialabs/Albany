@@ -2314,6 +2314,101 @@ void Albany::Application::setupBasicWorksetInfo(
   workset.x_importer = importer;
 }
 
+void Albany::Application::setupBasicWorksetInfo(
+  PHAL::Workset& workset,
+  double current_time,
+  const Stokhos::EpetraVectorOrthogPoly* sg_xdot, 
+  const Stokhos::EpetraVectorOrthogPoly* sg_x,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& sg_p_index,
+  const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals)
+{
+  // Scatter x and xdot to the overlapped distrbution
+  for (int i=0; i<sg_x->size(); i++) {
+    (*sg_overlapped_x)[i].Import((*sg_x)[i], *importer, Insert);
+    if (sg_xdot != NULL) (*sg_overlapped_xdot)[i].Import((*sg_xdot)[i], *importer, Insert);
+  }
+
+  // Set parameters
+  for (int i=0; i<p.size(); i++)
+    for (unsigned int j=0; j<p[i].size(); j++)
+      p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
+
+  // Set SG parameters
+  for (int i=0; i<sg_p_index.size(); i++) {
+    int ii = sg_p_index[i];
+    for (unsigned int j=0; j<p[ii].size(); j++) {
+      p[ii][j].family->setValue<PHAL::AlbanyTraits::SGResidual>(sg_p_vals[ii][j]);
+      p[ii][j].family->setValue<PHAL::AlbanyTraits::SGTangent>(sg_p_vals[ii][j]);
+      p[ii][j].family->setValue<PHAL::AlbanyTraits::SGJacobian>(sg_p_vals[ii][j]);
+    }
+  }
+
+  workset.sg_expansion = sg_expansion;
+  workset.sg_x         = sg_overlapped_x;
+  workset.sg_xdot      = sg_overlapped_xdot;
+  if (!paramLib->isParameter("Time"))
+    workset.current_time = current_time;
+  else 
+    workset.current_time = 
+      paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+  if (sg_xdot != NULL) workset.transientTerms = true;
+
+  // Create Teuchos::Comm from Epetra_Comm
+  const Epetra_Comm& comm = sg_x->coefficientMap()->Comm();
+  workset.comm = Albany::createTeuchosCommFromMpiComm(
+                  Albany::getMpiCommFromEpetraComm(comm));
+
+  workset.x_importer = importer;
+}
+
+void Albany::Application::setupBasicWorksetInfo(
+  PHAL::Workset& workset,
+  double current_time,
+  const Stokhos::ProductEpetraVector* mp_xdot, 
+  const Stokhos::ProductEpetraVector* mp_x,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& mp_p_index,
+  const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals)
+{
+  // Scatter x and xdot to the overlapped distrbution
+  for (int i=0; i<mp_x->size(); i++) {
+    (*mp_overlapped_x)[i].Import((*mp_x)[i], *importer, Insert);
+    if (mp_xdot != NULL) (*mp_overlapped_xdot)[i].Import((*mp_xdot)[i], *importer, Insert);
+  }
+
+  // Set parameters
+  for (int i=0; i<p.size(); i++)
+    for (unsigned int j=0; j<p[i].size(); j++)
+      p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
+
+  // Set MP parameters
+  for (int i=0; i<mp_p_index.size(); i++) {
+    int ii = mp_p_index[i];
+    for (unsigned int j=0; j<p[ii].size(); j++) {
+      p[ii][j].family->setValue<PHAL::AlbanyTraits::MPResidual>(mp_p_vals[ii][j]);
+      p[ii][j].family->setValue<PHAL::AlbanyTraits::MPTangent>(mp_p_vals[ii][j]);
+      p[ii][j].family->setValue<PHAL::AlbanyTraits::MPJacobian>(mp_p_vals[ii][j]);
+    }
+  }
+
+  workset.mp_x         = mp_overlapped_x;
+  workset.mp_xdot      = mp_overlapped_xdot;
+  if (!paramLib->isParameter("Time"))
+    workset.current_time = current_time;
+  else 
+    workset.current_time = 
+      paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+  if (mp_xdot != NULL) workset.transientTerms = true;
+
+  // Create Teuchos::Comm from Epetra_Comm
+  const Epetra_Comm& comm = mp_x->coefficientMap()->Comm();
+  workset.comm = Albany::createTeuchosCommFromMpiComm(
+                  Albany::getMpiCommFromEpetraComm(comm));
+
+  workset.x_importer = importer;
+}
+
 void Albany::Application::setupTangentWorksetInfo(
   PHAL::Workset& workset, 
   double current_time,
@@ -2392,6 +2487,192 @@ void Albany::Application::setupTangentWorksetInfo(
       else
         p.fastAccessDx(param_offset+i) = 1.0;
       (*params)[i].family->setValue<PHAL::AlbanyTraits::Tangent>(p);
+    }
+  }
+
+  workset.params = params;
+  workset.Vx = overlapped_Vx;
+  workset.Vxdot = overlapped_Vxdot;
+  workset.Vp = vp;
+  workset.num_cols_x = num_cols_x;
+  workset.num_cols_p = num_cols_p;
+  workset.param_offset = param_offset;
+}
+
+void Albany::Application::setupTangentWorksetInfo(
+  PHAL::Workset& workset, 
+  double current_time,
+  bool sum_derivs,
+  const Stokhos::EpetraVectorOrthogPoly* sg_xdot, 
+  const Stokhos::EpetraVectorOrthogPoly* sg_x,
+  const Teuchos::Array<ParamVec>& p,
+  ParamVec* deriv_p,
+  const Teuchos::Array<int>& sg_p_index,
+  const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+  const Epetra_MultiVector* Vxdot,
+  const Epetra_MultiVector* Vx,
+  const Epetra_MultiVector* Vp)
+{
+  setupBasicWorksetInfo(workset, current_time, sg_xdot, sg_x, p, 
+			sg_p_index, sg_p_vals);
+
+  // Scatter Vx dot the overlapped distribution
+  RCP<Epetra_MultiVector> overlapped_Vx;
+  if (Vx != NULL) {
+    overlapped_Vx = 
+      rcp(new Epetra_MultiVector(*(disc->getOverlapMap()), 
+					  Vx->NumVectors()));
+    overlapped_Vx->Import(*Vx, *importer, Insert);
+  }
+
+  // Scatter Vx dot the overlapped distribution
+  RCP<Epetra_MultiVector> overlapped_Vxdot;
+  if (Vxdot != NULL) {
+    overlapped_Vxdot = 
+      rcp(new Epetra_MultiVector(*(disc->getOverlapMap()), 
+				 Vxdot->NumVectors()));
+    overlapped_Vxdot->Import(*Vxdot, *importer, Insert);
+  }
+
+  RCP<const Epetra_MultiVector > vp = rcp(Vp, false);
+  RCP<ParamVec> params = rcp(deriv_p, false);
+
+  // Number of x & xdot tangent directions
+  int num_cols_x = 0;
+  if (Vx != NULL)
+    num_cols_x = Vx->NumVectors();
+  else if (Vxdot != NULL)
+    num_cols_x = Vxdot->NumVectors();
+
+  // Number of parameter tangent directions
+  int num_cols_p = 0;
+  if (params != Teuchos::null) {
+    if (Vp != NULL)
+      num_cols_p = Vp->NumVectors();
+    else
+      num_cols_p = params->size();
+  }
+
+  // Whether x and param tangent components are added or separate
+  int param_offset = 0;
+  if (!sum_derivs) 
+    param_offset = num_cols_x;  // offset of parameter derivs in deriv array
+
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    sum_derivs && 
+    (num_cols_x != 0) && 
+    (num_cols_p != 0) && 
+    (num_cols_x != num_cols_p),
+    std::logic_error,
+    "Seed matrices Vx and Vp must have the same number " << 
+    " of columns when sum_derivs is true and both are "
+    << "non-null!" << std::endl);
+
+  // Initialize 
+  if (params != Teuchos::null) {
+    SGFadType p;
+    int num_cols_tot = param_offset + num_cols_p;
+    for (unsigned int i=0; i<params->size(); i++) {
+      p = SGFadType(num_cols_tot, (*params)[i].baseValue);
+      if (Vp != NULL) 
+        for (int k=0; k<num_cols_p; k++)
+          p.fastAccessDx(param_offset+k) = (*Vp)[k][i];
+      else
+        p.fastAccessDx(param_offset+i) = 1.0;
+      (*params)[i].family->setValue<PHAL::AlbanyTraits::SGTangent>(p);
+    }
+  }
+
+  workset.params = params;
+  workset.Vx = overlapped_Vx;
+  workset.Vxdot = overlapped_Vxdot;
+  workset.Vp = vp;
+  workset.num_cols_x = num_cols_x;
+  workset.num_cols_p = num_cols_p;
+  workset.param_offset = param_offset;
+}
+
+void Albany::Application::setupTangentWorksetInfo(
+  PHAL::Workset& workset, 
+  double current_time,
+  bool sum_derivs,
+  const Stokhos::ProductEpetraVector* mp_xdot, 
+  const Stokhos::ProductEpetraVector* mp_x,
+  const Teuchos::Array<ParamVec>& p,
+  ParamVec* deriv_p,
+  const Teuchos::Array<int>& mp_p_index,
+  const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+  const Epetra_MultiVector* Vxdot,
+  const Epetra_MultiVector* Vx,
+  const Epetra_MultiVector* Vp)
+{
+  setupBasicWorksetInfo(workset, current_time, mp_xdot, mp_x, p, 
+			mp_p_index, mp_p_vals);
+
+  // Scatter Vx dot the overlapped distribution
+  RCP<Epetra_MultiVector> overlapped_Vx;
+  if (Vx != NULL) {
+    overlapped_Vx = 
+      rcp(new Epetra_MultiVector(*(disc->getOverlapMap()), 
+					  Vx->NumVectors()));
+    overlapped_Vx->Import(*Vx, *importer, Insert);
+  }
+
+  // Scatter Vx dot the overlapped distribution
+  RCP<Epetra_MultiVector> overlapped_Vxdot;
+  if (Vxdot != NULL) {
+    overlapped_Vxdot = 
+      rcp(new Epetra_MultiVector(*(disc->getOverlapMap()), 
+				 Vxdot->NumVectors()));
+    overlapped_Vxdot->Import(*Vxdot, *importer, Insert);
+  }
+
+  RCP<const Epetra_MultiVector > vp = rcp(Vp, false);
+  RCP<ParamVec> params = rcp(deriv_p, false);
+
+  // Number of x & xdot tangent directions
+  int num_cols_x = 0;
+  if (Vx != NULL)
+    num_cols_x = Vx->NumVectors();
+  else if (Vxdot != NULL)
+    num_cols_x = Vxdot->NumVectors();
+
+  // Number of parameter tangent directions
+  int num_cols_p = 0;
+  if (params != Teuchos::null) {
+    if (Vp != NULL)
+      num_cols_p = Vp->NumVectors();
+    else
+      num_cols_p = params->size();
+  }
+
+  // Whether x and param tangent components are added or separate
+  int param_offset = 0;
+  if (!sum_derivs) 
+    param_offset = num_cols_x;  // offset of parameter derivs in deriv array
+
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    sum_derivs && 
+    (num_cols_x != 0) && 
+    (num_cols_p != 0) && 
+    (num_cols_x != num_cols_p),
+    std::logic_error,
+    "Seed matrices Vx and Vp must have the same number " << 
+    " of columns when sum_derivs is true and both are "
+    << "non-null!" << std::endl);
+
+  // Initialize 
+  if (params != Teuchos::null) {
+    MPFadType p;
+    int num_cols_tot = param_offset + num_cols_p;
+    for (unsigned int i=0; i<params->size(); i++) {
+      p = MPFadType(num_cols_tot, (*params)[i].baseValue);
+      if (Vp != NULL) 
+        for (int k=0; k<num_cols_p; k++)
+          p.fastAccessDx(param_offset+k) = (*Vp)[k][i];
+      else
+        p.fastAccessDx(param_offset+i) = 1.0;
+      (*params)[i].family->setValue<PHAL::AlbanyTraits::MPTangent>(p);
     }
   }
 

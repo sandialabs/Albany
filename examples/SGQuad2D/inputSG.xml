@@ -84,7 +84,7 @@
       </ParameterList>
       <Parameter name="SG Method" type="string" value="AD"/>       
       <ParameterList name="Expansion">
-	<Parameter name="Type" type="string" value="Quadrature"/>
+	<Parameter name="Type" type="string" value="Algebraic"/>
       </ParameterList>
       <Parameter name="Triple Product Size" type="string" 
 		 value="Full"/>

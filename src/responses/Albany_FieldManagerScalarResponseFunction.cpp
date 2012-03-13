@@ -25,7 +25,7 @@ FieldManagerScalarResponseFunction(
   const Teuchos::RCP<Albany::MeshSpecsStruct>&  meshSpecs_,
   const Teuchos::RCP<Albany::StateManager>& stateMgr_,
   Teuchos::ParameterList& responseParams) :
-  SamplingBasedScalarResponseFunction(application_->getComm()),
+  ScalarResponseFunction(application_->getComm()),
   application(application_),
   problem(problem_),
   meshSpecs(meshSpecs_),
@@ -40,7 +40,7 @@ FieldManagerScalarResponseFunction(
   const Teuchos::RCP<Albany::AbstractProblem>& problem_,
   const Teuchos::RCP<Albany::MeshSpecsStruct>&  meshSpecs_,
   const Teuchos::RCP<Albany::StateManager>& stateMgr_) :
-  SamplingBasedScalarResponseFunction(application_->getComm()),
+  ScalarResponseFunction(application_->getComm()),
   application(application_),
   problem(problem_),
   meshSpecs(meshSpecs_),
@@ -210,5 +210,287 @@ evaluateGradient(const double current_time,
       rfm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
     }
     rfm->postEvaluate<PHAL::AlbanyTraits::Jacobian>(workset);
+  }  
+}
+
+void
+Albany::FieldManagerScalarResponseFunction::
+evaluateSGResponse(
+  const double current_time,
+  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+  const Stokhos::EpetraVectorOrthogPoly& sg_x,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& sg_p_index,
+  const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+  Stokhos::EpetraVectorOrthogPoly& sg_g)
+{
+  visResponseGraph<PHAL::AlbanyTraits::SGResidual>("_sg");
+
+  // Set data in Workset struct
+  PHAL::Workset workset;
+  application->setupBasicWorksetInfo(workset, current_time, sg_xdot, &sg_x, p,
+				     sg_p_index, sg_p_vals);
+  workset.sg_g = Teuchos::rcp(&sg_g,false);
+
+  // Perform fill via field manager
+  int numWorksets = application->getNumWorksets();
+  rfm->preEvaluate<PHAL::AlbanyTraits::SGResidual>(workset);
+  for (int ws=0; ws < numWorksets; ws++) {
+    application->loadWorksetBucketInfo<PHAL::AlbanyTraits::SGResidual>(
+      workset, ws);
+    rfm->evaluateFields<PHAL::AlbanyTraits::SGResidual>(workset);
+  }
+  rfm->postEvaluate<PHAL::AlbanyTraits::SGResidual>(workset);
+}
+
+void
+Albany::FieldManagerScalarResponseFunction::
+evaluateSGTangent(
+  const double alpha, 
+  const double beta, 
+  const double current_time,
+  bool sum_derivs,
+  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+  const Stokhos::EpetraVectorOrthogPoly& sg_x,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& sg_p_index,
+  const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+  ParamVec* deriv_p,
+  const Epetra_MultiVector* Vx,
+  const Epetra_MultiVector* Vxdot,
+  const Epetra_MultiVector* Vp,
+  Stokhos::EpetraVectorOrthogPoly* sg_g,
+  Stokhos::EpetraMultiVectorOrthogPoly* sg_JV,
+  Stokhos::EpetraMultiVectorOrthogPoly* sg_gp)
+{
+  visResponseGraph<PHAL::AlbanyTraits::SGTangent>("_sg_tangent");
+
+  // Set data in Workset struct
+  PHAL::Workset workset;
+  application->setupTangentWorksetInfo(workset, current_time, sum_derivs, 
+				       sg_xdot, &sg_x, p, deriv_p, 
+				       sg_p_index, sg_p_vals,
+				       Vxdot, Vx, Vp);
+  workset.sg_g = Teuchos::rcp(sg_g, false);
+  workset.sg_dgdx = Teuchos::rcp(sg_JV, false);
+  workset.sg_dgdp = Teuchos::rcp(sg_gp, false);
+  
+  // Perform fill via field manager
+  int numWorksets = application->getNumWorksets();
+  rfm->preEvaluate<PHAL::AlbanyTraits::SGTangent>(workset);
+  for (int ws=0; ws < numWorksets; ws++) {
+    application->loadWorksetBucketInfo<PHAL::AlbanyTraits::SGTangent>(
+      workset, ws);
+    rfm->evaluateFields<PHAL::AlbanyTraits::SGTangent>(workset);
+  }
+  rfm->postEvaluate<PHAL::AlbanyTraits::SGTangent>(workset);
+}
+
+void
+Albany::FieldManagerScalarResponseFunction::
+evaluateSGGradient(
+  const double current_time,
+  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+  const Stokhos::EpetraVectorOrthogPoly& sg_x,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& sg_p_index,
+  const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+  ParamVec* deriv_p,
+  Stokhos::EpetraVectorOrthogPoly* sg_g,
+  Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dx,
+  Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdot,
+  Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dp)
+{
+  visResponseGraph<PHAL::AlbanyTraits::SGJacobian>("_sg_gradient");
+
+  // Set data in Workset struct
+  PHAL::Workset workset;
+  application->setupBasicWorksetInfo(workset, current_time, sg_xdot, &sg_x, p,
+				     sg_p_index, sg_p_vals);
+  workset.sg_g = Teuchos::rcp(sg_g, false);
+  
+  // Perform fill via field manager (dg/dx)
+  int numWorksets = application->getNumWorksets();
+  if (sg_dg_dx != NULL) {
+    workset.m_coeff = 0.0;
+    workset.j_coeff = 1.0;
+    workset.sg_dgdx = Teuchos::rcp(sg_dg_dx, false);
+    workset.overlapped_sg_dgdx = 
+      Teuchos::rcp(new Stokhos::EpetraMultiVectorOrthogPoly(
+		     sg_dg_dx->basis(),
+		     sg_dg_dx->map(),
+		     Teuchos::rcp(&(workset.x_importer->TargetMap()),false),
+		     sg_dg_dx->productComm(),
+		     sg_dg_dx->numVectors()));
+    rfm->preEvaluate<PHAL::AlbanyTraits::SGJacobian>(workset);
+    for (int ws=0; ws < numWorksets; ws++) {
+      application->loadWorksetBucketInfo<PHAL::AlbanyTraits::SGJacobian>(
+	workset, ws);
+      rfm->evaluateFields<PHAL::AlbanyTraits::SGJacobian>(workset);
+    }
+    rfm->postEvaluate<PHAL::AlbanyTraits::SGJacobian>(workset);
+  }
+
+  // Perform fill via field manager (dg/dxdot)
+  if (sg_dg_dxdot != NULL) {
+    workset.m_coeff = 1.0;
+    workset.j_coeff = 0.0;
+    workset.sg_dgdx = Teuchos::null;
+    workset.sg_dgdxdot = Teuchos::rcp(sg_dg_dxdot, false);
+    workset.overlapped_sg_dgdx = Teuchos::null;
+    workset.overlapped_sg_dgdxdot = 
+      Teuchos::rcp(new Stokhos::EpetraMultiVectorOrthogPoly(
+		     sg_dg_dxdot->basis(),
+		     sg_dg_dxdot->map(),
+		     Teuchos::rcp(&(workset.x_importer->TargetMap()),false),
+		     sg_dg_dxdot->productComm(),
+		     sg_dg_dxdot->numVectors()));
+    rfm->preEvaluate<PHAL::AlbanyTraits::SGJacobian>(workset);
+    for (int ws=0; ws < numWorksets; ws++) {
+      application->loadWorksetBucketInfo<PHAL::AlbanyTraits::SGJacobian>(
+	workset, ws);
+      rfm->evaluateFields<PHAL::AlbanyTraits::SGJacobian>(workset);
+    }
+    rfm->postEvaluate<PHAL::AlbanyTraits::SGJacobian>(workset);
+  }  
+}
+
+void
+Albany::FieldManagerScalarResponseFunction::
+evaluateMPResponse(
+  const double current_time,
+  const Stokhos::ProductEpetraVector* mp_xdot,
+  const Stokhos::ProductEpetraVector& mp_x,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& mp_p_index,
+  const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+  Stokhos::ProductEpetraVector& mp_g)
+{
+  visResponseGraph<PHAL::AlbanyTraits::MPResidual>("_mp");
+
+  // Set data in Workset struct
+  PHAL::Workset workset;
+  application->setupBasicWorksetInfo(workset, current_time, mp_xdot, &mp_x, p,
+				     mp_p_index, mp_p_vals);
+  workset.mp_g = Teuchos::rcp(&mp_g,false);
+
+  // Perform fill via field manager
+  int numWorksets = application->getNumWorksets();
+  rfm->preEvaluate<PHAL::AlbanyTraits::MPResidual>(workset);
+  for (int ws=0; ws < numWorksets; ws++) {
+    application->loadWorksetBucketInfo<PHAL::AlbanyTraits::MPResidual>(
+      workset, ws);
+    rfm->evaluateFields<PHAL::AlbanyTraits::MPResidual>(workset);
+  }
+  rfm->postEvaluate<PHAL::AlbanyTraits::MPResidual>(workset);
+}
+
+void
+Albany::FieldManagerScalarResponseFunction::
+evaluateMPTangent(
+  const double alpha, 
+  const double beta, 
+  const double current_time,
+  bool sum_derivs,
+  const Stokhos::ProductEpetraVector* mp_xdot,
+  const Stokhos::ProductEpetraVector& mp_x,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& mp_p_index,
+  const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+  ParamVec* deriv_p,
+  const Epetra_MultiVector* Vx,
+  const Epetra_MultiVector* Vxdot,
+  const Epetra_MultiVector* Vp,
+  Stokhos::ProductEpetraVector* mp_g,
+  Stokhos::ProductEpetraMultiVector* mp_JV,
+  Stokhos::ProductEpetraMultiVector* mp_gp)
+{
+  visResponseGraph<PHAL::AlbanyTraits::MPTangent>("_mp_tangent");
+
+  // Set data in Workset struct
+  PHAL::Workset workset;
+  application->setupTangentWorksetInfo(workset, current_time, sum_derivs, 
+				       mp_xdot, &mp_x, p, deriv_p, 
+				       mp_p_index, mp_p_vals,
+				       Vxdot, Vx, Vp);
+  workset.mp_g = Teuchos::rcp(mp_g, false);
+  workset.mp_dgdx = Teuchos::rcp(mp_JV, false);
+  workset.mp_dgdp = Teuchos::rcp(mp_gp, false);
+  
+  // Perform fill via field manager
+  int numWorksets = application->getNumWorksets();
+  rfm->preEvaluate<PHAL::AlbanyTraits::MPTangent>(workset);
+  for (int ws=0; ws < numWorksets; ws++) {
+    application->loadWorksetBucketInfo<PHAL::AlbanyTraits::MPTangent>(
+      workset, ws);
+    rfm->evaluateFields<PHAL::AlbanyTraits::MPTangent>(workset);
+  }
+  rfm->postEvaluate<PHAL::AlbanyTraits::MPTangent>(workset);
+}
+
+void
+Albany::FieldManagerScalarResponseFunction::
+evaluateMPGradient(
+  const double current_time,
+  const Stokhos::ProductEpetraVector* mp_xdot,
+  const Stokhos::ProductEpetraVector& mp_x,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::Array<int>& mp_p_index,
+  const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+  ParamVec* deriv_p,
+  Stokhos::ProductEpetraVector* mp_g,
+  Stokhos::ProductEpetraMultiVector* mp_dg_dx,
+  Stokhos::ProductEpetraMultiVector* mp_dg_dxdot,
+  Stokhos::ProductEpetraMultiVector* mp_dg_dp)
+{
+  visResponseGraph<PHAL::AlbanyTraits::MPJacobian>("_mp_gradient");
+
+  // Set data in Workset struct
+  PHAL::Workset workset;
+  application->setupBasicWorksetInfo(workset, current_time, mp_xdot, &mp_x, p,
+				     mp_p_index, mp_p_vals);
+  workset.mp_g = Teuchos::rcp(mp_g, false);
+  
+  // Perform fill via field manager (dg/dx)
+  int numWorksets = application->getNumWorksets();
+  if (mp_dg_dx != NULL) {
+    workset.m_coeff = 0.0;
+    workset.j_coeff = 1.0;
+    workset.mp_dgdx = Teuchos::rcp(mp_dg_dx, false);
+    workset.overlapped_mp_dgdx = 
+      Teuchos::rcp(new Stokhos::ProductEpetraMultiVector(
+		     mp_dg_dx->map(),
+		     Teuchos::rcp(&(workset.x_importer->TargetMap()),false),
+		     mp_dg_dx->productComm(),
+		     mp_dg_dx->numVectors()));
+    rfm->preEvaluate<PHAL::AlbanyTraits::MPJacobian>(workset);
+    for (int ws=0; ws < numWorksets; ws++) {
+      application->loadWorksetBucketInfo<PHAL::AlbanyTraits::MPJacobian>(
+	workset, ws);
+      rfm->evaluateFields<PHAL::AlbanyTraits::MPJacobian>(workset);
+    }
+    rfm->postEvaluate<PHAL::AlbanyTraits::MPJacobian>(workset);
+  }
+
+  // Perform fill via field manager (dg/dxdot)
+  if (mp_dg_dxdot != NULL) {
+    workset.m_coeff = 1.0;
+    workset.j_coeff = 0.0;
+    workset.mp_dgdx = Teuchos::null;
+    workset.mp_dgdxdot = Teuchos::rcp(mp_dg_dxdot, false);
+    workset.overlapped_mp_dgdx = Teuchos::null;
+    workset.overlapped_mp_dgdxdot = 
+      Teuchos::rcp(new Stokhos::ProductEpetraMultiVector(
+		     mp_dg_dxdot->map(),
+		     Teuchos::rcp(&(workset.x_importer->TargetMap()),false),
+		     mp_dg_dxdot->productComm(),
+		     mp_dg_dxdot->numVectors()));
+    rfm->preEvaluate<PHAL::AlbanyTraits::MPJacobian>(workset);
+    for (int ws=0; ws < numWorksets; ws++) {
+      application->loadWorksetBucketInfo<PHAL::AlbanyTraits::MPJacobian>(
+	workset, ws);
+      rfm->evaluateFields<PHAL::AlbanyTraits::MPJacobian>(workset);
+    }
+    rfm->postEvaluate<PHAL::AlbanyTraits::MPJacobian>(workset);
   }  
 }
