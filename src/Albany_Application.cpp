@@ -2254,7 +2254,6 @@ void Albany::Application::loadBasicWorksetInfo(
     workset.current_time = current_time;
     //workset.delta_time = delta_time;
     if (overlapped_xdot != Teuchos::null) workset.transientTerms = true;
-  loadWorksetSidesetInfo(workset);
 }
 
 void Albany::Application::loadWorksetJacobianInfo(PHAL::Workset& workset,
@@ -2273,10 +2272,10 @@ void Albany::Application::loadWorksetNodesetInfo(PHAL::Workset& workset)
 
 }
 
-void Albany::Application::loadWorksetSidesetInfo(PHAL::Workset& workset)
+void Albany::Application::loadWorksetSidesetInfo(PHAL::Workset& workset, const int ws)
 {
 
-    workset.sideSets = Teuchos::rcpFromRef(disc->getSideSets());
+    workset.sideSets = Teuchos::rcpFromRef(disc->getSideSets(ws));
 
 }
 

@@ -402,6 +402,7 @@ void Albany::STKDiscretization::computeGraphs()
 
   if (comm->MyPID()==0)
     *out << "STKDisc: " << cells.size() << " elements on Proc 0 " << endl;
+
   int row, col;
 
   for (std::size_t i=0; i < cells.size(); i++) {
@@ -479,6 +480,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
   // Fill  wsElNodeEqID(workset, el_LID, local node, Eq) => unk_LID
   wsElNodeEqID.resize(numBuckets);
   coords.resize(numBuckets);
+
   int el_lid=0;
   for (int b=0; b < numBuckets; b++) {
     stk::mesh::Bucket& buck = *buckets[b];
@@ -491,6 +493,9 @@ void Albany::STKDiscretization::computeWorksetInfo()
 
       // e is the element GID. Save a map from lid to GID
       emap[el_lid] = gid(e);
+
+      // Now, save a map from element GID to workset on this PE
+      elemGIDws[emap[el_lid]] = b;
 
       stk::mesh::PairIterRelation rel = e.relations(metaData.NODE_RANK);
 
@@ -551,24 +556,28 @@ void Albany::STKDiscretization::computeSideSets(){
   // iterator over all side_rank parts found in the mesh
   std::map<std::string, stk::mesh::Part*>::iterator ss = stkMeshStruct->ssPartVec.begin();
 
+  int numBuckets = wsEBNames.size();
+
+  sideSets.resize(numBuckets); // Need a sideset list per workset
+
   while ( ss != stkMeshStruct->ssPartVec.end() ) { 
 
     // Get all owned sides in this side set
     stk::mesh::Selector select_owned_in_sspart =
 
-      // get only entities in the ss part
+      // get only entities in the ss part (ss->second is the current sideset part)
       stk::mesh::Selector( *(ss->second) ) &
       // and only if the part is local
       stk::mesh::Selector( metaData.locally_owned_part() );
 
     std::vector< stk::mesh::Entity * > sides ;
-    stk::mesh::get_selected_entities( select_owned_in_sspart ,
+    stk::mesh::get_selected_entities( select_owned_in_sspart , // sides local to this processor
 				      bulkData.buckets( metaData.side_rank() ) ,
-				      sides );
+				      sides ); // store the result in "sides"
 
     *out << "STKDisc: sideset "<< ss->first <<" has size " << sides.size() << "  on Proc 0." << endl;
 
-    sideSets[ss->first].resize(sides.size()); // build the data holder
+ //   sideSets[ss->first].resize(sides.size()); // build the data holder
 
     // loop over the sides to see what they are, then fill in the data holder
     // for side set options, look at $TRILINOS_DIR/packages/stk/stk_usecases/mesh/UseCase_13.cpp
@@ -586,18 +595,41 @@ void Albany::STKDiscretization::computeSideSets(){
 
       const stk::mesh::Entity & elem = *side_elems[0].entity();
 
-      // Save elem id. This is the global element id
-      sideSets[ss->first].elem_GID[localSideID] = gid(elem);
-      // Save elem id. This is the local element id
-      sideSets[ss->first].elem_LID[localSideID] = elem_map->LID(gid(elem));
-      // Save the side identifier inside of the element. This starts at zero here.
-      sideSets[ss->first].side_local_id[localSideID] = determine_local_side_id(elem, sidee);
+      SideStruct sStruct;
 
+      // Save elem id. This is the global element id
+      sStruct.elem_GID = gid(elem);
+      // Save elem id. This is the local element id
+      sStruct.elem_LID = elem_map->LID(gid(elem));
+      // Save the side identifier inside of the element. This starts at zero here.
+      sStruct.side_local_id = determine_local_side_id(elem, sidee);
+
+      int workset = elemGIDws[sStruct.elem_GID]; // Get the ws that this element lives in
+      SideSetList& ssList = sideSets[workset];   // Get a ref to the side set map for this ws
+      SideSetList::iterator it = ssList.find(ss->first); // Get an iterator to the correct sideset (if
+                                                                // it exists)
+
+      if(it != ssList.end()) // The sideset has already been created
+
+        it->second.push_back(sStruct); // Save this side to the vector that belongs to the name ss->first
+
+      else { // Add the key ss->first to the map, and the side vector to that map
+
+        std::vector<SideStruct> tmpSSVec;
+        tmpSSVec.push_back(sStruct);
+        
+        ssList.insert(SideSetList::value_type(ss->first, tmpSSVec));
+
+      }
+
+
+//      *out << "Sideset: " << ss->first << " entry " 
 /*
-      *out << "Sideset: " << ss->first << " entry " 
+      cout << "Sideset: " << ss->first << " PID " << comm->MyPID() << " entry " 
           << localSideID << " elem_GID " << sideSets[ss->first].elem_GID[localSideID]
           << " elem_LID " << sideSets[ss->first].elem_LID[localSideID]
-          << " side_local_id " <<  sideSets[ss->first].side_local_id[localSideID] << endl;
+          << " side_local_id " <<  sideSets[ss->first].side_local_id[localSideID] 
+          << " bucket number " << elemGIDws[sideSets[ss->first].elem_GID[localSideID]] << endl;
 */
 
 /*
@@ -614,7 +646,7 @@ void Albany::STKDiscretization::computeSideSets(){
   }
 }
 
-// From $TRILINOS_DIR/packages/stk/stk_usecases/mesh/UseCase_13.cpp
+// From $TRILINOS_DIR/packages/stk/stk_usecases/mesh/UseCase_13.cpp (GAH)
 
 unsigned 
 Albany::STKDiscretization::determine_local_side_id( const stk::mesh::Entity & elem , stk::mesh::Entity & side ) {

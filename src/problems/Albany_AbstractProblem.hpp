@@ -109,6 +109,7 @@ namespace Albany {
 
     Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > getFieldManager();
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > getDirichletFieldManager() ;
+    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > getNeumannFieldManager() ;
 
     //! Each problem must generate it's list of valide parameters
     virtual Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const 
@@ -144,6 +145,9 @@ namespace Albany {
 
     //! Field manager for Dirchlet Conditions Fill
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > dfm;
+
+    //! Field manager for Neumann Conditions Fill
+    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > nfm;
 
   private:
 

@@ -37,6 +37,7 @@ namespace Albany {
   typedef std::map<std::string, std::vector<std::vector<int> > > NodeSetList;
   typedef std::map<std::string, std::vector<double*> > NodeSetCoordList;
 
+/*
   class SideArray {
 
     public:
@@ -51,6 +52,19 @@ namespace Albany {
   };
 
   typedef std::map<std::string, SideArray > SideSetList;
+*/
+
+  class SideStruct {
+
+    public:
+
+    int elem_GID; // the global id of the element containing the side
+    int elem_LID; // the local id of the element containing the side
+    unsigned side_local_id; // The local id of the side relative to the owning element
+
+  };
+
+  typedef std::map<std::string, std::vector<SideStruct> > SideSetList;
 
  
   class AbstractDiscretization {
@@ -88,7 +102,7 @@ namespace Albany {
 //    virtual const std::vector<std::string>& getNodeSetIDs() const = 0;
 
     //! Get Side set lists
-    virtual const SideSetList& getSideSets() const = 0;
+    virtual const SideSetList& getSideSets(const int ws) const = 0;
 
     //! Get map from (Ws, El, Local Node, Eq) -> unkLID
     virtual const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >&

@@ -84,8 +84,8 @@ namespace Albany {
       Albany::FieldManagerChoice fmchoice,
       const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
-    template<typename BCTraits>
-    void constructBCEvaluators(const std::vector<std::string>& nodeorsideSetIDs);
+    void constructDirichletEvaluators(const std::vector<std::string>& nodeSetIDs);
+    void constructNeumannEvaluators(const std::vector<std::string>& sideSetIDs);
 
   protected:
 
@@ -97,6 +97,15 @@ namespace Albany {
     int numDim;
 
   };
+
+// Explicit specializations
+
+/*
+  template<>
+  void constructBCEvaluators<Albany::DirichletTraits>(const std::vector<std::string>& nodeSetIDs);
+  template<>
+  void constructBCEvaluators<Albany::NeumannTraits>(const std::vector<std::string>& sideSetIDs);
+*/
 
 }
 

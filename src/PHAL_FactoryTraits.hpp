@@ -28,6 +28,7 @@
 #endif
 #include "QCAD_PoissonDirichlet.hpp"
 #include "PHAL_Dirichlet.hpp"
+#include "PHAL_Neumann.hpp"
 
 
 #include "boost/mpl/vector/vector50.hpp"
@@ -71,6 +72,21 @@ namespace PHAL {
         LCM::TorsionBC<_, Traits>                 //  6
 #endif
         > EvaluatorTypes;
+};
+
+
+  template<typename Traits>
+  struct NeumannFactoryTraits {
+  
+    static const int id_neumann                   =  0;
+    static const int id_neumann_aggregator        =  1;
+
+   typedef boost::mpl::vector2< 
+
+	     PHAL::Neumann<_,Traits>,                //  0
+	     PHAL::NeumannAggregator<_,Traits>       //  1
+
+	  > EvaluatorTypes;
 };
 
 }

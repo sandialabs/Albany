@@ -495,7 +495,7 @@ namespace Albany {
     void loadWorksetNodesetInfo(PHAL::Workset& workset);
 
     //! Routine to load common sideset info into workset
-    void loadWorksetSidesetInfo(PHAL::Workset& workset);
+    void loadWorksetSidesetInfo(PHAL::Workset& workset, const int ws);
 
     void setupBasicWorksetInfo(
       PHAL::Workset& workset,
@@ -709,6 +709,9 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
   workset.wsElNodeEqID = wsElNodeEqID[ws];
   workset.wsCoords = coords[ws];
   workset.EBName = wsEBNames[ws];
+
+  // Sidesets are integrated within the Cells
+  loadWorksetSidesetInfo(workset, ws);
 
   workset.stateArrayPtr = &stateMgr.getStateArray(ws);
   workset.eigenDataPtr = stateMgr.getEigenData();

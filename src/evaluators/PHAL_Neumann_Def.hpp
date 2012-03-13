@@ -100,7 +100,8 @@ evaluateFields(typename Traits::EvalData workset)
   // GAH: Note that this loosely follows from 
   // $TRILINOS_DIR/packages/intrepid/test/Discretization/Basis/HGRAD_QUAD_C1_FEM/test_02.cpp
 
-  const Albany::SideArray& sideSet = workset.sideSets->find(this->sideSetID)->second;
+  const Albany::SideSetList& ssList = *(workset.sideSets);
+  Albany::SideSetList::const_iterator it = ssList.find(this->sideSetID);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
    for (std::size_t node=0; node < numNodes; ++node) {          
@@ -108,14 +109,20 @@ evaluateFields(typename Traits::EvalData workset)
    }
   }
 
+  if(it == ssList.end()) return; // This sideset does not exist in this workset (GAH - this can go away
+                                  // once we move logic to BCUtils
+
+  const std::vector<Albany::SideStruct>& sideSet = it->second;
+
   // Loop over the sides that form the boundary condition 
 
-  for (std::size_t side=0; side < sideSet.size(); ++side) {
+  for (std::size_t side=0; side < sideSet.size(); ++side) { // loop over the sides on this ws and name
 
     // Get the data that corresponds to the side
-    const int elem_GID = sideSet.elem_GID[side];
-    const int elem_LID = sideSet.elem_LID[side];
-    const int elem_side = sideSet.side_local_id[side];
+
+    const int elem_GID = sideSet[side].elem_GID;
+    const int elem_LID = sideSet[side].elem_LID;
+    const int elem_side = sideSet[side].side_local_id;
 
     // Map side cubature points to the reference parent cell based on the appropriate side (elem_side) 
     Intrepid::CellTools<RealType>::mapToReferenceSubcell
@@ -146,7 +153,8 @@ evaluateFields(typename Traits::EvalData workset)
       (physPointsSide, refPointsSide, coordVec, *cellType, elem_LID);
 
     // Transform the given BC data to the physical space QPs in each side (elem_side)
-   calc_gradT_dotn_five(data, physPointsSide, jacobianSide, *cellType, elem_side);
+//   calc_gradT_dotn_const(data, physPointsSide, jacobianSide, *cellType, cellDims, elem_side);
+   calc_dTdn_const(data, physPointsSide, jacobianSide, *cellType, cellDims, elem_side);
 
    // Put this side's contribution into the vector
 
@@ -163,29 +171,34 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename EvalT, typename Traits>
 void Neumann<EvalT, Traits>::
-calc_gradT_dotn_five(Intrepid::FieldContainer<typename EvalT::MeshScalarT> & qp_data_returned,
+calc_gradT_dotn_const(Intrepid::FieldContainer<typename EvalT::MeshScalarT> & qp_data_returned,
                           const Intrepid::FieldContainer<typename EvalT::MeshScalarT>& phys_side_cub_points,
                           const Intrepid::FieldContainer<typename EvalT::MeshScalarT>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
+                          const int cellDims,
                           int local_side_id){
 
   int numCells = qp_data_returned.dimension(0); // How many cell's worth of data is being computed?
   int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
 
-  Intrepid::FieldContainer<RealType> grad_T(numCells, numPoints, 2);
-  Intrepid::FieldContainer<typename EvalT::MeshScalarT> side_normals(numCells, numPoints, 2);
+  Intrepid::FieldContainer<RealType> grad_T(numCells, numPoints, cellDims);
+  Intrepid::FieldContainer<typename EvalT::MeshScalarT> side_normals(numCells, numPoints, cellDims);
   Intrepid::FieldContainer<typename EvalT::MeshScalarT> normal_lengths(numCells, numPoints);
 
-  double kdTdx = 5.0; // Neumann component in the x direction
-  double kdTdy = 0.0; // Neumann component in the y direction
+  double kdTdx[3];
+  kdTdx[0] = 1.0; // Neumann component in the x direction
+  kdTdx[1] = 0.0; // Neumann component in the y direction
+  kdTdx[2] = 0.0; // Neumann component in the z direction
 
   for(int cell = 0; cell < numCells; cell++)
 
     for(int pt = 0; pt < numPoints; pt++){
 
-      grad_T(cell, pt, 0) = kdTdx; // k grad T in the x direction goes in the x spot
-      grad_T(cell, pt, 1) = kdTdy; // k grad T in the y direction goes in the y spot
+      for(int dim = 0; dim < cellDims; dim++){
 
+        grad_T(cell, pt, dim) = kdTdx[dim]; // k grad T in the x direction goes in the x spot, and so on
+
+      }
   }
 
   // for this side in the reference cell, get the components of the normal direction vector
@@ -203,7 +216,51 @@ calc_gradT_dotn_five(Intrepid::FieldContainer<typename EvalT::MeshScalarT> & qp_
 
 }
 
+template<typename EvalT, typename Traits>
+void Neumann<EvalT, Traits>::
+calc_dTdn_const(Intrepid::FieldContainer<typename EvalT::MeshScalarT> & qp_data_returned,
+                          const Intrepid::FieldContainer<typename EvalT::MeshScalarT>& phys_side_cub_points,
+                          const Intrepid::FieldContainer<typename EvalT::MeshScalarT>& jacobian_side_refcell,
+                          const shards::CellTopology & celltopo,
+                          const int cellDims,
+                          int local_side_id){
 
+  int numCells = qp_data_returned.dimension(0); // How many cell's worth of data is being computed?
+  int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
+
+  double input_dTdn = -1.0; // input number (negative for flux in opposite normal direction)
+
+  for(int pt = 0; pt < numPoints; pt++){
+
+    qp_data_returned(0, pt) = input_dTdn; // User directly specified dTdn, just use it
+
+  }
+
+}
+
+
+// **********************************************************************
+// Simple evaluator to aggregate all Neumann BCs into one "field"
+// **********************************************************************
+
+template<typename EvalT, typename Traits>
+NeumannAggregator<EvalT, Traits>::
+NeumannAggregator(Teuchos::ParameterList& p) 
+{
+  Teuchos::RCP<PHX::DataLayout> dl =  p.get< Teuchos::RCP<PHX::DataLayout> >("Data Layout");
+
+  std::vector<std::string>& nbcs = *(p.get<std::vector<std::string>* >("NBC Names"));
+
+  for (unsigned int i=0; i<nbcs.size(); i++) {
+    PHX::Tag<ScalarT> fieldTag(nbcs[i], dl);
+    this->addDependentField(fieldTag);
+  }
+
+  PHX::Tag<ScalarT> fieldTag(p.get<std::string>("NBC Aggregator Name"), dl);
+  this->addEvaluatedField(fieldTag);
+
+  this->setName("Nirichlet Aggregator"+PHX::TypeString<EvalT>::value);
+}
 
 //**********************************************************************
 }

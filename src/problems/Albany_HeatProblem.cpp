@@ -71,11 +71,11 @@ buildProblem(
 
   if(meshSpecs[0]->nsNames.size() > 0) // Build a nodeset evaluator if nodesets are present
 
-    constructBCEvaluators<DirichletTraits>(meshSpecs[0]->nsNames);
+    constructDirichletEvaluators(meshSpecs[0]->nsNames);
 
 //  if(meshSpecs[0]->sides.size() > 0) // Build a sideset evaluator if sidesets are present
 
-//    constructBCEvaluators<NeumannTraits>(meshSpecs[0]->ssNames);
+//    constructNeumannEvaluators(meshSpecs[0]->ssNames);
 
 }
 
@@ -96,16 +96,33 @@ buildEvaluators(
   return *op.tags;
 }
 
-template<typename BCTraits>
+// Dirichlet BCs
 void
-Albany::HeatProblem::constructBCEvaluators(const std::vector<std::string>& nodeorsideSetIDs)
+Albany::HeatProblem::constructDirichletEvaluators(const std::vector<std::string>& nodeSetIDs)
 {
    // Construct BC evaluators for all node/side sets and names
    std::vector<string> bcNames(neq);
    bcNames[0] = "T";
-   Albany::BCUtils<BCTraits> bcUtils;
-   dfm = bcUtils.constructBCEvaluators(nodeorsideSetIDs, bcNames,
+   Albany::BCUtils<Albany::DirichletTraits> bcUtils;
+   dfm = bcUtils.constructBCEvaluators(nodeSetIDs, bcNames,
                                           this->params, this->paramLib);
+}
+
+// Neumann BCs
+void
+Albany::HeatProblem::constructNeumannEvaluators(const std::vector<std::string>& sideSetIDs)
+{
+/*
+   // Construct BC evaluators for all side sets on mesh and all possible names of conditions
+   std::vector<string> bcNames(4); //dTdx, dTdy, dTdz, dTdn
+   bcNames[0] = "dTdx";
+   bcNames[1] = "dTdy";
+   bcNames[2] = "dTdz";
+   bcNames[3] = "dTdn";
+   Albany::BCUtils<Albany::NeumannTraits> bcUtils;
+   nfm = bcUtils.constructBCEvaluators(sideSetIDs, bcNames,
+                                          this->params, this->paramLib);
+*/
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

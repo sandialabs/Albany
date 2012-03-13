@@ -60,6 +60,10 @@ Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
 Albany::AbstractProblem::getDirichletFieldManager()
 { return dfm; }
 
+Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
+Albany::AbstractProblem::getNeumannFieldManager()
+{ return nfm; }
+
 Teuchos::RCP<Teuchos::ParameterList>
 Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
 {

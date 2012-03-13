@@ -52,16 +52,18 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
   int  cellDims, sideDims, numQPs, numQPsSide, numNodes;
 
-  void calc_gradT_dotn_zero(Intrepid::FieldContainer<MeshScalarT> & qp_data_returned,
+  void calc_dTdn_const(Intrepid::FieldContainer<MeshScalarT> & qp_data_returned,
                           const Intrepid::FieldContainer<MeshScalarT>& phys_side_cub_points,
                           const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
-                          int local_side_id){}
+                          const int cellDims,
+                          int local_side_id);
 
-  void calc_gradT_dotn_five(Intrepid::FieldContainer<MeshScalarT> & qp_data_returned,
+  void calc_gradT_dotn_const(Intrepid::FieldContainer<MeshScalarT> & qp_data_returned,
                           const Intrepid::FieldContainer<MeshScalarT>& phys_side_cub_points,
                           const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
+                          const int cellDims,
                           int local_side_id);
 
   // Input:
@@ -96,6 +98,31 @@ private:
   std::string sideSetID;
 
 };
+
+// **************************************************************
+// **************************************************************
+// Evaluator to aggregate all Neumann BCs into one "field"
+// **************************************************************
+template<typename EvalT, typename Traits>
+class NeumannAggregator
+  : public PHX::EvaluatorWithBaseImpl<Traits>,
+    public PHX::EvaluatorDerived<EvalT, Traits>
+{
+private:
+
+  typedef typename EvalT::ScalarT ScalarT;
+
+public:
+  
+  NeumannAggregator(Teuchos::ParameterList& p);
+  
+  void postRegistrationSetup(typename Traits::SetupData d,
+                             PHX::FieldManager<Traits>& vm) {};
+  
+  void evaluateFields(typename Traits::EvalData d) {};
+
+};
+
 }
 
 #endif

@@ -16,11 +16,8 @@
 
 
 #include <iostream>
-
 #include "Albany_TmplSTKMeshStruct.hpp"
-
 #include <Shards_BasicTopologies.hpp>
-
 #include <stk_mesh/base/Entity.hpp>
 #include <stk_mesh/base/GetEntities.hpp>
 #include <stk_mesh/base/GetBuckets.hpp>
@@ -40,10 +37,8 @@
 //#include <stk_rebalance/Partition.hpp>
 //#include <stk_rebalance/ZoltanPartition.hpp>
 
-namespace Albany { // Wrap all this in the Albany namespace
-
 template<int Dim, class traits>
-TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
+Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const Teuchos::RCP<const Epetra_Comm>& comm) :
   GenericSTKMeshStruct(params, traits_type::size),
@@ -253,7 +248,7 @@ TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
 template<int Dim, class traits>
 void
-TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
+Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
                   const Teuchos::RCP<const Epetra_Comm>& comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_,
@@ -322,7 +317,7 @@ TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
 
 template <int Dim, class traits>
 void 
-TmplSTKMeshStruct<Dim, traits>::DeclareParts(
+Albany::TmplSTKMeshStruct<Dim, traits>::DeclareParts(
               std::vector<EBSpecsStruct<Dim, traits> > ebStructArray, 
               std::vector<std::string> ssNames,
               std::vector<std::string> nsNames)
@@ -357,7 +352,7 @@ TmplSTKMeshStruct<Dim, traits>::DeclareParts(
 
 template <int Dim, class traits>
 void
-EBSpecsStruct<Dim, traits>::Initialize(unsigned int nnelems[], double blLen[]){
+Albany::EBSpecsStruct<Dim, traits>::Initialize(unsigned int nnelems[], double blLen[]){
 
     name = "Block0";
 
@@ -377,20 +372,19 @@ EBSpecsStruct<Dim, traits>::Initialize(unsigned int nnelems[], double blLen[]){
 
 template<>
 int
-EBSpecsStruct<0>::numElems(int i){ 
+Albany::EBSpecsStruct<0>::numElems(int i){ 
     return 1;
 }
 
 template<>
 void
-//EBSpecsStruct<0>::calcElemSizes(std::vector<std::vector<double> > &h){ 
-EBSpecsStruct<0>::calcElemSizes(std::vector<double> h[]){ 
+Albany::EBSpecsStruct<0>::calcElemSizes(std::vector<double> h[]){ 
      h[0][0] = 1.0;
 }
 
 template<>
 void
-EBSpecsStruct<0>::Initialize(unsigned int nelems[], double blLen[]){
+Albany::EBSpecsStruct<0>::Initialize(unsigned int nelems[], double blLen[]){
     // Never more than one element block in a 0D problem
     name = "Block0";
     blLength[0] = blLen[0];
@@ -398,7 +392,7 @@ EBSpecsStruct<0>::Initialize(unsigned int nelems[], double blLen[]){
 
 template<>
 void
-EBSpecsStruct<0>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params){
+Albany::EBSpecsStruct<0>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params){
     // Never more than one element block in a 0D problem
     name = "Block0";
     blLength[0] = 1.0;
@@ -406,7 +400,7 @@ EBSpecsStruct<0>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& 
 
 template<>
 void
-EBSpecsStruct<1>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params){
+Albany::EBSpecsStruct<1>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params){
 
   // Read element block specs from input file. Note that this is called only for the multiple element 
   // block case, once per element block.
@@ -432,7 +426,7 @@ EBSpecsStruct<1>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& 
 
 template<>
 void
-EBSpecsStruct<2>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params)
+Albany::EBSpecsStruct<2>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params)
 {
 
   // Read element block specs from input file, or set defaults
@@ -458,7 +452,7 @@ EBSpecsStruct<2>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& 
 
 template<>
 void
-EBSpecsStruct<3>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params)
+Albany::EBSpecsStruct<3>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params)
 {
 
   // Read element block specs from input file, or set defaults
@@ -485,7 +479,7 @@ EBSpecsStruct<3>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& 
 // Specializations to build the mesh for each dimension
 template<>
 void
-TmplSTKMeshStruct<0>::buildMesh()
+Albany::TmplSTKMeshStruct<0>::buildMesh()
 {
 
   // Note: periodic flag just ignored for this case if it is present
@@ -512,7 +506,7 @@ TmplSTKMeshStruct<0>::buildMesh()
 
 template<>
 void
-TmplSTKMeshStruct<0, albany_stk_mesh_traits<0> >::setFieldAndBulkData(
+Albany::TmplSTKMeshStruct<0, Albany::albany_stk_mesh_traits<0> >::setFieldAndBulkData(
                   const Teuchos::RCP<const Epetra_Comm>& comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_,
@@ -537,7 +531,7 @@ TmplSTKMeshStruct<0, albany_stk_mesh_traits<0> >::setFieldAndBulkData(
 
 template<>
 void
-TmplSTKMeshStruct<1>::buildMesh()
+Albany::TmplSTKMeshStruct<1>::buildMesh()
 {
 
   stk::mesh::PartVector nodePartVec;
@@ -618,7 +612,7 @@ TmplSTKMeshStruct<1>::buildMesh()
 
 template<>
 void
-TmplSTKMeshStruct<2>::buildMesh()
+Albany::TmplSTKMeshStruct<2>::buildMesh()
 {
 
   // STK
@@ -843,7 +837,7 @@ TmplSTKMeshStruct<2>::buildMesh()
 
 template<>
 void
-TmplSTKMeshStruct<3>::buildMesh()
+Albany::TmplSTKMeshStruct<3>::buildMesh()
 {
 
   stk::mesh::PartVector nodePartVec;
@@ -1123,7 +1117,7 @@ TmplSTKMeshStruct<3>::buildMesh()
 
 template<>
 Teuchos::RCP<const Teuchos::ParameterList>
-TmplSTKMeshStruct<0>::getValidDiscretizationParameters() const
+Albany::TmplSTKMeshStruct<0>::getValidDiscretizationParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getValidGenericSTKParameters("ValidSTK0D_DiscParams");
@@ -1133,7 +1127,7 @@ TmplSTKMeshStruct<0>::getValidDiscretizationParameters() const
 
 template<>
 Teuchos::RCP<const Teuchos::ParameterList>
-TmplSTKMeshStruct<1>::getValidDiscretizationParameters() const
+Albany::TmplSTKMeshStruct<1>::getValidDiscretizationParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getValidGenericSTKParameters("ValidSTK1D_DiscParams");
@@ -1159,7 +1153,7 @@ TmplSTKMeshStruct<1>::getValidDiscretizationParameters() const
 
 template<>
 Teuchos::RCP<const Teuchos::ParameterList>
-TmplSTKMeshStruct<2>::getValidDiscretizationParameters() const
+Albany::TmplSTKMeshStruct<2>::getValidDiscretizationParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL = 
     this->getValidGenericSTKParameters("ValidSTK2D_DiscParams");
@@ -1189,7 +1183,7 @@ TmplSTKMeshStruct<2>::getValidDiscretizationParameters() const
 
 template<>
 Teuchos::RCP<const Teuchos::ParameterList>
-TmplSTKMeshStruct<3>::getValidDiscretizationParameters() const
+Albany::TmplSTKMeshStruct<3>::getValidDiscretizationParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getValidGenericSTKParameters("ValidSTK3D_DiscParams");
@@ -1217,6 +1211,4 @@ TmplSTKMeshStruct<3>::getValidDiscretizationParameters() const
   }
 
   return validPL;
-}
-
 }

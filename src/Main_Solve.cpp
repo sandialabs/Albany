@@ -129,22 +129,36 @@ int main(int argc, char *argv[]) {
       params_in.get_p(i)->Print(*out << "\nParameter vector " << i << ":\n");
 
     for (int i=0; i<num_g-1; i++) {
+
       RCP<Epetra_Vector> g = responses_out.get_g(i);
       bool is_scalar = true;
+
       if (app != Teuchos::null)
-	is_scalar = app->getResponse(i)->isScalarResponse();
+        is_scalar = app->getResponse(i)->isScalarResponse();
+
       if (is_scalar) {
-	g->Print(*out << "\nResponse vector " << i << ":\n");
-	for (int j=0; j<num_p; j++) {
-	  if (!responses_out.supports(EpetraExt::ModelEvaluator::OUT_ARG_DgDp, 
-				      i, j).none()) {
-	    RCP<Epetra_MultiVector> dgdp = 
-	      responses_out.get_DgDp(i,j).getMultiVector();
-	    if (dgdp != Teuchos::null)
-	      dgdp->Print(*out << "\nSensitivities (" << i << "," << j << "):!\n");
-	    status += slvrfctry.checkTestResults(i, j, g.get(), dgdp.get());
-	  }
-	}
+        g->Print(*out << "\nResponse vector " << i << ":\n");
+
+        if(num_p == 0){
+            // Just calculate regression data
+            status += slvrfctry.checkTestResults(i, 0, g.get(), NULL);
+        }
+        else
+          for (int j=0; j<num_p; j++) {
+
+            if (!responses_out.supports(EpetraExt::ModelEvaluator::OUT_ARG_DgDp, 
+             i, j).none()) {
+
+             RCP<Epetra_MultiVector> dgdp = 
+               responses_out.get_DgDp(i,j).getMultiVector();
+
+             if (dgdp != Teuchos::null)
+               dgdp->Print(*out << "\nSensitivities (" << i << "," << j << "):!\n");
+
+             status += slvrfctry.checkTestResults(i, j, g.get(), dgdp.get());
+
+           }
+        }
       }
     }
     double mnv; xfinal->MeanValue(&mnv);

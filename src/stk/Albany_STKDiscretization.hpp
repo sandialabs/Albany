@@ -78,7 +78,7 @@ namespace Albany {
 //    const std::vector<std::string>& getNodeSetIDs() const;
 
     //! Get Side set lists (typedef in Albany_AbstractDiscretization.hpp)
-    const SideSetList& getSideSets() const { return sideSets; };
+    const SideSetList& getSideSets(const int workset) const { return sideSets[workset]; };
 
     //! Get map from (Ws, El, Local Node) -> NodeLID
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >& getWsElNodeEqID() const;
@@ -201,8 +201,8 @@ namespace Albany {
     //! Just the node set ID strings
 //    std::vector<std::string> nodeSetIDs;
 
-    //! side sets stored as std::map(string ID, SideArray classes)
-    Albany::SideSetList sideSets;
+    //! side sets stored as std::map(string ID, SideArray classes) per workset (std::vector across worksets)
+    std::vector<Albany::SideSetList> sideSets;
 
     //! Connectivity array [workset, element, local-node, Eq] => LID
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > > wsElNodeEqID;
@@ -211,6 +211,9 @@ namespace Albany {
     Teuchos::ArrayRCP<std::string> wsEBNames;
     Teuchos::ArrayRCP<int> wsPhysIndex;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords;
+
+    //! Connectivity map from elementGID to workset
+    std::map<int, int>  elemGIDws;
 
     // States: vector of length worksets of a map from field name to shards array
     Albany::StateArrays stateArrays;

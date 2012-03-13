@@ -172,6 +172,34 @@ template<int Dim, class traits = albany_stk_mesh_traits<Dim> >
 
   };
 
+// Now, the explicit template function declarations (templated on dimension)
+
+  template<> int  EBSpecsStruct<0>::numElems(int i);
+  template<> void EBSpecsStruct<0>::calcElemSizes(std::vector<double> h[]);
+
+  template<> void EBSpecsStruct<0>::Initialize(unsigned int nelems[], double blLen[]);
+  template<> void EBSpecsStruct<0>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params);
+  template<> void EBSpecsStruct<1>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params);
+  template<> void EBSpecsStruct<2>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params);
+  template<> void EBSpecsStruct<3>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params);
+
+  template<> void TmplSTKMeshStruct<0>::buildMesh();
+  template<> void TmplSTKMeshStruct<1>::buildMesh();
+  template<> void TmplSTKMeshStruct<2>::buildMesh();
+  template<> void TmplSTKMeshStruct<3>::buildMesh();
+
+  template<> void TmplSTKMeshStruct<0, albany_stk_mesh_traits<0> >::setFieldAndBulkData(
+                  const Teuchos::RCP<const Epetra_Comm>& comm,
+                  const Teuchos::RCP<Teuchos::ParameterList>& params,
+                  const unsigned int neq_,
+                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                  const unsigned int worksetSize);
+
+  template<> Teuchos::RCP<const Teuchos::ParameterList> TmplSTKMeshStruct<0>::getValidDiscretizationParameters() const;
+  template<> Teuchos::RCP<const Teuchos::ParameterList> TmplSTKMeshStruct<1>::getValidDiscretizationParameters() const;
+  template<> Teuchos::RCP<const Teuchos::ParameterList> TmplSTKMeshStruct<2>::getValidDiscretizationParameters() const;
+  template<> Teuchos::RCP<const Teuchos::ParameterList> TmplSTKMeshStruct<3>::getValidDiscretizationParameters() const;
+
 } // namespace Albany
 
 // Define macro for explicit template instantiation

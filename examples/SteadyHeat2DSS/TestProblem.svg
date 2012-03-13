@@ -14,7 +14,7 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.48.2 r9819"
-   sodipodi:docname="New document 1">
+   sodipodi:docname="TestProblem.svg">
   <defs
      id="defs4">
     <inkscape:perspective
@@ -51,7 +51,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -187,11 +187,11 @@
          y="477.83246"
          x="466.33664"
          sodipodi:role="line"
-         id="tspan3052">Tmax = 1.0</tspan><tspan
+         id="tspan3052">Tmax = 2.0</tspan><tspan
          style="font-size:18px"
          y="500.33246"
          x="466.33664"
          sodipodi:role="line"
-         id="tspan3054">Tavg = 0.5</tspan></text>
+         id="tspan3054">Tavg = 1.5</tspan></text>
   </g>
 </svg>
