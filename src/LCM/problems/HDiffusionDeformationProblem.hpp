@@ -150,6 +150,7 @@ namespace Albany {
 #include "EquilibriumConstant.hpp"
 #include "TrappedSolvent.hpp"
 #include "TrappedConcentration.hpp"
+#include "TotalConcentration.hpp"
 #include "StrainRateFactor.hpp"
 #include "TauContribution.hpp"
 
@@ -524,6 +525,27 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
              ev = rcp(new LCM::TrappedConcentration<EvalT,AlbanyTraits>(*p));
              fm0.template registerEvaluator<EvalT>(ev);
              p = stateMgr.registerStateVariable("Trapped Concentration",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+             ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+             fm0.template registerEvaluator<EvalT>(ev);
+           }
+
+  { // Total Concentration
+             RCP<ParameterList> p = rcp(new ParameterList("Total Concentration"));
+
+             //Input
+
+
+             p->set<string>("Lattice Concentration Name", "Lattice Concentration");
+             p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+             p->set<string>("Trapped Concentration Name", "Trapped Concentration");
+
+             //Output
+             p->set<string>("Total Concentration Name", "Total Concentration");
+
+
+             ev = rcp(new LCM::TotalConcentration<EvalT,AlbanyTraits>(*p));
+             fm0.template registerEvaluator<EvalT>(ev);
+             p = stateMgr.registerStateVariable("Total Concentration",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
              ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
              fm0.template registerEvaluator<EvalT>(ev);
            }

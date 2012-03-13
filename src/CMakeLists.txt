@@ -340,6 +340,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/EquilibriumConstant.cpp
     ${LCM_DIR}/evaluators/TrappedSolvent.cpp
     ${LCM_DIR}/evaluators/TrappedConcentration.cpp
+    ${LCM_DIR}/evaluators/TotalConcentration.cpp
     ${LCM_DIR}/evaluators/HDiffusionDeformationMatterResidual.cpp
     ${LCM_DIR}/evaluators/ScalarL2ProjectionResidual.cpp
     ${LCM_DIR}/evaluators/TauContribution.cpp
@@ -451,6 +452,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/EffectiveDiffusivity_Def.hpp
     ${LCM_DIR}/evaluators/TrappedConcentration.hpp
     ${LCM_DIR}/evaluators/TrappedConcentration_Def.hpp
+    ${LCM_DIR}/evaluators/TotalConcentration.hpp
+    ${LCM_DIR}/evaluators/TotalConcentration_Def.hpp
     ${LCM_DIR}/evaluators/HDiffusionDeformationMatterResidual.hpp
     ${LCM_DIR}/evaluators/HDiffusionDeformationMatterResidual_Def.hpp
     ${LCM_DIR}/evaluators/ScalarL2ProjectionResidual.hpp

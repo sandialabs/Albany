@@ -151,7 +151,8 @@ Albany::HDiffusionDeformationProblem::getValidProblemParameters() const
   validPL->sublist("Diffusion Coefficient", false, "");
   validPL->sublist("Equilibrium Constant", false, "");
   validPL->sublist("Trapped Solvent", false, "");
-  validPL->sublist("TrappedConcentration", false, "");
+  validPL->sublist("Trapped Concentration", false, "");
+  validPL->sublist("Total Concentration", false, "");
   validPL->sublist("Molar Volume", false, "");
   validPL->sublist("Effective Diffusivity", false, "");
   validPL->sublist("Strain Rate Factor", false, "");
