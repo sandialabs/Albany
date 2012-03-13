@@ -1303,7 +1303,10 @@ computeGlobalSGTangent(
     SGFadType p;
     int num_cols_tot = param_offset + num_cols_p;
     for (unsigned int i=0; i<params->size(); i++) {
-      p = SGFadType(num_cols_tot, (*params)[i].baseValue);
+      // Get the base value set above
+      SGType base_val = 
+	(*params)[i].family->getValue<PHAL::AlbanyTraits::SGTangent>().val();
+      p = SGFadType(num_cols_tot, base_val);
       if (Vp != NULL) 
         for (int k=0; k<num_cols_p; k++)
           p.fastAccessDx(param_offset+k) = (*Vp)[k][i];
@@ -1867,7 +1870,10 @@ computeGlobalMPTangent(
     MPFadType p;
     int num_cols_tot = param_offset + num_cols_p;
     for (unsigned int i=0; i<params->size(); i++) {
-      p = MPFadType(num_cols_tot, (*params)[i].baseValue);
+      // Get the base value set above
+      MPType base_val = 
+	(*params)[i].family->getValue<PHAL::AlbanyTraits::MPTangent>().val();
+      p = MPFadType(num_cols_tot, base_val);
       if (Vp != NULL) 
         for (int k=0; k<num_cols_p; k++)
           p.fastAccessDx(param_offset+k) = (*Vp)[k][i];
@@ -2572,7 +2578,10 @@ void Albany::Application::setupTangentWorksetInfo(
     SGFadType p;
     int num_cols_tot = param_offset + num_cols_p;
     for (unsigned int i=0; i<params->size(); i++) {
-      p = SGFadType(num_cols_tot, (*params)[i].baseValue);
+      // Get the base value set above
+      SGType base_val = 
+	(*params)[i].family->getValue<PHAL::AlbanyTraits::SGTangent>().val();
+      p = SGFadType(num_cols_tot, base_val);
       if (Vp != NULL) 
         for (int k=0; k<num_cols_p; k++)
           p.fastAccessDx(param_offset+k) = (*Vp)[k][i];
@@ -2665,7 +2674,10 @@ void Albany::Application::setupTangentWorksetInfo(
     MPFadType p;
     int num_cols_tot = param_offset + num_cols_p;
     for (unsigned int i=0; i<params->size(); i++) {
-      p = MPFadType(num_cols_tot, (*params)[i].baseValue);
+      // Get the base value set above
+      MPType base_val = 
+	(*params)[i].family->getValue<PHAL::AlbanyTraits::MPTangent>().val();
+      p = MPFadType(num_cols_tot, base_val);
       if (Vp != NULL) 
         for (int k=0; k<num_cols_p; k++)
           p.fastAccessDx(param_offset+k) = (*Vp)[k][i];
