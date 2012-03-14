@@ -473,31 +473,31 @@ void Albany::STKDiscretization::computeWorksetInfo()
   else 
     for (int i=0; i<numBuckets; i++) wsPhysIndex[i]=stkMeshStruct->ebNameToIndex[wsEBNames[i]];
 
-  // Temp array to construct elem_map
-
-  std::vector<int> emap;
-
   // Fill  wsElNodeEqID(workset, el_LID, local node, Eq) => unk_LID
+
   wsElNodeEqID.resize(numBuckets);
   coords.resize(numBuckets);
 
-  int el_lid=0;
   for (int b=0; b < numBuckets; b++) {
+
     stk::mesh::Bucket& buck = *buckets[b];
     wsElNodeEqID[b].resize(buck.size());
     coords[b].resize(buck.size());
-    emap.resize(el_lid + buck.size()); 
-    for (std::size_t i=0; i < buck.size(); i++, el_lid++) {
-  
-      stk::mesh::Entity& e = buck[i];
 
-      // e is the element GID. Save a map from lid to GID
-      emap[el_lid] = gid(e);
+    // i is the element index within bucket b
+
+    for (std::size_t i=0; i < buck.size(); i++) {
+  
+      // Traverse all the elements in this bucket
+      stk::mesh::Entity& element = buck[i];
 
       // Now, save a map from element GID to workset on this PE
-      elemGIDws[emap[el_lid]] = b;
+      elemGIDws[gid(element)].ws = b;
 
-      stk::mesh::PairIterRelation rel = e.relations(metaData.NODE_RANK);
+      // Now, save a map from element GID to local id on this workset on this PE
+      elemGIDws[gid(element)].LID = i;
+
+      stk::mesh::PairIterRelation rel = element.relations(metaData.NODE_RANK);
 
       int nodes_per_element = rel.size();
       wsElNodeEqID[b][i].resize(nodes_per_element);
@@ -517,8 +517,6 @@ void Albany::STKDiscretization::computeWorksetInfo()
       }
     }
   }
-
-  elem_map = Teuchos::rcp(new Epetra_Map(-1, emap.size(), &(emap[0]), 0, *comm));
 
   // Pull out pointers to shards::Arrays for every bucket, for every state
   // Code is data-type dependent
@@ -599,15 +597,22 @@ void Albany::STKDiscretization::computeSideSets(){
 
       // Save elem id. This is the global element id
       sStruct.elem_GID = gid(elem);
-      // Save elem id. This is the local element id
-      sStruct.elem_LID = elem_map->LID(gid(elem));
+
+      int workset = elemGIDws[sStruct.elem_GID].ws; // Get the ws that this element lives in
+
+      // Save elem id. This is the local element id within the workset
+      sStruct.elem_LID = elemGIDws[sStruct.elem_GID].LID;
+
       // Save the side identifier inside of the element. This starts at zero here.
       sStruct.side_local_id = determine_local_side_id(elem, sidee);
 
-      int workset = elemGIDws[sStruct.elem_GID]; // Get the ws that this element lives in
       SideSetList& ssList = sideSets[workset];   // Get a ref to the side set map for this ws
       SideSetList::iterator it = ssList.find(ss->first); // Get an iterator to the correct sideset (if
                                                                 // it exists)
+
+//std::cout << "Workset = " << workset << " egid = " << sStruct.elem_GID << " eLID = " 
+//    << sStruct.elem_LID << " eside = " << sStruct.side_local_id << std::endl;
+
 
       if(it != ssList.end()) // The sideset has already been created
 
@@ -621,24 +626,6 @@ void Albany::STKDiscretization::computeSideSets(){
         ssList.insert(SideSetList::value_type(ss->first, tmpSSVec));
 
       }
-
-
-//      *out << "Sideset: " << ss->first << " entry " 
-/*
-      cout << "Sideset: " << ss->first << " PID " << comm->MyPID() << " entry " 
-          << localSideID << " elem_GID " << sideSets[ss->first].elem_GID[localSideID]
-          << " elem_LID " << sideSets[ss->first].elem_LID[localSideID]
-          << " side_local_id " <<  sideSets[ss->first].side_local_id[localSideID] 
-          << " bucket number " << elemGIDws[sideSets[ss->first].elem_GID[localSideID]] << endl;
-*/
-
-/*
-      *out << print_entity_key(sides[i]) << endl;
-      *out << sides[i]->identifier() - 1 << endl;
-      *out << sides[i]->log_query() << endl;
-      *out << sides[i]->entity_rank() << endl;
-      *out << "Relating to " << side_elems.size() << endl;
-*/
 
     }
 

@@ -303,8 +303,8 @@ Albany::BCUtils<Albany::DirichletTraits>::getValidBCParameters(
   
   for (std::size_t i=0; i<nodeSetIDs.size(); i++) 
   {
-    std::string ss = constructBCName(nodeorsideSetIDs[i],"K");
-    std::string tt = constructBCName(nodeorsideSetIDs[i],"twist");
+    std::string ss = constructBCName(nodeSetIDs[i],"K");
+    std::string tt = constructBCName(nodeSetIDs[i],"twist");
     validPL->sublist(ss, false, "");
     validPL->sublist(tt, false, "");
   }

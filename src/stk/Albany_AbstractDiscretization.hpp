@@ -37,23 +37,6 @@ namespace Albany {
   typedef std::map<std::string, std::vector<std::vector<int> > > NodeSetList;
   typedef std::map<std::string, std::vector<double*> > NodeSetCoordList;
 
-/*
-  class SideArray {
-
-    public:
-
-    std::vector<int> elem_GID; // the global id of the element containing the side
-    std::vector<int> elem_LID; // the local id of the element containing the side
-    std::vector<unsigned> side_local_id; // The local id of the side relative to the owning element
-
-    void resize(const unsigned size){ elem_GID.resize(size); elem_LID.resize(size); side_local_id.resize(size);}
-    unsigned size() const { return elem_GID.size();}
-
-  };
-
-  typedef std::map<std::string, SideArray > SideSetList;
-*/
-
   class SideStruct {
 
     public:
@@ -99,7 +82,6 @@ namespace Albany {
     //! Get Node set lists (typdef in Albany_Discretization.hpp)
     virtual const NodeSetList& getNodeSets() const = 0;
     virtual const NodeSetCoordList& getNodeSetCoords() const = 0;
-//    virtual const std::vector<std::string>& getNodeSetIDs() const = 0;
 
     //! Get Side set lists
     virtual const SideSetList& getSideSets(const int ws) const = 0;

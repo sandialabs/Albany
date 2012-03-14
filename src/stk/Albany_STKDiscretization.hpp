@@ -44,6 +44,18 @@
 
 namespace Albany {
 
+ class wsLid {
+
+    public:
+
+    int ws; // the workset of the element containing the side
+    int LID; // the local id of the element containing the side
+
+  };
+
+  typedef std::map<int, wsLid > WsLIDList;
+
+
   class STKDiscretization : public Albany::AbstractDiscretization {
   public:
 
@@ -166,9 +178,6 @@ namespace Albany {
     //! Epetra communicator
     Teuchos::RCP<const Epetra_Comm> comm;
 
-    //! Element map
-    Teuchos::RCP<Epetra_Map> elem_map;
-
     //! Node map
     Teuchos::RCP<Epetra_Map> node_map;
 
@@ -212,8 +221,8 @@ namespace Albany {
     Teuchos::ArrayRCP<int> wsPhysIndex;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords;
 
-    //! Connectivity map from elementGID to workset
-    std::map<int, int>  elemGIDws;
+    //! Connectivity map from elementGID to workset and LID in workset
+    WsLIDList  elemGIDws;
 
     // States: vector of length worksets of a map from field name to shards array
     Albany::StateArrays stateArrays;
