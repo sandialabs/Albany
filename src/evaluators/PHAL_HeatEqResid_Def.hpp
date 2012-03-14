@@ -45,14 +45,8 @@ HeatEqResid(const Teuchos::ParameterList& p) :
   haveSource  (p.get<bool>("Have Source")),
   haveConvection(false),
   haveAbsorption  (p.get<bool>("Have Absorption")),
-  haveNeumann  (false),
   haverhoCp(false)
 {
-
-  // Not all heat problems support Neumann yet!
-  if (p.isType<bool>("Have Neumann"))
-    haveNeumann = p.get<bool>("Have Neumann");
-  else haveNeumann = false;
 
   if (p.isType<bool>("Disable Transient"))
     enableTransient = !p.get<bool>("Disable Transient");
@@ -71,23 +65,8 @@ HeatEqResid(const Teuchos::ParameterList& p) :
 	p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"));
     this->addDependentField(Absorption);
   }
-  if (haveNeumann) {
-    Neumann = PHX::MDField<MeshScalarT,Cell,Node>(
-    p.get<std::string>("Neumann Name"),
-    p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout"));
-    this->addDependentField(Neumann);
-  }
   this->addEvaluatedField(TResidual);
 
-/*
-  Teuchos::RCP<PHX::DataLayout> vector_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
-  std::vector<PHX::DataLayout::size_type> dims;
-  vector_dl->dimensions(dims);
-  worksetSize = dims[0];
-  numQPs  = dims[1];
-  numDims = dims[2];
-*/
   Teuchos::RCP<PHX::DataLayout> vector_dl =
     p.get< Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
@@ -140,8 +119,6 @@ postRegistrationSetup(typename Traits::SetupData d,
 
   if (haveAbsorption)  this->utils.setFieldData(Absorption,fm);
 
-  if (haveNeumann)  this->utils.setFieldData(Neumann,fm);
-  
   if (haveConvection && haverhoCp)  this->utils.setFieldData(rhoCp,fm);
 
   this->utils.setFieldData(TResidual,fm);
@@ -188,14 +165,6 @@ evaluateFields(typename Traits::EvalData workset)
   if (haveAbsorption) {
     FST::scalarMultiplyDataData<ScalarT> (aterm, Absorption, Temperature);
     FST::integrate<ScalarT>(TResidual, aterm, wBF, Intrepid::COMP_CPP, true); 
-  }
-
-  if (haveNeumann) {
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t node=0; node < numNodes; ++node) { 
-	      TResidual(cell,node) += Neumann(cell, node);
-      }
-    }
   }
 
 }

@@ -36,7 +36,8 @@ MaterialDatabase( const std::string& inputFile,
   Teuchos::RCP<Teuchos::Comm<int> > tcomm = Albany::createTeuchosCommFromMpiComm(mcomm);
 
   std::cout << "Initializing material database from " << inputFile << std::endl;
-  Teuchos::updateParametersFromXmlFileAndBroadcast(inputFile, &data_, *tcomm);
+  Teuchos::updateParametersFromXmlFileAndBroadcast(inputFile, Teuchos::ptrFromRef(data_), *tcomm);
+//  Teuchos::updateParametersFromXmlFileAndBroadcast(inputFile, &data_, *tcomm);
   //Teuchos::updateParametersFromXmlFile(inputFile, &data_);
   
   //Check for and Set element block and materials sublists

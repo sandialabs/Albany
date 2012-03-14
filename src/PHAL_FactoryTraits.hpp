@@ -29,6 +29,7 @@
 #include "QCAD_PoissonDirichlet.hpp"
 #include "PHAL_Dirichlet.hpp"
 #include "PHAL_Neumann.hpp"
+#include "PHAL_GatherCoordinateVector.hpp"
 
 
 #include "boost/mpl/vector/vector50.hpp"
@@ -80,11 +81,13 @@ namespace PHAL {
   
     static const int id_neumann                   =  0;
     static const int id_neumann_aggregator        =  1;
+    static const int id_gather_coord_vector       =  2;
 
-   typedef boost::mpl::vector2< 
+   typedef boost::mpl::vector3< 
 
-	     PHAL::Neumann<_,Traits>,                //  0
-	     PHAL::NeumannAggregator<_,Traits>       //  1
+	     PHAL::Neumann<_,Traits>,                     //  0
+	     PHAL::NeumannAggregator<_,Traits>,           //  1
+	     PHAL::GatherCoordinateVector<_,Traits>       //  2
 
 	  > EvaluatorTypes;
 };

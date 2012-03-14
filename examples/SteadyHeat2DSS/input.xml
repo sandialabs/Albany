@@ -7,7 +7,7 @@
       <Parameter name="DBC on NS nodelist_16 for DOF T" type="double" value="1.0"/>
     </ParameterList>
     <ParameterList name="Neumann BCs">
-      <Parameter name="NBC on SS sidelist_12 for DOF T set dTdx" type="double" value="1.0"/>
+      <Parameter name="NBC on SS surface_12 for DOF T set dudn" type="Array(double)" value="{-1.0}"/>
     </ParameterList>
     <ParameterList name="Thermal Conductivity">
        <Parameter name="Thermal Conductivity Type" type="string" value="Constant" />
@@ -26,7 +26,8 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter name="Number of Comparisons" type="int" value="2"/>
-<!-- GAH Why is the avg 1.535 when the average between one and two = 1.5???  -->
+<!-- GAH Note that Solution Average is not 1.5 as one would expect. The paved mesh is not symmetric,
+     and Albany probably averages nodal temp values -->
     <Parameter name="Test Values" type="Array(double)" value="{1.535224, 2.0}"/>
     <Parameter name="Absolute Tolerance" type="double" value="1.0e-4"/>
   </ParameterList>

@@ -64,7 +64,7 @@ public:
   // This function will be overloaded with template specialized code
   void evaluateFields(typename Traits::EvalData d)=0;
   
-  virtual ScalarT& getValue(const std::string &n) { return value; };
+  virtual ScalarT& getValue(const std::string &n) { return value; }
 
 protected:
   const int offset;

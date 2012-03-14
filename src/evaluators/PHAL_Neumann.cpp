@@ -20,5 +20,7 @@
 #include "PHAL_Neumann.hpp"
 #include "PHAL_Neumann_Def.hpp"
 
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::NeumannBase)
 PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::Neumann)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::NeumannAggregator)
 

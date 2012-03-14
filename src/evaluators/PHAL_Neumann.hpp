@@ -26,45 +26,71 @@
 #include "Intrepid_CellTools.hpp"
 #include "Intrepid_Cubature.hpp"
 
+#include "Albany_ProblemUtils.hpp"
+//#include "Sacado_ParameterAccessor.hpp"
+//#include "PHAL_AlbanyTraits.hpp"
+
+
 namespace PHAL {
 
 /** \brief Neumann boundary condition evaluator
 
 */
 
+enum NEU_TYPE {COORD, NORMAL};
+
 template<typename EvalT, typename Traits>
-class Neumann : 
+class NeumannBase : 
     public PHX::EvaluatorWithBaseImpl<Traits>,
-    public PHX::EvaluatorDerived<EvalT, Traits>  {
+    public PHX::EvaluatorDerived<EvalT, Traits> //,  // TO DO
+//    public Sacado::ParameterAccessor<EvalT, SPL_Traits>
+   {
 
 public:
 
-  Neumann(const Teuchos::ParameterList& p);
+  NeumannBase(const Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
 
-  void evaluateFields(typename Traits::EvalData d);
+  void evaluateFields(typename Traits::EvalData d) = 0;
+
+//  virtual ScalarT& getValue(const std::string &n) { return dudn; }
+
 
 private:
 
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
+
+protected:
+
+  const Teuchos::RCP<Albany::Layouts>& dl;
+  const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs;
+
   int  cellDims, sideDims, numQPs, numQPsSide, numNodes;
+  const int offset;
 
-  void calc_dTdn_const(Intrepid::FieldContainer<MeshScalarT> & qp_data_returned,
+ // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
+
+   // dudn
+  void calc_dudn_const(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
                           const Intrepid::FieldContainer<MeshScalarT>& phys_side_cub_points,
                           const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id);
 
-  void calc_gradT_dotn_const(Intrepid::FieldContainer<MeshScalarT> & qp_data_returned,
+   // (dudx, dudy, dudz)
+  void calc_gradu_dotn_const(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
                           const Intrepid::FieldContainer<MeshScalarT>& phys_side_cub_points,
                           const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id);
+
+   // Do the side integration
+  void evaluateNeumannContribution(typename Traits::EvalData d);
 
   // Input:
   //! Coordinate vector at vertices
@@ -92,14 +118,150 @@ private:
   Intrepid::FieldContainer<MeshScalarT> trans_basis_refPointsSide;
   Intrepid::FieldContainer<MeshScalarT> weighted_trans_basis_refPointsSide;
 
-  Intrepid::FieldContainer<MeshScalarT> data;
+  Intrepid::FieldContainer<ScalarT> data;
 
   // Output:
-  PHX::MDField<MeshScalarT,Cell,Node>   neumann;
+//  PHX::MDField<MeshScalarT,Cell,Node>   neumann;
+//  Intrepid::FieldContainer<MeshScalarT>   neumann;
+  Intrepid::FieldContainer<ScalarT>   neumann;
 
   std::string sideSetID;
+  Teuchos::Array<RealType> inputValues;
+  std::string inputConditions;
+  std::string name;
+
+  NEU_TYPE bc_type;
+  ScalarT dudn;
+  std::vector<ScalarT> dudx;
 
 };
+
+template<typename EvalT, typename Traits> class Neumann;
+
+// **************************************************************
+// **************************************************************
+// * Specializations
+// **************************************************************
+// **************************************************************
+
+
+// **************************************************************
+// Residual 
+// **************************************************************
+template<typename Traits>
+class Neumann<PHAL::AlbanyTraits::Residual,Traits>
+  : public NeumannBase<PHAL::AlbanyTraits::Residual, Traits>  {
+public:
+  Neumann(const Teuchos::ParameterList& p);
+  void evaluateFields(typename Traits::EvalData d);
+private:
+  typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
+};
+
+// **************************************************************
+// Jacobian
+// **************************************************************
+template<typename Traits>
+class Neumann<PHAL::AlbanyTraits::Jacobian,Traits>
+  : public NeumannBase<PHAL::AlbanyTraits::Jacobian, Traits>  {
+public:
+  Neumann(const Teuchos::ParameterList& p);
+  void evaluateFields(typename Traits::EvalData d);
+private:
+  typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
+};
+
+// **************************************************************
+// Tangent
+// **************************************************************
+template<typename Traits>
+class Neumann<PHAL::AlbanyTraits::Tangent,Traits>
+  : public NeumannBase<PHAL::AlbanyTraits::Tangent, Traits>  {
+public:
+  Neumann(const Teuchos::ParameterList& p);
+  void evaluateFields(typename Traits::EvalData d);
+private:
+  typedef typename PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
+};
+
+// **************************************************************
+// Stochastic Galerkin Residual 
+// **************************************************************
+template<typename Traits>
+class Neumann<PHAL::AlbanyTraits::SGResidual,Traits>
+  : public NeumannBase<PHAL::AlbanyTraits::SGResidual, Traits>  {
+public:
+  Neumann(const Teuchos::ParameterList& p);
+  void evaluateFields(typename Traits::EvalData d);
+private:
+  typedef typename PHAL::AlbanyTraits::SGResidual::ScalarT ScalarT;
+};
+
+// **************************************************************
+// Stochastic Galerkin Jacobian
+// **************************************************************
+template<typename Traits>
+class Neumann<PHAL::AlbanyTraits::SGJacobian,Traits>
+  : public NeumannBase<PHAL::AlbanyTraits::SGJacobian, Traits>  {
+public:
+  Neumann(const Teuchos::ParameterList& p);
+  void evaluateFields(typename Traits::EvalData d);
+private:
+  typedef typename PHAL::AlbanyTraits::SGJacobian::ScalarT ScalarT;
+};
+
+// **************************************************************
+// Stochastic Galerkin Tangent
+// **************************************************************
+template<typename Traits>
+class Neumann<PHAL::AlbanyTraits::SGTangent,Traits>
+  : public NeumannBase<PHAL::AlbanyTraits::SGTangent, Traits>  {
+public:
+  Neumann(const Teuchos::ParameterList& p);
+  void evaluateFields(typename Traits::EvalData d);
+private:
+  typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
+};
+
+// **************************************************************
+// Multi-point Residual 
+// **************************************************************
+template<typename Traits>
+class Neumann<PHAL::AlbanyTraits::MPResidual,Traits>
+  : public NeumannBase<PHAL::AlbanyTraits::MPResidual, Traits>  {
+public:
+  Neumann(const Teuchos::ParameterList& p);
+  void evaluateFields(typename Traits::EvalData d);
+private:
+  typedef typename PHAL::AlbanyTraits::MPResidual::ScalarT ScalarT;
+};
+
+// **************************************************************
+// Multi-point Jacobian
+// **************************************************************
+template<typename Traits>
+class Neumann<PHAL::AlbanyTraits::MPJacobian,Traits>
+  : public NeumannBase<PHAL::AlbanyTraits::MPJacobian, Traits>  {
+public:
+  Neumann(const Teuchos::ParameterList& p);
+  void evaluateFields(typename Traits::EvalData d);
+private:
+  typedef typename PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
+};
+
+// **************************************************************
+// Multi-point Tangent
+// **************************************************************
+template<typename Traits>
+class Neumann<PHAL::AlbanyTraits::MPTangent,Traits>
+  : public NeumannBase<PHAL::AlbanyTraits::MPTangent, Traits>  {
+public:
+  Neumann(const Teuchos::ParameterList& p);
+  void evaluateFields(typename Traits::EvalData d);
+private:
+  typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
+};
+
 
 // **************************************************************
 // **************************************************************

@@ -54,18 +54,19 @@ int main(int argc, char *argv[]) {
   RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
   // Command-line argument for input file
-  char * xmlfilename=0;
-  char defaultfile[10]={"input.xml"};
-  if(argc>1){
+  std::string xmlfilename;
+  if(argc > 1){
+
     if(!strcmp(argv[1],"--help")){
       printf("albany [inputfile.xml]\n");
       exit(1);
     }
     else
-      xmlfilename=argv[1];
+      xmlfilename = argv[1];
+
   }
   else
-    xmlfilename=defaultfile;
+    xmlfilename = "input.xml";
   
   try {
 

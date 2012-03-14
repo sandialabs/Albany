@@ -23,7 +23,6 @@
 #include "Shards_CellTopology.hpp"
 #include "PHAL_FactoryTraits.hpp"
 #include "Albany_Utils.hpp"
-#include "Albany_ProblemUtils.hpp"
 
 
 Albany::HeatProblem::
@@ -32,7 +31,6 @@ HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_),
   haveSource(false),
-  haveNeumann(false),
   haveAbsorption(false),
   numDim(numDim_)
 {
@@ -43,7 +41,6 @@ HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   if (periodic) *out <<" Periodic Boundary Conditions being used." <<std::endl;
 
   haveSource =  params->isSublist("Source Functions");
-  haveNeumann =  params->isSublist("Neumann BCs");
   haveAbsorption =  params->isSublist("Absorption");
 
 }
@@ -62,8 +59,6 @@ buildProblem(
   /* Construct All Phalanx Evaluators */
   TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
 
-  if(meshSpecs[0]->ssNames.size() <= 0 && haveNeumann) haveNeumann = false;
-
   fm.resize(1);
   fm[0]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
   buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, BUILD_RESID_FM, 
@@ -73,9 +68,9 @@ buildProblem(
 
     constructDirichletEvaluators(meshSpecs[0]->nsNames);
 
-//  if(meshSpecs[0]->sides.size() > 0) // Build a sideset evaluator if sidesets are present
+  if(meshSpecs[0]->ssNames.size() > 0) // Build a sideset evaluator if sidesets are present
 
-//    constructNeumannEvaluators(meshSpecs[0]->ssNames);
+    constructNeumannEvaluators(meshSpecs[0]);
 
 }
 
@@ -88,7 +83,7 @@ buildEvaluators(
   Albany::FieldManagerChoice fmchoice,
   const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
-  // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
+  // Call constructEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
   ConstructEvaluatorsOp<HeatProblem> op(
     *this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
@@ -100,7 +95,7 @@ buildEvaluators(
 void
 Albany::HeatProblem::constructDirichletEvaluators(const std::vector<std::string>& nodeSetIDs)
 {
-   // Construct BC evaluators for all node/side sets and names
+   // Construct BC evaluators for all node sets and names
    std::vector<string> bcNames(neq);
    bcNames[0] = "T";
    Albany::BCUtils<Albany::DirichletTraits> bcUtils;
@@ -110,19 +105,43 @@ Albany::HeatProblem::constructDirichletEvaluators(const std::vector<std::string>
 
 // Neumann BCs
 void
-Albany::HeatProblem::constructNeumannEvaluators(const std::vector<std::string>& sideSetIDs)
+Albany::HeatProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
 {
-/*
-   // Construct BC evaluators for all side sets on mesh and all possible names of conditions
-   std::vector<string> bcNames(4); //dTdx, dTdy, dTdz, dTdn
-   bcNames[0] = "dTdx";
-   bcNames[1] = "dTdy";
-   bcNames[2] = "dTdz";
-   bcNames[3] = "dTdn";
+   // Note: we only enter this function if sidesets are defined in the mesh file
+   // i.e. meshSpecs.ssNames.size() > 0
+
    Albany::BCUtils<Albany::NeumannTraits> bcUtils;
-   nfm = bcUtils.constructBCEvaluators(sideSetIDs, bcNames,
+
+   // Check to make sure that Neumann BCs are given in the input file
+
+   if(!bcUtils.haveNeumann(this->params))
+
+      return;
+
+   // Construct BC evaluators for all side sets and names
+   // Note that the string index sets up the equation offset, so ordering is important
+   std::vector<string> bcNames(neq);
+   bcNames[0] = "T";
+
+   // Construct BC evaluators for all possible names of conditions
+   // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
+   std::vector<string> condNames(2); //dudx, dudy, dudz, dudn
+
+   // Note that sidesets are only supported for two and 3D currently
+   if(numDim == 2)
+    condNames[0] = "(dudx, dudy)";
+   else if(numDim == 3)
+    condNames[0] = "(dudx, dudy, dudz)";
+   else
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+       std::endl << "Error: Sidesets only supported in 2 and 3D." << std::endl);
+
+   condNames[1] = "dudn";
+
+   nfm.resize(1); // Heat problem only has one element block
+   nfm[0] = bcUtils.constructBCEvaluators(meshSpecs, bcNames, condNames, dl,
                                           this->params, this->paramLib);
-*/
+
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

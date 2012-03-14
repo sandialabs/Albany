@@ -53,6 +53,7 @@ namespace Albany {
 
     enum { type = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_neumann };
     enum { typeNa = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_neumann_aggregator };
+    enum { typeGCV = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_gather_coord_vector };
 
     static const std::string bcParamsPl;
 
@@ -134,7 +135,6 @@ template<>
 
   };
 
-#if 0
 template<>
 
   class BCUtils<NeumannTraits> {
@@ -149,9 +149,10 @@ template<>
     //! Generic implementation of Field Manager for BCs
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > 
     constructBCEvaluators(
-       const std::vector<std::string>& nodeorsideSetIDs,
+       const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs,
        const std::vector<std::string>& bcNames,
        const std::vector<std::string>& conditions,
+       const Teuchos::RCP<Albany::Layouts>& dl,
        Teuchos::RCP<Teuchos::ParameterList> params,
        Teuchos::RCP<ParamLib> paramLib);
 
@@ -161,7 +162,12 @@ template<>
                  const std::vector<std::string>& bcNames,
                  const std::vector<std::string>& condition) const;
 
+    //! Function to check if the Neumann BC section of input file is present
+    bool haveNeumann(const Teuchos::RCP<Teuchos::ParameterList>& params) const; 
+
   private:
+
+    int numDim;
 
     //! Local utility function to construct unique string from Nodeset/Sideset name and dof name
     std::string constructBCName(const std::string ns, const std::string dof,
@@ -172,7 +178,6 @@ template<>
         const std::string condition) const;
 
   };
-#endif
 
 // Now, for the explicit template function declarations
 

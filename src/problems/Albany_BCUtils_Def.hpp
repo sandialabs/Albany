@@ -331,14 +331,26 @@ Albany::BCUtils<Albany::DirichletTraits>::constructTimeDepBCName(const std::stri
 }
 
 // Neumann specialization
-#if 0
+
+//template<>
+bool
+Albany::BCUtils<Albany::NeumannTraits>::haveNeumann(const Teuchos::RCP<Teuchos::ParameterList>& params) const {
+
+      // If the NBC sublist is not in the input file, 
+      // side sets might be contained in the Exodus file but are not defined in the problem statement.This is OK, we
+      // just return 
+
+   return params->isSublist(traits_type::bcParamsPl);
+}
+
 
 //template<>
 Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > 
 Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
-      const std::vector<std::string>& sideSetIDs,
+      const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs,
       const std::vector<std::string>& bcNames,
       const std::vector<std::string>& conditions,
+      const Teuchos::RCP<Albany::Layouts>& dl,
       Teuchos::RCP<Teuchos::ParameterList> params,
       Teuchos::RCP<ParamLib> paramLib)
 {
@@ -352,43 +364,62 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
 
    using PHAL::AlbanyTraits;
 
-   if(!params->isSublist(traits_type::bcParamsPl)){ // If the BC sublist is not in the input file, 
-      // but we are inside this function, this means that
-      // side sets are contained in the Exodus file but are not defined in the problem statement.This is OK, we
-      // just don't do anything
+   numDim = meshSpecs->numDim;
 
-      return Teuchos::null;
-
-    }
 
    // Drop into the "Neumann BCs" sublist
    Teuchos::ParameterList BCparams = params->sublist(traits_type::bcParamsPl);
-   BCparams.validateParameters(*(getValidBCParameters(sideSetIDs, bcNames, conditions)),0);
+   BCparams.validateParameters(*(getValidBCParameters(meshSpecs->ssNames, bcNames, conditions)),0);
 
    std::map<string, RCP<ParameterList> > evaluators_to_build;
-   RCP<DataLayout> dummy = rcp(new MDALayout<Dummy>(0));
+//   RCP<DataLayout> dummy = rcp(new MDALayout<Dummy>(0));
    vector<string> bcs;
 
    // Check for all possible standard BCs (every dof on every sideset) to see which is set
-   for (std::size_t i=0; i<sideSetIDs.size(); i++) {
+   for (std::size_t i=0; i<meshSpecs->ssNames.size(); i++) {
      for (std::size_t j=0; j<bcNames.size(); j++) {
        for (std::size_t k=0; k<conditions.size(); k++) {
 
-         std::string ss = constructBCName(sideSetIDs[i],bcNames[j], conditions[k]);
+        // construct input.xml string like:
+        // "NBC on SS sidelist_12 for DOF T set dudn"
+        //  or
+        // "NBC on SS sidelist_12 for DOF T set (dudx, dudy)"
+
+         std::string ss = constructBCName(meshSpecs->ssNames[i], bcNames[j], conditions[k]);
+
+         // Have a match of the line in input.xml
 
          if (BCparams.isParameter(ss)) {
+
+//           std::cout << "Constructing NBC: " << ss << std::endl;
+
+           TEUCHOS_TEST_FOR_EXCEPTION(BCparams.isType<string>(ss), std::logic_error,
+               "NBC array information in XML file must be of type Array(double)\n");
+
+           // These are read in the Albany::Neumann constructor (PHAL_Neumann_Def.hpp)
+
            RCP<ParameterList> p = rcp(new ParameterList);
-           p->set<int>("Type", traits_type::type);
+
+           p->set<int>                            ("Type", traits_type::type);
   
-           p->set< RCP<DataLayout> >("Data Layout", dummy);
-           p->set< string >  ("Dirichlet Name", ss);
-           p->set< RealType >("Dirichlet Value", BCparams.get<double>(ss));
-           p->set< string >  ("Node Set ID", sideSetIDs[i]);
-          // p->set< int >     ("Number of Equations", dirichletNames.size());
-           p->set< int >     ("Equation Offset", j);
+//           p->set< RCP<DataLayout> >              ("Data Layout", dummy);
+           p->set<RCP<ParamLib> >                 ("Parameter Library", paramLib);
   
-           p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-  
+           p->set<string>                         ("Side Set ID", meshSpecs->ssNames[i]);
+           p->set< int >                          ("Equation Offset", j);
+           p->set< RCP<Albany::Layouts> >         ("Base Data Layout", dl);
+           p->set< RCP<MeshSpecsStruct> >         ("Mesh Specs Struct", meshSpecs);
+
+           p->set<string>                         ("Coordinate Vector Name", "Coord Vec");
+
+           // Pass the input file line
+           p->set< string >                       ("Neumann Input String", ss);
+           p->set< Teuchos::Array<double> >       ("Neumann Input Value", BCparams.get<Teuchos::Array<double> >(ss));
+           p->set< string >                       ("Neumann Input Conditions", conditions[k]);
+
+    // Inputs: X, Y at nodes, Cubature, and Basis
+    //p->set<string>("Node Variable Name", "Neumann");
+
            std::stringstream ess; ess << "Evaluator for " << ss;
            evaluators_to_build[ess.str()] = p;
   
@@ -398,14 +429,32 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
      }
    }
 
-   string allBC="Evaluator for all Dirichlet BCs";
+// Build evaluator for Gather Coordinate Vector
+
+   string NeuGCV="Evaluator for Gather Coordinate Vector";
+   {
+      RCP<ParameterList> p = rcp(new ParameterList);
+      p->set<int>("Type", traits_type::typeGCV);
+
+      // Input: Periodic BC flag
+      p->set<bool>("Periodic BC", false);
+ 
+      // Output:: Coordindate Vector at vertices
+      p->set< RCP<DataLayout> >  ("Coordinate Data Layout",  dl->vertices_vector);
+      p->set< string >("Coordinate Vector Name", "Coord Vec");
+ 
+      evaluators_to_build[NeuGCV] = p;
+   }
+
+   string allBC="Evaluator for all Neumann BCs";
    {
       RCP<ParameterList> p = rcp(new ParameterList);
       p->set<int>("Type", traits_type::typeNa);
 
-      p->set<vector<string>* >("DBC Names", &bcs);
-      p->set< RCP<DataLayout> >("Data Layout", dummy);
-      p->set<string>("DBC Aggregator Name", allBC);
+      p->set<vector<string>* >("NBC Names", &bcs);
+//      p->set< RCP<DataLayout> >("Data Layout", dummy);
+      p->set< RCP<DataLayout> >("Data Layout", dl->dummy);
+      p->set<string>("NBC Aggregator Name", allBC);
       evaluators_to_build[allBC] = p;
    }
 
@@ -421,31 +470,31 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
    // Register all Evaluators
    PHX::registerEvaluators(evaluators, *nfm);
 
-   PHX::Tag<AlbanyTraits::Residual::ScalarT> res_tag0(allBC, dummy);
+   PHX::Tag<AlbanyTraits::Residual::ScalarT> res_tag0(allBC, dl->dummy);
    nfm->requireField<AlbanyTraits::Residual>(res_tag0);
 
-   PHX::Tag<AlbanyTraits::Jacobian::ScalarT> jac_tag0(allBC, dummy);
+   PHX::Tag<AlbanyTraits::Jacobian::ScalarT> jac_tag0(allBC, dl->dummy);
    nfm->requireField<AlbanyTraits::Jacobian>(jac_tag0);
 
-   PHX::Tag<AlbanyTraits::Tangent::ScalarT> tan_tag0(allBC, dummy);
+   PHX::Tag<AlbanyTraits::Tangent::ScalarT> tan_tag0(allBC, dl->dummy);
    nfm->requireField<AlbanyTraits::Tangent>(tan_tag0);
 
-   PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_tag0(allBC, dummy);
+   PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_tag0(allBC, dl->dummy);
    nfm->requireField<AlbanyTraits::SGResidual>(sgres_tag0);
 
-   PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag0(allBC, dummy);
+   PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag0(allBC, dl->dummy);
    nfm->requireField<AlbanyTraits::SGJacobian>(sgjac_tag0);
 
-   PHX::Tag<AlbanyTraits::SGTangent::ScalarT> sgtan_tag0(allBC, dummy);
+   PHX::Tag<AlbanyTraits::SGTangent::ScalarT> sgtan_tag0(allBC, dl->dummy);
    nfm->requireField<AlbanyTraits::SGTangent>(sgtan_tag0);
 
-   PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag0(allBC, dummy);
+   PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag0(allBC, dl->dummy);
    nfm->requireField<AlbanyTraits::MPResidual>(mpres_tag0);
 
-   PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag0(allBC, dummy);
+   PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag0(allBC, dl->dummy);
    nfm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag0);
 
-   PHX::Tag<AlbanyTraits::MPTangent::ScalarT> mptan_tag0(allBC, dummy);
+   PHX::Tag<AlbanyTraits::MPTangent::ScalarT> mptan_tag0(allBC, dl->dummy);
    nfm->requireField<AlbanyTraits::MPTangent>(mptan_tag0);
 
    return nfm;
@@ -464,10 +513,19 @@ Albany::BCUtils<Albany::NeumannTraits>::getValidBCParameters(
   for (std::size_t i=0; i<sideSetIDs.size(); i++) { // loop over all side sets in the mesh
     for (std::size_t j=0; j<bcNames.size(); j++) { // loop over all possible types of condition
       for (std::size_t k=0; k<conditions.size(); k++) { // loop over all possible types of condition
+
         std::string ss = constructBCName(sideSetIDs[i], bcNames[j], conditions[k]);
         std::string tt = constructTimeDepBCName(sideSetIDs[i], bcNames[j], conditions[k]);
-        validPL->set<double>(ss, 0.0, "Value of BC corresponding to sideSetID and boundary condition");
+
+        if(numDim == 2)
+          validPL->set<Teuchos::Array<double> >(ss, Teuchos::tuple<double>(0.0, 0.0),
+            "Value of BC corresponding to sideSetID and boundary condition");
+        else
+          validPL->set<Teuchos::Array<double> >(ss, Teuchos::tuple<double>(0.0, 0.0, 0.0),
+            "Value of BC corresponding to sideSetID and boundary condition");
+
         validPL->sublist(tt, false, "SubList of BC corresponding to sideSetID and boundary condition");
+
       }
     }
   }
@@ -493,4 +551,3 @@ Albany::BCUtils<Albany::NeumannTraits>::constructTimeDepBCName(const std::string
   std::stringstream ss; ss << "Time Dependent " << constructBCName(ns, dof, condition);
   return ss.str();
 }
-#endif

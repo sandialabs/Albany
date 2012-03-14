@@ -614,6 +614,9 @@ namespace Albany {
     //! Phalanx Field Manager for Dirichlet Conditions
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > dfm;
 
+    //! Phalanx Field Manager for Neumann Conditions
+    Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > nfm;
+
     //! Phalanx Field Manager for states
     Teuchos::Array< Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > sfm;
 

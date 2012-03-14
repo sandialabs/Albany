@@ -24,6 +24,7 @@
 #include "Phalanx_MDField.hpp"
 
 namespace PHAL {
+
 /** \brief Finite Element Interpolation Evaluator
 
     This evaluator interpolates nodal DOF values to quad points.
@@ -59,7 +60,6 @@ private:
   Teuchos::Array<double> convectionVels;
   PHX::MDField<ScalarT,Cell,QuadPoint> rhoCp;
   PHX::MDField<ScalarT,Cell,QuadPoint> Absorption;
-  PHX::MDField<MeshScalarT,Cell,Node> Neumann;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> TResidual;
@@ -67,7 +67,6 @@ private:
   bool haveSource;
   bool haveConvection;
   bool haveAbsorption;
-  bool haveNeumann;
   bool enableTransient;
   bool haverhoCp;
   unsigned int numQPs, numDims, numNodes, worksetSize;
