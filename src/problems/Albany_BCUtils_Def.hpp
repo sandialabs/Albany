@@ -142,6 +142,8 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
 	 p->set<int>("Type", traits_type::typeTo);
 
          p->set< RealType >("Theta Dot", sub_list.get< RealType >("Theta Dot"));
+         p->set< RealType >("X0", sub_list.get< RealType >("X0"));
+         p->set< RealType >("Y0", sub_list.get< RealType >("Y0"));
 
 	 // Fill up ParameterList with things DirichletBase wants
 	 p->set< RCP<DataLayout> >("Data Layout", dummy);
@@ -301,8 +303,10 @@ Albany::BCUtils<Albany::DirichletTraits>::getValidBCParameters(
   
   for (std::size_t i=0; i<nodeSetIDs.size(); i++) 
   {
-    std::string ss = constructBCName(nodeSetIDs[i],"K");
+    std::string ss = constructBCName(nodeorsideSetIDs[i],"K");
+    std::string tt = constructBCName(nodeorsideSetIDs[i],"twist");
     validPL->sublist(ss, false, "");
+    validPL->sublist(tt, false, "");
   }
 
   return validPL;

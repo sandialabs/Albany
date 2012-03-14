@@ -53,6 +53,8 @@ public:
                   const RealType time);
 
   RealType thetaDot;
+  RealType X0;
+  RealType Y0;
 };
 
 // **************************************************************

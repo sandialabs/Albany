@@ -29,7 +29,9 @@ template <typename EvalT, typename Traits>
 TorsionBC_Base<EvalT, Traits>::
 TorsionBC_Base(Teuchos::ParameterList& p) :
   PHAL::DirichletBase<EvalT, Traits>(p),
-  thetaDot(p.get<RealType>("Rotation Rate"))
+  thetaDot(p.get<RealType>("Theta Dot")),
+  X0(p.get<RealType>("X0")),
+  Y0(p.get<RealType>("Y0"))
 {
 }
 
@@ -42,10 +44,16 @@ computeBCs(double* coord, ScalarT& Xval, ScalarT& Yval,
 {
   RealType X(coord[0]);
   RealType Y(coord[1]);
-  RealType R(std::sqrt(X*X+Y*Y));
   RealType theta(thetaDot*time);
-    
-  // FIXME: this needs to be finished
+
+  // compute displace Xval and Yval. (X0,Y0) is the center of rotation/torsion
+  Xval = X0 + (X-X0) * std::cos(theta) - (Y-Y0) * std::sin(theta) - X;
+  Yval = Y0 + (X-X0) * std::sin(theta) + (Y-Y0) * std::cos(theta) - Y;
+
+  // a different set of bc, for comparison with analytical solution
+  //RealType L = 2.0;
+  //Xval = -theta * L * Y;
+  //Yval = theta * L * X;
 }
 
 // **********************************************************************
