@@ -85,6 +85,8 @@ private:
   Intrepid::FieldContainer<MeshScalarT> jacobianSide;
   Intrepid::FieldContainer<MeshScalarT> jacobianSide_det;
 
+  Intrepid::FieldContainer<MeshScalarT> physPointsCell;
+
   Intrepid::FieldContainer<MeshScalarT> weighted_measure;
   Intrepid::FieldContainer<RealType> basis_refPointsSide;
   Intrepid::FieldContainer<MeshScalarT> trans_basis_refPointsSide;

@@ -69,6 +69,7 @@ Neumann(const Teuchos::ParameterList& p) :
   trans_basis_refPointsSide.resize(1, numNodes, numQPsSide);
   weighted_trans_basis_refPointsSide.resize(1, numNodes, numQPsSide);
 
+  physPointsCell.resize(1, numNodes, cellDims);
   data.resize(1, numQPsSide);
 
   // Pre-Calculate reference element quantitites
@@ -124,13 +125,25 @@ evaluateFields(typename Traits::EvalData workset)
     const int elem_LID = sideSet[side].elem_LID;
     const int elem_side = sideSet[side].side_local_id;
 
+    // Copy the coordinate data over to a temp container
+
+    for (std::size_t node=0; node < numNodes; ++node) { 
+      for (std::size_t dim=0; dim < cellDims; ++dim) {
+
+	      physPointsCell(0, node, dim) = coordVec(elem_LID, node, dim);
+
+      }
+    }
+
     // Map side cubature points to the reference parent cell based on the appropriate side (elem_side) 
     Intrepid::CellTools<RealType>::mapToReferenceSubcell
       (refPointsSide, cubPointsSide, sideDims, elem_side, *cellType);
 
     // Calculate side geometry
+//    Intrepid::CellTools<RealType>::setJacobian
+//       (jacobianSide, refPointsSide, coordVec, *cellType, elem_LID);
     Intrepid::CellTools<RealType>::setJacobian
-       (jacobianSide, refPointsSide, coordVec, *cellType, elem_LID);
+       (jacobianSide, refPointsSide, physPointsCell, *cellType);
     Intrepid::CellTools<MeshScalarT>::setJacobianDet(jacobianSide_det, jacobianSide);
 
     // Get weighted edge measure
@@ -149,8 +162,10 @@ evaluateFields(typename Traits::EvalData workset)
       (weighted_trans_basis_refPointsSide, weighted_measure, trans_basis_refPointsSide);
 
     // Map cell (reference) cubature points to the appropriate side (elem_side) in physical space
+//    Intrepid::CellTools<RealType>::mapToPhysicalFrame
+//      (physPointsSide, refPointsSide, coordVec, *cellType, elem_LID);
     Intrepid::CellTools<RealType>::mapToPhysicalFrame
-      (physPointsSide, refPointsSide, coordVec, *cellType, elem_LID);
+      (physPointsSide, refPointsSide, physPointsCell, *cellType);
 
     // Transform the given BC data to the physical space QPs in each side (elem_side)
 //   calc_gradT_dotn_const(data, physPointsSide, jacobianSide, *cellType, cellDims, elem_side);
@@ -259,7 +274,7 @@ NeumannAggregator(Teuchos::ParameterList& p)
   PHX::Tag<ScalarT> fieldTag(p.get<std::string>("NBC Aggregator Name"), dl);
   this->addEvaluatedField(fieldTag);
 
-  this->setName("Nirichlet Aggregator"+PHX::TypeString<EvalT>::value);
+  this->setName("Neumann Aggregator"+PHX::TypeString<EvalT>::value);
 }
 
 //**********************************************************************
