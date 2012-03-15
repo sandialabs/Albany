@@ -108,9 +108,15 @@ int main(int argc, char *argv[]) {
     //***********************************************************
     // Finish set up of coupled solver
     //***********************************************************
+    Teuchos::Array< RCP<EpetraExt::ModelEvaluator> > models(2);
+    models[0] = model1; models[1] = model2;
+    Teuchos::Array< RCP<Teuchos::ParameterList> > piroParams(2);
+    piroParams[0] = piroParams1; piroParams[1] = piroParams2;
+    RCP<Piro::Epetra::AbstractNetworkModel> network_model =
+      rcp(new Piro::Epetra::ParamToResponseNetworkModel);
     RCP<EpetraExt::ModelEvaluator> coupledModel =
-      rcp(new Piro::Epetra::NECoupledModelEvaluator(model1, model2,
-						    piroParams1, piroParams2,
+      rcp(new Piro::Epetra::NECoupledModelEvaluator(models, piroParams,
+						    network_model,
 						    coupledPiroParams, 
 						    globalComm));
     coupledSolver->setup(coupledModel);

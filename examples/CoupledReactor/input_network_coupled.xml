@@ -1,5 +1,9 @@
 <ParameterList>
   <ParameterList name="Piro">
+    <Parameter name="Network Coupling Parameter Indices" type="Array(int)" 
+	       value="{ 0, 0 }"/>
+    <Parameter name="Network Coupling Response Indices" type="Array(int)" 
+	       value="{ 0, 0 }"/>
     <Parameter name="Stochastic" type="bool" value="0"/>
     <Parameter name="Solver Type" type="string" value="NOX"/>
     <ParameterList name="NOX">

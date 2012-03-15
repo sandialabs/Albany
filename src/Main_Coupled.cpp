@@ -105,9 +105,15 @@ int main(int argc, char *argv[]) {
     Teuchos::ParameterList& coupledParams = coupled_slvrfctry.getParameters();
     Teuchos::RCP< Teuchos::ParameterList> coupledPiroParams = 
       Teuchos::rcp(&(coupledParams.sublist("Piro")),false);
+    Teuchos::Array< RCP<EpetraExt::ModelEvaluator> > models(2);
+    models[0] = model1; models[1] = model2;
+    Teuchos::Array< RCP<Teuchos::ParameterList> > piroParams(2);
+    piroParams[0] = piroParams1; piroParams[1] = piroParams2;
+    RCP<Piro::Epetra::AbstractNetworkModel> network_model =
+      rcp(new Piro::Epetra::ParamToResponseNetworkModel);
     RCP<EpetraExt::ModelEvaluator> coupledModel =
-      rcp(new Piro::Epetra::NECoupledModelEvaluator(model1, model2,
-						    piroParams1, piroParams2,
+      rcp(new Piro::Epetra::NECoupledModelEvaluator(models, piroParams,
+						    network_model,
 						    coupledPiroParams, 
 						    coupledComm));
     RCP<EpetraExt::ModelEvaluator> coupledSolver =
