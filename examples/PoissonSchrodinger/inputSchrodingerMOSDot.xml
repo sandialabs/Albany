@@ -106,7 +106,7 @@
 	<ParameterList name="Eigensolver">
 	  <Parameter name="Method" type="string" value="Anasazi"/>
 	  <Parameter name="Operator" type="string" value="Shift-Invert"/>
-	  <Parameter name="Convergence Tolerance" type="double" value="1e-4"/>
+	  <Parameter name="Convergence Tolerance" type="double" value="1e-6"/>
 	  <Parameter name="Num Blocks" type="int" value="100"/>
 	  <Parameter name="Num Eigenvalues" type="int" value="5"/>
 	  <Parameter name="Save Eigenvectors" type="int" value="5"/>

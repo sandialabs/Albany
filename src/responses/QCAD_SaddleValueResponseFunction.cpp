@@ -561,13 +561,13 @@ doNudgedElasticBand(const double current_time,
 
     //Reduce dt if movement of any point exceeds initial average distance btwn pts
     bool reduce_dt = true;
-    while(reduce_dt) {
+    while(reduce_dt && dt/2 > minTimeStep) {
       reduce_dt = false;
       for(std::size_t i=1; i<nImagePts-1; i++) {
 	if(imagePts[i].velocity.norm() * dt > max_dCoords) { reduce_dt = true; break; }
 	if(0.5 * force[i].norm() * dt2 > max_dCoords) { reduce_dt = true; break; }
       }
-      if(reduce_dt && dt/2 > minTimeStep) { 
+      if(reduce_dt) { 
 	dt /= 2; dt2=dt*dt;
 	if(dbMode > 2) std::cout << "Saddle Point:  ** Warning: dCoords too large: dt => " << dt << std::endl;
       }

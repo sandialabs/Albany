@@ -303,7 +303,6 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 
   string matrlCategory = materialDB->getElementBlockParam<string>(workset.EBName,"Category");
 
-
   //! function pointer to quantum electron density member function
   ScalarT (QCAD::PoissonSource<EvalT,Traits>::*quantum_edensity_fn) 
     (typename Traits::EvalData, std::size_t, std::size_t, const ScalarT, const bool);
@@ -501,13 +500,14 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
         } // end of loop over cells
       }
       else if(quantumRegionSource == "coulomb") {
+
 	//RHS == evec[i] * evec[j]
 	int i = (int)QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue( sourceEvecInds[0] );
 	int j = (int)QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue( sourceEvecInds[1] );
 
 	//int valleyDegeneracyFactor = materialDB->getElementBlockParam<int>(workset.EBName,"Num of conduction band min",2);
 	// scale so electron density is in [cm^-3] (assume 3D? Suzey?) as expected of RHS of Poisson eqn
-	ScalarT eDenPrefactor = 1.0/pow(X0,3.);
+	ScalarT prefactor = 1.0/pow(X0,3.);
 	
 	// loop over cells and qps
 	for (std::size_t cell=0; cell < workset.numCells; ++cell) {
@@ -518,8 +518,8 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 	    ScalarT phi = unscaled_phi / V0; 
 
 	    // the scaled full RHS   note: wavefunctions are assumed normalized and **REAL** here 
-	    ScalarT charge = 1.0/Lambda2 * eDenPrefactor * ( eigenvector_Re[i](cell,qp) * eigenvector_Re[j](cell,qp) );
-	    poissonSource(cell, qp) = factor*charge;
+	    ScalarT charge = - prefactor * ( eigenvector_Re[i](cell,qp) * eigenvector_Re[j](cell,qp) );
+	    poissonSource(cell, qp) = factor * 1.0/Lambda2 * charge; //sign??
 
 	    chargeDensity(cell, qp) = charge;
 	    electronDensity(cell, qp) = charge;
@@ -717,6 +717,9 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 	//RHS == evec[i] * evec[j]
 	int i = (int)QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue( sourceEvecInds[0] );
 	int j = (int)QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue( sourceEvecInds[1] );
+
+	//convert to cm^-3 and assume 3D
+	ScalarT prefactor = 1.0/pow(X0,3.); //3D
 	
 	// loop over cells and qps
 	for (std::size_t cell=0; cell < workset.numCells; ++cell) {
@@ -727,8 +730,8 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 	    ScalarT phi = unscaled_phi / V0; 
 
 	    // the scaled full RHS   note: wavefunctions are assumed normalized and **REAL** here 
-	    ScalarT charge = ( eigenvector_Re[i](cell,qp) * eigenvector_Re[j](cell,qp) );
-	    poissonSource(cell, qp) = factor*charge;
+	    ScalarT charge = - prefactor * ( eigenvector_Re[i](cell,qp) * eigenvector_Re[j](cell,qp) );
+	    poissonSource(cell, qp) = factor * 1.0/Lambda2 * charge; //sign??
 
 	    chargeDensity(cell, qp) = charge;
 	    electronDensity(cell, qp) = charge;
@@ -852,7 +855,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
     TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
 			std::endl << "Error!  Unknown material category " 
 			<< matrlCategory << "!" << std::endl);
-  }  
+  } 
 }
 
 

@@ -69,6 +69,8 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
     else break;
   }
 
+  std::string integrandLinLengthUnit; // linear length unit of integrand (e.g. "cm" for integrand in cm^-3)
+  integrandLinLengthUnit = plist->get<std::string>("Integrand Length Unit","cm");
   bPositiveOnly = plist->get<bool>("Positive Return Only",false);
 
   limitX = limitY = limitZ = false;
@@ -87,6 +89,27 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
     zmin = plist->get<double>("z min");
     zmax = plist->get<double>("z max");
   }
+
+  //! compute scaling factor based on number of dimensions and units
+  double integrand_length_unit_in_m;
+  if( integrandLinLengthUnit == "m" )       integrand_length_unit_in_m = 1.0;
+  else if( integrandLinLengthUnit == "cm" ) integrand_length_unit_in_m = 1e-2;
+  else if( integrandLinLengthUnit == "um" ) integrand_length_unit_in_m = 1e-6;
+  else if( integrandLinLengthUnit == "nm" ) integrand_length_unit_in_m = 1e-9;
+  else if( integrandLinLengthUnit == "mesh" ) integrand_length_unit_in_m = length_unit_in_m;
+  else integrand_length_unit_in_m = length_unit_in_m;  // assume same unit as mesh (e.g. if unit string is blank)
+  
+  double X0 = length_unit_in_m / integrand_length_unit_in_m; // length scaling to get to integrand's lenght unit
+
+  if (numDims == 1)       scaling = X0; 
+  else if (numDims == 2)  scaling = X0*X0; 
+  else if (numDims == 3)  scaling = X0*X0*X0; 
+  else 
+    TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+				<< "Error! Invalid number of dimensions: " << numDims << std::endl);
+
+
+
 
   //! add dependent fields (all fields assumed scalar qp)
   std::vector<std::string>::const_iterator it;
@@ -153,25 +176,11 @@ evaluateFields(typename Traits::EvalData workset)
     this->local_response[i] = 0.0;
 
   typename std::vector<PHX::MDField<ScalarT,Cell,QuadPoint> >::const_iterator it;
-
-  // Scaling factors
-  double X0 = length_unit_in_m/1e-2; // length scaling to get to [cm]
-  double scaling = 0.0; 
-  
-  if (numDims == 1)
-    scaling = X0; 
-  else if (numDims == 2)
-    scaling = X0*X0; 
-  else if (numDims == 3)
-    scaling = X0*X0*X0; 
-  else      
-    TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
-			  << "Error! Invalid number of dimensions: " << numDims << std::endl);
     
   if( ebNames.size() == 0 || 
       std::find(ebNames.begin(), ebNames.end(), workset.EBName) != ebNames.end() ) {
 
-    ScalarT val;
+    ScalarT val; //, dbI = 0.0;
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
       bool cellInBox = false;
@@ -188,11 +197,18 @@ evaluateFields(typename Traits::EvalData workset)
 	val = weights(cell,qp) * scaling; //volume	
 	for(it = fields.begin(); it != fields.end(); ++it)
 	  val *= (*it)(cell,qp); //multiply each field
+	//dbI += val;
 
         this->local_response(cell) += val;
 	this->global_response(0) += val;
       }
     }
+
+    //DEBUG
+    /*std::cout << "DB: Field Integral - int(";
+    for(int i=0; i<fieldNames.size(); i++)
+      std::cout << fieldNames[i] << " * ";
+      std::cout << " dV) -- I += " << dbI << "  (ebName = " << workset.EBName << ")" << std::endl;*/
   }
 
   // Do any local-scattering necessary
@@ -240,6 +256,7 @@ QCAD::ResponseFieldIntegral<EvalT,Traits>::getValidResponseParameters() const
   for(int i=1; i < QCAD::MAX_FIELDNAMES_IN_INTEGRAL; i++)
     validPL->set<string>(Albany::strint("Field Name",i), "", "Name of Field to integrate (multiplied into integrand)");
 
+  validPL->set<string>("Integrand Length Unit","cm","Linear length unit of integrand, e.g. cm for integrand in cm^-3.  Can be m, cm, um, nm, or mesh.");
   validPL->set<bool>("Positive Return Only",false);
 
   validPL->set<double>("x min", 0.0, "Integration domain minimum x coordinate");

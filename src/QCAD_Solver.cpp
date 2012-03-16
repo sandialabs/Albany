@@ -606,25 +606,24 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
       int rIndx = 0 ;// offset to the responses corresponding to delta_ij values == 0 by construction
       for(int i=0; i<nEigenvectors; i++) {
 	assert(rIndx < g->MyLength()); //make sure g-vector is long enough
-	blockU->el(i,i) = (*(eigenDataToPass->eigenvalueRe))[i] - (*g)[rIndx];
-	blockD->el(i,i) = (*(eigenDataToPass->eigenvalueRe))[i] - (*g)[rIndx];
+	blockU->el(i,i) = -(*(eigenDataToPass->eigenvalueRe))[i] - (*g)[rIndx]; // first minus (-) sign b/c of 
+	blockD->el(i,i) = -(*(eigenDataToPass->eigenvalueRe))[i] - (*g)[rIndx]; //  eigenvalue convention
 
 	for(int j=i+1; j<nEigenvectors; j++) {
 	  assert(rIndx < g->MyLength()); //make sure g-vector is long enough
-	  blockU->el(i,j) = (*g)[rIndx]; blockU->el(j,i) = -(*g)[rIndx];
-	  blockD->el(i,j) = (*g)[rIndx]; blockD->el(j,i) = -(*g)[rIndx];
+	  blockU->el(i,j) = -(*g)[rIndx]; blockU->el(j,i) = -(*g)[rIndx];
+	  blockD->el(i,j) = -(*g)[rIndx]; blockD->el(j,i) = -(*g)[rIndx];
 	  rIndx++;
 	}
       }
 
       //DEBUG
-      *out << "DEBUG: g vector:" << endl;
-      for(int i=0; i< g->MyLength(); i++)
-	*out << "  g[" << i << "] = " << (*g)[i] << endl;
+      //*out << "DEBUG: g vector:" << endl;
+      //for(int i=0; i< g->MyLength(); i++) *out << "  g[" << i << "] = " << (*g)[i] << endl;
       
       Teuchos::RCP<AlbanyCI::BlockTensor<AlbanyCI::dcmplx> > mx1P =
 	Teuchos::rcp(new AlbanyCI::BlockTensor<AlbanyCI::dcmplx>(basis1P, blocks1P, 1));
-      *out << std::endl << "DEBUG CI mx1P:"; mx1P->print(out); //DEBUG
+      //*out << std::endl << "DEBUG CI mx1P:"; mx1P->print(out); //DEBUG
       
       
       // fill in mx2P (4 blocks, each n1PperBlock x n1PperBlock x n1PperBlock x n1PperBlock )
@@ -636,15 +635,15 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
 	  SetCoulombParams( getSubSolver("CoulombPoisson").params_in, i2,i4 ); 
 	  QCAD::SolveModel(getSubSolver("CoulombPoisson"), pStatesToPass, pStatesToLoop,
 		     eigenDataToPass, eigenDataNull);
-
-	  //DEBUG
-	  *out << "DEBUG: g vector:" << endl;
-	  for(int i=0; i< g->MyLength(); i++)
-	    *out << "  g[" << i << "] = " << (*g)[i] << endl;
 	  
 	  // transfer responses to H2P matrix blocks
 	  Teuchos::RCP<Epetra_Vector> g =
 	    getSubSolver("CoulombPoisson").responses_out->get_g(0); //only use *first* response vector    
+
+	  //DEBUG
+	  //*out << "DEBUG: g vector:" << endl;
+	  //for(int i=0; i< g->MyLength(); i++) *out << "  g[" << i << "] = " << (*g)[i] << endl;
+
 	  rIndx = 0 ;  // offset to the responses corresponding to Coulomb_ij values == 0 by construction
 	  for(int i1=0; i1<nEigenvectors; i1++) {
 	    for(int i3=i1; i3<nEigenvectors; i3++) {
@@ -677,11 +676,12 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
       
       Teuchos::RCP<AlbanyCI::BlockTensor<AlbanyCI::dcmplx> > mx2P =
 	Teuchos::rcp(new AlbanyCI::BlockTensor<AlbanyCI::dcmplx>(basis1P, blocks2P, 2));
-      *out << std::endl << "DEBUG CI mx2P:"; mx2P->print(out); //DEBUG
+      //*out << std::endl << "DEBUG CI mx2P:"; mx2P->print(out); //DEBUG
       
       
       //Now should have H1P and H2P - run CI:
       if(bVerbose) *out << "QCAD Solve: CI solve" << endl;
+
       AlbanyCI::Solver solver;
       Teuchos::RCP<AlbanyCI::Solution> soln;
       soln = solver.solve(MyPL, mx1P, mx2P, tcomm, out); //Note: out cannot be null
@@ -694,7 +694,7 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
       std::vector< std::vector< AlbanyCI::dcmplx > > mxPx;
       Teuchos::RCP<AlbanyCI::Solution::Vector> ci_evec;
       Teuchos::RCP<Epetra_MultiVector> mbStateDensities = 
-	Teuchos::rcp( new Epetra_MultiVector(eigenDataToPass->eigenvectorRe->Map(), nCIevals, true /*zero out*/ ));
+      Teuchos::rcp( new Epetra_MultiVector(eigenDataToPass->eigenvectorRe->Map(), nCIevals, true )); //zero out
       eigenDataToPass->eigenvalueRe->resize(nCIevals);
       eigenDataToPass->eigenvalueIm->resize(nCIevals);
 
@@ -922,6 +922,7 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
 	responseParams.set("Field Name", "Electric Potential");  // same as solution, but must be at quad points
 	responseParams.set("Field Name 1", buf1);
 	responseParams.set("Field Name 2", buf2);
+	responseParams.set("Integrand Length Unit", "mesh"); // same as mesh
 	
 	iResponse++;
       }
@@ -973,22 +974,13 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
 	responseParams.set("Field Name", "Electric Potential");  // same as solution, but must be at quad points
 	responseParams.set("Field Name 1", buf1);
 	responseParams.set("Field Name 2", buf2);
+	responseParams.set("Integrand Length Unit", "mesh"); // same as mesh
 	
 	iResponse++;
       }
     }
   }
 
-    //OLD dummy poisson processing -- remove later
-    //! Rename materials file
-    //std::string mtrlName= "dummy_" + params.sublist("Problem").get<std::string>("MaterialDB Filename");
-    // params.sublist("Problem").set("MaterialDB Filename", mtrlName);
- 
-    //! Replace Dirichlet BCs and Parameters sublists with dummy versions
-    //params.sublist("Problem").sublist("Dirichlet BCs") = 
-    //  params.sublist("Problem").sublist("Dummy Dirichlet BCs");
-    //params.sublist("Problem").sublist("Parameters") = 
-    //  params.sublist("Problem").sublist("Dummy Parameters");
 }
 
 
@@ -1671,10 +1663,10 @@ double QCAD::GetEigensolverShift(const QCAD::SolverSubSolver& ss,
   double minVal = (*gVector)[minPotentialResponseIndex];
 
   //set shift to be slightly (5% of range) below minimum value
-  // double shift = -(minVal - 0.05*(maxVal-minVal)); //minus sign b/c negative eigenvalue convention
+  //double shift = -(minVal - 0.05*(maxVal-minVal)); //minus sign b/c negative eigenvalue convention
   
-  // double shift = -minVal*1.1;  // 10% below minimum value
-  double shift = -minVal*1.2;
+  //double shift = -minVal*1.1;  // 10% below minimum value
+  double shift = -minVal*1.01;
   return shift;
 }
   

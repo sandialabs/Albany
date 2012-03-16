@@ -60,6 +60,7 @@ namespace QCAD {
     PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
     
     double length_unit_in_m; // length unit for input and output mesh
+    double scaling;          // scaling factor due to difference in mesh and integrand units
     bool bPositiveOnly;
     bool limitX, limitY, limitZ;
     double xmin, xmax, ymin, ymax, zmin, zmax;
