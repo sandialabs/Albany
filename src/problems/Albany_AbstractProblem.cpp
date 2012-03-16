@@ -92,7 +92,8 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   validPL->sublist("Dirichlet BCs", false, "");
   validPL->sublist("Neumann BCs", false, "");
   validPL->set<bool>("Solve Adjoint", false, "");
-  validPL->set<bool>("Compute Sensitivities", false, "");
+  validPL->set<bool>("Compute Sensitivities", true, "");
+  validPL->set<bool>("Print Response Expansion", true, "");
 
   validPL->set<bool>("Ignore Residual In Jacobian", false, 
 		     "Ignore residual calculations while computing the Jacobian (only generally appropriate for linear problems)");

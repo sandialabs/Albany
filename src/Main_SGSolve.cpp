@@ -177,10 +177,8 @@ int main(int argc, char *argv[]) {
 
     sg_solver->evalModel(sg_inArgs, sg_outArgs);
 
-    totalTimer.~TimeMonitor();
-    Teuchos::TimeMonitor::summarize(std::cout,false,true,false);
-    Teuchos::TimeMonitor::zeroOutTimers();
-
+    bool printResponse = 
+      albanyParams.sublist("Problem").get("Print Response Expansion", true);
     for (int i=0; i<ng-1; i++) {
       // Don't loop over last g which is x, since it is a long vector
       // to print out.
@@ -199,17 +197,19 @@ int main(int argc, char *argv[]) {
 	       << g_mean << std::endl;
 	  *out << "Response " << i << " Std. Dev. = " << std::endl 
 	       << g_std_dev << std::endl;
-	  *out << "Response " << i << "           = " << std::endl 
-	       << *g_sg << std::endl;
-	  for (int j=0; j<np; j++) {
-	    EpetraExt::ModelEvaluator::DerivativeSupport ds =
-	      sg_outArgs.supports(EpetraExt::ModelEvaluator::OUT_ARG_DgDp_sg,i,j);
-	    if (!ds.none()) {
-	      Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> dgdp_sg =
-		sg_outArgs.get_DgDp_sg(i,j).getMultiVector();
-	      if (dgdp_sg != Teuchos::null)
-		*out << "Response " << i << " Derivative " << j << " = " 
-		     << std::endl << *dgdp_sg << std::endl;
+	  if (printResponse) {
+	    *out << "Response " << i << "           = " << std::endl 
+		 << *g_sg << std::endl;
+	    for (int j=0; j<np; j++) {
+	      EpetraExt::ModelEvaluator::DerivativeSupport ds =
+		sg_outArgs.supports(EpetraExt::ModelEvaluator::OUT_ARG_DgDp_sg,i,j);
+	      if (!ds.none()) {
+		Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> dgdp_sg =
+		  sg_outArgs.get_DgDp_sg(i,j).getMultiVector();
+		if (dgdp_sg != Teuchos::null)
+		  *out << "Response " << i << " Derivative " << j << " = " 
+		       << std::endl << *dgdp_sg << std::endl;
+	      }
 	    }
 	  }
 
@@ -220,6 +220,10 @@ int main(int argc, char *argv[]) {
       }
     }
     *out << "\nNumber of Failed Comparisons: " << status << endl;
+
+    totalTimer.~TimeMonitor();
+    Teuchos::TimeMonitor::summarize(std::cout,false,true,false);
+    Teuchos::TimeMonitor::zeroOutTimers();
 
   }
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);
