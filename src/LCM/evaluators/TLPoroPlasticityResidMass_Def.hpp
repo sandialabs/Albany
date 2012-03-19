@@ -230,9 +230,7 @@ evaluateFields(typename Traits::EvalData workset)
 
  				  // Volumetric Constraint Term
  				  TResidual(cell,node) += -biotCoefficient(cell, qp)*(
-
- 					 (J(cell,qp)-Jold(cell,qp))
-
+ 					 std::log(J(cell,qp)/Jold(cell,qp))
  						  )
              		  *wBF(cell, node, qp)  ;
 
