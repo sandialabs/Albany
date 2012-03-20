@@ -53,7 +53,7 @@ Albany::SolverFactory::SolverFactory(
 
   // Set up application parameters: read and broadcast XML file, and set defaults
   appParams = rcp(new ParameterList("Albany Parameters"));
-  Teuchos::updateParametersFromXmlFileAndBroadcast(inputFile, appParams.get(), *tcomm);
+  Teuchos::updateParametersFromXmlFileAndBroadcast(inputFile, appParams.ptr(), *tcomm);
 
   RCP<ParameterList> defaultSolverParams = rcp(new ParameterList());
   setSolverParamDefaults(defaultSolverParams.get(), tcomm->getRank());
