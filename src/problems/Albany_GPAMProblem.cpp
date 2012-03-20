@@ -36,7 +36,7 @@ GPAMProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 {
 
   // Compute number of equations
-  int neq = numDim_;
+  neq = numDim_;
 }
 
 Albany::GPAMProblem::
@@ -85,7 +85,7 @@ Albany::GPAMProblem::constructDirichletEvaluators(
    // Construct Dirichlet evaluators for all nodesets and names
    std::vector<string> dirichletNames(neq);
    for (int i=0; i<neq; i++) {
-     std::stringstream s; s << "C " << i;
+     std::stringstream s; s << "C" << i;
      dirichletNames[i] = s.str();
    }
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
