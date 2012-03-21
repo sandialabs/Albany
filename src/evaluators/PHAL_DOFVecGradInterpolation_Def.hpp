@@ -44,6 +44,9 @@ DOFVecGradInterpolation(const Teuchos::ParameterList& p) :
   numNodes = dims[1];
   numQPs   = dims[2];
   numDims  = dims[3];
+
+  val_node.fieldTag().dataLayout().dimensions(dims);
+  vecDim  = dims[2];
 }
 
 //**********************************************************************
@@ -68,7 +71,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {
           for (std::size_t qp=0; qp < numQPs; ++qp) {
-            for (std::size_t i=0; i<numDims; i++) {
+            for (std::size_t i=0; i<vecDim; i++) {
               for (std::size_t dim=0; dim<numDims; dim++) {
                 grad_val_qp(cell,qp,i,dim) += val_node(cell, node, i) * GradBF(cell, node, qp, dim);
     } } } } }

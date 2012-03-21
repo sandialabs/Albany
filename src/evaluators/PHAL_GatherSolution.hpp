@@ -60,8 +60,8 @@ protected:
   typedef typename EvalT::ScalarT ScalarT;
   std::vector< PHX::MDField<ScalarT,Cell,Node> > val;
   std::vector< PHX::MDField<ScalarT,Cell,Node> > val_dot;
-  std::vector< PHX::MDField<ScalarT,Cell,Node,Dim> > valVec;
-  std::vector< PHX::MDField<ScalarT,Cell,Node,Dim> > valVec_dot;
+  std::vector< PHX::MDField<ScalarT,Cell,Node,VecDim> > valVec;
+  std::vector< PHX::MDField<ScalarT,Cell,Node,VecDim> > valVec_dot;
   std::size_t numNodes;
   std::size_t numFieldsBase; // Number of fields gathered in this call
   std::size_t offset; // Offset of first DOF being gathered when numFields<neq

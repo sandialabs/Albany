@@ -41,7 +41,7 @@ namespace Albany {
    * \brief Struct to construct and hold DataLayouts
    */
   struct Layouts {
-    Layouts(int worksetSize, int  numVertices, int numNodes, int numQPts, int numDim);
+    Layouts(int worksetSize, int  numVertices, int numNodes, int numQPts, int numDim, int vecDim=-1);
     //! Data Layout for scalar quantity that lives at nodes
     Teuchos::RCP<PHX::DataLayout> node_scalar;
     //! Data Layout for scalar quantity that lives at quad points
@@ -56,6 +56,12 @@ namespace Albany {
     Teuchos::RCP<PHX::DataLayout> qp_vector;
     //! Data Layout for vector quantity that lives on a cell
     Teuchos::RCP<PHX::DataLayout> cell_vector;
+    //! Data Layout for gradient quantity that lives at nodes
+    Teuchos::RCP<PHX::DataLayout> node_gradient;
+    //! Data Layout for gradient quantity that lives at quad points
+    Teuchos::RCP<PHX::DataLayout> qp_gradient;
+    //! Data Layout for gradient quantity that lives on a cell
+    Teuchos::RCP<PHX::DataLayout> cell_gradient;
     //! Data Layout for tensor quantity that lives at nodes
     Teuchos::RCP<PHX::DataLayout> node_tensor;
     //! Data Layout for tensor quantity that lives at quad points
@@ -66,12 +72,15 @@ namespace Albany {
     Teuchos::RCP<PHX::DataLayout> vertices_vector;
     //! Data Layout for scalar basis functions
     Teuchos::RCP<PHX::DataLayout> node_qp_scalar;
-    //! Data Layout for vector basis functions
-    Teuchos::RCP<PHX::DataLayout> node_qp_vector;
+    //! Data Layout for gradient basis functions
+    Teuchos::RCP<PHX::DataLayout> node_qp_gradient;
+    Teuchos::RCP<PHX::DataLayout> node_qp_vector; // Old, but incorrect name
     //! Data Layout for scalar quantity on workset
     Teuchos::RCP<PHX::DataLayout> workset_scalar;
     //! Data Layout for vector quantity on workset
     Teuchos::RCP<PHX::DataLayout> workset_vector;
+    //! Data Layout for gradient quantity on workset
+    Teuchos::RCP<PHX::DataLayout> workset_gradient;
     //! Data Layout for tensor quantity on workset
     Teuchos::RCP<PHX::DataLayout> workset_tensor;
     /*!
@@ -84,6 +93,12 @@ namespace Albany {
      * the action is performed.
      */
     Teuchos::RCP<PHX::DataLayout> dummy;
+
+    // For backward compatibility, and simplicitiy, we want to check if
+    // the vector length is the same as the spatial dimension. This
+    // assumption is hardwired in mechanics problems and we want to 
+    // test that it is a valide assumption with this bool.
+    bool vectorAndGradientLayoutsAreEquivalent;
   };
 
   //! Helper Factory function to construct Intrepid Basis from Shards CellTopologyData

@@ -64,7 +64,7 @@ GatherSolutionBase(const Teuchos::ParameterList& p)
   } 
   else {
     valVec.resize(1);
-    PHX::MDField<ScalarT,Cell,Node,Dim> f(solution_names[0],dl);
+    PHX::MDField<ScalarT,Cell,Node,VecDim> f(solution_names[0],dl);
     valVec[0] = f;
     this->addEvaluatedField(valVec[0]);
     // repeat for xdot if transient is enabled
@@ -73,7 +73,7 @@ GatherSolutionBase(const Teuchos::ParameterList& p)
         p.get< Teuchos::ArrayRCP<std::string> >("Time Dependent Solution Names");
   
       valVec_dot.resize(1);
-      PHX::MDField<ScalarT,Cell,Node,Dim> f(names_dot[0],dl);
+      PHX::MDField<ScalarT,Cell,Node,VecDim> f(names_dot[0],dl);
       valVec_dot[0] = f;
       this->addEvaluatedField(valVec_dot[0]);
     }

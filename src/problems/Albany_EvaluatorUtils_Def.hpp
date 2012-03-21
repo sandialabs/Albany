@@ -159,7 +159,7 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructMapToPhysicalFrameEvaluator(
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
  
     // Output: X, Y at Quad Points (same name as input)
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_gradient);
  
     return rcp(new PHAL::MapToPhysicalFrame<EvalT,Traits>(*p));
 }
@@ -196,7 +196,7 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructComputeBasisFunctionsEvaluator(
  
     p->set<string>("Gradient BF Name",          "Grad BF");
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_gradient);
 
     return rcp(new PHAL::ComputeBasisFunctions<EvalT,Traits>(*p));
 }
@@ -241,11 +241,11 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFGradInterpolationEvaluator(
     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
 
     p->set<string>("Gradient BF Name", "Grad BF");
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_gradient);
 
     // Output (assumes same Name as input)
     p->set<string>("Gradient Variable Name", dof_name+" Gradient");
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_gradient);
 
     return rcp(new PHAL::DOFGradInterpolation<EvalT,Traits>(*p));
 }
@@ -290,7 +290,7 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecGradInterpolationEvaluator(
     p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
 
     p->set<string>("Gradient BF Name", "Grad BF");
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_gradient);
 
     // Output (assumes same Name as input)
     p->set<string>("Gradient Variable Name", dof_name+" Gradient");

@@ -29,7 +29,7 @@ GPAMResid(const Teuchos::ParameterList& p) :
   wBF     (p.get<std::string>                   ("Weighted BF Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
   wGradBF    (p.get<std::string>                   ("Weighted Gradient BF Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Gradient Data Layout") ),
   C          (p.get<std::string>                   ("QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
   Cgrad      (p.get<std::string>                   ("Gradient QP Variable Name"),
@@ -55,6 +55,12 @@ GPAMResid(const Teuchos::ParameterList& p) :
   numNodes = dims[1];
   numQPs   = dims[2];
   numDims  = dims[3];
+
+  C.fieldTag().dataLayout().dimensions(dims);
+  vecDim  = dims[2];
+
+cout << " vecDim = " << vecDim << endl;
+cout << " numDims = " << numDims << endl;
 }
 
 //**********************************************************************
@@ -81,9 +87,9 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {
-              for (std::size_t dim=0; dim<numDims; dim++)  Residual(cell,node,dim)=0.0;
+              for (std::size_t i=0; i<vecDim; i++)  Residual(cell,node,i)=0.0;
           for (std::size_t qp=0; qp < numQPs; ++qp) {
-            for (std::size_t i=0; i<numDims; i++) {
+            for (std::size_t i=0; i<vecDim; i++) {
               for (std::size_t dim=0; dim<numDims; dim++) {
                 Residual(cell,node,i) += Cgrad(cell, qp, i, dim) * wGradBF(cell, node, qp, dim);
     } } } } }

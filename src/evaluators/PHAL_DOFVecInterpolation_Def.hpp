@@ -44,7 +44,7 @@ DOFVecInterpolation(const Teuchos::ParameterList& p) :
   numQPs   = dims[2];
 
   val_node.fieldTag().dataLayout().dimensions(dims);
-  numDims  = dims[2];
+  vecDim   = dims[2];
 }
 
 //**********************************************************************
@@ -69,8 +69,8 @@ evaluateFields(typename Traits::EvalData workset)
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t node=0; node < numNodes; ++node) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-         for (std::size_t dim=0; dim<numDims; dim++) {
-            val_qp(cell,qp,dim) += val_node(cell, node, dim) * BF(cell, node, qp);
+         for (std::size_t i=0; i<vecDim; i++) {
+            val_qp(cell,qp,i) += val_node(cell, node, i) * BF(cell, node, qp);
   } } } }
 
 //  Intrepid::FunctionSpaceTools::evaluate<ScalarT>(val_qp, val_node, BF);
