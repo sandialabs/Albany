@@ -295,6 +295,8 @@ Albany::GradientDamageProblem::constructEvaluators(
     p->set<bool>("avgJ Name", avgJ);
     const bool volavgJ = params->get("volavgJ", false);
     p->set<bool>("volavgJ Name", volavgJ);
+    const bool weighted_Volume_Averaged_J = params->get("weighted_Volume_Averaged_J", false);
+    p->set<bool>("weighted_Volume_Averaged_J Name", weighted_Volume_Averaged_J);
     p->set<string>("Weights Name","Weights");
     p->set<string>("Gradient QP Variable Name", "Displacement Gradient");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);

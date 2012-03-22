@@ -65,6 +65,7 @@ private:
 
   bool avgJ;
   bool volavgJ;
+  bool weighted_Volume_Averaged_J;
 
 };
 

@@ -118,6 +118,7 @@ Albany::NonlinearElasticityProblem::getValidProblemParameters() const
   validPL->sublist("Material Model", false, "");
   validPL->set<bool>("avgJ", false, "Flag to indicate the J should be averaged");
   validPL->set<bool>("volavgJ", false, "Flag to indicate the J should be volume averaged");
+  validPL->set<bool>("weighted_Volume_Averaged_J", false, "Flag to indicate the J should be volume averaged with stabilization");
   validPL->set<bool>("Use Composite Tet 10", false, "Flag to use the compostie tet 10 basis in Intrepid");
   if (matModel == "J2")
   {

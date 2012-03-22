@@ -127,6 +127,7 @@ Albany::TLPoroPlasticityProblem::getValidProblemParameters() const
   validPL->sublist("Material Model", false, "");
   validPL->set<bool>("avgJ", false, "Flag to indicate the J should be averaged");
   validPL->set<bool>("volavgJ", false, "Flag to indicate the J should be volume averaged");
+  validPL->set<bool>("weighted_Volume_Averaged_J", false, "Flag to indicate the J should be volume averaged with stabilization");
   validPL->sublist("Porosity", false, "");
   validPL->sublist("Biot Coefficient", false, "");
   validPL->sublist("Biot Modulus", false, "");
