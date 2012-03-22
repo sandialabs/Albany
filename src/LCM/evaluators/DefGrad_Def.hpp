@@ -152,7 +152,7 @@ evaluateFields(typename Traits::EvalData workset)
   }
   else if (weighted_Volume_Averaged_J)
     {
-      ScalarT Jbar, vol;
+      ScalarT Jbar, wJbar, vol;
       ScalarT StabAlpha = 0.5; // This setting need to change later..
       for (std::size_t cell=0; cell < workset.numCells; ++cell)
       {
@@ -164,8 +164,10 @@ evaluateFields(typename Traits::EvalData workset)
           //    " negative volume detected in volavgJ routine");
   	Jbar += weights(cell,qp) * std::log( J(cell,qp) );
   	vol  += weights(cell,qp);
+
         }
         Jbar /= vol;
+
        // Jbar = std::exp(Jbar);
         for (std::size_t qp=0; qp < numQPs; ++qp)
         {
@@ -173,12 +175,13 @@ evaluateFields(typename Traits::EvalData workset)
   	{
   	  for (std::size_t j=0; j < numDims; ++j)
   	  {
-  		Jbar =   std::exp( (1-StabAlpha)*Jbar+
-        		  StabAlpha*std::log(J(cell,qp)));
-  	    defgrad(cell,qp,i,j) *= std::pow(Jbar /J(cell,qp),1./3.);
+  		wJbar =   std::exp( (1-StabAlpha)*Jbar+
+  		          	        		  StabAlpha*std::log(J(cell,qp)));
+
+  	    defgrad(cell,qp,i,j) *= std::pow(wJbar /J(cell,qp),1./3.);
   	  }
   	}
-  	J(cell,qp) = Jbar;
+  	J(cell,qp) = wJbar;
         }
       }
     }
