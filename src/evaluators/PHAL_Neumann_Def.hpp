@@ -19,7 +19,7 @@
 #include "Phalanx_DataLayout.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
-//#include "Sacado_ParameterRegistration.hpp"
+#include "Sacado_ParameterRegistration.hpp"
 
 
 namespace PHAL {
@@ -27,7 +27,7 @@ namespace PHAL {
 //**********************************************************************
 template<typename EvalT, typename Traits>
 NeumannBase<EvalT, Traits>::
-NeumannBase(const Teuchos::ParameterList& p) :
+NeumannBase(Teuchos::ParameterList& p) :
 
   dl             (p.get<Teuchos::RCP<Albany::Layouts> >("Base Data Layout")),
   meshSpecs      (p.get<Teuchos::RCP<Albany::MeshSpecsStruct> >("Mesh Specs Struct")),
@@ -66,20 +66,18 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
   this->addDependentField(coordVec);
 
-//  PHX::Tag<ScalarT> fieldTag(name, p.get< Teuchos::RCP<PHX::DataLayout> >("Data Layout"));
+  //PHX::Tag<ScalarT> fieldTag(name, p.get< Teuchos::RCP<PHX::DataLayout> >("Data Layout"));
   PHX::Tag<ScalarT> fieldTag(name, dl->dummy);
 
   this->addEvaluatedField(fieldTag);
 
 // TO DO
   // Set up values as parameters for parameter library
-/*
+
   Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib> >
                ("Parameter Library", Teuchos::null);
 
   new Sacado::ParameterRegistration<EvalT, SPL_Traits> (name, this, paramLib);
-*/
-
 
   // Build element and side integration support
 
@@ -321,7 +319,7 @@ calc_dudn_const(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
 // **********************************************************************
 template<typename Traits>
 Neumann<PHAL::AlbanyTraits::Residual,Traits>::
-Neumann(const Teuchos::ParameterList& p)
+Neumann(Teuchos::ParameterList& p)
   : NeumannBase<PHAL::AlbanyTraits::Residual,Traits>(p)
 {
 }
@@ -357,7 +355,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 Neumann<PHAL::AlbanyTraits::Jacobian, Traits>::
-Neumann(const Teuchos::ParameterList& p)
+Neumann(Teuchos::ParameterList& p)
   : NeumannBase<PHAL::AlbanyTraits::Jacobian,Traits>(p)
 {
 }
@@ -423,7 +421,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 Neumann<PHAL::AlbanyTraits::Tangent, Traits>::
-Neumann(const Teuchos::ParameterList& p)
+Neumann(Teuchos::ParameterList& p)
   : NeumannBase<PHAL::AlbanyTraits::Tangent,Traits>(p)
 {
 }
@@ -484,7 +482,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 Neumann<PHAL::AlbanyTraits::SGResidual, Traits>::
-Neumann(const Teuchos::ParameterList& p)
+Neumann(Teuchos::ParameterList& p)
   : NeumannBase<PHAL::AlbanyTraits::SGResidual,Traits>(p)
 {
 }
@@ -525,7 +523,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 Neumann<PHAL::AlbanyTraits::SGJacobian, Traits>::
-Neumann(const Teuchos::ParameterList& p)
+Neumann(Teuchos::ParameterList& p)
   : NeumannBase<PHAL::AlbanyTraits::SGJacobian,Traits>(p)
 {
 }
@@ -611,7 +609,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 Neumann<PHAL::AlbanyTraits::SGTangent, Traits>::
-Neumann(const Teuchos::ParameterList& p)
+Neumann(Teuchos::ParameterList& p)
   : NeumannBase<PHAL::AlbanyTraits::SGTangent,Traits>(p)
 {
 }
@@ -675,7 +673,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 Neumann<PHAL::AlbanyTraits::MPResidual, Traits>::
-Neumann(const Teuchos::ParameterList& p)
+Neumann(Teuchos::ParameterList& p)
   : NeumannBase<PHAL::AlbanyTraits::MPResidual,Traits>(p)
 {
 }
@@ -713,7 +711,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 Neumann<PHAL::AlbanyTraits::MPJacobian, Traits>::
-Neumann(const Teuchos::ParameterList& p)
+Neumann(Teuchos::ParameterList& p)
   : NeumannBase<PHAL::AlbanyTraits::MPJacobian,Traits>(p)
 {
 }
@@ -791,7 +789,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 Neumann<PHAL::AlbanyTraits::MPTangent, Traits>::
-Neumann(const Teuchos::ParameterList& p)
+Neumann(Teuchos::ParameterList& p)
   : NeumannBase<PHAL::AlbanyTraits::MPTangent,Traits>(p)
 {
 }
