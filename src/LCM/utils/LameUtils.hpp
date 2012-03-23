@@ -21,17 +21,33 @@
 #include "Teuchos_ParameterList.hpp"
 
 // LAME material model base class
+
+#include "Teuchos_RCP.hpp"
+#include "Teuchos_ParameterList.hpp"
+
+// LAME material model base class
+#ifdef ALBANY_LAME
 #include <models/Material.h>
+using lame::MatProps;
+using lame::matParams;
+using lame::Material;
+#endif
+#ifdef ALBANY_LAMENT
+#include <models/Lament_Material.h>
+using lament::MatProps;
+using lament::matParams;
+using lament::Material;
+#endif
 
 //! Utility functions for interfacing to LAME material library
 namespace LameUtils {
 
-  //! Convert a Teuchos::ParameterList into a lame::MatProps structure.
-  void parameterListToMatProps(const Teuchos::ParameterList& lameMaterialParameters, lame::MatProps& matProps);
+  //! Convert a Teuchos::ParameterList into a lame(nt)::MatProps structure.
+  void parameterListToMatProps(const Teuchos::ParameterList& lameMaterialParameters, MatProps& matProps);
 
-  //! Instantiate a lame::MaterialModel given the model name and a set of material parameters. 
-  Teuchos::RCP<lame::Material> constructLameMaterialModel(const std::string& lameMaterialModelName,
-                                                          const Teuchos::ParameterList& lameMaterialParameters);
+  //! Instantiate a lame(nt)::MaterialModel given the model name and a set of material parameters. 
+  Teuchos::RCP<Material> constructLameMaterialModel(const std::string& lameMaterialModelName,
+						    const Teuchos::ParameterList& lameMaterialParameters);
 
   //! Return a vector containing the names of the state variables associated with the given LAME material model and material parameters.
   std::vector<std::string> getStateVariableNames(const std::string& lameMaterialModelName,

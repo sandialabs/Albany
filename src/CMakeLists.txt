@@ -492,7 +492,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/utils/Topology.h 
   )
 
-IF(ALBANY_LAME)
+IF(ALBANY_LAME OR ALBANY_LAMENT)
   SET(SOURCES ${SOURCES}
     ${LCM_DIR}/utils/LameUtils.cpp
     ${LCM_DIR}/evaluators/LameStress.cpp 
@@ -643,6 +643,14 @@ ELSE()
   set(LAME_LIB )
 ENDIF()
 
+# LAMENT
+IF(ALBANY_LAMENT)
+  include_directories (${LAMENT_INCLUDE_DIR})
+  link_directories (${LAMENT_LIBRARY_DIR})
+  set(LAMENT_LIB lament)
+ELSE()
+  set(LAMENT_LIB )
+ENDIF()
 
 # Albany CI (Configuration Interaction)
 IF(ALBANY_CI)
@@ -688,7 +696,7 @@ IF (ALBANY_LCM)
   add_executable(NodeUpdate LCM/test/utils/NodeUpdate.cc)
   add_executable(MeshComponents LCM/test/utils/MeshComponents.cc)
 ENDIF ()
-IF (ALBANY_LAME)
+IF (ALBANY_LAME OR ALBANY_LAMENT)
   add_executable(utLameStress_elastic
     PHAL_Dimension.cpp
     PHAL_AlbanyTraits.cpp
@@ -705,10 +713,10 @@ IF (ALBANY_LAME)
     ${LCM_DIR}/test/unit_tests/StandardUnitTestMain.cpp
     ${LCM_DIR}/test/unit_tests/utLameStress_elastic.cpp
   )
-  target_link_libraries(utLameStress_elastic ${LAME_LIB} ${Trilinos_LIBRARIES})
+  target_link_libraries(utLameStress_elastic ${LAME_LIB} ${LAMENT_LIB} ${Trilinos_LIBRARIES})
 ENDIF ()
 
-set(ALL_LIBRARIES ${ALBANY_CI_LIB} ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${Trilinos_EXTRA_LD_FLAGS} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES} )
+set(ALL_LIBRARIES ${ALBANY_CI_LIB} ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${LAMENT_LIB} ${Trilinos_EXTRA_LD_FLAGS} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES} )
 
 target_link_libraries(Albany          albanyLib ${ALL_LIBRARIES}) 
 target_link_libraries(AlbanySG        albanyLib ${ALL_LIBRARIES})

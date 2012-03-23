@@ -246,6 +246,8 @@ Albany::LameProblem::constructEvaluators(
     // If true, compute determinate of deformation gradient at all integration points, then replace all of them with the volume average for the element (integrate J over volume of element, divide by total volume).  This give a constant volumetric response.
     const bool volavgJ = params->get("volavgJ", false);
     p->set<bool>("volavgJ Name", volavgJ);
+    const bool weighted_Volume_Averaged_J = params->get("weighted_Volume_Averaged_J", false);
+    p->set<bool>("weighted_Volume_Averaged_J Name", weighted_Volume_Averaged_J);
     // Integration weights for each quadrature point
     p->set<string>("Weights Name","Weights");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
@@ -359,4 +361,4 @@ Albany::LameProblem::constructEvaluators(
   return Teuchos::null;
 }
 
-#endif // ALBANY_LAMEPROBLEM_HPP
+#endif // LAMEPROBLEM_HPP

@@ -4,6 +4,8 @@
 # exclude patterns (uncomment them if you want to use them):
 *.[oa]
 *~
+/GCC_4.4.4_OPT/
+/LAMENT_GCC_4.4.4_OPT/
 /build/
 /DEBUG/
 /RELEASE/
