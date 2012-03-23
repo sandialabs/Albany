@@ -293,7 +293,7 @@ void LameStressBase<EvalT, Traits>::
   matp->state_new = stateNew;
   matp->stress_old = stressOld;
   matp->stress_new = stressNew;
-  matp->dtrnew = 1.0;  // This is the default value in LAME, only MDCreep and MunsonDawson use it
+//   matp->dt_mat = std::numeric_limits<double>::max();
   
   // matParams that still need to be added:
   // matp->temp_old  (temperature)
