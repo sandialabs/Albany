@@ -505,7 +505,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 	int i = (int)QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue( sourceEvecInds[0] );
 	int j = (int)QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue( sourceEvecInds[1] );
 
-	//int valleyDegeneracyFactor = materialDB->getElementBlockParam<int>(workset.EBName,"Num of conduction band min",2);
+	//int valleyDegeneracyFactor = materialDB->getElementBlockParam<int>(workset.EBName,"Number of conduction band min",2);
 	// scale so electron density is in [cm^-3] (assume 3D? Suzey?) as expected of RHS of Poisson eqn
 	ScalarT prefactor = 1.0/pow(X0,3.);
 	
@@ -1435,7 +1435,7 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrodinger
   double cm2Perm2 = 1.0e4; 
   
   // For Delta2-band in Silicon, valley degeneracy factor = 2
-  int valleyDegeneracyFactor = materialDB->getElementBlockParam<int>(workset.EBName,"Num of conduction band min",2);
+  int valleyDegeneracyFactor = materialDB->getElementBlockParam<int>(workset.EBName,"Number of conduction band min",2);
 
   // Scaling factors
   double X0 = length_unit_in_m/1e-2; // length scaling to get to [cm] (structure dimension in [um])
@@ -1595,7 +1595,7 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonCI
   //double cm2Perm2 = 1.0e4; 
   
   // For Delta2-band in Silicon, valley degeneracy factor = 2
-  int valleyDegeneracyFactor = materialDB->getElementBlockParam<int>(workset.EBName,"Num of conduction band min",2);
+  int valleyDegeneracyFactor = materialDB->getElementBlockParam<int>(workset.EBName,"Number of conduction band min",2);
 
   // Scaling factors
   double X0 = length_unit_in_m/1e-2; // length scaling to get to [cm] (structure dimension in [um])

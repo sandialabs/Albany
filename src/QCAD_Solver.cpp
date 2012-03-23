@@ -87,7 +87,7 @@ namespace QCAD {
   
   void ResetEigensolverShift(const Teuchos::RCP<EpetraExt::ModelEvaluator>& Solver, double newShift,
 			     Teuchos::RCP<Teuchos::ParameterList>& eigList);
-  double GetEigensolverShift(const SolverSubSolver& ss, int minPotentialResponseIndex);
+  double GetEigensolverShift(const SolverSubSolver& ss, int minPotentialResponseIndex, double pcBelowMinPotential);
 
 
   //String processing helper functions
@@ -137,6 +137,7 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
       problemName == "Poisson CI") {
     maxIter = problemParams.get<int>("Maximum Iterations", 100);
     iterationMethod = problemParams.get<string>("Iteration Method", "Picard");
+    shiftPercentBelowMin = problemParams.get<double>("Eigensolver Percent Shift Below Potential Min", 1.0);
     CONVERGE_TOL = problemParams.get<double>("Convergence Tolerance", 1e-6);
   }
 
@@ -404,9 +405,9 @@ QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
     iter++;
 
     if (iter == 1) 
-      newShift = QCAD::GetEigensolverShift(getSubSolver("InitPoisson"), 0);
+      newShift = QCAD::GetEigensolverShift(getSubSolver("InitPoisson"), 0, shiftPercentBelowMin);
     else
-      newShift = QCAD::GetEigensolverShift(getSubSolver("Poisson"), 0);
+      newShift = QCAD::GetEigensolverShift(getSubSolver("Poisson"), 0, shiftPercentBelowMin);
     QCAD::ResetEigensolverShift(getSubSolver("Schrodinger").model, newShift, eigList);
 
     // Schrodinger Solve -> eigenstates
@@ -544,9 +545,9 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
     iter++;
  
     if (iter == 1) 
-      newShift = QCAD::GetEigensolverShift(getSubSolver("InitPoisson"), 0);
+      newShift = QCAD::GetEigensolverShift(getSubSolver("InitPoisson"), 0, shiftPercentBelowMin);
     else
-      newShift = QCAD::GetEigensolverShift(getSubSolver("Poisson"), 0);
+      newShift = QCAD::GetEigensolverShift(getSubSolver("Poisson"), 0, shiftPercentBelowMin);
     QCAD::ResetEigensolverShift(getSubSolver("Schrodinger").model, newShift, eigList);
 
     // Schrodinger Solve -> eigenstates
@@ -1652,7 +1653,7 @@ void QCAD::ResetEigensolverShift(const Teuchos::RCP<EpetraExt::ModelEvaluator>& 
 
 
 double QCAD::GetEigensolverShift(const QCAD::SolverSubSolver& ss, 
-			   int minPotentialResponseIndex)
+				 int minPotentialResponseIndex, double pcBelowMinPotential)
 {
   int Ng = ss.responses_out->Ng();
   TEUCHOS_TEST_FOR_EXCEPT( Ng <= 0 );
@@ -1666,7 +1667,7 @@ double QCAD::GetEigensolverShift(const QCAD::SolverSubSolver& ss,
   //double shift = -(minVal - 0.05*(maxVal-minVal)); //minus sign b/c negative eigenvalue convention
   
   //double shift = -minVal*1.1;  // 10% below minimum value
-  double shift = -minVal*1.01;
+  double shift = -minVal*(1.0 + pcBelowMinPotential/100.0);
   return shift;
 }
   

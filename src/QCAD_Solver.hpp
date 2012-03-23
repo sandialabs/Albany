@@ -92,6 +92,7 @@ namespace QCAD {
     std::size_t maxIter;
     std::size_t nParameters;
     std::size_t nResponseDoubles;
+    
 
     std::string iterationMethod;
     int nEigenvectors; //used in Poisson-CI coupling
@@ -107,6 +108,7 @@ namespace QCAD {
     bool bSupportDpDg;
 
     double CONVERGE_TOL;
+    double shiftPercentBelowMin;  // for eigensolver shift-invert: shift point == minPotential * (1 + shiftPercent/100)
   };
 
 
