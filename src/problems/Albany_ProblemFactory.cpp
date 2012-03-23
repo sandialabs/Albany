@@ -37,7 +37,7 @@
 #include "LCM/problems/GradientDamageProblem.hpp"
 #include "LCM/problems/ThermoMechanicalProblem.hpp"
 #include "LCM/problems/HDiffusionDeformationProblem.hpp"
-#ifdef ALBANY_LAME
+#if defined(ALBANY_LAME) || defined(ALBANY_LAMENT)
 #include "LCM/problems/LameProblem.hpp"
 #endif
 #endif
@@ -131,10 +131,10 @@ Albany::ProblemFactory::create()
   }
 #ifdef ALBANY_LCM
   else if (method == "LAME" || method == "Lame" || method == "lame") {
-#ifdef ALBANY_LAME
+#if defined(ALBANY_LAME) || defined(ALBANY_LAMENT)
     strategy = rcp(new Albany::LameProblem(problemParams, paramLib, 3, comm));
 #else
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, " **** LAME materials not enabled, recompile with -DENABLE_LAME ****\n");
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, " **** LAME materials not enabled, recompile with -DENABLE_LAME or -DENABLE_LAMENT ****\n");
 #endif
   }
   else if (method == "Elasticity 1D") {

@@ -361,4 +361,4 @@ Albany::LameProblem::constructEvaluators(
   return Teuchos::null;
 }
 
-#endif // ALBANY_LAMEPROBLEM_HPP
+#endif // LAMEPROBLEM_HPP

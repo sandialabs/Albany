@@ -25,6 +25,15 @@
 #include "PHAL_Dimension.hpp"
 #include "LameUtils.hpp"
 
+#ifdef ALBANY_LAME
+using lame::matParams;
+using lame::Material;
+#endif
+#ifdef ALBANY_LAMENT
+using lament::matParams;
+using lament::Material;
+#endif
+
 namespace LCM {
 /** \brief Evaluates stress using the Library for Advanced Materials for Engineering (LAME).
 */
@@ -57,14 +66,14 @@ protected:
   void calcStressRealType(PHX::MDField<RealType,Cell,QuadPoint,Dim,Dim>& stressFieldRef,
                           PHX::MDField<RealType,Cell,QuadPoint,Dim,Dim>& defGradFieldRef,
                           typename Traits::EvalData workset,
-                          Teuchos::RCP<lame::matParams>& matp);
+                          Teuchos::RCP<matParams>& matp);
 
   // Allocate material parameter arrays -- always doubles
-  void setMatP(Teuchos::RCP<lame::matParams>& matp,
+  void setMatP(Teuchos::RCP<matParams>& matp,
                typename Traits::EvalData workset);
 
   // Free material pointer arrays -- always doubles
-  void freeMatP(Teuchos::RCP<lame::matParams>& matp);
+  void freeMatP(Teuchos::RCP<matParams>& matp);
 
 
   // Input:
@@ -79,7 +88,7 @@ protected:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stressField;
 
   // The LAME material model
-  Teuchos::RCP<lame::Material> lameMaterialModel;
+  Teuchos::RCP<Material> lameMaterialModel;
 
   // The LAME material model name
   std::string lameMaterialModelName;

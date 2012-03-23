@@ -71,7 +71,7 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
   lameStressParameterList->set<string>("Stress Name", "Stress");
   lameStressParameterList->set< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout", qp_scalar);
   lameStressParameterList->set< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout", qp_tensor);
-  lameStressParameterList->set<string>("Lame Material Model", "Elastic");
+  lameStressParameterList->set<string>("Lame Material Model", "Elastic_New");
   Teuchos::ParameterList& materialModelParametersList = lameStressParameterList->sublist("Lame Material Parameters");
   materialModelParametersList.set<double>("Youngs Modulus", 1.0);
   materialModelParametersList.set<double>("Poissons Ratio", 0.25);
