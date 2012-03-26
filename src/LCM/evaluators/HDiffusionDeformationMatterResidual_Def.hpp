@@ -278,7 +278,7 @@ evaluateFields(typename Traits::EvalData workset)
 						  TResidual(cell,node) -= tauFactor(cell,qp)*
 	                		          wGradBF(cell, node, qp, i)*
 	                		          Cinv(cell,qp,i,j)*
-	                		          stressGrad(cell, qp, j);
+	                		          stressGrad(cell, qp, j)*0.0;
 					  }
 
 				  }

@@ -129,7 +129,7 @@ evaluateFields(typename Traits::EvalData workset)
 		  TResidual(cell,node)=0.0;
 		  for (std::size_t qp=0; qp < numQPs; ++qp)
 				  {
-				  	  TResidual(cell,node) += ( projectedStress(cell,qp)-
+				  	  TResidual(cell,node) -= ( projectedStress(cell,qp)-
 	                		          tauH(cell, qp))*wBF(cell,node,qp);
 			  }
 	  }
