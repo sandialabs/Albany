@@ -70,6 +70,8 @@ SaddleValueResponseFunction(
   bAdaptivePointSize = params.get<bool>("Adaptive Image Point Size", false);
   minAdaptivePointWt = params.get<double>("Adaptive Min Point Weight", 5);
   maxAdaptivePointWt = params.get<double>("Adaptive Max Point Weight", 10);
+  shortenBeginPc = params.get<double>("Percent to Shorten Begin", 0);
+  shortenEndPc   = params.get<double>("Percent to Shorten End", 0);
 
   fieldCutoffFctr = params.get<double>("Levelset Field Cutoff Factor", 1.0);
   minPoolDepthFctr = params.get<double>("Levelset Minimum Pool Depth Factor", 1.0);
@@ -299,8 +301,21 @@ initializeImagePoints(const double current_time,
     imagePts[nImagePts-1].value = globalMin;                               //no need to broadcast winner's value
   }
 
-  if(dbMode > 2) std::cout << "Saddle Point:   -- done begin/end point initialization" << std::endl;
+  //! Shorten beginning and end of path if requested (used to move begin/end point off of a contact region in QCAD)
+  if(shortenBeginPc > 1e-6) {
+     if(saddleGuessGiven)
+       imagePts[0].coords = imagePts[0].coords + (saddlePointGuess - imagePts[0].coords) * (shortenBeginPc/100.0);
+     else
+       imagePts[0].coords = imagePts[0].coords + (imagePts[nImagePts-1].coords - imagePts[0].coords) * (shortenBeginPc/100.0);
+  }
+  if(shortenEndPc > 1e-6) {
+     if(saddleGuessGiven)
+       imagePts[nImagePts-1].coords = imagePts[nImagePts-1].coords + (saddlePointGuess - imagePts[nImagePts-1].coords) * (shortenEndPc/100.0);
+     else
+       imagePts[nImagePts-1].coords = imagePts[nImagePts-1].coords + (imagePts[0].coords - imagePts[nImagePts-1].coords) * (shortenEndPc/100.0);
+  }
 
+  if(dbMode > 2) std::cout << "Saddle Point:   -- done begin/end point initialization" << std::endl;
 
   //! Initialize Image Points:  
   //   interpolate between initial and final points (and possibly guess point) 
