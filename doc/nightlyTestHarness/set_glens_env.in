@@ -15,7 +15,6 @@
 # Set these to whatever you like
 SCRIPTDIR=/ascldap/users/gahanse/Codes/AlbanyBuild
 NIGHTLYDIR=$SCRIPTDIR/Results
-cd $NIGHTLYDIR
 
 #set this correctly
 BOOSTDIR=/ascldap/users/gahanse/local/boost_1_47_0

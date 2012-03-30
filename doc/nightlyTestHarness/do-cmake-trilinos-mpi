@@ -29,9 +29,6 @@
 # All paths must me changed for your build (search "gahanse")
 #
 # Set some paths if we are not being executed by the build scripts
-# BOOSTDIR=/ascldap/users/gahanse/local/boost_1_47_0
-
-NETCDF_PATH=/ascldap/users/gahanse/local/
 
 BUILD_DIR=`pwd`
 
@@ -93,10 +90,8 @@ cmake \
       -D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
       -D Trilinos_ENABLE_Pamgen:BOOL=ON \
       -D TPL_ENABLE_Netcdf:BOOL=ON \
-      -D TPL_Netcdf_INCLUDE_DIRS:PATH=/ascldap/users/gahanse/local/include \
-      -D TPL_Netcdf_LIBRARY_DIRS:PATH=/ascldap/users/gahanse/local/lib \
-      -D TPL_Netcdf_INCLUDE_DIRS:PATH=$NETCDF_PATH/include \
-      -D TPL_Netcdf_LIBRARY_DIRS:PATH=$NETCDF_PATH/lib \
+      -D TPL_Netcdf_INCLUDE_DIRS:PATH=$NETCDFDIR/include \
+      -D TPL_Netcdf_LIBRARY_DIRS:PATH=$NETCDFDIR/lib \
        ../
 
 #
