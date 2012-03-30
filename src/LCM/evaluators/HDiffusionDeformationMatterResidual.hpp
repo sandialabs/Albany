@@ -117,9 +117,10 @@ private:
 
   Intrepid::FieldContainer<ScalarT> pTTterm;
   Intrepid::FieldContainer<ScalarT> pBterm;
+  Intrepid::FieldContainer<ScalarT> pTranTerm;
 
 
-  ScalarT pTranTerm, trialPbar;
+  ScalarT trialPbar;
  // ScalarT pStrainRateTerm;
 
 
