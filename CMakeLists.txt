@@ -74,6 +74,14 @@ ELSE()
   SET(ALBANY_DAKOTA FALSE)
 ENDIF()
 
+MESSAGE("-- Looking for Tpetra:")
+LIST(FIND Trilinos_PACKAGE_LIST Tpetra Tpetra_List_ID)
+IF (Tpetra_List_ID GREATER -1)
+  MESSAGE("-- Looking for Tpetra: -- found.")
+ELSE()
+  MESSAGE(FATAL_ERROR "-- Looking for Tpetra: -- not found.  Recompile Trilinos with TRILINOS_ENABLE_Tpetra:BOOL=ON.")
+ENDIF()
+
 # MPI check -- defaults to TRUE
 MESSAGE("-- Checking if MPI is enabled in Trilinos:")
 LIST(FIND Trilinos_TPL_LIST MPI MPI_List_ID)

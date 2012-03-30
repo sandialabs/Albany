@@ -41,6 +41,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=/home/agsalin/Trilinos/build_july10/install \
       -D Trilinos_ENABLE_Shards:BOOL=ON \
       -D Trilinos_ENABLE_Sacado:BOOL=ON \
       -D Trilinos_ENABLE_Epetra:BOOL=ON \
+      -D Trilinos_ENABLE_Tpetra:BOOL=ON \
       -D Trilinos_ENABLE_EpetraExt:BOOL=ON \
       -D Trilinos_ENABLE_Ifpack:BOOL=ON \
       -D Trilinos_ENABLE_AztecOO:BOOL=ON \
