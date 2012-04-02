@@ -96,6 +96,8 @@ namespace Albany {
       const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
     void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
+    void constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs);
+
 
   protected:
 
@@ -103,7 +105,8 @@ namespace Albany {
     bool haveSource;
     int numDim;
 
-    std::string matModel;
+    std::string matModel; 
+    Teuchos::RCP<Albany::Layouts> dl;
 
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState;
@@ -172,7 +175,7 @@ Albany::ElasticityProblem::constructEvaluators(
 
 
    // Construct standard FEM evaluators with standard field names                              
-   RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
+   dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
    TEUCHOS_TEST_FOR_EXCEPTION(dl->vectorAndGradientLayoutsAreEquivalent==false, std::logic_error,
                               "Data Layout Usage in Mechanics problems assume vecDim = numDim");
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);

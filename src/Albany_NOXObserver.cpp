@@ -43,18 +43,28 @@ void Albany_NOXObserver::observeSolution(
        const Epetra_Vector& solution, double time_or_param_val
                                          )
 {
+
+
 #ifdef ALBANY_SEACAS
   // if (solution.Map().Comm().MyPID()==0)
   //   cout << "Albany::NOXObserver calling exodus output " << endl;
 
-  Albany::STKDiscretization* stkDisc =
-    dynamic_cast<Albany::STKDiscretization*>(disc.get());
+    Albany::STKDiscretization* stkDisc =
+      dynamic_cast<Albany::STKDiscretization*>(disc.get());
 
-  {
-    Teuchos::TimeMonitor exooutTimer(*exooutTime); //start timer
+  /* GAH Note:
+   * If solution == "Steady", we need to update the solution from the initial guess prior to
+   * writing it out, or we will not get the proper state of things like "Stress" in the Exodus file.
+   */ 
 
-    stkDisc->outputToExodus(solution, time_or_param_val);
+  if(app->getSolutionMethod() != Albany::Application::Steady){
+
+      Teuchos::TimeMonitor exooutTimer(*exooutTime); //start timer
+  
+      stkDisc->outputToExodus(solution, time_or_param_val);
+
   }
+
 #endif
 
   // Special output for loca runs of HTE problem
@@ -68,5 +78,22 @@ void Albany_NOXObserver::observeSolution(
   // This must come at the end since it renames the New state 
   // as the Old state in preparation for the next step
   app->getStateMgr().updateStates();
+
+#ifdef ALBANY_SEACAS
+
+  /* GAH Note:
+   * If solution == "Steady", we need to update the solution from the initial guess prior to
+   * writing it out, or we will not get the proper state of things like "Stress" in the Exodus file.
+   */ 
+
+  if(app->getSolutionMethod() == Albany::Application::Steady){
+
+      Teuchos::TimeMonitor exooutTimer(*exooutTime); //start timer
+  
+      stkDisc->outputToExodus(solution, time_or_param_val);
+
+  }
+
+#endif
 
 }

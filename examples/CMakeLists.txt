@@ -102,6 +102,7 @@ ENDIF()
 
 # These require exodus, Ioss, stk_io, to read meshes
 IF(ALBANY_SEACAS)
+  add_subdirectory(Elasticity2DTraction)
   add_subdirectory(Poisson)
   add_subdirectory(Schrodinger)
   add_subdirectory(PoissonSchroMosCap1D)
