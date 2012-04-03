@@ -29,45 +29,47 @@ namespace LCM {
   template<typename EvalT, typename Traits>
   HDiffusionDeformationMatterResidual<EvalT, Traits>::
   HDiffusionDeformationMatterResidual(const Teuchos::ParameterList& p) :
-    wBF         (p.get<std::string>                ("Weighted BF Name"),
+    wBF         (p.get<std::string>           ("Weighted BF Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
-	wGradBF     (p.get<std::string>                ("Weighted Gradient BF Name"),
+	wGradBF     (p.get<std::string>           ("Weighted Gradient BF Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
-	GradBF      (p.get<std::string>                   ("Gradient BF Name"),
+	GradBF      (p.get<std::string>           ("Gradient BF Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
-    Dstar (p.get<std::string>                   ("Effective Diffusivity Name"),
+    Dstar (p.get<std::string>                 ("Effective Diffusivity Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-    DL   (p.get<std::string>                       ("Diffusion Coefficient Name"),
+    DL   (p.get<std::string>                  ("Diffusion Coefficient Name"),
          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-    Clattice (p.get<std::string>                   ("QP Variable Name"),
+    Clattice (p.get<std::string>              ("QP Variable Name"),
          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-	eqps (p.get<std::string>                   ("eqps Name"),
+	eqps (p.get<std::string>                  ("eqps Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-    eqpsFactor (p.get<std::string>                   ("Strain Rate Factor Name"),
+    eqpsFactor (p.get<std::string>            ("Strain Rate Factor Name"),
 	     p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-	Ctrapped (p.get<std::string>                   ("Trapped Concentration Name"),
+	Ctrapped (p.get<std::string>              ("Trapped Concentration Name"),
          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-	Ntrapped (p.get<std::string>                   ("Trapped Solvent Name"),
+	Ntrapped (p.get<std::string>              ("Trapped Solvent Name"),
          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-    CLGrad       (p.get<std::string>               ("Gradient QP Variable Name"),
+    CLGrad       (p.get<std::string>          ("Gradient QP Variable Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-	stressGrad       (p.get<std::string>               ("Gradient Hydrostatic Stress Name"),
+	stressGrad       (p.get<std::string>      ("Gradient Hydrostatic Stress Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
 //    Source      (p.get<std::string>                ("Source Name"),
 //		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
 //	MechSource      (p.get<std::string>            ("Mechanical Source Name"),
 //		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-    DefGrad      (p.get<std::string>               ("Deformation Gradient Name"),
+    DefGrad      (p.get<std::string>          ("Deformation Gradient Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-	Pstress      (p.get<std::string>               ("Stress Name"),
+	Pstress      (p.get<std::string>          ("Stress Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-	weights       (p.get<std::string>                   ("Weights Name"),
+	weights       (p.get<std::string>         ("Weights Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-	tauFactor  (p.get<std::string>                   ("Tau Contribution Name"),
-		 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-	deltaTime (p.get<std::string>                  ("Delta Time Name"),
+	tauFactor  (p.get<std::string>            ("Tau Contribution Name"),
+		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+    elementLength (p.get<std::string>         ("Element Length Name"),
+		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	deltaTime (p.get<std::string>             ("Delta Time Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("Workset Scalar Data Layout")),
-    TResidual   (p.get<std::string>                ("Residual Name"),
+    TResidual   (p.get<std::string>           ("Residual Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") )
  //   haveSource  (p.get<bool>("Have Source"))
  //   ,haveMechSource  (p.get<bool>("Have Mechanical Source"))
@@ -76,6 +78,7 @@ namespace LCM {
       enableTransient = !p.get<bool>("Disable Transient");
     else enableTransient = true;
 
+    this->addDependentField(elementLength);
     this->addDependentField(wBF);
     this->addDependentField(wGradBF);
     this->addDependentField(GradBF);
@@ -146,6 +149,7 @@ namespace LCM {
   postRegistrationSetup(typename Traits::SetupData d,
 			PHX::FieldManager<Traits>& fm)
   {
+	this->utils.setFieldData(elementLength,fm);
 	this->utils.setFieldData(wBF,fm);
 	this->utils.setFieldData(wGradBF,fm);
     this->utils.setFieldData(GradBF,fm);
@@ -210,7 +214,7 @@ evaluateFields(typename Traits::EvalData workset)
    FST::integrate<ScalarT>(TResidual, CinvTgrad, wGradBF, Intrepid::COMP_CPP, false); // this also works
   //FST::integrate<ScalarT>(TResidual, Hflux, wGradBF, Intrepid::COMP_CPP, false);
 
-  ScalarT artificialViscosity(1e-6); // Currently it's set to be constant, but I will change it -S.Sun
+  // ScalarT artificialViscosity(1e-6); // Currently it's set to be constant, but I will change it -S.Sun
 
    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
@@ -231,14 +235,16 @@ evaluateFields(typename Traits::EvalData workset)
 				  TResidual(cell,node) += Dstar(cell, qp)*(
 						     Clattice(cell,qp)- Clattice_old(cell, qp)
 						    )*wBF(cell, node, qp)
-						    /(DL(cell,qp)+artificialViscosity);
+						    /(DL(cell,qp)+
+						      Dstar(cell,qp)*Dstar(cell,qp)*elementLength(cell,qp)*elementLength(cell,qp)/6.0);
 
 				  // Strain Rate Term
 				  TResidual(cell,node) += Ctrapped(cell, qp)/Ntrapped(cell, qp)*
 						                  eqpsFactor(cell,qp)*(
 				  						     eqps(cell,qp)- eqps_old(cell, qp)
 				  						    ) *wBF(cell, node, qp)*dt
-				  						  /(DL(cell,qp)+artificialViscosity);
+				  						  /(DL(cell,qp)
+				  						    +Dstar(cell,qp)*Dstar(cell,qp)*elementLength(cell,qp)*elementLength(cell,qp)/6.0);
 
 			  }
 		  }
@@ -263,7 +269,8 @@ evaluateFields(typename Traits::EvalData workset)
 	                		          wGradBF(cell, node, qp, i)*
 	                		          Cinv(cell,qp,i,j)*
 	                		          stressGrad(cell, qp, j)*dt
-	                		          /(DL(cell,qp)+artificialViscosity);
+	                		          /(DL(cell,qp)+
+	                		            Dstar(cell,qp)*Dstar(cell,qp)*elementLength(cell,qp)*elementLength(cell,qp)/6.0);
 					  }
 
 				  }

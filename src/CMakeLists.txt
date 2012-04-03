@@ -353,6 +353,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/MixtureThermalExpansion.cpp
     ${LCM_DIR}/evaluators/MixtureSpecificHeat.cpp
     ${LCM_DIR}/evaluators/StabParameter.cpp
+    ${LCM_DIR}/evaluators/GradientElementLength.cpp
+    ${LCM_DIR}/evaluators/UnitGradient.cpp
     ${LCM_DIR}/evaluators/SetField.cpp
   )
 
@@ -473,6 +475,10 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/MixtureSpecificHeat_Def.hpp
     ${LCM_DIR}/evaluators/StabParameter.hpp
     ${LCM_DIR}/evaluators/StabParameter_Def.hpp
+    ${LCM_DIR}/evaluators/GradientElementLength.hpp
+    ${LCM_DIR}/evaluators/GradientElementLength_Def.hpp
+    ${LCM_DIR}/evaluators/UnitGradient.hpp
+    ${LCM_DIR}/evaluators/UnitGradient_Def.hpp
     ${LCM_DIR}/evaluators/SetField.hpp 
     ${LCM_DIR}/evaluators/SetField_Def.hpp 
   )
