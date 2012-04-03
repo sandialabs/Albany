@@ -25,9 +25,10 @@
 Albany_RythmosObserver::Albany_RythmosObserver(
      const Teuchos::RCP<Albany::Application> &app_) : 
   disc(app_->getDiscretization()),
-  app(app_)
+  app(app_),
+  exodusOutput(app->getDiscretization())
 {
-   exooutTime = Teuchos::TimeMonitor::getNewTimer("Albany: Output to Exodus");
+  // Nothing to do
 }
 
 void Albany_RythmosObserver::observeCompletedTimeStep(
@@ -65,13 +66,7 @@ void Albany_RythmosObserver::observeCompletedTimeStep(
     t = app->getParamLib()->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
 
 #ifdef ALBANY_SEACAS
-  Albany::STKDiscretization* stkDisc =
-    dynamic_cast<Albany::STKDiscretization*>(disc.get());
-
-  {
-    Teuchos::TimeMonitor exooutTimer(*exooutTime); //start timer
-    stkDisc->outputToExodus(soln, t);
-  }
+  exodusOutput.writeSolution(t, soln);
 #endif
 
   // Evaluate state field manager
