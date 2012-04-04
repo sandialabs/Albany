@@ -53,7 +53,7 @@ void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
   const std::string name = icParams.get("Function","Constant");
   if (name=="Restart") return;
 
-  Teuchos::Array<double> defaultData;
+  Teuchos::Array<double> defaultData(neq);
   Teuchos::Array<double> data = icParams.get("Function Data",defaultData);
 
   // Call factory method from library of initial condition functions
