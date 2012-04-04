@@ -26,6 +26,7 @@
 
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_AbstractSTKMeshStruct.hpp"
+#include "Albany_DataTypes.hpp"
 
 #include "Epetra_CrsMatrix.h"
 #include "Epetra_Vector.h"
@@ -68,20 +69,30 @@ namespace Albany {
     //! Destructor
     ~STKDiscretization();
 
-    //! Get DOF map
+    //! Get Epetra DOF map
     Teuchos::RCP<const Epetra_Map> getMap() const;
+    //! Get Tpetra DOF map
+    Teuchos::RCP<const Tpetra_Map> getMapT() const;
 
-    //! Get overlapped DOF map
+    //! Get Epetra overlapped DOF map
     Teuchos::RCP<const Epetra_Map> getOverlapMap() const;
+    //! Get Tpetra overlapped DOF map
+    Teuchos::RCP<const Tpetra_Map> getOverlapMapT() const;
 
-    //! Get Jacobian graph
+    //! Get Epetra Jacobian graph
     Teuchos::RCP<const Epetra_CrsGraph> getJacobianGraph() const;
+    //! Get Tpetra Jacobian graph
+    Teuchos::RCP<const Tpetra_CrsGraph> getJacobianGraphT() const;
 
-    //! Get overlap Jacobian graph
+    //! Get Epetra overlap Jacobian graph
     Teuchos::RCP<const Epetra_CrsGraph> getOverlapJacobianGraph() const;
+    //! Get Tpetra overlap Jacobian graph
+    Teuchos::RCP<const Tpetra_CrsGraph> getOverlapJacobianGraphT() const;
 
-    //! Get Node map
+    //! Get Epetra Node map
     Teuchos::RCP<const Epetra_Map> getNodeMap() const; 
+    //! Get Tpetra Node map
+    Teuchos::RCP<const Tpetra_Map> getNodeMapT() const; 
 
     //! Get Node set lists (typedef in Albany_AbstractDiscretization.hpp)
     const NodeSetList& getNodeSets() const { return nodeSets; };
@@ -111,8 +122,12 @@ namespace Albany {
     void outputToExodus(const Epetra_Vector& soln, const double time);
  
     Teuchos::RCP<Epetra_Vector> getSolutionField() const;
+    //Tpetra analog
+    Teuchos::RCP<Tpetra_Vector> getSolutionFieldT() const;
 
     void setResidualField(const Epetra_Vector& residual);
+    //Tpetra analog
+    void setResidualFieldT(const Tpetra_Vector& residualT);
 
     // Retrieve mesh struct
     Teuchos::RCP<Albany::AbstractSTKMeshStruct> getSTKMeshStruct() {return stkMeshStruct;};
@@ -178,21 +193,25 @@ namespace Albany {
     //! Epetra communicator
     Teuchos::RCP<const Epetra_Comm> comm;
 
+   //! Tpetra communicator and Kokkos node
+    Teuchos::RCP<const Teuchos::Comm<int> > commT;
+    Teuchos::RCP<KokkosNode> nodeT;
+
     //! Node map
-    Teuchos::RCP<Epetra_Map> node_map;
+    Teuchos::RCP<const Tpetra_Map> node_mapT; 
 
     //! Unknown Map
-    Teuchos::RCP<Epetra_Map> map;
+    Teuchos::RCP<const Tpetra_Map> mapT; 
 
     //! Overlapped unknown map, and node map
-    Teuchos::RCP<Epetra_Map> overlap_map;
-    Teuchos::RCP<Epetra_Map> overlap_node_map;
+    Teuchos::RCP<const Tpetra_Map> overlap_mapT; 
+    Teuchos::RCP<const Tpetra_Map> overlap_node_mapT; 
 
     //! Jacobian matrix graph
-    Teuchos::RCP<Epetra_CrsGraph> graph;
+    Teuchos::RCP<Tpetra_CrsGraph> graphT; 
 
     //! Overlapped Jacobian matrix graph
-    Teuchos::RCP<Epetra_CrsGraph> overlap_graph;
+    Teuchos::RCP<Tpetra_CrsGraph> overlap_graphT; 
 
     //! Processor ID
     unsigned int myPID;

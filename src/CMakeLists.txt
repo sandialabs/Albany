@@ -18,6 +18,7 @@
 SET(SOURCES
 	Albany_SolverFactory.cpp
 	Albany_Utils.cpp
+	Petra_Converters.cpp
 	PHAL_Dimension.cpp 
 	PHAL_AlbanyTraits.cpp 
 	Albany_Application.cpp 
@@ -31,6 +32,7 @@ SET(SOURCES
 SET(HEADERS
 	Albany_SolverFactory.hpp
 	Albany_Utils.hpp
+	Petra_Converters.hpp
 	Albany_DataTypes.hpp 
 	PHAL_Dimension.hpp 
 	PHAL_FactoryTraits.hpp 
@@ -701,6 +703,7 @@ IF (ALBANY_LAME OR ALBANY_LAMENT)
     PHAL_Dimension.cpp
     PHAL_AlbanyTraits.cpp
     Albany_Utils.cpp
+    Petra_Converters.cpp
     Albany_StateManager.cpp
     stk/Albany_GenericSTKMeshStruct.cpp
     stk/Albany_TmplSTKMeshStruct.cpp

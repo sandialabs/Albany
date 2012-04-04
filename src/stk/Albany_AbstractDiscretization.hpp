@@ -23,6 +23,7 @@
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ArrayRCP.hpp"
+#include "Albany_DataTypes.hpp"
 
 #include "Epetra_Map.h"
 #include "Epetra_Vector.h"
@@ -59,26 +60,41 @@ namespace Albany {
     //! Destructor
     virtual ~AbstractDiscretization() {};
 
-    //! Get DOF map
+    //! Get Epetra DOF map
     virtual Teuchos::RCP<const Epetra_Map>
-    getMap() const = 0;
+    getMap() const = 0; 
+    //! Get Tpetra DOF map
+    virtual Teuchos::RCP<const Tpetra_Map>
+    getMapT() const = 0;
 
-    //! Get overlapped DOF map
+    //! Get Epetra overlapped DOF map
     virtual Teuchos::RCP<const Epetra_Map>
     getOverlapMap() const = 0;
+    //! Get Tpetra overlapped DOF map
+    virtual Teuchos::RCP<const Tpetra_Map>
+    getOverlapMapT() const = 0;
 
-    //! Get Jacobian graph
+    //! Get Epetra Jacobian graph
     virtual Teuchos::RCP<const Epetra_CrsGraph>
-    getJacobianGraph() const = 0;
+    getJacobianGraph() const = 0; 
+    //! Get Tpetra Jacobian graph
+    virtual Teuchos::RCP<const Tpetra_CrsGraph>
+    getJacobianGraphT() const = 0;
 
-    //! Get overlap Jacobian graph
+    //! Get Epetra overlap Jacobian graph
     virtual Teuchos::RCP<const Epetra_CrsGraph>
     getOverlapJacobianGraph() const = 0;
+    //! Get Tpetra overlap Jacobian graph
+    virtual Teuchos::RCP<const Tpetra_CrsGraph>
+    getOverlapJacobianGraphT() const = 0;
 
-    //! Get Node map
+    //! Get Epetra Node map
     virtual Teuchos::RCP<const Epetra_Map>
     getNodeMap() const = 0;
-
+    //! Get Tpetra Node map
+    virtual Teuchos::RCP<const Tpetra_Map>
+    getNodeMapT() const = 0;
+    
     //! Get Node set lists (typdef in Albany_Discretization.hpp)
     virtual const NodeSetList& getNodeSets() const = 0;
     virtual const NodeSetCoordList& getNodeSetCoords() const = 0;
@@ -104,6 +120,8 @@ namespace Albany {
 
     //! Get solution vector from mesh database
     virtual Teuchos::RCP<Epetra_Vector> getSolutionField() const = 0;
+    //Tpetra analog
+    virtual Teuchos::RCP<Tpetra_Vector> getSolutionFieldT() const = 0;
 
     //! Accessor function to get coordinates for ML. Memory controlled here.
     virtual void getOwned_xyz(double **x, double **y, double **z, double **rbm,

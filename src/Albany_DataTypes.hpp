@@ -39,6 +39,33 @@ typedef Sacado::Fad::DFad<SGType> SGFadType;
 typedef Sacado::ETV::Vector<double,StorageType> MPType;
 typedef Sacado::Fad::DFad<MPType> MPFadType;
 
+//Tpetra includes
+#include "Teuchos_DefaultComm.hpp"
+#include "Teuchos_ArrayView.hpp"
+#include "Tpetra_DefaultPlatform.hpp"
+#include "Tpetra_Map.hpp"
+#include "Tpetra_CrsGraph.hpp"
+#include "Tpetra_CrsMatrix.hpp"
+#include "Tpetra_DistObject.hpp"
+#include "Tpetra_Operator.hpp"
+#include "Tpetra_MultiVector.hpp"
+#include "MatrixMarket_Tpetra.hpp"
+
+//Kokkos includes 
+#include "Kokkos_SerialNode.hpp"
+
+//Tpetra typedefs
+typedef double                                      ST;
+typedef int                                         GO;
+typedef int                                         LO;
+typedef Kokkos::SerialNode                          KokkosNode;
+typedef Tpetra::Map<LO, GO, KokkosNode>             Tpetra_Map;
+typedef Tpetra::Export<LO, GO, KokkosNode>          Tpetra_Export;
+typedef Tpetra::Import<LO, GO, KokkosNode>          Tpetra_Import;
+typedef Tpetra::CrsGraph<LO, GO, KokkosNode>        Tpetra_CrsGraph;
+typedef Tpetra::CrsMatrix<ST, LO, GO, KokkosNode>   Tpetra_CrsMatrix;
+typedef Tpetra::Vector<ST, LO, GO, KokkosNode>      Tpetra_Vector;
+
 
 // Include ScalarParameterLibrary to specialize its traits
 #include "Sacado_ScalarParameterLibrary.hpp"
