@@ -116,7 +116,7 @@ void LameStress<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 
-  Teuchos::RCP<matParams> matp = Teuchos::rcp(new matParams());
+  Teuchos::RCP<MaterialParameters> matp = Teuchos::rcp(new MaterialParameters());
   this->setMatP(matp, workset);
 
   this->calcStressRealType(this->stressField, this->defGradField, workset, matp);
@@ -146,7 +146,7 @@ evaluateFields(typename Traits::EvalData workset)
   defGradFieldRealType.setFieldData(d_mem);
 
   // Allocate double arrays in matp
-  Teuchos::RCP<matParams> matp = Teuchos::rcp(new matParams());
+  Teuchos::RCP<MaterialParameters> matp = Teuchos::rcp(new MaterialParameters());
   this->setMatP(matp, workset);
 
   // Begin Finite Difference 
@@ -212,7 +212,7 @@ evaluateFields(typename Traits::EvalData workset)
   defGradFieldRealType.setFieldData(d_mem);
 
   // Allocate double arrays in matp
-  Teuchos::RCP<matParams> matp = Teuchos::rcp(new matParams());
+  Teuchos::RCP<MaterialParameters> matp = Teuchos::rcp(new MaterialParameters());
   this->setMatP(matp, workset);
 
   // Begin Finite Difference 
@@ -258,7 +258,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename EvalT, typename Traits>
 void LameStressBase<EvalT, Traits>::
-  setMatP(Teuchos::RCP<matParams>& matp,
+  setMatP(Teuchos::RCP<MaterialParameters>& matp,
           typename Traits::EvalData workset)
 {
   // \todo Get actual time step for calls to LAME materials.
@@ -307,7 +307,7 @@ void LameStressBase<EvalT, Traits>::
 
 template<typename EvalT, typename Traits>
 void LameStressBase<EvalT, Traits>::
-  freeMatP(Teuchos::RCP<matParams>& matp)
+  freeMatP(Teuchos::RCP<MaterialParameters>& matp)
 {
   delete [] matp->strain_rate;
   delete [] matp->spin;
@@ -324,7 +324,7 @@ void LameStressBase<EvalT, Traits>::
   calcStressRealType(PHX::MDField<RealType,Cell,QuadPoint,Dim,Dim>& stressFieldRef,
              PHX::MDField<RealType,Cell,QuadPoint,Dim,Dim>& defGradFieldRef,
              typename Traits::EvalData workset,
-             Teuchos::RCP<matParams>& matp) 
+             Teuchos::RCP<MaterialParameters>& matp) 
 {
   // Get the old state data
   Albany::MDArray oldDefGrad = (*workset.stateArrayPtr)[defGradName];

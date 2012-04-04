@@ -28,24 +28,22 @@
 // LAME material model base class
 #ifdef ALBANY_LAME
 #include <models/Material.h>
-#using lame::MatProps;
-using lame::matParams;
+using lame::MatProps;
 using lame::Material;
-typedef lame::MatProps MaterialProperties;
+typedef lame::matParams MaterialParameters;
 #endif
 #ifdef ALBANY_LAMENT
 #include <models/Lament_Material.h>
-//using lament::MatProps;
-using lament::matParams;
+using lament::MatProps;
 using lament::Material;
-typedef lament::MatProps<double> MaterialProperties;
+typedef lament::matParams<double> MaterialParameters;
 #endif
 
 //! Utility functions for interfacing to LAME material library
 namespace LameUtils {
 
   //! Convert a Teuchos::ParameterList into a lame(nt)::MatProps structure.
-  void parameterListToMatProps(const Teuchos::ParameterList& lameMaterialParameters, MaterialProperties& matProps);
+  void parameterListToMatProps(const Teuchos::ParameterList& lameMaterialParameters, MatProps& matProps);
 
   //! Instantiate a lame(nt)::MaterialModel given the model name and a set of material parameters. 
   Teuchos::RCP<Material> constructLameMaterialModel(const std::string& lameMaterialModelName,

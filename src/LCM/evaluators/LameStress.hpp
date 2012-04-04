@@ -26,12 +26,12 @@
 #include "LameUtils.hpp"
 
 #ifdef ALBANY_LAME
-using lame::matParams;
 using lame::Material;
+typedef lame::matParams MaterialParameters;
 #endif
 #ifdef ALBANY_LAMENT
-using lament::matParams;
 using lament::Material;
+typedef lament::matParams<double> MaterialParameters;
 #endif
 
 namespace LCM {
@@ -66,14 +66,14 @@ protected:
   void calcStressRealType(PHX::MDField<RealType,Cell,QuadPoint,Dim,Dim>& stressFieldRef,
                           PHX::MDField<RealType,Cell,QuadPoint,Dim,Dim>& defGradFieldRef,
                           typename Traits::EvalData workset,
-                          Teuchos::RCP<matParams>& matp);
+                          Teuchos::RCP<MaterialParameters>& matp);
 
   // Allocate material parameter arrays -- always doubles
-  void setMatP(Teuchos::RCP<matParams>& matp,
+  void setMatP(Teuchos::RCP<MaterialParameters>& matp,
                typename Traits::EvalData workset);
 
   // Free material pointer arrays -- always doubles
-  void freeMatP(Teuchos::RCP<matParams>& matp);
+  void freeMatP(Teuchos::RCP<MaterialParameters>& matp);
 
 
   // Input:

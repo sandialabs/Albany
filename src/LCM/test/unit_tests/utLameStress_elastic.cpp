@@ -135,8 +135,6 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
   workset.numCells = worksetSize;
   workset.stateArrayPtr = &stateMgr.getStateArray(0);
 
-  void* voidPtr(0);
-
   // Call the evaluators, evaluateFields() is the function that computes stress based on deformation gradient
   fieldManager.preEvaluate<PHAL::AlbanyTraits::Residual>(workset);
   fieldManager.evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
