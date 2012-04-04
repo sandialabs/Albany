@@ -33,7 +33,7 @@
 	<!-- MATERIAL MODEL/PROPERTIES -->
     <ParameterList name="Initial Condition">
       <Parameter name="Function" type="string" value="Constant"/>
-      <Parameter name="Function Data" type="Array(double)" value="{0.0,0.0,0.0, 38.7}"/>
+      <Parameter name="Function Data" type="Array(double)" value="{0.0,0.0,0.0, 38.7, 0.0}"/>
     </ParameterList>
 		
 	

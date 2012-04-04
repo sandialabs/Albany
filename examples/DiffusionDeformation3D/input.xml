@@ -27,7 +27,7 @@
 	<!-- MATERIAL MODEL/PROPERTIES -->
     <ParameterList name="Initial Condition">
       <Parameter name="Function" type="string" value="Constant"/>
-      <Parameter name="Function Data" type="Array(double)" value="{0.0,0.0,0.0, 0.00346992}"/>
+      <Parameter name="Function Data" type="Array(double)" value="{0.0,0.0,0.0, 0.00346992, 0.0}"/>
     </ParameterList>
 		
 	<!-- Hydorgen Transport Parameter -->

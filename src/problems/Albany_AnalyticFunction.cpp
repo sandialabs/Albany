@@ -51,6 +51,9 @@ Teuchos::RCP<Albany::AnalyticFunction> Albany::createAnalyticFunction(
 Albany::ConstantFunction::ConstantFunction(int neq_, int numDim_,
    Teuchos::Array<double> data_) : numDim(numDim_), neq(neq_), data(data_)
 {
+   TEUCHOS_TEST_FOR_EXCEPTION((data.size()!=neq),
+                             std::logic_error,
+                             "Error! Invalid specification of initial condition: incorrect length of Function Data for Constant Function; neq = " << neq << ", data.size() = " << data.size() <<  std::endl) ;
 }
 void Albany::ConstantFunction::compute(double* x, const double *X) 
 {
