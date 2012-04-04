@@ -310,7 +310,7 @@ calc_dudn_const(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
   for(int pt = 0; pt < numPoints; pt++){
 
 //    qp_data_returned(0, pt) = input_dTdn; // User directly specified dTdn, just use it
-    qp_data_returned(0, pt) = dudn; // User directly specified dTdn, just use it
+    qp_data_returned(0, pt) = -dudn; // User directly specified dTdn, just use it
 
   }
 
@@ -345,7 +345,10 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node){
 
       valptr = &(this->neumann)(cell, node);
+//     std::cout << this->offset << " " << this->neumann(cell, node) <<
+//      " " << (*f)[nodeID[node][this->offset]] << std::endl;
       (*f)[nodeID[node][this->offset]] += *valptr;
+
 
     }
   }

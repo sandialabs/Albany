@@ -86,7 +86,9 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT Jm53;
   ScalarT trace;
   
-  Intrepid::FieldContainer<ScalarT> b(workset.numCells, numQPs, numDims, numDims);
+  //Intrepid::FieldContainer<ScalarT> b(workset.numCells, numQPs, numDims, numDims);
+  //Replaced above line with the following.  The above will cause code to crash in some builds. IK, 4/4/2012
+  Intrepid::FieldContainer<ScalarT> b(worksetSize, numQPs, numDims, numDims);
   Intrepid::RealSpaceTools<ScalarT>::transpose(FT, F);
   Intrepid::FunctionSpaceTools::tensorMultiplyDataData<ScalarT> (b, F, FT, 'N');
 

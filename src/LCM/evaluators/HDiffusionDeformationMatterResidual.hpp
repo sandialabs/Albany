@@ -59,6 +59,7 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
   PHX::MDField<ScalarT,Cell,QuadPoint> Source;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> DefGrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint> elementLength;
   PHX::MDField<ScalarT,Cell,QuadPoint> Dstar;
   PHX::MDField<ScalarT,Cell,QuadPoint> DL;
   PHX::MDField<ScalarT,Cell,QuadPoint> Clattice;
@@ -117,9 +118,10 @@ private:
 
   Intrepid::FieldContainer<ScalarT> pTTterm;
   Intrepid::FieldContainer<ScalarT> pBterm;
+  Intrepid::FieldContainer<ScalarT> pTranTerm;
 
 
-  ScalarT pTranTerm, trialPbar;
+  ScalarT trialPbar;
  // ScalarT pStrainRateTerm;
 
 

@@ -11,7 +11,7 @@
     </ParameterList>
     <ParameterList name="Initial Condition">
       <Parameter name="Function" type="string" value="Constant"/>
-      <Parameter name="Function Data" type="Array(double)" value="{0.0}"/>
+      <Parameter name="Function Data" type="Array(double)" value="{0.0, 0.0}"/>
     </ParameterList>
     <ParameterList name="Initial Condition Dot">
       <Parameter name="Function" type="string" value="Linear Y"/>

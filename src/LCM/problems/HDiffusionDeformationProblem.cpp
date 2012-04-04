@@ -158,6 +158,8 @@ Albany::HDiffusionDeformationProblem::getValidProblemParameters() const
   validPL->sublist("Effective Diffusivity", false, "");
   validPL->sublist("Strain Rate Factor", false, "");
   validPL->sublist("Tau Contribution", false, "");
+  validPL->sublist("CL Unit Gradient", false, "");
+  validPL->sublist("Element Length", false, "");
 
   return validPL;
 }
