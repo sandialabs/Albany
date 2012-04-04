@@ -42,7 +42,7 @@
 
 namespace LameUtils {
 
-void parameterListToMatProps(const Teuchos::ParameterList& lameMaterialParameters, MatProps& matProps){
+void parameterListToMatProps(const Teuchos::ParameterList& lameMaterialParameters, MaterialProperties& matProps){
 
   // load the material properties into the lame(nt)::MatProps container.
   // LAME material properties must be of type int, double, or string.
@@ -87,7 +87,7 @@ Teuchos::RCP<Material> constructLameMaterialModel(const std::string& lameMateria
   std::transform(materialModelName.begin(), materialModelName.end(), materialModelName.begin(), toupper);
   std::replace(materialModelName.begin(), materialModelName.end(), ' ', '_');
 
-  MatProps props;
+  MaterialProperties props;
   parameterListToMatProps(lameMaterialParameters, props);
 
   Teuchos::RCP<Material> materialModel;
@@ -197,7 +197,7 @@ std::vector<double> getStateVariableInitialValues(const std::string& lameMateria
   matp->stress_old = &stressOld[0];
   matp->stress_new = &stressNew[0];
 
-  MatProps props;
+  MaterialProperties props;
   parameterListToMatProps(lameMaterialParameters, props);
 
   // todo Check with Bill to see if props can be a null pointer (meaning no changes to the material properties).
