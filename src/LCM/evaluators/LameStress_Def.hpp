@@ -49,7 +49,7 @@ LameStressBase(Teuchos::ParameterList& p) :
 
   this->setName("LameStress"+PHX::TypeString<EvalT>::value);
 
-  // Default to getting material infor form base input file (possibley overwritten later)
+  // Default to getting material info form base input file (possibley overwritten later)
   lameMaterialModelName = p.get<string>("Lame Material Model", "Elastic");
   Teuchos::ParameterList& lameMaterialParameters = p.sublist("Lame Material Parameters");
 
@@ -383,7 +383,7 @@ void LameStressBase<EvalT, Traits>::
       // and then fill data into the vectors below
 
       // new deformation gradient (the current deformation gradient as computed in the current configuration)
-     LCM::Tensor<RealType> Fnew(
+      LCM::Tensor<RealType> Fnew(
        defGradFieldRef(cell,qp,0,0), defGradFieldRef(cell,qp,0,1), defGradFieldRef(cell,qp,0,2),
        defGradFieldRef(cell,qp,1,0), defGradFieldRef(cell,qp,1,1), defGradFieldRef(cell,qp,1,2),
        defGradFieldRef(cell,qp,2,0), defGradFieldRef(cell,qp,2,1), defGradFieldRef(cell,qp,2,2) );
