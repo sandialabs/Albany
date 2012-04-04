@@ -187,6 +187,12 @@ evaluateFields(typename Traits::EvalData workset)
 
   ScalarT dt = deltaTime(0);
 
+  // compute factor
+  ScalarT fac(0.0);
+  if (dt > 0.0)
+    fac = 1.0 / dt;
+
+
 
   // Set Warning message
 //  if (Clattice_old(1,1) <= 0 || Clattice(1,1) <= 0 ) {
@@ -236,7 +242,7 @@ evaluateFields(typename Traits::EvalData workset)
 						     Clattice(cell,qp)- Clattice_old(cell, qp)
 						    )*wBF(cell, node, qp)
 						    /(DL(cell,qp)+
-						      Dstar(cell,qp)*Dstar(cell,qp)*elementLength(cell,qp)*elementLength(cell,qp)/6.0);
+						      Dstar(cell,qp)*elementLength(cell,qp)*elementLength(cell,qp)/6.0*fac);
 
 				  // Strain Rate Term
 				  TResidual(cell,node) += Ctrapped(cell, qp)/Ntrapped(cell, qp)*
@@ -244,7 +250,7 @@ evaluateFields(typename Traits::EvalData workset)
 				  						     eqps(cell,qp)- eqps_old(cell, qp)
 				  						    ) *wBF(cell, node, qp)*dt
 				  						  /(DL(cell,qp)
-				  						    +Dstar(cell,qp)*Dstar(cell,qp)*elementLength(cell,qp)*elementLength(cell,qp)/6.0);
+				  						    +Dstar(cell,qp)*elementLength(cell,qp)*elementLength(cell,qp)/6.0*fac);
 
 			  }
 		  }
@@ -270,7 +276,7 @@ evaluateFields(typename Traits::EvalData workset)
 	                		          Cinv(cell,qp,i,j)*
 	                		          stressGrad(cell, qp, j)*dt
 	                		          /(DL(cell,qp)+
-	                		            Dstar(cell,qp)*Dstar(cell,qp)*elementLength(cell,qp)*elementLength(cell,qp)/6.0);
+	                		            Dstar(cell,qp)*elementLength(cell,qp)*elementLength(cell,qp)/6.0*fac);
 					  }
 
 				  }
