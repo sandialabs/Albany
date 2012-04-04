@@ -52,6 +52,10 @@ struct Workset {
 
   Teuchos::RCP<const Epetra_Vector> x;
   Teuchos::RCP<const Epetra_Vector> xdot;
+  //Tpetra analogs of x and xdog
+  Teuchos::RCP<const Tpetra_Vector> xT;
+  Teuchos::RCP<const Tpetra_Vector> xdotT;
+  
   Teuchos::RCP<ParamVec> params;
   Teuchos::RCP<const Epetra_MultiVector> Vx;
   Teuchos::RCP<const Epetra_MultiVector> Vxdot;
@@ -62,6 +66,9 @@ struct Workset {
   Teuchos::RCP<const Stokhos::ProductEpetraVector > mp_xdot;
 
   Teuchos::RCP<Epetra_Vector> f;
+  //Tpetra analog of f
+  Teuchos::RCP<Tpetra_Vector> fT;
+ 
   Teuchos::RCP<Epetra_CrsMatrix> Jac;
   Teuchos::RCP<Epetra_MultiVector> JV;
   Teuchos::RCP<Epetra_MultiVector> fp;
@@ -121,6 +128,7 @@ struct Workset {
   // New field manager response stuff
   Teuchos::RCP<const Teuchos::Comm<int> > comm;
   Teuchos::RCP<const Epetra_Import> x_importer;
+  Teuchos::RCP<const Tpetra_Import> x_importerT;
   Teuchos::RCP<Epetra_Vector> g;
   Teuchos::RCP<Epetra_MultiVector> dgdx;
   Teuchos::RCP<Epetra_MultiVector> dgdxdot;

@@ -82,8 +82,14 @@ void
 TimeDepBC<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  Teuchos::RCP<Epetra_Vector> f = dirichletWorkset.f;
-  Teuchos::RCP<const Epetra_Vector> x = dirichletWorkset.x;
+  //Teuchos::RCP<Epetra_Vector> f = dirichletWorkset.f;
+  //Teuchos::RCP<const Epetra_Vector> x = dirichletWorkset.x;
+  
+  Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
+  Teuchos::RCP<const Tpetra_Vector> xT = dirichletWorkset.xT;
+  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
+  Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
+  
   RealType time = dirichletWorkset.current_time;
   // Grab the vector off node GIDs for this Node Set ID from the std::map
   const std::vector<std::vector<int> >& nsNodes = 
@@ -97,7 +103,8 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 
     Val = this->computeVal(time);
 
-    (*f)[lunk] = ((*x)[lunk] - Val);
+    //(*f)[lunk] = ((*x)[lunk] - Val);
+    fT_nonconstView[lunk] = xT_constView[lunk] - Val;
   }
 }
 

@@ -15,6 +15,7 @@
 \********************************************************************/
 
 #include "Albany_Application.hpp"
+#include "Petra_Converters.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemFactory.hpp"
 #include "Albany_DiscretizationFactory.hpp"
@@ -23,6 +24,8 @@
 #include "Epetra_LocalMap.h"
 #include "Stokhos_OrthogPolyBasis.hpp"
 #include "Teuchos_TimeMonitor.hpp"
+#include "EpetraExt_MultiVectorOut.h"
+
 
 #include<string>
 #include "PHAL_Workset.hpp"
@@ -43,23 +46,30 @@
 
 #include "Albany_ScalarResponseFunction.hpp"
 
+
 using Teuchos::ArrayRCP;
 using Teuchos::RCP;
 using Teuchos::rcp;
 using Teuchos::rcp_dynamic_cast;
 using Teuchos::TimeMonitor;
 
+
+
+
 Albany::Application::
 Application(const RCP<const Epetra_Comm>& comm_,
 	    const RCP<Teuchos::ParameterList>& params,
 	    const RCP<const Epetra_Vector>& initial_guess) :
   comm(comm_),
+  commT(Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(*comm_))),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   physicsBasedPreconditioner(false),
   shapeParamsHaveBeenReset(false),
   morphFromInit(true), perturbBetaForDirichlets(0.0),
   phxGraphVisDetail()
 {
+  Teuchos::ParameterList kokkosNodeParams;
+  nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
   defineTimers();
 
   // Create parameter library
@@ -73,22 +83,6 @@ Application(const RCP<const Epetra_Comm>& comm_,
 
   // Validate Problem parameters against list for this specific problem
   problemParams->validateParameters(*(problem->getValidProblemParameters()),0);
-
-  // Save the solution method to be used
-  string solutionMethod = problemParams->get("Solution Method", "Steady");
-  if(solutionMethod == "Steady") 
-    solMethod = Steady;
-  else if(solutionMethod == "Continuation") 
-    solMethod = Continuation;
-  else if(solutionMethod == "Transient") 
-    solMethod = Transient;
-  else if(solutionMethod == "Multi-Problem") 
-    solMethod = MultiProblem;
-  else
-    TEUCHOS_TEST_FOR_EXCEPTION(true, 
-            std::logic_error, "Solution Method must be Steady, Transient, "
-            << "Continuation, or Multi-Problem not : " << solutionMethod);
-
 
   // Register shape parameters for manipulation by continuation/optimization
   if (problemParams->get("Enable Cubit Shape Parameters",false)) {
@@ -181,21 +175,50 @@ Application(const RCP<const Epetra_Comm>& comm_,
   overlapped_xdot = rcp(new Epetra_Vector(*(disc->getOverlapMap())));
   overlapped_f = rcp(new Epetra_Vector(*(disc->getOverlapMap())));
   overlapped_jac = rcp(new Epetra_CrsMatrix(Copy, *(disc->getOverlapJacobianGraph())));
+  //Create analogous Tpetra objects
+  importerT = rcp(new Tpetra_Import(disc->getMapT(), disc->getOverlapMapT()));
+  exporterT = rcp(new Tpetra_Export(disc->getOverlapMapT(), disc->getMapT()));
+  overlapped_xT = rcp(new Tpetra_Vector(disc->getOverlapMapT()));
+  overlapped_xdotT = rcp(new Tpetra_Vector(disc->getOverlapMapT()));
+  overlapped_fT = rcp(new Tpetra_Vector(disc->getOverlapMapT()));
+  overlapped_jacT = rcp(new Tpetra_CrsMatrix(disc->getOverlapJacobianGraphT()));
 
-  // Initialize solution vector and time deriv
+  // Initialize Epetra solution vector and time deriv
   initial_x = disc->getSolutionField();
   initial_x_dot = rcp(new Epetra_Vector(*(disc->getMap())));
+  // Initialize Tpetra solution vector and time deriv
+  initial_xT = disc->getSolutionFieldT();
+  initial_x_dotT = rcp(new Tpetra_Vector(disc->getMapT()));
 
-  if (initial_guess != Teuchos::null) *initial_x = *initial_guess;
+  //Create Tpetra copy of initial_guess, called initial_guessT
+  //RCP<const Tpetra_Vector> initial_guessT; 
+  //if (initial_guess != Teuchos::null) initial_guessT = EpetraVectorConst_To_TpetraVector(*initial_guess, commT, nodeT); 
+
+  if (initial_guess != Teuchos::null) {
+     *initial_x = *initial_guess;
+     //initial_xT = rcp(new Tpetra_Vector(*initial_guessT)); 
+  }
   else {
+    EpetraExt::MultiVectorToMatrixMarketFile("initial_x.dat", *initial_x);
     overlapped_x->Import(*initial_x, *importer, Insert);
+    EpetraExt::MultiVectorToMatrixMarketFile("overlapped_x.dat", *overlapped_x);
     Albany::InitialConditions(overlapped_x, wsElNodeEqID, coords, neq, numDim,
                               problemParams->sublist("Initial Condition"));
     Albany::InitialConditions(overlapped_xdot,  wsElNodeEqID, coords, neq, numDim,
                               problemParams->sublist("Initial Condition Dot"));
     initial_x->Export(*overlapped_x, *exporter, Insert);
     initial_x_dot->Export(*overlapped_xdot, *exporter, Insert);
-  }
+    
+    //Tpetra version of above
+    /*overlapped_xT->doImport(*initial_xT, *importerT, Tpetra::INSERT);
+    Albany::InitialConditionsT(overlapped_xT, wsElNodeEqID, coords, neq, numDim,
+                              problemParams->sublist("Initial Condition"));
+    Albany::InitialConditionsT(overlapped_xdotT,  wsElNodeEqID, coords, neq, numDim,
+                              problemParams->sublist("Initial Condition Dot"));
+    initial_xT->doExport(*overlapped_xT, *exporterT, Tpetra::INSERT);
+    initial_x_dotT->doExport(*overlapped_xdotT, *exporterT, Tpetra::INSERT);
+    */
+}
 
   // Now that space is allocated in STK for state fields, initialize states
   stateMgr.setStateArrays(disc);
@@ -402,10 +425,20 @@ computeGlobalResidual(const double current_time,
   postRegSetup("Residual");
 
   TimeMonitor Timer(*timers[0]); //start timer
+  //Create Tpetra copy of x, called xT
+  Teuchos::RCP<const Tpetra_Vector> xT = Petra::EpetraVectorConst_To_TpetraVector(x, commT, nodeT); 
+  //Create Tpetra copy of xdot, called xdotT
+  Teuchos::RCP<const Tpetra_Vector> xdotT;
+  if (xdot != NULL) {
+     xdotT = Petra::EpetraVectorConst_To_TpetraVector(*xdot, commT, nodeT); 
+  }
 
   // Scatter x and xdot to the overlapped distrbution
-  overlapped_x->Import(x, *importer, Insert);
-  if (xdot != NULL) overlapped_xdot->Import(*xdot, *importer, Insert);
+  overlapped_xT->doImport(*xT, *importerT, Tpetra::INSERT);
+
+  if (xdot != NULL) {
+    overlapped_xdotT->doImport(*xdotT, *importerT, Tpetra::INSERT);
+  }
 
   // Set parameters
   for (int i=0; i<p.size(); i++)
@@ -428,21 +461,25 @@ computeGlobalResidual(const double current_time,
   }
 #endif
 
-  // Zero out overlapped residual
-  overlapped_f->PutScalar(0.0);
-  f.PutScalar(0.0);
+  //Create Tpetra copy of f, call it fT
+  Teuchos::RCP<Tpetra_Vector> fT = Petra::EpetraVectorNonConst_To_TpetraVector(f, commT, nodeT); //Teuchos::rcp(new Tpetra_Vector(xmapT, valuesfAV));
+
+  // Zero out overlapped residual - Tpetra
+  overlapped_fT->putScalar(0.0);
+  fT->putScalar(0.0);
 
   // Set data in Workset struct, and perform fill via field manager
   { 
     PHAL::Workset workset;
 
-    if (!paramLib->isParameter("Time"))
-      loadBasicWorksetInfo( workset, overlapped_x, overlapped_xdot, current_time );
-    else 
-      loadBasicWorksetInfo( workset, overlapped_x, overlapped_xdot,
+    if (!paramLib->isParameter("Time")) {
+      loadBasicWorksetInfoT( workset, overlapped_xT, overlapped_xdotT, current_time );
+   }
+   else { 
+      loadBasicWorksetInfoT( workset, overlapped_xT, overlapped_xdotT,
 			    paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time") );
-    
-    workset.f        = overlapped_f;
+    }
+    workset.fT        = overlapped_fT;
 
 
     for (int ws=0; ws < numWorksets; ws++) {
@@ -455,21 +492,22 @@ computeGlobalResidual(const double current_time,
     }
   }
 
-  f.Export(*overlapped_f, *exporter, Add);
+  fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
 
 #ifdef ALBANY_SEACAS
   Albany::STKDiscretization* stkDisc =
     dynamic_cast<Albany::STKDiscretization*>(disc.get());
   stkDisc->setResidualField(f);
+  stkDisc->setResidualFieldT(*fT);
 #endif
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (dfm!=Teuchos::null) { 
     PHAL::Workset workset;
 
-    workset.f = Teuchos::rcpFromRef(f);
+    workset.fT = fT;
     loadWorksetNodesetInfo(workset);
-    workset.x = Teuchos::rcpFromRef(x);
+    workset.xT = xT;
     if ( paramLib->isParameter("Time") )
       workset.current_time = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
     else
@@ -478,7 +516,10 @@ computeGlobalResidual(const double current_time,
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
-  } 
+  }
+
+  //Copy Tpetra vector fT into Epetra vector f 
+  Petra::TpetraVector_To_EpetraVector(fT, f); 
   //cout << f << endl;
 }
 
@@ -2079,15 +2120,27 @@ evaluateStateFieldManager(const double current_time,
     stateGraphVisDetail = -1;
   }
 
+  //Create Tpetra copy of x, called xT
+  Teuchos::RCP<const Tpetra_Vector> xT = Petra::EpetraVectorConst_To_TpetraVector(x, commT, nodeT); 
+  //Create Tpetra copy of xdot, called xdotT
+  Teuchos::RCP<const Tpetra_Vector> xdotT;
+  if (xdot != NULL) {
+     xdotT = Petra::EpetraVectorConst_To_TpetraVector(*xdot, commT, nodeT); 
+  }
   // Scatter x and xdot to the overlapped distrbution
-  overlapped_x->Import(x, *importer, Insert);
-  if (xdot != NULL) overlapped_xdot->Import(*xdot, *importer, Insert);
+  //overlapped_x->Import(x, *importer, Insert);
+  //if (xdot != NULL) overlapped_xdot->Import(*xdot, *importer, Insert);
 
+  overlapped_xT->doImport(*xT, *importerT, Tpetra::INSERT);
+  if (xdot != NULL) overlapped_xdotT->doImport(*xdotT, *importerT, Tpetra::INSERT);
+  
   // Set data in Workset struct
   PHAL::Workset workset;
-  loadBasicWorksetInfo( workset, overlapped_x, overlapped_xdot, current_time );
-  workset.f = overlapped_f;
-
+  //loadBasicWorksetInfo( workset, overlapped_x, overlapped_xdot, current_time );
+  //workset.f = overlapped_f;
+  loadBasicWorksetInfoT( workset, overlapped_xT, overlapped_xdotT, current_time );
+  workset.fT = overlapped_fT;
+  
   // Perform fill via field manager
   for (int ws=0; ws < numWorksets; ws++) {
     loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
@@ -2324,6 +2377,17 @@ void Albany::Application::loadBasicWorksetInfo(
     if (overlapped_xdot != Teuchos::null) workset.transientTerms = true;
 }
 
+void Albany::Application::loadBasicWorksetInfoT(
+       PHAL::Workset& workset, RCP<Tpetra_Vector> overlapped_xT,
+       RCP<Tpetra_Vector> overlapped_xdotT, double current_time)
+{
+    workset.xT        = overlapped_xT;
+    workset.xdotT     = overlapped_xdotT;
+    workset.current_time = current_time;
+    //workset.delta_time = delta_time;
+    if (overlapped_xdotT != Teuchos::null) workset.transientTerms = true;
+}
+
 void Albany::Application::loadWorksetJacobianInfo(PHAL::Workset& workset,
                                  const double& alpha, const double& beta)
 {
@@ -2380,6 +2444,38 @@ void Albany::Application::setupBasicWorksetInfo(
 
   workset.x_importer = importer;
 }
+
+void Albany::Application::setupBasicWorksetInfoT(
+  PHAL::Workset& workset,
+  double current_time,
+  Teuchos::RCP<const Tpetra_Vector> xdotT, 
+  Teuchos::RCP<const Tpetra_Vector> xT,
+  const Teuchos::Array<ParamVec>& p
+  )
+{
+  // Scatter xT and xdotT to the overlapped distrbution
+  overlapped_xT->doImport(*xT, *importerT, Tpetra::INSERT);
+  if (xdotT != Teuchos::null) overlapped_xdotT->doImport(*xdotT, *importerT, Tpetra::INSERT);
+
+  // Set parameters
+  for (int i=0; i<p.size(); i++)
+    for (unsigned int j=0; j<p[i].size(); j++)
+      p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
+
+  workset.xT = overlapped_xT;
+  workset.xdotT = overlapped_xdotT;
+  if (!paramLib->isParameter("Time"))
+    workset.current_time = current_time;
+  else 
+    workset.current_time = 
+      paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+  if (overlapped_xdotT != Teuchos::null) workset.transientTerms = true;
+
+  workset.comm = commT; 
+
+  workset.x_importerT = importerT;
+}
+
 
 void Albany::Application::setupBasicWorksetInfo(
   PHAL::Workset& workset,

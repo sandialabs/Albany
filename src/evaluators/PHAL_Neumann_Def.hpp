@@ -326,12 +326,16 @@ Neumann(const Teuchos::ParameterList& p)
 {
 }
 
+
+
 template<typename Traits>
 void Neumann<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 
-  Teuchos::RCP<Epetra_Vector> f = workset.f;
+//  Teuchos::RCP<Epetra_Vector> f = workset.f;
+  Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
+  Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
   ScalarT *valptr;
 
   // Fill in "neumann" array
@@ -347,7 +351,8 @@ evaluateFields(typename Traits::EvalData workset)
       valptr = &(this->neumann)(cell, node);
 //     std::cout << this->offset << " " << this->neumann(cell, node) <<
 //      " " << (*f)[nodeID[node][this->offset]] << std::endl;
-      (*f)[nodeID[node][this->offset]] += *valptr;
+//      (*f)[nodeID[node][this->offset]] += *valptr;
+     fT_nonconstView[nodeID[node][this->offset]] += *valptr;
 
 
     }

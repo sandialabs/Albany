@@ -65,8 +65,6 @@ namespace Albany {
      public Sacado::ParameterAccessor<PHAL::AlbanyTraits::Residual, SPL_Traits> {
   public:
 
-    enum SolutionMethod {Steady, Transient, Continuation, MultiProblem};
-
     //! Constructor 
     Application(const Teuchos::RCP<const Epetra_Comm>& comm,
 		const Teuchos::RCP<Teuchos::ParameterList>& params,
@@ -104,9 +102,6 @@ namespace Albany {
 
     //! Get parameter library
     Teuchos::RCP<ParamLib> getParamLib();
-
-    //! Get number of responses
-    SolutionMethod getSolutionMethod() const {return solMethod; }
 
     //! Get number of responses
     int getNumResponses() const;
@@ -492,6 +487,12 @@ namespace Albany {
             Teuchos::RCP<Epetra_Vector> overlapped_x,
             Teuchos::RCP<Epetra_Vector> overlapped_xdot,
             double current_time);
+   // Tpetra analog of above function 
+   void loadBasicWorksetInfoT(
+            PHAL::Workset& workset,
+            Teuchos::RCP<Tpetra_Vector> overlapped_xT,
+            Teuchos::RCP<Tpetra_Vector> overlapped_xdotT,
+            double current_time);
 
     void loadWorksetJacobianInfo(PHAL::Workset& workset,
                 const double& alpha, const double& beta);
@@ -507,6 +508,13 @@ namespace Albany {
       double current_time,
       const Epetra_Vector* xdot, 
       const Epetra_Vector* x,
+      const Teuchos::Array<ParamVec>& p);
+
+    void setupBasicWorksetInfoT(
+      PHAL::Workset& workset,
+      double current_time,
+      Teuchos::RCP<const Tpetra_Vector> xdot, 
+      Teuchos::RCP<const Tpetra_Vector> x,
       const Teuchos::Array<ParamVec>& p);
 
     void setupBasicWorksetInfo(
@@ -574,6 +582,10 @@ namespace Albany {
     //! Communicator
     Teuchos::RCP<const Epetra_Comm> comm;
 
+    //! Tpetra communicator and Kokkos node
+    Teuchos::RCP<const Teuchos::Comm<int> > commT;
+    Teuchos::RCP<KokkosNode> nodeT;
+
     //! Output stream, defaults to pronting just Proc 0
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
@@ -583,29 +595,45 @@ namespace Albany {
     //! Problem class
     Teuchos::RCP<Albany::AbstractProblem> problem;
 
-    //! Initial solution vector
+    //! Initial Epetra solution vector
     Teuchos::RCP<Epetra_Vector> initial_x;
+    //! Initial Tpetra solution vector
+    Teuchos::RCP<Tpetra_Vector> initial_xT;
 
-    //! Initial solution vector
+    //! Initial Epetra solution vector
     Teuchos::RCP<Epetra_Vector> initial_x_dot;
+    //! Initial Tpetra solution vector
+    Teuchos::RCP<Tpetra_Vector> initial_x_dotT;
 
-    //! Importer for overlapped data
+    //! Epetra Importer for overlapped data
     Teuchos::RCP<Epetra_Import> importer;
+    //! Tpetra Importer for overlapped data
+    Teuchos::RCP<Tpetra_Import> importerT;
 
-    //! Exporter for overlapped data
+    //! Epetra Exporter for overlapped data
     Teuchos::RCP<Epetra_Export> exporter;
+    //! Tpetra Exporter for overlapped data
+    Teuchos::RCP<Tpetra_Export> exporterT;
 
-    //! Overlapped solution vector
+    //! Overlapped Epetra solution vector
     Teuchos::RCP<Epetra_Vector> overlapped_x;
+    //! Overlapped Tpetra solution vector
+    Teuchos::RCP<Tpetra_Vector> overlapped_xT;
 
-    //! Overlapped time derivative vector
+    //! Overlapped Epetra time derivative vector
     Teuchos::RCP<Epetra_Vector> overlapped_xdot;
+    //! Overlapped Tpetra time derivative vector
+    Teuchos::RCP<Tpetra_Vector> overlapped_xdotT;
 
-    //! Overlapped residual vector
+    //! Overlapped Epetra residual vector
     Teuchos::RCP<Epetra_Vector> overlapped_f;
+    //! Overlapped Tpetra residual vector
+    Teuchos::RCP<Tpetra_Vector> overlapped_fT;
 
-    //! Overlapped Jacobian matrix
+    //! Overlapped Epetra Jacobian matrix
     Teuchos::RCP<Epetra_CrsMatrix> overlapped_jac;
+    //! Overlapped Tpetra Jacobian matrix
+    Teuchos::RCP<Tpetra_CrsMatrix> overlapped_jacT;
 
     //! Parameter library
     Teuchos::RCP<ParamLib> paramLib;
@@ -672,9 +700,6 @@ namespace Albany {
     //! Data for Physics-Based Preconditioners
     bool physicsBasedPreconditioner;
     Teuchos::RCP<Teuchos::ParameterList> tekoParams;
-
-    //! Type of solution method
-    SolutionMethod solMethod;
 
     //! Shape Optimization data
     bool shapeParamsHaveBeenReset;

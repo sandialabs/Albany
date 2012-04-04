@@ -16,6 +16,7 @@
 
 
 #include "Albany_FieldManagerScalarResponseFunction.hpp"
+#include "Petra_Converters.hpp"
 #include <algorithm>
 
 Albany::FieldManagerScalarResponseFunction::
@@ -104,7 +105,20 @@ evaluateResponse(const double current_time,
 
   // Set data in Workset struct
   PHAL::Workset workset;
-  application->setupBasicWorksetInfo(workset, current_time, xdot, &x, p);
+  Teuchos::RCP<const Epetra_Comm> comm = application->getComm();
+  Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(*comm));
+  Teuchos::ParameterList kokkosNodeParams;
+    Teuchos::RCP<KokkosNode> nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
+  //convert Epetra_Vector x to Tpetra_Vector xT
+  Teuchos::RCP<const Tpetra_Vector> xT = Petra::EpetraVectorConst_To_TpetraVector(x, commT, nodeT);
+  //convert Epetra_Vector *xdot to Tpetra_Vector xdotT
+  Teuchos::RCP<const Tpetra_Vector> xdotT;
+  if (xdot != NULL) {
+     xdotT = Petra::EpetraVectorConst_To_TpetraVector(*xdot, commT, nodeT);
+  }
+ 
+  //application->setupBasicWorksetInfo(workset, current_time, xdot, &x, p);
+  application->setupBasicWorksetInfoT(workset, current_time, xdotT, xT, p);
   workset.g = Teuchos::rcp(&g,false);
 
   // Perform fill via field manager

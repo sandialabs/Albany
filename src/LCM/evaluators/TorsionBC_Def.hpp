@@ -72,8 +72,14 @@ void
 TorsionBC<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  Teuchos::RCP<Epetra_Vector> f = dirichletWorkset.f;
-  Teuchos::RCP<const Epetra_Vector> x = dirichletWorkset.x;
+  //Teuchos::RCP<Epetra_Vector> f = dirichletWorkset.f;
+  //Teuchos::RCP<const Epetra_Vector> x = dirichletWorkset.x;
+  
+  Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
+  Teuchos::RCP<const Tpetra_Vector> xT = dirichletWorkset.xT;
+  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
+  Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
+  
   // Grab the vector off node GIDs for this Node Set ID from the std::map
   const std::vector<std::vector<int> >& nsNodes = 
     dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
@@ -93,8 +99,10 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 
     this->computeBCs(coord, Xval, Yval, time);
 
-    (*f)[xlunk] = ((*x)[xlunk] - Xval);
-    (*f)[ylunk] = ((*x)[ylunk] - Yval);
+    //(*f)[xlunk] = ((*x)[xlunk] - Xval);
+    //(*f)[ylunk] = ((*x)[ylunk] - Yval);
+    fT_nonconstView[xlunk] = xT_constView[xlunk] - Xval;
+    fT_nonconstView[ylunk] = xT_constView[ylunk] - Yval;
   }
 }
 

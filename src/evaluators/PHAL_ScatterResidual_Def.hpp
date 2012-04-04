@@ -106,7 +106,11 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Teuchos::RCP<Epetra_Vector> f = workset.f;
+  //Teuchos::RCP<Epetra_Vector> f = workset.f;
+  Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
+  //get nonconst (read and write) view of fT
+  Teuchos::ArrayRCP<ST> f_nonconstView = fT->get1dViewNonConst();
+
   ScalarT *valptr;
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
@@ -117,7 +121,8 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t eq = 0; eq < numFields; eq++) {
         if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
         else                   valptr = &(this->val[eq])(cell,node);
-	(*f)[nodeID[node][this->offset + eq]] += *valptr;
+	//(*f)[nodeID[node][this->offset + eq]] += *valptr;
+	f_nonconstView[nodeID[node][this->offset + eq]] += *valptr;
       }
     }
   }

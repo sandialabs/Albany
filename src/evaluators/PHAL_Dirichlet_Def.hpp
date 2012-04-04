@@ -69,14 +69,22 @@ template<typename Traits>
 void Dirichlet<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  Teuchos::RCP<Epetra_Vector> f = dirichletWorkset.f;
-  Teuchos::RCP<const Epetra_Vector> x = dirichletWorkset.x;
+  //Teuchos::RCP<Epetra_Vector> f = dirichletWorkset.f;
+  //Teuchos::RCP<const Epetra_Vector> x = dirichletWorkset.x;
+
+
+  Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
+  Teuchos::RCP<const Tpetra_Vector> xT = dirichletWorkset.xT;
+  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
+  Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
+
   // Grab the vector off node GIDs for this Node Set ID from the std::map
   const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
 
   for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
       int lunk = nsNodes[inode][this->offset];
-      (*f)[lunk] = ((*x)[lunk] - this->value);
+      // (*f)[lunk] = ((*x)[lunk] - this->value);
+      fT_nonconstView[lunk] = xT_constView[lunk] - this->value;
   }
 }
 
