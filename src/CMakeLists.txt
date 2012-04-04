@@ -21,6 +21,7 @@ SET(SOURCES
 	PHAL_Dimension.cpp 
 	PHAL_AlbanyTraits.cpp 
 	Albany_Application.cpp 
+	Albany_ObserverFactory.cpp
 	Albany_RythmosObserver.cpp 
 	Albany_NOXObserver.cpp 
 	Albany_StateManager.cpp 
@@ -39,6 +40,7 @@ SET(HEADERS
 	PHAL_Workset.hpp 
 	PHAL_TypeKeyMap.hpp
 	Albany_Application.hpp 
+	Albany_ObserverFactory.hpp
 	Albany_RythmosObserver.hpp 
 	Albany_NOXObserver.hpp 
 	Albany_StateManager.hpp 
