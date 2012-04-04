@@ -42,7 +42,7 @@
 
 namespace LameUtils {
 
-void parameterListToMatProps(const Teuchos::ParameterList& lameMaterialParameters, MatProps& matProps){
+void parameterListToMatProps(const Teuchos::ParameterList& lameMaterialParameters, LameMatProps& matProps){
 
   // load the material properties into the lame(nt)::MatProps container.
   // LAME material properties must be of type int, double, or string.
@@ -79,18 +79,18 @@ void parameterListToMatProps(const Teuchos::ParameterList& lameMaterialParameter
 }
 
 
-Teuchos::RCP<Material> constructLameMaterialModel(const std::string& lameMaterialModelName,
-						  const Teuchos::ParameterList& lameMaterialParameters){
+Teuchos::RCP<LameMaterial> constructLameMaterialModel(const std::string& lameMaterialModelName,
+						      const Teuchos::ParameterList& lameMaterialParameters){
 
   // Strings should be all upper case with spaces replaced with underscores
   std::string materialModelName = lameMaterialModelName;
   std::transform(materialModelName.begin(), materialModelName.end(), materialModelName.begin(), toupper);
   std::replace(materialModelName.begin(), materialModelName.end(), ' ', '_');
 
-  MatProps props;
+  LameMatProps props;
   parameterListToMatProps(lameMaterialParameters, props);
 
-  Teuchos::RCP<Material> materialModel;
+  Teuchos::RCP<LameMaterial> materialModel;
 
 #ifdef ALBANY_LAME
   if(materialModelName == "ELASTIC")
@@ -140,7 +140,7 @@ Teuchos::RCP<Material> constructLameMaterialModel(const std::string& lameMateria
 std::vector<std::string> getStateVariableNames(const std::string& lameMaterialModelName,
                                                const Teuchos::ParameterList& lameMaterialParameters){
 
-  Teuchos::RCP<Material> materialModel = constructLameMaterialModel(lameMaterialModelName, lameMaterialParameters);
+  Teuchos::RCP<LameMaterial> materialModel = constructLameMaterialModel(lameMaterialModelName, lameMaterialParameters);
 
   // Get a list of the state variables, in alphabetical order
   std::vector<std::string> lameMaterialModelStateVariables;
@@ -167,7 +167,7 @@ std::vector<std::string> getStateVariableNames(const std::string& lameMaterialMo
 std::vector<double> getStateVariableInitialValues(const std::string& lameMaterialModelName,
                                                   const Teuchos::ParameterList& lameMaterialParameters){
 
-  Teuchos::RCP<Material> materialModel = constructLameMaterialModel(lameMaterialModelName, lameMaterialParameters);
+  Teuchos::RCP<LameMaterial> materialModel = constructLameMaterialModel(lameMaterialModelName, lameMaterialParameters);
 
   int numStateVariables = materialModel->getNumStateVars();
 
@@ -184,7 +184,7 @@ std::vector<double> getStateVariableInitialValues(const std::string& lameMateria
   // \todo Set up scratch space for material models using getNumScratchVars() and setScratchPtr().
 
   // Create the matParams structure, which is passed to LAME
-  Teuchos::RCP<MaterialParameters> matp = Teuchos::rcp(new MaterialParameters());
+  Teuchos::RCP<LameMatParams> matp = Teuchos::rcp(new LameMatParams());
   matp->nelements = 1;
   matp->dt = 0.0;
   matp->time = 0.0;
@@ -197,7 +197,7 @@ std::vector<double> getStateVariableInitialValues(const std::string& lameMateria
   matp->stress_old = &stressOld[0];
   matp->stress_new = &stressNew[0];
 
-  MatProps props;
+  LameMatProps props;
   parameterListToMatProps(lameMaterialParameters, props);
 
   // todo Check with Bill to see if props can be a null pointer (meaning no changes to the material properties).

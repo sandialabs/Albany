@@ -30,7 +30,7 @@ LameStressBase(Teuchos::ParameterList& p) :
                p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
   stressField(p.get<std::string>("Stress Name"),
               p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-  lameMaterialModel(Teuchos::RCP<Material>())
+  lameMaterialModel(Teuchos::RCP<LameMaterial>())
 {
   // Pull out numQPs and numDims from a Layout
   tensor_dl = p.get< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
@@ -116,7 +116,7 @@ void LameStress<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 
-  Teuchos::RCP<MaterialParameters> matp = Teuchos::rcp(new MaterialParameters());
+  Teuchos::RCP<LameMatParams> matp = Teuchos::rcp(new LameMatParams());
   this->setMatP(matp, workset);
 
   this->calcStressRealType(this->stressField, this->defGradField, workset, matp);
@@ -146,7 +146,7 @@ evaluateFields(typename Traits::EvalData workset)
   defGradFieldRealType.setFieldData(d_mem);
 
   // Allocate double arrays in matp
-  Teuchos::RCP<MaterialParameters> matp = Teuchos::rcp(new MaterialParameters());
+  Teuchos::RCP<LameMatParams> matp = Teuchos::rcp(new LameMatParams());
   this->setMatP(matp, workset);
 
   // Begin Finite Difference 
@@ -212,7 +212,7 @@ evaluateFields(typename Traits::EvalData workset)
   defGradFieldRealType.setFieldData(d_mem);
 
   // Allocate double arrays in matp
-  Teuchos::RCP<MaterialParameters> matp = Teuchos::rcp(new MaterialParameters());
+  Teuchos::RCP<LameMatParams> matp = Teuchos::rcp(new LameMatParams());
   this->setMatP(matp, workset);
 
   // Begin Finite Difference 
@@ -258,7 +258,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename EvalT, typename Traits>
 void LameStressBase<EvalT, Traits>::
-  setMatP(Teuchos::RCP<MaterialParameters>& matp,
+  setMatP(Teuchos::RCP<LameMatParams>& matp,
           typename Traits::EvalData workset)
 {
   // \todo Get actual time step for calls to LAME materials.
@@ -307,7 +307,7 @@ void LameStressBase<EvalT, Traits>::
 
 template<typename EvalT, typename Traits>
 void LameStressBase<EvalT, Traits>::
-  freeMatP(Teuchos::RCP<MaterialParameters>& matp)
+  freeMatP(Teuchos::RCP<LameMatParams>& matp)
 {
   delete [] matp->strain_rate;
   delete [] matp->spin;
@@ -324,7 +324,7 @@ void LameStressBase<EvalT, Traits>::
   calcStressRealType(PHX::MDField<RealType,Cell,QuadPoint,Dim,Dim>& stressFieldRef,
              PHX::MDField<RealType,Cell,QuadPoint,Dim,Dim>& defGradFieldRef,
              typename Traits::EvalData workset,
-             Teuchos::RCP<MaterialParameters>& matp) 
+             Teuchos::RCP<LameMatParams>& matp) 
 {
   // Get the old state data
   Albany::MDArray oldDefGrad = (*workset.stateArrayPtr)[defGradName];

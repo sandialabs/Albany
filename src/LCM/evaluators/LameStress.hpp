@@ -26,12 +26,12 @@
 #include "LameUtils.hpp"
 
 #ifdef ALBANY_LAME
-using lame::Material;
-typedef lame::matParams MaterialParameters;
+typedef lame::Material LameMaterial;
+typedef lame::matParams LameMatParams;
 #endif
 #ifdef ALBANY_LAMENT
-using lament::Material;
-typedef lament::matParams<double> MaterialParameters;
+typedef lament::Material<double> LameMaterial;
+typedef lament::matParams<double> LameMatParams;
 #endif
 
 namespace LCM {
@@ -66,14 +66,14 @@ protected:
   void calcStressRealType(PHX::MDField<RealType,Cell,QuadPoint,Dim,Dim>& stressFieldRef,
                           PHX::MDField<RealType,Cell,QuadPoint,Dim,Dim>& defGradFieldRef,
                           typename Traits::EvalData workset,
-                          Teuchos::RCP<MaterialParameters>& matp);
+                          Teuchos::RCP<LameMatParams>& matp);
 
   // Allocate material parameter arrays -- always doubles
-  void setMatP(Teuchos::RCP<MaterialParameters>& matp,
+  void setMatP(Teuchos::RCP<LameMatParams>& matp,
                typename Traits::EvalData workset);
 
   // Free material pointer arrays -- always doubles
-  void freeMatP(Teuchos::RCP<MaterialParameters>& matp);
+  void freeMatP(Teuchos::RCP<LameMatParams>& matp);
 
 
   // Input:
@@ -88,7 +88,7 @@ protected:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stressField;
 
   // The LAME material model
-  Teuchos::RCP<Material> lameMaterialModel;
+  Teuchos::RCP<LameMaterial> lameMaterialModel;
 
   // The LAME material model name
   std::string lameMaterialModelName;
