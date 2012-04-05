@@ -75,7 +75,8 @@ Albany::ModelEvaluator::ModelEvaluator(
   epetra_param_vec.resize(num_param_vecs);
   p_sg_vals.resize(num_param_vecs);
   p_mp_vals.resize(num_param_vecs);
-  const Epetra_Comm& comm = app->getMap()->Comm();
+  //`const Epetra_Comm& comm = app->getMap()->Comm();
+  const Epetra_Comm& comm = *app->getComm();
   for (int i=0; i<num_param_vecs; i++) {
 
     // Initialize Sacado parameter vector
