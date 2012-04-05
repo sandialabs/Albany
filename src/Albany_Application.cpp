@@ -207,33 +207,20 @@ Application(const RCP<const Epetra_Comm>& comm_,
   initial_x_dotT = rcp(new Tpetra_Vector(disc->getMapT()));
 
   //Create Tpetra copy of initial_guess, called initial_guessT
-  //RCP<const Tpetra_Vector> initial_guessT; 
-  //if (initial_guess != Teuchos::null) initial_guessT = EpetraVectorConst_To_TpetraVector(*initial_guess, commT, nodeT); 
+  RCP<const Tpetra_Vector> initial_guessT; 
+  if (initial_guess != Teuchos::null) initial_guessT = Petra::EpetraVectorConst_To_TpetraVector(*initial_guess, commT, nodeT); 
 
   if (initial_guess != Teuchos::null) {
-     *initial_x = *initial_guess;
-     //initial_xT = rcp(new Tpetra_Vector(*initial_guessT)); 
+     initial_xT = rcp(new Tpetra_Vector(*initial_guessT)); 
   }
   else {
-    EpetraExt::MultiVectorToMatrixMarketFile("initial_x.dat", *initial_x);
-    overlapped_x->Import(*initial_x, *importer, Insert);
-    EpetraExt::MultiVectorToMatrixMarketFile("overlapped_x.dat", *overlapped_x);
-    Albany::InitialConditions(overlapped_x, wsElNodeEqID, coords, neq, numDim,
-                              problemParams->sublist("Initial Condition"));
-    Albany::InitialConditions(overlapped_xdot,  wsElNodeEqID, coords, neq, numDim,
-                              problemParams->sublist("Initial Condition Dot"));
-    initial_x->Export(*overlapped_x, *exporter, Insert);
-    initial_x_dot->Export(*overlapped_xdot, *exporter, Insert);
-    
-    //Tpetra version of above
-    /*overlapped_xT->doImport(*initial_xT, *importerT, Tpetra::INSERT);
+    overlapped_xT->doImport(*initial_xT, *importerT, Tpetra::INSERT);
     Albany::InitialConditionsT(overlapped_xT, wsElNodeEqID, coords, neq, numDim,
                               problemParams->sublist("Initial Condition"));
     Albany::InitialConditionsT(overlapped_xdotT,  wsElNodeEqID, coords, neq, numDim,
                               problemParams->sublist("Initial Condition Dot"));
     initial_xT->doExport(*overlapped_xT, *exporterT, Tpetra::INSERT);
     initial_x_dotT->doExport(*overlapped_xdotT, *exporterT, Tpetra::INSERT);
-    */
 }
 
   // Now that space is allocated in STK for state fields, initialize states
@@ -351,6 +338,8 @@ RCP<const Epetra_Vector>
 Albany::Application::
 getInitialSolution() const
 {
+  //Convert Tpetra::Vector initial_xT to analogous Epetra_Vector initial_x for return
+  Petra::TpetraVector_To_EpetraVector(initial_xT, *initial_x); 
   return initial_x;
 }
 
@@ -358,6 +347,8 @@ RCP<const Epetra_Vector>
 Albany::Application::
 getInitialSolutionDot() const
 {
+  //Convert Tpetra::Vector initial_x_dotT to analogous Epetra_Vector initial_x_dot for return
+  Petra::TpetraVector_To_EpetraVector(initial_x_dotT, *initial_x_dot); 
   return initial_x_dot;
 }
 
