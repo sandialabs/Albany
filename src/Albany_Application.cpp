@@ -84,6 +84,22 @@ Application(const RCP<const Epetra_Comm>& comm_,
   // Validate Problem parameters against list for this specific problem
   problemParams->validateParameters(*(problem->getValidProblemParameters()),0);
 
+  // Save the solution method to be used
+  string solutionMethod = problemParams->get("Solution Method", "Steady");
+  if(solutionMethod == "Steady")
+    solMethod = Steady;
+  else if(solutionMethod == "Continuation")
+    solMethod = Continuation;
+  else if(solutionMethod == "Transient")
+    solMethod = Transient;
+  else if(solutionMethod == "Multi-Problem")
+    solMethod = MultiProblem;
+  else
+    TEUCHOS_TEST_FOR_EXCEPTION(true,
+            std::logic_error, "Solution Method must be Steady, Transient, "
+            << "Continuation, or Multi-Problem not : " << solutionMethod);
+
+
   // Register shape parameters for manipulation by continuation/optimization
   if (problemParams->get("Enable Cubit Shape Parameters",false)) {
 #ifdef ALBANY_CUTR

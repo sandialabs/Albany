@@ -65,6 +65,8 @@ namespace Albany {
      public Sacado::ParameterAccessor<PHAL::AlbanyTraits::Residual, SPL_Traits> {
   public:
 
+     enum SolutionMethod {Steady, Transient, Continuation, MultiProblem};
+
     //! Constructor 
     Application(const Teuchos::RCP<const Epetra_Comm>& comm,
 		const Teuchos::RCP<Teuchos::ParameterList>& params,
@@ -102,6 +104,9 @@ namespace Albany {
 
     //! Get parameter library
     Teuchos::RCP<ParamLib> getParamLib();
+
+   //! Get number of responses
+   SolutionMethod getSolutionMethod() const {return solMethod; }
 
     //! Get number of responses
     int getNumResponses() const;
@@ -700,6 +705,9 @@ namespace Albany {
     //! Data for Physics-Based Preconditioners
     bool physicsBasedPreconditioner;
     Teuchos::RCP<Teuchos::ParameterList> tekoParams;
+
+    //! Type of solution method
+    SolutionMethod solMethod;
 
     //! Shape Optimization data
     bool shapeParamsHaveBeenReset;
