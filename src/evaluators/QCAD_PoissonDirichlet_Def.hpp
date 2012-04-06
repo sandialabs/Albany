@@ -94,20 +94,16 @@ template<typename EvalT,typename Traits>
 void PoissonDirichlet<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
+  ScalarT bcValue = 0.0; 
+  
   //! Contacts on insulator
   if (material.length() > 0)  
   {
     double metalWorkFunc = materialDB->getMaterialParam<double>(material,"Work Function");
     ScalarT offsetDueToWorkFunc = (metalWorkFunc-qPhiRef)/1.0;  // 1.0 converts from [eV] to [V]
-    
-    // ScalarT newValue = (user_value - offsetDueToWorkFunc)/V0;
-    ScalarT newValue = (user_value - offsetDueToWorkFunc);  //[V]
-    PHAL::DirichletBase<EvalT,Traits>::value = newValue;
-    
-    //! Call base class evaluateFields, which sets relevant nodes using value member
-    PHAL::Dirichlet<EvalT,Traits>::evaluateFields(dirichletWorkset);
+
+    bcValue = (user_value - offsetDueToWorkFunc);  //[V]
   }
-  
   
   //! Ohmic contacts on semiconductor (charge neutrality and equilibrium ) 
   else if (ebName.length() > 0)  
@@ -150,17 +146,10 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     {
       // apply charge neutrality (p=n) and MB statistics
       builtinPotential = (qPhiRef-Chi-0.5*Eg)/1.0 + 0.5*kbT*log(Nv/Nc)/1.0;
-      
-      // ScalarT newValue = (user_value + builtinPotential)/V0; 
-      ScalarT newValue = (user_value + builtinPotential);  //[V]
-      PHAL::DirichletBase<EvalT,Traits>::value = newValue;
-    
-      //! Call base class evaluateFields, which sets relevant nodes using value member
-      PHAL::Dirichlet<EvalT,Traits>::evaluateFields(dirichletWorkset);
-      return;
+      bcValue = (user_value + builtinPotential);  //[V]
     }
     
-    // Extrinsic semiconductor (doped)
+    else // Extrinsic semiconductor (doped)
     {
       double dopingConc = materialDB->getElementBlockParam<double>(ebName,"Doping Value");
       double dopantActE = materialDB->getElementBlockParam<double>(ebName,"Dopant Activation Energy", 0.045);
@@ -182,25 +171,25 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
       // is enabled, the MB almost always holds, so use potentialForMBIncomplIon.
       else  
         builtinPotential = potentialForMBIncomplIon(Nc,Nv,Eg,Chi,dopantType,dopingConc,dopantActE);
-
-      // ScalarT newValue = (user_value + builtinPotential)/V0;
-      ScalarT newValue = (user_value + builtinPotential);  // [V]
-      PHAL::DirichletBase<EvalT,Traits>::value = newValue;
-    
-      //! Call base class evaluateFields, which sets relevant nodes using value member
-      PHAL::Dirichlet<EvalT,Traits>::evaluateFields(dirichletWorkset);
+        
+      bcValue = (user_value + builtinPotential);  // [V]
     }
     
   } // end of else if (ebName.length() > 0)
   
-  
   //! Otherwise, just use the user_value. 
   else
-  {
-    PHAL::DirichletBase<EvalT,Traits>::value = user_value;
-    PHAL::Dirichlet<EvalT,Traits>::evaluateFields(dirichletWorkset);
-  }
-  
+    bcValue = user_value;
+
+  //! Register bcValue 
+  PHAL::DirichletBase<EvalT,Traits>::value = bcValue;
+    
+  //! Call base class evaluateFields, which sets relevant nodes using value member
+  PHAL::Dirichlet<EvalT,Traits>::evaluateFields(dirichletWorkset);
+
+  // std::string nodeSetName = PHAL::DirichletBase<EvalT,Traits>::nodeSetID;
+  // std::cout << "nodeSetName = " << nodeSetName << ", bcValue = " << bcValue << std::endl;   
+
 }
 
 

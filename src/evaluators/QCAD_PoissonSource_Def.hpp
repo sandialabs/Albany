@@ -428,194 +428,203 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
     //! Schrodinger source for electrons
     if(materialDB->getElementBlockParam<bool>(workset.EBName,"quantum",false)) 
     {
-      if(quantumRegionSource == "schrodinger" || quantumRegionSource == "ci") {
+      if(quantumRegionSource == "schrodinger" || quantumRegionSource == "ci") 
+      {
+        // retrieve Previous Poisson Potential
+	      Albany::MDArray prevPhiArray = (*workset.stateArrayPtr)["Previous Poisson Potential"];
 
-	// retrieve Previous Poisson Potential
-	Albany::MDArray prevPhiArray = (*workset.stateArrayPtr)["Previous Poisson Potential"];
-
-	// loop over cells and qps
-	for (std::size_t cell=0; cell < workset.numCells; ++cell)
-	{
-	  for (std::size_t qp=0; qp < numQPs; ++qp)
-	  {
-	    ScalarT approxEDensity = 0.0;
-	    ScalarT prevPhi = prevPhiArray(cell,qp); 
+        // loop over cells and qps
+        for (std::size_t cell=0; cell < workset.numCells; ++cell)
+        {
+          for (std::size_t qp=0; qp < numQPs; ++qp)
+          {
+            ScalarT approxEDensity = 0.0;
+            ScalarT prevPhi = prevPhiArray(cell,qp); 
           
-	    if(bUsePredictorCorrector)
-	      // compute the approximate quantum electron density using predictor-corrector method
-	      approxEDensity = (this->*quantum_edensity_fn)(workset, cell, qp, prevPhi, true);
+            if(bUsePredictorCorrector)
+              // compute the approximate quantum electron density using predictor-corrector method
+              approxEDensity = (this->*quantum_edensity_fn)(workset, cell, qp, prevPhi, true);
 
-	    else  // otherwise, use the exact quantum density
-	      approxEDensity = (this->*quantum_edensity_fn)(workset, cell, qp, 0.0, false);
+            else  // otherwise, use the exact quantum density
+              approxEDensity = (this->*quantum_edensity_fn)(workset, cell, qp, 0.0, false);
 	    
-	    // compute the exact quantum electron density
-	    ScalarT eDensity = (this->*quantum_edensity_fn)(workset, cell, qp, 0.0, false);
+            // compute the exact quantum electron density
+            ScalarT eDensity = (this->*quantum_edensity_fn)(workset, cell, qp, 0.0, false);
           
-	    // obtain the scaled potential
-	    const ScalarT& unscaled_phi = potential(cell,qp); //[V]
-	    ScalarT phi = unscaled_phi / V0; 
+            // obtain the scaled potential
+            const ScalarT& unscaled_phi = potential(cell,qp); //[V]
+            ScalarT phi = unscaled_phi / V0; 
            
-	    // compute the hole density treated as classical
-	    ScalarT hDensity = Nv*(this->*carrStat)(-phi+hArgOffset); 
+            // compute the hole density treated as classical
+            ScalarT hDensity = Nv*(this->*carrStat)(-phi+hArgOffset); 
 
-	    // obtain the ionized dopants
-	    ScalarT ionN  = 0.0;
-	    if (dopantType == "Donor")  // function takes care of sign
-	      ionN = (this->*ionDopant)(dopantType,phi+inArg)*dopingConc;
-	    else if (dopantType == "Acceptor")
-	      ionN = (this->*ionDopant)(dopantType,-phi+inArg)*dopingConc;
-	    else 
-	      ionN = 0.0;
+            // obtain the ionized dopants
+            ScalarT ionN  = 0.0;
+            if (dopantType == "Donor")  // function takes care of sign
+              ionN = (this->*ionDopant)(dopantType,phi+inArg)*dopingConc;
+            else if (dopantType == "Acceptor")
+              ionN = (this->*ionDopant)(dopantType,-phi+inArg)*dopingConc;
+            else 
+              ionN = 0.0;
               
-	    // the scaled full RHS
-	    ScalarT charge; 
-	    charge = 1.0/Lambda2*(hDensity- approxEDensity + ionN);
-	    poissonSource(cell, qp) = factor*charge;
+            // the scaled full RHS
+            ScalarT charge; 
+            charge = 1.0/Lambda2*(hDensity- approxEDensity + ionN);
+            poissonSource(cell, qp) = factor*charge;
 
-	    // output states
-	    chargeDensity(cell, qp) = hDensity -eDensity +ionN;
-	    electronDensity(cell, qp) = eDensity;
-	    holeDensity(cell, qp) = hDensity;
-	    electricPotential(cell, qp) = phi*V0;
-	    ionizedDopant(cell, qp) = ionN;
-	    approxQuanEDen(cell,qp) = approxEDensity;
-	    artCBDensity(cell, qp) = ( eDensity > 1e-6 ? eDensity : -Nc*(this->*carrStat)( -(phi+eArgOffset) ));
+            // output states
+            chargeDensity(cell, qp) = hDensity -eDensity +ionN;
+            electronDensity(cell, qp) = eDensity;
+            holeDensity(cell, qp) = hDensity;
+            electricPotential(cell, qp) = phi*V0;
+            ionizedDopant(cell, qp) = ionN;
+            approxQuanEDen(cell,qp) = approxEDensity;
+            artCBDensity(cell, qp) = ( eDensity > 1e-6 ? eDensity : -Nc*(this->*carrStat)( -(phi+eArgOffset) ));
           
-	    if (bIncludeVxc)  // include Vxc
-	    {
-	      ScalarT Vxc = computeVxcLDA(relPerm, averagedEffMass, approxEDensity);
-	      conductionBand(cell, qp) = qPhiRef -Chi -phi*V0 +Vxc; // [eV]
-	      electricPotential(cell, qp) = phi*V0 + Vxc; //add xc correction to electric potential (used in CI delta_ij computation)
-	      // conductionBand(cell, qp) = qPhiRef -Chi -0.5*(phi*V0 +prevPhi) +Vxc; 
-	    }
-	    else { // not include Vxc
-	      conductionBand(cell, qp) = qPhiRef -Chi -phi*V0; // [eV]
-	      electricPotential(cell, qp) = phi*V0;
-              // conductionBand(cell, qp) = qPhiRef -Chi -0.5*(phi*V0 +prevPhi);
-	    }
-          
-	    valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
-	  }
-          
-        } // end of loop over cells
-      }
-      else if(quantumRegionSource == "coulomb") {
+            if (bIncludeVxc)  // include Vxc
+            {
+              ScalarT Vxc = computeVxcLDA(relPerm, averagedEffMass, approxEDensity);
+              conductionBand(cell, qp) = qPhiRef -Chi -phi*V0 +Vxc; // [eV]
+              
+              // Suzey: need to be discussed (April 06, 2012) ? 
+              electricPotential(cell, qp) = phi*V0 + Vxc; //add xc correction to electric potential (used in CI delta_ij computation)
+            }
+            else  // not include Vxc
+            {
+              conductionBand(cell, qp) = qPhiRef -Chi -phi*V0; // [eV]
+              electricPotential(cell, qp) = phi*V0;
+            }
+            valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
+          }
+        }  // end of loop over cells
+      }  // end of if (schrodinger or ci)
 
-	//RHS == evec[i] * evec[j]
-	int i = (int)QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue( sourceEvecInds[0] );
-	int j = (int)QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue( sourceEvecInds[1] );
 
-	//int valleyDegeneracyFactor = materialDB->getElementBlockParam<int>(workset.EBName,"Number of conduction band min",2);
-	// scale so electron density is in [cm^-3] (assume 3D? Suzey?) as expected of RHS of Poisson eqn
-	ScalarT prefactor = 1.0/pow(X0,3.);
+      else if(quantumRegionSource == "coulomb") 
+      {
+        //RHS == evec[i] * evec[j]
+        int i = (int)QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue( sourceEvecInds[0] );
+        int j = (int)QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue( sourceEvecInds[1] );
+
+        //int valleyDegeneracyFactor = materialDB->getElementBlockParam<int>(workset.EBName,"Number of conduction band min",2);
+        // scale so electron density is in [cm^-3] (assume 3D? Suzey?) as expected of RHS of Poisson eqn
+        ScalarT prefactor = 1.0/pow(X0,3.);
 	
-	// loop over cells and qps
-	for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-	  for (std::size_t qp=0; qp < numQPs; ++qp) {
+        // loop over cells and qps
+        for (std::size_t cell=0; cell < workset.numCells; ++cell) 
+        {
+          for (std::size_t qp=0; qp < numQPs; ++qp) 
+          {
+            // obtain the scaled potential
+            const ScalarT& unscaled_phi = potential(cell,qp); //[V]
+            ScalarT phi = unscaled_phi / V0; 
 
-	    // obtain the scaled potential
-	    const ScalarT& unscaled_phi = potential(cell,qp); //[V]
-	    ScalarT phi = unscaled_phi / V0; 
+            // the scaled full RHS   note: wavefunctions are assumed normalized and **REAL** here 
+            ScalarT charge = - prefactor * ( eigenvector_Re[i](cell,qp) * eigenvector_Re[j](cell,qp) );
+            poissonSource(cell, qp) = factor * 1.0/Lambda2 * charge; //sign??
 
-	    // the scaled full RHS   note: wavefunctions are assumed normalized and **REAL** here 
-	    ScalarT charge = - prefactor * ( eigenvector_Re[i](cell,qp) * eigenvector_Re[j](cell,qp) );
-	    poissonSource(cell, qp) = factor * 1.0/Lambda2 * charge; //sign??
-
-	    chargeDensity(cell, qp) = charge;
-	    electronDensity(cell, qp) = charge;
-	    holeDensity(cell, qp) = 0.0;
-	    electricPotential(cell, qp) = phi*V0;
-	    // Don't bother to set other state variables - e.g. conductionBand, valenceBand
-	  }
-	}
-      }
+            chargeDensity(cell, qp) = charge;
+            electronDensity(cell, qp) = charge;
+            holeDensity(cell, qp) = 0.0;
+            electricPotential(cell, qp) = phi*V0;
+            // Don't bother to set other state variables - e.g. conductionBand, valenceBand
+          }
+        }
+      }  // end of else if (coulomb)
+      
       else if(quantumRegionSource == "semiclassical") {
-	goto jumpToSemiClRHS_semiconductor; //TODO later: functions instead of goto stmts
+        goto jumpToSemiClRHS_semiconductor; //TODO later: functions instead of goto stmts
       }
       else if(quantumRegionSource == "none") {
-	goto jumpToNoneRHS_semiconductor;
+        goto jumpToNoneRHS_semiconductor;
       }
       else TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
         std::endl << "Error!  Unknown quantum region source: " << quantumRegionSource << "!"<< std::endl);
-    }
+    
+    } // end of if quantum = true 
+
 
     //! calculate the classical charge (RHS) for Poisson equation
-    else {
+    else 
+    {
+      if(nonQuantumRegionSource == "semiclassical") 
+      {
+       jumpToSemiClRHS_semiconductor:
       
-      if(nonQuantumRegionSource == "semiclassical") {
-      jumpToSemiClRHS_semiconductor:
-      
-	for (std::size_t cell=0; cell < workset.numCells; ++cell)
-	{
-	  for (std::size_t qp=0; qp < numQPs; ++qp)
+        for (std::size_t cell=0; cell < workset.numCells; ++cell)
+        {
+          for (std::size_t qp=0; qp < numQPs; ++qp)
           {
-	    const ScalarT& unscaled_phi = potential(cell,qp);  // [V]
-	    ScalarT phi = unscaled_phi / V0; 
+            const ScalarT& unscaled_phi = potential(cell,qp);  // [V]
+            ScalarT phi = unscaled_phi / V0; 
           
-	    // obtain the ionized dopants
-	    ScalarT ionN;
-	    if (dopantType == "Donor")  // function takes care of sign
-	      ionN = (this->*ionDopant)(dopantType,phi+inArg)*dopingConc;
-	    else if (dopantType == "Acceptor")
-	      ionN = (this->*ionDopant)(dopantType,-phi+inArg)*dopingConc;
-	    else 
-	      ionN = 0.0; 
+            // obtain the ionized dopants
+            ScalarT ionN;
+            if (dopantType == "Donor")  // function takes care of sign
+              ionN = (this->*ionDopant)(dopantType,phi+inArg)*dopingConc;
+            else if (dopantType == "Acceptor")
+              ionN = (this->*ionDopant)(dopantType,-phi+inArg)*dopingConc;
+            else 
+              ionN = 0.0; 
 
-	    // the scaled full RHS
-	    ScalarT charge, eDensity, hDensity; 
-	    eDensity = Nc*(this->*carrStat)(phi+eArgOffset);
-	    hDensity = Nv*(this->*carrStat)(-phi+hArgOffset);
-	    charge = 1.0/Lambda2 * (hDensity - eDensity + ionN);
-	    poissonSource(cell, qp) = factor*charge;
+            // the scaled full RHS
+            ScalarT charge, eDensity, hDensity; 
+            eDensity = Nc*(this->*carrStat)(phi+eArgOffset);
+            hDensity = Nv*(this->*carrStat)(-phi+hArgOffset);
+            charge = 1.0/Lambda2 * (hDensity - eDensity + ionN);
+            poissonSource(cell, qp) = factor*charge;
           
-	    // output states
-	    chargeDensity(cell, qp) = charge*Lambda2;
-	    electronDensity(cell, qp) = eDensity;
-	    holeDensity(cell, qp) = hDensity;
-	    electricPotential(cell, qp) = phi*V0;
-	    ionizedDopant(cell, qp) = ionN;
-	    conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
-	    valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
-	    approxQuanEDen(cell,qp) = 0.0; 
-	    artCBDensity(cell, qp) = ( eDensity > 1e-6 ? eDensity 
+            // output states
+            chargeDensity(cell, qp) = charge*Lambda2;
+            electronDensity(cell, qp) = eDensity;
+            holeDensity(cell, qp) = hDensity;
+            electricPotential(cell, qp) = phi*V0;
+            ionizedDopant(cell, qp) = ionN;
+            conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
+            valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
+            approxQuanEDen(cell,qp) = 0.0; 
+            artCBDensity(cell, qp) = ( eDensity > 1e-6 ? eDensity 
 				       : -Nc*(this->*carrStat)( -(phi+eArgOffset) ));
+          }
+        } 
+      }  // end of if(nonQuantumRegionSource == "semiclassical") 
+      
+      else if(nonQuantumRegionSource == "none") 
+      {
+       jumpToNoneRHS_semiconductor:
 
-	  }
-	}
-      }
-      else if(nonQuantumRegionSource == "none") {
-      jumpToNoneRHS_semiconductor:
-
-	for (std::size_t cell=0; cell < workset.numCells; ++cell)
-	{
-	  for (std::size_t qp=0; qp < numQPs; ++qp)
+        for (std::size_t cell=0; cell < workset.numCells; ++cell)
+        {
+          for (std::size_t qp=0; qp < numQPs; ++qp)
           {
-	    const ScalarT& unscaled_phi = potential(cell,qp);  // [V]
-	    ScalarT phi = unscaled_phi / V0; 
+            const ScalarT& unscaled_phi = potential(cell,qp);  // [V]
+            ScalarT phi = unscaled_phi / V0; 
 
-	    // the scaled full RHS
-	    ScalarT charge, eDensity, hDensity; 
-	    eDensity = 0.0;
-	    hDensity = 0.0;
-	    charge = 0.0;
-	    poissonSource(cell, qp) = factor*charge;
+            // the scaled full RHS
+            ScalarT charge, eDensity, hDensity; 
+            eDensity = 0.0;
+            hDensity = 0.0;
+            charge = 0.0;
+            poissonSource(cell, qp) = factor*charge;
           
-	    // output states
-	    chargeDensity(cell, qp) = charge*Lambda2;
-	    electronDensity(cell, qp) = eDensity;
-	    holeDensity(cell, qp) = hDensity;
-	    electricPotential(cell, qp) = phi*V0;
-	    ionizedDopant(cell, qp) = 0.0;
-	    conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
-	    valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
-	    approxQuanEDen(cell,qp) = 0.0; 
-	    artCBDensity(cell, qp) = 0.0;
-	  }
-	}
-      }
+            // output states
+            chargeDensity(cell, qp) = charge*Lambda2;
+            electronDensity(cell, qp) = eDensity;
+            holeDensity(cell, qp) = hDensity;
+            electricPotential(cell, qp) = phi*V0;
+            ionizedDopant(cell, qp) = 0.0;
+            conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
+            valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
+            approxQuanEDen(cell,qp) = 0.0; 
+            artCBDensity(cell, qp) = 0.0;
+          }
+        }
+      }  // end of else if(nonQuantumRegionSource == "none")
+      
       else TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
         std::endl << "Error!  Unknown non-quantum region source: " << nonQuantumRegionSource << "!"<< std::endl);
-    }
+    
+    } // end of if quantum = false
 
   } // end of if(matrlCategory == "Semiconductor") 
 
@@ -653,163 +662,174 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
     //! Schrodinger source for electrons
     if(materialDB->getElementBlockParam<bool>(workset.EBName,"quantum",false)) 
     {
-      if(quantumRegionSource == "schrodinger" || quantumRegionSource == "ci") {
+      if(quantumRegionSource == "schrodinger" || quantumRegionSource == "ci") 
+      {
+        // retrieve Previous Poisson Potential
+        Albany::MDArray prevPhiArray = (*workset.stateArrayPtr)["Previous Poisson Potential"];
 
-	// retrieve Previous Poisson Potential
-	Albany::MDArray prevPhiArray = (*workset.stateArrayPtr)["Previous Poisson Potential"];
-
-	// loop over cells and qps
-	for (std::size_t cell=0; cell < workset.numCells; ++cell)
-	{
-	  for (std::size_t qp=0; qp < numQPs; ++qp)
-	  {
-	    ScalarT approxEDensity = 0.0;
-	    ScalarT prevPhi = prevPhiArray(cell,qp);
+        // loop over cells and qps
+        for (std::size_t cell=0; cell < workset.numCells; ++cell)
+        {
+          for (std::size_t qp=0; qp < numQPs; ++qp)
+          {
+            ScalarT approxEDensity = 0.0;
+            ScalarT prevPhi = prevPhiArray(cell,qp);
           
-	    if (bUsePredictorCorrector) 
-	      // compute the approximate quantum electron density using predictor-corrector method
-	      approxEDensity = (this->*quantum_edensity_fn)(workset, cell, qp, prevPhi, true);
+            if (bUsePredictorCorrector) 
+              // compute the approximate quantum electron density using predictor-corrector method
+              approxEDensity = (this->*quantum_edensity_fn)(workset, cell, qp, prevPhi, true);
+            else
+              approxEDensity = (this->*quantum_edensity_fn)(workset, cell, qp, 0.0, false);
 
-	    else
-	      approxEDensity = (this->*quantum_edensity_fn)(workset, cell, qp, 0.0, false);
+            // compute the exact quantum electron density
+            ScalarT eDensity = (this->*quantum_edensity_fn)(workset, cell, qp, 0.0, false);
 
-	    // compute the exact quantum electron density
-	    ScalarT eDensity = (this->*quantum_edensity_fn)(workset, cell, qp, 0.0, false);
+            // obtain the scaled potential
+            const ScalarT& unscaled_phi = potential(cell,qp); //[V]
+            ScalarT phi = unscaled_phi / V0; 
 
-	    // obtain the scaled potential
-	    const ScalarT& unscaled_phi = potential(cell,qp); //[V]
-	    ScalarT phi = unscaled_phi / V0; 
-
-	    //(No other classical density in insulator)
+            //(No other classical density in insulator)
               
-	    // the scaled full RHS
-	    ScalarT charge;
-	    charge = 1.0/Lambda2 * (-approxEDensity + fixedCharge);
-	    poissonSource(cell, qp) = factor*charge;
+            // the scaled full RHS
+            ScalarT charge;
+            charge = 1.0/Lambda2 * (-approxEDensity + fixedCharge);
+            poissonSource(cell, qp) = factor*charge;
 
-	    // output states
-	    chargeDensity(cell, qp) = -eDensity + fixedCharge; 
-	    electronDensity(cell, qp) = eDensity;  // quantum electrons in an insulator
-	    holeDensity(cell, qp) = 0.0;           // no holes in an insulator
-	    electricPotential(cell, qp) = phi*V0;
-	    ionizedDopant(cell, qp) = 0.0;
-	    approxQuanEDen(cell,qp) = approxEDensity;
-	    artCBDensity(cell, qp) = eDensity;
+            // output states
+            chargeDensity(cell, qp) = -eDensity + fixedCharge; 
+            electronDensity(cell, qp) = eDensity;  // quantum electrons in an insulator
+            holeDensity(cell, qp) = 0.0;           // no holes in an insulator
+            electricPotential(cell, qp) = phi*V0;
+            ionizedDopant(cell, qp) = 0.0;
+            approxQuanEDen(cell,qp) = approxEDensity;
+            artCBDensity(cell, qp) = eDensity;
 	  
-	    if (bIncludeVxc)  // include Vxc
-	    {
-	      ScalarT Vxc = computeVxcLDA(relPerm, averagedEffMass, approxEDensity);
-	      conductionBand(cell, qp) = qPhiRef-Chi-phi*V0 +Vxc; // [eV]
-	      electricPotential(cell, qp) = phi*V0 + Vxc; //add xc correction to electric potential (used in CI delta_ij computation)
-	      // conductionBand(cell, qp) = qPhiRef -Chi -0.5*(phi*V0 +prevPhi) +Vxc;
-	    }
-	    else { // not include Vxc
-	      conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
-	      electricPotential(cell, qp) = phi*V0;
-              // conductionBand(cell, qp) = qPhiRef -Chi -0.5*(phi*V0 +prevPhi);
-	    }
-          
-	    valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
-	  }
-	}  // end of loop over cells
-      }
-      else if(quantumRegionSource == "coulomb") {
-	//RHS == evec[i] * evec[j]
-	int i = (int)QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue( sourceEvecInds[0] );
-	int j = (int)QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue( sourceEvecInds[1] );
+            if (bIncludeVxc)  // include Vxc
+            {
+              ScalarT Vxc = computeVxcLDA(relPerm, averagedEffMass, approxEDensity);
+              conductionBand(cell, qp) = qPhiRef-Chi-phi*V0 +Vxc; // [eV]
+              
+              // Suzey: need to be discussed (April 06, 2012) ? 
+              electricPotential(cell, qp) = phi*V0 + Vxc; //add xc correction to electric potential (used in CI delta_ij computation)
+            }
+            else  // not include Vxc
+            { 
+              conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
+              electricPotential(cell, qp) = phi*V0;
+            }
+            valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
+          }
+        }  // end of loop over cells
+      }  // end of if (schrodinger || ci) 
+      
+      else if(quantumRegionSource == "coulomb") 
+      {
+        //RHS == evec[i] * evec[j]
+        int i = (int)QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue( sourceEvecInds[0] );
+        int j = (int)QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue( sourceEvecInds[1] );
 
-	//convert to cm^-3 and assume 3D
-	ScalarT prefactor = 1.0/pow(X0,3.); //3D
+        //convert to cm^-3 and assume 3D
+        ScalarT prefactor = 1.0/pow(X0,3.); //3D
 	
-	// loop over cells and qps
-	for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-	  for (std::size_t qp=0; qp < numQPs; ++qp) {
+        // loop over cells and qps
+        for (std::size_t cell=0; cell < workset.numCells; ++cell) 
+        {
+          for (std::size_t qp=0; qp < numQPs; ++qp) 
+          {
+            // obtain the scaled potential
+            const ScalarT& unscaled_phi = potential(cell,qp); //[V]
+            ScalarT phi = unscaled_phi / V0; 
 
-	    // obtain the scaled potential
-	    const ScalarT& unscaled_phi = potential(cell,qp); //[V]
-	    ScalarT phi = unscaled_phi / V0; 
+            // the scaled full RHS   note: wavefunctions are assumed normalized and **REAL** here 
+            ScalarT charge = -prefactor * ( eigenvector_Re[i](cell,qp) * eigenvector_Re[j](cell,qp) );
+            poissonSource(cell, qp) = factor * 1.0/Lambda2 * charge; //sign??
 
-	    // the scaled full RHS   note: wavefunctions are assumed normalized and **REAL** here 
-	    ScalarT charge = - prefactor * ( eigenvector_Re[i](cell,qp) * eigenvector_Re[j](cell,qp) );
-	    poissonSource(cell, qp) = factor * 1.0/Lambda2 * charge; //sign??
+            chargeDensity(cell, qp) = charge;
+            electronDensity(cell, qp) = charge;
+            holeDensity(cell, qp) = 0.0;
+            electricPotential(cell, qp) = phi*V0;
+            // Don't bother to set other state variables - e.g. conductionBand, valenceBand
 
-	    chargeDensity(cell, qp) = charge;
-	    electronDensity(cell, qp) = charge;
-	    holeDensity(cell, qp) = 0.0;
-	    electricPotential(cell, qp) = phi*V0;
-	    // Don't bother to set other state variables - e.g. conductionBand, valenceBand
-
-	  }
-	}
-      }
+          }
+        }
+      }  // end of else if (coulomb)
+      
       else if(quantumRegionSource == "semiclassical") {
-	goto jumpToSemiClRHS_insulator; 
+        goto jumpToSemiClRHS_insulator; 
       }
       else if(quantumRegionSource == "none") {
-	goto jumpToNoneRHS_insulator;
+        goto jumpToNoneRHS_insulator;
       }
       else TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
         std::endl << "Error!  Unknown quantum region source: " << quantumRegionSource << "!"<< std::endl);
-    }
+
+    }  // end of if quantum = true 
+    
     
     else { // use semiclassical source
 
-      if(nonQuantumRegionSource == "semiclassical") {
-      jumpToSemiClRHS_insulator:
+      if(nonQuantumRegionSource == "semiclassical") 
+      {
+       jumpToSemiClRHS_insulator:
       
-	for (std::size_t cell=0; cell < workset.numCells; ++cell)
-	{
-	  for (std::size_t qp=0; qp < numQPs; ++qp)
-	  {
-	    const ScalarT& unscaled_phi = potential(cell,qp);  //[V]
-	    ScalarT phi = unscaled_phi / V0;  //[unitless]
+        for (std::size_t cell=0; cell < workset.numCells; ++cell)
+        {
+          for (std::size_t qp=0; qp < numQPs; ++qp)
+          {
+            const ScalarT& unscaled_phi = potential(cell,qp);  //[V]
+            ScalarT phi = unscaled_phi / V0;  //[unitless]
           
-	    // the scaled full RHS
-	    ScalarT charge; 
-	    charge = 1.0/Lambda2*fixedCharge;  // only fixed charge in an insulator
-	    poissonSource(cell, qp) = factor*charge;
+            // the scaled full RHS
+            ScalarT charge; 
+            charge = 1.0/Lambda2*fixedCharge;  // only fixed charge in an insulator
+            poissonSource(cell, qp) = factor*charge;
 	    
-	    chargeDensity(cell, qp) = fixedCharge; // fixed space charge in an insulator
-	    electronDensity(cell, qp) = 0.0;       // no electrons in an insulator
-	    holeDensity(cell, qp) = 0.0;           // no holes in an insulator
-	    electricPotential(cell, qp) = phi*V0;
-	    ionizedDopant(cell, qp) = 0.0;
-	    conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
-	    valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
-	    approxQuanEDen(cell,qp) = 0.0;
-	    artCBDensity(cell, qp) = 0.0;
-	  }
-	}
-      }
-      else if(nonQuantumRegionSource == "none") {
-      jumpToNoneRHS_insulator:
+            chargeDensity(cell, qp) = fixedCharge; // fixed space charge in an insulator
+            electronDensity(cell, qp) = 0.0;       // no electrons in an insulator
+            holeDensity(cell, qp) = 0.0;           // no holes in an insulator
+            electricPotential(cell, qp) = phi*V0;
+            ionizedDopant(cell, qp) = 0.0;
+            conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
+            valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
+            approxQuanEDen(cell,qp) = 0.0;
+            artCBDensity(cell, qp) = 0.0;
+          }
+        }
+      }  // end of if(nonQuantumRegionSource == "semiclassical") 
+      
+      else if(nonQuantumRegionSource == "none") 
+      {
+       jumpToNoneRHS_insulator:
 
-	for (std::size_t cell=0; cell < workset.numCells; ++cell)
-	{
-	  for (std::size_t qp=0; qp < numQPs; ++qp)
-	  {
-	    const ScalarT& unscaled_phi = potential(cell,qp);  //[V]
-	    ScalarT phi = unscaled_phi / V0;  //[unitless]
+        for (std::size_t cell=0; cell < workset.numCells; ++cell)
+        {
+          for (std::size_t qp=0; qp < numQPs; ++qp)
+          {
+            const ScalarT& unscaled_phi = potential(cell,qp);  //[V]
+            ScalarT phi = unscaled_phi / V0;  //[unitless]
           
-	    // the scaled full RHS
-	    ScalarT charge = 0.0;  // no charge in this RHS mode
-	    poissonSource(cell, qp) = factor*charge;
+            // the scaled full RHS
+            ScalarT charge = 0.0;  // no charge in this RHS mode
+            poissonSource(cell, qp) = factor*charge;
 	    
-	    chargeDensity(cell, qp) = 0.0;         // no charge in this RHS mode
-	    electronDensity(cell, qp) = 0.0;       // no electrons in an insulator
-	    holeDensity(cell, qp) = 0.0;           // no holes in an insulator
-	    electricPotential(cell, qp) = phi*V0;
-	    ionizedDopant(cell, qp) = 0.0;
-	    conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
-	    valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
-	    approxQuanEDen(cell,qp) = 0.0;
-	    artCBDensity(cell, qp) = 0.0;
-	  }
-	}
-      }
+            chargeDensity(cell, qp) = 0.0;         // no charge in this RHS mode
+            electronDensity(cell, qp) = 0.0;       // no electrons in an insulator
+            holeDensity(cell, qp) = 0.0;           // no holes in an insulator
+            electricPotential(cell, qp) = phi*V0;
+            ionizedDopant(cell, qp) = 0.0;
+            conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
+            valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
+            approxQuanEDen(cell,qp) = 0.0;
+            artCBDensity(cell, qp) = 0.0;
+          }
+        }
+      }  // end of else if(nonQuantumRegionSource == "none") 
+      
       else TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
         std::endl << "Error!  Unknown non-quantum region source: " << nonQuantumRegionSource << "!"<< std::endl);
-    }
+    
+    }  // end of if quantum = false
+  
   }  // end of else if(matrlCategory == "Insulator")
 
 
@@ -819,7 +839,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
   else if(matrlCategory == "Metal")
   {
     // Assume all metals are non-quantum regions, and calculation of charge, etc is the same
-    //  for all cases -- always zero charge in metals.
+    // for all cases -- always zero charge in metals.
     double workFunc = materialDB->getElementBlockParam<double>(workset.EBName,"Work Function");
     
     // The following assumes Metal is surrounded by Dirichlet BC
@@ -827,24 +847,24 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
     {
       for (std::size_t qp=0; qp < numQPs; ++qp)
       {
-	const ScalarT& unscaled_phi = potential(cell,qp); //[V]
-	ScalarT phi = unscaled_phi / V0; 
+        const ScalarT& unscaled_phi = potential(cell,qp); //[V]
+        ScalarT phi = unscaled_phi / V0; 
 	
-	// the scaled full RHS
-	ScalarT charge; 
-	charge = 0.0;  // no charge in metal bulk
-	poissonSource(cell, qp) = factor*charge;
+        // the scaled full RHS
+        ScalarT charge; 
+        charge = 0.0;  // no charge in metal bulk
+        poissonSource(cell, qp) = factor*charge;
 	
-	// output states
-	chargeDensity(cell, qp) = 0.0;    
-	electronDensity(cell, qp) = 0.0;  
-	holeDensity(cell, qp) = 0.0;      
-	electricPotential(cell, qp) = phi*V0; 
-	ionizedDopant(cell, qp) = 0.0;
-	conductionBand(cell, qp) = qPhiRef-workFunc-phi*V0; // [eV]
-	valenceBand(cell, qp) = conductionBand(cell,qp); // No band gap in metal
-	approxQuanEDen(cell,qp) = 0.0;
-	artCBDensity(cell, qp) = 0.0;
+        // output states
+        chargeDensity(cell, qp) = 0.0;    
+        electronDensity(cell, qp) = 0.0;  
+        holeDensity(cell, qp) = 0.0;      
+        electricPotential(cell, qp) = phi*V0; 
+        ionizedDopant(cell, qp) = 0.0;
+        conductionBand(cell, qp) = qPhiRef-workFunc-phi*V0; // [eV]
+        valenceBand(cell, qp) = conductionBand(cell,qp); // No band gap in metal
+        approxQuanEDen(cell,qp) = 0.0;
+        artCBDensity(cell, qp) = 0.0;
       }
     }
   }
