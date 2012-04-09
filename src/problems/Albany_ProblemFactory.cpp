@@ -61,13 +61,13 @@ Albany::ProblemFactory::create()
   std::string& method = problemParams->get("Name", "Heat 1D");
 
   if (method == "Heat 1D") {
-    strategy = rcp(new Albany::HeatProblem(problemParams, paramLib, 1));
+    strategy = rcp(new Albany::HeatProblem(problemParams, paramLib, 1, comm));
   }
   else if (method == "Heat 2D") {
-    strategy = rcp(new Albany::HeatProblem(problemParams, paramLib, 2));
+    strategy = rcp(new Albany::HeatProblem(problemParams, paramLib, 2, comm));
   }
   else if (method == "Heat 3D") {
-    strategy = rcp(new Albany::HeatProblem(problemParams, paramLib, 3));
+    strategy = rcp(new Albany::HeatProblem(problemParams, paramLib, 3, comm));
   }
   else if (method == "ODE") {
     strategy = rcp(new Albany::ODEProblem(problemParams, paramLib, 0));

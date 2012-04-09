@@ -56,7 +56,6 @@ ThermalConductivity(Teuchos::ParameterList& p) :
   numQPs  = dims[1];
   numDims = dims[2];
 
-  haveMatDB = p.get<bool>("Have MatDB", false);
   std::string ebName = 
     p.get<std::string>("Element Block Name", "Missing");
 
@@ -79,7 +78,7 @@ ThermalConductivity(Teuchos::ParameterList& p) :
   {
     // We have a multiple material problem and need to map element blocks to material data
 
-    if(haveMatDB){
+    if(p.isType<Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB")){
        materialDB = p.get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
     }
     else {

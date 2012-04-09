@@ -44,10 +44,44 @@ NeumannBase(const Teuchos::ParameterList& p) :
   // The input.xml argument for the above string
   inputConditions = p.get< std::string >("Neumann Input Conditions");
 
-  // Parse the input to determine what type of BC to calculate
+  // If we are doing a Neumann internal boundary with a "scaled jump",
+  // build a scale lookup table from the materialDB file (this must exist)
+
+  if(inputConditions == "scaled jump" && p.isType<Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB")){
+
+    //! Material database - holds the scaling we need
+    Teuchos::RCP<QCAD::MaterialDatabase> materialDB =
+      p.get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
+
+     // User has specified conditions on sideset normal
+     bc_type = INTJUMP;
+     dudn = inputValues[0];
+
+     // Build a vector to hold the scaling from the material DB
+     matScaling.resize(meshSpecs->ebNameToIndex.size());
+
+     // iterator over all ebnames in the mesh
+
+     std::map<std::string, int>::const_iterator it;
+     for(it = meshSpecs->ebNameToIndex.begin(); it != meshSpecs->ebNameToIndex.end(); it++){
+
+//      std::cout << "Searching for a value for \"Flux Scale\" in material database for element block: "
+//        << it->first << std::endl;
+
+       TEUCHOS_TEST_FOR_EXCEPTION(!materialDB->isElementBlockParam(it->first, "Flux Scale"),
+         Teuchos::Exceptions::InvalidParameter, 
+         "Cannot locate the value of \"Flux Scale\" in the material database");
+
+       matScaling[it->second] = 
+         materialDB->getElementBlockParam<double>(it->first, "Flux Scale");
+
+     }
+  }
+
+  // else parse the input to determine what type of BC to calculate
 
     // is there a "(" in the string?
-  if(inputConditions.find_first_of("(") != string::npos){
+  else if(inputConditions.find_first_of("(") != string::npos){
 
       // User has specified conditions in base coords
       bc_type = COORD;
@@ -224,11 +258,28 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
     Intrepid::CellTools<RealType>::mapToPhysicalFrame
       (physPointsSide, refPointsSide, physPointsCell, *cellType);
 
-    // Transform the given BC data to the physical space QPs in each side (elem_side)
-   if(bc_type == NORMAL)
-     calc_dudn_const(data, physPointsSide, jacobianSide, *cellType, cellDims, elem_side);
-   else
-     calc_gradu_dotn_const(data, physPointsSide, jacobianSide, *cellType, cellDims, elem_side);
+  // Transform the given BC data to the physical space QPs in each side (elem_side)
+
+    switch(bc_type){
+  
+      case INTJUMP:
+       {
+         const ScalarT elem_scale = matScaling[sideSet[side].elem_ebIndex];
+         calc_dudn_const(data, physPointsSide, jacobianSide, *cellType, cellDims, elem_side, elem_scale);
+         break;
+       }
+   
+      case NORMAL:
+  
+         calc_dudn_const(data, physPointsSide, jacobianSide, *cellType, cellDims, elem_side);
+         break;
+  
+      default:
+  
+         calc_gradu_dotn_const(data, physPointsSide, jacobianSide, *cellType, cellDims, elem_side);
+         break;
+  
+    }
 
    // Put this side's contribution into the vector
 
@@ -300,7 +351,8 @@ calc_dudn_const(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
                           const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
                           const int cellDims,
-                          int local_side_id){
+                          int local_side_id,
+                          ScalarT scale){
 
   int numCells = qp_data_returned.dimension(0); // How many cell's worth of data is being computed?
   int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
@@ -310,7 +362,7 @@ calc_dudn_const(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
   for(int pt = 0; pt < numPoints; pt++){
 
 //    qp_data_returned(0, pt) = input_dTdn; // User directly specified dTdn, just use it
-    qp_data_returned(0, pt) = -dudn; // User directly specified dTdn, just use it
+    qp_data_returned(0, pt) = -dudn * scale; // User directly specified dTdn, just use it
 
   }
 

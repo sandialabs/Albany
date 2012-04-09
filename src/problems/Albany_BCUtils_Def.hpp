@@ -352,7 +352,8 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
       const std::vector<std::string>& conditions,
       const Teuchos::RCP<Albany::Layouts>& dl,
       Teuchos::RCP<Teuchos::ParameterList> params,
-      Teuchos::RCP<ParamLib> paramLib)
+      Teuchos::RCP<ParamLib> paramLib,
+      const Teuchos::RCP<QCAD::MaterialDatabase>& materialDB)
 {
    using Teuchos::RCP;
    using Teuchos::rcp;
@@ -416,6 +417,21 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
            p->set< string >                       ("Neumann Input String", ss);
            p->set< Teuchos::Array<double> >       ("Neumann Input Value", BCparams.get<Teuchos::Array<double> >(ss));
            p->set< string >                       ("Neumann Input Conditions", conditions[k]);
+
+           // If we are doing a Neumann internal boundary with a "scaled jump",
+           // The material DB database needs to be passed to the BC object
+
+           if(conditions[k] == "scaled jump"){ 
+
+              TEUCHOS_TEST_FOR_EXCEPTION(materialDB == Teuchos::null,
+                Teuchos::Exceptions::InvalidParameter, 
+                "This BC needs a material database specified");
+
+              p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
+
+
+           }
+
 
     // Inputs: X, Y at nodes, Cubature, and Basis
     //p->set<string>("Node Variable Name", "Neumann");

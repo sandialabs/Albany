@@ -29,6 +29,8 @@
 #include "Phalanx.hpp"
 #include "PHAL_FactoryTraits.hpp"
 
+#include "QCAD_MaterialDatabase.hpp"
+
 
 namespace Albany {
 
@@ -154,7 +156,8 @@ template<>
        const std::vector<std::string>& conditions,
        const Teuchos::RCP<Albany::Layouts>& dl,
        Teuchos::RCP<Teuchos::ParameterList> params,
-       Teuchos::RCP<ParamLib> paramLib);
+       Teuchos::RCP<ParamLib> paramLib,
+       const Teuchos::RCP<QCAD::MaterialDatabase>& materialDB = Teuchos::null);
 
     //! Function to return valid list of parameters in BC section of input file
     Teuchos::RCP<const Teuchos::ParameterList> getValidBCParameters(
