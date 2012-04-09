@@ -17,16 +17,14 @@
 
 #include "Albany_NOXObserver.hpp"
 
-#ifdef ALBANY_SEACAS
-#include "Albany_STKDiscretization.hpp"
-#endif
+#include "Albany_StateManager.hpp"
 
 Albany_NOXObserver::Albany_NOXObserver(
 				       const Teuchos::RCP<Albany::Application> &app_) : 
   app(app_),
-  disc(app_->getDiscretization())
+  exodusOutput(app_->getDiscretization())
 {
-  exooutTime = Teuchos::TimeMonitor::getNewTimer("Albany: Output to Exodus");
+   // Nothing to do
 }
 
 void Albany_NOXObserver::observeSolution(
@@ -40,37 +38,13 @@ void Albany_NOXObserver::observeSolution(
 }
 
 void Albany_NOXObserver::observeSolution(
-       const Epetra_Vector& solution, double time_or_param_val
-                                         )
+       const Epetra_Vector& solution, double time_or_param_val)
 {
-
-
 #ifdef ALBANY_SEACAS
-  // if (solution.Map().Comm().MyPID()==0)
-  //   cout << "Albany::NOXObserver calling exodus output " << endl;
-
-    Albany::STKDiscretization* stkDisc =
-      dynamic_cast<Albany::STKDiscretization*>(disc.get());
-
-  /* GAH Note:
-   * If solution == "Steady", we need to update the solution from the initial guess prior to
-   * writing it out, or we will not get the proper state of things like "Stress" in the Exodus file.
-   */ 
-
   if(app->getSolutionMethod() != Albany::Application::Steady){
-
-      Teuchos::TimeMonitor exooutTimer(*exooutTime); //start timer
-  
-      stkDisc->outputToExodus(solution, time_or_param_val);
-
+    exodusOutput.writeSolution(time_or_param_val, solution);
   }
-
 #endif
-
-  // Special output for loca runs of HTE problem
-  //double mx;
-  //solution.MaxValue(&mx);
-  //cout << setprecision(9) << "MaxValue " << mx << endl;
 
   // Evaluate state field manager
   app->evaluateStateFieldManager(time_or_param_val, NULL, solution);
@@ -79,21 +53,14 @@ void Albany_NOXObserver::observeSolution(
   // as the Old state in preparation for the next step
   app->getStateMgr().updateStates();
 
-#ifdef ALBANY_SEACAS
-
   /* GAH Note:
    * If solution == "Steady", we need to update the solution from the initial guess prior to
    * writing it out, or we will not get the proper state of things like "Stress" in the Exodus file.
    */ 
 
+#ifdef ALBANY_SEACAS
   if(app->getSolutionMethod() == Albany::Application::Steady){
-
-      Teuchos::TimeMonitor exooutTimer(*exooutTime); //start timer
-  
-      stkDisc->outputToExodus(solution, time_or_param_val);
-
+    exodusOutput.writeSolution(time_or_param_val, solution);
   }
-
 #endif
-
 }

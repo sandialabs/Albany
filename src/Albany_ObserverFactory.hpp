@@ -14,37 +14,32 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
+#ifndef ALBANY_OBSERVERFACTORY_HPP
+#define ALBANY_OBSERVERFACTORY_HPP
 
-#ifndef ALBANY_NOXOBSERVER
-#define ALBANY_NOXOBSERVER
-
-
-#include "Albany_Application.hpp"
 #include "NOX_Epetra_Observer.H"
-#include "Teuchos_TimeMonitor.hpp"
-#include "Albany_ExodusOutput.hpp" 
+#include "Rythmos_IntegrationObserverBase.hpp"
 
-class Albany_NOXObserver : public NOX::Epetra::Observer
-{
+namespace Albany {
+
+class Application;
+
+class ObserverFactory {
 public:
-   Albany_NOXObserver (
-         const Teuchos::RCP<Albany::Application> &app_);
+  ObserverFactory(const Teuchos::RCP<Teuchos::ParameterList> &params,
+                  const Teuchos::RCP<Application> &app);
 
-   ~Albany_NOXObserver ()
-   { };
-
-  //! Original version, for steady with no time or param info
-  void observeSolution(
-    const Epetra_Vector& solution);
-
-  //! Improved version with space for time or parameter value
-  void observeSolution(
-    const Epetra_Vector& solution, double time_or_param_val);
+  Teuchos::RCP<NOX::Epetra::Observer> createNoxObserver();
+  Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > createRythmosObserver();
 
 private:
-   Teuchos::RCP<Albany::Application> app;
-  
-   Albany::ExodusOutput exodusOutput;
+  bool useNOX() const;
+  bool useRythmos() const;
+
+  Teuchos::RCP<Teuchos::ParameterList> params_;
+  Teuchos::RCP<Application> app_;
 };
 
-#endif //ALBANY_NOXOBSERVER
+}
+
+#endif /* ALBANY_OBSERVERFACTORY_HPP */

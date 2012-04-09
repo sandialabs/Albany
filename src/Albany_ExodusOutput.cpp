@@ -14,37 +14,25 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
+#include "Albany_ExodusOutput.hpp"
 
-#ifndef ALBANY_NOXOBSERVER
-#define ALBANY_NOXOBSERVER
+#include "Albany_STKDiscretization.hpp"
 
-
-#include "Albany_Application.hpp"
-#include "NOX_Epetra_Observer.H"
 #include "Teuchos_TimeMonitor.hpp"
-#include "Albany_ExodusOutput.hpp" 
 
-class Albany_NOXObserver : public NOX::Epetra::Observer
+namespace Albany {
+
+ExodusOutput::ExodusOutput(const Teuchos::RCP<AbstractDiscretization> &disc) :
+   stkDisc_(Teuchos::rcp_dynamic_cast<STKDiscretization>(disc)),
+   exoOutTime_(Teuchos::TimeMonitor::getNewTimer("Albany: Output to Exodus"))
 {
-public:
-   Albany_NOXObserver (
-         const Teuchos::RCP<Albany::Application> &app_);
+  // Nothing to oo
+}
 
-   ~Albany_NOXObserver ()
-   { };
+void ExodusOutput::writeSolution(double stamp, const Epetra_Vector &solution)
+{
+   Teuchos::TimeMonitor exoOutTimer(*exoOutTime_);
+   stkDisc_->outputToExodus(solution, stamp);
+}
 
-  //! Original version, for steady with no time or param info
-  void observeSolution(
-    const Epetra_Vector& solution);
-
-  //! Improved version with space for time or parameter value
-  void observeSolution(
-    const Epetra_Vector& solution, double time_or_param_val);
-
-private:
-   Teuchos::RCP<Albany::Application> app;
-  
-   Albany::ExodusOutput exodusOutput;
-};
-
-#endif //ALBANY_NOXOBSERVER
+}

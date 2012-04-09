@@ -15,36 +15,10 @@
 \********************************************************************/
 
 
-#ifndef ALBANY_NOXOBSERVER
-#define ALBANY_NOXOBSERVER
+#include "PHAL_AlbanyTraits.hpp"
 
+#include "J2Fiber.hpp"
+#include "J2Fiber_Def.hpp"
 
-#include "Albany_Application.hpp"
-#include "NOX_Epetra_Observer.H"
-#include "Teuchos_TimeMonitor.hpp"
-#include "Albany_ExodusOutput.hpp" 
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::J2Fiber)
 
-class Albany_NOXObserver : public NOX::Epetra::Observer
-{
-public:
-   Albany_NOXObserver (
-         const Teuchos::RCP<Albany::Application> &app_);
-
-   ~Albany_NOXObserver ()
-   { };
-
-  //! Original version, for steady with no time or param info
-  void observeSolution(
-    const Epetra_Vector& solution);
-
-  //! Improved version with space for time or parameter value
-  void observeSolution(
-    const Epetra_Vector& solution, double time_or_param_val);
-
-private:
-   Teuchos::RCP<Albany::Application> app;
-  
-   Albany::ExodusOutput exodusOutput;
-};
-
-#endif //ALBANY_NOXOBSERVER

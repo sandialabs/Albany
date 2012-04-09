@@ -14,37 +14,37 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
+#ifndef ALBANY_EXODUSOUTPUT_HPP
+#define ALBANY_EXODUSOUTPUT_HPP
 
-#ifndef ALBANY_NOXOBSERVER
-#define ALBANY_NOXOBSERVER
+#include "Epetra_Vector.h"
+#include "Teuchos_RCP.hpp"
 
+namespace Teuchos {
+  class Time;
+}
 
-#include "Albany_Application.hpp"
-#include "NOX_Epetra_Observer.H"
-#include "Teuchos_TimeMonitor.hpp"
-#include "Albany_ExodusOutput.hpp" 
+namespace Albany {
 
-class Albany_NOXObserver : public NOX::Epetra::Observer
-{
+class AbstractDiscretization;
+class STKDiscretization;
+
+class ExodusOutput {
 public:
-   Albany_NOXObserver (
-         const Teuchos::RCP<Albany::Application> &app_);
+   void writeSolution(double stamp, const Epetra_Vector &solution);
 
-   ~Albany_NOXObserver ()
-   { };
-
-  //! Original version, for steady with no time or param info
-  void observeSolution(
-    const Epetra_Vector& solution);
-
-  //! Improved version with space for time or parameter value
-  void observeSolution(
-    const Epetra_Vector& solution, double time_or_param_val);
+   explicit ExodusOutput(const Teuchos::RCP<AbstractDiscretization> &disc);
 
 private:
-   Teuchos::RCP<Albany::Application> app;
-  
-   Albany::ExodusOutput exodusOutput;
+   Teuchos::RCP<STKDiscretization> stkDisc_;
+
+   Teuchos::RCP<Teuchos::Time> exoOutTime_;
+
+   // Disallow copy and assignment
+   ExodusOutput(const ExodusOutput &);
+   ExodusOutput &operator=(const ExodusOutput &);
 };
 
-#endif //ALBANY_NOXOBSERVER
+}
+
+#endif //ALBANY_EXODUSOUTPUT_HPP

@@ -22,11 +22,13 @@ SET(SOURCES
 	PHAL_Dimension.cpp 
 	PHAL_AlbanyTraits.cpp 
 	Albany_Application.cpp 
+	Albany_ObserverFactory.cpp
 	Albany_RythmosObserver.cpp 
 	Albany_NOXObserver.cpp 
 	Albany_StateManager.cpp 
 	Albany_ModelEvaluator.cpp
 	Albany_SaveEigenData.cpp
+	Albany_ExodusOutput.cpp
   )
 
 SET(HEADERS
@@ -40,6 +42,7 @@ SET(HEADERS
 	PHAL_Workset.hpp 
 	PHAL_TypeKeyMap.hpp
 	Albany_Application.hpp 
+	Albany_ObserverFactory.hpp
 	Albany_RythmosObserver.hpp 
 	Albany_NOXObserver.hpp 
 	Albany_StateManager.hpp 
@@ -47,6 +50,7 @@ SET(HEADERS
         Albany_EigendataInfoStruct.hpp
 	Albany_ModelEvaluator.hpp
 	Albany_SaveEigenData.hpp
+	Albany_ExodusOutput.hpp
         Albany_DummyParameterAccessor.hpp
   )
 
@@ -300,6 +304,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/Stress.cpp
     ${LCM_DIR}/evaluators/CapModelStress.cpp  
     ${LCM_DIR}/evaluators/GursonSDStress.cpp  
+    ${LCM_DIR}/evaluators/J2Fiber.cpp  
     ${LCM_DIR}/evaluators/Strain.cpp 
     ${LCM_DIR}/evaluators/ElasticModulus.cpp 
     ${LCM_DIR}/evaluators/PoissonsRatio.cpp 
@@ -367,6 +372,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/CapModelStress_Def.hpp
     ${LCM_DIR}/evaluators/GursonSDStress.hpp 
     ${LCM_DIR}/evaluators/GursonSDStress_Def.hpp
+    ${LCM_DIR}/evaluators/J2Fiber.hpp 
+    ${LCM_DIR}/evaluators/J2Fiber_Def.hpp
     ${LCM_DIR}/evaluators/Strain.hpp 
     ${LCM_DIR}/evaluators/Strain_Def.hpp 
     ${LCM_DIR}/evaluators/ElasticModulus.hpp 

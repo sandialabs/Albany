@@ -21,6 +21,7 @@
 #include "Thyra_DetachedVectorView.hpp"
 #include "Albany_SaveEigenData.hpp"
 #include "Albany_ModelEvaluator.hpp"
+#include "Albany_ObserverFactory.hpp"
 
 #include "Piro_Epetra_NOXSolver.hpp"
 #include "Piro_Epetra_LOCASolver.hpp"
@@ -113,10 +114,9 @@ Albany::SolverFactory::createAndGetAlbanyApp(
       albanyApp = app; 
 
       // Create observer for output from time-stepper
-      if (solutionMethod=="Transient" && secondOrder=="No")
-	Rythmos_observer = rcp(new Albany_RythmosObserver(app));
-      else
-	NOX_observer = rcp(new Albany_NOXObserver(app));
+      ObserverFactory observerFactory(Teuchos::sublist(appParams, "Problem", true), app);
+      Rythmos_observer = observerFactory.createRythmosObserver();
+      NOX_observer = observerFactory.createNoxObserver();
     }
 
     RCP<Teuchos::ParameterList> piroParams = 

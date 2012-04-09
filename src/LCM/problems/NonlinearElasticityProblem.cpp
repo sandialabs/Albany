@@ -120,13 +120,35 @@ Albany::NonlinearElasticityProblem::getValidProblemParameters() const
   validPL->set<bool>("volavgJ", false, "Flag to indicate the J should be volume averaged");
   validPL->set<bool>("weighted_Volume_Averaged_J", false, "Flag to indicate the J should be volume averaged with stabilization");
   validPL->set<bool>("Use Composite Tet 10", false, "Flag to use the compostie tet 10 basis in Intrepid");
-  if (matModel == "J2")
+  if (matModel == "J2"|| matModel == "J2Fiber")
   {
     validPL->set<bool>("Compute Dislocation Density Tensor", false, "Flag to compute the dislocaiton density tensor (only for 3D)");
     validPL->sublist("Hardening Modulus", false, "");
     validPL->sublist("Yield Strength", false, "");
     validPL->sublist("Saturation Modulus", false, "");
     validPL->sublist("Saturation Exponent", false, "");
+  }
+
+  if (matModel == "J2Fiber")
+  {
+	validPL->set<RealType>("xiinf_J2",false,"");
+	validPL->set<RealType>("tau_J2",false,"");
+	validPL->set<RealType>("k_f1",false,"");
+	validPL->set<RealType>("q_f1",false,"");
+	validPL->set<RealType>("vol_f1",false,"");
+	validPL->set<RealType>("xiinf_f1",false,"");
+	validPL->set<RealType>("tau_f1",false,"");
+	validPL->set<RealType>("Mx_f1",false,"");
+	validPL->set<RealType>("My_f1",false,"");
+	validPL->set<RealType>("Mz_f1",false,"");
+	validPL->set<RealType>("k_f2",false,"");
+	validPL->set<RealType>("q_f2",false,"");
+	validPL->set<RealType>("vol_f2",false,"");
+	validPL->set<RealType>("xiinf_f2",false,"");
+	validPL->set<RealType>("tau_f2",false,"");
+	validPL->set<RealType>("Mx_f2",false,"");
+	validPL->set<RealType>("My_f2",false,"");
+	validPL->set<RealType>("Mz_f2",false,"");
   }
 
   return validPL;

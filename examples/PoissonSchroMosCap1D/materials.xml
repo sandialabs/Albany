@@ -12,15 +12,15 @@
     </ParameterList>
 
     <ParameterList name="lgate">
-      <Parameter name="material" type="string" value="PolySilicon" />
+      <Parameter name="material" type="string" value="MetalPolySilicon" />
     </ParameterList>
 
     <ParameterList name="rgate">
-      <Parameter name="material" type="string" value="PolySilicon" />
+      <Parameter name="material" type="string" value="MetalPolySilicon" />
     </ParameterList>
 
     <ParameterList name="gate">
-      <Parameter name="material" type="string" value="PolySilicon" />
+      <Parameter name="material" type="string" value="MetalPolySilicon" />
     </ParameterList>
 
     <ParameterList name="topgate">
@@ -48,7 +48,7 @@
     </ParameterList>
 
     <ParameterList name="NodeSet0">
-      <Parameter name="material" type="string" value="PolySilicon" />
+      <Parameter name="material" type="string" value="MetalPolySilicon" />
     </ParameterList>
 
     <ParameterList name="NodeSet1">
@@ -101,13 +101,13 @@
       <Parameter name="material" type="string" value="Silicon" />
       <Parameter name="Dopant Type" type="string" value="Acceptor" />
       <Parameter name="Doping Profile" type="string" value="Constant" />
-      <!-- <Parameter name="Doping Value" type="double" value="1e14" /> !-->
-      <Parameter name="Doping Value" type="double" value="5e17" />
+      <Parameter name="Doping Value" type="double" value="1e14" />
     </ParameterList>
 
     <ParameterList name="sio2">
       <Parameter name="material" type="string" value="SiliconDioxide" />
       <Parameter name="Charge Parameter Name" type="string" value="Oxide Charge" />
+      <Parameter name="Charge Parameter Scaling" type="double" value="1e18" />
       <!-- <Parameter name="Charge Value" type="double" value="1e10" /> -->
     </ParameterList>
 
@@ -118,6 +118,9 @@
 
     <ParameterList name="polysilicon">
       <Parameter name="material" type="string" value="PolySilicon" />
+      <Parameter name="Dopant Type" type="string" value="Donor" />
+      <Parameter name="Doping Profile" type="string" value="Constant" />
+      <Parameter name="Doping Value" type="double" value="6e18" />
     </ParameterList>
 
     <ParameterList name="sige">
@@ -133,7 +136,7 @@
     <ParameterList name="si3n4">
       <Parameter name="material" type="string" value="SiliconNitride" />
     </ParameterList>
-    
+
   </ParameterList>
 
 
@@ -154,14 +157,8 @@
       <Parameter name="Number of conduction band min" type="int" value="2" />
       <Parameter name="Number of valence band max" type="int" value="1" />
 
-      <!-- Electron effective mass along coordinate directions in [m0] -->
-      <!--
-      <Parameter name="Electron Effective Mass X" type="double" value="0.19" />
-      <Parameter name="Electron Effective Mass Y" type="double" value="0.19" />
-      <Parameter name="Electron Effective Mass Z" type="double" value="0.98" />
-      !-->
-      <!-- <Parameter name="Longitudinal Electron Effective Mass" type="double" value="0.98" /> !-->
-      <Parameter name="Longitudinal Electron Effective Mass" type="double" value="0.916" />
+      <!-- Electron effective mass in [m0] -->   
+      <Parameter name="Longitudinal Electron Effective Mass" type="double" value="0.98" />
       <Parameter name="Transverse Electron Effective Mass" type="double" value="0.19" />
 
       <!-- Heavy/Light Hole effective mass in [m0] -->
@@ -192,6 +189,50 @@
     </ParameterList>
 
 
+    <!-- Use Silicon parameters for PolySilicon as assumed standardly, since the latter 
+    has complicated structure (polycrystalline or amorphous) and no data is available -->
+    
+    <ParameterList name="PolySilicon">
+      <Parameter name="Category" type="string" value="Semiconductor" />
+      <Parameter name="Permittivity" type="double" value="11.9" />
+
+      <!-- Valley information -->
+      <Parameter name="Conduction Band Minimum" type="string" value="Delta2 Valley" />
+      <Parameter name="Number of conduction band min" type="int" value="2" />
+      <Parameter name="Number of valence band max" type="int" value="1" />
+
+      <!-- Electron effective mass in [m0] -->
+      <Parameter name="Longitudinal Electron Effective Mass" type="double" value="0.98" />
+      <Parameter name="Transverse Electron Effective Mass" type="double" value="0.19" />
+
+      <!-- Heavy/Light Hole effective mass in [m0] -->
+      <Parameter name="Light Hole Effective Mass" type="double" value="0.16" />
+      <Parameter name="Heavy Hole Effective Mass" type="double" value="0.56" />
+
+      <!-- Electron/Hole DOS effective mass (valley deg. included) [m0] -->
+      <!-- Electron = pow(6,2./3.)*pow(pow(mt,2)*ml,1./3.) b/c of 6 valleys -->
+      <!-- Hole = pow(pow(mhh,1.5)+pow(mlh,1.5),2./3.) -->
+      <Parameter name="Electron DOS Effective Mass" type="double" value="1.08396" />
+      <Parameter name="Hole DOS Effective Mass" type="double" value="0.61566" />
+      
+      <!-- Electron affinity in [eV] -->
+      <Parameter name="Electron Affinity" type="double" value="4.05" />
+
+      <!-- Band gap at 0 K in [eV] -->
+      <Parameter name="Zero Temperature Band Gap" type="double" value="1.1455" />
+
+      <!-- Temperature coefficient for band gap in [eV/K] -->
+      <Parameter name="Band Gap Alpha Coefficient" type="double" value="4.73e-4" />
+
+      <!-- Temperature coefficient for band gap in [K] -->
+      <Parameter name="Band Gap Beta Coefficient" type="double" value="636.0" />
+
+      <!-- Reference temperature [K] for computing Nc and Nv -->
+      <Parameter name="Reference Temperature" type="double" value="300.0" />
+
+    </ParameterList>
+    
+
     <!-- Relaxed Si(0.7)Ge(0.3): conduction band minima (CBM) are six-fold deg 
     Delta valleys, and VBM is the deg LH-HH Gamma-valley.  -->
     
@@ -204,7 +245,7 @@
       <Parameter name="Number of conduction band min" type="int" value="2" />
       <Parameter name="Number of valence band max" type="int" value="1" />
 
-      <!-- Electron effective mass along coordinate directions in [m0] -->
+      <!-- Electron effective mass in [m0] -->
       <Parameter name="Longitudinal Electron Effective Mass" type="double" value="0.98" />
       <Parameter name="Transverse Electron Effective Mass" type="double" value="0.19" />
 
@@ -249,7 +290,7 @@
       <Parameter name="Number of conduction band min" type="int" value="2" />
       <Parameter name="Number of valence band max" type="int" value="1" />
 
-      <!-- Electron effective mass along coordinate directions in [m0] -->
+      <!-- Electron effective mass in [m0] -->
       <Parameter name="Longitudinal Electron Effective Mass" type="double" value="0.94" />
       <Parameter name="Transverse Electron Effective Mass" type="double" value="0.19" />
 
@@ -285,12 +326,12 @@
       <Parameter name="Category" type="string" value="Insulator" />
       <Parameter name="Permittivity" type="double" value="3.9" />
 
-      <!-- Valley information - same as Silicon to avoid charge discontinuity -->
-      <Parameter name="Number of conduction band min" type="int" value="2" />
+      <!-- Valley information -->
+      <Parameter name="Number of conduction band min" type="int" value="1" />
 
       <!-- For Insulators, electron effective mass is often assumed 0.5m0 -->
-      <Parameter name="Longitudinal Electron Effective Mass" type="double" value="0.005" />
-      <Parameter name="Transverse Electron Effective Mass" type="double" value="0.005" />
+      <Parameter name="Longitudinal Electron Effective Mass" type="double" value="0.5" />
+      <Parameter name="Transverse Electron Effective Mass" type="double" value="0.5" />
 
       <!-- Band Gap in [eV] -->
       <Parameter name="Band Gap" type="double" value="9.0" />
@@ -304,8 +345,8 @@
       <Parameter name="Category" type="string" value="Insulator" />
       <Parameter name="Permittivity" type="double" value="7.5" />
 
-      <!-- Valley information - same as Silicon to avoid charge discontinuity -->
-      <Parameter name="Number of conduction band min" type="int" value="2" />
+      <!-- Valley information -->
+      <Parameter name="Number of conduction band min" type="int" value="1" />
 
       <!-- For Insulators, electron effective mass is often assumed 0.5m0 -->
       <Parameter name="Longitudinal Electron Effective Mass" type="double" value="0.5" />
@@ -319,12 +360,9 @@
     </ParameterList>
 
 
-    <ParameterList name="PolySilicon">
+    <ParameterList name="MetalPolySilicon">
       <Parameter name="Category" type="string" value="Metal" />  
       <Parameter name="Permittivity" type="double" value="11.9" />
-
-      <!-- Band Gap in [eV] (use 0K silicon now?)-->
-      <Parameter name="Band Gap" type="double" value="1.1455" />
 
       <!-- Assume n+ PolySilicon which is true in devices that QCAD team is interested in !-->
       <Parameter name="Work Function" type="double" value="4.05" /> 
