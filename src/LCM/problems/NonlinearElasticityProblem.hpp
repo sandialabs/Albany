@@ -133,6 +133,7 @@ namespace Albany {
 #include "DislocationDensity.hpp"
 #include "TLElasResid.hpp"
 #include "Time.hpp"
+#include "J2Fiber.hpp"
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
@@ -363,7 +364,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
-  else if (matModel == "J2")
+  else if (matModel == "J2"||matModel == "J2Fiber")
   { 
     { // Hardening Modulus
       RCP<ParameterList> p = rcp(new ParameterList);
@@ -456,6 +457,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
+    if(matModel == "J2")
     {// Stress
       RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
@@ -477,7 +479,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
       p->set<string>("Stress Name", matModel); //dl->qp_tensor also
       p->set<string>("Fp Name", "Fp");  // dl->qp_tensor also
       p->set<string>("Eqps Name", "eqps");  // dl->qp_scalar also
- 
+
       //Declare what state data will need to be saved (name, layout, init_type)
 
       ev = rcp(new LCM::J2Stress<EvalT,AlbanyTraits>(*p));
@@ -489,6 +491,92 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
       p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+    if(matModel == "J2Fiber")
+    {// J2Fiber Stress
+      RCP<ParameterList> p = rcp(new ParameterList("Stress"));
+
+      //Input
+      p->set<string>("DefGrad Name", "F");
+      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+
+      p->set<string>("Elastic Modulus Name", "Elastic Modulus");
+      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+      p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
+      p->set<string>("Hardening Modulus Name", "Hardening Modulus"); // dl->qp_scalar also
+      p->set<string>("Saturation Modulus Name", "Saturation Modulus"); // dl->qp_scalar also
+      p->set<string>("Saturation Exponent Name", "Saturation Exponent"); // dl->qp_scalar also
+      p->set<string>("Yield Strength Name", "Yield Strength"); // dl->qp_scalar also
+      p->set<string>("DetDefGrad Name", "J");  // dl->qp_scalar also
+
+      RealType xiinf_J2 = params->get("xiinf_J2", 0.0);
+      RealType tau_J2 = params->get("tau_J2", 1.0);
+      RealType k_f1 = params->get("k_f1", 0.0);
+      RealType q_f1 = params->get("q_f1", 1.0);
+      RealType vol_f1 = params->get("vol_f1", 0.0);
+      RealType xiinf_f1 = params->get("xiinf_f1", 0.0);
+      RealType tau_f1 = params->get("tau_f1", 1.0);
+      RealType Mx_f1 = params->get("Mx_f1", 1.0);
+      RealType My_f1 = params->get("My_f1", 0.0);
+      RealType Mz_f1 = params->get("Mz_f1", 0.0);
+      RealType k_f2 = params->get("k_f2", 0.0);
+      RealType q_f2 = params->get("q_f2", 1.0);
+      RealType vol_f2 = params->get("vol_f2", 0.0);
+      RealType xiinf_f2 = params->get("xiinf_f2", 0.0);
+      RealType tau_f2 = params->get("tau_f2", 1.0);
+      RealType Mx_f2 = params->get("Mx_f2", 1.0);
+      RealType My_f2 = params->get("My_f2", 0.0);
+      RealType Mz_f2 = params->get("Mz_f2", 0.0);
+
+      p->set<RealType>("xiinf_J2 Name", xiinf_J2);
+      p->set<RealType>("tau_J2 Name", tau_J2);
+      p->set<RealType>("k_f1 Name", k_f1);
+      p->set<RealType>("q_f1 Name", q_f1);
+      p->set<RealType>("vol_f1 Name", vol_f1);
+      p->set<RealType>("xiinf_f1 Name", xiinf_f1);
+      p->set<RealType>("tau_f1 Name", tau_f1);
+      p->set<RealType>("Mx_f1 Name", Mx_f1);
+      p->set<RealType>("My_f1 Name", My_f1);
+      p->set<RealType>("Mz_f1 Name", Mz_f1);
+      p->set<RealType>("k_f2 Name", k_f2);
+      p->set<RealType>("q_f2 Name", q_f2);
+      p->set<RealType>("vol_f2 Name", vol_f2);
+      p->set<RealType>("xiinf_f2 Name", xiinf_f2);
+      p->set<RealType>("tau_f2 Name", tau_f2);
+      p->set<RealType>("Mx_f2 Name", Mx_f2);
+      p->set<RealType>("My_f2 Name", My_f2);
+      p->set<RealType>("Mz_f2 Name", Mz_f2);
+      //Output
+      p->set<string>("Stress Name", matModel); //dl->qp_tensor also
+      p->set<string>("Fp Name", "Fp");  // dl->qp_tensor also
+      p->set<string>("Eqps Name", "eqps");  // dl->qp_scalar also
+      p->set<string>("Energy_J2 Name", "energy_J2");
+      p->set<string>("Energy_f1 Name", "energy_f1");
+      p->set<string>("Energy_f2 Name", "energy_f2");
+
+      //Declare what state data will need to be saved (name, layout, init_type)
+
+      ev = rcp(new LCM::J2Fiber<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy,"scalar", 0.0);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy,"identity", 1.0, true);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      p = stateMgr.registerStateVariable("energy_J2",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      p = stateMgr.registerStateVariable("energy_f1",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      p = stateMgr.registerStateVariable("energy_f2",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }

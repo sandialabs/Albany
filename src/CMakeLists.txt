@@ -302,6 +302,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/Stress.cpp
     ${LCM_DIR}/evaluators/CapModelStress.cpp  
     ${LCM_DIR}/evaluators/GursonSDStress.cpp  
+    ${LCM_DIR}/evaluators/J2Fiber.cpp  
     ${LCM_DIR}/evaluators/Strain.cpp 
     ${LCM_DIR}/evaluators/ElasticModulus.cpp 
     ${LCM_DIR}/evaluators/PoissonsRatio.cpp 
@@ -369,6 +370,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/CapModelStress_Def.hpp
     ${LCM_DIR}/evaluators/GursonSDStress.hpp 
     ${LCM_DIR}/evaluators/GursonSDStress_Def.hpp
+    ${LCM_DIR}/evaluators/J2Fiber.hpp 
+    ${LCM_DIR}/evaluators/J2Fiber_Def.hpp
     ${LCM_DIR}/evaluators/Strain.hpp 
     ${LCM_DIR}/evaluators/Strain_Def.hpp 
     ${LCM_DIR}/evaluators/ElasticModulus.hpp 

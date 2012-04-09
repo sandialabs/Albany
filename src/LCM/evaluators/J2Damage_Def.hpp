@@ -329,7 +329,7 @@ evaluateFields(typename Traits::EvalData workset)
       
 
       // compute pressure
-      p = kappa * ( J(cell,qp) - 1 / ( J(cell,qp) ) );
+      p = 0.5 * kappa * ( J(cell,qp) - 1 / ( J(cell,qp) ) );
 
       // compute stress
       for (std::size_t i=0; i < numDims; ++i)	
