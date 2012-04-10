@@ -46,11 +46,11 @@ typedef std::vector<StateArray> StateArrays;
     MeshSpecsStruct(const CellTopologyData& ctd_, int numDim_, 
                     int cubatureDegree_, std::vector<std::string> nsNames_,
                     std::vector<std::string> ssNames_,
-                    int worsetSize_, std::string ebName_,
-                    bool interleavedOrdering_)
+                    int worsetSize_, const std::string ebName_,
+                    const std::map<std::string, int>& ebNameToIndex_, bool interleavedOrdering_)
        :  ctd(ctd_), numDim(numDim_), cubatureDegree(cubatureDegree_),
           nsNames(nsNames_), ssNames(ssNames_), worksetSize(worsetSize_), 
-          ebName(ebName_), 
+          ebName(ebName_), ebNameToIndex(ebNameToIndex_),
           interleavedOrdering(interleavedOrdering_) {}
     const CellTopologyData ctd; 
     int numDim;
@@ -58,7 +58,8 @@ typedef std::vector<StateArray> StateArrays;
     std::vector<std::string> nsNames;  //Node Sets Names
     std::vector<std::string> ssNames;  //Side Sets Names
     int worksetSize;
-    std::string ebName;  //Element block name for the EB that this struct corresponds to
+    const std::string ebName;  //Element block name for the EB that this struct corresponds to
+    const std::map<std::string, int>& ebNameToIndex;
     bool interleavedOrdering;
   };
 }

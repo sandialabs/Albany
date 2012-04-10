@@ -30,6 +30,8 @@
 //#include "Sacado_ParameterAccessor.hpp"
 //#include "PHAL_AlbanyTraits.hpp"
 
+#include "QCAD_MaterialDatabase.hpp"
+
 
 namespace PHAL {
 
@@ -37,7 +39,7 @@ namespace PHAL {
 
 */
 
-enum NEU_TYPE {COORD, NORMAL};
+enum NEU_TYPE {COORD, NORMAL, INTJUMP};
 
 template<typename EvalT, typename Traits>
 class NeumannBase : 
@@ -73,13 +75,14 @@ protected:
 
  // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
 
-   // dudn
+   // dudn scaled
   void calc_dudn_const(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
                           const Intrepid::FieldContainer<MeshScalarT>& phys_side_cub_points,
                           const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
                           const int cellDims,
-                          int local_side_id);
+                          int local_side_id,
+                          ScalarT scale = 1.0);
 
    // (dudx, dudy, dudz)
   void calc_gradu_dotn_const(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
@@ -133,6 +136,8 @@ protected:
   NEU_TYPE bc_type;
   ScalarT dudn;
   std::vector<ScalarT> dudx;
+
+  std::vector<ScalarT> matScaling;
 
 };
 

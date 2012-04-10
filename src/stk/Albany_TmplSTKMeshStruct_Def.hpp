@@ -218,13 +218,20 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
   int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_map->NumMyElements());
 
+  // Build a map to get the EB name given the index
+
+  for (unsigned int eb=0; eb<numEB; eb++) 
+  
+    ebNameToIndex[partVec[eb]->name()] = eb;
+
   // Construct MeshSpecsStruct
   if (!params->get("Separate Evaluators by Element Block",false)) {
 
     const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
 
     this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
-                               nsNames, ssNames, worksetSize, partVec[0]->name(), this->interleavedOrdering));
+                               nsNames, ssNames, worksetSize, partVec[0]->name(), 
+                               ebNameToIndex, this->interleavedOrdering));
   }
   else {
 
@@ -234,14 +241,13 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
   
     for (unsigned int eb=0; eb<numEB; eb++) {
   
-      ebNameToIndex[partVec[eb]->name()] = eb;
-  
       // MeshSpecs holds all info needed to set up an Albany problem
   
       const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[eb]).getCellTopologyData();
 
       this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
-                                nsNames, ssNames, worksetSize, partVec[eb]->name(), this->interleavedOrdering));
+                                nsNames, ssNames, worksetSize, partVec[eb]->name(), 
+                                ebNameToIndex, this->interleavedOrdering));
     }
  }
 }

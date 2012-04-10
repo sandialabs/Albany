@@ -666,8 +666,8 @@ void Albany::STKDiscretization::computeSideSets(){
       stk::mesh::Entity &sidee = *sides[localSideID];
 
       const stk::mesh::PairIterRelation side_elems = sidee.relations(element_rank); // get the elements
-            // containing the side. Should be only one for external boundaries. Need to fix for internal
-            // flux conditions
+            // containing the side. Note that if the side is internal, it will show up twice in the
+            // element list, once for each element that contains it.
 
       TEUCHOS_TEST_FOR_EXCEPTION(side_elems.size() != 1, std::logic_error,
 			   "STKDisc: cannot figure out side set topology for side set " << ss->first << endl);
@@ -687,13 +687,12 @@ void Albany::STKDiscretization::computeSideSets(){
       // Save the side identifier inside of the element. This starts at zero here.
       sStruct.side_local_id = determine_local_side_id(elem, sidee);
 
+      // Save the index of the element block that this elem lives in
+      sStruct.elem_ebIndex = stkMeshStruct->ebNameToIndex[wsEBNames[workset]];
+
       SideSetList& ssList = sideSets[workset];   // Get a ref to the side set map for this ws
       SideSetList::iterator it = ssList.find(ss->first); // Get an iterator to the correct sideset (if
                                                                 // it exists)
-
-//std::cout << "Workset = " << workset << " egid = " << sStruct.elem_GID << " eLID = " 
-//    << sStruct.elem_LID << " eside = " << sStruct.side_local_id << std::endl;
-
 
       if(it != ssList.end()) // The sideset has already been created
 

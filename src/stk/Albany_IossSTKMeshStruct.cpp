@@ -122,12 +122,19 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   int ebSizeMax =  *std::max_element(el_blocks.begin(), el_blocks.end());
   int worksetSize = this->computeWorksetSize(worksetSizeMax, ebSizeMax);
 
+  // Build a map to get the EB name given the index
+
+  for (int eb=0; eb<numEB; eb++) 
+
+    this->ebNameToIndex[partVec[eb]->name()] = eb;
+
   // Construct MeshSpecsStruct
   if (!params->get("Separate Evaluators by Element Block",false)) {
 
     const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
     this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
-                               nsNames, ssNames, worksetSize, partVec[0]->name(), this->interleavedOrdering));
+                               nsNames, ssNames, worksetSize, partVec[0]->name(), 
+                               this->ebNameToIndex, this->interleavedOrdering));
 
   }
   else {
@@ -136,11 +143,10 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     this->allElementBlocksHaveSamePhysics=false;
     this->meshSpecs.resize(numEB);
     for (int eb=0; eb<numEB; eb++) {
-      this->ebNameToIndex[partVec[eb]->name()] = eb;
       const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[eb]).getCellTopologyData();
       this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
                                                 nsNames, ssNames, worksetSize, partVec[eb]->name(), 
-                                                this->interleavedOrdering));
+                                                this->ebNameToIndex, this->interleavedOrdering));
       cout << "el_block_size[" << eb << "] = " << el_blocks[eb] << "   name  " << partVec[eb]->name() << endl; 
     }
 
