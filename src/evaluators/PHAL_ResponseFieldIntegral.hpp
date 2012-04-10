@@ -52,6 +52,7 @@ namespace PHAL {
     PHX::MDField<MeshScalarT> weights;
     PHX::DataLayout::size_type field_rank;
     std::vector<PHX::DataLayout::size_type> field_dims;
+    Teuchos::Array<int> field_components;
     std::size_t numQPs;
     std::size_t numDims;
 

@@ -1,0 +1,46 @@
+create vertex 0 0 0 
+create vertex 1 0 0 
+create vertex 1 1 0 
+create vertex 0 1 0 
+create planar surface with plane vertex 1 vertex 2 vertex 3 
+create vertex 0 0.45 0 on surface 1 
+create vertex 0 0.55 0 on surface 1 
+create vertex 1 0.45 0 on surface 1 
+create vertex 1 0.55 0 on surface 1 
+partition create curve 3  vertex 11, 12
+partition create curve 1  vertex 9,10 
+surface 1  size 0.01
+mesh surface 1
+set duplicate block elements on
+block 1 surface 1 
+block 1 element type quad4
+block 1 name "body"
+#block 2 face 46 to 55 
+#block 2 element type quad4
+#block 2 name "inlet_eb" 
+#block 3 face 9946 to 9955
+#block 3 element type quad4
+#block 3 name "outlet_eb"
+nodeset 1 curve 2  # bottom
+nodeset 1 name "bottom"
+nodeset 2 curve 4  # top
+nodeset 2 name "top"
+nodeset 3 curve 8  # lower left
+nodeset 3 name "lowerleft"
+nodeset 4 curve 7  # inlet
+nodeset 4 name "inlet"
+nodeset 5 curve 1  # upper left
+nodeset 5 name "upperleft"
+nodeset 6 curve 3  # lower right
+nodeset 6 name "lowerright"
+nodeset 7 curve 5  # outlet
+nodeset 7 name "outlet"
+nodeset 8 curve 6  # upper right
+nodeset 8 name "upperright"
+Sideset 1 curve 7  # inlet
+Sideset 1 name "inlet_ss"
+Sideset 2 curve 5  # outlet
+Sideset 2 name "outlet_ss"
+set large exodus file on
+#export Genesis  "/Users/etphipp/development/Albany/Albany/examples/NSReactor2/reactor_med.exo" dimension 2 block 1, 2, 3 overwrite
+export Genesis  "/Users/etphipp/development/Albany/Albany/examples/NSReactor2/reactor_med.exo" dimension 2 block 1 overwrite
