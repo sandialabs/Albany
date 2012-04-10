@@ -41,28 +41,28 @@ namespace Petra {
 
 //TpetraMap_To_EpetraMap: takes in Tpetra::Map object, converts it to its equivalent Epetra_Map object, 
 //and returns an RCP pointer to this Epetra_Map
-Teuchos::RCP<const Epetra_Map> TpetraMap_To_EpetraMap(const Teuchos::RCP<const Tpetra_Map>& tpetraMap_, 
+Teuchos::RCP<Epetra_Map> TpetraMap_To_EpetraMap(const Teuchos::RCP<const Tpetra_Map>& tpetraMap_, 
                                                       const Teuchos::RCP<const Epetra_Comm>& comm_);
 
 
 //TpetraCrsGraph_To_TpetraCrsGraph: takes in Tpetra::CrsGraph object, converts it to its equivalent Epetra_CrsGraph object, 
 //and returns an RCP pointer to this Epetra_CrsGraph
-Teuchos::RCP<const Epetra_CrsGraph> TpetraCrsGraph_To_EpetraCrsGraph(const Teuchos::RCP<const Tpetra_CrsGraph>& tpetraCrsGraph_, 
+Teuchos::RCP<Epetra_CrsGraph> TpetraCrsGraph_To_EpetraCrsGraph(const Teuchos::RCP<const Tpetra_CrsGraph>& tpetraCrsGraph_, 
                                                                      const Teuchos::RCP<const Epetra_Comm>& comm_);
 
 
 //TpetraVector_To_EpetraVector: copies Tpetra::Vector object into its analogous 
 //Epetra_Vector object 
 void TpetraVector_To_EpetraVector(const Teuchos::RCP<const Tpetra_Vector>& tpetraVector_,
-                                  Epetra_Vector& epetraVector_); 
+                                  Epetra_Vector& epetraVector_, const Teuchos::RCP<const Epetra_Comm>& comm_); 
 
-//EpetraVectorConst_To_TpetraVector: copies const Epetra_Vector to const Tpetra_Vector
-Teuchos::RCP<const Tpetra_Vector> EpetraVectorConst_To_TpetraVector(const Epetra_Vector& epetraVector_, 
+//EpetraVector_To_TpetraVectorConst: copies const Epetra_Vector to const Tpetra_Vector
+Teuchos::RCP<const Tpetra_Vector> EpetraVector_To_TpetraVectorConst(const Epetra_Vector& epetraVector_, 
                                                                Teuchos::RCP<const Teuchos::Comm<int> >& commT_,
                                                                Teuchos::RCP<KokkosNode>& nodeT_); 
 
-//EpetraVectorNonConst_To_TpetraVector: copies non-const Epetra_Vector to non-const Tpetra_Vector
-Teuchos::RCP<Tpetra_Vector> EpetraVectorNonConst_To_TpetraVector(Epetra_Vector& epetraVector_, 
+//EpetraVector_To_TpetraVectorNonConst: copies non-const Epetra_Vector to non-const Tpetra_Vector
+Teuchos::RCP<Tpetra_Vector> EpetraVector_To_TpetraVectorNonConst(const Epetra_Vector& epetraVector_, 
                                                                Teuchos::RCP<const Teuchos::Comm<int> >& commT_,
                                                                Teuchos::RCP<KokkosNode>& nodeT_);
 }

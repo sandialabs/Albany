@@ -208,7 +208,7 @@ Application(const RCP<const Epetra_Comm>& comm_,
 
   //Create Tpetra copy of initial_guess, called initial_guessT
   RCP<const Tpetra_Vector> initial_guessT; 
-  if (initial_guess != Teuchos::null) initial_guessT = Petra::EpetraVectorConst_To_TpetraVector(*initial_guess, commT, nodeT); 
+  if (initial_guess != Teuchos::null) initial_guessT = Petra::EpetraVector_To_TpetraVectorConst(*initial_guess, commT, nodeT); 
 
   if (initial_guess != Teuchos::null) {
      initial_xT = rcp(new Tpetra_Vector(*initial_guessT)); 
@@ -222,6 +222,13 @@ Application(const RCP<const Epetra_Comm>& comm_,
     initial_xT->doExport(*overlapped_xT, *exporterT, Tpetra::INSERT);
     initial_x_dotT->doExport(*overlapped_xdotT, *exporterT, Tpetra::INSERT);
 }
+  
+  cout << "initial_xT" << endl; 
+  Teuchos::FancyOStream fos(Teuchos::rcpFromRef(std::cout));
+   initial_xT->describe(fos, Teuchos::VERB_EXTREME);
+   cout << "initial_xdotT" << endl;
+   initial_x_dotT->describe(fos, Teuchos::VERB_EXTREME);
+
 
   // Now that space is allocated in STK for state fields, initialize states
   stateMgr.setStateArrays(disc);
@@ -339,7 +346,7 @@ Albany::Application::
 getInitialSolution() const
 {
   //Convert Tpetra::Vector initial_xT to analogous Epetra_Vector initial_x for return
-  Petra::TpetraVector_To_EpetraVector(initial_xT, *initial_x); 
+  Petra::TpetraVector_To_EpetraVector(initial_xT, *initial_x, comm); 
   return initial_x;
 }
 
@@ -348,7 +355,7 @@ Albany::Application::
 getInitialSolutionDot() const
 {
   //Convert Tpetra::Vector initial_x_dotT to analogous Epetra_Vector initial_x_dot for return
-  Petra::TpetraVector_To_EpetraVector(initial_x_dotT, *initial_x_dot); 
+  Petra::TpetraVector_To_EpetraVector(initial_x_dotT, *initial_x_dot, comm); 
   return initial_x_dot;
 }
 
@@ -433,11 +440,11 @@ computeGlobalResidual(const double current_time,
 
   TimeMonitor Timer(*timers[0]); //start timer
   //Create Tpetra copy of x, called xT
-  Teuchos::RCP<const Tpetra_Vector> xT = Petra::EpetraVectorConst_To_TpetraVector(x, commT, nodeT); 
+  Teuchos::RCP<const Tpetra_Vector> xT = Petra::EpetraVector_To_TpetraVectorConst(x, commT, nodeT); 
   //Create Tpetra copy of xdot, called xdotT
   Teuchos::RCP<const Tpetra_Vector> xdotT;
   if (xdot != NULL) {
-     xdotT = Petra::EpetraVectorConst_To_TpetraVector(*xdot, commT, nodeT); 
+     xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT, nodeT); 
   }
 
   // Scatter x and xdot to the overlapped distrbution
@@ -469,7 +476,7 @@ computeGlobalResidual(const double current_time,
 #endif
 
   //Create Tpetra copy of f, call it fT
-  Teuchos::RCP<Tpetra_Vector> fT = Petra::EpetraVectorNonConst_To_TpetraVector(f, commT, nodeT); //Teuchos::rcp(new Tpetra_Vector(xmapT, valuesfAV));
+  Teuchos::RCP<Tpetra_Vector> fT = Petra::EpetraVector_To_TpetraVectorNonConst(f, commT, nodeT); //Teuchos::rcp(new Tpetra_Vector(xmapT, valuesfAV));
 
   // Zero out overlapped residual - Tpetra
   overlapped_fT->putScalar(0.0);
@@ -526,7 +533,7 @@ computeGlobalResidual(const double current_time,
   }
 
   //Copy Tpetra vector fT into Epetra vector f 
-  Petra::TpetraVector_To_EpetraVector(fT, f); 
+  Petra::TpetraVector_To_EpetraVector(fT, f, comm); 
   //cout << f << endl;
 }
 
@@ -2128,11 +2135,11 @@ evaluateStateFieldManager(const double current_time,
   }
 
   //Create Tpetra copy of x, called xT
-  Teuchos::RCP<const Tpetra_Vector> xT = Petra::EpetraVectorConst_To_TpetraVector(x, commT, nodeT); 
+  Teuchos::RCP<const Tpetra_Vector> xT = Petra::EpetraVector_To_TpetraVectorConst(x, commT, nodeT); 
   //Create Tpetra copy of xdot, called xdotT
   Teuchos::RCP<const Tpetra_Vector> xdotT;
   if (xdot != NULL) {
-     xdotT = Petra::EpetraVectorConst_To_TpetraVector(*xdot, commT, nodeT); 
+     xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT, nodeT); 
   }
   // Scatter x and xdot to the overlapped distrbution
   //overlapped_x->Import(x, *importer, Insert);

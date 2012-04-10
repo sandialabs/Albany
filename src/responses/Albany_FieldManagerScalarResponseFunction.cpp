@@ -110,11 +110,11 @@ evaluateResponse(const double current_time,
   Teuchos::ParameterList kokkosNodeParams;
     Teuchos::RCP<KokkosNode> nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
   //convert Epetra_Vector x to Tpetra_Vector xT
-  Teuchos::RCP<const Tpetra_Vector> xT = Petra::EpetraVectorConst_To_TpetraVector(x, commT, nodeT);
+  Teuchos::RCP<const Tpetra_Vector> xT = Petra::EpetraVector_To_TpetraVectorConst(x, commT, nodeT);
   //convert Epetra_Vector *xdot to Tpetra_Vector xdotT
   Teuchos::RCP<const Tpetra_Vector> xdotT;
   if (xdot != NULL) {
-     xdotT = Petra::EpetraVectorConst_To_TpetraVector(*xdot, commT, nodeT);
+     xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT, nodeT);
   }
  
   //application->setupBasicWorksetInfo(workset, current_time, xdot, &x, p);

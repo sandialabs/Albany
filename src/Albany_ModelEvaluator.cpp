@@ -389,6 +389,17 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
   if (W_out != Teuchos::null) {
     app->computeGlobalJacobian(alpha, beta, curr_time, x_dot.get(), *x, 
 			       sacado_param_vec, f_out.get(), *W_out_crs);
+    /*cout << "W_out_crs" << endl; 
+    cout << *W_out_crs << endl; 
+    cout << "x_dot" << endl; 
+    cout << x_dot << endl; 
+    cout << "f" << endl; 
+    cout << f_out << endl; 
+    cout << "x" << endl; 
+    cout << *x << endl; 
+    cout << "curr_time" << endl; 
+    cout << curr_time << endl; 
+    */
     f_already_computed=true;
   }
 
