@@ -108,7 +108,7 @@ evaluateResponse(const double current_time,
   Teuchos::RCP<const Epetra_Comm> comm = application->getComm();
   Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(*comm));
   Teuchos::ParameterList kokkosNodeParams;
-    Teuchos::RCP<KokkosNode> nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
+  Teuchos::RCP<KokkosNode> nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
   //convert Epetra_Vector x to Tpetra_Vector xT
   Teuchos::RCP<const Tpetra_Vector> xT = Petra::EpetraVector_To_TpetraVectorConst(x, commT, nodeT);
   //convert Epetra_Vector *xdot to Tpetra_Vector xdotT
@@ -184,10 +184,22 @@ evaluateGradient(const double current_time,
 		 Epetra_MultiVector* dg_dp)
 {
   visResponseGraph<PHAL::AlbanyTraits::Jacobian>("_gradient");
+  Teuchos::RCP<const Epetra_Comm> comm = application->getComm();
+  Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(*comm));
+  Teuchos::ParameterList kokkosNodeParams;
+  Teuchos::RCP<KokkosNode> nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
+  //Create Tpetra copy of x, called xT
+  Teuchos::RCP<const Tpetra_Vector> xT = Petra::EpetraVector_To_TpetraVectorConst(x, commT, nodeT);
+  //Create Tpetra copy of xdot, called xdotT
+  Teuchos::RCP<const Tpetra_Vector> xdotT;
+  if (xdot != NULL) {
+    xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT, nodeT);
+   }
+
 
   // Set data in Workset struct
   PHAL::Workset workset;
-  application->setupBasicWorksetInfo(workset, current_time, xdot, &x, p);
+  application->setupBasicWorksetInfoT(workset, current_time, xdotT, xT, p);
   workset.g = Teuchos::rcp(g, false);
   
   // Perform fill via field manager (dg/dx)

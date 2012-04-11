@@ -18,6 +18,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
+#include "Tpetra_CrsMatrix.hpp"
 
 // **********************************************************************
 // Genereric Template Code for Constructor and PostRegistrationSetup
@@ -104,25 +105,40 @@ void Dirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
 
-  Teuchos::RCP<Epetra_Vector> f = dirichletWorkset.f;
-  Teuchos::RCP<Epetra_CrsMatrix> jac = dirichletWorkset.Jac;
-  Teuchos::RCP<const Epetra_Vector> x = dirichletWorkset.x;
+
+  Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
+  Teuchos::RCP<const Tpetra_Vector> xT = dirichletWorkset.xT;
+  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
+  Teuchos::RCP<Tpetra_CrsMatrix> jacT = dirichletWorkset.JacT;
+
   const RealType j_coeff = dirichletWorkset.j_coeff;
   const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
 
-  RealType* matrixEntries;
-  int*    matrixIndices;
-  int     numEntries;
-  RealType diag=j_coeff;
-  bool fillResid = (f != Teuchos::null);
+  bool fillResid = (fT != Teuchos::null);
+  Teuchos::ArrayRCP<ST> fT_nonconstView;                                         
+  if (fillResid) fT_nonconstView = fT->get1dViewNonConst();
+
+  Teuchos::Array<LO> index(1);
+  Teuchos::Array<ST> value(1); 
+  size_t numEntriesT;  
+  value[0] = j_coeff; 
+  Teuchos::Array<ST> matrixEntriesT; 
+  Teuchos::Array<LO> matrixIndicesT; 
 
   for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
       int lunk = nsNodes[inode][this->offset];
-      jac->ExtractMyRowView(lunk, numEntries, matrixEntries, matrixIndices);
-      for (int i=0; i<numEntries; i++) matrixEntries[i]=0;
-      jac->ReplaceMyValues(lunk, 1, &diag, &lunk);
+      index[0] = lunk; 
+      numEntriesT = jacT->getNumEntriesInLocalRow(lunk);
+      matrixEntriesT.resize(numEntriesT); 
+      matrixIndicesT.resize(numEntriesT); 
 
-      if (fillResid) (*f)[lunk] = ((*x)[lunk] - this->value.val());
+      jacT->getLocalRowCopy(lunk, matrixIndicesT(), matrixEntriesT(), numEntriesT); 
+      for (int i=0; i<numEntriesT; i++) matrixEntriesT[i]=0;
+      jacT->replaceLocalValues(lunk, matrixIndicesT(), matrixEntriesT()); 
+
+      jacT->replaceLocalValues(lunk, index(), value()); 
+      
+      if (fillResid) fT_nonconstView[lunk] = xT_constView[lunk] - this->value.val();
   }
 }
 

@@ -67,6 +67,40 @@ Teuchos::RCP<Epetra_CrsGraph> Petra::TpetraCrsGraph_To_EpetraCrsGraph(const Teuc
   return epetraCrsGraph_; 
 }
 
+//TpetraVector_To_EpetraVector: copies Tpetra::CrsMatrix object into its analogous 
+//Epetra_CrsMatrix object 
+void Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(Teuchos::RCP<Tpetra_CrsMatrix>& tpetraCrsMatrix_,
+                                                  Epetra_CrsMatrix& epetraCrsMatrix_,
+                                                  const Teuchos::RCP<const Epetra_Comm>& comm_)
+{
+  //check if row maps of epetraCrsMatrix_ and tpetraCrsMatrix_ are the same
+  const Epetra_BlockMap epetraMap_ = epetraCrsMatrix_.RowMap(); 
+  Teuchos::RCP<const Tpetra_Map> tpetraMap_ = tpetraCrsMatrix_->getRowMap(); 
+  Teuchos::RCP<Epetra_Map> tpetraMapE_ = TpetraMap_To_EpetraMap(tpetraMap_, comm_); 
+  bool isSame = tpetraMapE_->SameAs(epetraMap_); 
+  //if epetraCrsMatrix_ and tpetraCrsMatrix_ do not have the same row map, throw an exception
+  TEUCHOS_TEST_FOR_EXCEPTION((isSame != true),
+                             std::logic_error,
+                             "Error in Petra::TpetraCrsMatrix_To_EpetraCrsMatrix! Arguments Epetra_CrsMatrix and Tpetra::CrsMatrix do not have same row map." <<  std::endl) ;
+  
+  size_t NumEntries = 0;
+  GO col; ST val;
+  Teuchos::Array<LO> Indices;
+  Teuchos::Array<ST> Values;
+  for (size_t i = 0; i<tpetraCrsMatrix_->getNodeNumRows(); i++) {
+     NumEntries = tpetraCrsMatrix_->getNumEntriesInLocalRow(i);
+     Indices.resize(NumEntries);
+     Values.resize(NumEntries);
+     tpetraCrsMatrix_->getLocalRowCopy(i, Indices(), Values(), NumEntries);
+     GO globalRow = tpetraCrsMatrix_->getRowMap()->getGlobalElement(i);
+     for (size_t j=0; j<NumEntries; j++) {
+        col = tpetraCrsMatrix_->getColMap()->getGlobalElement(Indices[j]);
+        val = Values[j];
+        epetraCrsMatrix_.ReplaceGlobalValues(globalRow, 1, &val, &col);
+     }
+  }
+}
+
 
 //TpetraVector_To_EpetraVector: copies Tpetra::Vector object into its analogous 
 //Epetra_Vector object 
@@ -122,3 +156,58 @@ Teuchos::RCP<Tpetra_Vector> Petra::EpetraVector_To_TpetraVectorNonConst(const Ep
   Teuchos::RCP<Tpetra_Vector> tpetraVector_ = Teuchos::rcp(new Tpetra_Vector(mapT, valuesAV));
   return tpetraVector_; 
 }
+
+//EpetraCrsMatrix_To_TpetraCrsMatrix: copies Epetra_CrsMatrix to its analogous Tpetra_CrsMatrix
+Teuchos::RCP<Tpetra_CrsMatrix> Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(Epetra_CrsMatrix& epetraCrsMatrix_,
+                                                               Teuchos::RCP<const Teuchos::Comm<int> >& commT_,
+                                                               Teuchos::RCP<KokkosNode>& nodeT_)
+{
+    //get row map of Epetra::CrsMatrix & convert to Tpetra::Map 
+    Epetra_Map epetraMap_ = epetraCrsMatrix_.RowMap();
+    size_t numElements = epetraMap_.NumMyElements();
+    GO *indices = epetraMap_.MyGlobalElements();
+    Teuchos::ArrayView<GO> indicesAV = Teuchos::arrayView(indices, numElements);
+    Teuchos::RCP<const Tpetra_Map> tpetraMap_ = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesAV, commT_, nodeT_);
+
+    //get CrsGraph of Epetra::CrsMatrix & convert to Tpetra::CrsGraph
+    const Epetra_CrsGraph epetraCrsGraph_ = epetraCrsMatrix_.Graph();
+    size_t maxEntries = epetraCrsGraph_.GlobalMaxNumIndices();
+    Teuchos::RCP<Tpetra_CrsGraph> tpetraCrsGraph_ = Teuchos::rcp(new Tpetra_CrsGraph(tpetraMap_, maxEntries));
+    int NumEntries = 0;
+    Teuchos::Array<GO> col(1);
+    for (int i=0; i<epetraCrsGraph_.NumMyRows(); i++) {
+       NumEntries = epetraCrsGraph_.NumMyIndices(i);
+       LO *Indices = new LO[NumEntries];
+       epetraCrsGraph_.ExtractMyRowView(i, NumEntries, Indices);
+       GO globalRow = epetraCrsGraph_.GRID(i);
+       for (int j = 0; j<NumEntries; j++) {
+          col[0] = epetraCrsGraph_.GCID(Indices[j]);
+          tpetraCrsGraph_->insertGlobalIndices(globalRow, col);
+       }
+    }
+    tpetraCrsGraph_->fillComplete();
+
+    //convert Epetra::CrsMatrix to Tpetra::CrsMatrix, after creating Tpetra::CrsMatrix based on above Tpetra::CrsGraph
+     Teuchos::RCP<Tpetra_CrsMatrix> tpetraCrsMatrix_ = Teuchos::rcp(new Tpetra_CrsMatrix(tpetraCrsGraph_));
+    tpetraCrsMatrix_->setAllToScalar(0.0);
+    tpetraCrsMatrix_->fillComplete();
+    tpetraCrsMatrix_->resumeFill();
+    Teuchos::Array<ST> val(1);
+    for (size_t i=0; i<epetraCrsMatrix_.NumMyRows(); i++) {
+       NumEntries = epetraCrsMatrix_.NumMyEntries(i);
+       ST *ValuesM = new ST[NumEntries];
+       LO *IndicesM = new LO[NumEntries];
+       epetraCrsMatrix_.ExtractMyRowView(i, NumEntries, ValuesM, IndicesM);
+       GO globalRow = epetraCrsMatrix_.GRID(i);
+       for (size_t j = 0; j<NumEntries; j++) {
+           col[0] = IndicesM[j];
+           val[0] = ValuesM[j];
+           tpetraCrsMatrix_->replaceLocalValues(i, col(), val());
+       }
+    }
+   tpetraCrsMatrix_->fillComplete();
+   return tpetraCrsMatrix_;
+
+}
+
+

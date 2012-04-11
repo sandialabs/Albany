@@ -35,6 +35,7 @@
 #include "Albany_DataTypes.hpp"
 #include "Epetra_Vector.h" 
 #include "Epetra_CrsGraph.h"
+#include "Epetra_CrsMatrix.h"
 
 namespace Petra {
 
@@ -51,6 +52,13 @@ Teuchos::RCP<Epetra_CrsGraph> TpetraCrsGraph_To_EpetraCrsGraph(const Teuchos::RC
                                                                      const Teuchos::RCP<const Epetra_Comm>& comm_);
 
 
+//TpetraVector_To_EpetraVector: copies Tpetra::CrsMatrix object into its analogous 
+//Epetra_CrsMatrix object 
+void TpetraCrsMatrix_To_EpetraCrsMatrix(Teuchos::RCP<Tpetra_CrsMatrix>& tpetraCrsMatrix_,
+                                                  Epetra_CrsMatrix& epetraCrsMatrix_,
+                                                  const Teuchos::RCP<const Epetra_Comm>& comm_);
+
+
 //TpetraVector_To_EpetraVector: copies Tpetra::Vector object into its analogous 
 //Epetra_Vector object 
 void TpetraVector_To_EpetraVector(const Teuchos::RCP<const Tpetra_Vector>& tpetraVector_,
@@ -65,5 +73,11 @@ Teuchos::RCP<const Tpetra_Vector> EpetraVector_To_TpetraVectorConst(const Epetra
 Teuchos::RCP<Tpetra_Vector> EpetraVector_To_TpetraVectorNonConst(const Epetra_Vector& epetraVector_, 
                                                                Teuchos::RCP<const Teuchos::Comm<int> >& commT_,
                                                                Teuchos::RCP<KokkosNode>& nodeT_);
+
+//EpetraCrsMatrix_To_TpetraCrsMatrix: copies Epetra_CrsMatrix to its analogous Tpetra_CrsMatrix
+Teuchos::RCP<Tpetra_CrsMatrix> EpetraCrsMatrix_To_TpetraCrsMatrix(Epetra_CrsMatrix& epetraMatrix_,
+                                                               Teuchos::RCP<const Teuchos::Comm<int> >& commT_,
+                                                               Teuchos::RCP<KokkosNode>& nodeT_);
+
 }
 #endif //PETRA_CONVERTERS

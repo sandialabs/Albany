@@ -228,9 +228,11 @@ void KfieldBC<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
 
-  Teuchos::RCP<Epetra_Vector> f = dirichletWorkset.f;
-  Teuchos::RCP<Epetra_CrsMatrix> jac = dirichletWorkset.Jac;
-  Teuchos::RCP<const Epetra_Vector> x = dirichletWorkset.x;
+  Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
+  Teuchos::RCP<const Tpetra_Vector> xT = dirichletWorkset.xT;
+  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
+  Teuchos::RCP<Tpetra_CrsMatrix> jacT = dirichletWorkset.JacT;
+
 
   RealType time = dirichletWorkset.current_time;
 
@@ -240,15 +242,22 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   const std::vector<double*>& nsNodeCoords = 
     dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
 
-  RealType* matrixEntries;
-  int*    matrixIndices;
-  int     numEntries;
-  RealType diag=j_coeff;
-  bool fillResid = (f != Teuchos::null);
+  bool fillResid = (fT != Teuchos::null);
+  Teuchos::ArrayRCP<ST> fT_nonconstView;
+  if (fillResid) fT_nonconstView = fT->get1dViewNonConst();
 
   int xlunk, ylunk; // local indicies into unknown vector
   double* coord;
+
   ScalarT Xval, Yval; 
+  Teuchos::Array<LO> index(1);
+  Teuchos::Array<ST> value(1);
+  size_t numEntriesT;
+  value[0] = j_coeff;
+  Teuchos::Array<ST> matrixEntriesT;
+  Teuchos::Array<LO> matrixIndicesT;
+
+
   for (unsigned int inode = 0; inode < nsNodes.size(); inode++) 
   {
     xlunk = nsNodes[inode][0];
@@ -258,19 +267,33 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     this->computeBCs(coord, Xval, Yval, time);
     
     // replace jac values for the X dof 
-    jac->ExtractMyRowView(xlunk, numEntries, matrixEntries, matrixIndices);
-    for (int i=0; i<numEntries; i++) matrixEntries[i]=0;
-    jac->ReplaceMyValues(xlunk, 1, &diag, &xlunk);
+    numEntriesT = jacT->getNumEntriesInLocalRow(xlunk);
+    matrixEntriesT.resize(numEntriesT);
+    matrixIndicesT.resize(numEntriesT);
+    jacT->getLocalRowCopy(xlunk, matrixIndicesT(), matrixEntriesT(), numEntriesT);
+    for (int i=0; i<numEntriesT; i++) matrixEntriesT[i]=0;
+    jacT->replaceLocalValues(xlunk, matrixIndicesT(), matrixEntriesT());
+
+    index[0] = xlunk;
+    jacT->replaceLocalValues(xlunk, index(), value());
+
 
     // replace jac values for the y dof
-    jac->ExtractMyRowView(ylunk, numEntries, matrixEntries, matrixIndices);
-    for (int i=0; i<numEntries; i++) matrixEntries[i]=0;
-    jac->ReplaceMyValues(ylunk, 1, &diag, &ylunk);
-    
+    numEntriesT = jacT->getNumEntriesInLocalRow(ylunk);
+    matrixEntriesT.resize(numEntriesT);
+    matrixIndicesT.resize(numEntriesT);
+    jacT->getLocalRowCopy(ylunk, matrixIndicesT(), matrixEntriesT(), numEntriesT);
+    for (int i=0; i<numEntriesT; i++) matrixEntriesT[i]=0;
+    jacT->replaceLocalValues(ylunk, matrixIndicesT(), matrixEntriesT());
+
+    index[0] = ylunk;
+    jacT->replaceLocalValues(ylunk, index(), value());    
+
+
     if (fillResid)
     {
-      (*f)[xlunk] = ((*x)[xlunk] - Xval.val());
-      (*f)[ylunk] = ((*x)[ylunk] - Yval.val());
+      fT_nonconstView[xlunk] = xT_constView[xlunk] - Xval.val();
+      fT_nonconstView[ylunk] = xT_constView[ylunk] - Yval.val();
     } 
   }
 }

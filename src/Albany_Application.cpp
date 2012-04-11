@@ -26,6 +26,10 @@
 #include "Teuchos_TimeMonitor.hpp"
 #include "EpetraExt_MultiVectorOut.h"
 
+#include "EpetraExt_RowMatrixOut.h"
+#include "EpetraExt_VectorOut.h"
+#include "MatrixMarket_Tpetra.hpp"
+
 
 #include<string>
 #include "PHAL_Workset.hpp"
@@ -53,6 +57,7 @@ using Teuchos::rcp;
 using Teuchos::rcp_dynamic_cast;
 using Teuchos::TimeMonitor;
 
+int iter = 0; 
 
 
 
@@ -200,6 +205,8 @@ Application(const RCP<const Epetra_Comm>& comm_,
   overlapped_jacT = rcp(new Tpetra_CrsMatrix(disc->getOverlapJacobianGraphT()));
 
   // Initialize Epetra solution vector and time deriv
+  
+
   initial_x = disc->getSolutionField();
   initial_x_dot = rcp(new Epetra_Vector(*(disc->getMap())));
   // Initialize Tpetra solution vector and time deriv
@@ -209,6 +216,9 @@ Application(const RCP<const Epetra_Comm>& comm_,
   //Create Tpetra copy of initial_guess, called initial_guessT
   RCP<const Tpetra_Vector> initial_guessT; 
   if (initial_guess != Teuchos::null) initial_guessT = Petra::EpetraVector_To_TpetraVectorConst(*initial_guess, commT, nodeT); 
+
+  
+
 
   if (initial_guess != Teuchos::null) {
      initial_xT = rcp(new Tpetra_Vector(*initial_guessT)); 
@@ -222,13 +232,6 @@ Application(const RCP<const Epetra_Comm>& comm_,
     initial_xT->doExport(*overlapped_xT, *exporterT, Tpetra::INSERT);
     initial_x_dotT->doExport(*overlapped_xdotT, *exporterT, Tpetra::INSERT);
 }
-  
-  cout << "initial_xT" << endl; 
-  Teuchos::FancyOStream fos(Teuchos::rcpFromRef(std::cout));
-   initial_xT->describe(fos, Teuchos::VERB_EXTREME);
-   cout << "initial_xdotT" << endl;
-   initial_x_dotT->describe(fos, Teuchos::VERB_EXTREME);
-
 
   // Now that space is allocated in STK for state fields, initialize states
   stateMgr.setStateArrays(disc);
@@ -551,11 +554,19 @@ computeGlobalJacobian(const double alpha,
   postRegSetup("Jacobian");
 
   TimeMonitor Timer(*timers[1]); //start timer
+  
+  //Create Tpetra copy of x, called xT
+  Teuchos::RCP<const Tpetra_Vector> xT = Petra::EpetraVector_To_TpetraVectorConst(x, commT, nodeT);
+  //Create Tpetra copy of xdot, called xdotT
+  Teuchos::RCP<const Tpetra_Vector> xdotT;
+  if (xdot != NULL) {
+    xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT, nodeT);
+   }
 
   // Scatter x and xdot to the overlapped distrbution
-  overlapped_x->Import(x, *importer, Insert);
-  if (xdot != NULL) overlapped_xdot->Import(*xdot, *importer, Insert);
-
+  overlapped_xT->doImport(*xT, *importerT, Tpetra::INSERT);
+  if (xdot != NULL) overlapped_xdotT->doImport(*xdotT, *importerT, Tpetra::INSERT);
+  
   // Set parameters
   for (int i=0; i<p.size(); i++)
     for (unsigned int j=0; j<p[i].size(); j++)
@@ -574,30 +585,44 @@ computeGlobalJacobian(const double alpha,
   }
 #endif
 
-  // Zero out overlapped residual
-  RCP<Epetra_Vector> overlapped_ff;
+
+  //Create Tpetra copy of f, call it fT
+  Teuchos::RCP<Tpetra_Vector> fT; 
   if (f != NULL) {
-    overlapped_ff = overlapped_f;
-    overlapped_ff->PutScalar(0.0);
-    f->PutScalar(0.0);
+    fT = Petra::EpetraVector_To_TpetraVectorNonConst(*f, commT, nodeT);
+  }
+  
+  // Zero out overlapped residual
+  if (f != NULL) {
+    overlapped_fT->putScalar(0.0);
+    fT->putScalar(0.0);
   }
 
+  //Convert jacT to its Tpetra::CrsMatrix analog, called jacT 
+  Teuchos::RCP<Tpetra_CrsMatrix> jacT = Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(jac, commT, nodeT);  
+
   // Zero out Jacobian
-  overlapped_jac->PutScalar(0.0);
-  jac.PutScalar(0.0);
+  overlapped_jacT->setAllToScalar(0.0); 
+  jacT->resumeFill(); 
+  jacT->setAllToScalar(0.0); 
+
 
   // Set data in Workset struct, and perform fill via field manager
   {
     PHAL::Workset workset;
-    if (!paramLib->isParameter("Time"))
-      loadBasicWorksetInfo( workset, overlapped_x, overlapped_xdot, current_time );
-    else 
-      loadBasicWorksetInfo( workset, overlapped_x, overlapped_xdot,
+    if (!paramLib->isParameter("Time")) {
+      loadBasicWorksetInfoT( workset, overlapped_xT, overlapped_xdotT, current_time );
+    }
+    else {
+      loadBasicWorksetInfoT( workset, overlapped_xT, overlapped_xdotT,
 			    paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time") );
+    }
 
-    workset.f        = overlapped_f;
-    workset.Jac      = overlapped_jac;
+    workset.fT        = overlapped_fT;
+    workset.JacT      = overlapped_jacT;
     loadWorksetJacobianInfo(workset, alpha, beta);
+  
+
 
     for (int ws=0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo<PHAL::AlbanyTraits::Jacobian>(workset, ws);
@@ -608,20 +633,21 @@ computeGlobalJacobian(const double alpha,
         nfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
     }
   } 
-
+  
   // Assemble global residual
-  if (f != NULL)
-    f->Export(*overlapped_f, *exporter, Add);
+  if (f != NULL){
+    fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD); 
+  }
 
   // Assemble global Jacobian
-  jac.Export(*overlapped_jac, *exporter, Add);
+  jacT->doExport(*overlapped_jacT, *exporterT, Tpetra::ADD);
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (dfm!=Teuchos::null) {
     PHAL::Workset workset;
 
-    workset.f = rcp(f,false);
-    workset.Jac = Teuchos::rcpFromRef(jac);
+    workset.fT = fT;
+    workset.JacT = jacT;
     workset.m_coeff = alpha;
     workset.j_coeff = beta;
 
@@ -632,7 +658,7 @@ computeGlobalJacobian(const double alpha,
 
     if (beta==0.0 && perturbBetaForDirichlets>0.0) workset.j_coeff = perturbBetaForDirichlets;
 
-    workset.x = Teuchos::rcpFromRef(x);;
+    workset.xT = xT; 
     if (xdot != NULL) workset.transientTerms = true;
 
     loadWorksetNodesetInfo(workset);
@@ -641,7 +667,15 @@ computeGlobalJacobian(const double alpha,
     dfm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
   }
 
-  jac.FillComplete(true);
+  //Convert Tpetra::Vector fT to Epetra_Vector f for output
+  if (f != NULL) { 
+    Petra::TpetraVector_To_EpetraVector(fT, *f, comm);
+  }
+ 
+  //Convert Tpetra::CrsMatrix jacT to Epetra_CrsMatrix jac for output
+  Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(jacT, jac, comm); 
+  jac.FillComplete(true); 
+  
   //cout << "f " << *f << endl;;
   //cout << "J " << jac << endl;;
 }
@@ -2488,6 +2522,7 @@ void Albany::Application::setupBasicWorksetInfoT(
   workset.comm = commT; 
 
   workset.x_importerT = importerT;
+  workset.x_importer = importer;
 }
 
 

@@ -70,6 +70,8 @@ struct Workset {
   Teuchos::RCP<Tpetra_Vector> fT;
  
   Teuchos::RCP<Epetra_CrsMatrix> Jac;
+  //Tpetra analog of Jac
+  Teuchos::RCP<Tpetra_CrsMatrix> JacT;
   Teuchos::RCP<Epetra_MultiVector> JV;
   Teuchos::RCP<Epetra_MultiVector> fp;
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > sg_f;

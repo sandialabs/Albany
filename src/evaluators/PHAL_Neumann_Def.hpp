@@ -427,14 +427,20 @@ template<typename Traits>
 void Neumann<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Teuchos::RCP<Epetra_Vector> f = workset.f;
-  Teuchos::RCP<Epetra_CrsMatrix> Jac = workset.Jac;
+
+  Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
+  Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
+  Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
+
   ScalarT *valptr;
 
   // Fill in "neumann" array
   evaluateNeumannContribution(workset);
 
-  int row, lcol, col;
+  int lcol;
+  Teuchos::Array<LO> rowT(1);
+  Teuchos::Array<LO> colT(1);
+  Teuchos::Array<ST> value(1);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
@@ -443,11 +449,13 @@ evaluateFields(typename Traits::EvalData workset)
      
       valptr = &(this->neumann)(cell, node);
 
-      row = nodeID[node][this->offset];
+      rowT[0] = nodeID[node][this->offset];
+
       int neq = nodeID[node].size();
 
-      if (f != Teuchos::null) 
-        f->SumIntoMyValue(row, 0, valptr->val());
+      if (fT != Teuchos::null) {
+         fT->sumIntoLocalValue(rowT[0], valptr->val());
+      }
 
       // Check derivative array is nonzero
       if (valptr->hasFastAccess()) {
@@ -460,15 +468,15 @@ evaluateFields(typename Traits::EvalData workset)
             lcol = neq * node_col + eq_col;
 
             // Global column
-            col =  nodeID[node_col][eq_col];
-              
+            colT[0] =  nodeID[node_col][eq_col];
+            value[0] = valptr->fastAccessDx(lcol);   
             if (workset.is_adjoint) {
               // Sum Jacobian transposed
-              Jac->SumIntoMyValues(col, 1, &(valptr->fastAccessDx(lcol)), &row);
+              JacT->sumIntoLocalValues(colT[0], rowT(), value());
             }
             else {
               // Sum Jacobian
-              Jac->SumIntoMyValues(row, 1, &(valptr->fastAccessDx(lcol)), &col);
+            JacT->sumIntoLocalValues(rowT[0], colT(), value());
             }
           } // column equations
         } // column nodes

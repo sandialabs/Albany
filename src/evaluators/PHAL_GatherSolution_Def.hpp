@@ -130,6 +130,8 @@ evaluateFields(typename Traits::EvalData workset)
 { 
   ScalarT* valptr;
 
+  //cerr << "PHAL_GatherSolution" << endl; 
+
   //Teuchos::RCP<const Epetra_Vector> x = workset.x;
   //Teuchos::RCP<const Epetra_Vector> xdot = workset.xdot;
  
@@ -180,8 +182,14 @@ void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 { 
 
-  Teuchos::RCP<const Epetra_Vector> x = workset.x;
-  Teuchos::RCP<const Epetra_Vector> xdot = workset.xdot;
+
+  Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
+  Teuchos::RCP<const Tpetra_Vector> xdotT = workset.xdotT;
+
+  //get const (read-only) view of xT and xdotT
+  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
+  Teuchos::ArrayRCP<const ST> xdotT_constView = xdotT->get1dView();
+
   ScalarT* valptr;
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
@@ -193,7 +201,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t eq = 0; eq < numFields; eq++) {
         if (this->vectorField) valptr = &((this->valVec[0])(cell,node,eq));
         else                   valptr = &(this->val[eq])(cell,node);
-	*valptr = FadType(num_dof, (*x)[nodeID[node][this->offset + eq]]);
+	*valptr = FadType(num_dof, xT_constView[nodeID[node][this->offset + eq]]);
 	valptr->setUpdateValue(!workset.ignore_residual);
 	valptr->fastAccessDx(neq * node + eq + this->offset) = workset.j_coeff;
       }
@@ -201,7 +209,7 @@ evaluateFields(typename Traits::EvalData workset)
         for (std::size_t eq = 0; eq < numFields; eq++) {
           if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
           else                   valptr = &(this->val_dot[eq])(cell,node);
-  	  *valptr = FadType(num_dof, (*xdot)[nodeID[node][this->offset + eq]]);
+  	  *valptr = FadType(num_dof, xdotT_constView[nodeID[node][this->offset + eq]]);
 	  valptr->fastAccessDx(neq * node + eq + this->offset) = workset.m_coeff;
         }
       }
