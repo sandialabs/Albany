@@ -126,6 +126,13 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   Teuchos::RCP<Epetra_Vector> f = dirichletWorkset.f;
   Teuchos::RCP<Epetra_CrsMatrix> jac = dirichletWorkset.Jac;
   Teuchos::RCP<const Epetra_Vector> x = dirichletWorkset.x;
+  
+  Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
+  Teuchos::RCP<const Tpetra_Vector> xT = dirichletWorkset.xT;
+  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
+  Teuchos::RCP<Tpetra_CrsMatrix> jacT = dirichletWorkset.JacT;
+
+
   RealType time = dirichletWorkset.current_time;
   const RealType j_coeff = dirichletWorkset.j_coeff;
   const std::vector<std::vector<int> >& nsNodes = 
@@ -133,13 +140,19 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   const std::vector<double*>& nsNodeCoords = 
     dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
 
-  RealType* matrixEntries;
-  int*    matrixIndices;
-  int     numEntries;
-  RealType diag=j_coeff;
   bool fillResid = (f != Teuchos::null);
+  Teuchos::ArrayRCP<ST> fT_nonconstView;
+  if (fillResid) fT_nonconstView = fT->get1dViewNonConst();
+
 
   int lunk; // local indicies into unknown vector
+  Teuchos::Array<LO> index(1);
+  Teuchos::Array<ST> value(1);
+  size_t numEntriesT;
+  value[0] = j_coeff;
+  Teuchos::Array<ST> matrixEntriesT;
+  Teuchos::Array<LO> matrixIndicesT;
+
   ScalarT Val; 
   for (unsigned int inode = 0; inode < nsNodes.size(); inode++) 
   {
@@ -148,11 +161,18 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     Val = this->computeVal(time);
     
     // replace jac values for the X dof 
-    jac->ExtractMyRowView(lunk, numEntries, matrixEntries, matrixIndices);
-    for (int i=0; i<numEntries; i++) matrixEntries[i]=0;
-    jac->ReplaceMyValues(lunk, 1, &diag, &lunk);
+    numEntriesT = jacT->getNumEntriesInLocalRow(lunk);
+    matrixEntriesT.resize(numEntriesT);
+    matrixIndicesT.resize(numEntriesT);
+    jacT->getLocalRowCopy(lunk, matrixIndicesT(), matrixEntriesT(), numEntriesT);
+    for (int i=0; i<numEntriesT; i++) matrixEntriesT[i]=0;
+    jacT->replaceLocalValues(lunk, matrixIndicesT(), matrixEntriesT());
+
+    index[0] = lunk;
+    jacT->replaceLocalValues(lunk, index(), value());
+
     
-    if (fillResid)  (*f)[lunk] = ((*x)[lunk] - Val.val());
+    if (fillResid)  fT_nonconstView[lunk] = xT_constView[lunk] - Val.val();
   }
 }
 
