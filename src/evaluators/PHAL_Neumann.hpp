@@ -27,8 +27,8 @@
 #include "Intrepid_Cubature.hpp"
 
 #include "Albany_ProblemUtils.hpp"
-//#include "Sacado_ParameterAccessor.hpp"
-//#include "PHAL_AlbanyTraits.hpp"
+#include "Sacado_ParameterAccessor.hpp"
+#include "PHAL_AlbanyTraits.hpp"
 
 #include "QCAD_MaterialDatabase.hpp"
 
@@ -44,11 +44,13 @@ enum NEU_TYPE {COORD, NORMAL, INTJUMP};
 template<typename EvalT, typename Traits>
 class NeumannBase : 
     public PHX::EvaluatorWithBaseImpl<Traits>,
-    public PHX::EvaluatorDerived<EvalT, Traits> //,  // TO DO
-//    public Sacado::ParameterAccessor<EvalT, SPL_Traits>
+    public PHX::EvaluatorDerived<EvalT, Traits>,
+    public Sacado::ParameterAccessor<EvalT, SPL_Traits>
    {
 
 public:
+  typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
 
   NeumannBase(const Teuchos::ParameterList& p);
 
@@ -57,13 +59,8 @@ public:
 
   void evaluateFields(typename Traits::EvalData d) = 0;
 
-//  virtual ScalarT& getValue(const std::string &n) { return dudn; }
+  ScalarT& getValue(const std::string &n);
 
-
-private:
-
-  typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
 
 protected:
 
@@ -283,7 +280,7 @@ private:
 
 public:
   
-  NeumannAggregator(Teuchos::ParameterList& p);
+  NeumannAggregator(const Teuchos::ParameterList& p);
   
   void postRegistrationSetup(typename Traits::SetupData d,
                              PHX::FieldManager<Traits>& vm) {};

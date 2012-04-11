@@ -17,9 +17,10 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include <string>
 
 #include "Intrepid_FunctionSpaceTools.hpp"
-//#include "Sacado_ParameterRegistration.hpp"
+#include "Sacado_ParameterRegistration.hpp"
 
 
 namespace PHAL {
@@ -44,6 +45,9 @@ NeumannBase(const Teuchos::ParameterList& p) :
   // The input.xml argument for the above string
   inputConditions = p.get< std::string >("Neumann Input Conditions");
 
+  // Set up values as parameters for parameter library
+  Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib> > ("Parameter Library");
+
   // If we are doing a Neumann internal boundary with a "scaled jump",
   // build a scale lookup table from the materialDB file (this must exist)
 
@@ -56,6 +60,8 @@ NeumannBase(const Teuchos::ParameterList& p) :
      // User has specified conditions on sideset normal
      bc_type = INTJUMP;
      dudn = inputValues[0];
+
+     new Sacado::ParameterRegistration<EvalT, SPL_Traits> (name, this, paramLib);
 
      // Build a vector to hold the scaling from the material DB
      matScaling.resize(meshSpecs->ebNameToIndex.size());
@@ -89,12 +95,17 @@ NeumannBase(const Teuchos::ParameterList& p) :
       for(int i = 0; i < dudx.size(); i++)
         dudx[i] = inputValues[i];
 
+      for(int i = 0; i < dudx.size(); i++) {
+        std::stringstream ss; ss << name << "[" << i << "]";
+        new Sacado::ParameterRegistration<EvalT, SPL_Traits> (ss.str(), this, paramLib);
+      }
   }
   else {
 
       // User has specified conditions on sideset normal
       bc_type = NORMAL;
       dudn = inputValues[0];
+      new Sacado::ParameterRegistration<EvalT, SPL_Traits> (name, this, paramLib);
 
   }
 
@@ -104,16 +115,6 @@ NeumannBase(const Teuchos::ParameterList& p) :
   PHX::Tag<ScalarT> fieldTag(name, dl->dummy);
 
   this->addEvaluatedField(fieldTag);
-
-// TO DO
-  // Set up values as parameters for parameter library
-/*
-  Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib> >
-               ("Parameter Library", Teuchos::null);
-
-  new Sacado::ParameterRegistration<EvalT, SPL_Traits> (name, this, paramLib);
-*/
-
 
   // Build element and side integration support
 
@@ -293,6 +294,21 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
   }
   
 }
+
+template<typename EvalT, typename Traits>
+typename NeumannBase<EvalT, Traits>::ScalarT&
+NeumannBase<EvalT, Traits>::
+getValue(const std::string &n) {
+
+  if (n == name) return dudn;
+  else {
+    for(int i = 0; i < dudx.size(); i++) {
+      std::stringstream ss; ss << name << "[" << i << "]";
+      if (n == ss.str())  return dudx[i];
+    }
+  }
+}
+
 
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
@@ -924,7 +940,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename EvalT, typename Traits>
 NeumannAggregator<EvalT, Traits>::
-NeumannAggregator(Teuchos::ParameterList& p) 
+NeumannAggregator(const Teuchos::ParameterList& p) 
 {
   Teuchos::RCP<PHX::DataLayout> dl =  p.get< Teuchos::RCP<PHX::DataLayout> >("Data Layout");
 
