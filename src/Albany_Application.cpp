@@ -520,10 +520,8 @@ computeGlobalJacobian(const double alpha,
 #endif
 
   // Zero out overlapped residual
-  RCP<Epetra_Vector> overlapped_ff;
   if (f != NULL) {
-    overlapped_ff = overlapped_f;
-    overlapped_ff->PutScalar(0.0);
+    overlapped_f->PutScalar(0.0);
     f->PutScalar(0.0);
   }
 
