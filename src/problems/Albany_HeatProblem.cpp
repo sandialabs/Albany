@@ -132,7 +132,13 @@ Albany::HeatProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshS
    // Construct BC evaluators for all side sets and names
    // Note that the string index sets up the equation offset, so ordering is important
    std::vector<string> bcNames(neq);
+   Teuchos::Array<Teuchos::Array<int> > offsets;
+   offsets.resize(neq);
+
    bcNames[0] = "T";
+   offsets[0].resize(1);
+   offsets[0][0] = 0;
+
 
    // Construct BC evaluators for all possible names of conditions
    // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
@@ -152,7 +158,7 @@ Albany::HeatProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshS
    condNames[2] = "scaled jump";
 
    nfm.resize(1); // Heat problem only has one element block
-   nfm[0] = bcUtils.constructBCEvaluators(meshSpecs, bcNames, condNames, dl, 
+   nfm[0] = bcUtils.constructBCEvaluators(meshSpecs, bcNames, condNames, offsets, dl, 
                                           this->params, this->paramLib, materialDB);
 
 }

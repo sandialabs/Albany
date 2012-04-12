@@ -133,14 +133,35 @@ Albany::ElasticityProblem::constructNeumannEvaluators(
 
    // Construct BC evaluators for all side sets and names
    // Note that the string index sets up the equation offset, so ordering is important
-   std::vector<string> neumannNames(neq);
+   std::vector<string> neumannNames(neq + 1);
+   Teuchos::Array<Teuchos::Array<int> > offsets;
+   offsets.resize(neq + 1);
+
    neumannNames[0] = "Tx";
-   if (neq>1) neumannNames[1] = "Ty";
-   if (neq>2) neumannNames[2] = "Tz";
+   offsets[0].resize(1);
+   offsets[0][0] = 0;
+   offsets[neq].resize(neq);
+   offsets[neq][0] = 0;
+
+   if (neq>1){ 
+      neumannNames[1] = "Ty";
+      offsets[1].resize(1);
+      offsets[1][0] = 1;
+      offsets[neq][1] = 1;
+   }
+
+   if (neq>2){
+     neumannNames[2] = "Tz";
+      offsets[2].resize(1);
+      offsets[2][0] = 2;
+      offsets[neq][2] = 2;
+   }
+
+   neumannNames[neq] = "all";
 
    // Construct BC evaluators for all possible names of conditions
    // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
-   std::vector<string> condNames(2); //dudx, dudy, dudz, dudn
+   std::vector<string> condNames(3); //dudx, dudy, dudz, dudn, P
 
    // Note that sidesets are only supported for two and 3D currently
    if(numDim == 2)
@@ -152,10 +173,11 @@ Albany::ElasticityProblem::constructNeumannEvaluators(
        std::endl << "Error: Sidesets only supported in 2 and 3D." << std::endl);
 
    condNames[1] = "dudn";
+   condNames[2] = "P";
 
    nfm.resize(1); // Elasticity problem only has one element block
 
-   nfm[0] = neuUtils.constructBCEvaluators(meshSpecs, neumannNames, condNames, dl,
+   nfm[0] = neuUtils.constructBCEvaluators(meshSpecs, neumannNames, condNames, offsets, dl,
                                           this->params, this->paramLib);
 
 }

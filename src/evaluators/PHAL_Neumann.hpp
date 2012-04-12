@@ -39,16 +39,17 @@ namespace PHAL {
 
 */
 
-enum NEU_TYPE {COORD, NORMAL, INTJUMP};
+enum NEU_TYPE {COORD, NORMAL, INTJUMP, PRESS};
+enum SIDE_TYPE {OTHER, LINE, TRI}; // to calculate areas for pressure bc
 
 template<typename EvalT, typename Traits>
 class NeumannBase : 
     public PHX::EvaluatorWithBaseImpl<Traits>,
     public PHX::EvaluatorDerived<EvalT, Traits>,
-    public Sacado::ParameterAccessor<EvalT, SPL_Traits>
-   {
+    public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
 
 public:
+
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
@@ -68,9 +69,10 @@ protected:
   const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs;
 
   int  cellDims, sideDims, numQPs, numQPsSide, numNodes;
-  const int offset;
+  Teuchos::Array<int> offset;
+  int numDOFsSet;
 
- // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
+ // Should only specify flux vector components (dudx, dudy, dudz), dudn, or pressure P
 
    // dudn scaled
   void calc_dudn_const(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
@@ -83,6 +85,14 @@ protected:
 
    // (dudx, dudy, dudz)
   void calc_gradu_dotn_const(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
+                          const Intrepid::FieldContainer<MeshScalarT>& phys_side_cub_points,
+                          const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+                          const shards::CellTopology & celltopo,
+                          const int cellDims,
+                          int local_side_id);
+
+   // Pressure P
+  void calc_press(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
                           const Intrepid::FieldContainer<MeshScalarT>& phys_side_cub_points,
                           const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
@@ -121,8 +131,6 @@ protected:
   Intrepid::FieldContainer<ScalarT> data;
 
   // Output:
-//  PHX::MDField<MeshScalarT,Cell,Node>   neumann;
-//  Intrepid::FieldContainer<MeshScalarT>   neumann;
   Intrepid::FieldContainer<ScalarT>   neumann;
 
   std::string sideSetID;
@@ -131,7 +139,8 @@ protected:
   std::string name;
 
   NEU_TYPE bc_type;
-  ScalarT dudn;
+  SIDE_TYPE side_type;
+  ScalarT const_val;
   std::vector<ScalarT> dudx;
 
   std::vector<ScalarT> matScaling;
