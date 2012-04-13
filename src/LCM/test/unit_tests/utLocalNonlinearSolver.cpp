@@ -26,9 +26,15 @@ namespace {
 
   TEUCHOS_UNIT_TEST( LocalNonlinearSolver, Instantiation )
   {
-    std::vector<Sacado::Fad::DFad<RealType> > F(1);
-    std::vector<Sacado::Fad::DFad<RealType> > X(1);
-    LCM::LocalNonlinearSolver<PHAL::AlbanyTraits::Residual, Sacado::Fad::DFad<RealType> > solver;
+    typedef PHAL::AlbanyTraits::Residual EvalT;
+    typedef PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
+
+    int numLocalVars(2);
+
+    std::vector<ScalarT> F(numLocalVars);
+    std::vector<ScalarT> dFdX(numLocalVars*numLocalVars);
+    std::vector<ScalarT> X(numLocalVars);
+    LCM::LocalNonlinearSolver<EvalT> solver;
 
     const int n = 2;
     const int nrhs = 1;
@@ -52,41 +58,38 @@ namespace {
   {
     typedef PHAL::AlbanyTraits::Residual EvalT;
     typedef PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
-    typedef Sacado::Fad::DFad<RealType> LocalT;
 
     // local objective function and solution
-    std::vector<LocalT> localF(1);
-    std::vector<LocalT> localX(1);
-    LCM::LocalNonlinearSolver<EvalT,LocalT> solver;
+    int numLocalVars(1);
+    std::vector<ScalarT> F(numLocalVars);
+    std::vector<ScalarT> dFdX(numLocalVars*numLocalVars);
+    std::vector<ScalarT> X(numLocalVars);
+    LCM::LocalNonlinearSolver<EvalT> solver;
     
     // initialize X
-    localX[0] = 1.0;
-    localX[0].diff(0,1);
+    X[0] = 1.0;
     
     int count(0);
     bool converged = false;
     while ( !converged && count < 10 )
     {
       // objective function --> x^2 - 2 == 0
-      localF[0] = localX[0]*localX[0] - 2.0;
+      F[0] = X[0]*X[0] - 2.0;
+      dFdX[0] = 2.0 * X[0];
 
-      solver.solve(localF,localX);
+      solver.solve(dFdX,X,F);
 
-      if (fabs(localF[0]) <= 1.0E-15 )
+      if (fabs(F[0]) <= 1.0E-15 )
         converged = true;
 
       count++;
     }
-    // method to compute sensitivities
-    // global objective function and solution
-    std::vector<ScalarT> globalF(1);
-    std::vector<ScalarT> globalX(1);
-    ScalarT val = localX[0].val();
-    globalF[0] = val*val - 2.0;
-    solver.computeFadInfo(localF,localX,globalF,globalX);
+    F[0] = X[0]*X[0] - 2.0;
+    std::vector<ScalarT> sol(numLocalVars);
+    solver.computeFadInfo(dFdX,X,F);
 
     const RealType refX[] = { std::sqrt(2) }; 
-    TEST_COMPARE( fabs(globalX[0]-refX[0]), <=, 1.0e-15 );
+    TEST_COMPARE( fabs(X[0]-refX[0]), <=, 1.0e-15 );
 
   }
 
@@ -94,82 +97,78 @@ namespace {
   {
     typedef PHAL::AlbanyTraits::Jacobian EvalT;
     typedef PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
-    typedef Sacado::Fad::DFad<RealType> LocalT;
 
     // local objective function and solution
-    std::vector<LocalT> localF(1);
-    std::vector<LocalT> localX(1);
-    LCM::LocalNonlinearSolver<EvalT,LocalT> solver;
+    int numLocalVars(1);
+    std::vector<ScalarT> F(numLocalVars);
+    std::vector<ScalarT> dFdX(numLocalVars*numLocalVars);
+    std::vector<ScalarT> X(numLocalVars);
+    LCM::LocalNonlinearSolver<EvalT> solver;
     
     // initialize X
-    localX[0] = 1.0;
-    localX[0].diff(0,1);
+    X[0] = 1.0;
     
+    ScalarT two(1,0,2.0);
     int count(0);
     bool converged = false;
     while ( !converged && count < 10 )
     {
       // objective function --> x^2 - 2 == 0
-      localF[0] = localX[0]*localX[0] - 2.0;
+      F[0] = X[0]*X[0] - two;
+      dFdX[0] = 2.0 * X[0];
 
-      solver.solve(localF,localX);
+      solver.solve(dFdX,X,F);
 
-      if (fabs(localF[0]) <= 1.0E-15 )
+      if (fabs(F[0]) <= 1.0E-15 )
         converged = true;
 
       count++;
     }
-    // method to compute sensitivities
-    // global objective function and solution
-    std::vector<ScalarT> globalF(1);
-    std::vector<ScalarT> globalX(1);
-    ScalarT val = localX[0].val();
-    ScalarT two(1,0,2.0);
-    globalF[0] = val*val - two;
-    solver.computeFadInfo(localF,localX,globalF,globalX);
+
+    F[0] = X[0]*X[0] - two;
+    solver.computeFadInfo(dFdX,X,F);
+
     const RealType refX[] = { std::sqrt(2) }; 
-    TEST_COMPARE( fabs(globalX[0].val()-refX[0]), <=, 1.0e-15 );
+    TEST_COMPARE( fabs(X[0].val()-refX[0]), <=, 1.0e-15 );
 
   }
   TEUCHOS_UNIT_TEST( LocalNonlinearSolver, Tangent )
   {
     typedef PHAL::AlbanyTraits::Tangent EvalT;
     typedef PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
-    typedef Sacado::Fad::DFad<RealType> LocalT;
 
     // local objective function and solution
-    std::vector<LocalT> localF(1);
-    std::vector<LocalT> localX(1);
-    LCM::LocalNonlinearSolver<EvalT,LocalT> solver;
+    int numLocalVars(1);
+    std::vector<ScalarT> F(numLocalVars);
+    std::vector<ScalarT> dFdX(numLocalVars*numLocalVars);
+    std::vector<ScalarT> X(numLocalVars);
+    LCM::LocalNonlinearSolver<EvalT> solver;
     
     // initialize X
-    localX[0] = 1.0;
-    localX[0].diff(0,1);
+    X[0] = 1.0;
     
+    ScalarT two(1,0,2.0);
+
     int count(0);
     bool converged = false;
     while ( !converged && count < 10 )
     {
       // objective function --> x^2 - 2 == 0
-      localF[0] = localX[0]*localX[0] - 2.0;
+      F[0] = X[0]*X[0] - two;
+      dFdX[0] = 2.0 * X[0];
 
-      solver.solve(localF,localX);
+      solver.solve(dFdX,X,F);
 
-      if (fabs(localF[0]) <= 1.0E-15 )
+      if (fabs(F[0]) <= 1.0E-15 )
         converged = true;
 
       count++;
     }
-    // method to compute sensitivities
-    // global objective function and solution
-    std::vector<ScalarT> globalF(1);
-    std::vector<ScalarT> globalX(1);
-    ScalarT val = localX[0].val();
-    ScalarT two(1,0,2.0);
-    globalF[0] = val*val - two;
-    solver.computeFadInfo(localF,localX,globalF,globalX);
-    const RealType refX[] = { std::sqrt(2) }; 
-    TEST_COMPARE( fabs(globalX[0].val()-refX[0]), <=, 1.0e-15 );
 
+    F[0] = X[0]*X[0] - two;
+    solver.computeFadInfo(dFdX,X,F);
+
+    const RealType refX[] = { std::sqrt(2) }; 
+    TEST_COMPARE( fabs(X[0].val()-refX[0]), <=, 1.0e-15 );
   }
 } // namespace

@@ -6,8 +6,8 @@
 
 namespace LCM {
 
-  template<typename GlobalT, typename LocalT>
-  LocalNonlinearSolver_Base<GlobalT,LocalT>::LocalNonlinearSolver_Base() :
+  template<typename EvalT>
+  LocalNonlinearSolver_Base<EvalT>::LocalNonlinearSolver_Base() :
     lapack()
   {
   }
@@ -20,133 +20,101 @@ namespace LCM {
   // Residual
   // ---------------------------------------------------------------------
   void
-  LocalNonlinearSolver<PHAL::AlbanyTraits::Residual, Sacado::Fad::DFad<RealType> >::
-  solve(std::vector<Sacado::Fad::DFad<RealType> > &F, std::vector<Sacado::Fad::DFad<RealType> > &X)
+  LocalNonlinearSolver<PHAL::AlbanyTraits::Residual>::
+  solve(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<ScalarT> & B)
   {
     // system size
-    int numLocalVars = F.size();
+    int numLocalVars = B.size();
 
     // data for the LAPACK call below
     int info(0);
     std::vector<int> IPIV(numLocalVars);
 
-    // fill F and dFdX from F
-    std::vector<RealType> f;
-    std::vector<RealType> dFdX;
-    std::vector<Sacado::Fad::DFad<RealType> >::iterator it;
-    for(it = F.begin(); it != F.end(); it++)
-    {
-      for(int n(0); n < numLocalVars; ++n)
-      {
-        dFdX.push_back(it->dx(n));
-      }
-      f.push_back(it->val());
-    }
-
     // call LAPACK
-    lapack.GESV(numLocalVars, numLocalVars, &dFdX[0], numLocalVars, &IPIV[0], &f[0], numLocalVars, &info);
+    lapack.GESV(numLocalVars, numLocalVars, &A[0], numLocalVars, &IPIV[0], &B[0], numLocalVars, &info);
 
     // increment the solution
     for(int i(0); i < numLocalVars; ++i)
-      X[i].val() -= f[i];
+      X[i] -= B[i];
   }
 
   void
-  LocalNonlinearSolver<PHAL::AlbanyTraits::Residual, Sacado::Fad::DFad<RealType> >::
-  computeFadInfo(std::vector<Sacado::Fad::DFad<RealType> > & localF,
-                 std::vector<Sacado::Fad::DFad<RealType> > & localX,
-                 std::vector<ScalarT> & globalF, 
-                 std::vector<ScalarT> & globalX)
+  LocalNonlinearSolver<PHAL::AlbanyTraits::Residual>::
+  computeFadInfo(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<ScalarT> & B)
   {
-    // system size
-    int numLocalVars = localF.size();
-
-    for (int i(0); i < numLocalVars; ++i)
-      globalX[0] = localX[0].val();
+    // no-op
   }
 
   // ---------------------------------------------------------------------
   // Jacobian
   // ---------------------------------------------------------------------
   void
-  LocalNonlinearSolver<PHAL::AlbanyTraits::Jacobian, Sacado::Fad::DFad<RealType> >::
-  solve(std::vector<Sacado::Fad::DFad<RealType> > & F, std::vector<Sacado::Fad::DFad<RealType> > & X)
+  LocalNonlinearSolver<PHAL::AlbanyTraits::Jacobian>::
+  solve(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<ScalarT> & B)
   {
     // system size
-    int numLocalVars = F.size();
+    int numLocalVars = B.size();
 
     // data for the LAPACK call below
     int info(0);
     std::vector<int> IPIV(numLocalVars);
 
-    // fill F and dFdX from F
-    std::vector<RealType> f;
-    std::vector<RealType> dFdX;
-    std::vector<Sacado::Fad::DFad<RealType> >::iterator it;
-    for(it = F.begin(); it != F.end(); it++)
+    // fill B and dBdX
+    std::vector<RealType> F(numLocalVars);
+    std::vector<RealType> dFdX(numLocalVars*numLocalVars);
+    for(int i(0); i < numLocalVars; ++i)
     {
-      for(int n(0); n < numLocalVars; ++n)
+      F[i] = B[i].val();
+      for(int j(0); j < numLocalVars; ++j)
       {
-        dFdX.push_back(it->dx(n));
+        dFdX[numLocalVars * i + j] = A[numLocalVars * i + j].val();
       }
-      f.push_back(it->val());
     }
 
     // call LAPACK
-    lapack.GESV(numLocalVars, numLocalVars, &dFdX[0], numLocalVars, &IPIV[0], &f[0], numLocalVars, &info);
+    lapack.GESV(numLocalVars, numLocalVars, &dFdX[0], numLocalVars, &IPIV[0], &F[0], numLocalVars, &info);
 
     // increment the solution
     for(int i(0); i < numLocalVars; ++i)
-      X[i].val() -= f[i];
-
+      X[i].val() -= F[i];
   }
 
   void
-  LocalNonlinearSolver<PHAL::AlbanyTraits::Jacobian, Sacado::Fad::DFad<RealType> >::
-  computeFadInfo(std::vector<Sacado::Fad::DFad<RealType> > & localF,
-                 std::vector<Sacado::Fad::DFad<RealType> > & localX,
-                 std::vector<ScalarT> & globalF, 
-                 std::vector<ScalarT> & globalX)
+  LocalNonlinearSolver<PHAL::AlbanyTraits::Jacobian>::
+  computeFadInfo(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<ScalarT> & B)
   {
     // local system size
-    int numLocalVars = localF.size();
+    int numLocalVars = B.size();
+    int numGlobalVars = B[0].size();
+    TEUCHOS_TEST_FOR_EXCEPTION( numGlobalVars == 0, std::logic_error, 
+                                "In LocalNonlinearSolver<Jacobian> the numGLobalVars is zero where it should be positive\n");
 
     // data for the LAPACK call below
     int info(0);
     std::vector<int> IPIV(numLocalVars);
 
-    // fill solution
+    // extract sensitivites of objective function(s) wrt p
+    std::vector<RealType> dBdP(numLocalVars*numGlobalVars);
     for (int i(0); i < numLocalVars; ++i)
-      globalX[i].val() = localX[i].val();
-
-    // number of external Parameters
-    int numGlobalVars = globalF[0].size();
-    TEUCHOS_TEST_FOR_EXCEPTION( numGlobalVars == 0, std::logic_error, 
-                                "In LocalNonlinearSolver<Jacobian,Dfad> the numGLobalVars is zero where it should be positive\n");
+      for (int j(0); j < numGlobalVars; ++j)
+        dBdP[numGlobalVars * i + j] = B[i].dx(j);
 
     // extract the jacobian
-    std::vector<RealType> dFdX;
-    std::vector<Sacado::Fad::DFad<RealType> >::iterator it;
-    for(it = localF.begin(); it != localF.end(); it++)
-      for(int n(0); n < numLocalVars; ++n)
-        dFdX.push_back(it->dx(n));
-
-    // fill in external parameter sensitivities
-    std::vector<RealType> dFdP(numLocalVars*numGlobalVars);
+    std::vector<RealType> dBdX(A.size());
     for (int i(0); i < numLocalVars; ++i)
-      for (int j(0); j < numGlobalVars; ++j)
-        dFdP[numGlobalVars * i + j] = globalF[i].dx(j);
-    
-    // call LAPACK to simultaneously solve for all dXdP
-    lapack.GESV(numLocalVars, numGlobalVars, &dFdX[0], numLocalVars, &IPIV[0], &dFdP[0], numLocalVars, &info);
+      for (int j(0); j < numLocalVars; ++j )
+        dBdX[numLocalVars * i + j] = A[numLocalVars * i + j].val();
 
-    // unpack into globalX (recall that LAPACK stores dXdP in dFdP)
+    // call LAPACK to simultaneously solve for all dXdP
+    lapack.GESV(numLocalVars, numGlobalVars, &dBdX[0], numLocalVars, &IPIV[0], &dBdP[0], numLocalVars, &info);
+
+    // unpack into globalX (recall that LAPACK stores dXdP in dBdP)
     for (int i(0); i < numLocalVars; ++i)
     {
-      globalX[i].resize(numGlobalVars);
+      X[i].resize(numGlobalVars);
       for (int j(0); j < numGlobalVars; ++j)
       {
-        globalX[i].fastAccessDx(j) = dFdP[numGlobalVars * i + j];
+        X[i].fastAccessDx(j) = dBdP[numGlobalVars * i + j];
       }
     }
   }
@@ -155,84 +123,72 @@ namespace LCM {
   // Tangent
   // ---------------------------------------------------------------------
   void
-  LocalNonlinearSolver<PHAL::AlbanyTraits::Tangent, Sacado::Fad::DFad<RealType> >::
-  solve(std::vector<Sacado::Fad::DFad<RealType> > & F, std::vector<Sacado::Fad::DFad<RealType> > & X)
+  LocalNonlinearSolver<PHAL::AlbanyTraits::Tangent>::
+  solve(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<ScalarT> & B)
   {
     // system size
-    int numLocalVars = F.size();
+    int numLocalVars = B.size();
 
     // data for the LAPACK call below
     int info(0);
     std::vector<int> IPIV(numLocalVars);
 
-    // fill F and dFdX from F
-    std::vector<RealType> f;
-    std::vector<RealType> dFdX;
-    std::vector<Sacado::Fad::DFad<RealType> >::iterator it;
-    for(it = F.begin(); it != F.end(); it++)
+    // fill B and dBdX
+    std::vector<RealType> F(numLocalVars);
+    std::vector<RealType> dFdX(numLocalVars*numLocalVars);
+    for(int i(0); i < numLocalVars; ++i)
     {
-      for(int n(0); n < numLocalVars; ++n)
+      F[i] = B[i].val();
+      for(int j(0); j < numLocalVars; ++j)
       {
-        dFdX.push_back(it->dx(n));
+        dFdX[numLocalVars * i + j] = A[numLocalVars * i + j].val();
       }
-      f.push_back(it->val());
     }
 
     // call LAPACK
-    lapack.GESV(numLocalVars, numLocalVars, &dFdX[0], numLocalVars, &IPIV[0], &f[0], numLocalVars, &info);
+    lapack.GESV(numLocalVars, numLocalVars, &dFdX[0], numLocalVars, &IPIV[0], &F[0], numLocalVars, &info);
 
     // increment the solution
     for(int i(0); i < numLocalVars; ++i)
-      X[i].val() -= f[i];
-
+      X[i].val() -= F[i];
   }
 
   void
-  LocalNonlinearSolver<PHAL::AlbanyTraits::Tangent, Sacado::Fad::DFad<RealType> >::
-  computeFadInfo(std::vector<Sacado::Fad::DFad<RealType> > & localF,
-                 std::vector<Sacado::Fad::DFad<RealType> > & localX,
-                 std::vector<ScalarT> & globalF, 
-                 std::vector<ScalarT> & globalX)
+  LocalNonlinearSolver<PHAL::AlbanyTraits::Tangent>::
+  computeFadInfo(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<ScalarT> & B)
   {
     // local system size
-    int numLocalVars = localF.size();
+    int numLocalVars = B.size();
+    int numGlobalVars = B[0].size();
+    TEUCHOS_TEST_FOR_EXCEPTION( numGlobalVars == 0, std::logic_error, 
+                                "In LocalNonlinearSolver<Tangent> the numGLobalVars is zero where it should be positive\n");
 
     // data for the LAPACK call below
     int info(0);
     std::vector<int> IPIV(numLocalVars);
 
-    // fill solution
+    // extract sensitivites of objective function(s) wrt p
+    std::vector<RealType> dBdP(numLocalVars*numGlobalVars);
     for (int i(0); i < numLocalVars; ++i)
-      globalX[i].val() = localX[i].val();
-
-    // number of external Parameters
-    int numGlobalVars = globalF[0].size();
-    TEUCHOS_TEST_FOR_EXCEPTION( numGlobalVars == 0, std::logic_error, 
-                                "In LocalNonlinearSolver<Jacobian,Dfad> the numGLobalVars is zero where it should be positive\n");
+      for (int j(0); j < numGlobalVars; ++j)
+        dBdP[numGlobalVars * i + j] = B[i].dx(j);
 
     // extract the jacobian
-    std::vector<RealType> dFdX;
-    std::vector<Sacado::Fad::DFad<RealType> >::iterator it;
-    for(it = localF.begin(); it != localF.end(); it++)
-      for(int n(0); n < numLocalVars; ++n)
-        dFdX.push_back(it->dx(n));
-
-    // fill in external parameter sensitivities
-    std::vector<RealType> dFdP(numLocalVars*numGlobalVars);
+    std::vector<RealType> dBdX(A.size());
     for (int i(0); i < numLocalVars; ++i)
-      for (int j(0); j < numGlobalVars; ++j)
-        dFdP[numGlobalVars * i + j] = globalF[i].dx(j);
-    
-    // call LAPACK to simultaneously solve for all dXdP
-    lapack.GESV(numLocalVars, numGlobalVars, &dFdX[0], numLocalVars, &IPIV[0], &dFdP[0], numLocalVars, &info);
+      for (int j(0); j < numLocalVars; ++j )
+        dBdX[numLocalVars * i + j] = A[numLocalVars * i + j].val();
 
-    // unpack into globalX (recall that LAPACK stores dXdP in dFdP)
+    // call LAPACK to simultaneously solve for all dXdP
+    lapack.GESV(numLocalVars, numGlobalVars, &dBdX[0], numLocalVars, &IPIV[0], &dBdP[0], numLocalVars, &info);
+
+    // unpack into globalX (recall that LAPACK stores dXdP in dBdP)
     for (int i(0); i < numLocalVars; ++i)
     {
-      globalX[i].resize(numGlobalVars);
+      X[i].resize(numGlobalVars);
       for (int j(0); j < numGlobalVars; ++j)
       {
-        globalX[i].fastAccessDx(j) = dFdP[numGlobalVars * i + j];
+        X[i].fastAccessDx(j) = dBdP[numGlobalVars * i + j];
       }
     }
   }
@@ -241,18 +197,15 @@ namespace LCM {
   // Stochastic Galerkin Residual
   // ---------------------------------------------------------------------
   void
-  LocalNonlinearSolver<PHAL::AlbanyTraits::SGResidual, Sacado::Fad::DFad<RealType> >::
-  solve(std::vector<Sacado::Fad::DFad<RealType> > & F, std::vector<Sacado::Fad::DFad<RealType> > & X)
+  LocalNonlinearSolver<PHAL::AlbanyTraits::SGResidual>::
+  solve(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<ScalarT> & B)
   {
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"LocalNonlinearSolver has not been implemented for Stochastic Galerkin types yet\n");
   }
 
   void
-  LocalNonlinearSolver<PHAL::AlbanyTraits::SGResidual, Sacado::Fad::DFad<RealType> >::
-  computeFadInfo(std::vector<Sacado::Fad::DFad<RealType> > & localF,
-                 std::vector<Sacado::Fad::DFad<RealType> > & localX,
-                 std::vector<ScalarT> & globalF, 
-                 std::vector<ScalarT> & globalX)
+  LocalNonlinearSolver<PHAL::AlbanyTraits::SGResidual>::
+  computeFadInfo(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<ScalarT> & B)
   {
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"LocalNonlinearSolver has not been implemented for Stochastic Galerkin types yet\n");
   }
@@ -261,18 +214,15 @@ namespace LCM {
   // Stochastic Galerkin Jacobian
   // ---------------------------------------------------------------------
   void
-  LocalNonlinearSolver<PHAL::AlbanyTraits::SGJacobian, Sacado::Fad::DFad<RealType> >::
-  solve(std::vector<Sacado::Fad::DFad<RealType> > & F, std::vector<Sacado::Fad::DFad<RealType> > & X)
+  LocalNonlinearSolver<PHAL::AlbanyTraits::SGJacobian>::
+  solve(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<ScalarT> & B)
   {
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"LocalNonlinearSolver has not been implemented for Stochastic Galerkin types yet\n");
   }
 
   void
-  LocalNonlinearSolver<PHAL::AlbanyTraits::SGJacobian, Sacado::Fad::DFad<RealType> >::
-  computeFadInfo(std::vector<Sacado::Fad::DFad<RealType> > & localF,
-                 std::vector<Sacado::Fad::DFad<RealType> > & localX,
-                 std::vector<ScalarT> & globalF, 
-                 std::vector<ScalarT> & globalX)
+  LocalNonlinearSolver<PHAL::AlbanyTraits::SGJacobian>::
+  computeFadInfo(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<ScalarT> & B)
   {
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"LocalNonlinearSolver has not been implemented for Stochastic Galerkin types yet\n");
   }
@@ -281,18 +231,15 @@ namespace LCM {
   // Stochastic Galerkin Tangent
   // ---------------------------------------------------------------------
   void
-  LocalNonlinearSolver<PHAL::AlbanyTraits::SGTangent, Sacado::Fad::DFad<RealType> >::
-  solve(std::vector<Sacado::Fad::DFad<RealType> > & F, std::vector<Sacado::Fad::DFad<RealType> > & X)
+  LocalNonlinearSolver<PHAL::AlbanyTraits::SGTangent>::
+  solve(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<ScalarT> & B)
   {
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"LocalNonlinearSolver has not been implemented for Stochastic Galerkin types yet\n");
   }
 
   void
-  LocalNonlinearSolver<PHAL::AlbanyTraits::SGTangent, Sacado::Fad::DFad<RealType> >::
-  computeFadInfo(std::vector<Sacado::Fad::DFad<RealType> > & localF,
-                 std::vector<Sacado::Fad::DFad<RealType> > & localX,
-                 std::vector<ScalarT> & globalF, 
-                 std::vector<ScalarT> & globalX)
+  LocalNonlinearSolver<PHAL::AlbanyTraits::SGTangent>::
+  computeFadInfo(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<ScalarT> & B)
   {
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"LocalNonlinearSolver has not been implemented for Stochastic Galerkin types yet\n");
   }
@@ -301,18 +248,15 @@ namespace LCM {
   // Multi-Point Residual
   // ---------------------------------------------------------------------
   void
-  LocalNonlinearSolver<PHAL::AlbanyTraits::MPResidual, Sacado::Fad::DFad<RealType> >::
-  solve(std::vector<Sacado::Fad::DFad<RealType> > & F, std::vector<Sacado::Fad::DFad<RealType> > & X)
+  LocalNonlinearSolver<PHAL::AlbanyTraits::MPResidual>::
+  solve(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<ScalarT> & B)
   {
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"LocalNonlinearSolver has not been implemented for Multi-Point types yet\n");
   }
 
   void
-  LocalNonlinearSolver<PHAL::AlbanyTraits::MPResidual, Sacado::Fad::DFad<RealType> >::
-  computeFadInfo(std::vector<Sacado::Fad::DFad<RealType> > & localF,
-                 std::vector<Sacado::Fad::DFad<RealType> > & localX,
-                 std::vector<ScalarT> & globalF, 
-                 std::vector<ScalarT> & globalX)
+  LocalNonlinearSolver<PHAL::AlbanyTraits::MPResidual>::
+  computeFadInfo(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<ScalarT> & B)
   {
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"LocalNonlinearSolver has not been implemented for Multi-Point types yet\n");
   }
@@ -321,18 +265,15 @@ namespace LCM {
   // Multi-Point Jacobian
   // ---------------------------------------------------------------------
   void
-  LocalNonlinearSolver<PHAL::AlbanyTraits::MPJacobian, Sacado::Fad::DFad<RealType> >::
-  solve(std::vector<Sacado::Fad::DFad<RealType> > & F, std::vector<Sacado::Fad::DFad<RealType> > & X)
+  LocalNonlinearSolver<PHAL::AlbanyTraits::MPJacobian>::
+  solve(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<ScalarT> & B)
   {
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"LocalNonlinearSolver has not been implemented for Multi-Point types yet\n");
   }
 
   void
-  LocalNonlinearSolver<PHAL::AlbanyTraits::MPJacobian, Sacado::Fad::DFad<RealType> >::
-  computeFadInfo(std::vector<Sacado::Fad::DFad<RealType> > & localF,
-                 std::vector<Sacado::Fad::DFad<RealType> > & localX,
-                 std::vector<ScalarT> & globalF, 
-                 std::vector<ScalarT> & globalX)
+  LocalNonlinearSolver<PHAL::AlbanyTraits::MPJacobian>::
+  computeFadInfo(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<ScalarT> & B)
   {
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"LocalNonlinearSolver has not been implemented for Multi-Point types yet\n");
   }
@@ -341,18 +282,15 @@ namespace LCM {
   // Multi-Point Tangent
   // ---------------------------------------------------------------------
   void
-  LocalNonlinearSolver<PHAL::AlbanyTraits::MPTangent, Sacado::Fad::DFad<RealType> >::
-  solve(std::vector<Sacado::Fad::DFad<RealType> > & F, std::vector<Sacado::Fad::DFad<RealType> > & X)
+  LocalNonlinearSolver<PHAL::AlbanyTraits::MPTangent>::
+  solve(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<ScalarT> & B)
   {
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"LocalNonlinearSolver has not been implemented for Multi-Point types yet\n");
   }
 
   void
-  LocalNonlinearSolver<PHAL::AlbanyTraits::MPTangent, Sacado::Fad::DFad<RealType> >::
-  computeFadInfo(std::vector<Sacado::Fad::DFad<RealType> > & localF,
-                 std::vector<Sacado::Fad::DFad<RealType> > & localX,
-                 std::vector<ScalarT> & globalF, 
-                 std::vector<ScalarT> & globalX)
+  LocalNonlinearSolver<PHAL::AlbanyTraits::MPTangent>::
+  computeFadInfo(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<ScalarT> & B)
   {
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"LocalNonlinearSolver has not been implemented for Multi-Point types yet\n");
   }
