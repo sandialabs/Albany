@@ -99,6 +99,7 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
 		     "Ignore residual calculations while computing the Jacobian (only generally appropriate for linear problems)");
   validPL->set<double>("Perturb Dirichlet", 0.0, 
 		     "Add this (small) perturbation to the diagonal to prevent Mass Matrices from being singular for Dirichlets)");
+  validPL->sublist("Model Order Reduction", false, "Specify the options relative to model order reduction");
 
   return validPL;
 }
