@@ -268,6 +268,20 @@ SET(HEADERS ${HEADERS}
 	evaluators/PHAL_SeparableScatterScalarResponse_Def.hpp
   )
 
+# MOR (Model Order Reduction)
+SET(MOR_DIR ${Albany_SOURCE_DIR}/src/MOR)
+
+SET(SOURCES ${SOURCES}
+  ${MOR_DIR}/Albany_MORObserverFactory.cpp
+  ${MOR_DIR}/Albany_SnapshotCollection.cpp
+  ${MOR_DIR}/Albany_SnapshotCollectionObserver.cpp
+)
+SET(HEADERS ${HEADERS}
+  ${MOR_DIR}/Albany_MORObserverFactory.hpp
+  ${MOR_DIR}/Albany_SnapshotCollection.hpp
+  ${MOR_DIR}/Albany_SnapshotCollectionObserver.hpp
+)
+
 # LCM
 IF(ALBANY_LCM)
   SET(LCM_DIR ${Albany_SOURCE_DIR}/src/LCM)

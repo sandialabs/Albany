@@ -14,38 +14,46 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
-#ifndef ALBANY_OBSERVERFACTORY_HPP
-#define ALBANY_OBSERVERFACTORY_HPP
+#ifndef ALBANY_SNAPSHOTCOLLECTION_HPP
+#define ALBANY_SNAPSHOTCOLLECTION_HPP
 
-#include "NOX_Epetra_Observer.H"
-#include "Rythmos_IntegrationObserverBase.hpp"
-#include "Teuchos_RCP.hpp"
+#include "Epetra_Vector.h"
+
 #include "Teuchos_ParameterList.hpp"
+#include "Teuchos_RCP.hpp"
+
+#include <deque>
+#include <string>
+#include <cstddef>
 
 namespace Albany {
 
-class Application;
-
-class ObserverFactory {
+class SnapshotCollection {
 public:
-  ObserverFactory(const Teuchos::RCP<Teuchos::ParameterList> &params,
-                  const Teuchos::RCP<Application> &app);
+  explicit SnapshotCollection(const Teuchos::RCP<Teuchos::ParameterList> &params);
 
-  Teuchos::RCP<NOX::Epetra::Observer> createNoxObserver();
-  Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > createRythmosObserver();
+  ~SnapshotCollection();
+  void addVector(double stamp, const Epetra_Vector &value);
 
 private:
-  bool useNOX() const;
-  bool useRythmos() const;
-
   Teuchos::RCP<Teuchos::ParameterList> params_;
-  Teuchos::RCP<Application> app_;
+  std::string outputFileFormat_;
+  std::string outputFileName_;
+  std::size_t period_;
 
-  // Disallow copy & assignment
-  ObserverFactory(const ObserverFactory &);
-  ObserverFactory &operator=(const ObserverFactory &);
+  std::size_t skipCount_;
+  std::deque<double> stamps_;
+  std::deque<Epetra_Vector> snapshots_;
+
+  void initOutputFileFormat();
+  void initOutputFileName();
+  void initPeriod();
+
+  // Disallow copy and assignment
+  SnapshotCollection(const SnapshotCollection &);
+  SnapshotCollection &operator=(const SnapshotCollection &);
 };
 
-}
+} // end namespace Albany
 
-#endif /* ALBANY_OBSERVERFACTORY_HPP */
+#endif /*ALBANY_SNAPSHOTCOLLECTION_HPP*/

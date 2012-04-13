@@ -14,38 +14,48 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
-#ifndef ALBANY_OBSERVERFACTORY_HPP
-#define ALBANY_OBSERVERFACTORY_HPP
+#include "Albany_MORObserverFactory.hpp"
 
-#include "NOX_Epetra_Observer.H"
-#include "Rythmos_IntegrationObserverBase.hpp"
-#include "Teuchos_RCP.hpp"
+#include "Albany_NOXObserver.hpp"
+#include "Albany_SnapshotCollectionObserver.hpp"
+
 #include "Teuchos_ParameterList.hpp"
+
+#include <string>
 
 namespace Albany {
 
-class Application;
+using ::Teuchos::RCP;
+using ::Teuchos::rcp;
+using ::Teuchos::ParameterList;
+using ::Teuchos::sublist;
 
-class ObserverFactory {
-public:
-  ObserverFactory(const Teuchos::RCP<Teuchos::ParameterList> &params,
-                  const Teuchos::RCP<Application> &app);
-
-  Teuchos::RCP<NOX::Epetra::Observer> createNoxObserver();
-  Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > createRythmosObserver();
-
-private:
-  bool useNOX() const;
-  bool useRythmos() const;
-
-  Teuchos::RCP<Teuchos::ParameterList> params_;
-  Teuchos::RCP<Application> app_;
-
-  // Disallow copy & assignment
-  ObserverFactory(const ObserverFactory &);
-  ObserverFactory &operator=(const ObserverFactory &);
-};
-
+MORObserverFactory::MORObserverFactory(const RCP<ParameterList> &parentParams) :
+  params_(sublist(parentParams, "Model Order Reduction"))
+{
+  // Nothing to do
 }
 
-#endif /* ALBANY_OBSERVERFACTORY_HPP */
+RCP<NOX::Epetra::Observer> MORObserverFactory::create(const RCP<NOX::Epetra::Observer> &child)
+{
+  if (collectSnapshots())
+  {
+    return rcp(new SnapshotCollectionObserver(getSnapParameters(), child));
+  }
+  else
+  {
+    return child;
+  }
+}
+
+bool MORObserverFactory::collectSnapshots() const
+{
+  return getSnapParameters()->get("Activate", false);
+}
+
+RCP<ParameterList> MORObserverFactory::getSnapParameters() const
+{
+  return sublist(params_, "Snapshot Collection");
+}
+
+} // end namespace Albany

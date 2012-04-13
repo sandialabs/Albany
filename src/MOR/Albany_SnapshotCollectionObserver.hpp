@@ -14,38 +14,40 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
-#ifndef ALBANY_OBSERVERFACTORY_HPP
-#define ALBANY_OBSERVERFACTORY_HPP
+#ifndef ALBANY_SNAPSHOTCOLLECTIONOBSERVER_HPP
+#define ALBANY_SNAPSHOTCOLLECTIONOBSERVER_HPP
 
 #include "NOX_Epetra_Observer.H"
-#include "Rythmos_IntegrationObserverBase.hpp"
+
+#include "Albany_SnapshotCollection.hpp"
+
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
 namespace Albany {
 
-class Application;
-
-class ObserverFactory {
+class SnapshotCollectionObserver : public NOX::Epetra::Observer
+{
 public:
-  ObserverFactory(const Teuchos::RCP<Teuchos::ParameterList> &params,
-                  const Teuchos::RCP<Application> &app);
+  SnapshotCollectionObserver(const Teuchos::RCP<Teuchos::ParameterList> &params,
+                             const Teuchos::RCP<NOX::Epetra::Observer> &decoratedObserver);
 
-  Teuchos::RCP<NOX::Epetra::Observer> createNoxObserver();
-  Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > createRythmosObserver();
+  //! Calls underlying observer then perform snapshot collection
+  virtual void observeSolution(const Epetra_Vector& solution);
+  
+  //! Calls underlying observer then perform snapshot collection
+  virtual void observeSolution(const Epetra_Vector& solution, double time_or_param_val);
 
 private:
-  bool useNOX() const;
-  bool useRythmos() const;
+  Teuchos::RCP<NOX::Epetra::Observer> decoratedObserver_;
 
-  Teuchos::RCP<Teuchos::ParameterList> params_;
-  Teuchos::RCP<Application> app_;
+  SnapshotCollection snapshotCollector_;
 
   // Disallow copy & assignment
-  ObserverFactory(const ObserverFactory &);
-  ObserverFactory &operator=(const ObserverFactory &);
+  SnapshotCollectionObserver(const SnapshotCollectionObserver &);
+  SnapshotCollectionObserver operator=(const SnapshotCollectionObserver &);
 };
 
-}
+} // end namespace Albany
 
-#endif /* ALBANY_OBSERVERFACTORY_HPP */
+#endif /*ALBANY_SNAPSHOTCOLLECTIONOBSERVER_HPP*/
