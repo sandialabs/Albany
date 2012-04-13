@@ -72,6 +72,7 @@ SnapshotCollection::~SnapshotCollection()
       EpetraExt::MultiVectorToMatrixMarketFile(outputFileName_.c_str(), collection, groupName.c_str());
     }
 
+#ifdef HAVE_EPETRAEXT_HDF5
     if (outputFileFormat_ == "HDF5")
     {
       const Epetra_Comm &fileComm = collection.Comm();
@@ -81,6 +82,7 @@ SnapshotCollection::~SnapshotCollection()
       hdf5Output.Write(groupName, collection);
       hdf5Output.Close();
     }
+#endif /* HAVE_EPETRAEXT_HDF5 */
   }
 }
 
@@ -100,7 +102,11 @@ void SnapshotCollection::addVector(double stamp, const Epetra_Vector &value)
 
 void SnapshotCollection::initOutputFileFormat()
 {
-  const Array<std::string> validFileFormats = Array<std::string>().append("Matrix Market").append("HDF5");
+  Array<std::string> validFileFormats;
+  validFileFormats.append("Matrix Market");
+#ifdef HAVE_EPETRAEXT_HDF5
+  validFileFormats.append("HDF5");
+#endif /* HAVE_EPETRAEXT_HDF5 */
 
   const std::string outputFileFormat = params_->get("Output File Format", validFileFormats[0]);
   TEUCHOS_TEST_FOR_EXCEPTION(!contains(validFileFormats, outputFileFormat),
