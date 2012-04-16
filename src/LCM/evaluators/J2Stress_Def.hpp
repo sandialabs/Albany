@@ -19,6 +19,7 @@
 #include "Phalanx_DataLayout.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
+#include "LocalNonlinearSolver.h"
 
 namespace LCM {
 
@@ -260,22 +261,34 @@ evaluateFields(typename Traits::EvalData workset)
 	int count = 0;
 	dgam = 0.0;
 
+        LocalNonlinearSolver<EvalT> solver;
+
+        std::vector<ScalarT> F(1);
+        std::vector<ScalarT> dFdX(1);
+        std::vector<ScalarT> X(1);
+
+        F[0] = f;
+        X[0] = 0.0;
+        dFdX[0] = ( -2. * mubar ) * ( 1. + H / ( 3. * mubar ) );
 	while (!converged)
 	{
 	  count++;
 
 	  //dgam = ( f / ( 2. * mubar) ) / ( 1. + K / ( 3. * mubar ) );
 	  dgam -= g/dg;
+          solver.solve(dFdX,X,F);
 
-	  alpha = eqpsold(cell,qp) + sq23 * dgam;
+	  alpha = eqpsold(cell,qp) + sq23 * X[0];
 
 	  H = K * alpha + siginf*( 1. - exp( -delta * alpha ) );
 	  dH = K + delta * siginf * exp( -delta * alpha );
 
 	  g = smag -  ( 2. * mubar * dgam + sq23 * ( Y + H ) );
 	  dg = -2. * mubar * ( 1. + dH / ( 3. * mubar ) );
+          F[0] = smag -  ( 2. * mubar * X[0] + sq23 * ( Y + H ) );
+          dFdX[0] = -2. * mubar * ( 1. + dH / ( 3. * mubar ) );
 
-	  res = std::abs(g);
+	  res = std::abs(F[0]);
 	  if ( res < 1.e-11 || res/f < 1.E-11 )
 	    converged = true;
 
@@ -283,11 +296,18 @@ evaluateFields(typename Traits::EvalData workset)
 				      std::endl << "Error in return mapping, count = " << count <<
                                       "\nres = " << res <<
                                       "\nrelres = " << res/f <<
-                                      "\ng = " << g <<
-                                      "\ndg = " << dg <<
+                                      "\ng = " << F[0] <<
+                                      "\ndg = " << dFdX[0] <<
                                       "\nalpha = " << alpha << std::endl);
 
         }
+        solver.computeFadInfo(dFdX,X,F);
+        
+
+        //dgam = X[0];
+        
+        cout << "X: " << X << endl;
+        cout << "dgam : " << dgam << endl;
 
         // plastic direction
         for (std::size_t i=0; i < numDims; ++i) 
