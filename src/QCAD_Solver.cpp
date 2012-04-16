@@ -678,7 +678,7 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
       Teuchos::RCP<AlbanyCI::BlockTensor<AlbanyCI::dcmplx> > mx2P =
 	Teuchos::rcp(new AlbanyCI::BlockTensor<AlbanyCI::dcmplx>(basis1P, blocks2P, 2));
       //*out << std::endl << "DEBUG CI mx2P:"; mx2P->print(out); //DEBUG
-      
+     
       
       //Now should have H1P and H2P - run CI:
       if(bVerbose) *out << "QCAD Solve: CI solve" << endl;
@@ -695,9 +695,12 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
       std::vector< std::vector< AlbanyCI::dcmplx > > mxPx;
       Teuchos::RCP<AlbanyCI::Solution::Vector> ci_evec;
       Teuchos::RCP<Epetra_MultiVector> mbStateDensities = 
-      Teuchos::rcp( new Epetra_MultiVector(eigenDataToPass->eigenvectorRe->Map(), nCIevals, true )); //zero out
+	Teuchos::rcp( new Epetra_MultiVector(eigenDataToPass->eigenvectorRe->Map(), nCIevals, true )); //zero out
       eigenDataToPass->eigenvalueRe->resize(nCIevals);
       eigenDataToPass->eigenvalueIm->resize(nCIevals);
+
+      //int rank = tcomm->getRank();
+      //std::cout << "DEBUG Rank " << rank << ": " << nCIevals << " evals" << std::endl;
 
       for(int k=0; k < nCIevals; k++) {
 	soln->getEigenvectorPxMatrix(k, mxPx); // mxPx = n1P x n1P matrix of coeffs of 1P products
@@ -772,7 +775,7 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
     }
       
     QCAD::CopyStateToContainer(*pStatesToLoop, "Electric Potential", prevElectricPotential);
-  } 
+  }
 
   if(bVerbose) {
     if(bConverged)

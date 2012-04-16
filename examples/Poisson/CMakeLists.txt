@@ -133,29 +133,29 @@ add_test(${testRoot}_mosdot_3D_tet10 ${Albany.exe} input_mosdot_3D_tet10.xml)
 
 
 # 1. Copy Input file from source to binary dir
-IF (ALBANY_MPI)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_DebugResponseMPI.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_DebugResponseMPI.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/debugMaterials.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/debugMaterials.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/debugMesh.exo.8.0
-               ${CMAKE_CURRENT_BINARY_DIR}/debugMesh.exo.8.0 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/debugMesh.exo.8.1
-               ${CMAKE_CURRENT_BINARY_DIR}/debugMesh.exo.8.1 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/debugMesh.exo.8.2
-               ${CMAKE_CURRENT_BINARY_DIR}/debugMesh.exo.8.2 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/debugMesh.exo.8.3
-               ${CMAKE_CURRENT_BINARY_DIR}/debugMesh.exo.8.3 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/debugMesh.exo.8.4
-               ${CMAKE_CURRENT_BINARY_DIR}/debugMesh.exo.8.4 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/debugMesh.exo.8.5
-               ${CMAKE_CURRENT_BINARY_DIR}/debugMesh.exo.8.5 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/debugMesh.exo.8.6
-               ${CMAKE_CURRENT_BINARY_DIR}/debugMesh.exo.8.6 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/debugMesh.exo.8.7
-               ${CMAKE_CURRENT_BINARY_DIR}/debugMesh.exo.8.7 COPYONLY)
-# 3. Create the test with this name and standard executable
-add_test(${testRoot}_ResponseMPITest ${Albany8.exe} input_DebugResponseMPI.xml)
-ENDIF()
+#IF (ALBANY_MPI)
+#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_DebugResponseMPI.xml
+#               ${CMAKE_CURRENT_BINARY_DIR}/input_DebugResponseMPI.xml COPYONLY)
+#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/debugMaterials.xml
+#               ${CMAKE_CURRENT_BINARY_DIR}/debugMaterials.xml COPYONLY)
+#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/debugMesh.exo.8.0
+#               ${CMAKE_CURRENT_BINARY_DIR}/debugMesh.exo.8.0 COPYONLY)
+#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/debugMesh.exo.8.1
+#               ${CMAKE_CURRENT_BINARY_DIR}/debugMesh.exo.8.1 COPYONLY)
+#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/debugMesh.exo.8.2
+#               ${CMAKE_CURRENT_BINARY_DIR}/debugMesh.exo.8.2 COPYONLY)
+#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/debugMesh.exo.8.3
+#               ${CMAKE_CURRENT_BINARY_DIR}/debugMesh.exo.8.3 COPYONLY)
+#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/debugMesh.exo.8.4
+#               ${CMAKE_CURRENT_BINARY_DIR}/debugMesh.exo.8.4 COPYONLY)
+#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/debugMesh.exo.8.5
+#               ${CMAKE_CURRENT_BINARY_DIR}/debugMesh.exo.8.5 COPYONLY)
+#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/debugMesh.exo.8.6
+#               ${CMAKE_CURRENT_BINARY_DIR}/debugMesh.exo.8.6 COPYONLY)
+#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/debugMesh.exo.8.7
+#               ${CMAKE_CURRENT_BINARY_DIR}/debugMesh.exo.8.7 COPYONLY)
+## 3. Create the test with this name and standard executable
+#add_test(${testRoot}_ResponseMPITest ${Albany8.exe} input_DebugResponseMPI.xml)
+#ENDIF()
 
 
