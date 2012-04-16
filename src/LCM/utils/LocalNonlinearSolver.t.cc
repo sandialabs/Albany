@@ -114,7 +114,7 @@ namespace LCM {
       X[i].resize(numGlobalVars);
       for (int j(0); j < numGlobalVars; ++j)
       {
-        X[i].fastAccessDx(j) = dBdP[numGlobalVars * i + j];
+        X[i].fastAccessDx(j) = -dBdP[numGlobalVars * i + j];
       }
     }
   }
@@ -188,7 +188,7 @@ namespace LCM {
       X[i].resize(numGlobalVars);
       for (int j(0); j < numGlobalVars; ++j)
       {
-        X[i].fastAccessDx(j) = dBdP[numGlobalVars * i + j];
+        X[i].fastAccessDx(j) = -dBdP[numGlobalVars * i + j];
       }
     }
   }
