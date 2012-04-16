@@ -19,6 +19,7 @@
 #include "Phalanx_DataLayout.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
+#include "LocalNonlinearSolver.h"
 
 namespace LCM {
 
@@ -253,29 +254,50 @@ evaluateFields(typename Traits::EvalData workset)
 	bool converged = false;
 	ScalarT g = f;
 	ScalarT H = K * eqpsold(cell,qp) + siginf*( 1. - exp( -delta * eqpsold(cell,qp) ) );
+        ScalarT H2 = 0.0;
 	ScalarT dg = ( -2. * mubar ) * ( 1. + H / ( 3. * mubar ) );
-	ScalarT dH = 0.0;;
+	ScalarT dH = 0.0;
+        ScalarT dH2 = 0.0;
 	ScalarT alpha = 0.0;
+        ScalarT alpha2 = 0.0;
 	ScalarT res = 0.0;
 	int count = 0;
 	dgam = 0.0;
 
+        LocalNonlinearSolver<EvalT> solver;
+
+        std::vector<ScalarT> F(1);
+        std::vector<ScalarT> dFdX(1);
+        std::vector<ScalarT> X(1);
+
+        F[0] = f;
+        X[0] = 0.0;
+        dFdX[0] = ( -2. * mubar ) * ( 1. + H / ( 3. * mubar ) );
 	while (!converged)
 	{
 	  count++;
 
 	  //dgam = ( f / ( 2. * mubar) ) / ( 1. + K / ( 3. * mubar ) );
-	  dgam -= g/dg;
+	  //dgam -= g/dg;
+          solver.solve(dFdX,X,F);
 
-	  alpha = eqpsold(cell,qp) + sq23 * dgam;
+          RealType X0 = Sacado::ScalarValue<ScalarT>::eval(X[0]);
+	  //alpha = eqpsold(cell,qp) + sq23 * dgam;
+          alpha2 = eqpsold(cell,qp) + sq23 * X0;
 
-	  H = K * alpha + siginf*( 1. - exp( -delta * alpha ) );
-	  dH = K + delta * siginf * exp( -delta * alpha );
+	  //H = K * alpha + siginf*( 1. - exp( -delta * alpha ) );
+	  //dH = K + delta * siginf * exp( -delta * alpha );
 
-	  g = smag -  ( 2. * mubar * dgam + sq23 * ( Y + H ) );
-	  dg = -2. * mubar * ( 1. + dH / ( 3. * mubar ) );
+	  H2 = K * alpha2 + siginf*( 1. - exp( -delta * alpha2 ) );
+	  dH2 = K + delta * siginf * exp( -delta * alpha2 );
 
-	  res = std::abs(g);
+	  //g = smag -  ( 2. * mubar * dgam + sq23 * ( Y + H ) );
+	  //dg = -2. * mubar * ( 1. + dH / ( 3. * mubar ) );    \
+
+          F[0] = smag -  ( 2. * mubar * X0 + sq23 * ( Y + H2 ) );
+          dFdX[0] = -2. * mubar * ( 1. + dH2 / ( 3. * mubar ) );
+
+	  res = std::abs(F[0]);
 	  if ( res < 1.e-11 || res/f < 1.E-11 )
 	    converged = true;
 
@@ -283,11 +305,23 @@ evaluateFields(typename Traits::EvalData workset)
 				      std::endl << "Error in return mapping, count = " << count <<
                                       "\nres = " << res <<
                                       "\nrelres = " << res/f <<
-                                      "\ng = " << g <<
-                                      "\ndg = " << dg <<
-                                      "\nalpha = " << alpha << std::endl);
+                                      "\ng = " << F[0] <<
+                                      "\ndg = " << dFdX[0] <<
+                                      "\nalpha = " << alpha2 << std::endl);
 
         }
+        std::cout << "g   : " << g << std::endl;
+        std::cout << "F   : " << F[0] << std::endl;
+        std::cout << "dg  : " << dg << std::endl;
+        std::cout << "dFdX: " << dFdX[0] << std::endl;
+        
+        solver.computeFadInfo(dFdX,X,F);
+        
+
+        dgam = X[0];
+        
+        std::cout << "X: " << X[0] << std::endl;
+        std::cout << "dgam : " << dgam << std::endl;
 
         // plastic direction
         for (std::size_t i=0; i < numDims; ++i) 
@@ -300,7 +334,7 @@ evaluateFields(typename Traits::EvalData workset)
 
         // update eqps
         //eqps(cell,qp) = eqpsold(cell,qp) + sqrt(2./3.) * dgam;
-        eqps(cell,qp) = alpha;
+        eqps(cell,qp) = alpha2;
 
         // exponential map to get Fp
         for (std::size_t i=0; i < numDims; ++i) 
