@@ -49,10 +49,11 @@ PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   if(params->isType<double>("Temperature"))
     temperature = params->get<double>("Temperature");
 
-  mtrlDbFilename = "materials.xml";
+  // Create Material Database
+  std::string mtrlDbFilename = "materials.xml";
   if(params->isType<string>("MaterialDB Filename"))
     mtrlDbFilename = params->get<string>("MaterialDB Filename");
-
+  materialDB = Teuchos::rcp(new QCAD::MaterialDatabase(mtrlDbFilename, comm));
 
   //Pull number of eigenvectors from poisson params list
   nEigenvectors = 0;
@@ -104,6 +105,10 @@ buildProblem(
   buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RESID_FM, 
 		  Teuchos::null);
   constructDirichletEvaluators(*meshSpecs[0]);
+
+  if(meshSpecs[0]->ssNames.size() > 0) // Build a sideset evaluator if sidesets are present
+    constructNeumannEvaluators(meshSpecs[0]);
+
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
@@ -148,9 +153,6 @@ QCAD::PoissonProblem::constructDirichletEvaluators(
 
    Teuchos::ParameterList DBCparams = params->sublist("Dirichlet BCs");
    DBCparams.validateParameters(*(dirUtils.getValidBCParameters(nodeSetIDs,dirichletNames)),0); //TODO: Poisson version??
-
-   // Create Material Database
-   RCP<QCAD::MaterialDatabase> materialDB = rcp(new QCAD::MaterialDatabase(mtrlDbFilename, comm));
 
    map<string, RCP<ParameterList> > evaluators_to_build;
    RCP<DataLayout> dummy = rcp(new MDALayout<Dummy>(0));
@@ -244,6 +246,54 @@ QCAD::PoissonProblem::constructDirichletEvaluators(
    dfm->requireField<AlbanyTraits::MPTangent>(mptan_tag0);
 }
 
+// Neumann BCs
+void
+QCAD::PoissonProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
+{
+   // Note: we only enter this function if sidesets are defined in the mesh file
+   // i.e. meshSpecs.ssNames.size() > 0
+
+   Albany::BCUtils<Albany::NeumannTraits> bcUtils;
+
+   // Check to make sure that Neumann BCs are given in the input file
+
+   if(!bcUtils.haveNeumann(this->params))
+
+      return;
+
+   // Construct BC evaluators for all side sets and names
+   // Note that the string index sets up the equation offset, so ordering is important
+   std::vector<string> bcNames(neq);
+   Teuchos::Array<Teuchos::Array<int> > offsets;
+   offsets.resize(neq);
+
+   bcNames[0] = "Phi";
+   offsets[0].resize(1);
+   offsets[0][0] = 0;
+
+
+   // Construct BC evaluators for all possible names of conditions
+   // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
+   std::vector<string> condNames(3); //dudx, dudy, dudz, dudn or scaled jump (internal surface)
+
+   // Note that sidesets are only supported for two and 3D currently
+   if(numDim == 2)
+    condNames[0] = "(dudx, dudy)";
+   else if(numDim == 3)
+    condNames[0] = "(dudx, dudy, dudz)";
+   else
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+       std::endl << "Error: Sidesets only supported in 2 and 3D." << std::endl);
+
+   condNames[1] = "dudn";
+
+   condNames[2] = "scaled jump";
+
+   nfm.resize(1); // Heat problem only has one element block
+   nfm[0] = bcUtils.constructBCEvaluators(meshSpecs, bcNames, condNames, offsets, dl, 
+                                          this->params, this->paramLib, materialDB);
+
+}
 
 Teuchos::RCP<const Teuchos::ParameterList>
 QCAD::PoissonProblem::getValidProblemParameters() const

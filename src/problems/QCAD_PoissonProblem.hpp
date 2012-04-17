@@ -28,6 +28,8 @@
 #include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
+#include "QCAD_MaterialDatabase.hpp"
+
 
 //! Code Base for Quantum Device Simulation Tools LDRD
 namespace QCAD {
@@ -90,6 +92,7 @@ namespace QCAD {
       const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
     void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
+    void constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs);
 
   protected:
 
@@ -102,10 +105,12 @@ namespace QCAD {
     int numDim;
     double length_unit_in_m;
     double temperature;
-    std::string mtrlDbFilename;
+    Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
+    Teuchos::RCP<Albany::Layouts> dl;
 
     //! Parameters for coupling to Schrodinger
     int nEigenvectors;
+
 
     /* Now Poisson source Params
     bool bUseSchrodingerSource;
@@ -169,7 +174,7 @@ QCAD::PoissonProblem::constructEvaluators(
 
    RCP<DataLayout> shared_param = rcp(new MDALayout<Dim>(1));
 
-   RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
+   dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
    bool supportsTransient=false;
 
@@ -217,9 +222,6 @@ QCAD::PoissonProblem::constructEvaluators(
      fm0.template registerEvaluator<EvalT>
        (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[i]));
   }
-
-   // Create Material Database
-   RCP<QCAD::MaterialDatabase> materialDB = rcp(new QCAD::MaterialDatabase(mtrlDbFilename, comm));
 
   { // Gather Eigenvectors
     RCP<ParameterList> p = rcp(new ParameterList);
