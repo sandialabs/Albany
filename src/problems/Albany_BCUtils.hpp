@@ -154,6 +154,7 @@ template<>
        const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs,
        const std::vector<std::string>& bcNames,
        const std::vector<std::string>& conditions,
+       const Teuchos::Array<Teuchos::Array<int> >& offsets,
        const Teuchos::RCP<Albany::Layouts>& dl,
        Teuchos::RCP<Teuchos::ParameterList> params,
        Teuchos::RCP<ParamLib> paramLib,

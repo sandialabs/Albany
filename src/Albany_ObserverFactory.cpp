@@ -19,6 +19,8 @@
 #include "Albany_NOXObserver.hpp"
 #include "Albany_RythmosObserver.hpp"
 
+#include "MOR/Albany_MORObserverFactory.hpp"
+
 #include "Teuchos_ParameterList.hpp"
 
 #include <string>
@@ -41,7 +43,9 @@ ObserverFactory::ObserverFactory(const RCP<ParameterList> &params,
 RCP<NOX::Epetra::Observer> ObserverFactory::createNoxObserver()
 {
   if (useNOX()) {
-    return rcp(new Albany_NOXObserver(app_)); 
+    RCP<NOX::Epetra::Observer> observer(new Albany_NOXObserver(app_)); 
+    MORObserverFactory morFactory(params_);  
+    return morFactory.create(observer);
   }
   return null;
 }

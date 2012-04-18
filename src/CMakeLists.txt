@@ -270,6 +270,20 @@ SET(HEADERS ${HEADERS}
 	evaluators/PHAL_SeparableScatterScalarResponse_Def.hpp
   )
 
+# MOR (Model Order Reduction)
+SET(MOR_DIR ${Albany_SOURCE_DIR}/src/MOR)
+
+SET(SOURCES ${SOURCES}
+  ${MOR_DIR}/Albany_MORObserverFactory.cpp
+  ${MOR_DIR}/Albany_SnapshotCollection.cpp
+  ${MOR_DIR}/Albany_SnapshotCollectionObserver.cpp
+)
+SET(HEADERS ${HEADERS}
+  ${MOR_DIR}/Albany_MORObserverFactory.hpp
+  ${MOR_DIR}/Albany_SnapshotCollection.hpp
+  ${MOR_DIR}/Albany_SnapshotCollectionObserver.hpp
+)
+
 # LCM
 IF(ALBANY_LCM)
   SET(LCM_DIR ${Albany_SOURCE_DIR}/src/LCM)
@@ -498,6 +512,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/utils/Partition.cc
     ${LCM_DIR}/utils/Tensor.cc
     ${LCM_DIR}/utils/Topology.cc
+    ${LCM_DIR}/utils/LocalNonlinearSolver.cc
   )
 
   SET(HEADERS ${HEADERS}
@@ -505,6 +520,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/utils/Partition.h
     ${LCM_DIR}/utils/Tensor.h
     ${LCM_DIR}/utils/Topology.h 
+    ${LCM_DIR}/utils/LocalNonlinearSolver.h 
   )
 
 IF(ALBANY_LAME OR ALBANY_LAMENT)
@@ -710,6 +726,11 @@ IF (ALBANY_LCM)
   add_executable(UtilsTest LCM/test/utils/UtilsTest.cc)
   add_executable(NodeUpdate LCM/test/utils/NodeUpdate.cc)
   add_executable(MeshComponents LCM/test/utils/MeshComponents.cc)
+  add_executable(
+    utLocalNonlinearSolver 
+    LCM/test/unit_tests/StandardUnitTestMain.cpp
+    LCM/test/unit_tests/utLocalNonlinearSolver.cpp
+  )
 ENDIF ()
 IF (ALBANY_LAME OR ALBANY_LAMENT)
   add_executable(utLameStress_elastic
@@ -754,4 +775,5 @@ IF (ALBANY_LCM)
   target_link_libraries(UtilsTest albanyLib ${ALL_LIBRARIES})
   target_link_libraries(NodeUpdate albanyLib ${ALL_LIBRARIES})
   target_link_libraries(MeshComponents albanyLib ${ALL_LIBRARIES})
+  target_link_libraries(utLocalNonlinearSolver albanyLib ${ALL_LIBRARIES})
 ENDIF ()

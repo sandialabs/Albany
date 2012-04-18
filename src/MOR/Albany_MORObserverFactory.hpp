@@ -14,38 +14,34 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
-#ifndef ALBANY_OBSERVERFACTORY_HPP
-#define ALBANY_OBSERVERFACTORY_HPP
+#ifndef ALBANY_MOROBSERVERFACTORY_HPP
+#define ALBANY_MOROBSERVERFACTORY_HPP
 
 #include "NOX_Epetra_Observer.H"
-#include "Rythmos_IntegrationObserverBase.hpp"
+
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
 namespace Albany {
 
-class Application;
-
-class ObserverFactory {
+class MORObserverFactory {
 public:
-  ObserverFactory(const Teuchos::RCP<Teuchos::ParameterList> &params,
-                  const Teuchos::RCP<Application> &app);
+  explicit MORObserverFactory(const Teuchos::RCP<Teuchos::ParameterList> &parentParams);
 
-  Teuchos::RCP<NOX::Epetra::Observer> createNoxObserver();
-  Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > createRythmosObserver();
+  Teuchos::RCP<NOX::Epetra::Observer> create(const Teuchos::RCP<NOX::Epetra::Observer> &child);
 
 private:
-  bool useNOX() const;
-  bool useRythmos() const;
+  bool collectSnapshots() const;
+
+  Teuchos::RCP<Teuchos::ParameterList> getSnapParameters() const;
 
   Teuchos::RCP<Teuchos::ParameterList> params_;
-  Teuchos::RCP<Application> app_;
 
   // Disallow copy & assignment
-  ObserverFactory(const ObserverFactory &);
-  ObserverFactory &operator=(const ObserverFactory &);
+  MORObserverFactory(const MORObserverFactory &);
+  MORObserverFactory &operator=(const MORObserverFactory &);
 };
 
-}
+} // end namespace Albany
 
-#endif /* ALBANY_OBSERVERFACTORY_HPP */
+#endif /* ALBANY_MOROBSERVERFACTORY_HPP */

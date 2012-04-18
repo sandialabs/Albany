@@ -350,6 +350,7 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
       const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs,
       const std::vector<std::string>& bcNames,
       const std::vector<std::string>& conditions,
+      const Teuchos::Array<Teuchos::Array<int> >& offsets,
       const Teuchos::RCP<Albany::Layouts>& dl,
       Teuchos::RCP<Teuchos::ParameterList> params,
       Teuchos::RCP<ParamLib> paramLib,
@@ -385,6 +386,8 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
         // "NBC on SS sidelist_12 for DOF T set dudn"
         //  or
         // "NBC on SS sidelist_12 for DOF T set (dudx, dudy)"
+        // or
+        // "NBC on SS surface_1 for DOF all set P"
 
          std::string ss = constructBCName(meshSpecs->ssNames[i], bcNames[j], conditions[k]);
 
@@ -403,11 +406,10 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
 
            p->set<int>                            ("Type", traits_type::type);
   
-//           p->set< RCP<DataLayout> >              ("Data Layout", dummy);
            p->set<RCP<ParamLib> >                 ("Parameter Library", paramLib);
   
            p->set<string>                         ("Side Set ID", meshSpecs->ssNames[i]);
-           p->set< int >                          ("Equation Offset", j);
+           p->set<Teuchos::Array< int > >         ("Equation Offset", offsets[j]);
            p->set< RCP<Albany::Layouts> >         ("Base Data Layout", dl);
            p->set< RCP<MeshSpecsStruct> >         ("Mesh Specs Struct", meshSpecs);
 

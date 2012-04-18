@@ -186,11 +186,12 @@ evaluateFields(typename Traits::EvalData workset)
   Albany::MDArray eqps_old = (*workset.stateArrayPtr)[eqpsName];
 
   ScalarT dt = deltaTime(0);
+  ScalarT temp(0);
 
   // compute factor
-   ScalarT fac(0.0);
-   if (dt > 0.0)
-    fac = 1.0/dt;
+  // ScalarT fac(0.0);
+  // if (dt > 0.0)
+   // fac = 1.0/dt;
 
 
 
@@ -240,17 +241,17 @@ evaluateFields(typename Traits::EvalData workset)
 				  // Transient Term
 				  TResidual(cell,node) += Dstar(cell, qp)*(
 						     Clattice(cell,qp)- Clattice_old(cell, qp)
-						    )*wBF(cell, node, qp)*dt
-						    /(DL(cell,qp)*dt+
-						      Dstar(cell,qp)*elementLength(cell,qp)*elementLength(cell,qp)/6.0);
+						    )*wBF(cell, node, qp)
+						    /(DL(cell,qp)+
+						      temp*Dstar(cell,qp)*elementLength(cell,qp)*elementLength(cell,qp)/6.0);
 
 				  // Strain Rate Term
 				  TResidual(cell,node) += Ctrapped(cell, qp)/Ntrapped(cell, qp)*
 						                  eqpsFactor(cell,qp)*(
 				  						     eqps(cell,qp)- eqps_old(cell, qp)
-				  						    ) *wBF(cell, node, qp)*dt*dt
-				  						  /(DL(cell,qp)*dt
-				  						    +Dstar(cell,qp)*elementLength(cell,qp)*elementLength(cell,qp)/6.0);
+				  						    ) *wBF(cell, node, qp)
+				  						  /(DL(cell,qp)
+				  						    +temp*Dstar(cell,qp)*elementLength(cell,qp)*elementLength(cell,qp)/6.0);
 
 			  }
 		  }
@@ -274,9 +275,9 @@ evaluateFields(typename Traits::EvalData workset)
 						  TResidual(cell,node) -= tauFactor(cell,qp)*
 	                		          wGradBF(cell, node, qp, i)*
 	                		          Cinv(cell,qp,i,j)*
-	                		          stressGrad(cell, qp, j)*dt*dt
-	                		          /(DL(cell,qp)*dt+
-	                		            Dstar(cell,qp)*elementLength(cell,qp)*elementLength(cell,qp)/6.0);
+	                		          stressGrad(cell, qp, j)*dt
+	                		          /(DL(cell,qp)+
+	                		            temp*Dstar(cell,qp)*elementLength(cell,qp)*elementLength(cell,qp)/6.0);
 					  }
 
 				  }
