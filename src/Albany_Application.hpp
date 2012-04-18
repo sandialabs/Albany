@@ -552,7 +552,19 @@ namespace Albany {
       const Epetra_MultiVector* Vx,
       const Epetra_MultiVector* Vp);
 
-    void setupTangentWorksetInfo(
+    void setupTangentWorksetInfoT(
+      PHAL::Workset& workset, 
+      double current_time,
+      bool sum_derivs,
+      Teuchos::RCP<const Tpetra_Vector> xdotT, 
+      Teuchos::RCP<const Tpetra_Vector> xT,
+      const Teuchos::Array<ParamVec>& p,
+      ParamVec* deriv_p,
+      Teuchos::RCP<const Tpetra_MultiVector> VxdotT,
+      Teuchos::RCP<const Tpetra_MultiVector> VxT,
+      Teuchos::RCP<const Tpetra_MultiVector> VpT);
+    
+   void setupTangentWorksetInfo(
       PHAL::Workset& workset, 
       double current_time,
       bool sum_derivs,

@@ -594,22 +594,11 @@ template<typename Traits>
 void Neumann<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Teuchos::RCP<Epetra_Vector> f = workset.f;
-  Teuchos::RCP<Epetra_MultiVector> JV = workset.JV;
-  Teuchos::RCP<Epetra_MultiVector> fp = workset.fp;
-  ScalarT *valptr;
-
-  const Epetra_BlockMap *row_map = NULL;
-
-  if (f != Teuchos::null)
-    row_map = &(f->Map());
-  else if (JV != Teuchos::null)
-    row_map = &(JV->Map());
-  else if (fp != Teuchos::null)
-    row_map = &(fp->Map());
-  else
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-                     "One of f, JV, or fp must be non-null! " << std::endl);
+  Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
+  Teuchos::RCP<Tpetra_MultiVector> JVT = workset.JVT;
+  Teuchos::RCP<Tpetra_MultiVector> fpT = workset.fpT;
+  
+   ScalarT *valptr;
 
   // Fill the local "neumann" array with cell contributions
 
@@ -625,17 +614,17 @@ evaluateFields(typename Traits::EvalData workset)
 
         int row = nodeID[node][this->offset[dim]];
 
-        if (f != Teuchos::null)
-          f->SumIntoMyValue(row, 0, valptr->val());
+        if (fT != Teuchos::null)
+          fT->sumIntoLocalValue(row, valptr->val());
 
-        if (JV != Teuchos::null)
+        if (JVT != Teuchos::null)
           for (int col=0; col<workset.num_cols_x; col++)
 
-        JV->SumIntoMyValue(row, col, valptr->dx(col));
+            JVT->sumIntoLocalValue(row, col, valptr->dx(col));
 
-        if (fp != Teuchos::null)
+        if (fpT != Teuchos::null)
           for (int col=0; col<workset.num_cols_p; col++)
-            fp->SumIntoMyValue(row, col, valptr->dx(col+workset.param_offset));
+            fpT->sumIntoLocalValue(row, col, valptr->dx(col+workset.param_offset));
       }
   }
 }

@@ -150,12 +150,43 @@ evaluateTangent(const double alpha,
 		Epetra_MultiVector* gp)
 {
   visResponseGraph<PHAL::AlbanyTraits::Tangent>("_tangent");
+  
+  Teuchos::RCP<const Epetra_Comm> comm = application->getComm();
+  Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(*comm));
+  Teuchos::ParameterList kokkosNodeParams;
+  Teuchos::RCP<KokkosNode> nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
+
+  //convert Epetra_Vector x to Tpetra_Vector xT
+  Teuchos::RCP<const Tpetra_Vector> xT = Petra::EpetraVector_To_TpetraVectorConst(x, commT, nodeT);
+  //convert Epetra_Vector *xdot to Tpetra_Vector xdotT
+  Teuchos::RCP<const Tpetra_Vector> xdotT;
+  if (xdot != NULL) {
+     xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT, nodeT);
+  }
+  //Create Tpetra copy of Vx, called VxT
+  Teuchos::RCP<const Tpetra_MultiVector> VxT;
+  if (Vx != NULL) {
+    VxT = Petra::EpetraMultiVector_To_TpetraMultiVector(*Vx, commT, nodeT);
+  }
+  //Create Tpetra copy of Vxdot, called VxdotT
+  Teuchos::RCP<const Tpetra_MultiVector> VxdotT;
+  if (Vxdot != NULL) {
+    VxdotT = Petra::EpetraMultiVector_To_TpetraMultiVector(*Vxdot, commT, nodeT);
+  }
+  //Create Tpetra copy of Vp, called VpT
+  Teuchos::RCP<const Tpetra_MultiVector> VpT;
+  if (Vp != NULL) {
+    VpT = Petra::EpetraMultiVector_To_TpetraMultiVector(*Vp, commT, nodeT);
+  }
 
   // Set data in Workset struct
   PHAL::Workset workset;
-  application->setupTangentWorksetInfo(workset, sum_derivs, 
-				       current_time, xdot, &x, p, 
-				       deriv_p, Vxdot, Vx, Vp);
+ // application->setupTangentWorksetInfo(workset, sum_derivs, 
+	//			       current_time, xdot, &x, p, 
+	//			       deriv_p, Vxdot, Vx, Vp);
+  application->setupTangentWorksetInfoT(workset, sum_derivs, 
+				       current_time, xdotT, xT, p, 
+				       deriv_p, VxdotT, VxT, VpT);
   workset.g = Teuchos::rcp(g, false);
   workset.dgdx = Teuchos::rcp(gx, false);
   workset.dgdp = Teuchos::rcp(gp, false);

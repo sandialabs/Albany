@@ -130,10 +130,6 @@ evaluateFields(typename Traits::EvalData workset)
 { 
   ScalarT* valptr;
 
-  //cerr << "PHAL_GatherSolution" << endl; 
-
-  //Teuchos::RCP<const Epetra_Vector> x = workset.x;
-  //Teuchos::RCP<const Epetra_Vector> xdot = workset.xdot;
  
   Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
   Teuchos::RCP<const Tpetra_Vector> xdotT = workset.xdotT;
@@ -149,14 +145,12 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t eq = 0; eq < numFields; eq++) {
         if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
         else                   valptr = &(this->val[eq])(cell,node);
-	//*valptr = (*x)[nodeID[node][this->offset + eq]];
 	*valptr = xT_constView[nodeID[node][this->offset + eq]];
       }
       if (workset.transientTerms && this->enableTransient) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
           if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
           else                   valptr = &(this->val_dot[eq])(cell,node);
-	  //*valptr = (*xdot)[nodeID[node][this->offset + eq]];
 	  *valptr = xdotT_constView[nodeID[node][this->offset + eq]];
         }
       }
@@ -237,12 +231,23 @@ template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 { 
+ 
+  Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
+  Teuchos::RCP<const Tpetra_Vector> xdotT = workset.xdotT;
+  Teuchos::RCP<const Tpetra_MultiVector> VxT = workset.VxT;
+  Teuchos::RCP<const Tpetra_MultiVector> VxdotT = workset.VxdotT;
+  Teuchos::RCP<const Tpetra_MultiVector> VpT = workset.VpT;
 
-  Teuchos::RCP<const Epetra_Vector> x = workset.x;
-  Teuchos::RCP<const Epetra_Vector> xdot = workset.xdot;
-  Teuchos::RCP<const Epetra_MultiVector> Vx = workset.Vx;
-  Teuchos::RCP<const Epetra_MultiVector> Vxdot = workset.Vxdot;
-  Teuchos::RCP<const Epetra_MultiVector> Vp = workset.Vp;
+ 
+  //get const (read-only) view of xT, xdotT, ...
+  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
+  Teuchos::ArrayRCP<const ST> xdotT_constView = xdotT->get1dView();
+  Teuchos::ArrayRCP<const ST> VxT_constView; 
+  Teuchos::ArrayRCP<const ST> VxdotT_constView; 
+  Teuchos::ArrayRCP<const ST> VpT_constView; 
+ 
+   //WHERE IS Vp used?? 
+ 
   Teuchos::RCP<ParamVec> params = workset.params;
   int num_cols_tot = workset.param_offset + workset.num_cols_p;
   ScalarT* valptr;
@@ -254,27 +259,33 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t eq = 0; eq < numFields; eq++) {
         if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
         else                   valptr = &(this->val[eq])(cell,node);
-	if (Vx != Teuchos::null && workset.j_coeff != 0.0) {
-	  *valptr = FadType(num_cols_tot, (*x)[nodeID[node][this->offset + eq]]);
-	  for (int k=0; k<workset.num_cols_x; k++)
+	if (VxT != Teuchos::null && workset.j_coeff != 0.0) {
+	  *valptr = FadType(num_cols_tot, xT_constView[nodeID[node][this->offset + eq]]);
+	  for (int k=0; k<workset.num_cols_x; k++) {
+            VxT_constView = VxT->getData(k); 
 	    valptr->fastAccessDx(k) = 
-	      workset.j_coeff*(*Vx)[k][nodeID[node][this->offset + eq]];
+	      workset.j_coeff*VxT_constView[nodeID[node][this->offset + eq]];
+          }
 	}
-	else
-	  *valptr = FadType((*x)[nodeID[node][this->offset + eq]]);
+	else {
+	  *valptr = FadType(xT_constView[nodeID[node][this->offset + eq]]);
+        }
       }
       if (workset.transientTerms && this->enableTransient) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
           if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
           else                   valptr = &(this->val_dot[eq])(cell,node);
-	  if (Vxdot != Teuchos::null && workset.m_coeff != 0.0) {
-	    *valptr = FadType(num_cols_tot, (*xdot)[nodeID[node][this->offset + eq]]);
-	    for (int k=0; k<workset.num_cols_x; k++)
+	  if (VxdotT != Teuchos::null && workset.m_coeff != 0.0) {
+	    *valptr = FadType(num_cols_tot, xdotT_constView[nodeID[node][this->offset + eq]]);
+	    for (int k=0; k<workset.num_cols_x; k++) {
+              VxdotT_constView = VxdotT->getData(k); 
 	      valptr->fastAccessDx(k) = 
-		workset.m_coeff*(*Vxdot)[k][nodeID[node][this->offset + eq]];
+		workset.m_coeff*VxdotT_constView[nodeID[node][this->offset + eq]];
+             }
 	  }
-	  else
-	    *valptr = FadType((*xdot)[nodeID[node][this->offset + eq]]);
+	  else {
+	    *valptr = FadType(xdotT_constView[nodeID[node][this->offset + eq]]);
+          }
         }
       }
     }

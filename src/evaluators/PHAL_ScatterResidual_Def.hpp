@@ -218,21 +218,12 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Teuchos::RCP<Epetra_Vector> f = workset.f;
-  Teuchos::RCP<Epetra_MultiVector> JV = workset.JV;
-  Teuchos::RCP<Epetra_MultiVector> fp = workset.fp;
+  
+  Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
+  Teuchos::RCP<Tpetra_MultiVector> JVT = workset.JVT;
+  Teuchos::RCP<Tpetra_MultiVector> fpT = workset.fpT;
   ScalarT *valptr;
 
-  const Epetra_BlockMap *row_map = NULL;
-  if (f != Teuchos::null)
-    row_map = &(f->Map());
-  else if (JV != Teuchos::null)
-    row_map = &(JV->Map());
-  else if (fp != Teuchos::null)
-    row_map = &(fp->Map());
-  else
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-                     "One of f, JV, or fp must be non-null! " << std::endl);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
@@ -244,16 +235,21 @@ evaluateFields(typename Traits::EvalData workset)
 
         int row = nodeID[node][this->offset + eq];
 
-        if (f != Teuchos::null)
-          f->SumIntoMyValue(row, 0, valptr->val());
+        if (fT != Teuchos::null) {
+          fT->sumIntoLocalValue(row, valptr->val());
+        }
 
-	if (JV != Teuchos::null)
-	  for (int col=0; col<workset.num_cols_x; col++)
-	    JV->SumIntoMyValue(row, col, valptr->dx(col));
+	if (JVT != Teuchos::null) {
+	  for (int col=0; col<workset.num_cols_x; col++) {
+	    JVT->sumIntoLocalValue(row, col, valptr->dx(col));
+          }
+        }
 
-	if (fp != Teuchos::null)
-	  for (int col=0; col<workset.num_cols_p; col++)
-	    fp->SumIntoMyValue(row, col, valptr->dx(col+workset.param_offset));
+	if (fpT != Teuchos::null) {
+	  for (int col=0; col<workset.num_cols_p; col++) {
+	    fpT->sumIntoLocalValue(row, col, valptr->dx(col+workset.param_offset));
+          }
+        }
       }
     }
   }

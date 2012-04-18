@@ -190,11 +190,17 @@ template<typename Traits>
 void TimeDepBC<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  Teuchos::RCP<Epetra_Vector> f = dirichletWorkset.f;
-  Teuchos::RCP<Epetra_MultiVector> fp = dirichletWorkset.fp;
-  Teuchos::RCP<Epetra_MultiVector> JV = dirichletWorkset.JV;
-  Teuchos::RCP<const Epetra_Vector> x = dirichletWorkset.x;
-  Teuchos::RCP<const Epetra_MultiVector> Vx = dirichletWorkset.Vx;
+  Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
+  Teuchos::RCP<Tpetra_MultiVector> fpT = dirichletWorkset.fpT;
+  Teuchos::RCP<Tpetra_MultiVector> JVT = dirichletWorkset.JVT;
+  Teuchos::RCP<const Tpetra_Vector> xT = dirichletWorkset.xT;
+  Teuchos::RCP<const Tpetra_MultiVector> VxT = dirichletWorkset.VxT;
+
+  Teuchos::ArrayRCP<const ST> VxT_constView; 
+  Teuchos::ArrayRCP<ST> fT_nonconstView;                                         
+  if (fT != Teuchos::null) fT_nonconstView = fT->get1dViewNonConst();
+  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();                                       
+  
   RealType time = dirichletWorkset.current_time;
   const RealType j_coeff = dirichletWorkset.j_coeff;
   const std::vector<std::vector<int> >& nsNodes = 
@@ -211,16 +217,26 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     
     Val = this->computeVal(time);
 
-    if (f != Teuchos::null)
-      (*f)[lunk] = ((*x)[lunk] - Val.val());
+    if (fT != Teuchos::null) {
+      fT_nonconstView[lunk] = xT_constView[lunk] - Val.val();
+    }
 
-    if (JV != Teuchos::null) 
-      for (int i=0; i<dirichletWorkset.num_cols_x; i++)
-	(*JV)[i][lunk] = j_coeff*(*Vx)[i][lunk];
+    if (JVT != Teuchos::null) { 
+      Teuchos::ArrayRCP<ST> JVT_nonconstView; 
+      for (int i=0; i<dirichletWorkset.num_cols_x; i++) {
+        JVT_nonconstView = JVT->getDataNonConst(i); 
+        VxT_constView = VxT->getData(i); 
+	JVT_nonconstView[lunk] = j_coeff*VxT_constView[lunk];
+      }
+    }
     
-    if (fp != Teuchos::null) 
-      for (int i=0; i<dirichletWorkset.num_cols_p; i++)
-     	(*fp)[i][lunk] = -Val.dx(dirichletWorkset.param_offset+i);
+    if (fpT != Teuchos::null) {
+      Teuchos::ArrayRCP<ST> fpT_nonconstView; 
+      for (int i=0; i<dirichletWorkset.num_cols_p; i++) {
+        fpT_nonconstView = fpT->getDataNonConst(i); 
+     	fpT_nonconstView[lunk] = -Val.dx(dirichletWorkset.param_offset+i);
+      }
+    }
   }
 }
 

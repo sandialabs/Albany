@@ -52,7 +52,7 @@ struct Workset {
 
   Teuchos::RCP<const Epetra_Vector> x;
   Teuchos::RCP<const Epetra_Vector> xdot;
-  //Tpetra analogs of x and xdog
+  //Tpetra analogs of x and xdot
   Teuchos::RCP<const Tpetra_Vector> xT;
   Teuchos::RCP<const Tpetra_Vector> xdotT;
   
@@ -60,6 +60,10 @@ struct Workset {
   Teuchos::RCP<const Epetra_MultiVector> Vx;
   Teuchos::RCP<const Epetra_MultiVector> Vxdot;
   Teuchos::RCP<const Epetra_MultiVector> Vp;
+  //Tpetra analogs of Vx, Vxdot and Vp
+  Teuchos::RCP<const Tpetra_MultiVector> VxT;
+  Teuchos::RCP<const Tpetra_MultiVector> VxdotT;
+  Teuchos::RCP<const Tpetra_MultiVector> VpT;
   Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > sg_x;
   Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > sg_xdot;
   Teuchos::RCP<const Stokhos::ProductEpetraVector > mp_x;
@@ -74,6 +78,9 @@ struct Workset {
   Teuchos::RCP<Tpetra_CrsMatrix> JacT;
   Teuchos::RCP<Epetra_MultiVector> JV;
   Teuchos::RCP<Epetra_MultiVector> fp;
+  //Tpetra analogs of JV and fp
+  Teuchos::RCP<Tpetra_MultiVector> JVT;
+  Teuchos::RCP<Tpetra_MultiVector> fpT;
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > sg_f;
   Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_CrsMatrix> > sg_Jac;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_JV;
