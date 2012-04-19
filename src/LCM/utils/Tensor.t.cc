@@ -87,7 +87,7 @@ namespace LCM {
     B = term;
 
     while (relError > tol && k < maxNumIter) {
-      term = - (k / (k + 1.0)) * term * Am1;
+      term = ScalarT(- (k / (k + 1.0))) * term * Am1;
       B = B + term;
       normTerm = norm_1(term);
       relError = normTerm / normA;

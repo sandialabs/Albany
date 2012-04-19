@@ -134,6 +134,7 @@ namespace Albany {
 #include "TLElasResid.hpp"
 #include "Time.hpp"
 #include "J2Fiber.hpp"
+#include "GursonFD.hpp"
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
@@ -364,7 +365,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
-  else if (matModel == "J2"||matModel == "J2Fiber")
+  else if (matModel == "J2"||matModel == "J2Fiber"||matModel == "GursonFD")
   { 
     { // Hardening Modulus
       RCP<ParameterList> p = rcp(new ParameterList);
@@ -580,11 +581,56 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
+    if(matModel == "GursonFD")
+    {// GursonFD: HyperElastic version
+
+	  RCP<ParameterList> p = rcp(new ParameterList("Stress"));
+
+	  //Input
+	  p->set<string>("DefGrad Name", "F");
+	  p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+
+	  p->set<string>("Elastic Modulus Name", "Elastic Modulus");
+	  p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+	  p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
+	  p->set<string>("Hardening Modulus Name", "Hardening Modulus"); // dl->qp_scalar also
+	  p->set<string>("Saturation Modulus Name", "Saturation Modulus"); // dl->qp_scalar also
+	  p->set<string>("Saturation Exponent Name", "Saturation Exponent"); // dl->qp_scalar also
+	  p->set<string>("Yield Strength Name", "Yield Strength"); // dl->qp_scalar also
+	  p->set<string>("DetDefGrad Name", "J");  // dl->qp_scalar also
+
+	  RealType f0 = params->get("f0", 0.0);
+      p->set<RealType>("f0 Name", f0);
+
+	  //Output
+      p->set<string>("Stress Name", matModel); //dl->qp_tensor also
+      p->set<string>("Fp Name", "Fp");  // dl->qp_tensor also
+      p->set<string>("Eqps Name", "eqps");  // dl->qp_scalar also
+      p->set<string>("Void Volume Name", "voidVolume"); // dl ->qp_scalar
+
+      //Declare what state data will need to be saved (name, layout, init_type)
+
+      ev = rcp(new LCM::GursonFD<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy,"scalar", 0.0);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy,"identity", 1.0, true);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      p = stateMgr.registerStateVariable("voidVolume",dl->qp_scalar, dl->dummy,"scalar", f0, true);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
   }
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 			       "Unrecognized Material Name: " << matModel 
-			       << "  Recognized names are : NeoHookean and J2");
+			       << "  Recognized names are : NeoHookean, NeoHookeanAD, J2, J2Fiber and GursonFD");
     
 
   { // Residual

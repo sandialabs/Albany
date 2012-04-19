@@ -38,7 +38,7 @@ namespace LCM {
     std::vector<int> IPIV(numLocalVars);
 
     // call LAPACK
-    this->lapack.GESV(numLocalVars, numLocalVars, &A[0], numLocalVars, &IPIV[0], &B[0], numLocalVars, &info);
+    this->lapack.GESV(numLocalVars, 1, &A[0], numLocalVars, &IPIV[0], &B[0], numLocalVars, &info);
 
     // increment the solution
     for(int i(0); i < numLocalVars; ++i)
@@ -86,7 +86,7 @@ namespace LCM {
     }
 
     // call LAPACK
-    this->lapack.GESV(numLocalVars, numLocalVars, &dFdX[0], numLocalVars, &IPIV[0], &F[0], numLocalVars, &info);
+    this->lapack.GESV(numLocalVars, 1, &dFdX[0], numLocalVars, &IPIV[0], &F[0], numLocalVars, &info);
 
     // increment the solution
     for(int i(0); i < numLocalVars; ++i)
@@ -108,18 +108,21 @@ namespace LCM {
     int info(0);
     std::vector<int> IPIV(numLocalVars);
 
-    // extract sensitivites of objective function(s) wrt p
+    // extract sensitivities of objective function(s) wrt p
     std::vector<RealType> dBdP(numLocalVars*numGlobalVars);
-    for (int i(0); i < numLocalVars; ++i)
-      for (int j(0); j < numGlobalVars; ++j)
-        dBdP[numGlobalVars * i + j] = B[i].dx(j);
+    for (int i(0); i < numLocalVars; ++i){
+      for (int j(0); j < numGlobalVars; ++j){
+    	    dBdP[i + numLocalVars * j] = B[i].dx(j);
+      }
+    }
 
     // extract the jacobian
     std::vector<RealType> dBdX(A.size());
-    for (int i(0); i < numLocalVars; ++i)
-      for (int j(0); j < numLocalVars; ++j )
-        dBdX[numLocalVars * i + j] = A[numLocalVars * i + j].val();
-
+    for (int i(0); i < numLocalVars; ++i){
+      for (int j(0); j < numLocalVars; ++j ){
+    	  dBdX[i + numLocalVars * j] = A[i + numLocalVars * j].val();
+      }
+    }
     // call LAPACK to simultaneously solve for all dXdP
     this->lapack.GESV(numLocalVars, numGlobalVars, &dBdX[0], numLocalVars, &IPIV[0], &dBdP[0], numLocalVars, &info);
 
@@ -129,7 +132,7 @@ namespace LCM {
       X[i].resize(numGlobalVars);
       for (int j(0); j < numGlobalVars; ++j)
       {
-        X[i].fastAccessDx(j) = -dBdP[numGlobalVars * i + j];
+    	X[i].fastAccessDx(j) = -dBdP[i + numLocalVars * j];
       }
     }
   }
@@ -167,7 +170,7 @@ namespace LCM {
     }
 
     // call LAPACK
-    this->lapack.GESV(numLocalVars, numLocalVars, &dFdX[0], numLocalVars, &IPIV[0], &F[0], numLocalVars, &info);
+    this->lapack.GESV(numLocalVars, 1, &dFdX[0], numLocalVars, &IPIV[0], &F[0], numLocalVars, &info);
 
     // increment the solution
     for(int i(0); i < numLocalVars; ++i)
@@ -191,15 +194,19 @@ namespace LCM {
 
     // extract sensitivites of objective function(s) wrt p
     std::vector<RealType> dBdP(numLocalVars*numGlobalVars);
-    for (int i(0); i < numLocalVars; ++i)
-      for (int j(0); j < numGlobalVars; ++j)
-        dBdP[numGlobalVars * i + j] = B[i].dx(j);
+    for (int i(0); i < numLocalVars; ++i){
+      for (int j(0); j < numGlobalVars; ++j){
+         dBdP[i + numLocalVars * j] = B[i].dx(j);
+      }
+    }
 
     // extract the jacobian
     std::vector<RealType> dBdX(A.size());
-    for (int i(0); i < numLocalVars; ++i)
-      for (int j(0); j < numLocalVars; ++j )
-        dBdX[numLocalVars * i + j] = A[numLocalVars * i + j].val();
+    for (int i(0); i < numLocalVars; ++i){
+      for (int j(0); j < numLocalVars; ++j ){
+    	  dBdX[i + numLocalVars * j] = A[i + numLocalVars * j].val();
+      }
+    }
 
     // call LAPACK to simultaneously solve for all dXdP
     this->lapack.GESV(numLocalVars, numGlobalVars, &dBdX[0], numLocalVars, &IPIV[0], &dBdP[0], numLocalVars, &info);
@@ -210,7 +217,7 @@ namespace LCM {
       X[i].resize(numGlobalVars);
       for (int j(0); j < numGlobalVars; ++j)
       {
-        X[i].fastAccessDx(j) = -dBdP[numGlobalVars * i + j];
+    	  X[i].fastAccessDx(j) = -dBdP[i + numLocalVars * j];
       }
     }
   }

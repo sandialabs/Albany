@@ -315,7 +315,9 @@ IF(ALBANY_LCM)
   SET(SOURCES ${SOURCES}
     ${LCM_DIR}/evaluators/Stress.cpp
     ${LCM_DIR}/evaluators/CapModelStress.cpp  
+    ${LCM_DIR}/evaluators/CapImplicit.cpp  
     ${LCM_DIR}/evaluators/GursonSDStress.cpp  
+    ${LCM_DIR}/evaluators/GursonFD.cpp  
     ${LCM_DIR}/evaluators/J2Fiber.cpp  
     ${LCM_DIR}/evaluators/Strain.cpp 
     ${LCM_DIR}/evaluators/ElasticModulus.cpp 
@@ -382,8 +384,12 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/Stress_Def.hpp
     ${LCM_DIR}/evaluators/CapModelStress.hpp 
     ${LCM_DIR}/evaluators/CapModelStress_Def.hpp
+    ${LCM_DIR}/evaluators/CapImplicit.hpp 
+    ${LCM_DIR}/evaluators/CapImplicit_Def.hpp
     ${LCM_DIR}/evaluators/GursonSDStress.hpp 
     ${LCM_DIR}/evaluators/GursonSDStress_Def.hpp
+    ${LCM_DIR}/evaluators/GursonFD.hpp 
+    ${LCM_DIR}/evaluators/GursonFD_Def.hpp
     ${LCM_DIR}/evaluators/J2Fiber.hpp 
     ${LCM_DIR}/evaluators/J2Fiber_Def.hpp
     ${LCM_DIR}/evaluators/Strain.hpp 

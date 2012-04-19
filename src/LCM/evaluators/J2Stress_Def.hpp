@@ -279,11 +279,14 @@ evaluateFields(typename Traits::EvalData workset)
 
 	  //dgam = ( f / ( 2. * mubar) ) / ( 1. + K / ( 3. * mubar ) );
 	  //dgam -= g/dg;
-          solver.solve(dFdX,X,F);
+          //solver.solve(dFdX,X,F);
 
-          RealType X0 = Sacado::ScalarValue<ScalarT>::eval(X[0]);
-	  //alpha = eqpsold(cell,qp) + sq23 * dgam;
-          alpha2 = eqpsold(cell,qp) + sq23 * X0;
+          //RealType X0 = Sacado::ScalarValue<ScalarT>::eval(X[0]);
+          //alpha2 = eqpsold(cell,qp) + sq23 * X0;
+
+          //Chen
+          ScalarT X0 = X[0];
+          alpha2 = eqpsold(cell, qp) + sq23 * X0;
 
 	  //H = K * alpha + siginf*( 1. - exp( -delta * alpha ) );
 	  //dH = K + delta * siginf * exp( -delta * alpha );
@@ -310,18 +313,22 @@ evaluateFields(typename Traits::EvalData workset)
                                       "\nalpha = " << alpha2 << std::endl);
 
         }
-        std::cout << "g   : " << g << std::endl;
+//        std::cout << "g   : " << g << std::endl;
+    	std::cout << "before X: " << X[0] << std::endl;
         std::cout << "F   : " << F[0] << std::endl;
-        std::cout << "dg  : " << dg << std::endl;
+//        std::cout << "dg  : " << dg << std::endl;
         std::cout << "dFdX: " << dFdX[0] << std::endl;
         
-        solver.computeFadInfo(dFdX,X,F);
+		std::cout << "=============Calling computeFadInfo ============" << std::endl;
+
+        //solver.computeFadInfo(dFdX,X,F);
         
+		std::cout << "=========================" << std::endl;
 
         dgam = X[0];
         
-        std::cout << "X: " << X[0] << std::endl;
-        std::cout << "dgam : " << dgam << std::endl;
+        std::cout << "after X: " << X[0] << std::endl;
+//        std::cout << "dgam : " << dgam << std::endl;
 
         // plastic direction
         for (std::size_t i=0; i < numDims; ++i) 
