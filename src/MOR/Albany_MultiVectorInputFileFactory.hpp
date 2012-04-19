@@ -14,40 +14,39 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
-#ifndef ALBANY_MOROBSERVERFACTORY_HPP
-#define ALBANY_MOROBSERVERFACTORY_HPP
+#ifndef ALBANY_MULTIVECTORINPUTFILEFACTORY_HPP
+#define ALBANY_MULTIVECTORINPUTFILEFACTORY_HPP
 
-#include "NOX_Epetra_Observer.H"
+#include "Albany_MultiVectorInputFile.hpp"
 
+#include "Teuchos_Array.hpp"
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
+#include <string>
+
 namespace Albany {
 
-class Application;
-
-class MORObserverFactory {
+class MultiVectorInputFileFactory {
 public:
-  MORObserverFactory(const Teuchos::RCP<Teuchos::ParameterList> &parentParams,
-                     const Teuchos::RCP<Application> &app);
-
-  Teuchos::RCP<NOX::Epetra::Observer> create(const Teuchos::RCP<NOX::Epetra::Observer> &child);
+  explicit MultiVectorInputFileFactory(const Teuchos::RCP<Teuchos::ParameterList> &params);
+  Teuchos::RCP<MultiVectorInputFile> create();
 
 private:
-  bool collectSnapshots() const;
-  bool computeProjectionError() const;
-
-  Teuchos::RCP<Teuchos::ParameterList> getSnapParameters() const;
-  Teuchos::RCP<Teuchos::ParameterList> getErrorParameters() const;
-
   Teuchos::RCP<Teuchos::ParameterList> params_;
-  Teuchos::RCP<Application> app_;
 
-  // Disallow copy & assignment
-  MORObserverFactory(const MORObserverFactory &);
-  MORObserverFactory &operator=(const MORObserverFactory &);
+  std::string inputFileName_, inputFileFormat_;
+  Teuchos::Array<std::string> validFileFormats_;
+
+  void initValidFileFormats();
+  void initInputFileFormat();
+  void initInputFileName();
+
+  // Disallow copy and assignment
+  MultiVectorInputFileFactory(const MultiVectorInputFileFactory &);
+  MultiVectorInputFileFactory &operator=(const MultiVectorInputFileFactory &);
 };
 
 } // end namespace Albany
 
-#endif /* ALBANY_MOROBSERVERFACTORY_HPP */
+#endif /* ALBANY_MULTIVECTORINPUTFILEFACTORY_HPP */

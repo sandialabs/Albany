@@ -14,40 +14,43 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
-#ifndef ALBANY_MOROBSERVERFACTORY_HPP
-#define ALBANY_MOROBSERVERFACTORY_HPP
+#include "Albany_MatrixMarketMVInputFile.hpp"
 
-#include "NOX_Epetra_Observer.H"
+#include "EpetraExt_MultiVectorIn.h"
 
-#include "Teuchos_RCP.hpp"
-#include "Teuchos_ParameterList.hpp"
+#include "Teuchos_TestForException.hpp"
+#include "Teuchos_Assert.hpp"
+
+#include <stdexcept>
+#include <cstddef>
 
 namespace Albany {
 
-class Application;
+using Teuchos::RCP;
+using Teuchos::rcp;
+using EpetraExt::MatrixMarketFileToMultiVector;
 
-class MORObserverFactory {
-public:
-  MORObserverFactory(const Teuchos::RCP<Teuchos::ParameterList> &parentParams,
-                     const Teuchos::RCP<Application> &app);
+MatrixMarketMVInputFile::MatrixMarketMVInputFile(const std::string &path) :
+  MultiVectorInputFile(path)
+{
+  // Nothing to do
+}
 
-  Teuchos::RCP<NOX::Epetra::Observer> create(const Teuchos::RCP<NOX::Epetra::Observer> &child);
+RCP<Epetra_MultiVector> MatrixMarketMVInputFile::vectorNew(const Epetra_Map &map)
+{
+  // Create an uninitialized raw pointer,
+  // to be passed by reference // to MatrixMarketFileToMultiVector for initialization
+  Epetra_MultiVector *raw_result = NULL;
+  const int err = MatrixMarketFileToMultiVector(path().c_str(), map, raw_result);
+  TEUCHOS_TEST_FOR_EXCEPTION(err != 0,
+                             std::runtime_error,
+                             "Cannot open input file: " + path());
 
-private:
-  bool collectSnapshots() const;
-  bool computeProjectionError() const;
+  // Take ownership of the returned newly allocated object 
+  RCP<Epetra_MultiVector> result(raw_result);
 
-  Teuchos::RCP<Teuchos::ParameterList> getSnapParameters() const;
-  Teuchos::RCP<Teuchos::ParameterList> getErrorParameters() const;
-
-  Teuchos::RCP<Teuchos::ParameterList> params_;
-  Teuchos::RCP<Application> app_;
-
-  // Disallow copy & assignment
-  MORObserverFactory(const MORObserverFactory &);
-  MORObserverFactory &operator=(const MORObserverFactory &);
-};
+  TEUCHOS_TEST_FOR_EXCEPT(result.is_null());
+  return result;
+}
 
 } // end namespace Albany
-
-#endif /* ALBANY_MOROBSERVERFACTORY_HPP */

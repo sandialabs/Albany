@@ -14,10 +14,12 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
-#ifndef ALBANY_MOROBSERVERFACTORY_HPP
-#define ALBANY_MOROBSERVERFACTORY_HPP
+#ifndef ALBANY_PROJECTIONERROROBSERVER_HPP
+#define ALBANY_PROJECTIONERROROBSERVER_HPP
 
 #include "NOX_Epetra_Observer.H"
+
+#include "Albany_ProjectionError.hpp"
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -26,28 +28,29 @@ namespace Albany {
 
 class Application;
 
-class MORObserverFactory {
+class ProjectionErrorObserver : public NOX::Epetra::Observer
+{
 public:
-  MORObserverFactory(const Teuchos::RCP<Teuchos::ParameterList> &parentParams,
-                     const Teuchos::RCP<Application> &app);
+  ProjectionErrorObserver(const Teuchos::RCP<Teuchos::ParameterList> &params,
+                          const Teuchos::RCP<NOX::Epetra::Observer> &decoratedObserver,
+                          const Teuchos::RCP<const Application> &app);
 
-  Teuchos::RCP<NOX::Epetra::Observer> create(const Teuchos::RCP<NOX::Epetra::Observer> &child);
+  //! Calls underlying observer then evalates projection error
+  virtual void observeSolution(const Epetra_Vector& solution);
+  
+  //! Calls underlying observer then evalates projection error
+  virtual void observeSolution(const Epetra_Vector& solution, double time_or_param_val);
 
 private:
-  bool collectSnapshots() const;
-  bool computeProjectionError() const;
+  Teuchos::RCP<NOX::Epetra::Observer> decoratedObserver_;
 
-  Teuchos::RCP<Teuchos::ParameterList> getSnapParameters() const;
-  Teuchos::RCP<Teuchos::ParameterList> getErrorParameters() const;
-
-  Teuchos::RCP<Teuchos::ParameterList> params_;
-  Teuchos::RCP<Application> app_;
+  ProjectionError projectionError_;
 
   // Disallow copy & assignment
-  MORObserverFactory(const MORObserverFactory &);
-  MORObserverFactory &operator=(const MORObserverFactory &);
+  ProjectionErrorObserver(const ProjectionErrorObserver &);
+  ProjectionErrorObserver operator=(const ProjectionErrorObserver &);
 };
 
 } // end namespace Albany
 
-#endif /* ALBANY_MOROBSERVERFACTORY_HPP */
+#endif /*ALBANY_PROJECTIONERROROBSERVER_HPP*/

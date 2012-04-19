@@ -273,13 +273,24 @@ SET(MOR_DIR ${Albany_SOURCE_DIR}/src/MOR)
 
 SET(SOURCES ${SOURCES}
   ${MOR_DIR}/Albany_MORObserverFactory.cpp
+  ${MOR_DIR}/Albany_ProjectionError.cpp
+  ${MOR_DIR}/Albany_ProjectionErrorObserver.cpp
   ${MOR_DIR}/Albany_SnapshotCollection.cpp
   ${MOR_DIR}/Albany_SnapshotCollectionObserver.cpp
+  ${MOR_DIR}/Albany_MultiVectorInputFileFactory.cpp
+  ${MOR_DIR}/Albany_MatrixMarketMVInputFile.cpp
+  ${MOR_DIR}/Albany_Hdf5MVInputFile.cpp
 )
 SET(HEADERS ${HEADERS}
   ${MOR_DIR}/Albany_MORObserverFactory.hpp
+  ${MOR_DIR}/Albany_ProjectionError.hpp
+  ${MOR_DIR}/Albany_ProjectionErrorObserver.hpp
   ${MOR_DIR}/Albany_SnapshotCollection.hpp
   ${MOR_DIR}/Albany_SnapshotCollectionObserver.hpp
+  ${MOR_DIR}/Albany_MultiVectorInputFile.hpp
+  ${MOR_DIR}/Albany_MultiVectorInputFileFactory.hpp
+  ${MOR_DIR}/Albany_MatrixMarketMVInputFile.hpp
+  ${MOR_DIR}/Albany_Hdf5MVInputFile.hpp
 )
 
 # LCM

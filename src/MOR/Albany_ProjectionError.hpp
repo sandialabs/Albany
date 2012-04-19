@@ -14,40 +14,32 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
-#ifndef ALBANY_MOROBSERVERFACTORY_HPP
-#define ALBANY_MOROBSERVERFACTORY_HPP
-
-#include "NOX_Epetra_Observer.H"
-
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
+#include "Epetra_Map.h"
+#include "Epetra_MultiVector.h"
+
 namespace Albany {
 
-class Application;
-
-class MORObserverFactory {
+class ProjectionError {
 public:
-  MORObserverFactory(const Teuchos::RCP<Teuchos::ParameterList> &parentParams,
-                     const Teuchos::RCP<Application> &app);
+  ProjectionError(const Teuchos::RCP<Teuchos::ParameterList> &params,
+                  const Teuchos::RCP<const Epetra_Map> &dofMap);
 
-  Teuchos::RCP<NOX::Epetra::Observer> create(const Teuchos::RCP<NOX::Epetra::Observer> &child);
+  void process(const Epetra_MultiVector &v);
 
 private:
-  bool collectSnapshots() const;
-  bool computeProjectionError() const;
-
-  Teuchos::RCP<Teuchos::ParameterList> getSnapParameters() const;
-  Teuchos::RCP<Teuchos::ParameterList> getErrorParameters() const;
-
   Teuchos::RCP<Teuchos::ParameterList> params_;
-  Teuchos::RCP<Application> app_;
+  Teuchos::RCP<const Epetra_Map> dofMap_;
 
-  // Disallow copy & assignment
-  MORObserverFactory(const MORObserverFactory &);
-  MORObserverFactory &operator=(const MORObserverFactory &);
+  Teuchos::RCP<Epetra_MultiVector> orthonormalBasis_;
+  
+  Teuchos::RCP<Epetra_MultiVector> createOrthonormalBasis();
+
+  // Doisallow copy & assignment
+  ProjectionError(const ProjectionError &);
+  ProjectionError &operator=(const ProjectionError &);
 };
 
 } // end namespace Albany
-
-#endif /* ALBANY_MOROBSERVERFACTORY_HPP */

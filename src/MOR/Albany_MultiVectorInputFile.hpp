@@ -14,40 +14,50 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
-#ifndef ALBANY_MOROBSERVERFACTORY_HPP
-#define ALBANY_MOROBSERVERFACTORY_HPP
+#ifndef ALBANY_MULTIVECTORINPUTFILE_HPP
+#define ALBANY_MULTIVECTORINPUTFILE_HPP
 
-#include "NOX_Epetra_Observer.H"
+#include "Epetra_MultiVector.h"
+#include "Epetra_Map.h"
 
 #include "Teuchos_RCP.hpp"
-#include "Teuchos_ParameterList.hpp"
+
+#include <string>
 
 namespace Albany {
 
-class Application;
-
-class MORObserverFactory {
+class MultiVectorInputFile {
 public:
-  MORObserverFactory(const Teuchos::RCP<Teuchos::ParameterList> &parentParams,
-                     const Teuchos::RCP<Application> &app);
+  std::string path() const { return path_; }
 
-  Teuchos::RCP<NOX::Epetra::Observer> create(const Teuchos::RCP<NOX::Epetra::Observer> &child);
+  virtual Teuchos::RCP<Epetra_MultiVector> vectorNew(const Epetra_Map &map) = 0;
+
+  virtual ~MultiVectorInputFile();
+
+protected:
+  explicit MultiVectorInputFile(const std::string &path);
 
 private:
-  bool collectSnapshots() const;
-  bool computeProjectionError() const;
+  std::string path_;
 
-  Teuchos::RCP<Teuchos::ParameterList> getSnapParameters() const;
-  Teuchos::RCP<Teuchos::ParameterList> getErrorParameters() const;
-
-  Teuchos::RCP<Teuchos::ParameterList> params_;
-  Teuchos::RCP<Application> app_;
-
-  // Disallow copy & assignment
-  MORObserverFactory(const MORObserverFactory &);
-  MORObserverFactory &operator=(const MORObserverFactory &);
+  // Disallow copy and assignment
+  MultiVectorInputFile(const MultiVectorInputFile &);
+  MultiVectorInputFile &operator=(const MultiVectorInputFile &);
 };
+
+inline
+MultiVectorInputFile::MultiVectorInputFile(const std::string &path) :
+  path_(path)
+{
+  // Nothing to do
+}
+
+inline
+MultiVectorInputFile::~MultiVectorInputFile()
+{
+  // Nothing to do
+}
 
 } // end namespace Albany
 
-#endif /* ALBANY_MOROBSERVERFACTORY_HPP */
+#endif /* ALBANY_MULTIVECTORINPUTFILE_HPP */

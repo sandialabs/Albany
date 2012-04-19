@@ -44,7 +44,7 @@ RCP<NOX::Epetra::Observer> ObserverFactory::createNoxObserver()
 {
   if (useNOX()) {
     RCP<NOX::Epetra::Observer> observer(new Albany_NOXObserver(app_)); 
-    MORObserverFactory morFactory(params_);  
+    MORObserverFactory morFactory(params_, app_);  
     return morFactory.create(observer);
   }
   return null;

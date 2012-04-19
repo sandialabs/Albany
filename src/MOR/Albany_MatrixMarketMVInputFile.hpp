@@ -14,40 +14,20 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
-#ifndef ALBANY_MOROBSERVERFACTORY_HPP
-#define ALBANY_MOROBSERVERFACTORY_HPP
+#ifndef ALBANY_MATRIXMARKETMVINPUTFILE_HPP
+#define ALBANY_MATRIXMARKETMVINPUTFILE_HPP
 
-#include "NOX_Epetra_Observer.H"
-
-#include "Teuchos_RCP.hpp"
-#include "Teuchos_ParameterList.hpp"
+#include "Albany_MultiVectorInputFile.hpp"
 
 namespace Albany {
 
-class Application;
-
-class MORObserverFactory {
+class MatrixMarketMVInputFile : public MultiVectorInputFile {
 public:
-  MORObserverFactory(const Teuchos::RCP<Teuchos::ParameterList> &parentParams,
-                     const Teuchos::RCP<Application> &app);
+  virtual Teuchos::RCP<Epetra_MultiVector> vectorNew(const Epetra_Map &map); // overriden
 
-  Teuchos::RCP<NOX::Epetra::Observer> create(const Teuchos::RCP<NOX::Epetra::Observer> &child);
-
-private:
-  bool collectSnapshots() const;
-  bool computeProjectionError() const;
-
-  Teuchos::RCP<Teuchos::ParameterList> getSnapParameters() const;
-  Teuchos::RCP<Teuchos::ParameterList> getErrorParameters() const;
-
-  Teuchos::RCP<Teuchos::ParameterList> params_;
-  Teuchos::RCP<Application> app_;
-
-  // Disallow copy & assignment
-  MORObserverFactory(const MORObserverFactory &);
-  MORObserverFactory &operator=(const MORObserverFactory &);
+  explicit MatrixMarketMVInputFile(const std::string &path);
 };
 
 } // end namespace Albany
 
-#endif /* ALBANY_MOROBSERVERFACTORY_HPP */
+#endif /* ALBANY_MATRIXMARKETMVINPUTFILE_HPP */
