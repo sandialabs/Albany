@@ -49,7 +49,7 @@ public:
 private:
 
   typedef typename EvalT::MeshScalarT MeshScalarT;
-  int  numVertices, numDims, numNodes, numQPs;
+  int  numVertices, numDims, numNodes, numQPs, numPlaneNodes;
 
   // Input:
   //! Coordinate vector at vertices
@@ -67,6 +67,7 @@ private:
   Intrepid::FieldContainer<MeshScalarT> jacobian_inv;
   Intrepid::FieldContainer<MeshScalarT> jacobian_det;
   Intrepid::FieldContainer<MeshScalarT> weighted_measure;
+  Intrepid::FieldContainer<MeshScalarT> midplaneCoords;
 
   // Output:
   //! Basis Functions at quadrature points

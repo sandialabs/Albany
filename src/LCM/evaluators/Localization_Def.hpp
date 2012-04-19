@@ -55,7 +55,7 @@ Localization(const Teuchos::ParameterList& p) :
   numNodes = dim[1];
   numQPs = dim[2];
   numDims = dim[3];
-
+  numPlaneNodes = numNodes/2.0;
 
   Teuchos::RCP<PHX::DataLayout> vert_dl = p.get< Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
@@ -71,6 +71,7 @@ Localization(const Teuchos::ParameterList& p) :
   jacobian_inv.resize(containerSize, numQPs, numDims, numDims);
   jacobian_det.resize(containerSize, numQPs);
   weighted_measure.resize(containerSize, numQPs);
+  midplaneCoords.resize(containerSize, numPlaneNodes, numDims);
 
   // Pre-Calculate reference element quantitites
   cubature->getCubature(refPoints, refWeights);
@@ -100,6 +101,30 @@ evaluateFields(typename Traits::EvalData workset)
 {
 
   // here, take the coordinates and do with them as you will.
+  for (std::size_t cell(0); cell < workset.numCells; ++cell) 
+  {
+    // compute the mid-plane coordinates
+    for (std::size_t node(0); node < numPlaneNodes; ++node)
+    {
+      for (std::size_t dim(0); dim < numDims; ++dim)
+      {
+        midplaneCoords(cell, node, dim) = 0.5 * ( coordVec(cell, node, dim) + coordVec(cell, node + numPlaneNodes, dim) );
+      }
+    }
+
+    // compute base vectors
+
+    // compute gap
+
+    // compute deformation gradient
+
+    // call constitutive response
+
+    // compute force
+  }
+
+
+
 
   Intrepid::CellTools<RealType>::setJacobian(jacobian, refPoints, coordVec, *cellType);
   Intrepid::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
