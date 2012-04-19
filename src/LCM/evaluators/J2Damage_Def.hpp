@@ -19,6 +19,7 @@
 #include "Phalanx_DataLayout.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
+#include "LocalNonlinearSolver.h"
 
 #include <typeinfo>
 
@@ -125,6 +126,8 @@ template<typename EvalT, typename Traits>
 void J2Damage<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  LocalNonlinearSolver<EvalT, Traits> solver;
+
   bool print = false;
   //if (typeid(ScalarT) == typeid(RealType)) print = true;
 

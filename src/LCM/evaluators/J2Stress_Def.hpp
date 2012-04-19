@@ -264,7 +264,7 @@ evaluateFields(typename Traits::EvalData workset)
 	int count = 0;
 	dgam = 0.0;
 
-        LocalNonlinearSolver<EvalT> solver;
+        LocalNonlinearSolver<EvalT, Traits> solver;
 
         std::vector<ScalarT> F(1);
         std::vector<ScalarT> dFdX(1);
