@@ -50,9 +50,11 @@ namespace LameUtils {
   Teuchos::RCP<LameMaterial> constructLameMaterialModel(const std::string& lameMaterialModelName,
 							const Teuchos::ParameterList& lameMaterialParameters);
 
+#ifdef ALBANY_LAMENT
   //! Instantiate a lament::MaterialModel<ADType> given the model name and a set of material parameters. 
   Teuchos::RCP<LameMaterial_AD> constructLameMaterialModel_AD(const std::string& lameMaterialModelName,
 							      const Teuchos::ParameterList& lameMaterialParameters);
+#endif
 
   //! Return a vector containing the names of the state variables associated with the given LAME material model and material parameters.
   std::vector<std::string> getStateVariableNames(const std::string& lameMaterialModelName,
