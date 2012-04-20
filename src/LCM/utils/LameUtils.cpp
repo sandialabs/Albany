@@ -127,7 +127,7 @@ Teuchos::RCP<LameMaterial> constructLameMaterialModel(const std::string& lameMat
 
 #ifdef ALBANY_LAMENT
   if(materialModelName == "ELASTIC_NEW")
-    materialModel = Teuchos::rcp(new lament::ElasticNew(props));
+    materialModel = Teuchos::rcp(new lament::ElasticNew<double>(props));
   else{
     if(materialModel.is_null())
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, " unsupported LAMENT material model: " + lameMaterialModelName + " (" + materialModelName + ")\n");
@@ -136,6 +136,37 @@ Teuchos::RCP<LameMaterial> constructLameMaterialModel(const std::string& lameMat
 
   return materialModel;
 }
+
+
+Teuchos::RCP<LameMaterial_AD> constructLameMaterialModel_AD(const std::string& lameMaterialModelName,
+							    const Teuchos::ParameterList& lameMaterialParameters){
+
+  // Strings should be all upper case with spaces replaced with underscores
+  std::string materialModelName = lameMaterialModelName;
+  std::transform(materialModelName.begin(), materialModelName.end(), materialModelName.begin(), toupper);
+  std::replace(materialModelName.begin(), materialModelName.end(), ' ', '_');
+
+  LameMatProps props;
+  parameterListToMatProps(lameMaterialParameters, props);
+
+  Teuchos::RCP<LameMaterial_AD> materialModel;
+
+#ifdef ALBANY_LAME
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, "Automatic differentiation is unsupported in LAME, recompile with LAMENT\n");
+#endif
+
+#ifdef ALBANY_LAMENT
+  if(materialModelName == "ELASTIC_NEW")
+    materialModel = Teuchos::rcp(new lament::ElasticNew<ADType>(props));
+  else{
+    if(materialModel.is_null())
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, " unsupported LAMENT material model: " + lameMaterialModelName + " (" + materialModelName + ")\n");
+  }
+#endif
+
+  return materialModel;
+}
+
 
 std::vector<std::string> getStateVariableNames(const std::string& lameMaterialModelName,
                                                const Teuchos::ParameterList& lameMaterialParameters){

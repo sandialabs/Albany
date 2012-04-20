@@ -25,15 +25,6 @@
 #include "PHAL_Dimension.hpp"
 #include "LameUtils.hpp"
 
-#ifdef ALBANY_LAME
-typedef lame::Material LameMaterial;
-typedef lame::matParams LameMatParams;
-#endif
-#ifdef ALBANY_LAMENT
-typedef lament::Material<double> LameMaterial;
-typedef lament::matParams<double> LameMatParams;
-#endif
-
 namespace LCM {
 /** \brief Evaluates stress using the Library for Advanced Materials for Engineering (LAME).
 */

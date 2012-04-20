@@ -36,6 +36,7 @@ typedef lame::matParams LameMatParams;
 #include <models/Lament_Material.h>
 typedef lament::MatProps LameMatProps;
 typedef lament::Material<double> LameMaterial;
+typedef lament::Material<ADType> LameMaterial_AD;
 typedef lament::matParams<double> LameMatParams;
 #endif
 
@@ -48,6 +49,10 @@ namespace LameUtils {
   //! Instantiate a lame(nt)::MaterialModel given the model name and a set of material parameters. 
   Teuchos::RCP<LameMaterial> constructLameMaterialModel(const std::string& lameMaterialModelName,
 							const Teuchos::ParameterList& lameMaterialParameters);
+
+  //! Instantiate a lament::MaterialModel<ADType> given the model name and a set of material parameters. 
+  Teuchos::RCP<LameMaterial_AD> constructLameMaterialModel_AD(const std::string& lameMaterialModelName,
+							      const Teuchos::ParameterList& lameMaterialParameters);
 
   //! Return a vector containing the names of the state variables associated with the given LAME material model and material parameters.
   std::vector<std::string> getStateVariableNames(const std::string& lameMaterialModelName,
