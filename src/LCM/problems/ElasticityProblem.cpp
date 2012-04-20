@@ -193,7 +193,7 @@ Albany::ElasticityProblem::getValidProblemParameters() const
   validPL->sublist("Poissons Ratio", false, "");
   validPL->sublist("Material Model", false, "");
 
-  if (matModel == "CapModel")
+  if (matModel == "CapModel"|| matModel == "CapImplicit")
   {
 	validPL->set<double>("A", false, "");
 	validPL->set<double>("B", false, "");

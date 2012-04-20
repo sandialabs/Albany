@@ -279,12 +279,11 @@ evaluateFields(typename Traits::EvalData workset)
 
 	  //dgam = ( f / ( 2. * mubar) ) / ( 1. + K / ( 3. * mubar ) );
 	  //dgam -= g/dg;
-          //solver.solve(dFdX,X,F);
+          solver.solve(dFdX,X,F);
 
           //RealType X0 = Sacado::ScalarValue<ScalarT>::eval(X[0]);
           //alpha2 = eqpsold(cell,qp) + sq23 * X0;
 
-          //Chen
           ScalarT X0 = X[0];
           alpha2 = eqpsold(cell, qp) + sq23 * X0;
 
@@ -319,11 +318,9 @@ evaluateFields(typename Traits::EvalData workset)
 //        std::cout << "dg  : " << dg << std::endl;
         std::cout << "dFdX: " << dFdX[0] << std::endl;
         
-		std::cout << "=============Calling computeFadInfo ============" << std::endl;
 
-        //solver.computeFadInfo(dFdX,X,F);
+        solver.computeFadInfo(dFdX,X,F);
         
-		std::cout << "=========================" << std::endl;
 
         dgam = X[0];
         
