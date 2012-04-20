@@ -618,7 +618,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
            ev = rcp(new LCM::GradientElementLength<EvalT,AlbanyTraits>(*p));
            fm0.template registerEvaluator<EvalT>(ev);
-           p = stateMgr.registerStateVariable("Gradient Element Length",dl->qp_scalar, dl->dummy,"scalar", 0.0);
+           p = stateMgr.registerStateVariable("Gradient Element Length",dl->qp_scalar, dl->dummy,"scalar", 1.0e-20);
            ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
            fm0.template registerEvaluator<EvalT>(ev);
     }
@@ -985,9 +985,10 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     p = stateMgr.registerStateVariable("Lattice Concentration",dl->qp_scalar, dl->dummy,"scalar", 38.7, true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Lattice Concentration Gradient",dl->qp_vector, dl->dummy,"vector", 0.0 , true);
+    p = stateMgr.registerStateVariable("Lattice Concentration Gradient", dl->qp_vector, dl->dummy ,"scalar" , 0.0  , true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+
   }
 
 

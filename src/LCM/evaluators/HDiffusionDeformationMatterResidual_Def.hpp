@@ -217,8 +217,8 @@ evaluateFields(typename Traits::EvalData workset)
 			    artificalDL(cell,qp) =
 				      (temp-1) // 1.25 = safety factor
 	  			      *DL(cell,qp)
-                      /( 2.0 + std::cosh(temp ) )
-                      *( -1.0 + std::cosh(temp ) )
+//                      /( 2.0 + std::cosh(temp ) )
+//                    *( -1.0 + std::cosh(temp ) )
 				      ;
 		      }
 		      else
@@ -235,7 +235,6 @@ evaluateFields(typename Traits::EvalData workset)
 
 	   for (std::size_t qp=0; qp < numQPs; ++qp) {
 		   stabilizedDL(cell,qp) = artificalDL(cell,qp)/(DL(cell,qp) + artificalDL(cell,qp));
-
       }
  }
 
@@ -243,27 +242,21 @@ evaluateFields(typename Traits::EvalData workset)
   // compute the 'material' flux
   FST::tensorMultiplyDataData<ScalarT> (C, DefGrad, DefGrad, 'T');
   Intrepid::RealSpaceTools<ScalarT>::inverse(Cinv, C);
-  //FST::tensorMultiplyDataData<ScalarT> (CinvTgrad_old, Cinv, CLGrad_old);
-  //FST::scalarMultiplyDataData<ScalarT> (Hflux, stabilizedDL, CinvTgrad_old);
-
-  // For debug only
-  // FST::integrate<ScalarT>(TResidual, CLGrad, wGradBF, Intrepid::COMP_CPP, false); // this one works
-  //  FST::integrate<ScalarT>(TResidual, CinvTgrad_old, wGradBF, Intrepid::COMP_CPP, false); // this also works
- //  FST::integrate<ScalarT>(TResidual, Hflux, wGradBF, Intrepid::COMP_CPP, false);
-
+  FST::tensorMultiplyDataData<ScalarT> (CinvTgrad_old, Cinv, CLGrad_old);
   FST::tensorMultiplyDataData<ScalarT> (CinvTgrad, Cinv, CLGrad);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
 	   for (std::size_t qp=0; qp < numQPs; ++qp) {
 		   for (std::size_t j=0; j<numDims; j++){
-			   CinvTgrad_old(cell,qp,j) = 0.0;
+			//  CinvTgrad_old(cell,qp,j) = 0.0;
 			//   for (std::size_t node=0; node < numNodes; ++node) {
 			     CinvTgrad_old(cell,qp,j) = CinvTgrad(cell,qp,j)
-			    		 - stabilizedDL(cell,qp)
-			    		 *CLGrad_old(cell,qp,j);
+			       	    -stabilizedDL(cell,qp)
+			    		 *CLGrad_old(cell,qp,j)
 			    //		 *Clattice_old(cell,qp)*wGradBF(cell, node, qp, j)/weights(cell,qp);
 		   		//			  }
+			    		 ;
 		   }
 
       }
@@ -357,7 +350,7 @@ evaluateFields(typename Traits::EvalData workset)
   //---------------------------------------------------------------------------//
   // Stabilization Term
 
-
+/*
   ScalarT CLPbar(0);
   ScalarT vol(0);
 
@@ -394,7 +387,7 @@ evaluateFields(typename Traits::EvalData workset)
 
  }
 
-/*
+
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
