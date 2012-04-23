@@ -1,17 +1,17 @@
 /********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
+ *            Albany, Copyright (2010) Sandia Corporation             *
+ *                                                                    *
+ * Notice: This computer software was prepared by Sandia Corporation, *
+ * hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
+ * the Department of Energy (DOE). All rights in the computer software*
+ * are reserved by DOE on behalf of the United States Government and  *
+ * the Contractor as provided in the Contract. You are authorized to  *
+ * use this computer software for Governmental purposes but it is not *
+ * to be released or distributed to the public. NEITHER THE GOVERNMENT*
+ * NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
+ * ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
+ * including this sentence must appear on any copies of this software.*
+ *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
 
@@ -37,16 +37,16 @@ namespace Albany {
   
     //! Default constructor
     NonlinearElasticityProblem(
-                         const Teuchos::RCP<Teuchos::ParameterList>& params_,
-                         const Teuchos::RCP<ParamLib>& paramLib_,
-                         const int numDim_);
+                               const Teuchos::RCP<Teuchos::ParameterList>& params_,
+                               const Teuchos::RCP<ParamLib>& paramLib_,
+                               const int numDim_);
 
     //! Destructor
     virtual ~NonlinearElasticityProblem();
 
     //Set problem information for computation of rigid body modes (in src/Albany_SolverFactory.cpp)
     void getRBMInfoForML(
-         int& numPDEs, int& numElasticityDim, int& numScalar, int& nullSpaceDim);
+                         int& numPDEs, int& numElasticityDim, int& numScalar, int& nullSpaceDim);
 
 
     //! Return number of spatial dimensions
@@ -54,25 +54,25 @@ namespace Albany {
 
     //! Build the PDE instantiations, boundary conditions, and initial solution
     virtual void buildProblem(
-      Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
-      StateManager& stateMgr);
+                              Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+                              StateManager& stateMgr);
 
     // Build evaluators
     virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
     buildEvaluators(
-      PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-      const Albany::MeshSpecsStruct& meshSpecs,
-      Albany::StateManager& stateMgr,
-      Albany::FieldManagerChoice fmchoice,
-      const Teuchos::RCP<Teuchos::ParameterList>& responseList);
+                    PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                    const Albany::MeshSpecsStruct& meshSpecs,
+                    Albany::StateManager& stateMgr,
+                    Albany::FieldManagerChoice fmchoice,
+                    const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
     //! Each problem must generate it's list of valid parameters
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
     void getAllocatedStates(
-         Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState_,
-         Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState_
-         ) const;
+                            Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState_,
+                            Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState_
+                            ) const;
 
   private:
 
@@ -88,11 +88,11 @@ namespace Albany {
     template <typename EvalT> 
     Teuchos::RCP<const PHX::FieldTag>
     constructEvaluators(
-      PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-      const Albany::MeshSpecsStruct& meshSpecs,
-      Albany::StateManager& stateMgr,
-      Albany::FieldManagerChoice fmchoice,
-      const Teuchos::RCP<Teuchos::ParameterList>& responseList);
+                        PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                        const Albany::MeshSpecsStruct& meshSpecs,
+                        Albany::StateManager& stateMgr,
+                        Albany::FieldManagerChoice fmchoice,
+                        const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
     void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
 
@@ -139,11 +139,11 @@ namespace Albany {
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
 Albany::NonlinearElasticityProblem::constructEvaluators(
-  PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-  const Albany::MeshSpecsStruct& meshSpecs,
-  Albany::StateManager& stateMgr,
-  Albany::FieldManagerChoice fieldManagerChoice,
-  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+                                                        PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                                                        const Albany::MeshSpecsStruct& meshSpecs,
+                                                        Albany::StateManager& stateMgr,
+                                                        Albany::FieldManagerChoice fieldManagerChoice,
+                                                        const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   using Teuchos::RCP;
   using Teuchos::rcp;
@@ -179,47 +179,47 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
        << ", QuadPts= " << numQPts
        << ", Dim= " << numDim << endl;
 
-   // Construct standard FEM evaluators with standard field names                              
-   RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
-   TEUCHOS_TEST_FOR_EXCEPTION(dl->vectorAndGradientLayoutsAreEquivalent==false, std::logic_error,
-                              "Data Layout Usage in Mechanics problems assume vecDim = numDim");
-   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
-   bool supportsTransient=true;
+  // Construct standard FEM evaluators with standard field names                              
+  RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
+  TEUCHOS_TEST_FOR_EXCEPTION(dl->vectorAndGradientLayoutsAreEquivalent==false, std::logic_error,
+                             "Data Layout Usage in Mechanics problems assume vecDim = numDim");
+  Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
+  bool supportsTransient=true;
 
-   // Define Field Names
-   Teuchos::ArrayRCP<string> dof_names(1);
-     dof_names[0] = "Displacement";
-   Teuchos::ArrayRCP<string> dof_names_dotdot(1);
-   if (supportsTransient)
-     dof_names_dotdot[0] = dof_names[0]+"_dotdot";
-   Teuchos::ArrayRCP<string> resid_names(1);
-     resid_names[0] = dof_names[0]+" Residual";
+  // Define Field Names
+  Teuchos::ArrayRCP<string> dof_names(1);
+  dof_names[0] = "Displacement";
+  Teuchos::ArrayRCP<string> dof_names_dotdot(1);
+  if (supportsTransient)
+    dof_names_dotdot[0] = dof_names[0]+"_dotdot";
+  Teuchos::ArrayRCP<string> resid_names(1);
+  resid_names[0] = dof_names[0]+" Residual";
 
-   fm0.template registerEvaluator<EvalT>
-     (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]));
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]));
 
-   if (supportsTransient) fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dotdot[0]));
+  if (supportsTransient) fm0.template registerEvaluator<EvalT>
+                           (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dotdot[0]));
 
-   fm0.template registerEvaluator<EvalT>
-     (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
 
-   if (supportsTransient) fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructGatherSolutionEvaluator(true, dof_names, dof_names_dotdot));
-   else  fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names));
+  if (supportsTransient) fm0.template registerEvaluator<EvalT>
+                           (evalUtils.constructGatherSolutionEvaluator(true, dof_names, dof_names_dotdot));
+  else  fm0.template registerEvaluator<EvalT>
+          (evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names));
 
-   fm0.template registerEvaluator<EvalT>
-     (evalUtils.constructScatterResidualEvaluator(true, resid_names));
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructScatterResidualEvaluator(true, resid_names));
 
-   fm0.template registerEvaluator<EvalT>
-     (evalUtils.constructGatherCoordinateVectorEvaluator());
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructGatherCoordinateVectorEvaluator());
 
-   fm0.template registerEvaluator<EvalT>
-     (evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
 
-   fm0.template registerEvaluator<EvalT>
-     (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
 
   // Temporary variable used numerous times below
   Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
@@ -276,7 +276,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
 
   if (haveSource) { // Source
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-			       "Error!  Sources not implemented in Elasticity yet!");
+                               "Error!  Sources not implemented in Elasticity yet!");
 
     RCP<ParameterList> p = rcp(new ParameterList);
 
@@ -584,26 +584,26 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
     if(matModel == "GursonFD")
     {// GursonFD: HyperElastic version
 
-	  RCP<ParameterList> p = rcp(new ParameterList("Stress"));
+      RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
-	  //Input
-	  p->set<string>("DefGrad Name", "F");
-	  p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+      //Input
+      p->set<string>("DefGrad Name", "F");
+      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-	  p->set<string>("Elastic Modulus Name", "Elastic Modulus");
-	  p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+      p->set<string>("Elastic Modulus Name", "Elastic Modulus");
+      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-	  p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
-	  p->set<string>("Hardening Modulus Name", "Hardening Modulus"); // dl->qp_scalar also
-	  p->set<string>("Saturation Modulus Name", "Saturation Modulus"); // dl->qp_scalar also
-	  p->set<string>("Saturation Exponent Name", "Saturation Exponent"); // dl->qp_scalar also
-	  p->set<string>("Yield Strength Name", "Yield Strength"); // dl->qp_scalar also
-	  p->set<string>("DetDefGrad Name", "J");  // dl->qp_scalar also
+      p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
+      p->set<string>("Hardening Modulus Name", "Hardening Modulus"); // dl->qp_scalar also
+      p->set<string>("Saturation Modulus Name", "Saturation Modulus"); // dl->qp_scalar also
+      p->set<string>("Saturation Exponent Name", "Saturation Exponent"); // dl->qp_scalar also
+      p->set<string>("Yield Strength Name", "Yield Strength"); // dl->qp_scalar also
+      p->set<string>("DetDefGrad Name", "J");  // dl->qp_scalar also
 
-	  RealType f0 = params->get("f0", 0.0);
+      RealType f0 = params->get("f0", 0.0);
       p->set<RealType>("f0 Name", f0);
 
-	  //Output
+      //Output
       p->set<string>("Stress Name", matModel); //dl->qp_tensor also
       p->set<string>("Fp Name", "Fp");  // dl->qp_tensor also
       p->set<string>("Eqps Name", "eqps");  // dl->qp_scalar also
@@ -629,8 +629,8 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
   }
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-			       "Unrecognized Material Name: " << matModel 
-			       << "  Recognized names are : NeoHookean, NeoHookeanAD, J2, J2Fiber and GursonFD");
+                               "Unrecognized Material Name: " << matModel 
+                               << "  Recognized names are : NeoHookean, NeoHookeanAD, J2, J2Fiber and GursonFD");
     
 
   { // Residual
