@@ -33,9 +33,12 @@
     <ParameterList name="Initial Condition">
       <Parameter name="Function" type="string" value="Constant"/>
       <Parameter name="Function Data" type="Array(double)" value="{0.0,0.0,0.0, 38.7, 0.0}"/>
-    </ParameterList>
-		
-	
+    </ParameterList>		
+	<!--Stabilization Parameter -->
+	<ParameterList name="Stabilization Parameter">
+	 <Parameter name="Type" type="string" value="Constant"/>
+	 <Parameter name="Value" type="double" value="1.0"/>
+	</ParameterList>	
 	<ParameterList name="Temperature">
 	 <Parameter name="Type" type="string" value="Constant"/>
 	 <Parameter name="Value" type="double" value="293.0"/>

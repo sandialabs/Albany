@@ -160,6 +160,7 @@ Albany::HDiffusionDeformationProblem::getValidProblemParameters() const
   validPL->sublist("Tau Contribution", false, "");
   validPL->sublist("CL Unit Gradient", false, "");
   validPL->sublist("Element Length", false, "");
+  validPL->sublist("Stabilization Parameter", false, "");
 
   return validPL;
 }

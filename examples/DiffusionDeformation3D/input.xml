@@ -29,7 +29,11 @@
       <Parameter name="Function" type="string" value="Constant"/>
       <Parameter name="Function Data" type="Array(double)" value="{0.0,0.0,0.0, 0.00346992, 0.0}"/>
     </ParameterList>
-		
+	<!--Stabilization Parameter -->
+	<ParameterList name="Stabilization Parameter">
+	 <Parameter name="Type" type="string" value="Constant"/>
+	 <Parameter name="Value" type="double" value="1.0"/>
+	</ParameterList>		
 	<!-- Hydorgen Transport Parameter -->
 	<ParameterList name="Temperature">
 	 <Parameter name="Type" type="string" value="Constant"/>

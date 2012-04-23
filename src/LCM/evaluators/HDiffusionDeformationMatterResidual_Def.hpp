@@ -57,6 +57,8 @@ namespace LCM {
 //		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
 //	MechSource      (p.get<std::string>            ("Mechanical Source Name"),
 //		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+   stabParameter  (p.get<std::string>         ("Material Property Name"),
+		p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     DefGrad      (p.get<std::string>          ("Deformation Gradient Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
 	Pstress      (p.get<std::string>          ("Stress Name"),
@@ -78,6 +80,7 @@ namespace LCM {
       enableTransient = !p.get<bool>("Disable Transient");
     else enableTransient = true;
 
+    this->addDependentField(stabParameter);
     this->addDependentField(elementLength);
     this->addDependentField(wBF);
     this->addDependentField(wGradBF);
@@ -154,6 +157,7 @@ namespace LCM {
   postRegistrationSetup(typename Traits::SetupData d,
 			PHX::FieldManager<Traits>& fm)
   {
+	this->utils.setFieldData(stabParameter,fm);
 	this->utils.setFieldData(elementLength,fm);
 	this->utils.setFieldData(wBF,fm);
 	this->utils.setFieldData(wGradBF,fm);
@@ -216,7 +220,7 @@ evaluateFields(typename Traits::EvalData workset)
 		      {
 			    artificalDL(cell,qp) =
 				      (temp-1) // 1.25 = safety factor
-	  			      *DL(cell,qp)
+	  			      *DL(cell,qp)*stabParameter(cell,qp)
 //                      /( 2.0 + std::cosh(temp ) )
 //                    *( -1.0 + std::cosh(temp ) )
 				      ;
@@ -253,8 +257,7 @@ evaluateFields(typename Traits::EvalData workset)
 			//   for (std::size_t node=0; node < numNodes; ++node) {
 			     CinvTgrad_old(cell,qp,j) = CinvTgrad(cell,qp,j)
 			       	    -stabilizedDL(cell,qp)
-			    		 *CLGrad_old(cell,qp,j)
-			    //		 *Clattice_old(cell,qp)*wGradBF(cell, node, qp, j)/weights(cell,qp);
+			    		 *CinvTgrad_old(cell,qp,j)
 		   		//			  }
 			    		 ;
 		   }

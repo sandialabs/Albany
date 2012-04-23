@@ -66,6 +66,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> CLGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> stressGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint> MechSource;
+  PHX::MDField<ScalarT,Cell,QuadPoint> stabParameter;
 
   // Input for the strain rate effect
   PHX::MDField<ScalarT,Cell,QuadPoint> Ctrapped;
