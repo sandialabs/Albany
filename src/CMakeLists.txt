@@ -280,8 +280,12 @@ SET(SOURCES ${SOURCES}
   ${MOR_DIR}/Albany_MultiVectorInputFileFactory.cpp
   ${MOR_DIR}/Albany_MatrixMarketMVInputFile.cpp
   ${MOR_DIR}/Albany_Hdf5MVInputFile.cpp
+  ${MOR_DIR}/Albany_MultiVectorOutputFileFactory.cpp
+  ${MOR_DIR}/Albany_MatrixMarketMVOutputFile.cpp
+  ${MOR_DIR}/Albany_Hdf5MVOutputFile.cpp
 )
 SET(HEADERS ${HEADERS}
+  ${MOR_DIR}/Albany_MORUtils.hpp
   ${MOR_DIR}/Albany_MORObserverFactory.hpp
   ${MOR_DIR}/Albany_ProjectionError.hpp
   ${MOR_DIR}/Albany_ProjectionErrorObserver.hpp
@@ -291,6 +295,10 @@ SET(HEADERS ${HEADERS}
   ${MOR_DIR}/Albany_MultiVectorInputFileFactory.hpp
   ${MOR_DIR}/Albany_MatrixMarketMVInputFile.hpp
   ${MOR_DIR}/Albany_Hdf5MVInputFile.hpp
+  ${MOR_DIR}/Albany_MultiVectorOutputFileFactory.hpp
+  ${MOR_DIR}/Albany_MultiVectorOutputFile.hpp
+  ${MOR_DIR}/Albany_MatrixMarketMVOutputFile.hpp
+  ${MOR_DIR}/Albany_Hdf5MVOutputFile.hpp
 )
 
 # LCM

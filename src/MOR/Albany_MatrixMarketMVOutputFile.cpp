@@ -14,47 +14,33 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
-#ifndef ALBANY_SNAPSHOTCOLLECTION_HPP
-#define ALBANY_SNAPSHOTCOLLECTION_HPP
+#include "Albany_MatrixMarketMVOutputFile.hpp"
 
-#include "Albany_MultiVectorOutputFileFactory.hpp"
+#include "EpetraExt_MultiVectorOut.h"
 
-#include "Epetra_Vector.h"
+#include "Teuchos_TestForException.hpp"
 
-#include "Teuchos_ParameterList.hpp"
-#include "Teuchos_RCP.hpp"
-
-#include <deque>
-#include <string>
-#include <cstddef>
+#include <stdexcept>
 
 namespace Albany {
 
-class SnapshotCollection {
-public:
-  explicit SnapshotCollection(const Teuchos::RCP<Teuchos::ParameterList> &params);
+using Teuchos::RCP;
+using EpetraExt::MultiVectorToMatrixMarketFile;
 
-  ~SnapshotCollection();
-  void addVector(double stamp, const Epetra_Vector &value);
+MatrixMarketMVOutputFile::MatrixMarketMVOutputFile(const std::string &path) :
+  MultiVectorOutputFile(path)
+{
+  // Nothing to do
+}
 
-private:
-  Teuchos::RCP<Teuchos::ParameterList> params_;
-  static Teuchos::RCP<Teuchos::ParameterList> fillDefaultParams(const Teuchos::RCP<Teuchos::ParameterList> &params);
-  
-  MultiVectorOutputFileFactory snapshotFileFactory_;
-  
-  std::size_t period_;
-  void initPeriod();
+void MatrixMarketMVOutputFile::write(const Epetra_MultiVector &mv)
+{
+  // Write complete MultiVector (replace file if it exists)
+  const int err = MultiVectorToMatrixMarketFile(path().c_str(), mv);
 
-  std::size_t skipCount_;
-  std::deque<double> stamps_;
-  std::deque<Epetra_Vector> snapshots_;
-
-  // Disallow copy and assignment
-  SnapshotCollection(const SnapshotCollection &);
-  SnapshotCollection &operator=(const SnapshotCollection &);
-};
+  TEUCHOS_TEST_FOR_EXCEPTION(err != 0,
+                             std::runtime_error,
+                             "Cannot create output file: " + path());
+}
 
 } // end namespace Albany
-
-#endif /*ALBANY_SNAPSHOTCOLLECTION_HPP*/

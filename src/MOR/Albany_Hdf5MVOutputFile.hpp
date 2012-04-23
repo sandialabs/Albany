@@ -14,47 +14,23 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
-#ifndef ALBANY_SNAPSHOTCOLLECTION_HPP
-#define ALBANY_SNAPSHOTCOLLECTION_HPP
+#ifndef ALBANY_HDF5MVOUTPUTFILE_HPP
+#define ALBANY_HDF5MVOUTPUTFILE_HPP
 
-#include "Albany_MultiVectorOutputFileFactory.hpp"
-
-#include "Epetra_Vector.h"
-
-#include "Teuchos_ParameterList.hpp"
-#include "Teuchos_RCP.hpp"
-
-#include <deque>
-#include <string>
-#include <cstddef>
+#include "Albany_MultiVectorOutputFile.hpp"
 
 namespace Albany {
 
-class SnapshotCollection {
+class Hdf5MVOutputFile : public MultiVectorOutputFile {
 public:
-  explicit SnapshotCollection(const Teuchos::RCP<Teuchos::ParameterList> &params);
+  Hdf5MVOutputFile(const std::string &path, const std::string &groupName);
 
-  ~SnapshotCollection();
-  void addVector(double stamp, const Epetra_Vector &value);
+  virtual void write(const Epetra_MultiVector &mv); // overriden
 
 private:
-  Teuchos::RCP<Teuchos::ParameterList> params_;
-  static Teuchos::RCP<Teuchos::ParameterList> fillDefaultParams(const Teuchos::RCP<Teuchos::ParameterList> &params);
-  
-  MultiVectorOutputFileFactory snapshotFileFactory_;
-  
-  std::size_t period_;
-  void initPeriod();
-
-  std::size_t skipCount_;
-  std::deque<double> stamps_;
-  std::deque<Epetra_Vector> snapshots_;
-
-  // Disallow copy and assignment
-  SnapshotCollection(const SnapshotCollection &);
-  SnapshotCollection &operator=(const SnapshotCollection &);
+  std::string groupName_;
 };
 
 } // end namespace Albany
 
-#endif /*ALBANY_SNAPSHOTCOLLECTION_HPP*/
+#endif /* ALBANY_HDF5MVOUTPUTFILE_HPP */

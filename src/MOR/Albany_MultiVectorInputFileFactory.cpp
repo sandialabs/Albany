@@ -18,6 +18,7 @@
 
 #include "Albany_MatrixMarketMVInputFile.hpp"
 #include "Albany_Hdf5MVInputFile.hpp"
+#include "Albany_MORUtils.hpp"
 
 #include "Teuchos_Array.hpp"
 
@@ -26,15 +27,6 @@
 #include "Teuchos_TestForException.hpp"
 
 #include <stdexcept>
-
-// Helper function
-#include <algorithm>
-
-template <typename Container, typename T>
-bool contains(const Container &c, const T &t)
-{
-  return std::find(c.begin(), c.end(), t) != c.end(); 
-}
 
 namespace Albany {
 
@@ -55,14 +47,14 @@ RCP<MultiVectorInputFile> MultiVectorInputFileFactory::create()
 {
   RCP<MultiVectorInputFile> result;
   if (inputFileFormat_ == "Matrix Market") {
-    result =  rcp(new MatrixMarketMVInputFile(inputFileName_));
+    result = rcp(new MatrixMarketMVInputFile(inputFileName_));
   }
   if (inputFileFormat_ == "HDF5") {
-    const std::string groupName = "basis"; // TODO not hardcoded
+    const std::string groupName = params_->get("Input File Group Name", "default");
     result = rcp(new Hdf5MVInputFile(inputFileName_, groupName));
   }
 
-  TEUCHOS_ASSERT(!result.is_null());
+  TEUCHOS_ASSERT(nonnull(result));
   return result;
 }
 
@@ -85,12 +77,12 @@ void MultiVectorInputFileFactory::initInputFileFormat()
 
 void MultiVectorInputFileFactory::initInputFileName() {
   const std::string userInputFileName = params_->get("Input File Name", "");
+  const std::string defaultInputBaseFileName = params_->get("Input File Default Base File Name", "default_in");
  
-  const std::string defaultInputFilePrefix = "basis";
   std::string defaultInputFilePostfix;
   if (inputFileFormat_ == "Matrix Market") defaultInputFilePostfix = "mtx";
   if (inputFileFormat_ == "HDF5")          defaultInputFilePostfix = "hdf5";
-  const std::string defaultInputFileName = defaultInputFilePrefix + "." + defaultInputFilePostfix;
+  const std::string defaultInputFileName = defaultInputBaseFileName + "." + defaultInputFilePostfix;
 
   const std::string inputFileName = !userInputFileName.empty() ? userInputFileName : defaultInputFileName;
 

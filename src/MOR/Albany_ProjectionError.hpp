@@ -20,6 +20,8 @@
 #include "Epetra_Map.h"
 #include "Epetra_MultiVector.h"
 
+#include <deque>
+
 namespace Albany {
 
 class ProjectionError {
@@ -27,15 +29,20 @@ public:
   ProjectionError(const Teuchos::RCP<Teuchos::ParameterList> &params,
                   const Teuchos::RCP<const Epetra_Map> &dofMap);
 
+  ~ProjectionError();
+
   void process(const Epetra_MultiVector &v);
 
 private:
   Teuchos::RCP<Teuchos::ParameterList> params_;
+  static Teuchos::RCP<Teuchos::ParameterList> fillDefaultParams(const Teuchos::RCP<Teuchos::ParameterList> &params);
+  
   Teuchos::RCP<const Epetra_Map> dofMap_;
 
   Teuchos::RCP<Epetra_MultiVector> orthonormalBasis_;
-  
   Teuchos::RCP<Epetra_MultiVector> createOrthonormalBasis();
+
+  std::deque<double> relativeErrorNorms_;
 
   // Doisallow copy & assignment
   ProjectionError(const ProjectionError &);

@@ -18,12 +18,17 @@
 
 #include "Albany_MultiVectorInputFile.hpp"
 #include "Albany_MultiVectorInputFileFactory.hpp"
+#include "Albany_MultiVectorOutputFile.hpp"
+#include "Albany_MultiVectorOutputFileFactory.hpp"
 
 #include "Epetra_Comm.h"
 #include "Epetra_LocalMap.h"
 #include "Epetra_Vector.h"
 
 #include "Teuchos_Assert.hpp"
+
+#include <algorithm>
+#include <iterator>
 
 // TODO remove dependency
 #include <iostream>
@@ -33,13 +38,26 @@ namespace Albany {
 using Teuchos::RCP;
 using Teuchos::ParameterList;
 
+// TODO: Better hiding / encapsulation
+const int ZERO_BASED_INDEXING = 0;
+const bool NO_INIT = false;
+ 
 ProjectionError::ProjectionError(const RCP<ParameterList> &params,
                                  const RCP<const Epetra_Map> &dofMap) :
-  params_(params),
+  params_(fillDefaultParams(params)),
   dofMap_(dofMap),
   orthonormalBasis_(createOrthonormalBasis())
 {
   // Nothing to do
+}
+
+RCP<ParameterList> ProjectionError::fillDefaultParams(const RCP<ParameterList> &params)
+{
+  params->get("Input File Group Name", "basis");
+  params->get("Input File Default Base File Name", "basis");
+  params->get("Output File Group Name", "proj_error");
+  params->get("Output File Default Base File Name", "proj_error");
+  return params;
 }
 
 RCP<Epetra_MultiVector> ProjectionError::createOrthonormalBasis()
@@ -50,14 +68,26 @@ RCP<Epetra_MultiVector> ProjectionError::createOrthonormalBasis()
   return file->vectorNew(*dofMap_);
 }
 
+// TODO: Do no actual work in the destructor
+ProjectionError::~ProjectionError()
+{
+  Epetra_LocalMap entryMap(relativeErrorNorms_.size(), ZERO_BASED_INDEXING, dofMap_->Comm());
+  Epetra_Vector entries(entryMap, NO_INIT);
+
+  for (int i = 0; i < entries.MyLength(); ++i) {
+    entries[i] = relativeErrorNorms_[i]; 
+  }
+
+  MultiVectorOutputFileFactory factory(params_);
+  const RCP<MultiVectorOutputFile> file = factory.create();
+  file->write(entries);
+}
+
 void ProjectionError::process(const Epetra_MultiVector &v)
 {
-  TEUCHOS_ASSERT(!orthonormalBasis_.is_null());
+  TEUCHOS_ASSERT(nonnull(orthonormalBasis_));
   TEUCHOS_ASSERT_EQUALITY(v.GlobalLength(), orthonormalBasis_->GlobalLength());
 
-  const int ZERO_BASED_INDEXING = 0;
-  const bool NO_INIT = false;
- 
   Epetra_LocalMap componentMap(orthonormalBasis_->NumVectors(), ZERO_BASED_INDEXING, dofMap_->Comm());
   Epetra_MultiVector components(componentMap, v.NumVectors(), NO_INIT);
 
@@ -81,8 +111,13 @@ void ProjectionError::process(const Epetra_MultiVector &v)
   Epetra_Vector relativeErrorNorm(normMap, NO_INIT);
   relativeErrorNorm.ReciprocalMultiply(1.0, referenceNorm, absoluteErrorNorm, 0.0);
 
+  // Collect output data
+  for (int i = 0; i < relativeErrorNorm.MyLength(); ++i) {
+    relativeErrorNorms_.push_back(relativeErrorNorm[i]);
+  }
+
   // Write to standard output
-  // TODO file output
+  // TODO remove
   components.Print(std::cout);
   referenceNorm.Print(std::cout);
   absoluteErrorNorm.Print(std::cout);
