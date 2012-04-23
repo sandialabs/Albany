@@ -65,7 +65,7 @@ RCP<Epetra_MultiVector> ProjectionError::createOrthonormalBasis()
   // TODO read partial basis
   MultiVectorInputFileFactory factory(params_); 
   const RCP<MultiVectorInputFile> file = factory.create();
-  return file->vectorNew(*dofMap_);
+  return file->read(*dofMap_);
 }
 
 // TODO: Do no actual work in the destructor

@@ -30,7 +30,7 @@ class MultiVectorInputFile {
 public:
   std::string path() const { return path_; }
 
-  virtual Teuchos::RCP<Epetra_MultiVector> vectorNew(const Epetra_Map &map) = 0;
+  virtual Teuchos::RCP<Epetra_MultiVector> read(const Epetra_Map &map) = 0;
 
   virtual ~MultiVectorInputFile();
 

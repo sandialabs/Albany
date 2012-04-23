@@ -36,7 +36,7 @@ MatrixMarketMVInputFile::MatrixMarketMVInputFile(const std::string &path) :
   // Nothing to do
 }
 
-RCP<Epetra_MultiVector> MatrixMarketMVInputFile::vectorNew(const Epetra_Map &map)
+RCP<Epetra_MultiVector> MatrixMarketMVInputFile::read(const Epetra_Map &map)
 {
   // Create an uninitialized raw pointer,
   // to be passed by reference // to MatrixMarketFileToMultiVector for initialization

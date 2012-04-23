@@ -23,7 +23,7 @@ namespace Albany {
 
 class Hdf5MVInputFile : public MultiVectorInputFile {
 public:
-  virtual Teuchos::RCP<Epetra_MultiVector> vectorNew(const Epetra_Map &map); // overriden
+  virtual Teuchos::RCP<Epetra_MultiVector> read(const Epetra_Map &map); // overriden
 
   Hdf5MVInputFile(const std::string &path, const std::string &groupName);
 

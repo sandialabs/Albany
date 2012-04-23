@@ -39,7 +39,7 @@ Hdf5MVInputFile::Hdf5MVInputFile(const std::string &path,
   // Nothing to do
 }
 
-RCP<Epetra_MultiVector> Hdf5MVInputFile::vectorNew(const Epetra_Map &map)
+RCP<Epetra_MultiVector> Hdf5MVInputFile::read(const Epetra_Map &map)
 {
 #ifdef HAVE_EPETRAEXT_HDF5
   const Epetra_Comm &fileComm = map.Comm();
