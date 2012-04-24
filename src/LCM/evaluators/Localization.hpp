@@ -38,6 +38,9 @@ class Localization : public PHX::EvaluatorWithBaseImpl<Traits>,
 		     public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
+  typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
+  typedef Intrepid::FieldContainer<ScalarT> FC;
 
   Localization(const Teuchos::ParameterList& p);
 
@@ -46,9 +49,14 @@ public:
 
   void evaluateFields(typename Traits::EvalData d);
 
+  void computeMidplaneCoords(PHX::MDField<ScalarT,Cell,Vertex,Dim> coordVec,
+                             FC & midplaneCoords);
+  void baseVectors(const FC & midplnaeCoords, FC & bases);
+  void dualBaseVectors(const FC & midplaneCoords, FC & normals, FC & dualBases);
+  void computeJacobian(const FC & bases, const FC & dualBases, FC & area, FC & jacobian);
+
 private:
 
-  typedef typename EvalT::MeshScalarT MeshScalarT;
   int  numVertices, numDims, numNodes, numQPs, numPlaneNodes;
 
   // Input:
@@ -63,11 +71,17 @@ private:
   Intrepid::FieldContainer<RealType> grad_at_cub_points;
   Intrepid::FieldContainer<RealType> refPoints;
   Intrepid::FieldContainer<RealType> refWeights;
-  Intrepid::FieldContainer<MeshScalarT> jacobian;
+  //Intrepid::FieldContainer<MeshScalarT> jacobian;
   Intrepid::FieldContainer<MeshScalarT> jacobian_inv;
   Intrepid::FieldContainer<MeshScalarT> jacobian_det;
   Intrepid::FieldContainer<MeshScalarT> weighted_measure;
-  Intrepid::FieldContainer<MeshScalarT> midplaneCoords;
+
+  // new stuff
+  Intrepid::FieldContainer<ScalarT> midplaneCoords;
+  Intrepid::FieldContainer<ScalarT> bases;
+  Intrepid::FieldContainer<ScalarT> dualBases;
+  Intrepid::FieldContainer<ScalarT> jacobian;
+  Intrepid::FieldContainer<ScalarT> normals;
 
   // Output:
   //! Basis Functions at quadrature points
