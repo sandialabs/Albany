@@ -275,13 +275,32 @@ SET(MOR_DIR ${Albany_SOURCE_DIR}/src/MOR)
 
 SET(SOURCES ${SOURCES}
   ${MOR_DIR}/Albany_MORObserverFactory.cpp
+  ${MOR_DIR}/Albany_ProjectionError.cpp
+  ${MOR_DIR}/Albany_ProjectionErrorObserver.cpp
   ${MOR_DIR}/Albany_SnapshotCollection.cpp
   ${MOR_DIR}/Albany_SnapshotCollectionObserver.cpp
+  ${MOR_DIR}/Albany_MultiVectorInputFileFactory.cpp
+  ${MOR_DIR}/Albany_MatrixMarketMVInputFile.cpp
+  ${MOR_DIR}/Albany_Hdf5MVInputFile.cpp
+  ${MOR_DIR}/Albany_MultiVectorOutputFileFactory.cpp
+  ${MOR_DIR}/Albany_MatrixMarketMVOutputFile.cpp
+  ${MOR_DIR}/Albany_Hdf5MVOutputFile.cpp
 )
 SET(HEADERS ${HEADERS}
+  ${MOR_DIR}/Albany_MORUtils.hpp
   ${MOR_DIR}/Albany_MORObserverFactory.hpp
+  ${MOR_DIR}/Albany_ProjectionError.hpp
+  ${MOR_DIR}/Albany_ProjectionErrorObserver.hpp
   ${MOR_DIR}/Albany_SnapshotCollection.hpp
   ${MOR_DIR}/Albany_SnapshotCollectionObserver.hpp
+  ${MOR_DIR}/Albany_MultiVectorInputFile.hpp
+  ${MOR_DIR}/Albany_MultiVectorInputFileFactory.hpp
+  ${MOR_DIR}/Albany_MatrixMarketMVInputFile.hpp
+  ${MOR_DIR}/Albany_Hdf5MVInputFile.hpp
+  ${MOR_DIR}/Albany_MultiVectorOutputFileFactory.hpp
+  ${MOR_DIR}/Albany_MultiVectorOutputFile.hpp
+  ${MOR_DIR}/Albany_MatrixMarketMVOutputFile.hpp
+  ${MOR_DIR}/Albany_Hdf5MVOutputFile.hpp
 )
 
 # LCM
@@ -317,7 +336,9 @@ IF(ALBANY_LCM)
   SET(SOURCES ${SOURCES}
     ${LCM_DIR}/evaluators/Stress.cpp
     ${LCM_DIR}/evaluators/CapModelStress.cpp  
+    ${LCM_DIR}/evaluators/CapImplicit.cpp  
     ${LCM_DIR}/evaluators/GursonSDStress.cpp  
+    ${LCM_DIR}/evaluators/GursonFD.cpp  
     ${LCM_DIR}/evaluators/J2Fiber.cpp  
     ${LCM_DIR}/evaluators/Strain.cpp 
     ${LCM_DIR}/evaluators/ElasticModulus.cpp 
@@ -384,8 +405,12 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/Stress_Def.hpp
     ${LCM_DIR}/evaluators/CapModelStress.hpp 
     ${LCM_DIR}/evaluators/CapModelStress_Def.hpp
+    ${LCM_DIR}/evaluators/CapImplicit.hpp 
+    ${LCM_DIR}/evaluators/CapImplicit_Def.hpp
     ${LCM_DIR}/evaluators/GursonSDStress.hpp 
     ${LCM_DIR}/evaluators/GursonSDStress_Def.hpp
+    ${LCM_DIR}/evaluators/GursonFD.hpp 
+    ${LCM_DIR}/evaluators/GursonFD_Def.hpp
     ${LCM_DIR}/evaluators/J2Fiber.hpp 
     ${LCM_DIR}/evaluators/J2Fiber_Def.hpp
     ${LCM_DIR}/evaluators/Strain.hpp 

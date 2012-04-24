@@ -14,47 +14,50 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
-#ifndef ALBANY_SNAPSHOTCOLLECTION_HPP
-#define ALBANY_SNAPSHOTCOLLECTION_HPP
+#ifndef ALBANY_MULTIVECTORINPUTFILE_HPP
+#define ALBANY_MULTIVECTORINPUTFILE_HPP
 
-#include "Albany_MultiVectorOutputFileFactory.hpp"
+#include "Epetra_MultiVector.h"
+#include "Epetra_Map.h"
 
-#include "Epetra_Vector.h"
-
-#include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
 
-#include <deque>
 #include <string>
-#include <cstddef>
 
 namespace Albany {
 
-class SnapshotCollection {
+class MultiVectorInputFile {
 public:
-  explicit SnapshotCollection(const Teuchos::RCP<Teuchos::ParameterList> &params);
+  std::string path() const { return path_; }
 
-  ~SnapshotCollection();
-  void addVector(double stamp, const Epetra_Vector &value);
+  virtual Teuchos::RCP<Epetra_MultiVector> read(const Epetra_Map &map) = 0;
+
+  virtual ~MultiVectorInputFile();
+
+protected:
+  explicit MultiVectorInputFile(const std::string &path);
 
 private:
-  Teuchos::RCP<Teuchos::ParameterList> params_;
-  static Teuchos::RCP<Teuchos::ParameterList> fillDefaultParams(const Teuchos::RCP<Teuchos::ParameterList> &params);
-  
-  MultiVectorOutputFileFactory snapshotFileFactory_;
-  
-  std::size_t period_;
-  void initPeriod();
-
-  std::size_t skipCount_;
-  std::deque<double> stamps_;
-  std::deque<Epetra_Vector> snapshots_;
+  std::string path_;
 
   // Disallow copy and assignment
-  SnapshotCollection(const SnapshotCollection &);
-  SnapshotCollection &operator=(const SnapshotCollection &);
+  MultiVectorInputFile(const MultiVectorInputFile &);
+  MultiVectorInputFile &operator=(const MultiVectorInputFile &);
 };
+
+inline
+MultiVectorInputFile::MultiVectorInputFile(const std::string &path) :
+  path_(path)
+{
+  // Nothing to do
+}
+
+inline
+MultiVectorInputFile::~MultiVectorInputFile()
+{
+  // Nothing to do
+}
 
 } // end namespace Albany
 
-#endif /*ALBANY_SNAPSHOTCOLLECTION_HPP*/
+#endif /* ALBANY_MULTIVECTORINPUTFILE_HPP */

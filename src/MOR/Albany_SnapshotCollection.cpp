@@ -16,40 +16,42 @@
 
 #include "Albany_SnapshotCollection.hpp"
 
-#include "Epetra_Comm.h"
-#include "EpetraExt_MultiVectorOut.h"
-#include "EpetraExt_HDF5.h"
+#include "Albany_MultiVectorOutputFile.hpp"
+#include "Albany_MultiVectorOutputFileFactory.hpp"
 
-#include "Teuchos_Array.hpp"
 #include "Teuchos_TestForException.hpp"
 
 #include <stdexcept>
 #include <string>
 
-// Helper function
-#include <algorithm>
-
-template <typename Container, typename T>
-bool contains(const Container &c, const T &t) {
-  return std::find(c.begin(), c.end(), t) != c.end(); 
-}
-
 namespace Albany {
 
 using Teuchos::RCP;
 using Teuchos::ParameterList;
-using Teuchos::Array;
 
 SnapshotCollection::SnapshotCollection(const RCP<ParameterList> &params) :
-  params_(params),
-  outputFileFormat_(),
-  outputFileName_(),
+  params_(fillDefaultParams(params)),
+  snapshotFileFactory_(params),
   period_(),
   skipCount_(0)
 {
-  initOutputFileFormat();
-  initOutputFileName();
   initPeriod();
+}
+
+RCP<ParameterList> SnapshotCollection::fillDefaultParams(const RCP<ParameterList> &params)
+{
+  params->get("Output File Group Name", "snapshots");
+  params->get("Output File Default Base File Name", "snapshots");
+  return params;
+}
+
+void SnapshotCollection::initPeriod()
+{
+  const std::size_t period = params_->get("Period", 1);
+  TEUCHOS_TEST_FOR_EXCEPTION(period == 0,
+                             std::out_of_range,
+                             "period > 0");
+  period_ = period;
 }
 
 SnapshotCollection::~SnapshotCollection()
@@ -65,24 +67,8 @@ SnapshotCollection::~SnapshotCollection()
       *collection(iVec) = snapshots_[iVec];
     }
 
-    const std::string groupName = "snapshots";
-    
-    if (outputFileFormat_ == "Matrix Market")
-    {
-      EpetraExt::MultiVectorToMatrixMarketFile(outputFileName_.c_str(), collection, groupName.c_str());
-    }
-
-#ifdef HAVE_EPETRAEXT_HDF5
-    if (outputFileFormat_ == "HDF5")
-    {
-      const Epetra_Comm &fileComm = collection.Comm();
-      EpetraExt::HDF5 hdf5Output(fileComm);
-      
-      hdf5Output.Create(outputFileName_); // Truncate existing file if necessary
-      hdf5Output.Write(groupName, collection);
-      hdf5Output.Close();
-    }
-#endif /* HAVE_EPETRAEXT_HDF5 */
+    const RCP<MultiVectorOutputFile> outFile = snapshotFileFactory_.create(); 
+    outFile->write(collection);
   }
 }
 
@@ -98,45 +84,6 @@ void SnapshotCollection::addVector(double stamp, const Epetra_Vector &value)
   {
     --skipCount_;
   }
-}
-
-void SnapshotCollection::initOutputFileFormat()
-{
-  Array<std::string> validFileFormats;
-  validFileFormats.append("Matrix Market");
-#ifdef HAVE_EPETRAEXT_HDF5
-  validFileFormats.append("HDF5");
-#endif /* HAVE_EPETRAEXT_HDF5 */
-
-  const std::string outputFileFormat = params_->get("Output File Format", validFileFormats[0]);
-  TEUCHOS_TEST_FOR_EXCEPTION(!contains(validFileFormats, outputFileFormat),
-                             std::out_of_range,
-                             outputFileFormat + " not in " + validFileFormats.toString());
-  outputFileFormat_ = outputFileFormat;
-}
-
-void SnapshotCollection::initOutputFileName()
-{
-  const std::string userOutputFileName = params_->get("Output File Name", "");
-  
-  const std::string defaultOutputFilePrefix = "snap";
-  std::string defaultOutputFilePostfix;
-  if (outputFileFormat_ == "Matrix Market") defaultOutputFilePostfix = "mtx";
-  if (outputFileFormat_ == "HDF5")          defaultOutputFilePostfix = "hdf5";
-  const std::string defaultOutputFileName = defaultOutputFilePrefix + "." + defaultOutputFilePostfix; 
-
-  const std::string outputFileName = !userOutputFileName.empty() ? userOutputFileName : defaultOutputFileName;
-  
-  outputFileName_ = outputFileName;
-}
-
-void SnapshotCollection::initPeriod()
-{
-  const std::size_t period = params_->get("Period", 1);
-  TEUCHOS_TEST_FOR_EXCEPTION(period == 0,
-                             std::out_of_range,
-                             "period > 0");
-  period_ = period;
 }
 
 } // end namespace Albany

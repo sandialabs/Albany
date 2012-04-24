@@ -66,6 +66,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> CLGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> stressGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint> MechSource;
+  PHX::MDField<ScalarT,Cell,QuadPoint> stabParameter;
 
   // Input for the strain rate effect
   PHX::MDField<ScalarT,Cell,QuadPoint> Ctrapped;
@@ -73,6 +74,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> eqps;
   PHX::MDField<ScalarT,Cell,QuadPoint> eqpsFactor;
   std::string eqpsName;
+
 
   // Input for hydro-static stress effect
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> Pstress;
@@ -86,6 +88,7 @@ private:
 
   //Data from previous time step
   std::string ClatticeName;
+  std::string CLGradName;
 
   bool haveSource;
   bool haveMechSource;
@@ -102,11 +105,16 @@ private:
   Intrepid::FieldContainer<ScalarT> C;
   Intrepid::FieldContainer<ScalarT> Cinv;
   Intrepid::FieldContainer<ScalarT> CinvTgrad;
+  Intrepid::FieldContainer<ScalarT> CinvTgrad_old;
+
+  Intrepid::FieldContainer<ScalarT> artificalDL;
+  Intrepid::FieldContainer<ScalarT> stabilizedDL;
 
   Intrepid::FieldContainer<ScalarT> tauStress;
 
 
   Intrepid::FieldContainer<ScalarT> pterm;
+  Intrepid::FieldContainer<ScalarT> tpterm;
   Intrepid::FieldContainer<ScalarT> aterm;
 
   Intrepid::FieldContainer<ScalarT> tauH;
@@ -119,6 +127,7 @@ private:
   Intrepid::FieldContainer<ScalarT> pTTterm;
   Intrepid::FieldContainer<ScalarT> pBterm;
   Intrepid::FieldContainer<ScalarT> pTranTerm;
+
 
 
   ScalarT trialPbar;

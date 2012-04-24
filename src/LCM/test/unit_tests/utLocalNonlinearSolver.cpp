@@ -26,6 +26,7 @@ namespace {
 
   TEUCHOS_UNIT_TEST( LocalNonlinearSolver, Instantiation )
   {
+    typedef PHAL::AlbanyTraits Traits;
     typedef PHAL::AlbanyTraits::Residual EvalT;
     typedef PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
 
@@ -34,7 +35,7 @@ namespace {
     std::vector<ScalarT> F(numLocalVars);
     std::vector<ScalarT> dFdX(numLocalVars*numLocalVars);
     std::vector<ScalarT> X(numLocalVars);
-    LCM::LocalNonlinearSolver<EvalT> solver;
+    LCM::LocalNonlinearSolver<EvalT,Traits> solver;
 
     const int n = 2;
     const int nrhs = 1;
@@ -56,6 +57,7 @@ namespace {
 
   TEUCHOS_UNIT_TEST( LocalNonlinearSolver, Residual )
   {
+    typedef PHAL::AlbanyTraits Traits;
     typedef PHAL::AlbanyTraits::Residual EvalT;
     typedef PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
 
@@ -64,7 +66,7 @@ namespace {
     std::vector<ScalarT> F(numLocalVars);
     std::vector<ScalarT> dFdX(numLocalVars*numLocalVars);
     std::vector<ScalarT> X(numLocalVars);
-    LCM::LocalNonlinearSolver<EvalT> solver;
+    LCM::LocalNonlinearSolver<EvalT,Traits> solver;
     
     // initialize X
     X[0] = 1.0;
@@ -95,6 +97,7 @@ namespace {
 
   TEUCHOS_UNIT_TEST( LocalNonlinearSolver, Jacobian )
   {
+    typedef PHAL::AlbanyTraits Traits;
     typedef PHAL::AlbanyTraits::Jacobian EvalT;
     typedef PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
 
@@ -103,7 +106,7 @@ namespace {
     std::vector<ScalarT> F(numLocalVars);
     std::vector<ScalarT> dFdX(numLocalVars*numLocalVars);
     std::vector<ScalarT> X(numLocalVars);
-    LCM::LocalNonlinearSolver<EvalT> solver;
+    LCM::LocalNonlinearSolver<EvalT,Traits> solver;
     
     // initialize X
     X[0] = 1.0;
@@ -134,6 +137,7 @@ namespace {
   }
   TEUCHOS_UNIT_TEST( LocalNonlinearSolver, Tangent )
   {
+    typedef PHAL::AlbanyTraits Traits;
     typedef PHAL::AlbanyTraits::Tangent EvalT;
     typedef PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
 
@@ -142,7 +146,7 @@ namespace {
     std::vector<ScalarT> F(numLocalVars);
     std::vector<ScalarT> dFdX(numLocalVars*numLocalVars);
     std::vector<ScalarT> X(numLocalVars);
-    LCM::LocalNonlinearSolver<EvalT> solver;
+    LCM::LocalNonlinearSolver<EvalT,Traits> solver;
     
     // initialize X
     X[0] = 1.0;

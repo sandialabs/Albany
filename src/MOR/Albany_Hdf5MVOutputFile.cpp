@@ -14,47 +14,47 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
-#ifndef ALBANY_SNAPSHOTCOLLECTION_HPP
-#define ALBANY_SNAPSHOTCOLLECTION_HPP
+#include "Albany_Hdf5MVOutputFile.hpp"
 
-#include "Albany_MultiVectorOutputFileFactory.hpp"
+#include "Epetra_Comm.h"
 
-#include "Epetra_Vector.h"
+#include "EpetraExt_HDF5.h"
 
-#include "Teuchos_ParameterList.hpp"
-#include "Teuchos_RCP.hpp"
+#include "Teuchos_TestForException.hpp"
 
-#include <deque>
-#include <string>
-#include <cstddef>
+#include <stdexcept>
 
 namespace Albany {
 
-class SnapshotCollection {
-public:
-  explicit SnapshotCollection(const Teuchos::RCP<Teuchos::ParameterList> &params);
+using Teuchos::RCP;
+using Teuchos::rcp;
 
-  ~SnapshotCollection();
-  void addVector(double stamp, const Epetra_Vector &value);
+Hdf5MVOutputFile::Hdf5MVOutputFile(const std::string &path,
+                                   const std::string &groupName) :
+  MultiVectorOutputFile(path),
+  groupName_(groupName)
+{
+  // Nothing to do
+}
 
-private:
-  Teuchos::RCP<Teuchos::ParameterList> params_;
-  static Teuchos::RCP<Teuchos::ParameterList> fillDefaultParams(const Teuchos::RCP<Teuchos::ParameterList> &params);
+void Hdf5MVOutputFile::write(const Epetra_MultiVector &mv)
+{
+#ifdef HAVE_EPETRAEXT_HDF5
+  const Epetra_Comm &fileComm = mv.Comm();
+  EpetraExt::HDF5 hdf5Output(fileComm);
   
-  MultiVectorOutputFileFactory snapshotFileFactory_;
+  hdf5Output.Create(path()); // Truncate existing file if necessary
   
-  std::size_t period_;
-  void initPeriod();
+  TEUCHOS_TEST_FOR_EXCEPTION(!hdf5Output.IsOpen(),
+                             std::runtime_error,
+                             "Cannot create output file: " + path());
 
-  std::size_t skipCount_;
-  std::deque<double> stamps_;
-  std::deque<Epetra_Vector> snapshots_;
+  hdf5Output.Write(groupName_, mv);
 
-  // Disallow copy and assignment
-  SnapshotCollection(const SnapshotCollection &);
-  SnapshotCollection &operator=(const SnapshotCollection &);
-};
+  hdf5Output.Close();
+#else /* HAVE_EPETRAEXT_HDF5 */
+  throw std::logic_error("HDF5 support disabled");
+#endif /* HAVE_EPETRAEXT_HDF5 */
+}
 
 } // end namespace Albany
-
-#endif /*ALBANY_SNAPSHOTCOLLECTION_HPP*/

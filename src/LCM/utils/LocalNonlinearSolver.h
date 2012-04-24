@@ -8,7 +8,6 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 #include <Teuchos_LAPACK.hpp>
-#include <Teuchos_RCP.hpp>
 #include <Sacado.hpp>
 
 namespace LCM {
@@ -16,7 +15,7 @@ namespace LCM {
   ///
   /// Local Nonlinear Solver Base class
   ///
-  template<typename EvalT> 
+  template<typename EvalT, typename Traits> 
   class LocalNonlinearSolver_Base
   {
   public:
@@ -24,28 +23,30 @@ namespace LCM {
     LocalNonlinearSolver_Base();
     ~LocalNonlinearSolver_Base() {};
     Teuchos::LAPACK<int,RealType> lapack;
-    virtual void solve(std::vector<ScalarT> & A, 
-                       std::vector<ScalarT> & X,
-                       std::vector<ScalarT> & B) = 0;
-    virtual void computeFadInfo(std::vector<ScalarT> & A, 
-                                std::vector<ScalarT> & X, 
-                                std::vector<ScalarT> & B) = 0; 
+    void solve(std::vector<ScalarT> & A, 
+               std::vector<ScalarT> & X,
+               std::vector<ScalarT> & B);
+    void computeFadInfo(std::vector<ScalarT> & A, 
+                        std::vector<ScalarT> & X, 
+                        std::vector<ScalarT> & B); 
   };
 
   // ---------------------------------------------------------------------
   // Specializations
   // ---------------------------------------------------------------------
 
-  template<typename EvalT> class LocalNonlinearSolver;
+  template<typename EvalT, typename Traits> class LocalNonlinearSolver;
 
   // ---------------------------------------------------------------------
   // Residual
   // ---------------------------------------------------------------------
-  template<>
-  class LocalNonlinearSolver<PHAL::AlbanyTraits::Residual> :
-    public LocalNonlinearSolver_Base<PHAL::AlbanyTraits::Residual>
+  template<typename Traits>
+  class LocalNonlinearSolver<PHAL::AlbanyTraits::Residual, Traits> :
+    public LocalNonlinearSolver_Base<PHAL::AlbanyTraits::Residual, Traits>
   {
   public:
+    typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
+    LocalNonlinearSolver();
     void solve(std::vector<ScalarT> & A, 
                std::vector<ScalarT> & X,
                std::vector<ScalarT> & B);
@@ -57,11 +58,13 @@ namespace LCM {
   // ---------------------------------------------------------------------
   // Jacobian
   // ---------------------------------------------------------------------
-  template <>
-  class LocalNonlinearSolver< PHAL::AlbanyTraits::Jacobian> :
-    public LocalNonlinearSolver_Base< PHAL::AlbanyTraits::Jacobian> 
+  template<typename Traits>
+  class LocalNonlinearSolver< PHAL::AlbanyTraits::Jacobian, Traits> :
+    public LocalNonlinearSolver_Base< PHAL::AlbanyTraits::Jacobian, Traits> 
   {
   public:
+    typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
+    LocalNonlinearSolver();
     void solve(std::vector<ScalarT> & A, 
                std::vector<ScalarT> & X,
                std::vector<ScalarT> & B);
@@ -73,11 +76,13 @@ namespace LCM {
   // ---------------------------------------------------------------------
   // Tangent
   // ---------------------------------------------------------------------
-  template <>
-  class LocalNonlinearSolver< PHAL::AlbanyTraits::Tangent> :
-      public LocalNonlinearSolver_Base< PHAL::AlbanyTraits::Tangent>
+  template<typename Traits>
+  class LocalNonlinearSolver< PHAL::AlbanyTraits::Tangent, Traits> :
+    public LocalNonlinearSolver_Base< PHAL::AlbanyTraits::Tangent, Traits>
   {
   public:
+    typedef typename PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
+    LocalNonlinearSolver();
     void solve(std::vector<ScalarT> & A, 
                std::vector<ScalarT> & X,
                std::vector<ScalarT> & B);
@@ -89,11 +94,13 @@ namespace LCM {
   // ---------------------------------------------------------------------
   // Stochastic Galerkin Residual
   // ---------------------------------------------------------------------
-  template <>
-  class LocalNonlinearSolver< PHAL::AlbanyTraits::SGResidual> : 
-    public LocalNonlinearSolver_Base< PHAL::AlbanyTraits::SGResidual>
+  template<typename Traits>
+  class LocalNonlinearSolver< PHAL::AlbanyTraits::SGResidual, Traits> : 
+    public LocalNonlinearSolver_Base< PHAL::AlbanyTraits::SGResidual, Traits>
   {
   public:
+    typedef typename PHAL::AlbanyTraits::SGResidual::ScalarT ScalarT;
+    LocalNonlinearSolver();
     void solve(std::vector<ScalarT> & A, 
                std::vector<ScalarT> & X,
                std::vector<ScalarT> & B);
@@ -105,11 +112,13 @@ namespace LCM {
   // ---------------------------------------------------------------------
   // Stochastic Galerkin Jacobian
   // ---------------------------------------------------------------------
-  template <>
-  class LocalNonlinearSolver< PHAL::AlbanyTraits::SGJacobian> :
-    public LocalNonlinearSolver_Base< PHAL::AlbanyTraits::SGJacobian>
+  template<typename Traits>
+  class LocalNonlinearSolver< PHAL::AlbanyTraits::SGJacobian, Traits> :
+    public LocalNonlinearSolver_Base< PHAL::AlbanyTraits::SGJacobian, Traits>
   {
   public:
+    typedef typename PHAL::AlbanyTraits::SGJacobian::ScalarT ScalarT;
+    LocalNonlinearSolver();
     void solve(std::vector<ScalarT> & A, 
                std::vector<ScalarT> & X,
                std::vector<ScalarT> & B);
@@ -121,11 +130,13 @@ namespace LCM {
   // ---------------------------------------------------------------------
   // Stochastic Galerkin Tangent
   // ---------------------------------------------------------------------
-  template <>
-  class LocalNonlinearSolver< PHAL::AlbanyTraits::SGTangent> :
-      public LocalNonlinearSolver_Base< PHAL::AlbanyTraits::SGTangent>
+  template<typename Traits>
+  class LocalNonlinearSolver< PHAL::AlbanyTraits::SGTangent, Traits> :
+    public LocalNonlinearSolver_Base< PHAL::AlbanyTraits::SGTangent, Traits>
   {
   public:
+    typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
+    LocalNonlinearSolver();
     void solve(std::vector<ScalarT> & A, 
                std::vector<ScalarT> & X,
                std::vector<ScalarT> & B);
@@ -137,11 +148,13 @@ namespace LCM {
   // ---------------------------------------------------------------------
   // Multi-Point Residual
   // ---------------------------------------------------------------------
-  template <>
-  class LocalNonlinearSolver< PHAL::AlbanyTraits::MPResidual> :
-    public LocalNonlinearSolver_Base< PHAL::AlbanyTraits::MPResidual>
+  template<typename Traits>
+  class LocalNonlinearSolver< PHAL::AlbanyTraits::MPResidual, Traits> :
+    public LocalNonlinearSolver_Base< PHAL::AlbanyTraits::MPResidual, Traits>
   {
   public:
+    typedef typename PHAL::AlbanyTraits::MPResidual::ScalarT ScalarT;
+    LocalNonlinearSolver();
     void solve(std::vector<ScalarT> & A, 
                std::vector<ScalarT> & X,
                std::vector<ScalarT> & B);
@@ -153,11 +166,13 @@ namespace LCM {
   // ---------------------------------------------------------------------
   // Multi-Point Jacobian
   // ---------------------------------------------------------------------
-  template <>
-  class LocalNonlinearSolver< PHAL::AlbanyTraits::MPJacobian> :
-    public LocalNonlinearSolver_Base< PHAL::AlbanyTraits::MPJacobian>
+  template <typename Traits>
+  class LocalNonlinearSolver< PHAL::AlbanyTraits::MPJacobian, Traits> :
+    public LocalNonlinearSolver_Base< PHAL::AlbanyTraits::MPJacobian, Traits>
   {
   public:
+    typedef typename PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
+    LocalNonlinearSolver();
     void solve(std::vector<ScalarT> & A, 
                std::vector<ScalarT> & X,
                std::vector<ScalarT> & B);
@@ -169,11 +184,13 @@ namespace LCM {
   // ---------------------------------------------------------------------
   // Multi-Point Tangent
   // ---------------------------------------------------------------------
-  template <>
-  class LocalNonlinearSolver< PHAL::AlbanyTraits::MPTangent> :
-    public LocalNonlinearSolver_Base< PHAL::AlbanyTraits::MPTangent>
+  template<typename Traits>
+  class LocalNonlinearSolver< PHAL::AlbanyTraits::MPTangent, Traits> :
+    public LocalNonlinearSolver_Base< PHAL::AlbanyTraits::MPTangent, Traits>
   {
   public:
+    typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
+    LocalNonlinearSolver();
     void solve(std::vector<ScalarT> & A, 
                std::vector<ScalarT> & X,
                std::vector<ScalarT> & B);

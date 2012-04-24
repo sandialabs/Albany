@@ -14,47 +14,43 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
-#ifndef ALBANY_SNAPSHOTCOLLECTION_HPP
-#define ALBANY_SNAPSHOTCOLLECTION_HPP
+#ifndef ALBANY_PROJECTIONERROROBSERVER_HPP
+#define ALBANY_PROJECTIONERROROBSERVER_HPP
 
-#include "Albany_MultiVectorOutputFileFactory.hpp"
+#include "NOX_Epetra_Observer.H"
 
-#include "Epetra_Vector.h"
+#include "Albany_ProjectionError.hpp"
 
-#include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
-
-#include <deque>
-#include <string>
-#include <cstddef>
+#include "Teuchos_ParameterList.hpp"
 
 namespace Albany {
 
-class SnapshotCollection {
-public:
-  explicit SnapshotCollection(const Teuchos::RCP<Teuchos::ParameterList> &params);
+class Application;
 
-  ~SnapshotCollection();
-  void addVector(double stamp, const Epetra_Vector &value);
+class ProjectionErrorObserver : public NOX::Epetra::Observer
+{
+public:
+  ProjectionErrorObserver(const Teuchos::RCP<Teuchos::ParameterList> &params,
+                          const Teuchos::RCP<NOX::Epetra::Observer> &decoratedObserver,
+                          const Teuchos::RCP<const Application> &app);
+
+  //! Calls underlying observer then evalates projection error
+  virtual void observeSolution(const Epetra_Vector& solution);
+  
+  //! Calls underlying observer then evalates projection error
+  virtual void observeSolution(const Epetra_Vector& solution, double time_or_param_val);
 
 private:
-  Teuchos::RCP<Teuchos::ParameterList> params_;
-  static Teuchos::RCP<Teuchos::ParameterList> fillDefaultParams(const Teuchos::RCP<Teuchos::ParameterList> &params);
-  
-  MultiVectorOutputFileFactory snapshotFileFactory_;
-  
-  std::size_t period_;
-  void initPeriod();
+  Teuchos::RCP<NOX::Epetra::Observer> decoratedObserver_;
 
-  std::size_t skipCount_;
-  std::deque<double> stamps_;
-  std::deque<Epetra_Vector> snapshots_;
+  ProjectionError projectionError_;
 
-  // Disallow copy and assignment
-  SnapshotCollection(const SnapshotCollection &);
-  SnapshotCollection &operator=(const SnapshotCollection &);
+  // Disallow copy & assignment
+  ProjectionErrorObserver(const ProjectionErrorObserver &);
+  ProjectionErrorObserver operator=(const ProjectionErrorObserver &);
 };
 
 } // end namespace Albany
 
-#endif /*ALBANY_SNAPSHOTCOLLECTION_HPP*/
+#endif /*ALBANY_PROJECTIONERROROBSERVER_HPP*/

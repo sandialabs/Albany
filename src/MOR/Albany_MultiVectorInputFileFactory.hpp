@@ -14,47 +14,39 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
-#ifndef ALBANY_SNAPSHOTCOLLECTION_HPP
-#define ALBANY_SNAPSHOTCOLLECTION_HPP
+#ifndef ALBANY_MULTIVECTORINPUTFILEFACTORY_HPP
+#define ALBANY_MULTIVECTORINPUTFILEFACTORY_HPP
 
-#include "Albany_MultiVectorOutputFileFactory.hpp"
+#include "Albany_MultiVectorInputFile.hpp"
 
-#include "Epetra_Vector.h"
-
-#include "Teuchos_ParameterList.hpp"
+#include "Teuchos_Array.hpp"
 #include "Teuchos_RCP.hpp"
+#include "Teuchos_ParameterList.hpp"
 
-#include <deque>
 #include <string>
-#include <cstddef>
 
 namespace Albany {
 
-class SnapshotCollection {
+class MultiVectorInputFileFactory {
 public:
-  explicit SnapshotCollection(const Teuchos::RCP<Teuchos::ParameterList> &params);
-
-  ~SnapshotCollection();
-  void addVector(double stamp, const Epetra_Vector &value);
+  explicit MultiVectorInputFileFactory(const Teuchos::RCP<Teuchos::ParameterList> &params);
+  Teuchos::RCP<MultiVectorInputFile> create();
 
 private:
   Teuchos::RCP<Teuchos::ParameterList> params_;
-  static Teuchos::RCP<Teuchos::ParameterList> fillDefaultParams(const Teuchos::RCP<Teuchos::ParameterList> &params);
-  
-  MultiVectorOutputFileFactory snapshotFileFactory_;
-  
-  std::size_t period_;
-  void initPeriod();
 
-  std::size_t skipCount_;
-  std::deque<double> stamps_;
-  std::deque<Epetra_Vector> snapshots_;
+  std::string inputFileName_, inputFileFormat_;
+  Teuchos::Array<std::string> validFileFormats_;
+
+  void initValidFileFormats();
+  void initInputFileFormat();
+  void initInputFileName();
 
   // Disallow copy and assignment
-  SnapshotCollection(const SnapshotCollection &);
-  SnapshotCollection &operator=(const SnapshotCollection &);
+  MultiVectorInputFileFactory(const MultiVectorInputFileFactory &);
+  MultiVectorInputFileFactory &operator=(const MultiVectorInputFileFactory &);
 };
 
 } // end namespace Albany
 
-#endif /*ALBANY_SNAPSHOTCOLLECTION_HPP*/
+#endif /* ALBANY_MULTIVECTORINPUTFILEFACTORY_HPP */

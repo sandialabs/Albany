@@ -9,11 +9,10 @@
     <Parameter name="Solution Method" type="string" value="Continuation"/>
     <!-- Have Phalanx output a graph of the used evaluators -->
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
-
     <!-- BOUNDARY CONDITIONS on node sets from the discretization which follows -->
     <ParameterList name="Dirichlet BCs">
       <!-- Kfield Boundary Conditions -->
-      <Parameter name="DBC on NS nodelist_4 for DOF Z" type="double" value="0.0"/>
+      <Parameter name="DBC on NS nodelist_2 for DOF T" type="double" value="560.0"/>
 	  <ParameterList name="Time Dependent DBC on NS nodelist_4 for DOF Z">
         <Parameter name="Number of points" type="int" value="3"/>
         <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 0.001000 ,500.0}"/>
@@ -21,11 +20,11 @@
       </ParameterList>
       <ParameterList name="DBC on NS nodelist_1 for DOF K">
 	<Parameter name="BC Function" type="string" value="Kfield"/>
-	<Parameter name="Kfield KI" type="double" value="1.0"/>
+	<Parameter name="Kfield KI" type="double" value="0.0"/>
 	<Parameter name="Kfield KII" type="double" value="0.0"/>
 	<Parameter name="Number of points" type="int" value="3"/>
 	<Parameter name="Time Values" type="Array(double)" value="{ 0.0, 0.01000 ,500.0}"/>
-	<Parameter name="KI Values" type="Array(double)" value="{   0.0, 0.01000 ,500.0}"/>
+	<Parameter name="KI Values" type="Array(double)" value="{   0.0, 0.10000 ,50.0}"/>
 	<Parameter name="KII Values" type="Array(double)" value="{  0.0, 0.00 ,000.0}"/>
       </ParameterList>
     </ParameterList>
@@ -34,10 +33,12 @@
     <ParameterList name="Initial Condition">
       <Parameter name="Function" type="string" value="Constant"/>
       <Parameter name="Function Data" type="Array(double)" value="{0.0,0.0,0.0, 38.7, 0.0}"/>
-    </ParameterList>
-		
-	
-	<!-- Hydorgen Transport Parameter -->
+    </ParameterList>		
+	<!--Stabilization Parameter -->
+	<ParameterList name="Stabilization Parameter">
+	 <Parameter name="Type" type="string" value="Constant"/>
+	 <Parameter name="Value" type="double" value="1.0"/>
+	</ParameterList>	
 	<ParameterList name="Temperature">
 	 <Parameter name="Type" type="string" value="Constant"/>
 	 <Parameter name="Value" type="double" value="293.0"/>
@@ -64,7 +65,7 @@
 	</ParameterList>
 	<ParameterList name="Pre Exponential Factor">
 	 <Parameter name="Type" type="string" value="Constant"/>
-	 <Parameter name="Value" type="double" value="5.3e-1"/>
+	 <Parameter name="Value" type="double" value="5.4e-7"/>
 	</ParameterList>
 	<ParameterList name="Trapped Solvent">
       <Parameter name="Trapped Solvent Type" type="string" value="Constant"/>
@@ -105,39 +106,34 @@
     </ParameterList>
     <ParameterList name="Yield Strength">
       <Parameter name="Yield Strength Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="700e0"/>
+      <Parameter name="Value" type="double" value="700.0e0"/>
       <Parameter name="dYdT Value" type="double" value="0.000"/>
-	  <Parameter name="zeta Value" type="double" value="0.00"/>
+	  <Parameter name="zeta Value" type="double" value="-219.00"/>
     </ParameterList>
     <ParameterList name="Hardening Modulus">
       <Parameter name="Hardening Modulus Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="1964.0e0"/>
+      <Parameter name="Value" type="double" value="1963.75e0"/>
       <Parameter name="dHdT Value" type="double" value="0.000"/>
     </ParameterList>
     <Parameter name="Reference Temperature" type="double" value="293.0"/>
     <Parameter name="Thermal Expansion Coefficient" type="double" value="0.e-5"/>
     <Parameter name="Density" type="double" value="7.8e-9"/>
     <Parameter name="Heat Capacity" type="double" value="0.46e9"/>
-
     <!-- PARAMETER -->
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="1"/>
-	  <Parameter name="Parameter 0" type="string" value="Time"/>
+      <Parameter name="Parameter 0" type="string" value="Time"/>
     </ParameterList>
-    <!-- RESPONSE FUNCTION used for regression testing -->
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="1"/>
       <Parameter name="Response 0" type="string" value="Solution Average"/>
     </ParameterList>
   </ParameterList>
-
   <!-- MESH -->
   <ParameterList name="Discretization">
-    <Parameter name="Method" type="string" value="Exodus"/>
+    <Parameter name="Method" type="string" value="Ioss"/>
     <Parameter name="Exodus Input File Name" type="string" value="K_field.g"/>
     <Parameter name="Exodus Output File Name" type="string" value="K_field.e"/>
-    <!-- Sets the number of elements per workset -->
-    <Parameter name="Workset Size" type="int" value="10"/>
   </ParameterList>
   <!-- REGRESSION comparison of the RESPONSE FUNCTION declared above-->
   <ParameterList name="Regression Results">
@@ -147,7 +143,6 @@
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{0.0}"/>
   </ParameterList>
-
   <ParameterList name="Piro">
     <!-- LOCA is used for stability analysis, continuation -->
     <ParameterList name="LOCA">
@@ -158,11 +153,11 @@
       </ParameterList>
       <!-- PARAMETER STEPPING -->
       <ParameterList name="Stepper">
-	<Parameter  name="Initial Value" type="double" value="0.0"/>
+	<Parameter  name="Initial Value" type="double" value="0.05"/>
 	<!-- Repeat the boundary condition (just one) that is to be loaded -->
 	<Parameter  name="Continuation Parameter" type="string" value="Time"/>
 	<!-- The number of steps in the problem -->
-	<Parameter  name="Max Steps" type="int" value="2"/>         
+	<Parameter  name="Max Steps" type="int" value="1"/>         
 	<Parameter  name="Max Value" type="double" value="5000.0"/>
 	<Parameter  name="Min Value" type="double" value="0.0"/>    
 	<!-- Compute eigenvalues of the global stiffness -->
@@ -175,12 +170,12 @@
       </ParameterList>
       <ParameterList name="Step Size">
 	<!-- Control the actual parameter incrementation, here it is the displacement increment on the BC -->
-	<Parameter  name="Initial Step Size" type="double" value="0.0005"/> 
-	<Parameter name="Method" type="string" value="Adaptive"/>
+	<Parameter  name="Initial Step Size" type="double" value="0.05"/> 
+	<Parameter name="Method" type="string" value="Constant"/>
       </ParameterList>
     </ParameterList>
     <!-- BEGIN SOLVER CONTROLS. IN GENERAL, The defaults need not be changed. -->
-   <ParameterList name="NOX">
+     <ParameterList name="NOX">
       <ParameterList name="Direction">
 	<Parameter name="Method" type="string" value="Newton"/>
 	<ParameterList name="Newton">
@@ -190,7 +185,6 @@
 	    <ParameterList name="NOX Stratimikos Options">
 	    </ParameterList>
 	    <ParameterList name="Stratimikos">
-	      <!-- Belos for iterative solvers, Amesos for direct-->
 	      <Parameter name="Linear Solver Type" type="string" value="Belos"/>
 	      <ParameterList name="Linear Solver Types">
 		<ParameterList name="AztecOO">
@@ -198,24 +192,24 @@
 		    <ParameterList name="AztecOO Settings">
 		      <Parameter name="Aztec Solver" type="string" value="GMRES"/>
 		      <Parameter name="Convergence Test" type="string" value="r0"/>
-		      <Parameter name="Size of Krylov Subspace" type="int" value="200"/>
+		      <Parameter name="Size of Krylov Subspace" type="int" value="300"/>
 		      <Parameter name="Output Frequency" type="int" value="10"/>
 		    </ParameterList>
-		    <Parameter name="Max Iterations" type="int" value="2000"/>
-		    <Parameter name="Tolerance" type="double" value="1e-12"/>
+		    <Parameter name="Max Iterations" type="int" value="200"/>
+		    <Parameter name="Tolerance" type="double" value="1e-15"/>
 		  </ParameterList>
 		</ParameterList>
 		<ParameterList name="Belos">
 		  <Parameter name="Solver Type" type="string" value="Block GMRES"/>
 		  <ParameterList name="Solver Types">
 		    <ParameterList name="Block GMRES">
-		      <Parameter name="Convergence Tolerance" type="double" value="1e-6"/>
-		      <Parameter name="Output Frequency" type="int" value="10"/>
-		      <Parameter name="Output Style" type="int" value="1"/>
-		      <Parameter name="Verbosity" type="int" value="33"/>
-		      <Parameter name="Maximum Iterations" type="int" value="20"/>
+		      <Parameter name="Convergence Tolerance" type="double" value="1e-15"/>
+		      <Parameter name="Output Frequency" type="int" value="0"/>
+		      <Parameter name="Output Style" type="int" value="0"/>
+		      <Parameter name="Verbosity" type="int" value="0"/>
+		      <Parameter name="Maximum Iterations" type="int" value="200"/>
 		      <Parameter name="Block Size" type="int" value="1"/>
-		      <Parameter name="Num Blocks" type="int" value="50"/>
+		      <Parameter name="Num Blocks" type="int" value="300"/>
 		      <Parameter name="Flexible Gmres" type="bool" value="0"/>
 		    </ParameterList>
 		  </ParameterList>
@@ -237,36 +231,36 @@
 	  </ParameterList>
 	</ParameterList>
       </ParameterList>
-    <ParameterList name="Line Search">
-      <ParameterList name="Full Step">
-        <Parameter name="Full Step" type="double" value="1"/>
+      <ParameterList name="Line Search">
+	<ParameterList name="Full Step">
+	  <Parameter name="Full Step" type="double" value="1"/>
+	</ParameterList>
+	<Parameter name="Method" type="string" value="Full Step"/>
       </ParameterList>
-      <Parameter name="Method" type="string" value="Full Step"/>
-    </ParameterList>
-    <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
-    <ParameterList name="Printing">
-      <Parameter name="Output Information" type="int" value="103"/>
-      <Parameter name="Output Precision" type="int" value="3"/>
-      <Parameter name="Output Processor" type="int" value="0"/>
-    </ParameterList>
-	    <ParameterList name="Status Tests">
-      <Parameter name="Test Type" type="string" value="Combo"/>
-      <Parameter name="Combo Type" type="string" value="OR"/>
-      <Parameter name="Number of Tests" type="int" value="3"/>
-      <ParameterList name="Test 0">
-        <Parameter name="Test Type" type="string" value="NormF"/>
-        <Parameter name="Norm Type" type="string" value="Two Norm"/>
-        <Parameter name="Scale Type" type="string" value="Scaled"/>
-        <Parameter name="Tolerance" type="double" value="2.0e-12"/>
+      <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
+      <ParameterList name="Printing">
+	<Parameter name="Output Information" type="int" value="103"/>
+	<Parameter name="Output Precision" type="int" value="3"/>
+	<Parameter name="Output Processor" type="int" value="0"/>
       </ParameterList>
-      <ParameterList name="Test 1">
-        <Parameter name="Test Type" type="string" value="MaxIters"/>
-        <Parameter name="Maximum Iterations" type="int" value="15"/>
+      <ParameterList name="Status Tests">
+	<Parameter name="Test Type" type="string" value="Combo"/>
+	<Parameter name="Combo Type" type="string" value="OR"/>
+	<Parameter name="Number of Tests" type="int" value="3"/>
+	<ParameterList name="Test 0">
+	  <Parameter name="Test Type" type="string" value="NormF"/>
+	  <Parameter name="Norm Type" type="string" value="Two Norm"/>
+	  <Parameter name="Scale Type" type="string" value="Scaled"/>
+	  <Parameter name="Tolerance" type="double" value="8e-7"/>
+	</ParameterList>
+	<ParameterList name="Test 1">
+	  <Parameter name="Test Type" type="string" value="MaxIters"/>
+	  <Parameter name="Maximum Iterations" type="int" value="8"/>
+	</ParameterList>
+	<ParameterList name="Test 2">
+	  <Parameter name="Test Type" type="string" value="FiniteValue"/>
+	</ParameterList>
       </ParameterList>
-      <ParameterList name="Test 2">
-        <Parameter name="Test Type" type="string" value="FiniteValue"/>
-      </ParameterList>
-    </ParameterList>
       <ParameterList name="Solver Options">
 	<Parameter name="Status Test Check Type" type="string" value="Minimal"/>
       </ParameterList>

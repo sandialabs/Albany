@@ -16,8 +16,11 @@
 
 #include "Albany_MORObserverFactory.hpp"
 
+#include "Albany_Application.hpp"
+
 #include "Albany_NOXObserver.hpp"
 #include "Albany_SnapshotCollectionObserver.hpp"
+#include "Albany_ProjectionErrorObserver.hpp"
 
 #include "Teuchos_ParameterList.hpp"
 
@@ -30,22 +33,26 @@ using ::Teuchos::rcp;
 using ::Teuchos::ParameterList;
 using ::Teuchos::sublist;
 
-MORObserverFactory::MORObserverFactory(const RCP<ParameterList> &parentParams) :
-  params_(sublist(parentParams, "Model Order Reduction"))
+MORObserverFactory::MORObserverFactory(const RCP<ParameterList> &parentParams, const RCP<Application> &app) :
+  params_(sublist(parentParams, "Model Order Reduction")),
+  app_(app)
 {
   // Nothing to do
 }
 
 RCP<NOX::Epetra::Observer> MORObserverFactory::create(const RCP<NOX::Epetra::Observer> &child)
 {
-  if (collectSnapshots())
-  {
-    return rcp(new SnapshotCollectionObserver(getSnapParameters(), child));
+  RCP<NOX::Epetra::Observer> result = child;
+  
+  if (collectSnapshots()) {
+    result = rcp(new SnapshotCollectionObserver(getSnapParameters(), result));
   }
-  else
-  {
-    return child;
+  
+  if (computeProjectionError()) {
+    result = rcp(new ProjectionErrorObserver(getErrorParameters(), result, app_));
   }
+
+  return result;
 }
 
 bool MORObserverFactory::collectSnapshots() const
@@ -53,9 +60,19 @@ bool MORObserverFactory::collectSnapshots() const
   return getSnapParameters()->get("Activate", false);
 }
 
+bool MORObserverFactory::computeProjectionError() const
+{
+  return getErrorParameters()->get("Activate", false);
+}
+
 RCP<ParameterList> MORObserverFactory::getSnapParameters() const
 {
   return sublist(params_, "Snapshot Collection");
+}
+
+RCP<ParameterList> MORObserverFactory::getErrorParameters() const
+{
+  return sublist(params_, "Projection Error");
 }
 
 } // end namespace Albany

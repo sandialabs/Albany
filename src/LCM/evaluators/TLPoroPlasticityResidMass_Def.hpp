@@ -272,7 +272,7 @@ evaluateFields(typename Traits::EvalData workset)
   FST::integrate<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
 
   //---------------------------------------------------------------------------//
-  // Stabilization Term (only 2D and 3D problem need stabilizer)
+  // Stabilization Term
 
 // Penalty Term
 

@@ -14,47 +14,43 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
-#ifndef ALBANY_SNAPSHOTCOLLECTION_HPP
-#define ALBANY_SNAPSHOTCOLLECTION_HPP
+#include "Albany_MatrixMarketMVInputFile.hpp"
 
-#include "Albany_MultiVectorOutputFileFactory.hpp"
+#include "EpetraExt_MultiVectorIn.h"
 
-#include "Epetra_Vector.h"
+#include "Teuchos_TestForException.hpp"
+#include "Teuchos_Assert.hpp"
 
-#include "Teuchos_ParameterList.hpp"
-#include "Teuchos_RCP.hpp"
-
-#include <deque>
-#include <string>
+#include <stdexcept>
 #include <cstddef>
 
 namespace Albany {
 
-class SnapshotCollection {
-public:
-  explicit SnapshotCollection(const Teuchos::RCP<Teuchos::ParameterList> &params);
+using Teuchos::RCP;
+using Teuchos::rcp;
+using EpetraExt::MatrixMarketFileToMultiVector;
 
-  ~SnapshotCollection();
-  void addVector(double stamp, const Epetra_Vector &value);
+MatrixMarketMVInputFile::MatrixMarketMVInputFile(const std::string &path) :
+  MultiVectorInputFile(path)
+{
+  // Nothing to do
+}
 
-private:
-  Teuchos::RCP<Teuchos::ParameterList> params_;
-  static Teuchos::RCP<Teuchos::ParameterList> fillDefaultParams(const Teuchos::RCP<Teuchos::ParameterList> &params);
-  
-  MultiVectorOutputFileFactory snapshotFileFactory_;
-  
-  std::size_t period_;
-  void initPeriod();
+RCP<Epetra_MultiVector> MatrixMarketMVInputFile::read(const Epetra_Map &map)
+{
+  // Create an uninitialized raw pointer,
+  // to be passed by reference // to MatrixMarketFileToMultiVector for initialization
+  Epetra_MultiVector *raw_result = NULL;
+  const int err = MatrixMarketFileToMultiVector(path().c_str(), map, raw_result);
+  TEUCHOS_TEST_FOR_EXCEPTION(err != 0,
+                             std::runtime_error,
+                             "Cannot open input file: " + path());
 
-  std::size_t skipCount_;
-  std::deque<double> stamps_;
-  std::deque<Epetra_Vector> snapshots_;
+  // Take ownership of the returned newly allocated object 
+  RCP<Epetra_MultiVector> result(raw_result);
 
-  // Disallow copy and assignment
-  SnapshotCollection(const SnapshotCollection &);
-  SnapshotCollection &operator=(const SnapshotCollection &);
-};
+  TEUCHOS_TEST_FOR_EXCEPT(result.is_null());
+  return result;
+}
 
 } // end namespace Albany
-
-#endif /*ALBANY_SNAPSHOTCOLLECTION_HPP*/

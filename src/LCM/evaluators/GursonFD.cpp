@@ -14,40 +14,13 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
-#ifndef ALBANY_MOROBSERVERFACTORY_HPP
-#define ALBANY_MOROBSERVERFACTORY_HPP
 
-#include "NOX_Epetra_Observer.H"
+#include "PHAL_AlbanyTraits.hpp"
 
-#include "Teuchos_RCP.hpp"
-#include "Teuchos_ParameterList.hpp"
+#include "GursonFD.hpp"
+#include "GursonFD_Def.hpp"
 
-namespace Albany {
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::GursonFD)
 
-class Application;
 
-class MORObserverFactory {
-public:
-  MORObserverFactory(const Teuchos::RCP<Teuchos::ParameterList> &parentParams,
-                     const Teuchos::RCP<Application> &app);
 
-  Teuchos::RCP<NOX::Epetra::Observer> create(const Teuchos::RCP<NOX::Epetra::Observer> &child);
-
-private:
-  bool collectSnapshots() const;
-  bool computeProjectionError() const;
-
-  Teuchos::RCP<Teuchos::ParameterList> getSnapParameters() const;
-  Teuchos::RCP<Teuchos::ParameterList> getErrorParameters() const;
-
-  Teuchos::RCP<Teuchos::ParameterList> params_;
-  Teuchos::RCP<Application> app_;
-
-  // Disallow copy & assignment
-  MORObserverFactory(const MORObserverFactory &);
-  MORObserverFactory &operator=(const MORObserverFactory &);
-};
-
-} // end namespace Albany
-
-#endif /* ALBANY_MOROBSERVERFACTORY_HPP */

@@ -14,47 +14,50 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
-#ifndef ALBANY_SNAPSHOTCOLLECTION_HPP
-#define ALBANY_SNAPSHOTCOLLECTION_HPP
+#ifndef ALBANY_MULTIVECTOROUTPUTFILE_HPP
+#define ALBANY_MULTIVECTOROUTPUTFILE_HPP
 
-#include "Albany_MultiVectorOutputFileFactory.hpp"
+#include "Epetra_MultiVector.h"
+#include "Epetra_Map.h"
 
-#include "Epetra_Vector.h"
-
-#include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
 
-#include <deque>
 #include <string>
-#include <cstddef>
 
 namespace Albany {
 
-class SnapshotCollection {
+class MultiVectorOutputFile {
 public:
-  explicit SnapshotCollection(const Teuchos::RCP<Teuchos::ParameterList> &params);
+  std::string path() const { return path_; }
 
-  ~SnapshotCollection();
-  void addVector(double stamp, const Epetra_Vector &value);
+  virtual void write(const Epetra_MultiVector &mv) = 0;
+
+  virtual ~MultiVectorOutputFile();
+
+protected:
+  explicit MultiVectorOutputFile(const std::string &path);
 
 private:
-  Teuchos::RCP<Teuchos::ParameterList> params_;
-  static Teuchos::RCP<Teuchos::ParameterList> fillDefaultParams(const Teuchos::RCP<Teuchos::ParameterList> &params);
-  
-  MultiVectorOutputFileFactory snapshotFileFactory_;
-  
-  std::size_t period_;
-  void initPeriod();
-
-  std::size_t skipCount_;
-  std::deque<double> stamps_;
-  std::deque<Epetra_Vector> snapshots_;
+  std::string path_;
 
   // Disallow copy and assignment
-  SnapshotCollection(const SnapshotCollection &);
-  SnapshotCollection &operator=(const SnapshotCollection &);
+  MultiVectorOutputFile(const MultiVectorOutputFile &);
+  MultiVectorOutputFile &operator=(const MultiVectorOutputFile &);
 };
+
+inline
+MultiVectorOutputFile::MultiVectorOutputFile(const std::string &path) :
+  path_(path)
+{
+  // Nothing to do
+}
+
+inline
+MultiVectorOutputFile::~MultiVectorOutputFile()
+{
+  // Nothing to do
+}
 
 } // end namespace Albany
 
-#endif /*ALBANY_SNAPSHOTCOLLECTION_HPP*/
+#endif /* ALBANY_MULTIVECTOROUTPUTFILE_HPP */

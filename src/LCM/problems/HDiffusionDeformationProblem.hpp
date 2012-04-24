@@ -296,6 +296,21 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+  { // Constant Stabilization Parameter
+       RCP<ParameterList> p = rcp(new ParameterList);
+
+       p->set<string>("Material Property Name", "Stabilization Parameter");
+       p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+       p->set<string>("Coordinate Vector Name", "Coord Vec");
+       p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
+       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+       Teuchos::ParameterList& paramList = params->sublist("Stabilization Parameter");
+       p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+       ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
+       fm0.template registerEvaluator<EvalT>(ev);
+     }
+
   { // Constant Temperature
        RCP<ParameterList> p = rcp(new ParameterList);
 
@@ -618,7 +633,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
            ev = rcp(new LCM::GradientElementLength<EvalT,AlbanyTraits>(*p));
            fm0.template registerEvaluator<EvalT>(ev);
-           p = stateMgr.registerStateVariable("Gradient Element Length",dl->qp_scalar, dl->dummy,"scalar", 0.0);
+           p = stateMgr.registerStateVariable("Gradient Element Length",dl->qp_scalar, dl->dummy,"scalar", 1.0e-20);
            ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
            fm0.template registerEvaluator<EvalT>(ev);
     }
@@ -917,6 +932,8 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
     //Input
     p->set<string>("Element Length Name", "Gradient Element Length");
+    p->set<string>("Material Property Name", "Stabilization Parameter");
+
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<string>("Weighted BF Name", "wBF");
@@ -982,9 +999,13 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
     ev = rcp(new LCM::HDiffusionDeformationMatterResidual<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Lattice Concentration",dl->qp_scalar, dl->dummy,"scalar", 38.7,true);
+    p = stateMgr.registerStateVariable("Lattice Concentration",dl->qp_scalar, dl->dummy,"scalar", 38.7, true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+    p = stateMgr.registerStateVariable("Lattice Concentration Gradient", dl->qp_vector, dl->dummy ,"scalar" , 0.0  , true);
+    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+
   }
 
 
@@ -1016,7 +1037,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
      ev = rcp(new LCM::ScalarL2ProjectionResidual<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
-     p = stateMgr.registerStateVariable("Hydrostatic Stress",dl->qp_scalar, dl->dummy,"scalar", 0.0,true);
+     p = stateMgr.registerStateVariable("Hydrostatic Stress",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
    }
