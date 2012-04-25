@@ -754,6 +754,11 @@ IF (ALBANY_LCM)
     LCM/test/unit_tests/StandardUnitTestMain.cpp
     LCM/test/unit_tests/utLocalNonlinearSolver.cpp
   )
+     add_executable(
+    utLocalization 
+    LCM/test/unit_tests/StandardUnitTestMain.cpp
+    LCM/test/unit_tests/utLocalization.cpp
+  )
 ENDIF ()
 IF (ALBANY_LAME OR ALBANY_LAMENT)
   add_executable(utLameStress_elastic
@@ -798,4 +803,5 @@ IF (ALBANY_LCM)
   target_link_libraries(NodeUpdate albanyLib ${ALL_LIBRARIES})
   target_link_libraries(MeshComponents albanyLib ${ALL_LIBRARIES})
   target_link_libraries(utLocalNonlinearSolver albanyLib ${ALL_LIBRARIES})
+  target_link_libraries(utLocalization albanyLib ${ALL_LIBRARIES})
 ENDIF ()
