@@ -21,9 +21,6 @@
 #include "Intrepid_DefaultCubatureFactory.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 #include "Albany_Utils.hpp"
-// #include "Albany_StateManager.hpp"
-// #include "Albany_TmplSTKMeshStruct.hpp"
-// #include "Albany_STKDiscretization.hpp"
 #include "LCM/evaluators/Localization.hpp"
 #include "LCM/evaluators/SetField.hpp"
 #include "Tensor.h"
@@ -118,43 +115,6 @@ namespace {
     PHAL::AlbanyTraits::SetupData setupData = "Test String";
     fieldManager.postRegistrationSetup(setupData);
 
-    // // Create a state manager with required fields
-    // Albany::StateManager stateMgr;
-    // // Stress and DefGrad are required for all LAME models
-    // stateMgr.registerStateVariable("Stress", qp_tensor, "scalar", 0.0, true);
-    // stateMgr.registerStateVariable("Deformation Gradient", qp_tensor, "identity", 1.0, true);
-    // // Add material-model specific state variables
-    // string lameMaterialModelName = lameStressParameterList->get<string>("Lame Material Model");
-    // std::vector<std::string> lameMaterialModelStateVariableNames = LameUtils::getStateVariableNames(lameMaterialModelName, materialModelParametersList);
-    // std::vector<double> lameMaterialModelStateVariableInitialValues = LameUtils::getStateVariableInitialValues(lameMaterialModelName, materialModelParametersList);
-    // for(unsigned int i=0 ; i<lameMaterialModelStateVariableNames.size() ; ++i){
-    //   stateMgr.registerStateVariable(lameMaterialModelStateVariableNames[i],
-    //                                  qp_scalar,
-    //                                  Albany::doubleToInitString(lameMaterialModelStateVariableInitialValues[i]),
-    //                                  true);
-    // }
-
-    // // Create a discretization, as required by the StateManager
-    // Teuchos::RCP<Teuchos::ParameterList> discretizationParameterList = Teuchos::rcp(new Teuchos::ParameterList("Discretization"));
-    // discretizationParameterList->set<int>("1D Elements", worksetSize);
-    // discretizationParameterList->set<int>("2D Elements", 1);
-    // discretizationParameterList->set<int>("3D Elements", 1);
-    // discretizationParameterList->set<string>("Method", "STK3D");
-    // discretizationParameterList->set<string>("Exodus Output File Name", "unitTestOutput.exo"); // Is this required?
-    // Teuchos::RCP<Epetra_Comm> comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
-    // int numberOfEquations = 3;
-    // Teuchos::RCP<Albany::GenericSTKMeshStruct> stkMeshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(discretizationParameterList, comm));
-    // stkMeshStruct->setFieldAndBulkData(comm,
-    //                                    discretizationParameterList,
-    //                                    numberOfEquations,
-    //                                    stateMgr.getStateInfoStruct(),
-    //                                    stkMeshStruct->getMeshSpecs()[0]->worksetSize);
-    // Teuchos::RCP<Albany::AbstractDiscretization> discretization =
-    //   Teuchos::rcp(new Albany::STKDiscretization(stkMeshStruct, comm));
-
-    // // Associate the discretization with the StateManager
-    // stateMgr.setStateArrays(discretization);
-
     // Create a workset
     PHAL::Workset workset;
     workset.numCells = worksetSize;
@@ -168,10 +128,6 @@ namespace {
     // Pull the stress from the FieldManager
     PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT,Cell,QuadPoint,Dim,Dim> defGradField("defGrad", qp_tensor);
     fieldManager.getFieldData<PHAL::AlbanyTraits::Residual::ScalarT, PHAL::AlbanyTraits::Residual, Cell, QuadPoint, Dim, Dim>(defGradField);
-
-    // Assert the dimensions of the stress field
-    //   std::vector<size_type> stressFieldDimensions;
-    //   stressField.dimensions(stressFieldDimensions);
 
     // Record the expected stress, which will be used to check the computed stress
     LCM::Tensor<PHAL::AlbanyTraits::Residual::ScalarT>

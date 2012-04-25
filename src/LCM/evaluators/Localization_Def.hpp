@@ -75,7 +75,7 @@ Localization(const Teuchos::ParameterList& p) :
   // compute reference configuration info
   computeMidplaneCoords(currentCoords, midplaneCoords);
   computeBaseVectors(midplaneCoords, bases);
-  computeDualBaseVectors(midplaneCoords, normals, dualBases);
+  computeDualBaseVectors(midplaneCoords, bases, normals, dualBases);
   computeJacobian(bases, dualBases, area, jacobian);
 
   this->setName("Localization"+PHX::TypeString<EvalT>::value);
@@ -103,6 +103,7 @@ evaluateFields(typename Traits::EvalData workset)
     computeMidplaneCoords(currentCoords, midplaneCoords);
 
     // compute base vectors
+    computeBaseVectors(midplaneCoords, bases);
 
     // compute gap
 
@@ -168,8 +169,20 @@ computeBaseVectors(const FC & midplaneCoords, FC & bases)
 //----------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 void Localization<EvalT, Traits>::
-computeDualBaseVectors(const FC & midplaneCoords, FC & normals, FC & dualBases)
+computeDualBaseVectors(const FC & midplaneCoords, const FC & bases, FC & normals, FC & dualBases)
 {
+  typedef LCM::Vector<ScalarT> V;
+  std::size_t worksetSize = midplaneCoords.dimension(0);
+
+  V g_1(0.0), g_2(0.0), g_3(0.0);
+
+  for (std::size_t cell(0); cell < worksetSize; ++cell)
+  {
+    for (std::size_t pt(0); pt < numQPs; ++pt)
+    {
+      // need assignment of FC to Vector
+    }
+  }
 }
 //----------------------------------------------------------------------
 template<typename EvalT, typename Traits>

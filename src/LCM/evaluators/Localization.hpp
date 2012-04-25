@@ -48,10 +48,37 @@ public:
 
   void evaluateFields(typename Traits::EvalData d);
 
+  ///
+  /// Takes the current coordinates and computes the midplane
+  /// \param currentCoords
+  /// \param midplaneCoords
+  ///
   void computeMidplaneCoords(PHX::MDField<ScalarT,Cell,Vertex,Dim> currentCoords,
                              FC & midplaneCoords);
+
+  ///
+  /// Computes current configuration Bases from the midplane
+  /// \param midplaneCoords
+  /// \param bases
+  ///
   void computeBaseVectors(const FC & midplaneCoords, FC & bases);
-  void computeDualBaseVectors(const FC & midplaneCoords, FC & normals, FC & dualBases);
+
+  ///
+  /// Computes the Dual from the midplane and current bases
+  /// \param midplaneCoords
+  /// \param bases
+  /// \param normals
+  /// \param dualBases
+  ///
+  void computeDualBaseVectors(const FC & midplaneCoords, const FC & bases, FC & normals, FC & dualBases);
+
+  ///
+  /// Computes the jacobian mapping - da/dA
+  /// \param bases
+  /// \param dualBases
+  /// \param area
+  /// \param jacobian
+  ///
   void computeJacobian(const FC & bases, const FC & dualBases, FC & area, FC & jacobian);
 
 private:
