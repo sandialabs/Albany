@@ -754,10 +754,15 @@ IF (ALBANY_LCM)
     LCM/test/unit_tests/StandardUnitTestMain.cpp
     LCM/test/unit_tests/utLocalNonlinearSolver.cpp
   )
-     add_executable(
+  add_executable(
     utLocalization 
     LCM/test/unit_tests/StandardUnitTestMain.cpp
     LCM/test/unit_tests/utLocalization.cpp
+  )
+  add_executable(
+    utTensorUtils 
+    LCM/test/unit_tests/StandardUnitTestMain.cpp
+    LCM/test/unit_tests/utTensorUtils.cpp
   )
 ENDIF ()
 IF (ALBANY_LAME OR ALBANY_LAMENT)
@@ -804,4 +809,5 @@ IF (ALBANY_LCM)
   target_link_libraries(MeshComponents albanyLib ${ALL_LIBRARIES})
   target_link_libraries(utLocalNonlinearSolver albanyLib ${ALL_LIBRARIES})
   target_link_libraries(utLocalization albanyLib ${ALL_LIBRARIES})
+  target_link_libraries(utTensorUtils albanyLib ${ALL_LIBRARIES})
 ENDIF ()
