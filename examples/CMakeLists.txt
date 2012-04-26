@@ -49,7 +49,6 @@ set(SerialAlbanyDakota.exe  ${Albany_BINARY_DIR}/src/AlbanyDakota)
 
 # Tests
 IF(ALBANY_LCM)
-  set(UtilsTest.exe  ${Albany_BINARY_DIR}/src/UtilsTest)
   set(PartitionTest.exe  ${Albany_BINARY_DIR}/src/PartitionTest)
 ENDIF()
 
@@ -91,7 +90,6 @@ IF(ALBANY_LCM)
   add_subdirectory(ThermoMechanical3D)
   add_subdirectory(ThermoPoroMechanics3D)
   add_subdirectory(J2Plasticity2D)	
-  add_subdirectory(UtilsTest)
   add_subdirectory(UnitTests)
   add_subdirectory(Partition)
   add_subdirectory(GradientDamage)

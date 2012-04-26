@@ -32,4 +32,197 @@ namespace {
     TEST_COMPARE( u + v == w, !=, 0 );
   }
 
+  TEUCHOS_UNIT_TEST( TensorUtils, VectorSubtraction )
+  {
+    LCM::Vector<ScalarT> u(0.0);
+    LCM::Vector<ScalarT> v(1.0);
+    u(0) = 1.0;
+    u(1) = 2.0;
+    u(2) = 3.0;
+    
+    v = u - u;
+
+    TEST_COMPARE( LCM::norm(v), <=, std::numeric_limits<ScalarT>::epsilon());
+  }
+
+  TEUCHOS_UNIT_TEST( TensorUtils, VectorScalarMultipliaction )
+  {
+    LCM::Vector<ScalarT> u(0.0);
+    LCM::Vector<ScalarT> v(1.0);
+    LCM::Vector<ScalarT> w(1.0);
+    u(0) = 1.0;
+    u(1) = 2.0;
+    u(2) = 3.0;
+
+    v(0) = -2.0;
+    v(1) = -4.0;
+    v(2) = -6.0;
+
+    w = 4.0 * u + 2.0 * v;
+
+    TEST_COMPARE( LCM::norm(w), <=, std::numeric_limits<ScalarT>::epsilon());
+  }
+
+  TEUCHOS_UNIT_TEST( TensorUtils, TensorAddition )
+  {
+    LCM::Tensor<ScalarT> A(1.0);
+    LCM::Tensor<ScalarT> B(2.0);
+    LCM::Tensor<ScalarT> C(3.0);
+
+    TEST_COMPARE( C == A + B, !=, 0 );
+  }
+
+  TEUCHOS_UNIT_TEST( TensorUtils, TensorManipulation )
+  {
+    LCM::Tensor<ScalarT> A = LCM::eye<ScalarT>();
+    LCM::Tensor<ScalarT> B(0.0);
+    LCM::Tensor<ScalarT> C(0.0);
+    LCM::Vector<ScalarT> u(0.0);
+
+    A = 2.0 * A;
+    A(1,0) = A(0,1) = 1.0;
+    A(2,1) = A(1,2) = 1.0;
+
+    B = LCM::inverse(A);
+
+    C = A * B;
+
+    TEST_COMPARE( LCM::norm(C - LCM::eye<ScalarT>()), <=, std::numeric_limits<ScalarT>::epsilon() );
+
+    ScalarT I1 = LCM::I1(A);
+    ScalarT I2 = LCM::I2(A);
+    ScalarT I3 = LCM::I3(A);
+    
+    u(0) = I1 - 6;
+    u(1) = I2 - 10;
+    u(2) = I3 - 4;
+
+    TEST_COMPARE( LCM::norm(u), <=, std::numeric_limits<ScalarT>::epsilon() );
+  }
+
+  TEUCHOS_UNIT_TEST( TensorUtils, TensorLogExp )
+  {
+    LCM::Tensor<ScalarT> A = LCM::eye<ScalarT>();
+    LCM::Tensor<ScalarT> B = LCM::log(A);
+
+    TEST_COMPARE( LCM::norm(B), <=, std::numeric_limits<ScalarT>::epsilon() );
+
+    LCM::Tensor<ScalarT> C = LCM::exp(B);
+
+    C -= A;
+
+    TEST_COMPARE( LCM::norm(C), <=, std::numeric_limits<ScalarT>::epsilon() );
+  }
+
+  TEUCHOS_UNIT_TEST( TensorUtils, TensorEig_Spd )
+  {
+    LCM::Tensor<ScalarT> A = LCM::eye<ScalarT>();
+    A(0,1) = 0.1;
+    A(1,0) = 0.1;
+    LCM::Tensor<ScalarT> eVec;
+    LCM::Tensor<ScalarT> eVal;
+    boost::tie(eVec,eVal) = LCM::eig_spd(A);
+
+    TEST_COMPARE( std::abs(eVal(0,0) - 1.0), <=, std::numeric_limits<ScalarT>::epsilon() );
+    TEST_COMPARE( std::abs(eVal(1,1) - 0.9), <=, std::numeric_limits<ScalarT>::epsilon() );
+    TEST_COMPARE( std::abs(eVal(2,2) - 1.1), <=, std::numeric_limits<ScalarT>::epsilon() );
+  }
+
+  TEUCHOS_UNIT_TEST( TensorUtils, TensorLeftPolarDecomposition )
+  {
+    LCM::Tensor<ScalarT> V0(1.1, 0.2, 0.0,
+                            0.2, 1.0, 0.0,
+                            0.0, 0.0, 1.2);
+    LCM::Tensor<ScalarT> R0(sqrt(2)/2, -sqrt(2)/2, 0.0,
+                            sqrt(2)/2,  sqrt(2)/2, 0.0,
+                            0.0,        0.0,       1.0);
+
+    LCM::Tensor<ScalarT> F = V0*R0;
+    LCM::Tensor<ScalarT> V;
+    LCM::Tensor<ScalarT> R;
+    boost::tie(V,R) = LCM::polar_left(F);
+
+    TEST_COMPARE( LCM::norm(V-V0), <=, 10*std::numeric_limits<ScalarT>::epsilon() );
+    TEST_COMPARE( LCM::norm(R-R0), <=, std::numeric_limits<ScalarT>::epsilon() );
+  }
+
+  TEUCHOS_UNIT_TEST( TensorUtils, TensorLogRotation )
+  {
+    LCM::Tensor<ScalarT> R = LCM::identity<ScalarT>();
+    LCM::Tensor<ScalarT> R0(sqrt(2)/2, -sqrt(2)/2, 0.0,
+                            sqrt(2)/2,  sqrt(2)/2, 0.0,
+                            0.0,        0.0,       1.0);
+
+    LCM::Tensor<ScalarT> r  = log_rotation(R);
+    LCM::Tensor<ScalarT> r0 = log_rotation(R0);
+
+    TEST_COMPARE( LCM::norm(r), <=, std::numeric_limits<ScalarT>::epsilon() );
+    TEST_COMPARE( std::abs(r0(0,1) + 0.785398163397448), <=, 10*std::numeric_limits<ScalarT>::epsilon() );
+    TEST_COMPARE( std::abs(r0(0,1) + r0(1,0)), <=, std::numeric_limits<ScalarT>::epsilon() );
+
+    ScalarT theta = std::acos(-1.0) + 10*std::numeric_limits<ScalarT>::epsilon(); // rotation angle
+    
+    R(0,0) =  cos(theta);
+    R(1,1) =  cos(theta);
+    R(0,1) =  sin(theta);
+    R(1,0) = -sin(theta);
+    R(2,2) =  1.0;
+
+    LCM::Tensor<ScalarT> logR = log_rotation(R); 
+
+    LCM::Tensor<ScalarT> Rref(0.0);
+    Rref(0,1) = -theta;
+    Rref(1,0) = theta;
+
+    TEST_COMPARE( LCM::norm(logR - Rref), <=, 100*std::numeric_limits<ScalarT>::epsilon() );
+  }
+
+  TEUCHOS_UNIT_TEST( TensorUtils, TensorBCHExp )
+  {
+    LCM::Tensor<ScalarT> F = 3.0*LCM::identity<ScalarT>();
+    LCM::Tensor<ScalarT> V, R, logV, logR;
+
+    boost::tie(V,R,logV) = polar_left_logV(F);
+    logR = log_rotation(R);
+    
+    LCM::Tensor<ScalarT> f = LCM::bch(logV,logR);
+
+    TEST_COMPARE( std::abs(f(0,0) - std::log(3.0)), <=, std::numeric_limits<ScalarT>::epsilon() );
+
+    LCM::Vector<ScalarT> u(0);
+    u(0) = std::acos(-1.0)/std::sqrt(2.0);
+    u(1) = u(0);
+    u(2) = 0.0;
+
+    LCM::Tensor<ScalarT> R1(0.0);
+    LCM::Tensor<ScalarT> logR2(0.0);
+    logR2(0,2) =  u(1);
+    logR2(1,2) = -u(0);
+    logR2(2,0) = -u(1);
+    logR2(2,1) =  u(0);
+    logR2(0,1) = -u(2);
+    logR2(1,0) =  u(2);
+
+    R1 = LCM::exp_skew_symmetric(logR2);
+    LCM::Tensor<ScalarT> Rref = LCM::zero<ScalarT>();
+    Rref(0,1) = 1.0;
+    Rref(1,0) = 1.0;
+    Rref(2,2) = -1.0;
+
+    TEST_COMPARE( norm(Rref-R1), <=, 100*std::numeric_limits<ScalarT>::epsilon() );
+    TEST_COMPARE( norm(exp_skew_symmetric(logR) - R), <=, 100*std::numeric_limits<ScalarT>::epsilon() );
+  }
+
+  TEUCHOS_UNIT_TEST( TensorUtils, TensorVolDev )
+  {
+    LCM::Tensor<ScalarT> A = 3.0 * LCM::eye<ScalarT>();
+    
+    TEST_COMPARE( norm(A - vol(A)), <=, 100*std::numeric_limits<ScalarT>::epsilon() );
+  
+    A = 3.0;
+    LCM::Tensor<ScalarT> B = dev(A);
+    A(0,0) = 0.0; A(1,1) = 0.0; A(2,2) = 0.0;
+    TEST_COMPARE( norm(A - B), <=, 100*std::numeric_limits<ScalarT>::epsilon() );
+  }
+
 } // namespace

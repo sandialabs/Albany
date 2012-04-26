@@ -746,7 +746,6 @@ add_executable(AlbanyAnalysis Main_Analysis.cpp)
 # Tests
 IF (ALBANY_LCM)
   add_executable(PartitionTest LCM/test/utils/PartitionTest.cc)
-  add_executable(UtilsTest LCM/test/utils/UtilsTest.cc)
   add_executable(NodeUpdate LCM/test/utils/NodeUpdate.cc)
   add_executable(MeshComponents LCM/test/utils/MeshComponents.cc)
   add_executable(
@@ -804,7 +803,6 @@ target_link_libraries(AlbanyAnalysis  albanyLib ${ALL_LIBRARIES})
 #Linking tests
 IF (ALBANY_LCM)
   target_link_libraries(PartitionTest albanyLib ${ALL_LIBRARIES})
-  target_link_libraries(UtilsTest albanyLib ${ALL_LIBRARIES})
   target_link_libraries(NodeUpdate albanyLib ${ALL_LIBRARIES})
   target_link_libraries(MeshComponents albanyLib ${ALL_LIBRARIES})
   target_link_libraries(utLocalNonlinearSolver albanyLib ${ALL_LIBRARIES})
