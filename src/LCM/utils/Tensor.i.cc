@@ -62,6 +62,38 @@ namespace LCM {
   }
 
   //
+  // Create vector specifying components - const version
+  // \param data
+  //
+  template<typename ScalarT>
+  inline
+  Vector<ScalarT>::Vector(const ScalarT * dataPtr)
+  {
+    assert(dataPtr != NULL);
+    e[0] = dataPtr[0];
+    e[1] = dataPtr[1];
+    e[2] = dataPtr[2];
+
+    return;
+  }
+
+  //
+  // Create vector specifying components
+  // \param data
+  //
+  template<typename ScalarT>
+  inline
+  Vector<ScalarT>::Vector(ScalarT * dataPtr)
+  {
+    assert(dataPtr != NULL);
+    e[0] = dataPtr[0];
+    e[1] = dataPtr[1];
+    e[2] = dataPtr[2];
+
+    return;
+  }
+
+  //
   // Copy constructor
   // \param v the values of its componets are copied to the new vector
   //

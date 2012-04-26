@@ -50,6 +50,18 @@ namespace LCM {
     Vector(const ScalarT s0, const ScalarT s1, const ScalarT s2);
 
     ///
+    /// Create vector from array - const version
+    /// \param data pointer into the array
+    ///
+    Vector(const ScalarT * dataPtr);
+
+    ///
+    /// Create vector from array
+    /// \param data pointer into the array
+    ///
+    Vector(ScalarT * dataPtr);
+
+    ///
     /// Copy constructor
     /// \param v the values of its componets are copied to the new vector
     ///
