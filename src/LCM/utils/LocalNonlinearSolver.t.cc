@@ -73,6 +73,8 @@ namespace LCM {
     int info(0);
     std::vector<int> IPIV(numLocalVars);
 
+    std::cout << "##########SOLVE###############" << std::endl;
+
     // fill B and dBdX
     std::vector<RealType> F(numLocalVars);
     std::vector<RealType> dFdX(numLocalVars*numLocalVars);
@@ -81,7 +83,8 @@ namespace LCM {
       F[i] = B[i].val();
       for(int j(0); j < numLocalVars; ++j)
       {
-        dFdX[numLocalVars * i + j] = A[numLocalVars * i + j].val();
+        dFdX[i + numLocalVars * j] = A[i + numLocalVars * j].val();
+		std::cout << "dFdX(" << i << ", "<< j << ")= "<< dFdX[i + numLocalVars * j] << std::endl;
       }
     }
 
@@ -91,6 +94,9 @@ namespace LCM {
     // increment the solution
     for(int i(0); i < numLocalVars; ++i)
       X[i].val() -= F[i];
+
+    std::cout << "##########END SOLVE###############" << std::endl;
+
   }
 
   template<typename Traits>
@@ -108,11 +114,15 @@ namespace LCM {
     int info(0);
     std::vector<int> IPIV(numLocalVars);
 
+    std::cout << "##########JACOBIAN###############" << std::endl;
+
     // extract sensitivities of objective function(s) wrt p
     std::vector<RealType> dBdP(numLocalVars*numGlobalVars);
     for (int i(0); i < numLocalVars; ++i){
       for (int j(0); j < numGlobalVars; ++j){
     	    dBdP[i + numLocalVars * j] = B[i].dx(j);
+			std::cout << "dFdP(" << i << ", "<< j << ")= "<< B[i].dx(j) << std::endl;
+
       }
     }
 
@@ -121,10 +131,14 @@ namespace LCM {
     for (int i(0); i < numLocalVars; ++i){
       for (int j(0); j < numLocalVars; ++j ){
     	  dBdX[i + numLocalVars * j] = A[i + numLocalVars * j].val();
+			std::cout << "dFdX(" << i << ", "<< j << ")= "<< dBdX[i + numLocalVars * j] << std::endl;
       }
     }
     // call LAPACK to simultaneously solve for all dXdP
     this->lapack.GESV(numLocalVars, numGlobalVars, &dBdX[0], numLocalVars, &IPIV[0], &dBdP[0], numLocalVars, &info);
+
+    std::cout << "INFO  : " << info << std::endl;
+    std::cout << "###########JACOBIAN END##############" << std::endl;
 
     // unpack into globalX (recall that LAPACK stores dXdP in dBdP)
     for (int i(0); i < numLocalVars; ++i)
@@ -165,7 +179,7 @@ namespace LCM {
       F[i] = B[i].val();
       for(int j(0); j < numLocalVars; ++j)
       {
-        dFdX[numLocalVars * i + j] = A[numLocalVars * i + j].val();
+        dFdX[i + numLocalVars * j] = A[i + numLocalVars * j].val();
       }
     }
 
@@ -192,11 +206,15 @@ namespace LCM {
     int info(0);
     std::vector<int> IPIV(numLocalVars);
 
+    std::cout << "*************TANGENT*************" << std::endl;
+
     // extract sensitivites of objective function(s) wrt p
     std::vector<RealType> dBdP(numLocalVars*numGlobalVars);
     for (int i(0); i < numLocalVars; ++i){
       for (int j(0); j < numGlobalVars; ++j){
          dBdP[i + numLocalVars * j] = B[i].dx(j);
+		 std::cout << "dFdP(" << i << ", "<< j << ")= "<< B[i].dx(j) << std::endl;
+
       }
     }
 
@@ -210,6 +228,9 @@ namespace LCM {
 
     // call LAPACK to simultaneously solve for all dXdP
     this->lapack.GESV(numLocalVars, numGlobalVars, &dBdX[0], numLocalVars, &IPIV[0], &dBdP[0], numLocalVars, &info);
+
+    std::cout << "INFO  : " << info << std::endl;
+    std::cout << "*************TANGENT END*************" << std::endl;
 
     // unpack into globalX (recall that LAPACK stores dXdP in dBdP)
     for (int i(0); i < numLocalVars; ++i)

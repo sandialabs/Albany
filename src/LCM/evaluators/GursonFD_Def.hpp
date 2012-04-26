@@ -127,11 +127,11 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT mu;
   ScalarT K, Y, siginf, delta;
   ScalarT trd3;
-  ScalarT smag, Phi, p, dgam(0.0);
+  ScalarT Phi, p, dgam(0.0);
   ScalarT sq23 = std::sqrt(2./3.);
+  ScalarT sq32 = std::sqrt(3./2.);
 
   ScalarT fvoid, eq;
-  LCM::Tensor<ScalarT> s;
 
   // previous state
   Albany::MDArray Fpold = (*workset.stateArrayPtr)[fpName];
@@ -181,7 +181,7 @@ evaluateFields(typename Traits::EvalData workset)
 //
 //
 //      std::cout << "trace(logbe)/3 " << trd3 << std::endl;
-      std::cout << "J " << J(cell,qp) << std::endl;
+//      std::cout << "J " << J(cell,qp) << std::endl;
 //      std::cout << "det(be) " << detbe << std::endl;
 //      std::cout << "trace(logbe)/3 " << trd3 << std::endl;
 
@@ -192,11 +192,29 @@ evaluateFields(typename Traits::EvalData workset)
       eq = eqpsold(cell,qp);
 
       Phi = compute_Phi(s, p, fvoid, eq, K, Y, siginf, delta);
-      std::cout << "Phi= " << Phi << std::endl;
-      std::cout << "p= " << p << std::endl;
-      std::cout << "fvoid= " << fvoid << std::endl;
-      std::cout << "eq= " << eq << std::endl;
+//      std::cout << "Phi= " << Phi << std::endl;
+//      std::cout << "p= " << p << std::endl;
+//      std::cout << "fvoid= " << fvoid << std::endl;
+//      std::cout << "eq= " << eq << std::endl;
 
+      // debugging
+      ScalarT smag = LCM::dotdot(s, s);
+      smag = std::sqrt(smag);
+
+//      std::cout << "smag : " << Sacado::ScalarValue<ScalarT>::eval(smag) << std::endl;
+//      std::cout << "eqpsold: " << Sacado::ScalarValue<ScalarT>::eval(eqpsold(cell,qp)) << std::endl;
+//      std::cout << "K      : " << Sacado::ScalarValue<ScalarT>::eval(K) << std::endl;
+//      std::cout << "Y      : " << Sacado::ScalarValue<ScalarT>::eval(Y) << std::endl;
+//      std::cout << "f      : " << Sacado::ScalarValue<ScalarT>::eval(Phi) << std::endl;
+
+	  std::cout << "----------" << std::endl;
+	  	std::cout << "mu     : " << mu << std::endl;
+	  	std::cout << "trd3   : " << trd3 << std::endl;
+		std::cout << "smag   : " << smag << std::endl;
+		std::cout << "eqpsold: " << eqpsold(cell,qp) << std::endl;
+		std::cout << "K      : " << K << std::endl;
+		std::cout << "Y      : " << Y << std::endl;
+		std::cout << "f      : " << Phi << std::endl;
 
       if (Phi > 1.e-12)
       {// plastic yielding
@@ -208,8 +226,18 @@ evaluateFields(typename Traits::EvalData workset)
     	  std::vector<ScalarT> dRdX(16);
     	  std::vector<ScalarT> X(4);
 
+    	  dgam = 0.0;
+
     	  X[0] = p, X[1] = fvoid, X[2] = eq, X[3] = dgam;
     	  LocalNonlinearSolver<EvalT, Traits> solver;
+
+    	  std::cout << "----------" << std::endl;
+
+		  std::cout << "initialization---" << std::endl;
+		  std::cout << "p      : " << p << std::endl;
+		  std::cout << "eq     : " << eq << std::endl;
+		  std::cout << "--------" << std::endl;
+
 
     	  // local N-R loop
     	  while (!converged){
@@ -226,10 +254,14 @@ evaluateFields(typename Traits::EvalData workset)
 			if(normR0 != 0) conv = normR / normR0;
 			else conv = normR0;
 
-			//std::cout << "iter= " << iter << std::endl;
+			std::cout << "count : " << iter << std::endl;
+	    	std::cout << "F[0]  : " << R[0]<< std::endl;
+
+		    //std::cout << "normR = " << Sacado::ScalarValue<ScalarT>::eval(normR) << std::endl;
+
 			//std::cout << "conv= " << conv << " normR= " << normR << std::endl;
 
-			if(conv < 1.e-12 || normR < 1.e-12) break;
+			if(conv < 1.e-11 || normR < 1.e-11) break;
 			if(iter > 20) break;
 
 
@@ -254,9 +286,18 @@ evaluateFields(typename Traits::EvalData workset)
 			iter ++;
     	  }// end of local N-R
 
-//    	  std::cout << "after local N-R"<< std::endl;
-//          std::cout << "R= " << R[0] << " " << R[1] << " " << R[2] << " " << R[3]<< std::endl;
-//          std::cout << "X= " << X[0] << " " << X[1] << " " << X[2] << " " << X[3]<< std::endl;
+    	  std::cout << "----------" << std::endl;
+    	  std::cout << "BEFORE sensitivity information calculated"<< std::endl;
+          //std::cout << "R= " << R[0] << " " << R[1] << " " << R[2] << " " << R[3]<< std::endl;
+          //std::cout << "p= " << X[0] << " fvoid= " << X[1] << " eq= " << X[2] << " dgam= " << X[3]<< std::endl;
+
+    	  std::cout << "F[0]  : " << R[0]<< std::endl;
+    	  std::cout << "dgam  : " << X[3]<< std::endl;
+
+    	  std::cout << "F[1]  : " << R[1]<< std::endl;
+    	  std::cout << "F[2]  : " << R[2]<< std::endl;
+    	  std::cout << "F[3]  : " << R[3]<< std::endl;
+
 //			std::cout << "dRdX0, 1, 2, 3= " << dRdX[0] << " "<< dRdX[1] << " "
 //					<< dRdX[2] << " "<< dRdX[3] << std::endl;
 //			std::cout << "dRdX4, 5, 6, 7= " << dRdX[4] << " "<< dRdX[5] << " "
@@ -265,7 +306,7 @@ evaluateFields(typename Traits::EvalData workset)
 //					<< dRdX[10] << " "<< dRdX[11] << std::endl;
 //			std::cout << "dRdX12, 13, 14, 15= " << dRdX[12] << " "<< dRdX[13] << " "
 //					<< dRdX[14] << " "<< dRdX[15] << std::endl;
-//			std::cout << "=============Calling computeFadInfo ============" << std::endl;
+			std::cout << " Calling computeFadInfo ......" << std::endl;
 
     	  // compute sensitivity information, and pack back to X
           solver.computeFadInfo(dRdX, X, R);
@@ -281,30 +322,83 @@ evaluateFields(typename Traits::EvalData workset)
           fvoid = X[1];
           eq = X[2];
           dgam = X[3];
-          s = ScalarT(1. / (1. + 2. * mu * dgam)) * s;
 
-      	  ScalarT h = siginf * (1. - std::exp(-delta * eq)) + K * eq;
-      	  ScalarT Ybar = Y;
-      	  if(std::abs(fvoid - 1.) > 1.0e-12)
-      		Ybar = Y + h / (1. - fvoid);
+          // checking
+          // original expression
+          //s = ScalarT(1. / (1. + 2. * mu * dgam)) * s;
 
-      	  ScalarT tmp = 1.5 * p / Ybar;
-      	  ScalarT sinhtmp = std::sinh(tmp);
+          // plastic direction
+          for (std::size_t i=0; i < numDims; ++i)
+            for (std::size_t j=0; j < numDims; ++j)
+              N(i,j) = (1/smag) * s(i,j);
 
-  		  LCM::Tensor<ScalarT> dPhidtau(0.0);
+          for (std::size_t i=0; i < numDims; ++i)
+            for (std::size_t j=0; j < numDims; ++j)
+              s(i,j) -= 2. * mu * dgam * N(i,j);
+
+    	 std::cout << "----------" << std::endl;
+         std::cout << "AFTER sensitivity information calculated"<< std::endl;
+         std::cout << "dgam  : " << dgam << std::endl;
+         ScalarT smagT = LCM::dotdot(s,s);
+         std::cout << "smag  : " << std::sqrt(smagT) << std::endl;
+         //std::cout << "fvoid : " << fvoid << std::endl;
+
+         std::cout << "eq    : " << eq << std::endl;
+         std::cout << "p     : " << p << std::endl;
+
+
+//      	  ScalarT h = siginf * (1. - std::exp(-delta * eq)) + K * eq;
+//      	  ScalarT Ybar = Y;
+//      	  if(std::abs(fvoid - 1.) > 1.0e-12)
+//      		Ybar = Y + h / (1. - fvoid);
+//
+
+
+		ScalarT h = siginf * (1. - std::exp(-delta * eq)) + K * eq;
+		ScalarT Ybar = Y + h;
+		ScalarT tmp = 1.5 * p / Ybar;
+
+		ScalarT psi;
+		psi = 1. + fvoid * fvoid  -  2. * fvoid * std::cosh(tmp);
+	    //std::cout << "psi= " << psi << std::endl;
+
+		ScalarT psi_sign = 1;
+		if (psi < 0) psi_sign = -1;
+
+		psi = std::abs(psi);
+
+     	ScalarT t;
+     	t = std::sinh(tmp);
+     	t = t / std::sqrt(psi);
+     	t = fvoid * t;
+     	t = sq32 * t;
+     	t = dgam * t;
+
+  		  LCM::Tensor<ScalarT> dPhi(0.0);
 
   		  for (std::size_t i=0; i < numDims; ++i){
 			for (std::size_t j=0; j < numDims; ++j){
-				dPhidtau(i,j) = s(i,j);
+				dPhi(i,j) = dgam * N(i,j);
 			}
-			dPhidtau(i,i) += 1./3. * Ybar * fvoid * sinhtmp;
+			dPhi(i,i) += 1./3. * t;
   		  }
 
-  		  LCM::Tensor<ScalarT> A = dgam * dPhidtau;
-  		  LCM::Tensor<ScalarT> expA = LCM::exp(A);
+  		  A = dPhi; //?factor of 2
+  		  expA = LCM::exp(A);
+
+          std::cout << "  " << std::endl;
+
+  		  for (std::size_t i=0; i < numDims; ++i){
+			for (std::size_t j=0; j < numDims; ++j){
+				std::cout << "A(" << i << ", "<< j << ")= "<< A(i,j) << std::endl;
+			}
+		}
+
+
 
   		  eqps(cell, qp) = eq;
   		  voidVolume(cell, qp) = fvoid;
+
           for (std::size_t i=0; i < numDims; ++i){
             for (std::size_t j=0; j < numDims; ++j){
               Fp(cell,qp,i,j) = 0.0;
@@ -313,6 +407,18 @@ evaluateFields(typename Traits::EvalData workset)
               }
             }
           }
+
+          std::cout << "  " << std::endl;
+  		  for (std::size_t i=0; i < numDims; ++i){
+			for (std::size_t j=0; j < numDims; ++j){
+				std::cout << "Fp(" << i << ", "<< j << ")= "<< Fp(i,j) << std::endl;
+			}
+		}
+
+  		  std::cout << "eqps: " << eq << std::endl;
+  		  //std::cout << "fvoid: " << fvoid << std::endl;
+
+    	    std::cout << "====================="<< std::endl;
 
       } // end of plastic loading
       else
@@ -335,6 +441,15 @@ evaluateFields(typename Traits::EvalData workset)
         stress(cell,qp,i,i) += p / J(cell,qp);
       }
 
+      std::cout << "  " << std::endl;
+      std::cout << "J     : " << J(cell,qp) << std::endl;
+		  for (std::size_t i=0; i < numDims; ++i){
+		for (std::size_t j=0; j < numDims; ++j){
+			std::cout << "stress(" << i << ", "<< j << ")= "<< stress(i,j) << std::endl;
+		}
+	}
+
+
     }// end of loop over qp
   } //end of loop over cell
 
@@ -346,6 +461,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t i=0; i < numDims; ++i)
           Fp(cell,qp,i,i) = 1.0;
 
+  std::cout << "====================="<< std::endl;
 
 } // end of evaluateFields
 
@@ -359,15 +475,32 @@ GursonFD<EvalT, Traits>::compute_Phi(LCM::Tensor<ScalarT> & s, ScalarT & p, Scal
 {
 
 	ScalarT h = siginf * (1. - std::exp(-delta * eq)) + K * eq;
-	ScalarT Ybar = Y;
-	if(std::abs(fvoid - 1.) > 1.0e-12)
-		Ybar = Y + h / (1. - fvoid);
+	// original
+//	if(std::abs(fvoid - 1.) > 1.0e-12)
+//		Ybar = Y + h / (1. - fvoid);
+
+	// for linear form
+	ScalarT Ybar = Y + h;
 
 	ScalarT tmp = 1.5 * p / Ybar;
 
 	ScalarT psi = 1. + fvoid * fvoid - 2. * fvoid * std::cosh(tmp);
 
-	return 0.5 * LCM::dotdot(s, s) - psi * Ybar * Ybar / 3.0;
+	ScalarT psi_sign = 1;
+	if (psi < 0) psi_sign = -1;
+
+	psi = std::abs(psi);
+
+	// original Gurson:
+	//ScalarT Phi = 0.5 * LCM::dotdot(s, s) - psi * Ybar * Ybar / 3.0;
+
+	// linear form
+	ScalarT smag = LCM::dotdot(s,s);
+	smag = std::sqrt(smag);
+	ScalarT sq23 = std::sqrt(2./3.);
+	ScalarT Phi = smag - sq23 * std::sqrt(psi) * psi_sign * Ybar;
+
+	return Phi;
 }
 
 template<typename EvalT, typename Traits>
@@ -377,10 +510,20 @@ GursonFD<EvalT, Traits>::compute_ResidJacobian(std::vector<ScalarT> & X, std::ve
 		LCM::Tensor<ScalarT> & s,ScalarT & mu,ScalarT & kappa,
 		ScalarT & K, ScalarT & Y, ScalarT & siginf,	ScalarT & delta)
 {
+	ScalarT sq32 = std::sqrt(3./2.);
+	ScalarT sq23 = std::sqrt(2./3.);
 	std::vector<DFadType> Rfad(4);
 	std::vector<DFadType> Xfad(4);
+
+//	std::cout << "  " << std::endl;
+//	std::cout << "-----before fad call, p= " << p << std::endl;
+//	std::cout << "-----before fad call, X[0]= " << X[0] << std::endl;
+
 	for (std::size_t i=0; i < 4; ++i)
 		Xfad[i] = DFadType(4, i, X[i]);
+
+//	std::cout << "-----after fad call, Xfad[0]= " << Xfad[0] << std::endl;
+//	std::cout << "  " << std::endl;
 
 	DFadType pfad = Xfad[0], fvoidfad = Xfad[1], eqfad = Xfad[2], dgam = Xfad[3];
 
@@ -392,17 +535,21 @@ GursonFD<EvalT, Traits>::compute_ResidJacobian(std::vector<ScalarT> & X, std::ve
 
 	// I have to do these step by step, otherwise, it causes compile error
 	// Qchen 4/17/12
-	DFadType fac; // fac = (1./ (1. + 2. * mu * dgam));
-	fac = mu * dgam;
-	fac = 1. / (1. + 2. * fac);
+	// quadratic representation
+//	DFadType fac; // fac = (1./ (1. + 2. * mu * dgam));
+//	fac = mu * dgam;
+//	fac = 1. / (1. + 2. * fac);
 
-//	DFadType fac = (1. / (1. + 2. * mu * dgam));
-//    std::cout << "fac= " << fac << std::endl;
 
-	LCM::Tensor<DFadType> sfad(0.0);
-	for (int i=0; i<3; i++)
-		for (int j=0; j<3; j++)
-			sfad(i,j) = fac *s(i,j);
+
+	ScalarT smag = LCM::dotdot(s,s);
+	smag = std::sqrt(smag);
+
+	// quadratic representation
+//	LCM::Tensor<DFadType> sfad(0.0);
+//	for (int i=0; i<3; i++)
+//		for (int j=0; j<3; j++)
+//			sfad(i,j) = fac *s(i,j);
 
 	DFadType h; // h = siginf * (1. - std::exp(-delta*eqfad)) + K * eqfad;
 	h = delta * eqfad;
@@ -414,10 +561,14 @@ GursonFD<EvalT, Traits>::compute_ResidJacobian(std::vector<ScalarT> & X, std::ve
 //    std::cout << "h= " << h<< std::endl;
 
 
-	DFadType Ybar = Y;
-    if(std::abs(fvoidfad - 1.) > 1.0e-12)
-		Ybar = Y + h / (1. - fvoidfad);
+	// linear form
+//	DFadType Ybar = Y;
+//    if(std::abs(fvoidfad - 1.) > 1.0e-12)
+//		Ybar = Y + h / (1. - fvoidfad);
 //    std::cout << "Ybar= " << Ybar << std::endl;
+
+    // quadratic form
+	DFadType Ybar = Y + h;
 
 	DFadType tmp = pfad / Ybar; // tmp = 1.5 * p / Ybar;
 	tmp = 1.5 * tmp;
@@ -432,17 +583,59 @@ GursonFD<EvalT, Traits>::compute_ResidJacobian(std::vector<ScalarT> & X, std::ve
 	psi = 2. * psi;
 	psi = fvoid2 - psi;
 	psi = 1. + psi;
-//    std::cout << "psi= " << psi << std::endl;
+    //std::cout << "psi= " << psi << std::endl;
+
+	ScalarT psi_sign = 1;
+	if (psi < 0) psi_sign = -1;
+
+	psi = std::abs(psi);
+
+	DFadType t;
+	t = std::sinh(tmp);
+	t = t / std::sqrt(psi);
+	t = fvoidfad * t;
+	t = sq32 * t;
+	t = dgam * t;
 
 	DFadType Phi;
-	Phi = 0.5 * LCM::dotdot(sfad, sfad) - psi * Ybar * Ybar / 3.0;
+	// quadratic form;
+	//Phi = 0.5 * LCM::dotdot(sfad, sfad) - psi * Ybar * Ybar / 3.0;
 //    std::cout << "Phi= " << Phi << std::endl;
 
-	// residual
+	// linear representation
+	DFadType fac;
+	fac = mu * dgam;
+	fac = 2. * fac;
+
+	Phi = smag - fac - sq23 * std::sqrt(psi) * psi_sign * Ybar;
+
+	std::cout << "&&&&&&&&&&" << std::endl;
+	std::cout << "pfad  : " << pfad << std::endl;
+	std::cout << "p     : " << p << std::endl;
+	std::cout << "kappa : " << kappa << std::endl;
+	std::cout << "t     : " << t << std::endl;
+
+
+	// linear
 	Rfad[0] = Phi;
-	Rfad[1] = pfad - p + dgam * kappa * Ybar * fvoidfad * std::sinh(tmp);
-	Rfad[2] = fvoidfad - fvoid - dgam * fvoidfad * (1. - fvoidfad) * Ybar * std::sinh(tmp);
-	Rfad[3] = eqfad - eq - dgam / (1. - fvoidfad) * (2./3. * psi * Ybar - pfad * fvoidfad * std::sinh(tmp));
+	Rfad[1] = pfad - p + kappa * t;
+	Rfad[2] = fvoidfad - fvoid - (1. - fvoidfad) * t;
+	Rfad[3] = eqfad - eq - (dgam * sq23 * psi_sign * std::sqrt(psi) + pfad * t / Ybar) / (1.-fvoidfad);
+
+	std::cout << "Rfad[1]: " << Rfad[1] << std::endl;
+
+//	std::cout << "  " << std::endl;
+//	std::cout << "--- in assemble Ffad, Ffad[0]= " << Rfad[0] << std::endl;
+//	std::cout << "--- in assemble Ffad, Ffad[1]= " << Rfad[1] << std::endl;
+//	std::cout << "--- in assemble Ffad, Ffad[2]= " << Rfad[2] << std::endl;
+//	std::cout << "--- in assemble Ffad, Ffad[3]= " << Rfad[3] << std::endl;
+//	std::cout << "  " << std::endl;
+
+	// residual - quadratic orig
+//	Rfad[0] = Phi;
+//	Rfad[1] = pfad - p + dgam * kappa * Ybar * fvoidfad * std::sinh(tmp);
+//	Rfad[2] = fvoidfad - fvoid - dgam * fvoidfad * (1. - fvoidfad) * Ybar * std::sinh(tmp);
+//	Rfad[3] = eqfad - eq - dgam / (1. - fvoidfad) * (2./3. * psi * Ybar - pfad * fvoidfad * std::sinh(tmp));
 
 //    std::cout << "in assemble_Resid, Rfad= " << Rfad[0] << " " << Rfad[1] << " "
 //    		<< Rfad[2] << " " << Rfad[3]<< std::endl;
@@ -459,13 +652,29 @@ GursonFD<EvalT, Traits>::compute_ResidJacobian(std::vector<ScalarT> & X, std::ve
 	for (int i=0; i<4; i++)
 		R[i] = Rfad[i].val();
 
+	std::cout << "R[1]  : " << R[1] << std::endl;
+	std::cout << "&&&&&&&&&&" << std::endl;
+
+//	std::cout << "  " << std::endl;
+//	std::cout << "--- in assemble F, F[0]= " << R[0] << std::endl;
+//	std::cout << "--- in assemble F, F[1]= " << R[1] << std::endl;
+//	std::cout << "--- in assemble F, F[2]= " << R[2] << std::endl;
+//	std::cout << "--- in assemble F, F[3]= " << R[3] << std::endl;
+//	std::cout << "  " << std::endl;
+
+//	std::cout << "in assemble_Resid, R : " << std::endl;
+//    std::cout << "R[0] = " << Sacado::ScalarValue<ScalarT>::eval(R[0]) << std::endl;
+//    std::cout << "R[1] = " << Sacado::ScalarValue<ScalarT>::eval(R[1]) << std::endl;
+//    std::cout << "R[2] = " << Sacado::ScalarValue<ScalarT>::eval(R[2]) << std::endl;
+//    std::cout << "R[3] = " << Sacado::ScalarValue<ScalarT>::eval(R[3]) << std::endl;
+
+
     //std::cout << "in assemble_Resid, R= " << R[0] << " " << R[1] << " " << R[2] << " " << R[3]<< std::endl;
 
 	// get Jacobian
 	for (int i=0; i<4; i++)
 		for (int j=0; j<4; j++)
 			dRdX[i + 4*j] = Rfad[i].dx(j);
-			//dRdX[4*i + j] = Rfad[i].dx(j);
 
 //	std::cout << "---------------" << std::endl;
 
