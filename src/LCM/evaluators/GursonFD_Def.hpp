@@ -228,7 +228,10 @@ evaluateFields(typename Traits::EvalData workset)
 
     	  dgam = 0.0;
 
-    	  X[0] = p, X[1] = fvoid, X[2] = eq, X[3] = dgam;
+    	  //X[0] = p, X[1] = fvoid, X[2] = eq, X[3] = dgam;
+    	  // new order of X
+    	  X[0] = dgam, X[1] = p, X[2] = fvoid, X[3] = eq;
+
     	  LocalNonlinearSolver<EvalT, Traits> solver;
 
     	  std::cout << "----------" << std::endl;
@@ -265,7 +268,7 @@ evaluateFields(typename Traits::EvalData workset)
 			if(iter > 20) break;
 
 
-//			std::cout << "before solve " << iter << std::endl;
+
 //	        std::cout << "R= " << R[0] << " " << R[1] << " " << R[2] << " " << R[3]<< std::endl;
 //	        std::cout << "X= " << X[0] << " " << X[1] << " " << X[2] << " " << X[3]<< std::endl;
 //	        std::cout << "dRdX0, 1, 2, 3= " << dRdX[0] << " "<< dRdX[1] << " "
@@ -292,7 +295,7 @@ evaluateFields(typename Traits::EvalData workset)
           //std::cout << "p= " << X[0] << " fvoid= " << X[1] << " eq= " << X[2] << " dgam= " << X[3]<< std::endl;
 
     	  std::cout << "F[0]  : " << R[0]<< std::endl;
-    	  std::cout << "dgam  : " << X[3]<< std::endl;
+    	  std::cout << "dgam  : " << X[0]<< std::endl;
 
     	  std::cout << "F[1]  : " << R[1]<< std::endl;
     	  std::cout << "F[2]  : " << R[2]<< std::endl;
@@ -318,10 +321,16 @@ evaluateFields(typename Traits::EvalData workset)
 //          std::cout << "X= " << X[0] << " " << X[1] << " " << X[2] << " " << X[3]<< std::endl;
 
           // update
-          p = X[0];
-          fvoid = X[1];
-          eq = X[2];
-          dgam = X[3];
+//          p = X[0];
+//          fvoid = X[1];
+//          eq = X[2];
+//          dgam = X[3];
+
+          // new order
+          dgam = X[0];
+          p = X[1];
+          fvoid = X[2];
+          eq = X[3];
 
           // checking
           // original expression
@@ -341,7 +350,7 @@ evaluateFields(typename Traits::EvalData workset)
          std::cout << "dgam  : " << dgam << std::endl;
          ScalarT smagT = LCM::dotdot(s,s);
          std::cout << "smag  : " << std::sqrt(smagT) << std::endl;
-         //std::cout << "fvoid : " << fvoid << std::endl;
+         std::cout << "fvoid : " << fvoid << std::endl;
 
          std::cout << "eq    : " << eq << std::endl;
          std::cout << "p     : " << p << std::endl;
@@ -525,7 +534,9 @@ GursonFD<EvalT, Traits>::compute_ResidJacobian(std::vector<ScalarT> & X, std::ve
 //	std::cout << "-----after fad call, Xfad[0]= " << Xfad[0] << std::endl;
 //	std::cout << "  " << std::endl;
 
-	DFadType pfad = Xfad[0], fvoidfad = Xfad[1], eqfad = Xfad[2], dgam = Xfad[3];
+	//DFadType pfad = Xfad[0], fvoidfad = Xfad[1], eqfad = Xfad[2], dgam = Xfad[3];
+	// new order
+	DFadType dgam = Xfad[0], pfad = Xfad[1], fvoidfad = Xfad[2], eqfad = Xfad[3];
 
 //	std::cout << "=================" << std::endl;
 //
@@ -614,6 +625,10 @@ GursonFD<EvalT, Traits>::compute_ResidJacobian(std::vector<ScalarT> & X, std::ve
 	std::cout << "p     : " << p << std::endl;
 	std::cout << "kappa : " << kappa << std::endl;
 	std::cout << "t     : " << t << std::endl;
+
+	std::cout << "psi   : " << psi << std::endl;
+	std::cout << "h     : " << h << std::endl;
+	std::cout << "fvoid2: " << fvoid2 << std::endl;
 
 
 	// linear
