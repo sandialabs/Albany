@@ -219,11 +219,12 @@ evaluateFields(typename Traits::EvalData workset)
 	  for (std::size_t qp=0; qp < numQPs; ++qp) {
 
 		      temp = elementLength(cell,qp)*elementLength(cell,qp)/6.0*Dstar(cell,qp)/DL(cell,qp)*fac;
-		 //     if (  temp > 1.0 )
+//		      if (  temp > 1.0 )
 		 //     {
 			    artificalDL(cell,qp) =
-			    	   //(temp) // temp - 1 is closer to the limit ...if lumped mass is preferred..
-				      std::abs(temp-1) // 1.25 = safety factor
+			//    	   (temp) // temp - 1 is closer to the limit ...if lumped mass is preferred..
+				      (temp-1) // 1.25 = safety factor
+				      *(0.5 + 0.5*std::tanh( (temp-1))/elementLength(cell,qp) ) // regularized
 	  			      *DL(cell,qp) //*stabParameter(cell,qp)
 //                      /( 2.0 + std::cosh(temp ) )
 //                    *( -1.0 + std::cosh(temp ) )
@@ -245,7 +246,7 @@ evaluateFields(typename Traits::EvalData workset)
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
 	   for (std::size_t qp=0; qp < numQPs; ++qp) {
-		   stabilizedDL(cell,qp) = artificalDL(cell,qp)/(DL(cell,qp) + artificalDL(cell,qp));
+		   stabilizedDL(cell,qp) = artificalDL(cell,qp)/( DL(cell,qp) + artificalDL(cell,qp) );
       }
  }
 
@@ -263,8 +264,8 @@ evaluateFields(typename Traits::EvalData workset)
 			//  CinvTgrad_old(cell,qp,j) = 0.0;
 			//   for (std::size_t node=0; node < numNodes; ++node) {
 			     Hflux(cell,qp,j) = CinvTgrad(cell,qp,j)
-			   //    	    -stabilizedDL(cell,qp)
-			   // 		 *CinvTgrad_old(cell,qp,j)
+			       	    -stabilizedDL(cell,qp)
+			    		 *CinvTgrad_old(cell,qp,j)
 		   		//			  }
 			    		 ;
 		   }
