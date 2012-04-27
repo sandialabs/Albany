@@ -83,7 +83,7 @@ public:
 
 private:
 
-  int  numVertices, numDims, numNodes, numQPs, numPlaneNodes;
+  int  numDims, numNodes, numQPs, numPlaneNodes;
 
   // Input:
   //! Coordinate vector at vertices

@@ -96,7 +96,7 @@ namespace {
     localizationParameterList->set< Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis",intrepidBasis);
     localizationParameterList->set< Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
     localizationParameterList->set< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout", qp_tensor);
-    localizationParameterList->set< Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layot", vertices_vector);
+    localizationParameterList->set< Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout", vertices_vector);
     Teuchos::RCP<LCM::Localization<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits> > localization = 
       Teuchos::rcp(new LCM::Localization<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>(*localizationParameterList));
 
@@ -112,13 +112,13 @@ namespace {
       fieldManager.requireField<PHAL::AlbanyTraits::Residual>(**it);
  
     // Call postRegistrationSetup on the evaluators
+    // JTO - I don't know what "Test String" is meant for...
     PHAL::AlbanyTraits::SetupData setupData = "Test String";
     fieldManager.postRegistrationSetup(setupData);
 
     // Create a workset
     PHAL::Workset workset;
     workset.numCells = worksetSize;
-    //workset.stateArrayPtr = &stateMgr.getStateArray(0);
 
     // Call the evaluators, evaluateFields() is the function that computes things
     fieldManager.preEvaluate<PHAL::AlbanyTraits::Residual>(workset);
