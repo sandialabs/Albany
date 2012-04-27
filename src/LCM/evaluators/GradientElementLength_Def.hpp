@@ -60,7 +60,6 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(GradBF,fm);
   this->utils.setFieldData(unitScalarGradient,fm);
-
   this->utils.setFieldData(elementLength,fm);
 
 }
@@ -77,12 +76,15 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t qp=0; qp < numQPs; ++qp) {
     	scalarH = 0.0;
+    	for (std::size_t j=0; j<numDims; j++)
+    	{
+    		for (std::size_t node=0; node < numNodes; ++node)
+    		{
 
-    	 for (std::size_t node=0; node < numNodes; ++node)
-    	 {
-    		 for (std::size_t j=0; j<numDims; j++)
-    		 {
-                scalarH += std::abs(unitScalarGradient(cell, qp, j)*GradBF(cell,node,qp,j));
+                scalarH += std::abs(
+                	//	unitScalarGradient(cell, qp, j)*GradBF(cell,node,qp,j)
+                		GradBF(cell,node,qp,j)/std::sqrt(numDims)
+                		);
     	     }
     	 }
     	 elementLength(cell,qp) = 2.0/scalarH;
