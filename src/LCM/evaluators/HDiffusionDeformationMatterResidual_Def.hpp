@@ -202,7 +202,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   ScalarT fac;
   if (dt==0) {
-	  fac = 1.0e15;
+	  fac = 1.0e20;
   }
   else
   {
@@ -218,16 +218,17 @@ evaluateFields(typename Traits::EvalData workset)
 
 	  for (std::size_t qp=0; qp < numQPs; ++qp) {
 
+		 //     temp = elementLength(cell,qp)*elementLength(cell,qp)/6.0*Dstar(cell,qp)/DL(cell,qp)*fac;
+
 		      temp = elementLength(cell,qp)*elementLength(cell,qp)/6.0*Dstar(cell,qp)/DL(cell,qp)*fac;
 //		      if (  temp > 1.0 )
 		 //     {
 			    artificalDL(cell,qp) =
 			//    	   (temp) // temp - 1 is closer to the limit ...if lumped mass is preferred..
-				      (temp-1) // 1.25 = safety factor
-				      *(0.5 + 0.5*std::tanh( (temp-1))/elementLength(cell,qp) ) // regularized
+				      std::abs(temp) // should be 1 but use 0.5 for safety
+				      *(0.5 + 0.5*std::tanh( (temp-1)/DL(cell,qp)  ))
+				      // smoothened Heavside function
 	  			      *DL(cell,qp) //*stabParameter(cell,qp)
-//                      /( 2.0 + std::cosh(temp ) )
-//                    *( -1.0 + std::cosh(temp ) )
 				      ;
 		 //     }
 /*		      else
@@ -264,8 +265,8 @@ evaluateFields(typename Traits::EvalData workset)
 			//  CinvTgrad_old(cell,qp,j) = 0.0;
 			//   for (std::size_t node=0; node < numNodes; ++node) {
 			     Hflux(cell,qp,j) = CinvTgrad(cell,qp,j)
-			       	    -stabilizedDL(cell,qp)
-			    		 *CinvTgrad_old(cell,qp,j)
+			    //   	    -stabilizedDL(cell,qp)
+			    //		 *CinvTgrad_old(cell,qp,j)
 		   		//			  }
 			    		 ;
 		   }
