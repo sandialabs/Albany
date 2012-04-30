@@ -53,7 +53,7 @@ public:
   /// \param currentCoords
   /// \param midplaneCoords
   ///
-  void computeMidplaneCoords(PHX::MDField<ScalarT,Cell,Vertex,Dim> currentCoords,
+  void computeMidplaneCoords(const PHX::MDField<ScalarT,Cell,Vertex,Dim> coords,
                              FC & midplaneCoords);
 
   ///
@@ -81,12 +81,26 @@ public:
   ///
   void computeJacobian(const FC & bases, const FC & dualBases, FC & area, FC & jacobian);
 
+  ///
+  /// Computes the gap or jump
+  /// \param coords
+  /// \param gap
+  ///
+  void computeGap(const PHX::MDField<ScalarT,Cell,Vertex,Dim> coords, 
+                  FC & gap);
+
+  ///
+  /// Computes the deformation gradient
+  ///
+  void computeDeformationGradient(const FC & bases);
+
 private:
 
   int  numDims, numNodes, numQPs, numPlaneNodes;
 
   // Input:
   //! Coordinate vector at vertices
+  PHX::MDField<ScalarT,Cell,Vertex,Dim> referenceCoords;
   PHX::MDField<ScalarT,Cell,Vertex,Dim> currentCoords;
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
@@ -105,6 +119,7 @@ private:
   Intrepid::FieldContainer<ScalarT> jacobian;
   Intrepid::FieldContainer<ScalarT> normals;
   Intrepid::FieldContainer<ScalarT> area;
+  Intrepid::FieldContainer<ScalarT> gap;
 
   // Output:
   //! Basis Functions at quadrature points

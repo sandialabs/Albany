@@ -27,14 +27,17 @@ namespace LCM {
 template<typename EvalT, typename Traits>
 Localization<EvalT, Traits>::
 Localization(const Teuchos::ParameterList& p) :
-  currentCoords (p.get<std::string>                   ("Coordinate Vector Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout") ),
-  cubature      (p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")),
-  intrepidBasis (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > > ("Intrepid Basis") ),
-  cellType      (p.get<Teuchos::RCP<shards::CellTopology> > ("Cell Type")),
-  defGrad       (p.get<std::string>                   ("Deformation Gradient Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout"))
+  referenceCoords (p.get<std::string>                   ("Reference Coordinates Name"),
+                   p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout") ),
+  currentCoords   (p.get<std::string>                   ("Current Coordinates Name"),
+                   p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout") ),
+  cubature        (p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")),
+  intrepidBasis   (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > > ("Intrepid Basis") ),
+  cellType        (p.get<Teuchos::RCP<shards::CellTopology> > ("Cell Type")),
+  defGrad         (p.get<std::string>                   ("Deformation Gradient Name"),
+                   p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout"))
 {
+  this->addDependentField(referenceCoords);
   this->addDependentField(currentCoords);
   this->addEvaluatedField(defGrad);
 
@@ -64,6 +67,7 @@ Localization(const Teuchos::ParameterList& p) :
   dualBases.resize(containerSize, numQPs, numDims, numDims);
   jacobian.resize(containerSize, numQPs);
   normals.resize(containerSize, numQPs, numDims);
+  gap.resize(containerSize, numQPs, numDims);
 
   // Pre-Calculate reference element quantitites
   std::cout << "Calling Intrepid to get reference quantities" << std::endl;
@@ -80,6 +84,7 @@ void Localization<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
+  this->utils.setFieldData(referenceCoords,fm);
   this->utils.setFieldData(currentCoords,fm);
   this->utils.setFieldData(defGrad,fm);
 }
@@ -92,8 +97,9 @@ evaluateFields(typename Traits::EvalData workset)
 
   for (std::size_t cell(0); cell < workset.numCells; ++cell) 
   {
+    // for the reference geometry
     // compute the mid-plane coordinates
-    computeMidplaneCoords(this->currentCoords, midplaneCoords);
+    computeMidplaneCoords(referenceCoords, midplaneCoords);
 
     // compute base vectors
     computeBaseVectors(midplaneCoords, bases);
@@ -103,10 +109,20 @@ evaluateFields(typename Traits::EvalData workset)
 
     // compute the Jacobian
     computeJacobian(bases, dualBases, area, jacobian);
+    
+    // for the current configuration
 
+    // compute the mid-plane coordinates
+    computeMidplaneCoords(currentCoords, midplaneCoords);
+
+    // compute base vectors
+    computeBaseVectors(midplaneCoords, bases);
+    
     // compute gap
+    computeGap(currentCoords, gap);
 
     // compute deformation gradient
+    computeDeformationGradient(bases);
 
     // call constitutive response
 
@@ -160,20 +176,20 @@ computeBaseVectors(const FC & midplaneCoords, FC & bases)
                                 midplaneCoords(cell,node,1),
                                 midplaneCoords(cell,node,2)));
 
-    V g_0(0.0), g_1(0.0), g_2(0.0);
+    V g0(0.0), g1(0.0), g2(0.0);
     //compute the base vectors
     for (std::size_t pt(0); pt < numQPs; ++pt)
     {
       for (std::size_t node(0); node < numPlaneNodes; ++ node)
       {
-        g_0 += ScalarT(refGrads(node, pt, 0)) * midplaneNodes[node];
-        g_1 += ScalarT(refGrads(node, pt, 1)) * midplaneNodes[node];
+        g0 += ScalarT(refGrads(node, pt, 0)) * midplaneNodes[node];
+        g1 += ScalarT(refGrads(node, pt, 1)) * midplaneNodes[node];
       }
-      g_2 = cross(g_1,g_2)/norm(cross(g_1,g_2));
+      g2 = cross(g1,g2)/norm(cross(g1,g2));
 
-      bases(cell,pt,0,0) = g_0(0); bases(cell,pt,0,1) = g_0(1); bases(cell,pt,0,2) = g_0(2);
-      bases(cell,pt,1,0) = g_1(0); bases(cell,pt,1,1) = g_1(1); bases(cell,pt,1,2) = g_1(2);
-      bases(cell,pt,2,0) = g_2(0); bases(cell,pt,2,1) = g_2(1); bases(cell,pt,2,2) = g_2(2);
+      bases(cell,pt,0,0) = g0(0); bases(cell,pt,0,1) = g0(1); bases(cell,pt,0,2) = g0(2);
+      bases(cell,pt,1,0) = g1(0); bases(cell,pt,1,1) = g1(1); bases(cell,pt,1,2) = g1(2);
+      bases(cell,pt,2,0) = g2(0); bases(cell,pt,2,1) = g2(1); bases(cell,pt,2,2) = g2(2);
     }
   }
 }
@@ -186,7 +202,7 @@ computeDualBaseVectors(const FC & midplaneCoords, const FC & bases, FC & normals
   typedef LCM::Vector<ScalarT> V;
   std::size_t worksetSize = midplaneCoords.dimension(0);
 
-  V g_1(0.0), g_2(0.0), g_3(0.0);
+  V g0(0.0), g1(0.0), g2(0.0), G0(0.0), G1(0.0), G2(0.0);
   
   const ScalarT * dataPtr;
 
@@ -195,13 +211,19 @@ computeDualBaseVectors(const FC & midplaneCoords, const FC & bases, FC & normals
     for (std::size_t pt(0); pt < numQPs; ++pt)
     {
       dataPtr = &bases(cell,pt,0,0);
-      g_1 = V( dataPtr );
+      g0 = V( dataPtr );
       dataPtr = &bases(cell,pt,1,0);
-      g_2 = V( dataPtr );
+      g1 = V( dataPtr );
       dataPtr = &bases(cell,pt,1,0);
-      g_3 = &bases(cell,pt,2,0);
+      g2 = &bases(cell,pt,2,0);
       
+      G0 = cross( g1,g2 ) / dot( g0, cross( g1,g2 ) );
+      G1 = cross( g0,g2 ) / dot( g1, cross( g0,g2 ) );
+      G2 = cross( g0,g1 ) / dot( g2, cross( g0,g1 ) );
 
+      dualBases(cell,pt,0,0) = G0(0); dualBases(cell,pt,0,1) = G0(1); dualBases(cell,pt,0,2) = G0(2);
+      dualBases(cell,pt,1,0) = G1(0); dualBases(cell,pt,1,1) = G1(1); dualBases(cell,pt,1,2) = G1(2);
+      dualBases(cell,pt,2,0) = G2(0); dualBases(cell,pt,2,1) = G2(1); dualBases(cell,pt,2,2) = G2(2);
     }
   }
 }
@@ -211,6 +233,37 @@ void Localization<EvalT, Traits>::
 computeJacobian(const FC & bases, const FC & dualbases, FC & area, FC & jacobian)
 {
   std::cout << "In computeJacobian" << std::endl;
+}
+
+//----------------------------------------------------------------------
+template<typename EvalT, typename Traits>
+void Localization<EvalT, Traits>::
+computeGap(const PHX::MDField<ScalarT,Cell,Vertex,Dim> coords, FC & gap)
+{
+  std::cout << "In computeGap" << std::endl;
+}
+//----------------------------------------------------------------------
+template<typename EvalT, typename Traits>
+void Localization<EvalT, Traits>::
+computeDeformationGradient(const FC & bases)
+{
+  std::cout << "In computeDeformationGradient" << std::endl;
+  std::size_t worksetSize = bases.dimension(0);
+  for (std::size_t cell(0); cell < worksetSize; ++cell)
+  {
+    for (std::size_t pt(0); pt < numQPs; ++pt)
+    {
+      for (std::size_t dim1(0); dim1 < numDims; ++dim1)
+      {
+        for (std::size_t dim2(0); dim2 < numDims; ++dim2)
+        {
+          defGrad(cell,pt,dim1,dim2) = 0.0;
+          if (dim1 == dim2)
+            defGrad(cell,pt,dim1,dim2) = 1.0;;
+        }
+      }
+    }
+  }
 }
 //----------------------------------------------------------------------
 } //namespace LCM
