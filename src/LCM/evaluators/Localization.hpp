@@ -38,6 +38,8 @@ class Localization : public PHX::EvaluatorWithBaseImpl<Traits>,
 		     public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
+  typedef typename EvalT::ScalarT ScalarT;
+  typedef Intrepid::FieldContainer<ScalarT> FC;
 
   Localization(const Teuchos::ParameterList& p);
 
@@ -46,34 +48,67 @@ public:
 
   void evaluateFields(typename Traits::EvalData d);
 
+  ///
+  /// Takes the current coordinates and computes the midplane
+  /// \param currentCoords
+  /// \param midplaneCoords
+  ///
+  void computeMidplaneCoords(PHX::MDField<ScalarT,Cell,Vertex,Dim> currentCoords,
+                             FC & midplaneCoords);
+
+  ///
+  /// Computes current configuration Bases from the midplane
+  /// \param midplaneCoords
+  /// \param bases
+  ///
+  void computeBaseVectors(const FC & midplaneCoords, FC & bases);
+
+  ///
+  /// Computes the Dual from the midplane and current bases
+  /// \param midplaneCoords
+  /// \param bases
+  /// \param normals
+  /// \param dualBases
+  ///
+  void computeDualBaseVectors(const FC & midplaneCoords, const FC & bases, FC & normals, FC & dualBases);
+
+  ///
+  /// Computes the jacobian mapping - da/dA
+  /// \param bases
+  /// \param dualBases
+  /// \param area
+  /// \param jacobian
+  ///
+  void computeJacobian(const FC & bases, const FC & dualBases, FC & area, FC & jacobian);
+
 private:
 
-  typedef typename EvalT::MeshScalarT MeshScalarT;
-  int  numVertices, numDims, numNodes, numQPs;
+  int  numVertices, numDims, numNodes, numQPs, numPlaneNodes;
 
   // Input:
   //! Coordinate vector at vertices
-  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
+  PHX::MDField<ScalarT,Cell,Vertex,Dim> currentCoords;
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
   Teuchos::RCP<shards::CellTopology> cellType;
 
-  // Temporary FieldContainers
-  Intrepid::FieldContainer<RealType> val_at_cub_points;
-  Intrepid::FieldContainer<RealType> grad_at_cub_points;
+  // Reference Cell FieldContainers
+  Intrepid::FieldContainer<RealType> refValues;
+  Intrepid::FieldContainer<RealType> refGrads;
   Intrepid::FieldContainer<RealType> refPoints;
   Intrepid::FieldContainer<RealType> refWeights;
-  Intrepid::FieldContainer<MeshScalarT> jacobian;
-  Intrepid::FieldContainer<MeshScalarT> jacobian_inv;
-  Intrepid::FieldContainer<MeshScalarT> jacobian_det;
-  Intrepid::FieldContainer<MeshScalarT> weighted_measure;
+
+  // Localization Element FieldContainers
+  Intrepid::FieldContainer<ScalarT> midplaneCoords;
+  Intrepid::FieldContainer<ScalarT> bases;
+  Intrepid::FieldContainer<ScalarT> dualBases;
+  Intrepid::FieldContainer<ScalarT> jacobian;
+  Intrepid::FieldContainer<ScalarT> normals;
+  Intrepid::FieldContainer<ScalarT> area;
 
   // Output:
   //! Basis Functions at quadrature points
-  PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defGrad;
 };
 }
 

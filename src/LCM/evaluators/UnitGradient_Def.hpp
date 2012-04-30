@@ -71,7 +71,7 @@ evaluateFields(typename Traits::EvalData workset)
     	 scalarMag = 0.0;
     	 for (std::size_t j=0; j<numDims; j++)
     	 {
-              unitScalarGradient(cell,qp,j) = scalarGrad(cell,qp,j);
+              //unitScalarGradient(cell,qp,j) = scalarGrad(cell,qp,j);
               scalarMag += scalarGrad(cell,qp,j)*scalarGrad(cell,qp,j);
     	 }
 
@@ -81,7 +81,7 @@ evaluateFields(typename Traits::EvalData workset)
     		 for (std::size_t i=0; i<numDims; i++)
     		 {
     			 //unitScalarGradient(cell,qp,i) = scalarMag;
-    			  unitScalarGradient(cell,qp,i) = unitScalarGradient(cell,qp,i)/scalarMag;
+    			  unitScalarGradient(cell,qp,i) = scalarGrad(cell,qp,i)/scalarMag;
     		 }
     	 }
 		 else {

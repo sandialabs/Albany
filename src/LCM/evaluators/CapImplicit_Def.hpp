@@ -176,7 +176,7 @@ evaluateFields(typename Traits::EvalData workset)
 			else conv = normR0;
 
 			std::cout << "iter= " << iter << std::endl;
-			//std::cout << "conv= " << conv << " normR= " << normR << std::endl;
+			std::cout << "conv= " << conv << " normR= " << normR << std::endl;
 
 			if(conv < 1.e-10 || normR < 1.e-10) break;
 			if(iter > 20) break;
@@ -460,8 +460,15 @@ CapImplicit<EvalT, Traits>::compute_ResidJacobian(std::vector<ScalarT> const & X
 
 	std::vector<DFadType> Rfad(13);
 	std::vector<DFadType> XX(13);
-	for (int i = 0; i < 13; ++i)
-		XX[i] = DFadType(13, i, XXVal[i]);
+	std::vector<ScalarT> XXtmp(13);
+
+	// initialize DFadType local unknown vector Xfad
+	// Note that since Xfad is a temporary variable that gets changed within local iterations
+	// when we initialize Xfad, we only pass in the values of X, NOT the system sensitivity information
+	for (int i = 0; i < 13; ++i){
+		XXtmp[i] = Sacado::ScalarValue<ScalarT>::eval(XXVal[i]);
+		XX[i] = DFadType(13, i, XXtmp[i]);
+	}
 
 	LCM::Tensor<DFadType> sigma, alpha;
 

@@ -127,11 +127,11 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT mu;
   ScalarT K, Y, siginf, delta;
   ScalarT trd3;
-  ScalarT smag, Phi, p, dgam(0.0);
+  ScalarT Phi, p, dgam(0.0);
   ScalarT sq23 = std::sqrt(2./3.);
+  ScalarT sq32 = std::sqrt(3./2.);
 
   ScalarT fvoid, eq;
-  LCM::Tensor<ScalarT> s;
 
   // previous state
   Albany::MDArray Fpold = (*workset.stateArrayPtr)[fpName];
@@ -170,33 +170,15 @@ evaluateFields(typename Traits::EvalData workset)
 
       ScalarT detbe = LCM::det<ScalarT>(be);
 
-//      std::cout << "E " << elasticModulus(cell,qp) << std::endl;
-//      std::cout << "nu " << poissonsRatio(cell,qp) << std::endl;
-//      std::cout << "K" << K << std::endl;
-//      std::cout << "Y" << Y << std::endl;
-//      std::cout << "siginf " << siginf << std::endl;
-//      std::cout << "delta " << delta << std::endl;
-//
-//      std::cout << "defgrad(cell, qp,1,1)" << defgrad(cell, qp, 1,1) << std::endl;
-//
-//
-//      std::cout << "trace(logbe)/3 " << trd3 << std::endl;
-      std::cout << "J " << J(cell,qp) << std::endl;
-//      std::cout << "det(be) " << detbe << std::endl;
-//      std::cout << "trace(logbe)/3 " << trd3 << std::endl;
-
-
       s = mu * (logbe - trd3 * LCM::identity<ScalarT>());
       p = 0.5 * kappa * std::log(detbe);
       fvoid = voidVolumeold(cell,qp);
       eq = eqpsold(cell,qp);
 
       Phi = compute_Phi(s, p, fvoid, eq, K, Y, siginf, delta);
-      std::cout << "Phi= " << Phi << std::endl;
-      std::cout << "p= " << p << std::endl;
-      std::cout << "fvoid= " << fvoid << std::endl;
-      std::cout << "eq= " << eq << std::endl;
 
+      ScalarT smag = LCM::dotdot(s, s);
+      smag = std::sqrt(smag);
 
       if (Phi > 1.e-12)
       {// plastic yielding
@@ -208,7 +190,14 @@ evaluateFields(typename Traits::EvalData workset)
     	  std::vector<ScalarT> dRdX(16);
     	  std::vector<ScalarT> X(4);
 
-    	  X[0] = p, X[1] = fvoid, X[2] = eq, X[3] = dgam;
+    	  dgam = 0.0;
+
+    	  // initialize local unknown vector
+    	  X[0] = dgam;
+    	  X[1] = p;
+    	  X[2] = fvoid;
+    	  X[3] = eq;
+
     	  LocalNonlinearSolver<EvalT, Traits> solver;
 
     	  // local N-R loop
@@ -226,85 +215,66 @@ evaluateFields(typename Traits::EvalData workset)
 			if(normR0 != 0) conv = normR / normR0;
 			else conv = normR0;
 
-			//std::cout << "iter= " << iter << std::endl;
-			//std::cout << "conv= " << conv << " normR= " << normR << std::endl;
-
-			if(conv < 1.e-12 || normR < 1.e-12) break;
+			if(conv < 1.e-11 || normR < 1.e-11) break;
 			if(iter > 20) break;
 
-
-//			std::cout << "before solve " << iter << std::endl;
-//	        std::cout << "R= " << R[0] << " " << R[1] << " " << R[2] << " " << R[3]<< std::endl;
-//	        std::cout << "X= " << X[0] << " " << X[1] << " " << X[2] << " " << X[3]<< std::endl;
-//	        std::cout << "dRdX0, 1, 2, 3= " << dRdX[0] << " "<< dRdX[1] << " "
-//	        		<< dRdX[2] << " "<< dRdX[3] << std::endl;
-//	        std::cout << "dRdX4, 5, 6, 7= " << dRdX[4] << " "<< dRdX[5] << " "
-//	        		<< dRdX[6] << " "<< dRdX[7] << std::endl;
-//	        std::cout << "dRdX8, 9, 10, 11= " << dRdX[8] << " "<< dRdX[9] << " "
-//	        		<< dRdX[10] << " "<< dRdX[11] << std::endl;
-//	        std::cout << "dRdX12, 13, 14, 15= " << dRdX[12] << " "<< dRdX[13] << " "
-//	        		<< dRdX[14] << " "<< dRdX[15] << std::endl;
-
 			solver.solve(dRdX, X, R);
-
-//			std::cout << "after solve " << iter << std::endl;
-//	        std::cout << "R= " << R[0] << " " << R[1] << " " << R[2] << " " << R[3]<< std::endl;
-//	        std::cout << "X= " << X[0] << " " << X[1] << " " << X[2] << " " << X[3]<< std::endl;
 
 			iter ++;
     	  }// end of local N-R
 
-//    	  std::cout << "after local N-R"<< std::endl;
-//          std::cout << "R= " << R[0] << " " << R[1] << " " << R[2] << " " << R[3]<< std::endl;
-//          std::cout << "X= " << X[0] << " " << X[1] << " " << X[2] << " " << X[3]<< std::endl;
-//			std::cout << "dRdX0, 1, 2, 3= " << dRdX[0] << " "<< dRdX[1] << " "
-//					<< dRdX[2] << " "<< dRdX[3] << std::endl;
-//			std::cout << "dRdX4, 5, 6, 7= " << dRdX[4] << " "<< dRdX[5] << " "
-//					<< dRdX[6] << " "<< dRdX[7] << std::endl;
-//			std::cout << "dRdX8, 9, 10, 11= " << dRdX[8] << " "<< dRdX[9] << " "
-//					<< dRdX[10] << " "<< dRdX[11] << std::endl;
-//			std::cout << "dRdX12, 13, 14, 15= " << dRdX[12] << " "<< dRdX[13] << " "
-//					<< dRdX[14] << " "<< dRdX[15] << std::endl;
-//			std::cout << "=============Calling computeFadInfo ============" << std::endl;
-
-    	  // compute sensitivity information, and pack back to X
+    	  // compute sensitivity information w.r.t system parameters, and pack back to X
           solver.computeFadInfo(dRdX, X, R);
 
-//			std::cout << "=========================" << std::endl;
-
-//    	  std::cout << "after sensitivity information calculated"<< std::endl;
-//          std::cout << "R= " << R[0] << " " << R[1] << " " << R[2] << " " << R[3]<< std::endl;
-//          std::cout << "X= " << X[0] << " " << X[1] << " " << X[2] << " " << X[3]<< std::endl;
-
           // update
-          p = X[0];
-          fvoid = X[1];
-          eq = X[2];
-          dgam = X[3];
-          s = ScalarT(1. / (1. + 2. * mu * dgam)) * s;
+          dgam = X[0];
+          p = X[1];
+          fvoid = X[2];
+          eq = X[3];
 
-      	  ScalarT h = siginf * (1. - std::exp(-delta * eq)) + K * eq;
-      	  ScalarT Ybar = Y;
-      	  if(std::abs(fvoid - 1.) > 1.0e-12)
-      		Ybar = Y + h / (1. - fvoid);
+          // plastic direction
+          for (std::size_t i=0; i < numDims; ++i)
+            for (std::size_t j=0; j < numDims; ++j)
+              N(i,j) = (1/smag) * s(i,j);
 
-      	  ScalarT tmp = 1.5 * p / Ybar;
-      	  ScalarT sinhtmp = std::sinh(tmp);
+          for (std::size_t i=0; i < numDims; ++i)
+            for (std::size_t j=0; j < numDims; ++j)
+              s(i,j) -= 2. * mu * dgam * N(i,j);
 
-  		  LCM::Tensor<ScalarT> dPhidtau(0.0);
+		  ScalarT h = siginf * (1. - std::exp(-delta * eq)) + K * eq;
+		  ScalarT Ybar = Y + h;
+		  ScalarT tmp = 1.5 * p / Ybar;
+
+		  ScalarT psi;
+		  psi = 1. + fvoid * fvoid  -  2. * fvoid * std::cosh(tmp);
+
+		  ScalarT psi_sign = 1;
+		  if (psi < 0) psi_sign = -1;
+
+		  psi = std::abs(psi);
+
+     	  ScalarT t;
+     	  t = std::sinh(tmp);
+     	  t = t / std::sqrt(psi);
+     	  t = fvoid * t;
+     	  t = sq32 * t;
+     	  t = dgam * t;
+
+  		  LCM::Tensor<ScalarT> dPhi(0.0);
 
   		  for (std::size_t i=0; i < numDims; ++i){
 			for (std::size_t j=0; j < numDims; ++j){
-				dPhidtau(i,j) = s(i,j);
+				dPhi(i,j) = dgam * N(i,j);
 			}
-			dPhidtau(i,i) += 1./3. * Ybar * fvoid * sinhtmp;
+			dPhi(i,i) += 1./3. * t;
   		  }
 
-  		  LCM::Tensor<ScalarT> A = dgam * dPhidtau;
-  		  LCM::Tensor<ScalarT> expA = LCM::exp(A);
+  		  A = dPhi;
+  		  expA = LCM::exp(A);
 
   		  eqps(cell, qp) = eq;
   		  voidVolume(cell, qp) = fvoid;
+
           for (std::size_t i=0; i < numDims; ++i){
             for (std::size_t j=0; j < numDims; ++j){
               Fp(cell,qp,i,j) = 0.0;
@@ -325,7 +295,8 @@ evaluateFields(typename Traits::EvalData workset)
 
       }
 
-      // compute stress (note p also has to be divided by J, since its the Kirchhoff pressure)
+      // compute Cauchy stress tensor
+      // (note that p also has to be divided by J, since its the Kirchhoff pressure)
       for (std::size_t i=0; i < numDims; ++i)
       {
         for (std::size_t j=0; j < numDims; ++j)
@@ -346,7 +317,6 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t i=0; i < numDims; ++i)
           Fp(cell,qp,i,i) = 1.0;
 
-
 } // end of evaluateFields
 
 
@@ -359,15 +329,27 @@ GursonFD<EvalT, Traits>::compute_Phi(LCM::Tensor<ScalarT> & s, ScalarT & p, Scal
 {
 
 	ScalarT h = siginf * (1. - std::exp(-delta * eq)) + K * eq;
-	ScalarT Ybar = Y;
-	if(std::abs(fvoid - 1.) > 1.0e-12)
-		Ybar = Y + h / (1. - fvoid);
+
+	ScalarT Ybar = Y + h;
 
 	ScalarT tmp = 1.5 * p / Ybar;
 
 	ScalarT psi = 1. + fvoid * fvoid - 2. * fvoid * std::cosh(tmp);
 
-	return 0.5 * LCM::dotdot(s, s) - psi * Ybar * Ybar / 3.0;
+	ScalarT psi_sign = 1;
+	if (psi < 0) psi_sign = -1;
+
+	psi = std::abs(psi);
+
+	// a quadratic representation will look like:
+	//ScalarT Phi = 0.5 * LCM::dotdot(s, s) - psi * Ybar * Ybar / 3.0;
+
+	// linear form
+	ScalarT smag = LCM::dotdot(s,s);
+	smag = std::sqrt(smag);
+	ScalarT sq23 = std::sqrt(2./3.);
+
+	return smag - sq23 * std::sqrt(psi) * psi_sign * Ybar;
 }
 
 template<typename EvalT, typename Traits>
@@ -377,33 +359,26 @@ GursonFD<EvalT, Traits>::compute_ResidJacobian(std::vector<ScalarT> & X, std::ve
 		LCM::Tensor<ScalarT> & s,ScalarT & mu,ScalarT & kappa,
 		ScalarT & K, ScalarT & Y, ScalarT & siginf,	ScalarT & delta)
 {
+	ScalarT sq32 = std::sqrt(3./2.);
+	ScalarT sq23 = std::sqrt(2./3.);
 	std::vector<DFadType> Rfad(4);
 	std::vector<DFadType> Xfad(4);
-	for (std::size_t i=0; i < 4; ++i)
-		Xfad[i] = DFadType(4, i, X[i]);
 
-	DFadType pfad = Xfad[0], fvoidfad = Xfad[1], eqfad = Xfad[2], dgam = Xfad[3];
+	// initialize DFadType local unknown vector Xfad
+	// Note that since Xfad is a temporary variable that gets changed within local iterations
+	// when we initialize Xfad, we only pass in the values of X, NOT the system sensitivity information
+	std::vector<ScalarT> Xval(4);
+	for (std::size_t i=0; i < 4; ++i){
+		Xval[i] = Sacado::ScalarValue<ScalarT>::eval(X[i]);
+		Xfad[i] = DFadType(4, i, Xval[i]);
+	}
 
-//	std::cout << "=================" << std::endl;
-//
-//	std::cout << "in assemble Residual" << std::endl;
-//    std::cout << "X= " << X[0] << " " << X[1] << " " << X[2] << " " << X[3]<< std::endl;
-//    std::cout << "Xfad= " << Xfad[0] << " " << Xfad[1] << " " << Xfad[2] << " " << Xfad[3]<< std::endl;
+	DFadType dgam = Xfad[0], pfad = Xfad[1], fvoidfad = Xfad[2], eqfad = Xfad[3];
 
-	// I have to do these step by step, otherwise, it causes compile error
-	// Qchen 4/17/12
-	DFadType fac; // fac = (1./ (1. + 2. * mu * dgam));
-	fac = mu * dgam;
-	fac = 1. / (1. + 2. * fac);
+	ScalarT smag = LCM::dotdot(s,s);
+	smag = std::sqrt(smag);
 
-//	DFadType fac = (1. / (1. + 2. * mu * dgam));
-//    std::cout << "fac= " << fac << std::endl;
-
-	LCM::Tensor<DFadType> sfad(0.0);
-	for (int i=0; i<3; i++)
-		for (int j=0; j<3; j++)
-			sfad(i,j) = fac *s(i,j);
-
+	// have to break down these equations, otherwise I get compile error
 	DFadType h; // h = siginf * (1. - std::exp(-delta*eqfad)) + K * eqfad;
 	h = delta * eqfad;
 	h = -1. * h;
@@ -411,19 +386,13 @@ GursonFD<EvalT, Traits>::compute_ResidJacobian(std::vector<ScalarT> & X, std::ve
 	h = 1. - h;
 	h = siginf * h;
 	h = h + K * eqfad;
-//    std::cout << "h= " << h<< std::endl;
 
+	DFadType Ybar = Y + h;
 
-	DFadType Ybar = Y;
-    if(std::abs(fvoidfad - 1.) > 1.0e-12)
-		Ybar = Y + h / (1. - fvoidfad);
-//    std::cout << "Ybar= " << Ybar << std::endl;
-
-	DFadType tmp = pfad / Ybar; // tmp = 1.5 * p / Ybar;
+	DFadType tmp = pfad / Ybar;
 	tmp = 1.5 * tmp;
-//    std::cout << "tmp= " << tmp << std::endl;
 
-	DFadType fvoid2;//psi = 1. + fvoid * fvoid - 2. * fvoid * std::cosh(tmp);
+	DFadType fvoid2;
 	fvoid2 = fvoidfad * fvoidfad;
 
 	DFadType psi;
@@ -432,42 +401,41 @@ GursonFD<EvalT, Traits>::compute_ResidJacobian(std::vector<ScalarT> & X, std::ve
 	psi = 2. * psi;
 	psi = fvoid2 - psi;
 	psi = 1. + psi;
-//    std::cout << "psi= " << psi << std::endl;
+
+	ScalarT psi_sign = 1;
+	if (psi < 0) psi_sign = -1;
+
+	psi = std::abs(psi);
+
+	DFadType t;
+	t = std::sinh(tmp);
+	t = t / std::sqrt(psi);
+	t = fvoidfad * t;
+	t = sq32 * t;
+	t = dgam * t;
+
+	DFadType fac;
+	fac = mu * dgam;
+	fac = 2. * fac;
 
 	DFadType Phi;
-	Phi = 0.5 * LCM::dotdot(sfad, sfad) - psi * Ybar * Ybar / 3.0;
-//    std::cout << "Phi= " << Phi << std::endl;
 
-	// residual
+	Phi = smag - fac - sq23 * std::sqrt(psi) * psi_sign * Ybar;
+
+	// local system of equations
 	Rfad[0] = Phi;
-	Rfad[1] = pfad - p + dgam * kappa * Ybar * fvoidfad * std::sinh(tmp);
-	Rfad[2] = fvoidfad - fvoid - dgam * fvoidfad * (1. - fvoidfad) * Ybar * std::sinh(tmp);
-	Rfad[3] = eqfad - eq - dgam / (1. - fvoidfad) * (2./3. * psi * Ybar - pfad * fvoidfad * std::sinh(tmp));
-
-//    std::cout << "in assemble_Resid, Rfad= " << Rfad[0] << " " << Rfad[1] << " "
-//    		<< Rfad[2] << " " << Rfad[3]<< std::endl;
-
-//    std::cout << "in R[3], eqfad & eq = "<< eqfad << " " << eq << std::endl;
-//    std::cout << "in R[3], dgam & fvoidfad = "<< dgam << " " << fvoidfad << std::endl;
-//    std::cout << "in R[3], psi & Ybar = "<< psi << " " << Ybar << std::endl;
-//    std::cout << "in R[3], pfad & sinh(tmp) = "<< pfad << " " << std::sinh(tmp) << std::endl;
-
-
-
+	Rfad[1] = pfad - p + kappa * t;
+	Rfad[2] = fvoidfad - fvoid - (1. - fvoidfad) * t;
+	Rfad[3] = eqfad - eq - (dgam * sq23 * psi_sign * std::sqrt(psi) + pfad * t / Ybar) / (1.-fvoidfad);
 
 	// get ScalarT Residual
 	for (int i=0; i<4; i++)
 		R[i] = Rfad[i].val();
 
-    //std::cout << "in assemble_Resid, R= " << R[0] << " " << R[1] << " " << R[2] << " " << R[3]<< std::endl;
-
-	// get Jacobian
+	// get local Jacobian
 	for (int i=0; i<4; i++)
 		for (int j=0; j<4; j++)
 			dRdX[i + 4*j] = Rfad[i].dx(j);
-			//dRdX[4*i + j] = Rfad[i].dx(j);
-
-//	std::cout << "---------------" << std::endl;
 
 }
 

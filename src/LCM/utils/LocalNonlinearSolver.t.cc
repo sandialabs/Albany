@@ -81,7 +81,7 @@ namespace LCM {
       F[i] = B[i].val();
       for(int j(0); j < numLocalVars; ++j)
       {
-        dFdX[numLocalVars * i + j] = A[numLocalVars * i + j].val();
+        dFdX[i + numLocalVars * j] = A[i + numLocalVars * j].val();
       }
     }
 
@@ -91,6 +91,7 @@ namespace LCM {
     // increment the solution
     for(int i(0); i < numLocalVars; ++i)
       X[i].val() -= F[i];
+
   }
 
   template<typename Traits>
@@ -165,7 +166,7 @@ namespace LCM {
       F[i] = B[i].val();
       for(int j(0); j < numLocalVars; ++j)
       {
-        dFdX[numLocalVars * i + j] = A[numLocalVars * i + j].val();
+        dFdX[i + numLocalVars * j] = A[i + numLocalVars * j].val();
       }
     }
 

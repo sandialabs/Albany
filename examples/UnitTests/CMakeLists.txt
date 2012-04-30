@@ -17,6 +17,7 @@
 # add the individual unit tests
 IF(ALBANY_LCM)
   add_test(utLocalNonlinearSolver ${Albany_BINARY_DIR}/src/utLocalNonlinearSolver)
+  add_test(utTensorUtils ${Albany_BINARY_DIR}/src/utTensorUtils)
 ENDIF()
 IF(ALBANY_LAME)
   add_test(utLameStress_elastic ${Albany_BINARY_DIR}/src/utLameStress_elastic)
