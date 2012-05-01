@@ -194,7 +194,8 @@ Application(const RCP<const Epetra_Comm>& comm_,
   else {
     overlapped_x->Import(*initial_x, *importer, Insert);
     Albany::InitialConditions(overlapped_x, wsElNodeEqID, coords, neq, numDim,
-                              problemParams->sublist("Initial Condition"));
+                              problemParams->sublist("Initial Condition"),
+                              disc->hasRestartSolution());
     Albany::InitialConditions(overlapped_xdot,  wsElNodeEqID, coords, neq, numDim,
                               problemParams->sublist("Initial Condition Dot"));
     initial_x->Export(*overlapped_x, *exporter, Insert);

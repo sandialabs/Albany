@@ -117,6 +117,9 @@ namespace Albany {
     // Retrieve mesh struct
     Teuchos::RCP<Albany::AbstractSTKMeshStruct> getSTKMeshStruct() {return stkMeshStruct;};
 
+    //! Flag if solution has a restart values -- used in Init Cond
+    bool hasRestartSolution() const {return stkMeshStruct->hasRestartSolution;}
+
     // After mesh modification, need to update the element connectivity and nodal coordinates
     void updateMesh(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct,
     		const Teuchos::RCP<const Epetra_Comm>& comm);

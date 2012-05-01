@@ -45,12 +45,17 @@ void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
                        const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >& wsElNodeEqID,
                        const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords,
                        const int neq, const int numDim,
-                       Teuchos::ParameterList& icParams)
+                       Teuchos::ParameterList& icParams, const bool hasRestartSolution)
 {
   // Called twice, with x and xdot. Different param lists are sent in.
   icParams.validateParameters(*Albany::getValidInitialConditionParameters(),0);
 
-  const std::string name = icParams.get("Function","Constant");
+  // Default function is Constant, unless a Restart solution vector
+  // was used, in which case the Init COnd defaults to Restart.
+  std::string name;
+  if (!hasRestartSolution) name = icParams.get("Function","Constant");
+  else                     name = icParams.get("Function","Restart");
+
   if (name=="Restart") return;
 
   Teuchos::Array<double> defaultData(neq);

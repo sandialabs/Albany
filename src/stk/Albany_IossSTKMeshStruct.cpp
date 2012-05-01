@@ -266,6 +266,7 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
       else {
         *out << "Restart Index set, reading solution time : " << index << endl;
          stk::io::process_input_request(*mesh_data, *bulkData, index);
+         hasRestartSolution = true;
       }
     }
 
