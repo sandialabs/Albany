@@ -38,11 +38,11 @@
 #include <stk_rebalance_utils/RebalanceUtils.hpp>
 
 // Refinement
+#if 0  // Work in progress GAH
 #include <stk_percept/PerceptMesh.hpp>
 #include <stk_adapt/UniformRefinerPattern.hpp>
 #include <stk_adapt/UniformRefiner.hpp>
-
-
+#endif
 
 
 template<int Dim, class traits>
@@ -353,6 +353,8 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
 #endif
 
 // Rebalance if requested
+
+#ifdef ALBANY_ZOLTAN
   if(params->get<bool>("Rebalance Mesh", false)){
 
     double imbalance;
@@ -423,9 +425,8 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
       cout << "Before second rebal: Imbalance threshold is = " << imbalance << endl;
 
     }
-
-
   }
+#endif  //ALBANY_ZOLTAN
 
 }
 
