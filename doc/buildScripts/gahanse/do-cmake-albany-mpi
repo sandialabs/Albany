@@ -1,0 +1,18 @@
+# Here is a script for configuring Glen's working version of Albany
+# 
+TRILINSTALLDIR=/ascldap/users/gahanse/local/trilinos/LINUX_MPI
+LAMEINCDIR=/ascldap/users/gahanse/Codes/4.24.1/lame/include
+LAMELIBDIR=/ascldap/users/gahanse/Codes/4.24.1/lame/build
+
+BUILD_DIR=`pwd`
+
+cmake \
+      -D ALBANY_TRILINOS_DIR:FILEPATH="$TRILINSTALLDIR" \
+      -D ENABLE_LCM:BOOL=ON \
+      -D ENABLE_LAME:BOOL=ON \
+      -D LAME_INCLUDE_DIR:FILEPATH="$LAMEINCDIR" \
+      -D LAME_LIBRARY_DIR:FILEPATH="$LAMELIBDIR" \
+       ../
+
+#      -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
+#      -D ENABLE_CHECK_FPE:BOOL=ON \

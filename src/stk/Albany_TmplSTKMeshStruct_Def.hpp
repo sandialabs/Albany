@@ -31,11 +31,19 @@
 #include <stk_io/IossBridge.hpp>
 #endif
 
-// Needed for rebalance 
-//#include <stk_mesh/fem/DefaultFEM.hpp>
-//#include <stk_rebalance/Rebalance.hpp>
-//#include <stk_rebalance/Partition.hpp>
-//#include <stk_rebalance/ZoltanPartition.hpp>
+// Rebalance 
+#include <stk_rebalance/Rebalance.hpp>
+#include <stk_rebalance/Partition.hpp>
+#include <stk_rebalance/ZoltanPartition.hpp>
+#include <stk_rebalance_utils/RebalanceUtils.hpp>
+
+// Refinement
+#include <stk_percept/PerceptMesh.hpp>
+#include <stk_adapt/UniformRefinerPattern.hpp>
+#include <stk_adapt/UniformRefiner.hpp>
+
+
+
 
 template<int Dim, class traits>
 Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
@@ -296,30 +304,130 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
 
   SetupFieldData(comm, neq_, sis, worksetSize);
 
+// Setup to refine if requested
+// Refine if requested
+#if 0  // Work in progress GAH
+
+    stk::percept::PerceptMesh eMesh(metaData, bulkData);
+
+//    eMesh.printInfo("Mesh input to refiner", 0);
+
+    // Reopen the metaData so we can refine the existing mesh
+//    eMesh.reopen();
+    stk::adapt::Quad4_Quad4_4 subdivideQuads(eMesh);
+//    eMesh.commit();
+
+#endif
+
+
   metaData->commit();
 
   // STK
   bulkData->modification_begin(); // Begin modifying the mesh
 
-  buildMesh();
+  buildMesh(comm);
 
   // STK
   bulkData->modification_end();
   useElementAsTopRank = true;
 
-// Needed for rebalance 
-//  stk::mesh::Selector owned_selector = metaData->locally_owned_part();
-//  cout << "Before rebal " << comm->MyPID() << "  " << stk::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->node_rank())) << endl;
-//  // Use Zoltan to determine new partition
-//  Teuchos::ParameterList emptyList;
-//  stk::rebalance::Zoltan zoltan_partition(Albany::getMpiCommFromEpetraComm(*comm), numDim, emptyList);
-//  stk::mesh::Selector selector(metaData->universal_part());
-//  stk::rebalance::rebalance(*bulkData, selector, coordinates_field, NULL, zoltan_partition);
-//
-//  cout << "After rebal " << comm->MyPID() << "  " << stk::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->node_rank())) << endl;
+#if 0 // Work in progress
+
+// Refine if requested
+  if(params->get<int>("h Refine Mesh", 0) != 0){
+
+//    stk::percept::PerceptMesh eMesh(metaData, bulkData, false);
+//    eMesh.printInfo("Mesh input to refiner", 0);
+
+    // Reopen the metaData so we can refine the existing mesh
+//    eMesh.reopen();
+//    stk::adapt::Quad4_Quad4_4 subdivideQuads(eMesh);
+//    eMesh.commit();
+
+    stk::adapt::UniformRefiner refiner(eMesh, subdivideQuads, proc_rank_field);
+
+    refiner.doBreak();
+
+  }
+
+#endif
+
+// Rebalance if requested
+  if(params->get<bool>("Rebalance Mesh", false)){
+
+    double imbalance;
+
+    stk::mesh::Selector selector(metaData->universal_part());
+    stk::mesh::Selector owned_selector(metaData->locally_owned_part());
+
+    cout << "Before rebal nelements " << comm->MyPID() << "  " << 
+      stk::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->element_rank())) << endl;
+
+    cout << "Before rebal " << comm->MyPID() << "  " << 
+      stk::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->node_rank())) << endl;
+
+
+    imbalance = stk::rebalance::check_balance(*bulkData, NULL, 
+      metaData->node_rank(), &selector);
+
+    if(comm->MyPID() == 0){
+
+      cout << "Before first rebal: Imbalance threshold is = " << imbalance << endl;
+
+    }
+
+
+    // Use Zoltan to determine new partition
+    Teuchos::ParameterList emptyList;
+
+    stk::rebalance::Zoltan zoltan_partition(Albany::getMpiCommFromEpetraComm(*comm), numDim, emptyList);
+    stk::rebalance::rebalance(*bulkData, owned_selector, coordinates_field, NULL, zoltan_partition);
+
+
+    imbalance = stk::rebalance::check_balance(*bulkData, NULL, 
+      metaData->node_rank(), &selector);
+
+    if(comm->MyPID() == 0){
+
+      cout << "Before second rebal: Imbalance threshold is = " << imbalance << endl;
+
+    }
+
+
+    // Configure Zoltan to use graph-based partitioning
+    Teuchos::ParameterList graph;
+    Teuchos::ParameterList lb_method;
+    lb_method.set("LOAD BALANCING METHOD"      , "4");
+    graph.sublist(stk::rebalance::Zoltan::default_parameters_name()) = lb_method;
+
+    stk::rebalance::Zoltan zoltan_partitiona(Albany::getMpiCommFromEpetraComm(*comm), numDim, graph);
+
+    cout << "Universal part " << comm->MyPID() << "  " << 
+      stk::mesh::count_selected_entities(selector, bulkData->buckets(metaData->element_rank())) << endl;
+    cout << "Owned part " << comm->MyPID() << "  " << 
+      stk::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->element_rank())) << endl;
+
+    stk::rebalance::rebalance(*bulkData, owned_selector, coordinates_field, NULL, zoltan_partitiona);
+
+    cout << "After rebal " << comm->MyPID() << "  " << 
+      stk::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->node_rank())) << endl;
+    cout << "After rebal nelements " << comm->MyPID() << "  " << 
+      stk::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->element_rank())) << endl;
+
+
+    imbalance = stk::rebalance::check_balance(*bulkData, NULL, 
+      metaData->node_rank(), &selector);
+
+    if(comm->MyPID() == 0){
+
+      cout << "Before second rebal: Imbalance threshold is = " << imbalance << endl;
+
+    }
+
+
+  }
 
 }
-
 
 template <int Dim, class traits>
 void 
@@ -485,7 +593,7 @@ Albany::EBSpecsStruct<3>::Initialize(int i, const Teuchos::RCP<Teuchos::Paramete
 // Specializations to build the mesh for each dimension
 template<>
 void
-Albany::TmplSTKMeshStruct<0>::buildMesh()
+Albany::TmplSTKMeshStruct<0>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& comm)
 {
 
   // Note: periodic flag just ignored for this case if it is present
@@ -527,7 +635,7 @@ Albany::TmplSTKMeshStruct<0, Albany::albany_stk_mesh_traits<0> >::setFieldAndBul
   // STK
   bulkData->modification_begin(); // Begin modifying the mesh
 
-  TmplSTKMeshStruct<0, albany_stk_mesh_traits<0> >::buildMesh();
+  TmplSTKMeshStruct<0, albany_stk_mesh_traits<0> >::buildMesh(comm);
 
   // STK
   bulkData->modification_end();
@@ -537,7 +645,7 @@ Albany::TmplSTKMeshStruct<0, Albany::albany_stk_mesh_traits<0> >::setFieldAndBul
 
 template<>
 void
-Albany::TmplSTKMeshStruct<1>::buildMesh()
+Albany::TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& comm)
 {
 
   stk::mesh::PartVector nodePartVec;
@@ -597,6 +705,9 @@ Albany::TmplSTKMeshStruct<1>::buildMesh()
     double* rnode_coord = stk::mesh::field_data(*coordinates_field, rnode);
     rnode_coord[0] = x[0][elem_GID+1];
 
+    int* p_rank = stk::mesh::field_data(*proc_rank_field, edge);
+    p_rank[0] = comm->MyPID();
+
     // Set node sets. There are no side sets currently with 1D problems (only 2D and 3D)
     if (elem_GID==0) {
        singlePartVec[0] = nsPartVec["NodeSet0"];
@@ -618,7 +729,7 @@ Albany::TmplSTKMeshStruct<1>::buildMesh()
 
 template<>
 void
-Albany::TmplSTKMeshStruct<2>::buildMesh()
+Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& comm)
 {
 
   // STK
@@ -671,7 +782,7 @@ Albany::TmplSTKMeshStruct<2>::buildMesh()
 
     singlePartVec[0] = partVec[ebNo];
 
-    // Declare NodesL= (Add one to IDs because STK requires 1-based
+    // Declare Nodes = (Add one to IDs because STK requires 1-based
     stk::mesh::Entity& llnode = bulkData->declare_entity(metaData->node_rank(), 1+lower_left, nodePartVec);
     stk::mesh::Entity& lrnode = bulkData->declare_entity(metaData->node_rank(), 1+lower_right, nodePartVec);
     stk::mesh::Entity& urnode = bulkData->declare_entity(metaData->node_rank(), 1+upper_right, nodePartVec);
@@ -687,6 +798,12 @@ Albany::TmplSTKMeshStruct<2>::buildMesh()
       bulkData->declare_relation(elem2, llnode, 0);
       bulkData->declare_relation(elem2, urnode, 1);
       bulkData->declare_relation(elem2, ulnode, 2);
+
+      int* p_rank = stk::mesh::field_data(*proc_rank_field, elem);
+      p_rank[0] = comm->MyPID();
+      p_rank = stk::mesh::field_data(*proc_rank_field, elem2);
+      p_rank[0] = comm->MyPID();
+
 
       if(!periodic){ // no sidesets if periodic
         // Triangle sideset construction
@@ -843,7 +960,7 @@ Albany::TmplSTKMeshStruct<2>::buildMesh()
 
 template<>
 void
-Albany::TmplSTKMeshStruct<3>::buildMesh()
+Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& comm)
 {
 
   stk::mesh::PartVector nodePartVec;
@@ -922,6 +1039,9 @@ Albany::TmplSTKMeshStruct<3>::buildMesh()
     bulkData->declare_relation(elem, lrnodeb, 5);
     bulkData->declare_relation(elem, urnodeb, 6);
     bulkData->declare_relation(elem, ulnodeb, 7);
+
+    int* p_rank = stk::mesh::field_data(*proc_rank_field, elem);
+    p_rank[0] = comm->MyPID();
 
     double* coord;
     coord = stk::mesh::field_data(*coordinates_field, llnode);
@@ -1140,6 +1260,8 @@ Albany::TmplSTKMeshStruct<1>::getValidDiscretizationParameters() const
   validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic a mesh");
   validPL->set<int>("1D Elements", 0, "Number of Elements in X discretization");
   validPL->set<double>("1D Scale", 1.0, "Width of X discretization");
+  validPL->set<bool>("Rebalance Mesh", false, "Parallel re-load balance initial mesh after generation");
+  validPL->set<int>("h Refine Mesh", 0, "Number of levels of uniform h refinement to apply");
 
   // Multiple element blocks parameters
   validPL->set<int>("Element Blocks", 1, "Number of elements blocks that span the X domain");
@@ -1170,6 +1292,8 @@ Albany::TmplSTKMeshStruct<2>::getValidDiscretizationParameters() const
   validPL->set<double>("1D Scale", 1.0, "Width of X discretization");
   validPL->set<double>("2D Scale", 1.0, "Height of Y discretization");
   validPL->set<string>("Cell Topology", "Quad" , "Quad or Tri Cell Topology");
+  validPL->set<bool>("Rebalance Mesh", false, "Parallel re-load balance initial mesh after generation");
+  validPL->set<int>("h Refine Mesh", 0, "Number of levels of uniform h refinement to apply");
 
   // Multiple element blocks parameters
   validPL->set<int>("Element Blocks", 1, "Number of elements blocks that span the X-Y domain");
@@ -1201,6 +1325,8 @@ Albany::TmplSTKMeshStruct<3>::getValidDiscretizationParameters() const
   validPL->set<double>("1D Scale", 1.0, "Width of X discretization");
   validPL->set<double>("2D Scale", 1.0, "Depth of Y discretization");
   validPL->set<double>("3D Scale", 1.0, "Height of Z discretization");
+  validPL->set<bool>("Rebalance Mesh", false, "Parallel re-load balance initial mesh after generation");
+  validPL->set<int>("h Refine Mesh", 0, "Number of levels of uniform h refinement to apply");
 
   // Multiple element blocks parameters
   validPL->set<int>("Element Blocks", 1, "Number of elements blocks that span the X-Y-Z domain");

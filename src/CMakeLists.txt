@@ -21,6 +21,7 @@ SET(SOURCES
 	PHAL_Dimension.cpp 
 	PHAL_AlbanyTraits.cpp 
 	Albany_Application.cpp 
+	Albany_Adaptation.cpp
 	Albany_ObserverFactory.cpp
 	Albany_RythmosObserver.cpp 
 	Albany_NOXObserver.cpp 
@@ -31,6 +32,7 @@ SET(SOURCES
   )
 
 SET(HEADERS
+	Albany_Adaptation.hpp
 	Albany_SolverFactory.hpp
 	Albany_Utils.hpp
 	Albany_DataTypes.hpp 

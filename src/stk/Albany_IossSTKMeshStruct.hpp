@@ -48,8 +48,13 @@ namespace Albany {
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParameters() const;
 
+    void readSerialMesh(const Teuchos::RCP<const Epetra_Comm>& comm);
+
+    void readBulkData(Ioss::Region &region);
+
     Teuchos::RCP<Teuchos::FancyOStream> out;
     bool usePamgen;
+    bool useSerialMesh;
     bool periodic;
     stk::io::MeshData* mesh_data;
   };

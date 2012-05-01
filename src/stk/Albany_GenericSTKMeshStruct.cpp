@@ -80,12 +80,15 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
 
   //Start STK stuff
   coordinates_field = & metaData->declare_field< VectorFieldType >( "coordinates" );
+  proc_rank_field = & metaData->declare_field< IntScalarFieldType >( "proc_rank" );
   solution_field = & metaData->declare_field< VectorFieldType >( "solution" );
 #ifdef ALBANY_LCM
   residual_field = & metaData->declare_field< VectorFieldType >( "residual" );
 #endif
 
   stk::mesh::put_field( *coordinates_field , metaData->node_rank() , metaData->universal_part(), numDim );
+  // Processor rank field, a scalar
+  stk::mesh::put_field( *proc_rank_field , metaData->element_rank() , metaData->universal_part());
   stk::mesh::put_field( *solution_field , metaData->node_rank() , metaData->universal_part(), neq );
 #ifdef ALBANY_LCM
   stk::mesh::put_field( *residual_field , metaData->node_rank() , metaData->universal_part() , neq );
@@ -93,6 +96,7 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
   
 #ifdef ALBANY_SEACAS
   stk::io::set_field_role(*coordinates_field, Ioss::Field::MESH);
+  stk::io::set_field_role(*proc_rank_field, Ioss::Field::MESH);
   stk::io::set_field_role(*solution_field, Ioss::Field::TRANSIENT);
 #ifdef ALBANY_LCM
   stk::io::set_field_role(*residual_field, Ioss::Field::TRANSIENT);

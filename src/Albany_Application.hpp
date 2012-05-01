@@ -37,6 +37,7 @@
 #include "Albany_AbstractProblem.hpp"
 #include "Albany_AbstractResponseFunction.hpp"
 #include "Albany_StateManager.hpp"
+#include "Albany_Adaptation.hpp"
 
 #ifdef ALBANY_CUTR
   #include "CUTR_CubitMeshMover.hpp"
@@ -683,6 +684,8 @@ namespace Albany {
 #ifdef ALBANY_CUTR
     Teuchos::RCP<CUTR::CubitMeshMover> meshMover;
 #endif
+
+    Teuchos::RCP<Adaptation> adapter;
 
     unsigned int neq;
 
