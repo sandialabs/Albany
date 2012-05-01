@@ -601,7 +601,16 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
       p->set<string>("DetDefGrad Name", "J");  // dl->qp_scalar also
 
       RealType f0 = params->get("f0", 0.0);
+      RealType kw = params->get("kw", 0.0);
+      RealType eN = params->get("eN", 0.0);
+      RealType sN = params->get("sN", 1.0);
+      RealType fN = params->get("fN", 0.0);
+
       p->set<RealType>("f0 Name", f0);
+      p->set<RealType>("kw Name", kw);
+      p->set<RealType>("eN Name", eN);
+      p->set<RealType>("sN Name", sN);
+      p->set<RealType>("fN Name", fN);
 
       //Output
       p->set<string>("Stress Name", matModel); //dl->qp_tensor also
