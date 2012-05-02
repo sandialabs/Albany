@@ -80,6 +80,10 @@ private:
   unsigned int worksetSize;
 
   RealType f0;
+  RealType kw;
+  RealType eN;
+  RealType sN;
+  RealType fN;
 
   //output
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;

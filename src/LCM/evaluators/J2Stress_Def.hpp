@@ -313,10 +313,10 @@ evaluateFields(typename Traits::EvalData workset)
 
         }
 //        std::cout << "g   : " << g << std::endl;
-    	std::cout << "before X: " << X[0] << std::endl;
-        std::cout << "F   : " << F[0] << std::endl;
+//    	std::cout << "before X: " << X[0] << std::endl;
+//        std::cout << "F   : " << F[0] << std::endl;
 //        std::cout << "dg  : " << dg << std::endl;
-        std::cout << "dFdX: " << dFdX[0] << std::endl;
+//        std::cout << "dFdX: " << dFdX[0] << std::endl;
         
 
         solver.computeFadInfo(dFdX,X,F);
@@ -324,7 +324,7 @@ evaluateFields(typename Traits::EvalData workset)
 
         dgam = X[0];
         
-        std::cout << "after X: " << X[0] << std::endl;
+//        std::cout << "after X: " << X[0] << std::endl;
 //        std::cout << "dgam : " << dgam << std::endl;
 
         // plastic direction

@@ -16,12 +16,10 @@
 
 
 #include "Albany_SolverFactory.hpp"
-#include "Albany_RythmosObserver.hpp"
-#include "Albany_NOXObserver.hpp"
+#include "Albany_ObserverFactory.hpp"
 #include "Thyra_DetachedVectorView.hpp"
 #include "Albany_SaveEigenData.hpp"
-#include "Albany_ModelEvaluator.hpp"
-#include "Albany_ObserverFactory.hpp"
+#include "Albany_ModelFactory.hpp"
 
 #include "Piro_Epetra_NOXSolver.hpp"
 #include "Piro_Epetra_LOCASolver.hpp"
@@ -53,7 +51,7 @@ Albany::SolverFactory::SolverFactory(
   RCP<Teuchos::Comm<int> > tcomm = Albany::createTeuchosCommFromMpiComm(mcomm);
 
   // Set up application parameters: read and broadcast XML file, and set defaults
-  appParams = rcp(new ParameterList("Albany Parameters"));
+  appParams = Teuchos::createParameterList("Albany Parameters");
   Teuchos::updateParametersFromXmlFileAndBroadcast(inputFile, appParams.ptr(), *tcomm);
 
   RCP<ParameterList> defaultSolverParams = rcp(new ParameterList());
@@ -166,10 +164,8 @@ Albany::SolverFactory::createAlbanyAppAndModel(
     validateParameters(*getValidResponseParameters(),0);
   
   // Create model evaluator
-  Teuchos::RCP<EpetraExt::ModelEvaluator> model = 
-    rcp(new Albany::ModelEvaluator(albanyApp, appParams));
-  
-  return model;
+  Albany::ModelFactory modelFactory(appParams, albanyApp);
+  return modelFactory.create();
 }
 
 

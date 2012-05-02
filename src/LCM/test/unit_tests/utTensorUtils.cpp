@@ -16,12 +16,51 @@
 
 #include <Teuchos_UnitTestHarness.hpp>
 #include "Tensor.h"
+#include "Intrepid_FieldContainer.hpp"
 
 using namespace std;
 
 typedef double ScalarT;
 
 namespace {
+
+  TEUCHOS_UNIT_TEST( TensorUtils, Initialization )
+  {
+    Intrepid::FieldContainer<ScalarT> FC(3,3);
+    FC(0,0) = 1.0;
+    FC(0,1) = 2.0;
+    FC(0,2) = 3.0;
+    FC(1,0) = 4.0;
+    FC(1,1) = 5.0;
+    FC(1,2) = 6.0;
+    FC(2,0) = 7.0;
+    FC(2,1) = 8.0;
+    FC(2,2) = 9.0;
+
+    const ScalarT * dataPtr0 = &FC(0,0);
+
+    LCM::Vector<ScalarT> u( dataPtr0 );
+
+    TEST_COMPARE( u(0), ==, 1.0 );
+    TEST_COMPARE( u(1), ==, 2.0 );
+    TEST_COMPARE( u(2), ==, 3.0 );
+
+    const ScalarT * dataPtr1 = &FC(1,0);
+
+    u = LCM::Vector<ScalarT>( dataPtr1 );
+
+    TEST_COMPARE( u(0), ==, 4.0 );
+    TEST_COMPARE( u(1), ==, 5.0 );
+    TEST_COMPARE( u(2), ==, 6.0 );
+
+    const ScalarT * dataPtr2 = &FC(2,0);
+
+    u = LCM::Vector<ScalarT>( dataPtr2 );
+
+    TEST_COMPARE( u(0), ==, 7.0 );
+    TEST_COMPARE( u(1), ==, 8.0 );
+    TEST_COMPARE( u(2), ==, 9.0 );
+  }
 
   TEUCHOS_UNIT_TEST( TensorUtils, VectorAddition )
   {
@@ -61,6 +100,57 @@ namespace {
     w = 4.0 * u + 2.0 * v;
 
     TEST_COMPARE( LCM::norm(w), <=, std::numeric_limits<ScalarT>::epsilon());
+  }
+
+  TEUCHOS_UNIT_TEST( TensorUtils, TensorInstantiation )
+  {
+    Intrepid::FieldContainer<ScalarT> FC(2,3,3);
+    FC(0,0,0) = 1.0;
+    FC(0,0,1) = 2.0;
+    FC(0,0,2) = 3.0;
+    FC(0,1,0) = 4.0;
+    FC(0,1,1) = 5.0;
+    FC(0,1,2) = 6.0;
+    FC(0,2,0) = 7.0;
+    FC(0,2,1) = 8.0;
+    FC(0,2,2) = 9.0;
+    FC(1,0,0) = 10.0;
+    FC(1,0,1) = 11.0;
+    FC(1,0,2) = 12.0;
+    FC(1,1,0) = 13.0;
+    FC(1,1,1) = 14.0;
+    FC(1,1,2) = 15.0;
+    FC(1,2,0) = 16.0;
+    FC(1,2,1) = 17.0;
+    FC(1,2,2) = 18.0;
+
+    const ScalarT * dataPtr0 = &FC(0,0,0);
+
+    LCM::Tensor<ScalarT> A( dataPtr0 );
+
+    TEST_COMPARE( A(0,0), ==, 1.0 );
+    TEST_COMPARE( A(0,1), ==, 2.0 );
+    TEST_COMPARE( A(0,2), ==, 3.0 );
+    TEST_COMPARE( A(1,0), ==, 4.0 );
+    TEST_COMPARE( A(1,1), ==, 5.0 );
+    TEST_COMPARE( A(1,2), ==, 6.0 );
+    TEST_COMPARE( A(2,0), ==, 7.0 );
+    TEST_COMPARE( A(2,1), ==, 8.0 );
+    TEST_COMPARE( A(2,2), ==, 9.0 );
+
+    const ScalarT * dataPtr1 = &FC(1,0,0);
+
+    LCM::Tensor<ScalarT> B( dataPtr1 );
+
+    TEST_COMPARE( B(0,0), ==, 10.0 );
+    TEST_COMPARE( B(0,1), ==, 11.0 );
+    TEST_COMPARE( B(0,2), ==, 12.0 );
+    TEST_COMPARE( B(1,0), ==, 13.0 );
+    TEST_COMPARE( B(1,1), ==, 14.0 );
+    TEST_COMPARE( B(1,2), ==, 15.0 );
+    TEST_COMPARE( B(2,0), ==, 16.0 );
+    TEST_COMPARE( B(2,1), ==, 17.0 );
+    TEST_COMPARE( B(2,2), ==, 18.0 );
   }
 
   TEUCHOS_UNIT_TEST( TensorUtils, TensorAddition )
@@ -189,7 +279,7 @@ namespace {
 
     TEST_COMPARE( std::abs(f(0,0) - std::log(3.0)), <=, std::numeric_limits<ScalarT>::epsilon() );
 
-    LCM::Vector<ScalarT> u(0);
+    LCM::Vector<ScalarT> u(0.0);
     u(0) = std::acos(-1.0)/std::sqrt(2.0);
     u(1) = u(0);
     u(2) = 0.0;

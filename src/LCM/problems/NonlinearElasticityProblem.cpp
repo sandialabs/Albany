@@ -154,6 +154,10 @@ Albany::NonlinearElasticityProblem::getValidProblemParameters() const
   if (matModel == "GursonFD")
   {
 	validPL->set<RealType>("f0",false,"");
+	validPL->set<RealType>("kw",false,"");
+	validPL->set<RealType>("eN",false,"");
+	validPL->set<RealType>("sN",false,"");
+	validPL->set<RealType>("fN",false,"");
   }
 
   return validPL;

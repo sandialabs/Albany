@@ -54,6 +54,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=/home/agsalin/Trilinos/build_july10/install \
       -D Trilinos_ENABLE_NOX:BOOL=ON \
       -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
       -D Trilinos_ENABLE_Thyra:BOOL=ON \
+      -D Trilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON \
       -D Trilinos_ENABLE_Rythmos:BOOL=ON \
       -D Trilinos_ENABLE_MOOCHO:BOOL=ON \
       -D Trilinos_ENABLE_OptiPack:BOOL=ON \

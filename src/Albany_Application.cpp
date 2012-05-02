@@ -123,6 +123,8 @@ Application(const RCP<const Epetra_Comm>& comm_,
 #endif
   }
 
+//  adapter = rcp(new Adaptation(problemParams));
+
   physicsBasedPreconditioner = problemParams->get("Use Physics-Based Preconditioner",false);
   if (physicsBasedPreconditioner) 
     tekoParams = Teuchos::sublist(problemParams, "Teko", true);
@@ -134,6 +136,8 @@ Application(const RCP<const Epetra_Comm>& comm_,
 #ifdef ALBANY_CUTR
   discFactory.setMeshMover(meshMover);
 #endif
+
+//  discFactory.setAdapter(adapter);
 
   // Get mesh specification object: worksetSize, cell topology, etc
   ArrayRCP<RCP<Albany::MeshSpecsStruct> > meshSpecs = 
@@ -226,7 +230,8 @@ Application(const RCP<const Epetra_Comm>& comm_,
   else {
     overlapped_xT->doImport(*initial_xT, *importerT, Tpetra::INSERT);
     Albany::InitialConditionsT(overlapped_xT, wsElNodeEqID, coords, neq, numDim,
-                              problemParams->sublist("Initial Condition"));
+                              problemParams->sublist("Initial Condition"),
+                              disc->hasRestartSolution());
     Albany::InitialConditionsT(overlapped_xdotT,  wsElNodeEqID, coords, neq, numDim,
                               problemParams->sublist("Initial Condition Dot"));
     initial_xT->doExport(*overlapped_xT, *exporterT, Tpetra::INSERT);
@@ -951,6 +956,8 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
   // End shape optimization logic
 #endif
 
+//  adapter->adaptit();
+
   // Set data in Workset struct, and perform fill via field manager
   {
     PHAL::Workset workset;
@@ -1157,6 +1164,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     shapeParamsHaveBeenReset = false;
   }
 #endif
+//  adapter->adaptit();
 
   // Set SG parameters
   for (int i=0; i<sg_p_index.size(); i++) {
@@ -1283,6 +1291,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     shapeParamsHaveBeenReset = false;
   }
 #endif
+//  adapter->adaptit();
 
   // Set SG parameters
   for (int i=0; i<sg_p_index.size(); i++) {
@@ -1710,6 +1719,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     shapeParamsHaveBeenReset = false;
   }
 #endif
+//  adapter->adaptit();
 
   // Set MP parameters
   for (int i=0; i<mp_p_index.size(); i++) {
@@ -1840,6 +1850,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     shapeParamsHaveBeenReset = false;
   }
 #endif
+//  adapter->adaptit();
 
   // Set MP parameters
   for (int i=0; i<mp_p_index.size(); i++) {

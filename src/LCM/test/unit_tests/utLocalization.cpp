@@ -45,41 +45,75 @@ namespace {
       Teuchos::rcp(new PHX::MDALayout<Cell, Vertex, Dim>(worksetSize, numVertices, numDim));
 
     // Instantiate the required evaluators with EvalT = PHAL::AlbanyTraits::Residual and Traits = PHAL::AlbanyTraits
-    Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> coordValue(24);
-    RealType eps = 0.01;
-    coordValue[0] = 0.0;
-    coordValue[1] = 0.0;
-    coordValue[2] = 0.0;
-    coordValue[3] = 0.0;
-    coordValue[4] = 0.0;
-    coordValue[5] = 0.0;
-    coordValue[6] = 0.0;
-    coordValue[7] = 0.0;
-    coordValue[8] = 0.0;
-    coordValue[9] = 0.0;
-    coordValue[10] = 0.0;
-    coordValue[11] = 0.0;
-    coordValue[12] = 0.0;
-    coordValue[13] = 0.0;
-    coordValue[14] = 0.0;
-    coordValue[15] = 0.0;
-    coordValue[16] = 0.0;
-    coordValue[17] = 0.0;
-    coordValue[18] = 0.0;
-    coordValue[19] = 0.0;
-    coordValue[20] = 0.0;
-    coordValue[21] = 0.0;
-    coordValue[22] = 0.0;
-    coordValue[23] = 0.0;
+    Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> referenceCoords(24);
+    referenceCoords[0] = -0.5;
+    referenceCoords[1] = 0.0;
+    referenceCoords[2] = -0.5;
+    referenceCoords[3] = -0.5;
+    referenceCoords[4] = 0.0;
+    referenceCoords[5] = 0.5;
+    referenceCoords[6] = 0.5;
+    referenceCoords[7] = 0.0;
+    referenceCoords[8] = 0.5;
+    referenceCoords[9] = 0.5;
+    referenceCoords[10] = 0.0;
+    referenceCoords[11] = -0.5;
+    referenceCoords[12] = -0.5;
+    referenceCoords[13] = 0.0;
+    referenceCoords[14] = -0.5;
+    referenceCoords[15] = -0.5;
+    referenceCoords[16] = 0.0;
+    referenceCoords[17] = 0.5;
+    referenceCoords[18] = 0.5;
+    referenceCoords[19] = 0.0;
+    referenceCoords[20] = 0.5;
+    referenceCoords[21] = 0.5;
+    referenceCoords[22] = 0.0;
+    referenceCoords[23] = -0.5;
+
+    Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> currentCoords(24);
+    const double eps = 0.1;
+    currentCoords[ 0] = referenceCoords[ 0];
+    currentCoords[ 1] = referenceCoords[ 1];
+    currentCoords[ 2] = referenceCoords[ 2];
+    currentCoords[ 3] = referenceCoords[ 3];
+    currentCoords[ 4] = referenceCoords[ 4];
+    currentCoords[ 5] = referenceCoords[ 5];
+    currentCoords[ 6] = referenceCoords[ 6];
+    currentCoords[ 7] = referenceCoords[ 7];
+    currentCoords[ 8] = referenceCoords[ 8];
+    currentCoords[ 9] = referenceCoords[ 9];
+    currentCoords[10] = referenceCoords[10];
+    currentCoords[11] = referenceCoords[11];
+    currentCoords[12] = referenceCoords[12];
+    currentCoords[13] = referenceCoords[13] + eps;
+    currentCoords[14] = referenceCoords[14];
+    currentCoords[15] = referenceCoords[15];
+    currentCoords[16] = referenceCoords[16] + eps;
+    currentCoords[17] = referenceCoords[17];
+    currentCoords[18] = referenceCoords[18];
+    currentCoords[19] = referenceCoords[19] + eps;
+    currentCoords[20] = referenceCoords[20];
+    currentCoords[21] = referenceCoords[21];
+    currentCoords[22] = referenceCoords[22] + eps;
+    currentCoords[23] = referenceCoords[23];
 
 
-    // SetField evaluator, which will be used to manually assign a value to the coordVec field
-    Teuchos::ParameterList setFieldParameterList("SetField");
-    setFieldParameterList.set<string>("Evaluated Field Name", "Current Coords");
-    setFieldParameterList.set< Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", vertices_vector);
-    setFieldParameterList.set< Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> >("Field Values", coordValue);
-    Teuchos::RCP<LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits> > setField = 
-      Teuchos::rcp(new LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>(setFieldParameterList));
+    // SetField evaluator, which will be used to manually assign a value to the Ref Coord field
+    Teuchos::ParameterList setRefFieldParameterList("SetFieldRefCoords");
+    setRefFieldParameterList.set<string>("Evaluated Field Name", "Reference Coords");
+    setRefFieldParameterList.set< Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", vertices_vector);
+    setRefFieldParameterList.set< Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> >("Field Values", referenceCoords);
+    Teuchos::RCP<LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits> > setFieldRefCoords = 
+      Teuchos::rcp(new LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>(setRefFieldParameterList));
+
+    // SetField evaluator, which will be used to manually assign a value to the Cur Coord field
+    Teuchos::ParameterList setCurFieldParameterList("SetFieldCurCoords");
+    setCurFieldParameterList.set<string>("Evaluated Field Name", "Current Coords");
+    setCurFieldParameterList.set< Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", vertices_vector);
+    setCurFieldParameterList.set< Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> >("Field Values", currentCoords);
+    Teuchos::RCP<LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits> > setFieldCurCoords = 
+      Teuchos::rcp(new LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>(setCurFieldParameterList));
 
     // stuff for the localization evaluator
     Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
@@ -90,13 +124,15 @@ namespace {
 
     // Localization evaluator
     Teuchos::RCP<Teuchos::ParameterList> localizationParameterList = Teuchos::rcp(new Teuchos::ParameterList("Localization"));
-    localizationParameterList->set<string>("Coordinate Vector Name", "Current Coords");
+    localizationParameterList->set<string>("Current Coordinates Name", "Current Coords");
+    localizationParameterList->set<string>("Reference Coordinates Name", "Reference Coords");
     localizationParameterList->set<string>("Deformation Gradient Name", "Deformation Gradient");
     localizationParameterList->set< Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
     localizationParameterList->set< Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis",intrepidBasis);
     localizationParameterList->set< Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
     localizationParameterList->set< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout", qp_tensor);
-    localizationParameterList->set< Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layot", vertices_vector);
+    localizationParameterList->set< Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout", vertices_vector);
+    localizationParameterList->set<double>("thickness", 0.1);
     Teuchos::RCP<LCM::Localization<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits> > localization = 
       Teuchos::rcp(new LCM::Localization<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>(*localizationParameterList));
 
@@ -104,7 +140,8 @@ namespace {
     PHX::FieldManager<PHAL::AlbanyTraits> fieldManager;
 
     // Register the evaluators with the field manager
-    fieldManager.registerEvaluator<PHAL::AlbanyTraits::Residual>(setField);
+    fieldManager.registerEvaluator<PHAL::AlbanyTraits::Residual>(setFieldRefCoords);
+    fieldManager.registerEvaluator<PHAL::AlbanyTraits::Residual>(setFieldCurCoords);
     fieldManager.registerEvaluator<PHAL::AlbanyTraits::Residual>(localization);
 
     // Set the Localization evaluated fields as required fields
@@ -112,13 +149,13 @@ namespace {
       fieldManager.requireField<PHAL::AlbanyTraits::Residual>(**it);
  
     // Call postRegistrationSetup on the evaluators
+    // JTO - I don't know what "Test String" is meant for...
     PHAL::AlbanyTraits::SetupData setupData = "Test String";
     fieldManager.postRegistrationSetup(setupData);
 
     // Create a workset
     PHAL::Workset workset;
     workset.numCells = worksetSize;
-    //workset.stateArrayPtr = &stateMgr.getStateArray(0);
 
     // Call the evaluators, evaluateFields() is the function that computes things
     fieldManager.preEvaluate<PHAL::AlbanyTraits::Residual>(workset);
@@ -126,7 +163,7 @@ namespace {
     fieldManager.postEvaluate<PHAL::AlbanyTraits::Residual>(workset);
 
     // Pull the stress from the FieldManager
-    PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT,Cell,QuadPoint,Dim,Dim> defGradField("defGrad", qp_tensor);
+    PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT,Cell,QuadPoint,Dim,Dim> defGradField("Deformation Gradient", qp_tensor);
     fieldManager.getFieldData<PHAL::AlbanyTraits::Residual::ScalarT, PHAL::AlbanyTraits::Residual, Cell, QuadPoint, Dim, Dim>(defGradField);
 
     // Record the expected stress, which will be used to check the computed stress
@@ -135,7 +172,7 @@ namespace {
                       0.0,
                       0.0,
                       0.0,
-                      1.0,
+                      2.0,
                       0.0,
                       0.0,
                       0.0,
@@ -146,7 +183,7 @@ namespace {
     for(size_type cell=0; cell< worksetSize; ++cell){
       for(size_type qp=0; qp < numQPts; ++qp){
 
-        std::cout << "Stress tensor at cell " << cell << ", quadrature point " << qp << ":" << endl;
+        std::cout << "Deformation Gradient tensor at cell " << cell << ", quadrature point " << qp << ":" << endl;
         std::cout << "  " << defGradField(cell, qp, 0, 0);
         std::cout << "  " << defGradField(cell, qp, 0, 1);
         std::cout << "  " << defGradField(cell, qp, 0, 2) << endl;

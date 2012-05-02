@@ -124,6 +124,9 @@ namespace Albany {
     //Tpetra analog
     virtual Teuchos::RCP<Tpetra_Vector> getSolutionFieldT() const = 0;
 
+    //! Flag if solution has a restart values -- used in Init Cond
+    virtual bool hasRestartSolution() const = 0;
+
     //! Accessor function to get coordinates for ML. Memory controlled here.
     virtual void getOwned_xyz(double **x, double **y, double **z, double **rbm,
                               int& nNodes, int numPDEs, int numScalar, int nullSpaceDim) = 0;

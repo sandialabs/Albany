@@ -56,6 +56,7 @@ namespace Albany {
     typedef stk::mesh::Field<double,stk::mesh::Cartesian,stk::mesh::Cartesian> TensorFieldType ;
     typedef stk::mesh::Field<double,stk::mesh::Cartesian> VectorFieldType ;
     typedef stk::mesh::Field<double>                      ScalarFieldType ;
+    typedef stk::mesh::Field<int>                      IntScalarFieldType ;
 
     typedef stk::mesh::Cartesian QPTag; // need to invent shards::ArrayDimTag
     typedef stk::mesh::Field<double,QPTag, stk::mesh::Cartesian,stk::mesh::Cartesian> QPTensorFieldType ;
@@ -68,6 +69,7 @@ namespace Albany {
     std::map<std::string, stk::mesh::Part*> nsPartVec;  //Node Sets
     std::map<std::string, stk::mesh::Part*> ssPartVec;  //Side Sets
     VectorFieldType* coordinates_field;
+    IntScalarFieldType* proc_rank_field;
     VectorFieldType* solution_field;
     VectorFieldType* residual_field;
     double time;
@@ -83,6 +85,7 @@ namespace Albany {
 
     bool exoOutput;
     std::string exoOutFile;
+    bool hasRestartSolution;
 
     // Temporary flag to switch between 2D elements being Rank Elements or Faces
     bool useElementAsTopRank;

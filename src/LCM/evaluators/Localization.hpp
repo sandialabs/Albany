@@ -53,7 +53,7 @@ public:
   /// \param currentCoords
   /// \param midplaneCoords
   ///
-  void computeMidplaneCoords(PHX::MDField<ScalarT,Cell,Vertex,Dim> currentCoords,
+  void computeMidplaneCoords(const PHX::MDField<ScalarT,Cell,Vertex,Dim> coords,
                              FC & midplaneCoords);
 
   ///
@@ -81,16 +81,33 @@ public:
   ///
   void computeJacobian(const FC & bases, const FC & dualBases, FC & area, FC & jacobian);
 
+  ///
+  /// Computes the gap or jump
+  /// \param coords
+  /// \param gap
+  ///
+  void computeGap(const PHX::MDField<ScalarT,Cell,Vertex,Dim> coords, 
+                  FC & gap);
+
+  ///
+  /// Computes the deformation gradient
+  /// \param bases
+  ///
+  void computeDeformationGradient(const ScalarT thickness, const FC & bases, const FC & dualBases, const FC & refNormal, const FC & gap,
+                                  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defGrad, FC & J);
+
 private:
 
-  int  numVertices, numDims, numNodes, numQPs, numPlaneNodes;
+  int  numDims, numNodes, numQPs, numPlaneNodes, numPlaneDims;
 
   // Input:
   //! Coordinate vector at vertices
+  PHX::MDField<ScalarT,Cell,Vertex,Dim> referenceCoords;
   PHX::MDField<ScalarT,Cell,Vertex,Dim> currentCoords;
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
   Teuchos::RCP<shards::CellTopology> cellType;
+  ScalarT thickness;
 
   // Reference Cell FieldContainers
   Intrepid::FieldContainer<RealType> refValues;
@@ -102,9 +119,11 @@ private:
   Intrepid::FieldContainer<ScalarT> midplaneCoords;
   Intrepid::FieldContainer<ScalarT> bases;
   Intrepid::FieldContainer<ScalarT> dualBases;
-  Intrepid::FieldContainer<ScalarT> jacobian;
-  Intrepid::FieldContainer<ScalarT> normals;
-  Intrepid::FieldContainer<ScalarT> area;
+  Intrepid::FieldContainer<ScalarT> refJacobian;
+  Intrepid::FieldContainer<ScalarT> refNormal;
+  Intrepid::FieldContainer<ScalarT> refArea;
+  Intrepid::FieldContainer<ScalarT> gap;
+  Intrepid::FieldContainer<ScalarT> J;
 
   // Output:
   //! Basis Functions at quadrature points

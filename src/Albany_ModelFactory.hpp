@@ -14,28 +14,34 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
+#ifndef ALBANY_MODELFACTORY_HPP
+#define ALBANY_MODELFACTORY_HPP
 
-#ifndef ALBANY_INITIALCONDITION_HPP
-#define ALBANY_INITIALCONDITION_HPP
+#include "EpetraExt_ModelEvaluator.h"
 
-#include <string>
+#include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
-#include "Epetra_Vector.h"
-#include "Albany_DataTypes.hpp"
 
 namespace Albany {
 
-void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
-                       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >& wsElNodeEqID,
-                       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords,
-                       const int neq, const int numDim,
-                       Teuchos::ParameterList& icParams,
-                       const bool gasRestartSolution=false);
-void InitialConditionsT(const Teuchos::RCP<Tpetra_Vector>& solnT,
-                       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >& wsElNodeEqID,
-                       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords,
-                       const int neq, const int numDim,
-                       Teuchos::ParameterList& icParams,
-                       const bool gasRestartSolution=false);
-}
-#endif
+class Application;
+
+class ModelFactory {
+public:
+  ModelFactory(const Teuchos::RCP<Teuchos::ParameterList> &params,
+               const Teuchos::RCP<Application> &app);
+
+  Teuchos::RCP<EpetraExt::ModelEvaluator> create() const;
+
+private:
+  Teuchos::RCP<Teuchos::ParameterList> params_;
+  Teuchos::RCP<Application> app_;
+
+  // Disallow copy & assignment
+  ModelFactory(const ModelFactory &);
+  ModelFactory &operator=(const ModelFactory &);
+};
+
+} // end namespace Albany
+
+#endif /* ALBANY_MODELFACTORY_HPP */

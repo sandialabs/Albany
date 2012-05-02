@@ -52,7 +52,11 @@ GursonFD(const Teuchos::ParameterList& p) :
 				p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   voidVolume       (p.get<std::string>                   ("Void Volume Name"),
 				p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  f0               (p.get<RealType>("f0 Name"))
+  f0               (p.get<RealType>("f0 Name")),
+  kw               (p.get<RealType>("kw Name")),
+  eN               (p.get<RealType>("eN Name")),
+  sN               (p.get<RealType>("sN Name")),
+  fN               (p.get<RealType>("fN Name"))
 {
     // Pull out numQPs and numDims from a Layout
     Teuchos::RCP<PHX::DataLayout> tensor_dl =
@@ -418,6 +422,18 @@ GursonFD<EvalT, Traits>::compute_ResidJacobian(std::vector<ScalarT> & X, std::ve
 	fac = mu * dgam;
 	fac = 2. * fac;
 
+	// shear-dependent term in void growth
+	ScalarT omega, J3, taue;
+	J3 = LCM::det(s);
+	taue = sq32 * smag;
+	if(taue > 0)
+		omega = 1. - (27. * J3 / 2./taue/taue/taue) * (27. * J3 / 2./taue/taue/taue);
+	else
+		omega = 0.0;
+
+	// void nucleation to be added
+
+
 	DFadType Phi;
 
 	Phi = smag - fac - sq23 * std::sqrt(psi) * psi_sign * Ybar;
@@ -425,7 +441,7 @@ GursonFD<EvalT, Traits>::compute_ResidJacobian(std::vector<ScalarT> & X, std::ve
 	// local system of equations
 	Rfad[0] = Phi;
 	Rfad[1] = pfad - p + kappa * t;
-	Rfad[2] = fvoidfad - fvoid - (1. - fvoidfad) * t;
+	Rfad[2] = fvoidfad - fvoid - (1. - fvoidfad) * t - sq23 * dgam * kw * fvoidfad * omega;
 	Rfad[3] = eqfad - eq - (dgam * sq23 * psi_sign * std::sqrt(psi) + pfad * t / Ybar) / (1.-fvoidfad);
 
 	// get ScalarT Residual

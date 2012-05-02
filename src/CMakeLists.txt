@@ -22,16 +22,19 @@ SET(SOURCES
 	PHAL_Dimension.cpp 
 	PHAL_AlbanyTraits.cpp 
 	Albany_Application.cpp 
+	Albany_Adaptation.cpp
 	Albany_ObserverFactory.cpp
 	Albany_RythmosObserver.cpp 
 	Albany_NOXObserver.cpp 
 	Albany_StateManager.cpp 
+	Albany_ModelFactory.cpp
 	Albany_ModelEvaluator.cpp
 	Albany_SaveEigenData.cpp
 	Albany_ExodusOutput.cpp
   )
 
 SET(HEADERS
+	Albany_Adaptation.hpp
 	Albany_SolverFactory.hpp
 	Albany_Utils.hpp
 	Petra_Converters.hpp
@@ -48,6 +51,7 @@ SET(HEADERS
 	Albany_StateManager.hpp 
         Albany_StateInfoStruct.hpp
         Albany_EigendataInfoStruct.hpp
+	Albany_ModelFactory.hpp
 	Albany_ModelEvaluator.hpp
 	Albany_SaveEigenData.hpp
 	Albany_ExodusOutput.hpp

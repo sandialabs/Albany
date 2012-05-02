@@ -50,6 +50,18 @@ namespace LCM {
     Vector(const ScalarT s0, const ScalarT s1, const ScalarT s2);
 
     ///
+    /// Create vector from array - const version
+    /// \param dataPtr pointer into the array
+    ///
+    Vector(const ScalarT * dataPtr);
+
+    ///
+    /// Create vector from array
+    /// \param dataPtr pointer into the array
+    ///
+    Vector(ScalarT * dataPtr);
+
+    ///
     /// Copy constructor
     /// \param v the values of its componets are copied to the new vector
     ///
@@ -140,6 +152,18 @@ namespace LCM {
         const ScalarT s00, const ScalarT s01, const ScalarT s02,
         const ScalarT s10, const ScalarT s11, const ScalarT s12,
         const ScalarT s20, const ScalarT s21, const ScalarT s22);
+
+    ///
+    /// Create tensor from array - const version
+    /// \param dataPtr pointer into the array
+    ///
+    Tensor(const ScalarT * dataPtr);
+
+    ///
+    /// Create tensor from array
+    /// \param dataPtr pointer into the array
+    ///
+    Tensor(ScalarT * dataPtr);
 
     ///
     /// Copy constructor
