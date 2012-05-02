@@ -91,12 +91,14 @@ public:
 
   ///
   /// Computes the deformation gradient
+  /// \param bases
   ///
-  void computeDeformationGradient(const FC & bases);
+  void computeDeformationGradient(const ScalarT thickness, const FC & bases, const FC & dualBases, const FC & refNormal, const FC & gap,
+                                  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defGrad, FC & J);
 
 private:
 
-  int  numDims, numNodes, numQPs, numPlaneNodes;
+  int  numDims, numNodes, numQPs, numPlaneNodes, numPlaneDims;
 
   // Input:
   //! Coordinate vector at vertices
@@ -105,6 +107,7 @@ private:
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
   Teuchos::RCP<shards::CellTopology> cellType;
+  ScalarT thickness;
 
   // Reference Cell FieldContainers
   Intrepid::FieldContainer<RealType> refValues;
@@ -116,10 +119,11 @@ private:
   Intrepid::FieldContainer<ScalarT> midplaneCoords;
   Intrepid::FieldContainer<ScalarT> bases;
   Intrepid::FieldContainer<ScalarT> dualBases;
-  Intrepid::FieldContainer<ScalarT> jacobian;
-  Intrepid::FieldContainer<ScalarT> normals;
-  Intrepid::FieldContainer<ScalarT> area;
+  Intrepid::FieldContainer<ScalarT> refJacobian;
+  Intrepid::FieldContainer<ScalarT> refNormal;
+  Intrepid::FieldContainer<ScalarT> refArea;
   Intrepid::FieldContainer<ScalarT> gap;
+  Intrepid::FieldContainer<ScalarT> J;
 
   // Output:
   //! Basis Functions at quadrature points

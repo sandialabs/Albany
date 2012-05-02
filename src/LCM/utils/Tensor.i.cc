@@ -62,8 +62,8 @@ namespace LCM {
   }
 
   //
-  // Create vector specifying components - const version
-  // \param data
+  // Create vector from array - const version
+  // \param dataPtr
   //
   template<typename ScalarT>
   inline
@@ -78,8 +78,8 @@ namespace LCM {
   }
 
   //
-  // Create vector specifying components
-  // \param data
+  // Create vector from array
+  // \param dataPtr
   //
   template<typename ScalarT>
   inline
@@ -464,6 +464,54 @@ namespace LCM {
     e[2][0] = s20;
     e[2][1] = s21;
     e[2][2] = s22;
+
+    return;
+  }
+
+  //
+  // Create tensor from array - const version
+  // \param dataPtr
+  //
+  template<typename ScalarT>
+  inline
+  Tensor<ScalarT>::Tensor(const ScalarT * dataPtr)
+  {
+    assert(dataPtr != NULL);
+    e[0][0] = dataPtr[0];
+    e[0][1] = dataPtr[1];
+    e[0][2] = dataPtr[2];
+
+    e[1][0] = dataPtr[3];
+    e[1][1] = dataPtr[4];
+    e[1][2] = dataPtr[5];
+
+    e[2][0] = dataPtr[6];
+    e[2][1] = dataPtr[7];
+    e[2][2] = dataPtr[8];
+
+    return;
+  }
+
+  //
+  // Create vector from array
+  // \param dataPtr
+  //
+  template<typename ScalarT>
+  inline
+  Tensor<ScalarT>::Tensor(ScalarT * dataPtr)
+  {
+    assert(dataPtr != NULL);
+    e[0][0] = dataPtr[0];
+    e[0][1] = dataPtr[1];
+    e[0][2] = dataPtr[2];
+
+    e[1][0] = dataPtr[3];
+    e[1][1] = dataPtr[4];
+    e[1][2] = dataPtr[5];
+
+    e[2][0] = dataPtr[6];
+    e[2][1] = dataPtr[7];
+    e[2][2] = dataPtr[8];
 
     return;
   }

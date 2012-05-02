@@ -73,30 +73,30 @@ namespace {
 
     Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> currentCoords(24);
     const double eps = 0.1;
-    referenceCoords[0] = -0.5;
-    currentCoords[1] = eps;
-    currentCoords[2] = 0.5;
-    currentCoords[3] = 0.5;
-    currentCoords[4] = eps;
-    currentCoords[5] = 0.5;
-    currentCoords[6] = 0.5;
-    currentCoords[7] = eps;
-    currentCoords[8] = 0.5;
-    currentCoords[9] = 0.5;
-    currentCoords[10] = eps;
-    currentCoords[11] = 0.5;
-    currentCoords[12] = 0.5;
-    currentCoords[13] = eps;
-    currentCoords[14] = 0.5;
-    currentCoords[15] = 0.5;
-    currentCoords[16] = eps;
-    currentCoords[17] = 0.5;
-    currentCoords[18] = 0.5;
-    currentCoords[19] = eps;
-    currentCoords[20] = 0.5;
-    currentCoords[21] = 0.5;
-    currentCoords[22] = eps;
-    currentCoords[23] = 0.5;
+    currentCoords[ 0] = referenceCoords[ 0];
+    currentCoords[ 1] = referenceCoords[ 1];
+    currentCoords[ 2] = referenceCoords[ 2];
+    currentCoords[ 3] = referenceCoords[ 3];
+    currentCoords[ 4] = referenceCoords[ 4];
+    currentCoords[ 5] = referenceCoords[ 5];
+    currentCoords[ 6] = referenceCoords[ 6];
+    currentCoords[ 7] = referenceCoords[ 7];
+    currentCoords[ 8] = referenceCoords[ 8];
+    currentCoords[ 9] = referenceCoords[ 9];
+    currentCoords[10] = referenceCoords[10];
+    currentCoords[11] = referenceCoords[11];
+    currentCoords[12] = referenceCoords[12];
+    currentCoords[13] = referenceCoords[13] + eps;
+    currentCoords[14] = referenceCoords[14];
+    currentCoords[15] = referenceCoords[15];
+    currentCoords[16] = referenceCoords[16] + eps;
+    currentCoords[17] = referenceCoords[17];
+    currentCoords[18] = referenceCoords[18];
+    currentCoords[19] = referenceCoords[19] + eps;
+    currentCoords[20] = referenceCoords[20];
+    currentCoords[21] = referenceCoords[21];
+    currentCoords[22] = referenceCoords[22] + eps;
+    currentCoords[23] = referenceCoords[23];
 
 
     // SetField evaluator, which will be used to manually assign a value to the Ref Coord field
@@ -132,6 +132,7 @@ namespace {
     localizationParameterList->set< Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
     localizationParameterList->set< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout", qp_tensor);
     localizationParameterList->set< Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout", vertices_vector);
+    localizationParameterList->set<double>("thickness", 0.1);
     Teuchos::RCP<LCM::Localization<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits> > localization = 
       Teuchos::rcp(new LCM::Localization<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>(*localizationParameterList));
 
@@ -171,7 +172,7 @@ namespace {
                       0.0,
                       0.0,
                       0.0,
-                      1.0,
+                      2.0,
                       0.0,
                       0.0,
                       0.0,
@@ -182,7 +183,7 @@ namespace {
     for(size_type cell=0; cell< worksetSize; ++cell){
       for(size_type qp=0; qp < numQPts; ++qp){
 
-        std::cout << "Stress tensor at cell " << cell << ", quadrature point " << qp << ":" << endl;
+        std::cout << "Deformation Gradient tensor at cell " << cell << ", quadrature point " << qp << ":" << endl;
         std::cout << "  " << defGradField(cell, qp, 0, 0);
         std::cout << "  " << defGradField(cell, qp, 0, 1);
         std::cout << "  " << defGradField(cell, qp, 0, 2) << endl;
