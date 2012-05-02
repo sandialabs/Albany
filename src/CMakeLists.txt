@@ -26,6 +26,7 @@ SET(SOURCES
 	Albany_RythmosObserver.cpp 
 	Albany_NOXObserver.cpp 
 	Albany_StateManager.cpp 
+	Albany_ModelFactory.cpp
 	Albany_ModelEvaluator.cpp
 	Albany_SaveEigenData.cpp
 	Albany_ExodusOutput.cpp
@@ -48,6 +49,7 @@ SET(HEADERS
 	Albany_StateManager.hpp 
         Albany_StateInfoStruct.hpp
         Albany_EigendataInfoStruct.hpp
+	Albany_ModelFactory.hpp
 	Albany_ModelEvaluator.hpp
 	Albany_SaveEigenData.hpp
 	Albany_ExodusOutput.hpp
