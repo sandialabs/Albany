@@ -40,6 +40,17 @@ createGradientOp() const
   return Teuchos::null;
 }
 
+Teuchos::RCP<Tpetra_Operator> 
+Albany::ScalarResponseFunction::
+createGradientOpT() const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    true, std::logic_error,
+    "Error!  Albany::ScalarResponseFunction::createGradientOp():  " <<
+    "Operator form of dg/dx is not supported for scalar responses.");
+  return Teuchos::null;
+}
+
 void
 Albany::ScalarResponseFunction::
 evaluateDerivative(
@@ -58,6 +69,22 @@ evaluateDerivative(
     dg_dx.getMultiVector().get(), dg_dxdot.getMultiVector().get(),
     dg_dp.getMultiVector().get());
 }
+
+void
+Albany::ScalarResponseFunction::
+evaluateDerivativeT(
+  const double current_time,
+  const Tpetra_Vector* xdot,
+  const Tpetra_Vector& x,
+  const Teuchos::Array<ParamVec>& p,
+  ParamVec* deriv_p,
+  Tpetra_Vector* g,
+  const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dx,
+  const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdot,
+  const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp)
+{
+}
+
 
 void 
 Albany::ScalarResponseFunction::

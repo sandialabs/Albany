@@ -241,6 +241,15 @@ fillSaddlePointData(current_time, xdot, x, p, g, dbMode);
   return;
 }
 
+void
+QCAD::SaddleValueResponseFunction::
+evaluateResponseT(const double current_time,
+		     const Tpetra_Vector* xdot,
+		     const Tpetra_Vector& x,
+		     const Teuchos::Array<ParamVec>& p,
+		     Tpetra_Vector& g)
+{
+}
 
 void
 QCAD::SaddleValueResponseFunction::
@@ -968,6 +977,51 @@ evaluateTangent(const double alpha,
 
 void
 QCAD::SaddleValueResponseFunction::
+evaluateTangentT(const double alpha, 
+		const double beta,
+		const double current_time,
+		bool sum_derivs,
+		const Tpetra_Vector* xdotT,
+		const Tpetra_Vector& xT,
+		const Teuchos::Array<ParamVec>& p,
+		ParamVec* deriv_p,
+		const Tpetra_MultiVector* VxdotT,
+		const Tpetra_MultiVector* VxT,
+		const Tpetra_MultiVector* VpT,
+		Tpetra_Vector* gT,
+		Tpetra_MultiVector* gxT,
+		Tpetra_MultiVector* gpT)
+{
+  // Require that g be computed to get tangent info 
+  if(gT != NULL) {
+    
+    // HACK: for now do not evaluate response when tangent is requested,
+    //   as it is assumed that evaluateResponse has already been called
+    //   directly or by evaluateGradient.  This prevents repeated calling 
+    //   of evaluateResponse within the dg/dp loop of Albany::ModelEvaluator's
+    //   evalModel(...) function.  matchesCurrentResults(...) would be able to 
+    //   determine if evaluateResponse needs to be run, but 
+    //   Albany::AggregateScalarReponseFunction does not copy from global g 
+    //   to local g so the g parameter passed to this function will always 
+    //   be zeros when used in an aggregate response fn.  Change this?
+
+    // Evaluate response g and run algorithm (if it hasn't run already)
+    //if(!matchesCurrentResults(*g)) 
+    //  evaluateResponse(current_time, xdot, x, p, *g);
+
+    mode = "Fill saddle point";
+    Albany::FieldManagerScalarResponseFunction::evaluateTangentT(
+                alpha, beta, current_time, sum_derivs, xdotT,
+  	        xT, p, deriv_p, VxdotT, VxT, VpT, gT, gxT, gpT);
+  }
+  else {
+    if (gxT != NULL) gxT->putScalar(0.0);
+    if (gpT != NULL) gpT->putScalar(0.0);
+  }
+}
+
+void
+QCAD::SaddleValueResponseFunction::
 evaluateGradient(const double current_time,
 		 const Epetra_Vector* xdot,
 		 const Epetra_Vector& x,
@@ -995,6 +1049,37 @@ evaluateGradient(const double current_time,
     if (dg_dxdot != NULL) dg_dxdot->PutScalar(0.0);
     if (dg_dp != NULL)    dg_dp->PutScalar(0.0);
   }
+}
+
+void
+QCAD::SaddleValueResponseFunction::
+evaluateGradientT(const double current_time,
+		 const Tpetra_Vector* xdotT,
+		 const Tpetra_Vector& xT,
+		 const Teuchos::Array<ParamVec>& p,
+		 ParamVec* deriv_p,
+		 Tpetra_Vector* gT,
+		 Tpetra_MultiVector* dg_dxT,
+		 Tpetra_MultiVector* dg_dxdotT,
+		 Tpetra_MultiVector* dg_dpT)
+{
+  // Require that g be computed to get gradient info 
+  if(gT != NULL) {
+
+    // Evaluate response g and run algorithm (if it hasn't run already)
+    if(!matchesCurrentResultsT(*gT)) 
+      evaluateResponseT(current_time, xdotT, xT, p, *gT);
+
+    mode = "Fill saddle point";
+    Albany::FieldManagerScalarResponseFunction::evaluateGradientT(
+	   current_time, xdotT, xT, p, deriv_p, gT, dg_dxT, dg_dxdotT, dg_dpT);
+  }
+  else {
+    if (dg_dxT != NULL)    dg_dxT->putScalar(0.0);
+    if (dg_dxdotT != NULL) dg_dxdotT->putScalar(0.0);
+    if (dg_dpT != NULL)    dg_dpT->putScalar(0.0);
+  }
+
 }
 
 void 
@@ -1390,6 +1475,25 @@ matchesCurrentResults(Epetra_Vector& g) const
 
   for(std::size_t i=0; i<numDims; i++) {
     if(  fabs(g[2+i] - imagePts[iSaddlePt].coords[i]) > TOL ) return false;
+  }
+
+  return true;
+}
+
+bool QCAD::SaddleValueResponseFunction::
+matchesCurrentResultsT(Tpetra_Vector& gT) const
+{
+  const double TOL = 1e-8;
+
+  Teuchos::ArrayRCP<const ST> gT_constView = gT.get1dView();
+
+  if(iSaddlePt < 0) return false;
+
+  if( fabs(gT_constView[0] - returnFieldVal) > TOL || fabs(gT_constView[1] - imagePts[iSaddlePt].value) > TOL)
+    return false;
+
+  for(std::size_t i=0; i<numDims; i++) {
+    if(  fabs(gT_constView[2+i] - imagePts[iSaddlePt].coords[i]) > TOL ) return false;
   }
 
   return true;

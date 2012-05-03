@@ -48,6 +48,13 @@ namespace Albany {
 		     const Teuchos::Array<ParamVec>& p,
 		     Epetra_Vector& g);
 
+    virtual void 
+    evaluateResponseT(const double current_time,
+		     const Tpetra_Vector* xdotT,
+		     const Tpetra_Vector& xT,
+		     const Teuchos::Array<ParamVec>& p,
+		     Tpetra_Vector& gT);
+
     //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
     virtual void 
     evaluateTangent(const double alpha, 
@@ -65,6 +72,22 @@ namespace Albany {
 		    Epetra_MultiVector* gx,
 		    Epetra_MultiVector* gp);
 
+    virtual void 
+    evaluateTangentT(const double alpha, 
+		    const double beta,
+		    const double current_time,
+		    bool sum_derivs,
+		    const Tpetra_Vector* xdot,
+		    const Tpetra_Vector& x,
+		    const Teuchos::Array<ParamVec>& p,
+		    ParamVec* deriv_p,
+		    const Tpetra_MultiVector* Vxdot,
+		    const Tpetra_MultiVector* Vx,
+		    const Tpetra_MultiVector* Vp,
+		    Tpetra_Vector* g,
+		    Tpetra_MultiVector* gx,
+		    Tpetra_MultiVector* gp);
+
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
     virtual void 
     evaluateGradient(const double current_time,
@@ -76,6 +99,18 @@ namespace Albany {
 		     Epetra_MultiVector* dg_dx,
 		     Epetra_MultiVector* dg_dxdot,
 		     Epetra_MultiVector* dg_dp);
+    
+    //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp - Tpetra version
+    virtual void 
+    evaluateGradientT(const double current_time,
+		     const Tpetra_Vector* xdotT,
+		     const Tpetra_Vector& xT,
+		     const Teuchos::Array<ParamVec>& p,
+		     ParamVec* deriv_p,
+		     Tpetra_Vector* gT,
+		     Tpetra_MultiVector* dg_dxT,
+		     Tpetra_MultiVector* dg_dxdotT,
+		     Tpetra_MultiVector* dg_dpT);
 
   private:
 
@@ -93,11 +128,17 @@ namespace Albany {
     //! Equation we want to get the max value from
     int eq;
 
+    //IK, 4/30/2012: added Epetra_Comm member function to facilitate Tpetra conversion
+    Teuchos::RCP<const Epetra_Comm> comm_; 
+
     //! Flag for interleaved verus blocked unknown ordering
     bool interleavedOrdering;
 
     //! Compute max value and index
     void computeMaxValue(const Epetra_Vector& x, double& val, int& index);
+    
+    //! Compute max value and index - Tpetra
+    void computeMaxValueT(const Tpetra_Vector& xT, double& val, int& index);
 
   };
 

@@ -40,6 +40,21 @@ Teuchos::RCP<Epetra_Map> Petra::TpetraMap_To_EpetraMap(const Teuchos::RCP<const 
   return epetraMap_; 
 }
 
+//EpetraMap_To_TpetraMap: takes in Epetra_Map object, converts it to its equivalent Tpetra::Map object, 
+//and returns an RCP pointer to this Tpetra::Map
+Teuchos::RCP<const Tpetra_Map> Petra::EpetraMap_To_TpetraMap(const Teuchos::RCP<const Epetra_Map>& epetraMap_,
+                                                      Teuchos::RCP<const Tpetra::Comm<int> >& commT_, 
+                                                      Teuchos::RCP<KokkosNode>& nodeT_)
+{
+  int numElements = epetraMap_->NumMyElements(); 
+  int *indices = new int[numElements];
+  epetraMap_->MyGlobalElements(indices);  
+  Teuchos::ArrayView<GO> indicesAV = Teuchos::arrayView(indices, numElements);
+  Teuchos::RCP<const Tpetra_Map> tpetraMap_ = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesAV, commT_, nodeT_);
+  return tpetraMap_;
+}
+
+
 
 //TpetraCrsGraph_To_TpetraCrsGraph: takes in Tpetra::CrsGraph object, converts it to its equivalent Epetra_CrsGraph object, 
 //and returns an RCP pointer to this Epetra_CrsGraph
@@ -108,14 +123,14 @@ void Petra::TpetraVector_To_EpetraVector(const Teuchos::RCP<const Tpetra_Vector>
                                   Epetra_Vector& epetraVector_, const Teuchos::RCP<const Epetra_Comm>& comm_)
 {
   //check if maps of epetraVector_ and tpetraVector_ are the same
-  const Epetra_BlockMap epetraMap_ = epetraVector_.Map();
-  Teuchos::RCP<const Tpetra_Map> tpetraMap_ = tpetraVector_->getMap();  
-  Teuchos::RCP<Epetra_Map> tpetraMapE_ = TpetraMap_To_EpetraMap(tpetraMap_, comm_); 
-  bool isSame = tpetraMapE_->SameAs(epetraMap_); 
+  //const Epetra_BlockMap epetraMap_ = epetraVector_.Map();
+  //Teuchos::RCP<const Tpetra_Map> tpetraMap_ = tpetraVector_->getMap();  
+  //Teuchos::RCP<Epetra_Map> tpetraMapE_ = TpetraMap_To_EpetraMap(tpetraMap_, comm_); 
+  //bool isSame = tpetraMapE_->SameAs(epetraMap_); 
   //if epetraVector_ and tpetraVector_ do not have the same map, throw an exception
-  TEUCHOS_TEST_FOR_EXCEPTION((isSame != true),
-                             std::logic_error,
-                             "Error in Petra::TpetraVector_To_EpetraVector! Arguments Epetra_Vector and Tpetra::Vector do not have same map." <<  std::endl) ;
+  //TEUCHOS_TEST_FOR_EXCEPTION((isSame != true),
+  //                          std::logic_error,
+  //                          "Error in Petra::TpetraVector_To_EpetraVector! Arguments Epetra_Vector and Tpetra::Vector do not have same map." <<  std::endl) ;
 
   //Copy tpetraVector_ to epetraVector_
   Teuchos::Array<ST> array(tpetraVector_->getMap()->getNodeNumElements());

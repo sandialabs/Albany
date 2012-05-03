@@ -51,6 +51,18 @@ namespace Albany {
       Epetra_Operator* dg_dx,
       Epetra_Operator* dg_dxdot,
       Epetra_MultiVector* dg_dp) = 0;
+    
+    //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp - Tpetra
+    virtual void evaluateGradientT(
+      const double current_time,
+      const Tpetra_Vector* xdotT,
+      const Tpetra_Vector& xT,
+      const Teuchos::Array<ParamVec>& p,
+      ParamVec* deriv_p,
+      Tpetra_Vector* gT,
+      Tpetra_Operator* dg_dxT,
+      Tpetra_Operator* dg_dxdotT,
+      Tpetra_MultiVector* dg_dpT) = 0;
 
     //! Evaluate stochastic Galerkin derivative
     virtual void evaluateSGGradient(
@@ -101,7 +113,19 @@ namespace Albany {
       const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
       const EpetraExt::ModelEvaluator::Derivative& dg_dp);
 
-    //! Evaluate stochastic Galerkin derivative
+    //! Evaluate derivative dg/dx, dg/dxdot, dg/dp
+    virtual void evaluateDerivativeT(
+      const double current_time,
+      const Tpetra_Vector* xdotT,
+      const Tpetra_Vector& xT,
+      const Teuchos::Array<ParamVec>& p,
+      ParamVec* deriv_p,
+      Tpetra_Vector* gT,
+      const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dx,
+      const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdot,
+      const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp);
+    
+   //! Evaluate stochastic Galerkin derivative
     virtual void evaluateSGDerivative(
       const double current_time,
       const Stokhos::EpetraVectorOrthogPoly* sg_xdot,

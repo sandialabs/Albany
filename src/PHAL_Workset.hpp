@@ -139,11 +139,21 @@ struct Workset {
   Teuchos::RCP<const Epetra_Import> x_importer;
   Teuchos::RCP<const Tpetra_Import> x_importerT;
   Teuchos::RCP<Epetra_Vector> g;
+  //Tpetra analog of g
+  Teuchos::RCP<Tpetra_Vector> gT;
   Teuchos::RCP<Epetra_MultiVector> dgdx;
   Teuchos::RCP<Epetra_MultiVector> dgdxdot;
+  //Tpetra analogs of dgdx and dgdxdot 
+  Teuchos::RCP<Tpetra_MultiVector> dgdxT;
+  Teuchos::RCP<Tpetra_MultiVector> dgdxdotT;
   Teuchos::RCP<Epetra_MultiVector> overlapped_dgdx;
   Teuchos::RCP<Epetra_MultiVector> overlapped_dgdxdot;
+  //Tpetra analogs of overlapped_dgdx and overlapped_dgdxdot
+  Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdxT;
+  Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdxdotT;
   Teuchos::RCP<Epetra_MultiVector> dgdp;
+  //Tpetra analog of dgdp
+  Teuchos::RCP<Tpetra_MultiVector> dgdpT;
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > sg_g;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_dgdx;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_dgdxdot;

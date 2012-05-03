@@ -16,6 +16,9 @@
 
 
 #include "Albany_DistributedResponseFunction.hpp"
+#include "Thyra_TpetraThyraWrappers.hpp"
+
+typedef Thyra::TpetraOperatorVectorExtraction<ST, int> ConverterT; 
 
 void
 Albany::DistributedResponseFunction::
@@ -34,6 +37,27 @@ evaluateDerivative(
     current_time, xdot, x, p, deriv_p, g,
     dg_dx.getLinearOp().get(), dg_dxdot.getLinearOp().get(),
     dg_dp.getMultiVector().get());
+}
+
+void
+Albany::DistributedResponseFunction::
+evaluateDerivativeT(
+  const double current_time,
+  const Tpetra_Vector* xdotT,
+  const Tpetra_Vector& xT,
+  const Teuchos::Array<ParamVec>& p,
+  ParamVec* deriv_p,
+  Tpetra_Vector* gT,
+  const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxT,
+  const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotT,
+  const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dpT)
+{
+  Teuchos::RCP<Tpetra_Operator> dgdxT = ConverterT::getTpetraOperator(dg_dxT.getLinearOp()); 
+  Teuchos::RCP<Tpetra_Operator> dgdxdotT = ConverterT::getTpetraOperator(dg_dxdotT.getLinearOp());
+  Teuchos::RCP<Tpetra_MultiVector> dgdpT = ConverterT::getTpetraMultiVector(dg_dpT.getMultiVector());  
+  this->evaluateGradientT(
+    current_time, xdotT, xT, p, deriv_p, gT,
+    dgdxT.get(), dgdxdotT.get(), dgdpT.get());
 }
 
 void 

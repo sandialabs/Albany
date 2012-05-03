@@ -17,6 +17,7 @@
 
 #include "Albany_SolutionResponseFunction.hpp"
 #include "Epetra_CrsMatrix.h"
+#include "Petra_Converters.hpp"
 #include <algorithm>
 
 Albany::SolutionResponseFunction::
@@ -49,6 +50,15 @@ setup()
   culled_map = buildCulledMap(*x_map, keepDOF);
   importer = Teuchos::rcp(new Epetra_Import(*culled_map, *x_map));
 
+  // Build culled map and importer - Tpetra
+  Teuchos::RCP<const Tpetra_Map> x_mapT = application->getMapT();
+  const Epetra_Comm& comm = *application->getComm();
+  Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(comm));
+  Teuchos::ParameterList kokkosNodeParams;
+  Teuchos::RCP<KokkosNode> nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
+  Teuchos::RCP<const Tpetra_Map> culled_mapT = Petra::EpetraMap_To_TpetraMap(culled_map, commT, nodeT); 
+  importerT = Teuchos::rcp(new Tpetra_Import(x_mapT, culled_mapT));
+  
   // Create graph for gradient operator -- diagonal matrix
   gradient_graph = 
     Teuchos::rcp(new Epetra_CrsGraph(Copy, *culled_map, 1, true));
@@ -82,6 +92,21 @@ createGradientOp() const
   return G;
 }
 
+Teuchos::RCP<Tpetra_Operator>
+Albany::SolutionResponseFunction::
+createGradientOpT() const
+{
+  Teuchos::RCP<Epetra_CrsMatrix> G =
+    Teuchos::rcp(new Epetra_CrsMatrix(Copy, *gradient_graph));
+  G->FillComplete();
+  const Epetra_Comm& comm = *application->getComm();
+  Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(comm));
+  Teuchos::ParameterList kokkosNodeParams;
+  Teuchos::RCP<KokkosNode> nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
+  Teuchos::RCP<Tpetra_CrsMatrix> GT = Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(*G, commT, nodeT); 
+  return GT; 
+}
+
 void
 Albany::SolutionResponseFunction::
 evaluateResponse(const double current_time,
@@ -91,6 +116,17 @@ evaluateResponse(const double current_time,
 		 Epetra_Vector& g)
 {
   cullSolution(x, g);
+}
+
+void
+Albany::SolutionResponseFunction::
+evaluateResponseT(const double current_time,
+		 const Tpetra_Vector* xdotT,
+		 const Tpetra_Vector& xT,
+		 const Teuchos::Array<ParamVec>& p,
+		 Tpetra_Vector& gT)
+{
+  cullSolutionT(xT, gT);
 }
 
 void
@@ -127,6 +163,38 @@ evaluateTangent(const double alpha,
 
 void
 Albany::SolutionResponseFunction::
+evaluateTangentT(const double alpha, 
+		const double beta,
+		const double current_time,
+		bool sum_derivs,
+		const Tpetra_Vector* xdotT,
+		const Tpetra_Vector& xT,
+		const Teuchos::Array<ParamVec>& p,
+		ParamVec* deriv_p,
+		const Tpetra_MultiVector* VxdotT,
+		const Tpetra_MultiVector* VxT,
+		const Tpetra_MultiVector* VpT,
+		Tpetra_Vector* gT,
+		Tpetra_MultiVector* gxT,
+		Tpetra_MultiVector* gpT)
+{
+  if (gT)
+    cullSolutionT(xT, *gT);
+
+  if (gxT) {
+    gxT->putScalar(0.0);
+    if (VxT) {
+      cullSolutionT(*VxT, *gxT);
+      gxT->scale(beta);
+    }
+  }
+
+  if (gpT)
+    gpT->putScalar(0.0);
+}
+
+void
+Albany::SolutionResponseFunction::
 evaluateGradient(const double current_time,
 		 const Epetra_Vector* xdot,
 		 const Epetra_Vector& x,
@@ -155,6 +223,38 @@ evaluateGradient(const double current_time,
   if (dg_dp)
     dg_dp->PutScalar(0.0);
 }
+
+void
+Albany::SolutionResponseFunction::
+evaluateGradientT(const double current_time,
+		 const Tpetra_Vector* xdotT,
+		 const Tpetra_Vector& xT,
+		 const Teuchos::Array<ParamVec>& p,
+		 ParamVec* deriv_p,
+		 Tpetra_Vector* gT,
+		 Tpetra_Operator* dg_dxT,
+		 Tpetra_Operator* dg_dxdotT,
+		 Tpetra_MultiVector* dg_dpT)
+{
+  if (gT)
+    cullSolutionT(xT, *gT);
+
+  if (dg_dxT) {
+    Tpetra_CrsMatrix *dg_dx_crsT = dynamic_cast<Tpetra_CrsMatrix*>(dg_dxT);
+    TEUCHOS_TEST_FOR_EXCEPT(dg_dx_crsT == NULL);
+    dg_dx_crsT->setAllToScalar(1.0); // matrix only stores the diagonal
+  }
+
+  if (dg_dxdotT) {
+    Tpetra_CrsMatrix *dg_dxdot_crsT = dynamic_cast<Tpetra_CrsMatrix*>(dg_dxdotT);
+    TEUCHOS_TEST_FOR_EXCEPT(dg_dxdot_crsT == NULL);
+    dg_dxdot_crsT->setAllToScalar(0.0); // matrix only stores the diagonal
+  }
+
+  if (dg_dpT)
+    dg_dpT->putScalar(0.0);
+}
+
 
 void
 Albany::SolutionResponseFunction::
@@ -376,4 +476,11 @@ Albany::SolutionResponseFunction::
 cullSolution(const Epetra_MultiVector& x, Epetra_MultiVector& x_culled) const
 {
   x_culled.Import(x, *importer, Insert);
+}
+
+void
+Albany::SolutionResponseFunction::
+cullSolutionT(const Tpetra_MultiVector& xT, Tpetra_MultiVector& x_culledT) const
+{
+  x_culledT.doImport(xT, *importerT, Tpetra::INSERT);
 }

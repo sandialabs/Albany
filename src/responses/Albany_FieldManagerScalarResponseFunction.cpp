@@ -134,6 +134,34 @@ evaluateResponse(const double current_time,
 
 void
 Albany::FieldManagerScalarResponseFunction::
+evaluateResponseT(const double current_time,
+		 const Tpetra_Vector* xdotT,
+		 const Tpetra_Vector& xT,
+		 const Teuchos::Array<ParamVec>& p,
+		 Tpetra_Vector& gT)
+{
+  visResponseGraph<PHAL::AlbanyTraits::Residual>("");
+
+  // Set data in Workset struct
+  PHAL::Workset workset;
+ 
+  //application->setupBasicWorksetInfo(workset, current_time, xdot, &x, p);
+  application->setupBasicWorksetInfoT(workset, current_time, rcp(xdotT, false), rcpFromRef(xT), p);
+  workset.gT = Teuchos::rcp(&gT,false);
+
+  // Perform fill via field manager
+  int numWorksets = application->getNumWorksets();
+  rfm->preEvaluate<PHAL::AlbanyTraits::Residual>(workset);
+  for (int ws=0; ws < numWorksets; ws++) {
+    application->loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(
+      workset, ws);
+    rfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
+  }
+  rfm->postEvaluate<PHAL::AlbanyTraits::Residual>(workset);
+}
+
+void
+Albany::FieldManagerScalarResponseFunction::
 evaluateTangent(const double alpha, 
 		const double beta,
 		const double current_time,
@@ -204,6 +232,45 @@ evaluateTangent(const double alpha,
 
 void
 Albany::FieldManagerScalarResponseFunction::
+evaluateTangentT(const double alpha, 
+		const double beta,
+		const double current_time,
+		bool sum_derivs,
+		const Tpetra_Vector* xdotT,
+		const Tpetra_Vector& xT,
+		const Teuchos::Array<ParamVec>& p,
+		ParamVec* deriv_p,
+		const Tpetra_MultiVector* VxdotT,
+		const Tpetra_MultiVector* VxT,
+		const Tpetra_MultiVector* VpT,
+		Tpetra_Vector* gT,
+		Tpetra_MultiVector* gxT,
+		Tpetra_MultiVector* gpT)
+{
+  visResponseGraph<PHAL::AlbanyTraits::Tangent>("_tangent");
+  
+  // Set data in Workset struct
+  PHAL::Workset workset;
+  application->setupTangentWorksetInfoT(workset, sum_derivs, 
+				       current_time, rcp(xdotT), rcpFromRef(xT), p, 
+				       deriv_p, rcp(VxdotT), rcp(VxT), rcp(VpT));
+  workset.gT = Teuchos::rcp(gT, false);
+  workset.dgdxT = Teuchos::rcp(gxT, false);
+  workset.dgdpT = Teuchos::rcp(gpT, false);
+  
+  // Perform fill via field manager
+  int numWorksets = application->getNumWorksets();
+  rfm->preEvaluate<PHAL::AlbanyTraits::Tangent>(workset);
+  for (int ws=0; ws < numWorksets; ws++) {
+    application->loadWorksetBucketInfo<PHAL::AlbanyTraits::Tangent>(
+      workset, ws);
+    rfm->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
+  }
+  rfm->postEvaluate<PHAL::AlbanyTraits::Tangent>(workset);
+}
+
+void
+Albany::FieldManagerScalarResponseFunction::
 evaluateGradient(const double current_time,
 		 const Epetra_Vector* xdot,
 		 const Epetra_Vector& x,
@@ -260,6 +327,63 @@ evaluateGradient(const double current_time,
     workset.overlapped_dgdxdot = 
       Teuchos::rcp(new Epetra_MultiVector(workset.x_importer->TargetMap(),
 					  dg_dxdot->NumVectors()));
+    rfm->preEvaluate<PHAL::AlbanyTraits::Jacobian>(workset);
+    for (int ws=0; ws < numWorksets; ws++) {
+      application->loadWorksetBucketInfo<PHAL::AlbanyTraits::Jacobian>(
+	workset, ws);
+      rfm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
+    }
+    rfm->postEvaluate<PHAL::AlbanyTraits::Jacobian>(workset);
+  }  
+}
+
+void
+Albany::FieldManagerScalarResponseFunction::
+evaluateGradientT(const double current_time,
+		 const Tpetra_Vector* xdotT,
+		 const Tpetra_Vector& xT,
+		 const Teuchos::Array<ParamVec>& p,
+		 ParamVec* deriv_p,
+		 Tpetra_Vector* gT,
+		 Tpetra_MultiVector* dg_dxT,
+		 Tpetra_MultiVector* dg_dxdotT,
+		 Tpetra_MultiVector* dg_dpT)
+{
+  visResponseGraph<PHAL::AlbanyTraits::Jacobian>("_gradient");
+
+  // Set data in Workset struct
+  PHAL::Workset workset;
+  application->setupBasicWorksetInfoT(workset, current_time, rcp(xdotT, false), rcpFromRef(xT), p);
+  
+  workset.gT = Teuchos::rcp(gT, false);
+  
+  // Perform fill via field manager (dg/dx)
+  int numWorksets = application->getNumWorksets();
+  if (dg_dxT != NULL) {
+    workset.m_coeff = 0.0;
+    workset.j_coeff = 1.0;
+    workset.dgdxT = Teuchos::rcp(dg_dxT, false);
+    workset.overlapped_dgdxT = 
+      Teuchos::rcp(new Tpetra_MultiVector(workset.x_importerT->getTargetMap(),
+					  dg_dxT->getNumVectors()));
+    rfm->preEvaluate<PHAL::AlbanyTraits::Jacobian>(workset);
+    for (int ws=0; ws < numWorksets; ws++) {
+      application->loadWorksetBucketInfo<PHAL::AlbanyTraits::Jacobian>(
+	workset, ws);
+      rfm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
+    }
+    rfm->postEvaluate<PHAL::AlbanyTraits::Jacobian>(workset);
+  }
+
+  // Perform fill via field manager (dg/dxdot)
+  if (dg_dxdotT != NULL) {
+    workset.m_coeff = 1.0;
+    workset.j_coeff = 0.0;
+    workset.dgdxT = Teuchos::null;
+    workset.dgdxdotT = Teuchos::rcp(dg_dxdotT, false);
+    workset.overlapped_dgdxdotT = 
+      Teuchos::rcp(new Tpetra_MultiVector(workset.x_importerT->getTargetMap(),
+					  dg_dxdotT->getNumVectors()));
     rfm->preEvaluate<PHAL::AlbanyTraits::Jacobian>(workset);
     for (int ws=0; ws < numWorksets; ws++) {
       application->loadWorksetBucketInfo<PHAL::AlbanyTraits::Jacobian>(

@@ -315,6 +315,13 @@ getMap() const
   return disc->getMap();
 }
 
+RCP<const Tpetra_Map>
+Albany::Application::
+getMapT() const
+{
+  return disc->getMapT();
+}
+
 RCP<const Epetra_CrsGraph>
 Albany::Application::
 getJacobianGraph() const
@@ -358,6 +365,13 @@ getInitialSolution() const
   return initial_x;
 }
 
+RCP<const Tpetra_Vector>
+Albany::Application::
+getInitialSolutionT() const
+{
+  return initial_xT;
+}
+
 RCP<const Epetra_Vector>
 Albany::Application::
 getInitialSolutionDot() const
@@ -365,6 +379,13 @@ getInitialSolutionDot() const
   //Convert Tpetra::Vector initial_x_dotT to analogous Epetra_Vector initial_x_dot for return
   Petra::TpetraVector_To_EpetraVector(initial_x_dotT, *initial_x_dot, comm); 
   return initial_x_dot;
+}
+
+RCP<const Tpetra_Vector>
+Albany::Application::
+getInitialSolutionDotT() const
+{
+  return initial_x_dotT;
 }
 
 RCP<ParamLib> 

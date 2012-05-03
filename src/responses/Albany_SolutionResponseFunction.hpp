@@ -52,6 +52,7 @@ namespace Albany {
 
     //! Create operator for gradient
     virtual Teuchos::RCP<Epetra_Operator> createGradientOp() const;
+    virtual Teuchos::RCP<Tpetra_Operator> createGradientOpT() const;
 
     //! \name Deterministic evaluation functions
     //@{
@@ -64,6 +65,14 @@ namespace Albany {
       const Teuchos::Array<ParamVec>& p,
       Epetra_Vector& g);
 
+    //! Evaluate responses - Tpetra
+    virtual void evaluateResponseT(
+      const double current_time,
+      const Tpetra_Vector* xdotT,
+      const Tpetra_Vector& xT,
+      const Teuchos::Array<ParamVec>& p,
+      Tpetra_Vector& gT);
+    
     //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
     virtual void evaluateTangent(
       const double alpha, 
@@ -81,6 +90,22 @@ namespace Albany {
       Epetra_MultiVector* gx,
       Epetra_MultiVector* gp);
 
+    virtual void evaluateTangentT(
+      const double alpha, 
+      const double beta,
+      const double current_time,
+      bool sum_derivs,
+      const Tpetra_Vector* xdot,
+      const Tpetra_Vector& x,
+      const Teuchos::Array<ParamVec>& p,
+      ParamVec* deriv_p,
+      const Tpetra_MultiVector* Vxdot,
+      const Tpetra_MultiVector* Vx,
+      const Tpetra_MultiVector* Vp,
+      Tpetra_Vector* g,
+      Tpetra_MultiVector* gx,
+      Tpetra_MultiVector* gp);
+
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
     virtual void evaluateGradient(
       const double current_time,
@@ -93,6 +118,17 @@ namespace Albany {
       Epetra_Operator* dg_dxdot,
       Epetra_MultiVector* dg_dp);
 
+    //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp - Tpetra
+    virtual void evaluateGradientT(
+      const double current_time,
+      const Tpetra_Vector* xdotT,
+      const Tpetra_Vector& xT,
+      const Teuchos::Array<ParamVec>& p,
+      ParamVec* deriv_p,
+      Tpetra_Vector* gT,
+      Tpetra_Operator* dg_dxT,
+      Tpetra_Operator* dg_dxdotT,
+      Tpetra_MultiVector* dg_dpT);
     //@}
 
     //! \name Stochastic Galerkin evaluation functions
@@ -214,6 +250,10 @@ namespace Albany {
 
     void cullSolution(const Epetra_MultiVector& x, 
 		      Epetra_MultiVector& x_culled) const;
+    
+    //Tpetra version of above function
+    void cullSolutionT(const Tpetra_MultiVector& xT, 
+		      Tpetra_MultiVector& x_culledT) const;
 
   protected:
 
@@ -227,7 +267,9 @@ namespace Albany {
     Teuchos::RCP<const Epetra_Map> culled_map;
 
     //! Importer mapping between full and culled solution
-    Teuchos::RCP<Epetra_Import> importer;
+    Teuchos::RCP<Epetra_Import> importer; 
+    //! Tpetra importer mapping between full and culled solution
+    Teuchos::RCP<Tpetra_Import> importerT;
 
     //! Graph of gradient operator
     Teuchos::RCP<Epetra_CrsGraph> gradient_graph;

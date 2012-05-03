@@ -33,6 +33,8 @@
 #include "Stokhos_ProductEpetraVector.hpp"
 #include "Stokhos_ProductEpetraMultiVector.hpp"
 #include "PHAL_AlbanyTraits.hpp"
+#include "Thyra_ModelEvaluatorBase.hpp"
+#include "Albany_DataTypes.hpp"
 
 namespace Albany {
 
@@ -62,6 +64,8 @@ namespace Albany {
 
     //! Create operator for gradient (e.g., dg/dx)
     virtual Teuchos::RCP<Epetra_Operator> createGradientOp() const = 0;
+    //! Create Tpetra operator for gradient (e.g., dg/dx)
+    virtual Teuchos::RCP<Tpetra_Operator> createGradientOpT() const = 0;
 
     //! \name Deterministic evaluation functions
     //@{
@@ -74,6 +78,13 @@ namespace Albany {
       const Teuchos::Array<ParamVec>& p,
       Epetra_Vector& g) = 0;
 
+    virtual void evaluateResponseT(
+      const double current_time,
+      const Tpetra_Vector* xdotT,
+      const Tpetra_Vector& xT,
+      const Teuchos::Array<ParamVec>& p,
+      Tpetra_Vector& gT) = 0;
+    
     //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
     virtual void evaluateTangent(
       const double alpha, 
@@ -90,6 +101,22 @@ namespace Albany {
       Epetra_Vector* g,
       Epetra_MultiVector* gx,
       Epetra_MultiVector* gp) = 0;
+    
+    virtual void evaluateTangentT(
+      const double alpha, 
+      const double beta,
+      const double current_time,
+      bool sum_derivs,
+      const Tpetra_Vector* xdot,
+      const Tpetra_Vector& x,
+      const Teuchos::Array<ParamVec>& p,
+      ParamVec* deriv_p,
+      const Tpetra_MultiVector* Vxdot,
+      const Tpetra_MultiVector* Vx,
+      const Tpetra_MultiVector* Vp,
+      Tpetra_Vector* g,
+      Tpetra_MultiVector* gx,
+      Tpetra_MultiVector* gp) = 0;
 
     //! Evaluate derivative dg/dx, dg/dxdot, dg/dp
     virtual void evaluateDerivative(
@@ -103,6 +130,17 @@ namespace Albany {
       const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
       const EpetraExt::ModelEvaluator::Derivative& dg_dp) = 0;
 
+   virtual void evaluateDerivativeT(
+      const double current_time,
+      const Tpetra_Vector* xdotT,
+      const Tpetra_Vector& xT,
+      const Teuchos::Array<ParamVec>& p,
+      ParamVec* deriv_p,
+      Tpetra_Vector* gT,
+      const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dx,
+      const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdot,
+      const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp) = 0;
+    
     //@}
 
     //! \name Stochastic Galerkin evaluation functions

@@ -90,6 +90,9 @@ namespace Albany {
 
     //! Get DOF map
     Teuchos::RCP<const Epetra_Map> getMap() const;
+    
+    //! Get Tpetra DOF map
+    Teuchos::RCP<const Tpetra_Map> getMapT() const;
 
     //! Get Jacobian graph
     Teuchos::RCP<const Epetra_CrsGraph> getJacobianGraph() const;
@@ -99,10 +102,16 @@ namespace Albany {
 
     //! Get initial solution
     Teuchos::RCP<const Epetra_Vector> getInitialSolution() const;
+  
+    //! Get Tpetra initial solution
+    Teuchos::RCP<const Tpetra_Vector> getInitialSolutionT() const;
 
-    //! Get initial solution
+    //! Get initial solution dot
     Teuchos::RCP<const Epetra_Vector> getInitialSolutionDot() const;
 
+    //! Get Tpetra initial solution dot
+    Teuchos::RCP<const Tpetra_Vector> getInitialSolutionDotT() const;
+    
     //! Get parameter library
     Teuchos::RCP<ParamLib> getParamLib();
 

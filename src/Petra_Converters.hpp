@@ -45,6 +45,11 @@ namespace Petra {
 Teuchos::RCP<Epetra_Map> TpetraMap_To_EpetraMap(const Teuchos::RCP<const Tpetra_Map>& tpetraMap_, 
                                                       const Teuchos::RCP<const Epetra_Comm>& comm_);
 
+//EpetraMap_To_TpetraMap: takes in Epetra_Map object, converts it to its equivalent Tpetra::Map object, 
+//and returns an RCP pointer to this Tpetra::Map
+Teuchos::RCP<const Tpetra_Map> EpetraMap_To_TpetraMap(const Teuchos::RCP<const Epetra_Map>& epetraMap_, 
+                                                      Teuchos::RCP<const Tpetra::Comm<int> >& comm_, 
+                                                      Teuchos::RCP<KokkosNode>& nodeT_);
 
 //TpetraCrsGraph_To_TpetraCrsGraph: takes in Tpetra::CrsGraph object, converts it to its equivalent Epetra_CrsGraph object, 
 //and returns an RCP pointer to this Epetra_CrsGraph

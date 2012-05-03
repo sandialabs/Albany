@@ -50,6 +50,13 @@ createGradientOp() const
   return response->createGradientOp();
 }
 
+Teuchos::RCP<Tpetra_Operator> 
+Albany::KLResponseFunction::
+createGradientOpT() const
+{
+  return response->createGradientOpT(); 
+}
+
 bool
 Albany::KLResponseFunction::
 isScalarResponse() const
@@ -67,6 +74,18 @@ evaluateResponse(const double current_time,
 {
   response->evaluateResponse(current_time, xdot, x, p, g);
 }
+
+void
+Albany::KLResponseFunction::
+evaluateResponseT(const double current_time,
+		 const Tpetra_Vector* xdotT,
+		 const Tpetra_Vector& xT,
+		 const Teuchos::Array<ParamVec>& p,
+		 Tpetra_Vector& gT)
+{
+  response->evaluateResponseT(current_time, xdotT, xT, p, gT);
+} 
+
 
 void
 Albany::KLResponseFunction::
@@ -92,6 +111,28 @@ evaluateTangent(const double alpha,
 
 void
 Albany::KLResponseFunction::
+evaluateTangentT(const double alpha, 
+		const double beta,
+		const double current_time,
+		bool sum_derivs,
+		const Tpetra_Vector* xdotT,
+		const Tpetra_Vector& xT,
+		const Teuchos::Array<ParamVec>& p,
+		ParamVec* deriv_p,
+		const Tpetra_MultiVector* VxdotT,
+		const Tpetra_MultiVector* VxT,
+		const Tpetra_MultiVector* VpT,
+		Tpetra_Vector* gT,
+		Tpetra_MultiVector* gxT,
+		Tpetra_MultiVector* gpT)
+{
+  response->evaluateTangentT(alpha, beta, current_time, sum_derivs, 
+			    xdotT, xT, p, deriv_p, VxdotT, VxT, VpT,
+			    gT, gxT, gpT);
+}
+
+void
+Albany::KLResponseFunction::
 evaluateDerivative(const double current_time,
 		   const Epetra_Vector* xdot,
 		   const Epetra_Vector& x,
@@ -104,6 +145,22 @@ evaluateDerivative(const double current_time,
 {
   response->evaluateDerivative(current_time, xdot, x, p, deriv_p, 
 			       g, dg_dx, dg_dxdot, dg_dp);
+}
+
+void
+Albany::KLResponseFunction::
+evaluateDerivativeT(const double current_time,
+		   const Tpetra_Vector* xdotT,
+		   const Tpetra_Vector& xT,
+		   const Teuchos::Array<ParamVec>& p,
+		   ParamVec* deriv_p,
+		   Tpetra_Vector* gT,
+		   const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxT,
+		   const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotT,
+		   const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dpT)
+{
+  response->evaluateDerivativeT(current_time, xdotT, xT, p, deriv_p, 
+			       gT, dg_dxT, dg_dxdotT, dg_dpT);
 }
 
 void
