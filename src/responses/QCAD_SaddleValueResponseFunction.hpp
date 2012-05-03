@@ -223,26 +223,52 @@ namespace QCAD {
     void initializeImagePoints(const double current_time, const Epetra_Vector* xdot,
 			       const Epetra_Vector& x, const Teuchos::Array<ParamVec>& p,
 			       Epetra_Vector& g, int dbMode);
+    //Tpetra version of above
+    void initializeImagePointsT(const double current_time, const Tpetra_Vector* xdotT,
+			       const Tpetra_Vector& xT, const Teuchos::Array<ParamVec>& p,
+			       Tpetra_Vector& gT, int dbMode);
     void doNudgedElasticBand(const double current_time, const Epetra_Vector* xdot,
 			     const Epetra_Vector& x, const Teuchos::Array<ParamVec>& p,
 			     Epetra_Vector& g, int dbMode);
+    //Tpetra version of above
+    void doNudgedElasticBandT(const double current_time, const Tpetra_Vector* xdotT,
+			     const Tpetra_Vector& xT, const Teuchos::Array<ParamVec>& p,
+			     Tpetra_Vector& gT, int dbMode);
     void fillSaddlePointData(const double current_time, const Epetra_Vector* xdot,
 			     const Epetra_Vector& x, const Teuchos::Array<ParamVec>& p,
 			     Epetra_Vector& g, int dbMode);
+    //Tpetra version of above
+    void fillSaddlePointDataT(const double current_time, const Tpetra_Vector* xdotT,
+			     const Tpetra_Vector& xT, const Teuchos::Array<ParamVec>& p,
+			     Tpetra_Vector& gT, int dbMode);
 
     //! Helper functions for level-set algorithm, performed in evaluateResponse
     void doLevelSet(const double current_time,  const Epetra_Vector* xdot,
 		    const Epetra_Vector& x,  const Teuchos::Array<ParamVec>& p,
 		    Epetra_Vector& g, int dbMode);
+    //Tpetra version of above
+    void doLevelSetT(const double current_time,  const Tpetra_Vector* xdotT,
+		    const Tpetra_Vector& xT,  const Teuchos::Array<ParamVec>& p,
+		    Tpetra_Vector& gT, int dbMode);
     int FindSaddlePoint_LevelSet(std::vector<double>& allFieldVals,
 			     std::vector<double>* allCoords, std::vector<int>& ordering,
 			     double cutoffDistance, double cutoffFieldVal, double minDepth, int dbMode,
 			     Epetra_Vector& g);
+    //Tpetra version of above
+    int FindSaddlePoint_LevelSetT(std::vector<double>& allFieldVals,
+			     std::vector<double>* allCoords, std::vector<int>& ordering,
+			     double cutoffDistance, double cutoffFieldVal, double minDepth, int dbMode,
+			     Tpetra_Vector& gT);
 
     //! Helper functions for doNudgedElasticBand(...)
     void getImagePointValues(const double current_time, const Epetra_Vector* xdot,
 			     const Epetra_Vector& x, const Teuchos::Array<ParamVec>& p,
 			     Epetra_Vector& g, double* globalPtValues, double* globalPtWeights,
+			     double* globalPtGrads, std::vector<mathVector> lastPositions, int dbMode);
+    //Tpetra version of above
+    void getImagePointValuesT(const double current_time, const Tpetra_Vector* xdotT,
+			     const Tpetra_Vector& xT, const Teuchos::Array<ParamVec>& p,
+			     Tpetra_Vector& gT, double* globalPtValues, double* globalPtWeights,
 			     double* globalPtGrads, std::vector<mathVector> lastPositions, int dbMode);
     void writeOutput(int nIters);
     void initialIterationSetup(double& gradScale, double& springScale, int dbMode);
