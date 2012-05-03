@@ -427,7 +427,7 @@ QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
     eigenDataNull = Teuchos::null;
 
     if(iter > 1) {
-      double local_maxDiff = QCAD::getMaxDifference(*pStatesToLoop, prevElectricPotential, "Electric Potential");
+      double local_maxDiff = QCAD::getMaxDifference(*pStatesToLoop, prevElectricPotential, "Saved Electric Potential");
       double global_maxDiff;
       solverComm->MaxAll(&local_maxDiff, &global_maxDiff, 1);
       bConverged = (global_maxDiff < CONVERGE_TOL);
@@ -435,7 +435,7 @@ QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
 			<< global_maxDiff << " (tol=" << CONVERGE_TOL << ")" << std::endl;
     }
       
-    QCAD::CopyStateToContainer(*pStatesToLoop, "Electric Potential", prevElectricPotential);
+    QCAD::CopyStateToContainer(*pStatesToLoop, "Saved Electric Potential", prevElectricPotential);
   } 
 
   if(bVerbose) {
@@ -746,7 +746,7 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
 
     if(iter > 1) {
       if(bPoissonSchrodingerConverged == false) {
-	double local_maxDiff = QCAD::getMaxDifference(*pStatesToLoop, prevElectricPotential, "Electric Potential");
+	double local_maxDiff = QCAD::getMaxDifference(*pStatesToLoop, prevElectricPotential, "Saved Electric Potential");
 	double global_maxDiff;
 	solverComm->MaxAll(&local_maxDiff, &global_maxDiff, 1);
 	bPoissonSchrodingerConverged = (global_maxDiff < CONVERGE_TOL);
@@ -774,7 +774,7 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
       }
     }
       
-    QCAD::CopyStateToContainer(*pStatesToLoop, "Electric Potential", prevElectricPotential);
+    QCAD::CopyStateToContainer(*pStatesToLoop, "Saved Electric Potential", prevElectricPotential);
   }
 
   if(bVerbose) {
@@ -923,7 +923,7 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
 
 	responseList.set(Albany::strint("Response",iResponse), "Field Integral");
 	Teuchos::ParameterList& responseParams = responseList.sublist(Albany::strint("ResponseParams",iResponse));
-	responseParams.set("Field Name", "Electric Potential");  // same as solution, but must be at quad points
+	responseParams.set("Field Name", "Saved Electric Potential");  // same as solution, but must be at quad points
 	responseParams.set("Field Name 1", buf1);
 	responseParams.set("Field Name 2", buf2);
 	responseParams.set("Integrand Length Unit", "mesh"); // same as mesh
@@ -975,7 +975,7 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
 
 	responseList.set(Albany::strint("Response",iResponse), "Field Integral");
 	Teuchos::ParameterList& responseParams = responseList.sublist(Albany::strint("ResponseParams",iResponse));
-	responseParams.set("Field Name", "Electric Potential");  // same as solution, but must be at quad points
+	responseParams.set("Field Name", "Saved Electric Potential");  // same as solution, but must be at quad points
 	responseParams.set("Field Name 1", buf1);
 	responseParams.set("Field Name 2", buf2);
 	responseParams.set("Integrand Length Unit", "mesh"); // same as mesh
