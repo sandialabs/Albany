@@ -98,6 +98,16 @@ namespace {
     currentCoords[22] = referenceCoords[22] + eps;
     currentCoords[23] = referenceCoords[23];
 
+    Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> shearModVals(4);
+    const double mu = 3;
+    for (int i(0); i < 4; ++i)
+      shearModVals[i] = mu;
+
+    Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> bulkModVals(4);
+    const double kappa = 3;
+    for (int i(0); i < 4; ++i)
+      bulkModVals[i] = kappa;
+
 
     // SetField evaluator, which will be used to manually assign a value to the Ref Coord field
     Teuchos::ParameterList setRefFieldParameterList("SetFieldRefCoords");
@@ -115,6 +125,22 @@ namespace {
     Teuchos::RCP<LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits> > setFieldCurCoords = 
       Teuchos::rcp(new LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>(setCurFieldParameterList));
 
+    // SetField evaluator, which will be used to manually assign a value to the Shear Modulus field
+    Teuchos::ParameterList setShearModParameterList("SetFieldShearMod");
+    setShearModParameterList.set<string>("Evaluated Field Name", "Shear Modulus");
+    setShearModParameterList.set< Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", qp_scalar);
+    setShearModParameterList.set< Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> >("Field Values", shearModVals);
+    Teuchos::RCP<LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits> > setFieldShearMod =
+      Teuchos::rcp(new LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>(setShearModParameterList));
+
+    // SetField evaluator, which will be used to manually assign a value to the Bulk Modulus field
+    Teuchos::ParameterList setBulkModParameterList("SetFieldBulkMod");
+    setBulkModParameterList.set<string>("Evaluated Field Name", "Bulk Modulus");
+    setBulkModParameterList.set< Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", qp_scalar);
+    setBulkModParameterList.set< Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> >("Field Values", bulkModVals);
+    Teuchos::RCP<LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits> > setFieldBulkMod =
+      Teuchos::rcp(new LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>(setBulkModParameterList));
+
     // stuff for the localization evaluator
     Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
     intrepidBasis = Teuchos::rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
@@ -126,11 +152,15 @@ namespace {
     Teuchos::RCP<Teuchos::ParameterList> localizationParameterList = Teuchos::rcp(new Teuchos::ParameterList("Localization"));
     localizationParameterList->set<string>("Current Coordinates Name", "Current Coords");
     localizationParameterList->set<string>("Reference Coordinates Name", "Reference Coords");
+    localizationParameterList->set<string>("Shear Modulus Name", "Shear Modulus");
+    localizationParameterList->set<string>("Bulk Modulus Name", "Bulk Modulus");
     localizationParameterList->set<string>("Deformation Gradient Name", "Deformation Gradient");
+    localizationParameterList->set<string>("Stress Name", "Stress");
     localizationParameterList->set< Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
     localizationParameterList->set< Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis",intrepidBasis);
     localizationParameterList->set< Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
     localizationParameterList->set< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout", qp_tensor);
+    localizationParameterList->set< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout", qp_scalar);
     localizationParameterList->set< Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout", vertices_vector);
     localizationParameterList->set<double>("thickness", 0.1);
     Teuchos::RCP<LCM::Localization<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits> > localization = 
@@ -142,6 +172,8 @@ namespace {
     // Register the evaluators with the field manager
     fieldManager.registerEvaluator<PHAL::AlbanyTraits::Residual>(setFieldRefCoords);
     fieldManager.registerEvaluator<PHAL::AlbanyTraits::Residual>(setFieldCurCoords);
+    fieldManager.registerEvaluator<PHAL::AlbanyTraits::Residual>(setFieldShearMod);
+    fieldManager.registerEvaluator<PHAL::AlbanyTraits::Residual>(setFieldBulkMod);
     fieldManager.registerEvaluator<PHAL::AlbanyTraits::Residual>(localization);
 
     // Set the Localization evaluated fields as required fields
@@ -162,6 +194,10 @@ namespace {
     fieldManager.evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
     fieldManager.postEvaluate<PHAL::AlbanyTraits::Residual>(workset);
 
+    // Pull the deformation gradient from the FieldManager
+    PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT,Cell,QuadPoint,Dim,Dim> stressField("Stress", qp_tensor);
+    fieldManager.getFieldData<PHAL::AlbanyTraits::Residual::ScalarT, PHAL::AlbanyTraits::Residual, Cell, QuadPoint, Dim, Dim>(stressField);
+
     // Pull the stress from the FieldManager
     PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT,Cell,QuadPoint,Dim,Dim> defGradField("Deformation Gradient", qp_tensor);
     fieldManager.getFieldData<PHAL::AlbanyTraits::Residual::ScalarT, PHAL::AlbanyTraits::Residual, Cell, QuadPoint, Dim, Dim>(defGradField);
@@ -178,7 +214,19 @@ namespace {
                       0.0,
                       1.0);
 
-    // Check the computed stresses
+    // Record the expected stress, which will be used to check the computed stress
+    LCM::Tensor<PHAL::AlbanyTraits::Residual::ScalarT>
+      expectedStress(1.305059212578845,
+                     0.0,
+                     0.0,
+                     0.0,
+                     4.139881574842310,
+                     0.0,
+                     0.0,
+                     0.0,
+                     1.305059212578845);
+
+    // Check the computed deformation gradient
     typedef PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT>::size_type size_type;
     for(size_type cell=0; cell< worksetSize; ++cell){
       for(size_type qp=0; qp < numQPts; ++qp){
@@ -211,6 +259,46 @@ namespace {
         for(size_type i=0 ; i<numDim ; ++i){
           for(size_type j=0 ; j<numDim ; ++j){
             TEST_COMPARE( fabs(defGradField(cell, qp, i, j) - expectedDefGrad(i, j)), <=, tolerance );
+          }
+        }
+
+      }
+    }
+    std::cout << endl;
+
+    // Check the computed stresses
+    typedef PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT>::size_type size_type;
+    for(size_type cell=0; cell< worksetSize; ++cell){
+      for(size_type qp=0; qp < numQPts; ++qp){
+
+        std::cout << "Stress tensor at cell " << cell << ", quadrature point " << qp << ":" << endl;
+        std::cout << "  " << stressField(cell, qp, 0, 0);
+        std::cout << "  " << stressField(cell, qp, 0, 1);
+        std::cout << "  " << stressField(cell, qp, 0, 2) << endl;
+        std::cout << "  " << stressField(cell, qp, 1, 0);
+        std::cout << "  " << stressField(cell, qp, 1, 1);
+        std::cout << "  " << stressField(cell, qp, 1, 2) << endl;
+        std::cout << "  " << stressField(cell, qp, 2, 0);
+        std::cout << "  " << stressField(cell, qp, 2, 1);
+        std::cout << "  " << stressField(cell, qp, 2, 2) << endl;
+
+        std::cout << "Expected result:" << endl;
+        std::cout << "  " << expectedStress(0, 0);
+        std::cout << "  " << expectedStress(0, 1);
+        std::cout << "  " << expectedStress(0, 2) << endl;
+        std::cout << "  " << expectedStress(1, 0);
+        std::cout << "  " << expectedStress(1, 1);
+        std::cout << "  " << expectedStress(1, 2) << endl;
+        std::cout << "  " << expectedStress(2, 0);
+        std::cout << "  " << expectedStress(2, 1);
+        std::cout << "  " << expectedStress(2, 2) << endl;
+
+        std::cout << endl;
+
+        double tolerance = 1.0e-15;
+        for(size_type i=0 ; i<numDim ; ++i){
+          for(size_type j=0 ; j<numDim ; ++j){
+            TEST_COMPARE( fabs(stressField(cell, qp, i, j) - expectedStress(i, j)), <=, tolerance );
           }
         }
 

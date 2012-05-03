@@ -594,9 +594,9 @@ namespace LCM {
   /// \param A tensor
   /// \return \f$ s A \f$
   ///
-  template<typename ScalarT>
+  template<typename ScalarT, typename T>
   Tensor<ScalarT>
-  operator*(const ScalarT s, Tensor<ScalarT> const & A);
+  operator*(const T s, Tensor<ScalarT> const & A);
 
   ///
   /// Tensor scalar product
@@ -604,9 +604,9 @@ namespace LCM {
   /// \param s scalar
   /// \return \f$ s A \f$
   ///
-  template<typename ScalarT>
+  template<typename ScalarT, typename T>
   Tensor<ScalarT>
-  operator*(Tensor<ScalarT> const & A, const ScalarT s);
+  operator*(Tensor<ScalarT> const & A, const T s);
 
   ///
   /// Scalar 3rd-order tensor product

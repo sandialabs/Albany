@@ -91,23 +91,49 @@ public:
 
   ///
   /// Computes the deformation gradient
+  /// \param thickness h parameter
   /// \param bases
+  /// \param dualBases
+  /// \param refNormal
+  /// \param gap
+  /// \param defGrad deformation gradient
+  /// \param J determinant of the deformation gradient
   ///
   void computeDeformationGradient(const ScalarT thickness, const FC & bases, const FC & dualBases, const FC & refNormal, const FC & gap,
                                   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defGrad, FC & J);
+
+  ///
+  /// Computes the Cauchy stress
+  /// \param defGrad - deformation gradient
+  /// \param J - determinant of the deformation gradient
+  /// \param mu - shear modulus
+  /// \param kappa - bulk modulus
+  /// \param stress
+  ///
+  void computeStress(const PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defGrad, const FC & J, const PHX::MDField<ScalarT,Cell,QuadPoint> mu,
+                     const PHX::MDField<ScalarT,Cell,QuadPoint> kappa, PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress);
 
 private:
 
   int  numDims, numNodes, numQPs, numPlaneNodes, numPlaneDims;
 
   // Input:
-  //! Coordinate vector at vertices
+  //! Cordinates in the reference configuration
   PHX::MDField<ScalarT,Cell,Vertex,Dim> referenceCoords;
+  //! Coordinates in the current configuration
   PHX::MDField<ScalarT,Cell,Vertex,Dim> currentCoords;
+  //! Numerical integration rule
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
+  //! Finite element basis for the midplane
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
+  //! Finite element basis for the midplane
   Teuchos::RCP<shards::CellTopology> cellType;
+  //! Length scale parameter for localization zone
   ScalarT thickness;
+  //! Shear Modulus
+  PHX::MDField<ScalarT,Cell,QuadPoint> mu;
+  //! Bulk Modulus
+  PHX::MDField<ScalarT,Cell,QuadPoint> kappa;
 
   // Reference Cell FieldContainers
   Intrepid::FieldContainer<RealType> refValues;
@@ -126,8 +152,10 @@ private:
   Intrepid::FieldContainer<ScalarT> J;
 
   // Output:
-  //! Basis Functions at quadrature points
+  //! the 3D deformation gradient at integration points
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defGrad;
+  //! the 3D Cauchy stress
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;
 };
 }
 
