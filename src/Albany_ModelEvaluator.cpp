@@ -21,6 +21,7 @@
 #include "Stokhos_EpetraVectorOrthogPoly.hpp"
 #include "Stokhos_EpetraMultiVectorOrthogPoly.hpp"
 #include "Stokhos_EpetraOperatorOrthogPoly.hpp"
+#include "Petra_Converters.hpp"
 
 Albany::ModelEvaluator::ModelEvaluator(
   const Teuchos::RCP<Albany::Application>& app_,
@@ -348,10 +349,27 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
   //
   Teuchos::RCP<const Epetra_Vector> x = inArgs.get_x();
   Teuchos::RCP<const Epetra_Vector> x_dot;
+  
+  //create comm and node objects for Epetra -> Tpetra conversions
+  const Epetra_Comm& comm = *app->getComm();
+  Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(comm));
+  Teuchos::ParameterList kokkosNodeParams;
+  Teuchos::RCP<KokkosNode> nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
+  //Create Tpetra copy of x, call it xT
+  Teuchos::RCP<const Tpetra_Vector> xT; 
+  if (x != Teuchos::null) 
+    xT  = Petra::EpetraVector_To_TpetraVectorConst(*x, commT, nodeT); 
+
   double alpha     = 0.0;
   double beta      = 1.0;
   double curr_time = 0.0;
+  
   x_dot = inArgs.get_x_dot();
+  //Declare and create Tpetra copy of x_dot, call it x_dotT
+  Teuchos::RCP<const Tpetra_Vector> x_dotT;
+  if (x_dotT != Teuchos::null)  
+    x_dotT = Petra::EpetraVector_To_TpetraVectorConst(*x_dot, commT, nodeT);
+  
   if (x_dot != Teuchos::null) {
     alpha = inArgs.get_alpha();
     beta = inArgs.get_beta();
@@ -454,6 +472,8 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
   // Response functions
   for (int i=0; i<outArgs.Ng(); i++) {
     Teuchos::RCP<Epetra_Vector> g_out = outArgs.get_g(i);
+    //Declare Tpetra_Vector copy of g_out
+    Teuchos::RCP<Tpetra_Vector> g_outT; 
     Derivative dgdx_out = outArgs.get_DgDx(i);
     Derivative dgdxdot_out = outArgs.get_DgDx_dot(i);
     bool g_computed = false;
@@ -471,6 +491,8 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
     for (int j=0; j<outArgs.Np(); j++) {
       Teuchos::RCP<Epetra_MultiVector> dgdp_out = 
 	outArgs.get_DgDp(i,j).getMultiVector();
+      //Declare Tpetra copy of dgdp_out
+      Teuchos::RCP<Tpetra_MultiVector> dgdp_outT; 
       if (dgdp_out != Teuchos::null) {
 	Teuchos::Array<int> p_indexes = 
 	  outArgs.get_DgDp(i,j).getDerivativeMultiVector().getParamIndexes();
@@ -483,19 +505,38 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
 	    p_vec->addParam(sacado_param_vec[j][p_indexes[k]].family, 
 			    sacado_param_vec[j][p_indexes[k]].baseValue);
 	}
-	app->evaluateResponseTangent(i, alpha, beta, curr_time, false,
-				     x_dot.get(), *x, 
+        //create Tpetra copy of g_out, call it g_outT
+        if (g_out != Teuchos::null) 
+           g_outT = Petra::EpetraVector_To_TpetraVectorNonConst(*g_out, commT, nodeT); 
+        //create Tpetra copy of dgdp_out, call it dgdp_outT
+        if (dgdp_out != Teuchos::null) 
+           dgdp_outT = Petra::EpetraMultiVector_To_TpetraMultiVector(*dgdp_out, commT, nodeT); 
+	app->evaluateResponseTangentT(i, alpha, beta, curr_time, false,
+				     x_dotT.get(), *xT, 
 				     sacado_param_vec, p_vec.get(),
-				     NULL, NULL, NULL, g_out.get(), NULL,
-				     dgdp_out.get());
-	g_computed = true;
+				     NULL, NULL, NULL, g_outT.get(), NULL,
+				     dgdp_outT.get());
+        //convert g_outT to Epetra_Vector g_out
+        if (g_out != Teuchos::null) 
+          Petra::TpetraVector_To_EpetraVector(g_outT, *g_out, Teuchos::rcpFromRef(comm)); 	
+        //convert dgdp_outT to Epetra_MultiVector dgdp_out
+        if (dgdp_out != Teuchos::null) 
+          Petra::TpetraMultiVector_To_EpetraMultiVector(dgdp_outT, *dgdp_out, Teuchos::rcpFromRef(comm)); 	
+        g_computed = true;
       }
     }
 
     
-    if (g_out != Teuchos::null && !g_computed)
+    if (g_out != Teuchos::null && !g_computed) {
+      //create Tpetra copy of g_out, call it g_outT
+      // g_outT = Petra::EpetraVector_To_TpetraVectorNonConst(*g_out, commT, nodeT); 
       app->evaluateResponse(i, curr_time, x_dot.get(), *x, sacado_param_vec, 
 			    *g_out);
+      //app->evaluateResponseT(i, curr_time, x_dotT.get(), *xT, sacado_param_vec, 
+	//		    *g_outT);
+      //convert g_outT to Epetra_Vector g_out 
+      //Petra::TpetraVector_To_EpetraVector(g_outT, *g_out, Teuchos::rcpFromRef(comm)); 
+    }
   }
 
   //

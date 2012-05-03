@@ -826,7 +826,6 @@ computeGlobalTangent(const double alpha,
 
   //create Tpetra copy of fp, call it fpT 
   RCP<Tpetra_MultiVector> fpT;
-  cerr << "before fp" << endl;  
   if (fp != NULL) 
     fpT = Petra::EpetraMultiVector_To_TpetraMultiVector(*fp, commT, nodeT); 
  
@@ -1093,6 +1092,23 @@ evaluateResponse(int response_index,
 
 void
 Albany::Application::
+evaluateResponseT(int response_index,
+                 const double current_time,
+                 const Tpetra_Vector* xdotT,
+                 const Tpetra_Vector& xT,
+                 const Teuchos::Array<ParamVec>& p,
+                 Tpetra_Vector& gT)
+{
+  double t = current_time;
+  if ( paramLib->isParameter("Time") )
+    t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+
+  responses[response_index]->evaluateResponseT(t, xdotT, xT, p, gT);
+}
+
+
+void
+Albany::Application::
 evaluateResponseTangent(int response_index,
 			const double alpha, 
 			const double beta,
@@ -1119,6 +1135,32 @@ evaluateResponseTangent(int response_index,
 
 void
 Albany::Application::
+evaluateResponseTangentT(int response_index,
+			const double alpha, 
+			const double beta,
+			const double current_time,
+			bool sum_derivs,
+			const Tpetra_Vector* xdotT,
+			const Tpetra_Vector& xT,
+			const Teuchos::Array<ParamVec>& p,
+			ParamVec* deriv_p,
+			const Tpetra_MultiVector* VxdotT,
+			const Tpetra_MultiVector* VxT,
+			const Tpetra_MultiVector* VpT,
+			Tpetra_Vector* gT,
+			Tpetra_MultiVector* gxT,
+			Tpetra_MultiVector* gpT)
+{
+  double t = current_time;
+  if ( paramLib->isParameter("Time") ) 
+    t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+
+  responses[response_index]->evaluateTangentT(
+    alpha, beta, t, sum_derivs, xdotT, xT, p, deriv_p, VxdotT, VxT, VpT, gT, gxT, gpT);
+}
+
+void
+Albany::Application::
 evaluateResponseDerivative(
   int response_index,
   const double current_time,
@@ -1137,6 +1179,28 @@ evaluateResponseDerivative(
 
   responses[response_index]->evaluateDerivative(
     t, xdot, x, p, deriv_p, g, dg_dx, dg_dxdot, dg_dp);
+}
+
+void
+Albany::Application::
+evaluateResponseDerivativeT(
+  int response_index,
+  const double current_time,
+  const Tpetra_Vector* xdotT,
+  const Tpetra_Vector& xT,
+  const Teuchos::Array<ParamVec>& p,
+  ParamVec* deriv_p,
+  Tpetra_Vector* gT,
+  const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxT,
+  const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotT,
+  const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dpT)
+{
+  double t = current_time;
+  if ( paramLib->isParameter("Time") ) 
+    t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+
+  responses[response_index]->evaluateDerivativeT(
+    t, xdotT, xT, p, deriv_p, gT, dg_dxT, dg_dxdotT, dg_dpT);
 }
 
 void

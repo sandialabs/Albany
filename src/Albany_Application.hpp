@@ -202,6 +202,14 @@ namespace Albany {
       const Teuchos::Array<ParamVec>& p,
       Epetra_Vector& g);
     
+    void evaluateResponseT(
+      int response_index,
+      const double current_time,
+      const Tpetra_Vector* xdotT,
+      const Tpetra_Vector& xT,
+      const Teuchos::Array<ParamVec>& p,
+      Tpetra_Vector& gT);
+    
     //! Evaluate tangent = alpha*dg/dx*Vx + beta*dg/dxdot*Vxdot + dg/dp*Vp
     /*!
      * Set xdot, dxdot_dp to NULL for steady-state problems
@@ -223,6 +231,23 @@ namespace Albany {
       Epetra_MultiVector* gx,
       Epetra_MultiVector* gp);
 
+    void evaluateResponseTangentT(
+      int response_index,
+      const double alpha, 
+      const double beta,
+      const double current_time,
+      bool sum_derivs,
+      const Tpetra_Vector* xdotT,
+      const Tpetra_Vector& xT,
+      const Teuchos::Array<ParamVec>& p,
+      ParamVec* deriv_p,
+      const Tpetra_MultiVector* VxdotT,
+      const Tpetra_MultiVector* VxT,
+      const Tpetra_MultiVector* VpT,
+      Tpetra_Vector* gT,
+      Tpetra_MultiVector* gxT,
+      Tpetra_MultiVector* gpT);
+    
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
     /*!
      * Set xdot, dg_dxdot to NULL for steady-state problems
@@ -238,6 +263,18 @@ namespace Albany {
       const EpetraExt::ModelEvaluator::Derivative& dg_dx,
       const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
       const EpetraExt::ModelEvaluator::Derivative& dg_dp);
+
+    void evaluateResponseDerivativeT(
+      int response_index,
+      const double current_time,
+      const Tpetra_Vector* xdotT,
+      const Tpetra_Vector& xT,
+      const Teuchos::Array<ParamVec>& p,
+      ParamVec* deriv_p,
+      Tpetra_Vector* gT,
+      const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxT,
+      const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotT,
+      const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dpT);
 
     //! Compute global residual for stochastic Galerkin problem
     /*!

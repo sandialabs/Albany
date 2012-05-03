@@ -178,8 +178,9 @@ evaluateTangentT(const double alpha,
 		Tpetra_MultiVector* gxT,
 		Tpetra_MultiVector* gpT)
 {
-  if (gT)
+  if (gT) {
     cullSolutionT(xT, *gT);
+  }
 
   if (gxT) {
     gxT->putScalar(0.0);

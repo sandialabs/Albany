@@ -220,8 +220,12 @@ evaluateTangentT(const double alpha,
 				  local_gT.get(), local_gxT.get(), 
 				  local_gpT.get());
 
-    Teuchos::ArrayRCP<const ST> local_gT_constView = local_gT->get1dView();
-    Teuchos::ArrayRCP<ST> gT_nonconstView = gT->get1dViewNonConst();
+    Teuchos::ArrayRCP<const ST> local_gT_constView;
+    Teuchos::ArrayRCP<ST> gT_nonconstView;
+    if (gT != NULL) { 
+      local_gT_constView = local_gT->get1dView();
+      gT_nonconstView = gT->get1dViewNonConst();
+    }
 
     // Copy results into combined result
     for (unsigned int j=0; j<num_responses; j++) {

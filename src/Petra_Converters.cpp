@@ -82,7 +82,7 @@ Teuchos::RCP<Epetra_CrsGraph> Petra::TpetraCrsGraph_To_EpetraCrsGraph(const Teuc
   return epetraCrsGraph_; 
 }
 
-//TpetraVector_To_EpetraVector: copies Tpetra::CrsMatrix object into its analogous 
+//TpetraCrsMatrix_To_EpetraCrsMatrix: copies Tpetra::CrsMatrix object into its analogous 
 //Epetra_CrsMatrix object 
 void Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(Teuchos::RCP<Tpetra_CrsMatrix>& tpetraCrsMatrix_,
                                                   Epetra_CrsMatrix& epetraCrsMatrix_,
@@ -172,7 +172,7 @@ Teuchos::RCP<const Tpetra_Vector> Petra::EpetraVector_To_TpetraVectorConst(const
   return tpetraVector_; 
 }
 
-//EpetraMultiVector_To_TpetraMultiVectorConst: copies Epetra_MultiVector to Tpetra_MultiVector
+//EpetraMultiVector_To_TpetraMultiVector: copies Epetra_MultiVector to non-const Tpetra_MultiVector
 Teuchos::RCP<Tpetra_MultiVector> Petra::EpetraMultiVector_To_TpetraMultiVector(const Epetra_MultiVector& epetraMV_, 
                                                                Teuchos::RCP<const Teuchos::Comm<int> >& commT_,
                                                                Teuchos::RCP<KokkosNode>& nodeT_)

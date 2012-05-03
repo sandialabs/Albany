@@ -136,19 +136,30 @@ void ScatterScalarResponse<PHAL::AlbanyTraits::Tangent, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
   // Here we scatter the *global* response and tangent
-  Teuchos::RCP<Epetra_Vector> g = workset.g;
-  Teuchos::RCP<Epetra_MultiVector> gx = workset.dgdx;
-  Teuchos::RCP<Epetra_MultiVector> gp = workset.dgdp;
+  //Teuchos::RCP<Epetra_Vector> g = workset.g;
+  //Teuchos::RCP<Epetra_MultiVector> gx = workset.dgdx;
+  //Teuchos::RCP<Epetra_MultiVector> gp = workset.dgdp;
+  Teuchos::RCP<Tpetra_Vector> gT = workset.gT;
+  Teuchos::RCP<Tpetra_MultiVector> gxT = workset.dgdxT;
+  Teuchos::RCP<Tpetra_MultiVector> gpT = workset.dgdpT;
   for (std::size_t res = 0; res < this->field_components.size(); res++) {
     ScalarT& val = this->global_response[this->field_components[res]];
-    if (g != Teuchos::null)
-      (*g)[res] = val.val();
-    if (gx != Teuchos::null)
-      for (int col=0; col<workset.num_cols_x; col++)
-	gx->ReplaceMyValue(res, col, val.dx(col));
-    if (gp != Teuchos::null)
-      for (int col=0; col<workset.num_cols_p; col++)
-	gp->ReplaceMyValue(res, col, val.dx(col+workset.param_offset));
+    if (gT != Teuchos::null) {
+     // (*g)[res] = val.val();
+     Teuchos::ArrayRCP<ST> gT_nonconstView = gT->get1dViewNonConst();
+     gT_nonconstView[res] = val.val(); 
+    }
+    if (gxT != Teuchos::null) {
+      for (int col=0; col<workset.num_cols_x; col++) {
+	//gx->ReplaceMyValue(res, col, val.dx(col));
+	gxT->replaceLocalValue(res, col, val.dx(col));
+      }
+    }
+    if (gpT != Teuchos::null) {
+      for (int col=0; col<workset.num_cols_p; col++) {
+	gpT->replaceLocalValue(res, col, val.dx(col+workset.param_offset));
+      }
+    }
   }
 }
 
