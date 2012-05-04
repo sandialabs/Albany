@@ -291,6 +291,7 @@ SET(SOURCES ${SOURCES}
 SET(HEADERS ${HEADERS}
   ${MOR_DIR}/Albany_MORUtils.hpp
   ${MOR_DIR}/Albany_MORObserverFactory.hpp
+  ${MOR_DIR}/Albany_BasisOps.hpp
   ${MOR_DIR}/Albany_ProjectionError.hpp
   ${MOR_DIR}/Albany_ProjectionErrorObserver.hpp
   ${MOR_DIR}/Albany_SnapshotCollection.hpp

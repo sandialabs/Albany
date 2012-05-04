@@ -21,6 +21,8 @@
 #include "Albany_MultiVectorOutputFile.hpp"
 #include "Albany_MultiVectorOutputFileFactory.hpp"
 
+#include "Albany_BasisOps.hpp"
+
 #include "Epetra_Comm.h"
 #include "Epetra_LocalMap.h"
 #include "Epetra_Vector.h"
@@ -92,11 +94,11 @@ void ProjectionError::process(const Epetra_MultiVector &v)
   Epetra_MultiVector components(componentMap, v.NumVectors(), NO_INIT);
 
   // components <- orthonormalBasis^T * v
-  components.Multiply('T', 'N', 1.0, *orthonormalBasis_, v, 0.0);
+  reduce(*orthonormalBasis_, v, components);
 
-  // absoluteError <- v - orthonormalBasis * components
+  // absoluteError <- orthonormalBasis * components - v
   Epetra_MultiVector absoluteError = v;
-  absoluteError.Multiply('N', 'N', -1.0, *orthonormalBasis_, components, 1.0);
+  expandAdd(*orthonormalBasis_, components, -1.0, absoluteError);
 
   // Norm computations
   Epetra_LocalMap normMap(components.NumVectors(), ZERO_BASED_INDEXING, dofMap_->Comm());
