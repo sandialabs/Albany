@@ -276,6 +276,9 @@ SET(HEADERS ${HEADERS}
 SET(MOR_DIR ${Albany_SOURCE_DIR}/src/MOR)
 
 SET(SOURCES ${SOURCES}
+  ${MOR_DIR}/Albany_ReducedSpace.cpp
+  ${MOR_DIR}/Albany_GalerkinProjectionOperator.cpp
+  ${MOR_DIR}/Albany_ReducedOrderModelEvaluator.cpp
   ${MOR_DIR}/Albany_MORObserverFactory.cpp
   ${MOR_DIR}/Albany_ProjectionError.cpp
   ${MOR_DIR}/Albany_ProjectionErrorObserver.cpp
@@ -290,8 +293,11 @@ SET(SOURCES ${SOURCES}
 )
 SET(HEADERS ${HEADERS}
   ${MOR_DIR}/Albany_MORUtils.hpp
-  ${MOR_DIR}/Albany_MORObserverFactory.hpp
   ${MOR_DIR}/Albany_BasisOps.hpp
+  ${MOR_DIR}/Albany_ReducedSpace.hpp
+  ${MOR_DIR}/Albany_GalerkinProjectionOperator.hpp
+  ${MOR_DIR}/Albany_ReducedOrderModelEvaluator.hpp
+  ${MOR_DIR}/Albany_MORObserverFactory.hpp
   ${MOR_DIR}/Albany_ProjectionError.hpp
   ${MOR_DIR}/Albany_ProjectionErrorObserver.hpp
   ${MOR_DIR}/Albany_SnapshotCollection.hpp
