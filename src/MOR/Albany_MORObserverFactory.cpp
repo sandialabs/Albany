@@ -21,6 +21,7 @@
 #include "Albany_NOXObserver.hpp"
 #include "Albany_SnapshotCollectionObserver.hpp"
 #include "Albany_ProjectionErrorObserver.hpp"
+#include "Albany_FullStateReconstructor.hpp"
 
 #include "Teuchos_ParameterList.hpp"
 
@@ -52,6 +53,10 @@ RCP<NOX::Epetra::Observer> MORObserverFactory::create(const RCP<NOX::Epetra::Obs
     result = rcp(new ProjectionErrorObserver(getErrorParameters(), result, app_));
   }
 
+  if (useReducedOrderModel()) {
+    result = rcp(new FullStateReconstructor(getReducedOrderModelParameters(), result, app_));
+  }
+
   return result;
 }
 
@@ -65,6 +70,11 @@ bool MORObserverFactory::computeProjectionError() const
   return getErrorParameters()->get("Activate", false);
 }
 
+bool MORObserverFactory::useReducedOrderModel() const
+{
+  return getReducedOrderModelParameters()->get("Activate", false);
+}
+
 RCP<ParameterList> MORObserverFactory::getSnapParameters() const
 {
   return sublist(params_, "Snapshot Collection");
@@ -73,6 +83,11 @@ RCP<ParameterList> MORObserverFactory::getSnapParameters() const
 RCP<ParameterList> MORObserverFactory::getErrorParameters() const
 {
   return sublist(params_, "Projection Error");
+}
+
+RCP<ParameterList> MORObserverFactory::getReducedOrderModelParameters() const
+{
+  return sublist(params_, "Reduced-Order Model");
 }
 
 } // end namespace Albany

@@ -279,7 +279,9 @@ SET(SOURCES ${SOURCES}
   ${MOR_DIR}/Albany_ReducedSpace.cpp
   ${MOR_DIR}/Albany_GalerkinProjectionOperator.cpp
   ${MOR_DIR}/Albany_ReducedOrderModelEvaluator.cpp
+  ${MOR_DIR}/Albany_ReducedOrderModelFactory.cpp
   ${MOR_DIR}/Albany_MORObserverFactory.cpp
+  ${MOR_DIR}/Albany_FullStateReconstructor.cpp
   ${MOR_DIR}/Albany_ProjectionError.cpp
   ${MOR_DIR}/Albany_ProjectionErrorObserver.cpp
   ${MOR_DIR}/Albany_SnapshotCollection.cpp
@@ -297,7 +299,9 @@ SET(HEADERS ${HEADERS}
   ${MOR_DIR}/Albany_ReducedSpace.hpp
   ${MOR_DIR}/Albany_GalerkinProjectionOperator.hpp
   ${MOR_DIR}/Albany_ReducedOrderModelEvaluator.hpp
+  ${MOR_DIR}/Albany_ReducedOrderModelFactory.hpp
   ${MOR_DIR}/Albany_MORObserverFactory.hpp
+  ${MOR_DIR}/Albany_FullStateReconstructor.hpp
   ${MOR_DIR}/Albany_ProjectionError.hpp
   ${MOR_DIR}/Albany_ProjectionErrorObserver.hpp
   ${MOR_DIR}/Albany_SnapshotCollection.hpp

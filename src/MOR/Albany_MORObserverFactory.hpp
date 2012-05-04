@@ -36,9 +36,11 @@ public:
 private:
   bool collectSnapshots() const;
   bool computeProjectionError() const;
+  bool useReducedOrderModel() const;
 
   Teuchos::RCP<Teuchos::ParameterList> getSnapParameters() const;
   Teuchos::RCP<Teuchos::ParameterList> getErrorParameters() const;
+  Teuchos::RCP<Teuchos::ParameterList> getReducedOrderModelParameters() const;
 
   Teuchos::RCP<Teuchos::ParameterList> params_;
   Teuchos::RCP<Application> app_;

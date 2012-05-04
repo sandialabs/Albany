@@ -19,14 +19,15 @@
 #include "Albany_Application.hpp"
 #include "Albany_ModelEvaluator.hpp"
 
+#include "MOR/Albany_ReducedOrderModelFactory.hpp"
+
 namespace Albany {
 
 using Teuchos::RCP;
-using Teuchos::rcp;
 using Teuchos::ParameterList;
 
-ModelFactory::ModelFactory(const Teuchos::RCP<Teuchos::ParameterList> &params,
-                           const Teuchos::RCP<Application> &app) :
+ModelFactory::ModelFactory(const RCP<ParameterList> &params,
+                           const RCP<Application> &app) :
   params_(params),
   app_(app)
 {
@@ -35,7 +36,14 @@ ModelFactory::ModelFactory(const Teuchos::RCP<Teuchos::ParameterList> &params,
 
 RCP<EpetraExt::ModelEvaluator> ModelFactory::create() const
 {
-  return rcp(new Albany::ModelEvaluator(app_, params_));
+  RCP<EpetraExt::ModelEvaluator> model(new Albany::ModelEvaluator(app_, params_)); 
+  
+  // Wrap a decorator around the original model when a reduced-order computation is requested.
+  const RCP<ParameterList> problemParams = Teuchos::sublist(params_, "Problem", true);
+  ReducedOrderModelFactory romFactory(problemParams);
+  model = romFactory.create(model);
+  
+  return model;
 }
 
 } // end namespace Albany
