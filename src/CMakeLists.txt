@@ -390,6 +390,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidEnergy.cpp
     ${LCM_DIR}/evaluators/Porosity.cpp
     ${LCM_DIR}/evaluators/KCPermeability.cpp
+    ${LCM_DIR}/evaluators/VanGenuchtenPermeability.cpp
     ${LCM_DIR}/evaluators/ThermoMechanicalEnergyResidual.cpp
     ${LCM_DIR}/evaluators/ThermoMechanicalMomentumResidual.cpp
     ${LCM_DIR}/evaluators/ThermoMechanicalStress.cpp
@@ -500,6 +501,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/Porosity_Def.hpp
     ${LCM_DIR}/evaluators/KCPermeability.hpp
     ${LCM_DIR}/evaluators/KCPermeability_Def.hpp
+    ${LCM_DIR}/evaluators/VanGenuchtenPermeability.hpp
+    ${LCM_DIR}/evaluators/VanGenuchtenPermeability_Def.hpp
     ${LCM_DIR}/evaluators/ThermoMechanicalEnergyResidual.hpp    
     ${LCM_DIR}/evaluators/ThermoMechanicalEnergyResidual_Def.hpp
     ${LCM_DIR}/evaluators/ThermoMechanicalMomentumResidual.hpp
