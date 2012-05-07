@@ -72,6 +72,7 @@ private:
   //! Optional dependence on porosity
 
   PHX::MDField<ScalarT,Cell,QuadPoint> porosity;
+  PHX::MDField<ScalarT,Cell,QuadPoint> porePressure;
   bool isPoroElastic;
 
   ScalarT waterUnitWeight;

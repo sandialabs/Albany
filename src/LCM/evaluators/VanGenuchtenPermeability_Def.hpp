@@ -99,8 +99,6 @@ VanGenuchtenPermeability(Teuchos::ParameterList& p) :
          PHX::MDField<ScalarT,Cell,QuadPoint>
            ppn(p.get<string>("QP Pore Pressure Name"), scalar_dl);
          porePressure = ppn;
-         isCompressibleSolidPhase = true;
-         isCompressibleFluidPhase = true;
          isPoroElastic = true;
          this->addDependentField(porePressure);
 
@@ -121,8 +119,10 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(vgPermeability,fm);
+  this->utils.setFieldData(porePressure,fm);
   if (!is_constant) this->utils.setFieldData(coordVec,fm);
   if (isPoroElastic) this->utils.setFieldData(porosity,fm);
+  if (isPoroElastic) this->utils.setFieldData(porePressure,fm);
 }
 
 // **********************************************************************

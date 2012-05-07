@@ -124,6 +124,7 @@ Albany::TLPoroPlasticityProblem::getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidTLPoroPlasticityProblemParams");
+
   validPL->sublist("Material Model", false, "");
   validPL->set<bool>("avgJ", false, "Flag to indicate the J should be averaged");
   validPL->set<bool>("volavgJ", false, "Flag to indicate the J should be volume averaged");
@@ -138,6 +139,7 @@ Albany::TLPoroPlasticityProblem::getValidProblemParameters() const
   validPL->sublist("Poissons Ratio", false, "");
   validPL->sublist("Stabilization Parameter", false, "");
   if (matModel=="J2"){
+   validPL->set<bool>("Compute Dislocation Density Tensor", false, "Flag to compute the dislocaiton density tensor (only for 3D)");
    validPL->sublist("Hardening Modulus", false, "");
    validPL->sublist("Saturation Modulus", false, "");
    validPL->sublist("Saturation Exponent", false, "");
