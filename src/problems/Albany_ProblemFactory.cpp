@@ -32,6 +32,7 @@
 #include "LCM/problems/NonlinearElasticityProblem.hpp"
 #include "LCM/problems/ThermoElasticityProblem.hpp"
 #include "LCM/problems/PoroElasticityProblem.hpp"
+#include "LCM/problems/UnSatPoroElasticityProblem.hpp"
 #include "LCM/problems/TLPoroPlasticityProblem.hpp"
 #include "LCM/problems/ThermoPoroPlasticityProblem.hpp"
 #include "LCM/problems/GradientDamageProblem.hpp"
@@ -172,6 +173,15 @@ Albany::ProblemFactory::create()
   }
   else if (method == "PoroElasticity 3D") {
     strategy = rcp(new Albany::PoroElasticityProblem(problemParams, paramLib, 3));
+  }
+  else if (method == "UnSaturated PoroElasticity 1D") {
+    strategy = rcp(new Albany::UnSatPoroElasticityProblem(problemParams, paramLib, 1));
+  }
+  else if (method == "UnSaturated PoroElasticity 2D") {
+    strategy = rcp(new Albany::UnSatPoroElasticityProblem(problemParams, paramLib, 2));
+  }
+  else if (method == "UnSaturated PoroElasticity 3D") {
+    strategy = rcp(new Albany::UnSatPoroElasticityProblem(problemParams, paramLib, 3));
   }
   else if (method == "Total Lagrangian PoroPlasticity 1D") {
         strategy = rcp(new Albany::TLPoroPlasticityProblem(problemParams, paramLib, 1));

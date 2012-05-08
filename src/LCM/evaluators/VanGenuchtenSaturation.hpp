@@ -15,8 +15,8 @@
 \********************************************************************/
 
 
-#ifndef VAN_GENUCHTEN_PERMEABILITY_HPP
-#define VAN_GENUCHTEN_PERMEABILITY_HPP
+#ifndef VAN_GENUCHTEN_SATURATION_HPP
+#define VAN_GENUCHTEN_SATURATION_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -31,14 +31,13 @@
 
 namespace LCM {
 /** 
- * \brief Evaluates permeability based on porosity
- *  through the van Genuchten equation, either as
- *  a constant or a truncated KL expansion.The permeability
- *  is divided by viscosity.
+ * \brief Evaluates saturation based on the
+ *  van Genuchten equation, either as
+ *  a constant or a truncated KL expansion.T
  */
 
 template<typename EvalT, typename Traits>
-class VanGenuchtenPermeability :
+class VanGenuchtenSaturation :
   public PHX::EvaluatorWithBaseImpl<Traits>,
   public PHX::EvaluatorDerived<EvalT, Traits>,
   public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
@@ -47,7 +46,7 @@ public:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  VanGenuchtenPermeability(Teuchos::ParameterList& p);
+  VanGenuchtenSaturation(Teuchos::ParameterList& p);
   
   void postRegistrationSetup(typename Traits::SetupData d,
 			     PHX::FieldManager<Traits>& vm);
@@ -61,7 +60,7 @@ private:
   std::size_t numQPs;
   std::size_t numDims;
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
-  PHX::MDField<ScalarT,Cell,QuadPoint> vgPermeability;
+  PHX::MDField<ScalarT,Cell,QuadPoint> vgSaturation;
 
   //! Is van Genuchten Permeability constant, or random field
   bool is_constant;

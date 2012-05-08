@@ -327,6 +327,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/problems/ThermoElasticityProblem.cpp 
     ${LCM_DIR}/problems/GradientDamageProblem.cpp 
     ${LCM_DIR}/problems/PoroElasticityProblem.cpp
+    ${LCM_DIR}/problems/UnSatPoroElasticityProblem.cpp
     ${LCM_DIR}/problems/TLPoroPlasticityProblem.cpp
     ${LCM_DIR}/problems/ThermoPoroPlasticityProblem.cpp
     ${LCM_DIR}/problems/ThermoMechanicalProblem.cpp
@@ -339,6 +340,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/problems/ThermoElasticityProblem.hpp 
     ${LCM_DIR}/problems/GradientDamageProblem.hpp
     ${LCM_DIR}/problems/PoroElasticityProblem.hpp 
+    ${LCM_DIR}/problems/UnSatPoroElasticityProblem.hpp 
     ${LCM_DIR}/problems/TLPoroPlasticityProblem.hpp
     ${LCM_DIR}/problems/ThermoPoroPlasticityProblem.hpp
     ${LCM_DIR}/problems/ThermoMechanicalProblem.hpp
@@ -382,6 +384,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/BiotModulus.cpp
     ${LCM_DIR}/evaluators/PoroElasticityResidMomentum.cpp    
     ${LCM_DIR}/evaluators/PoroElasticityResidMass.cpp
+    ${LCM_DIR}/evaluators/UnSatPoroElasticityResidMass.cpp
     ${LCM_DIR}/evaluators/TLPoroPlasticityResidMomentum.cpp
     ${LCM_DIR}/evaluators/TLPoroPlasticityResidMass.cpp
     ${LCM_DIR}/evaluators/TLPoroStress.cpp
@@ -391,6 +394,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/Porosity.cpp
     ${LCM_DIR}/evaluators/KCPermeability.cpp
     ${LCM_DIR}/evaluators/VanGenuchtenPermeability.cpp
+    ${LCM_DIR}/evaluators/VanGenuchtenSaturation.cpp
     ${LCM_DIR}/evaluators/ThermoMechanicalEnergyResidual.cpp
     ${LCM_DIR}/evaluators/ThermoMechanicalMomentumResidual.cpp
     ${LCM_DIR}/evaluators/ThermoMechanicalStress.cpp
@@ -487,6 +491,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/PoroElasticityResidMomentum_Def.hpp
     ${LCM_DIR}/evaluators/PoroElasticityResidMass.hpp
     ${LCM_DIR}/evaluators/PoroElasticityResidMass_Def.hpp
+    ${LCM_DIR}/evaluators/UnSatPoroElasticityResidMass.hpp
+    ${LCM_DIR}/evaluators/UnSatPoroElasticityResidMass_Def.hpp
     ${LCM_DIR}/evaluators/TLPoroPlasticityResidMomentum.hpp    
     ${LCM_DIR}/evaluators/TLPoroPlasticityResidMomentum_Def.hpp
     ${LCM_DIR}/evaluators/TLPoroPlasticityResidMass.hpp
@@ -503,6 +509,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/KCPermeability_Def.hpp
     ${LCM_DIR}/evaluators/VanGenuchtenPermeability.hpp
     ${LCM_DIR}/evaluators/VanGenuchtenPermeability_Def.hpp
+    ${LCM_DIR}/evaluators/VanGenuchtenSaturation.hpp
+    ${LCM_DIR}/evaluators/VanGenuchtenSaturation_Def.hpp
     ${LCM_DIR}/evaluators/ThermoMechanicalEnergyResidual.hpp    
     ${LCM_DIR}/evaluators/ThermoMechanicalEnergyResidual_Def.hpp
     ${LCM_DIR}/evaluators/ThermoMechanicalMomentumResidual.hpp
