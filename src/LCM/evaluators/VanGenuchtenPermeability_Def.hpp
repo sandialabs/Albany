@@ -119,7 +119,6 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(vgPermeability,fm);
-  this->utils.setFieldData(porePressure,fm);
   if (!is_constant) this->utils.setFieldData(coordVec,fm);
   if (isPoroElastic) this->utils.setFieldData(porosity,fm);
   if (isPoroElastic) this->utils.setFieldData(porePressure,fm);
