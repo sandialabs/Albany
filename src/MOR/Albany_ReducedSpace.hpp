@@ -33,13 +33,19 @@ public:
   
   const Epetra_MultiVector &basis() const { return basis_; }
   
+  virtual Teuchos::RCP<Epetra_MultiVector> expansion(const Epetra_MultiVector &reducedVector) const = 0;
   virtual Teuchos::RCP<Epetra_Vector> expansion(const Epetra_Vector &reducedVector) const = 0;
   virtual const Epetra_MultiVector &expansion(const Epetra_MultiVector &reducedVector, Epetra_MultiVector &target) const = 0;
+
+  virtual Teuchos::RCP<Epetra_MultiVector> reduction(const Epetra_MultiVector &fullVector) const = 0;
   virtual Teuchos::RCP<Epetra_Vector> reduction(const Epetra_Vector &fullVector) const = 0;
   virtual const Epetra_MultiVector &reduction(const Epetra_MultiVector &fullVector, Epetra_MultiVector &target) const = 0;
 
+  Teuchos::RCP<Epetra_MultiVector> linearExpansion(const Epetra_MultiVector &reducedVector) const;
   Teuchos::RCP<Epetra_Vector> linearExpansion(const Epetra_Vector &reducedVector) const;
   const Epetra_MultiVector &linearExpansion(const Epetra_MultiVector &reducedVector, Epetra_MultiVector &target) const;
+
+  Teuchos::RCP<Epetra_MultiVector> linearReduction(const Epetra_MultiVector &fullVector) const;
   Teuchos::RCP<Epetra_Vector> linearReduction(const Epetra_Vector &fullVector) const;
   const Epetra_MultiVector &linearReduction(const Epetra_MultiVector &fullVector, Epetra_MultiVector &target) const;
 
@@ -64,8 +70,11 @@ private:
 class LinearReducedSpace : public ReducedSpace {
 public:
   // Overriden functions
+  virtual Teuchos::RCP<Epetra_MultiVector> expansion(const Epetra_MultiVector &reducedVector) const;
   virtual Teuchos::RCP<Epetra_Vector> expansion(const Epetra_Vector &reducedVector) const;
   virtual const Epetra_MultiVector &expansion(const Epetra_MultiVector &reducedVector, Epetra_MultiVector &target) const;
+  
+  virtual Teuchos::RCP<Epetra_MultiVector> reduction(const Epetra_MultiVector &fullVector) const;
   virtual Teuchos::RCP<Epetra_Vector> reduction(const Epetra_Vector &fullVector) const;
   virtual const Epetra_MultiVector &reduction(const Epetra_MultiVector &fullVector, Epetra_MultiVector &target) const;
 
@@ -80,8 +89,11 @@ public:
 class AffineReducedSpace : public ReducedSpace {
 public:
   // Overriden functions
+  virtual Teuchos::RCP<Epetra_MultiVector> expansion(const Epetra_MultiVector &reducedVector) const;
   virtual Teuchos::RCP<Epetra_Vector> expansion(const Epetra_Vector &reducedVector) const;
   virtual const Epetra_MultiVector &expansion(const Epetra_MultiVector &reducedVector, Epetra_MultiVector &target) const;
+  
+  virtual Teuchos::RCP<Epetra_MultiVector> reduction(const Epetra_MultiVector &fullVector) const;
   virtual Teuchos::RCP<Epetra_Vector> reduction(const Epetra_Vector &fullVector) const;
   virtual const Epetra_MultiVector &reduction(const Epetra_MultiVector &fullVector, Epetra_MultiVector &target) const;
 

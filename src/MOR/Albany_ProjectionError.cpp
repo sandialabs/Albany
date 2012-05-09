@@ -21,7 +21,7 @@
 #include "Albany_MultiVectorOutputFile.hpp"
 #include "Albany_MultiVectorOutputFileFactory.hpp"
 
-#include "Albany_BasisOps.hpp"
+#include "Albany_ReducedSpace.hpp"
 
 #include "Epetra_Comm.h"
 #include "Epetra_LocalMap.h"
@@ -38,6 +38,7 @@
 namespace Albany {
 
 using Teuchos::RCP;
+using Teuchos::rcp;
 using Teuchos::ParameterList;
 
 // TODO: Better hiding / encapsulation
@@ -48,9 +49,10 @@ ProjectionError::ProjectionError(const RCP<ParameterList> &params,
                                  const RCP<const Epetra_Map> &dofMap) :
   params_(fillDefaultParams(params)),
   dofMap_(dofMap),
-  orthonormalBasis_(createOrthonormalBasis())
+  reducedSpace_()
 {
-  // Nothing to do
+  const RCP<const Epetra_MultiVector> basis = createOrthonormalBasis();
+  reducedSpace_ = rcp(new LinearReducedSpace(*basis));
 }
 
 RCP<ParameterList> ProjectionError::fillDefaultParams(const RCP<ParameterList> &params)
@@ -87,24 +89,18 @@ ProjectionError::~ProjectionError()
 
 void ProjectionError::process(const Epetra_MultiVector &v)
 {
-  TEUCHOS_ASSERT(nonnull(orthonormalBasis_));
-  TEUCHOS_ASSERT_EQUALITY(v.GlobalLength(), orthonormalBasis_->GlobalLength());
-
-  Epetra_LocalMap componentMap(orthonormalBasis_->NumVectors(), ZERO_BASED_INDEXING, dofMap_->Comm());
-  Epetra_MultiVector components(componentMap, v.NumVectors(), NO_INIT);
-
   // components <- orthonormalBasis^T * v
-  reduce(*orthonormalBasis_, v, components);
+  const RCP<const Epetra_MultiVector> components = reducedSpace_->reduction(v);
 
   // absoluteError <- orthonormalBasis * components - v
-  Epetra_MultiVector absoluteError = v;
-  expandAdd(*orthonormalBasis_, components, -1.0, absoluteError);
+  const RCP<Epetra_MultiVector> absoluteError = reducedSpace_->expansion(*components);
+  absoluteError->Update(-1.0, v, 1.0);
 
   // Norm computations
-  Epetra_LocalMap normMap(components.NumVectors(), ZERO_BASED_INDEXING, dofMap_->Comm());
+  Epetra_LocalMap normMap(components->NumVectors(), ZERO_BASED_INDEXING, dofMap_->Comm());
 
   Epetra_Vector absoluteErrorNorm(normMap, NO_INIT);
-  absoluteError.Norm2(absoluteErrorNorm.Values());
+  absoluteError->Norm2(absoluteErrorNorm.Values());
 
   Epetra_Vector referenceNorm(normMap, NO_INIT);
   v.Norm2(referenceNorm.Values());
@@ -120,7 +116,7 @@ void ProjectionError::process(const Epetra_MultiVector &v)
 
   // Write to standard output
   // TODO remove
-  components.Print(std::cout);
+  components->Print(std::cout);
   referenceNorm.Print(std::cout);
   absoluteErrorNorm.Print(std::cout);
   relativeErrorNorm.Print(std::cout);
