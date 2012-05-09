@@ -16,7 +16,6 @@
 
 #include "Albany_FullStateReconstructor.hpp"
 
-#include "Albany_Application.hpp"
 #include "Albany_ReducedSpace.hpp"
 
 #include "Albany_MultiVectorInputFile.hpp"
@@ -32,13 +31,13 @@ using Teuchos::ParameterList;
 
 FullStateReconstructor::FullStateReconstructor(const RCP<Teuchos::ParameterList> &params,
                                                const RCP<NOX::Epetra::Observer> &decoratedObserver,
-                                               const RCP<const Application> &app) :
+                                               const Epetra_Map &decoratedMap) :
   params_(fillDefaultParams(params)),
   decoratedObserver_(decoratedObserver),
   reducedSpace_(),
-  lastFullSolution_(*app->getMap(), false)
+  lastFullSolution_(decoratedMap, false)
 {
-  const RCP<const Epetra_MultiVector> orthogonalBasis = createOrthonormalBasis(params_, *app->getMap());
+  const RCP<const Epetra_MultiVector> orthogonalBasis = createOrthonormalBasis(params_, decoratedMap);
   reducedSpace_ = rcp(new LinearReducedSpace(*orthogonalBasis));
 }
 

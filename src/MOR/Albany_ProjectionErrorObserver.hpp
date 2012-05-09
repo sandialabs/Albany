@@ -24,16 +24,16 @@
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
-namespace Albany {
+class Epetra_Map;
 
-class Application;
+namespace Albany {
 
 class ProjectionErrorObserver : public NOX::Epetra::Observer
 {
 public:
   ProjectionErrorObserver(const Teuchos::RCP<Teuchos::ParameterList> &params,
                           const Teuchos::RCP<NOX::Epetra::Observer> &decoratedObserver,
-                          const Teuchos::RCP<const Application> &app);
+                          const Teuchos::RCP<const Epetra_Map> &decoratedMap);
 
   //! Calls underlying observer then evalates projection error
   virtual void observeSolution(const Epetra_Vector& solution);
