@@ -102,9 +102,9 @@ VanGenuchtenPermeability(Teuchos::ParameterList& p) :
          isPoroElastic = true;
          this->addDependentField(porePressure);
 
-         waterUnitWeight = elmd_list->get("Water Unit Weight", 9810.0); // typically Kgrain >> Kskeleton
+         waterUnitWeight = elmd_list->get("Water Unit Weight Value", 9810.0); // typically Kgrain >> Kskeleton
                     new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-          "Water Unit Weight", this, paramLib);
+          "Water Unit Weight Value", this, paramLib);
   }
 
 
@@ -167,6 +167,8 @@ VanGenuchtenPermeability<EvalT,Traits>::getValue(const std::string &n)
 {
   if (n == "Van Genuchten Permeability")
     return constant_value;
+  else if (n == "Water Unit Weight Value")
+      return waterUnitWeight;
   for (int i=0; i<rv.size(); i++) {
     if (n == Albany::strint("Van Genuchten Permeability KL Random Variable",i))
       return rv[i];

@@ -306,7 +306,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 
 
-  /*
+
   //---------------------------------------------------------------------------//
   // Stabilization Term (only 2D and 3D problem need stabilizer)
 
@@ -318,8 +318,8 @@ evaluateFields(typename Traits::EvalData workset)
 
    vol = 0.0;
    for (std::size_t qp=0; qp < numQPs; ++qp) {
-	porePbar += weights(cell,qp)*(porePressure(cell,qp)
-			                     -porePressureold(cell, qp)
+	porePbar += weights(cell,qp)*(vgSat(cell,qp)
+			                     -vgSatold(cell, qp)
 			                      );
 
 	vol  += weights(cell,qp);
@@ -350,14 +350,14 @@ evaluateFields(typename Traits::EvalData workset)
 	  for (std::size_t node=0; node < numNodes; ++node) {
 		  for (std::size_t qp=0; qp < numQPs; ++qp) {
 
- 				  TResidual(cell,node) -= (porePressure(cell, qp)
- 						                  -porePressureold(cell, qp)
+ 				  TResidual(cell,node) -= (vgSat(cell, qp)
+ 						                  -vgSatold(cell, qp)
  						                               )
-                    		                    		*stabParameter(cell, qp)/biotModulus(cell, qp)*
+                    		                    		*stabParameter(cell, qp)*porosity(cell, qp)*
                     		                    		( wBF(cell, node, qp)
                     		                    				-tpterm(cell,node,qp)
                     		                    				);
- 				  TResidual(cell,node) += pterm(cell,qp)*stabParameter(cell, qp)/biotModulus(cell, qp)*
+ 				  TResidual(cell,node) += pterm(cell,qp)*stabParameter(cell, qp)*porosity(cell, qp)*
  						 ( wBF(cell, node, qp)
  								 -tpterm(cell,node,qp)
  								 );
@@ -372,7 +372,7 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
 
-*/
+
 
 
 

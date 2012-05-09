@@ -290,8 +290,6 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
 		p->set<string>("Gradient BF Name", "Grad BF");
 		p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
-		p->set<string>("Diffusive Parameter Name", "Kozeny-Carman Permeability");
-		p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
         ev = rcp(new LCM::StabParameter<EvalT,AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
@@ -764,10 +762,6 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
     //Input
     p->set<string>("Stress Name", "Total Stress");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
-    p->set<string>("Weighted BF Name", "wBF");
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
-
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
