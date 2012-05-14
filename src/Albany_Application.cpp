@@ -568,6 +568,102 @@ computeGlobalResidual(const double current_time,
 
 void
 Albany::Application::
+computeGlobalResidualT(const double current_time,
+		      const Tpetra_Vector* xdotT,
+		      const Tpetra_Vector& xT,
+		      const Teuchos::Array<ParamVec>& p,
+		      Tpetra_Vector& fT)
+{
+  postRegSetup("Residual");
+
+  TimeMonitor Timer(*timers[0]); //start timer
+  
+  // Scatter x and xdot to the overlapped distrbution
+  overlapped_xT->doImport(xT, *importerT, Tpetra::INSERT);
+
+  if (xdotT != NULL) {
+    overlapped_xdotT->doImport(*xdotT, *importerT, Tpetra::INSERT);
+  }
+
+  // Set parameters
+  for (int i=0; i<p.size(); i++)
+    for (unsigned int j=0; j<p[i].size(); j++)
+      p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
+
+  // Mesh motion needs to occur here on the global mesh befor
+  // it is potentially carved into worksets.
+#ifdef ALBANY_CUTR
+  static int first=true;
+  if (shapeParamsHaveBeenReset) {
+    TimeMonitor cubitTimer(*timers[10]); //start timer
+
+*out << " Calling moveMesh with params: " << std::setprecision(8);
+ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
+*out << endl;
+    meshMover->moveMesh(shapeParams, morphFromInit);
+    coords = disc->getCoords();
+    shapeParamsHaveBeenReset = false;
+  }
+#endif
+
+  // Zero out overlapped residual - Tpetra
+  overlapped_fT->putScalar(0.0);
+  fT.putScalar(0.0);
+
+  // Set data in Workset struct, and perform fill via field manager
+  { 
+    PHAL::Workset workset;
+
+    if (!paramLib->isParameter("Time")) {
+      loadBasicWorksetInfoT( workset, overlapped_xT, overlapped_xdotT, current_time );
+   }
+   else { 
+      loadBasicWorksetInfoT( workset, overlapped_xT, overlapped_xdotT,
+			    paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time") );
+    }
+    workset.fT        = overlapped_fT;
+
+
+    for (int ws=0; ws < numWorksets; ws++) {
+      loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
+
+      // FillType template argument used to specialize Sacado
+      fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
+      if (nfm!=Teuchos::null)
+         nfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
+    }
+  }
+
+  fT.doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
+
+#ifdef ALBANY_SEACAS
+  Albany::STKDiscretization* stkDisc =
+    dynamic_cast<Albany::STKDiscretization*>(disc.get());
+  stkDisc->setResidualFieldT(fT);
+#endif
+
+  // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
+  if (dfm!=Teuchos::null) { 
+    PHAL::Workset workset;
+
+    workset.fT = Teuchos::rcpFromRef(fT);
+    loadWorksetNodesetInfo(workset);
+    workset.xT = Teuchos::rcpFromRef(xT);
+    if ( paramLib->isParameter("Time") )
+      workset.current_time = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+    else
+      workset.current_time = current_time;
+    if (xdotT != NULL) workset.transientTerms = true;
+
+    // FillType template argument used to specialize Sacado
+    dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
+  }
+
+  //cout << f << endl;
+}
+
+void
+Albany::Application::
 computeGlobalJacobian(const double alpha, 
 		      const double beta,
 		      const double current_time,
@@ -706,6 +802,119 @@ computeGlobalJacobian(const double alpha,
   //cout << "J " << jac << endl;;
 }
 
+void
+Albany::Application::
+computeGlobalJacobianT(const double alpha, 
+		      const double beta,
+		      const double current_time,
+		      const Tpetra_Vector* xdotT,
+		      const Tpetra_Vector& xT,
+		      const Teuchos::Array<ParamVec>& p,
+		      Tpetra_Vector* fT,
+		      Tpetra_CrsMatrix& jacT)
+{
+  postRegSetup("Jacobian");
+
+  TimeMonitor Timer(*timers[1]); //start timer
+  
+  // Scatter x and xdot to the overlapped distrbution
+  overlapped_xT->doImport(xT, *importerT, Tpetra::INSERT);
+  if (xdotT != NULL) overlapped_xdotT->doImport(*xdotT, *importerT, Tpetra::INSERT);
+  
+  // Set parameters
+  for (int i=0; i<p.size(); i++)
+    for (unsigned int j=0; j<p[i].size(); j++)
+      p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
+
+#ifdef ALBANY_CUTR
+  if (shapeParamsHaveBeenReset) {
+    TimeMonitor Timer(*timers[10]); //start timer
+
+*out << " Calling moveMesh with params: " << std::setprecision(8);
+ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
+*out << endl;
+    meshMover->moveMesh(shapeParams, morphFromInit);
+    coords = disc->getCoords();
+    shapeParamsHaveBeenReset = false;
+  }
+#endif
+
+
+  // Zero out overlapped residual
+  if (fT != NULL) {
+    overlapped_fT->putScalar(0.0);
+    fT->putScalar(0.0);
+  }
+
+  // Zero out Jacobian
+  overlapped_jacT->setAllToScalar(0.0); 
+  jacT.resumeFill(); 
+  jacT.setAllToScalar(0.0); 
+
+
+  // Set data in Workset struct, and perform fill via field manager
+  {
+    PHAL::Workset workset;
+    if (!paramLib->isParameter("Time")) {
+      loadBasicWorksetInfoT( workset, overlapped_xT, overlapped_xdotT, current_time );
+    }
+    else {
+      loadBasicWorksetInfoT( workset, overlapped_xT, overlapped_xdotT,
+			    paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time") );
+    }
+
+    workset.fT        = overlapped_fT;
+    workset.JacT      = overlapped_jacT;
+    loadWorksetJacobianInfo(workset, alpha, beta);
+  
+
+
+    for (int ws=0; ws < numWorksets; ws++) {
+      loadWorksetBucketInfo<PHAL::AlbanyTraits::Jacobian>(workset, ws);
+
+      // FillType template argument used to specialize Sacado
+      fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
+      if (nfm!=Teuchos::null)
+        nfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
+    }
+  } 
+  
+  // Assemble global residual
+  if (fT != NULL){
+    fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD); 
+  }
+
+  // Assemble global Jacobian
+  jacT.doExport(*overlapped_jacT, *exporterT, Tpetra::ADD);
+
+  // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
+  if (dfm!=Teuchos::null) {
+    PHAL::Workset workset;
+
+    workset.fT = rcp(fT, false);
+    workset.JacT = Teuchos::rcpFromRef(jacT);
+    workset.m_coeff = alpha;
+    workset.j_coeff = beta;
+
+    if ( paramLib->isParameter("Time") )
+      workset.current_time = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+    else
+      workset.current_time = current_time;
+
+    if (beta==0.0 && perturbBetaForDirichlets>0.0) workset.j_coeff = perturbBetaForDirichlets;
+
+    workset.xT = Teuchos::rcpFromRef(xT); 
+    if (xdotT != NULL) workset.transientTerms = true;
+
+    loadWorksetNodesetInfo(workset);
+
+    // FillType template argument used to specialize Sacado
+    dfm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
+  }
+
+  //cout << "f " << *f << endl;;
+  //cout << "J " << jac << endl;;
+}
 void
 Albany::Application::
 computeGlobalPreconditioner(const RCP<Epetra_CrsMatrix>& jac,
@@ -1069,6 +1278,309 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     Petra::TpetraMultiVector_To_EpetraMultiVector(fpT, *fp, comm);
   }
 
+
+//*out << "fp " << *fp << endl;
+
+}
+
+void
+Albany::Application::
+computeGlobalTangentT(const double alpha, 
+		     const double beta,
+		     const double current_time,
+		     bool sum_derivs,
+		     const Tpetra_Vector* xdotT,
+		     const Tpetra_Vector& xT,
+		     const Teuchos::Array<ParamVec>& par,
+		     ParamVec* deriv_par,
+		     const Tpetra_MultiVector* VxT,
+		     const Tpetra_MultiVector* VxdotT,
+		     const Tpetra_MultiVector* VpT,
+		     Tpetra_Vector* fT,
+		     Tpetra_MultiVector* JVT,
+		     Tpetra_MultiVector* fpT)
+{
+  postRegSetup("Tangent");
+
+  TimeMonitor Timer(*timers[3]); //start timer
+
+
+  // Scatter x and xdot to the overlapped distrbution
+  overlapped_xT->doImport(xT, *importerT, Tpetra::INSERT);
+  if (xdotT != NULL) overlapped_xdotT->doImport(*xdotT, *importerT, Tpetra::INSERT);
+
+  // Scatter Vx to the overlapped distribution
+  RCP<Tpetra_MultiVector> overlapped_VxT;
+  if (VxT != NULL) {
+    overlapped_VxT = 
+      rcp(new Tpetra_MultiVector(disc->getOverlapMapT(), 
+					  VxT->getNumVectors()));
+    overlapped_VxT->doImport(*VxT, *importerT, Tpetra::INSERT);
+  }
+
+  
+  // Scatter Vxdot to the overlapped distribution
+  RCP<Tpetra_MultiVector> overlapped_VxdotT;
+  if (VxdotT != NULL) {
+    overlapped_VxdotT = 
+      rcp(new Tpetra_MultiVector(disc->getOverlapMapT(), 
+					  VxdotT->getNumVectors()));
+    overlapped_VxdotT->doImport(*VxdotT, *importerT, Tpetra::INSERT);
+  }
+
+  // Set parameters
+  for (int i=0; i<par.size(); i++)
+    for (unsigned int j=0; j<par[i].size(); j++)
+      par[i][j].family->setRealValueForAllTypes(par[i][j].baseValue);
+
+  RCP<const Tpetra_MultiVector > vpT = rcp(VpT, false);
+  RCP<ParamVec> params = rcp(deriv_par, false);
+
+  // Zero out overlapped residual
+  if (fT != NULL) {
+    overlapped_fT->putScalar(0.0);
+    fT->putScalar(0.0);
+  }
+
+  RCP<Tpetra_MultiVector> overlapped_JVT;
+  if (JVT != NULL) {
+    overlapped_JVT = 
+      rcp(new Tpetra_MultiVector(disc->getOverlapMapT(), 
+					  JVT->getNumVectors()));
+    overlapped_JVT->putScalar(0.0);
+    JVT->putScalar(0.0);
+  }
+
+ 
+  RCP<Tpetra_MultiVector> overlapped_fpT;
+  if (fpT != NULL) {
+    overlapped_fpT = 
+      rcp(new Tpetra_MultiVector(disc->getOverlapMapT(), 
+					  fpT->getNumVectors()));
+    overlapped_fpT->putScalar(0.0);
+    fpT->putScalar(0.0);
+  }
+
+  // Number of x & xdot tangent directions
+  int num_cols_x = 0;
+  if (VxT != NULL) {
+    num_cols_x = VxT->getNumVectors();
+  }
+  else if (VxdotT != NULL) {
+    num_cols_x = VxdotT->getNumVectors();
+  }
+
+  // Number of parameter tangent directions
+  int num_cols_p = 0;
+  if (params != Teuchos::null) {
+    if (VpT != NULL) {
+      num_cols_p = VpT->getNumVectors();
+    }
+    else
+      num_cols_p = params->size();
+  }
+
+  // Whether x and param tangent components are added or separate
+  int param_offset = 0;
+  if (!sum_derivs) 
+    param_offset = num_cols_x;  // offset of parameter derivs in deriv array
+
+
+
+  TEUCHOS_TEST_FOR_EXCEPTION(sum_derivs && 
+			     (num_cols_x != 0) && 
+			     (num_cols_p != 0) && 
+			     (num_cols_x != num_cols_p),
+			     std::logic_error,
+			     "Seed matrices Vx and Vp must have the same number " << 
+			     " of columns when sum_derivs is true and both are "
+			     << "non-null!" << std::endl);
+
+  // Initialize 
+  
+  if (params != Teuchos::null) {
+    FadType p;
+    int num_cols_tot = param_offset + num_cols_p;
+    for (unsigned int i=0; i<params->size(); i++) {
+      p = FadType(num_cols_tot, (*params)[i].baseValue);
+      if (VpT != NULL) { 
+        //ArrayRCP for const view of Vp's vectors
+        Teuchos::ArrayRCP<const ST> VpT_constView; 
+        for (int k=0; k<num_cols_p; k++) {
+          VpT_constView = VpT->getData(k); 
+          p.fastAccessDx(param_offset+k) = VpT_constView[i];  //CHANGE TO TPETRA!
+         }
+      }
+      else
+        p.fastAccessDx(param_offset+i) = 1.0;
+      (*params)[i].family->setValue<PHAL::AlbanyTraits::Tangent>(p);
+    }
+  }
+
+  // Begin shape optimization logic
+  ArrayRCP<ArrayRCP<double> > coord_derivs;
+  // ws, sp, cell, node, dim
+  ArrayRCP<ArrayRCP<ArrayRCP<ArrayRCP<ArrayRCP<double> > > > > ws_coord_derivs;
+  ws_coord_derivs.resize(coords.size());
+  std::vector<int> coord_deriv_indices;
+#ifdef ALBANY_CUTR
+  if (shapeParamsHaveBeenReset) {
+    TimeMonitor Timer(*timers[10]); //start timer
+
+     int num_sp = 0;
+     std::vector<int> shape_param_indices;
+
+     // Find any shape params from param list
+     for (unsigned int i=0; i<params->size(); i++) {
+       for (unsigned int j=0; j<shapeParamNames.size(); j++) {
+         if ((*params)[i].family->getName() == shapeParamNames[j]) {
+           num_sp++;
+           coord_deriv_indices.resize(num_sp);
+           shape_param_indices.resize(num_sp);
+           coord_deriv_indices[num_sp-1] = i;
+           shape_param_indices[num_sp-1] = j;
+         }
+       }
+     }
+
+    TEUCHOS_TEST_FOR_EXCEPTION( Vp != NULL, std::logic_error,
+				"Derivatives with respect to a vector of shape\n " << 
+				"parameters has not been implemented. Need to write\n" <<
+				"directional derivative perturbation through meshMover!" <<
+				std::endl);
+
+     // Compute FD derivs of coordinate vector w.r.t. shape params
+     double eps = 1.0e-4;
+     double pert;
+     coord_derivs.resize(num_sp);
+     for (int ws=0; ws<coords.size(); ws++)  ws_coord_derivs[ws].resize(num_sp);
+     for (int i=0; i<num_sp; i++) {
+*out << "XXX perturbing parameter " << coord_deriv_indices[i]
+     << " which is shapeParam # " << shape_param_indices[i] 
+     << " with name " <<  shapeParamNames[shape_param_indices[i]]
+     << " which should equal " << (*params)[coord_deriv_indices[i]].family->getName() << endl;
+
+     pert = (fabs(shapeParams[shape_param_indices[i]]) + 1.0e-2) * eps;
+
+       shapeParams[shape_param_indices[i]] += pert;
+*out << " Calling moveMesh with params: " << std::setprecision(8);
+for (unsigned int ii=0; ii<shapeParams.size(); ii++) *out << shapeParams[ii] << "  ";
+*out << endl;
+       meshMover->moveMesh(shapeParams, morphFromInit);
+       for (int ws=0; ws<coords.size(); ws++) {  //worset
+         ws_coord_derivs[ws][i].resize(coords[ws].size());
+         for (int e=0; e<coords[ws].size(); e++) { //cell
+           ws_coord_derivs[ws][i][e].resize(coords[ws][e].size());
+           for (int j=0; j<coords[ws][e].size(); j++) { //node
+             ws_coord_derivs[ws][i][e][j].resize(disc->getNumDim());
+             for (int d=0; d<disc->getNumDim(); d++)  //node
+                ws_coord_derivs[ws][i][e][j][d] = coords[ws][e][j][d];
+       } } } } 
+
+       shapeParams[shape_param_indices[i]] -= pert;
+     }
+*out << " Calling moveMesh with params: " << std::setprecision(8);
+for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
+*out << endl;
+     meshMover->moveMesh(shapeParams, morphFromInit);
+     coords = disc->getCoords();
+
+     for (int i=0; i<num_sp; i++) {
+       for (int ws=0; ws<coords.size(); ws++)  //worset
+         for (int e=0; e<coords[ws].size(); e++)  //cell
+           for (int j=0; j<coords[ws][i].size(); j++)  //node
+             for (int d=0; d<disc->getNumDim; d++)  //node
+                ws_coord_derivs[ws][i][e][j][d] = (ws_coord_derivs[ws][i][e][j][d] - coords[ws][e][j][d]) / pert;
+       }
+     }
+     shapeParamsHaveBeenReset = false;
+  }
+  // End shape optimization logic
+#endif
+
+//  adapter->adaptit();
+
+  // Set data in Workset struct, and perform fill via field manager
+  {
+    PHAL::Workset workset;
+    if (!paramLib->isParameter("Time")) {
+      loadBasicWorksetInfoT( workset, overlapped_xT, overlapped_xdotT, current_time );
+    }
+    else { 
+      loadBasicWorksetInfoT( workset, overlapped_xT, overlapped_xdotT,
+			    paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time") );
+    }
+
+    workset.params = params;
+    workset.VxT = overlapped_VxT;
+    workset.VxdotT = overlapped_VxdotT;
+    workset.VpT = vpT;
+
+    workset.fT            = overlapped_fT;
+    workset.JVT           = overlapped_JVT;
+    workset.fpT           = overlapped_fpT;
+    workset.j_coeff      = beta;
+    workset.m_coeff      = alpha;
+
+    workset.num_cols_x = num_cols_x;
+    workset.num_cols_p = num_cols_p;
+    workset.param_offset = param_offset;
+
+    workset.coord_deriv_indices = &coord_deriv_indices;
+
+    for (int ws=0; ws < numWorksets; ws++) {
+      loadWorksetBucketInfo<PHAL::AlbanyTraits::Tangent>(workset, ws);
+      workset.ws_coord_derivs = ws_coord_derivs[ws];
+
+      // FillType template argument used to specialize Sacado
+      fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
+      if (nfm!=Teuchos::null)
+        nfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
+    }
+  }
+
+  vpT = Teuchos::null;
+  params = Teuchos::null;
+
+  // Assemble global residual
+  if (fT != NULL) {
+    fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
+  }
+
+  // Assemble derivatives
+  if (JVT != NULL) {
+    JVT->doExport(*overlapped_JVT, *exporterT, Tpetra::ADD);
+  }
+  if (fpT != NULL) {
+    fpT->doExport(*overlapped_fpT, *exporterT, Tpetra::ADD);
+  }
+
+  // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
+  if (dfm!=Teuchos::null) {
+    PHAL::Workset workset;
+
+    workset.num_cols_x = num_cols_x;
+    workset.num_cols_p = num_cols_p;
+    workset.param_offset = param_offset;
+
+    workset.fT = rcp(fT, false);
+    workset.fpT = rcp(fpT, false);
+    workset.JVT = rcp(JVT, false);
+    workset.j_coeff = beta;
+    workset.xT = Teuchos::rcpFromRef(xT); 
+    workset.VxT = rcp(VxT, false);
+    if (xdotT != NULL) workset.transientTerms = true;
+
+    loadWorksetNodesetInfo(workset);
+
+    if ( paramLib->isParameter("Time") )
+      workset.current_time = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+    else
+      workset.current_time = current_time;
+
+    // FillType template argument used to specialize Sacado
+    dfm->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
+  }
 
 //*out << "fp " << *fp << endl;
 

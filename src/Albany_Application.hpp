@@ -151,6 +151,13 @@ namespace Albany {
 			       const Teuchos::Array<ParamVec>& p,
 			       Epetra_Vector& f);
 
+     void computeGlobalResidualT(const double current_time,
+                               const Tpetra_Vector* xdotT,
+                               const Tpetra_Vector& xT,
+                               const Teuchos::Array<ParamVec>& p,
+                               Tpetra_Vector& fT);
+
+
     //! Compute global Jacobian
     /*!
      * Set xdot to NULL for steady-state problems
@@ -163,6 +170,15 @@ namespace Albany {
 			       const Teuchos::Array<ParamVec>& p,
 			       Epetra_Vector* f,
 			       Epetra_CrsMatrix& jac);
+
+     void computeGlobalJacobianT(const double alpha,
+                               const double beta,
+                               const double current_time,
+                               const Tpetra_Vector* xdotT,
+                               const Tpetra_Vector& xT,
+                               const Teuchos::Array<ParamVec>& p,
+                               Tpetra_Vector* fT,
+                               Tpetra_CrsMatrix& jacT);
 
     //! Compute global Preconditioner
     /*!
@@ -189,6 +205,21 @@ namespace Albany {
 			      Epetra_Vector* f,
 			      Epetra_MultiVector* JV,
 			      Epetra_MultiVector* fp);
+
+     void computeGlobalTangentT(const double alpha,
+                              const double beta,
+                              const double current_time,
+                              bool sum_derivs,
+                              const Tpetra_Vector* xdotT,
+                              const Tpetra_Vector& xT,
+                              const Teuchos::Array<ParamVec>& p,
+                              ParamVec* deriv_p,
+                              const Tpetra_MultiVector* VxT,
+                              const Tpetra_MultiVector* VxdotT,
+                              const Tpetra_MultiVector* VpT,
+                              Tpetra_Vector* fT,
+                              Tpetra_MultiVector* JVT,
+                              Tpetra_MultiVector* fpT);
 
     //! Evaluate response functions
     /*!
