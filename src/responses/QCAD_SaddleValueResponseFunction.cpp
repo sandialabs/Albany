@@ -462,9 +462,9 @@ initializeImagePointsT(const double current_time,
     //comm.MaxAll( &procToBcast, &winner, 1 );
     int procToBcastInt = procToBcast; 
     Teuchos::reduceAll(*commT, Teuchos::REDUCE_MAX, procToBcastInt, Teuchos::ptr(&winner));
-    //NEED TO CONVERT BROADCAST TO TPETRA!
+    double *imagePtsData = imagePts[0].coords.data();
+    Teuchos::broadcast<LO, ST>(*commT, winner, imagePtsData);  
     //comm.Broadcast( imagePts[0].coords.data(), numDims, winner); //broadcast winner's min position to others
-    //Teuchos::broadcast(*commT, imagePtsCoordsData, numDims, winner); //broadcast winner's min position to others
     imagePts[0].value = globalMin;                               //no need to broadcast winner's value
   }
 
@@ -487,7 +487,8 @@ initializeImagePointsT(const double current_time,
     //comm.MaxAll( &procToBcast, &winner, 1 );
     int procToBCastInt = procToBcast; 
     Teuchos::reduceAll(*commT, Teuchos::REDUCE_MAX, procToBCastInt, Teuchos::ptr(&winner));
-    //NEED TO CONVERT BROADCAST TO TPETRA!
+    double *imagePtsData = imagePts[nImagePts-1].coords.data(); 
+    Teuchos::broadcast<LO, ST>(*commT, winner, imagePtsData); 
     //comm.Broadcast( imagePts[nImagePts-1].coords.data(), numDims, winner); //broadcast winner's min position to others
     imagePts[nImagePts-1].value = globalMin;                               //no need to broadcast winner's value
   }
@@ -1942,7 +1943,9 @@ getImagePointValuesT(const double current_time,
   }
 
   //MPI -- sum weights, value, and gradient for each image pt
-  //CONVERT SUMALL TO TPETRA!
+  Teuchos::reduceAll<LO, ST>(*commT, Teuchos::REDUCE_SUM, nImagePts, imagePtValues.data(), globalPtValues); 
+  Teuchos::reduceAll<LO, ST>(*commT, Teuchos::REDUCE_SUM, nImagePts, imagePtWeights.data(), globalPtWeights); 
+  Teuchos::reduceAll<LO, ST>(*commT, Teuchos::REDUCE_SUM, nImagePts*numDims, imagePtGradComps.data(), globalPtGrads); 
   //comm.SumAll( imagePtValues.data(),    globalPtValues,  nImagePts );
   //comm.SumAll( imagePtWeights.data(),   globalPtWeights, nImagePts );
   //comm.SumAll( imagePtGradComps.data(), globalPtGrads,   nImagePts*numDims );
