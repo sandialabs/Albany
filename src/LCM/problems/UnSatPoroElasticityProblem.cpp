@@ -14,7 +14,7 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
-#include "TLPoroPlasticityProblem.hpp"
+#include "UnSatPoroElasticityProblem.hpp"
 
 #include "Intrepid_FieldContainer.hpp"
 #include "Intrepid_DefaultCubatureFactory.hpp"
@@ -24,8 +24,8 @@
 #include "Albany_ProblemUtils.hpp"
 
 
-Albany::TLPoroPlasticityProblem::
-TLPoroPlasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
+Albany::UnSatPoroElasticityProblem::
+UnSatPoroElasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 			const Teuchos::RCP<ParamLib>& paramLib_,
 			const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_, numDim_ + 1), // additional DOF for pore pressure
@@ -33,12 +33,12 @@ TLPoroPlasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   numDim(numDim_)
 {
  
-  std::string& method = params->get("Name", "Total Lagrangian PoroPlasticity ");
+  std::string& method = params->get("Name", "UnSatPoroElasticity ");
   *out << "Problem Name = " << method << std::endl;
   
   haveSource =  params->isSublist("Source Functions");
 
-  matModel = params->sublist("Material Model").get("Model Name", "NeoHookean");
+  matModel = params->sublist("Material Model").get("Model Name", "LinearElasticity");
 
 // Changing this ifdef changes ordering from  (X,Y,T) to (T,X,Y)
 //#define NUMBER_T_FIRST
@@ -51,14 +51,14 @@ TLPoroPlasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 #endif
 }
 
-Albany::TLPoroPlasticityProblem::
-~TLPoroPlasticityProblem()
+Albany::UnSatPoroElasticityProblem::
+~UnSatPoroElasticityProblem()
 {
 }
 
 //the following function returns the problem information required for setting the rigid body modes (RBMs) for elasticity problems (in src/Albany_SolverFactory.cpp)
 //written by IK, Feb. 2012 
-void Albany::TLPoroPlasticityProblem::getRBMInfoForML(
+void Albany::UnSatPoroElasticityProblem::getRBMInfoForML(
    int& numPDEs, int& numElasticityDim, int& numScalar,  int& nullSpaceDim)
 {
   numPDEs = numDim + 1;
@@ -73,7 +73,7 @@ void Albany::TLPoroPlasticityProblem::getRBMInfoForML(
 
 
 void
-Albany::TLPoroPlasticityProblem::
+Albany::UnSatPoroElasticityProblem::
 buildProblem(
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
   Albany::StateManager& stateMgr)
@@ -88,7 +88,7 @@ buildProblem(
 }
 
 Teuchos::Array<Teuchos::RCP<const PHX::FieldTag> >
-Albany::TLPoroPlasticityProblem::
+Albany::UnSatPoroElasticityProblem::
 buildEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   const Albany::MeshSpecsStruct& meshSpecs,
@@ -98,14 +98,14 @@ buildEvaluators(
 {
   // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
-  ConstructEvaluatorsOp<TLPoroPlasticityProblem> op(
+  ConstructEvaluatorsOp<UnSatPoroElasticityProblem> op(
     *this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
   boost::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(op);
   return *op.tags;
 }
 
 void
-Albany::TLPoroPlasticityProblem::constructDirichletEvaluators(
+Albany::UnSatPoroElasticityProblem::constructDirichletEvaluators(
         const Albany::MeshSpecsStruct& meshSpecs)
 {
   // Construct Dirichlet evaluators for all nodesets and names
@@ -120,37 +120,64 @@ Albany::TLPoroPlasticityProblem::constructDirichletEvaluators(
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
-Albany::TLPoroPlasticityProblem::getValidProblemParameters() const
+Albany::UnSatPoroElasticityProblem::getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
-    this->getGenericProblemParams("ValidTLPoroPlasticityProblemParams");
-
+    this->getGenericProblemParams("ValidUnSatPoroElasticityProblemParams");
   validPL->sublist("Material Model", false, "");
-  validPL->set<bool>("avgJ", false, "Flag to indicate the J should be averaged");
-  validPL->set<bool>("volavgJ", false, "Flag to indicate the J should be volume averaged");
-  validPL->set<bool>("weighted_Volume_Averaged_J", false, "Flag to indicate the J should be volume averaged with stabilization");
   validPL->sublist("Porosity", false, "");
   validPL->sublist("Biot Coefficient", false, "");
   validPL->sublist("Biot Modulus", false, "");
   validPL->sublist("Thermal Conductivity", false, "");
-  validPL->sublist("Kozeny-Carman Permeability", false, "");
+  validPL->sublist("Van Genuchten Permeability", false, "");
+  validPL->sublist("Van Genuchten Saturation", false, "");
   validPL->sublist("Elastic Modulus", false, "");
   validPL->sublist("Shear Modulus", false, "");
   validPL->sublist("Poissons Ratio", false, "");
   validPL->sublist("Stabilization Parameter", false, "");
-  if (matModel=="J2"){
-   validPL->set<bool>("Compute Dislocation Density Tensor", false, "Flag to compute the dislocaiton density tensor (only for 3D)");
-   validPL->sublist("Hardening Modulus", false, "");
-   validPL->sublist("Saturation Modulus", false, "");
-   validPL->sublist("Saturation Exponent", false, "");
-   validPL->sublist("Yield Strength", false, "");
-  }
+
+
+  if (matModel == "CapModel")
+    {
+  	validPL->set<double>("A", false, "");
+  	validPL->set<double>("B", false, "");
+  	validPL->set<double>("C", false, "");
+  	validPL->set<double>("theta", false, "");
+  	validPL->set<double>("R", false, "");
+  	validPL->set<double>("kappa0", false, "");
+  	validPL->set<double>("W", false, "");
+  	validPL->set<double>("D1", false, "");
+  	validPL->set<double>("D2", false, "");
+  	validPL->set<double>("calpha", false, "");
+  	validPL->set<double>("psi", false, "");
+  	validPL->set<double>("N", false, "");
+  	validPL->set<double>("L", false, "");
+  	validPL->set<double>("phi", false, "");
+  	validPL->set<double>("Q", false, "");
+    }
+
+    if (matModel == "GursonSD")
+    {
+  	validPL->set<double>("f0", false, "");
+  	validPL->set<double>("Y0", false, "");
+  	validPL->set<double>("kw", false, "");
+  	validPL->set<double>("N", false, "");
+  	validPL->set<double>("q1", false, "");
+  	validPL->set<double>("q2", false, "");
+  	validPL->set<double>("q3", false, "");
+  	validPL->set<double>("eN", false, "");
+  	validPL->set<double>("sN", false, "");
+  	validPL->set<double>("fN", false, "");
+  	validPL->set<double>("fc", false, "");
+  	validPL->set<double>("ff", false, "");
+  	validPL->set<double>("flag", false, "");
+    }
 
   return validPL;
 }
 
 void
-Albany::TLPoroPlasticityProblem::getAllocatedStates(
+Albany::UnSatPoroElasticityProblem::getAllocatedStates(
    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState_,
    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState_
    ) const

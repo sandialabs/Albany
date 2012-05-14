@@ -20,6 +20,7 @@
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Tensor.h"
+#include "Sacado_MathFunctions.hpp"
 
 namespace LCM {
 
@@ -35,12 +36,21 @@ Localization(const Teuchos::ParameterList& p) :
   intrepidBasis   (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > > ("Intrepid Basis") ),
   cellType        (p.get<Teuchos::RCP<shards::CellTopology> > ("Cell Type")),
   thickness       (p.get<double>("thickness")),
+  mu              (p.get<std::string>                   ("Shear Modulus Name"),
+                   p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+  kappa           (p.get<std::string>                   ("Bulk Modulus Name"),
+                   p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
   defGrad         (p.get<std::string>                   ("Deformation Gradient Name"),
+                   p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
+  stress          (p.get<std::string>                   ("Stress Name"),
                    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout"))
 {
   this->addDependentField(referenceCoords);
   this->addDependentField(currentCoords);
+  this->addDependentField(mu);
+  this->addDependentField(kappa);
   this->addEvaluatedField(defGrad);
+  this->addEvaluatedField(stress);
 
   // Get Dimensions
   Teuchos::RCP<PHX::DataLayout> vert_dl = p.get< Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout");
@@ -90,7 +100,10 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(referenceCoords,fm);
   this->utils.setFieldData(currentCoords,fm);
+  this->utils.setFieldData(mu,fm);
+  this->utils.setFieldData(kappa,fm);
   this->utils.setFieldData(defGrad,fm);
+  this->utils.setFieldData(stress,fm);
 }
 
 //----------------------------------------------------------------------
@@ -143,6 +156,7 @@ evaluateFields(typename Traits::EvalData workset)
     computeDeformationGradient(thickness, bases, dualBases, refNormal, gap, defGrad, J);
 
     // call constitutive response
+    computeStress(defGrad, J, mu, kappa, stress);
 
     // compute force
   }
@@ -314,6 +328,34 @@ computeDeformationGradient(const ScalarT t, const FC & bases, const FC & dualBas
       defGrad(cell,pt,1,0) = F(1,0); defGrad(cell,pt,1,1) = F(1,1); defGrad(cell,pt,1,2) = F(1,2);
       defGrad(cell,pt,2,0) = F(2,0); defGrad(cell,pt,2,1) = F(2,1); defGrad(cell,pt,2,2) = F(2,2);
       J(cell,pt) = LCM::det( F );
+    }
+  }
+}
+//----------------------------------------------------------------------
+template<typename EvalT, typename Traits>
+void Localization<EvalT, Traits>::
+computeStress(const PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defGrad, const FC & J, const PHX::MDField<ScalarT,Cell,QuadPoint> mu,
+              const PHX::MDField<ScalarT,Cell,QuadPoint> kappa, PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress)
+{
+  for (std::size_t cell(0); cell < defGrad.dimension(0); ++cell)
+  {
+    for (std::size_t pt(0); pt < numQPs; ++pt)
+    {
+      ScalarT MU    = mu(cell,pt);
+      ScalarT KAPPA = kappa(cell,pt);
+
+      LCM::Tensor<ScalarT> F( &defGrad(cell,pt,0,0) );
+      LCM::Tensor<ScalarT> b( F*transpose(F) );
+      ScalarT Jm53 = std::pow( J(cell,pt), -5./3. );
+      ScalarT half = 0.5;
+      const LCM::Tensor<ScalarT> I = LCM::identity<ScalarT>();
+      
+      LCM::Tensor<ScalarT> sigma = half * KAPPA * ( J(cell,pt) - 1. / J(cell,pt) ) * LCM::identity<ScalarT>() + MU * Jm53 * dev(b);
+      //LCM::Tensor<ScalarT> sigma = half * KAPPA * I;
+
+      stress(cell,pt,0,0) = sigma(0,0); stress(cell,pt,0,1) = sigma(0,1); stress(cell,pt,0,2) = sigma(0,2);
+      stress(cell,pt,1,0) = sigma(1,0); stress(cell,pt,1,1) = sigma(1,1); stress(cell,pt,1,2) = sigma(1,2);
+      stress(cell,pt,2,0) = sigma(2,0); stress(cell,pt,2,1) = sigma(2,1); stress(cell,pt,2,2) = sigma(2,2);
     }
   }
 }

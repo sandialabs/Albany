@@ -14,13 +14,12 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
-#ifndef ALBANY_PROJECTIONERROROBSERVER_HPP
-#define ALBANY_PROJECTIONERROROBSERVER_HPP
+#ifndef ALBANY_FULLSTATERECONSTRUCTOR_HPP
+#define ALBANY_FULLSTATERECONSTRUCTOR_HPP
 
 #include "NOX_Epetra_Observer.H"
 
-#include "Albany_ProjectionError.hpp"
-
+#include "Epetra_Vector.h"
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
@@ -28,29 +27,38 @@ class Epetra_Map;
 
 namespace Albany {
 
-class ProjectionErrorObserver : public NOX::Epetra::Observer
-{
-public:
-  ProjectionErrorObserver(const Teuchos::RCP<Teuchos::ParameterList> &params,
-                          const Teuchos::RCP<NOX::Epetra::Observer> &decoratedObserver,
-                          const Teuchos::RCP<const Epetra_Map> &decoratedMap);
+class ReducedSpace;
 
-  //! Calls underlying observer then evalates projection error
+class FullStateReconstructor : public NOX::Epetra::Observer {
+public:
+  FullStateReconstructor(const Teuchos::RCP<Teuchos::ParameterList> &params,
+                         const Teuchos::RCP<NOX::Epetra::Observer> &decoratedObserver,
+                         const Epetra_Map &decoratedMap);
+
+  //! Calls underlying observer then evaluates projection error
   virtual void observeSolution(const Epetra_Vector& solution);
   
-  //! Calls underlying observer then evalates projection error
+  //! Calls underlying observer then evaluates projection error
   virtual void observeSolution(const Epetra_Vector& solution, double time_or_param_val);
 
 private:
+  Teuchos::RCP<Teuchos::ParameterList> params_;
   Teuchos::RCP<NOX::Epetra::Observer> decoratedObserver_;
 
-  ProjectionError projectionError_;
+  Teuchos::RCP<ReducedSpace> reducedSpace_;
+  
+  static Teuchos::RCP<Teuchos::ParameterList> fillDefaultParams(const Teuchos::RCP<Teuchos::ParameterList> &params);
+  static Teuchos::RCP<Epetra_MultiVector> createOrthonormalBasis(const Teuchos::RCP<Teuchos::ParameterList> &params,
+                                                                 const Epetra_Map &map);
+
+  Epetra_Vector lastFullSolution_;
+  void computeLastFullSolution(const Epetra_Vector& reducedSolution);
 
   // Disallow copy & assignment
-  ProjectionErrorObserver(const ProjectionErrorObserver &);
-  ProjectionErrorObserver operator=(const ProjectionErrorObserver &);
+  FullStateReconstructor(const FullStateReconstructor &);
+  FullStateReconstructor operator=(const FullStateReconstructor &);
 };
 
 } // end namespace Albany
 
-#endif /*ALBANY_PROJECTIONERROROBSERVER_HPP*/
+#endif /* ALBANY_FULLSTATERECONSTRUCTOR_HPP */

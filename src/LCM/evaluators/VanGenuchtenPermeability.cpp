@@ -14,36 +14,11 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
-#include "Albany_ModelFactory.hpp"
 
-#include "Albany_Application.hpp"
-#include "Albany_ModelEvaluator.hpp"
+#include "PHAL_AlbanyTraits.hpp"
 
-#include "MOR/Albany_ReducedOrderModelFactory.hpp"
+#include "VanGenuchtenPermeability.hpp"
+#include "VanGenuchtenPermeability_Def.hpp"
 
-namespace Albany {
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::VanGenuchtenPermeability)
 
-using Teuchos::RCP;
-using Teuchos::ParameterList;
-
-ModelFactory::ModelFactory(const RCP<ParameterList> &params,
-                           const RCP<Application> &app) :
-  params_(params),
-  app_(app)
-{
-  // Nothing to do
-}
-
-RCP<EpetraExt::ModelEvaluator> ModelFactory::create() const
-{
-  RCP<EpetraExt::ModelEvaluator> model(new Albany::ModelEvaluator(app_, params_)); 
-  
-  // Wrap a decorator around the original model when a reduced-order computation is requested.
-  const RCP<ParameterList> problemParams = Teuchos::sublist(params_, "Problem", true);
-  ReducedOrderModelFactory romFactory(problemParams);
-  model = romFactory.create(model);
-  
-  return model;
-}
-
-} // end namespace Albany

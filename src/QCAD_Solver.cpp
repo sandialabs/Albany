@@ -869,13 +869,6 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
     
     else TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 			  "Unknown function Discretization Parameter" << std::endl);
-
-    // temporary set Restart Index = 1 for initial poisson
-    if (params.sublist("Discretization").isParameter("Restart Index"))
-    {
-      params.sublist("Discretization").set("Restart Index", 1); 
-    }
-
   }
 
   else if(preprocessType == "CI poisson") {

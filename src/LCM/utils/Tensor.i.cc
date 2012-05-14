@@ -766,9 +766,9 @@ namespace LCM {
   // \param A tensor
   // \return \f$ s A \f$
   //
-  template<typename ScalarT>
+  template<typename ScalarT, typename T>
   inline Tensor<ScalarT>
-  operator*(const ScalarT s, Tensor<ScalarT> const & A)
+  operator*(const T s, Tensor<ScalarT> const & A)
   {
     return Tensor<ScalarT>(
         s*A(0,0), s*A(0,1), s*A(0,2),
@@ -782,9 +782,9 @@ namespace LCM {
   // \param s scalar
   // \return \f$ s A \f$
   //
-  template<typename ScalarT>
+  template<typename ScalarT, typename T>
   inline Tensor<ScalarT>
-  operator*(Tensor<ScalarT> const & A, const ScalarT s)
+  operator*(Tensor<ScalarT> const & A, const T s)
   {
     return s * A;
   }

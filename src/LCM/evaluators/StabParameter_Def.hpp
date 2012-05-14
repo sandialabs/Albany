@@ -53,7 +53,7 @@ StabParameter(Teuchos::ParameterList& p) :
   std::string type = elmd_list->get("Stabilization Parameter Type", "Constant");
   if (type == "Constant") {
     is_constant = true;
-    constant_value = elmd_list->get("Value", 0.0); // Default value =0 means no pores in the material
+    constant_value = elmd_list->get("Value", 1.0);
 
     // Add StabParameter as a Sacado-ized parameter
     new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
@@ -61,7 +61,7 @@ StabParameter(Teuchos::ParameterList& p) :
   }
   else if (type == "Gradient Dependent") {
     is_constant = false;
-    constant_value = elmd_list->get("Value", 0.0); // Default value =0 means no pores in the material
+    constant_value = elmd_list->get("Value", 1.0);
 
   }
   else {
@@ -73,7 +73,7 @@ StabParameter(Teuchos::ParameterList& p) :
   // Get additional input to construct adaptive stabilization
 
   if ( p.isType<string>("Gradient QP Variable Name") ) {
-	  is_constant = false;
+	//  is_constant = false;
 
  //   Teuchos::RCP<PHX::DataLayout> scalar_dl =
  //     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
@@ -93,7 +93,7 @@ StabParameter(Teuchos::ParameterList& p) :
   }
 
   if ( p.isType<string>("Gradient BF Name") ) {
-	  is_constant = false;
+	//  is_constant = false;
 
    //   Teuchos::RCP<PHX::DataLayout> scalar_dl =
    //     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");

@@ -57,10 +57,10 @@ evaluateFields(typename Traits::EvalData workset)
   int dim2 = evaluatedFieldDimensions[1];
 
   if(numDimensions == 2){
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(fieldValues.size() != 1, "SetField::evaluateFields(), inconsistent data sizes.");
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(fieldValues.size() != dim1*dim2, "SetField::evaluateFields(), inconsistent data sizes.");
     for(int i=0 ; i<dim1 ; ++i){
       for(int j=0 ; j<dim2 ; ++j){
-        evaluatedField(i,j) = fieldValues[0];
+        evaluatedField(i,j) = fieldValues[i*dim2 + j];
       }
     }
   }

@@ -24,6 +24,8 @@
 
 namespace Albany {
 
+class ReducedSpace;
+
 class ProjectionError {
 public:
   ProjectionError(const Teuchos::RCP<Teuchos::ParameterList> &params,
@@ -39,7 +41,7 @@ private:
   
   Teuchos::RCP<const Epetra_Map> dofMap_;
 
-  Teuchos::RCP<Epetra_MultiVector> orthonormalBasis_;
+  Teuchos::RCP<ReducedSpace> reducedSpace_;
   Teuchos::RCP<Epetra_MultiVector> createOrthonormalBasis();
 
   std::deque<double> relativeErrorNorms_;

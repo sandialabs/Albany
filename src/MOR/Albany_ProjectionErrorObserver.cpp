@@ -16,8 +16,6 @@
 
 #include "Albany_ProjectionErrorObserver.hpp"
 
-#include "Albany_Application.hpp"
-
 namespace Albany {
 
 using Teuchos::RCP;
@@ -25,9 +23,9 @@ using Teuchos::ParameterList;
 
 ProjectionErrorObserver::ProjectionErrorObserver(const RCP<ParameterList> &params,
                                                  const Teuchos::RCP<NOX::Epetra::Observer>& decoratedObserver,
-                                                 const RCP<const Application> &app) :
+                                                 const RCP<const Epetra_Map> &decoratedMap) :
   decoratedObserver_(decoratedObserver),
-  projectionError_(params, app->getMap())
+  projectionError_(params, decoratedMap)
 {
    // Nothing to do
 }
