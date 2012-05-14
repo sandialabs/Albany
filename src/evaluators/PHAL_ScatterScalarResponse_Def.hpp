@@ -113,9 +113,17 @@ void ScatterScalarResponse<PHAL::AlbanyTraits::Residual, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
   // Here we scatter the *global* response
-  Teuchos::RCP<Epetra_Vector> g = workset.g;
+  Teuchos::RCP<Epetra_Vector> g = workset.g; //Epetra version
+  Teuchos::RCP<Tpetra_Vector> gT = workset.gT; //Tpetra version
+  Teuchos::ArrayRCP<ST> gT_nonconstView;
+  if (gT != Teuchos::null) {
+    gT_nonconstView = gT->get1dViewNonConst();
+  }
   for (std::size_t res = 0; res < this->field_components.size(); res++) {
-    (*g)[res] = this->global_response[this->field_components[res]];
+    if (g != Teuchos::null) 
+       (*g)[res] = this->global_response[this->field_components[res]];
+    if (gT != Teuchos::null)  
+       gT_nonconstView[res] = this->global_response[this->field_components[res]];
   }
 }
 

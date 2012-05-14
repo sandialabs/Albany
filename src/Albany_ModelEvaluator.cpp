@@ -529,13 +529,11 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
     
     if (g_out != Teuchos::null && !g_computed) {
       //create Tpetra copy of g_out, call it g_outT
-      // g_outT = Petra::EpetraVector_To_TpetraVectorNonConst(*g_out, commT, nodeT); 
-      app->evaluateResponse(i, curr_time, x_dot.get(), *x, sacado_param_vec, 
-			    *g_out);
-      //app->evaluateResponseT(i, curr_time, x_dotT.get(), *xT, sacado_param_vec, 
-	//		    *g_outT);
+      g_outT = Petra::EpetraVector_To_TpetraVectorNonConst(*g_out, commT, nodeT); 
+      app->evaluateResponseT(i, curr_time, x_dotT.get(), *xT, sacado_param_vec, 
+			    *g_outT);
       //convert g_outT to Epetra_Vector g_out 
-      //Petra::TpetraVector_To_EpetraVector(g_outT, *g_out, Teuchos::rcpFromRef(comm)); 
+      Petra::TpetraVector_To_EpetraVector(g_outT, *g_out, Teuchos::rcpFromRef(comm)); 
     }
   }
 
