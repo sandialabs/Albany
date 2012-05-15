@@ -113,6 +113,21 @@ public:
   void computeStress(const PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defGrad, const FC & J, const PHX::MDField<ScalarT,Cell,QuadPoint> mu,
                      const PHX::MDField<ScalarT,Cell,QuadPoint> kappa, PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress);
 
+  ///
+  /// Computes the nodal forces
+  /// \param thickness - h parameter
+  /// \param defGrad - deformation gradient
+  /// \param J - determinant of the deformation gradient
+  /// \param stress
+  /// \param bases
+  /// \param dualBases
+  /// \param refNormal
+  /// \param force
+  ///
+  void computeForce(const ScalarT thickness, const PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defGrad, const FC & J, 
+                    const PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress, const FC & bases, const FC & dualRefBases, 
+                    const FC & refNormal, PHX::MDField<ScalarT,Cell,Node,Dim> force);
+
 private:
 
   int  numDims, numNodes, numQPs, numPlaneNodes, numPlaneDims;
@@ -144,7 +159,7 @@ private:
   // Localization Element FieldContainers
   Intrepid::FieldContainer<ScalarT> midplaneCoords;
   Intrepid::FieldContainer<ScalarT> bases;
-  Intrepid::FieldContainer<ScalarT> dualBases;
+  Intrepid::FieldContainer<ScalarT> dualRefBases;
   Intrepid::FieldContainer<ScalarT> refJacobian;
   Intrepid::FieldContainer<ScalarT> refNormal;
   Intrepid::FieldContainer<ScalarT> refArea;
@@ -156,6 +171,9 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defGrad;
   //! the 3D Cauchy stress
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;
+  //! the nodal force
+  PHX::MDField<ScalarT,Cell,Node,Dim> force;
+
 };
 }
 

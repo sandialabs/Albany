@@ -37,12 +37,15 @@ namespace {
     const int numQPts = 4;
     const int numDim = 3;
     const int numVertices = 8;
+    const int numNodes = 8;
     Teuchos::RCP<PHX::MDALayout<Cell, QuadPoint> > qp_scalar =
       Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint>(worksetSize, numQPts));
     Teuchos::RCP<PHX::MDALayout<Cell, QuadPoint, Dim, Dim> > qp_tensor =
       Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint, Dim, Dim>(worksetSize, numQPts, numDim, numDim));
     Teuchos::RCP<PHX::MDALayout<Cell, Vertex, Dim> > vertices_vector =
       Teuchos::rcp(new PHX::MDALayout<Cell, Vertex, Dim>(worksetSize, numVertices, numDim));
+    Teuchos::RCP<PHX::MDALayout<Cell, Node, Dim> > node_vector =
+      Teuchos::rcp(new PHX::MDALayout<Cell, Node, Dim>(worksetSize, numNodes, numDim));
 
     // Instantiate the required evaluators with EvalT = PHAL::AlbanyTraits::Residual and Traits = PHAL::AlbanyTraits
     Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> referenceCoords(24);
@@ -156,12 +159,14 @@ namespace {
     localizationParameterList->set<string>("Bulk Modulus Name", "Bulk Modulus");
     localizationParameterList->set<string>("Deformation Gradient Name", "Deformation Gradient");
     localizationParameterList->set<string>("Stress Name", "Stress");
+    localizationParameterList->set<string>("Force Name", "Force");
     localizationParameterList->set< Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
     localizationParameterList->set< Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis",intrepidBasis);
     localizationParameterList->set< Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
     localizationParameterList->set< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout", qp_tensor);
     localizationParameterList->set< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout", qp_scalar);
     localizationParameterList->set< Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout", vertices_vector);
+    localizationParameterList->set< Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout", node_vector);
     localizationParameterList->set<double>("thickness", 0.1);
     Teuchos::RCP<LCM::Localization<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits> > localization = 
       Teuchos::rcp(new LCM::Localization<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>(*localizationParameterList));
