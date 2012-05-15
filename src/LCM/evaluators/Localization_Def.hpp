@@ -201,8 +201,8 @@ computeBaseVectors(const FC & midplaneCoords, FC & bases)
       g_0.clear(); g_1.clear(); g_2.clear();
       for (std::size_t node(0); node < numPlaneNodes; ++ node)
       {
-        g_0 += ScalarT(refGrads(node, pt, 0)) * midplaneNodes[node];
-        g_1 += ScalarT(refGrads(node, pt, 1)) * midplaneNodes[node];
+        g_0 += refGrads(node, pt, 0) * midplaneNodes[node];
+        g_1 += refGrads(node, pt, 1) * midplaneNodes[node];
       }
       g_2 = cross(g_0,g_1)/norm(cross(g_0,g_1));
       
@@ -320,7 +320,8 @@ computeDeformationGradient(const ScalarT t, const FC & bases, const FC & dualBas
       LCM::Vector<ScalarT> G2( &dualBases(cell,pt,2,0) );
       
       LCM::Tensor<ScalarT> F1( LCM::bun( g_0, G0 ) + LCM::bun( g_1, G1 ) + LCM::bun( g_2, G2 ) );
-      LCM::Tensor<ScalarT> F2( ScalarT( 1 / t ) * LCM::bun( d, G_2 ) );
+      // for Jay: bun()
+      LCM::Tensor<ScalarT> F2( ( 1 / t ) * LCM::bun( d, G_2 ) );
 
       LCM::Tensor<ScalarT> F = F1 + F2;
 
@@ -351,7 +352,6 @@ computeStress(const PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defGrad, const 
       const LCM::Tensor<ScalarT> I = LCM::identity<ScalarT>();
       
       LCM::Tensor<ScalarT> sigma = half * KAPPA * ( J(cell,pt) - 1. / J(cell,pt) ) * LCM::identity<ScalarT>() + MU * Jm53 * dev(b);
-      //LCM::Tensor<ScalarT> sigma = half * KAPPA * I;
 
       stress(cell,pt,0,0) = sigma(0,0); stress(cell,pt,0,1) = sigma(0,1); stress(cell,pt,0,2) = sigma(0,2);
       stress(cell,pt,1,0) = sigma(1,0); stress(cell,pt,1,1) = sigma(1,1); stress(cell,pt,1,2) = sigma(1,2);
