@@ -29,6 +29,7 @@ SET(SOURCES
 	Albany_StateManager.cpp 
 	Albany_ModelFactory.cpp
 	Albany_ModelEvaluator.cpp
+	Albany_ModelEvaluatorT.cpp
 	Albany_SaveEigenData.cpp
 	Albany_ExodusOutput.cpp
   )
@@ -53,6 +54,7 @@ SET(HEADERS
         Albany_EigendataInfoStruct.hpp
 	Albany_ModelFactory.hpp
 	Albany_ModelEvaluator.hpp
+	Albany_ModelEvaluatorT.hpp
 	Albany_SaveEigenData.hpp
 	Albany_ExodusOutput.hpp
         Albany_DummyParameterAccessor.hpp

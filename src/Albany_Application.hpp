@@ -96,6 +96,9 @@ namespace Albany {
 
     //! Get Jacobian graph
     Teuchos::RCP<const Epetra_CrsGraph> getJacobianGraph() const;
+    
+    //! Get Tpetra Jacobian graph
+    Teuchos::RCP<const Tpetra_CrsGraph> getJacobianGraphT() const;
 
     //! Get Preconditioner Operator
     Teuchos::RCP<Epetra_Operator> getPreconditioner();

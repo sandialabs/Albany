@@ -18,9 +18,12 @@
 #define ALBANY_MODELFACTORY_HPP
 
 #include "EpetraExt_ModelEvaluator.h"
+#include "Thyra_ModelEvaluator.hpp"
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
+
+#include "Albany_DataTypes.hpp"
 
 namespace Albany {
 
@@ -32,6 +35,8 @@ public:
                const Teuchos::RCP<Application> &app);
 
   Teuchos::RCP<EpetraExt::ModelEvaluator> create() const;
+  //Thyra version of above
+  Teuchos::RCP<Thyra::ModelEvaluator<ST> > createT() const;
 
 private:
   Teuchos::RCP<Teuchos::ParameterList> params_;

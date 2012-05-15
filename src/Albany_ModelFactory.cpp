@@ -18,6 +18,7 @@
 
 #include "Albany_Application.hpp"
 #include "Albany_ModelEvaluator.hpp"
+#include "Albany_ModelEvaluatorT.hpp"
 
 #include "MOR/Albany_ReducedOrderModelFactory.hpp"
 
@@ -44,6 +45,19 @@ RCP<EpetraExt::ModelEvaluator> ModelFactory::create() const
   model = romFactory.create(model);
   
   return model;
+}
+
+RCP<Thyra::ModelEvaluator<ST> > ModelFactory::createT() const
+{
+  RCP<Thyra::ModelEvaluator<ST> > modelT(new Albany::ModelEvaluatorT(app_, params_)); 
+  
+  // Wrap a decorator around the original model when a reduced-order computation is requested.
+  const RCP<ParameterList> problemParams = Teuchos::sublist(params_, "Problem", true);
+  //WILL NEED TO CONVERT ROM STUFF TO THYRA!
+  //ReducedOrderModelFactory romFactory(problemParams);
+  //model = romFactory.create(model);
+  
+  return modelT;
 }
 
 } // end namespace Albany

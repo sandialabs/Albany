@@ -329,6 +329,13 @@ getJacobianGraph() const
   return disc->getJacobianGraph();
 }
 
+RCP<const Tpetra_CrsGraph>
+Albany::Application::
+getJacobianGraphT() const
+{
+  return disc->getJacobianGraphT();
+}
+
 RCP<Epetra_Operator>
 Albany::Application::
 getPreconditioner()

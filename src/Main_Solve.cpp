@@ -82,9 +82,15 @@ int main(int argc, char *argv[]) {
     RCP<Albany::Application> app;
     RCP<EpetraExt::ModelEvaluator> solver = 
       slvrfctry.createAndGetAlbanyApp(app, appComm, appComm);
+    //Thyra version of above
+    //RCP<Thyra::ModelEvaluator<ST> > solverT = 
+    //  slvrfctry.createAndGetAlbanyAppT(app, appComm, appComm);
 
     EpetraExt::ModelEvaluator::InArgs params_in = solver->createInArgs();
     EpetraExt::ModelEvaluator::OutArgs responses_out = solver->createOutArgs();
+    //Thyra version of above
+    //Thyra::ModelEvaluatorBase::InArgs<ST> params_inT = solverT->createInArgs();
+    //Thyra::ModelEvaluatorBase::OutArgs<ST> responses_outT = solverT->createOutArgs();
     int num_p = params_in.Np();     // Number of *vectors* of parameters
     int num_g = responses_out.Ng(); // Number of *vectors* of responses
 

@@ -37,6 +37,21 @@
 
 #include "NOX_Epetra_Observer.H"
 
+#include "Thyra_ModelEvaluatorDefaultBase.hpp" 
+
+//#include "Piro_RythmosSolver.hpp"
+#include "Piro_NOXSolver.hpp" 
+#include "Piro_ConfigDefs.hpp"
+#include "Thyra_EpetraModelEvaluator.hpp" 
+#include <iostream> 
+#include <string> 
+#include "Teuchos_XMLParameterListHelpers.hpp"
+#include "Teuchos_Assert.hpp"
+#include "Teuchos_GlobalMPISession.hpp"
+#include "Teuchos_StandardCatchMacros.hpp"
+
+
+
 int Albany_ML_Coord2RBM(int Nnodes, double x[], double y[], double z[], double rbm[], int Ndof, int NscalarDof, int NSdim);
 
 using Teuchos::RCP;
@@ -70,6 +85,16 @@ Albany::SolverFactory::create(
 {
   Teuchos::RCP<Albany::Application> dummyAlbanyApp;
   return createAndGetAlbanyApp(dummyAlbanyApp, appComm, solverComm, initial_guess);
+}
+
+Teuchos::RCP<Thyra::ModelEvaluator<ST> >  
+Albany::SolverFactory::createT(
+  const Teuchos::RCP<const Epetra_Comm>& appComm,
+  const Teuchos::RCP<const Epetra_Comm>& solverComm,
+  const Teuchos::RCP<const Epetra_Vector>& initial_guess)
+{
+  Teuchos::RCP<Albany::Application> dummyAlbanyApp;
+  return createAndGetAlbanyAppT(dummyAlbanyApp, appComm, solverComm, initial_guess);
 }
 
 Teuchos::RCP<EpetraExt::ModelEvaluator>  
@@ -149,6 +174,88 @@ Albany::SolverFactory::createAndGetAlbanyApp(
       return  rcp(new Piro::Epetra::NOXSolver(piroParams, model, NOX_observer));
 }
 
+Teuchos::RCP<Thyra::ModelEvaluator<ST> >  
+Albany::SolverFactory::createAndGetAlbanyAppT(
+  Teuchos::RCP<Albany::Application>& albanyApp,
+  const Teuchos::RCP<const Epetra_Comm>& appComm,
+  const Teuchos::RCP<const Epetra_Comm>& solverComm,
+  const Teuchos::RCP<const Epetra_Vector>& initial_guess)
+{
+    // Get solver type
+    ParameterList& problemParams = appParams->sublist("Problem");
+    string solutionMethod = problemParams.get("Solution Method", "Steady");
+    TEUCHOS_TEST_FOR_EXCEPTION(solutionMethod != "Steady" &&
+            solutionMethod != "Transient" && solutionMethod != "Continuation" &&
+	    solutionMethod != "Multi-Problem",  
+            std::logic_error, "Solution Method must be Steady, Transient, "
+            << "Continuation, or Multi-Problem not : " << solutionMethod);
+    bool stochastic = problemParams.get("Stochastic", false);
+    string secondOrder = problemParams.get("Second Order", "No");
+
+    Teuchos::RCP<Albany::Application> app;
+    Teuchos::RCP<Thyra::ModelEvaluator<ST> > modelT;
+
+    typedef double Scalar;
+    RCP<Rythmos::IntegrationObserverBase<Scalar> > Rythmos_observer;
+    RCP<NOX::Epetra::Observer > NOX_observer; //CONVERT TO THYRA!
+
+    // QCAD::Solve is only example of a multi-app solver so far
+    bool bSingleAppSolver = (solutionMethod != "Multi-Problem");
+
+    //If solver uses a single app, create it here along with observer
+    if (bSingleAppSolver) {
+
+      // Create application and Thyra model evaluator
+      modelT = createAlbanyAppAndModelT(app, appComm, initial_guess);
+
+      //Pass back albany app so that interface beyond ModelEvaluator can be used.
+      // This is essentially a hack to allow additional in/out arguments beyond 
+      //  what ModelEvaluator specifies.
+      albanyApp = app; 
+
+      // Create observer for output from time-stepper
+      ObserverFactory observerFactory(Teuchos::sublist(appParams, "Problem", true), app);
+      Rythmos_observer = observerFactory.createRythmosObserver();
+      NOX_observer = observerFactory.createNoxObserver(); //CHANGE TO THYRA IN OBSERVERFACTORY!
+    }
+
+    RCP<Teuchos::ParameterList> piroParams = 
+      rcp(&(appParams->sublist("Piro")),false);
+
+    // Get coordinates from the mesh a insert into param list if using ML preconditioner
+    setCoordinatesForML(solutionMethod, secondOrder, piroParams,
+                        app, problemParams.get("Name", "Heat 1D"));
+
+    if (solutionMethod== "Continuation") { // add save eigen data here as in Piro test
+      Teuchos::ParameterList& locaParams = piroParams->sublist("LOCA");
+        RCP<LOCA::SaveEigenData::AbstractStrategy> saveEigs =
+	  rcp(new Albany::SaveEigenData( locaParams, NOX_observer, &app->getStateMgr() ));  //CONVERT TO THYRA!
+        // return  rcp(new Piro::Epetra::LOCASolver(piroParams, model, NOX_observer, saveEigs));
+	//return  rcp(new Piro::Epetra::LOCASolver(piroParams, model, NOX_observer));
+    }
+    else if (solutionMethod== "Transient" && secondOrder=="No") { 
+      //return  rcp(new Piro::Epetra::RythmosSolver(piroParams, model, Rythmos_observer));
+    }
+    else if (solutionMethod== "Transient" && secondOrder=="Velocity Verlet") {
+      //return  rcp(new Piro::Epetra::VelocityVerletSolver(piroParams, model, NOX_observer));
+    }
+    else if (solutionMethod== "Transient" && secondOrder=="Trapezoid Rule") {
+      //return  rcp(new Piro::Epetra::TrapezoidRuleSolver(piroParams, model, NOX_observer));
+    }
+    else if (solutionMethod== "Multi-Problem") {
+      //return  rcp(new QCAD::Solver(appParams, solverComm));
+    }
+    else if (solutionMethod== "Transient") {
+      TEUCHOS_TEST_FOR_EXCEPTION(secondOrder!="No", std::logic_error,
+         "Invalid value for Second Order: (No, Velocity Verlet, Trapezoid Rule): "
+         << secondOrder << "\n");
+      return Teuchos::null;
+      }
+    else {
+      //return Teuchos::rcp(new Piro::NOXSolver<ST>(piroParams, thyraModel)); 
+    }
+}
+
 Teuchos::RCP<EpetraExt::ModelEvaluator>  
 Albany::SolverFactory::createAlbanyAppAndModel(
   Teuchos::RCP<Albany::Application>& albanyApp,
@@ -168,6 +275,24 @@ Albany::SolverFactory::createAlbanyAppAndModel(
   return modelFactory.create();
 }
 
+Teuchos::RCP<Thyra::ModelEvaluator<ST> >  
+Albany::SolverFactory::createAlbanyAppAndModelT(
+  Teuchos::RCP<Albany::Application>& albanyApp,
+  const Teuchos::RCP<const Epetra_Comm>& appComm,
+  const Teuchos::RCP<const Epetra_Vector>& initial_guess)
+{
+  // Create application
+  albanyApp = rcp(new Albany::Application(appComm, appParams, initial_guess));
+  
+  // Validate Response list: may move inside individual Problem class
+  ParameterList& problemParams = appParams->sublist("Problem");
+  problemParams.sublist("Response Functions").
+    validateParameters(*getValidResponseParameters(),0);
+  
+  // Create model evaluator
+  Albany::ModelFactory modelFactory(appParams, albanyApp);
+  return modelFactory.createT();
+}
 
 int Albany::SolverFactory::checkTestResults(
   int response_index,

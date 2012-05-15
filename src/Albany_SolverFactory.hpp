@@ -21,6 +21,7 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
 #include "EpetraExt_ModelEvaluator.h"
+#include "Thyra_ModelEvaluator.hpp"
 #include "Teuchos_SerialDenseVector.hpp"
 #include "Epetra_Vector.h"
 #include "Thyra_VectorBase.hpp"
@@ -50,14 +51,33 @@ namespace Albany {
       const Teuchos::RCP<const Epetra_Comm>& appComm,
       const Teuchos::RCP<const Epetra_Comm>& solverComm,
       const Teuchos::RCP<const Epetra_Vector>& initial_guess = Teuchos::null);
+   
+   // Thyra version of above 
+   virtual Teuchos::RCP<Thyra::ModelEvaluator<ST> > createT(
+      const Teuchos::RCP<const Epetra_Comm>& appComm,
+      const Teuchos::RCP<const Epetra_Comm>& solverComm,
+      const Teuchos::RCP<const Epetra_Vector>& initial_guess = Teuchos::null);
 
     Teuchos::RCP<EpetraExt::ModelEvaluator> createAndGetAlbanyApp(
       Teuchos::RCP<Application>& albanyApp,
       const Teuchos::RCP<const Epetra_Comm>& appComm,
       const Teuchos::RCP<const Epetra_Comm>& solverComm,
       const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null);
+    
+    //Thyra version of above
+    Teuchos::RCP<Thyra::ModelEvaluator<ST> > createAndGetAlbanyAppT(
+      Teuchos::RCP<Application>& albanyApp,
+      const Teuchos::RCP<const Epetra_Comm>& appComm,
+      const Teuchos::RCP<const Epetra_Comm>& solverComm,
+      const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null);
 
     Teuchos::RCP<EpetraExt::ModelEvaluator> createAlbanyAppAndModel(
+      Teuchos::RCP<Application>& albanyApp,
+      const Teuchos::RCP<const Epetra_Comm>& appComm,
+      const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null);
+    
+    //Thyra version of above
+    Teuchos::RCP<Thyra::ModelEvaluator<ST> > createAlbanyAppAndModelT(
       Teuchos::RCP<Application>& albanyApp,
       const Teuchos::RCP<const Epetra_Comm>& appComm,
       const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null);
