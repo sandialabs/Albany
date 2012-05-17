@@ -351,11 +351,11 @@ evaluateFields(typename Traits::EvalData workset)
  						                               )
                     		                    		*stabParameter(cell, qp)/biotModulus(cell, qp)*
                     		                    		( wBF(cell, node, qp)
-                    		                    				-tpterm(cell,node,qp)
+                    		                    		//		-tpterm(cell,node,qp)
                     		                    				);
  				  TResidual(cell,node) += pterm(cell,qp)*stabParameter(cell, qp)/biotModulus(cell, qp)*
  						 ( wBF(cell, node, qp)
- 								 -tpterm(cell,node,qp)
+ 							//	 -tpterm(cell,node,qp)
  								 );
 
 
