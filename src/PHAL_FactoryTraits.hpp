@@ -30,6 +30,7 @@
 #include "PHAL_Dirichlet.hpp"
 #include "PHAL_Neumann.hpp"
 #include "PHAL_GatherCoordinateVector.hpp"
+#include "PHAL_GatherSolution.hpp"
 
 
 #include "boost/mpl/vector/vector50.hpp"
@@ -82,12 +83,14 @@ namespace PHAL {
     static const int id_neumann                   =  0;
     static const int id_neumann_aggregator        =  1;
     static const int id_gather_coord_vector       =  2;
+    static const int id_gather_solution           =  3;
 
-   typedef boost::mpl::vector3< 
+   typedef boost::mpl::vector4< 
 
 	     PHAL::Neumann<_,Traits>,                     //  0
 	     PHAL::NeumannAggregator<_,Traits>,           //  1
-	     PHAL::GatherCoordinateVector<_,Traits>       //  2
+             PHAL::GatherCoordinateVector<_,Traits>,      //  2
+             PHAL::GatherSolution<_,Traits>               //  3
 
 	  > EvaluatorTypes;
 };

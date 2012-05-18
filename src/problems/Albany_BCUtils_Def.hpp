@@ -349,6 +349,10 @@ Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
 Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
       const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs,
       const std::vector<std::string>& bcNames,
+      const Teuchos::ArrayRCP<string>& dof_names,
+      const Teuchos::ArrayRCP<string>& dof_names_dot,
+      bool isVectorField, 
+      int offsetToFirstDOF, 
       const std::vector<std::string>& conditions,
       const Teuchos::Array<Teuchos::Array<int> >& offsets,
       const Teuchos::RCP<Albany::Layouts>& dl,
@@ -368,6 +372,8 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
 
    numDim = meshSpecs->numDim;
 
+   // dof_names and bcNames should always be the same length, since bcNames are just shortened dof names
+   TEUCHOS_TEST_FOR_EXCEPT(dof_names.size() != bcNames.size());
 
    // Drop into the "Neumann BCs" sublist
    Teuchos::ParameterList BCparams = params->sublist(traits_type::bcParamsPl);
@@ -414,16 +420,21 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
            p->set< RCP<MeshSpecsStruct> >         ("Mesh Specs Struct", meshSpecs);
 
            p->set<string>                         ("Coordinate Vector Name", "Coord Vec");
+           p->set<string>                         ("DOF Name", dof_names[j]);
+
+	   p->set<bool>                           ("Vector Field", isVectorField);
+	   if (isVectorField) p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_vector);
+	   else               p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_scalar);
 
            // Pass the input file line
            p->set< string >                       ("Neumann Input String", ss);
            p->set< Teuchos::Array<double> >       ("Neumann Input Value", BCparams.get<Teuchos::Array<double> >(ss));
            p->set< string >                       ("Neumann Input Conditions", conditions[k]);
 
-           // If we are doing a Neumann internal boundary with a "scaled jump",
+           // If we are doing a Neumann internal boundary with a "scaled jump" (includes "robin" too)
            // The material DB database needs to be passed to the BC object
 
-           if(conditions[k] == "scaled jump"){ 
+           if(conditions[k] == "scaled jump" || conditions[k] == "robin"){ 
 
               TEUCHOS_TEST_FOR_EXCEPTION(materialDB == Teuchos::null,
                 Teuchos::Exceptions::InvalidParameter, 
@@ -463,6 +474,28 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
  
       evaluators_to_build[NeuGCV] = p;
    }
+
+// Build evaluator for Gather Solution
+
+   string NeuGS="Evaluator for Gather Solution";
+   {
+     RCP<ParameterList> p = rcp(new ParameterList());
+     p->set<int>("Type", traits_type::typeGS);
+
+     p->set< Teuchos::ArrayRCP<std::string> >("Solution Names", dof_names);
+
+     p->set<bool>("Vector Field", isVectorField);
+     if (isVectorField) p->set< RCP<DataLayout> >("Data Layout", dl->node_vector);
+     else               p->set< RCP<DataLayout> >("Data Layout", dl->node_scalar);
+
+     p->set<int>("Offset of First DOF", offsetToFirstDOF);
+     p->set< Teuchos::ArrayRCP<std::string> >("Time Dependent Solution Names", dof_names_dot);
+
+     evaluators_to_build[NeuGS] = p;
+   }
+
+
+// Build evaluator that causes the evaluation of all the NBCs
 
    string allBC="Evaluator for all Neumann BCs";
    {

@@ -121,6 +121,7 @@ IF(ALBANY_SEACAS)
   add_subdirectory(NSRayleighBernard2DwithNeut)
   add_subdirectory(NSVortexShedding2D)  
   add_subdirectory(SteadyHeat2DInternalNeumann)  
+  add_subdirectory(SteadyHeat2DRobin)  
 ENDIF()
 
 IF(ALBANY_SEACAS AND ALBANY_LCM)
