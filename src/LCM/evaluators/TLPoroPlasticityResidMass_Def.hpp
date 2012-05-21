@@ -31,6 +31,8 @@ namespace LCM {
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
     porePressure (p.get<std::string>                   ("QP Pore Pressure Name"),
 		  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	elementLength (p.get<std::string>         ("Element Length Name"),
+		  		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     Tdot        (p.get<std::string>                   ("QP Time Derivative Variable Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
 	stabParameter        (p.get<std::string>                   ("Material Property Name"),
@@ -77,6 +79,7 @@ namespace LCM {
     else enableTransient = true;
 
     this->addDependentField(stabParameter);
+    this->addDependentField(elementLength);
     this->addDependentField(deltaTime);
     this->addDependentField(weights);
     this->addDependentField(coordVec);
@@ -172,6 +175,7 @@ namespace LCM {
 			PHX::FieldManager<Traits>& fm)
   {
 	this->utils.setFieldData(stabParameter,fm);
+	this->utils.setFieldData(elementLength,fm);
 	this->utils.setFieldData(deltaTime,fm);
 	this->utils.setFieldData(weights,fm);
     this->utils.setFieldData(coordVec,fm);
@@ -223,10 +227,10 @@ evaluateFields(typename Traits::EvalData workset)
 		  for (std::size_t qp=0; qp < numQPs; ++qp) {
 
 			      // set correction for 1st time step
-			      if (J(cell,qp) == 0)
-			    		  J(cell,qp) = 1.0;
-			      if (Jold(cell,qp) == 0)
-			      		  Jold(cell,qp) = 1.0;
+			 //     if (J(cell,qp) == 0)
+			 //   		  J(cell,qp) = 1.0;
+			 //     if (Jold(cell,qp) == 0)
+			 //     		  Jold(cell,qp) = 1.0;
 
  				  // Volumetric Constraint Term
  				  TResidual(cell,node) += -biotCoefficient(cell, qp)*(
@@ -236,9 +240,10 @@ evaluateFields(typename Traits::EvalData workset)
 
  				  // Pore-fluid Resistance Term
  				  TResidual(cell,node) +=  -(
- 						 -(J(cell,qp)-Jold(cell,qp))*porePressure(cell,qp) +
- 						 J(cell,qp)*(porePressure(cell,qp)-porePressureold(cell, qp) ))
- 						                  /  (J(cell,qp)*J(cell,qp))
+ 					//	 -(J(cell,qp)-Jold(cell,qp))*porePressure(cell,qp) +
+ 					//	 J(cell,qp)*
+ 						 (porePressure(cell,qp)-porePressureold(cell, qp) ))
+ 						          //        /  (J(cell,qp)*J(cell,qp))
              		                    		/biotModulus(cell, qp)*
              		                    		wBF(cell, node, qp);
 			  }
@@ -283,9 +288,10 @@ evaluateFields(typename Traits::EvalData workset)
    vol = 0.0;
    for (std::size_t qp=0; qp < numQPs; ++qp) {
 	porePbar += weights(cell,qp)*(
-			-(J(cell,qp)-Jold(cell,qp))*porePressure(cell,qp)
-			 						 +  J(cell,qp)*(porePressure(cell,qp)-porePressureold(cell, qp) )
-			 						 / (J(cell,qp)*J(cell,qp))
+		//	-(J(cell,qp)-Jold(cell,qp))*porePressure(cell,qp)
+		//	 						 +  J(cell,qp)*
+			 						 (porePressure(cell,qp)-porePressureold(cell, qp) )
+		//	 						 / (J(cell,qp)*J(cell,qp))
 			                      );
 	vol  += weights(cell,qp);
    }
@@ -308,21 +314,40 @@ evaluateFields(typename Traits::EvalData workset)
 
  }
 
+  ScalarT temp(0);
+
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
 	  for (std::size_t node=0; node < numNodes; ++node) {
 		  for (std::size_t qp=0; qp < numQPs; ++qp) {
+
+                  temp = 3.0 - 12.0*kcPermeability(cell,qp)*dt
+          				/(elementLength(cell,qp)*elementLength(cell,qp));
+
+                  if (temp > 0) {
+
  				  TResidual(cell,node) -= (
- 						 -(J(cell,qp)-Jold(cell,qp))*porePressure(cell,qp)
- 						 +  J(cell,qp)*(porePressure(cell,qp)-porePressureold(cell, qp) )
- 						 / (J(cell,qp)*J(cell,qp))
+ 					//	 -(J(cell,qp)-Jold(cell,qp))*porePressure(cell,qp)
+ 					//	 +  J(cell,qp)*
+ 						 (porePressure(cell,qp)-porePressureold(cell, qp) )
+ 					//	 / (J(cell,qp)*J(cell,qp))
  						                               )
-                    		                    		*stabParameter(cell, qp)/biotModulus(cell, qp)*
-                    		                    		( wBF(cell, node, qp) -tpterm(cell,node,qp)
+                    		                    		*stabParameter(cell, qp)
+                    		                    		 *std::abs(temp) // should be 1 but use 0.5 for safety
+                    		                    		*(0.5 + 0.5*std::tanh( (temp-1)/kcPermeability(cell,qp)  ))
+                    		                    		/biotModulus(cell, qp)*
+                    		                    		( wBF(cell, node, qp)
+                    		                    //				-tpterm(cell,node,qp)
                     		                    		 								 );
- 				  TResidual(cell,node) += pterm(cell,qp)*stabParameter(cell, qp)/biotModulus(cell, qp)*
- 						 ( wBF(cell, node, qp) -tpterm(cell,node,qp)
+ 				  TResidual(cell,node) += pterm(cell,qp)
+ 						                  *stabParameter(cell, qp)
+ 						                 *std::abs(temp) // should be 1 but use 0.5 for safety
+ 						                 *(0.5 + 0.5*std::tanh( (temp-1)/kcPermeability(cell,qp)  ))
+ 						                  /biotModulus(cell, qp)*
+ 						 ( wBF(cell, node, qp)
+ 						//	 -tpterm(cell,node,qp)
  						  								 );
+                  }
 
 
 //                  // Use biotModulus as pre-conditioner

@@ -39,7 +39,7 @@ namespace PHAL {
 
 */
 
-enum NEU_TYPE {COORD, NORMAL, INTJUMP, PRESS};
+enum NEU_TYPE {COORD, NORMAL, INTJUMP, PRESS, ROBIN};
 enum SIDE_TYPE {OTHER, LINE, TRI}; // to calculate areas for pressure bc
 
 template<typename EvalT, typename Traits>
@@ -83,6 +83,17 @@ protected:
                           int local_side_id,
                           ScalarT scale = 1.0);
 
+  // robin (also uses flux scaling)
+  void calc_dudn_robin(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
+                          const Intrepid::FieldContainer<MeshScalarT>& phys_side_cub_points,
+   		          const Intrepid::FieldContainer<ScalarT>& dof_side,
+                          const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+                          const shards::CellTopology & celltopo,
+                          const int cellDims,
+                          int local_side_id,
+		          ScalarT scale,
+		          const ScalarT* robin_param_values);
+
    // (dudx, dudy, dudz)
   void calc_gradu_dotn_const(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
                           const Intrepid::FieldContainer<MeshScalarT>& phys_side_cub_points,
@@ -105,6 +116,7 @@ protected:
   // Input:
   //! Coordinate vector at vertices
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
+  PHX::MDField<ScalarT,Cell,Node> dof;
   Teuchos::RCP<shards::CellTopology> cellType;
   Teuchos::RCP<shards::CellTopology> sideType;
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubatureCell;
@@ -128,6 +140,9 @@ protected:
   Intrepid::FieldContainer<MeshScalarT> trans_basis_refPointsSide;
   Intrepid::FieldContainer<MeshScalarT> weighted_trans_basis_refPointsSide;
 
+  Intrepid::FieldContainer<ScalarT> dofCell;
+  Intrepid::FieldContainer<ScalarT> dofSide;
+
   Intrepid::FieldContainer<ScalarT> data;
 
   // Output:
@@ -141,6 +156,7 @@ protected:
   NEU_TYPE bc_type;
   SIDE_TYPE side_type;
   ScalarT const_val;
+  ScalarT robin_vals[3]; // (dof_value, distance (in mesh units), jump)
   std::vector<ScalarT> dudx;
 
   std::vector<ScalarT> matScaling;

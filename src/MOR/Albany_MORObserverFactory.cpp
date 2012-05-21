@@ -16,9 +16,6 @@
 
 #include "Albany_MORObserverFactory.hpp"
 
-#include "Albany_Application.hpp"
-
-#include "Albany_NOXObserver.hpp"
 #include "Albany_SnapshotCollectionObserver.hpp"
 #include "Albany_ProjectionErrorObserver.hpp"
 #include "Albany_FullStateReconstructor.hpp"
@@ -34,9 +31,10 @@ using ::Teuchos::rcp;
 using ::Teuchos::ParameterList;
 using ::Teuchos::sublist;
 
-MORObserverFactory::MORObserverFactory(const RCP<ParameterList> &parentParams, const RCP<Application> &app) :
+MORObserverFactory::MORObserverFactory(const RCP<ParameterList> &parentParams,
+                                       const Epetra_Map &applicationMap) :
   params_(sublist(parentParams, "Model Order Reduction")),
-  app_(app)
+  applicationMap_(applicationMap)
 {
   // Nothing to do
 }
@@ -50,11 +48,11 @@ RCP<NOX::Epetra::Observer> MORObserverFactory::create(const RCP<NOX::Epetra::Obs
   }
   
   if (computeProjectionError()) {
-    result = rcp(new ProjectionErrorObserver(getErrorParameters(), result, app_));
+    result = rcp(new ProjectionErrorObserver(getErrorParameters(), result, rcp(new Epetra_Map(applicationMap_))));
   }
 
   if (useReducedOrderModel()) {
-    result = rcp(new FullStateReconstructor(getReducedOrderModelParameters(), result, app_));
+    result = rcp(new FullStateReconstructor(getReducedOrderModelParameters(), result, applicationMap_));
   }
 
   return result;

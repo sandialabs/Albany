@@ -27,14 +27,13 @@ class Epetra_Map;
 
 namespace Albany {
 
-class Application;
 class ReducedSpace;
 
 class FullStateReconstructor : public NOX::Epetra::Observer {
 public:
   FullStateReconstructor(const Teuchos::RCP<Teuchos::ParameterList> &params,
                          const Teuchos::RCP<NOX::Epetra::Observer> &decoratedObserver,
-                         const Teuchos::RCP<const Application> &app);
+                         const Epetra_Map &decoratedMap);
 
   //! Calls underlying observer then evaluates projection error
   virtual void observeSolution(const Epetra_Vector& solution);

@@ -297,9 +297,9 @@ namespace LCM {
   // \param u vector factor
   // \return \f$ s u \f$
   //
-  template<typename ScalarT>
+  template<typename ScalarT, typename T>
   inline Vector<ScalarT>
-  operator*(const ScalarT s, Vector<ScalarT> const & u)
+  operator*(const T s, Vector<ScalarT> const & u)
   {
     return Vector<ScalarT>(s*u(0), s*u(1), s*u(2));
   }
@@ -310,9 +310,9 @@ namespace LCM {
   // \param s scalar factor
   // \return \f$ s u \f$
   //
-  template<typename ScalarT>
+  template<typename ScalarT, typename T>
   inline Vector<ScalarT>
-  operator*(Vector<ScalarT> const & u, const ScalarT s)
+  operator*(Vector<ScalarT> const & u, const T s)
   {
     return s * u;
   }

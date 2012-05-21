@@ -294,7 +294,7 @@ Albany::PoroElasticityProblem::constructEvaluators(
         ev = rcp(new LCM::StabParameter<EvalT,AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
 
-        p = stateMgr.registerStateVariable("Stabilization Parameter",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+        p = stateMgr.registerStateVariable("Stabilization Parameter",dl->qp_scalar, dl->dummy,"scalar", 5.0e-7, true);
         ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
       }

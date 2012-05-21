@@ -922,7 +922,7 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
     p = stateMgr.registerStateVariable("Jacobian",
-    		                           dl->qp_scalar, dl->dummy,"scalar", 0.0,true);
+    		                           dl->qp_scalar, dl->dummy,"scalar", 1.0,true);
 	ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }

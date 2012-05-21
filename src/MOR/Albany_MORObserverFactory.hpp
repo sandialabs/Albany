@@ -22,14 +22,14 @@
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
-namespace Albany {
+#include "Epetra_Map.h"
 
-class Application;
+namespace Albany {
 
 class MORObserverFactory {
 public:
   MORObserverFactory(const Teuchos::RCP<Teuchos::ParameterList> &parentParams,
-                     const Teuchos::RCP<Application> &app);
+                     const Epetra_Map &applicationMap);
 
   Teuchos::RCP<NOX::Epetra::Observer> create(const Teuchos::RCP<NOX::Epetra::Observer> &child);
 
@@ -43,7 +43,7 @@ private:
   Teuchos::RCP<Teuchos::ParameterList> getReducedOrderModelParameters() const;
 
   Teuchos::RCP<Teuchos::ParameterList> params_;
-  Teuchos::RCP<Application> app_;
+  Epetra_Map applicationMap_;
 
   // Disallow copy & assignment
   MORObserverFactory(const MORObserverFactory &);

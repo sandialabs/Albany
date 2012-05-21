@@ -67,6 +67,15 @@ const Epetra_MultiVector &ReducedSpace::linearExpansion(const Epetra_MultiVector
   return target;
 }
 
+RCP<Epetra_MultiVector> ReducedSpace::linearExpansion(const Epetra_MultiVector &reducedVector) const
+{
+  RCP<Epetra_MultiVector> result = rcp(new Epetra_MultiVector(this->basisMap(),
+                                                              reducedVector.NumVectors(),
+                                                              false));
+  this->linearExpansion(reducedVector, *result);
+  return result;
+}
+
 RCP<Epetra_Vector> ReducedSpace::linearExpansion(const Epetra_Vector &reducedVector) const
 {
   RCP<Epetra_Vector> result = rcp(new Epetra_Vector(this->basisMap(), false));
@@ -80,6 +89,15 @@ const Epetra_MultiVector &ReducedSpace::linearReduction(const Epetra_MultiVector
   const int err = reduce(this->basis(), fullVector, target);
   TEUCHOS_TEST_FOR_EXCEPT(err != 0);
   return target;
+}
+
+RCP<Epetra_MultiVector> ReducedSpace::linearReduction(const Epetra_MultiVector &fullVector) const
+{
+  RCP<Epetra_MultiVector> result = rcp(new Epetra_MultiVector(this->componentMap(),
+                                                              fullVector.NumVectors(),
+                                                              false));
+  this->linearReduction(fullVector, *result);
+  return result;
 }
 
 RCP<Epetra_Vector> ReducedSpace::linearReduction(const Epetra_Vector &fullVector) const
@@ -101,6 +119,11 @@ LinearReducedSpace::LinearReducedSpace(const Epetra_BlockMap &map, int basisSize
   // Nothing to do
 }
 
+RCP<Epetra_MultiVector> LinearReducedSpace::expansion(const Epetra_MultiVector &reducedVector) const
+{
+  return linearExpansion(reducedVector);
+}
+
 RCP<Epetra_Vector> LinearReducedSpace::expansion(const Epetra_Vector &reducedVector) const
 {
   return linearExpansion(reducedVector);
@@ -110,6 +133,11 @@ const Epetra_MultiVector &LinearReducedSpace::expansion(const Epetra_MultiVector
                                                         Epetra_MultiVector &target) const
 {
   return linearExpansion(reducedVector, target);
+}
+
+RCP<Epetra_MultiVector> LinearReducedSpace::reduction(const Epetra_MultiVector &fullVector) const
+{
+  return linearReduction(fullVector);
 }
 
 RCP<Epetra_Vector> LinearReducedSpace::reduction(const Epetra_Vector &fullVector) const
@@ -151,6 +179,21 @@ void AffineReducedSpace::addLinearExpansion(const Epetra_MultiVector &reducedVec
   TEUCHOS_TEST_FOR_EXCEPT(err != 0);
 }
 
+RCP<Epetra_MultiVector> AffineReducedSpace::expansion(const Epetra_MultiVector &reducedVector) const
+{
+  const int vectorCount = reducedVector.NumVectors(); 
+  const RCP<Epetra_MultiVector> result = rcp(new Epetra_MultiVector(this->basisMap(),
+                                                                    vectorCount,
+                                                                    false));
+  for (int i = 0; i < vectorCount; ++i) {
+    Epetra_Vector &v = *(*result)(i);
+    v = origin_;
+  }
+
+  addLinearExpansion(reducedVector, *result);
+  return result;
+}
+
 RCP<Epetra_Vector> AffineReducedSpace::expansion(const Epetra_Vector &reducedVector) const
 {
   RCP<Epetra_Vector> result = rcp(new Epetra_Vector(origin_));
@@ -186,6 +229,15 @@ void AffineReducedSpace::computeReduction(const Epetra_MultiVectorT &fullVector,
   Epetra_MultiVectorT temp(fullVector);
   substractOrigin(temp);
   linearReduction(temp, target);
+}
+
+RCP<Epetra_MultiVector> AffineReducedSpace::reduction(const Epetra_MultiVector &fullVector) const
+{
+  RCP<Epetra_MultiVector> result = rcp(new Epetra_MultiVector(this->componentMap(),
+                                                              fullVector.NumVectors(),
+                                                              false));
+  computeReduction(fullVector, *result);
+  return result;
 }
 
 RCP<Epetra_Vector> AffineReducedSpace::reduction(const Epetra_Vector &fullVector) const
