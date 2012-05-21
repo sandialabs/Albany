@@ -98,11 +98,11 @@ namespace QCAD {
     ScalarT computeFDIntMinusOneHalf(const ScalarT x);
     
     //! compute the electron density for Poisson-Schrodinger iteration
-    ScalarT eDensityForPoissonSchrodinger(typename Traits::EvalData workset, 
-        std::size_t cell, std::size_t qp, const ScalarT prevPhi, const bool bUsePredCorr);
+    ScalarT eDensityForPoissonSchrodinger(typename Traits::EvalData workset, std::size_t cell, 
+        std::size_t qp, const ScalarT prevPhi, const bool bUsePredCorr, const double Ef);
 
-    ScalarT eDensityForPoissonCI(typename Traits::EvalData workset, 
-        std::size_t cell, std::size_t qp, const ScalarT prevPhi, const bool bUsePredCorr);
+    ScalarT eDensityForPoissonCI(typename Traits::EvalData workset, std::size_t cell,
+        std::size_t qp, const ScalarT prevPhi, const bool bUsePredCorr, const double Ef);
     
     //! compute exchange-correlation potential energy within Local Density Approximation
     ScalarT computeVxcLDA(const double& relPerm, const double& effMass, 
@@ -169,11 +169,14 @@ namespace QCAD {
     Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
 
     //! Material database parameter values
-    std::map< std::string, ScalarT > materialParams;
+    std::map<std::string, ScalarT > materialParams;
     
     //! specific parameters for "1D MOSCapacitor"
     double oxideWidth;
     double siliconWidth; 
+    
+    //! Map element blocks and their associated DBC values
+    std::map<std::string, double> mapDBCValue; 
     
   };
 }

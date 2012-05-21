@@ -277,8 +277,13 @@ QCAD::PoissonProblem::constructEvaluators(
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
+    // Poisson Source ParameterList
     Teuchos::ParameterList& paramList = params->sublist("Poisson Source");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+    
+    // Dirichlet BCs ParameterList 
+    Teuchos::ParameterList& dbcPList = params->sublist("Dirichlet BCs");
+    p->set<Teuchos::ParameterList*>("Dirichlet BCs ParameterList", &dbcPList);
 
     //Output
     p->set<string>("Source Name", "Poisson Source");
