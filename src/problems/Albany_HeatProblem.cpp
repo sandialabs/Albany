@@ -132,13 +132,12 @@ Albany::HeatProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshS
    // Construct BC evaluators for all side sets and names
    // Note that the string index sets up the equation offset, so ordering is important
    std::vector<string> bcNames(neq);
-   Teuchos::ArrayRCP<string> dof_names(neq), dof_names_dot(neq);
+   Teuchos::ArrayRCP<string> dof_names(neq);
    Teuchos::Array<Teuchos::Array<int> > offsets;
    offsets.resize(neq);
 
    bcNames[0] = "T";
    dof_names[0] = "Temperature";
-   dof_names_dot[0] = "Temperature dot";
    offsets[0].resize(1);
    offsets[0][0] = 0;
 
@@ -164,7 +163,7 @@ Albany::HeatProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshS
    condNames[3] = "robin";
 
    nfm.resize(1); // Heat problem only has one physics set   
-   nfm[0] = bcUtils.constructBCEvaluators(meshSpecs, bcNames, dof_names, dof_names_dot, false, 0,
+   nfm[0] = bcUtils.constructBCEvaluators(meshSpecs, bcNames, dof_names, false, 0,
 				  condNames, offsets, dl, this->params, this->paramLib, materialDB);
 
 }

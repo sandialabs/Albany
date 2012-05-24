@@ -264,13 +264,12 @@ QCAD::PoissonProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::Mesh
    // Construct BC evaluators for all side sets and names
    // Note that the string index sets up the equation offset, so ordering is important
    std::vector<string> bcNames(neq);
-   Teuchos::ArrayRCP<string> dof_names(neq), dof_names_dot(neq);
+   Teuchos::ArrayRCP<string> dof_names(neq);
    Teuchos::Array<Teuchos::Array<int> > offsets;
    offsets.resize(neq);
 
    bcNames[0] = "Phi";
    dof_names[0] = "Potential";
-   dof_names_dot[0] = "Potential_dot";
    offsets[0].resize(1);
    offsets[0][0] = 0;
 
@@ -296,7 +295,7 @@ QCAD::PoissonProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::Mesh
    condNames[3] = "robin";
 
    nfm.resize(1); // Poisson problem only has one physics set
-   nfm[0] = bcUtils.constructBCEvaluators(meshSpecs, bcNames, dof_names, dof_names_dot, false, 0,
+   nfm[0] = bcUtils.constructBCEvaluators(meshSpecs, bcNames, dof_names, false, 0,
 				  condNames, offsets, dl, this->params, this->paramLib, materialDB);
 
 }

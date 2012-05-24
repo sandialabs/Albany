@@ -155,7 +155,6 @@ template<>
        const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs,
        const std::vector<std::string>& bcNames,
        const Teuchos::ArrayRCP<string>& dof_names,
-       const Teuchos::ArrayRCP<string>& dof_names_dot,
        bool isVectorField, 
        int offsetToFirstDOF, 
        const std::vector<std::string>& conditions,

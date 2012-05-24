@@ -350,7 +350,6 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
       const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs,
       const std::vector<std::string>& bcNames,
       const Teuchos::ArrayRCP<string>& dof_names,
-      const Teuchos::ArrayRCP<string>& dof_names_dot,
       bool isVectorField, 
       int offsetToFirstDOF, 
       const std::vector<std::string>& conditions,
@@ -371,9 +370,6 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
    using PHAL::AlbanyTraits;
 
    numDim = meshSpecs->numDim;
-
-   // dof_names and bcNames should always be the same length, since bcNames are just shortened dof names
-   TEUCHOS_TEST_FOR_EXCEPT(dof_names.size() != bcNames.size());
 
    // Drop into the "Neumann BCs" sublist
    Teuchos::ParameterList BCparams = params->sublist(traits_type::bcParamsPl);
@@ -420,11 +416,13 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
            p->set< RCP<MeshSpecsStruct> >         ("Mesh Specs Struct", meshSpecs);
 
            p->set<string>                         ("Coordinate Vector Name", "Coord Vec");
-           p->set<string>                         ("DOF Name", dof_names[j]);
 
-	   p->set<bool>                           ("Vector Field", isVectorField);
-	   if (isVectorField) p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_vector);
-	   else               p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_scalar);
+           if(conditions[k] == "robin") {
+             p->set<string>  ("DOF Name", dof_names[j]);
+	     p->set<bool> ("Vector Field", isVectorField);
+	     if (isVectorField) p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_vector);
+	     else               p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_scalar);
+           }
 
            // Pass the input file line
            p->set< string >                       ("Neumann Input String", ss);
@@ -489,7 +487,7 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
      else               p->set< RCP<DataLayout> >("Data Layout", dl->node_scalar);
 
      p->set<int>("Offset of First DOF", offsetToFirstDOF);
-     p->set< Teuchos::ArrayRCP<std::string> >("Time Dependent Solution Names", dof_names_dot);
+     p->set<bool>("Disable Transient", true);
 
      evaluators_to_build[NeuGS] = p;
    }

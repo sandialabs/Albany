@@ -34,8 +34,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
   meshSpecs      (p.get<Teuchos::RCP<Albany::MeshSpecsStruct> >("Mesh Specs Struct")),
   offset         (p.get<Teuchos::Array<int> >("Equation Offset")),
   sideSetID      (p.get<std::string>("Side Set ID")),
-  coordVec       (p.get<std::string>("Coordinate Vector Name"), dl->vertices_vector),
-  dof            (p.get<std::string>("DOF Name"), p.get< Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"))
+  coordVec       (p.get<std::string>("Coordinate Vector Name"), dl->vertices_vector)
 {
   // the input.xml string "NBC on SS sidelist_12 for DOF T set dudn" (or something like it)
   name = p.get< std::string >("Neumann Input String");
@@ -45,15 +44,6 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
   // The input.xml argument for the above string
   inputConditions = p.get< std::string >("Neumann Input Conditions");
-
-  // Currently, the Neumann evaluator doesn't handle the case when the degree of freedom is a vector.
-  // It wouldn't be difficult to have the boundary condition use a component of the vector, but I'm
-  // not sure this is the correct behavior.  In any case, the only time when this evaluator needs
-  // a degree of freedom value is in the "robin" case.
-  TEUCHOS_TEST_FOR_EXCEPTION(p.get<bool>("Vector Field") == true && inputConditions == "robin", 
-			     Teuchos::Exceptions::InvalidParameter, 
-			     std::endl << "Error: \"Robin\" Neumann boundary conditions " 
-			     << "only supported when the DOF is not a vector" << std::endl);
 
   // The DOF offsets are contained in the Equation Offset array. The length of this array are the
   // number of DOFs we will set each call
@@ -107,8 +97,22 @@ NeumannBase(const Teuchos::ParameterList& p) :
      }
 
      // In the robin boundary condition case, the NBC depends on the solution (dof) field
-     if (inputConditions == "robin")
+     if (inputConditions == "robin") {
+      // Currently, the Neumann evaluator doesn't handle the case when the degree of freedom is a vector.
+      // It wouldn't be difficult to have the boundary condition use a component of the vector, but I'm
+      // not sure this is the correct behavior.  In any case, the only time when this evaluator needs
+      // a degree of freedom value is in the "robin" case.
+      TEUCHOS_TEST_FOR_EXCEPTION(p.get<bool>("Vector Field") == true, 
+    			     Teuchos::Exceptions::InvalidParameter, 
+    			     std::endl << "Error: \"Robin\" Neumann boundary conditions " 
+			     << "only supported when the DOF is not a vector" << std::endl);
+
+       PHX::MDField<ScalarT,Cell,Node> tmp(p.get<string>("DOF Name"),
+           p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
+       dof = tmp;
+
        this->addDependentField(dof);
+     }
   }
 
   // else parse the input to determine what type of BC to calculate
