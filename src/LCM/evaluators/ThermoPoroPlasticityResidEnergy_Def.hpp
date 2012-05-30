@@ -272,7 +272,7 @@ evaluateFields(typename Traits::EvalData workset)
              		                      *wBF(cell, node, qp);
 
  				 // Thermal Expansion
- 				 TResidual(cell,node) -= ( -(
+ 				 TResidual(cell,node) -=  -(
  						 // J(cell,qp)-Jold(cell,qp) )*Temp(cell,qp) +
  				  		//				   J(cell,qp)*
  				  						   dTemperature )
@@ -326,7 +326,7 @@ evaluateFields(typename Traits::EvalData workset)
 	porePbar += weights(cell,qp)*(
 		//	-(J(cell,qp)-Jold(cell,qp))*porePressure(cell,qp)
 			 		//				 +  J(cell,qp)*
-			 						 (porePressure(cell,qp)-porePressureold(cell, qp)))
+			 						 (porePressure(cell,qp)-porePressureold(cell, qp)));
 			 				//		 / ( J(cell,qp)*J(cell,qp) );
 	vol  += weights(cell,qp);
    }
