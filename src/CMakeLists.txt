@@ -561,6 +561,7 @@ IF(ALBANY_LCM)
   SET(SOURCES ${SOURCES}
     ${LCM_DIR}/utils/Geometry.cc
     ${LCM_DIR}/utils/Partition.cc
+    ${LCM_DIR}/utils/BarycentricSubdivision.cc
     ${LCM_DIR}/utils/Tensor.cc
     ${LCM_DIR}/utils/Topology.cc
     ${LCM_DIR}/utils/LocalNonlinearSolver.cc
@@ -775,6 +776,7 @@ add_executable(AlbanyAnalysis Main_Analysis.cpp)
 IF (ALBANY_LCM)
   add_executable(PartitionTest LCM/test/utils/PartitionTest.cc)
   add_executable(NodeUpdate LCM/test/utils/NodeUpdate.cc)
+  add_executable(Subdivision LCM/test/utils/Subdivision.cc)
   add_executable(MeshComponents LCM/test/utils/MeshComponents.cc)
   add_executable(
     utLocalNonlinearSolver 
@@ -832,6 +834,7 @@ target_link_libraries(AlbanyAnalysis  albanyLib ${ALL_LIBRARIES})
 IF (ALBANY_LCM)
   target_link_libraries(PartitionTest albanyLib ${ALL_LIBRARIES})
   target_link_libraries(NodeUpdate albanyLib ${ALL_LIBRARIES})
+  target_link_libraries(Subdivision albanyLib ${ALL_LIBRARIES})
   target_link_libraries(MeshComponents albanyLib ${ALL_LIBRARIES})
   target_link_libraries(utLocalNonlinearSolver albanyLib ${ALL_LIBRARIES})
   target_link_libraries(utLocalization albanyLib ${ALL_LIBRARIES})
