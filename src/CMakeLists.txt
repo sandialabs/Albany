@@ -577,14 +577,31 @@ IF(ALBANY_LCM)
 IF(ALBANY_LAME OR ALBANY_LAMENT)
   SET(SOURCES ${SOURCES}
     ${LCM_DIR}/utils/LameUtils.cpp
-    ${LCM_DIR}/evaluators/LameStress.cpp 
     ${LCM_DIR}/problems/LameProblem.cpp 
   )
   SET(HEADERS ${HEADERS}
     ${LCM_DIR}/utils/LameUtils.hpp
+    ${LCM_DIR}/problems/LameProblem.hpp
+  )
+ENDIF()
+
+IF(ALBANY_LAME)
+  SET(SOURCES ${SOURCES}
+    ${LCM_DIR}/evaluators/LameStress.cpp 
+  )
+  SET(HEADERS ${HEADERS}
     ${LCM_DIR}/evaluators/LameStress.hpp 
     ${LCM_DIR}/evaluators/LameStress_Def.hpp 
-    ${LCM_DIR}/problems/LameProblem.hpp
+  )
+ENDIF()
+
+IF(ALBANY_LAMENT)
+  SET(SOURCES ${SOURCES}
+    ${LCM_DIR}/evaluators/LamentStress.cpp 
+  )
+  SET(HEADERS ${HEADERS}
+    ${LCM_DIR}/evaluators/LamentStress.hpp 
+    ${LCM_DIR}/evaluators/LamentStress_Def.hpp 
   )
 ENDIF()
 

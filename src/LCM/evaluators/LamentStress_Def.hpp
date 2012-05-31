@@ -21,11 +21,13 @@
 #include "QCAD_MaterialDatabase.hpp"
 #include "Tensor.h"
 
+using namespace std;
+
 namespace LCM {
 
 template<typename EvalT, typename Traits>
-LamentStressBase<EvalT, Traits>::
-LamentStressBase(Teuchos::ParameterList& p) :
+LamentStress<EvalT, Traits>::
+LamentStress(Teuchos::ParameterList& p) :
   defGradField(p.get<std::string>("DefGrad Name"),
                p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
   stressField(p.get<std::string>("Stress Name"),
@@ -76,7 +78,7 @@ LamentStressBase(Teuchos::ParameterList& p) :
   // This assumes that there is a single material model associated with this
   // evaluator and that the material properties are constant (read directly
   // from input deck parameter list)
-  lamentMaterialModel = LameUtils::constructLameMaterialModel_AD(lamentMaterialModelName, lamentMaterialParameters);
+  lamentMaterialModel = LameUtils::constructLamentMaterialModel<ScalarT>(lamentMaterialModelName, lamentMaterialParameters);
 
   // Get a list of the LAMENT material model state variable names
   lamentMaterialModelStateVariableNames = LameUtils::getStateVariableNames(lamentMaterialModelName, lamentMaterialParameters);
@@ -91,7 +93,7 @@ LamentStressBase(Teuchos::ParameterList& p) :
 }
 
 template<typename EvalT, typename Traits>
-void LamentStressBase<EvalT, Traits>::
+void LamentStress<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -102,79 +104,11 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 template<typename EvalT, typename Traits>
-void LamentStressBase<EvalT, Traits>::
-evaluateFields(typename Traits::EvalData workset)
-{
-  TEUCHOS_TEST_FOR_EXCEPTION("LamentStressBase::evaluateFields not implemented for this template type",
-    Teuchos::Exceptions::InvalidParameter, "Need specialization.");
-}
-
-template<typename Traits>
-void LamentStress<PHAL::AlbanyTraits::Residual, Traits>::
+void LamentStress<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   Teuchos::RCP<lament::matParams<ScalarT> > matp = Teuchos::rcp(new lament::matParams<ScalarT>());
-  this->setMatP(matp, workset);
 
-  this->calcStress(this->stressField, this->defGradField, workset, matp);
-}
-
-// template<typename EvalT, typename Traits>
-// void LameStressBase<EvalT, Traits>::
-//   setMatP(Teuchos::RCP<lament::matParams<ScalarT> >& matp,
-//           typename Traits::EvalData workset)
-// {
-//   // \todo Get actual time step for calls to LAME materials.
-//   RealType deltaT = 1.0;
-
-//   int numStateVariables = (int)(this->lameMaterialModelStateVariableNames.size());
-
-//   // Allocate workset space
-//   // Lame is called one time (called for all material points in the workset at once)
-//   int numMaterialEvaluations = workset.numCells * this->numQPs;
-
-//   double* strainRate = new double[6*numMaterialEvaluations];   // symmetric tensor5
-//   double* spin = new double[3*numMaterialEvaluations];         // skew-symmetric tensor
-//   double* leftStretch = new double[6*numMaterialEvaluations];  // symmetric tensor
-//   double* rotation = new double[9*numMaterialEvaluations];     // full tensor
-//   double* stressOld = new double[6*numMaterialEvaluations];    // symmetric tensor
-//   double* stressNew = new double[6*numMaterialEvaluations];    // symmetric tensor
-//   double* stateOld = new double[numStateVariables*numMaterialEvaluations];  // a single double for each state variable
-//   double* stateNew = new double[numStateVariables*numMaterialEvaluations];  // a single double for each state variable
-
-//   // \todo Set up scratch space for material models using getNumScratchVars() and setScratchPtr().
-
-//   // Create the matParams structure, which is passed to Lame
-//   matp->nelements = numMaterialEvaluations;
-//   matp->dt = deltaT;
-//   matp->time = 0.0;
-//   matp->strain_rate = strainRate;
-//   matp->spin = spin;
-//   matp->left_stretch = leftStretch;
-//   matp->rotation = rotation;
-//   matp->state_old = stateOld;
-//   matp->state_new = stateNew;
-//   matp->stress_old = stressOld;
-//   matp->stress_new = stressNew;
-// //   matp->dt_mat = std::numeric_limits<double>::max();
-  
-//   // matParams that still need to be added:
-//   // matp->temp_old  (temperature)
-//   // matp->temp_new
-//   // matp->sound_speed_old
-//   // matp->sound_speed_new
-//   // matp->volume
-//   // scratch pointer
-//   // function pointers (lots to be done here)
-// }
-
-template<typename EvalT, typename Traits>
-void LamentStressBase<EvalT, Traits>::
-  calcStress(PHX::MDField<RealType,Cell,QuadPoint,Dim,Dim>& stressFieldRef,
-             PHX::MDField<RealType,Cell,QuadPoint,Dim,Dim>& defGradFieldRef,
-             typename Traits::EvalData workset,
-             Teuchos::RCP<lament::matParams<ScalarT> >& matp) 
-{
   // Get the old state data
   Albany::MDArray oldDefGrad = (*workset.stateArrayPtr)[defGradName];
   Albany::MDArray oldStress = (*workset.stateArrayPtr)[stressName];
@@ -184,16 +118,10 @@ void LamentStressBase<EvalT, Traits>::
   // \todo Get actual time step for calls to LAMENT materials.
   double deltaT = 1.0;
 
-  int numStateVariables = (int)(this->lamentMaterialModelStateVariableNames.size());
-
-  // Allocate workset space
-  // Lament is called one time (called for all material points in the workset at once)
-  int numMaterialEvaluations = workset.numCells * this->numQPs;
-
   vector<ScalarT> strainRate(6);              // symmetric tensor
-  vector<double> spin(3);                     // skew-symmetric tensor
-  vector<double> leftStretch(6);              // symmetric tensor
-  vector<double> rotation(9);                 // full tensor
+  vector<ScalarT> spin(3);                     // skew-symmetric tensor
+  vector<ScalarT> leftStretch(6);              // symmetric tensor
+  vector<ScalarT> rotation(9);                 // full tensor
   vector<double> stressOld(6);                // symmetric tensor
   vector<ScalarT> stressNew(6);               // symmetric tensor
   vector<double> stateOld(numStateVariables); // a single scalar for each state variable
@@ -266,21 +194,58 @@ void LamentStressBase<EvalT, Traits>::
 
       // new deformation gradient (the current deformation gradient as computed in the current configuration)
       LCM::Tensor<ScalarT> Fnew(
-       defGradFieldRef(cell,qp,0,0), defGradFieldRef(cell,qp,0,1), defGradFieldRef(cell,qp,0,2),
-       defGradFieldRef(cell,qp,1,0), defGradFieldRef(cell,qp,1,1), defGradFieldRef(cell,qp,1,2),
-       defGradFieldRef(cell,qp,2,0), defGradFieldRef(cell,qp,2,1), defGradFieldRef(cell,qp,2,2) );
+       defGradField(cell,qp,0,0), defGradField(cell,qp,0,1), defGradField(cell,qp,0,2),
+       defGradField(cell,qp,1,0), defGradField(cell,qp,1,1), defGradField(cell,qp,1,2),
+       defGradField(cell,qp,2,0), defGradField(cell,qp,2,1), defGradField(cell,qp,2,2) );
 
       // old deformation gradient (deformation gradient at previous load step)
-      LCM::Tensor<RealType> Fold( oldDefGrad(cell,qp,0,0), oldDefGrad(cell,qp,0,1), oldDefGrad(cell,qp,0,2),
-                                 oldDefGrad(cell,qp,1,0), oldDefGrad(cell,qp,1,1), oldDefGrad(cell,qp,1,2),
-                                 oldDefGrad(cell,qp,2,0), oldDefGrad(cell,qp,2,1), oldDefGrad(cell,qp,2,2) );
+      LCM::Tensor<ScalarT> Fold( oldDefGrad(cell,qp,0,0), oldDefGrad(cell,qp,0,1), oldDefGrad(cell,qp,0,2),
+				 oldDefGrad(cell,qp,1,0), oldDefGrad(cell,qp,1,1), oldDefGrad(cell,qp,1,2),
+				 oldDefGrad(cell,qp,2,0), oldDefGrad(cell,qp,2,1), oldDefGrad(cell,qp,2,2) );
 
       // incremental deformation gradient
       LCM::Tensor<ScalarT> Finc = Fnew * LCM::inverse(Fold);
 
+      // DEBUGGING //
+      if(cell==0 && qp==0){
+	std::cout << "Fnew(0,0) " << Fnew(0,0) << endl;
+	std::cout << "Fnew(1,0) " << Fnew(1,0) << endl;
+	std::cout << "Fnew(2,0) " << Fnew(2,0) << endl;
+	std::cout << "Fnew(0,1) " << Fnew(0,1) << endl;
+	std::cout << "Fnew(1,1) " << Fnew(1,1) << endl;
+	std::cout << "Fnew(2,1) " << Fnew(2,1) << endl;
+	std::cout << "Fnew(0,2) " << Fnew(0,2) << endl;
+	std::cout << "Fnew(1,2) " << Fnew(1,2) << endl;
+	std::cout << "Fnew(2,2) " << Fnew(2,2) << endl;
+      }
+      // END DEBUGGING //
+
       // left stretch V, and rotation R, from left polar decomposition of new deformation gradient
       LCM::Tensor<ScalarT> V, R;
       boost::tie(V,R) = LCM::polar_left(Fnew);
+
+      // DEBUGGING //
+      if(cell==0 && qp==0){
+	std::cout << "V(0,0) " << V(0,0) << endl;
+	std::cout << "V(1,0) " << V(1,0) << endl;
+	std::cout << "V(2,0) " << V(2,0) << endl;
+	std::cout << "V(0,1) " << V(0,1) << endl;
+	std::cout << "V(1,1) " << V(1,1) << endl;
+	std::cout << "V(2,1) " << V(2,1) << endl;
+	std::cout << "V(0,2) " << V(0,2) << endl;
+	std::cout << "V(1,2) " << V(1,2) << endl;
+	std::cout << "V(2,2) " << V(2,2) << endl;
+	std::cout << "R(0,0) " << R(0,0) << endl;
+	std::cout << "R(1,0) " << R(1,0) << endl;
+	std::cout << "R(2,0) " << R(2,0) << endl;
+	std::cout << "R(0,1) " << R(0,1) << endl;
+	std::cout << "R(1,1) " << R(1,1) << endl;
+	std::cout << "R(2,1) " << R(2,1) << endl;
+	std::cout << "R(0,2) " << R(0,2) << endl;
+	std::cout << "R(1,2) " << R(1,2) << endl;
+	std::cout << "R(2,2) " << R(2,2) << endl;
+      }
+      // END DEBUGGING //
 
       // incremental left stretch Vinc, incremental rotation Rinc, and log of incremental left stretch, logVinc
       LCM::Tensor<ScalarT> Vinc, Rinc, logVinc;
@@ -351,28 +316,49 @@ void LamentStressBase<EvalT, Traits>::
       // Get the stress from the LAMENT material
       this->lamentMaterialModel->getStress(matp.get());
 
-      // Post-process data from Lament call
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
-
-	// Copy the new stress into the stress field
-	stressFieldRef(cell,qp,0,0) = stressNew[0];
-	stressFieldRef(cell,qp,1,1) = stressNew[1];
-	stressFieldRef(cell,qp,2,2) = stressNew[2];
-	stressFieldRef(cell,qp,0,1) = stressNew[3];
-	stressFieldRef(cell,qp,1,2) = stressNew[4];
-	stressFieldRef(cell,qp,0,2) = stressNew[5];
-	stressFieldRef(cell,qp,1,0) = stressNew[3]; 
-	stressFieldRef(cell,qp,2,1) = stressNew[4]; 
-	stressFieldRef(cell,qp,2,0) = stressNew[5];
-
-	// copy state_new data from the LAMENT data structure to the corresponding state variable field
-	for(int iVar=0 ; iVar<numStateVariables ; iVar++)
-	  this->lamentMaterialModelStateVariableFields[iVar](cell,qp) = stateNew[iVar];
+      // DEBUGGING //
+      if(cell==0 && qp==0){
+	std::cout << "check strainRate[0] " << strainRate[0] << endl;
+	std::cout << "check strainRate[1] " << strainRate[1] << endl;
+	std::cout << "check strainRate[2] " << strainRate[2] << endl;
+	std::cout << "check strainRate[3] " << strainRate[3] << endl;
+	std::cout << "check strainRate[4] " << strainRate[4] << endl;
+	std::cout << "check strainRate[5] " << strainRate[5] << endl;
       }
+      // END DEBUGGING //
+
+      // Copy the new stress into the stress field
+      stressField(cell,qp,0,0) = stressNew[0];
+      stressField(cell,qp,1,1) = stressNew[1];
+      stressField(cell,qp,2,2) = stressNew[2];
+      stressField(cell,qp,0,1) = stressNew[3];
+      stressField(cell,qp,1,2) = stressNew[4];
+      stressField(cell,qp,0,2) = stressNew[5];
+      stressField(cell,qp,1,0) = stressNew[3]; 
+      stressField(cell,qp,2,1) = stressNew[4]; 
+      stressField(cell,qp,2,0) = stressNew[5];
+
+      // copy state_new data from the LAMENT data structure to the corresponding state variable field
+      for(int iVar=0 ; iVar<numStateVariables ; iVar++)
+	this->lamentMaterialModelStateVariableFields[iVar](cell,qp) = stateNew[iVar];
+
+      // DEBUGGING //
+      if(cell==0 && qp==0){
+	std::cout << "stress(0,0) " << this->stressField(cell,qp,0,0) << endl;
+	std::cout << "stress(1,1) " << this->stressField(cell,qp,1,1) << endl;
+	std::cout << "stress(2,2) " << this->stressField(cell,qp,2,2) << endl;
+	std::cout << "stress(0,1) " << this->stressField(cell,qp,0,1) << endl;
+	std::cout << "stress(1,2) " << this->stressField(cell,qp,1,2) << endl;
+	std::cout << "stress(0,2) " << this->stressField(cell,qp,0,2) << endl;
+	std::cout << "stress(1,0) " << this->stressField(cell,qp,1,0) << endl;
+	std::cout << "stress(2,1) " << this->stressField(cell,qp,2,1) << endl;
+	std::cout << "stress(2,0) " << this->stressField(cell,qp,2,0) << endl;
+      }
+      // END DEBUGGING //
+
     }
   }
 }
-
 
 }
 

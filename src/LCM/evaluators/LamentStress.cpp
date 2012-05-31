@@ -21,4 +21,3 @@
 #include "LamentStress_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::LamentStress)
-

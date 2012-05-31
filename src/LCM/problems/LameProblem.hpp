@@ -115,11 +115,15 @@ namespace Albany {
 #include "PHAL_Source.hpp"
 #include "Strain.hpp"
 #include "DefGrad.hpp"
+#ifdef ALBANY_LAME
 #include "LameStress.hpp"
+#endif
+#ifdef ALBANY_LAMENT
+#include "LamentStress.hpp"
+#endif
 #include "LameUtils.hpp"
 #include "PHAL_SaveStateField.hpp"
 #include "ElasticityResid.hpp"
-
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
@@ -293,7 +297,14 @@ Albany::LameProblem::constructEvaluators(
     // A LAME material model may register additional state variables (type is always double)
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
+#ifdef ALBANY_LAME
     ev = rcp(new LCM::LameStress<EvalT,AlbanyTraits>(*p));
+#endif
+
+#ifdef ALBANY_LAMENT
+    ev = rcp(new LCM::LamentStress<EvalT,AlbanyTraits>(*p));
+#endif
+
     fm0.template registerEvaluator<EvalT>(ev);
 
     // Declare state data that need to be saved

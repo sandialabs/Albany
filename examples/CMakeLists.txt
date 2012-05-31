@@ -100,9 +100,9 @@ IF(ALBANY_LCM)
     add_subdirectory(LameStaticElasticity3D)
     add_subdirectory(LameMultiMaterials)
   ENDIF()
-  IF(ALBANY_LAMENT)
-    add_subdirectory(LamentStaticElasticity3D)
-  ENDIF()
+#  IF(ALBANY_LAMENT)
+#    add_subdirectory(LamentStaticElasticity3D)
+#  ENDIF()
 ENDIF()
 
 # These require exodus, Ioss, stk_io, to read meshes
