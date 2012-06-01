@@ -56,7 +56,7 @@
     </ParameterList>
 
     <ParameterList name="polygate">
-      <Parameter name="elementBlock" type="string" value="polysilicon" />
+      <Parameter name="elementBlock" type="string" value="polysi.gate" />
     </ParameterList>
 
     <ParameterList name="psub">
@@ -121,6 +121,10 @@
     </ParameterList>
 
     <ParameterList name="polysilicon">
+      <Parameter name="material" type="string" value="MetalPolySilicon" />
+    </ParameterList>
+
+    <ParameterList name="polysi.gate">
       <Parameter name="material" type="string" value="PolySilicon" />
       <Parameter name="Dopant Type" type="string" value="Donor" />
       <Parameter name="Doping Profile" type="string" value="Constant" />

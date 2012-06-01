@@ -53,7 +53,7 @@ block 2 name "sio2"
 block 2 element type quad4
 
 block 3 surface 3
-block 3 name "polysilicon"
+block 3 name "polysi.gate"
 block 3 element type quad4
 
 # define meshing size
