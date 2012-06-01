@@ -156,7 +156,7 @@ protected:
   NEU_TYPE bc_type;
   SIDE_TYPE side_type;
   ScalarT const_val;
-  ScalarT robin_vals[3]; // (dof_value, distance (in mesh units), jump)
+  ScalarT robin_vals[3]; // (dof_value, coeff multiplying difference (dof - dof_value), jump)
   std::vector<ScalarT> dudx;
 
   std::vector<ScalarT> matScaling;

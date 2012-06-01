@@ -371,6 +371,12 @@ NeumannBase<EvalT, Traits>::
 getValue(const std::string &n) {
 
   if (n == name) return const_val;
+  else if(std::string::npos != n.find("robin")) {
+    for(int i = 0; i < 3; i++) {
+      std::stringstream ss; ss << name << "[" << i << "]";
+      if (n == ss.str())  return robin_vals[i];
+    }
+  }
   else {
     for(int i = 0; i < dudx.size(); i++) {
       std::stringstream ss; ss << name << "[" << i << "]";
