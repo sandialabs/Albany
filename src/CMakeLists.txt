@@ -561,6 +561,7 @@ IF(ALBANY_LCM)
   SET(SOURCES ${SOURCES}
     ${LCM_DIR}/utils/Geometry.cc
     ${LCM_DIR}/utils/Partition.cc
+    ${LCM_DIR}/utils/BarycentricSubdivision.cc
     ${LCM_DIR}/utils/Tensor.cc
     ${LCM_DIR}/utils/Topology.cc
     ${LCM_DIR}/utils/LocalNonlinearSolver.cc
@@ -577,14 +578,31 @@ IF(ALBANY_LCM)
 IF(ALBANY_LAME OR ALBANY_LAMENT)
   SET(SOURCES ${SOURCES}
     ${LCM_DIR}/utils/LameUtils.cpp
-    ${LCM_DIR}/evaluators/LameStress.cpp 
     ${LCM_DIR}/problems/LameProblem.cpp 
   )
   SET(HEADERS ${HEADERS}
     ${LCM_DIR}/utils/LameUtils.hpp
+    ${LCM_DIR}/problems/LameProblem.hpp
+  )
+ENDIF()
+
+IF(ALBANY_LAME)
+  SET(SOURCES ${SOURCES}
+    ${LCM_DIR}/evaluators/LameStress.cpp 
+  )
+  SET(HEADERS ${HEADERS}
     ${LCM_DIR}/evaluators/LameStress.hpp 
     ${LCM_DIR}/evaluators/LameStress_Def.hpp 
-    ${LCM_DIR}/problems/LameProblem.hpp
+  )
+ENDIF()
+
+IF(ALBANY_LAMENT)
+  SET(SOURCES ${SOURCES}
+    ${LCM_DIR}/evaluators/LamentStress.cpp 
+  )
+  SET(HEADERS ${HEADERS}
+    ${LCM_DIR}/evaluators/LamentStress.hpp 
+    ${LCM_DIR}/evaluators/LamentStress_Def.hpp 
   )
 ENDIF()
 
@@ -775,6 +793,7 @@ add_executable(AlbanyAnalysis Main_Analysis.cpp)
 IF (ALBANY_LCM)
   add_executable(PartitionTest LCM/test/utils/PartitionTest.cc)
   add_executable(NodeUpdate LCM/test/utils/NodeUpdate.cc)
+  add_executable(Subdivision LCM/test/utils/Subdivision.cc)
   add_executable(MeshComponents LCM/test/utils/MeshComponents.cc)
   add_executable(
     utLocalNonlinearSolver 
@@ -832,6 +851,7 @@ target_link_libraries(AlbanyAnalysis  albanyLib ${ALL_LIBRARIES})
 IF (ALBANY_LCM)
   target_link_libraries(PartitionTest albanyLib ${ALL_LIBRARIES})
   target_link_libraries(NodeUpdate albanyLib ${ALL_LIBRARIES})
+  target_link_libraries(Subdivision albanyLib ${ALL_LIBRARIES})
   target_link_libraries(MeshComponents albanyLib ${ALL_LIBRARIES})
   target_link_libraries(utLocalNonlinearSolver albanyLib ${ALL_LIBRARIES})
   target_link_libraries(utLocalization albanyLib ${ALL_LIBRARIES})

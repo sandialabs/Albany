@@ -272,6 +272,26 @@ topology::set_entities_open(
 	return;
 }
 
+//
+// \brief Output the graph associated with the mesh to graphviz .dot
+// file for visualization purposes. No need for entity_open map
+// for this version
+//
+// \param[in] output file
+// \param[in] map of entity and boolean value is open
+//
+// To create final output figure, run command below from terminal:
+//   dot -Tpng <gviz_output>.dot -o <gviz_output>.png
+//
+void
+topology::output_to_graphviz(
+		std::string & gviz_output)
+{
+	std::map<EntityKey, bool> entity_open;
+	output_to_graphviz(gviz_output, entity_open);
+	return;
+}
+
 /**
  * \brief Output the graph associated with the mesh to graphviz .dot
  * file for visualization purposes.
