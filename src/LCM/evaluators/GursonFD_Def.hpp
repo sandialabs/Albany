@@ -219,6 +219,7 @@ evaluateFields(typename Traits::EvalData workset)
 			if(normR0 != 0) conv = normR / normR0;
 			else conv = normR0;
 
+			//std::cout << "Iter = " << iter << "conv = " << conv << std::endl;
 			if(conv < 1.e-11 || normR < 1.e-11) break;
 			if(iter > 20) break;
 
@@ -431,8 +432,19 @@ GursonFD<EvalT, Traits>::compute_ResidJacobian(std::vector<ScalarT> & X, std::ve
 	else
 		omega = 0.0;
 
-	// void nucleation to be added
+	DFadType deq(0.0);
+	deq = (dgam * sq23 * psi_sign * std::sqrt(psi) + pfad * t / Ybar) / (1.-fvoidfad);
 
+	// void nucleation to be added
+	DFadType dfn(0.0);
+	DFadType An(0.0), eratio(0.0);
+	eratio = -0.5 * (eqfad - eN) * (eqfad - eN) / sN / sN;
+
+	const double pi = acos(-1.0);
+	if(pfad >= 0)
+		An = fN / sN / (std::sqrt(2.0*pi)) * std::exp(eratio);
+
+	dfn = An * deq;
 
 	DFadType Phi;
 
@@ -441,8 +453,8 @@ GursonFD<EvalT, Traits>::compute_ResidJacobian(std::vector<ScalarT> & X, std::ve
 	// local system of equations
 	Rfad[0] = Phi;
 	Rfad[1] = pfad - p + kappa * t;
-	Rfad[2] = fvoidfad - fvoid - (1. - fvoidfad) * t - sq23 * dgam * kw * fvoidfad * omega;
-	Rfad[3] = eqfad - eq - (dgam * sq23 * psi_sign * std::sqrt(psi) + pfad * t / Ybar) / (1.-fvoidfad);
+	Rfad[2] = fvoidfad - fvoid - (1. - fvoidfad) * t - sq23 * dgam * kw * fvoidfad * omega - dfn;
+	Rfad[3] = eqfad - eq - deq;
 
 	// get ScalarT Residual
 	for (int i=0; i<4; i++)

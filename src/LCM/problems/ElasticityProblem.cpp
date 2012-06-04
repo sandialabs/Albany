@@ -162,6 +162,8 @@ Albany::ElasticityProblem::constructNeumannEvaluators(
    // Construct BC evaluators for all possible names of conditions
    // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
    std::vector<string> condNames(3); //dudx, dudy, dudz, dudn, P
+   Teuchos::ArrayRCP<string> dof_names(1);
+     dof_names[0] = "Displacement";
 
    // Note that sidesets are only supported for two and 3D currently
    if(numDim == 2)
@@ -177,7 +179,8 @@ Albany::ElasticityProblem::constructNeumannEvaluators(
 
    nfm.resize(1); // Elasticity problem only has one element block
 
-   nfm[0] = neuUtils.constructBCEvaluators(meshSpecs, neumannNames, condNames, offsets, dl,
+   nfm[0] = neuUtils.constructBCEvaluators(meshSpecs, neumannNames, dof_names, true, 0,
+                                          condNames, offsets, dl,
                                           this->params, this->paramLib);
 
 }

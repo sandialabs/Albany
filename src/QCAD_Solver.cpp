@@ -858,7 +858,7 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
     //! Rename output file
     if (params.sublist("Discretization").isParameter("Exodus Output File Name"))
     {
-      std::string exoName= "init" + params.sublist("Discretization").get<std::string>("Exodus Output File Name");
+      std::string exoName= params.sublist("Discretization").get<std::string>("Exodus Output File Name") + ".init";
       params.sublist("Discretization").set("Exodus Output File Name", exoName);
     }
     else if (params.sublist("Discretization").isParameter("1D Output File Name"))

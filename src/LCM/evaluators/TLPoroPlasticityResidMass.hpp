@@ -71,6 +71,7 @@ private:
 
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defgrad;
   PHX::MDField<ScalarT,Cell,QuadPoint> J;
+  PHX::MDField<ScalarT,Cell,QuadPoint> elementLength;
 
   // stabilization term
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;

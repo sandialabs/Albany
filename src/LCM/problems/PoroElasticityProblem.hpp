@@ -294,7 +294,7 @@ Albany::PoroElasticityProblem::constructEvaluators(
         ev = rcp(new LCM::StabParameter<EvalT,AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
 
-        p = stateMgr.registerStateVariable("Stabilization Parameter",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+        p = stateMgr.registerStateVariable("Stabilization Parameter",dl->qp_scalar, dl->dummy,"scalar", 5.0e-7, true);
         ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
       }
@@ -339,7 +339,7 @@ Albany::PoroElasticityProblem::constructEvaluators(
 
           ev = rcp(new LCM::Porosity<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
-          p = stateMgr.registerStateVariable("Porosity",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+          p = stateMgr.registerStateVariable("Porosity",dl->qp_scalar, dl->dummy,"scalar", 0.4, true);
           ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
      }
@@ -364,7 +364,7 @@ Albany::PoroElasticityProblem::constructEvaluators(
 
           ev = rcp(new LCM::BiotCoefficient<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
-          p = stateMgr.registerStateVariable("Biot Coefficient",dl->qp_scalar, dl->dummy,"scalar", 0.0);
+          p = stateMgr.registerStateVariable("Biot Coefficient",dl->qp_scalar, dl->dummy,"scalar", 1.0);
           ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -388,7 +388,7 @@ Albany::PoroElasticityProblem::constructEvaluators(
 
           ev = rcp(new LCM::BiotModulus<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
-          p = stateMgr.registerStateVariable("Biot Modulus",dl->qp_scalar, dl->dummy,"scalar", 0.0);
+          p = stateMgr.registerStateVariable("Biot Modulus",dl->qp_scalar, dl->dummy,"scalar", 1.0e10);
           ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
      }

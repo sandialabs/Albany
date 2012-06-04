@@ -49,6 +49,21 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/pmoscap.exo.4.3
 # 3. Create the test with this name and standard executable
 add_test(${testRoot}_pmoscap ${Albany.exe} input_pmoscap.xml)
 
+# 1. Copy Input file from source to binary dir
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_pmoscap_polygate.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_pmoscap_polygate.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/pmoscap_polygate.exo
+               ${CMAKE_CURRENT_BINARY_DIR}/pmoscap_polygate.exo COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/pmoscap_polygate.exo.4.0
+               ${CMAKE_CURRENT_BINARY_DIR}/pmoscap_polygate.exo.4.0 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/pmoscap_polygate.exo.4.1
+               ${CMAKE_CURRENT_BINARY_DIR}/pmoscap_polygate.exo.4.1 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/pmoscap_polygate.exo.4.2
+               ${CMAKE_CURRENT_BINARY_DIR}/pmoscap_polygate.exo.4.2 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/pmoscap_polygate.exo.4.3
+               ${CMAKE_CURRENT_BINARY_DIR}/pmoscap_polygate.exo.4.3 COPYONLY)
+# 3. Create the test with this name and standard executable
+add_test(${testRoot}_pmoscap_polygate ${Albany.exe} input_pmoscap_polygate.xml)
 
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_pndiode.xml

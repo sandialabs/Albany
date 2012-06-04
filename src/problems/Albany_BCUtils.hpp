@@ -56,6 +56,7 @@ namespace Albany {
     enum { type = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_neumann };
     enum { typeNa = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_neumann_aggregator };
     enum { typeGCV = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_gather_coord_vector };
+    enum { typeGS = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_gather_solution };
 
     static const std::string bcParamsPl;
 
@@ -153,6 +154,9 @@ template<>
     constructBCEvaluators(
        const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs,
        const std::vector<std::string>& bcNames,
+       const Teuchos::ArrayRCP<string>& dof_names,
+       bool isVectorField, 
+       int offsetToFirstDOF, 
        const std::vector<std::string>& conditions,
        const Teuchos::Array<Teuchos::Array<int> >& offsets,
        const Teuchos::RCP<Albany::Layouts>& dl,

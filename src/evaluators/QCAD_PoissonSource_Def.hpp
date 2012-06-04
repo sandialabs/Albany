@@ -76,6 +76,33 @@ PoissonSource(Teuchos::ParameterList& p) :
   bUsePredictorCorrector = psList->get<bool>("Use predictor-corrector method",false);
   bIncludeVxc = psList->get<bool>("Include exchange-correlation potential",false);
 
+  // find element blocks and voltages applied on them
+  std::string preName = "DBC on NS "; 
+  std::string postName = " for DOF Phi";
+  std::size_t preLen = preName.length();
+  std::size_t postLen = postName.length();  
+
+  const Teuchos::ParameterList& dbcPList = *(p.get<Teuchos::ParameterList*>("Dirichlet BCs ParameterList"));
+  for (Teuchos::ParameterList::ConstIterator model_it = dbcPList.begin();
+         model_it != dbcPList.end(); ++model_it)
+  {
+    // retrieve the nodeset name
+    const std::string& dbcName = model_it->first;
+    std::size_t nsNameLen = dbcName.length() - preLen - postLen;
+    std::string nsName = dbcName.substr(preLen, nsNameLen);
+    
+    // obtain the element block associated with this nodeset (should be ohmic, NOT contact on insulator) 
+    const std::string& ebName = materialDB->getNodeSetParam<std::string>(nsName,"elementBlock","");
+    
+    // map the element block to its applied voltage
+    if (ebName.length() > 0)
+    {
+      double dbcValue = dbcPList.get<double>(dbcName); 
+      mapDBCValue[ebName] = dbcValue;
+      std::cout << "ebName = " << ebName << ", value = " << mapDBCValue[ebName] << std::endl;  
+    }
+  }
+
   // specific values for "1D MOSCapacitor"
   if (device == "1D MOSCapacitor") 
   {
@@ -305,7 +332,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 
   //! function pointer to quantum electron density member function
   ScalarT (QCAD::PoissonSource<EvalT,Traits>::*quantum_edensity_fn) 
-    (typename Traits::EvalData, std::size_t, std::size_t, const ScalarT, const bool);
+    (typename Traits::EvalData, std::size_t, std::size_t, const ScalarT, const bool, const double);
 
   if(quantumRegionSource == "schrodinger")
     quantum_edensity_fn = &QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrodinger;
@@ -390,6 +417,13 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
     else TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
         std::endl << "Error!  Invalid incomplete ionization option ! " << std::endl);
 
+    //! obtain the fermi energy in a given element block
+    double fermiE = 0.0;  // default, [eV]
+    if (mapDBCValue.count(workset.EBName) > 0) 
+    {
+      fermiE = -1.0*mapDBCValue[workset.EBName]; 
+      // std::cout << "EBName = " << workset.EBName << ", fermiE = " << fermiE << std::endl; 
+    }
 
     //! get doping concentration and activation energy
     //** Note: doping profile unused currently
@@ -412,9 +446,9 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
         std::endl << "Error!  Unknown dopant concentration for " << workset.EBName << "!"<< std::endl);
 
       if(dopantType == "Donor") 
-        inArg = eArgOffset + dopantActE/kbT;
+        inArg = eArgOffset + dopantActE/kbT + fermiE/kbT;
       else if(dopantType == "Acceptor") 
-        inArg = hArgOffset + dopantActE/kbT;
+        inArg = hArgOffset + dopantActE/kbT - fermiE/kbT;
       else TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
 	       std::endl << "Error!  Unknown dopant type " << dopantType << "!"<< std::endl);
     }
@@ -423,7 +457,6 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
       dopingConc = 0.0;
       inArg = 0.0;
     }
-
 
     //! Schrodinger source for electrons
     if(materialDB->getElementBlockParam<bool>(workset.EBName,"quantum",false)) 
@@ -443,27 +476,27 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
           
             if(bUsePredictorCorrector)
               // compute the approximate quantum electron density using predictor-corrector method
-              approxEDensity = (this->*quantum_edensity_fn)(workset, cell, qp, prevPhi, true);
+              approxEDensity = (this->*quantum_edensity_fn)(workset, cell, qp, prevPhi, true, fermiE);
 
             else  // otherwise, use the exact quantum density
-              approxEDensity = (this->*quantum_edensity_fn)(workset, cell, qp, 0.0, false);
+              approxEDensity = (this->*quantum_edensity_fn)(workset, cell, qp, 0.0, false, fermiE);
 	    
             // compute the exact quantum electron density
-            ScalarT eDensity = (this->*quantum_edensity_fn)(workset, cell, qp, 0.0, false);
+            ScalarT eDensity = (this->*quantum_edensity_fn)(workset, cell, qp, 0.0, false, fermiE);
           
             // obtain the scaled potential
             const ScalarT& unscaled_phi = potential(cell,qp); //[V]
             ScalarT phi = unscaled_phi / V0; 
            
             // compute the hole density treated as classical
-            ScalarT hDensity = Nv*(this->*carrStat)(-phi+hArgOffset); 
+            ScalarT hDensity = Nv*(this->*carrStat)(-phi + hArgOffset); 
 
             // obtain the ionized dopants
             ScalarT ionN  = 0.0;
             if (dopantType == "Donor")  // function takes care of sign
-              ionN = (this->*ionDopant)(dopantType,phi+inArg)*dopingConc;
+              ionN = (this->*ionDopant)(dopantType,phi + inArg)*dopingConc;
             else if (dopantType == "Acceptor")
-              ionN = (this->*ionDopant)(dopantType,-phi+inArg)*dopingConc;
+              ionN = (this->*ionDopant)(dopantType,-phi + inArg)*dopingConc;
             else 
               ionN = 0.0;
               
@@ -561,16 +594,16 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
             // obtain the ionized dopants
             ScalarT ionN;
             if (dopantType == "Donor")  // function takes care of sign
-              ionN = (this->*ionDopant)(dopantType,phi+inArg)*dopingConc;
+              ionN = (this->*ionDopant)(dopantType,phi + inArg)*dopingConc;
             else if (dopantType == "Acceptor")
-              ionN = (this->*ionDopant)(dopantType,-phi+inArg)*dopingConc;
+              ionN = (this->*ionDopant)(dopantType,-phi + inArg)*dopingConc;
             else 
               ionN = 0.0; 
 
             // the scaled full RHS
             ScalarT charge, eDensity, hDensity; 
-            eDensity = Nc*(this->*carrStat)(phi+eArgOffset);
-            hDensity = Nv*(this->*carrStat)(-phi+hArgOffset);
+            eDensity = Nc*(this->*carrStat)(phi + eArgOffset + fermiE/kbT);
+            hDensity = Nv*(this->*carrStat)(-phi + hArgOffset - fermiE/kbT);
             charge = 1.0/Lambda2 * (hDensity - eDensity + ionN);
             poissonSource(cell, qp) = factor*charge;
           
@@ -677,12 +710,12 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
           
             if (bUsePredictorCorrector) 
               // compute the approximate quantum electron density using predictor-corrector method
-              approxEDensity = (this->*quantum_edensity_fn)(workset, cell, qp, prevPhi, true);
+              approxEDensity = (this->*quantum_edensity_fn)(workset, cell, qp, prevPhi, true, 0.0);
             else
-              approxEDensity = (this->*quantum_edensity_fn)(workset, cell, qp, 0.0, false);
+              approxEDensity = (this->*quantum_edensity_fn)(workset, cell, qp, 0.0, false, 0.0);
 
             // compute the exact quantum electron density
-            ScalarT eDensity = (this->*quantum_edensity_fn)(workset, cell, qp, 0.0, false);
+            ScalarT eDensity = (this->*quantum_edensity_fn)(workset, cell, qp, 0.0, false, 0.0);
 
             // obtain the scaled potential
             const ScalarT& unscaled_phi = potential(cell,qp); //[V]
@@ -1064,13 +1097,13 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
         
         if(bUsePredictorCorrector)
           // compute the approximate quantum electron density using predictor-corrector method
-          approxEDensity = eDensityForPoissonSchrodinger(workset, cell, qp, prevPhi, true);
+          approxEDensity = eDensityForPoissonSchrodinger(workset, cell, qp, prevPhi, true, 0.0);
 
         else  // otherwise, use the exact quantum density
-          approxEDensity = eDensityForPoissonSchrodinger(workset, cell, qp, 0.0, false);
+          approxEDensity = eDensityForPoissonSchrodinger(workset, cell, qp, 0.0, false, 0.0);
 
         // compute the exact quantum electron density
-        ScalarT eDensity = eDensityForPoissonSchrodinger(workset, cell, qp, 0.0, false);
+        ScalarT eDensity = eDensityForPoissonSchrodinger(workset, cell, qp, 0.0, false, 0.0);
           
         // obtain the scaled potential
         const ScalarT& unscaled_phi = potential(cell,qp);
@@ -1184,13 +1217,13 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
         
         if (bUsePredictorCorrector) 
           // compute the approximate quantum electron density using predictor-corrector method
-          approxEDensity = eDensityForPoissonSchrodinger(workset, cell, qp, prevPhi, true);
+          approxEDensity = eDensityForPoissonSchrodinger(workset, cell, qp, prevPhi, true, 0.0);
 
         else
-          approxEDensity = eDensityForPoissonSchrodinger(workset, cell, qp, 0.0, false);
+          approxEDensity = eDensityForPoissonSchrodinger(workset, cell, qp, 0.0, false, 0.0);
 
         // compute the exact quantum electron density
-        ScalarT eDensity = eDensityForPoissonSchrodinger(workset, cell, qp, 0.0, false);
+        ScalarT eDensity = eDensityForPoissonSchrodinger(workset, cell, qp, 0.0, false, 0.0);
 
         // obtain the scaled potential
         const ScalarT& unscaled_phi = potential(cell,qp);
@@ -1441,7 +1474,8 @@ QCAD::PoissonSource<EvalT,Traits>::computeFDIntMinusOneHalf(const ScalarT x)
 template<typename EvalT, typename Traits>
 typename QCAD::PoissonSource<EvalT,Traits>::ScalarT
 QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrodinger 
-(typename Traits::EvalData workset, std::size_t cell, std::size_t qp, const ScalarT prevPhi, const bool bUsePredCorr)
+  (typename Traits::EvalData workset, std::size_t cell, std::size_t qp, 
+   const ScalarT prevPhi, const bool bUsePredCorr, const double Ef)
 {
   // Use the predictor-corrector method proposed by A. Trellakis, A. T. Galick,  
   // and U. Ravaioli, "Iteration scheme for the solution of the two-dimensional  
@@ -1463,7 +1497,6 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrodinger
   ScalarT temperature = temperatureField(0); //get shared temperature parameter from field
   ScalarT kbT = kbBoltz*temperature;  // in [eV]
   ScalarT eDensity = 0.0; 
-  double Ef = 0.0;  //Fermi energy == 0
 
   const std::vector<double>& neg_eigenvals = *(workset.eigenDataPtr->eigenvalueRe);
   std::vector<double> eigenvals( neg_eigenvals );
@@ -1504,12 +1537,12 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrodinger
         ScalarT wfSquared = ( eigenvector_Re[i](cell,qp)*eigenvector_Re[i](cell,qp) + 
  			      eigenvector_Im[i](cell,qp)*eigenvector_Im[i](cell,qp) );
  			  
-	ScalarT tmpArg = (Ef-eigenvals[i])/kbT + deltaPhi;
-	ScalarT logFunc; 
-	if (tmpArg > MAX_EXPONENT)
-	  logFunc = tmpArg;  // exp(tmpArg) blows up for large positive tmpArg, leading to bad derivative
-	else
-	  logFunc = log(1.0 + exp(tmpArg));
+        ScalarT tmpArg = (Ef-eigenvals[i])/kbT + deltaPhi;
+        ScalarT logFunc; 
+        if (tmpArg > MAX_EXPONENT)
+          logFunc = tmpArg;  // exp(tmpArg) blows up for large positive tmpArg, leading to bad derivative
+        else
+          logFunc = log(1.0 + exp(tmpArg));
  			      
         eDensity += wfSquared*logFunc;
       }
@@ -1601,7 +1634,8 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrodinger
 template<typename EvalT, typename Traits>
 typename QCAD::PoissonSource<EvalT,Traits>::ScalarT
 QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonCI 
-(typename Traits::EvalData workset, std::size_t cell, std::size_t qp, const ScalarT prevPhi, const bool bUsePredCorr)
+  (typename Traits::EvalData workset, std::size_t cell, std::size_t qp, 
+   const ScalarT prevPhi, const bool bUsePredCorr, const double Ef)
 {
   // Use the predictor-corrector method proposed by A. Trellakis, A. T. Galick,  
   // and U. Ravaioli, "Iteration scheme for the solution of the two-dimensional  

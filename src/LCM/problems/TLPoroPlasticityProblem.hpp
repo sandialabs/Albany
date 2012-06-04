@@ -139,6 +139,7 @@ namespace Albany {
 #include "ElasticModulus.hpp"
 #include "ShearModulus.hpp"
 #include "PoissonsRatio.hpp"
+#include "GradientElementLength.hpp"
 
 #include "PHAL_Source.hpp"
 #include "TLPoroPlasticityResidMass.hpp"
@@ -154,6 +155,7 @@ namespace Albany {
 #include "SaturationExponent.hpp"
 #include "DislocationDensity.hpp"
 #include "TLPoroStress.hpp"
+
 
 
 template <typename EvalT>
@@ -289,6 +291,27 @@ Albany::TLPoroPlasticityProblem::constructEvaluators(
         fm0.template registerEvaluator<EvalT>(ev);
       }
 
+   { // Element length in the direction of solution gradient
+              RCP<ParameterList> p = rcp(new ParameterList("Gradient Element Length"));
+
+              //Input
+              p->set<string>("Unit Gradient QP Variable Name", "Pore Pressure Gradient");
+              p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
+              p->set<string>("Gradient BF Name", "Grad BF");
+              p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+
+              //Output
+              p->set<string>("Element Length Name", "Gradient Element Length");
+              p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+              ev = rcp(new LCM::GradientElementLength<EvalT,AlbanyTraits>(*p));
+              fm0.template registerEvaluator<EvalT>(ev);
+              p = stateMgr.registerStateVariable("Gradient Element Length",dl->qp_scalar, dl->dummy,"scalar", 1.0);
+              ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+              fm0.template registerEvaluator<EvalT>(ev);
+       }
+
 
    { // Strain
      RCP<ParameterList> p = rcp(new ParameterList("Strain"));
@@ -355,7 +378,7 @@ Albany::TLPoroPlasticityProblem::constructEvaluators(
 
           ev = rcp(new LCM::BiotCoefficient<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
-          p = stateMgr.registerStateVariable("Biot Coefficient",dl->qp_scalar, dl->dummy,"scalar", 0.0);
+          p = stateMgr.registerStateVariable("Biot Coefficient",dl->qp_scalar, dl->dummy,"scalar", 1.0);
           ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -379,7 +402,7 @@ Albany::TLPoroPlasticityProblem::constructEvaluators(
 
           ev = rcp(new LCM::BiotModulus<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
-          p = stateMgr.registerStateVariable("Biot Modulus",dl->qp_scalar, dl->dummy,"scalar", 0.0);
+          p = stateMgr.registerStateVariable("Biot Modulus",dl->qp_scalar, dl->dummy,"scalar", 1.0e20);
           ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
      }
@@ -652,7 +675,7 @@ Albany::TLPoroPlasticityProblem::constructEvaluators(
         p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy,"scalar", 0.0);
         ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
-        p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy,"identity", true);
+        p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy,"identity", 1.0, true);
         ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
         p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
@@ -744,7 +767,7 @@ Albany::TLPoroPlasticityProblem::constructEvaluators(
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
     p = stateMgr.registerStateVariable("Jacobian",
-    		                           dl->qp_scalar, dl->dummy,"scalar", 0.0,true);
+    		                           dl->qp_scalar, dl->dummy,"scalar", 1.0,true);
 	ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -797,6 +820,7 @@ Albany::TLPoroPlasticityProblem::constructEvaluators(
     p->set<bool>("Have Absorption", false);
 
     // Input from cubature points
+    p->set<string>("Element Length Name", "Gradient Element Length");
     p->set<string>("QP Pore Pressure Name", "Pore Pressure");
 	p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 

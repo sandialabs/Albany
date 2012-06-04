@@ -262,16 +262,21 @@ evaluateFields(typename Traits::EvalData workset)
  						                   )*wBF(cell, node, qp)  ;
 
  				  // Pore-fluid Resistance Term
- 				  TResidual(cell,node) +=  (-(J(cell,qp)-Jold(cell,qp))*porePressure(cell,qp) +
- 						                    J(cell,qp)*dporePressure)
- 						                  / (J(cell,qp)*J(cell,qp))
+ 				  TResidual(cell,node) +=  (-
+ 						  // (J(cell,qp)-Jold(cell,qp))*
+ 						 // porePressure(cell,qp) +
+ 						//                    J(cell,qp)*
+ 						                    dporePressure)
+ 						 //                 / (J(cell,qp)*J(cell,qp))
              		                      *3.00*alphaMixture(cell,qp)*refTemp(cell,qp)
              		                      *wBF(cell, node, qp);
 
  				 // Thermal Expansion
- 				 TResidual(cell,node) -= ( -( J(cell,qp)-Jold(cell,qp) )*Temp(cell,qp) +
- 				  						   J(cell,qp)*dTemperature )
- 				  						 /(J(cell,qp)*J(cell,qp))
+ 				 TResidual(cell,node) -=  -(
+ 						 // J(cell,qp)-Jold(cell,qp) )*Temp(cell,qp) +
+ 				  		//				   J(cell,qp)*
+ 				  						   dTemperature )
+ 				  			//			 /(J(cell,qp)*J(cell,qp))
  				              		     *gammaMixture(cell, qp)*wBF(cell, node, qp);
 			  }
 		  }
@@ -319,9 +324,10 @@ evaluateFields(typename Traits::EvalData workset)
 
 
 	porePbar += weights(cell,qp)*(
-			-(J(cell,qp)-Jold(cell,qp))*porePressure(cell,qp)
-			 						 +  J(cell,qp)*(porePressure(cell,qp)-porePressureold(cell, qp)))
-			 						 / ( J(cell,qp)*J(cell,qp) );
+		//	-(J(cell,qp)-Jold(cell,qp))*porePressure(cell,qp)
+			 		//				 +  J(cell,qp)*
+			 						 (porePressure(cell,qp)-porePressureold(cell, qp)));
+			 				//		 / ( J(cell,qp)*J(cell,qp) );
 	vol  += weights(cell,qp);
    }
    porePbar /= vol;
@@ -351,16 +357,17 @@ evaluateFields(typename Traits::EvalData workset)
 
     	 if (Tempold(cell,qp) != 0) dTemperature = Temp(cell,qp)-Tempold(cell,qp);
 
-	      // set correction for 1st time step
-	      if (J(cell,qp) == 0)
-	    		  J(cell,qp) = 1.0;
-	      if (Jold(cell,qp) == 0)
-	      		  Jold(cell,qp) = 1.0;
+	  //    // set correction for 1st time step
+	 //     if (J(cell,qp) == 0)
+	  //  		  J(cell,qp) = 1.0;
+	 //     if (Jold(cell,qp) == 0)
+	 //     		  Jold(cell,qp) = 1.0;
 
   	 Tempbar += weights(cell,qp)*(
-  			-(J(cell,qp)-Jold(cell,qp))*Temp(cell,qp) +
-  			  J(cell,qp)*dTemperature)
-  			 / (J(cell,qp)*J(cell,qp))
+  		//	-(J(cell,qp)-Jold(cell,qp))*Temp(cell,qp) +
+  		//	  J(cell,qp)*
+  			  dTemperature)
+  		//	 / (J(cell,qp)*J(cell,qp))
   			                      ;
   	vol  += weights(cell,qp);
 

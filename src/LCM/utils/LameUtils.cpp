@@ -36,48 +36,8 @@
 #include "models/FeFp.h"
 #include "models/CrystalPlasticity.h"
 #endif
-#ifdef ALBANY_LAMENT
-#include "models/Lament_ElasticNew.h"
-#endif
 
 namespace LameUtils {
-
-void parameterListToMatProps(const Teuchos::ParameterList& lameMaterialParameters, LameMatProps& matProps){
-
-  // load the material properties into the lame(nt)::MatProps container.
-  // LAME material properties must be of type int, double, or string.
-
-  for(Teuchos::ParameterList::ConstIterator it = lameMaterialParameters.begin() ; it != lameMaterialParameters.end() ; ++it){
-
-    std::string name = lameMaterialParameters.name(it);
-    std::transform(name.begin(), name.end(), name.begin(), toupper);
-    std::replace(name.begin(), name.end(), ' ', '_');
-
-    const Teuchos::ParameterEntry entry = lameMaterialParameters.entry(it);
-    if(entry.isType<int>()){
-      std::vector<int> propertyVector;
-      propertyVector.push_back(Teuchos::getValue<int>(entry));
-      matProps.insert(name, propertyVector);
-    }
-    else if(entry.isType<double>()){
-      std::vector<double> propertyVector;
-      propertyVector.push_back(Teuchos::getValue<double>(entry));
-      matProps.insert(name, propertyVector);
-    }
-    else if(entry.isType<std::string>()){
-      std::vector<std::string> propertyVector;
-      propertyVector.push_back(Teuchos::getValue<std::string>(entry));
-      matProps.insert(name, propertyVector);
-    }
-    else if(entry.isType<bool>()){
-      // Flag for reading from xml materials database is a bool -- not sent to Lame
-    }
-    else{
-      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, " parameters for LAME material models must be of type double, int, or string.\n");
-    }
-  }
-}
-
 
 Teuchos::RCP<LameMaterial> constructLameMaterialModel(const std::string& lameMaterialModelName,
 						      const Teuchos::ParameterList& lameMaterialParameters){
@@ -136,33 +96,6 @@ Teuchos::RCP<LameMaterial> constructLameMaterialModel(const std::string& lameMat
 
   return materialModel;
 }
-
-
-#ifdef ALBANY_LAMENT
-Teuchos::RCP<LameMaterial_AD> constructLameMaterialModel_AD(const std::string& lameMaterialModelName,
-							    const Teuchos::ParameterList& lameMaterialParameters){
-
-  // Strings should be all upper case with spaces replaced with underscores
-  std::string materialModelName = lameMaterialModelName;
-  std::transform(materialModelName.begin(), materialModelName.end(), materialModelName.begin(), toupper);
-  std::replace(materialModelName.begin(), materialModelName.end(), ' ', '_');
-
-  LameMatProps props;
-  parameterListToMatProps(lameMaterialParameters, props);
-
-  Teuchos::RCP<LameMaterial_AD> materialModel;
-
-  if(materialModelName == "ELASTIC_NEW")
-    materialModel = Teuchos::rcp(new lament::ElasticNew<ADType>(props));
-  else{
-    if(materialModel.is_null())
-      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, " unsupported LAMENT material model: " + lameMaterialModelName + " (" + materialModelName + ")\n");
-  }
-
-  return materialModel;
-}
-#endif
-
 
 std::vector<std::string> getStateVariableNames(const std::string& lameMaterialModelName,
                                                const Teuchos::ParameterList& lameMaterialParameters){

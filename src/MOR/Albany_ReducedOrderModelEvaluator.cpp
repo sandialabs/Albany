@@ -17,9 +17,10 @@
 #include "Albany_ReducedOrderModelEvaluator.hpp"
 
 #include "Albany_ReducedSpace.hpp"
-#include "Albany_GalerkinProjectionOperator.hpp"
+#include "Albany_ReducedLinearOperatorFactory.hpp"
 
 #include "Epetra_Vector.h"
+#include "Epetra_CrsMatrix.h"
 
 #include "Teuchos_TestForException.hpp"
 
@@ -154,7 +155,9 @@ RCP<Epetra_Operator> ReducedOrderModelEvaluator::create_W() const
     return null;
   }
 
-  return rcp(new GalerkinProjectionOperator(fullOrderOperator, solutionSpace_));
+  const RCP<Epetra_MultiVector> projector(new Epetra_MultiVector(solutionSpace_->basis()));
+  ReducedLinearOperatorFactory factory(projector);
+  return factory.reducedOperatorNew();
 }
 
 EpetraExt::ModelEvaluator::InArgs ReducedOrderModelEvaluator::createInArgs() const
@@ -245,12 +248,10 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
       }
     }
 
-    // Prepare reduced Jacobian (W_r), implies W_r <- basis^T * W * basis (Galerkin projection)
+    // Prepare reduced Jacobian (W_r)
     if (supportsJacobian) {
       if (nonnull(outArgs.get_W())) {
-        const RCP<GalerkinProjectionOperator> W_r = rcp_dynamic_cast<GalerkinProjectionOperator>(outArgs.get_W());
-        TEUCHOS_TEST_FOR_EXCEPT(is_null((W_r))); 
-        fullOutArgs.set_W(W_r->fullOperator());
+        fullOutArgs.set_W(fullOrderModel_->create_W());
       }
     }
   }
@@ -261,6 +262,16 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
   // f_r <- basis^T * f (Galerkin projection)
   if (supportsResidual && nonnull(outArgs.get_f())) {
     solutionSpace_->linearReduction(*fullOutArgs.get_f(), *outArgs.get_f());
+  }
+
+  // Wr <- basis^T * W * basis (Galerkin projection)
+  if (supportsJacobian && nonnull(outArgs.get_W())) {
+    const RCP<Epetra_CrsMatrix> W_r = rcp_dynamic_cast<Epetra_CrsMatrix>(outArgs.get_W());
+    TEUCHOS_TEST_FOR_EXCEPT(is_null((W_r))); 
+    
+    const RCP<Epetra_MultiVector> projector(new Epetra_MultiVector(solutionSpace_->basis()));
+    ReducedLinearOperatorFactory factory(projector);
+    factory.reducedOperatorInit(*fullOutArgs.get_W(), *W_r);
   }
 }
 

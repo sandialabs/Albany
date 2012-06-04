@@ -55,6 +55,14 @@
       <Parameter name="elementBlock" type="string" value="silicon.psubstrate" />
     </ParameterList>
 
+    <ParameterList name="polygate">
+      <Parameter name="elementBlock" type="string" value="polysi.gate" />
+    </ParameterList>
+
+    <ParameterList name="psub">
+      <Parameter name="elementBlock" type="string" value="silicon.psub" />
+    </ParameterList>
+
   </ParameterList>
 
 
@@ -93,6 +101,13 @@
       <Parameter name="Doping Value" type="double" value="1e14" />
     </ParameterList>
 
+    <ParameterList name="silicon.psub">
+      <Parameter name="material" type="string" value="Silicon" />
+      <Parameter name="Dopant Type" type="string" value="Acceptor" />
+      <Parameter name="Doping Profile" type="string" value="Constant" />
+      <Parameter name="Doping Value" type="double" value="1e15" />
+    </ParameterList>
+
     <ParameterList name="sio2">
       <Parameter name="material" type="string" value="SiliconDioxide" />
       <Parameter name="Charge Parameter Name" type="string" value="Oxide Charge" />
@@ -107,6 +122,13 @@
 
     <ParameterList name="polysilicon">
       <Parameter name="material" type="string" value="MetalPolySilicon" />
+    </ParameterList>
+
+    <ParameterList name="polysi.gate">
+      <Parameter name="material" type="string" value="PolySilicon" />
+      <Parameter name="Dopant Type" type="string" value="Donor" />
+      <Parameter name="Doping Profile" type="string" value="Constant" />
+      <Parameter name="Doping Value" type="double" value="6e18" />
     </ParameterList>
 
     <ParameterList name="sige">

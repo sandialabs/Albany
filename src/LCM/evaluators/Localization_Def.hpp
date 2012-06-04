@@ -43,7 +43,9 @@ Localization(const Teuchos::ParameterList& p) :
   defGrad         (p.get<std::string>                   ("Deformation Gradient Name"),
                    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
   stress          (p.get<std::string>                   ("Stress Name"),
-                   p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout"))
+                   p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
+  force           (p.get<std::string>                   ("Force Name"),
+                   p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout"))
 {
   this->addDependentField(referenceCoords);
   this->addDependentField(currentCoords);
@@ -51,6 +53,7 @@ Localization(const Teuchos::ParameterList& p) :
   this->addDependentField(kappa);
   this->addEvaluatedField(defGrad);
   this->addEvaluatedField(stress);
+  this->addEvaluatedField(force);
 
   // Get Dimensions
   Teuchos::RCP<PHX::DataLayout> vert_dl = p.get< Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout");
@@ -76,7 +79,7 @@ Localization(const Teuchos::ParameterList& p) :
   // new stuff
   midplaneCoords.resize(containerSize, numPlaneNodes, numDims);
   bases.resize(containerSize, numQPs, numDims, numDims);
-  dualBases.resize(containerSize, numQPs, numDims, numDims);
+  dualRefBases.resize(containerSize, numQPs, numDims, numDims);
   refJacobian.resize(containerSize, numQPs);
   refNormal.resize(containerSize, numQPs, numDims);
   refArea.resize(containerSize, numQPs);
@@ -104,6 +107,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(kappa,fm);
   this->utils.setFieldData(defGrad,fm);
   this->utils.setFieldData(stress,fm);
+  this->utils.setFieldData(force,fm);
 }
 
 //----------------------------------------------------------------------
@@ -125,13 +129,13 @@ evaluateFields(typename Traits::EvalData workset)
     std::cout << "Ref bases:\n" << bases << std::endl;
     
     // compute the dual
-    computeDualBaseVectors(midplaneCoords, bases, refNormal, dualBases);
+    computeDualBaseVectors(midplaneCoords, bases, refNormal, dualRefBases);
 
     std::cout << "Ref normal:\n" << refNormal << std::endl;
-    std::cout << "Ref dual Bases:\n" << dualBases << std::endl;
+    std::cout << "Ref dual Bases:\n" << dualRefBases << std::endl;
 
     // compute the Jacobian
-    computeJacobian(bases, dualBases, refArea, refJacobian);
+    computeJacobian(bases, dualRefBases, refArea, refJacobian);
 
     std::cout << "Ref Area:\n" << refArea << std::endl;
     std::cout << "Ref Jacobian:\n" << refJacobian << std::endl;
@@ -153,12 +157,13 @@ evaluateFields(typename Traits::EvalData workset)
     std::cout << "gap:\n" << gap << std::endl;
 
     // compute deformation gradient
-    computeDeformationGradient(thickness, bases, dualBases, refNormal, gap, defGrad, J);
+    computeDeformationGradient(thickness, bases, dualRefBases, refNormal, gap, defGrad, J);
 
     // call constitutive response
     computeStress(defGrad, J, mu, kappa, stress);
 
     // compute force
+    computeForce(thickness, defGrad, J, stress, bases, dualRefBases, refNormal, force);
   }
 }
 //----------------------------------------------------------------------
@@ -201,8 +206,8 @@ computeBaseVectors(const FC & midplaneCoords, FC & bases)
       g_0.clear(); g_1.clear(); g_2.clear();
       for (std::size_t node(0); node < numPlaneNodes; ++ node)
       {
-        g_0 += ScalarT(refGrads(node, pt, 0)) * midplaneNodes[node];
-        g_1 += ScalarT(refGrads(node, pt, 1)) * midplaneNodes[node];
+        g_0 += refGrads(node, pt, 0) * midplaneNodes[node];
+        g_1 += refGrads(node, pt, 1) * midplaneNodes[node];
       }
       g_2 = cross(g_0,g_1)/norm(cross(g_0,g_1));
       
@@ -245,7 +250,7 @@ computeDualBaseVectors(const FC & midplaneCoords, const FC & bases, FC & normal,
 //----------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 void Localization<EvalT, Traits>::
-computeJacobian(const FC & bases, const FC & dualbases, FC & area, FC & jacobian)
+computeJacobian(const FC & bases, const FC & dualBases, FC & area, FC & jacobian)
 {
   std::cout << "In computeJacobian" << std::endl;
   const std::size_t worksetSize = bases.dimension(0);
@@ -320,7 +325,8 @@ computeDeformationGradient(const ScalarT t, const FC & bases, const FC & dualBas
       LCM::Vector<ScalarT> G2( &dualBases(cell,pt,2,0) );
       
       LCM::Tensor<ScalarT> F1( LCM::bun( g_0, G0 ) + LCM::bun( g_1, G1 ) + LCM::bun( g_2, G2 ) );
-      LCM::Tensor<ScalarT> F2( ScalarT( 1 / t ) * LCM::bun( d, G_2 ) );
+      // for Jay: bun()
+      LCM::Tensor<ScalarT> F2( ( 1 / t ) * LCM::bun( d, G_2 ) );
 
       LCM::Tensor<ScalarT> F = F1 + F2;
 
@@ -351,11 +357,43 @@ computeStress(const PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defGrad, const 
       const LCM::Tensor<ScalarT> I = LCM::identity<ScalarT>();
       
       LCM::Tensor<ScalarT> sigma = half * KAPPA * ( J(cell,pt) - 1. / J(cell,pt) ) * LCM::identity<ScalarT>() + MU * Jm53 * dev(b);
-      //LCM::Tensor<ScalarT> sigma = half * KAPPA * I;
 
       stress(cell,pt,0,0) = sigma(0,0); stress(cell,pt,0,1) = sigma(0,1); stress(cell,pt,0,2) = sigma(0,2);
       stress(cell,pt,1,0) = sigma(1,0); stress(cell,pt,1,1) = sigma(1,1); stress(cell,pt,1,2) = sigma(1,2);
       stress(cell,pt,2,0) = sigma(2,0); stress(cell,pt,2,1) = sigma(2,1); stress(cell,pt,2,2) = sigma(2,2);
+    }
+  }
+}
+//----------------------------------------------------------------------
+template<typename EvalT, typename Traits>
+void Localization<EvalT, Traits>::
+computeForce(const ScalarT thickness, const PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defGrad, const FC & J, 
+             const PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress, const FC & bases, const FC & dualRefBases, 
+             const FC & refNormal, PHX::MDField<ScalarT,Cell,Node,Dim> force)
+{
+  for (std::size_t cell(0); cell < defGrad.dimension(0); ++cell)
+  {
+    for (std::size_t pt(0); pt < numQPs; ++pt)
+    {
+      // deformed bases
+      LCM::Vector<ScalarT> g_0( &bases(cell,pt,0,0) );
+      LCM::Vector<ScalarT> g_1( &bases(cell,pt,1,0) );
+      LCM::Vector<ScalarT> n( &bases(cell,pt,2,0) );
+      // ref bases
+      LCM::Vector<ScalarT> G0( &dualRefBases(cell,pt,0,0) );
+      LCM::Vector<ScalarT> G1( &dualRefBases(cell,pt,1,0) );
+      LCM::Vector<ScalarT> G2( &dualRefBases(cell,pt,2,0) );
+      // ref normal
+      LCM::Vector<ScalarT> G_2( &refNormal(cell,pt,0) );
+      // deformation gradient
+      LCM::Tensor<ScalarT> F( &defGrad(cell,pt,0,0) );
+      // cauchy stress
+      LCM::Tensor<ScalarT> sigma( &stress(cell,pt,0,0) );
+
+      // compute P
+      LCM::Tensor<ScalarT> P = ( 1. / det( F ) ) * sigma * inverse( transpose( F ) );
+
+      
     }
   }
 }

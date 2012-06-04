@@ -36,7 +36,6 @@ NeumannBase(const Teuchos::ParameterList& p) :
   sideSetID      (p.get<std::string>("Side Set ID")),
   coordVec       (p.get<std::string>("Coordinate Vector Name"), dl->vertices_vector)
 {
-
   // the input.xml string "NBC on SS sidelist_12 for DOF T set dudn" (or something like it)
   name = p.get< std::string >("Neumann Input String");
 
@@ -56,15 +55,24 @@ NeumannBase(const Teuchos::ParameterList& p) :
   // If we are doing a Neumann internal boundary with a "scaled jump",
   // build a scale lookup table from the materialDB file (this must exist)
 
-  if(inputConditions == "scaled jump" && p.isType<Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB")){
+  if((inputConditions == "scaled jump" || inputConditions == "robin") &&
+     p.isType<Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB")){
 
     //! Material database - holds the scaling we need
     Teuchos::RCP<QCAD::MaterialDatabase> materialDB =
       p.get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
 
      // User has specified conditions on sideset normal
-     bc_type = INTJUMP;
-     const_val = inputValues[0];
+    if(inputConditions == "scaled jump") {
+      bc_type = INTJUMP;
+      const_val = inputValues[0];
+    }
+    else { // inputConditions == "robin"
+      bc_type = ROBIN;
+      robin_vals[0] = inputValues[0]; // dof_value
+      robin_vals[1] = inputValues[1]; // coeff multiplying difference (dof - dof_value) -- could be permittivity/distance (distance in mesh units)
+      robin_vals[2] = inputValues[2]; // jump in slope (like plain Neumann bc)
+    }
 
      new Sacado::ParameterRegistration<EvalT, SPL_Traits> (name, this, paramLib);
 
@@ -86,6 +94,24 @@ NeumannBase(const Teuchos::ParameterList& p) :
        matScaling[it->second] = 
          materialDB->getElementBlockParam<double>(it->first, "Flux Scale");
 
+     }
+
+     // In the robin boundary condition case, the NBC depends on the solution (dof) field
+     if (inputConditions == "robin") {
+      // Currently, the Neumann evaluator doesn't handle the case when the degree of freedom is a vector.
+      // It wouldn't be difficult to have the boundary condition use a component of the vector, but I'm
+      // not sure this is the correct behavior.  In any case, the only time when this evaluator needs
+      // a degree of freedom value is in the "robin" case.
+      TEUCHOS_TEST_FOR_EXCEPTION(p.get<bool>("Vector Field") == true, 
+    			     Teuchos::Exceptions::InvalidParameter, 
+    			     std::endl << "Error: \"Robin\" Neumann boundary conditions " 
+			     << "only supported when the DOF is not a vector" << std::endl);
+
+       PHX::MDField<ScalarT,Cell,Node> tmp(p.get<string>("DOF Name"),
+           p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
+       dof = tmp;
+
+       this->addDependentField(dof);
      }
   }
 
@@ -173,6 +199,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
   refPointsSide.resize(numQPsSide, cellDims);
   cubWeightsSide.resize(numQPsSide);
   physPointsSide.resize(1, numQPsSide, cellDims);
+  dofSide.resize(1, numQPsSide);
 
   // Do the BC one side at a time for now
   jacobianSide.resize(1, numQPsSide, cellDims, cellDims);
@@ -184,6 +211,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
   weighted_trans_basis_refPointsSide.resize(1, numNodes, numQPsSide);
 
   physPointsCell.resize(1, numNodes, cellDims);
+  dofCell.resize(1, numNodes);
   neumann.resize(containerSize, numNodes, numDOFsSet);
   data.resize(1, numQPsSide, numDOFsSet);
 
@@ -201,6 +229,7 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(coordVec,fm);
+  if (inputConditions == "robin") this->utils.setFieldData(dof,fm);
   // Note, we do not need to add dependent field to fm here for output - that is done
   // by Neumann Aggregator
 }
@@ -244,7 +273,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
 
     for (std::size_t node=0; node < numNodes; ++node)
       for (std::size_t dim=0; dim < cellDims; ++dim)
-	      physPointsCell(0, node, dim) = coordVec(elem_LID, node, dim);
+	physPointsCell(0, node, dim) = coordVec(elem_LID, node, dim);
 
 
     // Map side cubature points to the reference parent cell based on the appropriate side (elem_side) 
@@ -276,6 +305,20 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
     Intrepid::CellTools<RealType>::mapToPhysicalFrame
       (physPointsSide, refPointsSide, physPointsCell, *cellType);
 
+    
+    // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
+    if(bc_type == ROBIN) {
+      for (std::size_t node=0; node < numNodes; ++node)
+	dofCell(0, node) = dof(elem_LID, node);
+
+      // This is needed, since evaluate currently sums into
+      for (int i=0; i < numQPsSide ; i++) dofSide(0,i) = 0.0;
+
+      // Get dof at cubature points of appropriate side (see DOFInterpolation evaluator)
+      Intrepid::FunctionSpaceTools::
+	evaluate<ScalarT>(dofSide, dofCell, trans_basis_refPointsSide);
+    }
+
   // Transform the given BC data to the physical space QPs in each side (elem_side)
 
     switch(bc_type){
@@ -286,6 +329,13 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
          calc_dudn_const(data, physPointsSide, jacobianSide, *cellType, cellDims, elem_side, elem_scale);
          break;
        }
+
+      case ROBIN:
+       {
+         const ScalarT elem_scale = matScaling[sideSet[side].elem_ebIndex];
+         calc_dudn_robin(data, physPointsSide, dofSide, jacobianSide, *cellType, cellDims, elem_side, elem_scale, robin_vals);
+         break;
+       }   
    
       case NORMAL:
   
@@ -311,8 +361,6 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
          for (std::size_t dim=0; dim < numDOFsSet; ++dim)
            neumann(elem_LID, node, dim) += 
                   data(0, qp, dim) * weighted_trans_basis_refPointsSide(0, node, qp);
-
-
   }
   
 }
@@ -323,6 +371,12 @@ NeumannBase<EvalT, Traits>::
 getValue(const std::string &n) {
 
   if (n == name) return const_val;
+  else if(std::string::npos != n.find("robin")) {
+    for(int i = 0; i < 3; i++) {
+      std::stringstream ss; ss << name << "[" << i << "]";
+      if (n == ss.str())  return robin_vals[i];
+    }
+  }
   else {
     for(int i = 0; i < dudx.size(); i++) {
       std::stringstream ss; ss << name << "[" << i << "]";
@@ -396,6 +450,34 @@ calc_dudn_const(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
 
 
 }
+
+template<typename EvalT, typename Traits>
+void NeumannBase<EvalT, Traits>::
+calc_dudn_robin(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
+		const Intrepid::FieldContainer<MeshScalarT>& phys_side_cub_points,
+		const Intrepid::FieldContainer<ScalarT>& dof_side,
+		const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+		const shards::CellTopology & celltopo,
+		const int cellDims,
+		int local_side_id,
+		ScalarT scale,
+		const ScalarT* robin_param_values){
+
+  int numCells = qp_data_returned.dimension(0); // How many cell's worth of data is being computed?
+  int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
+  int numDOFs = qp_data_returned.dimension(2); // How many DOFs per node to calculate?
+
+  const ScalarT& dof_value = robin_vals[0];
+  const ScalarT& coeff = robin_vals[1];
+  const ScalarT& jump = robin_vals[2];
+
+  for(int pt = 0; pt < numPoints; pt++)
+    for(int dim = 0; dim < numDOFsSet; dim++)
+      qp_data_returned(0, pt, dim) = coeff*(dof_side(0,pt) - dof_value) - jump * scale * 2.0; 
+         // mult by 2 to emulate behavior of an internal side within a single material (element block) 
+         //  in which case usual Neumann would add contributions from both sides, giving factor of 2
+}
+
 
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::

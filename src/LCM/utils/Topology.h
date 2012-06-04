@@ -141,6 +141,20 @@ public:
 	set_entities_open(
 			std::map<EntityKey,bool>& entity_open);
 
+	///
+	/// \brief Output the graph associated with the mesh to graphviz .dot
+	/// file for visualization purposes. No need for entity_open map
+	/// for this version
+	///
+	/// \param[in] output file
+	/// \param[in] map of entity and boolean value is open
+	///
+	/// To create final output figure, run command below from terminal:
+	///   dot -Tpng <gviz_output>.dot -o <gviz_output>.png
+	///
+	void
+	output_to_graphviz(std::string & gviz_output);
+
 	/**
 	 * \brief Output the graph associated with the mesh to graphviz .dot
 	 * file for visualization purposes.
@@ -339,6 +353,11 @@ public:
 	 */
 	void
 	fracture_boundary(std::map<EntityKey, bool> & entity_open);
+
+	///
+	/// \brief Barycentric subdivision of simplicial meshes
+	///
+	void barycentric_subdivision();
 
 private:
 
