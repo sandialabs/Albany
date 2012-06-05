@@ -334,6 +334,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/problems/ThermoPoroPlasticityProblem.cpp
     ${LCM_DIR}/problems/ThermoMechanicalProblem.cpp
     ${LCM_DIR}/problems/HDiffusionDeformationProblem.cpp
+    ${LCM_DIR}/problems/MesoScaleLinkProblem.cpp 
   )
 
   SET(HEADERS ${HEADERS}
@@ -347,6 +348,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/problems/ThermoPoroPlasticityProblem.hpp
     ${LCM_DIR}/problems/ThermoMechanicalProblem.hpp
     ${LCM_DIR}/problems/HDiffusionDeformationProblem.hpp
+    ${LCM_DIR}/problems/MesoScaleLinkProblem.hpp
   )
 
   # LCM evaluators
@@ -364,6 +366,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/Neohookean.cpp
     ${LCM_DIR}/evaluators/J2Stress.cpp 
     ${LCM_DIR}/evaluators/ElasticityResid.cpp
+    ${LCM_DIR}/evaluators/MultiScaleStress.cpp
     ${LCM_DIR}/evaluators/TLElasResid.cpp 
     ${LCM_DIR}/evaluators/EnergyPotential.cpp 
     ${LCM_DIR}/evaluators/HardeningModulus.cpp
@@ -447,6 +450,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/J2Stress_Def.hpp
     ${LCM_DIR}/evaluators/ElasticityResid.hpp
     ${LCM_DIR}/evaluators/ElasticityResid_Def.hpp
+    ${LCM_DIR}/evaluators/MultiScaleStress.hpp
+    ${LCM_DIR}/evaluators/MultiScaleStress_Def.hpp
     ${LCM_DIR}/evaluators/TLElasResid.hpp 
     ${LCM_DIR}/evaluators/TLElasResid_Def.hpp 
     ${LCM_DIR}/evaluators/EnergyPotential.hpp 

@@ -29,6 +29,7 @@
 
 #ifdef ALBANY_LCM
 #include "LCM/problems/ElasticityProblem.hpp"
+#include "LCM/problems/MesoScaleLinkProblem.hpp"
 #include "LCM/problems/NonlinearElasticityProblem.hpp"
 #include "LCM/problems/ThermoElasticityProblem.hpp"
 #include "LCM/problems/PoroElasticityProblem.hpp"
@@ -208,11 +209,20 @@ Albany::ProblemFactory::create()
     strategy = rcp(new Albany::ThermoMechanicalProblem(problemParams, paramLib, 3));
   }
   else if (method == "Hydrogen Diffusion-Deformation") {
-      strategy = rcp(new Albany::HDiffusionDeformationProblem(problemParams, paramLib, 3));
-    }
+    strategy = rcp(new Albany::HDiffusionDeformationProblem(problemParams, paramLib, 3));
+  }
   else if (method == "Hydrogen Diffusion-Deformation 2D") {
-        strategy = rcp(new Albany::HDiffusionDeformationProblem(problemParams, paramLib, 2));
-      }
+    strategy = rcp(new Albany::HDiffusionDeformationProblem(problemParams, paramLib, 2));
+  }
+  else if (method == "MesoScaleLink 1D") {
+    strategy = rcp(new Albany::MesoScaleLinkProblem(problemParams, paramLib, 1, comm));
+  }
+  else if (method == "MesoScaleLink 2D") {
+    strategy = rcp(new Albany::MesoScaleLinkProblem(problemParams, paramLib, 2, comm));
+  }
+  else if (method == "MesoScaleLink 3D") {
+    strategy = rcp(new Albany::MesoScaleLinkProblem(problemParams, paramLib, 3, comm));
+  }
 #endif
   else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
