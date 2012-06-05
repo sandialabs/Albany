@@ -605,12 +605,23 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
       RealType eN = params->get("eN", 0.0);
       RealType sN = params->get("sN", 1.0);
       RealType fN = params->get("fN", 0.0);
+      RealType fc = params->get("fc", 1.0);
+      RealType ff = params->get("ff", 1.0);
+      RealType q1 = params->get("q1", 1.0);
+      RealType q2 = params->get("q2", 1.0);
+      RealType q3 = params->get("q3", 1.0);
 
       p->set<RealType>("f0 Name", f0);
       p->set<RealType>("kw Name", kw);
       p->set<RealType>("eN Name", eN);
       p->set<RealType>("sN Name", sN);
       p->set<RealType>("fN Name", fN);
+      p->set<RealType>("fc Name", fc);
+      p->set<RealType>("ff Name", ff);
+      p->set<RealType>("q1 Name", q1);
+      p->set<RealType>("q2 Name", q2);
+      p->set<RealType>("q3 Name", q3);
+
 
       //Output
       p->set<string>("Stress Name", matModel); //dl->qp_tensor also

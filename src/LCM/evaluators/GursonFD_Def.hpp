@@ -56,7 +56,12 @@ GursonFD(const Teuchos::ParameterList& p) :
   kw               (p.get<RealType>("kw Name")),
   eN               (p.get<RealType>("eN Name")),
   sN               (p.get<RealType>("sN Name")),
-  fN               (p.get<RealType>("fN Name"))
+  fN               (p.get<RealType>("fN Name")),
+  fc          	   (p.get<RealType>("fc Name")),
+  ff          	   (p.get<RealType>("ff Name")),
+  q1          	   (p.get<RealType>("q1 Name")),
+  q2       	   	   (p.get<RealType>("q2 Name")),
+  q3          	   (p.get<RealType>("q3 Name"))
 {
     // Pull out numQPs and numDims from a Layout
     Teuchos::RCP<PHX::DataLayout> tensor_dl =
@@ -243,10 +248,10 @@ evaluateFields(typename Traits::EvalData workset)
 
 		  ScalarT h = siginf * (1. - std::exp(-delta * eq)) + K * eq;
 		  ScalarT Ybar = Y + h;
-		  ScalarT tmp = 1.5 * p / Ybar;
+		  ScalarT tmp = 1.5 * q2 * p / Ybar;
 
-		  ScalarT psi;
-		  psi = 1. + fvoid * fvoid  -  2. * fvoid * std::cosh(tmp);
+		  //ScalarT psi;
+		  //psi = 1. + q3 * fvoid * fvoid  -  2. * q1 * fvoid * std::cosh(tmp);
 
   		  LCM::Tensor<ScalarT> dPhi(0.0);
 
@@ -254,7 +259,7 @@ evaluateFields(typename Traits::EvalData workset)
 			for (std::size_t j=0; j < numDims; ++j){
 				dPhi(i,j) = s(i,j);
 			}
-			dPhi(i,i) += 1./3. * Ybar * fvoid * std::sinh(tmp);
+			dPhi(i,i) += 1./3. * q1 * q2 * Ybar * fvoid * std::sinh(tmp);
   		  }
 
   		  A = dgam * dPhi;
@@ -320,9 +325,9 @@ GursonFD<EvalT, Traits>::compute_Phi(LCM::Tensor<ScalarT> & s, ScalarT & p, Scal
 
 	ScalarT Ybar = Y + h;
 
-	ScalarT tmp = 1.5 * p / Ybar;
+	ScalarT tmp = 1.5 * q2 * p / Ybar;
 
-	ScalarT psi = 1. + fvoid * fvoid - 2. * fvoid * std::cosh(tmp);
+	ScalarT psi = 1. + q3 * fvoid * fvoid - 2. * q1 * fvoid * std::cosh(tmp);
 
 	// a quadratic representation will look like:
 	ScalarT Phi = 0.5 * LCM::dotdot(s, s) - psi * Ybar * Ybar / 3.0;
@@ -378,14 +383,17 @@ GursonFD<EvalT, Traits>::compute_ResidJacobian(std::vector<ScalarT> & X, std::ve
 
 	DFadType tmp = pfad / Ybar;
 	tmp = 1.5 * tmp;
+	tmp = q2 * tmp;
 
 	DFadType fvoid2;
 	fvoid2 = fvoidfad * fvoidfad;
+	fvoid2 = q3 * fvoid2;
 
 	DFadType psi;
 	psi = std::cosh(tmp);
 	psi = fvoidfad * psi;
 	psi = 2. * psi;
+	psi = q1 * psi;
 	psi = fvoid2 - psi;
 	psi = 1. + psi;
 
@@ -410,7 +418,7 @@ GursonFD<EvalT, Traits>::compute_ResidJacobian(std::vector<ScalarT> & X, std::ve
 		omega = 1. - (27. * J3 / 2./taue/taue/taue) * (27. * J3 / 2./taue/taue/taue);
 
 	DFadType deq(0.0);
-	deq = dgam * (smag2 + pfad * Ybar * fvoidfad * std::sinh(tmp)) / (1. - fvoidfad) / Ybar;
+	deq = dgam * (smag2 + q1 * q2 * pfad * Ybar * fvoidfad * std::sinh(tmp)) / (1. - fvoidfad) / Ybar;
 
 	// void nucleation to be added
 	DFadType dfn(0.0);
@@ -425,10 +433,10 @@ GursonFD<EvalT, Traits>::compute_ResidJacobian(std::vector<ScalarT> & X, std::ve
 
 	DFadType dfg(0.0);
 	if(taue > 0){
-		dfg = dgam * (1. - fvoidfad) * fvoidfad * Ybar * std::sinh(tmp) + sq23 * dgam * kw * fvoidfad * omega * smag;
+		dfg = dgam * q1 * q2 * (1. - fvoidfad) * fvoidfad * Ybar * std::sinh(tmp) + sq23 * dgam * kw * fvoidfad * omega * smag;
 	}
 	else{
-		dfg = dgam * (1. - fvoidfad) * fvoidfad * Ybar * std::sinh(tmp);
+		dfg = dgam * q1 * q2 * (1. - fvoidfad) * fvoidfad * Ybar * std::sinh(tmp);
 	}
 
 
@@ -438,7 +446,7 @@ GursonFD<EvalT, Traits>::compute_ResidJacobian(std::vector<ScalarT> & X, std::ve
 
 	// local system of equations
 	Rfad[0] = Phi;
-	Rfad[1] = pfad - p + dgam * kappa * Ybar * fvoidfad * std::sinh(tmp);
+	Rfad[1] = pfad - p + dgam * q1 * q2 * kappa * Ybar * fvoidfad * std::sinh(tmp);
 	Rfad[2] = fvoidfad - fvoid  - dfg - dfn;
 	Rfad[3] = eqfad - eq - deq;
 
