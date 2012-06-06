@@ -18,6 +18,17 @@
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemUtils.hpp"
 
+#ifdef ALBANY_MPI
+#include "Teuchos_TypeNameTraits.hpp"
+
+namespace Teuchos {
+// Provide an explicit template specialization for the opaque type MPI_Comm
+// so that the instantiation of Teuchos::RCP<MPI_Comm> objects compiles correctly in debug mode
+// without relying on the implementation details of the MPI library.
+  TEUCHOS_TYPE_NAME_TRAITS_BUILTIN_TYPE_SPECIALIZATION(MPI_Comm);
+} // namespace Teuchos
+#endif /* ALBANY_MPI */
+
 Albany::MesoScaleLinkProblem::
 MesoScaleLinkProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
                      const Teuchos::RCP<ParamLib>& paramLib_,
