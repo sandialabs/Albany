@@ -84,6 +84,11 @@ private:
   RealType eN;
   RealType sN;
   RealType fN;
+  RealType fc;
+  RealType ff;
+  RealType q1;
+  RealType q2;
+  RealType q3;
 
   //output
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;

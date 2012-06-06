@@ -56,7 +56,12 @@ GursonFD(const Teuchos::ParameterList& p) :
   kw               (p.get<RealType>("kw Name")),
   eN               (p.get<RealType>("eN Name")),
   sN               (p.get<RealType>("sN Name")),
-  fN               (p.get<RealType>("fN Name"))
+  fN               (p.get<RealType>("fN Name")),
+  fc          	   (p.get<RealType>("fc Name")),
+  ff          	   (p.get<RealType>("ff Name")),
+  q1          	   (p.get<RealType>("q1 Name")),
+  q2       	   	   (p.get<RealType>("q2 Name")),
+  q3          	   (p.get<RealType>("q3 Name"))
 {
     // Pull out numQPs and numDims from a Layout
     Teuchos::RCP<PHX::DataLayout> tensor_dl =
@@ -181,8 +186,8 @@ evaluateFields(typename Traits::EvalData workset)
 
       Phi = compute_Phi(s, p, fvoid, eq, K, Y, siginf, delta);
 
-      ScalarT smag = LCM::dotdot(s, s);
-      smag = std::sqrt(smag);
+      ScalarT smag2 = LCM::dotdot(s, s);
+      ScalarT smag = std::sqrt(smag2);
 
       if (Phi > 1.e-12)
       {// plastic yielding
@@ -237,44 +242,27 @@ evaluateFields(typename Traits::EvalData workset)
           fvoid = X[2];
           eq = X[3];
 
-          // plastic direction
           for (std::size_t i=0; i < numDims; ++i)
             for (std::size_t j=0; j < numDims; ++j)
-              N(i,j) = (1/smag) * s(i,j);
-
-          for (std::size_t i=0; i < numDims; ++i)
-            for (std::size_t j=0; j < numDims; ++j)
-              s(i,j) -= 2. * mu * dgam * N(i,j);
+              s(i,j) = (1./(1. + 2. * mu * dgam)) * s(i,j);
 
 		  ScalarT h = siginf * (1. - std::exp(-delta * eq)) + K * eq;
 		  ScalarT Ybar = Y + h;
-		  ScalarT tmp = 1.5 * p / Ybar;
+		  ScalarT tmp = 1.5 * q2 * p / Ybar;
 
-		  ScalarT psi;
-		  psi = 1. + fvoid * fvoid  -  2. * fvoid * std::cosh(tmp);
-
-		  ScalarT psi_sign = 1;
-		  if (psi < 0) psi_sign = -1;
-
-		  psi = std::abs(psi);
-
-     	  ScalarT t;
-     	  t = std::sinh(tmp);
-     	  t = t / std::sqrt(psi);
-     	  t = fvoid * t;
-     	  t = sq32 * t;
-     	  t = dgam * t;
+		  //ScalarT psi;
+		  //psi = 1. + q3 * fvoid * fvoid  -  2. * q1 * fvoid * std::cosh(tmp);
 
   		  LCM::Tensor<ScalarT> dPhi(0.0);
 
   		  for (std::size_t i=0; i < numDims; ++i){
 			for (std::size_t j=0; j < numDims; ++j){
-				dPhi(i,j) = dgam * N(i,j);
+				dPhi(i,j) = s(i,j);
 			}
-			dPhi(i,i) += 1./3. * t;
+			dPhi(i,i) += 1./3. * q1 * q2 * Ybar * fvoid * std::sinh(tmp);
   		  }
 
-  		  A = dPhi;
+  		  A = dgam * dPhi;
   		  expA = LCM::exp(A);
 
   		  eqps(cell, qp) = eq;
@@ -337,24 +325,20 @@ GursonFD<EvalT, Traits>::compute_Phi(LCM::Tensor<ScalarT> & s, ScalarT & p, Scal
 
 	ScalarT Ybar = Y + h;
 
-	ScalarT tmp = 1.5 * p / Ybar;
+	ScalarT tmp = 1.5 * q2 * p / Ybar;
 
-	ScalarT psi = 1. + fvoid * fvoid - 2. * fvoid * std::cosh(tmp);
-
-	ScalarT psi_sign = 1;
-	if (psi < 0) psi_sign = -1;
-
-	psi = std::abs(psi);
+	ScalarT psi = 1. + q3 * fvoid * fvoid - 2. * q1 * fvoid * std::cosh(tmp);
 
 	// a quadratic representation will look like:
-	//ScalarT Phi = 0.5 * LCM::dotdot(s, s) - psi * Ybar * Ybar / 3.0;
+	ScalarT Phi = 0.5 * LCM::dotdot(s, s) - psi * Ybar * Ybar / 3.0;
 
 	// linear form
-	ScalarT smag = LCM::dotdot(s,s);
-	smag = std::sqrt(smag);
-	ScalarT sq23 = std::sqrt(2./3.);
+//	ScalarT smag = LCM::dotdot(s,s);
+//	smag = std::sqrt(smag);
+//	ScalarT sq23 = std::sqrt(2./3.);
+//  ScalarT Phi = smag - sq23 * std::sqrt(psi) * psi_sign * Ybar
 
-	return smag - sq23 * std::sqrt(psi) * psi_sign * Ybar;
+	return Phi;
 }
 
 template<typename EvalT, typename Traits>
@@ -380,11 +364,14 @@ GursonFD<EvalT, Traits>::compute_ResidJacobian(std::vector<ScalarT> & X, std::ve
 
 	DFadType dgam = Xfad[0], pfad = Xfad[1], fvoidfad = Xfad[2], eqfad = Xfad[3];
 
-	ScalarT smag = LCM::dotdot(s,s);
-	smag = std::sqrt(smag);
-
 	// have to break down these equations, otherwise I get compile error
-	DFadType h; // h = siginf * (1. - std::exp(-delta*eqfad)) + K * eqfad;
+	DFadType fac;
+	fac = mu * dgam;
+	fac = 2. * fac;
+	fac = 1. + fac;
+	fac = 1./fac;
+
+	DFadType h(0.0); // h = siginf * (1. - std::exp(-delta*eqfad)) + K * eqfad;
 	h = delta * eqfad;
 	h = -1. * h;
 	h = std::exp(h);
@@ -396,44 +383,42 @@ GursonFD<EvalT, Traits>::compute_ResidJacobian(std::vector<ScalarT> & X, std::ve
 
 	DFadType tmp = pfad / Ybar;
 	tmp = 1.5 * tmp;
+	tmp = q2 * tmp;
 
 	DFadType fvoid2;
 	fvoid2 = fvoidfad * fvoidfad;
+	fvoid2 = q3 * fvoid2;
 
 	DFadType psi;
 	psi = std::cosh(tmp);
 	psi = fvoidfad * psi;
 	psi = 2. * psi;
+	psi = q1 * psi;
 	psi = fvoid2 - psi;
 	psi = 1. + psi;
 
-	ScalarT psi_sign = 1;
-	if (psi < 0) psi_sign = -1;
+	LCM::Tensor<DFadType> sfad(0.0);
 
-	psi = std::abs(psi);
-
-	DFadType t;
-	t = std::sinh(tmp);
-	t = t / std::sqrt(psi);
-	t = fvoidfad * t;
-	t = sq32 * t;
-	t = dgam * t;
-
-	DFadType fac;
-	fac = mu * dgam;
-	fac = 2. * fac;
-
+	// valid for assumption Ntr = N;
+	for (int i=0; i<3; i++){
+		for (int j=0; j<3; j++){
+			sfad(i,j) = fac * s(i,j);
+		}
+	}
 	// shear-dependent term in void growth
-	ScalarT omega, J3, taue;
-	J3 = LCM::det(s);
-	taue = sq32 * smag;
+	DFadType omega(0.0), J3(0.0), taue(0.0), smag2, smag;
+	J3 = LCM::det(sfad);
+	smag2 = LCM::dotdot(sfad,sfad);
+	if(smag2 > 0){
+		smag = std::sqrt(smag2);
+		taue = sq32 * smag;
+	}
+
 	if(taue > 0)
 		omega = 1. - (27. * J3 / 2./taue/taue/taue) * (27. * J3 / 2./taue/taue/taue);
-	else
-		omega = 0.0;
 
 	DFadType deq(0.0);
-	deq = (dgam * sq23 * psi_sign * std::sqrt(psi) + pfad * t / Ybar) / (1.-fvoidfad);
+	deq = dgam * (smag2 + q1 * q2 * pfad * Ybar * fvoidfad * std::sinh(tmp)) / (1. - fvoidfad) / Ybar;
 
 	// void nucleation to be added
 	DFadType dfn(0.0);
@@ -446,14 +431,23 @@ GursonFD<EvalT, Traits>::compute_ResidJacobian(std::vector<ScalarT> & X, std::ve
 
 	dfn = An * deq;
 
+	DFadType dfg(0.0);
+	if(taue > 0){
+		dfg = dgam * q1 * q2 * (1. - fvoidfad) * fvoidfad * Ybar * std::sinh(tmp) + sq23 * dgam * kw * fvoidfad * omega * smag;
+	}
+	else{
+		dfg = dgam * q1 * q2 * (1. - fvoidfad) * fvoidfad * Ybar * std::sinh(tmp);
+	}
+
+
 	DFadType Phi;
 
-	Phi = smag - fac - sq23 * std::sqrt(psi) * psi_sign * Ybar;
+	Phi = 0.5 * smag2 - psi * Ybar * Ybar / 3.0;
 
 	// local system of equations
 	Rfad[0] = Phi;
-	Rfad[1] = pfad - p + kappa * t;
-	Rfad[2] = fvoidfad - fvoid - (1. - fvoidfad) * t - sq23 * dgam * kw * fvoidfad * omega - dfn;
+	Rfad[1] = pfad - p + dgam * q1 * q2 * kappa * Ybar * fvoidfad * std::sinh(tmp);
+	Rfad[2] = fvoidfad - fvoid  - dfg - dfn;
 	Rfad[3] = eqfad - eq - deq;
 
 	// get ScalarT Residual

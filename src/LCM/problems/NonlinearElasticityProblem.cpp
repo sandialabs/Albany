@@ -158,6 +158,11 @@ Albany::NonlinearElasticityProblem::getValidProblemParameters() const
 	validPL->set<RealType>("eN",false,"");
 	validPL->set<RealType>("sN",false,"");
 	validPL->set<RealType>("fN",false,"");
+	validPL->set<RealType>("fc",false,"");
+	validPL->set<RealType>("ff",false,"");
+	validPL->set<RealType>("q1",false,"");
+	validPL->set<RealType>("q2",false,"");
+	validPL->set<RealType>("q3",false,"");
   }
 
   return validPL;

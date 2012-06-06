@@ -339,6 +339,11 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/problems/ThermoMechanicalProblem.cpp
     ${LCM_DIR}/problems/HDiffusionDeformationProblem.cpp
   )
+  IF(ALBANY_MPI)
+    SET(SOURCES ${SOURCES}
+      ${LCM_DIR}/problems/MesoScaleLinkProblem.cpp 
+    )
+  ENDIF()
 
   SET(HEADERS ${HEADERS}
     ${LCM_DIR}/problems/ElasticityProblem.hpp
@@ -352,6 +357,11 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/problems/ThermoMechanicalProblem.hpp
     ${LCM_DIR}/problems/HDiffusionDeformationProblem.hpp
   )
+  IF(ALBANY_MPI)
+    SET(HEADERS ${HEADERS}
+      ${LCM_DIR}/problems/MesoScaleLinkProblem.hpp
+    )
+  ENDIF()
 
   # LCM evaluators
   SET(SOURCES ${SOURCES}
@@ -423,6 +433,12 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/UnitGradient.cpp
     ${LCM_DIR}/evaluators/SetField.cpp
   )
+
+  IF(ALBANY_MPI)
+    SET(SOURCES ${SOURCES}
+      ${LCM_DIR}/evaluators/MultiScaleStress.cpp
+    )
+  ENDIF()
 
   SET(HEADERS ${HEADERS}
     ${LCM_DIR}/evaluators/Stress.hpp 
@@ -560,6 +576,13 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/SetField.hpp 
     ${LCM_DIR}/evaluators/SetField_Def.hpp 
   )
+
+  IF(ALBANY_MPI)
+    SET(HEADERS ${HEADERS}
+      ${LCM_DIR}/evaluators/MultiScaleStress.hpp
+      ${LCM_DIR}/evaluators/MultiScaleStress_Def.hpp
+    )
+  ENDIF()
 
   #LCM utils
   SET(SOURCES ${SOURCES}

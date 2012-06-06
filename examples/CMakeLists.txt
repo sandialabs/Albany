@@ -103,6 +103,9 @@ IF(ALBANY_LCM)
 #  IF(ALBANY_LAMENT)
 #    add_subdirectory(LamentStaticElasticity3D)
 #  ENDIF()
+  IF(ALBANY_MPI)
+    add_subdirectory(MultiScaleRing)
+  ENDIF()
 ENDIF()
 
 # These require exodus, Ioss, stk_io, to read meshes

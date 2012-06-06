@@ -109,7 +109,7 @@ namespace LCM {
     //firewalls, make sure R \in SO(3)
     assert(norm(R*transpose(R) - eye<ScalarT>())
         < 100.0 * std::numeric_limits<ScalarT>::epsilon());
-    assert((det(R) - 1.0)
+    assert(std::fabs(det(R) - 1.0)
         < 100.0 * std::numeric_limits<ScalarT>::epsilon());
 
     // acos requires input between -1 and +1
