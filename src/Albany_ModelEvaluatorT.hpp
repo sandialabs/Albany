@@ -27,7 +27,8 @@
 #include "Epetra_LocalMap.h"
 
 //Thyra includes 
-#include "Thyra_ModelEvaluator.hpp"
+#include "Thyra_ModelEvaluatorDefaultBase.hpp"
+
 #include "Thyra_LinearOpWithSolveBase.hpp"
 #include "Thyra_LinearOpWithSolveFactoryBase.hpp"
 
@@ -35,7 +36,7 @@ using namespace Thyra;
 
 namespace Albany {
 
-  class ModelEvaluatorT : public Thyra::ModelEvaluator<ST> {
+  class ModelEvaluatorT : public Thyra::ModelEvaluatorDefaultBase<ST> {
   public:
 
     // Constructor
@@ -66,17 +67,18 @@ namespace Albany {
     
     Teuchos::RCP<LinearOpBase<ST> >create_W_op() const; 
 
-    //*********CONCRETE VERSIONS OF THE FOLLOWING NEED TO BE OVERWRITTEN FROM THYRA::MODELEVALUATOR<ST>.  
-    int Np() const {};  
-    int Ng() const {};  
+    //*********CONCRETE VERSIONS OF THE FOLLOWING NEED TO BE OVERWRITTEN FROM THYRA::MODELEVALUATORDEFAULTBASE<ST>.  
+   // int Np() const {};  
+   // int Ng() const {};  
     Thyra::ModelEvaluatorBase::InArgs<ST> getLowerBounds() const {}; 
     Thyra::ModelEvaluatorBase::InArgs<ST> getUpperBounds() const {}; 
-    Teuchos::RCP<LinearOpWithSolveBase<ST> >create_W() const {}; 
-    Teuchos::RCP<LinearOpBase<ST> >create_DfDp_op(int j) const {}; 
-    Teuchos::RCP<LinearOpBase<ST> >create_DgDp_op(int j, int l) const {}; 
+    //Teuchos::RCP<LinearOpWithSolveBase<ST> >create_W() const {}; 
+    //Teuchos::RCP<LinearOpBase<ST> >create_DfDp_op(int j) const {}; 
+    //Teuchos::RCP<LinearOpBase<ST> >create_DgDp_op(int j, int l) const {}; 
     Teuchos::RCP<const LinearOpWithSolveFactoryBase<ST> >get_W_factory() const {}; 
     void reportFinalPoint(const Thyra::ModelEvaluatorBase::InArgs<ST>& finalPoint, const bool wasSolved) {}; 
-    //**************************  
+   
+   //**************************  
  
     //! Create preconditioner operator
     //Teuchos::RCP<EpetraExt::ModelEvaluator::Preconditioner> create_WPrec() const;
@@ -91,10 +93,10 @@ namespace Albany {
     Thyra::ModelEvaluatorBase::InArgs<ST> createInArgs() const;
 
     //! Create OutArgs
-    Thyra::ModelEvaluatorBase::OutArgs<ST> createOutArgs() const;
+    Thyra::ModelEvaluatorBase::OutArgs<ST> createOutArgsImpl() const; 
 
     //! Evaluate model on InArgs
-    void evalModel(const Thyra::ModelEvaluatorBase::InArgs<ST>& inArgs, const Thyra::ModelEvaluatorBase::OutArgs<ST>& outArgs) const;
+    void evalModelImpl(const Thyra::ModelEvaluatorBase::InArgs<ST>& inArgs, const Thyra::ModelEvaluatorBase::OutArgs<ST>& outArgs) const; 
 
     //@}
 

@@ -47,9 +47,9 @@ RCP<EpetraExt::ModelEvaluator> ModelFactory::create() const
   return model;
 }
 
-RCP<Thyra::ModelEvaluator<ST> > ModelFactory::createT() const
+RCP<Thyra::ModelEvaluatorDefaultBase<ST> > ModelFactory::createT() const
 {
-  RCP<Thyra::ModelEvaluator<ST> > modelT(new Albany::ModelEvaluatorT(app_, params_)); 
+  RCP<Thyra::ModelEvaluatorDefaultBase<ST> > modelT(new Albany::ModelEvaluatorT(app_, params_)); 
   
   // Wrap a decorator around the original model when a reduced-order computation is requested.
   const RCP<ParameterList> problemParams = Teuchos::sublist(params_, "Problem", true);

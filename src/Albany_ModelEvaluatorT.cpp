@@ -333,7 +333,7 @@ Albany::ModelEvaluatorT::createInArgs() const
 }
 
 Thyra::ModelEvaluatorBase::OutArgs<ST> 
-Albany::ModelEvaluatorT::createOutArgs() const
+Albany::ModelEvaluatorT::createOutArgsImpl() const
 {
   //The following I believe are not yet implemented in Thyra::ModelEvaluatorBase 
   // Stochastic
@@ -389,7 +389,7 @@ Albany::ModelEvaluatorT::createOutArgs() const
 
 
 void 
-Albany::ModelEvaluatorT::evalModel(const Thyra::ModelEvaluatorBase::InArgs<ST>& inArgsT, 
+Albany::ModelEvaluatorT::evalModelImpl(const Thyra::ModelEvaluatorBase::InArgs<ST>& inArgsT, 
 				   const Thyra::ModelEvaluatorBase::OutArgs<ST>& outArgsT) const
 {
   Teuchos::TimeMonitor Timer(*timer); //start timer
