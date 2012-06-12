@@ -37,7 +37,7 @@
 	<!--Stabilization Parameter -->
 	<ParameterList name="Stabilization Parameter">
 	 <Parameter name="Type" type="string" value="Constant"/>
-	 <Parameter name="Value" type="double" value="1.0"/>
+	 <Parameter name="Value" type="double" value="0.5"/>
 	</ParameterList>	
 	<ParameterList name="Temperature">
 	 <Parameter name="Type" type="string" value="Constant"/>
@@ -138,8 +138,8 @@
   <!-- REGRESSION comparison of the RESPONSE FUNCTION declared above-->
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{9.966}"/>
-    <Parameter  name="Relative Tolerance" type="double" value="1.0e0"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{28.36}"/>
+    <Parameter  name="Relative Tolerance" type="double" value="3.0e0"/>
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{0.0}"/>
   </ParameterList>

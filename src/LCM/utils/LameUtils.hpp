@@ -49,7 +49,7 @@ namespace LameUtils {
     for(Teuchos::ParameterList::ConstIterator it = lameMaterialParameters.begin() ; it != lameMaterialParameters.end() ; ++it){
 
       std::string name = lameMaterialParameters.name(it);
-      std::transform(name.begin(), name.end(), name.begin(), toupper);
+      std::transform(name.begin(), name.end(), name.begin(), (int (*)(int))std::toupper);
       std::replace(name.begin(), name.end(), ' ', '_');
 
       const Teuchos::ParameterEntry entry = lameMaterialParameters.entry(it);
@@ -90,7 +90,8 @@ namespace LameUtils {
     
     // Strings should be all upper case with spaces replaced with underscores
     std::string materialModelName = lameMaterialModelName;
-    std::transform(materialModelName.begin(), materialModelName.end(), materialModelName.begin(), toupper);
+    std::transform(materialModelName.begin(), materialModelName.end(), materialModelName.begin(), 
+      (int (*)(int))std::toupper);
     std::replace(materialModelName.begin(), materialModelName.end(), ' ', '_');
   
     LameMatProps props;
