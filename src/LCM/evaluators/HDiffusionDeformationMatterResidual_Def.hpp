@@ -227,8 +227,6 @@ evaluateFields(typename Traits::EvalData workset)
 			//    	   (temp) // temp - DL is closer to the limit ...if lumped mass is preferred..
 				      std::abs(temp) // should be 1 but use 0.5 for safety
 				      *(0.5 + 0.5*std::tanh( (temp-1)/DL(cell,qp)  ))
-				      *(0.5 + 0.5*std::tanh( (temp-1)/DL(cell,qp)  ))
-				      *(0.5 + 0.5*std::tanh( (temp-1)/DL(cell,qp)  ))
 				      // smoothened Heavside function
 	  			      *DL(cell,qp) //*stabParameter(cell,qp)
 				      ;
