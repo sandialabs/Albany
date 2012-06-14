@@ -175,11 +175,16 @@ evaluateFields(typename Traits::EvalData workset)
 			if(normR0 != 0) conv = normR / normR0;
 			else conv = normR0;
 
-			std::cout << "iter= " << iter << std::endl;
-			std::cout << "conv= " << conv << " normR= " << normR << std::endl;
+//			std::cout << "iter= " << iter << std::endl;
+//			std::cout << "conv= " << Sacado::ScalarValue<ScalarT>::eval(conv)
+//					<< " normR= " << Sacado::ScalarValue<ScalarT>::eval(normR) << std::endl;
 
 			if(conv < 1.e-10 || normR < 1.e-10) break;
-			if(iter > 20) break;
+			//if(iter > 20) break;
+			TEUCHOS_TEST_FOR_EXCEPTION( iter > 20, std::runtime_error,
+						      std::endl << "Error in return mapping, iter = " << iter <<
+		                                      "\nres = " << normR <<
+		                                      "\nrelres = " << conv << std::endl);
 
 			std::vector<ScalarT> XXValK = XXVal;
 			solver.solve(dRdX, XXValK, R);
@@ -190,11 +195,13 @@ evaluateFields(typename Traits::EvalData workset)
 			}
 			else {XXVal = XXValK; kappa_flag = false;}
 
+			// debugging
+			//XXVal = XXValK;
+
 			iter ++;
 		  }//end local NR
 
 	  	  // compute sensitivity information, and pack back to X.
-
 	  	  solver.computeFadInfo(dRdX, XXVal, R);
 
   	  }// end of plasticity
@@ -560,6 +567,10 @@ CapImplicit<EvalT, Traits>::compute_ResidJacobian(std::vector<ScalarT> const & X
 
 	if(kappa_flag == false)	Rfad[11] = dgamma * hkappa - kappa + kappaVal;
 	else Rfad[11] = 0;
+
+	// debugging
+//	if(kappa_flag == false)Rfad[11] = -dgamma * hkappa - kappa + kappaVal;
+//	else Rfad[11] = 0;
 
 	Rfad[12] = f;
 

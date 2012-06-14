@@ -246,7 +246,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 			// restrictions on kappa, only allow monotonic decreasing
 			dkappa = delta_gamma * hkappa;
-			if (dkappa > 0) dkappa = 0;
+			if (dkappa > 0) dkappa = delta_gamma * 0.0;
 
 			sigmaK = sigmaVal - delta_gamma * LCM::dotdot(Celastic, dgdsigma);
 			alphaK = alphaVal + delta_gamma * halpha;
