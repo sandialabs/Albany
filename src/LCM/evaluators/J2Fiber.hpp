@@ -26,7 +26,7 @@
 #include "Tensor.h"
 
 namespace LCM {
-/** \brief J2Fibers stress response
+/** \brief J2Fiber stress response
 
     This evaluator computes stress based on a uncoupled J2Fiber
     potential
@@ -75,11 +75,9 @@ private:
   unsigned int numDims;
   unsigned int worksetSize;
 
-  // scratch space FCs
-  Intrepid::FieldContainer<ScalarT> Fpinv;
-  Intrepid::FieldContainer<ScalarT> FpinvT;
-  Intrepid::FieldContainer<ScalarT> Cpinv;
-
+  LCM::Tensor<ScalarT> F;
+  LCM::Tensor<ScalarT> Fpn;
+  LCM::Tensor<ScalarT> Cpinv;
   LCM::Tensor<ScalarT> be;
   LCM::Tensor<ScalarT> s;
   LCM::Tensor<ScalarT> N;

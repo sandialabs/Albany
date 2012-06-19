@@ -18,7 +18,6 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
 #include <typeinfo>
 namespace LCM {
 
@@ -48,30 +47,30 @@ namespace LCM {
                       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
     eqps             (p.get<std::string>                   ("Eqps Name"),
                       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-    energy_J2         (p.get<std::string>                   ("Energy_J2 Name"),
-                       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+    energy_J2        (p.get<std::string>                   ("Energy_J2 Name"),
+                      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     energy_f1        (p.get<std::string>                   ("Energy_f1 Name"),
                       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     energy_f2        (p.get<std::string>                   ("Energy_f2 Name"),
                       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-    xiinf_J2          (p.get<RealType>("xiinf_J2 Name")),
-    tau_J2            (p.get<RealType>("tau_J2 Name")),
-    k_f1                  (p.get<RealType>("k_f1 Name")),
-    q_f1                  (p.get<RealType>("q_f1 Name")),
-    vol_f1                (p.get<RealType>("vol_f1 Name")),
-    xiinf_f1          (p.get<RealType>("xiinf_f1 Name")),
-    tau_f1                (p.get<RealType>("tau_f1 Name")),
-    Mx_f1                 (p.get<RealType>("Mx_f1 Name")),
-    My_f1                 (p.get<RealType>("My_f1 Name")),
-    Mz_f1                 (p.get<RealType>("Mz_f1 Name")),
-    k_f2                  (p.get<RealType>("k_f2 Name")),
-    q_f2                  (p.get<RealType>("q_f2 Name")),
-    vol_f2                (p.get<RealType>("vol_f2 Name")),
-    xiinf_f2          (p.get<RealType>("xiinf_f2 Name")),
-    tau_f2                (p.get<RealType>("tau_f2 Name")),
-    Mx_f2                 (p.get<RealType>("Mx_f2 Name")),
-    My_f2                 (p.get<RealType>("My_f2 Name")),
-    Mz_f2                 (p.get<RealType>("Mz_f2 Name"))
+    xiinf_J2         (p.get<RealType>("xiinf_J2 Name")),
+    tau_J2           (p.get<RealType>("tau_J2 Name")),
+    k_f1             (p.get<RealType>("k_f1 Name")),
+    q_f1             (p.get<RealType>("q_f1 Name")),
+    vol_f1           (p.get<RealType>("vol_f1 Name")),
+    xiinf_f1         (p.get<RealType>("xiinf_f1 Name")),
+    tau_f1           (p.get<RealType>("tau_f1 Name")),
+    Mx_f1            (p.get<RealType>("Mx_f1 Name")),
+    My_f1            (p.get<RealType>("My_f1 Name")),
+    Mz_f1            (p.get<RealType>("Mz_f1 Name")),
+    k_f2             (p.get<RealType>("k_f2 Name")),
+    q_f2             (p.get<RealType>("q_f2 Name")),
+    vol_f2           (p.get<RealType>("vol_f2 Name")),
+    xiinf_f2         (p.get<RealType>("xiinf_f2 Name")),
+    tau_f2           (p.get<RealType>("tau_f2 Name")),
+    Mx_f2            (p.get<RealType>("Mx_f2 Name")),
+    My_f2            (p.get<RealType>("My_f2 Name")),
+    Mz_f2            (p.get<RealType>("Mz_f2 Name"))
   {
     // Pull out numQPs and numDims from a Layout
     Teuchos::RCP<PHX::DataLayout> tensor_dl =
@@ -90,8 +89,6 @@ namespace LCM {
     this->addDependentField(hardeningModulus);
     this->addDependentField(satMod);  
     this->addDependentField(satExp);
-    // PoissonRatio not used in 1D stress calc
-    //  if (numDims>1) this->addDependentField(poissonsRatio);
 
     fpName = p.get<std::string>("Fp Name")+"_old";
     eqpsName = p.get<std::string>("Eqps Name")+"_old";
@@ -108,18 +105,7 @@ namespace LCM {
     this->addEvaluatedField(energy_f1);
     this->addEvaluatedField(energy_f2);
 
-    // scratch space FCs
-    //  be.resize(numDims, numDims);
-    //  s.resize(numDims, numDims);
-    //  N.resize(numDims, numDims);
-    //  A.resize(numDims, numDims);
-    //  expA.resize(numDims, numDims);
-    Fpinv.resize(worksetSize, numQPs, numDims, numDims);
-    FpinvT.resize(worksetSize, numQPs, numDims, numDims);
-    Cpinv.resize(worksetSize, numQPs, numDims, numDims);
-
     this->setName("Stress"+PHX::TypeString<EvalT>::value);
-
   }
 
   //**********************************************************************
@@ -143,7 +129,7 @@ namespace LCM {
     this->utils.setFieldData(energy_f1,fm);
     this->utils.setFieldData(energy_f2,fm);
 
-    if (numDims>1) this->utils.setFieldData(poissonsRatio,fm);
+    this->utils.setFieldData(poissonsRatio,fm);
   }
 
   //**********************************************************************
@@ -151,8 +137,9 @@ namespace LCM {
   void J2Fiber<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
-    typedef Intrepid::FunctionSpaceTools FST;
-    typedef Intrepid::RealSpaceTools<ScalarT> RST;
+
+    std::cout << "In J2Fiber evaluate Fields" << std::endl;
+    std::size_t zero(0), one(1), two(2);
 
     ScalarT kappa;
     ScalarT mu, mubar;
@@ -172,13 +159,6 @@ namespace LCM {
     Albany::MDArray energy_f1old = (*workset.stateArrayPtr)[energy_f1Name];
     Albany::MDArray energy_f2old = (*workset.stateArrayPtr)[energy_f2Name];
 
-    //  // compute Cp_{n}^{-1}
-    //  // AGS MAY NEED TO ALLICATE Fpinv FpinvT Cpinv  with actual workse size
-    //  // to prevent going past the end of Fpold.
-    RST::inverse(Fpinv, Fpold);
-    RST::transpose(FpinvT, Fpinv);
-    FST::tensorMultiplyDataData<ScalarT>(Cpinv, Fpinv, FpinvT);
-
     for (std::size_t cell=0; cell < workset.numCells; ++cell)
     {
       for (std::size_t qp=0; qp < numQPs; ++qp)
@@ -192,25 +172,30 @@ namespace LCM {
         delta  = satExp(cell,qp);
         Jm23   = std::pow( J(cell,qp), -2./3. );
 
-        be.clear();
-        // Compute Trial State
-        for (std::size_t i=0; i < numDims; ++i)
-          for (std::size_t j=0; j < numDims; ++j)
-            for (std::size_t p=0; p < numDims; ++p)
-              for (std::size_t q=0; q < numDims; ++q)
-                be(i,j) += Jm23 * defgrad(cell,qp,i,p) * Cpinv(cell,qp,p,q) * defgrad(cell,qp,j,q);
+        // Fill in Fpn and F Tensors with Fpold and defgrad
+        Fpn = LCM::Tensor<ScalarT>( Fpold(cell,qp,zero,zero), Fpold(cell,qp,zero,one), Fpold(cell,qp,zero,two),
+                                    Fpold(cell,qp,one,zero),  Fpold(cell,qp,one,one),  Fpold(cell,qp,one,two),
+                                    Fpold(cell,qp,two,zero),  Fpold(cell,qp,two,one),  Fpold(cell,qp,two,two) );
+        F = LCM::Tensor<ScalarT>( &defgrad( cell, qp, 0, 0 ) );
 
+        // compute Cpinv = Fpn^{-T} * Fpn
+        Cpinv = transpose( inverse(Fpn) ) * Fpn;
+
+        // compute trial state
+        be.clear();
+        be = Jm23 * F * Cpinv * transpose(F);
         trace = LCM::trace(be);
         trd3 = trace / numDims;
         mubar = trd3*mu;
 
+        // compute deviatoric stress in intermediate configuration
         s = mu*(be - trd3 * eye<ScalarT>());
 
         // check for yielding
         smag = LCM::norm(s);
-
         f = smag - sq23 * ( Y + K * eqpsold(cell,qp) + siginf * ( 1. - std::exp( -delta * eqpsold(cell,qp) ) ) );
 
+        // if yield surface is violated, find plastic increment via return mapping alg
         if (f > 1E-12)
         {
           // return mapping algorithm
@@ -252,10 +237,11 @@ namespace LCM {
 
           }
 
-          // plastic direction
-          N = ScalarT(1./smag) * s;
+          // plastic direction (associative flow)
+          N = (1./smag) * s;
 
-          s -= ScalarT(2. * mubar * dgam) * N;
+          // adjust deviatoric stress to account for plastic increment
+          s -= 2. * mubar * dgam * N;
 
           // update eqps
           eqps(cell,qp) = alpha;
@@ -298,8 +284,8 @@ namespace LCM {
           stress(cell,qp,i,i) += p;
         }
 
-        // update be
-        be = ScalarT(1./mu) * s + trd3 * eye<ScalarT>();
+        // update be (the intermediate config)
+        be = (1./mu) * s + trd3 * eye<ScalarT>();
         // compute energy for J2 stress
         energy_J2(cell,qp) = 0.5*kappa*(0.5*(J(cell,qp)*J(cell,qp)-1.0)-std::log(J(cell,qp)))
           + 0.5*mu*(trace - 3.0);
@@ -313,19 +299,14 @@ namespace LCM {
 
         //-----------compute stress in Fibers
 
-        LCM::Tensor<ScalarT> F;
-        for (std::size_t i=0; i < numDims; ++i)
-          for (std::size_t j=0; j < numDims; ++j)
-            F(i,j) = defgrad(cell,qp,i,j);
-
+        // Right Cauchy-Green Tensor C = F^{T} * F
         LCM::Tensor<ScalarT> C = LCM::dot(LCM::transpose(F), F);
-        ScalarT Mx1 = ScalarT(Mx_f1), My1 = ScalarT(My_f1), Mz1 = ScalarT(Mz_f1);
-        ScalarT Mx2 = ScalarT(Mx_f2), My2 = ScalarT(My_f2), Mz2 = ScalarT(Mz_f2);
 
-        LCM::Vector<ScalarT> M1(Mx1, My1, Mz1);
-        LCM::Vector<ScalarT> M2(Mx2, My2, Mz2);
+        // Fiber orientation vectors
+        LCM::Vector<ScalarT> M1(Mx_f1, My_f1, Mz_f1);
+        LCM::Vector<ScalarT> M2(Mx_f2, My_f2, Mz_f2);
 
-        //LCM::Vector<ScalarT> CdotM1 = LCM::dot(C,M1);
+        // Anisotropic invariants I4 = M_{i} * C * M_{i}
         ScalarT I4_f1 = LCM::dot(M1, LCM::dot(C, M1));
         ScalarT I4_f2 = LCM::dot(M2, LCM::dot(C, M2));
         LCM::Tensor<ScalarT> M1dyadM1 = dyad(M1,M1);
@@ -333,8 +314,8 @@ namespace LCM {
 
         // undamaged stress (2nd PK stress)
         LCM::Tensor<ScalarT> S0_f1, S0_f2;
-        S0_f1 = ScalarT(4.0 * k_f1 * (I4_f1 - 1.0) * std::exp(q_f1 * (I4_f1 - 1) * (I4_f1 - 1))) * M1dyadM1;
-        S0_f2 = ScalarT(4.0 * k_f2 * (I4_f2 - 1.0) * std::exp(q_f2 * (I4_f2 - 1) * (I4_f2 - 1))) * M2dyadM2;
+        S0_f1 = (4.0 * k_f1 * (I4_f1 - 1.0) * std::exp(q_f1 * (I4_f1 - 1) * (I4_f1 - 1))) * M1dyadM1;
+        S0_f2 = (4.0 * k_f2 * (I4_f2 - 1.0) * std::exp(q_f2 * (I4_f2 - 1) * (I4_f2 - 1))) * M2dyadM2;
 
         // compute energy for fibers
         energy_f1(cell,qp) = k_f1 * (std::exp(q_f1 * (I4_f1 - 1) * (I4_f1 - 1)) - 1) / q_f1;
@@ -342,8 +323,8 @@ namespace LCM {
 
         // Cauchy stress
         LCM::Tensor<ScalarT> stress_f1, stress_f2;
-        stress_f1 = ScalarT(1.0/J(cell,qp)) * LCM::dot(F, LCM::dot(S0_f1, LCM::transpose(F)));
-        stress_f2 = ScalarT(1.0/J(cell,qp)) * LCM::dot(F, LCM::dot(S0_f2, LCM::transpose(F)));
+        stress_f1 = (1.0/J(cell,qp)) * LCM::dot(F, LCM::dot(S0_f1, LCM::transpose(F)));
+        stress_f2 = (1.0/J(cell,qp)) * LCM::dot(F, LCM::dot(S0_f2, LCM::transpose(F)));
 
         // maximum thermodynamic forces
         alpha_f1 = energy_f1old(cell,qp);
@@ -361,29 +342,14 @@ namespace LCM {
 
         // total Cauchy stress (J2, Fibers)
         for (std::size_t i=0; i < numDims; ++i)
-        {
           for (std::size_t j=0; j < numDims; ++j)
-          {
             stress(cell,qp,i,j) = (1-vol_f1-vol_f2) * (1-xi_J2) * stress(cell, qp, i, j)
               + vol_f1 * (1-xi_f1) * stress_f1(i,j)
               + vol_f2 * (1-xi_f2) * stress_f2(i,j);
-          }
-        }
 
       }// end of loop over qp
     }// end of loop over cell
-
-    // Since Intrepid will later perform calculations on the entire workset size
-    // and not just the used portion, we must fill the excess with reasonable
-    // values. Leaving this out leads to inversion of 0 tensors.
-    for (std::size_t cell=workset.numCells; cell < worksetSize; ++cell)
-      for (std::size_t qp=0; qp < numQPs; ++qp)
-        for (std::size_t i=0; i < numDims; ++i)
-          Fp(cell,qp,i,i) = 1.0;
   }
-  //**********************************************************************
-
-  //**********************************************************************
 } // end LCM
 
  
