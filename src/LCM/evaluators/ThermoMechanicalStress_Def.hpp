@@ -280,7 +280,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
 
       // update be
-      be = ScalarT(1/mu)*s + ScalarT(trace(be)/3)*eye<ScalarT>();
+      be = ScalarT(1/mu)*s + ScalarT(trace(be)/3)*eye<ScalarT, 3>();
 
       if (print)
       {

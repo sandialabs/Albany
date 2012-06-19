@@ -54,7 +54,7 @@ namespace LCM {
   ///
   /// Map for topologcal objects for which it is possible to associate points.
   ///
-  typedef std::map<int, LCM::Vector<double> >
+  typedef std::map<int, LCM::Vector<double, 3> >
   PointMap;
 
   ///

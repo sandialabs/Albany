@@ -1,19 +1,18 @@
 /********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-\********************************************************************/
-
+ *            Albany, Copyright (2010) Sandia Corporation             *
+ *                                                                    *
+ * Notice: This computer software was prepared by Sandia Corporation, *
+ * hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
+ * the Department of Energy (DOE). All rights in the computer software*
+ * are reserved by DOE on behalf of the United States Government and  *
+ * the Contractor as provided in the Contract. You are authorized to  *
+ * use this computer software for Governmental purposes but it is not *
+ * to be released or distributed to the public. NEITHER THE GOVERNMENT*
+ * NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
+ * ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
+ * including this sentence must appear on any copies of this software.*
+ *    Questions to Andy Salinger, agsalin@sandia.gov                  *
+ \********************************************************************/
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -23,525 +22,535 @@
 namespace LCM {
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-CapModelStress<EvalT, Traits>::
-CapModelStress(const Teuchos::ParameterList& p) :
-  elasticModulus   (p.get<std::string>                   ("Elastic Modulus Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  poissonsRatio    (p.get<std::string>                   ("Poissons Ratio Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  strain           (p.get<std::string>                   ("Strain Name"),
-   	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-  stress           (p.get<std::string>                   ("Stress Name"),
-				p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-  backStress       (p.get<std::string>                   ("Back Stress Name"),
-				p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-  capParameter	   (p.get<std::string>                   ("Cap Parameter Name"),
-				p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  A          	   (p.get<double>("A Name")),
-  B          	   (p.get<double>("B Name")),
-  C          	   (p.get<double>("C Name")),
-  theta        	   (p.get<double>("Theta Name")),
-  R          	   (p.get<double>("R Name")),
-  kappa0       	   (p.get<double>("Kappa0 Name")),
-  W          	   (p.get<double>("W Name")),
-  D1          	   (p.get<double>("D1 Name")),
-  D2          	   (p.get<double>("D2 Name")),
-  calpha       	   (p.get<double>("Calpha Name")),
-  psi          	   (p.get<double>("Psi Name")),
-  N          	   (p.get<double>("N Name")),
-  L          	   (p.get<double>("L Name")),
-  phi          	   (p.get<double>("Phi Name")),
-  Q          	   (p.get<double>("Q Name"))
-{
-  // Pull out numQPs and numDims from a Layout
-  Teuchos::RCP<PHX::DataLayout> tensor_dl =
-	p.get< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
-  std::vector<PHX::DataLayout::size_type> dims;
-  tensor_dl->dimensions(dims);
-  numQPs  = dims[1];
-  numDims = dims[2];
-
-  this->addDependentField(elasticModulus);
-  // PoissonRatio not used in 1D stress calc
-  if (numDims>1) this->addDependentField(poissonsRatio);
-  this->addDependentField(strain);
-
-  // state variable
-  strainName = p.get<std::string>("Strain Name")+"_old";
-  stressName = p.get<std::string>("Stress Name")+"_old";
-  backStressName = p.get<std::string>("Back Stress Name")+"_old";
-  capParameterName = p.get<std::string>("Cap Parameter Name")+"_old";
-
-  // evaluated fields
-  this->addEvaluatedField(stress);
-  this->addEvaluatedField(backStress);
-  this->addEvaluatedField(capParameter);
-
-  this->setName("Stress"+PHX::TypeString<EvalT>::value);
-
-}
-
-//**********************************************************************
-template<typename EvalT, typename Traits>
-void CapModelStress<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& fm)
-{
-  this->utils.setFieldData(elasticModulus,fm);
-  if (numDims>1) this->utils.setFieldData(poissonsRatio,fm);
-  this->utils.setFieldData(stress,fm);
-  this->utils.setFieldData(strain,fm);
-  this->utils.setFieldData(backStress,fm);
-  this->utils.setFieldData(capParameter,fm);
-}
-
-//**********************************************************************
-
-template<typename EvalT, typename Traits>
-void CapModelStress<EvalT, Traits>::
-evaluateFields(typename Traits::EvalData workset)
-{
-
-  // previous state
-  Albany::MDArray strainold = (*workset.stateArrayPtr)[strainName];
-  Albany::MDArray stressold = (*workset.stateArrayPtr)[stressName];
-  Albany::MDArray backStressold = (*workset.stateArrayPtr)[backStressName];
-  Albany::MDArray capParameterold = (*workset.stateArrayPtr)[capParameterName];
-
-  for (std::size_t cell=0; cell < workset.numCells; ++cell)
+  template<typename EvalT, typename Traits>
+  CapModelStress<EvalT, Traits>::CapModelStress(const Teuchos::ParameterList& p) :
+      elasticModulus(p.get<std::string>("Elastic Modulus Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), poissonsRatio(
+          p.get<std::string>("Poissons Ratio Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), strain(
+          p.get<std::string>("Strain Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), stress(
+          p.get<std::string>("Stress Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), backStress(
+          p.get<std::string>("Back Stress Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), capParameter(
+          p.get<std::string>("Cap Parameter Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), A(
+          p.get<double>("A Name")), B(p.get<double>("B Name")), C(
+          p.get<double>("C Name")), theta(p.get<double>("Theta Name")), R(
+          p.get<double>("R Name")), kappa0(p.get<double>("Kappa0 Name")), W(
+          p.get<double>("W Name")), D1(p.get<double>("D1 Name")), D2(
+          p.get<double>("D2 Name")), calpha(p.get<double>("Calpha Name")), psi(
+          p.get<double>("Psi Name")), N(p.get<double>("N Name")), L(
+          p.get<double>("L Name")), phi(p.get<double>("Phi Name")), Q(
+          p.get<double>("Q Name"))
   {
-    for (std::size_t qp=0; qp < numQPs; ++qp)
-    {
-      // local parameters
-      ScalarT lame = elasticModulus(cell,qp) * poissonsRatio(cell,qp) / ( 1.0 + poissonsRatio(cell,qp) ) / ( 1.0 - 2.0 * poissonsRatio(cell,qp) );
-      ScalarT mu   = elasticModulus(cell,qp) / 2.0 / (1.0 + poissonsRatio(cell,qp) );
+    // Pull out numQPs and numDims from a Layout
+    Teuchos::RCP<PHX::DataLayout> tensor_dl = p.get<
+        Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
+    std::vector<PHX::DataLayout::size_type> dims;
+    tensor_dl->dimensions(dims);
+    numQPs = dims[1];
+    numDims = dims[2];
 
-      // elastic matrix
-      LCM::Tensor4<ScalarT> Celastic = lame * LCM::identity_3<ScalarT>()
-    		+ mu * (LCM::identity_1<ScalarT>() + LCM::identity_2<ScalarT>());
+    this->addDependentField(elasticModulus);
+    // PoissonRatio not used in 1D stress calc
+    if (numDims > 1) this->addDependentField(poissonsRatio);
+    this->addDependentField(strain);
 
-  	  // incremental strain tensor
-  	  LCM::Tensor<ScalarT> depsilon;
-  	  for (std::size_t i = 0; i < numDims; ++i)
-  	  	  for (std::size_t j = 0; j < numDims; ++j)
-  	  		  depsilon(i,j) = strain(cell,qp,i,j) - strainold(cell,qp,i,j);
+    // state variable
+    strainName = p.get<std::string>("Strain Name") + "_old";
+    stressName = p.get<std::string>("Stress Name") + "_old";
+    backStressName = p.get<std::string>("Back Stress Name") + "_old";
+    capParameterName = p.get<std::string>("Cap Parameter Name") + "_old";
 
-  	  // trial state
-  	  LCM::Tensor<ScalarT> sigmaVal = LCM::dotdot(Celastic, depsilon);
-  	  LCM::Tensor<ScalarT> alphaVal = LCM::identity<ScalarT>();
-  	  LCM::Tensor<ScalarT> sigmaN, strainN; // previous state
+    // evaluated fields
+    this->addEvaluatedField(stress);
+    this->addEvaluatedField(backStress);
+    this->addEvaluatedField(capParameter);
 
-  	  for (std::size_t i = 0; i < numDims; ++i){
-  	  	  for (std::size_t j = 0; j < numDims; ++j){
-  	  		  sigmaN(i,j) = stressold(cell,qp,i,j);
-  	  		  strainN(i,j) = strainold(cell,qp,i,j);
-  	  		  sigmaVal(i,j) = sigmaVal(i,j) + stressold(cell,qp,i,j);
-  	  		  alphaVal(i,j) = backStressold(cell,qp,i,j);
-  	  	  }
-  	  }
+    this->setName("Stress" + PHX::TypeString<EvalT>::value);
 
-  	  ScalarT kappaVal = capParameterold(cell,qp);
+  }
 
-  	  // make sure the cap starts from kappa0, and monotonically hardening (decreasing, more negative)
-  	  //if(kappaVal > kappa0){
-  		  //kappaVal = ScalarT(kappa0);
-  		  //std::cout << "kappaVal > kappa0, make kappaVal = kappa0" << std::endl;
-  	  //}
+//**********************************************************************
+  template<typename EvalT, typename Traits>
+  void CapModelStress<EvalT, Traits>::postRegistrationSetup(
+      typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
+  {
+    this->utils.setFieldData(elasticModulus, fm);
+    if (numDims > 1) this->utils.setFieldData(poissonsRatio, fm);
+    this->utils.setFieldData(stress, fm);
+    this->utils.setFieldData(strain, fm);
+    this->utils.setFieldData(backStress, fm);
+    this->utils.setFieldData(capParameter, fm);
+  }
 
-  	  // check yielding
-  	  ScalarT f = compute_f(sigmaVal, alphaVal, kappaVal);
+//**********************************************************************
 
-  	  // plastic correction
-  	  ScalarT dgamma = 0.0;
-  	  if(f > 1.0e-10)
-  	  {
-  		LCM::Tensor<ScalarT> dfdsigma = compute_dfdsigma(sigmaN, alphaVal, kappaVal);
+  template<typename EvalT, typename Traits>
+  void CapModelStress<EvalT, Traits>::evaluateFields(
+      typename Traits::EvalData workset)
+  {
 
-  		LCM::Tensor<ScalarT> dgdsigma = compute_dgdsigma(sigmaN, alphaVal, kappaVal);
+    // previous state
+    Albany::MDArray strainold = (*workset.stateArrayPtr)[strainName];
+    Albany::MDArray stressold = (*workset.stateArrayPtr)[stressName];
+    Albany::MDArray backStressold = (*workset.stateArrayPtr)[backStressName];
+    Albany::MDArray capParameterold = (*workset.stateArrayPtr)[capParameterName];
 
-  		LCM::Tensor<ScalarT> dfdalpha = - dfdsigma;
+    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+      for (std::size_t qp = 0; qp < numQPs; ++qp) {
+        // local parameters
+        ScalarT lame = elasticModulus(cell, qp) * poissonsRatio(cell, qp)
+            / (1.0 + poissonsRatio(cell, qp))
+            / (1.0 - 2.0 * poissonsRatio(cell, qp));
+        ScalarT mu = elasticModulus(cell, qp) / 2.0
+            / (1.0 + poissonsRatio(cell, qp));
 
-  		ScalarT dfdkappa = compute_dfdkappa(sigmaN, alphaVal, kappaVal);
+        // elastic matrix
+        LCM::Tensor4<ScalarT, 3> Celastic =
+            lame * LCM::identity_3<ScalarT, 3>()
+                + mu
+                    * (LCM::identity_1<ScalarT, 3>()
+                        + LCM::identity_2<ScalarT, 3>());
 
-		ScalarT J2_alpha = 0.5 * LCM::dotdot(alphaVal, alphaVal);
+        // incremental strain tensor
+        LCM::Tensor<ScalarT, 3> depsilon;
+        for (std::size_t i = 0; i < numDims; ++i)
+          for (std::size_t j = 0; j < numDims; ++j)
+            depsilon(i, j) = strain(cell, qp, i, j) - strainold(cell, qp, i, j);
 
-		LCM::Tensor<ScalarT> halpha = compute_halpha(dgdsigma, J2_alpha);
+        // trial state
+        LCM::Tensor<ScalarT, 3> sigmaVal = LCM::dotdot(Celastic, depsilon);
+        LCM::Tensor<ScalarT, 3> alphaVal = LCM::identity<ScalarT, 3>();
+        LCM::Tensor<ScalarT, 3> sigmaN, strainN; // previous state
 
-		ScalarT I1_dgdsigma = LCM::trace(dgdsigma);
+        for (std::size_t i = 0; i < numDims; ++i) {
+          for (std::size_t j = 0; j < numDims; ++j) {
+            sigmaN(i, j) = stressold(cell, qp, i, j);
+            strainN(i, j) = strainold(cell, qp, i, j);
+            sigmaVal(i, j) = sigmaVal(i, j) + stressold(cell, qp, i, j);
+            alphaVal(i, j) = backStressold(cell, qp, i, j);
+          }
+        }
 
-		ScalarT dedkappa = compute_dedkappa(kappaVal);
+        ScalarT kappaVal = capParameterold(cell, qp);
 
-		ScalarT hkappa;
-		if(dedkappa != 0) hkappa = I1_dgdsigma / dedkappa;
-		else hkappa = 0;
+        // make sure the cap starts from kappa0, and monotonically hardening (decreasing, more negative)
+        //if(kappaVal > kappa0){
+        //kappaVal = ScalarT(kappa0);
+        //std::cout << "kappaVal > kappa0, make kappaVal = kappa0" << std::endl;
+        //}
 
-		ScalarT kai(0.0);
-		kai = LCM::dotdot(dfdsigma, LCM::dotdot(Celastic, dgdsigma))
-				- LCM::dotdot(dfdalpha, halpha) - dfdkappa * hkappa;
+        // check yielding
+        ScalarT f = compute_f(sigmaVal, alphaVal, kappaVal);
 
-		LCM::Tensor<ScalarT> dfdotCe = LCM::dotdot(dfdsigma, Celastic);
+        // plastic correction
+        ScalarT dgamma = 0.0;
+        if (f > 1.0e-10) {
+          LCM::Tensor<ScalarT, 3> dfdsigma = compute_dfdsigma(sigmaN, alphaVal,
+              kappaVal);
 
-		if(kai != 0)
-			dgamma = LCM::dotdot(dfdotCe, depsilon) / kai;
-		else
-			dgamma = 0;
+          LCM::Tensor<ScalarT, 3> dgdsigma = compute_dgdsigma(sigmaN, alphaVal,
+              kappaVal);
 
-		// update
-		sigmaVal -= dgamma * LCM::dotdot(Celastic, dgdsigma);
+          LCM::Tensor<ScalarT, 3> dfdalpha = -dfdsigma;
 
-		alphaVal += dgamma * halpha;
+          ScalarT dfdkappa = compute_dfdkappa(sigmaN, alphaVal, kappaVal);
 
-		// restrictions on kappa, only allow monotonic decreasing (cap hardening)
-		ScalarT dkappa = dgamma * hkappa;
-		if (dkappa > 0) dkappa = 0;
+          ScalarT J2_alpha = 0.5 * LCM::dotdot(alphaVal, alphaVal);
 
-		kappaVal += dkappa;
+          LCM::Tensor<ScalarT, 3> halpha = compute_halpha(dgdsigma, J2_alpha);
 
-		// stress correction algorithm to avoid drifting from yield surface
-		bool condition = false;
-		int iteration = 0;
-		while(condition == false){
-			f = compute_f(sigmaVal, alphaVal, kappaVal);
+          ScalarT I1_dgdsigma = LCM::trace(dgdsigma);
 
-			LCM::Tensor<ScalarT> dfdsigma = compute_dfdsigma(sigmaVal, alphaVal, kappaVal);
+          ScalarT dedkappa = compute_dedkappa(kappaVal);
 
-			LCM::Tensor<ScalarT> dgdsigma = compute_dgdsigma(sigmaVal, alphaVal, kappaVal);
+          ScalarT hkappa;
+          if (dedkappa != 0)
+            hkappa = I1_dgdsigma / dedkappa;
+          else
+            hkappa = 0;
 
-			LCM::Tensor<ScalarT> dfdalpha = - dfdsigma;
+          ScalarT kai(0.0);
+          kai = LCM::dotdot(dfdsigma, LCM::dotdot(Celastic, dgdsigma))
+              - LCM::dotdot(dfdalpha, halpha) - dfdkappa * hkappa;
 
-			ScalarT dfdkappa = compute_dfdkappa(sigmaVal, alphaVal, kappaVal);
+          LCM::Tensor<ScalarT, 3> dfdotCe = LCM::dotdot(dfdsigma, Celastic);
 
-			J2_alpha = 0.5 * LCM::dotdot(alphaVal, alphaVal);
+          if (kai != 0)
+            dgamma = LCM::dotdot(dfdotCe, depsilon) / kai;
+          else
+            dgamma = 0;
 
-			halpha = compute_halpha(dgdsigma, J2_alpha);
+          // update
+          sigmaVal -= dgamma * LCM::dotdot(Celastic, dgdsigma);
 
-			I1_dgdsigma = LCM::trace(dgdsigma);
+          alphaVal += dgamma * halpha;
 
-			dedkappa = compute_dedkappa(kappaVal);
+          // restrictions on kappa, only allow monotonic decreasing (cap hardening)
+          ScalarT dkappa = dgamma * hkappa;
+          if (dkappa > 0) dkappa = 0;
 
-			if(dedkappa != 0)
-				hkappa = I1_dgdsigma / dedkappa;
-			else hkappa = 0;
+          kappaVal += dkappa;
 
-			kai = LCM::dotdot(dfdsigma, LCM::dotdot(Celastic, dgdsigma));
-			kai = kai - LCM::dotdot(dfdalpha, halpha) - dfdkappa * hkappa;
+          // stress correction algorithm to avoid drifting from yield surface
+          bool condition = false;
+          int iteration = 0;
+          while (condition == false) {
+            f = compute_f(sigmaVal, alphaVal, kappaVal);
 
-			if (std::abs(f) < 1.0e-10 )break;
-			if (iteration > 20) {
-			  	  // output for debug
-			  	  std::cout<< "no stress correction after iteration = " << iteration
-			  			 << " yield function abs(f) = " << abs(f) << std::endl;
-				break;
-			}
+            LCM::Tensor<ScalarT, 3> dfdsigma = compute_dfdsigma(sigmaVal,
+                alphaVal, kappaVal);
 
-			ScalarT delta_gamma;
-			if (kai != 0)
-				delta_gamma = f / kai;
-			else
-				delta_gamma = 0;
+            LCM::Tensor<ScalarT, 3> dgdsigma = compute_dgdsigma(sigmaVal,
+                alphaVal, kappaVal);
 
-			LCM::Tensor<ScalarT> sigmaK, alphaK;
-			ScalarT kappaK;
+            LCM::Tensor<ScalarT, 3> dfdalpha = -dfdsigma;
 
-			// restrictions on kappa, only allow monotonic decreasing
-			dkappa = delta_gamma * hkappa;
-			if (dkappa > 0) dkappa = delta_gamma * 0.0;
+            ScalarT dfdkappa = compute_dfdkappa(sigmaVal, alphaVal, kappaVal);
 
-			sigmaK = sigmaVal - delta_gamma * LCM::dotdot(Celastic, dgdsigma);
-			alphaK = alphaVal + delta_gamma * halpha;
-			kappaK = kappaVal + dkappa;
+            J2_alpha = 0.5 * LCM::dotdot(alphaVal, alphaVal);
 
-			ScalarT fpre = compute_f(sigmaK, alphaK, kappaK);
+            halpha = compute_halpha(dgdsigma, J2_alpha);
 
-			if (std::abs(fpre) > std::abs(f)){
-				// if the corrected stress is further away from yield surface, then use normal correction
-				ScalarT dfdotdf = LCM::dotdot(dfdsigma, dfdsigma);
-				if (dfdotdf != 0)
-					delta_gamma = f / dfdotdf;
-				else
-					delta_gamma = 0.0;
+            I1_dgdsigma = LCM::trace(dgdsigma);
 
-				sigmaK = sigmaVal - delta_gamma * dfdsigma;
-				alphaK = alphaVal;
-				kappaK = kappaVal;
-			}
+            dedkappa = compute_dedkappa(kappaVal);
 
-			sigmaVal = sigmaK;
-			alphaVal = alphaK;
-			kappaVal = kappaK;
+            if (dedkappa != 0)
+              hkappa = I1_dgdsigma / dedkappa;
+            else
+              hkappa = 0;
 
-			iteration++;
+            kai = LCM::dotdot(dfdsigma, LCM::dotdot(Celastic, dgdsigma));
+            kai = kai - LCM::dotdot(dfdalpha, halpha) - dfdkappa * hkappa;
 
-		}// end of stress correction
+            if (std::abs(f) < 1.0e-10) break;
+            if (iteration > 20) {
+              // output for debug
+              std::cout << "no stress correction after iteration = "
+                  << iteration << " yield function abs(f) = " << abs(f)
+                  << std::endl;
+              break;
+            }
 
-  	  }// end of plastic correction
+            ScalarT delta_gamma;
+            if (kai != 0)
+              delta_gamma = f / kai;
+            else
+              delta_gamma = 0;
 
-  	  // update
-  	  for (std::size_t i = 0; i < numDims; ++i){
-  	  	  for (std::size_t j = 0; j < numDims; ++j){
-  	  		  stress(cell,qp,i,j) = sigmaVal(i,j);
-  	  		  backStress(cell,qp,i,j) = alphaVal(i,j);
-  	  	  }
-  	  }
+            LCM::Tensor<ScalarT, 3> sigmaK, alphaK;
+            ScalarT kappaK;
 
-  	  capParameter(cell,qp) = kappaVal;
+            // restrictions on kappa, only allow monotonic decreasing
+            dkappa = delta_gamma * hkappa;
+            if (dkappa > 0) dkappa = delta_gamma * 0.0;
 
-	} //loop over qps
+            sigmaK = sigmaVal - delta_gamma * LCM::dotdot(Celastic, dgdsigma);
+            alphaK = alphaVal + delta_gamma * halpha;
+            kappaK = kappaVal + dkappa;
 
-  }//loop over cell
+            ScalarT fpre = compute_f(sigmaK, alphaK, kappaK);
 
+            if (std::abs(fpre) > std::abs(f)) {
+              // if the corrected stress is further away from yield surface, then use normal correction
+              ScalarT dfdotdf = LCM::dotdot(dfdsigma, dfdsigma);
+              if (dfdotdf != 0)
+                delta_gamma = f / dfdotdf;
+              else
+                delta_gamma = 0.0;
 
-} // end of evaluateFields
+              sigmaK = sigmaVal - delta_gamma * dfdsigma;
+              alphaK = alphaVal;
+              kappaK = kappaVal;
+            }
+
+            sigmaVal = sigmaK;
+            alphaVal = alphaK;
+            kappaVal = kappaK;
+
+            iteration++;
+
+          } // end of stress correction
+
+        } // end of plastic correction
+
+        // update
+        for (std::size_t i = 0; i < numDims; ++i) {
+          for (std::size_t j = 0; j < numDims; ++j) {
+            stress(cell, qp, i, j) = sigmaVal(i, j);
+            backStress(cell, qp, i, j) = alphaVal(i, j);
+          }
+        }
+
+        capParameter(cell, qp) = kappaVal;
+
+      } //loop over qps
+
+    } //loop over cell
+
+  } // end of evaluateFields
 
 //**********************************************************************
 // all local functions
-template<typename EvalT, typename Traits>
-typename CapModelStress<EvalT, Traits>::ScalarT
-CapModelStress<EvalT, Traits>::compute_f(LCM::Tensor<ScalarT> & sigma, LCM::Tensor<ScalarT> & alpha, ScalarT & kappa)
-{
+  template<typename EvalT, typename Traits>
+  typename CapModelStress<EvalT, Traits>::ScalarT CapModelStress<EvalT, Traits>::compute_f(
+      LCM::Tensor<ScalarT, 3> & sigma, LCM::Tensor<ScalarT, 3> & alpha,
+      ScalarT & kappa)
+  {
 
-	LCM::Tensor<ScalarT> xi = sigma - alpha;
+    LCM::Tensor<ScalarT, 3> xi = sigma - alpha;
 
-	ScalarT I1 = LCM::trace(xi), p = I1 / 3;
+    ScalarT I1 = LCM::trace(xi), p = I1 / 3;
 
-	LCM::Tensor<ScalarT> s = xi - p * LCM::identity<ScalarT>();
+    LCM::Tensor<ScalarT, 3> s = xi - p * LCM::identity<ScalarT, 3>();
 
-	ScalarT J2 = 0.5 * LCM::dotdot(s, s);
+    ScalarT J2 = 0.5 * LCM::dotdot(s, s);
 
-	ScalarT J3 = LCM::det(s);
+    ScalarT J3 = LCM::det(s);
 
-	ScalarT Gamma = 1.0;
-	if (psi!=0 && J2!=0) Gamma = 0.5 * (1 - 3.0 * std::sqrt(3.0) * J3 / 2 / std::pow(J2, 1.5)
-			+ (1 + 3.0 * std::sqrt(3.0) * J3 / 2 / std::pow(J2, 1.5)) / psi);
+    ScalarT Gamma = 1.0;
+    if (psi != 0 && J2 != 0) Gamma = 0.5
+        * (1 - 3.0 * std::sqrt(3.0) * J3 / 2 / std::pow(J2, 1.5)
+            + (1 + 3.0 * std::sqrt(3.0) * J3 / 2 / std::pow(J2, 1.5)) / psi);
 
-	ScalarT Ff_I1 = A - C * std::exp(B * I1) - theta * I1;
+    ScalarT Ff_I1 = A - C * std::exp(B * I1) - theta * I1;
 
-	ScalarT Ff_kappa = A - C * std::exp(B * kappa) - theta * kappa;
+    ScalarT Ff_kappa = A - C * std::exp(B * kappa) - theta * kappa;
 
-	ScalarT X = kappa -  R * Ff_kappa;
+    ScalarT X = kappa - R * Ff_kappa;
 
-	ScalarT Fc = 1.0;
+    ScalarT Fc = 1.0;
 
-	if((kappa - I1) > 0 && ((X - kappa) != 0))
-		Fc = 1.0 - (I1 - kappa) * (I1 - kappa) / (X - kappa) / (X - kappa);
+    if ((kappa - I1) > 0 && ((X - kappa) != 0)) Fc = 1.0
+        - (I1 - kappa) * (I1 - kappa) / (X - kappa) / (X - kappa);
 
-	return Gamma * Gamma * J2 - Fc * (Ff_I1 - N) * (Ff_I1 - N);
-}
+    return Gamma * Gamma * J2 - Fc * (Ff_I1 - N) * (Ff_I1 - N);
+  }
 
-template<typename EvalT, typename Traits>
-LCM::Tensor<typename CapModelStress<EvalT, Traits>::ScalarT>
-CapModelStress<EvalT, Traits>::compute_dfdsigma(LCM::Tensor<ScalarT> & sigma, LCM::Tensor<ScalarT> & alpha, ScalarT & kappa)
-{
-	LCM::Tensor<ScalarT> dfdsigma;
+  template<typename EvalT, typename Traits>
+  LCM::Tensor<typename CapModelStress<EvalT, Traits>::ScalarT, 3> CapModelStress<
+      EvalT, Traits>::compute_dfdsigma(LCM::Tensor<ScalarT, 3> & sigma,
+      LCM::Tensor<ScalarT, 3> & alpha, ScalarT & kappa)
+  {
+    LCM::Tensor<ScalarT, 3> dfdsigma;
 
-	LCM::Tensor<ScalarT> xi = sigma - alpha;
+    LCM::Tensor<ScalarT, 3> xi = sigma - alpha;
 
-	ScalarT I1 = LCM::trace(xi), p = I1 / 3;
+    ScalarT I1 = LCM::trace(xi), p = I1 / 3;
 
-	LCM::Tensor<ScalarT> s = xi - p * LCM::identity<ScalarT>();
+    LCM::Tensor<ScalarT, 3> s = xi - p * LCM::identity<ScalarT, 3>();
 
-	ScalarT J2 = 0.5 * LCM::dotdot(s, s);
+    ScalarT J2 = 0.5 * LCM::dotdot(s, s);
 
-	ScalarT J3 = LCM::det(s);
+    ScalarT J3 = LCM::det(s);
 
-	LCM::Tensor<ScalarT> id = LCM::identity<ScalarT>();
-	LCM::Tensor<ScalarT> dI1dsigma = id;
-	LCM::Tensor<ScalarT> dJ2dsigma = s;
-	LCM::Tensor<ScalarT> dJ3dsigma;
-	for (int i = 0; i < 3; i++)
-		for (int j = 0; j < 3; j++)
-			dJ3dsigma(i,j) = s(i,j) * s(i,j) - 2 * J2 * id(i,j) / 3;
+    LCM::Tensor<ScalarT, 3> id = LCM::identity<ScalarT, 3>();
+    LCM::Tensor<ScalarT, 3> dI1dsigma = id;
+    LCM::Tensor<ScalarT, 3> dJ2dsigma = s;
+    LCM::Tensor<ScalarT, 3> dJ3dsigma;
+    for (int i = 0; i < 3; i++)
+      for (int j = 0; j < 3; j++)
+        dJ3dsigma(i, j) = s(i, j) * s(i, j) - 2 * J2 * id(i, j) / 3;
 
-	ScalarT Ff_I1 = A - C * std::exp(B * I1) - theta * I1;
+    ScalarT Ff_I1 = A - C * std::exp(B * I1) - theta * I1;
 
-	ScalarT Ff_kappa = A - C * std::exp(B * kappa) - theta * kappa;
+    ScalarT Ff_kappa = A - C * std::exp(B * kappa) - theta * kappa;
 
-	ScalarT X = kappa - R * Ff_kappa;
+    ScalarT X = kappa - R * Ff_kappa;
 
-	ScalarT Fc = 1.0;
+    ScalarT Fc = 1.0;
 
-	if((kappa - I1) > 0)
-		Fc = 1.0 - (I1 - kappa) * (I1 - kappa) / (X - kappa) / (X - kappa);
+    if ((kappa - I1) > 0) Fc = 1.0
+        - (I1 - kappa) * (I1 - kappa) / (X - kappa) / (X - kappa);
 
-	ScalarT Gamma = 1.0;
-	if (psi!=0 && J2!=0) Gamma = 0.5 * (1 - 3.0 * std::sqrt(3.0) * J3 / 2 / std::pow(J2, 1.5)
-			+ (1 + 3.0 * std::sqrt(3.0) * J3 / 2 / std::pow(J2, 1.5)) / psi);
+    ScalarT Gamma = 1.0;
+    if (psi != 0 && J2 != 0) Gamma = 0.5
+        * (1 - 3.0 * std::sqrt(3.0) * J3 / 2 / std::pow(J2, 1.5)
+            + (1 + 3.0 * std::sqrt(3.0) * J3 / 2 / std::pow(J2, 1.5)) / psi);
 
-	// derivatives
-	ScalarT dFfdI1 = -(B * C * std::exp(B * I1) + theta);
+    // derivatives
+    ScalarT dFfdI1 = -(B * C * std::exp(B * I1) + theta);
 
-	ScalarT dFcdI1 = 0.0;
-	if((kappa - I1) > 0 && ((X - kappa) != 0))
-		dFcdI1 = -2.0 * (I1 - kappa) / (X - kappa) / (X - kappa);
+    ScalarT dFcdI1 = 0.0;
+    if ((kappa - I1) > 0 && ((X - kappa) != 0)) dFcdI1 = -2.0 * (I1 - kappa)
+        / (X - kappa) / (X - kappa);
 
-	ScalarT dfdI1 = -(Ff_I1 - N) * ( 2 * Fc * dFfdI1 + (Ff_I1 - N) * dFcdI1);
+    ScalarT dfdI1 = -(Ff_I1 - N) * (2 * Fc * dFfdI1 + (Ff_I1 - N) * dFcdI1);
 
-	ScalarT dGammadJ2 = 0.0;
-	if (J2 != 0)
-		dGammadJ2 = 9.0 * std::sqrt(3.0) * J3 / std::pow(J2, 2.5) / 8.0 * (1.0 - 1.0 / psi);
+    ScalarT dGammadJ2 = 0.0;
+    if (J2 != 0) dGammadJ2 = 9.0 * std::sqrt(3.0) * J3 / std::pow(J2, 2.5) / 8.0
+        * (1.0 - 1.0 / psi);
 
-	ScalarT dfdJ2 = 2.0 * Gamma * dGammadJ2 * J2 + Gamma * Gamma;
+    ScalarT dfdJ2 = 2.0 * Gamma * dGammadJ2 * J2 + Gamma * Gamma;
 
-	ScalarT dGammadJ3 = 0.0;
-	if(J2 != 0)
-		dGammadJ3 = -3.0 * std::sqrt(3.0) / std::pow(J2, 1.5) / 4.0 * (1.0 - 1.0 / psi);
+    ScalarT dGammadJ3 = 0.0;
+    if (J2 != 0) dGammadJ3 = -3.0 * std::sqrt(3.0) / std::pow(J2, 1.5) / 4.0
+        * (1.0 - 1.0 / psi);
 
-	ScalarT dfdJ3 = 2.0 * Gamma * dGammadJ3 * J2;
+    ScalarT dfdJ3 = 2.0 * Gamma * dGammadJ3 * J2;
 
-	dfdsigma = dfdI1 * dI1dsigma + dfdJ2 * dJ2dsigma + dfdJ3 * dJ3dsigma;
+    dfdsigma = dfdI1 * dI1dsigma + dfdJ2 * dJ2dsigma + dfdJ3 * dJ3dsigma;
 
-	return dfdsigma;
-}
+    return dfdsigma;
+  }
 
-template<typename EvalT, typename Traits>
-LCM::Tensor<typename CapModelStress<EvalT, Traits>::ScalarT>
-CapModelStress<EvalT, Traits>::compute_dgdsigma(LCM::Tensor<ScalarT> & sigma, LCM::Tensor<ScalarT> & alpha, ScalarT & kappa)
-{
-	LCM::Tensor<ScalarT> dgdsigma;
+  template<typename EvalT, typename Traits>
+  LCM::Tensor<typename CapModelStress<EvalT, Traits>::ScalarT, 3> CapModelStress<
+      EvalT, Traits>::compute_dgdsigma(LCM::Tensor<ScalarT, 3> & sigma,
+      LCM::Tensor<ScalarT, 3> & alpha, ScalarT & kappa)
+  {
+    LCM::Tensor<ScalarT, 3> dgdsigma;
 
-	LCM::Tensor<ScalarT> xi = sigma - alpha;
+    LCM::Tensor<ScalarT, 3> xi = sigma - alpha;
 
-	ScalarT I1 = LCM::trace(xi), p = I1 / 3;
+    ScalarT I1 = LCM::trace(xi), p = I1 / 3;
 
-	LCM::Tensor<ScalarT> s = xi - p * LCM::identity<ScalarT>();
+    LCM::Tensor<ScalarT, 3> s = xi - p * LCM::identity<ScalarT, 3>();
 
-	ScalarT J2 = 0.5 * LCM::dotdot(s, s);
+    ScalarT J2 = 0.5 * LCM::dotdot(s, s);
 
-	ScalarT J3 = LCM::det(s);
+    ScalarT J3 = LCM::det(s);
 
-	LCM::Tensor<ScalarT> id = LCM::identity<ScalarT>();
-	LCM::Tensor<ScalarT> dI1dsigma = id;
-	LCM::Tensor<ScalarT> dJ2dsigma = s;
-	LCM::Tensor<ScalarT> dJ3dsigma;
-	for (int i = 0; i < 3; i++)
-		for (int j = 0; j < 3; j++)
-			dJ3dsigma(i,j) = s(i,j) * s(i,j) - 2 * J2 * id(i,j) / 3;
+    LCM::Tensor<ScalarT, 3> id = LCM::identity<ScalarT, 3>();
+    LCM::Tensor<ScalarT, 3> dI1dsigma = id;
+    LCM::Tensor<ScalarT, 3> dJ2dsigma = s;
+    LCM::Tensor<ScalarT, 3> dJ3dsigma;
+    for (int i = 0; i < 3; i++)
+      for (int j = 0; j < 3; j++)
+        dJ3dsigma(i, j) = s(i, j) * s(i, j) - 2 * J2 * id(i, j) / 3;
 
-	ScalarT Ff_I1 = A - C * std::exp(L * I1) - phi * I1;
+    ScalarT Ff_I1 = A - C * std::exp(L * I1) - phi * I1;
 
-	ScalarT Ff_kappa = A - C * std::exp(L * kappa) - phi * kappa;
+    ScalarT Ff_kappa = A - C * std::exp(L * kappa) - phi * kappa;
 
-	ScalarT X = kappa - Q * Ff_kappa;
+    ScalarT X = kappa - Q * Ff_kappa;
 
-	ScalarT Fc = 1.0;
+    ScalarT Fc = 1.0;
 
-	if((kappa - I1) > 0)
-		Fc = 1.0 - (I1 - kappa) * (I1 - kappa) / (X - kappa) / (X - kappa);
+    if ((kappa - I1) > 0) Fc = 1.0
+        - (I1 - kappa) * (I1 - kappa) / (X - kappa) / (X - kappa);
 
-	ScalarT Gamma = 1.0;
-	if (psi!=0 && J2!=0) Gamma = 0.5 * (1 - 3.0 * std::sqrt(3.0) * J3 / 2 / std::pow(J2, 1.5)
-			+ (1 + 3.0 * std::sqrt(3.0) * J3 / 2 / std::pow(J2, 1.5)) / psi);
+    ScalarT Gamma = 1.0;
+    if (psi != 0 && J2 != 0) Gamma = 0.5
+        * (1 - 3.0 * std::sqrt(3.0) * J3 / 2 / std::pow(J2, 1.5)
+            + (1 + 3.0 * std::sqrt(3.0) * J3 / 2 / std::pow(J2, 1.5)) / psi);
 
-	// derivatives
-	ScalarT dFfdI1 = -(L * C * std::exp(L * I1) + phi);
+    // derivatives
+    ScalarT dFfdI1 = -(L * C * std::exp(L * I1) + phi);
 
-	ScalarT dFcdI1 = 0.0;
-	if((kappa - I1) > 0 && ((X - kappa) != 0))
-		dFcdI1 = -2.0 * (I1 - kappa) / (X - kappa) / (X - kappa);
+    ScalarT dFcdI1 = 0.0;
+    if ((kappa - I1) > 0 && ((X - kappa) != 0)) dFcdI1 = -2.0 * (I1 - kappa)
+        / (X - kappa) / (X - kappa);
 
-	ScalarT dfdI1 = -(Ff_I1 - N) * ( 2 * Fc * dFfdI1 + (Ff_I1 - N) * dFcdI1);
+    ScalarT dfdI1 = -(Ff_I1 - N) * (2 * Fc * dFfdI1 + (Ff_I1 - N) * dFcdI1);
 
-	ScalarT dGammadJ2 = 0.0;
-	if (J2 != 0)
-		dGammadJ2 = 9.0 * std::sqrt(3.0) * J3 / std::pow(J2, 2.5) / 8.0 * (1.0 - 1.0 / psi);
+    ScalarT dGammadJ2 = 0.0;
+    if (J2 != 0) dGammadJ2 = 9.0 * std::sqrt(3.0) * J3 / std::pow(J2, 2.5) / 8.0
+        * (1.0 - 1.0 / psi);
 
-	ScalarT dfdJ2 = 2.0 * Gamma * dGammadJ2 * J2 + Gamma * Gamma;
+    ScalarT dfdJ2 = 2.0 * Gamma * dGammadJ2 * J2 + Gamma * Gamma;
 
-	ScalarT dGammadJ3 = 0.0;
-	if(J2 != 0)
-		dGammadJ3 = -3.0 * std::sqrt(3.0) / std::pow(J2, 1.5) / 4.0 * (1.0 - 1.0 / psi);
+    ScalarT dGammadJ3 = 0.0;
+    if (J2 != 0) dGammadJ3 = -3.0 * std::sqrt(3.0) / std::pow(J2, 1.5) / 4.0
+        * (1.0 - 1.0 / psi);
 
-	ScalarT dfdJ3 = 2.0 * Gamma * dGammadJ3 * J2;
+    ScalarT dfdJ3 = 2.0 * Gamma * dGammadJ3 * J2;
 
-	dgdsigma = dfdI1 * dI1dsigma + dfdJ2 * dJ2dsigma + dfdJ3 * dJ3dsigma;
+    dgdsigma = dfdI1 * dI1dsigma + dfdJ2 * dJ2dsigma + dfdJ3 * dJ3dsigma;
 
-	return dgdsigma;
-}
+    return dgdsigma;
+  }
 
-template<typename EvalT, typename Traits>
-typename CapModelStress<EvalT, Traits>::ScalarT
-CapModelStress<EvalT, Traits>::compute_dfdkappa(LCM::Tensor<ScalarT> & sigma, LCM::Tensor<ScalarT> & alpha, ScalarT & kappa)
-{
-	ScalarT dfdkappa;
-	LCM::Tensor<ScalarT> dfdsigma;
+  template<typename EvalT, typename Traits>
+  typename CapModelStress<EvalT, Traits>::ScalarT CapModelStress<EvalT, Traits>::compute_dfdkappa(
+      LCM::Tensor<ScalarT, 3> & sigma, LCM::Tensor<ScalarT, 3> & alpha,
+      ScalarT & kappa)
+  {
+    ScalarT dfdkappa;
+    LCM::Tensor<ScalarT, 3> dfdsigma;
 
-	LCM::Tensor<ScalarT> xi = sigma - alpha;
+    LCM::Tensor<ScalarT, 3> xi = sigma - alpha;
 
-	ScalarT I1 = LCM::trace(xi), p = I1 / 3;
+    ScalarT I1 = LCM::trace(xi), p = I1 / 3;
 
-	LCM::Tensor<ScalarT> s = xi - p * LCM::identity<ScalarT>();
+    LCM::Tensor<ScalarT, 3> s = xi - p * LCM::identity<ScalarT, 3>();
 
-	ScalarT J2 = 0.5 * LCM::dotdot(s, s);
+    ScalarT J2 = 0.5 * LCM::dotdot(s, s);
 
-	ScalarT J3 = LCM::det(s);
+    ScalarT J3 = LCM::det(s);
 
-	ScalarT Ff_I1 = A - C * std::exp(B * I1) - theta * I1;
+    ScalarT Ff_I1 = A - C * std::exp(B * I1) - theta * I1;
 
-	ScalarT Ff_kappa = A - C * std::exp(B * kappa) - theta * kappa;
+    ScalarT Ff_kappa = A - C * std::exp(B * kappa) - theta * kappa;
 
-	ScalarT X = kappa - R * Ff_kappa;
+    ScalarT X = kappa - R * Ff_kappa;
 
-	ScalarT dFcdkappa = 0.0;
+    ScalarT dFcdkappa = 0.0;
 
-	if((kappa - I1) > 0 && ((X - kappa) != 0))
-		dFcdkappa = 2 * (I1 - kappa) *
-		((X - kappa) + R*(I1-kappa)*(theta+B*C*std::exp(B*kappa)))
-		/ (X-kappa) / (X-kappa) / (X-kappa);
+    if ((kappa - I1) > 0 && ((X - kappa) != 0)) dFcdkappa = 2 * (I1 - kappa)
+        * ((X - kappa)
+            + R * (I1 - kappa) * (theta + B * C * std::exp(B * kappa)))
+        / (X - kappa) / (X - kappa) / (X - kappa);
 
-	dfdkappa = -dFcdkappa * (Ff_I1 - N) * (Ff_I1 - N);
+    dfdkappa = -dFcdkappa * (Ff_I1 - N) * (Ff_I1 - N);
 
-	return dfdkappa;
-}
-template<typename EvalT, typename Traits>
-typename CapModelStress<EvalT, Traits>::ScalarT
-CapModelStress<EvalT, Traits>::compute_Galpha(ScalarT & J2_alpha)
-{
-	if(N != 0)
-		return 1.0 - std::pow(J2_alpha, 0.5) / N;
-	else
-		return 0.0;
-}
+    return dfdkappa;
+  }
+  template<typename EvalT, typename Traits>
+  typename CapModelStress<EvalT, Traits>::ScalarT CapModelStress<EvalT, Traits>::compute_Galpha(
+      ScalarT & J2_alpha)
+  {
+    if (N != 0)
+      return 1.0 - std::pow(J2_alpha, 0.5) / N;
+    else
+      return 0.0;
+  }
 
-template<typename EvalT, typename Traits>
-LCM::Tensor<typename CapModelStress<EvalT, Traits>::ScalarT>
-CapModelStress<EvalT, Traits>::compute_halpha(LCM::Tensor<ScalarT> & dgdsigma, ScalarT & J2_alpha)
-{
+  template<typename EvalT, typename Traits>
+  LCM::Tensor<typename CapModelStress<EvalT, Traits>::ScalarT, 3> CapModelStress<
+      EvalT, Traits>::compute_halpha(LCM::Tensor<ScalarT, 3> & dgdsigma,
+      ScalarT & J2_alpha)
+  {
 
-	ScalarT Galpha = compute_Galpha(J2_alpha);
+    ScalarT Galpha = compute_Galpha(J2_alpha);
 
-	ScalarT I1 = LCM::trace(dgdsigma), p = I1 / 3;
+    ScalarT I1 = LCM::trace(dgdsigma), p = I1 / 3;
 
-	LCM::Tensor<ScalarT> s = dgdsigma - p * LCM::identity<ScalarT>();
+    LCM::Tensor<ScalarT, 3> s = dgdsigma - p * LCM::identity<ScalarT, 3>();
 
-	LCM::Tensor<ScalarT> halpha;
-	for (int i = 0; i < 3; i++){
-		for (int j = 0; j < 3; j++){
-			halpha(i,j) = calpha * Galpha * s(i,j);
-		}
-	}
+    LCM::Tensor<ScalarT, 3> halpha;
+    for (int i = 0; i < 3; i++) {
+      for (int j = 0; j < 3; j++) {
+        halpha(i, j) = calpha * Galpha * s(i, j);
+      }
+    }
 
-	return halpha;
-}
+    return halpha;
+  }
 
-template<typename EvalT, typename Traits>
-typename CapModelStress<EvalT, Traits>::ScalarT
-CapModelStress<EvalT, Traits>::compute_dedkappa(ScalarT & kappa)
-{
-	ScalarT Ff_kappa0 = A - C * std::exp(L * kappa0) - phi * kappa0;
+  template<typename EvalT, typename Traits>
+  typename CapModelStress<EvalT, Traits>::ScalarT CapModelStress<EvalT, Traits>::compute_dedkappa(
+      ScalarT & kappa)
+  {
+    ScalarT Ff_kappa0 = A - C * std::exp(L * kappa0) - phi * kappa0;
 
-	ScalarT X0 = kappa0 -  Q * Ff_kappa0;
+    ScalarT X0 = kappa0 - Q * Ff_kappa0;
 
-	ScalarT Ff_kappa = A - C * std::exp(L * kappa) - phi * kappa;
+    ScalarT Ff_kappa = A - C * std::exp(L * kappa) - phi * kappa;
 
-	ScalarT X = kappa -  Q * Ff_kappa;
+    ScalarT X = kappa - Q * Ff_kappa;
 
-	ScalarT dedX = (D1 - 2 * D2 * (X-X0)) * std::exp((D1 - D2 * (X - X0)) * (X - X0)) * W;
+    ScalarT dedX = (D1 - 2 * D2 * (X - X0))
+        * std::exp((D1 - D2 * (X - X0)) * (X - X0)) * W;
 
-	ScalarT dXdkappa = 1 + Q * C * L * std::exp(L * kappa) + Q * phi;
+    ScalarT dXdkappa = 1 + Q * C * L * std::exp(L * kappa) + Q * phi;
 
-	return dedX * dXdkappa;
-}
+    return dedX * dXdkappa;
+  }
 
 //**********************************************************************
-} // end LCM
+}// end LCM
