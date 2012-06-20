@@ -326,4 +326,34 @@ namespace {
     TEST_COMPARE( norm(A - B), <=, 100*std::numeric_limits<ScalarT>::epsilon());
   }
 
+  TEUCHOS_UNIT_TEST( TensorUtils, TensorSVD )
+  {
+    ScalarT cl = sqrt(3.0) / 2.0;
+    ScalarT sl = 0.5;
+
+    ScalarT cr = sqrt(2.0) / 2.0;
+    ScalarT sr = sqrt(2.0) / 2.0;
+
+    LCM::Tensor<ScalarT, 2>
+    U(cl, -sl, sl, cl);
+
+    LCM::Tensor<ScalarT, 2>
+    V(cr, -sr, sr, cr);
+
+    LCM::Tensor<ScalarT, 2>
+    S(2.0, 0.0, 0.0, 1.0);
+
+    LCM::Tensor<ScalarT, 2>
+    A = U * S * LCM::transpose(V);
+
+    LCM::Tensor<ScalarT, 2>
+    X, D, Y;
+
+    boost::tie(X, D, Y) = LCM::svd(A);
+
+    //TEST_COMPARE(norm(U - X), <=, 100*std::numeric_limits<ScalarT>::epsilon());
+    //TEST_COMPARE(norm(S - D), <=, 100*std::numeric_limits<ScalarT>::epsilon());
+    //TEST_COMPARE(norm(V - Y), <=, 100*std::numeric_limits<ScalarT>::epsilon());
+  }
+
 } // namespace

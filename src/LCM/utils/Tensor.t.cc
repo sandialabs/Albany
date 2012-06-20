@@ -1858,7 +1858,7 @@ namespace LCM {
     e = Ju + Ku;
 
     const T
-    f = sqrt(d * d - 4.0 * Lu * Lu);
+    f = sqrt(d * d + 4.0 * Lu * Lu);
 
     const T
     s0 = sqrt(0.5 * (e + f));
