@@ -230,9 +230,9 @@ namespace LCM {
             if (std::abs(f) < 1.0e-10) break;
             if (iteration > 20) {
               // output for debug
-              std::cout << "no stress correction after iteration = "
-                  << iteration << " yield function abs(f) = " << abs(f)
-                  << std::endl;
+              //std::cout << "no stress correction after iteration = "
+                  //<< iteration << " yield function abs(f) = " << abs(f)
+                  //<< std::endl;
               break;
             }
 

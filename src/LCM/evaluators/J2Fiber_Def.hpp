@@ -50,6 +50,12 @@ namespace LCM {
           p.get<std::string>("Energy_f1 Name"),
           p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), energy_f2(
           p.get<std::string>("Energy_f2 Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), damage_J2(
+          p.get<std::string>("Damage_J2 Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), damage_f1(
+          p.get<std::string>("Damage_f1 Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), damage_f2(
+          p.get<std::string>("Damage_f2 Name"),
           p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), xiinf_J2(
           p.get<RealType>("xiinf_J2 Name")), tau_J2(
           p.get<RealType>("tau_J2 Name")), k_f1(p.get<RealType>("k_f1 Name")), q_f1(
@@ -96,6 +102,10 @@ namespace LCM {
     this->addEvaluatedField(energy_f1);
     this->addEvaluatedField(energy_f2);
 
+    this->addEvaluatedField(damage_J2);
+    this->addEvaluatedField(damage_f1);
+    this->addEvaluatedField(damage_f2);
+
     this->setName("Stress" + PHX::TypeString<EvalT>::value);
   }
 
@@ -119,6 +129,10 @@ namespace LCM {
     this->utils.setFieldData(energy_f1, fm);
     this->utils.setFieldData(energy_f2, fm);
 
+    this->utils.setFieldData(damage_J2, fm);
+    this->utils.setFieldData(damage_f1, fm);
+    this->utils.setFieldData(damage_f2, fm);
+
     this->utils.setFieldData(poissonsRatio, fm);
   }
 
@@ -139,7 +153,7 @@ namespace LCM {
     ScalarT sq23 = std::sqrt(2. / 3.);
 
     ScalarT alpha_J2, alpha_f1, alpha_f2;
-    ScalarT xi_J2, xi_f1, xi_f2;
+    //ScalarT xi_J2, xi_f1, xi_f2;
 
     // previous state
     Albany::MDArray Fpold = (*workset.stateArrayPtr)[fpName];
@@ -274,7 +288,7 @@ namespace LCM {
         alpha_J2 = energy_J2old(cell, qp);
         if (energy_J2(cell, qp) > alpha_J2) alpha_J2 = energy_J2(cell, qp);
 
-        xi_J2 = xiinf_J2 * (1 - std::exp(-alpha_J2 / tau_J2));
+        damage_J2(cell, qp) = xiinf_J2 * (1 - std::exp(-alpha_J2 / tau_J2));
 
         //-----------compute stress in Fibers
 
@@ -320,16 +334,16 @@ namespace LCM {
         if (energy_f2(cell, qp) > alpha_f2) alpha_f2 = energy_f2(cell, qp);
 
         // damage term in fibers
-        xi_f1 = xiinf_f1 * (1 - std::exp(-alpha_f1 / tau_f1));
-        xi_f2 = xiinf_f2 * (1 - std::exp(-alpha_f2 / tau_f2));
+        damage_f1(cell,qp) = xiinf_f1 * (1 - std::exp(-alpha_f1 / tau_f1));
+        damage_f2(cell,qp) = xiinf_f2 * (1 - std::exp(-alpha_f2 / tau_f2));
 
         // total Cauchy stress (J2, Fibers)
         for (std::size_t i = 0; i < numDims; ++i)
           for (std::size_t j = 0; j < numDims; ++j)
-            stress(cell, qp, i, j) = (1 - vol_f1 - vol_f2) * (1 - xi_J2)
+            stress(cell, qp, i, j) = (1 - vol_f1 - vol_f2) * (1 - damage_J2(cell,qp))
                 * stress(cell, qp, i, j)
-                + vol_f1 * (1 - xi_f1) * stress_f1(i, j)
-                + vol_f2 * (1 - xi_f2) * stress_f2(i, j);
+                + vol_f1 * (1 - damage_f1(cell,qp)) * stress_f1(i, j)
+                + vol_f2 * (1 - damage_f2(cell,qp)) * stress_f2(i, j);
 
       } // end of loop over qp
     } // end of loop over cell

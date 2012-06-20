@@ -68,6 +68,9 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> energy_J2;
   PHX::MDField<ScalarT,Cell,QuadPoint> energy_f1;
   PHX::MDField<ScalarT,Cell,QuadPoint> energy_f2;
+  PHX::MDField<ScalarT,Cell,QuadPoint> damage_J2;
+  PHX::MDField<ScalarT,Cell,QuadPoint> damage_f1;
+  PHX::MDField<ScalarT,Cell,QuadPoint> damage_f2;
 
   std::string fpName, eqpsName;
   std::string energy_J2Name, energy_f1Name, energy_f2Name;
