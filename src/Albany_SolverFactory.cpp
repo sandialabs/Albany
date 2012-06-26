@@ -39,8 +39,8 @@
 
 #include "Thyra_ModelEvaluatorDefaultBase.hpp" 
 
-//#include "Piro_RythmosSolver.hpp"
-#include "Piro_NOXSolver.hpp" 
+#include "NOX_Thyra_Group.H"
+#include "Piro_RythmosSolver.hpp"
 #include "Piro_ConfigDefs.hpp"
 #include "Thyra_EpetraModelEvaluator.hpp" 
 #include <iostream> 
@@ -49,6 +49,7 @@
 #include "Teuchos_Assert.hpp"
 #include "Teuchos_GlobalMPISession.hpp"
 #include "Teuchos_StandardCatchMacros.hpp"
+#include "Piro_NOXSolver.hpp" 
 
 
 
@@ -174,7 +175,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
       return  rcp(new Piro::Epetra::NOXSolver(piroParams, model, NOX_observer));
 }
 
-Teuchos::RCP<Thyra::ModelEvaluator<ST> >  
+Teuchos::RCP<Thyra::ModelEvaluatorDefaultBase<ST> >  
 Albany::SolverFactory::createAndGetAlbanyAppT(
   Teuchos::RCP<Albany::Application>& albanyApp,
   const Teuchos::RCP<const Epetra_Comm>& appComm,
@@ -193,7 +194,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     string secondOrder = problemParams.get("Second Order", "No");
 
     Teuchos::RCP<Albany::Application> app;
-    Teuchos::RCP<Thyra::ModelEvaluator<ST> > modelT;
+    Teuchos::RCP<Thyra::ModelEvaluatorDefaultBase<ST> > modelT;
 
     typedef double Scalar;
     RCP<Rythmos::IntegrationObserverBase<Scalar> > Rythmos_observer;
@@ -234,7 +235,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 	//return  rcp(new Piro::Epetra::LOCASolver(piroParams, model, NOX_observer));
     }
     else if (solutionMethod== "Transient" && secondOrder=="No") { 
-      //return  rcp(new Piro::Epetra::RythmosSolver(piroParams, model, Rythmos_observer));
+      return  rcp(new Piro::RythmosSolver<ST>(piroParams, modelT, Rythmos_observer));
     }
     else if (solutionMethod== "Transient" && secondOrder=="Velocity Verlet") {
       //return  rcp(new Piro::Epetra::VelocityVerletSolver(piroParams, model, NOX_observer));
@@ -252,7 +253,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
       return Teuchos::null;
       }
     else {
-      //return Teuchos::rcp(new Piro::NOXSolver<ST>(piroParams, thyraModel)); 
+    //  return rcp(new Piro::NOXSolver<ST>(piroParams, modelT)); 
     }
 }
 
@@ -275,7 +276,7 @@ Albany::SolverFactory::createAlbanyAppAndModel(
   return modelFactory.create();
 }
 
-Teuchos::RCP<Thyra::ModelEvaluator<ST> >  
+Teuchos::RCP<Thyra::ModelEvaluatorDefaultBase<ST> >  
 Albany::SolverFactory::createAlbanyAppAndModelT(
   Teuchos::RCP<Albany::Application>& albanyApp,
   const Teuchos::RCP<const Epetra_Comm>& appComm,

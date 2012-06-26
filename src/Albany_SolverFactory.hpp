@@ -22,6 +22,7 @@
 #include "Teuchos_RCP.hpp"
 #include "EpetraExt_ModelEvaluator.h"
 #include "Thyra_ModelEvaluator.hpp"
+#include "Thyra_ModelEvaluatorDefaultBase.hpp"
 #include "Teuchos_SerialDenseVector.hpp"
 #include "Epetra_Vector.h"
 #include "Thyra_VectorBase.hpp"
@@ -65,7 +66,7 @@ namespace Albany {
       const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null);
     
     //Thyra version of above
-    Teuchos::RCP<Thyra::ModelEvaluator<ST> > createAndGetAlbanyAppT(
+    Teuchos::RCP<Thyra::ModelEvaluatorDefaultBase<ST> > createAndGetAlbanyAppT(
       Teuchos::RCP<Application>& albanyApp,
       const Teuchos::RCP<const Epetra_Comm>& appComm,
       const Teuchos::RCP<const Epetra_Comm>& solverComm,
@@ -77,7 +78,7 @@ namespace Albany {
       const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null);
     
     //Thyra version of above
-    Teuchos::RCP<Thyra::ModelEvaluator<ST> > createAlbanyAppAndModelT(
+    Teuchos::RCP<Thyra::ModelEvaluatorDefaultBase<ST> > createAlbanyAppAndModelT(
       Teuchos::RCP<Application>& albanyApp,
       const Teuchos::RCP<const Epetra_Comm>& appComm,
       const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null);
