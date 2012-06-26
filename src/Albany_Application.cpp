@@ -229,10 +229,10 @@ Application(const RCP<const Epetra_Comm>& comm_,
   }
   else {
     overlapped_xT->doImport(*initial_xT, *importerT, Tpetra::INSERT);
-    Albany::InitialConditionsT(overlapped_xT, wsElNodeEqID, coords, neq, numDim,
+    Albany::InitialConditionsT(overlapped_xT, wsElNodeEqID, wsEBNames, coords, neq, numDim,
                               problemParams->sublist("Initial Condition"),
                               disc->hasRestartSolution());
-    Albany::InitialConditionsT(overlapped_xdotT,  wsElNodeEqID, coords, neq, numDim,
+    Albany::InitialConditionsT(overlapped_xdotT,  wsElNodeEqID, wsEBNames, coords, neq, numDim,
                               problemParams->sublist("Initial Condition Dot"));
     initial_xT->doExport(*overlapped_xT, *exporterT, Tpetra::INSERT);
     initial_x_dotT->doExport(*overlapped_xdotT, *exporterT, Tpetra::INSERT);

@@ -30,7 +30,7 @@ const double pi=3.141592653589793;
 
 
 Teuchos::RCP<const Teuchos::ParameterList>
-getValidInitialConditionParameters()
+getValidInitialConditionParameters(const Teuchos::ArrayRCP<std::string>& wsEBNames)
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
      rcp(new Teuchos::ParameterList("ValidInitialConditionParams"));;
@@ -38,17 +38,24 @@ getValidInitialConditionParameters()
   Teuchos::Array<double> defaultData;
   validPL->set<Teuchos::Array<double> >("Function Data", defaultData, "");
 
+// Validate element block constant data
+
+  for(int i = 0; i < wsEBNames.size(); i++)
+
+    validPL->set<Teuchos::Array<double> >(wsEBNames[i], defaultData, "");
+
   return validPL;
 }
 
 void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
                        const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >& wsElNodeEqID,
+                       const Teuchos::ArrayRCP<std::string>& wsEBNames,
                        const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords,
                        const int neq, const int numDim,
                        Teuchos::ParameterList& icParams, const bool hasRestartSolution)
 {
   // Called twice, with x and xdot. Different param lists are sent in.
-  icParams.validateParameters(*Albany::getValidInitialConditionParameters(),0);
+  icParams.validateParameters(*Albany::getValidInitialConditionParameters(wsEBNames), 0);
 
   // Default function is Constant, unless a Restart solution vector
   // was used, in which case the Init COnd defaults to Restart.
@@ -58,38 +65,69 @@ void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
 
   if (name=="Restart") return;
 
-  Teuchos::Array<double> defaultData(neq);
-  Teuchos::Array<double> data = icParams.get("Function Data",defaultData);
+  // Handle element block specific constant data
 
-  // Call factory method from library of initial condition functions
-  Teuchos::RCP<Albany::AnalyticFunction> initFunc
-    = createAnalyticFunction(name, neq, numDim, data);
+  if(name == "EBConstant"){
 
-  // Loop over all worksets, elements, all local nodes: compute soln as a function of coord
-  std::vector<double> x; x.resize(neq);
-  for (int ws=0; ws < wsElNodeEqID.size(); ws++) {
-    for (int el=0; el < wsElNodeEqID[ws].size(); el++) {
-      for (int ln=0; ln < wsElNodeEqID[ws][el].size(); ln++) {
-        const double* X = coords[ws][el][ln];
-        Teuchos::ArrayRCP<int> lid = wsElNodeEqID[ws][el][ln];
-        for (int i=0; i<neq; i++) x[i] = (*soln)[lid[i]];
-        initFunc->compute(&x[0],X);
-        for (int i=0; i<neq; i++) (*soln)[lid[i]] = x[i];
-  } } }
+    Teuchos::Array<double> defaultData(neq);
+  
+    // Loop over all worksets, elements, all local nodes: compute soln as a function of coord and wsEBName
+
+    std::vector<double> x; x.resize(neq);
+    for (int ws=0; ws < wsElNodeEqID.size(); ws++) {
+
+      Teuchos::Array<double> data = icParams.get(wsEBNames[ws], defaultData);
+      // Call factory method from library of initial condition functions
+      Teuchos::RCP<Albany::AnalyticFunction> initFunc
+        = createAnalyticFunction("Constant", neq, numDim, data);
+
+      for (int el=0; el < wsElNodeEqID[ws].size(); el++) {
+        for (int ln=0; ln < wsElNodeEqID[ws][el].size(); ln++) {
+
+          const double* X = coords[ws][el][ln];
+          Teuchos::ArrayRCP<int> lid = wsElNodeEqID[ws][el][ln];
+          for (int i=0; i<neq; i++) x[i] = (*soln)[lid[i]];
+          initFunc->compute(&x[0],X);
+          for (int i=0; i<neq; i++) (*soln)[lid[i]] = x[i];
+
+    } } }
+
+  }
+  else {
+
+    Teuchos::Array<double> defaultData(neq);
+    Teuchos::Array<double> data = icParams.get("Function Data", defaultData);
+  
+    // Call factory method from library of initial condition functions
+    Teuchos::RCP<Albany::AnalyticFunction> initFunc
+      = createAnalyticFunction(name, neq, numDim, data);
+  
+    // Loop over all worksets, elements, all local nodes: compute soln as a function of coord
+    std::vector<double> x; x.resize(neq);
+    for (int ws=0; ws < wsElNodeEqID.size(); ws++) {
+      for (int el=0; el < wsElNodeEqID[ws].size(); el++) {
+        for (int ln=0; ln < wsElNodeEqID[ws][el].size(); ln++) {
+          const double* X = coords[ws][el][ln];
+          Teuchos::ArrayRCP<int> lid = wsElNodeEqID[ws][el][ln];
+          for (int i=0; i<neq; i++) x[i] = (*soln)[lid[i]];
+          initFunc->compute(&x[0],X);
+          for (int i=0; i<neq; i++) (*soln)[lid[i]] = x[i];
+    } } }
+
+  }
 
 }
-
 
 void InitialConditionsT(const Teuchos::RCP<Tpetra_Vector>& solnT,
                        const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >& wsElNodeEqID,
+                       const Teuchos::ArrayRCP<std::string>& wsEBNames,
                        const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords,
                        const int neq, const int numDim,
                        Teuchos::ParameterList& icParams, const bool hasRestartSolution)
 {
-
   Teuchos::ArrayRCP<ST> solnT_nonconstView = solnT->get1dViewNonConst();
   // Called twice, with x and xdot. Different param lists are sent in.
-  icParams.validateParameters(*Albany::getValidInitialConditionParameters(),0);
+  icParams.validateParameters(*Albany::getValidInitialConditionParameters(wsEBNames), 0);
 
   // Default function is Constant, unless a Restart solution vector
   // was used, in which case the Init COnd defaults to Restart.
@@ -99,25 +137,56 @@ void InitialConditionsT(const Teuchos::RCP<Tpetra_Vector>& solnT,
 
   if (name=="Restart") return;
 
-  Teuchos::Array<double> defaultData(neq);
-  Teuchos::Array<double> data = icParams.get("Function Data",defaultData);
+  // Handle element block specific constant data
 
-  // Call factory method from library of initial condition functions
-  Teuchos::RCP<Albany::AnalyticFunction> initFunc
-    = createAnalyticFunction(name, neq, numDim, data);
+  if(name == "EBConstant"){
 
-  // Loop over all worksets, elements, all local nodes: compute soln as a function of coord
-  std::vector<double> x; x.resize(neq);
-  for (int ws=0; ws < wsElNodeEqID.size(); ws++) {
-    for (int el=0; el < wsElNodeEqID[ws].size(); el++) {
-      for (int ln=0; ln < wsElNodeEqID[ws][el].size(); ln++) {
-        const double* X = coords[ws][el][ln];
-        Teuchos::ArrayRCP<int> lid = wsElNodeEqID[ws][el][ln];
-        for (int i=0; i<neq; i++) x[i] = solnT_nonconstView[lid[i]];
-        initFunc->compute(&x[0],X);
-        for (int i=0; i<neq; i++) solnT_nonconstView[lid[i]] = x[i];
-  } } }
+    Teuchos::Array<double> defaultData(neq);
+  
+    // Loop over all worksets, elements, all local nodes: compute soln as a function of coord and wsEBName
+
+    std::vector<double> x; x.resize(neq);
+    for (int ws=0; ws < wsElNodeEqID.size(); ws++) {
+
+      Teuchos::Array<double> data = icParams.get(wsEBNames[ws], defaultData);
+      // Call factory method from library of initial condition functions
+      Teuchos::RCP<Albany::AnalyticFunction> initFunc
+        = createAnalyticFunction("Constant", neq, numDim, data);
+
+      for (int el=0; el < wsElNodeEqID[ws].size(); el++) {
+        for (int ln=0; ln < wsElNodeEqID[ws][el].size(); ln++) {
+
+          const double* X = coords[ws][el][ln];
+          Teuchos::ArrayRCP<int> lid = wsElNodeEqID[ws][el][ln];
+          for (int i=0; i<neq; i++) x[i] = solnT_nonconstView[lid[i]];
+          initFunc->compute(&x[0],X);
+          for (int i=0; i<neq; i++) solnT_nonconstView[lid[i]] = x[i];
+
+    } } }
+
+  }
+  else {
+
+    Teuchos::Array<double> defaultData(neq);
+    Teuchos::Array<double> data = icParams.get("Function Data", defaultData);
+  
+    // Call factory method from library of initial condition functions
+    Teuchos::RCP<Albany::AnalyticFunction> initFunc
+      = createAnalyticFunction(name, neq, numDim, data);
+  
+    // Loop over all worksets, elements, all local nodes: compute soln as a function of coord
+    std::vector<double> x; x.resize(neq);
+    for (int ws=0; ws < wsElNodeEqID.size(); ws++) {
+      for (int el=0; el < wsElNodeEqID[ws].size(); el++) {
+        for (int ln=0; ln < wsElNodeEqID[ws][el].size(); ln++) {
+          const double* X = coords[ws][el][ln];
+          Teuchos::ArrayRCP<int> lid = wsElNodeEqID[ws][el][ln];
+          for (int i=0; i<neq; i++) x[i] = solnT_nonconstView[lid[i]];
+          initFunc->compute(&x[0],X);
+          for (int i=0; i<neq; i++) solnT_nonconstView[lid[i]] = x[i];
+    } } }
+
+  }
 
 }
-
 }

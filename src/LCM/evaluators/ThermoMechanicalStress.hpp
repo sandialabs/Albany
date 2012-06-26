@@ -74,7 +74,7 @@ private:
   RealType refTemperature;
 
   // local Tensors
-  Tensor<ScalarT> F, Fpold, Fpinv, Cpinv, be, s, N, A, expA;
+  Tensor<ScalarT, 3> F, Fpold, Fpinv, Cpinv, be, s, N, A, expA;
 };
 }
 

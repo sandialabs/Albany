@@ -26,7 +26,7 @@
 #include "Tensor.h"
 
 namespace LCM {
-/** \brief J2Fibers stress response
+/** \brief J2Fiber stress response
 
     This evaluator computes stress based on a uncoupled J2Fiber
     potential
@@ -68,6 +68,9 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> energy_J2;
   PHX::MDField<ScalarT,Cell,QuadPoint> energy_f1;
   PHX::MDField<ScalarT,Cell,QuadPoint> energy_f2;
+  PHX::MDField<ScalarT,Cell,QuadPoint> damage_J2;
+  PHX::MDField<ScalarT,Cell,QuadPoint> damage_f1;
+  PHX::MDField<ScalarT,Cell,QuadPoint> damage_f2;
 
   std::string fpName, eqpsName;
   std::string energy_J2Name, energy_f1Name, energy_f2Name;
@@ -75,16 +78,14 @@ private:
   unsigned int numDims;
   unsigned int worksetSize;
 
-  // scratch space FCs
-  Intrepid::FieldContainer<ScalarT> Fpinv;
-  Intrepid::FieldContainer<ScalarT> FpinvT;
-  Intrepid::FieldContainer<ScalarT> Cpinv;
-
-  LCM::Tensor<ScalarT> be;
-  LCM::Tensor<ScalarT> s;
-  LCM::Tensor<ScalarT> N;
-  LCM::Tensor<ScalarT> A;
-  LCM::Tensor<ScalarT> expA;
+  LCM::Tensor<ScalarT, 3> F;
+  LCM::Tensor<ScalarT, 3> Fpn;
+  LCM::Tensor<ScalarT, 3> Cpinv;
+  LCM::Tensor<ScalarT, 3> be;
+  LCM::Tensor<ScalarT, 3> s;
+  LCM::Tensor<ScalarT, 3> N;
+  LCM::Tensor<ScalarT, 3> A;
+  LCM::Tensor<ScalarT, 3> expA;
 
   RealType xiinf_J2;
   RealType tau_J2;
