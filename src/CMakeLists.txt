@@ -334,6 +334,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/problems/ThermoPoroPlasticityProblem.cpp
     ${LCM_DIR}/problems/ThermoMechanicalProblem.cpp
     ${LCM_DIR}/problems/HDiffusionDeformationProblem.cpp
+    ${LCM_DIR}/problems/ProjectionProblem.cpp
   )
   IF(ALBANY_MPI)
     SET(SOURCES ${SOURCES}
@@ -352,6 +353,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/problems/ThermoPoroPlasticityProblem.hpp
     ${LCM_DIR}/problems/ThermoMechanicalProblem.hpp
     ${LCM_DIR}/problems/HDiffusionDeformationProblem.hpp
+    ${LCM_DIR}/problems/ProjectionProblem.hpp
   )
   IF(ALBANY_MPI)
     SET(HEADERS ${HEADERS}
@@ -420,6 +422,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/TotalConcentration.cpp
     ${LCM_DIR}/evaluators/HDiffusionDeformationMatterResidual.cpp
     ${LCM_DIR}/evaluators/ScalarL2ProjectionResidual.cpp
+    ${LCM_DIR}/evaluators/L2ProjectionResidual.cpp
     ${LCM_DIR}/evaluators/TauContribution.cpp
     ${LCM_DIR}/evaluators/StrainRateFactor.cpp
     ${LCM_DIR}/evaluators/MixtureThermalExpansion.cpp
@@ -555,6 +558,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/HDiffusionDeformationMatterResidual_Def.hpp
     ${LCM_DIR}/evaluators/ScalarL2ProjectionResidual.hpp
     ${LCM_DIR}/evaluators/ScalarL2ProjectionResidual_Def.hpp
+        ${LCM_DIR}/evaluators/L2ProjectionResidual.hpp
+    ${LCM_DIR}/evaluators/L2ProjectionResidual_Def.hpp
     ${LCM_DIR}/evaluators/StrainRateFactor.hpp
     ${LCM_DIR}/evaluators/StrainRateFactor_Def.hpp
     ${LCM_DIR}/evaluators/TauContribution.hpp
