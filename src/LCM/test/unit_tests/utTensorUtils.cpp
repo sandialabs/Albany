@@ -13,6 +13,7 @@
  * including this sentence must appear on any copies of this software.*
  *    Questions to Andy Salinger, agsalin@sandia.gov                  *
  \********************************************************************/
+#include<ctime>
 
 #include <Teuchos_UnitTestHarness.hpp>
 #include "Tensor.h"
@@ -324,6 +325,49 @@ namespace {
     A(1, 1) = 0.0;
     A(2, 2) = 0.0;
     TEST_COMPARE( norm(A - B), <=, 100*std::numeric_limits<ScalarT>::epsilon());
+  }
+
+  TEUCHOS_UNIT_TEST(TensorUtils, TensorSVD2x2)
+  {
+    const ScalarT
+    phi = 1.0;
+
+    const ScalarT
+    psi = 2.0;
+
+    const ScalarT
+    s0 = sqrt(3.0);
+
+    const ScalarT
+    s1 = sqrt(2.0);
+
+    const ScalarT cl = cos(phi);
+    const ScalarT sl = sin(phi);
+
+    const ScalarT cr = cos(psi);
+    const ScalarT sr = sin(psi);
+
+    const LCM::Tensor<ScalarT, 2>
+    X(cl, -sl, sl, cl);
+
+    const LCM::Tensor<ScalarT, 2>
+    Y(cr, -sr, sr, cr);
+
+    const LCM::Tensor<ScalarT, 2>
+    D(s0, 0.0, 0.0, s1);
+
+    const LCM::Tensor<ScalarT, 2>
+    A = X * D * LCM::transpose(Y);
+
+    LCM::Tensor<ScalarT, 2>
+    U, S, V;
+
+    boost::tie(U, S, V) = LCM::svd(A);
+
+    const LCM::Tensor<ScalarT, 2>
+    B = U * S * LCM::transpose(V);
+
+    TEST_COMPARE(norm(A - B), <=, 100*std::numeric_limits<ScalarT>::epsilon());
   }
 
 } // namespace

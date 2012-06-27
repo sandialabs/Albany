@@ -125,7 +125,7 @@ ELSE()
   SET(ALBANY_ZOLTAN FALSE)
 ENDIF()
 
-# set optional dependency on LCM, defaults to Enabled
+# set optional dependency on LCM, defaults to Disabled
 ##    This changes default to ON:
 ##    IF (NOT ENABLE_LCM AND DEFINED ENABLE_LCM)
 IF (NOT ENABLE_LCM)
@@ -185,6 +185,17 @@ IF (ENABLE_ASCR)
 ELSE()
   MESSAGE("-- ASCR is NOT Enabled.")
   SET(ALBANY_ASCR FALSE)
+ENDIF()
+
+# Set optional build of FELIX (Land Ice SciDAC project), defaults to Disabled
+OPTION(ENABLE_FELIX "Flag to turn on FELIX Source code" OFF)
+IF (NOT ENABLE_FELIX)
+  MESSAGE("-- FELIX is NOT Enabled.")
+  SET(ALBANY_FELIX FALSE)
+ELSE()
+  ADD_DEFINITIONS(-DALBANY_FELIX)
+  MESSAGE("-- FELIX is Enabled, compiling with -DALBANY_FELIX")
+  SET(ALBANY_FELIX TRUE)
 ENDIF()
 
 # Add option to check for hardware floating point exceptions using SSE, defaults to disabled

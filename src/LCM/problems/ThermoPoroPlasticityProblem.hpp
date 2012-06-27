@@ -139,7 +139,9 @@ namespace Albany {
 #include "KCPermeability.hpp"
 #include "ElasticModulus.hpp"
 #include "PoissonsRatio.hpp"
-#include "TotalStress.hpp"
+#include "ShearModulus.hpp"
+#include "BulkModulus.hpp"
+// #include "TotalStress.hpp"
 #include "PHAL_Source.hpp"
 #include "ThermoPoroPlasticityResidMass.hpp"
 #include "ThermoPoroPlasticityResidMomentum.hpp"
@@ -148,8 +150,6 @@ namespace Albany {
 
 #include "MixtureThermalExpansion.hpp"
 #include "MixtureSpecificHeat.hpp"
-#include "ShearModulus.hpp"
-#include "BulkModulus.hpp"
 
 #include "J2Stress.hpp"
 #include "Neohookean.hpp"
@@ -317,25 +317,26 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
         fm0.template registerEvaluator<EvalT>(ev);
       }
 
-
+/*
  //  /// Temporary constant setting
- //  { // Constant Temperature
- //       RCP<ParameterList> p = rcp(new ParameterList);
+   { // Constant Temperature
+        RCP<ParameterList> p = rcp(new ParameterList);
 //
-  //      p->set<string>("Material Property Name", "Temperature");
-  //      p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
-  //      p->set<string>("Coordinate Vector Name", "Coord Vec");
-  //      p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
-  //      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-   //     Teuchos::ParameterList& paramList = params->sublist("Temperature");
-   //     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+        p->set<string>("Material Property Name", "Temperature");
+        p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+        p->set<string>("Coordinate Vector Name", "Coord Vec");
+        p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
+        p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+        Teuchos::ParameterList& paramList = params->sublist("Temperature");
+        p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 //
-   //     ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
-   //     fm0.template registerEvaluator<EvalT>(ev);
-   //     p = stateMgr.registerStateVariable("Temperature",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
-   //     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-  //      fm0.template registerEvaluator<EvalT>(ev);
-//   }
+        ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+        p = stateMgr.registerStateVariable("Temperature",dl->qp_scalar, dl->dummy,"scalar", 300.0, true);
+        ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+   }
+   */
 
    { // Constant Reference Temperature
            RCP<ParameterList> p = rcp(new ParameterList);
@@ -347,8 +348,13 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
            p->set<RCP<ParamLib> >("Parameter Library", paramLib);
            Teuchos::ParameterList& paramList = params->sublist("Reference Temperature");
            p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+           double refT = paramList.get("Value", 300.0);
 
            ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
+           fm0.template registerEvaluator<EvalT>(ev);
+
+           p = stateMgr.registerStateVariable("Reference Temperature",dl->qp_scalar, dl->dummy,"scalar", refT, true);
+           ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
            fm0.template registerEvaluator<EvalT>(ev);
     }
 
@@ -362,8 +368,14 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
            p->set<RCP<ParamLib> >("Parameter Library", paramLib);
            Teuchos::ParameterList& paramList = params->sublist("Skeleton Thermal Expansion");
            p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+           double skAlpha = paramList.get("Value", 0.0);
+
 
            ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
+           fm0.template registerEvaluator<EvalT>(ev);
+
+           p = stateMgr.registerStateVariable("Skeleton Thermal Expansion",dl->qp_scalar, dl->dummy,"scalar", skAlpha, true);
+           ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
            fm0.template registerEvaluator<EvalT>(ev);
    }
 
@@ -377,9 +389,14 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
               p->set<RCP<ParamLib> >("Parameter Library", paramLib);
               Teuchos::ParameterList& paramList = params->sublist("Pore-Fluid Thermal Expansion");
               p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+              double fAlpha = paramList.get("Value", 0.0);
 
               ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
               fm0.template registerEvaluator<EvalT>(ev);
+
+              p = stateMgr.registerStateVariable("Pore-Fluid Thermal Expansion",dl->qp_scalar, dl->dummy,"scalar", fAlpha, true);
+                         ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+                         fm0.template registerEvaluator<EvalT>(ev);
     }
 
    { // Skeleton Density
@@ -413,33 +430,33 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
    }
 
    { // Skeleton Specific Heat
-                    RCP<ParameterList> p = rcp(new ParameterList);
+			RCP<ParameterList> p = rcp(new ParameterList);
 
-                    p->set<string>("Material Property Name", "Skeleton Specific Heat");
-                    p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
-                    p->set<string>("Coordinate Vector Name", "Coord Vec");
-                    p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
-                    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-                    Teuchos::ParameterList& paramList = params->sublist("Skeleton Specific Heat");
-                    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+			p->set<string>("Material Property Name", "Skeleton Specific Heat");
+			p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+			p->set<string>("Coordinate Vector Name", "Coord Vec");
+			p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
+			p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+			Teuchos::ParameterList& paramList = params->sublist("Skeleton Specific Heat");
+			p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-                    ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
-                    fm0.template registerEvaluator<EvalT>(ev);
+			ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
+			fm0.template registerEvaluator<EvalT>(ev);
    }
 
    { // Pore-Fluid Specific Heat
-                       RCP<ParameterList> p = rcp(new ParameterList);
+			   RCP<ParameterList> p = rcp(new ParameterList);
 
-                       p->set<string>("Material Property Name", "Pore-Fluid Specific Heat");
-                       p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
-                       p->set<string>("Coordinate Vector Name", "Coord Vec");
-                       p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
-                       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-                       Teuchos::ParameterList& paramList = params->sublist("Pore-Fluid Specific Heat");
-                       p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+		   p->set<string>("Material Property Name", "Pore-Fluid Specific Heat");
+		   p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+		   p->set<string>("Coordinate Vector Name", "Coord Vec");
+		   p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
+		   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+		   Teuchos::ParameterList& paramList = params->sublist("Pore-Fluid Specific Heat");
+		   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-                       ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
-                       fm0.template registerEvaluator<EvalT>(ev);
+		   ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
+		   fm0.template registerEvaluator<EvalT>(ev);
    }
 
    { // Mixture Specific Heat
@@ -467,25 +484,24 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
         }
 
    { // Mixture Thermal Expansion
-             RCP<ParameterList> p = rcp(new ParameterList("Mixture Thermal Expansion"));
+		 RCP<ParameterList> p = rcp(new ParameterList("Mixture Thermal Expansion"));
 
-             //Input
-             p->set<string>("Pore-Fluid Thermal Expansion Name", "Pore-Fluid Thermal Expansion");
-             p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-             p->set<string>("Skeleton Thermal Expansion Name", "Skeleton Thermal Expansion");
+		 //Input
+		 p->set<string>("Pore-Fluid Thermal Expansion Name", "Pore-Fluid Thermal Expansion");
+		 p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+		 p->set<string>("Skeleton Thermal Expansion Name", "Skeleton Thermal Expansion");
 
+		 p->set<string>("Porosity Name", "Porosity");
+		 p->set<string>("Biot Coefficient Name", "Biot Coefficient");
 
-             p->set<string>("Porosity Name", "Porosity");
-             p->set<string>("Biot Coefficient Name", "Biot Coefficient");
+		 //Output
+		 p->set<string>("Mixture Thermal Expansion Name", "Mixture Thermal Expansion");
 
-             //Output
-             p->set<string>("Mixture Thermal Expansion Name", "Mixture Thermal Expansion");
-
-             ev = rcp(new LCM::MixtureThermalExpansion<EvalT,AlbanyTraits>(*p));
-             fm0.template registerEvaluator<EvalT>(ev);
-             p = stateMgr.registerStateVariable("Mixture Thermal Expansion",dl->qp_scalar, dl->dummy,"scalar", 0.0);
-             ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-             fm0.template registerEvaluator<EvalT>(ev);
+		 ev = rcp(new LCM::MixtureThermalExpansion<EvalT,AlbanyTraits>(*p));
+		 fm0.template registerEvaluator<EvalT>(ev);
+		 p = stateMgr.registerStateVariable("Mixture Thermal Expansion",dl->qp_scalar, dl->dummy,"scalar", 0.0);
+		 ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+		 fm0.template registerEvaluator<EvalT>(ev);
    }
 
 
@@ -503,38 +519,41 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
      ev = rcp(new LCM::Strain<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
-     p = stateMgr.registerStateVariable("Strain",dl->qp_tensor, dl->dummy,"scalar", 0.0,true);
+     p = stateMgr.registerStateVariable("Strain",dl->qp_tensor, dl->dummy,"scalar", 0.0, true);
      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
    }
 
    {  // Porosity
-      RCP<ParameterList> p = rcp(new ParameterList);
+         RCP<ParameterList> p = rcp(new ParameterList);
 
-	  p->set<string>("Porosity Name", "Porosity");
-	  p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-	  p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-	  p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-	  p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+   	  p->set<string>("Porosity Name", "Porosity");
+   	  p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+   	  p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+   	  p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+   	  p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
-	  p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-	  Teuchos::ParameterList& paramList = params->sublist("Porosity");
-	  p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-	  double initPorosity = paramList.get("Value", 0.0);
+   	  p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+   	  Teuchos::ParameterList& paramList = params->sublist("Porosity");
+   	  p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+   	  double initPorosity = paramList.get("Value", 0.0);
 
-	  // Setting this turns on dependence of strain and pore pressure)
-	  p->set<string>("Strain Name", "Strain");
-	  p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-	  p->set<string>("QP Pore Pressure Name", "Pore Pressure");
-	  p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-	  p->set<string>("Biot Coefficient Name", "Biot Coefficient");
+   	  // Setting this turns on dependence of strain and pore pressure)
+   	  p->set<string>("Strain Name", "Strain");
+   	  p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-          ev = rcp(new LCM::Porosity<EvalT,AlbanyTraits>(*p));
-          fm0.template registerEvaluator<EvalT>(ev);
-          p = stateMgr.registerStateVariable("Porosity",dl->qp_scalar, dl->dummy,"scalar", initPorosity, true);
-          ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-          fm0.template registerEvaluator<EvalT>(ev);
-     }
+   	  // porosity update based on Coussy's poromechanics (see p.79)
+   	  p->set<string>("QP Pore Pressure Name", "Pore Pressure");
+   	  p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+   	  p->set<string>("Biot Coefficient Name", "Biot Coefficient");
+
+             ev = rcp(new LCM::Porosity<EvalT,AlbanyTraits>(*p));
+             fm0.template registerEvaluator<EvalT>(ev);
+             p = stateMgr.registerStateVariable("Porosity",dl->qp_scalar, dl->dummy,"scalar", initPorosity, true);
+             ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+             fm0.template registerEvaluator<EvalT>(ev);
+    }
 
 
 
@@ -550,13 +569,14 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 	  p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 	  Teuchos::ParameterList& paramList = params->sublist("Biot Coefficient");
 	  p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+	  double initBiotCoeff = paramList.get("Value", 1.0);
 
 	  // Setting this turns on linear dependence on porosity
 	  p->set<string>("Porosity Name", "Porosity");
 
           ev = rcp(new LCM::BiotCoefficient<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
-          p = stateMgr.registerStateVariable("Biot Coefficient",dl->qp_scalar, dl->dummy,"scalar", 1.0);
+          p = stateMgr.registerStateVariable("Biot Coefficient",dl->qp_scalar, dl->dummy,"scalar", initBiotCoeff, true);
           ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -922,7 +942,7 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
     p = stateMgr.registerStateVariable("Jacobian",
-    		                           dl->qp_scalar, dl->dummy,"scalar", 1.0,true);
+    		                           dl->qp_scalar, dl->dummy,"scalar", 1.0, true);
 	ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -969,9 +989,8 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
     ev = rcp(new LCM::ThermoPoroPlasticityResidMomentum<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
-	p = stateMgr.registerStateVariable("Temperature",dl->qp_scalar, dl->dummy,"scalar", 300.0, true);
-	ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-	fm0.template registerEvaluator<EvalT>(ev);
+
+
   }
 
 
@@ -1019,8 +1038,6 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
-    p->set<string>("Strain Name", "Strain");
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
     // Inputs: X, Y at nodes, Cubature, and Basis
     p->set<string>("Coordinate Vector Name","Coord Vec");
@@ -1045,6 +1062,11 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
     ev = rcp(new LCM::ThermoPoroPlasticityResidMass<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+
+    p = stateMgr.registerStateVariable("Temperature",dl->qp_scalar, dl->dummy,"scalar", 300.0, true);
+    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+
   }
 
   { // Temperature Resid
@@ -1115,6 +1137,8 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
      ev = rcp(new LCM::ThermoPoroPlasticityResidEnergy<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
+
+
    }
 
 

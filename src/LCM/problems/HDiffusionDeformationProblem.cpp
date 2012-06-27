@@ -45,7 +45,8 @@ HDiffusionDeformationProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_
 //#define NUMBER_T_FIRST
 #ifdef NUMBER_T_FIRST
   T_offset=0;
-  X_offset=1;
+  Thydro_offset= 1;
+  X_offset=2;
 #else
   X_offset=0;
   T_offset=numDim;

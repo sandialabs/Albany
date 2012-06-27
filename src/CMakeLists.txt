@@ -635,6 +635,19 @@ ENDIF()
 
 ENDIF()
 
+# FELIX
+IF(ALBANY_FELIX)
+  SET(FELIX_DIR ${Albany_SOURCE_DIR}/src/FELIX)
+
+  # FELIX problems
+  SET(SOURCES ${SOURCES}
+       ${FELIX_DIR}/problems/FELIX_Stokes.cpp
+     )
+  SET(HEADERS ${HEADERS}
+       ${FELIX_DIR}/problems/FELIX_Stokes.hpp
+     )
+ENDIF()
+
 SET(SOURCES ${SOURCES}
        QCAD_Solver.cpp
        evaluators/QCAD_Permittivity.cpp
