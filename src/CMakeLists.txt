@@ -635,7 +635,27 @@ ENDIF()
 IF(ALBANY_FELIX)
   SET(FELIX_DIR ${Albany_SOURCE_DIR}/src/FELIX)
 
-  # FELIX problems
+  # FELIX evaluators
+  SET(SOURCES ${SOURCES}
+       ${FELIX_DIR}/evaluators/FELIX_StokesMomentumResid.cpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesContinuityResid.cpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesTauM.cpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesContravarientMetricTensor.cpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesRm.cpp
+   )
+  SET(HEADERS ${HEADERS}
+       ${FELIX_DIR}/evaluators/FELIX_StokesMomentumResid.hpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesMomentumResid_Def.hpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesContinuityResid.hpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesContinuityResid_Def.hpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesTauM.hpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesTauM_Def.hpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesContravarientMetricTensor.hpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesContravarientMetricTensor_Def.hpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesRm.hpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesRm_Def.hpp
+  )  
+ # FELIX problems
   SET(SOURCES ${SOURCES}
        ${FELIX_DIR}/problems/FELIX_Stokes.cpp
      )
@@ -765,7 +785,8 @@ set(ALB_TRILINOS_LIBS ${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES})
 
 include_directories (${Trilinos_INCLUDE_DIRS} 
                      ./ ./evaluators ./problems ./responses ./stk
-                     ./LCM/ ./LCM/evaluators ./LCM/utils
+                     ./LCM/ ./LCM/evaluators ./LCM/utils ./FELIX/problems 
+                     ./FELIX/evaluators
                      ${Trilinos_TPL_INCLUDE_DIRS})
 
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
