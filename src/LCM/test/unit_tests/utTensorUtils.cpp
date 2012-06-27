@@ -13,6 +13,7 @@
  * including this sentence must appear on any copies of this software.*
  *    Questions to Andy Salinger, agsalin@sandia.gov                  *
  \********************************************************************/
+#include<ctime>
 
 #include <Teuchos_UnitTestHarness.hpp>
 #include "Tensor.h"
@@ -326,34 +327,47 @@ namespace {
     TEST_COMPARE( norm(A - B), <=, 100*std::numeric_limits<ScalarT>::epsilon());
   }
 
-  TEUCHOS_UNIT_TEST( TensorUtils, TensorSVD )
+  TEUCHOS_UNIT_TEST(TensorUtils, TensorSVD2x2)
   {
-    ScalarT cl = sqrt(3.0) / 2.0;
-    ScalarT sl = 0.5;
+    const ScalarT
+    phi = 1.0;
 
-    ScalarT cr = sqrt(2.0) / 2.0;
-    ScalarT sr = sqrt(2.0) / 2.0;
+    const ScalarT
+    psi = 2.0;
+
+    const ScalarT
+    s0 = sqrt(3.0);
+
+    const ScalarT
+    s1 = sqrt(2.0);
+
+    const ScalarT cl = cos(phi);
+    const ScalarT sl = sin(phi);
+
+    const ScalarT cr = cos(psi);
+    const ScalarT sr = sin(psi);
+
+    const LCM::Tensor<ScalarT, 2>
+    X(cl, -sl, sl, cl);
+
+    const LCM::Tensor<ScalarT, 2>
+    Y(cr, -sr, sr, cr);
+
+    const LCM::Tensor<ScalarT, 2>
+    D(s0, 0.0, 0.0, s1);
+
+    const LCM::Tensor<ScalarT, 2>
+    A = X * D * LCM::transpose(Y);
 
     LCM::Tensor<ScalarT, 2>
-    U(cl, -sl, sl, cl);
+    U, S, V;
 
-    LCM::Tensor<ScalarT, 2>
-    V(cr, -sr, sr, cr);
+    boost::tie(U, S, V) = LCM::svd(A);
 
-    LCM::Tensor<ScalarT, 2>
-    S(2.0, 0.0, 0.0, 1.0);
+    const LCM::Tensor<ScalarT, 2>
+    B = U * S * LCM::transpose(V);
 
-    LCM::Tensor<ScalarT, 2>
-    A = U * S * LCM::transpose(V);
-
-    LCM::Tensor<ScalarT, 2>
-    X, D, Y;
-
-    boost::tie(X, D, Y) = LCM::svd(A);
-
-    //TEST_COMPARE(norm(U - X), <=, 100*std::numeric_limits<ScalarT>::epsilon());
-    //TEST_COMPARE(norm(S - D), <=, 100*std::numeric_limits<ScalarT>::epsilon());
-    //TEST_COMPARE(norm(V - Y), <=, 100*std::numeric_limits<ScalarT>::epsilon());
+    TEST_COMPARE(norm(A - B), <=, 100*std::numeric_limits<ScalarT>::epsilon());
   }
 
 } // namespace

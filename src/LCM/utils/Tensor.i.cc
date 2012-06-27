@@ -23,6 +23,116 @@ namespace LCM {
   }
 
   //
+  // Low-level half angle cosine and sine. Useful for SVD
+  // in that it does not use any trigonometric
+  // functions, just square roots.
+  // \param catheti x, y
+  // \return cosine and sine of 0.5 * atan2(y, x)
+  //
+  namespace {
+    template <typename T>
+    void
+    cos_sin_half(T const & x, T const & y, T & c, T & s)
+    {
+      T cf = 0.0;
+      T sf = 0.0;
+      if (fabs(x) > fabs(y)) {
+        const T a = y / x;
+        const T b = sqrt(1.0 + a * a);
+        //cf = sgn(x) / b;
+        cf = copysign(1.0 / b, x);
+        sf = copysign(a * cf, y);
+      } else {
+        const T a = x / fabs(y);
+        const T b = sqrt(1.0 + a * a);
+        sf = copysign(1.0 / b, y);
+        cf = copysign(a * sf, x);
+        //cf = a / b;
+      }
+
+      if (cf > 0.0) {
+        s = sqrt(0.5 * (1.0 - cf));
+        c = sqrt(1.0 - s * s);
+      } else {
+        c = sqrt(0.5 * (1.0 + cf));
+        s = sqrt(1.0 - c * c);
+      }
+
+      if (y < 0.0) {
+        s = -s;
+      }
+
+      return;
+    }
+
+  } // anonymous namespace
+
+
+  //
+  // Half angle cosine and sine. Useful for SVD
+  // in that it does not use any trigonometric
+  // functions, just square roots.
+  // \param catheti x, y
+  // \return cosine and sine of 0.5 * atan2(y, x)
+  //
+  template <typename T>
+  std::pair<T, T>
+  half_angle(T const & x, T const & y)
+  {
+    // In comments phi is full angle, psi is half angle
+    T c = 1.0;
+    T s = 0.0;
+
+    const int sx = sgn(x);
+    const int sy = sgn(y);
+    const T sr2 = sqrt(2.0);
+
+    switch (sx) {
+    case -1:
+      switch (sy) {
+      //
+      case -1:  cos_sin_half(x, y, c, s); break;
+      // phi = pi, psi = pi/2
+      case  0:  c =  0.0;  s =  1.0;      break;
+      //
+      case  1:  cos_sin_half(x, y, c, s); break;
+      //
+      default:  assert(false);            break;
+      }
+      break;
+    case  0:
+      switch (sy) {
+      // phi = -pi/2, psi = -pi/4
+      case -1:  c =  sr2;  s = -sr2;      break;
+      // phi = 0, psi = 0
+      case  0:  c =  1.0;  s =  0.0;      break;
+      // phi = pi/2, psi = pi/4
+      case  1:  c =  sr2;  s =  sr2;      break;
+      //
+      default:  assert(false);            break;
+      }
+      break;
+    case  1:
+      switch (sy) {
+      //
+      case -1:  cos_sin_half(x, y, c, s); break;
+      // phi = 0, psi = 0
+      case  0:  c =  1.0;  s =  0.0;      break;
+      //
+      case  1:  cos_sin_half(x, y, c, s); break;
+      //
+      default:  assert(false);            break;
+      }
+      break;
+    default:
+      assert(false);
+      break;
+    }
+
+    return std::make_pair(c, s);
+  }
+
+  //
   // R^N default constructor that initializes to NaNs
   //
   template<typename T, Index N>
@@ -3082,6 +3192,90 @@ namespace LCM {
   tensor(Vector<T, 2> const & u, Vector<T, 2> const & v)
   {
     return dyad(u, v);
+  }
+
+  //
+  // R^N diagonal tensor from vector
+  // \param v vector
+  // \return A = diag(v)
+  //
+  template<typename T, Index N>
+  Tensor<T, N>
+  diag(Vector<T, N> const & v)
+  {
+    Tensor<T, N> A = zero<T, N>();
+
+    for (Index i = 0; i < N; ++i) {
+      A(i, i) = v(i);
+    }
+
+    return A;
+  }
+
+  //
+  // R^3 diagonal tensor from vector
+  // \param v vector
+  // \return A = diag(v)
+  //
+  template<typename T>
+  Tensor<T, 3>
+  diag(Vector<T, 3> const & v)
+  {
+    return Tensor<T, 3>(v(0), 0.0, 0.0, 0.0, v(1), 0.0, 0.0, 0.0, v(2));
+  }
+
+  //
+  // R^2 diagonal tensor from vector
+  // \param v vector
+  // \return A = diag(v)
+  //
+  template<typename T>
+  Tensor<T, 2>
+  diag(Vector<T, 2> const & v)
+  {
+    return Tensor<T, 2>(v(0), 0.0, 0.0, v(1));
+  }
+
+  //
+  // R^N diagonal of tensor in a vector
+  // \param A tensor
+  // \return v = diag(A)
+  //
+  template<typename T, Index N>
+  Vector<T, N>
+  diag(Tensor<T, N> const & A)
+  {
+    Vector<T, N> v;
+
+    for (Index i = 0; i < N; ++i) {
+      v(i) = A(i, i);
+    }
+
+    return v;
+  }
+
+  //
+  // R^3 diagonal of tensor in a vector
+  // \param A tensor
+  // \return v = diag(A)
+  //
+  template<typename T>
+  Vector<T, 3>
+  diag(Tensor<T, 3> const & A)
+  {
+    return Vector<T, 3>(A(0,0), A(1,1), A(2,2));
+  }
+
+  //
+  // R^2 diagonal of tensor in a vector
+  // \param A tensor
+  // \return v = diag(A)
+  //
+  template<typename T>
+  Vector<T, 2>
+  diag(Tensor<T, 2> const & A)
+  {
+    return Vector<T, 2>(A(0,0), A(1,1));
   }
 
   //

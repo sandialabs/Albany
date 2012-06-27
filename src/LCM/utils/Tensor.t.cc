@@ -1234,7 +1234,7 @@ namespace LCM {
     //firewalls, make sure R \in SO(N)
     assert(norm(R*transpose(R) - eye<T, N>())
         < 100.0 * std::numeric_limits<T>::epsilon());
-    assert(std::abs(det(R) - 1.0)
+    assert(fabs(det(R) - 1.0)
         < 100.0 * std::numeric_limits<T>::epsilon());
 
     std::cerr << "Logarithm of SO(N) N != 2,3 not implemented." << std::endl;
@@ -1257,7 +1257,7 @@ namespace LCM {
     //firewalls, make sure R \in SO(3)
     assert(norm(R*transpose(R) - eye<T, 3>())
         < 100.0 * std::numeric_limits<T>::epsilon());
-    assert(std::abs(det(R) - 1.0)
+    assert(fabs(det(R) - 1.0)
         < 100.0 * std::numeric_limits<T>::epsilon());
 
     // acos requires input between -1 and +1
@@ -1278,7 +1278,7 @@ namespace LCM {
 
     if (theta == 0) {
       r = zero<T, 3>();
-    } else if (std::abs(cosine + 1.0) <
+    } else if (fabs(cosine + 1.0) <
         10.0*std::numeric_limits<T>::epsilon())  {
       // Rotation angle is PI.
       r = log_rotation_pi(R);
@@ -1301,7 +1301,7 @@ namespace LCM {
     //firewalls, make sure R \in SO(2)
     assert(norm(R*transpose(R) - eye<T, 2>())
         < 100.0 * std::numeric_limits<T>::epsilon());
-    assert(std::abs(det(R) - 1.0)
+    assert(fabs(det(R) - 1.0)
         < 100.0 * std::numeric_limits<T>::epsilon());
 
     // acos requires input between -1 and +1
@@ -1351,7 +1351,7 @@ namespace LCM {
   log_rotation_pi(Tensor<T, 3> const & R)
   {
     // set firewall to make sure the rotation is indeed 180 degrees
-    assert(std::abs(0.5 * (trace(R) - 1.0) + 1.0)
+    assert(fabs(0.5 * (trace(R) - 1.0) + 1.0)
         < std::numeric_limits<T>::epsilon());
 
     // obtain U from R = LU
@@ -1365,19 +1365,19 @@ namespace LCM {
     Vector<T, 3>
     normal;
 
-    if (std::abs(r(2,2)) < tol){
+    if (fabs(r(2,2)) < tol){
       normal(2) = 1.0;
     } else {
       normal(2) = 0.0;
     }
 
-    if (std::abs(r(1,1)) < tol){
+    if (fabs(r(1,1)) < tol){
       normal(1) = 1.0;
     } else {
       normal(1) = -normal(2)*r(1,2)/r(1,1);
     }
 
-    if (std::abs(r(0,0)) < tol){
+    if (fabs(r(0,0)) < tol){
       normal(0) = 1.0;
     } else {
       normal(0) = -normal(1)*r(0,1) - normal(2)*r(0,2)/r(0,0);
@@ -1409,7 +1409,7 @@ namespace LCM {
   log_rotation_pi(Tensor<T, 2> const & R)
   {
     // set firewall to make sure the rotation is indeed 180 degrees
-    assert(std::abs(R(0,0) - 1.0) < std::numeric_limits<T>::epsilon());
+    assert(fabs(R(0,0) - 1.0) < std::numeric_limits<T>::epsilon());
 
     const T
     theta = acos(-1.0);
@@ -1449,13 +1449,13 @@ namespace LCM {
       // find pivot in column j, starting in row i
       i_max = i;
       for (Index k = i + 1; k < N; ++k) {
-        if (std::abs(U(k,j) > std::abs(U(i_max,j)))) {
+        if (fabs(U(k,j) > fabs(U(i_max,j)))) {
           i_max = k;
         }
       }
 
       // Check if A(i_max,j) equal to or very close to 0
-      if (std::abs(U(i_max,j)) > tol){
+      if (fabs(U(i_max,j)) > tol){
         // swap rows i and i_max and divide each entry in row i
         // by U(i,j)
         for (Index k = 0; k < N; ++k) {
@@ -1488,8 +1488,8 @@ namespace LCM {
   givens_left(T const & c, T const & s, Index i, Index k, Tensor<T, N> & A)
   {
     for (Index j = 0; j < N; ++j) {
-      T const & t1 = A(i,j);
-      T const & t2 = A(k,j);
+      T const t1 = A(i,j);
+      T const t2 = A(k,j);
       A(i,j) = c * t1 - s * t2;
       A(k,j) = s * t1 + c * t2;
     }
@@ -1505,8 +1505,8 @@ namespace LCM {
   givens_right(T const & c, T const & s, Index i, Index k, Tensor<T, N> & A)
   {
     for (Index j = 0; j < N; ++j) {
-      T const & t1 = A(j,i);
-      T const & t2 = A(j,k);
+      T const t1 = A(j,i);
+      T const t2 = A(j,k);
       A(j,i) = c * t1 - s * t2;
       A(j,k) = s * t1 + c * t2;
     }
@@ -1591,7 +1591,7 @@ namespace LCM {
   // \return \f$ \sqrt(\sum_i \sum_{j, j\neq i} a_{ij}^2) \f$
   //
   template<typename T, Index N>
-  Tensor<T, N>
+  T
   norm_off_diagonal(Tensor<T, N> const & A)
   {
     T s = 0.0;
@@ -1610,7 +1610,7 @@ namespace LCM {
   // \return \f$ \sqrt(\sum_i \sum_{j, j\neq i} a_{ij}^2) \f$
   //
   template<typename T>
-  Tensor<T, 3>
+  T
   norm_off_diagonal(Tensor<T, 3> const & A)
   {
     return sqrt(
@@ -1625,7 +1625,7 @@ namespace LCM {
   // \return \f$ \sqrt(\sum_i \sum_{j, j\neq i} a_{ij}^2) \f$
   //
   template<typename T>
-  Tensor<T, 2>
+  T
   norm_off_diagonal(Tensor<T, 2> const & A)
   {
     return sqrt(A(0,1)*A(0,1) + A(1,0)*A(1,0));
@@ -1644,13 +1644,14 @@ namespace LCM {
     Index p = 0;
     Index q = 1;
 
-    T s = std::abs(A(p,q));
+    T s = fabs(A(p,q));
 
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
-        if (i != j && std::abs(A(i,j)) > s) {
+        if (i != j && fabs(A(i,j)) > s) {
           p = i;
           q = j;
+          s = fabs(A(i,j));
         }
       }
     }
@@ -1671,13 +1672,14 @@ namespace LCM {
     Index p = 0;
     Index q = 1;
 
-    T s = std::abs(A(p,q));
+    T s = fabs(A(p,q));
 
     for (Index i = 0; i < 3; ++i) {
       for (Index j = 0; j < 3; ++j) {
-        if (i != j && std::abs(A(i,j)) > s) {
+        if (i != j && fabs(A(i,j)) > s) {
           p = i;
           q = j;
+          s = fabs(A(i,j));
         }
       }
     }
@@ -1698,12 +1700,34 @@ namespace LCM {
     Index p = 0;
     Index q = 1;
 
-    if (std::abs(A(1,0)) > std::abs(A(0,1))) {
+    if (fabs(A(1,0)) > fabs(A(0,1))) {
       p = 1;
       q = 0;
     }
 
     return std::make_pair(p,q);
+  }
+
+  //
+  // Singular value decomposition (SVD) for 2x2
+  // bidiagonal matrix. Used for general 2x2 SVD
+  // \param f, g, h where A = [f, g; 0, h]
+  // \return \f$ A = USV^T\f$
+  //
+  template<typename T>
+  boost::tuple<Tensor<T, 2>, Tensor<T, 2>, Tensor<T, 2> >
+  svd_bidiagonal(T const & f, T const & g, T const & h)
+  {
+    Tensor<T, 2>
+    U;
+
+    Tensor<T, 2>
+    S;
+
+    Tensor<T, 2>
+    V;
+
+    return boost::make_tuple(U, S, V);
   }
 
   //
@@ -1747,26 +1771,30 @@ namespace LCM {
 
       boost::tie(p,q) = arg_max_off_diagonal(S);
 
+      if (p > q) {
+        std::swap(p, q);
+      }
+
       // Obtain left and right Givens rotations by using 2x2 SVD
       Tensor <T, 2>
-      Apq(A(p,p), A(p,q), A(q,p), A(q,q));
+      Spq(S(p,p), S(p,q), S(q,p), S(q,q));
 
       Tensor <T, 2>
       L, D, R;
 
-      boost::tie(L, D, R) = svd(Apq);
+      boost::tie(L, D, R) = svd(Spq);
 
       T const &
       cl = L(0,0);
 
       T const &
-      sl = L(1,0);
+      sl = L(0,1);
 
       T const &
       cr = R(0,0);
 
       T const &
-      sr = R(1,0);
+      sr = (sgn(R(0,1)) == sgn(R(1,0))) ? -R(0,1) : R(0,1);
 
       // Apply both Givens rotations to matrices
       // that are converging to singular values and singular vectors
@@ -1807,67 +1835,50 @@ namespace LCM {
     Ku = A(1,0)*A(1,0) + A(1,1)*A(1,1);
 
     const T
-    Jw = A(0,0)*A(0,0) + A(1,0)*A(1,0);
+    Jv = A(0,0)*A(0,0) + A(1,0)*A(1,0);
 
     const T
-    Lw = A(0,0)*A(0,1) + A(1,0)*A(1,1);
+    Lv = A(0,0)*A(0,1) + A(1,0)*A(1,1);
 
     const T
-    Kw = A(0,1)*A(0,1) + A(1,1)*A(1,1);
+    Kv = A(0,1)*A(0,1) + A(1,1)*A(1,1);
 
     // Form left singular vectors
-    const T
-    theta = 0.5 * atan2(2 * Lu, Ju - Ku);
-
-    const T
-    cu = cos(theta);
-
-    const T
-    su = sin(theta);
+    T cu, su;
+    boost::tie(cu, su) = half_angle(Ju - Ku, 2 * Lu);
 
     Tensor<T, 2>
     U(cu, -su, su, cu);
 
     // Form right singular vectors
-    const T
-    phi   = 0.5 * atan2(2 * Lw, Jw - Kw);
-
-    const T
-    cw = cos(phi);
-
-    const T
-    sw = sin(phi);
-
-    const Tensor<T, 2>
-    W(cw, -sw, sw, cw);
-
-    const Tensor<T, 2>
-    X = transpose(U) * A * W;
-
-    const Tensor<T, 2>
-    P(sgn(X(0,0)), 0, 0, sgn(X(1,1)));
+    T cv, sv;
+    boost::tie(cv, sv) = half_angle(Jv - Kv, 2 * Lv);
 
     Tensor<T, 2>
-    V = W * P;
+    V(cv, -sv, sv, cv);
 
     // Compute singular values
-    const T
-    d = Ju * Ju - Ku;
+   const Tensor<T, 2>
+    X = transpose(U) * A * V;
 
     const T
-    e = Ju + Ku;
+    s0 = X(0,0);
 
     const T
-    f = sqrt(d * d + 4.0 * Lu * Lu);
+    s1 = X(1,1);
 
-    const T
-    s0 = sqrt(0.5 * (e + f));
+    if (s0 < 0.0) {
+      V(0,0) = -V(0,0);
+      V(1,0) = -V(1,0);
+    }
 
-    const T
-    s1 = sqrt(0.5 * (e - f));
+    if (s1 < 0.0) {
+      V(0,1) = -V(0,1);
+      V(1,1) = -V(1,1);
+    }
 
     Tensor<T, 2>
-    S(s0, 0.0, 0.0, s1);
+    S(fabs(s0), 0.0, 0.0, fabs(s1));
 
     return boost::make_tuple(U, S, V);
   }
@@ -2258,6 +2269,33 @@ namespace LCM {
   }
 
   //
+  // Givens rotation. [c, -s; s, c] [a; b] = [r; 0]
+  // \param a, b
+  // \return c, s
+  //
+  template<typename T>
+  std::pair<T, T>
+  givens(T const & a, T const & b)
+  {
+    T c = 1.0;
+    T s = 0.0;
+
+    if (b != 0.0) {
+      if (fabs(b) > fabs(a)) {
+        const T t = - a / b;
+        s = 1.0 / sqrt(1.0 + t * t);
+        c = t * s;
+      } else {
+        const T t = - b / a;
+        c = 1.0 / sqrt(1.0 + t * t);
+        s = t * c;
+      }
+    }
+
+    return std::make_pair(c, s);
+  }
+
+  //
   // R^N eigenvalue decomposition for symmetric 2nd-order tensor
   // \param A tensor
   // \return V eigenvectors, D eigenvalues in diagonal Matlab-style
@@ -2294,6 +2332,9 @@ namespace LCM {
       q = 0;
 
       boost::tie(p,q) = arg_max_off_diagonal(D);
+      if (p > q) {
+        std::swap(p,q);
+      }
 
       // Obtain Givens rotations by using 2x2 symmetric Schur algorithm
       Tensor <T, 2>
@@ -2432,12 +2473,12 @@ namespace LCM {
       t1 = 3.0 / -J2;
 
       T
-      rhs = (J3 / 2.0) * T(std::sqrt(t1 * t1 * t1));
+      rhs = (J3 / 2.0) * T(sqrt(t1 * t1 * t1));
 
       T
       theta = pi / 2.0 * (1.0 - (rhs < 0 ? -1.0 : 1.0));
 
-      if (std::abs(rhs) <= 1.0) theta = acos(rhs);
+      if (fabs(rhs) <= 1.0) theta = acos(rhs);
 
       T
       thetad3 = theta / 3.0;
@@ -2500,7 +2541,7 @@ namespace LCM {
       }
 
       int p = 0;
-      if (std::abs(a(1)) > std::abs(a(0))) p = 1;
+      if (fabs(a(1)) > fabs(a(0))) p = 1;
 
       // normalize next most dominant column to get s2
       a(p) = sqrt(a(p));
@@ -2516,7 +2557,7 @@ namespace LCM {
 
       // normalize
       T
-      mag = std::sqrt(V(0,2) * V(0,2) + V(1,2) * V(1,2) + V(2,2) * V(2,2));
+      mag = sqrt(V(0,2) * V(0,2) + V(1,2) * V(1,2) + V(2,2) * V(2,2));
 
       V(0,2) /= mag;
       V(1,2) /= mag;
@@ -2554,7 +2595,7 @@ namespace LCM {
       if (arg == 0)
         D(0,0) = rm(1,1) + b;
       else
-        D(0,0) = rm(1,1) + b - fac * std::sqrt(b * b + rm(0,1) * rm(0,1));
+        D(0,0) = rm(1,1) + b - fac * sqrt(b * b + rm(0,1) * rm(0,1));
 
       D(1,1) = rm(0,0) + rm(1,1) - D(0,0);
 
@@ -2582,7 +2623,7 @@ namespace LCM {
       V(2,0) = rm(0,k3) * rk2(2) - rm(1,k3) * rk(2);
 
       // normalize
-      mag = std::sqrt(V(0,0) * V(0,0) + V(1,0) * V(1,0) + V(2,0) * V(2,0));
+      mag = sqrt(V(0,0) * V(0,0) + V(1,0) * V(1,0) + V(2,0) * V(2,0));
       V(0,0) /= mag;
       V(1,0) /= mag;
       V(2,0) /= mag;
@@ -2593,7 +2634,7 @@ namespace LCM {
       V(2,1) = V(0,0) * V(1,2) - V(1,0) * V(0,2);
 
       // normalize
-      mag = std::sqrt(V(0,1) * V(0,1) + V(1,1) * V(1,1) + V(2,1) * V(2,1));
+      mag = sqrt(V(0,1) * V(0,1) + V(1,1) * V(1,1) + V(2,1) * V(2,1));
       V(0,1) /= mag;
       V(1,1) /= mag;
       V(2,1) /= mag;
