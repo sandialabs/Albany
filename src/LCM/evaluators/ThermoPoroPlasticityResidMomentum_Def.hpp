@@ -27,7 +27,7 @@ namespace LCM {
 template<typename EvalT, typename Traits>
 ThermoPoroPlasticityResidMomentum<EvalT, Traits>::
 ThermoPoroPlasticityResidMomentum(const Teuchos::ParameterList& p) :
-  TotalStress      (p.get<std::string>                   ("Total Stress Name"),
+  TotalStress      (p.get<std::string>           ("Total Stress Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
   J           (p.get<std::string>                   ("DetDefGrad Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
@@ -134,15 +134,12 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {
-              for (std::size_t dim=0; dim<numDims; dim++)  ExResidual(cell,node,dim)=0.0;
+              for (std::size_t dim=0; dim<numDims; dim++)  {
+            	  ExResidual(cell,node,dim)=0.0;
+              }
           for (std::size_t qp=0; qp < numQPs; ++qp) {
 
-        	  // First Step Correction
-        	  if (Temp(cell,qp) == 0) {
-        		  dTemp = 0.0;
-        	  } else {
-        		  dTemp = Temp(cell,qp) - TempRef(cell,qp);
-        	  }
+        	dTemp = Temp(cell,qp) - TempRef(cell,qp);
 
             for (std::size_t i=0; i<numDims; i++) {
               for (std::size_t dim=0; dim<numDims; dim++) {
