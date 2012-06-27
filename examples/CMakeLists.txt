@@ -141,6 +141,10 @@ add_subdirectory(TransientHeat1D)
 add_subdirectory(TransientHeat2D)
 add_subdirectory(TekoPrec)
 
+IF(ALBANY_FELIX AND ALBANY_SEACAS )
+  add_subdirectory(FELIX_Stokes)
+ENDIF()
+
 IF(ALBANY_ENABLE_CUBIT)
   add_subdirectory(CUTR_Heat1D)
   add_subdirectory(CUTR_Heat2D)
