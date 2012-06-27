@@ -253,7 +253,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
       return Teuchos::null;
       }
     else {
-    //  return rcp(new Piro::NOXSolver<ST>(piroParams, modelT)); 
+      return rcp(new Piro::NOXSolver<ST>(piroParams, modelT)); 
     }
 }
 
