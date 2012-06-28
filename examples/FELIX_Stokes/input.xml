@@ -1,7 +1,7 @@
 <ParameterList>
   <ParameterList name="Problem">
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
-    <Parameter name="Name" type="string" value="NavierStokes 2D"/>
+    <Parameter name="Name" type="string" value="FELIX Stokes 2D"/>
     <ParameterList name="Dirichlet BCs">     
       <Parameter name="DBC on NS nodelist_1 for DOF ux" type="double" value="1.0"/>
       <Parameter name="DBC on NS nodelist_2 for DOF ux" type="double" value="0.0"/>
@@ -37,11 +37,11 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{1.358}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{1.356}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)"
-		value="{1.358}"/>
+		value="{1.3547}"/>
     <Parameter  name="Number of Dakota Comparisons" type="int" value="0"/>
   </ParameterList>
   <ParameterList name="Piro">

@@ -41,12 +41,8 @@ StokesMomentumResid(const Teuchos::ParameterList& p) :
   mu          (p.get<std::string>                   ("Viscosity QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   MResidual   (p.get<std::string>                   ("Residual Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") ),
-  haveSUPG(p.get<bool>("Have SUPG"))
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") )
 {
-   if (p.isType<bool>("Disable Transient"))
-     enableTransient = !p.get<bool>("Disable Transient");
-   else enableTransient = true;
 
   this->addDependentField(wBF);  
   this->addDependentField(pGrad);
@@ -55,20 +51,6 @@ StokesMomentumResid(const Teuchos::ParameterList& p) :
   this->addDependentField(P);
   this->addDependentField(Rm);
   this->addDependentField(mu);
-  if (haveSUPG) {
-    V = PHX::MDField<ScalarT,Cell,QuadPoint,Dim>(
-      p.get<std::string>("Velocity QP Variable Name"),
-      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") );
-    rho = PHX::MDField<ScalarT,Cell,QuadPoint>(
-      p.get<std::string>("Density QP Variable Name"),
-      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
-    TauM = PHX::MDField<ScalarT,Cell,QuadPoint>(
-	p.get<std::string>("Tau M Name"),
-	p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
-    this->addDependentField(V);
-    this->addDependentField(rho);
-    this->addDependentField(TauM);
-  }
   
   this->addEvaluatedField(MResidual);
 
@@ -96,11 +78,6 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(P,fm);
   this->utils.setFieldData(Rm,fm);
   this->utils.setFieldData(mu,fm);
-  if (haveSUPG) {
-    this->utils.setFieldData(V,fm);
-    this->utils.setFieldData(rho,fm);
-    this->utils.setFieldData(TauM,fm);
-  }
   
   this->utils.setFieldData(MResidual,fm);
 }
@@ -123,21 +100,6 @@ evaluateFields(typename Traits::EvalData workset)
 	    MResidual(cell,node,i) += 
 	      mu(cell,qp)*VGrad(cell,qp,i,j)*wGradBF(cell,node,qp,j);
 	  }  
-	}
-      }
-    }
-  }
-  
-  if (haveSUPG) {
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t node=0; node < numNodes; ++node) {          
-	for (std::size_t i=0; i<numDims; i++) {
-	  for (std::size_t qp=0; qp < numQPs; ++qp) {           
-	    for (std::size_t j=0; j < numDims; ++j) { 
-	      MResidual(cell,node,i) += 
-		rho(cell,qp)*TauM(cell,qp)*Rm(cell,qp,j)*V(cell,qp,j)*wGradBF(cell,node,qp,j);
-	    }  
-	  }
 	}
       }
     }

@@ -65,8 +65,6 @@ private:
   PHX::MDField<ScalarT,Cell,Node> MResidual;
 
   unsigned int numQPs, numDims, numNodes;
-  bool enableTransient;
-  bool haveSUPG;
  
 };
 }

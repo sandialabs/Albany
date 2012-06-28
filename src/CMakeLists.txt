@@ -651,6 +651,7 @@ IF(ALBANY_FELIX)
        ${FELIX_DIR}/evaluators/FELIX_StokesTauM.cpp
        ${FELIX_DIR}/evaluators/FELIX_StokesContravarientMetricTensor.cpp
        ${FELIX_DIR}/evaluators/FELIX_StokesRm.cpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesBodyForce.cpp
    )
   SET(HEADERS ${HEADERS}
        ${FELIX_DIR}/evaluators/FELIX_StokesMomentumResid.hpp
@@ -663,6 +664,8 @@ IF(ALBANY_FELIX)
        ${FELIX_DIR}/evaluators/FELIX_StokesContravarientMetricTensor_Def.hpp
        ${FELIX_DIR}/evaluators/FELIX_StokesRm.hpp
        ${FELIX_DIR}/evaluators/FELIX_StokesRm_Def.hpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesBodyForce.hpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesBodyForce_Def.hpp
   )  
  # FELIX problems
   SET(SOURCES ${SOURCES}

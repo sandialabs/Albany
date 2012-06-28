@@ -327,6 +327,31 @@ namespace {
     TEST_COMPARE( norm(A - B), <=, 100*std::numeric_limits<ScalarT>::epsilon());
   }
 
+  TEUCHOS_UNIT_TEST(TensorUtils, TensorSVD2x2BiDiag)
+  {
+    const ScalarT
+    f = 1.0;
+
+    const ScalarT
+    g = 3.0;
+
+    const ScalarT
+    h = 2.0;
+
+    LCM::Tensor<ScalarT, 2>
+    U, S, V;
+
+    boost::tie(U, S, V) = LCM::svd_bidiagonal(f, g, h);
+
+    const LCM::Tensor<ScalarT, 2>
+    B = U * S * LCM::transpose(V);
+
+    const LCM::Tensor<ScalarT, 2>
+    A(f, g, 0, h);
+
+    TEST_COMPARE(norm(A - B), <=, 100*std::numeric_limits<ScalarT>::epsilon());
+  }
+
   TEUCHOS_UNIT_TEST(TensorUtils, TensorSVD2x2)
   {
     const ScalarT
@@ -347,13 +372,13 @@ namespace {
     const ScalarT cr = cos(psi);
     const ScalarT sr = sin(psi);
 
-    const LCM::Tensor<ScalarT, 2>
+    LCM::Tensor<ScalarT, 2>
     X(cl, -sl, sl, cl);
 
-    const LCM::Tensor<ScalarT, 2>
+    LCM::Tensor<ScalarT, 2>
     Y(cr, -sr, sr, cr);
 
-    const LCM::Tensor<ScalarT, 2>
+    LCM::Tensor<ScalarT, 2>
     D(s0, 0.0, 0.0, s1);
 
     const LCM::Tensor<ScalarT, 2>
@@ -364,7 +389,23 @@ namespace {
 
     boost::tie(U, S, V) = LCM::svd(A);
 
-    const LCM::Tensor<ScalarT, 2>
+    LCM::Tensor<ScalarT, 2>
+    B = U * S * LCM::transpose(V);
+
+    TEST_COMPARE(norm(A - B), <=, 100*std::numeric_limits<ScalarT>::epsilon());
+  }
+
+  TEUCHOS_UNIT_TEST(TensorUtils, TensorSVD3x3)
+  {
+    LCM::Tensor<ScalarT, 3>
+    A(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0);
+
+    LCM::Tensor<ScalarT, 3>
+    U, S, V;
+
+    boost::tie(U, S, V) = LCM::svd(A);
+
+    LCM::Tensor<ScalarT, 3>
     B = U * S * LCM::transpose(V);
 
     TEST_COMPARE(norm(A - B), <=, 100*std::numeric_limits<ScalarT>::epsilon());

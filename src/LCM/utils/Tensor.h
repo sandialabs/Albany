@@ -2330,7 +2330,7 @@ namespace LCM {
   ///
   template<typename T>
   boost::tuple<Tensor<T, 2>, Tensor<T, 2>, Tensor<T, 2> >
-  svd_bidiagonal(T const & f, T const & g, T const & h);
+  svd_bidiagonal(T f, T g, T h);
 
   ///
   /// Singular value decomposition (SVD)
@@ -2346,6 +2346,10 @@ namespace LCM {
   template<typename T>
   boost::tuple<Tensor<T, 2>, Tensor<T, 2>, Tensor<T, 2> >
   svd(Tensor<T, 2> const & A);
+
+  template<typename T>
+  boost::tuple<Tensor<T, 2>, Tensor<T, 2>, Tensor<T, 2> >
+  svd2(Tensor<T, 2> const & A);
 
   ///
   /// Left polar decomposition
