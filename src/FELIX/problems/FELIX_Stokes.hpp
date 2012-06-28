@@ -113,7 +113,6 @@ namespace FELIX {
 
     bool haveSource;   //! have source term in heat equation
     bool havePSPG;     //! have pressure stabilization
-    bool haveSUPG;     //! have SUPG stabilization
     
   };
 
@@ -260,7 +259,7 @@ FELIX::Stokes::constructEvaluators(
    fm0.template registerEvaluator<EvalT>
      (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
 
-  if (havePSPG || haveSUPG) { // Compute Contravarient Metric Tensor
+  if (havePSPG) { // Compute Contravarient Metric Tensor
     RCP<ParameterList> p = 
       rcp(new ParameterList("Contravarient Metric Tensor"));
 
@@ -363,7 +362,7 @@ FELIX::Stokes::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (haveFlowEq && (haveSUPG || havePSPG)) { // Tau M
+  if (haveFlowEq && havePSPG) { // Tau M
     RCP<ParameterList> p = rcp(new ParameterList("Tau M"));
 
     //Input
@@ -395,7 +394,6 @@ FELIX::Stokes::constructEvaluators(
     p->set<string>("Viscosity QP Variable Name", "Viscosity");
     p->set<string>("Rm Name", "Rm");
 
-    p->set<bool>("Have SUPG", haveSUPG);
     p->set<string>("Velocity QP Variable Name", "Velocity");
     p->set<string>("Density QP Variable Name", "Density");
     p->set<string> ("Tau M Name", "Tau M");

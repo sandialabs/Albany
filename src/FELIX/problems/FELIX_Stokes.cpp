@@ -67,7 +67,6 @@ Stokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   haveFlowEq(false),
   haveSource(false),
   havePSPG(false),
-  haveSUPG(false),
   numDim(numDim_)
 {
 
@@ -78,8 +77,6 @@ Stokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     havePSPG = params->get("Have Pressure Stabilization", true);
   }
 
-  if (haveFlow && (haveFlowEq))
-    haveSUPG = params->get("Have SUPG Stabilization", true);
 
 
 
@@ -93,8 +90,7 @@ Stokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
        << "\tSpatial dimension:      " << numDim << std::endl
        << "\tFlow variables:         " << variableTypeToString(flowType) 
        << std::endl
-       << "\tPressure stabilization: " << havePSPG << std::endl
-       << "\tUpwind stabilization:   " << haveSUPG << std::endl; 
+       << "\tPressure stabilization: " << havePSPG << std::endl;
 }
 
 FELIX::Stokes::
@@ -161,7 +157,6 @@ FELIX::Stokes::getValidProblemParameters() const
     this->getGenericProblemParams("ValidStokesParams");
 
   validPL->set<bool>("Have Pressure Stabilization", true);
-  validPL->set<bool>("Have SUPG Stabilization", true);
   validPL->sublist("Flow", false, "");
   validPL->sublist("Density", false, "");
   validPL->sublist("Viscosity", false, "");
