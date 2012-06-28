@@ -1710,22 +1710,97 @@ namespace LCM {
 
   //
   // Singular value decomposition (SVD) for 2x2
-  // bidiagonal matrix. Used for general 2x2 SVD
+  // bidiagonal matrix. Used for general 2x2 SVD.
+  // Adapted from LAPAPCK's DLASV2, Netlib's dlasv2.c
+  // and LBNL computational crystalography toolbox
   // \param f, g, h where A = [f, g; 0, h]
   // \return \f$ A = USV^T\f$
   //
   template<typename T>
   boost::tuple<Tensor<T, 2>, Tensor<T, 2>, Tensor<T, 2> >
-  svd_bidiagonal(T const & f, T const & g, T const & h)
+  svd_bidiagonal(T f, T g, T h)
   {
-    Tensor<T, 2>
-    U;
+    T fa = std::abs(f);
+    T ga = std::abs(g);
+    T ha = std::abs(h);
 
-    Tensor<T, 2>
-    S;
+    T s0 = 0.0;
+    T s1 = 0.0;
 
-    Tensor<T, 2>
-    V;
+    T cu = 1.0;
+    T su = 0.0;
+    T cv = 1.0;
+    T sv = 0.0;
+
+    bool swap_diag = (ha > fa);
+
+    if (swap_diag) {
+      std::swap(fa, ha);
+      std::swap(f, h);
+    }
+
+    if (ga == 0.0) {
+      s1 = ha;
+      s0 = fa;
+    } else if (ga > fa && fa / ga < std::numeric_limits<T>::epsilon()) {
+      // case of very large ga
+      s0 = ga;
+      s1 = ha > 1.0 ?
+          fa / (ga / ha) :
+          (fa / ga) * ha;
+      cu = 1.0;
+      su = h / g;
+      cv = f / g;
+      sv = 1.0;
+    } else {
+      // normal case
+      T d = fa - ha;
+      T l = d != fa ?
+          d / fa :
+          1.0; // l \in [0,1]
+      T m = g / f; // m \in (-1/macheps, 1/macheps)
+      T t = 2.0 - l; // t \in [1,2]
+      T mm = m * m;
+      T tt = t * t;
+      T s = sqrt(tt + mm); // s \in [1,1 + 1/macheps]
+      T r = l != 0.0 ?
+          sqrt(l * l + mm) :
+          fabs(m); // r \in [0,1 + 1/macheps]
+      T a = 0.5 * (s + r); // a \in [1,1 + |m|]
+      s1 = ha / a;
+      s0 = fa * a;
+
+      // Compute singular vectors
+      T tau; // second assignment to T in DLASV2
+      if (mm != 0.0) {
+        tau = (m / (s + t) + m / (r + l)) * (1.0 + a);
+      } else {
+        // note that m is very tiny
+        tau = l == 0.0 ?
+            copysign(T(2.0), f) * copysign(T(1.0), g) :
+            g / copysign(d, f) + m / t;
+      }
+      T lv = sqrt(tau * tau + 4.0); // second assignment to L in DLASV2
+      cv = 2.0 / lv;
+      sv = tau / lv;
+      cu = (cv + sv * m) / a;
+      su = (h / f) * sv / a;
+    }
+
+    // Fix signs of singular values in accordance to sign of singular vectors
+    s0 = copysign(s0, f);
+    s1 = copysign(s1, h);
+
+    if (swap_diag) {
+      std::swap(cu, sv);
+      std::swap(su, cv);
+    }
+
+    Tensor<T, 2> U(cu, -su, su, cu);
+
+    Tensor<T, 2> S(s0, 0.0, 0.0, s1);
+
+    Tensor<T, 2> V(cv, -sv, sv, cv);
 
     return boost::make_tuple(U, S, V);
   }
@@ -1752,7 +1827,7 @@ namespace LCM {
     off = norm_off_diagonal(S);
 
     const T
-    tol = 100.0 * std::numeric_limits<T>::epsilon() * norm(A);
+    tol = std::numeric_limits<T>::epsilon() * norm(A);
 
     const Index
     max_iter = 1000;
@@ -1760,7 +1835,7 @@ namespace LCM {
     Index
     num_iter = 0;
 
-    while (off > tol || num_iter < max_iter) {
+    while (off > tol && num_iter < max_iter) {
 
       // Find largest off-diagonal entry
       Index
@@ -1812,7 +1887,7 @@ namespace LCM {
       std::cerr << "WARNING: SVD iteration did not converge." << std::endl;
     }
 
-    return boost::make_tuple(U, S, V);
+    return boost::make_tuple(U, diag(diag(S)), transpose(V));
   }
 
   //
@@ -1822,7 +1897,7 @@ namespace LCM {
   //
   template<typename T>
   boost::tuple<Tensor<T, 2>, Tensor<T, 2>, Tensor<T, 2> >
-  svd(Tensor<T, 2> const & A)
+  svd2(Tensor<T, 2> const & A)
   {
     // Preliminaries
     const T
@@ -1879,6 +1954,39 @@ namespace LCM {
 
     Tensor<T, 2>
     S(fabs(s0), 0.0, 0.0, fabs(s1));
+
+    return boost::make_tuple(U, S, V);
+  }
+
+  //
+  // R^2 singular value decomposition (SVD)
+  // \param A tensor
+  // \return \f$ A = USV^T\f$
+  //
+  template<typename T>
+  boost::tuple<Tensor<T, 2>, Tensor<T, 2>, Tensor<T, 2> >
+  svd(Tensor<T, 2> const & A)
+  {
+    // First compute a givens rotation to eliminate 1,0 entry in tensor
+    T c = 1.0;
+    T s = 0.0;
+    boost::tie(c, s) = givens(A(0,0), A(1,0));
+
+    Tensor<T, 2>
+    R(c, -s, s, c);
+
+    Tensor<T, 2>
+    B = R * A;
+
+    // B is bidiagonal. Use specialized algorithm to compute its SVD
+    Tensor<T, 2>
+    X, S, V;
+
+    boost::tie(X, S, V) = svd_bidiagonal(B(0,0), B(0,1), B(1,1));
+
+    // Complete general 2x2 SVD with givens rotation calculated above
+    Tensor<T, 2>
+    U = transpose(R) * X;
 
     return boost::make_tuple(U, S, V);
   }
