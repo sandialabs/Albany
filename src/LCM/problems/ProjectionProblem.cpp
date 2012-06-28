@@ -129,15 +129,9 @@ Albany::ProjectionProblem::getValidProblemParameters() const
   validPL->set<bool>("avgJ", false, "Flag to indicate the J should be averaged");
   validPL->set<bool>("volavgJ", false, "Flag to indicate the J should be volume averaged");
   validPL->set<bool>("weighted_Volume_Averaged_J", false, "Flag to indicate the J should be volume averaged with stabilization");
-  validPL->sublist("Porosity", false, "");
-  validPL->sublist("Biot Coefficient", false, "");
-  validPL->sublist("Biot Modulus", false, "");
-  validPL->sublist("Thermal Conductivity", false, "");
-  validPL->sublist("Kozeny-Carman Permeability", false, "");
   validPL->sublist("Elastic Modulus", false, "");
   validPL->sublist("Shear Modulus", false, "");
   validPL->sublist("Poissons Ratio", false, "");
-  validPL->sublist("Stabilization Parameter", false, "");
   if (matModel=="J2"){
    validPL->set<bool>("Compute Dislocation Density Tensor", false, "Flag to compute the dislocaiton density tensor (only for 3D)");
    validPL->sublist("Hardening Modulus", false, "");
