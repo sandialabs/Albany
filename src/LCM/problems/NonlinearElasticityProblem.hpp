@@ -136,6 +136,8 @@ namespace Albany {
 #include "J2Fiber.hpp"
 #include "GursonFD.hpp"
 #include "QptLocation.hpp"
+#include "MooneyRivlin.hpp"
+#include "MooneyRivlinDamage.hpp"
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
@@ -394,6 +396,73 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+
+  else if (matModel == "MooneyRivlin")
+  {
+	  RCP<ParameterList> p = rcp(new ParameterList("Stress"));
+
+	  //Input
+	  p->set<string>("DefGrad Name", "F");
+	  p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+	  p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+	  p->set<string>("DetDefGrad Name", "J");  // dl->qp_scalar also
+	  RealType c1 = params->get("c1", 0.0);
+	  RealType c2 = params->get("c2",0.0);
+	  RealType c = params->get("c",0.0);
+
+	  p->set<RealType>("c1 Name", c1);
+	  p->set<RealType>("c2 Name", c2);
+	  p->set<RealType>("c Name", c);
+
+	  //Output
+	  p->set<string>("Stress Name", matModel); //dl->qp_tensor also
+
+	  ev = rcp(new LCM::MooneyRivlin<EvalT,AlbanyTraits>(*p));
+	  fm0.template registerEvaluator<EvalT>(ev);
+	  p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy,"scalar",0.0);
+	  ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+	  fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  else if (matModel == "MooneyRivlinDamage")
+  {
+  	RCP<ParameterList> p = rcp(new ParameterList("Stress"));
+
+  	//Input
+  	p->set<string>("DefGrad Name", "F");
+  	p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+  	p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+  	p->set<string>("DetDefGrad Name", "J");  // dl->qp_scalar also
+  	p->set<string>("alpha Name", "alpha");
+  	RealType c1 = params->get("c1", 0.0);
+  	RealType c2 = params->get("c2",0.0);
+  	RealType c = params->get("c",0.0);
+  	RealType zeta_inf = params->get("zeta_inf",0.0);
+  	RealType iota = params->get("iota",0.0);
+
+  	p->set<RealType>("c1 Name", c1);
+  	p->set<RealType>("c2 Name", c2);
+  	p->set<RealType>("c Name", c);
+
+  	p->set<RealType>("zeta_inf Name", zeta_inf);
+  	p->set<RealType>("iota Name", iota);
+
+
+  	//Output
+  	p->set<string>("Stress Name", matModel); //dl->qp_tensor also
+
+  	ev = rcp(new LCM::MooneyRivlinDamage<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+    p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy,"scalar",0.0);
+    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+    p = stateMgr.registerStateVariable("alpha",dl->qp_scalar, dl->dummy,"scalar", 1.0, true);
+    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
   else if (matModel == "J2"||matModel == "J2Fiber"||matModel == "GursonFD")
   { 
     { // Hardening Modulus

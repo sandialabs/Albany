@@ -463,6 +463,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/SetField.cpp
     ${LCM_DIR}/evaluators/AssumedStrain.cpp
     ${LCM_DIR}/evaluators/QptLocation.cpp
+    ${LCM_DIR}/evaluators/MooneyRivlin.cpp
+    ${LCM_DIR}/evaluators/MooneyRivlinDamage.cpp
   )
 
   IF(ALBANY_MPI)
@@ -608,11 +610,19 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/UnitGradient_Def.hpp
     ${LCM_DIR}/evaluators/SetField.hpp 
     ${LCM_DIR}/evaluators/SetField_Def.hpp 
+<<<<<<< HEAD
     ${LCM_DIR}/evaluators/AssumedStrain.hpp
     ${LCM_DIR}/evaluators/AssumedStrain_Def.hpp
     ${LCM_DIR}/evaluators/QptLocation.hpp
     ${LCM_DIR}/evaluators/QptLocation_Def.hpp
   )
+=======
+    ${LCM_DIR}/evaluators/MooneyRivlin.hpp
+    ${LCM_DIR}/evaluators/MooneyRivlin_Def.hpp
+    ${LCM_DIR}/evaluators/MooneyRivlinDamage.hpp
+    ${LCM_DIR}/evaluators/MooneyRivlinDamage_Def.hpp
+ )
+>>>>>>> added new material models: Compressible Mooney-Rivlin and Compressible Mooney-Rivlin with damage
 
   IF(ALBANY_MPI)
     SET(HEADERS ${HEADERS}
@@ -911,6 +921,11 @@ IF (ALBANY_LCM)
     LCM/test/unit_tests/StandardUnitTestMain.cpp
     LCM/test/unit_tests/utTensorUtils.cpp
   )
+  add_executable(
+    utProjection
+    LCM/test/unit_tests/StandardUnitTestMain.cpp
+    LCM/test/unit_tests/utProjection.cpp
+  )
 ENDIF ()
 IF (ALBANY_LAME OR ALBANY_LAMENT)
   add_executable(utLameStress_elastic
@@ -957,4 +972,5 @@ IF (ALBANY_LCM)
   target_link_libraries(utLocalNonlinearSolver albanyLib ${ALL_LIBRARIES})
   target_link_libraries(utLocalization albanyLib ${ALL_LIBRARIES})
   target_link_libraries(utTensorUtils albanyLib ${ALL_LIBRARIES})
+  target_link_libraries(utProjection albanyLib ${ALL_LIBRARIES})
 ENDIF ()

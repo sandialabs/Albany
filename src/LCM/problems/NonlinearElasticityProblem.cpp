@@ -166,6 +166,22 @@ Albany::NonlinearElasticityProblem::getValidProblemParameters() const
 	validPL->set<RealType>("q3",false,"");
   }
 
+  if (matModel == "MooneyRivlin")
+  {
+	 validPL->set<RealType>("c1",false,"");
+	 validPL->set<RealType>("c2",false,"");
+	 validPL->set<RealType>("c",false,"");
+  }
+
+  if (matModel == "MooneyRivlinDamage")
+  {
+	 validPL->set<RealType>("c1",false,"");
+	 validPL->set<RealType>("c2",false,"");
+	 validPL->set<RealType>("c",false,"");
+	 validPL->set<RealType>("zeta_inf",false,"");
+	 validPL->set<RealType>("iota",false,"");
+  }
+
   return validPL;
 }
 
