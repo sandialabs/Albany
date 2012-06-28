@@ -93,6 +93,9 @@ int main(int argc, char *argv[]) {
     //Thyra::ModelEvaluatorBase::OutArgs<ST> responses_outT = solverT->createOutArgs();
     int num_p = params_in.Np();     // Number of *vectors* of parameters
     int num_g = responses_out.Ng(); // Number of *vectors* of responses
+    //Thyra version of above
+    //int num_pT = params_inT.Np();     // Number of *vectors* of parameters
+    //int num_gT = responses_outT.Ng(); // Number of *vectors* of responses
 
     // Set input parameters
     for (int i=0; i<num_p; i++) {
@@ -105,21 +108,36 @@ int main(int argc, char *argv[]) {
       RCP<const Epetra_Map> g_map = solver->get_g_map(i);
       RCP<Epetra_Vector> g = rcp(new Epetra_Vector(*g_map));
       responses_out.set_g(i,g);
+      //Thyra version of above
+      //RCP<const Thyra::VectorSpaceBase<ST> > g_space = solverT->get_g_space(i);
 
       for (int j=0; j<num_p; j++) {
 	RCP<const Epetra_Map> p_map = solver->get_p_map(j);
+        //Thyra version of above
+	//RCP<const Thyra::VectorSpaceBase<ST> > p_space = solverT->get_p_space(j);
 	if (!responses_out.supports(EpetraExt::ModelEvaluator::OUT_ARG_DgDp, 
 				    i, j).none()) {
 	  *out << "Main: model supports sensitivities, so will request DgDp" << endl;
 	  *out << " Num Responses: " << g_map->NumGlobalElements()
 	       << ",   Num Parameters: " << p_map->NumGlobalElements() << endl;
-
 	  if (p_map->NumGlobalElements() > 0) {
 	    RCP<Epetra_MultiVector> dgdp = 
 	      rcp(new Epetra_MultiVector(*g_map, p_map->NumGlobalElements()));
 	    responses_out.set_DgDp(i,j,dgdp);
 	  }
 	}
+        //Thyra version of above
+	/*if (!responses_outT.supports(Thyra::ModelEvaluatorBase::OUT_ARG_DgDp, 
+				    i, j).none()) {
+	  *out << "Main: model supports sensitivities, so will request DgDp" << endl;
+	  *out << " Num Responses: " << g_map->NumGlobalElements()
+	       << ",   Num Parameters: " << p_map->NumGlobalElements() << endl;
+          */
+	  if (p_map->NumGlobalElements() > 0) {
+	    RCP<Epetra_MultiVector> dgdp = 
+	      rcp(new Epetra_MultiVector(*g_map, p_map->NumGlobalElements()));
+	    responses_out.set_DgDp(i,j,dgdp);
+	  }
       }
     }
     RCP<Epetra_Vector> xfinal =
@@ -128,6 +146,8 @@ int main(int argc, char *argv[]) {
     
     setupTimer.~TimeMonitor();
     solver->evalModel(params_in, responses_out);
+    //Thyra version of above
+    //solverT->evalModel(params_inT, responses_outT);
 
     *out << "Finished eval of first model: Params, Responses " 
          << std::setprecision(12) << endl;
