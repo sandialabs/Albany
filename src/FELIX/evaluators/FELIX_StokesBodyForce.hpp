@@ -15,8 +15,8 @@
 \********************************************************************/
 
 
-#ifndef FELIX_STOKESMOMENTUMRESID_HPP
-#define FELIX_STOKESMOMENTUMRESID_HPP
+#ifndef FELIX_STOKESBODYFORCE_HPP
+#define FELIX_STOKESBODYFORCE_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -31,41 +31,40 @@ namespace FELIX {
 */
 
 template<typename EvalT, typename Traits>
-class StokesMomentumResid : public PHX::EvaluatorWithBaseImpl<Traits>,
+class StokesBodyForce : public PHX::EvaluatorWithBaseImpl<Traits>,
 		    public PHX::EvaluatorDerived<EvalT, Traits> {
 
 public:
 
   typedef typename EvalT::ScalarT ScalarT;
 
-  StokesMomentumResid(const Teuchos::ParameterList& p);
+  StokesBodyForce(const Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
+
 private:
  
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  // Input:
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> pGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> VGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> V;
-  PHX::MDField<ScalarT,Cell,QuadPoint> P;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> Rm;
-  PHX::MDField<ScalarT,Cell,QuadPoint> TauM;
-  PHX::MDField<ScalarT,Cell,QuadPoint> mu;
+  // Input:  
+  PHX::MDField<ScalarT,Cell,QuadPoint> T;
   PHX::MDField<ScalarT,Cell,QuadPoint> rho;
-
+  PHX::MDField<ScalarT,Cell,QuadPoint> beta;
+  Teuchos::Array<double> gravity;
+  
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> MResidual;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> force;
 
-  unsigned int numQPs, numDims, numNodes;
-  bool haveSUPG;
+   //Radom field types
+  enum BFTYPE {NONE, CONSTANT};
+  BFTYPE bf_type;
+
+  unsigned int numQPs, numDims;
+
  
 };
 }

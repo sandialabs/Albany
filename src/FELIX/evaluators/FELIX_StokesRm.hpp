@@ -57,18 +57,12 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> V_Dot;
   PHX::MDField<ScalarT,Cell,QuadPoint> T;
   PHX::MDField<ScalarT,Cell,QuadPoint> rho;
-  PHX::MDField<ScalarT,Cell,QuadPoint> phi;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> force;  
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> permTerm;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> ForchTerm;
   
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> Rm;
 
   unsigned int numQPs, numDims, numNodes;
-  bool enableTransient;
-  bool haveHeat;
-  bool porousMedia;
  
 };
 }

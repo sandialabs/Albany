@@ -103,7 +103,6 @@ namespace FELIX {
 
   protected:
     
-    bool periodic;     //! periodic BCs
     int numDim;        //! number of spatial dimensions
 
     NS_VAR_TYPE flowType; //! type of flow variables
@@ -132,7 +131,7 @@ namespace FELIX {
 #include "FELIX_StokesContravarientMetricTensor.hpp"
 #include "PHAL_NSMaterialProperty.hpp"
 #include "PHAL_Source.hpp"
-#include "PHAL_NSBodyForce.hpp"
+#include "FELIX_StokesBodyForce.hpp"
 #include "FELIX_StokesRm.hpp"
 #include "FELIX_StokesTauM.hpp"
 #include "FELIX_StokesMomentumResid.hpp"
@@ -316,7 +315,7 @@ FELIX::Stokes::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Body Force"));
 
     //Input
-    p->set<string>("Temperature QP Variable Name", "Temperature");
+    //p->set<string>("Temperature QP Variable Name", "Temperature");
     p->set<string>("Density QP Variable Name", "Density");
     p->set<string>("Volumetric Expansion Coefficient QP Variable Name", 
 		   "Volumetric Expansion Coefficient");
@@ -330,7 +329,7 @@ FELIX::Stokes::constructEvaluators(
     //Output
     p->set<string>("Body Force Name", "Body Force");
 
-    ev = rcp(new PHAL::NSBodyForce<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new FELIX::StokesBodyForce<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -346,9 +345,9 @@ FELIX::Stokes::constructEvaluators(
     p->set<string>("Pressure Gradient QP Variable Name", "Pressure Gradient");
     p->set<string>("Density QP Variable Name", "Density");
     p->set<string>("Body Force QP Variable Name", "Body Force");
-    p->set<string>("Porosity QP Variable Name", "Porosity");
-    p->set<string>("Permeability Term", "Permeability Term");
-    p->set<string>("Forchheimer Term", "Forchheimer Term");
+    //p->set<string>("Porosity QP Variable Name", "Porosity");
+    //p->set<string>("Permeability Term", "Permeability Term");
+    //p->set<string>("Forchheimer Term", "Forchheimer Term");
 
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);

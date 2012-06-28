@@ -70,9 +70,6 @@ Stokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   haveSUPG(false),
   numDim(numDim_)
 {
-  if (numDim==1) periodic = params->get("Periodic BC", false);
-  else           periodic = false;
-  if (periodic) *out <<" Periodic Boundary Conditions being used." <<std::endl;
 
   getVariableType(params->sublist("Flow"), "DOF", flowType, 
 		  haveFlow, haveFlowEq);
@@ -163,31 +160,12 @@ FELIX::Stokes::getValidProblemParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidStokesParams");
 
-  if (numDim==1)
-    validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic BC for 1D problems");
   validPL->set<bool>("Have Pressure Stabilization", true);
   validPL->set<bool>("Have SUPG Stabilization", true);
   validPL->sublist("Flow", false, "");
-  validPL->sublist("Heat", false, "");
-  validPL->sublist("Neutronics", false, "");
-  validPL->sublist("Thermal Conductivity", false, "");
   validPL->sublist("Density", false, "");
   validPL->sublist("Viscosity", false, "");
-  validPL->sublist("Volumetric Expansion Coefficient", false, "");
-  validPL->sublist("Specific Heat", false, "");
   validPL->sublist("Body Force", false, "");
-  validPL->sublist("Porosity", false, "");
-  validPL->sublist("Permeability", false, "");
-  validPL->sublist("Forchheimer", false, "");
-  
-  validPL->sublist("Neutron Source", false, "");
-  validPL->sublist("Neutron Diffusion Coefficient", false, "");
-  validPL->sublist("Absorption Cross Section", false, "");
-  validPL->sublist("Fission Cross Section", false, "");
-  validPL->sublist("Neutrons per Fission", false, "");
-  validPL->sublist("Scattering Cross Section", false, "");
-  validPL->sublist("Average Scattering Angle", false, "");
-  validPL->sublist("Energy Released per Fission", false, "");
 
   return validPL;
 }

@@ -44,9 +44,6 @@ StokesMomentumResid(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") ),
   haveSUPG(p.get<bool>("Have SUPG"))
 {
-   if (p.isType<bool>("Disable Transient"))
-     enableTransient = !p.get<bool>("Disable Transient");
-   else enableTransient = true;
 
   this->addDependentField(wBF);  
   this->addDependentField(pGrad);
