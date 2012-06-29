@@ -7,10 +7,12 @@
 #if !defined(LCM_Tensor_h)
 #define LCM_Tensor_h
 
+#include <cmath>
 #include <cstdarg>
 #include <iostream>
-#include <boost/tuple/tuple.hpp>
 #include <vector>
+
+#include <boost/tuple/tuple.hpp>
 
 namespace LCM {
 
@@ -22,7 +24,20 @@ namespace LCM {
   ///
   /// Sign function
   ///
-  template <typename T> int sgn(T const & s);
+  template <typename T>
+  int
+  sgn(T const & s);
+
+  ///
+  /// Half angle cosine and sine. Useful for SVD
+  /// in that it does not use any trigonometric
+  /// functions, just square roots.
+  /// \param catheti x, y
+  /// \return cosine and sine of 0.5 * atan2(y, x)
+  ///
+  template <typename T>
+  std::pair<T, T>
+  half_angle(T const & x, T const & y);
 
   ///
   /// Vector in R^N provided just as a framework to
@@ -1869,6 +1884,40 @@ namespace LCM {
 
 
   ///
+  /// Diagonal tensor from vector
+  /// \param v vector
+  /// \return A = diag(v)
+  ///
+  template<typename T, Index N>
+  Tensor<T, N>
+  diag(Vector<T, N> const & v);
+
+  template<typename T>
+  Tensor<T, 3>
+  diag(Vector<T, 3> const & v);
+
+  template<typename T>
+  Tensor<T, 2>
+  diag(Vector<T, 2> const & v);
+
+  ///
+  /// Diagonal of tensor in a vector
+  /// \param A tensor
+  /// \return v = diag(A)
+  ///
+  template<typename T, Index N>
+  Vector<T, N>
+  diag(Tensor<T, N> const & A);
+
+  template<typename T>
+  Vector<T, 3>
+  diag(Tensor<T, 3> const & A);
+
+  template<typename T>
+  Vector<T, 2>
+  diag(Tensor<T, 2> const & A);
+
+  ///
   /// Zero 2nd-order tensor
   /// All components are zero
   ///
@@ -2244,15 +2293,15 @@ namespace LCM {
   /// \return \f$ \sqrt(\sum_i \sum_{j, j\neq i} a_{ij}^2) \f$
   ///
   template<typename T, Index N>
-  Tensor<T, N>
+  T
   norm_off_diagonal(Tensor<T, N> const & A);
 
   template<typename T>
-  Tensor<T, 3>
+  T
   norm_off_diagonal(Tensor<T, 3> const & A);
 
   template<typename T>
-  Tensor<T, 2>
+  T
   norm_off_diagonal(Tensor<T, 2> const & A);
 
   ///
@@ -2274,6 +2323,16 @@ namespace LCM {
   arg_max_off_diagonal(Tensor<T, 2> const & A);
 
   ///
+  /// Singular value decomposition (SVD) for 2x2
+  /// bidiagonal matrix. Used for general 2x2 SVD
+  /// \param f, g, h where A = [f, g; 0, h]
+  /// \return \f$ A = USV^T\f$
+  ///
+  template<typename T>
+  boost::tuple<Tensor<T, 2>, Tensor<T, 2>, Tensor<T, 2> >
+  svd_bidiagonal(T f, T g, T h);
+
+  ///
   /// Singular value decomposition (SVD)
   /// \param A tensor
   /// \return \f$ A = USV^T\f$
@@ -2287,6 +2346,10 @@ namespace LCM {
   template<typename T>
   boost::tuple<Tensor<T, 2>, Tensor<T, 2>, Tensor<T, 2> >
   svd(Tensor<T, 2> const & A);
+
+  template<typename T>
+  boost::tuple<Tensor<T, 2>, Tensor<T, 2>, Tensor<T, 2> >
+  svd2(Tensor<T, 2> const & A);
 
   ///
   /// Left polar decomposition
@@ -2359,6 +2422,15 @@ namespace LCM {
   template<typename T>
   std::pair<T, T>
   schur_sym(Tensor<T, 2> const & A);
+
+  ///
+  /// Givens rotation. [c, -s; s, c] [a; b] = [r; 0]
+  /// \param a, b
+  /// \return c, s
+  ///
+  template<typename T>
+  std::pair<T, T>
+  givens(T const & a, T const & b);
 
   ///
   /// Eigenvalue decomposition for symmetric 2nd-order tensor

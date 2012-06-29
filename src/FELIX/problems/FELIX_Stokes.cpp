@@ -64,48 +64,25 @@ Stokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_),
   haveFlow(false),
-  haveHeat(false),
-  haveNeut(false),
   haveFlowEq(false),
-  haveHeatEq(false),
-  haveNeutEq(false),
   haveSource(false),
-  haveNeutSource(false),
   havePSPG(false),
-  haveSUPG(false),
-  porousMedia(false),
   numDim(numDim_)
 {
-  if (numDim==1) periodic = params->get("Periodic BC", false);
-  else           periodic = false;
-  if (periodic) *out <<" Periodic Boundary Conditions being used." <<std::endl;
 
   getVariableType(params->sublist("Flow"), "DOF", flowType, 
 		  haveFlow, haveFlowEq);
-  getVariableType(params->sublist("Heat"), "None", heatType, 
-		  haveHeat, haveHeatEq);
-  getVariableType(params->sublist("Neutronics"), "None", neutType, 
-		  haveNeut, haveNeutEq);
 
   if (haveFlowEq) {
     havePSPG = params->get("Have Pressure Stabilization", true);
-    porousMedia = params->get("Porous Media",false);
   }
 
-  if (haveFlow && (haveFlowEq || haveHeatEq))
-    haveSUPG = params->get("Have SUPG Stabilization", true);
 
-  if (haveHeatEq)
-    haveSource =  params->isSublist("Source Functions");
 
-  if (haveNeutEq)
-    haveNeutSource =  params->isSublist("Neutron Source");
 
   // Compute number of equations
   int num_eq = 0;
   if (haveFlowEq) num_eq += numDim+1;
-  if (haveHeatEq) num_eq += 1;
-  if (haveNeutEq) num_eq += 1;
   this->setNumEquations(num_eq);
 
   // Print out a summary of the problem
@@ -113,13 +90,7 @@ Stokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
        << "\tSpatial dimension:      " << numDim << std::endl
        << "\tFlow variables:         " << variableTypeToString(flowType) 
        << std::endl
-       << "\tHeat variables:         " << variableTypeToString(heatType) 
-       << std::endl
-       << "\tNeutronics variables:   " << variableTypeToString(neutType) 
-       << std::endl
-       << "\tPressure stabilization: " << havePSPG << std::endl
-       << "\tUpwind stabilization:   " << haveSUPG << std::endl
-       << "\tPorous media:           " << porousMedia << std::endl;
+       << "\tPressure stabilization: " << havePSPG << std::endl;
 }
 
 FELIX::Stokes::
@@ -174,8 +145,6 @@ FELIX::Stokes::constructDirichletEvaluators(
      if (numDim==3) dirichletNames[index++] = "uz";
      dirichletNames[index++] = "p";
    }
-   if (haveHeatEq) dirichletNames[index++] = "T";
-   if (haveNeutEq) dirichletNames[index++] = "phi";
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
@@ -187,32 +156,11 @@ FELIX::Stokes::getValidProblemParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidStokesParams");
 
-  if (numDim==1)
-    validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic BC for 1D problems");
   validPL->set<bool>("Have Pressure Stabilization", true);
-  validPL->set<bool>("Have SUPG Stabilization", true);
-  validPL->set<bool>("Porous Media", false, "Flag to use porous media equations");
   validPL->sublist("Flow", false, "");
-  validPL->sublist("Heat", false, "");
-  validPL->sublist("Neutronics", false, "");
-  validPL->sublist("Thermal Conductivity", false, "");
   validPL->sublist("Density", false, "");
   validPL->sublist("Viscosity", false, "");
-  validPL->sublist("Volumetric Expansion Coefficient", false, "");
-  validPL->sublist("Specific Heat", false, "");
   validPL->sublist("Body Force", false, "");
-  validPL->sublist("Porosity", false, "");
-  validPL->sublist("Permeability", false, "");
-  validPL->sublist("Forchheimer", false, "");
-  
-  validPL->sublist("Neutron Source", false, "");
-  validPL->sublist("Neutron Diffusion Coefficient", false, "");
-  validPL->sublist("Absorption Cross Section", false, "");
-  validPL->sublist("Fission Cross Section", false, "");
-  validPL->sublist("Neutrons per Fission", false, "");
-  validPL->sublist("Scattering Cross Section", false, "");
-  validPL->sublist("Average Scattering Angle", false, "");
-  validPL->sublist("Energy Released per Fission", false, "");
 
   return validPL;
 }

@@ -231,8 +231,8 @@ namespace LCM {
             if (iteration > 20) {
               // output for debug
               //std::cout << "no stress correction after iteration = "
-                  //<< iteration << " yield function abs(f) = " << abs(f)
-                  //<< std::endl;
+              //<< iteration << " yield function abs(f) = " << abs(f)
+              //<< std::endl;
               break;
             }
 

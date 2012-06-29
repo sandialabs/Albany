@@ -39,6 +39,7 @@
 #include "LCM/problems/GradientDamageProblem.hpp"
 #include "LCM/problems/ThermoMechanicalProblem.hpp"
 #include "LCM/problems/HDiffusionDeformationProblem.hpp"
+#include "LCM/problems/ProjectionProblem.hpp"
 #if defined(ALBANY_LAME) || defined(ALBANY_LAMENT)
 #include "LCM/problems/LameProblem.hpp"
 #endif
@@ -202,6 +203,15 @@ Albany::ProblemFactory::create()
     }
   else if (method == "Total Lagrangian ThermoPoroPlasticity 3D") {
       strategy =   rcp(new Albany::ThermoPoroPlasticityProblem(problemParams, paramLib, 3));
+  }
+  else if (method == "Total Lagrangian Plasticity with Projection 1D") {
+	  strategy = rcp(new Albany::ProjectionProblem(problemParams, paramLib, 1));
+  }
+  else if (method == "Total Lagrangian Plasticity with Projection 2D") {
+	  strategy = rcp(new Albany::ProjectionProblem(problemParams, paramLib, 2));
+  }
+  else if (method == "Total Lagrangian Plasticity with Projection 3D") {
+	strategy =   rcp(new Albany::ProjectionProblem(problemParams, paramLib, 3));
   }
   else if (method == "GradientDamage") {
     strategy = rcp(new Albany::GradientDamageProblem(problemParams, paramLib, 3));
