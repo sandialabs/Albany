@@ -1,5 +1,5 @@
 
-nem_slice -e -m mesh=4x2 -l multikl  -o reactor_med.nemI reactor_med.exo 
+nem_slice -e -m mesh=1x2 -l multikl  -o reactor_med.nemI reactor_med.exo 
 mkdir tmp1
 echo "
 Input FEM file		= reactor_med.exo

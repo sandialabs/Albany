@@ -30,6 +30,8 @@
 #include "Piro_Epetra_StokhosSolver.hpp"
 #include "Piro_Epetra_NECoupledModelEvaluator.hpp"
 
+#include "Albany_Networks.hpp"
+
 int main(int argc, char *argv[]) {
 
   int status=0; // 0 = pass, failures are incremented
@@ -105,6 +107,8 @@ int main(int argc, char *argv[]) {
     RCP<Piro::Epetra::AbstractNetworkModel> network_model;
     if (network_name == "Param To Response")
       network_model = rcp(new Piro::Epetra::ParamToResponseNetworkModel);
+    else if (network_name == "Reactor Network")
+      network_model = rcp(new Albany::ReactorNetworkModel(1));
     else
       TEUCHOS_TEST_FOR_EXCEPTION(
 	true, std::logic_error, "Invalid network model name " << network_name);

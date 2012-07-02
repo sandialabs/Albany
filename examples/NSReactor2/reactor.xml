@@ -2,35 +2,67 @@
   <ParameterList name="Problem">
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
     <Parameter name="Name" type="string" value="NavierStokes 2D"/>
+    <ParameterList name="Heat">
+      <Parameter name="Variable Type" type="string" value="DOF"/>
+    </ParameterList>
+    <!--ParameterList name="Volumetric Expansion Coefficient">
+      <Parameter name="Type" type="string" value="Constant"/>
+      <Parameter name="Value" type="double" value="1000"/> 
+    </ParameterList-->
+    <ParameterList name="Body Force">
+      <Parameter name="Type" type="string" value="Boussinesq"/>
+      <Parameter name="Gravity Vector" type="Array(double)" value="{0.0,-1.0}"/>
+    </ParameterList>
+    <ParameterList name="Source Functions">
+      <ParameterList name="Constant">
+	<Parameter name="Value" type="double" value="500"/>
+      </ParameterList>
+    </ParameterList>
     <ParameterList name="Dirichlet BCs">     
       <Parameter name="DBC on NS bottom for DOF ux" type="double" value="0.0"/>
       <Parameter name="DBC on NS bottom for DOF uy" type="double" value="0.0"/>
+      <Parameter name="DBC on NS bottom for DOF T" type="double" value="0.0"/>
       <Parameter name="DBC on NS top for DOF ux" type="double" value="0.0"/>
       <Parameter name="DBC on NS top for DOF uy" type="double" value="0.0"/>
+      <Parameter name="DBC on NS top for DOF T" type="double" value="0.0"/>
       <Parameter name="DBC on NS upperleft for DOF ux" type="double" value="0.0"/>
       <Parameter name="DBC on NS upperleft for DOF uy" type="double" value="0.0"/>
+      <Parameter name="DBC on NS upperleft for DOF T" type="double" value="0.0"/>
       <Parameter name="DBC on NS lowerleft for DOF ux" type="double" value="0.0"/>
       <Parameter name="DBC on NS lowerleft for DOF uy" type="double" value="0.0"/>
+      <Parameter name="DBC on NS lowerleft for DOF T" type="double" value="0.0"/>
       <Parameter name="DBC on NS lowerright for DOF ux" type="double" value="0.0"/>
       <Parameter name="DBC on NS lowerright for DOF uy" type="double" value="0.0"/>
+      <Parameter name="DBC on NS lowerright for DOF T" type="double" value="0.0"/>
       <Parameter name="DBC on NS upperright for DOF ux" type="double" value="0.0"/>
       <Parameter name="DBC on NS upperright for DOF uy" type="double" value="0.0"/>
-      <!--Parameter name="DBC on NS inlet for DOF ux" type="double" value="40.0"/-->
+      <Parameter name="DBC on NS upperright for DOF T" type="double" value="0.0"/>
+      <Parameter name="DBC on NS inlet for DOF ux" type="double" value="100.0"/>
       <Parameter name="DBC on NS inlet for DOF uy" type="double" value="0.0"/>
+      <!--Parameter name="DBC on NS inlet for DOF T" type="double" value="0.0"/-->
       <Parameter name="DBC on NS outlet for DOF uy" type="double" value="0.0"/>
     </ParameterList>
     <ParameterList name="Neumann BCs">     
-      <Parameter name="NBC on SS inlet_ss for DOF ux set dudn" type="Array(double)" value="{-1.0}"/>
-      <!--Parameter name="NBC on SS inlet_ss for DOF uy set dudn" type="Array(double)" value="{0.0}"/-->
-      <Parameter name="NBC on SS outlet_ss for DOF ux set dudn" type="Array(double)" value="{1.0}"/>
-      <!--Parameter name="NBC on SS outlet_ss for DOF uy set dudn" type="Array(double)" value="{0.0}"/-->
+      <Parameter name="NBC on SS inlet_ss for DOF T set dudn" type="Array(double)" value="{-37.0}"/>
+      <Parameter name="NBC on SS outlet_ss for DOF T set dudn" type="Array(double)" value="{7.0}"/>
     </ParameterList>
+    <!--ParameterList name="Viscosity">
+      <Parameter name="Type" type="string" value="Truncated KL Expansion"/>
+      <Parameter name="Number of KL Terms" type="int" value="4"/>
+      <Parameter name="Mean" type="double" value="1.0"/>
+      <Parameter name="Standard Deviation" type="double" value="0.5"/>
+      <Parameter name="Domain Lower Bounds" type="string" value="{0.0, 0.0}"/>
+      <Parameter name="Domain Upper Bounds" type="string" value="{1.0, 1.0}"/>
+      <Parameter name="Correlation Lengths" type="string" value="{0.1, 0.1}"/>
+      <Parameter name="Viscosity KL Random Variable 0" type="double" value="0.1"/>
+      <Parameter name="Viscosity KL Random Variable 0" type="double" value="0.2"/>
+      <Parameter name="Viscosity KL Random Variable 0" type="double" value="0.3"/>
+      <Parameter name="Viscosity KL Random Variable 0" type="double" value="0.4"/>
+    </ParameterList-->
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="2"/>
-      <Parameter name="Parameter 0" type="string" value="NBC on SS inlet_ss for DOF ux set dudn"/>
-      <!--Parameter name="Parameter 1" type="string" value="NBC on SS inlet_ss for DOF uy set dudn"/-->
-      <Parameter name="Parameter 1" type="string" value="NBC on SS outlet_ss for DOF ux set dudn"/>
-      <!--Parameter name="Parameter 3" type="string" value="NBC on SS outlet_ss for DOF uy set dudn"/-->
+      <Parameter name="Parameter 0" type="string" value="NBC on SS inlet_ss for DOF T set dudn"/>
+      <Parameter name="Parameter 1" type="string" value="NBC on SS outlet_ss for DOF T set dudn"/>
     </ParameterList>
     <ParameterList name="Response Functions">
       <Parameter name="Number of Response Vectors" type="int" value="1"/>
@@ -39,9 +71,7 @@
         <Parameter name="Number" type="int" value="2"/>
         <Parameter name="Response 0" type="string" value="PHAL Field Integral"/>
         <ParameterList name="ResponseParams 0">
-          <Parameter name="Field Name" type="string" value="Velocity"/>
-	  <Parameter name="Field Type" type="string" value="Vector"/>
-	  <Parameter name="Field Components" type="Array(int)" value="{0}"/>
+          <Parameter name="Field Name" type="string" value="Temperature"/>
 	  <Parameter name="x min" type="double" value="0.0"/>
 	  <Parameter name="x max" type="double" value="0.01"/>
 	  <Parameter name="y min" type="double" value="0.45"/>
@@ -50,9 +80,7 @@
         </ParameterList>
 	<Parameter name="Response 1" type="string" value="PHAL Field Integral"/>
         <ParameterList name="ResponseParams 1">
-          <Parameter name="Field Name" type="string" value="Velocity"/>
-	  <Parameter name="Field Type" type="string" value="Vector"/>
-	  <Parameter name="Field Components" type="Array(int)" value="{0}"/>
+          <Parameter name="Field Name" type="string" value="Temperature"/>
 	  <Parameter name="x min" type="double" value="0.99"/>
 	  <Parameter name="x max" type="double" value="1.00"/>
 	  <Parameter name="y min" type="double" value="0.45"/>
@@ -65,8 +93,8 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Ioss"/>
     <Parameter name="Workset Size" type="int" value="10"/>
-    <Parameter name="Exodus Input File Name" type="string" value="reactor_med.exo"/>
-    <Parameter name="Exodus Output File Name" type="string" value="reactor_med-out.exo"/>
+    <Parameter name="Exodus Input File Name" type="string" value="reactor_coarse.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="reactor_coarse-out.exo"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="0"/>
@@ -101,7 +129,7 @@
 	</ParameterList>
 	<ParameterList name="Test 1">
 	  <Parameter name="Test Type" type="string" value="MaxIters"/>
-	  <Parameter name="Maximum Iterations" type="int" value="10"/>
+	  <Parameter name="Maximum Iterations" type="int" value="20"/>
 	</ParameterList>
       </ParameterList>
       <ParameterList name="Direction">

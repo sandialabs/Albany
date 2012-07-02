@@ -1,14 +1,14 @@
 <ParameterList>
   <ParameterList name="Coupled System">
     <Parameter name="Model XML Files" type="Array(string)" 
-	       value="{ pipe1.xml, reactor.xml, pipe2.xml }"/>
+	       value="{ pipe.xml, reactor.xml }"/>
     <Parameter name="Network Model" type="string" value="Reactor Network"/>
   </ParameterList>
   <ParameterList name="Piro">
     <Parameter name="Network Coupling Parameter Indices" type="Array(int)" 
-	       value="{ 0, 0, 0 }"/>
+	       value="{ 0, 0 }"/>
     <Parameter name="Network Coupling Response Indices" type="Array(int)" 
-	       value="{ 0, 0, 0 }"/>
+	       value="{ 0, 0 }"/>
     <Parameter name="Stochastic" type="bool" value="0"/>
     <Parameter name="Solver Type" type="string" value="NOX"/>
     <ParameterList name="NOX">
@@ -43,15 +43,15 @@
 	  <ParameterList name="Linear Solver">
 	    <Parameter name="Max Iterations" type="int" value="1000"/>
 	    <Parameter name="Tolerance" type="double" value="1e-12"/>
-	    <Parameter name="Write Linear System" type="bool" value="true"/>
+	    <Parameter name="Write Linear System" type="bool" value="false"/>
 	  </ParameterList>       
 	  <Parameter name="Forcing Term Method" type="string" value="Constant"/>
 	  <ParameterList name="Stratimikos Linear Solver">
 	    <ParameterList name="NOX Stratimikos Options">
 	    </ParameterList>
 	    <ParameterList name="Stratimikos">
-	      <!--Parameter name="Linear Solver Type" type="string" value="AztecOO"/-->
-	      <Parameter name="Linear Solver Type" type="string" value="Amesos"/>
+	      <Parameter name="Linear Solver Type" type="string" value="AztecOO"/>
+	      <!--Parameter name="Linear Solver Type" type="string" value="Amesos"/-->
 	      <ParameterList name="Linear Solver Types">
 		<ParameterList name="AztecOO">
 		  <ParameterList name="Forward Solve"> 
@@ -68,18 +68,8 @@
 	      </ParameterList>
 	      <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
 	      <ParameterList name="Preconditioner Types">
-		<ParameterList name="ML">
-		  <Parameter name="Base Method Defaults" type="string" 
-			     value="none"/>
-		  <ParameterList name="ML Settings">
-		    <Parameter name="default values" type="string" value="SA"/>
-		    <Parameter name="smoother: type" type="string" 
-			       value="ML symmetric Gauss-Seidel"/>
-		    <Parameter name="smoother: pre or post" type="string" 
-			       value="both"/>
-		    <Parameter name="coarse: type" type="string" 
-			       value="Amesos-KLU"/>
-		  </ParameterList>
+		<ParameterList name="Ifpack">
+		  <Parameter name="Prec Type" type="string" value="Amesos"/>
 		</ParameterList>
 	      </ParameterList>
 	    </ParameterList>

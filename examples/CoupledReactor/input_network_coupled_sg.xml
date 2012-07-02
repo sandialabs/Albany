@@ -1,11 +1,28 @@
 <ParameterList>
+  <ParameterList name="Coupled System">
+    <Parameter name="Model XML Files" type="Array(string)" 
+	       value="{ input_heat_sg.xml, input_neutronics_sg.xml }"/>
+    <Parameter name="Print Response Expansion" type="bool" value="0"/>
+  </ParameterList>
   <ParameterList name="Piro">
     <Parameter name="Network Coupling Parameter Indices" type="Array(int)" 
 	       value="{ 0, 0 }"/>
     <Parameter name="Network Coupling Response Indices" type="Array(int)" 
 	     value="{ 0, 0 }"/>
     <Parameter name="Stochastic" type="bool" value="1"/>
-    <Parameter name="Reduce Dimension" type="bool" value="1"/>
+    <ParameterList name="Dimension Reduction">
+      <Parameter name="Reduce Dimension" type="bool" value="1"/>
+      <Parameter name="Dimension Reduction Method" type="string" value="Tensor Product Stieltjes"/>
+      <!--Parameter name="Dimension Reduction Method" type="string" value="Gram-Schmidt QR"/-->
+      <!--Parameter name="Reduced Quadrature Method" type="string" value="L1 Minimization"/-->
+      <Parameter name="Reduced Quadrature Method" type="string" value="Column-Pivoted QR"/>
+      <!--Parameter name="Reduced Quadrature Method" type="string" value="None"/-->
+      <Parameter name="Orthogonalization Method" type="string" value="Modified Gram-Schmidt"/>
+      <!--Parameter name="Reduced Order" type="int" value="3"/-->
+      <Parameter name="Reduction Tolerance" type="double" value="1e-15"/>
+      <Parameter name="Rank Threshold" type="double" value="1e-15"/>
+      <Parameter name="Verbose" type="bool" value="1"/>
+    </ParameterList>
     <Parameter name="Solver Type" type="string" value="NOX"/>
     <Parameter name="Print Convergence Stats" type="bool" value="0"/>
     <ParameterList name="Stochastic Galerkin">
@@ -14,25 +31,26 @@
 	<Parameter name="Number of SG Parameter Vectors" type="int" value="2"/>
 	<ParameterList name="SG Parameter Vector 0">
 	  <Parameter name="Parameter Vector Index" type="int" value="0"/>
-	  <Parameter name="Parameter 0 Initial Expansion Coefficients" type="Array(double)" value="{ 0.0, 1.0, 0.0, 0.0, 0.0 }"/>
-	  <Parameter name="Parameter 1 Initial Expansion Coefficients" type="Array(double)" value="{ 0.0, 0.0, 1.0, 0.0, 0.0 }"/>
+	  <Parameter name="Parameter 0 Initial Expansion Coefficients" type="Array(double)" value="{ 0.0, 0.577350269189626, 0.0, 0.0, 0.0 }"/>
+	  <Parameter name="Parameter 1 Initial Expansion Coefficients" type="Array(double)" value="{ 0.0, 0.0, 0.577350269189626, 0.0, 0.0 }"/>
 	</ParameterList>
 	<ParameterList name="SG Parameter Vector 1">
 	  <Parameter name="Parameter Vector Index" type="int" value="1"/>
-	  <Parameter name="Parameter 0 Initial Expansion Coefficients" type="Array(double)" value="{ 0.0, 0.0, 0.0, 1.0, 0.0 }"/>
-	  <Parameter name="Parameter 1 Initial Expansion Coefficients" type="Array(double)" value="{ 0.0, 0.0, 0.0, 0.0, 1.0 }"/>
+	  <Parameter name="Parameter 0 Initial Expansion Coefficients" type="Array(double)" value="{ 0.0, 0.0, 0.0, 0.577350269189626, 0.0 }"/>
+	  <Parameter name="Parameter 1 Initial Expansion Coefficients" type="Array(double)" value="{ 0.0, 0.0, 0.0, 0.0, 0.577350269189626 }"/>
 	</ParameterList>
       </ParameterList>
       <ParameterList name="Basis">
 	<Parameter name="Isotropic" type="bool" value="true"/>
 	<Parameter name="Type" type="string" value="Legendre"/>
-	<Parameter name="Order" type="int" value="3"/>
+	<Parameter name="Order" type="int" value="5"/>
 	<Parameter name="Dimension" type="int" value="4"/>
-	<Parameter name="Normalize" type="bool" value="false"/>
+	<Parameter name="Normalize" type="bool" value="true"/>
 	<Parameter name="Cijk Drop Tolerance" type="double" value="1e-12"/>
       </ParameterList>
       <ParameterList name="Quadrature">
-	<Parameter name="Type" type="string" value="Tensor Product"/>
+	<!--Parameter name="Type" type="string" value="Tensor Product"/-->
+	<Parameter name="Type" type="string" value="Sparse Grid"/>
       </ParameterList>
       <Parameter name="SG Method" type="string" value="AD"/>       
       <ParameterList name="Expansion">

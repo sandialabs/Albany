@@ -264,6 +264,16 @@ SET(HEADERS ${HEADERS}
 	evaluators/PHAL_SeparableScatterScalarResponse_Def.hpp
   )
 
+# ASCR
+IF(ALBANY_ASCR)
+  SET(SOURCES ${SOURCES}
+    Albany_Networks.cpp
+    )
+  SET(HEADERS ${HEADERS} 
+    Albany_Networks.hpp
+    )
+ENDIF()
+
 # LCM
 IF(ALBANY_LCM)
   SET(LCM_DIR ${Albany_SOURCE_DIR}/src/LCM)

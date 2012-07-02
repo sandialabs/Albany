@@ -3,7 +3,7 @@ create vertex 1 0.45 0
 create vertex 1 0.55 0 
 create vertex 0 0.55 0 
 create planar surface with plane vertex 1 vertex 2 vertex 3 
-surface 1  size 0.01
+surface 1  size 0.025
 mesh surface 1
 set duplicate block elements on
 block 1 surface 1 
@@ -29,4 +29,4 @@ Sideset 2 curve 3  # outlet
 Sideset 2 name "outlet_ss"
 set large exodus file on
 #export Genesis  "/Users/etphipp/development/Albany/Albany/examples/NSReactor2/pipe_med.exo" dimension 2 block 1, 2, 3 overwrite
-export Genesis  "/Users/etphipp/development/Albany/Albany/examples/NSReactor2/pipe_med.exo" dimension 2 block 1 overwrite
+export Genesis  "/Users/etphipp/development/Albany/Albany/examples/NSReactor2/pipe_coarse.exo" dimension 2 block 1 overwrite

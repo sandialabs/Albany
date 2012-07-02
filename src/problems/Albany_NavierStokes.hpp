@@ -665,6 +665,8 @@ Albany::NavierStokes::constructEvaluators(
     p->set<string>("Source Name", "Heat Source");
     p->set<string>("Variable Name", "Temperature");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
     p->set<string>("Neutron Flux Name", "Neutron Flux");
     p->set<string>("Fission Cross Section Name", "Fission Cross Section");
     p->set<string>("Energy Released per Fission Name", 
