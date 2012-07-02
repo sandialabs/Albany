@@ -124,6 +124,9 @@ Albany::PoroElasticityProblem::getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidPoroElasticityProblemParams");
+  validPL->set<bool>("avgJ", false, "Flag to indicate the J should be averaged");
+  validPL->set<bool>("volavgJ", false, "Flag to indicate the J should be volume averaged");
+  validPL->set<bool>("weighted_Volume_Averaged_J", false, "Flag to indicate the J should be volume averaged with stabilization");
   validPL->sublist("Material Model", false, "");
   validPL->sublist("Porosity", false, "");
   validPL->sublist("Biot Coefficient", false, "");

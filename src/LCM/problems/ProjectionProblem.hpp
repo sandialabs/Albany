@@ -132,17 +132,12 @@ namespace Albany {
 #include "DefGrad.hpp"
 #include "PHAL_SaveStateField.hpp"
 #include "Porosity.hpp"
-//#include "BiotCoefficient.hpp"
-//#include "BiotModulus.hpp"
-#include "PHAL_ThermalConductivity.hpp"
-//#include "KCPermeability.hpp"
+
 #include "ElasticModulus.hpp"
 #include "ShearModulus.hpp"
 #include "PoissonsRatio.hpp"
-//#include "GradientElementLength.hpp"
 
 #include "PHAL_Source.hpp"
-#include "TLPoroPlasticityResidMass.hpp"
 #include "L2ProjectionResidual.hpp"
 #include "TLElasResid.hpp"
 #include "PHAL_NSMaterialProperty.hpp"
@@ -155,7 +150,6 @@ namespace Albany {
 #include "SaturationModulus.hpp"
 #include "SaturationExponent.hpp"
 #include "DislocationDensity.hpp"
-//#include "TLPoroStress.hpp"
 
 
 
