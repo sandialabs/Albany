@@ -431,6 +431,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/GradientElementLength.cpp
     ${LCM_DIR}/evaluators/UnitGradient.cpp
     ${LCM_DIR}/evaluators/SetField.cpp
+    ${LCM_DIR}/evaluators/AssumedStrain.cpp
   )
 
   IF(ALBANY_MPI)
@@ -576,6 +577,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/UnitGradient_Def.hpp
     ${LCM_DIR}/evaluators/SetField.hpp 
     ${LCM_DIR}/evaluators/SetField_Def.hpp 
+    ${LCM_DIR}/evaluators/AssumedStrain.hpp
+    ${LCM_DIR}/evaluators/AssumedStrain_Def.hpp
   )
 
   IF(ALBANY_MPI)
