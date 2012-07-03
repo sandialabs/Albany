@@ -200,7 +200,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 
   // assembly assumed strain
-  for (std::size_t cell=workset.numCells; cell < worksetSize; ++cell) {
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
         for (std::size_t i=0; i < numDims; ++i){
         	for (std::size_t j=0; j < numDims; ++j){

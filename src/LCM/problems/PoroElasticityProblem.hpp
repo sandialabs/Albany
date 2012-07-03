@@ -528,7 +528,7 @@ Albany::PoroElasticityProblem::constructEvaluators(
 	  RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
       //Input
-      p->set<string>("Strain Name", "Strain");
+      p->set<string>("Strain Name", "Assumed Strain");
       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
       p->set<string>("Elastic Modulus Name", "Elastic Modulus");
@@ -595,7 +595,7 @@ Albany::PoroElasticityProblem::constructEvaluators(
 	  RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
       //Input
-      p->set<string>("Strain Name", "Strain");
+      p->set<string>("Strain Name", "Assumed Strain");
       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
       p->set<string>("Elastic Modulus Name", "Elastic Modulus");
@@ -661,7 +661,7 @@ Albany::PoroElasticityProblem::constructEvaluators(
       RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
       //Input
-      p->set<string>("Strain Name", "Strain");
+      p->set<string>("Strain Name", "Assumed Strain");
       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
       p->set<string>("Elastic Modulus Name", "Elastic Modulus");
