@@ -135,6 +135,7 @@ namespace Albany {
 #include "Time.hpp"
 #include "J2Fiber.hpp"
 #include "GursonFD.hpp"
+#include "QptLocation.hpp"
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
@@ -315,6 +316,37 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
     ev = rcp(new LCM::DefGrad<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+  if (matModel == "J2Fiber")
+  {
+	  { // Integration Point Location
+	      RCP<ParameterList> p = rcp(new ParameterList("Integration Point Location"));
+
+	      //Inputs: flags, weights, GradU
+	      p->set<string>("Coordinate Vector Name", "Coord Vec");
+	      p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
+
+	      p->set<string>("Gradient BF Name", "Grad BF");
+	      p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+
+	      p->set<string>("BF Name", "BF");
+	      p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
+
+	      //Outputs: F, J
+	      p->set<string>("Integration Point Location Name", "Integration Point Location"); //dl->qp_tensor also
+	      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
+	      ev = rcp(new LCM::QptLocation<EvalT,AlbanyTraits>(*p));
+	      fm0.template registerEvaluator<EvalT>(ev);
+
+	      p = stateMgr.registerStateVariable("Integration Point Location",dl->qp_vector, dl->dummy,"scalar", 0.0);
+	      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+	      fm0.template registerEvaluator<EvalT>(ev);
+	    }
+
+
+
+  }
+
 
   if (matModel == "NeoHookean")
   {
@@ -658,6 +690,8 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
+
+
   }
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
