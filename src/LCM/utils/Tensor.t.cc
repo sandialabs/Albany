@@ -2351,18 +2351,18 @@ namespace LCM {
 
   //
   // Symmetric Schur algorithm for R^2.
-  // \param \f$ A \in S(2) \f$
+  // \param \f$ A = [f, g; g, h] \in S(2) \f$
   // \return \f$ c, s \rightarrow [c, -s; s, c]\f diagonalizes A$
   //
   template<typename T>
   std::pair<T, T>
-  schur_sym(Tensor<T, 2> const & A)
+  schur_sym(const T f, const T g, const T h)
   {
     T c = 1.0;
     T s = 0.0;
 
-    if (A(0,1) != 0.0) {
-      T t = (A(0,0) - A(1,1)) / (2.0 * A(0,1));
+    if (g != 0.0) {
+      T t = (h - f) / (2.0 * g);
 
       if (t >= 0.0) {
         t = 1.0 / (sqrt(1.0 + t * t) + t);
@@ -2413,7 +2413,7 @@ namespace LCM {
   eig_sym(Tensor<T, N> const & A)
   {
     Tensor<T, N>
-    D = A;
+    D = symm(A);
 
     Tensor<T, N>
     V = identity<T, N>();
@@ -2422,7 +2422,7 @@ namespace LCM {
     off = norm_off_diagonal(D);
 
     const T
-    tol = 100.0 * std::numeric_limits<T>::epsilon() * norm(A);
+    tol = std::numeric_limits<T>::epsilon() * norm(A);
 
     const Index
     max_iter = 1000;
@@ -2430,7 +2430,7 @@ namespace LCM {
     Index
     num_iter = 0;
 
-    while (off > tol || num_iter < max_iter) {
+    while (off > tol && num_iter < max_iter) {
 
       // Find largest off-diagonal entry
       Index
@@ -2446,12 +2446,12 @@ namespace LCM {
 
       // Obtain Givens rotations by using 2x2 symmetric Schur algorithm
       Tensor <T, 2>
-      Apq(A(p,p), A(p,q), A(q,p), A(q,q));
+      Dpq(D(p,p), D(p,q), D(q,p), D(q,q));
 
       T
       c, s;
 
-      boost::tie(c, s) = schur_sym(Apq);
+      boost::tie(c, s) = schur_sym(Dpq(0,0), Dpq(0,1), Dpq(1,1));
 
       // Apply Givens rotation to matrices
       // that are converging to eigenvalues and eigenvectors
@@ -2468,7 +2468,7 @@ namespace LCM {
       std::cerr << "WARNING: EIG iteration did not converge." << std::endl;
     }
 
-    return boost::make_tuple(V, D);
+    return std::make_pair(V, diag(diag(D)));
   }
 
   //
@@ -2480,16 +2480,75 @@ namespace LCM {
   std::pair<Tensor<T, 2>, Tensor<T, 2> >
   eig_sym(Tensor<T, 2> const & A)
   {
+    const T f = A(0,0);
+    const T g = 0.5 * (A(0,1) + A(1,0));
+    const T h = A(1,1);
+
+    //
+    // Eigenvalues, based on LAPACK's dlae2
+    //
+    const T sum = f + h;
+    const T dif = fabs(f - h);
+    const T g2 = fabs(g + g);
+
+    T fhmax = f;
+    T fhmin = h;
+
+    const bool swap_diag = fabs(h) > fabs(f);
+
+    if (swap_diag == true) {
+      std::swap(fhmax, fhmin);
+    }
+
+    T r = 0.0;
+    if (dif > g2) {
+      const T t = g2 / dif;
+      r = dif * sqrt(1.0 + t * t);
+    } else if (dif < g2) {
+      const T t = dif / g2;
+      r = g2 * sqrt(1.0 + t * t);
+    } else {
+      // dif == g2, including zero
+      r = g2 * sqrt(2.0);
+    }
+
+    T s0 = 0.0;
+    T s1 = 0.0;
+
+    if (sum != 0.0) {
+      s0 = 0.5 * (sum + copysign(r, sum));
+      // Order of execution important.
+      // To get fully accurate smaller eigenvalue,
+      // next line needs to be executed in higher precision.
+      s1 = (fhmax / s0) * fhmin - (g / s0) * g;
+    } else {
+      // s0 == s1, including zero
+      s0 = 0.5 * r;
+      s1 = -0.5 * r;
+    }
+
+    // const T s0 = c*c*f - 2.0*c*s*g + s*s*h;
+    // const T s1 = s*s*f + 2.0*c*s*g + c*c*h;
+
+    Tensor<T, 2>
+    D(s0, 0.0, 0.0, s1);
+
+    //
+    // Eigenvectors
+    //
     T
     c, s;
 
-    boost::tie(c, s) = schur_sym(A);
+    boost::tie(c, s) = schur_sym(f, g, h);
 
     Tensor<T, 2>
     V(c, -s, s, c);
 
-    Tensor<T, 2>
-    D = transpose(V) * A * V;
+    if (swap_diag == true) {
+      // swap eigenvectors if eigenvalues were swapped
+      std::swap(V(0,0), V(0,1));
+      std::swap(V(1,0), V(1,1));
+    }
 
     return std::make_pair(V, D);
   }
