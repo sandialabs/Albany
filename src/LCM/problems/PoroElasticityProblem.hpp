@@ -129,6 +129,7 @@ namespace Albany {
 
 #include "Time.hpp"
 #include "Strain.hpp"
+#include "AssumedStrain.hpp"
 #include "StabParameter.hpp"
 #include "PHAL_SaveStateField.hpp"
 #include "Porosity.hpp"
@@ -317,6 +318,34 @@ Albany::PoroElasticityProblem::constructEvaluators(
      fm0.template registerEvaluator<EvalT>(ev);
    }
 
+   { // Assumed Strain
+       RCP<ParameterList> p = rcp(new ParameterList("Assumed Strain"));
+
+       //Inputs: flags, weights, GradU
+       const bool avgJ = params->get("avgJ", false);
+       p->set<bool>("avgJ Name", avgJ);
+       const bool volavgJ = params->get("volavgJ", false);
+       p->set<bool>("volavgJ Name", volavgJ);
+       const bool weighted_Volume_Averaged_J = params->get("weighted_Volume_Averaged_J", false);
+       p->set<bool>("weighted_Volume_Averaged_J Name", weighted_Volume_Averaged_J);
+       p->set<string>("Weights Name","Weights");
+       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+       p->set<string>("Gradient QP Variable Name", "Displacement Gradient");
+       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+
+       //Outputs: F, J
+       p->set<string>("DefGrad Name", "Deformation Gradient"); //dl->qp_tensor also
+       p->set<string>("Assumed Strain Name", "Assumed Strain"); //dl->qp_tensor also
+       p->set<string>("DetDefGrad Name", "Jacobian");
+       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+       ev = rcp(new LCM::AssumedStrain<EvalT,AlbanyTraits>(*p));
+       fm0.template registerEvaluator<EvalT>(ev);
+       p = stateMgr.registerStateVariable("Assumed Strain",dl->qp_tensor, dl->dummy,"scalar", 0.0,true);
+       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+       fm0.template registerEvaluator<EvalT>(ev);
+     }
+
    {  // Porosity
       RCP<ParameterList> p = rcp(new ParameterList);
 
@@ -499,7 +528,7 @@ Albany::PoroElasticityProblem::constructEvaluators(
 	  RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
       //Input
-      p->set<string>("Strain Name", "Strain");
+      p->set<string>("Strain Name", "Assumed Strain");
       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
       p->set<string>("Elastic Modulus Name", "Elastic Modulus");
@@ -566,7 +595,7 @@ Albany::PoroElasticityProblem::constructEvaluators(
 	  RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
       //Input
-      p->set<string>("Strain Name", "Strain");
+      p->set<string>("Strain Name", "Assumed Strain");
       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
       p->set<string>("Elastic Modulus Name", "Elastic Modulus");
@@ -632,7 +661,7 @@ Albany::PoroElasticityProblem::constructEvaluators(
       RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
       //Input
-      p->set<string>("Strain Name", "Strain");
+      p->set<string>("Strain Name", "Assumed Strain");
       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
       p->set<string>("Elastic Modulus Name", "Elastic Modulus");

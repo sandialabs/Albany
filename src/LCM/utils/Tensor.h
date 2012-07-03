@@ -2416,12 +2416,12 @@ namespace LCM {
 
   ///
   /// Symmetric Schur algorithm for R^2.
-  /// \param \f$ A \in S(2) \f$
+  /// \param \f$ A = [f, g; g, h] \in S(2) \f$
   /// \return \f$ c, s \rightarrow [c, -s; s, c]\f diagonalizes A$
   ///
   template<typename T>
   std::pair<T, T>
-  schur_sym(Tensor<T, 2> const & A);
+  schur_sym(const T f, const T g, const T h);
 
   ///
   /// Givens rotation. [c, -s; s, c] [a; b] = [r; 0]

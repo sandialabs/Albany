@@ -411,4 +411,36 @@ namespace {
     TEST_COMPARE(norm(A - B), <=, 100*std::numeric_limits<ScalarT>::epsilon());
   }
 
+  TEUCHOS_UNIT_TEST(TensorUtils, TensorEigenSym2x2)
+  {
+    LCM::Tensor<ScalarT, 2>
+    A(2.0, 1.0, 1.0, 2.0);
+
+    LCM::Tensor<ScalarT, 2>
+    V, D;
+
+    boost::tie(V, D) = LCM::eig_sym(A);
+
+    LCM::Tensor<ScalarT, 2>
+    B = V * D * LCM::transpose(V);
+
+    TEST_COMPARE(norm(A - B), <=, 100*std::numeric_limits<ScalarT>::epsilon());
+  }
+
+  TEUCHOS_UNIT_TEST(TensorUtils, TensorEigenSym3x3)
+  {
+    LCM::Tensor<ScalarT, 3>
+    A(2.0, 1.0, 0.0, 1.0, 2.0, 1.0, 0.0, 1.0, 2.0);
+
+    LCM::Tensor<ScalarT, 3>
+    V, D;
+
+    boost::tie(V, D) = LCM::eig_sym(A);
+
+    LCM::Tensor<ScalarT, 3>
+    B = V * D * LCM::transpose(V);
+
+    TEST_COMPARE(norm(A - B), <=, 100*std::numeric_limits<ScalarT>::epsilon());
+  }
+
 } // namespace

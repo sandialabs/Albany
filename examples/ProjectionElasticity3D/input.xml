@@ -53,13 +53,10 @@
     <Parameter name="2D Elements" type="int" value="2"/>
     <Parameter name="3D Elements" type="int" value="2"/>
     <Parameter name="Method" type="string" value="STK3D"/>
-    <Parameter name="Exodus Output File Name" type="string" value="OneDConsolid_OUTPUT.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="EQPS_OUTPUT.exo"/>
+	<Parameter name="Cubature Degree" type="int" value="3"/>
   </ParameterList>
   <ParameterList name="Regression Results">
-	<Parameter  name="Number of Comparisons" type="int" value="1"/>    
-    <Parameter  name="Test Values" type="Array(double)" value="{-8766.3840489}"/>
-    <Parameter  name="Relative Tolerance" type="double" value="5.0e1"/>
-    <Parameter  name="Absolute Tolerance" type="double" value="5.0e1"/>
   </ParameterList>
   <!-- LOCA is used for stability analysis, continuation -->
    <ParameterList name="Piro">
@@ -75,7 +72,7 @@
       <!-- Repeat the boundary condition (just one) that is to be loaded -->
       <Parameter  name="Continuation Parameter" type="string" value="Time"/>
       <!-- The number of steps in the problem -->
-      <Parameter  name="Max Steps" type="int" value="200"/>         
+      <Parameter  name="Max Steps" type="int" value="2"/>         
       <!-- Final value of the parameter, here it is a Dirichlet BC on displacement -->
       <Parameter  name="Max Value" type="double" value="0.2"/>
       <!-- Initial value of the parameter, here it is a Dirichlet BC on displacement -->
@@ -112,7 +109,7 @@
 		    <ParameterList name="AztecOO Settings">
 		      <Parameter name="Aztec Solver" type="string" value="GMRES"/>
 		      <Parameter name="Convergence Test" type="string" value="r0"/>
-		      <Parameter name="Size of Krylov Subspace" type="int" value="500"/>
+		      <Parameter name="Size of Krylov Subspace" type="int" value="4"/>
 		      <Parameter name="Output Frequency" type="int" value="10"/>
 		    </ParameterList>
 		    <Parameter name="Max Iterations" type="int" value="1000"/>
@@ -127,9 +124,9 @@
 		      <Parameter name="Output Frequency" type="int" value="0"/>
 		      <Parameter name="Output Style" type="int" value="0"/>
 		      <Parameter name="Verbosity" type="int" value="0"/>
-		      <Parameter name="Maximum Iterations" type="int" value="400"/>
+		      <Parameter name="Maximum Iterations" type="int" value="10"/>
 		      <Parameter name="Block Size" type="int" value="1"/>
-		      <Parameter name="Num Blocks" type="int" value="1850"/>
+		      <Parameter name="Num Blocks" type="int" value="4"/>
 		      <Parameter name="Flexible Gmres" type="bool" value="0"/>
 		    </ParameterList>
 		  </ParameterList>
