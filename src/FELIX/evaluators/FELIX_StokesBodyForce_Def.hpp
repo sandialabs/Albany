@@ -44,6 +44,17 @@ StokesBodyForce(const Teuchos::ParameterList& p) :
 	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
     this->addDependentField(rho);
   }
+  else if (type == "Poly") {
+    bf_type = POLY;  
+    mu = PHX::MDField<ScalarT,Cell,QuadPoint>(
+            p.get<std::string>("Material Property Name"),
+	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
+    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
+            p.get<std::string>("Coordinate Vector Name"),
+	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") );
+    this->addDependentField(mu); 
+    this->addDependentField(coordVec);
+  }
 
   this->addEvaluatedField(force);
 
@@ -74,6 +85,10 @@ postRegistrationSetup(typename Traits::SetupData d,
   if (bf_type == CONSTANT) {
     this->utils.setFieldData(rho,fm);
   }
+  else if (bf_type == POLY) {
+    this->utils.setFieldData(mu,fm);
+    this->utils.setFieldData(coordVec,fm);
+  }
 
   this->utils.setFieldData(force,fm); 
 }
@@ -88,8 +103,24 @@ evaluateFields(typename Traits::EvalData workset)
      for (std::size_t i=0; i < numDims; ++i) {
        if (bf_type == NONE)
 	 force(cell,qp,i) = 0.0;
-       else if (bf_type == CONSTANT)
+       else if (bf_type == CONSTANT) {
 	 force(cell,qp,i) = rho(cell,qp)*gravity[i];
+       }
+     }
+     //the following is hard-coded for a 2D Stokes problem with manufactured solution
+     if (bf_type == POLY) {
+       //double *X = &coordVec(cell, qp, 0);
+       //double *Y = &coordVec(cell, qp, 1);    
+       //f[0] = -40*mu*(2*y^2 - 3*y + 1)*y*(6*x^2 - 6*x + 1) - 120*mu*(x - 1)^2*x^2*(2*y - 1) - 10*mu; 
+       force(cell, qp, 0) = -40.0*mu(cell,qp)*(2.0*coordVec(cell,qp,1)*coordVec(cell,qp,1) - 3.0*coordVec(cell,qp,1)+1.0)*coordVec(cell,qp,1)*(6.0*coordVec(cell,qp,0)*coordVec(cell,qp,0) 
+                             -6.0*coordVec(cell,qp,0) + 1.0) - 120*mu(cell,qp)*(coordVec(cell,qp,0)-1.0)*(coordVec(cell,qp,0)-1.0)*coordVec(cell,qp,0)*coordVec(cell,qp,0)*(2.0*coordVec(cell,qp,1)-1.0) 
+                             - 10.0*mu(cell,qp);      
+       force(cell, qp, 0) = -1.0*force(cell, qp, 0);  
+       //f[1] = 120*mu*(1 - y)^2*y^2*(2*x-1) + 40*mu*(2*x^2 - 3*x + 1)*x*(6*y^2 - 6*y + 1) + 5*mu*y; 
+       force(cell, qp, 1) = 120.0*mu(cell,qp)*(1.0-coordVec(cell,qp,1))*(1.0-coordVec(cell,qp,1))*coordVec(cell,qp,1)*coordVec(cell,qp,1)*(2.0*coordVec(cell,qp,0)-1.0) + 
+                            40.0*mu(cell,qp)*(2.0*coordVec(cell,qp,0)*coordVec(cell,qp,0) - 3.0*coordVec(cell,qp,0) + 1.0)*coordVec(cell,qp,0)*(6.0*coordVec(cell,qp,1)*coordVec(cell,qp,1) - 
+                            6.0*coordVec(cell,qp,1) + 1.0) + 5*mu(cell,qp)*coordVec(cell,qp,1);
+       force(cell, qp, 1) = -1.0*force(cell, qp, 1);  
      }
    }
  }

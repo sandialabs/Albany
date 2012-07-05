@@ -95,7 +95,7 @@ evaluateFields(typename Traits::EvalData workset)
 	for (std::size_t qp=0; qp < numQPs; ++qp) {
 	  MResidual(cell,node,i) += 
 	    (Rm(cell, qp, i)-pGrad(cell,qp,i))*wBF(cell,node,qp) -
-	    P(cell,qp)*wGradBF(cell,node,qp,i);               
+	     P(cell,qp)*wGradBF(cell,node,qp,i);          
 	  for (std::size_t j=0; j < numDims; ++j) { 
 	    MResidual(cell,node,i) += 
 	      mu(cell,qp)*VGrad(cell,qp,i,j)*wGradBF(cell,node,qp,j);
