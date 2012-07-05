@@ -175,18 +175,15 @@ Albany::STKDiscretization::getWsPhysIndex() const
   return wsPhysIndex;
 }
 
-/*
-const std::vector<std::string>&
-Albany::STKDiscretization::getNodeSetIDs() const
-{
-  return nodeSetIDs;
-}
-*/
-
-void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln, const double time)
+void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln, const double time, const bool overlapped)
 {
   // Put solution as Epetra_Vector into STK Mesh
-  setSolutionField(soln);
+  if(!overlapped)
+    setSolutionField(soln);
+
+  // soln coming in is overlapped
+  else
+    setOvlpSolutionField(soln);
 
 #ifdef ALBANY_SEACAS
   if (stkMeshStruct->exoOutput) {
@@ -265,8 +262,43 @@ void
 Albany::STKDiscretization::setSolutionField(const Epetra_Vector& soln) 
 {
   // Copy soln vector into solution field, one node at a time
+  // Note that soln coming in is the local (non overlapped) soln
   for (std::size_t i=0; i < ownednodes.size(); i++)  {
     double* sol = stk::mesh::field_data(*stkMeshStruct->solution_field, *ownednodes[i]);
+    for (std::size_t j=0; j<neq; j++)
+      sol[j] = soln[getOwnedDOF(i,j)];
+  }
+}
+
+/* GAH:
+   This version supersedes the one above. Note that if we write this processor's solution contribution into STK's
+   overlapped solution space, we get the proper update of node ghost solution data.
+*/
+/*
+void 
+Albany::STKDiscretization::setSolutionField(const Epetra_Vector& soln) 
+{
+  // Copy soln vector into solution field, one node at a time
+  // Note that soln coming in is the local+ghost (overlapped) soln
+  for (std::size_t i=0; i < overlapnodes.size(); i++)  {
+    double* sol = stk::mesh::field_data(*stkMeshStruct->solution_field, *overlapnodes[i]);
+//    globalID = overlap_node_map->GID(i);
+    int globalID = gid(overlapnodes[i]);
+    if(node_map->MyGID(globalID)){ // Is this node local to soln?
+      int localID = node_map->LID(globalID);
+      for (std::size_t j=0; j<neq; j++)
+        sol[j] = soln[getOwnedDOF(localID, j)];
+    }
+  }
+}
+*/
+void 
+Albany::STKDiscretization::setOvlpSolutionField(const Epetra_Vector& soln) 
+{
+  // Copy soln vector into solution field, one node at a time
+  // Note that soln coming in is the local+ghost (overlapped) soln
+  for (std::size_t i=0; i < overlapnodes.size(); i++)  {
+    double* sol = stk::mesh::field_data(*stkMeshStruct->solution_field, *overlapnodes[i]);
     for (std::size_t j=0; j<neq; j++)
       sol[j] = soln[getOwnedDOF(i,j)];
   }

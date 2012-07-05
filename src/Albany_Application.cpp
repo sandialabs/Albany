@@ -185,6 +185,7 @@ Application(const RCP<const Epetra_Comm>& comm_,
   overlapped_xdot = rcp(new Epetra_Vector(*(disc->getOverlapMap())));
   overlapped_f = rcp(new Epetra_Vector(*(disc->getOverlapMap())));
   overlapped_jac = rcp(new Epetra_CrsMatrix(Copy, *(disc->getOverlapJacobianGraph())));
+  tmp_ovlp_sol = rcp(new Epetra_Vector(*(disc->getOverlapMap())));
 
   // Initialize solution vector and time deriv
   initial_x = disc->getSolutionField();

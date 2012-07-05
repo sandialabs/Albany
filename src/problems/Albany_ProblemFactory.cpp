@@ -17,6 +17,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Albany_ProblemFactory.hpp"
+#include "Albany_CahnHillProblem.hpp"
 #include "Albany_Helmholtz2DProblem.hpp"
 #include "Albany_HeatProblem.hpp"
 #include "Albany_MultiHeatProblem.hpp"
@@ -72,6 +73,9 @@ Albany::ProblemFactory::create()
   }
   else if (method == "Heat 3D") {
     strategy = rcp(new Albany::HeatProblem(problemParams, paramLib, 3, comm));
+  }
+  else if (method == "CahnHill 2D") {
+    strategy = rcp(new Albany::CahnHillProblem(problemParams, paramLib, 2, comm));
   }
   else if (method == "ODE") {
     strategy = rcp(new Albany::ODEProblem(problemParams, paramLib, 0));

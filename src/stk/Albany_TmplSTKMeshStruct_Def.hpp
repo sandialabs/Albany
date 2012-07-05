@@ -143,24 +143,43 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
   }
   else { // Element blocks are present in input
 
-    for(int i = 0; i < Dim; i++)
+    std::vector<int> min(Dim), max(Dim);
+
+    for(int i = 0; i < Dim; i++){
+
+      min[i] = INT_MAX;
+      max[i] = INT_MIN;
 
       nelem[i] = 0;
+
+    }
 
     // Read the EB extents from the parameter list and initialize the EB structs
     for(unsigned int eb = 0; eb < numEB; eb++){
 
       EBSpecs[eb].Initialize(eb, params);
 
-      for(int i = 0; i < Dim; i++)
+//      for(int i = 0; i < Dim; i++)
 
-        nelem[i] += EBSpecs[eb].numElems(i);
+//        nelem[i] += EBSpecs[eb].numElems(i);
+      for(int i = 0; i < Dim; i++){
+
+        min[i] = (min[i] < EBSpecs[eb].min[i]) ? min[i] : EBSpecs[eb].min[i];
+        max[i] = (max[i] > EBSpecs[eb].max[i]) ? max[i] : EBSpecs[eb].max[i];
+
+      }
 
     }
 
+    for(int i = 0; i < Dim; i++)
+
+      nelem[i] = max[i] - min[i];
+
     // Calculate total number of elements
     total_elems = nelem[0];
+
     for(int i = 1; i < Dim; i++)
+
       total_elems *= nelem[i];
 
   }
@@ -224,6 +243,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
   // Create just enough of the mesh to figure out number of owned elements 
   // so that the problem setup can know the worksetSize
 
+std::cout << "Mesh size is " << total_elems << " elems." << std::endl;
   elem_map = Teuchos::rcp(new Epetra_Map(total_elems, 0, *comm)); // Distribute the elems equally
 
   int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_map->NumMyElements());
@@ -768,10 +788,12 @@ Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
     if(numEB == 1) // assume all elements are in element block if there is only one
       ebNo = 0;
     else {
-      for(ebNo = 0; ebNo < numEB; ebNo++)
+      for(ebNo = 0; ebNo < numEB; ebNo++){
        // Does the elemNumber lie in the EB?
+//std::cout << elem_GID << " " << i << " " << ebNo << std::endl;
        if(EBSpecs[ebNo].inEB(elemNumber))
          break;
+      }
 
       if(ebNo == numEB){ // error, we didn't find an element block that this element
                           // should fit in

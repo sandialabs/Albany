@@ -193,11 +193,14 @@ getElementBlockParam(const std::string& ebName, const std::string& paramName)
   TEUCHOS_TEST_FOR_EXCEPTION(ebName.length() == 0, Teuchos::Exceptions::InvalidParameter,
 		     std::endl << "MaterialDB Error! Empty element block name" << std::endl);
 
-  TEUCHOS_TEST_FOR_EXCEPTION(!pEBList_->isSublist(ebName), Teuchos::Exceptions::InvalidParameter,
-		     std::endl << "MaterialDB Error! Invalid element block name " 
-		     << ebName << std::endl);
+  std::string newname = translateDBSublistName(pEBList_, ebName);
 
-  Teuchos::ParameterList& subList = pEBList_->sublist(ebName);
+  TEUCHOS_TEST_FOR_EXCEPTION(newname.length() == 0, Teuchos::Exceptions::InvalidParameter,
+                    std::endl << "MaterialDB Error! Invalid element block name \"" 
+                    << ebName << "\"."<< std::endl);
+
+  // This call returns the sublist for the particular EB within the "ElementBlocks" list
+  Teuchos::ParameterList& subList = pEBList_->sublist(newname);
 
   if( subList.isParameter(paramName) )
     return subList.get<T>(paramName);
@@ -226,6 +229,47 @@ getElementBlockParam(const std::string& ebName, const std::string& paramName)
   return matSubList.get<T>(paramName);
 }
 
+std::string
+QCAD::MaterialDatabase:: 
+translateDBSublistName(Teuchos::ParameterList *list, const std::string& listname){
+  /* 
+    NOTE: STK Ioss lowercases all names in the Exodus file, including element block names. Lets
+    lowercase the names used for the search so users are not confounded when they name the materials
+    using mixed case when they enter mixed case names in as element blocks in CUbit.
+  */
+
+  std::string newname;
+
+  for( Teuchos::ParameterList::ConstIterator i = list->begin(); i != list->end(); ++i ) {
+    std::string name_i = list->name(i);
+    const Teuchos::ParameterEntry &entry_i = list->entry(i);
+
+    if(listname == name_i && entry_i.isList()){ // found it
+
+      newname = list->name(i);
+
+      return newname; 
+
+    }
+
+    // Try to lowercase the list entry
+
+    std::transform(name_i.begin(), name_i.end(), name_i.begin(), (int (*)(int))std::tolower);
+
+    if(listname == name_i && entry_i.isList()){ // found it
+
+      newname = list->name(i);
+
+      return newname; 
+
+    }
+
+  }
+
+  return newname; // return string of length zero
+
+}
+
 Teuchos::ParameterList&
 QCAD::MaterialDatabase:: 
 getElementBlockSublist(const std::string& ebName, const std::string& subListName)
@@ -236,12 +280,14 @@ getElementBlockSublist(const std::string& ebName, const std::string& subListName
   TEUCHOS_TEST_FOR_EXCEPTION(ebName.length() == 0, Teuchos::Exceptions::InvalidParameter,
                     std::endl << "MaterialDB Error! Empty element block name." << std::endl);
 
-  TEUCHOS_TEST_FOR_EXCEPTION(!pEBList_->isSublist(ebName), Teuchos::Exceptions::InvalidParameter,
+  std::string newname = translateDBSublistName(pEBList_, ebName);
+
+  TEUCHOS_TEST_FOR_EXCEPTION(newname.length() == 0, Teuchos::Exceptions::InvalidParameter,
                     std::endl << "MaterialDB Error! Invalid element block name \"" 
                     << ebName << "\"."<< std::endl);
 
   // This call returns the sublist for the particular EB within the "ElementBlocks" list
-  Teuchos::ParameterList& subList = pEBList_->sublist(ebName);
+  Teuchos::ParameterList& subList = pEBList_->sublist(newname);
 
   if( subList.isSublist(subListName) )
     return subList.sublist(subListName);
@@ -289,10 +335,12 @@ getElementBlockParam(const std::string& ebName, const std::string& paramName, T 
   TEUCHOS_TEST_FOR_EXCEPTION(ebName.length() == 0, Teuchos::Exceptions::InvalidParameter,
 		     std::endl << "MaterialDB Error! Empty element block name" << std::endl);
 
-  //check if element block exists - if not return default
-  if(!pEBList_->isSublist(ebName)) return def_value;
+  std::string newname = translateDBSublistName(pEBList_, ebName);
 
-  Teuchos::ParameterList& subList = pEBList_->sublist(ebName);
+  //check if element block exists - if not return default
+  if(newname.length() == 0) return def_value;
+
+  Teuchos::ParameterList& subList = pEBList_->sublist(newname);
 
   if( subList.isParameter(paramName) )
     return subList.get<T>(paramName);
@@ -318,8 +366,10 @@ isElementBlockParam(const std::string& ebName, const std::string& paramName)
   TEUCHOS_TEST_FOR_EXCEPTION(pEBList_ == NULL, Teuchos::Exceptions::InvalidParameter,
 		     std::endl << "MaterialDB Error! param required but no DB." << std::endl);
 
-  if(!pEBList_->isSublist(ebName)) return false;
-  Teuchos::ParameterList& subList = pEBList_->sublist(ebName);
+  std::string newname = translateDBSublistName(pEBList_, ebName);
+
+  if(newname.length() == 0) return false;
+  Teuchos::ParameterList& subList = pEBList_->sublist(newname);
 
   if(subList.isParameter(paramName)) return true;
 
@@ -340,8 +390,10 @@ isElementBlockSublist(const std::string& ebName, const std::string& subListName)
   TEUCHOS_TEST_FOR_EXCEPTION(pEBList_ == NULL, Teuchos::Exceptions::InvalidParameter,
 		     std::endl << "MaterialDB Error! param required but no DB." << std::endl);
 
-  if(!pEBList_->isSublist(ebName)) return false;
-  Teuchos::ParameterList& subList = pEBList_->sublist(ebName);
+  std::string newname = translateDBSublistName(pEBList_, ebName);
+
+  if(newname.length() == 0) return false;
+  Teuchos::ParameterList& subList = pEBList_->sublist(newname);
 
   if(subList.isParameter(subListName)) return true;
 

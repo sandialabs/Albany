@@ -1,5 +1,5 @@
 /********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
+*            Albany, Copyright (2012) Sandia Corporation             *
 *                                                                    *
 * Notice: This computer software was prepared by Sandia Corporation, *
 * hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
@@ -11,40 +11,14 @@
 * NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
 * ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
 * including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
+*    Questions to Glen Hansen, gahanse@sandia.gov                    *
 \********************************************************************/
 
-#ifndef ALBANY_EXODUSOUTPUT_HPP
-#define ALBANY_EXODUSOUTPUT_HPP
 
-#include "Epetra_Vector.h"
-#include "Teuchos_RCP.hpp"
+#include "PHAL_AlbanyTraits.hpp"
 
-namespace Teuchos {
-  class Time;
-}
+#include "PHAL_CahnHillChemTerm.hpp"
+#include "PHAL_CahnHillChemTerm_Def.hpp"
 
-namespace Albany {
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::CahnHillChemTerm)
 
-class AbstractDiscretization;
-class STKDiscretization;
-
-class ExodusOutput {
-public:
-   void writeSolution(double stamp, const Epetra_Vector &solution, const bool overlapped = false);
-
-   explicit ExodusOutput(const Teuchos::RCP<AbstractDiscretization> &disc);
-
-private:
-   Teuchos::RCP<STKDiscretization> stkDisc_;
-
-   Teuchos::RCP<Teuchos::Time> exoOutTime_;
-
-   // Disallow copy and assignment
-   ExodusOutput(const ExodusOutput &);
-   ExodusOutput &operator=(const ExodusOutput &);
-};
-
-}
-
-#endif //ALBANY_EXODUSOUTPUT_HPP
