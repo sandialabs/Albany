@@ -289,19 +289,34 @@ EpetraExt::ModelEvaluator::InArgs QCAD::Solver::createInArgs() const
 
 EpetraExt::ModelEvaluator::OutArgs QCAD::Solver::createOutArgs() const
 {
+  //Based on Piro_Epetra_NOXSolver.cpp implementation
   EpetraExt::ModelEvaluator::OutArgsSetup outArgs;
   outArgs.setModelEvalDescription("QCAD Solver Multipurpose Model Evaluator");
   // Ng is 1 bigger then model-Ng so that the solution vector can be an outarg
   outArgs.set_Np_Ng(num_p, num_g+1);
 
+  const SolverSubSolver& referenceSolver = getSubSolver("Poisson");
 
+  // We support all dg/dp layouts model supports, plus the linear op layout
+  EpetraExt::ModelEvaluator::OutArgs model_outargs = referenceSolver.model->createOutArgs();
+  for (int i=0; i<num_g; i++) {
+    for (int j=0; j<num_p; j++) {
+      DerivativeSupport ds = model_outargs.supports(OUT_ARG_DgDp, i, j);
+      if (!ds.none()) {
+	ds.plus(DERIV_LINEAR_OP);
+	outArgs.setSupports(OUT_ARG_DgDp, i, j, ds);
+      }
+    }
+  }
+
+  /*OLD
   //Derivative info 
   if(bSupportDpDg) {
     for (int i=0; i<num_g; i++) {
       for (int j=0; j<num_p; j++)
 	outArgs.setSupports(OUT_ARG_DgDp, i, j, DerivativeSupport(DERIV_MV_BY_COL));
     }
-  }
+  }*/
 
   return outArgs;
 }
