@@ -17,7 +17,7 @@
 #include "Albany_ReducedOrderModelEvaluator.hpp"
 
 #include "Albany_ReducedSpace.hpp"
-#include "Albany_ReducedLinearOperatorFactory.hpp"
+#include "Albany_ReducedOperatorFactory.hpp"
 
 #include "Epetra_Vector.h"
 #include "Epetra_CrsMatrix.h"
@@ -34,9 +34,11 @@ using Teuchos::rcp_dynamic_cast;
 using Teuchos::null;
 
 ReducedOrderModelEvaluator::ReducedOrderModelEvaluator(const RCP<EpetraExt::ModelEvaluator> &fullOrderModel,
-                                                       const RCP<const ReducedSpace> &solutionSpace) :
+                                                       const RCP<const ReducedSpace> &solutionSpace,
+                                                       const RCP<ReducedOperatorFactory> &reducedOpFactory) :
   fullOrderModel_(fullOrderModel),
   solutionSpace_(solutionSpace),
+  reducedOpFactory_(reducedOpFactory),
   x_init_(null),
   x_dot_init_(null)
 {
@@ -155,15 +157,13 @@ RCP<Epetra_Operator> ReducedOrderModelEvaluator::create_W() const
     return null;
   }
 
-  const RCP<Epetra_MultiVector> projector(new Epetra_MultiVector(solutionSpace_->basis()));
-  ReducedLinearOperatorFactory factory(projector);
-  return factory.reducedOperatorNew();
+  return reducedOpFactory_->reducedJacobianNew();
 }
 
 EpetraExt::ModelEvaluator::InArgs ReducedOrderModelEvaluator::createInArgs() const
 {
   const InArgs fullInArgs = fullOrderModel_->createInArgs();
-  
+
   InArgsSetup result;
 
   result.setModelEvalDescription("MOR applied to " + fullInArgs.modelEvalDescription());
@@ -185,11 +185,11 @@ EpetraExt::ModelEvaluator::InArgs ReducedOrderModelEvaluator::createInArgs() con
 EpetraExt::ModelEvaluator::OutArgs ReducedOrderModelEvaluator::createOutArgs() const
 {
   const OutArgs fullOutArgs = fullOrderModel_->createOutArgs();
-  
+
   OutArgsSetup result;
 
   result.setModelEvalDescription("MOR applied to " + fullOutArgs.modelEvalDescription());
-  
+
   result.set_Np_Ng(fullOutArgs.Np(), fullOutArgs.Ng());
 
   const EOutArgsMembers optionalMembers[] = { OUT_ARG_f, OUT_ARG_W };
@@ -198,7 +198,7 @@ EpetraExt::ModelEvaluator::OutArgs ReducedOrderModelEvaluator::createOutArgs() c
     const EOutArgsMembers member = *it;
     result.setSupports(member, fullOutArgs.supports(member));
   }
- 
+
   result.set_W_properties(fullOutArgs.get_W_properties());
 
   return result;
@@ -210,13 +210,13 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
   InArgs fullInArgs = fullOrderModel_->createInArgs();
   {
     // Copy untouched supported inArgs content
-    if (fullInArgs.supports(IN_ARG_t))     fullInArgs.set_t(inArgs.get_t()); 
-    if (fullInArgs.supports(IN_ARG_alpha)) fullInArgs.set_alpha(inArgs.get_alpha()); 
-    if (fullInArgs.supports(IN_ARG_beta))  fullInArgs.set_beta(inArgs.get_beta()); 
+    if (fullInArgs.supports(IN_ARG_t))     fullInArgs.set_t(inArgs.get_t());
+    if (fullInArgs.supports(IN_ARG_alpha)) fullInArgs.set_alpha(inArgs.get_alpha());
+    if (fullInArgs.supports(IN_ARG_beta))  fullInArgs.set_beta(inArgs.get_beta());
     for (int l = 0; l < fullInArgs.Np(); ++l) {
       fullInArgs.set_p(l, inArgs.get_p(l));
     }
-  
+
     // x <- basis * x_r + x_origin
     TEUCHOS_TEST_FOR_EXCEPT(is_null(inArgs.get_x()));
     fullInArgs.set_x(solutionSpace_->expansion(*inArgs.get_x()));
@@ -230,48 +230,52 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 
   // Copy arguments to be able to modify f and W
   OutArgs fullOutArgs = fullOrderModel_->createOutArgs();
+
   const bool supportsResidual = fullOutArgs.supports(OUT_ARG_f);
+  const bool requestedResidual = supportsResidual && nonnull(outArgs.get_f());
+
   const bool supportsJacobian = fullOutArgs.supports(OUT_ARG_W);
+  const bool requestedJacobian = supportsJacobian && nonnull(outArgs.get_W());
+
+  const bool fullJacobianRequired = reducedOpFactory_->fullJacobianRequired(requestedResidual, requestedJacobian);
+
   {
     // Copy untouched supported outArgs content
     for (int j = 0; j < fullOutArgs.Ng(); ++j) {
       fullOutArgs.set_g(j, outArgs.get_g(j));
     }
-  
+
     // Prepare reduced residual (f_r)
-    if (supportsResidual) {
+    if (requestedResidual) {
       const Evaluation<Epetra_Vector> f_r = outArgs.get_f();
-      if (nonnull(f_r)) {
-        const Evaluation<Epetra_Vector> f(rcp(new Epetra_Vector(*fullOrderModel_->get_f_map(), false)),
-                                          f_r.getType());
-        fullOutArgs.set_f(f);
-      }
+      const Evaluation<Epetra_Vector> f(rcp(new Epetra_Vector(*fullOrderModel_->get_f_map(), false)),
+                                        f_r.getType());
+      fullOutArgs.set_f(f);
     }
 
-    // Prepare reduced Jacobian (W_r)
-    if (supportsJacobian) {
-      if (nonnull(outArgs.get_W())) {
-        fullOutArgs.set_W(fullOrderModel_->create_W());
-      }
+    if (fullJacobianRequired) {
+      fullOutArgs.set_W(fullOrderModel_->create_W());
     }
   }
 
   // (f, W) <- fullOrderModel(x, x_dot, ...)
   fullOrderModel_->evalModel(fullInArgs, fullOutArgs);
 
+  // (W * basis, W_r) <- W
+  if (fullJacobianRequired) {
+    reducedOpFactory_->fullJacobianIs(*fullOutArgs.get_W());
+  }
+
   // f_r <- basis^T * f (Galerkin projection)
-  if (supportsResidual && nonnull(outArgs.get_f())) {
-    solutionSpace_->linearReduction(*fullOutArgs.get_f(), *outArgs.get_f());
+  if (requestedResidual) {
+    reducedOpFactory_->leftProjection(*fullOutArgs.get_f(), *outArgs.get_f());
   }
 
   // Wr <- basis^T * W * basis (Galerkin projection)
-  if (supportsJacobian && nonnull(outArgs.get_W())) {
+  if (requestedJacobian) {
     const RCP<Epetra_CrsMatrix> W_r = rcp_dynamic_cast<Epetra_CrsMatrix>(outArgs.get_W());
-    TEUCHOS_TEST_FOR_EXCEPT(is_null((W_r))); 
-    
-    const RCP<Epetra_MultiVector> projector(new Epetra_MultiVector(solutionSpace_->basis()));
-    ReducedLinearOperatorFactory factory(projector);
-    factory.reducedOperatorInit(*fullOutArgs.get_W(), *W_r);
+    TEUCHOS_TEST_FOR_EXCEPT(is_null((W_r)));
+    reducedOpFactory_->reducedJacobian(*W_r);
   }
 }
 

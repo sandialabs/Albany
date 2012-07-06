@@ -287,6 +287,9 @@ SET(HEADERS ${HEADERS}
 SET(MOR_DIR ${Albany_SOURCE_DIR}/src/MOR)
 
 SET(SOURCES ${SOURCES}
+  ${MOR_DIR}/Albany_GaussNewtonOperatorFactory.cpp
+  ${MOR_DIR}/Albany_PetrovGalerkinOperatorFactory.cpp
+  ${MOR_DIR}/Albany_ReducedJacobianFactory.cpp
   ${MOR_DIR}/Albany_ReducedLinearOperatorFactory.cpp
   ${MOR_DIR}/Albany_ReducedSpace.cpp
   ${MOR_DIR}/Albany_GalerkinProjectionOperator.cpp
@@ -308,6 +311,10 @@ SET(SOURCES ${SOURCES}
 SET(HEADERS ${HEADERS}
   ${MOR_DIR}/Albany_MORUtils.hpp
   ${MOR_DIR}/Albany_BasisOps.hpp
+  ${MOR_DIR}/Albany_ReducedOperatorFactory.hpp
+  ${MOR_DIR}/Albany_GaussNewtonOperatorFactory.hpp
+  ${MOR_DIR}/Albany_PetrovGalerkinOperatorFactory.hpp
+  ${MOR_DIR}/Albany_ReducedJacobianFactory.hpp
   ${MOR_DIR}/Albany_ReducedLinearOperatorFactory.hpp
   ${MOR_DIR}/Albany_ReducedSpace.hpp
   ${MOR_DIR}/Albany_GalerkinProjectionOperator.hpp
