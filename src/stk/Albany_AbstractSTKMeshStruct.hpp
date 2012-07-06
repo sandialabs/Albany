@@ -37,6 +37,14 @@
 
 
 namespace Albany {
+  //! Small container to hold periodicBC info for use in setting coordinates
+  struct PeriodicBCStruct {
+    PeriodicBCStruct() 
+       {periodic[0]=false; periodic[1]=false; periodic[2]=false; 
+        scale[0]=1.0; scale[1]=1.0; scale[2]=1.0; };
+    bool periodic[3];
+    double scale[3];
+  };
 
   struct AbstractSTKMeshStruct {
 
@@ -93,6 +101,9 @@ namespace Albany {
     // Info to map element block to physics set
     bool allElementBlocksHaveSamePhysics;
     std::map<std::string, int> ebNameToIndex;
+
+    // Info for periodic BCs -- only for hand-coded STK meshes
+    struct PeriodicBCStruct PBCStruct;
   };
 }
 

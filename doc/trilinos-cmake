@@ -93,7 +93,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=/home/agsalin/Trilinos/build_july10/install \
 #
 #        -D Trilinos_ENABLE_TriKota:BOOL=ON \
 #        -D TriKota_ENABLE_DakotaCMake:BOOL=ON \
-#        -D ENABLE_DAKOTA_TESTS:BOOL=OFF \
+#        -D DAKOTA_ENABLE_TESTS:BOOL=OFF \
 #        -D Boost_LIBRARY_DIRS:FILEPATH="$BOOSTDIR/lib" \
 #
 #

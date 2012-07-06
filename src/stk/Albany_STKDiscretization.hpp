@@ -247,6 +247,9 @@ namespace Albany {
     double *xx, *yy, *zz, *rr;
     bool allocated_xyz;
 
+    // Storage used in periodic BCs to un-roll coordinates. Pointers saved for destructor.
+    std::vector<double*>  toDelete;
+
     Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct;
 
     // Used in Exodus writing capability

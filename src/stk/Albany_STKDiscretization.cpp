@@ -67,6 +67,8 @@ Albany::STKDiscretization::~STKDiscretization()
   if (stkMeshStruct->exoOutput) delete mesh_data;
 #endif
   if (allocated_xyz) { delete [] xx; delete [] yy; delete [] zz; delete [] rr; allocated_xyz=false;} 
+
+  for (int i=0; i< toDelete.size(); i++) delete [] toDelete[i];
 }
 
 	    
@@ -124,6 +126,7 @@ Albany::STKDiscretization::getCoordinates() const
     double* x = stk::mesh::field_data(*stkMeshStruct->coordinates_field, *overlapnodes[i]);
     for (int dim=0; dim<stkMeshStruct->numDim; dim++)
       coordinates[3*node_lid + dim] = x[dim];
+
   }
 
   return coordinates;
@@ -543,11 +546,44 @@ void Albany::STKDiscretization::computeWorksetInfo()
         TEUCHOS_TEST_FOR_EXCEPTION(node_lid<0, std::logic_error,
 			   "STK1D_Disc: node_lid out of range " << node_lid << endl);
         coords[b][i][j] = stk::mesh::field_data(*stkMeshStruct->coordinates_field, rowNode);
+
         wsElNodeEqID[b][i][j].resize(neq);
         for (std::size_t eq=0; eq < neq; eq++) 
           wsElNodeEqID[b][i][j][eq] = getOverlapDOF(node_lid,eq);
+
+if (stkMeshStruct->PBCStruct.periodic[0])
+  cout << "PX " << stkMeshStruct->PBCStruct.scale[0] << "  NGID " << node_gid << "  coordx " <<  coords[b][i][j][0] << "  coordy " << coords[b][i][j][1] << endl;
+
       }
     }
+  }
+
+  for (int d=0; d<stkMeshStruct->numDim; d++) {
+  if (stkMeshStruct->PBCStruct.periodic[d]) {
+    for (int b=0; b < numBuckets; b++) {
+      for (std::size_t i=0; i < buckets[b]->size(); i++) {
+        int nodes_per_element = (*buckets[b])[i].relations(metaData.NODE_RANK).size();
+        bool anyXeqZero=false, flipZeroToScale=false;
+        for (int j=0; j < nodes_per_element; j++)  if (coords[b][i][j][d]==0.0) anyXeqZero=true;
+        if (anyXeqZero) 
+          for (int j=0; j < nodes_per_element; j++) 
+              if (coords[b][i][j][d] > stkMeshStruct->PBCStruct.scale[d]/1.9) flipZeroToScale=true;
+        if (flipZeroToScale) {  
+           for (int j=0; j < nodes_per_element; j++)  {
+             double* xleak = new double [3];
+             for (int k=0; k < stkMeshStruct->numDim; k++) 
+                xleak[k] = coords[b][i][j][k];
+             if (xleak[d]==0.0) {
+                xleak[d]=stkMeshStruct->PBCStruct.scale[d];
+  cout << "REPLACE " << b << " " << i << " " << j << " dim  " << d << "  "  << coords[b][i][j][d] << " with " << xleak[d] << endl;
+               coords[b][i][j] = xleak; // replace ptr to coords
+               toDelete.push_back(xleak);
+             }
+           }          
+        }
+      }
+    }
+  }
   }
 
   // Pull out pointers to shards::Arrays for every bucket, for every state

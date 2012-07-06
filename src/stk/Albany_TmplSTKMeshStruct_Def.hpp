@@ -52,7 +52,9 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const Teuchos::RCP<const Epetra_Comm>& comm) :
   GenericSTKMeshStruct(params, traits_type::size),
-  periodic(params->get("Periodic BC", false)),
+  periodic_x(params->get("Periodic_x BC", false)),
+  periodic_y(params->get("Periodic_y BC", false)),
+  periodic_z(params->get("Periodic_z BC", false)),
   triangles(false)
 {
 
@@ -193,12 +195,14 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
     buf << "NodeSet" << idx;
     nsNames.push_back(buf.str());
   }
+  // For 2D and 3D, and extra node set of a single node for setting Pressure in confined incompressible flows
+  if (Dim==2 || Dim==3) nsNames.push_back("NodeSet99");
 
   std::vector<std::string> ssNames;
 
   // Construct the sideset names
 
-  if(Dim > 1 && !periodic) // Sidesets present only for 2 and 3D problems without periodic boundaries
+  if(Dim > 1 ) // Sidesets present only for 2 and 3D problems
 
     for(int idx=0; idx < Dim*2; idx++){ // 2 sidesets per dimension (one at beginning, one at end)
       std::stringstream buf;
@@ -228,14 +232,10 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
       stk::mesh::fem::set_cell_topology<default_element_type>(*partVec[i]);
   }
 
-  if(!periodic){ // Loop over defined sidesets and set side topo
+  for(std::map<std::string, stk::mesh::Part*>::const_iterator it = ssPartVec.begin(); 
+    it != ssPartVec.end(); ++it)
 
-    for(std::map<std::string, stk::mesh::Part*>::const_iterator it = ssPartVec.begin(); 
-      it != ssPartVec.end(); ++it)
-
-      stk::mesh::fem::set_cell_topology<default_element_side_type>(*it->second);
-
-  }
+    stk::mesh::fem::set_cell_topology<default_element_side_type>(*it->second);
 
   int cub = params->get("Cubature Degree",3);
   int worksetSizeMax = params->get("Workset Size",50);
@@ -619,8 +619,6 @@ void
 Albany::TmplSTKMeshStruct<0>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& comm)
 {
 
-  // Note: periodic flag just ignored for this case if it is present
-
   stk::mesh::PartVector nodePartVec;
   stk::mesh::PartVector singlePartVec(1);
 
@@ -677,13 +675,19 @@ Albany::TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
   std::vector<int> elemNumber(1);
   unsigned int ebNo;
   unsigned int rightNode=0;
+
+  if (periodic_x) {
+      this->PBCStruct.periodic[0] = true;
+      this->PBCStruct.scale[0] = scale[0];
+  }
+
   // Create elements and node IDs
   for (int i=0; i<elem_map->NumMyElements(); i++) {
     const unsigned int elem_GID = elem_map->GID(i);
     const unsigned int left_node  = elem_GID;
     unsigned int right_node = left_node+1;
-    if (periodic) right_node %= elem_map->NumGlobalElements();
-    if (rightNode < right_node) rightNode = right_node;
+    if (periodic_x) right_node %= elem_map->NumGlobalElements();
+//    if (rightNode < right_node) rightNode = right_node;
 
     stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
 
@@ -724,23 +728,22 @@ Albany::TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
 
     // set the coordinate values for these nodes
     double* lnode_coord = stk::mesh::field_data(*coordinates_field, lnode);
-    lnode_coord[0] = x[0][elem_GID];
+    lnode_coord[0] = x[0][left_node];
     double* rnode_coord = stk::mesh::field_data(*coordinates_field, rnode);
-    rnode_coord[0] = x[0][elem_GID+1];
+    rnode_coord[0] = x[0][right_node];
 
     int* p_rank = stk::mesh::field_data(*proc_rank_field, edge);
     p_rank[0] = comm->MyPID();
 
     // Set node sets. There are no side sets currently with 1D problems (only 2D and 3D)
-    if (elem_GID==0) {
+    if (left_node==0) {
        singlePartVec[0] = nsPartVec["NodeSet0"];
        bulkData->change_entity_parts(lnode, singlePartVec);
 
     }
-    if ((elem_GID+1)==(unsigned int)elem_map->NumGlobalElements()) {
+    if (right_node==(unsigned int)elem_map->NumGlobalElements()) {
       singlePartVec[0] = nsPartVec["NodeSet1"];
       bulkData->change_entity_parts(rnode, singlePartVec);
-
     }
 
 // Note: Side_ranks are not currently registered for 1D elements, see 
@@ -762,19 +765,33 @@ Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
   unsigned int ebNo;
 
   // Create elements and node IDs
-  const unsigned int nodes_x = periodic ? nelem[0] : nelem[0] + 1;
-  const unsigned int mod_x   = periodic ? nelem[0] : std::numeric_limits<unsigned int>::max();
-  const unsigned int mod_y   = periodic ? nelem[1] : std::numeric_limits<unsigned int>::max();
+  
+  const unsigned int nodes_x = periodic_x ? nelem[0] : nelem[0] + 1;
+  const unsigned int mod_x   = periodic_x ? nelem[0] : std::numeric_limits<unsigned int>::max();
+  const unsigned int mod_y   = periodic_y ? nelem[1] : std::numeric_limits<unsigned int>::max();
+
+  if (periodic_x) {
+      this->PBCStruct.periodic[0] = true;
+      this->PBCStruct.scale[0] = scale[0];
+  }
+  if (periodic_y) {
+      this->PBCStruct.periodic[1] = true;
+      this->PBCStruct.scale[1] = scale[1];
+  }
 
   for (int i=0; i<elem_map->NumMyElements(); i++) {
 
     const unsigned int elem_GID = elem_map->GID(i);
     const unsigned int x_GID = elem_GID % nelem[0]; // mesh column number
     const unsigned int y_GID = elem_GID / nelem[0]; // mesh row number
-    const unsigned int lower_left  =  x_GID          + nodes_x* y_GID;
-    const unsigned int lower_right = (x_GID+1)%mod_x + nodes_x* y_GID;
-    const unsigned int upper_right = (x_GID+1)%mod_x + nodes_x*((y_GID+1)%mod_y);
-    const unsigned int upper_left  =  x_GID          + nodes_x*((y_GID+1)%mod_y);
+
+    const unsigned  int x_GIDplus1 = (x_GID+1)%mod_x; // = x_GID+1 unless last element of periodic system
+    const unsigned  int y_GIDplus1 = (y_GID+1)%mod_y; // = y_GID+1 unless last element of periodic system
+
+    const unsigned int lower_left  =  x_GID      + nodes_x * y_GID;
+    const unsigned int lower_right =  x_GIDplus1 + nodes_x * y_GID;
+    const unsigned int upper_right =  x_GIDplus1 + nodes_x * y_GIDplus1;
+    const unsigned int upper_left  =  x_GID      + nodes_x * y_GIDplus1;
 
     // get ID of quadrilateral -- will be doubled for trianlges below
     stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
@@ -829,58 +846,55 @@ Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
       p_rank = stk::mesh::field_data(*proc_rank_field, elem2);
       p_rank[0] = comm->MyPID();
 
+      // Triangle sideset construction
+      if (x_GID==0) { // left edge of mesh, elem2 has side 2 on left boundary
 
-      if(!periodic){ // no sidesets if periodic
-        // Triangle sideset construction
-        if (x_GID==0) { // left edge of mesh, elem2 has side 2 on left boundary
-  
-           singlePartVec[0] = ssPartVec["SideSet0"];
-           stk::mesh::EntityId side_id = (stk::mesh::EntityId)(nelem[0] + (2 * y_GID));
-  
-           stk::mesh::Entity& side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-           bulkData->declare_relation(elem2, side,  2 /*local side id*/); 
-  
-           bulkData->declare_relation(side, ulnode, 0); 
-           bulkData->declare_relation(side, llnode, 1); 
-  
-        }
-        if ((x_GID+1)==(unsigned int)nelem[0]) { // right edge of mesh, elem has side 1 on right boundary
-  
-           singlePartVec[0] = ssPartVec["SideSet1"];
-           stk::mesh::EntityId side_id = (stk::mesh::EntityId)(nelem[0] + (2 * y_GID) + 1);
-  
-           stk::mesh::Entity& side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-           bulkData->declare_relation(elem, side,  1 /*local side id*/); 
-  
-           bulkData->declare_relation(side, lrnode, 0); 
-           bulkData->declare_relation(side, urnode, 1); 
-  
-        }
-        if (y_GID==0) { // bottom edge of mesh, elem has side 0 on lower boundary
-  
-           singlePartVec[0] = ssPartVec["SideSet2"];
-           stk::mesh::EntityId side_id = (stk::mesh::EntityId)(x_GID);
-  
-           stk::mesh::Entity& side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-           bulkData->declare_relation(elem, side,  0 /*local side id*/); 
-  
-           bulkData->declare_relation(side, llnode, 0); 
-           bulkData->declare_relation(side, lrnode, 1); 
-  
-        }
-        if ((y_GID+1)==(unsigned int)nelem[1]) { // top edge of mesh, elem2 has side 1 on upper boundary
-  
-           singlePartVec[0] = ssPartVec["SideSet3"];
-           stk::mesh::EntityId side_id = (stk::mesh::EntityId)(nelem[0] + (2 * nelem[1]) + x_GID);
-  
-           stk::mesh::Entity& side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-           bulkData->declare_relation(elem2, side,  1 /*local side id*/); 
-  
-           bulkData->declare_relation(side, urnode, 0); 
-           bulkData->declare_relation(side, ulnode, 1); 
-  
-        }
-      } // end if !periodic
+         singlePartVec[0] = ssPartVec["SideSet0"];
+         stk::mesh::EntityId side_id = (stk::mesh::EntityId)(nelem[0] + (2 * y_GID));
+
+         stk::mesh::Entity& side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
+         bulkData->declare_relation(elem2, side,  2 /*local side id*/); 
+
+         bulkData->declare_relation(side, ulnode, 0); 
+         bulkData->declare_relation(side, llnode, 1); 
+
+      }
+      if (x_GIDplus1==(unsigned int)nelem[0]) { // right edge of mesh, elem has side 1 on right boundary
+
+         singlePartVec[0] = ssPartVec["SideSet1"];
+         stk::mesh::EntityId side_id = (stk::mesh::EntityId)(nelem[0] + (2 * y_GID) + 1);
+
+         stk::mesh::Entity& side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
+         bulkData->declare_relation(elem, side,  1 /*local side id*/); 
+
+         bulkData->declare_relation(side, lrnode, 0); 
+         bulkData->declare_relation(side, urnode, 1); 
+
+      }
+      if (y_GID==0) { // bottom edge of mesh, elem has side 0 on lower boundary
+
+         singlePartVec[0] = ssPartVec["SideSet2"];
+         stk::mesh::EntityId side_id = (stk::mesh::EntityId)(x_GID);
+
+         stk::mesh::Entity& side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
+         bulkData->declare_relation(elem, side,  0 /*local side id*/); 
+
+         bulkData->declare_relation(side, llnode, 0); 
+         bulkData->declare_relation(side, lrnode, 1); 
+
+      }
+      if (y_GIDplus1==(unsigned int)nelem[1]) { // top edge of mesh, elem2 has side 1 on upper boundary
+
+         singlePartVec[0] = ssPartVec["SideSet3"];
+         stk::mesh::EntityId side_id = (stk::mesh::EntityId)(nelem[0] + (2 * nelem[1]) + x_GID);
+
+         stk::mesh::Entity& side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
+         bulkData->declare_relation(elem2, side,  1 /*local side id*/); 
+
+         bulkData->declare_relation(side, urnode, 0); 
+         bulkData->declare_relation(side, ulnode, 1); 
+
+      }
     } // end pair of triangles
   
     else {  //4-node quad
@@ -891,71 +905,69 @@ Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
       bulkData->declare_relation(elem, urnode, 2);
       bulkData->declare_relation(elem, ulnode, 3);
   
-      if(!periodic){ // no sidesets if periodic BC's
-        // Quad sideset construction
-        if (x_GID==0) { // left edge of mesh, elem has side 3 on left boundary
-  
-           singlePartVec[0] = ssPartVec["SideSet0"];
-  
-           stk::mesh::EntityId side_id = (stk::mesh::EntityId)(nelem[0] + (2 * y_GID));
-  
-           stk::mesh::Entity& side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-           bulkData->declare_relation(elem, side,  3 /*local side id*/); 
-  
-           bulkData->declare_relation(side, ulnode, 0); 
-           bulkData->declare_relation(side, llnode, 1); 
-  
-        }
-        if ((x_GID+1)==(unsigned int)nelem[0]) { // right edge of mesh, elem has side 1 on right boundary
-  
-           singlePartVec[0] = ssPartVec["SideSet1"];
-  
-           stk::mesh::EntityId side_id = (stk::mesh::EntityId)(nelem[0] + (2 * y_GID) + 1);
-  
-           stk::mesh::Entity& side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-           bulkData->declare_relation(elem, side,  1 /*local side id*/); 
-  
-           bulkData->declare_relation(side, lrnode, 0); 
-           bulkData->declare_relation(side, urnode, 1); 
-  
-        }
-        if (y_GID==0) { // bottom edge of mesh, elem has side 0 on lower boundary
-  
-           singlePartVec[0] = ssPartVec["SideSet2"];
-  
-           stk::mesh::EntityId side_id = (stk::mesh::EntityId)(x_GID);
-  
-           stk::mesh::Entity& side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-           bulkData->declare_relation(elem, side,  0 /*local side id*/); 
-  
-           bulkData->declare_relation(side, llnode, 0); 
-           bulkData->declare_relation(side, lrnode, 1); 
-  
-        }
-        if ((y_GID+1)==(unsigned int)nelem[1]) { // tope edge of mesh, elem has side 2 on upper boundary
-  
-           singlePartVec[0] = ssPartVec["SideSet3"];
-  
-           stk::mesh::EntityId side_id = (stk::mesh::EntityId)(nelem[0] + (2 * nelem[1]) + x_GID);
-  
-           stk::mesh::Entity& side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-           bulkData->declare_relation(elem, side,  2 /*local side id*/); 
-  
-           bulkData->declare_relation(side, urnode, 0); 
-           bulkData->declare_relation(side, ulnode, 1); 
-  
-        }
-      } // end if !periodic
+      // Quad sideset construction
+      if (x_GID==0) { // left edge of mesh, elem has side 3 on left boundary
+
+         singlePartVec[0] = ssPartVec["SideSet0"];
+
+         stk::mesh::EntityId side_id = (stk::mesh::EntityId)(nelem[0] + (2 * y_GID));
+
+         stk::mesh::Entity& side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
+         bulkData->declare_relation(elem, side,  3 /*local side id*/); 
+
+         bulkData->declare_relation(side, ulnode, 0); 
+         bulkData->declare_relation(side, llnode, 1); 
+
+      }
+      if (x_GIDplus1==(unsigned int)nelem[0]) { // right edge of mesh, elem has side 1 on right boundary
+
+         singlePartVec[0] = ssPartVec["SideSet1"];
+
+         stk::mesh::EntityId side_id = (stk::mesh::EntityId)(nelem[0] + (2 * y_GID) + 1);
+
+         stk::mesh::Entity& side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
+         bulkData->declare_relation(elem, side,  1 /*local side id*/); 
+
+         bulkData->declare_relation(side, lrnode, 0); 
+         bulkData->declare_relation(side, urnode, 1); 
+
+      }
+      if (y_GID==0) { // bottom edge of mesh, elem has side 0 on lower boundary
+
+         singlePartVec[0] = ssPartVec["SideSet2"];
+
+         stk::mesh::EntityId side_id = (stk::mesh::EntityId)(x_GID);
+
+         stk::mesh::Entity& side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
+         bulkData->declare_relation(elem, side,  0 /*local side id*/); 
+
+         bulkData->declare_relation(side, llnode, 0); 
+         bulkData->declare_relation(side, lrnode, 1); 
+
+      }
+      if (y_GIDplus1==(unsigned int)nelem[1]) { // tope edge of mesh, elem has side 2 on upper boundary
+
+         singlePartVec[0] = ssPartVec["SideSet3"];
+
+         stk::mesh::EntityId side_id = (stk::mesh::EntityId)(nelem[0] + (2 * nelem[1]) + x_GID);
+
+         stk::mesh::Entity& side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
+         bulkData->declare_relation(elem, side,  2 /*local side id*/); 
+
+         bulkData->declare_relation(side, urnode, 0); 
+         bulkData->declare_relation(side, ulnode, 1); 
+
+      }
     } // end 4 node quad
 
     double* llnode_coord = stk::mesh::field_data(*coordinates_field, llnode);
     llnode_coord[0] = x[0][x_GID];   llnode_coord[1] = x[1][y_GID];
     double* lrnode_coord = stk::mesh::field_data(*coordinates_field, lrnode);
-    lrnode_coord[0] = x[0][x_GID+1]; lrnode_coord[1] = x[1][y_GID];
+    lrnode_coord[0] = x[0][x_GIDplus1]; lrnode_coord[1] = x[1][y_GID];
     double* urnode_coord = stk::mesh::field_data(*coordinates_field, urnode);
-    urnode_coord[0] = x[0][x_GID+1]; urnode_coord[1] = x[1][y_GID+1];
+    urnode_coord[0] = x[0][x_GIDplus1]; urnode_coord[1] = x[1][y_GIDplus1];
     double* ulnode_coord = stk::mesh::field_data(*coordinates_field, ulnode);
-    ulnode_coord[0] = x[0][x_GID]; ulnode_coord[1] = x[1][y_GID+1];
+    ulnode_coord[0] = x[0][x_GID]; ulnode_coord[1] = x[1][y_GIDplus1];
 
     // Nodesets
 
@@ -963,9 +975,8 @@ Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
        singlePartVec[0] = nsPartVec["NodeSet0"];
        bulkData->change_entity_parts(llnode, singlePartVec);
        bulkData->change_entity_parts(ulnode, singlePartVec);
-
     }
-    if ((x_GID+1)==(unsigned int)nelem[0]) { // right of elem is on right bdy
+    if ((x_GIDplus1)==(unsigned int)nelem[0]) { // right of elem is on right bdy
        singlePartVec[0] = nsPartVec["NodeSet1"];
        bulkData->change_entity_parts(lrnode, singlePartVec);
        bulkData->change_entity_parts(urnode, singlePartVec);
@@ -975,10 +986,14 @@ Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
        bulkData->change_entity_parts(llnode, singlePartVec);
        bulkData->change_entity_parts(lrnode, singlePartVec);
     }
-    if ((y_GID+1)==(unsigned int)nelem[1]) { // top of elem is on top bdy
+    if ((y_GIDplus1)==(unsigned int)nelem[1]) { // top of elem is on top bdy
        singlePartVec[0] = nsPartVec["NodeSet3"];
        bulkData->change_entity_parts(ulnode, singlePartVec);
        bulkData->change_entity_parts(urnode, singlePartVec);
+    }
+    if (x_GID==0 && y_GID==0) { // single node at bottom corner
+       singlePartVec[0] = nsPartVec["NodeSet99"];
+       bulkData->change_entity_parts(llnode, singlePartVec);
     }
   }
 }
@@ -993,11 +1008,24 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
   std::vector<int> elemNumber(3);
   unsigned int ebNo;
 
-  const unsigned int nodes_x  = periodic ? nelem[0] : nelem[0] + 1;
-  const unsigned int nodes_xy = periodic ? nodes_x * nelem[1] : nodes_x*(nelem[1] + 1);
-  const unsigned int mod_x    = periodic ? nelem[0] : std::numeric_limits<unsigned int>::max();
-  const unsigned int mod_y    = periodic ? nelem[1] : std::numeric_limits<unsigned int>::max();
-  const unsigned int mod_z    = periodic ? nelem[2] : std::numeric_limits<unsigned int>::max();
+  const unsigned int nodes_x  = periodic_x ? nelem[0] : nelem[0] + 1;
+  const unsigned int nodes_xy = (periodic_y && periodic_y) ? nodes_x * nelem[1] : nodes_x*(nelem[1] + 1);
+  const unsigned int mod_x    = periodic_x ? nelem[0] : std::numeric_limits<unsigned int>::max();
+  const unsigned int mod_y    = periodic_y ? nelem[1] : std::numeric_limits<unsigned int>::max();
+  const unsigned int mod_z    = periodic_z ? nelem[2] : std::numeric_limits<unsigned int>::max();
+
+  if (periodic_x) {
+      this->PBCStruct.periodic[0] = true;
+      this->PBCStruct.scale[0] = scale[0];
+  }
+  if (periodic_y) {
+      this->PBCStruct.periodic[1] = true;
+      this->PBCStruct.scale[1] = scale[1];
+  }
+  if (periodic_z) {
+      this->PBCStruct.periodic[2] = true;
+      this->PBCStruct.scale[2] = scale[2];
+  }
 
   // Create elements and node IDs
   for (int i=0; i<elem_map->NumMyElements(); i++) {
@@ -1006,16 +1034,20 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
     const unsigned int xy_plane = elem_GID % (nelem[0]*nelem[1]); 
     const unsigned int x_GID    = xy_plane % nelem[0]; // mesh column number
     const unsigned int y_GID    = xy_plane / nelem[0]; // mesh row number
+ 
+    const unsigned  int x_GIDplus1 = (x_GID+1)%mod_x; // = x_GID+1 unless last element of periodic system
+    const unsigned  int y_GIDplus1 = (y_GID+1)%mod_y; // = y_GID+1 unless last element of periodic system
+    const unsigned  int z_GIDplus1 = (z_GID+1)%mod_z; // = z_GID+1 unless last element of periodic system
 
-    const unsigned int lower_left  =  x_GID          + nodes_x* y_GID            + nodes_xy*z_GID;
-    const unsigned int lower_right = (x_GID+1)%mod_x + nodes_x* y_GID            + nodes_xy*z_GID;
-    const unsigned int upper_right = (x_GID+1)%mod_x + nodes_x*((y_GID+1)%mod_y) + nodes_xy*z_GID;
-    const unsigned int upper_left  =  x_GID          + nodes_x*((y_GID+1)%mod_y) + nodes_xy*z_GID;
+    const unsigned int lower_left  =  x_GID      + nodes_x * y_GID      + nodes_xy*z_GID;
+    const unsigned int lower_right =  x_GIDplus1 + nodes_x * y_GID      + nodes_xy*z_GID;
+    const unsigned int upper_right =  x_GIDplus1 + nodes_x * y_GIDplus1 + nodes_xy*z_GID;
+    const unsigned int upper_left  =  x_GID      + nodes_x * y_GIDplus1 + nodes_xy*z_GID;
 
-    const unsigned int lower_left_back  =  x_GID          + nodes_x* y_GID            + nodes_xy*((z_GID+1)%mod_z);
-    const unsigned int lower_right_back = (x_GID+1)%mod_x + nodes_x* y_GID            + nodes_xy*((z_GID+1)%mod_z);
-    const unsigned int upper_right_back = (x_GID+1)%mod_x + nodes_x*((y_GID+1)%mod_y) + nodes_xy*((z_GID+1)%mod_z);
-    const unsigned int upper_left_back  =  x_GID          + nodes_x*((y_GID+1)%mod_y) + nodes_xy*((z_GID+1)%mod_z);
+    const unsigned int lower_left_back  =  x_GID      + nodes_x * y_GID      + nodes_xy * z_GIDplus1;
+    const unsigned int lower_right_back =  x_GIDplus1 + nodes_x * y_GID      + nodes_xy * z_GIDplus1;
+    const unsigned int upper_right_back =  x_GIDplus1 + nodes_x * y_GIDplus1 + nodes_xy * z_GIDplus1;
+    const unsigned int upper_left_back  =  x_GID      + nodes_x * y_GIDplus1 + nodes_xy * z_GIDplus1;
 
     stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
 
@@ -1072,138 +1104,135 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
     coord = stk::mesh::field_data(*coordinates_field, llnode);
     coord[0] = x[0][x_GID];   coord[1] = x[1][y_GID];   coord[2] = x[2][z_GID];
     coord = stk::mesh::field_data(*coordinates_field, lrnode);
-    coord[0] = x[0][x_GID+1]; coord[1] = x[1][y_GID];   coord[2] = x[2][z_GID];
+    coord[0] = x[0][x_GIDplus1]; coord[1] = x[1][y_GID];   coord[2] = x[2][z_GID];
     coord = stk::mesh::field_data(*coordinates_field, urnode);
-    coord[0] = x[0][x_GID+1]; coord[1] = x[1][y_GID+1]; coord[2] = x[2][z_GID];
+    coord[0] = x[0][x_GIDplus1]; coord[1] = x[1][y_GIDplus1]; coord[2] = x[2][z_GID];
     coord = stk::mesh::field_data(*coordinates_field, ulnode);
-    coord[0] = x[0][x_GID];   coord[1] = x[1][y_GID+1]; coord[2] = x[2][z_GID];
+    coord[0] = x[0][x_GID];   coord[1] = x[1][y_GIDplus1]; coord[2] = x[2][z_GID];
 
     coord = stk::mesh::field_data(*coordinates_field, llnodeb);
-    coord[0] = x[0][x_GID];   coord[1] = x[1][y_GID];   coord[2] = x[2][z_GID+1];
+    coord[0] = x[0][x_GID];   coord[1] = x[1][y_GID];   coord[2] = x[2][z_GIDplus1];
     coord = stk::mesh::field_data(*coordinates_field, lrnodeb);
-    coord[0] = x[0][x_GID+1]; coord[1] = x[1][y_GID];   coord[2] = x[2][z_GID+1];
+    coord[0] = x[0][x_GIDplus1]; coord[1] = x[1][y_GID];   coord[2] = x[2][z_GIDplus1];
     coord = stk::mesh::field_data(*coordinates_field, urnodeb);
-    coord[0] = x[0][x_GID+1]; coord[1] = x[1][y_GID+1]; coord[2] = x[2][z_GID+1];
+    coord[0] = x[0][x_GIDplus1]; coord[1] = x[1][y_GIDplus1]; coord[2] = x[2][z_GIDplus1];
     coord = stk::mesh::field_data(*coordinates_field, ulnodeb);
-    coord[0] = x[0][x_GID];   coord[1] = x[1][y_GID+1]; coord[2] = x[2][z_GID+1];
+    coord[0] = x[0][x_GID];   coord[1] = x[1][y_GIDplus1]; coord[2] = x[2][z_GIDplus1];
 
 /*
  * Do sidesets
  */
 
-    if(!periodic){ // no sidesets if periodic BC's
+    // Hex sideset construction
 
-      // Hex sideset construction
+    if (x_GID==0) { // left edge of mesh, elem has side 3 on left boundary
 
-      if (x_GID==0) { // left edge of mesh, elem has side 3 on left boundary
+      // Sideset construction
+      // elem has side 3 (0473) on left boundary
 
-        // Sideset construction
-        // elem has side 3 (0473) on left boundary
+     singlePartVec[0] = ssPartVec["SideSet0"];
 
-       singlePartVec[0] = ssPartVec["SideSet0"];
-  
-       stk::mesh::EntityId side_id = (stk::mesh::EntityId)(nelem[0] + (2 * y_GID) + 
-        (nelem[0] + nelem[1]) * 2 * z_GID);
-  
-       stk::mesh::Entity& side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-       bulkData->declare_relation(elem, side,  3 /*local side id*/); 
-  
-       bulkData->declare_relation(side, llnode, 0); 
-       bulkData->declare_relation(side, llnodeb, 4); 
-       bulkData->declare_relation(side, ulnodeb, 7); 
-       bulkData->declare_relation(side, ulnode, 3); 
-  
-      }
-      if ((x_GID+1)==(unsigned int)nelem[0]) { // right edge of mesh, elem has side 1 on right boundary
-  
+     stk::mesh::EntityId side_id = (stk::mesh::EntityId)(nelem[0] + (2 * y_GID) + 
+      (nelem[0] + nelem[1]) * 2 * z_GID);
 
-        // elem has side 1 (1265) on right boundary
+     stk::mesh::Entity& side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
+     bulkData->declare_relation(elem, side,  3 /*local side id*/); 
 
-         singlePartVec[0] = ssPartVec["SideSet1"];
-  
-         stk::mesh::EntityId side_id = (stk::mesh::EntityId)(nelem[0] + (2 * y_GID) + 1 +
-          (nelem[0] + nelem[1]) * 2 * z_GID);
-  
-         stk::mesh::Entity& side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-         bulkData->declare_relation(elem, side,  1 /*local side id*/); 
-  
-         bulkData->declare_relation(side, lrnode, 1); 
-         bulkData->declare_relation(side, urnode, 2); 
-         bulkData->declare_relation(side, urnodeb, 6); 
-         bulkData->declare_relation(side, lrnodeb, 5); 
-  
-      }
-      if (y_GID==0) { // bottom edge of mesh, elem has side 0 on lower boundary
-  
-      // elem has side 0 (0154) on bottom boundary
+     bulkData->declare_relation(side, llnode, 0); 
+     bulkData->declare_relation(side, llnodeb, 4); 
+     bulkData->declare_relation(side, ulnodeb, 7); 
+     bulkData->declare_relation(side, ulnode, 3); 
 
-         singlePartVec[0] = ssPartVec["SideSet2"];
-  
-         stk::mesh::EntityId side_id = (stk::mesh::EntityId)(x_GID + (nelem[0] + nelem[1]) * 2 * z_GID);
-  
-         stk::mesh::Entity& side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-         bulkData->declare_relation(elem, side,  0 /*local side id*/); 
-  
-         bulkData->declare_relation(side, llnode, 0); 
-         bulkData->declare_relation(side, lrnode, 1); 
-         bulkData->declare_relation(side, lrnodeb, 5); 
-         bulkData->declare_relation(side, llnodeb, 4); 
-  
-      }
-      if ((y_GID+1)==(unsigned int)nelem[1]) { // tope edge of mesh, elem has side 2 on upper boundary
-  
-       // elem has side 2 (2376) on top boundary
-
-       singlePartVec[0] = ssPartVec["SideSet3"];
-  
-       stk::mesh::EntityId side_id = (stk::mesh::EntityId)(nelem[0] + (2 * nelem[1]) + x_GID +
-        (nelem[0] + nelem[1]) * 2 * z_GID);
-  
-       stk::mesh::Entity& side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-       bulkData->declare_relation(elem, side,  2 /*local side id*/); 
-  
-       bulkData->declare_relation(side, urnode, 2); 
-       bulkData->declare_relation(side, ulnode, 3); 
-       bulkData->declare_relation(side, ulnodeb, 7); 
-       bulkData->declare_relation(side, urnodeb, 6); 
-  
     }
-    if (z_GID==0) {
+    if ((x_GIDplus1)==(unsigned int)nelem[0]) { // right edge of mesh, elem has side 1 on right boundary
 
-        // elem has side 4 (0321) on front boundary
 
-       singlePartVec[0] = ssPartVec["SideSet4"];
-  
-       stk::mesh::EntityId side_id = (stk::mesh::EntityId)((nelem[0] + nelem[1]) * 2 * nelem[2] +
-        x_GID + (2 * nelem[0]) * y_GID);
-  
+      // elem has side 1 (1265) on right boundary
+
+       singlePartVec[0] = ssPartVec["SideSet1"];
+
+       stk::mesh::EntityId side_id = (stk::mesh::EntityId)(nelem[0] + (2 * y_GID) + 1 +
+        (nelem[0] + nelem[1]) * 2 * z_GID);
+
        stk::mesh::Entity& side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-       bulkData->declare_relation(elem, side,  4 /*local side id*/); 
-  
-       bulkData->declare_relation(side, llnode, 0); 
-       bulkData->declare_relation(side, ulnode, 3); 
-       bulkData->declare_relation(side, urnode, 2); 
+       bulkData->declare_relation(elem, side,  1 /*local side id*/); 
+
        bulkData->declare_relation(side, lrnode, 1); 
+       bulkData->declare_relation(side, urnode, 2); 
+       bulkData->declare_relation(side, urnodeb, 6); 
+       bulkData->declare_relation(side, lrnodeb, 5); 
 
     }
-    if ((z_GID+1)==(unsigned int)nelem[2]) {
+    if (y_GID==0) { // bottom edge of mesh, elem has side 0 on lower boundary
 
-        // elem has side 5 (4567) on back boundary
+    // elem has side 0 (0154) on bottom boundary
 
-       singlePartVec[0] = ssPartVec["SideSet5"];
-       stk::mesh::EntityId side_id = (stk::mesh::EntityId)((nelem[0] + nelem[1]) * 2 * nelem[2] +
-        x_GID + (2 * nelem[0]) * y_GID + nelem[0]);
-  
+       singlePartVec[0] = ssPartVec["SideSet2"];
+
+       stk::mesh::EntityId side_id = (stk::mesh::EntityId)(x_GID + (nelem[0] + nelem[1]) * 2 * z_GID);
+
        stk::mesh::Entity& side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-       bulkData->declare_relation(elem, side,  5 /*local side id*/); 
-  
-       bulkData->declare_relation(side, llnodeb, 4); 
-       bulkData->declare_relation(side, lrnodeb, 5); 
-       bulkData->declare_relation(side, urnodeb, 6); 
-       bulkData->declare_relation(side, ulnodeb, 7); 
+       bulkData->declare_relation(elem, side,  0 /*local side id*/); 
 
-      }
-    } // end if !periodic
+       bulkData->declare_relation(side, llnode, 0); 
+       bulkData->declare_relation(side, lrnode, 1); 
+       bulkData->declare_relation(side, lrnodeb, 5); 
+       bulkData->declare_relation(side, llnodeb, 4); 
+
+    }
+    if ((y_GIDplus1)==(unsigned int)nelem[1]) { // tope edge of mesh, elem has side 2 on upper boundary
+
+     // elem has side 2 (2376) on top boundary
+
+     singlePartVec[0] = ssPartVec["SideSet3"];
+
+     stk::mesh::EntityId side_id = (stk::mesh::EntityId)(nelem[0] + (2 * nelem[1]) + x_GID +
+      (nelem[0] + nelem[1]) * 2 * z_GID);
+
+     stk::mesh::Entity& side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
+     bulkData->declare_relation(elem, side,  2 /*local side id*/); 
+
+     bulkData->declare_relation(side, urnode, 2); 
+     bulkData->declare_relation(side, ulnode, 3); 
+     bulkData->declare_relation(side, ulnodeb, 7); 
+     bulkData->declare_relation(side, urnodeb, 6); 
+
+  }
+  if (z_GID==0) {
+
+      // elem has side 4 (0321) on front boundary
+
+     singlePartVec[0] = ssPartVec["SideSet4"];
+
+     stk::mesh::EntityId side_id = (stk::mesh::EntityId)((nelem[0] + nelem[1]) * 2 * nelem[2] +
+      x_GID + (2 * nelem[0]) * y_GID);
+
+     stk::mesh::Entity& side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
+     bulkData->declare_relation(elem, side,  4 /*local side id*/); 
+
+     bulkData->declare_relation(side, llnode, 0); 
+     bulkData->declare_relation(side, ulnode, 3); 
+     bulkData->declare_relation(side, urnode, 2); 
+     bulkData->declare_relation(side, lrnode, 1); 
+
+  }
+  if ((z_GIDplus1)==(unsigned int)nelem[2]) {
+
+      // elem has side 5 (4567) on back boundary
+
+     singlePartVec[0] = ssPartVec["SideSet5"];
+     stk::mesh::EntityId side_id = (stk::mesh::EntityId)((nelem[0] + nelem[1]) * 2 * nelem[2] +
+      x_GID + (2 * nelem[0]) * y_GID + nelem[0]);
+
+     stk::mesh::Entity& side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
+     bulkData->declare_relation(elem, side,  5 /*local side id*/); 
+
+     bulkData->declare_relation(side, llnodeb, 4); 
+     bulkData->declare_relation(side, lrnodeb, 5); 
+     bulkData->declare_relation(side, urnodeb, 6); 
+     bulkData->declare_relation(side, ulnodeb, 7); 
+
+    }
 
 /*
  * Do Nodesets
@@ -1218,7 +1247,7 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
        bulkData->change_entity_parts(ulnodeb, singlePartVec); // 7
 
     }
-    if ((x_GID+1)==(unsigned int)nelem[0]) {
+    if ((x_GIDplus1)==(unsigned int)nelem[0]) {
 
        singlePartVec[0] = nsPartVec["NodeSet1"];
        bulkData->change_entity_parts(lrnode, singlePartVec); // 1
@@ -1236,7 +1265,7 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
        bulkData->change_entity_parts(lrnodeb, singlePartVec); // 5
 
     }
-    if ((y_GID+1)==(unsigned int)nelem[1]) {
+    if ((y_GIDplus1)==(unsigned int)nelem[1]) {
 
        singlePartVec[0] = nsPartVec["NodeSet3"];
        bulkData->change_entity_parts(ulnode, singlePartVec); // 3
@@ -1254,7 +1283,7 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
        bulkData->change_entity_parts(urnode, singlePartVec); // 2
 
     }
-    if ((z_GID+1)==(unsigned int)nelem[2]) {
+    if ((z_GIDplus1)==(unsigned int)nelem[2]) {
 
        singlePartVec[0] = nsPartVec["NodeSet5"];
        bulkData->change_entity_parts(llnodeb, singlePartVec); // 4
@@ -1263,6 +1292,11 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
        bulkData->change_entity_parts(urnodeb, singlePartVec); // 6
 
     }
+    if (x_GID==0 && y_GID==0 && z_GID==0) {
+       singlePartVec[0] = nsPartVec["NodeSet99"];
+       bulkData->change_entity_parts(llnode, singlePartVec); // node 0
+    }
+
   } // end element loop
 }
 
@@ -1282,7 +1316,7 @@ Albany::TmplSTKMeshStruct<1>::getValidDiscretizationParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getValidGenericSTKParameters("ValidSTK1D_DiscParams");
-  validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic a mesh");
+  validPL->set<bool>("Periodic_x BC", false, "Flag to indicate periodic mesh in x-dimesnsion");
   validPL->set<int>("1D Elements", 0, "Number of Elements in X discretization");
   validPL->set<double>("1D Scale", 1.0, "Width of X discretization");
   validPL->set<bool>("Rebalance Mesh", false, "Parallel re-load balance initial mesh after generation");
@@ -1311,7 +1345,8 @@ Albany::TmplSTKMeshStruct<2>::getValidDiscretizationParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL = 
     this->getValidGenericSTKParameters("ValidSTK2D_DiscParams");
 
-  validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic a mesh");
+  validPL->set<bool>("Periodic_x BC", false, "Flag to indicate periodic mesh in x-dimesnsion");
+  validPL->set<bool>("Periodic_y BC", false, "Flag to indicate periodic mesh in y-dimesnsion");
   validPL->set<int>("1D Elements", 0, "Number of Elements in X discretization");
   validPL->set<int>("2D Elements", 0, "Number of Elements in Y discretization");
   validPL->set<double>("1D Scale", 1.0, "Width of X discretization");
@@ -1343,7 +1378,9 @@ Albany::TmplSTKMeshStruct<3>::getValidDiscretizationParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getValidGenericSTKParameters("ValidSTK3D_DiscParams");
 
-  validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic a mesh");
+  validPL->set<bool>("Periodic_x BC", false, "Flag to indicate periodic mesh in x-dimesnsion");
+  validPL->set<bool>("Periodic_y BC", false, "Flag to indicate periodic mesh in y-dimesnsion");
+  validPL->set<bool>("Periodic_z BC", false, "Flag to indicate periodic mesh in z-dimesnsion");
   validPL->set<int>("1D Elements", 0, "Number of Elements in X discretization");
   validPL->set<int>("2D Elements", 0, "Number of Elements in Y discretization");
   validPL->set<int>("3D Elements", 0, "Number of Elements in Z discretization");
