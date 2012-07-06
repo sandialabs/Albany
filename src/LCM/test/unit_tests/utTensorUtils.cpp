@@ -443,4 +443,26 @@ namespace {
     TEST_COMPARE(norm(A - B), <=, 100*std::numeric_limits<ScalarT>::epsilon());
   }
 
+  TEUCHOS_UNIT_TEST(TensorUtils, TensorInverse4x4)
+  {
+    LCM::Tensor<ScalarT, 4>
+    A(
+        2.0, 1.0, 0.0, 0.0,
+        1.0, 2.0, 1.0, 0.0,
+        0.0, 1.0, 2.0, 1.0,
+        0.0, 0.0, 1.0, 2.0
+    );
+
+    LCM::Tensor<ScalarT, 4>
+    B = inverse(A);
+
+    LCM::Tensor<ScalarT, 4>
+    C = A * B;
+
+    LCM::Tensor<ScalarT, 4>
+    D = LCM::eye<ScalarT, 4>();
+
+    TEST_COMPARE(norm(C - D), <=, 100*std::numeric_limits<ScalarT>::epsilon());
+  }
+
 } // namespace

@@ -1632,6 +1632,34 @@ namespace LCM {
   }
 
   //
+  // R^N arg max abs. Useful for inverse and other algorithms
+  // that rely on Jacobi-type procedures.
+  // \param A
+  // \return \f$ (p,q) = arg max_{i,j} |a_{ij}| \f$
+  //
+  template<typename T, Index N>
+  std::pair<Index, Index>
+  arg_max_abs(Tensor<T, N> const & A)
+  {
+    Index p = 0;
+    Index q = 0;
+
+    T s = fabs(A(p,q));
+
+    for (Index i = 0; i < N; ++i) {
+      for (Index j = 0; j < N; ++j) {
+        if (fabs(A(i,j)) > s) {
+          p = i;
+          q = j;
+          s = fabs(A(i,j));
+        }
+      }
+    }
+
+    return std::make_pair(p,q);
+  }
+
+  //
   // R^N arg max off-diagonal. Useful for SVD and other algorithms
   // that rely on Jacobi-type procedures.
   // \param A
@@ -1648,34 +1676,6 @@ namespace LCM {
 
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
-        if (i != j && fabs(A(i,j)) > s) {
-          p = i;
-          q = j;
-          s = fabs(A(i,j));
-        }
-      }
-    }
-
-    return std::make_pair(p,q);
-  }
-
-  //
-  // R^3 arg max off-diagonal. Useful for SVD and other algorithms
-  // that rely on Jacobi-type procedures.
-  // \param A
-  // \return \f$ (p,q) = arg max_{i \neq j} |a_{ij}| \f$
-  //
-  template<typename T>
-  std::pair<Index, Index>
-  arg_max_off_diagonal(Tensor<T, 3> const & A)
-  {
-    Index p = 0;
-    Index q = 1;
-
-    T s = fabs(A(p,q));
-
-    for (Index i = 0; i < 3; ++i) {
-      for (Index j = 0; j < 3; ++j) {
         if (i != j && fabs(A(i,j)) > s) {
           p = i;
           q = j;

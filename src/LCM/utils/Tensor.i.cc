@@ -1501,7 +1501,8 @@ namespace LCM {
       e[0][j] = s;
     }
     for (Index i = 1; i < N; ++i) {
-      for (Index j = 1; j < N; ++j) {
+      e[i].resize(N);
+      for (Index j = 0; j < N; ++j) {
         T const & s = va_arg(arg_list, T);
         e[i][j] = s;
       }
@@ -3664,8 +3665,8 @@ namespace LCM {
 
   //
   // R^N 2nd-order tensor inverse
-  // Gauss-Jordan elimination. Warning: no pivoting.
-  // Casual use only. Use Teuchos LAPACK interface for
+  // Gauss-Jordan elimination. Warning: full pivoting
+  // for small tensors. Use Teuchos LAPACK interface for
   // more efficient and robust techniques.
   // \param A nonsingular tensor
   // \return \f$ A^{-1} \f$
@@ -3675,40 +3676,76 @@ namespace LCM {
   Tensor<T, N>
   inverse(Tensor<T, N> const & A)
   {
-    const T d = det(A);
-    assert(d != 0.0);
-
+    Tensor<T, N> S = A;
     Tensor<T, N> B = identity<T, N>();
+    Vector<Index, N> p, q;
 
+    p.clear();
+    q.clear();
+
+    // Determine full pivot
     for (Index k = 0; k < N; ++k) {
+
+      Index m = k;
+      Index n = k;
+
+      T s = fabs(S(m, n));
+
       for (Index i = k; i < N; ++i) {
-        T s = 1.0 / A(i, k);
         for (Index j = k; j < N; ++j) {
-          A(i, j) *= s;
-        }
-        for (Index j = 0; j < N; ++j) {
-          B(i, j) *= s;
+          if (fabs(S(i, j)) > s) {
+            m = i;
+            n = j;
+            s = fabs(S(i, j));
+          }
         }
       }
-      for (Index i = k + 1; i < N; ++i) {
-        for (Index j = k; j < N; ++j) {
-          A(i, j) -= A(k, j);
-        }
+
+      // Swap rows and columns for pivoting
+      swap_row(S, k, m);
+      swap_row(B, k, m);
+
+      swap_col(S, k, n);
+      swap_col(B, k, n);
+
+      p(k) = m;
+      q(k) = n;
+
+      // Gauss-Jordan elimination
+      const T t = S(k, k);
+
+      if (t == 0.0) {
+        std::cerr << "ERROR: Inverse of singular tensor." << std::endl;
+        exit(1);
+      }
+
+      for (Index j = 0; j < N; ++j) {
+        S(k, j) /= t;
+        B(k, j) /= t;
+      }
+
+      for (Index i = 0; i < N; ++i) {
+        if (i == k) continue;
+
+        const T c = S(i, k);
+
         for (Index j = 0; j < N; ++j) {
-          B(i, j) -= B(k, j);
+          S(i, j) -= c * S(k, j);
+          B(i, j) -= c * B(k, j);
         }
       }
+
     }
 
-    for (Index i = N - 2; i >= 0; --i) {
-      for (Index j = N - 1; j > i; --j) {
-        for (Index k = 0; k < N; ++k) {
-          B(i, k) -= A(i, j) * B(j, k);
-        }
-        for (Index k = 0; k < N; ++k) {
-          A(i, k) -= A(i, j) * A(j, k);
-        }
-      }
+    // Restore order of rows and columns
+    for (Index k = N - 1; k > 0; --k) {
+
+      Index m = p(k);
+      Index n = q(k);
+
+      swap_row(B, k, m);
+      swap_col(B, k, n);
+
     }
 
     return B;
@@ -3844,6 +3881,42 @@ namespace LCM {
 
     return B;
 
+  }
+
+  //
+  // Swap row. Echange rows i and j in place
+  // \param A tensor
+  // \param i index
+  // \param j index
+  //
+  template<typename T, Index N>
+  void
+  swap_row(Tensor<T, N> & A, Index i, Index j)
+  {
+    if (i != j) {
+      for (Index k = 0; k < N; ++k) {
+        std::swap(A(i, k), A(j, k));
+      }
+    }
+    return;
+  }
+
+  //
+  // Swap column. Echange columns i and j in place
+  // \param A tensor
+  // \param i index
+  // \param j index
+  //
+  template<typename T, Index N>
+  void
+  swap_col(Tensor<T, N> & A, Index i, Index j)
+  {
+    if (i != j) {
+      for (Index k = 0; k < N; ++k) {
+        std::swap(A(k, i), A(k, j));
+      }
+    }
+    return;
   }
 
   //
