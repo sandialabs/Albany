@@ -231,7 +231,7 @@ Albany::CahnHillProblem::constructEvaluators(
     p->set<string>("W QP Variable Name", "W");
 
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     //Output
     p->set<string>("Chemical Energy Term", "Chemical Energy Term");

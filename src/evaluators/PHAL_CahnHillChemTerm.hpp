@@ -53,11 +53,11 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> rho;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> w;
+  PHX::MDField<ScalarT,Cell,QuadPoint> rho;
+  PHX::MDField<ScalarT,Cell,QuadPoint> w;
   
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> chemTerm;
+  PHX::MDField<ScalarT,Cell,QuadPoint> chemTerm;
 
   unsigned int numQPs, numDims, numNodes;
 

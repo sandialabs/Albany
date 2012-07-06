@@ -56,7 +56,7 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> rhoGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> chemTerm;
+  PHX::MDField<ScalarT,Cell,QuadPoint> chemTerm;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> rhoResidual;
