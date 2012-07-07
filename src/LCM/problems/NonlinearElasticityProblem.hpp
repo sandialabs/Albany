@@ -342,9 +342,6 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
 	      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
 	      fm0.template registerEvaluator<EvalT>(ev);
 	    }
-
-
-
   }
 
 
