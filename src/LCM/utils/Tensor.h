@@ -2381,9 +2381,17 @@ namespace LCM {
   boost::tuple<Tensor<T, 2>, Tensor<T, 2>, Tensor<T, 2> >
   svd(Tensor<T, 2> const & A);
 
-  template<typename T>
-  boost::tuple<Tensor<T, 2>, Tensor<T, 2>, Tensor<T, 2> >
-  svd2(Tensor<T, 2> const & A);
+  ///
+  /// Right polar decomposition using a Newton-type algorithm.
+  /// See Higham's Functions of Matrices p210 [2008]
+  /// \param F tensor (often a deformation-gradient-like tensor)
+  /// \return \f$ RU = A \f$ with \f$ R \in SO(3) \f$ and U SPD
+  ///
+  template<typename T, Index N>
+  std::pair<Tensor<T, N>, Tensor<T, N> >
+  polar(Tensor<T, N> const & A);
+
+  // No specialization for R^2 or R^3
 
   ///
   /// Left polar decomposition

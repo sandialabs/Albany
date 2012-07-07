@@ -465,4 +465,26 @@ namespace {
     TEST_COMPARE(norm(C - D), <=, 100*std::numeric_limits<ScalarT>::epsilon());
   }
 
+  TEUCHOS_UNIT_TEST(TensorUtils, TensorPolar3x3)
+  {
+    LCM::Tensor<ScalarT, 3>
+    A(2.0, 1.0, 0.0, 0.0, 2.0, 1.0, 0.0, 0.0, 2.0);
+
+    LCM::Tensor<ScalarT, 3>
+    R, U;
+
+    boost::tie(R, U) = LCM::polar(A);
+
+    LCM::Tensor<ScalarT, 3>
+    X, D, Y;
+
+    boost::tie(X, D, Y) = LCM::svd(A);
+
+
+    LCM::Tensor<ScalarT, 3>
+    B = R - X * LCM::transpose(Y) + U - Y * D * LCM::transpose(Y);
+
+    TEST_COMPARE(norm(B), <=, 100*std::numeric_limits<ScalarT>::epsilon());
+  }
+
 } // namespace
