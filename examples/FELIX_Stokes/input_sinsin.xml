@@ -1,26 +1,18 @@
 <ParameterList>
   <ParameterList name="Problem">
-    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
+    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
     <Parameter name="Name" type="string" value="FELIX Stokes 2D"/>
     <ParameterList name="Dirichlet BCs">     
-      <!--Parameter name="DBC on NS NodeSet1 for DOF ux" type="double" value="1.0"/>
-      <Parameter name="DBC on NS NodeSet2 for DOF ux" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet4 for DOF ux" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet1 for DOF uy" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet2 for DOF uy" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet4 for DOF uy" type="double" value="0.0"/-->
-      <Parameter name="DBC on NS NodeSet0 for DOF ux" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet1 for DOF ux" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet2 for DOF ux" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet3 for DOF ux" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF uy" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet1 for DOF uy" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet2 for DOF uy" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet3 for DOF uy" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet99 for DOF p" type="double" value="4.1613"/>
+      <Parameter name="DBC on NS NodeSet99 for DOF p" type="double" value="0.0"/>
+      <Parameter name="DBC on NS NodeSet99 for DOF ux" type="double" value="0.0"/>
+      <Parameter name="DBC on NS NodeSet99 for DOF uy" type="double" value="0.0"/>
     </ParameterList>
     <ParameterList name="Body Force">
-      <Parameter name="Type" type="string" value="Poly"/>
+      <Parameter name="Type" type="string" value="SinSin"/>
+    </ParameterList>
+    <ParameterList name="Initial Condition">
+      <Parameter name="Function" type="string" value="Constant"/>
+      <Parameter name="Function Data" type="Array(double)" value="{0.5,0.5,0.5}"/>
     </ParameterList>
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="0"/>
@@ -38,16 +30,19 @@
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
-    <Parameter name="1D Elements" type="int" value="200"/>
-    <Parameter name="2D Elements" type="int" value="200"/>
-    <Parameter name="1D Scale" type="double" value="1"/>
-    <Parameter name="2D Scale" type="double" value="1"/>
+    <Parameter name="Periodic_x BC" type="bool" value="true"/>
+    <Parameter name="Periodic_y BC" type="bool" value="true"/>
+    <Parameter name="1D Elements" type="int" value="10"/>
+    <Parameter name="2D Elements" type="int" value="10"/>
+    <Parameter name="Workset Size" type="int" value="500"/>
+    <Parameter name="1D Scale" type="double" value="1.0"/>
+    <Parameter name="2D Scale" type="double" value="1.0"/>
     <Parameter name="Method" type="string" value="STK2D"/>
-    <Parameter name="Exodus Output File Name" type="string" value="ns_out.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="sinsin_out.exo"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="2"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{0.1203, 0.1424219}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{1.0, 2.0}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)"

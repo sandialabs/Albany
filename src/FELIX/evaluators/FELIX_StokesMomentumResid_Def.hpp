@@ -30,13 +30,11 @@ StokesMomentumResid(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ), 
   wGradBF     (p.get<std::string>                   ("Weighted Gradient BF Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
-  pGrad       (p.get<std::string>                   ("Pressure Gradient QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
   VGrad       (p.get<std::string>                   ("Velocity Gradient QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
   P           (p.get<std::string>                   ("Pressure QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  Rm          (p.get<std::string>              ("Rm Name"),
+  force       (p.get<std::string>              ("Body Force Name"),
  	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
   mu          (p.get<std::string>                   ("Viscosity QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
@@ -45,11 +43,10 @@ StokesMomentumResid(const Teuchos::ParameterList& p) :
 {
 
   this->addDependentField(wBF);  
-  this->addDependentField(pGrad);
   this->addDependentField(VGrad);
   this->addDependentField(wGradBF);
   this->addDependentField(P);
-  this->addDependentField(Rm);
+  this->addDependentField(force);
   this->addDependentField(mu);
   
   this->addEvaluatedField(MResidual);
@@ -72,11 +69,10 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(wBF,fm);
-  this->utils.setFieldData(pGrad,fm);
   this->utils.setFieldData(VGrad,fm);
   this->utils.setFieldData(wGradBF,fm); 
   this->utils.setFieldData(P,fm);
-  this->utils.setFieldData(Rm,fm);
+  this->utils.setFieldData(force,fm);
   this->utils.setFieldData(mu,fm);
   
   this->utils.setFieldData(MResidual,fm);
@@ -94,11 +90,11 @@ evaluateFields(typename Traits::EvalData workset)
 	MResidual(cell,node,i) = 0.0;
 	for (std::size_t qp=0; qp < numQPs; ++qp) {
 	  MResidual(cell,node,i) += 
-	    (Rm(cell, qp, i)-pGrad(cell,qp,i))*wBF(cell,node,qp) -
+	    force(cell,qp,i)*wBF(cell,node,qp) -
 	     P(cell,qp)*wGradBF(cell,node,qp,i);          
 	  for (std::size_t j=0; j < numDims; ++j) { 
 	    MResidual(cell,node,i) += 
-	      mu(cell,qp)*VGrad(cell,qp,i,j)*wGradBF(cell,node,qp,j);
+	      mu(cell,qp)*(VGrad(cell,qp,i,j)+VGrad(cell,qp,j,i))*wGradBF(cell,node,qp,j);
 	  }  
 	}
       }

@@ -389,9 +389,8 @@ FELIX::Stokes::constructEvaluators(
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
     p->set<string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
     p->set<string>("Pressure QP Variable Name", "Pressure");
-    p->set<string>("Pressure Gradient QP Variable Name", "Pressure Gradient");
     p->set<string>("Viscosity QP Variable Name", "Viscosity");
-    p->set<string>("Rm Name", "Rm");
+    p->set<string>("Body Force Name", "Body Force");
 
     p->set<string>("Velocity QP Variable Name", "Velocity");
     p->set<string>("Density QP Variable Name", "Density");

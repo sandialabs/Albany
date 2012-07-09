@@ -560,6 +560,7 @@ if (stkMeshStruct->PBCStruct.periodic[0])
 
   for (int d=0; d<stkMeshStruct->numDim; d++) {
   if (stkMeshStruct->PBCStruct.periodic[d]) {
+    cout << "-- Pardon the following debugging output for periodic BCs " << endl;
     for (int b=0; b < numBuckets; b++) {
       for (std::size_t i=0; i < buckets[b]->size(); i++) {
         int nodes_per_element = (*buckets[b])[i].relations(metaData.NODE_RANK).size();

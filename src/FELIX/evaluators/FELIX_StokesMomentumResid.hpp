@@ -52,11 +52,10 @@ private:
   // Input:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> pGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> VGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> V;
   PHX::MDField<ScalarT,Cell,QuadPoint> P;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> Rm;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> force;
   PHX::MDField<ScalarT,Cell,QuadPoint> TauM;
   PHX::MDField<ScalarT,Cell,QuadPoint> mu;
   //PHX::MDField<ScalarT,Cell,QuadPoint> rho;
