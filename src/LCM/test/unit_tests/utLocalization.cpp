@@ -253,19 +253,25 @@ namespace {
     fieldManager.evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
     fieldManager.postEvaluate<PHAL::AlbanyTraits::Residual>(workset);
 
-    // Pull the deformation gradient from the FieldManager
+    // Pull the stress from the FieldManager
     PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT, Cell, QuadPoint, Dim,
         Dim> stressField("Stress", qp_tensor);
     fieldManager.getFieldData<PHAL::AlbanyTraits::Residual::ScalarT,
         PHAL::AlbanyTraits::Residual, Cell, QuadPoint, Dim, Dim>(stressField);
 
-    // Pull the stress from the FieldManager
+    // Pull the deformation gradient from the FieldManager
     PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT, Cell, QuadPoint, Dim,
         Dim> defGradField("Deformation Gradient", qp_tensor);
     fieldManager.getFieldData<PHAL::AlbanyTraits::Residual::ScalarT,
         PHAL::AlbanyTraits::Residual, Cell, QuadPoint, Dim, Dim>(defGradField);
 
-    // Record the expected stress, which will be used to check the computed stress
+    // Pull the nodal forces from the FieldManager
+    PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT, Cell, Node,
+        Dim> forceField("Force", node_vector);
+    fieldManager.getFieldData<PHAL::AlbanyTraits::Residual::ScalarT,
+        PHAL::AlbanyTraits::Residual, Cell, Node, Dim>(forceField);
+
+    // Record the expected deformation gradient, which will be used to check the computed stress
     LCM::Tensor<PHAL::AlbanyTraits::Residual::ScalarT, 3> expectedDefGrad(1.0,
         0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 1.0);
 
@@ -355,6 +361,45 @@ namespace {
                 tolerance);
           }
         }
+
+      }
+    }
+    std::cout << endl;
+
+
+    // Check the computed nodal forces
+    typedef PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT>::size_type size_type;
+    for (size_type cell = 0; cell < worksetSize; ++cell) {
+    	int numPlaneNodes = numNodes/2;
+      for (size_type nd = 0; nd < numPlaneNodes; ++nd) {
+
+        std::cout << "nodal force positive at cell " << cell << ", node "
+            << nd << ":" << endl;
+        std::cout << "  " << forceField(cell, nd, 0);
+        std::cout << "  " << forceField(cell, nd, 1);
+        std::cout << "  " << forceField(cell, nd, 2) << endl;
+
+        std::cout << "nodal force negative at cell " << cell << ", node "
+            << nd << ":" << endl;
+        std::cout << "  " << forceField(cell, nd+numPlaneNodes, 0);
+        std::cout << "  " << forceField(cell, nd+numPlaneNodes, 1);
+        std::cout << "  " << forceField(cell, nd+numPlaneNodes, 2) << endl;
+
+//        std::cout << "Expected result:" << endl;
+//        std::cout << "  " << expectedForce(0, 0);
+//        std::cout << "  " << expectedForce(0, 1);
+//        std::cout << "  " << expectedForce(0, 2) << endl;
+
+        std::cout << endl;
+
+//        double tolerance = 1.0e-15;
+//        for (size_type i = 0; i < numDim; ++i) {
+//          for (size_type j = 0; j < numDim; ++j) {
+//            TEST_COMPARE(
+//                fabs(forceField(cell, qp, i, j) - expectedForce(i, j)), <=,
+//                tolerance);
+//          }
+//        }
 
       }
     }

@@ -73,6 +73,10 @@ namespace LCM {
     numDims = dims[2];
     numPlaneDims = numDims - 1;
 
+    std::cout << "dims[0]: " << dims[0]<< std::endl;
+    std::cout << "dims[1]: " << dims[2]<< std::endl;
+    std::cout << "dims[2]: " << dims[3]<< std::endl;
+
     // Allocate Temporary FieldContainers
     refValues.resize(numPlaneNodes, numQPs);
     refGrads.resize(numPlaneNodes, numQPs, numPlaneDims);
@@ -166,7 +170,9 @@ namespace LCM {
 
       // compute force
       computeForce(thickness, defGrad, J, stress, bases, dualRefBases,
-          refNormal, force);
+          refNormal, refArea, force);
+
+      std::cout << "force:\n" << force << std::endl;
     }
   }
 //----------------------------------------------------------------------
@@ -176,6 +182,7 @@ namespace LCM {
   {
     std::cout << "In computeMidplaneCoords" << std::endl;
     for (int cell(0); cell < midplaneCoords.dimension(0); ++cell) {
+       std::cout<<"cell :"<< cell << std::endl;
       // compute the mid-plane coordinates
       for (int node(0); node < numPlaneNodes; ++node) {
         int topNode = node + numPlaneNodes;
@@ -397,32 +404,100 @@ namespace LCM {
       const PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> defGrad,
       const FC & J,
       const PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> stress,
-      const FC & bases, const FC & dualRefBases, const FC & refNormal,
+      const FC & bases, const FC & dualRefBases, const FC & refNormal, const FC & area,
       PHX::MDField<ScalarT, Cell, Node, Dim> force)
   {
+	  std::cout << "In computeForce" << std::endl;
     for (std::size_t cell(0); cell < defGrad.dimension(0); ++cell) {
-      for (std::size_t pt(0); pt < numQPs; ++pt) {
-        // deformed bases
-        LCM::Vector<ScalarT, 3> g_0(&bases(cell, pt, 0, 0));
-        LCM::Vector<ScalarT, 3> g_1(&bases(cell, pt, 1, 0));
-        LCM::Vector<ScalarT, 3> n(&bases(cell, pt, 2, 0));
-        // ref bases
-        LCM::Vector<ScalarT, 3> G0(&dualRefBases(cell, pt, 0, 0));
-        LCM::Vector<ScalarT, 3> G1(&dualRefBases(cell, pt, 1, 0));
-        LCM::Vector<ScalarT, 3> G2(&dualRefBases(cell, pt, 2, 0));
-        // ref normal
-        LCM::Vector<ScalarT, 3> G_2(&refNormal(cell, pt, 0));
-        // deformation gradient
-        LCM::Tensor<ScalarT, 3> F(&defGrad(cell, pt, 0, 0));
-        // cauchy stress
-        LCM::Tensor<ScalarT, 3> sigma(&stress(cell, pt, 0, 0));
+      for (std::size_t node(0); node < numPlaneNodes; ++node) {
 
-        // compute P
-        LCM::Tensor<ScalarT, 3> P = (1. / det(F)) * sigma
-            * inverse(transpose(F));
+      	// define and initialize tensors/vectors
+        LCM::Vector<ScalarT, 3> f_plus(0.0), f_minus(0.0);
+        LCM::Tensor3<ScalarT, 3> dFdx_plus(0.0), dFdx_minus(0.0);
+        LCM::Tensor3<ScalarT, 3> dgapdxN(0.0), tmp1(0.0), tmp2(0.0);
+        LCM::Tensor<ScalarT, 3> dndxbar(0.0);
 
-      }
-    }
+        force(cell,node,0) = 0.0;
+        force(cell,node,1) = 0.0;
+        force(cell,node,2) = 0.0;
+        int topNode = node + numPlaneNodes;
+        force(cell,topNode,0) = 0.0;
+        force(cell,topNode,1) = 0.0;
+        force(cell,topNode,2) = 0.0;
+
+        // manually fill the permutation tensor
+        LCM::Tensor3<ScalarT, 3> e_permutation(0.0);
+        e_permutation(0,1,2) = e_permutation(1,2,0) = e_permutation(2,0,1) = 1.0;
+        e_permutation(0,2,1) = e_permutation(1,0,2) = e_permutation(2,1,0) = -1.0;
+
+        for (std::size_t pt(0); pt < numQPs; ++pt) {
+			// deformed bases
+			LCM::Vector<ScalarT, 3> g_0(&bases(cell, pt, 0, 0));
+			LCM::Vector<ScalarT, 3> g_1(&bases(cell, pt, 1, 0));
+			LCM::Vector<ScalarT, 3> n(&bases(cell, pt, 2, 0));
+			// ref bases
+			LCM::Vector<ScalarT, 3> G0(&dualRefBases(cell, pt, 0, 0));
+			LCM::Vector<ScalarT, 3> G1(&dualRefBases(cell, pt, 1, 0));
+			LCM::Vector<ScalarT, 3> G2(&dualRefBases(cell, pt, 2, 0));
+			// ref normal
+			LCM::Vector<ScalarT, 3> N(&refNormal(cell, pt, 0));
+			// deformation gradient
+			LCM::Tensor<ScalarT, 3> F(&defGrad(cell, pt, 0, 0));
+			// cauchy stress
+			LCM::Tensor<ScalarT, 3> sigma(&stress(cell, pt, 0, 0));
+
+			// compute P
+			LCM::Tensor<ScalarT, 3> P = (1. / det(F)) * sigma
+				* inverse(transpose(F));
+			// 2nd-order identity tensor
+			const LCM::Tensor<ScalarT, 3> I = LCM::identity<ScalarT, 3>();
+
+			// compute dFdx_plus_or_minus
+        	f_plus.clear();
+        	f_minus.clear();
+            for (int m(0); m < numDims; ++m) {
+                for (int i(0); i < numDims; ++i) {
+                    for (int L(0); L < numDims; ++L) {
+                    	// (1/h)* d[[phi]] / dx * N
+                    	dgapdxN(m,i,L) = I(m,i) * refValues(node,pt) * N(L) / thickness;
+
+                    	// tmp1 = (1/2) * delta * lambda_{,alpha} * G^{alpha L}
+                    	tmp1(m,i,L) = 0.5 * I(m,i) * refGrads(node,pt,0) * G0(L) + 0.5 * I(m,i) * refGrads(node,pt,1) * G1(L);
+
+                    	// tmp2 = (1/2) * dndxbar * G^{3}
+                    	dndxbar(m,i) = 0.0;
+                    	for (int r(0); r < numDims; ++r){
+                    		for (int s(0); s < numDims; ++s){
+                    			dndxbar(m,i) += e_permutation(i,r,s) * (g_1(r) * refGrads(node,pt,0) - g_0(r) * refGrads(node,pt,1)) * (I(m,s) - n(m)*n(s)) / norm(cross(g_0, g_1));
+                    		}
+                    	}
+                    	tmp2(m,i,L) = 0.5 * dndxbar(m,i) * G2(L);
+
+                    	// dFdx_plus
+                    	dFdx_plus(m,i,L) = dgapdxN(m,i,L) + tmp1(m,i,L) + tmp2(m,i,L);
+
+                    	// dFdx_minus
+                    	dFdx_minus(m,i,L) = -dgapdxN(m,i,L) + tmp1(m,i,L) + tmp2(m,i,L);
+
+                    	//f = h * P:dFdx
+                    	f_plus(i) += thickness * P(m,L) * dFdx_plus(m,i,L);
+                    	f_minus(i) += thickness * P(m,L) * dFdx_minus(m,i,L);
+                    }
+                }
+            }
+
+            // area (Reference) = |Jacobian| * weights
+	        force(cell,node,0) += f_plus(0) * area(cell,pt);
+	        force(cell,node,1) += f_plus(1) * area(cell,pt);
+	        force(cell,node,2) += f_plus(2) * area(cell,pt);
+
+	        force(cell,topNode,0) += f_minus(0) * area(cell,pt);
+	        force(cell,topNode,1) += f_minus(1) * area(cell,pt);
+	        force(cell,topNode,2) += f_minus(2) * area(cell,pt);
+
+        }// end of pt
+      }// end of numPlaneNodes
+    }// end of cell
   }
 //----------------------------------------------------------------------
 }//namespace LCM

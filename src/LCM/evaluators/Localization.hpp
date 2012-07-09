@@ -126,7 +126,7 @@ public:
   ///
   void computeForce(const ScalarT thickness, const PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defGrad, const FC & J, 
                     const PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress, const FC & bases, const FC & dualRefBases, 
-                    const FC & refNormal, PHX::MDField<ScalarT,Cell,Node,Dim> force);
+                    const FC & refNormal, const FC & area, PHX::MDField<ScalarT,Cell,Node,Dim> force);
 
 private:
 
