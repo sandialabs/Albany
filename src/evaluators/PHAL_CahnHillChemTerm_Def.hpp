@@ -38,22 +38,22 @@ CahnHillChemTerm(const Teuchos::ParameterList& p) :
  
 {
 
+  b = p.get<double>("b Value");
+
+  Teuchos::RCP<PHX::DataLayout> vector_dl =
+    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
+  std::vector<PHX::DataLayout::size_type> dims;
+  vector_dl->dimensions(dims);
+  numQPs  = dims[1];
+  numDims = dims[2];
+
   this->addDependentField(rho);
   this->addDependentField(w);
 
   this->addEvaluatedField(chemTerm);
 
-  b = p.get<double>("b Value");
-
-  Teuchos::RCP<PHX::DataLayout> vector_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout");
-  std::vector<PHX::DataLayout::size_type> dims;
-  vector_dl->dimensions(dims);
-  numNodes = dims[1];
-  numQPs  = dims[2];
-  numDims = dims[3];
-
   this->setName("CahnHillChemTerm"+PHX::TypeString<EvalT>::value);
+
 }
 
 //**********************************************************************
@@ -79,9 +79,8 @@ evaluateFields(typename Traits::EvalData workset)
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) 
     for (std::size_t qp=0; qp < numQPs; ++qp)
-      for (std::size_t i=0; i < numDims; ++i) 
 
-          chemTerm(cell,qp,i) = w(cell,qp,i) - 0.25 * SQR(SQR(rho(cell,qp,i)) - SQR(b));
+        chemTerm(cell,qp) = w(cell,qp) - 0.25 * SQR(SQR(rho(cell,qp)) - SQR(b));
 
 }
 

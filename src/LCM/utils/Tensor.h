@@ -2099,6 +2099,30 @@ namespace LCM {
   subtensor(Tensor<T, 2> const & A, Index i, Index j);
 
   ///
+  /// Swap row. Echange rows i and j in place
+  /// \param A tensor
+  /// \param i index
+  /// \param j index
+  ///
+  template<typename T, Index N>
+  void
+  swap_row(Tensor<T, N> & A, Index i, Index j);
+
+  // No specialization for R^2 and R^3
+
+  ///
+  /// Swap column. Echange columns i and j in place
+  /// \param A tensor
+  /// \param i index
+  /// \param j index
+  ///
+  template<typename T, Index N>
+  void
+  swap_col(Tensor<T, N> & A, Index i, Index j);
+
+  // No specialization for R^2 and R^3
+
+  ///
   /// Determinant
   /// \param A tensor
   /// \return \f$ \det A \f$
@@ -2305,6 +2329,18 @@ namespace LCM {
   norm_off_diagonal(Tensor<T, 2> const & A);
 
   ///
+  /// Arg max abs. Useful for inverse and other algorithms
+  /// that rely on Jacobi-type procedures.
+  /// \param A
+  /// \return \f$ (p,q) = arg max_{i,j} |a_{ij}| \f$
+  ///
+  template<typename T, Index N>
+  std::pair<Index, Index>
+  arg_max_abs(Tensor<T, N> const & A);
+
+  // No specialization for R^3 and R^2
+
+  ///
   /// Arg max off-diagonal. Useful for SVD and other algorithms
   /// that rely on Jacobi-type procedures.
   /// \param A
@@ -2314,9 +2350,7 @@ namespace LCM {
   std::pair<Index, Index>
   arg_max_off_diagonal(Tensor<T, N> const & A);
 
-  template<typename T>
-  std::pair<Index, Index>
-  arg_max_off_diagonal(Tensor<T, 3> const & A);
+  // No specialization for R^3
 
   template<typename T>
   std::pair<Index, Index>
@@ -2347,9 +2381,17 @@ namespace LCM {
   boost::tuple<Tensor<T, 2>, Tensor<T, 2>, Tensor<T, 2> >
   svd(Tensor<T, 2> const & A);
 
-  template<typename T>
-  boost::tuple<Tensor<T, 2>, Tensor<T, 2>, Tensor<T, 2> >
-  svd2(Tensor<T, 2> const & A);
+  ///
+  /// Right polar decomposition using a Newton-type algorithm.
+  /// See Higham's Functions of Matrices p210 [2008]
+  /// \param F tensor (often a deformation-gradient-like tensor)
+  /// \return \f$ RU = A \f$ with \f$ R \in SO(3) \f$ and U SPD
+  ///
+  template<typename T, Index N>
+  std::pair<Tensor<T, N>, Tensor<T, N> >
+  polar(Tensor<T, N> const & A);
+
+  // No specialization for R^2 or R^3
 
   ///
   /// Left polar decomposition
