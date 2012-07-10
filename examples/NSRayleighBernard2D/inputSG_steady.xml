@@ -114,7 +114,7 @@
     <Parameter  name="Number of Dakota Comparisons" type="int" value="0"/>
     <Parameter  name="Number of Stochastic Galerkin Comparisons" type="int" value="1"/>
     <Parameter  name="Stochastic Galerkin Expansion Test Values 0" type="Array(double)"
-    value="{82.1410, -1.9849, 1.5759, -0.02173, 0.04101, -0.0088505, -0.002834, 0.0097044, -0.007254, 0.001187}"/>
+    value="{ 82.141563, -1.9706870, 1.5555968, -0.021060186, 0.039478158, -0.0084814731, -0.0027971615, 0.0095599624, -0.0071457067, 0.0011702580 }"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-3"/>
   </ParameterList>
   <ParameterList name="VTK">
