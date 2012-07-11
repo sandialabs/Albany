@@ -745,6 +745,11 @@ Albany::TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
       singlePartVec[0] = nsPartVec["NodeSet1"];
       bulkData->change_entity_parts(rnode, singlePartVec);
     }
+    // Periodic case -- right node is wrapped to left side
+    if (right_node==0) {
+      singlePartVec[0] = nsPartVec["NodeSet0"];
+      bulkData->change_entity_parts(rnode, singlePartVec);
+    }
 
 // Note: Side_ranks are not currently registered for 1D elements, see 
 // $TRILINOS_DIR/packages/stk/stk_mesh/stk_mesh/fem/FEMMetaData.cpp line 104.
@@ -824,6 +829,7 @@ Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
 
     singlePartVec[0] = partVec[ebNo];
 
+if (x_GID==0 && y_GID==0) cout << " FOUND global node " << lower_left << endl;
     // Declare Nodes = (Add one to IDs because STK requires 1-based
     stk::mesh::Entity& llnode = bulkData->declare_entity(metaData->node_rank(), 1+lower_left, nodePartVec);
     stk::mesh::Entity& lrnode = bulkData->declare_entity(metaData->node_rank(), 1+lower_right, nodePartVec);
@@ -991,9 +997,40 @@ Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
        bulkData->change_entity_parts(ulnode, singlePartVec);
        bulkData->change_entity_parts(urnode, singlePartVec);
     }
-    if (x_GID==0 && y_GID==0) { // single node at bottom corner
+
+    // Periodic cases -- last node wraps around to first
+    if ((x_GIDplus1)==0) { // right of elem is on right bdy
+       singlePartVec[0] = nsPartVec["NodeSet0"];
+       bulkData->change_entity_parts(lrnode, singlePartVec);
+       bulkData->change_entity_parts(urnode, singlePartVec);
+    }
+    if ((y_GIDplus1)==0) { // top of elem is on top bdy
+       singlePartVec[0] = nsPartVec["NodeSet2"];
+       bulkData->change_entity_parts(ulnode, singlePartVec);
+       bulkData->change_entity_parts(urnode, singlePartVec);
+    }
+
+    // Single node at origin
+    if (x_GID==0 && y_GID==0) {
+cout << "EUREKA99 " << endl;
        singlePartVec[0] = nsPartVec["NodeSet99"];
        bulkData->change_entity_parts(llnode, singlePartVec);
+    }
+    // Periodic cases
+    if (x_GIDplus1==0 && y_GIDplus1==0) {
+cout << "EUREKA99 " << endl;
+       singlePartVec[0] = nsPartVec["NodeSet99"];
+       bulkData->change_entity_parts(urnode, singlePartVec);
+    }
+    if (x_GID==0 && y_GIDplus1==0)  {
+cout << "EUREKA99 " << endl;
+       singlePartVec[0] = nsPartVec["NodeSet99"];
+       bulkData->change_entity_parts(ulnode, singlePartVec);
+    }
+    if (x_GIDplus1==0 && y_GID==0) { // single node at bottom corner
+cout << "EUREKA99 " << endl;
+       singlePartVec[0] = nsPartVec["NodeSet99"];
+       bulkData->change_entity_parts(lrnode, singlePartVec);
     }
   }
 }
@@ -1239,62 +1276,105 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
  */
     
     if (x_GID==0) {
-
        singlePartVec[0] = nsPartVec["NodeSet0"];
        bulkData->change_entity_parts(llnode, singlePartVec); // node 0
        bulkData->change_entity_parts(ulnode, singlePartVec); // 3
        bulkData->change_entity_parts(llnodeb, singlePartVec); // 4
        bulkData->change_entity_parts(ulnodeb, singlePartVec); // 7
-
     }
     if ((x_GIDplus1)==(unsigned int)nelem[0]) {
-
        singlePartVec[0] = nsPartVec["NodeSet1"];
        bulkData->change_entity_parts(lrnode, singlePartVec); // 1
        bulkData->change_entity_parts(urnode, singlePartVec); // 2
        bulkData->change_entity_parts(lrnodeb, singlePartVec); // 5
        bulkData->change_entity_parts(urnodeb, singlePartVec); // 6
-
     }
     if (y_GID==0) {
-
        singlePartVec[0] = nsPartVec["NodeSet2"];
        bulkData->change_entity_parts(llnode, singlePartVec); // 0
        bulkData->change_entity_parts(lrnode, singlePartVec); // 1
        bulkData->change_entity_parts(llnodeb, singlePartVec); // 4
        bulkData->change_entity_parts(lrnodeb, singlePartVec); // 5
-
     }
     if ((y_GIDplus1)==(unsigned int)nelem[1]) {
-
        singlePartVec[0] = nsPartVec["NodeSet3"];
        bulkData->change_entity_parts(ulnode, singlePartVec); // 3
        bulkData->change_entity_parts(urnode, singlePartVec); // 2
        bulkData->change_entity_parts(ulnodeb, singlePartVec); // 7
        bulkData->change_entity_parts(urnodeb, singlePartVec); // 6
-
     }
     if (z_GID==0) {
-
        singlePartVec[0] = nsPartVec["NodeSet4"];
        bulkData->change_entity_parts(llnode, singlePartVec); // 0
        bulkData->change_entity_parts(lrnode, singlePartVec); // 1
        bulkData->change_entity_parts(ulnode, singlePartVec); // 3
        bulkData->change_entity_parts(urnode, singlePartVec); // 2
-
     }
     if ((z_GIDplus1)==(unsigned int)nelem[2]) {
-
        singlePartVec[0] = nsPartVec["NodeSet5"];
        bulkData->change_entity_parts(llnodeb, singlePartVec); // 4
        bulkData->change_entity_parts(lrnodeb, singlePartVec); // 5
        bulkData->change_entity_parts(ulnodeb, singlePartVec); // 7
        bulkData->change_entity_parts(urnodeb, singlePartVec); // 6
-
     }
+
+
+    // Periodic cases -- last node wraps around to first
+    if ((x_GIDplus1)==0) {
+       singlePartVec[0] = nsPartVec["NodeSet0"];
+       bulkData->change_entity_parts(lrnode, singlePartVec); // 1
+       bulkData->change_entity_parts(urnode, singlePartVec); // 2
+       bulkData->change_entity_parts(lrnodeb, singlePartVec); // 5
+       bulkData->change_entity_parts(urnodeb, singlePartVec); // 6
+    }
+    if ((y_GIDplus1)==0) {
+       singlePartVec[0] = nsPartVec["NodeSet2"];
+       bulkData->change_entity_parts(ulnode, singlePartVec); // 3
+       bulkData->change_entity_parts(urnode, singlePartVec); // 2
+       bulkData->change_entity_parts(ulnodeb, singlePartVec); // 7
+       bulkData->change_entity_parts(urnodeb, singlePartVec); // 6
+    }
+    if ((z_GIDplus1)==0) {
+       singlePartVec[0] = nsPartVec["NodeSet4"];
+       bulkData->change_entity_parts(llnodeb, singlePartVec); // 4
+       bulkData->change_entity_parts(lrnodeb, singlePartVec); // 5
+       bulkData->change_entity_parts(ulnodeb, singlePartVec); // 7
+       bulkData->change_entity_parts(urnodeb, singlePartVec); // 6
+    }
+
+    // Single node at origin
     if (x_GID==0 && y_GID==0 && z_GID==0) {
        singlePartVec[0] = nsPartVec["NodeSet99"];
        bulkData->change_entity_parts(llnode, singlePartVec); // node 0
+    }
+    // Seven Periodic cases
+    if (x_GIDplus1==0 && y_GID==0 && z_GID==0) {
+       singlePartVec[0] = nsPartVec["NodeSet99"];
+       bulkData->change_entity_parts(lrnode, singlePartVec); // node 0
+    }
+    if (x_GID==0 && y_GIDplus1==0 && z_GID==0) {
+       singlePartVec[0] = nsPartVec["NodeSet99"];
+       bulkData->change_entity_parts(ulnode, singlePartVec); // node 0
+    }
+    if (x_GIDplus1==0 && y_GIDplus1==0 && z_GID==0) {
+       singlePartVec[0] = nsPartVec["NodeSet99"];
+       bulkData->change_entity_parts(urnode, singlePartVec); // node 0
+    }
+    if (x_GID==0 && y_GID==0 && z_GIDplus1==0) {
+       singlePartVec[0] = nsPartVec["NodeSet99"];
+       bulkData->change_entity_parts(llnodeb, singlePartVec); // node 0
+    }
+    if (x_GIDplus1==0 && y_GID==0 && z_GIDplus1==0) {
+       singlePartVec[0] = nsPartVec["NodeSet99"];
+       bulkData->change_entity_parts(lrnodeb, singlePartVec); // node 0
+    }
+    if (x_GID==0 && y_GIDplus1==0 && z_GIDplus1==0) {
+       singlePartVec[0] = nsPartVec["NodeSet99"];
+       bulkData->change_entity_parts(ulnodeb, singlePartVec); // node 0
+    }
+    if (x_GIDplus1==0 && y_GIDplus1==0 && z_GIDplus1==0) {
+       singlePartVec[0] = nsPartVec["NodeSet99"];
+       bulkData->change_entity_parts(urnodeb, singlePartVec); // node 0
     }
 
   } // end element loop

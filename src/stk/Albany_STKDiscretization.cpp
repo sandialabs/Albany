@@ -550,37 +550,33 @@ void Albany::STKDiscretization::computeWorksetInfo()
         wsElNodeEqID[b][i][j].resize(neq);
         for (std::size_t eq=0; eq < neq; eq++) 
           wsElNodeEqID[b][i][j][eq] = getOverlapDOF(node_lid,eq);
-
-if (stkMeshStruct->PBCStruct.periodic[0])
-  cout << "PX " << stkMeshStruct->PBCStruct.scale[0] << "  NGID " << node_gid << "  coordx " <<  coords[b][i][j][0] << "  coordy " << coords[b][i][j][1] << endl;
-
       }
     }
   }
 
   for (int d=0; d<stkMeshStruct->numDim; d++) {
   if (stkMeshStruct->PBCStruct.periodic[d]) {
-    cout << "-- Pardon the following debugging output for periodic BCs " << endl;
     for (int b=0; b < numBuckets; b++) {
       for (std::size_t i=0; i < buckets[b]->size(); i++) {
         int nodes_per_element = (*buckets[b])[i].relations(metaData.NODE_RANK).size();
-        bool anyXeqZero=false, flipZeroToScale=false;
+        bool anyXeqZero=false;
         for (int j=0; j < nodes_per_element; j++)  if (coords[b][i][j][d]==0.0) anyXeqZero=true;
-        if (anyXeqZero) 
+        if (anyXeqZero)  {
+          bool flipZeroToScale=false;
           for (int j=0; j < nodes_per_element; j++) 
               if (coords[b][i][j][d] > stkMeshStruct->PBCStruct.scale[d]/1.9) flipZeroToScale=true;
-        if (flipZeroToScale) {  
-           for (int j=0; j < nodes_per_element; j++)  {
-             double* xleak = new double [3];
-             for (int k=0; k < stkMeshStruct->numDim; k++) 
-                xleak[k] = coords[b][i][j][k];
-             if (xleak[d]==0.0) {
-                xleak[d]=stkMeshStruct->PBCStruct.scale[d];
-  cout << "REPLACE " << b << " " << i << " " << j << " dim  " << d << "  "  << coords[b][i][j][d] << " with " << xleak[d] << endl;
-               coords[b][i][j] = xleak; // replace ptr to coords
-               toDelete.push_back(xleak);
-             }
-           }          
+          if (flipZeroToScale) {  
+            for (int j=0; j < nodes_per_element; j++)  {
+              if (coords[b][i][j][d] == 0.0) {
+                double* xleak = new double [stkMeshStruct->numDim];
+                for (int k=0; k < stkMeshStruct->numDim; k++) 
+                  if (k==d) xleak[d]=stkMeshStruct->PBCStruct.scale[d];
+                  else xleak[k] = coords[b][i][j][k];
+                coords[b][i][j] = xleak; // replace ptr to coords
+                toDelete.push_back(xleak);
+              }
+            }          
+          }
         }
       }
     }
@@ -781,7 +777,7 @@ void Albany::STKDiscretization::computeNodeSets()
     nodeSets[ns->first].resize(nodes.size());
     nodeSetCoords[ns->first].resize(nodes.size());
 //    nodeSetIDs.push_back(ns->first); // Grab string ID
-    *out << "STKDisc: nodeset "<< ns->first <<" has size " << nodes.size() << "  on Proc 0." << endl;
+    cout << "STKDisc: nodeset "<< ns->first <<" has size " << nodes.size() << "  on Proc 0." << endl;
     for (std::size_t i=0; i < nodes.size(); i++) {
       int node_gid = gid(nodes[i]);
       int node_lid = node_map->LID(node_gid);

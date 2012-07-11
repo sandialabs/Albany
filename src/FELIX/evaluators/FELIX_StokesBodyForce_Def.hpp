@@ -150,7 +150,7 @@ evaluateFields(typename Traits::EvalData workset)
        ScalarT& muqp = mu(cell,qp);
 
        f[0] = -4.0*muqp*pi*(2*pi-1)*sin(x2pi + xphase)*sin(y2pi + yphase);
-       f[0] = -4.0*muqp*pi*(2*pi+1)*cos(x2pi + xphase)*cos(y2pi + yphase);
+       f[1] = -4.0*muqp*pi*(2*pi+1)*cos(x2pi + xphase)*cos(y2pi + yphase);
      }
    }
  }
