@@ -31,6 +31,7 @@ public:
   std::string path() const { return path_; }
 
   virtual Teuchos::RCP<Epetra_MultiVector> read(const Epetra_Map &map) = 0;
+  virtual Teuchos::RCP<Epetra_MultiVector> readPartial(const Epetra_Map &map, int maxVecCount);
 
   virtual ~MultiVectorInputFile();
 

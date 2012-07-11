@@ -14,40 +14,39 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
-#include "Teuchos_RCP.hpp"
-#include "Teuchos_ParameterList.hpp"
+#include "Albany_BasisInputFile.hpp"
 
-#include "Epetra_Map.h"
-#include "Epetra_MultiVector.h"
+#include "Albany_MultiVectorInputFile.hpp"
+#include "Albany_MultiVectorInputFileFactory.hpp"
 
-#include <deque>
+#include "Teuchos_Ptr.hpp"
 
 namespace Albany {
 
-class ReducedSpace;
+using ::Teuchos::RCP;
+using ::Teuchos::Ptr;
+using ::Teuchos::nonnull;
+using ::Teuchos::ParameterList;
 
-class ProjectionError {
-public:
-  ProjectionError(const Teuchos::RCP<Teuchos::ParameterList> &params,
-                  const Teuchos::RCP<const Epetra_Map> &dofMap);
+RCP<ParameterList> fillDefaultBasisInputParams(const RCP<ParameterList> &params)
+{
+  params->get("Input File Group Name", "basis");
+  params->get("Input File Default Base File Name", "basis");
+  return params;
+}
 
-  ~ProjectionError();
+RCP<Epetra_MultiVector> readOrthonormalBasis(const Epetra_Map &basisMap,
+                                             const RCP<ParameterList> &fileParams)
+{
+  MultiVectorInputFileFactory factory(fileParams);
+  const RCP<MultiVectorInputFile> file = factory.create();
 
-  void process(const Epetra_MultiVector &v);
+  const Ptr<const int> maxVecCount(fileParams->getPtr<int>("Basis Size Max"));
+  if (nonnull(maxVecCount)) {
+    return file->readPartial(basisMap, *maxVecCount);
+  } else {
+    return file->read(basisMap);
+  }
+}
 
-private:
-  Teuchos::RCP<Teuchos::ParameterList> params_;
-  Teuchos::RCP<const Epetra_Map> dofMap_;
-
-  Teuchos::RCP<ReducedSpace> reducedSpace_;
-
-  std::deque<double> relativeErrorNorms_;
-
-  static Teuchos::RCP<Teuchos::ParameterList> fillDefaultParams(const Teuchos::RCP<Teuchos::ParameterList> &params);
-
-  // Disallow copy & assignment
-  ProjectionError(const ProjectionError &);
-  ProjectionError &operator=(const ProjectionError &);
-};
-
-} // end namespace Albany
+} // namespace Albany

@@ -16,8 +16,7 @@
 
 #include "Albany_ProjectionError.hpp"
 
-#include "Albany_MultiVectorInputFile.hpp"
-#include "Albany_MultiVectorInputFileFactory.hpp"
+#include "Albany_BasisInputFile.hpp"
 #include "Albany_MultiVectorOutputFile.hpp"
 #include "Albany_MultiVectorOutputFileFactory.hpp"
 
@@ -37,39 +36,30 @@
 
 namespace Albany {
 
-using Teuchos::RCP;
-using Teuchos::rcp;
-using Teuchos::ParameterList;
+using ::Teuchos::RCP;
+using ::Teuchos::rcp;
+using ::Teuchos::ParameterList;
 
 // TODO: Better hiding / encapsulation
 const int ZERO_BASED_INDEXING = 0;
 const bool NO_INIT = false;
- 
+
 ProjectionError::ProjectionError(const RCP<ParameterList> &params,
                                  const RCP<const Epetra_Map> &dofMap) :
   params_(fillDefaultParams(params)),
   dofMap_(dofMap),
   reducedSpace_()
 {
-  const RCP<const Epetra_MultiVector> basis = createOrthonormalBasis();
+  const RCP<const Epetra_MultiVector> basis = readOrthonormalBasis(*dofMap_, params_);
   reducedSpace_ = rcp(new LinearReducedSpace(*basis));
 }
 
 RCP<ParameterList> ProjectionError::fillDefaultParams(const RCP<ParameterList> &params)
 {
-  params->get("Input File Group Name", "basis");
-  params->get("Input File Default Base File Name", "basis");
+  fillDefaultBasisInputParams(params);
   params->get("Output File Group Name", "proj_error");
   params->get("Output File Default Base File Name", "proj_error");
   return params;
-}
-
-RCP<Epetra_MultiVector> ProjectionError::createOrthonormalBasis()
-{
-  // TODO read partial basis
-  MultiVectorInputFileFactory factory(params_); 
-  const RCP<MultiVectorInputFile> file = factory.create();
-  return file->read(*dofMap_);
 }
 
 // TODO: Do no actual work in the destructor
@@ -79,7 +69,7 @@ ProjectionError::~ProjectionError()
   Epetra_Vector entries(entryMap, NO_INIT);
 
   for (int i = 0; i < entries.MyLength(); ++i) {
-    entries[i] = relativeErrorNorms_[i]; 
+    entries[i] = relativeErrorNorms_[i];
   }
 
   MultiVectorOutputFileFactory factory(params_);

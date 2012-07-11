@@ -14,10 +14,8 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
-#ifndef ALBANY_REDUCEDORDERMODELFACTORY_HPP
-#define ALBANY_REDUCEDORDERMODELFACTORY_HPP
-
-#include "EpetraExt_ModelEvaluator.h"
+#ifndef ALBANY_BASISINPUTFILE_HPP
+#define ALBANY_BASISINPUTFILE_HPP
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -27,28 +25,13 @@ class Epetra_Map;
 
 namespace Albany {
 
-class ReducedOrderModelFactory {
-public:
-  explicit ReducedOrderModelFactory(const Teuchos::RCP<Teuchos::ParameterList> &parentParams);
+Teuchos::RCP<Teuchos::ParameterList> fillDefaultBasisInputParams(
+    const Teuchos::RCP<Teuchos::ParameterList> &params);
 
-  Teuchos::RCP<EpetraExt::ModelEvaluator> create(const Teuchos::RCP<EpetraExt::ModelEvaluator> &child);
+Teuchos::RCP<Epetra_MultiVector> readOrthonormalBasis(
+    const Epetra_Map &basisMap,
+    const Teuchos::RCP<Teuchos::ParameterList> &fileParams);
 
-private:
-  Teuchos::RCP<Teuchos::ParameterList> params_;
+} // namespace Albany
 
-  static Teuchos::RCP<Teuchos::ParameterList> extractModelOrderReductionParams(const Teuchos::RCP<Teuchos::ParameterList> &source);
-  static Teuchos::RCP<Teuchos::ParameterList> extractReducedOrderModelParams(const Teuchos::RCP<Teuchos::ParameterList> &source);
-
-  bool useReducedOrderModel() const;
-
-  static Teuchos::RCP<Epetra_MultiVector> createOrthonormalBasis(const Epetra_Map &fullStateMap,
-                                                                 const Teuchos::RCP<Teuchos::ParameterList> &params);
-
-  // Disallow copy & assignment
-  ReducedOrderModelFactory(const ReducedOrderModelFactory &);
-  ReducedOrderModelFactory &operator=(const ReducedOrderModelFactory &);
-};
-
-} // end namespace Albany
-
-#endif /* ALBANY_REDUCEDORDERMODELFACTORY_HPP */
+#endif /* ALBANY_BASISINPUTFILE_HPP */

@@ -22,8 +22,8 @@
 #include "Albany_GaussNewtonOperatorFactory.hpp"
 
 #include "Albany_ReducedSpace.hpp"
-#include "Albany_MultiVectorInputFile.hpp"
-#include "Albany_MultiVectorInputFileFactory.hpp"
+
+#include "Albany_BasisInputFile.hpp"
 #include "Albany_MultiVectorOutputFile.hpp"
 #include "Albany_MultiVectorOutputFileFactory.hpp"
 
@@ -59,21 +59,15 @@ RCP<ParameterList> ReducedOrderModelFactory::extractReducedOrderModelParams(cons
   return sublist(params, "Reduced-Order Model");
 }
 
-RCP<ParameterList> ReducedOrderModelFactory::fillDefaultReducedOrderModelParams(const RCP<ParameterList> &params)
-{
-  params->get("Input File Group Name", "basis");
-  params->get("Input File Default Base File Name", "basis");
-  return params;
-}
-
 RCP<EpetraExt::ModelEvaluator> ReducedOrderModelFactory::create(const RCP<EpetraExt::ModelEvaluator> &child)
 {
   RCP<EpetraExt::ModelEvaluator> result = child;
 
   if (useReducedOrderModel()) {
     const RCP<ParameterList> romParams = extractReducedOrderModelParams(params_);
-    const RCP<const Epetra_MultiVector> basis = createOrthonormalBasis(*child->get_x_map(),
-                                                                       romParams);
+    const RCP<ParameterList> fileParams = fillDefaultBasisInputParams(romParams);
+    const RCP<const Epetra_MultiVector> basis = readOrthonormalBasis(*child->get_x_map(),
+                                                                       fileParams);
     const RCP<const ReducedSpace> reducedSpace(new LinearReducedSpace(*basis));
 
     static const Tuple<std::string, 2> allowedProjectionTypes = tuple<std::string>("Galerkin Projection", "Minimum Residual");
@@ -97,17 +91,6 @@ RCP<EpetraExt::ModelEvaluator> ReducedOrderModelFactory::create(const RCP<Epetra
 bool ReducedOrderModelFactory::useReducedOrderModel() const
 {
   return extractReducedOrderModelParams(params_)->get("Activate", false);
-}
-
-RCP<Epetra_MultiVector> ReducedOrderModelFactory::createOrthonormalBasis(const Epetra_Map &fullStateMap,
-                                                                         const RCP<ParameterList> &params)
-{
-  const RCP<ParameterList> fileParams = fillDefaultReducedOrderModelParams(params);
-  MultiVectorInputFileFactory factory(fileParams);
-
-  // TODO read partial basis
-  const RCP<MultiVectorInputFile> file = factory.create();
-  return file->read(fullStateMap);
 }
 
 } // end namespace Albany

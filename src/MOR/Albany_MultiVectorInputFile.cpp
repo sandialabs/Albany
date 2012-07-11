@@ -14,40 +14,21 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
-#include "Teuchos_RCP.hpp"
-#include "Teuchos_ParameterList.hpp"
-
-#include "Epetra_Map.h"
-#include "Epetra_MultiVector.h"
-
-#include <deque>
+#include "Albany_MultiVectorInputFile.hpp"
 
 namespace Albany {
 
-class ReducedSpace;
+using ::Teuchos::RCP;
+using ::Teuchos::rcp;
 
-class ProjectionError {
-public:
-  ProjectionError(const Teuchos::RCP<Teuchos::ParameterList> &params,
-                  const Teuchos::RCP<const Epetra_Map> &dofMap);
+RCP<Epetra_MultiVector> MultiVectorInputFile::readPartial(const Epetra_Map &map, int maxVecCount) {
+  // Inefficiient default implementation
+  // Reads the whole basis first and then copy a portion of it into the returned value
+  const RCP<Epetra_MultiVector> fullBasis = read(map);
+  if (fullBasis->NumVectors() <= maxVecCount) {
+    return fullBasis;
+  }
+  return rcp(new Epetra_MultiVector(Copy, *fullBasis, 0, maxVecCount - 1));
+}
 
-  ~ProjectionError();
-
-  void process(const Epetra_MultiVector &v);
-
-private:
-  Teuchos::RCP<Teuchos::ParameterList> params_;
-  Teuchos::RCP<const Epetra_Map> dofMap_;
-
-  Teuchos::RCP<ReducedSpace> reducedSpace_;
-
-  std::deque<double> relativeErrorNorms_;
-
-  static Teuchos::RCP<Teuchos::ParameterList> fillDefaultParams(const Teuchos::RCP<Teuchos::ParameterList> &params);
-
-  // Disallow copy & assignment
-  ProjectionError(const ProjectionError &);
-  ProjectionError &operator=(const ProjectionError &);
-};
-
-} // end namespace Albany
+} // namespace Albany
