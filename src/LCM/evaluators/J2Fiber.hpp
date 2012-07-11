@@ -54,6 +54,7 @@ private:
   // Input:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defgrad;
   PHX::MDField<ScalarT,Cell,QuadPoint> J;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> gptLocation;
   PHX::MDField<ScalarT,Cell,QuadPoint> elasticModulus;
   PHX::MDField<ScalarT,Cell,QuadPoint> poissonsRatio;
   PHX::MDField<ScalarT,Cell,QuadPoint> yieldStrength;
@@ -107,6 +108,10 @@ private:
   RealType Mx_f2;
   RealType My_f2;
   RealType Mz_f2;
+  RealType X0;
+  RealType Y0;
+  RealType Z0;
+  bool isLocalCoord;
 
 };
 }

@@ -24,50 +24,63 @@ namespace LCM {
   template<typename EvalT, typename Traits>
   J2Fiber<EvalT, Traits>::J2Fiber(const Teuchos::ParameterList& p) :
       defgrad(p.get<std::string>("DefGrad Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), J(
-          p.get<std::string>("DetDefGrad Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), elasticModulus(
-          p.get<std::string>("Elastic Modulus Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), poissonsRatio(
-          p.get<std::string>("Poissons Ratio Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), yieldStrength(
-          p.get<std::string>("Yield Strength Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), hardeningModulus(
-          p.get<std::string>("Hardening Modulus Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), satMod(
-          p.get<std::string>("Saturation Modulus Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), satExp(
-          p.get<std::string>("Saturation Exponent Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), stress(
-          p.get<std::string>("Stress Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), Fp(
-          p.get<std::string>("Fp Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), eqps(
-          p.get<std::string>("Eqps Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), energy_J2(
-          p.get<std::string>("Energy_J2 Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), energy_f1(
-          p.get<std::string>("Energy_f1 Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), energy_f2(
-          p.get<std::string>("Energy_f2 Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), damage_J2(
-          p.get<std::string>("Damage_J2 Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), damage_f1(
-          p.get<std::string>("Damage_f1 Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), damage_f2(
-          p.get<std::string>("Damage_f2 Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), xiinf_J2(
-          p.get<RealType>("xiinf_J2 Name")), tau_J2(
-          p.get<RealType>("tau_J2 Name")), k_f1(p.get<RealType>("k_f1 Name")), q_f1(
-          p.get<RealType>("q_f1 Name")), vol_f1(p.get<RealType>("vol_f1 Name")), xiinf_f1(
-          p.get<RealType>("xiinf_f1 Name")), tau_f1(
-          p.get<RealType>("tau_f1 Name")), Mx_f1(p.get<RealType>("Mx_f1 Name")), My_f1(
-          p.get<RealType>("My_f1 Name")), Mz_f1(p.get<RealType>("Mz_f1 Name")), k_f2(
-          p.get<RealType>("k_f2 Name")), q_f2(p.get<RealType>("q_f2 Name")), vol_f2(
-          p.get<RealType>("vol_f2 Name")), xiinf_f2(
-          p.get<RealType>("xiinf_f2 Name")), tau_f2(
-          p.get<RealType>("tau_f2 Name")), Mx_f2(p.get<RealType>("Mx_f2 Name")), My_f2(
-          p.get<RealType>("My_f2 Name")), Mz_f2(p.get<RealType>("Mz_f2 Name"))
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
+      J(p.get<std::string>("DetDefGrad Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+      gptLocation(p.get<std::string>("Integration Point Location Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout")),
+      elasticModulus(p.get<std::string>("Elastic Modulus Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+      poissonsRatio(p.get<std::string>("Poissons Ratio Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+      yieldStrength(p.get<std::string>("Yield Strength Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+      hardeningModulus(p.get<std::string>("Hardening Modulus Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+      satMod(p.get<std::string>("Saturation Modulus Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+      satExp(p.get<std::string>("Saturation Exponent Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+      stress(p.get<std::string>("Stress Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
+      Fp(p.get<std::string>("Fp Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
+      eqps(p.get<std::string>("Eqps Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+      energy_J2(p.get<std::string>("Energy_J2 Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+      energy_f1(p.get<std::string>("Energy_f1 Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+      energy_f2(p.get<std::string>("Energy_f2 Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+      damage_J2(p.get<std::string>("Damage_J2 Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+      damage_f1(p.get<std::string>("Damage_f1 Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+      damage_f2(p.get<std::string>("Damage_f2 Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+      xiinf_J2(p.get<RealType>("xiinf_J2 Name")),
+      tau_J2(p.get<RealType>("tau_J2 Name")),
+	  k_f1(p.get<RealType>("k_f1 Name")),
+	  q_f1(p.get<RealType>("q_f1 Name")),
+	  vol_f1(p.get<RealType>("vol_f1 Name")),
+	  xiinf_f1(p.get<RealType>("xiinf_f1 Name")),
+	  tau_f1(p.get<RealType>("tau_f1 Name")),
+	  Mx_f1(p.get<RealType>("Mx_f1 Name")),
+	  My_f1(p.get<RealType>("My_f1 Name")),
+	  Mz_f1(p.get<RealType>("Mz_f1 Name")),
+	  k_f2(p.get<RealType>("k_f2 Name")),
+	  q_f2(p.get<RealType>("q_f2 Name")),
+	  vol_f2(p.get<RealType>("vol_f2 Name")),
+	  xiinf_f2(p.get<RealType>("xiinf_f2 Name")),
+	  tau_f2(p.get<RealType>("tau_f2 Name")),
+	  Mx_f2(p.get<RealType>("Mx_f2 Name")),
+	  My_f2(p.get<RealType>("My_f2 Name")),
+	  Mz_f2(p.get<RealType>("Mz_f2 Name")),
+	  X0(p.get<RealType>("X0 Name")),
+	  Y0(p.get<RealType>("Y0 Name")),
+	  Z0(p.get<RealType>("Z0 Name")),
+	  isLocalCoord(p.get<bool>("isLocalCoord Name"))
   {
     // Pull out numQPs and numDims from a Layout
     Teuchos::RCP<PHX::DataLayout> tensor_dl = p.get<
@@ -80,6 +93,7 @@ namespace LCM {
 
     this->addDependentField(defgrad);
     this->addDependentField(J);
+    this->addDependentField(gptLocation);
     this->addDependentField(elasticModulus);
     this->addDependentField(poissonsRatio);
     this->addDependentField(yieldStrength);
@@ -117,6 +131,7 @@ namespace LCM {
     this->utils.setFieldData(stress, fm);
     this->utils.setFieldData(defgrad, fm);
     this->utils.setFieldData(J, fm);
+    this->utils.setFieldData(gptLocation, fm);
     this->utils.setFieldData(elasticModulus, fm);
     this->utils.setFieldData(hardeningModulus, fm);
     this->utils.setFieldData(yieldStrength, fm);
@@ -141,7 +156,7 @@ namespace LCM {
   void J2Fiber<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
   {
 
-    std::cout << "In J2Fiber evaluate Fields" << std::endl;
+    //std::cout << "In J2Fiber evaluate Fields" << std::endl;
     std::size_t zero(0), one(1), two(2);
 
     ScalarT kappa;
@@ -296,8 +311,27 @@ namespace LCM {
         LCM::Tensor<ScalarT, 3> C = LCM::dot(LCM::transpose(F), F);
 
         // Fiber orientation vectors
-        LCM::Vector<ScalarT, 3> M1(Mx_f1, My_f1, Mz_f1);
-        LCM::Vector<ScalarT, 3> M2(Mx_f2, My_f2, Mz_f2);
+        LCM::Vector<ScalarT, 3> M1(0.0);
+        LCM::Vector<ScalarT, 3> M2(0.0);
+
+        // compute fiber orientation based on either local gauss point coordinates
+        // or global direction
+        if(isLocalCoord)
+        {
+            // compute fiber orientation based on local coordinates
+            // special case of plane strain M1(3) = 0; M2(3) = 0;
+            LCM::Vector<ScalarT, 3> center(X0, Y0, Z0);
+            LCM::Vector<ScalarT, 3> gpt(gptLocation(cell, qp,0), gptLocation(cell, qp,1),gptLocation(cell, qp,2));
+            LCM::Vector<ScalarT, 3> OA(gpt(0) - center(0), gpt(1) - center(1), 0);
+
+            M1 = OA / norm(OA);
+            M2(0) = -M1(1); M2(1) = M1(0); M2(2) = M1(2);
+        }
+        else
+        {
+			M1(0) = Mx_f1; M1(1) = My_f1; M1(2) = Mz_f1;
+			M2(0) = Mx_f2; M2(1) = My_f2; M2(2) = Mz_f2;
+        }
 
         // Anisotropic invariants I4 = M_{i} * C * M_{i}
         ScalarT I4_f1 = LCM::dot(M1, LCM::dot(C, M1));

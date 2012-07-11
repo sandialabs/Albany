@@ -532,6 +532,9 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
       p->set<string>("DefGrad Name", "F");
       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
+      p->set<string>("Integration Point Location Name", "Integration Point Location"); //dl->qp_tensor also
+      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
       p->set<string>("Elastic Modulus Name", "Elastic Modulus");
       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
@@ -560,6 +563,10 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
       RealType Mx_f2 = params->get("Mx_f2", 1.0);
       RealType My_f2 = params->get("My_f2", 0.0);
       RealType Mz_f2 = params->get("Mz_f2", 0.0);
+      RealType X0 = params->get("X0", 0.0);
+      RealType Y0 = params->get("Y0", 0.0);
+      RealType Z0 = params->get("Z0", 0.0);
+      bool isLocalCoord = params->get("isLocalCoord",false);
 
       p->set<RealType>("xiinf_J2 Name", xiinf_J2);
       p->set<RealType>("tau_J2 Name", tau_J2);
@@ -579,6 +586,11 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
       p->set<RealType>("Mx_f2 Name", Mx_f2);
       p->set<RealType>("My_f2 Name", My_f2);
       p->set<RealType>("Mz_f2 Name", Mz_f2);
+      p->set<RealType>("X0 Name", X0);
+      p->set<RealType>("Y0 Name", Y0);
+      p->set<RealType>("Z0 Name", Z0);
+      p->set<bool> ("isLocalCoord Name", isLocalCoord);
+
       //Output
       p->set<string>("Stress Name", matModel); //dl->qp_tensor also
       p->set<string>("Fp Name", "Fp");  // dl->qp_tensor also
