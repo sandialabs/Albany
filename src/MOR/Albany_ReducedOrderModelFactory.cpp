@@ -77,7 +77,7 @@ RCP<EpetraExt::ModelEvaluator> ReducedOrderModelFactory::create(const RCP<Epetra
     const RCP<const ReducedSpace> reducedSpace(new LinearReducedSpace(*basis));
 
     static const Tuple<std::string, 2> allowedProjectionTypes = tuple<std::string>("Galerkin Projection", "Minimum Residual");
-    const std::string projectionType = romParams->get("Equation Reduction", allowedProjectionTypes[0]);
+    const std::string projectionType = romParams->get("System Reduction", allowedProjectionTypes[0]);
     TEUCHOS_TEST_FOR_EXCEPT(!contains(allowedProjectionTypes, projectionType));
 
     if (projectionType == allowedProjectionTypes[0]) {
