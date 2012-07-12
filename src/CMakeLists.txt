@@ -301,6 +301,7 @@ SET(SOURCES ${SOURCES}
   ${MOR_DIR}/Albany_ProjectionErrorObserver.cpp
   ${MOR_DIR}/Albany_SnapshotCollection.cpp
   ${MOR_DIR}/Albany_SnapshotCollectionObserver.cpp
+  ${MOR_DIR}/Albany_RythmosSnapshotCollectionObserver.cpp
   ${MOR_DIR}/Albany_BasisInputFile.cpp
   ${MOR_DIR}/Albany_MultiVectorInputFile.cpp
   ${MOR_DIR}/Albany_MultiVectorInputFileFactory.cpp
@@ -328,6 +329,8 @@ SET(HEADERS ${HEADERS}
   ${MOR_DIR}/Albany_ProjectionErrorObserver.hpp
   ${MOR_DIR}/Albany_SnapshotCollection.hpp
   ${MOR_DIR}/Albany_SnapshotCollectionObserver.hpp
+  ${MOR_DIR}/Albany_RythmosSnapshotCollectionObserver.hpp
+  ${MOR_DIR}/Albany_RythmosUtils.hpp
   ${MOR_DIR}/Albany_BasisInputFile.hpp
   ${MOR_DIR}/Albany_MultiVectorInputFile.hpp
   ${MOR_DIR}/Albany_MultiVectorInputFileFactory.hpp

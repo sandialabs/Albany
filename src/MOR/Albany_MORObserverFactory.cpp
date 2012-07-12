@@ -20,6 +20,10 @@
 #include "Albany_ProjectionErrorObserver.hpp"
 #include "Albany_FullStateReconstructor.hpp"
 
+#include "Albany_RythmosSnapshotCollectionObserver.hpp"
+
+#include "Rythmos_CompositeIntegrationObserver.hpp"
+
 #include "Teuchos_ParameterList.hpp"
 
 #include <string>
@@ -59,7 +63,18 @@ RCP<NOX::Epetra::Observer> MORObserverFactory::create(const RCP<NOX::Epetra::Obs
 }
 
 RCP<Rythmos::IntegrationObserverBase<double> > MORObserverFactory::create(const RCP<Rythmos::IntegrationObserverBase<double> > &child) {
-  return child; // TODO
+  RCP<Rythmos::IntegrationObserverBase<double> > result = child;
+
+  if (collectSnapshots()) {
+    const RCP<Rythmos::CompositeIntegrationObserver<double> > composite = Rythmos::createCompositeIntegrationObserver<double>();
+    composite->addObserver(child);
+    composite->addObserver(rcp(new RythmosSnapshotCollectionObserver(getSnapParameters(), rcp(new Epetra_Map(applicationMap_)))));
+    result = composite;
+  }
+
+  // TODO other observers
+
+  return result;
 }
 
 bool MORObserverFactory::collectSnapshots() const
