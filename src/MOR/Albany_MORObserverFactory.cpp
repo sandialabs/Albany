@@ -21,6 +21,7 @@
 #include "Albany_FullStateReconstructor.hpp"
 
 #include "Albany_RythmosSnapshotCollectionObserver.hpp"
+#include "Albany_RythmosProjectionErrorObserver.hpp"
 
 #include "Rythmos_CompositeIntegrationObserver.hpp"
 
@@ -69,6 +70,13 @@ RCP<Rythmos::IntegrationObserverBase<double> > MORObserverFactory::create(const 
     const RCP<Rythmos::CompositeIntegrationObserver<double> > composite = Rythmos::createCompositeIntegrationObserver<double>();
     composite->addObserver(child);
     composite->addObserver(rcp(new RythmosSnapshotCollectionObserver(getSnapParameters(), rcp(new Epetra_Map(applicationMap_)))));
+    result = composite;
+  }
+
+  if (computeProjectionError()) {
+    const RCP<Rythmos::CompositeIntegrationObserver<double> > composite = Rythmos::createCompositeIntegrationObserver<double>();
+    composite->addObserver(child);
+    composite->addObserver(rcp(new RythmosProjectionErrorObserver(getErrorParameters(), rcp(new Epetra_Map(applicationMap_)))));
     result = composite;
   }
 
