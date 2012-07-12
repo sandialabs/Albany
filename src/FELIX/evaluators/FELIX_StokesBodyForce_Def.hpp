@@ -67,6 +67,17 @@ StokesBodyForce(const Teuchos::ParameterList& p) :
     this->addDependentField(mu); 
     this->addDependentField(coordVec);
   }
+  else if (type == "SinCosZ") {
+    bf_type = SINCOSZ;  
+    mu = PHX::MDField<ScalarT,Cell,QuadPoint>(
+            p.get<std::string>("Material Property Name"),
+	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
+    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
+            p.get<std::string>("Coordinate Vector Name"),
+	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") );
+    this->addDependentField(mu); 
+    this->addDependentField(coordVec);
+  }
 
   this->addEvaluatedField(force);
 
@@ -97,7 +108,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   if (bf_type == CONSTANT) {
     this->utils.setFieldData(rho,fm);
   }
-  else if (bf_type == POLY || bf_type == SINSIN) {
+  else if (bf_type == POLY || bf_type == SINSIN || bf_type == SINCOSZ) {
     this->utils.setFieldData(mu,fm);
     this->utils.setFieldData(coordVec,fm);
   }
@@ -151,6 +162,26 @@ evaluateFields(typename Traits::EvalData workset)
 
        f[0] = -4.0*muqp*pi*(2*pi-1)*sin(x2pi + xphase)*sin(y2pi + yphase);
        f[1] = -4.0*muqp*pi*(2*pi+1)*cos(x2pi + xphase)*cos(y2pi + yphase);
+     }
+   }
+ }
+ // Doubly-periodic MMS with polynomial in Z
+ else if (bf_type == SINCOSZ) {
+   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+     for (std::size_t qp=0; qp < numQPs; ++qp) {      
+       ScalarT* f = &force(cell,qp,0);
+       MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
+       MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
+       MeshScalarT& z = coordVec(cell,qp,2);
+       ScalarT& muqp = mu(cell,qp);
+
+       ScalarT t1 = muqp*z*(1-z)*(1-2*z);
+       ScalarT t2 = muqp*(1-6*z+6*z*z);
+       ScalarT t3 = muqp*z*z*(1-z)*(1-z);
+
+       f[0] =  (-8*pi*pi*t1 + t2 + 4*pi*pi)*sin(x2pi)*sin(y2pi);
+       f[1] = -(-8*pi*pi*t1 + t2 + 4*pi*pi)*cos(x2pi)*cos(y2pi);
+       f[2] = -2*pi*(-8*pi*pi*t3 + 2*t1 + 1)*cos(x2pi)*sin(y2pi);
      }
    }
  }

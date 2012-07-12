@@ -45,3 +45,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_sinsin.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_sinsin.xml COPYONLY)
 add_test(${testName}_SinSinPeriodicXY ${Albany.exe} input_sinsin.xml)
 
+#  Fourth test
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_sincosz.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_sincosz.xml COPYONLY)
+add_test(${testName}_SinCosZ3DPeriodicXY ${Albany.exe} input_sincosz.xml)
+
