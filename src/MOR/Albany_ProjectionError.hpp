@@ -14,6 +14,9 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
+#ifndef ALBANY_PROJECTIONERROR_HPP
+#define ALBANY_PROJECTIONERROR_HPP
+
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
@@ -51,3 +54,5 @@ private:
 };
 
 } // end namespace Albany
+
+#endif /* ALBANY_PROJECTIONERROR_HPP */
