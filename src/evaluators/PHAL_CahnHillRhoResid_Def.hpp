@@ -55,6 +55,8 @@ CahnHillRhoResid(const Teuchos::ParameterList& p) :
   numQPs  = dims[2];
   numDims = dims[3];
 
+  gamma_term.resize(worksetSize, numQPs, numDims);
+
   this->setName("CahnHillRhoResid"+PHX::TypeString<EvalT>::value);
 
 }
@@ -87,9 +89,9 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t qp=0; qp < numQPs; ++qp) 
       for (std::size_t i=0; i < numDims; ++i) 
 
-        rhoGrad(cell,qp,i) *= -gamma; 
+        gamma_term(cell, qp, i) = rhoGrad(cell,qp,i) * gamma; 
 
-  FST::integrate<ScalarT>(rhoResidual, rhoGrad, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+  FST::integrate<ScalarT>(rhoResidual, gamma_term, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
 
   FST::integrate<ScalarT>(rhoResidual, chemTerm, wBF, Intrepid::COMP_CPP, true); // "true" sums into
 

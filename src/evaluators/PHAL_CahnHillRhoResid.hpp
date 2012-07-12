@@ -61,6 +61,8 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,Node> rhoResidual;
 
+  Intrepid::FieldContainer<ScalarT> gamma_term;
+
   unsigned int numQPs, numDims, numNodes, worksetSize;
 
   ScalarT gamma;

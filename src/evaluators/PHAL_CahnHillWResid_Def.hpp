@@ -71,6 +71,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(wResidual,fm);
 }
 
+#if 0
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void CahnHillWResid<EvalT, Traits>::
@@ -81,6 +82,27 @@ evaluateFields(typename Traits::EvalData workset)
   FST::integrate<ScalarT>(wResidual, wGrad, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
 
   FST::integrate<ScalarT>(wResidual, rhoDot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+
+}
+#endif
+template<typename EvalT, typename Traits>
+void CahnHillWResid<EvalT, Traits>::
+evaluateFields(typename Traits::EvalData workset)
+{
+  typedef Intrepid::FunctionSpaceTools FST;
+
+  FST::integrate<ScalarT>(wResidual, wGrad, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+
+  // Consistent mass matrix
+//  FST::integrate<ScalarT>(wResidual, rhoDot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+
+  // Lumped mass matrix
+  // Consistent mass matrix
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) 
+    for (std::size_t node=0; node < numNodes; ++node)
+     for (std::size_t qp=0; qp < numQPs; ++qp) 
+
+       wResidual(cell, node) += rhoDot(cell, qp) * wBF(cell, node, qp);
 
 }
 
