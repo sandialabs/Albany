@@ -66,20 +66,14 @@ namespace LCM {
 	  vol_f1(p.get<RealType>("vol_f1 Name")),
 	  xiinf_f1(p.get<RealType>("xiinf_f1 Name")),
 	  tau_f1(p.get<RealType>("tau_f1 Name")),
-	  Mx_f1(p.get<RealType>("Mx_f1 Name")),
-	  My_f1(p.get<RealType>("My_f1 Name")),
-	  Mz_f1(p.get<RealType>("Mz_f1 Name")),
 	  k_f2(p.get<RealType>("k_f2 Name")),
 	  q_f2(p.get<RealType>("q_f2 Name")),
 	  vol_f2(p.get<RealType>("vol_f2 Name")),
 	  xiinf_f2(p.get<RealType>("xiinf_f2 Name")),
 	  tau_f2(p.get<RealType>("tau_f2 Name")),
-	  Mx_f2(p.get<RealType>("Mx_f2 Name")),
-	  My_f2(p.get<RealType>("My_f2 Name")),
-	  Mz_f2(p.get<RealType>("Mz_f2 Name")),
-	  X0(p.get<RealType>("X0 Name")),
-	  Y0(p.get<RealType>("Y0 Name")),
-	  Z0(p.get<RealType>("Z0 Name")),
+	  direction_f1(p.get<Teuchos::Array<RealType> >("direction_f1 Values").toVector()),
+	  direction_f2(p.get<Teuchos::Array<RealType> >("direction_f2 Values").toVector()),
+	  ringCenter(p.get<Teuchos::Array<RealType> >("Ring Center Values").toVector()),
 	  isLocalCoord(p.get<bool>("isLocalCoord Name"))
   {
     // Pull out numQPs and numDims from a Layout
@@ -320,17 +314,16 @@ namespace LCM {
         {
             // compute fiber orientation based on local coordinates
             // special case of plane strain M1(3) = 0; M2(3) = 0;
-            LCM::Vector<ScalarT, 3> center(X0, Y0, Z0);
             LCM::Vector<ScalarT, 3> gpt(gptLocation(cell, qp,0), gptLocation(cell, qp,1),gptLocation(cell, qp,2));
-            LCM::Vector<ScalarT, 3> OA(gpt(0) - center(0), gpt(1) - center(1), 0);
+            LCM::Vector<ScalarT, 3> OA(gpt(0) - ringCenter[0], gpt(1) - ringCenter[1], 0);
 
             M1 = OA / norm(OA);
             M2(0) = -M1(1); M2(1) = M1(0); M2(2) = M1(2);
         }
         else
         {
-			M1(0) = Mx_f1; M1(1) = My_f1; M1(2) = Mz_f1;
-			M2(0) = Mx_f2; M2(1) = My_f2; M2(2) = Mz_f2;
+			M1(0) = direction_f1[0]; M1(1) = direction_f1[1]; M1(2) = direction_f1[2];
+			M2(0) = direction_f2[0]; M2(1) = direction_f2[1]; M2(2) = direction_f2[2];
         }
 
         // Anisotropic invariants I4 = M_{i} * C * M_{i}
