@@ -42,11 +42,11 @@ MORObserverFactory::MORObserverFactory(const RCP<ParameterList> &parentParams,
 RCP<NOX::Epetra::Observer> MORObserverFactory::create(const RCP<NOX::Epetra::Observer> &child)
 {
   RCP<NOX::Epetra::Observer> result = child;
-  
+
   if (collectSnapshots()) {
     result = rcp(new SnapshotCollectionObserver(getSnapParameters(), result));
   }
-  
+
   if (computeProjectionError()) {
     result = rcp(new ProjectionErrorObserver(getErrorParameters(), result, rcp(new Epetra_Map(applicationMap_))));
   }
@@ -56,6 +56,10 @@ RCP<NOX::Epetra::Observer> MORObserverFactory::create(const RCP<NOX::Epetra::Obs
   }
 
   return result;
+}
+
+RCP<Rythmos::IntegrationObserverBase<double> > MORObserverFactory::create(const RCP<Rythmos::IntegrationObserverBase<double> > &child) {
+  return child; // TODO
 }
 
 bool MORObserverFactory::collectSnapshots() const
