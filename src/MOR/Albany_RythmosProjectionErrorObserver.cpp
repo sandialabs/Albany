@@ -40,21 +40,19 @@ RCP<Rythmos::IntegrationObserverBase<double> > RythmosProjectionErrorObserver::c
   return Teuchos::null; // TODO
 }
 
-void RythmosProjectionErrorObserver::resetIntegrationObserver(const Rythmos::TimeRange<double> &integrationTimeDomain) {
+void RythmosProjectionErrorObserver::resetIntegrationObserver(const Rythmos::TimeRange<double> &/*integrationTimeDomain*/) {
   // Not implemented
 }
 
 void RythmosProjectionErrorObserver::observeCompletedTimeStep(
     const Rythmos::StepperBase<double> &stepper,
-    const Rythmos::StepControlInfo<double> &stepCtrlInfo,
-    const int timeStepIter) {
+    const Rythmos::StepControlInfo<double> &/*stepCtrlInfo*/,
+    const int /*timeStepIter*/) {
   const Rythmos::StepStatus<double> stepStatus = stepper.getStepStatus();
 
   const RCP<const Thyra::VectorBase<double> > stepperSolution = stepStatus.solution;
   const RCP<const Thyra::VectorBase<double> > stepperState = getRythmosState(stepperSolution);
-  const RCP<const Epetra_Vector> state = Thyra::get_Epetra_Vector(*stateMap_, stepperSolution);
-
-  const double stamp = stepStatus.time;
+  const RCP<const Epetra_Vector> state = Thyra::get_Epetra_Vector(*stateMap_, stepperState);
 
   projectionError_.process(*state);
 }
