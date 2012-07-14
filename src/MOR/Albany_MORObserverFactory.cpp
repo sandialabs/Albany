@@ -22,6 +22,7 @@
 
 #include "Albany_RythmosSnapshotCollectionObserver.hpp"
 #include "Albany_RythmosProjectionErrorObserver.hpp"
+#include "Albany_RythmosFullStateReconstructor.hpp"
 
 #include "Rythmos_CompositeIntegrationObserver.hpp"
 
@@ -80,7 +81,9 @@ RCP<Rythmos::IntegrationObserverBase<double> > MORObserverFactory::create(const 
     result = composite;
   }
 
-  // TODO other observers
+  if (useReducedOrderModel()) {
+    result = rcp(new RythmosFullStateReconstructor(getReducedOrderModelParameters(), child, rcp(new Epetra_Map(applicationMap_))));
+  }
 
   return result;
 }

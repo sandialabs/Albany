@@ -297,6 +297,8 @@ SET(SOURCES ${SOURCES}
   ${MOR_DIR}/Albany_ReducedOrderModelFactory.cpp
   ${MOR_DIR}/Albany_MORObserverFactory.cpp
   ${MOR_DIR}/Albany_FullStateReconstructor.cpp
+  ${MOR_DIR}/Albany_RythmosFullStateReconstructor.cpp
+  ${MOR_DIR}/Albany_RythmosStepperFullStateWrapper.cpp
   ${MOR_DIR}/Albany_ProjectionError.cpp
   ${MOR_DIR}/Albany_ProjectionErrorObserver.cpp
   ${MOR_DIR}/Albany_RythmosProjectionErrorObserver.cpp
@@ -326,6 +328,8 @@ SET(HEADERS ${HEADERS}
   ${MOR_DIR}/Albany_ReducedOrderModelFactory.hpp
   ${MOR_DIR}/Albany_MORObserverFactory.hpp
   ${MOR_DIR}/Albany_FullStateReconstructor.hpp
+  ${MOR_DIR}/Albany_RythmosFullStateReconstructor.hpp
+  ${MOR_DIR}/Albany_RythmosStepperFullStateWrapper.hpp
   ${MOR_DIR}/Albany_ProjectionError.hpp
   ${MOR_DIR}/Albany_ProjectionErrorObserver.hpp
   ${MOR_DIR}/Albany_RythmosProjectionErrorObserver.hpp
