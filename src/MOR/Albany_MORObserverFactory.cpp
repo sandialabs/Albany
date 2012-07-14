@@ -69,20 +69,20 @@ RCP<Rythmos::IntegrationObserverBase<double> > MORObserverFactory::create(const 
 
   if (collectSnapshots()) {
     const RCP<Rythmos::CompositeIntegrationObserver<double> > composite = Rythmos::createCompositeIntegrationObserver<double>();
-    composite->addObserver(child);
+    composite->addObserver(result);
     composite->addObserver(rcp(new RythmosSnapshotCollectionObserver(getSnapParameters(), rcp(new Epetra_Map(applicationMap_)))));
     result = composite;
   }
 
   if (computeProjectionError()) {
     const RCP<Rythmos::CompositeIntegrationObserver<double> > composite = Rythmos::createCompositeIntegrationObserver<double>();
-    composite->addObserver(child);
+    composite->addObserver(result);
     composite->addObserver(rcp(new RythmosProjectionErrorObserver(getErrorParameters(), rcp(new Epetra_Map(applicationMap_)))));
     result = composite;
   }
 
   if (useReducedOrderModel()) {
-    result = rcp(new RythmosFullStateReconstructor(getReducedOrderModelParameters(), child, rcp(new Epetra_Map(applicationMap_))));
+    result = rcp(new RythmosFullStateReconstructor(getReducedOrderModelParameters(), result, rcp(new Epetra_Map(applicationMap_))));
   }
 
   return result;
