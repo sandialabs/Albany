@@ -38,14 +38,14 @@ RCP<Rythmos::IntegrationObserverBase<double> > RythmosSnapshotCollectionObserver
   return Teuchos::null; // TODO
 }
 
-void RythmosSnapshotCollectionObserver::resetIntegrationObserver(const Rythmos::TimeRange<double> &integrationTimeDomain) {
+void RythmosSnapshotCollectionObserver::resetIntegrationObserver(const Rythmos::TimeRange<double> &/*integrationTimeDomain*/) {
   // Not implemented
 }
 
-void RythmosSnapshotCollectionObserver::observeCompletedTimeStep(
+void RythmosSnapshotCollectionObserver::observeTimeStep(
     const Rythmos::StepperBase<double> &stepper,
-    const Rythmos::StepControlInfo<double> &stepCtrlInfo,
-    const int timeStepIter) {
+    const Rythmos::StepControlInfo<double> &/*stepCtrlInfo*/,
+    const int /*timeStepIter*/) {
   const Rythmos::StepStatus<double> stepStatus = stepper.getStepStatus();
 
   const RCP<const Thyra::VectorBase<double> > stepperSolution = stepStatus.solution;
@@ -55,6 +55,20 @@ void RythmosSnapshotCollectionObserver::observeCompletedTimeStep(
   const double stamp = stepStatus.time;
 
   snapshotCollector_.addVector(stamp, *state);
+}
+
+void RythmosSnapshotCollectionObserver::observeStartTimeStep(
+    const Rythmos::StepperBase<double> &stepper,
+    const Rythmos::StepControlInfo<double> &stepCtrlInfo,
+    const int timeStepIter) {
+  this->observeTimeStep(stepper, stepCtrlInfo, timeStepIter);
+}
+
+void RythmosSnapshotCollectionObserver::observeCompletedTimeStep(
+    const Rythmos::StepperBase<double> &stepper,
+    const Rythmos::StepControlInfo<double> &stepCtrlInfo,
+    const int timeStepIter) {
+  this->observeTimeStep(stepper, stepCtrlInfo, timeStepIter);
 }
 
 } // namespace Albany

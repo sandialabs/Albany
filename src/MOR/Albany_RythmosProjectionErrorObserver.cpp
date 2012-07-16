@@ -44,7 +44,21 @@ void RythmosProjectionErrorObserver::resetIntegrationObserver(const Rythmos::Tim
   // Not implemented
 }
 
+void RythmosProjectionErrorObserver::observeStartTimeStep(
+    const Rythmos::StepperBase<double> &stepper,
+    const Rythmos::StepControlInfo<double> &stepCtrlInfo,
+    const int timeStepIter) {
+  this->observeTimeStep(stepper, stepCtrlInfo, timeStepIter);
+}
+
 void RythmosProjectionErrorObserver::observeCompletedTimeStep(
+    const Rythmos::StepperBase<double> &stepper,
+    const Rythmos::StepControlInfo<double> &stepCtrlInfo,
+    const int timeStepIter) {
+  this->observeTimeStep(stepper, stepCtrlInfo, timeStepIter);
+}
+
+void RythmosProjectionErrorObserver::observeTimeStep(
     const Rythmos::StepperBase<double> &stepper,
     const Rythmos::StepControlInfo<double> &/*stepCtrlInfo*/,
     const int /*timeStepIter*/) {

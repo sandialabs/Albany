@@ -37,6 +37,11 @@ public:
 
   virtual void resetIntegrationObserver(const Rythmos::TimeRange<double> &integrationTimeDomain);
 
+  virtual void observeStartTimeStep(
+    const Rythmos::StepperBase<double> &stepper,
+    const Rythmos::StepControlInfo<double> &stepCtrlInfo,
+    const int timeStepIter);
+
   virtual void observeCompletedTimeStep(
     const Rythmos::StepperBase<double> &stepper,
     const Rythmos::StepControlInfo<double> &stepCtrlInfo,
@@ -45,6 +50,12 @@ public:
 private:
   SnapshotCollection snapshotCollector_;
   Teuchos::RCP<const Epetra_Map> stateMap_;
+
+  virtual void observeTimeStep(
+    const Rythmos::StepperBase<double> &stepper,
+    const Rythmos::StepControlInfo<double> &stepCtrlInfo,
+    const int timeStepIter);
+
 };
 
 } // namespace Albany
