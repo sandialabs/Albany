@@ -539,6 +539,24 @@ namespace Albany {
 
     //! Access to number of worksets - needed for working with StateManager
     int getNumWorksets() { return numWorksets;};
+
+    //! Accessor function to Epetra_Import the solution from other PEs for output
+    Epetra_Vector* getOverlapSolution(const Epetra_Vector& solution) {
+
+      tmp_ovlp_sol->Import(solution, *importer, Insert);
+
+      return tmp_ovlp_sol.get();
+
+    }
+    
+    Teuchos::RCP<Tpetra_Vector> getOverlapSolutionT(const Tpetra_Vector& solutionT) {
+
+      tmp_ovlp_solT->doImport(solutionT, *importerT, Tpetra::INSERT);
+
+      return tmp_ovlp_solT;
+
+    }
+    
     
     bool is_adjoint;
 
@@ -732,6 +750,12 @@ namespace Albany {
     Teuchos::RCP<Epetra_CrsMatrix> overlapped_jac;
     //! Overlapped Tpetra Jacobian matrix
     Teuchos::RCP<Tpetra_CrsMatrix> overlapped_jacT;
+
+    //! Temporary overlapped solution vector (for output)
+    Teuchos::RCP<Epetra_Vector> tmp_ovlp_sol;
+    
+    //! Temporary overlapped solution vector (for output) - Tpetra
+    Teuchos::RCP<Tpetra_Vector> tmp_ovlp_solT;
 
     //! Parameter library
     Teuchos::RCP<ParamLib> paramLib;

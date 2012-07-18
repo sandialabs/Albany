@@ -37,7 +37,7 @@ public:
 
   //! Calls underlying observer then evaluates projection error
   virtual void observeSolution(const Epetra_Vector& solution);
-  
+
   //! Calls underlying observer then evaluates projection error
   virtual void observeSolution(const Epetra_Vector& solution, double time_or_param_val);
 
@@ -46,10 +46,6 @@ private:
   Teuchos::RCP<NOX::Epetra::Observer> decoratedObserver_;
 
   Teuchos::RCP<ReducedSpace> reducedSpace_;
-  
-  static Teuchos::RCP<Teuchos::ParameterList> fillDefaultParams(const Teuchos::RCP<Teuchos::ParameterList> &params);
-  static Teuchos::RCP<Epetra_MultiVector> createOrthonormalBasis(const Teuchos::RCP<Teuchos::ParameterList> &params,
-                                                                 const Epetra_Map &map);
 
   Epetra_Vector lastFullSolution_;
   void computeLastFullSolution(const Epetra_Vector& reducedSolution);

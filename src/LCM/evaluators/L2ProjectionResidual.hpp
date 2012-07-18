@@ -54,8 +54,7 @@ private:
   // Input:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> DefGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint> projectedField;
+
 
 
   // Input for
@@ -76,9 +75,11 @@ private:
   unsigned int numDims;
   unsigned int worksetSize;
 
+  // Input:
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> projectedField;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> TResidual;
+  PHX::MDField<ScalarT,Cell,Node,VecDim> TResidual;
 
 
 };

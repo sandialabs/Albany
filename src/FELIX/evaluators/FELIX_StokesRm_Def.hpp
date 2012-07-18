@@ -83,10 +83,11 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t qp=0; qp < numQPs; ++qp) {      
       for (std::size_t i=0; i < numDims; ++i) {
         Rm(cell,qp,i) = 0;
-        Rm(cell,qp,i) += pGrad(cell,qp,i)+force(cell,qp,i);
-        for (std::size_t j=0; j < numDims; ++j) {
-          Rm(cell,qp,i) += rho(cell,qp)*V(cell,qp,j)*VGrad(cell,qp,i,j);
-        }
+        Rm(cell,qp,i) += pGrad(cell,qp,i)+force(cell,qp,i); //why is there a pGrad here??  it's added here then subtracted in Momentum.  Just get rid of it in both...
+        //advection term -- can get rid of for Stokes
+        //for (std::size_t j=0; j < numDims; ++j) {
+        //  Rm(cell,qp,i) += rho(cell,qp)*V(cell,qp,j)*VGrad(cell,qp,i,j);
+       // }
       } 
     }
   }

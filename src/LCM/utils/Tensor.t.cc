@@ -1632,6 +1632,34 @@ namespace LCM {
   }
 
   //
+  // R^N arg max abs. Useful for inverse and other algorithms
+  // that rely on Jacobi-type procedures.
+  // \param A
+  // \return \f$ (p,q) = arg max_{i,j} |a_{ij}| \f$
+  //
+  template<typename T, Index N>
+  std::pair<Index, Index>
+  arg_max_abs(Tensor<T, N> const & A)
+  {
+    Index p = 0;
+    Index q = 0;
+
+    T s = fabs(A(p,q));
+
+    for (Index i = 0; i < N; ++i) {
+      for (Index j = 0; j < N; ++j) {
+        if (fabs(A(i,j)) > s) {
+          p = i;
+          q = j;
+          s = fabs(A(i,j));
+        }
+      }
+    }
+
+    return std::make_pair(p,q);
+  }
+
+  //
   // R^N arg max off-diagonal. Useful for SVD and other algorithms
   // that rely on Jacobi-type procedures.
   // \param A
@@ -1648,34 +1676,6 @@ namespace LCM {
 
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
-        if (i != j && fabs(A(i,j)) > s) {
-          p = i;
-          q = j;
-          s = fabs(A(i,j));
-        }
-      }
-    }
-
-    return std::make_pair(p,q);
-  }
-
-  //
-  // R^3 arg max off-diagonal. Useful for SVD and other algorithms
-  // that rely on Jacobi-type procedures.
-  // \param A
-  // \return \f$ (p,q) = arg max_{i \neq j} |a_{ij}| \f$
-  //
-  template<typename T>
-  std::pair<Index, Index>
-  arg_max_off_diagonal(Tensor<T, 3> const & A)
-  {
-    Index p = 0;
-    Index q = 1;
-
-    T s = fabs(A(p,q));
-
-    for (Index i = 0; i < 3; ++i) {
-      for (Index j = 0; j < 3; ++j) {
         if (i != j && fabs(A(i,j)) > s) {
           p = i;
           q = j;
@@ -1746,8 +1746,8 @@ namespace LCM {
       // case of very large ga
       s0 = ga;
       s1 = ha > 1.0 ?
-          fa / (ga / ha) :
-          (fa / ga) * ha;
+          T(fa / (ga / ha)) :
+          T((fa / ga) * ha);
       cu = 1.0;
       su = h / g;
       cv = f / g;
@@ -1756,16 +1756,16 @@ namespace LCM {
       // normal case
       T d = fa - ha;
       T l = d != fa ?
-          d / fa :
-          1.0; // l \in [0,1]
+          T(d / fa) :
+          T(1.0); // l \in [0,1]
       T m = g / f; // m \in (-1/macheps, 1/macheps)
       T t = 2.0 - l; // t \in [1,2]
       T mm = m * m;
       T tt = t * t;
       T s = sqrt(tt + mm); // s \in [1,1 + 1/macheps]
       T r = l != 0.0 ?
-          sqrt(l * l + mm) :
-          fabs(m); // r \in [0,1 + 1/macheps]
+          T(sqrt(l * l + mm)) :
+          T(fabs(m)); // r \in [0,1 + 1/macheps]
       T a = 0.5 * (s + r); // a \in [1,1 + |m|]
       s1 = ha / a;
       s0 = fa * a;
@@ -1777,8 +1777,8 @@ namespace LCM {
       } else {
         // note that m is very tiny
         tau = l == 0.0 ?
-            copysign(T(2.0), f) * copysign(T(1.0), g) :
-            g / copysign(d, f) + m / t;
+            T(copysign(T(2.0), f) * copysign(T(1.0), g)) :
+            T(g / copysign(d, f) + m / t);
       }
       T lv = sqrt(tau * tau + 4.0); // second assignment to L in DLASV2
       cv = 2.0 / lv;
@@ -1869,7 +1869,7 @@ namespace LCM {
       cr = R(0,0);
 
       T const &
-      sr = (sgn(R(0,1)) == sgn(R(1,0))) ? -R(0,1) : R(0,1);
+      sr = (sgn(R(0,1)) == sgn(R(1,0))) ? T(-R(0,1)) : T(R(0,1));
 
       // Apply both Givens rotations to matrices
       // that are converging to singular values and singular vectors
@@ -1888,74 +1888,6 @@ namespace LCM {
     }
 
     return boost::make_tuple(U, diag(diag(S)), transpose(V));
-  }
-
-  //
-  // R^2 singular value decomposition (SVD)
-  // \param A tensor
-  // \return \f$ A = USV^T\f$
-  //
-  template<typename T>
-  boost::tuple<Tensor<T, 2>, Tensor<T, 2>, Tensor<T, 2> >
-  svd2(Tensor<T, 2> const & A)
-  {
-    // Preliminaries
-    const T
-    Ju = A(0,0)*A(0,0) + A(0,1)*A(0,1);
-
-    const T
-    Lu = A(0,0)*A(1,0) + A(0,1)*A(1,1);
-
-    const T
-    Ku = A(1,0)*A(1,0) + A(1,1)*A(1,1);
-
-    const T
-    Jv = A(0,0)*A(0,0) + A(1,0)*A(1,0);
-
-    const T
-    Lv = A(0,0)*A(0,1) + A(1,0)*A(1,1);
-
-    const T
-    Kv = A(0,1)*A(0,1) + A(1,1)*A(1,1);
-
-    // Form left singular vectors
-    T cu, su;
-    boost::tie(cu, su) = half_angle(Ju - Ku, 2 * Lu);
-
-    Tensor<T, 2>
-    U(cu, -su, su, cu);
-
-    // Form right singular vectors
-    T cv, sv;
-    boost::tie(cv, sv) = half_angle(Jv - Kv, 2 * Lv);
-
-    Tensor<T, 2>
-    V(cv, -sv, sv, cv);
-
-    // Compute singular values
-   const Tensor<T, 2>
-    X = transpose(U) * A * V;
-
-    const T
-    s0 = X(0,0);
-
-    const T
-    s1 = X(1,1);
-
-    if (s0 < 0.0) {
-      V(0,0) = -V(0,0);
-      V(1,0) = -V(1,0);
-    }
-
-    if (s1 < 0.0) {
-      V(0,1) = -V(0,1);
-      V(1,1) = -V(1,1);
-    }
-
-    Tensor<T, 2>
-    S(fabs(s0), 0.0, 0.0, fabs(s1));
-
-    return boost::make_tuple(U, S, V);
   }
 
   //
@@ -1989,6 +1921,87 @@ namespace LCM {
     U = transpose(R) * X;
 
     return boost::make_tuple(U, S, V);
+  }
+
+  //
+  // Right polar decomposition using a Newton-type algorithm.
+  // See Higham's Functions of Matrices p210 [2008]
+  // \param F tensor (often a deformation-gradient-like tensor)
+  // \return \f$ RU = A \f$ with \f$ R \in SO(3) \f$ and U SPD
+  //
+  template<typename T, Index N>
+  std::pair<Tensor<T, N>, Tensor<T, N> >
+  polar(Tensor<T, N> const & A)
+  {
+    bool
+    scale = true;
+
+    const T
+    tol_scale = 0.01;
+
+    const T
+    tol_conv = sqrt(N) * std::numeric_limits<T>::epsilon();
+
+    Tensor<T, N>
+    X = A;
+
+    T
+    gamma = 2.0;
+
+    const Index
+    max_iter = 1000;
+
+    Index
+    num_iter = 0;
+
+    while (num_iter < max_iter) {
+
+      Tensor<T, N>
+      Y = inverse(X);
+
+      T
+      mu = 1.0;
+
+      if (scale == true) {
+        mu = (norm_1(Y) * norm_infinity(Y)) / (norm_1(X) * norm_infinity(X));
+        mu = sqrt(sqrt(mu));
+      }
+
+      Tensor<T, N>
+      Z = 0.5 * (mu * X + (1.0 / mu) * transpose(Y));
+
+      Tensor<T, N>
+      D = Z - X;
+
+      T
+      delta = norm(D) / norm(Z);
+
+      if (scale == true && delta < tol_scale) {
+        scale = false;
+      }
+
+      bool
+      end_iter =
+          norm(D) <= sqrt(tol_conv) ||
+          (delta > 0.5 * gamma && scale == false);
+
+      X = Z;
+      gamma = delta;
+
+      if (end_iter == true) {
+        break;
+      }
+
+    }
+
+    if (num_iter == max_iter) {
+      std::cerr << "WARNING: Polar iteration did not converge." << std::endl;
+    }
+
+    Tensor<T, N>
+    U = symm(transpose(X) * A);
+
+    return std::make_pair(X, U);
   }
 
   //

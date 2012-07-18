@@ -51,16 +51,18 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:  
-  PHX::MDField<ScalarT,Cell,QuadPoint> T;
+  //PHX::MDField<ScalarT,Cell,QuadPoint> T;
   PHX::MDField<ScalarT,Cell,QuadPoint> rho;
-  PHX::MDField<ScalarT,Cell,QuadPoint> beta;
+  PHX::MDField<ScalarT,Cell,QuadPoint> mu;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
+  //PHX::MDField<ScalarT,Cell,QuadPoint> beta;
   Teuchos::Array<double> gravity;
   
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> force;
 
    //Radom field types
-  enum BFTYPE {NONE, CONSTANT};
+  enum BFTYPE {NONE, CONSTANT, POLY, SINSIN, SINCOSZ};
   BFTYPE bf_type;
 
   unsigned int numQPs, numDims;

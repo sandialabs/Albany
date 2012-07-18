@@ -314,13 +314,12 @@ FELIX::Stokes::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Body Force"));
 
     //Input
-    //p->set<string>("Temperature QP Variable Name", "Temperature");
     p->set<string>("Density QP Variable Name", "Density");
-    p->set<string>("Volumetric Expansion Coefficient QP Variable Name", 
-		   "Volumetric Expansion Coefficient");
-
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector); 
+    p->set<string>("Material Property Name", "Viscosity");
+    p->set<string>("Coordinate Vector Name", "Coord Vec");
+    //p->set< RCP<DataLayout> >("Coordinate Data Layout", dl->vertices_vector);
 
     Teuchos::ParameterList& paramList = params->sublist("Body Force");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
@@ -390,9 +389,8 @@ FELIX::Stokes::constructEvaluators(
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
     p->set<string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
     p->set<string>("Pressure QP Variable Name", "Pressure");
-    p->set<string>("Pressure Gradient QP Variable Name", "Pressure Gradient");
     p->set<string>("Viscosity QP Variable Name", "Viscosity");
-    p->set<string>("Rm Name", "Rm");
+    p->set<string>("Body Force Name", "Body Force");
 
     p->set<string>("Velocity QP Variable Name", "Velocity");
     p->set<string>("Density QP Variable Name", "Density");

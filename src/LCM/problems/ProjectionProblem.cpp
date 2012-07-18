@@ -28,9 +28,10 @@ Albany::ProjectionProblem::
 ProjectionProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 			const Teuchos::RCP<ParamLib>& paramLib_,
 			const int numDim_) :
-  Albany::AbstractProblem(params_, paramLib_, numDim_ + 1), // additional DOF for pore pressure
+  Albany::AbstractProblem(params_, paramLib_, numDim_ + 9), // additional DOF for pore pressure
   haveSource(false),
-  numDim(numDim_)
+  numDim(numDim_),
+  projection(params->sublist("Projection").get("Projection Variable", ""),params->sublist("Projection").get("Projection Rank",0),params->sublist("Projection").get("Projection Comp",0),numDim)
 {
  
   std::string& method = params->get("Name", "Total Lagrangian Plasticity with Projection ");
@@ -39,12 +40,48 @@ ProjectionProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   haveSource =  params->isSublist("Source Functions");
 
   matModel = params->sublist("Material Model").get("Model Name", "NeoHookean");
+  projectionVariable = params->sublist("Projection").get("Projection Variable", "");
+  projectionRank = params->sublist("Projection").get("Projection Rank",0);
+  *out << "Projection Variable: " << projectionVariable << std::endl;
+  *out << "Projection Variable Rank: " << projectionRank << std::endl;
+
+  // Only run if there is a projection variable defined
+  if(projection.isProjected())
+  {
+ 	  // For debug purposes
+ 	  *out << "Will variable be projected? " << projection.isProjected() << std::endl;
+ 	  *out << "Number of components: " << projection.getProjectedComponents() << std::endl;
+ 	  *out << "Rank of variable: " << projection.getProjectedRank() << std::endl;
+
+ 	  /* the evaluator constructor requires information on the size of the
+ 	   * projected variable as boolean flags in the argument list. Allowed
+ 	   * variable types are vector, (rank 2) tensor, or scalar (default).
+ 	   */
+ 	  switch(projection.getProjectedRank()){
+ 	  case 1:
+ 		 isProjectedVarVector = true;
+ 		 isProjectedVarTensor = false;
+ 		 break;
+
+ 	  case 2:
+ 		  //isProjectedVarVector = false;
+ 		  //isProjectedVarTensor = true;
+ 		  isProjectedVarVector = true;
+ 		  isProjectedVarTensor = false;
+ 		  break;
+
+ 	  default:
+ 		  isProjectedVarVector = false;
+ 		  isProjectedVarTensor = false;
+ 		  break;
+ 	  }
+  }
 
 // Changing this ifdef changes ordering from  (X,Y,T) to (T,X,Y)
 //#define NUMBER_T_FIRST
 #ifdef NUMBER_T_FIRST
   T_offset=0;
-  X_offset=1;
+  X_offset=projection.getProjectedComponents();
 #else
   X_offset=0;
   T_offset=numDim;
@@ -61,9 +98,9 @@ Albany::ProjectionProblem::
 void Albany::ProjectionProblem::getRBMInfoForML(
    int& numPDEs, int& numElasticityDim, int& numScalar,  int& nullSpaceDim)
 {
-  numPDEs = numDim + 1;
+  numPDEs = numDim + projection.getProjectedComponents();
   numElasticityDim = numDim;
-  numScalar = 1;
+  numScalar = projection.getProjectedComponents();
   if (numDim == 1) {nullSpaceDim = 0; }
   else {
     if (numDim == 2) {nullSpaceDim = 3; }
@@ -132,12 +169,36 @@ Albany::ProjectionProblem::getValidProblemParameters() const
   validPL->sublist("Elastic Modulus", false, "");
   validPL->sublist("Shear Modulus", false, "");
   validPL->sublist("Poissons Ratio", false, "");
-  if (matModel=="J2"){
+  validPL->sublist("Projection", false, "");
+
+  if (matModel=="J2"|| matModel=="J2Fiber"){
    validPL->set<bool>("Compute Dislocation Density Tensor", false, "Flag to compute the dislocaiton density tensor (only for 3D)");
    validPL->sublist("Hardening Modulus", false, "");
    validPL->sublist("Saturation Modulus", false, "");
    validPL->sublist("Saturation Exponent", false, "");
    validPL->sublist("Yield Strength", false, "");
+
+   if (matModel == "J2Fiber")
+   {
+	   validPL->set<RealType>("xiinf_J2",false,"");
+	   validPL->set<RealType>("tau_J2",false,"");
+	   validPL->set<RealType>("k_f1",false,"");
+	   validPL->set<RealType>("q_f1",false,"");
+	   validPL->set<RealType>("vol_f1",false,"");
+	   validPL->set<RealType>("xiinf_f1",false,"");
+	   validPL->set<RealType>("tau_f1",false,"");
+	   validPL->set<RealType>("Mx_f1",false,"");
+	   validPL->set<RealType>("My_f1",false,"");
+	   validPL->set<RealType>("Mz_f1",false,"");
+	   validPL->set<RealType>("k_f2",false,"");
+	   validPL->set<RealType>("q_f2",false,"");
+	   validPL->set<RealType>("vol_f2",false,"");
+	   validPL->set<RealType>("xiinf_f2",false,"");
+	   validPL->set<RealType>("tau_f2",false,"");
+	   validPL->set<RealType>("Mx_f2",false,"");
+	   validPL->set<RealType>("My_f2",false,"");
+	   validPL->set<RealType>("Mz_f2",false,"");
+   }
   }
 
   return validPL;
@@ -152,4 +213,3 @@ Albany::ProjectionProblem::getAllocatedStates(
   oldState_ = oldState;
   newState_ = newState;
 }
-

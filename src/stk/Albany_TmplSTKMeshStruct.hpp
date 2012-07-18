@@ -125,7 +125,7 @@ template<int Dim, class traits = albany_stk_mesh_traits<Dim> >
     Teuchos::RCP<Epetra_Map> elem_map;
     std::vector<EBSpecsStruct<Dim, traits> > EBSpecs;
 
-    bool periodic;
+    bool periodic_x, periodic_y, periodic_z;
     bool triangles; // Defaults to false, meaning quad elements
 
   };

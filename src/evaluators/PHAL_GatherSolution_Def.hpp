@@ -27,9 +27,18 @@ template<typename EvalT, typename Traits>
 GatherSolutionBase<EvalT,Traits>::
 GatherSolutionBase(const Teuchos::ParameterList& p)
 { 
-  if (p.isType<bool>("Vector Field"))
+  if      (p.isType<bool>("Vector Field")){
     vectorField = p.get<bool>("Vector Field");
-  else vectorField = false;
+    tensorField = false;
+  }
+  else if (p.isType<bool>("Tensor Field")){
+	tensorField = p.get<bool>("Tensor Field");
+    vectorField = false;
+  }
+  else{
+	vectorField = false;
+	tensorField = false;
+  }
   if (p.isType<bool>("Disable Transient"))
     enableTransient = !p.get<bool>("Disable Transient");
   else enableTransient = true;
@@ -41,7 +50,8 @@ GatherSolutionBase(const Teuchos::ParameterList& p)
   Teuchos::RCP<PHX::DataLayout> dl = 
     p.get< Teuchos::RCP<PHX::DataLayout> >("Data Layout");
 
-  if (!vectorField) {
+  // scalar
+  if (!vectorField && !tensorField) {
     val.resize(solution_names.size());
     for (std::size_t eq = 0; eq < solution_names.size(); ++eq) {
       PHX::MDField<ScalarT,Cell,Node> f(solution_names[eq],dl);
@@ -62,7 +72,8 @@ GatherSolutionBase(const Teuchos::ParameterList& p)
     }
     numFieldsBase = val.size();
   } 
-  else {
+  // vector
+  else if (vectorField) {
     valVec.resize(1);
     PHX::MDField<ScalarT,Cell,Node,VecDim> f(solution_names[0],dl);
     valVec[0] = f;
@@ -79,6 +90,26 @@ GatherSolutionBase(const Teuchos::ParameterList& p)
     }
     numFieldsBase = dl->dimension(2);
   }
+  // tensor
+  else {
+	valTensor.resize(1);
+	PHX::MDField<ScalarT,Cell,Node,VecDim,VecDim> f(solution_names[0],dl);
+	valTensor[0] = f;
+	this->addEvaluatedField(valTensor[0]);
+	// repeat for xdot if transient is enabled
+	if (enableTransient) {
+	  const Teuchos::ArrayRCP<std::string>& names_dot =
+	    p.get< Teuchos::ArrayRCP<std::string> >("Time Dependent Solution Name");
+
+	  valTensor_dot.resize(1);
+	  PHX::MDField<ScalarT,Cell,Node,VecDim,VecDim> f(names_dot[0],dl);
+	  valTensor_dot[0] = f;
+	  this->addEvaluatedField(valTensor_dot[0]);
+	}
+	numFieldsBase = dl->dimension(2);
+	// numFieldsBase is number of fields. For tensors, this is number of components.
+	numFieldsBase = numFieldsBase*numFieldsBase;
+  }
 
   if (p.isType<int>("Offset of First DOF"))
     offset = p.get<int>("Offset of First DOF");
@@ -93,7 +124,7 @@ void GatherSolutionBase<EvalT,Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  if (!vectorField) {
+  if (!vectorField && !tensorField) {
     for (std::size_t eq = 0; eq < numFieldsBase; ++eq)
       this->utils.setFieldData(val[eq],fm);
     if (enableTransient) {
@@ -102,10 +133,15 @@ postRegistrationSetup(typename Traits::SetupData d,
     }
     numNodes = val[0].dimension(1);
   }
-  else {
+  else if (vectorField) {
     this->utils.setFieldData(valVec[0],fm);
     if (enableTransient) this->utils.setFieldData(valVec_dot[0],fm);
     numNodes = valVec[0].dimension(1);
+  }
+  else {
+    this->utils.setFieldData(valTensor[0],fm);
+    if (enableTransient) this->utils.setFieldData(valTensor_dot[0],fm);
+    numNodes = valTensor[0].dimension(1);
   }
 }
 
@@ -143,15 +179,17 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
-        else                   valptr = &(this->val[eq])(cell,node);
-	*valptr = xT_constView[nodeID[node][this->offset + eq]];
+        if      (this->tensorField) valptr = &(this->valTensor[0])(cell,node,eq/numFields,eq%numFields);
+    	else if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+        else                        valptr = &(this->val[eq])(cell,node);
+	    *valptr = xT_constView[nodeID[node][this->offset + eq]];
       }
       if (workset.transientTerms && this->enableTransient) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
-          if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
-          else                   valptr = &(this->val_dot[eq])(cell,node);
-	  *valptr = xdotT_constView[nodeID[node][this->offset + eq]];
+          if      (this->tensorField) valptr = &(this->valTensor_dot[0])(cell,node,eq/numFields,eq%numFields);
+          else if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
+          else                        valptr = &(this->val_dot[eq])(cell,node);
+	      *valptr = xdotT_constView[nodeID[node][this->offset + eq]];
         }
       }
     }
@@ -193,18 +231,20 @@ evaluateFields(typename Traits::EvalData workset)
       int neq = nodeID[node].size();
       std::size_t num_dof = neq * this->numNodes;
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        if (this->vectorField) valptr = &((this->valVec[0])(cell,node,eq));
-        else                   valptr = &(this->val[eq])(cell,node);
+        if      (this->tensorField) valptr = &(this->valTensor[0])(cell,node,eq/numFields,eq%numFields);
+      	else if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+        else                        valptr = &(this->val[eq])(cell,node);
 	*valptr = FadType(num_dof, xT_constView[nodeID[node][this->offset + eq]]);
 	valptr->setUpdateValue(!workset.ignore_residual);
 	valptr->fastAccessDx(neq * node + eq + this->offset) = workset.j_coeff;
       }
       if (workset.transientTerms && this->enableTransient) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
-          if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
-          else                   valptr = &(this->val_dot[eq])(cell,node);
-  	  *valptr = FadType(num_dof, xdotT_constView[nodeID[node][this->offset + eq]]);
-	  valptr->fastAccessDx(neq * node + eq + this->offset) = workset.m_coeff;
+          if      (this->tensorField) valptr = &(this->valTensor_dot[0])(cell,node,eq/numFields,eq%numFields);
+          else if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
+          else                        valptr = &(this->val_dot[eq])(cell,node);
+  	      *valptr = FadType(num_dof, xdotT_constView[nodeID[node][this->offset + eq]]);
+	      valptr->fastAccessDx(neq * node + eq + this->offset) = workset.m_coeff;
         }
       }
     }
@@ -257,12 +297,12 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
-        else                   valptr = &(this->val[eq])(cell,node);
+        if      (this->tensorField) valptr = &(this->valTensor[0])(cell,node,eq/numFields,eq%numFields);
+        else if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+        else                        valptr = &(this->val[eq])(cell,node);
 	if (VxT != Teuchos::null && workset.j_coeff != 0.0) {
 	  *valptr = FadType(num_cols_tot, xT_constView[nodeID[node][this->offset + eq]]);
-	  for (int k=0; k<workset.num_cols_x; k++) {
-            VxT_constView = VxT->getData(k); 
+	for (int k=0; k<workset.num_cols_x; k++) {
 	    valptr->fastAccessDx(k) = 
 	      workset.j_coeff*VxT_constView[nodeID[node][this->offset + eq]];
           }
@@ -273,12 +313,12 @@ evaluateFields(typename Traits::EvalData workset)
       }
       if (workset.transientTerms && this->enableTransient) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
-          if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
-          else                   valptr = &(this->val_dot[eq])(cell,node);
+          if      (this->tensorField) valptr = &(this->valTensor_dot[0])(cell,node,eq/numFields,eq%numFields);
+          else if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
+          else                        valptr = &(this->val_dot[eq])(cell,node);
 	  if (VxdotT != Teuchos::null && workset.m_coeff != 0.0) {
 	    *valptr = FadType(num_cols_tot, xdotT_constView[nodeID[node][this->offset + eq]]);
-	    for (int k=0; k<workset.num_cols_x; k++) {
-              VxdotT_constView = VxdotT->getData(k); 
+	  for (int k=0; k<workset.num_cols_x; k++) {
 	      valptr->fastAccessDx(k) = 
 		workset.m_coeff*VxdotT_constView[nodeID[node][this->offset + eq]];
              }
@@ -326,8 +366,9 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
-        else                   valptr = &(this->val[eq])(cell,node);
+        if      (this->tensorField) valptr = &(this->valTensor[0])(cell,node,eq/numFields,eq%numFields);
+        else if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+        else                        valptr = &(this->val[eq])(cell,node);
 	valptr->reset(sg_expansion);
 	valptr->copyForWrite();
 	for (int block=0; block<nblock; block++)
@@ -336,8 +377,9 @@ evaluateFields(typename Traits::EvalData workset)
       }
       if (workset.transientTerms && this->enableTransient) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
-          if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
-          else                   valptr = &(this->val_dot[eq])(cell,node);
+          if      (this->tensorField) valptr = &(this->valTensor_dot[0])(cell,node,eq/numFields,eq%numFields);
+          else if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
+          else                        valptr = &(this->val_dot[eq])(cell,node);
 	  valptr->reset(sg_expansion);
 	  valptr->copyForWrite();
 	  for (int block=0; block<nblock; block++)
@@ -386,8 +428,9 @@ evaluateFields(typename Traits::EvalData workset)
       std::size_t num_dof = neq * this->numNodes;
 
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
-        else                   valptr = &(this->val[eq])(cell,node);
+        if      (this->tensorField) valptr = &(this->valTensor[0])(cell,node,eq/numFields,eq%numFields);
+        else if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+        else                        valptr = &(this->val[eq])(cell,node);
 	*valptr = SGFadType(num_dof, 0.0);
 	valptr->setUpdateValue(!workset.ignore_residual);
 	valptr->fastAccessDx(neq * node + eq + this->offset) = workset.j_coeff;
@@ -398,8 +441,9 @@ evaluateFields(typename Traits::EvalData workset)
       }
       if (workset.transientTerms && this->enableTransient) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
-          if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
-          else                   valptr = &(this->val_dot[eq])(cell,node);
+          if      (this->tensorField) valptr = &(this->valTensor_dot[0])(cell,node,eq/numFields,eq%numFields);
+          else if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
+          else                        valptr = &(this->val_dot[eq])(cell,node);
   	  *valptr = SGFadType(num_dof, 0.0);
 	  valptr->fastAccessDx(neq * node + eq + this->offset) = workset.m_coeff;
 	  valptr->val().reset(sg_expansion);
@@ -452,8 +496,9 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
-        else                   valptr = &(this->val[eq])(cell,node);
+      	if      (this->tensorField) valptr = &(this->valTensor[0])(cell,node,eq/numFields,eq%numFields);
+      	else if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+        else                        valptr = &(this->val[eq])(cell,node);
 	if (Vx != Teuchos::null && workset.j_coeff != 0.0) {
 	  *valptr = SGFadType(num_cols_tot, 0.0);
 	  for (int k=0; k<workset.num_cols_x; k++)
@@ -469,8 +514,9 @@ evaluateFields(typename Traits::EvalData workset)
       }
       if (workset.transientTerms && this->enableTransient) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
-          if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
-          else                   valptr = &(this->val_dot[eq])(cell,node);
+          if      (this->tensorField) valptr = &(this->valTensor_dot[0])(cell,node,eq/numFields,eq%numFields);
+          else if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
+          else                        valptr = &(this->val_dot[eq])(cell,node);
 	  if (Vxdot != Teuchos::null && workset.m_coeff != 0.0) {
 	    *valptr = SGFadType(num_cols_tot, 0.0);
 	    for (int k=0; k<workset.num_cols_x; k++)
@@ -521,8 +567,9 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
-        else                   valptr = &(this->val[eq])(cell,node);
+      	if      (this->tensorField) valptr = &(this->valTensor[0])(cell,node,eq/numFields,eq%numFields);
+      	else if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+        else                        valptr = &(this->val[eq])(cell,node);
 	valptr->reset(nblock);
 	valptr->copyForWrite();
 	for (int block=0; block<nblock; block++)
@@ -531,8 +578,9 @@ evaluateFields(typename Traits::EvalData workset)
       }
       if (workset.transientTerms && this->enableTransient) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
-          if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
-          else                   valptr = &(this->val_dot[eq])(cell,node);
+          if      (this->tensorField) valptr = &(this->valTensor_dot[0])(cell,node,eq/numFields,eq%numFields);
+          else if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
+          else                        valptr = &(this->val_dot[eq])(cell,node);
 	  valptr->reset(nblock);
 	  valptr->copyForWrite();
 	  for (int block=0; block<nblock; block++)
@@ -579,8 +627,9 @@ evaluateFields(typename Traits::EvalData workset)
       std::size_t num_dof = neq * this->numNodes;
 
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
-        else                   valptr = &(this->val[eq])(cell,node);
+        if      (this->tensorField) valptr = &(this->valTensor[0])(cell,node,eq/numFields,eq%numFields);
+        else if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+        else                        valptr = &(this->val[eq])(cell,node);
 	*valptr = MPFadType(num_dof, 0.0);
 	valptr->setUpdateValue(!workset.ignore_residual);
 	valptr->fastAccessDx(neq * node + eq + this->offset) = workset.j_coeff;
@@ -591,8 +640,9 @@ evaluateFields(typename Traits::EvalData workset)
       }
       if (workset.transientTerms && this->enableTransient) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
-          if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
-          else                   valptr = &(this->val_dot[eq])(cell,node);
+          if      (this->tensorField) valptr = &(this->valTensor_dot[0])(cell,node,eq/numFields,eq%numFields);
+          else if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
+          else                        valptr = &(this->val_dot[eq])(cell,node);
   	  *valptr = MPFadType(num_dof, 0.0);
 	  valptr->fastAccessDx(neq * node + eq + this->offset) = workset.m_coeff;
 	  valptr->val().reset(nblock);
@@ -643,8 +693,9 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
-        else                   valptr = &(this->val[eq])(cell,node);
+        if      (this->tensorField) valptr = &(this->valTensor[0])(cell,node,eq/numFields,eq%numFields);
+        else if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+        else                        valptr = &(this->val[eq])(cell,node);
 	if (Vx != Teuchos::null && workset.j_coeff != 0.0) {
 	  *valptr = MPFadType(num_cols_tot, 0.0);
 	  for (int k=0; k<workset.num_cols_x; k++)
@@ -660,8 +711,9 @@ evaluateFields(typename Traits::EvalData workset)
       }
       if (workset.transientTerms && this->enableTransient) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
-          if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
-          else                   valptr = &(this->val_dot[eq])(cell,node);
+          if      (this->tensorField) valptr = &(this->valTensor_dot[0])(cell,node,eq/numFields,eq%numFields);
+          else if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
+          else                        valptr = &(this->val_dot[eq])(cell,node);
 	  if (Vxdot != Teuchos::null && workset.m_coeff != 0.0) {
 	    *valptr = MPFadType(num_cols_tot, 0.0);
 	    for (int k=0; k<workset.num_cols_x; k++)

@@ -51,7 +51,7 @@ private:
 
   // Input:
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> BF;
+  PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint, Dim> GradBF;
 
 

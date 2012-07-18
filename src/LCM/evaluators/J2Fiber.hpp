@@ -54,6 +54,7 @@ private:
   // Input:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defgrad;
   PHX::MDField<ScalarT,Cell,QuadPoint> J;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> gptLocation;
   PHX::MDField<ScalarT,Cell,QuadPoint> elasticModulus;
   PHX::MDField<ScalarT,Cell,QuadPoint> poissonsRatio;
   PHX::MDField<ScalarT,Cell,QuadPoint> yieldStrength;
@@ -95,18 +96,18 @@ private:
   RealType vol_f1;
   RealType xiinf_f1;
   RealType tau_f1;
-  RealType Mx_f1;
-  RealType My_f1;
-  RealType Mz_f1;
 
   RealType k_f2;
   RealType q_f2;
   RealType vol_f2;
   RealType xiinf_f2;
   RealType tau_f2;
-  RealType Mx_f2;
-  RealType My_f2;
-  RealType Mz_f2;
+
+  bool isLocalCoord;
+
+  std::vector< RealType > direction_f1;
+  std::vector< RealType > direction_f2;
+  std::vector< RealType > ringCenter;
 
 };
 }

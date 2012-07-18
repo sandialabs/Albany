@@ -54,7 +54,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> VGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint> TauM;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> Rm;
-  PHX::MDField<ScalarT,Cell,QuadPoint> rho;
+  //PHX::MDField<ScalarT,Cell,QuadPoint> rho;
   
 
   // Output:

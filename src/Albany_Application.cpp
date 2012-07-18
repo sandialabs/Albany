@@ -200,6 +200,7 @@ Application(const RCP<const Epetra_Comm>& comm_,
   overlapped_xdot = rcp(new Epetra_Vector(*(disc->getOverlapMap())));
   overlapped_f = rcp(new Epetra_Vector(*(disc->getOverlapMap())));
   overlapped_jac = rcp(new Epetra_CrsMatrix(Copy, *(disc->getOverlapJacobianGraph())));
+  
   //Create analogous Tpetra objects
   importerT = rcp(new Tpetra_Import(disc->getMapT(), disc->getOverlapMapT()));
   exporterT = rcp(new Tpetra_Export(disc->getOverlapMapT(), disc->getMapT()));
@@ -210,6 +211,7 @@ Application(const RCP<const Epetra_Comm>& comm_,
 
   // Initialize Epetra solution vector and time deriv
   
+  tmp_ovlp_sol = rcp(new Epetra_Vector(*(disc->getOverlapMap())));
 
   initial_x = disc->getSolutionField();
   initial_x_dot = rcp(new Epetra_Vector(*(disc->getMap())));
@@ -566,6 +568,7 @@ computeGlobalResidual(const double current_time,
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
+//<<<<<<< HEAD
   }
 
   //Copy Tpetra vector fT into Epetra vector f 
@@ -667,6 +670,7 @@ computeGlobalResidualT(const double current_time,
   }
 
   //cout << f << endl;
+  //cout << "Global Resid f\n" << f << endl;
 }
 
 void

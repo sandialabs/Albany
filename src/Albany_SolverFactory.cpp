@@ -664,7 +664,10 @@ setCoordinatesForML(const string& solutionMethod,
       stratList = & piroParams->sublist("NOX").sublist("Direction").sublist("Newton").
                     sublist("Stratimikos Linear Solver").sublist("Stratimikos");
     else if (solutionMethod=="Transient"  && secondOrder=="No")
-      stratList = & piroParams->sublist("Rythmos").sublist("Stratimikos");
+      if (piroParams->isSublist("Rythmos"))
+        stratList = & piroParams->sublist("Rythmos").sublist("Stratimikos");
+      if (piroParams->isSublist("Rythmos Solver"))
+        stratList = & piroParams->sublist("Rythmos Solver").sublist("Stratimikos");
 
     if (stratList && stratList->isParameter("Preconditioner Type")) // Make sure stratList is set before dereference
       if ("ML" == stratList->get<string>("Preconditioner Type")) {

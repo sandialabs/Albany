@@ -74,6 +74,8 @@ Albany::STKDiscretization::~STKDiscretization()
   if (stkMeshStruct->exoOutput) delete mesh_data;
 #endif
   if (allocated_xyz) { delete [] xx; delete [] yy; delete [] zz; delete [] rr; allocated_xyz=false;} 
+
+  for (int i=0; i< toDelete.size(); i++) delete [] toDelete[i];
 }
 
 	    
@@ -170,6 +172,7 @@ Albany::STKDiscretization::getCoordinates() const
     double* x = stk::mesh::field_data(*stkMeshStruct->coordinates_field, *overlapnodes[i]);
     for (int dim=0; dim<stkMeshStruct->numDim; dim++)
       coordinates[3*node_lid + dim] = x[dim];
+
   }
 
   return coordinates;
@@ -221,18 +224,15 @@ Albany::STKDiscretization::getWsPhysIndex() const
   return wsPhysIndex;
 }
 
-/*
-const std::vector<std::string>&
-Albany::STKDiscretization::getNodeSetIDs() const
-{
-  return nodeSetIDs;
-}
-*/
-
-void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln, const double time)
+void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln, const double time, const bool overlapped)
 {
   // Put solution as Epetra_Vector into STK Mesh
-  setSolutionField(soln);
+  if(!overlapped)
+    setSolutionField(soln);
+
+  // soln coming in is overlapped
+  else
+    setOvlpSolutionField(soln);
 
 #ifdef ALBANY_SEACAS
   if (stkMeshStruct->exoOutput) {
@@ -348,8 +348,43 @@ void
 Albany::STKDiscretization::setSolutionField(const Epetra_Vector& soln) 
 {
   // Copy soln vector into solution field, one node at a time
+  // Note that soln coming in is the local (non overlapped) soln
   for (std::size_t i=0; i < ownednodes.size(); i++)  {
     double* sol = stk::mesh::field_data(*stkMeshStruct->solution_field, *ownednodes[i]);
+    for (std::size_t j=0; j<neq; j++)
+      sol[j] = soln[getOwnedDOF(i,j)];
+  }
+}
+
+/* GAH:
+   This version supersedes the one above. Note that if we write this processor's solution contribution into STK's
+   overlapped solution space, we get the proper update of node ghost solution data.
+*/
+/*
+void 
+Albany::STKDiscretization::setSolutionField(const Epetra_Vector& soln) 
+{
+  // Copy soln vector into solution field, one node at a time
+  // Note that soln coming in is the local+ghost (overlapped) soln
+  for (std::size_t i=0; i < overlapnodes.size(); i++)  {
+    double* sol = stk::mesh::field_data(*stkMeshStruct->solution_field, *overlapnodes[i]);
+//    globalID = overlap_node_map->GID(i);
+    int globalID = gid(overlapnodes[i]);
+    if(node_map->MyGID(globalID)){ // Is this node local to soln?
+      int localID = node_map->LID(globalID);
+      for (std::size_t j=0; j<neq; j++)
+        sol[j] = soln[getOwnedDOF(localID, j)];
+    }
+  }
+}
+*/
+void 
+Albany::STKDiscretization::setOvlpSolutionField(const Epetra_Vector& soln) 
+{
+  // Copy soln vector into solution field, one node at a time
+  // Note that soln coming in is the local+ghost (overlapped) soln
+  for (std::size_t i=0; i < overlapnodes.size(); i++)  {
+    double* sol = stk::mesh::field_data(*stkMeshStruct->solution_field, *overlapnodes[i]);
     for (std::size_t j=0; j<neq; j++)
       sol[j] = soln[getOwnedDOF(i,j)];
   }
@@ -592,11 +627,41 @@ void Albany::STKDiscretization::computeWorksetInfo()
         TEUCHOS_TEST_FOR_EXCEPTION(node_lid<0, std::logic_error,
 			   "STK1D_Disc: node_lid out of range " << node_lid << endl);
         coords[b][i][j] = stk::mesh::field_data(*stkMeshStruct->coordinates_field, rowNode);
+
         wsElNodeEqID[b][i][j].resize(neq);
         for (std::size_t eq=0; eq < neq; eq++) 
           wsElNodeEqID[b][i][j][eq] = getOverlapDOF(node_lid,eq);
       }
     }
+  }
+
+  for (int d=0; d<stkMeshStruct->numDim; d++) {
+  if (stkMeshStruct->PBCStruct.periodic[d]) {
+    for (int b=0; b < numBuckets; b++) {
+      for (std::size_t i=0; i < buckets[b]->size(); i++) {
+        int nodes_per_element = (*buckets[b])[i].relations(metaData.NODE_RANK).size();
+        bool anyXeqZero=false;
+        for (int j=0; j < nodes_per_element; j++)  if (coords[b][i][j][d]==0.0) anyXeqZero=true;
+        if (anyXeqZero)  {
+          bool flipZeroToScale=false;
+          for (int j=0; j < nodes_per_element; j++) 
+              if (coords[b][i][j][d] > stkMeshStruct->PBCStruct.scale[d]/1.9) flipZeroToScale=true;
+          if (flipZeroToScale) {  
+            for (int j=0; j < nodes_per_element; j++)  {
+              if (coords[b][i][j][d] == 0.0) {
+                double* xleak = new double [stkMeshStruct->numDim];
+                for (int k=0; k < stkMeshStruct->numDim; k++) 
+                  if (k==d) xleak[d]=stkMeshStruct->PBCStruct.scale[d];
+                  else xleak[k] = coords[b][i][j][k];
+                coords[b][i][j] = xleak; // replace ptr to coords
+                toDelete.push_back(xleak);
+              }
+            }          
+          }
+        }
+      }
+    }
+  }
   }
 
   // Pull out pointers to shards::Arrays for every bucket, for every state
@@ -793,7 +858,7 @@ void Albany::STKDiscretization::computeNodeSets()
     nodeSets[ns->first].resize(nodes.size());
     nodeSetCoords[ns->first].resize(nodes.size());
 //    nodeSetIDs.push_back(ns->first); // Grab string ID
-    *out << "STKDisc: nodeset "<< ns->first <<" has size " << nodes.size() << "  on Proc 0." << endl;
+    cout << "STKDisc: nodeset "<< ns->first <<" has size " << nodes.size() << "  on Proc 0." << endl;
     for (std::size_t i=0; i < nodes.size(); i++) {
       int node_gid = gid(nodes[i]);
       int node_lid = node_mapT->getLocalElement(node_gid);

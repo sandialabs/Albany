@@ -18,6 +18,7 @@
 #define ALBANY_MOROBSERVERFACTORY_HPP
 
 #include "NOX_Epetra_Observer.H"
+#include "Rythmos_IntegrationObserverBase.hpp"
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -32,6 +33,7 @@ public:
                      const Epetra_Map &applicationMap);
 
   Teuchos::RCP<NOX::Epetra::Observer> create(const Teuchos::RCP<NOX::Epetra::Observer> &child);
+  Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > create(const Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > &child);
 
 private:
   bool collectSnapshots() const;

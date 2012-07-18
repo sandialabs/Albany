@@ -98,8 +98,6 @@ namespace Albany {
     const NodeSetList& getNodeSets() const { return nodeSets; };
     const NodeSetCoordList& getNodeSetCoords() const { return nodeSetCoords; };
 
-//    const std::vector<std::string>& getNodeSetIDs() const;
-
     //! Get Side set lists (typedef in Albany_AbstractDiscretization.hpp)
     const SideSetList& getSideSets(const int workset) const { return sideSets[workset]; };
 
@@ -119,7 +117,7 @@ namespace Albany {
     const Teuchos::ArrayRCP<int>&  getWsPhysIndex() const;
 
     // 
-    void outputToExodus(const Epetra_Vector& soln, const double time);
+    void outputToExodus(const Epetra_Vector& soln, const double time, const bool overlapped = false);
  
     Teuchos::RCP<Epetra_Vector> getSolutionField() const;
     //Tpetra analog
@@ -161,7 +159,13 @@ namespace Albany {
     inline int getGlobalDOF(const int inode, const int eq) const;
 
     // Copy solution vector from Epetra_Vector into STK Mesh
+    // Here soln is the local (non overlapped) solution
     void setSolutionField(const Epetra_Vector& soln);
+
+    // Copy solution vector from Epetra_Vector into STK Mesh
+    // Here soln is the local + neighbor (overlapped) solution
+    void setOvlpSolutionField(const Epetra_Vector& soln);
+
     int nonzeroesPerRow(const int neq) const;
     double monotonicTimeLabel(const double time);
 
@@ -229,9 +233,6 @@ namespace Albany {
     Albany::NodeSetList nodeSets;
     Albany::NodeSetCoordList nodeSetCoords;
 
-    //! Just the node set ID strings
-//    std::vector<std::string> nodeSetIDs;
-
     //! side sets stored as std::map(string ID, SideArray classes) per workset (std::vector across worksets)
     std::vector<Albany::SideSetList> sideSets;
 
@@ -264,6 +265,9 @@ namespace Albany {
     // Coordinate vector in format needed by ML. Need to own memory here.
     double *xx, *yy, *zz, *rr;
     bool allocated_xyz;
+
+    // Storage used in periodic BCs to un-roll coordinates. Pointers saved for destructor.
+    std::vector<double*>  toDelete;
 
     Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct;
 

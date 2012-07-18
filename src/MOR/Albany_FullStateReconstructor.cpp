@@ -18,43 +18,26 @@
 
 #include "Albany_ReducedSpace.hpp"
 
-#include "Albany_MultiVectorInputFile.hpp"
-#include "Albany_MultiVectorInputFileFactory.hpp"
+#include "Albany_BasisInputFile.hpp"
 #include "Albany_MultiVectorOutputFile.hpp"
 #include "Albany_MultiVectorOutputFileFactory.hpp"
 
 namespace Albany {
 
-using Teuchos::RCP;
-using Teuchos::rcp;
-using Teuchos::ParameterList;
+using ::Teuchos::RCP;
+using ::Teuchos::rcp;
+using ::Teuchos::ParameterList;
 
 FullStateReconstructor::FullStateReconstructor(const RCP<Teuchos::ParameterList> &params,
                                                const RCP<NOX::Epetra::Observer> &decoratedObserver,
                                                const Epetra_Map &decoratedMap) :
-  params_(fillDefaultParams(params)),
+  params_(fillDefaultBasisInputParams(params)),
   decoratedObserver_(decoratedObserver),
   reducedSpace_(),
   lastFullSolution_(decoratedMap, false)
 {
-  const RCP<const Epetra_MultiVector> orthogonalBasis = createOrthonormalBasis(params_, decoratedMap);
+  const RCP<const Epetra_MultiVector> orthogonalBasis = readOrthonormalBasis(decoratedMap, params_);
   reducedSpace_ = rcp(new LinearReducedSpace(*orthogonalBasis));
-}
-
-RCP<ParameterList> FullStateReconstructor::fillDefaultParams(const RCP<ParameterList> &params)
-{
-  params->get("Input File Group Name", "basis");
-  params->get("Input File Default Base File Name", "basis");
-  return params;
-}
-
-RCP<Epetra_MultiVector> FullStateReconstructor::createOrthonormalBasis(const RCP<ParameterList> &params,
-                                                                       const Epetra_Map &map)
-{
-  // TODO read partial basis
-  MultiVectorInputFileFactory factory(params);
-  const RCP<MultiVectorInputFile> file = factory.create();
-  return file->read(map);
 }
 
 void FullStateReconstructor::observeSolution(const Epetra_Vector& solution)
@@ -62,7 +45,7 @@ void FullStateReconstructor::observeSolution(const Epetra_Vector& solution)
   computeLastFullSolution(solution);
   decoratedObserver_->observeSolution(lastFullSolution_);
 }
-  
+
 void FullStateReconstructor::observeSolution(const Epetra_Vector& solution, double time_or_param_val)
 {
   computeLastFullSolution(solution);
@@ -71,7 +54,7 @@ void FullStateReconstructor::observeSolution(const Epetra_Vector& solution, doub
 
 void FullStateReconstructor::computeLastFullSolution(const Epetra_Vector& reducedSolution)
 {
-  reducedSpace_->expansion(reducedSolution, lastFullSolution_); 
+  reducedSpace_->expansion(reducedSolution, lastFullSolution_);
 }
 
 } // end namespace Albany

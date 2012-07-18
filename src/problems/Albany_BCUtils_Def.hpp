@@ -357,7 +357,8 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
       const Teuchos::RCP<Albany::Layouts>& dl,
       Teuchos::RCP<Teuchos::ParameterList> params,
       Teuchos::RCP<ParamLib> paramLib,
-      const Teuchos::RCP<QCAD::MaterialDatabase>& materialDB)
+      const Teuchos::RCP<QCAD::MaterialDatabase>& materialDB,
+      bool isTensorField)
 {
    using Teuchos::RCP;
    using Teuchos::rcp;
@@ -483,8 +484,10 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
      p->set< Teuchos::ArrayRCP<std::string> >("Solution Names", dof_names);
 
      p->set<bool>("Vector Field", isVectorField);
-     if (isVectorField) p->set< RCP<DataLayout> >("Data Layout", dl->node_vector);
-     else               p->set< RCP<DataLayout> >("Data Layout", dl->node_scalar);
+     p->set<bool>("Tensor Field", isTensorField);
+     if      (isTensorField) p->set< RCP<DataLayout> >("Data Layout", dl->node_tensor);
+     else if (isVectorField) p->set< RCP<DataLayout> >("Data Layout", dl->node_vector);
+     else                    p->set< RCP<DataLayout> >("Data Layout", dl->node_scalar);
 
      p->set<int>("Offset of First DOF", offsetToFirstDOF);
      p->set<bool>("Disable Transient", true);

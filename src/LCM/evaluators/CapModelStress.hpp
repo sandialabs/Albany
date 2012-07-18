@@ -77,30 +77,34 @@ namespace LCM {
     unsigned int numQPs;
     unsigned int numDims;
 
-    double A;
-    double B;
-    double C;
-    double theta;
-    double R;
-    double kappa0;
-    double W;
-    double D1;
-    double D2;
-    double calpha;
-    double psi;
-    double N;
-    double L;
-    double phi;
-    double Q;
+    RealType A;
+    RealType B;
+    RealType C;
+    RealType theta;
+    RealType R;
+    RealType kappa0;
+    RealType W;
+    RealType D1;
+    RealType D2;
+    RealType calpha;
+    RealType psi;
+    RealType N;
+    RealType L;
+    RealType phi;
+    RealType Q;
 
     std::string strainName, stressName;
-    std::string backStressName, capParameterName;
+    std::string backStressName, capParameterName, eqpsName, hardeningModulusName;
 
     //output
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> stress;
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> backStress;
     PHX::MDField<ScalarT, Cell, QuadPoint> capParameter;
-
+    PHX::MDField<ScalarT, Cell, QuadPoint> friction;
+    PHX::MDField<ScalarT, Cell, QuadPoint> dilatancy;
+    PHX::MDField<ScalarT, Cell, QuadPoint> eqps;
+    PHX::MDField<ScalarT, Cell, QuadPoint> evolps;
+    PHX::MDField<ScalarT, Cell, QuadPoint> hardeningModulus;
   };
 }
 

@@ -30,8 +30,8 @@ StokesContinuityResid(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ), 
   VGrad       (p.get<std::string>                   ("Gradient QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-  rho         (p.get<std::string>                   ("Density QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  //rho         (p.get<std::string>                   ("Density QP Variable Name"),
+//	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
 
   CResidual   (p.get<std::string>                   ("Residual Name"), 
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
@@ -39,7 +39,7 @@ StokesContinuityResid(const Teuchos::ParameterList& p) :
 {
   this->addDependentField(wBF);  
   this->addDependentField(VGrad);
-  this->addDependentField(rho);
+  //this->addDependentField(rho);
   if (havePSPG) {
     wGradBF = PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>(
       p.get<std::string>("Weighted Gradient BF Name"),
@@ -79,7 +79,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(VGrad,fm);
-  this->utils.setFieldData(rho,fm);
+  //this->utils.setFieldData(rho,fm);
   if (havePSPG) {
     this->utils.setFieldData(wGradBF,fm); 
     this->utils.setFieldData(TauM,fm);
@@ -100,7 +100,8 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       divergence(cell,qp) = 0.0;
       for (std::size_t i=0; i < numDims; ++i) {
-        divergence(cell,qp) += rho(cell,qp)*VGrad(cell,qp,i,i);
+        //divergence(cell,qp) += rho(cell,qp)*VGrad(cell,qp,i,i);
+        divergence(cell,qp) += VGrad(cell,qp,i,i);
       }
     }
   }
@@ -114,7 +115,8 @@ evaluateFields(typename Traits::EvalData workset)
 	for (std::size_t qp=0; qp < numQPs; ++qp) {               
 	  for (std::size_t j=0; j < numDims; ++j) { 
 	    CResidual(cell,node) += 
-	      rho(cell,qp)*TauM(cell,qp)*Rm(cell,qp,j)*wGradBF(cell,node,qp,j);
+	      //rho(cell,qp)*TauM(cell,qp)*Rm(cell,qp,j)*wGradBF(cell,node,qp,j);
+	      TauM(cell,qp)*Rm(cell,qp,j)*wGradBF(cell,node,qp,j);
 	  }  
 	}    
       }

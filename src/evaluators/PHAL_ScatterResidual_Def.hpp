@@ -42,11 +42,16 @@ ScatterResidualBase(const Teuchos::ParameterList& p)
     p.get< Teuchos::RCP<PHX::DataLayout> >("Data Layout");
 
   if (p.isType<bool>("Vector Field"))
-    vectorField = p.get<bool>("Vector Field");
-  else vectorField = false;
+	  vectorField = p.get<bool>("Vector Field");
+  else
+	  vectorField = false;
+  if (p.isType<bool>("Tensor Field"))
+	  tensorField = p.get<bool>("Tensor Field");
+  else
+	  tensorField = false;
 
-  
-  if (!vectorField) {
+  // scalar
+  if (!vectorField && !tensorField) {
     numFieldsBase = names.size();
     const std::size_t num_val = numFieldsBase;
     val.resize(num_val);
@@ -56,12 +61,25 @@ ScatterResidualBase(const Teuchos::ParameterList& p)
       this->addDependentField(val[eq]);
     }
   }
-  else {
+
+  // vector
+  else if (vectorField) {
     valVec.resize(1);
     PHX::MDField<ScalarT,Cell,Node,Dim> mdf(names[0],dl);
     valVec[0] = mdf;
     this->addDependentField(valVec[0]);
     numFieldsBase = dl->dimension(2);
+  }
+
+  // tensor
+  else {
+	  valTensor.resize(1);
+	  PHX::MDField<ScalarT,Cell,Node,Dim,Dim> mdf(names[0],dl);
+	  valTensor[0] = mdf;
+	  this->addDependentField(valTensor[0]);
+	  numFieldsBase = dl->dimension(2);
+	  // numFieldsBase is number of fields. For tensors, this is number of components.
+	  numFieldsBase = numFieldsBase*numFieldsBase;
   }
 
   if (p.isType<int>("Offset of First DOF"))
@@ -79,14 +97,18 @@ void ScatterResidualBase<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  if (!vectorField) {
+  if (!vectorField && !tensorField) {
     for (std::size_t eq = 0; eq < numFieldsBase; ++eq)
       this->utils.setFieldData(val[eq],fm);
     numNodes = val[0].dimension(1);
   }
-  else {
+  else if (vectorField) {
     this->utils.setFieldData(valVec[0],fm);
     numNodes = valVec[0].dimension(1);
+  }
+  else {
+	  this->utils.setFieldData(valTensor[0],fm);
+	  numNodes = valTensor[0].dimension(1);
   }
 }
 
@@ -119,9 +141,9 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node) {
 
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
-        else                   valptr = &(this->val[eq])(cell,node);
-	//(*f)[nodeID[node][this->offset + eq]] += *valptr;
+    	if      (this->tensorField) valptr = &(this->valTensor[0])(cell,node,eq/numFields,eq%numFields);
+    	else if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+        else                        valptr = &(this->val[eq])(cell,node);
 	f_nonconstView[nodeID[node][this->offset + eq]] += *valptr;
       }
     }
@@ -163,8 +185,9 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node) {
      
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        if (this->vectorField) valptr = &((this->valVec[0])(cell,node,eq));
-        else                   valptr = &(this->val[eq])(cell,node);
+    	  if      (this->tensorField) valptr = &(this->valTensor[0])(cell,node,eq/numFields,eq%numFields);
+    	  else if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+    	  else                        valptr = &(this->val[eq])(cell,node);
 
         rowT[0] = nodeID[node][this->offset + eq];
         int neq = nodeID[node].size();
@@ -230,8 +253,9 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
-        else                   valptr = &(this->val[eq])(cell,node);
+    	  if      (this->tensorField) valptr = &(this->valTensor[0])(cell,node,eq/numFields,eq%numFields);
+    	  else if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+    	  else                        valptr = &(this->val[eq])(cell,node);
 
         int row = nodeID[node][this->offset + eq];
 
@@ -282,8 +306,9 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node) {
 
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
-        else                   valptr = &(this->val[eq])(cell,node);
+    	  if      (this->tensorField) valptr = &(this->valTensor[0])(cell,node,eq/numFields,eq%numFields);
+    	  else if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+    	  else                        valptr = &(this->val[eq])(cell,node);
 	for (int block=0; block<nblock; block++)
 	  (*f)[block][nodeID[node][this->offset + eq]] += valptr->coeff(block);
       }
@@ -326,8 +351,9 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node) {
 
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
-        else                   valptr = &(this->val[eq])(cell,node);
+    	  if      (this->tensorField) valptr = &(this->valTensor[0])(cell,node,eq/numFields,eq%numFields);
+    	  else if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+    	  else                        valptr = &(this->val[eq])(cell,node);
 
         row = nodeID[node][this->offset + eq];
         int neq = nodeID[node].size();
@@ -407,8 +433,9 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
-        else                   valptr = &(this->val[eq])(cell,node);
+    	  if      (this->tensorField) valptr = &(this->valTensor[0])(cell,node,eq/numFields,eq%numFields);
+    	  else if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+    	  else                        valptr = &(this->val[eq])(cell,node);
 
         int row = nodeID[node][this->offset + eq];
 
@@ -457,8 +484,9 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node) {
 
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
-        else                   valptr = &(this->val[eq])(cell,node);
+    	  if      (this->tensorField) valptr = &(this->valTensor[0])(cell,node,eq/numFields,eq%numFields);
+    	  else if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+    	  else                        valptr = &(this->val[eq])(cell,node);
 	for (int block=0; block<nblock; block++)
 	  (*f)[block][nodeID[node][this->offset + eq]] += valptr->coeff(block);
       }
@@ -501,8 +529,9 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node) {
 
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
-        else                   valptr = &(this->val[eq])(cell,node);
+    	  if      (this->tensorField) valptr = &(this->valTensor[0])(cell,node,eq/numFields,eq%numFields);
+    	  else if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+    	  else                        valptr = &(this->val[eq])(cell,node);
 
         row = nodeID[node][this->offset + eq];
         int neq = nodeID[node].size();
@@ -577,8 +606,9 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
-        else                   valptr = &(this->val[eq])(cell,node);
+    	  if      (this->tensorField) valptr = &(this->valTensor[0])(cell,node,eq/numFields,eq%numFields);
+    	  else if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+    	  else                        valptr = &(this->val[eq])(cell,node);
 
         int row = nodeID[node][this->offset + eq];
 

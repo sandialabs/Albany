@@ -79,16 +79,12 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{2366.9875}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{2399.7262}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-2"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)"
-		value="{-1.02793}"/>
+		value="{-1.059319}"/>
     <Parameter  name="Number of Dakota Comparisons" type="int" value="0"/>
-  </ParameterList>
-  <ParameterList name="VTK">
-    <Parameter name="Do Visualization" type="bool" value="0"/>
-    <Parameter name="Visualize Sensitivities" type="bool" value="0"/>
   </ParameterList>
   <ParameterList name="Piro">
     <ParameterList name="Rythmos">

@@ -77,6 +77,7 @@ Stokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     havePSPG = params->get("Have Pressure Stabilization", true);
   }
 
+  haveSource = true; 
 
 
 

@@ -132,7 +132,6 @@ evaluateFields(typename Traits::EvalData workset)
       } 
     }
   }
-
 /** // Gravity term used for load stepping 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t node=0; node < numNodes; ++node) {
