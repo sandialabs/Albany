@@ -19,7 +19,7 @@ namespace LCM {
   // Sign function
   //
   template <typename T> int sgn(T const & s) {
-    return (T(0) < s) - (s < T(0));
+    return int(T(0) < s) - int(s < T(0));
   }
 
   //

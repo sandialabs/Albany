@@ -1746,8 +1746,8 @@ namespace LCM {
       // case of very large ga
       s0 = ga;
       s1 = ha > 1.0 ?
-          fa / (ga / ha) :
-          (fa / ga) * ha;
+          T(fa / (ga / ha)) :
+          T((fa / ga) * ha);
       cu = 1.0;
       su = h / g;
       cv = f / g;
@@ -1756,16 +1756,16 @@ namespace LCM {
       // normal case
       T d = fa - ha;
       T l = d != fa ?
-          d / fa :
-          1.0; // l \in [0,1]
+          T(d / fa) :
+          T(1.0); // l \in [0,1]
       T m = g / f; // m \in (-1/macheps, 1/macheps)
       T t = 2.0 - l; // t \in [1,2]
       T mm = m * m;
       T tt = t * t;
       T s = sqrt(tt + mm); // s \in [1,1 + 1/macheps]
       T r = l != 0.0 ?
-          sqrt(l * l + mm) :
-          fabs(m); // r \in [0,1 + 1/macheps]
+          T(sqrt(l * l + mm)) :
+          T(fabs(m)); // r \in [0,1 + 1/macheps]
       T a = 0.5 * (s + r); // a \in [1,1 + |m|]
       s1 = ha / a;
       s0 = fa * a;
@@ -1777,8 +1777,8 @@ namespace LCM {
       } else {
         // note that m is very tiny
         tau = l == 0.0 ?
-            copysign(T(2.0), f) * copysign(T(1.0), g) :
-            g / copysign(d, f) + m / t;
+            T(copysign(T(2.0), f) * copysign(T(1.0), g)) :
+            T(g / copysign(d, f) + m / t);
       }
       T lv = sqrt(tau * tau + 4.0); // second assignment to L in DLASV2
       cv = 2.0 / lv;
@@ -1869,7 +1869,7 @@ namespace LCM {
       cr = R(0,0);
 
       T const &
-      sr = (sgn(R(0,1)) == sgn(R(1,0))) ? -R(0,1) : R(0,1);
+      sr = (sgn(R(0,1)) == sgn(R(1,0))) ? T(-R(0,1)) : T(R(0,1));
 
       // Apply both Givens rotations to matrices
       // that are converging to singular values and singular vectors

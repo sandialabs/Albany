@@ -16,6 +16,7 @@
 #include<ctime>
 
 #include <Teuchos_UnitTestHarness.hpp>
+#include "Sacado.hpp"
 #include "Tensor.h"
 #include "Intrepid_FieldContainer.hpp"
 
@@ -485,6 +486,20 @@ namespace {
     B = R - X * LCM::transpose(Y) + U - Y * D * LCM::transpose(Y);
 
     TEST_COMPARE(norm(B), <=, 100*std::numeric_limits<ScalarT>::epsilon());
+  }
+
+  TEUCHOS_UNIT_TEST(TensorUtils, TensorSVD3x3Fad)
+  {
+    LCM::Tensor < Sacado::Fad::DFad<double>, 3>
+    A(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0);
+
+    LCM::Tensor<Sacado::Fad::DFad<double>, 3> U, S, V;
+
+    boost::tie(U, S, V) = LCM::svd(A);
+
+    LCM::Tensor < Sacado::Fad::DFad<double>, 3 > B = U * S * LCM::transpose(V);
+
+    TEST_COMPARE(norm(A - B), <=, 100*std::numeric_limits<ScalarT>::epsilon());
   }
 
 } // namespace
