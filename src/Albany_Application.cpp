@@ -185,6 +185,7 @@ Application(const RCP<const Epetra_Comm>& comm_,
   overlapped_xdot = rcp(new Epetra_Vector(*(disc->getOverlapMap())));
   overlapped_f = rcp(new Epetra_Vector(*(disc->getOverlapMap())));
   overlapped_jac = rcp(new Epetra_CrsMatrix(Copy, *(disc->getOverlapJacobianGraph())));
+  tmp_ovlp_sol = rcp(new Epetra_Vector(*(disc->getOverlapMap())));
 
   // Initialize solution vector and time deriv
   initial_x = disc->getSolutionField();
@@ -193,10 +194,10 @@ Application(const RCP<const Epetra_Comm>& comm_,
   if (initial_guess != Teuchos::null) *initial_x = *initial_guess;
   else {
     overlapped_x->Import(*initial_x, *importer, Insert);
-    Albany::InitialConditions(overlapped_x, wsElNodeEqID, coords, neq, numDim,
+    Albany::InitialConditions(overlapped_x, wsElNodeEqID, wsEBNames, coords, neq, numDim,
                               problemParams->sublist("Initial Condition"),
                               disc->hasRestartSolution());
-    Albany::InitialConditions(overlapped_xdot,  wsElNodeEqID, coords, neq, numDim,
+    Albany::InitialConditions(overlapped_xdot,  wsElNodeEqID, wsEBNames, coords, neq, numDim,
                               problemParams->sublist("Initial Condition Dot"));
     initial_x->Export(*overlapped_x, *exporter, Insert);
     initial_x_dot->Export(*overlapped_xdot, *exporter, Insert);
@@ -486,7 +487,7 @@ computeGlobalResidual(const double current_time,
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
   } 
-  //cout << f << endl;
+  //cout << "Global Resid f\n" << f << endl;
 }
 
 void

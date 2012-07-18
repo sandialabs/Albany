@@ -20,6 +20,12 @@
 #include "Albany_ProjectionErrorObserver.hpp"
 #include "Albany_FullStateReconstructor.hpp"
 
+#include "Albany_RythmosSnapshotCollectionObserver.hpp"
+#include "Albany_RythmosProjectionErrorObserver.hpp"
+#include "Albany_RythmosFullStateReconstructor.hpp"
+
+#include "Rythmos_CompositeIntegrationObserver.hpp"
+
 #include "Teuchos_ParameterList.hpp"
 
 #include <string>
@@ -42,17 +48,41 @@ MORObserverFactory::MORObserverFactory(const RCP<ParameterList> &parentParams,
 RCP<NOX::Epetra::Observer> MORObserverFactory::create(const RCP<NOX::Epetra::Observer> &child)
 {
   RCP<NOX::Epetra::Observer> result = child;
-  
+
   if (collectSnapshots()) {
     result = rcp(new SnapshotCollectionObserver(getSnapParameters(), result));
   }
-  
+
   if (computeProjectionError()) {
     result = rcp(new ProjectionErrorObserver(getErrorParameters(), result, rcp(new Epetra_Map(applicationMap_))));
   }
 
   if (useReducedOrderModel()) {
     result = rcp(new FullStateReconstructor(getReducedOrderModelParameters(), result, applicationMap_));
+  }
+
+  return result;
+}
+
+RCP<Rythmos::IntegrationObserverBase<double> > MORObserverFactory::create(const RCP<Rythmos::IntegrationObserverBase<double> > &child) {
+  RCP<Rythmos::IntegrationObserverBase<double> > result = child;
+
+  if (collectSnapshots()) {
+    const RCP<Rythmos::CompositeIntegrationObserver<double> > composite = Rythmos::createCompositeIntegrationObserver<double>();
+    composite->addObserver(result);
+    composite->addObserver(rcp(new RythmosSnapshotCollectionObserver(getSnapParameters(), rcp(new Epetra_Map(applicationMap_)))));
+    result = composite;
+  }
+
+  if (computeProjectionError()) {
+    const RCP<Rythmos::CompositeIntegrationObserver<double> > composite = Rythmos::createCompositeIntegrationObserver<double>();
+    composite->addObserver(result);
+    composite->addObserver(rcp(new RythmosProjectionErrorObserver(getErrorParameters(), rcp(new Epetra_Map(applicationMap_)))));
+    result = composite;
+  }
+
+  if (useReducedOrderModel()) {
+    result = rcp(new RythmosFullStateReconstructor(getReducedOrderModelParameters(), result, rcp(new Epetra_Map(applicationMap_))));
   }
 
   return result;

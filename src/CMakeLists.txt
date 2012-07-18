@@ -59,6 +59,7 @@ SET(HEADERS
 #problems
 SET(SOURCES ${SOURCES}
 	problems/Albany_AbstractProblem.cpp 
+	problems/Albany_CahnHillProblem.cpp 
 	problems/Albany_ProblemUtils.cpp 
 	problems/Albany_EvaluatorUtils.cpp 
 	problems/Albany_ResponseUtilities.cpp 
@@ -77,6 +78,7 @@ SET(SOURCES ${SOURCES}
 SET(HEADERS ${HEADERS}
 	problems/Albany_ProblemFactory.hpp 
 	problems/Albany_AbstractProblem.hpp 
+	problems/Albany_CahnHillProblem.hpp 
 	problems/Albany_ProblemUtils.hpp 
 	problems/Albany_EvaluatorUtils.hpp 
 	problems/Albany_EvaluatorUtils_Def.hpp 
@@ -165,9 +167,13 @@ SET(SOURCES ${SOURCES}
         evaluators/PHAL_DOFGradInterpolation.cpp
         evaluators/PHAL_DOFVecInterpolation.cpp
         evaluators/PHAL_DOFVecGradInterpolation.cpp
+        evaluators/PHAL_DOFTensorInterpolation.cpp
         evaluators/PHAL_MapToPhysicalFrame.cpp
         evaluators/PHAL_HelmholtzResid.cpp
         evaluators/PHAL_GatherCoordinateVector.cpp
+  evaluators/PHAL_CahnHillRhoResid.cpp
+  evaluators/PHAL_CahnHillWResid.cpp
+	evaluators/PHAL_CahnHillChemTerm.cpp 
 	evaluators/PHAL_JouleHeating.cpp
 	evaluators/PHAL_TEProp.cpp
 	evaluators/PHAL_SaveStateField.cpp
@@ -224,12 +230,20 @@ SET(HEADERS ${HEADERS}
         evaluators/PHAL_DOFVecInterpolation_Def.hpp
         evaluators/PHAL_DOFVecGradInterpolation.hpp
         evaluators/PHAL_DOFVecGradInterpolation_Def.hpp
+        evaluators/PHAL_DOFTensorInterpolation.hpp
+        evaluators/PHAL_DOFTensorInterpolation_Def.hpp
         evaluators/PHAL_MapToPhysicalFrame.hpp
         evaluators/PHAL_MapToPhysicalFrame_Def.hpp
         evaluators/PHAL_HelmholtzResid.hpp
         evaluators/PHAL_HelmholtzResid_Def.hpp
         evaluators/PHAL_GatherCoordinateVector.hpp
         evaluators/PHAL_GatherCoordinateVector_Def.hpp
+  evaluators/PHAL_CahnHillRhoResid.hpp
+  evaluators/PHAL_CahnHillRhoResid_Def.hpp
+  evaluators/PHAL_CahnHillWResid.hpp
+  evaluators/PHAL_CahnHillWResid_Def.hpp
+	evaluators/PHAL_CahnHillChemTerm.hpp 
+	evaluators/PHAL_CahnHillChemTerm_Def.hpp 
 	evaluators/PHAL_JouleHeating.hpp
 	evaluators/PHAL_JouleHeating_Def.hpp
 	evaluators/PHAL_TEProp.hpp
@@ -276,6 +290,9 @@ SET(HEADERS ${HEADERS}
 SET(MOR_DIR ${Albany_SOURCE_DIR}/src/MOR)
 
 SET(SOURCES ${SOURCES}
+  ${MOR_DIR}/Albany_GaussNewtonOperatorFactory.cpp
+  ${MOR_DIR}/Albany_PetrovGalerkinOperatorFactory.cpp
+  ${MOR_DIR}/Albany_ReducedJacobianFactory.cpp
   ${MOR_DIR}/Albany_ReducedLinearOperatorFactory.cpp
   ${MOR_DIR}/Albany_ReducedSpace.cpp
   ${MOR_DIR}/Albany_GalerkinProjectionOperator.cpp
@@ -283,10 +300,16 @@ SET(SOURCES ${SOURCES}
   ${MOR_DIR}/Albany_ReducedOrderModelFactory.cpp
   ${MOR_DIR}/Albany_MORObserverFactory.cpp
   ${MOR_DIR}/Albany_FullStateReconstructor.cpp
+  ${MOR_DIR}/Albany_RythmosFullStateReconstructor.cpp
+  ${MOR_DIR}/Albany_RythmosStepperFullStateWrapper.cpp
   ${MOR_DIR}/Albany_ProjectionError.cpp
   ${MOR_DIR}/Albany_ProjectionErrorObserver.cpp
+  ${MOR_DIR}/Albany_RythmosProjectionErrorObserver.cpp
   ${MOR_DIR}/Albany_SnapshotCollection.cpp
   ${MOR_DIR}/Albany_SnapshotCollectionObserver.cpp
+  ${MOR_DIR}/Albany_RythmosSnapshotCollectionObserver.cpp
+  ${MOR_DIR}/Albany_BasisInputFile.cpp
+  ${MOR_DIR}/Albany_MultiVectorInputFile.cpp
   ${MOR_DIR}/Albany_MultiVectorInputFileFactory.cpp
   ${MOR_DIR}/Albany_MatrixMarketMVInputFile.cpp
   ${MOR_DIR}/Albany_Hdf5MVInputFile.cpp
@@ -297,6 +320,10 @@ SET(SOURCES ${SOURCES}
 SET(HEADERS ${HEADERS}
   ${MOR_DIR}/Albany_MORUtils.hpp
   ${MOR_DIR}/Albany_BasisOps.hpp
+  ${MOR_DIR}/Albany_ReducedOperatorFactory.hpp
+  ${MOR_DIR}/Albany_GaussNewtonOperatorFactory.hpp
+  ${MOR_DIR}/Albany_PetrovGalerkinOperatorFactory.hpp
+  ${MOR_DIR}/Albany_ReducedJacobianFactory.hpp
   ${MOR_DIR}/Albany_ReducedLinearOperatorFactory.hpp
   ${MOR_DIR}/Albany_ReducedSpace.hpp
   ${MOR_DIR}/Albany_GalerkinProjectionOperator.hpp
@@ -304,10 +331,16 @@ SET(HEADERS ${HEADERS}
   ${MOR_DIR}/Albany_ReducedOrderModelFactory.hpp
   ${MOR_DIR}/Albany_MORObserverFactory.hpp
   ${MOR_DIR}/Albany_FullStateReconstructor.hpp
+  ${MOR_DIR}/Albany_RythmosFullStateReconstructor.hpp
+  ${MOR_DIR}/Albany_RythmosStepperFullStateWrapper.hpp
   ${MOR_DIR}/Albany_ProjectionError.hpp
   ${MOR_DIR}/Albany_ProjectionErrorObserver.hpp
+  ${MOR_DIR}/Albany_RythmosProjectionErrorObserver.hpp
   ${MOR_DIR}/Albany_SnapshotCollection.hpp
   ${MOR_DIR}/Albany_SnapshotCollectionObserver.hpp
+  ${MOR_DIR}/Albany_RythmosSnapshotCollectionObserver.hpp
+  ${MOR_DIR}/Albany_RythmosUtils.hpp
+  ${MOR_DIR}/Albany_BasisInputFile.hpp
   ${MOR_DIR}/Albany_MultiVectorInputFile.hpp
   ${MOR_DIR}/Albany_MultiVectorInputFileFactory.hpp
   ${MOR_DIR}/Albany_MatrixMarketMVInputFile.hpp
@@ -334,6 +367,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/problems/ThermoPoroPlasticityProblem.cpp
     ${LCM_DIR}/problems/ThermoMechanicalProblem.cpp
     ${LCM_DIR}/problems/HDiffusionDeformationProblem.cpp
+    ${LCM_DIR}/problems/ProjectionProblem.cpp
   )
   IF(ALBANY_MPI)
     SET(SOURCES ${SOURCES}
@@ -352,6 +386,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/problems/ThermoPoroPlasticityProblem.hpp
     ${LCM_DIR}/problems/ThermoMechanicalProblem.hpp
     ${LCM_DIR}/problems/HDiffusionDeformationProblem.hpp
+    ${LCM_DIR}/problems/ProjectionProblem.hpp
   )
   IF(ALBANY_MPI)
     SET(HEADERS ${HEADERS}
@@ -420,6 +455,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/TotalConcentration.cpp
     ${LCM_DIR}/evaluators/HDiffusionDeformationMatterResidual.cpp
     ${LCM_DIR}/evaluators/ScalarL2ProjectionResidual.cpp
+    ${LCM_DIR}/evaluators/L2ProjectionResidual.cpp
     ${LCM_DIR}/evaluators/TauContribution.cpp
     ${LCM_DIR}/evaluators/StrainRateFactor.cpp
     ${LCM_DIR}/evaluators/MixtureThermalExpansion.cpp
@@ -428,6 +464,10 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/GradientElementLength.cpp
     ${LCM_DIR}/evaluators/UnitGradient.cpp
     ${LCM_DIR}/evaluators/SetField.cpp
+    ${LCM_DIR}/evaluators/AssumedStrain.cpp
+    ${LCM_DIR}/evaluators/QptLocation.cpp
+    ${LCM_DIR}/evaluators/MooneyRivlin.cpp
+    ${LCM_DIR}/evaluators/MooneyRivlinDamage.cpp
   )
 
   IF(ALBANY_MPI)
@@ -555,6 +595,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/HDiffusionDeformationMatterResidual_Def.hpp
     ${LCM_DIR}/evaluators/ScalarL2ProjectionResidual.hpp
     ${LCM_DIR}/evaluators/ScalarL2ProjectionResidual_Def.hpp
+    ${LCM_DIR}/evaluators/L2ProjectionResidual.hpp
+    ${LCM_DIR}/evaluators/L2ProjectionResidual_Def.hpp
     ${LCM_DIR}/evaluators/StrainRateFactor.hpp
     ${LCM_DIR}/evaluators/StrainRateFactor_Def.hpp
     ${LCM_DIR}/evaluators/TauContribution.hpp
@@ -571,7 +613,15 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/UnitGradient_Def.hpp
     ${LCM_DIR}/evaluators/SetField.hpp 
     ${LCM_DIR}/evaluators/SetField_Def.hpp 
-  )
+    ${LCM_DIR}/evaluators/AssumedStrain.hpp
+    ${LCM_DIR}/evaluators/AssumedStrain_Def.hpp
+    ${LCM_DIR}/evaluators/QptLocation.hpp
+    ${LCM_DIR}/evaluators/QptLocation_Def.hpp
+    ${LCM_DIR}/evaluators/MooneyRivlin.hpp
+    ${LCM_DIR}/evaluators/MooneyRivlin_Def.hpp
+    ${LCM_DIR}/evaluators/MooneyRivlinDamage.hpp
+    ${LCM_DIR}/evaluators/MooneyRivlinDamage_Def.hpp
+ )
 
   IF(ALBANY_MPI)
     SET(HEADERS ${HEADERS}
@@ -588,6 +638,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/utils/Tensor.cc
     ${LCM_DIR}/utils/Topology.cc
     ${LCM_DIR}/utils/LocalNonlinearSolver.cc
+    ${LCM_DIR}/utils/Projection.cpp
   )
 
   SET(HEADERS ${HEADERS}
@@ -596,6 +647,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/utils/Tensor.h
     ${LCM_DIR}/utils/Topology.h 
     ${LCM_DIR}/utils/LocalNonlinearSolver.h 
+    ${LCM_DIR}/utils/Projection.hpp
   )
 
 IF(ALBANY_LAME OR ALBANY_LAMENT)
@@ -629,6 +681,42 @@ IF(ALBANY_LAMENT)
   )
 ENDIF()
 
+ENDIF()
+
+# FELIX
+IF(ALBANY_FELIX)
+  SET(FELIX_DIR ${Albany_SOURCE_DIR}/src/FELIX)
+
+  # FELIX evaluators
+  SET(SOURCES ${SOURCES}
+       ${FELIX_DIR}/evaluators/FELIX_StokesMomentumResid.cpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesContinuityResid.cpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesTauM.cpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesContravarientMetricTensor.cpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesRm.cpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesBodyForce.cpp
+   )
+  SET(HEADERS ${HEADERS}
+       ${FELIX_DIR}/evaluators/FELIX_StokesMomentumResid.hpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesMomentumResid_Def.hpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesContinuityResid.hpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesContinuityResid_Def.hpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesTauM.hpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesTauM_Def.hpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesContravarientMetricTensor.hpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesContravarientMetricTensor_Def.hpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesRm.hpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesRm_Def.hpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesBodyForce.hpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesBodyForce_Def.hpp
+  )  
+ # FELIX problems
+  SET(SOURCES ${SOURCES}
+       ${FELIX_DIR}/problems/FELIX_Stokes.cpp
+     )
+  SET(HEADERS ${HEADERS}
+       ${FELIX_DIR}/problems/FELIX_Stokes.hpp
+     )
 ENDIF()
 
 SET(SOURCES ${SOURCES}
@@ -752,7 +840,8 @@ set(ALB_TRILINOS_LIBS ${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES})
 
 include_directories (${Trilinos_INCLUDE_DIRS} 
                      ./ ./evaluators ./problems ./responses ./stk
-                     ./LCM/ ./LCM/evaluators ./LCM/utils
+                     ./LCM/ ./LCM/evaluators ./LCM/utils ./FELIX/problems 
+                     ./FELIX/evaluators
                      ${Trilinos_TPL_INCLUDE_DIRS})
 
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
@@ -833,6 +922,11 @@ IF (ALBANY_LCM)
     LCM/test/unit_tests/StandardUnitTestMain.cpp
     LCM/test/unit_tests/utTensorUtils.cpp
   )
+  add_executable(
+    utProjection
+    LCM/test/unit_tests/StandardUnitTestMain.cpp
+    LCM/test/unit_tests/utProjection.cpp
+  )
 ENDIF ()
 IF (ALBANY_LAME OR ALBANY_LAMENT)
   add_executable(utLameStress_elastic
@@ -879,4 +973,5 @@ IF (ALBANY_LCM)
   target_link_libraries(utLocalNonlinearSolver albanyLib ${ALL_LIBRARIES})
   target_link_libraries(utLocalization albanyLib ${ALL_LIBRARIES})
   target_link_libraries(utTensorUtils albanyLib ${ALL_LIBRARIES})
+  target_link_libraries(utProjection albanyLib ${ALL_LIBRARIES})
 ENDIF ()

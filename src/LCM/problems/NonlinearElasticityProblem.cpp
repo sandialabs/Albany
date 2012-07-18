@@ -138,17 +138,18 @@ Albany::NonlinearElasticityProblem::getValidProblemParameters() const
 	validPL->set<RealType>("vol_f1",false,"");
 	validPL->set<RealType>("xiinf_f1",false,"");
 	validPL->set<RealType>("tau_f1",false,"");
-	validPL->set<RealType>("Mx_f1",false,"");
-	validPL->set<RealType>("My_f1",false,"");
-	validPL->set<RealType>("Mz_f1",false,"");
 	validPL->set<RealType>("k_f2",false,"");
 	validPL->set<RealType>("q_f2",false,"");
 	validPL->set<RealType>("vol_f2",false,"");
 	validPL->set<RealType>("xiinf_f2",false,"");
 	validPL->set<RealType>("tau_f2",false,"");
-	validPL->set<RealType>("Mx_f2",false,"");
-	validPL->set<RealType>("My_f2",false,"");
-	validPL->set<RealType>("Mz_f2",false,"");
+	validPL->set<RealType>("X0",false,"");
+	validPL->set<RealType>("Y0",false,"");
+	validPL->set<RealType>("Z0",false,"");
+	validPL->sublist("direction_f1",false,"");
+	validPL->sublist("direction_f2",false,"");
+	validPL->sublist("Ring Center",false,"");
+	validPL->set<bool>("isLocalCoord",false,"");
   }
 
   if (matModel == "GursonFD")
@@ -163,6 +164,22 @@ Albany::NonlinearElasticityProblem::getValidProblemParameters() const
 	validPL->set<RealType>("q1",false,"");
 	validPL->set<RealType>("q2",false,"");
 	validPL->set<RealType>("q3",false,"");
+  }
+
+  if (matModel == "MooneyRivlin")
+  {
+	 validPL->set<RealType>("c1",false,"");
+	 validPL->set<RealType>("c2",false,"");
+	 validPL->set<RealType>("c",false,"");
+  }
+
+  if (matModel == "MooneyRivlinDamage")
+  {
+	 validPL->set<RealType>("c1",false,"");
+	 validPL->set<RealType>("c2",false,"");
+	 validPL->set<RealType>("c",false,"");
+	 validPL->set<RealType>("zeta_inf",false,"");
+	 validPL->set<RealType>("iota",false,"");
   }
 
   return validPL;

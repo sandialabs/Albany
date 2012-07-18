@@ -425,8 +425,12 @@ calc_gradu_dotn_const(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
     side_normals, true);
 
   // take grad_T dotted with the unit normal
-  Intrepid::FunctionSpaceTools::dotMultiplyDataData<ScalarT>(qp_data_returned, 
-    grad_T, side_normals);
+//  Intrepid::FunctionSpaceTools::dotMultiplyDataData<ScalarT>(qp_data_returned, 
+//    grad_T, side_normals);
+
+  for(int pt = 0; pt < numPoints; pt++)
+    for(int dim = 0; dim < numDOFsSet; dim++)
+      qp_data_returned(0, pt, dim) = grad_T(0, pt, dim) * side_normals(0, pt, dim);
 
 }
 

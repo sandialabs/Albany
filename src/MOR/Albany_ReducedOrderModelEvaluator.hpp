@@ -24,30 +24,32 @@
 namespace Albany {
 
 class ReducedSpace;
+class ReducedOperatorFactory;
 
 class ReducedOrderModelEvaluator : public EpetraExt::ModelEvaluator {
 public:
   ReducedOrderModelEvaluator(const Teuchos::RCP<EpetraExt::ModelEvaluator> &fullOrderModel,
-                             const Teuchos::RCP<const ReducedSpace> &solutionSpace);
+                             const Teuchos::RCP<const ReducedSpace> &solutionSpace,
+                             const Teuchos::RCP<ReducedOperatorFactory> &reducedOpFactory);
 
   // Overriden functions
   virtual Teuchos::RCP<const Epetra_Map> get_x_map() const;
   virtual Teuchos::RCP<const Epetra_Map> get_f_map() const;
   virtual Teuchos::RCP<const Epetra_Map> get_p_map(int l) const;
   virtual Teuchos::RCP<const Teuchos::Array<std::string> > get_p_names(int l) const;
-  virtual Teuchos::RCP<const Epetra_Map> get_g_map(int j) const; 
+  virtual Teuchos::RCP<const Epetra_Map> get_g_map(int j) const;
 
   virtual Teuchos::RCP<const Epetra_Vector> get_x_init() const;
   virtual Teuchos::RCP<const Epetra_Vector> get_x_dot_init() const;
   virtual Teuchos::RCP<const Epetra_Vector> get_p_init(int l) const;
   virtual double get_t_init() const;
- 
+
   virtual double getInfBound() const;
   virtual Teuchos::RCP<const Epetra_Vector> get_p_lower_bounds(int l) const;
   virtual Teuchos::RCP<const Epetra_Vector> get_p_upper_bounds(int l) const;
   virtual double get_t_upper_bound() const;
   virtual double get_t_lower_bound() const;
-  
+
   virtual Teuchos::RCP<Epetra_Operator> create_W() const;
 
   virtual InArgs createInArgs() const;
@@ -63,6 +65,8 @@ public:
 private:
   Teuchos::RCP<EpetraExt::ModelEvaluator> fullOrderModel_;
   Teuchos::RCP<const ReducedSpace> solutionSpace_;
+
+  Teuchos::RCP<ReducedOperatorFactory> reducedOpFactory_;
 
   const Epetra_Map &componentMap() const;
   Teuchos::RCP<const Epetra_Map> componentMapRCP() const;

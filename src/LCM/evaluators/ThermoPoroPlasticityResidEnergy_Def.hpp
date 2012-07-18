@@ -112,8 +112,6 @@ namespace LCM {
       this->addDependentField(Absorption);
     }
 
-
-
     this->addDependentField(strain);
     this->addDependentField(J);
     this->addDependentField(defgrad);
@@ -225,9 +223,6 @@ evaluateFields(typename Traits::EvalData workset)
   typedef Intrepid::FunctionSpaceTools FST;
   typedef Intrepid::RealSpaceTools<ScalarT> RST;
 
-
-  Albany::MDArray strainold = (*workset.stateArrayPtr)[strainName];
-  Albany::MDArray porosityold = (*workset.stateArrayPtr)[porosityName];
   Albany::MDArray porePressureold = (*workset.stateArrayPtr)[porePressureName];
   Albany::MDArray Jold = (*workset.stateArrayPtr)[JName];
   Albany::MDArray Tempold = (*workset.stateArrayPtr)[tempName];
@@ -241,15 +236,17 @@ evaluateFields(typename Traits::EvalData workset)
 
 	  for (std::size_t node=0; node < numNodes; ++node) {
 		  TResidual(cell,node)=0.0;
-		  for (std::size_t qp=0; qp < numQPs; ++qp) {
+		  	  for (std::size_t qp=0; qp < numQPs; ++qp) {
 
 			      // set correction for 1st time step
-			      if (J(cell,qp) == 0)
-			    		  J(cell,qp) = 1.0;
-			      if (Jold(cell,qp) == 0)
-			      		  Jold(cell,qp) = 1.0;
+			   //   if (J(cell,qp) == 0)
+			   // 		  J(cell,qp) = 1.0;
+			   //   if (Jold(cell,qp) == 0)
+			   //   		  Jold(cell,qp) = 1.0;
 
-			      if (Tempold(cell,qp) != 0) dTemperature = Temp(cell,qp)-Tempold(cell,qp);
+
+			      dTemperature = Temp(cell,qp)-Tempold(cell,qp);
+
 			      dporePressure = porePressure(cell,qp)-porePressureold(cell, qp);
 
 
@@ -258,15 +255,15 @@ evaluateFields(typename Traits::EvalData workset)
  				  TResidual(cell,node) += -refTemp(cell,qp)
  						                  *3.00*alphaSkeleton(cell,qp)*bulk(cell,qp)
  						                  *(
- 					                         (J(cell,qp)-Jold(cell,qp))
+ 						                      std::log(J(cell,qp)/Jold(cell,qp))
  						                   )*wBF(cell, node, qp)  ;
 
  				  // Pore-fluid Resistance Term
- 				  TResidual(cell,node) +=  (-
+ 				  TResidual(cell,node) +=  (
  						  // (J(cell,qp)-Jold(cell,qp))*
  						 // porePressure(cell,qp) +
  						//                    J(cell,qp)*
- 						                    dporePressure)
+ 						                    dporePressure )
  						 //                 / (J(cell,qp)*J(cell,qp))
              		                      *3.00*alphaMixture(cell,qp)*refTemp(cell,qp)
              		                      *wBF(cell, node, qp);
@@ -282,13 +279,9 @@ evaluateFields(typename Traits::EvalData workset)
 		  }
 	  }
 
-
-
-
   // Heat Diffusion Term
 
    ScalarT dt = deltaTime(0);
-
 
    RST::inverse(F_inv, defgrad);
    RST::transpose(F_invT, F_inv);
@@ -309,8 +302,12 @@ evaluateFields(typename Traits::EvalData workset)
 
   FST::integrate<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
 
+
+
+/*
+
   //---------------------------------------------------------------------------//
-  // Stabilization Term (only 2D and 3D problem need stabilizer)
+  // Stabilization Term
 
 // Penalty Term
 
@@ -355,13 +352,9 @@ evaluateFields(typename Traits::EvalData workset)
      vol = 0.0;
      for (std::size_t qp=0; qp < numQPs; ++qp) {
 
-    	 if (Tempold(cell,qp) != 0) dTemperature = Temp(cell,qp)-Tempold(cell,qp);
 
-	  //    // set correction for 1st time step
-	 //     if (J(cell,qp) == 0)
-	  //  		  J(cell,qp) = 1.0;
-	 //     if (Jold(cell,qp) == 0)
-	 //     		  Jold(cell,qp) = 1.0;
+     dTemperature = Temp(cell,qp)-Tempold(cell,qp);
+
 
   	 Tempbar += weights(cell,qp)*(
   		//	-(J(cell,qp)-Jold(cell,qp))*Temp(cell,qp) +
@@ -386,36 +379,48 @@ evaluateFields(typename Traits::EvalData workset)
 		  for (std::size_t qp=0; qp < numQPs; ++qp) {
 //			      corrTerm = refTemp(cell,qp)*3.00*alphaSkeleton(cell,qp)*bulk(cell,qp);
 
-			    if (Tempold(cell,qp) != 0) dTemperature = Temp(cell,qp)-Tempold(cell,qp);
+
+			  	dTemperature = Temp(cell,qp)-Tempold(cell,qp);
+
 			  	dporePressure = porePressure(cell,qp)-porePressureold(cell, qp);
 
 
  				  TResidual(cell,node) -= (
- 						 -(J(cell,qp)-Jold(cell,qp))*porePressure(cell,qp)
- 						 +  J(cell,qp)*dporePressure)
- 						 / (J(cell,qp)*J(cell,qp))
+ 				//		 -(J(cell,qp)-Jold(cell,qp))*porePressure(cell,qp)
+ 					//	 +  J(cell,qp)*
+ 						 dporePressure)
+ 					//	 / (J(cell,qp)*J(cell,qp))
                     	*stabParameter(cell, qp)*alphaMixture(cell,qp)*refTemp(cell,qp)*3.00
-                    	*(wBF(cell, node, qp) -tpterm(cell,node,qp));
+                    	*(wBF(cell, node, qp)
+                    		//	-tpterm(cell,node,qp)
+                    			);
  				  TResidual(cell,node) += pterm(cell,qp)*stabParameter(cell, qp)
  						                  *alphaMixture(cell,qp)*refTemp(cell,qp)*3.00*
-                  		                  (wBF(cell, node, qp) -tpterm(cell,node,qp));
+                  		                  (wBF(cell, node, qp)
+                  		                		  // -tpterm(cell,node,qp)
+                  		                		  );
 
 
  				 TResidual(cell,node) -= (
- 				  						-(J(cell,qp)-Jold(cell,qp))*Temp(cell,qp) +
- 				  						  			  J(cell,qp)*dTemperature)
- 				  						  			 / ( J(cell,qp)*J(cell,qp) )
+ 				  					//	-(J(cell,qp)-Jold(cell,qp))*Temp(cell,qp) +
+ 				  						//  			  J(cell,qp)*
+ 				  						  			  dTemperature)
+ 				  						  //			 / ( J(cell,qp)*J(cell,qp) )
  				  				                     *stabParameter(cell, qp)*gammaMixture(cell, qp)*
- 				  				                     		                    		(wBF(cell, node, qp) -tpterm(cell,node,qp));
+ 				  				                     		                    		(wBF(cell, node, qp)
+ 				  				                     		                    			//	-tpterm(cell,node,qp)
+ 				  				                     		                    				);
  				  TResidual(cell,node) += tterm(cell,qp)*stabParameter(cell, qp)
-		                                                 *gammaMixture(cell, qp)*(wBF(cell, node, qp) -tpterm(cell,node,qp));
+		                                                 *gammaMixture(cell, qp)*(wBF(cell, node, qp)
+		                                                		// -tpterm(cell,node,qp)
+		                                                		 );
 
 
 		  }
 	  }
   }
 
-
+*/
 
 
 }

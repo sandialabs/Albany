@@ -17,6 +17,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Albany_ProblemFactory.hpp"
+#include "Albany_CahnHillProblem.hpp"
 #include "Albany_Helmholtz2DProblem.hpp"
 #include "Albany_HeatProblem.hpp"
 #include "Albany_MultiHeatProblem.hpp"
@@ -39,10 +40,12 @@
 #include "LCM/problems/GradientDamageProblem.hpp"
 #include "LCM/problems/ThermoMechanicalProblem.hpp"
 #include "LCM/problems/HDiffusionDeformationProblem.hpp"
+#include "LCM/problems/ProjectionProblem.hpp"
 #if defined(ALBANY_LAME) || defined(ALBANY_LAMENT)
 #include "LCM/problems/LameProblem.hpp"
 #endif
 #endif
+#include "FELIX/problems/FELIX_Stokes.hpp"
 
 Albany::ProblemFactory::ProblemFactory(
        const Teuchos::RCP<Teuchos::ParameterList>& problemParams_,
@@ -70,6 +73,9 @@ Albany::ProblemFactory::create()
   }
   else if (method == "Heat 3D") {
     strategy = rcp(new Albany::HeatProblem(problemParams, paramLib, 3, comm));
+  }
+  else if (method == "CahnHill 2D") {
+    strategy = rcp(new Albany::CahnHillProblem(problemParams, paramLib, 2, comm));
   }
   else if (method == "ODE") {
     strategy = rcp(new Albany::ODEProblem(problemParams, paramLib, 0));
@@ -202,6 +208,15 @@ Albany::ProblemFactory::create()
   else if (method == "Total Lagrangian ThermoPoroPlasticity 3D") {
       strategy =   rcp(new Albany::ThermoPoroPlasticityProblem(problemParams, paramLib, 3));
   }
+  else if (method == "Total Lagrangian Plasticity with Projection 1D") {
+	  strategy = rcp(new Albany::ProjectionProblem(problemParams, paramLib, 1));
+  }
+  else if (method == "Total Lagrangian Plasticity with Projection 2D") {
+	  strategy = rcp(new Albany::ProjectionProblem(problemParams, paramLib, 2));
+  }
+  else if (method == "Total Lagrangian Plasticity with Projection 3D") {
+	strategy =   rcp(new Albany::ProjectionProblem(problemParams, paramLib, 3));
+  }
   else if (method == "GradientDamage") {
     strategy = rcp(new Albany::GradientDamageProblem(problemParams, paramLib, 3));
   }
@@ -222,6 +237,14 @@ Albany::ProblemFactory::create()
   }
   else if (method == "MesoScaleLink 3D") {
     strategy = rcp(new Albany::MesoScaleLinkProblem(problemParams, paramLib, 3, comm));
+  }
+#endif
+#ifdef ALBANY_FELIX
+  else if (method == "FELIX Stokes" || method == "FELIX Stokes 3D" ) {
+    strategy = rcp(new FELIX::Stokes(problemParams, paramLib, 3));
+  }
+  else if (method == "FELIX Stokes 2D" ) {
+    strategy = rcp(new FELIX::Stokes(problemParams, paramLib, 2));
   }
 #endif
   else {

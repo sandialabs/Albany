@@ -26,7 +26,7 @@
 #include "Tensor.h"
 
 namespace LCM {
-/** \brief J2Fibers stress response
+/** \brief J2Fiber stress response
 
     This evaluator computes stress based on a uncoupled J2Fiber
     potential
@@ -54,6 +54,7 @@ private:
   // Input:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defgrad;
   PHX::MDField<ScalarT,Cell,QuadPoint> J;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> gptLocation;
   PHX::MDField<ScalarT,Cell,QuadPoint> elasticModulus;
   PHX::MDField<ScalarT,Cell,QuadPoint> poissonsRatio;
   PHX::MDField<ScalarT,Cell,QuadPoint> yieldStrength;
@@ -68,6 +69,9 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> energy_J2;
   PHX::MDField<ScalarT,Cell,QuadPoint> energy_f1;
   PHX::MDField<ScalarT,Cell,QuadPoint> energy_f2;
+  PHX::MDField<ScalarT,Cell,QuadPoint> damage_J2;
+  PHX::MDField<ScalarT,Cell,QuadPoint> damage_f1;
+  PHX::MDField<ScalarT,Cell,QuadPoint> damage_f2;
 
   std::string fpName, eqpsName;
   std::string energy_J2Name, energy_f1Name, energy_f2Name;
@@ -75,16 +79,14 @@ private:
   unsigned int numDims;
   unsigned int worksetSize;
 
-  // scratch space FCs
-  Intrepid::FieldContainer<ScalarT> Fpinv;
-  Intrepid::FieldContainer<ScalarT> FpinvT;
-  Intrepid::FieldContainer<ScalarT> Cpinv;
-
-  LCM::Tensor<ScalarT> be;
-  LCM::Tensor<ScalarT> s;
-  LCM::Tensor<ScalarT> N;
-  LCM::Tensor<ScalarT> A;
-  LCM::Tensor<ScalarT> expA;
+  LCM::Tensor<ScalarT, 3> F;
+  LCM::Tensor<ScalarT, 3> Fpn;
+  LCM::Tensor<ScalarT, 3> Cpinv;
+  LCM::Tensor<ScalarT, 3> be;
+  LCM::Tensor<ScalarT, 3> s;
+  LCM::Tensor<ScalarT, 3> N;
+  LCM::Tensor<ScalarT, 3> A;
+  LCM::Tensor<ScalarT, 3> expA;
 
   RealType xiinf_J2;
   RealType tau_J2;
@@ -94,18 +96,18 @@ private:
   RealType vol_f1;
   RealType xiinf_f1;
   RealType tau_f1;
-  RealType Mx_f1;
-  RealType My_f1;
-  RealType Mz_f1;
 
   RealType k_f2;
   RealType q_f2;
   RealType vol_f2;
   RealType xiinf_f2;
   RealType tau_f2;
-  RealType Mx_f2;
-  RealType My_f2;
-  RealType Mz_f2;
+
+  bool isLocalCoord;
+
+  std::vector< RealType > direction_f1;
+  std::vector< RealType > direction_f2;
+  std::vector< RealType > ringCenter;
 
 };
 }

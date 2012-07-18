@@ -1,0 +1,40 @@
+
+Documentation of how I built new libraries for changes
+in STK and SEACAS. Hope this helps -- can be cleaned up.
+
+This process worked for me to build Trilinos with parallel
+hdf5 and netcdf and boost_1_49. This includes Dakota build
+within Trilinos, which needs boost libraries.
+
+1) Download boost 1_49
+Build with this sciript (sice Dakota needs libraries not just headers)
+
+./bootstrap.sh --with-libraries=signals,regex,filesystem,system  --prefix=.
+./bjam install  
+
+2) Download hdf5-1.8.6 (install in place by default)
+./configure CC=mpicc FC=mpif90 CXX=mpicxx --enable-parallel \
+  CXXFLAGS="-fPIC"  CFLAGS="-fPIC" FCFLAGS="-fPIC"
+make install
+
+3) Download netcdf 4.2: need path to hdf5; seem to need a prefix
+besides the $PWD, so used $PWD/install since it gave a conflict.
+
+./configure --prefix=/home/agsalin/install/netcdf-4.2/install \
+CC=mpicc FC=mpif90 CXX=mpicxx \
+CFLAGS="-I/home/agsalin/install/hdf5-1.8.6/hdf5/include" \
+LDFLAGS="-L/home/agsalin/install/hdf5-1.8.6/hdf5/lib" \
+--disable-fsync --disable-cdmremote --disable-dap --disable-doxygen
+
+4) Trilinos cmake script:
+with:
+  NETCDFDIR=/home/agsalin/install/netcdf-4.2/install
+  HDF5DIR=/home/agsalin/install/hdf5-1.8.6/hdf5
+ 
+   -D TPL_ENABLE_Netcdf:BOOL=ON \
+   -D Netcdf_INCLUDE_DIRS:PATH="$NETCDFDIR/include" \
+   -D Netcdf_LIBRARY_DIRS:PATH="$NETCDFDIR/lib" \
+   -D TPL_ENABLE_HDF5:BOOL=ON \
+   -D HDF5_INCLUDE_DIRS:PATH="$HDF5DIR/include" \
+   -D HDF5_LIBRARY_DIRS:PATH="$HDF5DIR/lib" \
+

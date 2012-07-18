@@ -1,4 +1,22 @@
+/********************************************************************\
+*            Albany, Copyright (2010) Sandia Corporation             *
+*                                                                    *
+* Notice: This computer software was prepared by Sandia Corporation, *
+* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
+* the Department of Energy (DOE). All rights in the computer software*
+* are reserved by DOE on behalf of the United States Government and  *
+* the Contractor as provided in the Contract. You are authorized to  *
+* use this computer software for Governmental purposes but it is not *
+* to be released or distributed to the public. NEITHER THE GOVERNMENT*
+* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
+* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
+* including this sentence must appear on any copies of this software.*
+*    Questions to Andy Salinger, agsalin@sandia.gov                  *
+\********************************************************************/
+
 #include "Albany_ReducedLinearOperatorFactory.hpp"
+
+#include "Albany_BasisOps.hpp"
 
 #include "Epetra_CrsMatrix.h"
 #include "Epetra_LocalMap.h"
@@ -75,16 +93,15 @@ RCP<Epetra_CrsMatrix> ReducedLinearOperatorFactory::reducedOperatorNew() const
   return rcp(new Epetra_CrsMatrix(Copy, reducedGraph_));
 }
 
-
 void ReducedLinearOperatorFactory::reducedOperatorInit(const Epetra_Operator &fullOperator,
                                                        Epetra_CrsMatrix &result) const
 {
   // TODO Check arguments
   TEUCHOS_ASSERT(result.Filled());
-  
-  Epetra_MultiVector temp(fullOperator.OperatorRangeMap(), rightProjector_->NumVectors(), false);
+
+  Epetra_MultiVector premultipliedRightProjector(fullOperator.OperatorRangeMap(), rightProjector_->NumVectors(), false);
   {
-    const int err = fullOperator.Apply(*rightProjector_, temp);
+    const int err = fullOperator.Apply(*rightProjector_, premultipliedRightProjector);
     TEUCHOS_ASSERT(err == 0);
   }
 
@@ -101,7 +118,7 @@ void ReducedLinearOperatorFactory::reducedOperatorInit(const Epetra_Operator &fu
   Epetra_Vector rowVector(result.RangeMap(), false);
   for (int iRow = 0; iRow < leftProjector_->NumVectors(); ++iRow) {
     {
-      const int err = rowVector.Multiply('T', 'N', 1.0, temp, *(*leftProjector_)(iRow), 0.0);
+      const int err = reduce(premultipliedRightProjector, *(*leftProjector_)(iRow), rowVector);
       TEUCHOS_ASSERT(err == 0);
     }
     if (isMasterProcess())
