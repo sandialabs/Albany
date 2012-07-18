@@ -595,7 +595,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/HDiffusionDeformationMatterResidual_Def.hpp
     ${LCM_DIR}/evaluators/ScalarL2ProjectionResidual.hpp
     ${LCM_DIR}/evaluators/ScalarL2ProjectionResidual_Def.hpp
-        ${LCM_DIR}/evaluators/L2ProjectionResidual.hpp
+    ${LCM_DIR}/evaluators/L2ProjectionResidual.hpp
     ${LCM_DIR}/evaluators/L2ProjectionResidual_Def.hpp
     ${LCM_DIR}/evaluators/StrainRateFactor.hpp
     ${LCM_DIR}/evaluators/StrainRateFactor_Def.hpp
