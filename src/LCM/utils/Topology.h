@@ -228,6 +228,7 @@ public:
 	 * \brief Determine the nodes associated with a face.
 	 *
 	 * \param[in] Face entity
+	 *
 	 * \return vector of nodes for the face
 	 *
 	 * Return an ordered list of nodes which describe the input face. In 2D,
@@ -334,7 +335,8 @@ public:
 	 *   input vertex.
 	 *
 	 *   \attention Valid for entities of all ranks
-	 */
+	 *///
+		//
 	void
 	star(std::set<EntityKey> & subgraph_entity_lst,
 			std::set<stkEdge,EdgeLessThan> & subgraph_edge_lst,
@@ -355,9 +357,146 @@ public:
 	fracture_boundary(std::map<EntityKey, bool> & entity_open);
 
 	///
+	/// \brief Adds a new entity to the mesh
+	///
+	void
+	add_entity(EntityRank entity_rank);
+
+	///
+	/// \brief Removes an entity and all its connections
+	///
+	void
+	remove_entity(Entity & entity);
+
+	///
+	/// \brief Adds a relation between two entities
+	///
+	void
+	add_relation(Entity & source_entity,Entity & target_entity,EdgeId local_relation_id);
+
+	///
+	/// \brief Removes the relation between two entities
+	///
+	void
+	remove_relation(Entity & source_entity, Entity & target_entity, EdgeId local_relation_id);
+
+	///
+	/// \brief Returns a vector with all the mesh entities of a specific rank
+	///
+	std::vector< Entity*>
+	get_entities_by_rank(const stk::mesh::BulkData & mesh , EntityRank entity_rank);
+
+	///
+	/// \brief Gets the local relation id (0,1,2,...) between two entities
+	///
+    EdgeId
+    get_local_relation_id(Entity & source_entity, Entity & target_entity);
+
+
+    ///
+    /// \brief Returns the total number of lower rank entities connected to a specific entity
+    ///
+    unsigned int
+    get_number_lower_rank_entities (Entity & entity);
+
+    /*
+     *  \brief Returns a group of entities connected directly to a given entity. The input rank is the rank
+     *  of the returned entities.
+     */
+    std::vector<Entity*>
+    get_directly_connected_entities(Entity & entity,EntityRank entity_rank);
+
+    ///
+    /// \brief Checks if an entity exists inside a specific vector. returns "0" for true and "1" for false
+    ///
+    unsigned int
+    find_entity_in_vector(std::vector<Entity*> & entities, Entity * entity);
+
+    /**
+     *  \brief Returns a group of entities connected indirectly to a given entity.
+     *  e.g. of returns: nodes  that belong to a face
+     *  segments or nodes that belong to an  element
+     *  The input rank is the rank of the returned entities.
+     *  The input rank must be lower than that of the input entity
+     *
+     */
+    std::vector<Entity*>
+    get_boundary_entities(Entity & entity, EntityRank entity_rank);
+
+    ///
+    /// \brief Checks if a segment is connected to an input node. Returns true "0" or false "1"
+    ///
+    unsigned int
+    check_segment_connection(Entity & segment, Entity * node);
+
+    /*
+     * \brief Finds the adjacent segments to a given segment. The adjacent segments are connected to a given common point.
+     * it returns  adjacent segments
+     */
+    std::vector<Entity*>
+    find_adjacent_segments(Entity & segment, Entity * node);
+
+    ///
+    /// \brief Returns all the 3D entities to which a given face belongs
+    ///
+    std::vector<Entity*>
+    find_3D_relations(Entity & face);
+
+    /*
+     * \brief Returns all the segments at the boundary of a given element. Including those
+     * connected between the faces barycenters and the faces boundary nodes
+     */
+    std::vector<Entity*>
+    find_segments_from_element(Entity & element);
+
+    ///
+    /// \brief finds the adjacent faces from a given node
+    ///
+    std::vector<Entity*>
+    find_adjacent_faces_from_node(Entity & node);
+
+    /*
+     * \brief Returns "0" if the input faces have two points in common. Otherwise,
+     * it returns "1"
+     */
+    int
+    compare_faces(Entity & face1, Entity & face2);
+
+    /*
+     * \brief Returns the adjacent faces to a given face;
+     * "element_centroid" is the centroid of the element to which the face belongs
+     */
+    std::vector<Entity*>
+    find_adjacent_faces(Entity & face,  Entity & element_centroid);
+
+    ///
+    /// \brief Returns a pointer with the coordinates of a given entity
+    ///
+    double*
+    get_pointer_of_coordintes(Entity * entity);
+
+    ///
+    /// brief Returns a vector with the corresponding former boundary nodes of an input entity
+    ///
+    std::vector<Entity*>
+    get_former_element_nodes(Entity & entity, std::vector<std::vector<Entity*> > & entities);
+
+    /*
+     * brief Generates the coordinate of a given barycenter
+     * "entities" is a vector with the entities of rank "0" that belong to the same entity
+     *  of the barycenter(e.g segment, face, or element)
+     */
+    std::vector<double*>
+    create_coordinates(std::vector<Entity*> & entities, Entity * barycenter);
+
+
+	///
 	/// \brief Barycentric subdivision of simplicial meshes
 	///
-	void barycentric_subdivision();
+	void
+	barycentric_subdivision();
+
+
 
 private:
 

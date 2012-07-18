@@ -151,26 +151,30 @@ void
 topology::disp_connectivity()
 {
 	// Create a list of element entities
-	std::vector<Entity*> element_lst;
-	stk::mesh::get_entities(*(bulkData_),elementRank,element_lst);
+	std::vector<Entity*> element_list;
+	stk::mesh::get_entities(*(bulkData_),elementRank,element_list);
 
 	// Loop over the elements
-	for (int i = 0; i < element_lst.size(); ++i){
-		stk::mesh::PairIterRelation relations = element_lst[i]->relations(nodeRank);
-		cout << "Nodes of Element " << element_lst[i]->identifier() << "\n";
+	const int number_of_elements = element_list.size();
 
-		for (int j = 0; j < relations.size(); ++j){
+	for (int i = 0; i < number_of_elements; ++i) {
+
+		stk::mesh::PairIterRelation relations = element_list[i]->relations(nodeRank);
+
+		const int element_id = element_list[i]->identifier();
+		cout << "Nodes of Element " << element_id << std::endl;
+
+		const int nodes_per_element = relations.size();
+
+		for (int j = 0; j < nodes_per_element; ++j){
 			Entity& node = *(relations[j].entity());
-			cout << ":"  << node.identifier();
+
+			const int node_id = node.identifier();
+			cout << ":"  << node_id;
 		}
-		cout << ":\n";
+
+		cout << ":" << std::endl;
 	}
-
-	//topology::disp_relation(*(element_lst[0]));
-
-	//std::vector<Entity*> face_lst;
-	//stk::mesh::get_entities(*(bulkData_),elementRank-1,face_lst);
-	//topology::disp_relation(*(face_lst[1]));
 
 	return;
 }
@@ -614,7 +618,6 @@ topology::graph_cleanup()
 	communicator = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
 
 	stk_discretization.updateMesh(stkMeshStruct_,communicator);
-
 
 	return;
 }
