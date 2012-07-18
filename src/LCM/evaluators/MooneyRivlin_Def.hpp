@@ -75,9 +75,9 @@ void MooneyRivlin<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   cout.precision(15);
-  LCM::Tensor<ScalarT> S;
-  LCM::Tensor<ScalarT> C_qp;
-  LCM::Tensor<ScalarT> F_qp;
+  LCM::Tensor<ScalarT,3> S;
+  LCM::Tensor<ScalarT,3> C_qp;
+  LCM::Tensor<ScalarT,3> F_qp;
 
   ScalarT d = 2.0*(c1+2*c2);
 
@@ -96,7 +96,7 @@ evaluateFields(typename Traits::EvalData workset)
 			  }
 		  }
 
-		  S = 2.0*(c1 + c2*LCM::I1<ScalarT>(C_qp))*LCM::identity<ScalarT>() - 2.0*c2*C_qp + (2.0*c*J(cell,qp)*(J(cell,qp)-1)-d)*LCM::inverse(C_qp);
+		  S = 2.0*(c1 + c2*LCM::I1<ScalarT,3>(C_qp))*LCM::identity<ScalarT,3>() - 2.0*c2*C_qp + (2.0*c*J(cell,qp)*(J(cell,qp)-1)-d)*LCM::inverse(C_qp);
 
 		  // Convert to Cauchy stress
 		  S = (1./J(cell,qp))*F_qp*S*LCM::transpose<ScalarT>(F_qp);

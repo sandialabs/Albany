@@ -81,9 +81,9 @@ void MooneyRivlinDamage<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   cout.precision(15);
-  LCM::Tensor<ScalarT> S;
-  LCM::Tensor<ScalarT> C_qp;
-  LCM::Tensor<ScalarT> F_qp;
+  LCM::Tensor<ScalarT,3> S;
+  LCM::Tensor<ScalarT,3> C_qp;
+  LCM::Tensor<ScalarT,3> F_qp;
 
   ScalarT d = 2.0*(c1+2.0*c2);
 
@@ -104,17 +104,17 @@ evaluateFields(typename Traits::EvalData workset)
 
 		  // Per Holzapfel, a scalar damage model is added to the strain energy function to model isotropic damage
 		  // Compute the strain energy at the current step
-		  ScalarT Psi_0 = c*std::pow((J(cell,qp)-1),2.0) - d*std::log(J(cell,qp)) + c1*(LCM::I1<ScalarT>(C_qp)-3.0) + c2*(LCM::I2<ScalarT>(C_qp)-3.0);
+		  ScalarT Psi_0 = c*std::pow((J(cell,qp)-1),2.0) - d*std::log(J(cell,qp)) + c1*(LCM::I1<ScalarT,3>(C_qp)-3.0) + c2*(LCM::I2<ScalarT,3>(C_qp)-3.0);
 
 		  alpha(cell,qp) = std::max(alpha(cell,qp),Psi_0);
 
 		  ScalarT zeta = zeta_inf*(1.0-std::exp(-(alpha(cell,qp)/iota)));
 
-		  S = 2.0*(c1 + c2*LCM::I1<ScalarT>(C_qp))*LCM::identity<ScalarT>() - 2.0*c2*C_qp + (2*c*J(cell,qp)*(J(cell,qp)-1.0)-d)*LCM::inverse(C_qp);
+		  S = 2.0*(c1 + c2*LCM::I1<ScalarT,3>(C_qp))*LCM::identity<ScalarT,3>() - 2.0*c2*C_qp + (2*c*J(cell,qp)*(J(cell,qp)-1.0)-d)*LCM::inverse(C_qp);
 		  S = (1.0-zeta)*S;  // Damage the material
 
 		  // Convert to Cauchy stress
-		  S = (1./J(cell,qp))*F_qp*S*LCM::transpose<ScalarT>(F_qp);
+		  S = (1./J(cell,qp))*F_qp*S*LCM::transpose<ScalarT,3>(F_qp);
 
 		  for (std::size_t i=0; i < numDims; ++i){
 			  for (std::size_t j=0; j < numDims; ++j){

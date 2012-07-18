@@ -167,6 +167,7 @@ SET(SOURCES ${SOURCES}
         evaluators/PHAL_DOFGradInterpolation.cpp
         evaluators/PHAL_DOFVecInterpolation.cpp
         evaluators/PHAL_DOFVecGradInterpolation.cpp
+        evaluators/PHAL_DOFTensorInterpolation.cpp
         evaluators/PHAL_MapToPhysicalFrame.cpp
         evaluators/PHAL_HelmholtzResid.cpp
         evaluators/PHAL_GatherCoordinateVector.cpp
@@ -229,6 +230,8 @@ SET(HEADERS ${HEADERS}
         evaluators/PHAL_DOFVecInterpolation_Def.hpp
         evaluators/PHAL_DOFVecGradInterpolation.hpp
         evaluators/PHAL_DOFVecGradInterpolation_Def.hpp
+        evaluators/PHAL_DOFTensorInterpolation.hpp
+        evaluators/PHAL_DOFTensorInterpolation_Def.hpp
         evaluators/PHAL_MapToPhysicalFrame.hpp
         evaluators/PHAL_MapToPhysicalFrame_Def.hpp
         evaluators/PHAL_HelmholtzResid.hpp
@@ -639,6 +642,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/utils/Tensor.cc
     ${LCM_DIR}/utils/Topology.cc
     ${LCM_DIR}/utils/LocalNonlinearSolver.cc
+    ${LCM_DIR}/utils/Projection.cpp
   )
 
   SET(HEADERS ${HEADERS}
@@ -647,6 +651,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/utils/Tensor.h
     ${LCM_DIR}/utils/Topology.h 
     ${LCM_DIR}/utils/LocalNonlinearSolver.h 
+    ${LCM_DIR}/utils/Projection.hpp
   )
 
 IF(ALBANY_LAME OR ALBANY_LAMENT)

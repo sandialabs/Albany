@@ -487,7 +487,7 @@ computeGlobalResidual(const double current_time,
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
   } 
-  //cout << f << endl;
+  //cout << "Global Resid f\n" << f << endl;
 }
 
 void

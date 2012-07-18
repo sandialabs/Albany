@@ -28,6 +28,7 @@
 #include "PHAL_DOFGradInterpolation.hpp"
 #include "PHAL_DOFVecInterpolation.hpp"
 #include "PHAL_DOFVecGradInterpolation.hpp"
+#include "PHAL_DOFTensorInterpolation.hpp"
 
 /********************  Problem Utils Class  ******************************/
 
@@ -45,19 +46,26 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructGatherSolutionEvaluator(
        bool isVectorField,
        Teuchos::ArrayRCP<std::string> dof_names,
        Teuchos::ArrayRCP<std::string> dof_names_dot, 
-       int offsetToFirstDOF)
+       int offsetToFirstDOF,
+       bool isTensorField)
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
     using PHX::DataLayout;
     using Teuchos::ParameterList;
 
+    TEUCHOS_TEST_FOR_EXCEPTION(isVectorField && isTensorField,
+    		std::logic_error,
+    		"Only one of \"Vector Field\" or \"Tensor Field\" can be defined");
+
     RCP<ParameterList> p = rcp(new ParameterList("Gather Solution"));
     p->set< Teuchos::ArrayRCP<std::string> >("Solution Names", dof_names);
 
     p->set<bool>("Vector Field", isVectorField);
-    if (isVectorField) p->set< RCP<DataLayout> >("Data Layout", dl->node_vector);
-    else               p->set< RCP<DataLayout> >("Data Layout", dl->node_scalar);
+    p->set<bool>("Tensor Field", isTensorField);
+    if      (isVectorField) p->set< RCP<DataLayout> >("Data Layout", dl->node_vector);
+    else if (isTensorField) p->set< RCP<DataLayout> >("Data Layout", dl->node_tensor);
+    else                    p->set< RCP<DataLayout> >("Data Layout", dl->node_scalar);
 
     p->set<int>("Offset of First DOF", offsetToFirstDOF);
 
@@ -70,19 +78,26 @@ Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtils<EvalT,Traits>::constructGatherSolutionEvaluator_noTransient(
        bool isVectorField,
        Teuchos::ArrayRCP<std::string> dof_names,
-       int offsetToFirstDOF)
+       int offsetToFirstDOF,
+       bool isTensorField)
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
     using PHX::DataLayout;
     using Teuchos::ParameterList;
 
+    TEUCHOS_TEST_FOR_EXCEPTION(isVectorField && isTensorField,
+    		std::logic_error,
+    		"Only one of \"Vector Field\" or \"Tensor Field\" can be defined");
+
     RCP<ParameterList> p = rcp(new ParameterList("Gather Solution"));
     p->set< Teuchos::ArrayRCP<std::string> >("Solution Names", dof_names);
 
     p->set<bool>("Vector Field", isVectorField);
-    if (isVectorField) p->set< RCP<DataLayout> >("Data Layout", dl->node_vector);
-    else               p->set< RCP<DataLayout> >("Data Layout", dl->node_scalar);
+    p->set<bool>("Tensor Field", isTensorField);
+    if      (isVectorField) p->set< RCP<DataLayout> >("Data Layout", dl->node_vector);
+    else if (isTensorField) p->set< RCP<DataLayout> >("Data Layout", dl->node_tensor);
+    else                    p->set< RCP<DataLayout> >("Data Layout", dl->node_scalar);
 
     p->set<int>("Offset of First DOF", offsetToFirstDOF);
     p->set<bool>("Disable Transient", true);
@@ -96,19 +111,26 @@ Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtils<EvalT,Traits>::constructScatterResidualEvaluator(
        bool isVectorField,
        Teuchos::ArrayRCP<std::string> resid_names,
-       int offsetToFirstDOF, std::string scatterName)
+       int offsetToFirstDOF, std::string scatterName,
+       bool isTensorField)
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
     using PHX::DataLayout;
     using Teuchos::ParameterList;
 
+    TEUCHOS_TEST_FOR_EXCEPTION(isVectorField && isTensorField,
+    		std::logic_error,
+    		"Only one of \"Vector Field\" or \"Tensor Field\" can be defined");
+
     RCP<ParameterList> p = rcp(new ParameterList("Scatter Residual"));
     p->set< Teuchos::ArrayRCP<std::string> >("Residual Names", resid_names);
 
     p->set<bool>("Vector Field", isVectorField);
-    if (isVectorField) p->set< RCP<DataLayout> >("Data Layout", dl->node_vector);
-    else               p->set< RCP<DataLayout> >("Data Layout", dl->node_scalar);
+    p->set<bool>("Tensor Field", isTensorField);
+    if      (isVectorField) p->set< RCP<DataLayout> >("Data Layout", dl->node_vector);
+    else if (isTensorField) p->set< RCP<DataLayout> >("Data Layout", dl->node_tensor);
+    else                    p->set< RCP<DataLayout> >("Data Layout", dl->node_scalar);
 
     p->set< RCP<DataLayout> >("Dummy Data Layout", dl->dummy);
     p->set<int>("Offset of First DOF", offsetToFirstDOF);
@@ -297,4 +319,28 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecGradInterpolationEvaluator(
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
     return rcp(new PHAL::DOFVecGradInterpolation<EvalT,Traits>(*p));
+}
+
+template<typename EvalT, typename Traits>
+Teuchos::RCP< PHX::Evaluator<Traits> >
+Albany::EvaluatorUtils<EvalT,Traits>::constructDOFTensorInterpolationEvaluator(
+       std::string& dof_name)
+{
+    using Teuchos::RCP;
+    using Teuchos::rcp;
+    using PHX::DataLayout;
+    using Teuchos::ParameterList;
+
+    RCP<ParameterList> p = rcp(new ParameterList("DOFTensor Interpolation "+dof_name));
+    // Input
+    p->set<string>("Variable Name", dof_name);
+    p->set< RCP<DataLayout> >("Node Tensor Data Layout", dl->node_tensor);
+
+    p->set<string>("BF Name", "BF");
+    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
+
+    // Output (assumes same Name as input)
+    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+
+    return rcp(new PHAL::DOFTensorInterpolation<EvalT,Traits>(*p));
 }

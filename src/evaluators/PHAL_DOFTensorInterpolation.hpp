@@ -15,31 +15,28 @@
 \********************************************************************/
 
 
-#ifndef L2_PROJECTION_RESIDUAL_HPP
-#define L2_PROJECTION_RESIDUAL_HPP
+#ifndef PHAL_DOFTENSOR_INTERPOLATION_HPP
+#define PHAL_DOFTENSOR_INTERPOLATION_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
-#include "Intrepid_CellTools.hpp"
-#include "Intrepid_Cubature.hpp"
-
-namespace LCM {
+namespace PHAL {
 /** \brief Finite Element Interpolation Evaluator
 
-    This evaluator computes residual of a scalar projection from Gauss points to nodes.
+    This evaluator interpolates nodal DOFTensor values to quad points.
 
 */
 
 template<typename EvalT, typename Traits>
-class L2ProjectionResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
-				public PHX::EvaluatorDerived<EvalT, Traits>  {
+class DOFTensorInterpolation : public PHX::EvaluatorWithBaseImpl<Traits>,
+ 			 public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
-  L2ProjectionResidual(const Teuchos::ParameterList& p);
+  DOFTensorInterpolation(const Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
@@ -49,39 +46,20 @@ public:
 private:
 
   typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-
-
-
-  // Input for
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> Pfield;
-
-
-
-
-
-
-
-  bool haveSource;
-  bool haveMechSource;
-  bool enableTransient;
-
-  unsigned int numNodes;
-  unsigned int numQPs;
-  unsigned int numDims;
-  unsigned int worksetSize;
-
-  // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> projectedField;
+  //! Values at nodes
+  PHX::MDField<ScalarT,Cell,Node,VecDim,VecDim> val_node;
+  //! Basis Functions
+  PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node,VecDim> TResidual;
+  //! Values at quadrature points
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,VecDim> val_qp;
 
-
+  std::size_t numNodes;
+  std::size_t numQPs;
+  std::size_t vecDim;
 };
 }
 
