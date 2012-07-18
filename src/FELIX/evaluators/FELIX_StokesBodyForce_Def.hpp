@@ -175,13 +175,22 @@ evaluateFields(typename Traits::EvalData workset)
        MeshScalarT& z = coordVec(cell,qp,2);
        ScalarT& muqp = mu(cell,qp);
 
-       ScalarT t1 = muqp*z*(1-z)*(1-2*z);
+       /*ScalarT t1 = muqp*z*(1-z)*(1-2*z);
        ScalarT t2 = muqp*(1-6*z+6*z*z);
        ScalarT t3 = muqp*z*z*(1-z)*(1-z);
 
        f[0] =  (-8*pi*pi*t1 + t2 + 4*pi*pi)*sin(x2pi)*sin(y2pi);
        f[1] = -(-8*pi*pi*t1 + t2 + 4*pi*pi)*cos(x2pi)*cos(y2pi);
        f[2] = -2*pi*(-8*pi*pi*t3 + 2*t1 + 1)*cos(x2pi)*sin(y2pi);
+       */
+       ScalarT t1 = muqp*z*(1.0-z)*(1.0-2.0*z); 
+       ScalarT t2 = muqp*(12.0*z - 6.0); 
+       ScalarT t3 = muqp*z*z*(1.0-z)*(1.0-z); 
+       ScalarT t4 = muqp*(1.0-6.0*z+6.0*z*z); 
+     
+       f[0] = (-8.0*pi*pi*t1 + t2 + 4.0*pi*pi*z)*sin(x2pi)*sin(y2pi); 
+       f[1] = (8.0*pi*pi*t1 - t2 - 4.0*pi*pi*z)*cos(x2pi)*cos(y2pi); 
+       f[2] = (16.0*pi*pi*pi*t3 - 4.0*pi*t4 - 2.0*pi)*cos(x2pi)*sin(y2pi); 
      }
    }
  }
