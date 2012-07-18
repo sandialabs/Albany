@@ -613,19 +613,15 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/UnitGradient_Def.hpp
     ${LCM_DIR}/evaluators/SetField.hpp 
     ${LCM_DIR}/evaluators/SetField_Def.hpp 
-<<<<<<< HEAD
     ${LCM_DIR}/evaluators/AssumedStrain.hpp
     ${LCM_DIR}/evaluators/AssumedStrain_Def.hpp
     ${LCM_DIR}/evaluators/QptLocation.hpp
     ${LCM_DIR}/evaluators/QptLocation_Def.hpp
-  )
-=======
     ${LCM_DIR}/evaluators/MooneyRivlin.hpp
     ${LCM_DIR}/evaluators/MooneyRivlin_Def.hpp
     ${LCM_DIR}/evaluators/MooneyRivlinDamage.hpp
     ${LCM_DIR}/evaluators/MooneyRivlinDamage_Def.hpp
  )
->>>>>>> added new material models: Compressible Mooney-Rivlin and Compressible Mooney-Rivlin with damage
 
   IF(ALBANY_MPI)
     SET(HEADERS ${HEADERS}

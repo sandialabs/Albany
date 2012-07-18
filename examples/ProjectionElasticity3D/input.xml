@@ -15,8 +15,12 @@
       </ParameterList>
 	  <Parameter name="DBC on NS NodeSet4 for DOF Z" type="double" value="0.0"/>
     </ParameterList>
-	
-	
+
+    <ParameterList name = "Projection">
+      <Parameter name = "Projection Variable" type = "string" value="J2"/>
+      <Parameter name = "Projection Rank" type = "int" value = "2"/>
+      <Parameter name = "Projection Comp" type = "int" value = "9"/>
+    </ParameterList>	
 	<!-- MATERIAL MODEL/PROPERTIES -->
 	    <ParameterList name="Material Model">
       <Parameter name="Model Name" type="string" value="J2"/>
