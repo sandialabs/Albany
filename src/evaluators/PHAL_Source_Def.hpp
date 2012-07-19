@@ -17,6 +17,10 @@
 
 #include <cmath>
 #include <sstream>
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+
 #include "Sacado_ParameterAccessor.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 #include "Teuchos_VerboseObject.hpp"
@@ -123,6 +127,160 @@ Constant<EvalT,Traits>::
 evaluateFields(typename Traits::EvalData workset){
 
   // Loop over cells, quad points: compute Constant Source Term
+  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+    for (std::size_t iqp=0; iqp<m_num_qp; iqp++)
+      m_source(cell, iqp) = m_constant;
+  }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+template<typename EvalT, typename Traits>
+class Table : 
+    public Source_Base<EvalT,Traits>, 
+    public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+public :
+  typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
+  static bool check_for_existance(Teuchos::ParameterList* source_list);
+  Table(Teuchos::ParameterList& p);
+  virtual ~Table(){}
+  virtual void EvaluatedFields(Source<EvalT,Traits> &source, 
+			       Teuchos::ParameterList& p);
+  virtual void DependentFields(Source<EvalT,Traits> &source, 
+			       Teuchos::ParameterList& p);
+  virtual void FieldData(PHX::EvaluatorUtilities<EvalT,Traits> &utils, 
+			 PHX::FieldManager<Traits>& fm);
+  virtual void evaluateFields (typename Traits::EvalData workset);
+  virtual ScalarT & getValue(const std::string &n) { return m_constant;};
+private :
+  ScalarT     m_constant;
+  std::size_t m_num_qp;
+  Teuchos::ParameterList* m_source_list;
+  PHX::MDField<ScalarT,Cell,Point> m_source;
+  std::vector<double> time;
+  std::vector<double> sourceval;
+  int num_time_vals;
+};
+
+template<typename EvalT,typename Traits>
+bool 
+Table<EvalT,Traits>::
+check_for_existance(Teuchos::ParameterList* source_list)
+{
+  const bool exists = source_list->getEntryPtr("Table");
+  return exists;
+}
+
+template<typename EvalT,typename Traits>
+Table<EvalT,Traits>::
+Table(Teuchos::ParameterList& p) {
+  m_source_list = p.get<Teuchos::ParameterList*>("Parameter List", NULL);
+  Teuchos::ParameterList& paramList = m_source_list->sublist("Table");
+  std::string filename = paramList.get("Filename", "missing");
+
+  // open file
+  std::ifstream inFile(&filename[0]); 
+
+  TEUCHOS_TEST_FOR_EXCEPTION(!inFile, Teuchos::Exceptions::InvalidParameter, std::endl <<
+		     "Error! Cannot open tabular data file \"" << filename 
+		     << "\" in source table fill" << std::endl);
+
+  // Count lines in file
+  int array_size = std::count(std::istreambuf_iterator<char>(inFile), 
+             std::istreambuf_iterator<char>(), '\n');
+
+  // Allocate and fill arrays
+  time.resize(array_size);
+  sourceval.resize(array_size);
+
+  // rewind file
+  inFile.seekg(0);
+
+  for(num_time_vals = 0; num_time_vals < array_size; num_time_vals++){
+
+    if(inFile.eof()) break;
+    inFile >> time[num_time_vals];
+    if(inFile.eof()) break;
+    inFile >> sourceval[num_time_vals];
+
+//std::cout << "time " << num_time_vals << " is " << time[num_time_vals] 
+// << " " << sourceval[num_time_vals] << std::endl;
+  }
+
+  inFile.close();
+
+  m_constant = sourceval[0];
+
+  // Add the factor as a Sacado-ized parameter
+  Teuchos::RCP<ParamLib> paramLib = 
+    p.get< Teuchos::RCP<ParamLib> > ("Parameter Library", Teuchos::null);
+  new Sacado::ParameterRegistration<EvalT, SPL_Traits> ("Table Source Value",
+							this, paramLib);
+}
+
+template<typename EvalT,typename Traits>
+void Table<EvalT,Traits>::
+EvaluatedFields(Source<EvalT,Traits> &source, Teuchos::ParameterList& p) {
+  Teuchos::RCP<PHX::DataLayout> dl = 
+    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+  PHX::MDField<ScalarT,Cell,Point> f(p.get<std::string>("Source Name"), dl);
+  m_source = f ;
+  source.addEvaluatedField(m_source);
+}
+
+template<typename EvalT,typename Traits>
+void 
+Table<EvalT,Traits>::
+DependentFields(Source<EvalT,Traits> &source, Teuchos::ParameterList& p) {
+}
+
+template<typename EvalT,typename Traits>
+void 
+Table<EvalT,Traits>::
+FieldData(PHX::EvaluatorUtilities<EvalT,Traits> &utils, 
+	  PHX::FieldManager<Traits>& fm){
+  utils.setFieldData(m_source, fm);
+  typename std::vector< typename PHX::template MDField<ScalarT,Cell,Node>::size_type > dims;
+  m_source.dimensions(dims);
+  m_num_qp = dims[1];
+}
+
+template<typename EvalT,typename Traits>
+void 
+Table<EvalT,Traits>::
+evaluateFields(typename Traits::EvalData workset){
+
+  if(workset.current_time <= 0.0) // if time is uninitialized or zero, just take first value
+
+    m_constant = sourceval[0];
+
+  else { // Interpolate between time values
+
+    bool found_it = false;
+
+    for(int i = 0; i < num_time_vals - 1; i++) // Stride through time
+
+      if(workset.current_time >= time[i] && workset.current_time <= time[i + 1] ){ // Have bracketed current time
+
+        double s = (workset.current_time - time[i]) / (time[i + 1] - time[i]); // 0 \leq s \leq 1
+
+        m_constant = sourceval[i] + s * (sourceval[i + 1] - sourceval[i]); // interp value corresponding to s
+
+        found_it = true;
+
+        break;
+
+      }
+
+    TEUCHOS_TEST_FOR_EXCEPTION(!found_it, Teuchos::Exceptions::InvalidParameter, std::endl <<
+		     "Error! Cannot locate the current time \"" << workset.current_time 
+		     << "\" in the time series data between the endpoints " << time[0]
+          << " and " << time[num_time_vals - 1] << "." << std::endl);
+  }
+
+  // Loop over cells, quad points: compute Table Source Term
   for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
     for (std::size_t iqp=0; iqp<m_num_qp; iqp++)
       m_source(cell, iqp) = m_constant;
@@ -477,7 +635,7 @@ getValue(const std::string &n) {
   }
   TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		     std::endl <<
-		     "Error! Logic error in getting paramter " << n
+		     "Error! Logic error in getting parameter " << n
 		     << " in TruncatedKL::getValue()" << std::endl);
 }
 
@@ -977,6 +1135,12 @@ Source<EvalT, Traits>::Source(Teuchos::ParameterList& p)
     Source_Base<EvalT,Traits> *sb = q;
     m_sources.push_back(sb);
     this->setName("ConstantSource"+PHX::TypeString<EvalT>::value);
+  }
+  if (Table<EvalT,Traits>::check_for_existance(source_list)) {
+    Table<EvalT,Traits>    *q = new Table<EvalT,Traits>(p);
+    Source_Base<EvalT,Traits> *sb = q;
+    m_sources.push_back(sb);
+    this->setName("TableSource"+PHX::TypeString<EvalT>::value);
   }
   if (Trigonometric<EvalT,Traits>::check_for_existance(source_list)) {
     Trigonometric<EvalT,Traits>    *q = new Trigonometric<EvalT,Traits>(p);

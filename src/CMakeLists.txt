@@ -174,6 +174,7 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_CahnHillRhoResid.cpp
   evaluators/PHAL_CahnHillWResid.cpp
 	evaluators/PHAL_CahnHillChemTerm.cpp 
+  evaluators/PHAL_LangevinNoiseTerm.cpp
 	evaluators/PHAL_JouleHeating.cpp
 	evaluators/PHAL_TEProp.cpp
 	evaluators/PHAL_SaveStateField.cpp
@@ -244,6 +245,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_CahnHillWResid_Def.hpp
 	evaluators/PHAL_CahnHillChemTerm.hpp 
 	evaluators/PHAL_CahnHillChemTerm_Def.hpp 
+	evaluators/PHAL_LangevinNoiseTerm.hpp 
+	evaluators/PHAL_LangevinNoiseTerm_Def.hpp 
 	evaluators/PHAL_JouleHeating.hpp
 	evaluators/PHAL_JouleHeating_Def.hpp
 	evaluators/PHAL_TEProp.hpp

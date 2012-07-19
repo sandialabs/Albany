@@ -1,0 +1,66 @@
+#
+# Infinity
+create cylinder height 1.0 radius 10
+#
+# Liner outer radius
+create cylinder height 1.0 radius 3.80
+#
+# Buffer layer 2 outer radius
+create cylinder height 1.0 radius 3.05
+#
+# Buffer layer 1 outer radius
+create cylinder height 1.0 radius 1.8125
+#
+# Waste package outer radius
+create cylinder height 1.0 radius 0.575
+#
+# Cannister outer radius
+create cylinder height 1.0 radius 0.475
+#
+subtract volume 2 from volume 1 keep
+delete volume 1
+subtract volume 3 from volume 2 keep
+delete volume 2
+subtract volume 4 from volume 3 keep
+delete volume 3
+subtract volume 5 from volume 4 keep
+delete volume 4
+subtract volume 6 from volume 5 keep
+delete volume 5
+# imprint and merge
+imprint volume all
+merge volume all
+# set the number of grid lines we want to see at each radius
+curve 14 18 22 26 12 interval 60
+curve 14 18 22 26 12 scheme equal
+curve 16 interval 30
+# mesh it
+mesh surface 22 26 30 34 38 18
+# block it
+block 1 surface 22
+block 1 element type QUAD4
+block 1 name "ClayRock"
+block 2 surface 26
+block 2 element type QUAD4
+block 2 name "CementLiner"
+block 3 surface 30
+block 3 element type QUAD4
+block 3 name "BufferLayer2"
+block 4 surface 34
+block 4 element type QUAD4
+block 4 name "BufferLayer1"
+block 5 surface 38
+block 5 element type QUAD4
+block 5 name "WastePackage"
+block 6 surface 18
+block 6 element type QUAD4
+block 6 name "Cannister"
+# At infinity (boundary condition)
+nodeset 1 curve 16
+nodeset 1 name "T_inf"
+# Set up a gradient BC if needed
+Sideset 1 curve 16
+sideset 1 name "TGrad_inf"
+# Output
+set large exodus file off
+export mesh "/Volumes/ascldap/Codes/Albany/examples/Carlos/ebs.exo" overwrite

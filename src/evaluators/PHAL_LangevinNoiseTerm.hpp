@@ -15,55 +15,72 @@
 \********************************************************************/
 
 
-#ifndef PHAL_CAHNHILLWRESID_HPP
-#define PHAL_CAHNHILLWRESID_HPP
+#ifndef PHAL_LANGEVINNOISETERM_HPP
+#define PHAL_LANGEVINNOISETERM_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
-namespace PHAL {
+#include "QCAD_EvaluatorTools.hpp"
+
+// Random and Gaussian number distribution
+#include <boost/random.hpp>
+#include <boost/random/normal_distribution.hpp>
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/random/variate_generator.hpp>
 
 /** \brief Finite Element Interpolation Evaluator
 
     This evaluator interpolates nodal DOF values to quad points.
 
 */
+namespace PHAL {
 
 template<typename EvalT, typename Traits>
-class CahnHillWResid : public PHX::EvaluatorWithBaseImpl<Traits>,
-		    public PHX::EvaluatorDerived<EvalT, Traits>  {
+class LangevinNoiseTerm : public PHX::EvaluatorWithBaseImpl<Traits>,
+	     public PHX::EvaluatorDerived<EvalT, Traits>,
+       public QCAD::EvaluatorTools<EvalT, Traits>
+{
 
 public:
 
-  CahnHillWResid(const Teuchos::ParameterList& p);
+  typedef typename EvalT::ScalarT ScalarT;
+
+  LangevinNoiseTerm(const Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
-private:
+  ScalarT& getValue(const std::string &n);
 
-  typedef typename EvalT::ScalarT ScalarT;
+
+private:
+ 
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> BF;
-  PHX::MDField<ScalarT,Cell,QuadPoint> rhoDot;
-  PHX::MDField<ScalarT,Cell,Node> rhoDotNode;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> wGrad;
-
+  PHX::MDField<ScalarT,Cell,QuadPoint> rho;
+  
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> wResidual;
+  PHX::MDField<ScalarT,Cell,QuadPoint> noiseTerm;
 
-  unsigned int numQPs, numDims, numNodes, worksetSize;
+  unsigned int numQPs, numDims, numNodes;
 
-  // lump mass matrix
-  bool lump;
+  ScalarT sd;
+  Teuchos::Array<int> duration;
+
+  boost::mt19937 rng;
+  Teuchos::RCP<boost::normal_distribution<double> > nd;
+  Teuchos::RCP<boost::variate_generator<boost::mt19937&, boost::normal_distribution<double> > > var_nor;
+//  Teuchos::RCP<boost::normal_distribution<ScalarT> > nd;
+//  Teuchos::RCP<boost::variate_generator<boost::mt19937&, boost::normal_distribution<ScalarT> > > var_nor;
+
+  // generate seed convenience function
+  long seedgen();
 
 };
 }
