@@ -46,11 +46,16 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_sinsin.xml
 add_test(${testName}_SinSinPeriodicXY ${Albany.exe} input_sinsin.xml)
 
 #  Fourth test
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_sinsin_dirichlet.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_sinsin_dirichlet.xml COPYONLY)
+add_test(${testName}_SinSinDirichlet ${Albany.exe} input_sinsin_dirichlet.xml)
+
+#  Fifth test
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_sincosz_dirichlet.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_sincosz_dirichlet.xml COPYONLY)
 add_test(${testName}_SinCosZ3DDirichlet ${Albany.exe} input_sincosz_dirichlet.xml)
 
-#  Fifth test
+#  Sixth test
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_sincosz.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_sincosz.xml COPYONLY)
 add_test(${testName}_SinCosZ3DPeriodicXY ${Albany.exe} input_sincosz.xml)
