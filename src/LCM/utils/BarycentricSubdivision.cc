@@ -985,18 +985,18 @@ namespace LCM {
     connectivity_temp.clear();
     connectivity_temp = _connectivity_temp_;
 
-    /*
-     //What is inside the vector?
-     std::vector<Entity*>::const_iterator entities_iterator3;
-     for (entities_iterator3 =   modified2_entities_3D.begin();entities_iterator3 !=   modified2_entities_3D.end();
-     ++entities_iterator3){
-     //disp_relation(*(*entities_iterator3));
-     cout<<"HERE"<<(*(*entities_iterator3)).identifier()<<endl;
-     }
-     */
-
     // End mesh update
     bulkData_->modification_end();
+
+    // Recreate Albany STK Discretization
+    Albany::STKDiscretization & stk_discretization =
+        static_cast<Albany::STKDiscretization &>(*discretization_ptr_);
+
+    Teuchos::RCP<Epetra_Comm> communicator =
+        Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
+
+    stk_discretization.updateMesh(stkMeshStruct_, communicator);
+
 
     return;
   }

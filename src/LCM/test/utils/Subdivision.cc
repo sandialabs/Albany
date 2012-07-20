@@ -77,12 +77,7 @@ int main(int ac, char* av[])
   // Generate the output file
   //-----------------------------------------------------------------------------------------------------------------------------------
 
-  Teuchos::RCP<Albany::AbstractDiscretization> discretization_ptr =
-      topology.get_Discretization();
-  Albany::STKDiscretization & stk_discretization =
-      static_cast<Albany::STKDiscretization &>(*discretization_ptr);
-
-  topology.barycentric_subdivision();
+  //topology.barycentric_subdivision();
 
   std::cout << "*************************" << std::endl;
   std::cout << "After element subdivision" << std::endl;
@@ -95,6 +90,11 @@ int main(int ac, char* av[])
   // Must be called each time at conclusion of mesh modification
   topology.graph_cleanup();
   topology.disp_connectivity();
+
+  Teuchos::RCP<Albany::AbstractDiscretization> discretization_ptr =
+      topology.get_Discretization();
+  Albany::STKDiscretization & stk_discretization =
+      static_cast<Albany::STKDiscretization &>(*discretization_ptr);
 
   Teuchos::RCP<Epetra_Vector> solution_field =
       stk_discretization.getSolutionField();
