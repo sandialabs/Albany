@@ -176,7 +176,7 @@ namespace LCM {
         fvoid = voidVolumeold(cell, qp);
         eq = eqpsold(cell, qp);
 
-        Phi = compute_Phi(s, p, fvoid, eq, K, Y, siginf, delta);
+        Phi = compute_Phi(s, p, fvoid, eq, K, Y, siginf, delta, J(cell, qp));
 
         ScalarT smag2 = LCM::dotdot(s, s);
         ScalarT smag = std::sqrt(smag2);
@@ -204,7 +204,7 @@ namespace LCM {
           while (!converged) {
 
             compute_ResidJacobian(X, R, dRdX, p, fvoid, eq, s, mu, kappa, K, Y,
-                siginf, delta);
+                siginf, delta, J(cell,qp));
 
             normR = 0.0;
             for (int i = 0; i < 4; i++)
@@ -245,6 +245,8 @@ namespace LCM {
 
           ScalarT h = siginf * (1. - std::exp(-delta * eq)) + K * eq;
           ScalarT Ybar = Y + h;
+          Ybar = Ybar * J(cell,qp);
+
           ScalarT tmp = 1.5 * q2 * p / Ybar;
 
           //ScalarT psi;
@@ -311,12 +313,15 @@ namespace LCM {
   template<typename EvalT, typename Traits>
   typename EvalT::ScalarT GursonFD<EvalT, Traits>::compute_Phi(
       LCM::Tensor<ScalarT, 3> & s, ScalarT & p, ScalarT & fvoid, ScalarT & eq,
-      ScalarT & K, ScalarT & Y, ScalarT & siginf, ScalarT & delta)
+      ScalarT & K, ScalarT & Y, ScalarT & siginf, ScalarT & delta, ScalarT & Jacobian)
   {
 
     ScalarT h = siginf * (1. - std::exp(-delta * eq)) + K * eq;
 
     ScalarT Ybar = Y + h;
+
+    // Kirchhoff yield stress
+    Ybar = Ybar * Jacobian;
 
     ScalarT tmp = 1.5 * q2 * p / Ybar;
 
@@ -339,7 +344,7 @@ namespace LCM {
       std::vector<ScalarT> & R, std::vector<ScalarT> & dRdX, const ScalarT & p,
       const ScalarT & fvoid, const ScalarT & eq, LCM::Tensor<ScalarT, 3> & s,
       ScalarT & mu, ScalarT & kappa, ScalarT & K, ScalarT & Y, ScalarT & siginf,
-      ScalarT & delta)
+      ScalarT & delta, ScalarT & Jacobian)
   {
     ScalarT sq32 = std::sqrt(3. / 2.);
     ScalarT sq23 = std::sqrt(2. / 3.);
@@ -374,6 +379,9 @@ namespace LCM {
     h = h + K * eqfad;
 
     DFadType Ybar = Y + h;
+
+    // Kirchhoff yield stress
+    Ybar = Ybar * Jacobian;
 
     DFadType tmp = pfad / Ybar;
     tmp = 1.5 * tmp;
