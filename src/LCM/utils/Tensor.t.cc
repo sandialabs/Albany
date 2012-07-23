@@ -1256,9 +1256,9 @@ namespace LCM {
   {
     //firewalls, make sure R \in SO(3)
     assert(norm(R*transpose(R) - eye<T, 3>())
-        < 100.0 * std::numeric_limits<T>::epsilon());
+        < 100.0 * std::numeric_limits<double>::epsilon());
     assert(fabs(det(R) - 1.0)
-        < 100.0 * std::numeric_limits<T>::epsilon());
+        < 100.0 * std::numeric_limits<double>::epsilon());
 
     // acos requires input between -1 and +1
     T

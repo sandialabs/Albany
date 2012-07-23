@@ -30,6 +30,7 @@ typedef lame::matParams LameMatParams;
 #ifdef ALBANY_LAMENT
 #include <models/Lament_Material.h>
 #include "models/Lament_ElasticNew.h"
+#include "models/Lament_Neohookean.h"
 typedef lament::MatProps LameMatProps;
 typedef lament::Material<double> LameMaterial;
 //typedef lament::Material<ADType> LameMaterial_AD;
@@ -101,6 +102,8 @@ namespace LameUtils {
 
     if(materialModelName == "ELASTIC_NEW")
       materialModel = Teuchos::rcp(new lament::ElasticNew<ScalarT>(props));
+    else if(materialModelName == "NEOHOOKEAN")
+      materialModel = Teuchos::rcp(new lament::Neohookean<ScalarT>(props));
     else{
       if(materialModel.is_null())
 	TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, " unsupported LAMENT material model: " + lameMaterialModelName + " (" + materialModelName + ")\n");
