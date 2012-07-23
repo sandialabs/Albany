@@ -77,7 +77,7 @@ int main(int ac, char* av[])
   // Generate the output file
   //-----------------------------------------------------------------------------------------------------------------------------------
 
-  //topology.barycentric_subdivision();
+  topology.barycentric_subdivision();
 
   std::cout << "*************************" << std::endl;
   std::cout << "After element subdivision" << std::endl;

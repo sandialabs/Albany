@@ -7,9 +7,6 @@
 #if !defined(LCM_Tensor_t_cc)
 #define LCM_Tensor_t_cc
 
-#include <boost/tuple/tuple.hpp>
-#include <Sacado_MathFunctions.hpp>
-
 namespace LCM {
 
   //
@@ -1924,13 +1921,14 @@ namespace LCM {
   }
 
   //
-  // Right polar decomposition using a Newton-type algorithm.
+  // Right and left polar decomposition using a Newton-type algorithm.
   // See Higham's Functions of Matrices p210 [2008]
   // \param F tensor (often a deformation-gradient-like tensor)
-  // \return \f$ RU = A \f$ with \f$ R \in SO(3) \f$ and U SPD
+  // \return \f$ RU = A \f$ with \f$ R \in SO(3) \f$ and \f$ U \in SPD(N) \f$
+  // and \f$ VR = A \f$ for \f$ V \in SPD(N) \f$
   //
   template<typename T, Index N>
-  std::pair<Tensor<T, N>, Tensor<T, N> >
+  boost::tuple<Tensor<T, N>, Tensor<T, N>, Tensor<T, N> >
   polar(Tensor<T, N> const & A)
   {
     bool
@@ -2001,40 +1999,54 @@ namespace LCM {
     Tensor<T, N>
     U = symm(transpose(X) * A);
 
-    return std::make_pair(X, U);
+    Tensor<T, N>
+    V = symm(A * transpose(X));
+
+    return boost::make_tuple(V, X, U);
   }
 
   //
   // R^N Left polar decomposition
-  // \param F tensor (often a deformation-gradient-like tensor)
-  // \return \f$ VR = F \f$ with \f$ R \in SO(N) \f$ and V SPD(N)
+  // \param A tensor (often a deformation-gradient-like tensor)
+  // \return \f$ VR = A \f$ with \f$ R \in SO(N) \f$ and \f$ V \in SPD(N) \f$
   //
   template<typename T, Index N>
   std::pair<Tensor<T, N>, Tensor<T, N > >
-  polar_left(Tensor<T, N> const & F)
+  polar_left(Tensor<T, N> const & A)
   {
     Tensor<T, N>
-    X, S, Y;
+    V, R, U;
 
-    boost::tie(X, S, Y) = svd(F);
-
-    Tensor<T, N>
-    R = X * transpose(Y);
-
-    Tensor<T, N>
-    V = X * S * transpose(X);
+    boost::tie(V, R, U) = polar(A);
 
     return std::make_pair(V, R);
   }
 
   //
-  // R^3 left polar decomposition
+  // R^N Right polar decomposition
+  // \param A tensor (often a deformation-gradient-like tensor)
+  // \return \f$ RU = A \f$ with \f$ R \in SO(N) \f$ and \f$ U \in SPD(N) \f$
+  //
+  template<typename T, Index N>
+  std::pair<Tensor<T, N>, Tensor<T, N > >
+  polar_right(Tensor<T, N> const & A)
+  {
+    Tensor<T, N>
+    V, R, U;
+
+    boost::tie(V, R, U) = polar(A);
+
+    return std::make_pair(R, U);
+  }
+
+  //
+  // R^3 left polar decomposition with eigenvalue decomposition
   // \param F tensor (often a deformation-gradient-like tensor)
   // \return \f$ VR = F \f$ with \f$ R \in SO(3) \f$ and V SPD(3)
   //
   template<typename T>
   std::pair<Tensor<T, 3>, Tensor<T, 3> >
-  polar_left(Tensor<T, 3> const & F)
+  polar_left_eig(Tensor<T, 3> const & F)
   {
     // set up return tensors
     Tensor<T, 3>
@@ -2084,59 +2096,13 @@ namespace LCM {
   }
 
   //
-  // R^2 left polar decomposition
-  // \param F tensor (often a deformation-gradient-like tensor)
-  // \return \f$ VR = F \f$ with \f$ R \in SO(2) \f$ and V SPD(2)
-  //
-  template<typename T>
-  std::pair<Tensor<T, 2>, Tensor<T, 2 > >
-  polar_left(Tensor<T, 2> const & F)
-  {
-    Tensor<T, 2>
-    X, S, Y;
-
-    boost::tie(X, S, Y) = svd(F);
-
-    Tensor<T, 2>
-    R = X * transpose(Y);
-
-    Tensor<T, 2>
-    V = X * S * transpose(X);
-
-    return std::make_pair(V, R);
-  }
-
-  //
-  // R^N right polar decomposition
-  // \param F tensor (often a deformation-gradient-like tensor)
-  // \return \f$ RU = F \f$ with \f$ R \in SO(N) \f$ and U SPD(N)
-  //
-  template<typename T, Index N>
-  std::pair<Tensor<T, N>, Tensor<T, N> >
-  polar_right(Tensor<T, N> const & F)
-  {
-    Tensor<T, N>
-    X, S, Y;
-
-    boost::tie(X, S, Y) = svd(F);
-
-    Tensor<T, N>
-    R = X * transpose(Y);
-
-    Tensor<T, N>
-    U = Y * S * transpose(Y);
-
-    return std::make_pair(R, U);
-  }
-
-  //
-  // R^3 right polar decomposition
+  // R^3 right polar decomposition with eigenvalue decomposition
   // \param F tensor (often a deformation-gradient-like tensor)
   // \return \f$ RU = F \f$ with \f$ R \in SO(3) \f$ and U SPD(3)
   //
   template<typename T>
   std::pair<Tensor<T, 3>, Tensor<T, 3> >
-  polar_right(Tensor<T, 3> const & F)
+  polar_right_eig(Tensor<T, 3> const & F)
   {
     Tensor<T, 3>
     R;
@@ -2180,29 +2146,6 @@ namespace LCM {
     U    = eVec * x * transpose(eVec);
     Uinv = eVec * xi * transpose(eVec);
     R    = F * Uinv;
-
-    return std::make_pair(R, U);
-  }
-
-  //
-  // R^2 right polar decomposition
-  // \param F tensor (often a deformation-gradient-like tensor)
-  // \return \f$ RU = F \f$ with \f$ R \in SO(2) \f$ and U SPD(2)
-  //
-  template<typename T>
-  std::pair<Tensor<T, 2>,Tensor<T, 2> >
-  polar_right(Tensor<T, 2> const & F)
-  {
-    Tensor<T, 2>
-    X, S, Y;
-
-    boost::tie(X, S, Y) = svd(F);
-
-    Tensor<T, 2>
-    R = X * transpose(Y);
-
-    Tensor<T, 2>
-    U = Y * S * transpose(Y);
 
     return std::make_pair(R, U);
   }
