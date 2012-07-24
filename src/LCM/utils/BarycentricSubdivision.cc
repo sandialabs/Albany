@@ -988,16 +988,6 @@ namespace LCM {
     // End mesh update
     bulkData_->modification_end();
 
-    // Recreate Albany STK Discretization
-    Albany::STKDiscretization & stk_discretization =
-        static_cast<Albany::STKDiscretization &>(*discretization_ptr_);
-
-    Teuchos::RCP<Epetra_Comm> communicator =
-        Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
-
-    stk_discretization.updateMesh(stkMeshStruct_, communicator);
-
-
     return;
   }
 
