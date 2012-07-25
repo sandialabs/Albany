@@ -29,7 +29,7 @@
 #include "Teuchos_Tuple.hpp"
 #include "Teuchos_Array.hpp"
 #include "Teuchos_TestForException.hpp"
-#include "Teuchos_XmlParameterListHelpers.hpp"
+#include "Teuchos_XMLParameterListHelpers.hpp"
 
 #include <string>
 #include <stdexcept>
