@@ -7,12 +7,6 @@
 #if !defined(LCM_Tensor_i_cc)
 #define LCM_Tensor_i_cc
 
-#include <algorithm>
-#include <cassert>
-#include <cmath>
-#include <limits>
-#include <Sacado_MathFunctions.hpp>
-
 namespace LCM {
 
   //
@@ -20,6 +14,46 @@ namespace LCM {
   //
   template <typename T> int sgn(T const & s) {
     return int(T(0) < s) - int(s < T(0));
+  }
+
+  //
+  // NaN function. Necessary to choose the proper underlying NaN
+  // for non-floating-point types.
+  // Assumption: non-floating-point types have a typedef that
+  // determines the underlying floating-point type.
+  //
+  template<typename T>
+  typename boost::enable_if<boost::is_floating_point<T> >::type
+  not_a_number()
+  {
+    return std::numeric_limits<T>::quiet_NaN();
+  }
+
+  template<typename T>
+  typename boost::disable_if<boost::is_floating_point<T> >::type
+  not_a_number()
+  {
+    return std::numeric_limits<typename T::value_type>::quiet_NaN();
+  }
+
+  //
+  // Machine epsilon function. Necessary to choose the proper underlying
+  // machine epsilon for non-floating-point types.
+  // Assumption: non-floating-point types have a typedef that
+  // determines the underlying floating-point type.
+  //
+  template<typename T>
+  typename boost::enable_if<boost::is_floating_point<T> >::type
+  machine_epsilon()
+  {
+    return std::numeric_limits<T>::epsilon();
+  }
+
+  template<typename T>
+  typename boost::disable_if<boost::is_floating_point<T> >::type
+  machine_epsilon()
+  {
+    return std::numeric_limits<typename T::value_type>::epsilon();
   }
 
   //

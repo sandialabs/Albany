@@ -7,12 +7,17 @@
 #if !defined(LCM_Tensor_h)
 #define LCM_Tensor_h
 
+#include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <cstdarg>
 #include <iostream>
+#include <limits>
 #include <vector>
 
 #include <boost/tuple/tuple.hpp>
+#include <boost/type_traits/is_floating_point.hpp>
+#include <boost/utility/enable_if.hpp>
 
 namespace LCM {
 
@@ -29,15 +34,32 @@ namespace LCM {
   sgn(T const & s);
 
   ///
-  /// Half angle cosine and sine. Useful for SVD
-  /// in that it does not use any trigonometric
-  /// functions, just square roots.
-  /// \param catheti x, y
-  /// \return cosine and sine of 0.5 * atan2(y, x)
+  /// NaN function. Necessary to choose the proper underlying NaN
+  /// for non-floating-point types.
+  /// Assumption: non-floating-point types have a typedef that
+  /// determines the underlying floating-point type.
   ///
-  template <typename T>
-  std::pair<T, T>
-  half_angle(T const & x, T const & y);
+  template<typename T>
+  typename boost::enable_if<boost::is_floating_point<T> >::type
+  not_a_number();
+
+  template<typename T>
+  typename boost::disable_if<boost::is_floating_point<T> >::type
+  not_a_number();
+
+  ///
+  /// Machine epsilon function. Necessary to choose the proper underlying
+  /// machine epsilon for non-floating-point types.
+  /// Assumption: non-floating-point types have a typedef that
+  /// determines the underlying floating-point type.
+  ///
+  template<typename T>
+  typename boost::enable_if<boost::is_floating_point<T> >::type
+  machine_epsilon();
+
+  template<typename T>
+  typename boost::disable_if<boost::is_floating_point<T> >::type
+  machine_epsilon();
 
   ///
   /// Vector in R^N provided just as a framework to
@@ -2382,50 +2404,61 @@ namespace LCM {
   svd(Tensor<T, 2> const & A);
 
   ///
-  /// Right polar decomposition using a Newton-type algorithm.
+  /// Right and left polar decomposition using a Newton-type algorithm.
   /// See Higham's Functions of Matrices p210 [2008]
-  /// \param F tensor (often a deformation-gradient-like tensor)
-  /// \return \f$ RU = A \f$ with \f$ R \in SO(3) \f$ and U SPD
+  /// \param A tensor (often a deformation-gradient-like tensor)
+  /// \return \f$ RU = A \f$ with \f$ R \in SO(N) \f$ and \f$ U \in SPD(N) \f$
+  /// and \f$ VR = A \f$ for \f$ V \in SPD(N) \f$
   ///
   template<typename T, Index N>
-  std::pair<Tensor<T, N>, Tensor<T, N> >
+  boost::tuple<Tensor<T, N>, Tensor<T, N>, Tensor<T, N> >
   polar(Tensor<T, N> const & A);
 
   // No specialization for R^2 or R^3
 
   ///
   /// Left polar decomposition
-  /// \param F tensor (often a deformation-gradient-like tensor)
-  /// \return \f$ VR = F \f$ with \f$ R \in SO(3) \f$ and V SPD
+  /// \param A tensor (often a deformation-gradient-like tensor)
+  /// \return \f$ VR = A \f$ with \f$ R \in SO(N) \f$ and \f$ V \in SPD(N) \f$
   ///
   template<typename T, Index N>
   std::pair<Tensor<T, N>, Tensor<T, N> >
-  polar_left(Tensor<T, N> const & F);
+  polar_left(Tensor<T, N> const & A);
 
-  template<typename T>
-  std::pair<Tensor<T, 3>, Tensor<T, 3> >
-  polar_left(Tensor<T, 3> const & F);
-
-  template<typename T>
-  std::pair<Tensor<T, 2>, Tensor<T, 2> >
-  polar_left(Tensor<T, 2> const & F);
+  // No specialization for R^2 or R^3
 
   ///
   /// Right polar decomposition
-  /// \param F tensor (often a deformation-gradient-like tensor)
-  /// \return \f$ RU = F \f$ with \f$ R \in SO(3) \f$ and U SPD
+  /// \param A tensor (often a deformation-gradient-like tensor)
+  /// \return \f$ RU = A \f$ with \f$ R \in SO(N) \f$ and \f$ U \in SPD(N) \f$
   ///
   template<typename T, Index N>
   std::pair<Tensor<T, N>, Tensor<T, N> >
-  polar_right(Tensor<T, N> const & F);
+  polar_right(Tensor<T, N> const & A);
 
+  // No specialization for R^2 or R^3
+
+  ///
+  /// R^3 left polar decomposition computed with eigenvalue decomposition
+  /// \param A tensor (often a deformation-gradient-like tensor)
+  /// \return \f$ VR = A \f$ with \f$ R \in SO(3) \f$ and \f$ V \in SPD(N) \f$
+  ///
   template<typename T>
   std::pair<Tensor<T, 3>, Tensor<T, 3> >
-  polar_right(Tensor<T, 3> const & F);
+  polar_left_eig(Tensor<T, 3> const & A);
 
+  // No specialization for R^2 or R^N
+
+  ///
+  /// R^3 right polar decomposition
+  /// \param F tensor (often a deformation-gradient-like tensor)
+  /// \return \f$ RU = F \f$ with \f$ R \in SO(3) \f$ and \f$ U \in SPD(N) \f$
+  ///
   template<typename T>
-  std::pair<Tensor<T, 2>, Tensor<T, 2> >
-  polar_right(Tensor<T, 2> const & F);
+  std::pair<Tensor<T, 3>, Tensor<T, 3> >
+  polar_right_eig(Tensor<T, 3> const & A);
+
+  // No specialization for R^2 or R^N
 
   ///
   /// Left polar decomposition with matrix logarithm for V

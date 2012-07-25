@@ -474,7 +474,7 @@ namespace {
     LCM::Tensor<ScalarT, 3>
     R, U;
 
-    boost::tie(R, U) = LCM::polar(A);
+    boost::tie(R, U) = LCM::polar_right(A);
 
     LCM::Tensor<ScalarT, 3>
     X, D, Y;

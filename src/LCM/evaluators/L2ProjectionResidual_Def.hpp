@@ -77,10 +77,10 @@ namespace LCM {
   postRegistrationSetup(typename Traits::SetupData d,
 			PHX::FieldManager<Traits>& fm)
   {
-	this->utils.setFieldData(wBF,fm);
-	this->utils.setFieldData(wGradBF,fm);
-	this->utils.setFieldData(projectedField,fm);
-	this->utils.setFieldData(Pfield,fm);
+    this->utils.setFieldData(wBF,fm);
+    this->utils.setFieldData(wGradBF,fm);
+    this->utils.setFieldData(projectedField,fm);
+    this->utils.setFieldData(Pfield,fm);
     this->utils.setFieldData(TResidual,fm);
   }
 
@@ -95,26 +95,27 @@ evaluateFields(typename Traits::EvalData workset)
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell)
   {
-	  for (std::size_t node=0; node < numNodes; ++node)
-	  {
-		  /*TResidual(cell,node)=0.0;
-		  for (std::size_t qp=0; qp < numQPs; ++qp)
-		  {
-			  TResidual(cell,node) += ( projectedField(cell,qp)-
-					  Pfield(cell, qp))*wBF(cell,node,qp);
-		  }*/
-		  for (std::size_t k=0; k<numDims*numDims; ++k){
-			  TResidual(cell,node,k)=0.0;
+    for (std::size_t node=0; node < numNodes; ++node)
+    {
+      /*TResidual(cell,node)=0.0;
+      for (std::size_t qp=0; qp < numQPs; ++qp)
+      {
+        TResidual(cell,node) += ( projectedField(cell,qp)-
+        Pfield(cell, qp))*wBF(cell,node,qp);
+      }*/
+      for (std::size_t k=0; k<numDims*numDims; ++k){
+        TResidual(cell,node,k)=0.0;
 
-			  for (std::size_t qp=0; qp < numQPs; ++qp){
-				  // need to transform tensor valued Pfield to a vector for projectedField and TResidual
-				  TResidual(cell,node,k) += (projectedField(cell,qp,k) -
-						  Pfield(cell,qp,k/numDims,k%numDims))*wBF(cell,node,qp);
-				  //cout << "Projected Field: " << Sacado::ScalarValue<ScalarT>::eval(projectedField(cell,node,k)) << std::endl;
-				  //cout << "PField: " << Sacado::ScalarValue<ScalarT>::eval(Pfield(cell,node,k/numDims,k%numDims)) << std::endl;
-			  }
-		  }
+        for (std::size_t qp=0; qp < numQPs; ++qp){
+          // need to transform tensor valued Pfield to a vector for projectedField and TResidual
+          TResidual(cell,node,k) += (projectedField(cell,qp,k) -
+          Pfield(cell,qp,k/numDims,k%numDims))*wBF(cell,node,qp);
+
+          //cout << "Projected Field: " << Sacado::ScalarValue<ScalarT>::eval(projectedField(cell,node,k)) << std::endl;
+          //cout << "PField: " << Sacado::ScalarValue<ScalarT>::eval(Pfield(cell,node,k/numDims,k%numDims)) << std::endl;
+        }
 	  }
+    }
   }
 
 
