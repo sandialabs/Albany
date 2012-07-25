@@ -128,13 +128,13 @@ namespace FELIX {
 #include "Albany_ResponseUtilities.hpp"
 
 #include "FELIX_StokesContravarientMetricTensor.hpp"
-#include "PHAL_NSMaterialProperty.hpp"
-#include "PHAL_Source.hpp"
+//#include "PHAL_Source.hpp"
 #include "FELIX_StokesBodyForce.hpp"
 #include "FELIX_StokesRm.hpp"
 #include "FELIX_StokesTauM.hpp"
 #include "FELIX_StokesMomentumResid.hpp"
 #include "FELIX_StokesContinuityResid.hpp"
+#include "FELIX_Viscosity.hpp"
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
@@ -209,21 +209,6 @@ FELIX::Stokes::constructEvaluators(
        (evalUtils.constructScatterResidualEvaluator(true, resid_names,offset, "Scatter Momentum"));
      offset += numDim;
    }
-   else if (haveFlow) { // Constant velocity
-    RCP<ParameterList> p = rcp(new ParameterList);
-
-    p->set<string>("Material Property Name", "Velocity");
-    p->set< RCP<DataLayout> >("Data Layout", dl->qp_vector);
-    p->set<string>("Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
-
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Flow");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-    ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
 
    if (haveFlowEq) {
      Teuchos::ArrayRCP<string> dof_names(1);
@@ -278,48 +263,16 @@ FELIX::Stokes::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (haveFlowEq) { // Density
-    RCP<ParameterList> p = rcp(new ParameterList);
-
-    p->set<string>("Material Property Name", "Density");
-    p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
-    p->set<string>("Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
-
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Density");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-    ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
-
-  if (haveFlowEq) { // Viscosity
-    RCP<ParameterList> p = rcp(new ParameterList);
-
-    p->set<string>("Material Property Name", "Viscosity");
-    p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
-    p->set<string>("Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
-
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Viscosity");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-    ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
+  
 
   if (haveFlowEq) { // Body Force
     RCP<ParameterList> p = rcp(new ParameterList("Body Force"));
 
     //Input
-    p->set<string>("Density QP Variable Name", "Density");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector); 
-    p->set<string>("Material Property Name", "Viscosity");
+    p->set<string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
     p->set<string>("Coordinate Vector Name", "Coord Vec");
-    //p->set< RCP<DataLayout> >("Coordinate Data Layout", dl->vertices_vector);
 
     Teuchos::ParameterList& paramList = params->sublist("Body Force");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
@@ -341,13 +294,8 @@ FELIX::Stokes::constructEvaluators(
     p->set<string>("Velocity Dot QP Variable Name", "Velocity_dot");
     p->set<string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
     p->set<string>("Pressure Gradient QP Variable Name", "Pressure Gradient");
-    p->set<string>("Density QP Variable Name", "Density");
     p->set<string>("Body Force QP Variable Name", "Body Force");
-    //p->set<string>("Porosity QP Variable Name", "Porosity");
-    //p->set<string>("Permeability Term", "Permeability Term");
-    //p->set<string>("Forchheimer Term", "Forchheimer Term");
 
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
@@ -360,6 +308,29 @@ FELIX::Stokes::constructEvaluators(
     ev = rcp(new FELIX::StokesRm<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+  
+  //IK, 7/24/2012
+  if (haveFlowEq) { // FELIX viscosity
+    RCP<ParameterList> p = rcp(new ParameterList("FELIX Viscosity"));
+
+    //Input
+    p->set<string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
+    
+    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+    
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Viscosity Function");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+  
+    //Output
+    p->set<string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+    ev = rcp(new FELIX::Viscosity<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+    
+  }
+
 
   if (haveFlowEq && havePSPG) { // Tau M
     RCP<ParameterList> p = rcp(new ParameterList("Tau M"));
@@ -367,8 +338,7 @@ FELIX::Stokes::constructEvaluators(
     //Input
     p->set<string>("Velocity QP Variable Name", "Velocity");
     p->set<std::string>("Contravarient Metric Tensor Name", "Gc"); 
-    p->set<string>("Density QP Variable Name", "Density");
-    p->set<string>("Viscosity QP Variable Name", "Viscosity");
+    p->set<string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
 
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
@@ -389,7 +359,7 @@ FELIX::Stokes::constructEvaluators(
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
     p->set<string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
     p->set<string>("Pressure QP Variable Name", "Pressure");
-    p->set<string>("Viscosity QP Variable Name", "Viscosity");
+    p->set<string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
     p->set<string>("Body Force Name", "Body Force");
 
     p->set<string>("Velocity QP Variable Name", "Velocity");
@@ -411,6 +381,7 @@ FELIX::Stokes::constructEvaluators(
     ev = rcp(new FELIX::StokesMomentumResid<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+  
 
   if (haveFlowEq) { // Continuity Resid
     RCP<ParameterList> p = rcp(new ParameterList("Continuity Resid"));

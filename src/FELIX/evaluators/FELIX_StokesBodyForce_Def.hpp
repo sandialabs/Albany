@@ -40,42 +40,38 @@ StokesBodyForce(const Teuchos::ParameterList& p) :
   }
   else if (type == "Constant") {
     bf_type = CONSTANT;
-    rho = PHX::MDField<ScalarT,Cell,QuadPoint>(
-            p.get<std::string>("Density QP Variable Name"),
-	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
-    this->addDependentField(rho);
   }
   else if (type == "Poly") {
     bf_type = POLY;  
-    mu = PHX::MDField<ScalarT,Cell,QuadPoint>(
-            p.get<std::string>("Material Property Name"),
+    muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
+            p.get<std::string>("FELIX Viscosity QP Variable Name"),
 	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
     coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Name"),
 	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") );
-    this->addDependentField(mu); 
+    this->addDependentField(muFELIX); 
     this->addDependentField(coordVec);
   }
   else if (type == "SinSin") {
     bf_type = SINSIN;  
-    mu = PHX::MDField<ScalarT,Cell,QuadPoint>(
-            p.get<std::string>("Material Property Name"),
+    muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
+            p.get<std::string>("FELIX Viscosity QP Variable Name"),
 	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
     coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Name"),
 	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") );
-    this->addDependentField(mu); 
+    this->addDependentField(muFELIX); 
     this->addDependentField(coordVec);
   }
   else if (type == "SinCosZ") {
     bf_type = SINCOSZ;  
-    mu = PHX::MDField<ScalarT,Cell,QuadPoint>(
-            p.get<std::string>("Material Property Name"),
+    muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
+            p.get<std::string>("FELIX Viscosity QP Variable Name"),
 	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
     coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Name"),
 	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") );
-    this->addDependentField(mu); 
+    this->addDependentField(muFELIX); 
     this->addDependentField(coordVec);
   }
 
@@ -106,10 +102,9 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   if (bf_type == CONSTANT) {
-    this->utils.setFieldData(rho,fm);
   }
   else if (bf_type == POLY || bf_type == SINSIN || bf_type == SINCOSZ) {
-    this->utils.setFieldData(mu,fm);
+    this->utils.setFieldData(muFELIX,fm);
     this->utils.setFieldData(coordVec,fm);
   }
 
@@ -131,7 +126,7 @@ evaluateFields(typename Traits::EvalData workset)
  for (std::size_t cell=0; cell < workset.numCells; ++cell) 
    for (std::size_t qp=0; qp < numQPs; ++qp) 
      for (std::size_t i=0; i < numDims; ++i) 
-	 force(cell,qp,i) = rho(cell,qp)*gravity[i];
+	 force(cell,qp,i) = gravity[i];
  }
 
  //The following is hard-coded for a 2D Stokes problem with manufactured solution
@@ -140,7 +135,7 @@ evaluateFields(typename Traits::EvalData workset)
      for (std::size_t qp=0; qp < numQPs; ++qp) {      
        ScalarT* f = &force(cell,qp,0);
        MeshScalarT* X = &coordVec(cell,qp,0);
-       ScalarT& muqp = mu(cell,qp);
+       ScalarT& muqp = muFELIX(cell,qp);
        f[0] =  40.0*muqp*(2.0*X[1]*X[1] - 3.0*X[1]+1.0)*X[1]*(6.0*X[0]*X[0] -6.0*X[0] + 1.0)
               + 120*muqp*(X[0]-1.0)*(X[0]-1.0)*X[0]*X[0]*(2.0*X[1]-1.0) 
               + 10.0*muqp;      
@@ -158,7 +153,7 @@ evaluateFields(typename Traits::EvalData workset)
        ScalarT* f = &force(cell,qp,0);
        MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
        MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
-       ScalarT& muqp = mu(cell,qp);
+       ScalarT& muqp = muFELIX(cell,qp);
 
        f[0] = -4.0*muqp*pi*(2*pi-1)*sin(x2pi + xphase)*sin(y2pi + yphase);
        f[1] = -4.0*muqp*pi*(2*pi+1)*cos(x2pi + xphase)*cos(y2pi + yphase);
@@ -173,7 +168,7 @@ evaluateFields(typename Traits::EvalData workset)
        MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
        MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
        MeshScalarT& z = coordVec(cell,qp,2);
-       ScalarT& muqp = mu(cell,qp);
+       ScalarT& muqp = muFELIX(cell,qp);
 
        /*ScalarT t1 = muqp*z*(1-z)*(1-2*z);
        ScalarT t2 = muqp*(1-6*z+6*z*z);

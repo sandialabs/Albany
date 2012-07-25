@@ -690,6 +690,7 @@ IF(ALBANY_FELIX)
   # FELIX evaluators
   SET(SOURCES ${SOURCES}
        ${FELIX_DIR}/evaluators/FELIX_StokesMomentumResid.cpp
+       ${FELIX_DIR}/evaluators/FELIX_Viscosity.cpp
        ${FELIX_DIR}/evaluators/FELIX_StokesContinuityResid.cpp
        ${FELIX_DIR}/evaluators/FELIX_StokesTauM.cpp
        ${FELIX_DIR}/evaluators/FELIX_StokesContravarientMetricTensor.cpp
@@ -699,6 +700,8 @@ IF(ALBANY_FELIX)
   SET(HEADERS ${HEADERS}
        ${FELIX_DIR}/evaluators/FELIX_StokesMomentumResid.hpp
        ${FELIX_DIR}/evaluators/FELIX_StokesMomentumResid_Def.hpp
+       ${FELIX_DIR}/evaluators/FELIX_Viscosity.hpp
+       ${FELIX_DIR}/evaluators/FELIX_Viscosity_Def.hpp
        ${FELIX_DIR}/evaluators/FELIX_StokesContinuityResid.hpp
        ${FELIX_DIR}/evaluators/FELIX_StokesContinuityResid_Def.hpp
        ${FELIX_DIR}/evaluators/FELIX_StokesTauM.hpp

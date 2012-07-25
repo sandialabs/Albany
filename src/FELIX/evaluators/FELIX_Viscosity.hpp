@@ -15,8 +15,8 @@
 \********************************************************************/
 
 
-#ifndef FELIX_STOKESTAUM_HPP
-#define FELIX_STOKESTAUM_HPP
+#ifndef FELIX_VISCOSITY_HPP
+#define FELIX_VISCOSITY_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -31,12 +31,14 @@ namespace FELIX {
 */
 
 template<typename EvalT, typename Traits>
-class StokesTauM : public PHX::EvaluatorWithBaseImpl<Traits>,
-		    public PHX::EvaluatorDerived<EvalT, Traits>  {
+class Viscosity : public PHX::EvaluatorWithBaseImpl<Traits>,
+		    public PHX::EvaluatorDerived<EvalT, Traits> {
 
 public:
 
-  StokesTauM(const Teuchos::ParameterList& p);
+  typedef typename EvalT::ScalarT ScalarT;
+
+  Viscosity(const Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
@@ -44,23 +46,20 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 
 private:
-
-  typedef typename EvalT::ScalarT ScalarT;
+ 
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  // Input: 
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> V;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> VGrad; //IK - added 7/19/2012
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> Gc;
-  PHX::MDField<ScalarT,Cell,QuadPoint> mu;
-  PHX::MDField<ScalarT,Cell,QuadPoint> muFELIX;
+  // Input:
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> VGrad;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> TauM;
+  PHX::MDField<ScalarT,Cell,QuadPoint> mu;
 
-  unsigned int numQPs, numDims;
-  Intrepid::FieldContainer<MeshScalarT> normGc;
+  unsigned int numQPs, numDims, numNodes;
   
+  enum VISCTYPE {CONSTANT, GLENSLAW};
+  VISCTYPE visc_type;
+ 
 };
 }
 
