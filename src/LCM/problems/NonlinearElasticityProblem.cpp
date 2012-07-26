@@ -154,6 +154,8 @@ Albany::NonlinearElasticityProblem::getValidProblemParameters() const
 
   if (matModel == "GursonFD")
   {
+	validPL->set<RealType>("N",false,"");
+	validPL->set<RealType>("eq0",false,"");
 	validPL->set<RealType>("f0",false,"");
 	validPL->set<RealType>("kw",false,"");
 	validPL->set<RealType>("eN",false,"");
@@ -164,6 +166,8 @@ Albany::NonlinearElasticityProblem::getValidProblemParameters() const
 	validPL->set<RealType>("q1",false,"");
 	validPL->set<RealType>("q2",false,"");
 	validPL->set<RealType>("q3",false,"");
+	validPL->set<bool>("isSaturationH",false,"");
+	validPL->set<bool>("isHyper",false,"");
   }
 
   if (matModel == "MooneyRivlin")

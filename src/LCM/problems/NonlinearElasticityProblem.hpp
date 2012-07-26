@@ -318,6 +318,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
     ev = rcp(new LCM::DefGrad<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+
   if (matModel == "J2Fiber")
   {
 	  { // Integration Point Location
@@ -691,11 +692,14 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(ev);
     }
     if(matModel == "GursonFD")
-    {// GursonFD: HyperElastic version
+    {
 
       RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
       //Input
+      p->set<string>("Delta Time Name", "Delta Time");
+      p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
+
       p->set<string>("DefGrad Name", "F");
       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
@@ -709,6 +713,8 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
       p->set<string>("Yield Strength Name", "Yield Strength"); // dl->qp_scalar also
       p->set<string>("DetDefGrad Name", "J");  // dl->qp_scalar also
 
+      RealType N  = params->get("N", 0.0);
+      RealType eq0= params->get("eq0", 0.0);
       RealType f0 = params->get("f0", 0.0);
       RealType kw = params->get("kw", 0.0);
       RealType eN = params->get("eN", 0.0);
@@ -719,7 +725,12 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
       RealType q1 = params->get("q1", 1.0);
       RealType q2 = params->get("q2", 1.0);
       RealType q3 = params->get("q3", 1.0);
+      bool isSaturationH = params->get("isSaturationH",true);
+      bool isHyper = params->get("isHyper",true);
 
+
+      p->set<RealType>("N Name", N);
+      p->set<RealType>("eq0 Name", eq0);
       p->set<RealType>("f0 Name", f0);
       p->set<RealType>("kw Name", kw);
       p->set<RealType>("eN Name", eN);
@@ -730,6 +741,8 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
       p->set<RealType>("q1 Name", q1);
       p->set<RealType>("q2 Name", q2);
       p->set<RealType>("q3 Name", q3);
+      p->set<bool> ("isSaturationH Name", isSaturationH);
+      p->set<bool> ("isHyper Name", isHyper);
 
 
       //Output
@@ -742,7 +755,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
 
       ev = rcp(new LCM::GursonFD<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy,"scalar", 0.0);
+      p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy,"scalar", 0.0,true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
       p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy,"identity", 1.0, true);
@@ -754,6 +767,13 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
       p = stateMgr.registerStateVariable("voidVolume",dl->qp_scalar, dl->dummy,"scalar", f0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
+
+      // save deformation gradient as well
+      if(isHyper == false){
+		  p = stateMgr.registerStateVariable("F",dl->qp_tensor, dl->dummy,"identity", 1.0, true);
+		  ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+		  fm0.template registerEvaluator<EvalT>(ev);
+      }
     }
 
 
