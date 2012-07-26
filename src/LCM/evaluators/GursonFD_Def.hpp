@@ -220,14 +220,11 @@ namespace LCM {
 
 			// left stretch V, and rotation R, from left polar decomposition of new deformation gradient
 			LCM::Tensor<ScalarT, 3> V, U;
-			boost::tie(Rotate,U) = LCM::polar(Fnew);
-			V = Rotate * U * transpose(Rotate);
+			boost::tie(V, Rotate, U) = LCM::polar(Fnew);
 
 			// incremental left stretch Vinc, incremental rotation Rinc, and log of incremental left stretch, logVinc
 			LCM::Tensor<ScalarT, 3> Uinc, Vinc, Rinc, logVinc;
-			//boost::tie(Vinc,Rinc,logVinc) = LCM::polar_left_logV(Finc);
-			boost::tie(Rinc,Uinc) = LCM::polar(Finc);
-			Vinc = Rinc * Uinc * transpose(Rinc);
+			boost::tie(Vinc, Rinc, Uinc) = LCM::polar(Finc);
 			logVinc = LCM::log(Vinc);
 
 			// log of incremental rotation
