@@ -242,7 +242,10 @@ Albany::HeatProblem::constructEvaluators(
     p->set<string>("Source Name", "Source");
     p->set<string>("Variable Name", "Temperature");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
+    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Source Functions");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
