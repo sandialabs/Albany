@@ -76,6 +76,18 @@ namespace LCM {
   Vector<T, 3>
   centroid(std::vector<Vector<T, 3> > const & points);
 
+  ///
+  /// The surface normal of a face
+  /// Assumption: face is planar
+  /// Input: 3 independent nodes on the face
+  /// Output: normal vector
+  ///
+  template<typename T>
+  T
+  faceNormal(Vector<T,3> const & p0,
+          Vector<T,3> const & p1,
+          Vector<T,3> const & p2);
+
 } // namespace LCM
 
 #include "Geometry.i.cc"

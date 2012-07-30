@@ -45,6 +45,8 @@ ProjectionProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   *out << "Projection Variable: " << projectionVariable << std::endl;
   *out << "Projection Variable Rank: " << projectionRank << std::endl;
 
+  insertionCriteria = params->sublist("Insertion Criteria").get("Insertion Criteria","");
+
   // Only run if there is a projection variable defined
   if(projection.isProjected())
   {
@@ -58,6 +60,7 @@ ProjectionProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
  	   * variable types are vector, (rank 2) tensor, or scalar (default).
  	   */
  	  switch(projection.getProjectedRank()){
+ 	  // Currently doesn't really do anything. Have to change when I decide how to store the variable
  	  case 1:
  		 isProjectedVarVector = true;
  		 isProjectedVarTensor = false;
@@ -170,6 +173,7 @@ Albany::ProjectionProblem::getValidProblemParameters() const
   validPL->sublist("Shear Modulus", false, "");
   validPL->sublist("Poissons Ratio", false, "");
   validPL->sublist("Projection", false, "");
+  validPL->sublist("Insertion Criteria", false, "");
 
   if (matModel=="J2"|| matModel=="J2Fiber"){
    validPL->set<bool>("Compute Dislocation Density Tensor", false, "Flag to compute the dislocaiton density tensor (only for 3D)");

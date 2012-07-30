@@ -25,7 +25,7 @@
 /*********************** Helper Functions*********************************/
 
 Albany::Layouts::Layouts (int worksetSize, int  numVertices,
-                          int numNodes, int numQPts, int numDim, int vecDim)
+                          int numNodes, int numQPts, int numDim, int vecDim, int numFace)
 // numDim is the number of spatial dimensions
 // vecDim is the length of a vector quantity
 // -- For many problems, numDim is used for both since there are 
@@ -44,22 +44,27 @@ Albany::Layouts::Layouts (int worksetSize, int  numVertices,
   qp_scalar   = rcp(new MDALayout<Cell,QuadPoint>(worksetSize,numQPts));
   cell_scalar = rcp(new MDALayout<Cell,QuadPoint>(worksetSize,1));
   cell_scalar2 = rcp(new MDALayout<Cell>(worksetSize));
+  face_scalar = rcp(new MDALayout<Cell,Face>(worksetSize,numFace));
 
   node_vector = rcp(new MDALayout<Cell,Node,Dim>(worksetSize,numNodes,vecDim));
   qp_vector   = rcp(new MDALayout<Cell,QuadPoint,Dim>(worksetSize,numQPts,vecDim));
   cell_vector   = rcp(new MDALayout<Cell,Dim>(worksetSize,vecDim));
+  face_vector   = rcp(new MDALayout<Cell,Face,Dim>(worksetSize,numFace,vecDim));
 
   node_gradient = rcp(new MDALayout<Cell,Node,Dim>(worksetSize,numNodes,numDim));
   qp_gradient   = rcp(new MDALayout<Cell,QuadPoint,Dim>(worksetSize,numQPts,numDim));
   cell_gradient   = rcp(new MDALayout<Cell,Dim>(worksetSize,numDim));
+  face_gradient   = rcp(new MDALayout<Cell,Face,Dim>(worksetSize,numFace,numDim));
 
   node_tensor = rcp(new MDALayout<Cell,Node,Dim,Dim>(worksetSize,numNodes,numDim,numDim));
   qp_tensor   = rcp(new MDALayout<Cell,QuadPoint,Dim,Dim>(worksetSize,numQPts,numDim,numDim));
   cell_tensor   = rcp(new MDALayout<Cell,Dim,Dim>(worksetSize,numDim,numDim));
+  face_tensor   = rcp(new MDALayout<Cell,Face,Dim,Dim>(worksetSize,numFace,numDim,numDim));
 
   node_vecgradient = rcp(new MDALayout<Cell,Node,Dim,Dim>(worksetSize,numNodes,vecDim,numDim));
   qp_vecgradient   = rcp(new MDALayout<Cell,QuadPoint,Dim,Dim>(worksetSize,numQPts,vecDim,numDim));
   cell_vecgradient = rcp(new MDALayout<Cell,Dim,Dim>(worksetSize,vecDim,numDim));
+  face_vecgradient = rcp(new MDALayout<Cell,Face,Dim,Dim>(worksetSize,numFace,vecDim,numDim));
 
   // Coordinates
   vertices_vector = rcp(new MDALayout<Cell,Vertex, Dim>(worksetSize,numVertices,numDim));

@@ -52,6 +52,11 @@ const char * Cell::name() const
 const Cell & Cell::tag() 
 { static const Cell myself ; return myself ; }
 
+const char * Face::name() const
+{ static const char n[] = "Face" ; return n; }
+const Face & Face::tag()
+{static const Face myself ; return myself; }
+
 const char * Dummy::name() const 
 { static const char n[] = "Dummy" ; return n ; }
 const Dummy & Dummy::tag() 

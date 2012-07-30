@@ -141,6 +141,27 @@ namespace LCM {
     return C / static_cast<double>(n);
   }
 
+  ///
+  /// The surface normal of a face
+  /// Assumption: face is planar
+  /// Input: 3 independent nodes on the face
+  /// Output: normal vector
+  ///
+  template<typename T>
+  Vector<T,3>
+  faceNormal(Vector<T,3> const & p0,
+          Vector<T,3> const & p1,
+          Vector<T,3> const & p2)
+  {
+      // Construct 2 independent vectors
+      Vector<T,3> v0 = p1 - p0;
+      Vector<T,3> v1 = p2 - p0;
+
+      Vector<T,3> n(0.0, 0.0, 0.0);
+      n = LCM::cross(v0,v1);
+      return n;
+  }
+
 } // namespace LCM
 
 #endif // LCM_Geometry_t_cc

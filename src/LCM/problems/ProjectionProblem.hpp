@@ -116,6 +116,8 @@ namespace Albany {
     bool isProjectedVarVector;
     bool isProjectedVarTensor;
 
+    std::string insertionCriteria;
+
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState;
   };
@@ -159,6 +161,8 @@ namespace Albany {
 #include "SaturationModulus.hpp"
 #include "SaturationExponent.hpp"
 #include "DislocationDensity.hpp"
+#include "FaceFractureCriteria.hpp"
+#include "FaceAverage.hpp"
 
 
 
@@ -189,15 +193,28 @@ Albany::ProjectionProblem::constructEvaluators(
    Intrepid::DefaultCubatureFactory<RealType> cubFactory;
    RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
 
+   // Create intrepid basis and cubature for the face averaging
+   // this isn't the best way of defining the basis functions - requires you to know
+   //   the face type at compile time
+   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > faceAveIntrepidBasis;
+      faceAveIntrepidBasis = Teuchos::rcp(
+        new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType,
+            Intrepid::FieldContainer<RealType> >());
+   // the quadrature is general to the topology of the faces of the volume elements
+   RCP<Intrepid::Cubature<RealType> > faceAveCubature =
+     cubFactory.create(cellType->getCellTopologyData()->side->topology,meshSpecs.cubatureDegree);
+
+
    const int numQPts = cubature->getNumPoints();
    const int numVertices = cellType->getNodeCount();
+   const int numFaces = cellType->getFaceCount();
 
    *out << "Field Dimensions: Workset=" << worksetSize 
         << ", Vertices= " << numVertices
         << ", Nodes= " << numNodes
         << ", QuadPts= " << numQPts
+        << ", Faces= " << numFaces
         << ", Dim= " << numDim << endl;
-
 
    // Construct standard FEM evaluators with standard field names                              
    RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
@@ -206,7 +223,7 @@ Albany::ProjectionProblem::constructEvaluators(
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
 
    // Create a separate set of evaluators with their own data layout for use by the projection
-   RCP<Albany::Layouts> dl_proj = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim,numDim*numDim));
+   RCP<Albany::Layouts> dl_proj = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim,numDim*numDim,numFaces));
    Albany::EvaluatorUtils<EvalT,PHAL::AlbanyTraits> evalUtils_proj(dl_proj);
    string scatterName="Scatter Projection";
 
@@ -246,7 +263,7 @@ Albany::ProjectionProblem::constructEvaluators(
      (evalUtils_proj.constructDOFVecInterpolationEvaluator(tdof_names_dot[0]));
 
    fm0.template registerEvaluator<EvalT>
-     (evalUtils_proj.constructDOFGradInterpolationEvaluator(tdof_names[0]));
+     (evalUtils_proj.constructDOFVecGradInterpolationEvaluator(tdof_names[0]));
 
    // Need to use different arguments depending on the rank of the projected variables
    //   see the Albany_EvaluatorUtil class for specifics
@@ -736,7 +753,6 @@ Albany::ProjectionProblem::constructEvaluators(
       p->set<bool>("Have Source", false);
       p->set<string>("Source Name", "Source");
 
-      // Testing the integration
       p->set<string>("Projected Field Name", "Projected Field");
       p->set< RCP<DataLayout> >("QP Vector Data Layout", dl_proj->qp_vector);
 
@@ -752,7 +768,66 @@ Albany::ProjectionProblem::constructEvaluators(
       p = stateMgr.registerStateVariable("Projected Field",dl_proj->qp_vector, dl_proj->dummy,"scalar", 0.0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-    }
+  }
+
+  /*{ // Fracture Criterion
+	  RCP<ParameterList> p = rcp(new ParameterList("Face Fracture Criteria"));
+
+	  // Input
+	  p->set<string>("Face Average Name","Face Average");
+	  p->set< RCP<DataLayout> >("Face Vector Data Layout", dl_proj->face_vector);
+
+	  RealType yield = params->sublist("Yield Strength").get("Value",0.0);
+	  p->set<RealType>("Yield Name",yield);
+
+	  // Output
+	  p->set<string>("Criteria Met Name","Criteria Met");
+	  p->set<RCP<DataLayout> >("Face Scalar Data Layout", dl_proj->face_scalar);
+
+	  // This is in here to trick the code to run the evaluator - does absolutely nothing
+	  p->set<string>("Temp2 Name","Temp2");
+	  p->set< RCP<DataLayout> >("Cell Scalar Data Layout", dl_proj->cell_scalar);
+
+	  ev = rcp(new LCM::FaceFractureCriteria<EvalT,AlbanyTraits>(*p));
+	  fm0.template registerEvaluator<EvalT>(ev);
+	  p = stateMgr.registerStateVariable("Temp2",dl_proj->cell_scalar,dl_proj->dummy,"scalar",0.0,true);
+	  ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+	  fm0.template registerEvaluator<EvalT>(ev);
+  }*/
+
+  { // Face Average
+      RCP<ParameterList> p = rcp(new ParameterList("Face Average"));
+
+      // Input
+      // Nodal coordinates in the reference configuration
+      p->set<string>("Coordinate Vector Name","Coord Vec");
+      p->set< RCP<DataLayout> >("Vertex Vector Data Layout",dl->vertices_vector);
+
+      // The solution of the projection at the nodes
+      p->set<string>("Projected Field Name","Projected Field");
+      p->set< RCP<DataLayout> >("Node Vector Data Layout",dl_proj->node_vector);
+
+      // the cubature and basis function information
+      p->set<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Face Cubature",faceAveCubature);
+      p->set<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >(
+         "Face Intrepid Basis",faceAveIntrepidBasis);
+
+      p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type",cellType);
+
+      // Output
+      p->set<string>("Face Average Name","Face Average");
+      p->set< RCP<DataLayout> >("Face Vector Data Layout", dl_proj->face_vector);
+
+      // This is in here to trick the code to run the evaluator - does absolutely nothing
+      p->set<string>("Temp Name","Temp");
+      p->set< RCP<DataLayout> >("Cell Scalar Data Layout", dl_proj->cell_scalar);
+
+      ev = rcp(new LCM::FaceAverage<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      p = stateMgr.registerStateVariable("Temp",dl_proj->cell_scalar,dl_proj->dummy,"scalar",0.0,true);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+  }
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
     PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter", dl->dummy);

@@ -475,6 +475,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/MooneyRivlinDamage.cpp
     ${LCM_DIR}/evaluators/RIHMR.cpp
     ${LCM_DIR}/evaluators/RecoveryModulus.cpp
+    ${LCM_DIR}/evaluators/FaceFractureCriteria.cpp
+    ${LCM_DIR}/evaluators/FaceAverage.cpp
   )
 
   IF(ALBANY_MPI)
@@ -632,6 +634,10 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/RIHMR_Def.hpp
     ${LCM_DIR}/evaluators/RecoveryModulus.hpp
     ${LCM_DIR}/evaluators/RecoveryModulus_Def.hpp
+    ${LCM_DIR}/evaluators/FaceFractureCriteria.hpp
+    ${LCM_DIR}/evaluators/FaceFractureCriteria_Def.hpp
+    ${LCM_DIR}/evaluators/FaceAverage.hpp
+    ${LCM_DIR}/evaluators/FaceAverage_Def.hpp
  )
 
   IF(ALBANY_MPI)
