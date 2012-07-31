@@ -1921,15 +1921,17 @@ namespace LCM {
   }
 
   //
-  // Right and left polar decomposition using a Newton-type algorithm.
+  // Project to O(N) (Orthogonal Group) using a Newton-type algorithm.
   // See Higham's Functions of Matrices p210 [2008]
-  // \param F tensor (often a deformation-gradient-like tensor)
-  // \return \f$ RU = A \f$ with \f$ R \in SO(3) \f$ and \f$ U \in SPD(N) \f$
-  // and \f$ VR = A \f$ for \f$ V \in SPD(N) \f$
+  // \param A tensor (often a deformation-gradient-like tensor)
+  // \return \f$ R = \argmin_Q \|A - Q\|\f$
+  // This algorithm projects a given tensor in GL(N) to O(N).
+  // The rotation/reflection obtained through this projection is
+  // the orthogonal component of the real polar decomposition
   //
   template<typename T, Index N>
-  boost::tuple<Tensor<T, N>, Tensor<T, N>, Tensor<T, N> >
-  polar(Tensor<T, N> const & A)
+  Tensor<T, N>
+  polar_rotation(Tensor<T, N> const & A)
   {
     bool
     scale = true;
@@ -1996,13 +1998,7 @@ namespace LCM {
       std::cerr << "WARNING: Polar iteration did not converge." << std::endl;
     }
 
-    Tensor<T, N>
-    U = symm(transpose(X) * A);
-
-    Tensor<T, N>
-    V = symm(A * transpose(X));
-
-    return boost::make_tuple(V, X, U);
+    return X;
   }
 
   //
@@ -2015,9 +2011,10 @@ namespace LCM {
   polar_left(Tensor<T, N> const & A)
   {
     Tensor<T, N>
-    V, R, U;
+    R = polar_rotation(A);
 
-    boost::tie(V, R, U) = polar(A);
+    Tensor<T, N>
+    V = symm(A * transpose(R));
 
     return std::make_pair(V, R);
   }
@@ -2032,9 +2029,10 @@ namespace LCM {
   polar_right(Tensor<T, N> const & A)
   {
     Tensor<T, N>
-    V, R, U;
+    R = polar_rotation(A);
 
-    boost::tie(V, R, U) = polar(A);
+    Tensor<T, N>
+    U = symm(transpose(R) * A);
 
     return std::make_pair(R, U);
   }
