@@ -120,7 +120,9 @@ Albany::NonlinearElasticityProblem::getValidProblemParameters() const
   validPL->set<bool>("volavgJ", false, "Flag to indicate the J should be volume averaged");
   validPL->set<bool>("weighted_Volume_Averaged_J", false, "Flag to indicate the J should be volume averaged with stabilization");
   validPL->set<bool>("Use Composite Tet 10", false, "Flag to use the compostie tet 10 basis in Intrepid");
-  if (matModel == "J2"|| matModel == "J2Fiber" || matModel == "GursonFD")
+
+
+  if (matModel == "J2"|| matModel == "J2Fiber" || matModel == "GursonFD" || matModel == "RIHMR")
   {
     validPL->set<bool>("Compute Dislocation Density Tensor", false, "Flag to compute the dislocaiton density tensor (only for 3D)");
     validPL->sublist("Hardening Modulus", false, "");
@@ -184,6 +186,11 @@ Albany::NonlinearElasticityProblem::getValidProblemParameters() const
 	 validPL->set<RealType>("c",false,"");
 	 validPL->set<RealType>("zeta_inf",false,"");
 	 validPL->set<RealType>("iota",false,"");
+  }
+
+  if (matModel == "RIHMR")
+  {
+	validPL->sublist("Recovery Modulus", false, "");
   }
 
   return validPL;
