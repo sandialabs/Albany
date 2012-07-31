@@ -594,8 +594,6 @@ namespace LCM {
       }
     }
 
-    bulkData_->modification_end();
-
     // Recreate Albany STK Discretization
     Albany::STKDiscretization & stk_discretization =
         static_cast<Albany::STKDiscretization &>(*discretization_ptr_);
@@ -604,6 +602,8 @@ namespace LCM {
         Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
 
     stk_discretization.updateMesh(stkMeshStruct_, communicator);
+
+    bulkData_->modification_end();
 
     return;
   }

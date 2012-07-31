@@ -16,8 +16,8 @@
 #include <vector>
 
 #include <boost/tuple/tuple.hpp>
-#include <boost/type_traits/is_floating_point.hpp>
-#include <boost/utility/enable_if.hpp>
+
+#include "Sacado.hpp"
 
 namespace LCM {
 
@@ -40,11 +40,7 @@ namespace LCM {
   /// determines the underlying floating-point type.
   ///
   template<typename T>
-  typename boost::enable_if<boost::is_floating_point<T> >::type
-  not_a_number();
-
-  template<typename T>
-  typename boost::disable_if<boost::is_floating_point<T> >::type
+  typename Sacado::ScalarType<T>::type
   not_a_number();
 
   ///
@@ -54,11 +50,7 @@ namespace LCM {
   /// determines the underlying floating-point type.
   ///
   template<typename T>
-  typename boost::enable_if<boost::is_floating_point<T> >::type
-  machine_epsilon();
-
-  template<typename T>
-  typename boost::disable_if<boost::is_floating_point<T> >::type
+  typename Sacado::ScalarType<T>::type
   machine_epsilon();
 
   ///

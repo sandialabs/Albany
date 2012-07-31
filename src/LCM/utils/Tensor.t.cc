@@ -21,7 +21,7 @@ namespace LCM {
       for (Index j = 0; j < N; ++j) {
         e[i][j].resize(N);
         for (Index k = 0; k < N; ++k) {
-          e[i][j][k] = std::numeric_limits<T>::quiet_NaN();
+          e[i][j][k] = not_a_number<T>();
         }
       }
     }
@@ -38,7 +38,7 @@ namespace LCM {
     for (Index i = 0; i < 3; ++i) {
       for (Index j = 0; j < 3; ++j) {
         for (Index k = 0; k < 3; ++k) {
-          e[i][j][k] = std::numeric_limits<T>::quiet_NaN();
+          e[i][j][k] = not_a_number<T>();
         }
       }
     }
@@ -55,7 +55,7 @@ namespace LCM {
     for (Index i = 0; i < 2; ++i) {
       for (Index j = 0; j < 2; ++j) {
         for (Index k = 0; k < 2; ++k) {
-          e[i][j][k] = std::numeric_limits<T>::quiet_NaN();
+          e[i][j][k] = not_a_number<T>();
         }
       }
     }
@@ -606,7 +606,7 @@ namespace LCM {
         for (Index k = 0; k < N; ++k) {
           e[i][j][k].resize();
           for (Index l = 0; l < N; ++l) {
-            e[i][j][k][l] = std::numeric_limits<T>::quiet_NaN();
+            e[i][j][k][l] = not_a_number<T>();
           }
         }
       }
@@ -625,7 +625,7 @@ namespace LCM {
       for (Index j = 0; j < 3; ++j) {
         for (Index k = 0; k < 3; ++k) {
           for (Index l = 0; l < 3; ++l) {
-            e[i][j][k][l] = std::numeric_limits<T>::quiet_NaN();
+            e[i][j][k][l] = not_a_number<T>();
           }
         }
       }
@@ -644,7 +644,7 @@ namespace LCM {
       for (Index j = 0; j < 2; ++j) {
         for (Index k = 0; k < 2; ++k) {
           for (Index l = 0; l < 2; ++l) {
-            e[i][j][k][l] = std::numeric_limits<T>::quiet_NaN();
+            e[i][j][k][l] = not_a_number<T>();
           }
         }
       }
@@ -1145,7 +1145,7 @@ namespace LCM {
     max_iter = 128;
 
     const T
-    tol = std::numeric_limits<T>::epsilon();
+    tol = machine_epsilon<T>();
 
     Tensor<T, N>
     term = identity<T, N>();
@@ -1185,7 +1185,7 @@ namespace LCM {
     max_iter = 128;
 
     const T
-    tol = std::numeric_limits<T>::epsilon();
+    tol = machine_epsilon<T>();
 
     const T
     norm_arg = norm_1(A);
@@ -1230,9 +1230,9 @@ namespace LCM {
   {
     //firewalls, make sure R \in SO(N)
     assert(norm(R*transpose(R) - eye<T, N>())
-        < 100.0 * std::numeric_limits<T>::epsilon());
+        < 100.0 * machine_epsilon<T>());
     assert(fabs(det(R) - 1.0)
-        < 100.0 * std::numeric_limits<T>::epsilon());
+        < 100.0 * machine_epsilon<T>());
 
     std::cerr << "Logarithm of SO(N) N != 2,3 not implemented." << std::endl;
     exit(1);
@@ -1276,7 +1276,7 @@ namespace LCM {
     if (theta == 0) {
       r = zero<T, 3>();
     } else if (fabs(cosine + 1.0) <
-        10.0*std::numeric_limits<T>::epsilon())  {
+        10.0*machine_epsilon<T>())  {
       // Rotation angle is PI.
       r = log_rotation_pi(R);
     } else {
@@ -1297,9 +1297,9 @@ namespace LCM {
   {
     //firewalls, make sure R \in SO(2)
     assert(norm(R*transpose(R) - eye<T, 2>())
-        < 100.0 * std::numeric_limits<T>::epsilon());
+        < 100.0 * machine_epsilon<T>());
     assert(fabs(det(R) - 1.0)
-        < 100.0 * std::numeric_limits<T>::epsilon());
+        < 100.0 * machine_epsilon<T>());
 
     // acos requires input between -1 and +1
     T
@@ -1349,7 +1349,7 @@ namespace LCM {
   {
     // set firewall to make sure the rotation is indeed 180 degrees
     assert(fabs(0.5 * (trace(R) - 1.0) + 1.0)
-        < std::numeric_limits<T>::epsilon());
+        < machine_epsilon<T>());
 
     // obtain U from R = LU
     Tensor<T, 3>
@@ -1357,7 +1357,7 @@ namespace LCM {
 
     // backward substitution (for rotation exp(R) only)
     const T
-    tol = 10.0*std::numeric_limits<T>::epsilon();
+    tol = 10.0*machine_epsilon<T>();
 
     Vector<T, 3>
     normal;
@@ -1406,7 +1406,7 @@ namespace LCM {
   log_rotation_pi(Tensor<T, 2> const & R)
   {
     // set firewall to make sure the rotation is indeed 180 degrees
-    assert(fabs(R(0,0) - 1.0) < std::numeric_limits<T>::epsilon());
+    assert(fabs(R(0,0) - 1.0) < machine_epsilon<T>());
 
     const T
     theta = acos(-1.0);
@@ -1436,7 +1436,7 @@ namespace LCM {
     U = A;
 
     const T
-    tol = 10.0 * std::numeric_limits<T>::epsilon();
+    tol = 10.0 * machine_epsilon<T>();
 
     Index i = 0;
     Index j = 0;
@@ -1538,7 +1538,7 @@ namespace LCM {
   exp_skew_symmetric(Tensor<T, 3> const & r)
   {
     // Check whether skew-symmetry holds
-    assert(norm(r+transpose(r)) < std::numeric_limits<T>::epsilon());
+    assert(norm(r+transpose(r)) < machine_epsilon<T>());
 
     T
     theta = sqrt(r(2,1)*r(2,1)+r(0,2)*r(0,2)+r(1,0)*r(1,0));
@@ -1547,7 +1547,7 @@ namespace LCM {
     R = identity<T, 3>();
 
     //Check whether norm == 0. If so, return identity.
-    if (theta >= std::numeric_limits<T>::epsilon()) {
+    if (theta >= machine_epsilon<T>()) {
       R += sin(theta)/theta*r + (1.0-cos(theta))/(theta*theta)*r*r;
     }
 
@@ -1564,7 +1564,7 @@ namespace LCM {
   exp_skew_symmetric(Tensor<T, 2> const & r)
   {
     // Check whether skew-symmetry holds
-    assert(norm(r+transpose(r)) < std::numeric_limits<T>::epsilon());
+    assert(norm(r+transpose(r)) < machine_epsilon<T>());
 
     T
     theta = r(1,0);
@@ -1739,7 +1739,7 @@ namespace LCM {
     if (ga == 0.0) {
       s1 = ha;
       s0 = fa;
-    } else if (ga > fa && fa / ga < std::numeric_limits<T>::epsilon()) {
+    } else if (ga > fa && fa / ga < machine_epsilon<T>()) {
       // case of very large ga
       s0 = ga;
       s1 = ha > 1.0 ?
@@ -1824,7 +1824,7 @@ namespace LCM {
     off = norm_off_diagonal(S);
 
     const T
-    tol = std::numeric_limits<T>::epsilon() * norm(A);
+    tol = machine_epsilon<T>() * norm(A);
 
     const Index
     max_iter = 1000;
@@ -1938,7 +1938,7 @@ namespace LCM {
     tol_scale = 0.01;
 
     const T
-    tol_conv = sqrt(N) * std::numeric_limits<T>::epsilon();
+    tol_conv = sqrt(N) * machine_epsilon<T>();
 
     Tensor<T, N>
     X = A;
@@ -2378,7 +2378,7 @@ namespace LCM {
     off = norm_off_diagonal(D);
 
     const T
-    tol = std::numeric_limits<T>::epsilon() * norm(A);
+    tol = machine_epsilon<T>() * norm(A);
 
     const Index
     max_iter = 1000;

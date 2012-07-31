@@ -23,17 +23,11 @@ namespace LCM {
   // determines the underlying floating-point type.
   //
   template<typename T>
-  typename boost::enable_if<boost::is_floating_point<T> >::type
+  typename Sacado::ScalarType<T>::type
   not_a_number()
   {
-    return std::numeric_limits<T>::quiet_NaN();
-  }
-
-  template<typename T>
-  typename boost::disable_if<boost::is_floating_point<T> >::type
-  not_a_number()
-  {
-    return std::numeric_limits<typename T::value_type>::quiet_NaN();
+    return
+        std::numeric_limits<typename Sacado::ScalarType<T>::type>::quiet_NaN();
   }
 
   //
@@ -43,17 +37,11 @@ namespace LCM {
   // determines the underlying floating-point type.
   //
   template<typename T>
-  typename boost::enable_if<boost::is_floating_point<T> >::type
+  typename Sacado::ScalarType<T>::type
   machine_epsilon()
   {
-    return std::numeric_limits<T>::epsilon();
-  }
-
-  template<typename T>
-  typename boost::disable_if<boost::is_floating_point<T> >::type
-  machine_epsilon()
-  {
-    return std::numeric_limits<typename T::value_type>::epsilon();
+    return
+        std::numeric_limits<typename Sacado::ScalarType<T>::type>::epsilon();
   }
 
   //
@@ -65,7 +53,7 @@ namespace LCM {
   {
     e.resize(N);
     for (Index i =0; i < N; ++i) {
-      e[i] = std::numeric_limits<T>::quiet_NaN();
+      e[i] = not_a_number<T>();
     }
 
     return;
@@ -78,9 +66,9 @@ namespace LCM {
   inline
   Vector<T, 3>::Vector()
   {
-    e[0] = std::numeric_limits<T>::quiet_NaN();
-    e[1] = std::numeric_limits<T>::quiet_NaN();
-    e[2] = std::numeric_limits<T>::quiet_NaN();
+    e[0] = not_a_number<T>();
+    e[1] = not_a_number<T>();
+    e[2] = not_a_number<T>();
 
     return;
   }
@@ -92,8 +80,8 @@ namespace LCM {
   inline
   Vector<T, 2>::Vector()
   {
-    e[0] = std::numeric_limits<T>::quiet_NaN();
-    e[1] = std::numeric_limits<T>::quiet_NaN();
+    e[0] = not_a_number<T>();
+    e[1] = not_a_number<T>();
 
     return;
   }
@@ -1300,7 +1288,7 @@ namespace LCM {
     for (Index i = 0; i < N; ++i) {
       e[i].resize(N);
       for (Index j = 0; j < N; j++) {
-        e[i][j] = std::numeric_limits<T>::quiet_NaN();
+        e[i][j] = not_a_number<T>();
       }
     }
 
@@ -1314,17 +1302,17 @@ namespace LCM {
   inline
   Tensor<T, 3>::Tensor()
   {
-    e[0][0] = std::numeric_limits<T>::quiet_NaN();
-    e[0][1] = std::numeric_limits<T>::quiet_NaN();
-    e[0][2] = std::numeric_limits<T>::quiet_NaN();
+    e[0][0] = not_a_number<T>();
+    e[0][1] = not_a_number<T>();
+    e[0][2] = not_a_number<T>();
 
-    e[1][0] = std::numeric_limits<T>::quiet_NaN();
-    e[1][1] = std::numeric_limits<T>::quiet_NaN();
-    e[1][2] = std::numeric_limits<T>::quiet_NaN();
+    e[1][0] = not_a_number<T>();
+    e[1][1] = not_a_number<T>();
+    e[1][2] = not_a_number<T>();
 
-    e[2][0] = std::numeric_limits<T>::quiet_NaN();
-    e[2][1] = std::numeric_limits<T>::quiet_NaN();
-    e[2][2] = std::numeric_limits<T>::quiet_NaN();
+    e[2][0] = not_a_number<T>();
+    e[2][1] = not_a_number<T>();
+    e[2][2] = not_a_number<T>();
 
     return;
   }
@@ -1336,11 +1324,11 @@ namespace LCM {
   inline
   Tensor<T, 2>::Tensor()
   {
-    e[0][0] = std::numeric_limits<T>::quiet_NaN();
-    e[0][1] = std::numeric_limits<T>::quiet_NaN();
+    e[0][0] = not_a_number<T>();
+    e[0][1] = not_a_number<T>();
 
-    e[1][0] = std::numeric_limits<T>::quiet_NaN();
-    e[1][1] = std::numeric_limits<T>::quiet_NaN();
+    e[1][0] = not_a_number<T>();
+    e[1][1] = not_a_number<T>();
 
     return;
   }
