@@ -77,7 +77,7 @@ namespace LCM {
     /// Create vector specifying components
     /// \param s0,... are the vector components in the canonical basis
     ///
-    Vector(T const & s0, ...);
+    Vector(T const & s0, T const & s1, ...);
 
     ///
     /// Create vector from array - const version
@@ -377,7 +377,7 @@ namespace LCM {
     /// The parameters are the components in the canonical basis
     /// \param s00 ...
     ///
-    Tensor(T const & s00, ...);
+    Tensor(T const & s00, T const & s01, ...);
 
     ///
     /// Create tensor from array - const version
@@ -1573,6 +1573,24 @@ namespace LCM {
   template<typename T, typename S>
   Tensor<T, 2>
   operator*(Tensor<T, 2> const & A, S const & s);
+
+  ///
+  /// Tensor scalar division
+  /// \param A tensor
+  /// \param s scalar
+  /// \return \f$ A / s \f$
+  ///
+  template<typename T, Index N, typename S>
+  Tensor<T, N>
+  operator/(Tensor<T, N> const & A, S const & s);
+
+  template<typename T, typename S>
+  Tensor<T, 3>
+  operator/(Tensor<T, 3> const & A, S const & s);
+
+  template<typename T, typename S>
+  Tensor<T, 2>
+  operator/(Tensor<T, 2> const & A, S const & s);
 
   ///
   /// Scalar 3rd-order tensor product

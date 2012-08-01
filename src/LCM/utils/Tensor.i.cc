@@ -137,14 +137,15 @@ namespace LCM {
   //
   template<typename T, Index N>
   inline
-  Vector<T, N>::Vector(T const & s0, ...)
+  Vector<T, N>::Vector(T const & s0,  T const & s1, ...)
   {
 
     e.resize(N);
     e[0] = s0;
+    e[1] = s1;
 
     va_list arg_list;
-    va_start(arg_list, s0);
+    va_start(arg_list, s1);
     for (Index i = 1; i < N; ++i) {
       T const & s = va_arg(arg_list, T);
       e[i] = s;
@@ -1399,16 +1400,17 @@ namespace LCM {
   //
   template<typename T, Index N>
   inline
-  Tensor<T, N>::Tensor(T const & s00, ...)
+  Tensor<T, N>::Tensor(T const & s00, T const & s01, ...)
   {
     e.resize(N);
     e[0].resize(N);
 
     e[0][0] = s00;
+    e[0][1] = s01;
 
     va_list arg_list;
-    va_start(arg_list, s00);
-    for (Index j = 1; j < N; ++j) {
+    va_start(arg_list, s01);
+    for (Index j = 2; j < N; ++j) {
       T const & s = va_arg(arg_list, T);
       e[0][j] = s;
     }
@@ -2403,6 +2405,61 @@ namespace LCM {
   }
 
   //
+  // R^N tensor scalar division
+  // \param A tensor
+  // \param s scalar
+  // \return \f$ A / s \f$
+  //
+  template<typename T, Index N, typename S>
+  inline
+  Tensor<T, N>
+  operator/(Tensor<T, N> const & A, S const & s)
+  {
+    Tensor<T, N> B;
+
+    for (Index i = 0; i < N; ++i) {
+      for (Index j = 0; j < N; ++j) {
+        B(i, j) = A(i, j) / s;
+      }
+    }
+
+    return B;
+  }
+
+  //
+  // R^3 tensor scalar division
+  // \param A tensor
+  // \param s scalar
+  // \return \f$ A / s \f$
+  //
+  template<typename T, typename S>
+  inline
+  Tensor<T, 3>
+  operator/(Tensor<T, 3> const & A, S const & s)
+  {
+    return Tensor<T, 3>(
+        A(0,0)/s, A(0,1)/s, A(0,2)/s,
+        A(1,0)/s, A(1,1)/s, A(1,2)/s,
+        A(2,0)/s, A(2,1)/s, A(2,2)/s);
+  }
+
+  //
+  // R^2 tensor scalar division
+  // \param A tensor
+  // \param s scalar
+  // \return \f$ A / s \f$
+  //
+  template<typename T, typename S>
+  inline
+  Tensor<T, 2>
+  operator/(Tensor<T, 2> const & A, S const & s)
+  {
+    return Tensor<T, 2>(
+        A(0,0)/s, A(0,1)/s,
+        A(1,0)/s, A(1,1)/s);
+  }
+
+  //
   // R^N tensor vector product v = A u
   // \param A tensor
   // \param u vector
@@ -3200,9 +3257,7 @@ namespace LCM {
   const Tensor<T, N>
   zero()
   {
-    Tensor<T, N> A;
-    A.clear();
-    return A;
+    return Tensor<T, N>(T(0.0));
   }
 
   //
@@ -3214,7 +3269,7 @@ namespace LCM {
   const Tensor<T, 3>
   zero()
   {
-    return Tensor<T, 3>(0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0);
+    return Tensor<T, 3>(T(0.0));
   }
 
   //
@@ -3226,7 +3281,7 @@ namespace LCM {
   const Tensor<T, 2>
   zero()
   {
-    return Tensor<T, 2>(0.0,0.0,0.0,0.0);
+    return Tensor<T, 2>(T(0.0));
   }
 
   //
@@ -3237,8 +3292,8 @@ namespace LCM {
   const Tensor<T, N>
   identity()
   {
-    Tensor<T, N> A;
-    A.clear();
+    Tensor<T, N> A(T(0.0));
+
     for (Index i = 0; i < N; ++i) {
       A(i, i) = 1.0;
     }
@@ -3573,226 +3628,6 @@ namespace LCM {
   dev(Tensor<T, 2> const & A)
   {
     return A - vol(A);
-  }
-
-  //
-  // R^N 2nd-order tensor inverse
-  // Gauss-Jordan elimination. Warning: full pivoting
-  // for small tensors. Use Teuchos LAPACK interface for
-  // more efficient and robust techniques.
-  // \param A nonsingular tensor
-  // \return \f$ A^{-1} \f$
-  //
-  template<typename T, Index N>
-  inline
-  Tensor<T, N>
-  inverse(Tensor<T, N> const & A)
-  {
-    Tensor<T, N> S = A;
-    Tensor<T, N> B = identity<T, N>();
-    Vector<Index, N> p, q;
-
-    p.clear();
-    q.clear();
-
-    // Determine full pivot
-    for (Index k = 0; k < N; ++k) {
-
-      Index m = k;
-      Index n = k;
-
-      T s = fabs(S(m, n));
-
-      for (Index i = k; i < N; ++i) {
-        for (Index j = k; j < N; ++j) {
-          if (fabs(S(i, j)) > s) {
-            m = i;
-            n = j;
-            s = fabs(S(i, j));
-          }
-        }
-      }
-
-      // Swap rows and columns for pivoting
-      swap_row(S, k, m);
-      swap_row(B, k, m);
-
-      swap_col(S, k, n);
-      swap_col(B, k, n);
-
-      p(k) = m;
-      q(k) = n;
-
-      // Gauss-Jordan elimination
-      const T t = S(k, k);
-
-      if (t == 0.0) {
-        std::cerr << "ERROR: Inverse of singular tensor." << std::endl;
-        exit(1);
-      }
-
-      for (Index j = 0; j < N; ++j) {
-        S(k, j) /= t;
-        B(k, j) /= t;
-      }
-
-      for (Index i = 0; i < N; ++i) {
-        if (i == k) continue;
-
-        const T c = S(i, k);
-
-        for (Index j = 0; j < N; ++j) {
-          S(i, j) -= c * S(k, j);
-          B(i, j) -= c * B(k, j);
-        }
-      }
-
-    }
-
-    // Restore order of rows and columns
-    for (Index k = N - 1; k > 0; --k) {
-
-      Index m = p(k);
-      Index n = q(k);
-
-      swap_row(B, k, m);
-      swap_col(B, k, n);
-
-    }
-
-    return B;
-  }
-
-  //
-  // R^3 2nd-order tensor inverse
-  // \param A nonsingular tensor
-  // \return \f$ A^{-1} \f$
-  //
-  template<typename T>
-  inline
-  Tensor<T, 3>
-  inverse(Tensor<T, 3> const & A)
-  {
-    const T d = det(A);
-    assert(d != 0.0);
-    Tensor<T, 3> B(
-        -A(1,2)*A(2,1) + A(1,1)*A(2,2),
-         A(0,2)*A(2,1) - A(0,1)*A(2,2),
-        -A(0,2)*A(1,1) + A(0,1)*A(1,2),
-         A(1,2)*A(2,0) - A(1,0)*A(2,2),
-        -A(0,2)*A(2,0) + A(0,0)*A(2,2),
-         A(0,2)*A(1,0) - A(0,0)*A(1,2),
-        -A(1,1)*A(2,0) + A(1,0)*A(2,1),
-         A(0,1)*A(2,0) - A(0,0)*A(2,1),
-        -A(0,1)*A(1,0) + A(0,0)*A(1,1)
-    );
-    return T(1.0 / d) * B;
-  }
-
-  //
-  // R^2 2nd-order tensor inverse
-  // \param A nonsingular tensor
-  // \return \f$ A^{-1} \f$
-  //
-  template<typename T>
-  inline
-  Tensor<T, 2>
-  inverse(Tensor<T, 2> const & A)
-  {
-    const T d = det(A);
-    assert(d != 0.0);
-    Tensor<T, 2> B(A(1,1), -A(0,1), -A(1,0), A(0,0));
-    return T(1.0 / d) * B;
-  }
-
-  //
-  // R^N Subtensor
-  // \param A tensor
-  // \param i index
-  // \param j index
-  // \return Subtensor with i-row and j-col deleted.
-  //
-  template<typename T, Index N>
-  inline
-  Tensor<T, N - 1>
-  subtensor(Tensor<T, N> const & A, Index i, Index j)
-  {
-    assert(i < N);
-    assert(j < N);
-
-    Tensor<T, N - 1> B;
-
-    Index p = 0;
-    Index q = 0;
-    for (Index m = 0; m < N; ++m) {
-      if (m == i) continue;
-      for (Index n = 0; n < N; ++n) {
-        if (n == j) continue;
-        B(p, q) = A(m, n);
-        ++q;
-      }
-      ++p;
-    }
-
-    return B;
-  }
-
-  //
-  // R^3 Subtensor
-  // \param A tensor
-  // \param i index
-  // \param j index
-  // \return Subtensor with i-row and j-col deleted.
-  //
-  template<typename T>
-  inline
-  Tensor<T, 2>
-  subtensor(Tensor<T, 3> const & A, Index i, Index j)
-  {
-    assert(i < 3);
-    assert(j < 3);
-
-    Tensor<T, 2> B;
-
-    Index p = 0;
-    Index q = 0;
-    for (Index m = 0; m < 3; ++m) {
-      if (m == i) continue;
-      for (Index n = 0; n < 3; ++n) {
-        if (n == j) continue;
-        B(p, q) = A(m, n);
-        ++q;
-      }
-      ++p;
-    }
-
-    return B;
-  }
-
-  //
-  // R^2 Subtensor
-  // \param A tensor
-  // \param i index
-  // \param j index
-  // \return Subtensor with i-row and j-col deleted.
-  //
-  template<typename T>
-  inline
-  Tensor<T, 1>
-  subtensor(Tensor<T, 2> const & A, Index i, Index j)
-  {
-    assert(i < 2);
-    assert(j < 2);
-
-    Tensor<T, 1> B;
-
-    Index m = 1 - i;
-    Index n = 1 - j;
-
-    B(0, 0) = A(m, n);
-
-    return B;
-
   }
 
   //
