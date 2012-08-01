@@ -83,7 +83,7 @@ namespace LCM {
   /// Output: normal vector
   ///
   template<typename T>
-  T
+  Vector<T, 3>
   faceNormal(Vector<T,3> const & p0,
           Vector<T,3> const & p1,
           Vector<T,3> const & p2);

@@ -47,16 +47,17 @@ class FaceFractureCriteria : public PHX::EvaluatorWithBaseImpl<Traits>,
      * \param[out] criteriaMet - boolean value denoting criterion state
      *
      */
-    void testFracture(PHX::MDField<ScalarT,Cell,Face,VecDim> faceAve);
+    void testFracture();
 
     /** Traction based criterion
      * \param[in] faceAve - the face averaged projected variable
      * \param[in] coord - the nodal coordinates
      * \param[out] criteriaMet - boolean value denoting criterion state
      */
-    void tractionCriterion(PHX::MDField<ScalarT,Cell,Face,VecDim> faceAve);
+    void tractionCriterion();
 
   private:
+    unsigned int numDims;
     unsigned int numFaces;
     unsigned int numComp; // length of the vector
     unsigned int worksetSize;
@@ -64,8 +65,12 @@ class FaceFractureCriteria : public PHX::EvaluatorWithBaseImpl<Traits>,
     std::string criterion; // The criterion to be used
 
     // Input:
+    PHX::MDField<ScalarT,Cell,Vertex,Dim> coord;
     PHX::MDField<ScalarT,Cell,Face,VecDim> faceAve;
     RealType yieldStrength;
+    RealType fractureLimit;  // Fracture face if traction > this value
+
+   Teuchos::RCP<shards::CellTopology> cellType;
 
     //Output:
     // As we can't define a boolean field on a face, define as a scalar
@@ -73,6 +78,10 @@ class FaceFractureCriteria : public PHX::EvaluatorWithBaseImpl<Traits>,
 
     // This is in here to trick the code to run the evaluator - does absolutely nothing
     PHX::MDField<ScalarT,Cell> temp;
+
+    // Face topology object
+    const struct CellTopologyData_Subcell * sides;
+
 
 };
 

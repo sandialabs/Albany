@@ -145,7 +145,7 @@ namespace LCM {
   /// The surface normal of a face
   /// Assumption: face is planar
   /// Input: 3 independent nodes on the face
-  /// Output: normal vector
+  /// Output: unit normal vector
   ///
   template<typename T>
   Vector<T,3>
@@ -157,8 +157,8 @@ namespace LCM {
       Vector<T,3> v0 = p1 - p0;
       Vector<T,3> v1 = p2 - p0;
 
-      Vector<T,3> n(0.0, 0.0, 0.0);
-      n = LCM::cross(v0,v1);
+      Vector<T,3> n = LCM::cross(v0,v1);
+      n = n/LCM::norm(n);
       return n;
   }
 

@@ -770,15 +770,26 @@ Albany::ProjectionProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  /*{ // Fracture Criterion
+  { // Fracture Criterion
 	  RCP<ParameterList> p = rcp(new ParameterList("Face Fracture Criteria"));
 
 	  // Input
-	  p->set<string>("Face Average Name","Face Average");
+      // Nodal coordinates in the reference configuration
+      p->set<string>("Coordinate Vector Name","Coord Vec");
+      p->set< RCP<DataLayout> >("Vertex Vector Data Layout",dl->vertices_vector);
+
+      p->set<string>("Face Average Name","Face Average");
 	  p->set< RCP<DataLayout> >("Face Vector Data Layout", dl_proj->face_vector);
+
+	  p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type",cellType);
 
 	  RealType yield = params->sublist("Yield Strength").get("Value",0.0);
 	  p->set<RealType>("Yield Name",yield);
+
+	  RealType fractureLimit = params->sublist("Insertion Criteria").get("Fracture Limit",0.0);
+	  p->set<RealType>("Fracture Limit Name",fractureLimit);
+
+	  p->set<std::string>("Insertion Criteria Name",params->sublist("Insertion Criteria").get("Insertion Criteria",""));
 
 	  // Output
 	  p->set<string>("Criteria Met Name","Criteria Met");
@@ -793,7 +804,7 @@ Albany::ProjectionProblem::constructEvaluators(
 	  p = stateMgr.registerStateVariable("Temp2",dl_proj->cell_scalar,dl_proj->dummy,"scalar",0.0,true);
 	  ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
 	  fm0.template registerEvaluator<EvalT>(ev);
-  }*/
+  }
 
   { // Face Average
       RCP<ParameterList> p = rcp(new ParameterList("Face Average"));
