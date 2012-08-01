@@ -66,13 +66,15 @@ namespace LCM {
     Teuchos::RCP<PHX::DataLayout> defGrad_dl = p.get<
       Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
     defGrad_dl->dimensions(dims);
-    numQPs = dims[1];
+    //numQPs = dims[1];
     numDims = dims[2];
     numPlaneDims = numDims - 1;
 
     std::cout << "dims[0]: " << dims[0]<< std::endl;
     std::cout << "dims[1]: " << dims[2]<< std::endl;
     std::cout << "dims[2]: " << dims[3]<< std::endl;
+
+    numQPs = cubature->getNumPoints();
 
     // Allocate Temporary FieldContainers
     refValues.resize(numPlaneNodes, numQPs);
@@ -316,8 +318,11 @@ namespace LCM {
   //----------------------------------------------------------------------
   template<typename EvalT, typename Traits>
   void Localization<EvalT, Traits>::computeDeformationGradient(const ScalarT t,
-                                                               const FC & bases, const FC & dualBases, const FC & refNormal,
-                                                               const FC & gap, PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> defGrad,
+                                                               const FC & bases, 
+                                                               const FC & dualBases, 
+                                                               const FC & refNormal,
+                                                               const FC & gap, 
+                                                               PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> defGrad,
                                                                FC & J)
   {
     std::cout << "In computeDeformationGradient" << std::endl;
