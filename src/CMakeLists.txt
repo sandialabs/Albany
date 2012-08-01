@@ -425,6 +425,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/SaturationModulus.cpp		
     ${LCM_DIR}/evaluators/SaturationExponent.cpp
     ${LCM_DIR}/evaluators/Localization.cpp
+    ${LCM_DIR}/evaluators/SurfaceBasis.cpp
     ${LCM_DIR}/evaluators/DamageSource.cpp
     ${LCM_DIR}/evaluators/BulkModulus.cpp
     ${LCM_DIR}/evaluators/ShearModulus.cpp
@@ -534,6 +535,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/SaturationExponent_Def.hpp
     ${LCM_DIR}/evaluators/Localization.hpp 
     ${LCM_DIR}/evaluators/Localization_Def.hpp
+    ${LCM_DIR}/evaluators/SurfaceBasis.hpp 
+    ${LCM_DIR}/evaluators/SurfaceBasis_Def.hpp
     ${LCM_DIR}/evaluators/DamageSource.hpp 
     ${LCM_DIR}/evaluators/DamageSource_Def.hpp
     ${LCM_DIR}/evaluators/BulkModulus.hpp 

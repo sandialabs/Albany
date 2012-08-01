@@ -101,8 +101,7 @@ namespace LCM {
 
   //----------------------------------------------------------------------
   template<typename EvalT, typename Traits>
-  void Localization<EvalT, Traits>::postRegistrationSetup(
-                                                          typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
+  void Localization<EvalT, Traits>::postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
   {
     this->utils.setFieldData(referenceCoords, fm);
     this->utils.setFieldData(currentCoords, fm);
@@ -115,8 +114,7 @@ namespace LCM {
 
   //----------------------------------------------------------------------
   template<typename EvalT, typename Traits>
-  void Localization<EvalT, Traits>::evaluateFields(
-                                                   typename Traits::EvalData workset)
+  void Localization<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
   {
     for (std::size_t cell(0); cell < workset.numCells; ++cell) {
       // for the reference geometry
@@ -174,8 +172,7 @@ namespace LCM {
   }
   //----------------------------------------------------------------------
   template<typename EvalT, typename Traits>
-  void Localization<EvalT, Traits>::computeMidplaneCoords(
-                                                          PHX::MDField<ScalarT, Cell, Vertex, Dim> coords, FC & midplaneCoords)
+  void Localization<EvalT, Traits>::computeMidplaneCoords(PHX::MDField<ScalarT, Cell, Vertex, Dim> coords, FC & midplaneCoords)
   {
     std::cout << "In computeMidplaneCoords" << std::endl;
     for (int cell(0); cell < midplaneCoords.dimension(0); ++cell) {
@@ -192,8 +189,7 @@ namespace LCM {
   }
   //----------------------------------------------------------------------
   template<typename EvalT, typename Traits>
-  void Localization<EvalT, Traits>::computeBaseVectors(
-                                                       const FC & midplaneCoords, FC & bases)
+  void Localization<EvalT, Traits>::computeBaseVectors(const FC & midplaneCoords, FC & bases)
   {
     std::cout << "In computeBaseVectors" << std::endl;
     for (int cell(0); cell < midplaneCoords.dimension(0); ++cell) {
@@ -229,8 +225,7 @@ namespace LCM {
   }
   //----------------------------------------------------------------------
   template<typename EvalT, typename Traits>
-  void Localization<EvalT, Traits>::computeDualBaseVectors(
-                                                           const FC & midplaneCoords, const FC & bases, FC & normal, FC & dualBases)
+  void Localization<EvalT, Traits>::computeDualBaseVectors(const FC & midplaneCoords, const FC & bases, FC & normal, FC & dualBases)
   {
     std::cout << "In computeDualBaseVectors" << std::endl;
     std::size_t worksetSize = midplaneCoords.dimension(0);
@@ -291,8 +286,7 @@ namespace LCM {
 
   //----------------------------------------------------------------------
   template<typename EvalT, typename Traits>
-  void Localization<EvalT, Traits>::computeGap(
-                                               const PHX::MDField<ScalarT, Cell, Vertex, Dim> coords, FC & gap)
+  void Localization<EvalT, Traits>::computeGap(const PHX::MDField<ScalarT, Cell, Vertex, Dim> coords, FC & gap)
   {
     std::cout << "In computeGap" << std::endl;
     const std::size_t worksetSize = gap.dimension(0);
@@ -340,8 +334,7 @@ namespace LCM {
         LCM::Vector<ScalarT, 3> G1(&dualBases(cell, pt, 1, 0));
         LCM::Vector<ScalarT, 3> G2(&dualBases(cell, pt, 2, 0));
 
-        LCM::Tensor<ScalarT, 3> F1(
-                                   LCM::bun(g_0, G0) + LCM::bun(g_1, G1) + LCM::bun(g_2, G2));
+        LCM::Tensor<ScalarT, 3> F1(LCM::bun(g_0, G0) + LCM::bun(g_1, G1) + LCM::bun(g_2, G2));
         // for Jay: bun()
         LCM::Tensor<ScalarT, 3> F2((1 / t) * LCM::bun(d, G_2));
 
@@ -362,8 +355,7 @@ namespace LCM {
   }
   //----------------------------------------------------------------------
   template<typename EvalT, typename Traits>
-  void Localization<EvalT, Traits>::computeStress(
-                                                  const PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> defGrad,
+  void Localization<EvalT, Traits>::computeStress(const PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> defGrad,
                                                   const FC & J, const PHX::MDField<ScalarT, Cell, QuadPoint> mu,
                                                   const PHX::MDField<ScalarT, Cell, QuadPoint> kappa,
                                                   PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> stress)
@@ -409,7 +401,7 @@ namespace LCM {
     for (std::size_t cell(0); cell < defGrad.dimension(0); ++cell) {
       for (std::size_t node(0); node < numPlaneNodes; ++node) {
 
-      	// define and initialize tensors/vectors
+        // define and initialize tensors/vectors
         LCM::Vector<ScalarT, 3> f_plus(0.0), f_minus(0.0);
         LCM::Tensor3<ScalarT, 3> dFdx_plus(0.0), dFdx_minus(0.0);
         LCM::Tensor3<ScalarT, 3> dgapdxN(0.0), tmp1(0.0), tmp2(0.0);
