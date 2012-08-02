@@ -659,6 +659,7 @@ IF(ALBANY_LCM)
   #LCM utils
   SET(SOURCES ${SOURCES}
     ${LCM_DIR}/utils/Geometry.cc
+    ${LCM_DIR}/utils/FloatingPoint.cc
     ${LCM_DIR}/utils/Partition.cc
     ${LCM_DIR}/utils/BarycentricSubdivision.cc
     ${LCM_DIR}/utils/Tensor.cc
@@ -669,6 +670,7 @@ IF(ALBANY_LCM)
 
   SET(HEADERS ${HEADERS}
     ${LCM_DIR}/utils/Geometry.h
+    ${LCM_DIR}/utils/FloatingPoint.h
     ${LCM_DIR}/utils/Partition.h
     ${LCM_DIR}/utils/Tensor.h
     ${LCM_DIR}/utils/Topology.h

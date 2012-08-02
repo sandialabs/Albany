@@ -15,10 +15,10 @@
  \********************************************************************/
 #include<ctime>
 
-#include <Teuchos_UnitTestHarness.hpp>
+#include "Intrepid_FieldContainer.hpp"
 #include "Sacado.hpp"
 #include "Tensor.h"
-#include "Intrepid_FieldContainer.hpp"
+#include "Teuchos_UnitTestHarness.hpp"
 
 using namespace std;
 
@@ -498,6 +498,10 @@ namespace {
     boost::tie(U, S, V) = LCM::svd(A);
 
     LCM::Tensor < Sacado::Fad::DFad<double>, 3 > B = U * S * LCM::transpose(V);
+
+    std::cout << std::endl;
+    std::cout << "LOGARITHM OF NEGATIVE NUMBER: " << log(-1.0) << std::endl;
+    std::cout << std::endl;
 
     TEST_COMPARE(norm(A - B), <=, 100*std::numeric_limits<ScalarT>::epsilon());
   }

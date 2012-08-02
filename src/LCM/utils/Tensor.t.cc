@@ -3048,7 +3048,7 @@ namespace LCM {
   const Tensor4<T, N>
   identity_3()
   {
-    Tensor4<T, N> I;
+    Tensor4<T, N> I(T(0.0));
 
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
