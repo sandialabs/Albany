@@ -20,7 +20,6 @@
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "LCM/utils/Tensor.h"
-#include "FloatingPoint.h"
 
 namespace LCM {
 
@@ -39,11 +38,6 @@ Neohookean(const Teuchos::ParameterList& p) :
   stress           (p.get<std::string>                   ("Stress Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") )
 {
-  FloatingPoint fp;
-  fp.trapInexact();
-  fp.trapDivbyzero();
-  fp.trapOverflow();
-  fp.trapInvalid();
   // Pull out numQPs and numDims from a Layout
   Teuchos::RCP<PHX::DataLayout> tensor_dl =
     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
