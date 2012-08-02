@@ -121,17 +121,6 @@ int main(int argc, char *argv[]) {
 						    globalComm));
     coupledSolver->setup(coupledModel);
 
-    // Set initial guess
-    Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly> x_sg_init =
-      coupledSolver->get_x_sg_init();
-    Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> x_sg_init_new =
-      Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(*x_sg_init));
-    Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> > basis =
-      coupledSolver->getBasis();
-    for (int i=0; i<basis->dimension(); i++)
-      (*x_sg_init_new)[i+1].PutScalar(1.0);
-    coupledSolver->set_x_sg_init(*x_sg_init_new);
-
     // Solve coupled system
     EpetraExt::ModelEvaluator::InArgs inArgs = coupledSolver->createInArgs();
     EpetraExt::ModelEvaluator::OutArgs outArgs = coupledSolver->createOutArgs();
