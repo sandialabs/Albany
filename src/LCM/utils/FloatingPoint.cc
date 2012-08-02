@@ -149,7 +149,7 @@ namespace LCM {
 
 #else
 
-#if defined(ALBANY_LCM)
+#if defined(__linux__)
 
 //
 // subset of ISO/IEC C99; (linux)
