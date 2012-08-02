@@ -269,11 +269,11 @@ Albany::ProjectionProblem::constructEvaluators(
    //   see the Albany_EvaluatorUtil class for specifics
    fm0.template registerEvaluator<EvalT>
      (evalUtils_proj.constructGatherSolutionEvaluator(
-    		 isProjectedVarVector, tdof_names, tdof_names_dot, T_offset,isProjectedVarTensor));
+    		 isProjectedVarVector, tdof_names, tdof_names_dot, T_offset));
 
    fm0.template registerEvaluator<EvalT>
      (evalUtils_proj.constructScatterResidualEvaluator(
-    		 isProjectedVarVector, tresid_names, T_offset, scatterName,isProjectedVarTensor));
+    		 isProjectedVarVector, tresid_names, T_offset, scatterName));
 
    // ----------------------setup the solution field ---------------//
 

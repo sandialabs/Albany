@@ -43,9 +43,10 @@ ScatterResidualBase(const Teuchos::ParameterList& p)
 
   if (p.isType<bool>("Vector Field"))
 	  vectorField = p.get<bool>("Vector Field");
+  else vectorField = false;
 
   // scalar
-  if (!vectorField ) {
+  if (!vectorField) {
     numFieldsBase = names.size();
     const std::size_t num_val = numFieldsBase;
     val.resize(num_val);

@@ -56,16 +56,14 @@ namespace Albany {
        bool isVectorField,
        Teuchos::ArrayRCP<std::string> dof_names,
        Teuchos::ArrayRCP<std::string> dof_names_dot,
-       int offsetToFirstDOF=0,
-       bool isTensorField=false);
+       int offsetToFirstDOF=0);
 
     //! Same as above, but no ability to gather time dependent x_dot field
     Teuchos::RCP< PHX::Evaluator<Traits> > 
     constructGatherSolutionEvaluator_noTransient(
        bool isVectorField,
        Teuchos::ArrayRCP<std::string> dof_names,
-       int offsetToFirstDOF=0,
-       bool iaTensorField=false);
+       int offsetToFirstDOF=0);
 
     //! Function to create parameter list for construction of ScatterResidual
     //! evaluator with standard Field names
@@ -73,8 +71,7 @@ namespace Albany {
     constructScatterResidualEvaluator(
        bool isVectorField,
        Teuchos::ArrayRCP<std::string> resid_names,
-       int offsetToFirstDOF=0, std::string scatterName="Scatter",
-       bool isTensorField=false);
+       int offsetToFirstDOF=0, std::string scatterName="Scatter");
 
     //! Function to create parameter list for construction of DOFInterpolation 
     //! evaluator with standard field names
@@ -94,15 +91,6 @@ namespace Albany {
     Teuchos::RCP< PHX::Evaluator<Traits> > 
     constructDOFVecGradInterpolationEvaluator(
        std::string& dof_names);
-
-    //! Interpolation functions for tensor quantities
-    Teuchos::RCP< PHX::Evaluator<Traits> >
-    constructDOFTensorInterpolationEvaluator(
-       std::string& dof_names);
-    ////! Same as above, for Interpolating the Gradient for Vector quantities
-    //Teuchos::RCP< PHX::Evaluator<Traits> >
-    //constructDOFTensorGradInterpolationEvaluator(
-    //   std::string& dof_names);
 
     //! Function to create parameter list for construction of GatherCoordinateVector
     //! evaluator with standard Field names

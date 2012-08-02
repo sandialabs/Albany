@@ -186,7 +186,7 @@ evaluateFields(typename Traits::EvalData workset)
       int neq = nodeID[node].size();
       std::size_t num_dof = neq * this->numNodes;
       for (std::size_t eq = 0; eq < numFields; eq++) {
-      	if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+      	if (this->vectorField) valptr = &((this->valVec[0])(cell,node,eq));
         else                   valptr = &(this->val[eq])(cell,node);
 	*valptr = FadType(num_dof, (*x)[nodeID[node][this->offset + eq]]);
 	valptr->setUpdateValue(!workset.ignore_residual);
