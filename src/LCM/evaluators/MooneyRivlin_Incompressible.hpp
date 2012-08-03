@@ -15,8 +15,8 @@
 \********************************************************************/
 
 
-#ifndef MOONEYRIVLIN_HPP
-#define MOONEYRIVLIN_HPP
+#ifndef MOONEYRIVLIN_INCOMPRESSIBLE_HPP
+#define MOONEYRIVLIN_INCOMPRESSIBLE_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -54,6 +54,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> J;
   RealType c1;
   RealType c2;
+  RealType mu;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;

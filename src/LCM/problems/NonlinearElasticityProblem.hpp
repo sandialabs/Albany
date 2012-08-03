@@ -138,6 +138,7 @@ namespace Albany {
 #include "QptLocation.hpp"
 #include "MooneyRivlin.hpp"
 #include "MooneyRivlinDamage.hpp"
+#include "MooneyRivlin_Incompressible.hpp"
 #include "RIHMR.hpp"
 #include "RecoveryModulus.hpp"
 
@@ -465,6 +466,35 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+
+  else if (matModel == "MooneyRivlinIncompressible")
+  {
+	  RCP<ParameterList> p = rcp(new ParameterList("Stress"));
+
+	  //Input
+	  p->set<string>("DefGrad Name", "F");
+	  p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+	  p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+	  p->set<string>("DetDefGrad Name", "J");  // dl->qp_scalar also
+	  RealType c1 = params->get("c1", 0.0);
+	  RealType c2 = params->get("c2",0.0);
+	  RealType c = params->get("mu",0.0);
+
+	  p->set<RealType>("c1 Name", c1);
+	  p->set<RealType>("c2 Name", c2);
+	  p->set<RealType>("mu Name", c);
+
+	  //Output
+	  p->set<string>("Stress Name", matModel); //dl->qp_tensor also
+
+	  ev = rcp(new LCM::MooneyRivlin_Incompressible<EvalT,AlbanyTraits>(*p));
+	  fm0.template registerEvaluator<EvalT>(ev);
+	  p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy,"scalar",0.0);
+	  ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+	  fm0.template registerEvaluator<EvalT>(ev);
+  }
+
 
   else if (matModel == "J2"||matModel == "J2Fiber"||matModel == "GursonFD"|| matModel == "RIHMR")
   { 

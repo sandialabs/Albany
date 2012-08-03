@@ -188,6 +188,13 @@ Albany::NonlinearElasticityProblem::getValidProblemParameters() const
 	 validPL->set<RealType>("iota",false,"");
   }
 
+  if (matModel == "MooneyRivlinIncompressible")
+  {
+	 validPL->set<RealType>("c1",false,"");
+	 validPL->set<RealType>("c2",false,"");
+	 validPL->set<RealType>("mu",false,"");
+  }
+
   if (matModel == "RIHMR")
   {
 	validPL->sublist("Recovery Modulus", false, "");

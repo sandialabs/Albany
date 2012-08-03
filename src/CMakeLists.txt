@@ -476,6 +476,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/QptLocation.cpp
     ${LCM_DIR}/evaluators/MooneyRivlin.cpp
     ${LCM_DIR}/evaluators/MooneyRivlinDamage.cpp
+    ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible.cpp
     ${LCM_DIR}/evaluators/RIHMR.cpp
     ${LCM_DIR}/evaluators/RecoveryModulus.cpp
     ${LCM_DIR}/evaluators/FaceFractureCriteria.cpp
@@ -639,6 +640,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/MooneyRivlin_Def.hpp
     ${LCM_DIR}/evaluators/MooneyRivlinDamage.hpp
     ${LCM_DIR}/evaluators/MooneyRivlinDamage_Def.hpp
+    ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible.hpp
+    ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible_Def.hpp
     ${LCM_DIR}/evaluators/RIHMR.hpp
     ${LCM_DIR}/evaluators/RIHMR_Def.hpp
     ${LCM_DIR}/evaluators/RecoveryModulus.hpp

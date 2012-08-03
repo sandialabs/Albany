@@ -154,7 +154,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node) {
      
       for (std::size_t eq = 0; eq < numFields; eq++) {
-    	  if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+    	  if (this->vectorField) valptr = &((this->valVec[0])(cell,node,eq));
     	  else                   valptr = &(this->val[eq])(cell,node);
 
         row = nodeID[node][this->offset + eq];

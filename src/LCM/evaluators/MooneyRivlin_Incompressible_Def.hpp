@@ -34,7 +34,8 @@ MooneyRivlin_Incompressible(const Teuchos::ParameterList& p) :
   stress    (p.get<std::string>                   ("Stress Name"),
 	           p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
   c1        (p.get<double>("c1 Name")),
-  c2        (p.get<double>("c2 Name"))
+  c2        (p.get<double>("c2 Name")),
+  mu        (p.get<double>("mu Name"))
 {
   // Pull out numQPs and numDims from a Layout
   Teuchos::RCP<PHX::DataLayout> tensor_dl =
@@ -82,12 +83,15 @@ evaluateFields(typename Traits::EvalData workset)
   LCM::Tensor<ScalarT,3> Siso;
   LCM::Tensor<ScalarT,3> Sbar;
   LCM::Tensor4<ScalarT,3> PP;
+  LCM::Tensor<ScalarT,3> Id = LCM::identity<ScalarT,3>();
+
+  ScalarT Jm23;
 
   Intrepid::FieldContainer<ScalarT> C(worksetSize, numQPs, numDims, numDims);
   Intrepid::RealSpaceTools<ScalarT>::transpose(FT, F);
   Intrepid::FunctionSpaceTools::tensorMultiplyDataData<ScalarT> (C, FT, F, 'N');
 
-  PP = LCM::identity1()-1.0/3.0*LCM::dyad(LCM::identity(),LCM::identity());
+  PP = LCM::identity_1<ScalarT,3>()-(1.0/3.0)*LCM::tensor(Id,Id);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell){
     for (std::size_t qp=0; qp < numQPs; ++qp){
@@ -102,7 +106,9 @@ evaluateFields(typename Traits::EvalData workset)
 
       ScalarT pressure = 99.96 * mu*(J(cell,qp)-1);
       
-      Cbar = power(J(cell,qp),-2.0/3.0)*C_qp;
+      Jm23 = std::pow(J(cell,qp),-2.0/3.0);
+
+      Cbar = Jm23*C_qp;
 
       Svol = pressure*J(cell,qp)*LCM::inverse(C_qp);
 
@@ -111,8 +117,8 @@ evaluateFields(typename Traits::EvalData workset)
 
       
 
-      Sbar = gamma_bar1*LCM::identity() + gamma_bar2*Cbar;
-      Siso = power(J(cell,qp),-2.0/3.0)*LCM::dotdot(PP,Sbar);
+      Sbar = gamma_bar1*Id + gamma_bar2*Cbar;
+      Siso = Jm23*LCM::dotdot(PP,Sbar);
 
       S = Svol + Siso;
       

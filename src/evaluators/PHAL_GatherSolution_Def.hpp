@@ -106,7 +106,7 @@ postRegistrationSetup(typename Traits::SetupData d,
     }
     numNodes = val[0].dimension(1);
   }
-  else{
+  else {
     this->utils.setFieldData(valVec[0],fm);
     if (enableTransient) this->utils.setFieldData(valVec_dot[0],fm);
     numNodes = valVec[0].dimension(1);
