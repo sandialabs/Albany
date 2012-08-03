@@ -225,7 +225,7 @@ evaluateFields(typename Traits::EvalData workset)
 
       // left stretch V, and rotation R, from left polar decomposition of new deformation gradient
       LCM::Tensor<ScalarT, 3> V, R, U;
-      boost::tie(V,R,U) = LCM::polar(Fnew);
+      boost::tie(V,R) = LCM::polar_left(Fnew);
       //V = R * U * transpose(R);
       
       // DEBUGGING //
@@ -266,7 +266,7 @@ evaluateFields(typename Traits::EvalData workset)
       
       LCM::Tensor<ScalarT, 3> Uinc, Vinc, Rinc, logVinc;
       //boost::tie(Vinc,Rinc,logVinc) = LCM::polar_left_logV(Finc);
-      boost::tie(Vinc,Rinc,Uinc) = LCM::polar(Finc);
+      boost::tie(Vinc,Rinc) = LCM::polar_left(Finc);
       //Vinc = Rinc * Uinc * transpose(Rinc);
       logVinc = LCM::log(Vinc);
 
