@@ -47,7 +47,7 @@ namespace LCM {
           p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
       eqps(p.get<std::string>("Eqps Name"),
           p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-      ess(p.get<std::string>("Ess Name"),
+      isoHardening(p.get<std::string>("IsoHardening Name"),
           p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"))
   {
     // Pull out numQPs and numDims from a Layout
@@ -71,12 +71,12 @@ namespace LCM {
 
     fpName = p.get<std::string>("Fp Name") + "_old";
     eqpsName = p.get<std::string>("Eqps Name") + "_old";
-    essName = p.get<std::string>("Ess Name") + "_old";
+    isoHardeningName = p.get<std::string>("IsoHardening Name") + "_old";
 
     this->addEvaluatedField(stress);
     this->addEvaluatedField(Fp);
     this->addEvaluatedField(eqps);
-    this->addEvaluatedField(ess);
+    this->addEvaluatedField(isoHardening);
 
     // scratch space FCs
     Fpinv.resize(worksetSize, numQPs, numDims, numDims);
@@ -102,7 +102,7 @@ namespace LCM {
     this->utils.setFieldData(recoveryModulus, fm);
     this->utils.setFieldData(Fp, fm);
     this->utils.setFieldData(eqps, fm);
-    this->utils.setFieldData(ess, fm);
+    this->utils.setFieldData(isoHardening, fm);
   }
 
 //**********************************************************************
@@ -119,12 +119,12 @@ namespace LCM {
     ScalarT K, Y;
     ScalarT Jm23;
     ScalarT trd3, smag;
-    ScalarT Phi, p, dgam, es;
+    ScalarT Phi, p, dgam, isoH;
     ScalarT sq23 = std::sqrt(2. / 3.);
 
     Albany::MDArray Fpold = (*workset.stateArrayPtr)[fpName];
     Albany::MDArray eqpsold = (*workset.stateArrayPtr)[eqpsName];
-    Albany::MDArray essold = (*workset.stateArrayPtr)[essName];
+    Albany::MDArray isoHardeningold = (*workset.stateArrayPtr)[isoHardeningName];
 
     // compute Cp_{n}^{-1}
     RST::inverse(Fpinv, Fpold);
@@ -155,11 +155,11 @@ namespace LCM {
         mubar = trd3 * mu;
         s = mu * (be - trd3 * LCM::identity<ScalarT, 3>());
 
-        es = essold(cell,qp);
+        isoH = isoHardeningold(cell,qp);
 
         // check for yielding
         smag = LCM::norm(s);
-        Phi = smag - sq23 * (Y + 2. * mu * es);
+        Phi = smag - sq23 * (Y + isoH);
 
 //        std::cout << "Rd      : " << Sacado::ScalarValue<ScalarT>::eval(Rd) << std::endl;
 
@@ -177,13 +177,13 @@ namespace LCM {
           dgam = 0.0;
 
           // initialize local unkown vector
-          X[0]  = dgam; X[1] = es;
+          X[0]  = dgam; X[1] = isoH;
 
           LocalNonlinearSolver<EvalT, Traits> solver;
 
           while (!converged) {
 
-        	  compute_ResidJacobian(X, R, dRdX, es, smag, mubar, mu, kappa, K, Y, Rd);
+        	  compute_ResidJacobian(X, R, dRdX, isoH, smag, mubar, mu, kappa, K, Y, Rd);
 
         	  normR = R[0]*R[0] + R[1]* R[1];
         	  normR = std::sqrt(normR);
@@ -210,7 +210,7 @@ namespace LCM {
 
           // update
           dgam = X[0];
-          es = X[1];
+          isoH = X[1];
 
           // plastic direction
           n = ScalarT(1. / smag) * s;
@@ -218,8 +218,8 @@ namespace LCM {
           // updated deviatoric stress
           s -= ScalarT(2. * mubar * dgam) * n;
 
-          // update ess
-          ess(cell, qp) = es;
+          // update isoHardening
+          isoHardening(cell, qp) = isoH;
 
           // update eqps
           eqps(cell, qp) = eqpsold(cell,qp) + sq23 * dgam;
@@ -238,7 +238,7 @@ namespace LCM {
           }
         } else {
           // set state variables to old values
-          ess(cell, qp) = essold(cell,qp);
+          isoHardening(cell, qp) = isoHardeningold(cell,qp);
           eqps(cell, qp) = eqpsold(cell, qp);
           for (std::size_t i = 0; i < numDims; ++i)
             for (std::size_t j = 0; j < numDims; ++j)
@@ -263,7 +263,7 @@ namespace LCM {
 // all local functions
   template<typename EvalT, typename Traits>
   void RIHMR<EvalT, Traits>::compute_ResidJacobian(std::vector<ScalarT> & X,
-      std::vector<ScalarT> & R, std::vector<ScalarT> & dRdX, const ScalarT & es,
+      std::vector<ScalarT> & R, std::vector<ScalarT> & dRdX, const ScalarT & isoH,
       const ScalarT & smag, const ScalarT & mubar, ScalarT & mu, ScalarT & kappa, ScalarT & K, ScalarT & Y, ScalarT & Rd)
   {
 	ScalarT sq23 = std::sqrt(2. / 3.);
@@ -280,9 +280,9 @@ namespace LCM {
     Xfad[0] = DFadType(2, 0, Xval[0]);
     Xfad[1] = DFadType(2, 1, Xval[1]);
 
-    DFadType smagfad, Yfad, des;
+    DFadType smagfad, Yfad, d_isoH;
 
-    DFadType dgam = Xfad[0], esfad = Xfad[1];
+    DFadType dgam = Xfad[0], isoHfad = Xfad[1];
 
     //I have to break down these equations, otherwise, there will be compile error
     //Q.Chen.
@@ -291,21 +291,19 @@ namespace LCM {
     smagfad = 2 * smagfad;
     smagfad = smag - smagfad;
 
-	// Yfad = sq23 * (Y + 2. * mu *esfad);
-    Yfad = mu * esfad;
-    Yfad = 2. * Yfad;
-    Yfad = Y + Yfad;
+	// Yfad = sq23 * (Y + isoHfad);
+    Yfad = Y + isoHfad;
     Yfad = sq23 * Yfad;
 
-    // des = (K - Rd * esfad) * sq23 * dgam;
-    des = Rd * esfad;
-    des = K - des;
-    des = des * dgam;
-    des = des * sq23;
+    // d_isoH = (K - Rd * isoHfad) * sq23 * dgam;
+    d_isoH = Rd * isoHfad;
+    d_isoH = K - d_isoH;
+    d_isoH = d_isoH * dgam;
+    d_isoH = d_isoH * sq23;
 
     // local nonlinear sys of equations
-    Rfad[0] = smagfad - Yfad; // Phi = smag - 2.* mubar * dgam - sq23 * (Y + 2. * mu * esfad);
-    Rfad[1] = esfad - es - des;
+    Rfad[0] = smagfad - Yfad; // Phi = smag - 2.* mubar * dgam - sq23 * (Y + isoHfad);
+    Rfad[1] = isoHfad - isoH - d_isoH;
 
     // get ScalarT residual
     R[0] = Rfad[0].val();

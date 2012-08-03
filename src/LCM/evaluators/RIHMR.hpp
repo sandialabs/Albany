@@ -70,9 +70,9 @@ namespace LCM {
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> stress;
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> Fp;
     PHX::MDField<ScalarT, Cell, QuadPoint> eqps;
-    PHX::MDField<ScalarT, Cell, QuadPoint> ess;
+    PHX::MDField<ScalarT, Cell, QuadPoint> isoHardening;
 
-    std::string fpName, eqpsName, essName;
+    std::string fpName, eqpsName, isoHardeningName;
     unsigned int numQPs;
     unsigned int numDims;
 

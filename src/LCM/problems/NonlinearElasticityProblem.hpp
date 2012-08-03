@@ -819,7 +819,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
       p->set<string>("Stress Name", matModel); //dl->qp_tensor also
       p->set<string>("Fp Name", "Fp");  // dl->qp_tensor also
       p->set<string>("Eqps Name", "eqps");  // dl->qp_scalar also
-      p->set<string>("Ess Name", "ess"); // dl ->qp_scalar
+      p->set<string>("IsoHardening Name", "isoHardening"); // dl ->qp_scalar
 
       //Declare what state data will need to be saved (name, layout, init_type)
       ev = rcp(new LCM::RIHMR<EvalT,AlbanyTraits>(*p));
@@ -833,7 +833,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
       p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("ess",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+      p = stateMgr.registerStateVariable("isoHardening",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
