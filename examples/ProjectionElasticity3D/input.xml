@@ -15,6 +15,10 @@
       </ParameterList>
 	  <Parameter name="DBC on NS NodeSet4 for DOF Z" type="double" value="0.0"/>
     </ParameterList>
+   <ParameterList name="Insertion Criteria">
+      <Parameter name="Insertion Criteria" type="string" value="Traction"/>
+      <Parameter name="Fracture Limit" type="double" value="1e5"/>
+    </ParameterList>
 
     <ParameterList name = "Projection">
       <Parameter name = "Projection Variable" type = "string" value="J2"/>
