@@ -13,27 +13,65 @@
 
 namespace LCM {
 
-//INDENT EVERYTHING AGAIN USING THE SAME SPACE USED IN "Topology.h"!!!
+  //INDENT EVERYTHING AGAIN USING THE SAME SPACE USED IN "Topology.h"!!!
 
-//
-// \brief Adds a new entity to the mesh
-//
-  void topology::add_entity(EntityRank entity_rank)
+  //
+  // \brief Determine highest id number for each entuty rank.
+  // Used to assign unique ids to newly created entities
+  //
+  void topology::set_highest_ids()
   {
     // Get space dimension by querying the STK discretization.
-    Albany::STKDiscretization & stk_discretization =
+    Albany::STKDiscretization &
+    stk_discretization =
         static_cast<Albany::STKDiscretization &>(*discretization_ptr_);
-    int number_dimensions = stk_discretization.getSTKMeshStruct()->numDim;
-    std::vector<size_t> requests(number_dimensions + 1, 0); // number of entity ranks. 1 + number of dimensions
-    requests[entity_rank] = 1;
-    stk::mesh::EntityVector newEntity;
-    bulkData_->generate_new_entities(requests, newEntity);
+
+    const unsigned int number_dimensions =
+        stk_discretization.getSTKMeshStruct()->numDim;
+
+    highest_ids_.resize(number_dimensions);
+
+    for (unsigned int rank = 0; rank < number_dimensions; ++rank) {
+      highest_ids_[rank] = get_number_entities_by_rank(*bulkData_, rank);
+    }
+
     return;
   }
 
-//
-// \brief Removes an entity and all its connections
-//
+  //
+  // \brief Adds a new entity to the mesh
+  //
+  void
+  topology::add_entity(EntityRank entity_rank)
+  {
+
+    if (entity_rank == number_dimensions_) {
+
+      stk::mesh::PartVector part_vector(1);
+
+      part_vector[0] = stkMeshStruct_->partVec[0];
+
+      const unsigned int entity_id = ++highest_ids_[entity_rank];
+
+      stk::mesh::Entity & entity = bulkData_->declare_entity(entity_rank,
+          entity_id, part_vector);
+
+    } else {
+
+      // number of entity ranks. 1 + number of dimensions
+      std::vector<size_t> requests(number_dimensions_ + 1, 0);
+      requests[entity_rank] = 1;
+      stk::mesh::EntityVector newEntity;
+      bulkData_->generate_new_entities(requests, newEntity);
+
+    }
+
+    return;
+  }
+
+  //
+  // \brief Removes an entity and all its connections
+  //
   void topology::remove_entity(Entity & entity)
   {
     // Destroy all relations to or from the entity
@@ -50,9 +88,9 @@ namespace LCM {
     return;
   }
 
-//
-// \brief Adds a relation between two entities
-//
+  //
+  // \brief Adds a relation between two entities
+  //
   void topology::add_relation(Entity & source_entity, Entity & target_entity,
       EdgeId local_relation_id)
   {
@@ -100,6 +138,15 @@ namespace LCM {
       }
     }
     return entities;
+  }
+
+  //
+  // \brief Returns a vector with all the mesh entities of a specific rank
+  //
+  std::vector<Entity*>::size_type topology::get_number_entities_by_rank(
+      const stk::mesh::BulkData & mesh, EntityRank entity_rank)
+  {
+    return mesh.buckets(entity_rank).size();
   }
 
 //
@@ -494,6 +541,8 @@ namespace LCM {
 //
   void topology::barycentric_subdivision()
   {
+    // Use to assign unique ids
+    set_highest_ids();
 
     // Begin mesh update
     bulkData_->modification_begin();

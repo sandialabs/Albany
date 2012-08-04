@@ -5,7 +5,7 @@ namespace LCM {
    * \brief Default constructor for topology
    */
   topology::topology() :
-      numDim(0), discretization_ptr_(Teuchos::null)
+      number_dimensions_(0), discretization_ptr_(Teuchos::null)
   {
     return;
   }
@@ -83,7 +83,7 @@ namespace LCM {
     edgeRank = metaData->EDGE_RANK;
     faceRank = metaData->FACE_RANK;
     elementRank = metaData->element_rank();
-    numDim = stkMeshStruct_->numDim;
+    number_dimensions_ = stkMeshStruct_->numDim;
 
     // Get the topology of the elements. NOTE: Assumes one element type in
     //   mesh.
@@ -191,7 +191,7 @@ namespace LCM {
   {
     // Fracture only defined on the boundary of the elements
     EntityRank rank = entity.entity_rank();
-    assert(rank==numDim-1);
+    assert(rank==number_dimensions_-1);
 
     stk::mesh::PairIterRelation relations = entity.relations(elementRank);
     if (relations.size() == 1) return false;
@@ -221,7 +221,7 @@ namespace LCM {
     //   The rank of the boundary elements is one less than the
     //   dimension of the system.
     std::vector<Entity*> boundary_lst;
-    stk::mesh::get_entities(*(bulkData_), numDim - 1, boundary_lst);
+    stk::mesh::get_entities(*(bulkData_), number_dimensions_ - 1, boundary_lst);
 
     // Probability that fracture_criterion will return true.
     float p = 1.0;
@@ -232,7 +232,7 @@ namespace LCM {
       bool is_open = topology::fracture_criterion(entity, p);
       // If the criterion is met, need to set lower rank entities
       //   open as well
-      if (is_open == true && numDim == 3) {
+      if (is_open == true && number_dimensions_ == 3) {
         entity_open[entity.key()] = true;
         stk::mesh::PairIterRelation segments = entity.relations(
             entity.entity_rank() - 1);
@@ -250,7 +250,7 @@ namespace LCM {
         }
       }
       // If the mesh is 2D
-      else if (is_open == true && numDim == 2) {
+      else if (is_open == true && number_dimensions_ == 2) {
         entity_open[entity.key()] = true;
         stk::mesh::PairIterRelation nodes = entity.relations(
             entity.entity_rank() - 1);
@@ -711,12 +711,12 @@ namespace LCM {
     for (int i = 0; i < face1Relations.size(); ++i) {
       Entity * entity1 = face1Relations[i].entity();
       Entity * entity2 = face2Relations[i].entity();
-      // If numDim = 2, the out edge targets from the faces are nodes
+      // If number_dimensions_ = 2, the out edge targets from the faces are nodes
       if (entity1->entity_rank() == nodeRank) {
         connectivity[i] = entity1;
         connectivity[i + numFaceNodes] = entity2;
       }
-      // Id numDim = 3, the out edge targets from the faces are segments
+      // Id number_dimensions_ = 3, the out edge targets from the faces are segments
       // Take the 1st out edge of the segment relation list
       else {
         stk::mesh::PairIterRelation seg1Relations = entity1->relations(
@@ -836,7 +836,7 @@ namespace LCM {
         std::set<stkEdge>::iterator lastEdge = subgraph_edge_lst.end();
 
         Subgraph subgraph(bulkData_, firstEntity, lastEntity, firstEdge,
-            lastEdge, numDim);
+            lastEdge, number_dimensions_);
 
         // Clone open faces
         stk::mesh::PairIterRelation faces = segment->relations(faceRank);
@@ -883,7 +883,7 @@ namespace LCM {
       std::set<stkEdge>::iterator firstEdge = subgraph_edge_lst.begin();
       std::set<stkEdge>::iterator lastEdge = subgraph_edge_lst.end();
       Subgraph subgraph(bulkData_, firstEntity, lastEntity, firstEdge, lastEdge,
-          numDim);
+          number_dimensions_);
 
       Vertex node = subgraph.global_to_local(entity->key());
       std::map<Entity*, Entity*> new_connectivity =
