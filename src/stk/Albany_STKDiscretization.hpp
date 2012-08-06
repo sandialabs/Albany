@@ -126,9 +126,10 @@ namespace Albany {
     void getOwned_xyz(double **x, double **y, double **z, double **rbm,
                       int& nNodes, int numPDEs, int numScalar, int nullSpaceDim);
 
+#ifdef ALBANY_FELIX
     // Function that transforms an STK mesh of a unit cube (for FELIX problems)
     void transformMesh(); 
-     
+#endif     
 
   private:
 

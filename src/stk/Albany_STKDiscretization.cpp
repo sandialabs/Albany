@@ -134,6 +134,7 @@ Albany::STKDiscretization::getCoordinates() const
   return coordinates;
 }
 
+#ifdef ALBANY_FELIX
 //The function transformMesh() maps a unit cube domain by applying the transformation 
 //x = L*x
 //y = L*y
@@ -141,6 +142,7 @@ Albany::STKDiscretization::getCoordinates() const
 //where b(x,y) and s(x,y) are curves specifying the bedrock and top surface 
 //geometries respectively.   
 //Currently this function is only needed for some FELIX problems.
+
 
 void
 Albany::STKDiscretization::transformMesh()
@@ -173,7 +175,7 @@ Albany::STKDiscretization::transformMesh()
      }
    }
 }
-    
+#endif    
 
 void
 Albany::STKDiscretization::getOwned_xyz(double** x, double** y, double** z,
@@ -862,7 +864,9 @@ Albany::STKDiscretization::updateMesh(Teuchos::RCP<Albany::AbstractSTKMeshStruct
 
   computeOverlapNodesAndUnknowns();
 
+#ifdef ALBANY_FLEIX  
   transformMesh(); 
+#endif
 
   computeGraphs();
 
