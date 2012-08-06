@@ -29,9 +29,10 @@ class Epetra_Operator;
 
 namespace Albany {
 
-class GaussNewtonOperatorFactory : public ReducedOperatorFactory {
+template <typename Derived>
+class GaussNewtonOperatorFactoryBase : public ReducedOperatorFactory {
 public:
-  explicit GaussNewtonOperatorFactory(const Teuchos::RCP<const Epetra_MultiVector> &reducedBasis);
+  explicit GaussNewtonOperatorFactoryBase(const Teuchos::RCP<const Epetra_MultiVector> &reducedBasis);
 
   virtual bool fullJacobianRequired(bool residualRequested, bool jacobianRequested) const;
 
@@ -42,14 +43,40 @@ public:
 
   virtual void fullJacobianIs(const Epetra_Operator &op);
 
+protected:
+  Teuchos::RCP<const Epetra_MultiVector> getPremultipliedReducedBasis() const;
+
 private:
   Teuchos::RCP<const Epetra_MultiVector> reducedBasis_;
 
   ReducedJacobianFactory jacobianFactory_;
 
-  // Disallow copy and assignment
-  GaussNewtonOperatorFactory(const GaussNewtonOperatorFactory &);
-  GaussNewtonOperatorFactory &operator=(const GaussNewtonOperatorFactory &);
+  Teuchos::RCP<const Epetra_MultiVector> getLeftBasis() const;
+};
+
+class GaussNewtonOperatorFactory : public GaussNewtonOperatorFactoryBase<GaussNewtonOperatorFactory> {
+public:
+  explicit GaussNewtonOperatorFactory(const Teuchos::RCP<const Epetra_MultiVector> &reducedBasis);
+
+  Teuchos::RCP<const Epetra_MultiVector> leftProjectorBasis() const;
+};
+
+class GaussNewtonMetricOperatorFactory : public GaussNewtonOperatorFactoryBase<GaussNewtonMetricOperatorFactory> {
+public:
+  GaussNewtonMetricOperatorFactory(const Teuchos::RCP<const Epetra_MultiVector> &reducedBasis,
+                                   const Teuchos::RCP<const Epetra_Operator> &metric);
+
+  // Overridden
+  virtual void fullJacobianIs(const Epetra_Operator &op);
+
+  Teuchos::RCP<const Epetra_MultiVector> leftProjectorBasis() const;
+
+private:
+  Teuchos::RCP<const Epetra_Operator> metric_;
+
+  Teuchos::RCP<Epetra_MultiVector> premultipliedLeftProjector_;
+
+  void updatePremultipliedLeftProjector();
 };
 
 } // namespace Albany

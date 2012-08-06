@@ -84,6 +84,7 @@
       <Parameter name="Save Moments" type="int" value="2"/>
       <ParameterList name="SG Parameters">
 	<Parameter name="Number of SG Parameter Vectors" type="int" value="1"/>
+	<Parameter name="Set Initial SG Parameters" type="bool" value="0"/>
 	<ParameterList name="SG Parameter Vector 0">
 	  <Parameter name="Parameter Vector Index" type="int" value="1"/>
 	</ParameterList>
@@ -93,13 +94,14 @@
 	<Parameter name="Type" type="string" value="Legendre"/>
 	<Parameter name="Order" type="int" value="3"/>
 	<Parameter name="Dimension" type="int" value="4"/>
-	<Parameter name="Normalize" type="bool" value="false"/>
+	<Parameter name="Normalize" type="bool" value="true"/>
 	<Parameter name="Cijk Drop Tolerance" type="double" value="1e-12"/>
       </ParameterList>
       <ParameterList name="Quadrature">
 	<Parameter name="Type" type="string" value="Tensor Product"/>
       </ParameterList>
-      <Parameter name="SG Method" type="string" value="AD"/>       
+      <!--Parameter name="SG Method" type="string" value="AD"/-->
+      <Parameter name="SG Method" type="string" value="Non-intrusive"/>
       <ParameterList name="Expansion">
 	<Parameter name="Type" type="string" value="Quadrature"/>
       </ParameterList>

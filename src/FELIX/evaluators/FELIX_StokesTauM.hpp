@@ -50,9 +50,10 @@ private:
 
   // Input: 
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> V;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> VGrad; //IK - added 7/19/2012
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> Gc;
-  PHX::MDField<ScalarT,Cell,QuadPoint> rho;
   PHX::MDField<ScalarT,Cell,QuadPoint> mu;
+  PHX::MDField<ScalarT,Cell,QuadPoint> muFELIX;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> TauM;

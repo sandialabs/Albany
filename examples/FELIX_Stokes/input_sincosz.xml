@@ -14,6 +14,9 @@
     <ParameterList name="Body Force">
       <Parameter name="Type" type="string" value="SinCosZ"/>
     </ParameterList>
+    <ParameterList name="FELIX Viscosity">
+      <Parameter name="Type" type="string" value="Constant"/>
+    </ParameterList>
     <ParameterList name="Initial Condition">
       <Parameter name="Function" type="string" value="Constant"/>
       <Parameter name="Function Data" type="Array(double)" value="{0.5,0.5,0.5,0.5}"/>
@@ -67,7 +70,7 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="5"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{0.0664, 0.0664, 0.2652, 7.0244, 0.0}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{0.0943, 0.0943, 0.40775, 7.624, 0.0}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>

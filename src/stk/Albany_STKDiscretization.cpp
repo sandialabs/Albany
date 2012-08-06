@@ -47,6 +47,7 @@
 #include <Ionit_Initializer.h>
 #endif 
 
+const double pi = 3.1415926535897932385;
 
 Albany::STKDiscretization::STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
 					     const Teuchos::RCP<const Epetra_Comm>& comm_) :
@@ -177,6 +178,49 @@ Albany::STKDiscretization::getCoordinates() const
 
   return coordinates;
 }
+
+#ifdef ALBANY_FELIX
+//The function transformMesh() maps a unit cube domain by applying the transformation 
+//x = L*x
+//y = L*y
+//z = s(x,y)*z + b(x,y)*(1-z)
+//where b(x,y) and s(x,y) are curves specifying the bedrock and top surface 
+//geometries respectively.   
+//Currently this function is only needed for some FELIX problems.
+
+
+void
+Albany::STKDiscretization::transformMesh()
+{
+  std::string transformType = stkMeshStruct->transformType;
+  if (transformType == "None") {
+     transform_type = NONE;
+     cout << "None!" << endl;
+  }
+  else if (transformType == "ISMIP-HOM Test A") {
+     transform_type = ISMIP_HOM_TEST_A;
+     cout << "Test A!" << endl;
+  }
+  if (transform_type == ISMIP_HOM_TEST_A)
+  {
+    int L = stkMeshStruct->felixL; 
+    double alpha = stkMeshStruct->felixAlpha; 
+    cout << "here!" << endl;
+    cout << "L: " << L << endl; 
+    cout << "alpha degrees: " << alpha << endl; 
+    alpha = alpha*pi/180; //convert alpha, read in from ParameterList, to radians
+    cout << "alpha radians: " << alpha << endl; 
+    for (int i=0; i < numOverlapNodes; i++)  {
+      double* x = stk::mesh::field_data(*stkMeshStruct->coordinates_field, *overlapnodes[i]);
+      x[0] = L*x[0];
+      x[1] = L*x[1];
+      double s = -x[0]*tan(alpha);
+      double b = s - 1.0 + 0.5*sin(2*pi/L*x[0])*sin(2*pi/L*x[1]);
+      x[2] = s*x[2] + b*(1-x[2]);
+     }
+   }
+}
+#endif    
 
 void
 Albany::STKDiscretization::getOwned_xyz(double** x, double** y, double** z,
@@ -899,6 +943,10 @@ Albany::STKDiscretization::updateMesh(Teuchos::RCP<Albany::AbstractSTKMeshStruct
   computeOwnedNodesAndUnknowns();
 
   computeOverlapNodesAndUnknowns();
+
+#ifdef ALBANY_FLEIX  
+  transformMesh(); 
+#endif
 
   computeGraphs();
 

@@ -243,13 +243,29 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
 
   	bulkData->modification_begin();
 
+    // Restart index to read solution from exodus file.
+    int index = params->get("Restart Index",-1); // Default to no restart
+
     if(comm->MyPID() == 0){ // read in the mesh on PE 0
 
        readBulkData(*region);
+// Comment the line above and uncomment the one below once changes checked into Trilinos stk::io catch up (GAH)
+//       stk::io::process_mesh_bulk_data(region, *bulkData);
+
+      // Read solution from exodus file.
+      if (index<1) *out << "Restart Index not set. Not reading solution from exodus (" 
+           << index << ")"<< endl;
+      else {
+        *out << "Restart Index set, reading solution time : " << index << endl;
+// Uncomment the one below once changes checked into Trilinos stk::io catch up (GAH)
+//         stk::io::input_mesh_fields(region, *bulkData, index);
+      }
 
     }
 
-    // Note: restart from a single exodus file not currently supported.
+    if (index >= 1)
+
+         hasRestartSolution = true;
 
   	bulkData->modification_end();
 
@@ -322,17 +338,6 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
     *out << "After rebalancing, the imbalance threshold is = " << imbalance << endl;
 
   }
-
-  // What is in the sideset parts now?
-
-/*
-  std::map<std::string, stk::mesh::Part*>::iterator it;
-
- for(it = ssPartVec.begin(); it != ssPartVec.end(); ++it){
-
-      std::cout << "Topology is = " << metaData->get_cell_topology(*it->second) << std::endl;
-  }
-*/
 
 }
 
@@ -528,7 +533,6 @@ Albany::IossSTKMeshStruct::readBulkData(Ioss::Region& region){
   }
 
 }
-
 
 Teuchos::RCP<const Teuchos::ParameterList>
 Albany::IossSTKMeshStruct::getValidDiscretizationParameters() const

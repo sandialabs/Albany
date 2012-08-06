@@ -95,6 +95,12 @@ namespace Albany {
     std::string exoOutFile;
     bool hasRestartSolution;
 
+    //Flag for transforming STK mesh; currently only needed for FELIX problems 
+    std::string transformType;
+    //alpha and L are parameters read in from ParameterList for FELIX problems 
+    double felixAlpha; 
+    int felixL; 
+
     // Temporary flag to switch between 2D elements being Rank Elements or Faces
     bool useElementAsTopRank;
 

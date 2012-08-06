@@ -16,135 +16,135 @@
 
 #
 SET(SOURCES
-	Albany_SolverFactory.cpp
-	Albany_Utils.cpp
+        Albany_SolverFactory.cpp
+        Albany_Utils.cpp
+        PHAL_Dimension.cpp
+        PHAL_AlbanyTraits.cpp
 	Petra_Converters.cpp
-	PHAL_Dimension.cpp 
-	PHAL_AlbanyTraits.cpp 
-	Albany_Application.cpp 
-	Albany_Adaptation.cpp
-	Albany_ObserverFactory.cpp
-	Albany_RythmosObserver.cpp 
-	Albany_NOXObserver.cpp 
-	Albany_StateManager.cpp 
-	Albany_ModelFactory.cpp
-	Albany_ModelEvaluator.cpp
-	Albany_ModelEvaluatorT.cpp
-	Albany_SaveEigenData.cpp
-	Albany_ExodusOutput.cpp
+        Albany_Application.cpp
+        Albany_Adaptation.cpp
+        Albany_ObserverFactory.cpp
+        Albany_RythmosObserver.cpp
+        Albany_NOXObserver.cpp
+        Albany_StateManager.cpp
+        Albany_ModelFactory.cpp
+        Albany_ModelEvaluator.cpp
+        Albany_ModelEvaluatorT.cpp
+        Albany_SaveEigenData.cpp
+        Albany_ExodusOutput.cpp
   )
 
 SET(HEADERS
-	Albany_Adaptation.hpp
-	Albany_SolverFactory.hpp
-	Albany_Utils.hpp
+        Albany_Adaptation.hpp
+        Albany_SolverFactory.hpp
+        Albany_Utils.hpp
+        Albany_DataTypes.hpp
 	Petra_Converters.hpp
-	Albany_DataTypes.hpp 
-	PHAL_Dimension.hpp 
-	PHAL_FactoryTraits.hpp 
-	PHAL_AlbanyTraits.hpp 
-	PHAL_Workset.hpp 
-	PHAL_TypeKeyMap.hpp
-	Albany_Application.hpp 
-	Albany_ObserverFactory.hpp
-	Albany_RythmosObserver.hpp 
-	Albany_NOXObserver.hpp 
-	Albany_StateManager.hpp 
+        PHAL_Dimension.hpp
+        PHAL_FactoryTraits.hpp
+        PHAL_AlbanyTraits.hpp
+        PHAL_Workset.hpp
+        PHAL_TypeKeyMap.hpp
+        Albany_Application.hpp
+        Albany_ObserverFactory.hpp
+        Albany_RythmosObserver.hpp
+        Albany_NOXObserver.hpp
+        Albany_StateManager.hpp
         Albany_StateInfoStruct.hpp
         Albany_EigendataInfoStruct.hpp
-	Albany_ModelFactory.hpp
-	Albany_ModelEvaluator.hpp
-	Albany_ModelEvaluatorT.hpp
-	Albany_SaveEigenData.hpp
-	Albany_ExodusOutput.hpp
+        Albany_ModelFactory.hpp
+        Albany_ModelEvaluator.hpp
+        Albany_ModelEvaluatorT.hpp
+        Albany_SaveEigenData.hpp
+        Albany_ExodusOutput.hpp
         Albany_DummyParameterAccessor.hpp
   )
 
 #problems
 SET(SOURCES ${SOURCES}
-	problems/Albany_AbstractProblem.cpp 
-	problems/Albany_CahnHillProblem.cpp 
-	problems/Albany_ProblemUtils.cpp 
-	problems/Albany_EvaluatorUtils.cpp 
-	problems/Albany_ResponseUtilities.cpp 
-	problems/Albany_BCUtils.cpp 
-	problems/Albany_ProblemFactory.cpp
-	problems/Albany_HeatProblem.cpp 
-	problems/Albany_MultiHeatProblem.cpp 
-	problems/Albany_NavierStokes.cpp 
-	problems/Albany_GPAMProblem.cpp 
-	problems/Albany_ODEProblem.cpp 
-	problems/Albany_Helmholtz2DProblem.cpp 
-	problems/Albany_ThermoElectrostaticsProblem.cpp 
-	problems/Albany_AnalyticFunction.cpp 
-	problems/Albany_InitialCondition.cpp 
+        problems/Albany_AbstractProblem.cpp
+        problems/Albany_CahnHillProblem.cpp
+        problems/Albany_ProblemUtils.cpp
+        problems/Albany_EvaluatorUtils.cpp
+        problems/Albany_ResponseUtilities.cpp
+        problems/Albany_BCUtils.cpp
+        problems/Albany_ProblemFactory.cpp
+        problems/Albany_HeatProblem.cpp
+        problems/Albany_MultiHeatProblem.cpp
+        problems/Albany_NavierStokes.cpp
+        problems/Albany_GPAMProblem.cpp
+        problems/Albany_ODEProblem.cpp
+        problems/Albany_Helmholtz2DProblem.cpp
+        problems/Albany_ThermoElectrostaticsProblem.cpp
+        problems/Albany_AnalyticFunction.cpp
+        problems/Albany_InitialCondition.cpp
   )
 SET(HEADERS ${HEADERS}
-	problems/Albany_ProblemFactory.hpp 
-	problems/Albany_AbstractProblem.hpp 
-	problems/Albany_CahnHillProblem.hpp 
-	problems/Albany_ProblemUtils.hpp 
-	problems/Albany_EvaluatorUtils.hpp 
-	problems/Albany_EvaluatorUtils_Def.hpp 
-	problems/Albany_ResponseUtilities.hpp 
-	problems/Albany_ResponseUtilities_Def.hpp 
-	problems/Albany_BCUtils.hpp 
-	problems/Albany_BCUtils_Def.hpp 
-	problems/Albany_HeatProblem.hpp 
-	problems/Albany_MultiHeatProblem.hpp 
-	problems/Albany_NavierStokes.hpp 
-	problems/Albany_GPAMProblem.hpp 
-	problems/Albany_ODEProblem.hpp 
-	problems/Albany_Helmholtz2DProblem.hpp 
-	problems/Albany_ThermoElectrostaticsProblem.hpp 
-	problems/Albany_AnalyticFunction.hpp 
-	problems/Albany_InitialCondition.hpp 
+        problems/Albany_ProblemFactory.hpp
+        problems/Albany_AbstractProblem.hpp
+        problems/Albany_CahnHillProblem.hpp
+        problems/Albany_ProblemUtils.hpp
+        problems/Albany_EvaluatorUtils.hpp
+        problems/Albany_EvaluatorUtils_Def.hpp
+        problems/Albany_ResponseUtilities.hpp
+        problems/Albany_ResponseUtilities_Def.hpp
+        problems/Albany_BCUtils.hpp
+        problems/Albany_BCUtils_Def.hpp
+        problems/Albany_HeatProblem.hpp
+        problems/Albany_MultiHeatProblem.hpp
+        problems/Albany_NavierStokes.hpp
+        problems/Albany_GPAMProblem.hpp
+        problems/Albany_ODEProblem.hpp
+        problems/Albany_Helmholtz2DProblem.hpp
+        problems/Albany_ThermoElectrostaticsProblem.hpp
+        problems/Albany_AnalyticFunction.hpp
+        problems/Albany_InitialCondition.hpp
   )
 
 #responses
 SET(SOURCES ${SOURCES}
         responses/Albany_ScalarResponseFunction.cpp
-	responses/Albany_AggregateScalarResponseFunction.cpp
-	responses/Albany_SamplingBasedScalarResponseFunction.cpp
-	responses/Albany_SolutionAverageResponseFunction.cpp 
-	responses/Albany_SolutionMaxValueResponseFunction.cpp
-	responses/Albany_SolutionTwoNormResponseFunction.cpp
+        responses/Albany_AggregateScalarResponseFunction.cpp
+        responses/Albany_SamplingBasedScalarResponseFunction.cpp
+        responses/Albany_SolutionAverageResponseFunction.cpp
+        responses/Albany_SolutionMaxValueResponseFunction.cpp
+        responses/Albany_SolutionTwoNormResponseFunction.cpp
         responses/Albany_SolutionFileResponseFunction.cpp
-	responses/Albany_FieldManagerScalarResponseFunction.cpp
-	responses/Albany_DistributedResponseFunction.cpp
-	responses/Albany_SolutionResponseFunction.cpp
-	responses/Albany_KLResponseFunction.cpp
-	responses/Albany_ResponseFactory.cpp
+        responses/Albany_FieldManagerScalarResponseFunction.cpp
+        responses/Albany_DistributedResponseFunction.cpp
+        responses/Albany_SolutionResponseFunction.cpp
+        responses/Albany_KLResponseFunction.cpp
+        responses/Albany_ResponseFactory.cpp
   )
 SET(HEADERS ${HEADERS}
-	responses/Albany_AbstractResponseFunction.hpp 
-	responses/Albany_ScalarResponseFunction.hpp
-	responses/Albany_AggregateScalarResponseFunction.hpp
-	responses/Albany_SamplingBasedScalarResponseFunction.hpp
-	responses/Albany_SolutionAverageResponseFunction.hpp 
-	responses/Albany_SolutionMaxValueResponseFunction.hpp
-	responses/Albany_SolutionTwoNormResponseFunction.hpp
+        responses/Albany_AbstractResponseFunction.hpp
+        responses/Albany_ScalarResponseFunction.hpp
+        responses/Albany_AggregateScalarResponseFunction.hpp
+        responses/Albany_SamplingBasedScalarResponseFunction.hpp
+        responses/Albany_SolutionAverageResponseFunction.hpp
+        responses/Albany_SolutionMaxValueResponseFunction.hpp
+        responses/Albany_SolutionTwoNormResponseFunction.hpp
         responses/Albany_SolutionFileResponseFunction.hpp
-	responses/Albany_FieldManagerScalarResponseFunction.hpp
-	responses/Albany_DistributedResponseFunction.hpp
-	responses/Albany_SolutionResponseFunction.hpp
-	responses/Albany_KLResponseFunction.hpp
-	responses/Albany_ResponseFactory.hpp
+        responses/Albany_FieldManagerScalarResponseFunction.hpp
+        responses/Albany_DistributedResponseFunction.hpp
+        responses/Albany_SolutionResponseFunction.hpp
+        responses/Albany_KLResponseFunction.hpp
+        responses/Albany_ResponseFactory.hpp
   )
 
 #stk
 SET(SOURCES ${SOURCES}
         stk/Albany_STKDiscretization.cpp
-	stk/Albany_DiscretizationFactory.cpp
+        stk/Albany_DiscretizationFactory.cpp
         stk/Albany_GenericSTKMeshStruct.cpp
         stk/Albany_TmplSTKMeshStruct.cpp
         stk/Albany_FromCubitSTKMeshStruct.cpp
         stk/Albany_IossSTKMeshStruct.cpp
   )
 SET(HEADERS ${HEADERS}
-	stk/Albany_AbstractDiscretization.hpp 
+        stk/Albany_AbstractDiscretization.hpp
         stk/Albany_STKDiscretization.hpp
-	stk/Albany_DiscretizationFactory.hpp
+        stk/Albany_DiscretizationFactory.hpp
         stk/Albany_AbstractSTKMeshStruct.hpp
         stk/Albany_GenericSTKMeshStruct.hpp
         stk/Albany_TmplSTKMeshStruct.hpp
@@ -154,16 +154,16 @@ SET(HEADERS ${HEADERS}
 
 #evaluators
 SET(SOURCES ${SOURCES}
-	evaluators/PHAL_GatherSolution.cpp 
-	evaluators/PHAL_GatherEigenvectors.cpp
-	evaluators/PHAL_ScatterResidual.cpp 
-	evaluators/PHAL_Dirichlet.cpp 
-  evaluators/PHAL_Neumann.cpp
-	evaluators/PHAL_Source.cpp 
-	evaluators/PHAL_Constant.cpp 
-	evaluators/PHAL_ODEResid.cpp 
-	evaluators/PHAL_ThermalConductivity.cpp 
-	evaluators/PHAL_Absorption.cpp 
+        evaluators/PHAL_GatherSolution.cpp
+        evaluators/PHAL_GatherEigenvectors.cpp
+        evaluators/PHAL_ScatterResidual.cpp
+        evaluators/PHAL_Dirichlet.cpp
+        evaluators/PHAL_Neumann.cpp
+        evaluators/PHAL_Source.cpp
+        evaluators/PHAL_Constant.cpp
+        evaluators/PHAL_ODEResid.cpp
+        evaluators/PHAL_ThermalConductivity.cpp
+        evaluators/PHAL_Absorption.cpp
         evaluators/PHAL_HeatEqResid.cpp
         evaluators/PHAL_GPAMResid.cpp
         evaluators/PHAL_ComputeBasisFunctions.cpp
@@ -175,51 +175,52 @@ SET(SOURCES ${SOURCES}
         evaluators/PHAL_MapToPhysicalFrame.cpp
         evaluators/PHAL_HelmholtzResid.cpp
         evaluators/PHAL_GatherCoordinateVector.cpp
-  evaluators/PHAL_CahnHillRhoResid.cpp
-  evaluators/PHAL_CahnHillWResid.cpp
-	evaluators/PHAL_CahnHillChemTerm.cpp 
-	evaluators/PHAL_JouleHeating.cpp
-	evaluators/PHAL_TEProp.cpp
-	evaluators/PHAL_SaveStateField.cpp
-	evaluators/PHAL_LoadStateField.cpp
-	evaluators/PHAL_SharedParameter.cpp
-	evaluators/PHAL_NSContinuityResid.cpp
-	evaluators/PHAL_NSMomentumResid.cpp
+        evaluators/PHAL_CahnHillRhoResid.cpp
+        evaluators/PHAL_CahnHillWResid.cpp
+        evaluators/PHAL_CahnHillChemTerm.cpp
+        evaluators/PHAL_LangevinNoiseTerm.cpp
+        evaluators/PHAL_JouleHeating.cpp
+        evaluators/PHAL_TEProp.cpp
+        evaluators/PHAL_SaveStateField.cpp
+        evaluators/PHAL_LoadStateField.cpp
+        evaluators/PHAL_SharedParameter.cpp
+        evaluators/PHAL_NSContinuityResid.cpp
+        evaluators/PHAL_NSMomentumResid.cpp
         evaluators/PHAL_NSThermalEqResid.cpp
         evaluators/PHAL_NSNeutronEqResid.cpp
         evaluators/PHAL_NSRm.cpp
         evaluators/PHAL_NSContravarientMetricTensor.cpp
-        evaluators/PHAL_NSTauM.cpp 
+        evaluators/PHAL_NSTauM.cpp
         evaluators/PHAL_NSTauT.cpp
         evaluators/PHAL_NSMaterialProperty.cpp
         evaluators/PHAL_NSBodyForce.cpp
         evaluators/PHAL_NSPermeabilityTerm.cpp
         evaluators/PHAL_NSForchheimerTerm.cpp
-	evaluators/PHAL_ResponseFieldIntegral.cpp
-	evaluators/PHAL_ScatterScalarResponse.cpp
-	evaluators/PHAL_SeparableScatterScalarResponse.cpp
+        evaluators/PHAL_ResponseFieldIntegral.cpp
+        evaluators/PHAL_ScatterScalarResponse.cpp
+        evaluators/PHAL_SeparableScatterScalarResponse.cpp
   )
 SET(HEADERS ${HEADERS}
-	evaluators/PHAL_GatherSolution.hpp 
-	evaluators/PHAL_GatherSolution_Def.hpp 
-	evaluators/PHAL_GatherEigenvectors.hpp 
-	evaluators/PHAL_GatherEigenvectors_Def.hpp 
-	evaluators/PHAL_ScatterResidual.hpp 
-	evaluators/PHAL_ScatterResidual_Def.hpp 
-	evaluators/PHAL_Dirichlet.hpp 
-	evaluators/PHAL_Dirichlet_Def.hpp 
-  evaluators/PHAL_Neumann.hpp
-  evaluators/PHAL_Neumann_Def.hpp
-	evaluators/PHAL_Source.hpp 
-	evaluators/PHAL_Source_Def.hpp 
-	evaluators/PHAL_Constant.hpp 
-	evaluators/PHAL_Constant_Def.hpp 
-	evaluators/PHAL_ODEResid.hpp 
-	evaluators/PHAL_ODEResid_Def.hpp 
-	evaluators/PHAL_ThermalConductivity.hpp 
-	evaluators/PHAL_ThermalConductivity_Def.hpp
-	evaluators/PHAL_Absorption.hpp 
-	evaluators/PHAL_Absorption_Def.hpp
+        evaluators/PHAL_GatherSolution.hpp
+        evaluators/PHAL_GatherSolution_Def.hpp
+        evaluators/PHAL_GatherEigenvectors.hpp
+        evaluators/PHAL_GatherEigenvectors_Def.hpp
+        evaluators/PHAL_ScatterResidual.hpp
+        evaluators/PHAL_ScatterResidual_Def.hpp
+        evaluators/PHAL_Dirichlet.hpp
+        evaluators/PHAL_Dirichlet_Def.hpp
+        evaluators/PHAL_Neumann.hpp
+        evaluators/PHAL_Neumann_Def.hpp
+        evaluators/PHAL_Source.hpp
+        evaluators/PHAL_Source_Def.hpp
+        evaluators/PHAL_Constant.hpp
+        evaluators/PHAL_Constant_Def.hpp
+        evaluators/PHAL_ODEResid.hpp
+        evaluators/PHAL_ODEResid_Def.hpp
+        evaluators/PHAL_ThermalConductivity.hpp
+        evaluators/PHAL_ThermalConductivity_Def.hpp
+        evaluators/PHAL_Absorption.hpp
+        evaluators/PHAL_Absorption_Def.hpp
         evaluators/PHAL_HeatEqResid.hpp
         evaluators/PHAL_HeatEqResid_Def.hpp
         evaluators/PHAL_GPAMResid.hpp
@@ -242,26 +243,28 @@ SET(HEADERS ${HEADERS}
         evaluators/PHAL_HelmholtzResid_Def.hpp
         evaluators/PHAL_GatherCoordinateVector.hpp
         evaluators/PHAL_GatherCoordinateVector_Def.hpp
-  evaluators/PHAL_CahnHillRhoResid.hpp
-  evaluators/PHAL_CahnHillRhoResid_Def.hpp
-  evaluators/PHAL_CahnHillWResid.hpp
-  evaluators/PHAL_CahnHillWResid_Def.hpp
-	evaluators/PHAL_CahnHillChemTerm.hpp 
-	evaluators/PHAL_CahnHillChemTerm_Def.hpp 
-	evaluators/PHAL_JouleHeating.hpp
-	evaluators/PHAL_JouleHeating_Def.hpp
-	evaluators/PHAL_TEProp.hpp
-	evaluators/PHAL_TEProp_Def.hpp
-	evaluators/PHAL_SaveStateField.hpp
-	evaluators/PHAL_SaveStateField_Def.hpp
-	evaluators/PHAL_LoadStateField.hpp
-	evaluators/PHAL_LoadStateField_Def.hpp
-	evaluators/PHAL_SharedParameter.hpp
-	evaluators/PHAL_SharedParameter_Def.hpp
-	evaluators/PHAL_NSContinuityResid.hpp
-	evaluators/PHAL_NSContinuityResid_Def.hpp
-	evaluators/PHAL_NSMomentumResid.hpp
-	evaluators/PHAL_NSMomentumResid_Def.hpp
+        evaluators/PHAL_CahnHillRhoResid.hpp
+        evaluators/PHAL_CahnHillRhoResid_Def.hpp
+        evaluators/PHAL_CahnHillWResid.hpp
+        evaluators/PHAL_CahnHillWResid_Def.hpp
+        evaluators/PHAL_CahnHillChemTerm.hpp
+        evaluators/PHAL_CahnHillChemTerm_Def.hpp
+        evaluators/PHAL_LangevinNoiseTerm.hpp
+        evaluators/PHAL_LangevinNoiseTerm_Def.hpp
+        evaluators/PHAL_JouleHeating.hpp
+        evaluators/PHAL_JouleHeating_Def.hpp
+        evaluators/PHAL_TEProp.hpp
+        evaluators/PHAL_TEProp_Def.hpp
+        evaluators/PHAL_SaveStateField.hpp
+        evaluators/PHAL_SaveStateField_Def.hpp
+        evaluators/PHAL_LoadStateField.hpp
+        evaluators/PHAL_LoadStateField_Def.hpp
+        evaluators/PHAL_SharedParameter.hpp
+        evaluators/PHAL_SharedParameter_Def.hpp
+        evaluators/PHAL_NSContinuityResid.hpp
+        evaluators/PHAL_NSContinuityResid_Def.hpp
+        evaluators/PHAL_NSMomentumResid.hpp
+        evaluators/PHAL_NSMomentumResid_Def.hpp
         evaluators/PHAL_NSThermalEqResid.hpp
         evaluators/PHAL_NSThermalEqResid_Def.hpp
         evaluators/PHAL_NSNeutronEqResid.hpp
@@ -270,30 +273,31 @@ SET(HEADERS ${HEADERS}
         evaluators/PHAL_NSRm_Def.hpp
         evaluators/PHAL_NSContravarientMetricTensor.hpp
         evaluators/PHAL_NSContravarientMetricTensor_Def.hpp
-        evaluators/PHAL_NSTauM.hpp 
-        evaluators/PHAL_NSTauM_Def.hpp 
+        evaluators/PHAL_NSTauM.hpp
+        evaluators/PHAL_NSTauM_Def.hpp
         evaluators/PHAL_NSTauT.hpp
         evaluators/PHAL_NSTauT_Def.hpp
         evaluators/PHAL_NSMaterialProperty.hpp
-        evaluators/PHAL_NSMaterialProperty_Def.hpp 
+        evaluators/PHAL_NSMaterialProperty_Def.hpp
         evaluators/PHAL_NSBodyForce.hpp
         evaluators/PHAL_NSBodyForce_Def.hpp
         evaluators/PHAL_NSPermeabilityTerm.hpp
-        evaluators/PHAL_NSPermeabilityTerm_Def.hpp 
+        evaluators/PHAL_NSPermeabilityTerm_Def.hpp
         evaluators/PHAL_NSForchheimerTerm.hpp
         evaluators/PHAL_NSForchheimerTerm_Def.hpp
-	evaluators/PHAL_ResponseFieldIntegral.hpp
-	evaluators/PHAL_ResponseFieldIntegral_Def.hpp
-	evaluators/PHAL_ScatterScalarResponse.hpp
-	evaluators/PHAL_ScatterScalarResponse_Def.hpp
-	evaluators/PHAL_SeparableScatterScalarResponse.hpp
-	evaluators/PHAL_SeparableScatterScalarResponse_Def.hpp
+        evaluators/PHAL_ResponseFieldIntegral.hpp
+        evaluators/PHAL_ResponseFieldIntegral_Def.hpp
+        evaluators/PHAL_ScatterScalarResponse.hpp
+        evaluators/PHAL_ScatterScalarResponse_Def.hpp
+        evaluators/PHAL_SeparableScatterScalarResponse.hpp
+        evaluators/PHAL_SeparableScatterScalarResponse_Def.hpp
   )
 
 # MOR (Model Order Reduction)
 SET(MOR_DIR ${Albany_SOURCE_DIR}/src/MOR)
 
 SET(SOURCES ${SOURCES}
+  ${MOR_DIR}/Albany_EpetraSamplingOperator.cpp
   ${MOR_DIR}/Albany_GaussNewtonOperatorFactory.cpp
   ${MOR_DIR}/Albany_PetrovGalerkinOperatorFactory.cpp
   ${MOR_DIR}/Albany_ReducedJacobianFactory.cpp
@@ -324,6 +328,7 @@ SET(SOURCES ${SOURCES}
 SET(HEADERS ${HEADERS}
   ${MOR_DIR}/Albany_MORUtils.hpp
   ${MOR_DIR}/Albany_BasisOps.hpp
+  ${MOR_DIR}/Albany_EpetraSamplingOperator.hpp
   ${MOR_DIR}/Albany_ReducedOperatorFactory.hpp
   ${MOR_DIR}/Albany_GaussNewtonOperatorFactory.hpp
   ${MOR_DIR}/Albany_PetrovGalerkinOperatorFactory.hpp
@@ -361,10 +366,10 @@ IF(ALBANY_LCM)
 
   # LCM problems
   SET(SOURCES ${SOURCES}
-    ${LCM_DIR}/problems/ElasticityProblem.cpp 
-    ${LCM_DIR}/problems/NonlinearElasticityProblem.cpp 
-    ${LCM_DIR}/problems/ThermoElasticityProblem.cpp 
-    ${LCM_DIR}/problems/GradientDamageProblem.cpp 
+    ${LCM_DIR}/problems/ElasticityProblem.cpp
+    ${LCM_DIR}/problems/NonlinearElasticityProblem.cpp
+    ${LCM_DIR}/problems/ThermoElasticityProblem.cpp
+    ${LCM_DIR}/problems/GradientDamageProblem.cpp
     ${LCM_DIR}/problems/PoroElasticityProblem.cpp
     ${LCM_DIR}/problems/UnSatPoroElasticityProblem.cpp
     ${LCM_DIR}/problems/TLPoroPlasticityProblem.cpp
@@ -375,17 +380,17 @@ IF(ALBANY_LCM)
   )
   IF(ALBANY_MPI)
     SET(SOURCES ${SOURCES}
-      ${LCM_DIR}/problems/MesoScaleLinkProblem.cpp 
+      ${LCM_DIR}/problems/MesoScaleLinkProblem.cpp
     )
   ENDIF()
 
   SET(HEADERS ${HEADERS}
     ${LCM_DIR}/problems/ElasticityProblem.hpp
-    ${LCM_DIR}/problems/NonlinearElasticityProblem.hpp 
-    ${LCM_DIR}/problems/ThermoElasticityProblem.hpp 
+    ${LCM_DIR}/problems/NonlinearElasticityProblem.hpp
+    ${LCM_DIR}/problems/ThermoElasticityProblem.hpp
     ${LCM_DIR}/problems/GradientDamageProblem.hpp
-    ${LCM_DIR}/problems/PoroElasticityProblem.hpp 
-    ${LCM_DIR}/problems/UnSatPoroElasticityProblem.hpp 
+    ${LCM_DIR}/problems/PoroElasticityProblem.hpp
+    ${LCM_DIR}/problems/UnSatPoroElasticityProblem.hpp
     ${LCM_DIR}/problems/TLPoroPlasticityProblem.hpp
     ${LCM_DIR}/problems/ThermoPoroPlasticityProblem.hpp
     ${LCM_DIR}/problems/ThermoMechanicalProblem.hpp
@@ -401,29 +406,32 @@ IF(ALBANY_LCM)
   # LCM evaluators
   SET(SOURCES ${SOURCES}
     ${LCM_DIR}/evaluators/Stress.cpp
-    ${LCM_DIR}/evaluators/CapModelStress.cpp  
-    ${LCM_DIR}/evaluators/CapImplicit.cpp  
-    ${LCM_DIR}/evaluators/GursonSDStress.cpp  
-    ${LCM_DIR}/evaluators/GursonFD.cpp  
-    ${LCM_DIR}/evaluators/J2Fiber.cpp  
-    ${LCM_DIR}/evaluators/Strain.cpp 
-    ${LCM_DIR}/evaluators/ElasticModulus.cpp 
-    ${LCM_DIR}/evaluators/PoissonsRatio.cpp 
-    ${LCM_DIR}/evaluators/DefGrad.cpp 
+    ${LCM_DIR}/evaluators/CapModelStress.cpp
+    ${LCM_DIR}/evaluators/CapImplicit.cpp
+    ${LCM_DIR}/evaluators/GursonSDStress.cpp
+    ${LCM_DIR}/evaluators/GursonFD.cpp
+    ${LCM_DIR}/evaluators/J2Fiber.cpp
+    ${LCM_DIR}/evaluators/Strain.cpp
+    ${LCM_DIR}/evaluators/ElasticModulus.cpp
+    ${LCM_DIR}/evaluators/PoissonsRatio.cpp
+    ${LCM_DIR}/evaluators/DefGrad.cpp
     ${LCM_DIR}/evaluators/Neohookean.cpp
-    ${LCM_DIR}/evaluators/J2Stress.cpp 
+    ${LCM_DIR}/evaluators/J2Stress.cpp
     ${LCM_DIR}/evaluators/ElasticityResid.cpp
-    ${LCM_DIR}/evaluators/TLElasResid.cpp 
-    ${LCM_DIR}/evaluators/EnergyPotential.cpp 
+    ${LCM_DIR}/evaluators/TLElasResid.cpp
+    ${LCM_DIR}/evaluators/EnergyPotential.cpp
     ${LCM_DIR}/evaluators/HardeningModulus.cpp
     ${LCM_DIR}/evaluators/YieldStrength.cpp
-    ${LCM_DIR}/evaluators/PisdWdF.cpp 
-    ${LCM_DIR}/evaluators/DamageResid.cpp 
-    ${LCM_DIR}/evaluators/J2Damage.cpp 
-    ${LCM_DIR}/evaluators/DamageLS.cpp 
-    ${LCM_DIR}/evaluators/SaturationModulus.cpp		
+    ${LCM_DIR}/evaluators/PisdWdF.cpp
+    ${LCM_DIR}/evaluators/DamageResid.cpp
+    ${LCM_DIR}/evaluators/J2Damage.cpp
+    ${LCM_DIR}/evaluators/DamageLS.cpp
+    ${LCM_DIR}/evaluators/SaturationModulus.cpp
     ${LCM_DIR}/evaluators/SaturationExponent.cpp
     ${LCM_DIR}/evaluators/Localization.cpp
+    ${LCM_DIR}/evaluators/SurfaceBasis.cpp
+    ${LCM_DIR}/evaluators/SurfaceVectorJump.cpp
+    ${LCM_DIR}/evaluators/CurrentCoords.cpp
     ${LCM_DIR}/evaluators/DamageSource.cpp
     ${LCM_DIR}/evaluators/BulkModulus.cpp
     ${LCM_DIR}/evaluators/ShearModulus.cpp
@@ -433,7 +441,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/TotalStress.cpp
     ${LCM_DIR}/evaluators/BiotCoefficient.cpp
     ${LCM_DIR}/evaluators/BiotModulus.cpp
-    ${LCM_DIR}/evaluators/PoroElasticityResidMomentum.cpp    
+    ${LCM_DIR}/evaluators/PoroElasticityResidMomentum.cpp
     ${LCM_DIR}/evaluators/PoroElasticityResidMass.cpp
     ${LCM_DIR}/evaluators/UnSatPoroElasticityResidMass.cpp
     ${LCM_DIR}/evaluators/TLPoroPlasticityResidMomentum.cpp
@@ -472,6 +480,11 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/QptLocation.cpp
     ${LCM_DIR}/evaluators/MooneyRivlin.cpp
     ${LCM_DIR}/evaluators/MooneyRivlinDamage.cpp
+    ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible.cpp
+    ${LCM_DIR}/evaluators/RIHMR.cpp
+    ${LCM_DIR}/evaluators/RecoveryModulus.cpp
+    ${LCM_DIR}/evaluators/FaceFractureCriteria.cpp
+    ${LCM_DIR}/evaluators/FaceAverage.cpp
   )
 
   IF(ALBANY_MPI)
@@ -481,63 +494,69 @@ IF(ALBANY_LCM)
   ENDIF()
 
   SET(HEADERS ${HEADERS}
-    ${LCM_DIR}/evaluators/Stress.hpp 
+    ${LCM_DIR}/evaluators/Stress.hpp
     ${LCM_DIR}/evaluators/Stress_Def.hpp
-    ${LCM_DIR}/evaluators/CapModelStress.hpp 
+    ${LCM_DIR}/evaluators/CapModelStress.hpp
     ${LCM_DIR}/evaluators/CapModelStress_Def.hpp
-    ${LCM_DIR}/evaluators/CapImplicit.hpp 
+    ${LCM_DIR}/evaluators/CapImplicit.hpp
     ${LCM_DIR}/evaluators/CapImplicit_Def.hpp
-    ${LCM_DIR}/evaluators/GursonSDStress.hpp 
+    ${LCM_DIR}/evaluators/GursonSDStress.hpp
     ${LCM_DIR}/evaluators/GursonSDStress_Def.hpp
-    ${LCM_DIR}/evaluators/GursonFD.hpp 
+    ${LCM_DIR}/evaluators/GursonFD.hpp
     ${LCM_DIR}/evaluators/GursonFD_Def.hpp
-    ${LCM_DIR}/evaluators/J2Fiber.hpp 
+    ${LCM_DIR}/evaluators/J2Fiber.hpp
     ${LCM_DIR}/evaluators/J2Fiber_Def.hpp
-    ${LCM_DIR}/evaluators/Strain.hpp 
-    ${LCM_DIR}/evaluators/Strain_Def.hpp 
-    ${LCM_DIR}/evaluators/ElasticModulus.hpp 
-    ${LCM_DIR}/evaluators/ElasticModulus_Def.hpp 
-    ${LCM_DIR}/evaluators/PoissonsRatio.hpp 
+    ${LCM_DIR}/evaluators/Strain.hpp
+    ${LCM_DIR}/evaluators/Strain_Def.hpp
+    ${LCM_DIR}/evaluators/ElasticModulus.hpp
+    ${LCM_DIR}/evaluators/ElasticModulus_Def.hpp
+    ${LCM_DIR}/evaluators/PoissonsRatio.hpp
     ${LCM_DIR}/evaluators/PoissonsRatio_Def.hpp
-    ${LCM_DIR}/evaluators/DefGrad.hpp 
-    ${LCM_DIR}/evaluators/DefGrad_Def.hpp 
+    ${LCM_DIR}/evaluators/DefGrad.hpp
+    ${LCM_DIR}/evaluators/DefGrad_Def.hpp
     ${LCM_DIR}/evaluators/Neohookean.hpp
     ${LCM_DIR}/evaluators/Neohookean_Def.hpp
-    ${LCM_DIR}/evaluators/J2Stress.hpp 
+    ${LCM_DIR}/evaluators/J2Stress.hpp
     ${LCM_DIR}/evaluators/J2Stress_Def.hpp
     ${LCM_DIR}/evaluators/ElasticityResid.hpp
     ${LCM_DIR}/evaluators/ElasticityResid_Def.hpp
-    ${LCM_DIR}/evaluators/TLElasResid.hpp 
-    ${LCM_DIR}/evaluators/TLElasResid_Def.hpp 
-    ${LCM_DIR}/evaluators/EnergyPotential.hpp 
-    ${LCM_DIR}/evaluators/EnergyPotential_Def.hpp 
+    ${LCM_DIR}/evaluators/TLElasResid.hpp
+    ${LCM_DIR}/evaluators/TLElasResid_Def.hpp
+    ${LCM_DIR}/evaluators/EnergyPotential.hpp
+    ${LCM_DIR}/evaluators/EnergyPotential_Def.hpp
     ${LCM_DIR}/evaluators/HardeningModulus.hpp
     ${LCM_DIR}/evaluators/HardeningModulus_Def.hpp
     ${LCM_DIR}/evaluators/YieldStrength.hpp
     ${LCM_DIR}/evaluators/YieldStrength_Def.hpp
-    ${LCM_DIR}/evaluators/PisdWdF.hpp 
-    ${LCM_DIR}/evaluators/PisdWdF_Def.hpp 
-    ${LCM_DIR}/evaluators/DamageResid.hpp 
-    ${LCM_DIR}/evaluators/DamageResid_Def.hpp 
-    ${LCM_DIR}/evaluators/J2Damage.hpp 
-    ${LCM_DIR}/evaluators/J2Damage_Def.hpp 
-    ${LCM_DIR}/evaluators/DamageLS.hpp 
-    ${LCM_DIR}/evaluators/DamageLS_Def.hpp 
-    ${LCM_DIR}/evaluators/SaturationModulus.hpp 
-    ${LCM_DIR}/evaluators/SaturationModulus_Def.hpp 
-    ${LCM_DIR}/evaluators/SaturationExponent.hpp 
+    ${LCM_DIR}/evaluators/PisdWdF.hpp
+    ${LCM_DIR}/evaluators/PisdWdF_Def.hpp
+    ${LCM_DIR}/evaluators/DamageResid.hpp
+    ${LCM_DIR}/evaluators/DamageResid_Def.hpp
+    ${LCM_DIR}/evaluators/J2Damage.hpp
+    ${LCM_DIR}/evaluators/J2Damage_Def.hpp
+    ${LCM_DIR}/evaluators/DamageLS.hpp
+    ${LCM_DIR}/evaluators/DamageLS_Def.hpp
+    ${LCM_DIR}/evaluators/SaturationModulus.hpp
+    ${LCM_DIR}/evaluators/SaturationModulus_Def.hpp
+    ${LCM_DIR}/evaluators/SaturationExponent.hpp
     ${LCM_DIR}/evaluators/SaturationExponent_Def.hpp
-    ${LCM_DIR}/evaluators/Localization.hpp 
+    ${LCM_DIR}/evaluators/Localization.hpp
     ${LCM_DIR}/evaluators/Localization_Def.hpp
-    ${LCM_DIR}/evaluators/DamageSource.hpp 
+    ${LCM_DIR}/evaluators/SurfaceBasis.hpp
+    ${LCM_DIR}/evaluators/SurfaceBasis_Def.hpp
+    ${LCM_DIR}/evaluators/SurfaceVectorJump.hpp
+    ${LCM_DIR}/evaluators/SurfaceVectorJump_Def.hpp
+    ${LCM_DIR}/evaluators/CurrentCoords.hpp
+    ${LCM_DIR}/evaluators/CurrentCoords_Def.hpp
+    ${LCM_DIR}/evaluators/DamageSource.hpp
     ${LCM_DIR}/evaluators/DamageSource_Def.hpp
-    ${LCM_DIR}/evaluators/BulkModulus.hpp 
+    ${LCM_DIR}/evaluators/BulkModulus.hpp
     ${LCM_DIR}/evaluators/BulkModulus_Def.hpp
-    ${LCM_DIR}/evaluators/ShearModulus.hpp 
+    ${LCM_DIR}/evaluators/ShearModulus.hpp
     ${LCM_DIR}/evaluators/ShearModulus_Def.hpp
-    ${LCM_DIR}/evaluators/KfieldBC.hpp 
+    ${LCM_DIR}/evaluators/KfieldBC.hpp
     ${LCM_DIR}/evaluators/KfieldBC_Def.hpp
-    ${LCM_DIR}/evaluators/TorsionBC.hpp 
+    ${LCM_DIR}/evaluators/TorsionBC.hpp
     ${LCM_DIR}/evaluators/TorsionBC_Def.hpp
     ${LCM_DIR}/evaluators/DislocationDensity.hpp
     ${LCM_DIR}/evaluators/DislocationDensity_Def.hpp
@@ -555,11 +574,11 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/PoroElasticityResidMass_Def.hpp
     ${LCM_DIR}/evaluators/UnSatPoroElasticityResidMass.hpp
     ${LCM_DIR}/evaluators/UnSatPoroElasticityResidMass_Def.hpp
-    ${LCM_DIR}/evaluators/TLPoroPlasticityResidMomentum.hpp    
+    ${LCM_DIR}/evaluators/TLPoroPlasticityResidMomentum.hpp
     ${LCM_DIR}/evaluators/TLPoroPlasticityResidMomentum_Def.hpp
     ${LCM_DIR}/evaluators/TLPoroPlasticityResidMass.hpp
     ${LCM_DIR}/evaluators/TLPoroPlasticityResidMass_Def.hpp
-    ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidMomentum.hpp    
+    ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidMomentum.hpp
     ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidMomentum_Def.hpp
     ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidMass.hpp
     ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidMass_Def.hpp
@@ -573,7 +592,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/VanGenuchtenPermeability_Def.hpp
     ${LCM_DIR}/evaluators/VanGenuchtenSaturation.hpp
     ${LCM_DIR}/evaluators/VanGenuchtenSaturation_Def.hpp
-    ${LCM_DIR}/evaluators/ThermoMechanicalEnergyResidual.hpp    
+    ${LCM_DIR}/evaluators/ThermoMechanicalEnergyResidual.hpp
     ${LCM_DIR}/evaluators/ThermoMechanicalEnergyResidual_Def.hpp
     ${LCM_DIR}/evaluators/ThermoMechanicalMomentumResidual.hpp
     ${LCM_DIR}/evaluators/ThermoMechanicalMomentumResidual_Def.hpp
@@ -615,8 +634,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/GradientElementLength_Def.hpp
     ${LCM_DIR}/evaluators/UnitGradient.hpp
     ${LCM_DIR}/evaluators/UnitGradient_Def.hpp
-    ${LCM_DIR}/evaluators/SetField.hpp 
-    ${LCM_DIR}/evaluators/SetField_Def.hpp 
+    ${LCM_DIR}/evaluators/SetField.hpp
+    ${LCM_DIR}/evaluators/SetField_Def.hpp
     ${LCM_DIR}/evaluators/AssumedStrain.hpp
     ${LCM_DIR}/evaluators/AssumedStrain_Def.hpp
     ${LCM_DIR}/evaluators/QptLocation.hpp
@@ -625,6 +644,16 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/MooneyRivlin_Def.hpp
     ${LCM_DIR}/evaluators/MooneyRivlinDamage.hpp
     ${LCM_DIR}/evaluators/MooneyRivlinDamage_Def.hpp
+    ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible.hpp
+    ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible_Def.hpp
+    ${LCM_DIR}/evaluators/RIHMR.hpp
+    ${LCM_DIR}/evaluators/RIHMR_Def.hpp
+    ${LCM_DIR}/evaluators/RecoveryModulus.hpp
+    ${LCM_DIR}/evaluators/RecoveryModulus_Def.hpp
+    ${LCM_DIR}/evaluators/FaceFractureCriteria.hpp
+    ${LCM_DIR}/evaluators/FaceFractureCriteria_Def.hpp
+    ${LCM_DIR}/evaluators/FaceAverage.hpp
+    ${LCM_DIR}/evaluators/FaceAverage_Def.hpp
  )
 
   IF(ALBANY_MPI)
@@ -637,6 +666,7 @@ IF(ALBANY_LCM)
   #LCM utils
   SET(SOURCES ${SOURCES}
     ${LCM_DIR}/utils/Geometry.cc
+    ${LCM_DIR}/utils/FloatingPoint.cc
     ${LCM_DIR}/utils/Partition.cc
     ${LCM_DIR}/utils/BarycentricSubdivision.cc
     ${LCM_DIR}/utils/Tensor.cc
@@ -647,17 +677,18 @@ IF(ALBANY_LCM)
 
   SET(HEADERS ${HEADERS}
     ${LCM_DIR}/utils/Geometry.h
+    ${LCM_DIR}/utils/FloatingPoint.h
     ${LCM_DIR}/utils/Partition.h
     ${LCM_DIR}/utils/Tensor.h
-    ${LCM_DIR}/utils/Topology.h 
-    ${LCM_DIR}/utils/LocalNonlinearSolver.h 
+    ${LCM_DIR}/utils/Topology.h
+    ${LCM_DIR}/utils/LocalNonlinearSolver.h
     ${LCM_DIR}/utils/Projection.hpp
   )
 
 IF(ALBANY_LAME OR ALBANY_LAMENT)
   SET(SOURCES ${SOURCES}
     ${LCM_DIR}/utils/LameUtils.cpp
-    ${LCM_DIR}/problems/LameProblem.cpp 
+    ${LCM_DIR}/problems/LameProblem.cpp
   )
   SET(HEADERS ${HEADERS}
     ${LCM_DIR}/utils/LameUtils.hpp
@@ -667,21 +698,21 @@ ENDIF()
 
 IF(ALBANY_LAME)
   SET(SOURCES ${SOURCES}
-    ${LCM_DIR}/evaluators/LameStress.cpp 
+    ${LCM_DIR}/evaluators/LameStress.cpp
   )
   SET(HEADERS ${HEADERS}
-    ${LCM_DIR}/evaluators/LameStress.hpp 
-    ${LCM_DIR}/evaluators/LameStress_Def.hpp 
+    ${LCM_DIR}/evaluators/LameStress.hpp
+    ${LCM_DIR}/evaluators/LameStress_Def.hpp
   )
 ENDIF()
 
 IF(ALBANY_LAMENT)
   SET(SOURCES ${SOURCES}
-    ${LCM_DIR}/evaluators/LamentStress.cpp 
+    ${LCM_DIR}/evaluators/LamentStress.cpp
   )
   SET(HEADERS ${HEADERS}
-    ${LCM_DIR}/evaluators/LamentStress.hpp 
-    ${LCM_DIR}/evaluators/LamentStress_Def.hpp 
+    ${LCM_DIR}/evaluators/LamentStress.hpp
+    ${LCM_DIR}/evaluators/LamentStress_Def.hpp
   )
 ENDIF()
 
@@ -694,6 +725,7 @@ IF(ALBANY_FELIX)
   # FELIX evaluators
   SET(SOURCES ${SOURCES}
        ${FELIX_DIR}/evaluators/FELIX_StokesMomentumResid.cpp
+       ${FELIX_DIR}/evaluators/FELIX_Viscosity.cpp
        ${FELIX_DIR}/evaluators/FELIX_StokesContinuityResid.cpp
        ${FELIX_DIR}/evaluators/FELIX_StokesTauM.cpp
        ${FELIX_DIR}/evaluators/FELIX_StokesContravarientMetricTensor.cpp
@@ -703,6 +735,8 @@ IF(ALBANY_FELIX)
   SET(HEADERS ${HEADERS}
        ${FELIX_DIR}/evaluators/FELIX_StokesMomentumResid.hpp
        ${FELIX_DIR}/evaluators/FELIX_StokesMomentumResid_Def.hpp
+       ${FELIX_DIR}/evaluators/FELIX_Viscosity.hpp
+       ${FELIX_DIR}/evaluators/FELIX_Viscosity_Def.hpp
        ${FELIX_DIR}/evaluators/FELIX_StokesContinuityResid.hpp
        ${FELIX_DIR}/evaluators/FELIX_StokesContinuityResid_Def.hpp
        ${FELIX_DIR}/evaluators/FELIX_StokesTauM.hpp
@@ -713,7 +747,7 @@ IF(ALBANY_FELIX)
        ${FELIX_DIR}/evaluators/FELIX_StokesRm_Def.hpp
        ${FELIX_DIR}/evaluators/FELIX_StokesBodyForce.hpp
        ${FELIX_DIR}/evaluators/FELIX_StokesBodyForce_Def.hpp
-  )  
+  )
  # FELIX problems
   SET(SOURCES ${SOURCES}
        ${FELIX_DIR}/problems/FELIX_Stokes.cpp
@@ -842,9 +876,9 @@ SET(CUTR_HDRS
 
 set(ALB_TRILINOS_LIBS ${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES})
 
-include_directories (${Trilinos_INCLUDE_DIRS} 
+include_directories (${Trilinos_INCLUDE_DIRS}
                      ./ ./evaluators ./problems ./responses ./stk
-                     ./LCM/ ./LCM/evaluators ./LCM/utils ./FELIX/problems 
+                     ./LCM/ ./LCM/evaluators ./LCM/utils ./FELIX/problems
                      ./FELIX/evaluators
                      ${Trilinos_TPL_INCLUDE_DIRS})
 
@@ -912,17 +946,17 @@ IF (ALBANY_LCM)
   add_executable(Subdivision LCM/test/utils/Subdivision.cc)
   add_executable(MeshComponents LCM/test/utils/MeshComponents.cc)
   add_executable(
-    utLocalNonlinearSolver 
+    utLocalNonlinearSolver
     LCM/test/unit_tests/StandardUnitTestMain.cpp
     LCM/test/unit_tests/utLocalNonlinearSolver.cpp
   )
   add_executable(
-    utLocalization 
+    utLocalization
     LCM/test/unit_tests/StandardUnitTestMain.cpp
     LCM/test/unit_tests/utLocalization.cpp
   )
   add_executable(
-    utTensorUtils 
+    utTensorUtils
     LCM/test/unit_tests/StandardUnitTestMain.cpp
     LCM/test/unit_tests/utTensorUtils.cpp
   )
@@ -955,7 +989,7 @@ ENDIF ()
 
 set(ALL_LIBRARIES ${ALBANY_CI_LIB} ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${LAMENT_LIB} ${Trilinos_EXTRA_LD_FLAGS} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES} )
 
-target_link_libraries(Albany          albanyLib ${ALL_LIBRARIES}) 
+target_link_libraries(Albany          albanyLib ${ALL_LIBRARIES})
 target_link_libraries(AlbanySG        albanyLib ${ALL_LIBRARIES})
 if (ALBANY_ASCR)
   target_link_libraries(AlbanyAdjoint   albanyLib ${ALL_LIBRARIES})

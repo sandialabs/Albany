@@ -22,6 +22,9 @@
     <ParameterList name="Body Force">
       <Parameter name="Type" type="string" value="Poly"/>
     </ParameterList>
+    <ParameterList name="FELIX Viscosity">
+      <Parameter name="Type" type="string" value="Constant"/>
+    </ParameterList>
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="0"/>
       <Parameter name="Parameter 0" type="string"

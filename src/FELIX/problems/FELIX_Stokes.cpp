@@ -161,6 +161,7 @@ FELIX::Stokes::getValidProblemParameters() const
   validPL->sublist("Flow", false, "");
   validPL->sublist("Density", false, "");
   validPL->sublist("Viscosity", false, "");
+  validPL->sublist("FELIX Viscosity", false, "");
   validPL->sublist("Body Force", false, "");
 
   return validPL;

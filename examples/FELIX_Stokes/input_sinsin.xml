@@ -10,6 +10,9 @@
     <ParameterList name="Body Force">
       <Parameter name="Type" type="string" value="SinSin"/>
     </ParameterList>
+    <ParameterList name="FELIX Viscosity">
+      <Parameter name="Type" type="string" value="Constant"/>
+    </ParameterList>
     <ParameterList name="Initial Condition">
       <Parameter name="Function" type="string" value="Constant"/>
       <Parameter name="Function Data" type="Array(double)" value="{0.5,0.5,0.5}"/>

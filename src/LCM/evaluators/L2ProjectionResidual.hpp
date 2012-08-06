@@ -55,16 +55,8 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
 
-
-
   // Input for
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> Pfield;
-
-
-
-
-
-
 
   bool haveSource;
   bool haveMechSource;

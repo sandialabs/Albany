@@ -36,7 +36,7 @@ StokesMomentumResid(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   force       (p.get<std::string>              ("Body Force Name"),
  	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  mu          (p.get<std::string>                   ("Viscosity QP Variable Name"),
+  muFELIX    (p.get<std::string>                   ("FELIX Viscosity QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   MResidual   (p.get<std::string>                   ("Residual Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") )
@@ -47,7 +47,7 @@ StokesMomentumResid(const Teuchos::ParameterList& p) :
   this->addDependentField(wGradBF);
   this->addDependentField(P);
   this->addDependentField(force);
-  this->addDependentField(mu);
+  this->addDependentField(muFELIX);
   
   this->addEvaluatedField(MResidual);
 
@@ -73,7 +73,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(wGradBF,fm); 
   this->utils.setFieldData(P,fm);
   this->utils.setFieldData(force,fm);
-  this->utils.setFieldData(mu,fm);
+  this->utils.setFieldData(muFELIX,fm);
   
   this->utils.setFieldData(MResidual,fm);
 }
@@ -83,7 +83,9 @@ template<typename EvalT, typename Traits>
 void StokesMomentumResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  
+  //parameters to define non-linear viscosity mu, given by Glen's law
+  double A = pow(10, -16); //ice flow parameter
+  int n = 3; //exponent in Glen's law 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t node=0; node < numNodes; ++node) {          
       for (std::size_t i=0; i<numDims; i++) {
@@ -94,7 +96,7 @@ evaluateFields(typename Traits::EvalData workset)
 	     P(cell,qp)*wGradBF(cell,node,qp,i);          
 	  for (std::size_t j=0; j < numDims; ++j) { 
 	    MResidual(cell,node,i) += 
-	      mu(cell,qp)*(VGrad(cell,qp,i,j)+VGrad(cell,qp,j,i))*wGradBF(cell,node,qp,j);
+	      muFELIX(cell,qp)*(VGrad(cell,qp,i,j)+VGrad(cell,qp,j,i))*wGradBF(cell,node,qp,j);
 	  }  
 	}
       }

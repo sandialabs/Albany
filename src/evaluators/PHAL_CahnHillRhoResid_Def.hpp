@@ -38,11 +38,19 @@ CahnHillRhoResid(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") )
 {
 
+  haveNoise = p.get<bool>("Have Noise");
+
   this->addDependentField(wBF);
   this->addDependentField(rhoGrad);
   this->addDependentField(wGradBF);
   this->addDependentField(chemTerm);
   this->addEvaluatedField(rhoResidual);
+
+  if(haveNoise){
+    noiseTerm = PHX::MDField<ScalarT, Cell, QuadPoint> (p.get<std::string>("Langevin Noise Term"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+    this->addDependentField(noiseTerm);
+  }
 
   gamma = p.get<double>("gamma Value");
 
@@ -71,6 +79,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(rhoGrad,fm);
   this->utils.setFieldData(wGradBF,fm);
   this->utils.setFieldData(chemTerm,fm);
+  if(haveNoise)
+    this->utils.setFieldData(noiseTerm,fm);
 
   this->utils.setFieldData(rhoResidual,fm);
 }
@@ -94,6 +104,11 @@ evaluateFields(typename Traits::EvalData workset)
   FST::integrate<ScalarT>(rhoResidual, gamma_term, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
 
   FST::integrate<ScalarT>(rhoResidual, chemTerm, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+
+  if(haveNoise)
+
+    FST::integrate<ScalarT>(rhoResidual, noiseTerm, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+
 
 }
 

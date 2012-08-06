@@ -124,6 +124,7 @@ namespace Albany {
 #include "LameUtils.hpp"
 #include "PHAL_SaveStateField.hpp"
 #include "ElasticityResid.hpp"
+#include "TLElasResid.hpp"
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
@@ -341,9 +342,12 @@ Albany::LameProblem::constructEvaluators(
 
     // \todo Is the required?
     p->set<string>("DefGrad Name", "Deformation Gradient"); //dl->qp_tensor also
+    p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient"); 
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+    p->set<RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
     // extra input for time dependent term
     p->set<string>("Weighted BF Name", "wBF");
@@ -355,7 +359,8 @@ Albany::LameProblem::constructEvaluators(
     p->set<string>("Residual Name", "Displacement Residual");
     p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
 
-    ev = rcp(new LCM::ElasticityResid<EvalT,AlbanyTraits>(*p));
+    //ev = rcp(new LCM::ElasticityResid<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new LCM::TLElasResid<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 

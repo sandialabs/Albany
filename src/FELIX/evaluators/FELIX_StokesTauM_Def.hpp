@@ -22,6 +22,7 @@
 
 namespace FELIX {
 
+
 //**********************************************************************
 template<typename EvalT, typename Traits>
 StokesTauM<EvalT, Traits>::
@@ -30,9 +31,7 @@ StokesTauM(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
   Gc            (p.get<std::string>                   ("Contravarient Metric Tensor Name"),
                  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-  rho       (p.get<std::string>                   ("Density QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  mu       (p.get<std::string>                   ("Viscosity QP Variable Name"),
+  muFELIX    (p.get<std::string>                   ("FELIX Viscosity QP Variable Name"),
                p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   TauM            (p.get<std::string>                 ("Tau M Name"),
                  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") )
@@ -40,8 +39,7 @@ StokesTauM(const Teuchos::ParameterList& p) :
 {
   this->addDependentField(V);
   this->addDependentField(Gc);
-  this->addDependentField(rho);
-  this->addDependentField(mu);
+  this->addDependentField(muFELIX);
  
   this->addEvaluatedField(TauM);
 
@@ -66,8 +64,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(V,fm);
   this->utils.setFieldData(Gc,fm);
-  this->utils.setFieldData(rho,fm);
-  this->utils.setFieldData(mu,fm);
+  this->utils.setFieldData(muFELIX,fm);
   
   this->utils.setFieldData(TauM,fm);
 }
@@ -77,17 +74,20 @@ template<typename EvalT, typename Traits>
 void StokesTauM<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 { 
+    //parameters to define non-linear viscosity mu, given by Glen's law
+    double A = pow(10, -16); //ice flow parameter
+    int n = 3; //exponent in Glen's law 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {       
         TauM(cell,qp) = 0.0;
         normGc(cell,qp) = 0.0;
         for (std::size_t i=0; i < numDims; ++i) {
           for (std::size_t j=0; j < numDims; ++j) {
-            TauM(cell,qp) += rho(cell,qp)*rho(cell,qp)*V(cell,qp,i)*Gc(cell,qp,i,j)*V(cell,qp,j);
+            TauM(cell,qp) += V(cell,qp,i)*Gc(cell,qp,i,j)*V(cell,qp,j);
             normGc(cell,qp) += Gc(cell,qp,i,j)*Gc(cell,qp,i,j);          
           }
         }
-        TauM(cell,qp) += 12.*mu(cell,qp)*mu(cell,qp)*std::sqrt(normGc(cell,qp));
+        TauM(cell,qp) += 12.*muFELIX(cell,qp)*muFELIX(cell,qp)*std::sqrt(normGc(cell,qp));
         TauM(cell,qp) = 1./std::sqrt(TauM(cell,qp));
       }
     }

@@ -162,8 +162,7 @@ template<>
        const Teuchos::RCP<Albany::Layouts>& dl,
        Teuchos::RCP<Teuchos::ParameterList> params,
        Teuchos::RCP<ParamLib> paramLib,
-       const Teuchos::RCP<QCAD::MaterialDatabase>& materialDB = Teuchos::null,
-       bool isTensorField = false);
+       const Teuchos::RCP<QCAD::MaterialDatabase>& materialDB = Teuchos::null);
 
     //! Function to return valid list of parameters in BC section of input file
     Teuchos::RCP<const Teuchos::ParameterList> getValidBCParameters(

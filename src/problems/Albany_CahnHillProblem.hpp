@@ -63,7 +63,7 @@ namespace Albany {
       Albany::FieldManagerChoice fmchoice,
       const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
-    //! Each problem must generate it's list of valide parameters
+    //! Each problem must generate it's list of valid parameters
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
   private:
@@ -92,9 +92,11 @@ namespace Albany {
 
     int numDim;
 
-   Teuchos::RCP<const Epetra_Comm> comm;
+    bool haveNoise; // Langevin noise present
 
-   Teuchos::RCP<Albany::Layouts> dl;
+    Teuchos::RCP<const Epetra_Comm> comm;
+
+    Teuchos::RCP<Albany::Layouts> dl;
 
   };
 
@@ -109,6 +111,7 @@ namespace Albany {
 #include "Albany_ResponseUtilities.hpp"
 
 #include "PHAL_CahnHillChemTerm.hpp"
+#include "PHAL_LangevinNoiseTerm.hpp"
 #include "PHAL_CahnHillRhoResid.hpp"
 #include "PHAL_CahnHillWResid.hpp"
 
@@ -195,27 +198,6 @@ Albany::CahnHillProblem::constructEvaluators(
       (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[i]));
   }
 
-  { // W Resid
-    RCP<ParameterList> p = rcp(new ParameterList("W Resid"));
-
-    //Input
-    p->set<string>("Weighted BF Name", "wBF");
-    p->set<string>("Rho QP Time Derivative Variable Name", "rhoDot");
-    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set<string>("Gradient QP Variable Name", "W Gradient");
-
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
-
-    //Output
-    p->set<string>("Residual Name", "W Residual");
-    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
-
-    ev = rcp(new PHAL::CahnHillWResid<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
 
   { // Form the Chemical Energy term in Eq. 2.2
 
@@ -240,12 +222,45 @@ Albany::CahnHillProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+  if(params->isParameter("Langevin Noise SD")){
+
+   // Form the Langevin noise term
+
+    haveNoise = true;
+
+    RCP<ParameterList> p = rcp(new ParameterList("Langevin Noise Term"));
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+
+    // Standard deviation of the noise
+    p->set<double>("SD Value", params->get<double>("Langevin Noise SD"));
+    // Time period over which to apply the noise (-1 means over the whole time)
+    p->set<Teuchos::Array<int> >("Langevin Noise Time Period", 
+        params->get<Teuchos::Array<int> >("Langevin Noise Time Period", Teuchos::tuple<int>(-1, -1)));
+
+    //Input
+    p->set<string>("Rho QP Variable Name", "Rho");
+
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
+    //Output
+    p->set<string>("Langevin Noise Term", "Langevin Noise Term");
+
+    ev = rcp(new PHAL::LangevinNoiseTerm<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
   { // Rho Resid
     RCP<ParameterList> p = rcp(new ParameterList("Rho Resid"));
 
     //Input
     p->set<string>("Weighted BF Name", "wBF");
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+    if(haveNoise)
+      p->set<string>("Langevin Noise Term", "Langevin Noise Term");
+    // Accumulate in the Langevin noise term?
+    p->set<bool>("Have Noise", haveNoise);
 
     p->set<string>("Chemical Energy Term", "Chemical Energy Term");
     p->set<string>("Gradient QP Variable Name", "Rho Gradient");
@@ -263,6 +278,32 @@ Albany::CahnHillProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
 
     ev = rcp(new PHAL::CahnHillRhoResid<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  { // W Resid
+    RCP<ParameterList> p = rcp(new ParameterList("W Resid"));
+
+    //Input
+    p->set<string>("Weighted BF Name", "wBF");
+    p->set<string>("BF Name", "BF");
+    p->set<string>("Rho QP Time Derivative Variable Name", "rhoDot");
+    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set<string>("Gradient QP Variable Name", "W Gradient");
+
+    // Mass lump time term?
+    p->set<bool>("Lump Mass", params->get<bool>("Lump Mass"));
+
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
+    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+
+    //Output
+    p->set<string>("Residual Name", "W Residual");
+    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
+
+    ev = rcp(new PHAL::CahnHillWResid<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 

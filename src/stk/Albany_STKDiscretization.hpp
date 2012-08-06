@@ -141,6 +141,10 @@ namespace Albany {
     void getOwned_xyz(double **x, double **y, double **z, double **rbm,
                       int& nNodes, int numPDEs, int numScalar, int nullSpaceDim);
 
+#ifdef ALBANY_FELIX
+    // Function that transforms an STK mesh of a unit cube (for FELIX problems)
+    void transformMesh(); 
+#endif     
 
   private:
 
@@ -189,6 +193,10 @@ namespace Albany {
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
     double previous_time_label;
+
+    // Transformation types for FELIX problems
+    enum TRANSFORMTYPE {NONE, ISMIP_HOM_TEST_A};
+    TRANSFORMTYPE transform_type;
 
   protected:
 

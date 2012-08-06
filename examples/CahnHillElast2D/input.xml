@@ -2,13 +2,19 @@
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="CahnHill 2D"/>
     <Parameter name="Solution Method" type="string" value="Transient"/>
+    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
     <ParameterList name="Initial Condition">
       <Parameter name="Function" type="string" value="EBConstant"/>
-      <Parameter name="block_1" type="Array(double)" value="{0.0,0.0}"/>
-      <Parameter name="block_2" type="Array(double)" value="{1.0,-1.0}"/>
+      <Parameter name="block_1" type="Array(double)" value="{0.0, 0.0}"/>
+      <Parameter name="Perturb IC" type="Array(double)" value="{0.1, 0.0}"/>
     </ParameterList>
-    <Parameter name="b" type="double" value="0.4"/>
-    <Parameter name="gamma" type="double" value="1.0e-5"/>
+    <Parameter name="b" type="double" value="0.2"/>
+    <Parameter name="gamma" type="double" value="1.0e-4"/>
+    <Parameter name="Lump Mass" type="bool" value="1"/>
+<!--
+    <Parameter name="Langevin Noise SD" type="double" value="0.1"/>
+    <Parameter name="Langevin Noise Time Period" type="Array(int)" value="{0, 200}"/>
+-->
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="1"/>
       <Parameter name="Response 0" type="string" value="Solution Average"/>
@@ -16,21 +22,20 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Ioss"/>
-    <Parameter name="Exodus Input File Name" type="string" value="domain_fine.exo"/>
+    <Parameter name="Exodus Input File Name" type="string" value="domain.exo"/>
     <Parameter name="Exodus Output File Name" type="string" value="domain_out.exo"/>
     <Parameter name="Use Serial Mesh" type="bool" value="1"/>
   </ParameterList>
   <ParameterList name="Regression Results">
-    <Parameter name="Number of Comparisons" type="int" value="0"/>
-    <Parameter name="Test Values" type="Array(double)" value="{0.117236}"/>
-    <Parameter name="Relative Tolerance" type="double" value="1.0e-4"/>
-    <Parameter name="Number of Sensitivity Comparisons" type="int" value="0"/>
-    <Parameter name="Sensitivity Test Values 0" type="Array(double)" value="{0.465129, 0.465129}"/>
+    <Parameter name="Number of Comparisons" type="int" value="1"/>
+    <Parameter name="Test Values" type="Array(double)" value="{0.0}"/>
+    <Parameter name="Relative Tolerance" type="double" value="1.0e-1"/>
+    <Parameter name="Absolute Tolerance" type="double" value="1.0e-1"/>
   </ParameterList>
   <ParameterList name="Piro">
     <ParameterList name="Rythmos">
-      <Parameter name="Num Time Steps" type="int" value="2000"/>
-      <Parameter name="Final Time" type="double" value="0.02"/>
+      <Parameter name="Num Time Steps" type="int" value="50"/>
+      <Parameter name="Final Time" type="double" value="0.5"/>
       <Parameter name="Max State Error" type="double" value="0.001"/>
       <Parameter name="Alpha" type="double" value="0.0"/>
       <ParameterList name="Rythmos Stepper">

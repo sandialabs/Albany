@@ -569,7 +569,7 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT *valptr;
 
   // Fill in "neumann" array
-  evaluateNeumannContribution(workset);
+  this->evaluateNeumannContribution(workset);
 
   // Place it at the appropriate offset into F
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
@@ -613,7 +613,7 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT *valptr;
 
   // Fill in "neumann" array
-  evaluateNeumannContribution(workset);
+  this->evaluateNeumannContribution(workset);
 
   int lcol;
   Teuchos::Array<LO> rowT(1);
