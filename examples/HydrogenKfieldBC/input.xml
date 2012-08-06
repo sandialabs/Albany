@@ -134,6 +134,7 @@
     <Parameter name="Method" type="string" value="Ioss"/>
     <Parameter name="Exodus Input File Name" type="string" value="K_field.g"/>
     <Parameter name="Exodus Output File Name" type="string" value="K_field.e"/>
+    <Parameter name="Workset Size" type="int" value="820"/>
   </ParameterList>
   <!-- REGRESSION comparison of the RESPONSE FUNCTION declared above-->
   <ParameterList name="Regression Results">
