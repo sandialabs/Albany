@@ -2,8 +2,7 @@
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Heat 2D"/>
     <ParameterList name="Dirichlet BCs">
-      <Parameter name="DBC on NS NodeSet0 for DOF T" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet1 for DOF T" type="double" value="0.0"/>
+      <Parameter name="DBC on NS NodeSet99 for DOF T" type="double" value="0.0"/>
     </ParameterList>
     <ParameterList name="Source Functions">
       <ParameterList name="Trigonometric">
@@ -24,11 +23,19 @@
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
-    <Parameter name="1D Elements" type="int" value="40"/>
-    <Parameter name="2D Elements" type="int" value="40"/>
-    <Parameter name="Method" type="string" value="STK2D"/>
-    <Parameter name="Exodus Output File Name" type="string" value="steady2d.exo"/>
-    <Parameter name="Cubature Degree" type="int" value="9"/>
+      <Parameter name="Periodic_x BC" type="bool" value="true"/>
+      <Parameter name="Periodic_y BC" type="bool" value="true"/>
+      <Parameter name="Workset Size" type="int" value="100"/>
+      <Parameter name="1D Scale" type="double" value="1.0"/>
+      <Parameter name="2D Scale" type="double" value="1.0"/>
+      <Parameter name="Element Blocks" type="int" value="4"/>
+      <Parameter name="Block 0" type="string" value="begins at (0, 0) ends at (39, 39) length (0.975, 0.975) named MainDomain"/>
+      <Parameter name="Block 1" type="string" value="begins at (39, 0) ends at (40, 39) length (0.025, 0.975) named RightStrip"/>
+      <Parameter name="Block 2" type="string" value="begins at (0, 39) ends at (39, 40) length (0.975, 0.025) named TopStrip"/>
+      <Parameter name="Block 3" type="string" value="begins at (39, 39) ends at (40, 40) length (0.025, 0.025) named TopCorner"/>
+      <Parameter name="Method" type="string" value="STK2D"/>
+      <Parameter name="Exodus Output File Name" type="string" value="steady2d.exo"/>
+      <Parameter name="Cubature Degree" type="int" value="9"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="2"/>
@@ -85,7 +92,7 @@
 		      <Parameter name="Output Frequency" type="int" value="10"/>
 		      <Parameter name="Output Style" type="int" value="1"/>
 		      <Parameter name="Verbosity" type="int" value="33"/>
-		      <Parameter name="Maximum Iterations" type="int" value="100"/>
+		      <Parameter name="Maximum Iterations" type="int" value="2000"/>
 		      <Parameter name="Block Size" type="int" value="1"/>
 		      <Parameter name="Num Blocks" type="int" value="50"/>
 		      <Parameter name="Flexible Gmres" type="bool" value="0"/>
