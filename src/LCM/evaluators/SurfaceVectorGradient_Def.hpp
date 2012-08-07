@@ -35,7 +35,7 @@ SurfaceVectorGradient(const Teuchos::ParameterList& p) :
                   p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
   jump           (p.get<std::string>("Jump Name"),
                   p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  gradient        (p.get<std::string>("Vector Name"),
+  gradient        (p.get<std::string>("Surface Vector Gradient Name"),
                    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") )
 {
   this->addDependentField(currentBasis);
