@@ -27,11 +27,11 @@ template<typename EvalT, typename Traits>
 DOFVecInterpolation<EvalT, Traits>::
 DOFVecInterpolation(const Teuchos::ParameterList& p) :
   val_node    (p.get<std::string>                   ("Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") ),
+               p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") ),
   BF          (p.get<std::string>                   ("BF Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
+               p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
   val_qp      (p.get<std::string>                   ("Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") )
+               p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") )
 {
   this->addDependentField(val_node);
   this->addDependentField(BF);
@@ -69,13 +69,14 @@ evaluateFields(typename Traits::EvalData workset)
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t node=0; node < numNodes; ++node) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-         for (std::size_t i=0; i<vecDim; i++) {
-            val_qp(cell,qp,i) += val_node(cell, node, i) * BF(cell, node, qp);
-  } } } }
-
+        for (std::size_t i=0; i<vecDim; i++) {
+          val_qp(cell,qp,i) += val_node(cell, node, i) * BF(cell, node, qp);
+        } 
+      } 
+    } 
+  }
 //  Intrepid::FunctionSpaceTools::evaluate<ScalarT>(val_qp, val_node, BF);
 }
 
 //**********************************************************************
 }
-
