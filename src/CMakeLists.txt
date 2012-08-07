@@ -427,6 +427,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/Localization.cpp
     ${LCM_DIR}/evaluators/SurfaceBasis.cpp
     ${LCM_DIR}/evaluators/SurfaceVectorJump.cpp
+    ${LCM_DIR}/evaluators/SurfaceScalarJump.cpp
     ${LCM_DIR}/evaluators/CurrentCoords.cpp
     ${LCM_DIR}/evaluators/DamageSource.cpp
     ${LCM_DIR}/evaluators/BulkModulus.cpp
@@ -540,6 +541,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/Localization_Def.hpp
     ${LCM_DIR}/evaluators/SurfaceBasis.hpp
     ${LCM_DIR}/evaluators/SurfaceBasis_Def.hpp
+    ${LCM_DIR}/evaluators/SurfaceScalarJump.hpp
+    ${LCM_DIR}/evaluators/SurfaceScalarJump_Def.hpp
     ${LCM_DIR}/evaluators/SurfaceVectorJump.hpp
     ${LCM_DIR}/evaluators/SurfaceVectorJump_Def.hpp
     ${LCM_DIR}/evaluators/CurrentCoords.hpp
