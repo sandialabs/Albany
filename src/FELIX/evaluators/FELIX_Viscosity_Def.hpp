@@ -24,7 +24,7 @@ namespace FELIX {
 
 //should values of these be hard-coded here, or read in from the input file?
 //for now, I have hard coded them here.
-const long A = 1.0/10000000000000000; //A = 10^(-16) ice flow parameter 
+const long A = 1.0e-16; //A = 10^(-16) ice flow parameter 
 const int n = 3; //exponent in Glen's law
  
 //**********************************************************************
@@ -43,8 +43,9 @@ Viscosity(const Teuchos::ParameterList& p) :
   if (viscType == "Constant"){ 
     visc_type = CONSTANT;
   }
-  else if (viscType == "Glens Law"){
+  else if (viscType == "Glen's Law"){
     visc_type = GLENSLAW; 
+    cout << "Glen's law viscosity!" << endl; 
   }
 
   this->addDependentField(VGrad);
@@ -94,6 +95,7 @@ evaluateFields(typename Traits::EvalData workset)
              epsilonEqp += (VGrad(cell,qp,k,l) + VGrad(cell,qp,l,k))*(VGrad(cell,qp,k,l) + VGrad(cell,qp,l,k)); 
            }
         }
+        epsilonEqp += 1.0e-6; 
         epsilonEqp = sqrt(1.0/8.0*epsilonEqp);
         mu(cell,qp) = 1.0/2.0*pow(A, 1.0/n)*pow(epsilonEqp, 1.0/n - 1.0); //non-linear viscosity, given by Glen's law  
         //end non-linear viscosity evaluation

@@ -134,7 +134,6 @@ Albany::STKDiscretization::getCoordinates() const
   return coordinates;
 }
 
-#ifdef ALBANY_FELIX
 //The function transformMesh() maps a unit cube domain by applying the transformation 
 //x = L*x
 //y = L*y
@@ -150,7 +149,6 @@ Albany::STKDiscretization::transformMesh()
   std::string transformType = stkMeshStruct->transformType;
   if (transformType == "None") {
      transform_type = NONE;
-     cout << "None!" << endl;
   }
   else if (transformType == "ISMIP-HOM Test A") {
      transform_type = ISMIP_HOM_TEST_A;
@@ -175,7 +173,6 @@ Albany::STKDiscretization::transformMesh()
      }
    }
 }
-#endif    
 
 void
 Albany::STKDiscretization::getOwned_xyz(double** x, double** y, double** z,
@@ -864,9 +861,7 @@ Albany::STKDiscretization::updateMesh(Teuchos::RCP<Albany::AbstractSTKMeshStruct
 
   computeOverlapNodesAndUnknowns();
 
-#ifdef ALBANY_FLEIX  
   transformMesh(); 
-#endif
 
   computeGraphs();
 
