@@ -20,7 +20,9 @@
 #include <algorithm>
 
 // LAME material models
+#ifdef ALBANY_LAME
 #include "models/Elastic.h"
+#include "models/ElasticNew.h"
 #include "models/NeoHookean.h"
 #include "models/ElasticFracture.h"
 #include "models/ElasticPlastic.h"
@@ -33,61 +35,29 @@
 #include "models/StiffElastic.h"
 #include "models/FeFp.h"
 #include "models/CrystalPlasticity.h"
+#endif
 
 namespace LameUtils {
 
-void parameterListToMatProps(const Teuchos::ParameterList& lameMaterialParameters, lame::MatProps& matProps){
-
-  // load the material properties into the lame::MatProps container.
-  // LAME material properties must be of type int, double, or string.
-
-  for(Teuchos::ParameterList::ConstIterator it = lameMaterialParameters.begin() ; it != lameMaterialParameters.end() ; ++it){
-
-    std::string name = lameMaterialParameters.name(it);
-    std::transform(name.begin(), name.end(), name.begin(), toupper);
-    std::replace(name.begin(), name.end(), ' ', '_');
-
-    const Teuchos::ParameterEntry entry = lameMaterialParameters.entry(it);
-    if(entry.isType<int>()){
-      std::vector<int> propertyVector;
-      propertyVector.push_back(Teuchos::getValue<int>(entry));
-      matProps.insert(name, propertyVector);
-    }
-    else if(entry.isType<double>()){
-      std::vector<double> propertyVector;
-      propertyVector.push_back(Teuchos::getValue<double>(entry));
-      matProps.insert(name, propertyVector);
-    }
-    else if(entry.isType<std::string>()){
-      std::vector<std::string> propertyVector;
-      propertyVector.push_back(Teuchos::getValue<std::string>(entry));
-      matProps.insert(name, propertyVector);
-    }
-    else if(entry.isType<bool>()){
-      // Flag for reading from xml materials database is a bool -- not sent to Lame
-    }
-    else{
-      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, " parameters for LAME material models must be of type double, int, or string.\n");
-    }
-  }
-}
-
-
-Teuchos::RCP<lame::Material> constructLameMaterialModel(const std::string& lameMaterialModelName,
-                                                        const Teuchos::ParameterList& lameMaterialParameters){
+Teuchos::RCP<LameMaterial> constructLameMaterialModel(const std::string& lameMaterialModelName,
+						      const Teuchos::ParameterList& lameMaterialParameters){
 
   // Strings should be all upper case with spaces replaced with underscores
   std::string materialModelName = lameMaterialModelName;
-  std::transform(materialModelName.begin(), materialModelName.end(), materialModelName.begin(), toupper);
+  std::transform(materialModelName.begin(), materialModelName.end(), materialModelName.begin(), 
+    (int (*)(int))std::toupper);
   std::replace(materialModelName.begin(), materialModelName.end(), ' ', '_');
 
-  lame::MatProps props;
+  LameMatProps props;
   parameterListToMatProps(lameMaterialParameters, props);
 
-  Teuchos::RCP<lame::Material> materialModel;
+  Teuchos::RCP<LameMaterial> materialModel;
 
+#ifdef ALBANY_LAME
   if(materialModelName == "ELASTIC")
     materialModel = Teuchos::rcp(new lame::Elastic(props));
+  else if(materialModelName == "ELASTIC_NEW")
+    materialModel = Teuchos::rcp(new lame::ElasticNew(props));
   else if(materialModelName == "NEO_HOOKEAN")
     materialModel = Teuchos::rcp(new lame::NeoHookean(props));
   else if(materialModelName == "ELASTIC_FRACTURE")
@@ -114,6 +84,18 @@ Teuchos::RCP<lame::Material> constructLameMaterialModel(const std::string& lameM
     materialModel = Teuchos::rcp(new lame::CrystalPlasticity(props));
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, " unsupported LAME material model: " + lameMaterialModelName + " (" + materialModelName + ")\n");
+#endif
+
+#ifdef ALBANY_LAMENT
+  if(materialModelName == "ELASTIC_NEW")
+    materialModel = Teuchos::rcp(new lament::ElasticNew<double>(props));
+  else if(materialModelName == "NEOHOOKEAN")
+    materialModel = Teuchos::rcp(new lament::Neohookean<double>(props));
+  else{
+    if(materialModel.is_null())
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, " unsupported LAMENT material model: " + lameMaterialModelName + " (" + materialModelName + ")\n");
+  }
+#endif
 
   return materialModel;
 }
@@ -121,7 +103,7 @@ Teuchos::RCP<lame::Material> constructLameMaterialModel(const std::string& lameM
 std::vector<std::string> getStateVariableNames(const std::string& lameMaterialModelName,
                                                const Teuchos::ParameterList& lameMaterialParameters){
 
-  Teuchos::RCP<lame::Material> materialModel = constructLameMaterialModel(lameMaterialModelName, lameMaterialParameters);
+  Teuchos::RCP<LameMaterial> materialModel = constructLameMaterialModel(lameMaterialModelName, lameMaterialParameters);
 
   // Get a list of the state variables, in alphabetical order
   std::vector<std::string> lameMaterialModelStateVariables;
@@ -148,7 +130,7 @@ std::vector<std::string> getStateVariableNames(const std::string& lameMaterialMo
 std::vector<double> getStateVariableInitialValues(const std::string& lameMaterialModelName,
                                                   const Teuchos::ParameterList& lameMaterialParameters){
 
-  Teuchos::RCP<lame::Material> materialModel = constructLameMaterialModel(lameMaterialModelName, lameMaterialParameters);
+  Teuchos::RCP<LameMaterial> materialModel = constructLameMaterialModel(lameMaterialModelName, lameMaterialParameters);
 
   int numStateVariables = materialModel->getNumStateVars();
 
@@ -165,7 +147,7 @@ std::vector<double> getStateVariableInitialValues(const std::string& lameMateria
   // \todo Set up scratch space for material models using getNumScratchVars() and setScratchPtr().
 
   // Create the matParams structure, which is passed to LAME
-  Teuchos::RCP<lame::matParams> matp = Teuchos::rcp(new lame::matParams());
+  Teuchos::RCP<LameMatParams> matp = Teuchos::rcp(new LameMatParams());
   matp->nelements = 1;
   matp->dt = 0.0;
   matp->time = 0.0;
@@ -178,7 +160,7 @@ std::vector<double> getStateVariableInitialValues(const std::string& lameMateria
   matp->stress_old = &stressOld[0];
   matp->stress_new = &stressNew[0];
 
-  lame::MatProps props;
+  LameMatProps props;
   parameterListToMatProps(lameMaterialParameters, props);
 
   // todo Check with Bill to see if props can be a null pointer (meaning no changes to the material properties).

@@ -71,7 +71,7 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
   lameStressParameterList->set<string>("Stress Name", "Stress");
   lameStressParameterList->set< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout", qp_scalar);
   lameStressParameterList->set< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout", qp_tensor);
-  lameStressParameterList->set<string>("Lame Material Model", "Elastic");
+  lameStressParameterList->set<string>("Lame Material Model", "Elastic_New");
   Teuchos::ParameterList& materialModelParametersList = lameStressParameterList->sublist("Lame Material Parameters");
   materialModelParametersList.set<double>("Youngs Modulus", 1.0);
   materialModelParametersList.set<double>("Poissons Ratio", 0.25);
@@ -135,8 +135,6 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
   workset.numCells = worksetSize;
   workset.stateArrayPtr = &stateMgr.getStateArray(0);
 
-  void* voidPtr(0);
-
   // Call the evaluators, evaluateFields() is the function that computes stress based on deformation gradient
   fieldManager.preEvaluate<PHAL::AlbanyTraits::Residual>(workset);
   fieldManager.evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
@@ -151,7 +149,7 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
 //   stressField.dimensions(stressFieldDimensions);
 
   // Record the expected stress, which will be used to check the computed stress
-  LCM::Tensor<PHAL::AlbanyTraits::Residual::ScalarT>
+  LCM::Tensor<PHAL::AlbanyTraits::Residual::ScalarT, 3>
     expectedStress(materialModelParametersList.get<double>("Youngs Modulus") * 0.01,
                    0.0,
                    0.0,

@@ -28,11 +28,8 @@
 # All paths must me changed for your build (search "gahanse")
 #
 # Set some paths if we are not being executed by the build scripts
-# BOOSTDIR=/ascldap/users/gahanse/local/boost_1_47_0
 
 
-
-NETCDF_PATH=/ascldap/users/gahanse/local/
 BUILD_DIR=`pwd`
 
 cmake \
@@ -40,8 +37,8 @@ cmake \
       -D CMAKE_BUILD_TYPE:STRING=NONE \
       -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
 \
-      -D Boost_INCLUDE_DIRS:FILEPATH="$BOOSTDIR" \
-      -D Boost_LIBRARY_DIRS:FILEPATH="$BOOSTDIR/stage/lib" \
+      -D Boost_INCLUDE_DIRS:FILEPATH="$BOOSTDIR/include" \
+      -D Boost_LIBRARY_DIRS:FILEPATH="$BOOSTDIR/lib" \
       -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
       -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
 \
@@ -85,14 +82,20 @@ cmake \
 \
       -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
       -D Trilinos_VERBOSE_CONFIGURE:BOOL=OFF \
-      -D CMAKE_CXX_FLAGS:STRING="-g -O2 -ansi -pedantic -ftrapv -Wall -Wno-long-long" \
+      -D CMAKE_CXX_FLAGS:STRING="-g -O2" \
 \
       -D Trilinos_ENABLE_TriKota:BOOL=ON \
+      -D TriKota_ENABLE_DakotaCMake:BOOL=ON \
+      -D ENABLE_DAKOTA_TESTS:BOOL=OFF \
+\
       -D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
       -D Trilinos_ENABLE_Pamgen:BOOL=ON \
       -D TPL_ENABLE_Netcdf:BOOL=ON \
-      -D TPL_Netcdf_INCLUDE_DIRS:PATH=$NETCDF_PATH/include \
-      -D TPL_Netcdf_LIBRARY_DIRS:PATH=$NETCDF_PATH/lib \
+      -D Netcdf_INCLUDE_DIRS:PATH=$NETCDFDIR/include \
+      -D Netcdf_LIBRARY_DIRS:PATH=$NETCDFDIR/lib \
+      -D TPL_ENABLE_HDF5:BOOL=ON \
+      -D HDF5_INCLUDE_DIRS:PATH=$HDF5DIR/include \
+      -D HDF5_LIBRARY_DIRS:PATH=$HDF5DIR/lib \
        ../
 
 #

@@ -118,14 +118,86 @@ Albany::NonlinearElasticityProblem::getValidProblemParameters() const
   validPL->sublist("Material Model", false, "");
   validPL->set<bool>("avgJ", false, "Flag to indicate the J should be averaged");
   validPL->set<bool>("volavgJ", false, "Flag to indicate the J should be volume averaged");
+  validPL->set<bool>("weighted_Volume_Averaged_J", false, "Flag to indicate the J should be volume averaged with stabilization");
   validPL->set<bool>("Use Composite Tet 10", false, "Flag to use the compostie tet 10 basis in Intrepid");
-  if (matModel == "J2")
+
+
+  if (matModel == "J2"|| matModel == "J2Fiber" || matModel == "GursonFD" || matModel == "RIHMR")
   {
     validPL->set<bool>("Compute Dislocation Density Tensor", false, "Flag to compute the dislocaiton density tensor (only for 3D)");
     validPL->sublist("Hardening Modulus", false, "");
     validPL->sublist("Yield Strength", false, "");
     validPL->sublist("Saturation Modulus", false, "");
     validPL->sublist("Saturation Exponent", false, "");
+  }
+
+  if (matModel == "J2Fiber")
+  {
+	validPL->set<RealType>("xiinf_J2",false,"");
+	validPL->set<RealType>("tau_J2",false,"");
+	validPL->set<RealType>("k_f1",false,"");
+	validPL->set<RealType>("q_f1",false,"");
+	validPL->set<RealType>("vol_f1",false,"");
+	validPL->set<RealType>("xiinf_f1",false,"");
+	validPL->set<RealType>("tau_f1",false,"");
+	validPL->set<RealType>("k_f2",false,"");
+	validPL->set<RealType>("q_f2",false,"");
+	validPL->set<RealType>("vol_f2",false,"");
+	validPL->set<RealType>("xiinf_f2",false,"");
+	validPL->set<RealType>("tau_f2",false,"");
+	validPL->set<RealType>("X0",false,"");
+	validPL->set<RealType>("Y0",false,"");
+	validPL->set<RealType>("Z0",false,"");
+	validPL->sublist("direction_f1",false,"");
+	validPL->sublist("direction_f2",false,"");
+	validPL->sublist("Ring Center",false,"");
+	validPL->set<bool>("isLocalCoord",false,"");
+  }
+
+  if (matModel == "GursonFD")
+  {
+	validPL->set<RealType>("N",false,"");
+	validPL->set<RealType>("eq0",false,"");
+	validPL->set<RealType>("f0",false,"");
+	validPL->set<RealType>("kw",false,"");
+	validPL->set<RealType>("eN",false,"");
+	validPL->set<RealType>("sN",false,"");
+	validPL->set<RealType>("fN",false,"");
+	validPL->set<RealType>("fc",false,"");
+	validPL->set<RealType>("ff",false,"");
+	validPL->set<RealType>("q1",false,"");
+	validPL->set<RealType>("q2",false,"");
+	validPL->set<RealType>("q3",false,"");
+	validPL->set<bool>("isSaturationH",false,"");
+	validPL->set<bool>("isHyper",false,"");
+  }
+
+  if (matModel == "MooneyRivlin")
+  {
+	 validPL->set<RealType>("c1",false,"");
+	 validPL->set<RealType>("c2",false,"");
+	 validPL->set<RealType>("c",false,"");
+  }
+
+  if (matModel == "MooneyRivlinDamage")
+  {
+	 validPL->set<RealType>("c1",false,"");
+	 validPL->set<RealType>("c2",false,"");
+	 validPL->set<RealType>("c",false,"");
+	 validPL->set<RealType>("zeta_inf",false,"");
+	 validPL->set<RealType>("iota",false,"");
+  }
+
+  if (matModel == "MooneyRivlinIncompressible")
+  {
+	 validPL->set<RealType>("c1",false,"");
+	 validPL->set<RealType>("c2",false,"");
+	 validPL->set<RealType>("mu",false,"");
+  }
+
+  if (matModel == "RIHMR")
+  {
+	validPL->sublist("Recovery Modulus", false, "");
   }
 
   return validPL;

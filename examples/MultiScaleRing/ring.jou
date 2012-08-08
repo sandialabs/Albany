@@ -1,0 +1,15 @@
+# Build ring OD (rod dia = 0.422 inches)
+create cylinder height 0.001 radius 0.0053594
+#
+# Build ring ID (Clad thickness = 0.0243 inches)
+create cylinder height 0.001 radius 0.00474218
+#
+subtract volume 2 from volume 1
+surface 7 1  interval 70
+mesh volume 1
+block 1 volume 1
+nodeset 1 node 263 89
+nodeset 2 node 228 124
+export mesh "/Volumes/ascldap/Codes/Albany/examples/MultiScaleRing/ring.exo" overwrite
+
+

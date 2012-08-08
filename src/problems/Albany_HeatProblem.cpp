@@ -28,11 +28,13 @@
 Albany::HeatProblem::
 HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
-             const int numDim_) :
+             const int numDim_,
+             const Teuchos::RCP<const Epetra_Comm>& comm_) :
   Albany::AbstractProblem(params_, paramLib_),
   haveSource(false),
   haveAbsorption(false),
-  numDim(numDim_)
+  numDim(numDim_),
+  comm(comm_)
 {
   this->setNumEquations(1);
 
@@ -42,6 +44,15 @@ HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   haveSource =  params->isSublist("Source Functions");
   haveAbsorption =  params->isSublist("Absorption");
+
+  if(params->isType<string>("MaterialDB Filename")){
+
+    std::string mtrlDbFilename = params->get<string>("MaterialDB Filename");
+ // Create Material Database
+    materialDB = Teuchos::rcp(new QCAD::MaterialDatabase(mtrlDbFilename, comm));
+
+  }
+
 
 }
 
@@ -121,11 +132,20 @@ Albany::HeatProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshS
    // Construct BC evaluators for all side sets and names
    // Note that the string index sets up the equation offset, so ordering is important
    std::vector<string> bcNames(neq);
+   Teuchos::ArrayRCP<string> dof_names(neq);
+   Teuchos::Array<Teuchos::Array<int> > offsets;
+   offsets.resize(neq);
+
    bcNames[0] = "T";
+   dof_names[0] = "Temperature";
+   offsets[0].resize(1);
+   offsets[0][0] = 0;
+
 
    // Construct BC evaluators for all possible names of conditions
    // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
-   std::vector<string> condNames(2); //dudx, dudy, dudz, dudn
+   std::vector<string> condNames(4); 
+     //dudx, dudy, dudz, dudn, scaled jump (internal surface), or robin (like DBC plus scaled jump)
 
    // Note that sidesets are only supported for two and 3D currently
    if(numDim == 2)
@@ -138,9 +158,13 @@ Albany::HeatProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshS
 
    condNames[1] = "dudn";
 
-   nfm.resize(1); // Heat problem only has one element block
-   nfm[0] = bcUtils.constructBCEvaluators(meshSpecs, bcNames, condNames, dl,
-                                          this->params, this->paramLib);
+   condNames[2] = "scaled jump";
+
+   condNames[3] = "robin";
+
+   nfm.resize(1); // Heat problem only has one physics set   
+   nfm[0] = bcUtils.constructBCEvaluators(meshSpecs, bcNames, dof_names, false, 0,
+				  condNames, offsets, dl, this->params, this->paramLib, materialDB);
 
 }
 
@@ -155,6 +179,7 @@ Albany::HeatProblem::getValidProblemParameters() const
   validPL->sublist("Thermal Conductivity", false, "");
   validPL->set("Convection Velocity", "{0,0,0}", "");
   validPL->set<bool>("Have Rho Cp", false, "Flag to indicate if rhoCp is used");
+  validPL->set<string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
 
   return validPL;
 }

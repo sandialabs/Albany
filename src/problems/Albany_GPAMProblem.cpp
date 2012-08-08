@@ -34,9 +34,8 @@ GPAMProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   Albany::AbstractProblem(params_, paramLib_),
   numDim(numDim_)
 {
-
-  // Compute number of equations
-  neq = numDim_;
+  // Get number of species equations from Problem specifications
+  neq = params_->get("Number of Species", numDim);
 }
 
 Albany::GPAMProblem::
@@ -99,7 +98,7 @@ Albany::GPAMProblem::getValidProblemParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidGPAMProblemParams");
 
-  validPL->sublist("Neutron Source", false, "");
+  validPL->set("Number of Species", 1, "Number of species eqs in GPAM equation set");
 
   return validPL;
 }

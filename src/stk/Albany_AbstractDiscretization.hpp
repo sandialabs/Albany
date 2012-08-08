@@ -43,6 +43,7 @@ namespace Albany {
 
     int elem_GID; // the global id of the element containing the side
     int elem_LID; // the local id of the element containing the side
+    int elem_ebIndex; // The index of the element block that contains the element
     unsigned side_local_id; // The local id of the side relative to the owning element
 
   };
@@ -104,6 +105,9 @@ namespace Albany {
 
     //! Get solution vector from mesh database
     virtual Teuchos::RCP<Epetra_Vector> getSolutionField() const = 0;
+
+    //! Flag if solution has a restart values -- used in Init Cond
+    virtual bool hasRestartSolution() const = 0;
 
     //! Accessor function to get coordinates for ML. Memory controlled here.
     virtual void getOwned_xyz(double **x, double **y, double **z, double **rbm,

@@ -6,6 +6,7 @@
 	<!-- Transient or Steady (Quasi-Static) or Continuation (load steps) -->
     <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>	
+	<Parameter name="weighted_Volume_Averaged_J" type="bool" value="true"/> 
     <ParameterList name="Dirichlet BCs">
       <ParameterList name="Time Dependent DBC on NS NodeSet1 for DOF Z">
         <Parameter name="Number of points" type="int" value="4"/>

@@ -276,6 +276,7 @@ namespace QCAD {
     std::vector<mathVector> beginPolygon, endPolygon;
     bool saddleGuessGiven;
     mathVector saddlePointGuess;
+    double shortenBeginPc, shortenEndPc;
 
     double zmin, zmax;  //defines lateral-volume region when numDims == 3
     double xmin, xmax, ymin, ymax; // dynamically adjusted box marking region containing image points

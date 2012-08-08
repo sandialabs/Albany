@@ -57,14 +57,14 @@ protected:
   void calcStressRealType(PHX::MDField<RealType,Cell,QuadPoint,Dim,Dim>& stressFieldRef,
                           PHX::MDField<RealType,Cell,QuadPoint,Dim,Dim>& defGradFieldRef,
                           typename Traits::EvalData workset,
-                          Teuchos::RCP<lame::matParams>& matp);
+                          Teuchos::RCP<LameMatParams>& matp);
 
   // Allocate material parameter arrays -- always doubles
-  void setMatP(Teuchos::RCP<lame::matParams>& matp,
+  void setMatP(Teuchos::RCP<LameMatParams>& matp,
                typename Traits::EvalData workset);
 
   // Free material pointer arrays -- always doubles
-  void freeMatP(Teuchos::RCP<lame::matParams>& matp);
+  void freeMatP(Teuchos::RCP<LameMatParams>& matp);
 
 
   // Input:
@@ -79,7 +79,7 @@ protected:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stressField;
 
   // The LAME material model
-  Teuchos::RCP<lame::Material> lameMaterialModel;
+  Teuchos::RCP<LameMaterial> lameMaterialModel;
 
   // The LAME material model name
   std::string lameMaterialModelName;

@@ -101,6 +101,8 @@ namespace Albany {
 #include "Albany_EvaluatorUtils.hpp"
 #include "Albany_ResponseUtilities.hpp"
 
+#include "PHAL_DOFVecGradInterpolation.hpp"
+
 #include "PHAL_GPAMResid.hpp"
 
 #include "PHAL_Source.hpp"
@@ -142,8 +144,9 @@ Albany::GPAMProblem::constructEvaluators(
        << ", QuadPts= " << numQPts
        << ", Dim= " << numDim << endl;
   
+   int vecDim = neq;
 
-   RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
+   RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, vecDim));
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
    bool supportsTransient=true;
    int offset=0;
@@ -168,8 +171,8 @@ Albany::GPAMProblem::constructEvaluators(
      fm0.template registerEvaluator<EvalT>
        (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dot[0]));
 
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
+     //     fm0.template registerEvaluator<EvalT>
+     //  (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
 
      fm0.template registerEvaluator<EvalT>
        (evalUtils.constructScatterResidualEvaluator(true, resid_names,offset, "Scatter GPAM"));
@@ -184,7 +187,25 @@ Albany::GPAMProblem::constructEvaluators(
    fm0.template registerEvaluator<EvalT>
      (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
 
-  { // Temperature Resid
+   { // Specialized DofVecGrad Interpolation for this problem
+    
+     RCP<ParameterList> p = rcp(new ParameterList("DOFVecGrad Interpolation "+dof_names[0]));
+     // Input
+     p->set<string>("Variable Name", dof_names[0]);
+     p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
+     
+     p->set<string>("Gradient BF Name", "Grad BF");
+     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_gradient);
+     
+     // Output (assumes same Name as input)
+     p->set<string>("Gradient Variable Name", dof_names[0]+" Gradient");
+     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_vecgradient);
+     
+     ev = rcp(new PHAL::DOFVecGradInterpolation<EvalT,AlbanyTraits>(*p));
+     fm0.template registerEvaluator<EvalT>(ev);
+   }
+
+  { // GPAM Resid
     RCP<ParameterList> p = rcp(new ParameterList("GPAM Resid"));
 
     //Input
@@ -195,9 +216,9 @@ Albany::GPAMProblem::constructEvaluators(
     p->set<string>("Gradient QP Variable Name", "Concentration Gradient");
     
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_vecgradient);
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+    p->set< RCP<DataLayout> >("Node QP Gradient Data Layout", dl->node_qp_gradient);
 
     //Output
     p->set<string>("Residual Name", "GPAM Residual");

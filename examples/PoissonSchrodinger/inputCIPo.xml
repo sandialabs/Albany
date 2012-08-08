@@ -16,6 +16,10 @@
       <Parameter name="Input Filename" type="string" value="inputSchrodingerMOSDot.xml" />
     </ParameterList>
 
+    <Parameter name="Maximim Iterations" type="int" value="100" />
+    <Parameter name="Iteration Method" type="string" value="Picard" />
+    <Parameter name="Convergence Tolerance" type="double" value="1e-6" />
+    <Parameter name="Eigensolver Percent Shift Below Potential Min" type="double" value="1" />
 
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="5" />

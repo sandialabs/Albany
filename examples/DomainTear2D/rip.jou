@@ -33,4 +33,4 @@ Sideset 2 curve 8
 
 set large exodus file off
 
-export mesh "/ascldap/users/gahanse/Codes/Albany/examples/DomainTear2D/rip.exo" overwrite
+export mesh "/Volumes/ascldap/Codes/Albany/examples/DomainTear2D/rip.exo" overwrite

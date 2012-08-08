@@ -36,7 +36,7 @@ namespace PHAL {
  * \brief Evaluates thermal conductivity, either as a constant or a truncated
  * KL expansion.
 
-This class may be used in several ways. 
+This class may be used in two ways. 
 
 1. The simplest is to use a constant thermal conductivity across the entire domain (one element block,
 one material), say with a value of 5.0. In this case, one would declare at the "Problem" level, that a 
@@ -50,10 +50,11 @@ constant thermal conductivity was being used, and its value was 5.0:
     </ParameterList>
 </ParameterList>
 
-An example of this is test problem ...
+An example of this is test problem is SteadyHeat2DInternalNeumann
 
 2. The other extreme is to have a multiple element block problem, say 3, with each element block corresponding
-to a material. See the test problem ... for an example of this use case.
+to a material. Each element block has its own field manager, and different evaluators are used in each element
+block. See the test problem Heat2DMMCylWithSource for an example of this use case.
 
  */
 
@@ -81,8 +82,6 @@ private:
 //! Validate the name strings under "Thermal Conductivity" section in xml input file, 
   Teuchos::RCP<const Teuchos::ParameterList>
                getValidThermalCondParameters() const;
-
-  bool haveMatDB; // is a material database being used for thermal conductivity?
 
   bool is_constant;
 

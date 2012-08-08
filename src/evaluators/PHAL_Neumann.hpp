@@ -30,6 +30,8 @@
 #include "Sacado_ParameterAccessor.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 
+#include "QCAD_MaterialDatabase.hpp"
+
 
 namespace PHAL {
 
@@ -37,14 +39,14 @@ namespace PHAL {
 
 */
 
-enum NEU_TYPE {COORD, NORMAL};
+enum NEU_TYPE {COORD, NORMAL, INTJUMP, PRESS, ROBIN};
+enum SIDE_TYPE {OTHER, LINE, TRI}; // to calculate areas for pressure bc
 
 template<typename EvalT, typename Traits>
 class NeumannBase : 
     public PHX::EvaluatorWithBaseImpl<Traits>,
-    public PHX::EvaluatorDerived<EvalT, Traits>, //,  // TO DO
-    public Sacado::ParameterAccessor<EvalT, SPL_Traits>
-   {
+    public PHX::EvaluatorDerived<EvalT, Traits>,
+    public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
 
 private:
 
@@ -53,14 +55,17 @@ private:
 
 public:
 
-  NeumannBase(Teuchos::ParameterList& p);
+  typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
+
+  NeumannBase(const Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d) = 0;
 
-  virtual ScalarT& getValue(const std::string &n) { return dudn; };
+  ScalarT& getValue(const std::string &n);
 
 protected:
 
@@ -68,20 +73,41 @@ protected:
   const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs;
 
   int  cellDims, sideDims, numQPs, numQPsSide, numNodes;
-  const int offset;
+  Teuchos::Array<int> offset;
+  int numDOFsSet;
 
- // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
+ // Should only specify flux vector components (dudx, dudy, dudz), dudn, or pressure P
 
-   // dudn
+   // dudn scaled
   void calc_dudn_const(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
+                          const Intrepid::FieldContainer<MeshScalarT>& phys_side_cub_points,
+                          const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+                          const shards::CellTopology & celltopo,
+                          const int cellDims,
+                          int local_side_id,
+                          ScalarT scale = 1.0);
+
+  // robin (also uses flux scaling)
+  void calc_dudn_robin(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
+                          const Intrepid::FieldContainer<MeshScalarT>& phys_side_cub_points,
+   		          const Intrepid::FieldContainer<ScalarT>& dof_side,
+                          const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+                          const shards::CellTopology & celltopo,
+                          const int cellDims,
+                          int local_side_id,
+		          ScalarT scale,
+		          const ScalarT* robin_param_values);
+
+   // (dudx, dudy, dudz)
+  void calc_gradu_dotn_const(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
                           const Intrepid::FieldContainer<MeshScalarT>& phys_side_cub_points,
                           const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id);
 
-   // (dudx, dudy, dudz)
-  void calc_gradu_dotn_const(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
+   // Pressure P
+  void calc_press(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
                           const Intrepid::FieldContainer<MeshScalarT>& phys_side_cub_points,
                           const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
@@ -94,6 +120,7 @@ protected:
   // Input:
   //! Coordinate vector at vertices
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
+  PHX::MDField<ScalarT,Cell,Node> dof;
   Teuchos::RCP<shards::CellTopology> cellType;
   Teuchos::RCP<shards::CellTopology> sideType;
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubatureCell;
@@ -117,11 +144,12 @@ protected:
   Intrepid::FieldContainer<MeshScalarT> trans_basis_refPointsSide;
   Intrepid::FieldContainer<MeshScalarT> weighted_trans_basis_refPointsSide;
 
+  Intrepid::FieldContainer<ScalarT> dofCell;
+  Intrepid::FieldContainer<ScalarT> dofSide;
+
   Intrepid::FieldContainer<ScalarT> data;
 
   // Output:
-//  PHX::MDField<MeshScalarT,Cell,Node>   neumann;
-//  Intrepid::FieldContainer<MeshScalarT>   neumann;
   Intrepid::FieldContainer<ScalarT>   neumann;
 
   std::string sideSetID;
@@ -130,8 +158,12 @@ protected:
   std::string name;
 
   NEU_TYPE bc_type;
-  ScalarT dudn;
+  SIDE_TYPE side_type;
+  ScalarT const_val;
+  ScalarT robin_vals[3]; // (dof_value, coeff multiplying difference (dof - dof_value), jump)
   std::vector<ScalarT> dudx;
+
+  std::vector<ScalarT> matScaling;
 
 };
 
@@ -277,7 +309,7 @@ private:
 
 public:
   
-  NeumannAggregator(Teuchos::ParameterList& p);
+  NeumannAggregator(const Teuchos::ParameterList& p);
   
   void postRegistrationSetup(typename Traits::SetupData d,
                              PHX::FieldManager<Traits>& vm) {};

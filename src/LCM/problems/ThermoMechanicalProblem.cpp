@@ -135,6 +135,7 @@ Albany::ThermoMechanicalProblem::getValidProblemParameters() const
   validPL->set<RealType>("Heat Capacity", false, "");
   validPL->sublist("Material Model", false, "");
   validPL->set<bool>("volavgJ", false, "Flag to indicate the J should be volume averaged");
+  validPL->set<bool>("weighted_Volume_Averaged_J", false, "Flag to indicate the J should be volume averaged with stabilization");
 
   return validPL;
 }

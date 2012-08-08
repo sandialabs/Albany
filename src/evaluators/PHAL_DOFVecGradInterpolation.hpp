@@ -52,17 +52,18 @@ private:
 
   // Input:
   //! Values at nodes
-  PHX::MDField<ScalarT,Cell,Node,Dim> val_node;
+  PHX::MDField<ScalarT,Cell,Node,VecDim> val_node;
   //! Basis Functions
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
 
   // Output:
   //! Values at quadrature points
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> grad_val_qp;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> grad_val_qp;
 
   std::size_t numNodes;
   std::size_t numQPs;
   std::size_t numDims;
+  std::size_t vecDim;
 
 };
 }

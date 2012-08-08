@@ -180,6 +180,8 @@ Albany::ThermoMechanicalProblem::constructEvaluators(
 
   // Construct standard FEM evaluators with standard field names                              
   RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
+   TEUCHOS_TEST_FOR_EXCEPTION(dl->vectorAndGradientLayoutsAreEquivalent==false, std::logic_error,
+                              "Data Layout Usage in Mechanics problems assume vecDim = numDim");
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
   string scatterName="Scatter Heat";
 
@@ -281,6 +283,8 @@ Albany::ThermoMechanicalProblem::constructEvaluators(
     p->set<bool>("avgJ Name", avgJ);
     const bool volavgJ = params->get("volavgJ", false);
     p->set<bool>("volavgJ Name", volavgJ);
+    const bool weighted_Volume_Averaged_J = params->get("weighted_Volume_Averaged_J", false);
+    p->set<bool>("weighted_Volume_Averaged_J Name", weighted_Volume_Averaged_J);
     p->set<string>("Weights Name","Weights");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set<string>("Gradient QP Variable Name", "Displacement Gradient");

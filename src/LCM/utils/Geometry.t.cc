@@ -12,25 +12,25 @@ namespace LCM {
   //
   // Length of a segment
   //
-  template<typename ScalarT>
-  ScalarT
-  length(Vector<ScalarT> const & p0, Vector<ScalarT> const & p1)
+  template<typename T>
+  T
+  length(Vector<T, 3> const & p0, Vector<T, 3> const & p1)
   {
-    Vector<ScalarT> v = p1 - p0;
+    Vector<T, 3> v = p1 - p0;
     return norm(v);
   }
 
   //
   // Area of a triangle
   //
-  template<typename ScalarT>
-  ScalarT
-  area(Vector<ScalarT> const & p0, Vector<ScalarT> const & p1,
-      Vector<ScalarT> const & p2)
+  template<typename T>
+  T
+  area(Vector<T, 3> const & p0, Vector<T, 3> const & p1,
+      Vector<T, 3> const & p2)
   {
-    Vector<ScalarT> u = p1 - p0;
-    Vector<ScalarT> v = p2 - p0;
-    ScalarT a = 0.5 * norm(cross(u,v));
+    Vector<T, 3> u = p1 - p0;
+    Vector<T, 3> v = p2 - p0;
+    T a = 0.5 * norm(cross(u,v));
     return a;
   }
 
@@ -38,10 +38,10 @@ namespace LCM {
   // Area of a quadrilateral, assummed planar. If not planar, returns
   // the sum of the areas of the two triangles p0,p1,p2 and p0,p2,p3
   //
-  template<typename ScalarT>
-  ScalarT
-  area(Vector<ScalarT> const & p0, Vector<ScalarT> const & p1,
-      Vector<ScalarT> const & p2, Vector<ScalarT> const & p3)
+  template<typename T>
+  T
+  area(Vector<T, 3> const & p0, Vector<T, 3> const & p1,
+      Vector<T, 3> const & p2, Vector<T, 3> const & p3)
   {
     return area(p0, p1, p2) + area(p0, p2, p3);
   }
@@ -49,24 +49,24 @@ namespace LCM {
   //
   // Volume of tetrahedron
   //
-  template<typename ScalarT>
-  ScalarT
-  volume(Vector<ScalarT> const & p0, Vector<ScalarT> const & p1,
-      Vector<ScalarT> const & p2, Vector<ScalarT> const & p3)
+  template<typename T>
+  T
+  volume(Vector<T, 3> const & p0, Vector<T, 3> const & p1,
+      Vector<T, 3> const & p2, Vector<T, 3> const & p3)
   {
     // Area of base triangle
-    ScalarT A = area(p0, p1, p2);
+    T A = area(p0, p1, p2);
 
     // Height
-    Vector<ScalarT> u = p1 - p0;
-    Vector<ScalarT> v = p2 - p0;
-    Vector<ScalarT> n = cross(u, v);
+    Vector<T, 3> u = p1 - p0;
+    Vector<T, 3> v = p2 - p0;
+    Vector<T, 3> n = cross(u, v);
     n = n / norm(n);
-    Vector<ScalarT> w = p3 - p0;
-    ScalarT h = fabs(dot(w, n));
+    Vector<T, 3> w = p3 - p0;
+    T h = fabs(dot(w, n));
 
     // Volume
-    ScalarT V = A * h / 3.0;
+    T V = A * h / 3.0;
     return V;
   }
 
@@ -76,25 +76,25 @@ namespace LCM {
   // Base is p0,p1,p2,p3
   // Apex is p4
   //
-  template<typename ScalarT>
-  ScalarT
-  volume(Vector<ScalarT> const & p0, Vector<ScalarT> const & p1,
-      Vector<ScalarT> const & p2, Vector<ScalarT> const & p3,
-      Vector<ScalarT> const & p4)
+  template<typename T>
+  T
+  volume(Vector<T, 3> const & p0, Vector<T, 3> const & p1,
+      Vector<T, 3> const & p2, Vector<T, 3> const & p3,
+      Vector<T, 3> const & p4)
   {
     // Area of base quadrilateral
-    ScalarT A = area(p0, p1, p2, p3);
+    T A = area(p0, p1, p2, p3);
 
     // Height
-    Vector<ScalarT> u = p1 - p0;
-    Vector<ScalarT> v = p2 - p0;
-    Vector<ScalarT> n = cross(u, v);
+    Vector<T, 3> u = p1 - p0;
+    Vector<T, 3> v = p2 - p0;
+    Vector<T, 3> n = cross(u, v);
     n = n / norm(n);
-    Vector<ScalarT> w = p4 - p0;
-    ScalarT h = fabs(dot(w, n));
+    Vector<T, 3> w = p4 - p0;
+    T h = fabs(dot(w, n));
 
     // Volume
-    ScalarT V = A * h / 3.0;
+    T V = A * h / 3.0;
     return V;
   }
 
@@ -103,21 +103,21 @@ namespace LCM {
   // Assumption: all faces are planar
   // Decompose into 3 pyramids
   //
-  template<typename ScalarT>
-  ScalarT
-  volume(Vector<ScalarT> const & p0, Vector<ScalarT> const & p1,
-      Vector<ScalarT> const & p2, Vector<ScalarT> const & p3,
-      Vector<ScalarT> const & p4, Vector<ScalarT> const & p5,
-      Vector<ScalarT> const & p6, Vector<ScalarT> const & p7)
+  template<typename T>
+  T
+  volume(Vector<T, 3> const & p0, Vector<T, 3> const & p1,
+      Vector<T, 3> const & p2, Vector<T, 3> const & p3,
+      Vector<T, 3> const & p4, Vector<T, 3> const & p5,
+      Vector<T, 3> const & p6, Vector<T, 3> const & p7)
   {
     // 1st pyramid
-    ScalarT V1 = volume(p4, p7, p6, p5, p0);
+    T V1 = volume(p4, p7, p6, p5, p0);
 
     // 2nd pyramid
-    ScalarT V2 = volume(p3, p2, p6, p7, p0);
+    T V2 = volume(p3, p2, p6, p7, p0);
 
     // 3rd pyramid
-    ScalarT V3 = volume(p1, p5, p6, p2, p0);
+    T V3 = volume(p1, p5, p6, p2, p0);
 
     return V1 + V2 + V3;
   }
@@ -127,18 +127,39 @@ namespace LCM {
   // and hexahedron
   // For these we can just take the average of the vertices
   //
-  template<typename ScalarT>
-  Vector<ScalarT>
-  centroid(std::vector<Vector<ScalarT> > const & points)
+  template<typename T>
+  Vector<T, 3>
+  centroid(std::vector<Vector<T, 3> > const & points)
   {
-    Vector<ScalarT> C(0.0, 0.0, 0.0);
-    typedef typename std::vector<Vector<ScalarT> >::size_type sizeT;
+    Vector<T, 3> C(0.0, 0.0, 0.0);
+    typedef typename std::vector<Vector<T, 3> >::size_type sizeT;
     sizeT n = points.size();
 
     for (sizeT i = 0; i < n; ++i) {
       C += points[i];
     }
     return C / static_cast<double>(n);
+  }
+
+  ///
+  /// The surface normal of a face
+  /// Assumption: face is planar
+  /// Input: 3 independent nodes on the face
+  /// Output: unit normal vector
+  ///
+  template<typename T>
+  Vector<T,3>
+  faceNormal(Vector<T,3> const & p0,
+          Vector<T,3> const & p1,
+          Vector<T,3> const & p2)
+  {
+      // Construct 2 independent vectors
+      Vector<T,3> v0 = p1 - p0;
+      Vector<T,3> v1 = p2 - p0;
+
+      Vector<T,3> n = LCM::cross(v0,v1);
+      n = n/LCM::norm(n);
+      return n;
   }
 
 } // namespace LCM

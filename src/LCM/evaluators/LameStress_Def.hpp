@@ -30,7 +30,7 @@ LameStressBase(Teuchos::ParameterList& p) :
                p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
   stressField(p.get<std::string>("Stress Name"),
               p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-  lameMaterialModel(Teuchos::RCP<lame::Material>())
+  lameMaterialModel(Teuchos::RCP<LameMaterial>())
 {
   // Pull out numQPs and numDims from a Layout
   tensor_dl = p.get< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
@@ -49,7 +49,7 @@ LameStressBase(Teuchos::ParameterList& p) :
 
   this->setName("LameStress"+PHX::TypeString<EvalT>::value);
 
-  // Default to getting material infor form base input file (possibley overwritten later)
+  // Default to getting material info form base input file (possibley overwritten later)
   lameMaterialModelName = p.get<string>("Lame Material Model", "Elastic");
   Teuchos::ParameterList& lameMaterialParameters = p.sublist("Lame Material Parameters");
 
@@ -58,7 +58,7 @@ LameStressBase(Teuchos::ParameterList& p) :
 
   std::string ebName = p.get<std::string>("Element Block Name", "Missing");
 
-  // Check for material databas file
+  // Check for material database file
   if (haveMatDB) {
     // Check if material database will be supplying the data
     bool dataFromDatabase = lameMaterialParameters.get<bool>("Material Dependent Data Source",false);
@@ -116,7 +116,7 @@ void LameStress<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 
-  Teuchos::RCP<lame::matParams> matp = Teuchos::rcp(new lame::matParams());
+  Teuchos::RCP<LameMatParams> matp = Teuchos::rcp(new LameMatParams());
   this->setMatP(matp, workset);
 
   this->calcStressRealType(this->stressField, this->defGradField, workset, matp);
@@ -146,7 +146,7 @@ evaluateFields(typename Traits::EvalData workset)
   defGradFieldRealType.setFieldData(d_mem);
 
   // Allocate double arrays in matp
-  Teuchos::RCP<lame::matParams> matp = Teuchos::rcp(new lame::matParams());
+  Teuchos::RCP<LameMatParams> matp = Teuchos::rcp(new LameMatParams());
   this->setMatP(matp, workset);
 
   // Begin Finite Difference 
@@ -212,7 +212,7 @@ evaluateFields(typename Traits::EvalData workset)
   defGradFieldRealType.setFieldData(d_mem);
 
   // Allocate double arrays in matp
-  Teuchos::RCP<lame::matParams> matp = Teuchos::rcp(new lame::matParams());
+  Teuchos::RCP<LameMatParams> matp = Teuchos::rcp(new LameMatParams());
   this->setMatP(matp, workset);
 
   // Begin Finite Difference 
@@ -258,7 +258,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename EvalT, typename Traits>
 void LameStressBase<EvalT, Traits>::
-  setMatP(Teuchos::RCP<lame::matParams>& matp,
+  setMatP(Teuchos::RCP<LameMatParams>& matp,
           typename Traits::EvalData workset)
 {
   // \todo Get actual time step for calls to LAME materials.
@@ -293,7 +293,7 @@ void LameStressBase<EvalT, Traits>::
   matp->state_new = stateNew;
   matp->stress_old = stressOld;
   matp->stress_new = stressNew;
-  matp->dtrnew = 1.0;  // This is the default value in LAME, only MDCreep and MunsonDawson use it
+//   matp->dt_mat = std::numeric_limits<double>::max();
   
   // matParams that still need to be added:
   // matp->temp_old  (temperature)
@@ -307,7 +307,7 @@ void LameStressBase<EvalT, Traits>::
 
 template<typename EvalT, typename Traits>
 void LameStressBase<EvalT, Traits>::
-  freeMatP(Teuchos::RCP<lame::matParams>& matp)
+  freeMatP(Teuchos::RCP<LameMatParams>& matp)
 {
   delete [] matp->strain_rate;
   delete [] matp->spin;
@@ -324,7 +324,7 @@ void LameStressBase<EvalT, Traits>::
   calcStressRealType(PHX::MDField<RealType,Cell,QuadPoint,Dim,Dim>& stressFieldRef,
              PHX::MDField<RealType,Cell,QuadPoint,Dim,Dim>& defGradFieldRef,
              typename Traits::EvalData workset,
-             Teuchos::RCP<lame::matParams>& matp) 
+             Teuchos::RCP<LameMatParams>& matp) 
 {
   // Get the old state data
   Albany::MDArray oldDefGrad = (*workset.stateArrayPtr)[defGradName];
@@ -354,8 +354,8 @@ void LameStressBase<EvalT, Traits>::
       // spin          - anti-symmetric part of the velocity gradient
       // left_stretch  - found as V in the polar decomposition of the deformation gradient F = VR
       // rotation      - found as R in the polar decomposition of the deformation gradient F = VR
-      // state_old     - material state data for previous time step (material dependent, none for lame::Elastic)
-      // state_new     - material state data for current time step (material dependent, none for lame::Elastic)
+      // state_old     - material state data for previous time step (material dependent, none for lame(nt)::Elastic)
+      // state_new     - material state data for current time step (material dependent, none for lame(nt)::Elastic)
       // stress_old    - stress at previous time step
       // stress_new    - stress at current time step, filled by material model
       //
@@ -383,41 +383,41 @@ void LameStressBase<EvalT, Traits>::
       // and then fill data into the vectors below
 
       // new deformation gradient (the current deformation gradient as computed in the current configuration)
-     LCM::Tensor<RealType> Fnew(
+      LCM::Tensor<RealType, 3> Fnew(
        defGradFieldRef(cell,qp,0,0), defGradFieldRef(cell,qp,0,1), defGradFieldRef(cell,qp,0,2),
        defGradFieldRef(cell,qp,1,0), defGradFieldRef(cell,qp,1,1), defGradFieldRef(cell,qp,1,2),
        defGradFieldRef(cell,qp,2,0), defGradFieldRef(cell,qp,2,1), defGradFieldRef(cell,qp,2,2) );
 
       // old deformation gradient (deformation gradient at previous load step)
-      LCM::Tensor<RealType> Fold( oldDefGrad(cell,qp,0,0), oldDefGrad(cell,qp,0,1), oldDefGrad(cell,qp,0,2),
+      LCM::Tensor<RealType, 3> Fold( oldDefGrad(cell,qp,0,0), oldDefGrad(cell,qp,0,1), oldDefGrad(cell,qp,0,2),
                                  oldDefGrad(cell,qp,1,0), oldDefGrad(cell,qp,1,1), oldDefGrad(cell,qp,1,2),
                                  oldDefGrad(cell,qp,2,0), oldDefGrad(cell,qp,2,1), oldDefGrad(cell,qp,2,2) );
 
       // incremental deformation gradient
-      LCM::Tensor<RealType> Finc = Fnew * LCM::inverse(Fold);
+      LCM::Tensor<RealType, 3> Finc = Fnew * LCM::inverse(Fold);
 
       // left stretch V, and rotation R, from left polar decomposition of new deformation gradient
-      LCM::Tensor<RealType> V, R;
-      boost::tie(V,R) = LCM::polar_left(Fnew);
+      LCM::Tensor<RealType, 3> V, R;
+      boost::tie(V,R) = LCM::polar_left_eig(Fnew);
 
       // incremental left stretch Vinc, incremental rotation Rinc, and log of incremental left stretch, logVinc
-      LCM::Tensor<RealType> Vinc, Rinc, logVinc;
+      LCM::Tensor<RealType, 3> Vinc, Rinc, logVinc;
       boost::tie(Vinc,Rinc,logVinc) = LCM::polar_left_logV(Finc);
 
       // log of incremental rotation
-      LCM::Tensor<RealType> logRinc = LCM::log_rotation(Rinc);
+      LCM::Tensor<RealType, 3> logRinc = LCM::log_rotation(Rinc);
 
       // log of incremental deformation gradient
-      LCM::Tensor<RealType> logFinc = LCM::bch(logVinc, logRinc);
+      LCM::Tensor<RealType, 3> logFinc = LCM::bch(logVinc, logRinc);
 
       // velocity gradient
-      LCM::Tensor<RealType> L = RealType(1.0/deltaT)*logFinc;
+      LCM::Tensor<RealType, 3> L = RealType(1.0/deltaT)*logFinc;
 
       // strain rate (a.k.a rate of deformation)
-      LCM::Tensor<RealType> D = LCM::symm(L);
+      LCM::Tensor<RealType, 3> D = LCM::symm(L);
 
       // spin
-      LCM::Tensor<RealType> W = LCM::skew(L);
+      LCM::Tensor<RealType, 3> W = LCM::skew(L);
 
       // load everything into the Lame data structure
 

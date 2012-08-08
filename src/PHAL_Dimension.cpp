@@ -22,6 +22,11 @@ const char * Dim::name() const
 const Dim & Dim::tag() 
 { static const Dim myself ; return myself ; }
 
+const char * VecDim::name() const 
+{ static const char n[] = "VecDim" ; return n ; }
+const VecDim & VecDim::tag() 
+{ static const VecDim myself ; return myself ; }
+
 const char * QuadPoint::name() const 
 { static const char n[] = "QuadPoint" ; return n ; }
 const QuadPoint & QuadPoint::tag() 
@@ -46,6 +51,11 @@ const char * Cell::name() const
 { static const char n[] = "Cell" ; return n ; }
 const Cell & Cell::tag() 
 { static const Cell myself ; return myself ; }
+
+const char * Face::name() const
+{ static const char n[] = "Face" ; return n; }
+const Face & Face::tag()
+{static const Face myself ; return myself; }
 
 const char * Dummy::name() const 
 { static const char n[] = "Dummy" ; return n ; }

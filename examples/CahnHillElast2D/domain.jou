@@ -1,0 +1,16 @@
+create curve spline location -0.5 -0.5 0 location 0.5 -0.5 0
+create curve spline location 0.5 -0.5 0 location 0.5 0.5 0
+create curve spline location 0.5 0.5 0 location -0.5 0.5 0
+create curve spline location -0.5 0.5 0 location -0.5 -0.5 0
+create surface curve 1 2 3 4
+curve 1 2 3 4 interval 100
+curve 1 2 3 4 scheme equal
+#surface 1 scheme tridelaunay
+surface 1 scheme map
+mesh surface 1
+block 1 surface 1
+#block 1 element type TRI
+block 1 element type QUAD4
+set large exodus file off
+#export mesh "/Volumes/ascldap/Codes/working/square/domain.exo" overwrite
+export mesh "/ascldap/users/gahanse/Codes/working/square/domain.exo" overwrite

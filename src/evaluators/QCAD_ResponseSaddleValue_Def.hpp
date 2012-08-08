@@ -350,6 +350,9 @@ QCAD::ResponseSaddleValue<EvalT,Traits>::getValidResponseParameters() const
   validPL->set<string>("End Element Block", "", "Element block name whose minimum marks the elastic band's ending");
   validPL->sublist("End Polygon", false, "Ending polygon sublist");
 
+  validPL->set<double>("Percent to Shorten Begin", 0.0, "Percentage of total or half path (if guessed pt) to shorten the beginning of the path");
+  validPL->set<double>("Percent to Shorten End", 0.0, "Percentage of total or half path (if guessed pt) to shorten the end of the path");
+
   validPL->set<Teuchos::Array<double> >("Saddle Point Guess", Teuchos::Array<double>(), "Estimate of where the saddle point lies");
 
   validPL->set<int>("Debug Mode", 0, "Print verbose debug messages to stdout");

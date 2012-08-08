@@ -210,7 +210,7 @@ namespace LCM {
         node < number_nodes;
         ++node) {
 
-      LCM::Vector<double> point(0.0, 0.0, 0.0);
+      LCM::Vector<double, 3> point(0.0, 0.0, 0.0);
 
       for (int j = 0; j < dimension; ++j) {
         point(j) = coordinates[node * dimension + j];
@@ -342,7 +342,7 @@ namespace LCM {
       IDList const &
       node_list = (*elements_iter).second;
 
-      std::vector< LCM::Vector<double> >
+      std::vector< LCM::Vector<double, 3> >
       points;
 
       for (IDList::size_type
@@ -497,7 +497,7 @@ namespace LCM {
       IDList const &
       node_list = (*elements_iter).second;
 
-      std::vector< LCM::Vector<double> >
+      std::vector< LCM::Vector<double, 3> >
       points;
 
       // Collect element nodes
@@ -514,14 +514,14 @@ namespace LCM {
 
         assert(nodes_iter != nodes_.end());
 
-        const LCM::Vector<double>
+        const LCM::Vector<double, 3>
         point = (*nodes_iter).second;
 
         points.push_back(point);
 
       }
 
-      const LCM::Vector<double>
+      const LCM::Vector<double, 3>
       centroid = LCM::centroid(points);
 
       centroids.insert(std::make_pair(element, centroid));
@@ -652,7 +652,8 @@ namespace LCM {
     ball_volume = length_scale * length_scale * length_scale;
 
     const int
-    number_partitions = static_cast<int>(GetVolume() / ball_volume);
+    number_partitions =
+        static_cast<int>(round(GetVolume() / ball_volume));
 
     return number_partitions;
   }
@@ -1118,10 +1119,10 @@ namespace LCM {
         centroids_iter != centroids.end();
         ++centroids_iter) {
 
-      const LCM::Vector<double>
+      const LCM::Vector<double, 3>
       centroid = (*centroids_iter).second;
 
-      for (LCM::Index i = 0; i < LCM::MaxDim; ++i) {
+      for (LCM::Index i = 0; i < 3; ++i) {
 
         geom_vec[index_geom_vec] = centroid(i);
         ++index_geom_vec;
@@ -1163,7 +1164,7 @@ namespace LCM {
 
       output_stream << std::setw(12) << node;
 
-      LCM::Vector<double> const &
+      LCM::Vector<double, 3> const &
       point = (*nodes_iter).second;
 
       for (int j = 0; j < dimension; ++j) {

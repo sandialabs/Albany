@@ -37,6 +37,14 @@
 
 
 namespace Albany {
+  //! Small container to hold periodicBC info for use in setting coordinates
+  struct PeriodicBCStruct {
+    PeriodicBCStruct() 
+       {periodic[0]=false; periodic[1]=false; periodic[2]=false; 
+        scale[0]=1.0; scale[1]=1.0; scale[2]=1.0; };
+    bool periodic[3];
+    double scale[3];
+  };
 
   struct AbstractSTKMeshStruct {
 
@@ -56,6 +64,7 @@ namespace Albany {
     typedef stk::mesh::Field<double,stk::mesh::Cartesian,stk::mesh::Cartesian> TensorFieldType ;
     typedef stk::mesh::Field<double,stk::mesh::Cartesian> VectorFieldType ;
     typedef stk::mesh::Field<double>                      ScalarFieldType ;
+    typedef stk::mesh::Field<int>                      IntScalarFieldType ;
 
     typedef stk::mesh::Cartesian QPTag; // need to invent shards::ArrayDimTag
     typedef stk::mesh::Field<double,QPTag, stk::mesh::Cartesian,stk::mesh::Cartesian> QPTensorFieldType ;
@@ -68,6 +77,7 @@ namespace Albany {
     std::map<std::string, stk::mesh::Part*> nsPartVec;  //Node Sets
     std::map<std::string, stk::mesh::Part*> ssPartVec;  //Side Sets
     VectorFieldType* coordinates_field;
+    IntScalarFieldType* proc_rank_field;
     VectorFieldType* solution_field;
     VectorFieldType* residual_field;
     double time;
@@ -83,6 +93,13 @@ namespace Albany {
 
     bool exoOutput;
     std::string exoOutFile;
+    bool hasRestartSolution;
+
+    //Flag for transforming STK mesh; currently only needed for FELIX problems 
+    std::string transformType;
+    //alpha and L are parameters read in from ParameterList for FELIX problems 
+    double felixAlpha; 
+    int felixL; 
 
     // Temporary flag to switch between 2D elements being Rank Elements or Faces
     bool useElementAsTopRank;
@@ -90,6 +107,9 @@ namespace Albany {
     // Info to map element block to physics set
     bool allElementBlocksHaveSamePhysics;
     std::map<std::string, int> ebNameToIndex;
+
+    // Info for periodic BCs -- only for hand-coded STK meshes
+    struct PeriodicBCStruct PBCStruct;
   };
 }
 

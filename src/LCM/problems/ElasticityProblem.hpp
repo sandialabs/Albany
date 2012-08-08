@@ -96,6 +96,8 @@ namespace Albany {
       const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
     void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
+    void constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs);
+
 
   protected:
 
@@ -103,7 +105,8 @@ namespace Albany {
     bool haveSource;
     int numDim;
 
-    std::string matModel;
+    std::string matModel; 
+    Teuchos::RCP<Albany::Layouts> dl;
 
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState;
@@ -131,6 +134,8 @@ namespace Albany {
 #include "Time.hpp"
 #include "CapModelStress.hpp"
 #include "GursonSDStress.hpp"
+
+#include "CapImplicit.hpp"
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
@@ -172,7 +177,9 @@ Albany::ElasticityProblem::constructEvaluators(
 
 
    // Construct standard FEM evaluators with standard field names                              
-   RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
+   dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
+   TEUCHOS_TEST_FOR_EXCEPTION(dl->vectorAndGradientLayoutsAreEquivalent==false, std::logic_error,
+                              "Data Layout Usage in Mechanics problems assume vecDim = numDim");
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
    bool supportsTransient=true;
 
@@ -296,7 +303,7 @@ Albany::ElasticityProblem::constructEvaluators(
     ev = rcp(new LCM::Strain<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
-    if(matModel == "CapModel" || matModel == "GursonSD"){
+    if(matModel == "CapModel" || matModel == "GursonSD" || matModel == "CapImplicit"){
       p = stateMgr.registerStateVariable("Strain", dl->qp_tensor, dl->dummy,"scalar", 0.0, true);
     	ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     	fm0.template registerEvaluator<EvalT>(ev);
@@ -311,6 +318,8 @@ Albany::ElasticityProblem::constructEvaluators(
     p->set<bool>("avgJ Name", avgJ);
     const bool volavgJ = params->get("volavgJ", false);
     p->set<bool>("volavgJ Name", volavgJ);
+    const bool weighted_Volume_Averaged_J = params->get("weighted_Volume_Averaged_J", false);
+    p->set<bool>("weighted_Volume_Averaged_J Name", weighted_Volume_Averaged_J);
     p->set<string>("Weights Name","Weights");
     p->set<string>("Gradient QP Variable Name", "Displacement Gradient");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
@@ -324,7 +333,7 @@ Albany::ElasticityProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (matModel == "CapModel")
+  if (matModel == "CapModel" || matModel == "CapImplicit")
   {
 	{ // Cap model stress
 	  RCP<ParameterList> p = rcp(new ParameterList("Stress"));
@@ -376,8 +385,23 @@ Albany::ElasticityProblem::constructEvaluators(
       p->set<string>("Back Stress Name", "backStress"); //dl->qp_tensor also
       p->set<string>("Cap Parameter Name", "capParameter"); //dl->qp_tensor also
 
+      if(matModel == "CapModel"){
+          p->set<string>("Friction Name", "friction"); //dl->qp_scalar also
+          p->set<string>("Dilatancy Name", "dilatancy"); //dl->qp_scalar also
+          p->set<string>("Eqps Name", "eqps"); //dl->qp_scalar also
+          p->set<string>("Hardening Modulus Name", "hardeningModulus"); //dl->qp_scalar also
+
+      }
+
       //Declare what state data will need to be saved (name, layout, init_type)
-      ev = rcp(new LCM::CapModelStress<EvalT,AlbanyTraits>(*p));
+      if(matModel == "CapModel"){
+    	  ev = rcp(new LCM::CapModelStress<EvalT,AlbanyTraits>(*p));
+      }
+
+      if(matModel == "CapImplicit"){
+    	  ev = rcp(new LCM::CapImplicit<EvalT,AlbanyTraits>(*p));
+      }
+
       fm0.template registerEvaluator<EvalT>(ev);
       p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy,"scalar", 0.0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
@@ -388,6 +412,22 @@ Albany::ElasticityProblem::constructEvaluators(
       p = stateMgr.registerStateVariable("capParameter",dl->qp_scalar, dl->dummy,"scalar", kappa0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
+
+      if(matModel == "CapModel"){
+          p = stateMgr.registerStateVariable("friction",dl->qp_scalar, dl->dummy,"scalar", 0.0);
+          ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+          fm0.template registerEvaluator<EvalT>(ev);
+          p = stateMgr.registerStateVariable("dilatancy",dl->qp_scalar, dl->dummy,"scalar", 0.0);
+          ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+          fm0.template registerEvaluator<EvalT>(ev);
+          p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+          ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+          fm0.template registerEvaluator<EvalT>(ev);
+          p = stateMgr.registerStateVariable("hardeningModulus",dl->qp_scalar, dl->dummy,"scalar", 0.0);
+          ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+          fm0.template registerEvaluator<EvalT>(ev);
+      }
+
 	}
   }
 

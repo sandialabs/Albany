@@ -87,7 +87,7 @@ namespace QCAD {
   
   void ResetEigensolverShift(const Teuchos::RCP<EpetraExt::ModelEvaluator>& Solver, double newShift,
 			     Teuchos::RCP<Teuchos::ParameterList>& eigList);
-  double GetEigensolverShift(const SolverSubSolver& ss, int minPotentialResponseIndex);
+  double GetEigensolverShift(const SolverSubSolver& ss, int minPotentialResponseIndex, double pcBelowMinPotential);
 
 
   //String processing helper functions
@@ -137,6 +137,7 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
       problemName == "Poisson CI") {
     maxIter = problemParams.get<int>("Maximum Iterations", 100);
     iterationMethod = problemParams.get<string>("Iteration Method", "Picard");
+    shiftPercentBelowMin = problemParams.get<double>("Eigensolver Percent Shift Below Potential Min", 1.0);
     CONVERGE_TOL = problemParams.get<double>("Convergence Tolerance", 1e-6);
   }
 
@@ -404,9 +405,9 @@ QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
     iter++;
 
     if (iter == 1) 
-      newShift = QCAD::GetEigensolverShift(getSubSolver("InitPoisson"), 0);
+      newShift = QCAD::GetEigensolverShift(getSubSolver("InitPoisson"), 0, shiftPercentBelowMin);
     else
-      newShift = QCAD::GetEigensolverShift(getSubSolver("Poisson"), 0);
+      newShift = QCAD::GetEigensolverShift(getSubSolver("Poisson"), 0, shiftPercentBelowMin);
     QCAD::ResetEigensolverShift(getSubSolver("Schrodinger").model, newShift, eigList);
 
     // Schrodinger Solve -> eigenstates
@@ -426,7 +427,7 @@ QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
     eigenDataNull = Teuchos::null;
 
     if(iter > 1) {
-      double local_maxDiff = QCAD::getMaxDifference(*pStatesToLoop, prevElectricPotential, "Electric Potential");
+      double local_maxDiff = QCAD::getMaxDifference(*pStatesToLoop, prevElectricPotential, "Saved Electric Potential");
       double global_maxDiff;
       solverComm->MaxAll(&local_maxDiff, &global_maxDiff, 1);
       bConverged = (global_maxDiff < CONVERGE_TOL);
@@ -434,7 +435,7 @@ QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
 			<< global_maxDiff << " (tol=" << CONVERGE_TOL << ")" << std::endl;
     }
       
-    QCAD::CopyStateToContainer(*pStatesToLoop, "Electric Potential", prevElectricPotential);
+    QCAD::CopyStateToContainer(*pStatesToLoop, "Saved Electric Potential", prevElectricPotential);
   } 
 
   if(bVerbose) {
@@ -544,9 +545,9 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
     iter++;
  
     if (iter == 1) 
-      newShift = QCAD::GetEigensolverShift(getSubSolver("InitPoisson"), 0);
+      newShift = QCAD::GetEigensolverShift(getSubSolver("InitPoisson"), 0, shiftPercentBelowMin);
     else
-      newShift = QCAD::GetEigensolverShift(getSubSolver("Poisson"), 0);
+      newShift = QCAD::GetEigensolverShift(getSubSolver("Poisson"), 0, shiftPercentBelowMin);
     QCAD::ResetEigensolverShift(getSubSolver("Schrodinger").model, newShift, eigList);
 
     // Schrodinger Solve -> eigenstates
@@ -677,7 +678,7 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
       Teuchos::RCP<AlbanyCI::BlockTensor<AlbanyCI::dcmplx> > mx2P =
 	Teuchos::rcp(new AlbanyCI::BlockTensor<AlbanyCI::dcmplx>(basis1P, blocks2P, 2));
       //*out << std::endl << "DEBUG CI mx2P:"; mx2P->print(out); //DEBUG
-      
+     
       
       //Now should have H1P and H2P - run CI:
       if(bVerbose) *out << "QCAD Solve: CI solve" << endl;
@@ -694,9 +695,12 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
       std::vector< std::vector< AlbanyCI::dcmplx > > mxPx;
       Teuchos::RCP<AlbanyCI::Solution::Vector> ci_evec;
       Teuchos::RCP<Epetra_MultiVector> mbStateDensities = 
-      Teuchos::rcp( new Epetra_MultiVector(eigenDataToPass->eigenvectorRe->Map(), nCIevals, true )); //zero out
+	Teuchos::rcp( new Epetra_MultiVector(eigenDataToPass->eigenvectorRe->Map(), nCIevals, true )); //zero out
       eigenDataToPass->eigenvalueRe->resize(nCIevals);
       eigenDataToPass->eigenvalueIm->resize(nCIevals);
+
+      //int rank = tcomm->getRank();
+      //std::cout << "DEBUG Rank " << rank << ": " << nCIevals << " evals" << std::endl;
 
       for(int k=0; k < nCIevals; k++) {
 	soln->getEigenvectorPxMatrix(k, mxPx); // mxPx = n1P x n1P matrix of coeffs of 1P products
@@ -742,7 +746,7 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
 
     if(iter > 1) {
       if(bPoissonSchrodingerConverged == false) {
-	double local_maxDiff = QCAD::getMaxDifference(*pStatesToLoop, prevElectricPotential, "Electric Potential");
+	double local_maxDiff = QCAD::getMaxDifference(*pStatesToLoop, prevElectricPotential, "Saved Electric Potential");
 	double global_maxDiff;
 	solverComm->MaxAll(&local_maxDiff, &global_maxDiff, 1);
 	bPoissonSchrodingerConverged = (global_maxDiff < CONVERGE_TOL);
@@ -770,8 +774,8 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
       }
     }
       
-    QCAD::CopyStateToContainer(*pStatesToLoop, "Electric Potential", prevElectricPotential);
-  } 
+    QCAD::CopyStateToContainer(*pStatesToLoop, "Saved Electric Potential", prevElectricPotential);
+  }
 
   if(bVerbose) {
     if(bConverged)
@@ -854,7 +858,7 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
     //! Rename output file
     if (params.sublist("Discretization").isParameter("Exodus Output File Name"))
     {
-      std::string exoName= "init" + params.sublist("Discretization").get<std::string>("Exodus Output File Name");
+      std::string exoName= params.sublist("Discretization").get<std::string>("Exodus Output File Name") + ".init";
       params.sublist("Discretization").set("Exodus Output File Name", exoName);
     }
     else if (params.sublist("Discretization").isParameter("1D Output File Name"))
@@ -865,13 +869,6 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
     
     else TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 			  "Unknown function Discretization Parameter" << std::endl);
-
-    // temporary set Restart Index = 1 for initial poisson
-    if (params.sublist("Discretization").isParameter("Restart Index"))
-    {
-      params.sublist("Discretization").set("Restart Index", 1); 
-    }
-
   }
 
   else if(preprocessType == "CI poisson") {
@@ -919,7 +916,7 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
 
 	responseList.set(Albany::strint("Response",iResponse), "Field Integral");
 	Teuchos::ParameterList& responseParams = responseList.sublist(Albany::strint("ResponseParams",iResponse));
-	responseParams.set("Field Name", "Electric Potential");  // same as solution, but must be at quad points
+	responseParams.set("Field Name", "Saved Electric Potential");  // same as solution, but must be at quad points
 	responseParams.set("Field Name 1", buf1);
 	responseParams.set("Field Name 2", buf2);
 	responseParams.set("Integrand Length Unit", "mesh"); // same as mesh
@@ -971,7 +968,7 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
 
 	responseList.set(Albany::strint("Response",iResponse), "Field Integral");
 	Teuchos::ParameterList& responseParams = responseList.sublist(Albany::strint("ResponseParams",iResponse));
-	responseParams.set("Field Name", "Electric Potential");  // same as solution, but must be at quad points
+	responseParams.set("Field Name", "Saved Electric Potential");  // same as solution, but must be at quad points
 	responseParams.set("Field Name 1", buf1);
 	responseParams.set("Field Name 2", buf2);
 	responseParams.set("Integrand Length Unit", "mesh"); // same as mesh
@@ -1652,7 +1649,7 @@ void QCAD::ResetEigensolverShift(const Teuchos::RCP<EpetraExt::ModelEvaluator>& 
 
 
 double QCAD::GetEigensolverShift(const QCAD::SolverSubSolver& ss, 
-			   int minPotentialResponseIndex)
+				 int minPotentialResponseIndex, double pcBelowMinPotential)
 {
   int Ng = ss.responses_out->Ng();
   TEUCHOS_TEST_FOR_EXCEPT( Ng <= 0 );
@@ -1666,7 +1663,7 @@ double QCAD::GetEigensolverShift(const QCAD::SolverSubSolver& ss,
   //double shift = -(minVal - 0.05*(maxVal-minVal)); //minus sign b/c negative eigenvalue convention
   
   //double shift = -minVal*1.1;  // 10% below minimum value
-  double shift = -minVal*1.01;
+  double shift = -minVal*(1.0 + pcBelowMinPotential/100.0);
   return shift;
 }
   

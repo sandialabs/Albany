@@ -24,6 +24,7 @@
 #include "Rythmos_IntegrationObserverBase.hpp"
 #include "Rythmos_TimeRange.hpp"
 #include "Albany_Application.hpp"
+#include "Albany_ExodusOutput.hpp"
 #include "Thyra_EpetraThyraWrappers.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 
@@ -48,6 +49,13 @@ public:
     )
   { };
 
+  // Print initial condition
+  void observeStartTimeStep(
+    const Rythmos::StepperBase<Scalar> &stepper,
+    const Rythmos::StepControlInfo<Scalar> &stepCtrlInfo,
+    const int timeStepIter
+    );
+
   void observeCompletedTimeStep(
     const Rythmos::StepperBase<Scalar> &stepper,
     const Rythmos::StepControlInfo<Scalar> &stepCtrlInfo,
@@ -55,12 +63,12 @@ public:
     );
 
 private:
-
    Teuchos::RCP<Albany::AbstractDiscretization> disc;
    Teuchos::RCP<Albany::Application> app;
 
-   Teuchos::RCP<Teuchos::Time> exooutTime;
+   bool initial_step;
 
+   Albany::ExodusOutput exodusOutput;
 };
 
 #endif //ALBANY_RYTHMOSOBSERVER

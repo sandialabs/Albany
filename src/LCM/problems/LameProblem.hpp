@@ -115,11 +115,16 @@ namespace Albany {
 #include "PHAL_Source.hpp"
 #include "Strain.hpp"
 #include "DefGrad.hpp"
+#ifdef ALBANY_LAME
 #include "LameStress.hpp"
+#endif
+#ifdef ALBANY_LAMENT
+#include "LamentStress.hpp"
+#endif
 #include "LameUtils.hpp"
 #include "PHAL_SaveStateField.hpp"
 #include "ElasticityResid.hpp"
-
+#include "TLElasResid.hpp"
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
@@ -161,6 +166,8 @@ Albany::LameProblem::constructEvaluators(
 
    // Construct standard FEM evaluators with standard field names                              
    RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
+   TEUCHOS_TEST_FOR_EXCEPTION(dl->vectorAndGradientLayoutsAreEquivalent==false, std::logic_error,
+                              "Data Layout Usage in Mechanics problems assume vecDim = numDim");
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
    bool supportsTransient=true;
 
@@ -244,6 +251,8 @@ Albany::LameProblem::constructEvaluators(
     // If true, compute determinate of deformation gradient at all integration points, then replace all of them with the volume average for the element (integrate J over volume of element, divide by total volume).  This give a constant volumetric response.
     const bool volavgJ = params->get("volavgJ", false);
     p->set<bool>("volavgJ Name", volavgJ);
+    const bool weighted_Volume_Averaged_J = params->get("weighted_Volume_Averaged_J", false);
+    p->set<bool>("weighted_Volume_Averaged_J Name", weighted_Volume_Averaged_J);
     // Integration weights for each quadrature point
     p->set<string>("Weights Name","Weights");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
@@ -289,7 +298,14 @@ Albany::LameProblem::constructEvaluators(
     // A LAME material model may register additional state variables (type is always double)
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
+#ifdef ALBANY_LAME
     ev = rcp(new LCM::LameStress<EvalT,AlbanyTraits>(*p));
+#endif
+
+#ifdef ALBANY_LAMENT
+    ev = rcp(new LCM::LamentStress<EvalT,AlbanyTraits>(*p));
+#endif
+
     fm0.template registerEvaluator<EvalT>(ev);
 
     // Declare state data that need to be saved
@@ -326,9 +342,12 @@ Albany::LameProblem::constructEvaluators(
 
     // \todo Is the required?
     p->set<string>("DefGrad Name", "Deformation Gradient"); //dl->qp_tensor also
+    p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient"); 
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+    p->set<RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
     // extra input for time dependent term
     p->set<string>("Weighted BF Name", "wBF");
@@ -340,7 +359,8 @@ Albany::LameProblem::constructEvaluators(
     p->set<string>("Residual Name", "Displacement Residual");
     p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
 
-    ev = rcp(new LCM::ElasticityResid<EvalT,AlbanyTraits>(*p));
+    //ev = rcp(new LCM::ElasticityResid<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new LCM::TLElasResid<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -357,4 +377,4 @@ Albany::LameProblem::constructEvaluators(
   return Teuchos::null;
 }
 
-#endif // ALBANY_LAMEPROBLEM_HPP
+#endif // LAMEPROBLEM_HPP

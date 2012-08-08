@@ -49,17 +49,17 @@ private:
 
   // Input:
   //! Values at nodes
-  PHX::MDField<ScalarT,Cell,Node,Dim> val_node;
+  PHX::MDField<ScalarT,Cell,Node,VecDim> val_node;
   //! Basis Functions
   PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
 
   // Output:
   //! Values at quadrature points
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> val_qp;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> val_qp;
 
   std::size_t numNodes;
   std::size_t numQPs;
-  std::size_t numDims;
+  std::size_t vecDim;
 };
 }
 

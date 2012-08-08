@@ -31,10 +31,10 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{56.3530812}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{60.25494621}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
-    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{1.3989041,-0.47483441}"/>
+    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{1.41496696,-0.40227557}"/>
   </ParameterList>
   <ParameterList name="Piro">
     <ParameterList name="LOCA">
@@ -44,11 +44,11 @@
 	<Parameter  name="Method" type="string" value="Tangent"/>
       </ParameterList>
       <ParameterList name="Stepper">
-	<Parameter  name="Initial Value" type="double" value="40.0"/>
+	<Parameter  name="Initial Value" type="double" value="43.0"/>
 	<Parameter  name="Continuation Method" type="string" value="Natural"/>
 	<Parameter  name="Continuation Parameter" type="string" value="DBC on NS inlet for DOF ux"/>
 	<Parameter  name="Max Steps" type="int" value="1"/>
-	<Parameter  name="Max Value" type="double" value="45.0"/>
+	<Parameter  name="Max Value" type="double" value="50.0"/>
 	<Parameter  name="Min Value" type="double" value="0.5"/>
 	<Parameter  name="Compute Eigenvalues" type="bool" value="1"/>
 	<ParameterList name="Eigensolver">

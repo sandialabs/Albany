@@ -87,8 +87,6 @@ namespace Albany {
     const NodeSetList& getNodeSets() const { return nodeSets; };
     const NodeSetCoordList& getNodeSetCoords() const { return nodeSetCoords; };
 
-//    const std::vector<std::string>& getNodeSetIDs() const;
-
     //! Get Side set lists (typedef in Albany_AbstractDiscretization.hpp)
     const SideSetList& getSideSets(const int workset) const { return sideSets[workset]; };
 
@@ -108,7 +106,7 @@ namespace Albany {
     const Teuchos::ArrayRCP<int>&  getWsPhysIndex() const;
 
     // 
-    void outputToExodus(const Epetra_Vector& soln, const double time);
+    void outputToExodus(const Epetra_Vector& soln, const double time, const bool overlapped = false);
  
     Teuchos::RCP<Epetra_Vector> getSolutionField() const;
 
@@ -116,6 +114,9 @@ namespace Albany {
 
     // Retrieve mesh struct
     Teuchos::RCP<Albany::AbstractSTKMeshStruct> getSTKMeshStruct() {return stkMeshStruct;};
+
+    //! Flag if solution has a restart values -- used in Init Cond
+    bool hasRestartSolution() const {return stkMeshStruct->hasRestartSolution;}
 
     // After mesh modification, need to update the element connectivity and nodal coordinates
     void updateMesh(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct,
@@ -125,6 +126,8 @@ namespace Albany {
     void getOwned_xyz(double **x, double **y, double **z, double **rbm,
                       int& nNodes, int numPDEs, int numScalar, int nullSpaceDim);
 
+    // Function that transforms an STK mesh of a unit cube (for FELIX problems)
+    void transformMesh(); 
 
   private:
 
@@ -143,7 +146,13 @@ namespace Albany {
     inline int getGlobalDOF(const int inode, const int eq) const;
 
     // Copy solution vector from Epetra_Vector into STK Mesh
+    // Here soln is the local (non overlapped) solution
     void setSolutionField(const Epetra_Vector& soln);
+
+    // Copy solution vector from Epetra_Vector into STK Mesh
+    // Here soln is the local + neighbor (overlapped) solution
+    void setOvlpSolutionField(const Epetra_Vector& soln);
+
     int nonzeroesPerRow(const int neq) const;
     double monotonicTimeLabel(const double time);
 
@@ -167,6 +176,10 @@ namespace Albany {
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
     double previous_time_label;
+
+    // Transformation types for FELIX problems
+    enum TRANSFORMTYPE {NONE, ISMIP_HOM_TEST_A};
+    TRANSFORMTYPE transform_type;
 
   protected:
 
@@ -207,9 +220,6 @@ namespace Albany {
     Albany::NodeSetList nodeSets;
     Albany::NodeSetCoordList nodeSetCoords;
 
-    //! Just the node set ID strings
-//    std::vector<std::string> nodeSetIDs;
-
     //! side sets stored as std::map(string ID, SideArray classes) per workset (std::vector across worksets)
     std::vector<Albany::SideSetList> sideSets;
 
@@ -242,6 +252,9 @@ namespace Albany {
     // Coordinate vector in format needed by ML. Need to own memory here.
     double *xx, *yy, *zz, *rr;
     bool allocated_xyz;
+
+    // Storage used in periodic BCs to un-roll coordinates. Pointers saved for destructor.
+    std::vector<double*>  toDelete;
 
     Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct;
 

@@ -94,10 +94,8 @@ namespace Albany {
     bool periodic;
     bool haveSource;
     bool haveAbsorption;
-    bool haveMatDB;
     int numDim;
 
-    std::string mtrlDbFilename;
     Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
     Teuchos::RCP<const Epetra_Comm> comm;
 
@@ -214,11 +212,10 @@ Albany::MultiHeatProblem::constructEvaluators(
     Teuchos::ParameterList& paramList = params->sublist("Thermal Conductivity");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-    p->set<bool>("Have MatDB", haveMatDB);
     // Here we assume that the instance of this problem applies on a single element block
     p->set<string>("Element Block Name", meshSpecs.ebName);
 
-    if(haveMatDB)
+    if(materialDB != Teuchos::null)
       p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
 
     ev = rcp(new PHAL::ThermalConductivity<EvalT,AlbanyTraits>(*p));
@@ -264,7 +261,7 @@ Albany::MultiHeatProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(ev);
 
   }
-  else if(haveMatDB){ // Sources can be specified in terms of materials or element blocks
+  else if(materialDB != Teuchos::null){ // Sources can be specified in terms of materials or element blocks
 
       // Is the source function active for "this" element block?
 

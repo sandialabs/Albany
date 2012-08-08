@@ -16,11 +16,10 @@
 
 
 #include "Albany_SolverFactory.hpp"
-#include "Albany_RythmosObserver.hpp"
-#include "Albany_NOXObserver.hpp"
+#include "Albany_ObserverFactory.hpp"
 #include "Thyra_DetachedVectorView.hpp"
 #include "Albany_SaveEigenData.hpp"
-#include "Albany_ModelEvaluator.hpp"
+#include "Albany_ModelFactory.hpp"
 
 #include "Piro_Epetra_NOXSolver.hpp"
 #include "Piro_Epetra_LOCASolver.hpp"
@@ -52,7 +51,7 @@ Albany::SolverFactory::SolverFactory(
   RCP<Teuchos::Comm<int> > tcomm = Albany::createTeuchosCommFromMpiComm(mcomm);
 
   // Set up application parameters: read and broadcast XML file, and set defaults
-  appParams = rcp(new ParameterList("Albany Parameters"));
+  appParams = Teuchos::createParameterList("Albany Parameters");
   Teuchos::updateParametersFromXmlFileAndBroadcast(inputFile, appParams.ptr(), *tcomm);
 
   RCP<ParameterList> defaultSolverParams = rcp(new ParameterList());
@@ -113,10 +112,9 @@ Albany::SolverFactory::createAndGetAlbanyApp(
       albanyApp = app; 
 
       // Create observer for output from time-stepper
-      if (solutionMethod=="Transient" && secondOrder=="No")
-	Rythmos_observer = rcp(new Albany_RythmosObserver(app));
-      else
-	NOX_observer = rcp(new Albany_NOXObserver(app));
+      ObserverFactory observerFactory(Teuchos::sublist(appParams, "Problem", true), app);
+      Rythmos_observer = observerFactory.createRythmosObserver();
+      NOX_observer = observerFactory.createNoxObserver();
     }
 
     RCP<Teuchos::ParameterList> piroParams = 
@@ -166,10 +164,8 @@ Albany::SolverFactory::createAlbanyAppAndModel(
     validateParameters(*getValidResponseParameters(),0);
   
   // Create model evaluator
-  Teuchos::RCP<EpetraExt::ModelEvaluator> model = 
-    rcp(new Albany::ModelEvaluator(albanyApp, appParams));
-  
-  return model;
+  Albany::ModelFactory modelFactory(appParams, albanyApp);
+  return modelFactory.create();
 }
 
 
@@ -543,7 +539,10 @@ setCoordinatesForML(const string& solutionMethod,
       stratList = & piroParams->sublist("NOX").sublist("Direction").sublist("Newton").
                     sublist("Stratimikos Linear Solver").sublist("Stratimikos");
     else if (solutionMethod=="Transient"  && secondOrder=="No")
-      stratList = & piroParams->sublist("Rythmos").sublist("Stratimikos");
+      if (piroParams->isSublist("Rythmos"))
+        stratList = & piroParams->sublist("Rythmos").sublist("Stratimikos");
+      if (piroParams->isSublist("Rythmos Solver"))
+        stratList = & piroParams->sublist("Rythmos Solver").sublist("Stratimikos");
 
     if (stratList && stratList->isParameter("Preconditioner Type")) // Make sure stratList is set before dereference
       if ("ML" == stratList->get<string>("Preconditioner Type")) {

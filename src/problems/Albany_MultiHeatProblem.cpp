@@ -34,7 +34,6 @@ MultiHeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   Albany::AbstractProblem(params_, paramLib_),
   haveSource(false),
   haveAbsorption(false),
-  haveMatDB(false),
   numDim(numDim_),
   comm(comm_)
 {
@@ -47,10 +46,11 @@ MultiHeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   haveAbsorption =  params->isSublist("Absorption");
 
   if(params->isType<string>("MaterialDB Filename")){
-	haveMatDB = true;
-    mtrlDbFilename = params->get<string>("MaterialDB Filename");
+
+    std::string mtrlDbFilename = params->get<string>("MaterialDB Filename");
  // Create Material Database
     materialDB = Teuchos::rcp(new QCAD::MaterialDatabase(mtrlDbFilename, comm));
+
   }
 
 }

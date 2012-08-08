@@ -16,7 +16,7 @@
     </ParameterList>
     <ParameterList name="Initial Condition">
       <Parameter name="Function" type="string" value="Constant"/>
-      <Parameter name="Function Data" type="Array(double)" value="{0.1}"/>
+      <Parameter name="Function Data" type="Array(double)" value="{0.1,0.1}"/>
     </ParameterList>
     <ParameterList name="Source Functions">
       <ParameterList name="Point">

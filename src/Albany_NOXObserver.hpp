@@ -22,7 +22,7 @@
 #include "Albany_Application.hpp"
 #include "NOX_Epetra_Observer.H"
 #include "Teuchos_TimeMonitor.hpp"
-#include "Albany_StateManager.hpp"
+#include "Albany_ExodusOutput.hpp" 
 
 class Albany_NOXObserver : public NOX::Epetra::Observer
 {
@@ -42,12 +42,9 @@ public:
     const Epetra_Vector& solution, double time_or_param_val);
 
 private:
-
    Teuchos::RCP<Albany::Application> app;
-   Teuchos::RCP<Albany::AbstractDiscretization> disc;
-
-   Teuchos::RCP<Teuchos::Time> exooutTime;
-
+  
+   Albany::ExodusOutput exodusOutput;
 };
 
 #endif //ALBANY_NOXOBSERVER

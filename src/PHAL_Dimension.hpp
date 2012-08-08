@@ -26,6 +26,12 @@ struct Dim : public shards::ArrayDimTag {
   static const Dim& tag();
 };
 
+struct VecDim : public shards::ArrayDimTag {
+  VecDim(){};
+  const char * name() const ;
+  static const VecDim& tag();
+};
+
 struct QuadPoint : public shards::ArrayDimTag {
   QuadPoint(){};
   const char * name() const ;
@@ -54,6 +60,12 @@ struct Cell : public shards::ArrayDimTag {
   Cell(){};
   const char * name() const ;
   static const Cell& tag();
+};
+
+struct Face : public shards::ArrayDimTag {
+  Face(){};
+  const char * name() const;
+  static const Face& tag();
 };
 
 struct Dummy : public shards::ArrayDimTag {

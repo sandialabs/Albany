@@ -190,7 +190,7 @@ evaluateFields(typename Traits::EvalData workset)
 
       dgam = 0.0;
      
-      if (f > 1E-8)
+      if (f > 1E-6)
       {
         // return mapping algorithm
         bool converged = false;
@@ -202,7 +202,7 @@ evaluateFields(typename Traits::EvalData workset)
         ScalarT res = 0.0;
         int count = 0;
 
-        while (!converged)
+        while (!converged && count < 50)
         {
           count++;
 
@@ -217,7 +217,7 @@ evaluateFields(typename Traits::EvalData workset)
           dg = -2. * mubar * ( 1. + dG / ( 3. * mubar ) );
 
           res = std::abs(g);
-          if ( res < 1.e-8 || res/f < 1.e-8 )
+          if ( res < 1.e-6 || res/f < 1.e-6 )
             converged = true;
 
           TEUCHOS_TEST_FOR_EXCEPTION( count > 50, std::runtime_error,
@@ -280,7 +280,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
 
       // update be
-      be = ScalarT(1/mu)*s + ScalarT(trace(be)/3)*eye<ScalarT>();
+      be = ScalarT(1/mu)*s + ScalarT(trace(be)/3)*eye<ScalarT, 3>();
 
       if (print)
       {

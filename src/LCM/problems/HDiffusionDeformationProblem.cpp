@@ -33,6 +33,9 @@ HDiffusionDeformationProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_
 			const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_, numDim_ + 2),
   haveSource(false),
+
+
+
   numDim(numDim_)
 {
  
@@ -41,11 +44,14 @@ HDiffusionDeformationProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_
   
   haveSource =  params->isSublist("Source Functions");
 
+  matModel = params->sublist("Material Model").get("Model Name","J2");
+
 // Changing this ifdef changes ordering from  (X,Y,T) to (T,X,Y)
 //#define NUMBER_T_FIRST
 #ifdef NUMBER_T_FIRST
   T_offset=0;
-  X_offset=1;
+  Thydro_offset= 1;
+  X_offset=2;
 #else
   X_offset=0;
   T_offset=numDim;
@@ -128,9 +134,12 @@ Albany::HDiffusionDeformationProblem::getValidProblemParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidHDiffusionDeformationProblemParams");
 
+  validPL->sublist("Material Model", false, "");
   validPL->set<bool>("avgJ", false, "Flag to indicate the J should be averaged");
   validPL->set<bool>("volavgJ", false, "Flag to indicate the J should be volume averaged");
+  validPL->set<bool>("weighted_Volume_Averaged_J", false, "Flag to indicate the J should be volume averaged with stabilization");
   validPL->sublist("Thermal Conductivity", false, "");
+  validPL->sublist("Elastic Modulus", false, "");
   validPL->sublist("Bulk Modulus", false, "");
   validPL->sublist("Shear Modulus", false, "");
   validPL->sublist("Poissons Ratio", false, "");
@@ -157,6 +166,53 @@ Albany::HDiffusionDeformationProblem::getValidProblemParameters() const
   validPL->sublist("Effective Diffusivity", false, "");
   validPL->sublist("Strain Rate Factor", false, "");
   validPL->sublist("Tau Contribution", false, "");
+  validPL->sublist("CL Unit Gradient", false, "");
+  validPL->sublist("Element Length", false, "");
+  validPL->sublist("Stabilization Parameter", false, "");
+  if (matModel == "J2"|| matModel == "J2Fiber" || matModel == "GursonFD")
+   {
+     validPL->set<bool>("Compute Dislocation Density Tensor", false, "Flag to compute the dislocaiton density tensor (only for 3D)");
+     validPL->sublist("Hardening Modulus", false, "");
+     validPL->sublist("Yield Strength", false, "");
+     validPL->sublist("Saturation Modulus", false, "");
+     validPL->sublist("Saturation Exponent", false, "");
+   }
+
+   if (matModel == "J2Fiber")
+   {
+ 	validPL->set<RealType>("xiinf_J2",false,"");
+ 	validPL->set<RealType>("tau_J2",false,"");
+ 	validPL->set<RealType>("k_f1",false,"");
+ 	validPL->set<RealType>("q_f1",false,"");
+ 	validPL->set<RealType>("vol_f1",false,"");
+ 	validPL->set<RealType>("xiinf_f1",false,"");
+ 	validPL->set<RealType>("tau_f1",false,"");
+ 	validPL->set<RealType>("Mx_f1",false,"");
+ 	validPL->set<RealType>("My_f1",false,"");
+ 	validPL->set<RealType>("Mz_f1",false,"");
+ 	validPL->set<RealType>("k_f2",false,"");
+ 	validPL->set<RealType>("q_f2",false,"");
+ 	validPL->set<RealType>("vol_f2",false,"");
+ 	validPL->set<RealType>("xiinf_f2",false,"");
+ 	validPL->set<RealType>("tau_f2",false,"");
+ 	validPL->set<RealType>("Mx_f2",false,"");
+ 	validPL->set<RealType>("My_f2",false,"");
+ 	validPL->set<RealType>("Mz_f2",false,"");
+   }
+
+   if (matModel == "GursonFD")
+   {
+ 	validPL->set<RealType>("f0",false,"");
+ 	validPL->set<RealType>("kw",false,"");
+ 	validPL->set<RealType>("eN",false,"");
+ 	validPL->set<RealType>("sN",false,"");
+ 	validPL->set<RealType>("fN",false,"");
+ 	validPL->set<RealType>("fc",false,"");
+ 	validPL->set<RealType>("ff",false,"");
+ 	validPL->set<RealType>("q1",false,"");
+ 	validPL->set<RealType>("q2",false,"");
+ 	validPL->set<RealType>("q3",false,"");
+   }
 
   return validPL;
 }

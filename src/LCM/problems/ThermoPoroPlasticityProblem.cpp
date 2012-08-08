@@ -133,6 +133,7 @@ Albany::ThermoPoroPlasticityProblem::getValidProblemParameters() const
   validPL->sublist("Material Model", false, "");
   validPL->set<bool>("avgJ", false, "Flag to indicate the J should be averaged");
   validPL->set<bool>("volavgJ", false, "Flag to indicate the J should be volume averaged");
+  validPL->set<bool>("weighted_Volume_Averaged_J", false, "Flag to indicate the J should be volume averaged with stabilization");
   validPL->sublist("Porosity", false, "");
   validPL->sublist("Biot Coefficient", false, "");
   validPL->sublist("Biot Modulus", false, "");
@@ -140,6 +141,7 @@ Albany::ThermoPoroPlasticityProblem::getValidProblemParameters() const
   validPL->sublist("Kozeny-Carman Permeability", false, "");
   validPL->sublist("Shear Modulus", false, "");
   validPL->sublist("Elastic Modulus", false, "");
+  validPL->sublist("Bulk Modulus", false, "");
   validPL->sublist("Poissons Ratio", false, "");
   validPL->sublist("Stabilization Parameter", false, "");
   validPL->sublist("Reference Temperature", false, "");
@@ -149,7 +151,6 @@ Albany::ThermoPoroPlasticityProblem::getValidProblemParameters() const
   validPL->sublist("Pore-Fluid Density", false, "");
   validPL->sublist("Skeleton Specific Heat", false, "");
   validPL->sublist("Pore-Fluid Specific Heat", false, "");
-  validPL->sublist("Bulk Modulus", false, "");
   validPL->sublist("Mixture Thermal Expansion", false, "");
   validPL->sublist("Mixture Specific Heat", false, "");
   if (matModel=="J2"){

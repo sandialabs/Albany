@@ -52,16 +52,17 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> C;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> Cgrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> CDot;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> C;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Cgrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> CDot;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node,Dim> Residual;
+  PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;
 
   std::size_t numNodes;
   std::size_t numQPs;
   std::size_t numDims;
+  std::size_t vecDim;
   bool enableTransient;
 
 };

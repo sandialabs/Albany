@@ -91,6 +91,7 @@
       <Parameter name="Response 8" type="string" value="Save Field" />
       <ParameterList name="ResponseParams 8">
         <Parameter name="Field Name" type="string" value="Electric Potential" />
+        <Parameter name="State Name" type="string" value="Saved Electric Potential" />
         <Parameter name="Output Cell Average" type="bool" value="0" />
         <Parameter name="Output to Exodus" type="bool" value="0" />
       </ParameterList>

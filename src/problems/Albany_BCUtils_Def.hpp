@@ -349,10 +349,15 @@ Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
 Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
       const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs,
       const std::vector<std::string>& bcNames,
+      const Teuchos::ArrayRCP<string>& dof_names,
+      bool isVectorField, 
+      int offsetToFirstDOF, 
       const std::vector<std::string>& conditions,
+      const Teuchos::Array<Teuchos::Array<int> >& offsets,
       const Teuchos::RCP<Albany::Layouts>& dl,
       Teuchos::RCP<Teuchos::ParameterList> params,
-      Teuchos::RCP<ParamLib> paramLib)
+      Teuchos::RCP<ParamLib> paramLib,
+      const Teuchos::RCP<QCAD::MaterialDatabase>& materialDB)
 {
    using Teuchos::RCP;
    using Teuchos::rcp;
@@ -365,7 +370,6 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
    using PHAL::AlbanyTraits;
 
    numDim = meshSpecs->numDim;
-
 
    // Drop into the "Neumann BCs" sublist
    Teuchos::ParameterList BCparams = params->sublist(traits_type::bcParamsPl);
@@ -384,6 +388,8 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
         // "NBC on SS sidelist_12 for DOF T set dudn"
         //  or
         // "NBC on SS sidelist_12 for DOF T set (dudx, dudy)"
+        // or
+        // "NBC on SS surface_1 for DOF all set P"
 
          std::string ss = constructBCName(meshSpecs->ssNames[i], bcNames[j], conditions[k]);
 
@@ -402,20 +408,41 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
 
            p->set<int>                            ("Type", traits_type::type);
   
-//           p->set< RCP<DataLayout> >              ("Data Layout", dummy);
            p->set<RCP<ParamLib> >                 ("Parameter Library", paramLib);
   
            p->set<string>                         ("Side Set ID", meshSpecs->ssNames[i]);
-           p->set< int >                          ("Equation Offset", j);
+           p->set<Teuchos::Array< int > >         ("Equation Offset", offsets[j]);
            p->set< RCP<Albany::Layouts> >         ("Base Data Layout", dl);
            p->set< RCP<MeshSpecsStruct> >         ("Mesh Specs Struct", meshSpecs);
 
            p->set<string>                         ("Coordinate Vector Name", "Coord Vec");
 
+           if(conditions[k] == "robin") {
+             p->set<string>  ("DOF Name", dof_names[j]);
+	     p->set<bool> ("Vector Field", isVectorField);
+	     if (isVectorField) p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_vector);
+	     else               p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_scalar);
+           }
+
            // Pass the input file line
            p->set< string >                       ("Neumann Input String", ss);
            p->set< Teuchos::Array<double> >       ("Neumann Input Value", BCparams.get<Teuchos::Array<double> >(ss));
            p->set< string >                       ("Neumann Input Conditions", conditions[k]);
+
+           // If we are doing a Neumann internal boundary with a "scaled jump" (includes "robin" too)
+           // The material DB database needs to be passed to the BC object
+
+           if(conditions[k] == "scaled jump" || conditions[k] == "robin"){ 
+
+              TEUCHOS_TEST_FOR_EXCEPTION(materialDB == Teuchos::null,
+                Teuchos::Exceptions::InvalidParameter, 
+                "This BC needs a material database specified");
+
+              p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
+
+
+           }
+
 
     // Inputs: X, Y at nodes, Cubature, and Basis
     //p->set<string>("Node Variable Name", "Neumann");
@@ -446,6 +473,28 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
  
       evaluators_to_build[NeuGCV] = p;
    }
+
+// Build evaluator for Gather Solution
+
+   string NeuGS="Evaluator for Gather Solution";
+   {
+     RCP<ParameterList> p = rcp(new ParameterList());
+     p->set<int>("Type", traits_type::typeGS);
+
+     p->set< Teuchos::ArrayRCP<std::string> >("Solution Names", dof_names);
+
+     p->set<bool>("Vector Field", isVectorField);
+     if (isVectorField) p->set< RCP<DataLayout> >("Data Layout", dl->node_vector);
+     else               p->set< RCP<DataLayout> >("Data Layout", dl->node_scalar);
+
+     p->set<int>("Offset of First DOF", offsetToFirstDOF);
+     p->set<bool>("Disable Transient", true);
+
+     evaluators_to_build[NeuGS] = p;
+   }
+
+
+// Build evaluator that causes the evaluation of all the NBCs
 
    string allBC="Evaluator for all Neumann BCs";
    {

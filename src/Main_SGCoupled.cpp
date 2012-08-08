@@ -119,22 +119,6 @@ int main(int argc, char *argv[]) {
 						    globalComm));
     coupledSolver->setup(coupledModel);
 
-    // Set initial guess
-    Teuchos::ParameterList& sgParams =
-      coupledPiroParams->sublist("Stochastic Galerkin");
-    std::string sg_type = sgParams.get("SG Method", "Direct");
-    if (sg_type != "Non-intrusive") {
-      Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly> x_sg_init =
-	coupledSolver->get_x_sg_init();
-      Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> x_sg_init_new =
-	Teuchos::rcp(new Stokhos::EpetraVectorOrthogPoly(*x_sg_init));
-      Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> > basis =
-	coupledSolver->getBasis();
-      for (int i=0; i<basis->dimension(); i++)
-	(*x_sg_init_new)[i+1].PutScalar(1.0);
-      coupledSolver->set_x_sg_init(*x_sg_init_new);
-    }
-
     // Solve coupled system
     EpetraExt::ModelEvaluator::InArgs inArgs = coupledSolver->createInArgs();
     EpetraExt::ModelEvaluator::OutArgs outArgs = coupledSolver->createOutArgs();

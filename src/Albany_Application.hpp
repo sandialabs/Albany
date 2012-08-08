@@ -37,6 +37,7 @@
 #include "Albany_AbstractProblem.hpp"
 #include "Albany_AbstractResponseFunction.hpp"
 #include "Albany_StateManager.hpp"
+#include "Albany_Adaptation.hpp"
 
 #ifdef ALBANY_CUTR
   #include "CUTR_CubitMeshMover.hpp"
@@ -64,6 +65,8 @@ namespace Albany {
   class Application :
      public Sacado::ParameterAccessor<PHAL::AlbanyTraits::Residual, SPL_Traits> {
   public:
+
+    enum SolutionMethod {Steady, Transient, Continuation, MultiProblem};
 
     //! Constructor 
     Application(const Teuchos::RCP<const Epetra_Comm>& comm,
@@ -102,6 +105,9 @@ namespace Albany {
 
     //! Get parameter library
     Teuchos::RCP<ParamLib> getParamLib();
+
+    //! Get number of responses
+    SolutionMethod getSolutionMethod() const {return solMethod; }
 
     //! Get number of responses
     int getNumResponses() const;
@@ -453,6 +459,15 @@ namespace Albany {
 
     //! Access to number of worksets - needed for working with StateManager
     int getNumWorksets() { return numWorksets;};
+
+    //! Accessor function to Epetra_Import the solution from other PEs for output
+    Epetra_Vector* getOverlapSolution(const Epetra_Vector& solution) {
+
+      tmp_ovlp_sol->Import(solution, *importer, Insert);
+
+      return tmp_ovlp_sol.get();
+
+    }
     
     bool is_adjoint;
 
@@ -602,6 +617,9 @@ namespace Albany {
     //! Overlapped Jacobian matrix
     Teuchos::RCP<Epetra_CrsMatrix> overlapped_jac;
 
+    //! Temporary overlapped solution vector (for output)
+    Teuchos::RCP<Epetra_Vector> tmp_ovlp_sol;
+
     //! Parameter library
     Teuchos::RCP<ParamLib> paramLib;
 
@@ -668,6 +686,9 @@ namespace Albany {
     bool physicsBasedPreconditioner;
     Teuchos::RCP<Teuchos::ParameterList> tekoParams;
 
+    //! Type of solution method
+    SolutionMethod solMethod;
+
     //! Shape Optimization data
     bool shapeParamsHaveBeenReset;
     std::vector<RealType> shapeParams;
@@ -675,6 +696,8 @@ namespace Albany {
 #ifdef ALBANY_CUTR
     Teuchos::RCP<CUTR::CubitMeshMover> meshMover;
 #endif
+
+    Teuchos::RCP<Adaptation> adapter;
 
     unsigned int neq;
 
