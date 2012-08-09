@@ -221,23 +221,33 @@ Albany::NavierStokes::constructNeumannEvaluators(const Teuchos::RCP<Albany::Mesh
    Teuchos::RCP< Teuchos::Array<string> > dof_names = 
      Teuchos::rcp(new Teuchos::Array<string>);
    Teuchos::Array<Teuchos::Array<int> > offsets;
+   int idx = 0;
    if (haveFlowEq) {
      nbcNames.push_back("ux");
-     if (numDim>=2) nbcNames.push_back("uy");
-     if (numDim==3) nbcNames.push_back("uz");
+     offsets.push_back(Teuchos::Array<int>(1,idx++));
+     if (numDim>=2) {
+       nbcNames.push_back("uy");
+       offsets.push_back(Teuchos::Array<int>(1,idx++));
+     }
+     if (numDim==3) {
+       nbcNames.push_back("uz");
+       offsets.push_back(Teuchos::Array<int>(1,idx++));
+     }
      nbcNames.push_back("p");
+     offsets.push_back(Teuchos::Array<int>(1,idx++));
      dof_names->push_back("Velocity");
      dof_names->push_back("Pressure");
    }
    if (haveHeatEq) {
      nbcNames.push_back("T");
+     offsets.push_back(Teuchos::Array<int>(1,idx++));
      dof_names->push_back("Temperature");
    }
    if (haveNeutEq) {
      nbcNames.push_back("phi");
+     offsets.push_back(Teuchos::Array<int>(1,idx++));
      dof_names->push_back("Neutron Flux");
    }
-   offsets.resize(nbcNames.size());
    
    // Construct BC evaluators for all possible names of conditions
    // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
