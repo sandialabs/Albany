@@ -28,7 +28,7 @@ namespace PHAL {
 //**********************************************************************
 template<typename EvalT, typename Traits>
 NeumannBase<EvalT, Traits>::
-NeumannBase(Teuchos::ParameterList& p) :
+NeumannBase(const Teuchos::ParameterList& p) :
 
   dl             (p.get<Teuchos::RCP<Albany::Layouts> >("Base Data Layout")),
   meshSpecs      (p.get<Teuchos::RCP<Albany::MeshSpecsStruct> >("Mesh Specs Struct")),

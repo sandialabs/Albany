@@ -48,11 +48,6 @@ class NeumannBase :
     public PHX::EvaluatorDerived<EvalT, Traits>,
     public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
 
-private:
-
-  typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
-
 public:
 
   typedef typename EvalT::ScalarT ScalarT;

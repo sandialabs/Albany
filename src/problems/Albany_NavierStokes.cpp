@@ -210,17 +210,34 @@ Albany::NavierStokes::constructNeumannEvaluators(const Teuchos::RCP<Albany::Mesh
    // Construct BC evaluators for all side sets and names
    // Note that the string index sets up the equation offset, so ordering is important
 
-   std::vector<string> nbcNames(neq);
-   int index = 0;
+   // Currently we aren't exactly doing this right.  I think to do this
+   // correctly we need different neumann evaluators for each DOF (velocity,
+   // pressure, temperature, flux) since velocity is a vector and the 
+   // others are scalars.  The dof_names and offset stuff is only used
+   // for robin conditions, so at this point, as long as we don't enable
+   // robin conditions, this should work.
+
+   std::vector<string> nbcNames;
+   Teuchos::RCP< Teuchos::Array<string> > dof_names = 
+     Teuchos::rcp(new Teuchos::Array<string>);
+   Teuchos::Array<Teuchos::Array<int> > offsets;
    if (haveFlowEq) {
-     nbcNames[index++] = "ux";
-     if (numDim>=2) nbcNames[index++] = "uy";
-     if (numDim==3) nbcNames[index++] = "uz";
-     nbcNames[index++] = "p";
+     nbcNames.push_back("ux");
+     if (numDim>=2) nbcNames.push_back("uy");
+     if (numDim==3) nbcNames.push_back("uz");
+     nbcNames.push_back("p");
+     dof_names->push_back("Velocity");
+     dof_names->push_back("Pressure");
    }
-   if (haveHeatEq) nbcNames[index++] = "T";
-   if (haveNeutEq) nbcNames[index++] = "phi";
-   
+   if (haveHeatEq) {
+     nbcNames.push_back("T");
+     dof_names->push_back("Temperature");
+   }
+   if (haveNeutEq) {
+     nbcNames.push_back("phi");
+     dof_names->push_back("Neutron Flux");
+   }
+   offsets.resize(nbcNames.size());
    
    // Construct BC evaluators for all possible names of conditions
    // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
@@ -236,15 +253,13 @@ Albany::NavierStokes::constructNeumannEvaluators(const Teuchos::RCP<Albany::Mesh
        std::endl << "Error: Sidesets only supported in 2 and 3D." << std::endl);
 
    condNames[1] = "dudn";
-   
-   cout << "here4" << endl;
 
    nfm.resize(1);
 
-   nfm[0] = nbcUtils.constructBCEvaluators(meshSpecs, nbcNames, condNames, dl,
-                                          this->params, this->paramLib);
-
-   cout << "here5" << endl;
+   nfm[0] = nbcUtils.constructBCEvaluators(meshSpecs, nbcNames, 
+					   Teuchos::arcp(dof_names), 
+					   false, 0, condNames, offsets, dl,
+					   this->params, this->paramLib);
 }
 
 
