@@ -52,10 +52,8 @@
       </ParameterList>
       <ParameterList name="Parameter Vector 1">
 	<Parameter name="Number" type="int" value="2"/>
-	<Parameter name="Parameter 0" type="string"
-		   value="Thermal Conductivity KL Random Variable 0"/>
-	<Parameter name="Parameter 1" type="string"
-		   value="Thermal Conductivity KL Random Variable 1"/>
+	<Parameter name="Parameter 0" type="string" value="Thermal Conductivity KL Random Variable 0"/>
+	<Parameter name="Parameter 1" type="string" value="Thermal Conductivity KL Random Variable 1"/>
       </ParameterList>
     </ParameterList>
     <ParameterList name="Response Functions">
@@ -67,19 +65,23 @@
 	<ParameterList name="ResponseParams 0">
           <Parameter name="Field Name" type="string" value="Temperature"/>
 	  <Parameter name="x min" type="double" value="0.0"/>
-	  <Parameter name="x max" type="double" value="0.01"/>
+	  <!--Parameter name="x max" type="double" value="0.01"/-->
+	  <Parameter name="x max" type="double" value="0.1"/>
 	  <Parameter name="y min" type="double" value="0.45"/>
 	  <Parameter name="y max" type="double" value="0.55"/>
-	  <Parameter name="Length Scaling" type="double" value="31.6227766"/>
+	  <!--Parameter name="Length Scaling" type="double" value="31.6227766"/-->
+	  <Parameter name="Length Scaling" type="double" value="10.0"/>
         </ParameterList>
 	<Parameter name="Response 1" type="string" value="PHAL Field Integral"/>
         <ParameterList name="ResponseParams 1">
 	  <Parameter name="Field Name" type="string" value="Temperature"/>
-	  <Parameter name="x min" type="double" value="0.99"/>
+	  <!--Parameter name="x min" type="double" value="0.99"/-->
+	  <Parameter name="x min" type="double" value="0.90"/>
 	  <Parameter name="x max" type="double" value="1.00"/>
 	  <Parameter name="y min" type="double" value="0.45"/>
 	  <Parameter name="y max" type="double" value="0.55"/>
-	  <Parameter name="Length Scaling" type="double" value="31.6227766"/>
+	  <!--Parameter name="Length Scaling" type="double" value="31.6227766"/-->
+	  <Parameter name="Length Scaling" type="double" value="10.0"/>
 	</ParameterList>
       </ParameterList>
     </ParameterList>
@@ -87,8 +89,8 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Ioss"/>
     <Parameter name="Workset Size" type="int" value="10"/>
-    <Parameter name="Exodus Input File Name" type="string" value="pipe_med.exo"/>
-    <Parameter name="Exodus Output File Name" type="string" value="pipe_med_sg-out.exo"/>
+    <Parameter name="Exodus Input File Name" type="string" value="pipe_coarse.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="pipe_coarse_sg-out.exo"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="0"/>
@@ -113,8 +115,8 @@
 	<Parameter name="Isotropic" type="bool" value="true"/>
 	<Parameter name="Type" type="string" value="Legendre"/>
 	<Parameter name="Order" type="int" value="2"/>
-	<Parameter name="Dimension" type="int" value="2"/>
-	<Parameter name="Normalize" type="bool" value="false"/>
+	<Parameter name="Dimension" type="int" value="4"/>
+	<Parameter name="Normalize" type="bool" value="true"/>
 	<Parameter name="Cijk Drop Tolerance" type="double" value="1e-12"/>
       </ParameterList>
       <ParameterList name="Quadrature">
@@ -234,9 +236,14 @@
       </ParameterList>
       <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
       <ParameterList name="Printing">
-	<!--Parameter name="Output Information" type="int" value="103"/-->
-	<Parameter name="Output Information" type="int" value="0"/>
-	<!--Parameter name="Output Information" type="int" value="127"/-->
+	<ParameterList name="Output Information">
+	  <Parameter name="Error" type="bool" value="1"/>
+	  <Parameter name="Warning" type="bool" value="1"/>
+	  <Parameter name="Outer Iteration" type="bool" value="0"/>
+	  <Parameter name="Parameters" type="bool" value="0"/>
+	  <Parameter name="Details" type="bool" value="0"/>
+	  <Parameter name="Linear Solver Details" type="bool" value="0"/>
+	</ParameterList>
 	<Parameter name="Output Precision" type="int" value="3"/>
 	<Parameter name="Output Processor" type="int" value="0"/>
       </ParameterList>

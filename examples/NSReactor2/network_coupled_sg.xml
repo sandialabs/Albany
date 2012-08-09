@@ -13,38 +13,41 @@
     <Parameter name="Stochastic" type="bool" value="1"/>
     <ParameterList name="Dimension Reduction">
       <Parameter name="Reduce Dimension" type="bool" value="0"/>
-      <Parameter name="Dimension Reduction Method" type="string" value="Tensor Product Stieltjes"/>
-      <!--Parameter name="Dimension Reduction Method" type="string" value="Gram-Schmidt QR"/-->
-      <Parameter name="Reduced Quadrature Method" type="string" value="L1 Minimization"/>
-      <!--Parameter name="Reduced Quadrature Method" type="string" value="Column-Pivoted QR"/-->
-      <Parameter name="Orthogonalization Method" type="string" value="Modified Gram-Schmidt"/>
-      <!--Parameter name="Reduced Order" type="int" value="3"/-->
+      <Parameter name="Reduced Basis Method" type="string"
+		 value="Product Lanczos"/>
+      <!--Parameter name="Reduced Basis Method" type="string"
+	         value="Product Lanczos Gram-Schmidt"/-->
+      <!--Parameter name="Reduced Basis Method" type="string"
+		 value="Monomial Proj Gram-Schmidt"/-->
+      <!--Parameter name="Orthogonalization Method" type="string"
+	  value="Modified Gram-Schmidt"/-->
+      <Parameter name="Use Old Stieltjes Method" type="bool" value="0"/>
+      <Parameter name="Project" type="bool" value="1"/>
+      <Parameter name="Normalize" type="bool" value="1"/>
+      <Parameter name="Limit Integration Order" type="bool" value="0"/>
       <Parameter name="Verbose" type="bool" value="0"/>
+      <Parameter name="Reduced Order" type="int" value="-1"/>
+      <Parameter name="Cijk Drop Tolerance" type="double"
+		 value="1e-12"/>
+      <ParameterList name="Reduced Quadrature">
+	<!--Parameter name="Reduced Quadrature Method" type="string"
+	    value="None"/-->
+	<Parameter name="Reduction Tolerance" type="double" value="1e-12"/>
+	<Parameter name="Verbose" type="bool" value="0"/>
+      </ParameterList>
     </ParameterList>
     <Parameter name="Solver Type" type="string" value="NOX"/>
     <ParameterList name="Stochastic Galerkin">
       <Parameter name="Save Moments" type="int" value="2"/>
       <ParameterList name="SG Parameters">
-	<Parameter name="Number of SG Parameter Vectors" type="int" value="1"/>
-	<ParameterList name="SG Parameter Vector 0">
-	  <Parameter name="Parameter Vector Index" type="int" value="0"/>
-	  <Parameter name="Parameter 0 Initial Expansion Coefficients" type="Array(double)" value="{ 0.0, 1.0, 0.0 }"/>
-	  <Parameter name="Parameter 1 Initial Expansion Coefficients" type="Array(double)" value="{ 0.0, 0.0, 1.0 }"/>
-	  <Parameter name="Parameter 2 Initial Expansion Coefficients" type="Array(double)" value="{ 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0 }"/>
-	</ParameterList>
-	<ParameterList name="SG Parameter Vector 1">
-	  <Parameter name="Parameter Vector Index" type="int" value="1"/>
-	  <Parameter name="Parameter 0 Initial Expansion Coefficients" type="Array(double)" value="{ 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0 }"/>
-	  <Parameter name="Parameter 1 Initial Expansion Coefficients" type="Array(double)" value="{ 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 }"/>
-	  <Parameter name="Parameter 2 Initial Expansion Coefficients" type="Array(double)" value="{ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 }"/>
-	</ParameterList>
+	<Parameter name="Number of SG Parameter Vectors" type="int" value="2"/>
       </ParameterList>
       <ParameterList name="Basis">
 	<Parameter name="Isotropic" type="bool" value="true"/>
 	<Parameter name="Type" type="string" value="Legendre"/>
 	<Parameter name="Order" type="int" value="2"/>
-	<Parameter name="Dimension" type="int" value="2"/>
-	<Parameter name="Normalize" type="bool" value="false"/>
+	<Parameter name="Dimension" type="int" value="4"/>
+	<Parameter name="Normalize" type="bool" value="true"/>
 	<Parameter name="Cijk Drop Tolerance" type="double" value="1e-12"/>
       </ParameterList>
       <ParameterList name="Quadrature">
@@ -156,8 +159,14 @@
       </ParameterList>
       <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
       <ParameterList name="Printing">
-	<Parameter name="Output Information" type="int" value="103"/>
-	<!--Parameter name="Output Information" type="int" value="127"/-->
+	<ParameterList name="Output Information">
+	  <Parameter name="Error" type="bool" value="1"/>
+	  <Parameter name="Warning" type="bool" value="1"/>
+	  <Parameter name="Outer Iteration" type="bool" value="1"/>
+	  <Parameter name="Parameters" type="bool" value="0"/>
+	  <Parameter name="Details" type="bool" value="0"/>
+	  <Parameter name="Linear Solver Details" type="bool" value="0"/>
+	</ParameterList>
 	<Parameter name="Output Precision" type="int" value="3"/>
 	<Parameter name="Output Processor" type="int" value="0"/>
       </ParameterList>
@@ -169,10 +178,16 @@
 
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="0"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{242.131, 307.105}"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter  name="Number of Dakota Comparisons" type="int" value="0"/>
     <Parameter  name="Number of Stochastic Galerkin Comparisons" type="int" value="0"/>
+    <Parameter  name="Number of Stochastic Galerkin Mean Comparisons" type="int" value="4"/>
+    <Parameter  name="Stochastic Galerkin Mean Test Values"
+		type="Array(double)" value="{22.3174, -178.140, 178.140, -22.3174}"/>
+    <Parameter  name="Number of Stochastic Galerkin Standard Deviation Comparisons" type="int" value="4"/>
+    <Parameter  name="Stochastic Galerkin Standard Deviation Test Values" 
+		type="Array(double)" value="{0.345903, 9.56761, 9.56761, 0.345903}"/>
+    <Parameter  name="Absolute Tolerance" type="double" value="1.0e-8"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-3"/>
   </ParameterList>
 </ParameterList>

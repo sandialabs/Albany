@@ -8,23 +8,23 @@
     <!--ParameterList name="Volumetric Expansion Coefficient">
       <Parameter name="Type" type="string" value="Constant"/>
       <Parameter name="Value" type="double" value="1000"/> 
-    </ParameterList>
+    </ParameterList-->
     <ParameterList name="Body Force">
       <Parameter name="Type" type="string" value="Boussinesq"/>
       <Parameter name="Gravity Vector" type="Array(double)" value="{0.0,-1.0}"/>
-    </ParameterList-->
+    </ParameterList>
     <ParameterList name="Source Functions">
-      <ParameterList name="Constant">
+      <!--ParameterList name="Constant">
 	<Parameter name="Value" type="double" value="500"/>
-      </ParameterList>
-      <!--ParameterList name="Truncated KL Expansion">
+      </ParameterList-->
+      <ParameterList name="Truncated KL Expansion">
 	<Parameter name="Number of KL Terms" type="int" value="2"/>
 	<Parameter name="Mean" type="double" value="500.0"/>
 	<Parameter name="Standard Deviation" type="double" value="10.0"/>
 	<Parameter name="Domain Lower Bounds" type="string" value="{0.0, 0.0}"/>
 	<Parameter name="Domain Upper Bounds" type="string" value="{1.0, 1.0}"/>
 	<Parameter name="Correlation Lengths" type="string" value="{0.1, 0.1}"/>
-      </ParameterList-->
+      </ParameterList>
     </ParameterList>
     <ParameterList name="Dirichlet BCs">     
       <Parameter name="DBC on NS bottom for DOF ux" type="double" value="0.0"/>
@@ -51,7 +51,7 @@
       <Parameter name="DBC on NS outlet for DOF uy" type="double" value="0.0"/>
     </ParameterList>
     <ParameterList name="Neumann BCs">     
-      <Parameter name="NBC on SS inlet_ss for DOF T set dudn" type="Array(double)" value="{-32.0}"/>
+      <Parameter name="NBC on SS inlet_ss for DOF T set dudn" type="Array(double)" value="{-37.0}"/>
       <Parameter name="NBC on SS outlet_ss for DOF T set dudn" type="Array(double)" value="{7.0}"/>
     </ParameterList>
     <!--ParameterList name="Viscosity">
@@ -68,18 +68,16 @@
       <Parameter name="Viscosity KL Random Variable 0" type="double" value="0.4"/>
     </ParameterList-->
     <ParameterList name="Parameters">
-      <Parameter name="Number of Parameter Vectors" type="int" value="1"/>
+      <Parameter name="Number of Parameter Vectors" type="int" value="2"/>
       <ParameterList name="Parameter Vector 0">
 	<Parameter name="Number" type="int" value="2"/>
 	<Parameter name="Parameter 0" type="string" value="NBC on SS inlet_ss for DOF T set dudn"/>
 	<Parameter name="Parameter 1" type="string" value="NBC on SS outlet_ss for DOF T set dudn"/>
       </ParameterList>
       <ParameterList name="Parameter Vector 1">
-	<Parameter name="Number" type="int" value="1"/>
-	<Parameter name="Parameter 0" type="string"
-		   value="Heat Source KL Random Variable 0"/>
-	<Parameter name="Parameter 1" type="string"
-		   value="Heat Source KL Random Variable 1"/>
+	<Parameter name="Number" type="int" value="2"/>
+	<Parameter name="Parameter 0" type="string" value="Heat Source KL Random Variable 0"/>
+	<Parameter name="Parameter 1" type="string" value="Heat Source KL Random Variable 1"/>
       </ParameterList>
     </ParameterList>
     <ParameterList name="Response Functions">
@@ -91,19 +89,23 @@
         <ParameterList name="ResponseParams 0">
           <Parameter name="Field Name" type="string" value="Temperature"/>
 	  <Parameter name="x min" type="double" value="0.0"/>
-	  <Parameter name="x max" type="double" value="0.01"/>
+	  <!--Parameter name="x max" type="double" value="0.01"/-->
+	  <Parameter name="x max" type="double" value="0.1"/>
 	  <Parameter name="y min" type="double" value="0.45"/>
 	  <Parameter name="y max" type="double" value="0.55"/>
-	  <Parameter name="Length Scaling" type="double" value="31.6227766"/>
+	  <!--Parameter name="Length Scaling" type="double" value="31.6227766"/-->
+	  <Parameter name="Length Scaling" type="double" value="10.0"/>
         </ParameterList>
 	<Parameter name="Response 1" type="string" value="PHAL Field Integral"/>
         <ParameterList name="ResponseParams 1">
           <Parameter name="Field Name" type="string" value="Temperature"/>
-	  <Parameter name="x min" type="double" value="0.99"/>
+	  <!--Parameter name="x min" type="double" value="0.99"/-->
+	  <Parameter name="x min" type="double" value="0.90"/>
 	  <Parameter name="x max" type="double" value="1.00"/>
 	  <Parameter name="y min" type="double" value="0.45"/>
 	  <Parameter name="y max" type="double" value="0.55"/>
-	  <Parameter name="Length Scaling" type="double" value="31.6227766"/>
+	  <!--Parameter name="Length Scaling" type="double" value="31.6227766"/-->
+	  <Parameter name="Length Scaling" type="double" value="10.0"/>
         </ParameterList>
       </ParameterList>
     </ParameterList>
@@ -111,8 +113,8 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Ioss"/>
     <Parameter name="Workset Size" type="int" value="10"/>
-    <Parameter name="Exodus Input File Name" type="string" value="reactor_med.exo"/>
-    <Parameter name="Exodus Output File Name" type="string" value="reactor_med_sg-out.exo"/>
+    <Parameter name="Exodus Input File Name" type="string" value="reactor_coarse.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="reactor_coarse_sg-out.exo"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="0"/>
@@ -128,18 +130,17 @@
     <ParameterList name="Stochastic Galerkin">
       <Parameter name="Save Moments" type="int" value="2"/>
       <ParameterList name="SG Parameters">
-	<Parameter name="Number of SG Parameter Vectors" type="int" value="0"/>
+	<Parameter name="Number of SG Parameter Vectors" type="int" value="1"/>
 	<ParameterList name="SG Parameter Vector 0">
-	  <Parameter name="Parameter Vector Index" type="int" value="0"/>
-	  <Parameter name="Parameter 0 Initial Expansion Coefficients" type="Array(double)" value="{ -32.0, 1.0 }"/>
+	  <Parameter name="Parameter Vector Index" type="int" value="1"/>
 	</ParameterList>
       </ParameterList>
       <ParameterList name="Basis">
 	<Parameter name="Isotropic" type="bool" value="true"/>
 	<Parameter name="Type" type="string" value="Legendre"/>
 	<Parameter name="Order" type="int" value="2"/>
-	<Parameter name="Dimension" type="int" value="2"/>
-	<Parameter name="Normalize" type="bool" value="false"/>
+	<Parameter name="Dimension" type="int" value="4"/>
+	<Parameter name="Normalize" type="bool" value="true"/>
 	<Parameter name="Cijk Drop Tolerance" type="double" value="1e-12"/>
       </ParameterList>
       <ParameterList name="Quadrature">
@@ -266,9 +267,14 @@
       </ParameterList>
       <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
       <ParameterList name="Printing">
-	<!--Parameter name="Output Information" type="int" value="103"/-->
-	<Parameter name="Output Information" type="int" value="0"/>
-	<!--Parameter name="Output Information" type="int" value="127"/-->
+	<ParameterList name="Output Information">
+	  <Parameter name="Error" type="bool" value="1"/>
+	  <Parameter name="Warning" type="bool" value="1"/>
+	  <Parameter name="Outer Iteration" type="bool" value="0"/>
+	  <Parameter name="Parameters" type="bool" value="0"/>
+	  <Parameter name="Details" type="bool" value="0"/>
+	  <Parameter name="Linear Solver Details" type="bool" value="0"/>
+	</ParameterList>
 	<Parameter name="Output Precision" type="int" value="3"/>
 	<Parameter name="Output Processor" type="int" value="0"/>
       </ParameterList>

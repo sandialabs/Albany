@@ -73,19 +73,23 @@
         <ParameterList name="ResponseParams 0">
           <Parameter name="Field Name" type="string" value="Temperature"/>
 	  <Parameter name="x min" type="double" value="0.0"/>
-	  <Parameter name="x max" type="double" value="0.01"/>
+	  <!--Parameter name="x max" type="double" value="0.01"/-->
+	  <Parameter name="x max" type="double" value="0.1"/>
 	  <Parameter name="y min" type="double" value="0.45"/>
 	  <Parameter name="y max" type="double" value="0.55"/>
-	  <Parameter name="Length Scaling" type="double" value="31.6227766"/>
+	  <!--Parameter name="Length Scaling" type="double" value="31.6227766"/-->
+	  <Parameter name="Length Scaling" type="double" value="10.0"/>
         </ParameterList>
 	<Parameter name="Response 1" type="string" value="PHAL Field Integral"/>
         <ParameterList name="ResponseParams 1">
           <Parameter name="Field Name" type="string" value="Temperature"/>
-	  <Parameter name="x min" type="double" value="0.99"/>
+	  <!--Parameter name="x min" type="double" value="0.99"/-->
+	  <Parameter name="x min" type="double" value="0.90"/>
 	  <Parameter name="x max" type="double" value="1.00"/>
 	  <Parameter name="y min" type="double" value="0.45"/>
 	  <Parameter name="y max" type="double" value="0.55"/>
-	  <Parameter name="Length Scaling" type="double" value="31.6227766"/>
+	  <!--Parameter name="Length Scaling" type="double" value="31.6227766"/-->
+	  <Parameter name="Length Scaling" type="double" value="10.0"/>
         </ParameterList>
       </ParameterList>
     </ParameterList>
@@ -97,15 +101,19 @@
     <Parameter name="Exodus Output File Name" type="string" value="reactor_coarse-out.exo"/>
   </ParameterList>
   <ParameterList name="Regression Results">
-    <Parameter  name="Number of Comparisons" type="int" value="0"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{1.358}"/>
-    <Parameter  name="Relative Tolerance" type="double" value="1.0e-3"/>
-    <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
+    <Parameter  name="Number of Comparisons" type="int" value="2"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{0.0202613, 12.2034}"/>
+    <Parameter  name="Number of Sensitivity Comparisons" type="int" value="2"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)"
-		value="{1.358}"/>
+		value="{0.0236729, 3.06331e-9}"/>
+    <Parameter  name="Sensitivity Test Values 1" type="Array(double)"
+		value="{0.00763868, 0.00219157}"/>
     <Parameter  name="Number of Dakota Comparisons" type="int" value="0"/>
+    <Parameter  name="Relative Tolerance" type="double" value="1.0e-3"/>
+    <Parameter  name="Absolute Tolerance" type="double" value="1.0e-8"/>
   </ParameterList>
   <ParameterList name="Piro">
+    <Parameter name="Print Convergence Stats" type="bool" value="0"/>
     <ParameterList name="NOX">
       <ParameterList name="Status Tests">
 	<Parameter name="Test Type" type="string" value="Combo"/>
@@ -201,9 +209,14 @@
       </ParameterList>
       <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
       <ParameterList name="Printing">
-	<!--Parameter name="Output Information" type="int" value="103"/-->
-	<Parameter name="Output Information" type="int" value="0"/>
-	<!--Parameter name="Output Information" type="int" value="127"/-->
+	<ParameterList name="Output Information">
+	  <Parameter name="Error" type="bool" value="1"/>
+	  <Parameter name="Warning" type="bool" value="1"/>
+	  <Parameter name="Outer Iteration" type="bool" value="0"/>
+	  <Parameter name="Parameters" type="bool" value="0"/>
+	  <Parameter name="Details" type="bool" value="0"/>
+	  <Parameter name="Linear Solver Details" type="bool" value="0"/>
+	</ParameterList>
 	<Parameter name="Output Precision" type="int" value="3"/>
 	<Parameter name="Output Processor" type="int" value="0"/>
       </ParameterList>
