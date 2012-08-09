@@ -213,7 +213,7 @@ Albany::NavierStokes::constructNeumannEvaluators(const Teuchos::RCP<Albany::Mesh
    // Currently we aren't exactly doing this right.  I think to do this
    // correctly we need different neumann evaluators for each DOF (velocity,
    // pressure, temperature, flux) since velocity is a vector and the 
-   // others are scalars.  The dof_names and offset stuff is only used
+   // others are scalars.  The dof_names stuff is only used
    // for robin conditions, so at this point, as long as we don't enable
    // robin conditions, this should work.
 
