@@ -42,9 +42,12 @@ if (ALBANY_ASCR)
     set(AlbanyCoupled.exe   ${Albany_BINARY_DIR}/src/AlbanyCoupled)
     set(AlbanySGCoupled.exe ${Albany_BINARY_DIR}/src/AlbanySGCoupled)
   ENDIF()
+  set(SerialAlbanyCoupled.exe  ${Albany_BINARY_DIR}/src/AlbanyCoupled)
+  set(SerialAlbanySGCoupled.exe  ${Albany_BINARY_DIR}/src/AlbanySGCoupled)
 endif()
 
 set(SerialAlbany.exe  ${Albany_BINARY_DIR}/src/Albany)
+set(SerialAlbanySG.exe  ${Albany_BINARY_DIR}/src/AlbanySG)
 set(SerialAlbanyDakota.exe  ${Albany_BINARY_DIR}/src/AlbanyDakota)
 
 # Tests
@@ -159,4 +162,5 @@ ENDIF()
 
 if (ALBANY_ASCR)
   add_subdirectory(CoupledReactor)
+  add_subdirectory(NSReactor)
 endif()
