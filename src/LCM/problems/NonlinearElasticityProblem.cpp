@@ -192,7 +192,7 @@ Albany::NonlinearElasticityProblem::getValidProblemParameters() const
   {
 	 validPL->set<RealType>("c1",false,"");
 	 validPL->set<RealType>("c2",false,"");
-	 validPL->set<RealType>("mu",false,"");
+	 validPL->set<RealType>("mult",false,"");
   }
 
   if (matModel == "RIHMR")
