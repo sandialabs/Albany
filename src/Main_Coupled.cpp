@@ -20,6 +20,7 @@
 
 #include "Albany_Utils.hpp"
 #include "Albany_SolverFactory.hpp"
+#include "Albany_NOXObserver.hpp"
 #include "Teuchos_GlobalMPISession.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 #include "Teuchos_VerboseObject.hpp"
@@ -29,6 +30,8 @@
 #include "Piro_Epetra_Factory.hpp"
 #include "Epetra_LocalMap.h"
 #include "Epetra_Import.h"
+
+#include "Albany_Networks.hpp"
 
 int main(int argc, char *argv[]) {
 
@@ -45,16 +48,17 @@ int main(int argc, char *argv[]) {
   // Command-line argument for input file
   //***********************************************************
 
-  std::string xmlfilename1, xmlfilename2, xmlfilename3;
-  if (argc != 4 || (argc>1 && !strcmp(argv[1],"--help"))) {
-    std::cout << "albany input1.xml input2.xml input_coupled.xml\n";
-    std::exit(1);
+  std::string xmlfilename_coupled;
+  if(argc > 1){
+    if(!strcmp(argv[1],"--help")){
+      std::cout << "albany [inputfile.xml]" << std::endl;
+      std::exit(1);
+    }
+    else
+      xmlfilename_coupled = argv[1];
   }
-  xmlfilename1=argv[1];
-  xmlfilename2=argv[2];
-  xmlfilename3=argv[3];
-
-
+  else
+    xmlfilename_coupled = "input.xml";
 
   try {
 
@@ -65,52 +69,48 @@ int main(int argc, char *argv[]) {
     Teuchos::TimeMonitor totalTimer(*totalTime); //start timer
     Teuchos::TimeMonitor setupTimer(*setupTime); //start timer
 
-
-    //***********************************************************
-    // Set up the first model
-    //***********************************************************
-
-    Albany::SolverFactory slvrfctry1(xmlfilename1, Albany_MPI_COMM_WORLD);
-    RCP<Epetra_Comm> appComm1 = 
-      Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
-    RCP<Albany::Application> app1;
-    RCP<EpetraExt::ModelEvaluator> model1 = 
-      slvrfctry1.createAlbanyAppAndModel(app1, appComm1);
-    Teuchos::ParameterList& appParams1 = slvrfctry1.getParameters();
-    Teuchos::RCP< Teuchos::ParameterList> piroParams1 = 
-      Teuchos::rcp(&(appParams1.sublist("Piro")),false);
-
-    //***********************************************************
-    // Set up second model
-    //***********************************************************
-
-    Albany::SolverFactory slvrfctry2(xmlfilename2, Albany_MPI_COMM_WORLD);
-    RCP<Epetra_Comm> appComm2 = 
-      Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
-    RCP<Albany::Application> app2;
-    RCP<EpetraExt::ModelEvaluator> model2 = 
-      slvrfctry2.createAlbanyAppAndModel(app2, appComm2);
-    Teuchos::ParameterList& appParams2 = slvrfctry2.getParameters();
-    Teuchos::RCP< Teuchos::ParameterList> piroParams2 = 
-      Teuchos::rcp(&(appParams2.sublist("Piro")),false);
-
-    
     //***********************************************************
     // Set up coupled model
     //***********************************************************
-    Albany::SolverFactory coupled_slvrfctry(xmlfilename3, 
+
+    Albany::SolverFactory coupled_slvrfctry(xmlfilename_coupled, 
 					    Albany_MPI_COMM_WORLD);
     RCP<Epetra_Comm> coupledComm = 
       Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
     Teuchos::ParameterList& coupledParams = coupled_slvrfctry.getParameters();
+    Teuchos::ParameterList& coupledSystemParams = 
+      coupledParams.sublist("Coupled System");
     Teuchos::RCP< Teuchos::ParameterList> coupledPiroParams = 
       Teuchos::rcp(&(coupledParams.sublist("Piro")),false);
-    Teuchos::Array< RCP<EpetraExt::ModelEvaluator> > models(2);
-    models[0] = model1; models[1] = model2;
-    Teuchos::Array< RCP<Teuchos::ParameterList> > piroParams(2);
-    piroParams[0] = piroParams1; piroParams[1] = piroParams2;
-    RCP<Piro::Epetra::AbstractNetworkModel> network_model =
-      rcp(new Piro::Epetra::ParamToResponseNetworkModel);
+    Teuchos::Array<std::string> model_filenames =
+      coupledSystemParams.get<Teuchos::Array<std::string> >("Model XML Files");
+    int num_models = model_filenames.size();
+    Teuchos::Array< RCP<Albany::Application> > apps(num_models);
+    Teuchos::Array< RCP<EpetraExt::ModelEvaluator> > models(num_models);
+    Teuchos::Array< RCP<Teuchos::ParameterList> > piroParams(num_models);
+
+    // Set up each model
+    for (int m=0; m<num_models; m++) {
+      Albany::SolverFactory slvrfctry(model_filenames[m], 
+				      Albany_MPI_COMM_WORLD);
+      RCP<Epetra_Comm> appComm = 
+	Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
+      models[m] = slvrfctry.createAlbanyAppAndModel(apps[m], appComm);
+      Teuchos::ParameterList& appParams = slvrfctry.getParameters();
+      piroParams[m] = Teuchos::rcp(&(appParams.sublist("Piro")),false);
+    }
+    
+    // Setup network model
+    std::string network_name = 
+      coupledSystemParams.get("Network Model", "Param To Response");
+    RCP<Piro::Epetra::AbstractNetworkModel> network_model;
+    if (network_name == "Param To Response")
+      network_model = rcp(new Piro::Epetra::ParamToResponseNetworkModel);
+    else if (network_name == "Reactor Network")
+      network_model = rcp(new Albany::ReactorNetworkModel(1));
+    else
+      TEUCHOS_TEST_FOR_EXCEPTION(
+	true, std::logic_error, "Invalid network model name " << network_name);
     RCP<EpetraExt::ModelEvaluator> coupledModel =
       rcp(new Piro::Epetra::NECoupledModelEvaluator(models, piroParams,
 						    network_model,
@@ -130,6 +130,12 @@ int main(int argc, char *argv[]) {
       outArgs.set_g(i, g);
     }
     coupledSolver->evalModel(inArgs, outArgs);
+
+    // "observe solution" -- need to integrate this with the solvers
+    for (int m=0; m<num_models; m++) {
+      Albany_NOXObserver observer(apps[m]);
+      observer.observeSolution(*(outArgs.get_g(m)));
+    }
     
     // Print results
     RCP<Epetra_Vector> x_final = outArgs.get_g(outArgs.Ng()-1);

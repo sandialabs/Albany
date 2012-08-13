@@ -1,4 +1,8 @@
 <ParameterList>
+  <ParameterList name="Coupled System">
+    <Parameter name="Model XML Files" type="Array(string)" 
+	       value="{ input_heat.xml, input_neutronics.xml }"/>
+  </ParameterList>
   <ParameterList name="Piro">
     <Parameter name="Network Coupling Parameter Indices" type="Array(int)" 
 	       value="{ 0, 0 }"/>

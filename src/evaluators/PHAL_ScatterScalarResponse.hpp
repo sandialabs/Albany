@@ -76,7 +76,6 @@ protected:
   typedef typename EvalT::ScalarT ScalarT;
   PHX::MDField<ScalarT> global_response;
   Teuchos::RCP<PHX::FieldTag> scatter_operation;
-  Teuchos::Array<int> field_components;
 };
 
 template<typename EvalT, typename Traits> class ScatterScalarResponse {};

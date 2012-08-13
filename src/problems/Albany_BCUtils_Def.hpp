@@ -397,7 +397,7 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
 
          if (BCparams.isParameter(ss)) {
 
-//           std::cout << "Constructing NBC: " << ss << std::endl;
+           std::cout << "Constructing NBC: " << ss << std::endl;
 
            TEUCHOS_TEST_FOR_EXCEPTION(BCparams.isType<string>(ss), std::logic_error,
                "NBC array information in XML file must be of type Array(double)\n");
@@ -449,6 +449,7 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
 
            std::stringstream ess; ess << "Evaluator for " << ss;
            evaluators_to_build[ess.str()] = p;
+
   
            bcs.push_back(ss);
          }
@@ -506,6 +507,7 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
       p->set<string>("NBC Aggregator Name", allBC);
       evaluators_to_build[allBC] = p;
    }
+
 
    // Build Field Evaluators for each evaluation type
    PHX::EvaluatorFactory<AlbanyTraits, PHAL::NeumannFactoryTraits<AlbanyTraits> > factory;
