@@ -160,7 +160,7 @@ evaluateFields(typename Traits::EvalData workset)
   else if (weighted_Volume_Averaged_J)
   {
     ScalarT Jbar, wJbar, vol;
-    ScalarT StabAlpha = 0.5; // This setting need to change later..
+    ScalarT StabAlpha = 0.01; // This setting need to change later..
     for (std::size_t cell=0; cell < workset.numCells; ++cell)
     {
       Jbar = 0.0;
