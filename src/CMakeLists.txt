@@ -374,6 +374,7 @@ IF(ALBANY_LCM)
   SET(SOURCES ${SOURCES}
     ${LCM_DIR}/problems/ElasticityProblem.cpp
     ${LCM_DIR}/problems/NonlinearElasticityProblem.cpp
+    ${LCM_DIR}/problems/MechanicsProblem.cpp
     ${LCM_DIR}/problems/ThermoElasticityProblem.cpp
     ${LCM_DIR}/problems/GradientDamageProblem.cpp
     ${LCM_DIR}/problems/PoroElasticityProblem.cpp
@@ -393,6 +394,7 @@ IF(ALBANY_LCM)
   SET(HEADERS ${HEADERS}
     ${LCM_DIR}/problems/ElasticityProblem.hpp
     ${LCM_DIR}/problems/NonlinearElasticityProblem.hpp
+    ${LCM_DIR}/problems/MechanicsProblem.hpp
     ${LCM_DIR}/problems/ThermoElasticityProblem.hpp
     ${LCM_DIR}/problems/GradientDamageProblem.hpp
     ${LCM_DIR}/problems/PoroElasticityProblem.hpp
