@@ -61,6 +61,7 @@ SET(SOURCES ${SOURCES}
         problems/Albany_AbstractProblem.cpp
         problems/Albany_CahnHillProblem.cpp
         problems/Albany_ProblemUtils.cpp
+        problems/Albany_Layouts.cpp
         problems/Albany_EvaluatorUtils.cpp
         problems/Albany_ResponseUtilities.cpp
         problems/Albany_BCUtils.cpp
@@ -80,6 +81,7 @@ SET(HEADERS ${HEADERS}
         problems/Albany_AbstractProblem.hpp
         problems/Albany_CahnHillProblem.hpp
         problems/Albany_ProblemUtils.hpp
+        problems/Albany_Layouts.hpp
         problems/Albany_EvaluatorUtils.hpp
         problems/Albany_EvaluatorUtils_Def.hpp
         problems/Albany_ResponseUtilities.hpp
@@ -167,7 +169,6 @@ SET(SOURCES ${SOURCES}
         evaluators/PHAL_DOFGradInterpolation.cpp
         evaluators/PHAL_DOFVecInterpolation.cpp
         evaluators/PHAL_DOFVecGradInterpolation.cpp
-        evaluators/PHAL_DOFTensorInterpolation.cpp
         evaluators/PHAL_MapToPhysicalFrame.cpp
         evaluators/PHAL_HelmholtzResid.cpp
         evaluators/PHAL_GatherCoordinateVector.cpp
@@ -231,8 +232,6 @@ SET(HEADERS ${HEADERS}
         evaluators/PHAL_DOFVecInterpolation_Def.hpp
         evaluators/PHAL_DOFVecGradInterpolation.hpp
         evaluators/PHAL_DOFVecGradInterpolation_Def.hpp
-        evaluators/PHAL_DOFTensorInterpolation.hpp
-        evaluators/PHAL_DOFTensorInterpolation_Def.hpp
         evaluators/PHAL_MapToPhysicalFrame.hpp
         evaluators/PHAL_MapToPhysicalFrame_Def.hpp
         evaluators/PHAL_HelmholtzResid.hpp

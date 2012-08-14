@@ -322,16 +322,13 @@ QCAD::PoissonProblem::constructEvaluators(
     // Input
     sprintf(buf, "Evec_Re%d", k);
     p->set<string>("Variable Name", buf);
-    p->set< RCP<DataLayout> >("Node Data Layout",      dl->node_scalar);
     
     p->set<string>("BF Name", "BF");
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
     
     // Output (assumes same Name as input)
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     
     sprintf(buf, "Eigenvector Re %d interpolate to qps", k);
-    ev = rcp(new PHAL::DOFInterpolation<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new PHAL::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
     
     
@@ -342,16 +339,13 @@ QCAD::PoissonProblem::constructEvaluators(
     // Input
     sprintf(buf, "Evec_Im%d", k);
     p->set<string>("Variable Name", buf);
-    p->set< RCP<DataLayout> >("Node Data Layout",      dl->node_scalar);
     
     p->set<string>("BF Name", "BF");
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
     
     // Output (assumes same Name as input)
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     
     sprintf(buf, "Eigenvector Im %d interpolate to qps", k);
-    ev = rcp(new PHAL::DOFInterpolation<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new PHAL::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 

@@ -25,22 +25,19 @@ namespace PHAL {
 //**********************************************************************
 template<typename EvalT, typename Traits>
 MapToPhysicalFrame<EvalT, Traits>::
-MapToPhysicalFrame(const Teuchos::ParameterList& p) :
-  coords_vertices  (p.get<std::string>                   ("Coordinate Vector Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout") ),
+MapToPhysicalFrame(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) :
+  coords_vertices  (p.get<std::string>  ("Coordinate Vector Name"), dl->vertices_vector),
   cubature         (p.get<Teuchos::RCP <Intrepid::Cubature<RealType> > >("Cubature")),
   cellType         (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
-  coords_qp        (p.get<std::string>                   ("Coordinate Vector Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") )
+  coords_qp        (p.get<std::string>  ("Coordinate Vector Name"), dl->qp_gradient)
 {
   this->addDependentField(coords_vertices);
   this->addEvaluatedField(coords_qp);
 
   // Get Dimensions
-  Teuchos::RCP<PHX::DataLayout> vector_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
-  vector_dl->dimensions(dims);
+  dl->qp_gradient->dimensions(dims);
 
   // Compute cubature points in reference elements
   refPoints.resize(dims[1],dims[2]);

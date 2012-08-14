@@ -49,20 +49,17 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructGatherSolutionEvaluator(
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
-    using PHX::DataLayout;
     using Teuchos::ParameterList;
 
     RCP<ParameterList> p = rcp(new ParameterList("Gather Solution"));
     p->set< Teuchos::ArrayRCP<std::string> >("Solution Names", dof_names);
 
     p->set<bool>("Vector Field", isVectorField);
-    if (isVectorField) p->set< RCP<DataLayout> >("Data Layout", dl->node_vector);
-    else               p->set< RCP<DataLayout> >("Data Layout", dl->node_scalar);
 
     p->set<int>("Offset of First DOF", offsetToFirstDOF);
 
     p->set< Teuchos::ArrayRCP<std::string> >("Time Dependent Solution Names", dof_names_dot);
-    return rcp(new PHAL::GatherSolution<EvalT,Traits>(*p));
+    return rcp(new PHAL::GatherSolution<EvalT,Traits>(*p,dl));
 }
 
 template<typename EvalT, typename Traits>
@@ -74,20 +71,17 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructGatherSolutionEvaluator_noTransie
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
-    using PHX::DataLayout;
     using Teuchos::ParameterList;
 
     RCP<ParameterList> p = rcp(new ParameterList("Gather Solution"));
     p->set< Teuchos::ArrayRCP<std::string> >("Solution Names", dof_names);
 
     p->set<bool>("Vector Field", isVectorField);
-    if (isVectorField) p->set< RCP<DataLayout> >("Data Layout", dl->node_vector);
-    else               p->set< RCP<DataLayout> >("Data Layout", dl->node_scalar);
 
     p->set<int>("Offset of First DOF", offsetToFirstDOF);
     p->set<bool>("Disable Transient", true);
 
-    return rcp(new PHAL::GatherSolution<EvalT,Traits>(*p));
+    return rcp(new PHAL::GatherSolution<EvalT,Traits>(*p,dl));
 }
 
 
@@ -100,21 +94,17 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructScatterResidualEvaluator(
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
-    using PHX::DataLayout;
     using Teuchos::ParameterList;
 
     RCP<ParameterList> p = rcp(new ParameterList("Scatter Residual"));
     p->set< Teuchos::ArrayRCP<std::string> >("Residual Names", resid_names);
 
     p->set<bool>("Vector Field", isVectorField);
-    if (isVectorField) p->set< RCP<DataLayout> >("Data Layout", dl->node_vector);
-    else               p->set< RCP<DataLayout> >("Data Layout", dl->node_scalar);
 
-    p->set< RCP<DataLayout> >("Dummy Data Layout", dl->dummy);
     p->set<int>("Offset of First DOF", offsetToFirstDOF);
     p->set<string>("Scatter Field Name", scatterName);
 
-    return rcp(new PHAL::ScatterResidual<EvalT,Traits>(*p));
+    return rcp(new PHAL::ScatterResidual<EvalT,Traits>(*p,dl));
 }
 
 template<typename EvalT, typename Traits>
@@ -123,7 +113,6 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructGatherCoordinateVectorEvaluator()
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
-    using PHX::DataLayout;
     using Teuchos::ParameterList;
 
     RCP<ParameterList> p = rcp(new ParameterList("Gather Coordinate Vector"));
@@ -132,10 +121,9 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructGatherCoordinateVectorEvaluator()
     p->set<bool>("Periodic BC", false);
  
     // Output:: Coordindate Vector at vertices
-    p->set< RCP<DataLayout> >  ("Coordinate Data Layout",  dl->vertices_vector);
     p->set< string >("Coordinate Vector Name", "Coord Vec");
  
-    return rcp(new PHAL::GatherCoordinateVector<EvalT,Traits>(*p));
+    return rcp(new PHAL::GatherCoordinateVector<EvalT,Traits>(*p,dl));
 }
 
 template<typename EvalT, typename Traits>
@@ -146,22 +134,19 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructMapToPhysicalFrameEvaluator(
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
-    using PHX::DataLayout;
     using Teuchos::ParameterList;
 
     RCP<ParameterList> p = rcp(new ParameterList("Map To Physical Frame"));
  
     // Input: X, Y at vertices
     p->set< string >("Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Coordinate Data Layout", dl->vertices_vector);
  
     p->set<RCP <Intrepid::Cubature<RealType> > >("Cubature", cubature);
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
  
     // Output: X, Y at Quad Points (same name as input)
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_gradient);
  
-    return rcp(new PHAL::MapToPhysicalFrame<EvalT,Traits>(*p));
+    return rcp(new PHAL::MapToPhysicalFrame<EvalT,Traits>(*p,dl));
 }
 
 template<typename EvalT, typename Traits>
@@ -173,14 +158,12 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructComputeBasisFunctionsEvaluator(
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
-    using PHX::DataLayout;
     using Teuchos::ParameterList;
 
     RCP<ParameterList> p = rcp(new ParameterList("Compute Basis Functions"));
 
     // Inputs: X, Y at nodes, Cubature, and Basis
     p->set<string>("Coordinate Vector Name","Coord Vec");
-    p->set< RCP<DataLayout> >("Coordinate Data Layout", dl->vertices_vector);
     p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
  
     p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >
@@ -189,16 +172,13 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructComputeBasisFunctionsEvaluator(
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
      p->set<string>("Weights Name",          "Weights");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set<string>("BF Name",          "BF");
     p->set<string>("Weighted BF Name", "wBF");
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
  
     p->set<string>("Gradient BF Name",          "Grad BF");
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_gradient);
 
-    return rcp(new PHAL::ComputeBasisFunctions<EvalT,Traits>(*p));
+    return rcp(new PHAL::ComputeBasisFunctions<EvalT,Traits>(*p,dl));
 }
 
 template<typename EvalT, typename Traits>
@@ -208,21 +188,17 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFInterpolationEvaluator(
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
-    using PHX::DataLayout;
     using Teuchos::ParameterList;
 
     RCP<ParameterList> p = rcp(new ParameterList("DOF Interpolation "+dof_name));
     // Input
     p->set<string>("Variable Name", dof_name);
-    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
 
     p->set<string>("BF Name", "BF");
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
 
     // Output (assumes same Name as input)
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    return rcp(new PHAL::DOFInterpolation<EvalT,Traits>(*p));
+    return rcp(new PHAL::DOFInterpolation<EvalT,Traits>(*p,dl));
 }
 
 template<typename EvalT, typename Traits>
@@ -232,22 +208,18 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFGradInterpolationEvaluator(
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
-    using PHX::DataLayout;
     using Teuchos::ParameterList;
 
     RCP<ParameterList> p = rcp(new ParameterList("DOF Interpolation "+dof_name));
     // Input
     p->set<string>("Variable Name", dof_name);
-    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
 
     p->set<string>("Gradient BF Name", "Grad BF");
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_gradient);
 
     // Output (assumes same Name as input)
     p->set<string>("Gradient Variable Name", dof_name+" Gradient");
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_gradient);
 
-    return rcp(new PHAL::DOFGradInterpolation<EvalT,Traits>(*p));
+    return rcp(new PHAL::DOFGradInterpolation<EvalT,Traits>(*p,dl));
 }
 
 template<typename EvalT, typename Traits>
@@ -257,21 +229,17 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecInterpolationEvaluator(
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
-    using PHX::DataLayout;
     using Teuchos::ParameterList;
 
     RCP<ParameterList> p = rcp(new ParameterList("DOFVec Interpolation "+dof_name));
     // Input
     p->set<string>("Variable Name", dof_name);
-    p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
 
     p->set<string>("BF Name", "BF");
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
 
     // Output (assumes same Name as input)
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
-    return rcp(new PHAL::DOFVecInterpolation<EvalT,Traits>(*p));
+    return rcp(new PHAL::DOFVecInterpolation<EvalT,Traits>(*p,dl));
 }
 
 template<typename EvalT, typename Traits>
@@ -281,20 +249,16 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecGradInterpolationEvaluator(
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
-    using PHX::DataLayout;
     using Teuchos::ParameterList;
 
     RCP<ParameterList> p = rcp(new ParameterList("DOFVecGrad Interpolation "+dof_name));
     // Input
     p->set<string>("Variable Name", dof_name);
-    p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
 
     p->set<string>("Gradient BF Name", "Grad BF");
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_gradient);
 
     // Output (assumes same Name as input)
     p->set<string>("Gradient Variable Name", dof_name+" Gradient");
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-    return rcp(new PHAL::DOFVecGradInterpolation<EvalT,Traits>(*p));
+    return rcp(new PHAL::DOFVecGradInterpolation<EvalT,Traits>(*p,dl));
 }

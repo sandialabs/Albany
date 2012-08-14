@@ -23,6 +23,8 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
+#include "Albany_Layouts.hpp"
+
 #include "Teuchos_ParameterList.hpp"
 #include "Epetra_Vector.h"
 
@@ -44,7 +46,8 @@ class ScatterResidualBase
   
 public:
   
-  ScatterResidualBase(const Teuchos::ParameterList& p);
+  ScatterResidualBase(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl);
   
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
@@ -80,7 +83,8 @@ template<typename Traits>
 class ScatterResidual<PHAL::AlbanyTraits::Residual,Traits>
   : public ScatterResidualBase<PHAL::AlbanyTraits::Residual, Traits>  {
 public:
-  ScatterResidual(const Teuchos::ParameterList& p);
+  ScatterResidual(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
@@ -94,7 +98,8 @@ template<typename Traits>
 class ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>
   : public ScatterResidualBase<PHAL::AlbanyTraits::Jacobian, Traits>  {
 public:
-  ScatterResidual(const Teuchos::ParameterList& p);
+  ScatterResidual(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
@@ -108,7 +113,8 @@ template<typename Traits>
 class ScatterResidual<PHAL::AlbanyTraits::Tangent,Traits>
   : public ScatterResidualBase<PHAL::AlbanyTraits::Tangent, Traits>  {
 public:
-  ScatterResidual(const Teuchos::ParameterList& p);
+  ScatterResidual(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
@@ -122,7 +128,8 @@ template<typename Traits>
 class ScatterResidual<PHAL::AlbanyTraits::SGResidual,Traits>
   : public ScatterResidualBase<PHAL::AlbanyTraits::SGResidual, Traits>  {
 public:
-  ScatterResidual(const Teuchos::ParameterList& p);
+  ScatterResidual(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::SGResidual::ScalarT ScalarT;
@@ -136,7 +143,8 @@ template<typename Traits>
 class ScatterResidual<PHAL::AlbanyTraits::SGJacobian,Traits>
   : public ScatterResidualBase<PHAL::AlbanyTraits::SGJacobian, Traits>  {
 public:
-  ScatterResidual(const Teuchos::ParameterList& p);
+  ScatterResidual(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::SGJacobian::ScalarT ScalarT;
@@ -150,7 +158,8 @@ template<typename Traits>
 class ScatterResidual<PHAL::AlbanyTraits::SGTangent,Traits>
   : public ScatterResidualBase<PHAL::AlbanyTraits::SGTangent, Traits>  {
 public:
-  ScatterResidual(const Teuchos::ParameterList& p);
+  ScatterResidual(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
@@ -164,7 +173,8 @@ template<typename Traits>
 class ScatterResidual<PHAL::AlbanyTraits::MPResidual,Traits>
   : public ScatterResidualBase<PHAL::AlbanyTraits::MPResidual, Traits>  {
 public:
-  ScatterResidual(const Teuchos::ParameterList& p);
+  ScatterResidual(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::MPResidual::ScalarT ScalarT;
@@ -178,7 +188,8 @@ template<typename Traits>
 class ScatterResidual<PHAL::AlbanyTraits::MPJacobian,Traits>
   : public ScatterResidualBase<PHAL::AlbanyTraits::MPJacobian, Traits>  {
 public:
-  ScatterResidual(const Teuchos::ParameterList& p);
+  ScatterResidual(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
@@ -192,7 +203,8 @@ template<typename Traits>
 class ScatterResidual<PHAL::AlbanyTraits::MPTangent,Traits>
   : public ScatterResidualBase<PHAL::AlbanyTraits::MPTangent, Traits>  {
 public:
-  ScatterResidual(const Teuchos::ParameterList& p);
+  ScatterResidual(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;

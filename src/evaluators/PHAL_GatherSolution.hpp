@@ -23,6 +23,8 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
+#include "Albany_Layouts.hpp"
+
 #include "Teuchos_ParameterList.hpp"
 #include "Epetra_Vector.h"
 
@@ -47,7 +49,8 @@ class GatherSolutionBase
   
 public:
   
-  GatherSolutionBase(const Teuchos::ParameterList& p);
+  GatherSolutionBase(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl);
   
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
@@ -86,6 +89,9 @@ class GatherSolution<PHAL::AlbanyTraits::Residual,Traits>
    : public GatherSolutionBase<PHAL::AlbanyTraits::Residual, Traits>  {
   
 public:
+  GatherSolution(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl);
+  // Old constructor, still needed by BCs that use PHX Factory
   GatherSolution(const Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);
 private:
@@ -101,6 +107,8 @@ class GatherSolution<PHAL::AlbanyTraits::Jacobian,Traits>
    : public GatherSolutionBase<PHAL::AlbanyTraits::Jacobian, Traits>  {
   
 public:
+  GatherSolution(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl);
   GatherSolution(const Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);
 private:
@@ -117,6 +125,8 @@ class GatherSolution<PHAL::AlbanyTraits::Tangent,Traits>
    : public GatherSolutionBase<PHAL::AlbanyTraits::Tangent, Traits>  {
   
 public:
+  GatherSolution(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl);
   GatherSolution(const Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);
 private:
@@ -133,6 +143,8 @@ class GatherSolution<PHAL::AlbanyTraits::SGResidual,Traits>
    : public GatherSolutionBase<PHAL::AlbanyTraits::SGResidual, Traits>  {
   
 public:
+  GatherSolution(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl);
   GatherSolution(const Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);
 private:
@@ -149,6 +161,8 @@ class GatherSolution<PHAL::AlbanyTraits::SGJacobian,Traits>
    : public GatherSolutionBase<PHAL::AlbanyTraits::SGJacobian, Traits>  {
   
 public:
+  GatherSolution(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl);
   GatherSolution(const Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);
 private:
@@ -164,6 +178,8 @@ class GatherSolution<PHAL::AlbanyTraits::SGTangent,Traits>
    : public GatherSolutionBase<PHAL::AlbanyTraits::SGTangent, Traits>  {
   
 public:
+  GatherSolution(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl);
   GatherSolution(const Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);
 private:
@@ -180,6 +196,8 @@ class GatherSolution<PHAL::AlbanyTraits::MPResidual,Traits>
    : public GatherSolutionBase<PHAL::AlbanyTraits::MPResidual, Traits>  {
   
 public:
+  GatherSolution(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl);
   GatherSolution(const Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);
 private:
@@ -196,6 +214,8 @@ class GatherSolution<PHAL::AlbanyTraits::MPJacobian,Traits>
    : public GatherSolutionBase<PHAL::AlbanyTraits::MPJacobian, Traits>  {
   
 public:
+  GatherSolution(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl);
   GatherSolution(const Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);
 private:
@@ -211,6 +231,8 @@ class GatherSolution<PHAL::AlbanyTraits::MPTangent,Traits>
    : public GatherSolutionBase<PHAL::AlbanyTraits::MPTangent, Traits>  {
   
 public:
+  GatherSolution(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl);
   GatherSolution(const Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);
 private:

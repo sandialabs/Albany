@@ -23,6 +23,8 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
+#include "Albany_Layouts.hpp"
+
 namespace PHAL {
 /** \brief Finite Element Interpolation Evaluator
 
@@ -37,7 +39,8 @@ class DOFGradInterpolation : public PHX::EvaluatorWithBaseImpl<Traits>,
 
 public:
 
-  DOFGradInterpolation(const Teuchos::ParameterList& p);
+  DOFGradInterpolation(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);

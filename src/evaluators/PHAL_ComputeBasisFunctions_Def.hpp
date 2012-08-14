@@ -25,22 +25,17 @@ namespace PHAL {
 //**********************************************************************
 template<typename EvalT, typename Traits>
 ComputeBasisFunctions<EvalT, Traits>::
-ComputeBasisFunctions(const Teuchos::ParameterList& p) :
-  coordVec      (p.get<std::string>                   ("Coordinate Vector Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout") ),
+ComputeBasisFunctions(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) :
+  coordVec      (p.get<std::string>  ("Coordinate Vector Name"), dl->vertices_vector ),
   cubature      (p.get<Teuchos::RCP <Intrepid::Cubature<RealType> > >("Cubature")),
   intrepidBasis (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > > ("Intrepid Basis") ),
   cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
-  weighted_measure (p.get<std::string>                   ("Weights Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  BF            (p.get<std::string>                   ("BF Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
-  wBF           (p.get<std::string>                   ("Weighted BF Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
-  GradBF        (p.get<std::string>                   ("Gradient BF Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
-  wGradBF       (p.get<std::string>                   ("Weighted Gradient BF Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") )
+  weighted_measure (p.get<std::string>  ("Weights Name"), dl->qp_scalar ),
+  BF            (p.get<std::string>  ("BF Name"), dl->node_qp_scalar),
+  wBF           (p.get<std::string>  ("Weighted BF Name"), dl->node_qp_scalar),
+  GradBF        (p.get<std::string>  ("Gradient BF Name"), dl->node_qp_gradient),
+  wGradBF       (p.get<std::string>  ("Weighted Gradient BF Name"), dl->node_qp_gradient)
 {
   this->addDependentField(coordVec);
   this->addEvaluatedField(weighted_measure);
@@ -50,9 +45,8 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p) :
   this->addEvaluatedField(wGradBF);
 
   // Get Dimensions
-  Teuchos::RCP<PHX::DataLayout> vector_dl = p.get< Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout");
   std::vector<PHX::DataLayout::size_type> dim;
-  vector_dl->dimensions(dim);
+  dl->node_qp_gradient->dimensions(dim);
 
   int containerSize = dim[0];
   numNodes = dim[1];
@@ -60,9 +54,8 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p) :
   numDims = dim[3];
 
 
-  Teuchos::RCP<PHX::DataLayout> vert_dl = p.get< Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
-  vert_dl->dimensions(dims);
+  dl->vertices_vector->dimensions(dims);
   numVertices = dims[1];
 
   // Allocate Temporary FieldContainers

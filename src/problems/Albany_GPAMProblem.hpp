@@ -192,16 +192,13 @@ Albany::GPAMProblem::constructEvaluators(
      RCP<ParameterList> p = rcp(new ParameterList("DOFVecGrad Interpolation "+dof_names[0]));
      // Input
      p->set<string>("Variable Name", dof_names[0]);
-     p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
      
      p->set<string>("Gradient BF Name", "Grad BF");
-     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_gradient);
      
      // Output (assumes same Name as input)
      p->set<string>("Gradient Variable Name", dof_names[0]+" Gradient");
-     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_vecgradient);
      
-     ev = rcp(new PHAL::DOFVecGradInterpolation<EvalT,AlbanyTraits>(*p));
+     ev = rcp(new PHAL::DOFVecGradInterpolation<EvalT,AlbanyTraits>(*p,dl));
      fm0.template registerEvaluator<EvalT>(ev);
    }
 
