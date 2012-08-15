@@ -195,6 +195,22 @@ Albany::NonlinearElasticityProblem::getValidProblemParameters() const
 	 validPL->set<RealType>("mult",false,"");
   }
 
+  if (matModel == "MooneyRivlinIncompDamage")
+  {
+	 validPL->set<RealType>("c1",false,"");
+	 validPL->set<RealType>("c2",false,"");
+	 validPL->set<RealType>("mult",false,"");
+	 validPL->set<RealType>("zeta_inf",false,"");
+	 validPL->set<RealType>("iota",false,"");
+  }
+
+  if (matModel == "AAA")
+  {
+	 validPL->set<RealType>("alpha",false,"");
+	 validPL->set<RealType>("beta",false,"");
+	 validPL->set<RealType>("mult",false,"");
+  }
+
   if (matModel == "RIHMR")
   {
 	validPL->sublist("Recovery Modulus", false, "");

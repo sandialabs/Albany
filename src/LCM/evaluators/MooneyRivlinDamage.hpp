@@ -62,6 +62,8 @@ private:
   RealType zeta_inf;
   RealType iota;
 
+  std::string alphaName;
+
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;

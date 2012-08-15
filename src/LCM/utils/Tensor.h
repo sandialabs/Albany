@@ -1812,6 +1812,14 @@ namespace LCM {
   T
   dotdot(Tensor<T, 2> const & A, Tensor<T, 2> const & B);
 
+  /// Tensor4 Tensor4 double dot product
+  /// \param A tensor4
+  /// \param B tensor4
+  /// \return a tensor4 \f$ C_{ijop} = A_{ijkl} : B){lkop} \f$
+  template<typename T, Index N>
+  Tensor4<T, N>
+  dotdot(Tensor4<T,N> const & A, Tensor4<T, N> const & B);
+
   ///
   /// Tensor Frobenius norm
   /// \return \f$ \sqrt{A:A} \f$
@@ -2009,6 +2017,13 @@ namespace LCM {
   template<typename T>
   Tensor<T, 2>
   transpose(Tensor<T, 2> const & A);
+
+  ///
+  /// 4th-order tensor transpose
+  ///
+  template<typename T, Index N>
+  Tensor4<T, N>
+  transpose(Tensor4<T, N> const & A);
 
   ///
   /// Symmetric part of 2nd-order tensor

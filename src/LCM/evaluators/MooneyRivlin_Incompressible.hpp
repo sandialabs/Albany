@@ -24,9 +24,9 @@
 #include "Phalanx_MDField.hpp"
 
 namespace LCM {
-/** \brief incompressible Mooney-Rivlin stress response
+/** \brief Nearly incompressible Mooney-Rivlin stress response
 
-    This evaluator computes stress based on a coupled Mooney-Rivlin
+    This evaluator computes stress based on a decoupled Mooney-Rivlin
     Helmholtz potential.
 
     Based on the methods discussed in Holzapfel's "Nonlinear Solid Mechanics" and

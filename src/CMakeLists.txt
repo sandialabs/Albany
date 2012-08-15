@@ -488,10 +488,12 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/MooneyRivlin.cpp
     ${LCM_DIR}/evaluators/MooneyRivlinDamage.cpp
     ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible.cpp
+    ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible_Damage.cpp
     ${LCM_DIR}/evaluators/RIHMR.cpp
     ${LCM_DIR}/evaluators/RecoveryModulus.cpp
     ${LCM_DIR}/evaluators/FaceFractureCriteria.cpp
     ${LCM_DIR}/evaluators/FaceAverage.cpp
+    ${LCM_DIR}/evaluators/AAA.cpp
   )
 
   IF(ALBANY_MPI)
@@ -655,6 +657,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/MooneyRivlinDamage_Def.hpp
     ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible.hpp
     ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible_Def.hpp
+    ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible_Damage.hpp
+    ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible_Damage_Def.hpp
     ${LCM_DIR}/evaluators/RIHMR.hpp
     ${LCM_DIR}/evaluators/RIHMR_Def.hpp
     ${LCM_DIR}/evaluators/RecoveryModulus.hpp
@@ -663,6 +667,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/FaceFractureCriteria_Def.hpp
     ${LCM_DIR}/evaluators/FaceAverage.hpp
     ${LCM_DIR}/evaluators/FaceAverage_Def.hpp
+    ${LCM_DIR}/evaluators/AAA.hpp
+    ${LCM_DIR}/evaluators/AAA_Def.hpp
  )
 
   IF(ALBANY_MPI)

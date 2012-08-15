@@ -3223,6 +3223,33 @@ namespace LCM {
     return C;
   }
 
+  // Tensor4 Tensor4 double dot product
+  /// \param A tensor4
+  /// \param B tensor4
+  /// \return a tensor4 \f$ C_{ijmn} = A_{ijkl} : B){lkmn} \f$
+  template<typename T, Index N>
+  Tensor4<T, N>
+  dotdot(Tensor4<T, N> const & A, Tensor4<T, N> const & B)
+  {
+    Tensor4<T, N> C;
+
+    for (Index i = 0; i < N; ++i) {
+      for (Index j = 0; j < N; ++j) {
+        for (Index k = 0; k < N; ++k) {
+          for (Index l = 0; l < N; ++l) {
+            for (Index m = 0; m < N; ++m) {
+              for (Index n = 0; n < N; ++n) {
+                C(i,j,m,n) = A(i,j,k,l) * B(l,k,m,n);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return C;
+  }
+
   //
   // 2nd-order tensor 2nd-order tensor tensor product
   // \param A 2nd-order tensor
