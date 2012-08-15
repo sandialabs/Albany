@@ -29,10 +29,10 @@ ExodusOutput::ExodusOutput(const Teuchos::RCP<AbstractDiscretization> &disc) :
   // Nothing to oo
 }
 
-void ExodusOutput::writeSolution(double stamp, const Epetra_Vector &solution)
+void ExodusOutput::writeSolution(double stamp, const Epetra_Vector &solution, const bool overlapped)
 {
    Teuchos::TimeMonitor exoOutTimer(*exoOutTime_);
-   stkDisc_->outputToExodus(solution, stamp);
+   stkDisc_->outputToExodus(solution, stamp, overlapped);
 }
 
 }

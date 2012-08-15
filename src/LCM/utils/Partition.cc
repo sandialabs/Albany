@@ -652,7 +652,8 @@ namespace LCM {
     ball_volume = length_scale * length_scale * length_scale;
 
     const int
-    number_partitions = static_cast<int>(GetVolume() / ball_volume);
+    number_partitions =
+        static_cast<int>(round(GetVolume() / ball_volume));
 
     return number_partitions;
   }

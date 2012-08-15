@@ -7,9 +7,6 @@
 #if !defined(LCM_Tensor_t_cc)
 #define LCM_Tensor_t_cc
 
-#include <boost/tuple/tuple.hpp>
-#include <Sacado_MathFunctions.hpp>
-
 namespace LCM {
 
   //
@@ -24,7 +21,7 @@ namespace LCM {
       for (Index j = 0; j < N; ++j) {
         e[i][j].resize(N);
         for (Index k = 0; k < N; ++k) {
-          e[i][j][k] = std::numeric_limits<T>::quiet_NaN();
+          e[i][j][k] = not_a_number<T>();
         }
       }
     }
@@ -41,7 +38,7 @@ namespace LCM {
     for (Index i = 0; i < 3; ++i) {
       for (Index j = 0; j < 3; ++j) {
         for (Index k = 0; k < 3; ++k) {
-          e[i][j][k] = std::numeric_limits<T>::quiet_NaN();
+          e[i][j][k] = not_a_number<T>();
         }
       }
     }
@@ -58,7 +55,7 @@ namespace LCM {
     for (Index i = 0; i < 2; ++i) {
       for (Index j = 0; j < 2; ++j) {
         for (Index k = 0; k < 2; ++k) {
-          e[i][j][k] = std::numeric_limits<T>::quiet_NaN();
+          e[i][j][k] = not_a_number<T>();
         }
       }
     }
@@ -609,7 +606,7 @@ namespace LCM {
         for (Index k = 0; k < N; ++k) {
           e[i][j][k].resize();
           for (Index l = 0; l < N; ++l) {
-            e[i][j][k][l] = std::numeric_limits<T>::quiet_NaN();
+            e[i][j][k][l] = not_a_number<T>();
           }
         }
       }
@@ -628,7 +625,7 @@ namespace LCM {
       for (Index j = 0; j < 3; ++j) {
         for (Index k = 0; k < 3; ++k) {
           for (Index l = 0; l < 3; ++l) {
-            e[i][j][k][l] = std::numeric_limits<T>::quiet_NaN();
+            e[i][j][k][l] = not_a_number<T>();
           }
         }
       }
@@ -647,7 +644,7 @@ namespace LCM {
       for (Index j = 0; j < 2; ++j) {
         for (Index k = 0; k < 2; ++k) {
           for (Index l = 0; l < 2; ++l) {
-            e[i][j][k][l] = std::numeric_limits<T>::quiet_NaN();
+            e[i][j][k][l] = not_a_number<T>();
           }
         }
       }
@@ -1136,6 +1133,220 @@ namespace LCM {
   }
 
   //
+  // R^N 2nd-order tensor inverse
+  // Gauss-Jordan elimination. Warning: full pivoting
+  // for small tensors. Use Teuchos LAPACK interface for
+  // more efficient and robust techniques.
+  // \param A nonsingular tensor
+  // \return \f$ A^{-1} \f$
+  //
+  template<typename T, Index N>
+  Tensor<T, N>
+  inverse(Tensor<T, N> const & A)
+  {
+    Tensor<T, N> S = A;
+    Tensor<T, N> B = identity<T, N>();
+    Vector<Index, N> p, q;
+
+    p.clear();
+    q.clear();
+
+    // Determine full pivot
+    for (Index k = 0; k < N; ++k) {
+
+      Index m = k;
+      Index n = k;
+
+      T s = fabs(S(m, n));
+
+      for (Index i = k; i < N; ++i) {
+        for (Index j = k; j < N; ++j) {
+          if (fabs(S(i, j)) > s) {
+            m = i;
+            n = j;
+            s = fabs(S(i, j));
+          }
+        }
+      }
+
+      // Swap rows and columns for pivoting
+      swap_row(S, k, m);
+      swap_row(B, k, m);
+
+      swap_col(S, k, n);
+      swap_col(B, k, n);
+
+      p(k) = m;
+      q(k) = n;
+
+      // Gauss-Jordan elimination
+      const T t = S(k, k);
+
+      if (t == 0.0) {
+        std::cerr << "ERROR: Inverse of singular tensor." << std::endl;
+        exit(1);
+      }
+
+      for (Index j = 0; j < N; ++j) {
+        S(k, j) /= t;
+        B(k, j) /= t;
+      }
+
+      for (Index i = 0; i < N; ++i) {
+        if (i == k) continue;
+
+        const T c = S(i, k);
+
+        for (Index j = 0; j < N; ++j) {
+          S(i, j) -= c * S(k, j);
+          B(i, j) -= c * B(k, j);
+        }
+      }
+
+    }
+
+    // Restore order of rows and columns
+    for (Index k = N - 1; k > 0; --k) {
+
+      Index m = p(k);
+      Index n = q(k);
+
+      swap_row(B, k, m);
+      swap_col(B, k, n);
+
+    }
+
+    return B;
+  }
+
+  //
+  // R^3 2nd-order tensor inverse
+  // \param A nonsingular tensor
+  // \return \f$ A^{-1} \f$
+  //
+  template<typename T>
+  Tensor<T, 3>
+  inverse(Tensor<T, 3> const & A)
+  {
+    const T d = det(A);
+    assert(d != 0.0);
+    Tensor<T, 3> B(
+        -A(1,2)*A(2,1) + A(1,1)*A(2,2),
+         A(0,2)*A(2,1) - A(0,1)*A(2,2),
+        -A(0,2)*A(1,1) + A(0,1)*A(1,2),
+         A(1,2)*A(2,0) - A(1,0)*A(2,2),
+        -A(0,2)*A(2,0) + A(0,0)*A(2,2),
+         A(0,2)*A(1,0) - A(0,0)*A(1,2),
+        -A(1,1)*A(2,0) + A(1,0)*A(2,1),
+         A(0,1)*A(2,0) - A(0,0)*A(2,1),
+        -A(0,1)*A(1,0) + A(0,0)*A(1,1)
+    );
+    return B / d;
+  }
+
+  //
+  // R^2 2nd-order tensor inverse
+  // \param A nonsingular tensor
+  // \return \f$ A^{-1} \f$
+  //
+  template<typename T>
+  Tensor<T, 2>
+  inverse(Tensor<T, 2> const & A)
+  {
+    const T d = det(A);
+    assert(d != 0.0);
+    Tensor<T, 2> B(A(1,1), -A(0,1), -A(1,0), A(0,0));
+    return B / d;
+  }
+
+  //
+  // R^N Subtensor
+  // \param A tensor
+  // \param i index
+  // \param j index
+  // \return Subtensor with i-row and j-col deleted.
+  //
+  template<typename T, Index N>
+  Tensor<T, N - 1>
+  subtensor(Tensor<T, N> const & A, Index i, Index j)
+  {
+    assert(i < N);
+    assert(j < N);
+
+    Tensor<T, N - 1> B;
+
+    Index p = 0;
+    Index q = 0;
+    for (Index m = 0; m < N; ++m) {
+      if (m == i) continue;
+      for (Index n = 0; n < N; ++n) {
+        if (n == j) continue;
+        B(p, q) = A(m, n);
+        ++q;
+      }
+      ++p;
+    }
+
+    return B;
+  }
+
+  //
+  // R^3 Subtensor
+  // \param A tensor
+  // \param i index
+  // \param j index
+  // \return Subtensor with i-row and j-col deleted.
+  //
+  template<typename T>
+  Tensor<T, 2>
+  subtensor(Tensor<T, 3> const & A, Index i, Index j)
+  {
+    assert(i < 3);
+    assert(j < 3);
+
+    Tensor<T, 2> B;
+
+    Index p = 0;
+    Index q = 0;
+    for (Index m = 0; m < 3; ++m) {
+      if (m == i) continue;
+      for (Index n = 0; n < 3; ++n) {
+        if (n == j) continue;
+        B(p, q) = A(m, n);
+        ++q;
+      }
+      ++p;
+    }
+
+    return B;
+  }
+
+  //
+  // R^2 Subtensor
+  // \param A tensor
+  // \param i index
+  // \param j index
+  // \return Subtensor with i-row and j-col deleted.
+  //
+  template<typename T>
+  Tensor<T, 1>
+  subtensor(Tensor<T, 2> const & A, Index i, Index j)
+  {
+    assert(i < 2);
+    assert(j < 2);
+
+    Tensor<T, 1> B;
+
+    Index m = 1 - i;
+    Index n = 1 - j;
+
+    B(0, 0) = A(m, n);
+
+    return B;
+
+  }
+
+  //
   // R^N exponential map by Taylor series, radius of convergence is infinity
   // \param A tensor
   // \return \f$ \exp A \f$
@@ -1148,7 +1359,7 @@ namespace LCM {
     max_iter = 128;
 
     const T
-    tol = std::numeric_limits<T>::epsilon();
+    tol = machine_epsilon<T>();
 
     Tensor<T, N>
     term = identity<T, N>();
@@ -1188,7 +1399,7 @@ namespace LCM {
     max_iter = 128;
 
     const T
-    tol = std::numeric_limits<T>::epsilon();
+    tol = machine_epsilon<T>();
 
     const T
     norm_arg = norm_1(A);
@@ -1233,9 +1444,9 @@ namespace LCM {
   {
     //firewalls, make sure R \in SO(N)
     assert(norm(R*transpose(R) - eye<T, N>())
-        < 100.0 * std::numeric_limits<T>::epsilon());
+        < 100.0 * machine_epsilon<T>());
     assert(fabs(det(R) - 1.0)
-        < 100.0 * std::numeric_limits<T>::epsilon());
+        < 100.0 * machine_epsilon<T>());
 
     std::cerr << "Logarithm of SO(N) N != 2,3 not implemented." << std::endl;
     exit(1);
@@ -1256,9 +1467,9 @@ namespace LCM {
   {
     //firewalls, make sure R \in SO(3)
     assert(norm(R*transpose(R) - eye<T, 3>())
-        < 100.0 * std::numeric_limits<T>::epsilon());
+        < 100.0 * std::numeric_limits<double>::epsilon());
     assert(fabs(det(R) - 1.0)
-        < 100.0 * std::numeric_limits<T>::epsilon());
+        < 100.0 * std::numeric_limits<double>::epsilon());
 
     // acos requires input between -1 and +1
     T
@@ -1279,7 +1490,7 @@ namespace LCM {
     if (theta == 0) {
       r = zero<T, 3>();
     } else if (fabs(cosine + 1.0) <
-        10.0*std::numeric_limits<T>::epsilon())  {
+        10.0*machine_epsilon<T>())  {
       // Rotation angle is PI.
       r = log_rotation_pi(R);
     } else {
@@ -1300,9 +1511,9 @@ namespace LCM {
   {
     //firewalls, make sure R \in SO(2)
     assert(norm(R*transpose(R) - eye<T, 2>())
-        < 100.0 * std::numeric_limits<T>::epsilon());
+        < 100.0 * machine_epsilon<T>());
     assert(fabs(det(R) - 1.0)
-        < 100.0 * std::numeric_limits<T>::epsilon());
+        < 100.0 * machine_epsilon<T>());
 
     // acos requires input between -1 and +1
     T
@@ -1318,9 +1529,7 @@ namespace LCM {
     theta = acos(cosine);
 
     Tensor<T, 2>
-    r(0.0, -1.0, 1.0, 0.0);
-
-    r *= theta;
+    r(0.0, -theta, theta, 0.0);
 
     return r;
   }
@@ -1352,7 +1561,7 @@ namespace LCM {
   {
     // set firewall to make sure the rotation is indeed 180 degrees
     assert(fabs(0.5 * (trace(R) - 1.0) + 1.0)
-        < std::numeric_limits<T>::epsilon());
+        < machine_epsilon<T>());
 
     // obtain U from R = LU
     Tensor<T, 3>
@@ -1360,7 +1569,7 @@ namespace LCM {
 
     // backward substitution (for rotation exp(R) only)
     const T
-    tol = 10.0*std::numeric_limits<T>::epsilon();
+    tol = 10.0*machine_epsilon<T>();
 
     Vector<T, 3>
     normal;
@@ -1409,7 +1618,7 @@ namespace LCM {
   log_rotation_pi(Tensor<T, 2> const & R)
   {
     // set firewall to make sure the rotation is indeed 180 degrees
-    assert(fabs(R(0,0) - 1.0) < std::numeric_limits<T>::epsilon());
+    assert(fabs(R(0,0) - 1.0) < machine_epsilon<T>());
 
     const T
     theta = acos(-1.0);
@@ -1420,9 +1629,7 @@ namespace LCM {
 
     // obtain U from R = LU
     Tensor<T, 2>
-    r(0.0, -1.0, 1.0, 0.0);
-
-    r *= theta;
+    r(0.0, -theta, theta, 0.0);
 
     return r;
   }
@@ -1439,7 +1646,7 @@ namespace LCM {
     U = A;
 
     const T
-    tol = 10.0 * std::numeric_limits<T>::epsilon();
+    tol = 10.0 * machine_epsilon<T>();
 
     Index i = 0;
     Index j = 0;
@@ -1541,7 +1748,7 @@ namespace LCM {
   exp_skew_symmetric(Tensor<T, 3> const & r)
   {
     // Check whether skew-symmetry holds
-    assert(norm(r+transpose(r)) < std::numeric_limits<T>::epsilon());
+    assert(norm(r+transpose(r)) < machine_epsilon<T>());
 
     T
     theta = sqrt(r(2,1)*r(2,1)+r(0,2)*r(0,2)+r(1,0)*r(1,0));
@@ -1550,7 +1757,7 @@ namespace LCM {
     R = identity<T, 3>();
 
     //Check whether norm == 0. If so, return identity.
-    if (theta >= std::numeric_limits<T>::epsilon()) {
+    if (theta >= machine_epsilon<T>()) {
       R += sin(theta)/theta*r + (1.0-cos(theta))/(theta*theta)*r*r;
     }
 
@@ -1567,7 +1774,7 @@ namespace LCM {
   exp_skew_symmetric(Tensor<T, 2> const & r)
   {
     // Check whether skew-symmetry holds
-    assert(norm(r+transpose(r)) < std::numeric_limits<T>::epsilon());
+    assert(norm(r+transpose(r)) < machine_epsilon<T>());
 
     T
     theta = r(1,0);
@@ -1632,6 +1839,34 @@ namespace LCM {
   }
 
   //
+  // R^N arg max abs. Useful for inverse and other algorithms
+  // that rely on Jacobi-type procedures.
+  // \param A
+  // \return \f$ (p,q) = arg max_{i,j} |a_{ij}| \f$
+  //
+  template<typename T, Index N>
+  std::pair<Index, Index>
+  arg_max_abs(Tensor<T, N> const & A)
+  {
+    Index p = 0;
+    Index q = 0;
+
+    T s = fabs(A(p,q));
+
+    for (Index i = 0; i < N; ++i) {
+      for (Index j = 0; j < N; ++j) {
+        if (fabs(A(i,j)) > s) {
+          p = i;
+          q = j;
+          s = fabs(A(i,j));
+        }
+      }
+    }
+
+    return std::make_pair(p,q);
+  }
+
+  //
   // R^N arg max off-diagonal. Useful for SVD and other algorithms
   // that rely on Jacobi-type procedures.
   // \param A
@@ -1648,34 +1883,6 @@ namespace LCM {
 
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
-        if (i != j && fabs(A(i,j)) > s) {
-          p = i;
-          q = j;
-          s = fabs(A(i,j));
-        }
-      }
-    }
-
-    return std::make_pair(p,q);
-  }
-
-  //
-  // R^3 arg max off-diagonal. Useful for SVD and other algorithms
-  // that rely on Jacobi-type procedures.
-  // \param A
-  // \return \f$ (p,q) = arg max_{i \neq j} |a_{ij}| \f$
-  //
-  template<typename T>
-  std::pair<Index, Index>
-  arg_max_off_diagonal(Tensor<T, 3> const & A)
-  {
-    Index p = 0;
-    Index q = 1;
-
-    T s = fabs(A(p,q));
-
-    for (Index i = 0; i < 3; ++i) {
-      for (Index j = 0; j < 3; ++j) {
         if (i != j && fabs(A(i,j)) > s) {
           p = i;
           q = j;
@@ -1742,12 +1949,12 @@ namespace LCM {
     if (ga == 0.0) {
       s1 = ha;
       s0 = fa;
-    } else if (ga > fa && fa / ga < std::numeric_limits<T>::epsilon()) {
+    } else if (ga > fa && fa / ga < machine_epsilon<T>()) {
       // case of very large ga
       s0 = ga;
       s1 = ha > 1.0 ?
-          fa / (ga / ha) :
-          (fa / ga) * ha;
+          T(fa / (ga / ha)) :
+          T((fa / ga) * ha);
       cu = 1.0;
       su = h / g;
       cv = f / g;
@@ -1756,16 +1963,16 @@ namespace LCM {
       // normal case
       T d = fa - ha;
       T l = d != fa ?
-          d / fa :
-          1.0; // l \in [0,1]
+          T(d / fa) :
+          T(1.0); // l \in [0,1]
       T m = g / f; // m \in (-1/macheps, 1/macheps)
       T t = 2.0 - l; // t \in [1,2]
       T mm = m * m;
       T tt = t * t;
       T s = sqrt(tt + mm); // s \in [1,1 + 1/macheps]
       T r = l != 0.0 ?
-          sqrt(l * l + mm) :
-          fabs(m); // r \in [0,1 + 1/macheps]
+          T(sqrt(l * l + mm)) :
+          T(fabs(m)); // r \in [0,1 + 1/macheps]
       T a = 0.5 * (s + r); // a \in [1,1 + |m|]
       s1 = ha / a;
       s0 = fa * a;
@@ -1777,8 +1984,8 @@ namespace LCM {
       } else {
         // note that m is very tiny
         tau = l == 0.0 ?
-            copysign(T(2.0), f) * copysign(T(1.0), g) :
-            g / copysign(d, f) + m / t;
+            T(copysign(T(2.0), f) * copysign(T(1.0), g)) :
+            T(g / copysign(d, f) + m / t);
       }
       T lv = sqrt(tau * tau + 4.0); // second assignment to L in DLASV2
       cv = 2.0 / lv;
@@ -1827,10 +2034,10 @@ namespace LCM {
     off = norm_off_diagonal(S);
 
     const T
-    tol = std::numeric_limits<T>::epsilon() * norm(A);
+    tol = machine_epsilon<T>() * norm(A);
 
     const Index
-    max_iter = 1000;
+    max_iter = 128;
 
     Index
     num_iter = 0;
@@ -1869,7 +2076,7 @@ namespace LCM {
       cr = R(0,0);
 
       T const &
-      sr = (sgn(R(0,1)) == sgn(R(1,0))) ? -R(0,1) : R(0,1);
+      sr = (sgn(R(0,1)) == sgn(R(1,0))) ? T(-R(0,1)) : T(R(0,1));
 
       // Apply both Givens rotations to matrices
       // that are converging to singular values and singular vectors
@@ -1888,74 +2095,6 @@ namespace LCM {
     }
 
     return boost::make_tuple(U, diag(diag(S)), transpose(V));
-  }
-
-  //
-  // R^2 singular value decomposition (SVD)
-  // \param A tensor
-  // \return \f$ A = USV^T\f$
-  //
-  template<typename T>
-  boost::tuple<Tensor<T, 2>, Tensor<T, 2>, Tensor<T, 2> >
-  svd2(Tensor<T, 2> const & A)
-  {
-    // Preliminaries
-    const T
-    Ju = A(0,0)*A(0,0) + A(0,1)*A(0,1);
-
-    const T
-    Lu = A(0,0)*A(1,0) + A(0,1)*A(1,1);
-
-    const T
-    Ku = A(1,0)*A(1,0) + A(1,1)*A(1,1);
-
-    const T
-    Jv = A(0,0)*A(0,0) + A(1,0)*A(1,0);
-
-    const T
-    Lv = A(0,0)*A(0,1) + A(1,0)*A(1,1);
-
-    const T
-    Kv = A(0,1)*A(0,1) + A(1,1)*A(1,1);
-
-    // Form left singular vectors
-    T cu, su;
-    boost::tie(cu, su) = half_angle(Ju - Ku, 2 * Lu);
-
-    Tensor<T, 2>
-    U(cu, -su, su, cu);
-
-    // Form right singular vectors
-    T cv, sv;
-    boost::tie(cv, sv) = half_angle(Jv - Kv, 2 * Lv);
-
-    Tensor<T, 2>
-    V(cv, -sv, sv, cv);
-
-    // Compute singular values
-   const Tensor<T, 2>
-    X = transpose(U) * A * V;
-
-    const T
-    s0 = X(0,0);
-
-    const T
-    s1 = X(1,1);
-
-    if (s0 < 0.0) {
-      V(0,0) = -V(0,0);
-      V(1,0) = -V(1,0);
-    }
-
-    if (s1 < 0.0) {
-      V(0,1) = -V(0,1);
-      V(1,1) = -V(1,1);
-    }
-
-    Tensor<T, 2>
-    S(fabs(s0), 0.0, 0.0, fabs(s1));
-
-    return boost::make_tuple(U, S, V);
   }
 
   //
@@ -1992,36 +2131,130 @@ namespace LCM {
   }
 
   //
+  // Project to O(N) (Orthogonal Group) using a Newton-type algorithm.
+  // See Higham's Functions of Matrices p210 [2008]
+  // \param A tensor (often a deformation-gradient-like tensor)
+  // \return \f$ R = \argmin_Q \|A - Q\|\f$
+  // This algorithm projects a given tensor in GL(N) to O(N).
+  // The rotation/reflection obtained through this projection is
+  // the orthogonal component of the real polar decomposition
+  //
+  template<typename T, Index N>
+  Tensor<T, N>
+  polar_rotation(Tensor<T, N> const & A)
+  {
+    bool
+    scale = true;
+
+    const T
+    tol_scale = 0.01;
+
+    const T
+    tol_conv = sqrt(N) * machine_epsilon<T>();
+
+    Tensor<T, N>
+    X = A;
+
+    T
+    gamma = 2.0;
+
+    const Index
+    max_iter = 128;
+
+    Index
+    num_iter = 0;
+
+    while (num_iter < max_iter) {
+
+      Tensor<T, N>
+      Y = inverse(X);
+
+      T
+      mu = 1.0;
+
+      if (scale == true) {
+        mu = (norm_1(Y) * norm_infinity(Y)) / (norm_1(X) * norm_infinity(X));
+        mu = sqrt(sqrt(mu));
+      }
+
+      Tensor<T, N>
+      Z = 0.5 * (mu * X + transpose(Y) / mu);
+
+      Tensor<T, N>
+      D = Z - X;
+
+      T
+      delta = norm(D) / norm(Z);
+
+      if (scale == true && delta < tol_scale) {
+        scale = false;
+      }
+
+      bool
+      end_iter =
+          norm(D) <= sqrt(tol_conv) ||
+          (delta > 0.5 * gamma && scale == false);
+
+      X = Z;
+      gamma = delta;
+
+      if (end_iter == true) {
+        break;
+      }
+
+    }
+
+    if (num_iter == max_iter) {
+      std::cerr << "WARNING: Polar iteration did not converge." << std::endl;
+    }
+
+    return X;
+  }
+
+  //
   // R^N Left polar decomposition
-  // \param F tensor (often a deformation-gradient-like tensor)
-  // \return \f$ VR = F \f$ with \f$ R \in SO(N) \f$ and V SPD(N)
+  // \param A tensor (often a deformation-gradient-like tensor)
+  // \return \f$ VR = A \f$ with \f$ R \in SO(N) \f$ and \f$ V \in SPD(N) \f$
   //
   template<typename T, Index N>
   std::pair<Tensor<T, N>, Tensor<T, N > >
-  polar_left(Tensor<T, N> const & F)
+  polar_left(Tensor<T, N> const & A)
   {
     Tensor<T, N>
-    X, S, Y;
-
-    boost::tie(X, S, Y) = svd(F);
+    R = polar_rotation(A);
 
     Tensor<T, N>
-    R = X * transpose(Y);
-
-    Tensor<T, N>
-    V = X * S * transpose(X);
+    V = symm(A * transpose(R));
 
     return std::make_pair(V, R);
   }
 
   //
-  // R^3 left polar decomposition
+  // R^N Right polar decomposition
+  // \param A tensor (often a deformation-gradient-like tensor)
+  // \return \f$ RU = A \f$ with \f$ R \in SO(N) \f$ and \f$ U \in SPD(N) \f$
+  //
+  template<typename T, Index N>
+  std::pair<Tensor<T, N>, Tensor<T, N > >
+  polar_right(Tensor<T, N> const & A)
+  {
+    Tensor<T, N>
+    R = polar_rotation(A);
+
+    Tensor<T, N>
+    U = symm(transpose(R) * A);
+
+    return std::make_pair(R, U);
+  }
+
+  //
+  // R^3 left polar decomposition with eigenvalue decomposition
   // \param F tensor (often a deformation-gradient-like tensor)
   // \return \f$ VR = F \f$ with \f$ R \in SO(3) \f$ and V SPD(3)
   //
   template<typename T>
   std::pair<Tensor<T, 3>, Tensor<T, 3> >
-  polar_left(Tensor<T, 3> const & F)
+  polar_left_eig(Tensor<T, 3> const & F)
   {
     // set up return tensors
     Tensor<T, 3>
@@ -2071,59 +2304,13 @@ namespace LCM {
   }
 
   //
-  // R^2 left polar decomposition
-  // \param F tensor (often a deformation-gradient-like tensor)
-  // \return \f$ VR = F \f$ with \f$ R \in SO(2) \f$ and V SPD(2)
-  //
-  template<typename T>
-  std::pair<Tensor<T, 2>, Tensor<T, 2 > >
-  polar_left(Tensor<T, 2> const & F)
-  {
-    Tensor<T, 2>
-    X, S, Y;
-
-    boost::tie(X, S, Y) = svd(F);
-
-    Tensor<T, 2>
-    R = X * transpose(Y);
-
-    Tensor<T, 2>
-    V = X * S * transpose(X);
-
-    return std::make_pair(V, R);
-  }
-
-  //
-  // R^N right polar decomposition
-  // \param F tensor (often a deformation-gradient-like tensor)
-  // \return \f$ RU = F \f$ with \f$ R \in SO(N) \f$ and U SPD(N)
-  //
-  template<typename T, Index N>
-  std::pair<Tensor<T, N>, Tensor<T, N> >
-  polar_right(Tensor<T, N> const & F)
-  {
-    Tensor<T, N>
-    X, S, Y;
-
-    boost::tie(X, S, Y) = svd(F);
-
-    Tensor<T, N>
-    R = X * transpose(Y);
-
-    Tensor<T, N>
-    U = Y * S * transpose(Y);
-
-    return std::make_pair(R, U);
-  }
-
-  //
-  // R^3 right polar decomposition
+  // R^3 right polar decomposition with eigenvalue decomposition
   // \param F tensor (often a deformation-gradient-like tensor)
   // \return \f$ RU = F \f$ with \f$ R \in SO(3) \f$ and U SPD(3)
   //
   template<typename T>
   std::pair<Tensor<T, 3>, Tensor<T, 3> >
-  polar_right(Tensor<T, 3> const & F)
+  polar_right_eig(Tensor<T, 3> const & F)
   {
     Tensor<T, 3>
     R;
@@ -2167,29 +2354,6 @@ namespace LCM {
     U    = eVec * x * transpose(eVec);
     Uinv = eVec * xi * transpose(eVec);
     R    = F * Uinv;
-
-    return std::make_pair(R, U);
-  }
-
-  //
-  // R^2 right polar decomposition
-  // \param F tensor (often a deformation-gradient-like tensor)
-  // \return \f$ RU = F \f$ with \f$ R \in SO(2) \f$ and U SPD(2)
-  //
-  template<typename T>
-  std::pair<Tensor<T, 2>,Tensor<T, 2> >
-  polar_right(Tensor<T, 2> const & F)
-  {
-    Tensor<T, 2>
-    X, S, Y;
-
-    boost::tie(X, S, Y) = svd(F);
-
-    Tensor<T, 2>
-    R = X * transpose(Y);
-
-    Tensor<T, 2>
-    U = Y * S * transpose(Y);
 
     return std::make_pair(R, U);
   }
@@ -2422,10 +2586,10 @@ namespace LCM {
     off = norm_off_diagonal(D);
 
     const T
-    tol = std::numeric_limits<T>::epsilon() * norm(A);
+    tol = machine_epsilon<T>() * norm(A);
 
     const Index
-    max_iter = 1000;
+    max_iter = 128;
 
     Index
     num_iter = 0;
@@ -2834,13 +2998,15 @@ namespace LCM {
   const Tensor4<T, N>
   identity_1()
   {
-    Tensor4<T, N> I;
+    Tensor4<T, N> I(T(0.0));
 
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
         for (Index k = 0; k < N; ++k) {
           for (Index l = 0; l < N; ++l) {
-            I(i,j,k,l) = (i == k && j == l) ? 1.0 : 0.0;
+            if (i == k && j == l) {
+              I(i,j,k,l) = 1.0;
+            }
           }
         }
       }
@@ -2857,13 +3023,15 @@ namespace LCM {
   const Tensor4<T, N>
   identity_2()
   {
-    Tensor4<T, N> I;
+    Tensor4<T, N> I(T(0.0));
 
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
         for (Index k = 0; k < N; ++k) {
           for (Index l = 0; l < N; ++l) {
-            I(i,j,k,l) = (i == l && j == k) ? 1.0 : 0.0;
+            if (i == l && j == k) {
+              I(i,j,k,l) = 1.0;
+            }
           }
         }
       }
@@ -2880,13 +3048,15 @@ namespace LCM {
   const Tensor4<T, N>
   identity_3()
   {
-    Tensor4<T, N> I;
+    Tensor4<T, N> I(T(0.0));
 
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
         for (Index k = 0; k < N; ++k) {
           for (Index l = 0; l < N; ++l) {
-            I(i,j,k,l) = (i == j && k == l) ? 1.0 : 0.0;
+            if (i == j && k == l) {
+              I(i,j,k,l) = 1.0;
+            }
           }
         }
       }
@@ -2910,10 +3080,11 @@ namespace LCM {
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
         for (Index k = 0; k < N; ++k) {
-          B(i,j,k) = 0.0;
+          T s = 0.0;
           for (Index l = 0; l < N; ++l) {
-            B(i,j,k) = A(i,j,k,l) * u(l);
+            s += A(i,j,k,l) * u(l);
           }
+          B(i,j,k) = s;
         }
       }
     }
@@ -2935,10 +3106,11 @@ namespace LCM {
     for (Index j = 0; j < N; ++j) {
       for (Index k = 0; k < N; ++k) {
         for (Index l = 0; l < N; ++l) {
-          B(j,k,l) = 0.0;
+          T s = 0.0;
           for (Index i = 0; i < N; ++i) {
-            B(j,k,l) = u(i) * A(i,j,k,l);
+            s += u(i) * A(i,j,k,l);
           }
+          B(j,k,l) = s;
         }
       }
     }
@@ -2960,10 +3132,11 @@ namespace LCM {
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
         for (Index l = 0; l < N; ++l) {
-          B(i,j,l) = 0.0;
+          T s = 0.0;
           for (Index k = 0; k < N; ++k) {
-            B(i,j,l) = A(i,j,k,l) * u(k);
+            s += A(i,j,k,l) * u(k);
           }
+          B(i,j,l) = s;
         }
       }
     }
@@ -2985,10 +3158,11 @@ namespace LCM {
     for (Index i = 0; i < N; ++i) {
       for (Index k = 0; k < N; ++k) {
         for (Index l = 0; l < N; ++l) {
-          B(i,k,l) = 0.0;
+          T s = 0.0;
           for (Index j = 0; j < N; ++j) {
-            B(i,k,l) = u(j) * A(i,j,k,l);
+            s += u(j) * A(i,j,k,l);
           }
+          B(i,k,l) = s;
         }
       }
     }
@@ -3009,12 +3183,13 @@ namespace LCM {
 
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
-        C(i,j) = 0.0;
+        T s = 0.0;
         for (Index k = 0; k < N; ++k) {
           for (Index l = 0; l < N; ++l) {
-            C(i,j) += A(i,j,k,l) * B(k,l);
+            s += A(i,j,k,l) * B(k,l);
           }
         }
+        C(i,j) = s;
       }
     }
 
@@ -3035,12 +3210,13 @@ namespace LCM {
 
     for (Index k = 0; k < N; ++k) {
       for (Index l = 0; l < N; ++l) {
-        C(k,l) = 0.0;
+        T s = 0.0;
         for (Index i = 0; i < N; ++i) {
           for (Index j = 0; j < N; ++j) {
-            C(k,l) += A(i,j,k,l) * B(i,j);
+            s += A(i,j,k,l) * B(i,j);
           }
         }
+        C(k,l) = s;
       }
     }
 

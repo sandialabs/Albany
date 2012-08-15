@@ -81,6 +81,10 @@ namespace QCAD {
     void getAllMatchingParams_helper(const std::string& paramName, 
 				     std::vector<T>& results, Teuchos::ParameterList& pList);
 
+    std::string translateDBSublistName(Teuchos::ParameterList*, const std::string&);
+
+    
+
   private:
 
     //! Private to prohibit copying

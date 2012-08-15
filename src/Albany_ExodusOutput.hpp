@@ -31,7 +31,7 @@ class STKDiscretization;
 
 class ExodusOutput {
 public:
-   void writeSolution(double stamp, const Epetra_Vector &solution);
+   void writeSolution(double stamp, const Epetra_Vector &solution, const bool overlapped = false);
 
    explicit ExodusOutput(const Teuchos::RCP<AbstractDiscretization> &disc);
 

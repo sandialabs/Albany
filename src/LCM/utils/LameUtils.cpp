@@ -89,6 +89,8 @@ Teuchos::RCP<LameMaterial> constructLameMaterialModel(const std::string& lameMat
 #ifdef ALBANY_LAMENT
   if(materialModelName == "ELASTIC_NEW")
     materialModel = Teuchos::rcp(new lament::ElasticNew<double>(props));
+  else if(materialModelName == "NEOHOOKEAN")
+    materialModel = Teuchos::rcp(new lament::Neohookean<double>(props));
   else{
     if(materialModel.is_null())
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, " unsupported LAMENT material model: " + lameMaterialModelName + " (" + materialModelName + ")\n");

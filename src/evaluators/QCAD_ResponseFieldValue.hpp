@@ -46,6 +46,8 @@ namespace QCAD {
 
     // Set NodeID structure for cell corrsponding to max/min
     void setNodeID(const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >&) {}
+
+    Teuchos::Array<int> field_components;
   };
 
   template<typename Traits> 
@@ -86,6 +88,7 @@ namespace QCAD {
 
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > nodeID;
     int numNodes;
+    Teuchos::Array<int> field_components;
   };
 
   template<typename Traits> 
@@ -126,6 +129,7 @@ namespace QCAD {
 
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > nodeID;
     int numNodes;
+    Teuchos::Array<int> field_components;
   };
 
   template<typename Traits> 
@@ -166,6 +170,7 @@ namespace QCAD {
 
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > nodeID;
     int numNodes;
+    Teuchos::Array<int> field_components;
   };
 
 /** 
@@ -202,6 +207,7 @@ namespace QCAD {
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
     PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > max_nodeID;
+    Teuchos::Array<int> field_components;
     
     bool bOpFieldIsVector, bRetFieldIsVector;
 

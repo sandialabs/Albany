@@ -420,6 +420,7 @@ Albany::SolverFactory::getValidAppParameters() const
   validPL->sublist("Regression Results", false, "Regression Results sublist");
   validPL->sublist("VTK",                false, "DEPRECATED  VTK sublist");
   validPL->sublist("Piro",               false, "Piro sublist");
+  validPL->sublist("Coupled System",     false, "Coupled system sublist");
 
   // validPL->set<string>("Jacobian Operator", "Have Jacobian", "Flag to allow Matrix-Free specification in Piro");
   // validPL->set<double>("Matrix-Free Perturbation", 3.0e-7, "delta in matrix-free formula");
@@ -538,7 +539,10 @@ setCoordinatesForML(const string& solutionMethod,
       stratList = & piroParams->sublist("NOX").sublist("Direction").sublist("Newton").
                     sublist("Stratimikos Linear Solver").sublist("Stratimikos");
     else if (solutionMethod=="Transient"  && secondOrder=="No")
-      stratList = & piroParams->sublist("Rythmos").sublist("Stratimikos");
+      if (piroParams->isSublist("Rythmos"))
+        stratList = & piroParams->sublist("Rythmos").sublist("Stratimikos");
+      if (piroParams->isSublist("Rythmos Solver"))
+        stratList = & piroParams->sublist("Rythmos Solver").sublist("Stratimikos");
 
     if (stratList && stratList->isParameter("Preconditioner Type")) // Make sure stratList is set before dereference
       if ("ML" == stratList->get<string>("Preconditioner Type")) {

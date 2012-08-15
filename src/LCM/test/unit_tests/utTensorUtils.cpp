@@ -15,9 +15,10 @@
  \********************************************************************/
 #include<ctime>
 
-#include <Teuchos_UnitTestHarness.hpp>
-#include "Tensor.h"
 #include "Intrepid_FieldContainer.hpp"
+#include "Sacado.hpp"
+#include "Tensor.h"
+#include "Teuchos_UnitTestHarness.hpp"
 
 using namespace std;
 
@@ -40,7 +41,8 @@ namespace {
 
     const ScalarT * dataPtr0 = &FC(0, 0);
 
-    LCM::Vector<ScalarT, 3> u(dataPtr0);
+    const unsigned int N = 3;
+    LCM::Vector<ScalarT, N> u(dataPtr0);
 
     TEST_COMPARE( u(0), ==, 1.0);
     TEST_COMPARE( u(1), ==, 2.0);
@@ -48,7 +50,7 @@ namespace {
 
     const ScalarT * dataPtr1 = &FC(1, 0);
 
-    u = LCM::Vector<ScalarT, 3>(dataPtr1);
+    u = LCM::Vector<ScalarT, N>(dataPtr1);
 
     TEST_COMPARE( u(0), ==, 4.0);
     TEST_COMPARE( u(1), ==, 5.0);
@@ -56,7 +58,7 @@ namespace {
 
     const ScalarT * dataPtr2 = &FC(2, 0);
 
-    u = LCM::Vector<ScalarT, 3>(dataPtr2);
+    u = LCM::Vector<ScalarT, N>(dataPtr2);
 
     TEST_COMPARE( u(0), ==, 7.0);
     TEST_COMPARE( u(1), ==, 8.0);
@@ -439,6 +441,68 @@ namespace {
 
     LCM::Tensor<ScalarT, 3>
     B = V * D * LCM::transpose(V);
+
+    TEST_COMPARE(norm(A - B), <=, 100*std::numeric_limits<ScalarT>::epsilon());
+  }
+
+  TEUCHOS_UNIT_TEST(TensorUtils, TensorInverse4x4)
+  {
+    LCM::Tensor<ScalarT, 4>
+    A(
+        2.0, 1.0, 0.0, 0.0,
+        1.0, 2.0, 1.0, 0.0,
+        0.0, 1.0, 2.0, 1.0,
+        0.0, 0.0, 1.0, 2.0
+    );
+
+    LCM::Tensor<ScalarT, 4>
+    B = inverse(A);
+
+    LCM::Tensor<ScalarT, 4>
+    C = A * B;
+
+    LCM::Tensor<ScalarT, 4>
+    D = LCM::eye<ScalarT, 4>();
+
+    TEST_COMPARE(norm(C - D), <=, 100*std::numeric_limits<ScalarT>::epsilon());
+  }
+
+  TEUCHOS_UNIT_TEST(TensorUtils, TensorPolar3x3)
+  {
+    LCM::Tensor<ScalarT, 3>
+    A(2.0, 1.0, 0.0, 0.0, 2.0, 1.0, 0.0, 0.0, 2.0);
+
+    LCM::Tensor<ScalarT, 3>
+    R, U;
+
+    boost::tie(R, U) = LCM::polar_right(A);
+
+    LCM::Tensor<ScalarT, 3>
+    X, D, Y;
+
+    boost::tie(X, D, Y) = LCM::svd(A);
+
+
+    LCM::Tensor<ScalarT, 3>
+    B = R - X * LCM::transpose(Y) + U - Y * D * LCM::transpose(Y);
+
+    TEST_COMPARE(norm(B), <=, 100*std::numeric_limits<ScalarT>::epsilon());
+  }
+
+  TEUCHOS_UNIT_TEST(TensorUtils, TensorSVD3x3Fad)
+  {
+    LCM::Tensor < Sacado::Fad::DFad<double>, 3>
+    A(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0);
+
+    LCM::Tensor<Sacado::Fad::DFad<double>, 3> U, S, V;
+
+    boost::tie(U, S, V) = LCM::svd(A);
+
+    LCM::Tensor < Sacado::Fad::DFad<double>, 3 > B = U * S * LCM::transpose(V);
+
+    std::cout << std::endl;
+    std::cout << "LOGARITHM OF NEGATIVE NUMBER: " << log(-1.0) << std::endl;
+    std::cout << std::endl;
 
     TEST_COMPARE(norm(A - B), <=, 100*std::numeric_limits<ScalarT>::epsilon());
   }

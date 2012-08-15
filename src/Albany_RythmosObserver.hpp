@@ -49,6 +49,13 @@ public:
     )
   { };
 
+  // Print initial condition
+  void observeStartTimeStep(
+    const Rythmos::StepperBase<Scalar> &stepper,
+    const Rythmos::StepControlInfo<Scalar> &stepCtrlInfo,
+    const int timeStepIter
+    );
+
   void observeCompletedTimeStep(
     const Rythmos::StepperBase<Scalar> &stepper,
     const Rythmos::StepControlInfo<Scalar> &stepCtrlInfo,
@@ -58,6 +65,8 @@ public:
 private:
    Teuchos::RCP<Albany::AbstractDiscretization> disc;
    Teuchos::RCP<Albany::Application> app;
+
+   bool initial_step;
 
    Albany::ExodusOutput exodusOutput;
 };

@@ -185,6 +185,7 @@ Application(const RCP<const Epetra_Comm>& comm_,
   overlapped_xdot = rcp(new Epetra_Vector(*(disc->getOverlapMap())));
   overlapped_f = rcp(new Epetra_Vector(*(disc->getOverlapMap())));
   overlapped_jac = rcp(new Epetra_CrsMatrix(Copy, *(disc->getOverlapJacobianGraph())));
+  tmp_ovlp_sol = rcp(new Epetra_Vector(*(disc->getOverlapMap())));
 
   // Initialize solution vector and time deriv
   initial_x = disc->getSolutionField();
@@ -486,7 +487,7 @@ computeGlobalResidual(const double current_time,
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
   } 
-  //cout << f << endl;
+  //cout << "Global Resid f\n" << f << endl;
 }
 
 void
@@ -979,7 +980,25 @@ computeGlobalSGResidual(
 {
   postRegSetup("SGResidual");
 
+  //std::cout << sg_x << std::endl;
+
   TimeMonitor Timer(*timers[4]); //start timer
+
+  if (sg_overlapped_x == Teuchos::null || 
+      sg_overlapped_x->size() != sg_x.size()) {
+    sg_overlap_map =
+      rcp(new Epetra_LocalMap(sg_basis->size(), 0, 
+			      product_comm->TimeDomainComm()));
+    sg_overlapped_x = 
+      rcp(new Stokhos::EpetraVectorOrthogPoly(
+	    sg_basis, sg_overlap_map, disc->getOverlapMap(), product_comm));
+    sg_overlapped_xdot = 
+	rcp(new Stokhos::EpetraVectorOrthogPoly(
+	      sg_basis, sg_overlap_map, disc->getOverlapMap(), product_comm));
+    sg_overlapped_f = 
+      rcp(new Stokhos::EpetraVectorOrthogPoly(
+	    sg_basis, sg_overlap_map, disc->getOverlapMap(), product_comm));
+  }
 
   for (int i=0; i<sg_x.size(); i++) {
 
@@ -1067,6 +1086,8 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     dfm->evaluateFields<PHAL::AlbanyTraits::SGResidual>(workset);
 
   }
+
+  //std::cout << sg_f << std::endl;
 }
 
 void
@@ -1086,6 +1107,22 @@ computeGlobalSGJacobian(
   postRegSetup("SGJacobian");
 
   TimeMonitor Timer(*timers[5]); //start timer
+
+  if (sg_overlapped_x == Teuchos::null || 
+      sg_overlapped_x->size() != sg_x.size()) {
+    sg_overlap_map =
+      rcp(new Epetra_LocalMap(sg_basis->size(), 0, 
+			      product_comm->TimeDomainComm()));
+    sg_overlapped_x = 
+      rcp(new Stokhos::EpetraVectorOrthogPoly(
+	    sg_basis, sg_overlap_map, disc->getOverlapMap(), product_comm));
+    sg_overlapped_xdot = 
+	rcp(new Stokhos::EpetraVectorOrthogPoly(
+	      sg_basis, sg_overlap_map, disc->getOverlapMap(), product_comm));
+    sg_overlapped_f = 
+      rcp(new Stokhos::EpetraVectorOrthogPoly(
+	    sg_basis, sg_overlap_map, disc->getOverlapMap(), product_comm));
+  }
 
   for (int i=0; i<sg_x.size(); i++) {
 
@@ -1206,6 +1243,8 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::SGJacobian>(workset);
   } 
+
+  //std::cout << sg_jac << std::endl;
 }
 
 void
@@ -1231,6 +1270,22 @@ computeGlobalSGTangent(
   postRegSetup("SGTangent");
 
   TimeMonitor Timer(*timers[6]); //start timer
+
+  if (sg_overlapped_x == Teuchos::null || 
+      sg_overlapped_x->size() != sg_x.size()) {
+    sg_overlap_map =
+      rcp(new Epetra_LocalMap(sg_basis->size(), 0, 
+			      product_comm->TimeDomainComm()));
+    sg_overlapped_x = 
+      rcp(new Stokhos::EpetraVectorOrthogPoly(
+	    sg_basis, sg_overlap_map, disc->getOverlapMap(), product_comm));
+    sg_overlapped_xdot = 
+	rcp(new Stokhos::EpetraVectorOrthogPoly(
+	      sg_basis, sg_overlap_map, disc->getOverlapMap(), product_comm));
+    sg_overlapped_f = 
+      rcp(new Stokhos::EpetraVectorOrthogPoly(
+	    sg_basis, sg_overlap_map, disc->getOverlapMap(), product_comm));
+  }
 
   for (int i=0; i<sg_x.size(); i++) {
 

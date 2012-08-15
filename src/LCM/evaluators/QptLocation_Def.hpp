@@ -31,7 +31,7 @@ QptLocation(const Teuchos::ParameterList& p) :
   GradBF      (p.get<std::string>                   ("Gradient BF Name"),
 	 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
   coordVec    (p.get<std::string>                   ("Coordinate Vector Name"),
-	 p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout") ),
+	 p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Vector Data Layout") ),
   gptLocation  (p.get<std::string>                 ("Integration Point Location Name"),
 	 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") )
 {
@@ -80,7 +80,7 @@ evaluateFields(typename Traits::EvalData workset)
 		for (std::size_t i=0; i<numDims; i++) {
 			gptLocation(cell,qp,i) = 0.0;
 			for (std::size_t node=0; node < numNodes; ++node) {
-				gptLocation(cell,qp,i) += BF(cell,node, qp, i)*coordVec(cell,node);
+				gptLocation(cell,qp,i) += BF(cell,node, qp)*coordVec(cell,node,i);
 			}
 		}
 	  }

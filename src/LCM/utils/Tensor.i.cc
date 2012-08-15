@@ -7,129 +7,41 @@
 #if !defined(LCM_Tensor_i_cc)
 #define LCM_Tensor_i_cc
 
-#include <algorithm>
-#include <cassert>
-#include <cmath>
-#include <limits>
-#include <Sacado_MathFunctions.hpp>
-
 namespace LCM {
 
   //
   // Sign function
   //
   template <typename T> int sgn(T const & s) {
-    return (T(0) < s) - (s < T(0));
+    return int(T(0) < s) - int(s < T(0));
   }
 
   //
-  // Low-level half angle cosine and sine. Useful for SVD
-  // in that it does not use any trigonometric
-  // functions, just square roots.
-  // \param catheti x, y
-  // \return cosine and sine of 0.5 * atan2(y, x)
+  // NaN function. Necessary to choose the proper underlying NaN
+  // for non-floating-point types.
+  // Assumption: non-floating-point types have a typedef that
+  // determines the underlying floating-point type.
   //
-  namespace {
-    template <typename T>
-    void
-    cos_sin_half(T const & x, T const & y, T & c, T & s)
-    {
-      T cf = 0.0;
-      T sf = 0.0;
-      if (fabs(x) > fabs(y)) {
-        const T a = y / x;
-        const T b = sqrt(1.0 + a * a);
-        //cf = sgn(x) / b;
-        cf = copysign(1.0 / b, x);
-        sf = copysign(a * cf, y);
-      } else {
-        const T a = x / fabs(y);
-        const T b = sqrt(1.0 + a * a);
-        sf = copysign(1.0 / b, y);
-        cf = copysign(a * sf, x);
-        //cf = a / b;
-      }
-
-      if (cf > 0.0) {
-        s = sqrt(0.5 * (1.0 - cf));
-        c = sqrt(1.0 - s * s);
-      } else {
-        c = sqrt(0.5 * (1.0 + cf));
-        s = sqrt(1.0 - c * c);
-      }
-
-      if (y < 0.0) {
-        s = -s;
-      }
-
-      return;
-    }
-
-  } // anonymous namespace
-
-
-  //
-  // Half angle cosine and sine. Useful for SVD
-  // in that it does not use any trigonometric
-  // functions, just square roots.
-  // \param catheti x, y
-  // \return cosine and sine of 0.5 * atan2(y, x)
-  //
-  template <typename T>
-  std::pair<T, T>
-  half_angle(T const & x, T const & y)
+  template<typename T>
+  typename Sacado::ScalarType<T>::type
+  not_a_number()
   {
-    // In comments phi is full angle, psi is half angle
-    T c = 1.0;
-    T s = 0.0;
+    return
+        std::numeric_limits<typename Sacado::ScalarType<T>::type>::quiet_NaN();
+  }
 
-    const int sx = sgn(x);
-    const int sy = sgn(y);
-    const T sr2 = sqrt(2.0);
-
-    switch (sx) {
-    case -1:
-      switch (sy) {
-      //
-      case -1:  cos_sin_half(x, y, c, s); break;
-      // phi = pi, psi = pi/2
-      case  0:  c =  0.0;  s =  1.0;      break;
-      //
-      case  1:  cos_sin_half(x, y, c, s); break;
-      //
-      default:  assert(false);            break;
-      }
-      break;
-    case  0:
-      switch (sy) {
-      // phi = -pi/2, psi = -pi/4
-      case -1:  c =  sr2;  s = -sr2;      break;
-      // phi = 0, psi = 0
-      case  0:  c =  1.0;  s =  0.0;      break;
-      // phi = pi/2, psi = pi/4
-      case  1:  c =  sr2;  s =  sr2;      break;
-      //
-      default:  assert(false);            break;
-      }
-      break;
-    case  1:
-      switch (sy) {
-      //
-      case -1:  cos_sin_half(x, y, c, s); break;
-      // phi = 0, psi = 0
-      case  0:  c =  1.0;  s =  0.0;      break;
-      //
-      case  1:  cos_sin_half(x, y, c, s); break;
-      //
-      default:  assert(false);            break;
-      }
-      break;
-    default:
-      assert(false);
-      break;
-    }
-
-    return std::make_pair(c, s);
+  //
+  // Machine epsilon function. Necessary to choose the proper underlying
+  // machine epsilon for non-floating-point types.
+  // Assumption: non-floating-point types have a typedef that
+  // determines the underlying floating-point type.
+  //
+  template<typename T>
+  typename Sacado::ScalarType<T>::type
+  machine_epsilon()
+  {
+    return
+        std::numeric_limits<typename Sacado::ScalarType<T>::type>::epsilon();
   }
 
   //
@@ -141,7 +53,7 @@ namespace LCM {
   {
     e.resize(N);
     for (Index i =0; i < N; ++i) {
-      e[i] = std::numeric_limits<T>::quiet_NaN();
+      e[i] = not_a_number<T>();
     }
 
     return;
@@ -154,9 +66,9 @@ namespace LCM {
   inline
   Vector<T, 3>::Vector()
   {
-    e[0] = std::numeric_limits<T>::quiet_NaN();
-    e[1] = std::numeric_limits<T>::quiet_NaN();
-    e[2] = std::numeric_limits<T>::quiet_NaN();
+    e[0] = not_a_number<T>();
+    e[1] = not_a_number<T>();
+    e[2] = not_a_number<T>();
 
     return;
   }
@@ -168,8 +80,8 @@ namespace LCM {
   inline
   Vector<T, 2>::Vector()
   {
-    e[0] = std::numeric_limits<T>::quiet_NaN();
-    e[1] = std::numeric_limits<T>::quiet_NaN();
+    e[0] = not_a_number<T>();
+    e[1] = not_a_number<T>();
 
     return;
   }
@@ -225,14 +137,15 @@ namespace LCM {
   //
   template<typename T, Index N>
   inline
-  Vector<T, N>::Vector(T const & s0, ...)
+  Vector<T, N>::Vector(T const & s0,  T const & s1, ...)
   {
 
     e.resize(N);
     e[0] = s0;
+    e[1] = s1;
 
     va_list arg_list;
-    va_start(arg_list, s0);
+    va_start(arg_list, s1);
     for (Index i = 1; i < N; ++i) {
       T const & s = va_arg(arg_list, T);
       e[i] = s;
@@ -1376,7 +1289,7 @@ namespace LCM {
     for (Index i = 0; i < N; ++i) {
       e[i].resize(N);
       for (Index j = 0; j < N; j++) {
-        e[i][j] = std::numeric_limits<T>::quiet_NaN();
+        e[i][j] = not_a_number<T>();
       }
     }
 
@@ -1390,17 +1303,17 @@ namespace LCM {
   inline
   Tensor<T, 3>::Tensor()
   {
-    e[0][0] = std::numeric_limits<T>::quiet_NaN();
-    e[0][1] = std::numeric_limits<T>::quiet_NaN();
-    e[0][2] = std::numeric_limits<T>::quiet_NaN();
+    e[0][0] = not_a_number<T>();
+    e[0][1] = not_a_number<T>();
+    e[0][2] = not_a_number<T>();
 
-    e[1][0] = std::numeric_limits<T>::quiet_NaN();
-    e[1][1] = std::numeric_limits<T>::quiet_NaN();
-    e[1][2] = std::numeric_limits<T>::quiet_NaN();
+    e[1][0] = not_a_number<T>();
+    e[1][1] = not_a_number<T>();
+    e[1][2] = not_a_number<T>();
 
-    e[2][0] = std::numeric_limits<T>::quiet_NaN();
-    e[2][1] = std::numeric_limits<T>::quiet_NaN();
-    e[2][2] = std::numeric_limits<T>::quiet_NaN();
+    e[2][0] = not_a_number<T>();
+    e[2][1] = not_a_number<T>();
+    e[2][2] = not_a_number<T>();
 
     return;
   }
@@ -1412,11 +1325,11 @@ namespace LCM {
   inline
   Tensor<T, 2>::Tensor()
   {
-    e[0][0] = std::numeric_limits<T>::quiet_NaN();
-    e[0][1] = std::numeric_limits<T>::quiet_NaN();
+    e[0][0] = not_a_number<T>();
+    e[0][1] = not_a_number<T>();
 
-    e[1][0] = std::numeric_limits<T>::quiet_NaN();
-    e[1][1] = std::numeric_limits<T>::quiet_NaN();
+    e[1][0] = not_a_number<T>();
+    e[1][1] = not_a_number<T>();
 
     return;
   }
@@ -1487,21 +1400,23 @@ namespace LCM {
   //
   template<typename T, Index N>
   inline
-  Tensor<T, N>::Tensor(T const & s00, ...)
+  Tensor<T, N>::Tensor(T const & s00, T const & s01, ...)
   {
     e.resize(N);
     e[0].resize(N);
 
     e[0][0] = s00;
+    e[0][1] = s01;
 
     va_list arg_list;
-    va_start(arg_list, s00);
-    for (Index j = 1; j < N; ++j) {
+    va_start(arg_list, s01);
+    for (Index j = 2; j < N; ++j) {
       T const & s = va_arg(arg_list, T);
       e[0][j] = s;
     }
     for (Index i = 1; i < N; ++i) {
-      for (Index j = 1; j < N; ++j) {
+      e[i].resize(N);
+      for (Index j = 0; j < N; ++j) {
         T const & s = va_arg(arg_list, T);
         e[i][j] = s;
       }
@@ -2490,6 +2405,61 @@ namespace LCM {
   }
 
   //
+  // R^N tensor scalar division
+  // \param A tensor
+  // \param s scalar
+  // \return \f$ A / s \f$
+  //
+  template<typename T, Index N, typename S>
+  inline
+  Tensor<T, N>
+  operator/(Tensor<T, N> const & A, S const & s)
+  {
+    Tensor<T, N> B;
+
+    for (Index i = 0; i < N; ++i) {
+      for (Index j = 0; j < N; ++j) {
+        B(i, j) = A(i, j) / s;
+      }
+    }
+
+    return B;
+  }
+
+  //
+  // R^3 tensor scalar division
+  // \param A tensor
+  // \param s scalar
+  // \return \f$ A / s \f$
+  //
+  template<typename T, typename S>
+  inline
+  Tensor<T, 3>
+  operator/(Tensor<T, 3> const & A, S const & s)
+  {
+    return Tensor<T, 3>(
+        A(0,0)/s, A(0,1)/s, A(0,2)/s,
+        A(1,0)/s, A(1,1)/s, A(1,2)/s,
+        A(2,0)/s, A(2,1)/s, A(2,2)/s);
+  }
+
+  //
+  // R^2 tensor scalar division
+  // \param A tensor
+  // \param s scalar
+  // \return \f$ A / s \f$
+  //
+  template<typename T, typename S>
+  inline
+  Tensor<T, 2>
+  operator/(Tensor<T, 2> const & A, S const & s)
+  {
+    return Tensor<T, 2>(
+        A(0,0)/s, A(0,1)/s,
+        A(1,0)/s, A(1,1)/s);
+  }
+
+  //
   // R^N tensor vector product v = A u
   // \param A tensor
   // \param u vector
@@ -3287,9 +3257,7 @@ namespace LCM {
   const Tensor<T, N>
   zero()
   {
-    Tensor<T, N> A;
-    A.clear();
-    return A;
+    return Tensor<T, N>(T(0.0));
   }
 
   //
@@ -3301,7 +3269,7 @@ namespace LCM {
   const Tensor<T, 3>
   zero()
   {
-    return Tensor<T, 3>(0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0);
+    return Tensor<T, 3>(T(0.0));
   }
 
   //
@@ -3313,7 +3281,7 @@ namespace LCM {
   const Tensor<T, 2>
   zero()
   {
-    return Tensor<T, 2>(0.0,0.0,0.0,0.0);
+    return Tensor<T, 2>(T(0.0));
   }
 
   //
@@ -3324,8 +3292,8 @@ namespace LCM {
   const Tensor<T, N>
   identity()
   {
-    Tensor<T, N> A;
-    A.clear();
+    Tensor<T, N> A(T(0.0));
+
     for (Index i = 0; i < N; ++i) {
       A(i, i) = 1.0;
     }
@@ -3663,187 +3631,39 @@ namespace LCM {
   }
 
   //
-  // R^N 2nd-order tensor inverse
-  // Gauss-Jordan elimination. Warning: no pivoting.
-  // Casual use only. Use Teuchos LAPACK interface for
-  // more efficient and robust techniques.
-  // \param A nonsingular tensor
-  // \return \f$ A^{-1} \f$
+  // Swap row. Echange rows i and j in place
+  // \param A tensor
+  // \param i index
+  // \param j index
   //
   template<typename T, Index N>
-  inline
-  Tensor<T, N>
-  inverse(Tensor<T, N> const & A)
+  void
+  swap_row(Tensor<T, N> & A, Index i, Index j)
   {
-    const T d = det(A);
-    assert(d != 0.0);
-
-    Tensor<T, N> B = identity<T, N>();
-
-    for (Index k = 0; k < N; ++k) {
-      for (Index i = k; i < N; ++i) {
-        T s = 1.0 / A(i, k);
-        for (Index j = k; j < N; ++j) {
-          A(i, j) *= s;
-        }
-        for (Index j = 0; j < N; ++j) {
-          B(i, j) *= s;
-        }
-      }
-      for (Index i = k + 1; i < N; ++i) {
-        for (Index j = k; j < N; ++j) {
-          A(i, j) -= A(k, j);
-        }
-        for (Index j = 0; j < N; ++j) {
-          B(i, j) -= B(k, j);
-        }
+    if (i != j) {
+      for (Index k = 0; k < N; ++k) {
+        std::swap(A(i, k), A(j, k));
       }
     }
-
-    for (Index i = N - 2; i >= 0; --i) {
-      for (Index j = N - 1; j > i; --j) {
-        for (Index k = 0; k < N; ++k) {
-          B(i, k) -= A(i, j) * B(j, k);
-        }
-        for (Index k = 0; k < N; ++k) {
-          A(i, k) -= A(i, j) * A(j, k);
-        }
-      }
-    }
-
-    return B;
+    return;
   }
 
   //
-  // R^3 2nd-order tensor inverse
-  // \param A nonsingular tensor
-  // \return \f$ A^{-1} \f$
-  //
-  template<typename T>
-  inline
-  Tensor<T, 3>
-  inverse(Tensor<T, 3> const & A)
-  {
-    const T d = det(A);
-    assert(d != 0.0);
-    Tensor<T, 3> B(
-        -A(1,2)*A(2,1) + A(1,1)*A(2,2),
-         A(0,2)*A(2,1) - A(0,1)*A(2,2),
-        -A(0,2)*A(1,1) + A(0,1)*A(1,2),
-         A(1,2)*A(2,0) - A(1,0)*A(2,2),
-        -A(0,2)*A(2,0) + A(0,0)*A(2,2),
-         A(0,2)*A(1,0) - A(0,0)*A(1,2),
-        -A(1,1)*A(2,0) + A(1,0)*A(2,1),
-         A(0,1)*A(2,0) - A(0,0)*A(2,1),
-        -A(0,1)*A(1,0) + A(0,0)*A(1,1)
-    );
-    return T(1.0 / d) * B;
-  }
-
-  //
-  // R^2 2nd-order tensor inverse
-  // \param A nonsingular tensor
-  // \return \f$ A^{-1} \f$
-  //
-  template<typename T>
-  inline
-  Tensor<T, 2>
-  inverse(Tensor<T, 2> const & A)
-  {
-    const T d = det(A);
-    assert(d != 0.0);
-    Tensor<T, 2> B(A(1,1), -A(0,1), -A(1,0), A(0,0));
-    return T(1.0 / d) * B;
-  }
-
-  //
-  // R^N Subtensor
+  // Swap column. Echange columns i and j in place
   // \param A tensor
   // \param i index
   // \param j index
-  // \return Subtensor with i-row and j-col deleted.
   //
   template<typename T, Index N>
-  inline
-  Tensor<T, N - 1>
-  subtensor(Tensor<T, N> const & A, Index i, Index j)
+  void
+  swap_col(Tensor<T, N> & A, Index i, Index j)
   {
-    assert(i < N);
-    assert(j < N);
-
-    Tensor<T, N - 1> B;
-
-    Index p = 0;
-    Index q = 0;
-    for (Index m = 0; m < N; ++m) {
-      if (m == i) continue;
-      for (Index n = 0; n < N; ++n) {
-        if (n == j) continue;
-        B(p, q) = A(m, n);
-        ++q;
+    if (i != j) {
+      for (Index k = 0; k < N; ++k) {
+        std::swap(A(k, i), A(k, j));
       }
-      ++p;
     }
-
-    return B;
-  }
-
-  //
-  // R^3 Subtensor
-  // \param A tensor
-  // \param i index
-  // \param j index
-  // \return Subtensor with i-row and j-col deleted.
-  //
-  template<typename T>
-  inline
-  Tensor<T, 2>
-  subtensor(Tensor<T, 3> const & A, Index i, Index j)
-  {
-    assert(i < 3);
-    assert(j < 3);
-
-    Tensor<T, 2> B;
-
-    Index p = 0;
-    Index q = 0;
-    for (Index m = 0; m < 3; ++m) {
-      if (m == i) continue;
-      for (Index n = 0; n < 3; ++n) {
-        if (n == j) continue;
-        B(p, q) = A(m, n);
-        ++q;
-      }
-      ++p;
-    }
-
-    return B;
-  }
-
-  //
-  // R^2 Subtensor
-  // \param A tensor
-  // \param i index
-  // \param j index
-  // \return Subtensor with i-row and j-col deleted.
-  //
-  template<typename T>
-  inline
-  Tensor<T, 1>
-  subtensor(Tensor<T, 2> const & A, Index i, Index j)
-  {
-    assert(i < 2);
-    assert(j < 2);
-
-    Tensor<T, 1> B;
-
-    Index m = 1 - i;
-    Index n = 1 - j;
-
-    B(0, 0) = A(m, n);
-
-    return B;
-
+    return;
   }
 
   //

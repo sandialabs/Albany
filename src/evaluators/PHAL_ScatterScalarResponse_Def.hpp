@@ -50,6 +50,8 @@ setup(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
   PHX::Tag<ScalarT> global_response_tag =
     p.get<PHX::Tag<ScalarT> >("Global Response Field Tag");
   global_response = PHX::MDField<ScalarT>(global_response_tag);
+  std::cout << "global_response layout = " << std::endl;
+  global_response_tag.dataLayout().print(std::cout);
   if (stand_alone)
     this->addDependentField(global_response);
   else
@@ -69,17 +71,6 @@ setup(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
     plist->validateParameters(*reflist,0);
   }
 
-  // Get components of field we scatter, assume all of them by default
-  if (plist->isType< Teuchos::Array<int> >("Field Components"))
-    field_components = plist->get< Teuchos::Array<int> >("Field Components");
-  else {
-    int rank = global_response_tag.dataLayout().rank();
-    int num_components = global_response_tag.dataLayout().dimension(rank-1);
-    field_components.resize(num_components);
-    for (int i=0; i<num_components; i++)
-      field_components[i] = i;
-  }
-
   if (stand_alone)
     this->setName(fieldName+" Scatter Response" + 
 		  PHX::TypeString<EvalT>::value);
@@ -92,8 +83,6 @@ getValidResponseParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     rcp(new Teuchos::ParameterList("Valid ScatterScalarResponse Params"));
-  validPL->set< Teuchos::Array<int> >("Field Components", Teuchos::Array<int>(),
-				      "Field components to scatter");
   return validPL;
 }
 
@@ -114,8 +103,8 @@ postEvaluate(typename Traits::PostEvalData workset)
 {
   // Here we scatter the *global* response
   Teuchos::RCP<Epetra_Vector> g = workset.g;
-  for (std::size_t res = 0; res < this->field_components.size(); res++) {
-    (*g)[res] = this->global_response[this->field_components[res]];
+  for (std::size_t res = 0; res < this->global_response.size(); res++) {
+    (*g)[res] = this->global_response[res];
   }
 }
 
@@ -139,8 +128,8 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP<Epetra_Vector> g = workset.g;
   Teuchos::RCP<Epetra_MultiVector> gx = workset.dgdx;
   Teuchos::RCP<Epetra_MultiVector> gp = workset.dgdp;
-  for (std::size_t res = 0; res < this->field_components.size(); res++) {
-    ScalarT& val = this->global_response[this->field_components[res]];
+  for (std::size_t res = 0; res < this->global_response.size(); res++) {
+    ScalarT& val = this->global_response[res];
     if (g != Teuchos::null)
       (*g)[res] = val.val();
     if (gx != Teuchos::null)
@@ -170,8 +159,8 @@ postEvaluate(typename Traits::PostEvalData workset)
 {
   // Here we scatter the *global* SG response
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > g_sg = workset.sg_g;
-  for (std::size_t res = 0; res < this->field_components.size(); res++) {
-    ScalarT& val = this->global_response[this->field_components[res]];
+  for (std::size_t res = 0; res < this->global_response.size(); res++) {
+    ScalarT& val = this->global_response[res];
     for (int block=0; block<g_sg->size(); block++)
       (*g_sg)[block][res] = val.coeff(block);
   }
@@ -197,8 +186,8 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> g_sg = workset.sg_g;
   Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> gx_sg = workset.sg_dgdx;
   Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> gp_sg = workset.sg_dgdp;
-  for (std::size_t res = 0; res < this->field_components.size(); res++) {
-    ScalarT& val = this->global_response[this->field_components[res]];
+  for (std::size_t res = 0; res < this->global_response.size(); res++) {
+    ScalarT& val = this->global_response[res];
     if (g_sg != Teuchos::null)
       for (int block=0; block<g_sg->size(); block++)
 	(*g_sg)[block][res] = val.val().coeff(block);
@@ -232,8 +221,8 @@ postEvaluate(typename Traits::PostEvalData workset)
 {
   // Here we scatter the *global* MP response
   Teuchos::RCP<Stokhos::ProductEpetraVector> g_mp = workset.mp_g;
-  for (std::size_t res = 0; res < this->field_components.size(); res++) {
-    ScalarT& val = this->global_response[this->field_components[res]];
+  for (std::size_t res = 0; res < this->global_response.size(); res++) {
+    ScalarT& val = this->global_response[res];
     for (int block=0; block<g_mp->size(); block++)
       (*g_mp)[block][res] = val.coeff(block);
   }
@@ -259,8 +248,8 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP<Stokhos::ProductEpetraVector> g_mp = workset.mp_g;
   Teuchos::RCP<Stokhos::ProductEpetraMultiVector> gx_mp = workset.mp_dgdx;
   Teuchos::RCP<Stokhos::ProductEpetraMultiVector> gp_mp = workset.mp_dgdp;
-  for (std::size_t res = 0; res < this->field_components.size(); res++) {
-    ScalarT& val = this->global_response[this->field_components[res]];
+  for (std::size_t res = 0; res < this->global_response.size(); res++) {
+    ScalarT& val = this->global_response[res];
     if (g_mp != Teuchos::null)
       for (int block=0; block<g_mp->size(); block++)
 	(*g_mp)[block][res] = val.val().coeff(block);

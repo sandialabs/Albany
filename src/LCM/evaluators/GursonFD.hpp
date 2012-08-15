@@ -56,14 +56,14 @@ namespace LCM {
     ScalarT
     compute_Phi(LCM::Tensor<ScalarT, 3> & s, ScalarT & p, ScalarT & fvoid,
         ScalarT & eq, ScalarT & K, ScalarT & Y, ScalarT & siginf,
-        ScalarT & delta);
+        ScalarT & delta, ScalarT & Jacobian, ScalarT & E);
 
     void
     compute_ResidJacobian(std::vector<ScalarT> & X, std::vector<ScalarT> & R,
         std::vector<ScalarT> & dRdX, const ScalarT & p, const ScalarT & fvoid,
         const ScalarT & eq, LCM::Tensor<ScalarT, 3> & s, ScalarT & mu,
         ScalarT & kappa, ScalarT & K, ScalarT & Y, ScalarT & siginf,
-        ScalarT & delta);
+        ScalarT & delta, ScalarT & Jacobian);
 
     //Input
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> defgrad;
@@ -74,12 +74,15 @@ namespace LCM {
     PHX::MDField<ScalarT, Cell, QuadPoint> hardeningModulus;
     PHX::MDField<ScalarT, Cell, QuadPoint> satMod;
     PHX::MDField<ScalarT, Cell, QuadPoint> satExp;
+    PHX::MDField<ScalarT,Dummy> deltaTime;
 
-    std::string fpName, eqpsName, voidVolumeName;
+    std::string fpName, eqpsName, voidVolumeName, defGradName, stressName;
     unsigned int numQPs;
     unsigned int numDims;
     unsigned int worksetSize;
 
+    RealType eq0;
+    RealType N;
     RealType f0;
     RealType kw;
     RealType eN;
@@ -91,6 +94,9 @@ namespace LCM {
     RealType q2;
     RealType q3;
 
+    bool isSaturationH;
+    bool isHyper;
+
     //output
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> stress;
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> Fp;
@@ -101,7 +107,6 @@ namespace LCM {
     Tensor<ScalarT, 3> be;
     Tensor<ScalarT, 3> logbe;
     Tensor<ScalarT, 3> s;
-    Tensor<ScalarT, 3> N;
     Tensor<ScalarT, 3> A;
     Tensor<ScalarT, 3> expA;
 

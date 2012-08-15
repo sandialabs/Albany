@@ -77,6 +77,7 @@ Stokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     havePSPG = params->get("Have Pressure Stabilization", true);
   }
 
+  haveSource = true; 
 
 
 
@@ -160,6 +161,7 @@ FELIX::Stokes::getValidProblemParameters() const
   validPL->sublist("Flow", false, "");
   validPL->sublist("Density", false, "");
   validPL->sublist("Viscosity", false, "");
+  validPL->sublist("FELIX Viscosity", false, "");
   validPL->sublist("Body Force", false, "");
 
   return validPL;

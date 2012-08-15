@@ -7,12 +7,17 @@
 #if !defined(LCM_Tensor_h)
 #define LCM_Tensor_h
 
+#include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <cstdarg>
 #include <iostream>
+#include <limits>
 #include <vector>
 
 #include <boost/tuple/tuple.hpp>
+
+#include "Sacado.hpp"
 
 namespace LCM {
 
@@ -29,15 +34,24 @@ namespace LCM {
   sgn(T const & s);
 
   ///
-  /// Half angle cosine and sine. Useful for SVD
-  /// in that it does not use any trigonometric
-  /// functions, just square roots.
-  /// \param catheti x, y
-  /// \return cosine and sine of 0.5 * atan2(y, x)
+  /// NaN function. Necessary to choose the proper underlying NaN
+  /// for non-floating-point types.
+  /// Assumption: non-floating-point types have a typedef that
+  /// determines the underlying floating-point type.
   ///
-  template <typename T>
-  std::pair<T, T>
-  half_angle(T const & x, T const & y);
+  template<typename T>
+  typename Sacado::ScalarType<T>::type
+  not_a_number();
+
+  ///
+  /// Machine epsilon function. Necessary to choose the proper underlying
+  /// machine epsilon for non-floating-point types.
+  /// Assumption: non-floating-point types have a typedef that
+  /// determines the underlying floating-point type.
+  ///
+  template<typename T>
+  typename Sacado::ScalarType<T>::type
+  machine_epsilon();
 
   ///
   /// Vector in R^N provided just as a framework to
@@ -63,7 +77,7 @@ namespace LCM {
     /// Create vector specifying components
     /// \param s0,... are the vector components in the canonical basis
     ///
-    Vector(T const & s0, ...);
+    Vector(T const & s0, T const & s1, ...);
 
     ///
     /// Create vector from array - const version
@@ -363,7 +377,7 @@ namespace LCM {
     /// The parameters are the components in the canonical basis
     /// \param s00 ...
     ///
-    Tensor(T const & s00, ...);
+    Tensor(T const & s00, T const & s01, ...);
 
     ///
     /// Create tensor from array - const version
@@ -1561,6 +1575,24 @@ namespace LCM {
   operator*(Tensor<T, 2> const & A, S const & s);
 
   ///
+  /// Tensor scalar division
+  /// \param A tensor
+  /// \param s scalar
+  /// \return \f$ A / s \f$
+  ///
+  template<typename T, Index N, typename S>
+  Tensor<T, N>
+  operator/(Tensor<T, N> const & A, S const & s);
+
+  template<typename T, typename S>
+  Tensor<T, 3>
+  operator/(Tensor<T, 3> const & A, S const & s);
+
+  template<typename T, typename S>
+  Tensor<T, 2>
+  operator/(Tensor<T, 2> const & A, S const & s);
+
+  ///
   /// Scalar 3rd-order tensor product
   /// \param s scalar
   /// \param A 3rd-order tensor
@@ -2099,6 +2131,30 @@ namespace LCM {
   subtensor(Tensor<T, 2> const & A, Index i, Index j);
 
   ///
+  /// Swap row. Echange rows i and j in place
+  /// \param A tensor
+  /// \param i index
+  /// \param j index
+  ///
+  template<typename T, Index N>
+  void
+  swap_row(Tensor<T, N> & A, Index i, Index j);
+
+  // No specialization for R^2 and R^3
+
+  ///
+  /// Swap column. Echange columns i and j in place
+  /// \param A tensor
+  /// \param i index
+  /// \param j index
+  ///
+  template<typename T, Index N>
+  void
+  swap_col(Tensor<T, N> & A, Index i, Index j);
+
+  // No specialization for R^2 and R^3
+
+  ///
   /// Determinant
   /// \param A tensor
   /// \return \f$ \det A \f$
@@ -2305,6 +2361,18 @@ namespace LCM {
   norm_off_diagonal(Tensor<T, 2> const & A);
 
   ///
+  /// Arg max abs. Useful for inverse and other algorithms
+  /// that rely on Jacobi-type procedures.
+  /// \param A
+  /// \return \f$ (p,q) = arg max_{i,j} |a_{ij}| \f$
+  ///
+  template<typename T, Index N>
+  std::pair<Index, Index>
+  arg_max_abs(Tensor<T, N> const & A);
+
+  // No specialization for R^3 and R^2
+
+  ///
   /// Arg max off-diagonal. Useful for SVD and other algorithms
   /// that rely on Jacobi-type procedures.
   /// \param A
@@ -2314,9 +2382,7 @@ namespace LCM {
   std::pair<Index, Index>
   arg_max_off_diagonal(Tensor<T, N> const & A);
 
-  template<typename T>
-  std::pair<Index, Index>
-  arg_max_off_diagonal(Tensor<T, 3> const & A);
+  // No specialization for R^3
 
   template<typename T>
   std::pair<Index, Index>
@@ -2347,43 +2413,64 @@ namespace LCM {
   boost::tuple<Tensor<T, 2>, Tensor<T, 2>, Tensor<T, 2> >
   svd(Tensor<T, 2> const & A);
 
-  template<typename T>
-  boost::tuple<Tensor<T, 2>, Tensor<T, 2>, Tensor<T, 2> >
-  svd2(Tensor<T, 2> const & A);
+  ///
+  /// Project to O(N) (Orthogonal Group) using a Newton-type algorithm.
+  /// See Higham's Functions of Matrices p210 [2008]
+  /// \param A tensor (often a deformation-gradient-like tensor)
+  /// \return \f$ R = \argmin_Q \|A - Q\|\f$
+  /// This algorithm projects a given tensor in GL(N) to O(N).
+  /// The rotation/reflection obtained through this projection is
+  /// the orthogonal component of the real polar decomposition
+  ///
+  template<typename T, Index N>
+  Tensor<T, N>
+  polar_rotation(Tensor<T, N> const & A);
+
+  // No specialization for R^2 or R^3
 
   ///
   /// Left polar decomposition
-  /// \param F tensor (often a deformation-gradient-like tensor)
-  /// \return \f$ VR = F \f$ with \f$ R \in SO(3) \f$ and V SPD
+  /// \param A tensor (often a deformation-gradient-like tensor)
+  /// \return \f$ VR = A \f$ with \f$ R \in SO(N) \f$ and \f$ V \in SPD(N) \f$
   ///
   template<typename T, Index N>
   std::pair<Tensor<T, N>, Tensor<T, N> >
-  polar_left(Tensor<T, N> const & F);
+  polar_left(Tensor<T, N> const & A);
 
-  template<typename T>
-  std::pair<Tensor<T, 3>, Tensor<T, 3> >
-  polar_left(Tensor<T, 3> const & F);
-
-  template<typename T>
-  std::pair<Tensor<T, 2>, Tensor<T, 2> >
-  polar_left(Tensor<T, 2> const & F);
+  // No specialization for R^2 or R^3
 
   ///
   /// Right polar decomposition
-  /// \param F tensor (often a deformation-gradient-like tensor)
-  /// \return \f$ RU = F \f$ with \f$ R \in SO(3) \f$ and U SPD
+  /// \param A tensor (often a deformation-gradient-like tensor)
+  /// \return \f$ RU = A \f$ with \f$ R \in SO(N) \f$ and \f$ U \in SPD(N) \f$
   ///
   template<typename T, Index N>
   std::pair<Tensor<T, N>, Tensor<T, N> >
-  polar_right(Tensor<T, N> const & F);
+  polar_right(Tensor<T, N> const & A);
 
+  // No specialization for R^2 or R^3
+
+  ///
+  /// R^3 left polar decomposition computed with eigenvalue decomposition
+  /// \param A tensor (often a deformation-gradient-like tensor)
+  /// \return \f$ VR = A \f$ with \f$ R \in SO(3) \f$ and \f$ V \in SPD(N) \f$
+  ///
   template<typename T>
   std::pair<Tensor<T, 3>, Tensor<T, 3> >
-  polar_right(Tensor<T, 3> const & F);
+  polar_left_eig(Tensor<T, 3> const & A);
 
+  // No specialization for R^2 or R^N
+
+  ///
+  /// R^3 right polar decomposition
+  /// \param F tensor (often a deformation-gradient-like tensor)
+  /// \return \f$ RU = F \f$ with \f$ R \in SO(3) \f$ and \f$ U \in SPD(N) \f$
+  ///
   template<typename T>
-  std::pair<Tensor<T, 2>, Tensor<T, 2> >
-  polar_right(Tensor<T, 2> const & F);
+  std::pair<Tensor<T, 3>, Tensor<T, 3> >
+  polar_right_eig(Tensor<T, 3> const & A);
+
+  // No specialization for R^2 or R^N
 
   ///
   /// Left polar decomposition with matrix logarithm for V
