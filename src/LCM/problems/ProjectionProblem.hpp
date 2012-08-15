@@ -250,17 +250,17 @@ Albany::ProjectionProblem::constructEvaluators(
 
   // Projected Field Variable
    Teuchos::ArrayRCP<string> tdof_names(1);
-     tdof_names[0] = "Projected Field";
-   Teuchos::ArrayRCP<string> tdof_names_dot(1);
-     tdof_names_dot[0] = tdof_names[0]+"_dot";
+   tdof_names[0] = "Projected Field";
+     //Teuchos::ArrayRCP<string> tdof_names_dot(1);
+     //tdof_names_dot[0] = tdof_names[0]+"_dot";
    Teuchos::ArrayRCP<string> tresid_names(1);
      tresid_names[0] = tdof_names[0]+" Residual";
 
    fm0.template registerEvaluator<EvalT>
      (evalUtils_proj.constructDOFVecInterpolationEvaluator(tdof_names[0]));
 
-   fm0.template registerEvaluator<EvalT>
-     (evalUtils_proj.constructDOFVecInterpolationEvaluator(tdof_names_dot[0]));
+   //fm0.template registerEvaluator<EvalT>
+   //  (evalUtils_proj.constructDOFVecInterpolationEvaluator(tdof_names_dot[0]));
 
    fm0.template registerEvaluator<EvalT>
      (evalUtils_proj.constructDOFVecGradInterpolationEvaluator(tdof_names[0]));
@@ -268,8 +268,8 @@ Albany::ProjectionProblem::constructEvaluators(
    // Need to use different arguments depending on the rank of the projected variables
    //   see the Albany_EvaluatorUtil class for specifics
    fm0.template registerEvaluator<EvalT>
-     (evalUtils_proj.constructGatherSolutionEvaluator(
-    		 isProjectedVarVector, tdof_names, tdof_names_dot, T_offset));
+     (evalUtils_proj.constructGatherSolutionEvaluator_noTransient(
+    		 isProjectedVarVector, tdof_names, T_offset));
 
    fm0.template registerEvaluator<EvalT>
      (evalUtils_proj.constructScatterResidualEvaluator(

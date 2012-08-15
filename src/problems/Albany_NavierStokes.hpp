@@ -82,8 +82,9 @@ namespace Albany {
       Albany::StateManager& stateMgr,
       Albany::FieldManagerChoice fmchoice,
       const Teuchos::RCP<Teuchos::ParameterList>& responseList);
-
-    void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
+    
+    void constructDirichletEvaluators(const std::vector<std::string>& nodeSetIDs);
+    void constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs); 
 
   protected:
 
@@ -124,6 +125,7 @@ namespace Albany {
     bool haveSUPG;     //! have SUPG stabilization
     bool porousMedia;  //! flow through porous media problem
     
+    Teuchos::RCP<Albany::Layouts> dl;
   };
 
 }
@@ -146,6 +148,7 @@ namespace Albany {
 #include "PHAL_NSRm.hpp"
 #include "PHAL_NSTauM.hpp"
 #include "PHAL_NSTauT.hpp"
+//#include "PHAL_Neumann.hpp"
 #include "PHAL_NSMomentumResid.hpp"
 #include "PHAL_NSContinuityResid.hpp"
 #include "PHAL_NSThermalEqResid.hpp"
@@ -168,7 +171,9 @@ Albany::NavierStokes::constructEvaluators(
   using std::vector;
   using std::map;
   using PHAL::AlbanyTraits;
-  
+ 
+  const CellTopologyData * const elem_top = &meshSpecs.ctd;
+ 
   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
     intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
@@ -188,10 +193,10 @@ Albany::NavierStokes::constructEvaluators(
        << ", QuadPts= " << numQPts
        << ", Dim= " << numDim << endl;
   
-
-   RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
+   dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
    TEUCHOS_TEST_FOR_EXCEPTION(dl->vectorAndGradientLayoutsAreEquivalent==false, std::logic_error,
                               "Data Layout Usage in NavierStokes problem assumes vecDim = numDim");
+
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
    bool supportsTransient=true;
    int offset=0;
@@ -662,6 +667,8 @@ Albany::NavierStokes::constructEvaluators(
     p->set<string>("Source Name", "Heat Source");
     p->set<string>("Variable Name", "Temperature");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
     p->set<string>("Neutron Flux Name", "Neutron Flux");
     p->set<string>("Fission Cross Section Name", "Fission Cross Section");
     p->set<string>("Energy Released per Fission Name", 
@@ -714,6 +721,127 @@ Albany::NavierStokes::constructEvaluators(
     ev = rcp(new PHAL::NSBodyForce<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+
+/*  if (haveFlowEq && haveNeumannx) { // Neumann BC's listed in input file and sidesets are present
+
+    RCP<ParameterList> p = rcp(new ParameterList);
+    // cell side
+      
+    const CellTopologyData * const side_top = elem_top->side[0].topology;
+
+    p->set<string>("Side Set ID", meshSpecs.ssNames[0]);
+    
+    RCP<shards::CellTopology> sideType = rcp(new shards::CellTopology(side_top));
+    RCP <Intrepid::Cubature<RealType> > sideCubature = cubFactory.create(*sideType, meshSpecs.cubatureDegree);
+  
+    // Inputs: X, Y at nodes, Cubature, and Basis
+    p->set<string>("Node Variable Name", "Neumannx");
+    p->set<string>("Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("Coordinate Data Layout", dl->vertices_vector);
+    p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+    
+    p->set< RCP<Intrepid::Cubature<RealType> > >("Side Cubature", sideCubature);
+    
+    p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >
+        ("Intrepid Basis", intrepidBasis);
+
+    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
+    p->set<RCP<shards::CellTopology> >("Side Type", sideType);
+
+    // Output
+    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
+  
+//    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Neumann BCs");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+    
+    ev = rcp(new PHAL::Neumann<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+ if (haveFlowEq && haveNeumanny) { // Neumann BC's listed in input file and sidesets are present
+
+    RCP<ParameterList> p = rcp(new ParameterList);
+    // cell side
+
+    const CellTopologyData * const side_top = elem_top->side[0].topology;
+
+    p->set<string>("Side Set ID", meshSpecs.ssNames[0]);
+
+    RCP<shards::CellTopology> sideType = rcp(new shards::CellTopology(side_top));
+    RCP <Intrepid::Cubature<RealType> > sideCubature = cubFactory.create(*sideType, meshSpecs.cubatureDegree);
+
+    // Inputs: X, Y at nodes, Cubature, and Basis
+    p->set<string>("Node Variable Name", "Neumanny");
+    p->set<string>("Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("Coordinate Data Layout", dl->vertices_vector);
+    p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+
+    p->set< RCP<Intrepid::Cubature<RealType> > >("Side Cubature", sideCubature);
+
+    p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >
+        ("Intrepid Basis", intrepidBasis);
+
+    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
+    p->set<RCP<shards::CellTopology> >("Side Type", sideType);
+
+    // Output
+    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
+
+//    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Neumann BCs");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    ev = rcp(new PHAL::Neumann<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  if (haveFlowEq && haveNeumannz) { // Neumann BC's listed in input file and sidesets are present
+
+    RCP<ParameterList> p = rcp(new ParameterList);
+    // cell side
+
+    const CellTopologyData * const side_top = elem_top->side[0].topology;
+
+    p->set<string>("Side Set ID", meshSpecs.ssNames[0]);
+
+    RCP<shards::CellTopology> sideType = rcp(new shards::CellTopology(side_top));
+    RCP <Intrepid::Cubature<RealType> > sideCubature = cubFactory.create(*sideType, meshSpecs.cubatureDegree);
+
+    // Inputs: X, Y at nodes, Cubature, and Basis
+    p->set<string>("Node Variable Name", "Neumannz");
+    p->set<string>("Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("Coordinate Data Layout", dl->vertices_vector);
+    p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+
+    p->set< RCP<Intrepid::Cubature<RealType> > >("Side Cubature", sideCubature);
+
+    p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >
+        ("Intrepid Basis", intrepidBasis);
+
+    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
+    p->set<RCP<shards::CellTopology> >("Side Type", sideType);
+
+    // Output
+    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
+
+//    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Neumann BCs");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    ev = rcp(new PHAL::Neumann<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+   }
+*/
 
    if (porousMedia) { // Permeability term in momentum equation
     std::cout <<"This is flow through porous media problem" << std::endl;
@@ -852,7 +980,7 @@ Albany::NavierStokes::constructEvaluators(
     p->set<string>("Velocity QP Variable Name", "Velocity");
     p->set<string>("Density QP Variable Name", "Density");
     p->set<string> ("Tau M Name", "Tau M");
- 
+
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);    
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);

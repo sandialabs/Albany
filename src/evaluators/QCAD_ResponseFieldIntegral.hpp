@@ -58,6 +58,7 @@ namespace QCAD {
     std::vector<PHX::MDField<ScalarT,Cell,QuadPoint> > fields;
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
     PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
+    Teuchos::Array<int> field_components;
     
     double length_unit_in_m; // length unit for input and output mesh
     double scaling;          // scaling factor due to difference in mesh and integrand units

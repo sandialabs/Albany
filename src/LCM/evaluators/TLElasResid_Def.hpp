@@ -22,6 +22,8 @@
 #include "Intrepid_RealSpaceTools.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 
+#include "Tensor.h"
+
 namespace LCM {
 
 //**********************************************************************
@@ -125,7 +127,7 @@ evaluateFields(typename Traits::EvalData workset)
 	for (std::size_t qp=0; qp < numQPs; ++qp) {
 	  for (std::size_t i=0; i<numDims; i++) {
 	    for (std::size_t j=0; j<numDims; j++) {
-	      Residual(cell,node,i) += P(cell, qp, i, j) * wGradBF(cell, node, qp, j);
+              Residual(cell,node,i) += P(cell, qp, i, j) * wGradBF(cell, node, qp, j);
 	    } 
 	  } 
 	} 
@@ -141,7 +143,6 @@ evaluateFields(typename Traits::EvalData workset)
     } 
   }
 **/
-
 }
 // **********************************************************************
 template<typename EvalT,typename Traits>

@@ -17,8 +17,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "SurfaceVectorJump.hpp"
-#include "SurfaceVectorJump_Def.hpp"
+#include "SurfaceVectorGradient.hpp"
+#include "SurfaceVectorGradient_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::SurfaceVectorJump)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::SurfaceVectorGradient)
 

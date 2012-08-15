@@ -18,9 +18,6 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
-#include "Intrepid_RealSpaceTools.hpp"
-
 #include <typeinfo>
 
 namespace LCM {
@@ -31,11 +28,11 @@ namespace LCM {
   L2ProjectionResidual(const Teuchos::ParameterList& p) :
     wBF         (p.get<std::string>                ("Weighted BF Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
-	wGradBF     (p.get<std::string>                   ("Weighted Gradient BF Name"),
+    wGradBF     (p.get<std::string>                   ("Weighted Gradient BF Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
     projectedField (p.get<std::string>               ("Projected Field Name"),
-         p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-	Pfield      (p.get<std::string>               ("Projection Field Name"),
+                    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
+    Pfield      (p.get<std::string>               ("Projection Field Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
     TResidual   (p.get<std::string>                ("Residual Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") )
@@ -51,8 +48,6 @@ namespace LCM {
  //   if (haveSource) this->addDependentField(Source);
  //   if (haveMechSource) this->addDependentField(MechSource);
 
-
-
     this->addEvaluatedField(TResidual);
 
     Teuchos::RCP<PHX::DataLayout> vector_dl =
@@ -60,12 +55,10 @@ namespace LCM {
     std::vector<PHX::DataLayout::size_type> dims;
     vector_dl->dimensions(dims);
 
-
     worksetSize = dims[0];
     numNodes = dims[1];
     numQPs  = dims[2];
     numDims = dims[3];
-
 
     this->setName("L2ProjectionResidual"+PHX::TypeString<EvalT>::value);
 
@@ -89,10 +82,6 @@ template<typename EvalT, typename Traits>
 void L2ProjectionResidual<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid::FunctionSpaceTools FST;
-
-
-
   for (std::size_t cell=0; cell < workset.numCells; ++cell)
   {
     for (std::size_t node=0; node < numNodes; ++node)
@@ -114,11 +103,9 @@ evaluateFields(typename Traits::EvalData workset)
           //cout << "Projected Field: " << Sacado::ScalarValue<ScalarT>::eval(projectedField(cell,node,k)) << std::endl;
           //cout << "PField: " << Sacado::ScalarValue<ScalarT>::eval(Pfield(cell,node,k/numDims,k%numDims)) << std::endl;
         }
-	  }
+      }
     }
   }
-
-
 }
 //**********************************************************************
 }

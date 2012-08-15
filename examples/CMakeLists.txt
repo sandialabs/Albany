@@ -42,9 +42,12 @@ if (ALBANY_ASCR)
     set(AlbanyCoupled.exe   ${Albany_BINARY_DIR}/src/AlbanyCoupled)
     set(AlbanySGCoupled.exe ${Albany_BINARY_DIR}/src/AlbanySGCoupled)
   ENDIF()
+  set(SerialAlbanyCoupled.exe  ${Albany_BINARY_DIR}/src/AlbanyCoupled)
+  set(SerialAlbanySGCoupled.exe  ${Albany_BINARY_DIR}/src/AlbanySGCoupled)
 endif()
 
 set(SerialAlbany.exe  ${Albany_BINARY_DIR}/src/Albany)
+set(SerialAlbanySG.exe  ${Albany_BINARY_DIR}/src/AlbanySG)
 set(SerialAlbanyDakota.exe  ${Albany_BINARY_DIR}/src/AlbanyDakota)
 
 # Tests
@@ -71,7 +74,7 @@ add_subdirectory(ThermoElectrostatics2D)
 add_subdirectory(HeatEigenvalues)
 
 IF(ALBANY_LCM)
-  #add_subdirectory(ProjectionElasticity3D)
+  add_subdirectory(ProjectionElasticity3D)
   add_subdirectory(GursonFD3D)
   add_subdirectory(CapModelPlasticity3D)
   add_subdirectory(StaticElasticity1D)
@@ -159,4 +162,5 @@ ENDIF()
 
 if (ALBANY_ASCR)
   add_subdirectory(CoupledReactor)
+  add_subdirectory(NSReactor)
 endif()

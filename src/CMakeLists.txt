@@ -289,6 +289,16 @@ SET(HEADERS ${HEADERS}
         evaluators/PHAL_SeparableScatterScalarResponse_Def.hpp
   )
 
+# ASCR
+IF(ALBANY_ASCR)
+  SET(SOURCES ${SOURCES}
+    Albany_Networks.cpp
+    )
+  SET(HEADERS ${HEADERS} 
+    Albany_Networks.hpp
+    )
+ENDIF()
+
 # MOR (Model Order Reduction)
 SET(MOR_DIR ${Albany_SOURCE_DIR}/src/MOR)
 
