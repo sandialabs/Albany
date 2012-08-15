@@ -174,6 +174,8 @@ evalModel(
     EpetraExt::ModelEvaluator::OutArgs::sg_vector_t f_sg = 
       network_outargs.get_f_sg();
     if (f_sg != Teuchos::null) {
+      // std::cout << "g_sg[0] = " << std::endl << *(g_sg[0]) << std::endl;
+      // std::cout << "g_sg[1] = " << std::endl << *(g_sg[1]) << std::endl;
       f_sg->init(0.0);
       for (int block=0; block<f_sg->size(); block++) {
 	for (int i=0; i<n; i++) {
@@ -191,6 +193,8 @@ evalModel(
     EpetraExt::ModelEvaluator::OutArgs::sg_operator_t W_sg = 
       network_outargs.get_W_sg();
     if (W_sg != Teuchos::null) {
+      // std::cout << "dgdp_sg[0] = " << std::endl << *(dgdp_sg[0]) << std::endl;
+      // std::cout << "dgdp_sg[1] = " << std::endl << *(dgdp_sg[1]) << std::endl;
       int row, col;
       double val;
       for (int block=0; block<W_sg->size(); block++) {
