@@ -5,7 +5,7 @@
 //
 
 #include "Topology.h"
-
+#include "time.h"
 int main(int ac, char* av[])
 {
 
@@ -62,7 +62,6 @@ int main(int ac, char* av[])
   topology.disp_connectivity();
 
   // Start the mesh update process
-
   // Prepares mesh for barycentric subdivision
   topology.remove_node_relations();
 
@@ -77,12 +76,20 @@ int main(int ac, char* av[])
   // Generate the output file
   //-----------------------------------------------------------------------------------------------------------------------------------
 
+  //Measure the time computing the barycentric subdivision
+  clock_t start, end;
+  double cpu_time_used;
+  start = clock();
+
+  //Carry out barycentric subdivision on the mesh
   topology.barycentric_subdivision();
+
+  end = clock();
+  cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
 
   std::cout << "*************************" << std::endl;
   std::cout << "After element subdivision" << std::endl;
   std::cout << "*************************" << std::endl;
-
   gviz_output = "after.dot";
   topology.output_to_graphviz(gviz_output);
 
@@ -90,6 +97,9 @@ int main(int ac, char* av[])
   // Must be called each time at conclusion of mesh modification
   topology.graph_cleanup();
   topology.disp_connectivity();
+  std::cout << endl;
+  std::cout << "topology.barycentric_subdivision() takes "
+ 		  << cpu_time_used << " seconds"<<endl;
 
   Teuchos::RCP<Albany::AbstractDiscretization> discretization_ptr =
       topology.get_Discretization();
