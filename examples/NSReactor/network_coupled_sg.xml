@@ -12,11 +12,11 @@
 	       value="{ 0, 0 }"/>
     <Parameter name="Stochastic" type="bool" value="1"/>
     <ParameterList name="Dimension Reduction">
-      <Parameter name="Reduce Dimension" type="bool" value="0"/>
-      <Parameter name="Reduced Basis Method" type="string"
-		 value="Product Lanczos"/>
+      <Parameter name="Reduce Dimension" type="bool" value="1"/>
       <!--Parameter name="Reduced Basis Method" type="string"
-	         value="Product Lanczos Gram-Schmidt"/-->
+		 value="Product Lanczos"/-->
+      <Parameter name="Reduced Basis Method" type="string"
+	         value="Product Lanczos Gram-Schmidt"/>
       <!--Parameter name="Reduced Basis Method" type="string"
 		 value="Monomial Proj Gram-Schmidt"/-->
       <!--Parameter name="Orthogonalization Method" type="string"
