@@ -47,6 +47,7 @@ evalModel(
       (*f)[i+2*n] = (*p[0])[i+n] + (*p[1])[i];
       (*f)[i+3*n] = (*p[0])[i]   + (*p[1])[i+n];
     }
+    // f->Print(std::cout << "f = " << std::endl);
   }
 
   // W
@@ -166,7 +167,7 @@ evalModel(
       W_crs->ReplaceGlobalValues(row, 1, &val, &col);
     }
 
-    //W_crs->Print(std::cout << "W_crs =" << std::endl);
+    // W_crs->Print(std::cout << "W_crs =" << std::endl);
   }
       
   // f_sg
