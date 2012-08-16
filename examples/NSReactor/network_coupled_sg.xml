@@ -76,7 +76,8 @@
 	  <Parameter name="Symmetric Gauss-Seidel" type="bool" value="0"/>
 	  <Parameter name="Mean Preconditioner Type" type="string" value="Ifpack"/>
 	  <ParameterList name="Mean Preconditioner Parameters">
-	    <!--Parameter name="Ifpack Preconditioner" type="string" value="Amesos"/-->
+	    <Parameter name="Ifpack Preconditioner" type="string" value="Amesos"/>
+            <Parameter name="Overlap" type="int" value="4"/>
 	  </ParameterList>
 	  <Parameter name="Fully Assembled Preconditioner Type" type="string" value="Ifpack"/>
 	  <ParameterList name="Fully Assembled Preconditioner Parameters">
@@ -144,6 +145,7 @@
 	      <ParameterList name="Preconditioner Types">
 		<ParameterList name="Ifpack">
 		  <Parameter name="Prec Type" type="string" value="Amesos"/>
+                  <Parameter name="Overlap" type="int" value="4"/>
 		</ParameterList>
 	      </ParameterList>
 	    </ParameterList>
@@ -187,7 +189,7 @@
     <Parameter  name="Number of Stochastic Galerkin Standard Deviation Comparisons" type="int" value="4"/>
     <Parameter  name="Stochastic Galerkin Standard Deviation Test Values" 
 		type="Array(double)" value="{0.345903, 9.56761, 9.56761, 0.345903}"/>
-    <Parameter  name="Absolute Tolerance" type="double" value="1.0e-8"/>
+    <Parameter  name="Absolute Tolerance" type="double" value="1.0e-5"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-3"/>
   </ParameterList>
 </ParameterList>
