@@ -183,6 +183,9 @@ Albany::ProjectionProblem::constructEvaluators(
    using std::vector;
    using PHAL::AlbanyTraits;
 
+  // get the name of the current element block
+  string elementBlockName = meshSpecs.ebName;
+
    RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
    RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
      intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
@@ -301,7 +304,7 @@ Albany::ProjectionProblem::constructEvaluators(
 
      ev = rcp(new LCM::Time<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
-     p = stateMgr.registerStateVariable("Time",dl->workset_scalar, dl->dummy,"scalar", 0.0, true);
+     p = stateMgr.registerStateVariable("Time",dl->workset_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
    }
@@ -318,7 +321,7 @@ Albany::ProjectionProblem::constructEvaluators(
 
      ev = rcp(new LCM::Strain<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
-     p = stateMgr.registerStateVariable("Strain",dl->qp_tensor, dl->dummy,"scalar", 0.0,true);
+     p = stateMgr.registerStateVariable("Strain",dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0,true);
      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
    }
@@ -398,7 +401,7 @@ Albany::ProjectionProblem::constructEvaluators(
 
         ev = rcp(new LCM::Neohookean<EvalT,AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
-        p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy,"scalar", 0.0);
+        p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0);
         ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
       }
@@ -420,7 +423,7 @@ Albany::ProjectionProblem::constructEvaluators(
 
       ev = rcp(new LCM::PisdWdF<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy,"scalar", 0.0);
+      p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
@@ -512,7 +515,7 @@ Albany::ProjectionProblem::constructEvaluators(
         //Declare what state data will need to be saved (name, layout, init_type)
         ev = rcp(new LCM::DislocationDensity<EvalT,AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
-        p = stateMgr.registerStateVariable("G",dl->qp_tensor, dl->dummy,"scalar", 0.0);
+        p = stateMgr.registerStateVariable("G",dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0);
         ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
       }
@@ -544,13 +547,13 @@ Albany::ProjectionProblem::constructEvaluators(
 
         ev = rcp(new LCM::J2Stress<EvalT,AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
-        p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy,"scalar", 0.0);
+        p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0);
         ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
-        p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy,"identity", 1.0, true);
+        p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy, elementBlockName, "identity", 1.0, true);
         ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
-        p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+        p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
         ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
       }
@@ -625,31 +628,31 @@ Albany::ProjectionProblem::constructEvaluators(
 
     	  ev = rcp(new LCM::J2Fiber<EvalT,AlbanyTraits>(*p));
     	  fm0.template registerEvaluator<EvalT>(ev);
-    	  p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy,"scalar", 0.0);
+    	  p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0);
     	  ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     	  fm0.template registerEvaluator<EvalT>(ev);
-    	  p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy,"identity", 1.0, true);
+    	  p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy, elementBlockName, "identity", 1.0, true);
     	  ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     	  fm0.template registerEvaluator<EvalT>(ev);
-    	  p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+    	  p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
     	  ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     	  fm0.template registerEvaluator<EvalT>(ev);
-    	  p = stateMgr.registerStateVariable("energy_J2",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+    	  p = stateMgr.registerStateVariable("energy_J2",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
     	  ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     	  fm0.template registerEvaluator<EvalT>(ev);
-    	  p = stateMgr.registerStateVariable("energy_f1",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+    	  p = stateMgr.registerStateVariable("energy_f1",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
     	  ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     	  fm0.template registerEvaluator<EvalT>(ev);
-    	  p = stateMgr.registerStateVariable("energy_f2",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+    	  p = stateMgr.registerStateVariable("energy_f2",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
     	  ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     	  fm0.template registerEvaluator<EvalT>(ev);
-    	  p = stateMgr.registerStateVariable("damage_J2",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+    	  p = stateMgr.registerStateVariable("damage_J2",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
     	  ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     	  fm0.template registerEvaluator<EvalT>(ev);
-    	  p = stateMgr.registerStateVariable("damage_f1",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+    	  p = stateMgr.registerStateVariable("damage_f1",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
     	  ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     	  fm0.template registerEvaluator<EvalT>(ev);
-    	  p = stateMgr.registerStateVariable("damage_f2",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+    	  p = stateMgr.registerStateVariable("damage_f2",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
     	  ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     	  fm0.template registerEvaluator<EvalT>(ev);
 
@@ -701,11 +704,11 @@ Albany::ProjectionProblem::constructEvaluators(
     ev = rcp(new LCM::DefGrad<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
     p = stateMgr.registerStateVariable("Displacement Gradient",dl->qp_tensor,
-    		                            dl->dummy,"identity",true);
+    		                            dl->dummy, elementBlockName, "identity",true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
     p = stateMgr.registerStateVariable("Jacobian",
-    		                           dl->qp_scalar, dl->dummy,"scalar", 1.0,true);
+    		                           dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 1.0,true);
 	ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -765,7 +768,7 @@ Albany::ProjectionProblem::constructEvaluators(
 
       ev = rcp(new LCM::L2ProjectionResidual<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("Projected Field",dl_proj->qp_vector, dl_proj->dummy,"scalar", 0.0, true);
+      p = stateMgr.registerStateVariable("Projected Field",dl_proj->qp_vector, dl_proj->dummy, elementBlockName, "scalar", 0.0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -801,7 +804,7 @@ Albany::ProjectionProblem::constructEvaluators(
 
 	  ev = rcp(new LCM::FaceFractureCriteria<EvalT,AlbanyTraits>(*p));
 	  fm0.template registerEvaluator<EvalT>(ev);
-	  p = stateMgr.registerStateVariable("Temp2",dl_proj->cell_scalar,dl_proj->dummy,"scalar",0.0,true);
+	  p = stateMgr.registerStateVariable("Temp2",dl_proj->cell_scalar,dl_proj->dummy, elementBlockName, "scalar",0.0,true);
 	  ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
 	  fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -835,7 +838,7 @@ Albany::ProjectionProblem::constructEvaluators(
 
       ev = rcp(new LCM::FaceAverage<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("Temp",dl_proj->cell_scalar,dl_proj->dummy,"scalar",0.0,true);
+      p = stateMgr.registerStateVariable("Temp",dl_proj->cell_scalar,dl_proj->dummy, elementBlockName, "scalar",0.0,true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
   }

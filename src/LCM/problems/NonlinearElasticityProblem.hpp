@@ -161,6 +161,9 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
   using std::vector;
   using PHAL::AlbanyTraits;
 
+  // get the name of the current element block
+  string elementBlockName = meshSpecs.ebName;
+
   const bool composite = params->get("Use Composite Tet 10", false);
   RCP<shards::CellTopology> comp_cellType = rcp(new shards::CellTopology( shards::getCellTopologyData<shards::Tetrahedron<11> >() ) );
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
@@ -243,7 +246,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
 
     ev = rcp(new LCM::Time<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Time",dl->workset_scalar, dl->dummy,"scalar", 0.0, true);
+    p = stateMgr.registerStateVariable("Time",dl->workset_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -326,30 +329,30 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
 
   if (matModel == "J2Fiber")
   {
-	  { // Integration Point Location
-	      RCP<ParameterList> p = rcp(new ParameterList("Integration Point Location"));
+    { // Integration Point Location
+      RCP<ParameterList> p = rcp(new ParameterList("Integration Point Location"));
 
-	      //Inputs: flags, weights, GradU
-	      p->set<string>("Coordinate Vector Name", "Coord Vec");
-	      p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
+      //Inputs: flags, weights, GradU
+      p->set<string>("Coordinate Vector Name", "Coord Vec");
+      p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
 
-	      p->set<string>("Gradient BF Name", "Grad BF");
-	      p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+      p->set<string>("Gradient BF Name", "Grad BF");
+      p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
-	      p->set<string>("BF Name", "BF");
-	      p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
+      p->set<string>("BF Name", "BF");
+      p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
 
-	      //Outputs: F, J
-	      p->set<string>("Integration Point Location Name", "Integration Point Location"); //dl->qp_tensor also
-	      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+      //Outputs: F, J
+      p->set<string>("Integration Point Location Name", "Integration Point Location"); //dl->qp_tensor also
+      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
-	      ev = rcp(new LCM::QptLocation<EvalT,AlbanyTraits>(*p));
-	      fm0.template registerEvaluator<EvalT>(ev);
+      ev = rcp(new LCM::QptLocation<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
 
-	      p = stateMgr.registerStateVariable("Integration Point Location",dl->qp_vector, dl->dummy,"scalar", 0.0);
-	      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-	      fm0.template registerEvaluator<EvalT>(ev);
-	  }
+      p = stateMgr.registerStateVariable("Integration Point Location",dl->qp_vector, dl->dummy, elementBlockName, "scalar", 0.0);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
   }
 
 
@@ -373,10 +376,10 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
 
       ev = rcp(new LCM::Neohookean<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy,"scalar", 0.0);
+      p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("F",dl->qp_tensor, dl->dummy,"identity");
+      p = stateMgr.registerStateVariable("F",dl->qp_tensor, dl->dummy, elementBlockName, "identity");
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
@@ -398,103 +401,103 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
 
     ev = rcp(new LCM::PisdWdF<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy,"scalar", 0.0);
+    p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
   else if (matModel == "MooneyRivlin")
   {
-	  RCP<ParameterList> p = rcp(new ParameterList("Stress"));
+    RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
-	  //Input
-	  p->set<string>("DefGrad Name", "F");
-	  p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-	  p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    //Input
+    p->set<string>("DefGrad Name", "F");
+    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-	  p->set<string>("DetDefGrad Name", "J");  // dl->qp_scalar also
-	  RealType c1 = params->get("c1", 0.0);
-	  RealType c2 = params->get("c2",0.0);
-	  RealType c = params->get("c",0.0);
+    p->set<string>("DetDefGrad Name", "J");  // dl->qp_scalar also
+    RealType c1 = params->get("c1", 0.0);
+    RealType c2 = params->get("c2",0.0);
+    RealType c = params->get("c",0.0);
 
-	  p->set<RealType>("c1 Name", c1);
-	  p->set<RealType>("c2 Name", c2);
-	  p->set<RealType>("c Name", c);
+    p->set<RealType>("c1 Name", c1);
+    p->set<RealType>("c2 Name", c2);
+    p->set<RealType>("c Name", c);
 
-	  //Output
-	  p->set<string>("Stress Name", matModel); //dl->qp_tensor also
+    //Output
+    p->set<string>("Stress Name", matModel); //dl->qp_tensor also
 
-	  ev = rcp(new LCM::MooneyRivlin<EvalT,AlbanyTraits>(*p));
-	  fm0.template registerEvaluator<EvalT>(ev);
-	  p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy,"scalar",0.0);
-	  ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-	  fm0.template registerEvaluator<EvalT>(ev);
+    ev = rcp(new LCM::MooneyRivlin<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+    p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy, elementBlockName, "scalar",0.0);
+    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
   }
 
   else if (matModel == "MooneyRivlinDamage")
   {
-  	RCP<ParameterList> p = rcp(new ParameterList("Stress"));
+    RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
-  	//Input
-  	p->set<string>("DefGrad Name", "F");
-  	p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-  	p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    //Input
+    p->set<string>("DefGrad Name", "F");
+    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-  	p->set<string>("DetDefGrad Name", "J");  // dl->qp_scalar also
-  	p->set<string>("alpha Name", "alpha");
-  	RealType c1 = params->get("c1", 0.0);
-  	RealType c2 = params->get("c2",0.0);
-  	RealType c = params->get("c",0.0);
-  	RealType zeta_inf = params->get("zeta_inf",0.0);
-  	RealType iota = params->get("iota",0.0);
+    p->set<string>("DetDefGrad Name", "J");  // dl->qp_scalar also
+    p->set<string>("alpha Name", "alpha");
+    RealType c1 = params->get("c1", 0.0);
+    RealType c2 = params->get("c2",0.0);
+    RealType c = params->get("c",0.0);
+    RealType zeta_inf = params->get("zeta_inf",0.0);
+    RealType iota = params->get("iota",0.0);
 
-  	p->set<RealType>("c1 Name", c1);
-  	p->set<RealType>("c2 Name", c2);
-  	p->set<RealType>("c Name", c);
+    p->set<RealType>("c1 Name", c1);
+    p->set<RealType>("c2 Name", c2);
+    p->set<RealType>("c Name", c);
 
-  	p->set<RealType>("zeta_inf Name", zeta_inf);
-  	p->set<RealType>("iota Name", iota);
+    p->set<RealType>("zeta_inf Name", zeta_inf);
+    p->set<RealType>("iota Name", iota);
 
 
-  	//Output
-  	p->set<string>("Stress Name", matModel); //dl->qp_tensor also
+    //Output
+    p->set<string>("Stress Name", matModel); //dl->qp_tensor also
 
-  	ev = rcp(new LCM::MooneyRivlinDamage<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new LCM::MooneyRivlinDamage<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy,"scalar",0.0);
+    p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy, elementBlockName, "scalar",0.0);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("alpha",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+    p = stateMgr.registerStateVariable("alpha",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 1.0, true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
   else if (matModel == "MooneyRivlinIncompressible")
   {
-	  RCP<ParameterList> p = rcp(new ParameterList("Stress"));
+    RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
-	  //Input
-	  p->set<string>("DefGrad Name", "F");
-	  p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-	  p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    //Input
+    p->set<string>("DefGrad Name", "F");
+    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-	  p->set<string>("DetDefGrad Name", "J");  // dl->qp_scalar also
-	  RealType c1 = params->get("c1", 0.0);
-	  RealType c2 = params->get("c2",0.0);
-	  RealType mult = params->get("mult",100.0); // default
+    p->set<string>("DetDefGrad Name", "J");  // dl->qp_scalar also
+    RealType c1 = params->get("c1", 0.0);
+    RealType c2 = params->get("c2",0.0);
+    RealType c = params->get("mu",0.0);
 
-	  p->set<RealType>("c1 Name", c1);
-	  p->set<RealType>("c2 Name", c2);
-	  p->set<RealType>("mult Name", mult);
+    p->set<RealType>("c1 Name", c1);
+    p->set<RealType>("c2 Name", c2);
+    p->set<RealType>("mu Name", c);
 
-	  //Output
-	  p->set<string>("Stress Name", matModel); //dl->qp_tensor also
+    //Output
+    p->set<string>("Stress Name", matModel); //dl->qp_tensor also
 
-	  ev = rcp(new LCM::MooneyRivlin_Incompressible<EvalT,AlbanyTraits>(*p));
-	  fm0.template registerEvaluator<EvalT>(ev);
-	  p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy,"scalar",0.0);
-	  ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-	  fm0.template registerEvaluator<EvalT>(ev);
+    ev = rcp(new LCM::MooneyRivlin_Incompressible<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+    p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy, elementBlockName, "scalar",0.0);
+    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
   }
 
   else if (matModel == "MooneyRivlinIncompDamage")
@@ -652,7 +655,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
       //Declare what state data will need to be saved (name, layout, init_type)
       ev = rcp(new LCM::DislocationDensity<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("G",dl->qp_tensor, dl->dummy,"scalar", 0.0);
+      p = stateMgr.registerStateVariable("G",dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
@@ -684,13 +687,13 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
 
       ev = rcp(new LCM::J2Stress<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy,"scalar", 0.0);
+      p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy,"identity", 1.0, true);
+      p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy, elementBlockName, "identity", 1.0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+      p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
@@ -764,31 +767,31 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
 
       ev = rcp(new LCM::J2Fiber<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy,"scalar", 0.0);
+      p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy,"identity", 1.0, true);
+      p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy, elementBlockName, "identity", 1.0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+      p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("energy_J2",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+      p = stateMgr.registerStateVariable("energy_J2",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("energy_f1",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+      p = stateMgr.registerStateVariable("energy_f1",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("energy_f2",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+      p = stateMgr.registerStateVariable("energy_f2",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("damage_J2",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+      p = stateMgr.registerStateVariable("damage_J2",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("damage_f1",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+      p = stateMgr.registerStateVariable("damage_f1",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("damage_f2",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+      p = stateMgr.registerStateVariable("damage_f2",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
@@ -854,45 +857,45 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
 
       ev = rcp(new LCM::GursonFD<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy,"scalar", 0.0,true);
+      p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0,true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy,"identity", 1.0, true);
+      p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy, elementBlockName, "identity", 1.0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+      p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("voidVolume",dl->qp_scalar, dl->dummy,"scalar", f0, true);
+      p = stateMgr.registerStateVariable("voidVolume",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", f0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
 
       // save deformation gradient as well
       if(isHyper == false){
-		  p = stateMgr.registerStateVariable("F",dl->qp_tensor, dl->dummy,"identity", 1.0, true);
-		  ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-		  fm0.template registerEvaluator<EvalT>(ev);
+        p = stateMgr.registerStateVariable("F",dl->qp_tensor, dl->dummy, elementBlockName, "identity", 1.0, true);
+        ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
       }
     }
 
     if(matModel == "RIHMR")
     {
-		{ // Recovery Modulus
-		  RCP<ParameterList> p = rcp(new ParameterList);
+      { // Recovery Modulus
+        RCP<ParameterList> p = rcp(new ParameterList);
 
-		  p->set<string>("QP Variable Name", "Recovery Modulus");
-		  p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-		  p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-		  p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-		  p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+        p->set<string>("QP Variable Name", "Recovery Modulus");
+        p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+        p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+        p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+        p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
-		  p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-		  Teuchos::ParameterList& paramList = params->sublist("Recovery Modulus");
-		  p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+        p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+        Teuchos::ParameterList& paramList = params->sublist("Recovery Modulus");
+        p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-		  ev = rcp(new LCM::RecoveryModulus<EvalT,AlbanyTraits>(*p));
-		  fm0.template registerEvaluator<EvalT>(ev);
-		}
+        ev = rcp(new LCM::RecoveryModulus<EvalT,AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+      }
     }
 
 
@@ -922,16 +925,16 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
       //Declare what state data will need to be saved (name, layout, init_type)
       ev = rcp(new LCM::RIHMR<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy,"scalar", 0.0);
+      p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy,"identity", 1.0, true);
+      p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy, elementBlockName, "identity", 1.0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+      p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("isoHardening",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+      p = stateMgr.registerStateVariable("isoHardening",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }

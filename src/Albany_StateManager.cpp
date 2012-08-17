@@ -30,23 +30,25 @@ Albany::StateManager::StateManager() :
 Teuchos::RCP<Teuchos::ParameterList>
 Albany::StateManager::registerStateVariable(const std::string &name, const Teuchos::RCP<PHX::DataLayout> &dl,
                                             const Teuchos::RCP<PHX::DataLayout> &dummy,
+                                            const std::string& ebName,
                                             const std::string &init_type,
                                             const double init_val,
                                             const bool registerOldState)
 {
-  return registerStateVariable(name, dl, dummy, init_type, init_val, registerOldState, name);
+  return registerStateVariable(name, dl, dummy, ebName, init_type, init_val, registerOldState, name);
 }
 
 Teuchos::RCP<Teuchos::ParameterList>
 Albany::StateManager::registerStateVariable(const std::string &stateName, const Teuchos::RCP<PHX::DataLayout> &dl,
                                             const Teuchos::RCP<PHX::DataLayout> &dummy,
+                                            const std::string& ebName,
                                             const std::string &init_type,
                                             const double init_val,
                                             const bool registerOldState,
                                             const std::string& fieldName)
 {
   const bool bOutputToExodus = true;
-  registerStateVariable(stateName, dl, init_type, init_val, registerOldState, bOutputToExodus, fieldName);
+  registerStateVariable(stateName, dl, ebName, init_type, init_val, registerOldState, bOutputToExodus, fieldName);
 
   // Create param list for SaveStateField evaluator 
   Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Save or Load State " 
@@ -62,6 +64,7 @@ Albany::StateManager::registerStateVariable(const std::string &stateName, const 
 void
 Albany::StateManager::registerStateVariable(const std::string &stateName, 
 					    const Teuchos::RCP<PHX::DataLayout> &dl,
+                                            const std::string& ebName,
                                             const std::string &init_type,                                            
                                             const double init_val,
                                             const bool registerOldState,
@@ -111,6 +114,9 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
     pstateRef.output = false; 
     dl->dimensions(pstateRef.dim); 
   }
+
+  // insert
+  stateRef.nameMap[stateName] = ebName;
 }
 
 Teuchos::RCP<Albany::StateInfoStruct>
@@ -331,7 +337,7 @@ Albany::StateManager::setEigenData(const Teuchos::RCP<Albany::EigendataStruct>& 
 }
 
 std::vector<std::string>
-Albany::StateManager::getResidResponseIDsToRequire()
+Albany::StateManager::getResidResponseIDsToRequire(std::string & elementBlockName)
 {
   std::string id, name;
   std::vector<std::string> idsToRequire; 
@@ -342,10 +348,10 @@ Albany::StateManager::getResidResponseIDsToRequire()
     id = (*st)->responseIDtoRequire;
     if(id.length() > 0) {
       idsToRequire.push_back(id);
-cout << "RRR1  " << name << " requiring " << id << " (" << i << ")" << endl;
+      cout << "RRR1  " << name << " requiring " << id << " (" << i << ")" << endl;
     }
     else {
-cout << "RRR1  " << name << " empty (" << i << ")" << endl;
+      cout << "RRR1  " << name << " empty (" << i << ")" << endl;
     }
     i++;
   }

@@ -155,6 +155,9 @@ Albany::ThermoElasticityProblem::constructEvaluators(
    using std::vector;
    using PHAL::AlbanyTraits;
 
+  // get the name of the current element block
+  string elementBlockName = meshSpecs.ebName;
+
    RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
    RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
      intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
@@ -327,7 +330,7 @@ Albany::ThermoElasticityProblem::constructEvaluators(
 
     ev = rcp(new LCM::Stress<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy,"zero");
+    p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy, elementBlockName, "zero");
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }

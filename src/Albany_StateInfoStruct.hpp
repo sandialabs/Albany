@@ -84,6 +84,7 @@ struct StateStruct {
   std::string entity; //Entity entity;
   std::string initType; //InitType initType;
   double initValue;
+  std::map<std::string, std::string> nameMap;
 
   //For proper PHAL_SaveStateField functionality - maybe only needed temporarily?
   std::string responseIDtoRequire; //If nonzero length, the responseID for response 

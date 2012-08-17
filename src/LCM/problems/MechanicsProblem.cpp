@@ -79,6 +79,7 @@ buildProblem(
   cout << "Num MeshSpecs: " << physSets << endl;
   fm.resize(physSets);
 
+  cout << "Calling MechanicsProblem::buildEvaluators" << endl;
   for (int ps=0; ps<physSets; ps++) {
     fm[ps]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
     buildEvaluators(*fm[ps], *meshSpecs[ps], stateMgr, BUILD_RESID_FM, 

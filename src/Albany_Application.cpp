@@ -128,6 +128,7 @@ Application(const RCP<const Epetra_Comm>& comm_,
   ArrayRCP<RCP<Albany::MeshSpecsStruct> > meshSpecs = 
     discFactory.createMeshSpecs();
 
+  cout << "Albany_Application constructor: calling problem->buildProblem" << endl;
   problem->buildProblem(meshSpecs, stateMgr);
 
   // Construct responses
@@ -136,36 +137,49 @@ Application(const RCP<const Epetra_Comm>& comm_,
   // are responses that setup states, which has to happen before the 
   // discreatization is created.  We will delay setup of the distributed
   // responses to deal with this temporarily.
+  cout << "Albany_Application constructor: get response list" << endl;
   Teuchos::ParameterList& responseList = 
     problemParams->sublist("Response Functions");
+  cout << "Albany_Application constructor: responseFactory" << endl;
   ResponseFactory responseFactory(Teuchos::rcp(this,false), problem, meshSpecs, 
 				  Teuchos::rcp(&stateMgr,false));
+  cout << "Albany_Application constructor: createResponseFunctions" << endl;
   responses = responseFactory.createResponseFunctions(responseList);
 
+  cout << "build state field manager" << endl;
   // Build state field manager
   sfm.resize(meshSpecs.size());
   Teuchos::RCP<PHX::DataLayout> dummy =
     Teuchos::rcp(new PHX::MDALayout<Dummy>(0));
-  std::vector<string>responseIDs_to_require = 
-    stateMgr.getResidResponseIDsToRequire();
+  cout << "looping over meshSpecs to create " << endl;
   for (int ps=0; ps<meshSpecs.size(); ps++) {
+    cout << "get the field manager" << endl;
+    fm = problem->getFieldManager();
+    //cout << *fm[ps] << endl;
+    string elementBlockName = meshSpecs[ps]->ebName;
+    std::vector<string>responseIDs_to_require = 
+      stateMgr.getResidResponseIDsToRequire(elementBlockName);
     sfm[ps] = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+    cout << "creating tags via problem->buildEvaluators" << endl;
     Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> > tags = 
       problem->buildEvaluators(*sfm[ps], *meshSpecs[ps], stateMgr, 
 			       BUILD_STATE_FM, Teuchos::null);
+    cout << "iterating over the responses" << endl;
     std::vector<string>::const_iterator it;
     for (it = responseIDs_to_require.begin(); 
 	 it != responseIDs_to_require.end(); 
 	 it++) {
       const string& responseID = *it;
+      cout << "creating the res_response_tag" << endl;
       PHX::Tag<PHAL::AlbanyTraits::Residual::ScalarT> res_response_tag(
 	responseID, dummy);
+      cout << "calling requireField for " << res_response_tag << endl;
       sfm[ps]->requireField<PHAL::AlbanyTraits::Residual>(res_response_tag);
     }
     sfm[ps]->postRegistrationSetup("");
   }
   
-
+  *out << "create the full mesh" << endl;
   // Create the full mesh
   neq = problem->numEquations();
   disc = discFactory.createDiscretization(neq, stateMgr.getStateInfoStruct());
@@ -203,6 +217,7 @@ Application(const RCP<const Epetra_Comm>& comm_,
     initial_x_dot->Export(*overlapped_xdot, *exporter, Insert);
   }
 
+  cout << "initialize states" << endl;
   // Now that space is allocated in STK for state fields, initialize states
   stateMgr.setStateArrays(disc);
 
@@ -211,7 +226,7 @@ Application(const RCP<const Epetra_Comm>& comm_,
     responses[i]->setup();
 
   // Set up memory for workset
-
+  cout << "fm = problem->getFieldManager()" << endl;
   fm = problem->getFieldManager();
   TEUCHOS_TEST_FOR_EXCEPTION(fm==Teuchos::null, std::logic_error,
 			     "getFieldManager not implemented!!!");

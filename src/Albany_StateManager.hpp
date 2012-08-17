@@ -52,6 +52,7 @@ public:
   //! Method to call multiple times (before allocate) to register which states will be saved.
   void registerStateVariable(const std::string &stateName, 
 			     const Teuchos::RCP<PHX::DataLayout> &dl,
+                             const std::string &ebName,
 			     const std::string &init_type="scalar",
 			     const double init_val=0.0,
 			     const bool registerOldState=false,
@@ -63,6 +64,7 @@ public:
   Teuchos::RCP<Teuchos::ParameterList>
   registerStateVariable(const std::string &name, const Teuchos::RCP<PHX::DataLayout> &dl, 
                         const Teuchos::RCP<PHX::DataLayout> &dummy,
+                        const std::string &ebName,
                         const std::string &init_type="scalar",
                         const double init_val=0.0,
                         const bool registerOldState=false);
@@ -71,6 +73,7 @@ public:
   Teuchos::RCP<Teuchos::ParameterList>
   registerStateVariable(const std::string &stateName, const Teuchos::RCP<PHX::DataLayout> &dl, 
 			const Teuchos::RCP<PHX::DataLayout> &dummy,
+                        const std::string &ebName,
 			const std::string &init_type,
                         const double init_val,
                         const bool registerOldState,
@@ -87,7 +90,7 @@ public:
 
   //! Method to get the ResponseIDs for states which have been registered and (should)
   //!  have a SaveStateField evaluator associated with them that evaluates the responseID
-  std::vector<std::string> getResidResponseIDsToRequire();
+  std::vector<std::string> getResidResponseIDsToRequire(std::string & elementBlockName);
 
   //! Method to make the current newState the oldState, and vice versa
   void updateStates();
