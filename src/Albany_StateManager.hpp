@@ -86,7 +86,7 @@ public:
   void importStateData(Albany::StateArrays& statesToCopyFrom);
 
   //! Method to get the Names of the state variables
-  RegisteredStates& getRegisteredStates(){return statesToStore;};
+  std::map<std::string, RegisteredStates>& getRegisteredStates(){return statesToStore;};
 
   //! Method to get the ResponseIDs for states which have been registered and (should)
   //!  have a SaveStateField evaluator associated with them that evaluates the responseID
@@ -125,8 +125,8 @@ private:
   //! boolean to enforce that allocate gets called once, and after registration and befor gets
   bool stateVarsAreAllocated;
 
-  //! Container to hold the states that have been registered, to be allocated later
-  RegisteredStates statesToStore;
+  //! Container to hold the states that have been registered, by element block, to be allocated later
+  std::map<std::string, RegisteredStates> statesToStore;
 
   //! Discretization object which allows StateManager to perform input/output with exodus and Epetra vectors
   Teuchos::RCP<Albany::AbstractDiscretization> disc;

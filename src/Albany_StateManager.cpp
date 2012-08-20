@@ -74,7 +74,7 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
 {
   TEUCHOS_TEST_FOR_EXCEPT(stateVarsAreAllocated);
 
-  if( statesToStore.find(stateName) != statesToStore.end() ) {
+  if( statesToStore[ebName].find(stateName) != statesToStore[ebName].end() ) {
     //Duplicate registration.  This will occur when a problem's 
     // constructEvaluators function (templated) registers state variables.
 
@@ -83,7 +83,7 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
     return;  // Don't re-register the same state name
   }
 
-  statesToStore[stateName] = dl;
+  statesToStore[ebName][stateName] = dl;
 
   // Load into StateInfo
   (*stateInfo).push_back(Teuchos::rcp(new Albany::StateStruct(stateName)));
@@ -339,14 +339,16 @@ Albany::StateManager::setEigenData(const Teuchos::RCP<Albany::EigendataStruct>& 
 std::vector<std::string>
 Albany::StateManager::getResidResponseIDsToRequire(std::string & elementBlockName)
 {
-  std::string id, name;
+  std::string id, name, ebName;
   std::vector<std::string> idsToRequire; 
 
   int i = 0;
   for (Albany::StateInfoStruct::const_iterator st = stateInfo->begin(); st!= stateInfo->end(); st++) {
     name = (*st)->name;
     id = (*st)->responseIDtoRequire;
-    if(id.length() > 0) {
+    ebName = (*st)->nameMap[name];
+    cout << "ebName --> " << ebName << endl;
+    if ( id.length() > 0 && ebName == elementBlockName ) {
       idsToRequire.push_back(id);
       cout << "RRR1  " << name << " requiring " << id << " (" << i << ")" << endl;
     }

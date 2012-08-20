@@ -502,70 +502,68 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
 
   else if (matModel == "MooneyRivlinIncompDamage")
   {
-	  RCP<ParameterList> p = rcp(new ParameterList("Stress"));
+    RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
-	  //Input
-	  p->set<string>("DefGrad Name", "F");
-	  p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-	  p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    //Input
+    p->set<string>("DefGrad Name", "F");
+    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-	  p->set<string>("DetDefGrad Name", "J");  // dl->qp_scalar also
-	  p->set<string>("alpha Name","alpha");
-	  RealType c1 = params->get("c1", 0.0);
-	  RealType c2 = params->get("c2",0.0);
-	  RealType mult = params->get("mult",100.0); // default
-	  RealType zeta_inf = params->get("zeta_inf",0.0);
-	  RealType iota = params->get("iota",0.0);
+    p->set<string>("DetDefGrad Name", "J");  // dl->qp_scalar also
+    p->set<string>("alpha Name","alpha");
+    RealType c1 = params->get("c1", 0.0);
+    RealType c2 = params->get("c2",0.0);
+    RealType mult = params->get("mult",100.0); // default
+    RealType zeta_inf = params->get("zeta_inf",0.0);
+    RealType iota = params->get("iota",0.0);
 
-	  p->set<RealType>("c1 Name", c1);
-	  p->set<RealType>("c2 Name", c2);
-	  p->set<RealType>("mult Name", mult);
-	  p->set<RealType>("zeta_inf Name", zeta_inf);
-	  p->set<RealType>("iota Name", iota);
+    p->set<RealType>("c1 Name", c1);
+    p->set<RealType>("c2 Name", c2);
+    p->set<RealType>("mult Name", mult);
+    p->set<RealType>("zeta_inf Name", zeta_inf);
+    p->set<RealType>("iota Name", iota);
 
-	  //Output
-	  p->set<string>("Stress Name", matModel); //dl->qp_tensor also
+    //Output
+    p->set<string>("Stress Name", matModel); //dl->qp_tensor also
 
-	  ev = rcp(new LCM::MooneyRivlin_Incompressible_Damage<EvalT,AlbanyTraits>(*p));
-	  fm0.template registerEvaluator<EvalT>(ev);
-	  p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy,"scalar",0.0);
-	  ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-	  fm0.template registerEvaluator<EvalT>(ev);
-	  p = stateMgr.registerStateVariable("alpha",dl->qp_scalar, dl->dummy,"scalar", 0.0,true);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
+    ev = rcp(new LCM::MooneyRivlin_Incompressible_Damage<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+    p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy, elementBlockName, "scalar",0.0);
+    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+    p = stateMgr.registerStateVariable("alpha",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0,true);
+    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
 
   }
 
   else if (matModel == "AAA")
   {
-	  RCP<ParameterList> p = rcp(new ParameterList("Stress"));
+    RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
-	  //Input
-	  p->set<string>("DefGrad Name", "F");
-	  p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-	  p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    //Input
+    p->set<string>("DefGrad Name", "F");
+    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-	  p->set<string>("DetDefGrad Name", "J");  // dl->qp_scalar also
-	  RealType alpha = params->get("alpha", 0.0);
-	  RealType beta = params->get("beta",0.0);
-	  RealType mult = params->get("mult",100.0); // default
+    p->set<string>("DetDefGrad Name", "J");  // dl->qp_scalar also
+    RealType alpha = params->get("alpha", 0.0);
+    RealType beta = params->get("beta",0.0);
+    RealType mult = params->get("mult",100.0); // default
 
-	  p->set<RealType>("alpha Name", alpha);
-	  p->set<RealType>("beta Name", beta);
-	  p->set<RealType>("mult Name", mult);
+    p->set<RealType>("alpha Name", alpha);
+    p->set<RealType>("beta Name", beta);
+    p->set<RealType>("mult Name", mult);
 
-	  //Output
-	  p->set<string>("Stress Name", matModel); //dl->qp_tensor also
+    //Output
+    p->set<string>("Stress Name", matModel); //dl->qp_tensor also
 
-	  ev = rcp(new LCM::AAA<EvalT,AlbanyTraits>(*p));
-	  fm0.template registerEvaluator<EvalT>(ev);
-	  p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy,"scalar",0.0);
-	  ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-	  fm0.template registerEvaluator<EvalT>(ev);
+    ev = rcp(new LCM::AAA<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+    p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy, elementBlockName, "scalar",0.0);
+    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
   }
-
-
 
   else if (matModel == "J2"||matModel == "J2Fiber"||matModel == "GursonFD"|| matModel == "RIHMR")
   { 
