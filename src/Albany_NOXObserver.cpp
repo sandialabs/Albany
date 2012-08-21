@@ -41,13 +41,13 @@ void Albany_NOXObserver::observeSolution(
        const Epetra_Vector& solution, double time_or_param_val)
 {
 
-#ifdef ALBANY_SEACAS
-  if(app->getSolutionMethod() != Albany::Application::Steady){
-//    exodusOutput.writeSolution(time_or_param_val, solution); // soln is not overlapped
-    Epetra_Vector *ovlp_solution = app->getOverlapSolution(solution);
-    exodusOutput.writeSolution(time_or_param_val, *ovlp_solution, true); // soln is overlapped
-  }
-#endif
+//#ifdef ALBANY_SEACAS
+//  if(app->getSolutionMethod() != Albany::Application::Steady){
+////    exodusOutput.writeSolution(time_or_param_val, solution); // soln is not overlapped
+//    Epetra_Vector *ovlp_solution = app->getOverlapSolution(solution);
+//    exodusOutput.writeSolution(time_or_param_val, *ovlp_solution, true); // soln is overlapped
+//  }
+//#endif
 
   // Evaluate state field manager
   app->evaluateStateFieldManager(time_or_param_val, NULL, solution);
@@ -62,10 +62,10 @@ void Albany_NOXObserver::observeSolution(
    */ 
 
 #ifdef ALBANY_SEACAS
-  if(app->getSolutionMethod() == Albany::Application::Steady){
+//  if(app->getSolutionMethod() == Albany::Application::Steady){
 //    exodusOutput.writeSolution(time_or_param_val, solution); // soln is not overlapped
     Epetra_Vector *ovlp_solution = app->getOverlapSolution(solution);
     exodusOutput.writeSolution(time_or_param_val, *ovlp_solution, true); // soln is overlapped
-  }
+//  }
 #endif
 }

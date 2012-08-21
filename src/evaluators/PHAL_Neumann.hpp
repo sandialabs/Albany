@@ -62,7 +62,6 @@ public:
 
   ScalarT& getValue(const std::string &n);
 
-
 protected:
 
   const Teuchos::RCP<Albany::Layouts>& dl;
@@ -179,7 +178,7 @@ template<typename Traits>
 class Neumann<PHAL::AlbanyTraits::Residual,Traits>
   : public NeumannBase<PHAL::AlbanyTraits::Residual, Traits>  {
 public:
-  Neumann(const Teuchos::ParameterList& p);
+  Neumann(Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
@@ -192,7 +191,7 @@ template<typename Traits>
 class Neumann<PHAL::AlbanyTraits::Jacobian,Traits>
   : public NeumannBase<PHAL::AlbanyTraits::Jacobian, Traits>  {
 public:
-  Neumann(const Teuchos::ParameterList& p);
+  Neumann(Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
@@ -205,7 +204,7 @@ template<typename Traits>
 class Neumann<PHAL::AlbanyTraits::Tangent,Traits>
   : public NeumannBase<PHAL::AlbanyTraits::Tangent, Traits>  {
 public:
-  Neumann(const Teuchos::ParameterList& p);
+  Neumann(Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
@@ -218,7 +217,7 @@ template<typename Traits>
 class Neumann<PHAL::AlbanyTraits::SGResidual,Traits>
   : public NeumannBase<PHAL::AlbanyTraits::SGResidual, Traits>  {
 public:
-  Neumann(const Teuchos::ParameterList& p);
+  Neumann(Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::SGResidual::ScalarT ScalarT;
@@ -231,7 +230,7 @@ template<typename Traits>
 class Neumann<PHAL::AlbanyTraits::SGJacobian,Traits>
   : public NeumannBase<PHAL::AlbanyTraits::SGJacobian, Traits>  {
 public:
-  Neumann(const Teuchos::ParameterList& p);
+  Neumann(Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::SGJacobian::ScalarT ScalarT;
@@ -244,7 +243,7 @@ template<typename Traits>
 class Neumann<PHAL::AlbanyTraits::SGTangent,Traits>
   : public NeumannBase<PHAL::AlbanyTraits::SGTangent, Traits>  {
 public:
-  Neumann(const Teuchos::ParameterList& p);
+  Neumann(Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
@@ -257,7 +256,7 @@ template<typename Traits>
 class Neumann<PHAL::AlbanyTraits::MPResidual,Traits>
   : public NeumannBase<PHAL::AlbanyTraits::MPResidual, Traits>  {
 public:
-  Neumann(const Teuchos::ParameterList& p);
+  Neumann(Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::MPResidual::ScalarT ScalarT;
@@ -270,7 +269,7 @@ template<typename Traits>
 class Neumann<PHAL::AlbanyTraits::MPJacobian,Traits>
   : public NeumannBase<PHAL::AlbanyTraits::MPJacobian, Traits>  {
 public:
-  Neumann(const Teuchos::ParameterList& p);
+  Neumann(Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
@@ -283,7 +282,7 @@ template<typename Traits>
 class Neumann<PHAL::AlbanyTraits::MPTangent,Traits>
   : public NeumannBase<PHAL::AlbanyTraits::MPTangent, Traits>  {
 public:
-  Neumann(const Teuchos::ParameterList& p);
+  Neumann(Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;

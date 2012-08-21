@@ -398,7 +398,7 @@ void LameStressBase<EvalT, Traits>::
 
       // left stretch V, and rotation R, from left polar decomposition of new deformation gradient
       LCM::Tensor<RealType, 3> V, R;
-      boost::tie(V,R) = LCM::polar_left(Fnew);
+      boost::tie(V,R) = LCM::polar_left_eig(Fnew);
 
       // incremental left stretch Vinc, incremental rotation Rinc, and log of incremental left stretch, logVinc
       LCM::Tensor<RealType, 3> Vinc, Rinc, logVinc;

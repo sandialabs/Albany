@@ -652,7 +652,8 @@ namespace LCM {
     ball_volume = length_scale * length_scale * length_scale;
 
     const int
-    number_partitions = static_cast<int>(GetVolume() / ball_volume);
+    number_partitions =
+        static_cast<int>(round(GetVolume() / ball_volume));
 
     return number_partitions;
   }
@@ -728,12 +729,11 @@ namespace LCM {
     zoltan.Set_Param("DEBUG_LEVEL", "0");
     zoltan.Set_Param("OBJ_WEIGHT_DIM", "1");
     zoltan.Set_Param("NUM_GLOBAL_PARTS", zoltan_number_parts.c_str());
-    //zoltan.Set_Param("NUM_LOCAL_PARTS", zoltan_number_parts.c_str());
     zoltan.Set_Param("REMAP", "0");
     zoltan.Set_Param("HYPERGRAPH_PACKAGE", "PHG");
     zoltan.Set_Param("PHG_MULTILEVEL", "1");
     zoltan.Set_Param("PHG_EDGE_WEIGHT_OPERATION", "ERROR");
-    zoltan.Set_Param("IMBALANCE_TOL", "1.01");
+    zoltan.Set_Param("IMBALANCE_TOL", "1.10");
     zoltan.Set_Param("PHG_CUT_OBJECTIVE", "HYPEREDGES");
 
     //
@@ -865,14 +865,14 @@ namespace LCM {
     Zoltan
     zoltan(MPI::COMM_SELF);
 
-    zoltan.Set_Param("LB_METHOD", "RIB");
+    zoltan.Set_Param("LB_METHOD", "RCB");
+    zoltan.Set_Param("RCB_RECOMPUTE_BOX", "1");
     zoltan.Set_Param("LB_APPROACH", "PARTITION");
     zoltan.Set_Param("DEBUG_LEVEL", "0");
     zoltan.Set_Param("OBJ_WEIGHT_DIM", "1");
     zoltan.Set_Param("NUM_GLOBAL_PARTS", zoltan_number_parts.c_str());
-    //zoltan.Set_Param("NUM_LOCAL_PARTS", zoltan_number_parts.c_str());
     zoltan.Set_Param("REMAP", "0");
-    zoltan.Set_Param("IMBALANCE_TOL", "1.01");
+    zoltan.Set_Param("IMBALANCE_TOL", "1.10");
     zoltan.Set_Param("CHECK_GEOM", "1");
     zoltan.Set_Param("AVERAGE_CUTS", "1");
     zoltan.Set_Param("REDUCE_DIMENSIONS", "1");

@@ -38,11 +38,19 @@ CahnHillRhoResid(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") )
 {
 
+  haveNoise = p.get<bool>("Have Noise");
+
   this->addDependentField(wBF);
   this->addDependentField(rhoGrad);
   this->addDependentField(wGradBF);
   this->addDependentField(chemTerm);
   this->addEvaluatedField(rhoResidual);
+
+  if(haveNoise){
+    noiseTerm = PHX::MDField<ScalarT, Cell, QuadPoint> (p.get<std::string>("Langevin Noise Term"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+    this->addDependentField(noiseTerm);
+  }
 
   gamma = p.get<double>("gamma Value");
 
@@ -54,6 +62,8 @@ CahnHillRhoResid(const Teuchos::ParameterList& p) :
   numNodes = dims[1];
   numQPs  = dims[2];
   numDims = dims[3];
+
+  gamma_term.resize(worksetSize, numQPs, numDims);
 
   this->setName("CahnHillRhoResid"+PHX::TypeString<EvalT>::value);
 
@@ -69,6 +79,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(rhoGrad,fm);
   this->utils.setFieldData(wGradBF,fm);
   this->utils.setFieldData(chemTerm,fm);
+  if(haveNoise)
+    this->utils.setFieldData(noiseTerm,fm);
 
   this->utils.setFieldData(rhoResidual,fm);
 }
@@ -87,11 +99,16 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t qp=0; qp < numQPs; ++qp) 
       for (std::size_t i=0; i < numDims; ++i) 
 
-        rhoGrad(cell,qp,i) *= -gamma; 
+        gamma_term(cell, qp, i) = rhoGrad(cell,qp,i) * gamma; 
 
-  FST::integrate<ScalarT>(rhoResidual, rhoGrad, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+  FST::integrate<ScalarT>(rhoResidual, gamma_term, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
 
   FST::integrate<ScalarT>(rhoResidual, chemTerm, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+
+  if(haveNoise)
+
+    FST::integrate<ScalarT>(rhoResidual, noiseTerm, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+
 
 }
 

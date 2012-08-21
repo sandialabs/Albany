@@ -14,6 +14,9 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
+#ifndef ALBANY_PROJECTIONERROR_HPP
+#define ALBANY_PROJECTIONERROR_HPP
+
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
@@ -37,18 +40,19 @@ public:
 
 private:
   Teuchos::RCP<Teuchos::ParameterList> params_;
-  static Teuchos::RCP<Teuchos::ParameterList> fillDefaultParams(const Teuchos::RCP<Teuchos::ParameterList> &params);
-  
   Teuchos::RCP<const Epetra_Map> dofMap_;
 
   Teuchos::RCP<ReducedSpace> reducedSpace_;
-  Teuchos::RCP<Epetra_MultiVector> createOrthonormalBasis();
 
   std::deque<double> relativeErrorNorms_;
 
-  // Doisallow copy & assignment
+  static Teuchos::RCP<Teuchos::ParameterList> fillDefaultParams(const Teuchos::RCP<Teuchos::ParameterList> &params);
+
+  // Disallow copy & assignment
   ProjectionError(const ProjectionError &);
   ProjectionError &operator=(const ProjectionError &);
 };
 
 } // end namespace Albany
+
+#endif /* ALBANY_PROJECTIONERROR_HPP */

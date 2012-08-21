@@ -46,6 +46,8 @@
 #include <Ionit_Initializer.h>
 #endif 
 
+const double pi = 3.1415926535897932385;
+
 Albany::STKDiscretization::STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
 					     const Teuchos::RCP<const Epetra_Comm>& comm_) :
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
@@ -130,6 +132,46 @@ Albany::STKDiscretization::getCoordinates() const
   }
 
   return coordinates;
+}
+
+//The function transformMesh() maps a unit cube domain by applying the transformation 
+//x = L*x
+//y = L*y
+//z = s(x,y)*z + b(x,y)*(1-z)
+//where b(x,y) and s(x,y) are curves specifying the bedrock and top surface 
+//geometries respectively.   
+//Currently this function is only needed for some FELIX problems.
+
+
+void
+Albany::STKDiscretization::transformMesh()
+{
+  std::string transformType = stkMeshStruct->transformType;
+  if (transformType == "None") {
+     transform_type = NONE;
+  }
+  else if (transformType == "ISMIP-HOM Test A") {
+     transform_type = ISMIP_HOM_TEST_A;
+     cout << "Test A!" << endl;
+  }
+  if (transform_type == ISMIP_HOM_TEST_A)
+  {
+    int L = stkMeshStruct->felixL; 
+    double alpha = stkMeshStruct->felixAlpha; 
+    cout << "here!" << endl;
+    cout << "L: " << L << endl; 
+    cout << "alpha degrees: " << alpha << endl; 
+    alpha = alpha*pi/180; //convert alpha, read in from ParameterList, to radians
+    cout << "alpha radians: " << alpha << endl; 
+    for (int i=0; i < numOverlapNodes; i++)  {
+      double* x = stk::mesh::field_data(*stkMeshStruct->coordinates_field, *overlapnodes[i]);
+      x[0] = L*x[0];
+      x[1] = L*x[1];
+      double s = -x[0]*tan(alpha);
+      double b = s - 1.0 + 0.5*sin(2*pi/L*x[0])*sin(2*pi/L*x[1]);
+      x[2] = s*x[2] + b*(1-x[2]);
+     }
+   }
 }
 
 void
@@ -550,10 +592,6 @@ void Albany::STKDiscretization::computeWorksetInfo()
         wsElNodeEqID[b][i][j].resize(neq);
         for (std::size_t eq=0; eq < neq; eq++) 
           wsElNodeEqID[b][i][j][eq] = getOverlapDOF(node_lid,eq);
-
-if (stkMeshStruct->PBCStruct.periodic[0])
-  cout << "PX " << stkMeshStruct->PBCStruct.scale[0] << "  NGID " << node_gid << "  coordx " <<  coords[b][i][j][0] << "  coordy " << coords[b][i][j][1] << endl;
-
       }
     }
   }
@@ -563,23 +601,24 @@ if (stkMeshStruct->PBCStruct.periodic[0])
     for (int b=0; b < numBuckets; b++) {
       for (std::size_t i=0; i < buckets[b]->size(); i++) {
         int nodes_per_element = (*buckets[b])[i].relations(metaData.NODE_RANK).size();
-        bool anyXeqZero=false, flipZeroToScale=false;
+        bool anyXeqZero=false;
         for (int j=0; j < nodes_per_element; j++)  if (coords[b][i][j][d]==0.0) anyXeqZero=true;
-        if (anyXeqZero) 
+        if (anyXeqZero)  {
+          bool flipZeroToScale=false;
           for (int j=0; j < nodes_per_element; j++) 
               if (coords[b][i][j][d] > stkMeshStruct->PBCStruct.scale[d]/1.9) flipZeroToScale=true;
-        if (flipZeroToScale) {  
-           for (int j=0; j < nodes_per_element; j++)  {
-             double* xleak = new double [3];
-             for (int k=0; k < stkMeshStruct->numDim; k++) 
-                xleak[k] = coords[b][i][j][k];
-             if (xleak[d]==0.0) {
-                xleak[d]=stkMeshStruct->PBCStruct.scale[d];
-  cout << "REPLACE " << b << " " << i << " " << j << " dim  " << d << "  "  << coords[b][i][j][d] << " with " << xleak[d] << endl;
-               coords[b][i][j] = xleak; // replace ptr to coords
-               toDelete.push_back(xleak);
-             }
-           }          
+          if (flipZeroToScale) {  
+            for (int j=0; j < nodes_per_element; j++)  {
+              if (coords[b][i][j][d] == 0.0) {
+                double* xleak = new double [stkMeshStruct->numDim];
+                for (int k=0; k < stkMeshStruct->numDim; k++) 
+                  if (k==d) xleak[d]=stkMeshStruct->PBCStruct.scale[d];
+                  else xleak[k] = coords[b][i][j][k];
+                coords[b][i][j] = xleak; // replace ptr to coords
+                toDelete.push_back(xleak);
+              }
+            }          
+          }
         }
       }
     }
@@ -780,7 +819,7 @@ void Albany::STKDiscretization::computeNodeSets()
     nodeSets[ns->first].resize(nodes.size());
     nodeSetCoords[ns->first].resize(nodes.size());
 //    nodeSetIDs.push_back(ns->first); // Grab string ID
-    *out << "STKDisc: nodeset "<< ns->first <<" has size " << nodes.size() << "  on Proc 0." << endl;
+    cout << "STKDisc: nodeset "<< ns->first <<" has size " << nodes.size() << "  on Proc 0." << endl;
     for (std::size_t i=0; i < nodes.size(); i++) {
       int node_gid = gid(nodes[i]);
       int node_lid = node_map->LID(node_gid);
@@ -821,6 +860,8 @@ Albany::STKDiscretization::updateMesh(Teuchos::RCP<Albany::AbstractSTKMeshStruct
   computeOwnedNodesAndUnknowns();
 
   computeOverlapNodesAndUnknowns();
+
+  transformMesh(); 
 
   computeGraphs();
 

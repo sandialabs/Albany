@@ -47,6 +47,8 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
   // Get field type and corresponding layouts
   std::string field_name = plist->get<string>("Field Name");
   std::string fieldType = plist->get<std::string>("Field Type", "Scalar");
+  if (plist->isType< Teuchos::Array<int> >("Field Components"))
+    field_components = plist->get< Teuchos::Array<int> >("Field Components");
   Teuchos::RCP<PHX::DataLayout> field_layout;
   Teuchos::RCP<PHX::DataLayout> local_response_layout;
   Teuchos::RCP<PHX::DataLayout> global_response_layout;
@@ -57,8 +59,18 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
   }
   else if (fieldType == "Vector") {
     field_layout = dl->qp_vector;
-    local_response_layout = dl->cell_vector;
-    global_response_layout = dl->workset_vector;
+    if (field_components.size() == 0) {
+      local_response_layout = dl->cell_vector;
+      global_response_layout = dl->workset_vector;
+    }
+    else {
+      int worksetSize = dl->cell_scalar->dimension(0);
+      local_response_layout = 
+	Teuchos::rcp(new PHX::MDALayout<Cell,Dim>(worksetSize, 
+						  field_components.size()));
+      global_response_layout = 
+	Teuchos::rcp(new PHX::MDALayout<Dim>(field_components.size()));
+    }
   }
   else if (fieldType == "Tensor") {
     field_layout = dl->qp_tensor;
@@ -75,6 +87,12 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
   field = PHX::MDField<ScalarT>(field_name, field_layout);
   field_layout->dimensions(field_dims);
   field_rank = field_layout->rank();
+  if (field_components.size() == 0) {
+    int num_components = field_dims[field_rank-1];
+    field_components.resize(num_components);
+    for (int i=0; i<num_components; i++)
+      field_components[i] = i;
+  }
 
   // coordinate dimensions
   std::vector<PHX::DataLayout::size_type> coord_dims;
@@ -195,8 +213,8 @@ evaluateFields(typename Traits::EvalData workset)
 	  this->global_response(0) += s;
 	}
 	else if (field_rank == 3) {
-	  for (std::size_t dim=0; dim < field_dims[2]; ++dim) {
-	    s = field(cell,qp,dim) * weights(cell,qp) * scaling;
+	  for (std::size_t dim=0; dim < field_components.size(); ++dim) {
+	    s = field(cell,qp,field_components[dim]) * weights(cell,qp) * scaling;
 	    this->local_response(cell,dim) += s;
 	    this->global_response(dim) += s;
 	  }
@@ -263,6 +281,9 @@ getValidResponseParameters() const
   validPL->set<double>("y max", 0.0, "Integration domain maximum y coordinate");
   validPL->set<double>("z min", 0.0, "Integration domain minimum z coordinate");
   validPL->set<double>("z max", 0.0, "Integration domain maximum z coordinate");
+
+  validPL->set< Teuchos::Array<int> >("Field Components", Teuchos::Array<int>(),
+				      "Field components to scatter");
 
   return validPL;
 }

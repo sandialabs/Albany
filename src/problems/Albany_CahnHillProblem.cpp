@@ -32,6 +32,7 @@ CahnHillProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<const Epetra_Comm>& comm_) :
   Albany::AbstractProblem(params_, paramLib_, 2),
   numDim(numDim_),
+  haveNoise(false),
   comm(comm_)
 {
 }
@@ -96,8 +97,14 @@ Albany::CahnHillProblem::getValidProblemParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidCahnHillProblemParams");
 
+  Teuchos::Array<int> defaultPeriod;
+
   validPL->set<double>("b", 0.0, "b value in equation 1.1");
   validPL->set<double>("gamma", 0.0, "gamma value in equation 2.2");
+  validPL->set<double>("Langevin Noise SD", 0.0, "Standard deviation of the Langevin noise to apply");
+  validPL->set<Teuchos::Array<int> >("Langevin Noise Time Period", defaultPeriod, 
+    "Time period to apply Langevin noise");
+  validPL->set<bool>("Lump Mass", true, "Lump mass matrix in time derivative term");
 
   return validPL;
 }

@@ -41,7 +41,7 @@ namespace Albany {
    * \brief Struct to construct and hold DataLayouts
    */
   struct Layouts {
-    Layouts(int worksetSize, int  numVertices, int numNodes, int numQPts, int numDim, int vecDim=-1);
+    Layouts(int worksetSize, int  numVertices, int numNodes, int numQPts, int numDim, int vecDim=-1, int numFace=0);
     //! Data Layout for scalar quantity that lives at nodes
     Teuchos::RCP<PHX::DataLayout> node_scalar;
     //! Data Layout for scalar quantity that lives at quad points
@@ -50,24 +50,40 @@ namespace Albany {
     Teuchos::RCP<PHX::DataLayout> cell_scalar;
     //! Data Layout for scalar quantity that lives on a cell
     Teuchos::RCP<PHX::DataLayout> cell_scalar2;
+    //! Data Layout for scalar quantity that lives on a face
+    Teuchos::RCP<PHX::DataLayout> face_scalar;
     //! Data Layout for vector quantity that lives at nodes
     Teuchos::RCP<PHX::DataLayout> node_vector;
     //! Data Layout for vector quantity that lives at quad points
     Teuchos::RCP<PHX::DataLayout> qp_vector;
     //! Data Layout for vector quantity that lives on a cell
     Teuchos::RCP<PHX::DataLayout> cell_vector;
+    //! Data Layout for vector quantity that lives on a face
+    Teuchos::RCP<PHX::DataLayout> face_vector;
     //! Data Layout for gradient quantity that lives at nodes
     Teuchos::RCP<PHX::DataLayout> node_gradient;
     //! Data Layout for gradient quantity that lives at quad points
     Teuchos::RCP<PHX::DataLayout> qp_gradient;
     //! Data Layout for gradient quantity that lives on a cell
     Teuchos::RCP<PHX::DataLayout> cell_gradient;
+    //! Data Layout for gradient quantity that lives on a face
+    Teuchos::RCP<PHX::DataLayout> face_gradient;
     //! Data Layout for tensor quantity that lives at nodes
     Teuchos::RCP<PHX::DataLayout> node_tensor;
     //! Data Layout for tensor quantity that lives at quad points
     Teuchos::RCP<PHX::DataLayout> qp_tensor;
     //! Data Layout for tensor quantity that lives on a cell
     Teuchos::RCP<PHX::DataLayout> cell_tensor;
+    //! Data Layout for tensor quantity that lives on a face
+    Teuchos::RCP<PHX::DataLayout> face_tensor;
+    //! Data Layout for vector gradient quantity that lives at nodes
+    Teuchos::RCP<PHX::DataLayout> node_vecgradient;
+    //! Data Layout for vector gradient quantity that lives at quad points
+    Teuchos::RCP<PHX::DataLayout> qp_vecgradient;
+    //! Data Layout for vector gradient quantity that lives on a cell
+    Teuchos::RCP<PHX::DataLayout> cell_vecgradient;
+    //! Data Layout for vector gradient quantity that lives on a face
+    Teuchos::RCP<PHX::DataLayout> face_vecgradient;
     //! Data Layout for vector quantity that lives at vertices (coordinates)
     Teuchos::RCP<PHX::DataLayout> vertices_vector;
     //! Data Layout for scalar basis functions
@@ -83,6 +99,8 @@ namespace Albany {
     Teuchos::RCP<PHX::DataLayout> workset_gradient;
     //! Data Layout for tensor quantity on workset
     Teuchos::RCP<PHX::DataLayout> workset_tensor;
+    //! Data Layout for vector gradient quantity on workset
+    Teuchos::RCP<PHX::DataLayout> workset_vecgradient;
     /*!
      * \brief Dummy Data Layout where one is needed but not accessed
      * For instance, the action of scattering residual data from a

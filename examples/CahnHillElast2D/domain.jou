@@ -1,39 +1,16 @@
-create curve spline location 0 0 0 location 20 0 0
-create curve spline location 20 0 0 location 20 3 0
-create curve spline location 0 3 0 location 20 3 0
-create curve spline location 0 0 0 location 0 3 0
-
-create curve spline location 0.333 1.333 0 location 19.667 1.333 0
-create curve spline location 19.667 1.333 0 location 19.667 1.667 0
-create curve spline location 0.333 1.667 0 location 19.667 1.667 0
-create curve spline location 0.333 1.333 0 location 0.333 1.667 0
-
-create surface curve 1 2 3 4 5 6 7 8
-create surface curve 5 6 7 8
-
-imprint all
-merge all
-
-curve 4 2  interval 9
-curve 4 2  scheme equal
-curve 1 3  interval 60
-curve 1 3  scheme equal
-
-curve 6 8  interval 1
-curve 6 8  scheme equal
-curve 5 7  interval 58
-curve 5 7  scheme equal
-
-mesh surface 1 2
-
+create curve spline location -0.5 -0.5 0 location 0.5 -0.5 0
+create curve spline location 0.5 -0.5 0 location 0.5 0.5 0
+create curve spline location 0.5 0.5 0 location -0.5 0.5 0
+create curve spline location -0.5 0.5 0 location -0.5 -0.5 0
+create surface curve 1 2 3 4
+curve 1 2 3 4 interval 100
+curve 1 2 3 4 scheme equal
+#surface 1 scheme tridelaunay
+surface 1 scheme map
+mesh surface 1
 block 1 surface 1
-block 2 surface 2
-
+#block 1 element type TRI
 block 1 element type QUAD4
-block 2 element type QUAD4
-
-nodeset 1 curve 1 2 3 4
-
 set large exodus file off
-
-export mesh "/Volumes/ascldap/Codes/Albany/examples/CahnHillElast2D/domain.exo" overwrite
+#export mesh "/Volumes/ascldap/Codes/working/square/domain.exo" overwrite
+export mesh "/ascldap/users/gahanse/Codes/working/square/domain.exo" overwrite

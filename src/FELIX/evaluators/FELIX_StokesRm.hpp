@@ -56,7 +56,6 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> V;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> V_Dot;
   PHX::MDField<ScalarT,Cell,QuadPoint> T;
-  PHX::MDField<ScalarT,Cell,QuadPoint> rho;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> force;  
   
   // Output:

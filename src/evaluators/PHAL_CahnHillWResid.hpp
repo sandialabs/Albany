@@ -51,7 +51,9 @@ private:
 
   // Input:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> BF;
   PHX::MDField<ScalarT,Cell,QuadPoint> rhoDot;
+  PHX::MDField<ScalarT,Cell,Node> rhoDotNode;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> wGrad;
 
@@ -59,6 +61,9 @@ private:
   PHX::MDField<ScalarT,Cell,Node> wResidual;
 
   unsigned int numQPs, numDims, numNodes, worksetSize;
+
+  // lump mass matrix
+  bool lump;
 
 };
 }

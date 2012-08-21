@@ -110,7 +110,7 @@ int main(int ac, char* av[])
   Albany::STKDiscretization &
   stk_discretization = static_cast<Albany::STKDiscretization &>(discretization);
 
-  // Get MDArray which is memeopru in stk for "Partition" element variable
+  // Get MDArray which has the "Partition" element variable
   Albany::MDArray
   stk_partition = stk_discretization.getStateArrays()[0]["Partition"];
 
@@ -205,6 +205,35 @@ int main(int ac, char* av[])
   }
   std::cout << "==========================================";
   std::cout << std::endl;
+
+  std::cout << "Number of elements       : ";
+  std::cout << std::setw(14);
+  std::cout << connectivity_array.GetNumberElements() << std::endl;
+  std::cout << std::endl;
+  std::cout << "------------------------------------------";
+  std::cout << std::endl;
+  std::cout << "Element        Partition";
+  std::cout << std::endl;
+  std::cout << "------------------------------------------";
+  std::cout << std::endl;
+  for (std::map<int, int>::const_iterator
+      partitions_iter = partitions.begin();
+      partitions_iter != partitions.end();
+      ++partitions_iter) {
+
+    const int
+    element = (*partitions_iter).first;
+
+    const int
+    partition = (*partitions_iter).second;
+
+    std::cout << std::setw(16) << element;
+    std::cout << std::setw(16) << partition;
+    std::cout << std::endl;
+  }
+  std::cout << "==========================================";
+  std::cout << std::endl;
+
 
   LCM::DualGraph dual_graph(connectivity_array);
   dual_graph.Print();

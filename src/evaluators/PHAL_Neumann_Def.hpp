@@ -553,7 +553,7 @@ calc_press(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
 // **********************************************************************
 template<typename Traits>
 Neumann<PHAL::AlbanyTraits::Residual,Traits>::
-Neumann(const Teuchos::ParameterList& p)
+Neumann(Teuchos::ParameterList& p)
   : NeumannBase<PHAL::AlbanyTraits::Residual,Traits>(p)
 {
 }
@@ -567,7 +567,7 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT *valptr;
 
   // Fill in "neumann" array
-  evaluateNeumannContribution(workset);
+  this->evaluateNeumannContribution(workset);
 
   // Place it at the appropriate offset into F
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
@@ -591,7 +591,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 Neumann<PHAL::AlbanyTraits::Jacobian, Traits>::
-Neumann(const Teuchos::ParameterList& p)
+Neumann(Teuchos::ParameterList& p)
   : NeumannBase<PHAL::AlbanyTraits::Jacobian,Traits>(p)
 {
 }
@@ -606,7 +606,7 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT *valptr;
 
   // Fill in "neumann" array
-  evaluateNeumannContribution(workset);
+  this->evaluateNeumannContribution(workset);
 
   int row, lcol, col;
 
@@ -658,7 +658,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 Neumann<PHAL::AlbanyTraits::Tangent, Traits>::
-Neumann(const Teuchos::ParameterList& p)
+Neumann(Teuchos::ParameterList& p)
   : NeumannBase<PHAL::AlbanyTraits::Tangent,Traits>(p)
 {
 }
@@ -720,7 +720,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 Neumann<PHAL::AlbanyTraits::SGResidual, Traits>::
-Neumann(const Teuchos::ParameterList& p)
+Neumann(Teuchos::ParameterList& p)
   : NeumannBase<PHAL::AlbanyTraits::SGResidual,Traits>(p)
 {
 }
@@ -762,7 +762,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 Neumann<PHAL::AlbanyTraits::SGJacobian, Traits>::
-Neumann(const Teuchos::ParameterList& p)
+Neumann(Teuchos::ParameterList& p)
   : NeumannBase<PHAL::AlbanyTraits::SGJacobian,Traits>(p)
 {
 }
@@ -849,7 +849,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 Neumann<PHAL::AlbanyTraits::SGTangent, Traits>::
-Neumann(const Teuchos::ParameterList& p)
+Neumann(Teuchos::ParameterList& p)
   : NeumannBase<PHAL::AlbanyTraits::SGTangent,Traits>(p)
 {
 }
@@ -913,7 +913,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 Neumann<PHAL::AlbanyTraits::MPResidual, Traits>::
-Neumann(const Teuchos::ParameterList& p)
+Neumann(Teuchos::ParameterList& p)
   : NeumannBase<PHAL::AlbanyTraits::MPResidual,Traits>(p)
 {
 }
@@ -952,7 +952,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 Neumann<PHAL::AlbanyTraits::MPJacobian, Traits>::
-Neumann(const Teuchos::ParameterList& p)
+Neumann(Teuchos::ParameterList& p)
   : NeumannBase<PHAL::AlbanyTraits::MPJacobian,Traits>(p)
 {
 }
@@ -1029,7 +1029,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 Neumann<PHAL::AlbanyTraits::MPTangent, Traits>::
-Neumann(const Teuchos::ParameterList& p)
+Neumann(Teuchos::ParameterList& p)
   : NeumannBase<PHAL::AlbanyTraits::MPTangent,Traits>(p)
 {
 }

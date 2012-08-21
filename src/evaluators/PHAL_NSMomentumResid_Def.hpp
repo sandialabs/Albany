@@ -44,9 +44,10 @@ NSMomentumResid(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") ),
   haveSUPG(p.get<bool>("Have SUPG"))
 {
-   if (p.isType<bool>("Disable Transient"))
-     enableTransient = !p.get<bool>("Disable Transient");
-   else enableTransient = true;
+
+  if (p.isType<bool>("Disable Transient"))
+    enableTransient = !p.get<bool>("Disable Transient");
+  else enableTransient = true;
 
   this->addDependentField(wBF);  
   this->addDependentField(pGrad);
@@ -69,7 +70,7 @@ NSMomentumResid(const Teuchos::ParameterList& p) :
     this->addDependentField(rho);
     this->addDependentField(TauM);
   }
-  
+ 
   this->addEvaluatedField(MResidual);
 
   Teuchos::RCP<PHX::DataLayout> vector_dl =
@@ -101,7 +102,7 @@ postRegistrationSetup(typename Traits::SetupData d,
     this->utils.setFieldData(rho,fm);
     this->utils.setFieldData(TauM,fm);
   }
-  
+ 
   this->utils.setFieldData(MResidual,fm);
 }
 
@@ -121,7 +122,8 @@ evaluateFields(typename Traits::EvalData workset)
 	    P(cell,qp)*wGradBF(cell,node,qp,i);               
 	  for (std::size_t j=0; j < numDims; ++j) { 
 	    MResidual(cell,node,i) += 
-	      mu(cell,qp)*VGrad(cell,qp,i,j)*wGradBF(cell,node,qp,j);
+	      mu(cell,qp)*(VGrad(cell,qp,i,j)+VGrad(cell,qp,j,i))*wGradBF(cell,node,qp,j);
+//	      mu(cell,qp)*VGrad(cell,qp,i,j)*wGradBF(cell,node,qp,j);
 	  }  
 	}
       }
@@ -142,7 +144,6 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-  
  
 }
 

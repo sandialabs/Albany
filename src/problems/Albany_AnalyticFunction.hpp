@@ -20,9 +20,18 @@
 
 #include <string>
 
+// Random and Gaussian number distribution
+#include <boost/random.hpp>
+#include <boost/random/normal_distribution.hpp>
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/random/variate_generator.hpp>
+
 #include "Teuchos_Array.hpp"
 
 namespace Albany {
+
+// generate seed convenience function
+long seedgen(int worksetID);
 
 // Base class for initial condition functions
 class AnalyticFunction {
@@ -46,6 +55,40 @@ class ConstantFunction : public AnalyticFunction {
     int numDim; // size of coordinate vector X
     int neq;    // size of solution vector x
     Teuchos::Array<double> data;  
+};
+
+class ConstantFunctionPerturbed : public AnalyticFunction {
+  public:
+    ConstantFunctionPerturbed(int neq_, int numDim_, int worksetID, 
+      Teuchos::Array<double> const_data_, Teuchos::Array<double> pert_mag_);
+    void compute(double* x, const double *X);
+  private:
+    int numDim; // size of coordinate vector X
+    int neq;    // size of solution vector x
+    Teuchos::Array<double> data;  
+    Teuchos::Array<double> pert_mag;  
+
+    // random number generator convenience function
+    double udrand ( double lo, double hi );
+
+};
+
+class ConstantFunctionGaussianPerturbed : public AnalyticFunction {
+  public:
+    ConstantFunctionGaussianPerturbed(int neq_, int numDim_, int worksetID,
+      Teuchos::Array<double> const_data_, Teuchos::Array<double> pert_mag_);
+    void compute(double* x, const double *X);
+  private:
+    int numDim; // size of coordinate vector X
+    int neq;    // size of solution vector x
+    Teuchos::Array<double> data;  
+    Teuchos::Array<double> pert_mag;  
+
+    boost::mt19937 rng;
+    Teuchos::Array<Teuchos::RCP<boost::normal_distribution<double> > > nd;
+    Teuchos::Array<Teuchos::RCP<boost::variate_generator<boost::mt19937&, 
+      boost::normal_distribution<double> > > > var_nor;
+
 };
 
 class GaussSin : public AnalyticFunction {

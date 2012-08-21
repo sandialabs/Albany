@@ -38,10 +38,9 @@ private:
 
   static Teuchos::RCP<Teuchos::ParameterList> extractModelOrderReductionParams(const Teuchos::RCP<Teuchos::ParameterList> &source);
   static Teuchos::RCP<Teuchos::ParameterList> extractReducedOrderModelParams(const Teuchos::RCP<Teuchos::ParameterList> &source);
-  static Teuchos::RCP<Teuchos::ParameterList> fillDefaultReducedOrderModelParams(const Teuchos::RCP<Teuchos::ParameterList> &source);
 
   bool useReducedOrderModel() const;
-  
+
   static Teuchos::RCP<Epetra_MultiVector> createOrthonormalBasis(const Epetra_Map &fullStateMap,
                                                                  const Teuchos::RCP<Teuchos::ParameterList> &params);
 

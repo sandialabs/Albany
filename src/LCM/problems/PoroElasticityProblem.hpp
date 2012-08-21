@@ -574,6 +574,12 @@ Albany::PoroElasticityProblem::constructEvaluators(
       p->set<string>("Back Stress Name", "backStress"); //dl->qp_tensor also
       p->set<string>("Cap Parameter Name", "capParameter"); //dl->qp_tensor also
 
+      p->set<string>("Friction Name", "friction"); //dl->qp_scalar also
+      p->set<string>("Dilatancy Name", "dilatancy"); //dl->qp_scalar also
+      p->set<string>("Eqps Name", "eqps"); //dl->qp_scalar also
+      p->set<string>("Hardening Modulus Name", "hardeningModulus"); //dl->qp_scalar also
+
+
       //Declare what state data will need to be saved (name, layout, init_type)
       ev = rcp(new LCM::CapModelStress<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
@@ -584,6 +590,19 @@ Albany::PoroElasticityProblem::constructEvaluators(
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
       p = stateMgr.registerStateVariable("capParameter",dl->qp_scalar, dl->dummy,"scalar", kappa0, true);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+
+      p = stateMgr.registerStateVariable("friction",dl->qp_scalar, dl->dummy,"scalar", 0.0);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      p = stateMgr.registerStateVariable("dilatancy",dl->qp_scalar, dl->dummy,"scalar", 0.0);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      p = stateMgr.registerStateVariable("hardeningModulus",dl->qp_scalar, dl->dummy,"scalar", 0.0);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
 	}

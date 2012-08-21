@@ -42,10 +42,10 @@ ScatterResidualBase(const Teuchos::ParameterList& p)
     p.get< Teuchos::RCP<PHX::DataLayout> >("Data Layout");
 
   if (p.isType<bool>("Vector Field"))
-    vectorField = p.get<bool>("Vector Field");
+	  vectorField = p.get<bool>("Vector Field");
   else vectorField = false;
 
-  
+  // scalar
   if (!vectorField) {
     numFieldsBase = names.size();
     const std::size_t num_val = numFieldsBase;
@@ -56,6 +56,8 @@ ScatterResidualBase(const Teuchos::ParameterList& p)
       this->addDependentField(val[eq]);
     }
   }
+
+  // vector
   else {
     valVec.resize(1);
     PHX::MDField<ScalarT,Cell,Node,Dim> mdf(names[0],dl);
@@ -115,7 +117,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node) {
 
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+    	if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
         else                   valptr = &(this->val[eq])(cell,node);
 	(*f)[nodeID[node][this->offset + eq]] += *valptr;
       }
@@ -152,8 +154,8 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node) {
      
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        if (this->vectorField) valptr = &((this->valVec[0])(cell,node,eq));
-        else                   valptr = &(this->val[eq])(cell,node);
+    	  if (this->vectorField) valptr = &((this->valVec[0])(cell,node,eq));
+    	  else                   valptr = &(this->val[eq])(cell,node);
 
         row = nodeID[node][this->offset + eq];
         int neq = nodeID[node].size();
@@ -228,8 +230,8 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
-        else                   valptr = &(this->val[eq])(cell,node);
+    	  if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+    	  else                   valptr = &(this->val[eq])(cell,node);
 
         int row = nodeID[node][this->offset + eq];
 
@@ -275,8 +277,8 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node) {
 
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
-        else                   valptr = &(this->val[eq])(cell,node);
+    	  if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+    	  else                   valptr = &(this->val[eq])(cell,node);
 	for (int block=0; block<nblock; block++)
 	  (*f)[block][nodeID[node][this->offset + eq]] += valptr->coeff(block);
       }
@@ -319,8 +321,8 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node) {
 
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
-        else                   valptr = &(this->val[eq])(cell,node);
+    	  if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+    	  else                   valptr = &(this->val[eq])(cell,node);
 
         row = nodeID[node][this->offset + eq];
         int neq = nodeID[node].size();
@@ -400,8 +402,8 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
-        else                   valptr = &(this->val[eq])(cell,node);
+    	  if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+    	  else                   valptr = &(this->val[eq])(cell,node);
 
         int row = nodeID[node][this->offset + eq];
 
@@ -450,8 +452,8 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node) {
 
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
-        else                   valptr = &(this->val[eq])(cell,node);
+    	  if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+    	  else                   valptr = &(this->val[eq])(cell,node);
 	for (int block=0; block<nblock; block++)
 	  (*f)[block][nodeID[node][this->offset + eq]] += valptr->coeff(block);
       }
@@ -494,8 +496,8 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node) {
 
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
-        else                   valptr = &(this->val[eq])(cell,node);
+    	  if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+    	  else                   valptr = &(this->val[eq])(cell,node);
 
         row = nodeID[node][this->offset + eq];
         int neq = nodeID[node].size();
@@ -570,8 +572,8 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
-        else                   valptr = &(this->val[eq])(cell,node);
+    	  if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+    	  else                   valptr = &(this->val[eq])(cell,node);
 
         int row = nodeID[node][this->offset + eq];
 

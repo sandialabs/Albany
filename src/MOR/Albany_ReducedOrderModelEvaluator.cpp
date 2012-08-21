@@ -22,9 +22,8 @@
 #include "Epetra_Vector.h"
 #include "Epetra_CrsMatrix.h"
 
+#include "Teuchos_Tuple.hpp"
 #include "Teuchos_TestForException.hpp"
-
-#include <cstddef>
 
 namespace Albany {
 
@@ -32,6 +31,10 @@ using Teuchos::RCP;
 using Teuchos::rcp;
 using Teuchos::rcp_dynamic_cast;
 using Teuchos::null;
+using Teuchos::is_null;
+using Teuchos::nonnull;
+using Teuchos::Tuple;
+using Teuchos::tuple;
 
 ReducedOrderModelEvaluator::ReducedOrderModelEvaluator(const RCP<EpetraExt::ModelEvaluator> &fullOrderModel,
                                                        const RCP<const ReducedSpace> &solutionSpace,
@@ -172,9 +175,8 @@ EpetraExt::ModelEvaluator::InArgs ReducedOrderModelEvaluator::createInArgs() con
 
   // Requires underlying full order model to accept a state input
   TEUCHOS_TEST_FOR_EXCEPT(!fullInArgs.supports(IN_ARG_x));
-  const EInArgsMembers optionalMembers[] = { IN_ARG_x, IN_ARG_x_dot, IN_ARG_t, IN_ARG_alpha, IN_ARG_beta };
-  const std::size_t optionalMemberCount = sizeof(optionalMembers) / sizeof(optionalMembers[0]);
-  for (const EInArgsMembers *it = optionalMembers; it != optionalMembers + optionalMemberCount; ++it) {
+  const Tuple<EInArgsMembers, 5> optionalMembers = tuple(IN_ARG_x, IN_ARG_x_dot, IN_ARG_t, IN_ARG_alpha, IN_ARG_beta);
+  for (Tuple<EInArgsMembers, 5>::const_iterator it = optionalMembers.begin(); it != optionalMembers.end(); ++it) {
     const EInArgsMembers member = *it;
     result.setSupports(member, fullInArgs.supports(member));
   }
@@ -192,9 +194,8 @@ EpetraExt::ModelEvaluator::OutArgs ReducedOrderModelEvaluator::createOutArgs() c
 
   result.set_Np_Ng(fullOutArgs.Np(), fullOutArgs.Ng());
 
-  const EOutArgsMembers optionalMembers[] = { OUT_ARG_f, OUT_ARG_W };
-  const std::size_t optionalMemberCount = sizeof(optionalMembers) / sizeof(optionalMembers[0]);
-  for (const EOutArgsMembers *it = optionalMembers; it != optionalMembers + optionalMemberCount; ++it) {
+  const Tuple<EOutArgsMembers, 2> optionalMembers = tuple(OUT_ARG_f, OUT_ARG_W);
+  for (Tuple<EOutArgsMembers, 2>::const_iterator it = optionalMembers.begin(); it != optionalMembers.end(); ++it) {
     const EOutArgsMembers member = *it;
     result.setSupports(member, fullOutArgs.supports(member));
   }
@@ -222,8 +223,7 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
     fullInArgs.set_x(solutionSpace_->expansion(*inArgs.get_x()));
 
     // x_dot <- basis * x_dot_r
-    if (inArgs.supports(IN_ARG_x_dot)) {
-      TEUCHOS_TEST_FOR_EXCEPT(is_null(inArgs.get_x_dot()));
+    if (inArgs.supports(IN_ARG_x_dot) && nonnull(inArgs.get_x_dot())) {
       fullInArgs.set_x_dot(solutionSpace_->linearExpansion(*inArgs.get_x_dot()));
     }
   }
@@ -266,12 +266,12 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
     reducedOpFactory_->fullJacobianIs(*fullOutArgs.get_W());
   }
 
-  // f_r <- basis^T * f (Galerkin projection)
+  // f_r <- leftBasis^T * f
   if (requestedResidual) {
     reducedOpFactory_->leftProjection(*fullOutArgs.get_f(), *outArgs.get_f());
   }
 
-  // Wr <- basis^T * W * basis (Galerkin projection)
+  // Wr <- leftBasis^T * W * basis
   if (requestedJacobian) {
     const RCP<Epetra_CrsMatrix> W_r = rcp_dynamic_cast<Epetra_CrsMatrix>(outArgs.get_W());
     TEUCHOS_TEST_FOR_EXCEPT(is_null((W_r)));

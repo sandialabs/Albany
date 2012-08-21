@@ -21,6 +21,7 @@
 #include "Intrepid_FunctionSpaceTools.hpp"
 
 namespace FELIX {
+const double pi = 3.1415926535897932385;
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
@@ -39,20 +40,38 @@ StokesBodyForce(const Teuchos::ParameterList& p) :
   }
   else if (type == "Constant") {
     bf_type = CONSTANT;
-    rho = PHX::MDField<ScalarT,Cell,QuadPoint>(
-            p.get<std::string>("Density QP Variable Name"),
-	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
-    this->addDependentField(rho);
   }
   else if (type == "Poly") {
     bf_type = POLY;  
-    mu = PHX::MDField<ScalarT,Cell,QuadPoint>(
-            p.get<std::string>("Material Property Name"),
+    muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
+            p.get<std::string>("FELIX Viscosity QP Variable Name"),
 	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
     coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Name"),
 	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") );
-    this->addDependentField(mu); 
+    this->addDependentField(muFELIX); 
+    this->addDependentField(coordVec);
+  }
+  else if (type == "SinSin") {
+    bf_type = SINSIN;  
+    muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
+            p.get<std::string>("FELIX Viscosity QP Variable Name"),
+	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
+    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
+            p.get<std::string>("Coordinate Vector Name"),
+	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") );
+    this->addDependentField(muFELIX); 
+    this->addDependentField(coordVec);
+  }
+  else if (type == "SinCosZ") {
+    bf_type = SINCOSZ;  
+    muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
+            p.get<std::string>("FELIX Viscosity QP Variable Name"),
+	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
+    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
+            p.get<std::string>("Coordinate Vector Name"),
+	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") );
+    this->addDependentField(muFELIX); 
     this->addDependentField(coordVec);
   }
 
@@ -83,10 +102,9 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   if (bf_type == CONSTANT) {
-    this->utils.setFieldData(rho,fm);
   }
-  else if (bf_type == POLY) {
-    this->utils.setFieldData(mu,fm);
+  else if (bf_type == POLY || bf_type == SINSIN || bf_type == SINCOSZ) {
+    this->utils.setFieldData(muFELIX,fm);
     this->utils.setFieldData(coordVec,fm);
   }
 
@@ -98,29 +116,76 @@ template<typename EvalT, typename Traits>
 void StokesBodyForce<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
- for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-   for (std::size_t qp=0; qp < numQPs; ++qp) {      
-     for (std::size_t i=0; i < numDims; ++i) {
-       if (bf_type == NONE)
-	 force(cell,qp,i) = 0.0;
-       else if (bf_type == CONSTANT) {
-	 force(cell,qp,i) = rho(cell,qp)*gravity[i];
-       }
+ if (bf_type == NONE) {
+   for (std::size_t cell=0; cell < workset.numCells; ++cell) 
+     for (std::size_t qp=0; qp < numQPs; ++qp)       
+       for (std::size_t i=0; i < numDims; ++i) 
+  	 force(cell,qp,i) = 0.0;
+ }
+ else if (bf_type == CONSTANT) {
+ for (std::size_t cell=0; cell < workset.numCells; ++cell) 
+   for (std::size_t qp=0; qp < numQPs; ++qp) 
+     for (std::size_t i=0; i < numDims; ++i) 
+	 force(cell,qp,i) = gravity[i];
+ }
+
+ //The following is hard-coded for a 2D Stokes problem with manufactured solution
+ else if (bf_type == POLY) {
+   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+     for (std::size_t qp=0; qp < numQPs; ++qp) {      
+       ScalarT* f = &force(cell,qp,0);
+       MeshScalarT* X = &coordVec(cell,qp,0);
+       ScalarT& muqp = muFELIX(cell,qp);
+       f[0] =  40.0*muqp*(2.0*X[1]*X[1] - 3.0*X[1]+1.0)*X[1]*(6.0*X[0]*X[0] -6.0*X[0] + 1.0)
+              + 120*muqp*(X[0]-1.0)*(X[0]-1.0)*X[0]*X[0]*(2.0*X[1]-1.0) 
+              + 10.0*muqp;      
+       f[1] = - 120.0*muqp*(1.0-X[1])*(1.0-X[1])*X[1]*X[1]*(2.0*X[0]-1.0)
+              - 40.0*muqp*(2.0*X[0]*X[0] - 3.0*X[0] + 1.0)*X[0]*(6.0*X[1]*X[1] - 6.0*X[1] + 1.0)
+              - 5*muqp*X[1];
      }
-     //the following is hard-coded for a 2D Stokes problem with manufactured solution
-     if (bf_type == POLY) {
-       //double *X = &coordVec(cell, qp, 0);
-       //double *Y = &coordVec(cell, qp, 1);    
-       //f[0] = -40*mu*(2*y^2 - 3*y + 1)*y*(6*x^2 - 6*x + 1) - 120*mu*(x - 1)^2*x^2*(2*y - 1) - 10*mu; 
-       force(cell, qp, 0) = -40.0*mu(cell,qp)*(2.0*coordVec(cell,qp,1)*coordVec(cell,qp,1) - 3.0*coordVec(cell,qp,1)+1.0)*coordVec(cell,qp,1)*(6.0*coordVec(cell,qp,0)*coordVec(cell,qp,0) 
-                             -6.0*coordVec(cell,qp,0) + 1.0) - 120*mu(cell,qp)*(coordVec(cell,qp,0)-1.0)*(coordVec(cell,qp,0)-1.0)*coordVec(cell,qp,0)*coordVec(cell,qp,0)*(2.0*coordVec(cell,qp,1)-1.0) 
-                             - 10.0*mu(cell,qp);      
-       force(cell, qp, 0) = -1.0*force(cell, qp, 0);  
-       //f[1] = 120*mu*(1 - y)^2*y^2*(2*x-1) + 40*mu*(2*x^2 - 3*x + 1)*x*(6*y^2 - 6*y + 1) + 5*mu*y; 
-       force(cell, qp, 1) = 120.0*mu(cell,qp)*(1.0-coordVec(cell,qp,1))*(1.0-coordVec(cell,qp,1))*coordVec(cell,qp,1)*coordVec(cell,qp,1)*(2.0*coordVec(cell,qp,0)-1.0) + 
-                            40.0*mu(cell,qp)*(2.0*coordVec(cell,qp,0)*coordVec(cell,qp,0) - 3.0*coordVec(cell,qp,0) + 1.0)*coordVec(cell,qp,0)*(6.0*coordVec(cell,qp,1)*coordVec(cell,qp,1) - 
-                            6.0*coordVec(cell,qp,1) + 1.0) + 5*mu(cell,qp)*coordVec(cell,qp,1);
-       force(cell, qp, 1) = -1.0*force(cell, qp, 1);  
+   }
+ }
+ // Doubly-periodic MMS derived by Irina. 
+ else if (bf_type == SINSIN) {
+   double xphase=0.0, yphase=0.0; // Expose as parameters for verification
+   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+     for (std::size_t qp=0; qp < numQPs; ++qp) {      
+       ScalarT* f = &force(cell,qp,0);
+       MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
+       MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
+       ScalarT& muqp = muFELIX(cell,qp);
+
+       f[0] = -4.0*muqp*pi*(2*pi-1)*sin(x2pi + xphase)*sin(y2pi + yphase);
+       f[1] = -4.0*muqp*pi*(2*pi+1)*cos(x2pi + xphase)*cos(y2pi + yphase);
+     }
+   }
+ }
+ // Doubly-periodic MMS with polynomial in Z
+ else if (bf_type == SINCOSZ) {
+   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+     for (std::size_t qp=0; qp < numQPs; ++qp) {      
+       ScalarT* f = &force(cell,qp,0);
+       MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
+       MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
+       MeshScalarT& z = coordVec(cell,qp,2);
+       ScalarT& muqp = muFELIX(cell,qp);
+
+       /*ScalarT t1 = muqp*z*(1-z)*(1-2*z);
+       ScalarT t2 = muqp*(1-6*z+6*z*z);
+       ScalarT t3 = muqp*z*z*(1-z)*(1-z);
+
+       f[0] =  (-8*pi*pi*t1 + t2 + 4*pi*pi)*sin(x2pi)*sin(y2pi);
+       f[1] = -(-8*pi*pi*t1 + t2 + 4*pi*pi)*cos(x2pi)*cos(y2pi);
+       f[2] = -2*pi*(-8*pi*pi*t3 + 2*t1 + 1)*cos(x2pi)*sin(y2pi);
+       */
+       ScalarT t1 = muqp*z*(1.0-z)*(1.0-2.0*z); 
+       ScalarT t2 = muqp*(12.0*z - 6.0); 
+       ScalarT t3 = muqp*z*z*(1.0-z)*(1.0-z); 
+       ScalarT t4 = muqp*(1.0-6.0*z+6.0*z*z); 
+     
+       f[0] = (-8.0*pi*pi*t1 + t2 + 4.0*pi*pi*z)*sin(x2pi)*sin(y2pi); 
+       f[1] = (8.0*pi*pi*t1 - t2 - 4.0*pi*pi*z)*cos(x2pi)*cos(y2pi); 
+       f[2] = (16.0*pi*pi*pi*t3 - 4.0*pi*t4 - 2.0*pi)*cos(x2pi)*sin(y2pi); 
      }
    }
  }

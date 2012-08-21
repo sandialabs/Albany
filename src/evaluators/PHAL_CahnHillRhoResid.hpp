@@ -57,13 +57,21 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> rhoGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint> chemTerm;
+  PHX::MDField<ScalarT,Cell,QuadPoint> noiseTerm;
+
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> rhoResidual;
 
+  Intrepid::FieldContainer<ScalarT> gamma_term;
+
   unsigned int numQPs, numDims, numNodes, worksetSize;
 
   ScalarT gamma;
+
+  // Langevin noise present
+  bool haveNoise;
+
 
 };
 }
