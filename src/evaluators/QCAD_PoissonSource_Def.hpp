@@ -674,12 +674,12 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
     ScalarT fixedCharge; // [cm^-3]
     if( materialDB->isElementBlockParam(workset.EBName, "Charge Value") ) {
       fixedCharge = materialDB->getElementBlockParam<double>(workset.EBName,"Charge Value");
-      std::cout << "DEBUG: applying fixed charge " << fixedCharge << " to element block '" << workset.EBName << "'" << std::endl;
+      //std::cout << "DEBUG: applying fixed charge " << fixedCharge << " to element block '" << workset.EBName << "'" << std::endl;
     }
     else if( materialDB->isElementBlockParam(workset.EBName, "Charge Parameter Name") ) { 
       double scl = materialDB->getElementBlockParam<double>(workset.EBName,"Charge Parameter Scaling", 1.0);
       fixedCharge = materialParams[ materialDB->getElementBlockParam<string>(workset.EBName,"Charge Parameter Name") ] * scl;
-      std::cout << "DEBUG: applying fixed charge " << fixedCharge << " to element block '" << workset.EBName << "' via param" << std::endl;
+      //std::cout << "DEBUG: applying fixed charge " << fixedCharge << " to element block '" << workset.EBName << "' via param" << std::endl;
     }
     else fixedCharge = 0.0; 
 
