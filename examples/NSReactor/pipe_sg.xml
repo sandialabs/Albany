@@ -107,6 +107,7 @@
       <Parameter name="Save Moments" type="int" value="2"/>
       <ParameterList name="SG Parameters">
 	<Parameter name="Number of SG Parameter Vectors" type="int" value="1"/>
+	<Parameter name="Set Initial SG Parameters" type="bool" value="0"/>
 	<ParameterList name="SG Parameter Vector 0">
 	  <Parameter name="Parameter Vector Index" type="int" value="1"/>
 	</ParameterList>

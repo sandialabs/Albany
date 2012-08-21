@@ -35,7 +35,7 @@ MooneyRivlin_Incompressible(const Teuchos::ParameterList& p) :
 	           p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
   c1        (p.get<double>("c1 Name")),
   c2        (p.get<double>("c2 Name")),
-  mu        (p.get<double>("mu Name"))
+  mult        (p.get<double>("mult Name"))
 {
   // Pull out numQPs and numDims from a Layout
   Teuchos::RCP<PHX::DataLayout> tensor_dl =
@@ -86,12 +86,13 @@ evaluateFields(typename Traits::EvalData workset)
   LCM::Tensor<ScalarT,3> Id = LCM::identity<ScalarT,3>();
 
   ScalarT Jm23;
+  ScalarT mu = 2.0*(c1+c2);
+  // Assume that kappa (bulk modulus) = scalar multiplier (mult) * mu (shear modulus)
+  ScalarT kappa = mult*mu;
 
   Intrepid::FieldContainer<ScalarT> C(worksetSize, numQPs, numDims, numDims);
   Intrepid::RealSpaceTools<ScalarT>::transpose(FT, F);
   Intrepid::FunctionSpaceTools::tensorMultiplyDataData<ScalarT> (C, FT, F, 'N');
-
-  PP = LCM::identity_1<ScalarT,3>()-(1.0/3.0)*LCM::tensor(Id,Id);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell){
     for (std::size_t qp=0; qp < numQPs; ++qp){
@@ -104,7 +105,10 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
 
-      ScalarT pressure = 99.96 * mu*(J(cell,qp)-1);
+      // eq 6.84 Holzapfel
+      PP = LCM::identity_1<ScalarT,3>()-(1.0/3.0)*LCM::tensor(LCM::inverse(C_qp),C_qp);
+
+      ScalarT pressure = kappa*(J(cell,qp)-1);
       
       Jm23 = std::pow(J(cell,qp),-2.0/3.0);
 
@@ -112,16 +116,14 @@ evaluateFields(typename Traits::EvalData workset)
 
       Svol = pressure*J(cell,qp)*LCM::inverse(C_qp);
 
+      // table 6.2 Holzapfel
       ScalarT gamma_bar1 = 2.0*(c1+c2*LCM::I1(Cbar));
       ScalarT gamma_bar2 = -2.0*c2;
-
-      
 
       Sbar = gamma_bar1*Id + gamma_bar2*Cbar;
       Siso = Jm23*LCM::dotdot(PP,Sbar);
 
-      S = Svol + Siso;
-      
+      S = Svol + Siso; // decomposition of stress tensor per Holzapfel
 
       // Convert to Cauchy stress
       S = (1./J(cell,qp))*F_qp*S*LCM::transpose<ScalarT>(F_qp);
