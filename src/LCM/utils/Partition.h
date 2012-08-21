@@ -21,9 +21,9 @@
 #include <Teuchos_ArrayRCP.hpp>
 #include <Teuchos_ParameterList.hpp>
 
-#include <stk/Albany_AbstractDiscretization.hpp>
-#include <stk/Albany_DiscretizationFactory.hpp>
-#include <stk/Albany_STKDiscretization.hpp>
+#include <Albany_AbstractDiscretization.hpp>
+#include <Albany_DiscretizationFactory.hpp>
+#include <Albany_STKDiscretization.hpp>
 #include <Albany_SolverFactory.hpp>
 #include <Albany_Utils.hpp>
 

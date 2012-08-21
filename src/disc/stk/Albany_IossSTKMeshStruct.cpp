@@ -252,6 +252,10 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
 
   metaData->commit();
 
+  // Restart index to read solution from exodus file.
+  int index = params->get("Restart Index",-1); // Default to no restart
+  double res_time = params->get<double>("Restart Time",-1.0); // Default to no restart
+
 #ifdef ALBANY_ZOLTAN // rebalance needs Zoltan
 
   if(useSerialMesh){
@@ -260,31 +264,35 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
 
   	bulkData->modification_begin();
 
-    // Restart index to read solution from exodus file.
-    int index = params->get("Restart Index",-1); // Default to no restart
-
     if(comm->MyPID() == 0){ // read in the mesh on PE 0
 
        stk::io::process_mesh_bulk_data(region, *bulkData);
 
       // Read solution from exodus file.
-      if (index<1) *out << "Restart Index not set. Not reading solution from exodus (" 
-           << index << ")"<< endl;
-      else {
-        *out << "Restart Index set, reading solution time : " << index << endl;
+      if (index >= 0) { // User has specified a time step to restart at
+        *out << "Restart Index set, reading solution index : " << index << endl;
          stk::io::input_mesh_fields(region, *bulkData, index);
-      }
-
-    }
-
-    if (index >= 1)
-
+         restartDataTime = region->get_state_time(index);
          hasRestartSolution = true;
+      }
+      else if (res_time >= 0) { // User has specified a time to restart at
+        *out << "Restart solution time set, reading solution time : " << res_time << endl;
+         stk::io::input_mesh_fields(region, *bulkData, res_time);
+         restartDataTime = res_time;
+         hasRestartSolution = true;
+      }
+      else {
+
+        *out << "Neither restart index or time are set. Not reading solution data from exodus file"<< endl;
+
+      }
+    }
 
   	bulkData->modification_end();
 
-  }
-  else {
+  } // UseSerialMesh - reading mesh on PE 0
+
+  else { // Parallel read from Nemspread files - or we are running in serial
 #endif
 
     stk::io::populate_bulk_data(*bulkData, *mesh_data);
@@ -309,17 +317,35 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
 
 
     if (!usePamgen)  {
-      // Restart index to read solution from exodus file.
-      int index = params->get("Restart Index",-1); // Default to no restart
-      if (index<1) *out << "Restart Index not set. Not reading solution from exodus (" 
-           << index << ")"<< endl;
-      else {
-        *out << "Restart Index set, reading solution time : " << index << endl;
-         Ioss::Region *region = mesh_data->m_input_region;
-         stk::io::process_input_request(*mesh_data, *bulkData, index);
-         hasRestartSolution = true;
 
+      // Read solution from exodus file.
+      if (index >= 0) { // User has specified a time step to restart at
+        *out << "Restart Index set, reading solution index : " << index << endl;
+         stk::io::process_input_request(*mesh_data, *bulkData, index);
          restartDataTime = region->get_state_time(index);
+         hasRestartSolution = true;
+      }
+      else if (res_time >= 0) { // User has specified a time to restart at
+        *out << "Restart solution time set, reading solution time : " << res_time << endl;
+         stk::io::process_input_request(*mesh_data, *bulkData, res_time);
+         restartDataTime = res_time;
+         hasRestartSolution = true;
+      }
+      else {
+        *out << "Restart Index not set. Not reading solution from exodus (" 
+           << index << ")"<< endl;
+
+      }
+    }
+
+    bulkData->modification_end();
+
+#ifdef ALBANY_ZOLTAN
+  } // Parallel Read - or running in serial
+#endif
+
+  if(hasRestartSolution){
+
          Teuchos::Array<std::string> default_field;
          default_field.push_back("solution");
          Teuchos::Array<std::string> restart_fields =
@@ -355,15 +381,7 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
 
                }
            }
-
-      }
-    }
-
-    bulkData->modification_end();
-
-#ifdef ALBANY_ZOLTAN
   }
-#endif
 
   coordinates_field = metaData->get_field<VectorFieldType>(std::string("coordinates"));
   proc_rank_field = metaData->get_field<IntScalarFieldType>(std::string("proc_rank"));
@@ -508,6 +526,7 @@ Albany::IossSTKMeshStruct::getValidDiscretizationParameters() const
   validPL->set<string>("Exodus Input File Name", "", "File Name For Exodus Mesh Input");
   validPL->set<string>("Pamgen Input File Name", "", "File Name For Pamgen Mesh Input");
   validPL->set<int>("Restart Index", 1, "Exodus time index to read for inital guess/condition.");
+  validPL->set<double>("Restart Time", 1.0, "Exodus solution time to read for inital guess/condition.");
   validPL->set<bool>("Use Serial Mesh", false, "Read in a single mesh on PE 0 and rebalance");
 
   return validPL;

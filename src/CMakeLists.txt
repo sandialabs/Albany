@@ -145,22 +145,22 @@ SET(HEADERS ${HEADERS}
 
 #stk
 SET(SOURCES ${SOURCES}
-        stk/Albany_STKDiscretization.cpp
-        stk/Albany_DiscretizationFactory.cpp
-        stk/Albany_GenericSTKMeshStruct.cpp
-        stk/Albany_TmplSTKMeshStruct.cpp
-        stk/Albany_FromCubitSTKMeshStruct.cpp
-        stk/Albany_IossSTKMeshStruct.cpp
+        disc/stk/Albany_STKDiscretization.cpp
+        disc/Albany_DiscretizationFactory.cpp
+        disc/stk/Albany_GenericSTKMeshStruct.cpp
+        disc/stk/Albany_TmplSTKMeshStruct.cpp
+        disc/stk/Albany_FromCubitSTKMeshStruct.cpp
+        disc/stk/Albany_IossSTKMeshStruct.cpp
   )
 SET(HEADERS ${HEADERS}
-        stk/Albany_AbstractDiscretization.hpp
-        stk/Albany_STKDiscretization.hpp
-        stk/Albany_DiscretizationFactory.hpp
-        stk/Albany_AbstractSTKMeshStruct.hpp
-        stk/Albany_GenericSTKMeshStruct.hpp
-        stk/Albany_TmplSTKMeshStruct.hpp
-        stk/Albany_FromCubitSTKMeshStruct.hpp
-        stk/Albany_IossSTKMeshStruct.hpp
+        disc/Albany_AbstractDiscretization.hpp
+        disc/stk/Albany_STKDiscretization.hpp
+        disc/Albany_DiscretizationFactory.hpp
+        disc/stk/Albany_AbstractSTKMeshStruct.hpp
+        disc/stk/Albany_GenericSTKMeshStruct.hpp
+        disc/stk/Albany_TmplSTKMeshStruct.hpp
+        disc/stk/Albany_FromCubitSTKMeshStruct.hpp
+        disc/stk/Albany_IossSTKMeshStruct.hpp
   )
 
 #evaluators
@@ -467,6 +467,19 @@ IF(ALBANY_FELIX)
      )
 ENDIF()
 
+# RPI SCOREC Adaptivity tools
+IF(ALBANY_SCOREC)
+
+  SET(ALBANY_FMDB_INCLUDE_DIRS ./disc/fmdb)
+
+  SET(SOURCES ${SOURCES}
+		disc/fmdb/Albany_FMDBMeshStruct.cpp
+   )
+  SET(HEADERS ${HEADERS}
+		disc/fmdb/Albany_FMDBMeshStruct.hpp
+  )
+ENDIF()
+
 SET(SOURCES ${SOURCES}
        QCAD_Solver.cpp
        evaluators/QCAD_Permittivity.cpp
@@ -604,12 +617,14 @@ set(ALB_TRILINOS_LIBS ${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES})
 
 include_directories (${Trilinos_INCLUDE_DIRS}
                      ${Trilinos_TPL_INCLUDE_DIRS}
+                     ${ALBANY_FMDB_INCLUDE_DIRS}
                      ./
 		                 ./evaluators
 		                 ./problems
 		                 ./responses
-		                 ./stk
+		                 ./disc/stk
 		                 ./adapt
+                     ./disc
                      ./LCM/
 		                 ./LCM/evaluators
 		                 ./LCM/utils
@@ -660,7 +675,17 @@ if (ALBANY_ENABLE_CUBIT)
   MESSAGE("-- CUBIT is Enabled, compiling with -DALBANY_CUTR")
 endif (ALBANY_ENABLE_CUBIT)
 
+# RPI SCOREC Adaptivity
+IF(ALBANY_SCOREC)
+  include_directories (${FMDB_INCLUDE_DIR})
+  link_directories (${FMDB_LIBRARY_DIR})
+  set(SCOREC_LIB FMDB SCORECModel SCORECUtil ipcomman parmetis metis)
+ELSE()
+  set(SCOREC_LIB )
+ENDIF()
+
 add_library(albanyLib ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
+
 # Now build executables from this library, tailored main()s, and Trilinos
 
 add_executable(Albany Main_Solve.cpp)
@@ -694,6 +719,17 @@ IF (ALBANY_LCM)
   ENDIF()
 
 ENDIF()
+
+set(ALL_LIBRARIES 
+	${ALBANY_CI_LIB} 
+	${ALB_TRILINOS_LIBS} 
+	${ALB_CUBIT_LIBS}
+	${LAME_LIB} 
+	${LAMENT_LIB} 
+	${SCOREC_LIB} 
+	${Trilinos_EXTRA_LD_FLAGS} 
+	${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES} 
+)
 
 target_link_libraries(Albany          ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})
 target_link_libraries(AlbanySG        ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})

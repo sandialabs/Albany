@@ -21,9 +21,9 @@
 #include <Teuchos_ScalarTraits.hpp>
 #include <Shards_CellTopology.hpp>
 #include <Shards_BasicTopologies.hpp>
-#include <stk/Albany_AbstractDiscretization.hpp>
-#include <stk/Albany_DiscretizationFactory.hpp>
-#include <stk/Albany_STKDiscretization.hpp>
+#include <Albany_AbstractDiscretization.hpp>
+#include <Albany_DiscretizationFactory.hpp>
+#include <Albany_STKDiscretization.hpp>
 #include <Albany_Utils.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/properties.hpp>

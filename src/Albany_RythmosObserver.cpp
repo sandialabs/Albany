@@ -60,7 +60,10 @@ void Albany_RythmosObserver::observeStartTimeStep(
   const Epetra_Vector soln= *(Thyra::get_Epetra_Vector(*disc->getMap(), solution));
   const Epetra_Vector soln_dot= *(Thyra::get_Epetra_Vector(*disc->getMap(), solution_dot));
 
-  double t = 0;
+  // Should be zero unless we are restarting
+  double t = stepper.getStepStatus().time;
+  if ( app->getParamLib()->isParameter("Time") )
+    t = app->getParamLib()->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
 
   Epetra_Vector *ovlp_solution = app->getAdaptSolMgr()->getOverlapSolution(soln);
   exodusOutput.writeSolution(t, *ovlp_solution, true); // soln is overlapped
@@ -99,6 +102,8 @@ void Albany_RythmosObserver::observeCompletedTimeStep(
   const Epetra_Vector soln_dot= *(Thyra::get_Epetra_Vector(*disc->getMap(), solution_dot));
 
   double t = stepper.getStepStatus().time;
+
+std::cout << "stepper time " << t << std::endl;
   if ( app->getParamLib()->isParameter("Time") )
     t = app->getParamLib()->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
 
