@@ -79,7 +79,15 @@ public:
                         const bool registerOldState,
 			const std::string &fieldName);
 
-
+  //! If you want to give more control over whether or not to output to Exodus
+  Teuchos::RCP<Teuchos::ParameterList>
+  registerStateVariable(const std::string &stateName, const Teuchos::RCP<PHX::DataLayout> &dl, 
+			const Teuchos::RCP<PHX::DataLayout> &dummy,
+                        const std::string &ebName,
+			const std::string &init_type,
+                        const double init_val,
+                        const bool registerOldState,
+			const bool outputToExodus);
 
 
   //! Method to re-initialize state variables, which can be called multiple times after allocating

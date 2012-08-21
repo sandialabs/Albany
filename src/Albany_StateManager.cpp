@@ -60,6 +60,27 @@ Albany::StateManager::registerStateVariable(const std::string &stateName, const 
   return p;
 }
 
+Teuchos::RCP<Teuchos::ParameterList>
+Albany::StateManager::registerStateVariable(const std::string &stateName, const Teuchos::RCP<PHX::DataLayout> &dl,
+                                            const Teuchos::RCP<PHX::DataLayout> &dummy,
+                                            const std::string& ebName,
+                                            const std::string &init_type,
+                                            const double init_val,
+                                            const bool registerOldState,
+                                            const bool outputToExodus)
+{
+  registerStateVariable(stateName, dl, ebName, init_type, init_val, registerOldState, outputToExodus, stateName);
+
+  // Create param list for SaveStateField evaluator 
+  Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Save or Load State " 
+							  + stateName + " to/from field " + stateName));
+  p->set<const std::string>("State Name", stateName);
+  p->set<const std::string>("Field Name", stateName);
+  p->set<const Teuchos::RCP<PHX::DataLayout> >("State Field Layout", dl);
+  p->set<const Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout", dummy);
+  return p;
+}
+
 
 void
 Albany::StateManager::registerStateVariable(const std::string &stateName, 
@@ -347,13 +368,16 @@ Albany::StateManager::getResidResponseIDsToRequire(std::string & elementBlockNam
     name = (*st)->name;
     id = (*st)->responseIDtoRequire;
     ebName = (*st)->nameMap[name];
-    cout << "ebName --> " << ebName << endl;
     if ( id.length() > 0 && ebName == elementBlockName ) {
       idsToRequire.push_back(id);
+#ifdef ALBANY_VERBOSE      
       cout << "RRR1  " << name << " requiring " << id << " (" << i << ")" << endl;
+#endif      
     }
     else {
+#ifdef ALBANY_VERBOSE      
       cout << "RRR1  " << name << " empty (" << i << ")" << endl;
+#endif
     }
     i++;
   }

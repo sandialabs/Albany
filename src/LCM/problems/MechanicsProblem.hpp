@@ -164,13 +164,8 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
   using std::vector;
   using PHAL::AlbanyTraits;
 
-
-  *out << "In MechanicsProblem::constructEvaluators" << endl;
-
   // get the name of the current element block
   string elementBlockName = meshSpecs.ebName;
-
-  *out << "element block name: " << elementBlockName << endl;
 
   // get the name of the material model to be used (and make sure there is one)
   string materialModelName;
@@ -178,7 +173,11 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
   TEUCHOS_TEST_FOR_EXCEPTION(materialModelName.length()==0, std::logic_error,
                              "A meterial model must be defined for block: "+elementBlockName);
 
+#ifdef ALBANY_VERBOSE
+  *out << "In MechanicsProblem::constructEvaluators" << endl;
+  *out << "element block name: " << elementBlockName << endl;
   *out << "material model name: " << materialModelName << endl;
+#endif
 
   // define cell topologies
   RCP<shards::CellTopology> comp_cellType = rcp(new shards::CellTopology( shards::getCellTopologyData<shards::Tetrahedron<11> >() ) );
@@ -206,7 +205,7 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
   //numVertices = cellType->getNodeCount();
   numVertices = numNodes;
 
-#ifdef ALBANY_DEBUG
+#ifdef ALBANY_VERBOSE
   *out << "Field Dimensions: Workset=" << worksetSize 
        << ", Vertices= " << numVertices
        << ", Nodes= " << numNodes
@@ -486,7 +485,7 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
     if ( materialDB->isElementBlockParam(elementBlockName,"Output " + cauchy) )
       outputFlag = materialDB->getElementBlockParam<bool>(elementBlockName,"Output " + cauchy);
 
-    p = stateMgr.registerStateVariable(cauchy,dl->qp_tensor, dl->dummy, elementBlockName, "scalar",0.0, outputFlag);
+    p = stateMgr.registerStateVariable(cauchy,dl->qp_tensor, dl->dummy, elementBlockName, "scalar",0.0, false, outputFlag);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -530,7 +529,7 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
     if ( materialDB->isElementBlockParam(elementBlockName,"Output " + cauchy) )
       outputFlag = materialDB->getElementBlockParam<bool>(elementBlockName,"Output " + cauchy);
 
-    p = stateMgr.registerStateVariable(cauchy,dl->qp_tensor, dl->dummy, elementBlockName, "scalar",0.0, outputFlag);
+    p = stateMgr.registerStateVariable(cauchy,dl->qp_tensor, dl->dummy, elementBlockName, "scalar",0.0, false, outputFlag);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
@@ -538,7 +537,7 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
     if ( materialDB->isElementBlockParam(elementBlockName,"Output Alpha") )
       outputFlag = materialDB->getElementBlockParam<bool>(elementBlockName,"Output Alpha");
 
-    p = stateMgr.registerStateVariable("alpha",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 1.0, outputFlag);
+    p = stateMgr.registerStateVariable("alpha",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 1.0, false, outputFlag);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -576,7 +575,7 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
     if ( materialDB->isElementBlockParam(elementBlockName,"Output " + cauchy) )
       outputFlag = materialDB->getElementBlockParam<bool>(elementBlockName,"Output " + cauchy);
 
-    p = stateMgr.registerStateVariable(cauchy,dl->qp_tensor, dl->dummy, elementBlockName, "scalar",0.0);
+    p = stateMgr.registerStateVariable(cauchy,dl->qp_tensor, dl->dummy, elementBlockName, "scalar",0.0, false, outputFlag);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -789,17 +788,17 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
       bool outputFlag(true);
       if ( materialDB->isElementBlockParam(elementBlockName,"Output " + cauchy) )
         outputFlag = materialDB->getElementBlockParam<bool>(elementBlockName,"Output " + cauchy);
-      p = stateMgr.registerStateVariable(cauchy,dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0, outputFlag);
+      p = stateMgr.registerStateVariable(cauchy,dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0, false, outputFlag);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
 
       outputFlag = true;      
-      if ( materialDB->isElementBlockParam(elementBlockName,"Output " + cauchy) )
-        outputFlag = materialDB->getElementBlockParam<bool>(elementBlockName,"Output " + cauchy);
+      if ( materialDB->isElementBlockParam(elementBlockName,"Output Fp") )
+        outputFlag = materialDB->getElementBlockParam<bool>(elementBlockName,"Output Fp");
+      p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy, elementBlockName, "identity", 1.0, true, outputFlag);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
 
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy, elementBlockName, "identity", 1.0, true);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
       p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
