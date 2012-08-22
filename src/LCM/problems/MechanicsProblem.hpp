@@ -616,38 +616,41 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
-    { // Saturation Modulus
-      RCP<ParameterList> p = rcp(new ParameterList);
+    if (materialModelName == "J2" || materialModelName == "J2Fiber" || materialModelName == "GursonFD")
+    {
+      { // Saturation Modulus
+        RCP<ParameterList> p = rcp(new ParameterList);
 
-      p->set<string>("Saturation Modulus Name", "Saturation Modulus");
-      p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-      p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+        p->set<string>("Saturation Modulus Name", "Saturation Modulus");
+        p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+        p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+        p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+        p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
-      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-      Teuchos::ParameterList& paramList = materialDB->getElementBlockSublist(elementBlockName,"Saturation Modulus");
-      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+        p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+        Teuchos::ParameterList& paramList = materialDB->getElementBlockSublist(elementBlockName,"Saturation Modulus");
+        p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-      ev = rcp(new LCM::SaturationModulus<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-    }
+        ev = rcp(new LCM::SaturationModulus<EvalT,AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+      }
 
-    { // Saturation Exponent
-      RCP<ParameterList> p = rcp(new ParameterList);
+      { // Saturation Exponent
+        RCP<ParameterList> p = rcp(new ParameterList);
 
-      p->set<string>("Saturation Exponent Name", "Saturation Exponent");
-      p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-      p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+        p->set<string>("Saturation Exponent Name", "Saturation Exponent");
+        p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+        p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+        p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+        p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
-      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-      Teuchos::ParameterList& paramList = materialDB->getElementBlockSublist(elementBlockName,"Saturation Exponent");
-      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+        p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+        Teuchos::ParameterList& paramList = materialDB->getElementBlockSublist(elementBlockName,"Saturation Exponent");
+        p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-      ev = rcp(new LCM::SaturationExponent<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
+        ev = rcp(new LCM::SaturationExponent<EvalT,AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+      }
     }
 
     // if ( numDim == 3 && params->get("Compute Dislocation Density Tensor", false) )
