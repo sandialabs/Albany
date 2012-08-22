@@ -105,6 +105,7 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
   for(unsigned int i=0 ; i<lameMaterialModelStateVariableNames.size() ; ++i){
     stateMgr.registerStateVariable(lameMaterialModelStateVariableNames[i],
                                    qp_scalar,
+                                   "dummy",
                                    Albany::doubleToInitString(lameMaterialModelStateVariableInitialValues[i]),
                                    true);
   }
