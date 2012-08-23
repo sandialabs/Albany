@@ -354,10 +354,18 @@ namespace LCM {
     fracture_boundary(std::map<EntityKey, bool> & entity_open);
 
     ///
-    /// \brief Adds a new entity to the mesh
+    /// \brief Adds a new entity of rank 3 to the mesh
     ///
     void
-    add_entity(EntityRank entity_rank);
+    add_element(EntityRank entity_rank);
+
+    /*
+     * \brief creates several entities at a time. The information about
+     * the type of entity and and the amount of entities is contained
+     * in the input vector called: "requests"
+     */
+    void
+    add_entities(std::vector<size_t> & Requests);
 
     ///
     /// \brief Removes an entity and all its connections
@@ -465,15 +473,17 @@ namespace LCM {
      * \brief Returns "0" if the input faces have two points in common. Otherwise,
      * it returns "1"
      */
-    int
+    bool
     compare_faces(const Entity & face1, const Entity & face2);
 
-    /*
-     * \brief Returns the adjacent faces to a given face;
-     * "element_centroid" is the centroid of the element to which the face belongs
-     */
+
+
+    // \brief returns the adjacent segments from a given face
     std::vector<Entity*>
-    find_adjacent_faces(const Entity & face, const Entity & element_centroid);
+    find_adjacent_faces_from_face(
+    const std::vector<std::vector<Entity*> > & faces_inside_element, const Entity & _face,
+     int element_number);
+
 
     ///
     /// \brief Returns a pointer with the coordinates of a given entity

@@ -36,12 +36,15 @@ namespace LCM {
   }
 
   //
-  // \brief Adds a new entity to the mesh
+  // \brief Adds a new entity of rank 3 to the mesh
   //
+<<<<<<< HEAD
   void topology::add_entity(EntityRank entity_rank)
+=======
+  void
+  topology::add_element(EntityRank entity_rank)
+>>>>>>> The function BarycentricSubdivision was modified
   {
-
-    if (entity_rank == number_dimensions_) {
 
       stk::mesh::PartVector part_vector(1);
 
@@ -51,20 +54,22 @@ namespace LCM {
 
       stk::mesh::Entity & entity = bulkData_->declare_entity(entity_rank,
           entity_id, part_vector);
-    }
-
-    else {
-
-      // number of entity ranks. 1 + number of dimensions
-      std::vector<size_t> requests(number_dimensions_ + 1, 0);
-      requests[entity_rank] = 1;
-      stk::mesh::EntityVector newEntity;
-      bulkData_->generate_new_entities(requests, newEntity);
-
-    }
 
     return;
   }
+
+  /*
+   * \brief creates several entities at a time. The information about
+   * the type of entity and and the amount of entities is contained
+   * in the input vector called: "Requests"
+   */
+   void
+   topology::add_entities(std::vector<size_t> & Requests )
+   {
+       stk::mesh::EntityVector newEntity;
+       bulkData_->generate_new_entities(Requests,newEntity);
+       return;
+   }
 
   //
   // \brief Removes an entity and all its connections
@@ -372,19 +377,17 @@ namespace LCM {
     std::vector<Entity*> adjacent_segments;
     std::vector<Entity*> adjacent_faces;
     std::vector<Entity*> adjacent_faces_final;
-    std::vector<Entity*>::iterator iterator_adjacent_segments;
-    std::vector<Entity*>::iterator iterator_adjacent_faces;
-    std::vector<Entity*>::iterator iterator_adjacent_faces_final;
+    std::vector<Entity*>::const_iterator iterator_adjacent_segments;
+    std::vector<Entity*>::const_iterator iterator_adjacent_faces;
+    std::vector<Entity*>::const_iterator iterator_adjacent_faces_final;
 
     adjacent_segments = get_directly_connected_entities(node, 1);
     for (iterator_adjacent_segments = adjacent_segments.begin();
-        iterator_adjacent_segments != adjacent_segments.end();
-        ++iterator_adjacent_segments) {
+    	iterator_adjacent_segments != adjacent_segments.end();++iterator_adjacent_segments) {
       adjacent_faces = get_directly_connected_entities(
           *(*iterator_adjacent_segments), 2);
       for (iterator_adjacent_faces = adjacent_faces.begin();
-          iterator_adjacent_faces != adjacent_faces.end();
-          ++iterator_adjacent_faces) {
+          iterator_adjacent_faces != adjacent_faces.end();++iterator_adjacent_faces) {
         if (find_entity_in_vector(adjacent_faces_final,
             *iterator_adjacent_faces) == 1) {
           adjacent_faces_final.push_back(*iterator_adjacent_faces);
@@ -398,47 +401,46 @@ namespace LCM {
    * \brief Returns "0" if the input faces have two points in common. Otherwise,
    * it returns "1"
    */
-  int topology::compare_faces(const Entity & face1, const Entity & face2)
+  bool topology::compare_faces(const Entity & face1, const Entity & face2)
   {
     std::vector<Entity*> face1_nodes;
     std::vector<Entity*> face2_nodes;
     std::vector<Entity*> common_nodes;
     face1_nodes = get_boundary_entities(face1, 0);
     face2_nodes = get_boundary_entities(face2, 0);
-    int num = 1;
+    bool num = true;
     for (int ii = 0; ii < face2_nodes.size(); ++ii) {
       if (find_entity_in_vector(face1_nodes, face2_nodes[ii]) == 0) {
         common_nodes.push_back(face1_nodes[ii]);
       }
     }
     if (common_nodes.size() == 2) {
-      num = 0;
+      num = false;
     }
     return num;
   }
 
-  /*
-   * \brief Returns the adjacent faces to a given face;
-   * "element_centroid" is the centroid of the element to which the face belongs
-   */
 
-  std::vector<Entity*> topology::find_adjacent_faces(const Entity & face,
-      const Entity & element_centroid)
-  {
-    std::vector<Entity*> face_nodes;
-    std::vector<Entity*> _element_internal_faces;
-    std::vector<Entity*> adjacent_faces;
-    std::vector<Entity*>::iterator iterator_element_internal_faces;
-    _element_internal_faces = find_adjacent_faces_from_node(element_centroid);
-    for (iterator_element_internal_faces = _element_internal_faces.begin();
-        iterator_element_internal_faces != _element_internal_faces.end();
-        ++iterator_element_internal_faces) {
-      if (compare_faces(face, *(*iterator_element_internal_faces)) == 0) {
-        adjacent_faces.push_back(*iterator_element_internal_faces);
-      }
+
+ // \brief returns the adjacent segments from a given face
+ std::vector<Entity*>
+ topology::find_adjacent_faces_from_face(
+ const std::vector<std::vector<Entity*> > & faces_inside_element, const Entity & _face,
+ const int element_number){
+ std::vector<Entity*> adjacent_faces;
+ std::vector<Entity*>::const_iterator iterator_element_internal_faces;
+ std::vector<Entity*> _element_internal_faces = faces_inside_element[element_number];
+
+ for (iterator_element_internal_faces = _element_internal_faces.begin();
+	   iterator_element_internal_faces != _element_internal_faces.end();
+	   ++iterator_element_internal_faces) {
+	   if (compare_faces(_face, *(*iterator_element_internal_faces)) == 0) {
+	          adjacent_faces.push_back(*iterator_element_internal_faces);
+	   }
     }
-    return adjacent_faces;
-  }
+   return adjacent_faces;
+ }
+
 
 //
 // \brief Returns a pointer with the coordinates of a given entity
@@ -544,9 +546,12 @@ namespace LCM {
     std::vector<Entity*> vector_nodes;
 
     //Adding nodes to divide segments by half
-    for (int ii = 0; ii < initial_entities_1D.size(); ++ii) {
-      add_entity(0);
-    }
+    std::vector<size_t> requests1(number_dimensions_ + 1, 0);
+    requests1[0] = initial_entities_1D.size();
+    std::vector<size_t> requests_step1_1(number_dimensions_ + 1, 0);
+    requests_step1_1[0] = initial_entities_1D.size();
+    add_entities(requests_step1_1);
+
     std::vector<Entity*> initial_entities_0D = get_entities_by_rank(
         *(bulkData_), 0);
 
@@ -589,9 +594,9 @@ namespace LCM {
     }
 
     //Adding segments
-    for (int ii = 0; ii < initial_entities_1D.size(); ++ii) {
-      add_entity(1);
-    }
+    std::vector<size_t> requests_step1_2(number_dimensions_ + 1, 0);
+    requests_step1_2[1] = initial_entities_1D.size();
+    add_entities(requests_step1_2);
     std::vector<Entity*> modified1_entities_1D = get_entities_by_rank(
         *(bulkData_), 1);
 
@@ -632,7 +637,7 @@ namespace LCM {
     //Get the former faces from the mesh
     std::vector<Entity*> initial_entities_2D = get_entities_by_rank(
         *(bulkData_), 2);
-    //Final number of segments per face after the division of the segments
+    //Calculate the final number of segments per face after the division of the segments
     stk::mesh::PairIterRelation _relations =
         initial_entities_2D[0]->relations();
     std::vector<Entity*> segments;
@@ -660,9 +665,10 @@ namespace LCM {
     double cpu_time_used2;
     start2 = clock();
     //Adding new nodes to the centers of the faces of the original mesh
-    for (int ii = 0; ii < initial_entities_2D.size(); ++ii) {
-      add_entity(0);
-    }
+    std::vector<size_t> requests_step2(number_dimensions_ + 1, 0);
+    requests_step2[0] = initial_entities_2D.size();
+    add_entities(requests_step2);
+
     std::vector<Entity*> modified1_entities_0D = get_entities_by_rank(
         *(bulkData_), 0);
 
@@ -698,6 +704,7 @@ namespace LCM {
     double cpu_time_used3;
     start3 = clock();
     //Add the new segments that will connect the center point with the points at the boundary
+<<<<<<< HEAD
     const int New_Boundary_segments = (get_directly_connected_entities(
         *initial_entities_2D[0], 1).size()) * (initial_entities_2D.size());
 
@@ -705,6 +712,13 @@ namespace LCM {
     for (int ii = 0; ii < New_Boundary_segments; ++ii) {
       add_entity(1);
     }
+=======
+    const int New_Boundary_segments =  (get_directly_connected_entities(
+		   *initial_entities_2D[0],1).size())*(initial_entities_2D.size());
+    std::vector<size_t> requests_step3(number_dimensions_ + 1, 0);
+    requests_step3[1] = New_Boundary_segments;
+    add_entities(requests_step3);
+>>>>>>> The function BarycentricSubdivision was modified
 
     //Vector that contains the latest addition of segments
     std::vector<Entity*> modified2_entities_1D = get_entities_by_rank(
@@ -772,6 +786,7 @@ namespace LCM {
     clock_t start4, end4;
     double cpu_time_used4;
     start4 = clock();
+<<<<<<< HEAD
     //Add the new faces
     for (int ii = 0; ii < Num_segments_face * initial_entities_2D.size();
         ++ii) {
@@ -783,6 +798,13 @@ namespace LCM {
     std::cout << endl;
     std::cout << "The Fourth part takes " << cpu_time_used4 << " seconds";
     std::cout << endl;
+=======
+   //Add the new faces
+   std::vector<size_t> requests_step4(number_dimensions_ + 1, 0);
+   requests_step4[2] = Num_segments_face * initial_entities_2D.size();;
+   add_entities(requests_step4);
+
+>>>>>>> The function BarycentricSubdivision was modified
     std::vector<Entity*> modified1_entities_2D = get_entities_by_rank(
         *(bulkData_), 2);
 
@@ -839,6 +861,16 @@ namespace LCM {
       }
     }
 
+<<<<<<< HEAD
+=======
+    //MEASURING TIME
+        end4 = clock();
+        cpu_time_used4 = ((double) (end4 - start4)) / CLOCKS_PER_SEC;
+        std::cout << endl;
+        std::cout << "The Fourth part takes "
+             		  << cpu_time_used4 << " seconds"<<endl;
+
+>>>>>>> The function BarycentricSubdivision was modified
 //-----------------------------------------------------------------------------------------------------------------------------------
 // V. Delete former mesh faces
 // initial_entities_3D:  Vector that contains all the former elements of the mesh
@@ -902,6 +934,7 @@ namespace LCM {
     double cpu_time_used6;
     start6 = clock();
     //Add a point to each element
+<<<<<<< HEAD
     for (int ii = 0; ii < initial_entities_3D.size(); ++ii) {
       add_entity(0);
     }
@@ -911,6 +944,11 @@ namespace LCM {
     std::cout << endl;
     std::cout << "The Sixth part takes " << cpu_time_used6 << " seconds";
     std::cout << endl;
+=======
+    std::vector<size_t> requests_step6(number_dimensions_ + 1, 0);
+    requests_step6[0] = initial_entities_3D.size();
+    add_entities(requests_step6);
+>>>>>>> The function BarycentricSubdivision was modified
 
     std::vector<Entity*> modified2_entities_0D = get_entities_by_rank(
         *(bulkData_), 0);
@@ -938,6 +976,12 @@ namespace LCM {
       add_relation(*(initial_entities_3D[ii]), *(elements_centroids[ii]),
           get_number_lower_rank_entities(*(initial_entities_3D[ii])));
     }
+    //MEASURING TIME
+       end6 = clock();
+       cpu_time_used6 = ((double) (end6 - start6)) / CLOCKS_PER_SEC;
+       std::cout << endl;
+       std::cout << "The Sixth part takes "
+                      		  << cpu_time_used6 << " seconds"<<endl;
 
 //-----------------------------------------------------------------------------------------------------------------------------------
 // VII. For each element create new segments to connect its center point to all the points that
@@ -945,14 +989,22 @@ namespace LCM {
 // modified3_entities_1D: Vector that contains all the segments up to the new ones defined in step VII.
 //-----------------------------------------------------------------------------------------------------------------------------------
 
+<<<<<<< HEAD
+=======
+       //MEASURING TIME
+          clock_t start7, end7;
+          double cpu_time_used7;
+          start7 = clock();
+>>>>>>> The function BarycentricSubdivision was modified
     //Add the new segments that will connect the center point with the points at the boundary
     //Create a vector with all the boundary points of all the former elements of the mesh
     std::vector<Entity*> element_boundary_nodes;
     std::vector<Entity*> all_elements_boundary_nodes;
     for (int ii = 0; ii < initial_entities_3D.size(); ++ii) {
-      element_boundary_nodes = get_boundary_entities(*(initial_entities_3D[ii]),
+         element_boundary_nodes = get_boundary_entities(*(initial_entities_3D[ii]),
           0);
       for (int ii = 0; ii < element_boundary_nodes.size(); ++ii) {
+<<<<<<< HEAD
         // add_entity(1);
         all_elements_boundary_nodes.push_back(element_boundary_nodes[ii]);
       }
@@ -972,6 +1024,18 @@ namespace LCM {
     std::cout << endl;
     std::cout << "The Seventh part takes " << cpu_time_used7 << " seconds";
     std::cout << endl;
+=======
+          all_elements_boundary_nodes.push_back(element_boundary_nodes[ii]);
+      }
+    }
+
+    //Add the new segments.
+    std::vector<size_t> requests_step7(number_dimensions_ + 1, 0);
+    requests_step7[1] = all_elements_boundary_nodes.size();
+    add_entities(requests_step7);
+
+
+>>>>>>> The function BarycentricSubdivision was modified
     //Vector that contains the latest addition of segments
     std::vector<Entity*> modified3_entities_1D = get_entities_by_rank(
         *(bulkData_), 1);
@@ -996,6 +1060,12 @@ namespace LCM {
       add_relation(*(segments_connected_centroid[ii]),
           *(all_elements_boundary_nodes[ii]), 1);
     }
+    //MEASURING TIME
+        end7 = clock();
+        cpu_time_used7 = ((double) (end7 - start7)) / CLOCKS_PER_SEC;
+        std::cout << endl;
+        std::cout << "The Seventh part takes "
+                    		  << cpu_time_used7 << " seconds"<<endl;
 
 //-----------------------------------------------------------------------------------------------------------------------------------
 // VIII. Create the new faces inside each element  //REDO SLIDES HERE!!!
@@ -1006,6 +1076,7 @@ namespace LCM {
     double cpu_time_used8;
     start8 = clock();
     //Add the new faces.
+<<<<<<< HEAD
     for (int ii = 0; ii < All_boundary_segments.size(); ++ii) {
       add_entity(2); //It takes 71.85 sec!!!
     }
@@ -1015,23 +1086,46 @@ namespace LCM {
     std::cout << endl;
     std::cout << "The Eight part takes " << cpu_time_used8 << " seconds";
     std::cout << endl;
+=======
+    std::vector<size_t> requests_step8(number_dimensions_ + 1, 0);
+    requests_step8[2] = All_boundary_segments.size();
+    add_entities(requests_step8);
+>>>>>>> The function BarycentricSubdivision was modified
 
     std::vector<Entity*> modified2_entities_2D = get_entities_by_rank(
         *(bulkData_), 2);
 
+    //Create a vector of vectors with all the faces inside the element. Each
+    //row represents an element
+    std::vector<std::vector<Entity*> > faces_inside_elements(initial_entities_3D.size());
+
     //Connect  the face to the corresponding segments
-    std::vector<Entity*> adjacent_segments_inside;
+    std::vector<Entity*> adjacent_segments_inside(2);
     for (int ii = 0; ii < All_boundary_segments.size(); ++ii) {
-      adjacent_segments_inside = find_adjacent_segments(
-          *(All_boundary_segments[ii]),
-          elements_centroids[ii / Number_new_triangles_inside_element]);
+      adjacent_segments_inside = find_adjacent_segments(*(All_boundary_segments[ii]),
+      elements_centroids[ii / Number_new_triangles_inside_element]);
       add_relation(*(modified2_entities_2D[ii]), *(All_boundary_segments[ii]),
           0);
       add_relation(*(modified2_entities_2D[ii]), *(adjacent_segments_inside[0]),
           1);
       add_relation(*(modified2_entities_2D[ii]), *(adjacent_segments_inside[1]),
           2);
+      /*
+       *faces_inside_elements is a vector of vectors that contains
+       *the faces inside each element. Each row contains the faces of
+       *one specific element. The first row corresponds to the first
+       *element, the second one to the second element and so forth.
+        */
+      faces_inside_elements[ii/Number_new_triangles_inside_element].
+      push_back(modified2_entities_2D[ii]);
     }
+
+    //MEASURING TIME
+       end8 = clock();
+       cpu_time_used8 = ((double) (end8 - start8)) / CLOCKS_PER_SEC;
+       std::cout << endl;
+       std::cout << "The Eight part takes "
+                 		  << cpu_time_used8 << " seconds"<<endl;
 
 //-----------------------------------------------------------------------------------------------------------------------------------
 // IX. Delete the former elements
@@ -1051,23 +1145,36 @@ namespace LCM {
     end9 = clock();
     cpu_time_used9 = ((double) (end9 - start9)) / CLOCKS_PER_SEC;
     std::cout << endl;
+<<<<<<< HEAD
     std::cout << "The Ninth part takes " << cpu_time_used9 << " seconds";
     std::cout << endl;
+=======
+    std::cout << "The Ninth part takes "
+              		  << cpu_time_used9 << " seconds"<<endl;
+
+>>>>>>> The function BarycentricSubdivision was modified
 //-----------------------------------------------------------------------------------------------------------------------------------
 // X. Create the new elements
 // modified1_entities_3D: Vector with all the elements required to carry out the barycentric
 // subdivision
 //-----------------------------------------------------------------------------------------------------------------------------------
+<<<<<<< HEAD
     //MEASURING TIME
     clock_t start10, end10;
     double cpu_time_used10;
     start10 = clock();
     int number_new_elements = _faces_element.size()
         * initial_entities_3D.size();
+=======
+
+    int number_new_elements = _faces_element.size()*initial_entities_3D.size();
+
+>>>>>>> The function BarycentricSubdivision was modified
     //Add the new elements
     for (int ii = 0; ii < number_new_elements; ++ii) {
-      add_entity(3);
+      add_element(3);
     }
+<<<<<<< HEAD
     //MEASURING TIME
     end10 = clock();
     cpu_time_used10 = ((double) (end10 - start10)) / CLOCKS_PER_SEC;
@@ -1077,16 +1184,34 @@ namespace LCM {
 
     std::vector<Entity*> modified1_entities_3D = get_entities_by_rank(
         *(bulkData_), 3);
+=======
+    std::vector<Entity*> modified1_entities_3D = get_entities_by_rank(*(bulkData_),3);
+
+
+    //MEASURING TIME
+      clock_t start10, end10;
+      double cpu_time_used10;
+      start10 = clock();
+>>>>>>> The function BarycentricSubdivision was modified
     //Connect the the element with its corresponding faces
-    std::vector<Entity*> adjacent_faces_inside;
+    std::vector<Entity*> adjacent_faces_inside(3);
     for (int ii = 0; ii < All_boundary_faces.size(); ++ii) {
-      adjacent_faces_inside = find_adjacent_faces(*(All_boundary_faces[ii]),
-          *elements_centroids[ii / _faces_element.size()]);
-      add_relation(*(modified1_entities_3D[ii]), *(All_boundary_faces[ii]), 0);
-      add_relation(*(modified1_entities_3D[ii]), *adjacent_faces_inside[0], 1);
-      add_relation(*(modified1_entities_3D[ii]), *adjacent_faces_inside[1], 2);
-      add_relation(*(modified1_entities_3D[ii]), *adjacent_faces_inside[2], 3);
+    adjacent_faces_inside  = find_adjacent_faces_from_face(faces_inside_elements,
+     *(All_boundary_faces[ii]),(ii/_faces_element.size()));
+    add_relation(*(modified1_entities_3D[ii]), *(All_boundary_faces[ii]), 0);
+    add_relation(*(modified1_entities_3D[ii]), *adjacent_faces_inside[0], 1);
+    add_relation(*(modified1_entities_3D[ii]), *adjacent_faces_inside[1], 2);
+    add_relation(*(modified1_entities_3D[ii]), *adjacent_faces_inside[2], 3);
+
     }
+
+    //MEASURING TIME
+       end10 = clock();
+       cpu_time_used10 = ((double) (end10 - start10)) / CLOCKS_PER_SEC;
+       std::cout << endl;
+       std::cout << "The tenth part takes "
+                		  << cpu_time_used10 << "seconds"<<endl;
+
 
 //-----------------------------------------------------------------------------------------------------------------------------------
 // XI. Update the vector: connectivity_temp
@@ -1109,11 +1234,20 @@ namespace LCM {
     // End mesh update
     bulkData_->modification_end();
     //MEASURING TIME
+<<<<<<< HEAD
     end11 = clock();
     cpu_time_used11 = ((double) (end11 - start11)) / CLOCKS_PER_SEC;
     std::cout << endl;
     std::cout << "The Eleventh part takes " << cpu_time_used11 << " seconds";
     std::cout << endl;
+=======
+       end11 = clock();
+       cpu_time_used11 = ((double) (end11 - start11)) / CLOCKS_PER_SEC;
+       std::cout << endl;
+       std::cout << "The Eleventh part takes "
+                    		  << cpu_time_used11 << " seconds"<<endl;
+
+>>>>>>> The function BarycentricSubdivision was modified
     return;
   }
 
