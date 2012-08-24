@@ -52,6 +52,7 @@ public:
   //! Method to call multiple times (before allocate) to register which states will be saved.
   void registerStateVariable(const std::string &stateName, 
 			     const Teuchos::RCP<PHX::DataLayout> &dl,
+                             const std::string &ebName,
 			     const std::string &init_type="scalar",
 			     const double init_val=0.0,
 			     const bool registerOldState=false,
@@ -63,6 +64,7 @@ public:
   Teuchos::RCP<Teuchos::ParameterList>
   registerStateVariable(const std::string &name, const Teuchos::RCP<PHX::DataLayout> &dl, 
                         const Teuchos::RCP<PHX::DataLayout> &dummy,
+                        const std::string &ebName,
                         const std::string &init_type="scalar",
                         const double init_val=0.0,
                         const bool registerOldState=false);
@@ -71,23 +73,32 @@ public:
   Teuchos::RCP<Teuchos::ParameterList>
   registerStateVariable(const std::string &stateName, const Teuchos::RCP<PHX::DataLayout> &dl, 
 			const Teuchos::RCP<PHX::DataLayout> &dummy,
+                        const std::string &ebName,
 			const std::string &init_type,
                         const double init_val,
                         const bool registerOldState,
 			const std::string &fieldName);
 
-
+  //! If you want to give more control over whether or not to output to Exodus
+  Teuchos::RCP<Teuchos::ParameterList>
+  registerStateVariable(const std::string &stateName, const Teuchos::RCP<PHX::DataLayout> &dl, 
+			const Teuchos::RCP<PHX::DataLayout> &dummy,
+                        const std::string &ebName,
+			const std::string &init_type,
+                        const double init_val,
+                        const bool registerOldState,
+			const bool outputToExodus);
 
 
   //! Method to re-initialize state variables, which can be called multiple times after allocating
   void importStateData(Albany::StateArrays& statesToCopyFrom);
 
   //! Method to get the Names of the state variables
-  RegisteredStates& getRegisteredStates(){return statesToStore;};
+  std::map<std::string, RegisteredStates>& getRegisteredStates(){return statesToStore;};
 
   //! Method to get the ResponseIDs for states which have been registered and (should)
   //!  have a SaveStateField evaluator associated with them that evaluates the responseID
-  std::vector<std::string> getResidResponseIDsToRequire();
+  std::vector<std::string> getResidResponseIDsToRequire(std::string & elementBlockName);
 
   //! Method to make the current newState the oldState, and vice versa
   void updateStates();
@@ -122,8 +133,8 @@ private:
   //! boolean to enforce that allocate gets called once, and after registration and befor gets
   bool stateVarsAreAllocated;
 
-  //! Container to hold the states that have been registered, to be allocated later
-  RegisteredStates statesToStore;
+  //! Container to hold the states that have been registered, by element block, to be allocated later
+  std::map<std::string, RegisteredStates> statesToStore;
 
   //! Discretization object which allows StateManager to perform input/output with exodus and Epetra vectors
   Teuchos::RCP<Albany::AbstractDiscretization> disc;

@@ -29,6 +29,7 @@
 #include "QCAD_SchrodingerProblem.hpp"
 
 #ifdef ALBANY_LCM
+#include "LCM/problems/MechanicsProblem.hpp"
 #include "LCM/problems/ElasticityProblem.hpp"
 #include "LCM/problems/MesoScaleLinkProblem.hpp"
 #include "LCM/problems/NonlinearElasticityProblem.hpp"
@@ -144,6 +145,15 @@ Albany::ProblemFactory::create()
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, " **** LAME materials not enabled, recompile with -DENABLE_LAME or -DENABLE_LAMENT ****\n");
 #endif
+  }
+  else if (method == "Mechanics 1D") {
+    strategy = rcp(new Albany::MechanicsProblem(problemParams, paramLib, 1, comm));
+  }
+  else if (method == "Mechanics 2D") {
+    strategy = rcp(new Albany::MechanicsProblem(problemParams, paramLib, 2, comm));
+  }
+  else if (method == "Mechanics 3D") {
+    strategy = rcp(new Albany::MechanicsProblem(problemParams, paramLib, 3, comm));
   }
   else if (method == "Elasticity 1D") {
     strategy = rcp(new Albany::ElasticityProblem(problemParams, paramLib, 1));

@@ -99,8 +99,9 @@ Albany::getIntrepidBasis(const CellTopologyData& ctd, bool compositeTet)
    const int& numDim = ctd.dimension;
    std::string name = ctd.name;
 
+#ifdef ALBANY_DEBUG
    cout << "CellTopology is " << name << " with nodes " << numNodes << "  dim " << numDim << endl;
-
+#endif
    if (name == "Line_2" )
        intrepidBasis = rcp(new Intrepid::Basis_HGRAD_LINE_C1_FEM<RealType, FieldContainer<RealType> >() );
 // No HGRAD_LINE_C2 in Intrepid

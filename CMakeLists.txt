@@ -220,6 +220,15 @@ ELSE()
   SET(ALBANY_CI FALSE)
 ENDIF()
 
+IF (NOT ENABLE_ALBANY_VERBOSE)
+  MESSAGE("-- Verbose printing is not enabled")      
+  SET(ALBANY_VERBOSE TRUE)
+ELSE()  
+  ADD_DEFINITIONS(-DALBANY_VERBOSE)
+  MESSAGE("-- Verbose printing is enabled")
+  SET(ALBANY_VERBOSE TRUE)
+ENDIF()
+
 add_subdirectory(src)
 
 enable_testing()

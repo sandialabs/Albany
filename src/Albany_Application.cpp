@@ -146,9 +146,10 @@ Application(const RCP<const Epetra_Comm>& comm_,
   sfm.resize(meshSpecs.size());
   Teuchos::RCP<PHX::DataLayout> dummy =
     Teuchos::rcp(new PHX::MDALayout<Dummy>(0));
-  std::vector<string>responseIDs_to_require = 
-    stateMgr.getResidResponseIDsToRequire();
   for (int ps=0; ps<meshSpecs.size(); ps++) {
+    string elementBlockName = meshSpecs[ps]->ebName;
+    std::vector<string>responseIDs_to_require = 
+      stateMgr.getResidResponseIDsToRequire(elementBlockName);
     sfm[ps] = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
     Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> > tags = 
       problem->buildEvaluators(*sfm[ps], *meshSpecs[ps], stateMgr, 
@@ -165,7 +166,6 @@ Application(const RCP<const Epetra_Comm>& comm_,
     sfm[ps]->postRegistrationSetup("");
   }
   
-
   // Create the full mesh
   neq = problem->numEquations();
   disc = discFactory.createDiscretization(neq, stateMgr.getStateInfoStruct());
@@ -211,7 +211,6 @@ Application(const RCP<const Epetra_Comm>& comm_,
     responses[i]->setup();
 
   // Set up memory for workset
-
   fm = problem->getFieldManager();
   TEUCHOS_TEST_FOR_EXCEPTION(fm==Teuchos::null, std::logic_error,
 			     "getFieldManager not implemented!!!");

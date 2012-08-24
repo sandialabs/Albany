@@ -63,9 +63,12 @@ private:
   unsigned int numDims;
   unsigned int worksetSize;
 
-  bool avgJ;
-  bool volavgJ;
-  bool weighted_Volume_Averaged_J;
+  //! flag to compute the weighted average of J
+  bool weightedAverage;
+
+  //! stabilization parameter for the weighted average
+  ScalarT alpha;
+  
 
 };
 
