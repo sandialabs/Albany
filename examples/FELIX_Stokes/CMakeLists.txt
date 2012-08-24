@@ -18,6 +18,8 @@
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_ismip-hom_testA.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_ismip-hom_testA.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/reference_solution.dat
                ${CMAKE_CURRENT_BINARY_DIR}/reference_solution.dat COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ns.exo

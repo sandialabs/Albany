@@ -22,6 +22,9 @@
 
 namespace FELIX {
 const double pi = 3.1415926535897932385;
+const double g = 9.8; //gravity for FELIX; hard-coded here for now
+const double rho = 910; //density for FELIX; hard-coded here for now 
+
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
@@ -38,8 +41,8 @@ StokesBodyForce(const Teuchos::ParameterList& p) :
   if (type == "None") {
     bf_type = NONE;
   }
-  else if (type == "Constant") {
-    bf_type = CONSTANT;
+  else if (type == "Gravity") {
+    bf_type = GRAVITY;
   }
   else if (type == "Poly") {
     bf_type = POLY;  
@@ -84,7 +87,7 @@ StokesBodyForce(const Teuchos::ParameterList& p) :
   numQPs  = dims[1];
   numDims = dims[2];
 
-  if (bf_type == CONSTANT) {
+  if (bf_type == GRAVITY) {
     if (bf_list->isType<Teuchos::Array<double> >("Gravity Vector"))
       gravity = bf_list->get<Teuchos::Array<double> >("Gravity Vector");
     else {
@@ -101,7 +104,7 @@ void StokesBodyForce<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  if (bf_type == CONSTANT) {
+  if (bf_type == GRAVITY) {
   }
   else if (bf_type == POLY || bf_type == SINSIN || bf_type == SINCOSZ) {
     this->utils.setFieldData(muFELIX,fm);
@@ -122,11 +125,11 @@ evaluateFields(typename Traits::EvalData workset)
        for (std::size_t i=0; i < numDims; ++i) 
   	 force(cell,qp,i) = 0.0;
  }
- else if (bf_type == CONSTANT) {
+ else if (bf_type == GRAVITY) {
  for (std::size_t cell=0; cell < workset.numCells; ++cell) 
    for (std::size_t qp=0; qp < numQPs; ++qp) 
      for (std::size_t i=0; i < numDims; ++i) 
-	 force(cell,qp,i) = gravity[i];
+	 force(cell,qp,i) = -1.0*rho*g*gravity[i];
  }
 
  //The following is hard-coded for a 2D Stokes problem with manufactured solution
