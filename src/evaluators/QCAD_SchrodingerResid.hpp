@@ -23,6 +23,8 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
+#include "Albany_Layouts.hpp"
+
 #include "QCAD_MaterialDatabase.hpp"
 
 namespace QCAD {
@@ -33,7 +35,8 @@ class SchrodingerResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 
 public:
 
-  SchrodingerResid(const Teuchos::ParameterList& p);
+  SchrodingerResid(const Teuchos::ParameterList& p,
+                 const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);

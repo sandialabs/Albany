@@ -172,8 +172,6 @@ QCAD::PoissonProblem::constructEvaluators(
         << ", QuadPts= " << numQPts
         << ", Dim= " << numDim << endl;
 
-   RCP<DataLayout> shared_param = rcp(new MDALayout<Dim>(1));
-
    dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
    bool supportsTransient=false;
@@ -227,9 +225,8 @@ QCAD::PoissonProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList);
     p->set<string>("Eigenvector field name root", "Evec");
     p->set<int>("Number of eigenvectors", nEigenvectors);
-    p->set< RCP<DataLayout> >("Data Layout", dl->node_scalar);
 
-    ev = rcp(new PHAL::GatherEigenvectors<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new PHAL::GatherEigenvectors<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -238,9 +235,6 @@ QCAD::PoissonProblem::constructEvaluators(
 
     p->set<string>("QP Variable Name", "Permittivity");
     p->set<string>("Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     p->set< RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Permittivity");
@@ -248,7 +242,7 @@ QCAD::PoissonProblem::constructEvaluators(
 
     p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
 
-    ev = rcp(new QCAD::Permittivity<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new QCAD::Permittivity<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -257,7 +251,7 @@ QCAD::PoissonProblem::constructEvaluators(
 
     p->set<string>("Parameter Name", "Temperature");
     p->set<double>("Parameter Value", temperature);
-    p->set< RCP<DataLayout> >("Data Layout", shared_param);
+    p->set< RCP<DataLayout> >("Data Layout", dl->shared_param);
     p->set< RCP<ParamLib> >("Parameter Library", paramLib);
 
     ev = rcp(new PHAL::SharedParameter<EvalT,AlbanyTraits>(*p));
@@ -270,10 +264,8 @@ QCAD::PoissonProblem::constructEvaluators(
 
     //Input
     p->set< string >("Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     p->set<string>("Variable Name", "Potential");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
@@ -291,7 +283,6 @@ QCAD::PoissonProblem::constructEvaluators(
     //Global Problem Parameters
     p->set<double>("Length unit in m", length_unit_in_m);
     p->set<string>("Temperature Name", "Temperature");
-    p->set< RCP<DataLayout> >("Shared Param Data Layout", shared_param);
     p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
 
     // Schrodinger coupling
@@ -304,7 +295,7 @@ QCAD::PoissonProblem::constructEvaluators(
     p->set<bool>("Include exchange-correlation potential", bIncludeVxc); 
     */
 
-    ev = rcp(new QCAD::PoissonSource<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new QCAD::PoissonSource<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -354,7 +345,6 @@ QCAD::PoissonProblem::constructEvaluators(
 
     //Input
     p->set<string>("Weighted BF Name", "wBF");
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
     p->set<string>("QP Variable Name", "Potential");
 
     p->set<string>("QP Time Derivative Variable Name", "Potential_dot");
@@ -363,20 +353,16 @@ QCAD::PoissonProblem::constructEvaluators(
     p->set<string>("Source Name", "Poisson Source");
 
     p->set<string>("Permittivity Name", "Permittivity");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<string>("Gradient QP Variable Name", "Potential Gradient");
     p->set<string>("Flux QP Variable Name", "Potential Flux");
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
     //Output
     p->set<string>("Residual Name", "Potential Residual");
-    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
 
-    ev = rcp(new QCAD::PoissonResid<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new QCAD::PoissonResid<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 

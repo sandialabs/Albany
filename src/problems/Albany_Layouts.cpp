@@ -77,6 +77,7 @@ Albany::Layouts::Layouts (int worksetSize, int  numVertices,
   workset_tensor = rcp(new MDALayout<Dim,Dim>(numDim,numDim));
   workset_vecgradient = rcp(new MDALayout<Dim,Dim>(vecDim,numDim));
 
+  shared_param = rcp(new MDALayout<Dim>(1));
   dummy = rcp(new MDALayout<Dummy>(0));
 
   // NOTE: vector data layouts here are used both for vectors fields

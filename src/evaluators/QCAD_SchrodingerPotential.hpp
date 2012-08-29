@@ -23,6 +23,8 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
+#include "Albany_Layouts.hpp"
+
 #include "Teuchos_ParameterList.hpp"
 #include "Epetra_Vector.h"
 #include "Sacado_ParameterAccessor.hpp"
@@ -43,7 +45,8 @@ namespace QCAD {
   	typedef typename EvalT::ScalarT ScalarT;
   	typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  	SchrodingerPotential(Teuchos::ParameterList& p);
+  	SchrodingerPotential(Teuchos::ParameterList& p,
+                 const Teuchos::RCP<Albany::Layouts>& dl);
   
   	void postRegistrationSetup(typename Traits::SetupData d,
 			     PHX::FieldManager<Traits>& vm);

@@ -131,7 +131,6 @@ QCAD::SchrodingerProblem::constructEvaluators(
    using Teuchos::rcp;
    using Teuchos::ParameterList;
    using PHX::DataLayout;
-   using PHX::MDALayout;
    using std::vector;
    using PHAL::AlbanyTraits;
 
@@ -212,9 +211,6 @@ QCAD::SchrodingerProblem::constructEvaluators(
     p->set<string>("QP Variable Name", "psi");
     p->set<string>("QP Potential Name", potentialStateName);
     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Potential");
@@ -224,7 +220,7 @@ QCAD::SchrodingerProblem::constructEvaluators(
     p->set<double>("Energy unit in eV", energy_unit_in_eV);
     p->set<double>("Length unit in m", length_unit_in_m);
 
-    ev = rcp(new QCAD::SchrodingerPotential<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new QCAD::SchrodingerPotential<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -233,7 +229,6 @@ QCAD::SchrodingerProblem::constructEvaluators(
 
     //Input
     p->set<string>("Weighted BF Name", "wBF");
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
     p->set<string>("QP Variable Name", "psi");
     p->set<string>("QP Time Derivative Variable Name", "psi_dot");
     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
@@ -241,17 +236,13 @@ QCAD::SchrodingerProblem::constructEvaluators(
     p->set<bool>("Have Potential", havePotential);
     p->set<bool>("Have Material", haveMaterial);
     p->set<string>("Potential Name", potentialStateName); // was "V"
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<string>("Gradient QP Variable Name", "psi Gradient");
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
     //Output
     p->set<string>("Residual Name", "psi Residual");
-    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
 
     if(haveMaterial) {
       Teuchos::ParameterList& paramList = params->sublist("Material");
@@ -269,7 +260,7 @@ QCAD::SchrodingerProblem::constructEvaluators(
     Teuchos::ParameterList& paramList = params->sublist("Potential");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-    ev = rcp(new QCAD::SchrodingerResid<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new QCAD::SchrodingerResid<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 

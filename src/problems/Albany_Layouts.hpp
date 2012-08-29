@@ -100,6 +100,7 @@ namespace Albany {
      * Requesting this Dummy Field then activates this evaluator so
      * the action is performed.
      */
+    Teuchos::RCP<PHX::DataLayout> shared_param;
     Teuchos::RCP<PHX::DataLayout> dummy;
 
     // For backward compatibility, and simplicitiy, we want to check if
