@@ -513,7 +513,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
             ionizedDopant(cell, qp) = ionN;
             approxQuanEDen(cell,qp) = approxEDensity;
             artCBDensity(cell, qp) = ( eDensity > 1e-6 ? eDensity : -Nc*(this->*carrStat)( -(phi+eArgOffset) ));
-          
+
             if (bIncludeVxc)  // include Vxc
             {
               ScalarT Vxc = computeVxcLDA(relPerm, averagedEffMass, approxEDensity);
@@ -1612,8 +1612,8 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrodinger
 
         // note: wavefunctions are assumed normalized here 
         ScalarT wfSquared = ( eigenvector_Re[i](cell,qp)*eigenvector_Re[i](cell,qp) + 
- 			      eigenvector_Im[i](cell,qp)*eigenvector_Im[i](cell,qp) );
- 			      
+ 			      eigenvector_Im[i](cell,qp)*eigenvector_Im[i](cell,qp) );				
+
         eDensity += wfSquared*fermiFactor; 
       }
       eDensity = eDenPrefactor*eDensity; // in [cm^-3]

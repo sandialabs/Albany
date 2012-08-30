@@ -136,7 +136,7 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   if( problemName == "Poisson Schrodinger" ||
       problemName == "Poisson CI") {
     maxIter = problemParams.get<int>("Maximum Iterations", 100);
-    iterationMethod = problemParams.get<string>("Iteration Method", "Picard");
+    //iterationMethod = problemParams.get<string>("Iteration Method", "Picard"); //unused
     shiftPercentBelowMin = problemParams.get<double>("Eigensolver Percent Shift Below Potential Min", 1.0);
     CONVERGE_TOL = problemParams.get<double>("Convergence Tolerance", 1e-6);
   }
@@ -452,6 +452,36 @@ QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
       
     QCAD::CopyStateToContainer(*pStatesToLoop, "Saved Electric Potential", prevElectricPotential);
   } 
+
+  if(bConverged) {
+    // LATER: perhaps run a separate Poisson solve (as above) but have it compute all the responses we want
+    //  (and don't have it compute them in the in-loop call above).
+
+    //Write parameters and responses of final Poisson solve
+    // Don't worry about sensitivities yet - just output vectors
+    
+    const QCAD::SolverSubSolver& ss = getSubSolver("Poisson");
+      int num_p = ss.params_in->Np();     // Number of *vectors* of parameters
+    int num_g = ss.responses_out->Ng(); // Number of *vectors* of responses
+
+    for (int i=0; i<num_p; i++)
+      ss.params_in->get_p(i)->Print(*out << "\nParameter vector " << i << ":\n");
+
+    for (int i=0; i<num_g-1; i++) {
+      Teuchos::RCP<Epetra_Vector> g = ss.responses_out->get_g(i);
+      bool is_scalar = true;
+
+      if (ss.app != Teuchos::null)
+        is_scalar = ss.app->getResponse(i)->isScalarResponse();
+
+      if (is_scalar) {
+        g->Print(*out << "\nResponse vector " << i << ":\n");
+	*out << "\n";  //add blank line after vector is printed - needed for proper post-processing
+	// see Main_Solve.cpp for how to print sensitivities here
+      }
+    }
+  }
+
 
   if(bVerbose) {
     if(bConverged)
@@ -1008,7 +1038,7 @@ QCAD::Solver::CreateSubSolver(const std::string xmlfilename,
   const Albany_MPI_Comm mpiComm = Albany::getMpiCommFromEpetraComm(comm);
 
   RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
-  *out << "QCAD Solver: creating solver from input " << xmlfilename 
+  *out << "QCAD Solver creating solver from input " << xmlfilename 
        << " after preprocessing as " << xmlPreprocessType << std::endl;
  
   //! Create solver factory, which reads xml input filen
@@ -1656,7 +1686,7 @@ void QCAD::ResetEigensolverShift(const Teuchos::RCP<EpetraExt::ModelEvaluator>& 
 
   //cout << " OLD Eigensolver list  " << oldEigList << endl;
   //cout << " NEW Eigensolver list  " << *eigList << endl;
-  std::cout << "QCAD Solver: setting eigensolver shift = " 
+  std::cout << "QCAD Solver setting eigensolver shift = " 
 	    << std::setprecision(5) << newShift << std::endl;
 
   stepper->eigensolverReset(eigList);
