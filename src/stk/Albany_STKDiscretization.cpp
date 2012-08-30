@@ -162,7 +162,9 @@ Albany::STKDiscretization::transformMesh()
     cout << "L: " << L << endl; 
     cout << "alpha degrees: " << alpha << endl; 
     alpha = alpha*pi/180; //convert alpha, read in from ParameterList, to radians
-    cout << "alpha radians: " << alpha << endl; 
+    cout << "alpha radians: " << alpha << endl;
+    stkMeshStruct->PBCStruct.scale[0]*=L;
+    stkMeshStruct->PBCStruct.scale[1]*=L; 
     for (int i=0; i < numOverlapNodes; i++)  {
       double* x = stk::mesh::field_data(*stkMeshStruct->coordinates_field, *overlapnodes[i]);
       x[0] = L*x[0];

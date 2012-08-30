@@ -76,6 +76,6 @@ add_test(${testName}_TrigonometricSource ${Albany.exe} input_trigSource.xml)
 
 # 8. 2D Steady Heat (Poisson) problem with trigonometric source and periodic
 # BCs.
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_trigSource_periodicBCs.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_trigSource_periodicBCs.xml COPYONLY)
-add_test(${testName}_TrigonometricSource_PeriodicBCs ${Albany.exe} input_trigSource_periodicBCs.xml)
+#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_trigSource_periodicBCs.xml
+#               ${CMAKE_CURRENT_BINARY_DIR}/input_trigSource_periodicBCs.xml COPYONLY)
+#add_test(${testName}_TrigonometricSource_PeriodicBCs ${Albany.exe} input_trigSource_periodicBCs.xml)
