@@ -88,8 +88,8 @@ NeumannBase(const Teuchos::ParameterList& p) :
 //        << it->first << std::endl;
 
        TEUCHOS_TEST_FOR_EXCEPTION(!materialDB->isElementBlockParam(it->first, "Flux Scale"),
-         Teuchos::Exceptions::InvalidParameter, 
-         "Cannot locate the value of \"Flux Scale\" in the material database");
+         Teuchos::Exceptions::InvalidParameter, "Cannot locate the value of \"Flux Scale\" for element block " 
+				  << it->first << " in the material database");
 
        matScaling[it->second] = 
          materialDB->getElementBlockParam<double>(it->first, "Flux Scale");
