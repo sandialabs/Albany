@@ -198,11 +198,17 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   Teuchos::ParameterList& responseList = problemParams.sublist("Response Functions");
   setupResponseMapping(responseList);
 
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
+  typedef int GlobalIndex;
+#else
+  typedef long long GlobalIndex;
+#endif
+
   // Create Epetra map for parameter vector (only one since num_p always == 1)
-  epetra_param_map = Teuchos::rcp(new Epetra_LocalMap(nParameters, 0, *comm));
+  epetra_param_map = Teuchos::rcp(new Epetra_LocalMap(static_cast<GlobalIndex>(nParameters), 0, *comm));
 
   // Create Epetra map for (first) response vector
-  epetra_response_map = Teuchos::rcp(new Epetra_LocalMap(nResponseDoubles, 0, *comm));
+  epetra_response_map = Teuchos::rcp(new Epetra_LocalMap(static_cast<GlobalIndex>(nResponseDoubles), 0, *comm));
      //ANDY: if (nResponseDoubles > 0) needed ??
 
   // Create Epetra map for solution vector (second response vector).  Assume 
@@ -1463,8 +1469,14 @@ void QCAD::SolverResponseFn::fillSolverResponses(Epetra_Vector& g, Teuchos::RCP<
       g[offset+i] = arg_vals[i]; //set value
 
       if(dgdp != Teuchos::null) { //set derivative
-	for(std::size_t k=0; k < arg_DgDps[i].size(); k++) //set derivative
-	  dgdp->ReplaceGlobalValue(offset+i, k, arg_DgDps[i][k]);
+        for(std::size_t k=0; k < arg_DgDps[i].size(); k++) { //set derivative
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
+          typedef int GlobalIndex;
+#else
+          typedef long long GlobalIndex;
+#endif
+          dgdp->ReplaceGlobalValue(static_cast<GlobalIndex>(offset+i), k, arg_DgDps[i][k]);
+        }
       }
     }
   }
