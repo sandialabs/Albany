@@ -35,10 +35,12 @@
 #include "Albany_Utils.hpp"
 
 // Rebalance 
+#ifdef ALBANY_ZOLTAN 
 #include <stk_rebalance/Rebalance.hpp>
 #include <stk_rebalance/Partition.hpp>
 #include <stk_rebalance/ZoltanPartition.hpp>
 #include <stk_rebalance_utils/RebalanceUtils.hpp>
+#endif
 
 Albany::IossSTKMeshStruct::IossSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
@@ -57,6 +59,8 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 
   usePamgen = (params->get("Method","Exodus") == "Pamgen");
 
+#ifdef ALBANY_ZOLTAN  // rebalance requires Zoltan
+
   if (params->get<bool>("Use Serial Mesh", false) && comm->NumProc() > 1){ 
     // We are parallel but reading a single exodus file
 
@@ -65,7 +69,9 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     readSerialMesh(comm);
 
   }
-  else if (!usePamgen) {
+  else 
+#endif
+    if (!usePamgen) {
     *out << "Albany_IOSS: Loading STKMesh from Exodus file  " 
          << params->get<string>("Exodus Input File Name") << endl;
 
@@ -172,6 +178,8 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 void
 Albany::IossSTKMeshStruct::readSerialMesh(const Teuchos::RCP<const Epetra_Comm>& comm){
 
+#ifdef ALBANY_ZOLTAN // rebalance needs Zoltan
+
    MPI_Group group_world;
    MPI_Group peZero;
    MPI_Comm peZeroComm;
@@ -220,6 +228,8 @@ Albany::IossSTKMeshStruct::readSerialMesh(const Teuchos::RCP<const Epetra_Comm>&
 
   // Here, all PEs have read the metaData from the input file, and have a pointer to in_region in mesh_data
 
+#endif
+
 }
 
 void
@@ -236,6 +246,8 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
   *out << "IOSS-STK: number of side sets = " << ssPartVec.size() << endl;
 
   metaData->commit();
+
+#ifdef ALBANY_ZOLTAN // rebalance needs Zoltan
 
   if(useSerialMesh){
 
@@ -271,6 +283,7 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
 
   }
   else {
+#endif
 
     stk::io::populate_bulk_data(*bulkData, *mesh_data);
 
@@ -288,7 +301,9 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
 
     bulkData->modification_end();
 
+#ifdef ALBANY_ZOLTAN
   }
+#endif
 
   coordinates_field = metaData->get_field<VectorFieldType>(std::string("coordinates"));
   proc_rank_field = metaData->get_field<IntScalarFieldType>(std::string("proc_rank"));
@@ -296,6 +311,7 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
   delete mesh_data;
   useElementAsTopRank = true;
 
+#ifdef ALBANY_ZOLTAN
 // Rebalance if we read a single mesh and are running in parallel
 
   if(useSerialMesh){
@@ -338,6 +354,7 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
     *out << "After rebalancing, the imbalance threshold is = " << imbalance << endl;
 
   }
+#endif
 
 }
 

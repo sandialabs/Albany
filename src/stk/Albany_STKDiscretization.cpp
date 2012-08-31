@@ -233,7 +233,13 @@ void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln, const 
     setOvlpSolutionField(soln);
 
 #ifdef ALBANY_SEACAS
+
   if (stkMeshStruct->exoOutput) {
+
+    // Skip this write unless the proper interval has been reached
+    if(outputInterval++ % stkMeshStruct->exoOutputInterval)
+
+      return;
 
     double time_label = monotonicTimeLabel(time);
 
@@ -837,6 +843,8 @@ void Albany::STKDiscretization::setupExodusOutput()
 {
 #ifdef ALBANY_SEACAS
   if (stkMeshStruct->exoOutput) {
+
+    outputInterval = 0;
 
     Ioss::Init::Initializer io;
     mesh_data = new stk::io::MeshData();
