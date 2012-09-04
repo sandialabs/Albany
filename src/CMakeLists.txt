@@ -496,6 +496,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/FaceFractureCriteria.cpp
     ${LCM_DIR}/evaluators/FaceAverage.cpp
     ${LCM_DIR}/evaluators/AAA.cpp
+    ${LCM_DIR}/evaluators/LatticeDefGrad.cpp
   )
 
   IF(ALBANY_MPI)
@@ -671,6 +672,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/FaceAverage_Def.hpp
     ${LCM_DIR}/evaluators/AAA.hpp
     ${LCM_DIR}/evaluators/AAA_Def.hpp
+    ${LCM_DIR}/evaluators/LatticeDefGrad.hpp
+    ${LCM_DIR}/evaluators/LatticeDefGrad_Def.hpp
  )
 
   IF(ALBANY_MPI)
