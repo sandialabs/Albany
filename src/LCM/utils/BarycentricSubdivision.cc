@@ -565,7 +565,7 @@ namespace LCM {
       //Create a vector with all the initial nodes connected to a segment
       vector_nodes = get_directly_connected_entities(*(initial_entities_1D[ii]),
           0);
-        //Look for all the relations of each segment
+      //Look for all the relations of each segment
       stk::mesh::PairIterRelation _relations =
           initial_entities_1D[ii]->relations();
       for (int i = 0; i < _relations.size(); ++i) {
@@ -1014,7 +1014,7 @@ namespace LCM {
                     		  << cpu_time_used7 << " seconds"<<endl;
 
 //-----------------------------------------------------------------------------------------------------------------------------------
-// VIII. Create the new faces inside each element  //REDO SLIDES HERE!!!
+// VIII. Create the new faces inside each element
 // modified2_entities_2D: Vector with all the faces up the ones that are inside the elements
 //-----------------------------------------------------------------------------------------------------------------------------------
     //MEASURING TIME
