@@ -943,12 +943,12 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
 
     //! Set responses: add responses for each pair ( evec_i, evec_j ) => delta_ij
     Teuchos::ParameterList& responseList = params.sublist("Problem").sublist("Response Functions");
-    nEigenvectors = params.sublist("Problem").sublist("Poisson Source").get<int>("Eigenvectors from States"); //sets member
-    int initial_nResponses = responseList.get<int>("Number"); //Shift existing reso
+    nEigenvectors = params.sublist("Problem").sublist("Poisson Source").get<int>("Eigenvectors from States"); 
+    int initial_nResponses = responseList.get<int>("Number"); //Shift existing responses
     int added_nResponses = nEigenvectors * (nEigenvectors + 1) / 2;
     char buf1[200], buf2[200];
     int iResponse;
-    responseList.set("Number", initial_nResponses + added_nResponses);
+    responseList.set("Number", initial_nResponses + added_nResponses); //sets member
 
     //shift response indices of existing responses by added_responses so added responses index from zero
     for(int i=initial_nResponses-1; i >= 0; i--) {       
@@ -967,7 +967,7 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
 
 	responseList.set(Albany::strint("Response",iResponse), "Field Integral");
 	Teuchos::ParameterList& responseParams = responseList.sublist(Albany::strint("ResponseParams",iResponse));
-	responseParams.set("Field Name", "Saved Electric Potential");  // same as solution, but must be at quad points
+	responseParams.set("Field Name", "Electric Potential");  // same as solution, but must be at quad points
 	responseParams.set("Field Name 1", buf1);
 	responseParams.set("Field Name 2", buf2);
 	responseParams.set("Integrand Length Unit", "mesh"); // same as mesh
@@ -1019,7 +1019,7 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
 
 	responseList.set(Albany::strint("Response",iResponse), "Field Integral");
 	Teuchos::ParameterList& responseParams = responseList.sublist(Albany::strint("ResponseParams",iResponse));
-	responseParams.set("Field Name", "Saved Electric Potential");  // same as solution, but must be at quad points
+	responseParams.set("Field Name", "Electric Potential");  // same as solution, but must be at quad points
 	responseParams.set("Field Name 1", buf1);
 	responseParams.set("Field Name 2", buf2);
 	responseParams.set("Integrand Length Unit", "mesh"); // same as mesh

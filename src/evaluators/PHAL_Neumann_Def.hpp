@@ -66,15 +66,19 @@ NeumannBase(const Teuchos::ParameterList& p) :
     if(inputConditions == "scaled jump") {
       bc_type = INTJUMP;
       const_val = inputValues[0];
+      new Sacado::ParameterRegistration<EvalT, SPL_Traits> (name, this, paramLib);
     }
     else { // inputConditions == "robin"
       bc_type = ROBIN;
       robin_vals[0] = inputValues[0]; // dof_value
       robin_vals[1] = inputValues[1]; // coeff multiplying difference (dof - dof_value) -- could be permittivity/distance (distance in mesh units)
       robin_vals[2] = inputValues[2]; // jump in slope (like plain Neumann bc)
-    }
 
-     new Sacado::ParameterRegistration<EvalT, SPL_Traits> (name, this, paramLib);
+      for(int i = 0; i < 3; i++) {
+        std::stringstream ss; ss << name << "[" << i << "]";
+        new Sacado::ParameterRegistration<EvalT, SPL_Traits> (ss.str(), this, paramLib);
+      }
+    }
 
      // Build a vector to hold the scaling from the material DB
      matScaling.resize(meshSpecs->ebNameToIndex.size());

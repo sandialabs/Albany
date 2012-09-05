@@ -70,9 +70,9 @@ endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.xml)
 
 # 7. 2D Steady Heat (Poisson) problem with trigonometric source and
 # Dirichlet/Neumann BCs.
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_trigSource.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_trigSource.xml COPYONLY)
-add_test(${testName}_TrigonometricSource ${Albany.exe} input_trigSource.xml)
+#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_trigSource.xml
+#               ${CMAKE_CURRENT_BINARY_DIR}/input_trigSource.xml COPYONLY)
+#add_test(${testName}_TrigonometricSource ${Albany.exe} input_trigSource.xml)
 
 # 8. 2D Steady Heat (Poisson) problem with trigonometric source and periodic
 # BCs.
