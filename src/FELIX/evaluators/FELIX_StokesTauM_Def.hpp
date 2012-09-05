@@ -37,6 +37,12 @@ StokesTauM(const Teuchos::ParameterList& p) :
                  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") )
   
 {
+   Teuchos::ParameterList* tauM_list =
+   p.get<Teuchos::ParameterList*>("Parameter List");
+
+  meshSize = tauM_list->get("Mesh Size", 1.0);
+  delta = tauM_list->get("Delta", 1.0);
+
   this->addDependentField(V);
   this->addDependentField(Gc);
   this->addDependentField(muFELIX);
@@ -74,9 +80,6 @@ template<typename EvalT, typename Traits>
 void StokesTauM<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 { 
-    //parameters to define non-linear viscosity mu, given by Glen's law
-    double A = pow(10, -16); //ice flow parameter
-    int n = 3; //exponent in Glen's law 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {       
         TauM(cell,qp) = 0.0;
@@ -89,6 +92,7 @@ evaluateFields(typename Traits::EvalData workset)
         }
         TauM(cell,qp) += 12.*muFELIX(cell,qp)*muFELIX(cell,qp)*std::sqrt(normGc(cell,qp));
         TauM(cell,qp) = 1./std::sqrt(TauM(cell,qp));
+        //TauM(cell,qp) = meshSize*meshSize*delta; 
       }
     }
   

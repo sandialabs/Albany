@@ -54,6 +54,8 @@ private:
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> Gc;
   PHX::MDField<ScalarT,Cell,QuadPoint> mu;
   PHX::MDField<ScalarT,Cell,QuadPoint> muFELIX;
+  double meshSize; 
+  double delta; 
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> TauM;
