@@ -500,10 +500,6 @@ namespace {
 
     LCM::Tensor < Sacado::Fad::DFad<double>, 3 > B = U * S * LCM::transpose(V);
 
-    std::cout << std::endl;
-    std::cout << "LOGARITHM OF NEGATIVE NUMBER: " << log(-1.0) << std::endl;
-    std::cout << std::endl;
-
     TEST_COMPARE(norm(A - B), <=, 100*std::numeric_limits<ScalarT>::epsilon());
   }
 
