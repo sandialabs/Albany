@@ -874,6 +874,10 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     ev = rcp(new LCM::DefGrad<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
+    p = stateMgr.registerStateVariable("Determinant of the Deformation Gradient",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 1.0);
+          ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+          fm0.template registerEvaluator<EvalT>(ev);
+
 
 
   }
@@ -893,23 +897,28 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
       const bool weighted_Volume_Averaged_J = params->get("weighted_Volume_Averaged_J", false);
       p->set<bool>("weighted_Volume_Averaged_J Name", weighted_Volume_Averaged_J);
       p->set<string>("Weights Name","Weights");
+      p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
       // Hydrogen Concentration induced deforamtion
       p->set<string>("Molar Volume Name", "Molar Volume");
       p->set<string>("Partial Molar Volume Name", "Partial Molar Volume");
       p->set<string>("Stress Free Total Concentration Name", "Stress Free Total Concentration");
+      p->set<string>("Total Concentration Name", "Lattice Concentration");
       p->set<string>("DetDefGrad Name", "Determinant of the Deformation Gradient");
-      p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
       p->set<string>("DefGrad Name", "Deformation Gradient");
       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-      p->set<string>("Total Concentration Name", "Total Concentration");
-      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
       //Output
+      p->set<string>("DetDefGradH Name", "Hydrogen Induced J");
+      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
       p->set<string>("Lattice Deformation Gradient Name", "Lattice Deformation Gradient");
       ev = rcp(new LCM::LatticeDefGrad<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
       p = stateMgr.registerStateVariable("Lattice Deformation Gradient",dl->qp_tensor, dl->dummy, elementBlockName, "identity", 1.0, true);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+
+      p = stateMgr.registerStateVariable("Hydrogen Induced J",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 1.0);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
@@ -920,14 +929,14 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
       RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
       //Input
-      p->set<string>("DefGrad Name", "Deformation Gradient");
+      p->set<string>("DefGrad Name", "Lattice Deformation Gradient");
       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
       p->set<string>("Elastic Modulus Name", "Elastic Modulus");
       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
       p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
-      p->set<string>("DetDefGrad Name", "J");  // dl->qp_scalar also
+      p->set<string>("DetDefGrad Name", "Hydrogen Induced J");  // dl->qp_scalar also
 
       //Output
       p->set<string>("Stress Name", matModel); //dl->qp_tensor also
@@ -951,7 +960,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
 
-    p->set<string>("DefGrad Name", "Deformation Gradient");
+    p->set<string>("DefGrad Name", "Lattice Deformation Gradient");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
     //Output
@@ -1061,7 +1070,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
       RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
       //Input
-      p->set<string>("DefGrad Name", "Deformation Gradient");
+      p->set<string>("DefGrad Name", "Lattice Deformation Gradient");
       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
       p->set<string>("Elastic Modulus Name", "Elastic Modulus");
@@ -1098,7 +1107,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
       RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
       //Input
-      p->set<string>("DefGrad Name", "Deformation Gradient");
+      p->set<string>("DefGrad Name", "Lattice Deformation Gradient");
       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
       p->set<string>("Elastic Modulus Name", "Elastic Modulus");
@@ -1197,7 +1206,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
       RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
       //Input
-      p->set<string>("DefGrad Name", "Deformation Gradient");
+      p->set<string>("DefGrad Name", "Lattice Deformation Gradient");
       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
       p->set<string>("Elastic Modulus Name", "Elastic Modulus");
@@ -1208,7 +1217,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
       p->set<string>("Saturation Modulus Name", "Saturation Modulus"); // dl->qp_scalar also
       p->set<string>("Saturation Exponent Name", "Saturation Exponent"); // dl->qp_scalar also
       p->set<string>("Yield Strength Name", "Yield Strength"); // dl->qp_scalar also
-      p->set<string>("DetDefGrad Name", "Determinant of the Deformation Gradient");  // dl->qp_scalar also
+      p->set<string>("DetDefGrad Name", "Hydrogen Induced J");  // dl->qp_scalar also
 
       RealType f0 = params->get("f0", 0.0);
       RealType kw = params->get("kw", 0.0);
@@ -1318,10 +1327,10 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     p->set<string>("Stress Name", matModel);
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-    p->set<string>("DetDefGrad Name", "Determinant of the Deformation Gradient");
+    p->set<string>("DetDefGrad Name", "Hydrogen Induced J");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<string>("DefGrad Name", "Deformation Gradient");
+    p->set<string>("DefGrad Name", "Lattice Deformation Gradient");
 
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
@@ -1465,7 +1474,7 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     p->set<bool>("Have Source", false);
     p->set<string>("Source Name", "Source");
 
-    p->set<string>("Deformation Gradient Name", "Deformation Gradient");
+    p->set<string>("Deformation Gradient Name", "Lattice Deformation Gradient");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
     p->set<string>("QP Variable Name", "Hydrostatic Stress");

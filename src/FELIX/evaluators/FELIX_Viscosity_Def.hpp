@@ -17,6 +17,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include "Sacado_ParameterRegistration.hpp" 
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 
@@ -24,7 +25,7 @@ namespace FELIX {
 
 //should values of these be hard-coded here, or read in from the input file?
 //for now, I have hard coded them here.
-const long A = 1.0e16; //A = 10^(-16) ice flow parameter 
+const long long A = 1.0e4; //A = 10^(-4) ice flow parameter when velocity is in m/a and length is in km
 const int n = 3; //exponent in Glen's law
  
 //**********************************************************************
@@ -34,12 +35,15 @@ Viscosity(const Teuchos::ParameterList& p) :
   VGrad       (p.get<std::string>                   ("Velocity Gradient QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
   mu          (p.get<std::string>                   ("FELIX Viscosity QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") )
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ), 
+  homotopyParam (1.0)
 {
   Teuchos::ParameterList* visc_list = 
    p.get<Teuchos::ParameterList*>("Parameter List");
 
   std::string viscType = visc_list->get("Type", "Constant");
+  homotopyParam = visc_list->get("Glen's Law Homotopy Parameter", 0.2);
+
   if (viscType == "Constant"){ 
     visc_type = CONSTANT;
   }
@@ -59,6 +63,10 @@ Viscosity(const Teuchos::ParameterList& p) :
   numQPs  = dims[1];
   numDims = dims[2];
 
+  Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib> >("Parameter Library"); 
+  
+  new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Glen's Law Homotopy Parameter", this, paramLib);   
+
   this->setName("Viscosity"+PHX::TypeString<EvalT>::value);
 }
 
@@ -74,6 +82,14 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
+template<typename EvalT,typename Traits>
+typename Viscosity<EvalT,Traits>::ScalarT& 
+Viscosity<EvalT,Traits>::getValue(const std::string &n)
+{
+  return homotopyParam;
+}
+
+//**********************************************************************
 template<typename EvalT, typename Traits>
 void Viscosity<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
@@ -86,26 +102,32 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
   else if (visc_type == GLENSLAW) {
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
-        //evaluate non-linear viscosity, given by Glen's law, at quadrature points
-        ScalarT epsilonEqp = 0.0; //used to define the viscosity in non-linear Stokes 
-        for (std::size_t k=0; k<numDims; k++) {
-           for (std::size_t l=0; l<numDims; l++) {
-             if (l>k) {
-                epsilonEqp += 1.0/4.0*(VGrad(cell,qp,k,l) + VGrad(cell,qp,l,k))*(VGrad(cell,qp,k,l) + VGrad(cell,qp,l,k)) 
-                             - VGrad(cell,qp,k,k)*VGrad(cell,qp,l,l); 
-              } 
-             //epsilonEqp += (VGrad(cell,qp,k,l) + VGrad(cell,qp,l,k))*(VGrad(cell,qp,k,l) + VGrad(cell,qp,l,k)); 
-           }
+    if (homotopyParam == 0.0) {
+      for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+        for (std::size_t qp=0; qp < numQPs; ++qp) {
+          mu(cell,qp) = 1.0/2.0*pow(A, 1.0/n); 
         }
-        epsilonEqp += 1.0e-2; 
-        epsilonEqp = sqrt(1.0/8.0*epsilonEqp);
-        mu(cell,qp) = 1.0/2.0*pow(A, 1.0/n)*pow(epsilonEqp, 1.0/n - 1.0); //non-linear viscosity, given by Glen's law  
+      }
+    }
+    else {
+      ScalarT ff = pow(10.0, -10.0*homotopyParam); 
+      for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+        for (std::size_t qp=0; qp < numQPs; ++qp) {
+          //evaluate non-linear viscosity, given by Glen's law, at quadrature points
+          ScalarT epsilonEqp = 0.0; //used to define the viscosity in non-linear Stokes 
+          for (std::size_t k=0; k<numDims; k++) {
+            for (std::size_t l=0; l<numDims; l++) {
+             epsilonEqp += 1.0/8.0*(VGrad(cell,qp,k,l) + VGrad(cell,qp,l,k))*(VGrad(cell,qp,k,l) + VGrad(cell,qp,l,k)); 
+             }
+          }
+        epsilonEqp += ff;
+        epsilonEqp = sqrt(epsilonEqp);
+        mu(cell,qp) = 1.0/2.0*pow(A, 1.0/n)*pow(epsilonEqp,  1.0/n-1.0); //non-linear viscosity, given by Glen's law  
         //end non-linear viscosity evaluation
       }
     }
   }
+}
 }
 }
 
