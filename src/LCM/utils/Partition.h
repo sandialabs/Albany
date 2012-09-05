@@ -9,6 +9,7 @@
 #if defined (ALBANY_LCM) && defined(ALBANY_ZOLTAN)
 
 #include <iostream>
+#include <iterator>
 #include <map>
 #include <set>
 #include <vector>

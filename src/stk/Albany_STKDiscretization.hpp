@@ -261,6 +261,8 @@ namespace Albany {
     // Used in Exodus writing capability
 #ifdef ALBANY_SEACAS
     stk::io::MeshData* mesh_data;
+
+    int outputInterval;
 #endif
     bool interleavedOrdering;
   };

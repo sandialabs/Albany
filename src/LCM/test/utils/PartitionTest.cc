@@ -110,48 +110,46 @@ int main(int ac, char* av[])
   Albany::STKDiscretization &
   stk_discretization = static_cast<Albany::STKDiscretization &>(discretization);
 
-  // Get MDArray which has the "Partition" element variable
-  Albany::MDArray
-  stk_partition = stk_discretization.getStateArrays()[0]["Partition"];
-
   //
   // Output partitions
   //
 
-  // For better color contrast in visualization programs, shuffle
-  // the partition number so that it is less likely that partitions
-  // with very close numbers are next to each other, leading to almost
-  // the same color in output.
-  const LCM::ScalarMap
-  partition_volumes = connectivity_array.GetPartitionVolumes();
-
-  const unsigned int
-  number_partitions = partition_volumes.size();
-
-  LCM::IDList
-  partition_shuffle(number_partitions);
-
-  for (LCM::IDList::size_type i = 0; i < number_partitions; ++i) {
-    partition_shuffle[i] = i;
-  }
-
-  std::random_shuffle(partition_shuffle.begin(), partition_shuffle.end());
-
   // Convert partition map to format used by Albany to set internal variables.
   // Assumption: numbering of elements is contiguous.
-  for (std::map<int, int>::const_iterator
-      partitions_iter = partitions.begin();
-      partitions_iter != partitions.end();
-      ++partitions_iter) {
 
-    const int
-    element = (*partitions_iter).first;
+  int
+  element = 0;
 
-    const int
-    partition = (*partitions_iter).second;
+  Albany::StateArrays
+  state_arrays = stk_discretization.getStateArrays();
 
-    // set partition number in stk field memory
-    stk_partition[element] = partition_shuffle[partition];
+  for (Albany::StateArrays::size_type i = 0; i < state_arrays.size(); ++i) {
+
+    Albany::StateArray
+    state_array = state_arrays[i];
+
+    // Get MDArray which has the "Partition" element variable
+    Albany::MDArray
+    stk_partition = state_array["Partition"];
+
+    for (Albany::MDArray::size_type j = 0; j < stk_partition.size(); ++j) {
+
+      const std::map<int, int>::const_iterator
+      partitions_iterator = partitions.find(element);
+
+      if (partitions_iterator == partitions.end()) {
+        std::cerr << std::endl;
+        std::cerr << "Element " << element << " does not have a partition.";
+        std::cerr << std::endl;
+        exit(1);
+      }
+
+      const int
+      partition = (*partitions_iterator).second;
+
+      element++;
+      stk_partition[j] = partition;
+    }
 
   }
 
@@ -168,6 +166,12 @@ int main(int ac, char* av[])
 
   const double
   length_scale_cubed = length_scale * length_scale * length_scale;
+
+  const LCM::ScalarMap
+  partition_volumes = connectivity_array.GetPartitionVolumes();
+
+  const unsigned int
+  number_partitions = partition_volumes.size();
 
   std::cout << std::endl;
   std::cout << "==========================================";
@@ -206,6 +210,8 @@ int main(int ac, char* av[])
   std::cout << "==========================================";
   std::cout << std::endl;
 
+#if 0
+
   std::cout << "Number of elements       : ";
   std::cout << std::setw(14);
   std::cout << connectivity_array.GetNumberElements() << std::endl;
@@ -237,6 +243,8 @@ int main(int ac, char* av[])
 
   LCM::DualGraph dual_graph(connectivity_array);
   dual_graph.Print();
+
+#endif
 
   return 0;
 

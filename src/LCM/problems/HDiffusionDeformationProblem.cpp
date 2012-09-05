@@ -163,10 +163,13 @@ Albany::HDiffusionDeformationProblem::getValidProblemParameters() const
   validPL->sublist("Trapped Concentration", false, "");
   validPL->sublist("Total Concentration", false, "");
   validPL->sublist("Molar Volume", false, "");
+  validPL->sublist("Partial Molar Volume", false, "");
+  validPL->sublist("Stress Free Total Concentration", false, "");
   validPL->sublist("Effective Diffusivity", false, "");
   validPL->sublist("Strain Rate Factor", false, "");
   validPL->sublist("Tau Contribution", false, "");
   validPL->sublist("CL Unit Gradient", false, "");
+  validPL->sublist("Lattice Deformation Gradient", false, "");
   validPL->sublist("Element Length", false, "");
   validPL->sublist("Stabilization Parameter", false, "");
   if (matModel == "J2"|| matModel == "J2Fiber" || matModel == "GursonFD")

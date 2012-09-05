@@ -3224,9 +3224,9 @@ namespace LCM {
   }
 
   // Tensor4 Tensor4 double dot product
-  /// \param A tensor4
-  /// \param B tensor4
-  /// \return a tensor4 \f$ C_{ijmn} = A_{ijkl} : B){lkmn} \f$
+  /// \param A Tensor4
+  /// \param B Tensor4
+  /// \return a Tensor4 \f$ C_{ijkl} = A_{ijmn} : B){mnkl} \f$
   template<typename T, Index N>
   Tensor4<T, N>
   dotdot(Tensor4<T, N> const & A, Tensor4<T, N> const & B)
@@ -3237,11 +3237,13 @@ namespace LCM {
       for (Index j = 0; j < N; ++j) {
         for (Index k = 0; k < N; ++k) {
           for (Index l = 0; l < N; ++l) {
+            T s = 0.0;
             for (Index m = 0; m < N; ++m) {
               for (Index n = 0; n < N; ++n) {
-                C(i,j,m,n) = A(i,j,k,l) * B(l,k,m,n);
+                s += A(i,j,m,n) * B(m,n,k,l);
               }
             }
+            C(i,j,k,l) = s;
           }
         }
       }

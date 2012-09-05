@@ -65,7 +65,12 @@ RCP<ParameterList> ProjectionError::fillDefaultParams(const RCP<ParameterList> &
 // TODO: Do no actual work in the destructor
 ProjectionError::~ProjectionError()
 {
-  Epetra_LocalMap entryMap(relativeErrorNorms_.size(), ZERO_BASED_INDEXING, dofMap_->Comm());
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
+  typedef int GlobalIndex;
+#else
+  typedef long long GlobalIndex;
+#endif
+  Epetra_LocalMap entryMap(static_cast<GlobalIndex>(relativeErrorNorms_.size()), ZERO_BASED_INDEXING, dofMap_->Comm());
   Epetra_Vector entries(entryMap, NO_INIT);
 
   for (int i = 0; i < entries.MyLength(); ++i) {

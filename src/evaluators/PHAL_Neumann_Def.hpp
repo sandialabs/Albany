@@ -448,6 +448,8 @@ calc_dudn_const(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
   int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
   int numDOFs = qp_data_returned.dimension(2); // How many DOFs per node to calculate?
 
+  //std::cout << "DEBUG: applying const dudn to sideset " << this->sideSetID << ": " << (const_val * scale) << std::endl;
+
   for(int pt = 0; pt < numPoints; pt++)
     for(int dim = 0; dim < numDOFsSet; dim++)
       qp_data_returned(0, pt, dim) = -const_val * scale; // User directly specified dTdn, just use it

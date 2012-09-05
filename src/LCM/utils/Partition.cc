@@ -659,6 +659,93 @@ namespace LCM {
   }
 
   //
+  // Anonymous namespace for helper functions
+  //
+  namespace {
+
+    //
+    // Helper function to renumber partitions to avoid gaps in numbering.
+    // Also for better color contrast in visualization programs, shuffle
+    // the partition number so that it is less likely that partitions
+    // with very close numbers are next to each other, leading to almost
+    // the same color in output.
+    //
+    std::map<int, int>
+    RenumberPartitions(std::map<int, int> const & old_partitions) {
+
+      std::set<int>
+      partitions_set;
+
+      for (std::map<int, int>::const_iterator it = old_partitions.begin();
+          it != old_partitions.end();
+          ++it) {
+
+        const int
+        partition = (*it).second;
+
+        partitions_set.insert(partition);
+      }
+
+      std::set<int>::size_type
+      number_partitions = partitions_set.size();
+
+      std::vector<int>
+      partition_shuffle(number_partitions);
+
+      for (std::vector<int>::size_type i = 0; i < number_partitions; ++i) {
+        partition_shuffle[i] = i;
+      }
+
+      std::random_shuffle(partition_shuffle.begin(), partition_shuffle.end());
+
+      std::map<int, int>
+      partition_map;
+
+      int
+      partition_index = 0;
+
+      for (std::set<int>::const_iterator it = partitions_set.begin();
+          it != partitions_set.end();
+          ++it) {
+
+        const int
+        partition = (*it);
+
+        partition_map[partition] = partition_index;
+
+        ++partition_index;
+
+      }
+
+      std::map<int, int>
+      new_partitions;
+
+      for (std::map<int, int>::const_iterator it = old_partitions.begin();
+          it != old_partitions.end();
+          ++it) {
+
+        const int
+        element = (*it).first;
+
+        const int
+        old_partition = (*it).second;
+
+        const int
+        partition_index = partition_map[old_partition];
+
+        const int
+        new_partition = partition_shuffle[partition_index];
+
+        new_partitions[element] = new_partition;
+
+      }
+
+      return new_partitions;
+    }
+
+  } // anonymous namespace
+
+  //
   // Partition mesh according to the specified algorithm and length scale
   // \param partition_scheme The partition algorithm to use
   // \param length_scale The length scale for variational nonlocal
@@ -692,9 +779,9 @@ namespace LCM {
     }
 
     // Store for use by other methods
-    partitions_ = partitions;
+    partitions_ = RenumberPartitions(partitions);
 
-    return partitions;
+    return partitions_;
 
   }
 
@@ -733,7 +820,7 @@ namespace LCM {
     zoltan.Set_Param("HYPERGRAPH_PACKAGE", "PHG");
     zoltan.Set_Param("PHG_MULTILEVEL", "1");
     zoltan.Set_Param("PHG_EDGE_WEIGHT_OPERATION", "ERROR");
-    zoltan.Set_Param("IMBALANCE_TOL", "1.10");
+    zoltan.Set_Param("IMBALANCE_TOL", "1.01");
     zoltan.Set_Param("PHG_CUT_OBJECTIVE", "HYPEREDGES");
 
     //
