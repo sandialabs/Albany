@@ -22,6 +22,7 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+#include "Sacado_ParameterAccessor.hpp" 
 
 namespace FELIX {
 /** \brief Finite Element Interpolation Evaluator
@@ -32,7 +33,8 @@ namespace FELIX {
 
 template<typename EvalT, typename Traits>
 class Viscosity : public PHX::EvaluatorWithBaseImpl<Traits>,
-		    public PHX::EvaluatorDerived<EvalT, Traits> {
+		    public PHX::EvaluatorDerived<EvalT, Traits>,
+		    public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
 
 public:
 
@@ -45,9 +47,13 @@ public:
 
   void evaluateFields(typename Traits::EvalData d);
 
+  ScalarT& getValue(const std::string &n); 
+
 private:
  
   typedef typename EvalT::MeshScalarT MeshScalarT;
+
+  ScalarT homotopyParam; 
 
   // Input:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> VGrad;
