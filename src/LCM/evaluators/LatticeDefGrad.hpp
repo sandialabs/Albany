@@ -56,6 +56,7 @@ private:
   // Input:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defgrad;
   PHX::MDField<ScalarT,Cell,QuadPoint> J;
+  PHX::MDField<ScalarT,Cell,QuadPoint> JH;
   PHX::MDField<ScalarT,Cell,QuadPoint> VH; // partial molar volume
   PHX::MDField<ScalarT,Cell,QuadPoint> VM; // molar volume of Fe
   PHX::MDField<ScalarT,Cell,QuadPoint> CtotalRef; // stress free concentration

@@ -9,6 +9,7 @@
     <Parameter name="Solution Method" type="string" value="Continuation"/>
     <!-- Have Phalanx output a graph of the used evaluators -->
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
+    <Parameter name="weighted_Volume_Averaged_J" type="bool" value="true"/>
     <!-- BOUNDARY CONDITIONS on node sets from the discretization which follows -->
     <ParameterList name="Dirichlet BCs">
       <!-- Kfield Boundary Conditions -->
@@ -37,7 +38,7 @@
 	<!--Stabilization Parameter -->
 	<ParameterList name="Stabilization Parameter">
 	 <Parameter name="Type" type="string" value="Constant"/>
-	 <Parameter name="Value" type="double" value="0.5"/>
+	 <Parameter name="Value" type="double" value="2.0"/>
 	</ParameterList>	
 	<ParameterList name="Temperature">
 	 <Parameter name="Type" type="string" value="Constant"/>
@@ -46,6 +47,14 @@
 	<ParameterList name="Molar Volume">
 	 <Parameter name="Type" type="string" value="Constant"/>
 	 <Parameter name="Value" type="double" value="7.116e-6"/>
+	</ParameterList>
+	<ParameterList name="Partial Molar Volume">
+	 <Parameter name="Type" type="string" value="Constant"/>
+	 <Parameter name="Value" type="double" value="2.0e-6"/>
+	</ParameterList>
+	<ParameterList name="Stress Free Total Concentration">
+	 <Parameter name="Type" type="string" value="Constant"/>
+	 <Parameter name="Value" type="double" value="38.7"/>
 	</ParameterList>
 	<ParameterList name="Avogadro Number">
 	 <Parameter name="Type" type="string" value="Constant"/>
