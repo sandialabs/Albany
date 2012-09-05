@@ -82,9 +82,11 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
   //Start STK stuff
   coordinates_field = & metaData->declare_field< VectorFieldType >( "coordinates" );
   proc_rank_field = & metaData->declare_field< IntScalarFieldType >( "proc_rank" );
-  solution_field = & metaData->declare_field< VectorFieldType >( "solution" );
+  solution_field = & metaData->declare_field< VectorFieldType >(
+    params->get<string>("Exodus Solution Name", "solution"));
 #ifdef ALBANY_LCM
-  residual_field = & metaData->declare_field< VectorFieldType >( "residual" );
+  residual_field = & metaData->declare_field< VectorFieldType >(
+    params->get<string>("Exodus Residual Name", "residual"));
 #endif
 
   stk::mesh::put_field( *coordinates_field , metaData->node_rank() , metaData->universal_part(), numDim );
@@ -148,6 +150,8 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
   exoOutput = params->isType<string>("Exodus Output File Name");
   if (exoOutput)
     exoOutFile = params->get<string>("Exodus Output File Name");
+
+  exoOutputInterval = params->get<int>("Exodus Write Interval", 1);
   
   
   //get the type of transformation of STK mesh (for FELIX problems)
@@ -265,6 +269,11 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
   validPL->set<string>("Cell Topology", "Quad" , "Quad or Tri Cell Topology");
   validPL->set<std::string>("Exodus Output File Name", "",
       "Request exodus output to given file name. Requires SEACAS build");
+  validPL->set<std::string>("Exodus Solution Name", "",
+      "Name of solution output vector written to Exodus file. Requires SEACAS build");
+  validPL->set<std::string>("Exodus Residual Name", "",
+      "Name of residual output vector written to Exodus file. Requires SEACAS build");
+  validPL->set<int>("Exodus Write Interval", 3, "Step interval to write solution data to Exodus file");
   validPL->set<std::string>("Method", "",
     "The discretization method, parsed in the Discretization Factory");
   validPL->set<int>("Cubature Degree", 3, "Integration order sent to Intrepid");

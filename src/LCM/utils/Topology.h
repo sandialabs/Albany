@@ -463,11 +463,6 @@ namespace LCM {
     std::vector<Entity*>
     find_segments_from_element(const Entity & element);
 
-    ///
-    /// \brief finds the adjacent faces from a given node
-    ///
-    std::vector<Entity*>
-    find_adjacent_faces_from_node(const Entity & node);
 
     /*
      * \brief Returns "0" if the input faces have two points in common. Otherwise,

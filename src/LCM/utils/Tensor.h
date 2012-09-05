@@ -1813,12 +1813,12 @@ namespace LCM {
   dotdot(Tensor<T, 2> const & A, Tensor<T, 2> const & B);
 
   /// Tensor4 Tensor4 double dot product
-  /// \param A tensor4
-  /// \param B tensor4
-  /// \return a tensor4 \f$ C_{ijop} = A_{ijkl} : B){lkop} \f$
+  /// \param A Tensor4
+  /// \param B Tensor4
+  /// \return a Tensor4 \f$ C_{ijkl} = A_{ijmn} : B){mnkl} \f$
   template<typename T, Index N>
   Tensor4<T, N>
-  dotdot(Tensor4<T,N> const & A, Tensor4<T, N> const & B);
+  dotdot(Tensor4<T, N> const & A, Tensor4<T, N> const & B);
 
   ///
   /// Tensor Frobenius norm

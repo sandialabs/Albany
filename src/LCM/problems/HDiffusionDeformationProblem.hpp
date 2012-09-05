@@ -156,6 +156,7 @@ namespace Albany {
 #include "TauContribution.hpp"
 #include "UnitGradient.hpp"
 #include "GradientElementLength.hpp"
+#include "LatticeDefGrad.hpp"
 
 // Matierial Model
 #include "J2Stress.hpp"
@@ -355,6 +356,36 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
     ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  { // Constant Partial Molar Volume
+      RCP<ParameterList> p = rcp(new ParameterList);
+
+      p->set<string>("Material Property Name", "Partial Molar Volume");
+      p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+      p->set<string>("Coordinate Vector Name", "Coord Vec");
+      p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
+      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+      Teuchos::ParameterList& paramList = params->sublist("Partial Molar Volume");
+      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+      ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+
+  { // Constant Stress Free Total Concentration
+        RCP<ParameterList> p = rcp(new ParameterList);
+
+        p->set<string>("Material Property Name", "Stress Free Total Concentration");
+        p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+        p->set<string>("Coordinate Vector Name", "Coord Vec");
+        p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
+        p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+        Teuchos::ParameterList& paramList = params->sublist("Stress Free Total Concentration");
+        p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+        ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
   }
 
   { // Constant Avogadro Number
@@ -568,8 +599,6 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Total Concentration"));
 
     //Input
-
-
     p->set<string>("Lattice Concentration Name", "Lattice Concentration");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set<string>("Trapped Concentration Name", "Trapped Concentration");
@@ -684,8 +713,6 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     Teuchos::ParameterList& paramList = params->sublist("Shear Modulus");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-
- 
     ev = rcp(new LCM::ShearModulus<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -768,8 +795,6 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     Teuchos::ParameterList& paramList = params->sublist("Hardening Modulus");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-
-
     ev = rcp(new LCM::HardeningModulus<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -786,8 +811,6 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Saturation Modulus");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-
 
     ev = rcp(new LCM::SaturationModulus<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -854,6 +877,42 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
 
   }
+
+  { // Lattice Deformation Gradient
+      RCP<ParameterList> p = rcp(new ParameterList("Lattice Deformation Gradient"));
+
+      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+      Teuchos::ParameterList& paramList = params->sublist("Lattice Deformation Gradient");
+      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+      //Inputs: flags, weights
+      const bool avgJ = params->get("avgJ", false);
+      p->set<bool>("avgJ Name", avgJ);
+      const bool volavgJ = params->get("volavgJ", false);
+      p->set<bool>("volavgJ Name", volavgJ);
+      const bool weighted_Volume_Averaged_J = params->get("weighted_Volume_Averaged_J", false);
+      p->set<bool>("weighted_Volume_Averaged_J Name", weighted_Volume_Averaged_J);
+      p->set<string>("Weights Name","Weights");
+      // Hydrogen Concentration induced deforamtion
+      p->set<string>("Molar Volume Name", "Molar Volume");
+      p->set<string>("Partial Molar Volume Name", "Partial Molar Volume");
+      p->set<string>("Stress Free Total Concentration Name", "Stress Free Total Concentration");
+      p->set<string>("DetDefGrad Name", "Determinant of the Deformation Gradient");
+      p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+      p->set<string>("DefGrad Name", "Deformation Gradient");
+      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+      p->set<string>("Total Concentration Name", "Total Concentration");
+      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+      //Output
+      p->set<string>("Lattice Deformation Gradient Name", "Lattice Deformation Gradient");
+      ev = rcp(new LCM::LatticeDefGrad<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      p = stateMgr.registerStateVariable("Lattice Deformation Gradient",dl->qp_tensor, dl->dummy, elementBlockName, "identity", 1.0, true);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
 
   if (matModel == "NeoHookean")
   {
