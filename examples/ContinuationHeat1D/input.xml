@@ -47,6 +47,7 @@
 	<Parameter  name="Max Value" type="double" value="200.0"/>
 	<Parameter  name="Min Value" type="double" value="0.5"/>
 	<Parameter  name="Compute Eigenvalues" type="bool" value="1"/>
+	<Parameter  name="Return Failed on Reaching Max Steps" type="bool" value="0"/>
 	<ParameterList name="Eigensolver">
 	  <Parameter name="Method" type="string" value="Anasazi"/>
 	</ParameterList>
