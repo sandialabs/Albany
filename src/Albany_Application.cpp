@@ -58,7 +58,8 @@ Application(const RCP<const Epetra_Comm>& comm_,
   physicsBasedPreconditioner(false),
   shapeParamsHaveBeenReset(false),
   morphFromInit(true), perturbBetaForDirichlets(0.0),
-  phxGraphVisDetail()
+  phxGraphVisDetail(0),
+  stateGraphVisDetail(0)
 {
   defineTimers();
 
