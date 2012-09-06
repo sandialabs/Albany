@@ -50,7 +50,7 @@ namespace LCM {
 
       const unsigned int entity_id = ++highest_ids_[entity_rank];
 
-      stk::mesh::Entity & entity = bulkData_->declare_entity(entity_rank,
+     bulkData_->declare_entity(entity_rank,
           entity_id, part_vector);
 
 	return;
@@ -161,8 +161,8 @@ namespace LCM {
 
     EdgeId local_id;
     const stk::mesh::PairIterRelation &source_relations = source_entity.relations();
-    int target_entity_identifier = target_entity.identifier();
-    int target_entity_entity_rank = target_entity.entity_rank();
+    unsigned int target_entity_identifier = target_entity.identifier();
+    unsigned int target_entity_entity_rank = target_entity.entity_rank();
 
     stk::mesh::PairIterRelation::iterator iterator_source_relations;
     for (iterator_source_relations = source_relations.begin(); iterator_source_relations!=source_relations.end(); iterator_source_relations++) {
@@ -185,7 +185,7 @@ namespace LCM {
 
     unsigned int count = 0;
     const stk::mesh::PairIterRelation &entity_relations = entity.relations();
-    int entity_rank=entity.entity_rank();
+    unsigned int entity_rank=entity.entity_rank();
 
     stk::mesh::PairIterRelation::iterator iterator_relations;
     for(iterator_relations=entity_relations.begin(); iterator_relations!=entity_relations.end(); iterator_relations++){
@@ -494,7 +494,7 @@ namespace LCM {
 
     //Pointer with coordinates without average
     std::vector<double> coordinates_(3);
-    for (int ii = 0; ii < vector_pointers.size(); ++ii) {
+    for (unsigned int ii = 0; ii < vector_pointers.size(); ++ii) {
       coordinates_[0] += vector_pointers[ii][0];
       coordinates_[1] += vector_pointers[ii][1];
       coordinates_[2] += vector_pointers[ii][2];
@@ -556,19 +556,19 @@ namespace LCM {
     std::vector<std::vector<Entity*> > all_elements_boundary_nodes1(
         initial_entities_3D.size() + 1);
     //temporary vector //check the values inside this vector
-    for (int ii = 0; ii < initial_entities_3D.size(); ++ii) {
+    for (unsigned int ii = 0; ii < initial_entities_3D.size(); ++ii) {
       all_elements_boundary_nodes1[ii + 1] = get_boundary_entities(
           *(initial_entities_3D[ii]), 0);
     }
 
-    for (int ii = 0; ii < initial_entities_1D.size(); ++ii) {
+    for (unsigned int ii = 0; ii < initial_entities_1D.size(); ++ii) {
       //Create a vector with all the initial nodes connected to a segment
       vector_nodes = get_directly_connected_entities(*(initial_entities_1D[ii]),
           0);
       //Look for all the relations of each segment
       stk::mesh::PairIterRelation _relations =
           initial_entities_1D[ii]->relations();
-      for (int i = 0; i < _relations.size(); ++i) {
+      for (unsigned int i = 0; i < _relations.size(); ++i) {
         if (_relations[i].entity()->entity_rank() == 0
             && get_local_relation_id(*(initial_entities_1D[ii]),
                 *(_relations[i].entity())) == 1) {
@@ -595,11 +595,11 @@ namespace LCM {
     std::vector<Entity*> modified1_entities_1D = get_entities_by_rank(
         *(bulkData_), 1);
 
-    for (int ii = 0; ii < initial_entities_1D.size(); ++ii) {
+    for (unsigned int ii = 0; ii < initial_entities_1D.size(); ++ii) {
       //Look for all the relations of each segment
       stk::mesh::PairIterRelation _relations =
           initial_entities_1D[ii]->relations();
-      for (int i = 0; i < _relations.size(); ++i) {
+      for (unsigned int i = 0; i < _relations.size(); ++i) {
         if (_relations[i].entity()->entity_rank() == 0
             && get_local_relation_id(*(initial_entities_1D[ii]),
                 *(_relations[i].entity())) == 2) {
@@ -618,10 +618,10 @@ namespace LCM {
 
     //Adding the new segments to its corresponding faces
     //The segments can be connected to 1 one or more faces
-    for (int ii = 0; ii < initial_entities_1D.size(); ++ii) {
+    for (unsigned int ii = 0; ii < initial_entities_1D.size(); ++ii) {
       stk::mesh::PairIterRelation _relations =
           initial_entities_1D[ii]->relations();
-      for (int i = 0; i < _relations.size(); ++i) {
+      for (unsigned int i = 0; i < _relations.size(); ++i) {
         if (_relations[i].entity()->entity_rank() == 2) {
           add_relation(*(_relations[i].entity()), *(modified1_entities_1D[ii]),
               get_number_lower_rank_entities(*(_relations[i].entity())));
@@ -671,7 +671,7 @@ namespace LCM {
     std::vector<Entity*> modified1_entities_0D = get_entities_by_rank(
         *(bulkData_), 0);
 
-    for (int ii = 0; ii < initial_entities_2D.size(); ++ii) {
+    for (unsigned int ii = 0; ii < initial_entities_2D.size(); ++ii) {
       //Connect the node to its corresponding face
       add_relation(*(initial_entities_2D[ii]), *(modified1_entities_0D[ii]),
           get_number_lower_rank_entities(*(initial_entities_2D[ii])));
@@ -679,7 +679,7 @@ namespace LCM {
 
     //Add the corresponding coordinates to the barycenters of all faces
     std::vector<Entity*> boundary_nodes;
-    for (int ii = 0; ii < initial_entities_2D.size(); ++ii) {
+    for (unsigned int ii = 0; ii < initial_entities_2D.size(); ++ii) {
       boundary_nodes = get_boundary_entities(*(initial_entities_2D[ii]), 0);
       create_coordinates(boundary_nodes, modified1_entities_0D[ii]);
     }
@@ -733,7 +733,7 @@ namespace LCM {
     }
 
     //Connect the new segments to the corresponding nodes
-    for (int ii = 0; ii < Num_segments_face * initial_entities_2D.size();
+    for (unsigned int ii = 0; ii < Num_segments_face * initial_entities_2D.size();
         ++ii) {
       //Add a relation between the segments and the center nodes
       add_relation(*(modified2_entities_1D[ii]),
@@ -814,7 +814,7 @@ namespace LCM {
     std::vector<Entity*> original_face_relations_3D;
     std::vector<Entity*> original_face;
     std::vector<Entity*>::iterator iterator_entities;
-    for (int ii = 0; ii < all_boundary_segments.size(); ++ii) {
+    for (unsigned int ii = 0; ii < all_boundary_segments.size(); ++ii) {
       adjacent_segments = find_adjacent_segments(*all_boundary_segments[ii],
           all_faces_centroids[ii / Num_segments_face]);
       add_relation(*(modified1_entities_2D[ii]), *(all_boundary_segments[ii]),
@@ -931,14 +931,14 @@ namespace LCM {
 
     //Add the coordinates of all the elements centroids
     std::vector<Entity*> boundary_nodes_elements;
-    for (int ii = 0; ii < initial_entities_3D.size(); ++ii) {
+    for (unsigned int ii = 0; ii < initial_entities_3D.size(); ++ii) {
       boundary_nodes_elements = get_former_element_nodes(
           *(initial_entities_3D[ii]), all_elements_boundary_nodes1);
       create_coordinates(boundary_nodes_elements, elements_centroids[ii]);
     }
 
     //Connect each element to the new added nodes
-    for (int ii = 0; ii < initial_entities_3D.size(); ++ii) {
+    for (unsigned int ii = 0; ii < initial_entities_3D.size(); ++ii) {
       //Connect the node to its corresponding element
       add_relation(*(initial_entities_3D[ii]), *(elements_centroids[ii]),
           get_number_lower_rank_entities(*(initial_entities_3D[ii])));
@@ -998,7 +998,7 @@ namespace LCM {
     }
 
     //Connect the new segments to the corresponding nodes
-    for (int ii = 0; ii < segments_connected_centroid.size(); ++ii) {
+    for (unsigned int ii = 0; ii < segments_connected_centroid.size(); ++ii) {
       //Add a relation between the segments and the center nodes
       add_relation(*(segments_connected_centroid[ii]),
           *(elements_centroids[ii / element_boundary_nodes.size()]), 0);
@@ -1035,14 +1035,14 @@ namespace LCM {
 
     //Connect  the face to the corresponding segments
     std::vector<Entity*> adjacent_segments_inside(2);
-    for (int ii = 0; ii < All_boundary_segments.size(); ++ii) {
-      adjacent_segments_inside = find_adjacent_segments(*(All_boundary_segments[ii]),
-      elements_centroids[ii / Number_new_triangles_inside_element]);
-      add_relation(*(modified2_entities_2D[ii]), *(All_boundary_segments[ii]),
+    for (unsigned int ii = 0; ii < All_boundary_segments.size(); ++ii) {
+        adjacent_segments_inside = find_adjacent_segments(*(All_boundary_segments[ii]),
+        elements_centroids[ii / Number_new_triangles_inside_element]);
+        add_relation(*(modified2_entities_2D[ii]), *(All_boundary_segments[ii]),
           0);
-      add_relation(*(modified2_entities_2D[ii]), *(adjacent_segments_inside[0]),
+        add_relation(*(modified2_entities_2D[ii]), *(adjacent_segments_inside[0]),
           1);
-      add_relation(*(modified2_entities_2D[ii]), *(adjacent_segments_inside[1]),
+        add_relation(*(modified2_entities_2D[ii]), *(adjacent_segments_inside[1]),
           2);
       /*
        *faces_inside_elements is a vector of vectors that contains
@@ -1100,22 +1100,19 @@ namespace LCM {
     }
     std::vector<Entity*> modified1_entities_3D = get_entities_by_rank(*(bulkData_),3);
 
-
     //MEASURING TIME
       clock_t start10, end10;
       double cpu_time_used10;
       start10 = clock();
     //Connect the the element with its corresponding faces
     std::vector<Entity*> adjacent_faces_inside(3);
-    for (int ii = 0; ii < All_boundary_faces.size(); ++ii) {
-    adjacent_faces_inside  = find_adjacent_faces_from_face(faces_inside_elements,
-     *(All_boundary_faces[ii]),(ii/_faces_element.size()));
-
-   add_relation(*(modified1_entities_3D[ii]), *(All_boundary_faces[ii]), 0);
-   add_relation(*(modified1_entities_3D[ii]), *adjacent_faces_inside[0], 1);
-   add_relation(*(modified1_entities_3D[ii]), *adjacent_faces_inside[1], 2);
-   add_relation(*(modified1_entities_3D[ii]), *adjacent_faces_inside[2], 3);
-
+    for (unsigned int ii = 0; ii < All_boundary_faces.size(); ++ii) {
+         adjacent_faces_inside  = find_adjacent_faces_from_face(faces_inside_elements,
+         *(All_boundary_faces[ii]),(ii/_faces_element.size()));
+      add_relation(*(modified1_entities_3D[ii]), *(All_boundary_faces[ii]), 0);
+      add_relation(*(modified1_entities_3D[ii]), *adjacent_faces_inside[0], 1);
+      add_relation(*(modified1_entities_3D[ii]), *adjacent_faces_inside[1], 2);
+      add_relation(*(modified1_entities_3D[ii]), *adjacent_faces_inside[2], 3);
     }
 
     //MEASURING TIME
@@ -1136,7 +1133,7 @@ namespace LCM {
     //Connectivity matrix
     std::vector<std::vector<Entity*> > _connectivity_temp_(modified1_entities_3D.size());
     //Add the new entities to "connectivity_temp"
-    for (int ii = 0; ii < modified1_entities_3D.size(); ++ii) {
+    for (unsigned int ii = 0; ii < modified1_entities_3D.size(); ++ii) {
          _connectivity_temp_[ii] = get_boundary_entities(*modified1_entities_3D[ii],0);
     }
     connectivity_temp.clear();

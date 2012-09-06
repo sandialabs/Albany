@@ -51,7 +51,7 @@ int main(int ac, char* av[])
   LCM::topology topology(input_file, output_file);
 
   // Node rank should be 0 and element rank should be equal to the dimension of the
-  // system (e.g. 2 for 2D meshes and 3 for 3D meshes)
+  //system (e.g. 2 for 2D meshes and 3 for 3D meshes)
   //cout << "Node Rank: "<< nodeRank << ", Element Rank: " << elementRank << "\n";
 
   // Print element connectivity before the mesh topology is modified
