@@ -166,6 +166,7 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
     const std::string stateName = (*stateInfo)[i]->name;
     const std::string init_type = (*stateInfo)[i]->initType;
     const double init_val       = (*stateInfo)[i]->initValue;
+    bool have_restart           = (*stateInfo)[i]->restartDataAvailable;
 
     // JTO: specifying zero recovers previous behavior
     // if (stateName == "zero")
@@ -175,7 +176,12 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
     // }
 
     *out << "StateManager: initializing state:  " << stateName;
-    if (init_type == "scalar")
+    if(have_restart){
+        *out << " from restart file." << std::endl;
+        // If we are restarting, arrays should already be initialized from exodus file
+        continue;
+	}
+    else if (init_type == "scalar")
       *out << " with initialization type 'scalar' and value: " << init_val << std::endl;
     else if (init_type == "identity")
       *out << " with initialization type 'identity'" << std::endl;
@@ -188,31 +194,37 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
 
       if (init_type == "scalar")
       {
+
         switch (size) {
-	case 1:
-	  sa[ws][stateName](0) = init_val;
-	  break;
-	case 2:
-	  for (int cell = 0; cell < dims[0]; ++cell)
-	    for (int qp = 0; qp < dims[1]; ++qp)
-	      sa[ws][stateName](cell, qp) = init_val;
-	  break;
-	case 3:
-	  for (int cell = 0; cell < dims[0]; ++cell)
-	    for (int qp = 0; qp < dims[1]; ++qp)
-	      for (int i = 0; i < dims[2]; ++i)
-		sa[ws][stateName](cell, qp, i) = init_val;
-	  break;
-	case 4:
-	  for (int cell = 0; cell < dims[0]; ++cell)
-	    for (int qp = 0; qp < dims[1]; ++qp)
-	      for (int i = 0; i < dims[2]; ++i)
-		for (int j = 0; j < dims[3]; ++j)
-		  sa[ws][stateName](cell, qp, i, j) = init_val;
-	  break;
-	default:
-	  TEUCHOS_TEST_FOR_EXCEPTION(size<2||size>4, std::logic_error,
-				     "Something is wrong during scalar state variable initialization: " << size);
+
+          case 1:
+            sa[ws][stateName](0) = init_val;
+            break;
+
+          case 2:
+            for (int cell = 0; cell < dims[0]; ++cell)
+              for (int qp = 0; qp < dims[1]; ++qp)
+                sa[ws][stateName](cell, qp) = init_val;
+            break;
+
+          case 3:
+            for (int cell = 0; cell < dims[0]; ++cell)
+              for (int qp = 0; qp < dims[1]; ++qp)
+                for (int i = 0; i < dims[2]; ++i)
+                  sa[ws][stateName](cell, qp, i) = init_val;
+            break;
+
+          case 4:
+            for (int cell = 0; cell < dims[0]; ++cell)
+              for (int qp = 0; qp < dims[1]; ++qp)
+                for (int i = 0; i < dims[2]; ++i)
+                 for (int j = 0; j < dims[3]; ++j)
+                   sa[ws][stateName](cell, qp, i, j) = init_val;
+            break;
+
+          default:
+            TEUCHOS_TEST_FOR_EXCEPTION(size<2||size>4, std::logic_error,
+                     "Something is wrong during scalar state variable initialization: " << size);
         }
 
       }
@@ -220,7 +232,7 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
       {
         // we assume operating on the last two indices is correct
         TEUCHOS_TEST_FOR_EXCEPTION(size != 4, std::logic_error,
-				   "Something is wrong during tensor state variable initialization: " << size);
+           "Something is wrong during tensor state variable initialization: " << size);
         TEUCHOS_TEST_FOR_EXCEPT( ! (dims[2] == dims[3]) );
 
         for (int cell = 0; cell < dims[0]; ++cell)

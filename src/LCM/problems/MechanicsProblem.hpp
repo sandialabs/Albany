@@ -262,7 +262,11 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
   Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
 
   // string for cauchy stress used numerous times below
-  string cauchy = "Cauchy Stress";
+  string cauchy = "Cauchy_Stress";
+
+// GAH: Restart mechanism cannot find fields with spaces 
+// in the Exodus file, as Ioss replaces spaces with underscores
+//  string cauchy = "Cauchy Stress";
 
   { // Time
     RCP<ParameterList> p = rcp(new ParameterList);

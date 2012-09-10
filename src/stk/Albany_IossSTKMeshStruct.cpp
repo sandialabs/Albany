@@ -29,6 +29,8 @@
 #include <stk_mesh/base/FieldData.hpp>
 #include <stk_mesh/base/Selector.hpp>
 #include <Ionit_Initializer.h>
+#include <stk_io/IossBridge.hpp>
+#include <Ioss_SubSystem.h>
 
 #include <stk_mesh/fem/FEMHelpers.hpp>
 
@@ -296,6 +298,32 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
         *out << "Restart Index set, reading solution time : " << index << endl;
          stk::io::process_input_request(*mesh_data, *bulkData, index);
          hasRestartSolution = true;
+
+         // See what state data was initialized from the stk::io request
+         // This should be propagated into stk::io
+           Ioss::Region *region = mesh_data->m_input_region;
+           const Ioss::ElementBlockContainer& elem_blocks = region->get_element_blocks();
+
+/*
+            // Uncomment to print what fields are in the exodus file
+			Ioss::NameList exo_fld_names;
+			elem_blocks[0]->field_describe(&exo_fld_names);
+			for(std::size_t i = 0; i < exo_fld_names.size(); i++){
+				*out << "Found field \"" << exo_fld_names[i] << "\" in exodus file" << std::endl;
+			}
+*/
+
+           for (std::size_t i=0; i<sis->size(); i++) {
+             Albany::StateStruct& st = *((*sis)[i]);
+
+             if(elem_blocks[0]->field_exists(st.name)){
+               *out << "Found field \"" << st.name << "\" in exodus file." << std::endl;
+               st.restartDataAvailable = true;
+			 }
+//			 else
+//               *out << "Could NOT find field \"" << st.name << "\" in exodus file." << std::endl;
+           }
+
       }
     }
 
@@ -368,8 +396,6 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
  *
  */
 
-#include <stk_io/IossBridge.hpp>
-#include <Ioss_SubSystem.h>
 
 
 void 
