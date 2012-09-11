@@ -374,8 +374,16 @@ QCAD::PoissonProblem::constructEvaluators(
   }
 
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
+
+    // Parameters to be sent to all response constructors (whether they use them or not).
+    //  Note that pFromProb is sent to constructResponses as a separate ParameterList that
+    //  is not validated, so parameters in this list that are not used will not generate errors.
+    RCP<ParameterList> pFromProb = rcp(new ParameterList("Response Parameters from Problem"));
+    pFromProb->set<double>("Length unit in m", length_unit_in_m);
+    pFromProb->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
+
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
-    return respUtils.constructResponses(fm0, *responseList, stateMgr);
+    return respUtils.constructResponses(fm0, *responseList, pFromProb, stateMgr);
   }
 
   return Teuchos::null;

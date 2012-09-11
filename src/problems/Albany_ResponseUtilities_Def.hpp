@@ -23,6 +23,7 @@
 #include "QCAD_ResponseSaveField.hpp"
 #include "QCAD_ResponseCenterOfMass.hpp"
 #include "QCAD_ResponseSaddleValue.hpp"
+#include "QCAD_ResponseRegionBoundary.hpp"
 #include "PHAL_ResponseFieldIntegral.hpp"
 
 
@@ -38,6 +39,7 @@ Teuchos::RCP<const PHX::FieldTag>
 Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm,
   Teuchos::ParameterList& responseParams, 
+  Teuchos::RCP<Teuchos::ParameterList> paramsFromProblem, 
   Albany::StateManager& stateMgr)
 {
   using Teuchos::RCP;
@@ -48,12 +50,11 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   string responseName = responseParams.get<string>("Name");
   RCP<ParameterList> p = rcp(new ParameterList);
   p->set<ParameterList*>("Parameter List", &responseParams);
+  p->set<RCP<ParameterList> >("Parameters From Problem", paramsFromProblem);
   Teuchos::RCP<const PHX::FieldTag> response_tag;
 
   if (responseName == "Field Integral") 
   {
-    double length_unit_in_m=1.0e-6; 
-    p->set<double>("Length unit in m", length_unit_in_m);
     RCP<QCAD::ResponseFieldIntegral<EvalT,Traits> > res_ev = 
       rcp(new QCAD::ResponseFieldIntegral<EvalT,Traits>(*p, dl));
     fm.template registerEvaluator<EvalT>(res_ev);
@@ -109,6 +110,16 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
   }
+
+  else if (responseName == "Region Boundary") 
+  {
+    RCP<QCAD::ResponseRegionBoundary<EvalT,Traits> > res_ev = 
+      rcp(new QCAD::ResponseRegionBoundary<EvalT,Traits>(*p, dl));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+  }
+
 
   else 
     TEUCHOS_TEST_FOR_EXCEPTION(

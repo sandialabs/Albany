@@ -20,16 +20,6 @@
 #include "Teuchos_CommHelpers.hpp"
 #include "Albany_Utils.hpp"
 
-//Utility function to split a std::string by a delimiter, so far only used here
-void split(const std::string &s, char delim, std::vector<std::string> &elems) {
-    std::stringstream ss(s);
-    std::string item;
-    while(std::getline(ss, item, delim)) {
-        elems.push_back(item);
-    }
-}
-
-
 template<typename EvalT, typename Traits>
 QCAD::ResponseFieldIntegral<EvalT, Traits>::
 ResponseFieldIntegral(Teuchos::ParameterList& p,
@@ -44,9 +34,22 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
     this->getValidResponseParameters();
   plist->validateParameters(*reflist,0);
 
-  // passed down from main list
-  length_unit_in_m = p.get<double>("Length unit in m");
+  //! parameters passed down from problem
+  Teuchos::RCP<Teuchos::ParameterList> paramsFromProblem = 
+    p.get< Teuchos::RCP<Teuchos::ParameterList> >("Parameters From Problem");
+  if(paramsFromProblem != Teuchos::null) {
 
+    // Material database 
+    materialDB = paramsFromProblem->get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
+
+    // Length unit in meters
+    length_unit_in_m = paramsFromProblem->get<double>("Length unit in m");
+  }
+  else {
+    materialDB = Teuchos::null;
+    length_unit_in_m = 1.0e-6; //default length unit = microns (backward compat)
+  }
+       
   //! number of quad points per cell
   Teuchos::RCP<PHX::DataLayout> scalar_dl = dl->qp_scalar;
   numQPs = scalar_dl->dimension(1);
@@ -60,7 +63,7 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
   //! User-specified parameters
   std::string fieldName;
   std::string ebNameStr = plist->get<std::string>("Element Block Name","");
-  if(ebNameStr.length() > 0) split(ebNameStr,',',ebNames);
+  if(ebNameStr.length() > 0) Albany::splitStringOnDelim(ebNameStr,',',ebNames);
   fieldName = plist->get<std::string>("Field Name","");
   if(fieldName.length() > 0) fieldNames.push_back(fieldName);
   for(int i=1; i < QCAD::MAX_FIELDNAMES_IN_INTEGRAL; i++) {
@@ -68,6 +71,8 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
     if(fieldName.length() > 0) fieldNames.push_back(fieldName);
     else break;
   }
+
+  bQuantumEBsOnly = plist->get<bool>("Quantum Element Blocks Only",false);
 
   std::string integrandLinLengthUnit; // linear length unit of integrand (e.g. "cm" for integrand in cm^-3)
   integrandLinLengthUnit = plist->get<std::string>("Integrand Length Unit","cm");
@@ -170,15 +175,21 @@ template<typename EvalT, typename Traits>
 void QCAD::ResponseFieldIntegral<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  bool bQuantumEB = false; //if no material database, all element blocks are "non-quantum"
+
+  if(materialDB != Teuchos::null)
+    bQuantumEB = materialDB->getElementBlockParam<bool>(workset.EBName,"quantum",false);
+
   // Zero out local response
   for (typename PHX::MDField<ScalarT>::size_type i=0; 
        i<this->local_response.size(); i++)
     this->local_response[i] = 0.0;
 
   typename std::vector<PHX::MDField<ScalarT,Cell,QuadPoint> >::const_iterator it;
-    
-  if( ebNames.size() == 0 || 
-      std::find(ebNames.begin(), ebNames.end(), workset.EBName) != ebNames.end() ) {
+
+  if( (ebNames.size() == 0 || 
+       std::find(ebNames.begin(), ebNames.end(), workset.EBName) != ebNames.end()) &&
+      (bQuantumEBsOnly == false || bQuantumEB == true) ) {
 
     ScalarT val; //, dbI = 0.0;
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
@@ -251,6 +262,7 @@ QCAD::ResponseFieldIntegral<EvalT,Traits>::getValidResponseParameters() const
   validPL->set<int>("Phalanx Graph Visualization Detail", 0, "Make dot file to visualize phalanx graph");
   validPL->set<string>("Type", "", "Response type");
   validPL->set<string>("Element Block Name", "", "Name of the element block to use as the integration domain");
+  validPL->set<bool>("Quantum Element Blocks Only",false);
 
   validPL->set<string>("Field Name", "", "Name of Field to integrate");
   for(int i=1; i < QCAD::MAX_FIELDNAMES_IN_INTEGRAL; i++)

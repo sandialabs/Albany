@@ -15,50 +15,10 @@
 \********************************************************************/
 
 
-#ifndef ALBANY_RESPONSEUTILITIES_HPP
-#define ALBANY_RESPONSEUTILITIES_HPP
-
-#include "Teuchos_RCP.hpp"
-#include "Teuchos_ParameterList.hpp"
-
 #include "PHAL_AlbanyTraits.hpp"
-#include "Albany_ProblemUtils.hpp"
 
-#include "Phalanx.hpp"
+#include "QCAD_ResponseRegionBoundary.hpp"
+#include "QCAD_ResponseRegionBoundary_Def.hpp"
 
+PHAL_INSTANTIATE_TEMPLATE_CLASS(QCAD::ResponseRegionBoundary)
 
-//! Code Base for Quantum Device Simulation Tools LDRD
-namespace Albany {
-
-  /*!
-   * \brief Abstract interface for representing a 1-D finite element
-   * problem.
-   */
-
-  template<typename EvalT, typename Traits>
-  class ResponseUtilities {
-
-    public:
-
-    ResponseUtilities(Teuchos::RCP<Albany::Layouts> dl);
-  
-    //! Utility for parsing response requests and creating response field manager
-    Teuchos::RCP<const PHX::FieldTag>
-    constructResponses(
-      PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-      Teuchos::ParameterList& responseList, 
-      Teuchos::RCP<Teuchos::ParameterList> paramsFromProblem, 
-      Albany::StateManager& stateMgr);
-
- 
-    //! Accessor 
-    Teuchos::RCP<Albany::Layouts> get_dl() { return dl;};
-
-   private:
-
-    //! Struct of PHX::DataLayout objects defined all together.
-    Teuchos::RCP<Albany::Layouts> dl;
-  };
-}
-
-#endif

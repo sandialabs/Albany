@@ -38,6 +38,8 @@ namespace QCAD
     
     EvaluatorTools();  
     double getDoubleValue(const ScalarT& t) const;	  
+    double getMeshDoubleValue(const MeshScalarT& t) const;	  
+    std::string getEvalType() const;
   };
 
 
@@ -51,6 +53,8 @@ namespace QCAD
     
     EvaluatorTools();  
     double getDoubleValue(const ScalarT& t) const;	  
+    double getMeshDoubleValue(const MeshScalarT& t) const;
+    std::string getEvalType() const;
   };
 
   
@@ -63,7 +67,9 @@ namespace QCAD
     typedef typename PHAL::AlbanyTraits::Tangent::MeshScalarT MeshScalarT;
     
     EvaluatorTools();  
-    double getDoubleValue(const ScalarT& t) const;	  
+    double getDoubleValue(const ScalarT& t) const;
+    double getMeshDoubleValue(const MeshScalarT& t) const;	  
+    std::string getEvalType() const;
   };
 
 
@@ -76,7 +82,9 @@ namespace QCAD
     typedef typename PHAL::AlbanyTraits::SGResidual::MeshScalarT MeshScalarT;
     
     EvaluatorTools();  
-    double getDoubleValue(const ScalarT& t) const;	  
+    double getDoubleValue(const ScalarT& t) const;
+    double getMeshDoubleValue(const MeshScalarT& t) const;	  
+    std::string getEvalType() const;
   };
 
   
@@ -89,7 +97,9 @@ namespace QCAD
     typedef typename PHAL::AlbanyTraits::SGJacobian::MeshScalarT MeshScalarT;
     
     EvaluatorTools();  
-    double getDoubleValue(const ScalarT& t) const;	  
+    double getDoubleValue(const ScalarT& t) const;
+    double getMeshDoubleValue(const MeshScalarT& t) const;	  
+    std::string getEvalType() const;
   };
 
   // Stochastic Galerkin Tangent
@@ -101,7 +111,9 @@ namespace QCAD
     typedef typename PHAL::AlbanyTraits::SGTangent::MeshScalarT MeshScalarT;
     
     EvaluatorTools();  
-    double getDoubleValue(const ScalarT& t) const;	  
+    double getDoubleValue(const ScalarT& t) const; 
+    double getMeshDoubleValue(const MeshScalarT& t) const;
+    std::string getEvalType() const;
   };
 
   
@@ -114,7 +126,9 @@ namespace QCAD
     typedef typename PHAL::AlbanyTraits::MPResidual::MeshScalarT MeshScalarT;
     
     EvaluatorTools();  
-    double getDoubleValue(const ScalarT& t) const;	  
+    double getDoubleValue(const ScalarT& t) const;
+    double getMeshDoubleValue(const MeshScalarT& t) const;	  
+    std::string getEvalType() const;
   };
 
 
@@ -127,7 +141,9 @@ namespace QCAD
     typedef typename PHAL::AlbanyTraits::MPJacobian::MeshScalarT MeshScalarT;
     
     EvaluatorTools();  
-    double getDoubleValue(const ScalarT& t) const;	  
+    double getDoubleValue(const ScalarT& t) const;
+    double getMeshDoubleValue(const MeshScalarT& t) const;	  
+    std::string getEvalType() const;
   };
 
   // Multi-point Tangent
@@ -139,7 +155,9 @@ namespace QCAD
     typedef typename PHAL::AlbanyTraits::MPTangent::MeshScalarT MeshScalarT;
     
     EvaluatorTools();  
-    double getDoubleValue(const ScalarT& t) const;	  
+    double getDoubleValue(const ScalarT& t) const;
+    double getMeshDoubleValue(const MeshScalarT& t) const;	  
+    std::string getEvalType() const;
   };
 	
 }

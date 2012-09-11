@@ -15,61 +15,79 @@
 \********************************************************************/
 
 
-#ifndef QCAD_RESPONSEFIELDINTEGRAL_HPP
-#define QCAD_RESPONSEFIELDINTEGRAL_HPP
+#ifndef QCAD_RESPONSEREGIONBOUNDARY_HPP
+#define QCAD_RESPONSEREGIONBOUNDARY_HPP
 
+#include "Phalanx_Evaluator_WithBaseImpl.hpp"
+#include "Phalanx_Evaluator_Derived.hpp"
+#include "Phalanx_MDField.hpp"
+#include "Phalanx_DataLayout.hpp"
+#include "Teuchos_ParameterList.hpp"
+#include "Albany_ProblemUtils.hpp"
 #include "QCAD_MaterialDatabase.hpp"
-#include "PHAL_SeparableScatterScalarResponse.hpp"
+#include "QCAD_EvaluatorTools.hpp"
 
 namespace QCAD {
 
-  const int MAX_FIELDNAMES_IN_INTEGRAL = 10;
 /** 
- * \brief Response Description
+ * \brief QCAD Response which computes regions within the mesh based on field values, usually to determing
+ *         sub-regions of the mesh for later processing (e.g. for a quantum mechanical solution to be obtained)
  */
   template<typename EvalT, typename Traits>
-  class ResponseFieldIntegral : 
-    public PHAL::SeparableScatterScalarResponse<EvalT,Traits>
+  class ResponseRegionBoundary :
+    public PHX::EvaluatorWithBaseImpl<Traits>,
+    public PHX::EvaluatorDerived<EvalT, Traits>,
+    public EvaluatorTools<EvalT, Traits>
   {
   public:
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
-
-    ResponseFieldIntegral(Teuchos::ParameterList& p,
-			  const Teuchos::RCP<Albany::Layouts>& dl);
+    
+    ResponseRegionBoundary(Teuchos::ParameterList& p,
+		       const Teuchos::RCP<Albany::Layouts>& dl);
   
     void postRegistrationSetup(typename Traits::SetupData d,
-				     PHX::FieldManager<Traits>& vm);
-  
-    void preEvaluate(typename Traits::PreEvalData d);
+			       PHX::FieldManager<Traits>& vm);
   
     void evaluateFields(typename Traits::EvalData d);
 
     void postEvaluate(typename Traits::PostEvalData d);
+
+    Teuchos::RCP<const PHX::FieldTag> getEvaluatedFieldTag() const {
+      return response_field_tag;
+    }
+
+    Teuchos::RCP<const PHX::FieldTag> getResponseFieldTag() const {
+      return response_field_tag;
+    }
 	  
   private:
     Teuchos::RCP<const Teuchos::ParameterList> getValidResponseParameters() const;
 
-    std::vector<std::string> fieldNames;
-    std::vector<std::string> ebNames;
-    bool bQuantumEBsOnly;
-    
+    std::string regionType;
+    std::string outputFilename;
+    double levelSetFieldMin, levelSetFieldMax;
+
     std::size_t numQPs;
     std::size_t numDims;
-    
-    std::vector<PHX::MDField<ScalarT,Cell,QuadPoint> > fields;
+
+    std::string levelSetFieldname;
+    PHX::MDField<ScalarT> levelSetField;    
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
     PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
-    Teuchos::Array<int> field_components;
     
-    double length_unit_in_m; // length unit for input and output mesh
-    double scaling;          // scaling factor due to difference in mesh and integrand units
-    bool bPositiveOnly;
-    bool limitX, limitY, limitZ;
-    double xmin, xmax, ymin, ymax, zmin, zmax;
+    std::vector<std::string> ebNames;
+    bool bQuantumEBsOnly;
+
+    //Region boundary: for now just min/max along each coordinate direction
+    //  * just MeshScalarTs - no derivative information for region boundaries yet, as
+    //  * it's not clear this should be done and whether it's ever desired
+    std::vector<MeshScalarT> minVals, maxVals;
 
     //! Material database
     Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
+
+    Teuchos::RCP< PHX::Tag<ScalarT> > response_field_tag;
   };
 	
 }
