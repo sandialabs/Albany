@@ -25,8 +25,6 @@ namespace FELIX {
 
 //should values of these be hard-coded here, or read in from the input file?
 //for now, I have hard coded them here.
-const long long A = 1.0e4; //A = 10^(-4) ice flow parameter when velocity is in m/a and length is in km
-const int n = 3; //exponent in Glen's law
  
 //**********************************************************************
 template<typename EvalT, typename Traits>
@@ -36,20 +34,26 @@ Viscosity(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
   mu          (p.get<std::string>                   ("FELIX Viscosity QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ), 
-  homotopyParam (1.0)
+  homotopyParam (1.0), 
+  A(1.0), 
+  n(3)
 {
   Teuchos::ParameterList* visc_list = 
    p.get<Teuchos::ParameterList*>("Parameter List");
 
   std::string viscType = visc_list->get("Type", "Constant");
   homotopyParam = visc_list->get("Glen's Law Homotopy Parameter", 0.2);
+  A = visc_list->get("Glen's Law A", 1.0); 
+  n = visc_list->get("Glen's Law n", 3);  
 
   if (viscType == "Constant"){ 
     visc_type = CONSTANT;
   }
   else if (viscType == "Glen's Law"){
     visc_type = GLENSLAW; 
-    cout << "Glen's law viscosity!" << endl; 
+    cout << "Glen's law viscosity!" << endl;
+    cout << "A: " << A << endl; 
+    cout << "n: " << n << endl;  
   }
 
   this->addDependentField(VGrad);
@@ -105,7 +109,7 @@ evaluateFields(typename Traits::EvalData workset)
     if (homotopyParam == 0.0) {
       for (std::size_t cell=0; cell < workset.numCells; ++cell) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
-          mu(cell,qp) = 1.0/2.0*pow(A, 1.0/n); 
+          mu(cell,qp) = 1.0/2.0*pow(A, -1.0/n); 
         }
       }
     }
@@ -122,7 +126,7 @@ evaluateFields(typename Traits::EvalData workset)
           }
         epsilonEqp += ff;
         epsilonEqp = sqrt(epsilonEqp);
-        mu(cell,qp) = 1.0/2.0*pow(A, 1.0/n)*pow(epsilonEqp,  1.0/n-1.0); //non-linear viscosity, given by Glen's law  
+        mu(cell,qp) = 1.0/2.0*pow(A, -1.0/n)*pow(epsilonEqp,  1.0/n-1.0); //non-linear viscosity, given by Glen's law  
         //end non-linear viscosity evaluation
       }
     }

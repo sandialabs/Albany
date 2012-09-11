@@ -28,9 +28,7 @@ const double rho = 910; //density for FELIX; hard-coded here for now
 const double L = 5; 
 const double alpha = 0.5*pi/180; 
 const double Z = 1; 
-const double A = 1e-16; 
-const int n = 3; 
-const double U = A*L*pow(2*rho*g*Z,3); 
+const double U = L*pow(2*rho*g*Z,3); 
 const double cx = 1.0; //1e-9*U; 
 const double cy = 1.0; //1e-9*U; 
 
@@ -299,13 +297,17 @@ template<typename EvalT, typename Traits>
 StokesBodyForce<EvalT, Traits>::
 StokesBodyForce(const Teuchos::ParameterList& p) :
   force(p.get<std::string>("Body Force Name"),
- 	p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") )
+ 	p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ), 
+  A(1.0), 
+  n(3)
 {
 
   Teuchos::ParameterList* bf_list = 
     p.get<Teuchos::ParameterList*>("Parameter List");
 
   std::string type = bf_list->get("Type", "None");
+  A = bf_list->get("Glen's Law A", 1.0); 
+  n = bf_list->get("Glen's Law n", 3); 
   if (type == "None") {
     bf_type = NONE;
   }
@@ -336,6 +338,17 @@ StokesBodyForce(const Teuchos::ParameterList& p) :
   }
   else if (type == "SinSin") {
     bf_type = SINSIN;  
+    muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
+            p.get<std::string>("FELIX Viscosity QP Variable Name"),
+	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
+    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
+            p.get<std::string>("Coordinate Vector Name"),
+	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") );
+    this->addDependentField(muFELIX); 
+    this->addDependentField(coordVec);
+  }
+  else if (type == "SinSinGlen") {
+    bf_type = SINSINGLEN;  
     muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
             p.get<std::string>("FELIX Viscosity QP Variable Name"),
 	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
@@ -396,7 +409,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   if (bf_type == GRAVITY) {
   }
-  else if (bf_type == POLY || bf_type == SINSIN || bf_type == SINCOSZ || bf_type == POLYSACADO || bf_type == TESTAMMF) {
+  else if (bf_type == POLY || bf_type == SINSIN || bf_type == SINSINGLEN || bf_type == SINCOSZ || bf_type == POLYSACADO || bf_type == TESTAMMF) {
     this->utils.setFieldData(muFELIX,fm);
     this->utils.setFieldData(coordVec,fm);
   }
@@ -452,6 +465,21 @@ evaluateFields(typename Traits::EvalData workset)
 
        f[0] = -4.0*muqp*pi*(2*pi-1)*sin(x2pi + xphase)*sin(y2pi + yphase);
        f[1] = -4.0*muqp*pi*(2*pi+1)*cos(x2pi + xphase)*cos(y2pi + yphase);
+     }
+   }
+ }
+ //MMS test case for 2D nonlinear Stokes with Glen's law on unit square 
+ else if (bf_type == SINSINGLEN) {
+   double xphase=0.0, yphase=0.0; 
+   double r = 3*pi;
+   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+     for (std::size_t qp=0; qp < numQPs; ++qp) {      
+       ScalarT* f = &force(cell,qp,0);
+       MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
+       MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
+       MeshScalarT muqp = 0.5*pow(A, -1.0/n)*pow(2.0*pi*cos(x2pi + xphase)*cos(y2pi + yphase)+r, 1.0/n - 1.0);
+       f[0] = -8.0*pi*pi*sin(x2pi + xphase)*cos(y2pi + yphase)*(muqp - 1.0);
+       f[1] = 8.0*pi*pi*cos(x2pi + xphase)*sin(y2pi + yphase)*(muqp + 1.0);
      }
    }
  }

@@ -20,6 +20,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_ismip-hom_testA.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_ismip-hom_testA.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_sinsin_glen.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_sinsin_glen.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/reference_solution.dat
                ${CMAKE_CURRENT_BINARY_DIR}/reference_solution.dat COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ns.exo
@@ -62,4 +64,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_sincosz.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_sincosz.xml COPYONLY)
 add_test(${testName}_SinCosZ3DPeriodicXY ${Albany.exe} input_sincosz.xml)
 
+#  Seventh test
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_sacado.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_sacado.xml COPYONLY)
+add_test(${testName}_PolySacado ${Albany.exe} input_sacado.xml)
 
