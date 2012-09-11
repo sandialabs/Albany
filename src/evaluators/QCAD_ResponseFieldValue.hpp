@@ -18,6 +18,7 @@
 #ifndef QCAD_RESPONSEFIELDVALUE_HPP
 #define QCAD_RESPONSEFIELDVALUE_HPP
 
+#include "QCAD_MaterialDatabase.hpp"
 #include "PHAL_ScatterScalarResponse.hpp"
 
 namespace QCAD {
@@ -215,7 +216,8 @@ namespace QCAD {
     std::string opFieldName;
     std::string retFieldName;
     std::string opDomain;
-    std::string ebName;
+    std::vector<std::string> ebNames;
+    bool bQuantumEBsOnly;
 
     bool bReturnOpField;
     bool opX, opY, opZ;
@@ -223,6 +225,9 @@ namespace QCAD {
     double xmin, xmax, ymin, ymax, zmin, zmax;
 
     Teuchos::Array<double> initVals;
+
+    //! Material database
+    Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
   };
 	
 }
