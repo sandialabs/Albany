@@ -415,7 +415,7 @@ void Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
   node_map = Teuchos::rcp(new Epetra_Map(-1, numOwnedNodes,
 					 &(indices[0]), 0, *comm));
 
-  numGlobalNodes = node_map->NumGlobalElements();
+  numGlobalNodes = node_map->MaxAllGID() + 1;
   indices.resize(numOwnedNodes * neq);
   for (int i=0; i < numOwnedNodes; i++)
     for (std::size_t j=0; j < neq; j++)
