@@ -26,26 +26,24 @@ namespace PHAL {
 
 template<typename EvalT, typename Traits>
 GatherEigenvectors<EvalT,Traits>::
-GatherEigenvectors(const Teuchos::ParameterList& p)
+GatherEigenvectors(const Teuchos::ParameterList& p,
+                   const Teuchos::RCP<Albany::Layouts>& dl)
 { 
   char buf[200];
   
   std::string eigenvector_name_root = p.get<string>("Eigenvector field name root"); 
   nEigenvectors = p.get<int>("Number of eigenvectors");
 
-  Teuchos::RCP<PHX::DataLayout> dl = 
-    p.get< Teuchos::RCP<PHX::DataLayout> >("Data Layout");
-
   eigenvector_Re.resize(nEigenvectors);
   eigenvector_Im.resize(nEigenvectors);
   for (std::size_t k = 0; k < nEigenvectors; ++k) {
     sprintf(buf, "%s_Re%d", eigenvector_name_root.c_str(), (int)k);
-    PHX::MDField<ScalarT,Cell,Node> fr(buf,dl);
+    PHX::MDField<ScalarT,Cell,Node> fr(buf,dl->node_scalar);
     eigenvector_Re[k] = fr;
     this->addEvaluatedField(eigenvector_Re[k]);
 
     sprintf(buf, "%s_Im%d", eigenvector_name_root.c_str(), (int)k);
-    PHX::MDField<ScalarT,Cell,Node> fi(buf,dl);
+    PHX::MDField<ScalarT,Cell,Node> fi(buf,dl->node_scalar);
     eigenvector_Im[k] = fi;
     this->addEvaluatedField(eigenvector_Im[k]);
   }

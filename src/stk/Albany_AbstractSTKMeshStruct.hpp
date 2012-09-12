@@ -93,6 +93,7 @@ namespace Albany {
 
     bool exoOutput;
     std::string exoOutFile;
+    int exoOutputInterval;
     bool hasRestartSolution;
 
     //Flag for transforming STK mesh; currently only needed for FELIX problems 

@@ -136,7 +136,7 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   if( problemName == "Poisson Schrodinger" ||
       problemName == "Poisson CI") {
     maxIter = problemParams.get<int>("Maximum Iterations", 100);
-    iterationMethod = problemParams.get<string>("Iteration Method", "Picard");
+    //iterationMethod = problemParams.get<string>("Iteration Method", "Picard"); //unused
     shiftPercentBelowMin = problemParams.get<double>("Eigensolver Percent Shift Below Potential Min", 1.0);
     CONVERGE_TOL = problemParams.get<double>("Convergence Tolerance", 1e-6);
   }
@@ -155,7 +155,7 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 
   else if( problemName == "Poisson CI" ) {
     subSolvers["InitPoisson"]    = CreateSubSolver(inputFilenames["Poisson"], "initial poisson", *comm);
-    subSolvers["Poisson"]        = CreateSubSolver(inputFilenames["Poisson"], "none", *comm);
+    subSolvers["Poisson"]        = CreateSubSolver(inputFilenames["Poisson"], "Poisson", *comm);
     subSolvers["DeltaPoisson"]   = CreateSubSolver(inputFilenames["Poisson"], "Delta poisson", *comm);
     subSolvers["CoulombPoisson"] = CreateSubSolver(inputFilenames["Poisson"], "Coulomb poisson", *comm);
     subSolvers["CIPoisson"]      = CreateSubSolver(inputFilenames["Poisson"], "CI poisson", *comm);
@@ -198,11 +198,17 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   Teuchos::ParameterList& responseList = problemParams.sublist("Response Functions");
   setupResponseMapping(responseList);
 
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
+  typedef int GlobalIndex;
+#else
+  typedef long long GlobalIndex;
+#endif
+
   // Create Epetra map for parameter vector (only one since num_p always == 1)
-  epetra_param_map = Teuchos::rcp(new Epetra_LocalMap(nParameters, 0, *comm));
+  epetra_param_map = Teuchos::rcp(new Epetra_LocalMap(static_cast<GlobalIndex>(nParameters), 0, *comm));
 
   // Create Epetra map for (first) response vector
-  epetra_response_map = Teuchos::rcp(new Epetra_LocalMap(nResponseDoubles, 0, *comm));
+  epetra_response_map = Teuchos::rcp(new Epetra_LocalMap(static_cast<GlobalIndex>(nResponseDoubles), 0, *comm));
      //ANDY: if (nResponseDoubles > 0) needed ??
 
   // Create Epetra map for solution vector (second response vector).  Assume 
@@ -289,19 +295,34 @@ EpetraExt::ModelEvaluator::InArgs QCAD::Solver::createInArgs() const
 
 EpetraExt::ModelEvaluator::OutArgs QCAD::Solver::createOutArgs() const
 {
+  //Based on Piro_Epetra_NOXSolver.cpp implementation
   EpetraExt::ModelEvaluator::OutArgsSetup outArgs;
   outArgs.setModelEvalDescription("QCAD Solver Multipurpose Model Evaluator");
   // Ng is 1 bigger then model-Ng so that the solution vector can be an outarg
   outArgs.set_Np_Ng(num_p, num_g+1);
 
+  const SolverSubSolver& referenceSolver = getSubSolver("Poisson");
 
+  // We support all dg/dp layouts model supports, plus the linear op layout
+  EpetraExt::ModelEvaluator::OutArgs model_outargs = referenceSolver.model->createOutArgs();
+  for (int i=0; i<num_g; i++) {
+    for (int j=0; j<num_p; j++) {
+      DerivativeSupport ds = model_outargs.supports(OUT_ARG_DgDp, i, j);
+      if (!ds.none()) {
+	ds.plus(DERIV_LINEAR_OP);
+	outArgs.setSupports(OUT_ARG_DgDp, i, j, ds);
+      }
+    }
+  }
+
+  /*OLD
   //Derivative info 
   if(bSupportDpDg) {
     for (int i=0; i<num_g; i++) {
       for (int j=0; j<num_p; j++)
 	outArgs.setSupports(OUT_ARG_DgDp, i, j, DerivativeSupport(DERIV_MV_BY_COL));
     }
-  }
+  }*/
 
   return outArgs;
 }
@@ -437,6 +458,36 @@ QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
       
     QCAD::CopyStateToContainer(*pStatesToLoop, "Saved Electric Potential", prevElectricPotential);
   } 
+
+  if(bConverged) {
+    // LATER: perhaps run a separate Poisson solve (as above) but have it compute all the responses we want
+    //  (and don't have it compute them in the in-loop call above).
+
+    //Write parameters and responses of final Poisson solve
+    // Don't worry about sensitivities yet - just output vectors
+    
+    const QCAD::SolverSubSolver& ss = getSubSolver("Poisson");
+      int num_p = ss.params_in->Np();     // Number of *vectors* of parameters
+    int num_g = ss.responses_out->Ng(); // Number of *vectors* of responses
+
+    for (int i=0; i<num_p; i++)
+      ss.params_in->get_p(i)->Print(*out << "\nParameter vector " << i << ":\n");
+
+    for (int i=0; i<num_g-1; i++) {
+      Teuchos::RCP<Epetra_Vector> g = ss.responses_out->get_g(i);
+      bool is_scalar = true;
+
+      if (ss.app != Teuchos::null)
+        is_scalar = ss.app->getResponse(i)->isScalarResponse();
+
+      if (is_scalar) {
+        g->Print(*out << "\nResponse vector " << i << ":\n");
+	*out << "\n";  //add blank line after vector is printed - needed for proper post-processing
+	// see Main_Solve.cpp for how to print sensitivities here
+      }
+    }
+  }
+
 
   if(bVerbose) {
     if(bConverged)
@@ -872,9 +923,10 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
   }
 
   else if(preprocessType == "CI poisson") {
-    //! Rename output file
-    std::string exoName= "ci" + params.sublist("Discretization").get<std::string>("Exodus Output File Name");
-    params.sublist("Discretization").set("Exodus Output File Name", exoName);
+    //! Rename output file -- NO LONGER: keep "root" exo name for CI poisson solver, as it will be final result
+    //std::string exoName= "ci" + params.sublist("Discretization").get<std::string>("Exodus Output File Name");
+    //std::string exoName= params.sublist("Discretization").get<std::string>("Exodus Output File Name") + ".ci";
+    //params.sublist("Discretization").set("Exodus Output File Name", exoName);
 
     //! Set poisson parameters
     params.sublist("Problem").sublist("Poisson Source").set("Quantum Region Source", "ci");
@@ -883,7 +935,8 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
 
   else if(preprocessType == "Delta poisson") {
     //! Rename output file
-    std::string exoName= "delta" + params.sublist("Discretization").get<std::string>("Exodus Output File Name");
+    //std::string exoName= "delta" + params.sublist("Discretization").get<std::string>("Exodus Output File Name");
+    std::string exoName= params.sublist("Discretization").get<std::string>("Exodus Output File Name") + ".delta";
     params.sublist("Discretization").set("Exodus Output File Name", exoName);
 
     //! Set poisson parameters
@@ -892,12 +945,12 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
 
     //! Set responses: add responses for each pair ( evec_i, evec_j ) => delta_ij
     Teuchos::ParameterList& responseList = params.sublist("Problem").sublist("Response Functions");
-    nEigenvectors = params.sublist("Problem").sublist("Poisson Source").get<int>("Eigenvectors from States"); //sets member
-    int initial_nResponses = responseList.get<int>("Number"); //Shift existing reso
+    nEigenvectors = params.sublist("Problem").sublist("Poisson Source").get<int>("Eigenvectors from States"); 
+    int initial_nResponses = responseList.get<int>("Number"); //Shift existing responses
     int added_nResponses = nEigenvectors * (nEigenvectors + 1) / 2;
     char buf1[200], buf2[200];
     int iResponse;
-    responseList.set("Number", initial_nResponses + added_nResponses);
+    responseList.set("Number", initial_nResponses + added_nResponses); //sets member
 
     //shift response indices of existing responses by added_responses so added responses index from zero
     for(int i=initial_nResponses-1; i >= 0; i--) {       
@@ -916,7 +969,7 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
 
 	responseList.set(Albany::strint("Response",iResponse), "Field Integral");
 	Teuchos::ParameterList& responseParams = responseList.sublist(Albany::strint("ResponseParams",iResponse));
-	responseParams.set("Field Name", "Saved Electric Potential");  // same as solution, but must be at quad points
+	responseParams.set("Field Name", "Electric Potential");  // same as solution, but must be at quad points
 	responseParams.set("Field Name 1", buf1);
 	responseParams.set("Field Name 2", buf2);
 	responseParams.set("Integrand Length Unit", "mesh"); // same as mesh
@@ -928,7 +981,8 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
 	
   else if(preprocessType == "Coulomb poisson") {
     //! Rename output file
-    std::string exoName= "coulomb" + params.sublist("Discretization").get<std::string>("Exodus Output File Name");
+    //std::string exoName= "coulomb" + params.sublist("Discretization").get<std::string>("Exodus Output File Name");
+    std::string exoName= params.sublist("Discretization").get<std::string>("Exodus Output File Name") + ".coulomb";
     params.sublist("Discretization").set("Exodus Output File Name", exoName);
 
     //! Set poisson parameters
@@ -968,7 +1022,7 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
 
 	responseList.set(Albany::strint("Response",iResponse), "Field Integral");
 	Teuchos::ParameterList& responseParams = responseList.sublist(Albany::strint("ResponseParams",iResponse));
-	responseParams.set("Field Name", "Saved Electric Potential");  // same as solution, but must be at quad points
+	responseParams.set("Field Name", "Electric Potential");  // same as solution, but must be at quad points
 	responseParams.set("Field Name 1", buf1);
 	responseParams.set("Field Name 2", buf2);
 	responseParams.set("Integrand Length Unit", "mesh"); // same as mesh
@@ -977,6 +1031,13 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
       }
     }
   }
+  
+  else if(preprocessType == "Poisson") {
+    //! Rename output file
+    std::string exoName= params.sublist("Discretization").get<std::string>("Exodus Output File Name") + ".poisson";
+    params.sublist("Discretization").set("Exodus Output File Name", exoName);
+  }
+
 
 }
 
@@ -993,7 +1054,7 @@ QCAD::Solver::CreateSubSolver(const std::string xmlfilename,
   const Albany_MPI_Comm mpiComm = Albany::getMpiCommFromEpetraComm(comm);
 
   RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
-  *out << "QCAD Solver: creating solver from input " << xmlfilename 
+  *out << "QCAD Solver creating solver from input " << xmlfilename 
        << " after preprocessing as " << xmlPreprocessType << std::endl;
  
   //! Create solver factory, which reads xml input filen
@@ -1418,8 +1479,14 @@ void QCAD::SolverResponseFn::fillSolverResponses(Epetra_Vector& g, Teuchos::RCP<
       g[offset+i] = arg_vals[i]; //set value
 
       if(dgdp != Teuchos::null) { //set derivative
-	for(std::size_t k=0; k < arg_DgDps[i].size(); k++) //set derivative
-	  dgdp->ReplaceGlobalValue(offset+i, k, arg_DgDps[i][k]);
+        for(std::size_t k=0; k < arg_DgDps[i].size(); k++) { //set derivative
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
+          typedef int GlobalIndex;
+#else
+          typedef long long GlobalIndex;
+#endif
+          dgdp->ReplaceGlobalValue(static_cast<GlobalIndex>(offset+i), k, arg_DgDps[i][k]);
+        }
       }
     }
   }
@@ -1641,7 +1708,7 @@ void QCAD::ResetEigensolverShift(const Teuchos::RCP<EpetraExt::ModelEvaluator>& 
 
   //cout << " OLD Eigensolver list  " << oldEigList << endl;
   //cout << " NEW Eigensolver list  " << *eigList << endl;
-  std::cout << "QCAD Solver: setting eigensolver shift = " 
+  std::cout << "QCAD Solver setting eigensolver shift = " 
 	    << std::setprecision(5) << newShift << std::endl;
 
   stepper->eigensolverReset(eigList);

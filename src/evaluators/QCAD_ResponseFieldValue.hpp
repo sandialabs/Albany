@@ -18,6 +18,7 @@
 #ifndef QCAD_RESPONSEFIELDVALUE_HPP
 #define QCAD_RESPONSEFIELDVALUE_HPP
 
+#include "QCAD_MaterialDatabase.hpp"
 #include "PHAL_ScatterScalarResponse.hpp"
 
 namespace QCAD {
@@ -46,6 +47,8 @@ namespace QCAD {
 
     // Set NodeID structure for cell corrsponding to max/min
     void setNodeID(const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >&) {}
+
+    Teuchos::Array<int> field_components;
   };
 
   template<typename Traits> 
@@ -86,6 +89,7 @@ namespace QCAD {
 
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > nodeID;
     int numNodes;
+    Teuchos::Array<int> field_components;
   };
 
   template<typename Traits> 
@@ -126,6 +130,7 @@ namespace QCAD {
 
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > nodeID;
     int numNodes;
+    Teuchos::Array<int> field_components;
   };
 
   template<typename Traits> 
@@ -166,6 +171,7 @@ namespace QCAD {
 
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > nodeID;
     int numNodes;
+    Teuchos::Array<int> field_components;
   };
 
 /** 
@@ -202,6 +208,7 @@ namespace QCAD {
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
     PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > max_nodeID;
+    Teuchos::Array<int> field_components;
     
     bool bOpFieldIsVector, bRetFieldIsVector;
 
@@ -209,7 +216,8 @@ namespace QCAD {
     std::string opFieldName;
     std::string retFieldName;
     std::string opDomain;
-    std::string ebName;
+    std::vector<std::string> ebNames;
+    bool bQuantumEBsOnly;
 
     bool bReturnOpField;
     bool opX, opY, opZ;
@@ -217,6 +225,9 @@ namespace QCAD {
     double xmin, xmax, ymin, ymax, zmin, zmax;
 
     Teuchos::Array<double> initVals;
+
+    //! Material database
+    Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
   };
 	
 }

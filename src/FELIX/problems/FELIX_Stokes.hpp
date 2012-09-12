@@ -276,7 +276,8 @@ FELIX::Stokes::constructEvaluators(
 
     Teuchos::ParameterList& paramList = params->sublist("Body Force");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-  
+      
+
     //Output
     p->set<string>("Body Force Name", "Body Force");
 
@@ -319,7 +320,7 @@ FELIX::Stokes::constructEvaluators(
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
     
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Viscosity Function");
+    Teuchos::ParameterList& paramList = params->sublist("FELIX Viscosity");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
   
     //Output
@@ -343,6 +344,10 @@ FELIX::Stokes::constructEvaluators(
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Tau M");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     //Output
     p->set<string>("Tau M Name", "Tau M");

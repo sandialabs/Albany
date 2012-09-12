@@ -50,6 +50,8 @@ MooneyRivlinDamage(const Teuchos::ParameterList& p) :
   numDims = dims[2];
   worksetSize = dims[0];
 
+  alphaName = p.get<std::string>("alpha Name")+"_old";
+
   this->addDependentField(F);
   this->addDependentField(J);
 
@@ -87,42 +89,44 @@ evaluateFields(typename Traits::EvalData workset)
 
   ScalarT d = 2.0*(c1+2.0*c2);
 
+  Albany::MDArray alphaold = (*workset.stateArrayPtr)[alphaName];
+
   Intrepid::FieldContainer<ScalarT> C(worksetSize, numQPs, numDims, numDims);
   Intrepid::RealSpaceTools<ScalarT>::transpose(FT, F);
   Intrepid::FunctionSpaceTools::tensorMultiplyDataData<ScalarT> (C, FT, F, 'N');
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell){
-	  for (std::size_t qp=0; qp < numQPs; ++qp){
-		  C_qp.clear();
-		  F_qp.clear();
-		  for (std::size_t i=0; i < numDims; ++i){
-			  for (std::size_t j=0; j < numDims; ++j){
-				  C_qp(i,j) = C(cell,qp,i,j);
-				  F_qp(i,j) = F(cell,qp,i,j);
-			  }
-		  }
+    for (std::size_t qp=0; qp < numQPs; ++qp){
+      C_qp.clear();
+      F_qp.clear();
+      for (std::size_t i=0; i < numDims; ++i){
+        for (std::size_t j=0; j < numDims; ++j){
+          C_qp(i,j) = C(cell,qp,i,j);
+          F_qp(i,j) = F(cell,qp,i,j);
+        }
+      }
 
-		  // Per Holzapfel, a scalar damage model is added to the strain energy function to model isotropic damage
-		  // Compute the strain energy at the current step
-		  ScalarT Psi_0 = c*std::pow((J(cell,qp)-1),2.0) - d*std::log(J(cell,qp)) + c1*(LCM::I1<ScalarT,3>(C_qp)-3.0) + c2*(LCM::I2<ScalarT,3>(C_qp)-3.0);
+      // Per Holzapfel, a scalar damage model is added to the strain energy function to model isotropic damage
+      // Compute the strain energy at the current step
+      ScalarT Psi_0 = c*std::pow((J(cell,qp)-1),2.0) - d*std::log(J(cell,qp)) + c1*(LCM::I1<ScalarT,3>(C_qp)-3.0) + c2*(LCM::I2<ScalarT,3>(C_qp)-3.0);
 
-		  alpha(cell,qp) = std::max(alpha(cell,qp),Psi_0);
+      ScalarT alphaold_comp = alphaold(cell,qp); // as the max function is not defined for this variable type
 
-		  ScalarT zeta = zeta_inf*(1.0-std::exp(-(alpha(cell,qp)/iota)));
+      ScalarT zeta = zeta_inf*(1.0-std::exp(-(alpha(cell,qp)/iota)));
 
-		  S = 2.0*(c1 + c2*LCM::I1<ScalarT,3>(C_qp))*LCM::identity<ScalarT,3>() - 2.0*c2*C_qp + (2*c*J(cell,qp)*(J(cell,qp)-1.0)-d)*LCM::inverse(C_qp);
-		  S = (1.0-zeta)*S;  // Damage the material
+      S = 2.0*(c1 + c2*LCM::I1<ScalarT,3>(C_qp))*LCM::identity<ScalarT,3>() - 2.0*c2*C_qp + (2*c*J(cell,qp)*(J(cell,qp)-1.0)-d)*LCM::inverse(C_qp);
+      S = (1.0-zeta)*S;  // Damage the material
 
-		  // Convert to Cauchy stress
-		  S = (1./J(cell,qp))*F_qp*S*LCM::transpose<ScalarT,3>(F_qp);
+      // Convert to Cauchy stress
+      S = (1./J(cell,qp))*F_qp*S*LCM::transpose<ScalarT,3>(F_qp);
 
-		  for (std::size_t i=0; i < numDims; ++i){
-			  for (std::size_t j=0; j < numDims; ++j){
-				  stress(cell,qp,i,j) = S(i,j);
-			  }
-		  }
+      for (std::size_t i=0; i < numDims; ++i){
+        for (std::size_t j=0; j < numDims; ++j){
+          stress(cell,qp,i,j) = S(i,j);
+        }
+      }
 
-	  }
+    }
   }
 }
 

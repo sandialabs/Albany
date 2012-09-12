@@ -41,7 +41,8 @@ namespace {
 
     const ScalarT * dataPtr0 = &FC(0, 0);
 
-    LCM::Vector<ScalarT, 3> u(dataPtr0);
+    const unsigned int N = 3;
+    LCM::Vector<ScalarT, N> u(dataPtr0);
 
     TEST_COMPARE( u(0), ==, 1.0);
     TEST_COMPARE( u(1), ==, 2.0);
@@ -49,7 +50,7 @@ namespace {
 
     const ScalarT * dataPtr1 = &FC(1, 0);
 
-    u = LCM::Vector<ScalarT, 3>(dataPtr1);
+    u = LCM::Vector<ScalarT, N>(dataPtr1);
 
     TEST_COMPARE( u(0), ==, 4.0);
     TEST_COMPARE( u(1), ==, 5.0);
@@ -57,7 +58,7 @@ namespace {
 
     const ScalarT * dataPtr2 = &FC(2, 0);
 
-    u = LCM::Vector<ScalarT, 3>(dataPtr2);
+    u = LCM::Vector<ScalarT, N>(dataPtr2);
 
     TEST_COMPARE( u(0), ==, 7.0);
     TEST_COMPARE( u(1), ==, 8.0);
@@ -498,10 +499,6 @@ namespace {
     boost::tie(U, S, V) = LCM::svd(A);
 
     LCM::Tensor < Sacado::Fad::DFad<double>, 3 > B = U * S * LCM::transpose(V);
-
-    std::cout << std::endl;
-    std::cout << "LOGARITHM OF NEGATIVE NUMBER: " << log(-1.0) << std::endl;
-    std::cout << std::endl;
 
     TEST_COMPARE(norm(A - B), <=, 100*std::numeric_limits<ScalarT>::epsilon());
   }

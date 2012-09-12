@@ -66,15 +66,19 @@ NeumannBase(const Teuchos::ParameterList& p) :
     if(inputConditions == "scaled jump") {
       bc_type = INTJUMP;
       const_val = inputValues[0];
+      new Sacado::ParameterRegistration<EvalT, SPL_Traits> (name, this, paramLib);
     }
     else { // inputConditions == "robin"
       bc_type = ROBIN;
       robin_vals[0] = inputValues[0]; // dof_value
       robin_vals[1] = inputValues[1]; // coeff multiplying difference (dof - dof_value) -- could be permittivity/distance (distance in mesh units)
       robin_vals[2] = inputValues[2]; // jump in slope (like plain Neumann bc)
-    }
 
-     new Sacado::ParameterRegistration<EvalT, SPL_Traits> (name, this, paramLib);
+      for(int i = 0; i < 3; i++) {
+        std::stringstream ss; ss << name << "[" << i << "]";
+        new Sacado::ParameterRegistration<EvalT, SPL_Traits> (ss.str(), this, paramLib);
+      }
+    }
 
      // Build a vector to hold the scaling from the material DB
      matScaling.resize(meshSpecs->ebNameToIndex.size());
@@ -88,8 +92,8 @@ NeumannBase(const Teuchos::ParameterList& p) :
 //        << it->first << std::endl;
 
        TEUCHOS_TEST_FOR_EXCEPTION(!materialDB->isElementBlockParam(it->first, "Flux Scale"),
-         Teuchos::Exceptions::InvalidParameter, 
-         "Cannot locate the value of \"Flux Scale\" in the material database");
+         Teuchos::Exceptions::InvalidParameter, "Cannot locate the value of \"Flux Scale\" for element block " 
+				  << it->first << " in the material database");
 
        matScaling[it->second] = 
          materialDB->getElementBlockParam<double>(it->first, "Flux Scale");
@@ -448,6 +452,8 @@ calc_dudn_const(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
   int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
   int numDOFs = qp_data_returned.dimension(2); // How many DOFs per node to calculate?
 
+  //std::cout << "DEBUG: applying const dudn to sideset " << this->sideSetID << ": " << (const_val * scale) << std::endl;
+
   for(int pt = 0; pt < numPoints; pt++)
     for(int dim = 0; dim < numDOFsSet; dim++)
       qp_data_returned(0, pt, dim) = -const_val * scale; // User directly specified dTdn, just use it
@@ -551,7 +557,7 @@ calc_press(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
 // **********************************************************************
 template<typename Traits>
 Neumann<PHAL::AlbanyTraits::Residual,Traits>::
-Neumann(const Teuchos::ParameterList& p)
+Neumann(Teuchos::ParameterList& p)
   : NeumannBase<PHAL::AlbanyTraits::Residual,Traits>(p)
 {
 }
@@ -595,7 +601,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 Neumann<PHAL::AlbanyTraits::Jacobian, Traits>::
-Neumann(const Teuchos::ParameterList& p)
+Neumann(Teuchos::ParameterList& p)
   : NeumannBase<PHAL::AlbanyTraits::Jacobian,Traits>(p)
 {
 }
@@ -670,7 +676,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 Neumann<PHAL::AlbanyTraits::Tangent, Traits>::
-Neumann(const Teuchos::ParameterList& p)
+Neumann(Teuchos::ParameterList& p)
   : NeumannBase<PHAL::AlbanyTraits::Tangent,Traits>(p)
 {
 }
@@ -721,7 +727,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 Neumann<PHAL::AlbanyTraits::SGResidual, Traits>::
-Neumann(const Teuchos::ParameterList& p)
+Neumann(Teuchos::ParameterList& p)
   : NeumannBase<PHAL::AlbanyTraits::SGResidual,Traits>(p)
 {
 }
@@ -763,7 +769,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 Neumann<PHAL::AlbanyTraits::SGJacobian, Traits>::
-Neumann(const Teuchos::ParameterList& p)
+Neumann(Teuchos::ParameterList& p)
   : NeumannBase<PHAL::AlbanyTraits::SGJacobian,Traits>(p)
 {
 }
@@ -850,7 +856,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 Neumann<PHAL::AlbanyTraits::SGTangent, Traits>::
-Neumann(const Teuchos::ParameterList& p)
+Neumann(Teuchos::ParameterList& p)
   : NeumannBase<PHAL::AlbanyTraits::SGTangent,Traits>(p)
 {
 }
@@ -914,7 +920,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 Neumann<PHAL::AlbanyTraits::MPResidual, Traits>::
-Neumann(const Teuchos::ParameterList& p)
+Neumann(Teuchos::ParameterList& p)
   : NeumannBase<PHAL::AlbanyTraits::MPResidual,Traits>(p)
 {
 }
@@ -953,7 +959,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 Neumann<PHAL::AlbanyTraits::MPJacobian, Traits>::
-Neumann(const Teuchos::ParameterList& p)
+Neumann(Teuchos::ParameterList& p)
   : NeumannBase<PHAL::AlbanyTraits::MPJacobian,Traits>(p)
 {
 }
@@ -1030,7 +1036,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 Neumann<PHAL::AlbanyTraits::MPTangent, Traits>::
-Neumann(const Teuchos::ParameterList& p)
+Neumann(Teuchos::ParameterList& p)
   : NeumannBase<PHAL::AlbanyTraits::MPTangent,Traits>(p)
 {
 }

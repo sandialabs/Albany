@@ -3402,6 +3402,30 @@ namespace LCM {
   }
 
   //
+  // R^N 4th-order tensor transpose
+  // per Holzapfel 1.157
+  //
+  template<typename T, Index N>
+  inline
+  Tensor4<T, N>
+  transpose(Tensor4<T, N> const & A)
+  {
+    Tensor4<T, N> B;
+
+    for (Index i = 0; i < N; ++i) {
+      for (Index j = 0; j < N; ++j) {
+        for (Index k = 0; k < N; ++k) {
+          for (Index l = 0; l < N; ++l) {
+            B(i,j,k,l)  = A(k,l,i,j);
+          }
+        }
+      }
+    }
+
+    return B;
+  }
+
+  //
   // R^N symmetric part of 2nd-order tensor
   // \return \f$ \frac{1}{2}(A + A^T) \f$
   //

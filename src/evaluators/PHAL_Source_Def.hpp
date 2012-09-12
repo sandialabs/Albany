@@ -387,7 +387,7 @@ evaluateFields(typename Traits::EvalData workset){
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
       for (std::size_t iqp=0; iqp<m_num_qp; iqp++) {
         MeshScalarT *X = &coordVec(cell,iqp,0); 
-        m_source(cell, iqp) = -8.0*pi*pi*sin(2.0*pi*X[0])*cos(2.0*pi*X[1]);
+        m_source(cell, iqp) = 8.0*pi*pi*sin(2.0*pi*X[0])*cos(2.0*pi*X[1]);
       }
     }
   }

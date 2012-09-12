@@ -22,13 +22,11 @@
 
 template<typename EvalT, typename Traits>
 QCAD::SchrodingerPotential<EvalT, Traits>::
-SchrodingerPotential(Teuchos::ParameterList& p) :
-  coordVec(p.get<std::string>("QP Coordinate Vector Name"),
-     p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout")),
-  psi(p.get<std::string>("QP Variable Name"),
-      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-  V(p.get<std::string>("QP Potential Name"),
-      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"))
+SchrodingerPotential(Teuchos::ParameterList& p,
+                 const Teuchos::RCP<Albany::Layouts>& dl) :
+  coordVec(p.get<std::string>("QP Coordinate Vector Name"), dl->qp_gradient),
+  psi(p.get<std::string>("QP Variable Name"), dl->qp_scalar),
+  V(p.get<std::string>("QP Potential Name"), dl->qp_scalar)
 {
   Teuchos::ParameterList* psList = p.get<Teuchos::ParameterList*>("Parameter List");
 
@@ -36,10 +34,8 @@ SchrodingerPotential(Teuchos::ParameterList& p) :
       this->getValidSchrodingerPotentialParameters();
   psList->validateParameters(*reflist,0);
 
-  Teuchos::RCP<PHX::DataLayout> vector_dl =
-      p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
-  vector_dl->dimensions(dims);
+  dl->qp_gradient->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
 

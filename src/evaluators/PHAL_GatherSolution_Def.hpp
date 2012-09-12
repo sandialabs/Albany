@@ -1,17 +1,17 @@
 /********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
+ *            Albany, Copyright (2010) Sandia Corporation             *
+ *                                                                    *
+ * Notice: This computer software was prepared by Sandia Corporation, *
+ * hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
+ * the Department of Energy (DOE). All rights in the computer software*
+ * are reserved by DOE on behalf of the United States Government and  *
+ * the Contractor as provided in the Contract. You are authorized to  *
+ * use this computer software for Governmental purposes but it is not *
+ * to be released or distributed to the public. NEITHER THE GOVERNMENT*
+ * NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
+ * ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
+ * including this sentence must appear on any copies of this software.*
+ *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
 
@@ -25,63 +25,62 @@ namespace PHAL {
 
 template<typename EvalT, typename Traits>
 GatherSolutionBase<EvalT,Traits>::
-GatherSolutionBase(const Teuchos::ParameterList& p)
-{ 
-  if      (p.isType<bool>("Vector Field"))
+GatherSolutionBase(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl)
+{
+  if (p.isType<bool>("Vector Field"))
     vectorField = p.get<bool>("Vector Field");
   else
-	vectorField = false;
+    vectorField = false;
 
-	if (p.isType<bool>("Disable Transient"))
+  if (p.isType<bool>("Disable Transient"))
     enableTransient = !p.get<bool>("Disable Transient");
   else enableTransient = true;
 
-  Teuchos::ArrayRCP<std::string> solution_names; 
+  Teuchos::ArrayRCP<std::string> solution_names;
   if (p.getEntryPtr("Solution Names")) {
     solution_names = p.get< Teuchos::ArrayRCP<std::string> >("Solution Names");
   }
-  Teuchos::RCP<PHX::DataLayout> dl = 
-    p.get< Teuchos::RCP<PHX::DataLayout> >("Data Layout");
 
   // scalar
   if (!vectorField ) {
     val.resize(solution_names.size());
     for (std::size_t eq = 0; eq < solution_names.size(); ++eq) {
-      PHX::MDField<ScalarT,Cell,Node> f(solution_names[eq],dl);
+      PHX::MDField<ScalarT,Cell,Node> f(solution_names[eq],dl->node_scalar);
       val[eq] = f;
       this->addEvaluatedField(val[eq]);
     }
     // repeat for xdot if transient is enabled
     if (enableTransient) {
-      const Teuchos::ArrayRCP<std::string>& names_dot = 
+      const Teuchos::ArrayRCP<std::string>& names_dot =
         p.get< Teuchos::ArrayRCP<std::string> >("Time Dependent Solution Names");
-  
+
       val_dot.resize(names_dot.size());
       for (std::size_t eq = 0; eq < names_dot.size(); ++eq) {
-        PHX::MDField<ScalarT,Cell,Node> f(names_dot[eq],dl);
+        PHX::MDField<ScalarT,Cell,Node> f(names_dot[eq],dl->node_scalar);
         val_dot[eq] = f;
         this->addEvaluatedField(val_dot[eq]);
       }
     }
     numFieldsBase = val.size();
-  } 
+  }
   // vector
   else {
     valVec.resize(1);
-    PHX::MDField<ScalarT,Cell,Node,VecDim> f(solution_names[0],dl);
+    PHX::MDField<ScalarT,Cell,Node,VecDim> f(solution_names[0],dl->node_vector);
     valVec[0] = f;
     this->addEvaluatedField(valVec[0]);
     // repeat for xdot if transient is enabled
     if (enableTransient) {
-      const Teuchos::ArrayRCP<std::string>& names_dot = 
+      const Teuchos::ArrayRCP<std::string>& names_dot =
         p.get< Teuchos::ArrayRCP<std::string> >("Time Dependent Solution Names");
-  
+
       valVec_dot.resize(1);
-      PHX::MDField<ScalarT,Cell,Node,VecDim> f(names_dot[0],dl);
+      PHX::MDField<ScalarT,Cell,Node,VecDim> f(names_dot[0],dl->node_vector);
       valVec_dot[0] = f;
       this->addEvaluatedField(valVec_dot[0]);
     }
-    numFieldsBase = dl->dimension(2);
+    numFieldsBase = dl->node_vector->dimension(2);
   }
 
   if (p.isType<int>("Offset of First DOF"))
@@ -121,17 +120,26 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 template<typename Traits>
 GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
-GatherSolution(const Teuchos::ParameterList& p) :
-  GatherSolutionBase<PHAL::AlbanyTraits::Residual, Traits>(p),
+GatherSolution(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) :
+  GatherSolutionBase<PHAL::AlbanyTraits::Residual, Traits>(p,dl),
   numFields(GatherSolutionBase<PHAL::AlbanyTraits::Residual,Traits>::numFieldsBase)
-{  
+{
+}
+
+template<typename Traits>
+GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
+GatherSolution(const Teuchos::ParameterList& p) :
+  GatherSolutionBase<PHAL::AlbanyTraits::Residual, Traits>(p,p.get<Teuchos::RCP<Albany::Layouts> >("Layouts Struct")),
+  numFields(GatherSolutionBase<PHAL::AlbanyTraits::Residual,Traits>::numFieldsBase)
+{
 }
 
 // **********************************************************************
 template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
-{ 
+{
   ScalarT* valptr;
 
  
@@ -147,7 +155,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
-    	if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+        if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
         else                   valptr = &(this->val[eq])(cell,node);
 	    *valptr = xT_constView[nodeID[node][this->offset + eq]];
       }
@@ -168,10 +176,19 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
-GatherSolution(const Teuchos::ParameterList& p) :
-  GatherSolutionBase<PHAL::AlbanyTraits::Jacobian, Traits>(p),
+GatherSolution(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) :
+  GatherSolutionBase<PHAL::AlbanyTraits::Jacobian, Traits>(p,dl),
   numFields(GatherSolutionBase<PHAL::AlbanyTraits::Jacobian,Traits>::numFieldsBase)
-{ 
+{
+}
+
+template<typename Traits>
+GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
+GatherSolution(const Teuchos::ParameterList& p) :
+  GatherSolutionBase<PHAL::AlbanyTraits::Jacobian, Traits>(p,p.get<Teuchos::RCP<Albany::Layouts> >("Layouts Struct")),
+  numFields(GatherSolutionBase<PHAL::AlbanyTraits::Jacobian,Traits>::numFieldsBase)
+{
 }
 
 // **********************************************************************
@@ -197,7 +214,7 @@ evaluateFields(typename Traits::EvalData workset)
       int neq = nodeID[node].size();
       std::size_t num_dof = neq * this->numNodes;
       for (std::size_t eq = 0; eq < numFields; eq++) {
-      	if (this->vectorField) valptr = &((this->valVec[0])(cell,node,eq));
+        if (this->vectorField) valptr = &((this->valVec[0])(cell,node,eq));
         else                   valptr = &(this->val[eq])(cell,node);
 	*valptr = FadType(num_dof, xT_constView[nodeID[node][this->offset + eq]]);
 	valptr->setUpdateValue(!workset.ignore_residual);
@@ -213,7 +230,6 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-
 }
 
 // **********************************************************************
@@ -224,10 +240,19 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 GatherSolution<PHAL::AlbanyTraits::Tangent, Traits>::
-GatherSolution(const Teuchos::ParameterList& p) :
-  GatherSolutionBase<PHAL::AlbanyTraits::Tangent, Traits>(p),
+GatherSolution(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) :
+  GatherSolutionBase<PHAL::AlbanyTraits::Tangent, Traits>(p,dl),
   numFields(GatherSolutionBase<PHAL::AlbanyTraits::Tangent,Traits>::numFieldsBase)
-{ 
+{
+}
+
+template<typename Traits>
+GatherSolution<PHAL::AlbanyTraits::Tangent, Traits>::
+GatherSolution(const Teuchos::ParameterList& p) :
+  GatherSolutionBase<PHAL::AlbanyTraits::Tangent, Traits>(p,p.get<Teuchos::RCP<Albany::Layouts> >("Layouts Struct")),
+  numFields(GatherSolutionBase<PHAL::AlbanyTraits::Tangent,Traits>::numFieldsBase)
+{
 }
 
 // **********************************************************************
@@ -266,6 +291,7 @@ evaluateFields(typename Traits::EvalData workset)
 	if (VxT != Teuchos::null && workset.j_coeff != 0.0) {
 	  *valptr = FadType(num_cols_tot, xT_constView[nodeID[node][this->offset + eq]]);
 	  for (int k=0; k<workset.num_cols_x; k++) {
+            VxT_constView=VxT->getData(k); 
 	    valptr->fastAccessDx(k) = 
 	      workset.j_coeff*VxT_constView[nodeID[node][this->offset + eq]];
           }
@@ -281,6 +307,7 @@ evaluateFields(typename Traits::EvalData workset)
 	  if (VxdotT != Teuchos::null && workset.m_coeff != 0.0) {
 	    *valptr = FadType(num_cols_tot, xdotT_constView[nodeID[node][this->offset + eq]]);
 	    for (int k=0; k<workset.num_cols_x; k++) {
+              VxdotT_constView=VxdotT->getData(k); 
 	      valptr->fastAccessDx(k) = 
 		workset.m_coeff*VxdotT_constView[nodeID[node][this->offset + eq]];
              }
@@ -303,22 +330,31 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 GatherSolution<PHAL::AlbanyTraits::SGResidual, Traits>::
-GatherSolution(const Teuchos::ParameterList& p) :
-  GatherSolutionBase<PHAL::AlbanyTraits::SGResidual, Traits>(p),
+GatherSolution(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) :
+  GatherSolutionBase<PHAL::AlbanyTraits::SGResidual, Traits>(p,dl),
   numFields(GatherSolutionBase<PHAL::AlbanyTraits::SGResidual,Traits>::numFieldsBase)
-{  
+{
+}
+
+template<typename Traits>
+GatherSolution<PHAL::AlbanyTraits::SGResidual, Traits>::
+GatherSolution(const Teuchos::ParameterList& p) :
+  GatherSolutionBase<PHAL::AlbanyTraits::SGResidual, Traits>(p,p.get<Teuchos::RCP<Albany::Layouts> >("Layouts Struct")),
+  numFields(GatherSolutionBase<PHAL::AlbanyTraits::SGResidual,Traits>::numFieldsBase)
+{
 }
 
 // **********************************************************************
 template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::SGResidual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
-{ 
+{
   Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,RealType> > sg_expansion =
     workset.sg_expansion;
-  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > x = 
+  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > x =
     workset.sg_x;
-  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > xdot = 
+  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > xdot =
     workset.sg_xdot;
   ScalarT* valptr;
 
@@ -330,21 +366,21 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t eq = 0; eq < numFields; eq++) {
         if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
         else                   valptr = &(this->val[eq])(cell,node);
-	valptr->reset(sg_expansion);
-	valptr->copyForWrite();
-	for (int block=0; block<nblock; block++)
-	  valptr->fastAccessCoeff(block) = 
-	    (*x)[block][nodeID[node][this->offset + eq]];
+        valptr->reset(sg_expansion);
+        valptr->copyForWrite();
+        for (int block=0; block<nblock; block++)
+          valptr->fastAccessCoeff(block) =
+            (*x)[block][nodeID[node][this->offset + eq]];
       }
       if (workset.transientTerms && this->enableTransient) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
           if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
           else                   valptr = &(this->val_dot[eq])(cell,node);
-	  valptr->reset(sg_expansion);
-	  valptr->copyForWrite();
-	  for (int block=0; block<nblock; block++)
-	    valptr->fastAccessCoeff(block) = 
-	      (*xdot)[block][nodeID[node][this->offset + eq]];
+          valptr->reset(sg_expansion);
+          valptr->copyForWrite();
+          for (int block=0; block<nblock; block++)
+            valptr->fastAccessCoeff(block) =
+              (*xdot)[block][nodeID[node][this->offset + eq]];
         }
       }
     }
@@ -360,22 +396,31 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 GatherSolution<PHAL::AlbanyTraits::SGJacobian, Traits>::
-GatherSolution(const Teuchos::ParameterList& p) :
-  GatherSolutionBase<PHAL::AlbanyTraits::SGJacobian, Traits>(p),
+GatherSolution(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) :
+  GatherSolutionBase<PHAL::AlbanyTraits::SGJacobian, Traits>(p,dl),
   numFields(GatherSolutionBase<PHAL::AlbanyTraits::SGJacobian,Traits>::numFieldsBase)
-{ 
+{
+}
+
+template<typename Traits>
+GatherSolution<PHAL::AlbanyTraits::SGJacobian, Traits>::
+GatherSolution(const Teuchos::ParameterList& p) :
+  GatherSolutionBase<PHAL::AlbanyTraits::SGJacobian, Traits>(p,p.get<Teuchos::RCP<Albany::Layouts> >("Layouts Struct")),
+  numFields(GatherSolutionBase<PHAL::AlbanyTraits::SGJacobian,Traits>::numFieldsBase)
+{
 }
 
 // **********************************************************************
 template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::SGJacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
-{ 
+{
   Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,RealType> > sg_expansion =
     workset.sg_expansion;
-  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > x = 
+  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > x =
     workset.sg_x;
-  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > xdot = 
+  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > xdot =
     workset.sg_xdot;
   ScalarT* valptr;
 
@@ -390,24 +435,24 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t eq = 0; eq < numFields; eq++) {
         if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
         else                   valptr = &(this->val[eq])(cell,node);
-	*valptr = SGFadType(num_dof, 0.0);
-	valptr->setUpdateValue(!workset.ignore_residual);
-	valptr->fastAccessDx(neq * node + eq + this->offset) = workset.j_coeff;
-	valptr->val().reset(sg_expansion);
-	valptr->val().copyForWrite();
-	for (int block=0; block<nblock; block++)
-	  valptr->val().fastAccessCoeff(block) = (*x)[block][nodeID[node][this->offset + eq]];
+        *valptr = SGFadType(num_dof, 0.0);
+        valptr->setUpdateValue(!workset.ignore_residual);
+        valptr->fastAccessDx(neq * node + eq + this->offset) = workset.j_coeff;
+        valptr->val().reset(sg_expansion);
+        valptr->val().copyForWrite();
+        for (int block=0; block<nblock; block++)
+          valptr->val().fastAccessCoeff(block) = (*x)[block][nodeID[node][this->offset + eq]];
       }
       if (workset.transientTerms && this->enableTransient) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
           if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
           else                   valptr = &(this->val_dot[eq])(cell,node);
-  	  *valptr = SGFadType(num_dof, 0.0);
-	  valptr->fastAccessDx(neq * node + eq + this->offset) = workset.m_coeff;
-	  valptr->val().reset(sg_expansion);
-	  valptr->val().copyForWrite();
-	  for (int block=0; block<nblock; block++)
-	    valptr->val().fastAccessCoeff(block) = (*xdot)[block][nodeID[node][this->offset + eq]];
+          *valptr = SGFadType(num_dof, 0.0);
+          valptr->fastAccessDx(neq * node + eq + this->offset) = workset.m_coeff;
+          valptr->val().reset(sg_expansion);
+          valptr->val().copyForWrite();
+          for (int block=0; block<nblock; block++)
+            valptr->val().fastAccessCoeff(block) = (*xdot)[block][nodeID[node][this->offset + eq]];
         }
       }
     }
@@ -423,23 +468,32 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 GatherSolution<PHAL::AlbanyTraits::SGTangent, Traits>::
-GatherSolution(const Teuchos::ParameterList& p) :
-  GatherSolutionBase<PHAL::AlbanyTraits::SGTangent, Traits>(p),
+GatherSolution(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) :
+  GatherSolutionBase<PHAL::AlbanyTraits::SGTangent, Traits>(p,dl),
   numFields(GatherSolutionBase<PHAL::AlbanyTraits::SGTangent,Traits>::numFieldsBase)
-{ 
+{
+}
+
+template<typename Traits>
+GatherSolution<PHAL::AlbanyTraits::SGTangent, Traits>::
+GatherSolution(const Teuchos::ParameterList& p) :
+  GatherSolutionBase<PHAL::AlbanyTraits::SGTangent, Traits>(p,p.get<Teuchos::RCP<Albany::Layouts> >("Layouts Struct")),
+  numFields(GatherSolutionBase<PHAL::AlbanyTraits::SGTangent,Traits>::numFieldsBase)
+{
 }
 
 // **********************************************************************
 template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::SGTangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
-{ 
+{
 
   Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,RealType> > sg_expansion =
     workset.sg_expansion;
-  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > x = 
+  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > x =
     workset.sg_x;
-  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > xdot = 
+  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > xdot =
     workset.sg_xdot;
   Teuchos::RCP<const Epetra_MultiVector> Vx = workset.Vx;
   Teuchos::RCP<const Epetra_MultiVector> Vxdot = workset.Vxdot;
@@ -454,37 +508,37 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
-      	if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+        if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
         else                   valptr = &(this->val[eq])(cell,node);
-	if (Vx != Teuchos::null && workset.j_coeff != 0.0) {
-	  *valptr = SGFadType(num_cols_tot, 0.0);
-	  for (int k=0; k<workset.num_cols_x; k++)
-	    valptr->fastAccessDx(k) = 
-	      workset.j_coeff*(*Vx)[k][nodeID[node][this->offset + eq]];
-	}
-	else
-	  *valptr = SGFadType(0.0);
-	valptr->val().reset(sg_expansion);
-	valptr->val().copyForWrite();
-	for (int block=0; block<nblock; block++)
-	  valptr->val().fastAccessCoeff(block) = (*x)[block][nodeID[node][this->offset + eq]];
+        if (Vx != Teuchos::null && workset.j_coeff != 0.0) {
+          *valptr = SGFadType(num_cols_tot, 0.0);
+          for (int k=0; k<workset.num_cols_x; k++)
+            valptr->fastAccessDx(k) =
+              workset.j_coeff*(*Vx)[k][nodeID[node][this->offset + eq]];
+        }
+        else
+          *valptr = SGFadType(0.0);
+        valptr->val().reset(sg_expansion);
+        valptr->val().copyForWrite();
+        for (int block=0; block<nblock; block++)
+          valptr->val().fastAccessCoeff(block) = (*x)[block][nodeID[node][this->offset + eq]];
       }
       if (workset.transientTerms && this->enableTransient) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
           if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
           else                   valptr = &(this->val_dot[eq])(cell,node);
-	  if (Vxdot != Teuchos::null && workset.m_coeff != 0.0) {
-	    *valptr = SGFadType(num_cols_tot, 0.0);
-	    for (int k=0; k<workset.num_cols_x; k++)
-	      valptr->fastAccessDx(k) = 
-		workset.m_coeff*(*Vxdot)[k][nodeID[node][this->offset + eq]];
-	  }
-	  else
-	    *valptr = SGFadType(0.0);
-	  valptr->val().reset(sg_expansion);
-	  valptr->val().copyForWrite();
-	  for (int block=0; block<nblock; block++)
-	    valptr->val().fastAccessCoeff(block) = (*xdot)[block][nodeID[node][this->offset + eq]];
+          if (Vxdot != Teuchos::null && workset.m_coeff != 0.0) {
+            *valptr = SGFadType(num_cols_tot, 0.0);
+            for (int k=0; k<workset.num_cols_x; k++)
+              valptr->fastAccessDx(k) =
+                workset.m_coeff*(*Vxdot)[k][nodeID[node][this->offset + eq]];
+          }
+          else
+            *valptr = SGFadType(0.0);
+          valptr->val().reset(sg_expansion);
+          valptr->val().copyForWrite();
+          for (int block=0; block<nblock; block++)
+            valptr->val().fastAccessCoeff(block) = (*xdot)[block][nodeID[node][this->offset + eq]];
         }
       }
     }
@@ -500,20 +554,29 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 GatherSolution<PHAL::AlbanyTraits::MPResidual, Traits>::
-GatherSolution(const Teuchos::ParameterList& p) :
-  GatherSolutionBase<PHAL::AlbanyTraits::MPResidual, Traits>(p),
+GatherSolution(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) :
+  GatherSolutionBase<PHAL::AlbanyTraits::MPResidual, Traits>(p,dl),
   numFields(GatherSolutionBase<PHAL::AlbanyTraits::MPResidual,Traits>::numFieldsBase)
-{  
+{
+}
+
+template<typename Traits>
+GatherSolution<PHAL::AlbanyTraits::MPResidual, Traits>::
+GatherSolution(const Teuchos::ParameterList& p) :
+  GatherSolutionBase<PHAL::AlbanyTraits::MPResidual, Traits>(p,p.get<Teuchos::RCP<Albany::Layouts> >("Layouts Struct")),
+  numFields(GatherSolutionBase<PHAL::AlbanyTraits::MPResidual,Traits>::numFieldsBase)
+{
 }
 
 // **********************************************************************
 template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::MPResidual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
-{ 
-  Teuchos::RCP<const Stokhos::ProductEpetraVector > x = 
+{
+  Teuchos::RCP<const Stokhos::ProductEpetraVector > x =
     workset.mp_x;
-  Teuchos::RCP<const Stokhos::ProductEpetraVector > xdot = 
+  Teuchos::RCP<const Stokhos::ProductEpetraVector > xdot =
     workset.mp_xdot;
   ScalarT* valptr;
 
@@ -523,23 +586,23 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
-      	if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+        if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
         else                   valptr = &(this->val[eq])(cell,node);
-	valptr->reset(nblock);
-	valptr->copyForWrite();
-	for (int block=0; block<nblock; block++)
-	  valptr->fastAccessCoeff(block) = 
-	    (*x)[block][nodeID[node][this->offset + eq]];
+        valptr->reset(nblock);
+        valptr->copyForWrite();
+        for (int block=0; block<nblock; block++)
+          valptr->fastAccessCoeff(block) =
+            (*x)[block][nodeID[node][this->offset + eq]];
       }
       if (workset.transientTerms && this->enableTransient) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
           if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
           else                   valptr = &(this->val_dot[eq])(cell,node);
-	  valptr->reset(nblock);
-	  valptr->copyForWrite();
-	  for (int block=0; block<nblock; block++)
-	    valptr->fastAccessCoeff(block) = 
-	      (*xdot)[block][nodeID[node][this->offset + eq]];
+          valptr->reset(nblock);
+          valptr->copyForWrite();
+          for (int block=0; block<nblock; block++)
+            valptr->fastAccessCoeff(block) =
+              (*xdot)[block][nodeID[node][this->offset + eq]];
         }
       }
     }
@@ -555,20 +618,29 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 GatherSolution<PHAL::AlbanyTraits::MPJacobian, Traits>::
-GatherSolution(const Teuchos::ParameterList& p) :
-  GatherSolutionBase<PHAL::AlbanyTraits::MPJacobian, Traits>(p),
+GatherSolution(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) :
+  GatherSolutionBase<PHAL::AlbanyTraits::MPJacobian, Traits>(p,dl),
   numFields(GatherSolutionBase<PHAL::AlbanyTraits::MPJacobian,Traits>::numFieldsBase)
-{ 
+{
+}
+
+template<typename Traits>
+GatherSolution<PHAL::AlbanyTraits::MPJacobian, Traits>::
+GatherSolution(const Teuchos::ParameterList& p) :
+  GatherSolutionBase<PHAL::AlbanyTraits::MPJacobian, Traits>(p,p.get<Teuchos::RCP<Albany::Layouts> >("Layouts Struct")),
+  numFields(GatherSolutionBase<PHAL::AlbanyTraits::MPJacobian,Traits>::numFieldsBase)
+{
 }
 
 // **********************************************************************
 template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::MPJacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
-{ 
-  Teuchos::RCP<const Stokhos::ProductEpetraVector > x = 
+{
+  Teuchos::RCP<const Stokhos::ProductEpetraVector > x =
     workset.mp_x;
-  Teuchos::RCP<const Stokhos::ProductEpetraVector > xdot = 
+  Teuchos::RCP<const Stokhos::ProductEpetraVector > xdot =
     workset.mp_xdot;
   ScalarT* valptr;
 
@@ -583,24 +655,24 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t eq = 0; eq < numFields; eq++) {
         if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
         else                   valptr = &(this->val[eq])(cell,node);
-	*valptr = MPFadType(num_dof, 0.0);
-	valptr->setUpdateValue(!workset.ignore_residual);
-	valptr->fastAccessDx(neq * node + eq + this->offset) = workset.j_coeff;
-	valptr->val().reset(nblock);
-	valptr->val().copyForWrite();
-	for (int block=0; block<nblock; block++)
-	  valptr->val().fastAccessCoeff(block) = (*x)[block][nodeID[node][this->offset + eq]];
+        *valptr = MPFadType(num_dof, 0.0);
+        valptr->setUpdateValue(!workset.ignore_residual);
+        valptr->fastAccessDx(neq * node + eq + this->offset) = workset.j_coeff;
+        valptr->val().reset(nblock);
+        valptr->val().copyForWrite();
+        for (int block=0; block<nblock; block++)
+          valptr->val().fastAccessCoeff(block) = (*x)[block][nodeID[node][this->offset + eq]];
       }
       if (workset.transientTerms && this->enableTransient) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
           if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
           else                   valptr = &(this->val_dot[eq])(cell,node);
-  	  *valptr = MPFadType(num_dof, 0.0);
-	  valptr->fastAccessDx(neq * node + eq + this->offset) = workset.m_coeff;
-	  valptr->val().reset(nblock);
-	  valptr->val().copyForWrite();
-	  for (int block=0; block<nblock; block++)
-	    valptr->val().fastAccessCoeff(block) = (*xdot)[block][nodeID[node][this->offset + eq]];
+          *valptr = MPFadType(num_dof, 0.0);
+          valptr->fastAccessDx(neq * node + eq + this->offset) = workset.m_coeff;
+          valptr->val().reset(nblock);
+          valptr->val().copyForWrite();
+          for (int block=0; block<nblock; block++)
+            valptr->val().fastAccessCoeff(block) = (*xdot)[block][nodeID[node][this->offset + eq]];
         }
       }
     }
@@ -616,21 +688,30 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 GatherSolution<PHAL::AlbanyTraits::MPTangent, Traits>::
-GatherSolution(const Teuchos::ParameterList& p) :
-  GatherSolutionBase<PHAL::AlbanyTraits::MPTangent, Traits>(p),
+GatherSolution(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) :
+  GatherSolutionBase<PHAL::AlbanyTraits::MPTangent, Traits>(p,dl),
   numFields(GatherSolutionBase<PHAL::AlbanyTraits::MPTangent,Traits>::numFieldsBase)
-{ 
+{
+}
+
+template<typename Traits>
+GatherSolution<PHAL::AlbanyTraits::MPTangent, Traits>::
+GatherSolution(const Teuchos::ParameterList& p) :
+  GatherSolutionBase<PHAL::AlbanyTraits::MPTangent, Traits>(p,p.get<Teuchos::RCP<Albany::Layouts> >("Layouts Struct")),
+  numFields(GatherSolutionBase<PHAL::AlbanyTraits::MPTangent,Traits>::numFieldsBase)
+{
 }
 
 // **********************************************************************
 template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::MPTangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
-{ 
+{
 
-  Teuchos::RCP<const Stokhos::ProductEpetraVector > x = 
+  Teuchos::RCP<const Stokhos::ProductEpetraVector > x =
     workset.mp_x;
-  Teuchos::RCP<const Stokhos::ProductEpetraVector > xdot = 
+  Teuchos::RCP<const Stokhos::ProductEpetraVector > xdot =
     workset.mp_xdot;
   Teuchos::RCP<const Epetra_MultiVector> Vx = workset.Vx;
   Teuchos::RCP<const Epetra_MultiVector> Vxdot = workset.Vxdot;
@@ -647,35 +728,35 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t eq = 0; eq < numFields; eq++) {
         if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
         else                   valptr = &(this->val[eq])(cell,node);
-	if (Vx != Teuchos::null && workset.j_coeff != 0.0) {
-	  *valptr = MPFadType(num_cols_tot, 0.0);
-	  for (int k=0; k<workset.num_cols_x; k++)
-	    valptr->fastAccessDx(k) = 
-	      workset.j_coeff*(*Vx)[k][nodeID[node][this->offset + eq]];
-	}
-	else
-	  *valptr = MPFadType(0.0);
-	valptr->val().reset(nblock);
-	valptr->val().copyForWrite();
-	for (int block=0; block<nblock; block++)
-	  valptr->val().fastAccessCoeff(block) = (*x)[block][nodeID[node][this->offset + eq]];
+        if (Vx != Teuchos::null && workset.j_coeff != 0.0) {
+          *valptr = MPFadType(num_cols_tot, 0.0);
+          for (int k=0; k<workset.num_cols_x; k++)
+            valptr->fastAccessDx(k) =
+              workset.j_coeff*(*Vx)[k][nodeID[node][this->offset + eq]];
+        }
+        else
+          *valptr = MPFadType(0.0);
+        valptr->val().reset(nblock);
+        valptr->val().copyForWrite();
+        for (int block=0; block<nblock; block++)
+          valptr->val().fastAccessCoeff(block) = (*x)[block][nodeID[node][this->offset + eq]];
       }
       if (workset.transientTerms && this->enableTransient) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
           if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
           else                   valptr = &(this->val_dot[eq])(cell,node);
-	  if (Vxdot != Teuchos::null && workset.m_coeff != 0.0) {
-	    *valptr = MPFadType(num_cols_tot, 0.0);
-	    for (int k=0; k<workset.num_cols_x; k++)
-	      valptr->fastAccessDx(k) = 
-		workset.m_coeff*(*Vxdot)[k][nodeID[node][this->offset + eq]];
-	  }
-	  else
-	    *valptr = MPFadType(0.0);
-	  valptr->val().reset(nblock);
-	  valptr->val().copyForWrite();
-	  for (int block=0; block<nblock; block++)
-	    valptr->val().fastAccessCoeff(block) = (*xdot)[block][nodeID[node][this->offset + eq]];
+          if (Vxdot != Teuchos::null && workset.m_coeff != 0.0) {
+            *valptr = MPFadType(num_cols_tot, 0.0);
+            for (int k=0; k<workset.num_cols_x; k++)
+              valptr->fastAccessDx(k) =
+                workset.m_coeff*(*Vxdot)[k][nodeID[node][this->offset + eq]];
+          }
+          else
+            *valptr = MPFadType(0.0);
+          valptr->val().reset(nblock);
+          valptr->val().copyForWrite();
+          for (int block=0; block<nblock; block++)
+            valptr->val().fastAccessCoeff(block) = (*xdot)[block][nodeID[node][this->offset + eq]];
         }
       }
     }
@@ -684,4 +765,3 @@ evaluateFields(typename Traits::EvalData workset)
 }
 
 }
-

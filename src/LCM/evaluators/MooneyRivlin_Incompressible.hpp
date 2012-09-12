@@ -24,10 +24,13 @@
 #include "Phalanx_MDField.hpp"
 
 namespace LCM {
-/** \brief incompressible Mooney-Rivlin stress response
+/** \brief Nearly incompressible Mooney-Rivlin stress response
 
-    This evaluator computes stress based on a coupled Mooney-Rivlin
-    Helmholtz potential
+    This evaluator computes stress based on a decoupled Mooney-Rivlin
+    Helmholtz potential.
+
+    Based on the methods discussed in Holzapfel's "Nonlinear Solid Mechanics" and
+    Bonet and Wood's "Nonlinear Continuum Mechanics for Finite Element Analysis"
 
 */
 
@@ -54,7 +57,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> J;
   RealType c1;
   RealType c2;
-  RealType mu;
+  RealType mult; // Shear modulus multiplier (assume bulk modulus = mult * shear modulus)
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;

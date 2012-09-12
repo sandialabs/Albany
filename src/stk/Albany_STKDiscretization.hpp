@@ -141,10 +141,8 @@ namespace Albany {
     void getOwned_xyz(double **x, double **y, double **z, double **rbm,
                       int& nNodes, int numPDEs, int numScalar, int nullSpaceDim);
 
-#ifdef ALBANY_FELIX
     // Function that transforms an STK mesh of a unit cube (for FELIX problems)
     void transformMesh(); 
-#endif     
 
   private:
 
@@ -282,6 +280,8 @@ namespace Albany {
     // Used in Exodus writing capability
 #ifdef ALBANY_SEACAS
     stk::io::MeshData* mesh_data;
+
+    int outputInterval;
 #endif
     bool interleavedOrdering;
   };

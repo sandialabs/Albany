@@ -29,6 +29,8 @@
 #include "Stokhos_KL_ExponentialRandomField.hpp"
 #include "Teuchos_Array.hpp"
 
+#include "Albany_Layouts.hpp"
+
 #include "QCAD_MaterialDatabase.hpp"
 #include "QCAD_EvaluatorTools.hpp"
 
@@ -47,7 +49,8 @@ namespace QCAD {
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
 
-    PoissonSource(Teuchos::ParameterList& p);
+    PoissonSource(Teuchos::ParameterList& p,
+                 const Teuchos::RCP<Albany::Layouts>& dl);
   
     void postRegistrationSetup(typename Traits::SetupData d,
          PHX::FieldManager<Traits>& vm);

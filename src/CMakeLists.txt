@@ -65,6 +65,7 @@ SET(SOURCES ${SOURCES}
         problems/Albany_AbstractProblem.cpp
         problems/Albany_CahnHillProblem.cpp
         problems/Albany_ProblemUtils.cpp
+        problems/Albany_Layouts.cpp
         problems/Albany_EvaluatorUtils.cpp
         problems/Albany_ResponseUtilities.cpp
         problems/Albany_BCUtils.cpp
@@ -84,6 +85,7 @@ SET(HEADERS ${HEADERS}
         problems/Albany_AbstractProblem.hpp
         problems/Albany_CahnHillProblem.hpp
         problems/Albany_ProblemUtils.hpp
+        problems/Albany_Layouts.hpp
         problems/Albany_EvaluatorUtils.hpp
         problems/Albany_EvaluatorUtils_Def.hpp
         problems/Albany_ResponseUtilities.hpp
@@ -171,7 +173,6 @@ SET(SOURCES ${SOURCES}
         evaluators/PHAL_DOFGradInterpolation.cpp
         evaluators/PHAL_DOFVecInterpolation.cpp
         evaluators/PHAL_DOFVecGradInterpolation.cpp
-        evaluators/PHAL_DOFTensorInterpolation.cpp
         evaluators/PHAL_MapToPhysicalFrame.cpp
         evaluators/PHAL_HelmholtzResid.cpp
         evaluators/PHAL_GatherCoordinateVector.cpp
@@ -235,8 +236,6 @@ SET(HEADERS ${HEADERS}
         evaluators/PHAL_DOFVecInterpolation_Def.hpp
         evaluators/PHAL_DOFVecGradInterpolation.hpp
         evaluators/PHAL_DOFVecGradInterpolation_Def.hpp
-        evaluators/PHAL_DOFTensorInterpolation.hpp
-        evaluators/PHAL_DOFTensorInterpolation_Def.hpp
         evaluators/PHAL_MapToPhysicalFrame.hpp
         evaluators/PHAL_MapToPhysicalFrame_Def.hpp
         evaluators/PHAL_HelmholtzResid.hpp
@@ -292,6 +291,16 @@ SET(HEADERS ${HEADERS}
         evaluators/PHAL_SeparableScatterScalarResponse.hpp
         evaluators/PHAL_SeparableScatterScalarResponse_Def.hpp
   )
+
+# ASCR
+IF(ALBANY_ASCR)
+  SET(SOURCES ${SOURCES}
+    Albany_Networks.cpp
+    )
+  SET(HEADERS ${HEADERS} 
+    Albany_Networks.hpp
+    )
+ENDIF()
 
 # MOR (Model Order Reduction)
 SET(MOR_DIR ${Albany_SOURCE_DIR}/src/MOR)
@@ -368,6 +377,7 @@ IF(ALBANY_LCM)
   SET(SOURCES ${SOURCES}
     ${LCM_DIR}/problems/ElasticityProblem.cpp
     ${LCM_DIR}/problems/NonlinearElasticityProblem.cpp
+    ${LCM_DIR}/problems/MechanicsProblem.cpp
     ${LCM_DIR}/problems/ThermoElasticityProblem.cpp
     ${LCM_DIR}/problems/GradientDamageProblem.cpp
     ${LCM_DIR}/problems/PoroElasticityProblem.cpp
@@ -387,6 +397,7 @@ IF(ALBANY_LCM)
   SET(HEADERS ${HEADERS}
     ${LCM_DIR}/problems/ElasticityProblem.hpp
     ${LCM_DIR}/problems/NonlinearElasticityProblem.hpp
+    ${LCM_DIR}/problems/MechanicsProblem.hpp
     ${LCM_DIR}/problems/ThermoElasticityProblem.hpp
     ${LCM_DIR}/problems/GradientDamageProblem.hpp
     ${LCM_DIR}/problems/PoroElasticityProblem.hpp
@@ -431,6 +442,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/Localization.cpp
     ${LCM_DIR}/evaluators/SurfaceBasis.cpp
     ${LCM_DIR}/evaluators/SurfaceVectorJump.cpp
+    ${LCM_DIR}/evaluators/SurfaceScalarJump.cpp
     ${LCM_DIR}/evaluators/CurrentCoords.cpp
     ${LCM_DIR}/evaluators/DamageSource.cpp
     ${LCM_DIR}/evaluators/BulkModulus.cpp
@@ -481,10 +493,13 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/MooneyRivlin.cpp
     ${LCM_DIR}/evaluators/MooneyRivlinDamage.cpp
     ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible.cpp
+    ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible_Damage.cpp
     ${LCM_DIR}/evaluators/RIHMR.cpp
     ${LCM_DIR}/evaluators/RecoveryModulus.cpp
     ${LCM_DIR}/evaluators/FaceFractureCriteria.cpp
     ${LCM_DIR}/evaluators/FaceAverage.cpp
+    ${LCM_DIR}/evaluators/AAA.cpp
+    ${LCM_DIR}/evaluators/LatticeDefGrad.cpp
   )
 
   IF(ALBANY_MPI)
@@ -544,6 +559,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/Localization_Def.hpp
     ${LCM_DIR}/evaluators/SurfaceBasis.hpp
     ${LCM_DIR}/evaluators/SurfaceBasis_Def.hpp
+    ${LCM_DIR}/evaluators/SurfaceScalarJump.hpp
+    ${LCM_DIR}/evaluators/SurfaceScalarJump_Def.hpp
     ${LCM_DIR}/evaluators/SurfaceVectorJump.hpp
     ${LCM_DIR}/evaluators/SurfaceVectorJump_Def.hpp
     ${LCM_DIR}/evaluators/CurrentCoords.hpp
@@ -646,6 +663,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/MooneyRivlinDamage_Def.hpp
     ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible.hpp
     ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible_Def.hpp
+    ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible_Damage.hpp
+    ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible_Damage_Def.hpp
     ${LCM_DIR}/evaluators/RIHMR.hpp
     ${LCM_DIR}/evaluators/RIHMR_Def.hpp
     ${LCM_DIR}/evaluators/RecoveryModulus.hpp
@@ -654,6 +673,10 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/FaceFractureCriteria_Def.hpp
     ${LCM_DIR}/evaluators/FaceAverage.hpp
     ${LCM_DIR}/evaluators/FaceAverage_Def.hpp
+    ${LCM_DIR}/evaluators/AAA.hpp
+    ${LCM_DIR}/evaluators/AAA_Def.hpp
+    ${LCM_DIR}/evaluators/LatticeDefGrad.hpp
+    ${LCM_DIR}/evaluators/LatticeDefGrad_Def.hpp
  )
 
   IF(ALBANY_MPI)
@@ -768,6 +791,7 @@ SET(SOURCES ${SOURCES}
        evaluators/QCAD_ResponseSaddleValue.cpp
        evaluators/QCAD_ResponseSaveField.cpp
        evaluators/QCAD_ResponseCenterOfMass.cpp
+       evaluators/QCAD_ResponseRegionBoundary.cpp
        evaluators/QCAD_EvaluatorTools.cpp
        problems/QCAD_PoissonProblem.cpp
        problems/QCAD_MaterialDatabase.cpp
@@ -794,6 +818,10 @@ SET(HEADERS ${HEADERS}
        evaluators/QCAD_ResponseSaveField_Def.hpp
        evaluators/QCAD_ResponseCenterOfMass.hpp
        evaluators/QCAD_ResponseCenterOfMass_Def.hpp
+       evaluators/QCAD_ResponseRegionBoundary.hpp
+       evaluators/QCAD_ResponseRegionBoundary_Def.hpp
+       evaluators/QCAD_EvaluatorTools.cpp
+       evaluators/QCAD_EvaluatorTools.cpp
        evaluators/QCAD_EvaluatorTools.hpp
        evaluators/QCAD_EvaluatorTools_Def.hpp
        problems/QCAD_PoissonProblem.hpp

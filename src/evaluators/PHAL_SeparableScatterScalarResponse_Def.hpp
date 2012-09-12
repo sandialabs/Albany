@@ -108,8 +108,8 @@ evaluateFields(typename Traits::EvalData workset)
       workset.wsElNodeEqID[cell];
 
     // Loop over responses
-    for (std::size_t res = 0; res < this->field_components.size(); res++) {
-      ScalarT& val = this->local_response(cell, this->field_components[res]);
+    for (std::size_t res = 0; res < this->global_response.size(); res++) {
+      ScalarT& val = this->local_response(cell, res);
 
       // Loop over nodes in cell
       for (unsigned int node_dof=0; node_dof<numNodes; node_dof++) {
@@ -140,8 +140,8 @@ postEvaluate(typename Traits::PostEvalData workset)
   // Here we scatter the *global* response
   Teuchos::RCP<Epetra_Vector> g = workset.g;
   if (g != Teuchos::null)
-    for (std::size_t res = 0; res < this->field_components.size(); res++) {
-      (*g)[res] = this->global_response[this->field_components[res]].val();
+    for (std::size_t res = 0; res < this->global_response.size(); res++) {
+      (*g)[res] = this->global_response[res].val();
   }
   
   // Here we scatter the *global* response derivatives
@@ -214,8 +214,8 @@ evaluateFields(typename Traits::EvalData workset)
       workset.wsElNodeEqID[cell];
 
     // Loop over responses
-    for (std::size_t res = 0; res < this->field_components.size(); res++) {
-      ScalarT& val = this->local_response(cell, this->field_components[res]);
+    for (std::size_t res = 0; res < this->global_response.size(); res++) {
+      ScalarT& val = this->local_response(cell, res);
 
       // Loop over nodes in cell
       for (unsigned int node_dof=0; node_dof<numNodes; node_dof++) {
@@ -248,8 +248,8 @@ postEvaluate(typename Traits::PostEvalData workset)
   // Here we scatter the *global* SG response
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > g_sg = workset.sg_g;
   if (g_sg != Teuchos::null) {
-    for (std::size_t res = 0; res < this->field_components.size(); res++) {
-      ScalarT& val = this->global_response[this->field_components[res]];
+    for (std::size_t res = 0; res < this->global_response.size(); res++) {
+      ScalarT& val = this->global_response[res];
       for (int block=0; block<g_sg->size(); block++)
 	(*g_sg)[block][res] = val.val().coeff(block);
     }
@@ -332,8 +332,8 @@ evaluateFields(typename Traits::EvalData workset)
       workset.wsElNodeEqID[cell];
 
     // Loop over responses
-    for (std::size_t res = 0; res < this->field_components.size(); res++) {
-      ScalarT& val = this->local_response(cell, this->field_components[res]);
+    for (std::size_t res = 0; res < this->global_response.size(); res++) {
+      ScalarT& val = this->local_response(cell, res);
 
       // Loop over nodes in cell
       for (unsigned int node_dof=0; node_dof<numNodes; node_dof++) {
@@ -366,8 +366,8 @@ postEvaluate(typename Traits::PostEvalData workset)
   // Here we scatter the *global* MP response
   Teuchos::RCP<Stokhos::ProductEpetraVector> g_mp = workset.mp_g;
   if (g_mp != Teuchos::null) {
-    for (std::size_t res = 0; res < this->field_components.size(); res++) {
-      ScalarT& val = this->global_response[this->field_components[res]];
+    for (std::size_t res = 0; res < this->global_response.size(); res++) {
+      ScalarT& val = this->global_response[res];
       for (int block=0; block<g_mp->size(); block++)
 	(*g_mp)[block][res] = val.val().coeff(block);
     }

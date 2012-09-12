@@ -22,33 +22,21 @@
 
 template<typename EvalT, typename Traits>
 QCAD::PoissonSource<EvalT, Traits>::
-PoissonSource(Teuchos::ParameterList& p) :
-  coordVec(p.get<std::string>("Coordinate Vector Name"),
-     p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout")),
-  potential(p.get<std::string>("Variable Name"),
-      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-  temperatureField(p.get<std::string>("Temperature Name"),
-      p.get<Teuchos::RCP<PHX::DataLayout> >("Shared Param Data Layout")),
-  poissonSource(p.get<std::string>("Source Name"),
-      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-  chargeDensity("Charge Density",
-      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-  electronDensity("Electron Density",
-      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-  artCBDensity("Artificial Conduction Band Density",
-      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-  holeDensity("Hole Density",
-      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-  electricPotential("Electric Potential",
-      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-  ionizedDopant("Ionized Dopant",
-      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-  conductionBand("Conduction Band",
-      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-  valenceBand("Valence Band",
-      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-  approxQuanEDen("Approx Quantum EDensity",
-      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"))
+PoissonSource(Teuchos::ParameterList& p,
+                 const Teuchos::RCP<Albany::Layouts>& dl) :
+  coordVec(p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient),
+  potential(p.get<std::string>("Variable Name"), dl->qp_scalar),
+  temperatureField(p.get<std::string>("Temperature Name"), dl->shared_param),
+  poissonSource(p.get<std::string>("Source Name"), dl->qp_scalar),
+  chargeDensity("Charge Density",dl->qp_scalar),
+  electronDensity("Electron Density",dl->qp_scalar),
+  artCBDensity("Artificial Conduction Band Density",dl->qp_scalar),
+  holeDensity("Hole Density",dl->qp_scalar),
+  electricPotential("Electric Potential",dl->qp_scalar),
+  ionizedDopant("Ionized Dopant",dl->qp_scalar),
+  conductionBand("Conduction Band",dl->qp_scalar),
+  valenceBand("Valence Band",dl->qp_scalar),
+  approxQuanEDen("Approx Quantum EDensity",dl->qp_scalar)
 {
   // Material database
   materialDB = p.get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
@@ -59,10 +47,8 @@ PoissonSource(Teuchos::ParameterList& p) :
       this->getValidPoissonSourceParameters();
   psList->validateParameters(*reflist,0);
 
-  Teuchos::RCP<PHX::DataLayout> vector_dl =
-      p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
-  vector_dl->dimensions(dims);
+  dl->qp_gradient->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
 
@@ -125,16 +111,13 @@ PoissonSource(Teuchos::ParameterList& p) :
     eigenvector_Im.resize(nEigenvectors);
 
     char buf[200];
-    Teuchos::RCP<PHX::DataLayout> dl = 
-      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
-
     for (int k = 0; k < nEigenvectors; ++k) {
       sprintf(buf, "%s_Re%d", evecFieldRoot.c_str(), k);
-      PHX::MDField<ScalarT,Cell,QuadPoint> fr(buf,dl);
+      PHX::MDField<ScalarT,Cell,QuadPoint> fr(buf,dl->qp_scalar);
       eigenvector_Re[k] = fr; this->addDependentField(eigenvector_Re[k]);
 
       sprintf(buf, "%s_Im%d", evecFieldRoot.c_str(), k);
-      PHX::MDField<ScalarT,Cell,QuadPoint> fi(buf,dl);
+      PHX::MDField<ScalarT,Cell,QuadPoint> fi(buf,dl->qp_scalar);
       eigenvector_Im[k] = fi; this->addDependentField(eigenvector_Im[k]);
     }
   }
@@ -513,7 +496,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
             ionizedDopant(cell, qp) = ionN;
             approxQuanEDen(cell,qp) = approxEDensity;
             artCBDensity(cell, qp) = ( eDensity > 1e-6 ? eDensity : -Nc*(this->*carrStat)( -(phi+eArgOffset) ));
-          
+
             if (bIncludeVxc)  // include Vxc
             {
               ScalarT Vxc = computeVxcLDA(relPerm, averagedEffMass, approxEDensity);
@@ -674,12 +657,12 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
     ScalarT fixedCharge; // [cm^-3]
     if( materialDB->isElementBlockParam(workset.EBName, "Charge Value") ) {
       fixedCharge = materialDB->getElementBlockParam<double>(workset.EBName,"Charge Value");
-      std::cout << "DEBUG: applying fixed charge " << fixedCharge << " to element block '" << workset.EBName << "'" << std::endl;
+      //std::cout << "DEBUG: applying fixed charge " << fixedCharge << " to element block '" << workset.EBName << "'" << std::endl;
     }
     else if( materialDB->isElementBlockParam(workset.EBName, "Charge Parameter Name") ) { 
       double scl = materialDB->getElementBlockParam<double>(workset.EBName,"Charge Parameter Scaling", 1.0);
       fixedCharge = materialParams[ materialDB->getElementBlockParam<string>(workset.EBName,"Charge Parameter Name") ] * scl;
-      std::cout << "DEBUG: applying fixed charge " << fixedCharge << " to element block '" << workset.EBName << "' via param" << std::endl;
+      //std::cout << "DEBUG: applying fixed charge " << fixedCharge << " to element block '" << workset.EBName << "' via param" << std::endl;
     }
     else fixedCharge = 0.0; 
 
@@ -1612,8 +1595,8 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrodinger
 
         // note: wavefunctions are assumed normalized here 
         ScalarT wfSquared = ( eigenvector_Re[i](cell,qp)*eigenvector_Re[i](cell,qp) + 
- 			      eigenvector_Im[i](cell,qp)*eigenvector_Im[i](cell,qp) );
- 			      
+ 			      eigenvector_Im[i](cell,qp)*eigenvector_Im[i](cell,qp) );				
+
         eDensity += wfSquared*fermiFactor; 
       }
       eDensity = eDenPrefactor*eDensity; // in [cm^-3]

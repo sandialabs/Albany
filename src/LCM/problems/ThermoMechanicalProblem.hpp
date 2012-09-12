@@ -158,6 +158,9 @@ Albany::ThermoMechanicalProblem::constructEvaluators(
   using std::vector;
   using PHAL::AlbanyTraits;
 
+  // get the name of the current element block
+  string elementBlockName = meshSpecs.ebName;
+
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
     intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
@@ -252,7 +255,7 @@ Albany::ThermoMechanicalProblem::constructEvaluators(
 
     ev = rcp(new LCM::Time<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Time",dl->workset_scalar, dl->dummy,"scalar", 0.0, true);
+    p = stateMgr.registerStateVariable("Time",dl->workset_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -462,13 +465,13 @@ Albany::ThermoMechanicalProblem::constructEvaluators(
 
       ev = rcp(new LCM::ThermoMechanicalStress<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy,"scalar", 0.0);
+      p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy,"identity",1.0,true);
+      p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy, elementBlockName, "identity",1.0,true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy,"scalar", 0.0,true);
+      p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0,true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
@@ -511,13 +514,13 @@ Albany::ThermoMechanicalProblem::constructEvaluators(
 
       // ev = rcp(new LCM::BCJ<EvalT,AlbanyTraits>(*p));
       // fm0.template registerEvaluator<EvalT>(ev);
-      // p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy,"scalar", 0.0);
+      // p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0);
       // ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       // fm0.template registerEvaluator<EvalT>(ev);
-      // p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy,"identity",1.0,true);
+      // p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy, elementBlockName, "identity",1.0,true);
       // ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       // fm0.template registerEvaluator<EvalT>(ev);
-      // p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy,"scalar", 0.0,true);
+      // p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0,true);
       // ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       // fm0.template registerEvaluator<EvalT>(ev);
     }
@@ -619,7 +622,7 @@ Albany::ThermoMechanicalProblem::constructEvaluators(
 
     ev = rcp(new LCM::ThermoMechanicalEnergyResidual<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Temperature",dl->qp_scalar, dl->dummy,"scalar", 0.0,true);
+    p = stateMgr.registerStateVariable("Temperature",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0,true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }

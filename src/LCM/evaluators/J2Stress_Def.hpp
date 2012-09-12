@@ -88,7 +88,7 @@ J2Stress(const Teuchos::ParameterList& p) :
   tmp.resize(numDims, numDims);
   tmp2.resize(numDims, numDims);
 
-  this->setName("Stress"+PHX::TypeString<EvalT>::value);
+  this->setName("J2 Stress"+PHX::TypeString<EvalT>::value);
 
 }
 
@@ -127,65 +127,21 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT smag2, smag, f, p, dgam;
   ScalarT sq23 = std::sqrt(2./3.);
 
-  //Albany::StateVariables  oldState = *workset.oldState;
-  //Intrepid::FieldContainer<RealType>& Fpold   = *oldState[fpName];
-  //Intrepid::FieldContainer<RealType>& eqpsold = *oldState[eqpsName];
-
   Albany::MDArray Fpold = (*workset.stateArrayPtr)[fpName];
   Albany::MDArray eqpsold = (*workset.stateArrayPtr)[eqpsName];
 
   // compute Cp_{n}^{-1}
-  // AGS MAY NEED TO ALLICATE Fpinv FpinvT Cpinv  with actual workse size
+  // AGS MAY NEED TO ALLOCATE Fpinv FpinvT Cpinv  with actual workse size
   // to prevent going past the end of Fpold.
   RST::inverse(Fpinv, Fpold);
   RST::transpose(FpinvT, Fpinv);
   FST::tensorMultiplyDataData<ScalarT>(Cpinv, Fpinv, FpinvT);
 
-  // std::cout << "F:\n";
-  // for (std::size_t cell=0; cell < workset.numCells; ++cell)
-  // {
-  //   for (std::size_t qp=0; qp < numQPs; ++qp)
-  //   {
-  //     for (std::size_t i=0; i < numDims; ++i)
-  // 	for (std::size_t j=0; j < numDims; ++j)
-  // 	  std::cout << Sacado::ScalarValue<ScalarT>::eval(defgrad(cell,qp,i,j)) << " ";
-  //   }
-  //   std::cout << std::endl;      
-  // }
-  // std::cout << std::endl;      
-
-  // std::cout << "Fpold:\n";
-  // for (std::size_t cell=0; cell < workset.numCells; ++cell)
-  // {
-  //   for (std::size_t qp=0; qp < numQPs; ++qp)
-  //   {
-  //     for (std::size_t i=0; i < numDims; ++i)
-  // 	for (std::size_t j=0; j < numDims; ++j)
-  // 	  std::cout << Sacado::ScalarValue<ScalarT>::eval(Fpold(cell,qp,i,j)) << " ";
-  //   }
-  //   std::cout << std::endl;      
-  // }
-  // std::cout << std::endl;      
-    
-  // std::cout << "Cpinv:\n";
-  // for (std::size_t cell=0; cell < workset.numCells; ++cell)
-  // {
-  //   for (std::size_t qp=0; qp < numQPs; ++qp)
-  //   {
-  //     for (std::size_t i=0; i < numDims; ++i)
-  // 	for (std::size_t j=0; j < numDims; ++j)
-  // 	  std::cout << Sacado::ScalarValue<ScalarT>::eval(Cpinv(cell,qp,i,j)) << " ";
-  //   }
-  //   std::cout << std::endl;      
-  // }
-  // std::cout << std::endl;      
-
-
   for (std::size_t cell=0; cell < workset.numCells; ++cell) 
   {
     for (std::size_t qp=0; qp < numQPs; ++qp) 
     {
- // local parameters
+      // local parameters
       kappa  = elasticModulus(cell,qp) / ( 3. * ( 1. - 2. * poissonsRatio(cell,qp) ) );
       mu     = elasticModulus(cell,qp) / ( 2. * ( 1. + poissonsRatio(cell,qp) ) );
       K      = hardeningModulus(cell,qp);
@@ -197,7 +153,7 @@ evaluateFields(typename Traits::EvalData workset)
       // std::cout << "kappa: " << Sacado::ScalarValue<ScalarT>::eval(kappa) << std::endl;
       // std::cout << "mu   : " << Sacado::ScalarValue<ScalarT>::eval(mu) << std::endl;
       // std::cout << "K    : " << Sacado::ScalarValue<ScalarT>::eval(K) << std::endl;
-      // std::cout << "Y    : " << Sacao::ScalarValue<ScalarT>::eval(Y) << std::endl;
+      // std::cout << "Y    : " << Sacado::ScalarValue<ScalarT>::eval(Y) << std::endl;
       be.initialize(0.0);
       // Compute Trial State      
       for (std::size_t i=0; i < numDims; ++i)
@@ -234,11 +190,13 @@ evaluateFields(typename Traits::EvalData workset)
 
       // check for yielding
       // smag = s.norm();
-      smag2 = 0.0;
+      smag2 = 0.0; smag = 0.0;
       for (std::size_t i=0; i < numDims; ++i)	
 	for (std::size_t j=0; j < numDims; ++j)
 	  smag2 += s(i,j) * s(i,j);
-      smag = std::sqrt(smag2);
+
+      if ( Sacado::ScalarValue<ScalarT>::eval(smag2) > 0.0 )
+        smag = std::sqrt(smag2);
       
       f = smag - sq23 * ( Y + K * eqpsold(cell,qp) + siginf * ( 1. - exp( -delta * eqpsold(cell,qp) ) ) );
 
@@ -312,20 +270,18 @@ evaluateFields(typename Traits::EvalData workset)
                                       "\nalpha = " << alpha2 << std::endl);
 
         }
-//        std::cout << "g   : " << g << std::endl;
-//    	std::cout << "before X: " << X[0] << std::endl;
-//        std::cout << "F   : " << F[0] << std::endl;
-//        std::cout << "dg  : " << dg << std::endl;
-//        std::cout << "dFdX: " << dFdX[0] << std::endl;
+        // std::cout << "g   : " << g << std::endl;
+   	// std::cout << "before X: " << X[0] << std::endl;
+        // std::cout << "F   : " << F[0] << std::endl;
+        // std::cout << "dg  : " << dg << std::endl;
+        // std::cout << "dFdX: " << dFdX[0] << std::endl;
         
-
         solver.computeFadInfo(dFdX,X,F);
         
-
         dgam = X[0];
         
-//        std::cout << "after X: " << X[0] << std::endl;
-//        std::cout << "dgam : " << dgam << std::endl;
+       // std::cout << "after X: " << X[0] << std::endl;
+       // std::cout << "dgam : " << dgam << std::endl;
 
         // plastic direction
         for (std::size_t i=0; i < numDims; ++i) 

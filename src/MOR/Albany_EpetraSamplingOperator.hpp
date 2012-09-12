@@ -27,7 +27,11 @@ namespace Albany {
 
 class EpetraSamplingOperator : public Epetra_Operator {
 public:
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
   typedef int GlobalIndex;
+#else
+  typedef long long GlobalIndex;
+#endif
 
   EpetraSamplingOperator(const Epetra_Map &map, const Teuchos::ArrayView<const GlobalIndex> &sampleGIDs);
 

@@ -59,6 +59,12 @@ private:
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
   //! Vector to take the jump of
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> vector;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> jump;
+
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> currentBasis;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> refDualBasis;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> refNormal;
+
 
   // Reference Cell FieldContainers
   Intrepid::FieldContainer<RealType> refValues;
@@ -67,7 +73,7 @@ private:
   Intrepid::FieldContainer<RealType> refWeights;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> jump;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> gradient;
 
   unsigned int worksetSize;
   unsigned int numNodes;

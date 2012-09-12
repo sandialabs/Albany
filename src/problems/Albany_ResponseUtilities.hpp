@@ -47,8 +47,18 @@ namespace Albany {
     constructResponses(
       PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       Teuchos::ParameterList& responseList, 
+      Teuchos::RCP<Teuchos::ParameterList> paramsFromProblem, 
       Albany::StateManager& stateMgr);
 
+    //! Utility for parsing response requests and creating response field manager
+    //! (Convenience overload in the absence of parameters list from problem)
+    Teuchos::RCP<const PHX::FieldTag>
+    constructResponses(
+      PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+      Teuchos::ParameterList& responseList, 
+      Albany::StateManager& stateMgr) {
+      return constructResponses(fm0, responseList, Teuchos::null, stateMgr);
+    }
  
     //! Accessor 
     Teuchos::RCP<Albany::Layouts> get_dl() { return dl;};

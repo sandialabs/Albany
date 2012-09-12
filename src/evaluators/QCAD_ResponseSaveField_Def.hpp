@@ -63,10 +63,10 @@ ResponseSaveField(Teuchos::ParameterList& p,
   //! Register with state manager
   Albany::StateManager* pStateMgr = p.get< Albany::StateManager* >("State Manager Ptr");
   if( outputCellAverage ) {
-    pStateMgr->registerStateVariable(stateName, cell_dl, "scalar", 0.0, false, outputToExodus);
+    pStateMgr->registerStateVariable(stateName, cell_dl, "ALL", "scalar", 0.0, false, outputToExodus);
   }
   else {
-    pStateMgr->registerStateVariable(stateName, scalar_dl, "scalar", 0.0, false, outputToExodus);
+    pStateMgr->registerStateVariable(stateName, scalar_dl, "ALL", "scalar", 0.0, false, outputToExodus);
   }
 
   // Create field tag

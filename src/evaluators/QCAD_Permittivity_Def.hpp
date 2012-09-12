@@ -22,9 +22,9 @@
 
 template<typename EvalT, typename Traits>
 QCAD::Permittivity<EvalT, Traits>::
-Permittivity(Teuchos::ParameterList& p) :
-  permittivity(p.get<std::string>("QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+Permittivity(Teuchos::ParameterList& p,
+             const Teuchos::RCP<Albany::Layouts>& dl) :
+  permittivity(p.get<std::string>("QP Variable Name"), dl->qp_scalar),
   temp_dependent(false), position_dependent(false)
 {
 	Teuchos::ParameterList* perm_list = 
@@ -34,12 +34,8 @@ Permittivity(Teuchos::ParameterList& p) :
   		this->getValidPermittivityParameters();
   perm_list->validateParameters(*reflist,0);
 
-  Teuchos::RCP<PHX::DataLayout> scalar_dl =
-    	p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
-  Teuchos::RCP<PHX::DataLayout> vector_dl =
-    	p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
-  vector_dl->dimensions(dims);
+  dl->qp_vector->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
 
@@ -111,7 +107,7 @@ Permittivity(Teuchos::ParameterList& p) :
   // Add coordinate dependence to permittivity evaluator
   if(position_dependent) {
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>
-      	tmp(p.get<string>("Coordinate Vector Name"), vector_dl);
+      	tmp(p.get<string>("Coordinate Vector Name"), dl->qp_vector);
     coordVec = tmp;
     this->addDependentField(coordVec);
   }
@@ -119,7 +115,7 @@ Permittivity(Teuchos::ParameterList& p) :
   // Add temperature dependence to permittivity evaluator
   if(temp_dependent) {
     PHX::MDField<ScalarT,Cell,QuadPoint>
-      	tmp(p.get<string>("Temperature Variable Name"), scalar_dl);
+      	tmp(p.get<string>("Temperature Variable Name"), dl->qp_scalar);
     Temp = tmp;
     this->addDependentField(Temp);
   }

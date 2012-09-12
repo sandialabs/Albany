@@ -35,10 +35,14 @@ DefGrad(const Teuchos::ParameterList& p) :
 	         p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
   J             (p.get<std::string>                   ("DetDefGrad Name"),
 	         p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  avgJ          (p.get<bool> ("avgJ Name")),
-  volavgJ       (p.get<bool> ("volavgJ Name")),
-  weighted_Volume_Averaged_J      (p.get<bool> ("weighted_Volume_Averaged_J Name"))
+  weightedAverage(false),
+  alpha(0.05)
 {
+  if ( p.isType<string>("Weighted Volume Average J Name") )
+    weightedAverage = p.get<bool>("Weighted Volume Average J");
+  if ( p.isType<double>("Average J Stabilization Parameter Name") )
+    alpha = p.get<double>("Average J Stabilization Parameter");
+
   Teuchos::RCP<PHX::DataLayout> tensor_dl =
     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
 
@@ -90,102 +94,6 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-
-  Intrepid::RealSpaceTools<ScalarT>::det(J, defgrad);
-
-  if (avgJ)
-  {
-    ScalarT Jbar;
-    for (std::size_t cell=0; cell < workset.numCells; ++cell)
-    {
-      Jbar = 0.0;
-      for (std::size_t qp=0; qp < numQPs; ++qp)
-      {
-        //TEUCHOS_TEST_FOR_EXCEPTION(J(cell,qp) < 0, std::runtime_error,
-        //    " negative volume detected in avgJ routine");
-	Jbar += std::log(J(cell,qp));
-        //Jbar += J(cell,qp);
-      }
-      Jbar /= numQPs;
-      Jbar = std::exp(Jbar);
-      for (std::size_t qp=0; qp < numQPs; ++qp)
-      {
-	for (std::size_t i=0; i < numDims; ++i)
-	{
-	  for (std::size_t j=0; j < numDims; ++j)
-	  {
-	    defgrad(cell,qp,i,j) *= std::pow(Jbar/J(cell,qp),1./3.);
-	  }
-	}
-	J(cell,qp) = Jbar;
-      }
-    }
-  }
-  else if (volavgJ)
-  {
-    ScalarT Jbar, vol;
-    for (std::size_t cell=0; cell < workset.numCells; ++cell)
-    {
-      Jbar = 0.0;
-      vol = 0.0;
-      for (std::size_t qp=0; qp < numQPs; ++qp)
-      {
-        //TEUCHOS_TEST_FOR_EXCEPTION(J(cell,qp) < 0, std::runtime_error,
-        //    " negative volume detected in volavgJ routine");
-	Jbar += weights(cell,qp) * std::log( J(cell,qp) );
-	vol  += weights(cell,qp);
-      }
-      Jbar /= vol;
-      Jbar = std::exp(Jbar);
-      for (std::size_t qp=0; qp < numQPs; ++qp)
-      {
-	for (std::size_t i=0; i < numDims; ++i)
-	{
-	  for (std::size_t j=0; j < numDims; ++j)
-	  {
-	    defgrad(cell,qp,i,j) *= std::pow(Jbar/J(cell,qp),1./3.);
-	  }
-	}
-	J(cell,qp) = Jbar;
-      }
-    }
-  }
-  else if (weighted_Volume_Averaged_J)
-    {
-      ScalarT Jbar, wJbar, vol;
-      ScalarT StabAlpha = 0.5; // This setting need to change later..
-      for (std::size_t cell=0; cell < workset.numCells; ++cell)
-      {
-        Jbar = 0.0;
-        vol = 0.0;
-        for (std::size_t qp=0; qp < numQPs; ++qp)
-        {
-          //TEUCHOS_TEST_FOR_EXCEPTION(J(cell,qp) < 0, std::runtime_error,
-          //    " negative volume detected in volavgJ routine");
-  	Jbar += weights(cell,qp) * std::log( J(cell,qp) );
-  	vol  += weights(cell,qp);
-
-        }
-        Jbar /= vol;
-
-       // Jbar = std::exp(Jbar);
-        for (std::size_t qp=0; qp < numQPs; ++qp)
-        {
-  	for (std::size_t i=0; i < numDims; ++i)
-  	{
-  	  for (std::size_t j=0; j < numDims; ++j)
-  	  {
-  		wJbar =   std::exp( (1-StabAlpha)*Jbar+
-  		          	        		  StabAlpha*std::log(J(cell,qp)));
-
-  	    defgrad(cell,qp,i,j) *= std::pow(wJbar /J(cell,qp),1./3.);
-  	  }
-  	}
-  	J(cell,qp) = wJbar;
-        }
-      }
-    }
-
   // Since Intrepid will later perform calculations on the entire workset size
   // and not just the used portion, we must fill the excess with reasonable 
   // values. Leaving this out leads to inversion of 0 tensors.
@@ -193,6 +101,38 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t qp=0; qp < numQPs; ++qp) 
       for (std::size_t i=0; i < numDims; ++i)
 	defgrad(cell,qp,i,i) = 1.0;
+
+  Intrepid::RealSpaceTools<ScalarT>::det(J, defgrad);
+
+  if (weightedAverage)
+  {
+    ScalarT Jbar, wJbar, vol;
+    for (std::size_t cell=0; cell < workset.numCells; ++cell)
+    {
+      Jbar = 0.0;
+      vol = 0.0;
+      for (std::size_t qp=0; qp < numQPs; ++qp)
+      {
+  	Jbar += weights(cell,qp) * std::log( J(cell,qp) );
+  	vol  += weights(cell,qp);
+      }
+      Jbar /= vol;
+
+      // Jbar = std::exp(Jbar);
+      for (std::size_t qp=0; qp < numQPs; ++qp)
+      {
+  	for (std::size_t i=0; i < numDims; ++i)
+  	{
+  	  for (std::size_t j=0; j < numDims; ++j)
+  	  {
+            wJbar = std::exp( (1-alpha) * Jbar + alpha * std::log( J(cell,qp) ) );
+  	    defgrad(cell,qp,i,j) *= std::pow( wJbar / J(cell,qp) ,1./3. );
+  	  }
+  	}
+  	J(cell,qp) = wJbar;
+      }
+    }
+  }
 }
 
 //**********************************************************************

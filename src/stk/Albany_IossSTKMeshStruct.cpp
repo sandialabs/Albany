@@ -29,16 +29,20 @@
 #include <stk_mesh/base/FieldData.hpp>
 #include <stk_mesh/base/Selector.hpp>
 #include <Ionit_Initializer.h>
+#include <stk_io/IossBridge.hpp>
+#include <Ioss_SubSystem.h>
 
 #include <stk_mesh/fem/FEMHelpers.hpp>
 
 #include "Albany_Utils.hpp"
 
 // Rebalance 
+#ifdef ALBANY_ZOLTAN 
 #include <stk_rebalance/Rebalance.hpp>
 #include <stk_rebalance/Partition.hpp>
 #include <stk_rebalance/ZoltanPartition.hpp>
 #include <stk_rebalance_utils/RebalanceUtils.hpp>
+#endif
 
 Albany::IossSTKMeshStruct::IossSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
@@ -57,6 +61,8 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 
   usePamgen = (params->get("Method","Exodus") == "Pamgen");
 
+#ifdef ALBANY_ZOLTAN  // rebalance requires Zoltan
+
   if (params->get<bool>("Use Serial Mesh", false) && comm->NumProc() > 1){ 
     // We are parallel but reading a single exodus file
 
@@ -65,7 +71,9 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     readSerialMesh(comm);
 
   }
-  else if (!usePamgen) {
+  else 
+#endif
+    if (!usePamgen) {
     *out << "Albany_IOSS: Loading STKMesh from Exodus file  " 
          << params->get<string>("Exodus Input File Name") << endl;
 
@@ -172,6 +180,8 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 void
 Albany::IossSTKMeshStruct::readSerialMesh(const Teuchos::RCP<const Epetra_Comm>& comm){
 
+#ifdef ALBANY_ZOLTAN // rebalance needs Zoltan
+
    MPI_Group group_world;
    MPI_Group peZero;
    MPI_Comm peZeroComm;
@@ -220,6 +230,8 @@ Albany::IossSTKMeshStruct::readSerialMesh(const Teuchos::RCP<const Epetra_Comm>&
 
   // Here, all PEs have read the metaData from the input file, and have a pointer to in_region in mesh_data
 
+#endif
+
 }
 
 void
@@ -236,6 +248,8 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
   *out << "IOSS-STK: number of side sets = " << ssPartVec.size() << endl;
 
   metaData->commit();
+
+#ifdef ALBANY_ZOLTAN // rebalance needs Zoltan
 
   if(useSerialMesh){
 
@@ -271,6 +285,7 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
 
   }
   else {
+#endif
 
     stk::io::populate_bulk_data(*bulkData, *mesh_data);
 
@@ -283,12 +298,40 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
         *out << "Restart Index set, reading solution time : " << index << endl;
          stk::io::process_input_request(*mesh_data, *bulkData, index);
          hasRestartSolution = true;
+
+         // See what state data was initialized from the stk::io request
+         // This should be propagated into stk::io
+           Ioss::Region *region = mesh_data->m_input_region;
+           const Ioss::ElementBlockContainer& elem_blocks = region->get_element_blocks();
+
+/*
+            // Uncomment to print what fields are in the exodus file
+			Ioss::NameList exo_fld_names;
+			elem_blocks[0]->field_describe(&exo_fld_names);
+			for(std::size_t i = 0; i < exo_fld_names.size(); i++){
+				*out << "Found field \"" << exo_fld_names[i] << "\" in exodus file" << std::endl;
+			}
+*/
+
+           for (std::size_t i=0; i<sis->size(); i++) {
+             Albany::StateStruct& st = *((*sis)[i]);
+
+             if(elem_blocks[0]->field_exists(st.name)){
+               *out << "Found field \"" << st.name << "\" in exodus file." << std::endl;
+               st.restartDataAvailable = true;
+			 }
+//			 else
+//               *out << "Could NOT find field \"" << st.name << "\" in exodus file." << std::endl;
+           }
+
       }
     }
 
     bulkData->modification_end();
 
+#ifdef ALBANY_ZOLTAN
   }
+#endif
 
   coordinates_field = metaData->get_field<VectorFieldType>(std::string("coordinates"));
   proc_rank_field = metaData->get_field<IntScalarFieldType>(std::string("proc_rank"));
@@ -296,6 +339,7 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
   delete mesh_data;
   useElementAsTopRank = true;
 
+#ifdef ALBANY_ZOLTAN
 // Rebalance if we read a single mesh and are running in parallel
 
   if(useSerialMesh){
@@ -338,6 +382,7 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
     *out << "After rebalancing, the imbalance threshold is = " << imbalance << endl;
 
   }
+#endif
 
 }
 
@@ -351,8 +396,6 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
  *
  */
 
-#include <stk_io/IossBridge.hpp>
-#include <Ioss_SubSystem.h>
 
 
 void 

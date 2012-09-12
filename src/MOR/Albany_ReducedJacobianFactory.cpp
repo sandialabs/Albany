@@ -107,6 +107,8 @@ const Epetra_CrsMatrix &ReducedJacobianFactory::reducedMatrix(const Epetra_Multi
       TEUCHOS_ASSERT(err == 0);
     }
   }
+
+  return result;
 }
 
 bool ReducedJacobianFactory::isMasterProcess() const

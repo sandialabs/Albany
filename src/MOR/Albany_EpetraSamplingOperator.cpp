@@ -50,7 +50,7 @@ EpetraSamplingOperator::EpetraSamplingOperator(const Epetra_Map &map,
   sampleLIDs_.reserve(mySampleGIDs.size());
   std::transform(mySampleGIDs.begin(), mySampleGIDs.end(),
                  std::back_inserter(sampleLIDs_),
-                 std::bind1st(std::mem_fun_ref(&Epetra_Map::LID), map_));
+                 std::bind1st(std::mem_fun_ref(static_cast<int(Epetra_Map::*)(GlobalIndex) const>(&Epetra_Map::LID)), map_));
 
   std::sort(sampleLIDs_.begin(), sampleLIDs_.end());
 }

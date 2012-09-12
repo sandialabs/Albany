@@ -154,6 +154,9 @@ Albany::ElasticityProblem::constructEvaluators(
    using std::vector;
    using PHAL::AlbanyTraits;
 
+  // get the name of the current element block
+  string elementBlockName = meshSpecs.ebName;
+
    RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
    RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
      intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
@@ -233,7 +236,7 @@ Albany::ElasticityProblem::constructEvaluators(
 
     ev = rcp(new LCM::Time<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Time",dl->workset_scalar, dl->dummy,"scalar", 0.0, true);
+    p = stateMgr.registerStateVariable("Time",dl->workset_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -304,7 +307,7 @@ Albany::ElasticityProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
 
     if(matModel == "CapModel" || matModel == "GursonSD" || matModel == "CapImplicit"){
-      p = stateMgr.registerStateVariable("Strain", dl->qp_tensor, dl->dummy,"scalar", 0.0, true);
+      p = stateMgr.registerStateVariable("Strain", dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0, true);
     	ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     	fm0.template registerEvaluator<EvalT>(ev);
     }
@@ -403,27 +406,27 @@ Albany::ElasticityProblem::constructEvaluators(
       }
 
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy,"scalar", 0.0, true);
+      p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("backStress",dl->qp_tensor, dl->dummy,"scalar", 0.0, true);
+      p = stateMgr.registerStateVariable("backStress",dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("capParameter",dl->qp_scalar, dl->dummy,"scalar", kappa0, true);
+      p = stateMgr.registerStateVariable("capParameter",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", kappa0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
 
       if(matModel == "CapModel"){
-          p = stateMgr.registerStateVariable("friction",dl->qp_scalar, dl->dummy,"scalar", 0.0);
+          p = stateMgr.registerStateVariable("friction",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0);
           ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
-          p = stateMgr.registerStateVariable("dilatancy",dl->qp_scalar, dl->dummy,"scalar", 0.0);
+          p = stateMgr.registerStateVariable("dilatancy",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0);
           ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
-          p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+          p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
           ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
-          p = stateMgr.registerStateVariable("hardeningModulus",dl->qp_scalar, dl->dummy,"scalar", 0.0);
+          p = stateMgr.registerStateVariable("hardeningModulus",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0);
           ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
       }
@@ -482,16 +485,16 @@ Albany::ElasticityProblem::constructEvaluators(
       //Declare what state data will need to be saved (name, layout, init_type)
       ev = rcp(new LCM::GursonSDStress<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy,"scalar", 0.0, true);
+      p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("voidVolume",dl->qp_scalar, dl->dummy,"scalar", f0, true);
+      p = stateMgr.registerStateVariable("voidVolume",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", f0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("ep",dl->qp_scalar, dl->dummy,"scalar", 0.0, true);
+      p = stateMgr.registerStateVariable("ep",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("yieldStrength",dl->qp_scalar, dl->dummy,"scalar", Y0, true);
+      p = stateMgr.registerStateVariable("yieldStrength",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", Y0, true);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
 	}
@@ -516,7 +519,7 @@ Albany::ElasticityProblem::constructEvaluators(
 
       ev = rcp(new LCM::Stress<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy,"scalar", 0.0);
+      p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
 	}

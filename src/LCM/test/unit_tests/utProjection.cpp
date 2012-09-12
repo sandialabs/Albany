@@ -97,8 +97,8 @@ TEUCHOS_UNIT_TEST( Projection, Instantiation )
   // Create a state manager with required fields
   Albany::StateManager stateMgr;
   // Stress and DefGrad are required for all LAME models
-  stateMgr.registerStateVariable("Stress", qp_tensor, "scalar", 0.0, true);
-  stateMgr.registerStateVariable("Deformation Gradient", qp_tensor, "identity", 1.0, true);
+  stateMgr.registerStateVariable("Stress", qp_tensor, "dummy","scalar", 0.0, true);
+  stateMgr.registerStateVariable("Deformation Gradient", qp_tensor, "dummy", "identity", 1.0, true);
   /*// Add material-model specific state variables
   string MRMaterialModelName = MRStressParameterList->get<string>("Lame Material Model");
   std::vector<std::string> MRMaterialModelStateVariableNames = LameUtils::getStateVariableNames(MRMaterialModelName, materialModelParametersList);

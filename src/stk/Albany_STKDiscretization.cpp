@@ -179,7 +179,6 @@ Albany::STKDiscretization::getCoordinates() const
   return coordinates;
 }
 
-#ifdef ALBANY_FELIX
 //The function transformMesh() maps a unit cube domain by applying the transformation 
 //x = L*x
 //y = L*y
@@ -195,7 +194,6 @@ Albany::STKDiscretization::transformMesh()
   std::string transformType = stkMeshStruct->transformType;
   if (transformType == "None") {
      transform_type = NONE;
-     cout << "None!" << endl;
   }
   else if (transformType == "ISMIP-HOM Test A") {
      transform_type = ISMIP_HOM_TEST_A;
@@ -209,7 +207,9 @@ Albany::STKDiscretization::transformMesh()
     cout << "L: " << L << endl; 
     cout << "alpha degrees: " << alpha << endl; 
     alpha = alpha*pi/180; //convert alpha, read in from ParameterList, to radians
-    cout << "alpha radians: " << alpha << endl; 
+    cout << "alpha radians: " << alpha << endl;
+    stkMeshStruct->PBCStruct.scale[0]*=L;
+    stkMeshStruct->PBCStruct.scale[1]*=L; 
     for (int i=0; i < numOverlapNodes; i++)  {
       double* x = stk::mesh::field_data(*stkMeshStruct->coordinates_field, *overlapnodes[i]);
       x[0] = L*x[0];
@@ -220,7 +220,6 @@ Albany::STKDiscretization::transformMesh()
      }
    }
 }
-#endif    
 
 void
 Albany::STKDiscretization::getOwned_xyz(double** x, double** y, double** z,
@@ -279,7 +278,13 @@ void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln, const 
     setOvlpSolutionField(soln);
 
 #ifdef ALBANY_SEACAS
+
   if (stkMeshStruct->exoOutput) {
+
+    // Skip this write unless the proper interval has been reached
+    if(outputInterval++ % stkMeshStruct->exoOutputInterval)
+
+      return;
 
     double time_label = monotonicTimeLabel(time);
 
@@ -492,9 +497,9 @@ void Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
   node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesT(), commT, nodeT);
 
 
-  numGlobalNodes = node_mapT->getGlobalNumElements();
-
+  numGlobalNodes = node_mapT->getMaxAllGlobalIndex() + 1;
   indicesT.resize(numOwnedNodes * neq);
+  
   for (int i=0; i < numOwnedNodes; i++)
     for (std::size_t j=0; j < neq; j++)
       indicesT[getOwnedDOF(i,j)] = getGlobalDOF(gid(ownednodes[i]),j);
@@ -919,6 +924,8 @@ void Albany::STKDiscretization::setupExodusOutput()
 #ifdef ALBANY_SEACAS
   if (stkMeshStruct->exoOutput) {
 
+    outputInterval = 0;
+
     Ioss::Init::Initializer io;
     mesh_data = new stk::io::MeshData();
     stk::io::create_output_mesh(stkMeshStruct->exoOutFile,
@@ -944,9 +951,7 @@ Albany::STKDiscretization::updateMesh(Teuchos::RCP<Albany::AbstractSTKMeshStruct
 
   computeOverlapNodesAndUnknowns();
 
-#ifdef ALBANY_FLEIX  
   transformMesh(); 
-#endif
 
   computeGraphs();
 

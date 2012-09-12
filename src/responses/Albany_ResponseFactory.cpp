@@ -103,6 +103,7 @@ createResponseFunction(
 	   name == "Field Value" ||
 	   name == "Center Of Mass" ||
 	   name == "Save Field" ||
+	   name == "Region Boundary" ||
 	   name == "PHAL Field Integral") {
     responseParams.set("Name", name);
     for (int i=0; i<meshSpecs.size(); i++) {

@@ -25,7 +25,8 @@ namespace PHAL {
 
 template<typename EvalT, typename Traits>
 ScatterResidualBase<EvalT, Traits>::
-ScatterResidualBase(const Teuchos::ParameterList& p)
+ScatterResidualBase(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl)
 {
   std::string fieldName;
   if (p.isType<std::string>("Scatter Field Name"))
@@ -33,13 +34,10 @@ ScatterResidualBase(const Teuchos::ParameterList& p)
   else fieldName = "Scatter";
   
   scatter_operation = Teuchos::rcp(new PHX::Tag<ScalarT>
-    (fieldName, p.get< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout")));
+    (fieldName, dl->dummy));
 
   const Teuchos::ArrayRCP<std::string>& names =
     p.get< Teuchos::ArrayRCP<std::string> >("Residual Names");
-
-  Teuchos::RCP<PHX::DataLayout> dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("Data Layout");
 
   if (p.isType<bool>("Vector Field"))
 	  vectorField = p.get<bool>("Vector Field");
@@ -51,7 +49,7 @@ ScatterResidualBase(const Teuchos::ParameterList& p)
     const std::size_t num_val = numFieldsBase;
     val.resize(num_val);
     for (std::size_t eq = 0; eq < numFieldsBase; ++eq) {
-      PHX::MDField<ScalarT,Cell,Node> mdf(names[eq],dl);
+      PHX::MDField<ScalarT,Cell,Node> mdf(names[eq],dl->node_scalar);
       val[eq] = mdf;
       this->addDependentField(val[eq]);
     }
@@ -60,10 +58,10 @@ ScatterResidualBase(const Teuchos::ParameterList& p)
   // vector
   else {
     valVec.resize(1);
-    PHX::MDField<ScalarT,Cell,Node,Dim> mdf(names[0],dl);
+    PHX::MDField<ScalarT,Cell,Node,Dim> mdf(names[0],dl->node_vector);
     valVec[0] = mdf;
     this->addDependentField(valVec[0]);
-    numFieldsBase = dl->dimension(2);
+    numFieldsBase = dl->node_vector->dimension(2);
   }
 
   if (p.isType<int>("Offset of First DOF"))
@@ -97,8 +95,9 @@ postRegistrationSetup(typename Traits::SetupData d,
 // **********************************************************************
 template<typename Traits>
 ScatterResidual<PHAL::AlbanyTraits::Residual,Traits>::
-ScatterResidual(const Teuchos::ParameterList& p)
-  : ScatterResidualBase<PHAL::AlbanyTraits::Residual,Traits>(p),
+ScatterResidual(const Teuchos::ParameterList& p,
+                       const Teuchos::RCP<Albany::Layouts>& dl)
+  : ScatterResidualBase<PHAL::AlbanyTraits::Residual,Traits>(p,dl),
   numFields(ScatterResidualBase<PHAL::AlbanyTraits::Residual,Traits>::numFieldsBase)
 
 {
@@ -135,8 +134,9 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 ScatterResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
-ScatterResidual(const Teuchos::ParameterList& p)
-  : ScatterResidualBase<PHAL::AlbanyTraits::Jacobian,Traits>(p),
+ScatterResidual(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl)
+  : ScatterResidualBase<PHAL::AlbanyTraits::Jacobian,Traits>(p,dl),
   numFields(ScatterResidualBase<PHAL::AlbanyTraits::Jacobian,Traits>::numFieldsBase)
 {
 }
@@ -208,8 +208,9 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 ScatterResidual<PHAL::AlbanyTraits::Tangent, Traits>::
-ScatterResidual(const Teuchos::ParameterList& p)
-  : ScatterResidualBase<PHAL::AlbanyTraits::Tangent,Traits>(p),
+ScatterResidual(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl)
+  : ScatterResidualBase<PHAL::AlbanyTraits::Tangent,Traits>(p,dl),
   numFields(ScatterResidualBase<PHAL::AlbanyTraits::Tangent,Traits>::numFieldsBase)
 {
 }
@@ -262,8 +263,9 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 ScatterResidual<PHAL::AlbanyTraits::SGResidual, Traits>::
-ScatterResidual(const Teuchos::ParameterList& p)
-  : ScatterResidualBase<PHAL::AlbanyTraits::SGResidual,Traits>(p),
+ScatterResidual(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl)
+  : ScatterResidualBase<PHAL::AlbanyTraits::SGResidual,Traits>(p,dl),
   numFields(ScatterResidualBase<PHAL::AlbanyTraits::SGResidual,Traits>::numFieldsBase)
 {
 }
@@ -298,8 +300,9 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 ScatterResidual<PHAL::AlbanyTraits::SGJacobian, Traits>::
-ScatterResidual(const Teuchos::ParameterList& p)
-  : ScatterResidualBase<PHAL::AlbanyTraits::SGJacobian,Traits>(p),
+ScatterResidual(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl)
+  : ScatterResidualBase<PHAL::AlbanyTraits::SGJacobian,Traits>(p,dl),
   numFields(ScatterResidualBase<PHAL::AlbanyTraits::SGJacobian,Traits>::numFieldsBase)
 {
 }
@@ -375,8 +378,9 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 ScatterResidual<PHAL::AlbanyTraits::SGTangent, Traits>::
-ScatterResidual(const Teuchos::ParameterList& p)
-  : ScatterResidualBase<PHAL::AlbanyTraits::SGTangent,Traits>(p),
+ScatterResidual(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl)
+  : ScatterResidualBase<PHAL::AlbanyTraits::SGTangent,Traits>(p,dl),
   numFields(ScatterResidualBase<PHAL::AlbanyTraits::SGTangent,Traits>::numFieldsBase)
 {
 }
@@ -437,8 +441,9 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 ScatterResidual<PHAL::AlbanyTraits::MPResidual, Traits>::
-ScatterResidual(const Teuchos::ParameterList& p)
-  : ScatterResidualBase<PHAL::AlbanyTraits::MPResidual,Traits>(p),
+ScatterResidual(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl)
+  : ScatterResidualBase<PHAL::AlbanyTraits::MPResidual,Traits>(p,dl),
   numFields(ScatterResidualBase<PHAL::AlbanyTraits::MPResidual,Traits>::numFieldsBase)
 {
 }
@@ -473,8 +478,9 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 ScatterResidual<PHAL::AlbanyTraits::MPJacobian, Traits>::
-ScatterResidual(const Teuchos::ParameterList& p)
-  : ScatterResidualBase<PHAL::AlbanyTraits::MPJacobian,Traits>(p),
+ScatterResidual(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl)
+  : ScatterResidualBase<PHAL::AlbanyTraits::MPJacobian,Traits>(p,dl),
   numFields(ScatterResidualBase<PHAL::AlbanyTraits::MPJacobian,Traits>::numFieldsBase)
 {
 }
@@ -545,8 +551,9 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 ScatterResidual<PHAL::AlbanyTraits::MPTangent, Traits>::
-ScatterResidual(const Teuchos::ParameterList& p)
-  : ScatterResidualBase<PHAL::AlbanyTraits::MPTangent,Traits>(p),
+ScatterResidual(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl)
+  : ScatterResidualBase<PHAL::AlbanyTraits::MPTangent,Traits>(p,dl),
   numFields(ScatterResidualBase<PHAL::AlbanyTraits::MPTangent,Traits>::numFieldsBase)
 {
 }

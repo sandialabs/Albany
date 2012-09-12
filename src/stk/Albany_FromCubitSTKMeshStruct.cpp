@@ -117,6 +117,11 @@ Albany::FromCubitSTKMeshStruct::FromCubitSTKMeshStruct(
   exoOutput = params->isType<string>("Exodus Output File Name");
   if (exoOutput)
     exoOutFile = params->get<string>("Exodus Output File Name");
+  
+  //get the type of transformation of STK mesh (for FELIX problems)
+  transformType = params->get("Transform Type", "None"); //get the type of transformation of STK mesh (for FELIX problems)
+  felixAlpha = params->get("FELIX alpha", 0.0); 
+  felixL = params->get("FELIX L", 1); 
 }
 
 Albany::FromCubitSTKMeshStruct::~FromCubitSTKMeshStruct()
