@@ -491,6 +491,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible.cpp
     ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible_Damage.cpp
     ${LCM_DIR}/evaluators/RIHMR.cpp
+    ${LCM_DIR}/evaluators/GursonHMR.cpp
     ${LCM_DIR}/evaluators/RecoveryModulus.cpp
     ${LCM_DIR}/evaluators/FaceFractureCriteria.cpp
     ${LCM_DIR}/evaluators/FaceAverage.cpp
@@ -663,6 +664,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible_Damage_Def.hpp
     ${LCM_DIR}/evaluators/RIHMR.hpp
     ${LCM_DIR}/evaluators/RIHMR_Def.hpp
+    ${LCM_DIR}/evaluators/GursonHMR.hpp
+    ${LCM_DIR}/evaluators/GursonHMR_Def.hpp
     ${LCM_DIR}/evaluators/RecoveryModulus.hpp
     ${LCM_DIR}/evaluators/RecoveryModulus_Def.hpp
     ${LCM_DIR}/evaluators/FaceFractureCriteria.hpp
