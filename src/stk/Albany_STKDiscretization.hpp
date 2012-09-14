@@ -118,6 +118,9 @@ namespace Albany {
     //! Flag if solution has a restart values -- used in Init Cond
     bool hasRestartSolution() const {return stkMeshStruct->hasRestartSolution;}
 
+    //! If restarting, convenience function to return restart data time
+    double restartDataTime() const {return stkMeshStruct->restartDataTime;}
+
     // After mesh modification, need to update the element connectivity and nodal coordinates
     void updateMesh(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct,
     		const Teuchos::RCP<const Epetra_Comm>& comm);

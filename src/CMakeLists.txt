@@ -174,6 +174,7 @@ SET(SOURCES ${SOURCES}
         evaluators/PHAL_GatherCoordinateVector.cpp
         evaluators/PHAL_CahnHillRhoResid.cpp
         evaluators/PHAL_CahnHillWResid.cpp
+        evaluators/PHAL_CahnHillElasResid.cpp
         evaluators/PHAL_CahnHillChemTerm.cpp
         evaluators/PHAL_LangevinNoiseTerm.cpp
         evaluators/PHAL_JouleHeating.cpp
@@ -242,6 +243,8 @@ SET(HEADERS ${HEADERS}
         evaluators/PHAL_CahnHillRhoResid_Def.hpp
         evaluators/PHAL_CahnHillWResid.hpp
         evaluators/PHAL_CahnHillWResid_Def.hpp
+        evaluators/PHAL_CahnHillElasResid.hpp
+        evaluators/PHAL_CahnHillElasResid_Def.hpp
         evaluators/PHAL_CahnHillChemTerm.hpp
         evaluators/PHAL_CahnHillChemTerm_Def.hpp
         evaluators/PHAL_LangevinNoiseTerm.hpp

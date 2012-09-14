@@ -128,6 +128,7 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
     Albany::StateStruct& pstateRef = *stateInfo->back();
     pstateRef.initType  = init_type; 
     pstateRef.initValue = init_val; 
+    pstateRef.pParentStateStruct = &stateRef;
     if ( dl->rank() > 1 )
       pstateRef.entity = dl->name(1); //Tag, should be Node or QuadPoint
     else if ( dl->rank() == 1 )
@@ -167,6 +168,7 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
     const std::string init_type = (*stateInfo)[i]->initType;
     const double init_val       = (*stateInfo)[i]->initValue;
     bool have_restart           = (*stateInfo)[i]->restartDataAvailable;
+    Albany::StateStruct *pParentStruct = (*stateInfo)[i]->pParentStateStruct;
 
     // JTO: specifying zero recovers previous behavior
     // if (stateName == "zero")
@@ -179,6 +181,17 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
     if(have_restart){
         *out << " from restart file." << std::endl;
         // If we are restarting, arrays should already be initialized from exodus file
+        continue;
+	}
+    else if(pParentStruct && pParentStruct->restartDataAvailable){
+        *out << " from restarted parent state." << std::endl;
+        // If we are restarting, my parent is initialized from exodus file
+        // Copy over parent's state
+
+        for (int ws = 0; ws < numWorksets; ws++)
+
+          sa[ws][stateName] = sa[ws][pParentStruct->name];
+
         continue;
 	}
     else if (init_type == "scalar")

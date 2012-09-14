@@ -125,10 +125,20 @@ Albany::SolverFactory::createAndGetAlbanyApp(
                         app, problemParams.get("Name", "Heat 1D"));
 
     if (solutionMethod== "Continuation") { // add save eigen data here as in Piro test
+
       Teuchos::ParameterList& locaParams = piroParams->sublist("LOCA");
-        RCP<LOCA::SaveEigenData::AbstractStrategy> saveEigs =
-	  rcp(new Albany::SaveEigenData( locaParams, NOX_observer, &app->getStateMgr() ));
+
+	  // If restarting, pick up the problem time from the restart file
+
+	  if(app->getDiscretization()->hasRestartSolution())
+
+		locaParams.sublist("Stepper").set("Initial Value", app->getDiscretization()->restartDataTime());
+
+      RCP<LOCA::SaveEigenData::AbstractStrategy> saveEigs =
+        rcp(new Albany::SaveEigenData( locaParams, NOX_observer, &app->getStateMgr() ));
+
         return  rcp(new Piro::Epetra::LOCASolver(piroParams, model, NOX_observer, saveEigs));
+
 	//return  rcp(new Piro::Epetra::LOCASolver(piroParams, model, NOX_observer));
     }
     else if (solutionMethod== "Transient" && secondOrder=="No") 
