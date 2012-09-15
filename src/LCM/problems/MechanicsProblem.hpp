@@ -1057,7 +1057,7 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
 
         //output
         p->set<string>("Stress Name", cauchy); //dl->qp_tensor also
-        p->set<string>("Fp Name", "Fp");  // dl->qp_tensor also
+        p->set<string>("logFp Name", "logFp");  // dl->qp_tensor also
         p->set<string>("Eqps Name", "eqps");  // dl->qp_scalar also
         p->set<string>("IsoHardening Name", "isoHardening"); // dl ->qp_scalar
 
@@ -1067,7 +1067,7 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
         p = stateMgr.registerStateVariable(cauchy,dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0);
         ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
-        p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy, elementBlockName, "identity", 1.0, true);
+        p = stateMgr.registerStateVariable("logFp",dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0, true);
         ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
         p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
