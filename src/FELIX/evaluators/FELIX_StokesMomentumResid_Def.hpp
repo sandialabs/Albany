@@ -83,9 +83,6 @@ template<typename EvalT, typename Traits>
 void StokesMomentumResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  //parameters to define non-linear viscosity mu, given by Glen's law
-  double A = pow(10, -16); //ice flow parameter
-  int n = 3; //exponent in Glen's law 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t node=0; node < numNodes; ++node) {          
       for (std::size_t i=0; i<numDims; i++) {

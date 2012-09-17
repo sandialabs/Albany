@@ -477,9 +477,18 @@ evaluateFields(typename Traits::EvalData workset)
        ScalarT* f = &force(cell,qp,0);
        MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
        MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
-       MeshScalarT muqp = 0.5*pow(A, -1.0/n)*pow(2.0*pi*cos(x2pi + xphase)*cos(y2pi + yphase)+r, 1.0/n - 1.0);
-       f[0] = -8.0*pi*pi*sin(x2pi + xphase)*cos(y2pi + yphase)*(muqp - 1.0);
-       f[1] = 8.0*pi*pi*cos(x2pi + xphase)*sin(y2pi + yphase)*(muqp + 1.0);
+       MeshScalarT muargt = 2.0*pi*cos(x2pi + xphase)*cos(y2pi + yphase) + r;
+       MeshScalarT muqp = 0.5*pow(A, -1.0/n)*pow(muargt, 1.0/n - 1.0);
+       MeshScalarT dudx = 2.0*pi*cos(x2pi + xphase)*cos(y2pi + yphase) + r;
+       MeshScalarT dudy = -2.0*pi*sin(x2pi + xphase)*cos(y2pi + yphase);
+       MeshScalarT dvdx = 2.0*pi*sin(x2pi + xphase)*sin(y2pi+yphase);
+       MeshScalarT dvdy = -2.0*pi*cos(x2pi + xphase)*cos(y2pi + yphase) - r;
+       MeshScalarT dmuargtdx = -4.0*pi*pi*sin(x2pi + xphase)*cos(y2pi + yphase);
+       MeshScalarT dmuargtdy = -4.0*pi*pi*cos(x2pi + xphase)*sin(y2pi + yphase);
+       f[0] = -8.0*pi*pi*sin(x2pi + xphase)*cos(y2pi + yphase)*(muqp - 1.0)
+            + 0.5*pow(A, -1.0/n)*(1.0/n - 1.0)*pow(muargt, 1.0/n - 2.0)*(dmuargtdx*dudx + dmuargtdy*dudy);
+       f[1] = 8.0*pi*pi*cos(x2pi + xphase)*sin(y2pi + yphase)*(muqp + 1.0)
+            + 0.5*pow(A, -1.0/n)*(1.0/n - 1.0)*pow(muargt, 1.0/n - 2.0)*(dmuargtdx*dvdx + dmuargtdy*dvdy);
      }
    }
  }

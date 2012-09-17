@@ -88,7 +88,8 @@
       <ParameterList name="Stepper">
 	<Parameter  name="Initial Value" type="double" value="0"/>
 	<Parameter  name="Continuation Parameter" type="string" value="Glen's Law Homotopy Parameter"/>
-	<Parameter  name="Max Steps" type="int" value="10"/>
+	<Parameter  name="Continuation Method" type="string" value="Natural"/>
+        <Parameter  name="Max Steps" type="int" value="10"/>
 	<Parameter  name="Max Value" type="double" value="1.0"/>
 	<Parameter  name="Min Value" type="double" value="0.0"/>
       </ParameterList>
