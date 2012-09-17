@@ -1,0 +1,625 @@
+%
+% $Id: SANDtemplate.tex,v 1.3 2007/12/13 21:27:14 rolf Exp $
+% A template to build SAND reports. See the examples for more details and
+% formatting suggestions. A command reference is available at
+% http://www.cs.sandia.gov/~rolf/SANDreport
+%
+\documentclass[pdf,12pt,report,strict]{SANDreport}
+
+\usepackage{graphicx}
+\usepackage[sort&compress,colon,square,numbers]{natbib}
+\usepackage{amsmath,amsfonts,amsthm,eucal}
+%\usepackage{enumerate}
+%\usepackage[letterpaper,margin=3cm]{geometry}
+%\usepackage{setspace}
+%\usepackage{float}
+%\usepackage[title]{appendix}
+%\usepackage{color}
+%\usepackage[T1]{fontenc}
+\usepackage{rotating}
+\usepackage{subfigure}
+
+\input{bold-symbols.tex}
+
+%
+\newcommand{\tensor}[1]{\ensuremath{\boldsymbol{#1}}}
+\newcommand{\jump}[1]{\lbrack\!\lbrack #1 \rbrack\!\rbrack}
+\newcommand{\alert}[1]{\textcolor{red}{#1}}
+\newtheorem{prop}{Proposition}
+\theoremstyle{remark}
+\newtheorem{rmk}{Remark}
+\renewcommand{\vec}[1]{\ensuremath{\boldsymbol{#1}}}
+
+
+
+% ---------------------------------------------------------------------------- %
+% Set the title, author, and date
+%
+\title{Albany Development: Getting Started}
+
+\date{}               % Leave this here but empty
+
+
+% ---------------------------------------------------------------------------- %
+% These are mandatory
+%
+\SANDnum{SAND20XX-????}         % e.g. \SANDnum{SAND2006-0420}
+\SANDprintDate{??}  % Month, year
+\SANDauthor{}
+ % One line, separated by commas
+
+
+% ---------------------------------------------------------------------------- %
+% These are optional
+%
+%\SANDrePrintDate{}     % May be repeated for successive printings
+%\SANDsupersed{}{}      % {Old SAND number}{Old date}
+
+
+% ---------------------------------------------------------------------------- %
+% Build your markings. See example files and SAND Report Guide
+%
+%\SANDreleaseType{}
+%\SANDmarkTopBottomCoverBackTitle{}
+%\SANDmarkBottomCover{}
+%\SANDmarkTopBottomCoverTitle{}
+%\SANDmarkTop{}
+%\SANDmarkBottom{}
+%\SANDmarkTopBottom{}
+%\SANDmarkCover{}
+%\SANDmarkCoverTitle{}
+
+
+% ---------------------------------------------------------------------------- %
+% Start the document
+%
+\begin{document}
+\maketitle
+
+% ------------------------------------------------------------------------ %
+% An Abstract is required for SAND reports
+%
+\begin{abstract}
+This document is intended to help new developers get started
+contributing to Albany. Albany is the main demonstration application
+of the AgileComponets strategy. It is a PDE code that strives to be
+built almost entirely from functionality in reusable libraries (such
+as Trilinos/STK/Dakota). Albany plays a large role in demonstrating
+and maturing functionality of new libraries, and also in the
+interfaces and interoperability between these libraries. It also
+serves to expose gaps in coverage of capabilities and
+interface. Another aspect of the project is to serve as a template for
+writing new applications against Trilinos/STK/Dakota. It uses CMake,
+CTest, and git, and grabs almost all configuration information from
+installed Trilinos. Albany was granted OpenSource license to share
+with collaborators.
+\end{abstract}
+
+
+% ------------------------------------------------------------------------ %
+% An Acknowledgment section is optional but important
+%
+%\clearpage
+%\chapter*{Acknowledgment}
+
+% ------------------------------------------------------------------------ %
+% The table of contents and list of figures and tables
+%
+\cleardoublepage            % TOC needs to start on an odd page
+\tableofcontents
+\listoffigures
+\listoftables
+
+
+%    % ---------------------------------------------------------------------- %
+%    % An optional preface or Foreword
+%    \clearpage
+%    \chapter*{Preface}
+%    \addcontentsline{toc}{chapter}{Preface}
+%
+%
+%    % ---------------------------------------------------------------------- %
+%    % An optional executive summary
+%    \clearpage
+%    \chapter*{Summary}
+%    \addcontentsline{toc}{chapter}{Summary}
+
+
+% ---------------------------------------------------------------------- %
+% An optional glossary. We don't want it to be numbered
+%\clearpage
+%\chapter*{Nomenclature}
+%\addcontentsline{toc}{chapter}{Nomenclature}
+%\begin{description}
+%\item[Term 1]
+%   Description
+%\item[Term 2]
+%   Description
+%\item[Term 3]
+%    Description
+%\end{description}
+
+
+% ---------------------------------------------------------------------- %
+% This is where the body of the report begins; usually with an Introduction
+%
+\SANDmain           % Start the main part of the report
+
+\chapter{Introduction}
+\label{Intro}
+
+Albany is the main demonstration application of the AgileComponets
+strategy. It is a PDE code that strives to be built almost entirely
+from functionality in reusable libraries (such as
+Trilinos/STK/Dakota). Albany plays a large role in demonstrating and
+maturing functionality of new libraries, and also in the interfaces
+and interoperability between these libraries. It also serves to expose
+gaps in our coverage of capabilities and interface. Another aspect of
+the project is to serve as a template for writing new applications
+against Trilinos/STK/Dakota. It uses CMake, CTest, and git, and grabs
+almost all configuration information from installed Trilinos. Albany
+was granted OpenSource license to share with collaborators.
+
+\section{Distinguishing Capabilities}
+
+The highlight of Albany is the PDE assembly. The template-based
+generic programming approach allows developers to just program for
+residual equations, and all manner of derivatives and polynomial
+propogations get automatically computed with no development
+effort. This approach uses Phalanx for rapid and flexible addition of
+physics, which works closely with Sacado and Stokhos for automatic
+propagation of derivatives and UQ. Intrepid and Shards packages are
+used for the local discretization. A second strength of Albany is the
+demonstration of transformational analysis algorithms. Albany
+demonstrates the clean use of all Solver/Analysis tools in Trilinosi
+(through Piro, which was developed in Albany) including NOX, LOCA,
+Rythmos, Stokhos, and all of Dakota. On any problem we not only get a
+solution, but can also get sensitivities, run optimization problems,
+and perform uncertainty quantification. All of these approaches can
+access all of the linear solver options in Trilinos that are exposed
+by the Stratimikos layer. The third main strength is the early
+adoption of STK, the sierra toolkit libraries. This includes the mesh
+database, IO, and willl be growing soon to include mesh changes for
+stk\_rebalance and stk\_adapt.  
+
+\section{Physics Sets: what PDEs}
+
+Albany strives for a bit of a paradigm shift, where a code is defined
+more by its analysis capabilities and data structure choices, which
+are difficult to change, and less by the physcics set. Much of Albany
+was developed in FY08-10 for solving simple heat transfer and poisson
+equations. With nonlinear source terms, this was adequate for
+developing and verifying all the hooks for analysis algorithms from
+sensitivity analysis to UQ. Recenty, Navier-Stokes equations have been
+added to the general Albany physics set. In FY11, two new projects
+were funded to develop application codes on Albany. These physics sets
+are developed in the Albany code, yet are distinct in many ways as
+well: C++ namespace, project teams, and funding sources.  
+
+\section{LCM: Labratory for Computational Mechanics}
+
+The first application project build on Albany is the LCM, or
+Laboratory for Computational Mechanics [Ostien-PI, Salinger, Mota,
+  Foulk, Littlewood]. This project is creating an OpenSource
+computational mechanics RandD code, with a particular emphasis on
+fracture and failure models. The infrastructure in Albany, which is
+aimed at rapid development of new physics with automated generation of
+analytic derivatives and sensitivities, is well suited for trying out
+new discretizations and new material models. The links to Dakota and
+handling of model parameter are set up to perform calibration and UQ
+studies. LCM serves as a research tool that can be shared with
+academics. Successful research ideas and code will be migrated to the
+production mechanics applications of Adagio and Presto. Albany can
+link against the LAME material library, and we are looking at ways of
+getting derivative info through it for more robust solution
+algorithms.  
+
+
+\subsection{Mechanics and Multi-Physics}
+Short discussion of Thermomechanics, Poromechanics, Hydrogen
+diffusion and defrmation problems.
+
+\section{QCAD: Quantum Device Design}
+
+The other new application code built on Albany is the QCAD quantum dot
+design LDRD (Schrodinger-Poisson) [Muller-PI, Gao, Nielsen,
+  Salinger]. A poisson solve for classical representation of charge
+distribution is coupled to a Schrodinger region for quantum effects.
+Embedded UQ
+
+\section {Uncertainity Quantification (UQ)}
+Albany is also serving as a main development and demonstration
+environment for embedded UQ research [Phipps-PI, Wildey]. By
+leveraging the templated fill environment, polynomial representations
+can be directly propogated through the physics assembly. Many issues
+with data structures, parallelization, and linear algebra are being
+addressed.  
+
+\section{NEAMS}
+
+\section{FELIX}
+
+\section{Nuclear Energy Reactor}
+
+\section{Further development}
+
+The new applications have exposed many weaknesses in the Albany code,
+and more importantly, some gaps in the aggregate Agile Components
+infrastructure. For instance, an initial implementation in Trilinos of
+time integrators has been developed in responses to the needs of the
+transient dynamics problem. Future development includes: load
+balancing and uniform mesh refinement, transitioning to Tpetra and a
+templated software stack, being a testbed for embedded UQ methods,
+early adoption of architecture-aware PDE assembly kernels, and
+eventually a full error estimation and adaptivity capability. Albany
+is making the transition from a demonstration prototype to a research
+code. It still seriously lacks full boundary condition support, any
+multi-physics capability, post-processing, and documentation (all the
+hard stuff). The sister code Drekar [Pawlowski, Cyr] has developed the
+infrastructure for multi-physics applications with varying physics and
+discretizations, which Albany does not support.
+
+\chapter{Building}
+\label{build}
+
+Building Albany, at a minimum, requires nothing but an installation of
+Trilinos. The AgileComponents philosophy is geared toward usage of
+multiple packes from the Trilinos suite of codes. Therefore, task
+number one is the acquisition, build, and installation of
+Trilinos. This chapter will layout the requirements for building the
+necessary third party libraries, as well as building and installing
+the proper Trilinos packages.  It is assumed that at this point you
+have a copy of the Albany code, possibly via a clone of the git
+repository. In the {\tt Albany/doc} directory there are some example
+script that provide templates for various steps of the build
+process. In particular, the configuration stage for Trilinos requires
+a CMake script, and an example can be found in the {\tt
+  trilinos-cmake} file, which will be reproduced here for
+completeness.
+\section{Example cmake file to configure Trilinos}
+\begin{verbatim}
+#/********************************************************************\
+#*            Albany, Copyright (2010) Sandia Corporation             *
+#*                                                                    *
+#* Notice: This computer software was prepared by Sandia Corporation, *
+#* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
+#* the Department of Energy (DOE). All rights in the computer software*
+#* are reserved by DOE on behalf of the United States Government and  *
+#* the Contractor as provided in the Contract. You are authorized to  *
+#* use this computer software for Governmental purposes but it is not *
+#* to be released or distributed to the public. NEITHER THE GOVERNMENT*
+#* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
+#* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
+#* including this sentence must appear on any copies of this software.*
+#*    Questions to Andy Salinger, agsalin@sandia.gov                  *
+#\********************************************************************/
+
+# This is a sample Trilinos configuration script for Albany.
+#
+# Boost is required, but just needs to be unpacked,
+# not compiled. Version _1_40 or newer.
+#
+# There are two optional build choices, commented below
+#   these are for Dakota and Exodus I/O capabilites.
+#
+# Albany automatically queries the Trilinos build to 
+# know if these capabilities are enabled or disabled.
+#
+#
+# All paths must me changed for your build (search "agsalin")
+#
+rm CMakeCache.txt
+
+cmake -D CMAKE_INSTALL_PREFIX:PATH=/home/agsalin/Trilinos/build_july10/install \
+      -D Boost_INCLUDE_DIRS:FILEPATH="/home/agsalin/install/boost_1_42_0" \
+      -D CMAKE_BUILD_TYPE:STRING=NONE \
+      -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
+      -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
+      -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
+\
+      -D Trilinos_ENABLE_Teuchos:BOOL=ON \
+      -D Trilinos_ENABLE_Shards:BOOL=ON \
+      -D Trilinos_ENABLE_Sacado:BOOL=ON \
+      -D Trilinos_ENABLE_Epetra:BOOL=ON \
+      -D Trilinos_ENABLE_EpetraExt:BOOL=ON \
+      -D Trilinos_ENABLE_Ifpack:BOOL=ON \
+      -D Trilinos_ENABLE_AztecOO:BOOL=ON \
+      -D Trilinos_ENABLE_Amesos:BOOL=ON \
+      -D Trilinos_ENABLE_Anasazi:BOOL=ON \
+      -D Trilinos_ENABLE_Belos:BOOL=ON \
+      -D Trilinos_ENABLE_ML:BOOL=ON \
+      -D Trilinos_ENABLE_Phalanx:BOOL=ON \
+      -D Trilinos_ENABLE_Intrepid:BOOL=ON \
+      -D Trilinos_ENABLE_NOX:BOOL=ON \
+      -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
+      -D Trilinos_ENABLE_Thyra:BOOL=ON \
+      -D Trilinos_ENABLE_Rythmos:BOOL=ON \
+      -D Trilinos_ENABLE_MOOCHO:BOOL=ON \
+      -D Trilinos_ENABLE_OptiPack:BOOL=ON \
+      -D Trilinos_ENABLE_GlobiPack:BOOL=ON \
+      -D Trilinos_ENABLE_Stokhos:BOOL=ON \
+      -D Trilinos_ENABLE_Isorropia:BOOL=ON\
+      -D Trilinos_ENABLE_Piro:BOOL=ON \
+      -D Trilinos_ENABLE_STK:BOOL=ON \
+      -D Trilinos_ENABLE_Teko:BOOL=ON \
+\
+      -D Trilinos_ENABLE_Mesquite:BOOL=OFF\
+      -D Trilinos_ENABLE_Zoltan:BOOL=ON\
+      -D Trilinos_ENABLE_FEI:BOOL=OFF\
+\
+      -D Trilinos_ENABLE_TESTS:BOOL=OFF \
+      -D Piro_ENABLE_TESTS:BOOL=ON \
+      -D Trilinos_ENABLE_EXAMPLES:BOOL=OFF \
+      -D TPL_ENABLE_MPI:BOOL=ON \
+      -D TPL_ENABLE_Boost:BOOL=ON \
+\
+      -D Phalanx_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
+      -D Stokhos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
+      -D Stratimikos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
+\
+      -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
+      -D Trilinos_VERBOSE_CONFIGURE:BOOL=OFF \
+      -D CMAKE_CXX_FLAGS:STRING="-g -O2 -fno-var-tracking" \
+      -D Trilinos_ENABLE_Export_Makefiles:BOOL=ON \
+       ../
+
+#
+# Optional build capabilities:
+# (1) TriKota is a Trilinos package that builds the
+#     Dakota libraries, for optimization and UQ. See
+#     TriKota web page for how to unpack Dakota.
+#     Dakota requires boost libraries. See boost-make
+#     sample script for how to build these libraries.
+#
+#        -D Trilinos_ENABLE_TriKota:BOOL=ON \
+#        -D TriKota_ENABLE_DakotaCMake:BOOL=ON \
+#        -D DAKOTA_ENABLE_TESTS:BOOL=OFF \
+#        -D Boost_LIBRARY_DIRS:FILEPATH="$BOOSTDIR/lib" \
+#
+#
+# (2) These 5 lines regarding  SEACAS/netcdf  are needed
+#     for reading exodus meshes, but require an
+#     installed netcdf. Also used for Pamgen meshes.
+#        -D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
+#        -D Trilinos_ENABLE_Pamgen:BOOL=ON \
+#        -D TPL_ENABLE_Netcdf:BOOL=ON \
+#        -D TPL_Netcdf_INCLUDE_DIRS:PATH=/home/agsalin/install/netcdf-4.0.1/include \
+#        -D Netcdf_LIBRARY_DIRS:PATH=/home/agsalin/install/netcdf-4.0.1/lib \
+\end{verbatim}
+
+\section{Third Party Libraries}
+
+To build Trilinos with the aim of building Albany, a number of
+software dependencies must be met. They are termed third party
+libraries (TPLs). 
+\begin{enumerate}
+\item Git
+\item A recent version of Boost
+\item NetCDF - version $\ge$ 4.1.3 (version $>$ 4.2 also requires
+  HDF5)
+\item CMake - version $>$ 2.7 should be fine
+\item Some version of MPI, possibly openmpi - version $\ge$ 1.4.3
+\item BLAS/LAPACK - systeminstalled version on relatively modern
+  Linux/Mac machine works
+\item Optional - a recent version (4.7) of GCC
+\end{enumerate}
+There are some other products that can aid workflow.
+\begin{enumerate}
+\item eg -- Easy Git, makes some things clearer and cleaner
+\item doxygen/graphviz and dot - to build the doxygen documentation
+  and visualize the phalanx graphs
+\item paraview to post-process
+\item cubit for mesh generation (not currently free, for now)
+\item Optional - php (a php server is required if you want a local
+  build of the Albany website, useful for visualizing documentation,
+  but not necessary)
+\end{enumerate}
+
+\section{Example CMake File for Albany}
+The following cmake configuration script assumes the same
+directory structure as that of Trilinos.
+\begin{verbatim}
+#!/bin/bash
+rm CMakeCache.txt
+cmake  \
+    -D ALBANY_TRILINOS_DIR:FILEPATH=<location_of_trilinos_install> \
+    -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
+    -D ENABLE_LCM:BOOL=OFF \
+    ../
+\end{verbatim}
+After invoking the script, it remains to build Albany and run the
+tests, which can be accomplished from within the build directory using
+the following command.
+\begin{verbatim}
+% make && ctest
+\end{verbatim}
+If everyting is well, all the tests should pass.
+
+\chapter{Workflow}
+\label{workflow}
+
+This chapter consists of introductions to using Git and CMake in your
+development workflow.
+
+\section{Using Git}
+
+The following are some workflow suggestions and general tips for using
+git. Of note is the autorebase feature provided by git, which in
+essence, upon pulling hides away your local work, updates your local
+repository against the remote master, and then applies your local
+changes "on top". This is good and safe and should be done early and
+often. To set this up, consult the following contents of the following
+gitconfig file.
+
+\begin{verbatim}
+===================== contents of ~/.gitconfig
+
+[user]
+        name = <name>
+        email = <redacted>
+[branch]
+        autosetuprebase = always
+[color]
+        ui = true
+        branch = auto
+        diff = auto
+        status = auto
+[core]
+        whitespace = -trailing-space,-space-before-tab
+        preloadingindex = true
+        preloadindex = true
+
+[branch "master"]
+        rebase = true
+
+
+====================== end contents
+\end{verbatim}
+
+It is encouraged for anyone to, at least, provide the [user] section
+such that the checkin messages are meaningful. You can do this by
+editing the .gitconfig file in your home directory (or creating it if
+it is not there) to include the contents above, or some subset.
+
+The following is then a list some useful git commands. Note most of
+the time git and eg are interchangeable. However there are a few
+places where eg is arguably more useful.
+
+\begin{itemize}
+\item to clone Trilinos and Albany into ./Trilinos and ./Albany
+\begin{verbatim}
+% git/eg clone <user>@software.sandia.gov:/space/git/Trilinos
+% git/eg clone <user>@software.sandia.gov:/space/git/Albany
+\end{verbatim}
+
+\item to pull the current repository
+\begin{verbatim}
+% git pull
+\end{verbatim}
+
+\item to push changes to the master
+\begin{verbatim}
+% git push
+\end{verbatim}
+
+\item to view the log of checkins to the repository
+\begin{verbatim}
+% git/eg log
+\end{verbatim}
+NB: eg log is much cleaner
+
+\item to prepare local currently tracked modified files to be committed
+\begin{verbatim}
+% git/eg add/stage <path_to_file>/<file>
+\end{verbatim}
+NB: git add and git stage work virtually the same in this case
+
+\item to prepare newly created files to be committed
+\begin{verbatim}
+% git/eg add <path_to_file>/<file>
+\end{verbatim}
+
+\item example workflow (using eg, but git would be the same)
+\begin{verbatim}
+% eg pull
+<edit some files>
+# now build
+% make
+# run the tests
+% ctest
+# tests didn't pass so 
+<fix some bugs>
+# build, run tests again
+% make && ctest
+#tests look good, commit local changes>
+% eg add <path_to_file>/<file>
+# check that everything is kosher
+% eg status
+# should say something like, "staged files ready to be committed"
+% eg commit
+# don't forget to write a nice one line description, 
+# followed by more detail if you like
+# then pull and test again before you push
+% eg pull
+% make
+% ctest
+# if nothing has broken
+%eg push
+\end{verbatim}
+
+\item hypothetically, pulled changes don't compile (this will happen)
+\begin{verbatim}
+# how to recover
+# check the log to see if there is an obvious checkin causing the error
+# there will be a tag, something like master~#
+# then use the following syntax, I'll use #=5 for demonstration
+# here eg is required
+% eg reset --working-copy master~5
+\end{verbatim}
+
+\item another hypothetical, you have lots of changes locally, but
+  you'd like to pull, and you haven't committed anything
+\begin{verbatim}
+# you can use the stash command
+% eg stash save workInProgress
+# now you can pull without issue
+% eg pull
+# then if you want to, you can apply your changes
+% eg stash apply workInProgress
+# then resolve conflicts as necessary
+\end{verbatim}
+\end{itemize}
+
+\section{Using CMake}
+
+Need to write up how to add and file, add a test, and having a
+conditional ENABLE\_MYCRUD compile option.
+
+
+% ---------------------------------------------------------------------- %
+% References
+%
+\clearpage
+% If hyperref is included, then \phantomsection is already defined.
+% If not, we need to define it.
+\providecommand*{\phantomsection}{}
+\phantomsection
+\addcontentsline{toc}{chapter}{References}
+\bibliographystyle{plain}
+\bibliography{gettingStarted}
+
+% ---------------------------------------------------------------------- %
+%
+%\appendix
+%\chapter{Notation}
+% \printindex
+
+\begin{SANDdistribution}[CA]% or [CA]
+  % \SANDdistCRADA        % If this report is about CRADA work
+  % \SANDdistPatent       % If this report has a Patent Caution or Patent Interest
+  % \SANDdistLDRD         % If this report is about LDRD work
+
+  % External Address Format: {num copies}{Address}
+  \SANDdistExternal{}{}
+  \bigskip
+
+  % The following MUST BE between the external and internal distributions!
+  % \SANDdistClassified % If this report is classified
+
+  % Internal Address Format: {num copies}{Mail stop}{Name}{Org}
+  \SANDdistInternal{}{}{}{}
+
+  % Mail Channel Address Format: {num copies}{Mail Channel}{Name}{Org}
+  \SANDdistInternalM{}{}{}{}
+\end{SANDdistribution}
+
+
+% The second printing
+%\begin{SANDreDistribution}
+%    \SANDdistExternal{}{}
+%    \bigskip
+%    \SANDdistInternal{}{}{}{}
+%    \SANDdistInternalM{}{}{}{}
+%\end{SANDreDistribution}
+
+\end{document}
