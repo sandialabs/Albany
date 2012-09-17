@@ -75,7 +75,7 @@ struct StateStruct {
   //enum InitType {Zero, Identity, Restart, UndefinedInit};
 
   StateStruct (std::string name_): name(name_), responseIDtoRequire(""), output(true), 
-	restartDataAvailable(false), saveOldState(false) {};
+	restartDataAvailable(false), saveOldState(false), pParentStateStruct(NULL) {};
    //StateStruct (std::string name_): name(name_), entity(UndefinedEntity), initType(UndefinedInit), output(true) {};
   ~StateStruct () {};
 
@@ -91,10 +91,9 @@ struct StateStruct {
   std::string responseIDtoRequire; //If nonzero length, the responseID for response 
                                    // field manager to require (assume dummy data layout)
   bool output;
-// If true, we are starting from a restart and there is restart data available for this state.
-// Note: This is work in progress - we need to signify to start from a restart using InitType eventually.
   bool restartDataAvailable;
   bool saveOldState; // Bool that this state is to be copied into name+"_old"
+  StateStruct *pParentStateStruct; // If this is a copy (name = parentName+"_old"), ptr to parent struct
 
   private:  
     StateStruct ();

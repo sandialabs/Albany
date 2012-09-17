@@ -178,6 +178,7 @@ SET(SOURCES ${SOURCES}
         evaluators/PHAL_GatherCoordinateVector.cpp
         evaluators/PHAL_CahnHillRhoResid.cpp
         evaluators/PHAL_CahnHillWResid.cpp
+        evaluators/PHAL_CahnHillElasResid.cpp
         evaluators/PHAL_CahnHillChemTerm.cpp
         evaluators/PHAL_LangevinNoiseTerm.cpp
         evaluators/PHAL_JouleHeating.cpp
@@ -246,6 +247,8 @@ SET(HEADERS ${HEADERS}
         evaluators/PHAL_CahnHillRhoResid_Def.hpp
         evaluators/PHAL_CahnHillWResid.hpp
         evaluators/PHAL_CahnHillWResid_Def.hpp
+        evaluators/PHAL_CahnHillElasResid.hpp
+        evaluators/PHAL_CahnHillElasResid_Def.hpp
         evaluators/PHAL_CahnHillChemTerm.hpp
         evaluators/PHAL_CahnHillChemTerm_Def.hpp
         evaluators/PHAL_LangevinNoiseTerm.hpp
@@ -495,6 +498,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible.cpp
     ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible_Damage.cpp
     ${LCM_DIR}/evaluators/RIHMR.cpp
+    ${LCM_DIR}/evaluators/GursonHMR.cpp
     ${LCM_DIR}/evaluators/RecoveryModulus.cpp
     ${LCM_DIR}/evaluators/FaceFractureCriteria.cpp
     ${LCM_DIR}/evaluators/FaceAverage.cpp
@@ -667,6 +671,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible_Damage_Def.hpp
     ${LCM_DIR}/evaluators/RIHMR.hpp
     ${LCM_DIR}/evaluators/RIHMR_Def.hpp
+    ${LCM_DIR}/evaluators/GursonHMR.hpp
+    ${LCM_DIR}/evaluators/GursonHMR_Def.hpp
     ${LCM_DIR}/evaluators/RecoveryModulus.hpp
     ${LCM_DIR}/evaluators/RecoveryModulus_Def.hpp
     ${LCM_DIR}/evaluators/FaceFractureCriteria.hpp

@@ -281,6 +281,10 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
   validPL->set<bool>("Interleaved Ordering", true, "Flag for interleaved or blocked unknown ordering");
   validPL->set<bool>("Separate Evaluators by Element Block", false,
                      "Flag for different evaluation trees for each Element Block");
+  Teuchos::Array<std::string> defaultFields;
+  validPL->set<Teuchos::Array<std::string> >("Restart Fields", defaultFields, 
+                     "Fields to pick up from the restart file when restarting");
+
 
   return validPL;
 }

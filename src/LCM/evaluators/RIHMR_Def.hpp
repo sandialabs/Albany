@@ -43,7 +43,7 @@ namespace LCM {
           p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
       stress(p.get<std::string>("Stress Name"),
           p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
-      Fp(p.get<std::string>("Fp Name"),
+      logFp(p.get<std::string>("logFp Name"),
           p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
       eqps(p.get<std::string>("Eqps Name"),
           p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
@@ -69,19 +69,19 @@ namespace LCM {
     this->addDependentField(hardeningModulus);
     this->addDependentField(recoveryModulus);
 
-    fpName = p.get<std::string>("Fp Name") + "_old";
+    logFpName = p.get<std::string>("logFp Name") + "_old";
     eqpsName = p.get<std::string>("Eqps Name") + "_old";
     isoHardeningName = p.get<std::string>("IsoHardening Name") + "_old";
 
     this->addEvaluatedField(stress);
-    this->addEvaluatedField(Fp);
+    this->addEvaluatedField(logFp);
     this->addEvaluatedField(eqps);
     this->addEvaluatedField(isoHardening);
 
     // scratch space FCs
-    Fpinv.resize(worksetSize, numQPs, numDims, numDims);
-    FpinvT.resize(worksetSize, numQPs, numDims, numDims);
-    Cpinv.resize(worksetSize, numQPs, numDims, numDims);
+    //Fpinv.resize(worksetSize, numQPs, numDims, numDims);
+    //FpinvT.resize(worksetSize, numQPs, numDims, numDims);
+    //Cpinv.resize(worksetSize, numQPs, numDims, numDims);
 
     this->setName("Stress" + PHX::TypeString<EvalT>::value);
 
@@ -100,7 +100,7 @@ namespace LCM {
     this->utils.setFieldData(hardeningModulus, fm);
     this->utils.setFieldData(yieldStrength, fm);
     this->utils.setFieldData(recoveryModulus, fm);
-    this->utils.setFieldData(Fp, fm);
+    this->utils.setFieldData(logFp, fm);
     this->utils.setFieldData(eqps, fm);
     this->utils.setFieldData(isoHardening, fm);
   }
@@ -122,18 +122,38 @@ namespace LCM {
     ScalarT Phi, p, dgam, isoH;
     ScalarT sq23 = std::sqrt(2. / 3.);
 
-    Albany::MDArray Fpold = (*workset.stateArrayPtr)[fpName];
+    Albany::MDArray logFpold = (*workset.stateArrayPtr)[logFpName];
     Albany::MDArray eqpsold = (*workset.stateArrayPtr)[eqpsName];
     Albany::MDArray isoHardeningold = (*workset.stateArrayPtr)[isoHardeningName];
 
     // compute Cp_{n}^{-1}
-    RST::inverse(Fpinv, Fpold);
-    RST::transpose(FpinvT, Fpinv);
-    FST::tensorMultiplyDataData<ScalarT>(Cpinv, Fpinv, FpinvT);
+    //RST::inverse(Fpinv, Fpold);
+    //RST::transpose(FpinvT, Fpinv);
+    //FST::tensorMultiplyDataData<ScalarT>(Cpinv, Fpinv, FpinvT);
 
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
       for (std::size_t qp = 0; qp < numQPs; ++qp) {
-        // local parameters
+
+    	  // compute Cp_{n}^{-1}
+          int cell_int = int(cell);
+          int qp_int = int(qp);
+          LCM::Tensor<ScalarT, 3> logFp_tensor(logFpold(cell_int, qp_int, 0, 0),
+              logFpold(cell_int, qp_int, 0, 1),
+              logFpold(cell_int, qp_int, 0, 2),
+              logFpold(cell_int, qp_int, 1, 0),
+              logFpold(cell_int, qp_int, 1, 1),
+              logFpold(cell_int, qp_int, 1, 2),
+              logFpold(cell_int, qp_int, 2, 0),
+              logFpold(cell_int, qp_int, 2, 1),
+              logFpold(cell_int, qp_int, 2, 2));
+
+          Fp = LCM::exp(logFp_tensor);
+          Fpold = Fp;
+          Fpinv = LCM::inverse(Fp);
+          FpinvT = LCM::transpose(Fpinv);
+          Cpinv = LCM::dot(Fpinv, FpinvT);
+
+    	  // local parameters
         kappa = elasticModulus(cell, qp)
               / (3. * (1. - 2. * poissonsRatio(cell, qp)));
         mu = elasticModulus(cell, qp) / (2. * (1. + poissonsRatio(cell, qp)));
@@ -148,8 +168,9 @@ namespace LCM {
           for (std::size_t j = 0; j < numDims; ++j)
             for (std::size_t p = 0; p < numDims; ++p)
               for (std::size_t q = 0; q < numDims; ++q)
-                be(i, j) += Jm23 * defgrad(cell, qp, i, p)
-                    * Cpinv(cell, qp, p, q) * defgrad(cell, qp, j, q);
+                   be(i,j) += Jm23 * defgrad(cell,qp, i,p) * Cpinv(p,q) * defgrad(cell,qp,j,q);
+            	  //be(i, j) += Jm23 * defgrad(cell, qp, i, p)
+                    //* Cpinv(cell, qp, p, q) * defgrad(cell, qp, j, q);
 
         trd3 = trace(be) / 3.;
         mubar = trd3 * mu;
@@ -228,22 +249,37 @@ namespace LCM {
           A = dgam * n;
           expA = LCM::exp<ScalarT>(A);
 
-          for (std::size_t i = 0; i < numDims; ++i) {
-            for (std::size_t j = 0; j < numDims; ++j) {
-              Fp(cell, qp, i, j) = 0.0;
-              for (std::size_t p = 0; p < numDims; ++p) {
-                Fp(cell, qp, i, j) += expA(i, p) * Fpold(cell, qp, p, j);
-              }
-            }
-          }
+//          for (std::size_t i = 0; i < numDims; ++i) {
+//            for (std::size_t j = 0; j < numDims; ++j) {
+//              Fp(cell, qp, i, j) = 0.0;
+//              for (std::size_t p = 0; p < numDims; ++p) {
+//                Fp(cell, qp, i, j) += expA(i, p) * Fpold(cell, qp, p, j);
+//              }
+//            }
+//          }
+			for (std::size_t i = 0; i < numDims; ++i) {
+			  for (std::size_t j = 0; j < numDims; ++j) {
+				Fp(i, j) = 0.0;
+				for (std::size_t p = 0; p < numDims; ++p) {
+				  Fp(i, j) += expA(i, p) * Fpold(p, j);
+				}
+			  }
+			}
         } else {
           // set state variables to old values
           isoHardening(cell, qp) = isoHardeningold(cell,qp);
           eqps(cell, qp) = eqpsold(cell, qp);
-          for (std::size_t i = 0; i < numDims; ++i)
-            for (std::size_t j = 0; j < numDims; ++j)
-              Fp(cell, qp, i, j) = Fpold(cell, qp, i, j);
+          Fp = Fpold;
+//          for (std::size_t i = 0; i < numDims; ++i)
+//            for (std::size_t j = 0; j < numDims; ++j)
+//              Fp(cell, qp, i, j) = Fpold(cell, qp, i, j);
         }
+
+
+        logFp_tensor = LCM::log(Fp);
+		  for (std::size_t i = 0; i < numDims; ++i)
+		    for (std::size_t j = 0; j < numDims; ++j)
+		    	logFp(cell,qp,i,j) = logFp_tensor(i,j);
 
         // compute pressure
         p = 0.5 * kappa * (J(cell, qp) - 1 / (J(cell, qp)));
