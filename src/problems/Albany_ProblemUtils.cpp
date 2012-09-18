@@ -32,7 +32,7 @@ Albany::getIntrepidBasis(const CellTopologyData& ctd, bool compositeTet)
    const int& numDim = ctd.dimension;
    std::string name = ctd.name;
 
-#ifdef ALBANY_DEBUG
+#ifdef ALBANY_VERBOSE
    cout << "CellTopology is " << name << " with nodes " << numNodes << "  dim " << numDim << endl;
 #endif
    if (name == "Line_2" )

@@ -188,6 +188,14 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
   bool composite = false;
   if ( materialDB->isElementBlockParam(elementBlockName,"Use Composite Tet 10") ) 
     composite = materialDB->getElementBlockParam<bool>(elementBlockName,"Use Composite Tet 10");
+
+  // Surface element checking
+  bool surfaceElement = false;
+  if ( materialDB->isElementBlockParam(elementBlockName,"Surface Element") )
+    surfaceElement = materialDB->getElementBlockParam<bool>(elementBlockName,"Surface Element");
+
+  TEUCHOS_TEST_FOR_EXCEPTION(composite && surfaceElement, std::logic_error, 
+                             "Currently surface elements are not supported with the composite tet");
   
   // get the intrepid basis for the given cell topology
   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
@@ -195,11 +203,53 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
 
   if (composite && meshSpecs.ctd.dimension==3 && meshSpecs.ctd.node_count==10) cellType = comp_cellType;
 
-  numNodes = intrepidBasis->getCardinality();
-  const int worksetSize = meshSpecs.worksetSize;
-
   Intrepid::DefaultCubatureFactory<RealType> cubFactory;
   RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+
+  if (surfaceElement)
+  {
+    string name = meshSpecs.ctd.name;
+    if ( name == "Triangle_3" || name == "Quadrilateral_4" )
+    {
+      intrepidBasis = rcp(new Intrepid::Basis_HGRAD_LINE_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
+      cellType = rcp(new shards::CellTopology( shards::getCellTopologyData<shards::Line<2> >()) );
+      cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+    }
+    // else if ( name == "Tetrahedron_4" )
+    // {
+    //   intrepidBasis = rcp(new Intrepid::Basis_HGRAD_LINE_C1_FEM<RealType, FieldContainer<RealType> >() );
+    //   cellType = rcp(new shards::CellTopology( shards::getCellTopologyData<shards::Line<2> >()) );
+    //   cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+    // }
+    // else if ( name == "Tetrahedron_10" && !compositeTet )
+    // {
+    //   intrepidBasis = rcp(new Intrepid::Basis_HGRAD_LINE_C1_FEM<RealType, FieldContainer<RealType> >() );
+    //   cellType = rcp(new shards::CellTopology( shards::getCellTopologyData<shards::Line<2> >()) );
+    //   cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+    // }
+    else if ( name == "Wedge_6" )
+    {
+      intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TRI_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
+      cellType = rcp(new shards::CellTopology( shards::getCellTopologyData<shards::Triangle<3> >()) );
+      cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+    }
+    else if ( name == "Hexahedron_8" )   
+    {
+      intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
+      cellType = rcp(new shards::CellTopology( shards::getCellTopologyData<shards::Quadrilateral<4> >()) );
+      cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+    }
+    else if ( name == "Hexahedron_27" )
+    {
+      intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C2_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
+      cellType = rcp(new shards::CellTopology( shards::getCellTopologyData<shards::Quadrilateral<9> >()) );
+      cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+    }
+
+  }
+
+  numNodes = intrepidBasis->getCardinality();
+  const int worksetSize = meshSpecs.worksetSize;
 
   numDim = cubature->getDimension();
   numQPts = cubature->getNumPoints();
