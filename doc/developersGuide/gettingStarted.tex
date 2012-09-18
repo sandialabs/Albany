@@ -278,6 +278,22 @@ addressed.
 \section{NEAMS}
 
 \section{FELIX}
+A new project using Albany as a PDE solver is the PISCEES SciDAC-3 project
+joint between the BER ans ASCR dicisions of the office of science. This
+project is developing simulation tools for Ice Sheet dynamics (targeting
+Greenland and then Antarctica). The initial models going into the FELIX
+(Finite Element Land Ice Experiments) namespace within Albany area
+a 3D Stokes model with nonlinear viscosity
+formulation plus $2-3$ other models that are simplifications of Stokes.
+This project will drive much development in UQ through interactions 
+with Dakota. One unique feature of this project is that it will be able
+to use a mesh from LANL's MPAS framework, putting to test the abstraction
+layer that we put between the finite element asembly and the concrete
+STK Mesh implementation. Long term plans include adjoint for distributed
+boundary condition parameters, coupled temperature solves, and implicit
+advection of the Ice Sheet. The plan is for this code to be integrated
+into the CESM Community Earth System Model at NCAR as an option for the
+CISM Community Ice Sheet Model.
 
 \section{Nuclear Energy Reactor}
 
@@ -304,7 +320,7 @@ discretizations, which Albany does not support.
 
 Building Albany, at a minimum, requires nothing but an installation of
 Trilinos. The AgileComponents philosophy is geared toward usage of
-multiple packes from the Trilinos suite of codes. Therefore, task
+multiple packages from the Trilinos suite of codes. Therefore, task
 number one is the acquisition, build, and installation of
 Trilinos. This chapter will layout the requirements for building the
 necessary third party libraries, as well as building and installing
@@ -350,8 +366,8 @@ completeness.
 #
 rm CMakeCache.txt
 
-cmake -D CMAKE_INSTALL_PREFIX:PATH=/home/agsalin/Trilinos/build_july10/install \
-      -D Boost_INCLUDE_DIRS:FILEPATH="/home/agsalin/install/boost_1_42_0" \
+cmake -D CMAKE_INSTALL_PREFIX:PATH=/home/agsalin/Trilinos/build/install \
+      -D Boost_INCLUDE_DIRS:FILEPATH="/home/agsalin/install/boost_1_47_0" \
       -D CMAKE_BUILD_TYPE:STRING=NONE \
       -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
       -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
@@ -427,6 +443,25 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=/home/agsalin/Trilinos/build_july10/install \
 #        -D Netcdf_LIBRARY_DIRS:PATH=/home/agsalin/install/netcdf-4.0.1/lib \
 \end{verbatim}
 
+After executing this script, it should suffice to do
+\begin{verbatim}
+% make && ctest && make install
+\end{verbatim}
+where the enabled tests should pass. In the above script, this is
+just a handful of \texttt{piro} tests which are a good indicator
+if the build was successful.
+
+For runs using the exodus mesh database, which is the majority of
+examples and applications, it is necessary to have a set of the
+SEACAS tools installed on your machine. These can now be built
+from Trilinos. We recommend a separate build for these (as opposed
+to doing them as part of the Trilinos install above). The file 
+\texttt{Albany/doc/seacas-cmake} is a script that will configure 
+trilinos to build these tools.  Again, this should be followed
+by a  \texttt{make; make install} and making sure the executables,
+e.g. \texttt{epu}, are in your path.
+
+
 \section{Third Party Libraries}
 
 To build Trilinos with the aim of building Albany, a number of
@@ -456,8 +491,7 @@ There are some other products that can aid workflow.
 \end{enumerate}
 
 \section{Example CMake File for Albany}
-The following cmake configuration script assumes the same
-directory structure as that of Trilinos.
+The following cmake configuration script is enough to configure Albany.
 \begin{verbatim}
 #!/bin/bash
 rm CMakeCache.txt
@@ -467,13 +501,68 @@ cmake  \
     -D ENABLE_LCM:BOOL=OFF \
     ../
 \end{verbatim}
+Note that the \texttt{<location\_of\_trilinos\_install>} needs to be
+exacly the path in the \texttt{CMAKE\_INSTALL\_PREFIX} in the Trilinos
+build above.  This is typically executed from a subdirectory of Albany such as
+\texttt{build} or \texttt{build\_linux\_mpi\_20120920} depending on
+your personal directory-naming style.
+Note, that the final \texttt{   ../  } is the relative path to the Albany
+directory from the build directory where this script is invoked.
+
 After invoking the script, it remains to build Albany and run the
 tests, which can be accomplished from within the build directory using
 the following command.
 \begin{verbatim}
 % make && ctest
 \end{verbatim}
-If everyting is well, all the tests should pass.
+If everyting is well, all the tests should pass. 
+
+Numerous parts of the build process are taken from the Trilinos install.
+For instance, the compilers, compiler flags, and any paths to netcdf,
+boost, blas, lapack, etc., are taken from the Trilinos build and do not
+need to be repeated in the Albany configuration.
+
+In addition, the Albany build system will auto-detect what packages 
+were built in Trilinos and set defines in Albany to accommodate.
+For example, the presence of the Zoltan package in the Trilinos install
+will trigger the definition of \texttt{ALBANY\_ZOLTAN}  on compile lines. 
+Corresponding \texttt{\#ifdef ALBANY\_ZOLTAN} lines in the source code
+will toggle the compilation of capabilities in Albany that require
+Zoltan, such as \texttt{stk\_rebalance}. The same is true for Dakota,
+SEACASIoss (for reading exodus files), and MPI (versus serial).
+
+There are other CMake configuration options recognized by the
+Albany build system. (In addition, CMake has a standard set that
+can be found at the CMake websote.) Many of these are experimental
+options and not generally supported, but currrently include [default]:
+\begin{verbatim}
+ENABLE_LCM             & Bool flag to enable LCM physics sets [off] \\
+ENABLE_FELIX           & Bool flag to enable FELIX physics sets [on] \\
+ENABLE_ASCR            & Bool flag to enable ASCR embedded UQ algorithm research [off] \\
+ENABLE_LAME            & Bool flag to enable links to the LAME material library [off] \\
+LAME_INCLUDE_DIR       & Path to installed Lame include directory \\
+LAME_LIBRARY_DIR       & Path to installed Lame lib directory \\
+ENABLE_ALBANY_CI       & Flag to enable links to the CI configuration interaction library [off] \\
+ALBANY_CI_INCLUDE_DIR  & Path to installed CI include directory \\
+ALBANY_CI_LIBRARY_DIR  & Path to installed CI lib directory \\
+ALBANY_CXX_FLAGS       & Extra flags for the C++ compiler appended to those from Trilinos \\
+CMAKE_CXX_FLAGS        & Flags for the C++ compiler overwriting those from Trilinos \\
+\end{verbatim}
+
+\chapter{Albany Directory Structure}
+\label{}
+\section{Source Code Directories}
+  Delineate general albany code, stk dir, responsens, problems, evaluators,
+and how larger projects move problems and evaluators into their own subdir.
+
+\subsection{Namespaces and Naming Conventions}
+ Albany, PHAL, QCAD, LCM, FELIX, ...
+ could be better...
+
+ templated code has  \_Def
+
+\section{Other Directories}
+ examples, doc, doc/nightly, doc/doxygen, doc/webpage
 
 \chapter{Workflow}
 \label{workflow}
@@ -481,7 +570,7 @@ If everyting is well, all the tests should pass.
 This chapter consists of introductions to using Git and CMake in your
 development workflow.
 
-\section{Using Git}
+\section{Development Using Git}
 
 The following are some workflow suggestions and general tips for using
 git. Of note is the autorebase feature provided by git, which in
@@ -610,11 +699,24 @@ NB: git add and git stage work virtually the same in this case
 \end{verbatim}
 \end{itemize}
 
-\section{Using CMake}
+\section{Development Using CMake}
 
 Need to write up how to add and file, add a test, and having a
 conditional ENABLE\_MYCRUD compile option.
 
+\chapter{Albany Mailing Lists}
+All those interested in keeping up with Albany development should subscribe
+to the following mailman lists:
+\begin{itemize}
+\item albany-checkins  \texttt{ https://software.sandia.gov/mailman/listinfo/albany-checkins}
+\item albany-developers  \texttt{ https://software.sandia.gov/mailman/listinfo/albany-developers}
+\end{itemize}
+Developers making commits with any frequency should subscribe to the nightly test results
+(about 3 emails per night) since these test build/configuration/platform options that ]
+might not be part of your workflow.
+\begin{itemize}
+\item albany-regression  \texttt{ https://software.sandia.gov/mailman/listinfo/albany-regression}
+\end{itemize}
 
 % ---------------------------------------------------------------------- %
 % References
