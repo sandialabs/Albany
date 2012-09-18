@@ -216,8 +216,40 @@ algorithms.
 
 
 \subsection{Mechanics and Multi-Physics}
-Short discussion of Thermomechanics, Poromechanics, Hydrogen
-diffusion and defrmation problems.
+Many engineering applications are multi-physical, in which cases 
+mechanical behaviors  of the solid is largely depending on both 
+the constitutive responses and other physical processes taking 
+place within the solid. To accurately replicate and predict the multiphysics, 
+additional constraint must be added to the governing equations such that
+all physical process are represented properly. 
+LCM is equipped with a number of mixed finite element models aimed to capture
+the following multiphysical phenomena: thermomechanics, poromechanics, and hydrogen diffusion-deformation problems. 
+
+As the name implied, the thermomechanics problem deals with standard dissipative
+ solids under non-isothermal condition. In such a condition, deformation may
+  generates heat while heat diffusion may occur simultaneously within the body. 
+In LCM, the thermomechanical process is modeled by a multiplicative decomposition 
+of deformation gradient which takes account of the deformation induced by thermal
+ expansion, elastic energy storage and plastic dissipation. The balance of 
+linear momentum is coupled with the balance of energy equation to capture the
+ coupling between the solid deformation and thermal diffusion processes. 
+
+Poromechanics problem concerns with porous solids that is infiltrated with 
+liquid or gas. Examples of porous solids, including bones, soft tissues, sand, clay, 
+rock and concrete. The hydraulic-mechanical coupling is two-way. On the one hand,
+ deformation may trigger seepage within the porous media. On the other hand,  hydraulic response may also introduce time-dependence and gradient-dependence into the mechanical behavior as the transient diffusion take place. In LCM, this coupled physics is modeled via equal-order finite element spaces for displacement and pore pressure. Since this discretization choice may lead to spurious oscillation, an adaptive pressure projection stabilization scheme is introduced to guarantee stable numerical solutions in both infinitesimal and finite deformation regimes. 
+ 
+In addition, LCM is also capable of modeling hydrogen transport within metal. This
+ model is used to analyze how presence of hydrogen affects fracture of metals in
+ various concentration level. Since hydrogen-gas is increasingly popular to be used as 
+ an energy source, hydrogen embrittlement of metals is a key material issues one
+needed to address for future energy security. Mathematically, hydrogen transport can
+be modeled as a nonlinear convection-diffusion problem, in which the dislocation
+density may act as a source term that affects the distribution of hydrogen between
+the lattice site and the trapped site. To avoid spurious solutions commonly exhibited
+ in convection-diffusion problem at low diffusivity limit, we introduce an adaptively 
+stabilization scheme which may reduce to lumped and higher-order mass formulation
+in one dimension. 
 
 \section{QCAD: Quantum Device Design}
 
