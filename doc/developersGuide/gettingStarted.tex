@@ -701,8 +701,54 @@ NB: git add and git stage work virtually the same in this case
 
 \section{Development Using CMake}
 
-Need to write up how to add and file, add a test, and having a
+Need to add how to have a
 conditional ENABLE\_MYCRUD compile option.
+
+The following are some general steps to add new evaluators or problems, as well as new test problems to Albany CMakeLists. As an example, there are two newly created source and header files belonging to Albany LCM \verb+ myNewProblem.cpp, myNewProblem.hpp+ that you would like to add to the CMakeLists (same steps apply for other types of Albany problems or evaluators). 
+\begin{itemize}
+\item Add new problem files in \verb+<path_to_Albany_directory>/src/CMakeList.txt+ at the correspoinding section (in this example \verb+ALBANY_LCM+)
+\begin{verbatim}
+# LCM
+IF(ALBANY_LCM)
+ SET(LCM_DIR ${Albany_SOURCE_DIR}/src/LCM)
+ # LCM problems
+ SET(SOURCES ${SOURCES}
+ ${LCM_DIR}/problems/myNewProblem.cpp
+ )
+ SET(HEADERS ${HEADERS}
+ ${LCM_DIR}/problems/myNewProblem.hpp
+ )
+ENDIF()
+\end{verbatim}
+
+\item To add a test problem to Albany examples, first create a new directory \verb+<path_to_Albany_directory>/examples/myNewProblem+
+
+\item Within the new directory, create necessary input files to run the example, as well as a \verb+CMakeLists.txt+ file. A simple example \verb+CMakeLists.txt+ file may include the following 
+\begin{verbatim}
+# 1. Copy Input file from source to binary dir
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
+# 2. Name the test with the directory name
+get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+# 3. Create the test with this name and standard executable
+add_test(${testName} ${Albany.exe})
+\end{verbatim}
+NB: you may also copy and paste existing test examples in Albany, and modify according to your new problem. 
+
+\item Add in \verb+<path_to_Albany_directory>/examples/CMakeLists.txt+ the directory name of the newly created example at corresponding sectioin (again, in this example \verb+ALBANY_LCM+). 
+\begin{verbatim}
+IF(ALBANY_LCM)
+ add_subdirectory{myNewProblem}  
+ENDIF()
+\end{verbatim}
+
+\item Compile and test to make sure the newly added problem passes ctest. 
+\begin{verbatim}
+% cd <path_to_Albany_directory>/build
+% make && ctest
+\end{verbatim}
+Once it passes ctest, you can push your changes to the master repository using the steps listed in the previous section.
+\end{itemize}
 
 \chapter{Albany Mailing Lists}
 All those interested in keeping up with Albany development should subscribe
