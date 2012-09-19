@@ -115,6 +115,7 @@ namespace Albany {
     //! state data
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState;
+
   };
 
 }
@@ -172,7 +173,7 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
   string materialModelName;
   materialModelName = materialDB->getElementBlockSublist(elementBlockName,"Material Model").get<string>("Model Name");
   TEUCHOS_TEST_FOR_EXCEPTION(materialModelName.length()==0, std::logic_error,
-                             "A meterial model must be defined for block: "+elementBlockName);
+                             "A material model must be defined for block: "+elementBlockName);
 
 #ifdef ALBANY_VERBOSE
   *out << "In MechanicsProblem::constructEvaluators" << endl;
@@ -194,6 +195,7 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
   if ( materialDB->isElementBlockParam(elementBlockName,"Surface Element") )
     surfaceElement = materialDB->getElementBlockParam<bool>(elementBlockName,"Surface Element");
 
+  // FIXME, really need to check for WEDGE_12 topologies
   TEUCHOS_TEST_FOR_EXCEPTION(composite && surfaceElement, std::logic_error, 
                              "Currently surface elements are not supported with the composite tet");
   
@@ -206,48 +208,36 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
   Intrepid::DefaultCubatureFactory<RealType> cubFactory;
   RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
 
+
+  // FIXME, this could probably go into the ProblemUtils just like the call to getIntrepidBasis
+  RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > surfaceBasis;
+  RCP<shards::CellTopology> surfaceTopology;
+  RCP<Intrepid::Cubature<RealType> > surfaceCubature;
   if (surfaceElement)
   {
-    string name = meshSpecs.ctd.name;
+     string name = meshSpecs.ctd.name;
     if ( name == "Triangle_3" || name == "Quadrilateral_4" )
     {
-      intrepidBasis = rcp(new Intrepid::Basis_HGRAD_LINE_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
-      cellType = rcp(new shards::CellTopology( shards::getCellTopologyData<shards::Line<2> >()) );
-      cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+      surfaceBasis = rcp(new Intrepid::Basis_HGRAD_LINE_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
+      surfaceTopology = rcp(new shards::CellTopology( shards::getCellTopologyData<shards::Line<2> >()) );
+      surfaceCubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
     }
-    // else if ( name == "Tetrahedron_4" )
-    // {
-    //   intrepidBasis = rcp(new Intrepid::Basis_HGRAD_LINE_C1_FEM<RealType, FieldContainer<RealType> >() );
-    //   cellType = rcp(new shards::CellTopology( shards::getCellTopologyData<shards::Line<2> >()) );
-    //   cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
-    // }
-    // else if ( name == "Tetrahedron_10" && !compositeTet )
-    // {
-    //   intrepidBasis = rcp(new Intrepid::Basis_HGRAD_LINE_C1_FEM<RealType, FieldContainer<RealType> >() );
-    //   cellType = rcp(new shards::CellTopology( shards::getCellTopologyData<shards::Line<2> >()) );
-    //   cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
-    // }
     else if ( name == "Wedge_6" )
     {
-      intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TRI_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
-      cellType = rcp(new shards::CellTopology( shards::getCellTopologyData<shards::Triangle<3> >()) );
-      cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+      surfaceBasis = rcp(new Intrepid::Basis_HGRAD_TRI_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
+      surfaceTopology = rcp(new shards::CellTopology( shards::getCellTopologyData<shards::Triangle<3> >()) );
+      surfaceCubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
     }
-    else if ( name == "Hexahedron_8" )   
+     else if ( name == "Hexahedron_8" )   
     {
-      intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
-      cellType = rcp(new shards::CellTopology( shards::getCellTopologyData<shards::Quadrilateral<4> >()) );
-      cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
-    }
-    else if ( name == "Hexahedron_27" )
-    {
-      intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C2_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
-      cellType = rcp(new shards::CellTopology( shards::getCellTopologyData<shards::Quadrilateral<9> >()) );
-      cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+      surfaceBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
+      surfaceTopology = rcp(new shards::CellTopology( shards::getCellTopologyData<shards::Quadrilateral<4> >()) );
+      surfaceCubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
     }
 
   }
 
+  // Note that these are the volume element quantities
   numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
 
@@ -1133,8 +1123,29 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
                                "Unrecognized Material Name: " << materialModelName 
                                << "  Recognized names are : NeoHookean, NeoHookeanAD, J2, J2Fiber and GursonFD");
   
-  
-  { // Residual
+
+  // If the element block is a surface element we need to register evaluators that use the 
+  // surface quantities fro mabove, i.e. surfaceBasis, surfaceTopology, surfaceCubature
+  // Watch out for consistency issues between numDims, numQPs, numNodes, etc...!!!
+  if ( surfaceElement )
+  {
+    {// Surface Basis
+      // SurfaceBasis_Def.hpp
+    }
+    
+    { // Surface Jump
+      //SurfaceJump_Def.hpp
+    }
+
+    { // Surface Gradient
+      //SurfaceGradient_Def.hpp
+    }
+
+    { // Surface Residual
+      // need to convert the force calculation in the localization evaluator into its own
+    }
+
+  } else { // Residual
     RCP<ParameterList> p = rcp(new ParameterList("Residual"));
     
     //Input

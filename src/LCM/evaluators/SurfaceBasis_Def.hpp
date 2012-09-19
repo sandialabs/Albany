@@ -78,16 +78,16 @@ namespace LCM {
     numNodes = dims[1];
     numPlaneNodes = numNodes / 2;
 
-    Teuchos::RCP<PHX::DataLayout> defGrad_dl = p.get<
-      Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
-    defGrad_dl->dimensions(dims);
-    numQPs = dims[1];
-    numDims = dims[2];
-    numPlaneDims = numDims - 1;
+    // Teuchos::RCP<PHX::DataLayout> qpt_dl = p.get<
+    //   Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
+    // qpt_dl->dimensions(dims);
+    // numQPs = dims[1];
+    // numDims = dims[2];
+    // numPlaneDims = numDims - 1;
 
-    std::cout << "dims[0]: " << dims[0]<< std::endl;
-    std::cout << "dims[1]: " << dims[2]<< std::endl;
-    std::cout << "dims[2]: " << dims[3]<< std::endl;
+    numQPs = cubature->getNumPoints();
+    numPlaneDims = cubature->getDimension();
+    numDims = numPlaneDims + 1;
 
     // Allocate Temporary FieldContainers
     refValues.resize(numPlaneNodes, numQPs);
