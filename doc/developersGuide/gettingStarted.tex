@@ -550,19 +550,92 @@ CMAKE_CXX_FLAGS        & Flags for the C++ compiler overwriting those from Trili
 \end{verbatim}
 
 \chapter{Albany Directory Structure}
-\label{}
-\section{Source Code Directories}
-  Delineate general albany code, stk dir, responsens, problems, evaluators,
-and how larger projects move problems and evaluators into their own subdir.
+\label{directories}
 
+\section{Source Code Directories \texttt{Albany/src} }
+\begin{itemize}
+
+\item{\texttt{Albany/src}}  This top-level source code directory contains
+
+\item{\texttt{Albany/src/stk}}  This source code directory contains
+
+\item{\texttt{Albany/src/problems}}  This source code directory contains
+
+\item{\texttt{Albany/src/evaluators}}  This source code directory contains
+
+\item{\texttt{Albany/src/responses}}  This source code directory contains
+
+\item{\texttt{Albany/src/LCM}}  This source code directory contains
+
+\item{\texttt{Albany/src/FELIX}}  This source code directory contains
+
+
+\end{itemize}
+  
 \subsection{Namespaces and Naming Conventions}
- Albany, PHAL, QCAD, LCM, FELIX, ...
- could be better...
+ (Albany, PHAL, QCAD, LCM, FELIX, ...
+ could be better...  
+ templated code has  \_Def )
 
- templated code has  \_Def
+\section{Example/Regression Directory \texttt{Albany/examples} }
+\texttt{Albany/examples} This directory holds all the example problems for Albany, which 
+also serve as the {\em regression tests}. 
 
-\section{Other Directories}
- examples, doc, doc/nightly, doc/doxygen, doc/webpage
+Each directory holds one or more \texttt{xml} file that is
+the input file for the run. Separate problems do {\em not} run off of separate executables. 
+The physics set and solution method are set in the input file. The
+large majority of examples run of of the same \texttt{Albany} executable, which performs simulations and
+linearized sensititivity anaysis. Problems that perform optimization or Dakota-based UQ 
+use the \texttt{AlbanyDakota} or \texttt{AlbanyAnalysis} executables, while intrusive UQ
+using the Stokhos package use the \texttt{AlbanySG} executable. Other \texttt{Main*.cpp} files
+can exist to create other executables, but these are currently experimental only.
+
+The input files for each example include a \texttt{Regression Results} section which 
+compares scalar responses, sensitivities, optimization results, and/or stochastic Galerkin
+results, to trusted values. Disrepencies between these results increment an integer that
+is the return code from \texttt{main()}. The \texttt{ctest} testing code uses this return
+code to decide pass/fail of tests. (We would like to extend the regression process to
+incorporate an \texttt{exodiff} capability to test the entire solution and the I/O 
+capability.)
+
+Many directories also include exodus files for specification of the finite element mesh,
+although some problems run from internally generated meshes. These have been partitioned
+using the \texttt{decomp} script from SEACAS. Both the serial and 4-processor versions
+of the exodus file are typically included.
+
+\section{Documentation Directories \texttt{Albany/doc} }
+
+\begin{itemize}
+
+\item{\texttt{Albany/doc}}  This top-level documentation directory contains
+useful CMake scripts with comments for configuring Trilinos, SEACAS tools,
+boost, and the albanyCI code. These have worked at one time on one machine,
+but are (unfortunately) not tested, so may drift out of date.
+
+\item{\texttt{Albany/doc/webpage}} The \texttt{webpage} directory contains
+html files for the Albany web page. (The webpage has not been filled in with 
+much detail.) On Sandia's internal SRN network, it can be view at
+\texttt{https://development.sandia.gov/Albany/}. Developers are encouraged
+to expand the coverage and usefulness of these webpages, including the
+Albany code as a whole as well as the project-specific tabs. 
+
+\item{\texttt{Albany/doc/doxygen}} The \texttt{doxygen} directory contains
+necessary files so that doxygen documentation of the source code will be
+generated. This is generated automatically and linked to from the Albany
+webpage. 
+
+\item{\texttt{Albany/doc/nightlyTestHarness}} This directory contains
+a set of shells scripts that are used, with minor modifications, as
+the nightly test harness. One file with machine-specific environment
+variables needs to be modifies (e.g. \texttt{set\_andys\_env.in}) an then
+the test harness is run with \texttt{./run\_master.sh set\_andys\_env.in}.
+This is currently run under a cron job on four platforms nightly.
+
+\item{\texttt{Albany/doc/developersGuide}} The directory that holds this
+document. Please improve and commit!
+
+\end{itemize}
+
 
 \chapter{Workflow}
 \label{workflow}
