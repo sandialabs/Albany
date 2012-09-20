@@ -70,6 +70,7 @@ SET(SOURCES ${SOURCES}
         problems/Albany_MultiHeatProblem.cpp
         problems/Albany_NavierStokes.cpp
         problems/Albany_GPAMProblem.cpp
+        problems/Albany_LinComprNSProblem.cpp
         problems/Albany_ODEProblem.cpp
         problems/Albany_Helmholtz2DProblem.cpp
         problems/Albany_ThermoElectrostaticsProblem.cpp
@@ -92,6 +93,7 @@ SET(HEADERS ${HEADERS}
         problems/Albany_MultiHeatProblem.hpp
         problems/Albany_NavierStokes.hpp
         problems/Albany_GPAMProblem.hpp
+        problems/Albany_LinComprNSProblem.hpp
         problems/Albany_ODEProblem.hpp
         problems/Albany_Helmholtz2DProblem.hpp
         problems/Albany_ThermoElectrostaticsProblem.hpp
@@ -164,6 +166,7 @@ SET(SOURCES ${SOURCES}
         evaluators/PHAL_Absorption.cpp
         evaluators/PHAL_HeatEqResid.cpp
         evaluators/PHAL_GPAMResid.cpp
+        evaluators/PHAL_LinComprNSResid.cpp
         evaluators/PHAL_ComputeBasisFunctions.cpp
         evaluators/PHAL_DOFInterpolation.cpp
         evaluators/PHAL_DOFGradInterpolation.cpp
@@ -223,6 +226,8 @@ SET(HEADERS ${HEADERS}
         evaluators/PHAL_HeatEqResid_Def.hpp
         evaluators/PHAL_GPAMResid.hpp
         evaluators/PHAL_GPAMResid_Def.hpp
+        evaluators/PHAL_LinComprNSResid.hpp
+        evaluators/PHAL_LinComprNSResid_Def.hpp
         evaluators/PHAL_ComputeBasisFunctions.hpp
         evaluators/PHAL_ComputeBasisFunctions_Def.hpp
         evaluators/PHAL_DOFInterpolation.hpp
@@ -750,6 +755,7 @@ IF(ALBANY_FELIX)
   # FELIX evaluators
   SET(SOURCES ${SOURCES}
        ${FELIX_DIR}/evaluators/FELIX_StokesMomentumResid.cpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesFOResid.cpp
        ${FELIX_DIR}/evaluators/FELIX_Viscosity.cpp
        ${FELIX_DIR}/evaluators/FELIX_StokesContinuityResid.cpp
        ${FELIX_DIR}/evaluators/FELIX_StokesTauM.cpp
@@ -759,6 +765,8 @@ IF(ALBANY_FELIX)
    )
   SET(HEADERS ${HEADERS}
        ${FELIX_DIR}/evaluators/FELIX_StokesMomentumResid.hpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesFOResid_Def.hpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesFOResid.hpp
        ${FELIX_DIR}/evaluators/FELIX_StokesMomentumResid_Def.hpp
        ${FELIX_DIR}/evaluators/FELIX_Viscosity.hpp
        ${FELIX_DIR}/evaluators/FELIX_Viscosity_Def.hpp
@@ -776,9 +784,11 @@ IF(ALBANY_FELIX)
  # FELIX problems
   SET(SOURCES ${SOURCES}
        ${FELIX_DIR}/problems/FELIX_Stokes.cpp
+       ${FELIX_DIR}/problems/FELIX_StokesFO.cpp
      )
   SET(HEADERS ${HEADERS}
        ${FELIX_DIR}/problems/FELIX_Stokes.hpp
+       ${FELIX_DIR}/problems/FELIX_StokesFO.hpp
      )
 ENDIF()
 

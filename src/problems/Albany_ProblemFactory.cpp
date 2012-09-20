@@ -23,6 +23,7 @@
 #include "Albany_MultiHeatProblem.hpp"
 #include "Albany_NavierStokes.hpp"
 #include "Albany_GPAMProblem.hpp"
+#include "Albany_LinComprNSProblem.hpp"
 #include "Albany_ODEProblem.hpp"
 #include "Albany_ThermoElectrostaticsProblem.hpp"
 #include "QCAD_PoissonProblem.hpp"
@@ -47,6 +48,7 @@
 #endif
 #endif
 #include "FELIX/problems/FELIX_Stokes.hpp"
+#include "FELIX/problems/FELIX_StokesFO.hpp"
 
 Albany::ProblemFactory::ProblemFactory(
        const Teuchos::RCP<Teuchos::ParameterList>& problemParams_,
@@ -110,6 +112,12 @@ Albany::ProblemFactory::create()
   }
   else if (method == "GPAM 3D") {
     strategy = rcp(new Albany::GPAMProblem(problemParams, paramLib, 3));
+  }
+  else if (method == "LinComprNS 2D") {
+    strategy = rcp(new Albany::LinComprNSProblem(problemParams, paramLib, 2));
+  }
+  else if (method == "LinComprNS 3D") {
+    strategy = rcp(new Albany::LinComprNSProblem(problemParams, paramLib, 3));
   }
   else if (method == "Schrodinger 1D") {
     strategy = rcp(new QCAD::SchrodingerProblem(problemParams, paramLib, 1, comm));
@@ -255,6 +263,9 @@ Albany::ProblemFactory::create()
   }
   else if (method == "FELIX Stokes 2D" ) {
     strategy = rcp(new FELIX::Stokes(problemParams, paramLib, 2));
+  }
+  else if (method == "FELIX Stokes First Order" || method == "FELIX Stokes FO" ) {
+    strategy = rcp(new FELIX::StokesFO(problemParams, paramLib, 3));
   }
 #endif
   else {
