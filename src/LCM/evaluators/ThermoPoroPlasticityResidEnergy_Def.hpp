@@ -252,7 +252,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 
  				  // Volumetric Constraint Term
- 				  TResidual(cell,node) += -refTemp(cell,qp)
+ 				  TResidual(cell,node) += refTemp(cell,qp)
  						                  *3.00*alphaSkeleton(cell,qp)*bulk(cell,qp)
  						                  *(
  						                      std::log(J(cell,qp)/Jold(cell,qp))
@@ -269,7 +269,7 @@ evaluateFields(typename Traits::EvalData workset)
              		                      *wBF(cell, node, qp);
 
  				 // Thermal Expansion
- 				 TResidual(cell,node) -=  -(
+ 				 TResidual(cell,node) =  +(
  						 // J(cell,qp)-Jold(cell,qp) )*Temp(cell,qp) +
  				  		//				   J(cell,qp)*
  				  						   dTemperature )

@@ -69,6 +69,7 @@ add_subdirectory(MultiHeat)
 add_subdirectory(Helmholtz2D)
 
 add_subdirectory(GPAM)
+add_subdirectory(LinComprNS)
 add_subdirectory(ODE)
 add_subdirectory(ThermoElectrostatics2D)
 add_subdirectory(HeatEigenvalues)
