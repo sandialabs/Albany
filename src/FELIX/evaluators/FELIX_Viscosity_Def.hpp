@@ -57,7 +57,6 @@ Viscosity(const Teuchos::ParameterList& p) :
   }
 
   this->addDependentField(VGrad);
-  
   this->addEvaluatedField(mu);
 
   Teuchos::RCP<PHX::DataLayout> vector_dl =
@@ -81,7 +80,6 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(VGrad,fm);
-  
   this->utils.setFieldData(mu,fm); 
 }
 
