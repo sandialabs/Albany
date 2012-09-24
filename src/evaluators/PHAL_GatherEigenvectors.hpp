@@ -23,6 +23,8 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
+#include "Albany_Layouts.hpp"
+
 #include "Teuchos_ParameterList.hpp"
 #include "Epetra_Vector.h"
 
@@ -47,7 +49,8 @@ class GatherEigenvectors
   
 public:
   
-  GatherEigenvectors(const Teuchos::ParameterList& p);
+  GatherEigenvectors(const Teuchos::ParameterList& p,
+                     const Teuchos::RCP<Albany::Layouts>& dl);
   
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);

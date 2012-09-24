@@ -23,6 +23,8 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
+#include "Albany_Layouts.hpp"
+
 namespace QCAD {
 /** \brief Finite Element Interpolation Evaluator
 
@@ -36,7 +38,8 @@ class PoissonResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 
 public:
 
-  PoissonResid(const Teuchos::ParameterList& p);
+  PoissonResid(const Teuchos::ParameterList& p,
+                 const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);

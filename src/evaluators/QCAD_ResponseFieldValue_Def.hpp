@@ -251,6 +251,15 @@ ResponseFieldValue(Teuchos::ParameterList& p,
     this->getValidResponseParameters();
   plist->validateParameters(*reflist,0);
 
+  //! parameters passed down from problem
+  Teuchos::RCP<Teuchos::ParameterList> paramsFromProblem = 
+    p.get< Teuchos::RCP<Teuchos::ParameterList> >("Parameters From Problem");
+
+    // Material database (if given)
+  if(paramsFromProblem != Teuchos::null)
+    materialDB = paramsFromProblem->get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
+  else materialDB = Teuchos::null;
+
   // number of quad points per cell and dimension of space
   Teuchos::RCP<PHX::DataLayout> scalar_dl = dl->qp_scalar;
   Teuchos::RCP<PHX::DataLayout> vector_dl = dl->qp_vector;
@@ -285,6 +294,7 @@ ResponseFieldValue(Teuchos::ParameterList& p,
 
   if(opDomain == "box") {
     limitX = limitY = limitZ = false;
+    bQuantumEBsOnly = false;
 
     if( plist->isParameter("x min") && plist->isParameter("x max") ) {
       limitX = true; TEUCHOS_TEST_FOR_EXCEPT(numDims <= 0);
@@ -303,7 +313,12 @@ ResponseFieldValue(Teuchos::ParameterList& p,
     }
   }
   else if(opDomain == "element block") {
-    ebName = plist->get<string>("Element Block Name");
+    std::string ebNameStr = plist->get<std::string>("Element Block Name","");
+    if(ebNameStr.length() > 0) Albany::splitStringOnDelim(ebNameStr,',',ebNames);
+    bQuantumEBsOnly = plist->get<bool>("Quantum Element Blocks Only",false);
+  }
+  else if(opDomain == "quantum blocks") {
+    bQuantumEBsOnly = true;
   }
   else TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
              << "Error!  Invalid operation domain type " << opDomain << std::endl); 
@@ -384,10 +399,14 @@ void QCAD::ResponseFieldValue<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   ScalarT opVal, qpVal, cellVol;
+  bool bQuantumEB = false; //if no material database, all element blocks are "non-quantum"
 
-  if(opDomain == "element block" && workset.EBName != ebName) 
-  {
-      return;
+  if(materialDB != Teuchos::null)
+    bQuantumEB = materialDB->getElementBlockParam<bool>(workset.EBName,"quantum",false);
+
+  if(opDomain == "element block" || opDomain == "quantum blocks") {
+    if(ebNames.size() > 0 && std::find(ebNames.begin(), ebNames.end(), workset.EBName) == ebNames.end()) return;
+    if(bQuantumEBsOnly == true && bQuantumEB == false) return;
   }
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) 
@@ -553,7 +572,8 @@ QCAD::ResponseFieldValue<EvalT,Traits>::getValidResponseParameters() const
   validPL->set<double>("z min", 0.0, "Box domain minimum z coordinate");
   validPL->set<double>("z max", 0.0, "Box domain maximum z coordinate");
 
-  validPL->set<string>("Element Block Name", "", "Element block name that specifies domain");
+  validPL->set<string>("Element Block Name", "", "Comma-delimited element block name(s) that specifies domain");
+  validPL->set<bool>("Quantum Element Blocks Only",false);
 
   validPL->set<string>("Description", "", "Description of this response used by post processors");
 

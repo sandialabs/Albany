@@ -24,25 +24,18 @@
 //**********************************************************************
 template<typename EvalT, typename Traits>
 QCAD::SchrodingerResid<EvalT, Traits>::
-SchrodingerResid(const Teuchos::ParameterList& p) :
-  wBF         (p.get<std::string>                   ("Weighted BF Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
-  psi         (p.get<std::string>                   ("QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  psiDot      (p.get<std::string>                   ("QP Time Derivative Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  wGradBF     (p.get<std::string>                   ("Weighted Gradient BF Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
-  psiGrad     (p.get<std::string>                   ("Gradient QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  V           (p.get<std::string>                   ("Potential Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  coordVec    (p.get<std::string>                   ("QP Coordinate Vector Name"),
-               p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout")),
+SchrodingerResid(const Teuchos::ParameterList& p,
+                 const Teuchos::RCP<Albany::Layouts>& dl) :
+  wBF         (p.get<std::string>  ("Weighted BF Name"), dl->node_qp_scalar),
+  psi         (p.get<std::string>  ("QP Variable Name"), dl->qp_scalar),
+  psiDot      (p.get<std::string>  ("QP Time Derivative Variable Name"), dl->qp_scalar),
+  wGradBF     (p.get<std::string>  ("Weighted Gradient BF Name"), dl->node_qp_gradient),
+  psiGrad     (p.get<std::string>  ("Gradient QP Variable Name"), dl->qp_gradient),
+  V           (p.get<std::string>  ("Potential Name"), dl->qp_scalar),
+  coordVec    (p.get<std::string>  ("QP Coordinate Vector Name"), dl->qp_gradient),
   havePotential (p.get<bool>("Have Potential")),
   haveMaterial  (p.get<bool>("Have Material")),
-  psiResidual (p.get<std::string>                   ("Residual Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") )
+  psiResidual (p.get<std::string>  ("Residual Name"), dl->node_scalar)
 {
   // obtain Finite Wall potential parameters
   Teuchos::ParameterList* psList = p.get<Teuchos::ParameterList*>("Parameter List");
@@ -70,10 +63,8 @@ SchrodingerResid(const Teuchos::ParameterList& p) :
   // Material database
   materialDB = p.get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
 
-  Teuchos::RCP<PHX::DataLayout> vector_dl =
-      p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
-  vector_dl->dimensions(dims);
+  dl->qp_gradient->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
 

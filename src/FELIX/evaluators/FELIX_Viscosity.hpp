@@ -53,7 +53,11 @@ private:
  
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  ScalarT homotopyParam; 
+  ScalarT homotopyParam;
+
+  //coefficients for Glen's law
+  double A; 
+  int n; 
 
   // Input:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> VGrad;

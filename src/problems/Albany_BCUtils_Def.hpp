@@ -480,6 +480,9 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
    {
      RCP<ParameterList> p = rcp(new ParameterList());
      p->set<int>("Type", traits_type::typeGS);
+ 
+     // for new way
+     p->set< RCP<Albany::Layouts> >("Layouts Struct", dl);
 
      p->set< Teuchos::ArrayRCP<std::string> >("Solution Names", dof_names);
 

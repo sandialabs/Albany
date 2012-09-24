@@ -29,8 +29,11 @@
 #include <stk_mesh/base/FieldData.hpp>
 #include <stk_mesh/base/Selector.hpp>
 #include <Ionit_Initializer.h>
+#include <stk_io/IossBridge.hpp>
+#include <Ioss_SubSystem.h>
 
 #include <stk_mesh/fem/FEMHelpers.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 #include "Albany_Utils.hpp"
 
@@ -294,8 +297,45 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
            << index << ")"<< endl;
       else {
         *out << "Restart Index set, reading solution time : " << index << endl;
+         Ioss::Region *region = mesh_data->m_input_region;
          stk::io::process_input_request(*mesh_data, *bulkData, index);
          hasRestartSolution = true;
+
+         restartDataTime = region->get_state_time(index);
+         Teuchos::Array<std::string> restart_fields =
+           params->get<Teuchos::Array<std::string> >("Restart Fields");
+
+		 // Get the fields to be used for restart
+
+         // See what state data was initialized from the stk::io request
+         // This should be propagated into stk::io
+         const Ioss::ElementBlockContainer& elem_blocks = region->get_element_blocks();
+
+/*
+            // Uncomment to print what fields are in the exodus file
+			Ioss::NameList exo_fld_names;
+			elem_blocks[0]->field_describe(&exo_fld_names);
+			for(std::size_t i = 0; i < exo_fld_names.size(); i++){
+				*out << "Found field \"" << exo_fld_names[i] << "\" in exodus file" << std::endl;
+			}
+*/
+
+         for (std::size_t i=0; i<sis->size(); i++) {
+           Albany::StateStruct& st = *((*sis)[i]);
+
+           if(elem_blocks[0]->field_exists(st.name))
+
+             for(std::size_t j = 0; j < restart_fields.size(); j++)
+
+               if(boost::iequals(st.name, restart_fields[j])){
+
+                 *out << "Restarting from field \"" << st.name << "\" found in exodus file." << std::endl;
+                 st.restartDataAvailable = true;
+                 break;
+
+               }
+           }
+
       }
     }
 
@@ -368,8 +408,6 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
  *
  */
 
-#include <stk_io/IossBridge.hpp>
-#include <Ioss_SubSystem.h>
 
 
 void 

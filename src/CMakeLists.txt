@@ -61,6 +61,7 @@ SET(SOURCES ${SOURCES}
         problems/Albany_AbstractProblem.cpp
         problems/Albany_CahnHillProblem.cpp
         problems/Albany_ProblemUtils.cpp
+        problems/Albany_Layouts.cpp
         problems/Albany_EvaluatorUtils.cpp
         problems/Albany_ResponseUtilities.cpp
         problems/Albany_BCUtils.cpp
@@ -69,6 +70,7 @@ SET(SOURCES ${SOURCES}
         problems/Albany_MultiHeatProblem.cpp
         problems/Albany_NavierStokes.cpp
         problems/Albany_GPAMProblem.cpp
+        problems/Albany_LinComprNSProblem.cpp
         problems/Albany_ODEProblem.cpp
         problems/Albany_Helmholtz2DProblem.cpp
         problems/Albany_ThermoElectrostaticsProblem.cpp
@@ -80,6 +82,7 @@ SET(HEADERS ${HEADERS}
         problems/Albany_AbstractProblem.hpp
         problems/Albany_CahnHillProblem.hpp
         problems/Albany_ProblemUtils.hpp
+        problems/Albany_Layouts.hpp
         problems/Albany_EvaluatorUtils.hpp
         problems/Albany_EvaluatorUtils_Def.hpp
         problems/Albany_ResponseUtilities.hpp
@@ -90,6 +93,7 @@ SET(HEADERS ${HEADERS}
         problems/Albany_MultiHeatProblem.hpp
         problems/Albany_NavierStokes.hpp
         problems/Albany_GPAMProblem.hpp
+        problems/Albany_LinComprNSProblem.hpp
         problems/Albany_ODEProblem.hpp
         problems/Albany_Helmholtz2DProblem.hpp
         problems/Albany_ThermoElectrostaticsProblem.hpp
@@ -162,17 +166,18 @@ SET(SOURCES ${SOURCES}
         evaluators/PHAL_Absorption.cpp
         evaluators/PHAL_HeatEqResid.cpp
         evaluators/PHAL_GPAMResid.cpp
+        evaluators/PHAL_LinComprNSResid.cpp
         evaluators/PHAL_ComputeBasisFunctions.cpp
         evaluators/PHAL_DOFInterpolation.cpp
         evaluators/PHAL_DOFGradInterpolation.cpp
         evaluators/PHAL_DOFVecInterpolation.cpp
         evaluators/PHAL_DOFVecGradInterpolation.cpp
-        evaluators/PHAL_DOFTensorInterpolation.cpp
         evaluators/PHAL_MapToPhysicalFrame.cpp
         evaluators/PHAL_HelmholtzResid.cpp
         evaluators/PHAL_GatherCoordinateVector.cpp
         evaluators/PHAL_CahnHillRhoResid.cpp
         evaluators/PHAL_CahnHillWResid.cpp
+        evaluators/PHAL_CahnHillElasResid.cpp
         evaluators/PHAL_CahnHillChemTerm.cpp
         evaluators/PHAL_LangevinNoiseTerm.cpp
         evaluators/PHAL_JouleHeating.cpp
@@ -221,6 +226,8 @@ SET(HEADERS ${HEADERS}
         evaluators/PHAL_HeatEqResid_Def.hpp
         evaluators/PHAL_GPAMResid.hpp
         evaluators/PHAL_GPAMResid_Def.hpp
+        evaluators/PHAL_LinComprNSResid.hpp
+        evaluators/PHAL_LinComprNSResid_Def.hpp
         evaluators/PHAL_ComputeBasisFunctions.hpp
         evaluators/PHAL_ComputeBasisFunctions_Def.hpp
         evaluators/PHAL_DOFInterpolation.hpp
@@ -231,8 +238,6 @@ SET(HEADERS ${HEADERS}
         evaluators/PHAL_DOFVecInterpolation_Def.hpp
         evaluators/PHAL_DOFVecGradInterpolation.hpp
         evaluators/PHAL_DOFVecGradInterpolation_Def.hpp
-        evaluators/PHAL_DOFTensorInterpolation.hpp
-        evaluators/PHAL_DOFTensorInterpolation_Def.hpp
         evaluators/PHAL_MapToPhysicalFrame.hpp
         evaluators/PHAL_MapToPhysicalFrame_Def.hpp
         evaluators/PHAL_HelmholtzResid.hpp
@@ -243,6 +248,8 @@ SET(HEADERS ${HEADERS}
         evaluators/PHAL_CahnHillRhoResid_Def.hpp
         evaluators/PHAL_CahnHillWResid.hpp
         evaluators/PHAL_CahnHillWResid_Def.hpp
+        evaluators/PHAL_CahnHillElasResid.hpp
+        evaluators/PHAL_CahnHillElasResid_Def.hpp
         evaluators/PHAL_CahnHillChemTerm.hpp
         evaluators/PHAL_CahnHillChemTerm_Def.hpp
         evaluators/PHAL_LangevinNoiseTerm.hpp
@@ -492,6 +499,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible.cpp
     ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible_Damage.cpp
     ${LCM_DIR}/evaluators/RIHMR.cpp
+    ${LCM_DIR}/evaluators/GursonHMR.cpp
     ${LCM_DIR}/evaluators/RecoveryModulus.cpp
     ${LCM_DIR}/evaluators/FaceFractureCriteria.cpp
     ${LCM_DIR}/evaluators/FaceAverage.cpp
@@ -664,6 +672,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible_Damage_Def.hpp
     ${LCM_DIR}/evaluators/RIHMR.hpp
     ${LCM_DIR}/evaluators/RIHMR_Def.hpp
+    ${LCM_DIR}/evaluators/GursonHMR.hpp
+    ${LCM_DIR}/evaluators/GursonHMR_Def.hpp
     ${LCM_DIR}/evaluators/RecoveryModulus.hpp
     ${LCM_DIR}/evaluators/RecoveryModulus_Def.hpp
     ${LCM_DIR}/evaluators/FaceFractureCriteria.hpp
@@ -745,6 +755,7 @@ IF(ALBANY_FELIX)
   # FELIX evaluators
   SET(SOURCES ${SOURCES}
        ${FELIX_DIR}/evaluators/FELIX_StokesMomentumResid.cpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesFOResid.cpp
        ${FELIX_DIR}/evaluators/FELIX_Viscosity.cpp
        ${FELIX_DIR}/evaluators/FELIX_StokesContinuityResid.cpp
        ${FELIX_DIR}/evaluators/FELIX_StokesTauM.cpp
@@ -754,6 +765,8 @@ IF(ALBANY_FELIX)
    )
   SET(HEADERS ${HEADERS}
        ${FELIX_DIR}/evaluators/FELIX_StokesMomentumResid.hpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesFOResid_Def.hpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesFOResid.hpp
        ${FELIX_DIR}/evaluators/FELIX_StokesMomentumResid_Def.hpp
        ${FELIX_DIR}/evaluators/FELIX_Viscosity.hpp
        ${FELIX_DIR}/evaluators/FELIX_Viscosity_Def.hpp
@@ -771,9 +784,11 @@ IF(ALBANY_FELIX)
  # FELIX problems
   SET(SOURCES ${SOURCES}
        ${FELIX_DIR}/problems/FELIX_Stokes.cpp
+       ${FELIX_DIR}/problems/FELIX_StokesFO.cpp
      )
   SET(HEADERS ${HEADERS}
        ${FELIX_DIR}/problems/FELIX_Stokes.hpp
+       ${FELIX_DIR}/problems/FELIX_StokesFO.hpp
      )
 ENDIF()
 
@@ -788,6 +803,7 @@ SET(SOURCES ${SOURCES}
        evaluators/QCAD_ResponseSaddleValue.cpp
        evaluators/QCAD_ResponseSaveField.cpp
        evaluators/QCAD_ResponseCenterOfMass.cpp
+       evaluators/QCAD_ResponseRegionBoundary.cpp
        evaluators/QCAD_EvaluatorTools.cpp
        problems/QCAD_PoissonProblem.cpp
        problems/QCAD_MaterialDatabase.cpp
@@ -814,6 +830,10 @@ SET(HEADERS ${HEADERS}
        evaluators/QCAD_ResponseSaveField_Def.hpp
        evaluators/QCAD_ResponseCenterOfMass.hpp
        evaluators/QCAD_ResponseCenterOfMass_Def.hpp
+       evaluators/QCAD_ResponseRegionBoundary.hpp
+       evaluators/QCAD_ResponseRegionBoundary_Def.hpp
+       evaluators/QCAD_EvaluatorTools.cpp
+       evaluators/QCAD_EvaluatorTools.cpp
        evaluators/QCAD_EvaluatorTools.hpp
        evaluators/QCAD_EvaluatorTools_Def.hpp
        problems/QCAD_PoissonProblem.hpp

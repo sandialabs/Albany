@@ -74,7 +74,8 @@ struct StateStruct {
   //enum Entity {Node, Element, UndefinedEntity};
   //enum InitType {Zero, Identity, Restart, UndefinedInit};
 
-  StateStruct (std::string name_): name(name_), responseIDtoRequire(""), output(true), saveOldState(false) {};
+  StateStruct (std::string name_): name(name_), responseIDtoRequire(""), output(true), 
+	restartDataAvailable(false), saveOldState(false), pParentStateStruct(NULL) {};
    //StateStruct (std::string name_): name(name_), entity(UndefinedEntity), initType(UndefinedInit), output(true) {};
   ~StateStruct () {};
 
@@ -90,7 +91,9 @@ struct StateStruct {
   std::string responseIDtoRequire; //If nonzero length, the responseID for response 
                                    // field manager to require (assume dummy data layout)
   bool output;
+  bool restartDataAvailable;
   bool saveOldState; // Bool that this state is to be copied into name+"_old"
+  StateStruct *pParentStateStruct; // If this is a copy (name = parentName+"_old"), ptr to parent struct
 
   private:  
     StateStruct ();

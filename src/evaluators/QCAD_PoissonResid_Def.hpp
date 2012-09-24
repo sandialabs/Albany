@@ -24,24 +24,17 @@
 //**********************************************************************
 template<typename EvalT, typename Traits>
 QCAD::PoissonResid<EvalT, Traits>::
-PoissonResid(const Teuchos::ParameterList& p) :
-  wBF         (p.get<std::string>                   ("Weighted BF Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
-  Potential (p.get<std::string>                   ("QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  Permittivity (p.get<std::string>                   ("Permittivity Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  wGradBF     (p.get<std::string>                   ("Weighted Gradient BF Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
-  PhiGrad       (p.get<std::string>                   ("Gradient QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  PhiFlux       (p.get<std::string>                   ("Flux QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  Source      (p.get<std::string>                   ("Source Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+PoissonResid(const Teuchos::ParameterList& p,
+                 const Teuchos::RCP<Albany::Layouts>& dl) :
+  wBF         (p.get<std::string>  ("Weighted BF Name"), dl->node_qp_scalar),
+  Potential   (p.get<std::string>  ("QP Variable Name"), dl->qp_scalar),
+  Permittivity (p.get<std::string>  ("Permittivity Name"), dl->qp_scalar),
+  wGradBF     (p.get<std::string>  ("Weighted Gradient BF Name"), dl->node_qp_gradient),
+  PhiGrad     (p.get<std::string>  ("Gradient QP Variable Name"), dl->qp_gradient),
+  PhiFlux     (p.get<std::string>  ("Flux QP Variable Name"), dl->qp_gradient),
+  Source      (p.get<std::string>  ("Source Name"), dl->qp_scalar ),
   haveSource  (p.get<bool>("Have Source")),
-  PhiResidual   (p.get<std::string>                   ("Residual Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") )
+  PhiResidual (p.get<std::string>  ("Residual Name"),  dl->node_scalar )
 {
   this->addDependentField(wBF);
   //this->addDependentField(Potential);

@@ -25,7 +25,8 @@ namespace PHAL {
 
 template<typename EvalT, typename Traits>
 GatherSolutionBase<EvalT,Traits>::
-GatherSolutionBase(const Teuchos::ParameterList& p)
+GatherSolutionBase(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl)
 {
   if (p.isType<bool>("Vector Field"))
     vectorField = p.get<bool>("Vector Field");
@@ -40,14 +41,12 @@ GatherSolutionBase(const Teuchos::ParameterList& p)
   if (p.getEntryPtr("Solution Names")) {
     solution_names = p.get< Teuchos::ArrayRCP<std::string> >("Solution Names");
   }
-  Teuchos::RCP<PHX::DataLayout> dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("Data Layout");
 
   // scalar
   if (!vectorField ) {
     val.resize(solution_names.size());
     for (std::size_t eq = 0; eq < solution_names.size(); ++eq) {
-      PHX::MDField<ScalarT,Cell,Node> f(solution_names[eq],dl);
+      PHX::MDField<ScalarT,Cell,Node> f(solution_names[eq],dl->node_scalar);
       val[eq] = f;
       this->addEvaluatedField(val[eq]);
     }
@@ -58,7 +57,7 @@ GatherSolutionBase(const Teuchos::ParameterList& p)
 
       val_dot.resize(names_dot.size());
       for (std::size_t eq = 0; eq < names_dot.size(); ++eq) {
-        PHX::MDField<ScalarT,Cell,Node> f(names_dot[eq],dl);
+        PHX::MDField<ScalarT,Cell,Node> f(names_dot[eq],dl->node_scalar);
         val_dot[eq] = f;
         this->addEvaluatedField(val_dot[eq]);
       }
@@ -68,7 +67,7 @@ GatherSolutionBase(const Teuchos::ParameterList& p)
   // vector
   else {
     valVec.resize(1);
-    PHX::MDField<ScalarT,Cell,Node,VecDim> f(solution_names[0],dl);
+    PHX::MDField<ScalarT,Cell,Node,VecDim> f(solution_names[0],dl->node_vector);
     valVec[0] = f;
     this->addEvaluatedField(valVec[0]);
     // repeat for xdot if transient is enabled
@@ -77,11 +76,11 @@ GatherSolutionBase(const Teuchos::ParameterList& p)
         p.get< Teuchos::ArrayRCP<std::string> >("Time Dependent Solution Names");
 
       valVec_dot.resize(1);
-      PHX::MDField<ScalarT,Cell,Node,VecDim> f(names_dot[0],dl);
+      PHX::MDField<ScalarT,Cell,Node,VecDim> f(names_dot[0],dl->node_vector);
       valVec_dot[0] = f;
       this->addEvaluatedField(valVec_dot[0]);
     }
-    numFieldsBase = dl->dimension(2);
+    numFieldsBase = dl->node_vector->dimension(2);
   }
 
   if (p.isType<int>("Offset of First DOF"))
@@ -121,8 +120,17 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 template<typename Traits>
 GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
+GatherSolution(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) :
+  GatherSolutionBase<PHAL::AlbanyTraits::Residual, Traits>(p,dl),
+  numFields(GatherSolutionBase<PHAL::AlbanyTraits::Residual,Traits>::numFieldsBase)
+{
+}
+
+template<typename Traits>
+GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 GatherSolution(const Teuchos::ParameterList& p) :
-  GatherSolutionBase<PHAL::AlbanyTraits::Residual, Traits>(p),
+  GatherSolutionBase<PHAL::AlbanyTraits::Residual, Traits>(p,p.get<Teuchos::RCP<Albany::Layouts> >("Layouts Struct")),
   numFields(GatherSolutionBase<PHAL::AlbanyTraits::Residual,Traits>::numFieldsBase)
 {
 }
@@ -163,8 +171,17 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
+GatherSolution(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) :
+  GatherSolutionBase<PHAL::AlbanyTraits::Jacobian, Traits>(p,dl),
+  numFields(GatherSolutionBase<PHAL::AlbanyTraits::Jacobian,Traits>::numFieldsBase)
+{
+}
+
+template<typename Traits>
+GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 GatherSolution(const Teuchos::ParameterList& p) :
-  GatherSolutionBase<PHAL::AlbanyTraits::Jacobian, Traits>(p),
+  GatherSolutionBase<PHAL::AlbanyTraits::Jacobian, Traits>(p,p.get<Teuchos::RCP<Albany::Layouts> >("Layouts Struct")),
   numFields(GatherSolutionBase<PHAL::AlbanyTraits::Jacobian,Traits>::numFieldsBase)
 {
 }
@@ -211,8 +228,17 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 GatherSolution<PHAL::AlbanyTraits::Tangent, Traits>::
+GatherSolution(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) :
+  GatherSolutionBase<PHAL::AlbanyTraits::Tangent, Traits>(p,dl),
+  numFields(GatherSolutionBase<PHAL::AlbanyTraits::Tangent,Traits>::numFieldsBase)
+{
+}
+
+template<typename Traits>
+GatherSolution<PHAL::AlbanyTraits::Tangent, Traits>::
 GatherSolution(const Teuchos::ParameterList& p) :
-  GatherSolutionBase<PHAL::AlbanyTraits::Tangent, Traits>(p),
+  GatherSolutionBase<PHAL::AlbanyTraits::Tangent, Traits>(p,p.get<Teuchos::RCP<Albany::Layouts> >("Layouts Struct")),
   numFields(GatherSolutionBase<PHAL::AlbanyTraits::Tangent,Traits>::numFieldsBase)
 {
 }
@@ -275,8 +301,17 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 GatherSolution<PHAL::AlbanyTraits::SGResidual, Traits>::
+GatherSolution(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) :
+  GatherSolutionBase<PHAL::AlbanyTraits::SGResidual, Traits>(p,dl),
+  numFields(GatherSolutionBase<PHAL::AlbanyTraits::SGResidual,Traits>::numFieldsBase)
+{
+}
+
+template<typename Traits>
+GatherSolution<PHAL::AlbanyTraits::SGResidual, Traits>::
 GatherSolution(const Teuchos::ParameterList& p) :
-  GatherSolutionBase<PHAL::AlbanyTraits::SGResidual, Traits>(p),
+  GatherSolutionBase<PHAL::AlbanyTraits::SGResidual, Traits>(p,p.get<Teuchos::RCP<Albany::Layouts> >("Layouts Struct")),
   numFields(GatherSolutionBase<PHAL::AlbanyTraits::SGResidual,Traits>::numFieldsBase)
 {
 }
@@ -332,8 +367,17 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 GatherSolution<PHAL::AlbanyTraits::SGJacobian, Traits>::
+GatherSolution(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) :
+  GatherSolutionBase<PHAL::AlbanyTraits::SGJacobian, Traits>(p,dl),
+  numFields(GatherSolutionBase<PHAL::AlbanyTraits::SGJacobian,Traits>::numFieldsBase)
+{
+}
+
+template<typename Traits>
+GatherSolution<PHAL::AlbanyTraits::SGJacobian, Traits>::
 GatherSolution(const Teuchos::ParameterList& p) :
-  GatherSolutionBase<PHAL::AlbanyTraits::SGJacobian, Traits>(p),
+  GatherSolutionBase<PHAL::AlbanyTraits::SGJacobian, Traits>(p,p.get<Teuchos::RCP<Albany::Layouts> >("Layouts Struct")),
   numFields(GatherSolutionBase<PHAL::AlbanyTraits::SGJacobian,Traits>::numFieldsBase)
 {
 }
@@ -395,8 +439,17 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 GatherSolution<PHAL::AlbanyTraits::SGTangent, Traits>::
+GatherSolution(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) :
+  GatherSolutionBase<PHAL::AlbanyTraits::SGTangent, Traits>(p,dl),
+  numFields(GatherSolutionBase<PHAL::AlbanyTraits::SGTangent,Traits>::numFieldsBase)
+{
+}
+
+template<typename Traits>
+GatherSolution<PHAL::AlbanyTraits::SGTangent, Traits>::
 GatherSolution(const Teuchos::ParameterList& p) :
-  GatherSolutionBase<PHAL::AlbanyTraits::SGTangent, Traits>(p),
+  GatherSolutionBase<PHAL::AlbanyTraits::SGTangent, Traits>(p,p.get<Teuchos::RCP<Albany::Layouts> >("Layouts Struct")),
   numFields(GatherSolutionBase<PHAL::AlbanyTraits::SGTangent,Traits>::numFieldsBase)
 {
 }
@@ -472,8 +525,17 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 GatherSolution<PHAL::AlbanyTraits::MPResidual, Traits>::
+GatherSolution(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) :
+  GatherSolutionBase<PHAL::AlbanyTraits::MPResidual, Traits>(p,dl),
+  numFields(GatherSolutionBase<PHAL::AlbanyTraits::MPResidual,Traits>::numFieldsBase)
+{
+}
+
+template<typename Traits>
+GatherSolution<PHAL::AlbanyTraits::MPResidual, Traits>::
 GatherSolution(const Teuchos::ParameterList& p) :
-  GatherSolutionBase<PHAL::AlbanyTraits::MPResidual, Traits>(p),
+  GatherSolutionBase<PHAL::AlbanyTraits::MPResidual, Traits>(p,p.get<Teuchos::RCP<Albany::Layouts> >("Layouts Struct")),
   numFields(GatherSolutionBase<PHAL::AlbanyTraits::MPResidual,Traits>::numFieldsBase)
 {
 }
@@ -527,8 +589,17 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 GatherSolution<PHAL::AlbanyTraits::MPJacobian, Traits>::
+GatherSolution(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) :
+  GatherSolutionBase<PHAL::AlbanyTraits::MPJacobian, Traits>(p,dl),
+  numFields(GatherSolutionBase<PHAL::AlbanyTraits::MPJacobian,Traits>::numFieldsBase)
+{
+}
+
+template<typename Traits>
+GatherSolution<PHAL::AlbanyTraits::MPJacobian, Traits>::
 GatherSolution(const Teuchos::ParameterList& p) :
-  GatherSolutionBase<PHAL::AlbanyTraits::MPJacobian, Traits>(p),
+  GatherSolutionBase<PHAL::AlbanyTraits::MPJacobian, Traits>(p,p.get<Teuchos::RCP<Albany::Layouts> >("Layouts Struct")),
   numFields(GatherSolutionBase<PHAL::AlbanyTraits::MPJacobian,Traits>::numFieldsBase)
 {
 }
@@ -588,8 +659,17 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 GatherSolution<PHAL::AlbanyTraits::MPTangent, Traits>::
+GatherSolution(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) :
+  GatherSolutionBase<PHAL::AlbanyTraits::MPTangent, Traits>(p,dl),
+  numFields(GatherSolutionBase<PHAL::AlbanyTraits::MPTangent,Traits>::numFieldsBase)
+{
+}
+
+template<typename Traits>
+GatherSolution<PHAL::AlbanyTraits::MPTangent, Traits>::
 GatherSolution(const Teuchos::ParameterList& p) :
-  GatherSolutionBase<PHAL::AlbanyTraits::MPTangent, Traits>(p),
+  GatherSolutionBase<PHAL::AlbanyTraits::MPTangent, Traits>(p,p.get<Teuchos::RCP<Albany::Layouts> >("Layouts Struct")),
   numFields(GatherSolutionBase<PHAL::AlbanyTraits::MPTangent,Traits>::numFieldsBase)
 {
 }

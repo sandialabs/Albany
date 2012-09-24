@@ -53,5 +53,8 @@ namespace Albany {
 
   //! Converts an init string to a double:  initStringToDouble("initial value 1.54") = 1.54
   double initStringToDouble(const std::string& initString);
+
+  //! Splits a std::string on a delimiter
+  void splitStringOnDelim(const std::string &s, char delim, std::vector<std::string> &elems);
 }
 #endif //ALBANY_UTILS

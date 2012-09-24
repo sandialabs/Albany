@@ -17,8 +17,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "PHAL_DOFTensorInterpolation.hpp"
-#include "PHAL_DOFTensorInterpolation_Def.hpp"
+#include "PHAL_LinComprNSResid.hpp"
+#include "PHAL_LinComprNSResid_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::DOFTensorInterpolation)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::LinComprNSResid)
 

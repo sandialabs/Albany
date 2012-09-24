@@ -68,11 +68,11 @@ namespace LCM {
 
     // Output:
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> stress;
-    PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> Fp;
+    PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> logFp;
     PHX::MDField<ScalarT, Cell, QuadPoint> eqps;
     PHX::MDField<ScalarT, Cell, QuadPoint> isoHardening;
 
-    std::string fpName, eqpsName, isoHardeningName;
+    std::string logFpName, eqpsName, isoHardeningName;
     unsigned int numQPs;
     unsigned int numDims;
 
@@ -83,9 +83,15 @@ namespace LCM {
     Tensor<ScalarT, 3> A;
     Tensor<ScalarT, 3> expA;
 
-    Intrepid::FieldContainer<ScalarT> Fpinv;
-    Intrepid::FieldContainer<ScalarT> FpinvT;
-    Intrepid::FieldContainer<ScalarT> Cpinv;
+    Tensor<ScalarT, 3> Fp;
+    Tensor<ScalarT, 3> Fpold;
+    Tensor<ScalarT, 3> Fpinv;
+    Tensor<ScalarT, 3> FpinvT;
+    Tensor<ScalarT, 3> Cpinv;
+
+    //Intrepid::FieldContainer<ScalarT> Fpinv;
+    //Intrepid::FieldContainer<ScalarT> FpinvT;
+    //Intrepid::FieldContainer<ScalarT> Cpinv;
 
   };
 }

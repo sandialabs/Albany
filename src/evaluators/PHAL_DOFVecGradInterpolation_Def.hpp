@@ -25,13 +25,11 @@ namespace PHAL {
   //**********************************************************************
   template<typename EvalT, typename Traits>
   DOFVecGradInterpolation<EvalT, Traits>::
-  DOFVecGradInterpolation(const Teuchos::ParameterList& p) :
-    val_node    (p.get<std::string>                   ("Variable Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") ),
-    GradBF      (p.get<std::string>                   ("Gradient BF Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
-    grad_val_qp (p.get<std::string>                   ("Gradient Variable Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") )
+  DOFVecGradInterpolation(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) :
+    val_node    (p.get<std::string>  ("Variable Name"), dl->node_vector),
+    GradBF      (p.get<std::string>  ("Gradient BF Name"), dl->node_qp_gradient ),
+    grad_val_qp (p.get<std::string>  ("Gradient Variable Name"), dl->qp_vecgradient )
   {
     this->addDependentField(val_node);
     this->addDependentField(GradBF);

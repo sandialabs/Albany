@@ -23,6 +23,8 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
+#include "Albany_Layouts.hpp"
+
 #include "Teuchos_ParameterList.hpp"
 #include "Epetra_Vector.h"
 
@@ -42,6 +44,9 @@ class GatherCoordinateVector : public PHX::EvaluatorWithBaseImpl<Traits>,
   
 public:
   
+  GatherCoordinateVector(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl);
+  // Old constructor, still needed by BCs that use PHX Factory
   GatherCoordinateVector(const Teuchos::ParameterList& p);
   
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -70,6 +75,8 @@ class GatherCoordinateVector<PHAL::AlbanyTraits::Tangent, Traits>
   
 public:
   
+  GatherCoordinateVector(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl);
   GatherCoordinateVector(const Teuchos::ParameterList& p);
   
   void postRegistrationSetup(typename Traits::SetupData d,

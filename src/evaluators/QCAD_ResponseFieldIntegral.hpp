@@ -18,6 +18,7 @@
 #ifndef QCAD_RESPONSEFIELDINTEGRAL_HPP
 #define QCAD_RESPONSEFIELDINTEGRAL_HPP
 
+#include "QCAD_MaterialDatabase.hpp"
 #include "PHAL_SeparableScatterScalarResponse.hpp"
 
 namespace QCAD {
@@ -51,6 +52,7 @@ namespace QCAD {
 
     std::vector<std::string> fieldNames;
     std::vector<std::string> ebNames;
+    bool bQuantumEBsOnly;
     
     std::size_t numQPs;
     std::size_t numDims;
@@ -66,6 +68,8 @@ namespace QCAD {
     bool limitX, limitY, limitZ;
     double xmin, xmax, ymin, ymax, zmin, zmax;
 
+    //! Material database
+    Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
   };
 	
 }

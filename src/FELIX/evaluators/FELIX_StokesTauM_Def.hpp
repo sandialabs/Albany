@@ -80,6 +80,16 @@ template<typename EvalT, typename Traits>
 void StokesTauM<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 { 
+  if (meshSize != 1.0) { //tau = h^numDims*delta - stabilization from Bochev et. al. "taxonomy" paper
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t qp=0; qp < numQPs; ++qp) {       
+          TauM(cell, qp) = delta; 
+          for (std::size_t i=0; i<numDims; ++i)  
+             TauM(cell,qp) *= meshSize; 
+      }
+    }
+   }
+   else {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {       
         TauM(cell,qp) = 0.0;
@@ -92,11 +102,9 @@ evaluateFields(typename Traits::EvalData workset)
         }
         TauM(cell,qp) += 12.*muFELIX(cell,qp)*muFELIX(cell,qp)*std::sqrt(normGc(cell,qp));
         TauM(cell,qp) = 1./std::sqrt(TauM(cell,qp));
-        //TauM(cell,qp) = meshSize*meshSize*delta; 
       }
     }
-  
-
+  }
 }
 
 //**********************************************************************

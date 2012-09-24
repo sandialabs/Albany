@@ -25,13 +25,11 @@ namespace PHAL {
 //**********************************************************************
 template<typename EvalT, typename Traits>
 DOFInterpolation<EvalT, Traits>::
-DOFInterpolation(const Teuchos::ParameterList& p) :
-  val_node    (p.get<std::string>                   ("Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Data Layout") ),
-  BF          (p.get<std::string>                   ("BF Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
-  val_qp      (p.get<std::string>                   ("Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") )
+DOFInterpolation(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) :
+  val_node    (p.get<std::string>   ("Variable Name"), dl->node_scalar),
+  BF          (p.get<std::string>   ("BF Name"), dl->node_qp_scalar),
+  val_qp      (p.get<std::string>   ("Variable Name"), dl->qp_scalar )
 {
   this->addDependentField(val_node);
   this->addDependentField(BF);

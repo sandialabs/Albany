@@ -18,6 +18,7 @@
 #include <fstream>
 #include "Teuchos_TestForException.hpp"
 
+//#define MESH_SCALAR_IS_AD_TYPE
 
 // **********************************************************************
 //   RESIDUAL
@@ -34,6 +35,20 @@ double QCAD::EvaluatorTools<PHAL::AlbanyTraits::Residual, Traits>::
 getDoubleValue(const ScalarT& t) const
 {
   return t;
+}
+
+template<typename Traits>
+double QCAD::EvaluatorTools<PHAL::AlbanyTraits::Residual, Traits>::
+getMeshDoubleValue(const MeshScalarT& t) const
+{
+  return t;
+}
+
+template<typename Traits>
+std::string QCAD::EvaluatorTools<PHAL::AlbanyTraits::Residual, Traits>::
+getEvalType() const
+{
+  return "Residual";
 }
 
 
@@ -54,6 +69,25 @@ getDoubleValue(const ScalarT& t) const
   return t.val();
 }
 
+template<typename Traits>
+double QCAD::EvaluatorTools<PHAL::AlbanyTraits::Jacobian, Traits>::
+getMeshDoubleValue(const MeshScalarT& t) const
+{
+  #ifdef MESH_SCALAR_IS_AD_TYPE
+    return t.val();
+  #else
+    return t;
+  #endif
+}
+
+template<typename Traits>
+std::string QCAD::EvaluatorTools<PHAL::AlbanyTraits::Jacobian, Traits>::
+getEvalType() const
+{
+  return "Jacobian";
+}
+
+
 
 // **********************************************************************
 //   TANGENT
@@ -70,6 +104,25 @@ double QCAD::EvaluatorTools<PHAL::AlbanyTraits::Tangent, Traits>::
 getDoubleValue(const ScalarT& t) const
 {
   return t.val();
+}
+
+template<typename Traits>
+double QCAD::EvaluatorTools<PHAL::AlbanyTraits::Tangent, Traits>::
+getMeshDoubleValue(const MeshScalarT& t) const
+{
+  #ifdef MESH_SCALAR_IS_AD_TYPE
+    return t.val();
+  #else
+    return 0.0;
+    //return t;  //Error about mesh scalar type not convertable to double -- EGN needs to talk with Andy here.
+  #endif
+}
+
+template<typename Traits>
+std::string QCAD::EvaluatorTools<PHAL::AlbanyTraits::Tangent, Traits>::
+getEvalType() const
+{
+  return "Tangent";
 }
 
 // **********************************************************************
@@ -89,6 +142,25 @@ getDoubleValue(const ScalarT& t) const
   return t.val();
 }
 
+template<typename Traits>
+double QCAD::EvaluatorTools<PHAL::AlbanyTraits::SGResidual, Traits>::
+getMeshDoubleValue(const MeshScalarT& t) const
+{
+  #ifdef MESH_SCALAR_IS_AD_TYPE
+    return t.val();
+  #else
+    return t;
+  #endif
+}
+
+template<typename Traits>
+std::string QCAD::EvaluatorTools<PHAL::AlbanyTraits::SGResidual, Traits>::
+getEvalType() const
+{
+  return "SGResidual";
+}
+
+
 // **********************************************************************
 //   STOCHASTIC GALERKIN JACOBIAN
 // **********************************************************************
@@ -105,6 +177,25 @@ getDoubleValue(const ScalarT& t) const
 {
   return t.val().val();
 }
+
+template<typename Traits>
+double QCAD::EvaluatorTools<PHAL::AlbanyTraits::SGJacobian, Traits>::
+getMeshDoubleValue(const MeshScalarT& t) const
+{
+  #ifdef MESH_SCALAR_IS_AD_TYPE
+    return t.val().val();
+  #else
+    return t;
+  #endif
+}
+
+template<typename Traits>
+std::string QCAD::EvaluatorTools<PHAL::AlbanyTraits::SGJacobian, Traits>::
+getEvalType() const
+{
+  return "SGJacobian";
+}
+
 
 // **********************************************************************
 //   STOCHASTIC GALERKIN TANGENT
@@ -123,6 +214,25 @@ getDoubleValue(const ScalarT& t) const
   return t.val().val();
 }
 
+template<typename Traits>
+double QCAD::EvaluatorTools<PHAL::AlbanyTraits::SGTangent, Traits>::
+getMeshDoubleValue(const MeshScalarT& t) const
+{
+  #ifdef MESH_SCALAR_IS_AD_TYPE
+    return t.val().val();
+  #else
+    return t;
+  #endif
+}
+
+template<typename Traits>
+std::string QCAD::EvaluatorTools<PHAL::AlbanyTraits::SGTangent, Traits>::
+getEvalType() const
+{
+  return "SGTangent";
+}
+
+
 // **********************************************************************
 //   MULTI-POINT RESIDUAL
 // **********************************************************************
@@ -139,6 +249,25 @@ getDoubleValue(const ScalarT& t) const
 {
   return t.val(); 
 }
+
+template<typename Traits>
+double QCAD::EvaluatorTools<PHAL::AlbanyTraits::MPResidual, Traits>::
+getMeshDoubleValue(const MeshScalarT& t) const
+{
+  #ifdef MESH_SCALAR_IS_AD_TYPE
+    return t.val();
+  #else
+    return t;
+  #endif
+}
+
+template<typename Traits>
+std::string QCAD::EvaluatorTools<PHAL::AlbanyTraits::MPResidual, Traits>::
+getEvalType() const
+{
+  return "MPResidual";
+}
+
 
 // **********************************************************************
 //   MULTI-POINT JACOBIAN
@@ -157,6 +286,25 @@ getDoubleValue(const ScalarT& t) const
   return t.val().val(); 
 }
 
+template<typename Traits>
+double QCAD::EvaluatorTools<PHAL::AlbanyTraits::MPJacobian, Traits>::
+getMeshDoubleValue(const MeshScalarT& t) const
+{
+  #ifdef MESH_SCALAR_IS_AD_TYPE
+    return t.val().val();
+  #else
+    return t;
+  #endif
+}
+
+template<typename Traits>
+std::string QCAD::EvaluatorTools<PHAL::AlbanyTraits::MPJacobian, Traits>::
+getEvalType() const
+{
+  return "MPJacobian";
+}
+
+
 // **********************************************************************
 //   MULTI-POINT TANGENT
 // **********************************************************************
@@ -173,6 +321,25 @@ getDoubleValue(const ScalarT& t) const
 {
   return t.val().val();
 }
+
+template<typename Traits>
+double QCAD::EvaluatorTools<PHAL::AlbanyTraits::MPTangent, Traits>::
+getMeshDoubleValue(const MeshScalarT& t) const
+{
+  #ifdef MESH_SCALAR_IS_AD_TYPE
+    return t.val().val();
+  #else
+    return t;
+  #endif
+}
+
+template<typename Traits>
+std::string QCAD::EvaluatorTools<PHAL::AlbanyTraits::MPTangent, Traits>::
+getEvalType() const
+{
+  return "MPTangent";
+}
+
 
 // **********************************************************************
 

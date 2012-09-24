@@ -15,51 +15,56 @@
 \********************************************************************/
 
 
-#ifndef PHAL_DOFTENSOR_INTERPOLATION_HPP
-#define PHAL_DOFTENSOR_INTERPOLATION_HPP
+#ifndef FELIX_STOKESFORESID_HPP
+#define FELIX_STOKESFORESID_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
-namespace PHAL {
+namespace FELIX {
 /** \brief Finite Element Interpolation Evaluator
 
-    This evaluator interpolates nodal DOFTensor values to quad points.
+    This evaluator interpolates nodal DOF values to quad points.
 
 */
 
 template<typename EvalT, typename Traits>
-class DOFTensorInterpolation : public PHX::EvaluatorWithBaseImpl<Traits>,
- 			 public PHX::EvaluatorDerived<EvalT, Traits>  {
+class StokesFOResid : public PHX::EvaluatorWithBaseImpl<Traits>,
+		        public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
-  DOFTensorInterpolation(const Teuchos::ParameterList& p);
+  StokesFOResid(const Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
+			     PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
 private:
 
   typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  //! Values at nodes
-  PHX::MDField<ScalarT,Cell,Node,VecDim,VecDim> val_node;
-  //! Basis Functions
-  PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> C;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Cgrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> CDot;
 
   // Output:
-  //! Values at quadrature points
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,VecDim> val_qp;
+  PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;
 
   std::size_t numNodes;
   std::size_t numQPs;
+  std::size_t numDims;
   std::size_t vecDim;
+  bool enableTransient;
+
 };
 }
 

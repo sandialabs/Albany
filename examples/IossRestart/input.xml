@@ -37,6 +37,7 @@
     <Parameter name="Exodus Input File Name" type="string" value="quadOut.exo"/>
     <Parameter name="Exodus Output File Name" type="string" value="quadOutOut.exo"/>
     <Parameter  name="Restart Index" type="int" value="1"/>
+    <Parameter name="Restart Fields" type="Array(string)" value="{ T }"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>

@@ -239,27 +239,22 @@ Albany::ThermoElectrostaticsProblem::constructEvaluators(
 
     //Input
     p->set<string>("Weighted BF Name", "wBF");
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
     p->set<string>("QP Variable Name", "Potential");
 
     p->set<string>("Permittivity Name", "Permittivity");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<string>("Gradient QP Variable Name", "Potential Gradient");
     p->set<string>("Flux QP Variable Name", "Potential Flux");
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
     p->set<bool>("Have Source", false);
     p->set<string>("Source Name", "None");
 
     //Output
     p->set<string>("Residual Name", "Potential Residual");
-    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
 
-    ev = rcp(new QCAD::PoissonResid<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new QCAD::PoissonResid<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -310,7 +305,7 @@ Albany::ThermoElectrostaticsProblem::constructEvaluators(
 
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
-    return respUtils.constructResponses(fm0, *responseList, stateMgr);
+    return respUtils.constructResponses(fm0, *responseList, Teuchos::null, stateMgr);
   }
 
   return Teuchos::null;

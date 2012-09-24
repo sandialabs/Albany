@@ -26,6 +26,8 @@
 #include "Intrepid_CellTools.hpp"
 #include "Intrepid_Cubature.hpp"
 
+#include "Albany_Layouts.hpp"
+
 namespace PHAL {
 /** \brief Finite Element Interpolation Evaluator
 
@@ -40,7 +42,8 @@ class MapToPhysicalFrame : public PHX::EvaluatorWithBaseImpl<Traits>,
 
 public:
 
-  MapToPhysicalFrame(const Teuchos::ParameterList& p);
+  MapToPhysicalFrame(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);

@@ -155,7 +155,7 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 
   else if( problemName == "Poisson CI" ) {
     subSolvers["InitPoisson"]    = CreateSubSolver(inputFilenames["Poisson"], "initial poisson", *comm);
-    subSolvers["Poisson"]        = CreateSubSolver(inputFilenames["Poisson"], "none", *comm);
+    subSolvers["Poisson"]        = CreateSubSolver(inputFilenames["Poisson"], "Poisson", *comm);
     subSolvers["DeltaPoisson"]   = CreateSubSolver(inputFilenames["Poisson"], "Delta poisson", *comm);
     subSolvers["CoulombPoisson"] = CreateSubSolver(inputFilenames["Poisson"], "Coulomb poisson", *comm);
     subSolvers["CIPoisson"]      = CreateSubSolver(inputFilenames["Poisson"], "CI poisson", *comm);
@@ -923,9 +923,10 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
   }
 
   else if(preprocessType == "CI poisson") {
-    //! Rename output file
-    std::string exoName= "ci" + params.sublist("Discretization").get<std::string>("Exodus Output File Name");
-    params.sublist("Discretization").set("Exodus Output File Name", exoName);
+    //! Rename output file -- NO LONGER: keep "root" exo name for CI poisson solver, as it will be final result
+    //std::string exoName= "ci" + params.sublist("Discretization").get<std::string>("Exodus Output File Name");
+    //std::string exoName= params.sublist("Discretization").get<std::string>("Exodus Output File Name") + ".ci";
+    //params.sublist("Discretization").set("Exodus Output File Name", exoName);
 
     //! Set poisson parameters
     params.sublist("Problem").sublist("Poisson Source").set("Quantum Region Source", "ci");
@@ -934,7 +935,8 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
 
   else if(preprocessType == "Delta poisson") {
     //! Rename output file
-    std::string exoName= "delta" + params.sublist("Discretization").get<std::string>("Exodus Output File Name");
+    //std::string exoName= "delta" + params.sublist("Discretization").get<std::string>("Exodus Output File Name");
+    std::string exoName= params.sublist("Discretization").get<std::string>("Exodus Output File Name") + ".delta";
     params.sublist("Discretization").set("Exodus Output File Name", exoName);
 
     //! Set poisson parameters
@@ -979,7 +981,8 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
 	
   else if(preprocessType == "Coulomb poisson") {
     //! Rename output file
-    std::string exoName= "coulomb" + params.sublist("Discretization").get<std::string>("Exodus Output File Name");
+    //std::string exoName= "coulomb" + params.sublist("Discretization").get<std::string>("Exodus Output File Name");
+    std::string exoName= params.sublist("Discretization").get<std::string>("Exodus Output File Name") + ".coulomb";
     params.sublist("Discretization").set("Exodus Output File Name", exoName);
 
     //! Set poisson parameters
@@ -1028,6 +1031,13 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
       }
     }
   }
+  
+  else if(preprocessType == "Poisson") {
+    //! Rename output file
+    std::string exoName= params.sublist("Discretization").get<std::string>("Exodus Output File Name") + ".poisson";
+    params.sublist("Discretization").set("Exodus Output File Name", exoName);
+  }
+
 
 }
 

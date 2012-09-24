@@ -25,6 +25,20 @@ namespace PHAL {
 
 template<typename EvalT, typename Traits>
 GatherCoordinateVector<EvalT, Traits>::
+GatherCoordinateVector(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) :
+  coordVec  (p.get<std::string> ("Coordinate Vector Name"), dl->vertices_vector ),
+  numVertices(0), numDim(0), worksetSize(0)
+{  
+  if (p.isType<bool>("Periodic BC")) periodic = p.get<bool>("Periodic BC");
+  else periodic = false;
+
+  this->addEvaluatedField(coordVec);
+  this->setName("Gather Coordinate Vector"+PHX::TypeString<EvalT>::value);
+}
+
+template<typename EvalT, typename Traits>
+GatherCoordinateVector<EvalT, Traits>::
 GatherCoordinateVector(const Teuchos::ParameterList& p) :
   coordVec         (p.get<std::string>                   ("Coordinate Vector Name"),
                     p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout") ),
@@ -79,6 +93,21 @@ void GatherCoordinateVector<EvalT, Traits>::evaluateFields(typename Traits::Eval
   }
 }
 // **********************************************************************
+template<typename Traits>
+GatherCoordinateVector<PHAL::AlbanyTraits::Tangent, Traits>::
+GatherCoordinateVector(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) :
+  coordVec         (p.get<std::string> ("Coordinate Vector Name"), dl->vertices_vector ),
+  numVertices(0), numDim(0), worksetSize(0)
+{  
+  if (p.isType<bool>("Periodic BC")) periodic = p.get<bool>("Periodic BC");
+  else periodic = false;
+
+  this->addEvaluatedField(coordVec);
+  this->setName("Gather Coordinate Vector"
+                +PHX::TypeString<PHAL::AlbanyTraits::Tangent>::value);
+}
+
 template<typename Traits>
 GatherCoordinateVector<PHAL::AlbanyTraits::Tangent, Traits>::
 GatherCoordinateVector(const Teuchos::ParameterList& p) :
