@@ -302,8 +302,10 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
          hasRestartSolution = true;
 
          restartDataTime = region->get_state_time(index);
+         Teuchos::Array<std::string> default_field;
+         default_field.push_back("solution");
          Teuchos::Array<std::string> restart_fields =
-           params->get<Teuchos::Array<std::string> >("Restart Fields");
+           params->get<Teuchos::Array<std::string> >("Restart Fields", default_field);
 
 		 // Get the fields to be used for restart
 
