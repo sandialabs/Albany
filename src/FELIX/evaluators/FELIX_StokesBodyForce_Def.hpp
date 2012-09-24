@@ -347,8 +347,19 @@ StokesBodyForce(const Teuchos::ParameterList& p) :
     this->addDependentField(muFELIX); 
     this->addDependentField(coordVec);
   }
-  else if (type == "SinSinGlen") {
-    bf_type = SINSINGLEN;  
+  else if (type == "SinCosGlen") {
+    bf_type = SINCOSGLEN;  
+    muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
+            p.get<std::string>("FELIX Viscosity QP Variable Name"),
+	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
+    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
+            p.get<std::string>("Coordinate Vector Name"),
+	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") );
+    this->addDependentField(muFELIX); 
+    this->addDependentField(coordVec);
+  }
+  else if (type == "FOSinCos2D") {
+    bf_type = FO_SINCOS2D;  
     muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
             p.get<std::string>("FELIX Viscosity QP Variable Name"),
 	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
@@ -409,7 +420,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   if (bf_type == GRAVITY) {
   }
-  else if (bf_type == POLY || bf_type == SINSIN || bf_type == SINSINGLEN || bf_type == SINCOSZ || bf_type == POLYSACADO || bf_type == TESTAMMF) {
+  else if (bf_type == POLY || bf_type == SINSIN || bf_type == SINCOSGLEN || bf_type == FO_SINCOS2D ||  bf_type == SINCOSZ || bf_type == POLYSACADO || bf_type == TESTAMMF) {
     this->utils.setFieldData(muFELIX,fm);
     this->utils.setFieldData(coordVec,fm);
   }
@@ -469,7 +480,7 @@ evaluateFields(typename Traits::EvalData workset)
    }
  }
  //MMS test case for 2D nonlinear Stokes with Glen's law on unit square 
- else if (bf_type == SINSINGLEN) {
+ else if (bf_type == SINCOSGLEN) {
    double xphase=0.0, yphase=0.0; 
    double r = 3*pi;
    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
@@ -489,6 +500,20 @@ evaluateFields(typename Traits::EvalData workset)
             + 0.5*pow(A, -1.0/n)*(1.0/n - 1.0)*pow(muargt, 1.0/n - 2.0)*(dmuargtdx*dudx + dmuargtdy*dudy);
        f[1] = 8.0*pi*pi*cos(x2pi + xphase)*sin(y2pi + yphase)*(muqp + 1.0)
             + 0.5*pow(A, -1.0/n)*(1.0/n - 1.0)*pow(muargt, 1.0/n - 2.0)*(dmuargtdx*dvdx + dmuargtdy*dvdy);
+     }
+   }
+ }
+ else if (bf_type == FO_SINCOS2D) {
+   double xphase=0.0, yphase=0.0; 
+   double r = 3*pi;
+   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+     for (std::size_t qp=0; qp < numQPs; ++qp) {      
+       ScalarT* f = &force(cell,qp,0);
+       MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
+       MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
+       MeshScalarT muqp = 1.0; //0.5*pow(A, -1.0/n)*pow(muargt, 1.0/n - 1.0);
+       f[0] = 8.0*pi*pi*muqp*sin(x2pi + xphase)*cos(y2pi + yphase); 
+       f[1] = -8.0*pi*pi*muqp*cos(x2pi + xphase)*sin(y2pi + yphase); 
      }
    }
  }

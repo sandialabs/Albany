@@ -13,7 +13,7 @@
       <Parameter name="DBC on NS NodeSet99 for DOF p" type="double" value="0.0"/>
     </ParameterList>
     <ParameterList name="Body Force">
-      <Parameter name="Type" type="string" value="SinSinGlen"/>
+      <Parameter name="Type" type="string" value="SinCosGlen"/>
       <Parameter name="Glen's Law A" type="double" value="1.0"/>
       <Parameter name="Glen's Law n" type="int" value="3"/>
     </ParameterList>

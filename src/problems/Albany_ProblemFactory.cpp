@@ -264,7 +264,10 @@ Albany::ProblemFactory::create()
   else if (method == "FELIX Stokes 2D" ) {
     strategy = rcp(new FELIX::Stokes(problemParams, paramLib, 2));
   }
-  else if (method == "FELIX Stokes First Order" || method == "FELIX Stokes FO" ) {
+  else if (method == "FELIX Stokes First Order 2D" || method == "FELIX Stokes FO 2D" ) {
+    strategy = rcp(new FELIX::StokesFO(problemParams, paramLib, 2));
+  }
+  else if (method == "FELIX Stokes First Order 3D" || method == "FELIX Stokes FO 3D" ) {
     strategy = rcp(new FELIX::StokesFO(problemParams, paramLib, 3));
   }
 #endif

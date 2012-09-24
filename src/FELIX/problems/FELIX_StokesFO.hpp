@@ -213,6 +213,7 @@ FELIX::StokesFO::constructEvaluators(
     p->set<string>("QP Time Derivative Variable Name", "Concentration_dot");
     p->set<string>("Gradient QP Variable Name", "Concentration Gradient");
     p->set<string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
+    p->set<string>("Body Force Name", "Body Force");
     
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);

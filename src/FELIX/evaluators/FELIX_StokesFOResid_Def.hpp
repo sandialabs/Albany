@@ -36,11 +36,14 @@ StokesFOResid(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Concentration Tensor Data Layout") ),
   CDot       (p.get<std::string>                   ("QP Time Derivative Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
+  force       (p.get<std::string>              ("Body Force Name"),
+ 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
   Residual   (p.get<std::string>                   ("Residual Name"),
               p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") )
 {
   this->addDependentField(C);
   this->addDependentField(Cgrad);
+  this->addDependentField(force);
   //this->addDependentField(CDot);
   this->addDependentField(wBF);
   this->addDependentField(wGradBF);
@@ -63,9 +66,6 @@ cout << " vecDim = " << vecDim << endl;
 cout << " numDims = " << numDims << endl;
 cout << " in FELIX Stokes FO residual! " << numDims << endl;
 
-if (numDims != 3) {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-				  std::endl << "Error in FELIX::StokesFOResid constructor:  " <<
-				  "Invalid Parameter numDims.  Problem implemented for 3D only. " << std::endl);}
 if (vecDim != 2)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 				  std::endl << "Error in FELIX::StokesFOResid constructor:  " <<
 				  "Invalid Parameter vecDim.  Problem implemented for 2 dofs per node only (u and v). " << std::endl);}
@@ -80,6 +80,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(C,fm);
   this->utils.setFieldData(Cgrad,fm);
+  this->utils.setFieldData(force,fm);
   //this->utils.setFieldData(CDot,fm);
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(wGradBF,fm);
@@ -92,21 +93,30 @@ template<typename EvalT, typename Traits>
 void StokesFOResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  MeshScalarT muqp = 1.0; //mu is constant for now
   typedef Intrepid::FunctionSpaceTools FST;
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {
               for (std::size_t i=0; i<vecDim; i++)  Residual(cell,node,i)=0.0;
           for (std::size_t qp=0; qp < numQPs; ++qp) {
              Residual(cell,node,0) += (2.0*Cgrad(cell,qp,0,0) + Cgrad(cell,qp,1,1))*wGradBF(cell,node,qp,0) + 
-                                      0.5*(Cgrad(cell,qp,0,1) + Cgrad(cell,qp,1,0))*wGradBF(cell,node,qp,1) + 
-                                      0.5*Cgrad(cell,qp,0,2)*wGradBF(cell,node,qp,2); 
+                                      0.5*(Cgrad(cell,qp,0,1) + Cgrad(cell,qp,1,0))*wGradBF(cell,node,qp,1);
              Residual(cell,node,1) += 0.5*(Cgrad(cell,qp,0,1) + Cgrad(cell,qp,1,0))*wGradBF(cell,node,qp,0) + 
-                                      (Cgrad(cell,qp,0,1) + 2.0*Cgrad(cell,qp,1,1))*wGradBF(cell,node,qp,1) + 
-                                      0.5*Cgrad(cell,qp,1,2)*wGradBF(cell,node,qp,2); 
+                                      (Cgrad(cell,qp,0,1) + 2.0*Cgrad(cell,qp,1,1))*wGradBF(cell,node,qp,1);
+             for (std::size_t i=0; i<vecDim; i++) { 
+                Residual(cell,node,i) *= 2.0*muqp; 
+                Residual(cell,node,i) += force(cell,qp,i)*wBF(cell,node,qp); //add source term contribution
+                for (std::size_t dim=2; dim<numDims; dim++) {  //if problem is 3D, add d/dz terms
+                    cout << "adding terms for 3D problem!" << endl; 
+                    Residual(cell,node,i) += 2.0*muqp*(0.5*Cgrad(cell,qp,i,2)*wGradBF(cell,node,qp,2));
+                 }
+              }
+           }
+           
        //     for (std::size_t i=0; i<vecDim; i++) {
        //       for (std::size_t dim=0; dim<numDims; dim++) {
      //           Residual(cell,node,i) += Cgrad(cell, qp, i, dim) * wGradBF(cell, node, qp, dim);
-    } } } 
+    } } 
    //} }
 
 }

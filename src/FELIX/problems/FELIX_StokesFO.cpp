@@ -102,7 +102,7 @@ FELIX::StokesFO::getValidProblemParameters() const
 
   validPL->set("Number of Species", 1, "Number of species eqs in GPAM equation set");
   validPL->sublist("FELIX Viscosity", false, "");
-
+  validPL->sublist("Body Force", false, "");
   return validPL;
 }
 
