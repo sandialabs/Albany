@@ -504,16 +504,16 @@ evaluateFields(typename Traits::EvalData workset)
    }
  }
  else if (bf_type == FO_SINCOS2D) {
-   double xphase=0.0, yphase=0.0; 
+   double xphase=0.0, yphase=0.0;
    double r = 3*pi;
    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
      for (std::size_t qp=0; qp < numQPs; ++qp) {      
        ScalarT* f = &force(cell,qp,0);
        MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
        MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
-       MeshScalarT muqp = 1.0; //0.5*pow(A, -1.0/n)*pow(muargt, 1.0/n - 1.0);
-       f[0] = 8.0*pi*pi*muqp*sin(x2pi + xphase)*cos(y2pi + yphase); 
-       f[1] = -8.0*pi*pi*muqp*cos(x2pi + xphase)*sin(y2pi + yphase); 
+       MeshScalarT muqp = 1.0; //hard coded to constant for now 
+       f[0] = -8.0*pi*pi*muqp*sin(x2pi + xphase)*cos(y2pi + yphase); 
+       f[1] = 8.0*pi*pi*muqp*cos(x2pi + xphase)*sin(y2pi + yphase); 
      }
    }
  }

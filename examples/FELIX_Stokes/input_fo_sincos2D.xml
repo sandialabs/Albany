@@ -1,6 +1,6 @@
 <ParameterList>
   <ParameterList name="Problem">
-    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
+    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="2"/>
     <Parameter name="Name" type="string" value="FELIX Stokes First Order 2D"/>
     <Parameter name="Number of Species" type="int" value="2"/>
     <ParameterList name="Dirichlet BCs">     
@@ -24,8 +24,8 @@
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
-    <Parameter name="1D Elements" type="int" value="20"/>
-    <Parameter name="2D Elements" type="int" value="20"/>
+    <Parameter name="1D Elements" type="int" value="80"/>
+    <Parameter name="2D Elements" type="int" value="80"/>
     <Parameter name="1D Scale" type="double" value="1"/>
     <Parameter name="2D Scale" type="double" value="1"/>
     <Parameter name="Method" type="string" value="STK2D"/>

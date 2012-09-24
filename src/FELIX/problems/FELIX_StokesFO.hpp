@@ -104,6 +104,7 @@ namespace FELIX {
 #include "PHAL_DOFVecGradInterpolation.hpp"
 
 #include "FELIX_StokesFOResid.hpp"
+#include "FELIX_Viscosity.hpp"
 #include "FELIX_StokesBodyForce.hpp"
 
 #include "PHAL_Source.hpp"
@@ -172,8 +173,8 @@ FELIX::StokesFO::constructEvaluators(
      fm0.template registerEvaluator<EvalT>
        (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dot[0]));
 
-     //     fm0.template registerEvaluator<EvalT>
-     //  (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
+     fm0.template registerEvaluator<EvalT>
+       (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
 
      fm0.template registerEvaluator<EvalT>
        (evalUtils.constructScatterResidualEvaluator(true, resid_names,offset, "Scatter GPAM"));
@@ -229,6 +230,28 @@ FELIX::StokesFO::constructEvaluators(
     ev = rcp(new FELIX::StokesFOResid<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+  { // FELIX viscosity
+    RCP<ParameterList> p = rcp(new ParameterList("FELIX Viscosity"));
+
+    //Input
+    p->set<string>("Velocity Gradient QP Variable Name", "Concentration Gradient");
+    
+    //p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_vecgradient);
+    
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("FELIX Viscosity");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+  
+    //Output
+    p->set<string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+    ev = rcp(new FELIX::Viscosity<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+    
+  }
+
   { // Body Force
     RCP<ParameterList> p = rcp(new ParameterList("Body Force"));
 
@@ -247,6 +270,14 @@ FELIX::StokesFO::constructEvaluators(
 
     ev = rcp(new FELIX::StokesBodyForce<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+  }
+  if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
+    PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter GPAM", dl->dummy);
+    fm0.requireField<EvalT>(res_tag);
+  }
+  else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
+    Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
+    return respUtils.constructResponses(fm0, *responseList, Teuchos::null, stateMgr);
   }
 
   return Teuchos::null;

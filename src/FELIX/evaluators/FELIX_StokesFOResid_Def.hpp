@@ -65,6 +65,9 @@ StokesFOResid(const Teuchos::ParameterList& p) :
 cout << " vecDim = " << vecDim << endl;
 cout << " numDims = " << numDims << endl;
 cout << " in FELIX Stokes FO residual! " << numDims << endl;
+cout << " numQPs = " << numQPs << endl; 
+cout << " numNodes = " << numNodes << endl; 
+
 
 if (vecDim != 2)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 				  std::endl << "Error in FELIX::StokesFOResid constructor:  " <<
@@ -99,26 +102,14 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t node=0; node < numNodes; ++node) {
               for (std::size_t i=0; i<vecDim; i++)  Residual(cell,node,i)=0.0;
           for (std::size_t qp=0; qp < numQPs; ++qp) {
-             Residual(cell,node,0) += (2.0*Cgrad(cell,qp,0,0) + Cgrad(cell,qp,1,1))*wGradBF(cell,node,qp,0) + 
-                                      0.5*(Cgrad(cell,qp,0,1) + Cgrad(cell,qp,1,0))*wGradBF(cell,node,qp,1);
-             Residual(cell,node,1) += 0.5*(Cgrad(cell,qp,0,1) + Cgrad(cell,qp,1,0))*wGradBF(cell,node,qp,0) + 
-                                      (Cgrad(cell,qp,0,1) + 2.0*Cgrad(cell,qp,1,1))*wGradBF(cell,node,qp,1);
-             for (std::size_t i=0; i<vecDim; i++) { 
-                Residual(cell,node,i) *= 2.0*muqp; 
-                Residual(cell,node,i) += force(cell,qp,i)*wBF(cell,node,qp); //add source term contribution
-                for (std::size_t dim=2; dim<numDims; dim++) {  //if problem is 3D, add d/dz terms
-                    cout << "adding terms for 3D problem!" << endl; 
-                    Residual(cell,node,i) += 2.0*muqp*(0.5*Cgrad(cell,qp,i,2)*wGradBF(cell,node,qp,2));
-                 }
+             Residual(cell,node,0) += 2.0*muqp*((2.0*Cgrad(cell,qp,0,0) + Cgrad(cell,qp,1,1))*wGradBF(cell,node,qp,0) + 
+                                      0.5*(Cgrad(cell,qp,0,1) + Cgrad(cell,qp,1,0))*wGradBF(cell,node,qp,1)) + 
+                                      force(cell,qp,0)*wBF(cell,node,qp);
+             Residual(cell,node,1) += 2.0*muqp*(0.5*(Cgrad(cell,qp,0,1) + Cgrad(cell,qp,1,0))*wGradBF(cell,node,qp,0) +
+                                      (Cgrad(cell,qp,0,0) + 2.0*Cgrad(cell,qp,1,1))*wGradBF(cell,node,qp,1)) + force(cell,qp,1)*wBF(cell,node,qp); 
               }
-           }
            
-       //     for (std::size_t i=0; i<vecDim; i++) {
-       //       for (std::size_t dim=0; dim<numDims; dim++) {
-     //           Residual(cell,node,i) += Cgrad(cell, qp, i, dim) * wGradBF(cell, node, qp, dim);
     } } 
-   //} }
-
 }
 
 //**********************************************************************
