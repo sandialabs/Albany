@@ -118,6 +118,8 @@ namespace LCM {
     this->addDependentField(alphaMixture);
     this->addDependentField(bulk);
     this->addEvaluatedField(TResidual);
+    this->addEvaluatedField(Temp);
+
 
     Teuchos::RCP<PHX::DataLayout> vector_dl =
       p.get< Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout");
@@ -229,6 +231,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   ScalarT dTemperature(0.0);
   ScalarT dporePressure(0.0);
+  ScalarT dJ(0.0);
 
 
   // Pore-fluid diffusion coupling.
@@ -238,43 +241,29 @@ evaluateFields(typename Traits::EvalData workset)
 		  TResidual(cell,node)=0.0;
 		  	  for (std::size_t qp=0; qp < numQPs; ++qp) {
 
-			      // set correction for 1st time step
-			   //   if (J(cell,qp) == 0)
-			   // 		  J(cell,qp) = 1.0;
-			   //   if (Jold(cell,qp) == 0)
-			   //   		  Jold(cell,qp) = 1.0;
 
+			      dJ = std::log(J(cell,qp)/Jold(cell,qp))/J(cell,qp);
 
 			      dTemperature = Temp(cell,qp)-Tempold(cell,qp);
 
 			      dporePressure = porePressure(cell,qp)-porePressureold(cell, qp);
 
-
-
  				  // Volumetric Constraint Term
- 				  TResidual(cell,node) += refTemp(cell,qp)
- 						                  *3.00*alphaSkeleton(cell,qp)*bulk(cell,qp)
- 						                  *(
- 						                      std::log(J(cell,qp)/Jold(cell,qp))
- 						                   )*wBF(cell, node, qp)  ;
+
+ 				  TResidual(cell,node) +=  alphaSkeleton(cell,qp)*bulk(cell,qp)
+ 						                  *dJ*wBF(cell, node, qp)  ;
 
  				  // Pore-fluid Resistance Term
  				  TResidual(cell,node) +=  (
- 						  // (J(cell,qp)-Jold(cell,qp))*
- 						 // porePressure(cell,qp) +
- 						//                    J(cell,qp)*
  						                    dporePressure )
- 						 //                 / (J(cell,qp)*J(cell,qp))
-             		                      *3.00*alphaMixture(cell,qp)*refTemp(cell,qp)
+             		                      *alphaMixture(cell,qp)*Temp(cell,qp)
              		                      *wBF(cell, node, qp);
 
  				 // Thermal Expansion
  				 TResidual(cell,node) =  +(
- 						 // J(cell,qp)-Jold(cell,qp) )*Temp(cell,qp) +
- 				  		//				   J(cell,qp)*
  				  						   dTemperature )
- 				  			//			 /(J(cell,qp)*J(cell,qp))
  				              		     *gammaMixture(cell, qp)*wBF(cell, node, qp);
+
 			  }
 		  }
 	  }

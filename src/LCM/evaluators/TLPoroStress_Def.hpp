@@ -61,8 +61,9 @@ TLPoroStress(const Teuchos::ParameterList& p) :
   this->addDependentField(defGrad);
   this->addDependentField(J);
   this->addDependentField(biotCoefficient);
-  this->addDependentField(porePressure);
+ // this->addDependentField(porePressure);
 
+  this->addEvaluatedField(porePressure);
   this->addEvaluatedField(totstress);
 
   this->setName("TLPoroStress"+PHX::TypeString<EvalT>::value);
