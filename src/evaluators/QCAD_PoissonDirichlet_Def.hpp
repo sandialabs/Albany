@@ -311,34 +311,38 @@ QCAD::PoissonDirichlet<EvalT,Traits>::potentialForMBIncomplIon(const ScalarT &Nc
       const ScalarT &Nv, const ScalarT &Eg, const double &Chi, const std::string &dopType, 
       const double &dopingConc, const double &dopantActE )
 {
+  // maximum allowed exponent in an exponential function (unitless)
+  const double MAX_EXPONENT = 100.0; 
   ScalarT builtinPotential;
   
   // assume n = Nd+ to have an analytical expression (neglect p)  
   if(dopType == "Donor") 
   {
-    ScalarT tmp = -1./4.+1./4.*sqrt(1.+8.*dopingConc/Nc*exp(dopantActE/kbT));
-    if (tmp <= 0.)
+    ScalarT offset = (-dopantActE +qPhiRef -Chi) /1.0;
+    if (dopantActE/kbT > MAX_EXPONENT)  // exp(dopantActE/kbT) -> +infinity for very small T
     {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
-        std::endl << "Error ! Argument of log() function <= 0.0" 
-        << " in potentialForMBIncomplIon() function" << std::endl);
+      builtinPotential = offset +V0 *(0.5*log(dopingConc/(2.*Nc)) + dopantActE/(2.*kbT) );
     }
     else
-      builtinPotential = (-dopantActE+qPhiRef-Chi)/1.0 + V0*log(tmp);
+    { 
+      ScalarT tmp = -1./4.+1./4.*sqrt(1.+8.*dopingConc/Nc*exp(dopantActE/kbT));
+      builtinPotential = offset + V0*log(tmp);
+    }  
   }
   
   // assume p = Na- to have an analytical expression (neglect n)
   else if(dopType == "Acceptor") 
   {
-    ScalarT tmp = -1./8.+1./8.*sqrt(1.+16.*dopingConc/Nv*exp(dopantActE/kbT));
-    if (tmp <= 0.)
+    ScalarT offset = (dopantActE +qPhiRef -Chi -Eg) /1.0; 
+    if (dopantActE/kbT > MAX_EXPONENT)  // exp(dopantActE/kbT) -> +infinity for very small T
     {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
-        std::endl << "Error ! Argument of log() function <= 0.0" 
-        << " in potentialForMBIncomplIon() function" << std::endl);
+      builtinPotential = offset -V0 *(0.5*log(dopingConc/(4.*Nv)) + dopantActE/(2.*kbT) );
     }
     else
-      builtinPotential = (dopantActE+qPhiRef-Chi-Eg)/1.0 - V0*log(tmp);
+    {
+      ScalarT tmp = -1./8.+1./8.*sqrt(1.+16.*dopingConc/Nv*exp(dopantActE/kbT));
+      builtinPotential = offset - V0*log(tmp);
+    }
   }
 
   else 
