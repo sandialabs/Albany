@@ -57,10 +57,6 @@ namespace LCM {
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
     TGrad       (p.get<std::string>                   ("Gradient QP Variable Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-	coordVec      (p.get<std::string>                   ("Coordinate Vector Name"),
-				 p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout") ),
-    cubature      (p.get<Teuchos::RCP <Intrepid::Cubature<RealType> > >("Cubature")),
-	cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
 	weights       (p.get<std::string>                   ("Weights Name"),
 		         p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
 	deltaTime (p.get<std::string>("Delta Time Name"),
@@ -83,7 +79,6 @@ namespace LCM {
     this->addDependentField(stabParameter);
     this->addDependentField(deltaTime);
     this->addDependentField(weights);
-    this->addDependentField(coordVec);
     this->addDependentField(wBF);
     this->addDependentField(porePressure);
     this->addDependentField(ThermalCond);
@@ -183,7 +178,6 @@ namespace LCM {
 	this->utils.setFieldData(stabParameter,fm);
 	this->utils.setFieldData(deltaTime,fm);
 	this->utils.setFieldData(weights,fm);
-    this->utils.setFieldData(coordVec,fm);
     this->utils.setFieldData(wBF,fm);
     this->utils.setFieldData(porePressure,fm);
     this->utils.setFieldData(ThermalCond,fm);
@@ -222,6 +216,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   ScalarT dTemperature(0.0);
   ScalarT dporePressure(0.0);
+  ScalarT dJ(0.0);
 
 
   // Pore-fluid diffusion coupling.
@@ -232,6 +227,7 @@ evaluateFields(typename Traits::EvalData workset)
 		  for (std::size_t qp=0; qp < numQPs; ++qp) {
 
 
+		    	  dJ = std::log(J(cell,qp)/Jold(cell,qp))/J(cell,qp);
 
 			  	  dTemperature = Temp(cell,qp)-Tempold(cell,qp);
 
@@ -240,9 +236,7 @@ evaluateFields(typename Traits::EvalData workset)
                   //std::cout << "dT" << dTemperature << endl;
 
  				  // Volumetric Constraint Term
- 				  TResidual(cell,node) +=  -biotCoefficient(cell, qp)*(
- 				  					 std::log(J(cell,qp)/Jold(cell,qp))
- 				  						  )
+ 				  TResidual(cell,node) +=  -biotCoefficient(cell, qp)*dJ
  				              		  *wBF(cell, node, qp) ;
 
  				  // Pore-fluid Resistance Term
@@ -259,10 +253,8 @@ evaluateFields(typename Traits::EvalData workset)
  				 TResidual(cell,node) +=  (
  				  						// - (J(cell,qp)-Jold(cell,qp))*Temp(cell,qp) +
  				  					//	 J(cell,qp)*
- 				  						 dTemperature)
- 				  						         //         /(J(cell,qp)*J(cell,qp))
- 				              		                    		*3.0*alphaMixture(cell, qp)*
- 				              		                    		wBF(cell, node, qp);
+ 				  						 dTemperature)*
+ 				              		alphaMixture(cell, qp)*wBF(cell, node, qp);
 			  }
 		  }
 	  }
@@ -300,7 +292,7 @@ evaluateFields(typename Traits::EvalData workset)
 
    for (std::size_t cell=0; cell < workset.numCells; ++cell){
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-    	  for (std::size_t dim=0; dim <numDims; ++dim){
+    	  for (std::size_t dim=0; dim < numDims; ++dim){
     		  fluxdt(cell, qp, dim) = -flux(cell,qp,dim)*dt; // should replace the number with dt
     	  }
       }

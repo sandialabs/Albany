@@ -47,13 +47,13 @@ ThermoPoroPlasticityResidMomentum(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") )
 {
   this->addDependentField(TotalStress);
-  this->addDependentField(wGradBF);
   this->addDependentField(J);
   this->addDependentField(Bulk);
-  this->addDependentField(alphaSkeleton);
   this->addDependentField(Temp);
   this->addDependentField(TempRef);
+  this->addDependentField(alphaSkeleton);
   this->addDependentField(defgrad);
+  this->addDependentField(wGradBF);
   this->addEvaluatedField(ExResidual);
 
   if (p.isType<bool>("Disable Transient"))
