@@ -179,6 +179,16 @@ ELSE()
   SET(ALBANY_ASCR FALSE)
 ENDIF()
 
+# Add option for Hydride work, defaults to disabled
+IF (ENABLE_HYDRIDE)
+  ADD_DEFINITIONS(-DALBANY_HYDRIDE)
+  MESSAGE("-- HYDRIDE is Enabled, compiling with -DALBANY_HYDRIDE")
+  SET(ALBANY_HYDRIDE TRUE)
+ELSE()
+  MESSAGE("-- HYDRIDE is NOT Enabled.")
+  SET(ALBANY_HYDRIDE FALSE)
+ENDIF()
+
 # Set optional build of FELIX (Land Ice SciDAC project), defaults to Disabled
 OPTION(ENABLE_FELIX "Flag to turn on FELIX Source code" OFF)
 IF (NOT ENABLE_FELIX)

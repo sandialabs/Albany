@@ -373,6 +373,40 @@ SET(HEADERS ${HEADERS}
   ${MOR_DIR}/Albany_Hdf5MVOutputFile.hpp
 )
 
+# HYDRIDE
+IF(ALBANY_HYDRIDE)
+  SET(HYDRIDE_DIR ${Albany_SOURCE_DIR}/src/Hydride)
+
+# problems
+  SET(SOURCES ${SOURCES}
+    ${HYDRIDE_DIR}/problems/HydrideProblem.cpp
+    )
+  SET(HEADERS ${HEADERS} 
+    ${HYDRIDE_DIR}/problems/HydrideProblem.hpp
+    )
+
+# evaluators
+  SET(SOURCES ${SOURCES}
+    ${HYDRIDE_DIR}/evaluators/HydrideCResid.cpp
+    ${HYDRIDE_DIR}/evaluators/HydrideWResid.cpp
+    ${HYDRIDE_DIR}/evaluators/HydrideChemTerm.cpp
+    ${HYDRIDE_DIR}/evaluators/HydrideStress.cpp
+    ${HYDRIDE_DIR}/evaluators/HydrideStressTerm.cpp
+    )
+  SET(HEADERS ${HEADERS} 
+    ${HYDRIDE_DIR}/evaluators/HydrideCResid.hpp
+    ${HYDRIDE_DIR}/evaluators/HydrideCResid_Def.hpp
+    ${HYDRIDE_DIR}/evaluators/HydrideWResid.hpp
+    ${HYDRIDE_DIR}/evaluators/HydrideWResid_Def.hpp
+    ${HYDRIDE_DIR}/evaluators/HydrideChemTerm.hpp
+    ${HYDRIDE_DIR}/evaluators/HydrideChemTerm_Def.hpp
+    ${HYDRIDE_DIR}/evaluators/HydrideStress.hpp
+    ${HYDRIDE_DIR}/evaluators/HydrideStress_Def.hpp
+    ${HYDRIDE_DIR}/evaluators/HydrideStressTerm.hpp
+    ${HYDRIDE_DIR}/evaluators/HydrideStressTerm_Def.hpp
+    )
+ENDIF()
+
 # LCM
 IF(ALBANY_LCM)
   SET(LCM_DIR ${Albany_SOURCE_DIR}/src/LCM)
@@ -919,7 +953,7 @@ set(ALB_TRILINOS_LIBS ${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES})
 include_directories (${Trilinos_INCLUDE_DIRS}
                      ./ ./evaluators ./problems ./responses ./stk
                      ./LCM/ ./LCM/evaluators ./LCM/utils ./FELIX/problems
-                     ./FELIX/evaluators
+                     ./FELIX/evaluators ./Hydride/problems ./Hydride/evaluators
                      ${Trilinos_TPL_INCLUDE_DIRS})
 
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})

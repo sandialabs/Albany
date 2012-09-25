@@ -47,6 +47,9 @@
 #include "LCM/problems/LameProblem.hpp"
 #endif
 #endif
+#ifdef ALBANY_HYDRIDE
+#include "Hydride/problems/HydrideProblem.hpp"
+#endif
 #include "FELIX/problems/FELIX_Stokes.hpp"
 #include "FELIX/problems/FELIX_StokesFO.hpp"
 
@@ -255,6 +258,11 @@ Albany::ProblemFactory::create()
   }
   else if (method == "MesoScaleLink 3D") {
     strategy = rcp(new Albany::MesoScaleLinkProblem(problemParams, paramLib, 3, comm));
+  }
+#endif
+#ifdef ALBANY_HYDRIDE
+  else if (method == "Hydride 2D") {
+    strategy = rcp(new Albany::HydrideProblem(problemParams, paramLib, 2, comm));
   }
 #endif
 #ifdef ALBANY_FELIX
