@@ -323,7 +323,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 
 
-  /*
+
 
   //---------------------------------------------------------------------------//
   // Stabilization Term
@@ -334,24 +334,29 @@ evaluateFields(typename Traits::EvalData workset)
   for (std::size_t cell=0; cell < workset.numCells; ++cell){
 
    porePbar = 0.0;
+   Tempbar = 0.0;
    vol = 0.0;
    for (std::size_t qp=0; qp < numQPs; ++qp) {
 
 
 
 	porePbar += weights(cell,qp)*(
-		//	-(J(cell,qp)-Jold(cell,qp))*porePressure(cell,qp)
-			 	//					 +  J(cell,qp)*
-			 (porePressure(cell,qp)-porePressureold(cell, qp) ))
-			 		//				 / (J(cell,qp)*J(cell,qp))
-			 						 ;
+			 (porePressure(cell,qp)-porePressureold(cell, qp) ));
+	Tempbar += weights(cell,qp)*(Temp(cell,qp)-Tempold(cell,qp));
+
+
 	vol  += weights(cell,qp);
    }
    porePbar /= vol;
-   for (std::size_t qp=0; qp < numQPs; ++qp) {
-   pterm(cell,qp) = porePbar;
-        }
+   Tempbar /= vol;
 
+   for (std::size_t qp=0; qp < numQPs; ++qp) {
+      pterm(cell,qp) = porePbar;
+      Tterm(cell,qp) = Tempbar;
+
+   }
+  }
+   /*
    for (std::size_t node=0; node < numNodes; ++node) {
      	     trialPbar = 0.0;
       		 for (std::size_t qp=0; qp < numQPs; ++qp) {
@@ -364,35 +369,8 @@ evaluateFields(typename Traits::EvalData workset)
 
      }
 
- }
+   */
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell){
-
-
-
-     Tempbar = 0.0;
-     vol = 0.0;
-     for (std::size_t qp=0; qp < numQPs; ++qp) {
-
-
-     dTemperature = Temp(cell,qp)-Tempold(cell,qp);
-
-
-  	 Tempbar += weights(cell,qp)*(
-  		//	-(J(cell,qp)-Jold(cell,qp))*Temp(cell,qp) +
-  		//	  J(cell,qp)*
-  			  dTemperature )
-  		//	 / (J(cell,qp)*J(cell,qp))
-  			  ;
-  	  vol  += weights(cell,qp);
-
-     }
-     Tempbar /= vol;
-     for (std::size_t qp=0; qp < numQPs; ++qp) {
-     Tterm(cell,qp) = Tempbar;
-          }
-
-   }
 
 
 
@@ -409,46 +387,21 @@ evaluateFields(typename Traits::EvalData workset)
 
 
 
- 				  TResidual(cell,node) -= (
- 				//		 -(J(cell,qp)-Jold(cell,qp))*porePressure(cell,qp)
- 				//		 +  J(cell,qp)*
- 						 dporePressure)*
- 				//		 / (J(cell,qp)*J(cell,qp))*
+ 				  TResidual(cell,node) +=
+ 						 (pterm(cell,qp)-dporePressure)*
  						 stabParameter(cell, qp)/biotModulus(cell, qp)
-                    		                    		*(wBF(cell, node, qp)
-                    		                    			//	-tpterm(cell,node,qp)
-                    		                    				);
- 				  TResidual(cell,node) += pterm(cell,qp)*stabParameter(cell, qp)/biotModulus(cell, qp)
- 						                  *(wBF(cell, node, qp)
- 						                	//	  -tpterm(cell,node,qp)
- 						                		  );
+                    		                    		*wBF(cell, node, qp);
 
-
-
- 				 TResidual(cell,node) -= (
- 					//	-(
- 					//			J(cell,qp)-Jold(cell,qp))*Temp(cell,qp) +
- 						 // 			  J(cell,qp)*
- 						  			  dTemperature)
- 						  //			 / (J(cell,qp)*J(cell,qp))
- 				                     *stabParameter(cell, qp)*3.0*alphaMixture(cell, qp)
- 				                     *(wBF(cell, node, qp)
- 				                   // 		 -tpterm(cell,node,qp)
- 				                    		 );
- 				 TResidual(cell,node) += Tterm(cell,qp)*stabParameter(cell, qp)
- 				  				      *3.0*alphaMixture(cell, qp)*(wBF(cell, node, qp)
- 				  				         //	-tpterm(cell,node,qp)
- 				  				    		  );
-
+ 				 TResidual(cell,node) +=
+ 						  			  (dTemperature - Tterm(cell,qp))
+ 				                     *stabParameter(cell, qp)*alphaMixture(cell, qp)
+ 				                     *wBF(cell, node, qp);
 
 		  }
 	  }
   }
 
-*/
-
 }
-
 //**********************************************************************
 }
 
