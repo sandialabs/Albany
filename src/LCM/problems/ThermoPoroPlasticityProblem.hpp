@@ -1118,6 +1118,7 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
      p->set<string>("QP Temperature Name", "Temperature");
+     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
      p->set<string>("Mixture Specific Heat Name", "Mixture Specific Heat");
      p->set<string>("Skeleton Thermal Expansion Name", "Skeleton Thermal Expansion");

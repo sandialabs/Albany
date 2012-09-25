@@ -21,6 +21,8 @@
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Intrepid_RealSpaceTools.hpp"
 
+#include <typeinfo>
+
 namespace LCM {
 
 //**********************************************************************
@@ -47,14 +49,14 @@ ThermoPoroPlasticityResidMomentum(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") )
 {
   this->addDependentField(TotalStress);
+  this->addDependentField(wGradBF);
   this->addDependentField(J);
   this->addDependentField(Bulk);
+  this->addDependentField(alphaSkeleton);
   this->addDependentField(Temp);
   this->addDependentField(TempRef);
-  this->addDependentField(alphaSkeleton);
   this->addDependentField(defgrad);
-  this->addDependentField(wGradBF);
-  this->addEvaluatedField(ExResidual);
+
 
   if (p.isType<bool>("Disable Transient"))
     enableTransient = !p.get<bool>("Disable Transient");
@@ -78,6 +80,8 @@ ThermoPoroPlasticityResidMomentum(const Teuchos::ParameterList& p) :
    this->addDependentField(uDotDot);
 
   }
+
+  this->addEvaluatedField(ExResidual);
 
 
   this->setName("ThermoPoroPlasticityResidMomentum"+PHX::TypeString<EvalT>::value);
@@ -126,11 +130,10 @@ evaluateFields(typename Traits::EvalData workset)
   typedef Intrepid::FunctionSpaceTools FST;
   typedef Intrepid::RealSpaceTools<ScalarT> RST;
 
-  RST::inverse(F_inv, defgrad);
-  RST::transpose(F_invT, F_inv);
-  FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
-  FST::scalarMultiplyDataData<ScalarT>(thermoEPS, alphaSkeleton , JF_invT);
-  // FST::tensorMultiplyDataData<ScalarT>(P, TotalStress, JF_invT);
+   RST::inverse(F_inv, defgrad);
+   RST::transpose(F_invT, F_inv);
+   FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
+   FST::scalarMultiplyDataData<ScalarT>(thermoEPS, alphaSkeleton , JF_invT);
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {
@@ -152,7 +155,7 @@ evaluateFields(typename Traits::EvalData workset)
                 		                   * wGradBF(cell, node, qp, dim);
     } } } } }
 
-
+ /*
   if (workset.transientTerms && enableTransient)
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {
@@ -160,7 +163,7 @@ evaluateFields(typename Traits::EvalData workset)
             for (std::size_t i=0; i<numDims; i++) {
                 ExResidual(cell,node,i) += uDotDot(cell, qp, i) * wBF(cell, node, qp);
     } } } }
-
+*/
 
 //  FST::integrate<ScalarT>(ExResidual, TotalStress, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
 

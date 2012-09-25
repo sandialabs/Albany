@@ -21,6 +21,8 @@
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Intrepid_RealSpaceTools.hpp"
 
+#include <typeinfo>
+
 namespace LCM {
 
   //**********************************************************************
@@ -101,7 +103,6 @@ namespace LCM {
     this->addDependentField(biotCoefficient);
     this->addDependentField(biotModulus);
 
-    this->addDependentField(Temp);
     this->addDependentField(TGrad);
     this->addDependentField(wGradBF);
     if (haveSource) this->addDependentField(Source);
@@ -120,11 +121,25 @@ namespace LCM {
     this->addEvaluatedField(TResidual);
     this->addEvaluatedField(Temp);
 
-
+/*
     Teuchos::RCP<PHX::DataLayout> vector_dl =
       p.get< Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout");
     std::vector<PHX::DataLayout::size_type> dims;
     vector_dl->dimensions(dims);
+*/
+    Teuchos::RCP<PHX::DataLayout> vector_dl =
+      p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
+    std::vector<PHX::DataLayout::size_type> dims;
+    vector_dl->dimensions(dims);
+    numQPs  = dims[1];
+    numDims = dims[2];
+
+    Teuchos::RCP<PHX::DataLayout> node_dl =
+      p.get< Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout");
+    std::vector<PHX::DataLayout::size_type> ndims;
+    node_dl->dimensions(ndims);
+    worksetSize = dims[0];
+    numNodes = dims[1];
 
     // Get data from previous converged time step
     strainName = p.get<std::string>("Strain Name")+"_old";
@@ -135,10 +150,10 @@ namespace LCM {
 
 
 
-    worksetSize = dims[0];
-    numNodes = dims[1];
-    numQPs  = dims[2];
-    numDims = dims[3];
+ //   worksetSize = dims[0];
+ //   numNodes = dims[1];
+ //   numQPs  = dims[2];
+ //   numDims = dims[3];
 
     // Works space FCs
     C.resize(worksetSize, numQPs, numDims, numDims);
@@ -233,41 +248,6 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT dporePressure(0.0);
   ScalarT dJ(0.0);
 
-
-  // Pore-fluid diffusion coupling.
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-
-	  for (std::size_t node=0; node < numNodes; ++node) {
-		  TResidual(cell,node)=0.0;
-		  	  for (std::size_t qp=0; qp < numQPs; ++qp) {
-
-
-			      dJ = std::log(J(cell,qp)/Jold(cell,qp))/J(cell,qp);
-
-			      dTemperature = Temp(cell,qp)-Tempold(cell,qp);
-
-			      dporePressure = porePressure(cell,qp)-porePressureold(cell, qp);
-
- 				  // Volumetric Constraint Term
-
- 				  TResidual(cell,node) +=  alphaSkeleton(cell,qp)*bulk(cell,qp)
- 						                  *dJ*wBF(cell, node, qp)  ;
-
- 				  // Pore-fluid Resistance Term
- 				  TResidual(cell,node) +=  (
- 						                    dporePressure )
-             		                      *alphaMixture(cell,qp)*Temp(cell,qp)
-             		                      *wBF(cell, node, qp);
-
- 				 // Thermal Expansion
- 				 TResidual(cell,node) =  +(
- 				  						   dTemperature )
- 				              		     *gammaMixture(cell, qp)*wBF(cell, node, qp);
-
-			  }
-		  }
-	  }
-
   // Heat Diffusion Term
 
    ScalarT dt = deltaTime(0);
@@ -289,7 +269,45 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
 
-  FST::integrate<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
+  FST::integrate<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid::COMP_CPP, false); // "true" sums into
+
+//  std::cout << TResidual(1,1) << endl;
+
+  // Pore-fluid diffusion coupling.
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+
+	  for (std::size_t node=0; node < numNodes; ++node) {
+		//  TResidual(cell,node)=0.0;
+		  	  for (std::size_t qp=0; qp < numQPs; ++qp) {
+
+
+			      dJ = std::log(J(cell,qp)/Jold(cell,qp));
+
+			      dTemperature = Temp(cell,qp)-Tempold(cell,qp);
+
+			      dporePressure = porePressure(cell,qp)-porePressureold(cell, qp);
+
+ 				  // Volumetric Constraint Term
+ 				  TResidual(cell,node) +=  alphaSkeleton(cell,qp)*bulk(cell,qp)
+ 						                  *dJ*wBF(cell, node, qp)  ;
+
+
+ 				  // Pore-fluid Resistance Term
+ 				  TResidual(cell,node) +=  (
+ 						                    dporePressure )
+             		                      *alphaMixture(cell,qp)*Temp(cell,qp)
+             		                      *wBF(cell, node, qp);
+
+ 				 // Thermal Expansion
+ 				 TResidual(cell,node) +=  (
+ 				  						   dTemperature )
+ 				              		     *gammaMixture(cell, qp)*wBF(cell, node, qp);
+
+			  }
+		  }
+	  }
+
+
 
 
 

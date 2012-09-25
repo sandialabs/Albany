@@ -24,6 +24,9 @@
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemUtils.hpp"
 
+#include "Albany_EvaluatorUtils.hpp"
+#include "PHAL_AlbanyTraits.hpp"
+
 
 Albany::ThermoPoroPlasticityProblem::
 ThermoPoroPlasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
@@ -151,14 +154,52 @@ Albany::ThermoPoroPlasticityProblem::getValidProblemParameters() const
   validPL->sublist("Pore-Fluid Density", false, "");
   validPL->sublist("Skeleton Specific Heat", false, "");
   validPL->sublist("Pore-Fluid Specific Heat", false, "");
-  validPL->sublist("Mixture Thermal Expansion", false, "");
-  validPL->sublist("Mixture Specific Heat", false, "");
-  if (matModel=="J2"){
-   validPL->sublist("Hardening Modulus", false, "");
-   validPL->sublist("Saturation Modulus", false, "");
-   validPL->sublist("Saturation Exponent", false, "");
-   validPL->sublist("Yield Strength", false, "");
-  }
+ // validPL->sublist("Mixture Thermal Expansion", false, "");
+ // validPL->sublist("Mixture Specific Heat", false, "");
+  if (matModel == "J2"|| matModel == "J2Fiber" || matModel == "GursonFD")
+   {
+     validPL->set<bool>("Compute Dislocation Density Tensor", false, "Flag to compute the dislocaiton density tensor (only for 3D)");
+     validPL->sublist("Hardening Modulus", false, "");
+     validPL->sublist("Yield Strength", false, "");
+     validPL->sublist("Saturation Modulus", false, "");
+     validPL->sublist("Saturation Exponent", false, "");
+   }
+
+   if (matModel == "J2Fiber")
+   {
+ 	validPL->set<RealType>("xiinf_J2",false,"");
+ 	validPL->set<RealType>("tau_J2",false,"");
+ 	validPL->set<RealType>("k_f1",false,"");
+ 	validPL->set<RealType>("q_f1",false,"");
+ 	validPL->set<RealType>("vol_f1",false,"");
+ 	validPL->set<RealType>("xiinf_f1",false,"");
+ 	validPL->set<RealType>("tau_f1",false,"");
+ 	validPL->set<RealType>("Mx_f1",false,"");
+ 	validPL->set<RealType>("My_f1",false,"");
+ 	validPL->set<RealType>("Mz_f1",false,"");
+ 	validPL->set<RealType>("k_f2",false,"");
+ 	validPL->set<RealType>("q_f2",false,"");
+ 	validPL->set<RealType>("vol_f2",false,"");
+ 	validPL->set<RealType>("xiinf_f2",false,"");
+ 	validPL->set<RealType>("tau_f2",false,"");
+ 	validPL->set<RealType>("Mx_f2",false,"");
+ 	validPL->set<RealType>("My_f2",false,"");
+ 	validPL->set<RealType>("Mz_f2",false,"");
+   }
+
+   if (matModel == "GursonFD")
+   {
+ 	validPL->set<RealType>("f0",false,"");
+ 	validPL->set<RealType>("kw",false,"");
+ 	validPL->set<RealType>("eN",false,"");
+ 	validPL->set<RealType>("sN",false,"");
+ 	validPL->set<RealType>("fN",false,"");
+ 	validPL->set<RealType>("fc",false,"");
+ 	validPL->set<RealType>("ff",false,"");
+ 	validPL->set<RealType>("q1",false,"");
+ 	validPL->set<RealType>("q2",false,"");
+ 	validPL->set<RealType>("q3",false,"");
+   }
 
   return validPL;
 }

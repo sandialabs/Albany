@@ -21,6 +21,8 @@
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Intrepid_RealSpaceTools.hpp"
 
+#include <typeinfo>
+
 namespace LCM {
 
   //**********************************************************************
@@ -92,25 +94,39 @@ namespace LCM {
     this->addDependentField(RefTemp);
     this->addDependentField(TGrad);
     this->addDependentField(wGradBF);
-    if (haveSource) this->addDependentField(Source);
-    if (haveAbsorption) {
-      Absorption = PHX::MDField<ScalarT,Cell,QuadPoint>(
-							p.get<std::string>("Absorption Name"),
-							p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"));
-      this->addDependentField(Absorption);
-    }
-
 
     this->addDependentField(J);
-    this->addDependentField(defgrad);
     this->addDependentField(alphaMixture);
     this->addDependentField(alphaPoreFluid);
+    this->addDependentField(defgrad);
     this->addEvaluatedField(TResidual);
 
+    if (haveSource) this->addDependentField(Source);
+      if (haveAbsorption) {
+        Absorption = PHX::MDField<ScalarT,Cell,QuadPoint>(
+  							p.get<std::string>("Absorption Name"),
+  							p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"));
+        this->addDependentField(Absorption);
+      }
+/*
     Teuchos::RCP<PHX::DataLayout> vector_dl =
       p.get< Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout");
     std::vector<PHX::DataLayout::size_type> dims;
     vector_dl->dimensions(dims);
+*/
+    Teuchos::RCP<PHX::DataLayout> vector_dl =
+      p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
+    std::vector<PHX::DataLayout::size_type> dims;
+    vector_dl->dimensions(dims);
+    numQPs  = dims[1];
+    numDims = dims[2];
+
+    Teuchos::RCP<PHX::DataLayout> node_dl =
+      p.get< Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout");
+    std::vector<PHX::DataLayout::size_type> ndims;
+    node_dl->dimensions(ndims);
+    worksetSize = dims[0];
+    numNodes = dims[1];
 
     // Get data from previous converged time step
     porosityName = p.get<std::string>("Porosity Name")+"_old";
@@ -120,10 +136,10 @@ namespace LCM {
 
 
 
-    worksetSize = dims[0];
-    numNodes = dims[1];
-    numQPs  = dims[2];
-    numDims = dims[3];
+   // worksetSize = dims[0];
+   // numNodes = dims[1];
+  //  numQPs  = dims[2];
+  //  numDims = dims[3];
 
     // Works space FCs
     C.resize(worksetSize, numQPs, numDims, numDims);
@@ -176,6 +192,8 @@ namespace LCM {
 			PHX::FieldManager<Traits>& fm)
   {
 	this->utils.setFieldData(stabParameter,fm);
+    this->utils.setFieldData(Temp,fm);
+    this->utils.setFieldData(RefTemp,fm);
 	this->utils.setFieldData(deltaTime,fm);
 	this->utils.setFieldData(weights,fm);
     this->utils.setFieldData(wBF,fm);
@@ -188,16 +206,14 @@ namespace LCM {
     this->utils.setFieldData(biotModulus,fm);
     this->utils.setFieldData(TGrad,fm);
     this->utils.setFieldData(wGradBF,fm);
-    if (haveSource)  this->utils.setFieldData(Source,fm);
-    this->utils.setFieldData(Temp,fm);
-    this->utils.setFieldData(RefTemp,fm);
-    if (haveAbsorption)  this->utils.setFieldData(Absorption,fm);
-    if (haveConvection && haverhoCp)  this->utils.setFieldData(rhoCp,fm);
     this->utils.setFieldData(J,fm);
     this->utils.setFieldData(defgrad,fm);
     this->utils.setFieldData(densityPoreFluid,fm);
     this->utils.setFieldData(alphaPoreFluid,fm);
     this->utils.setFieldData(TResidual,fm);
+    if (haveSource)  this->utils.setFieldData(Source,fm);
+    if (haveAbsorption)  this->utils.setFieldData(Absorption,fm);
+    if (haveConvection && haverhoCp)  this->utils.setFieldData(rhoCp,fm);
   }
 
 //**********************************************************************
@@ -217,48 +233,6 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT dTemperature(0.0);
   ScalarT dporePressure(0.0);
   ScalarT dJ(0.0);
-
-
-  // Pore-fluid diffusion coupling.
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-
-	  for (std::size_t node=0; node < numNodes; ++node) {
-		  TResidual(cell,node)=0.0;
-		  for (std::size_t qp=0; qp < numQPs; ++qp) {
-
-
-		    	  dJ = std::log(J(cell,qp)/Jold(cell,qp))/J(cell,qp);
-
-			  	  dTemperature = Temp(cell,qp)-Tempold(cell,qp);
-
-			      dporePressure = porePressure(cell,qp)-porePressureold(cell, qp);
-
-                  //std::cout << "dT" << dTemperature << endl;
-
- 				  // Volumetric Constraint Term
- 				  TResidual(cell,node) +=  -biotCoefficient(cell, qp)*dJ
- 				              		  *wBF(cell, node, qp) ;
-
- 				  // Pore-fluid Resistance Term
- 				  TResidual(cell,node) +=  -(
- 						// -(J(cell,qp)-Jold(cell,qp))*porePressure(cell,qp) +
- 					//	 J(cell,qp)*
- 						 dporePressure )
- 						                //  /
- 						             //   		  (J(cell,qp)*J(cell,qp))
-             		                    		/biotModulus(cell, qp)*
-             		                    		wBF(cell, node, qp);
-
- 				 // Thermal Expansion
- 				 TResidual(cell,node) +=  (
- 				  						// - (J(cell,qp)-Jold(cell,qp))*Temp(cell,qp) +
- 				  					//	 J(cell,qp)*
- 				  						 dTemperature)*
- 				              		alphaMixture(cell, qp)*wBF(cell, node, qp);
-			  }
-		  }
-	  }
-
 
   // Pore-Fluid Diffusion Term
 
@@ -298,7 +272,55 @@ evaluateFields(typename Traits::EvalData workset)
       }
   }
 
-  FST::integrate<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid::COMP_CPP, true); // "false" overwrites
+  FST::integrate<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+
+
+
+  // Pore-fluid diffusion coupling.
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+
+	  for (std::size_t node=0; node < numNodes; ++node) {
+	//	  TResidual(cell,node)=0.0;
+		  for (std::size_t qp=0; qp < numQPs; ++qp) {
+
+
+		    	  dJ = std::log(J(cell,qp)/Jold(cell,qp));
+
+			  	  dTemperature = Temp(cell,qp)-Tempold(cell,qp);
+
+			      dporePressure = porePressure(cell,qp)-porePressureold(cell, qp);
+
+                  //std::cout << "dT" << dTemperature << endl;
+
+ 				  // Volumetric Constraint Term
+ 				  TResidual(cell,node) +=  -biotCoefficient(cell, qp)*dJ
+ 				              		  *wBF(cell, node, qp) ;
+
+ 				  // Pore-fluid Resistance Term
+ 				  TResidual(cell,node) +=  -(
+ 						// -(J(cell,qp)-Jold(cell,qp))*porePressure(cell,qp) +
+ 					//	 J(cell,qp)*
+ 						 dporePressure )
+ 						                //  /
+ 						             //   		  (J(cell,qp)*J(cell,qp))
+             		                    		/biotModulus(cell, qp)*
+             		                    		wBF(cell, node, qp);
+
+ 				 // Thermal Expansion
+ 				 TResidual(cell,node) +=  (
+ 				  						// - (J(cell,qp)-Jold(cell,qp))*Temp(cell,qp) +
+ 				  					//	 J(cell,qp)*
+ 				  						 dTemperature)*
+ 				              		alphaMixture(cell, qp)*wBF(cell, node, qp);
+
+			  }
+		  }
+  }
+
+ // std::cout << TResidual(1,1) << endl;
+
+
+
 
 
   /*
