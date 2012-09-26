@@ -147,12 +147,13 @@ QCAD::PoissonProblem::constructDirichletEvaluators(
    // Construct Dirichlet evaluators for all nodesets and names
    vector<string> dirichletNames(neq);
    dirichletNames[0] = "Phi";   
-   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
+//   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
 
    const std::vector<std::string>& nodeSetIDs = meshSpecs.nsNames;
 
    Teuchos::ParameterList DBCparams = params->sublist("Dirichlet BCs");
-   DBCparams.validateParameters(*(dirUtils.getValidBCParameters(nodeSetIDs,dirichletNames)),0); //TODO: Poisson version??
+//   DBCparams.validateParameters(*(dirUtils.getValidBCParameters(nodeSetIDs,dirichletNames)),0); //TODO: Poisson version??
+   DBCparams.validateParameters(*(Albany::DirichletTraits::getValidBCParameters(nodeSetIDs,dirichletNames)),0); //TODO: Poisson version??
 
    map<string, RCP<ParameterList> > evaluators_to_build;
    RCP<DataLayout> dummy = rcp(new MDALayout<Dummy>(0));
@@ -257,7 +258,7 @@ QCAD::PoissonProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::Mesh
 
    // Check to make sure that Neumann BCs are given in the input file
 
-   if(!bcUtils.haveNeumann(this->params))
+   if(!bcUtils.haveBCSpecified(this->params))
 
       return;
 

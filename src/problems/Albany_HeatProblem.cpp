@@ -125,7 +125,7 @@ Albany::HeatProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshS
 
    // Check to make sure that Neumann BCs are given in the input file
 
-   if(!bcUtils.haveNeumann(this->params))
+   if(!bcUtils.haveBCSpecified(this->params))
 
       return;
 
