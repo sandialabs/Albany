@@ -1,18 +1,88 @@
+#!/bin/sh
+#
 # Here is a script for configuring Glen's working version of Albany
 # 
-#TRILINSTALLDIR=/ascldap/users/gahanse/local/trilinos/LINUX_MPI
-LAMEINCDIR=/ascldap/users/gahanse/Codes/4.24.1/lame/include
-LAMELIBDIR=/ascldap/users/gahanse/Codes/4.24.1/lame/build
+# Note: This heavily borrows ideas from Kevin Long's Trilinos configure script
 
-BUILD_DIR=`pwd`
+# Parse for command line arguments
+TEMP=`getopt -o x --long help,lcm,hyd,dryrun,verbose,fpe,lameinc:,lamelib:,trilinos: -- "$@"`
 
-cmake \
+eval set -- "$TEMP"
+
+while true ; do
+    case "$1" in 
+      --lameinc)
+             ALB_LAME_INC_DIR="$2"; shift 2;;
+      --lamelib)
+             ALB_LAME_LIB_DIR="$2"; shift 2;;
+      --lcm) ALB_ENABLE_LCM=ON; shift ;;
+      --hyd) ALB_ENABLE_HYDRIDE=ON; shift ;;
+      --dryrun) ECHO=echo; shift;;
+      --verbose) ALB_VERBOSE=ON; shift;;
+      --fpe) ALB_CHECK_FPE=ON; shift;;
+      --trilinos)
+            TRILINOS_INSTALL_DIR="$2"; shift 2;;
+      --help)
+            echo "Command-line arguments:"
+            echo "--help             help"
+            echo "--dryrun           print the command that would be used"
+            echo "--verbose          enable verbose configuration (default: off)"
+            echo "--lameinc  <dir>   set location of LAME include files (no default)"
+            echo "--lamelib  <dir>   set location of LAME library files (no default)"
+            echo "--lcm              enable LCM capabilities (default: off)"
+            echo "--hyd              enable Hydride capabilities (default: off)"
+            echo "--fpe              enable traps for floating point exceptions (default: off)"
+            echo "--trilinos <dir>   set location of Trilinos library (no default)"
+            echo " ";
+            exit 0;
+            shift
+            ;;
+      --) shift; break;;
+   esac
+done
+
+if [ -z "$TRILINOS_INSTALL_DIR" ]; then
+    echo -e "\nNeed to set environment variable TRILINOS_INSTALL_DIR or use --trilinos <dir> option"
+    exit 1
+fi
+
+# LAME
+if [ -z "$ALB_LAME_INC_DIR" -o  -z "$ALB_LAME_LIB_DIR" ]; then
+  echo -e "\nLAME capabilities are NOT configured. If this is incorrect:"
+  echo "Need to set environment variables ALB_LAME_* or use --lameinc <dir> and --lamelib <dir> options"
+  ALB_ENABLE_LAME=OFF
+else
+  ALB_ENABLE_LAME=ON
+fi
+
+if [ -z "$ALB_ENABLE_HYDRIDE" ]; then
+    echo -e "\nHydride capabilities are NOT configured. If this is incorrect, use option --hyd"
+    ALB_ENABLE_HYDRIDE=OFF
+fi
+
+if [ -z "$ALB_ENABLE_LCM" ]; then
+    echo -e "\nLCM capabilities are NOT configured. If this is incorrect, use option --lcm"
+    ALB_ENABLE_LCM=OFF
+fi
+
+if [ -z "$ALB_VERBOSE" ]; then
+    ALB_VERBOSE=OFF
+fi
+
+if [ -z "$ALB_CHECK_FPE" ]; then
+    ALB_CHECK_FPE=OFF
+fi
+
+echo -e "\n"
+
+${ECHO} cmake \
       -D ALBANY_TRILINOS_DIR:FILEPATH="$TRILINOS_INSTALL_DIR" \
-      -D ENABLE_LCM:BOOL=ON \
-      -D ENABLE_LAME:BOOL=ON \
-      -D LAME_INCLUDE_DIR:FILEPATH="$LAMEINCDIR" \
-      -D LAME_LIBRARY_DIR:FILEPATH="$LAMELIBDIR" \
+      -D ENABLE_LCM:BOOL=${ALB_ENABLE_LCM} \
+      -D ENABLE_LAME:BOOL=${ALB_ENABLE_LAME} \
+      -D CMAKE_VERBOSE_MAKEFILE:BOOL=${ALB_VERBOSE} \
+      -D ENABLE_CHECK_FPE:BOOL=${ALB_CHECK_FPE} \
+      -D ENABLE_HYDRIDE:BOOL=${ALB_ENABLE_HYDRIDE} \
+      -D LAME_INCLUDE_DIR:FILEPATH="$ALB_LAME_INC_DIR" \
+      -D LAME_LIBRARY_DIR:FILEPATH="$ALB_LAME_LIB_DIR" \
        ../
 
-#      -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
-#      -D ENABLE_CHECK_FPE:BOOL=ON \

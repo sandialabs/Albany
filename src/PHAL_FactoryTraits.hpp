@@ -84,13 +84,21 @@ namespace PHAL {
     static const int id_neumann_aggregator        =  1;
     static const int id_gather_coord_vector       =  2;
     static const int id_gather_solution           =  3;
+    static const int id_timedep_bc                =  4; // Only for LCM probs
 
-   typedef boost::mpl::vector4< 
+#ifdef ALBANY_LCM
+    typedef boost::mpl::vector5<
+#else
+    typedef boost::mpl::vector4< 
+#endif
 
 	     PHAL::Neumann<_,Traits>,                     //  0
 	     PHAL::NeumannAggregator<_,Traits>,           //  1
              PHAL::GatherCoordinateVector<_,Traits>,      //  2
              PHAL::GatherSolution<_,Traits>               //  3
+#ifdef ALBANY_LCM
+        , LCM::TimeDepBC<_, Traits>                //  4
+#endif
 
 	  > EvaluatorTypes;
 };

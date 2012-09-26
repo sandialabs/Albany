@@ -202,7 +202,7 @@ Albany::NavierStokes::constructNeumannEvaluators(const Teuchos::RCP<Albany::Mesh
 
    // Check to make sure that Neumann BCs are given in the input file
 
-   if(!nbcUtils.haveNeumann(this->params)) {
+   if(!nbcUtils.haveBCSpecified(this->params)) {
       return;
    }
 

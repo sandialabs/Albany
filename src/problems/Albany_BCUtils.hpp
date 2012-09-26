@@ -49,6 +49,19 @@ namespace Albany {
 
     static const std::string bcParamsPl;
 
+    typedef typename PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits> factory_type;
+
+    static Teuchos::RCP<const Teuchos::ParameterList>
+      getValidBCParameters(
+        const std::vector<std::string>& nodeSetIDs,
+        const std::vector<std::string>& bcNames);
+
+    static std::string
+      constructBCName(const std::string ns, const std::string dof);
+
+    static std::string
+      constructTimeDepBCName(const std::string ns, const std::string dof);
+
   };
 
   struct NeumannTraits { 
@@ -57,99 +70,61 @@ namespace Albany {
     enum { typeNa = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_neumann_aggregator };
     enum { typeGCV = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_gather_coord_vector };
     enum { typeGS = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_gather_solution };
+    enum { typeTd = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_timedep_bc };
 
     static const std::string bcParamsPl;
 
+    typedef typename PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits> factory_type;
+
+    static Teuchos::RCP<const Teuchos::ParameterList>
+      getValidBCParameters(
+        const std::vector<std::string>& sideSetIDs,
+        const std::vector<std::string>& bcNames,
+        const std::vector<std::string>& conditions);
+
+    static std::string
+      constructBCName(const std::string ns, const std::string dof,
+          const std::string condition);
+
+    static std::string
+      constructTimeDepBCName(const std::string ns,
+          const std::string dof, const std::string condition);
+
   };
 
-
-/*
 template<typename BCTraits>
 
   class BCUtils {
 
    public:
 
+    BCUtils(){}
+
     //! Type of traits class being used
     typedef BCTraits traits_type;
 
-    BCUtils() {};
+    //! Function to check if the Neumann/Dirichlet BC section of input file is present
+    bool haveBCSpecified(const Teuchos::RCP<Teuchos::ParameterList>& params) const {
 
-    //! Generic implementation of Field Manager for BCs
+      // If the BC sublist is not in the input file, 
+      // side/node sets can be contained in the Exodus file but are not defined in the problem statement.
+      // This is OK, just return 
+
+      return params->isSublist(traits_type::bcParamsPl);
+
+    }
+
+    //! Specific implementation for Dirichlet BC Evaluator below
+
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > 
     constructBCEvaluators(
-       const std::vector<std::string>& nodeorsideSetIDs,
+       const std::vector<std::string>& nodeSetIDs,
        const std::vector<std::string>& bcNames,
        Teuchos::RCP<Teuchos::ParameterList> params,
        Teuchos::RCP<ParamLib> paramLib);
 
-    //! Function to return valid list of parameters in BC section of input file
-    Teuchos::RCP<const Teuchos::ParameterList> getValidBCParameters(
-                 const std::vector<std::string>& nodeorsideSetIDs,
-                 const std::vector<std::string>& bcNames) const;
+    //! Specific implementation for Dirichlet BC Evaluator below
 
-  private:
-
-    //! Local utility function to construct unique string from Nodeset/Sideset name and dof name
-    std::string constructBCName(const std::string ns, const std::string dof,
-        const std::string condition = "N/A") const;
-
-    //! Local utility function to construct unique string from Nodeset/Sideset name and dof name
-    std::string constructTimeDepBCName(const std::string ns, const std::string dof,
-        const std::string condition = "N/A") const;
-
-  };
-*/
-template<typename BCTraits>
-
-  class BCUtils {};
-
-template<>
-
-  class BCUtils<DirichletTraits> {
-
-   public:
-
-    //! Type of traits class being used
-    typedef DirichletTraits traits_type;
-
-    BCUtils() {};
-
-    //! Generic implementation of Field Manager for BCs
-    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > 
-    constructBCEvaluators(
-       const std::vector<std::string>& nodeorsideSetIDs,
-       const std::vector<std::string>& bcNames,
-       Teuchos::RCP<Teuchos::ParameterList> params,
-       Teuchos::RCP<ParamLib> paramLib);
-
-    //! Function to return valid list of parameters in BC section of input file
-    Teuchos::RCP<const Teuchos::ParameterList> getValidBCParameters(
-                 const std::vector<std::string>& nodeorsideSetIDs,
-                 const std::vector<std::string>& bcNames) const;
-
-  private:
-
-    //! Local utility function to construct unique string from Nodeset/Sideset name and dof name
-    std::string constructBCName(const std::string ns, const std::string dof) const;
-
-    //! Local utility function to construct unique string from Nodeset/Sideset name and dof name
-    std::string constructTimeDepBCName(const std::string ns, const std::string dof) const;
-
-  };
-
-template<>
-
-  class BCUtils<NeumannTraits> {
-
-   public:
-
-    //! Type of traits class being used
-    typedef NeumannTraits traits_type;
-
-    BCUtils() {};
-
-    //! Generic implementation of Field Manager for BCs
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > 
     constructBCEvaluators(
        const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs,
@@ -164,42 +139,41 @@ template<>
        Teuchos::RCP<ParamLib> paramLib,
        const Teuchos::RCP<QCAD::MaterialDatabase>& materialDB = Teuchos::null);
 
-    //! Function to return valid list of parameters in BC section of input file
-    Teuchos::RCP<const Teuchos::ParameterList> getValidBCParameters(
-                 const std::vector<std::string>& nodeorsideSetIDs,
-                 const std::vector<std::string>& bcNames,
-                 const std::vector<std::string>& condition) const;
-
-    //! Function to check if the Neumann BC section of input file is present
-    bool haveNeumann(const Teuchos::RCP<Teuchos::ParameterList>& params) const; 
-
   private:
 
-    int numDim;
-
-    //! Local utility function to construct unique string from Nodeset/Sideset name and dof name
-    std::string constructBCName(const std::string ns, const std::string dof,
-        const std::string condition) const;
-
-    //! Local utility function to construct unique string from Nodeset/Sideset name and dof name
-    std::string constructTimeDepBCName(const std::string ns, const std::string dof,
-        const std::string condition) const;
+    //! Generic implementation of Field Manager construction function
+    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > 
+      buildFieldManager(const std::map<std::string, Teuchos::RCP<Teuchos::ParameterList> >& evals_to_build,
+		std::string& allBC, Teuchos::RCP<PHX::DataLayout>& dummy );
 
   };
 
-// Now, for the explicit template function declarations
+    //! Specific implementation for Dirichlet BC Evaluator
 
-/*
-  template<> Teuchos::RCP<const Teuchos::ParameterList> BCUtils<DirichletTraits>::getValidBCParameters(
-      const std::vector<std::string>& nodeSetIDs, const std::vector<std::string>& bcNames) const{};
+template<>
+    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > 
+    BCUtils<DirichletTraits>::constructBCEvaluators(
+       const std::vector<std::string>& nodeSetIDs,
+       const std::vector<std::string>& bcNames,
+       Teuchos::RCP<Teuchos::ParameterList> params,
+       Teuchos::RCP<ParamLib> paramLib);
 
-  template<> std::string BCUtils<DirichletTraits>::constructBCName(const std::string ns, const std::string dof) const;
+    //! Specific implementation for Dirichlet BC Evaluator
 
-  template<> Teuchos::RCP<const Teuchos::ParameterList> BCUtils<NeumannTraits>::getValidBCParameters(
-      const std::vector<std::string>& sideSetIDs, const std::vector<std::string>& bcNames) const;
-  template<> std::string BCUtils<NeumannTraits>::constructBCName(const std::string ns, 
-      const std::string condition) const;
-*/
+template<>
+    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > 
+    BCUtils<NeumannTraits>::constructBCEvaluators(
+       const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs,
+       const std::vector<std::string>& bcNames,
+       const Teuchos::ArrayRCP<string>& dof_names,
+       bool isVectorField, 
+       int offsetToFirstDOF, 
+       const std::vector<std::string>& conditions,
+       const Teuchos::Array<Teuchos::Array<int> >& offsets,
+       const Teuchos::RCP<Albany::Layouts>& dl,
+       Teuchos::RCP<Teuchos::ParameterList> params,
+       Teuchos::RCP<ParamLib> paramLib,
+       const Teuchos::RCP<QCAD::MaterialDatabase>& materialDB);
 
 }
 
