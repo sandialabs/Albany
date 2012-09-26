@@ -15,14 +15,13 @@
 \********************************************************************/
 
 
-#ifndef FELIX_VISCOSITY_HPP
-#define FELIX_VISCOSITY_HPP
+#ifndef FELIX_STOKESFORESID_HPP
+#define FELIX_STOKESFORESID_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-#include "Sacado_ParameterAccessor.hpp" 
 
 namespace FELIX {
 /** \brief Finite Element Interpolation Evaluator
@@ -32,45 +31,41 @@ namespace FELIX {
 */
 
 template<typename EvalT, typename Traits>
-class Viscosity : public PHX::EvaluatorWithBaseImpl<Traits>,
-		    public PHX::EvaluatorDerived<EvalT, Traits>,
-		    public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+class StokesFOResid : public PHX::EvaluatorWithBaseImpl<Traits>,
+		        public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
-  typedef typename EvalT::ScalarT ScalarT;
-
-  Viscosity(const Teuchos::ParameterList& p);
+  StokesFOResid(const Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
+			     PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
-  ScalarT& getValue(const std::string &n); 
-
 private:
- 
+
+  typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  ScalarT homotopyParam;
-
-  //coefficients for Glen's law
-  double A; 
-  double n; 
-
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> VGrad;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> force;
+
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> C;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Cgrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> CDot;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint> mu;
+  PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;
 
-  unsigned int numQPs, numDims, numNodes;
-  
-  enum VISCTYPE {CONSTANT, GLENSLAW};
-  VISCTYPE visc_type;
- 
+  std::size_t numNodes;
+  std::size_t numQPs;
+  std::size_t numDims;
+  std::size_t vecDim;
+  bool enableTransient;
+
 };
 }
 

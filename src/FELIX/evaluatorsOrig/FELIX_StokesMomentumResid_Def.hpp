@@ -30,10 +30,10 @@ StokesMomentumResid(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ), 
   wGradBF     (p.get<std::string>                   ("Weighted Gradient BF Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
-  VGrad       (p.get<std::string>                   ("Velocity Gradient QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
   P           (p.get<std::string>                   ("Pressure QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  VGrad       (p.get<std::string>                   ("Velocity Gradient QP Variable Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
   force       (p.get<std::string>              ("Body Force Name"),
  	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
   muFELIX    (p.get<std::string>                   ("FELIX Viscosity QP Variable Name"),
@@ -43,8 +43,8 @@ StokesMomentumResid(const Teuchos::ParameterList& p) :
 {
 
   this->addDependentField(wBF);  
-  this->addDependentField(VGrad);
   this->addDependentField(wGradBF);
+  this->addDependentField(VGrad);
   this->addDependentField(P);
   this->addDependentField(force);
   this->addDependentField(muFELIX);
@@ -69,8 +69,8 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(wBF,fm);
-  this->utils.setFieldData(VGrad,fm);
   this->utils.setFieldData(wGradBF,fm); 
+  this->utils.setFieldData(VGrad,fm); 
   this->utils.setFieldData(P,fm);
   this->utils.setFieldData(force,fm);
   this->utils.setFieldData(muFELIX,fm);
@@ -94,7 +94,6 @@ evaluateFields(typename Traits::EvalData workset)
 	  for (std::size_t j=0; j < numDims; ++j) { 
 	    MResidual(cell,node,i) += 
 	      muFELIX(cell,qp)*(VGrad(cell,qp,i,j)+VGrad(cell,qp,j,i))*wGradBF(cell,node,qp,j);
-//	      muFELIX(cell,qp)*VGrad(cell,qp,i,j)*wGradBF(cell,node,qp,j);
 	  }  
 	}
       }

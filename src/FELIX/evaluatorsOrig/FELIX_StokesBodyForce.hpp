@@ -15,14 +15,13 @@
 \********************************************************************/
 
 
-#ifndef FELIX_VISCOSITY_HPP
-#define FELIX_VISCOSITY_HPP
+#ifndef FELIX_STOKESBODYFORCE_HPP
+#define FELIX_STOKESBODYFORCE_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-#include "Sacado_ParameterAccessor.hpp" 
 
 namespace FELIX {
 /** \brief Finite Element Interpolation Evaluator
@@ -32,45 +31,42 @@ namespace FELIX {
 */
 
 template<typename EvalT, typename Traits>
-class Viscosity : public PHX::EvaluatorWithBaseImpl<Traits>,
-		    public PHX::EvaluatorDerived<EvalT, Traits>,
-		    public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+class StokesBodyForce : public PHX::EvaluatorWithBaseImpl<Traits>,
+		    public PHX::EvaluatorDerived<EvalT, Traits> {
 
 public:
 
   typedef typename EvalT::ScalarT ScalarT;
 
-  Viscosity(const Teuchos::ParameterList& p);
+  StokesBodyForce(const Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
-  ScalarT& getValue(const std::string &n); 
 
 private:
  
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  ScalarT homotopyParam;
-
-  //coefficients for Glen's law
-  double A; 
-  double n; 
-
-  // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> VGrad;
+  // Input:  
+  PHX::MDField<ScalarT,Cell,QuadPoint> muFELIX;
   PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
-
-  // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint> mu;
-
-  unsigned int numQPs, numDims, numNodes;
+  Teuchos::Array<double> gravity;
   
-  enum VISCTYPE {CONSTANT, GLENSLAW};
-  VISCTYPE visc_type;
- 
+  // Output:
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> force;
+
+   //Radom field types
+  enum BFTYPE {NONE, GRAVITY, TESTAMMF, POLY, POLYSACADO, SINSIN, FO_SINCOS2D, SINCOSGLEN, SINCOSZ};
+  BFTYPE bf_type;
+
+  unsigned int numQPs, numDims;
+
+  //Glen's law parameters
+  int n; 
+  double A;
 };
 }
 

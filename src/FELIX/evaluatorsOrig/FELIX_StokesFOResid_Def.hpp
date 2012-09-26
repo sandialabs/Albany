@@ -38,8 +38,6 @@ StokesFOResid(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
   force       (p.get<std::string>              ("Body Force Name"),
  	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  muFELIX    (p.get<std::string>                   ("FELIX Viscosity QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   Residual   (p.get<std::string>                   ("Residual Name"),
               p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") )
 {
@@ -49,7 +47,6 @@ StokesFOResid(const Teuchos::ParameterList& p) :
   //this->addDependentField(CDot);
   this->addDependentField(wBF);
   this->addDependentField(wGradBF);
-  this->addDependentField(muFELIX);
 
   this->addEvaluatedField(Residual);
 
@@ -65,9 +62,9 @@ StokesFOResid(const Teuchos::ParameterList& p) :
   C.fieldTag().dataLayout().dimensions(dims);
   vecDim  = dims[2];
 
-cout << " in FELIX Stokes FO residual! " << endl;
 cout << " vecDim = " << vecDim << endl;
 cout << " numDims = " << numDims << endl;
+cout << " in FELIX Stokes FO residual! " << numDims << endl;
 cout << " numQPs = " << numQPs << endl; 
 cout << " numNodes = " << numNodes << endl; 
 
@@ -90,7 +87,6 @@ postRegistrationSetup(typename Traits::SetupData d,
   //this->utils.setFieldData(CDot,fm);
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(wGradBF,fm);
-  this->utils.setFieldData(muFELIX,fm);
 
   this->utils.setFieldData(Residual,fm);
 }
@@ -100,36 +96,20 @@ template<typename EvalT, typename Traits>
 void StokesFOResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  MeshScalarT muqp = 1.0; //mu is constant for now
   typedef Intrepid::FunctionSpaceTools FST;
-  if (numDims == 3) { //3D case
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {
               for (std::size_t i=0; i<vecDim; i++)  Residual(cell,node,i)=0.0;
           for (std::size_t qp=0; qp < numQPs; ++qp) {
-             Residual(cell,node,0) += 2.0*muFELIX(cell,qp)*((2.0*Cgrad(cell,qp,0,0) + Cgrad(cell,qp,1,1))*wGradBF(cell,node,qp,0) + 
-                                      0.5*(Cgrad(cell,qp,0,1) + Cgrad(cell,qp,1,0))*wGradBF(cell,node,qp,1) + 
-                                      0.5*Cgrad(cell,qp,0,2)*wGradBF(cell,node,qp,2)) + 
-                                      force(cell,qp,0)*wBF(cell,node,qp);
-             Residual(cell,node,1) += 2.0*muFELIX(cell,qp)*(0.5*(Cgrad(cell,qp,0,1) + Cgrad(cell,qp,1,0))*wGradBF(cell,node,qp,0) +
-                                      (Cgrad(cell,qp,0,0) + 2.0*Cgrad(cell,qp,1,1))*wGradBF(cell,node,qp,1) + 
-                                      0.5*Cgrad(cell,qp,1,2)*wGradBF(cell,node,qp,2)) + 
-                                      force(cell,qp,1)*wBF(cell,node,qp); 
-              }
-           
-    } } }
-   else { //2D case
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t node=0; node < numNodes; ++node) {
-              for (std::size_t i=0; i<vecDim; i++)  Residual(cell,node,i)=0.0;
-          for (std::size_t qp=0; qp < numQPs; ++qp) {
-             Residual(cell,node,0) += 2.0*muFELIX(cell,qp)*((2.0*Cgrad(cell,qp,0,0) + Cgrad(cell,qp,1,1))*wGradBF(cell,node,qp,0) + 
+             Residual(cell,node,0) += 2.0*muqp*((2.0*Cgrad(cell,qp,0,0) + Cgrad(cell,qp,1,1))*wGradBF(cell,node,qp,0) + 
                                       0.5*(Cgrad(cell,qp,0,1) + Cgrad(cell,qp,1,0))*wGradBF(cell,node,qp,1)) + 
                                       force(cell,qp,0)*wBF(cell,node,qp);
-             Residual(cell,node,1) += 2.0*muFELIX(cell,qp)*(0.5*(Cgrad(cell,qp,0,1) + Cgrad(cell,qp,1,0))*wGradBF(cell,node,qp,0) +
+             Residual(cell,node,1) += 2.0*muqp*(0.5*(Cgrad(cell,qp,0,1) + Cgrad(cell,qp,1,0))*wGradBF(cell,node,qp,0) +
                                       (Cgrad(cell,qp,0,0) + 2.0*Cgrad(cell,qp,1,1))*wGradBF(cell,node,qp,1)) + force(cell,qp,1)*wBF(cell,node,qp); 
               }
            
-    } } }
+    } } 
 }
 
 //**********************************************************************

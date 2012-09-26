@@ -59,13 +59,13 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> force;
 
    //Radom field types
-  enum BFTYPE {NONE, GRAVITY, TESTAMMF, POLY, POLYSACADO, SINSIN, FO_SINCOS2D, SINCOSGLEN, SINCOSZ};
+  enum BFTYPE {NONE, GRAVITY, TESTAMMF, POLY, POLYSACADO, SINSIN, SINSINGLEN, SINCOSZ};
   BFTYPE bf_type;
 
   unsigned int numQPs, numDims;
 
   //Glen's law parameters
-  int n; 
+  double n; 
   double A;
 };
 }

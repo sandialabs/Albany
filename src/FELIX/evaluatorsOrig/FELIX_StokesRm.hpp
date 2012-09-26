@@ -15,14 +15,13 @@
 \********************************************************************/
 
 
-#ifndef FELIX_VISCOSITY_HPP
-#define FELIX_VISCOSITY_HPP
+#ifndef FELIX_STOKESRM_HPP
+#define FELIX_STOKESRM_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-#include "Sacado_ParameterAccessor.hpp" 
 
 namespace FELIX {
 /** \brief Finite Element Interpolation Evaluator
@@ -32,44 +31,37 @@ namespace FELIX {
 */
 
 template<typename EvalT, typename Traits>
-class Viscosity : public PHX::EvaluatorWithBaseImpl<Traits>,
-		    public PHX::EvaluatorDerived<EvalT, Traits>,
-		    public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+class StokesRm : public PHX::EvaluatorWithBaseImpl<Traits>,
+	     public PHX::EvaluatorDerived<EvalT, Traits> {
 
 public:
 
   typedef typename EvalT::ScalarT ScalarT;
 
-  Viscosity(const Teuchos::ParameterList& p);
+  StokesRm(const Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
-  ScalarT& getValue(const std::string &n); 
 
 private:
  
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  ScalarT homotopyParam;
-
-  //coefficients for Glen's law
-  double A; 
-  double n; 
-
   // Input:
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> pGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> VGrad;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
-
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> V;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> V_Dot;
+  PHX::MDField<ScalarT,Cell,QuadPoint> T;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> force;  
+  
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint> mu;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> Rm;
 
   unsigned int numQPs, numDims, numNodes;
-  
-  enum VISCTYPE {CONSTANT, GLENSLAW};
-  VISCTYPE visc_type;
  
 };
 }

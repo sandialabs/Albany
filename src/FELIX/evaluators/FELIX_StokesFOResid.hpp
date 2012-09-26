@@ -51,11 +51,12 @@ private:
   // Input:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> force;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> force;
 
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> C;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Cgrad;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> CDot;
+  PHX::MDField<ScalarT,Cell,QuadPoint> muFELIX;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;

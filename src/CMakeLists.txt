@@ -757,19 +757,21 @@ IF(ALBANY_FELIX)
        ${FELIX_DIR}/evaluators/FELIX_StokesMomentumResid.cpp
        ${FELIX_DIR}/evaluators/FELIX_StokesFOResid.cpp
        ${FELIX_DIR}/evaluators/FELIX_Viscosity.cpp
+       ${FELIX_DIR}/evaluators/FELIX_ViscosityFO.cpp
        ${FELIX_DIR}/evaluators/FELIX_StokesContinuityResid.cpp
        ${FELIX_DIR}/evaluators/FELIX_StokesTauM.cpp
        ${FELIX_DIR}/evaluators/FELIX_StokesContravarientMetricTensor.cpp
        ${FELIX_DIR}/evaluators/FELIX_StokesRm.cpp
        ${FELIX_DIR}/evaluators/FELIX_StokesBodyForce.cpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesFOBodyForce.cpp
    )
   SET(HEADERS ${HEADERS}
        ${FELIX_DIR}/evaluators/FELIX_StokesMomentumResid.hpp
        ${FELIX_DIR}/evaluators/FELIX_StokesFOResid_Def.hpp
        ${FELIX_DIR}/evaluators/FELIX_StokesFOResid.hpp
        ${FELIX_DIR}/evaluators/FELIX_StokesMomentumResid_Def.hpp
-       ${FELIX_DIR}/evaluators/FELIX_Viscosity.hpp
-       ${FELIX_DIR}/evaluators/FELIX_Viscosity_Def.hpp
+       ${FELIX_DIR}/evaluators/FELIX_ViscosityFO.hpp
+       ${FELIX_DIR}/evaluators/FELIX_ViscosityFO_Def.hpp
        ${FELIX_DIR}/evaluators/FELIX_StokesContinuityResid.hpp
        ${FELIX_DIR}/evaluators/FELIX_StokesContinuityResid_Def.hpp
        ${FELIX_DIR}/evaluators/FELIX_StokesTauM.hpp
@@ -780,6 +782,8 @@ IF(ALBANY_FELIX)
        ${FELIX_DIR}/evaluators/FELIX_StokesRm_Def.hpp
        ${FELIX_DIR}/evaluators/FELIX_StokesBodyForce.hpp
        ${FELIX_DIR}/evaluators/FELIX_StokesBodyForce_Def.hpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesFOBodyForce.hpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesFOBodyForce_Def.hpp
   )
  # FELIX problems
   SET(SOURCES ${SOURCES}

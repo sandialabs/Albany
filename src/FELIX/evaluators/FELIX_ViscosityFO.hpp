@@ -15,8 +15,8 @@
 \********************************************************************/
 
 
-#ifndef FELIX_VISCOSITY_HPP
-#define FELIX_VISCOSITY_HPP
+#ifndef FELIX_VISCOSITYFO_HPP
+#define FELIX_VISCOSITYFO_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -32,7 +32,7 @@ namespace FELIX {
 */
 
 template<typename EvalT, typename Traits>
-class Viscosity : public PHX::EvaluatorWithBaseImpl<Traits>,
+class ViscosityFO : public PHX::EvaluatorWithBaseImpl<Traits>,
 		    public PHX::EvaluatorDerived<EvalT, Traits>,
 		    public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
 
@@ -40,7 +40,7 @@ public:
 
   typedef typename EvalT::ScalarT ScalarT;
 
-  Viscosity(const Teuchos::ParameterList& p);
+  ViscosityFO(const Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
@@ -60,8 +60,7 @@ private:
   double n; 
 
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> VGrad;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Cgrad;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint> mu;

@@ -57,11 +57,10 @@ private:
 
   //coefficients for Glen's law
   double A; 
-  double n; 
+  int n; 
 
   // Input:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> VGrad;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint> mu;

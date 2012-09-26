@@ -57,6 +57,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> V_Dot;
   PHX::MDField<ScalarT,Cell,QuadPoint> T;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> force;  
+  PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
   
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> Rm;

@@ -13,19 +13,19 @@
       <Parameter name="DBC on NS NodeSet99 for DOF p" type="double" value="0.0"/>
     </ParameterList>
     <ParameterList name="Body Force">
-      <Parameter name="Type" type="string" value="SinCosGlen"/>
+      <Parameter name="Type" type="string" value="SinSinGlen"/>
       <Parameter name="Glen's Law A" type="double" value="1.0"/>
-      <Parameter name="Glen's Law n" type="int" value="3"/>
+      <Parameter name="Glen's Law n" type="double" value="1.0"/>
     </ParameterList>
     <ParameterList name="FELIX Viscosity">
       <Parameter name="Type" type="string" value="Glen's Law"/>
       <Parameter name="Glen's Law Homotopy Parameter" type="double" value="0.3"/>
       <Parameter name="Glen's Law A" type="double" value="1.0"/>
-      <Parameter name="Glen's Law n" type="int" value="3"/>
+      <Parameter name="Glen's Law n" type="double" value="1.0"/>
     </ParameterList>
     <ParameterList name="Tau M">
       <Parameter name="Mesh Size" type="double" value="0.0125"/>
-      <Parameter name="Delta" type="double" value="0.2"/>
+      <Parameter name="Delta" type="double" value="2"/>
     </ParameterList>
     <ParameterList name="Initial Condition">
       <Parameter name="Function" type="string" value="Constant"/>
@@ -61,16 +61,17 @@
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
-    <Parameter name="1D Elements" type="int" value="80"/>
-    <Parameter name="2D Elements" type="int" value="80"/>
+    <Parameter name="1D Elements" type="int" value="20"/>
+    <Parameter name="2D Elements" type="int" value="20"/>
     <Parameter name="1D Scale" type="double" value="1"/>
     <Parameter name="2D Scale" type="double" value="1"/>
     <Parameter name="Method" type="string" value="STK2D"/>
-    <Parameter name="Exodus Output File Name" type="string" value="sinsin_glen_out.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="sincos_glen_out.exo"/>
+    <Parameter name="Cubature Degree" type="int" value="7"/>
   </ParameterList>
   <ParameterList name="Regression Results">
-    <Parameter  name="Number of Comparisons" type="int" value="0"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{0.0943, 0.0943, 0.40775, 7.624, 0.0}"/>
+    <Parameter  name="Number of Comparisons" type="int" value="5"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{9.42477796, 9.42477796, 9.42477796, 9.42477796, -4.24792463397}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
@@ -89,12 +90,12 @@
 	<Parameter  name="Initial Value" type="double" value="0"/>
 	<Parameter  name="Continuation Parameter" type="string" value="Glen's Law Homotopy Parameter"/>
 	<Parameter  name="Continuation Method" type="string" value="Natural"/>
-        <Parameter  name="Max Steps" type="int" value="10"/>
+	<Parameter  name="Max Steps" type="int" value="10"/>
 	<Parameter  name="Max Value" type="double" value="1.0"/>
 	<Parameter  name="Min Value" type="double" value="0.0"/>
       </ParameterList>
       <ParameterList name="Step Size">
-	<Parameter  name="Initial Step Size" type="double" value="0.2"/>
+	<Parameter  name="Initial Step Size" type="double" value="0.05"/>
       </ParameterList>
     </ParameterList>
     <ParameterList name="NOX">
@@ -144,7 +145,7 @@
 		      <Parameter name="Size of Krylov Subspace" type="int" value="250"/>
 		      <Parameter name="Output Frequency" type="int" value="10"/>
 		    </ParameterList>
-		    <Parameter name="Max Iterations" type="int" value="250"/>
+		    <Parameter name="Max Iterations" type="int" value="1000"/>
 		    <Parameter name="Tolerance" type="double" value="1e-6"/>
 		  </ParameterList>
 		</ParameterList>

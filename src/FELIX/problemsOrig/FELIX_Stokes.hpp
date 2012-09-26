@@ -296,7 +296,6 @@ FELIX::Stokes::constructEvaluators(
     p->set<string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
     p->set<string>("Pressure Gradient QP Variable Name", "Pressure Gradient");
     p->set<string>("Body Force QP Variable Name", "Body Force");
-    p->set<string>("Coordinate Vector Name", "Coord Vec");
 
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
@@ -317,12 +316,12 @@ FELIX::Stokes::constructEvaluators(
 
     //Input
     p->set<string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
+    
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+    
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("FELIX Viscosity");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector); 
-    p->set<string>("Coordinate Vector Name", "Coord Vec");
   
     //Output
     p->set<string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
