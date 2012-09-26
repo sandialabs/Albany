@@ -176,7 +176,7 @@ Albany::MesoScaleLinkProblem::constructNeumannEvaluators(
 
   // Check to make sure that Neumann BCs are given in the input file
 
-  if(!neuUtils.haveNeumann(this->params))
+  if(!neuUtils.haveBCSpecified(this->params))
 
     return;
 

@@ -1,5 +1,5 @@
 /********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
+*            Albany, Copyright (2012) Sandia Corporation             *
 *                                                                    *
 * Notice: This computer software was prepared by Sandia Corporation, *
 * hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
@@ -11,11 +11,11 @@
 * NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
 * ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
 * including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
+*    Questions to Glen Hansen, gahanse@sandia.gov                  *
 \********************************************************************/
 
 
-#include "Albany_HeatProblem.hpp"
+#include "HydrideProblem.hpp"
 #include "Albany_InitialCondition.hpp"
 
 #include "Intrepid_FieldContainer.hpp"
@@ -25,44 +25,33 @@
 #include "Albany_Utils.hpp"
 
 
-Albany::HeatProblem::
-HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
+Albany::HydrideProblem::
+HydrideProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
              const int numDim_,
              const Teuchos::RCP<const Epetra_Comm>& comm_) :
   Albany::AbstractProblem(params_, paramLib_),
-  haveSource(false),
-  haveAbsorption(false),
   numDim(numDim_),
+  haveNoise(false),
   comm(comm_)
 {
-  this->setNumEquations(1);
 
-  if (numDim==1) periodic = params->get("Periodic BC", false);
-  else           periodic = false;
-  if (periodic) *out <<" Periodic Boundary Conditions being used." <<std::endl;
-
-  haveSource =  params->isSublist("Source Functions");
-  haveAbsorption =  params->isSublist("Absorption");
-
-  if(params->isType<string>("MaterialDB Filename")){
-
-    std::string mtrlDbFilename = params->get<string>("MaterialDB Filename");
- // Create Material Database
-    materialDB = Teuchos::rcp(new QCAD::MaterialDatabase(mtrlDbFilename, comm));
-
-  }
-
+  // Compute number of equations
+  int num_eq = 0;
+  num_eq += numDim; // one displacement equation per dimension
+  num_eq += 1; // the equation for concentration c
+  num_eq += 1; // the equation for chemical potential difference w
+  this->setNumEquations(num_eq);
 
 }
 
-Albany::HeatProblem::
-~HeatProblem()
+Albany::HydrideProblem::
+~HydrideProblem()
 {
 }
 
 void
-Albany::HeatProblem::
+Albany::HydrideProblem::
 buildProblem(
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
   Albany::StateManager& stateMgr)
@@ -83,10 +72,11 @@ buildProblem(
 
     constructNeumannEvaluators(meshSpecs[0]);
 
+
 }
 
 Teuchos::Array<Teuchos::RCP<const PHX::FieldTag> >
-Albany::HeatProblem::
+Albany::HydrideProblem::
 buildEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   const Albany::MeshSpecsStruct& meshSpecs,
@@ -96,7 +86,7 @@ buildEvaluators(
 {
   // Call constructEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
-  ConstructEvaluatorsOp<HeatProblem> op(
+  ConstructEvaluatorsOp<HydrideProblem> op(
     *this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
   boost::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(op);
   return *op.tags;
@@ -104,11 +94,16 @@ buildEvaluators(
 
 // Dirichlet BCs
 void
-Albany::HeatProblem::constructDirichletEvaluators(const std::vector<std::string>& nodeSetIDs)
+Albany::HydrideProblem::constructDirichletEvaluators(const std::vector<std::string>& nodeSetIDs)
 {
    // Construct BC evaluators for all node sets and names
    std::vector<string> bcNames(neq);
-   bcNames[0] = "T";
+   bcNames[0] = "X";
+   if (numDim>1) bcNames[1] = "Y";
+   if (numDim>2) bcNames[2] = "Z";
+   bcNames[numDim] = "c";
+   bcNames[numDim+1] = "w";
+
    Albany::BCUtils<Albany::DirichletTraits> bcUtils;
    dfm = bcUtils.constructBCEvaluators(nodeSetIDs, bcNames,
                                           this->params, this->paramLib);
@@ -116,36 +111,63 @@ Albany::HeatProblem::constructDirichletEvaluators(const std::vector<std::string>
 
 // Neumann BCs
 void
-Albany::HeatProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
+Albany::HydrideProblem::constructNeumannEvaluators(
+        const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
 {
    // Note: we only enter this function if sidesets are defined in the mesh file
    // i.e. meshSpecs.ssNames.size() > 0
 
-   Albany::BCUtils<Albany::NeumannTraits> bcUtils;
+   Albany::BCUtils<Albany::NeumannTraits> neuUtils;
 
    // Check to make sure that Neumann BCs are given in the input file
 
-   if(!bcUtils.haveBCSpecified(this->params))
+   if(!neuUtils.haveNeumann(this->params))
 
       return;
 
    // Construct BC evaluators for all side sets and names
    // Note that the string index sets up the equation offset, so ordering is important
-   std::vector<string> bcNames(neq);
-   Teuchos::ArrayRCP<string> dof_names(neq);
+   std::vector<string> neumannNames(neq + 1);
    Teuchos::Array<Teuchos::Array<int> > offsets;
-   offsets.resize(neq);
+   offsets.resize(neq+1);
 
-   bcNames[0] = "T";
-   dof_names[0] = "Temperature";
+   neumannNames[0] = "Tx";
    offsets[0].resize(1);
    offsets[0][0] = 0;
+   offsets[neq].resize(neq);
+   offsets[neq][0] = 0;
 
+   if (numDim>1){ 
+      neumannNames[1] = "Ty";
+      offsets[1].resize(1);
+      offsets[1][0] = 1;
+      offsets[neq][1] = 1;
+   }
+
+   if (numDim>2){
+     neumannNames[2] = "Tz";
+      offsets[2].resize(1);
+      offsets[2][0] = 2;
+      offsets[neq][2] = 2;
+   }
+
+   neumannNames[numDim] = "cFlux";
+   offsets[numDim].resize(1);
+   offsets[numDim][0] = numDim;
+   offsets[neq][numDim] = numDim;
+
+   neumannNames[numDim + 1] = "wFlux";
+   offsets[numDim+1].resize(1);
+   offsets[numDim+1][0] = numDim+1;
+   offsets[neq][numDim+1] = numDim+1;
+
+   neumannNames[neq] = "all";
 
    // Construct BC evaluators for all possible names of conditions
    // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
-   std::vector<string> condNames(4); 
-     //dudx, dudy, dudz, dudn, scaled jump (internal surface), or robin (like DBC plus scaled jump)
+   std::vector<string> condNames(3); //dudx, dudy, dudz, dudn, P
+   Teuchos::ArrayRCP<string> dof_names(1);
+     dof_names[0] = "Displacement";
 
    // Note that sidesets are only supported for two and 3D currently
    if(numDim == 2)
@@ -157,29 +179,35 @@ Albany::HeatProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshS
        std::endl << "Error: Sidesets only supported in 2 and 3D." << std::endl);
 
    condNames[1] = "dudn";
+   condNames[2] = "P";
 
-   condNames[2] = "scaled jump";
+   nfm.resize(1); // Elasticity problem only has one element block
 
-   condNames[3] = "robin";
-
-   nfm.resize(1); // Heat problem only has one physics set   
-   nfm[0] = bcUtils.constructBCEvaluators(meshSpecs, bcNames, dof_names, false, 0,
-				  condNames, offsets, dl, this->params, this->paramLib, materialDB);
+   nfm[0] = neuUtils.constructBCEvaluators(meshSpecs, neumannNames, dof_names, true, 0,
+                                          condNames, offsets, dl,
+                                          this->params, this->paramLib);
 
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
-Albany::HeatProblem::getValidProblemParameters() const
+Albany::HydrideProblem::getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
-    this->getGenericProblemParams("ValidHeatProblemParams");
+    this->getGenericProblemParams("ValidHydrideProblemParams");
 
-  if (numDim==1)
-    validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic BC for 1D problems");
-  validPL->sublist("Thermal Conductivity", false, "");
-  validPL->set("Convection Velocity", "{0,0,0}", "");
-  validPL->set<bool>("Have Rho Cp", false, "Flag to indicate if rhoCp is used");
-  validPL->set<string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
+  Teuchos::Array<int> defaultPeriod;
+
+  validPL->set<double>("b", 0.0, "b value in equation 1.1");
+  validPL->set<double>("gamma", 0.0, "gamma value in equation 2.2");
+  validPL->set<double>("e", 0.0, "e value in equation between 1.2 and 1.3");
+  validPL->set<double>("Langevin Noise SD", 0.0, "Standard deviation of the Langevin noise to apply");
+  validPL->set<Teuchos::Array<int> >("Langevin Noise Time Period", defaultPeriod, 
+    "Time period to apply Langevin noise");
+  validPL->set<bool>("Lump Mass", true, "Lump mass matrix in time derivative term");
+
+ validPL->sublist("Elastic Modulus", false, "");
+  validPL->sublist("Poissons Ratio", false, "");
+
 
   return validPL;
 }

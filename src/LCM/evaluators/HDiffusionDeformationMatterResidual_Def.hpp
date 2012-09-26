@@ -408,8 +408,6 @@ evaluateFields(typename Traits::EvalData workset)
  	  for (std::size_t node=0; node < numNodes; ++node) {
  		  for (std::size_t qp=0; qp < numQPs; ++qp) {
   				  TResidual(cell,node) -=
-  						                  // (2.0-12*dt*DL(cell,qp)
-  				                          // /elementLength(cell,qp)/elementLength(cell,qp))
   						                  stabParameter(cell,qp)
   				                          *Dstar(cell, qp)/ ( DL(cell,qp)  + artificalDL(cell,qp)  )*
   						(
