@@ -51,11 +51,10 @@ namespace LCM {
     typedef typename Sacado::Fad::DFad<ScalarT> DFadType;
 
     void
-    compute_ResidJacobian(std::vector<ScalarT> & X,
-        std::vector<ScalarT> & R, std::vector<ScalarT> & dRdX, const ScalarT & es,
-        const ScalarT & smag, const ScalarT & mubar, ScalarT & mu,
-        ScalarT & kappa, ScalarT & K, ScalarT & Y, ScalarT & Rd);
-
+    compute_ResidJacobian(std::vector<ScalarT> & X, std::vector<ScalarT> & R,
+        std::vector<ScalarT> & dRdX, const ScalarT & es, const ScalarT & smag,
+        const ScalarT & mubar, ScalarT & mu, ScalarT & kappa, ScalarT & K,
+        ScalarT & Y, ScalarT & Rd);
 
     // Input:
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> defgrad;
@@ -75,19 +74,6 @@ namespace LCM {
     std::string logFpName, eqpsName, isoHardeningName;
     unsigned int numQPs;
     unsigned int numDims;
-
-    // scratch space FCs
-    Tensor<ScalarT, 3> be;
-    Tensor<ScalarT, 3> s;
-    Tensor<ScalarT, 3> n;
-    Tensor<ScalarT, 3> A;
-    Tensor<ScalarT, 3> expA;
-
-    Tensor<ScalarT, 3> Fp;
-    Tensor<ScalarT, 3> Fpold;
-    Tensor<ScalarT, 3> Fpinv;
-    Tensor<ScalarT, 3> FpinvT;
-    Tensor<ScalarT, 3> Cpinv;
 
     //Intrepid::FieldContainer<ScalarT> Fpinv;
     //Intrepid::FieldContainer<ScalarT> FpinvT;

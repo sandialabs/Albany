@@ -72,13 +72,6 @@ namespace LCM {
     unsigned int numQPs;
     unsigned int numDims;
 
-    // scratch space FCs
-    Tensor<ScalarT, 3> be;
-    Tensor<ScalarT, 3> s;
-    Tensor<ScalarT, 3> N;
-    Tensor<ScalarT, 3> A;
-    Tensor<ScalarT, 3> expA;
-
     Intrepid::FieldContainer<ScalarT> Fpinv;
     Intrepid::FieldContainer<ScalarT> FpinvT;
     Intrepid::FieldContainer<ScalarT> Cpinv;

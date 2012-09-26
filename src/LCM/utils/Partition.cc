@@ -210,7 +210,7 @@ namespace LCM {
         node < number_nodes;
         ++node) {
 
-      LCM::Vector<double, 3> point(0.0, 0.0, 0.0);
+      LCM::Vector<double> point(0.0, 0.0, 0.0);
 
       for (int j = 0; j < dimension; ++j) {
         point(j) = coordinates[node * dimension + j];
@@ -342,7 +342,7 @@ namespace LCM {
       IDList const &
       node_list = (*elements_iter).second;
 
-      std::vector< LCM::Vector<double, 3> >
+      std::vector< LCM::Vector<double> >
       points;
 
       for (IDList::size_type
@@ -497,7 +497,7 @@ namespace LCM {
       IDList const &
       node_list = (*elements_iter).second;
 
-      std::vector< LCM::Vector<double, 3> >
+      std::vector< LCM::Vector<double> >
       points;
 
       // Collect element nodes
@@ -514,14 +514,14 @@ namespace LCM {
 
         assert(nodes_iter != nodes_.end());
 
-        const LCM::Vector<double, 3>
+        const LCM::Vector<double>
         point = (*nodes_iter).second;
 
         points.push_back(point);
 
       }
 
-      const LCM::Vector<double, 3>
+      const LCM::Vector<double>
       centroid = LCM::centroid(points);
 
       centroids.insert(std::make_pair(element, centroid));
@@ -1205,7 +1205,7 @@ namespace LCM {
         centroids_iter != centroids.end();
         ++centroids_iter) {
 
-      const LCM::Vector<double, 3>
+      const LCM::Vector<double>
       centroid = (*centroids_iter).second;
 
       for (LCM::Index i = 0; i < 3; ++i) {
@@ -1250,7 +1250,7 @@ namespace LCM {
 
       output_stream << std::setw(12) << node;
 
-      LCM::Vector<double, 3> const &
+      LCM::Vector<double> const &
       point = (*nodes_iter).second;
 
       for (int j = 0; j < dimension; ++j) {

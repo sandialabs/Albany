@@ -25,40 +25,33 @@ namespace LCM {
   template<typename EvalT, typename Traits>
   CapModelStress<EvalT, Traits>::CapModelStress(const Teuchos::ParameterList& p) :
       elasticModulus(p.get<std::string>("Elastic Modulus Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-      poissonsRatio(p.get<std::string>("Poissons Ratio Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-      strain(p.get<std::string>("Strain Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
-      stress(p.get<std::string>("Stress Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
-      backStress(p.get<std::string>("Back Stress Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
-      capParameter(p.get<std::string>("Cap Parameter Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-      friction(p.get<std::string>("Friction Name"),
-              p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-      dilatancy(p.get<std::string>("Dilatancy Name"),
-              p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-      eqps(p.get<std::string>("Eqps Name"),
-              p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-      hardeningModulus(p.get<std::string>("Hardening Modulus Name"),
-              p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-      A(p.get<RealType>("A Name")),
-      B(p.get<RealType>("B Name")),
-      C(p.get<RealType>("C Name")),
-      theta(p.get<RealType>("Theta Name")),
-      R(p.get<RealType>("R Name")),
-      kappa0(p.get<RealType>("Kappa0 Name")),
-      W(p.get<RealType>("W Name")),
-      D1(p.get<RealType>("D1 Name")),
-      D2(p.get<RealType>("D2 Name")),
-      calpha(p.get<RealType>("Calpha Name")),
-      psi(p.get<RealType>("Psi Name")),
-      N(p.get<RealType>("N Name")),
-      L(p.get<RealType>("L Name")),
-      phi(p.get<RealType>("Phi Name")),
-      Q(p.get<RealType>("Q Name"))
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), poissonsRatio(
+          p.get<std::string>("Poissons Ratio Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), strain(
+          p.get<std::string>("Strain Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), stress(
+          p.get<std::string>("Stress Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), backStress(
+          p.get<std::string>("Back Stress Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), capParameter(
+          p.get<std::string>("Cap Parameter Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), friction(
+          p.get<std::string>("Friction Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), dilatancy(
+          p.get<std::string>("Dilatancy Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), eqps(
+          p.get<std::string>("Eqps Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), hardeningModulus(
+          p.get<std::string>("Hardening Modulus Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), A(
+          p.get<RealType>("A Name")), B(p.get<RealType>("B Name")), C(
+          p.get<RealType>("C Name")), theta(p.get<RealType>("Theta Name")), R(
+          p.get<RealType>("R Name")), kappa0(p.get<RealType>("Kappa0 Name")), W(
+          p.get<RealType>("W Name")), D1(p.get<RealType>("D1 Name")), D2(
+          p.get<RealType>("D2 Name")), calpha(p.get<RealType>("Calpha Name")), psi(
+          p.get<RealType>("Psi Name")), N(p.get<RealType>("N Name")), L(
+          p.get<RealType>("L Name")), phi(p.get<RealType>("Phi Name")), Q(
+          p.get<RealType>("Q Name"))
   {
     // Pull out numQPs and numDims from a Layout
     Teuchos::RCP<PHX::DataLayout> tensor_dl = p.get<
@@ -132,31 +125,31 @@ namespace LCM {
             / (1.0 - 2.0 * poissonsRatio(cell, qp));
         ScalarT mu = elasticModulus(cell, qp) / 2.0
             / (1.0 + poissonsRatio(cell, qp));
-        ScalarT bulkModulus = lame + (2./3.) * mu;
+        ScalarT bulkModulus = lame + (2. / 3.) * mu;
 
         // elastic matrix
-        LCM::Tensor4<ScalarT, 3> Celastic =
-            lame * LCM::identity_3<ScalarT, 3>()
-                + mu
-                    * (LCM::identity_1<ScalarT, 3>()
-                        + LCM::identity_2<ScalarT, 3>());
+        LCM::Tensor4<ScalarT> Celastic = lame * LCM::identity_3<ScalarT>(3)
+            + mu * (LCM::identity_1<ScalarT>(3) + LCM::identity_2<ScalarT>(3));
 
         // elastic compliance tangent matrix
-        LCM::Tensor4<ScalarT, 3> compliance =
-        	(1./bulkModulus/9.) * LCM::identity_3<ScalarT, 3>()
-        	  + (1./mu/2.) * (0.5 * (LCM::identity_1<ScalarT, 3>()
-                      + LCM::identity_2<ScalarT, 3>()) - (1./3.) * LCM::identity_3<ScalarT, 3>());
+        LCM::Tensor4<ScalarT> compliance =
+            (1. / bulkModulus / 9.) * LCM::identity_3<ScalarT>(3)
+                + (1. / mu / 2.)
+                    * (0.5
+                        * (LCM::identity_1<ScalarT>(3)
+                            + LCM::identity_2<ScalarT>(3))
+                        - (1. / 3.) * LCM::identity_3<ScalarT>(3));
 
         // incremental strain tensor
-        LCM::Tensor<ScalarT, 3> depsilon;
+        LCM::Tensor<ScalarT> depsilon(3);
         for (std::size_t i = 0; i < numDims; ++i)
           for (std::size_t j = 0; j < numDims; ++j)
             depsilon(i, j) = strain(cell, qp, i, j) - strainold(cell, qp, i, j);
 
         // trial state
-        LCM::Tensor<ScalarT, 3> sigmaVal = LCM::dotdot(Celastic, depsilon);
-        LCM::Tensor<ScalarT, 3> alphaVal = LCM::identity<ScalarT, 3>();
-        LCM::Tensor<ScalarT, 3> sigmaN, strainN; // previous state
+        LCM::Tensor<ScalarT> sigmaVal = LCM::dotdot(Celastic, depsilon);
+        LCM::Tensor<ScalarT> alphaVal = LCM::identity<ScalarT>(3);
+        LCM::Tensor<ScalarT> sigmaN(3), strainN(3); // previous state
 
         for (std::size_t i = 0; i < numDims; ++i) {
           for (std::size_t j = 0; j < numDims; ++j) {
@@ -170,21 +163,21 @@ namespace LCM {
         ScalarT kappaVal = capParameterold(cell, qp);
 
         // initialize friction and dilatancy (which will be updated only if plasticity occurs)
-        friction(cell,qp) = 0.0;
-        dilatancy(cell,qp) = 0.0;
-        hardeningModulus(cell,qp) = 0.0;
+        friction(cell, qp) = 0.0;
+        dilatancy(cell, qp) = 0.0;
+        hardeningModulus(cell, qp) = 0.0;
 
         // define generalized plastic hardening modulus H
         ScalarT H(0.0), Htan(0.0);
 
         // define plastic strain increment, its two invariants: dev, and vol
-        LCM::Tensor<ScalarT, 3> deps_plastic(0.0);
+        LCM::Tensor<ScalarT> deps_plastic(3, 0.0);
         ScalarT deqps(0.0), devolps(0.0);
 
         // define a temporary tensor to store trial stress tensors
-        LCM::Tensor<ScalarT, 3> sigmaTr = sigmaVal;
+        LCM::Tensor<ScalarT> sigmaTr = sigmaVal;
         // define a temporary tensor to store previous back stress
-        LCM::Tensor<ScalarT, 3> alphaN = alphaVal;
+        LCM::Tensor<ScalarT> alphaN = alphaVal;
 
         // check yielding
         ScalarT f = compute_f(sigmaVal, alphaVal, kappaVal);
@@ -192,19 +185,19 @@ namespace LCM {
         // plastic correction
         ScalarT dgamma = 0.0;
         if (f > 1.0e-10) {
-          LCM::Tensor<ScalarT, 3> dfdsigma = compute_dfdsigma(sigmaN, alphaVal,
+          LCM::Tensor<ScalarT> dfdsigma = compute_dfdsigma(sigmaN, alphaVal,
               kappaVal);
 
-          LCM::Tensor<ScalarT, 3> dgdsigma = compute_dgdsigma(sigmaN, alphaVal,
+          LCM::Tensor<ScalarT> dgdsigma = compute_dgdsigma(sigmaN, alphaVal,
               kappaVal);
 
-          LCM::Tensor<ScalarT, 3> dfdalpha = -dfdsigma;
+          LCM::Tensor<ScalarT> dfdalpha = -dfdsigma;
 
           ScalarT dfdkappa = compute_dfdkappa(sigmaN, alphaVal, kappaVal);
 
           ScalarT J2_alpha = 0.5 * LCM::dotdot(alphaVal, alphaVal);
 
-          LCM::Tensor<ScalarT, 3> halpha = compute_halpha(dgdsigma, J2_alpha);
+          LCM::Tensor<ScalarT> halpha = compute_halpha(dgdsigma, J2_alpha);
 
           ScalarT I1_dgdsigma = LCM::trace(dgdsigma);
 
@@ -220,9 +213,9 @@ namespace LCM {
           kai = LCM::dotdot(dfdsigma, LCM::dotdot(Celastic, dgdsigma))
               - LCM::dotdot(dfdalpha, halpha) - dfdkappa * hkappa;
 
-          H = - LCM::dotdot(dfdalpha, halpha) - dfdkappa * hkappa;
+          H = -LCM::dotdot(dfdalpha, halpha) - dfdkappa * hkappa;
 
-          LCM::Tensor<ScalarT, 3> dfdotCe = LCM::dotdot(dfdsigma, Celastic);
+          LCM::Tensor<ScalarT> dfdotCe = LCM::dotdot(dfdsigma, Celastic);
 
           if (kai != 0)
             dgamma = LCM::dotdot(dfdotCe, depsilon) / kai;
@@ -237,8 +230,8 @@ namespace LCM {
           // restrictions on kappa, only allow monotonic decreasing (cap hardening)
           ScalarT dkappa = dgamma * hkappa;
           if (dkappa > 0) {
-        	  dkappa = 0;
-        	  H = - LCM::dotdot(dfdalpha, halpha);
+            dkappa = 0;
+            H = -LCM::dotdot(dfdalpha, halpha);
           }
 
           kappaVal += dkappa;
@@ -249,13 +242,13 @@ namespace LCM {
           while (condition == false) {
             f = compute_f(sigmaVal, alphaVal, kappaVal);
 
-            LCM::Tensor<ScalarT, 3> dfdsigma = compute_dfdsigma(sigmaVal,
-                alphaVal, kappaVal);
+            LCM::Tensor<ScalarT> dfdsigma = compute_dfdsigma(sigmaVal, alphaVal,
+                kappaVal);
 
-            LCM::Tensor<ScalarT, 3> dgdsigma = compute_dgdsigma(sigmaVal,
-                alphaVal, kappaVal);
+            LCM::Tensor<ScalarT> dgdsigma = compute_dgdsigma(sigmaVal, alphaVal,
+                kappaVal);
 
-            LCM::Tensor<ScalarT, 3> dfdalpha = -dfdsigma;
+            LCM::Tensor<ScalarT> dfdalpha = -dfdsigma;
 
             ScalarT dfdkappa = compute_dfdkappa(sigmaVal, alphaVal, kappaVal);
 
@@ -273,7 +266,7 @@ namespace LCM {
               hkappa = 0;
 
             //generalized plastic hardening modulus
-            H = - LCM::dotdot(dfdalpha, halpha) - dfdkappa * hkappa;
+            H = -LCM::dotdot(dfdalpha, halpha) - dfdkappa * hkappa;
 
             kai = LCM::dotdot(dfdsigma, LCM::dotdot(Celastic, dgdsigma));
             kai = kai - LCM::dotdot(dfdalpha, halpha) - dfdkappa * hkappa;
@@ -293,14 +286,14 @@ namespace LCM {
             else
               delta_gamma = 0;
 
-            LCM::Tensor<ScalarT, 3> sigmaK(0.0), alphaK(0.0);
+            LCM::Tensor<ScalarT> sigmaK(3, 0.0), alphaK(3, 0.0);
             ScalarT kappaK(0.0);
 
             // restrictions on kappa, only allow monotonic decreasing
             dkappa = delta_gamma * hkappa;
             if (dkappa > 0) {
-            	dkappa = delta_gamma * 0.0;
-            	H = - LCM::dotdot(dfdalpha, halpha);
+              dkappa = delta_gamma * 0.0;
+              H = -LCM::dotdot(dfdalpha, halpha);
             }
 
             sigmaK = sigmaVal - delta_gamma * LCM::dotdot(Celastic, dgdsigma);
@@ -334,39 +327,40 @@ namespace LCM {
           } // end of stress correction
 
           //compute plastic strain increment deps_plastic = compliance ( sigma_tr - sigma_(n+1));
-          LCM::Tensor<ScalarT, 3> dsigma = sigmaTr - sigmaVal;
+          LCM::Tensor<ScalarT> dsigma = sigmaTr - sigmaVal;
           deps_plastic = LCM::dotdot(compliance, dsigma);
 
           // compute its two invariants: devolps (volumetric) and deqps (deviatoric)
           devolps = LCM::trace(deps_plastic);
-          LCM::Tensor<ScalarT, 3> dev_plastic = deps_plastic - (1./3.) * devolps * LCM::identity<ScalarT, 3>();
+          LCM::Tensor<ScalarT> dev_plastic = deps_plastic
+              - (1. / 3.) * devolps * LCM::identity<ScalarT>(3);
           //deqps = std::sqrt(2./3.) * LCM::norm(dev_plastic);
           // use altenative definition, just differ by constants
           deqps = std::sqrt(2) * LCM::norm(dev_plastic);
 
           // dilatancy
           if (deqps != 0)
-          	dilatancy(cell,qp) = devolps / deqps;
+            dilatancy(cell, qp) = devolps / deqps;
           else
-          	dilatancy(cell,qp) = 0.0;
+            dilatancy(cell, qp) = 0.0;
 
           // previous p and tau
           ScalarT pN(0.0), tauN(0.0);
-          LCM::Tensor<ScalarT, 3> xi = sigmaN - alphaN;
+          LCM::Tensor<ScalarT> xi = sigmaN - alphaN;
           pN = LCM::trace(xi);
           pN = pN / 3.;
-          LCM::Tensor<ScalarT, 3> sN = xi - pN * LCM::identity<ScalarT, 3>();
+          LCM::Tensor<ScalarT> sN = xi - pN * LCM::identity<ScalarT>(3);
           //qN = sqrt(3./2.) * LCM::norm(sN);
-          tauN = sqrt(1./2.) * LCM::norm(sN);
+          tauN = sqrt(1. / 2.) * LCM::norm(sN);
 
           // current p, and tau
           ScalarT p(0.0), tau(0.0);
           xi = sigmaVal - alphaVal;
           p = LCM::trace(xi);
           p = p / 3.;
-          LCM::Tensor<ScalarT, 3> s = xi - p * LCM::identity<ScalarT, 3>();
+          LCM::Tensor<ScalarT> s = xi - p * LCM::identity<ScalarT>(3);
           //q = sqrt(3./2.) * LCM::norm(s);
-          tau = sqrt(1./2.) * LCM::norm(s);
+          tau = sqrt(1. / 2.) * LCM::norm(s);
           //LCM::Tensor<ScalarT, 3> ds = s - sN;
 
           // difference
@@ -375,39 +369,37 @@ namespace LCM {
           ScalarT dp = p - pN;
 
           // friction coefficient by finite difference
-          if(dp != 0)
-          	friction(cell,qp) = dtau / dp;
+          if (dp != 0)
+            friction(cell, qp) = dtau / dp;
           else
-          	friction(cell, qp) = 0.0;
+            friction(cell, qp) = 0.0;
 
           // previous r(gamma)
           ScalarT rN(0.0);
           ScalarT evol3 = LCM::trace(strainN);
           evol3 = evol3 / 3.;
-          LCM::Tensor<ScalarT, 3> e = strainN - evol3 * LCM::identity<ScalarT, 3>();
+          LCM::Tensor<ScalarT> e = strainN - evol3 * LCM::identity<ScalarT>(3);
           rN = sqrt(2.) * LCM::norm(e);
 
           // current r(gamma)
           ScalarT r(0.0);
-          LCM::Tensor<ScalarT, 3> strainCurrent = strainN + depsilon;
+          LCM::Tensor<ScalarT> strainCurrent = strainN + depsilon;
           evol3 = LCM::trace(strainCurrent);
           evol3 = evol3 / 3.;
-          e = strainCurrent - evol3 * LCM::identity<ScalarT, 3>();
+          e = strainCurrent - evol3 * LCM::identity<ScalarT>(3);
           r = sqrt(2.) * LCM::norm(e);
 
           // difference
           ScalarT dr = r - rN;
           // tagent hardening modulus
-          if(dr != 0)
-          	Htan = dtau / dr;
+          if (dr != 0) Htan = dtau / dr;
 
-          if(std::abs(1.- Htan/mu) > 1.0e-10)
-          	hardeningModulus(cell,qp) = Htan / (1. - Htan / mu);
+          if (std::abs(1. - Htan / mu) > 1.0e-10)
+            hardeningModulus(cell, qp) = Htan / (1. - Htan / mu);
           else
-          	hardeningModulus(cell,qp) = 0.0;
+            hardeningModulus(cell, qp) = 0.0;
 
         } // end of plastic correction
-
 
         // output for debugging
 //        std::cout << "friction = " << Sacado::ScalarValue<ScalarT>::eval(friction(cell,qp)) << std::endl;
@@ -424,7 +416,7 @@ namespace LCM {
         }
 
         capParameter(cell, qp) = kappaVal;
-        eqps(cell, qp) = eqpsold(cell,qp) + deqps;
+        eqps(cell, qp) = eqpsold(cell, qp) + deqps;
 
       } //loop over qps
 
@@ -436,15 +428,15 @@ namespace LCM {
 // all local functions
   template<typename EvalT, typename Traits>
   typename CapModelStress<EvalT, Traits>::ScalarT CapModelStress<EvalT, Traits>::compute_f(
-      LCM::Tensor<ScalarT, 3> & sigma, LCM::Tensor<ScalarT, 3> & alpha,
+      LCM::Tensor<ScalarT> & sigma, LCM::Tensor<ScalarT> & alpha,
       ScalarT & kappa)
   {
 
-    LCM::Tensor<ScalarT, 3> xi = sigma - alpha;
+    LCM::Tensor<ScalarT> xi = sigma - alpha;
 
     ScalarT I1 = LCM::trace(xi), p = I1 / 3;
 
-    LCM::Tensor<ScalarT, 3> s = xi - p * LCM::identity<ScalarT, 3>();
+    LCM::Tensor<ScalarT> s = xi - p * LCM::identity<ScalarT>(3);
 
     ScalarT J2 = 0.5 * LCM::dotdot(s, s);
 
@@ -470,26 +462,26 @@ namespace LCM {
   }
 
   template<typename EvalT, typename Traits>
-  LCM::Tensor<typename CapModelStress<EvalT, Traits>::ScalarT, 3> CapModelStress<
-      EvalT, Traits>::compute_dfdsigma(LCM::Tensor<ScalarT, 3> & sigma,
-      LCM::Tensor<ScalarT, 3> & alpha, ScalarT & kappa)
+  LCM::Tensor<typename CapModelStress<EvalT, Traits>::ScalarT> CapModelStress<
+      EvalT, Traits>::compute_dfdsigma(LCM::Tensor<ScalarT> & sigma,
+      LCM::Tensor<ScalarT> & alpha, ScalarT & kappa)
   {
-    LCM::Tensor<ScalarT, 3> dfdsigma;
+    LCM::Tensor<ScalarT> dfdsigma(3);
 
-    LCM::Tensor<ScalarT, 3> xi = sigma - alpha;
+    LCM::Tensor<ScalarT> xi = sigma - alpha;
 
     ScalarT I1 = LCM::trace(xi), p = I1 / 3;
 
-    LCM::Tensor<ScalarT, 3> s = xi - p * LCM::identity<ScalarT, 3>();
+    LCM::Tensor<ScalarT> s = xi - p * LCM::identity<ScalarT>(3);
 
     ScalarT J2 = 0.5 * LCM::dotdot(s, s);
 
     ScalarT J3 = LCM::det(s);
 
-    LCM::Tensor<ScalarT, 3> id = LCM::identity<ScalarT, 3>();
-    LCM::Tensor<ScalarT, 3> dI1dsigma = id;
-    LCM::Tensor<ScalarT, 3> dJ2dsigma = s;
-    LCM::Tensor<ScalarT, 3> dJ3dsigma;
+    LCM::Tensor<ScalarT> id = LCM::identity<ScalarT>(3);
+    LCM::Tensor<ScalarT> dI1dsigma = id;
+    LCM::Tensor<ScalarT> dJ2dsigma = s;
+    LCM::Tensor<ScalarT> dJ3dsigma(3);
     for (int i = 0; i < 3; i++)
       for (int j = 0; j < 3; j++)
         dJ3dsigma(i, j) = s(i, j) * s(i, j) - 2 * J2 * id(i, j) / 3;
@@ -537,26 +529,26 @@ namespace LCM {
   }
 
   template<typename EvalT, typename Traits>
-  LCM::Tensor<typename CapModelStress<EvalT, Traits>::ScalarT, 3> CapModelStress<
-      EvalT, Traits>::compute_dgdsigma(LCM::Tensor<ScalarT, 3> & sigma,
-      LCM::Tensor<ScalarT, 3> & alpha, ScalarT & kappa)
+  LCM::Tensor<typename CapModelStress<EvalT, Traits>::ScalarT> CapModelStress<
+      EvalT, Traits>::compute_dgdsigma(LCM::Tensor<ScalarT> & sigma,
+      LCM::Tensor<ScalarT> & alpha, ScalarT & kappa)
   {
-    LCM::Tensor<ScalarT, 3> dgdsigma;
+    LCM::Tensor<ScalarT> dgdsigma(3);
 
-    LCM::Tensor<ScalarT, 3> xi = sigma - alpha;
+    LCM::Tensor<ScalarT> xi = sigma - alpha;
 
     ScalarT I1 = LCM::trace(xi), p = I1 / 3;
 
-    LCM::Tensor<ScalarT, 3> s = xi - p * LCM::identity<ScalarT, 3>();
+    LCM::Tensor<ScalarT> s = xi - p * LCM::identity<ScalarT>(3);
 
     ScalarT J2 = 0.5 * LCM::dotdot(s, s);
 
     ScalarT J3 = LCM::det(s);
 
-    LCM::Tensor<ScalarT, 3> id = LCM::identity<ScalarT, 3>();
-    LCM::Tensor<ScalarT, 3> dI1dsigma = id;
-    LCM::Tensor<ScalarT, 3> dJ2dsigma = s;
-    LCM::Tensor<ScalarT, 3> dJ3dsigma;
+    LCM::Tensor<ScalarT> id = LCM::identity<ScalarT>(3);
+    LCM::Tensor<ScalarT> dI1dsigma = id;
+    LCM::Tensor<ScalarT> dJ2dsigma = s;
+    LCM::Tensor<ScalarT> dJ3dsigma(3);
     for (int i = 0; i < 3; i++)
       for (int j = 0; j < 3; j++)
         dJ3dsigma(i, j) = s(i, j) * s(i, j) - 2 * J2 * id(i, j) / 3;
@@ -605,17 +597,17 @@ namespace LCM {
 
   template<typename EvalT, typename Traits>
   typename CapModelStress<EvalT, Traits>::ScalarT CapModelStress<EvalT, Traits>::compute_dfdkappa(
-      LCM::Tensor<ScalarT, 3> & sigma, LCM::Tensor<ScalarT, 3> & alpha,
+      LCM::Tensor<ScalarT> & sigma, LCM::Tensor<ScalarT> & alpha,
       ScalarT & kappa)
   {
     ScalarT dfdkappa;
-    LCM::Tensor<ScalarT, 3> dfdsigma;
+    LCM::Tensor<ScalarT> dfdsigma(3);
 
-    LCM::Tensor<ScalarT, 3> xi = sigma - alpha;
+    LCM::Tensor<ScalarT> xi = sigma - alpha;
 
     ScalarT I1 = LCM::trace(xi), p = I1 / 3;
 
-    LCM::Tensor<ScalarT, 3> s = xi - p * LCM::identity<ScalarT, 3>();
+    LCM::Tensor<ScalarT> s = xi - p * LCM::identity<ScalarT>(3);
 
     ScalarT J2 = 0.5 * LCM::dotdot(s, s);
 
@@ -649,8 +641,8 @@ namespace LCM {
   }
 
   template<typename EvalT, typename Traits>
-  LCM::Tensor<typename CapModelStress<EvalT, Traits>::ScalarT, 3> CapModelStress<
-      EvalT, Traits>::compute_halpha(LCM::Tensor<ScalarT, 3> & dgdsigma,
+  LCM::Tensor<typename CapModelStress<EvalT, Traits>::ScalarT> CapModelStress<
+      EvalT, Traits>::compute_halpha(LCM::Tensor<ScalarT> & dgdsigma,
       ScalarT & J2_alpha)
   {
 
@@ -658,9 +650,9 @@ namespace LCM {
 
     ScalarT I1 = LCM::trace(dgdsigma), p = I1 / 3;
 
-    LCM::Tensor<ScalarT, 3> s = dgdsigma - p * LCM::identity<ScalarT, 3>();
+    LCM::Tensor<ScalarT> s = dgdsigma - p * LCM::identity<ScalarT>(3);
 
-    LCM::Tensor<ScalarT, 3> halpha;
+    LCM::Tensor<ScalarT> halpha(3);
     for (int i = 0; i < 3; i++) {
       for (int j = 0; j < 3; j++) {
         halpha(i, j) = calpha * Galpha * s(i, j);

@@ -123,6 +123,21 @@ namespace LCM {
     ScalarT sq23 = std::sqrt(2. / 3.);
 
     Albany::MDArray logFpold = (*workset.stateArrayPtr)[logFpName];
+
+    // scratch space FCs
+    Tensor<ScalarT> be(3);
+    Tensor<ScalarT> s(3);
+    Tensor<ScalarT> n(3);
+    Tensor<ScalarT> A(3);
+    Tensor<ScalarT> expA(3);
+
+    Tensor<ScalarT> Fp(3);
+    Tensor<ScalarT> Fpold(3);
+    Tensor<ScalarT> Fpinv(3);
+    Tensor<ScalarT> FpinvT(3);
+    Tensor<ScalarT> Cpinv(3);
+
+    //Albany::MDArray Fpold = (*workset.stateArrayPtr)[fpName];
     Albany::MDArray eqpsold = (*workset.stateArrayPtr)[eqpsName];
     Albany::MDArray isoHardeningold = (*workset.stateArrayPtr)[isoHardeningName];
 
@@ -174,7 +189,7 @@ namespace LCM {
 
         trd3 = trace(be) / 3.;
         mubar = trd3 * mu;
-        s = mu * (be - trd3 * LCM::identity<ScalarT, 3>());
+        s = mu * (be - trd3 * LCM::identity<ScalarT>(3));
 
         isoH = isoHardeningold(cell,qp);
 

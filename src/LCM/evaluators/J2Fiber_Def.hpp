@@ -24,57 +24,53 @@ namespace LCM {
   template<typename EvalT, typename Traits>
   J2Fiber<EvalT, Traits>::J2Fiber(const Teuchos::ParameterList& p) :
       defgrad(p.get<std::string>("DefGrad Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
-      J(p.get<std::string>("DetDefGrad Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-      gptLocation(p.get<std::string>("Integration Point Location Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout")),
-      elasticModulus(p.get<std::string>("Elastic Modulus Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-      poissonsRatio(p.get<std::string>("Poissons Ratio Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-      yieldStrength(p.get<std::string>("Yield Strength Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-      hardeningModulus(p.get<std::string>("Hardening Modulus Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-      satMod(p.get<std::string>("Saturation Modulus Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-      satExp(p.get<std::string>("Saturation Exponent Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-      stress(p.get<std::string>("Stress Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
-      Fp(p.get<std::string>("Fp Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
-      eqps(p.get<std::string>("Eqps Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-      energy_J2(p.get<std::string>("Energy_J2 Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-      energy_f1(p.get<std::string>("Energy_f1 Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-      energy_f2(p.get<std::string>("Energy_f2 Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-      damage_J2(p.get<std::string>("Damage_J2 Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-      damage_f1(p.get<std::string>("Damage_f1 Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-      damage_f2(p.get<std::string>("Damage_f2 Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-      xiinf_J2(p.get<RealType>("xiinf_J2 Name")),
-      tau_J2(p.get<RealType>("tau_J2 Name")),
-	  k_f1(p.get<RealType>("k_f1 Name")),
-	  q_f1(p.get<RealType>("q_f1 Name")),
-	  vol_f1(p.get<RealType>("vol_f1 Name")),
-	  xiinf_f1(p.get<RealType>("xiinf_f1 Name")),
-	  tau_f1(p.get<RealType>("tau_f1 Name")),
-	  k_f2(p.get<RealType>("k_f2 Name")),
-	  q_f2(p.get<RealType>("q_f2 Name")),
-	  vol_f2(p.get<RealType>("vol_f2 Name")),
-	  xiinf_f2(p.get<RealType>("xiinf_f2 Name")),
-	  tau_f2(p.get<RealType>("tau_f2 Name")),
-	  direction_f1(p.get<Teuchos::Array<RealType> >("direction_f1 Values").toVector()),
-	  direction_f2(p.get<Teuchos::Array<RealType> >("direction_f2 Values").toVector()),
-	  ringCenter(p.get<Teuchos::Array<RealType> >("Ring Center Values").toVector()),
-	  isLocalCoord(p.get<bool>("isLocalCoord Name"))
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), J(
+          p.get<std::string>("DetDefGrad Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), gptLocation(
+          p.get<std::string>("Integration Point Location Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout")), elasticModulus(
+          p.get<std::string>("Elastic Modulus Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), poissonsRatio(
+          p.get<std::string>("Poissons Ratio Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), yieldStrength(
+          p.get<std::string>("Yield Strength Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), hardeningModulus(
+          p.get<std::string>("Hardening Modulus Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), satMod(
+          p.get<std::string>("Saturation Modulus Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), satExp(
+          p.get<std::string>("Saturation Exponent Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), stress(
+          p.get<std::string>("Stress Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), Fp(
+          p.get<std::string>("Fp Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), eqps(
+          p.get<std::string>("Eqps Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), energy_J2(
+          p.get<std::string>("Energy_J2 Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), energy_f1(
+          p.get<std::string>("Energy_f1 Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), energy_f2(
+          p.get<std::string>("Energy_f2 Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), damage_J2(
+          p.get<std::string>("Damage_J2 Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), damage_f1(
+          p.get<std::string>("Damage_f1 Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), damage_f2(
+          p.get<std::string>("Damage_f2 Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), xiinf_J2(
+          p.get<RealType>("xiinf_J2 Name")), tau_J2(
+          p.get<RealType>("tau_J2 Name")), k_f1(p.get<RealType>("k_f1 Name")), q_f1(
+          p.get<RealType>("q_f1 Name")), vol_f1(p.get<RealType>("vol_f1 Name")), xiinf_f1(
+          p.get<RealType>("xiinf_f1 Name")), tau_f1(
+          p.get<RealType>("tau_f1 Name")), k_f2(p.get<RealType>("k_f2 Name")), q_f2(
+          p.get<RealType>("q_f2 Name")), vol_f2(p.get<RealType>("vol_f2 Name")), xiinf_f2(
+          p.get<RealType>("xiinf_f2 Name")), tau_f2(
+          p.get<RealType>("tau_f2 Name")), direction_f1(
+          p.get<Teuchos::Array<RealType> >("direction_f1 Values").toVector()), direction_f2(
+          p.get<Teuchos::Array<RealType> >("direction_f2 Values").toVector()), ringCenter(
+          p.get<Teuchos::Array<RealType> >("Ring Center Values").toVector()), isLocalCoord(
+          p.get<bool>("isLocalCoord Name"))
   {
     // Pull out numQPs and numDims from a Layout
     Teuchos::RCP<PHX::DataLayout> tensor_dl = p.get<
@@ -184,12 +180,13 @@ namespace LCM {
         Jm23 = std::pow(J(cell, qp), -2. / 3.);
 
         // Fill in Fpn and F Tensors with Fpold and defgrad
-        Fpn = LCM::Tensor<ScalarT, 3>(Fpold(cell, qp, zero, zero),
+        Fpn = LCM::Tensor<ScalarT>(Fpold(cell, qp, zero, zero),
             Fpold(cell, qp, zero, one), Fpold(cell, qp, zero, two),
             Fpold(cell, qp, one, zero), Fpold(cell, qp, one, one),
             Fpold(cell, qp, one, two), Fpold(cell, qp, two, zero),
             Fpold(cell, qp, two, one), Fpold(cell, qp, two, two));
-        F = LCM::Tensor<ScalarT, 3>(&defgrad(cell, qp, 0, 0));
+
+        F = LCM::Tensor<ScalarT>(3, &defgrad(cell, qp, 0, 0));
 
         // compute Cpinv = Fpn^{-T} * Fpn
         Cpinv = transpose(inverse(Fpn)) * Fpn;
@@ -202,7 +199,7 @@ namespace LCM {
         mubar = trd3 * mu;
 
         // compute deviatoric stress in intermediate configuration
-        s = mu * (be - trd3 * eye<ScalarT, 3>());
+        s = mu * (be - trd3 * eye<ScalarT>(3));
 
         // check for yielding
         smag = LCM::norm(s);
@@ -287,7 +284,7 @@ namespace LCM {
         }
 
         // update be (the intermediate config)
-        be = (1. / mu) * s + trd3 * eye<ScalarT, 3>();
+        be = (1. / mu) * s + trd3 * eye<ScalarT>(3);
         // compute energy for J2 stress
         energy_J2(cell, qp) = 0.5 * kappa
             * (0.5 * (J(cell, qp) * J(cell, qp) - 1.0) - std::log(J(cell, qp)))
@@ -302,38 +299,44 @@ namespace LCM {
         //-----------compute stress in Fibers
 
         // Right Cauchy-Green Tensor C = F^{T} * F
-        LCM::Tensor<ScalarT, 3> C = LCM::dot(LCM::transpose(F), F);
+        LCM::Tensor<ScalarT> C = LCM::dot(LCM::transpose(F), F);
 
         // Fiber orientation vectors
-        LCM::Vector<ScalarT, 3> M1(0.0);
-        LCM::Vector<ScalarT, 3> M2(0.0);
+        LCM::Vector<ScalarT> M1(0.0, 0.0, 0.0);
+        LCM::Vector<ScalarT> M2(0.0, 0.0, 0.0);
 
         // compute fiber orientation based on either local gauss point coordinates
         // or global direction
-        if(isLocalCoord)
-        {
-            // compute fiber orientation based on local coordinates
-            // special case of plane strain M1(3) = 0; M2(3) = 0;
-            LCM::Vector<ScalarT, 3> gpt(gptLocation(cell, qp,0), gptLocation(cell, qp,1),gptLocation(cell, qp,2));
-            LCM::Vector<ScalarT, 3> OA(gpt(0) - ringCenter[0], gpt(1) - ringCenter[1], 0);
+        if (isLocalCoord) {
+          // compute fiber orientation based on local coordinates
+          // special case of plane strain M1(3) = 0; M2(3) = 0;
+          LCM::Vector<ScalarT> gpt(gptLocation(cell, qp, 0),
+              gptLocation(cell, qp, 1), gptLocation(cell, qp, 2));
 
-            M1 = OA / norm(OA);
-            M2(0) = -M1(1); M2(1) = M1(0); M2(2) = M1(2);
-        }
-        else
-        {
-			M1(0) = direction_f1[0]; M1(1) = direction_f1[1]; M1(2) = direction_f1[2];
-			M2(0) = direction_f2[0]; M2(1) = direction_f2[1]; M2(2) = direction_f2[2];
+          LCM::Vector<ScalarT> OA(gpt(0) - ringCenter[0],
+              gpt(1) - ringCenter[1], 0);
+
+          M1 = OA / norm(OA);
+          M2(0) = -M1(1);
+          M2(1) = M1(0);
+          M2(2) = M1(2);
+        } else {
+          M1(0) = direction_f1[0];
+          M1(1) = direction_f1[1];
+          M1(2) = direction_f1[2];
+          M2(0) = direction_f2[0];
+          M2(1) = direction_f2[1];
+          M2(2) = direction_f2[2];
         }
 
         // Anisotropic invariants I4 = M_{i} * C * M_{i}
         ScalarT I4_f1 = LCM::dot(M1, LCM::dot(C, M1));
         ScalarT I4_f2 = LCM::dot(M2, LCM::dot(C, M2));
-        LCM::Tensor<ScalarT, 3> M1dyadM1 = dyad(M1, M1);
-        LCM::Tensor<ScalarT, 3> M2dyadM2 = dyad(M2, M2);
+        LCM::Tensor<ScalarT> M1dyadM1 = dyad(M1, M1);
+        LCM::Tensor<ScalarT> M2dyadM2 = dyad(M2, M2);
 
         // undamaged stress (2nd PK stress)
-        LCM::Tensor<ScalarT, 3> S0_f1, S0_f2;
+        LCM::Tensor<ScalarT> S0_f1(3), S0_f2(3);
         S0_f1 = (4.0 * k_f1 * (I4_f1 - 1.0)
             * std::exp(q_f1 * (I4_f1 - 1) * (I4_f1 - 1))) * M1dyadM1;
         S0_f2 = (4.0 * k_f2 * (I4_f2 - 1.0)
@@ -346,7 +349,7 @@ namespace LCM {
             * (std::exp(q_f2 * (I4_f2 - 1) * (I4_f2 - 1)) - 1) / q_f2;
 
         // Cauchy stress
-        LCM::Tensor<ScalarT, 3> stress_f1, stress_f2;
+        LCM::Tensor<ScalarT> stress_f1(3), stress_f2(3);
         stress_f1 = (1.0 / J(cell, qp))
             * LCM::dot(F, LCM::dot(S0_f1, LCM::transpose(F)));
         stress_f2 = (1.0 / J(cell, qp))
@@ -361,16 +364,16 @@ namespace LCM {
         if (energy_f2(cell, qp) > alpha_f2) alpha_f2 = energy_f2(cell, qp);
 
         // damage term in fibers
-        damage_f1(cell,qp) = xiinf_f1 * (1 - std::exp(-alpha_f1 / tau_f1));
-        damage_f2(cell,qp) = xiinf_f2 * (1 - std::exp(-alpha_f2 / tau_f2));
+        damage_f1(cell, qp) = xiinf_f1 * (1 - std::exp(-alpha_f1 / tau_f1));
+        damage_f2(cell, qp) = xiinf_f2 * (1 - std::exp(-alpha_f2 / tau_f2));
 
         // total Cauchy stress (J2, Fibers)
         for (std::size_t i = 0; i < numDims; ++i)
           for (std::size_t j = 0; j < numDims; ++j)
-            stress(cell, qp, i, j) = (1 - vol_f1 - vol_f2) * (1 - damage_J2(cell,qp))
-                * stress(cell, qp, i, j)
-                + vol_f1 * (1 - damage_f1(cell,qp)) * stress_f1(i, j)
-                + vol_f2 * (1 - damage_f2(cell,qp)) * stress_f2(i, j);
+            stress(cell, qp, i, j) = (1 - vol_f1 - vol_f2)
+                * (1 - damage_J2(cell, qp)) * stress(cell, qp, i, j)
+                + vol_f1 * (1 - damage_f1(cell, qp)) * stress_f1(i, j)
+                + vol_f2 * (1 - damage_f2(cell, qp)) * stress_f2(i, j);
 
       } // end of loop over qp
     } // end of loop over cell

@@ -50,21 +50,21 @@ namespace LCM {
     typedef typename EvalT::MeshScalarT MeshScalarT;
 
     // all local functions used in computing cap model stress:
-    ScalarT compute_f(LCM::Tensor<ScalarT, 3> & sigma,
-        LCM::Tensor<ScalarT, 3> & alpha, ScalarT & kappa);
+    ScalarT compute_f(LCM::Tensor<ScalarT> & sigma,
+        LCM::Tensor<ScalarT> & alpha, ScalarT & kappa);
 
-    LCM::Tensor<ScalarT, 3> compute_dfdsigma(LCM::Tensor<ScalarT, 3> & sigma,
-        LCM::Tensor<ScalarT, 3> & alpha, ScalarT & kappa);
+    LCM::Tensor<ScalarT> compute_dfdsigma(LCM::Tensor<ScalarT> & sigma,
+        LCM::Tensor<ScalarT> & alpha, ScalarT & kappa);
 
-    LCM::Tensor<ScalarT, 3> compute_dgdsigma(LCM::Tensor<ScalarT, 3> & sigma,
-        LCM::Tensor<ScalarT, 3> & alpha, ScalarT & kappa);
+    LCM::Tensor<ScalarT> compute_dgdsigma(LCM::Tensor<ScalarT> & sigma,
+        LCM::Tensor<ScalarT> & alpha, ScalarT & kappa);
 
-    ScalarT compute_dfdkappa(LCM::Tensor<ScalarT, 3> & sigma,
-        LCM::Tensor<ScalarT, 3> & alpha, ScalarT & kappa);
+    ScalarT compute_dfdkappa(LCM::Tensor<ScalarT> & sigma,
+        LCM::Tensor<ScalarT> & alpha, ScalarT & kappa);
 
     ScalarT compute_Galpha(ScalarT & J2_alpha);
 
-    LCM::Tensor<ScalarT, 3> compute_halpha(LCM::Tensor<ScalarT, 3> & dgdsigma,
+    LCM::Tensor<ScalarT> compute_halpha(LCM::Tensor<ScalarT> & dgdsigma,
         ScalarT & J2_alpha);
 
     ScalarT compute_dedkappa(ScalarT & kappa);

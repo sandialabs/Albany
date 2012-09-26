@@ -16,15 +16,15 @@ namespace LCM {
   ///
   template<typename T>
   T
-  length(Vector<T, 3> const & p0, Vector<T, 3> const & p1);
+  length(Vector<T> const & p0, Vector<T> const & p1);
 
   ///
   /// Area of a triangle
   ///
   template<typename T>
   T
-  area(Vector<T, 3> const & p0, Vector<T, 3> const & p1,
-      Vector<T, 3> const & p2);
+  area(Vector<T> const & p0, Vector<T> const & p1,
+      Vector<T> const & p2);
 
   ///
   /// Area of a quadrilateral, assummed planar. If not planar, returns
@@ -32,16 +32,16 @@ namespace LCM {
   ///
   template<typename T>
   T
-  area(Vector<T, 3> const & p0, Vector<T, 3> const & p1,
-      Vector<T, 3> const & p2, Vector<T, 3> const & p3);
+  area(Vector<T> const & p0, Vector<T> const & p1,
+      Vector<T> const & p2, Vector<T> const & p3);
 
   ///
   /// Volume of tetrahedron
   ///
   template<typename T>
   T
-  volume(Vector<T, 3> const & p0, Vector<T, 3> const & p1,
-      Vector<T, 3> const & p2, Vector<T, 3> const & p3);
+  volume(Vector<T> const & p0, Vector<T> const & p1,
+      Vector<T> const & p2, Vector<T> const & p3);
 
   ///
   /// Volume of pyramid of quadrilateral base
@@ -51,9 +51,9 @@ namespace LCM {
   ///
   template<typename T>
   T
-  volume(Vector<T, 3> const & p0, Vector<T, 3> const & p1,
-      Vector<T, 3> const & p2, Vector<T, 3> const & p3,
-      Vector<T, 3> const & p4);
+  volume(Vector<T> const & p0, Vector<T> const & p1,
+      Vector<T> const & p2, Vector<T> const & p3,
+      Vector<T> const & p4);
 
   ///
   /// Volume of hexahedron
@@ -62,10 +62,10 @@ namespace LCM {
   ///
   template<typename T>
   T
-  volume(Vector<T, 3> const & p0, Vector<T, 3> const & p1,
-      Vector<T, 3> const & p2, Vector<T, 3> const & p3,
-      Vector<T, 3> const & p4, Vector<T, 3> const & p5,
-      Vector<T, 3> const & p6, Vector<T, 3> const & p7);
+  volume(Vector<T> const & p0, Vector<T> const & p1,
+      Vector<T> const & p2, Vector<T> const & p3,
+      Vector<T> const & p4, Vector<T> const & p5,
+      Vector<T> const & p6, Vector<T> const & p7);
 
   ///
   /// Centroids of segment, triangle, tetrahedron, quadrilateral
@@ -73,8 +73,8 @@ namespace LCM {
   /// For these we can just take the average of the vertices
   ///
   template<typename T>
-  Vector<T, 3>
-  centroid(std::vector<Vector<T, 3> > const & points);
+  Vector<T>
+  centroid(std::vector<Vector<T> > const & points);
 
   ///
   /// The surface normal of a face
@@ -83,10 +83,10 @@ namespace LCM {
   /// Output: normal vector
   ///
   template<typename T>
-  Vector<T, 3>
-  faceNormal(Vector<T,3> const & p0,
-          Vector<T,3> const & p1,
-          Vector<T,3> const & p2);
+  Vector<T>
+  faceNormal(Vector<T> const & p0,
+          Vector<T> const & p1,
+          Vector<T> const & p2);
 
 } // namespace LCM
 

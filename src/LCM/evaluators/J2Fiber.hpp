@@ -79,14 +79,14 @@ private:
   unsigned int numDims;
   unsigned int worksetSize;
 
-  LCM::Tensor<ScalarT, 3> F;
-  LCM::Tensor<ScalarT, 3> Fpn;
-  LCM::Tensor<ScalarT, 3> Cpinv;
-  LCM::Tensor<ScalarT, 3> be;
-  LCM::Tensor<ScalarT, 3> s;
-  LCM::Tensor<ScalarT, 3> N;
-  LCM::Tensor<ScalarT, 3> A;
-  LCM::Tensor<ScalarT, 3> expA;
+  LCM::Tensor<ScalarT> F;
+  LCM::Tensor<ScalarT> Fpn;
+  LCM::Tensor<ScalarT> Cpinv;
+  LCM::Tensor<ScalarT> be;
+  LCM::Tensor<ScalarT> s;
+  LCM::Tensor<ScalarT> N;
+  LCM::Tensor<ScalarT> A;
+  LCM::Tensor<ScalarT> expA;
 
   RealType xiinf_J2;
   RealType tau_J2;

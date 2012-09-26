@@ -26,51 +26,53 @@ namespace LCM {
 //----------------------------------------------------------------------
   template<typename EvalT, typename Traits>
   SurfaceBasis<EvalT, Traits>::SurfaceBasis(const Teuchos::ParameterList& p) :
-    needCurrentBasis(false),
-    referenceCoords(p.get<std::string>("Reference Coordinates Name"),
-                    p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout")), 
-    cubature       (p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")), 
-    intrepidBasis  (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis")), 
-    cellType       (p.get<Teuchos::RCP<shards::CellTopology> >("Cell Type")), 
-    refArea        (p.get<std::string>("Reference Area Name"),
-                    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-    refDualBasis   (p.get<std::string>("Reference Dual Basis Name"),
-                    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
-    refNormal      (p.get<std::string>("Reference Normal Name"),
-                    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout"))
+      needCurrentBasis(false), referenceCoords(
+          p.get<std::string>("Reference Coordinates Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout")), cubature(
+          p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")), intrepidBasis(
+          p.get<
+              Teuchos::RCP<
+                  Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >(
+              "Intrepid Basis")), cellType(
+          p.get<Teuchos::RCP<shards::CellTopology> >("Cell Type")), refArea(
+          p.get<std::string>("Reference Area Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), refDualBasis(
+          p.get<std::string>("Reference Dual Basis Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), refNormal(
+          p.get<std::string>("Reference Normal Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout"))
   {
     this->addDependentField(referenceCoords);
     this->addEvaluatedField(refArea);
     this->addEvaluatedField(refDualBasis);
     this->addEvaluatedField(refNormal);
-    
+
     // if current coordinates are being passed in, compute and return the current basis
     // needed for the localization element, but not uncoupled transport
-    if (p.isType<std::string>("Current Coordinates Name"))
-    {
+    if (p.isType<std::string>("Current Coordinates Name")) {
       needCurrentBasis = true;
 
       // grab the current coords
-      Teuchos::RCP<PHX::DataLayout> coord_dl =
-        p.get< Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout");
-      PHX::MDField<ScalarT,Cell,Vertex,Dim>
-        tmp(p.get<string>("Current Coordinates Name"), coord_dl);
+      Teuchos::RCP<PHX::DataLayout> coord_dl = p.get<
+          Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout");
+      PHX::MDField<ScalarT, Cell, Vertex, Dim> tmp(
+          p.get<string>("Current Coordinates Name"), coord_dl);
       currentCoords = tmp;
 
       // set up the current basis
-      Teuchos::RCP<PHX::DataLayout> basis_dl =
-        p.get< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
-      PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim>
-        tmp2(p.get<string>("Current Basis Name"), basis_dl);
+      Teuchos::RCP<PHX::DataLayout> basis_dl = p.get<
+          Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
+      PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> tmp2(
+          p.get<string>("Current Basis Name"), basis_dl);
       currentBasis = tmp2;
-      
+
       this->addDependentField(currentCoords);
       this->addEvaluatedField(currentBasis);
     }
 
     // Get Dimensions
     Teuchos::RCP<PHX::DataLayout> vert_dl =
-      p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout");
+        p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout");
     std::vector<PHX::DataLayout::size_type> dims;
     vert_dl->dimensions(dims);
 
@@ -98,9 +100,8 @@ namespace LCM {
     // temp space for midplane coords
     midplaneCoords.resize(containerSize, numPlaneNodes, numDims);
     Teuchos::RCP<PHX::DataLayout> basis_dl =
-      p.get< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim>
-      tmp3("Basis", basis_dl);
+        p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
+    PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> tmp3("Basis", basis_dl);
     basis = tmp3;
 
     // Pre-Calculate reference element quantitites
@@ -114,15 +115,15 @@ namespace LCM {
 
   //----------------------------------------------------------------------
   template<typename EvalT, typename Traits>
-  void SurfaceBasis<EvalT, Traits>::postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
+  void SurfaceBasis<EvalT, Traits>::postRegistrationSetup(
+      typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
   {
     this->utils.setFieldData(referenceCoords, fm);
     this->utils.setFieldData(refArea, fm);
     this->utils.setFieldData(refDualBasis, fm);
     this->utils.setFieldData(refNormal, fm);
     this->utils.setFieldData(basis, fm);
-    if (needCurrentBasis) 
-    {
+    if (needCurrentBasis) {
       this->utils.setFieldData(currentCoords, fm);
       this->utils.setFieldData(currentBasis, fm);
     }
@@ -130,7 +131,8 @@ namespace LCM {
 
   //----------------------------------------------------------------------
   template<typename EvalT, typename Traits>
-  void SurfaceBasis<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
+  void SurfaceBasis<EvalT, Traits>::evaluateFields(
+      typename Traits::EvalData workset)
   {
     for (std::size_t cell(0); cell < workset.numCells; ++cell) {
       // for the reference geometry
@@ -146,8 +148,7 @@ namespace LCM {
       // compute the Jacobian
       computeJacobian(basis, refDualBasis, refArea);
 
-      if (needCurrentBasis)
-      {
+      if (needCurrentBasis) {
         // for the current configuration
         // compute the mid-plane coordinates
         computeMidplaneCoords(currentCoords, midplaneCoords);
@@ -159,8 +160,8 @@ namespace LCM {
   }
   //----------------------------------------------------------------------
   template<typename EvalT, typename Traits>
-  void SurfaceBasis<EvalT, Traits>::computeMidplaneCoords(PHX::MDField<ScalarT, Cell, Vertex, Dim> coords, 
-                                                          FC & midplaneCoords)
+  void SurfaceBasis<EvalT, Traits>::computeMidplaneCoords(
+      PHX::MDField<ScalarT, Cell, Vertex, Dim> coords, FC & midplaneCoords)
   {
     for (int cell(0); cell < midplaneCoords.dimension(0); ++cell) {
       // compute the mid-plane coordinates
@@ -168,23 +169,25 @@ namespace LCM {
         int topNode = node + numPlaneNodes;
         for (int dim(0); dim < numDims; ++dim) {
           midplaneCoords(cell, node, dim) = 0.5
-            * (coords(cell, node, dim) + coords(cell, topNode, dim));
+              * (coords(cell, node, dim) + coords(cell, topNode, dim));
         }
       }
     }
   }
   //----------------------------------------------------------------------
   template<typename EvalT, typename Traits>
-  void SurfaceBasis<EvalT, Traits>::computeBaseVectors(const FC & midplaneCoords,
-                                                       PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> basis)
+  void SurfaceBasis<EvalT, Traits>::computeBaseVectors(
+      const FC & midplaneCoords,
+      PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> basis)
   {
     for (int cell(0); cell < midplaneCoords.dimension(0); ++cell) {
       // get the midplane coordinates
-      std::vector<LCM::Vector<ScalarT, 3> > midplaneNodes(numPlaneNodes);
+      std::vector<LCM::Vector<ScalarT> > midplaneNodes(numPlaneNodes);
       for (std::size_t node(0); node < numPlaneNodes; ++node)
-        midplaneNodes[node] = LCM::Vector<ScalarT, 3>(&midplaneCoords(cell, node, 0));
+        midplaneNodes[node] = LCM::Vector<ScalarT>(3,
+            &midplaneCoords(cell, node, 0));
 
-      LCM::Vector<ScalarT, 3> g_0, g_1, g_2;
+      LCM::Vector<ScalarT> g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0);
       //compute the base vectors
       for (std::size_t pt(0); pt < numQPs; ++pt) {
         g_0.clear();
@@ -210,20 +213,22 @@ namespace LCM {
   }
   //----------------------------------------------------------------------
   template<typename EvalT, typename Traits>
-  void SurfaceBasis<EvalT, Traits>::computeDualBaseVectors(const FC & midplaneCoords, 
-                                                           const PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> basis, 
-                                                           PHX::MDField<ScalarT,Cell,QuadPoint,Dim> normal, 
-                                                           PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> dualBasis)
+  void SurfaceBasis<EvalT, Traits>::computeDualBaseVectors(
+      const FC & midplaneCoords,
+      const PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> basis,
+      PHX::MDField<ScalarT, Cell, QuadPoint, Dim> normal,
+      PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> dualBasis)
   {
     std::size_t worksetSize = midplaneCoords.dimension(0);
 
-    LCM::Vector<ScalarT, 3> g_0(0.0), g_1(0.0), g_2(0.0), g0(0.0), g1(0.0), g2(0.0);
+    LCM::Vector<ScalarT> g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0), g0(0, 0, 0),
+        g1(0, 0, 0), g2(0, 0, 0);
 
     for (std::size_t cell(0); cell < worksetSize; ++cell) {
       for (std::size_t pt(0); pt < numQPs; ++pt) {
-        g_0 = LCM::Vector<ScalarT, 3>(&basis(cell, pt, 0, 0));
-        g_1 = LCM::Vector<ScalarT, 3>(&basis(cell, pt, 1, 0));
-        g_2 = LCM::Vector<ScalarT, 3>(&basis(cell, pt, 2, 0));
+        g_0 = LCM::Vector<ScalarT>(3, &basis(cell, pt, 0, 0));
+        g_1 = LCM::Vector<ScalarT>(3, &basis(cell, pt, 1, 0));
+        g_2 = LCM::Vector<ScalarT>(3, &basis(cell, pt, 2, 0));
 
         normal(cell, pt, 0) = g_2(0);
         normal(cell, pt, 1) = g_2(1);
@@ -247,24 +252,28 @@ namespace LCM {
   }
   //----------------------------------------------------------------------
   template<typename EvalT, typename Traits>
-    void SurfaceBasis<EvalT, Traits>::computeJacobian(const PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> basis,
-                                                      const PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> dualBasis,
-                                                      PHX::MDField<ScalarT,Cell,QuadPoint> area)
+  void SurfaceBasis<EvalT, Traits>::computeJacobian(
+      const PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> basis,
+      const PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> dualBasis,
+      PHX::MDField<ScalarT, Cell, QuadPoint> area)
   {
     const std::size_t worksetSize = basis.dimension(0);
 
     for (std::size_t cell(0); cell < worksetSize; ++cell) {
       for (std::size_t pt(0); pt < numQPs; ++pt) {
-        LCM::Tensor<ScalarT, 3> dPhiInv(&dualBasis(cell, pt, 0, 0));
-        LCM::Tensor<ScalarT, 3> dPhi(&basis(cell, pt, 0, 0));
-        LCM::Vector<ScalarT, 3> G_2(&basis(cell, pt, 2, 0));
+        LCM::Tensor<ScalarT> dPhiInv(3, &dualBasis(cell, pt, 0, 0));
+        LCM::Tensor<ScalarT> dPhi(3, &basis(cell, pt, 0, 0));
+        LCM::Vector<ScalarT> G_2(3, &basis(cell, pt, 2, 0));
 
         ScalarT j0 = LCM::det(dPhi);
-        ScalarT jacobian = j0 * std::sqrt(LCM::dot(LCM::dot(G_2, dPhiInv * LCM::transpose(dPhiInv)),G_2));
+        ScalarT jacobian = j0
+            * std::sqrt(
+                LCM::dot(LCM::dot(G_2, dPhiInv * LCM::transpose(dPhiInv)),
+                    G_2));
         area(cell, pt) = jacobian * refWeights(pt);
       }
     }
 
   }
-  //----------------------------------------------------------------------
+//----------------------------------------------------------------------
 }//namespace LCM

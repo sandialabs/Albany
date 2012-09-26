@@ -14,9 +14,9 @@ namespace LCM {
   //
   template<typename T>
   T
-  length(Vector<T, 3> const & p0, Vector<T, 3> const & p1)
+  length(Vector<T> const & p0, Vector<T> const & p1)
   {
-    Vector<T, 3> v = p1 - p0;
+    Vector<T> v = p1 - p0;
     return norm(v);
   }
 
@@ -25,11 +25,11 @@ namespace LCM {
   //
   template<typename T>
   T
-  area(Vector<T, 3> const & p0, Vector<T, 3> const & p1,
-      Vector<T, 3> const & p2)
+  area(Vector<T> const & p0, Vector<T> const & p1,
+      Vector<T> const & p2)
   {
-    Vector<T, 3> u = p1 - p0;
-    Vector<T, 3> v = p2 - p0;
+    Vector<T> u = p1 - p0;
+    Vector<T> v = p2 - p0;
     T a = 0.5 * norm(cross(u,v));
     return a;
   }
@@ -40,8 +40,8 @@ namespace LCM {
   //
   template<typename T>
   T
-  area(Vector<T, 3> const & p0, Vector<T, 3> const & p1,
-      Vector<T, 3> const & p2, Vector<T, 3> const & p3)
+  area(Vector<T> const & p0, Vector<T> const & p1,
+      Vector<T> const & p2, Vector<T> const & p3)
   {
     return area(p0, p1, p2) + area(p0, p2, p3);
   }
@@ -51,18 +51,18 @@ namespace LCM {
   //
   template<typename T>
   T
-  volume(Vector<T, 3> const & p0, Vector<T, 3> const & p1,
-      Vector<T, 3> const & p2, Vector<T, 3> const & p3)
+  volume(Vector<T> const & p0, Vector<T> const & p1,
+      Vector<T> const & p2, Vector<T> const & p3)
   {
     // Area of base triangle
     T A = area(p0, p1, p2);
 
     // Height
-    Vector<T, 3> u = p1 - p0;
-    Vector<T, 3> v = p2 - p0;
-    Vector<T, 3> n = cross(u, v);
+    Vector<T> u = p1 - p0;
+    Vector<T> v = p2 - p0;
+    Vector<T> n = cross(u, v);
     n = n / norm(n);
-    Vector<T, 3> w = p3 - p0;
+    Vector<T> w = p3 - p0;
     T h = fabs(dot(w, n));
 
     // Volume
@@ -78,19 +78,19 @@ namespace LCM {
   //
   template<typename T>
   T
-  volume(Vector<T, 3> const & p0, Vector<T, 3> const & p1,
-      Vector<T, 3> const & p2, Vector<T, 3> const & p3,
-      Vector<T, 3> const & p4)
+  volume(Vector<T> const & p0, Vector<T> const & p1,
+      Vector<T> const & p2, Vector<T> const & p3,
+      Vector<T> const & p4)
   {
     // Area of base quadrilateral
     T A = area(p0, p1, p2, p3);
 
     // Height
-    Vector<T, 3> u = p1 - p0;
-    Vector<T, 3> v = p2 - p0;
-    Vector<T, 3> n = cross(u, v);
+    Vector<T> u = p1 - p0;
+    Vector<T> v = p2 - p0;
+    Vector<T> n = cross(u, v);
     n = n / norm(n);
-    Vector<T, 3> w = p4 - p0;
+    Vector<T> w = p4 - p0;
     T h = fabs(dot(w, n));
 
     // Volume
@@ -105,10 +105,10 @@ namespace LCM {
   //
   template<typename T>
   T
-  volume(Vector<T, 3> const & p0, Vector<T, 3> const & p1,
-      Vector<T, 3> const & p2, Vector<T, 3> const & p3,
-      Vector<T, 3> const & p4, Vector<T, 3> const & p5,
-      Vector<T, 3> const & p6, Vector<T, 3> const & p7)
+  volume(Vector<T> const & p0, Vector<T> const & p1,
+      Vector<T> const & p2, Vector<T> const & p3,
+      Vector<T> const & p4, Vector<T> const & p5,
+      Vector<T> const & p6, Vector<T> const & p7)
   {
     // 1st pyramid
     T V1 = volume(p4, p7, p6, p5, p0);
@@ -128,11 +128,11 @@ namespace LCM {
   // For these we can just take the average of the vertices
   //
   template<typename T>
-  Vector<T, 3>
-  centroid(std::vector<Vector<T, 3> > const & points)
+  Vector<T>
+  centroid(std::vector<Vector<T> > const & points)
   {
-    Vector<T, 3> C(0.0, 0.0, 0.0);
-    typedef typename std::vector<Vector<T, 3> >::size_type sizeT;
+    Vector<T> C(0.0, 0.0, 0.0);
+    typedef typename std::vector<Vector<T> >::size_type sizeT;
     sizeT n = points.size();
 
     for (sizeT i = 0; i < n; ++i) {
@@ -148,16 +148,16 @@ namespace LCM {
   /// Output: unit normal vector
   ///
   template<typename T>
-  Vector<T,3>
-  faceNormal(Vector<T,3> const & p0,
-          Vector<T,3> const & p1,
-          Vector<T,3> const & p2)
+  Vector<T>
+  faceNormal(Vector<T> const & p0,
+          Vector<T> const & p1,
+          Vector<T> const & p2)
   {
       // Construct 2 independent vectors
-      Vector<T,3> v0 = p1 - p0;
-      Vector<T,3> v1 = p2 - p0;
+      Vector<T> v0 = p1 - p0;
+      Vector<T> v1 = p2 - p0;
 
-      Vector<T,3> n = LCM::cross(v0,v1);
+      Vector<T> n = LCM::cross(v0,v1);
       n = n/LCM::norm(n);
       return n;
   }
