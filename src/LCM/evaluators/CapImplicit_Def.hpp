@@ -109,21 +109,18 @@ namespace LCM {
             / (1.0 + poissonsRatio(cell, qp));
 
         // elastic matrix
-        LCM::Tensor4<ScalarT, 3> Celastic =
-            lame * LCM::identity_3<ScalarT, 3>()
-                + mu
-                    * (LCM::identity_1<ScalarT, 3>()
-                        + LCM::identity_2<ScalarT, 3>());
+        LCM::Tensor4<ScalarT> Celastic = lame * LCM::identity_3<ScalarT>(3)
+            + mu * (LCM::identity_1<ScalarT>(3) + LCM::identity_2<ScalarT>(3));
 
         // incremental strain tensor
-        LCM::Tensor<ScalarT, 3> depsilon;
+        LCM::Tensor<ScalarT> depsilon(3);
         for (std::size_t i = 0; i < numDims; ++i)
           for (std::size_t j = 0; j < numDims; ++j)
             depsilon(i, j) = strain(cell, qp, i, j) - strainold(cell, qp, i, j);
 
         // trial state
-        LCM::Tensor<ScalarT, 3> sigmaVal = LCM::dotdot(Celastic, depsilon);
-        LCM::Tensor<ScalarT, 3> alphaVal;
+        LCM::Tensor<ScalarT> sigmaVal = LCM::dotdot(Celastic, depsilon);
+        LCM::Tensor<ScalarT> alphaVal(3);
 
         for (std::size_t i = 0; i < numDims; ++i) {
           for (std::size_t j = 0; j < numDims; ++j) {
@@ -247,15 +244,15 @@ namespace LCM {
 // all local functions
   template<typename EvalT, typename Traits>
   typename CapImplicit<EvalT, Traits>::ScalarT CapImplicit<EvalT, Traits>::compute_f(
-      LCM::Tensor<ScalarT, 3> & sigma, LCM::Tensor<ScalarT, 3> & alpha,
+      LCM::Tensor<ScalarT> & sigma, LCM::Tensor<ScalarT> & alpha,
       ScalarT & kappa)
   {
 
-    LCM::Tensor<ScalarT, 3> xi = sigma - alpha;
+    LCM::Tensor<ScalarT> xi = sigma - alpha;
 
     ScalarT I1 = LCM::trace(xi), p = I1 / 3.;
 
-    LCM::Tensor<ScalarT, 3> s = xi - p * LCM::identity<ScalarT, 3>();
+    LCM::Tensor<ScalarT> s = xi - p * LCM::identity<ScalarT>(3);
 
     ScalarT J2 = 0.5 * LCM::dotdot(s, s);
 
@@ -282,15 +279,15 @@ namespace LCM {
 
   template<typename EvalT, typename Traits>
   typename CapImplicit<EvalT, Traits>::DFadType CapImplicit<EvalT, Traits>::compute_f(
-      LCM::Tensor<DFadType, 3> & sigma, LCM::Tensor<DFadType, 3> & alpha,
+      LCM::Tensor<DFadType> & sigma, LCM::Tensor<DFadType> & alpha,
       DFadType & kappa)
   {
 
-    LCM::Tensor<DFadType, 3> xi = sigma - alpha;
+    LCM::Tensor<DFadType> xi = sigma - alpha;
 
     DFadType I1 = LCM::trace(xi), p = I1 / 3.;
 
-    LCM::Tensor<DFadType, 3> s = xi - p * LCM::identity<DFadType, 3>();
+    LCM::Tensor<DFadType> s = xi - p * LCM::identity<DFadType>(3);
 
     DFadType J2 = 0.5 * LCM::dotdot(s, s);
 
@@ -317,15 +314,15 @@ namespace LCM {
 
   template<typename EvalT, typename Traits>
   typename CapImplicit<EvalT, Traits>::D2FadType CapImplicit<EvalT, Traits>::compute_g(
-      LCM::Tensor<D2FadType, 3> & sigma, LCM::Tensor<D2FadType, 3> & alpha,
+      LCM::Tensor<D2FadType> & sigma, LCM::Tensor<D2FadType> & alpha,
       D2FadType & kappa)
   {
 
-    LCM::Tensor<D2FadType, 3> xi = sigma - alpha;
+    LCM::Tensor<D2FadType> xi = sigma - alpha;
 
     D2FadType I1 = LCM::trace(xi), p = I1 / 3.;
 
-    LCM::Tensor<D2FadType, 3> s = xi - p * LCM::identity<D2FadType, 3>();
+    LCM::Tensor<D2FadType> s = xi - p * LCM::identity<D2FadType>(3);
 
     D2FadType J2 = 0.5 * LCM::dotdot(s, s);
 
@@ -352,9 +349,8 @@ namespace LCM {
 
   template<typename EvalT, typename Traits>
   std::vector<typename CapImplicit<EvalT, Traits>::ScalarT> CapImplicit<EvalT,
-      Traits>::initialize(LCM::Tensor<ScalarT, 3> & sigmaVal,
-      LCM::Tensor<ScalarT, 3> & alphaVal, ScalarT & kappaVal,
-      ScalarT & dgammaVal)
+      Traits>::initialize(LCM::Tensor<ScalarT> & sigmaVal,
+      LCM::Tensor<ScalarT> & alphaVal, ScalarT & kappaVal, ScalarT & dgammaVal)
   {
     std::vector<ScalarT> XX(13);
 
@@ -376,8 +372,8 @@ namespace LCM {
   }
 
   template<typename EvalT, typename Traits>
-  LCM::Tensor<typename CapImplicit<EvalT, Traits>::DFadType, 3> CapImplicit<
-      EvalT, Traits>::compute_dgdsigma(std::vector<DFadType> const & XX)
+  LCM::Tensor<typename CapImplicit<EvalT, Traits>::DFadType> CapImplicit<EvalT,
+      Traits>::compute_dgdsigma(std::vector<DFadType> const & XX)
   {
     std::vector<D2FadType> D2XX(13);
 
@@ -385,7 +381,7 @@ namespace LCM {
       D2XX[i] = D2FadType(13, i, XX[i]);
     }
 
-    LCM::Tensor<D2FadType, 3> sigma, alpha;
+    LCM::Tensor<D2FadType> sigma(3), alpha(3);
 
     sigma(0, 0) = D2XX[0];
     sigma(0, 1) = D2XX[5];
@@ -411,7 +407,7 @@ namespace LCM {
 
     D2FadType g = compute_g(sigma, alpha, kappa);
 
-    LCM::Tensor<DFadType, 3> dgdsigma;
+    LCM::Tensor<DFadType> dgdsigma(3);
 
     dgdsigma(0, 0) = g.dx(0);
     dgdsigma(0, 1) = g.dx(5);
@@ -437,8 +433,8 @@ namespace LCM {
   }
 
   template<typename EvalT, typename Traits>
-  LCM::Tensor<typename CapImplicit<EvalT, Traits>::DFadType, 3> CapImplicit<
-      EvalT, Traits>::compute_halpha(LCM::Tensor<DFadType, 3> const & dgdsigma,
+  LCM::Tensor<typename CapImplicit<EvalT, Traits>::DFadType> CapImplicit<EvalT,
+      Traits>::compute_halpha(LCM::Tensor<DFadType> const & dgdsigma,
       DFadType const J2_alpha)
   {
 
@@ -446,10 +442,10 @@ namespace LCM {
 
     DFadType I1 = LCM::trace(dgdsigma), p = I1 / 3.0;
 
-    LCM::Tensor<DFadType, 3> s = dgdsigma - p * LCM::identity<DFadType, 3>();
+    LCM::Tensor<DFadType> s = dgdsigma - p * LCM::identity<DFadType>(3);
 
     //LCM::Tensor<DFadType, 3> halpha = calpha * Galpha * s; // * operator not defined;
-    LCM::Tensor<DFadType, 3> halpha;
+    LCM::Tensor<DFadType> halpha(3);
     for (int i = 0; i < 3; i++) {
       for (int j = 0; j < 3; j++) {
         halpha(i, j) = calpha * Galpha * s(i, j);
@@ -494,9 +490,9 @@ namespace LCM {
   template<typename EvalT, typename Traits>
   void CapImplicit<EvalT, Traits>::compute_ResidJacobian(
       std::vector<ScalarT> const & XXVal, std::vector<ScalarT> & R,
-      std::vector<ScalarT> & dRdX, const LCM::Tensor<ScalarT, 3> & sigmaVal,
-      const LCM::Tensor<ScalarT, 3> & alphaVal, const ScalarT & kappaVal,
-      LCM::Tensor4<ScalarT, 3> const & Celastic, bool kappa_flag)
+      std::vector<ScalarT> & dRdX, const LCM::Tensor<ScalarT> & sigmaVal,
+      const LCM::Tensor<ScalarT> & alphaVal, const ScalarT & kappaVal,
+      LCM::Tensor4<ScalarT> const & Celastic, bool kappa_flag)
   {
 
     std::vector<DFadType> Rfad(13);
@@ -511,7 +507,7 @@ namespace LCM {
       XX[i] = DFadType(13, i, XXtmp[i]);
     }
 
-    LCM::Tensor<DFadType, 3> sigma, alpha;
+    LCM::Tensor<DFadType> sigma(3), alpha(3);
 
     sigma(0, 0) = XX[0];
     sigma(0, 1) = XX[5];
@@ -539,11 +535,11 @@ namespace LCM {
 
     DFadType f = compute_f(sigma, alpha, kappa);
 
-    LCM::Tensor<DFadType, 3> dgdsigma = compute_dgdsigma(XX);
+    LCM::Tensor<DFadType> dgdsigma = compute_dgdsigma(XX);
 
     DFadType J2_alpha = 0.5 * LCM::dotdot(alpha, alpha);
 
-    LCM::Tensor<DFadType, 3> halpha = compute_halpha(dgdsigma, J2_alpha);
+    LCM::Tensor<DFadType> halpha = compute_halpha(dgdsigma, J2_alpha);
 
     DFadType I1_dgdsigma = LCM::trace(dgdsigma);
 

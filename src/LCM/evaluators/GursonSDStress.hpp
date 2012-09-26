@@ -52,7 +52,7 @@ namespace LCM {
 
     // all local functions used in computing GursonSD model stress:
     ScalarT compute_Y(ScalarT & epVal, ScalarT & Eor3mu);
-    ScalarT compute_Phi(LCM::Tensor<ScalarT, 3> & devVal, ScalarT & pVal,
+    ScalarT compute_Phi(LCM::Tensor<ScalarT> & devVal, ScalarT & pVal,
         ScalarT & fvoidVal, ScalarT & epVal, ScalarT & Eor3mu);
     ScalarT compute_dPhidep(ScalarT & tmp, ScalarT & pN, ScalarT & fvoidN,
         ScalarT & epN, ScalarT & YN, ScalarT & Eor3mu);

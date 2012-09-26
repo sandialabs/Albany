@@ -54,14 +54,14 @@ namespace LCM {
     // all local functions used in computing GursonFD model stress:
 
     ScalarT
-    compute_Phi(LCM::Tensor<ScalarT, 3> & s, ScalarT & p, ScalarT & fvoid,
+    compute_Phi(LCM::Tensor<ScalarT> & s, ScalarT & p, ScalarT & fvoid,
         ScalarT & eq, ScalarT & K, ScalarT & Y, ScalarT & siginf,
         ScalarT & delta, ScalarT & Jacobian, ScalarT & E);
 
     void
     compute_ResidJacobian(std::vector<ScalarT> & X, std::vector<ScalarT> & R,
         std::vector<ScalarT> & dRdX, const ScalarT & p, const ScalarT & fvoid,
-        const ScalarT & eq, LCM::Tensor<ScalarT, 3> & s, ScalarT & mu,
+        const ScalarT & eq, LCM::Tensor<ScalarT> & s, ScalarT & mu,
         ScalarT & kappa, ScalarT & K, ScalarT & Y, ScalarT & siginf,
         ScalarT & delta, ScalarT & Jacobian);
 
@@ -102,13 +102,6 @@ namespace LCM {
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> Fp;
     PHX::MDField<ScalarT, Cell, QuadPoint> eqps;
     PHX::MDField<ScalarT, Cell, QuadPoint> voidVolume;
-
-    // scratch space FCs
-    Tensor<ScalarT, 3> be;
-    Tensor<ScalarT, 3> logbe;
-    Tensor<ScalarT, 3> s;
-    Tensor<ScalarT, 3> A;
-    Tensor<ScalarT, 3> expA;
 
     Intrepid::FieldContainer<ScalarT> Fpinv;
     Intrepid::FieldContainer<ScalarT> FpinvT;

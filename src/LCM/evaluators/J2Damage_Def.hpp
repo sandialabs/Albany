@@ -139,6 +139,13 @@ namespace LCM {
     ScalarT smag, f, p, dgam;
     ScalarT sq23 = std::sqrt(2. / 3.);
 
+    // scratch space FCs
+    Tensor<ScalarT> be(3);
+    Tensor<ScalarT> s(3);
+    Tensor<ScalarT> N(3);
+    Tensor<ScalarT> A(3);
+    Tensor<ScalarT> expA(3);
+
     //Albany::StateVariables  oldState = *workset.oldState;
     //Intrepid::FieldContainer<RealType>& Fpold   = *oldState[fpName];
     //Intrepid::FieldContainer<RealType>& eqpsold = *oldState[eqpsName];
@@ -221,7 +228,7 @@ namespace LCM {
 
         trd3 = trace(be) / 3.;
         mubar = trd3 * mu;
-        s = mu * (be - trd3 * eye<ScalarT, 3>());
+        s = mu * (be - trd3 * eye<ScalarT>(3));
 
         // std::cout << "s: \n" << s;
 
@@ -334,7 +341,7 @@ namespace LCM {
             stress(cell, qp, i, j) *= H2;
 
         // update be
-        be = ScalarT(1 / mu) * s + trd3 * eye<ScalarT, 3>();
+        be = ScalarT(1 / mu) * s + trd3 * eye<ScalarT>(3);
 
         // compute energy
         energy(cell, qp) = 0.5 * kappa
