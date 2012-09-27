@@ -1,5 +1,5 @@
 /********************************************************************\
-*            Albany, Copyright (2012) Sandia Corporation             *
+*            Albany, Copyright (2010) Sandia Corporation             *
 *                                                                    *
 * Notice: This computer software was prepared by Sandia Corporation, *
 * hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
@@ -15,11 +15,47 @@
 \********************************************************************/
 
 
-#include "PHAL_AlbanyTraits.hpp"
+#ifndef TIMETRACBC_HPP
+#define TIMETRACBC_HPP
 
-#include "MultiScaleStress.hpp"
-#include "MultiScaleStress_Def.hpp"
+#include "PHAL_Neumann.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::MultiScaleStressBase)
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::MultiScaleStress)
+namespace LCM {
 
+/** \brief Time dependent Neumann boundary condition evaluator
+
+*/
+
+template<typename EvalT, typename Traits>
+class TimeTracBC_Base : public PHAL::Neumann<EvalT, Traits> {
+
+public:
+
+  typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
+
+  TimeTracBC_Base(Teuchos::ParameterList& p);
+
+  void computeVal(RealType time);
+
+protected:
+
+  std::vector< RealType > timeValues;
+  Teuchos::TwoDArray< RealType > BCValues;
+
+};
+
+template<typename EvalT, typename Traits>
+class TimeTracBC : public TimeTracBC_Base<EvalT, Traits>  {
+
+public:
+  TimeTracBC(Teuchos::ParameterList& p);
+  void evaluateFields(typename Traits::EvalData d);
+private:
+  typedef typename EvalT::ScalarT ScalarT;
+};
+
+
+}
+
+#endif

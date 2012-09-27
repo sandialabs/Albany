@@ -23,6 +23,7 @@
 #ifdef ALBANY_LCM
 #include "LCM/evaluators/KfieldBC.hpp"
 #include "LCM/evaluators/TimeDepBC.hpp"
+#include "LCM/evaluators/TimeTracBC.hpp"
 #include "LCM/evaluators/Time.hpp"
 #include "LCM/evaluators/TorsionBC.hpp"
 #endif
@@ -97,7 +98,7 @@ namespace PHAL {
              PHAL::GatherCoordinateVector<_,Traits>,      //  2
              PHAL::GatherSolution<_,Traits>               //  3
 #ifdef ALBANY_LCM
-        , LCM::TimeDepBC<_, Traits>                //  4
+        , LCM::TimeTracBC<_, Traits>                //  4
 #endif
 
 	  > EvaluatorTypes;

@@ -126,7 +126,7 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
 
    ///
    /// Torsion BC specific
-   ///
+   ////
    for (std::size_t i=0; i<nodeSetIDs.size(); i++) 
    {
      std::string ss = traits_type::constructBCName(nodeSetIDs[i],"twist");
@@ -311,7 +311,7 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
   
            p->set<string>                         ("Side Set ID", meshSpecs->ssNames[i]);
            p->set<Teuchos::Array< int > >         ("Equation Offset", offsets[j]);
-           p->set< RCP<Albany::Layouts> >         ("Base Data Layout", dl);
+           p->set< RCP<Albany::Layouts> >         ("Layouts Struct", dl);
            p->set< RCP<MeshSpecsStruct> >         ("Mesh Specs Struct", meshSpecs);
 
            p->set<string>                         ("Coordinate Vector Name", "Coord Vec");
@@ -382,7 +382,7 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
 
            std::cout << "Constructing Time Dependent NBC: " << ss << std::endl;
 
-           // These are read in the Albany::Neumann constructor (PHAL_Neumann_Def.hpp)
+           // These are read in the LCM::TimeTracBC constructor (LCM/evaluators/TimeTrac_Def.hpp)
 
            RCP<ParameterList> p = rcp(new ParameterList);
 
@@ -393,14 +393,12 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
 
            p->set< Teuchos::Array<RealType> >("BC Values", 
               sub_list.get<Teuchos::Array<RealType> >("BC Values"));
-           RCP<DataLayout> dummy = rcp(new MDALayout<Dummy>(0));
-           p->set< RCP<DataLayout> >("Data Layout", dummy);
-  
+
            p->set<RCP<ParamLib> >                 ("Parameter Library", paramLib);
   
            p->set<string>                         ("Side Set ID", meshSpecs->ssNames[i]);
            p->set<Teuchos::Array< int > >         ("Equation Offset", offsets[j]);
-           p->set< RCP<Albany::Layouts> >         ("Base Data Layout", dl);
+           p->set< RCP<Albany::Layouts> >         ("Layouts Struct", dl);
            p->set< RCP<MeshSpecsStruct> >         ("Mesh Specs Struct", meshSpecs);
 
            p->set<string>                         ("Coordinate Vector Name", "Coord Vec");
@@ -431,9 +429,6 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
 
            }
 
-
-    // Inputs: X, Y at nodes, Cubature, and Basis
-    //p->set<string>("Node Variable Name", "Neumann");
 
            std::stringstream ess; ess << "Evaluator for " << ss;
            evaluators_to_build[ess.str()] = p;
@@ -495,7 +490,6 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
       p->set<int>("Type", traits_type::typeNa);
 
       p->set<vector<string>* >("NBC Names", &bcs);
-//      p->set< RCP<DataLayout> >("Data Layout", dummy);
       p->set< RCP<DataLayout> >("Data Layout", dl->dummy);
       p->set<string>("NBC Aggregator Name", allBC);
       evaluators_to_build[allBC] = p;
