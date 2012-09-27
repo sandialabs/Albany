@@ -153,7 +153,7 @@ namespace LCM {
           p2(i) = coord(cell, n2, i);
         }
 
-        normal = LCM::faceNormal(p0, p1, p2);
+        normal = LCM::normal(p0, p1, p2);
 
         // fill the stress tensor
         for (std::size_t i = 0; i < numComp; ++i) {

@@ -78,15 +78,27 @@ namespace LCM {
 
   ///
   /// The surface normal of a face
-  /// Assumption: face is planar
   /// Input: 3 independent nodes on the face
   /// Output: normal vector
   ///
   template<typename T>
   Vector<T>
-  faceNormal(Vector<T> const & p0,
+  normal(Vector<T> const & p0,
           Vector<T> const & p1,
           Vector<T> const & p2);
+
+  ///
+  /// Given 3 points p0, p1, p2 that define a plane
+  /// determine if point p is in the same side of the normal
+  /// to the plane as defined by the right hand rule.
+  ///
+  template<typename T>
+  bool
+  in_normal_side(
+      Vector<T> const & p,
+      Vector<T> const & p0,
+      Vector<T> const & p1,
+      Vector<T> const & p2);
 
 } // namespace LCM
 

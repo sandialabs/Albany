@@ -532,6 +532,43 @@ namespace LCM {
 
   }
 
+  ///
+  /// \return Bounding box for all nodes
+  ///
+  std::pair<LCM::Vector<double>, LCM::Vector<double> >
+  ConnectivityArray::BoundingBox() const
+  {
+    PointMap::const_iterator
+    it = nodes_.begin();
+
+    LCM::Vector<double>
+    min = (*it).second;
+
+    LCM::Vector<double>
+    max = min;
+
+    const Index
+    N = min.get_dimension();
+
+    ++it;
+
+    for (; it != nodes_.end(); ++it) {
+
+      LCM::Vector<double> const &
+      node = (*it).second;
+
+      for (Index i = 0; i < N; ++i) {
+        const double s = node(i);
+        if (s < min(i)) min(i) = s;
+        if (s > max(i)) max(i) = s;
+      }
+
+    }
+
+    return std::make_pair(min, max);
+
+  }
+
   //
   // Helper functions for determining the type of element
   //

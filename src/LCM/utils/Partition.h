@@ -165,6 +165,12 @@ namespace LCM {
     GetCentroids() const;
 
     ///
+    /// \return Bounding box for all nodes
+    ///
+    std::pair<LCM::Vector<double>, LCM::Vector<double> >
+    BoundingBox() const;
+
+    ///
     /// \param length_scale Length scale for partitioning for
     /// variational non-local regularization
     /// \return Number of partitions defined as total volume
