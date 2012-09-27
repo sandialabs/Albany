@@ -865,6 +865,43 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
        ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
        fm0.template registerEvaluator<EvalT>(ev);
      }
+
+     {// Stress
+           RCP<ParameterList> p = rcp(new ParameterList("Stress"));
+
+           //Input
+           p->set<string>("DefGrad Name", "Deformation Gradient");
+           p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+
+           p->set<string>("Elastic Modulus Name", "Elastic Modulus");
+           p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+           p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
+           p->set<string>("Hardening Modulus Name", "Hardening Modulus"); // dl->qp_scalar also
+           p->set<string>("Saturation Modulus Name", "Saturation Modulus"); // dl->qp_scalar also
+           p->set<string>("Saturation Exponent Name", "Saturation Exponent"); // dl->qp_scalar also
+           p->set<string>("Yield Strength Name", "Yield Strength"); // dl->qp_scalar also
+           p->set<string>("DetDefGrad Name", "Jacobian");  // dl->qp_scalar also
+
+           //Output
+           p->set<string>("Stress Name", matModel); //dl->qp_tensor also
+           p->set<string>("Fp Name", "Fp");  // dl->qp_tensor also
+           p->set<string>("Eqps Name", "eqps");  // dl->qp_scalar also
+
+           //Declare what state data will need to be saved (name, layout, init_type)
+
+           ev = rcp(new LCM::J2Stress<EvalT,AlbanyTraits>(*p));
+           fm0.template registerEvaluator<EvalT>(ev);
+           p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0);
+           ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+           fm0.template registerEvaluator<EvalT>(ev);
+           p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy, elementBlockName, "identity", 1.0, true);
+           ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+           fm0.template registerEvaluator<EvalT>(ev);
+           p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
+           ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+           fm0.template registerEvaluator<EvalT>(ev);
+         }
    }
 
 
