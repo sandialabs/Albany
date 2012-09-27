@@ -509,6 +509,7 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/ThermoMechanicalStress.cpp
     ${LCM_DIR}/evaluators/Time.cpp
     ${LCM_DIR}/evaluators/TimeDepBC.cpp
+    ${LCM_DIR}/evaluators/TimeTracBC.cpp
     ${LCM_DIR}/evaluators/DiffusionCoefficient.cpp
     ${LCM_DIR}/evaluators/EffectiveDiffusivity.cpp
     ${LCM_DIR}/evaluators/EquilibriumConstant.cpp
@@ -658,6 +659,8 @@ IF(ALBANY_LCM)
     ${LCM_DIR}/evaluators/Time_Def.hpp
     ${LCM_DIR}/evaluators/TimeDepBC.hpp
     ${LCM_DIR}/evaluators/TimeDepBC_Def.hpp
+    ${LCM_DIR}/evaluators/TimeTracBC.hpp
+    ${LCM_DIR}/evaluators/TimeTracBC_Def.hpp
     ${LCM_DIR}/evaluators/DiffusionCoefficient.hpp
     ${LCM_DIR}/evaluators/DiffusionCoefficient_Def.hpp
     ${LCM_DIR}/evaluators/EquilibriumConstant.hpp

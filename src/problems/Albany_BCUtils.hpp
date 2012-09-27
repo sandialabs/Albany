@@ -49,7 +49,7 @@ namespace Albany {
 
     static const std::string bcParamsPl;
 
-    typedef typename PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits> factory_type;
+    typedef PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits> factory_type;
 
     static Teuchos::RCP<const Teuchos::ParameterList>
       getValidBCParameters(
@@ -74,7 +74,7 @@ namespace Albany {
 
     static const std::string bcParamsPl;
 
-    typedef typename PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits> factory_type;
+    typedef PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits> factory_type;
 
     static Teuchos::RCP<const Teuchos::ParameterList>
       getValidBCParameters(

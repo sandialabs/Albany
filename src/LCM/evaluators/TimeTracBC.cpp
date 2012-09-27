@@ -1,5 +1,5 @@
 /********************************************************************\
-*            Albany, Copyright (2012) Sandia Corporation             *
+*            Albany, Copyright (2010) Sandia Corporation             *
 *                                                                    *
 * Notice: This computer software was prepared by Sandia Corporation, *
 * hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
@@ -17,9 +17,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "MultiScaleStress.hpp"
-#include "MultiScaleStress_Def.hpp"
+#include "TimeTracBC.hpp"
+#include "TimeTracBC_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::MultiScaleStressBase)
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::MultiScaleStress)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::TimeTracBC)
 
