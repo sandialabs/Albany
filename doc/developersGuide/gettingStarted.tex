@@ -93,6 +93,14 @@ writing new applications against Trilinos/STK/Dakota. It uses CMake,
 CTest, and git, and grabs almost all configuration information from
 installed Trilinos. Albany was granted OpenSource license to share
 with collaborators.
+
+Albany is also the home for several application and algorithm
+projects that use and contribute to the overall infrastructure.
+These include the LCM (Laboratory for Computatinal Mechanics),
+QCAD (Quantume Computer Aided Design) and FELIX (Finite Element for
+Land Ice eXperiments) applications, as well as algorthmic projects
+in embedded uncertainty quantification, model order reduction, and
+maturation of the templated software stack in Trilinos.
 \end{abstract}
 
 
@@ -160,6 +168,15 @@ against Trilinos/STK/Dakota. It uses CMake, CTest, and git, and grabs
 almost all configuration information from installed Trilinos. Albany
 was granted OpenSource license to share with collaborators.
 
+Albany is also the home for several application and algorithm
+projects that use and contribute to the overall infrastructure.
+These include the LCM (Laboratory for Computatinal Mechanics),
+QCAD (Quantume Computer Aided Design) and FELIX (Finite Element for
+Land Ice eXperiments) applications, as well as algorthmic projects
+in embedded uncertainty quantification, model order reduction, and
+maturation of the templated software stack in Trilinos.
+
+
 \section{Distinguishing Capabilities}
 
 The highlight of Albany is the PDE assembly. The template-based
@@ -169,7 +186,9 @@ propogations get automatically computed with no development
 effort. This approach uses Phalanx for rapid and flexible addition of
 physics, which works closely with Sacado and Stokhos for automatic
 propagation of derivatives and UQ. Intrepid and Shards packages are
-used for the local discretization. A second strength of Albany is the
+used for the local discretization. 
+
+A second strength of Albany is the
 demonstration of transformational analysis algorithms. Albany
 demonstrates the clean use of all Solver/Analysis tools in Trilinosi
 (through Piro, which was developed in Albany) including NOX, LOCA,
@@ -177,24 +196,34 @@ Rythmos, Stokhos, and all of Dakota. On any problem we not only get a
 solution, but can also get sensitivities, run optimization problems,
 and perform uncertainty quantification. All of these approaches can
 access all of the linear solver options in Trilinos that are exposed
-by the Stratimikos layer. The third main strength is the early
+by the Stratimikos layer. 
+
+The third main strength is the early
 adoption of STK, the sierra toolkit libraries. This includes the mesh
-database, IO, and willl be growing soon to include mesh changes for
+database, IO, and will be growing soon to include mesh changes for
 stk\_rebalance and stk\_adapt.  
+
+Also of note is that Albany is, and intends to remain, a 
+Publically Available code base, free of export control 
+restrictions. This allows it to serve freely as a collaboration
+vehicle with universities and other labs, and as a template
+for building applications from Trilinos.
 
 \section{Physics Sets: what PDEs}
 
 Albany strives for a bit of a paradigm shift, where a code is defined
 more by its analysis capabilities and data structure choices, which
-are difficult to change, and less by the physcics set. Much of Albany
+are difficult to change, and less by the physics set. Much of Albany
 was developed in FY08-10 for solving simple heat transfer and poisson
 equations. With nonlinear source terms, this was adequate for
 developing and verifying all the hooks for analysis algorithms from
 sensitivity analysis to UQ. Recenty, Navier-Stokes equations have been
 added to the general Albany physics set. In FY11, two new projects
-were funded to develop application codes on Albany. These physics sets
+(LCM and QCAD) were funded to develop application codes on Albany. These physics sets
 are developed in the Albany code, yet are distinct in many ways as
 well: C++ namespace, project teams, and funding sources.  
+More recenlty, other applications and algorithm research projects
+have chose Albany as their home. 
 
 \section{LCM: Labratory for Computational Mechanics}
 
@@ -278,8 +307,8 @@ addressed.
 \section{NEAMS}
 
 \section{FELIX}
-A new project using Albany as a PDE solver is the PISCEES SciDAC-3 project
-joint between the BER ans ASCR dicisions of the office of science. This
+A new project, as of late FY12, using Albany as a PDE solver is the PISCEES SciDAC-3 project
+joint between the BER ans ASCR divisions of the office of science. This
 project is developing simulation tools for Ice Sheet dynamics (targeting
 Greenland and then Antarctica). The initial models going into the FELIX
 (Finite Element Land Ice Experiments) namespace within Albany area
@@ -324,9 +353,16 @@ multiple packages from the Trilinos suite of codes. Therefore, task
 number one is the acquisition, build, and installation of
 Trilinos. This chapter will layout the requirements for building the
 necessary third party libraries, as well as building and installing
-the proper Trilinos packages.  It is assumed that at this point you
+the proper Trilinos packages.  
+
+It is assumed that at this point you
 have a copy of the Albany code, possibly via a clone of the git
-repository. In the {\tt Albany/doc} directory there are some example
+repository. If not, see the beginning of Chapter \ref{workflow} 
+to see how to use \texttt{git} to get development versions of Albany and Trilinos.
+These commands require an account on the machine \texttt{software.sandia.gov}
+and being a member of the \texttt{trilinos} UNIX group.
+
+In the {\tt Albany/doc} directory there are some example
 script that provide templates for various steps of the build
 process. In particular, the configuration stage for Trilinos requires
 a CMake script, and an example can be found in the {\tt
@@ -552,7 +588,7 @@ CMAKE_CXX_FLAGS        & Flags for the C++ compiler overwriting those from Trili
 \chapter{Albany Directory Structure}
 \label{directories}
 
-At the top level, ALbany has three directories: \texttt{src} for the source code,
+At the top level, Albany has three directories: \texttt{src} for the source code,
 \texttt{examples} for the example problems (which also serve as the regression tests),
 and a \texttt{doc} documentation directory.
 
@@ -660,27 +696,70 @@ PDE descriptions using evaluators both from the \texttt{src/evaluators} director
 well as the \texttt{LCM/evaluators} directory. There are additional
 directories for LCM development, including a \texttt{utils} directory with a Tensor
 library. Since LCM includes such a large code base to compile, there is a CMake configuration 
-option \texttt{-D ENABLE\_LCM:=ON} needed to enable this code base.
+option \texttt{-D ENABLE\_LCM:=ON} needed to enable this code base (POC: Ostien).
 
 \item{\texttt{Albany/src/FELIX}}  The \texttt{FELIX} directory contains application-speciic
 code for the Ice Sheet dynamics application described in the introduction. It contains
  \texttt{problems} and \texttt{evaluators} directories that describe and implement
-the physics sets needed for this application domain.
+the physics sets needed for this application domain (POC: Kalashnikova).
+
+\item{\texttt{Albany/src/Hydride}}  The \texttt{Hydride} directory contains application-speciic
+code for the nuclear energy application of hydridization of cladding materials. It contains
+ \texttt{problems} and \texttt{evaluators} directories that describe and implement
+the physics sets needed for this application domain (POC: Hansen).
 
 \item{\texttt{Albany/src/MOR}}  The \texttt{MOR} directory contains source code specific
 to model order reduction. This includes the ability to collect and analyze snapshot
-information from Albany runs and produce reduced order models. 
+information from Albany runs and produce reduced order models (POC: Cortial). 
 
 \end{itemize}
   
-\subsection{Namespaces and Naming Conventions}
- (Albany, PHAL, QCAD, LCM, FELIX, ...
- could be better...  
- templated code has  \_Def )
+\subsection{Source Code Namespaces and File Naming Conventions}
+
+There are several C++ namespaces in use in Albany. Most of the code
+is in the Albany namespace. This includes the general-purpose code in
+the \texttt{src} directory for problem setup, the processing of the
+mesh, and setups of many problems (physics sets). Most new development
+starts by default using the Albany namespace. There are opportunities
+to use more namespaces to clarify the modularity of the code, such
+as between the solver code and discretization/mesh code. 
+
+In addition to \texttt{Albany}, there are a few other namespaces in 
+use to compartmentalize the code:
+\begin{itemize}
+\item{\texttt{PHAL}}  This namespace (short for PHalanx-ALbany) is for the
+code that derives from the Phalanx base classes. This is the magic that 
+allow for such rapid and flexible implementation of new PDEs and terms.
+In addition to the evaluators, also in this namespace are classes for
+the traits, data types, and workset that are integral to this part of the
+code.
+
+\item{\texttt{LCM, QCAD, FELIX}} These namespaces are used to visually separate 
+code specific to those application projects. This can aid in figuring out
+what code is gerenal-purpose or application specific and what parts of code can
+be excluded from lightweight compilations.
+\end{itemize}
+
+File naming conventions are as follows.
+\begin{itemize}
+\item{File Naming Conventions: prefix} Most source code files adheres to the 
+convention that the file name is the same as the class name, with the namespace
+as the prefix. So the class \texttt{Albany::SolverFactory} will have a filename
+starting with \texttt{Albany\_SolverFactory}.
+
+\item{File Naming Conventions: suffix} The code base that is not templated uses
+"\texttt{.hpp}" and "\texttt{.cpp}" suffixes. For the templated code base, which is primarily the
+code in the \texttt{evaluators} directories, we use the following naming conventions.
+There is a tiny "\texttt{{\em file}.cpp}" file for
+explicit template instatiation, a file with "\texttt{{\em file}\_Def.hpp}" extension
+for the definition files with the source code in it, and "\texttt{{\em file}.hpp}" for
+the header file.
+
+\end{itemize}
 
 \section{Example/Regression Directory \texttt{Albany/examples} }
 \texttt{Albany/examples} This directory holds all the example problems for Albany, which 
-also serve as the {\em regression tests}. 
+also serve as the \textbf{regression tests}. 
 
 Each directory holds one or more \texttt{xml} file that is
 the input file for the run. Separate problems do {\em not} run off of separate executables. 
@@ -738,11 +817,12 @@ document. Please improve and commit!
 \end{itemize}
 
 
-\chapter{Workflow}
+\chapter{Developer Workflow}
 \label{workflow}
 
 This chapter consists of introductions to using Git and CMake in your
-development workflow.
+development workflow. Git is the source code control tool, and CMake
+is for configuration management and compiling the code. 
 
 \section{Development Using Git}
 
