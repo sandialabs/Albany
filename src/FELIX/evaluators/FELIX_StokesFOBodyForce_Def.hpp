@@ -34,7 +34,8 @@ StokesFOBodyForce(const Teuchos::ParameterList& p) :
   force(p.get<std::string>("Body Force Name"),
  	p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ), 
   A(1.0), 
-  n(3.0)
+  n(3.0), 
+  alpha(0.0)
 {
   cout << "FO Stokes body force constructor!" << endl; 
   Teuchos::ParameterList* bf_list = 
@@ -43,6 +44,9 @@ StokesFOBodyForce(const Teuchos::ParameterList& p) :
   std::string type = bf_list->get("Type", "None");
   A = bf_list->get("Glen's Law A", 1.0); 
   n = bf_list->get("Glen's Law n", 3.0); 
+  alpha = bf_list->get("FELIX alpha", 0.0);
+  cout << "alpha: " << alpha << endl; 
+  alpha *= pi/180.0; //convert alpha to radians 
   if (type == "None") {
     bf_type = NONE;
   }
@@ -67,6 +71,10 @@ StokesFOBodyForce(const Teuchos::ParameterList& p) :
 	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Gradient Data Layout") );
     this->addDependentField(muFELIX); 
     this->addDependentField(coordVec);
+  }
+  else if (type == "FO ISMIP-HOM Test A") {
+    cout << "ISMIP-HOM Test A Source!" << endl; 
+    bf_type = FO_ISMIPHOM_TESTA; 
   }
 
   this->addEvaluatedField(force);
@@ -155,6 +163,17 @@ evaluateFields(typename Traits::EvalData workset)
        f[1] = 2.0*muqp*(16.0*pi*pi*t1 - 3.0*t2)*cos(x2pi)*cos(y2pi);  
      }
    }
+ }
+ //source for ISMIP-HOM Test A
+ else if (bf_type == FO_ISMIPHOM_TESTA) {
+   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+     for (std::size_t qp=0; qp < numQPs; ++qp) {      
+       ScalarT* f = &force(cell,qp,0);
+       f[0] = -rho*g*tan(alpha);  
+       f[1] = 0.0;  
+     }
+   }
+ 
  }
 }
 

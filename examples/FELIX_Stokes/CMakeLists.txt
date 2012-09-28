@@ -83,3 +83,8 @@ add_test(${testName}_FOSinCosGlen ${Albany.exe} input_fo_sincos2D.xml)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_sincosz.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_sincosz.xml COPYONLY)
 add_test(${testName}_FOSinCosZ3DPeriodicXY ${Albany.exe} input_fo_sincosz.xml)
+
+#  Eleventh test
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_ismip-hom_testA.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_ismip-hom_testA.xml COPYONLY)
+add_test(${testName}_FO_ISMIP-HOM_TestA ${Albany.exe} input_fo_ismip-hom_testA.xml)

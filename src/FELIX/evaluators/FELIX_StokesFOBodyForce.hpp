@@ -59,7 +59,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> force;
 
    //Radom field types
-  enum BFTYPE {NONE, FO_SINCOS2D, FO_SINCOSZ};
+  enum BFTYPE {NONE, FO_SINCOS2D, FO_SINCOSZ, FO_ISMIPHOM_TESTA};
   BFTYPE bf_type;
 
   std::size_t numQPs;
@@ -69,6 +69,8 @@ private:
   //Glen's law parameters
   double n; 
   double A;
+  //ISMIP-HOM parameter
+  double alpha; 
 };
 }
 
