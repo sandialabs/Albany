@@ -383,41 +383,41 @@ void LameStressBase<EvalT, Traits>::
       // and then fill data into the vectors below
 
       // new deformation gradient (the current deformation gradient as computed in the current configuration)
-      LCM::Tensor<RealType, 3> Fnew(
+      LCM::Tensor<RealType> Fnew(
        defGradFieldRef(cell,qp,0,0), defGradFieldRef(cell,qp,0,1), defGradFieldRef(cell,qp,0,2),
        defGradFieldRef(cell,qp,1,0), defGradFieldRef(cell,qp,1,1), defGradFieldRef(cell,qp,1,2),
        defGradFieldRef(cell,qp,2,0), defGradFieldRef(cell,qp,2,1), defGradFieldRef(cell,qp,2,2) );
 
       // old deformation gradient (deformation gradient at previous load step)
-      LCM::Tensor<RealType, 3> Fold( oldDefGrad(cell,qp,0,0), oldDefGrad(cell,qp,0,1), oldDefGrad(cell,qp,0,2),
+      LCM::Tensor<RealType> Fold( oldDefGrad(cell,qp,0,0), oldDefGrad(cell,qp,0,1), oldDefGrad(cell,qp,0,2),
                                  oldDefGrad(cell,qp,1,0), oldDefGrad(cell,qp,1,1), oldDefGrad(cell,qp,1,2),
                                  oldDefGrad(cell,qp,2,0), oldDefGrad(cell,qp,2,1), oldDefGrad(cell,qp,2,2) );
 
       // incremental deformation gradient
-      LCM::Tensor<RealType, 3> Finc = Fnew * LCM::inverse(Fold);
+      LCM::Tensor<RealType> Finc = Fnew * LCM::inverse(Fold);
 
       // left stretch V, and rotation R, from left polar decomposition of new deformation gradient
-      LCM::Tensor<RealType, 3> V, R;
+      LCM::Tensor<RealType> V(3), R(3);
       boost::tie(V,R) = LCM::polar_left_eig(Fnew);
 
       // incremental left stretch Vinc, incremental rotation Rinc, and log of incremental left stretch, logVinc
-      LCM::Tensor<RealType, 3> Vinc, Rinc, logVinc;
+      LCM::Tensor<RealType> Vinc(3), Rinc(3), logVinc(3);
       boost::tie(Vinc,Rinc,logVinc) = LCM::polar_left_logV(Finc);
 
       // log of incremental rotation
-      LCM::Tensor<RealType, 3> logRinc = LCM::log_rotation(Rinc);
+      LCM::Tensor<RealType> logRinc = LCM::log_rotation(Rinc);
 
       // log of incremental deformation gradient
-      LCM::Tensor<RealType, 3> logFinc = LCM::bch(logVinc, logRinc);
+      LCM::Tensor<RealType> logFinc = LCM::bch(logVinc, logRinc);
 
       // velocity gradient
-      LCM::Tensor<RealType, 3> L = RealType(1.0/deltaT)*logFinc;
+      LCM::Tensor<RealType> L = RealType(1.0/deltaT)*logFinc;
 
       // strain rate (a.k.a rate of deformation)
-      LCM::Tensor<RealType, 3> D = LCM::symm(L);
+      LCM::Tensor<RealType> D = LCM::symm(L);
 
       // spin
-      LCM::Tensor<RealType, 3> W = LCM::skew(L);
+      LCM::Tensor<RealType> W = LCM::skew(L);
 
       // load everything into the Lame data structure
 

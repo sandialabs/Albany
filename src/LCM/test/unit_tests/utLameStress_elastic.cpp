@@ -150,7 +150,7 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
 //   stressField.dimensions(stressFieldDimensions);
 
   // Record the expected stress, which will be used to check the computed stress
-  LCM::Tensor<PHAL::AlbanyTraits::Residual::ScalarT, 3>
+  LCM::Tensor<PHAL::AlbanyTraits::Residual::ScalarT>
     expectedStress(materialModelParametersList.get<double>("Youngs Modulus") * 0.01,
                    0.0,
                    0.0,
