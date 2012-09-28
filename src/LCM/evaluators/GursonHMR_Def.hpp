@@ -139,6 +139,12 @@ namespace LCM {
     ScalarT sq23 = std::sqrt(2. / 3.);
     ScalarT sq32 = std::sqrt(3. / 2.);
 
+    Tensor<ScalarT> be(3);
+    Tensor<ScalarT> logbe(3);
+    Tensor<ScalarT> s(3);
+    Tensor<ScalarT> A(3);
+    Tensor<ScalarT> expA(3);
+
     // previous state
     Albany::MDArray Fpold = (*workset.stateArrayPtr)[fpName];
     Albany::MDArray essold = (*workset.stateArrayPtr)[essName];

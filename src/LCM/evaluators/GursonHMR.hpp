@@ -97,12 +97,6 @@ namespace LCM {
     PHX::MDField<ScalarT, Cell, QuadPoint> voidVolume;
     PHX::MDField<ScalarT, Cell, QuadPoint> isoHardening;
 
-    // scratch space FCs
-    Tensor<ScalarT> be;
-    Tensor<ScalarT> logbe;
-    Tensor<ScalarT> s;
-    Tensor<ScalarT> A;
-    Tensor<ScalarT> expA;
 
     Intrepid::FieldContainer<ScalarT> Fpinv;
     Intrepid::FieldContainer<ScalarT> FpinvT;
