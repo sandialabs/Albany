@@ -87,7 +87,7 @@ evaluateFields(typename Traits::EvalData workset)
   RealType time = workset.current_time;
   this->computeVal(time);
 
-  this->template PHAL::Neumann<EvalT, Traits>::evaluateFields(workset);
+  PHAL::Neumann<EvalT, Traits>::evaluateFields(workset);
 
 }
 

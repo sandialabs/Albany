@@ -275,7 +275,6 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
    BCparams.validateParameters(*(traits_type::getValidBCParameters(meshSpecs->ssNames, bcNames, conditions)),0);
 
    std::map<string, RCP<ParameterList> > evaluators_to_build;
-//   RCP<DataLayout> dummy = rcp(new MDALayout<Dummy>(0));
    vector<string> bcs;
 
    // Check for all possible standard BCs (every dof on every sideset) to see which is set
@@ -296,7 +295,7 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
 
          if (BCparams.isParameter(ss)) {
 
-           std::cout << "Constructing NBC: " << ss << std::endl;
+//           std::cout << "Constructing NBC: " << ss << std::endl;
 
            TEUCHOS_TEST_FOR_EXCEPTION(BCparams.isType<string>(ss), std::logic_error,
                "NBC array information in XML file must be of type Array(double)\n");
@@ -380,7 +379,7 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
            // grab the sublist 
            ParameterList& sub_list = BCparams.sublist(ss);
 
-           std::cout << "Constructing Time Dependent NBC: " << ss << std::endl;
+//           std::cout << "Constructing Time Dependent NBC: " << ss << std::endl;
 
            // These are read in the LCM::TimeTracBC constructor (LCM/evaluators/TimeTrac_Def.hpp)
 
@@ -391,8 +390,11 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
            p->set< Teuchos::Array<RealType> >("Time Values", 
               sub_list.get<Teuchos::Array<RealType> >("Time Values"));
 
-           p->set< Teuchos::Array<RealType> >("BC Values", 
-              sub_list.get<Teuchos::Array<RealType> >("BC Values"));
+           // Note, we use a TwoDArray here as we expect the user to specify multiple components of
+           // the traction vector at each "time" step.
+
+           p->set< Teuchos::TwoDArray<RealType> >("BC Values", 
+              sub_list.get<Teuchos::TwoDArray<RealType> >("BC Values"));
 
            p->set<RCP<ParamLib> >                 ("Parameter Library", paramLib);
   
@@ -412,7 +414,7 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
 
            // Pass the input file line
            p->set< string >                       ("Neumann Input String", ss);
-           p->set< Teuchos::Array<double> >       ("Neumann Input Value", BCparams.get<Teuchos::Array<double> >(ss));
+           p->set< Teuchos::Array<double> >       ("Neumann Input Value", Teuchos::tuple<double>(0.0, 0.0, 0.0));
            p->set< string >                       ("Neumann Input Conditions", conditions[k]);
 
            // If we are doing a Neumann internal boundary with a "scaled jump" (includes "robin" too)
