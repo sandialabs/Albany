@@ -570,6 +570,76 @@ namespace LCM {
   }
 
   //
+  // Determine is a given point is inside the mesh.
+  //
+  bool
+  ConnectivityArray::IsInsideMesh(Vector<double> const & point) const
+  {
+
+    // Check bounding box first
+    Vector<double> min;
+    Vector<double> max;
+
+    boost::tie(min, max) = BoundingBox();
+
+    if (in_box(point, min, max) == false) {
+      return false;
+    }
+
+    // Now check element by element
+    for (AdjacencyMap::const_iterator
+        elements_iter = connectivity_.begin();
+        elements_iter != connectivity_.end();
+        ++elements_iter) {
+
+      IDList const &
+      node_list = (*elements_iter).second;
+
+      std::vector< LCM::Vector<double> >
+      node;
+
+      for (IDList::size_type
+          i = 0;
+          i < node_list.size();
+          ++i) {
+
+        PointMap::const_iterator
+        nodes_iter = nodes_.find(node_list[i]);
+
+        assert(nodes_iter != nodes_.end());
+        node.push_back((*nodes_iter).second);
+
+      }
+
+      switch (type_) {
+
+      case TETRAHEDRAL:
+        if (in_tetrahedron(point, node[0], node[1], node[2], node[3]) == true) {
+          return true;
+        }
+        break;
+
+      case HEXAHEDRAL:
+        if (in_hexahedron(point, node[0], node[1], node[2], node[3],
+            node[4], node[5], node[6], node[7])) {
+          return true;
+        }
+        break;
+
+      default:
+        std::cerr << "Unknown element type in K-means partition." << std::endl;
+        exit(1);
+        break;
+
+      }
+
+    }
+
+    return false;
+  }
+
+
+  //
   // Helper functions for determining the type of element
   //
   namespace {
@@ -806,6 +876,10 @@ namespace LCM {
 
     case LCM::GEOMETRIC:
       partitions = PartitionGeometric(length_scale);
+      break;
+
+    case LCM::KMEANS:
+      partitions = PartitionKMeans(length_scale);
       break;
 
     default:
@@ -1067,6 +1141,186 @@ namespace LCM {
     for (int i = 0; i < num_import; ++i) {
       const int element = static_cast<int>(import_local_ids[i]);
       partitions[element] = import_to_part[i];
+    }
+
+    return partitions;
+
+  }
+
+  //
+  /// Partition mesh with K-means algortithm
+  // \param length_scale The length scale for variational nonlocal
+  // regularization
+  // \return Partition number for each element
+  //
+  std::map<int, int>
+  ConnectivityArray::PartitionKMeans(const double length_scale)
+  {
+    const int
+    number_partitions = GetNumberPartitions(length_scale);
+
+    Vector<double>
+    min;
+
+    Vector<double>
+    max;
+
+    boost::tie(min, max) = BoundingBox();
+
+    // Create initial generators
+    int
+    number_generators = 0;
+
+    std::vector< Vector<double> >
+    generators;
+
+    while (number_generators < number_partitions) {
+
+      Vector<double>
+      p = random_in_box(min, max);
+
+      if (IsInsideMesh(p) == true) {
+        generators.push_back(p);
+        ++number_generators;
+        //std::cout << p;
+      }
+
+    }
+
+    // K-means iteration
+    const Index
+    max_iterations = 128;
+
+    const Index
+    number_random_points = 16 * number_partitions;
+
+    Index
+    number_iterations = 0;
+
+    const double
+    diagonal_distance = norm(max - min);
+
+    const double
+    tolerance = 1.0e-3 * diagonal_distance;
+
+    double
+    max_step = diagonal_distance;
+
+    while (max_step >= tolerance && number_iterations < max_iterations) {
+
+      // Create random points and assign to closest generators
+      int
+      random_point_counter = 0;
+
+      std::vector< Vector<double> >
+      random_points;
+
+      std::map<int, int>
+      point_generator_map;
+
+      while (random_point_counter < number_random_points) {
+
+        const Vector<double>
+        random_point = random_in_box(min, max);
+
+        const bool
+        point_is_in_mesh = IsInsideMesh(random_point);
+
+        if (point_is_in_mesh == true) {
+          random_points.push_back(random_point);
+
+          point_generator_map[random_point_counter] =
+              closest_point(random_point, generators);
+
+          ++random_point_counter;
+          //std::cout << p;
+        }
+
+      }
+
+      // Determine cluster of random points for each generator
+      std::vector<std::vector<Vector<double> > >
+      clusters;
+
+      clusters.resize(number_partitions);
+
+      for (std::map<int, int>::const_iterator it = point_generator_map.begin();
+          it != point_generator_map.end();
+          ++it) {
+
+        const int
+        point_index = (*it).first;
+
+        const int
+        generator_index = (*it).second;
+
+        clusters[generator_index].push_back(random_points[point_index]);
+
+      }
+
+      // Compute centroids of each cluster and set generators to
+      // these centroids.
+      max_step = 0.0;
+
+      for (std::vector< std::vector<Vector<double> > >::size_type i = 0;
+          i < clusters.size();
+          ++i) {
+
+        const Vector<double>
+        cluster_centroid = centroid(clusters[i]);
+
+        const double
+        step = norm(cluster_centroid - generators[i]);
+
+        if (step > max_step) {
+          max_step = step;
+        }
+
+        generators[i] = cluster_centroid;
+      }
+
+    }
+
+    // Set partition number for each element.
+
+    // Partition map.
+    std::map<int, int>
+    partitions;
+
+    for (AdjacencyMap::const_iterator
+        elements_iter = connectivity_.begin();
+        elements_iter != connectivity_.end();
+        ++elements_iter) {
+
+      int const &
+      element = (*elements_iter).first;
+
+      IDList const &
+      node_list = (*elements_iter).second;
+
+      std::vector< LCM::Vector<double> >
+      element_nodes;
+
+      for (IDList::size_type
+          i = 0;
+          i < node_list.size();
+          ++i) {
+
+        PointMap::const_iterator
+        nodes_iter = nodes_.find(node_list[i]);
+
+        assert(nodes_iter != nodes_.end());
+        element_nodes.push_back((*nodes_iter).second);
+
+      }
+
+      const Vector<double>
+      element_centroid = centroid(element_nodes);
+
+      //std::cout << element_centroid;
+
+      partitions[element] = closest_point(element_centroid, generators);
+
     }
 
     return partitions;

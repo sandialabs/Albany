@@ -100,6 +100,82 @@ namespace LCM {
       Vector<T> const & p1,
       Vector<T> const & p2);
 
+  ///
+  /// Given two iterators to a container of points,
+  /// find the associated bounding box.
+  /// \param start, end: define sequence of points
+  /// \return vectors that define the bounding box
+  ///
+  template<typename T, typename I>
+  std::pair< Vector<T>, Vector<T> >
+  bounding_box(I start, I end);
+
+  ///
+  /// Determine if a given point is inside a bounding box.
+  /// \param p the point
+  /// \param min, max points defining the box
+  /// \return whether the point is inside
+  ///
+  template<typename T>
+  bool
+  in_box(
+      Vector<T> const & p,
+      Vector<T> const & min,
+      Vector<T> const & max);
+
+  ///
+  /// Generate random point inside bounding box
+  /// \param min, max the bounding box
+  /// \return p point inside box
+  ///
+  template<typename T>
+  Vector<T>
+  random_in_box(
+      Vector<T> const & min,
+      Vector<T> const & max);
+
+  ///
+  /// Given 4 points p0, p1, p2, p3 that define a tetrahedron
+  /// determine if point p is inside it.
+  ///
+  template<typename T>
+  bool
+  in_tetrahedron(
+      Vector<T> const & p,
+      Vector<T> const & p0,
+      Vector<T> const & p1,
+      Vector<T> const & p2,
+      Vector<T> const & p3);
+
+  ///
+  /// Given 8 points that define a hexahedron
+  /// determine if point p is inside it.
+  /// Assumption: faces are planar
+  ///
+  template<typename T>
+  bool
+  in_hexahedron(
+      Vector<T> const & p,
+      Vector<T> const & p0,
+      Vector<T> const & p1,
+      Vector<T> const & p2,
+      Vector<T> const & p3,
+      Vector<T> const & p4,
+      Vector<T> const & p5,
+      Vector<T> const & p6,
+      Vector<T> const & p7);
+
+  ///
+  /// Closest point
+  /// \param p the point
+  /// \param n vector of points to test
+  /// \return index to closest point
+  ///
+  template<typename T>
+  typename std::vector< Vector<T> >::size_type
+  closest_point(Vector<T> const & p, std::vector< Vector<T> > const & n);
+
+
 } // namespace LCM
 
 #include "Geometry.i.cc"

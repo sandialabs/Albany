@@ -61,7 +61,7 @@ namespace LCM {
   ///
   /// Useful to distinguish among different partitioning schemes.
   ///
-  enum PartitionScheme {UNKNOWN, GEOMETRIC, HYPERGRAPH};
+  enum PartitionScheme {UNKNOWN, GEOMETRIC, HYPERGRAPH, KMEANS};
 
   //
   ///Forward declarations
@@ -171,6 +171,12 @@ namespace LCM {
     BoundingBox() const;
 
     ///
+    /// Determine is a given point is inside the mesh.
+    ///
+    bool
+    IsInsideMesh(Vector<double> const & point) const;
+
+    ///
     /// \param length_scale Length scale for partitioning for
     /// variational non-local regularization
     /// \return Number of partitions defined as total volume
@@ -214,6 +220,15 @@ namespace LCM {
     ///
     std::map<int, int>
     PartitionGeometric(const double length_scale);
+
+    ///
+    /// Partition mesh with K-means algortithm
+    /// \param length_scale The length scale for variational nonlocal
+    /// regularization
+    /// \return Partition number for each element
+    ///
+    std::map<int, int>
+    PartitionKMeans(const double length_scale);
 
     ///
     /// Zoltan interface query function that returns the number of values

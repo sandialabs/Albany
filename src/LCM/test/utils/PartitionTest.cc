@@ -29,7 +29,7 @@ int main(int ac, char* av[])
 
   command_line_processor.setDocString(
       "Partitioning of Exodus mesh with Zoltan.\n"
-      "Uses geometric or hypergraph partitioning algorithms.\n");
+      "Uses geometric, hypergraph or K-means partitioning algorithms.\n");
 
   std::string input_file = "input.e";
   command_line_processor.setOption(
@@ -44,16 +44,16 @@ int main(int ac, char* av[])
       "Output File Name");
 
   const int
-  number_schemes = 2;
+  number_schemes = 3;
 
   const LCM::PartitionScheme
-  scheme_values[] = {LCM::GEOMETRIC, LCM::HYPERGRAPH};
+  scheme_values[] = {LCM::GEOMETRIC, LCM::HYPERGRAPH, LCM::KMEANS};
 
   const char*
-  scheme_names[] = {"geometric", "hypergraph"};
+  scheme_names[] = {"geometric", "hypergraph", "kmeans"};
 
   LCM::PartitionScheme
-  partition_scheme = LCM::HYPERGRAPH;
+  partition_scheme = LCM::KMEANS;
 
   command_line_processor.setOption(
       "scheme",
@@ -64,7 +64,7 @@ int main(int ac, char* av[])
       "Partition Scheme");
 
   double
-  length_scale = 0.0016;
+  length_scale = 0.0017;
 
   command_line_processor.setOption(
       "length-scale",
