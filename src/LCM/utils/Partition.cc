@@ -1201,7 +1201,7 @@ namespace LCM {
     diagonal_distance = norm(max - min);
 
     const double
-    tolerance = 1.0e-3 * diagonal_distance;
+    tolerance = 1.0e-2 * diagonal_distance;
 
     double
     max_step = diagonal_distance;
@@ -1209,7 +1209,7 @@ namespace LCM {
     while (max_step >= tolerance && number_iterations < max_iterations) {
 
       // Create random points and assign to closest generators
-      int
+      Index
       random_point_counter = 0;
 
       std::vector< Vector<double> >
@@ -1232,8 +1232,10 @@ namespace LCM {
           point_generator_map[random_point_counter] =
               closest_point(random_point, generators);
 
+          //std::cout << "Random point: " << random_point_counter;
+          //std::cout << "/" << number_random_points << std::endl;
+
           ++random_point_counter;
-          //std::cout << p;
         }
 
       }
@@ -1278,6 +1280,11 @@ namespace LCM {
 
         generators[i] = cluster_centroid;
       }
+
+      std::cout << "Iteration: " << number_iterations;
+      std::cout << ". Step: " << max_step << ". Tol:" << tolerance << std::endl;
+
+      ++number_iterations;
 
     }
 
