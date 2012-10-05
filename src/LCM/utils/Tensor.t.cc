@@ -2219,9 +2219,6 @@ namespace LCM {
         s1 = -0.5 * r;
       }
 
-      // const T s0 = c*c*f - 2.0*c*s*g + s*s*h;
-      // const T s1 = s*s*f + 2.0*c*s*g + c*c*h;
-
       Tensor<T>
       D(s0, 0.0, 0.0, s1);
 
@@ -2274,7 +2271,7 @@ namespace LCM {
 
     }
 
-    return std::make_pair(V, diag(diag(D)));
+    return std::make_pair(V, D);
   }
 
   //
