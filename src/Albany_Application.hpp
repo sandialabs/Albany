@@ -488,8 +488,6 @@ namespace Albany {
     //! Utility function to set up ShapeParameters through Sacado
     void registerShapeParameters();
 
-    void defineTimers();
-
   public:
 
     //! Routine to get workset (bucket) sized info needed by all Evaluation types
@@ -709,8 +707,6 @@ namespace Albany {
     Teuchos::RCP<Teko::InverseFactory> inverseFac;
     Teuchos::RCP<Epetra_Operator> wrappedJac;
     std::vector<int> blockDecomp;
-
-    std::vector<Teuchos::RCP<Teuchos::Time> > timers;
 
     std::set<string> setupSet;
     mutable int phxGraphVisDetail;
