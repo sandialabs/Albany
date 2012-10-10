@@ -61,8 +61,6 @@ Application(const RCP<const Epetra_Comm>& comm_,
   phxGraphVisDetail(0),
   stateGraphVisDetail(0)
 {
-  defineTimers();
-
   // Create parameter library
   paramLib = rcp(new ParamLib);
 
@@ -94,7 +92,7 @@ Application(const RCP<const Epetra_Comm>& comm_,
   // Register shape parameters for manipulation by continuation/optimization
   if (problemParams->get("Enable Cubit Shape Parameters",false)) {
 #ifdef ALBANY_CUTR
-    TimeMonitor Timer(*timers[10]); //start timer
+    TEUCHOS_FUNC_TIME_MONITOR("Albany-Cubit MeshMover");
     meshMover = rcp(new CUTR::CubitMeshMover
           (problemParams->get<std::string>("Cubit Base Filename")));
 
@@ -405,9 +403,9 @@ computeGlobalResidual(const double current_time,
 		      const Teuchos::Array<ParamVec>& p,
 		      Epetra_Vector& f)
 {
-  postRegSetup("Residual");
+  TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Residual");
 
-  TimeMonitor Timer(*timers[0]); //start timer
+  postRegSetup("Residual");
 
   // Scatter x and xdot to the overlapped distrbution
   overlapped_x->Import(x, *importer, Insert);
@@ -423,7 +421,7 @@ computeGlobalResidual(const double current_time,
 #ifdef ALBANY_CUTR
   static int first=true;
   if (shapeParamsHaveBeenReset) {
-    TimeMonitor cubitTimer(*timers[10]); //start timer
+    TEUCHOS_FUNC_TIME_MONITOR("Albany-Cubit MeshMover");
 
 *out << " Calling moveMesh with params: " << std::setprecision(8);
  for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
@@ -501,9 +499,9 @@ computeGlobalJacobian(const double alpha,
 		      Epetra_Vector* f,
 		      Epetra_CrsMatrix& jac)
 {
-  postRegSetup("Jacobian");
+  TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Jacobian");
 
-  TimeMonitor Timer(*timers[1]); //start timer
+  postRegSetup("Jacobian");
 
   // Scatter x and xdot to the overlapped distrbution
   overlapped_x->Import(x, *importer, Insert);
@@ -516,7 +514,7 @@ computeGlobalJacobian(const double alpha,
 
 #ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
-    TimeMonitor Timer(*timers[10]); //start timer
+    TEUCHOS_FUNC_TIME_MONITOR("Albany-Cubit MeshMover");
 
 *out << " Calling moveMesh with params: " << std::setprecision(8);
  for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
@@ -604,7 +602,7 @@ Albany::Application::
 computeGlobalPreconditioner(const RCP<Epetra_CrsMatrix>& jac,
 			    const RCP<Epetra_Operator>& prec)
 {
-  TimeMonitor Timer(*timers[2]); //start timer
+  TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Precond");
 
   *out << "Computing WPrec by Teko" << endl;
 
@@ -634,9 +632,9 @@ computeGlobalTangent(const double alpha,
 		     Epetra_MultiVector* JV,
 		     Epetra_MultiVector* fp)
 {
-  postRegSetup("Tangent");
+  TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Tangent");
 
-  TimeMonitor Timer(*timers[3]); //start timer
+  postRegSetup("Tangent");
 
   // Scatter x and xdot to the overlapped distrbution
   overlapped_x->Import(x, *importer, Insert);
@@ -747,7 +745,7 @@ computeGlobalTangent(const double alpha,
   std::vector<int> coord_deriv_indices;
 #ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
-    TimeMonitor Timer(*timers[10]); //start timer
+    TEUCHOS_FUNC_TIME_MONITOR("Albany-Cubit MeshMover");
 
      int num_sp = 0;
      std::vector<int> shape_param_indices;
@@ -912,6 +910,7 @@ evaluateResponse(int response_index,
 		 const Teuchos::Array<ParamVec>& p,
 		 Epetra_Vector& g)
 {  
+  TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Responses");
   double t = current_time;
   if ( paramLib->isParameter("Time") ) 
     t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
@@ -937,6 +936,7 @@ evaluateResponseTangent(int response_index,
 			Epetra_MultiVector* gx,
 			Epetra_MultiVector* gp)
 {
+  TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Response Tangent");
   double t = current_time;
   if ( paramLib->isParameter("Time") ) 
     t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
@@ -959,6 +959,7 @@ evaluateResponseDerivative(
   const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
   const EpetraExt::ModelEvaluator::Derivative& dg_dp)
 {
+  TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Response Gradient");
   double t = current_time;
   if ( paramLib->isParameter("Time") ) 
     t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
@@ -978,11 +979,11 @@ computeGlobalSGResidual(
   const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
   Stokhos::EpetraVectorOrthogPoly& sg_f)
 {
+  TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: SGResidual");
+
   postRegSetup("SGResidual");
 
   //std::cout << sg_x << std::endl;
-
-  TimeMonitor Timer(*timers[4]); //start timer
 
   if (sg_overlapped_x == Teuchos::null || 
       sg_overlapped_x->size() != sg_x.size()) {
@@ -1022,7 +1023,7 @@ computeGlobalSGResidual(
 
 #ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
-    TimeMonitor Timer(*timers[10]); //start timer
+    TEUCHOS_FUNC_TIME_MONITOR("Albany-Cubit MeshMover");
 *out << " Calling moveMesh with params: " << std::setprecision(8);
 for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
 *out << endl;
@@ -1104,9 +1105,9 @@ computeGlobalSGJacobian(
   Stokhos::EpetraVectorOrthogPoly* sg_f,
   Stokhos::VectorOrthogPoly<Epetra_CrsMatrix>& sg_jac)
 {
-  postRegSetup("SGJacobian");
+  TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: SGJacobian");
 
-  TimeMonitor Timer(*timers[5]); //start timer
+  postRegSetup("SGJacobian");
 
   if (sg_overlapped_x == Teuchos::null || 
       sg_overlapped_x->size() != sg_x.size()) {
@@ -1167,7 +1168,7 @@ computeGlobalSGJacobian(
 
 #ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
-    TimeMonitor Timer(*timers[10]); //start timer
+    TEUCHOS_FUNC_TIME_MONITOR("Albany-Cubit MeshMover");
 *out << " Calling moveMesh with params: " << std::setprecision(8);
 for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
 *out << endl;
@@ -1267,9 +1268,9 @@ computeGlobalSGTangent(
   Stokhos::EpetraMultiVectorOrthogPoly* sg_JVx,
   Stokhos::EpetraMultiVectorOrthogPoly* sg_fVp)
 {
-  postRegSetup("SGTangent");
+  TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: SGTangent");
 
-  TimeMonitor Timer(*timers[6]); //start timer
+  postRegSetup("SGTangent");
 
   if (sg_overlapped_x == Teuchos::null || 
       sg_overlapped_x->size() != sg_x.size()) {
@@ -1498,7 +1499,7 @@ evaluateSGResponse(
   const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
   Stokhos::EpetraVectorOrthogPoly& sg_g)
 {
-  TEUCHOS_FUNC_TIME_MONITOR("Albany::Application::evaluateSGResponses");
+  TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: SGResponses");
 
   responses[response_index]->evaluateSGResponse(
     curr_time, sg_xdot, sg_x, p, sg_p_index, sg_p_vals, sg_g);
@@ -1525,7 +1526,7 @@ evaluateSGResponseTangent(
   Stokhos::EpetraMultiVectorOrthogPoly* sg_JV,
   Stokhos::EpetraMultiVectorOrthogPoly* sg_gp)
 {
-  TEUCHOS_FUNC_TIME_MONITOR("Albany::Application::evaluateSGResponses");
+  TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: SGResponse Tangent");
 
   responses[response_index]->evaluateSGTangent(
     alpha, beta, current_time, sum_derivs, sg_xdot, sg_x, p, sg_p_index, 
@@ -1548,7 +1549,7 @@ evaluateSGResponseDerivative(
   const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdot,
   const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dp)
 {
-  TEUCHOS_FUNC_TIME_MONITOR("Albany::Application::evaluateSGResponses");
+  TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: SGResponse Gradient");
 
   responses[response_index]->evaluateSGDerivative(
     current_time, sg_xdot, sg_x, p, sg_p_index, sg_p_vals, deriv_p,
@@ -1566,9 +1567,9 @@ computeGlobalMPResidual(
   const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
   Stokhos::ProductEpetraVector& mp_f)
 {
-  postRegSetup("MPResidual");
+  TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: MPResidual");
 
-  TimeMonitor Timer(*timers[7]); //start timer
+  postRegSetup("MPResidual");
 
   // Create overlapped multi-point Epetra objects
   if (mp_overlapped_x == Teuchos::null || 
@@ -1613,7 +1614,7 @@ computeGlobalMPResidual(
 
 #ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
-    TimeMonitor Timer(*timers[10]); //start timer
+    TEUCHOS_FUNC_TIME_MONITOR("Albany-Cubit MeshMover");
 *out << " Calling moveMesh with params: " << std::setprecision(8);
 for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
 *out << endl;
@@ -1687,9 +1688,9 @@ computeGlobalMPJacobian(
   Stokhos::ProductEpetraVector* mp_f,
   Stokhos::ProductContainer<Epetra_CrsMatrix>& mp_jac)
 {
-  postRegSetup("MPJacobian");
+  TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: MPJacobian");
 
-  TimeMonitor Timer(*timers[8]); //start timer
+  postRegSetup("MPJacobian");
 
   // Create overlapped multi-point Epetra objects
   if (mp_overlapped_x == Teuchos::null || 
@@ -1744,7 +1745,7 @@ computeGlobalMPJacobian(
 
 #ifdef ALBANY_CUTR
   if (shapeParamsHaveBeenReset) {
-    TimeMonitor Timer(*timers[10]); //start timer
+    TEUCHOS_FUNC_TIME_MONITOR("Albany-Cubit MeshMover");
 *out << " Calling moveMesh with params: " << std::setprecision(8);
 for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
 *out << endl;
@@ -1841,9 +1842,9 @@ computeGlobalMPTangent(
   Stokhos::ProductEpetraMultiVector* mp_JVx,
   Stokhos::ProductEpetraMultiVector* mp_fVp)
 {
-  postRegSetup("MPTangent");
+  TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: MPTangent");
 
-  TimeMonitor Timer(*timers[9]); //start timer
+  postRegSetup("MPTangent");
 
   // Create overlapped multi-point Epetra objects
   if (mp_overlapped_x == Teuchos::null || 
@@ -2071,7 +2072,7 @@ evaluateMPResponse(
   const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
   Stokhos::ProductEpetraVector& mp_g)
 {
-  TEUCHOS_FUNC_TIME_MONITOR("Albany::Application::evaluateMPResponses");
+  TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: MPResponses");
   
   responses[response_index]->evaluateMPResponse(
     curr_time, mp_xdot, mp_x, p, mp_p_index, mp_p_vals, mp_g);
@@ -2098,7 +2099,7 @@ evaluateMPResponseTangent(
   Stokhos::ProductEpetraMultiVector* mp_JV,
   Stokhos::ProductEpetraMultiVector* mp_gp)
 {
-  TEUCHOS_FUNC_TIME_MONITOR("Albany::Application::evaluateMPResponseTangent");
+  TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: MPResponse Tangents");
   
   responses[response_index]->evaluateMPTangent(
     alpha, beta, current_time, sum_derivs, mp_xdot, mp_x, p, mp_p_index, 
@@ -2121,7 +2122,7 @@ evaluateMPResponseDerivative(
   const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdot,
   const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dp)
 {
-  TEUCHOS_FUNC_TIME_MONITOR("Albany::Application::evaluateMPResponseGradient");
+  TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: MPResponse Gradient");
   
   responses[response_index]->evaluateMPDerivative(
     current_time, mp_xdot, mp_x, p, mp_p_index, mp_p_vals, deriv_p,
@@ -2364,21 +2365,6 @@ Albany::Application::buildWrappedOperator(const RCP<Epetra_Operator>& Jac,
      *out << "Teko: Tested operator correctness:  " << (result ? "passed" : "FAILED!") << std::endl;
   }
   return wrappedOp;
-}
-
-void Albany::Application::defineTimers()
-{
-  timers.push_back(TimeMonitor::getNewTimer("> Albany Fill: Residual"));
-  timers.push_back(TimeMonitor::getNewTimer("> Albany Fill: Jacobian"));
-  timers.push_back(TimeMonitor::getNewTimer("> Albany Fill: Precond"));
-  timers.push_back(TimeMonitor::getNewTimer("> Albany Fill: Tangent"));
-  timers.push_back(TimeMonitor::getNewTimer("> Albany Fill: SGResidual"));
-  timers.push_back(TimeMonitor::getNewTimer("> Albany Fill: SGJacobian"));
-  timers.push_back(TimeMonitor::getNewTimer("> Albany Fill: SGTangent"));
-  timers.push_back(TimeMonitor::getNewTimer("> Albany Fill: MPResidual"));
-  timers.push_back(TimeMonitor::getNewTimer("> Albany Fill: MPJacobian"));
-  timers.push_back(TimeMonitor::getNewTimer("> Albany Fill: MPTangent"));
-  timers.push_back(TimeMonitor::getNewTimer("Albany-Cubit MeshMover"));
 }
 
 void Albany::Application::loadBasicWorksetInfo(
