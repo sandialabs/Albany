@@ -1732,7 +1732,7 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonCI
 	for(int j=0; j < nEvals; j++) oneOverOcc += exp(-(eigenvals[j]-eigenvals[i])/kbT);
 
 	ScalarT wfOcc = 0.0; //exp(-eigenvals[i]/kbT) / Z;
-	if(!isinf(QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue(oneOverOcc)))
+	if(!std::isinf(QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue(oneOverOcc)))
 	  wfOcc = 1/oneOverOcc; //otherwise just leave as zero since denom is infinite
 
         eDensity += wfSquared * wfOcc;
