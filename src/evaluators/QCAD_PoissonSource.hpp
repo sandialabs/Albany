@@ -143,6 +143,7 @@ namespace QCAD {
     std::string nonQuantumRegionSource;
     std::string quantumRegionSource;
     ScalarT sourceEvecInds[2];
+    bool imagPartOfCoulombSrc; // if true, use the imaginary as opposed to real part of coulomb source
     
     //! specify carrier statistics and incomplete ionization
     std::string carrierStatistics;

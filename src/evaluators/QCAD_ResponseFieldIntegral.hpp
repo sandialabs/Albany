@@ -23,7 +23,10 @@
 
 namespace QCAD {
 
-  const int MAX_FIELDNAMES_IN_INTEGRAL = 10;
+  //Maximum number of fields that can be multiplied together as an integrand
+  //  (Note: must be less than the number of bits in an integer)
+  const int MAX_FIELDNAMES_IN_INTEGRAL = 10; 
+  
 /** 
  * \brief Response Description
  */
@@ -51,13 +54,18 @@ namespace QCAD {
     Teuchos::RCP<const Teuchos::ParameterList> getValidResponseParameters() const;
 
     std::vector<std::string> fieldNames;
+    std::vector<std::string> fieldNames_Imag;
     std::vector<std::string> ebNames;
     bool bQuantumEBsOnly;
+    bool bReturnImagPart;
     
     std::size_t numQPs;
     std::size_t numDims;
     
+    std::vector<bool> fieldIsComplex;
+    std::vector<bool> conjugateFieldFlag;
     std::vector<PHX::MDField<ScalarT,Cell,QuadPoint> > fields;
+    std::vector<PHX::MDField<ScalarT,Cell,QuadPoint> > fields_Imag;
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
     PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
     Teuchos::Array<int> field_components;

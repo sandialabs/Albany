@@ -154,12 +154,14 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   }
 
   else if( problemName == "Poisson CI" ) {
-    subSolvers["InitPoisson"]    = CreateSubSolver(inputFilenames["Poisson"], "initial poisson", *comm);
-    subSolvers["Poisson"]        = CreateSubSolver(inputFilenames["Poisson"], "Poisson", *comm);
-    subSolvers["DeltaPoisson"]   = CreateSubSolver(inputFilenames["Poisson"], "Delta poisson", *comm);
-    subSolvers["CoulombPoisson"] = CreateSubSolver(inputFilenames["Poisson"], "Coulomb poisson", *comm);
-    subSolvers["CIPoisson"]      = CreateSubSolver(inputFilenames["Poisson"], "CI poisson", *comm);
-    subSolvers["Schrodinger"]    = CreateSubSolver(inputFilenames["Schrodinger"], "none", *comm);
+    subSolvers["InitPoisson"]      = CreateSubSolver(inputFilenames["Poisson"], "initial poisson", *comm);
+    subSolvers["Poisson"]          = CreateSubSolver(inputFilenames["Poisson"], "Poisson", *comm);
+    subSolvers["DeltaPoisson"]     = CreateSubSolver(inputFilenames["Poisson"], "Delta poisson", *comm);
+    subSolvers["NoChargePoisson"]  = CreateSubSolver(inputFilenames["Poisson"], "No charge poisson", *comm);
+    subSolvers["CoulombPoisson"]   = CreateSubSolver(inputFilenames["Poisson"], "Coulomb poisson", *comm);
+    subSolvers["CoulombPoissonIm"] = CreateSubSolver(inputFilenames["Poisson"], "Coulomb poisson imaginary", *comm);
+    subSolvers["CIPoisson"]        = CreateSubSolver(inputFilenames["Poisson"], "CI poisson", *comm);
+    subSolvers["Schrodinger"]      = CreateSubSolver(inputFilenames["Schrodinger"], "none", *comm);
 
   }
 
@@ -646,6 +648,16 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
       //    - set poisson source param specifying quantum region charge == product of eigenvectors & give i2,i4 indices
       //    - set responses to N^2 FieldIntegrals - ADD "Weight State Name 1" and "2" to possible params -- i1,i3
       // in both modes keep dbc's as they are - just change RHS of poisson.
+
+      // Poisson Solve without any source charge: this gives terms that are due to environment charges that
+      //   occur due to boundary conditions (e.g. charge on surface of conductors due to DBCs) that we must subtract
+      //   from terms below to get effect of *just* the quantum electron charges and their image charges. 
+      if(bVerbose) *out << "QCAD Solve: No-charge Poisson iteration " << iter << endl;
+      QCAD::SolveModel(getSubSolver("NoChargePoisson"), pStatesToPass, pStatesToLoop,
+		       eigenDataToPass, eigenDataNull);
+      Teuchos::RCP<Epetra_Vector> g_noCharge =
+	getSubSolver("NoChargePoisson").responses_out->get_g(0); //only use *first* response vector    
+
       
       // Delta Poisson Solve - get delta_ij in reponse vector
       if(bVerbose) *out << "QCAD Solve: Delta Poisson iteration " << iter << endl;
@@ -655,17 +667,25 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
       // transfer responses to H1P matrix (2 blocks (up & down), each nEvecs x nEvecs)
       Teuchos::RCP<Epetra_Vector> g =
 	getSubSolver("DeltaPoisson").responses_out->get_g(0); //only use *first* response vector    
-      int rIndx = 0 ;// offset to the responses corresponding to delta_ij values == 0 by construction
+      int rIndx = 0; // offset to the responses corresponding to delta_ij values == 0 by construction
       for(int i=0; i<nEigenvectors; i++) {
 	assert(rIndx < g->MyLength()); //make sure g-vector is long enough
-	blockU->el(i,i) = -(*(eigenDataToPass->eigenvalueRe))[i] - (*g)[rIndx]; // first minus (-) sign b/c of 
-	blockD->el(i,i) = -(*(eigenDataToPass->eigenvalueRe))[i] - (*g)[rIndx]; //  eigenvalue convention
+	double delta_re = -( (*g)[rIndx] - (*g_noCharge)[rIndx] );       //Minus sign used because we use electric potential
+	double delta_im = -( (*g)[rIndx+1] - (*g_noCharge)[rIndx+1] );   // in delta calcs, and e- sees negated potential
+	blockU->el(i,i) = -(*(eigenDataToPass->eigenvalueRe))[i] - delta_re; // first minus (-) sign b/c of 
+	blockD->el(i,i) = -(*(eigenDataToPass->eigenvalueRe))[i] - delta_re; //  eigenvalue convention
+	*out << "DEBUG CI 1P Block El (" <<i<<","<<i<<") = " << -(*(eigenDataToPass->eigenvalueRe))[i] << " - " 
+	     << "(" << delta_re << " + i*" << delta_im << ")" << std::endl;
+	rIndx += 2;
 
 	for(int j=i+1; j<nEigenvectors; j++) {
 	  assert(rIndx < g->MyLength()); //make sure g-vector is long enough
-	  blockU->el(i,j) = -(*g)[rIndx]; blockU->el(j,i) = -(*g)[rIndx];
-	  blockD->el(i,j) = -(*g)[rIndx]; blockD->el(j,i) = -(*g)[rIndx];
-	  rIndx++;
+	  delta_re = -((*g)[rIndx] - (*g_noCharge)[rIndx]);
+	  delta_im = -((*g)[rIndx+1] - (*g_noCharge)[rIndx+1]);
+	  blockU->el(i,j) = -delta_re; blockU->el(j,i) = -delta_re;
+	  blockD->el(i,j) = -delta_re; blockD->el(j,i) = -delta_re;
+	  *out << "DEBUG CI 1P Block El (" <<i<<","<<j<<") = (" << delta_re << " + i*" << delta_im << ")" << std::endl;
+	  rIndx += 2;
 	}
       }
 
@@ -676,8 +696,8 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
       Teuchos::RCP<AlbanyCI::BlockTensor<AlbanyCI::dcmplx> > mx1P =
 	Teuchos::rcp(new AlbanyCI::BlockTensor<AlbanyCI::dcmplx>(basis1P, blocks1P, 1));
       //*out << std::endl << "DEBUG CI mx1P:"; mx1P->print(out); //DEBUG
-      
-      
+
+            
       // fill in mx2P (4 blocks, each n1PperBlock x n1PperBlock x n1PperBlock x n1PperBlock )
       for(int i2=0; i2<nEigenvectors; i2++) {
 	for(int i4=i2; i4<nEigenvectors; i4++) {
@@ -689,8 +709,19 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
 		     eigenDataToPass, eigenDataNull);
 	  
 	  // transfer responses to H2P matrix blocks
-	  Teuchos::RCP<Epetra_Vector> g =
+	  Teuchos::RCP<Epetra_Vector> g_reSrc =
 	    getSubSolver("CoulombPoisson").responses_out->get_g(0); //only use *first* response vector    
+
+
+	  // Coulomb Poisson Solve - get coulomb els in reponse vector
+	  if(bVerbose) *out << "QCAD Solve: Imaginary Coulomb " << i2 << "," << i4 << " Poisson iteration " << iter << endl;
+	  SetCoulombParams( getSubSolver("CoulombPoissonIm").params_in, i2,i4 ); 
+	  QCAD::SolveModel(getSubSolver("CoulombPoissonIm"), pStatesToPass, pStatesToLoop,
+		     eigenDataToPass, eigenDataNull);
+	  
+	  // transfer responses to H2P matrix blocks
+	  Teuchos::RCP<Epetra_Vector> g_imSrc =
+	    getSubSolver("CoulombPoissonIm").responses_out->get_g(0); //only use *first* response vector    
 
 	  //DEBUG
 	  //*out << "DEBUG: g vector:" << endl;
@@ -700,27 +731,41 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
 	  for(int i1=0; i1<nEigenvectors; i1++) {
 	    for(int i3=i1; i3<nEigenvectors; i3++) {
 	      assert(rIndx < g->MyLength()); //make sure g-vector is long enough
-	      blockUU->el(i1,i2,i3,i4) = (*g)[rIndx];
-	      blockUU->el(i3,i2,i1,i4) = (*g)[rIndx];
-	      blockUU->el(i1,i4,i3,i2) = (*g)[rIndx];
-	      blockUU->el(i3,i4,i1,i2) = (*g)[rIndx];
+	      double c_reSrc_re = -((*g_reSrc)[rIndx] - (*g_noCharge)[rIndx]);  
+	      double c_reSrc_im = -((*g_reSrc)[rIndx+1] - (*g_noCharge)[rIndx+1]); // rIndx + 1 == imag part
+	      double c_imSrc_re = -((*g_imSrc)[rIndx] - (*g_noCharge)[rIndx]);
+	      double c_imSrc_im = -((*g_imSrc)[rIndx+1] - (*g_noCharge)[rIndx+1]); // rIndx + 1 == imag part
+
+	      //Coulomb integral of interest (see above)
+	      double c_re = c_reSrc_re - c_imSrc_im;
+	      double c_im = c_reSrc_im + c_imSrc_re;
+		
+
+	      *out << "DEBUG CI 2P Block El (" <<i1<<","<<i2<<","<<i3<<","<<i4<<") = " << c_re << " + i*" << c_im << std::endl;
+
+	      // Only use REAL parts here since we don't have complex support yet
+	      //  (Tpetra doesn't work).  Use c_re + i*c_im or conjugate where necessary.
+	      blockUU->el(i1,i2,i3,i4) = c_re;
+	      blockUU->el(i3,i2,i1,i4) = c_re;
+	      blockUU->el(i1,i4,i3,i2) = c_re;
+	      blockUU->el(i3,i4,i1,i2) = c_re;
 	      
-	      blockUD->el(i1,i2,i3,i4) = (*g)[rIndx];
-	      blockUD->el(i3,i2,i1,i4) = (*g)[rIndx];
-	      blockUD->el(i1,i4,i3,i2) = (*g)[rIndx];
-	      blockUD->el(i3,i4,i1,i2) = (*g)[rIndx];
+	      blockUD->el(i1,i2,i3,i4) = c_re;
+	      blockUD->el(i3,i2,i1,i4) = c_re;
+	      blockUD->el(i1,i4,i3,i2) = c_re;
+	      blockUD->el(i3,i4,i1,i2) = c_re;
 	      
-	      blockDU->el(i1,i2,i3,i4) = (*g)[rIndx];
-	      blockDU->el(i3,i2,i1,i4) = (*g)[rIndx];
-	      blockDU->el(i1,i4,i3,i2) = (*g)[rIndx];
-	      blockDU->el(i3,i4,i1,i2) = (*g)[rIndx];
+	      blockDU->el(i1,i2,i3,i4) = c_re;
+	      blockDU->el(i3,i2,i1,i4) = c_re;
+	      blockDU->el(i1,i4,i3,i2) = c_re;
+	      blockDU->el(i3,i4,i1,i2) = c_re;
 	      
-	      blockDD->el(i1,i2,i3,i4) = (*g)[rIndx];
-	      blockDD->el(i3,i2,i1,i4) = (*g)[rIndx];
-	      blockDD->el(i1,i4,i3,i2) = (*g)[rIndx];
-	      blockDD->el(i3,i4,i1,i2) = (*g)[rIndx];
-	      
-	      rIndx++;
+	      blockDD->el(i1,i2,i3,i4) = c_re;
+	      blockDD->el(i3,i2,i1,i4) = c_re;
+	      blockDD->el(i1,i4,i3,i2) = c_re;
+	      blockDD->el(i3,i4,i1,i2) = c_re;
+
+	      rIndx += 2;
 	    }
 	  }
 	}
@@ -780,7 +825,7 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
       eigenDataToPass->eigenvectorIm = mbStateDensities; 
 
       // Poisson Solve which uses CI MB state density and eigenvalues to get quantum electron density
-      if(bVerbose) *out << "QCAD Solve: Poisson iteration " << iter << endl;
+      if(bVerbose) *out << "QCAD Solve: CI Poisson iteration " << iter << endl;
       QCAD::SolveModel(getSubSolver("CIPoisson"), pStatesToPass, pStatesToLoop,
 		 eigenDataToPass, eigenDataNull);
       
@@ -812,10 +857,20 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
 
 	  int nParticles, nExcitations;
   	  nParticles = 2;  //hardcoded for testing
-	  //nParticles = (*g)[0]; // assume the 0th response double is the integrated charge in the quantum region (LATER: pass in # of doubles as param)
+	  //nParticles = (int)round((*g)[5]); // assume the 1st response double is the integrated charge in the quantum region (LATER: pass in # of doubles as param)
 	  nExcitations = std::min(nParticles,4); //four excitations at most?
 	  MyPL->set("Num Excitations", nExcitations);
 	  MyPL->set("Subbasis Particles 0", nParticles);
+
+	  if(bVerbose) *out << "QCAD Solve: SP Converged.  Starting CI with " 
+			    << nParticles << " particles, " << nExcitations << " excitations" << endl;
+	  *out << "g[0] = " << (*g)[0] << std::endl;
+	  *out << "g[1] = " << (*g)[1] << std::endl;
+	  *out << "g[2] = " << (*g)[2] << std::endl;
+	  *out << "g[3] = " << (*g)[3] << std::endl;
+	  *out << "g[4] = " << (*g)[4] << std::endl;
+	  *out << "g[5] = " << (*g)[5] << " -> " << (int)round((*g)[5]) << std::endl; //DEBUG
+	  *out << "g[6] = " << (*g)[6] << std::endl;
 	}
 
       }
@@ -834,6 +889,37 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
     else
       *out << "QCAD Solve: Maximum iterations (" << maxIter << ") reached." << endl;
   }
+
+  if(bConverged) {
+    // LATER: perhaps run a separate Poisson CI solve (as above) but have it compute all the responses we want
+    //  (and don't have it compute them in the in-loop call above).
+
+    //Write parameters and responses of final PoissonCI solve
+    // Don't worry about sensitivities yet - just output vectors
+
+    const QCAD::SolverSubSolver& ss = getSubSolver("CIPoisson");
+    int num_p = ss.params_in->Np();     // Number of *vectors* of parameters
+    int num_g = ss.responses_out->Ng(); // Number of *vectors* of responses
+
+    for (int i=0; i<num_p; i++)
+      ss.params_in->get_p(i)->Print(*out << "\nParameter vector " << i << ":\n");
+
+    for (int i=0; i<num_g-1; i++) {
+      Teuchos::RCP<Epetra_Vector> g = ss.responses_out->get_g(i);
+      bool is_scalar = true;
+
+      if (ss.app != Teuchos::null)
+        is_scalar = ss.app->getResponse(i)->isScalarResponse();
+
+      if (is_scalar) {
+        g->Print(*out << "\nResponse vector " << i << ":\n");
+	*out << "\n";  //add blank line after vector is printed - needed for proper post-processing
+	// see Main_Solve.cpp for how to print sensitivities here
+      }
+    }
+  }
+
+
 
   #else
   
@@ -947,8 +1033,8 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
     Teuchos::ParameterList& responseList = params.sublist("Problem").sublist("Response Functions");
     nEigenvectors = params.sublist("Problem").sublist("Poisson Source").get<int>("Eigenvectors from States"); 
     int initial_nResponses = responseList.get<int>("Number"); //Shift existing responses
-    int added_nResponses = nEigenvectors * (nEigenvectors + 1) / 2;
-    char buf1[200], buf2[200];
+    int added_nResponses = 2 * nEigenvectors * (nEigenvectors + 1) / 2;  //mult by 2 for real & imag parts
+    char buf1[200], buf2[200], buf1i[200], buf2i[200];
     int iResponse;
     responseList.set("Number", initial_nResponses + added_nResponses); //sets member
 
@@ -963,44 +1049,58 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
 
     iResponse = 0;
     for(int i=0; i<nEigenvectors; i++) {
-      sprintf(buf1, "%s_Re%d", "Evec", i); //assume only REAL evectors and "Evec" root
+      sprintf(buf1, "%s_Re%d", "Evec", i);
+      sprintf(buf1i, "%s_Im%d", "Evec", i);
       for(int j=i; j<nEigenvectors; j++) {
-	sprintf(buf2, "%s_Re%d", "Evec", j); //assume only REAL evectors and "Evec" root
+	sprintf(buf2, "%s_Re%d", "Evec", j);
+	sprintf(buf2i, "%s_Im%d", "Evec", j);
 
 	responseList.set(Albany::strint("Response",iResponse), "Field Integral");
 	Teuchos::ParameterList& responseParams = responseList.sublist(Albany::strint("ResponseParams",iResponse));
 	responseParams.set("Field Name", "Electric Potential");  // same as solution, but must be at quad points
-	responseParams.set("Field Name 1", buf1);
+	responseParams.set("Field Name 1", buf1);  
+	responseParams.set("Field Name Im 1", buf1i);
 	responseParams.set("Field Name 2", buf2);
+	responseParams.set("Field Name Im 2", buf2i);
+	responseParams.set("Conjugate Field 1", true);
+	responseParams.set("Conjugate Field 2", false);
 	responseParams.set("Integrand Length Unit", "mesh"); // same as mesh
-	
+	responseParams.set("Return Imaginary Part", false);
+
+	iResponse++;
+
+	responseList.set(Albany::strint("Response",iResponse), "Field Integral");
+	Teuchos::ParameterList& responseParams2 = responseList.sublist(Albany::strint("ResponseParams",iResponse));
+	responseParams2.set("Field Name", "Electric Potential");  // same as solution, but must be at quad points
+	responseParams2.set("Field Name 1", buf1);
+	responseParams2.set("Field Name Im 1", buf1i);
+	responseParams2.set("Field Name 2", buf2);
+	responseParams2.set("Field Name Im 2", buf2i);
+	responseParams2.set("Conjugate Field 1", true);
+	responseParams2.set("Conjugate Field 2", false);
+	responseParams2.set("Integrand Length Unit", "mesh"); // same as mesh
+	responseParams2.set("Return Imaginary Part", true);
+
 	iResponse++;
       }
     }
   }
-	
-  else if(preprocessType == "Coulomb poisson") {
+
+  else if(preprocessType == "No charge poisson") {
     //! Rename output file
-    //std::string exoName= "coulomb" + params.sublist("Discretization").get<std::string>("Exodus Output File Name");
-    std::string exoName= params.sublist("Discretization").get<std::string>("Exodus Output File Name") + ".coulomb";
+    std::string exoName= params.sublist("Discretization").get<std::string>("Exodus Output File Name") + ".nocharge";
     params.sublist("Discretization").set("Exodus Output File Name", exoName);
 
     //! Set poisson parameters
-    params.sublist("Problem").sublist("Poisson Source").set("Quantum Region Source", "coulomb");
+    params.sublist("Problem").sublist("Poisson Source").set("Quantum Region Source", "none");
     params.sublist("Problem").sublist("Poisson Source").set("Non Quantum Region Source", "none");
 
-    //! Specify source eigenvector indices as parameters
-    int nParams = params.sublist("Problem").sublist("Parameters").get<int>("Number");
-    params.sublist("Problem").sublist("Parameters").set("Number", nParams + 2); //assumes Source Eigenvector X are not already params
-    params.sublist("Problem").sublist("Parameters").set(Albany::strint("Parameter",nParams), "Source Eigenvector 1");
-    params.sublist("Problem").sublist("Parameters").set(Albany::strint("Parameter",nParams+1), "Source Eigenvector 2");
-
-    //! Set responses: add responses for each pair ( evec_i, evec_j ) => Coulomb(i,src_evec1,j,src_evec2)
+    //! Set responses: add responses for each pair ( evec_i, evec_j ) => Coulomb_noSrcCharge(i,j)
     Teuchos::ParameterList& responseList = params.sublist("Problem").sublist("Response Functions");
     int nEigenvectors = params.sublist("Problem").sublist("Poisson Source").get<int>("Eigenvectors from States");
     int initial_nResponses = responseList.get<int>("Number");
-    int added_nResponses = nEigenvectors * (nEigenvectors + 1) / 2;
-    char buf1[200], buf2[200];
+    int added_nResponses = 2 * nEigenvectors * (nEigenvectors + 1) / 2;  //mult by 2 for real & imag parts
+    char buf1[200], buf2[200], buf1i[200], buf2i[200];
     int iResponse;
 
     responseList.set("Number", initial_nResponses + nEigenvectors * (nEigenvectors + 1) / 2);
@@ -1016,16 +1116,187 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
 
     iResponse = 0;
     for(int i=0; i<nEigenvectors; i++) {
-      sprintf(buf1, "%s_Re%d", "Evec", i); //assume only REAL evectors and "Evec" root
+      sprintf(buf1, "%s_Re%d", "Evec", i);
+      sprintf(buf1i, "%s_Im%d", "Evec", i);
       for(int j=i; j<nEigenvectors; j++) {
-	sprintf(buf2, "%s_Re%d", "Evec", j); //assume only REAL evectors and "Evec" root
+	sprintf(buf2, "%s_Re%d", "Evec", j);
+	sprintf(buf2i, "%s_Im%d", "Evec", j);
 
 	responseList.set(Albany::strint("Response",iResponse), "Field Integral");
 	Teuchos::ParameterList& responseParams = responseList.sublist(Albany::strint("ResponseParams",iResponse));
 	responseParams.set("Field Name", "Electric Potential");  // same as solution, but must be at quad points
 	responseParams.set("Field Name 1", buf1);
+	responseParams.set("Field Name Im 1", buf1i);
 	responseParams.set("Field Name 2", buf2);
+	responseParams.set("Field Name Im 2", buf2i);
+	responseParams.set("Conjugate Field 1", true);
+	responseParams.set("Conjugate Field 2", false);
 	responseParams.set("Integrand Length Unit", "mesh"); // same as mesh
+	responseParams.set("Return Imaginary Part", false);
+	
+	iResponse++;
+
+	responseList.set(Albany::strint("Response",iResponse), "Field Integral");
+	Teuchos::ParameterList& responseParams2 = responseList.sublist(Albany::strint("ResponseParams",iResponse));
+	responseParams2.set("Field Name", "Electric Potential");  // same as solution, but must be at quad points
+	responseParams2.set("Field Name 1", buf1);
+	responseParams2.set("Field Name Im 1", buf1i);
+	responseParams2.set("Field Name 2", buf2);
+	responseParams2.set("Field Name Im 2", buf2i);
+	responseParams2.set("Conjugate Field 1", true);
+	responseParams2.set("Conjugate Field 2", false);
+	responseParams2.set("Integrand Length Unit", "mesh"); // same as mesh
+	responseParams2.set("Return Imaginary Part", true);
+	
+	iResponse++;
+      }
+    }
+  }
+	
+  else if(preprocessType == "Coulomb poisson") {
+    //! Rename output file
+    //std::string exoName= "coulomb" + params.sublist("Discretization").get<std::string>("Exodus Output File Name");
+    std::string exoName= params.sublist("Discretization").get<std::string>("Exodus Output File Name") + ".coulomb";
+    params.sublist("Discretization").set("Exodus Output File Name", exoName);
+
+    //! Set poisson parameters
+    params.sublist("Problem").sublist("Poisson Source").set("Quantum Region Source", "coulomb");
+    params.sublist("Problem").sublist("Poisson Source").set("Non Quantum Region Source", "none");
+    params.sublist("Problem").sublist("Poisson Source").set("Imaginary Part Of Coulomb Source", false);
+
+    //! Specify source eigenvector indices as parameters
+    int nParams = params.sublist("Problem").sublist("Parameters").get<int>("Number");
+    params.sublist("Problem").sublist("Parameters").set("Number", nParams + 2); //assumes Source Eigenvector X are not already params
+    params.sublist("Problem").sublist("Parameters").set(Albany::strint("Parameter",nParams), "Source Eigenvector 1");
+    params.sublist("Problem").sublist("Parameters").set(Albany::strint("Parameter",nParams+1), "Source Eigenvector 2");
+
+    //! Set responses: add responses for each pair ( evec_i, evec_j ) => Coulomb(i,src_evec1,j,src_evec2)
+    Teuchos::ParameterList& responseList = params.sublist("Problem").sublist("Response Functions");
+    int nEigenvectors = params.sublist("Problem").sublist("Poisson Source").get<int>("Eigenvectors from States");
+    int initial_nResponses = responseList.get<int>("Number");
+    int added_nResponses = 2 * nEigenvectors * (nEigenvectors + 1) / 2;  //mult by 2 for real & imag parts
+    char buf1[200], buf2[200], buf1i[200], buf2i[200];
+    int iResponse;
+
+    responseList.set("Number", initial_nResponses + nEigenvectors * (nEigenvectors + 1) / 2);
+
+    //shift response indices of existing responses by added_responses so added responses index from zero
+    for(int i=initial_nResponses-1; i >= 0; i--) {       
+      std::string respType = responseList.get<std::string>(Albany::strint("Response",i));
+      responseList.set(Albany::strint("Response",i + added_nResponses), respType);
+      responseList.sublist( Albany::strint("ResponseParams",i + added_nResponses) ) = 
+	Teuchos::ParameterList(responseList.sublist( Albany::strint("ResponseParams",i)) ); 
+      responseList.sublist( Albany::strint("ResponseParams",i) ) = Teuchos::ParameterList(Albany::strint("ResponseParams",i)); //clear sublist i
+    }
+
+    iResponse = 0;
+    for(int i=0; i<nEigenvectors; i++) {
+      sprintf(buf1, "%s_Re%d", "Evec", i);
+      sprintf(buf1i, "%s_Im%d", "Evec", i);
+      for(int j=i; j<nEigenvectors; j++) {
+	sprintf(buf2, "%s_Re%d", "Evec", j);
+	sprintf(buf2i, "%s_Im%d", "Evec", j);
+
+	responseList.set(Albany::strint("Response",iResponse), "Field Integral");
+	Teuchos::ParameterList& responseParams = responseList.sublist(Albany::strint("ResponseParams",iResponse));
+	responseParams.set("Field Name", "Electric Potential");  // same as solution, but must be at quad points
+	responseParams.set("Field Name 1", buf1);
+	responseParams.set("Field Name Im 1", buf1i);
+	responseParams.set("Field Name 2", buf2);
+	responseParams.set("Field Name Im 2", buf2i);
+	responseParams.set("Conjugate Field 1", true);
+	responseParams.set("Conjugate Field 2", false);
+	responseParams.set("Integrand Length Unit", "mesh"); // same as mesh
+	responseParams.set("Return Imaginary Part", false);
+	
+	iResponse++;
+
+	responseList.set(Albany::strint("Response",iResponse), "Field Integral");
+	Teuchos::ParameterList& responseParams2 = responseList.sublist(Albany::strint("ResponseParams",iResponse));
+	responseParams2.set("Field Name", "Electric Potential");  // same as solution, but must be at quad points
+	responseParams2.set("Field Name 1", buf1);
+	responseParams2.set("Field Name Im 1", buf1i);
+	responseParams2.set("Field Name 2", buf2);
+	responseParams2.set("Field Name Im 2", buf2i);
+	responseParams2.set("Conjugate Field 1", true);
+	responseParams2.set("Conjugate Field 2", false);
+	responseParams2.set("Integrand Length Unit", "mesh"); // same as mesh
+	responseParams2.set("Return Imaginary Part", true);
+	
+	iResponse++;
+      }
+    }
+  }
+
+  else if(preprocessType == "Coulomb poisson imaginary") {
+    //! Rename output file
+    //std::string exoName= "coulomb" + params.sublist("Discretization").get<std::string>("Exodus Output File Name");
+    std::string exoName= params.sublist("Discretization").get<std::string>("Exodus Output File Name") + ".coulomb";
+    params.sublist("Discretization").set("Exodus Output File Name", exoName);
+
+    //! Set poisson parameters
+    params.sublist("Problem").sublist("Poisson Source").set("Quantum Region Source", "coulomb");
+    params.sublist("Problem").sublist("Poisson Source").set("Non Quantum Region Source", "none");
+    params.sublist("Problem").sublist("Poisson Source").set("Imaginary Part Of Coulomb Source", true);
+
+    //! Specify source eigenvector indices as parameters
+    int nParams = params.sublist("Problem").sublist("Parameters").get<int>("Number");
+    params.sublist("Problem").sublist("Parameters").set("Number", nParams + 2); //assumes Source Eigenvector X are not already params
+    params.sublist("Problem").sublist("Parameters").set(Albany::strint("Parameter",nParams), "Source Eigenvector 1");
+    params.sublist("Problem").sublist("Parameters").set(Albany::strint("Parameter",nParams+1), "Source Eigenvector 2");
+
+    //! Set responses: add responses for each pair ( evec_i, evec_j ) => Coulomb(i,src_evec1,j,src_evec2)
+    Teuchos::ParameterList& responseList = params.sublist("Problem").sublist("Response Functions");
+    int nEigenvectors = params.sublist("Problem").sublist("Poisson Source").get<int>("Eigenvectors from States");
+    int initial_nResponses = responseList.get<int>("Number");
+    int added_nResponses = 2 * nEigenvectors * (nEigenvectors + 1) / 2;  //mult by 2 for real & imag parts
+    char buf1[200], buf2[200], buf1i[200], buf2i[200];
+    int iResponse;
+
+    responseList.set("Number", initial_nResponses + nEigenvectors * (nEigenvectors + 1) / 2);
+
+    //shift response indices of existing responses by added_responses so added responses index from zero
+    for(int i=initial_nResponses-1; i >= 0; i--) {       
+      std::string respType = responseList.get<std::string>(Albany::strint("Response",i));
+      responseList.set(Albany::strint("Response",i + added_nResponses), respType);
+      responseList.sublist( Albany::strint("ResponseParams",i + added_nResponses) ) = 
+	Teuchos::ParameterList(responseList.sublist( Albany::strint("ResponseParams",i)) ); 
+      responseList.sublist( Albany::strint("ResponseParams",i) ) = Teuchos::ParameterList(Albany::strint("ResponseParams",i)); //clear sublist i
+    }
+
+    iResponse = 0;
+    for(int i=0; i<nEigenvectors; i++) {
+      sprintf(buf1, "%s_Re%d", "Evec", i);
+      sprintf(buf1i, "%s_Im%d", "Evec", i);
+      for(int j=i; j<nEigenvectors; j++) {
+	sprintf(buf2, "%s_Re%d", "Evec", j);
+	sprintf(buf2i, "%s_Im%d", "Evec", j);
+
+	responseList.set(Albany::strint("Response",iResponse), "Field Integral");
+	Teuchos::ParameterList& responseParams = responseList.sublist(Albany::strint("ResponseParams",iResponse));
+	responseParams.set("Field Name", "Electric Potential");  // same as solution, but must be at quad points
+	responseParams.set("Field Name 1", buf1);
+	responseParams.set("Field Name Im 1", buf1i);
+	responseParams.set("Field Name 2", buf2);
+	responseParams.set("Field Name Im 2", buf2i);
+	responseParams.set("Conjugate Field 1", true);
+	responseParams.set("Conjugate Field 2", false);
+	responseParams.set("Integrand Length Unit", "mesh"); // same as mesh
+	responseParams.set("Return Imaginary Part", false);
+	
+	iResponse++;
+
+	responseList.set(Albany::strint("Response",iResponse), "Field Integral");
+	Teuchos::ParameterList& responseParams2 = responseList.sublist(Albany::strint("ResponseParams",iResponse));
+	responseParams2.set("Field Name", "Electric Potential");  // same as solution, but must be at quad points
+	responseParams2.set("Field Name 1", buf1);
+	responseParams2.set("Field Name Im 1", buf1i);
+	responseParams2.set("Field Name 2", buf2);
+	responseParams2.set("Field Name Im 2", buf2i);
+	responseParams2.set("Conjugate Field 1", true);
+	responseParams2.set("Conjugate Field 2", false);
+	responseParams2.set("Integrand Length Unit", "mesh"); // same as mesh
+	responseParams2.set("Return Imaginary Part", true);
 	
 	iResponse++;
       }
