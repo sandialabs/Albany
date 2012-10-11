@@ -177,6 +177,7 @@ namespace QCAD {
     void addBeginPointData(const std::string& elementBlock, const double* p, double value);
     void addEndPointData(const std::string& elementBlock, const double* p, double value);
     void addImagePointData(const double* p, double value, double* grad);
+    void addFinalImagePointData(const double* p, double value);
     void accumulatePointData(const double* p, double value, double* grad);
     void accumulateLevelSetData(const double* p, double value, double cellArea);
     double getSaddlePointWeight(const double* p) const;
@@ -187,6 +188,9 @@ namespace QCAD {
 
     //! Helper functions for Nudged Elastic Band (NEB) algorithm, performed in evaluateResponse
     void initializeImagePoints(const double current_time, const Epetra_Vector* xdot,
+			       const Epetra_Vector& x, const Teuchos::Array<ParamVec>& p,
+			       Epetra_Vector& g, int dbMode);
+    void initializeFinalImagePoints(const double current_time, const Epetra_Vector* xdot,
 			       const Epetra_Vector& x, const Teuchos::Array<ParamVec>& p,
 			       Epetra_Vector& g, int dbMode);
     void doNudgedElasticBand(const double current_time, const Epetra_Vector* xdot,
@@ -210,6 +214,9 @@ namespace QCAD {
 			     const Epetra_Vector& x, const Teuchos::Array<ParamVec>& p,
 			     Epetra_Vector& g, double* globalPtValues, double* globalPtWeights,
 			     double* globalPtGrads, std::vector<mathVector> lastPositions, int dbMode);
+    void getFinalImagePointValues(const double current_time, const Epetra_Vector* xdot,
+			     const Epetra_Vector& x, const Teuchos::Array<ParamVec>& p,
+			     Epetra_Vector& g, int dbMode);
     void writeOutput(int nIters);
     void initialIterationSetup(double& gradScale, double& springScale, int dbMode);
     void computeTangent(std::size_t i, mathVector& tangent, int dbMode);
@@ -240,6 +247,7 @@ namespace QCAD {
     std::size_t numDims;
     std::size_t nImagePts;
     std::vector<nebImagePt> imagePts;
+    std::vector<nebImagePt> finalPts;
     double imagePtSize;
     bool bClimbing, bAdaptivePointSize;
     double minAdaptivePointWt, maxAdaptivePointWt;
@@ -283,10 +291,18 @@ namespace QCAD {
     bool bLockToPlane;
     double lockedZ;
 
+    //! data for final points (just used at end to get more data pts along saddle path)
+    double finalPtSpacing;
+    int maxFinalPts;
+
     //! accumulation vectors for evaluator to fill
     mathVector imagePtValues;
     mathVector imagePtWeights;
     mathVector imagePtGradComps;
+
+    mathVector finalPtValues;
+    mathVector finalPtWeights;
+
 
     //! mode of current evaluator operation (maybe not thread safe?)
     std::string mode;
