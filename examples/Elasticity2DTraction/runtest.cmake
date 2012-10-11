@@ -10,7 +10,7 @@ endif()
 
 if(DEFINED MPIMNP AND ${MPIMNP} GREATER 1)
 
-	find_program(EPU NAMES epu)
+	find_program(EPU NAMES epu PATHS ENV PATH) 
 
 	if (NOT EPU)
 		message(FATAL_ERROR "Cannot find epu")
@@ -27,29 +27,50 @@ if(DEFINED MPIMNP AND ${MPIMNP} GREATER 1)
 
 endif()
 
-# 3. Find and run ncdump
+# Old approach - this uses an external program to check the result at one node
 
-find_program(NCDUMP NAMES ncdump)
+## 3. Find and run ncdump
+#
+#find_program(NCDUMP NAMES ncdump)
+#
+#if (NOT NCDUMP)
+#  message(FATAL_ERROR "Cannot find ncdump")
+#endif()
+#
+#SET(NCDUMP_COMMAND ${NCDUMP} -v vals_elem_var4eb1 hole_out.exo)
+#
+#EXECUTE_PROCESS(COMMAND ${NCDUMP_COMMAND} OUTPUT_FILE hole_out.ncdump
+#	RESULT_VARIABLE HAD_ERROR)
+#
+#if(HAD_ERROR)
+#	message(FATAL_ERROR "ncdump failed")
+#endif()
+#
+## 4. Run the comparison program to test the validity of info in the ncdump file
+#
+#EXECUTE_PROCESS(COMMAND "./TestNcdumpValues"
+#	RESULT_VARIABLE HAD_ERROR)
+#
+#message(${HAD_ERROR})
+#
+#if(HAD_ERROR)
+#	message(FATAL_ERROR "Test failed")
+#endif()
 
-if (NOT NCDUMP)
-  message(FATAL_ERROR "Cannot find ncdump")
+# 3. Find and run exodiff
+
+find_program(EXODIFF NAMES exodiff PATHS ENV PATH)
+
+if (NOT EXODIFF)
+  message(FATAL_ERROR "Cannot find exodiff")
 endif()
 
-SET(NCDUMP_COMMAND ${NCDUMP} -v vals_elem_var4eb1 hole_out.exo)
+SET(EXODIFF_TEST ${EXODIFF} -file exodiff_commands hole_out.exo reference_hole.exo)
 
-EXECUTE_PROCESS(COMMAND ${NCDUMP_COMMAND} OUTPUT_FILE hole_out.ncdump
-	RESULT_VARIABLE HAD_ERROR)
-
-if(HAD_ERROR)
-	message(FATAL_ERROR "ncdump failed")
-endif()
-
-# 4. Run the comparison program to test the validity of info in the ncdump file
-
-EXECUTE_PROCESS(COMMAND "./TestNcdumpValues"
-	RESULT_VARIABLE HAD_ERROR)
-
-message(${HAD_ERROR})
+EXECUTE_PROCESS(
+    COMMAND ${EXODIFF_TEST}
+    OUTPUT_FILE exodiff.out
+    RESULT_VARIABLE HAD_ERROR)
 
 if(HAD_ERROR)
 	message(FATAL_ERROR "Test failed")

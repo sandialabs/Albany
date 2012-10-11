@@ -24,6 +24,9 @@ IF (NOT DEFINED ALBANY_TRILINOS_DIR)
   (-D ALBANY_TRILINOS_DIR:FILEPATH=<trilinos_install_prefix>)!")
 ENDIF()
 
+# Advertise that we support shared libs
+SET_PROPERTY(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS TRUE)
+
 # Get Trilinos as one entity
 SET(CMAKE_PREFIX_PATH ${ALBANY_TRILINOS_DIR} ${CMAKE_PREFIX_PATH})
 FIND_PACKAGE(Trilinos REQUIRED)
@@ -51,6 +54,17 @@ IF (CMAKE_Fortran_COMPILER) # Enable Fortran if it is enabled in Trilinos.
   ENABLE_LANGUAGE(Fortran) 
 ENDIF()
 
+# Build Albany as shared libraries if Trilinos was compiled that way
+
+IF(Trilinos_BUILD_SHARED_LIBS)
+  SET(Albany_LIBRARY_TYPE SHARED)
+  SET(BUILD_SHARED_LIBS ON)
+  MESSAGE("-- Building Albany with shared libraries")
+ELSE(Trilinos_BUILD_SHARED_LIBS)
+  SET(Albany_LIBRARY_TYPE STATIC)
+ENDIF(Trilinos_BUILD_SHARED_LIBS)
+
+
 # End of setup and error checking
 #  NOTE: PROJECT command checks for compilers, so this statement
 #        is moved AFTER setting CMAKE_CXX_COMPILER from Trilinos
@@ -62,6 +76,12 @@ IF (NOT CMAKE_CXX_FLAGS)
 ENDIF()
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ALBANY_CXX_FLAGS}")
 
+IF(${CMAKE_CXX_COMPILER_ID} MATCHES "Intel")
+  SET(USING_INTEL TRUE)
+# On Intel, turn of interprocedural optimization at linking to keep linker from hanging
+# This could possibly be removed with further study (GAH)
+  SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -no-ip")
+ENDIF()
 
 MESSAGE("-- Looking for Dakota (via TriKota):")
 LIST(FIND Trilinos_PACKAGE_LIST TriKota TriKota_List_ID)

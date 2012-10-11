@@ -52,7 +52,7 @@ set(SerialAlbanyDakota.exe  ${Albany_BINARY_DIR}/src/AlbanyDakota)
 
 # Tests
 IF(ALBANY_LCM)
-  set(PartitionTest.exe  ${Albany_BINARY_DIR}/src/PartitionTest)
+  set(PartitionTest.exe  ${Albany_BINARY_DIR}/src/LCM/PartitionTest)
 ENDIF()
 
 add_subdirectory(SteadyHeat1D)
