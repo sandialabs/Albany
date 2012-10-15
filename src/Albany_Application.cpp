@@ -234,6 +234,10 @@ Application(const RCP<const Epetra_Comm>& comm_,
 
   is_adjoint = 
     problemParams->get("Solve Adjoint", false);
+
+  bool compute_sensitivities = 
+    problemParams->get("Compute Sensitivities", true);
+  support_DfDp = support_DgDp_and_DgDx = compute_sensitivities;
 }
 
 Albany::Application::
@@ -284,6 +288,7 @@ getJacobianGraph() const
 {
   return disc->getJacobianGraph();
 }
+
 
 RCP<Epetra_Operator>
 Albany::Application::

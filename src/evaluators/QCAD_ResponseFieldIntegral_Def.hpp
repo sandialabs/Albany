@@ -91,8 +91,6 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
   }
 
   bReturnImagPart = plist->get<bool>("Return Imaginary Part",false);
-  //std::cout << "DEBUG RETURN: Return Im Part = " << bReturnImagPart << std::endl;
-
   bQuantumEBsOnly = plist->get<bool>("Quantum Element Blocks Only",false);
 
   std::string integrandLinLengthUnit; // linear length unit of integrand (e.g. "cm" for integrand in cm^-3)

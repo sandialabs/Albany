@@ -264,74 +264,87 @@ Albany::ModelEvaluator::createOutArgs() const
     DerivativeProperties(DERIV_LINEARITY_UNKNOWN, DERIV_RANK_FULL, true));
   if (supplies_prec) outArgs.setSupports(OUT_ARG_WPrec, true);
   outArgs.set_Np_Ng(param_names.size(), n_g);
-  
-  for (int i=0; i<param_names.size(); i++)
-    outArgs.setSupports(OUT_ARG_DfDp, i, DerivativeSupport(DERIV_MV_BY_COL));
-  for (int i=0; i<n_g; i++) {
-    if (app->getResponse(i)->isScalarResponse()) {
-      outArgs.setSupports(OUT_ARG_DgDx, i, 
-			  DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
-      outArgs.setSupports(OUT_ARG_DgDx_dot, i, 
-			  DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
-    }
-    else {
-       outArgs.setSupports(OUT_ARG_DgDx, i, 
-			   DerivativeSupport(DERIV_LINEAR_OP));
-       outArgs.setSupports(OUT_ARG_DgDx_dot, i, 
-			   DerivativeSupport(DERIV_LINEAR_OP));
-    }
-    for (int j=0; j<param_names.size(); j++)
-      outArgs.setSupports(OUT_ARG_DgDp, i, j, 
-			  DerivativeSupport(DERIV_MV_BY_COL));
-  }
 
+  if(app->support_DfDp) {
+    for (int i=0; i<param_names.size(); i++)
+      outArgs.setSupports(OUT_ARG_DfDp, i, DerivativeSupport(DERIV_MV_BY_COL));
+  }
+  if(app->support_DgDp_and_DgDx) {
+    for (int i=0; i<n_g; i++) {
+      if (app->getResponse(i)->isScalarResponse()) {
+	outArgs.setSupports(OUT_ARG_DgDx, i, 
+			    DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
+	outArgs.setSupports(OUT_ARG_DgDx_dot, i, 
+			    DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
+      }
+      else {
+	outArgs.setSupports(OUT_ARG_DgDx, i, 
+			    DerivativeSupport(DERIV_LINEAR_OP));
+	outArgs.setSupports(OUT_ARG_DgDx_dot, i, 
+			    DerivativeSupport(DERIV_LINEAR_OP));
+      }
+      
+      for (int j=0; j<param_names.size(); j++)
+	outArgs.setSupports(OUT_ARG_DgDp, i, j, 
+			    DerivativeSupport(DERIV_MV_BY_COL));
+    }
+  }
+  
   
   // Stochastic
   outArgs.setSupports(OUT_ARG_f_sg,true);
   outArgs.setSupports(OUT_ARG_W_sg,true);
-  for (int i=0; i<param_names.size(); i++)
-    outArgs.setSupports(OUT_ARG_DfDp_sg, i, DerivativeSupport(DERIV_MV_BY_COL));
-  for (int i=0; i<n_g; i++) {
-    outArgs.setSupports(OUT_ARG_g_sg, i, true);
-    if (app->getResponse(i)->isScalarResponse()) {
-      outArgs.setSupports(OUT_ARG_DgDx_sg, i, 
-			  DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
-      outArgs.setSupports(OUT_ARG_DgDx_dot_sg, i, 
-			  DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
+  if(app->support_DfDp) {
+    for (int i=0; i<param_names.size(); i++)
+      outArgs.setSupports(OUT_ARG_DfDp_sg, i, DerivativeSupport(DERIV_MV_BY_COL));
+  }
+  if(app->support_DgDp_and_DgDx) {
+    for (int i=0; i<n_g; i++) {
+      outArgs.setSupports(OUT_ARG_g_sg, i, true);
+      if (app->getResponse(i)->isScalarResponse()) {
+	outArgs.setSupports(OUT_ARG_DgDx_sg, i, 
+			    DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
+	outArgs.setSupports(OUT_ARG_DgDx_dot_sg, i, 
+			    DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
+      }
+      else {
+	outArgs.setSupports(OUT_ARG_DgDx_sg, i, 
+			    DerivativeSupport(DERIV_LINEAR_OP));
+	outArgs.setSupports(OUT_ARG_DgDx_dot_sg, i, 
+			    DerivativeSupport(DERIV_LINEAR_OP));
+      }
+      for (int j=0; j<param_names.size(); j++)
+	outArgs.setSupports(OUT_ARG_DgDp_sg, i, j, 
+			    DerivativeSupport(DERIV_MV_BY_COL));
     }
-    else {
-       outArgs.setSupports(OUT_ARG_DgDx_sg, i, 
-			   DerivativeSupport(DERIV_LINEAR_OP));
-       outArgs.setSupports(OUT_ARG_DgDx_dot_sg, i, 
-			   DerivativeSupport(DERIV_LINEAR_OP));
-    }
-    for (int j=0; j<param_names.size(); j++)
-      outArgs.setSupports(OUT_ARG_DgDp_sg, i, j, 
-			  DerivativeSupport(DERIV_MV_BY_COL));
   }
       
   // Multi-point
   outArgs.setSupports(OUT_ARG_f_mp,true);
   outArgs.setSupports(OUT_ARG_W_mp,true);
-  for (int i=0; i<param_names.size(); i++)
-    outArgs.setSupports(OUT_ARG_DfDp_mp, i, DerivativeSupport(DERIV_MV_BY_COL));
-  for (int i=0; i<n_g; i++) {
-    outArgs.setSupports(OUT_ARG_g_mp, i, true);
-    if (app->getResponse(i)->isScalarResponse()) {
-      outArgs.setSupports(OUT_ARG_DgDx_mp, i, 
-			  DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
-      outArgs.setSupports(OUT_ARG_DgDx_dot_mp, i, 
-			  DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
+  if(app->support_DfDp) {
+    for (int i=0; i<param_names.size(); i++)
+      outArgs.setSupports(OUT_ARG_DfDp_mp, i, DerivativeSupport(DERIV_MV_BY_COL));
+  }
+  if(app->support_DgDp_and_DgDx) {
+    for (int i=0; i<n_g; i++) {
+      outArgs.setSupports(OUT_ARG_g_mp, i, true);
+      if (app->getResponse(i)->isScalarResponse()) {
+	outArgs.setSupports(OUT_ARG_DgDx_mp, i, 
+			    DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
+	outArgs.setSupports(OUT_ARG_DgDx_dot_mp, i, 
+			    DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
+      }
+      else {
+	outArgs.setSupports(OUT_ARG_DgDx_mp, i, 
+			    DerivativeSupport(DERIV_LINEAR_OP));
+	outArgs.setSupports(OUT_ARG_DgDx_dot_mp, i, 
+			    DerivativeSupport(DERIV_LINEAR_OP));
+      }
+      for (int j=0; j<param_names.size(); j++)
+	outArgs.setSupports(OUT_ARG_DgDp_mp, i, j, 
+			    DerivativeSupport(DERIV_MV_BY_COL));
     }
-    else {
-       outArgs.setSupports(OUT_ARG_DgDx_mp, i, 
-			   DerivativeSupport(DERIV_LINEAR_OP));
-       outArgs.setSupports(OUT_ARG_DgDx_dot_mp, i, 
-			   DerivativeSupport(DERIV_LINEAR_OP));
-    }
-    for (int j=0; j<param_names.size(); j++)
-      outArgs.setSupports(OUT_ARG_DgDp_mp, i, j, 
-			  DerivativeSupport(DERIV_MV_BY_COL));
   }
 
   return outArgs;
@@ -400,28 +413,30 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
   }
 
   // df/dp
-  for (int i=0; i<outArgs.Np(); i++) {
-    Teuchos::RCP<Epetra_MultiVector> dfdp_out = 
-      outArgs.get_DfDp(i).getMultiVector();
-    if (dfdp_out != Teuchos::null) {
-      Teuchos::Array<int> p_indexes = 
-	outArgs.get_DfDp(i).getDerivativeMultiVector().getParamIndexes();
-      Teuchos::RCP<ParamVec> p_vec;
-      if (p_indexes.size() == 0)
-	p_vec = Teuchos::rcp(&sacado_param_vec[i],false);
-      else {
-	p_vec = Teuchos::rcp(new ParamVec);
-	for (int j=0; j<p_indexes.size(); j++)
-	  p_vec->addParam(sacado_param_vec[i][p_indexes[j]].family, 
-			  sacado_param_vec[i][p_indexes[j]].baseValue);
+  if(app->support_DfDp) {
+    for (int i=0; i<outArgs.Np(); i++) {
+      Teuchos::RCP<Epetra_MultiVector> dfdp_out = 
+	outArgs.get_DfDp(i).getMultiVector();
+      if (dfdp_out != Teuchos::null) {
+	Teuchos::Array<int> p_indexes = 
+	  outArgs.get_DfDp(i).getDerivativeMultiVector().getParamIndexes();
+	Teuchos::RCP<ParamVec> p_vec;
+	if (p_indexes.size() == 0)
+	  p_vec = Teuchos::rcp(&sacado_param_vec[i],false);
+	else {
+	  p_vec = Teuchos::rcp(new ParamVec);
+	  for (int j=0; j<p_indexes.size(); j++)
+	    p_vec->addParam(sacado_param_vec[i][p_indexes[j]].family, 
+			    sacado_param_vec[i][p_indexes[j]].baseValue);
+	}
+	
+	app->computeGlobalTangent(curr_time, 0.0, 0.0, false, x_dot.get(), *x, 
+				  sacado_param_vec, p_vec.get(),
+				  NULL, NULL, NULL, f_out.get(), NULL, 
+				  dfdp_out.get());
+	
+	f_already_computed=true;
       }
-  
-      app->computeGlobalTangent(curr_time, 0.0, 0.0, false, x_dot.get(), *x, 
-				sacado_param_vec, p_vec.get(),
-				NULL, NULL, NULL, f_out.get(), NULL, 
-				dfdp_out.get());
-      
-      f_already_computed=true;
     }
   }
 
@@ -439,47 +454,50 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
   			       sacado_param_vec, *f_out);
     }
   }
+
   // Response functions
   for (int i=0; i<outArgs.Ng(); i++) {
     Teuchos::RCP<Epetra_Vector> g_out = outArgs.get_g(i);
-    Derivative dgdx_out = outArgs.get_DgDx(i);
-    Derivative dgdxdot_out = outArgs.get_DgDx_dot(i);
     bool g_computed = false;
 
-    // dg/dx, dg/dxdot
-    if (!dgdx_out.isEmpty() || !dgdxdot_out.isEmpty()) {
-      app->evaluateResponseDerivative(i, curr_time, x_dot.get(), *x, 
-				      sacado_param_vec, NULL,
-				      g_out.get(), dgdx_out, 
-				      dgdxdot_out, Derivative());
-      g_computed = true;
-    }
-    
-    // dg/dp
-    for (int j=0; j<outArgs.Np(); j++) {
-      Teuchos::RCP<Epetra_MultiVector> dgdp_out = 
-	outArgs.get_DgDp(i,j).getMultiVector();
-      if (dgdp_out != Teuchos::null) {
-	Teuchos::Array<int> p_indexes = 
-	  outArgs.get_DgDp(i,j).getDerivativeMultiVector().getParamIndexes();
-	Teuchos::RCP<ParamVec> p_vec;
-	if (p_indexes.size() == 0)
-	  p_vec = Teuchos::rcp(&sacado_param_vec[j],false);
-	else {
-	  p_vec = Teuchos::rcp(new ParamVec);
-	  for (int k=0; k<p_indexes.size(); k++)
-	    p_vec->addParam(sacado_param_vec[j][p_indexes[k]].family, 
-			    sacado_param_vec[j][p_indexes[k]].baseValue);
-	}
-	app->evaluateResponseTangent(i, alpha, beta, curr_time, false,
-				     x_dot.get(), *x, 
-				     sacado_param_vec, p_vec.get(),
-				     NULL, NULL, NULL, g_out.get(), NULL,
-				     dgdp_out.get());
+    if(app->support_DgDp_and_DgDx) {
+      Derivative dgdx_out = outArgs.get_DgDx(i);
+      Derivative dgdxdot_out = outArgs.get_DgDx_dot(i);
+
+      // dg/dx, dg/dxdot
+      if (!dgdx_out.isEmpty() || !dgdxdot_out.isEmpty()) {
+	app->evaluateResponseDerivative(i, curr_time, x_dot.get(), *x, 
+					sacado_param_vec, NULL,
+					g_out.get(), dgdx_out, 
+					dgdxdot_out, Derivative());
 	g_computed = true;
       }
+      
+      // dg/dp
+      for (int j=0; j<outArgs.Np(); j++) {
+	Teuchos::RCP<Epetra_MultiVector> dgdp_out = 
+	  outArgs.get_DgDp(i,j).getMultiVector();
+	if (dgdp_out != Teuchos::null) {
+	  Teuchos::Array<int> p_indexes = 
+	    outArgs.get_DgDp(i,j).getDerivativeMultiVector().getParamIndexes();
+	  Teuchos::RCP<ParamVec> p_vec;
+	  if (p_indexes.size() == 0)
+	    p_vec = Teuchos::rcp(&sacado_param_vec[j],false);
+	  else {
+	    p_vec = Teuchos::rcp(new ParamVec);
+	    for (int k=0; k<p_indexes.size(); k++)
+	      p_vec->addParam(sacado_param_vec[j][p_indexes[k]].family, 
+			      sacado_param_vec[j][p_indexes[k]].baseValue);
+	  }
+	  app->evaluateResponseTangent(i, alpha, beta, curr_time, false,
+				       x_dot.get(), *x, 
+				       sacado_param_vec, p_vec.get(),
+				       NULL, NULL, NULL, g_out.get(), NULL,
+				       dgdp_out.get());
+	  g_computed = true;
+	}
+      }
     }
-
     
     if (g_out != Teuchos::null && !g_computed)
       app->evaluateResponse(i, curr_time, x_dot.get(), *x, sacado_param_vec, 
@@ -533,29 +551,31 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
     }
 
     // df/dp_sg
-    for (int i=0; i<outArgs.Np(); i++) {
-      Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > dfdp_sg 
-	= outArgs.get_DfDp_sg(i).getMultiVector();
-      if (dfdp_sg != Teuchos::null) {
-	Teuchos::Array<int> p_indexes = 
-	  outArgs.get_DfDp_sg(i).getDerivativeMultiVector().getParamIndexes();
-	Teuchos::RCP<ParamVec> p_vec;
-	if (p_indexes.size() == 0)
-	  p_vec = Teuchos::rcp(&sacado_param_vec[i],false);
-	else {
-	  p_vec = Teuchos::rcp(new ParamVec);
-	  for (int j=0; j<p_indexes.size(); j++)
-	    p_vec->addParam(sacado_param_vec[i][p_indexes[j]].family, 
-			    sacado_param_vec[i][p_indexes[j]].baseValue);
+    if(app->support_DfDp) {
+      for (int i=0; i<outArgs.Np(); i++) {
+	Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > dfdp_sg 
+	  = outArgs.get_DfDp_sg(i).getMultiVector();
+	if (dfdp_sg != Teuchos::null) {
+	  Teuchos::Array<int> p_indexes = 
+	    outArgs.get_DfDp_sg(i).getDerivativeMultiVector().getParamIndexes();
+	  Teuchos::RCP<ParamVec> p_vec;
+	  if (p_indexes.size() == 0)
+	    p_vec = Teuchos::rcp(&sacado_param_vec[i],false);
+	  else {
+	    p_vec = Teuchos::rcp(new ParamVec);
+	    for (int j=0; j<p_indexes.size(); j++)
+	      p_vec->addParam(sacado_param_vec[i][p_indexes[j]].family, 
+			      sacado_param_vec[i][p_indexes[j]].baseValue);
+	  }
+	
+	  app->computeGlobalSGTangent(0.0, 0.0, curr_time, false, 
+				      x_dot_sg.get(), *x_sg, 
+				      sacado_param_vec, p_sg_index, p_sg_vals, 
+				      p_vec.get(), NULL, NULL, NULL,  
+				      f_sg.get(), NULL, dfdp_sg.get());
+	  
+	  f_sg_computed = true;
 	}
-	
-	app->computeGlobalSGTangent(0.0, 0.0, curr_time, false, 
-				    x_dot_sg.get(), *x_sg, 
-				    sacado_param_vec, p_sg_index, p_sg_vals, 
-				    p_vec.get(), NULL, NULL, NULL,  
-				    f_sg.get(), NULL, dfdp_sg.get());
-	
-	f_sg_computed = true;
       }
     }
 
@@ -567,44 +587,47 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
     // Response functions
     for (int i=0; i<outArgs.Ng(); i++) {
       OutArgs::sg_vector_t g_sg = outArgs.get_g_sg(i);
-      SGDerivative dgdx_sg = outArgs.get_DgDx_sg(i);
-      SGDerivative dgdxdot_sg = outArgs.get_DgDx_dot_sg(i);
       bool g_sg_computed = false;
 
-      // dg/dx, dg/dxdot
-      if (!dgdx_sg.isEmpty() || !dgdxdot_sg.isEmpty()) {
-	app->evaluateSGResponseDerivative(
-	  i, curr_time, x_dot_sg.get(), *x_sg, 
-	  sacado_param_vec, p_sg_index, p_sg_vals,
-	  NULL, g_sg.get(), dgdx_sg, 
-	  dgdxdot_sg, SGDerivative());
-	g_sg_computed = true;
-      }
-    
-      // dg/dp
-      for (int j=0; j<outArgs.Np(); j++) {
-	Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > dgdp_sg = 
-	  outArgs.get_DgDp_sg(i,j).getMultiVector();
-	if (dgdp_sg != Teuchos::null) {
-	  Teuchos::Array<int> p_indexes = 
-	    outArgs.get_DgDp_sg(i,j).getDerivativeMultiVector().getParamIndexes();
-	  Teuchos::RCP<ParamVec> p_vec;
-	  if (p_indexes.size() == 0)
-	    p_vec = Teuchos::rcp(&sacado_param_vec[j],false);
-	  else {
-	    p_vec = Teuchos::rcp(new ParamVec);
-	    for (int k=0; k<p_indexes.size(); k++)
-	      p_vec->addParam(sacado_param_vec[j][p_indexes[k]].family, 
-			      sacado_param_vec[j][p_indexes[k]].baseValue);
-	  }
-	  app->evaluateSGResponseTangent(i, alpha, beta, curr_time, false,
-					 x_dot_sg.get(), *x_sg, 
-					 sacado_param_vec, p_sg_index, 
-					 p_sg_vals, p_vec.get(), 
-					 NULL, NULL, NULL, g_sg.get(), 
-					 NULL, dgdp_sg.get());
+      if(app->support_DgDp_and_DgDx) {
+	SGDerivative dgdx_sg = outArgs.get_DgDx_sg(i);
+	SGDerivative dgdxdot_sg = outArgs.get_DgDx_dot_sg(i);
+
+	// dg/dx, dg/dxdot
+	if (!dgdx_sg.isEmpty() || !dgdxdot_sg.isEmpty()) {
+	  app->evaluateSGResponseDerivative(
+		  i, curr_time, x_dot_sg.get(), *x_sg, 
+		  sacado_param_vec, p_sg_index, p_sg_vals,
+		  NULL, g_sg.get(), dgdx_sg, 
+		  dgdxdot_sg, SGDerivative());
 	  g_sg_computed = true;
-					 
+	}
+    
+	// dg/dp
+	for (int j=0; j<outArgs.Np(); j++) {
+	  Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > dgdp_sg = 
+	    outArgs.get_DgDp_sg(i,j).getMultiVector();
+	  if (dgdp_sg != Teuchos::null) {
+	    Teuchos::Array<int> p_indexes = 
+	      outArgs.get_DgDp_sg(i,j).getDerivativeMultiVector().getParamIndexes();
+	    Teuchos::RCP<ParamVec> p_vec;
+	    if (p_indexes.size() == 0)
+	      p_vec = Teuchos::rcp(&sacado_param_vec[j],false);
+	    else {
+	      p_vec = Teuchos::rcp(new ParamVec);
+	      for (int k=0; k<p_indexes.size(); k++)
+		p_vec->addParam(sacado_param_vec[j][p_indexes[k]].family, 
+				sacado_param_vec[j][p_indexes[k]].baseValue);
+	    }
+	    app->evaluateSGResponseTangent(i, alpha, beta, curr_time, false,
+					   x_dot_sg.get(), *x_sg, 
+					   sacado_param_vec, p_sg_index, 
+					   p_sg_vals, p_vec.get(), 
+					   NULL, NULL, NULL, g_sg.get(), 
+					   NULL, dgdp_sg.get());
+	    g_sg_computed = true;
+	    
+	  }
 	}
       }
       
@@ -656,29 +679,31 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
     }
 
     // df/dp_mp
-    for (int i=0; i<outArgs.Np(); i++) {
-      Teuchos::RCP< Stokhos::ProductEpetraMultiVector > dfdp_mp 
-	= outArgs.get_DfDp_mp(i).getMultiVector();
-      if (dfdp_mp != Teuchos::null) {
-	Teuchos::Array<int> p_indexes = 
-	  outArgs.get_DfDp_mp(i).getDerivativeMultiVector().getParamIndexes();
-	Teuchos::RCP<ParamVec> p_vec;
-	if (p_indexes.size() == 0)
-	  p_vec = Teuchos::rcp(&sacado_param_vec[i],false);
-	else {
-	  p_vec = Teuchos::rcp(new ParamVec);
-	  for (int j=0; j<p_indexes.size(); j++)
-	    p_vec->addParam(sacado_param_vec[i][p_indexes[j]].family, 
-			    sacado_param_vec[i][p_indexes[j]].baseValue);
-	}
+    if(app->support_DfDp) {
+      for (int i=0; i<outArgs.Np(); i++) {
+	Teuchos::RCP< Stokhos::ProductEpetraMultiVector > dfdp_mp 
+	  = outArgs.get_DfDp_mp(i).getMultiVector();
+	if (dfdp_mp != Teuchos::null) {
+	  Teuchos::Array<int> p_indexes = 
+	    outArgs.get_DfDp_mp(i).getDerivativeMultiVector().getParamIndexes();
+	  Teuchos::RCP<ParamVec> p_vec;
+	  if (p_indexes.size() == 0)
+	    p_vec = Teuchos::rcp(&sacado_param_vec[i],false);
+	  else {
+	    p_vec = Teuchos::rcp(new ParamVec);
+	    for (int j=0; j<p_indexes.size(); j++)
+	      p_vec->addParam(sacado_param_vec[i][p_indexes[j]].family, 
+			      sacado_param_vec[i][p_indexes[j]].baseValue);
+	  }
 	    
-	app->computeGlobalMPTangent(0.0, 0.0, curr_time, false, 
-				    x_dot_mp.get(), *x_mp, 
-				    sacado_param_vec, p_mp_index, p_mp_vals, 
-				    p_vec.get(), NULL, NULL, NULL,
-				    f_mp.get(), NULL, dfdp_mp.get());
-	
-	f_mp_computed = true;
+	  app->computeGlobalMPTangent(0.0, 0.0, curr_time, false, 
+				      x_dot_mp.get(), *x_mp, 
+				      sacado_param_vec, p_mp_index, p_mp_vals, 
+				      p_vec.get(), NULL, NULL, NULL,
+				      f_mp.get(), NULL, dfdp_mp.get());
+	  
+	  f_mp_computed = true;
+	}
       }
     }
 
@@ -690,43 +715,46 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
     // Response functions
     for (int i=0; i<outArgs.Ng(); i++) {
       mp_vector_t g_mp = outArgs.get_g_mp(i);
-      MPDerivative dgdx_mp = outArgs.get_DgDx_mp(i);
-      MPDerivative dgdxdot_mp = outArgs.get_DgDx_dot_mp(i);
       bool g_mp_computed = false;
 
-      // dg/dx, dg/dxdot
-      if (!dgdx_mp.isEmpty() || !dgdxdot_mp.isEmpty()) {
-	app->evaluateMPResponseDerivative(
-	  i, curr_time, x_dot_mp.get(), *x_mp, 
-	  sacado_param_vec, p_mp_index, p_mp_vals,
-	  NULL, g_mp.get(), dgdx_mp, 
-	  dgdxdot_mp, MPDerivative());
-	g_mp_computed = true;
-      }
-      
-      // dg/dp
-      for (int j=0; j<outArgs.Np(); j++) {
-	Teuchos::RCP< Stokhos::ProductEpetraMultiVector > dgdp_mp = 
-	  outArgs.get_DgDp_mp(i,j).getMultiVector();
-	if (dgdp_mp != Teuchos::null) {
-	  Teuchos::Array<int> p_indexes = 
-	    outArgs.get_DgDp_mp(i,j).getDerivativeMultiVector().getParamIndexes();
-	  Teuchos::RCP<ParamVec> p_vec;
-	  if (p_indexes.size() == 0)
-	    p_vec = Teuchos::rcp(&sacado_param_vec[j],false);
-	  else {
-	    p_vec = Teuchos::rcp(new ParamVec);
-	    for (int k=0; k<p_indexes.size(); k++)
-	      p_vec->addParam(sacado_param_vec[j][p_indexes[k]].family, 
-			      sacado_param_vec[j][p_indexes[k]].baseValue);
-	  }
-	  app->evaluateMPResponseTangent(i, alpha, beta, curr_time, false,
-					 x_dot_mp.get(), *x_mp, 
-					 sacado_param_vec, p_mp_index, 
-					 p_mp_vals, p_vec.get(), 
-					 NULL, NULL, NULL, g_mp.get(), 
-					 NULL, dgdp_mp.get());
+      if(app->support_DgDp_and_DgDx) {
+	MPDerivative dgdx_mp = outArgs.get_DgDx_mp(i);
+	MPDerivative dgdxdot_mp = outArgs.get_DgDx_dot_mp(i);
+
+	// dg/dx, dg/dxdot
+	if (!dgdx_mp.isEmpty() || !dgdxdot_mp.isEmpty()) {
+	  app->evaluateMPResponseDerivative(
+	      i, curr_time, x_dot_mp.get(), *x_mp, 
+	      sacado_param_vec, p_mp_index, p_mp_vals,
+	      NULL, g_mp.get(), dgdx_mp, 
+	      dgdxdot_mp, MPDerivative());
 	  g_mp_computed = true;
+	}
+	
+	// dg/dp
+	for (int j=0; j<outArgs.Np(); j++) {
+	  Teuchos::RCP< Stokhos::ProductEpetraMultiVector > dgdp_mp = 
+	    outArgs.get_DgDp_mp(i,j).getMultiVector();
+	  if (dgdp_mp != Teuchos::null) {
+	    Teuchos::Array<int> p_indexes = 
+	      outArgs.get_DgDp_mp(i,j).getDerivativeMultiVector().getParamIndexes();
+	    Teuchos::RCP<ParamVec> p_vec;
+	    if (p_indexes.size() == 0)
+	      p_vec = Teuchos::rcp(&sacado_param_vec[j],false);
+	    else {
+	      p_vec = Teuchos::rcp(new ParamVec);
+	      for (int k=0; k<p_indexes.size(); k++)
+		p_vec->addParam(sacado_param_vec[j][p_indexes[k]].family, 
+				sacado_param_vec[j][p_indexes[k]].baseValue);
+	    }
+	    app->evaluateMPResponseTangent(i, alpha, beta, curr_time, false,
+					   x_dot_mp.get(), *x_mp, 
+					   sacado_param_vec, p_mp_index, 
+					   p_mp_vals, p_vec.get(), 
+					   NULL, NULL, NULL, g_mp.get(), 
+					   NULL, dgdp_mp.get());
+	    g_mp_computed = true;
+	  }
 	}
       }
           

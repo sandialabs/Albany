@@ -109,6 +109,7 @@ namespace QCAD {
 
     double CONVERGE_TOL;
     double shiftPercentBelowMin;  // for eigensolver shift-invert: shift point == minPotential * (1 + shiftPercent/100)
+    int    maxCIParticles;        // the maximum number of particles allowed to be used in CI calculation
   };
 
 
