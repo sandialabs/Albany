@@ -58,7 +58,7 @@ evaluateResponse(const double current_time,
   for (unsigned int i=0; i<responses.size(); i++) {
 
     // Create Epetra_Map for response function
-    unsigned int num_responses = responses[i]->numResponses();
+    int num_responses = responses[i]->numResponses();
     Epetra_LocalMap local_response_map(num_responses, 0, 
 				       *(responses[i]->getComm()));
 
@@ -136,7 +136,7 @@ evaluateTangent(const double alpha,
   for (unsigned int i=0; i<responses.size(); i++) {
 
     // Create Epetra_Map for response function
-    unsigned int num_responses = responses[i]->numResponses();
+    int num_responses = responses[i]->numResponses();
     Epetra_LocalMap local_response_map(num_responses, 0, 
       *(responses[i]->getComm()));
 
@@ -273,7 +273,7 @@ evaluateGradient(const double current_time,
   for (unsigned int i=0; i<responses.size(); i++) {
 
     // Create Epetra_Map for response function
-    unsigned int num_responses = responses[i]->numResponses();
+    int num_responses = responses[i]->numResponses();
     Epetra_LocalMap local_response_map(num_responses, 0, 
 				       *(responses[i]->getComm()));
 
