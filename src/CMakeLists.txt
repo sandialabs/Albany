@@ -610,11 +610,19 @@ add_executable(AlbanyAnalysis Main_Analysis.cpp)
 
 set(ALL_LIBRARIES ${ALBANY_CI_LIB} ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${LAMENT_LIB} ${Trilinos_EXTRA_LD_FLAGS} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES} )
 
-add_subdirectory(LCM)
-add_subdirectory(Hydride)
+SET(ALBANY_LIBRARIES albanyLib)
 
-#SET(ALBANY_LIBRARIES hydride lcm albanyLib)
-SET(ALBANY_LIBRARIES albanyLib hydride lcm albanyLib)
+IF (ALBANY_LCM)
+  add_subdirectory(LCM)
+  SET(ALBANY_LIBRARIES albanyLib lcm albanyLib)
+
+  IF (ALBANY_HYDRIDE) 
+#Hydride requires LCM
+    add_subdirectory(Hydride)
+    SET(ALBANY_LIBRARIES albanyLib hydride lcm albanyLib)
+  ENDIF()
+
+ENDIF()
 
 target_link_libraries(Albany          ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})
 target_link_libraries(AlbanySG        ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})

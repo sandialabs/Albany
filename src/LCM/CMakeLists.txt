@@ -29,11 +29,6 @@
     problems/HDiffusionDeformationProblem.cpp
     problems/ProjectionProblem.cpp
   )
-  IF(ALBANY_MPI)
-    SET(SOURCES ${SOURCES}
-      problems/MesoScaleLinkProblem.cpp
-    )
-  ENDIF()
 
   SET(HEADERS 
     problems/ElasticityProblem.hpp
@@ -49,11 +44,6 @@
     problems/HDiffusionDeformationProblem.hpp
     problems/ProjectionProblem.hpp
   )
-  IF(ALBANY_MPI)
-    SET(HEADERS ${HEADERS}
-      problems/MesoScaleLinkProblem.hpp
-    )
-  ENDIF()
 
   # LCM evaluators
   SET(SOURCES ${SOURCES}
@@ -144,12 +134,6 @@
     evaluators/AAA.cpp
     evaluators/LatticeDefGrad.cpp
   )
-
-  IF(ALBANY_MPI)
-    SET(SOURCES ${SOURCES}
-      evaluators/MultiScaleStress.cpp
-    )
-  ENDIF()
 
   SET(HEADERS ${HEADERS}
     evaluators/Stress.hpp
@@ -326,13 +310,6 @@
     evaluators/LatticeDefGrad_Def.hpp
  )
 
-  IF(ALBANY_MPI)
-    SET(HEADERS ${HEADERS}
-      evaluators/MultiScaleStress.hpp
-      evaluators/MultiScaleStress_Def.hpp
-    )
-  ENDIF()
-
   #LCM utils
   SET(SOURCES ${SOURCES}
     utils/Geometry.cc
@@ -452,7 +429,6 @@ ENDIF(BUILD_SHARED_LIBS)
 
 
 #Linking tests
-IF (ALBANY_LCM)
   target_link_libraries(PartitionTest ${LCM_UT_LIBS} ${ALL_LIBRARIES})
   target_link_libraries(NodeUpdate ${LCM_UT_LIBS} ${ALL_LIBRARIES})
   target_link_libraries(Subdivision ${LCM_UT_LIBS} ${ALL_LIBRARIES})
@@ -461,5 +437,4 @@ IF (ALBANY_LCM)
   target_link_libraries(utLocalization ${LCM_UT_LIBS} ${ALL_LIBRARIES})
   target_link_libraries(utTensorUtils ${LCM_UT_LIBS} ${ALL_LIBRARIES})
   target_link_libraries(utProjection ${LCM_UT_LIBS} ${ALL_LIBRARIES})
-ENDIF ()
 

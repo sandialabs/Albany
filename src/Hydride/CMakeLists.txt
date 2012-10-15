@@ -24,6 +24,15 @@
     problems/HydrideProblem.hpp
     )
 
+IF(ALBANY_MPI)
+  SET(SOURCES ${SOURCES}
+    problems/MesoScaleLinkProblem.cpp
+  )
+  SET(HEADERS ${HEADERS}
+    problems/MesoScaleLinkProblem.hpp
+  )
+ENDIF()
+
 # evaluators
   SET(SOURCES ${SOURCES}
     evaluators/HydrideCResid.cpp
@@ -44,6 +53,17 @@
     evaluators/HydrideStressTerm.hpp
     evaluators/HydrideStressTerm_Def.hpp
     )
+
+IF(ALBANY_MPI)
+  SET(SOURCES ${SOURCES}
+    evaluators/MultiScaleStress.cpp
+  )
+  SET(HEADERS ${HEADERS}
+    evaluators/MultiScaleStress.hpp
+    evaluators/MultiScaleStress_Def.hpp
+  )
+ENDIF()
+
 
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
                      ${Albany_SOURCE_DIR}/src ${Albany_SOURCE_DIR}/src/evaluators 
