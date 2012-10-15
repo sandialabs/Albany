@@ -246,9 +246,9 @@ evaluateResponse(const double current_time,
       out.open(outputFilename.c_str(), std::fstream::out | std::fstream::app);
       out << std::endl << std::endl << "# Final points" << std::endl;
       for(std::size_t i=0; i<finalPts.size(); i++) {
+	//std::cout << "DEBUG printing pt " << i << " of " << finalPts.size() << std::endl;
 	out << i << " " << finalPts[i].coords[0] << " " << finalPts[i].coords[1] 
 	    << " " << finalPts[i].value << " " << pathLength << " " << finalPts[i].radius << std::endl;
-	std::cout << "DEBUG printing pt " << i << " of " << finalPts.size() << std::endl;
 	if(i < (finalPts.size()-1)) pathLength += finalPts[i].coords.distanceTo(finalPts[i+1].coords);
       }
       out.close();
@@ -410,14 +410,19 @@ initializeFinalImagePoints(const double current_time,
   
   double* segmentLength = new double[nImagePts-1]; // segmentLength[i] == distance between imagePt[i] and imagePt[i+1]
   double lengthBefore = 0.0, lengthAfter = 0.0;    // path length before and after saddle point
+  double radius = 0.0;
   int nPtsBefore = 0, nPtsAfter = 0, nFinalPts;
 
   // Get the distances along each leg of the current (final) saddle path
   for(std::size_t i=0; i<nImagePts-1; i++) {
     segmentLength[i] = imagePts[i].coords.distanceTo(imagePts[i+1].coords);
+    radius += imagePts[i].radius;
     if( (int)i < iSaddlePt ) lengthBefore += segmentLength[i];
     else lengthAfter += segmentLength[i];
   }
+
+  radius += imagePts[nImagePts-1].radius;
+  radius /= nImagePts;  // average radius
 
   // We'd like to put equal number of final points on each side of the saddle point.  Compute here how 
   //  many final points (fixed spacing) will lie on each side of the saddle point.
@@ -435,7 +440,7 @@ initializeFinalImagePoints(const double current_time,
     nPtsAfter  = int(lengthAfter  / ptSpacing);
   }
 
-  nFinalPts = nPtsBefore + nPtsAfter;
+  nFinalPts = nPtsBefore + nPtsAfter + 1; // one extra for "on/at" saddle point
   finalPts.resize(nFinalPts);
   finalPtValues.resize(nFinalPts);
   finalPtWeights.resize(nFinalPts);
@@ -453,11 +458,17 @@ initializeFinalImagePoints(const double current_time,
     double leftover = (segmentLength[i]-offset) - ptSpacing * nPts;
 
     for(int j=0; j<nPts && iCurFinalPt >= 0; j++) {
-      finalPts[iCurFinalPt].init(initialPt + v * (ptSpacing * j + offset), (imagePts[i].radius + imagePts[i+1].radius)/2 );
+      //radius = (imagePts[i].radius + imagePts[i+1].radius)/2; // use average radius
+      finalPts[iCurFinalPt].init(initialPt + v * (ptSpacing * j + offset), radius );
       iCurFinalPt--;
     }
     offset = ptSpacing - leftover; //how much to advance the first point of the next segment
   }
+
+  //If there are any leftover points (at beginning), initialize them too
+  for(int j=0; j<=iCurFinalPt; j++) 
+    finalPts[j].init(imagePts[0].coords, imagePts[0].radius);
+
 
   offset = ptSpacing;  //start initial point *after* saddle point this time
   iCurFinalPt = nPtsBefore+1;
@@ -468,8 +479,9 @@ initializeFinalImagePoints(const double current_time,
     int nPts = int((segmentLength[i]-offset) / ptSpacing);
     double leftover = (segmentLength[i]-offset) - ptSpacing * nPts;
 
-    for(int j=0; j<nPts && iCurFinalPt < nFinalPts; j++) {
-      finalPts[iCurFinalPt].init(initialPt + v * (ptSpacing * j + offset), (imagePts[i].radius + imagePts[i+1].radius)/2 );
+    for(int j=0; j<nPts && iCurFinalPt < nFinalPts; j++) {;
+      // radius = (imagePts[i].radius + imagePts[i+1].radius)/2; // use average radius
+      finalPts[iCurFinalPt].init(initialPt + v * (ptSpacing * j + offset), radius );
       iCurFinalPt++;
     }
     offset = ptSpacing - leftover; //how much to advance the first point of the next segment

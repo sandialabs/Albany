@@ -91,7 +91,7 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
   }
 
   bReturnImagPart = plist->get<bool>("Return Imaginary Part",false);
-  std::cout << "DEBUG RETURN: Return Im Part = " << bReturnImagPart << std::endl;
+  //std::cout << "DEBUG RETURN: Return Im Part = " << bReturnImagPart << std::endl;
 
   bQuantumEBsOnly = plist->get<bool>("Quantum Element Blocks Only",false);
 
@@ -222,7 +222,7 @@ evaluateFields(typename Traits::EvalData workset)
        std::find(ebNames.begin(), ebNames.end(), workset.EBName) != ebNames.end()) &&
       (bQuantumEBsOnly == false || bQuantumEB == true) ) {
 
-    ScalarT term, val, dbI = 0.0;
+    ScalarT term, val; //, dbI = 0.0;
     std::size_t n, max, nExtraMinuses, nOneBits, nBits = fields.size();
 
     //DEBUG
