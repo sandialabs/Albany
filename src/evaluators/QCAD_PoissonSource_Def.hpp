@@ -86,7 +86,7 @@ PoissonSource(Teuchos::ParameterList& p,
     {
       double dbcValue = dbcPList.get<double>(dbcName); 
       mapDBCValue[ebName] = dbcValue;
-      std::cout << "ebName = " << ebName << ", value = " << mapDBCValue[ebName] << std::endl;  
+      //std::cout << "ebName = " << ebName << ", value = " << mapDBCValue[ebName] << std::endl;  
     }
   }
 
