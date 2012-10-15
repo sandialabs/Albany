@@ -39,7 +39,7 @@ class DOFVecInterpolation : public PHX::EvaluatorWithBaseImpl<Traits>,
 public:
 
   DOFVecInterpolation(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
+                      const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);

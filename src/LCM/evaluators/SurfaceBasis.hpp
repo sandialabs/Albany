@@ -23,6 +23,8 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
+#include "Albany_Layouts.hpp"
+
 #include "Intrepid_CellTools.hpp"
 #include "Intrepid_Cubature.hpp"
 
@@ -35,13 +37,14 @@ namespace LCM {
 
 template<typename EvalT, typename Traits>
 class SurfaceBasis : public PHX::EvaluatorWithBaseImpl<Traits>,
-                        public PHX::EvaluatorDerived<EvalT, Traits>  {
+                     public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
   typedef typename EvalT::ScalarT ScalarT;
   typedef Intrepid::FieldContainer<ScalarT> FC;
 
-  SurfaceBasis(const Teuchos::ParameterList& p);
+  SurfaceBasis(const Teuchos::ParameterList& p,
+               const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
 			     PHX::FieldManager<Traits>& vm);

@@ -25,10 +25,12 @@
 #include "Intrepid_CellTools.hpp"
 #include "Intrepid_Cubature.hpp"
 
+#include "Albany_Layouts.hpp"
+
 namespace LCM {
 /** \brief
 
-    Compute the current coordinates
+    Construct a deformation gradient on a surface
 
 **/
 
@@ -38,7 +40,8 @@ class SurfaceVectorGradient : public PHX::EvaluatorWithBaseImpl<Traits>,
 
 public:
 
-  SurfaceVectorGradient(const Teuchos::ParameterList& p);
+  SurfaceVectorGradient(const Teuchos::ParameterList& p,
+                        const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
 			     PHX::FieldManager<Traits>& vm);

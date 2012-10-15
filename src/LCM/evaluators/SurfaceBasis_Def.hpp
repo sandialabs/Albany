@@ -25,22 +25,16 @@ namespace LCM {
 
 //----------------------------------------------------------------------
   template<typename EvalT, typename Traits>
-  SurfaceBasis<EvalT, Traits>::SurfaceBasis(const Teuchos::ParameterList& p) :
-      needCurrentBasis(false), referenceCoords(
-          p.get<std::string>("Reference Coordinates Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout")), cubature(
-          p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")), intrepidBasis(
-          p.get<
-              Teuchos::RCP<
-                  Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >(
-              "Intrepid Basis")), cellType(
-          p.get<Teuchos::RCP<shards::CellTopology> >("Cell Type")), refArea(
-          p.get<std::string>("Reference Area Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), refDualBasis(
-          p.get<std::string>("Reference Dual Basis Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), refNormal(
-          p.get<std::string>("Reference Normal Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout"))
+  SurfaceBasis<EvalT, Traits>::SurfaceBasis(const Teuchos::ParameterList& p,
+                                            const Teuchos::RCP<Albany::Layouts>& dl) :
+      needCurrentBasis(false), 
+      referenceCoords(p.get<std::string>("Reference Coordinates Name"), dl->vertices_vector),
+      cubature       (p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")), 
+      intrepidBasis  (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis")), 
+      cellType       (p.get<Teuchos::RCP<shards::CellTopology> >("Cell Type")), 
+      refArea        (p.get<std::string>("Reference Area Name"), dl->qp_scalar),
+      refDualBasis   (p.get<std::string>("Reference Dual Basis Name"), dl->qp_tensor),
+      refNormal      (p.get<std::string>("Reference Normal Name"), dl->qp_vector)
   {
     this->addDependentField(referenceCoords);
     this->addEvaluatedField(refArea);
@@ -53,10 +47,8 @@ namespace LCM {
       needCurrentBasis = true;
 
       // grab the current coords
-      Teuchos::RCP<PHX::DataLayout> coord_dl = p.get<
-          Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout");
-      PHX::MDField<ScalarT, Cell, Vertex, Dim> tmp(
-          p.get<string>("Current Coordinates Name"), coord_dl);
+      Teuchos::RCP<PHX::DataLayout> coord_dl = p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout");
+      PHX::MDField<ScalarT, Cell, Vertex, Dim> tmp(p.get<string>("Current Coordinates Name"), coord_dl);
       currentCoords = tmp;
 
       // set up the current basis

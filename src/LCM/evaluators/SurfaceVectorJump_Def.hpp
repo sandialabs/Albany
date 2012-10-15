@@ -23,16 +23,13 @@ namespace LCM {
 
 //**********************************************************************
   template<typename EvalT, typename Traits>
-  SurfaceVectorJump<EvalT, Traits>::SurfaceVectorJump(
-      const Teuchos::ParameterList& p) :
-      cubature(p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")), intrepidBasis(
-          p.get<
-              Teuchos::RCP<
-                  Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >(
-              "Intrepid Basis")), vector(p.get<std::string>("Vector Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout")), jump(
-          p.get<std::string>("Jump Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout"))
+  SurfaceVectorJump<EvalT, Traits>::
+  SurfaceVectorJump(const Teuchos::ParameterList& p,
+                    const Teuchos::RCP<Albany::Layouts>& dl) :
+      cubature     (p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")), 
+      intrepidBasis(p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis")), 
+      vector       (p.get<std::string>("Vector Name"),dl->node_vector),
+      jump         (p.get<std::string>("Vector Jump Name"),dl->qp_vector)
   {
     this->addDependentField(vector);
 

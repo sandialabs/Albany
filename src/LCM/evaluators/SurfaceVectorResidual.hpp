@@ -15,8 +15,8 @@
 \********************************************************************/
 
 
-#ifndef SURFACEVECTORJUMP_HPP
-#define SURFACEVECTORJUMP_HPP
+#ifndef SURFACE_VECTOR_RESIDUAL_HPP
+#define SURFACE_VECTOR_RESIDUALHPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -30,18 +30,18 @@
 namespace LCM {
 /** \brief
 
-    Compute the jump of a vector on a midplane surface
+    Compute the residual forces on a surface
 
 **/
 
 template<typename EvalT, typename Traits>
-class SurfaceVectorJump : public PHX::EvaluatorWithBaseImpl<Traits>,
-                          public PHX::EvaluatorDerived<EvalT, Traits>  {
+class SurfaceVectorResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
+                              public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
-  SurfaceVectorJump(const Teuchos::ParameterList& p,
-                    const Teuchos::RCP<Albany::Layouts>& dl);
+  SurfaceVectorResidual(const Teuchos::ParameterList& p,
+                        const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
 			     PHX::FieldManager<Traits>& vm);
@@ -54,21 +54,33 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
+  //! Length scale parameter for localization zone
+  ScalarT thickness;
   //! Numerical integration rule
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
   //! Finite element basis for the midplane
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
-  //! Vector to take the jump of
-  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> vector;
+  //! Deformation Gradient
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> defGrad;
+  //! Cauchy Stress
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> stress;
+  //! Current configuration basis
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> currentBasis;
+  //! Reference configuration dual basis
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> refDualBasis;
+  //! Reference configuration normal
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> refNormal;
+  //! Reference configuration normal
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> refArea;
 
-  // Reference Cell FieldContainers
+  //! Reference Cell FieldContainers
   Intrepid::FieldContainer<RealType> refValues;
   Intrepid::FieldContainer<RealType> refGrads;
   Intrepid::FieldContainer<RealType> refPoints;
   Intrepid::FieldContainer<RealType> refWeights;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> jump;
+  PHX::MDField<ScalarT,Cell,Node,Dim> force;
 
   unsigned int worksetSize;
   unsigned int numNodes;

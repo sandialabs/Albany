@@ -26,7 +26,7 @@ namespace PHAL {
 template<typename EvalT, typename Traits>
 DOFVecInterpolation<EvalT, Traits>::
 DOFVecInterpolation(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl) :
+                    const Teuchos::RCP<Albany::Layouts>& dl) :
   val_node    (p.get<std::string>  ("Variable Name"), dl->node_vector),
   BF          (p.get<std::string>  ("BF Name"),  dl->node_qp_scalar),
   val_qp      (p.get<std::string>  ("Variable Name"), dl->qp_vector)
