@@ -20,16 +20,14 @@
 
 #ifdef ALBANY_MPI
 #include "Teuchos_TypeNameTraits.hpp"
+#include "Teuchos_OpaqueWrapper.hpp"
 
-#ifndef MPICH2
-// MPICH2 #defines MPI_Comm as int, which conflicts with existing definition of class Teuchos::TypeNameTraits<int> in Teuchos
 namespace Teuchos {
 // Provide an explicit template specialization for the opaque type MPI_Comm
 // so that the instantiation of Teuchos::RCP<MPI_Comm> objects compiles correctly in debug mode
 // without relying on the implementation details of the MPI library.
-  TEUCHOS_TYPE_NAME_TRAITS_BUILTIN_TYPE_SPECIALIZATION(MPI_Comm);
+  TEUCHOS_TYPE_NAME_TRAITS_BUILTIN_TYPE_SPECIALIZATION( OpaqueWrapper<MPI_Comm> );
 } // namespace Teuchos
-#endif /* MPICH2 */
 #endif /* ALBANY_MPI */
 
 Albany::MesoScaleLinkProblem::

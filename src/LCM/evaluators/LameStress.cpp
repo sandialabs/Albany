@@ -21,4 +21,5 @@
 #include "LameStress_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::LameStress)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::LameStressBase)
 

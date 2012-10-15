@@ -181,6 +181,18 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+  else if(svResponseFn->getMode() == "Collect final image point data") {
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      getAvgCellCoordinates(coordVec, cell, dblAvgCoords, dblMaxZ);
+
+      if(svResponseFn->pointIsInImagePtRegion(dblAvgCoords, dblMaxZ)) {	
+	getCellQuantities(cell, cellVol, fieldVal, retFieldVal, fieldGrad);
+
+	dblFieldVal = QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue(fieldVal);
+	svResponseFn->addFinalImagePointData(dblAvgCoords, dblFieldVal);
+      }
+    }
+  }
   else if(svResponseFn->getMode() == "Accumulate all field data") {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       getAvgCellCoordinates(coordVec, cell, dblAvgCoords, dblMaxZ);
@@ -341,6 +353,9 @@ QCAD::ResponseSaddleValue<EvalT,Traits>::getValidResponseParameters() const
   validPL->set<double>("z min", 0.0, "Domain minimum z coordinate");
   validPL->set<double>("z max", 0.0, "Domain maximum z coordinate");
   validPL->set<double>("Lock to z-coord", 0.0, "z-coordinate to lock elastic band to, making a 3D problem into 2D");
+
+  validPL->set<int>("Maximum Number of Final Points", 0, "Maximum number of final points to use.  Zero indicates no final points are used and data is just returned at image points.");
+  validPL->set<double>("Final Point Spacing", 1.0, "Spacing between final points (if they're used) - given in mesh units");
 
   validPL->set<Teuchos::Array<double> >("Begin Point", Teuchos::Array<double>(), "Beginning point of elastic band");
   validPL->set<string>("Begin Element Block", "", "Element block name whose minimum marks the elastic band's beginning");

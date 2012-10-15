@@ -373,418 +373,6 @@ SET(HEADERS ${HEADERS}
   ${MOR_DIR}/Albany_Hdf5MVOutputFile.hpp
 )
 
-# HYDRIDE
-IF(ALBANY_HYDRIDE)
-  SET(HYDRIDE_DIR ${Albany_SOURCE_DIR}/src/Hydride)
-
-# problems
-  SET(SOURCES ${SOURCES}
-    ${HYDRIDE_DIR}/problems/HydrideProblem.cpp
-    )
-  SET(HEADERS ${HEADERS} 
-    ${HYDRIDE_DIR}/problems/HydrideProblem.hpp
-    )
-
-# evaluators
-  SET(SOURCES ${SOURCES}
-    ${HYDRIDE_DIR}/evaluators/HydrideCResid.cpp
-    ${HYDRIDE_DIR}/evaluators/HydrideWResid.cpp
-    ${HYDRIDE_DIR}/evaluators/HydrideChemTerm.cpp
-    ${HYDRIDE_DIR}/evaluators/HydrideStress.cpp
-    ${HYDRIDE_DIR}/evaluators/HydrideStressTerm.cpp
-    )
-  SET(HEADERS ${HEADERS} 
-    ${HYDRIDE_DIR}/evaluators/HydrideCResid.hpp
-    ${HYDRIDE_DIR}/evaluators/HydrideCResid_Def.hpp
-    ${HYDRIDE_DIR}/evaluators/HydrideWResid.hpp
-    ${HYDRIDE_DIR}/evaluators/HydrideWResid_Def.hpp
-    ${HYDRIDE_DIR}/evaluators/HydrideChemTerm.hpp
-    ${HYDRIDE_DIR}/evaluators/HydrideChemTerm_Def.hpp
-    ${HYDRIDE_DIR}/evaluators/HydrideStress.hpp
-    ${HYDRIDE_DIR}/evaluators/HydrideStress_Def.hpp
-    ${HYDRIDE_DIR}/evaluators/HydrideStressTerm.hpp
-    ${HYDRIDE_DIR}/evaluators/HydrideStressTerm_Def.hpp
-    )
-ENDIF()
-
-# LCM
-IF(ALBANY_LCM)
-  SET(LCM_DIR ${Albany_SOURCE_DIR}/src/LCM)
-
-  # LCM problems
-  SET(SOURCES ${SOURCES}
-    ${LCM_DIR}/problems/ElasticityProblem.cpp
-    ${LCM_DIR}/problems/NonlinearElasticityProblem.cpp
-    ${LCM_DIR}/problems/MechanicsProblem.cpp
-    ${LCM_DIR}/problems/ThermoElasticityProblem.cpp
-    ${LCM_DIR}/problems/GradientDamageProblem.cpp
-    ${LCM_DIR}/problems/PoroElasticityProblem.cpp
-    ${LCM_DIR}/problems/UnSatPoroElasticityProblem.cpp
-    ${LCM_DIR}/problems/TLPoroPlasticityProblem.cpp
-    ${LCM_DIR}/problems/ThermoPoroPlasticityProblem.cpp
-    ${LCM_DIR}/problems/ThermoMechanicalProblem.cpp
-    ${LCM_DIR}/problems/HDiffusionDeformationProblem.cpp
-    ${LCM_DIR}/problems/ProjectionProblem.cpp
-  )
-  IF(ALBANY_MPI)
-    SET(SOURCES ${SOURCES}
-      ${LCM_DIR}/problems/MesoScaleLinkProblem.cpp
-    )
-  ENDIF()
-
-  SET(HEADERS ${HEADERS}
-    ${LCM_DIR}/problems/ElasticityProblem.hpp
-    ${LCM_DIR}/problems/NonlinearElasticityProblem.hpp
-    ${LCM_DIR}/problems/MechanicsProblem.hpp
-    ${LCM_DIR}/problems/ThermoElasticityProblem.hpp
-    ${LCM_DIR}/problems/GradientDamageProblem.hpp
-    ${LCM_DIR}/problems/PoroElasticityProblem.hpp
-    ${LCM_DIR}/problems/UnSatPoroElasticityProblem.hpp
-    ${LCM_DIR}/problems/TLPoroPlasticityProblem.hpp
-    ${LCM_DIR}/problems/ThermoPoroPlasticityProblem.hpp
-    ${LCM_DIR}/problems/ThermoMechanicalProblem.hpp
-    ${LCM_DIR}/problems/HDiffusionDeformationProblem.hpp
-    ${LCM_DIR}/problems/ProjectionProblem.hpp
-  )
-  IF(ALBANY_MPI)
-    SET(HEADERS ${HEADERS}
-      ${LCM_DIR}/problems/MesoScaleLinkProblem.hpp
-    )
-  ENDIF()
-
-  # LCM evaluators
-  SET(SOURCES ${SOURCES}
-    ${LCM_DIR}/evaluators/Stress.cpp
-    ${LCM_DIR}/evaluators/CapModelStress.cpp
-    ${LCM_DIR}/evaluators/CapImplicit.cpp
-    ${LCM_DIR}/evaluators/GursonSDStress.cpp
-    ${LCM_DIR}/evaluators/GursonFD.cpp
-    ${LCM_DIR}/evaluators/J2Fiber.cpp
-    ${LCM_DIR}/evaluators/Strain.cpp
-    ${LCM_DIR}/evaluators/ElasticModulus.cpp
-    ${LCM_DIR}/evaluators/PoissonsRatio.cpp
-    ${LCM_DIR}/evaluators/DefGrad.cpp
-    ${LCM_DIR}/evaluators/Neohookean.cpp
-    ${LCM_DIR}/evaluators/J2Stress.cpp
-    ${LCM_DIR}/evaluators/ElasticityResid.cpp
-    ${LCM_DIR}/evaluators/TLElasResid.cpp
-    ${LCM_DIR}/evaluators/EnergyPotential.cpp
-    ${LCM_DIR}/evaluators/HardeningModulus.cpp
-    ${LCM_DIR}/evaluators/YieldStrength.cpp
-    ${LCM_DIR}/evaluators/PisdWdF.cpp
-    ${LCM_DIR}/evaluators/DamageResid.cpp
-    ${LCM_DIR}/evaluators/J2Damage.cpp
-    ${LCM_DIR}/evaluators/DamageLS.cpp
-    ${LCM_DIR}/evaluators/SaturationModulus.cpp
-    ${LCM_DIR}/evaluators/SaturationExponent.cpp
-    ${LCM_DIR}/evaluators/Localization.cpp
-    ${LCM_DIR}/evaluators/SurfaceBasis.cpp
-    ${LCM_DIR}/evaluators/SurfaceVectorJump.cpp
-    ${LCM_DIR}/evaluators/SurfaceScalarJump.cpp
-    ${LCM_DIR}/evaluators/CurrentCoords.cpp
-    ${LCM_DIR}/evaluators/DamageSource.cpp
-    ${LCM_DIR}/evaluators/BulkModulus.cpp
-    ${LCM_DIR}/evaluators/ShearModulus.cpp
-    ${LCM_DIR}/evaluators/KfieldBC.cpp
-    ${LCM_DIR}/evaluators/TorsionBC.cpp
-    ${LCM_DIR}/evaluators/DislocationDensity.cpp
-    ${LCM_DIR}/evaluators/TotalStress.cpp
-    ${LCM_DIR}/evaluators/BiotCoefficient.cpp
-    ${LCM_DIR}/evaluators/BiotModulus.cpp
-    ${LCM_DIR}/evaluators/PoroElasticityResidMomentum.cpp
-    ${LCM_DIR}/evaluators/PoroElasticityResidMass.cpp
-    ${LCM_DIR}/evaluators/UnSatPoroElasticityResidMass.cpp
-    ${LCM_DIR}/evaluators/TLPoroPlasticityResidMomentum.cpp
-    ${LCM_DIR}/evaluators/TLPoroPlasticityResidMass.cpp
-    ${LCM_DIR}/evaluators/TLPoroStress.cpp
-    ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidMomentum.cpp
-    ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidMass.cpp
-    ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidEnergy.cpp
-    ${LCM_DIR}/evaluators/Porosity.cpp
-    ${LCM_DIR}/evaluators/KCPermeability.cpp
-    ${LCM_DIR}/evaluators/VanGenuchtenPermeability.cpp
-    ${LCM_DIR}/evaluators/VanGenuchtenSaturation.cpp
-    ${LCM_DIR}/evaluators/ThermoMechanicalEnergyResidual.cpp
-    ${LCM_DIR}/evaluators/ThermoMechanicalMomentumResidual.cpp
-    ${LCM_DIR}/evaluators/ThermoMechanicalStress.cpp
-    ${LCM_DIR}/evaluators/Time.cpp
-    ${LCM_DIR}/evaluators/TimeDepBC.cpp
-    ${LCM_DIR}/evaluators/TimeTracBC.cpp
-    ${LCM_DIR}/evaluators/DiffusionCoefficient.cpp
-    ${LCM_DIR}/evaluators/EffectiveDiffusivity.cpp
-    ${LCM_DIR}/evaluators/EquilibriumConstant.cpp
-    ${LCM_DIR}/evaluators/TrappedSolvent.cpp
-    ${LCM_DIR}/evaluators/TrappedConcentration.cpp
-    ${LCM_DIR}/evaluators/TotalConcentration.cpp
-    ${LCM_DIR}/evaluators/HDiffusionDeformationMatterResidual.cpp
-    ${LCM_DIR}/evaluators/ScalarL2ProjectionResidual.cpp
-    ${LCM_DIR}/evaluators/L2ProjectionResidual.cpp
-    ${LCM_DIR}/evaluators/TauContribution.cpp
-    ${LCM_DIR}/evaluators/StrainRateFactor.cpp
-    ${LCM_DIR}/evaluators/MixtureThermalExpansion.cpp
-    ${LCM_DIR}/evaluators/MixtureSpecificHeat.cpp
-    ${LCM_DIR}/evaluators/StabParameter.cpp
-    ${LCM_DIR}/evaluators/GradientElementLength.cpp
-    ${LCM_DIR}/evaluators/UnitGradient.cpp
-    ${LCM_DIR}/evaluators/SetField.cpp
-    ${LCM_DIR}/evaluators/AssumedStrain.cpp
-    ${LCM_DIR}/evaluators/QptLocation.cpp
-    ${LCM_DIR}/evaluators/MooneyRivlin.cpp
-    ${LCM_DIR}/evaluators/MooneyRivlinDamage.cpp
-    ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible.cpp
-    ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible_Damage.cpp
-    ${LCM_DIR}/evaluators/RIHMR.cpp
-    ${LCM_DIR}/evaluators/GursonHMR.cpp
-    ${LCM_DIR}/evaluators/RecoveryModulus.cpp
-    ${LCM_DIR}/evaluators/FaceFractureCriteria.cpp
-    ${LCM_DIR}/evaluators/FaceAverage.cpp
-    ${LCM_DIR}/evaluators/AAA.cpp
-    ${LCM_DIR}/evaluators/LatticeDefGrad.cpp
-  )
-
-  IF(ALBANY_MPI)
-    SET(SOURCES ${SOURCES}
-      ${LCM_DIR}/evaluators/MultiScaleStress.cpp
-    )
-  ENDIF()
-
-  SET(HEADERS ${HEADERS}
-    ${LCM_DIR}/evaluators/Stress.hpp
-    ${LCM_DIR}/evaluators/Stress_Def.hpp
-    ${LCM_DIR}/evaluators/CapModelStress.hpp
-    ${LCM_DIR}/evaluators/CapModelStress_Def.hpp
-    ${LCM_DIR}/evaluators/CapImplicit.hpp
-    ${LCM_DIR}/evaluators/CapImplicit_Def.hpp
-    ${LCM_DIR}/evaluators/GursonSDStress.hpp
-    ${LCM_DIR}/evaluators/GursonSDStress_Def.hpp
-    ${LCM_DIR}/evaluators/GursonFD.hpp
-    ${LCM_DIR}/evaluators/GursonFD_Def.hpp
-    ${LCM_DIR}/evaluators/J2Fiber.hpp
-    ${LCM_DIR}/evaluators/J2Fiber_Def.hpp
-    ${LCM_DIR}/evaluators/Strain.hpp
-    ${LCM_DIR}/evaluators/Strain_Def.hpp
-    ${LCM_DIR}/evaluators/ElasticModulus.hpp
-    ${LCM_DIR}/evaluators/ElasticModulus_Def.hpp
-    ${LCM_DIR}/evaluators/PoissonsRatio.hpp
-    ${LCM_DIR}/evaluators/PoissonsRatio_Def.hpp
-    ${LCM_DIR}/evaluators/DefGrad.hpp
-    ${LCM_DIR}/evaluators/DefGrad_Def.hpp
-    ${LCM_DIR}/evaluators/Neohookean.hpp
-    ${LCM_DIR}/evaluators/Neohookean_Def.hpp
-    ${LCM_DIR}/evaluators/J2Stress.hpp
-    ${LCM_DIR}/evaluators/J2Stress_Def.hpp
-    ${LCM_DIR}/evaluators/ElasticityResid.hpp
-    ${LCM_DIR}/evaluators/ElasticityResid_Def.hpp
-    ${LCM_DIR}/evaluators/TLElasResid.hpp
-    ${LCM_DIR}/evaluators/TLElasResid_Def.hpp
-    ${LCM_DIR}/evaluators/EnergyPotential.hpp
-    ${LCM_DIR}/evaluators/EnergyPotential_Def.hpp
-    ${LCM_DIR}/evaluators/HardeningModulus.hpp
-    ${LCM_DIR}/evaluators/HardeningModulus_Def.hpp
-    ${LCM_DIR}/evaluators/YieldStrength.hpp
-    ${LCM_DIR}/evaluators/YieldStrength_Def.hpp
-    ${LCM_DIR}/evaluators/PisdWdF.hpp
-    ${LCM_DIR}/evaluators/PisdWdF_Def.hpp
-    ${LCM_DIR}/evaluators/DamageResid.hpp
-    ${LCM_DIR}/evaluators/DamageResid_Def.hpp
-    ${LCM_DIR}/evaluators/J2Damage.hpp
-    ${LCM_DIR}/evaluators/J2Damage_Def.hpp
-    ${LCM_DIR}/evaluators/DamageLS.hpp
-    ${LCM_DIR}/evaluators/DamageLS_Def.hpp
-    ${LCM_DIR}/evaluators/SaturationModulus.hpp
-    ${LCM_DIR}/evaluators/SaturationModulus_Def.hpp
-    ${LCM_DIR}/evaluators/SaturationExponent.hpp
-    ${LCM_DIR}/evaluators/SaturationExponent_Def.hpp
-    ${LCM_DIR}/evaluators/Localization.hpp
-    ${LCM_DIR}/evaluators/Localization_Def.hpp
-    ${LCM_DIR}/evaluators/SurfaceBasis.hpp
-    ${LCM_DIR}/evaluators/SurfaceBasis_Def.hpp
-    ${LCM_DIR}/evaluators/SurfaceScalarJump.hpp
-    ${LCM_DIR}/evaluators/SurfaceScalarJump_Def.hpp
-    ${LCM_DIR}/evaluators/SurfaceVectorJump.hpp
-    ${LCM_DIR}/evaluators/SurfaceVectorJump_Def.hpp
-    ${LCM_DIR}/evaluators/CurrentCoords.hpp
-    ${LCM_DIR}/evaluators/CurrentCoords_Def.hpp
-    ${LCM_DIR}/evaluators/DamageSource.hpp
-    ${LCM_DIR}/evaluators/DamageSource_Def.hpp
-    ${LCM_DIR}/evaluators/BulkModulus.hpp
-    ${LCM_DIR}/evaluators/BulkModulus_Def.hpp
-    ${LCM_DIR}/evaluators/ShearModulus.hpp
-    ${LCM_DIR}/evaluators/ShearModulus_Def.hpp
-    ${LCM_DIR}/evaluators/KfieldBC.hpp
-    ${LCM_DIR}/evaluators/KfieldBC_Def.hpp
-    ${LCM_DIR}/evaluators/TorsionBC.hpp
-    ${LCM_DIR}/evaluators/TorsionBC_Def.hpp
-    ${LCM_DIR}/evaluators/DislocationDensity.hpp
-    ${LCM_DIR}/evaluators/DislocationDensity_Def.hpp
-    ${LCM_DIR}/evaluators/TotalStress.hpp
-    ${LCM_DIR}/evaluators/TotalStress_Def.hpp
-    ${LCM_DIR}/evaluators/TLPoroStress.hpp
-    ${LCM_DIR}/evaluators/TLPoroStress_Def.hpp
-    ${LCM_DIR}/evaluators/BiotCoefficient.hpp
-    ${LCM_DIR}/evaluators/BiotCoefficient_Def.hpp
-    ${LCM_DIR}/evaluators/BiotModulus.hpp
-    ${LCM_DIR}/evaluators/BiotModulus_Def.hpp
-    ${LCM_DIR}/evaluators/PoroElasticityResidMomentum.hpp
-    ${LCM_DIR}/evaluators/PoroElasticityResidMomentum_Def.hpp
-    ${LCM_DIR}/evaluators/PoroElasticityResidMass.hpp
-    ${LCM_DIR}/evaluators/PoroElasticityResidMass_Def.hpp
-    ${LCM_DIR}/evaluators/UnSatPoroElasticityResidMass.hpp
-    ${LCM_DIR}/evaluators/UnSatPoroElasticityResidMass_Def.hpp
-    ${LCM_DIR}/evaluators/TLPoroPlasticityResidMomentum.hpp
-    ${LCM_DIR}/evaluators/TLPoroPlasticityResidMomentum_Def.hpp
-    ${LCM_DIR}/evaluators/TLPoroPlasticityResidMass.hpp
-    ${LCM_DIR}/evaluators/TLPoroPlasticityResidMass_Def.hpp
-    ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidMomentum.hpp
-    ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidMomentum_Def.hpp
-    ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidMass.hpp
-    ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidMass_Def.hpp
-    ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidEnergy.hpp
-    ${LCM_DIR}/evaluators/ThermoPoroPlasticityResidEnergy_Def.hpp
-    ${LCM_DIR}/evaluators/Porosity.hpp
-    ${LCM_DIR}/evaluators/Porosity_Def.hpp
-    ${LCM_DIR}/evaluators/KCPermeability.hpp
-    ${LCM_DIR}/evaluators/KCPermeability_Def.hpp
-    ${LCM_DIR}/evaluators/VanGenuchtenPermeability.hpp
-    ${LCM_DIR}/evaluators/VanGenuchtenPermeability_Def.hpp
-    ${LCM_DIR}/evaluators/VanGenuchtenSaturation.hpp
-    ${LCM_DIR}/evaluators/VanGenuchtenSaturation_Def.hpp
-    ${LCM_DIR}/evaluators/ThermoMechanicalEnergyResidual.hpp
-    ${LCM_DIR}/evaluators/ThermoMechanicalEnergyResidual_Def.hpp
-    ${LCM_DIR}/evaluators/ThermoMechanicalMomentumResidual.hpp
-    ${LCM_DIR}/evaluators/ThermoMechanicalMomentumResidual_Def.hpp
-    ${LCM_DIR}/evaluators/ThermoMechanicalStress.hpp
-    ${LCM_DIR}/evaluators/ThermoMechanicalStress_Def.hpp
-    ${LCM_DIR}/evaluators/Time.hpp
-    ${LCM_DIR}/evaluators/Time_Def.hpp
-    ${LCM_DIR}/evaluators/TimeDepBC.hpp
-    ${LCM_DIR}/evaluators/TimeDepBC_Def.hpp
-    ${LCM_DIR}/evaluators/TimeTracBC.hpp
-    ${LCM_DIR}/evaluators/TimeTracBC_Def.hpp
-    ${LCM_DIR}/evaluators/DiffusionCoefficient.hpp
-    ${LCM_DIR}/evaluators/DiffusionCoefficient_Def.hpp
-    ${LCM_DIR}/evaluators/EquilibriumConstant.hpp
-    ${LCM_DIR}/evaluators/EquilibriumConstant_Def.hpp
-    ${LCM_DIR}/evaluators/TrappedSolvent.hpp
-    ${LCM_DIR}/evaluators/TrappedSolvent_Def.hpp
-    ${LCM_DIR}/evaluators/EffectiveDiffusivity.hpp
-    ${LCM_DIR}/evaluators/EffectiveDiffusivity_Def.hpp
-    ${LCM_DIR}/evaluators/TrappedConcentration.hpp
-    ${LCM_DIR}/evaluators/TrappedConcentration_Def.hpp
-    ${LCM_DIR}/evaluators/TotalConcentration.hpp
-    ${LCM_DIR}/evaluators/TotalConcentration_Def.hpp
-    ${LCM_DIR}/evaluators/HDiffusionDeformationMatterResidual.hpp
-    ${LCM_DIR}/evaluators/HDiffusionDeformationMatterResidual_Def.hpp
-    ${LCM_DIR}/evaluators/ScalarL2ProjectionResidual.hpp
-    ${LCM_DIR}/evaluators/ScalarL2ProjectionResidual_Def.hpp
-    ${LCM_DIR}/evaluators/L2ProjectionResidual.hpp
-    ${LCM_DIR}/evaluators/L2ProjectionResidual_Def.hpp
-    ${LCM_DIR}/evaluators/StrainRateFactor.hpp
-    ${LCM_DIR}/evaluators/StrainRateFactor_Def.hpp
-    ${LCM_DIR}/evaluators/TauContribution.hpp
-    ${LCM_DIR}/evaluators/TauContribution_Def.hpp
-    ${LCM_DIR}/evaluators/MixtureThermalExpansion.hpp
-    ${LCM_DIR}/evaluators/MixtureThermalExpansion_Def.hpp
-    ${LCM_DIR}/evaluators/MixtureSpecificHeat.hpp
-    ${LCM_DIR}/evaluators/MixtureSpecificHeat_Def.hpp
-    ${LCM_DIR}/evaluators/StabParameter.hpp
-    ${LCM_DIR}/evaluators/StabParameter_Def.hpp
-    ${LCM_DIR}/evaluators/GradientElementLength.hpp
-    ${LCM_DIR}/evaluators/GradientElementLength_Def.hpp
-    ${LCM_DIR}/evaluators/UnitGradient.hpp
-    ${LCM_DIR}/evaluators/UnitGradient_Def.hpp
-    ${LCM_DIR}/evaluators/SetField.hpp
-    ${LCM_DIR}/evaluators/SetField_Def.hpp
-    ${LCM_DIR}/evaluators/AssumedStrain.hpp
-    ${LCM_DIR}/evaluators/AssumedStrain_Def.hpp
-    ${LCM_DIR}/evaluators/QptLocation.hpp
-    ${LCM_DIR}/evaluators/QptLocation_Def.hpp
-    ${LCM_DIR}/evaluators/MooneyRivlin.hpp
-    ${LCM_DIR}/evaluators/MooneyRivlin_Def.hpp
-    ${LCM_DIR}/evaluators/MooneyRivlinDamage.hpp
-    ${LCM_DIR}/evaluators/MooneyRivlinDamage_Def.hpp
-    ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible.hpp
-    ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible_Def.hpp
-    ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible_Damage.hpp
-    ${LCM_DIR}/evaluators/MooneyRivlin_Incompressible_Damage_Def.hpp
-    ${LCM_DIR}/evaluators/RIHMR.hpp
-    ${LCM_DIR}/evaluators/RIHMR_Def.hpp
-    ${LCM_DIR}/evaluators/GursonHMR.hpp
-    ${LCM_DIR}/evaluators/GursonHMR_Def.hpp
-    ${LCM_DIR}/evaluators/RecoveryModulus.hpp
-    ${LCM_DIR}/evaluators/RecoveryModulus_Def.hpp
-    ${LCM_DIR}/evaluators/FaceFractureCriteria.hpp
-    ${LCM_DIR}/evaluators/FaceFractureCriteria_Def.hpp
-    ${LCM_DIR}/evaluators/FaceAverage.hpp
-    ${LCM_DIR}/evaluators/FaceAverage_Def.hpp
-    ${LCM_DIR}/evaluators/AAA.hpp
-    ${LCM_DIR}/evaluators/AAA_Def.hpp
-    ${LCM_DIR}/evaluators/LatticeDefGrad.hpp
-    ${LCM_DIR}/evaluators/LatticeDefGrad_Def.hpp
- )
-
-  IF(ALBANY_MPI)
-    SET(HEADERS ${HEADERS}
-      ${LCM_DIR}/evaluators/MultiScaleStress.hpp
-      ${LCM_DIR}/evaluators/MultiScaleStress_Def.hpp
-    )
-  ENDIF()
-
-  #LCM utils
-  SET(SOURCES ${SOURCES}
-    ${LCM_DIR}/utils/Geometry.cc
-    ${LCM_DIR}/utils/FloatingPoint.cc
-    ${LCM_DIR}/utils/Partition.cc
-    ${LCM_DIR}/utils/BarycentricSubdivision.cc
-    ${LCM_DIR}/utils/Tensor.cc
-    ${LCM_DIR}/utils/Topology.cc
-    ${LCM_DIR}/utils/LocalNonlinearSolver.cc
-    ${LCM_DIR}/utils/Projection.cpp
-  )
-
-  SET(HEADERS ${HEADERS}
-    ${LCM_DIR}/utils/Geometry.h
-    ${LCM_DIR}/utils/FloatingPoint.h
-    ${LCM_DIR}/utils/Partition.h
-    ${LCM_DIR}/utils/Tensor.h
-    ${LCM_DIR}/utils/Topology.h
-    ${LCM_DIR}/utils/LocalNonlinearSolver.h
-    ${LCM_DIR}/utils/Projection.hpp
-  )
-
-IF(ALBANY_LAME OR ALBANY_LAMENT)
-  SET(SOURCES ${SOURCES}
-    ${LCM_DIR}/utils/LameUtils.cpp
-    ${LCM_DIR}/problems/LameProblem.cpp
-  )
-  SET(HEADERS ${HEADERS}
-    ${LCM_DIR}/utils/LameUtils.hpp
-    ${LCM_DIR}/problems/LameProblem.hpp
-  )
-ENDIF()
-
-IF(ALBANY_LAME)
-  SET(SOURCES ${SOURCES}
-    ${LCM_DIR}/evaluators/LameStress.cpp
-  )
-  SET(HEADERS ${HEADERS}
-    ${LCM_DIR}/evaluators/LameStress.hpp
-    ${LCM_DIR}/evaluators/LameStress_Def.hpp
-  )
-ENDIF()
-
-IF(ALBANY_LAMENT)
-  SET(SOURCES ${SOURCES}
-    ${LCM_DIR}/evaluators/LamentStress.cpp
-  )
-  SET(HEADERS ${HEADERS}
-    ${LCM_DIR}/evaluators/LamentStress.hpp
-    ${LCM_DIR}/evaluators/LamentStress_Def.hpp
-  )
-ENDIF()
-
-ENDIF()
-
 # FELIX
 IF(ALBANY_FELIX)
   SET(FELIX_DIR ${Albany_SOURCE_DIR}/src/FELIX)
@@ -957,11 +545,11 @@ SET(CUTR_HDRS
 
 set(ALB_TRILINOS_LIBS ${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES})
 
-include_directories (${Trilinos_INCLUDE_DIRS}
+include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
                      ./ ./evaluators ./problems ./responses ./stk
                      ./LCM/ ./LCM/evaluators ./LCM/utils ./FELIX/problems
                      ./FELIX/evaluators ./Hydride/problems ./Hydride/evaluators
-                     ${Trilinos_TPL_INCLUDE_DIRS})
+                    )
 
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
 
@@ -1003,7 +591,7 @@ if (ALBANY_ENABLE_CUBIT)
   MESSAGE("-- CUBIT is Enabled, compiling with -DALBANY_CUTR")
 endif (ALBANY_ENABLE_CUBIT)
 
-add_library(albanyLib ${SOURCES} ${HEADERS})
+add_library(albanyLib ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
 # Now build executables from this library, tailored main()s, and Trilinos
 
 add_executable(Albany Main_Solve.cpp)
@@ -1020,77 +608,33 @@ ENDIF ()
 
 add_executable(AlbanyAnalysis Main_Analysis.cpp)
 
-# Tests
-IF (ALBANY_LCM)
-  add_executable(PartitionTest LCM/test/utils/PartitionTest.cc)
-  add_executable(NodeUpdate LCM/test/utils/NodeUpdate.cc)
-  add_executable(Subdivision LCM/test/utils/Subdivision.cc)
-  add_executable(MeshComponents LCM/test/utils/MeshComponents.cc)
-  add_executable(
-    utLocalNonlinearSolver
-    LCM/test/unit_tests/StandardUnitTestMain.cpp
-    LCM/test/unit_tests/utLocalNonlinearSolver.cpp
-  )
-  add_executable(
-    utLocalization
-    LCM/test/unit_tests/StandardUnitTestMain.cpp
-    LCM/test/unit_tests/utLocalization.cpp
-  )
-  add_executable(
-    utTensorUtils
-    LCM/test/unit_tests/StandardUnitTestMain.cpp
-    LCM/test/unit_tests/utTensorUtils.cpp
-  )
-  add_executable(
-    utProjection
-    LCM/test/unit_tests/StandardUnitTestMain.cpp
-    LCM/test/unit_tests/utProjection.cpp
-  )
-ENDIF ()
-IF (ALBANY_LAME OR ALBANY_LAMENT)
-  add_executable(utLameStress_elastic
-    PHAL_Dimension.cpp
-    PHAL_AlbanyTraits.cpp
-    Albany_Utils.cpp
-    Albany_StateManager.cpp
-    stk/Albany_GenericSTKMeshStruct.cpp
-    stk/Albany_TmplSTKMeshStruct.cpp
-    stk/Albany_STKDiscretization.cpp
-    problems/QCAD_MaterialDatabase.cpp
-    ${LCM_DIR}/utils/Tensor.cc
-    ${LCM_DIR}/utils/LameUtils.cpp
-    ${LCM_DIR}/evaluators/LameStress.cpp
-    ${LCM_DIR}/evaluators/SetField.cpp
-    ${LCM_DIR}/test/unit_tests/StandardUnitTestMain.cpp
-    ${LCM_DIR}/test/unit_tests/utLameStress_elastic.cpp
-  )
-  target_link_libraries(utLameStress_elastic ${LAME_LIB} ${LAMENT_LIB} ${Trilinos_LIBRARIES})
-ENDIF ()
-
 set(ALL_LIBRARIES ${ALBANY_CI_LIB} ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${LAMENT_LIB} ${Trilinos_EXTRA_LD_FLAGS} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES} )
 
-target_link_libraries(Albany          albanyLib ${ALL_LIBRARIES})
-target_link_libraries(AlbanySG        albanyLib ${ALL_LIBRARIES})
+SET(ALBANY_LIBRARIES albanyLib)
+
+IF (ALBANY_LCM)
+  add_subdirectory(LCM)
+  SET(ALBANY_LIBRARIES albanyLib lcm albanyLib)
+
+  IF (ALBANY_HYDRIDE) 
+#Hydride requires LCM
+    add_subdirectory(Hydride)
+    SET(ALBANY_LIBRARIES albanyLib hydride lcm albanyLib)
+  ENDIF()
+
+ENDIF()
+
+target_link_libraries(Albany          ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})
+target_link_libraries(AlbanySG        ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})
 if (ALBANY_ASCR)
-  target_link_libraries(AlbanyAdjoint   albanyLib ${ALL_LIBRARIES})
-  target_link_libraries(AlbanySGAdjoint   albanyLib ${ALL_LIBRARIES})
-  target_link_libraries(AlbanyCoupled   albanyLib ${ALL_LIBRARIES})
-  target_link_libraries(AlbanySGCoupled   albanyLib ${ALL_LIBRARIES})
+  target_link_libraries(AlbanyAdjoint   ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})
+  target_link_libraries(AlbanySGAdjoint   ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})
+  target_link_libraries(AlbanyCoupled   ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})
+  target_link_libraries(AlbanySGCoupled   ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})
 endif()
 IF (ALBANY_DAKOTA)
-  target_link_libraries(AlbanyDakota    albanyLib ${ALL_LIBRARIES})
+  target_link_libraries(AlbanyDakota    ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})
 ENDIF ()
 
-target_link_libraries(AlbanyAnalysis  albanyLib ${ALL_LIBRARIES})
+target_link_libraries(AlbanyAnalysis  ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})
 
-#Linking tests
-IF (ALBANY_LCM)
-  target_link_libraries(PartitionTest albanyLib ${ALL_LIBRARIES})
-  target_link_libraries(NodeUpdate albanyLib ${ALL_LIBRARIES})
-  target_link_libraries(Subdivision albanyLib ${ALL_LIBRARIES})
-  target_link_libraries(MeshComponents albanyLib ${ALL_LIBRARIES})
-  target_link_libraries(utLocalNonlinearSolver albanyLib ${ALL_LIBRARIES})
-  target_link_libraries(utLocalization albanyLib ${ALL_LIBRARIES})
-  target_link_libraries(utTensorUtils albanyLib ${ALL_LIBRARIES})
-  target_link_libraries(utProjection albanyLib ${ALL_LIBRARIES})
-ENDIF ()

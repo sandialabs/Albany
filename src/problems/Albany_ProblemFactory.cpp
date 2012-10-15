@@ -32,7 +32,6 @@
 #ifdef ALBANY_LCM
 #include "LCM/problems/MechanicsProblem.hpp"
 #include "LCM/problems/ElasticityProblem.hpp"
-#include "LCM/problems/MesoScaleLinkProblem.hpp"
 #include "LCM/problems/NonlinearElasticityProblem.hpp"
 #include "LCM/problems/ThermoElasticityProblem.hpp"
 #include "LCM/problems/PoroElasticityProblem.hpp"
@@ -49,6 +48,7 @@
 #endif
 #ifdef ALBANY_HYDRIDE
 #include "Hydride/problems/HydrideProblem.hpp"
+#include "Hydride/problems/MesoScaleLinkProblem.hpp"
 #endif
 #include "FELIX/problems/FELIX_Stokes.hpp"
 #include "FELIX/problems/FELIX_StokesFO.hpp"
@@ -250,6 +250,11 @@ Albany::ProblemFactory::create()
   else if (method == "Hydrogen Diffusion-Deformation 2D") {
     strategy = rcp(new Albany::HDiffusionDeformationProblem(problemParams, paramLib, 2));
   }
+#endif
+#ifdef ALBANY_HYDRIDE
+  else if (method == "Hydride 2D") {
+    strategy = rcp(new Albany::HydrideProblem(problemParams, paramLib, 2, comm));
+  }
   else if (method == "MesoScaleLink 1D") {
     strategy = rcp(new Albany::MesoScaleLinkProblem(problemParams, paramLib, 1, comm));
   }
@@ -258,11 +263,6 @@ Albany::ProblemFactory::create()
   }
   else if (method == "MesoScaleLink 3D") {
     strategy = rcp(new Albany::MesoScaleLinkProblem(problemParams, paramLib, 3, comm));
-  }
-#endif
-#ifdef ALBANY_HYDRIDE
-  else if (method == "Hydride 2D") {
-    strategy = rcp(new Albany::HydrideProblem(problemParams, paramLib, 2, comm));
   }
 #endif
 #ifdef ALBANY_FELIX

@@ -5,7 +5,7 @@
 # Note: This heavily borrows ideas from Kevin Long's Trilinos configure script
 
 # Parse for command line arguments
-TEMP=`getopt -o x --long help,lcm,hyd,dryrun,verbose,fpe,lameinc:,lamelib:,trilinos: -- "$@"`
+TEMP=`getopt -o x --long help,lcm,hyd,scorec,dryrun,verbose,fpe,lameinc:,lamelib:,trilinos: -- "$@"`
 
 eval set -- "$TEMP"
 
@@ -17,6 +17,7 @@ while true ; do
              ALB_LAME_LIB_DIR="$2"; shift 2;;
       --lcm) ALB_ENABLE_LCM=ON; shift ;;
       --hyd) ALB_ENABLE_HYDRIDE=ON; shift ;;
+      --scorec) ALB_ENABLE_SCOREC=ON; shift ;;
       --dryrun) ECHO=echo; shift;;
       --verbose) ALB_VERBOSE=ON; shift;;
       --fpe) ALB_CHECK_FPE=ON; shift;;
@@ -31,6 +32,7 @@ while true ; do
             echo "--lamelib  <dir>   set location of LAME library files (no default)"
             echo "--lcm              enable LCM capabilities (default: off)"
             echo "--hyd              enable Hydride capabilities (default: off)"
+            echo "--scorec           enable RPI SCOREC adaptation (default: off)"
             echo "--fpe              enable traps for floating point exceptions (default: off)"
             echo "--trilinos <dir>   set location of Trilinos library (no default)"
             echo " ";
@@ -55,21 +57,36 @@ else
   ALB_ENABLE_LAME=ON
 fi
 
-if [ -z "$ALB_ENABLE_HYDRIDE" ]; then
+if [ -z "$ALB_ENABLE_HYDRIDE" -o "$ALB_ENABLE_HYDRIDE" = "OFF" ]; then
     echo -e "\nHydride capabilities are NOT configured. If this is incorrect, use option --hyd"
     ALB_ENABLE_HYDRIDE=OFF
 fi
 
-if [ -z "$ALB_ENABLE_LCM" ]; then
+if [ -z "$ALB_ENABLE_LCM" -o "$ALB_ENABLE_LCM" = "OFF" ]; then
     echo -e "\nLCM capabilities are NOT configured. If this is incorrect, use option --lcm"
     ALB_ENABLE_LCM=OFF
 fi
 
-if [ -z "$ALB_VERBOSE" ]; then
+if [ -z "$ALB_ENABLE_SCOREC" -o "$ALB_ENABLE_SCOREC" = "OFF" ]; then
+    echo -e "\nSCOREC capabilities are NOT configured. If this is incorrect, use option --scorec"
+    ALB_ENABLE_SCOREC=OFF
+else
+    if [ -z "$SCOREC_BASE" ]; then
+        echo -e "\nNeed to set environment variable SCOREC_BASE"
+        exit 1
+    fi
+    ALB_ENABLE_SCOREC=ON
+    FMDBINCDIR=$SCOREC_BASE/fmdbParallel/include
+    FMDBLIBDIR=$SCOREC_BASE/fmdbParallel/lib
+    SITERINCDIR=$SCOREC_BASE/SCOREC_Software/SCUtil/siter/src
+    PARMETISLIBDIR=$SCOREC_BASE/parmetis/ParMetis-3.1.1
+fi
+
+if [ -z "$ALB_VERBOSE" -o "$ALB_VERBOSE" = "OFF" ]; then
     ALB_VERBOSE=OFF
 fi
 
-if [ -z "$ALB_CHECK_FPE" ]; then
+if [ -z "$ALB_CHECK_FPE" -o "$ALB_CHECK_FPE" = "OFF" ]; then
     ALB_CHECK_FPE=OFF
 fi
 
@@ -82,7 +99,11 @@ ${ECHO} cmake \
       -D CMAKE_VERBOSE_MAKEFILE:BOOL=${ALB_VERBOSE} \
       -D ENABLE_CHECK_FPE:BOOL=${ALB_CHECK_FPE} \
       -D ENABLE_HYDRIDE:BOOL=${ALB_ENABLE_HYDRIDE} \
+      -D ENABLE_SCOREC:BOOL=${ALB_ENABLE_SCOREC} \
       -D LAME_INCLUDE_DIR:FILEPATH="$ALB_LAME_INC_DIR" \
       -D LAME_LIBRARY_DIR:FILEPATH="$ALB_LAME_LIB_DIR" \
+      -D FMDB_INCLUDE_DIR:FILEPATH="$FMDBINCDIR;$SITERINCDIR" \
+      -D FMDB_LIBRARY_DIR:FILEPATH="$FMDBLIBDIR;$PARMETISLIBDIR" \
        ../
 
+#-D CMAKE_EXE_LINKER_FLAGS:STRING="-no-ip" \

@@ -57,6 +57,7 @@ PoissonSource(Teuchos::ParameterList& p,
   device = psList->get("Device", "defaultdevice");
   nonQuantumRegionSource = psList->get("Non Quantum Region Source", "semiclassical");
   quantumRegionSource    = psList->get("Quantum Region Source", "semiclassical"); 
+  imagPartOfCoulombSrc   = psList->get<bool>("Imaginary Part Of Coulomb Source", false); 
   carrierStatistics = psList->get("Carrier Statistics", "Boltzmann Statistics");
   incompIonization = psList->get("Incomplete Ionization", "False");
   bUsePredictorCorrector = psList->get<bool>("Use predictor-corrector method",false);
@@ -85,7 +86,7 @@ PoissonSource(Teuchos::ParameterList& p,
     {
       double dbcValue = dbcPList.get<double>(dbcName); 
       mapDBCValue[ebName] = dbcValue;
-      std::cout << "ebName = " << ebName << ", value = " << mapDBCValue[ebName] << std::endl;  
+      //std::cout << "ebName = " << ebName << ", value = " << mapDBCValue[ebName] << std::endl;  
     }
   }
 
@@ -238,6 +239,7 @@ QCAD::PoissonSource<EvalT,Traits>::getValidPoissonSourceParameters() const
   validPL->set<string>("Device", "defaultdevice", "Switch between different device models");
   validPL->set<string>("Non Quantum Region Source", "semiclassical", "Source type for non-quantum regions");
   validPL->set<string>("Quantum Region Source", "semiclassical", "Source type for quantum regions");
+  validPL->set<bool>("Imaginary Part Of Coulomb Source",false,"Whether to use imag or real part of coulomb quantum region source");
   //validPL->set<double>("Donor Doping", 1e14, "Doping for nsilicon element blocks [cm^-3]");
   validPL->set<double>("Acceptor Doping", 1e14, "Doping for psilicon element blocks [cm^-3]");
   validPL->set<string>("Carrier Statistics", "Boltzmann Statistics", "Carrier statistics");
@@ -535,15 +537,26 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
             const ScalarT& unscaled_phi = potential(cell,qp); //[V]
             ScalarT phi = unscaled_phi / V0; 
 
-            // the scaled full RHS   note: wavefunctions are assumed normalized and **REAL** here 
-            ScalarT charge = - prefactor * ( eigenvector_Re[i](cell,qp) * eigenvector_Re[j](cell,qp) );
+            // the scaled full RHS   note: wavefunctions are assumed normalized.  Source term 
+	    //  is conj(evec_j) * evec_i
+            ScalarT charge;
+	    if(imagPartOfCoulombSrc) 
+	      charge = - prefactor * ( eigenvector_Re[i](cell,qp) * eigenvector_Im[j](cell,qp) - 
+				       eigenvector_Im[i](cell,qp) * eigenvector_Re[j](cell,qp));
+	    else
+	      charge = - prefactor * ( eigenvector_Re[i](cell,qp) * eigenvector_Re[j](cell,qp) + 
+				       eigenvector_Im[i](cell,qp) * eigenvector_Im[j](cell,qp));
+
             poissonSource(cell, qp) = factor * 1.0/Lambda2 * charge; //sign??
 
             chargeDensity(cell, qp) = charge;
             electronDensity(cell, qp) = charge;
             holeDensity(cell, qp) = 0.0;
             electricPotential(cell, qp) = phi*V0;
-            // Don't bother to set other state variables - e.g. conductionBand, valenceBand
+
+            //never include Vxc
+	    conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
+            valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
           }
         }
       }  // end of else if (coulomb)
@@ -767,8 +780,10 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
             electronDensity(cell, qp) = charge;
             holeDensity(cell, qp) = 0.0;
             electricPotential(cell, qp) = phi*V0;
-            // Don't bother to set other state variables - e.g. conductionBand, valenceBand
 
+            //never include Vxc
+	    conductionBand(cell, qp) = qPhiRef-Chi-phi*V0; // [eV]
+            valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
           }
         }
       }  // end of else if (coulomb)
@@ -1633,7 +1648,7 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonCI
   // unit conversion factor
   //double eVPerJ = 1.0/eleQ; 
   //double cm2Perm2 = 1.0e4; 
-  
+
   // For Delta2-band in Silicon, valley degeneracy factor = 2
   int valleyDegeneracyFactor = materialDB->getElementBlockParam<int>(workset.EBName,"Number of conduction band min",2);
 
@@ -1647,7 +1662,11 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonCI
 
   const std::vector<double>& neg_eigenvals = *(workset.eigenDataPtr->eigenvalueRe);
   std::vector<double> eigenvals( neg_eigenvals );
-  for(unsigned int i=0; i<eigenvals.size(); ++i) eigenvals[i] *= -1; //apply minus sign (b/c of eigenval convention)
+  int nCIEvals = eigenvals.size(); //not necessarily == nEigenvectors, since CI could have not converged as many as requested
+  int nEvals = std::min(nCIEvals, nEigenvectors); // the number of eigen-pairs to use (we don't gather more than nEigenvectors)
+
+  //I don't believe CI eigenvalues are negated...
+  //for(unsigned int i=0; i<nEvals; ++i) eigenvals[i] *= -1; //apply minus sign (b/c of eigenval convention)
 
   //Note: NO predictor corrector method used here yet -- need to understand what's going on better first
   
@@ -1677,10 +1696,10 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonCI
       
       // Get Z = sum( exp(-E_i/kT) )
       ScalarT Z = 0.0;
-      for(int i=0; i < nEigenvectors; i++) Z += exp(-eigenvals[i]/kbT);
+      for(int i=0; i < nEvals; i++) Z += exp(-eigenvals[i]/kbT);
 
       // loop over eigenvalues to compute electron density [cm^-3]
-      for(int i=0; i < nEigenvectors; i++) 
+      for(int i=0; i < nEvals; i++) 
       {
         ScalarT wfSquared = ( eigenvector_Re[i](cell,qp) );
         ScalarT wfOcc = exp(-eigenvals[i]/kbT) / Z;
@@ -1702,14 +1721,20 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonCI
       ScalarT eDenPrefactor = degeneracyFactor/pow(X0,3.);
 
       // Get Z = sum( exp(-E_i/kT) )
-      ScalarT Z = 0.0;
-      for(int i=0; i < nEigenvectors; i++) Z += exp(-eigenvals[i]/kbT);
+      //ScalarT Z = 0.0;
+      //for(int i=0; i < nEvals; i++) Z += exp(-eigenvals[i]/kbT);
 
       // loop over eigenvalues to compute electron density [cm^-3]
-      for(int i = 0; i < nEigenvectors; i++) 
+      for(int i = 0; i < nEvals; i++) 
       {
         ScalarT wfSquared = ( eigenvector_Re[i](cell,qp) );
-        ScalarT wfOcc = exp(-eigenvals[i]/kbT) / Z;
+        ScalarT oneOverOcc = 0.0;  // get 1/(exp(-eigenvals[i]/kbT) / Z) as sum, then invert (avoids inf issues)
+	for(int j=0; j < nEvals; j++) oneOverOcc += exp(-(eigenvals[j]-eigenvals[i])/kbT);
+
+	ScalarT wfOcc = 0.0; //exp(-eigenvals[i]/kbT) / Z;
+	if(!std::isinf(QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue(oneOverOcc)))
+	  wfOcc = 1/oneOverOcc; //otherwise just leave as zero since denom is infinite
+
         eDensity += wfSquared * wfOcc;
       }
       eDensity = eDenPrefactor*eDensity; // in [cm^-3]
