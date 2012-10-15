@@ -468,8 +468,10 @@ namespace Albany {
       return tmp_ovlp_sol.get();
 
     }
+
     
     bool is_adjoint;
+    bool support_DfDp, support_DgDp_and_DgDx;
 
   private:
 
