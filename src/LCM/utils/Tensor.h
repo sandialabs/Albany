@@ -1237,7 +1237,7 @@ namespace LCM {
   /// \param u vector to sort
   /// \return pair<v, P>
   /// \return v sorted vector
-  /// \return P permutation matrix such that v = P u
+  /// \return P permutation matrix such that v = P^T u
   ///
   template<typename T>
   std::pair<Vector<T>, Tensor<T> >

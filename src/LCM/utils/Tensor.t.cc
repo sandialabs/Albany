@@ -1698,6 +1698,14 @@ namespace LCM {
         std::cerr << "WARNING: SVD iteration did not converge." << std::endl;
       }
 
+      Vector<T> s(N);
+      Tensor<T> P(N);
+
+      boost::tie(s, P) = sort_permutation(diag(S));
+      S = diag(s);
+      U = U * P;
+      V = V * P;
+
       return boost::make_tuple(U, diag(diag(S)), transpose(V));
     }
 
@@ -2162,9 +2170,10 @@ namespace LCM {
       Tensor<T> P(N);
 
       boost::tie(d, P) = sort_permutation(diag(D));
-      V = P * V;
+      D = diag(d);
+      V = V * P;
 
-      return std::make_pair(V, diag(d));
+      return std::make_pair(V, D);
     }
 
     //

@@ -948,21 +948,21 @@ namespace LCM {
 
     template<typename S>
     bool
-    less_than(S const & a, S const & b)
+    greater_than(S const & a, S const & b)
     {
-      return a.first < b.first;
+      return a.first > b.first;
     }
 
   } // anonymous namespace
 
   //
-  // Sort and index. Useful for ordering singular values
+  // Sort and index in descending order. Useful for ordering singular values
   // and eigenvalues and corresponding vectors in the
   // respective decompositions.
   // \param u vector to sort
   // \return pair<v, P>
   // \return v sorted vector
-  // \return P permutation matrix such that v = P u
+  // \return P permutation matrix such that v = P^T u
   //
   template<typename T>
   std::pair<Vector<T>, Tensor<T> >
@@ -980,7 +980,7 @@ namespace LCM {
       s[i].second = i;
     }
 
-    std::sort(s.begin(), s.end(), less_than< std::pair<T, Index > > );
+    std::sort(s.begin(), s.end(), greater_than< std::pair<T, Index > > );
 
     Vector<T> v(N);
 
@@ -989,7 +989,7 @@ namespace LCM {
 
     for (Index i = 0; i < N; ++i) {
       v(i) = s[i].first;
-      P(i, s[i].second) = 1.0;
+      P(s[i].second, i) = 1.0;
     }
 
     return std::make_pair(v, P);

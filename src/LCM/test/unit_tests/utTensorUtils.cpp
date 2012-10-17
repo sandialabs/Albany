@@ -239,9 +239,9 @@ namespace {
     LCM::Tensor<ScalarT> D(3);
     boost::tie(V, D) = LCM::eig_sym(A);
 
-    TEST_COMPARE( std::abs(D(0,0) - 0.9), <=, LCM::machine_epsilon<ScalarT>());
-    TEST_COMPARE( std::abs(D(1,1) - 1.1), <=, LCM::machine_epsilon<ScalarT>());
-    TEST_COMPARE( std::abs(D(2,2) - 1.0), <=, LCM::machine_epsilon<ScalarT>());
+    TEST_COMPARE( std::abs(D(0,0) - 1.1), <=, LCM::machine_epsilon<ScalarT>());
+    TEST_COMPARE( std::abs(D(1,1) - 1.0), <=, LCM::machine_epsilon<ScalarT>());
+    TEST_COMPARE( std::abs(D(2,2) - 0.9), <=, LCM::machine_epsilon<ScalarT>());
   }
 
   TEUCHOS_UNIT_TEST( TensorUtils, TensorLeftPolarDecomposition )
