@@ -107,7 +107,7 @@ namespace Albany {
     //! number of element vertices
     int numVertices;
     
-    //! QCAD_MaterialDatabase info
+    //! QCAD_Materialatabase info
     bool haveMatDB;
     std::string mtrlDbFilename;
     Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
@@ -149,6 +149,10 @@ namespace Albany {
 #include "RIHMR.hpp"
 #include "RecoveryModulus.hpp"
 #include "GursonHMR.hpp"
+#include "SurfaceBasis.hpp"
+#include "SurfaceVectorJump.hpp"
+#include "SurfaceVectorGradient.hpp"
+#include "SurfaceVectorResidual.hpp"
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
@@ -374,40 +378,6 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
-
-  { // Deformation Gradient
-    RCP<ParameterList> p = rcp(new ParameterList("DefGrad"));
-
-    // set flags to optionally volume average J with a weighted average
-    bool WeightedVolumeAverageJ(false);
-    if ( materialDB->isElementBlockParam(elementBlockName,"Weighted Volume Average J") )
-      p->set<bool>("Weighted Volume Average J Name", materialDB->getElementBlockParam<bool>(elementBlockName,"Weighted Volume Average J") );
-    if ( materialDB->isElementBlockParam(elementBlockName,"Average J Stabilization Parameter") )
-      p->set<RealType>("Averaged J Stabilization Parameter Name", materialDB->getElementBlockParam<RealType>(elementBlockName,"Average J Stabilization Parameter") );
-                   
-    // send in integration weights and the displacement gradient
-    p->set<string>("Weights Name","Weights");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set<string>("Gradient QP Variable Name", "Displacement Gradient");
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
-    //Outputs: F, J
-    p->set<string>("DefGrad Name", "F"); //dl->qp_tensor also
-    p->set<string>("DetDefGrad Name", "J"); 
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-    ev = rcp(new LCM::DefGrad<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-
-    // optional output
-    bool outputFlag(true);
-    if ( materialDB->isElementBlockParam(elementBlockName,"Output Deformation Gradient") )
-      outputFlag = materialDB->getElementBlockParam<bool>(elementBlockName,"Output Deformation Gradient");
-
-    p = stateMgr.registerStateVariable("F",dl->qp_tensor, dl->dummy, elementBlockName, "identity", 1.0, outputFlag);
-    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -1131,45 +1101,149 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
   {
     {// Surface Basis
       // SurfaceBasis_Def.hpp
+      RCP<ParameterList> p = rcp(new ParameterList("Surface Basis"));
+
+      // inputs
+      p->set<string>("Reference Coordinates Name", "Coord Vec");
+      p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
+      p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", surfaceBasis);
+      p->set<RCP<shards::CellTopology> >("Cell Type", surfaceTopology);
+      p->set<string>("Current Coordinates Name", "Current Coordinates");
+
+      // outputs
+      p->set<string>("Reference Area Name", "Reference Area");
+      p->set<string>("Reference Dual Basis Name", "Reference Dual Basis");
+      p->set<string>("Reference Normal Name", "Reference Normal");
+      p->set<string>("Current Basis Name", "Current Basis");
+      
+      ev = rcp(new LCM::SurfaceBasis<EvalT,AlbanyTraits>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ev);
     }
     
     { // Surface Jump
-      //SurfaceJump_Def.hpp
+      //SurfaceVectorJump_Def.hpp
+      RCP<ParameterList> p = rcp(new ParameterList("Surface Vector Jump"));
+
+      // inputs
+      p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
+      p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", surfaceBasis);
+      p->set<string>("Vector Name", "Current Coordinates");
+
+      // outputs
+      p->set<string>("Vector Jump Name", "Vector Jump");
+      
+      ev = rcp(new LCM::SurfaceVectorJump<EvalT,AlbanyTraits>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ev);
     }
 
     { // Surface Gradient
-      //SurfaceGradient_Def.hpp
+      //SurfaceVectorGradient_Def.hpp
+      RCP<ParameterList> p = rcp(new ParameterList("Surface Vector Gradient"));
+
+      // inputs
+      if ( materialDB->isElementBlockParam(elementBlockName,"Localization thickness parameter") )
+        p->set<RealType>("thickness",materialDB->getElementBlockParam<RealType>(elementBlockName,"Localization thickness parameter"));
+      else
+        p->set<RealType>("thickness",0.1);
+      p->set<string>("Current Basis Name", "Current Basis");
+      p->set<string>("Reference Dual Basis Name", "Reference Dual Basis");
+      p->set<string>("Reference Normal Name", "Reference Normal");
+      p->set<string>("Vector Jump Name", "Vector Jump");
+      
+      // outputs
+      p->set<string>("Surface Vector Gradient Name", "F");
+      
+      ev = rcp(new LCM::SurfaceVectorGradient<EvalT,AlbanyTraits>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ev);
     }
 
     { // Surface Residual
-      // need to convert the force calculation in the localization evaluator into its own
+      // SurfaceVectorResidual_Def.hpp
+      RCP<ParameterList> p = rcp(new ParameterList("Surface Vector Residual"));
+
+      // inputs
+      if ( materialDB->isElementBlockParam(elementBlockName,"Localization thickness parameter") )
+        p->set<RealType>("thickness",materialDB->getElementBlockParam<RealType>(elementBlockName,"Localization thickness parameter"));
+      else
+        p->set<RealType>("thickness",0.1);
+      p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
+      p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", surfaceBasis);
+      p->set<string>("DefGrad Name", "F");
+      p->set<string>("Stress Name", cauchy);
+      p->set<string>("Current Basis Name", "Current Basis");
+      p->set<string>("Reference Dual Basis Name", "Reference Dual Basis");
+      p->set<string>("Reference Normal Name", "Reference Normal");
+      p->set<string>("Reference Area Name", "Reference Area");
+      
+      // outputs
+      p->set<string>("Surface Vector Residual Name", "Displacement Residual");
+      
+      ev = rcp(new LCM::SurfaceVectorResidual<EvalT,AlbanyTraits>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ev);
     }
 
-  } else { // Residual
-    RCP<ParameterList> p = rcp(new ParameterList("Residual"));
+  } else { 
+
+    { // Deformation Gradient
+      RCP<ParameterList> p = rcp(new ParameterList("Deformation Gradient"));
+
+      // set flags to optionally volume average J with a weighted average
+      bool WeightedVolumeAverageJ(false);
+      if ( materialDB->isElementBlockParam(elementBlockName,"Weighted Volume Average J") )
+        p->set<bool>("Weighted Volume Average J Name", materialDB->getElementBlockParam<bool>(elementBlockName,"Weighted Volume Average J") );
+      if ( materialDB->isElementBlockParam(elementBlockName,"Average J Stabilization Parameter") )
+        p->set<RealType>("Averaged J Stabilization Parameter Name", materialDB->getElementBlockParam<RealType>(elementBlockName,"Average J Stabilization Parameter") );
+                   
+      // send in integration weights and the displacement gradient
+      p->set<string>("Weights Name","Weights");
+      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+      p->set<string>("Gradient QP Variable Name", "Displacement Gradient");
+      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+
+      //Outputs: F, J
+      p->set<string>("DefGrad Name", "F"); //dl->qp_tensor also
+      p->set<string>("DetDefGrad Name", "J"); 
+      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+      ev = rcp(new LCM::DefGrad<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+
+      // optional output
+      bool outputFlag(true);
+      if ( materialDB->isElementBlockParam(elementBlockName,"Output Deformation Gradient") )
+        outputFlag = materialDB->getElementBlockParam<bool>(elementBlockName,"Output Deformation Gradient");
+
+      p = stateMgr.registerStateVariable("F",dl->qp_tensor, dl->dummy, elementBlockName, "identity", 1.0, outputFlag);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+
+    { // Residual
+      RCP<ParameterList> p = rcp(new ParameterList("Residual"));
     
-    //Input
-    p->set<string>("Stress Name", cauchy);
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+      //Input
+      p->set<string>("Stress Name", cauchy);
+      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-    p->set<string>("DefGrad Name", "F"); //dl->qp_tensor also
+      p->set<string>("DefGrad Name", "F"); //dl->qp_tensor also
 
-    p->set<string>("DetDefGrad Name", "J");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+      p->set<string>("DetDefGrad Name", "J");
+      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+      p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+      p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
-    p->set<string>("Weighted BF Name", "wBF");
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+      p->set<string>("Weighted BF Name", "wBF");
+      p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
+      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
-    //Output
-    p->set<string>("Residual Name", "Displacement Residual");
-    p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
+      //Output
+      p->set<string>("Residual Name", "Displacement Residual");
+      p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
 
-    ev = rcp(new LCM::TLElasResid<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
+      ev = rcp(new LCM::TLElasResid<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
   }
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {

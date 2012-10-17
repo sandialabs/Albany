@@ -72,8 +72,10 @@
     evaluators/SaturationExponent.cpp
     evaluators/Localization.cpp
     evaluators/SurfaceBasis.cpp
-    evaluators/SurfaceVectorJump.cpp
     evaluators/SurfaceScalarJump.cpp
+    evaluators/SurfaceVectorJump.cpp
+    evaluators/SurfaceVectorGradient.cpp
+    evaluators/SurfaceVectorResidual.cpp
     evaluators/CurrentCoords.cpp
     evaluators/DamageSource.cpp
     evaluators/BulkModulus.cpp
@@ -190,6 +192,10 @@
     evaluators/SurfaceScalarJump_Def.hpp
     evaluators/SurfaceVectorJump.hpp
     evaluators/SurfaceVectorJump_Def.hpp
+    evaluators/SurfaceVectorGradient.hpp
+    evaluators/SurfaceVectorGradient_Def.hpp
+    evaluators/SurfaceVectorResidual.hpp
+    evaluators/SurfaceVectorResidual_Def.hpp
     evaluators/CurrentCoords.hpp
     evaluators/CurrentCoords_Def.hpp
     evaluators/DamageSource.hpp
