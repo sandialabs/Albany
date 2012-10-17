@@ -23,6 +23,8 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
+#include "Albany_Layouts.hpp"
+
 namespace LCM {
 /** \brief
 
@@ -36,7 +38,8 @@ class CurrentCoords : public PHX::EvaluatorWithBaseImpl<Traits>,
 
 public:
 
-  CurrentCoords(const Teuchos::ParameterList& p);
+  CurrentCoords(const Teuchos::ParameterList& p,
+                const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
 			     PHX::FieldManager<Traits>& vm);

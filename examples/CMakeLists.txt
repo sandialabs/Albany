@@ -145,6 +145,7 @@ IF(ALBANY_SEACAS AND ALBANY_LCM)
   add_subdirectory(KfieldBC)
   add_subdirectory(HydrogenKfieldBC)
   add_subdirectory(Mechanics)
+  add_subdirectory(SurfaceElement)
 ENDIF()
 
 add_subdirectory(SGBratu1D)

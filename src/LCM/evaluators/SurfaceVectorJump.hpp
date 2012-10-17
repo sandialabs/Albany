@@ -59,7 +59,7 @@ private:
   //! Finite element basis for the midplane
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
   //! Vector to take the jump of
-  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> vector;
+  PHX::MDField<ScalarT,Cell,Vertex,Dim> vector;
 
   // Reference Cell FieldContainers
   Intrepid::FieldContainer<RealType> refValues;

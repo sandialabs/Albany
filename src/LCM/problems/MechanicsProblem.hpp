@@ -44,7 +44,7 @@ namespace Albany {
     //! Destructor
     virtual ~MechanicsProblem();
 
-    //Set problem information for computation of rigid body modes (in src/Albany_SolverFactory.cpp)
+    //! gSet problem information for computation of rigid body modes (in src/Albany_SolverFactory.cpp)
     void getRBMInfoForML(int& numPDEs, int& numElasticityDim, int& numScalar, int& nullSpaceDim);
 
 
@@ -153,6 +153,7 @@ namespace Albany {
 #include "SurfaceVectorJump.hpp"
 #include "SurfaceVectorGradient.hpp"
 #include "SurfaceVectorResidual.hpp"
+#include "CurrentCoords.hpp"
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
@@ -219,27 +220,34 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
   RCP<Intrepid::Cubature<RealType> > surfaceCubature;
   if (surfaceElement)
   {
-     string name = meshSpecs.ctd.name;
+    std::cout << "In Surface Element Logic" << std::endl;
+
+    string name = meshSpecs.ctd.name;
     if ( name == "Triangle_3" || name == "Quadrilateral_4" )
     {
       surfaceBasis = rcp(new Intrepid::Basis_HGRAD_LINE_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
       surfaceTopology = rcp(new shards::CellTopology( shards::getCellTopologyData<shards::Line<2> >()) );
-      surfaceCubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+      surfaceCubature = cubFactory.create(*surfaceTopology, meshSpecs.cubatureDegree);
     }
     else if ( name == "Wedge_6" )
     {
       surfaceBasis = rcp(new Intrepid::Basis_HGRAD_TRI_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
       surfaceTopology = rcp(new shards::CellTopology( shards::getCellTopologyData<shards::Triangle<3> >()) );
-      surfaceCubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+      surfaceCubature = cubFactory.create(*surfaceTopology, meshSpecs.cubatureDegree);
     }
      else if ( name == "Hexahedron_8" )   
     {
+      std::cout << "in Hex 8 logic" << std::endl;
       surfaceBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
       surfaceTopology = rcp(new shards::CellTopology( shards::getCellTopologyData<shards::Quadrilateral<4> >()) );
-      surfaceCubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+      surfaceCubature = cubFactory.create(*surfaceTopology, meshSpecs.cubatureDegree);
     }
 
+    std::cout << "surfaceCubature->getNumPoints(): " << surfaceCubature->getNumPoints() << std::endl;
+    std::cout << "surfaceCubature->getDimension(): " << surfaceCubature->getDimension() << std::endl;
   }
+
+
 
   // Note that these are the volume element quantities
   numNodes = intrepidBasis->getCardinality();
@@ -314,7 +322,7 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
 //  string cauchy = "Cauchy Stress";
 
   { // Time
-    RCP<ParameterList> p = rcp(new ParameterList);
+    RCP<ParameterList> p = rcp(new ParameterList("Time"));
     
     p->set<string>("Time Name", "Time");
     p->set<string>("Delta Time Name", "Delta Time");
@@ -326,6 +334,17 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
     fm0.template registerEvaluator<EvalT>(ev);
     p = stateMgr.registerStateVariable("Time",dl->workset_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  { // Current Coordinates
+    RCP<ParameterList> p = rcp(new ParameterList("Current Coordinates"));
+    
+    p->set<string>("Reference Coordinates Name", "Coord Vec");
+    p->set<string>("Displacement Name", "Displacement");
+    p->set<string>("Current Coordinates Name", "Current Coordinates");
+
+    ev = rcp(new LCM::CurrentCoords<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -1111,6 +1130,7 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
       p->set<string>("Current Coordinates Name", "Current Coordinates");
 
       // outputs
+      p->set<string>("Reference Basis Name", "Reference Basis");
       p->set<string>("Reference Area Name", "Reference Area");
       p->set<string>("Reference Dual Basis Name", "Reference Dual Basis");
       p->set<string>("Reference Normal Name", "Reference Normal");
@@ -1145,6 +1165,13 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
         p->set<RealType>("thickness",materialDB->getElementBlockParam<RealType>(elementBlockName,"Localization thickness parameter"));
       else
         p->set<RealType>("thickness",0.1);
+      bool WeightedVolumeAverageJ(false);
+      if ( materialDB->isElementBlockParam(elementBlockName,"Weighted Volume Average J") )
+        p->set<bool>("Weighted Volume Average J Name", materialDB->getElementBlockParam<bool>(elementBlockName,"Weighted Volume Average J") );
+      if ( materialDB->isElementBlockParam(elementBlockName,"Average J Stabilization Parameter") )
+        p->set<RealType>("Averaged J Stabilization Parameter Name", materialDB->getElementBlockParam<RealType>(elementBlockName,"Average J Stabilization Parameter") );
+      p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
+      p->set<string>("Weights Name","Reference Area");
       p->set<string>("Current Basis Name", "Current Basis");
       p->set<string>("Reference Dual Basis Name", "Reference Dual Basis");
       p->set<string>("Reference Normal Name", "Reference Normal");
@@ -1152,6 +1179,7 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
       
       // outputs
       p->set<string>("Surface Vector Gradient Name", "F");
+      p->set<string>("Surface Vector Gradient Determinant Name", "J");
       
       ev = rcp(new LCM::SurfaceVectorGradient<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);

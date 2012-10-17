@@ -58,8 +58,6 @@ private:
   ScalarT thickness;
   //! Numerical integration rule
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
-  //! Finite element basis for the midplane
-  Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
   //! Vector to take the jump of
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> vector;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> jump;
@@ -67,16 +65,11 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> currentBasis;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> refDualBasis;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> refNormal;
-
-
-  // Reference Cell FieldContainers
-  Intrepid::FieldContainer<RealType> refValues;
-  Intrepid::FieldContainer<RealType> refGrads;
-  Intrepid::FieldContainer<RealType> refPoints;
-  Intrepid::FieldContainer<RealType> refWeights;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> gradient;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> defGrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> J;
 
   unsigned int worksetSize;
   unsigned int numNodes;
@@ -84,6 +77,13 @@ private:
   unsigned int numDims;
   unsigned int numPlaneNodes;
   unsigned int numPlaneDims;
+
+  //! flag to compute the weighted average of J
+  bool weightedAverage;
+
+  //! stabilization parameter for the weighted average
+  ScalarT alpha;
+
 };
 }
 

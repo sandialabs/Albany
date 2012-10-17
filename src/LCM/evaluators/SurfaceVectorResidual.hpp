@@ -70,7 +70,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> refDualBasis;
   //! Reference configuration normal
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> refNormal;
-  //! Reference configuration normal
+  //! Reference configuration area
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> refArea;
 
   //! Reference Cell FieldContainers

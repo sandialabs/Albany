@@ -25,13 +25,11 @@ namespace LCM {
 //**********************************************************************
 template<typename EvalT, typename Traits>
 CurrentCoords<EvalT, Traits>::
-CurrentCoords(const Teuchos::ParameterList& p) :
-  refCoords     (p.get<std::string>("Reference Coordinates Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout") ),
-  displacement  (p.get<std::string>("Displacement Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout") ),
-  currentCoords (p.get<std::string>("Current Coordinates Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout") )
+CurrentCoords(const Teuchos::ParameterList& p,
+              const Teuchos::RCP<Albany::Layouts>& dl) :
+  refCoords     (p.get<std::string>("Reference Coordinates Name"),dl->vertices_vector),
+  displacement  (p.get<std::string>("Displacement Name"),dl->node_vector),
+  currentCoords (p.get<std::string>("Current Coordinates Name"),dl->node_vector)
 {
   this->addDependentField(refCoords);
   this->addDependentField(displacement);
@@ -40,15 +38,11 @@ CurrentCoords(const Teuchos::ParameterList& p) :
 
   this->setName("Current Coordinates"+PHX::TypeString<EvalT>::value);
 
-  Teuchos::RCP<PHX::DataLayout> dl =
-     p.get< Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout");
-     std::vector<PHX::DataLayout::size_type> dims;
-     dl->dimensions(dims);
-     worksetSize = dims[0];
-     numNodes = dims[1];
-     numDims = dims[2];
-
-
+  std::vector<PHX::DataLayout::size_type> dims;
+  dl->node_vector->dimensions(dims);
+  worksetSize = dims[0];
+  numNodes = dims[1];
+  numDims = dims[2];
 }
 
 //**********************************************************************

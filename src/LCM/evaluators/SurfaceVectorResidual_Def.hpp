@@ -30,12 +30,12 @@ namespace LCM {
     thickness      (p.get<double>("thickness")),
     cubature       (p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")),
     intrepidBasis  (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis")),
-    defGrad        (p.get<std::string>("Deformation Gradient Name"),dl->qp_tensor),
+    defGrad        (p.get<std::string>("DefGrad Name"),dl->qp_tensor),
     stress         (p.get<std::string>("Stress Name"),dl->qp_tensor),
     currentBasis   (p.get<std::string>("Current Basis Name"),dl->qp_tensor),
     refDualBasis   (p.get<std::string>("Reference Dual Basis Name"),dl->qp_tensor),
     refNormal      (p.get<std::string>("Reference Normal Name"),dl->qp_vector),
-    refArea        (p.get<std::string>("Reference Area Name"),dl->qp_vector),
+    refArea        (p.get<std::string>("Reference Area Name"),dl->qp_scalar),
     force          (p.get<std::string>("Surface Vector Residual Name"),dl->node_vector)
   {
     this->addDependentField(defGrad);
@@ -55,8 +55,7 @@ namespace LCM {
     numNodes = dims[1];
     numDims = dims[2];
 
-    dl->qp_vector->dimensions(dims);
-    numQPs = dims[1];
+    numQPs = cubature->getNumPoints();
 
     numPlaneNodes = numNodes / 2;
     numPlaneDims = numDims - 1;
@@ -68,9 +67,11 @@ namespace LCM {
     refWeights.resize(numQPs);
 
     // Pre-Calculate reference element quantitites
+    std::cout << "SurfaceVectorResidual Calling Intrepid to get reference quantities" << std::endl;
     cubature->getCubature(refPoints, refWeights);
     intrepidBasis->getValues(refValues, refPoints, Intrepid::OPERATOR_VALUE);
     intrepidBasis->getValues(refGrads, refPoints, Intrepid::OPERATOR_GRAD);
+    std::cout << "End SurfaceVectorResidual Calling Intrepid" << std::endl;
   }
 
   //**********************************************************************

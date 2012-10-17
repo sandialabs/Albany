@@ -37,22 +37,23 @@ namespace LCM {
 
     this->setName("Surface Vector Jump" + PHX::TypeString<EvalT>::value);
 
-    Teuchos::RCP<PHX::DataLayout> nv_dl = p.get<Teuchos::RCP<PHX::DataLayout> >(
-        "Node Vector Data Layout");
     std::vector<PHX::DataLayout::size_type> dims;
-    nv_dl->dimensions(dims);
+    dl->node_vector->dimensions(dims);
     worksetSize = dims[0];
     numNodes = dims[1];
     numDims = dims[2];
 
-    Teuchos::RCP<PHX::DataLayout> qpv_dl =
-        p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
-    qpv_dl->dimensions(dims);
-    numQPs = dims[1];
+    numQPs = cubature->getNumPoints();
 
     numPlaneNodes = numNodes / 2;
     numPlaneDims = numDims - 1;
 
+    std::cout << "numPlaneNodes: " << numPlaneNodes << std::endl;
+    std::cout << "numPlaneDims: " << numPlaneDims << std::endl;
+    std::cout << "numQPs: " << numQPs << std::endl;
+    std::cout << "cubature->getNumPoints(): " << cubature->getNumPoints() << std::endl;
+    std::cout << "cubature->getDimension(): " << cubature->getDimension() << std::endl;
+    
     // Allocate Temporary FieldContainers
     refValues.resize(numPlaneNodes, numQPs);
     refGrads.resize(numPlaneNodes, numQPs, numPlaneDims);
@@ -60,9 +61,11 @@ namespace LCM {
     refWeights.resize(numQPs);
 
     // Pre-Calculate reference element quantitites
+    std::cout << "SurfaceVectorJump Calling Intrepid to get reference quantities" << std::endl;
     cubature->getCubature(refPoints, refWeights);
     intrepidBasis->getValues(refValues, refPoints, Intrepid::OPERATOR_VALUE);
     intrepidBasis->getValues(refGrads, refPoints, Intrepid::OPERATOR_GRAD);
+    std::cout << "End SurfaceVectorJump" << std::endl;
   }
 
   //**********************************************************************
