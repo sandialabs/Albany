@@ -2158,7 +2158,13 @@ namespace LCM {
         std::cerr << "WARNING: EIG iteration did not converge." << std::endl;
       }
 
-      return std::make_pair(V, diag(diag(D)));
+      Vector<T> d(N);
+      Tensor<T> P(N);
+
+      boost::tie(d, P) = sort_permutation(diag(D));
+      V = P * V;
+
+      return std::make_pair(V, diag(d));
     }
 
     //

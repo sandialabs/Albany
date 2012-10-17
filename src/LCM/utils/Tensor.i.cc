@@ -944,6 +944,58 @@ namespace LCM {
     return s;
   }
 
+  namespace {
+
+    template<typename S>
+    bool
+    less_than(S const & a, S const & b)
+    {
+      return a.first < b.first;
+    }
+
+  } // anonymous namespace
+
+  //
+  // Sort and index. Useful for ordering singular values
+  // and eigenvalues and corresponding vectors in the
+  // respective decompositions.
+  // \param u vector to sort
+  // \return pair<v, P>
+  // \return v sorted vector
+  // \return P permutation matrix such that v = P u
+  //
+  template<typename T>
+  std::pair<Vector<T>, Tensor<T> >
+  sort_permutation(Vector<T> const & u)
+  {
+
+    const Index
+    N = u.get_dimension();
+
+    std::vector<std::pair<T, Index > >
+    s(N);
+
+    for (Index i = 0; i < N; ++i) {
+      s[i].first = u(i);
+      s[i].second = i;
+    }
+
+    std::sort(s.begin(), s.end(), less_than< std::pair<T, Index > > );
+
+    Vector<T> v(N);
+
+    Tensor<T>
+    P = zero<T>(N);
+
+    for (Index i = 0; i < N; ++i) {
+      v(i) = s[i].first;
+      P(i, s[i].second) = 1.0;
+    }
+
+    return std::make_pair(v, P);
+
+  }
+
   //
   // Dimension
   // get dimension

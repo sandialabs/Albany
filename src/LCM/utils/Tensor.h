@@ -1231,6 +1231,19 @@ namespace LCM {
   arg_max_off_diagonal(Tensor<T> const & A);
 
   ///
+  /// Sort and index. Useful for ordering singular values
+  /// and eigenvalues and corresponding vectors in the
+  /// respective decompositions.
+  /// \param u vector to sort
+  /// \return pair<v, P>
+  /// \return v sorted vector
+  /// \return P permutation matrix such that v = P u
+  ///
+  template<typename T>
+  std::pair<Vector<T>, Tensor<T> >
+  sort_permutation(Vector<T> const & u);
+
+  ///
   /// Singular value decomposition (SVD)
   /// \param A tensor
   /// \return \f$ A = USV^T\f$
