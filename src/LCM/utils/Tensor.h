@@ -1368,6 +1368,17 @@ namespace LCM {
   eig_spd_cos(Tensor<T> const & A);
 
   ///
+  /// Cholesky decomposition, gaxpy algorithm
+  /// (Matrix Computations 3rd ed., Golub & Van Loan, p144)
+  /// \param A assumed symetric tensor
+  /// \return G Cholesky factor A = GG^T
+  /// \return completed (bool) algorithm ran to completion
+  ///
+  template<typename T>
+  std::pair<Tensor<T>, bool >
+  cholesky(Tensor<T> const & A);
+
+  ///
   /// 4th-order identity I1
   /// \return \f$ \delta_{ik} \delta_{jl} \f$ such that \f$ A = I_1 A \f$
   ///

@@ -2564,6 +2564,57 @@ namespace LCM {
   }
 
   //
+  // Cholesky decomposition, gaxpy algorithm
+  // (Matrix Computations 3rd ed., Golub & Van Loan, p144)
+  // \param A assumed symetric tensor
+  // \return G Cholesky factor A = GG^T
+  // \return completed (bool) algorithm ran to completion
+  //
+  template<typename T>
+  std::pair<Tensor<T>, bool >
+  cholesky(Tensor<T> const & A)
+  {
+    Tensor<T>
+    G = symm(A);
+
+    const Index
+    N = A.get_dimension();
+
+    Vector<T>
+    v(N);
+
+    for (Index j = 0; j < N; ++j) {
+
+      for (Index k = j; k < N; ++k) {
+        v(k) = G(k,j);
+      }
+
+      if (j > 0) {
+        for (Index k = 0; k < j - 1; ++k) {
+          for (Index l = j; l < N; ++l) {
+            v(l) -= G(j,k) * G(l,k);
+          }
+        }
+      }
+
+      T
+      s = v(j);
+
+      if (s <= 0.0) {
+        return std::make_pair(G, false);
+      }
+
+      s = sqrt(s);
+
+      for (Index k = j; k < N; ++k) {
+        G(k,j) = v(k) / s;
+      }
+    }
+
+    return std::make_pair(G, true);
+  }
+
+  //
   // 4th-order identity I1
   // \return \f$ \delta_{ik} \delta_{jl} \f$ such that \f$ A = I_1 A \f$
   //

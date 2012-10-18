@@ -392,7 +392,7 @@ namespace {
   TEUCHOS_UNIT_TEST(TensorUtils, TensorSVD3x3)
   {
     LCM::Tensor<ScalarT>
-    A(1.0, 4.0, 9.0, 16.0, 25.0, 36.0, 49.0, 64.0, 81.0);
+    A(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0);
 
     LCM::Tensor<ScalarT>
     U(3), S(3), V(3);
@@ -499,6 +499,25 @@ namespace {
     B = U * S * LCM::transpose(V);
 
     TEST_COMPARE(norm(A - B), <=, 100.0*LCM::machine_epsilon<ScalarT>());
+  }
+
+  TEUCHOS_UNIT_TEST(TensorUtils, TensorCholesky)
+  {
+    LCM::Tensor<ScalarT>
+    A(1.0, 1.0, 1.0, 1.0, 5.0, 3.0, 1.0, 3.0, 3.0);
+
+    LCM::Tensor<ScalarT>
+    G(3);
+
+    bool
+    is_spd;
+
+    boost::tie(G, is_spd) = LCM::cholesky(A);
+
+    LCM::Tensor<ScalarT>
+    B(1.0, 1.0, 1.0, 0.0, 2.0, 1.0, 0.0, 0.0, 1.0);
+
+    TEST_COMPARE(norm(G - B), <=, 100.0*LCM::machine_epsilon<ScalarT>());
   }
 
 } // namespace
