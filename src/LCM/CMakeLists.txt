@@ -135,6 +135,8 @@
     evaluators/FaceAverage.cpp
     evaluators/AAA.cpp
     evaluators/LatticeDefGrad.cpp
+    evaluators/TvergaardHutchinson.cpp
+    evaluators/SurfaceCohesiveResidual.cpp
   )
 
   SET(HEADERS ${HEADERS}
@@ -314,6 +316,10 @@
     evaluators/AAA_Def.hpp
     evaluators/LatticeDefGrad.hpp
     evaluators/LatticeDefGrad_Def.hpp
+    evaluators/TvergaardHutchinson.hpp
+    evaluators/TvergaardHutchinson_Def.hpp
+    evaluators/SurfaceCohesiveResidual.hpp
+    evaluators/SurfaceCohesiveResidual_Def.hpp
  )
 
   #LCM utils

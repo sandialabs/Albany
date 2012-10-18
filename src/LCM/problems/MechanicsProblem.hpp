@@ -154,6 +154,8 @@ namespace Albany {
 #include "SurfaceVectorGradient.hpp"
 #include "SurfaceVectorResidual.hpp"
 #include "CurrentCoords.hpp"
+#include "TvergaardHutchinson.hpp"
+#include "SurfaceCohesiveResidual.hpp"
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
@@ -197,8 +199,12 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
 
   // Surface element checking
   bool surfaceElement = false;
-  if ( materialDB->isElementBlockParam(elementBlockName,"Surface Element") )
+  bool cohesiveElement = false;
+  if ( materialDB->isElementBlockParam(elementBlockName,"Surface Element") ){
     surfaceElement = materialDB->getElementBlockParam<bool>(elementBlockName,"Surface Element");
+    if ( materialDB->isElementBlockParam(elementBlockName,"Cohesive Element") )
+      cohesiveElement = materialDB->getElementBlockParam<bool>(elementBlockName,"Cohesive Element");
+  }
 
   // FIXME, really need to check for WEDGE_12 topologies
   TEUCHOS_TEST_FOR_EXCEPTION(composite && surfaceElement, std::logic_error, 
@@ -1185,31 +1191,104 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
-    { // Surface Residual
-      // SurfaceVectorResidual_Def.hpp
-      RCP<ParameterList> p = rcp(new ParameterList("Surface Vector Residual"));
+    if(cohesiveElement)
+    {
+      { // Surface Traction based on cohesive element
+        //TvergaardHutchinson_Def.hpp
+        RCP<ParameterList> p = rcp(new ParameterList("Surface Cohesive Traction"));
 
-      // inputs
-      if ( materialDB->isElementBlockParam(elementBlockName,"Localization thickness parameter") )
-        p->set<RealType>("thickness",materialDB->getElementBlockParam<RealType>(elementBlockName,"Localization thickness parameter"));
-      else
-        p->set<RealType>("thickness",0.1);
-      p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
-      p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", surfaceBasis);
-      p->set<string>("DefGrad Name", "F");
-      p->set<string>("Stress Name", cauchy);
-      p->set<string>("Current Basis Name", "Current Basis");
-      p->set<string>("Reference Dual Basis Name", "Reference Dual Basis");
-      p->set<string>("Reference Normal Name", "Reference Normal");
-      p->set<string>("Reference Area Name", "Reference Area");
-      
-      // outputs
-      p->set<string>("Surface Vector Residual Name", "Displacement Residual");
-      
-      ev = rcp(new LCM::SurfaceVectorResidual<EvalT,AlbanyTraits>(*p,dl));
-      fm0.template registerEvaluator<EvalT>(ev);
+        // inputs
+        p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
+        p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", surfaceBasis);
+        p->set<string>("Vector Jump Name", "Vector Jump");
+	    p->set<string>("Current Basis Name", "Current Basis");
+
+        if ( materialDB->isElementBlockParam(elementBlockName,"delta_1") )
+           p->set<RealType>("delta_1 Name", materialDB->getElementBlockParam<RealType>(elementBlockName,"delta_1"));
+        else
+           p->set<RealType>("delta_1 Name", 0.5);
+
+        if ( materialDB->isElementBlockParam(elementBlockName,"delta_2") )
+           p->set<RealType>("delta_2 Name", materialDB->getElementBlockParam<RealType>(elementBlockName,"delta_2"));
+        else
+           p->set<RealType>("delta_2 Name", 0.5);
+
+        if ( materialDB->isElementBlockParam(elementBlockName,"delta_c") )
+           p->set<RealType>("delta_c Name", materialDB->getElementBlockParam<RealType>(elementBlockName,"delta_c"));
+        else
+           p->set<RealType>("delta_c Name", 1.0);
+
+        if ( materialDB->isElementBlockParam(elementBlockName,"sigma_c") )
+           p->set<RealType>("sigma_c Name", materialDB->getElementBlockParam<RealType>(elementBlockName,"sigma_c"));
+        else
+           p->set<RealType>("sigma_c Name", 1.0);
+
+        if ( materialDB->isElementBlockParam(elementBlockName,"beta_0") )
+           p->set<RealType>("beta_0 Name", materialDB->getElementBlockParam<RealType>(elementBlockName,"beta_0"));
+        else
+           p->set<RealType>("beta_0 Name", 0.0);
+
+        if ( materialDB->isElementBlockParam(elementBlockName,"beta_1") )
+           p->set<RealType>("beta_1 Name", materialDB->getElementBlockParam<RealType>(elementBlockName,"beta_1"));
+        else
+           p->set<RealType>("beta_1 Name", 0.0);
+
+        if ( materialDB->isElementBlockParam(elementBlockName,"beta_2") )
+           p->set<RealType>("beta_2 Name", materialDB->getElementBlockParam<RealType>(elementBlockName,"beta_2"));
+        else
+           p->set<RealType>("beta_2 Name", 1.0);
+
+        // outputs
+	    p->set<string>("Cohesive Traction Name","Cohesive Traction");
+        ev = rcp(new LCM::TvergaardHutchinson<EvalT,AlbanyTraits>(*p,dl));
+        fm0.template registerEvaluator<EvalT>(ev);
+      }
+
+      { // Surface Cohesive Residual
+        // SurfaceCohesiveResidual_Def.hpp
+        RCP<ParameterList> p = rcp(new ParameterList("Surface Cohesive Residual"));
+
+        // inputs
+        p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
+        p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", surfaceBasis);
+        p->set<string>("Cohesive Traction Name", "Cohesive Traction");
+        p->set<string>("Reference Area Name", "Reference Area");
+
+        // outputs
+        p->set<string>("Surface Cohesive Residual Name", "Displacement Residual");
+
+        ev = rcp(new LCM::SurfaceCohesiveResidual<EvalT,AlbanyTraits>(*p,dl));
+        fm0.template registerEvaluator<EvalT>(ev);
+      }
+
     }
+    else
+    {
+      { // Surface Residual
+        // SurfaceVectorResidual_Def.hpp
+        RCP<ParameterList> p = rcp(new ParameterList("Surface Vector Residual"));
 
+        // inputs
+        if ( materialDB->isElementBlockParam(elementBlockName,"Localization thickness parameter") )
+          p->set<RealType>("thickness",materialDB->getElementBlockParam<RealType>(elementBlockName,"Localization thickness parameter"));
+        else
+          p->set<RealType>("thickness",0.1);
+        p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
+        p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", surfaceBasis);
+        p->set<string>("DefGrad Name", "F");
+        p->set<string>("Stress Name", cauchy);
+        p->set<string>("Current Basis Name", "Current Basis");
+        p->set<string>("Reference Dual Basis Name", "Reference Dual Basis");
+        p->set<string>("Reference Normal Name", "Reference Normal");
+        p->set<string>("Reference Area Name", "Reference Area");
+      
+        // outputs
+        p->set<string>("Surface Vector Residual Name", "Displacement Residual");
+      
+        ev = rcp(new LCM::SurfaceVectorResidual<EvalT,AlbanyTraits>(*p,dl));
+        fm0.template registerEvaluator<EvalT>(ev);
+      }
+    }
   } else { 
 
     { // Deformation Gradient
