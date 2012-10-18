@@ -67,11 +67,9 @@ namespace LCM {
     refWeights.resize(numQPs);
 
     // Pre-Calculate reference element quantitites
-    std::cout << "SurfaceVectorResidual Calling Intrepid to get reference quantities" << std::endl;
     cubature->getCubature(refPoints, refWeights);
     intrepidBasis->getValues(refValues, refPoints, Intrepid::OPERATOR_VALUE);
     intrepidBasis->getValues(refGrads, refPoints, Intrepid::OPERATOR_GRAD);
-    std::cout << "End SurfaceVectorResidual Calling Intrepid" << std::endl;
   }
 
   //**********************************************************************

@@ -405,6 +405,12 @@ add_library(lcm ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
     test/unit_tests/StandardUnitTestMain.cpp
     test/unit_tests/utProjection.cpp
   )
+  add_executable(
+    utSurfaceElement
+    test/unit_tests/StandardUnitTestMain.cpp
+    test/unit_tests/utSurfaceElement.cpp
+  )
+
 
 IF (ALBANY_LAME OR ALBANY_LAMENT)
   add_executable(utLameStress_elastic
@@ -441,6 +447,7 @@ ENDIF(BUILD_SHARED_LIBS)
   target_link_libraries(MeshComponents ${LCM_UT_LIBS} ${ALL_LIBRARIES})
   target_link_libraries(utLocalNonlinearSolver ${LCM_UT_LIBS} ${ALL_LIBRARIES})
   target_link_libraries(utLocalization ${LCM_UT_LIBS} ${ALL_LIBRARIES})
+  target_link_libraries(utSurfaceElement ${LCM_UT_LIBS} ${ALL_LIBRARIES})
   target_link_libraries(utTensorUtils ${LCM_UT_LIBS} ${ALL_LIBRARIES})
   target_link_libraries(utProjection ${LCM_UT_LIBS} ${ALL_LIBRARIES})
 

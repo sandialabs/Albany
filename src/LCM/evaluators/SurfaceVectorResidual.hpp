@@ -16,7 +16,7 @@
 
 
 #ifndef SURFACE_VECTOR_RESIDUAL_HPP
-#define SURFACE_VECTOR_RESIDUALHPP
+#define SURFACE_VECTOR_RESIDUAL_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
