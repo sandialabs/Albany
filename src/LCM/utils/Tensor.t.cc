@@ -1698,6 +1698,17 @@ namespace LCM {
         std::cerr << "WARNING: SVD iteration did not converge." << std::endl;
       }
 
+      // Fix signs for entries in the diagonal matrix S
+      // that are negative
+      for (Index i = 0; i < N; ++i) {
+        if (S(i,i) < 0.0) {
+          S(i,i) = -S(i,i);
+          for (Index j = 0; j < N; ++j) {
+            U(j,i) = -U(j,i);
+          }
+        }
+      }
+
       Vector<T> s(N);
       Tensor<T> P(N);
 

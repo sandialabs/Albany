@@ -392,7 +392,7 @@ namespace {
   TEUCHOS_UNIT_TEST(TensorUtils, TensorSVD3x3)
   {
     LCM::Tensor<ScalarT>
-    A(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0);
+    A(1.0, 4.0, 9.0, 16.0, 25.0, 36.0, 49.0, 64.0, 81.0);
 
     LCM::Tensor<ScalarT>
     U(3), S(3), V(3);
