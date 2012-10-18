@@ -252,7 +252,7 @@ evaluateFields(typename Traits::EvalData workset)
 	//nContrib1++; //DEBUG
 
 	//for(it = fields.begin(); it != fields.end(); ++it)
-	max = pow(2,nBits);
+	max = (std::size_t)std::pow(2.,(int)nBits);
 	for(std::size_t i=0; i<max; i++) {
 
 	  // Count the number of 1 bits, and exit early if 
