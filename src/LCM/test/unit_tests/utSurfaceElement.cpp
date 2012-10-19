@@ -59,7 +59,7 @@ namespace {
     referenceCoords[23] = -0.5;
 
     Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> currentCoords(24);
-    const double eps = 0.1;
+    const double eps = 0.01;
     currentCoords[0] = referenceCoords[0];
     currentCoords[1] = referenceCoords[1];
     currentCoords[2] = referenceCoords[2];
@@ -110,11 +110,26 @@ namespace {
     Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> defgrad(9*numQPts);
     // Fill in the values for defgrad
     for (int i(0); i < 9*numQPts; ++i) 
-      defgrad[i] = 0.0;
+      defgrad[i]  = 0.0;
+
+ /*   // This creates identity tensor for every integration points in the element
+    defgrad[i] = 0.0;
     defgrad[0]  = defgrad[4]  = defgrad[8]  = 1.0;
     defgrad[9]  = defgrad[13] = defgrad[17] = 1.0;
     defgrad[18] = defgrad[22] = defgrad[26] = 1.0;
     defgrad[27] = defgrad[31] = defgrad[35] = 1.0;
+*/
+    // This creates an uniaxial tension
+    defgrad[0]  = defgrad[8]  = 1.0;
+    defgrad[9]  = defgrad[17] = 1.0;
+    defgrad[18] = defgrad[26] = 1.0;
+    defgrad[27] = defgrad[35] = 1.0;
+
+    defgrad[4]  = 2.0;
+    defgrad[13] = 2.0;
+    defgrad[22] = 2.0;
+    defgrad[31] = 2.0;
+
 
     // SetField evaluator, which will be used to manually assign a value to the defgrad field
     Teuchos::ParameterList setDefGradParameterList("SetFieldDefGrad");
@@ -127,8 +142,23 @@ namespace {
     //-----------------------------------------------------------------------------------
     Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> stress(9*numQPts);
     // Fill in the values for stress
-    for (int i(0); i < 9*numQPts; ++i) 
+    for (int i(0); i < 9*numQPts; ++i) {
       stress[i] = 0.0;
+    }
+
+    // 1st PK stress resulted from uniaxial tension
+    // P_11 and P_33
+      stress[0] = stress[8] = 4.47222e9;
+      stress[9] = stress[17] =4.47222e9;
+      stress[18]= stress[26] =4.47222e9;
+      stress[27]= stress[35] =4.47222e9;
+
+      // P_22
+      stress[4]  = 1.66111e10;
+      stress[13] = 1.66111e10;
+      stress[22] = 1.66111e10;
+      stress[31] = 1.66111e10;
+
 
     // SetField evaluator, which will be used to manually assign a value to the stress field
     Teuchos::ParameterList stressP("SetFieldStress");
@@ -142,11 +172,12 @@ namespace {
     Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> currentBasis(9*numQPts);
     // Fill in the values for the current basis
     for (int i(0); i < 9*numQPts; ++i) 
-      currentBasis[i] = 0.0;
-    currentBasis[0]  = currentBasis[4]  = currentBasis[8]  = 1.0;
-    currentBasis[9]  = currentBasis[13] = currentBasis[17] = 1.0;
-    currentBasis[18] = currentBasis[22] = currentBasis[26] = 1.0;
-    currentBasis[27] = currentBasis[31] = currentBasis[35] = 1.0;
+    currentBasis[i] = 0.0;
+
+    currentBasis[2]  = currentBasis[3]  = currentBasis[7]  = 1.0;
+    currentBasis[11] = currentBasis[12] = currentBasis[16] = 1.0;
+    currentBasis[20] = currentBasis[21] = currentBasis[25] = 1.0;
+    currentBasis[29] = currentBasis[30] = currentBasis[34] = 1.0;
     
 
     // SetField evaluator, which will be used to manually assign a value to the current basis field
@@ -162,10 +193,10 @@ namespace {
     // Fill in the values for the ref dual basis
     for (int i(0); i < 9*numQPts; ++i) 
       refDualBasis[i] = 0.0;
-    refDualBasis[0]  = refDualBasis[4]  = refDualBasis[8]  = 1.0;
-    refDualBasis[9]  = refDualBasis[13] = refDualBasis[17] = 1.0;
-    refDualBasis[18] = refDualBasis[22] = refDualBasis[26] = 1.0;
-    refDualBasis[27] = refDualBasis[31] = refDualBasis[35] = 1.0;
+    refDualBasis[2]  = refDualBasis[3]  = refDualBasis[7]  = 1.0;
+    refDualBasis[11] = refDualBasis[12] = refDualBasis[16] = 1.0;
+    refDualBasis[20] = refDualBasis[21] = refDualBasis[25] = 1.0;
+    refDualBasis[29] = refDualBasis[30] = refDualBasis[34] = 1.0;
 
     // SetField evaluator, which will be used to manually assign a value to the ref dual basis field
     Teuchos::ParameterList rdbP("SetFieldRefDualBasis");
@@ -193,7 +224,7 @@ namespace {
     //-----------------------------------------------------------------------------------
     Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> refArea(numQPts);
     // Fill in the values for the ref area
-    refArea[0] = refArea[1] = refArea[2] = refArea[3] = 0.25;
+    refArea[0] = refArea[1] = refArea[2] = refArea[3] = 1.0;
 
     // SetField evaluator, which will be used to manually assign a value to the ref normal field
     Teuchos::ParameterList raP("SetFieldRefArea");
@@ -263,7 +294,7 @@ namespace {
     fieldManager.getFieldData<PHAL::AlbanyTraits::Residual::ScalarT,PHAL::AlbanyTraits::Residual,Cell,Node,Dim>(forceField);
 
     // Record the expected nodal forces, which will be used to check the computed force
-    LCM::Vector<PHAL::AlbanyTraits::Residual::ScalarT> expectedForce(0.0,0.0,0.0);
+    LCM::Vector<PHAL::AlbanyTraits::Residual::ScalarT> expectedForce(1.11806e8,4.15278e9, 1.11806e8);
 
     // Check the computed force
     typedef PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT>::size_type size_type;
@@ -272,9 +303,9 @@ namespace {
 
         std::cout << "Nodal force at cell " << cell
             << ", node " << node << ":" << endl;
-        std::cout << "  " << forceField(cell, node, 0);
-        std::cout << "  " << forceField(cell, node, 1);
-        std::cout << "  " << forceField(cell, node, 2) << endl;
+        std::cout << "  " << fabs(forceField(cell, node, 0));
+        std::cout << "  " << fabs(forceField(cell, node, 1));
+        std::cout << "  " << fabs(forceField(cell, node, 2)) << endl;
 
         std::cout << "Expected result:" << endl;
         std::cout << "  " << expectedForce(0);
@@ -283,9 +314,9 @@ namespace {
 
         std::cout << endl;
 
-        double tolerance = 1.0e-15;
+        double tolerance = 1.0e4;
         for (size_type i = 0; i < numDim; ++i) {
-          TEST_COMPARE(fabs(forceField(cell, node, i) - expectedForce(i)), <=, tolerance);
+          TEST_COMPARE(forceField(cell, node, i) - expectedForce(i), <=, tolerance);
         }
       }
     }
