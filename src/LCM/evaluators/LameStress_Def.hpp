@@ -345,6 +345,9 @@ void LameStressBase<EvalT, Traits>::
   for (int cell=0; cell < (int)workset.numCells; ++cell) {
     for (int qp=0; qp < (int)numQPs; ++qp) {
 
+      std::cout << "Cell: " << cell << std::endl;
+      std::cout << "     QP: " << qp << std::endl;
+
       // Fill the following entries in matParams for call to LAME
       //
       // nelements     - number of elements 
@@ -400,9 +403,48 @@ void LameStressBase<EvalT, Traits>::
       LCM::Tensor<RealType> V(3), R(3);
       boost::tie(V,R) = LCM::polar_left_eig(Fnew);
 
+      std::cout << "     QP: " << qp << std::endl;
+      std::cout << "        F: " 
+                << Fnew(0,0) << " " << Fnew(0,1) << " " << Fnew(0,2) << " " 
+                << Fnew(1,0) << " " << Fnew(1,1) << " " << Fnew(1,2) << " "
+                << Fnew(2,0) << " " << Fnew(2,1) << " " << Fnew(2,2) << " "
+                <<std::endl;
+      std::cout << "        V: " 
+                << V(0,0) << " " << V(0,1) << " " << V(0,2) << " " 
+                << V(1,0) << " " << V(1,1) << " " << V(1,2) << " "
+                << V(2,0) << " " << V(2,1) << " " << V(2,2) << " "
+                <<std::endl;
+
+      std::cout << "        R: " 
+                << R(0,0) << " " << R(0,1) << " " << R(0,2) << " " 
+                << R(1,0) << " " << R(1,1) << " " << R(1,2) << " "
+                << R(2,0) << " " << R(2,1) << " " << R(2,2) << " "
+                <<std::endl;
+
       // incremental left stretch Vinc, incremental rotation Rinc, and log of incremental left stretch, logVinc
       LCM::Tensor<RealType> Vinc(3), Rinc(3), logVinc(3);
       boost::tie(Vinc,Rinc,logVinc) = LCM::polar_left_logV(Finc);
+
+      std::cout << "     Finc: " 
+                << Finc(0,0) << " " << Finc(0,1) << " " << Finc(0,2) << " " 
+                << Finc(1,0) << " " << Finc(1,1) << " " << Finc(1,2) << " "
+                << Finc(2,0) << " " << Finc(2,1) << " " << Finc(2,2) << " "
+                <<std::endl;
+      std::cout << "     Vinc: " 
+                << Vinc(0,0) << " " << Vinc(0,1) << " " << Vinc(0,2) << " " 
+                << Vinc(1,0) << " " << Vinc(1,1) << " " << Vinc(1,2) << " "
+                << Vinc(2,0) << " " << Vinc(2,1) << " " << Vinc(2,2) << " "
+                <<std::endl;
+      std::cout << "      Rinc: " 
+                << Rinc(0,0) << " " << Rinc(0,1) << " " << Rinc(0,2) << " " 
+                << Rinc(1,0) << " " << Rinc(1,1) << " " << Rinc(1,2) << " "
+                << Rinc(2,0) << " " << Rinc(2,1) << " " << Rinc(2,2) << " "
+                <<std::endl;
+      std::cout << "   logVinc: " 
+                << logVinc(0,0) << " " << logVinc(0,1) << " " << logVinc(0,2) << " " 
+                << logVinc(1,0) << " " << logVinc(1,1) << " " << logVinc(1,2) << " "
+                << logVinc(2,0) << " " << logVinc(2,1) << " " << logVinc(2,2) << " "
+                <<std::endl;
 
       // log of incremental rotation
       LCM::Tensor<RealType> logRinc = LCM::log_rotation(Rinc);

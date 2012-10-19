@@ -346,15 +346,15 @@ namespace {
 
     boost::tie(Vinc, Rinc, logVinc) = polar_left_logV(Finc);
 
-    TEST_COMPARE( std::abs(logVinc(0,0) - solLogVinc(0,0)), <=, LCM::machine_epsilon<ScalarT>());
-    TEST_COMPARE( std::abs(logVinc(0,1) - solLogVinc(0,1)), <=, LCM::machine_epsilon<ScalarT>());
-    TEST_COMPARE( std::abs(logVinc(0,2) - solLogVinc(0,2)), <=, LCM::machine_epsilon<ScalarT>());
-    TEST_COMPARE( std::abs(logVinc(1,0) - solLogVinc(1,0)), <=, LCM::machine_epsilon<ScalarT>());
-    TEST_COMPARE( std::abs(logVinc(1,1) - solLogVinc(1,1)), <=, LCM::machine_epsilon<ScalarT>());
-    TEST_COMPARE( std::abs(logVinc(1,2) - solLogVinc(1,2)), <=, LCM::machine_epsilon<ScalarT>());
-    TEST_COMPARE( std::abs(logVinc(2,0) - solLogVinc(2,0)), <=, LCM::machine_epsilon<ScalarT>());
-    TEST_COMPARE( std::abs(logVinc(2,1) - solLogVinc(2,1)), <=, LCM::machine_epsilon<ScalarT>());
-    TEST_COMPARE( std::abs(logVinc(2,2) - solLogVinc(2,2)), <=, LCM::machine_epsilon<ScalarT>());
+    TEST_COMPARE( std::abs(logVinc(0,0) - solLogVinc(0,0)), <=, 100*LCM::machine_epsilon<ScalarT>());
+    TEST_COMPARE( std::abs(logVinc(0,1) - solLogVinc(0,1)), <=, 100*LCM::machine_epsilon<ScalarT>());
+    TEST_COMPARE( std::abs(logVinc(0,2) - solLogVinc(0,2)), <=, 100*LCM::machine_epsilon<ScalarT>());
+    TEST_COMPARE( std::abs(logVinc(1,0) - solLogVinc(1,0)), <=, 100*LCM::machine_epsilon<ScalarT>());
+    TEST_COMPARE( std::abs(logVinc(1,1) - solLogVinc(1,1)), <=, 100*LCM::machine_epsilon<ScalarT>());
+    TEST_COMPARE( std::abs(logVinc(1,2) - solLogVinc(1,2)), <=, 100*LCM::machine_epsilon<ScalarT>());
+    TEST_COMPARE( std::abs(logVinc(2,0) - solLogVinc(2,0)), <=, 100*LCM::machine_epsilon<ScalarT>());
+    TEST_COMPARE( std::abs(logVinc(2,1) - solLogVinc(2,1)), <=, 100*LCM::machine_epsilon<ScalarT>());
+    TEST_COMPARE( std::abs(logVinc(2,2) - solLogVinc(2,2)), <=, 100*LCM::machine_epsilon<ScalarT>());
   }
 
   TEUCHOS_UNIT_TEST( TensorUtils, TensorVolDev )
