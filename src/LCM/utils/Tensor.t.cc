@@ -2564,8 +2564,8 @@ namespace LCM {
   }
 
   //
-  // Cholesky decomposition, gaxpy algorithm
-  // (Matrix Computations 3rd ed., Golub & Van Loan, p144)
+  // Cholesky decomposition, rank-1 update algorithm
+  // (Matrix Computations 3rd ed., Golub & Van Loan, p145)
   // \param A assumed symetric tensor
   // \return G Cholesky factor A = GG^T
   // \return completed (bool) algorithm ran to completion
@@ -2580,25 +2580,15 @@ namespace LCM {
     const Index
     N = A.get_dimension();
 
-    Vector<T>
-    v(N);
+    for (Index k = 0; k < N; ++k) {
 
-    for (Index j = 0; j < N; ++j) {
-
-      for (Index k = j; k < N; ++k) {
-        v(k) = G(k,j);
-      }
-
-      if (j > 0) {
-        for (Index k = 0; k < j - 1; ++k) {
-          for (Index l = j; l < N; ++l) {
-            v(l) -= G(j,k) * G(l,k);
-          }
-        }
+      // Zeros above the diagonal
+      for (Index j = k + 1; j < N; ++j) {
+        G(k,j) = 0.0;
       }
 
       T
-      s = v(j);
+      s = G(k,k);
 
       if (s <= 0.0) {
         return std::make_pair(G, false);
@@ -2606,9 +2596,18 @@ namespace LCM {
 
       s = sqrt(s);
 
-      for (Index k = j; k < N; ++k) {
-        G(k,j) = v(k) / s;
+      for (Index j = k + 1; j < N; ++j) {
+        G(j,k) /= s;
       }
+
+      G(k,k) = s;
+
+      for (Index j = k + 1; j < N; ++j) {
+        for (Index i = j; i < N; ++i) {
+          G(i,j) -= G(i,k) * G(j,k);
+        }
+      }
+
     }
 
     return std::make_pair(G, true);

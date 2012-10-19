@@ -515,7 +515,7 @@ namespace {
     boost::tie(G, is_spd) = LCM::cholesky(A);
 
     LCM::Tensor<ScalarT>
-    B(1.0, 1.0, 1.0, 0.0, 2.0, 1.0, 0.0, 0.0, 1.0);
+    B(1.0, 0.0, 0.0, 1.0, 2.0, 0.0, 1.0, 1.0, 1.0);
 
     TEST_COMPARE(norm(G - B), <=, 100.0*LCM::machine_epsilon<ScalarT>());
   }

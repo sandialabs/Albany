@@ -1368,8 +1368,8 @@ namespace LCM {
   eig_spd_cos(Tensor<T> const & A);
 
   ///
-  /// Cholesky decomposition, gaxpy algorithm
-  /// (Matrix Computations 3rd ed., Golub & Van Loan, p144)
+  /// Cholesky decomposition, rank-1 update algorithm
+  /// (Matrix Computations 3rd ed., Golub & Van Loan, p145)
   /// \param A assumed symetric tensor
   /// \return G Cholesky factor A = GG^T
   /// \return completed (bool) algorithm ran to completion
