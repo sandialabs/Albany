@@ -51,6 +51,50 @@ namespace QCAD {
     Teuchos::Array<int> field_components;
   };
 
+
+  // unnecessary, but just commenting out for at least one git commit
+  /*template<typename Traits> 
+  class FieldValueScatterScalarResponse<PHAL::AlbanyTraits::Tangent,Traits> : 
+    public PHAL::ScatterScalarResponseBase<PHAL::AlbanyTraits::Tangent,Traits> {
+  
+  public:
+    typedef PHAL::AlbanyTraits::Tangent EvalT;
+    typedef typename EvalT::ScalarT ScalarT;
+
+    FieldValueScatterScalarResponse(const Teuchos::ParameterList& p,
+			      const Teuchos::RCP<Albany::Layouts>& dl) :
+      PHAL::ScatterScalarResponseBase<EvalT,Traits>(p,dl) {}
+
+    void preEvaluate(typename Traits::PreEvalData d) {}
+    void evaluateFields(typename Traits::EvalData d) {}
+    void postEvaluate(typename Traits::PostEvalData d);
+  
+  protected:
+
+    // Default constructor for child classes
+    FieldValueScatterScalarResponse() :
+      PHAL::ScatterScalarResponseBase<EvalT,Traits>() {}
+
+    // Child classes should call setup once p is filled out
+    void setup(const Teuchos::ParameterList& p,
+	       const Teuchos::RCP<Albany::Layouts>& dl) {
+      PHAL::ScatterScalarResponseBase<EvalT,Traits>::setup(p,dl);
+      numNodes = dl->node_scalar->dimension(1);
+    }
+
+    // Set NodeID structure for cell corrsponding to max/min
+    void setNodeID(const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID_) {
+      nodeID = nodeID_;
+    }
+
+    Teuchos::Array<int> field_components;
+
+  private:
+
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > nodeID;
+    int numNodes;
+    };*/
+
   template<typename Traits> 
   class FieldValueScatterScalarResponse<PHAL::AlbanyTraits::Jacobian,Traits> : 
     public PHAL::ScatterScalarResponseBase<PHAL::AlbanyTraits::Jacobian,Traits> {
@@ -85,11 +129,12 @@ namespace QCAD {
       nodeID = nodeID_;
     }
 
+    Teuchos::Array<int> field_components;
+
   private:
 
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > nodeID;
     int numNodes;
-    Teuchos::Array<int> field_components;
   };
 
   template<typename Traits> 
@@ -126,11 +171,12 @@ namespace QCAD {
       nodeID = nodeID_;
     }
 
+    Teuchos::Array<int> field_components;
+
   private:
 
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > nodeID;
     int numNodes;
-    Teuchos::Array<int> field_components;
   };
 
   template<typename Traits> 
@@ -167,11 +213,12 @@ namespace QCAD {
       nodeID = nodeID_;
     }
 
+    Teuchos::Array<int> field_components;
+
   private:
 
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > nodeID;
     int numNodes;
-    Teuchos::Array<int> field_components;
   };
 
 /** 
@@ -208,7 +255,7 @@ namespace QCAD {
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
     PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > max_nodeID;
-    Teuchos::Array<int> field_components;
+    //Teuchos::Array<int> field_components;
     
     bool bOpFieldIsVector, bRetFieldIsVector;
 

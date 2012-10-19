@@ -20,6 +20,81 @@
 #include "Teuchos_CommHelpers.hpp"
 
 // **********************************************************************
+// Specialization: Tangent  (I thought we might need this, but ended up
+//                            being unnecessary, so commenting out for 
+//                            at least one git commit before removing)
+// **********************************************************************
+
+/*template<typename Traits>
+void 
+QCAD::FieldValueScatterScalarResponse<PHAL::AlbanyTraits::Tangent, Traits>::
+postEvaluate(typename Traits::PostEvalData workset)
+{
+  // Here we scatter the *global* response
+  Teuchos::RCP<Epetra_Vector> g = workset.g;
+  if (g != Teuchos::null) {
+    for (std::size_t res = 0; res < this->field_components.size(); res++) {
+      (*g)[res] = this->global_response[this->field_components[res]].val();
+    }
+  }
+
+  // Here we scatter the *global* tangent
+  Teuchos::RCP<Epetra_MultiVector> dg = workset.dgdx;
+  Teuchos::RCP<Epetra_MultiVector> overlapped_dg = workset.overlapped_dgdx;
+  Teuchos::RCP<Epetra_MultiVector> gp = workset.dgdp;
+
+  if (gp != Teuchos::null) gp->PutScalar(0.0);
+  if (dg != Teuchos::null) dg->PutScalar(0.0);
+  if (overlapped_dg != Teuchos::null) overlapped_dg->PutScalar(0.0);
+
+  std::cout << "gp == null is " << (gp == Teuchos::null) << std::endl;
+  std::cout << "dg == null is " << (dg == Teuchos::null) << std::endl;
+  std::cout << "overlapped_dg == null is " << (overlapped_dg == Teuchos::null) << std::endl;
+
+  // Extract derivatives for the cell corresponding to nodeID
+  if (false && nodeID != Teuchos::null && overlapped_dg != Teuchos::null) {
+
+    // Loop over responses
+    for (std::size_t res = 0; res < this->field_components.size(); res++) {
+      ScalarT& val = this->global_response(this->field_components[res]);
+      
+      // Loop over nodes in cell
+      for (unsigned int node_dof=0; node_dof<numNodes; node_dof++) {
+	int neq = nodeID[node_dof].size();
+	
+	// Loop over equations per node
+	for (unsigned int eq_dof=0; eq_dof<neq; eq_dof++) {
+	  
+	  // local derivative component
+	  int deriv = neq * node_dof + eq_dof;
+	  
+	  // local DOF
+	  int dof = nodeID[node_dof][eq_dof];
+	    
+	  // Set dg/dx
+	  overlapped_dg->ReplaceMyValue(dof, res, val.dx(deriv));
+	  
+	} // column equations
+      } // column nodes
+    } // response
+  } // cell belongs to this proc
+
+  if (dg != Teuchos::null && overlapped_dg != Teuchos::null)
+    dg->Export(*overlapped_dg, *workset.x_importer, Insert);
+
+
+  //EGN: just taken from ScatterScalarResponse -- need to check if this is correct
+  if (gp != Teuchos::null) {
+    for (std::size_t res = 0; res < this->field_components.size(); res++) {
+      ScalarT& val = this->global_response(this->field_components[res]);
+      for (int col=0; col<workset.num_cols_p; col++)
+	gp->ReplaceMyValue(res, col, val.dx(col+workset.param_offset));
+    }
+  }
+}
+*/
+
+// **********************************************************************
 // Specialization: Jacobian
 // **********************************************************************
 
@@ -31,7 +106,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   // Here we scatter the *global* response
   Teuchos::RCP<Epetra_Vector> g = workset.g;
   if (g != Teuchos::null)
-    for (std::size_t res = 0; res < this->field_components.size(); res++) {
+    for (int res = 0; res < this->field_components.size(); res++) {
       (*g)[res] = this->global_response[this->field_components[res]].val();
   }
 
@@ -57,15 +132,15 @@ postEvaluate(typename Traits::PostEvalData workset)
   if (nodeID != Teuchos::null) {
 
     // Loop over responses
-    for (std::size_t res = 0; res < this->field_components.size(); res++) {
+    for (int res = 0; res < this->field_components.size(); res++) {
       ScalarT& val = this->global_response(this->field_components[res]);
       
       // Loop over nodes in cell
-      for (unsigned int node_dof=0; node_dof<numNodes; node_dof++) {
+      for (int node_dof=0; node_dof<numNodes; node_dof++) {
 	int neq = nodeID[node_dof].size();
 	
 	// Loop over equations per node
-	for (unsigned int eq_dof=0; eq_dof<neq; eq_dof++) {
+	for (int eq_dof=0; eq_dof<neq; eq_dof++) {
 	  
 	  // local derivative component
 	  int deriv = neq * node_dof + eq_dof;
@@ -96,7 +171,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   // Here we scatter the *global* SG response
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > g_sg = workset.sg_g;
   if (g_sg != Teuchos::null) {
-    for (std::size_t res = 0; res < this->field_components.size(); res++) {
+    for (int res = 0; res < this->field_components.size(); res++) {
       ScalarT& val = this->global_response[this->field_components[res]];
       for (int block=0; block<g_sg->size(); block++)
 	(*g_sg)[block][res] = val.val().coeff(block);
@@ -130,15 +205,15 @@ postEvaluate(typename Traits::PostEvalData workset)
   if (nodeID != Teuchos::null) {
 
     // Loop over responses
-    for (std::size_t res = 0; res < this->field_components.size(); res++) {
+    for (int res = 0; res < this->field_components.size(); res++) {
       ScalarT& val = this->global_response(this->field_components[res]);
       
       // Loop over nodes in cell
-      for (unsigned int node_dof=0; node_dof<numNodes; node_dof++) {
+      for (int node_dof=0; node_dof<numNodes; node_dof++) {
 	int neq = nodeID[node_dof].size();
 	
 	// Loop over equations per node
-	for (unsigned int eq_dof=0; eq_dof<neq; eq_dof++) {
+	for (int eq_dof=0; eq_dof<neq; eq_dof++) {
 	  
 	  // local derivative component
 	  int deriv = neq * node_dof + eq_dof;
@@ -173,7 +248,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   // Here we scatter the *global* MP response
   Teuchos::RCP<Stokhos::ProductEpetraVector> g_mp = workset.mp_g;
   if (g_mp != Teuchos::null) {
-    for (std::size_t res = 0; res < this->field_components.size(); res++) {
+    for (int res = 0; res < this->field_components.size(); res++) {
       ScalarT& val = this->global_response[this->field_components[res]];
       for (int block=0; block<g_mp->size(); block++)
 	(*g_mp)[block][res] = val.val().coeff(block);
@@ -206,15 +281,15 @@ postEvaluate(typename Traits::PostEvalData workset)
   if (nodeID != Teuchos::null) {
 
     // Loop over responses
-    for (std::size_t res = 0; res < this->field_components.size(); res++) {
+    for (int res = 0; res < this->field_components.size(); res++) {
       ScalarT& val = this->global_response(this->field_components[res]);
       
       // Loop over nodes in cell
-      for (unsigned int node_dof=0; node_dof<numNodes; node_dof++) {
+      for (int node_dof=0; node_dof<numNodes; node_dof++) {
 	int neq = nodeID[node_dof].size();
 	
 	// Loop over equations per node
-	for (unsigned int eq_dof=0; eq_dof<neq; eq_dof++) {
+	for (int eq_dof=0; eq_dof<neq; eq_dof++) {
 	  
 	  // local derivative component
 	  int deriv = neq * node_dof + eq_dof;
@@ -356,7 +431,7 @@ ResponseFieldValue(Teuchos::ParameterList& p,
   // Setup scatter evaluator
   std::string global_response_name = 
     opFieldName + " Global Response Field Value";
-  int worksetSize = scalar_dl->dimension(0);
+  //int worksetSize = scalar_dl->dimension(0);
   int responseSize = 5;
   Teuchos::RCP<PHX::DataLayout> global_response_layout =
     Teuchos::rcp(new PHX::MDALayout<Dim>(responseSize));
@@ -365,6 +440,12 @@ ResponseFieldValue(Teuchos::ParameterList& p,
   p.set("Stand-alone Evaluator", false);
   p.set("Global Response Field Tag", global_response_tag);
   this->setup(p,dl);
+
+  // Specify which components of response (in this case 0th and 1st) to 
+  //  scatter derivatives for.
+  FieldValueScatterScalarResponse<EvalT,Traits>::field_components.resize(2);
+  FieldValueScatterScalarResponse<EvalT,Traits>::field_components[0] = 0;
+  FieldValueScatterScalarResponse<EvalT,Traits>::field_components[1] = 1;
 }
 
 // **********************************************************************
