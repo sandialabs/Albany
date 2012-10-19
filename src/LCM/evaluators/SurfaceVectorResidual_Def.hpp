@@ -179,13 +179,13 @@ namespace LCM {
           }
 
           // area (Reference) = |Jacobian| * weights
-          force(cell, node, 0) += f_plus(0) * refArea(cell, pt);
-          force(cell, node, 1) += f_plus(1) * refArea(cell, pt);
-          force(cell, node, 2) += f_plus(2) * refArea(cell, pt);
+          force(cell, topNode, 0) += f_plus(0) * refArea(cell, pt);
+          force(cell, topNode, 1) += f_plus(1) * refArea(cell, pt);
+          force(cell, topNode, 2) += f_plus(2) * refArea(cell, pt);
 
-          force(cell, topNode, 0) += f_minus(0) * refArea(cell, pt);
-          force(cell, topNode, 1) += f_minus(1) * refArea(cell, pt);
-          force(cell, topNode, 2) += f_minus(2) * refArea(cell, pt);
+          force(cell, node, 0) += f_minus(0) * refArea(cell, pt);
+          force(cell, node, 1) += f_minus(1) * refArea(cell, pt);
+          force(cell, node, 2) += f_minus(2) * refArea(cell, pt);
 
         } // end of pt
       } // end of numPlaneNodes
