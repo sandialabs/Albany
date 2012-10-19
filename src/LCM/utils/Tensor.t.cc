@@ -2026,6 +2026,52 @@ namespace LCM {
   }
 
   //
+  // R^N left polar decomposition with matrix logarithm for V
+  // \param F tensor (often a deformation-gradient-like tensor)
+  // \return \f$ VR = F \f$ with \f$ R \in SO(N) \f$ and V SPD(N), and log V
+  //
+  template<typename T>
+  boost::tuple<Tensor<T>, Tensor<T>, Tensor<T> >
+  polar_left_logV_lame(Tensor<T> const & F)
+  {
+    const Index
+    N = F.get_dimension();
+
+    // set up return tensors
+    Tensor<T> R(N), V(N), v(N), Vinv(N);
+ 
+    // compute spd tensor
+    Tensor<T> b = F*transpose(F);
+ 
+    // get eigenvalues/eigenvectors
+    Tensor<T> eVal(N);
+    Tensor<T> eVec(N);
+    boost::tie(eVec,eVal) = eig_spd_cos(b);
+ 
+    // compute sqrt() and inv(sqrt()) of eigenvalues
+    Tensor<T> x = zero<T>(3);
+    x(0,0) = sqrt(eVal(0,0));
+    x(1,1) = sqrt(eVal(1,1));
+    x(2,2) = sqrt(eVal(2,2));
+    Tensor<T> xi = zero<T>(3);
+    xi(0,0) = 1.0/x(0,0);
+    xi(1,1) = 1.0/x(1,1);
+    xi(2,2) = 1.0/x(2,2);
+    Tensor<T> lnx = zero<T>(3);
+    lnx(0,0) = std::log(x(0,0));
+    lnx(1,1) = std::log(x(1,1));
+    lnx(2,2) = std::log(x(2,2));
+ 
+    // compute V, Vinv, log(V)=v, and R
+    V    = eVec*x*transpose(eVec);
+    Vinv = eVec*xi*transpose(eVec);
+    v    = eVec*lnx*transpose(eVec);
+    R    = Vinv*F;
+ 
+    return boost::make_tuple(V,R,v);
+  }
+
+  //
   // R^N logarithmic map using BCH expansion (3 terms)
   // \param x tensor
   // \param y tensor
@@ -2481,10 +2527,10 @@ namespace LCM {
 
       // now for the other two eigenvalues, extract vectors
       Vector<T>
-      rk(3, R(0,k), R(1,k), R(2,k));
+      rk(R(0,k), R(1,k), R(2,k));
 
       Vector<T>
-      rk2(3, R(0,k2), R(1,k2), R(2,k2));
+      rk2(R(0,k2), R(1,k2), R(2,k2));
 
       // compute projections
       Vector<T>

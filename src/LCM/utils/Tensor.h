@@ -1311,6 +1311,15 @@ namespace LCM {
   polar_left_logV(Tensor<T> const & F);
 
   ///
+  /// Left polar decomposition with matrix logarithm for V using eig_spd_cos
+  /// \param F tensor (often a deformation-gradient-like tensor)
+  /// \return \f$ VR = F \f$ with \f$ R \in SO(N) \f$ and V SPD, and log V
+  ///
+  template<typename T>
+  boost::tuple<Tensor<T>, Tensor<T>, Tensor<T> >
+  polar_left_logV_lame(Tensor<T> const & F);
+
+  ///
   /// Logarithmic map using BCH expansion (3 terms)
   /// \param v tensor
   /// \param r tensor
