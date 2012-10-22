@@ -78,11 +78,6 @@ evaluateFields(typename Traits::EvalData workset)
   else if(numDimensions == 4){
     int dim3 = evaluatedFieldDimensions[2];
     int dim4 = evaluatedFieldDimensions[3];
-    std::cout << std::endl;
-    std::cout << "in SetField" << std::endl;
-    std::cout << " dim1: " << dim1 << ", dim2: " << dim2 << ", dim3: " << dim3 << ", dim4: " << dim4 << std::endl;
-    std::cout << "fieldValues.size(): " << fieldValues.size() << std::endl;
-    std::cout << "dim1*dim2*dim3*dim4: " << dim1*dim2*dim3*dim4 << std::endl;
     TEUCHOS_TEST_FOR_EXCEPT_MSG(fieldValues.size() != dim1*dim2*dim3*dim4, "SetField::evaluateFields(), inconsistent data sizes.");
     for(int i=0 ; i<dim1 ; ++i){
       for(int j=0 ; j<dim2 ; ++j){

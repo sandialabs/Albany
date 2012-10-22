@@ -21,6 +21,7 @@
 #include "Intrepid_DefaultCubatureFactory.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 #include "Albany_Utils.hpp"
+#include "LCM/evaluators/SurfaceBasis.hpp"
 #include "LCM/evaluators/SurfaceVectorResidual.hpp"
 #include "LCM/evaluators/SurfaceVectorJump.hpp"
 #include "LCM/evaluators/SetField.hpp"
@@ -33,7 +34,21 @@ namespace {
 
   TEUCHOS_UNIT_TEST( SurfaceElement, Basis )
   {
-    Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> referenceCoords(24);
+    typedef PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT>::size_type size_type;
+    typedef PHAL::AlbanyTraits::Residual Residual;
+    typedef PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
+    typedef PHAL::AlbanyTraits Traits;
+
+    const int worksetSize = 1;
+    const int numQPts = 4;
+    const int numDim = 3;
+    const int numVertices = 8;
+    const int numNodes = 8;
+    const Teuchos::RCP<Albany::Layouts> dl = Teuchos::rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
+
+    //-----------------------------------------------------------------------------------
+    // reference coordinates
+    Teuchos::ArrayRCP<ScalarT> referenceCoords(24);
     referenceCoords[0] = -0.5;
     referenceCoords[1] = 0.0;
     referenceCoords[2] = -0.5;
@@ -59,7 +74,16 @@ namespace {
     referenceCoords[22] = 0.0;
     referenceCoords[23] = -0.5;
 
-    Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> currentCoords(24);
+    // SetField evaluator, which will be used to manually assign values to the reference coordiantes field
+    Teuchos::ParameterList rcPL("SetFieldRefCoords");
+    rcPL.set<string>("Evaluated Field Name", "Reference Coordinates");
+    rcPL.set<Teuchos::ArrayRCP<ScalarT> >("Field Values", referenceCoords);
+    rcPL.set<Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->vertices_vector);
+    Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldRefCoords = Teuchos::rcp(new LCM::SetField<Residual, Traits>(rcPL));
+
+    //-----------------------------------------------------------------------------------
+    // current coordinates
+    Teuchos::ArrayRCP<ScalarT> currentCoords(24);
     const double eps = 0.01;
     currentCoords[0] = referenceCoords[0];
     currentCoords[1] = referenceCoords[1];
@@ -85,6 +109,122 @@ namespace {
     currentCoords[21] = referenceCoords[21];
     currentCoords[22] = referenceCoords[22] + eps;
     currentCoords[23] = referenceCoords[23];
+
+    // SetField evaluator, which will be used to manually assign values to the reference coordiantes field
+    Teuchos::ParameterList ccPL("SetFieldCurCoords");
+    ccPL.set<string>("Evaluated Field Name", "Current Coordinates");
+    ccPL.set<Teuchos::ArrayRCP<ScalarT> >("Field Values", currentCoords);
+    ccPL.set<Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->node_vector);
+    Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldCurCoords = Teuchos::rcp(new LCM::SetField<Residual, Traits>(ccPL));
+
+    //-----------------------------------------------------------------------------------
+    // intrepid basis and cubature
+    Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
+    intrepidBasis = Teuchos::rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType,Intrepid::FieldContainer<RealType> >());
+    Teuchos::RCP<shards::CellTopology> cellType = Teuchos::rcp(new shards::CellTopology(shards::getCellTopologyData<shards::Quadrilateral<4> >()));
+    Intrepid::DefaultCubatureFactory<RealType> cubFactory;
+    Teuchos::RCP<Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, 3);
+
+    //-----------------------------------------------------------------------------------
+    // SurfaceBasis evaluator
+    Teuchos::RCP<Teuchos::ParameterList> sbPL = Teuchos::rcp(new Teuchos::ParameterList);
+    sbPL->set<string>("Reference Coordinates Name","Reference Coordinates");
+    sbPL->set<string>("Current Coordinates Name","Current Coordinates");
+    sbPL->set<string>("Current Basis Name", "Current Basis");
+    sbPL->set<string>("Reference Basis Name", "Reference Basis");    
+    sbPL->set<string>("Reference Dual Basis Name", "Reference Dual Basis");
+    sbPL->set<string>("Reference Normal Name", "Reference Normal");
+    sbPL->set<string>("Reference Area Name", "Reference Area");
+    sbPL->set<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+    sbPL->set<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", intrepidBasis);
+    Teuchos::RCP<LCM::SurfaceBasis<Residual, Traits> > sb = Teuchos::rcp(new LCM::SurfaceBasis<Residual,Traits>(*sbPL,dl));
+
+    // Instantiate a field manager.
+    PHX::FieldManager<PHAL::AlbanyTraits> fieldManager;
+
+    // Register the evaluators with the field manager
+    fieldManager.registerEvaluator<PHAL::AlbanyTraits::Residual>(setFieldRefCoords);
+    fieldManager.registerEvaluator<PHAL::AlbanyTraits::Residual>(setFieldCurCoords);
+    fieldManager.registerEvaluator<PHAL::AlbanyTraits::Residual>(sb);
+
+    // Set the evaluated fields as required fields
+    for (std::vector<Teuchos::RCP<PHX::FieldTag> >::const_iterator it = sb->evaluatedFields().begin();
+         it != sb->evaluatedFields().end(); it++)
+      fieldManager.requireField<Residual>(**it);
+
+    // Call postRegistrationSetup on the evaluators
+    // JTO - I don't know what "Test String" is meant for...
+    PHAL::AlbanyTraits::SetupData setupData = "Test String";
+    fieldManager.postRegistrationSetup(setupData);
+
+    // Create a workset
+    PHAL::Workset workset;
+    workset.numCells = worksetSize;
+
+    // Call the evaluators, evaluateFields() is the function that computes things
+    fieldManager.preEvaluate<Residual>(workset);
+    fieldManager.evaluateFields<Residual>(workset);
+    fieldManager.postEvaluate<Residual>(workset);
+
+    //-----------------------------------------------------------------------------------
+    // Pull the current basis from the FieldManager
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> curBasis("Current Basis", dl->qp_tensor);
+    fieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint,Dim,Dim>(curBasis);
+
+    // Record the expected current basis
+    LCM::Tensor<ScalarT> expectedCurBasis(0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+
+    double tolerance = 1.0e4;
+    for (size_type cell = 0; cell < worksetSize; ++cell) {
+      for (size_type pt = 0; pt < numQPts; ++pt) {
+        for (size_type i = 0; i < numDim; ++i) {
+          for (size_type j = 0; j < numDim; ++j) {
+
+            std::cout << "Current Basis at cell " << cell
+                      << ", point " << pt << ", i " << i << ", j " << j << ": "
+                      << "  " << curBasis(cell, pt, i, j) << std::endl;
+
+            std::cout << "Expected result: " 
+                      << expectedCurBasis(i,j) << std::endl;;
+
+            TEST_COMPARE(curBasis(cell, pt, i, j) - expectedCurBasis(i, j), <=, tolerance);
+          }
+        }
+      }
+    }
+    std::cout << endl;
+
+    //-----------------------------------------------------------------------------------
+    // Pull the reference basis from the FieldManager
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> refBasis("Reference Basis", dl->qp_tensor);
+    fieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint,Dim,Dim>(refBasis);
+
+    // Record the expected reference basis
+    LCM::Tensor<ScalarT> expectedRefBasis(0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+
+    //-----------------------------------------------------------------------------------
+    // Pull the reference dual basis from the FieldManager
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> refDualBasis("Reference Dual Basis", dl->qp_tensor);
+    fieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint,Dim,Dim>(refDualBasis);
+
+    // Record the expected reference dual basis
+    LCM::Tensor<ScalarT> expectedRefDualBasis(0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+
+    //-----------------------------------------------------------------------------------
+    // Pull the reference normal from the FieldManager
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim> refNormal("Reference Normal", dl->qp_vector);
+    fieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint,Dim>(refNormal);
+
+    // Record the expected reference normal
+    LCM::Vector<ScalarT> expectedRefNormal(0.0, 1.0, 0.0);
+
+    //-----------------------------------------------------------------------------------
+    // Pull the reference area from the FieldManager
+    PHX::MDField<ScalarT,Cell,QuadPoint> refArea("Reference Area", dl->qp_scalar);
+    fieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint>(refArea);
+
+    // Record the expected reference area
+    ScalarT expectedRefArea(0.125);
   }
 
   TEUCHOS_UNIT_TEST( SurfaceElement, VectorJump )

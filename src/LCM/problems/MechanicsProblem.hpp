@@ -1155,7 +1155,6 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
       p->set<string>("Reference Coordinates Name", "Coord Vec");
       p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
       p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", surfaceBasis);
-      p->set<RCP<shards::CellTopology> >("Cell Type", surfaceTopology);
       p->set<string>("Current Coordinates Name", "Current Coordinates");
 
       // outputs

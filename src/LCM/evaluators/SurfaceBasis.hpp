@@ -110,8 +110,6 @@ namespace LCM {
     Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
     //! Finite element basis for the midplane
     Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
-    //! Cell Topology
-    Teuchos::RCP<shards::CellTopology> cellType;
 
     // Surface Ref Bases FieldContainers
     Intrepid::FieldContainer<ScalarT> midplaneCoords;

@@ -31,7 +31,6 @@ namespace LCM {
       referenceCoords(p.get<std::string>("Reference Coordinates Name"), dl->vertices_vector),
       cubature       (p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")), 
       intrepidBasis  (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis")), 
-      cellType       (p.get<Teuchos::RCP<shards::CellTopology> >("Cell Type")), 
       refBasis       (p.get<std::string>("Reference Basis Name"), dl->qp_tensor),
       refArea        (p.get<std::string>("Reference Area Name"), dl->qp_scalar),
       refDualBasis   (p.get<std::string>("Reference Dual Basis Name"), dl->qp_tensor),
