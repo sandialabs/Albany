@@ -34,7 +34,7 @@ namespace Albany {
    */
   class MechanicsProblem : public Albany::AbstractProblem {
   public:
-  
+
     //! Default constructor
     MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
                      const Teuchos::RCP<ParamLib>& paramLib_,
@@ -73,7 +73,7 @@ namespace Albany {
 
     //! Private to prohibit copying
     MechanicsProblem(const MechanicsProblem&);
-    
+
     //! Private to prohibit copying
     MechanicsProblem& operator=(const MechanicsProblem&);
 
@@ -106,7 +106,7 @@ namespace Albany {
 
     //! number of element vertices
     int numVertices;
-    
+
     //! QCAD_Materialatabase info
     bool haveMatDB;
     std::string mtrlDbFilename;
@@ -207,9 +207,9 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
   }
 
   // FIXME, really need to check for WEDGE_12 topologies
-  TEUCHOS_TEST_FOR_EXCEPTION(composite && surfaceElement, std::logic_error, 
+  TEUCHOS_TEST_FOR_EXCEPTION(composite && surfaceElement, std::logic_error,
                              "Currently surface elements are not supported with the composite tet");
-  
+
   // get the intrepid basis for the given cell topology
   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
     intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd, composite);
@@ -226,7 +226,9 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
   RCP<Intrepid::Cubature<RealType> > surfaceCubature;
   if (surfaceElement)
   {
-    std::cout << "In Surface Element Logic" << std::endl;
+#ifdef ALBANY_VERBOSE
+    *out << "In Surface Element Logic" << std::endl;
+#endif
 
     string name = meshSpecs.ctd.name;
     if ( name == "Triangle_3" || name == "Quadrilateral_4" )
@@ -241,26 +243,31 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
       surfaceTopology = rcp(new shards::CellTopology( shards::getCellTopologyData<shards::Triangle<3> >()) );
       surfaceCubature = cubFactory.create(*surfaceTopology, meshSpecs.cubatureDegree);
     }
-     else if ( name == "Hexahedron_8" )   
+     else if ( name == "Hexahedron_8" )
     {
-      std::cout << "in Hex 8 logic" << std::endl;
       surfaceBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType, Intrepid::FieldContainer<RealType> >() );
       surfaceTopology = rcp(new shards::CellTopology( shards::getCellTopologyData<shards::Quadrilateral<4> >()) );
       surfaceCubature = cubFactory.create(*surfaceTopology, meshSpecs.cubatureDegree);
     }
 
-    std::cout << "surfaceCubature->getNumPoints(): " << surfaceCubature->getNumPoints() << std::endl;
-    std::cout << "surfaceCubature->getDimension(): " << surfaceCubature->getDimension() << std::endl;
+#ifdef ALBANY_VERBOSE
+    *out << "surfaceCubature->getNumPoints(): " << surfaceCubature->getNumPoints() << std::endl;
+    *out << "surfaceCubature->getDimension(): " << surfaceCubature->getDimension() << std::endl;
+#endif
   }
-
-
 
   // Note that these are the volume element quantities
   numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
 
+#ifdef ALBANY_VERBOSE
+  std::cout << "Setting numQPts, surface elemenet is " << surfaceElement << std::endl;
+#endif
   numDim = cubature->getDimension();
-  numQPts = cubature->getNumPoints();
+  if ( !surfaceElement )
+    numQPts = cubature->getNumPoints();
+  else
+    numQPts = surfaceCubature->getNumPoints();
   //numVertices = cellType->getNodeCount();
   numVertices = numNodes;
 
@@ -290,18 +297,18 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
 
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]));
-  
-  if (supportsTransient) 
+
+  if (supportsTransient)
     fm0.template registerEvaluator<EvalT>
       (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dotdot[0]));
 
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
 
-  if (supportsTransient) 
+  if (supportsTransient)
     fm0.template registerEvaluator<EvalT>
       (evalUtils.constructGatherSolutionEvaluator(true, dof_names, dof_names_dotdot));
-  else  
+  else
     fm0.template registerEvaluator<EvalT>
       (evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names));
 
@@ -311,17 +318,20 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructGatherCoordinateVectorEvaluator());
 
-  fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
-
-  fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
+  if ( !surfaceElement ) {
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
+    
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
+  }
 
   // Temporary variable used numerous times below
   Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
 
   // string for cauchy stress used numerous times below
   string cauchy = "Cauchy_Stress";
+  if ( surfaceElement ) cauchy = "Surface_Cauchy_Stress";
 
 // GAH: Restart mechanism cannot find fields with spaces 
 // in the Exodus file, as Ioss replaces spaces with underscores
@@ -329,7 +339,7 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
 
   { // Time
     RCP<ParameterList> p = rcp(new ParameterList("Time"));
-    
+
     p->set<string>("Time Name", "Time");
     p->set<string>("Delta Time Name", "Delta Time");
     p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
@@ -343,9 +353,11 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+  std::cout << "Current Coordinates" << std::endl;
+
   { // Current Coordinates
     RCP<ParameterList> p = rcp(new ParameterList("Current Coordinates"));
-    
+
     p->set<string>("Reference Coordinates Name", "Coord Vec");
     p->set<string>("Displacement Name", "Displacement");
     p->set<string>("Current Coordinates Name", "Current Coordinates");
@@ -353,6 +365,8 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
     ev = rcp(new LCM::CurrentCoords<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+
+  std::cout << "Register Elastic Modulus" << std::endl;
 
   { // Elastic Modulus
     RCP<ParameterList> p = rcp(new ParameterList);
@@ -371,7 +385,9 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  { // Poissons Ratio 
+  std::cout << "Register Poissons Ratio" << std::endl;
+
+  { // Poissons Ratio
     RCP<ParameterList> p = rcp(new ParameterList);
 
     p->set<string>("QP Variable Name", "Poissons Ratio");
@@ -406,6 +422,8 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+  std::cout << "Register J2Fiber" << std::endl;
+
   if (materialModelName == "J2Fiber")
   {
     { // Integration Point Location
@@ -432,6 +450,8 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
     }
   }
 
+  std::cout << "Register Neohookean" << std::endl;
+
   if (materialModelName == "NeoHookean")
   {
     { // Stress
@@ -457,7 +477,7 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
       bool outputFlag(true);
       if ( materialDB->isElementBlockParam(elementBlockName,"Output " + cauchy) )
         outputFlag = materialDB->getElementBlockParam<bool>(elementBlockName,"Output " + cauchy);
-      
+
       p = stateMgr.registerStateVariable(cauchy,dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0, outputFlag);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
@@ -473,7 +493,7 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
   //   p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
   //   p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
 
-  //   p->set<string>("DefGrad Name", "F"); 
+  //   p->set<string>("DefGrad Name", "F");
   //   p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
   //   //Output
@@ -502,7 +522,7 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<string>("DetDefGrad Name", "J");  // dl->qp_scalar also
-    
+
     // defaults for parameters
     RealType c1(0.0),c2(0.0),c(0.0); 
     // overide defaults
@@ -550,7 +570,7 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
     c        = materialDB->getElementBlockParam<RealType>(elementBlockName,"c");
     zeta_inf = materialDB->getElementBlockParam<RealType>(elementBlockName,"zeta_inf");
     iota     = materialDB->getElementBlockParam<RealType>(elementBlockName,"iota");
-    
+
     p->set<RealType>("c1 Name", c1);
     p->set<RealType>("c2 Name", c2);
     p->set<RealType>("c Name", c);
@@ -621,7 +641,7 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
   }
 
   else if (materialModelName == "J2"||materialModelName == "J2Fiber"||materialModelName == "GursonFD"|| materialModelName == "RIHMR" || materialModelName == "GursonHMR")
-  { 
+  {
     { // Hardening Modulus
       RCP<ParameterList> p = rcp(new ParameterList);
 
@@ -696,27 +716,27 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
 
     if (materialModelName == "RIHMR" || materialModelName == "GursonHMR")
     {
-	  { // Recovery Modulus
-	    RCP<ParameterList> p = rcp(new ParameterList);
+          { // Recovery Modulus
+            RCP<ParameterList> p = rcp(new ParameterList);
 
-	    p->set<string>("QP Variable Name", "Recovery Modulus");
-	    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-	    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-	    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-	    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+            p->set<string>("QP Variable Name", "Recovery Modulus");
+            p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+            p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+            p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+            p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
-	    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-	    Teuchos::ParameterList& paramList = materialDB->getElementBlockSublist(elementBlockName,"Recovery Modulus");
-	    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+            p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+            Teuchos::ParameterList& paramList = materialDB->getElementBlockSublist(elementBlockName,"Recovery Modulus");
+            p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-	    ev = rcp(new LCM::RecoveryModulus<EvalT,AlbanyTraits>(*p));
-	    fm0.template registerEvaluator<EvalT>(ev);
-	  }
+            ev = rcp(new LCM::RecoveryModulus<EvalT,AlbanyTraits>(*p));
+            fm0.template registerEvaluator<EvalT>(ev);
+          }
     }
     // if ( numDim == 3 && params->get("Compute Dislocation Density Tensor", false) )
     // { // Dislocation Density Tensor
     //   RCP<ParameterList> p = rcp(new ParameterList("Dislocation Density"));
-    
+
     //   //Input
     //   p->set<string>("Fp Name", "Fp");
     //   p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
@@ -727,7 +747,7 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
 
     //   //Output
     //   p->set<string>("Dislocation Density Name", "G"); //dl->qp_tensor also
- 
+
     //   //Declare what state data will need to be saved (name, layout, init_type)
     //   ev = rcp(new LCM::DislocationDensity<EvalT,AlbanyTraits>(*p));
     //   fm0.template registerEvaluator<EvalT>(ev);
@@ -855,7 +875,7 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
 
-      outputFlag = true;      
+      outputFlag = true;
       if ( materialDB->isElementBlockParam(elementBlockName,"Output Fp") )
         outputFlag = materialDB->getElementBlockParam<bool>(elementBlockName,"Output Fp");
       p = stateMgr.registerStateVariable("Fp",dl->qp_tensor, dl->dummy, elementBlockName, "identity", 1.0, true, outputFlag);
@@ -905,7 +925,7 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
       p->set<string>("Saturation Exponent Name", "Saturation Exponent"); // dl->qp_scalar also
       p->set<string>("Yield Strength Name", "Yield Strength"); // dl->qp_scalar also
       p->set<string>("DetDefGrad Name", "J");  // dl->qp_scalar also
-      
+
       // default parameters
       RealType N(0.0), eq0(0.0), f0(0.0), kw(0.0), eN(0.0), sN(0.0), fN(0.0);
       RealType fc(1.0), ff(1.0), q1(1.0), q2(1.0), q3(1.0);
@@ -1117,13 +1137,16 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                                "Unrecognized Material Name: " << materialModelName 
                                << "  Recognized names are : NeoHookean, NeoHookeanAD, J2, J2Fiber and GursonFD");
-  
+
 
   // If the element block is a surface element we need to register evaluators that use the 
   // surface quantities fro mabove, i.e. surfaceBasis, surfaceTopology, surfaceCubature
   // Watch out for consistency issues between numDims, numQPs, numNodes, etc...!!!
   if ( surfaceElement )
   {
+
+    std::cout << "Register Surface Basis" << std::endl;
+
     {// Surface Basis
       // SurfaceBasis_Def.hpp
       RCP<ParameterList> p = rcp(new ParameterList("Surface Basis"));
@@ -1141,11 +1164,13 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
       p->set<string>("Reference Dual Basis Name", "Reference Dual Basis");
       p->set<string>("Reference Normal Name", "Reference Normal");
       p->set<string>("Current Basis Name", "Current Basis");
-      
+
       ev = rcp(new LCM::SurfaceBasis<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
     }
-    
+
+    std::cout << "Register Surface Vector Jump" << std::endl;
+
     { // Surface Jump
       //SurfaceVectorJump_Def.hpp
       RCP<ParameterList> p = rcp(new ParameterList("Surface Vector Jump"));
@@ -1157,10 +1182,12 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
 
       // outputs
       p->set<string>("Vector Jump Name", "Vector Jump");
-      
+
       ev = rcp(new LCM::SurfaceVectorJump<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
     }
+
+    std::cout << "Register Surface Vector Gradient" << std::endl;
 
     { // Surface Gradient
       //SurfaceVectorGradient_Def.hpp
@@ -1182,17 +1209,20 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
       p->set<string>("Reference Dual Basis Name", "Reference Dual Basis");
       p->set<string>("Reference Normal Name", "Reference Normal");
       p->set<string>("Vector Jump Name", "Vector Jump");
-      
+
       // outputs
       p->set<string>("Surface Vector Gradient Name", "F");
       p->set<string>("Surface Vector Gradient Determinant Name", "J");
-      
+
       ev = rcp(new LCM::SurfaceVectorGradient<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
     if(cohesiveElement)
     {
+
+      std::cout << "Register Cohesive Traction" << std::endl;
+
       { // Surface Traction based on cohesive element
         //TvergaardHutchinson_Def.hpp
         RCP<ParameterList> p = rcp(new ParameterList("Surface Cohesive Traction"));
@@ -1201,7 +1231,7 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
         p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", surfaceCubature);
         p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", surfaceBasis);
         p->set<string>("Vector Jump Name", "Vector Jump");
-	    p->set<string>("Current Basis Name", "Current Basis");
+        p->set<string>("Current Basis Name", "Current Basis");
 
         if ( materialDB->isElementBlockParam(elementBlockName,"delta_1") )
            p->set<RealType>("delta_1 Name", materialDB->getElementBlockParam<RealType>(elementBlockName,"delta_1"));
@@ -1239,11 +1269,13 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
            p->set<RealType>("beta_2 Name", 1.0);
 
         // outputs
-	    p->set<string>("Cohesive Traction Name","Cohesive Traction");
+        p->set<string>("Cohesive Traction Name","Cohesive Traction");
         ev = rcp(new LCM::TvergaardHutchinson<EvalT,AlbanyTraits>(*p,dl));
         fm0.template registerEvaluator<EvalT>(ev);
       }
 
+      std::cout << "Register Cohesive Residual" << std::endl;
+      
       { // Surface Cohesive Residual
         // SurfaceCohesiveResidual_Def.hpp
         RCP<ParameterList> p = rcp(new ParameterList("Surface Cohesive Residual"));
@@ -1264,6 +1296,9 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
     }
     else
     {
+
+      std::cout << "Register Surface Residual" << std::endl;
+
       { // Surface Residual
         // SurfaceVectorResidual_Def.hpp
         RCP<ParameterList> p = rcp(new ParameterList("Surface Vector Residual"));
@@ -1281,15 +1316,15 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
         p->set<string>("Reference Dual Basis Name", "Reference Dual Basis");
         p->set<string>("Reference Normal Name", "Reference Normal");
         p->set<string>("Reference Area Name", "Reference Area");
-      
+
         // outputs
         p->set<string>("Surface Vector Residual Name", "Displacement Residual");
-      
+
         ev = rcp(new LCM::SurfaceVectorResidual<EvalT,AlbanyTraits>(*p,dl));
         fm0.template registerEvaluator<EvalT>(ev);
       }
     }
-  } else { 
+  } else {
 
     { // Deformation Gradient
       RCP<ParameterList> p = rcp(new ParameterList("Deformation Gradient"));
@@ -1300,7 +1335,7 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
         p->set<bool>("Weighted Volume Average J Name", materialDB->getElementBlockParam<bool>(elementBlockName,"Weighted Volume Average J") );
       if ( materialDB->isElementBlockParam(elementBlockName,"Average J Stabilization Parameter") )
         p->set<RealType>("Averaged J Stabilization Parameter Name", materialDB->getElementBlockParam<RealType>(elementBlockName,"Average J Stabilization Parameter") );
-                   
+
       // send in integration weights and the displacement gradient
       p->set<string>("Weights Name","Weights");
       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
@@ -1327,7 +1362,7 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
 
     { // Residual
       RCP<ParameterList> p = rcp(new ParameterList("Residual"));
-    
+
       //Input
       p->set<string>("Stress Name", cauchy);
       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);

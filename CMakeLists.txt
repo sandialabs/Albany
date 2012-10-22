@@ -266,7 +266,7 @@ ENDIF()
 
 IF (NOT ENABLE_ALBANY_VERBOSE)
   MESSAGE("-- Verbose printing is not enabled")      
-  SET(ALBANY_VERBOSE TRUE)
+  SET(ALBANY_VERBOSE FALSE)
 ELSE()  
   ADD_DEFINITIONS(-DALBANY_VERBOSE)
   MESSAGE("-- Verbose printing is enabled")

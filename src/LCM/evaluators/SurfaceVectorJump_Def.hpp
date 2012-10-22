@@ -48,11 +48,14 @@ namespace LCM {
     numPlaneNodes = numNodes / 2;
     numPlaneDims = numDims - 1;
 
-    std::cout << "numPlaneNodes: " << numPlaneNodes << std::endl;
-    std::cout << "numPlaneDims: " << numPlaneDims << std::endl;
-    std::cout << "numQPs: " << numQPs << std::endl;
-    std::cout << "cubature->getNumPoints(): " << cubature->getNumPoints() << std::endl;
-    std::cout << "cubature->getDimension(): " << cubature->getDimension() << std::endl;
+#ifdef ALBANY_VERBOSE
+    std::cout << "in Surface Vector Jump" << std::endl;
+    std::cout << " numPlaneNodes: " << numPlaneNodes << std::endl;
+    std::cout << " numPlaneDims: " << numPlaneDims << std::endl;
+    std::cout << " numQPs: " << numQPs << std::endl;
+    std::cout << " cubature->getNumPoints(): " << cubature->getNumPoints() << std::endl;
+    std::cout << " cubature->getDimension(): " << cubature->getDimension() << std::endl;
+#endif
     
     // Allocate Temporary FieldContainers
     refValues.resize(numPlaneNodes, numQPs);
@@ -61,11 +64,9 @@ namespace LCM {
     refWeights.resize(numQPs);
 
     // Pre-Calculate reference element quantitites
-    std::cout << "SurfaceVectorJump Calling Intrepid to get reference quantities" << std::endl;
     cubature->getCubature(refPoints, refWeights);
     intrepidBasis->getValues(refValues, refPoints, Intrepid::OPERATOR_VALUE);
     intrepidBasis->getValues(refGrads, refPoints, Intrepid::OPERATOR_GRAD);
-    std::cout << "End SurfaceVectorJump" << std::endl;
   }
 
   //**********************************************************************
