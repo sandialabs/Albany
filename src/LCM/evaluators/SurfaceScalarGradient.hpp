@@ -15,8 +15,8 @@
 \********************************************************************/
 
 
-#ifndef SURFACEVECTORGRADIENT_HPP
-#define SURFACEVECTORGRADIENT_HPP
+#ifndef SURFACESCALARGRADIENT_HPP
+#define SURFACESCALARGRADIENT_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -35,12 +35,12 @@ namespace LCM {
 **/
 
 template<typename EvalT, typename Traits>
-class SurfaceVectorGradient : public PHX::EvaluatorWithBaseImpl<Traits>,
+class SurfaceScalarGradient : public PHX::EvaluatorWithBaseImpl<Traits>,
                           public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
-  SurfaceVectorGradient(const Teuchos::ParameterList& p,
+  SurfaceScalarGradient(const Teuchos::ParameterList& p,
                         const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -68,7 +68,7 @@ private:
   PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> defGrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> scalarGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint> J;
 
   unsigned int worksetSize;
