@@ -22,6 +22,7 @@
 #include "PHAL_AlbanyTraits.hpp"
 #include "Albany_Utils.hpp"
 #include "LCM/evaluators/SurfaceVectorResidual.hpp"
+#include "LCM/evaluators/SurfaceVectorJump.hpp"
 #include "LCM/evaluators/SetField.hpp"
 #include "Tensor.h"
 #include "Albany_Layouts.hpp"
@@ -88,6 +89,169 @@ namespace {
 
   TEUCHOS_UNIT_TEST( SurfaceElement, VectorJump )
   {
+	// Set up the data layout
+	const int worksetSize = 1;
+	const int numQPts = 4;
+	const int numDim = 3;
+	const int numVertices = 8;
+	const int numNodes = 8;
+    const Teuchos::RCP<Albany::Layouts> dl = Teuchos::rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
+
+    // Instantiate the required evaluators with EvalT = PHAL::AlbanyTraits::Residual and Traits = PHAL::AlbanyTraits
+
+    //-----------------------------------------------------------------------------------
+    // nodal displacement jump
+    Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> referenceCoords(24);
+    referenceCoords[0] = -0.5;
+    referenceCoords[1] = 0.0;
+    referenceCoords[2] = -0.5;
+
+    referenceCoords[3] = -0.5;
+    referenceCoords[4] = 0.0;
+    referenceCoords[5] = 0.5;
+
+    referenceCoords[6] = 0.5;
+    referenceCoords[7] = 0.0;
+    referenceCoords[8] = 0.5;
+
+    referenceCoords[9] = 0.5;
+    referenceCoords[10] = 0.0;
+    referenceCoords[11] = -0.5;
+
+    referenceCoords[12] = -0.5;
+    referenceCoords[13] = 0.0;
+    referenceCoords[14] = -0.5;
+
+    referenceCoords[15] = -0.5;
+    referenceCoords[16] = 0.0;
+    referenceCoords[17] = 0.5;
+
+    referenceCoords[18] = 0.5;
+    referenceCoords[19] = 0.0;
+    referenceCoords[20] = 0.5;
+
+    referenceCoords[21] = 0.5;
+    referenceCoords[22] = 0.0;
+    referenceCoords[23] = -0.5;
+
+    Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> currentCoords(24);
+    const double eps = 0.01;
+    currentCoords[0] = referenceCoords[0];
+    currentCoords[1] = referenceCoords[1];
+    currentCoords[2] = referenceCoords[2];
+
+    currentCoords[3] = referenceCoords[3];
+    currentCoords[4] = referenceCoords[4];
+    currentCoords[5] = referenceCoords[5];
+
+    currentCoords[6] = referenceCoords[6];
+    currentCoords[7] = referenceCoords[7];
+    currentCoords[8] = referenceCoords[8];
+
+    currentCoords[9] = referenceCoords[9];
+    currentCoords[10] = referenceCoords[10];
+    currentCoords[11] = referenceCoords[11];
+
+    currentCoords[12] = referenceCoords[12];
+    currentCoords[13] = referenceCoords[13] + eps;
+    currentCoords[14] = referenceCoords[14];
+
+    currentCoords[15] = referenceCoords[15];
+    currentCoords[16] = referenceCoords[16] + eps;
+    currentCoords[17] = referenceCoords[17];
+
+    currentCoords[18] = referenceCoords[18];
+    currentCoords[19] = referenceCoords[19] + eps;
+    currentCoords[20] = referenceCoords[20];
+
+    currentCoords[21] = referenceCoords[21];
+    currentCoords[22] = referenceCoords[22] + eps;
+    currentCoords[23] = referenceCoords[23];
+
+    // SetField evaluator, which will be used to manually assign a value to the currentCoords field
+    Teuchos::ParameterList currentCoordsP("SetFieldCurrentCoords");
+    currentCoordsP.set<string>("Evaluated Field Name", "Current Coordinates");
+    currentCoordsP.set<Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> >("Field Values", currentCoords);
+    currentCoordsP.set<Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->node_vector);
+    Teuchos::RCP<LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits> > setFieldCurrentCoords =
+      Teuchos::rcp(new LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>(currentCoordsP));
+
+    //-----------------------------------------------------------------------------------
+    // intrepid basis and cubature
+    Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
+    intrepidBasis = Teuchos::rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType,Intrepid::FieldContainer<RealType> >());
+    Teuchos::RCP<shards::CellTopology> cellType = Teuchos::rcp(new shards::CellTopology(shards::getCellTopologyData<shards::Quadrilateral<4> >()));
+    Intrepid::DefaultCubatureFactory<RealType> cubFactory;
+    Teuchos::RCP<Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, 3);
+
+    //-----------------------------------------------------------------------------------
+    // SurfaceVectorJump evaluator
+    Teuchos::RCP<Teuchos::ParameterList> svjP = Teuchos::rcp(new Teuchos::ParameterList("Surface Vector Jump"));
+    svjP->set<string>("Vector Name","Current Coordinates");
+    svjP->set<string>("Vector Jump Name", "Vector Jump");
+    svjP->set<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+    svjP->set<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", intrepidBasis);
+    Teuchos::RCP<LCM::SurfaceVectorJump<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits> > svj =
+      Teuchos::rcp(new LCM::SurfaceVectorJump<PHAL::AlbanyTraits::Residual,PHAL::AlbanyTraits>(*svjP,dl));
+
+    // Instantiate a field manager.
+    PHX::FieldManager<PHAL::AlbanyTraits> fieldManager;
+
+    // Register the evaluators with the field manager
+    fieldManager.registerEvaluator<PHAL::AlbanyTraits::Residual>(setFieldCurrentCoords);
+    fieldManager.registerEvaluator<PHAL::AlbanyTraits::Residual>(svj);
+
+    // Set the evaluated fields as required fields
+     for (std::vector<Teuchos::RCP<PHX::FieldTag> >::const_iterator it = svj->evaluatedFields().begin();
+          it != svj->evaluatedFields().end(); it++)
+       fieldManager.requireField<PHAL::AlbanyTraits::Residual>(**it);
+
+    // Call postRegistrationSetup on the evaluators
+    // JTO - I don't know what "Test String" is meant for...
+    PHAL::AlbanyTraits::SetupData setupData = "Test String";
+    fieldManager.postRegistrationSetup(setupData);
+
+    // Create a workset
+    PHAL::Workset workset;
+    workset.numCells = worksetSize;
+
+    // Call the evaluators, evaluateFields() is the function that computes things
+    fieldManager.preEvaluate<PHAL::AlbanyTraits::Residual>(workset);
+    fieldManager.evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
+    fieldManager.postEvaluate<PHAL::AlbanyTraits::Residual>(workset);
+
+    // Pull the vector jump from the FieldManager
+    PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT,Cell,QuadPoint,Dim> jumpField("Vector Jump", dl->qp_vector);
+    fieldManager.getFieldData<PHAL::AlbanyTraits::Residual::ScalarT,PHAL::AlbanyTraits::Residual,Cell,QuadPoint,Dim>(jumpField);
+
+    // Record the expected vector jump, which will be used to check the computed vector jump
+    LCM::Vector<PHAL::AlbanyTraits::Residual::ScalarT> expectedJump(0.0,eps,0.0);
+
+    // Check the computed jump
+    typedef PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT>::size_type size_type;
+    for (size_type cell = 0; cell < worksetSize; ++cell) {
+      for (size_type pt = 0; pt < numQPts; ++pt) {
+
+        std::cout << "Jump Vector at cell " << cell
+            << ", quadrature point " << pt << ":" << endl;
+        std::cout << "  " << fabs(jumpField(cell, pt, 0));
+        std::cout << "  " << fabs(jumpField(cell, pt, 1));
+        std::cout << "  " << fabs(jumpField(cell, pt, 2)) << endl;
+
+        std::cout << "Expected result:" << endl;
+        std::cout << "  " << expectedJump(0);
+        std::cout << "  " << expectedJump(1);
+        std::cout << "  " << expectedJump(2) << endl;
+
+        std::cout << endl;
+
+        double tolerance = 1.0e-6;
+        for (size_type i = 0; i < numDim; ++i) {
+          TEST_COMPARE(jumpField(cell, pt, i) - expectedJump(i), <=, tolerance);
+        }
+      }
+    }
+    std::cout << endl;
   }
 
   TEUCHOS_UNIT_TEST( SurfaceElement, CohesiveForce )
