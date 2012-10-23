@@ -40,6 +40,8 @@ class SurfaceScalarGradient : public PHX::EvaluatorWithBaseImpl<Traits>,
 
 public:
 
+
+
   SurfaceScalarGradient(const Teuchos::ParameterList& p,
                         const Teuchos::RCP<Albany::Layouts>& dl);
 
@@ -47,6 +49,8 @@ public:
 			     PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
+
+
 
 private:
 
@@ -63,6 +67,8 @@ private:
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
   //! Cell Topology
   Teuchos::RCP<shards::CellTopology> cellType;
+  // nodal value used to construct in-plan gradient
+  PHX::MDField<ScalarT,Cell,Node> nodalScalar;
 
   //! Vector to take the jump of
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> vector;
@@ -78,6 +84,9 @@ private:
   Intrepid::FieldContainer<RealType> refGrads;
   Intrepid::FieldContainer<RealType> refPoints;
   Intrepid::FieldContainer<RealType> refWeights;
+
+  // Surface Ref Bases FieldContainers
+  Intrepid::FieldContainer<ScalarT> midplaneScalar;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> scalarGrad;

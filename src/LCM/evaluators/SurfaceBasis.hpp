@@ -99,7 +99,7 @@ namespace LCM {
                          PHX::MDField<ScalarT,Cell,QuadPoint> area);
 
   private:
-    int  numDims, numNodes, numQPs, numPlaneNodes, numPlaneDims;
+    unsigned int  numDims, numNodes, numQPs, numPlaneNodes, numPlaneDims;
 
     bool needCurrentBasis;
 

@@ -35,7 +35,8 @@ namespace LCM {
     refDualBasis   (p.get<std::string>("Reference Dual Basis Name"),dl->qp_tensor),
     refNormal      (p.get<std::string>("Reference Normal Name"),dl->qp_vector),
     jump           (p.get<std::string>("Vector Jump Name"),dl->qp_scalar),
-    scalarGrad        (p.get<std::string>("Surface Vector Gradient Name"),dl->qp_vector),
+    nodalScalar           (p.get<std::string>("Nodal Scalar Name"),dl->node_scalar),
+    scalarGrad        (p.get<std::string>("Surface Scalar Gradient Name"),dl->qp_vector),
    // J              (p.get<std::string>("Surface Vector Gradient Determinant Name"),dl->qp_scalar),
     weights        (p.get<std::string>("Weights Name"),dl->qp_scalar),
     weightedAverage(false),
@@ -50,6 +51,7 @@ namespace LCM {
     this->addDependentField(refDualBasis);
     this->addDependentField(refNormal);
     this->addDependentField(jump);
+    this->addDependentField(nodalScalar);
 
     this->addEvaluatedField(scalarGrad);
   //  this->addEvaluatedField(J);
@@ -73,6 +75,9 @@ namespace LCM {
     refPoints.resize(numQPs, numPlaneDims);
     refWeights.resize(numQPs);
 
+    // temp space for midplane coords
+    midplaneScalar.resize(worksetSize, numPlaneNodes, numDims);
+
 
     // Pre-Calculate reference element quantitites
     std::cout << "SurfaceBasis Calling Intrepid to get reference quantities" << std::endl;
@@ -91,6 +96,7 @@ namespace LCM {
     this->utils.setFieldData(refDualBasis,fm);
     this->utils.setFieldData(refNormal,fm);
     this->utils.setFieldData(jump,fm);
+    this->utils.setFieldData(nodalScalar,fm);
     this->utils.setFieldData(scalarGrad,fm);
   //  this->utils.setFieldData(J,fm);
   }
@@ -100,6 +106,16 @@ namespace LCM {
   void SurfaceScalarGradient<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
+
+	 // compute mid-plane scalar value for the normal contributino calculation
+     for (int cell(0); cell < midplaneScalar.dimension(0); ++cell) {
+        // compute the mid-plane value
+        for (int node(0); node < numPlaneNodes; ++node) {
+          int topNode = node + numPlaneNodes;
+            midplaneScalar(cell, node) = 0.5 * (nodalScalar(cell, node) + nodalScalar(cell, topNode));
+        }
+     }
+
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t pt=0; pt < numQPs; ++pt) {
         LCM::Vector<ScalarT> g_0(3, &currentBasis(cell, pt, 0, 0));
