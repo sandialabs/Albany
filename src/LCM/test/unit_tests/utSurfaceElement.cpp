@@ -24,6 +24,7 @@
 #include "LCM/evaluators/SurfaceBasis.hpp"
 #include "LCM/evaluators/SurfaceVectorResidual.hpp"
 #include "LCM/evaluators/SurfaceVectorJump.hpp"
+#include "LCM/evaluators/SurfaceCohesiveResidual.hpp"
 #include "LCM/evaluators/SetField.hpp"
 #include "Tensor.h"
 #include "Albany_Layouts.hpp"
@@ -422,7 +423,129 @@ namespace {
 
   TEUCHOS_UNIT_TEST( SurfaceElement, CohesiveForce )
   {
-  }
+	// Set up the data layout
+	const int worksetSize = 1;
+	const int numQPts = 4;
+	const int numDim = 3;
+	const int numVertices = 8;
+	const int numNodes = 8;
+	const int numPlaneNodes = numNodes/2;
+	const Teuchos::RCP<Albany::Layouts> dl = Teuchos::rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
+
+    // Instantiate the required evaluators with EvalT = PHAL::AlbanyTraits::Residual and Traits = PHAL::AlbanyTraits
+    //-----------------------------------------------------------------------------------
+	// manually create evaluator field for cohesive traction
+    Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> cohesiveTraction(numQPts*numDim);
+    // manually fill the cohesiveTraction field
+    for (int i(0); i < numQPts*numDim; ++i)
+      cohesiveTraction[i]  = 0.0;
+    const double T0 = 2.0;
+    cohesiveTraction[1] = T0;
+    cohesiveTraction[4] = 0.2*T0;
+    cohesiveTraction[7] = 0.4*T0;
+    cohesiveTraction[10] = 0.6*T0;
+
+    // SetField evaluator, which will be used to manually assign a value to the cohesiveTraction field
+    Teuchos::ParameterList ctP("SetFieldCohesiveTraction");
+    ctP.set<string>("Evaluated Field Name", "Cohesive Traction");
+    ctP.set<Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> >("Field Values", cohesiveTraction);
+    ctP.set<Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_vector);
+    Teuchos::RCP<LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits> > setFieldCohesiveTraction =
+      Teuchos::rcp(new LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>(ctP));
+
+    //-----------------------------------------------------------------------------------
+	// manually create evaluator field for refArea
+    Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> refArea(numQPts);
+    // manually fill the refArea field, for this unit squre, refArea = 0.25;
+    for (int i(0); i < numQPts; ++i)
+      refArea[i]  = 0.25;
+
+    // SetField evaluator, which will be used to manually assign a value to the cohesiveTraction field
+    Teuchos::ParameterList refAP("SetFieldRefArea");
+    refAP.set<string>("Evaluated Field Name", "Reference Area");
+    refAP.set<Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> >("Field Values", refArea);
+    refAP.set<Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_scalar);
+    Teuchos::RCP<LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits> > setFieldRefArea =
+      Teuchos::rcp(new LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>(refAP));
+
+    //-----------------------------------------------------------------------------------
+    // intrepid basis and cubature
+    Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
+    intrepidBasis = Teuchos::rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType,Intrepid::FieldContainer<RealType> >());
+    Teuchos::RCP<shards::CellTopology> cellType = Teuchos::rcp(new shards::CellTopology(shards::getCellTopologyData<shards::Quadrilateral<4> >()));
+    Intrepid::DefaultCubatureFactory<RealType> cubFactory;
+    Teuchos::RCP<Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, 3);
+
+    //-----------------------------------------------------------------------------------
+    // SurfaceCohesiveResidual evaluator
+    Teuchos::RCP<Teuchos::ParameterList> scrP = Teuchos::rcp(new Teuchos::ParameterList);
+    scrP->set<string>("Reference Area Name", "Reference Area");
+    scrP->set<string>("Cohesive Traction Name", "Cohesive Traction");
+    scrP->set<string>("Surface Cohesive Residual Name", "Force");
+    scrP->set<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+    scrP->set<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", intrepidBasis);
+    Teuchos::RCP<LCM::SurfaceCohesiveResidual<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits> > scr =
+      Teuchos::rcp(new LCM::SurfaceCohesiveResidual<PHAL::AlbanyTraits::Residual,PHAL::AlbanyTraits>(*scrP,dl));
+
+    // Instantiate a field manager.
+    PHX::FieldManager<PHAL::AlbanyTraits> fieldManager;
+
+    // Register the evaluators with the field manager
+    fieldManager.registerEvaluator<PHAL::AlbanyTraits::Residual>(setFieldCohesiveTraction);
+    fieldManager.registerEvaluator<PHAL::AlbanyTraits::Residual>(setFieldRefArea);
+    fieldManager.registerEvaluator<PHAL::AlbanyTraits::Residual>(scr);
+
+    // Set the evaluated fields as required fields
+    for (std::vector<Teuchos::RCP<PHX::FieldTag> >::const_iterator it = scr->evaluatedFields().begin();
+         it != scr->evaluatedFields().end(); it++)
+      fieldManager.requireField<PHAL::AlbanyTraits::Residual>(**it);
+
+    // Call postRegistrationSetup on the evaluators
+    // JTO - I don't know what "Test String" is meant for...
+    PHAL::AlbanyTraits::SetupData setupData = "Test String";
+    fieldManager.postRegistrationSetup(setupData);
+
+    // Create a workset
+    PHAL::Workset workset;
+    workset.numCells = worksetSize;
+
+    // Call the evaluators, evaluateFields() is the function that computes things
+    fieldManager.preEvaluate<PHAL::AlbanyTraits::Residual>(workset);
+    fieldManager.evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
+    fieldManager.postEvaluate<PHAL::AlbanyTraits::Residual>(workset);
+
+    // Pull the nodal force from the FieldManager
+    PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT,Cell,Node,Dim> forceField("Force", dl->node_vector);
+    fieldManager.getFieldData<PHAL::AlbanyTraits::Residual::ScalarT,PHAL::AlbanyTraits::Residual,Cell,Node,Dim>(forceField);
+
+    // Record the expected nodal forces, which will be used to check the computed force
+    // only y component for this particular test
+    Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> expectedForceBottom(numPlaneNodes);
+    expectedForceBottom[0]=-0.2589316;
+    expectedForceBottom[1]=-0.2622008;
+    expectedForceBottom[2]=-0.3744017;
+    expectedForceBottom[3]=-0.2044658;
+
+    // Check the computed force
+    typedef PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT>::size_type size_type;
+    for (size_type cell = 0; cell < worksetSize; ++cell) {
+      for (size_type node = 0; node < numPlaneNodes; ++node) {
+
+        std::cout << "Bottom Nodal forceY at cell " << cell
+            << ", node " << node << ":" << endl;
+        std::cout << "  " << forceField(cell, node, 1) << endl;
+
+        std::cout << "Expected result:" << endl;
+        std::cout << "  " << expectedForceBottom[node]<< endl;
+
+        std::cout << endl;
+
+        double tolerance = 1.0e-6;
+        TEST_COMPARE(forceField(cell, node, 1) - expectedForceBottom[node], <=, tolerance);
+      }
+    }
+    std::cout << endl;
+  } // end SurfaceCohesiveResidual unitTest
 
   TEUCHOS_UNIT_TEST( SurfaceElement, LocalizationForce )
   {
