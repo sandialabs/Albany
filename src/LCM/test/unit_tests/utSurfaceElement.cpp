@@ -39,6 +39,9 @@ namespace {
     typedef PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
     typedef PHAL::AlbanyTraits Traits;
 
+    // set tolerance once and for all
+    double tolerance = 1.0e-15;
+
     const int worksetSize = 1;
     const int numQPts = 4;
     const int numDim = 3;
@@ -172,27 +175,13 @@ namespace {
     fieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint,Dim,Dim>(curBasis);
 
     // Record the expected current basis
-    LCM::Tensor<ScalarT> expectedCurBasis(0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+    LCM::Tensor<ScalarT> expectedCurBasis(0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0, 0.0);
 
-    double tolerance = 1.0e4;
-    for (size_type cell = 0; cell < worksetSize; ++cell) {
-      for (size_type pt = 0; pt < numQPts; ++pt) {
-        for (size_type i = 0; i < numDim; ++i) {
-          for (size_type j = 0; j < numDim; ++j) {
-
-            std::cout << "Current Basis at cell " << cell
-                      << ", point " << pt << ", i " << i << ", j " << j << ": "
-                      << "  " << curBasis(cell, pt, i, j) << std::endl;
-
-            std::cout << "Expected result: " 
-                      << expectedCurBasis(i,j) << std::endl;;
-
-            TEST_COMPARE(curBasis(cell, pt, i, j) - expectedCurBasis(i, j), <=, tolerance);
-          }
-        }
-      }
-    }
-    std::cout << endl;
+    for (size_type cell = 0; cell < worksetSize; ++cell)
+      for (size_type pt = 0; pt < numQPts; ++pt)
+        for (size_type i = 0; i < numDim; ++i)
+          for (size_type j = 0; j < numDim; ++j)
+            TEST_COMPARE(fabs(curBasis(cell, pt, i, j) - expectedCurBasis(i, j)), <=, tolerance);
 
     //-----------------------------------------------------------------------------------
     // Pull the reference basis from the FieldManager
@@ -200,7 +189,13 @@ namespace {
     fieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint,Dim,Dim>(refBasis);
 
     // Record the expected reference basis
-    LCM::Tensor<ScalarT> expectedRefBasis(0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+    LCM::Tensor<ScalarT> expectedRefBasis(0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0, 0.0);
+
+    for (size_type cell = 0; cell < worksetSize; ++cell)
+      for (size_type pt = 0; pt < numQPts; ++pt)
+        for (size_type i = 0; i < numDim; ++i)
+          for (size_type j = 0; j < numDim; ++j)
+            TEST_COMPARE(fabs(refBasis(cell, pt, i, j) - expectedRefBasis(i, j)), <=, tolerance);
 
     //-----------------------------------------------------------------------------------
     // Pull the reference dual basis from the FieldManager
@@ -208,7 +203,13 @@ namespace {
     fieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint,Dim,Dim>(refDualBasis);
 
     // Record the expected reference dual basis
-    LCM::Tensor<ScalarT> expectedRefDualBasis(0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+    LCM::Tensor<ScalarT> expectedRefDualBasis(0.0, 0.0, 2.0, 2.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+
+    for (size_type cell = 0; cell < worksetSize; ++cell)
+      for (size_type pt = 0; pt < numQPts; ++pt)
+        for (size_type i = 0; i < numDim; ++i)
+          for (size_type j = 0; j < numDim; ++j)
+            TEST_COMPARE(fabs(refDualBasis(cell, pt, i, j) - expectedRefDualBasis(i, j)), <=, tolerance);
 
     //-----------------------------------------------------------------------------------
     // Pull the reference normal from the FieldManager
@@ -218,23 +219,48 @@ namespace {
     // Record the expected reference normal
     LCM::Vector<ScalarT> expectedRefNormal(0.0, 1.0, 0.0);
 
+    for (size_type cell = 0; cell < worksetSize; ++cell)
+      for (size_type pt = 0; pt < numQPts; ++pt)
+        for (size_type i = 0; i < numDim; ++i)
+          TEST_COMPARE(fabs(refNormal(cell, pt, i) - expectedRefNormal(i)), <=, tolerance);
+
     //-----------------------------------------------------------------------------------
     // Pull the reference area from the FieldManager
     PHX::MDField<ScalarT,Cell,QuadPoint> refArea("Reference Area", dl->qp_scalar);
     fieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint>(refArea);
 
     // Record the expected reference area
-    ScalarT expectedRefArea(0.125);
+    ScalarT expectedRefArea(0.5);
+
+    for (size_type cell = 0; cell < worksetSize; ++cell)
+      for (size_type pt = 0; pt < numQPts; ++pt)
+        TEST_COMPARE(fabs(refArea(cell, pt) - expectedRefArea), <=, tolerance);
+
+    //-----------------------------------------------------------------------------------
+    // compute a deformation gradient for the membrane
+    for (size_type cell = 0; cell < worksetSize; ++cell) {
+      for (size_type pt = 0; pt < numQPts; ++pt) {
+        LCM::Vector<ScalarT> g_0(3, &curBasis(cell, pt, 0, 0));
+        LCM::Vector<ScalarT> g_1(3, &curBasis(cell, pt, 1, 0));
+        LCM::Vector<ScalarT> g_2(3, &curBasis(cell, pt, 2, 0));
+        LCM::Vector<ScalarT> G0(3, &refDualBasis(cell, pt, 0, 0));
+        LCM::Vector<ScalarT> G1(3, &refDualBasis(cell, pt, 1, 0));
+        LCM::Vector<ScalarT> G2(3, &refDualBasis(cell, pt, 2, 0));
+        LCM::Tensor<ScalarT> F(LCM::bun(g_0, G0) + LCM::bun(g_1, G1) + LCM::bun(g_2, G2));
+        LCM::Tensor<ScalarT> I(LCM::eye<ScalarT>(3));
+        TEST_COMPARE(LCM::norm(F-I), <=, tolerance);
+      }
+    }
   }
 
   TEUCHOS_UNIT_TEST( SurfaceElement, VectorJump )
   {
-	// Set up the data layout
-	const int worksetSize = 1;
-	const int numQPts = 4;
-	const int numDim = 3;
-	const int numVertices = 8;
-	const int numNodes = 8;
+    // Set up the data layout
+    const int worksetSize = 1;
+    const int numQPts = 4;
+    const int numDim = 3;
+    const int numVertices = 8;
+    const int numNodes = 8;
     const Teuchos::RCP<Albany::Layouts> dl = Teuchos::rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
 
     // Instantiate the required evaluators with EvalT = PHAL::AlbanyTraits::Residual and Traits = PHAL::AlbanyTraits
@@ -342,9 +368,9 @@ namespace {
     fieldManager.registerEvaluator<PHAL::AlbanyTraits::Residual>(svj);
 
     // Set the evaluated fields as required fields
-     for (std::vector<Teuchos::RCP<PHX::FieldTag> >::const_iterator it = svj->evaluatedFields().begin();
-          it != svj->evaluatedFields().end(); it++)
-       fieldManager.requireField<PHAL::AlbanyTraits::Residual>(**it);
+    for (std::vector<Teuchos::RCP<PHX::FieldTag> >::const_iterator it = svj->evaluatedFields().begin();
+         it != svj->evaluatedFields().end(); it++)
+      fieldManager.requireField<PHAL::AlbanyTraits::Residual>(**it);
 
     // Call postRegistrationSetup on the evaluators
     // JTO - I don't know what "Test String" is meant for...
@@ -373,7 +399,7 @@ namespace {
       for (size_type pt = 0; pt < numQPts; ++pt) {
 
         std::cout << "Jump Vector at cell " << cell
-            << ", quadrature point " << pt << ":" << endl;
+                  << ", quadrature point " << pt << ":" << endl;
         std::cout << "  " << fabs(jumpField(cell, pt, 0));
         std::cout << "  " << fabs(jumpField(cell, pt, 1));
         std::cout << "  " << fabs(jumpField(cell, pt, 2)) << endl;
