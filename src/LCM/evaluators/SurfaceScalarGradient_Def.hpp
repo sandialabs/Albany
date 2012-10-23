@@ -124,12 +124,12 @@ namespace LCM {
         for (std::size_t i=0; i < numDims; ++i)
 		 {
         	// normal contribution
-			  scalarGradNormal(i) = 0.0;
+        	for (int node(0); node < numPlaneNodes; ++node) {
+			  scalarGradNormal(i) += refGrads(node, pt, i)*midplaneScalar[node];
+        	}
 
 			// orthogonal contribution
               scalarGradOrthogonal(i) = jump(cell,pt)*G2(i)/thickness;
-
-
               scalarGrad(cell, pt, i) =scalarGradOrthogonal(i) + scalarGradNormal(i);
         }
 
