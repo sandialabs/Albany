@@ -1,8 +1,9 @@
-///
-/// \file Geometry.t.cc
-/// Geometry utilities for LCM. Templates.
-/// \author Alejandro Mota
-///
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
+
 #if !defined(LCM_Geometry_t_cc)
 #define LCM_Geometry_t_cc
 

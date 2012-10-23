@@ -1,10 +1,8 @@
-///
-/// \file Partition.cc
-/// Simple Zoltan compact hyperedge graph for partitioning meshes.
-/// Implementation.
-/// \author Alejandro Mota
-///
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 
 // Define only if Zoltan is enabled
 #if defined (ALBANY_LCM) && defined(ALBANY_ZOLTAN)

@@ -1,10 +1,8 @@
-/*
- * FaceFractureCriteria.hpp
- *
- *  Created on: Jul 20, 2012
- *      Author: jrthune
- */
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 #ifndef FACE_FRACTURE_CRITERIA_HPP
 #define FACE_FRACTURE_CRITERIA_HPP
 

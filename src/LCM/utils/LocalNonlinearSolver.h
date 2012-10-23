@@ -1,8 +1,9 @@
-///
-/// \file LocalNonlinearSolver.h
-/// A templated nonlinear solver for local (integration point) computations
-/// \author Jake Ostien
-///
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
+
 #if !defined(LCM_LocalNonlinearSolver_h)
 #define LCM_LocalNonlinearSolver_h
 

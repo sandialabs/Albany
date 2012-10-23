@@ -1,9 +1,9 @@
-///
-/// \file Tensor.t.cc
-/// First cut of LCM small tensor utilities. Templates.
-/// \author Alejandro Mota
-/// \author Jake Ostien
-///
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
+
 #if !defined(LCM_Tensor_t_cc)
 #define LCM_Tensor_t_cc
 
