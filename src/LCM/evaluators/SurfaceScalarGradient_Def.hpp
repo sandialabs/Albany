@@ -29,6 +29,8 @@ namespace LCM {
                         const Teuchos::RCP<Albany::Layouts>& dl) :
     thickness      (p.get<double>("thickness")), 
     cubature       (p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")), 
+    intrepidBasis  (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis")),
+    cellType       (p.get<Teuchos::RCP<shards::CellTopology> >("Cell Type")),
     currentBasis   (p.get<std::string>("Current Basis Name"),dl->qp_tensor),
     refDualBasis   (p.get<std::string>("Reference Dual Basis Name"),dl->qp_tensor),
     refNormal      (p.get<std::string>("Reference Normal Name"),dl->qp_vector),
@@ -64,6 +66,19 @@ namespace LCM {
 
     numPlaneNodes = numNodes / 2;
     numPlaneDims = numDims - 1;
+
+    // Allocate Temporary FieldContainers
+    refValues.resize(numPlaneNodes, numQPs);
+    refGrads.resize(numPlaneNodes, numQPs, numPlaneDims);
+    refPoints.resize(numQPs, numPlaneDims);
+    refWeights.resize(numQPs);
+
+
+    // Pre-Calculate reference element quantitites
+    std::cout << "SurfaceBasis Calling Intrepid to get reference quantities" << std::endl;
+    cubature->getCubature(refPoints, refWeights);
+    intrepidBasis->getValues(refValues, refPoints, Intrepid::OPERATOR_VALUE);
+    intrepidBasis->getValues(refGrads, refPoints, Intrepid::OPERATOR_GRAD);
   }
 
   //**********************************************************************
@@ -96,15 +111,22 @@ namespace LCM {
         LCM::Vector<ScalarT> G2(3, &refDualBasis(cell, pt, 2, 0));
 
 
-        // for now, there is no normal contribution, I will add it later on --Sun
-        LCM::Vector<ScalarT> F2((1 / thickness) * jump(cell, pt) * G_2); // orthogonal contribution
+        LCM::Vector<ScalarT> scalarGradOrthogonal(0, 0, 0);
+        LCM::Vector<ScalarT> scalarGradNormal(0, 0, 0);
 
-        LCM::Vector<ScalarT> F = F2;
+        // normal contribution
+        // NOT YET IMPLEMENTED
+        for (std::size_t i=0; i < numDims; ++i)
+		 {
+        	// normal contribution
+			  scalarGradNormal(i) = 0.0;
 
-        scalarGrad(cell, pt, 0) =F(0);
-        scalarGrad(cell, pt, 1) =F(1);
-        scalarGrad(cell, pt, 2) =F(2);
+			// orthogonal contribution
+              scalarGradOrthogonal(i) = jump(cell,pt)*G2(i)/thickness;
 
+
+              scalarGrad(cell, pt, i) =scalarGradOrthogonal(i) + scalarGradNormal(i);
+        }
 
       }
     }

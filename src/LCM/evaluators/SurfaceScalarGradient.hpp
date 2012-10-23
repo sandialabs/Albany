@@ -58,6 +58,12 @@ private:
   ScalarT thickness;
   //! Numerical integration rule
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
+
+  //! for the parallel gradient term
+  Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
+  //! Cell Topology
+  Teuchos::RCP<shards::CellTopology> cellType;
+
   //! Vector to take the jump of
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> vector;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> jump;
@@ -66,6 +72,12 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> refDualBasis;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> refNormal;
   PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
+
+  //! Reference Cell FieldContainers
+  Intrepid::FieldContainer<RealType> refValues;
+  Intrepid::FieldContainer<RealType> refGrads;
+  Intrepid::FieldContainer<RealType> refPoints;
+  Intrepid::FieldContainer<RealType> refWeights;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> scalarGrad;
