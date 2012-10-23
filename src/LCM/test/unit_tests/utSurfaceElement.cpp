@@ -268,7 +268,7 @@ namespace {
 	     // Instantiate the required evaluators with EvalT = PHAL::AlbanyTraits::Residual and Traits = PHAL::AlbanyTraits
 
 	     //-----------------------------------------------------------------------------------
-	     // nodal displacement jump
+	     // nodal value of the scalar (usually a scalar solution field such as pressure, temperature..etc)
 	     Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> referenceScalar(8);
 	     referenceScalar[0] = 0.5;
 	     referenceScalar[1] = 0.5;
@@ -283,12 +283,12 @@ namespace {
 
 
 	     Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> currentScalar(8);
-	     const double eps = 0.0;
-	     currentScalar[0] = referenceScalar[0] + eps;
-	     currentScalar[1] = referenceScalar[1] + eps;
-	     currentScalar[2] = referenceScalar[2] + eps;
+	     const double eps = 0.05;
+	     currentScalar[0] = referenceScalar[0] ;
+	     currentScalar[1] = referenceScalar[1] ;
+	     currentScalar[2] = referenceScalar[2] ;
 
-	     currentScalar[3] = referenceScalar[3] + eps;
+	     currentScalar[3] = referenceScalar[3] ;
 	     currentScalar[4] = referenceScalar[4] + eps;
 	     currentScalar[5] = referenceScalar[5] + eps;
 
