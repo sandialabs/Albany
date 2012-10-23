@@ -24,6 +24,7 @@
 #include "LCM/evaluators/SurfaceBasis.hpp"
 #include "LCM/evaluators/SurfaceVectorResidual.hpp"
 #include "LCM/evaluators/SurfaceVectorJump.hpp"
+#include "LCM/evaluators/SurfaceScalarJump.hpp"
 #include "LCM/evaluators/SurfaceCohesiveResidual.hpp"
 #include "LCM/evaluators/SetField.hpp"
 #include "Tensor.h"
@@ -252,6 +253,130 @@ namespace {
         TEST_COMPARE(LCM::norm(F-I), <=, tolerance);
       }
     }
+  }
+
+  TEUCHOS_UNIT_TEST( SurfaceElement, ScalarJump )
+  {
+	  // Set up the data layout
+	     const int worksetSize = 1;
+	     const int numQPts = 4;
+	     const int numDim = 3;
+	     const int numVertices = 8;
+	     const int numNodes = 8;
+	     const Teuchos::RCP<Albany::Layouts> dl = Teuchos::rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts, numDim));
+
+	     // Instantiate the required evaluators with EvalT = PHAL::AlbanyTraits::Residual and Traits = PHAL::AlbanyTraits
+
+	     //-----------------------------------------------------------------------------------
+	     // nodal displacement jump
+	     Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> referenceScalar(8);
+	     referenceScalar[0] = 0.5;
+	     referenceScalar[1] = 0.5;
+	     referenceScalar[2] = 0.5;
+
+	     referenceScalar[3] = 0.5;
+	     referenceScalar[4] = 0.5;
+	     referenceScalar[5] = 0.5;
+
+	     referenceScalar[6] = 0.5;
+	     referenceScalar[7] = 0.5;
+
+
+	     Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> currentScalar(8);
+	     const double eps = 0.0;
+	     currentScalar[0] = referenceScalar[0] + eps;
+	     currentScalar[1] = referenceScalar[1] + eps;
+	     currentScalar[2] = referenceScalar[2] + eps;
+
+	     currentScalar[3] = referenceScalar[3] + eps;
+	     currentScalar[4] = referenceScalar[4] + eps;
+	     currentScalar[5] = referenceScalar[5] + eps;
+
+	     currentScalar[6] = referenceScalar[6] + eps;
+	     currentScalar[7] = referenceScalar[7] + eps;
+
+
+	     // SetField evaluator, which will be used to manually assign a value to the currentCoords field
+	     Teuchos::ParameterList currentScalarP("SetFieldCurrentScalar");
+	     currentScalarP.set<string>("Evaluated Field Name", "Current Scalar");
+	     currentScalarP.set<Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> >("Field Values", currentScalar);
+	     currentScalarP.set<Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->node_scalar);
+	     Teuchos::RCP<LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits> > setFieldCurrentScalar =
+	     Teuchos::rcp(new LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>(currentScalarP));
+
+	     //-----------------------------------------------------------------------------------
+	     // intrepid basis and cubature
+	     Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
+	     intrepidBasis = Teuchos::rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType,Intrepid::FieldContainer<RealType> >());
+	     Teuchos::RCP<shards::CellTopology> cellType = Teuchos::rcp(new shards::CellTopology(shards::getCellTopologyData<shards::Quadrilateral<4> >()));
+	     Intrepid::DefaultCubatureFactory<RealType> cubFactory;
+	     Teuchos::RCP<Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, 3);
+
+	     //-----------------------------------------------------------------------------------
+	     // SurfaceScalarJump evaluator
+	     Teuchos::RCP<Teuchos::ParameterList> svjP = Teuchos::rcp(new Teuchos::ParameterList("Surface Scalar Jump"));
+	     svjP->set<string>("Scalar Name","Current Scalar");
+	     svjP->set<string>("Scalar Jump Name", "Scalar Jump");
+	     svjP->set<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+	     svjP->set<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", intrepidBasis);
+	     Teuchos::RCP<LCM::SurfaceScalarJump<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits> > svj =
+	     Teuchos::rcp(new LCM::SurfaceScalarJump<PHAL::AlbanyTraits::Residual,PHAL::AlbanyTraits>(*svjP,dl));
+
+	     // Instantiate a field manager.
+	     PHX::FieldManager<PHAL::AlbanyTraits> fieldManager;
+
+	     // Register the evaluators with the field manager
+	     fieldManager.registerEvaluator<PHAL::AlbanyTraits::Residual>(setFieldCurrentScalar);
+	     fieldManager.registerEvaluator<PHAL::AlbanyTraits::Residual>(svj);
+
+	     // Set the evaluated fields as required fields
+	     for (std::vector<Teuchos::RCP<PHX::FieldTag> >::const_iterator it = svj->evaluatedFields().begin();
+	          it != svj->evaluatedFields().end(); it++)
+	       fieldManager.requireField<PHAL::AlbanyTraits::Residual>(**it);
+
+	     // Call postRegistrationSetup on the evaluators
+	     // JTO - I don't know what "Test String" is meant for...
+	     PHAL::AlbanyTraits::SetupData setupData = "Test String";
+	     fieldManager.postRegistrationSetup(setupData);
+
+	     // Create a workset
+	     PHAL::Workset workset;
+	     workset.numCells = worksetSize;
+
+	     // Call the evaluators, evaluateFields() is the function that computes things
+	     fieldManager.preEvaluate<PHAL::AlbanyTraits::Residual>(workset);
+	     fieldManager.evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
+	     fieldManager.postEvaluate<PHAL::AlbanyTraits::Residual>(workset);
+
+	     // Pull the vector jump from the FieldManager
+	     PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT,Cell,QuadPoint,Dim> jumpField("Scalar Jump", dl->qp_scalar);
+	     fieldManager.getFieldData<PHAL::AlbanyTraits::Residual::ScalarT,PHAL::AlbanyTraits::Residual,Cell,QuadPoint>(jumpField);
+
+	     // Record the expected vector jump, which will be used to check the computed vector jump
+	     double expectedJump(eps);
+
+	     // Check the computed jump
+	     typedef PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT>::size_type size_type;
+	     for (size_type cell = 0; cell < worksetSize; ++cell) {
+	       for (size_type pt = 0; pt < numQPts; ++pt) {
+
+	         std::cout << "Jump Scalar at cell " << cell
+	                   << ", quadrature point " << pt << ":" << endl;
+	         std::cout << "  " << fabs(jumpField(cell, pt)) << endl;
+
+	         std::cout << "Expected result:" << endl;
+	         std::cout << "  " << expectedJump << endl;
+
+	         std::cout << endl;
+
+	         double tolerance = 1.0e-9;
+
+	           TEST_COMPARE(jumpField(cell, pt) - expectedJump, <=, tolerance);
+
+	       }
+	     }
+	     std::cout << endl;
+
   }
 
   TEUCHOS_UNIT_TEST( SurfaceElement, VectorJump )

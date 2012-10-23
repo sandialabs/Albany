@@ -25,6 +25,8 @@
 #include "Intrepid_CellTools.hpp"
 #include "Intrepid_Cubature.hpp"
 
+#include "Albany_Layouts.hpp"
+
 namespace LCM {
 /** \brief
 
@@ -39,7 +41,8 @@ class SurfaceScalarJump : public PHX::EvaluatorWithBaseImpl<Traits>,
 
 public:
 
-  SurfaceScalarJump(const Teuchos::ParameterList& p);
+  SurfaceScalarJump(const Teuchos::ParameterList& p,
+		            const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
 			     PHX::FieldManager<Traits>& vm);

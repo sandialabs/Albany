@@ -141,7 +141,6 @@ namespace LCM {
 
 			// orthogonal contribution
               scalarGradOrthogonal(i) = jump(cell,pt)*G2(i)/thickness;
-
               scalarGrad(cell, pt, i) =scalarGradOrthogonal(i) + scalarGradNormal(i);
         }
 

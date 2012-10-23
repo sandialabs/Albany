@@ -25,13 +25,12 @@ namespace LCM {
 //**********************************************************************
 template<typename EvalT, typename Traits>
 SurfaceScalarJump<EvalT, Traits>::
-SurfaceScalarJump(const Teuchos::ParameterList& p) :
+SurfaceScalarJump(const Teuchos::ParameterList& p,
+                  const Teuchos::RCP<Albany::Layouts>& dl) :
   cubature      (p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")), 
   intrepidBasis (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis")), 
-  scalar        (p.get<std::string>("Scalar Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
-  scalarJump          (p.get<std::string>("Scalar Jump Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") )
+  scalar        (p.get<std::string>("Scalar Name"),dl->node_scalar),
+  scalarJump    (p.get<std::string>("Scalar Jump Name"),dl->qp_scalar)
 {
   this->addDependentField(scalar);
 
@@ -39,21 +38,25 @@ SurfaceScalarJump(const Teuchos::ParameterList& p) :
 
   this->setName("Surface Scalar Jump"+PHX::TypeString<EvalT>::value);
 
-  Teuchos::RCP<PHX::DataLayout> nv_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
-  nv_dl->dimensions(dims);
+  dl->node_vector->dimensions(dims);
   worksetSize = dims[0];
   numNodes = dims[1];
   numDims = dims[2];
 
-  Teuchos::RCP<PHX::DataLayout> qpv_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
-  qpv_dl->dimensions(dims);
-  numQPs = dims[1];
+  numQPs = cubature->getNumPoints();
 
   numPlaneNodes = numNodes / 2;
   numPlaneDims = numDims - 1;
+
+#ifdef ALBANY_VERBOSE
+    std::cout << "in Surface Scalar Jump" << std::endl;
+    std::cout << " numPlaneNodes: " << numPlaneNodes << std::endl;
+    std::cout << " numPlaneDims: " << numPlaneDims << std::endl;
+    std::cout << " numQPs: " << numQPs << std::endl;
+    std::cout << " cubature->getNumPoints(): " << cubature->getNumPoints() << std::endl;
+    std::cout << " cubature->getDimension(): " << cubature->getDimension() << std::endl;
+#endif
 
   // Allocate Temporary FieldContainers
   refValues.resize(numPlaneNodes, numQPs);
