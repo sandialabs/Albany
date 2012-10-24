@@ -22,9 +22,9 @@ namespace LCM {
     refDualBasis   (p.get<std::string>("Reference Dual Basis Name"),dl->qp_tensor),
     refNormal      (p.get<std::string>("Reference Normal Name"),dl->qp_vector),
     jump           (p.get<std::string>("Vector Jump Name"),dl->qp_vector),
+    weights        (p.get<std::string>("Weights Name"),dl->qp_scalar),
     defGrad        (p.get<std::string>("Surface Vector Gradient Name"),dl->qp_tensor),
     J              (p.get<std::string>("Surface Vector Gradient Determinant Name"),dl->qp_scalar),
-    weights        (p.get<std::string>("Weights Name"),dl->qp_scalar),
     weightedAverage(false),
     alpha(0.05)
   {
@@ -36,7 +36,8 @@ namespace LCM {
     this->addDependentField(currentBasis);
     this->addDependentField(refDualBasis);
     this->addDependentField(refNormal);
-    this->addDependentField(jump);
+    this->addDependentField(jump);    
+    this->addDependentField(weights);
 
     this->addEvaluatedField(defGrad);
     this->addEvaluatedField(J);
@@ -65,6 +66,7 @@ namespace LCM {
     this->utils.setFieldData(refDualBasis,fm);
     this->utils.setFieldData(refNormal,fm);
     this->utils.setFieldData(jump,fm);
+    this->utils.setFieldData(weights,fm);
     this->utils.setFieldData(defGrad,fm);
     this->utils.setFieldData(J,fm);
   }
