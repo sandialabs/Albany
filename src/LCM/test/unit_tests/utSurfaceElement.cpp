@@ -557,9 +557,9 @@ namespace {
     // current basis
     Teuchos::ArrayRCP<ScalarT> currentBasis(numQPts*numDim*numDim);
     for ( int i(0); i < numQPts; ++i ) {
-      currentBasis[numQPts*i+0]=0.0; currentBasis[numQPts*i+1]=0.0; currentBasis[numQPts*i+2]=0.5;
-      currentBasis[numQPts*i+3]=0.5; currentBasis[numQPts*i+4]=0.0; currentBasis[numQPts*i+5]=0.0;
-      currentBasis[numQPts*i+6]=0.0; currentBasis[numQPts*i+7]=1.0; currentBasis[numQPts*i+8]=0.0;
+      currentBasis[numDim*numDim*i+0]=0.0; currentBasis[numDim*numDim*i+1]=0.0; currentBasis[numDim*numDim*i+2]=0.5;
+      currentBasis[numDim*numDim*i+3]=0.5; currentBasis[numDim*numDim*i+4]=0.0; currentBasis[numDim*numDim*i+5]=0.0;
+      currentBasis[numDim*numDim*i+6]=0.0; currentBasis[numDim*numDim*i+7]=1.0; currentBasis[numDim*numDim*i+8]=0.0;
     }
 
     // SetField evaluator, which will be used to manually assign values to the current basis
@@ -573,9 +573,9 @@ namespace {
     // reference dual basis
     Teuchos::ArrayRCP<ScalarT> refDualBasis(numQPts*numDim*numDim);    
     for ( int i(0); i < numQPts; ++i ) {
-      refDualBasis[numQPts*i+0]=0.0; refDualBasis[numQPts*i+1]=0.0; refDualBasis[numQPts*i+2]=2.0;
-      refDualBasis[numQPts*i+3]=2.0; refDualBasis[numQPts*i+4]=0.0; refDualBasis[numQPts*i+5]=0.0;
-      refDualBasis[numQPts*i+6]=0.0; refDualBasis[numQPts*i+7]=1.0; refDualBasis[numQPts*i+8]=0.0;
+      refDualBasis[numDim*numDim*i+0]=0.0; refDualBasis[numDim*numDim*i+1]=0.0; refDualBasis[numDim*numDim*i+2]=2.0;
+      refDualBasis[numDim*numDim*i+3]=2.0; refDualBasis[numDim*numDim*i+4]=0.0; refDualBasis[numDim*numDim*i+5]=0.0;
+      refDualBasis[numDim*numDim*i+6]=0.0; refDualBasis[numDim*numDim*i+7]=1.0; refDualBasis[numDim*numDim*i+8]=0.0;
     }
 
     // SetField evaluator, which will be used to manually assign values to the reference dual basis
@@ -601,9 +601,8 @@ namespace {
     //-----------------------------------------------------------------------------------
     // jump
     Teuchos::ArrayRCP<ScalarT> jump(numQPts*numDim);
-    for (int i(0); i < numQPts; ++i) {
-      jump[numQPts*i + 0] = 0.0; jump[numQPts*i + 1] = 0.01; jump[numQPts*i + 2] = 0.0;
-    }
+    for (int i(0); i < jump.size(); ++i) jump[i] = 0.0;
+    jump[1] = jump[4] = jump[7] = jump[10] = 0.01;
 
     // SetField evaluator, which will be used to manually assign values to the jump
     Teuchos::ParameterList jPL;
@@ -682,7 +681,7 @@ namespace {
     fieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint,Dim,Dim>(defGrad);
 
     // Record the expected current basis
-    LCM::Tensor<ScalarT> expectedDefGrad(1.0, 0.0, 0.0, 0.0, 2.1, 0.0, 0.0, 0.0, 1.0);
+    LCM::Tensor<ScalarT> expectedDefGrad(1.0, 0.0, 0.0, 0.0, 1.1, 0.0, 0.0, 0.0, 1.0);
 
     std::cout << "expected F:\n" << expectedDefGrad << std::endl;
 
