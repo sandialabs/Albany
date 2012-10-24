@@ -556,9 +556,8 @@ namespace LCM {
       node = (*it).second;
 
       for (Index i = 0; i < N; ++i) {
-        const double s = node(i);
-        if (s < min(i)) min(i) = s;
-        if (s > max(i)) max(i) = s;
+        min(i) = std::min(min(i), node(i));
+        max(i) = std::max(max(i), node(i));
       }
 
     }
@@ -568,10 +567,108 @@ namespace LCM {
   }
 
   //
+  // Voxelization of the domain for fast determination
+  // of points being inside or outside the domain.
+  //
+  void
+  ConnectivityArray::Voxelize()
+  {
+
+    //
+    // First determine the maximum dimension of the bounding box.
+    //
+    const Index
+    maximum_divisions = 1024;
+
+    LCM::Vector<double> lo;
+    LCM::Vector<double> hi;
+
+    boost::tie(lo, hi) = BoundingBox();
+
+    const Index
+    N = lo.get_dimension();
+
+    double
+    maximum_dimension = 0.0;
+
+    for (Index i = 0; i < N; ++i) {
+
+      maximum_dimension = std::max(maximum_dimension, hi(i) - lo(i));
+
+    }
+
+    const double
+    delta = maximum_dimension / maximum_divisions;
+
+    //
+    // Determine number of voxels for each dimension.
+    //
+    LCM::Vector<Index>
+    voxels_dimension(N);
+
+    for (Index i = 0; i < N; ++i) {
+      const Index
+      number_voxels = std::ceil((hi(i) - lo(i)) / delta);
+      voxels_dimension(i) = number_voxels;
+    }
+
+    //
+    // Set up the voxels array.
+    // Generalization to N dimensions fails here.
+    // This is specific to 3D.
+    //
+    voxels_.resize(voxels_dimension(0));
+
+    for (Index i = 0; i < voxels_dimension(0); ++i) {
+
+      voxels_[i].resize(voxels_dimension(1));
+
+      for (Index j = 0; j < voxels_dimension(1); ++j) {
+
+        voxels_[i][j].resize(voxels_dimension(2));
+
+      }
+
+    }
+
+    // Fill array
+    LCM::Vector<double> p(N);
+
+    for (Index i = 0; i < voxels_dimension(0); ++i) {
+      p(0) = i * delta + delta / 2.0;
+      for (Index j = 0; j < voxels_dimension(1); ++j) {
+        p(1) = j * delta + delta / 2.0;
+        for (Index k = 0; k < voxels_dimension(2); ++k) {
+          p(2) = k * delta + delta / 2.0;
+
+          voxels_[i][j][k] = IsInsideMeshByElement(p);
+
+        }
+
+      }
+
+    }
+
+    return;
+  }
+
+  //
   // Determine is a given point is inside the mesh.
   //
   bool
   ConnectivityArray::IsInsideMesh(Vector<double> const & point) const
+  {
+    return false;
+  }
+
+  //
+  // Determine is a given point is inside the mesh
+  // doing it element by element. Slow but useful
+  // to set up an initial data structure that will
+  // be used on a faster method.
+  //
+  bool
+  ConnectivityArray::IsInsideMeshByElement(Vector<double> const & point) const
   {
 
     // Check bounding box first
@@ -635,7 +732,6 @@ namespace LCM {
 
     return false;
   }
-
 
   //
   // Helper functions for determining the type of element

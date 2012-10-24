@@ -36,7 +36,7 @@ namespace LCM {
   }
 
   //
-  // Area of a quadrilateral, assummed planar. If not planar, returns
+  // Area of a quadrilateral, assumed planar. If not planar, returns
   // the sum of the areas of the two triangles p0,p1,p2 and p0,p2,p3
   //
   template<typename T>

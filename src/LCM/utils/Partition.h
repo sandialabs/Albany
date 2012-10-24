@@ -170,10 +170,26 @@ namespace LCM {
     BoundingBox() const;
 
     ///
+    /// Voxelization of the domain for fast determination
+    /// of points being inside or outside the domain.
+    ///
+    void
+    Voxelize();
+
+    ///
     /// Determine is a given point is inside the mesh.
     ///
     bool
     IsInsideMesh(Vector<double> const & point) const;
+
+    ///
+    /// Determine is a given point is inside the mesh
+    /// doing it element by element. Slow but useful
+    /// to set up an initial data structure that will
+    /// be used on a faster method.
+    ///
+    bool
+    IsInsideMeshByElement(Vector<double> const & point) const;
 
     ///
     /// \param length_scale Length scale for partitioning for
@@ -203,7 +219,7 @@ namespace LCM {
         const double length_scale);
 
     ///
-    /// Partition mesh with Zoltan Hypergraph algortithm
+    /// Partition mesh with Zoltan Hypergraph algorithm
     /// \param length_scale The length scale for variational nonlocal
     /// regularization
     /// \return Partition number for each element
@@ -212,7 +228,7 @@ namespace LCM {
     PartitionHyperGraph(const double length_scale);
 
     ///
-    /// Partition mesh with Zoltan Recursive Inertial Bisection algortithm
+    /// Partition mesh with Zoltan Recursive Inertial Bisection algorithm
     /// \param length_scale The length scale for variational nonlocal
     /// regularization
     /// \return Partition number for each element
@@ -221,7 +237,7 @@ namespace LCM {
     PartitionGeometric(const double length_scale);
 
     ///
-    /// Partition mesh with K-means algortithm
+    /// Partition mesh with K-means algorithm
     /// \param length_scale The length scale for variational nonlocal
     /// regularization
     /// \return Partition number for each element
@@ -406,6 +422,12 @@ namespace LCM {
     std::map<int, int>
     partitions_;
 
+    //
+    // Voxelization of the domain for fast determination
+    // of whether a point is inside the domain or not.
+    //
+    std::vector< std::vector< std::vector<bool> > >
+    voxels_;
   };
 
   ///
