@@ -96,7 +96,7 @@ namespace LCM {
   evaluateFields(typename Traits::EvalData workset)
   {
 
-	 // compute mid-plane scalar value for the normal contributino calculation
+	 // compute mid-plane scalar value for the normal contribution calculation
      for (int cell(0); cell < midplaneScalar.dimension(0); ++cell) {
         // compute the mid-plane value
         for (int node(0); node < numPlaneNodes; ++node) {
@@ -125,11 +125,11 @@ namespace LCM {
 		 {
         	// normal contribution
         	for (int node(0); node < numPlaneNodes; ++node) {
-			  scalarGradNormal(i) += refGrads(node, pt, i)*midplaneScalar[node];
+			  scalarGradNormal(i) += refGrads(node, pt, i)*midplaneScalar[node]*(g_0(i)+g_1(i));
         	}
 
 			// orthogonal contribution
-              scalarGradOrthogonal(i) = jump(cell,pt)*G2(i)/thickness;
+              scalarGradOrthogonal(i) = jump(cell,pt)*g_2(i)/thickness;
               scalarGrad(cell, pt, i) =scalarGradOrthogonal(i) + scalarGradNormal(i);
         }
 
