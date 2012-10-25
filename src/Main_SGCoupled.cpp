@@ -9,10 +9,13 @@
 
 #include "Albany_Utils.hpp"
 #include "Albany_SolverFactory.hpp"
+#include "Albany_NOXObserver.hpp"
+
 #include "Teuchos_GlobalMPISession.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Teuchos_StandardCatchMacros.hpp"
+
 #include "Epetra_Map.h"  //Needed for serial, somehow
 #include "Stokhos.hpp"
 #include "Stokhos_Epetra.hpp"
@@ -81,6 +84,7 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<const Epetra_Comm> app_comm = coupledSolver->getSpatialComm();
 
     // Set up each model
+    Teuchos::Array< Teuchos::RCP<NOX::Epetra::Observer> > observers(num_models);
     for (int m=0; m<num_models; m++) {
       Albany::SolverFactory slvrfctry(
 	model_filenames[m], 
@@ -88,6 +92,7 @@ int main(int argc, char *argv[]) {
       models[m] = slvrfctry.createAlbanyAppAndModel(apps[m], app_comm);
       Teuchos::ParameterList& appParams = slvrfctry.getParameters();
       piroParams[m] = Teuchos::rcp(&(appParams.sublist("Piro")),false);
+      observers[m] = Teuchos::rcp(new Albany_NOXObserver(apps[m]));
     }
 
     // Setup network model
@@ -105,7 +110,8 @@ int main(int argc, char *argv[]) {
       rcp(new Piro::Epetra::NECoupledModelEvaluator(models, piroParams,
 						    network_model,
 						    coupledPiroParams, 
-						    globalComm));
+						    globalComm,
+						    observers));
     coupledSolver->setup(coupledModel);
 
     // Solve coupled system
