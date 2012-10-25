@@ -19,7 +19,7 @@
 namespace LCM {
 /** \brief
 
-    Construct a deformation gradient on a surface
+    Construct a scalar gradient on a surface
 
 **/
 
@@ -47,15 +47,13 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  //! Length scale parameter for localization zone
+  /// Length scale parameter for localization zone
   ScalarT thickness;
-  //! Numerical integration rule
+  /// Numerical integration rule
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
 
-  //! for the parallel gradient term
+  /// for the parallel gradient term
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
-  //! Cell Topology
-  Teuchos::RCP<shards::CellTopology> cellType;
   // nodal value used to construct in-plan gradient
   PHX::MDField<ScalarT,Cell,Node> nodalScalar;
 
@@ -63,7 +61,6 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> jump;
 
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> currentBasis;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> refDualBasis;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> refNormal;
   PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
 
@@ -85,13 +82,6 @@ private:
   unsigned int numDims;
   unsigned int numPlaneNodes;
   unsigned int numPlaneDims;
-
-  //! flag to compute the weighted average of J
-  bool weightedAverage;
-
-  //! stabilization parameter for the weighted average
-  ScalarT alpha;
-
 };
 }
 
