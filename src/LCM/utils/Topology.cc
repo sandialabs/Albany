@@ -7,20 +7,13 @@
 #include "Topology.h"
 
 namespace LCM {
-  /**
-   * \brief Default constructor for topology
-   */
+
   topology::topology() :
       number_dimensions_(0), discretization_ptr_(Teuchos::null)
   {
     return;
   }
 
-  /**
-   * \brief Create mesh data structure
-   * \param[in] input_file is exodus II input file name
-   * \param[in] output_file is exodus II output file name
-   */
   topology::topology(std::string const & input_file,
       std::string const & output_file)
   {

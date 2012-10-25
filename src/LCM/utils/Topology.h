@@ -51,19 +51,19 @@ namespace LCM {
 
   class topology {
   public:
-    /**
-     * \brief Default constructor for topology
-     */
+    ///
+    /// \brief Default constructor for topology
+    ///
     topology();
 
-    /**
-     * \brief Create mesh data structure
-     *
-     * \param[in] input_file is exodus II input file name
-     * \param[in] output_file is exodus II output file name
-     *
-     * Use if want to create new Albany mesh object
-     */
+    ///
+    /// \brief Create mesh data structure
+    ///
+    /// \param[in] input_file is exodus II input file name
+    /// \param[in] output_file is exodus II output file name
+    ///
+    /// Use if want to create new Albany mesh object
+    ///
     topology(std::string const & input_file, std::string const & output_file);
 
     /**
