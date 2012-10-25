@@ -556,20 +556,20 @@ namespace {
     const Teuchos::RCP<Albany::Layouts> dl = Teuchos::rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
 
     //-----------------------------------------------------------------------------------
-    // current basis
-    Teuchos::ArrayRCP<ScalarT> currentBasis(numQPts*numDim*numDim);
+    // reference basis
+    Teuchos::ArrayRCP<ScalarT> referenceBasis(numQPts*numDim*numDim);
     for ( int i(0); i < numQPts; ++i ) {
-      currentBasis[numDim*numDim*i+0]=0.0; currentBasis[numDim*numDim*i+1]=0.0; currentBasis[numDim*numDim*i+2]=0.5;
-      currentBasis[numDim*numDim*i+3]=0.5; currentBasis[numDim*numDim*i+4]=0.0; currentBasis[numDim*numDim*i+5]=0.0;
-      currentBasis[numDim*numDim*i+6]=0.0; currentBasis[numDim*numDim*i+7]=1.0; currentBasis[numDim*numDim*i+8]=0.0;
+      referenceBasis[numDim*numDim*i+0]=0.0; referenceBasis[numDim*numDim*i+1]=0.0; referenceBasis[numDim*numDim*i+2]=0.5;
+      referenceBasis[numDim*numDim*i+3]=0.5; referenceBasis[numDim*numDim*i+4]=0.0; referenceBasis[numDim*numDim*i+5]=0.0;
+      referenceBasis[numDim*numDim*i+6]=0.0; referenceBasis[numDim*numDim*i+7]=1.0; referenceBasis[numDim*numDim*i+8]=0.0;
     }
 
-    // SetField evaluator, which will be used to manually assign values to the current basis
-    Teuchos::ParameterList cbPL;
-    cbPL.set<string>("Evaluated Field Name", "Current Basis");
-    cbPL.set<Teuchos::ArrayRCP<ScalarT> >("Field Values", currentBasis);
-    cbPL.set<Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_tensor);
-    Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldCurBasis = Teuchos::rcp(new LCM::SetField<Residual, Traits>(cbPL));
+    // SetField evaluator, which will be used to manually assign values to the reference basis
+    Teuchos::ParameterList rbPL;
+    rbPL.set<string>("Evaluated Field Name", "Reference Basis");
+    rbPL.set<Teuchos::ArrayRCP<ScalarT> >("Field Values", referenceBasis);
+    rbPL.set<Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_tensor);
+    Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldRefBasis = Teuchos::rcp(new LCM::SetField<Residual, Traits>(rbPL));
 
     //-----------------------------------------------------------------------------------
     // reference normal
@@ -588,7 +588,7 @@ namespace {
     // Nodal value of the scalar in localization element
     Teuchos::ArrayRCP<ScalarT> nodalScalar(numVertices);
     for (int i(0); i < nodalScalar.size(); ++i) nodalScalar[i] = 0.0;
-    nodalScalar[4] = nodalScalar[5] = nodalScalar[6] = nodalScalar[7] = 0.01;
+    nodalScalar[4] = nodalScalar[5] = nodalScalar[6] = nodalScalar[7] = 1.0;
 
     // SetField evaluator, which will be used to manually assign values to the jump
     Teuchos::ParameterList nsvPL;
@@ -600,7 +600,7 @@ namespace {
     //-----------------------------------------------------------------------------------
     // jump
     Teuchos::ArrayRCP<ScalarT> jump(numQPts);
-    for (int i(0); i < jump.size(); ++i) jump[i] = 0.01;
+    for (int i(0); i < jump.size(); ++i) jump[i] = 1.0;
 
     // SetField evaluator, which will be used to manually assign values to the jump
     Teuchos::ParameterList jPL;
@@ -620,7 +620,7 @@ namespace {
     //-----------------------------------------------------------------------------------
     // SurfaceScalarGradient evaluator
     Teuchos::ParameterList ssgPL;
-    ssgPL.set<string>("Current Basis Name","Current Basis");
+    ssgPL.set<string>("Reference Basis Name","Reference Basis");
     ssgPL.set<string>("Reference Normal Name", "Reference Normal");
     ssgPL.set<string>("Scalar Jump Name", "Jump");
     ssgPL.set<string>("Nodal Scalar Name", "Nodal Scalar");
@@ -632,11 +632,11 @@ namespace {
     Teuchos::RCP<LCM::SurfaceScalarGradient<Residual, Traits> > ssg = 
       Teuchos::rcp(new LCM::SurfaceScalarGradient<Residual,Traits>(ssgPL,dl));
 
-    // Instantiate a field manager.
+    // instantiate a field manager.
     PHX::FieldManager<PHAL::AlbanyTraits> fieldManager;
 
     // Register the evaluators with the field manager
-    fieldManager.registerEvaluator<Residual>(setFieldCurBasis);
+    fieldManager.registerEvaluator<Residual>(setFieldRefBasis);
     fieldManager.registerEvaluator<Residual>(setFieldRefNormal);
     fieldManager.registerEvaluator<Residual>(setFieldJump);
     fieldManager.registerEvaluator<Residual>(setFieldNodalScalar);
@@ -667,8 +667,8 @@ namespace {
     fieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint,Dim>(scalarGrad);
 
 
-    // Record the expected current basis
-    LCM::Vector<ScalarT> expectedScalarGrad(0.0, 0.1, 0.0);
+    // Record the expected gradient
+    LCM::Vector<ScalarT> expectedScalarGrad(0.0, 10.0, 0.0);
 
     std::cout << "expected scalar gradient:\n" << expectedScalarGrad << std::endl;
 

@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    albany 2.0:  Copyright 2012 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -19,19 +19,18 @@ namespace LCM {
     thickness      (p.get<double>("thickness")), 
     cubature       (p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")), 
     intrepidBasis  (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis")),
-    currentBasis   (p.get<std::string>("Current Basis Name"),dl->qp_tensor),
+    refBasis       (p.get<std::string>("Reference Basis Name"),dl->qp_tensor),
     refNormal      (p.get<std::string>("Reference Normal Name"),dl->qp_vector),
     jump           (p.get<std::string>("Scalar Jump Name"),dl->qp_scalar),
     nodalScalar    (p.get<std::string>("Nodal Scalar Name"),dl->node_scalar),
     scalarGrad     (p.get<std::string>("Surface Scalar Gradient Name"),dl->qp_vector)
   {
-    this->addDependentField(currentBasis);
+    this->addDependentField(refBasis);
     this->addDependentField(refNormal);
     this->addDependentField(jump);
     this->addDependentField(nodalScalar);
 
     this->addEvaluatedField(scalarGrad);
-    //  this->addEvaluatedField(J);
 
     this->setName("Surface Scalar Gradient"+PHX::TypeString<EvalT>::value);
 
@@ -52,9 +51,6 @@ namespace LCM {
     refPoints.resize(numQPs, numPlaneDims);
     refWeights.resize(numQPs);
 
-    // temp space for midplane coords
-    midplaneScalar.resize(worksetSize, numPlaneNodes);
-
     // Pre-Calculate reference element quantitites
     cubature->getCubature(refPoints, refWeights);
     intrepidBasis->getValues(refValues, refPoints, Intrepid::OPERATOR_VALUE);
@@ -67,7 +63,7 @@ namespace LCM {
   postRegistrationSetup(typename Traits::SetupData d,
                         PHX::FieldManager<Traits>& fm)
   {
-    this->utils.setFieldData(currentBasis,fm);
+    this->utils.setFieldData(refBasis,fm);
     this->utils.setFieldData(refNormal,fm);
     this->utils.setFieldData(jump,fm);
     this->utils.setFieldData(nodalScalar,fm);
@@ -80,43 +76,34 @@ namespace LCM {
   void SurfaceScalarGradient<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
-
-    // compute mid-plane scalar value for the normal contribution calculation
-    for (int cell(0); cell < midplaneScalar.dimension(0); ++cell) {
-      // compute the mid-plane value
-      for (int node(0); node < numPlaneNodes; ++node) {
-        int topNode = node + numPlaneNodes;
-        midplaneScalar(cell, node) = 0.5 * (nodalScalar(cell, node) + nodalScalar(cell, topNode));
-      }
-    }
-
+    ScalarT midPlaneAvg;
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t pt=0; pt < numQPs; ++pt) {
 
-        LCM::Vector<ScalarT> g_0(3, &currentBasis(cell, pt, 0, 0));
-        LCM::Vector<ScalarT> g_1(3, &currentBasis(cell, pt, 1, 0));
-        LCM::Vector<ScalarT> g_2(3, &currentBasis(cell, pt, 2, 0));
+        LCM::Vector<ScalarT> G_0(3, &refBasis(cell, pt, 0, 0));
+        LCM::Vector<ScalarT> G_1(3, &refBasis(cell, pt, 1, 0));
+        LCM::Vector<ScalarT> G_2(3, &refBasis(cell, pt, 2, 0));        
+        LCM::Vector<ScalarT> N(3, &refNormal(cell, pt, 0));
 
-        LCM::Vector<ScalarT> scalarGradOrthogonal(0, 0, 0);
-        LCM::Vector<ScalarT> scalarGradNormal(0, 0, 0);
+        LCM::Vector<ScalarT> scalarGradPerpendicular(0, 0, 0);
+        LCM::Vector<ScalarT> scalarGradParallel(0, 0, 0);
 
-        for (std::size_t i=0; i < numDims; ++i)
-        {
-          scalarGrad(cell,pt,i) = 0;
-
-          // in-plane contribution
-          for (int node(0); node < numPlaneNodes; ++node) {
-            //scalarGradNormal(i) += refGrads(node, pt, i)*midplaneScalar(cell,node)*(g_0(i)+g_1(i));
-          }
-
-          // orthogonal contribution
-          scalarGradOrthogonal(i) = jump(cell,pt)*g_2(i)/thickness;
-          scalarGrad(cell, pt, i) =scalarGradOrthogonal(i) + scalarGradNormal(i);
+        // in-plane (parallel) contribution
+        for (int node(0); node < numPlaneNodes; ++node) {
+          int topNode = node + numPlaneNodes;
+          midPlaneAvg = 0.5 * (nodalScalar(cell, node) + nodalScalar(cell, topNode));
+          scalarGradParallel += refGrads(node, pt, 0) * midPlaneAvg * G_0;
+          scalarGradParallel += refGrads(node, pt, 1) * midPlaneAvg * G_1;
         }
 
+        // normal (perpendicular) contribution
+        scalarGradPerpendicular = jump(cell,pt)*N/thickness;
+
+        // assign components to MDfield ScalarGrad
+        for (int i(0); i < numDims; ++i )
+          scalarGrad(cell, pt, i) = scalarGradParallel(i) + scalarGradPerpendicular(i);
       }
     }
-
   }
   //**********************************************************************  
 }

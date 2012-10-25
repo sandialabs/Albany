@@ -60,19 +60,14 @@ private:
   //! Vector to take the jump of
   PHX::MDField<ScalarT,Cell,QuadPoint> jump;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> currentBasis;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> refBasis;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> refNormal;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
 
   //! Reference Cell FieldContainers
   Intrepid::FieldContainer<RealType> refValues;
   Intrepid::FieldContainer<RealType> refGrads;
   Intrepid::FieldContainer<RealType> refPoints;
   Intrepid::FieldContainer<RealType> refWeights;
-
-  // Surface Ref Bases FieldContainers
-  Intrepid::FieldContainer<ScalarT> midplaneScalar;
-
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> scalarGrad;
 
