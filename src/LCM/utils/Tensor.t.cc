@@ -1302,7 +1302,7 @@ namespace LCM {
 
   // Apply Givens-Jacobi rotation on the right in place.
   // \param A
-  /// \param c and s for a rotation G in form [c, s; -s, c]
+  // \param c and s for a rotation G in form [c, s; -s, c]
   //
   template<typename T>
   void
@@ -2927,9 +2927,9 @@ namespace LCM {
   }
 
   // Tensor4 Tensor4 double dot product
-  /// \param A Tensor4
-  /// \param B Tensor4
-  /// \return a Tensor4 \f$ C_{ijkl} = A_{ijmn} : B){mnkl} \f$
+  // \param A Tensor4
+  // \param B Tensor4
+  // \return a Tensor4 \f$ C_{ijkl} = A_{ijmn} : B){mnkl} \f$
   template<typename T>
   Tensor4<T>
   dotdot(Tensor4<T> const & A, Tensor4<T> const & B)

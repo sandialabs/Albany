@@ -13,42 +13,41 @@
 #include "Phalanx_MDField.hpp"
 
 namespace LCM {
-/** \brief
- *
- *   evaulate diffusion coefficient D_{o} \exp(-Q/RT)
 
-*/
+  /// \brief Diffusion Coefficient Evaluator
+  ///
+  /// evaulate diffusion coefficient \f$ D_{o} \exp(-Q/RT) \f$
+  ///
+  template<typename EvalT, typename Traits>
+  class DiffusionCoefficient : public PHX::EvaluatorWithBaseImpl<Traits>,
+                               public PHX::EvaluatorDerived<EvalT, Traits>  {
 
-template<typename EvalT, typename Traits>
-class DiffusionCoefficient : public PHX::EvaluatorWithBaseImpl<Traits>,
-	       public PHX::EvaluatorDerived<EvalT, Traits>  {
+  public:
 
-public:
+    DiffusionCoefficient(const Teuchos::ParameterList& p);
 
-  DiffusionCoefficient(const Teuchos::ParameterList& p);
+    void postRegistrationSetup(typename Traits::SetupData d,
+                               PHX::FieldManager<Traits>& vm);
 
-  void postRegistrationSetup(typename Traits::SetupData d,
-			     PHX::FieldManager<Traits>& vm);
+    void evaluateFields(typename Traits::EvalData d);
 
-  void evaluateFields(typename Traits::EvalData d);
+  private:
 
-private:
+    typedef typename EvalT::ScalarT ScalarT;
+    typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
+    // Input:
+    PHX::MDField<ScalarT,Cell,QuadPoint> Qdiff;
+    PHX::MDField<ScalarT,Cell,QuadPoint> temperature;
+    PHX::MDField<ScalarT,Cell,QuadPoint> Rideal;
+    PHX::MDField<ScalarT,Cell,QuadPoint> Dpre;
 
-  // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint> Qdiff;
-  PHX::MDField<ScalarT,Cell,QuadPoint> temperature;
-  PHX::MDField<ScalarT,Cell,QuadPoint> Rideal;
-  PHX::MDField<ScalarT,Cell,QuadPoint> Dpre;
+    // Output:
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> diffusionCoefficient;
 
-  // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> diffusionCoefficient;
-
-  unsigned int numQPs;
-  unsigned int numDims;
-};
+    unsigned int numQPs;
+    unsigned int numDims;
+  };
 }
 
 #endif

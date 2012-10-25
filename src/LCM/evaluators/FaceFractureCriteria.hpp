@@ -15,16 +15,13 @@
 #include "Intrepid_Cubature.hpp"
 
 namespace LCM {
-/** \brief Face-centric Fracture Criteria Evaluator
- *
- *   Computes a fracture criterion on the faces of an element using nodal data
- *
- */
-
-
-template<typename EvalT, typename Traits>
-class FaceFractureCriteria : public PHX::EvaluatorWithBaseImpl<Traits>,
-  public PHX::EvaluatorDerived<EvalT, Traits>  {
+  /// \brief Face-centric Fracture Criteria Evaluator
+  ///
+  /// Computes a fracture criterion on the faces of an element using nodal data
+  ///
+  template<typename EvalT, typename Traits>
+  class FaceFractureCriteria : public PHX::EvaluatorWithBaseImpl<Traits>,
+                               public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 
   private:
@@ -36,22 +33,18 @@ class FaceFractureCriteria : public PHX::EvaluatorWithBaseImpl<Traits>,
     FaceFractureCriteria(const Teuchos::ParameterList& p);
 
     void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
+                               PHX::FieldManager<Traits>& vm);
 
     void evaluateFields(typename Traits::EvalData d);
 
-    /** Simple fracture criterion for testing
-     * \param[in] faceAve - the face averaged projected variable
-     * \param[out] criteriaMet - boolean value denoting criterion state
-     *
-     */
+    ///
+    /// Simple fracture criterion for testing
+    ///
     void testFracture();
 
-    /** Traction based criterion
-     * \param[in] faceAve - the face averaged projected variable
-     * \param[in] coord - the nodal coordinates
-     * \param[out] criteriaMet - boolean value denoting criterion state
-     */
+    ///
+    /// Traction based criterion
+    ///
     void tractionCriterion();
 
   private:
@@ -68,7 +61,7 @@ class FaceFractureCriteria : public PHX::EvaluatorWithBaseImpl<Traits>,
     RealType yieldStrength;
     RealType fractureLimit;  // Fracture face if traction > this value
 
-   Teuchos::RCP<shards::CellTopology> cellType;
+    Teuchos::RCP<shards::CellTopology> cellType;
 
     //Output:
     // As we can't define a boolean field on a face, define as a scalar
@@ -81,7 +74,7 @@ class FaceFractureCriteria : public PHX::EvaluatorWithBaseImpl<Traits>,
     const struct CellTopologyData_Subcell * sides;
 
 
-};
+  };
 
 } // namespace LCM
 

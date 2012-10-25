@@ -69,7 +69,7 @@ namespace LCM {
     /// Computes the Dual from the midplane and current bases
     /// \param midplaneCoords
     /// \param basis
-    /// \param normals
+    /// \param normal
     /// \param dualBasis
     ///
     void computeDualBaseVectors(const FC & midplaneCoords, 

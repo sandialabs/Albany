@@ -18,8 +18,8 @@ namespace LCM {
   ///
   /// This evaluator computes stress based on a uncoupled Neohookean
   /// Helmholtz potential
-  /// \f$ \sigma_{ij} = \frac{\kappa}{2}\left(J-1/J)\delta_{ij}
-  /// + \mu dev(\bar{\b_{ij}}) \f$
+  /// \f$ \sigma_{ij} = \frac{\kappa}{2}(J-1/J)\delta_{ij}
+  /// + \mu dev(\bar{b_{ij}}) \f$
 
 
 template<typename EvalT, typename Traits>

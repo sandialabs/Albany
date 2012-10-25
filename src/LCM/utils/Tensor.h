@@ -72,24 +72,25 @@ namespace LCM {
     ///
     Vector(const Index N);
 
-    ///
-    /// Create vector from a scalar
-    /// \param N dimension
-    /// \param s all components are set equal to this value
-    ///
-    // Vector(const Index N, T const & s);
+    // ///
+    // /// Create vector from a scalar
+    // /// \param N dimension
+    // /// \param s all components are set equal to this value
+    // ///
+    // // Vector(const Index N, T const & s);
 
     ///
     /// Create vector specifying components
-    /// \param N dimension
     /// \param s0, s1 are the vector components in the R^2 canonical basis
     ///
     Vector(T const & s0, T const & s1);
 
     ///
     /// Create vector specifying components
-    /// \param N dimension
-    /// \param s0, s1, s2 are the vector components in the R^3 canonical basis
+    /// the vector components in the R^3 canonical basis
+    /// \param s0 
+    /// \param s1 
+    /// \param s2 
     ///
     Vector(T const & s0, T const & s1, T const & s2);
 
@@ -1177,6 +1178,9 @@ namespace LCM {
 
   /// Apply Givens-Jacobi rotation on the left in place.
   /// \param c and s for a rotation G in form [c, s; -s, c]
+  /// \param s
+  /// \param i
+  /// \param k
   /// \param A
   ///
   template<typename T>
@@ -1186,6 +1190,9 @@ namespace LCM {
   /// Apply Givens-Jacobi rotation on the right in place.
   /// \param A
   /// \param c and s for a rotation G in form [c, s; -s, c]
+  /// \param s
+  /// \param i
+  /// \param k
   ///
   template<typename T>
   void
@@ -1256,7 +1263,7 @@ namespace LCM {
   /// Project to O(N) (Orthogonal Group) using a Newton-type algorithm.
   /// See Higham's Functions of Matrices p210 [2008]
   /// \param A tensor (often a deformation-gradient-like tensor)
-  /// \return \f$ R = \argmin_Q \|A - Q\|\f$
+  /// \return \f$ R = \arg min_Q \|A - Q\|\f$
   /// This algorithm projects a given tensor in GL(N) to O(N).
   /// The rotation/reflection obtained through this projection is
   /// the orthogonal component of the real polar decomposition
@@ -1294,7 +1301,7 @@ namespace LCM {
 
   ///
   /// R^3 right polar decomposition
-  /// \param F tensor (often a deformation-gradient-like tensor)
+  /// \param A tensor (often a deformation-gradient-like tensor)
   /// \return \f$ RU = F \f$ with \f$ R \in SO(N) \f$ and \f$ U \in SPD(N) \f$
   ///
   template<typename T>
@@ -1332,7 +1339,10 @@ namespace LCM {
   ///
   /// Symmetric Schur algorithm for R^2.
   /// \param \f$ A = [f, g; g, h] \in S(2) \f$
-  /// \return \f$ c, s \rightarrow [c, -s; s, c]\f diagonalizes A$
+  /// \param f
+  /// \param g
+  /// \param h
+  /// \return \f$ c, s \rightarrow [c, -s; s, c]\f$ diagonalizes A$
   ///
   template<typename T>
   std::pair<T, T>
