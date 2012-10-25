@@ -230,7 +230,7 @@ int main(int ac, char* av[])
         	StressParameterList.set<string>("Stress Name", cauchy);
 
         	Teuchos::RCP<LCM::Neohookean<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits> > stress =
-        		Teuchos::rcp(new LCM::Neohookean<PHAL::AlbanyTraits::Residual,PHAL::AlbanyTraits>(StressParameterList));
+        		Teuchos::rcp(new LCM::Neohookean<PHAL::AlbanyTraits::Residual,PHAL::AlbanyTraits>(StressParameterList, dl));
    	        fieldManager.registerEvaluator<PHAL::AlbanyTraits::Residual>(stress);
 
    	        // Set the evaluated field as required
