@@ -377,13 +377,10 @@ Albany::ElasticityProblem::constructEvaluators(
       p->set<string>("Back Stress Name", "backStress"); //dl->qp_tensor also
       p->set<string>("Cap Parameter Name", "capParameter"); //dl->qp_tensor also
 
-      if(matModel == "CapModel"){
-          p->set<string>("Friction Name", "friction"); //dl->qp_scalar also
-          p->set<string>("Dilatancy Name", "dilatancy"); //dl->qp_scalar also
-          p->set<string>("Eqps Name", "eqps"); //dl->qp_scalar also
-          p->set<string>("Hardening Modulus Name", "hardeningModulus"); //dl->qp_scalar also
-
-      }
+      p->set<string>("Friction Name", "friction"); //dl->qp_scalar also
+      p->set<string>("Dilatancy Name", "dilatancy"); //dl->qp_scalar also
+      p->set<string>("Eqps Name", "eqps"); //dl->qp_scalar also
+      p->set<string>("Hardening Modulus Name", "hardeningModulus"); //dl->qp_scalar also
 
       //Declare what state data will need to be saved (name, layout, init_type)
       if(matModel == "CapModel"){

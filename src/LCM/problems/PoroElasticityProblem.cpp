@@ -128,7 +128,7 @@ Albany::PoroElasticityProblem::getValidProblemParameters() const
   validPL->sublist("Stabilization Parameter", false, "");
 
 
-  if (matModel == "CapModel")
+  if (matModel == "CapModel" || matModel == "CapImplicit")
     {
   	validPL->set<double>("A", false, "");
   	validPL->set<double>("B", false, "");
