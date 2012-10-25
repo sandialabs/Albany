@@ -11,14 +11,16 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+#include "Albany_Layouts.hpp"
 
 namespace LCM {
-/** \brief Neohookean stress response
+  /// \brief Neohookean stress response
+  ///
+  /// This evaluator computes stress based on a uncoupled Neohookean
+  /// Helmholtz potential
+  /// \f$ \sigma_{ij} = \frac{\kappa}{2}\left(J-1/J)\delta_{ij}
+  /// + \mu dev(\bar{\b_{ij}})
 
-    This evaluator computes stress based on a uncoupled Neohookean
-    Helmholtz potential
-
-*/
 
 template<typename EvalT, typename Traits>
 class Neohookean : public PHX::EvaluatorWithBaseImpl<Traits>,
@@ -26,11 +28,21 @@ class Neohookean : public PHX::EvaluatorWithBaseImpl<Traits>,
 
 public:
 
-  Neohookean(const Teuchos::ParameterList& p);
+  ///
+  /// Constructor
+  ///
+  Neohookean(const Teuchos::ParameterList& p,
+             const Teuchos::RCP<Albany::Layouts>& dl);
 
+  ///
+  /// Phalanx method to allocate space
+  ///
   void postRegistrationSetup(typename Traits::SetupData d,
 			     PHX::FieldManager<Traits>& vm);
 
+  ///
+  /// Implementation of physics
+  ///
   void evaluateFields(typename Traits::EvalData d);
 
 private:
@@ -38,21 +50,45 @@ private:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> F;
+  ///
+  /// Input: Deformation Gradient
+  ///
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defGrad;
+
+  ///
+  /// Input: Deterinnat of Deformation Gradient
+  ///
   PHX::MDField<ScalarT,Cell,QuadPoint> J;
+
+  ///
+  /// Input: Elastic (or Young's) Modulus
+  ///
   PHX::MDField<ScalarT,Cell,QuadPoint> elasticModulus;
+
+  ///
+  /// Input: Poisson's Ratio
+  ///
   PHX::MDField<ScalarT,Cell,QuadPoint> poissonsRatio;
 
-  // Output:
+  ///
+  /// Output: Cauchy Stress
+  ///
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;
 
+  ///
+  /// Number of integration points
+  ///
   unsigned int numQPs;
-  unsigned int numDims;
-  unsigned int worksetSize;
 
-  // scratch space FCs
-  Intrepid::FieldContainer<ScalarT> FT;
+  ///
+  /// Number of integration points
+  ///
+  unsigned int numDims;
+
+  ///
+  /// Number of elements in workset
+  ///
+  unsigned int worksetSize;
 };
 }
 

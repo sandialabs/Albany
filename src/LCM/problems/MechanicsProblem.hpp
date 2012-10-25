@@ -342,8 +342,6 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  std::cout << "Current Coordinates" << std::endl;
-
   { // Current Coordinates
     RCP<ParameterList> p = rcp(new ParameterList("Current Coordinates"));
 
@@ -354,8 +352,6 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
     ev = rcp(new LCM::CurrentCoords<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
-
-  std::cout << "Register Elastic Modulus" << std::endl;
 
   { // Elastic Modulus
     RCP<ParameterList> p = rcp(new ParameterList);
@@ -373,8 +369,6 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
     ev = rcp(new LCM::ElasticModulus<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
-
-  std::cout << "Register Poissons Ratio" << std::endl;
 
   { // Poissons Ratio
     RCP<ParameterList> p = rcp(new ParameterList);
@@ -411,8 +405,6 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  std::cout << "Register J2Fiber" << std::endl;
-
   if (materialModelName == "J2Fiber")
   {
     { // Integration Point Location
@@ -439,8 +431,6 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
     }
   }
 
-  std::cout << "Register Neohookean" << std::endl;
-
   if (materialModelName == "NeoHookean")
   {
     { // Stress
@@ -448,18 +438,14 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
 
       //Input
       p->set<string>("DefGrad Name", "F");
-      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
       p->set<string>("Elastic Modulus Name", "Elastic Modulus");
-      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-      p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
-      p->set<string>("DetDefGrad Name", "J");  // dl->qp_scalar also
+      p->set<string>("Poissons Ratio Name", "Poissons Ratio");
+      p->set<string>("DetDefGrad Name", "J");
 
       //Output
-      p->set<string>("Stress Name", cauchy); //dl->qp_tensor also
+      p->set<string>("Stress Name", cauchy);
 
-      ev = rcp(new LCM::Neohookean<EvalT,AlbanyTraits>(*p));
+      ev = rcp(new LCM::Neohookean<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
 
       // optional output
@@ -472,35 +458,6 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
       fm0.template registerEvaluator<EvalT>(ev);
     }
   }
-  // JTO - this capability needs to be put into its own specialized problem class
-  // else if (materialModelName == "NeoHookean AD")
-  // {
-  //   RCP<ParameterList> p = rcp(new ParameterList("NeoHookean AD Stress"));
-
-  //   //Input
-  //   p->set<string>("Elastic Modulus Name", "Elastic Modulus");
-  //   p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-  //   p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
-
-  //   p->set<string>("DefGrad Name", "F");
-  //   p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
-  //   //Output
-  //   p->set<string>("Stress Name", "PK Stress"); //dl->qp_tensor also
-
-  //   ev = rcp(new LCM::PisdWdF<EvalT,AlbanyTraits>(*p));
-  //   fm0.template registerEvaluator<EvalT>(ev);
-
-  //   // optional output
-  //   bool outputFlag(true);
-  //   if ( materialDB->isElementBlockParam(elementBlockName,"Output " + cauchy) )
-  //     output = materialDB->getElementBlockParam<bool>(elementBlockName,"Output " + cauchy);
-
-  //   p = stateMgr.registerStateVariable("PK Stress",dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0, outputFlag);
-  //   ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-  //   fm0.template registerEvaluator<EvalT>(ev);
-  // }
-
   else if (materialModelName == "MooneyRivlin")
   {
     RCP<ParameterList> p = rcp(new ParameterList("MooneyRivlin Stress"));
@@ -1134,8 +1091,6 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
   if ( surfaceElement )
   {
 
-    std::cout << "Register Surface Basis" << std::endl;
-
     {// Surface Basis
       // SurfaceBasis_Def.hpp
       RCP<ParameterList> p = rcp(new ParameterList("Surface Basis"));
@@ -1157,8 +1112,6 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
-    std::cout << "Register Surface Vector Jump" << std::endl;
-
     { // Surface Jump
       //SurfaceVectorJump_Def.hpp
       RCP<ParameterList> p = rcp(new ParameterList("Surface Vector Jump"));
@@ -1174,8 +1127,6 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
       ev = rcp(new LCM::SurfaceVectorJump<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
     }
-
-    std::cout << "Register Surface Vector Gradient" << std::endl;
 
     { // Surface Gradient
       //SurfaceVectorGradient_Def.hpp
@@ -1208,8 +1159,6 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
 
     if(cohesiveElement)
     {
-
-      std::cout << "Register Cohesive Traction" << std::endl;
 
       { // Surface Traction based on cohesive element
         //TvergaardHutchinson_Def.hpp
@@ -1262,8 +1211,6 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
         fm0.template registerEvaluator<EvalT>(ev);
       }
 
-      std::cout << "Register Cohesive Residual" << std::endl;
-      
       { // Surface Cohesive Residual
         // SurfaceCohesiveResidual_Def.hpp
         RCP<ParameterList> p = rcp(new ParameterList("Surface Cohesive Residual"));
@@ -1284,8 +1231,6 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
     }
     else
     {
-
-      std::cout << "Register Surface Residual" << std::endl;
 
       { // Surface Residual
         // SurfaceVectorResidual_Def.hpp

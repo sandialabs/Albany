@@ -919,18 +919,14 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
 
       //Input
       p->set<string>("DefGrad Name", "Lattice Deformation Gradient");
-      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
       p->set<string>("Elastic Modulus Name", "Elastic Modulus");
-      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-      p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
-      p->set<string>("DetDefGrad Name", "Hydrogen Induced J");  // dl->qp_scalar also
+      p->set<string>("Poissons Ratio Name", "Poissons Ratio");
+      p->set<string>("DetDefGrad Name", "Hydrogen Induced J");
 
       //Output
-      p->set<string>("Stress Name", matModel); //dl->qp_tensor also
+      p->set<string>("Stress Name", matModel);
 
-      ev = rcp(new LCM::Neohookean<EvalT,AlbanyTraits>(*p));
+      ev = rcp(new LCM::Neohookean<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
       p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
@@ -939,27 +935,6 @@ Albany::HDiffusionDeformationProblem::constructEvaluators(
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
-  }
-  else if (matModel == "NeoHookean AD")
-  {
-    RCP<ParameterList> p = rcp(new ParameterList("Stress"));
-
-    //Input
-    p->set<string>("Elastic Modulus Name", "Elastic Modulus");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
-
-    p->set<string>("DefGrad Name", "Lattice Deformation Gradient");
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
-    //Output
-    p->set<string>("Stress Name", matModel); //dl->qp_tensor also
-
-    ev = rcp(new LCM::PisdWdF<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0);
-    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
   }
   else if (matModel == "J2"||matModel == "J2Fiber"||matModel == "GursonFD")
   {

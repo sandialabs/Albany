@@ -118,7 +118,6 @@ namespace Albany {
 #include "YieldStrength.hpp"
 #include "SaturationModulus.hpp"
 #include "SaturationExponent.hpp"
-#include "Neohookean.hpp"
 #include "PHAL_SaveStateField.hpp"
 #include "TLElasResid.hpp"
 #include "J2Damage.hpp"

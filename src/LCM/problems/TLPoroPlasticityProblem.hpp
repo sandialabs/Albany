@@ -506,18 +506,14 @@ Albany::TLPoroPlasticityProblem::constructEvaluators(
 
        //Input
        p->set<string>("DefGrad Name", "Deformation Gradient");
-       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
        p->set<string>("Elastic Modulus Name", "Elastic Modulus");
-       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-       p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
-       p->set<string>("DetDefGrad Name", "Jacobian");  // dl->qp_scalar also
+       p->set<string>("Poissons Ratio Name", "Poissons Ratio");
+       p->set<string>("DetDefGrad Name", "Jacobian");
 
        //Output
-       p->set<string>("Stress Name", matModel); //dl->qp_tensor also
+       p->set<string>("Stress Name", matModel);
 
-       ev = rcp(new LCM::Neohookean<EvalT,AlbanyTraits>(*p));
+       ev = rcp(new LCM::Neohookean<EvalT,AlbanyTraits>(*p,dl));
        fm0.template registerEvaluator<EvalT>(ev);
        p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0);
        ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
