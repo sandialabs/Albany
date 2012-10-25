@@ -339,6 +339,8 @@ namespace {
 
     // Check the computed jump
     typedef PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT>::size_type size_type;
+
+    std::cout << "Perpendicular case:" << endl;
     for (size_type cell = 0; cell < worksetSize; ++cell) {
       for (size_type pt = 0; pt < numQPts; ++pt) {
 
@@ -385,6 +387,8 @@ namespace {
 
     // Check the computed jump
     typedef PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT>::size_type size_type;
+
+    std::cout << "Parallel case:" << endl;
     for (size_type cell = 0; cell < worksetSize; ++cell) {
       for (size_type pt = 0; pt < numQPts; ++pt) {
 
@@ -455,7 +459,7 @@ namespace {
     referenceCoords[23] = -0.5;
 
     Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> currentCoords(24);
-    const double eps = 0.01;
+    double eps = 0.01;
     currentCoords[0] = referenceCoords[0];
     currentCoords[1] = referenceCoords[1];
     currentCoords[2] = referenceCoords[2];
@@ -706,6 +710,7 @@ namespace {
     // Record the expected gradient
     LCM::Vector<ScalarT> expectedScalarGrad(0.0, 10.0, 0.0);
 
+    std::cout << "Perpendicular case:" << expectedScalarGrad << std::endl;
     std::cout << "expected scalar gradient:\n" << expectedScalarGrad << std::endl;
 
     std::cout << "scalar gradient:\n" << std::endl;
@@ -721,30 +726,39 @@ namespace {
     //-----------------------------------------------------------------------------------
     // Now test  gradient in parallel direction
 
-    // //-----------------------------------------------------------------------------------
-    // // Nodal value of the scalar in localization element
-    // Teuchos::ArrayRCP<ScalarT> nodalScalar(numVertices);
-    // for (int i(0); i < nodalScalar.size(); ++i) nodalScalar[i] = 0.0;
-    // nodalScalar[1] = nodalScalar[2] = nodalScalar[5] = nodalScalar[6] = 1.0;
+    //-----------------------------------------------------------------------------------
+    // Nodal value of the scalar in localization element
+    for (int i(0); i < nodalScalar.size(); ++i) nodalScalar[i] = 0.0;
+    nodalScalar[1] = nodalScalar[2] = nodalScalar[5] = nodalScalar[6] = 1.0;
 
-    // // SetField evaluator, which will be used to manually assign values to the jump
-    // Teuchos::ParameterList nsvPL;
-    // nsvPL.set<string>("Evaluated Field Name", "Nodal Scalar");
-    // nsvPL.set<Teuchos::ArrayRCP<ScalarT> >("Field Values", nodalScalar);
-    // nsvPL.set<Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->node_scalar);
-    // Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldNodalScalar = Teuchos::rcp(new LCM::SetField<Residual, Traits>(nsvPL));
+    // jump
+    for (int i(0); i < jump.size(); ++i) jump[i] = 0.0;
 
-    // //-----------------------------------------------------------------------------------
-    // // jump
-    // Teuchos::ArrayRCP<ScalarT> jump(numQPts);
-    // for (int i(0); i < jump.size(); ++i) jump[i] = 0.0;
+    // Call the evaluators, evaluateFields() is the function that computes things
+    fieldManager.preEvaluate<Residual>(workset);
+    fieldManager.evaluateFields<Residual>(workset);
+    fieldManager.postEvaluate<Residual>(workset);
 
-    // // SetField evaluator, which will be used to manually assign values to the jump
-    // Teuchos::ParameterList jPL;
-    // jPL.set<string>("Evaluated Field Name", "Jump");
-    // jPL.set<Teuchos::ArrayRCP<ScalarT> >("Field Values", jump);
-    // jPL.set<Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_scalar);
-    // Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldJump = Teuchos::rcp(new LCM::SetField<Residual, Traits>(jPL));
+    //-----------------------------------------------------------------------------------
+    // Pull the scalar gradient from the FieldManager
+    fieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint,Dim>(scalarGrad);
+
+
+    // Record the expected gradient
+    LCM::Vector<ScalarT> expectedScalarGrad2(0.0, 0.0, 0.25);
+
+    std::cout << "Parallel case:" << expectedScalarGrad2 << std::endl;
+    std::cout << "expected scalar gradient:\n" << expectedScalarGrad2 << std::endl;
+
+    std::cout << "scalar gradient:\n" << std::endl;
+    for (size_type cell = 0; cell < worksetSize; ++cell)
+      for (size_type pt = 0; pt < numQPts; ++pt)
+        std::cout << LCM::Vector<ScalarT>(3, &scalarGrad(cell,pt,0)) << std::endl;
+
+    for (size_type cell = 0; cell < worksetSize; ++cell)
+      for (size_type pt = 0; pt < numQPts; ++pt)
+        for (size_type i = 0; i < numDim; ++i)
+          TEST_COMPARE(fabs(scalarGrad(cell, pt, i) - expectedScalarGrad2(i)), <=, tolerance);
 
 
   } // end of scalar gradient test
