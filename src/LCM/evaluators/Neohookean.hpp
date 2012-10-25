@@ -81,7 +81,7 @@ private:
   unsigned int numQPs;
 
   ///
-  /// Number of integration points
+  /// Number of problem dimensions
   ///
   unsigned int numDims;
 
