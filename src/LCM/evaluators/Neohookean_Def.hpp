@@ -61,7 +61,6 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT kappa;
   ScalarT mu;
   ScalarT Jm53;
-  
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       kappa = elasticModulus(cell,qp) / ( 3. * ( 1. - 2. * poissonsRatio(cell,qp) ) );

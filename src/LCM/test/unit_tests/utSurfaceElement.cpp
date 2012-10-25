@@ -249,125 +249,161 @@ namespace {
 
   TEUCHOS_UNIT_TEST( SurfaceElement, ScalarJump )
   {
-	  // Set up the data layout
-	     const int worksetSize = 1;
-	     const int numQPts = 4;
-	     const int numDim = 3;
-	     const int numVertices = 8;
-	     const int numNodes = 8;
-	     const Teuchos::RCP<Albany::Layouts> dl = Teuchos::rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts, numDim));
+    typedef PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT>::size_type size_type;
+    typedef PHAL::AlbanyTraits::Residual Residual;
+    typedef PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
+    typedef PHAL::AlbanyTraits Traits;
 
-	     // Instantiate the required evaluators with EvalT = PHAL::AlbanyTraits::Residual and Traits = PHAL::AlbanyTraits
+    // Set up the data layout
+    const int worksetSize = 1;
+    const int numQPts = 4;
+    const int numDim = 3;
+    const int numVertices = 8;
+    const int numNodes = 8;
+    const Teuchos::RCP<Albany::Layouts> dl = Teuchos::rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts, numDim));
 
-	     //-----------------------------------------------------------------------------------
-	     // nodal value of the scalar (usually a scalar solution field such as pressure, temperature..etc)
-	     Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> referenceScalar(8);
-	     referenceScalar[0] = 0.5;
-	     referenceScalar[1] = 0.5;
-	     referenceScalar[2] = 0.5;
+    // Instantiate the required evaluators with EvalT = PHAL::AlbanyTraits::Residual and Traits = PHAL::AlbanyTraits
 
-	     referenceScalar[3] = 0.5;
-	     referenceScalar[4] = 0.5;
-	     referenceScalar[5] = 0.5;
+    //-----------------------------------------------------------------------------------
+    // nodal value of the scalar (usually a scalar solution field such as pressure, temperature..etc)
+    Teuchos::ArrayRCP<ScalarT> currentScalar(8);
+    double eps = 0.05;
+    currentScalar[0] = 0.5;
+    currentScalar[1] = 0.5;
+    currentScalar[2] = 0.5;
+    currentScalar[3] = 0.5;
 
-	     referenceScalar[6] = 0.5;
-	     referenceScalar[7] = 0.5;
+    currentScalar[4] = 0.5 + eps;
+    currentScalar[5] = 0.5 + eps;
+    currentScalar[6] = 0.5 + eps;
+    currentScalar[7] = 0.5 + eps;
 
+    // SetField evaluator, which will be used to manually assign a value to the currentCoords field
+    Teuchos::ParameterList currentScalarP("SetFieldCurrentScalar");
+    currentScalarP.set<string>("Evaluated Field Name", "Current Scalar");
+    currentScalarP.set<Teuchos::ArrayRCP<ScalarT> >("Field Values", currentScalar);
+    currentScalarP.set<Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->node_scalar);
+    Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldCurrentScalar =
+      Teuchos::rcp(new LCM::SetField<Residual, Traits>(currentScalarP));
 
-	     Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> currentScalar(8);
-	     const double eps = 0.05;
-	     currentScalar[0] = referenceScalar[0] ;
-	     currentScalar[1] = referenceScalar[1] ;
-	     currentScalar[2] = referenceScalar[2] ;
+    //-----------------------------------------------------------------------------------
+    // intrepid basis and cubature
+    Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
+    intrepidBasis = Teuchos::rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType,Intrepid::FieldContainer<RealType> >());
+    Teuchos::RCP<shards::CellTopology> cellType = Teuchos::rcp(new shards::CellTopology(shards::getCellTopologyData<shards::Quadrilateral<4> >()));
+    Intrepid::DefaultCubatureFactory<RealType> cubFactory;
+    Teuchos::RCP<Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, 3);
 
-	     currentScalar[3] = referenceScalar[3] ;
-	     currentScalar[4] = referenceScalar[4] + eps;
-	     currentScalar[5] = referenceScalar[5] + eps;
+    //-----------------------------------------------------------------------------------
+    // SurfaceScalarJump evaluator
+    Teuchos::ParameterList sjPL;
+    sjPL.set<string>("Scalar Name","Current Scalar");
+    sjPL.set<string>("Scalar Jump Name", "Scalar Jump");
+    sjPL.set<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+    sjPL.set<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", intrepidBasis);
+    Teuchos::RCP<LCM::SurfaceScalarJump<Residual, Traits> > sj =
+      Teuchos::rcp(new LCM::SurfaceScalarJump<Residual, Traits>(sjPL,dl));
 
-	     currentScalar[6] = referenceScalar[6] + eps;
-	     currentScalar[7] = referenceScalar[7] + eps;
+    // Instantiate a field manager.
+    PHX::FieldManager<PHAL::AlbanyTraits> fieldManager;
 
+    // Register the evaluators with the field manager
+    fieldManager.registerEvaluator<PHAL::AlbanyTraits::Residual>(setFieldCurrentScalar);
+    fieldManager.registerEvaluator<PHAL::AlbanyTraits::Residual>(sj);
 
-	     // SetField evaluator, which will be used to manually assign a value to the currentCoords field
-	     Teuchos::ParameterList currentScalarP("SetFieldCurrentScalar");
-	     currentScalarP.set<string>("Evaluated Field Name", "Current Scalar");
-	     currentScalarP.set<Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> >("Field Values", currentScalar);
-	     currentScalarP.set<Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->node_scalar);
-	     Teuchos::RCP<LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits> > setFieldCurrentScalar =
-	     Teuchos::rcp(new LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>(currentScalarP));
+    // Set the evaluated fields as required fields
+    for (std::vector<Teuchos::RCP<PHX::FieldTag> >::const_iterator it = sj->evaluatedFields().begin();
+         it != sj->evaluatedFields().end(); it++)
+      fieldManager.requireField<PHAL::AlbanyTraits::Residual>(**it);
 
-	     //-----------------------------------------------------------------------------------
-	     // intrepid basis and cubature
-	     Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
-	     intrepidBasis = Teuchos::rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType,Intrepid::FieldContainer<RealType> >());
-	     Teuchos::RCP<shards::CellTopology> cellType = Teuchos::rcp(new shards::CellTopology(shards::getCellTopologyData<shards::Quadrilateral<4> >()));
-	     Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-	     Teuchos::RCP<Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, 3);
+    // Call postRegistrationSetup on the evaluators
+    // JTO - I don't know what "Test String" is meant for...
+    PHAL::AlbanyTraits::SetupData setupData = "Test String";
+    fieldManager.postRegistrationSetup(setupData);
 
-	     //-----------------------------------------------------------------------------------
-	     // SurfaceScalarJump evaluator
-	     Teuchos::RCP<Teuchos::ParameterList> svjP = Teuchos::rcp(new Teuchos::ParameterList("Surface Scalar Jump"));
-	     svjP->set<string>("Scalar Name","Current Scalar");
-	     svjP->set<string>("Scalar Jump Name", "Scalar Jump");
-	     svjP->set<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
-	     svjP->set<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", intrepidBasis);
-	     Teuchos::RCP<LCM::SurfaceScalarJump<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits> > svj =
-	     Teuchos::rcp(new LCM::SurfaceScalarJump<PHAL::AlbanyTraits::Residual,PHAL::AlbanyTraits>(*svjP,dl));
+    // Create a workset
+    PHAL::Workset workset;
+    workset.numCells = worksetSize;
 
-	     // Instantiate a field manager.
-	     PHX::FieldManager<PHAL::AlbanyTraits> fieldManager;
+    // Call the evaluators, evaluateFields() is the function that computes things
+    fieldManager.preEvaluate<Residual>(workset);
+    fieldManager.evaluateFields<Residual>(workset);
+    fieldManager.postEvaluate<Residual>(workset);
 
-	     // Register the evaluators with the field manager
-	     fieldManager.registerEvaluator<PHAL::AlbanyTraits::Residual>(setFieldCurrentScalar);
-	     fieldManager.registerEvaluator<PHAL::AlbanyTraits::Residual>(svj);
+    // Pull the vector jump from the FieldManager
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim> jumpField("Scalar Jump", dl->qp_scalar);
+    fieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint>(jumpField);
 
-	     // Set the evaluated fields as required fields
-	     for (std::vector<Teuchos::RCP<PHX::FieldTag> >::const_iterator it = svj->evaluatedFields().begin();
-	          it != svj->evaluatedFields().end(); it++)
-	       fieldManager.requireField<PHAL::AlbanyTraits::Residual>(**it);
+    // Record the expected vector jump, which will be used to check the computed vector jump
+    double expectedJump(eps);
 
-	     // Call postRegistrationSetup on the evaluators
-	     // JTO - I don't know what "Test String" is meant for...
-	     PHAL::AlbanyTraits::SetupData setupData = "Test String";
-	     fieldManager.postRegistrationSetup(setupData);
+    // Check the computed jump
+    typedef PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT>::size_type size_type;
+    for (size_type cell = 0; cell < worksetSize; ++cell) {
+      for (size_type pt = 0; pt < numQPts; ++pt) {
 
-	     // Create a workset
-	     PHAL::Workset workset;
-	     workset.numCells = worksetSize;
+        std::cout << "Jump Scalar at cell " << cell
+                  << ", quadrature point " << pt << ":" << endl;
+        std::cout << "  " << fabs(jumpField(cell, pt)) << endl;
 
-	     // Call the evaluators, evaluateFields() is the function that computes things
-	     fieldManager.preEvaluate<PHAL::AlbanyTraits::Residual>(workset);
-	     fieldManager.evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
-	     fieldManager.postEvaluate<PHAL::AlbanyTraits::Residual>(workset);
+        std::cout << "Expected result:" << endl;
+        std::cout << "  " << expectedJump << endl;
 
-	     // Pull the vector jump from the FieldManager
-	     PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT,Cell,QuadPoint,Dim> jumpField("Scalar Jump", dl->qp_scalar);
-	     fieldManager.getFieldData<PHAL::AlbanyTraits::Residual::ScalarT,PHAL::AlbanyTraits::Residual,Cell,QuadPoint>(jumpField);
+        std::cout << endl;
 
-	     // Record the expected vector jump, which will be used to check the computed vector jump
-	     double expectedJump(eps);
+        double tolerance = 1.0e-9;
 
-	     // Check the computed jump
-	     typedef PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT>::size_type size_type;
-	     for (size_type cell = 0; cell < worksetSize; ++cell) {
-	       for (size_type pt = 0; pt < numQPts; ++pt) {
+        TEST_COMPARE(jumpField(cell, pt) - expectedJump, <=, tolerance);
 
-	         std::cout << "Jump Scalar at cell " << cell
-	                   << ", quadrature point " << pt << ":" << endl;
-	         std::cout << "  " << fabs(jumpField(cell, pt)) << endl;
+      }
+    }
+    std::cout << endl;
 
-	         std::cout << "Expected result:" << endl;
-	         std::cout << "  " << expectedJump << endl;
+    //-----------------------------------------------------------------------------------
+    // now test a different scalar field
+    eps = 0.05;
+    currentScalar[0] = 0.5;
+    currentScalar[1] = 0.5;
+    currentScalar[4] = 0.5;
+    currentScalar[5] = 0.5;
 
-	         std::cout << endl;
+    currentScalar[2] = 0.5 + eps;
+    currentScalar[3] = 0.5 + eps;
+    currentScalar[6] = 0.5 + eps;
+    currentScalar[7] = 0.5 + eps;
 
-	         double tolerance = 1.0e-9;
+    // Call the evaluators, evaluateFields() is the function that computes things
+    fieldManager.preEvaluate<Residual>(workset);
+    fieldManager.evaluateFields<Residual>(workset);
+    fieldManager.postEvaluate<Residual>(workset);
 
-	           TEST_COMPARE(jumpField(cell, pt) - expectedJump, <=, tolerance);
+    // Pull the vector jump from the FieldManager
+    fieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint>(jumpField);
 
-	       }
-	     }
-	     std::cout << endl;
+    // Record the expected vector jump, which will be used to check the computed vector jump
+    expectedJump = 0.0;
+
+    // Check the computed jump
+    typedef PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT>::size_type size_type;
+    for (size_type cell = 0; cell < worksetSize; ++cell) {
+      for (size_type pt = 0; pt < numQPts; ++pt) {
+
+        std::cout << "Jump Scalar at cell " << cell
+                  << ", quadrature point " << pt << ":" << endl;
+        std::cout << "  " << fabs(jumpField(cell, pt)) << endl;
+
+        std::cout << "Expected result:" << endl;
+        std::cout << "  " << expectedJump << endl;
+
+        std::cout << endl;
+
+        double tolerance = 1.0e-9;
+
+        TEST_COMPARE(jumpField(cell, pt) - expectedJump, <=, tolerance);
+
+      }
+    }
+    std::cout << endl;
 
   }
 
@@ -645,7 +681,7 @@ namespace {
     // Set the evaluated fields as required fields
     for (std::vector<Teuchos::RCP<PHX::FieldTag> >::const_iterator it = 
            ssg->evaluatedFields().begin(); it != ssg->evaluatedFields().end(); it++)
-    fieldManager.requireField<Residual>(**it);
+      fieldManager.requireField<Residual>(**it);
 
     // Call postRegistrationSetup on the evaluators
     // JTO - I don't know what "Test String" is meant for...
@@ -681,6 +717,35 @@ namespace {
       for (size_type pt = 0; pt < numQPts; ++pt)
         for (size_type i = 0; i < numDim; ++i)
           TEST_COMPARE(fabs(scalarGrad(cell, pt, i) - expectedScalarGrad(i)), <=, tolerance);
+
+    //-----------------------------------------------------------------------------------
+    // Now test  gradient in parallel direction
+
+    // //-----------------------------------------------------------------------------------
+    // // Nodal value of the scalar in localization element
+    // Teuchos::ArrayRCP<ScalarT> nodalScalar(numVertices);
+    // for (int i(0); i < nodalScalar.size(); ++i) nodalScalar[i] = 0.0;
+    // nodalScalar[1] = nodalScalar[2] = nodalScalar[5] = nodalScalar[6] = 1.0;
+
+    // // SetField evaluator, which will be used to manually assign values to the jump
+    // Teuchos::ParameterList nsvPL;
+    // nsvPL.set<string>("Evaluated Field Name", "Nodal Scalar");
+    // nsvPL.set<Teuchos::ArrayRCP<ScalarT> >("Field Values", nodalScalar);
+    // nsvPL.set<Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->node_scalar);
+    // Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldNodalScalar = Teuchos::rcp(new LCM::SetField<Residual, Traits>(nsvPL));
+
+    // //-----------------------------------------------------------------------------------
+    // // jump
+    // Teuchos::ArrayRCP<ScalarT> jump(numQPts);
+    // for (int i(0); i < jump.size(); ++i) jump[i] = 0.0;
+
+    // // SetField evaluator, which will be used to manually assign values to the jump
+    // Teuchos::ParameterList jPL;
+    // jPL.set<string>("Evaluated Field Name", "Jump");
+    // jPL.set<Teuchos::ArrayRCP<ScalarT> >("Field Values", jump);
+    // jPL.set<Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_scalar);
+    // Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldJump = Teuchos::rcp(new LCM::SetField<Residual, Traits>(jPL));
+
 
   } // end of scalar gradient test
 
@@ -848,18 +913,18 @@ namespace {
 
   TEUCHOS_UNIT_TEST( SurfaceElement, CohesiveForce )
   {
-	// Set up the data layout
-	const int worksetSize = 1;
-	const int numQPts = 4;
-	const int numDim = 3;
-	const int numVertices = 8;
-	const int numNodes = 8;
-	const int numPlaneNodes = numNodes/2;
-	const Teuchos::RCP<Albany::Layouts> dl = Teuchos::rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
+    // Set up the data layout
+    const int worksetSize = 1;
+    const int numQPts = 4;
+    const int numDim = 3;
+    const int numVertices = 8;
+    const int numNodes = 8;
+    const int numPlaneNodes = numNodes/2;
+    const Teuchos::RCP<Albany::Layouts> dl = Teuchos::rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
 
     // Instantiate the required evaluators with EvalT = PHAL::AlbanyTraits::Residual and Traits = PHAL::AlbanyTraits
     //-----------------------------------------------------------------------------------
-	// manually create evaluator field for cohesive traction
+    // manually create evaluator field for cohesive traction
     Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> cohesiveTraction(numQPts*numDim);
     // manually fill the cohesiveTraction field
     for (int i(0); i < numQPts*numDim; ++i)
@@ -879,7 +944,7 @@ namespace {
       Teuchos::rcp(new LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>(ctP));
 
     //-----------------------------------------------------------------------------------
-	// manually create evaluator field for refArea
+    // manually create evaluator field for refArea
     Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> refArea(numQPts);
     // manually fill the refArea field, for this unit squre, refArea = 0.25;
     for (int i(0); i < numQPts; ++i)
@@ -957,7 +1022,7 @@ namespace {
       for (size_type node = 0; node < numPlaneNodes; ++node) {
 
         std::cout << "Bottom Nodal forceY at cell " << cell
-            << ", node " << node << ":" << endl;
+                  << ", node " << node << ":" << endl;
         std::cout << "  " << forceField(cell, node, 1) << endl;
 
         std::cout << "Expected result:" << endl;
@@ -990,13 +1055,13 @@ namespace {
     for (int i(0); i < 9*numQPts; ++i) 
       defgrad[i]  = 0.0;
 
- /*   // This creates identity tensor for every integration points in the element
-    defgrad[i] = 0.0;
-    defgrad[0]  = defgrad[4]  = defgrad[8]  = 1.0;
-    defgrad[9]  = defgrad[13] = defgrad[17] = 1.0;
-    defgrad[18] = defgrad[22] = defgrad[26] = 1.0;
-    defgrad[27] = defgrad[31] = defgrad[35] = 1.0;
-*/
+    /*   // This creates identity tensor for every integration points in the element
+         defgrad[i] = 0.0;
+         defgrad[0]  = defgrad[4]  = defgrad[8]  = 1.0;
+         defgrad[9]  = defgrad[13] = defgrad[17] = 1.0;
+         defgrad[18] = defgrad[22] = defgrad[26] = 1.0;
+         defgrad[27] = defgrad[31] = defgrad[35] = 1.0;
+    */
     // This creates an uniaxial tension
     defgrad[0]  = defgrad[8]  = 1.0;
     defgrad[9]  = defgrad[17] = 1.0;
@@ -1026,16 +1091,16 @@ namespace {
 
     // 1st PK stress resulted from uniaxial tension
     // P_11 and P_33
-      stress[0] = stress[8] = 4.47222e9;
-      stress[9] = stress[17] =4.47222e9;
-      stress[18]= stress[26] =4.47222e9;
-      stress[27]= stress[35] =4.47222e9;
+    stress[0] = stress[8] = 4.47222e9;
+    stress[9] = stress[17] =4.47222e9;
+    stress[18]= stress[26] =4.47222e9;
+    stress[27]= stress[35] =4.47222e9;
 
-      // P_22
-      stress[4]  = 1.66111e10;
-      stress[13] = 1.66111e10;
-      stress[22] = 1.66111e10;
-      stress[31] = 1.66111e10;
+    // P_22
+    stress[4]  = 1.66111e10;
+    stress[13] = 1.66111e10;
+    stress[22] = 1.66111e10;
+    stress[31] = 1.66111e10;
 
 
     // SetField evaluator, which will be used to manually assign a value to the stress field
@@ -1050,7 +1115,7 @@ namespace {
     Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> currentBasis(9*numQPts);
     // Fill in the values for the current basis
     for (int i(0); i < 9*numQPts; ++i) 
-    currentBasis[i] = 0.0;
+      currentBasis[i] = 0.0;
 
     currentBasis[2]  = currentBasis[3]  = currentBasis[7]  = 1.0;
     currentBasis[11] = currentBasis[12] = currentBasis[16] = 1.0;
@@ -1180,7 +1245,7 @@ namespace {
       for (size_type node = 0; node < numNodes; ++node) {
 
         std::cout << "Nodal force at cell " << cell
-            << ", node " << node << ":" << endl;
+                  << ", node " << node << ":" << endl;
         std::cout << "  " << fabs(forceField(cell, node, 0));
         std::cout << "  " << fabs(forceField(cell, node, 1));
         std::cout << "  " << fabs(forceField(cell, node, 2)) << endl;
