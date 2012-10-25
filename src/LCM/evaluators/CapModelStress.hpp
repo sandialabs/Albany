@@ -83,7 +83,7 @@ namespace LCM {
     RealType Q;
 
     std::string strainName, stressName;
-    std::string backStressName, capParameterName, eqpsName, hardeningModulusName;
+    std::string backStressName, capParameterName, eqpsName;
 
     //output
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> stress;

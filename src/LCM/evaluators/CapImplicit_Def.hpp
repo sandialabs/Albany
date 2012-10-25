@@ -13,26 +13,43 @@ namespace LCM {
 //**********************************************************************
   template<typename EvalT, typename Traits>
   CapImplicit<EvalT, Traits>::CapImplicit(const Teuchos::ParameterList& p) :
-      elasticModulus(p.get<std::string>("Elastic Modulus Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), poissonsRatio(
+     elasticModulus(p.get<std::string>("Elastic Modulus Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+     poissonsRatio(
           p.get<std::string>("Poissons Ratio Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), strain(
-          p.get<std::string>("Strain Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), stress(
-          p.get<std::string>("Stress Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), backStress(
-          p.get<std::string>("Back Stress Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), capParameter(
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+     strain(p.get<std::string>("Strain Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
+     stress(p.get<std::string>("Stress Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
+     backStress(p.get<std::string>("Back Stress Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
+     capParameter(
           p.get<std::string>("Cap Parameter Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), A(
-          p.get<RealType>("A Name")), B(p.get<RealType>("B Name")), C(
-          p.get<RealType>("C Name")), theta(p.get<RealType>("Theta Name")), R(
-          p.get<RealType>("R Name")), kappa0(p.get<RealType>("Kappa0 Name")), W(
-          p.get<RealType>("W Name")), D1(p.get<RealType>("D1 Name")), D2(
-          p.get<RealType>("D2 Name")), calpha(p.get<RealType>("Calpha Name")), psi(
-          p.get<RealType>("Psi Name")), N(p.get<RealType>("N Name")), L(
-          p.get<RealType>("L Name")), phi(p.get<RealType>("Phi Name")), Q(
-          p.get<RealType>("Q Name"))
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+     friction(p.get<std::string>("Friction Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+     dilatancy(p.get<std::string>("Dilatancy Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+     eqps(p.get<std::string>("Eqps Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+     hardeningModulus(p.get<std::string>("Hardening Modulus Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+     A(p.get<RealType>("A Name")),
+     B(p.get<RealType>("B Name")),
+     C(p.get<RealType>("C Name")),
+     theta(p.get<RealType>("Theta Name")),
+     R(p.get<RealType>("R Name")),
+     kappa0(p.get<RealType>("Kappa0 Name")),
+     W(p.get<RealType>("W Name")),
+     D1(p.get<RealType>("D1 Name")),
+     D2(p.get<RealType>("D2 Name")),
+     calpha(p.get<RealType>("Calpha Name")),
+     psi(p.get<RealType>("Psi Name")),
+     N(p.get<RealType>("N Name")),
+     L(p.get<RealType>("L Name")),
+     phi(p.get<RealType>("Phi Name")),
+     Q(p.get<RealType>("Q Name"))
   {
     // Pull out numQPs and numDims from a Layout
     Teuchos::RCP<PHX::DataLayout> tensor_dl = p.get<
@@ -52,11 +69,16 @@ namespace LCM {
     stressName = p.get<std::string>("Stress Name") + "_old";
     backStressName = p.get<std::string>("Back Stress Name") + "_old";
     capParameterName = p.get<std::string>("Cap Parameter Name") + "_old";
+    eqpsName = p.get<std::string>("Eqps Name") + "_old";
 
     // evaluated fields
     this->addEvaluatedField(stress);
     this->addEvaluatedField(backStress);
     this->addEvaluatedField(capParameter);
+    this->addEvaluatedField(friction);
+    this->addEvaluatedField(dilatancy);
+    this->addEvaluatedField(eqps);
+    this->addEvaluatedField(hardeningModulus);
 
     this->setName("Stress" + PHX::TypeString<EvalT>::value);
 
@@ -73,6 +95,10 @@ namespace LCM {
     this->utils.setFieldData(strain, fm);
     this->utils.setFieldData(backStress, fm);
     this->utils.setFieldData(capParameter, fm);
+    this->utils.setFieldData(friction, fm);
+    this->utils.setFieldData(dilatancy, fm);
+    this->utils.setFieldData(eqps, fm);
+    this->utils.setFieldData(hardeningModulus, fm);
   }
 
 //**********************************************************************
@@ -87,6 +113,7 @@ namespace LCM {
     Albany::MDArray stressold = (*workset.stateArrayPtr)[stressName];
     Albany::MDArray backStressold = (*workset.stateArrayPtr)[backStressName];
     Albany::MDArray capParameterold = (*workset.stateArrayPtr)[capParameterName];
+    Albany::MDArray eqpsold = (*workset.stateArrayPtr)[eqpsName];
 
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
       for (std::size_t qp = 0; qp < numQPs; ++qp) {
@@ -96,30 +123,58 @@ namespace LCM {
             / (1.0 - 2.0 * poissonsRatio(cell, qp));
         ScalarT mu = elasticModulus(cell, qp) / 2.0
             / (1.0 + poissonsRatio(cell, qp));
+        ScalarT bulkModulus = lame + (2. / 3.) * mu;
 
         // elastic matrix
         LCM::Tensor4<ScalarT> Celastic = lame * LCM::identity_3<ScalarT>(3)
             + mu * (LCM::identity_1<ScalarT>(3) + LCM::identity_2<ScalarT>(3));
 
+        // elastic compliance tangent matrix
+        LCM::Tensor4<ScalarT> compliance =
+            (1. / bulkModulus / 9.) * LCM::identity_3<ScalarT>(3)
+                + (1. / mu / 2.)
+                    * (0.5
+                        * (LCM::identity_1<ScalarT>(3)
+                            + LCM::identity_2<ScalarT>(3))
+                        - (1. / 3.) * LCM::identity_3<ScalarT>(3));
+
+        // previous state
+        LCM::Tensor<ScalarT> sigmaN(3,0.0), alphaN(3,0.0), strainN(3,0.0);
+
         // incremental strain tensor
         LCM::Tensor<ScalarT> depsilon(3);
-        for (std::size_t i = 0; i < numDims; ++i)
-          for (std::size_t j = 0; j < numDims; ++j)
+        for (std::size_t i = 0; i < numDims; ++i){
+          for (std::size_t j = 0; j < numDims; ++j){
             depsilon(i, j) = strain(cell, qp, i, j) - strainold(cell, qp, i, j);
+            strainN(i,j) = strainold(cell,qp,i,j);
+          }
+        }
 
         // trial state
         LCM::Tensor<ScalarT> sigmaVal = LCM::dotdot(Celastic, depsilon);
-        LCM::Tensor<ScalarT> alphaVal(3);
+        LCM::Tensor<ScalarT> alphaVal(3,0.0);
 
         for (std::size_t i = 0; i < numDims; ++i) {
           for (std::size_t j = 0; j < numDims; ++j) {
             sigmaVal(i, j) = sigmaVal(i, j) + stressold(cell, qp, i, j);
             alphaVal(i, j) = backStressold(cell, qp, i, j);
+            sigmaN(i,j) = stressold(cell,qp,i,j);
+            alphaN(i,j) = backStressold(cell,qp,i,j);
           }
         }
 
         ScalarT kappaVal = capParameterold(cell, qp);
         ScalarT dgammaVal = 0.0;
+
+        // used in defining generalized hardening modulus
+        ScalarT Htan(0.0);
+
+        // define plastic strain increment, its two invariants: dev, and vol
+        LCM::Tensor<ScalarT> deps_plastic(3, 0.0);
+        ScalarT deqps(0.0), devolps(0.0);
+
+        // define temporary trial stress, used in computing plastic strain
+        LCM::Tensor<ScalarT> sigmaTr = sigmaVal;
 
         std::vector<ScalarT> XXVal(13);
 
@@ -127,7 +182,7 @@ namespace LCM {
         ScalarT f = compute_f(sigmaVal, alphaVal, kappaVal);
         XXVal = initialize(sigmaVal, alphaVal, kappaVal, dgammaVal);
 
-        // local NW
+        // local Newton loop
         if (f > 1.e-10) { // plastic yielding
 
           ScalarT normR, normR0, conv;
@@ -213,7 +268,85 @@ namespace LCM {
 
         //dgammaVal = XXVal[12];
 
+        //compute plastic strain increment deps_plastic = compliance ( sigma_tr - sigma_(n+1));
+        LCM::Tensor<ScalarT> dsigma = sigmaTr - sigmaVal;
+        deps_plastic = LCM::dotdot(compliance, dsigma);
+
+        // compute its two invariants: devolps (volumetric) and deqps (deviatoric)
+        devolps = LCM::trace(deps_plastic);
+        LCM::Tensor<ScalarT> dev_plastic = deps_plastic
+              - (1. / 3.) * devolps * LCM::identity<ScalarT>(3);
+        //deqps = std::sqrt(2./3.) * LCM::norm(dev_plastic);
+        // use altenative definition, just differ by constants
+        deqps = std::sqrt(2) * LCM::norm(dev_plastic);
+
+        //
         // update
+        //
+        // dilatancy
+        if (deqps != 0)
+           dilatancy(cell, qp) = devolps / deqps;
+        else
+           dilatancy(cell, qp) = 0.0;
+
+        // friction coefficient = dtau / dp;
+		// previous p and tau
+		ScalarT pN(0.0), tauN(0.0);
+		LCM::Tensor<ScalarT> xi = sigmaN - alphaN;
+		pN = LCM::trace(xi);
+		pN = pN / 3.;
+		LCM::Tensor<ScalarT> sN = xi - pN * LCM::identity<ScalarT>(3);
+		//qN = sqrt(3./2.) * LCM::norm(sN);
+		tauN = sqrt(1. / 2.) * LCM::norm(sN);
+
+		// current p, and tau
+		ScalarT p(0.0), tau(0.0);
+		xi = sigmaVal - alphaVal;
+		p = LCM::trace(xi);
+		p = p / 3.;
+		LCM::Tensor<ScalarT> s = xi - p * LCM::identity<ScalarT>(3);
+		//q = sqrt(3./2.) * LCM::norm(s);
+		tau = sqrt(1. / 2.) * LCM::norm(s);
+		//LCM::Tensor<ScalarT, 3> ds = s - sN;
+
+		// difference
+		ScalarT dtau = tau - tauN;
+		//ScalarT dtau = sqrt(1./2.) * LCM::norm(ds);
+		ScalarT dp = p - pN;
+
+		// friction coefficient by finite difference
+		if (dp != 0)
+		   friction(cell, qp) = dtau / dp;
+		else
+		   friction(cell, qp) = 0.0;
+
+		// hardening modulus
+		// previous r(gamma)
+		ScalarT rN(0.0);
+		ScalarT evol3 = LCM::trace(strainN);
+		evol3 = evol3 / 3.;
+		LCM::Tensor<ScalarT> e = strainN - evol3 * LCM::identity<ScalarT>(3);
+		rN = sqrt(2.) * LCM::norm(e);
+
+		// current r(gamma)
+		ScalarT r(0.0);
+		LCM::Tensor<ScalarT> strainCurrent = strainN + depsilon;
+		evol3 = LCM::trace(strainCurrent);
+		evol3 = evol3 / 3.;
+		e = strainCurrent - evol3 * LCM::identity<ScalarT>(3);
+		r = sqrt(2.) * LCM::norm(e);
+
+		// difference
+		ScalarT dr = r - rN;
+		// tagent hardening modulus
+		if (dr != 0) Htan = dtau / dr;
+
+		if (std::abs(1. - Htan / mu) > 0)
+			hardeningModulus(cell, qp) = Htan / (1. - Htan / mu);
+		else
+			hardeningModulus(cell, qp) = 0.0;
+
+		// stress and back stress
         for (std::size_t i = 0; i < numDims; ++i) {
           for (std::size_t j = 0; j < numDims; ++j) {
             stress(cell, qp, i, j) = sigmaVal(i, j);
@@ -222,6 +355,7 @@ namespace LCM {
         }
 
         capParameter(cell, qp) = kappaVal;
+        eqps(cell, qp) = eqpsold(cell, qp) + deqps;
 
       } //loop over qps
 

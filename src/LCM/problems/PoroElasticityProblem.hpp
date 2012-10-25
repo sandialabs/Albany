@@ -140,6 +140,7 @@ namespace Albany {
 // Plasticity model from Q.Chen
 #include "CapModelStress.hpp"
 #include "GursonSDStress.hpp"
+#include "CapImplicit.hpp"
 
 
 template <typename EvalT>
@@ -514,7 +515,7 @@ Albany::PoroElasticityProblem::constructEvaluators(
      fm0.template registerEvaluator<EvalT>(ev);
    }
 
-   if (matModel == "CapModel")
+   if (matModel == "CapModel" || matModel == "CapImplicit")
    {
      { // Cap model stress
        RCP<ParameterList> p = rcp(new ParameterList("Stress"));
@@ -573,7 +574,14 @@ Albany::PoroElasticityProblem::constructEvaluators(
 
 
        //Declare what state data will need to be saved (name, layout, init_type)
-       ev = rcp(new LCM::CapModelStress<EvalT,AlbanyTraits>(*p));
+       if(matModel == "CapModel"){
+    	  ev = rcp(new LCM::CapModelStress<EvalT,AlbanyTraits>(*p));
+       }
+
+       if(matModel == "CapImplicit"){
+    	  ev = rcp(new LCM::CapImplicit<EvalT,AlbanyTraits>(*p));
+       }
+
        fm0.template registerEvaluator<EvalT>(ev);
        p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0, true);
        ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
