@@ -19,14 +19,13 @@ namespace LCM {
     thickness      (p.get<double>("thickness")), 
     cubature       (p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")), 
     intrepidBasis  (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis")),
-    cellType       (p.get<Teuchos::RCP<shards::CellTopology> >("Cell Type")),
+  //  cellType       (p.get<Teuchos::RCP<shards::CellTopology> >("Cell Type")),
     currentBasis   (p.get<std::string>("Current Basis Name"),dl->qp_tensor),
     refDualBasis   (p.get<std::string>("Reference Dual Basis Name"),dl->qp_tensor),
     refNormal      (p.get<std::string>("Reference Normal Name"),dl->qp_vector),
-    jump           (p.get<std::string>("Vector Jump Name"),dl->qp_scalar),
-    nodalScalar           (p.get<std::string>("Nodal Scalar Name"),dl->node_scalar),
-    scalarGrad        (p.get<std::string>("Surface Scalar Gradient Name"),dl->qp_vector),
-   // J              (p.get<std::string>("Surface Vector Gradient Determinant Name"),dl->qp_scalar),
+    jump           (p.get<std::string>("Scalar Jump Name"),dl->qp_scalar),
+    nodalScalar    (p.get<std::string>("Nodal Scalar Name"),dl->node_scalar),
+    scalarGrad     (p.get<std::string>("Surface Scalar Gradient Name"),dl->qp_vector),
     weights        (p.get<std::string>("Weights Name"),dl->qp_scalar),
     weightedAverage(false),
     alpha(0.0)
@@ -45,7 +44,7 @@ namespace LCM {
     this->addEvaluatedField(scalarGrad);
   //  this->addEvaluatedField(J);
 
-    this->setName("Surface Vector Gradient"+PHX::TypeString<EvalT>::value);
+    this->setName("Surface Scalar Gradient"+PHX::TypeString<EvalT>::value);
 
     std::vector<PHX::DataLayout::size_type> dims;
     dl->node_vector->dimensions(dims);
@@ -69,7 +68,7 @@ namespace LCM {
 
 
     // Pre-Calculate reference element quantitites
-    std::cout << "SurfaceBasis Calling Intrepid to get reference quantities" << std::endl;
+    std::cout << "SurfaceScalarGradient Calling Intrepid to get reference quantities" << std::endl;
     cubature->getCubature(refPoints, refWeights);
     intrepidBasis->getValues(refValues, refPoints, Intrepid::OPERATOR_VALUE);
     intrepidBasis->getValues(refGrads, refPoints, Intrepid::OPERATOR_GRAD);
@@ -87,7 +86,7 @@ namespace LCM {
     this->utils.setFieldData(jump,fm);
     this->utils.setFieldData(nodalScalar,fm);
     this->utils.setFieldData(scalarGrad,fm);
-  //  this->utils.setFieldData(J,fm);
+
   }
 
   //**********************************************************************
@@ -107,6 +106,8 @@ namespace LCM {
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t pt=0; pt < numQPs; ++pt) {
+
+
         LCM::Vector<ScalarT> g_0(3, &currentBasis(cell, pt, 0, 0));
         LCM::Vector<ScalarT> g_1(3, &currentBasis(cell, pt, 1, 0));
         LCM::Vector<ScalarT> g_2(3, &currentBasis(cell, pt, 2, 0));
@@ -119,13 +120,14 @@ namespace LCM {
         LCM::Vector<ScalarT> scalarGradOrthogonal(0, 0, 0);
         LCM::Vector<ScalarT> scalarGradNormal(0, 0, 0);
 
-        // normal contribution
-        // NOT YET IMPLEMENTED
+
         for (std::size_t i=0; i < numDims; ++i)
 		 {
+        	scalarGrad(cell,pt,i) = 0;
+
         	// normal contribution
         	for (int node(0); node < numPlaneNodes; ++node) {
-			  scalarGradNormal(i) += refGrads(node, pt, i)*midplaneScalar[node]*(g_0(i)+g_1(i));
+			//  scalarGradNormal(i) += refGrads(node, pt, i)*midplaneScalar(cell,node)*(g_0(i)+g_1(i));
         	}
 
 			// orthogonal contribution
@@ -136,39 +138,6 @@ namespace LCM {
       }
     }
 
-    /*
-    if (weightedAverage)
-    {
-      ScalarT Jbar, wJbar, vol;
-      for (std::size_t cell=0; cell < workset.numCells; ++cell)
-      {
-        Jbar = 0.0;
-        vol = 0.0;
-        for (std::size_t qp=0; qp < numQPs; ++qp)
-        {
-          Jbar += weights(cell,qp) * std::log( J(cell,qp) );
-          vol  += weights(cell,qp);
-        }
-        Jbar /= vol;
-
-        // Jbar = std::exp(Jbar);
-        for (std::size_t qp=0; qp < numQPs; ++qp)
-        {
-          for (std::size_t i=0; i < numDims; ++i)
-          {
-            for (std::size_t j=0; j < numDims; ++j)
-            {
-              wJbar = std::exp( (1-alpha) * Jbar + alpha * std::log( J(cell,qp) ) );
-              scalarGrad(cell,qp,i,j) *= std::pow( wJbar / J(cell,qp) ,1./3. );
-            }
-          }
-          J(cell,qp) = wJbar;
-        }
-      }
-    }
-
-    */
-
-  }
+}
   //**********************************************************************  
 }

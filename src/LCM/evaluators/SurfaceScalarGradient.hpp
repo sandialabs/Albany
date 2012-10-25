@@ -60,8 +60,7 @@ private:
   PHX::MDField<ScalarT,Cell,Node> nodalScalar;
 
   //! Vector to take the jump of
-  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> vector;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> jump;
+  PHX::MDField<ScalarT,Cell,QuadPoint> jump;
 
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> currentBasis;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> refDualBasis;
@@ -79,7 +78,6 @@ private:
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> scalarGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint> J;
 
   unsigned int worksetSize;
   unsigned int numNodes;
