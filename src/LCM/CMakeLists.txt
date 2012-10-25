@@ -387,6 +387,7 @@ add_library(lcm ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
   add_executable(NodeUpdate test/utils/NodeUpdate.cc)
   add_executable(Subdivision test/utils/Subdivision.cc)
   add_executable(MeshComponents test/utils/MeshComponents.cc)
+  add_executable(MaterialPointSimulator test/utils/MaterialPointSimulator.cc)
   add_executable(
     utLocalNonlinearSolver
     test/unit_tests/StandardUnitTestMain.cpp
@@ -452,4 +453,5 @@ ENDIF(BUILD_SHARED_LIBS)
   target_link_libraries(utSurfaceElement ${LCM_UT_LIBS} ${ALL_LIBRARIES})
   target_link_libraries(utTensorUtils ${LCM_UT_LIBS} ${ALL_LIBRARIES})
   target_link_libraries(utProjection ${LCM_UT_LIBS} ${ALL_LIBRARIES})
-
+  target_link_libraries(NodeUpdate ${LCM_UT_LIBS} ${ALL_LIBRARIES})
+  target_link_libraries(MaterialPointSimulator ${LCM_UT_LIBS} ${ALL_LIBRARIES})
