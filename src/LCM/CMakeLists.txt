@@ -48,6 +48,7 @@
     evaluators/PoissonsRatio.cpp
     evaluators/DefGrad.cpp
     evaluators/Neohookean.cpp
+    evaluators/KirchhoffStVenant.cpp
     evaluators/J2Stress.cpp
     evaluators/ElasticityResid.cpp
     evaluators/TLElasResid.cpp
@@ -154,6 +155,8 @@
     evaluators/DefGrad_Def.hpp
     evaluators/Neohookean.hpp
     evaluators/Neohookean_Def.hpp
+    evaluators/KirchhoffStVenant.hpp
+    evaluators/KirchhoffStVenant_Def.hpp
     evaluators/J2Stress.hpp
     evaluators/J2Stress_Def.hpp
     evaluators/ElasticityResid.hpp

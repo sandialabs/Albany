@@ -20,6 +20,7 @@
 #include "LCM/evaluators/SurfaceCohesiveResidual.hpp"
 #include "LCM/evaluators/SetField.hpp"
 #include "LCM/evaluators/Neohookean.hpp"
+#include "LCM/evaluators/KirchhoffStVenant.hpp"
 #include "Tensor.h"
 #include "Albany_Layouts.hpp"
 
@@ -1455,7 +1456,7 @@ namespace {
     //-----------------------------------------------------------------------------------
     // Poisson's Ratio
     Teuchos::ArrayRCP<ScalarT> pRatio(numQPts);
-    pRatio[0] = pRatio[1] = pRatio[2] = pRatio[3] = 0.45;
+    pRatio[0] = pRatio[1] = pRatio[2] = pRatio[3] = 0.0;
 
     // SetField evaluator, which will be used to manually assign values to the Poisson's Ratio field
     Teuchos::ParameterList prPL;
@@ -1483,6 +1484,11 @@ namespace {
     Teuchos::RCP<shards::CellTopology> cellType = Teuchos::rcp(new shards::CellTopology(shards::getCellTopologyData<shards::Quadrilateral<4> >()));
     Intrepid::DefaultCubatureFactory<RealType> cubFactory;
     Teuchos::RCP<Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, 3);
+
+    Intrepid::FieldContainer<double> refPoints(numQPts,2);
+    Intrepid::FieldContainer<double> refWeights(numQPts);
+    cubature->getCubature(refPoints,refWeights);
+    std::cout << "Cubature points:\n" << refPoints << endl;
 
     //-----------------------------------------------------------------------------------
     // SurfaceBasis evaluator
@@ -1523,14 +1529,14 @@ namespace {
     Teuchos::RCP<LCM::SurfaceVectorGradient<Residual, Traits> > svg = Teuchos::rcp(new LCM::SurfaceVectorGradient<Residual,Traits>(svgPL,dl));
 
     //-----------------------------------------------------------------------------------
-    // Neohookean evaluator
-    Teuchos::ParameterList neoPL;
-    neoPL.set<string>("DefGrad Name", "F");
-    neoPL.set<string>("DetDefGrad Name", "J");
-    neoPL.set<string>("Elastic Modulus Name", "Elastic Modulus");
-    neoPL.set<string>("Poissons Ratio Name", "Poissons Ratio");
-    neoPL.set<string>("Stress Name", "Stress");
-    Teuchos::RCP<LCM::Neohookean<Residual, Traits> > neo = Teuchos::rcp(new LCM::Neohookean<Residual,Traits>(neoPL,dl));
+    // KSV evaluator
+    Teuchos::ParameterList ksvPL;
+    ksvPL.set<string>("DefGrad Name", "F");
+    ksvPL.set<string>("DetDefGrad Name", "J");
+    ksvPL.set<string>("Elastic Modulus Name", "Elastic Modulus");
+    ksvPL.set<string>("Poissons Ratio Name", "Poissons Ratio");
+    ksvPL.set<string>("Stress Name", "Stress");
+    Teuchos::RCP<LCM::KirchhoffStVenant<Residual, Traits> > ksv = Teuchos::rcp(new LCM::KirchhoffStVenant<Residual,Traits>(ksvPL,dl));
 
     //-----------------------------------------------------------------------------------
     // SurfaceVectorResidual evaluator
@@ -1559,7 +1565,7 @@ namespace {
     fieldManager.registerEvaluator<Residual>(sb);
     fieldManager.registerEvaluator<Residual>(svj);
     fieldManager.registerEvaluator<Residual>(svg);
-    fieldManager.registerEvaluator<Residual>(neo);
+    fieldManager.registerEvaluator<Residual>(ksv);
     fieldManager.registerEvaluator<Residual>(svr);
 
     // Set the evaluated fields as required fields
@@ -1654,8 +1660,16 @@ namespace {
     fieldManager.preEvaluate<PHAL::AlbanyTraits::Residual>(workset);
     fieldManager.evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
     fieldManager.postEvaluate<PHAL::AlbanyTraits::Residual>(workset);
-    fieldManager.getFieldData<PHAL::AlbanyTraits::Residual::ScalarT,PHAL::AlbanyTraits::Residual,Cell,Node,Dim>(forceField);
 
+    fieldManager.getFieldData<ScalarT,Residual,Cell,Node,Dim>(forceField);
+    // Pull the current basis
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> curBasisField("Current Basis", dl->qp_tensor);
+    fieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint,Dim,Dim>(curBasisField);
+    for (size_type cell = 0; cell < worksetSize; ++cell) {
+      for (size_type qp = 0; qp < numQPts; ++qp) {
+        std::cout << "current Basis:\n" << LCM::Tensor<ScalarT>(3,&curBasisField(cell,qp,0,0)) << std::endl;
+      }
+    }
     // Record the expected nodal forces, which will be used to check the computed force
     expectedForce = LCM::Vector<ScalarT>(1.0, 0.0, 0.0);
 
