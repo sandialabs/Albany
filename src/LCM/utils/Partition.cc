@@ -102,7 +102,8 @@ namespace LCM {
   ConnectivityArray::ConnectivityArray() :
     type_(ConnectivityArray::UNKNOWN),
     dimension_(0),
-    discretization_ptr_(Teuchos::null)
+    discretization_ptr_(Teuchos::null),
+    voxel_size_(0.0)
   {
     return;
   }
@@ -114,7 +115,11 @@ namespace LCM {
   //
   ConnectivityArray::ConnectivityArray(
       std::string const & input_file,
-      std::string const & output_file)
+      std::string const & output_file) :
+      type_(ConnectivityArray::UNKNOWN),
+      dimension_(0),
+      discretization_ptr_(Teuchos::null),
+      voxel_size_(0.0)
   {
     //Teuchos::GlobalMPISession mpiSession(&argc,&argv);
 
@@ -578,27 +583,32 @@ namespace LCM {
     // First determine the maximum dimension of the bounding box.
     //
     const Index
-    maximum_divisions = 1024;
+    maximum_divisions = 16;
 
-    LCM::Vector<double> lo;
-    LCM::Vector<double> hi;
+    LCM::Vector<double>
+    min;
 
-    boost::tie(lo, hi) = BoundingBox();
+    LCM::Vector<double>
+    max;
+
+    boost::tie(min, max) = BoundingBox();
 
     const Index
-    N = lo.get_dimension();
+    N = min.get_dimension();
 
     double
     maximum_dimension = 0.0;
 
     for (Index i = 0; i < N; ++i) {
 
-      maximum_dimension = std::max(maximum_dimension, hi(i) - lo(i));
+      maximum_dimension = std::max(maximum_dimension, max(i) - min(i));
 
     }
 
     const double
     delta = maximum_dimension / maximum_divisions;
+
+    voxel_size_ = delta;
 
     //
     // Determine number of voxels for each dimension.
@@ -608,7 +618,7 @@ namespace LCM {
 
     for (Index i = 0; i < N; ++i) {
       const Index
-      number_voxels = std::ceil((hi(i) - lo(i)) / delta);
+      number_voxels = std::ceil((max(i) - min(i)) / delta);
       voxels_dimension(i) = number_voxels;
     }
 
@@ -635,13 +645,17 @@ namespace LCM {
     LCM::Vector<double> p(N);
 
     for (Index i = 0; i < voxels_dimension(0); ++i) {
-      p(0) = i * delta + delta / 2.0;
+      p(0) = i * delta + delta / 2.0 + min(0);
       for (Index j = 0; j < voxels_dimension(1); ++j) {
-        p(1) = j * delta + delta / 2.0;
+        p(1) = j * delta + delta / 2.0 + min(1);
         for (Index k = 0; k < voxels_dimension(2); ++k) {
-          p(2) = k * delta + delta / 2.0;
+          p(2) = k * delta + delta / 2.0 + min(2);
 
           voxels_[i][j][k] = IsInsideMeshByElement(p);
+
+          std::cout << i << "/" << voxels_dimension(0) << "-";
+          std::cout << j << "/" << voxels_dimension(1) << "-";
+          std::cout << k << "/" << voxels_dimension(2) << std::endl;
 
         }
 
@@ -654,11 +668,30 @@ namespace LCM {
 
   //
   // Determine is a given point is inside the mesh.
+  // 3D only for now.
   //
   bool
   ConnectivityArray::IsInsideMesh(Vector<double> const & point) const
   {
-    return false;
+    const Index i = (point(0) - lower_corner_(0)) / voxel_size_ + 0.5;
+
+    if (i < 0 || i >= voxels_.size()) {
+      return false;
+    }
+
+    const Index j = (point(1) - lower_corner_(1)) / voxel_size_ + 0.5;
+
+    if (j < 0 || j >= voxels_[0].size()) {
+      return false;
+    }
+
+    const Index k = (point(2) - lower_corner_(2)) / voxel_size_ + 0.5;
+
+    if (k < 0 || k >= voxels_[0][0].size()) {
+      return false;
+    }
+
+    return voxels_[i][j][k];
   }
 
   //
@@ -672,12 +705,7 @@ namespace LCM {
   {
 
     // Check bounding box first
-    Vector<double> min;
-    Vector<double> max;
-
-    boost::tie(min, max) = BoundingBox();
-
-    if (in_box(point, min, max) == false) {
+    if (in_box(point, lower_corner_, upper_corner_) == false) {
       return false;
     }
 
@@ -1253,13 +1281,18 @@ namespace LCM {
     const int
     number_partitions = GetNumberPartitions(length_scale);
 
-    Vector<double>
+    LCM::Vector<double>
     min;
 
-    Vector<double>
+    LCM::Vector<double>
     max;
 
     boost::tie(min, max) = BoundingBox();
+
+    lower_corner_ = min;
+    upper_corner_ = max;
+
+    Voxelize();
 
     // Create initial generators
     int
@@ -1283,10 +1316,10 @@ namespace LCM {
 
     // K-means iteration
     const Index
-    max_iterations = 128;
+    max_iterations = 64;
 
     const Index
-    number_random_points = 16 * number_partitions;
+    number_random_points = 64 * number_partitions;
 
     Index
     number_iterations = 0;
@@ -1361,6 +1394,11 @@ namespace LCM {
       for (std::vector< std::vector<Vector<double> > >::size_type i = 0;
           i < clusters.size();
           ++i) {
+
+        // If cluster is empty then generator does not move.
+        if (clusters[i].size() == 0) {
+          continue;
+        }
 
         const Vector<double>
         cluster_centroid = centroid(clusters[i]);

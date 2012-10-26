@@ -34,6 +34,13 @@ namespace LCM {
   sgn(T const & s);
 
   ///
+  /// Copysign function
+  ///
+  template<typename T>
+  T
+  copysign(T const & a, T const & b);
+
+  ///
   /// NaN function. Necessary to choose the proper underlying NaN
   /// for non-floating-point types.
   /// Assumption: non-floating-point types have a typedef that

@@ -428,6 +428,21 @@ namespace LCM {
     //
     std::vector< std::vector< std::vector<bool> > >
     voxels_;
+
+    //
+    // Size of voxel
+    //
+    double
+    voxel_size_;
+    //
+    // Limits of the bounding box for coordinate array
+    //
+    LCM::Vector<double>
+    lower_corner_;
+
+    LCM::Vector<double>
+    upper_corner_;
+
   };
 
   ///

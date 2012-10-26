@@ -12,8 +12,22 @@ namespace LCM {
   //
   // Sign function
   //
-  template <typename T> int sgn(T const & s) {
+  template <typename T>
+  inline
+  int
+  sgn(T const & s) {
     return (T(0) < s) - (s < T(0));
+  }
+
+  //
+  // Copysign function
+  //
+  template<typename T>
+  inline
+  T
+  copysign(T const & a, T const & b)
+  {
+    return b >= 0 ? std::abs(a) : -std::abs(a);
   }
 
   //
@@ -23,6 +37,7 @@ namespace LCM {
   // determines the underlying floating-point type.
   //
   template<typename T>
+  inline
   typename Sacado::ScalarType<T>::type
   not_a_number()
   {
@@ -37,6 +52,7 @@ namespace LCM {
   // determines the underlying floating-point type.
   //
   template<typename T>
+  inline
   typename Sacado::ScalarType<T>::type
   machine_epsilon()
   {
