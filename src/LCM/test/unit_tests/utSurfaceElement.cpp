@@ -46,30 +46,30 @@ namespace {
     //-----------------------------------------------------------------------------------
     // reference coordinates
     Teuchos::ArrayRCP<ScalarT> referenceCoords(24);
-    referenceCoords[0] = -0.5;
-    referenceCoords[1] = 0.0;
-    referenceCoords[2] = -0.5;
-    referenceCoords[3] = -0.5;
-    referenceCoords[4] = 0.0;
-    referenceCoords[5] = 0.5;
-    referenceCoords[6] = 0.5;
-    referenceCoords[7] = 0.0;
-    referenceCoords[8] = 0.5;
-    referenceCoords[9] = 0.5;
-    referenceCoords[10] = 0.0;
-    referenceCoords[11] = -0.5;
-    referenceCoords[12] = -0.5;
-    referenceCoords[13] = 0.0;
-    referenceCoords[14] = -0.5;
-    referenceCoords[15] = -0.5;
-    referenceCoords[16] = 0.0;
-    referenceCoords[17] = 0.5;
-    referenceCoords[18] = 0.5;
-    referenceCoords[19] = 0.0;
-    referenceCoords[20] = 0.5;
-    referenceCoords[21] = 0.5;
-    referenceCoords[22] = 0.0;
-    referenceCoords[23] = -0.5;
+    // Node 0
+    // X                        Y                          Z
+    referenceCoords[0] = -0.5;  referenceCoords[1] = 0.0;  referenceCoords[2] = -0.5;
+    // Node 1
+    // X                        Y                          Z
+    referenceCoords[3] = -0.5;  referenceCoords[4] = 0.0;  referenceCoords[5] = 0.5;
+    // Node 2
+    // X                        Y                          Z
+    referenceCoords[6] = 0.5;   referenceCoords[7] = 0.0;  referenceCoords[8] = 0.5;
+    // Node 3
+    // X                        Y                          Z
+    referenceCoords[9] = 0.5;   referenceCoords[10] = 0.0; referenceCoords[11] = -0.5;
+    // Node 4
+    // X                        Y                          Z
+    referenceCoords[12] = -0.5; referenceCoords[13] = 0.0; referenceCoords[14] = -0.5;
+    // Node 5
+    // X                        Y                          Z
+    referenceCoords[15] = -0.5; referenceCoords[16] = 0.0; referenceCoords[17] = 0.5;
+    // Node 6
+    // X                        Y                          Z
+    referenceCoords[18] = 0.5;  referenceCoords[19] = 0.0; referenceCoords[20] = 0.5;
+    // Node 7
+    // X                        Y                          Z
+    referenceCoords[21] = 0.5;  referenceCoords[22] = 0.0; referenceCoords[23] = -0.5;
 
     // SetField evaluator, which will be used to manually assign values to the reference coordiantes field
     Teuchos::ParameterList rcPL;
@@ -81,28 +81,36 @@ namespace {
     //-----------------------------------------------------------------------------------
     // current coordinates
     Teuchos::ArrayRCP<ScalarT> currentCoords(24);
-    const double eps = 0.01;
+    double eps = 0.01;
+    // Node 0
     currentCoords[0] = referenceCoords[0];
     currentCoords[1] = referenceCoords[1];
     currentCoords[2] = referenceCoords[2];
+    // Node 1
     currentCoords[3] = referenceCoords[3];
     currentCoords[4] = referenceCoords[4];
     currentCoords[5] = referenceCoords[5];
+    // Node 2
     currentCoords[6] = referenceCoords[6];
     currentCoords[7] = referenceCoords[7];
     currentCoords[8] = referenceCoords[8];
+    // Node 3
     currentCoords[9] = referenceCoords[9];
     currentCoords[10] = referenceCoords[10];
     currentCoords[11] = referenceCoords[11];
+    // Node 4
     currentCoords[12] = referenceCoords[12];
     currentCoords[13] = referenceCoords[13] + eps;
-    currentCoords[14] = referenceCoords[14];
+    currentCoords[14] = referenceCoords[14];    
+    // Node 5
     currentCoords[15] = referenceCoords[15];
     currentCoords[16] = referenceCoords[16] + eps;
     currentCoords[17] = referenceCoords[17];
+    // Node 6
     currentCoords[18] = referenceCoords[18];
     currentCoords[19] = referenceCoords[19] + eps;
     currentCoords[20] = referenceCoords[20];
+    // Node 7
     currentCoords[21] = referenceCoords[21];
     currentCoords[22] = referenceCoords[22] + eps;
     currentCoords[23] = referenceCoords[23];
@@ -245,6 +253,72 @@ namespace {
         TEST_COMPARE(LCM::norm(F-I), <=, tolerance);
       }
     }
+
+    //-----------------------------------------------------------------------------------
+    // Now test in-plane shear
+    //-----------------------------------------------------------------------------------
+    // Node 0
+    currentCoords[0] = referenceCoords[0];
+    currentCoords[1] = referenceCoords[1];
+    currentCoords[2] = referenceCoords[2];
+    // Node 1
+    currentCoords[3] = referenceCoords[3] + eps;
+    currentCoords[4] = referenceCoords[4];
+    currentCoords[5] = referenceCoords[5];
+    // Node 2
+    currentCoords[6] = referenceCoords[6] + eps;
+    currentCoords[7] = referenceCoords[7];
+    currentCoords[8] = referenceCoords[8];
+    // Node 3
+    currentCoords[9] = referenceCoords[9];
+    currentCoords[10] = referenceCoords[10];
+    currentCoords[11] = referenceCoords[11];    
+    // Node 4
+    currentCoords[12] = referenceCoords[12];
+    currentCoords[13] = referenceCoords[13];
+    currentCoords[14] = referenceCoords[14];
+    // Node 5
+    currentCoords[15] = referenceCoords[15] + eps;
+    currentCoords[16] = referenceCoords[16];
+    currentCoords[17] = referenceCoords[17];    
+    // Node 6
+    currentCoords[18] = referenceCoords[18] + eps;
+    currentCoords[19] = referenceCoords[19];
+    currentCoords[20] = referenceCoords[20];
+    // Node 7
+    currentCoords[21] = referenceCoords[21];
+    currentCoords[22] = referenceCoords[22];
+    currentCoords[23] = referenceCoords[23];
+
+    // Call the evaluators, evaluateFields() is the function that computes things
+    fieldManager.preEvaluate<Residual>(workset);
+    fieldManager.evaluateFields<Residual>(workset);
+    fieldManager.postEvaluate<Residual>(workset);
+    
+    //-----------------------------------------------------------------------------------
+    // Grab the current basis and the ref dual basis
+    fieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint,Dim,Dim>(curBasis);
+    fieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint,Dim,Dim>(refDualBasis);
+
+    //-----------------------------------------------------------------------------------
+    // compute a deformation gradient for the membrane
+    for (size_type cell = 0; cell < worksetSize; ++cell) {
+      for (size_type pt = 0; pt < numQPts; ++pt) {
+        LCM::Vector<ScalarT> g_0(3, &curBasis(cell, pt, 0, 0));
+        LCM::Vector<ScalarT> g_1(3, &curBasis(cell, pt, 1, 0));
+        LCM::Vector<ScalarT> g_2(3, &curBasis(cell, pt, 2, 0));
+        LCM::Vector<ScalarT> G0(3, &refDualBasis(cell, pt, 0, 0));
+        LCM::Vector<ScalarT> G1(3, &refDualBasis(cell, pt, 1, 0));
+        LCM::Vector<ScalarT> G2(3, &refDualBasis(cell, pt, 2, 0));
+        LCM::Tensor<ScalarT> F(LCM::bun(g_0, G0) + LCM::bun(g_1, G1) + LCM::bun(g_2, G2));
+        std::cout << "F :\n" << F << std::endl;
+        LCM::Tensor<ScalarT> expectedF(LCM::eye<ScalarT>(3));
+        expectedF(0,2) = eps;
+        std::cout << "expectedF :\n" << expectedF << std::endl;
+        TEST_COMPARE(LCM::norm(F-expectedF), <=, tolerance);
+      }
+    }
+
   }
 
   TEUCHOS_UNIT_TEST( SurfaceElement, ScalarJump )
