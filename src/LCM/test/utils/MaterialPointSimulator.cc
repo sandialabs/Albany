@@ -32,6 +32,12 @@
 int main(int ac, char* av[])
 {
 
+  typedef PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT>::size_type size_type;
+  typedef PHAL::AlbanyTraits::Residual Residual;
+  typedef PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
+  typedef PHAL::AlbanyTraits Traits;
+  string cauchy = "Cauchy_Stress";
+
   //
   // Create a command line processor and parse command line options
   //
@@ -98,8 +104,6 @@ int main(int ac, char* av[])
   // A mpi object must be instantiated before using the comm to read material file
   Teuchos::GlobalMPISession mpiSession(&ac,&av);
   Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
-  // This also works
-  //  const Teuchos::RCP<Epetra_Comm> comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
 
   Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
   materialDB = Teuchos::rcp(new QCAD::MaterialDatabase(input_file,comm));
@@ -112,7 +116,8 @@ int main(int ac, char* av[])
                              "A material model must be defined for block: "+elementBlockName);
 
   //
-  // Quantities used by all loading scenarios
+  // Preloading stage setup
+  // set up evaluators, create field and state managers
   //
 
   // Set up the data layout
@@ -124,6 +129,116 @@ int main(int ac, char* av[])
   const Teuchos::RCP<Albany::Layouts> dl =
 		  Teuchos::rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
 
+  // Instantiate the required evaluators with EvalT = PHAL::AlbanyTraits::Residual and Traits = PHAL::AlbanyTraits
+
+  //---------------------------------------------------------------------------
+  // Deformation gradient
+  Teuchos::ArrayRCP<ScalarT> defgrad(9);
+  for (int i(0); i < 9; ++i)
+	defgrad[i]  = 0.0;
+  defgrad[0] = 1.0;
+  defgrad[4] = 1.0;
+  defgrad[8] = 1.0;
+  // SetField evaluator, which will be used to manually assign a value to the defgrad field
+  Teuchos::ParameterList setDefGradP("SetFieldDefGrad");
+  setDefGradP.set<string>("Evaluated Field Name", "F");
+  setDefGradP.set<Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_tensor);
+  setDefGradP.set< Teuchos::ArrayRCP<ScalarT> >("Field Values", defgrad);
+  Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldDefGrad =
+   			Teuchos::rcp(new LCM::SetField<Residual, Traits>(setDefGradP));
+
+  //---------------------------------------------------------------------------
+  // Det(deformation gradient)
+  Teuchos::ArrayRCP<ScalarT> detdefgrad(1);
+  LCM::Tensor<ScalarT> Ftensor(3, &defgrad[0]);
+  detdefgrad[0] = LCM::det(Ftensor);
+  // SetField evaluator, which will be used to manually assign a value to the detdefgrad field
+  Teuchos::ParameterList setDetDefGradP("SetFieldDetDefGrad");
+  setDetDefGradP.set<string>("Evaluated Field Name", "J");
+  setDetDefGradP.set<Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_scalar);
+  setDetDefGradP.set< Teuchos::ArrayRCP<ScalarT> >("Field Values", detdefgrad);
+  Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldDetDefGrad =
+   			Teuchos::rcp(new LCM::SetField<Residual, Traits>(setDetDefGradP));
+
+  //---------------------------------------------------------------------------
+  // Elastic modulus
+  Teuchos::ArrayRCP<ScalarT> elasticModulus(1);
+  elasticModulus[0] = materialDB->getElementBlockSublist(elementBlockName,"Elastic Modulus").get<double>("Value",1.0);
+  // SetField evaluator, which will be used to manually assign a value to the elasticModulus field
+  Teuchos::ParameterList setElasticModulusP("SetFieldElasticModulus");
+  setElasticModulusP.set<string>("Evaluated Field Name", "Elastic Modulus");
+  setElasticModulusP.set<Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_scalar);
+  setElasticModulusP.set< Teuchos::ArrayRCP<ScalarT> >("Field Values", elasticModulus);
+  Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldElasticModulus =
+  		Teuchos::rcp(new LCM::SetField<Residual, Traits>(setElasticModulusP));
+
+  //---------------------------------------------------------------------------
+  // Poissons ratio
+  Teuchos::ArrayRCP<ScalarT> poissonsRatio(1);
+  poissonsRatio[0] = materialDB->getElementBlockSublist(elementBlockName,"Poissons Ratio").get<double>("Value",0.3);
+  // SetField evaluator, which will be used to manually assign a value to the poissionsRatio field
+  Teuchos::ParameterList setPoissonsRatioP("SetFieldPoissonsRatio");
+  setPoissonsRatioP.set<string>("Evaluated Field Name", "Poissons Ratio");
+  setPoissonsRatioP.set<Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_scalar);
+  setPoissonsRatioP.set< Teuchos::ArrayRCP<ScalarT> >("Field Values", poissonsRatio);
+  Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldPoissonsRatio =
+  		Teuchos::rcp(new LCM::SetField<Residual, Traits>(setPoissonsRatioP));
+
+
+  // Instantiate a field manager
+  PHX::FieldManager<Traits> fieldManager;
+
+  // Register the evaluators with the field manager
+  fieldManager.registerEvaluator<Residual>(setFieldElasticModulus);
+  fieldManager.registerEvaluator<Residual>(setFieldPoissonsRatio);
+  fieldManager.registerEvaluator<Residual>(setFieldDefGrad);
+  fieldManager.registerEvaluator<Residual>(setFieldDetDefGrad);
+
+  // Instantiate a state manager
+  Albany::StateManager stateMgr;
+
+  // Material-model-specific settings
+  if(materialModelName == "NeoHookean")
+  {
+
+   	Teuchos::ParameterList StressParameterList ;
+
+   	// Inputs
+   	StressParameterList.set<string>("DefGrad Name", "F");
+   	StressParameterList.set<string>("DetDefGrad Name", "J");
+   	StressParameterList.set<string>("Elastic Modulus Name", "Elastic Modulus");
+   	StressParameterList.set<string>("Poissons Ratio Name", "Poissons Ratio");
+    StressParameterList.set< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+    StressParameterList.set< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+   	// Outputs
+   	StressParameterList.set<string>("Stress Name", cauchy);
+
+	Teuchos::RCP<LCM::Neohookean<Residual, Traits> > stress =
+		Teuchos::rcp(new LCM::Neohookean<Residual,Traits>(StressParameterList, dl));
+	fieldManager.registerEvaluator<Residual>(stress);
+
+	// Set the evaluated field as required
+	for (std::vector<Teuchos::RCP<PHX::FieldTag> >::const_iterator it = stress->evaluatedFields().begin();
+		it != stress->evaluatedFields().end(); it++)
+	fieldManager.requireField<Residual>(**it);
+
+	// Call postRegistrationSetup on evaluators
+	Traits::SetupData setupData = "Test String";
+	fieldManager.postRegistrationSetup(setupData);
+
+	//Declare what state data will need to be saved (name, layout, init_type)
+	stateMgr.registerStateVariable(cauchy, dl->qp_tensor, dl->dummy,elementBlockName, "scalar", 0.0, true);
+	stateMgr.registerStateVariable("Deformation Gradient", dl->qp_tensor, dl->dummy, elementBlockName, "identity", 1.0, true);
+
+  }
+  else
+	TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+					   "Unrecognized Material Name: " << materialModelName
+					   << "  Recognized names are : NeoHookean");
+
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stressField(cauchy, dl->qp_tensor);
+
   // Create discretization, as required by the StateManager
   Teuchos::RCP<Teuchos::ParameterList> discretizationParameterList =
        		Teuchos::rcp(new Teuchos::ParameterList("Discretization"));
@@ -133,51 +248,29 @@ int main(int ac, char* av[])
   discretizationParameterList->set<string>("Method", "STK3D");
   discretizationParameterList->set<string>("Exodus Output File Name", "TestOutput.exo"); // Is this required?
 
+  int numberOfEquations = 3;
+  Teuchos::RCP<Albany::GenericSTKMeshStruct> stkMeshStruct =
+        Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(discretizationParameterList, comm));
+  stkMeshStruct->setFieldAndBulkData(comm,
+					 discretizationParameterList,
+					 numberOfEquations,
+					 stateMgr.getStateInfoStruct(),
+					 stkMeshStruct->getMeshSpecs()[0]->worksetSize);
 
-  // SetField evaluator, which will be used to manually assign a value to the defgrad field
+  Teuchos::RCP<Albany::AbstractDiscretization> discretization =
+		Teuchos::rcp(new Albany::STKDiscretization(stkMeshStruct, comm));
 
-  // Deformation gradient
-  Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> defgrad(9);
-  Teuchos::ParameterList setDefGradP("SetFieldDefGrad");
-  setDefGradP.set<string>("Evaluated Field Name", "F");
-  setDefGradP.set<Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_tensor);
-  for (int i(0); i < 9; ++i)
-	defgrad[i]  = 0.0;
-  defgrad[0] = 1.0;
-  defgrad[4] = 1.0;
-  defgrad[8] = 1.0;
+  // Associate the discretization with the StateManager
+  stateMgr.setStateArrays(discretization);
 
-  // Det(deformation gradient)
-  Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> detdefgrad(1);
-  Teuchos::ParameterList setDetDefGradP("SetFieldDetDefGrad");
-  setDetDefGradP.set<string>("Evaluated Field Name", "J");
-  setDetDefGradP.set<Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_scalar);
+  // Create a workset
+  PHAL::Workset workset;
+  workset.numCells = worksetSize;
+  workset.stateArrayPtr = &stateMgr.getStateArray(0);
 
-  // Elastic modulus
-  Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> elasticModulus(1);
-  elasticModulus[0] = materialDB->getElementBlockSublist(elementBlockName,"Elastic Modulus").get<double>("Value",1.0);
-  Teuchos::ParameterList setElasticModulusP("SetFieldElasticModulus");
-  setElasticModulusP.set<string>("Evaluated Field Name", "Elastic Modulus");
-  setElasticModulusP.set<Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_scalar);
-  setElasticModulusP.set< Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> >("Field Values", elasticModulus);
-  Teuchos::RCP<LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits> > setFieldElasticModulus =
-  		Teuchos::rcp(new LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>(setElasticModulusP));
-
-  // Poissons ratio
-  Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> poissonsRatio(1);
-  poissonsRatio[0] = materialDB->getElementBlockSublist(elementBlockName,"Poissons Ratio").get<double>("Value",0.3);
-  Teuchos::ParameterList setPoissonsRatioP("SetFieldPoissonsRatio");
-  setPoissonsRatioP.set<string>("Evaluated Field Name", "Poissons Ratio");
-  setPoissonsRatioP.set<Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_scalar);
-  setPoissonsRatioP.set< Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> >("Field Values", poissonsRatio);
-  Teuchos::RCP<LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits> > setFieldPoissonsRatio =
-  		Teuchos::rcp(new LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>(setPoissonsRatioP));
-
-  string cauchy = "Cauchy_Stress";
   //
-  // Setup loading scenario and call material model
+  // Setup loading scenario and instantiate evaluatFields
   //
-
   if(load_case == "uniaxial")
   {
     std::cout<< "starting uniaxial loading" << std::endl;
@@ -187,104 +280,15 @@ int main(int ac, char* av[])
 
     	defgrad[0] = 1.0 + istep * step_size;
 
-		// Instantiate the required evaluators with EvalT = PHAL::AlbanyTraits::Residual and Traits = PHAL::AlbanyTraits
-		// Deformation gradient
-    	setDefGradP.set< Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> >("Field Values", defgrad);
-    	Teuchos::RCP<LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits> > setFieldDefGrad =
-    			Teuchos::rcp(new LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>(setDefGradP));
-
-		// Det(deformation gradient)
-    	LCM::Tensor<PHAL::AlbanyTraits::Residual::ScalarT> Ftensor(3, &defgrad[0]);
-    	detdefgrad[0] = LCM::det(Ftensor);
-    	setDetDefGradP.set< Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> >("Field Values", detdefgrad);
-    	Teuchos::RCP<LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits> > setFieldDetDefGrad =
-    			Teuchos::rcp(new LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>(setDetDefGradP));
-
-    	// Create a field manager.
-    	PHX::FieldManager<PHAL::AlbanyTraits> fieldManager;
-
-        // Register the evaluators with the field manager
-        fieldManager.registerEvaluator<PHAL::AlbanyTraits::Residual>(setFieldElasticModulus);
-        fieldManager.registerEvaluator<PHAL::AlbanyTraits::Residual>(setFieldPoissonsRatio);
-        fieldManager.registerEvaluator<PHAL::AlbanyTraits::Residual>(setFieldDefGrad);
-        fieldManager.registerEvaluator<PHAL::AlbanyTraits::Residual>(setFieldDetDefGrad);
-
-        // Create a state manager
-   	    Albany::StateManager stateMgr;
-
-        // select material models
-        if(materialModelName == "NeoHookean")
-        {
-
-        	Teuchos::ParameterList StressParameterList ;
-
-        	// Inputs
-        	StressParameterList.set<string>("DefGrad Name", "F");
-        	StressParameterList.set<string>("DetDefGrad Name", "J");
-        	StressParameterList.set<string>("Elastic Modulus Name", "Elastic Modulus");
-        	StressParameterList.set<string>("Poissons Ratio Name", "Poissons Ratio");
-            StressParameterList.set< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-            StressParameterList.set< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-        	// Outputs
-        	StressParameterList.set<string>("Stress Name", cauchy);
-
-        	Teuchos::RCP<LCM::Neohookean<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits> > stress =
-        		Teuchos::rcp(new LCM::Neohookean<PHAL::AlbanyTraits::Residual,PHAL::AlbanyTraits>(StressParameterList, dl));
-   	        fieldManager.registerEvaluator<PHAL::AlbanyTraits::Residual>(stress);
-
-   	        // Set the evaluated field as required
-   	        for (std::vector<Teuchos::RCP<PHX::FieldTag> >::const_iterator it = stress->evaluatedFields().begin();
-        	    it != stress->evaluatedFields().end(); it++)
-   	        fieldManager.requireField<PHAL::AlbanyTraits::Residual>(**it);
-
-   	        // Call postRegistrationSetup on evaluators
-   	        PHAL::AlbanyTraits::SetupData setupData = "Test String";
-   	        fieldManager.postRegistrationSetup(setupData);
-
-            //Declare what state data will need to be saved (name, layout, init_type)
-   	        stateMgr.registerStateVariable(cauchy, dl->qp_tensor, dl->dummy,elementBlockName, "scalar", 0.0);
-   	        stateMgr.registerStateVariable("Deformation Gradient", dl->qp_tensor, dl->dummy, elementBlockName, "identity", 1.0);
-
-        }
-        else
-        	TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-                               "Unrecognized Material Name: " << materialModelName
-                               << "  Recognized names are : NeoHookean");
-
-
-   	    // create a discretization as required by the StateManager
-   	    int numberOfEquations = 3;
-   	    Teuchos::RCP<Albany::GenericSTKMeshStruct> stkMeshStruct =
-		  Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(discretizationParameterList, comm));
-   	    stkMeshStruct->setFieldAndBulkData(comm,
-							 discretizationParameterList,
-							 numberOfEquations,
-							 stateMgr.getStateInfoStruct(),
-							 stkMeshStruct->getMeshSpecs()[0]->worksetSize);
-
-   	    Teuchos::RCP<Albany::AbstractDiscretization> discretization =
-   	    		Teuchos::rcp(new Albany::STKDiscretization(stkMeshStruct, comm));
-
-   	    // Associate the discretization with the StateManager
-   	    stateMgr.setStateArrays(discretization);
-
-   	    // Create a workset
-   	    PHAL::Workset workset;
-   	    workset.numCells = worksetSize;
-   	    workset.stateArrayPtr = &stateMgr.getStateArray(0);
-
 		// Call the evaluators, evaluateFields() is the function that computes stress based on deformation gradient
-		fieldManager.preEvaluate<PHAL::AlbanyTraits::Residual>(workset);
-		fieldManager.evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
-		fieldManager.postEvaluate<PHAL::AlbanyTraits::Residual>(workset);
+		fieldManager.preEvaluate<Residual>(workset);
+		fieldManager.evaluateFields<Residual>(workset);
+		fieldManager.postEvaluate<Residual>(workset);
 
 		// Pull the stress from the FieldManager
-		PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT,Cell,QuadPoint,Dim,Dim> stressField(cauchy, dl->qp_tensor);
-		fieldManager.getFieldData<PHAL::AlbanyTraits::Residual::ScalarT, PHAL::AlbanyTraits::Residual, Cell, QuadPoint, Dim, Dim>(stressField);
+		fieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint, Dim, Dim>(stressField);
 
 		// Check the computed stresses
-		typedef PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT>::size_type size_type;
 		for(size_type cell=0; cell<worksetSize; ++cell){
 			for(size_type qp=0; qp<numQPts; ++qp){
 			  std::cout << "Stress tensor at cell " << cell << ", quadrature point " << qp << ":" << endl;
