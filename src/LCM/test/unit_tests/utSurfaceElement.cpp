@@ -19,6 +19,7 @@
 #include "LCM/evaluators/SurfaceDiffusionResidual.hpp"
 #include "LCM/evaluators/SurfaceCohesiveResidual.hpp"
 #include "LCM/evaluators/SetField.hpp"
+#include "LCM/evaluators/Neohookean.hpp"
 #include "Tensor.h"
 #include "Albany_Layouts.hpp"
 
@@ -1347,11 +1348,341 @@ namespace {
 
         double tolerance = 1.0e4;
         for (size_type i = 0; i < numDim; ++i) {
-          TEST_COMPARE(forceField(cell, node, i) - expectedForce(i), <=, tolerance);
+          TEST_COMPARE(fabs(fabs(forceField(cell, node, i)) - expectedForce(i)), <=, tolerance);
         }
       }
     }
     std::cout << endl;
   }
 
+  TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
+  {
+    typedef PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT>::size_type size_type;
+    typedef PHAL::AlbanyTraits::Residual Residual;
+    typedef PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
+    typedef PHAL::AlbanyTraits Traits;
+
+    // set tolerance once and for all
+    double tolerance = 1.0e-15;
+
+    const int worksetSize = 1;
+    const int numQPts = 4;
+    const int numDim = 3;
+    const int numVertices = 8;
+    const int numNodes = 8;
+    const Teuchos::RCP<Albany::Layouts> dl = Teuchos::rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
+
+    const double thickness = 0.1;
+
+    //-----------------------------------------------------------------------------------
+    // reference coordinates
+    Teuchos::ArrayRCP<ScalarT> referenceCoords(24);
+    // Node 0
+    // X                        Y                          Z
+    referenceCoords[0] = -0.5;  referenceCoords[1] = 0.0;  referenceCoords[2] = -0.5;
+    // Node 1
+    // X                        Y                          Z
+    referenceCoords[3] = -0.5;  referenceCoords[4] = 0.0;  referenceCoords[5] = 0.5;
+    // Node 2
+    // X                        Y                          Z
+    referenceCoords[6] = 0.5;   referenceCoords[7] = 0.0;  referenceCoords[8] = 0.5;
+    // Node 3
+    // X                        Y                          Z
+    referenceCoords[9] = 0.5;   referenceCoords[10] = 0.0; referenceCoords[11] = -0.5;
+    // Node 4
+    // X                        Y                          Z
+    referenceCoords[12] = -0.5; referenceCoords[13] = 0.0; referenceCoords[14] = -0.5;
+    // Node 5
+    // X                        Y                          Z
+    referenceCoords[15] = -0.5; referenceCoords[16] = 0.0; referenceCoords[17] = 0.5;
+    // Node 6
+    // X                        Y                          Z
+    referenceCoords[18] = 0.5;  referenceCoords[19] = 0.0; referenceCoords[20] = 0.5;
+    // Node 7
+    // X                        Y                          Z
+    referenceCoords[21] = 0.5;  referenceCoords[22] = 0.0; referenceCoords[23] = -0.5;
+
+    // SetField evaluator, which will be used to manually assign values to the reference coordiantes field
+    Teuchos::ParameterList rcPL;
+    rcPL.set<string>("Evaluated Field Name", "Reference Coordinates");
+    rcPL.set<Teuchos::ArrayRCP<ScalarT> >("Field Values", referenceCoords);
+    rcPL.set<Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->vertices_vector);
+    Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldRefCoords = Teuchos::rcp(new LCM::SetField<Residual, Traits>(rcPL));
+
+    //-----------------------------------------------------------------------------------
+    // current coordinates
+    Teuchos::ArrayRCP<ScalarT> currentCoords(24);
+    // Node 0
+    currentCoords[0] = referenceCoords[0];
+    currentCoords[1] = referenceCoords[1];
+    currentCoords[2] = referenceCoords[2];
+    // Node 1
+    currentCoords[3] = referenceCoords[3];
+    currentCoords[4] = referenceCoords[4];
+    currentCoords[5] = referenceCoords[5];
+    // Node 2
+    currentCoords[6] = referenceCoords[6];
+    currentCoords[7] = referenceCoords[7];
+    currentCoords[8] = referenceCoords[8];
+    // Node 3
+    currentCoords[9] = referenceCoords[9];
+    currentCoords[10] = referenceCoords[10];
+    currentCoords[11] = referenceCoords[11];
+    // Node 4
+    currentCoords[12] = referenceCoords[12];
+    currentCoords[13] = referenceCoords[13];
+    currentCoords[14] = referenceCoords[14];    
+    // Node 5
+    currentCoords[15] = referenceCoords[15];
+    currentCoords[16] = referenceCoords[16];
+    currentCoords[17] = referenceCoords[17];
+    // Node 6
+    currentCoords[18] = referenceCoords[18];
+    currentCoords[19] = referenceCoords[19];
+    currentCoords[20] = referenceCoords[20];
+    // Node 7
+    currentCoords[21] = referenceCoords[21];
+    currentCoords[22] = referenceCoords[22];
+    currentCoords[23] = referenceCoords[23];
+
+    // SetField evaluator, which will be used to manually assign values to the reference coordiantes field
+    Teuchos::ParameterList ccPL;
+    ccPL.set<string>("Evaluated Field Name", "Current Coordinates");
+    ccPL.set<Teuchos::ArrayRCP<ScalarT> >("Field Values", currentCoords);
+    ccPL.set<Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->node_vector);
+    Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldCurCoords = Teuchos::rcp(new LCM::SetField<Residual, Traits>(ccPL));
+
+    //-----------------------------------------------------------------------------------
+    // Poisson's Ratio
+    Teuchos::ArrayRCP<ScalarT> pRatio(numQPts);
+    pRatio[0] = pRatio[1] = pRatio[2] = pRatio[3] = 0.45;
+
+    // SetField evaluator, which will be used to manually assign values to the Poisson's Ratio field
+    Teuchos::ParameterList prPL;
+    prPL.set<string>("Evaluated Field Name", "Poissons Ratio");
+    prPL.set<Teuchos::ArrayRCP<ScalarT> >("Field Values", pRatio);
+    prPL.set<Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_scalar);
+    Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldPRatio = Teuchos::rcp(new LCM::SetField<Residual, Traits>(prPL));
+
+    //-----------------------------------------------------------------------------------
+    // Elastic Modulus
+    Teuchos::ArrayRCP<ScalarT> eMod(numQPts);
+    eMod[0] = eMod[1] = eMod[2] = eMod[3] = 100.0E3;
+
+    // SetField evaluator, which will be used to manually assign values to the Elastic Modulus field
+    Teuchos::ParameterList emPL;
+    emPL.set<string>("Evaluated Field Name", "Elastic Modulus");
+    emPL.set<Teuchos::ArrayRCP<ScalarT> >("Field Values", eMod);
+    emPL.set<Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_scalar);
+    Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldEMod = Teuchos::rcp(new LCM::SetField<Residual, Traits>(emPL));
+
+    //-----------------------------------------------------------------------------------
+    // intrepid basis and cubature
+    Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
+    intrepidBasis = Teuchos::rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType,Intrepid::FieldContainer<RealType> >());
+    Teuchos::RCP<shards::CellTopology> cellType = Teuchos::rcp(new shards::CellTopology(shards::getCellTopologyData<shards::Quadrilateral<4> >()));
+    Intrepid::DefaultCubatureFactory<RealType> cubFactory;
+    Teuchos::RCP<Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, 3);
+
+    //-----------------------------------------------------------------------------------
+    // SurfaceBasis evaluator
+    Teuchos::ParameterList sbPL;
+    sbPL.set<string>("Reference Coordinates Name","Reference Coordinates");
+    sbPL.set<string>("Current Coordinates Name","Current Coordinates");
+    sbPL.set<string>("Current Basis Name", "Current Basis");
+    sbPL.set<string>("Reference Basis Name", "Reference Basis");    
+    sbPL.set<string>("Reference Dual Basis Name", "Reference Dual Basis");
+    sbPL.set<string>("Reference Normal Name", "Reference Normal");
+    sbPL.set<string>("Reference Area Name", "Reference Area");
+    sbPL.set<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+    sbPL.set<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", intrepidBasis);
+    Teuchos::RCP<LCM::SurfaceBasis<Residual, Traits> > sb = Teuchos::rcp(new LCM::SurfaceBasis<Residual,Traits>(sbPL,dl));
+
+    //-----------------------------------------------------------------------------------
+    // SurfaceVectorJump evaluator
+    Teuchos::RCP<Teuchos::ParameterList> svjP = Teuchos::rcp(new Teuchos::ParameterList("Surface Vector Jump"));
+    svjP->set<string>("Vector Name","Current Coordinates");
+    svjP->set<string>("Vector Jump Name", "Vector Jump");
+    svjP->set<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+    svjP->set<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", intrepidBasis);
+    Teuchos::RCP<LCM::SurfaceVectorJump<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits> > svj =
+      Teuchos::rcp(new LCM::SurfaceVectorJump<PHAL::AlbanyTraits::Residual,PHAL::AlbanyTraits>(*svjP,dl));
+
+    //-----------------------------------------------------------------------------------
+    // SurfaceVectorGradient evaluator
+    Teuchos::ParameterList svgPL;
+    svgPL.set<string>("Current Basis Name","Current Basis");
+    svgPL.set<string>("Reference Dual Basis Name", "Reference Dual Basis");
+    svgPL.set<string>("Reference Normal Name", "Reference Normal");
+    svgPL.set<string>("Vector Jump Name", "Vector Jump");
+    svgPL.set<string>("Weights Name", "Reference Area");
+    svgPL.set<string>("Surface Vector Gradient Name", "F");
+    svgPL.set<string>("Surface Vector Gradient Determinant Name", "J");
+    svgPL.set<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+    svgPL.set<double>("thickness",thickness);
+    Teuchos::RCP<LCM::SurfaceVectorGradient<Residual, Traits> > svg = Teuchos::rcp(new LCM::SurfaceVectorGradient<Residual,Traits>(svgPL,dl));
+
+    //-----------------------------------------------------------------------------------
+    // Neohookean evaluator
+    Teuchos::ParameterList neoPL;
+    neoPL.set<string>("DefGrad Name", "F");
+    neoPL.set<string>("DetDefGrad Name", "J");
+    neoPL.set<string>("Elastic Modulus Name", "Elastic Modulus");
+    neoPL.set<string>("Poissons Ratio Name", "Poissons Ratio");
+    neoPL.set<string>("Stress Name", "Stress");
+    Teuchos::RCP<LCM::Neohookean<Residual, Traits> > neo = Teuchos::rcp(new LCM::Neohookean<Residual,Traits>(neoPL,dl));
+
+    //-----------------------------------------------------------------------------------
+    // SurfaceVectorResidual evaluator
+    Teuchos::RCP<Teuchos::ParameterList> svrP = Teuchos::rcp(new Teuchos::ParameterList);
+    svrP->set<double>("thickness",thickness);
+    svrP->set<string>("DefGrad Name","F");
+    svrP->set<string>("Stress Name", "Stress");
+    svrP->set<string>("Current Basis Name", "Current Basis");
+    svrP->set<string>("Reference Dual Basis Name", "Reference Dual Basis");
+    svrP->set<string>("Reference Normal Name", "Reference Normal");
+    svrP->set<string>("Reference Area Name", "Reference Area");
+    svrP->set<string>("Surface Vector Residual Name", "Force");
+    svrP->set<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+    svrP->set<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", intrepidBasis);
+    Teuchos::RCP<LCM::SurfaceVectorResidual<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits> > svr =
+      Teuchos::rcp(new LCM::SurfaceVectorResidual<PHAL::AlbanyTraits::Residual,PHAL::AlbanyTraits>(*svrP,dl));
+
+    // Instantiate a field manager.
+    PHX::FieldManager<PHAL::AlbanyTraits> fieldManager;
+
+    // Register the evaluators with the field manager
+    fieldManager.registerEvaluator<Residual>(setFieldRefCoords);
+    fieldManager.registerEvaluator<Residual>(setFieldCurCoords);
+    fieldManager.registerEvaluator<Residual>(setFieldPRatio);
+    fieldManager.registerEvaluator<Residual>(setFieldEMod);
+    fieldManager.registerEvaluator<Residual>(sb);
+    fieldManager.registerEvaluator<Residual>(svj);
+    fieldManager.registerEvaluator<Residual>(svg);
+    fieldManager.registerEvaluator<Residual>(neo);
+    fieldManager.registerEvaluator<Residual>(svr);
+
+    // Set the evaluated fields as required fields
+    for (std::vector<Teuchos::RCP<PHX::FieldTag> >::const_iterator it = svr->evaluatedFields().begin();
+         it != svr->evaluatedFields().end(); it++)
+      fieldManager.requireField<PHAL::AlbanyTraits::Residual>(**it);
+
+    // Call postRegistrationSetup on the evaluators
+    // JTO - I don't know what "Test String" is meant for...
+    PHAL::AlbanyTraits::SetupData setupData = "Test String";
+    fieldManager.postRegistrationSetup(setupData);
+
+    // Create a workset
+    PHAL::Workset workset;
+    workset.numCells = worksetSize;
+
+    // Call the evaluators, evaluateFields() is the function that computes things
+    fieldManager.preEvaluate<PHAL::AlbanyTraits::Residual>(workset);
+    fieldManager.evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
+    fieldManager.postEvaluate<PHAL::AlbanyTraits::Residual>(workset);
+
+    // Pull the nodal force from the FieldManager
+    PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT,Cell,Node,Dim> forceField("Force", dl->node_vector);
+    fieldManager.getFieldData<PHAL::AlbanyTraits::Residual::ScalarT,PHAL::AlbanyTraits::Residual,Cell,Node,Dim>(forceField);
+
+    // Record the expected nodal forces, which will be used to check the computed force
+    LCM::Vector<PHAL::AlbanyTraits::Residual::ScalarT> expectedForce(0.0, 0.0, 0.0);
+
+    // Check the computed force
+    typedef PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT>::size_type size_type;
+    for (size_type cell = 0; cell < worksetSize; ++cell) {
+      for (size_type node = 0; node < numNodes; ++node) {
+
+        std::cout << "Nodal force at cell " << cell
+                  << ", node " << node << ":" << endl;
+        std::cout << "  " << fabs(forceField(cell, node, 0));
+        std::cout << "  " << fabs(forceField(cell, node, 1));
+        std::cout << "  " << fabs(forceField(cell, node, 2)) << endl;
+
+        std::cout << "Expected result:" << endl;
+        std::cout << "  " << expectedForce(0);
+        std::cout << "  " << expectedForce(1);
+        std::cout << "  " << expectedForce(2) << endl;
+
+        std::cout << endl;
+
+        //double tolerance = 1.0e4;
+        for (size_type i = 0; i < numDim; ++i) {
+          TEST_COMPARE(fabs(fabs(forceField(cell, node, i)) - expectedForce(i)), <=, tolerance);
+        }
+      }
+    }
+    std::cout << endl;
+
+    //-----------------------------------------------------------------------------------
+    // perturbing the current coordinates
+    double eps = 0.01;
+    // Node 0
+    currentCoords[0] = referenceCoords[0] + eps;
+    currentCoords[1] = referenceCoords[1];
+    currentCoords[2] = referenceCoords[2];
+    // Node 1
+    currentCoords[3] = referenceCoords[3];
+    currentCoords[4] = referenceCoords[4];
+    currentCoords[5] = referenceCoords[5];
+    // Node 2
+    currentCoords[6] = referenceCoords[6];
+    currentCoords[7] = referenceCoords[7];
+    currentCoords[8] = referenceCoords[8];
+    // Node 3
+    currentCoords[9] = referenceCoords[9];
+    currentCoords[10] = referenceCoords[10];
+    currentCoords[11] = referenceCoords[11];
+    // Node 4
+    currentCoords[12] = referenceCoords[12];
+    currentCoords[13] = referenceCoords[13];
+    currentCoords[14] = referenceCoords[14];    
+    // Node 5
+    currentCoords[15] = referenceCoords[15];
+    currentCoords[16] = referenceCoords[16];
+    currentCoords[17] = referenceCoords[17];
+    // Node 6
+    currentCoords[18] = referenceCoords[18];
+    currentCoords[19] = referenceCoords[19];
+    currentCoords[20] = referenceCoords[20];
+    // Node 7
+    currentCoords[21] = referenceCoords[21];
+    currentCoords[22] = referenceCoords[22];
+    currentCoords[23] = referenceCoords[23];
+
+    // Call the evaluators, evaluateFields() is the function that computes things
+    fieldManager.preEvaluate<PHAL::AlbanyTraits::Residual>(workset);
+    fieldManager.evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
+    fieldManager.postEvaluate<PHAL::AlbanyTraits::Residual>(workset);
+    fieldManager.getFieldData<PHAL::AlbanyTraits::Residual::ScalarT,PHAL::AlbanyTraits::Residual,Cell,Node,Dim>(forceField);
+
+    // Record the expected nodal forces, which will be used to check the computed force
+    expectedForce = LCM::Vector<ScalarT>(1.0, 0.0, 0.0);
+
+    // Check the computed force
+    typedef PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT>::size_type size_type;
+    for (size_type cell = 0; cell < worksetSize; ++cell) {
+      for (size_type node = 0; node < numNodes; ++node) {
+
+        std::cout << "Nodal force at cell " << cell
+                  << ", node " << node << ":" << endl;
+        std::cout << "  " << fabs(forceField(cell, node, 0));
+        std::cout << "  " << fabs(forceField(cell, node, 1));
+        std::cout << "  " << fabs(forceField(cell, node, 2)) << endl;
+
+        std::cout << "Expected result:" << endl;
+        std::cout << "  " << expectedForce(0);
+        std::cout << "  " << expectedForce(1);
+        std::cout << "  " << expectedForce(2) << endl;
+
+        std::cout << endl;
+
+        for (size_type i = 0; i < numDim; ++i) {
+          //TEST_COMPARE(fabs(fabs(forceField(cell, node, i)) - expectedForce(i))/LCM::norm(expectedForce), <=, tolerance);
+        }
+      }
+    }
+    std::cout << endl;
+
+  }
 } // namespace
