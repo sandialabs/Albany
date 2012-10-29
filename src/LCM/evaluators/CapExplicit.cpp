@@ -6,8 +6,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "CapModelStress.hpp"
-#include "CapModelStress_Def.hpp"
+#include "CapExplicit.hpp"
+#include "CapExplicit_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::CapModelStress)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::CapExplicit)
 

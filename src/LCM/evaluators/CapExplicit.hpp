@@ -3,8 +3,8 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#ifndef CAPMODELSTRESS_HPP
-#define CAPMODELSTRESS_HPP
+#ifndef CAPEXPLICIT_HPP
+#define CAPEXPLICIT_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -14,19 +14,19 @@
 #include "Tensor.h"
 
 namespace LCM {
-  /** \brief CapModelStress stress response
+  /** \brief CapExplicit stress response
 
    This evaluator computes stress based on a cap plasticity model.
 
    */
 
   template<typename EvalT, typename Traits>
-  class CapModelStress: public PHX::EvaluatorWithBaseImpl<Traits>,
+  class CapExplicit: public PHX::EvaluatorWithBaseImpl<Traits>,
       public PHX::EvaluatorDerived<EvalT, Traits> {
 
   public:
 
-    CapModelStress(const Teuchos::ParameterList& p);
+    CapExplicit(const Teuchos::ParameterList& p);
 
     void postRegistrationSetup(typename Traits::SetupData d,
         PHX::FieldManager<Traits>& vm);

@@ -12,7 +12,7 @@ namespace LCM {
 
 //**********************************************************************
   template<typename EvalT, typename Traits>
-  CapModelStress<EvalT, Traits>::CapModelStress(const Teuchos::ParameterList& p) :
+  CapExplicit<EvalT, Traits>::CapExplicit(const Teuchos::ParameterList& p) :
       elasticModulus(p.get<std::string>("Elastic Modulus Name"),
           p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), poissonsRatio(
           p.get<std::string>("Poissons Ratio Name"),
@@ -77,7 +77,7 @@ namespace LCM {
 
 //**********************************************************************
   template<typename EvalT, typename Traits>
-  void CapModelStress<EvalT, Traits>::postRegistrationSetup(
+  void CapExplicit<EvalT, Traits>::postRegistrationSetup(
       typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
   {
     this->utils.setFieldData(elasticModulus, fm);
@@ -95,7 +95,7 @@ namespace LCM {
 //**********************************************************************
 
   template<typename EvalT, typename Traits>
-  void CapModelStress<EvalT, Traits>::evaluateFields(
+  void CapExplicit<EvalT, Traits>::evaluateFields(
       typename Traits::EvalData workset)
   {
 
@@ -416,7 +416,7 @@ namespace LCM {
 //**********************************************************************
 // all local functions
   template<typename EvalT, typename Traits>
-  typename CapModelStress<EvalT, Traits>::ScalarT CapModelStress<EvalT, Traits>::compute_f(
+  typename CapExplicit<EvalT, Traits>::ScalarT CapExplicit<EvalT, Traits>::compute_f(
       LCM::Tensor<ScalarT> & sigma, LCM::Tensor<ScalarT> & alpha,
       ScalarT & kappa)
   {
@@ -451,7 +451,7 @@ namespace LCM {
   }
 
   template<typename EvalT, typename Traits>
-  LCM::Tensor<typename CapModelStress<EvalT, Traits>::ScalarT> CapModelStress<
+  LCM::Tensor<typename CapExplicit<EvalT, Traits>::ScalarT> CapExplicit<
       EvalT, Traits>::compute_dfdsigma(LCM::Tensor<ScalarT> & sigma,
       LCM::Tensor<ScalarT> & alpha, ScalarT & kappa)
   {
@@ -518,7 +518,7 @@ namespace LCM {
   }
 
   template<typename EvalT, typename Traits>
-  LCM::Tensor<typename CapModelStress<EvalT, Traits>::ScalarT> CapModelStress<
+  LCM::Tensor<typename CapExplicit<EvalT, Traits>::ScalarT> CapExplicit<
       EvalT, Traits>::compute_dgdsigma(LCM::Tensor<ScalarT> & sigma,
       LCM::Tensor<ScalarT> & alpha, ScalarT & kappa)
   {
@@ -585,7 +585,7 @@ namespace LCM {
   }
 
   template<typename EvalT, typename Traits>
-  typename CapModelStress<EvalT, Traits>::ScalarT CapModelStress<EvalT, Traits>::compute_dfdkappa(
+  typename CapExplicit<EvalT, Traits>::ScalarT CapExplicit<EvalT, Traits>::compute_dfdkappa(
       LCM::Tensor<ScalarT> & sigma, LCM::Tensor<ScalarT> & alpha,
       ScalarT & kappa)
   {
@@ -620,7 +620,7 @@ namespace LCM {
     return dfdkappa;
   }
   template<typename EvalT, typename Traits>
-  typename CapModelStress<EvalT, Traits>::ScalarT CapModelStress<EvalT, Traits>::compute_Galpha(
+  typename CapExplicit<EvalT, Traits>::ScalarT CapExplicit<EvalT, Traits>::compute_Galpha(
       ScalarT & J2_alpha)
   {
     if (N != 0)
@@ -630,7 +630,7 @@ namespace LCM {
   }
 
   template<typename EvalT, typename Traits>
-  LCM::Tensor<typename CapModelStress<EvalT, Traits>::ScalarT> CapModelStress<
+  LCM::Tensor<typename CapExplicit<EvalT, Traits>::ScalarT> CapExplicit<
       EvalT, Traits>::compute_halpha(LCM::Tensor<ScalarT> & dgdsigma,
       ScalarT & J2_alpha)
   {
@@ -652,7 +652,7 @@ namespace LCM {
   }
 
   template<typename EvalT, typename Traits>
-  typename CapModelStress<EvalT, Traits>::ScalarT CapModelStress<EvalT, Traits>::compute_dedkappa(
+  typename CapExplicit<EvalT, Traits>::ScalarT CapExplicit<EvalT, Traits>::compute_dedkappa(
       ScalarT & kappa)
   {
     ScalarT Ff_kappa0 = A - C * std::exp(L * kappa0) - phi * kappa0;

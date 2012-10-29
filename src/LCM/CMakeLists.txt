@@ -38,7 +38,7 @@
   # LCM evaluators
   SET(SOURCES ${SOURCES}
     evaluators/Stress.cpp
-    evaluators/CapModelStress.cpp
+    evaluators/CapExplicit.cpp
     evaluators/CapImplicit.cpp
     evaluators/GursonSDStress.cpp
     evaluators/GursonFD.cpp
@@ -135,8 +135,8 @@
   SET(HEADERS ${HEADERS}
     evaluators/Stress.hpp
     evaluators/Stress_Def.hpp
-    evaluators/CapModelStress.hpp
-    evaluators/CapModelStress_Def.hpp
+    evaluators/CapExplicit.hpp
+    evaluators/CapExplicit_Def.hpp
     evaluators/CapImplicit.hpp
     evaluators/CapImplicit_Def.hpp
     evaluators/GursonSDStress.hpp

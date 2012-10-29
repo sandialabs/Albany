@@ -139,7 +139,7 @@ namespace Albany {
 #include "PHAL_NSMaterialProperty.hpp"
 
 // Plasticity model from Q.Chen
-#include "CapModelStress.hpp"
+#include "CapExplicit.hpp"
 #include "GursonSDStress.hpp"
 
 
@@ -515,7 +515,7 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
      fm0.template registerEvaluator<EvalT>(ev);
    }
 
-   if (matModel == "CapModel")
+   if (matModel == "CapExplicit")
    {
      { // Cap model stress
        RCP<ParameterList> p = rcp(new ParameterList("Stress"));
@@ -568,7 +568,7 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
        p->set<string>("Cap Parameter Name", "capParameter"); //dl->qp_tensor also
 
        //Declare what state data will need to be saved (name, layout, init_type)
-       ev = rcp(new LCM::CapModelStress<EvalT,AlbanyTraits>(*p));
+       ev = rcp(new LCM::CapExplicit<EvalT,AlbanyTraits>(*p));
        fm0.template registerEvaluator<EvalT>(ev);
        p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0, true);
        ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));

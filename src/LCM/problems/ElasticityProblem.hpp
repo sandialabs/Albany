@@ -121,7 +121,7 @@ namespace Albany {
 #include "ElasticityResid.hpp"
 
 #include "Time.hpp"
-#include "CapModelStress.hpp"
+#include "CapExplicit.hpp"
 #include "GursonSDStress.hpp"
 
 #include "CapImplicit.hpp"
@@ -295,7 +295,7 @@ Albany::ElasticityProblem::constructEvaluators(
     ev = rcp(new LCM::Strain<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
-    if(matModel == "CapModel" || matModel == "GursonSD" || matModel == "CapImplicit"){
+    if(matModel == "CapExplicit" || matModel == "GursonSD" || matModel == "CapImplicit"){
       p = stateMgr.registerStateVariable("Strain", dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0, true);
     	ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     	fm0.template registerEvaluator<EvalT>(ev);
@@ -325,7 +325,7 @@ Albany::ElasticityProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (matModel == "CapModel" || matModel == "CapImplicit")
+  if (matModel == "CapExplicit" || matModel == "CapImplicit")
   {
 	{ // Cap model stress
 	  RCP<ParameterList> p = rcp(new ParameterList("Stress"));
@@ -383,8 +383,8 @@ Albany::ElasticityProblem::constructEvaluators(
       p->set<string>("Hardening Modulus Name", "hardeningModulus"); //dl->qp_scalar also
 
       //Declare what state data will need to be saved (name, layout, init_type)
-      if(matModel == "CapModel"){
-    	  ev = rcp(new LCM::CapModelStress<EvalT,AlbanyTraits>(*p));
+      if(matModel == "CapExplicit"){
+    	  ev = rcp(new LCM::CapExplicit<EvalT,AlbanyTraits>(*p));
       }
 
       if(matModel == "CapImplicit"){
