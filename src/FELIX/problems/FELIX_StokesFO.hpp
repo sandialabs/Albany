@@ -73,9 +73,11 @@ namespace FELIX {
       const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
     void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
+    void constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs);
 
   protected:
     int numDim;
+    Teuchos::RCP<Albany::Layouts> dl;
 
   };
 
@@ -95,7 +97,7 @@ namespace FELIX {
 #include "FELIX_StokesFOResid.hpp"
 #include "FELIX_ViscosityFO.hpp"
 #include "FELIX_StokesFOBodyForce.hpp"
-
+#include "PHAL_Neumann.hpp"
 #include "PHAL_Source.hpp"
 
 template <typename EvalT>
@@ -137,7 +139,7 @@ FELIX::StokesFO::constructEvaluators(
   
    int vecDim = neq;
 
-   RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, vecDim));
+   dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, vecDim));
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
    bool supportsTransient=true;
    int offset=0;

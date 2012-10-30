@@ -49,6 +49,9 @@ buildProblem(
   buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RESID_FM, 
 		  Teuchos::null);
   constructDirichletEvaluators(*meshSpecs[0]);
+  
+  if(meshSpecs[0]->ssNames.size() > 0) // Build a sideset evaluator if sidesets are present
+     constructNeumannEvaluators(meshSpecs[0]);
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
@@ -81,6 +84,73 @@ FELIX::StokesFO::constructDirichletEvaluators(
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
+}
+
+// Neumann BCs
+void
+FELIX::StokesFO::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
+{
+
+  cout << "setting Neumann evaluators" << endl; 
+   // Note: we only enter this function if sidesets are defined in the mesh file
+   // i.e. meshSpecs.ssNames.size() > 0
+
+   Albany::BCUtils<Albany::NeumannTraits> nbcUtils;
+
+   // Check to make sure that Neumann BCs are given in the input file
+
+   if(!nbcUtils.haveBCSpecified(this->params)) {
+      return;
+   }
+
+
+   // Construct BC evaluators for all side sets and names
+   // Note that the string index sets up the equation offset, so ordering is important
+
+   // Currently we aren't exactly doing this right.  I think to do this
+   // correctly we need different neumann evaluators for each DOF (velocity,
+   // pressure, temperature, flux) since velocity is a vector and the 
+   // others are scalars.  The dof_names stuff is only used
+   // for robin conditions, so at this point, as long as we don't enable
+   // robin conditions, this should work.
+
+   std::vector<string> nbcNames;
+   Teuchos::RCP< Teuchos::Array<string> > dof_names = 
+     Teuchos::rcp(new Teuchos::Array<string>);
+   Teuchos::Array<Teuchos::Array<int> > offsets;
+   int idx = 0;
+     nbcNames.push_back("C0");
+     offsets.push_back(Teuchos::Array<int>(1,idx++));
+     if (numDim>=2) {
+       nbcNames.push_back("C1");
+       offsets.push_back(Teuchos::Array<int>(1,idx++));
+     }
+     offsets.push_back(Teuchos::Array<int>(1,idx++));
+     dof_names->push_back("Velocity");
+   // Construct BC evaluators for all possible names of conditions
+   // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
+   std::vector<string> condNames(3); //dCdx, dCdy, dCdz, dCdn, basal
+
+   // Note that sidesets are only supported for two and 3D currently
+   if(numDim == 2)
+    condNames[0] = "(dCdx, dCdy)";
+   else if(numDim == 3)
+    condNames[0] = "(dCdx, dCdy, dCdz)";
+   else
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+       std::endl << "Error: Sidesets only supported in 2 and 3D." << std::endl);
+
+   condNames[1] = "dCdn";
+   
+   condNames[2] = "basal";
+
+   nfm.resize(1);
+
+   nfm[0] = nbcUtils.constructBCEvaluators(meshSpecs, nbcNames,
+                                           Teuchos::arcp(dof_names),
+                                           false, 0, condNames, offsets, dl,
+                                           this->params, this->paramLib);
+
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
