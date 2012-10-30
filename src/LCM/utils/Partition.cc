@@ -9,6 +9,7 @@
 
 #include <cassert>
 #include <cstdlib>
+#include <fstream>
 #include <iomanip>
 #include <sstream>
 #include <string>
@@ -103,7 +104,8 @@ namespace LCM {
     type_(ConnectivityArray::UNKNOWN),
     dimension_(0),
     discretization_ptr_(Teuchos::null),
-    voxel_size_(0.0)
+    cluster_size_(0),
+    maximum_divisions_(0)
   {
     return;
   }
@@ -119,7 +121,8 @@ namespace LCM {
       type_(ConnectivityArray::UNKNOWN),
       dimension_(0),
       discretization_ptr_(Teuchos::null),
-      voxel_size_(0.0)
+      cluster_size_(0),
+      maximum_divisions_(0)
   {
     //Teuchos::GlobalMPISession mpiSession(&argc,&argv);
 
@@ -291,6 +294,42 @@ namespace LCM {
   }
 
   //
+  // \return K-means cluster size
+  //
+  Index
+  ConnectivityArray::GetClusterSize() const
+  {
+    return cluster_size_;
+  }
+
+  //
+  // \return maximum divisions for voxelization
+  //
+  Index
+  ConnectivityArray::GetMaximumDivisions() const
+  {
+    return maximum_divisions_;
+  }
+
+  //
+  // \param K-means cluster size
+  //
+  void
+  ConnectivityArray::SetClusterSize(Index cluster_size)
+  {
+    cluster_size_ = cluster_size;
+  }
+
+  //
+  // \param maximum divisions for voxelization
+  //
+  void
+  ConnectivityArray::SetMaximumDivisions(Index maximum_divisions)
+  {
+    maximum_divisions_ = maximum_divisions;
+  }
+
+  //
   // \return Type of finite element in the array
   // (assume same type for all elements)
   //
@@ -326,6 +365,50 @@ namespace LCM {
   {
     return (*discretization_ptr_.get());
   }
+
+  //
+  // \return Number of nodes that define element topology
+  // (assume same type for all elements)
+  //
+  Index
+  ConnectivityArray::GetNodesPerElement() const
+  {
+    Index
+    nodes_per_element;
+
+    switch (GetType()) {
+
+    default:
+      std::cerr << "ERROR: Unknown element type in GetNodesPerElement()";
+      std::cerr << std::endl;
+      exit(1);
+      break;
+
+    case SEGMENTAL:
+      nodes_per_element = 2;
+      break;
+
+    case TRIANGULAR:
+      nodes_per_element = 3;
+      break;
+
+    case QUADRILATERAL:
+      nodes_per_element = 4;
+      break;
+
+    case TETRAHEDRAL:
+      nodes_per_element = 4;
+      break;
+
+    case HEXAHEDRAL:
+      nodes_per_element = 8;
+      break;
+
+    }
+
+    return nodes_per_element;
+  }
+
 
   //
   // \return Volume for each element
@@ -583,7 +666,7 @@ namespace LCM {
     // First determine the maximum dimension of the bounding box.
     //
     const Index
-    maximum_divisions = 16;
+    maximum_divisions = GetMaximumDivisions();
 
     LCM::Vector<double>
     min;
@@ -608,18 +691,22 @@ namespace LCM {
     const double
     delta = maximum_dimension / maximum_divisions;
 
-    voxel_size_ = delta;
-
     //
     // Determine number of voxels for each dimension.
     //
     LCM::Vector<Index>
-    voxels_dimension(N);
+    voxels_per_dimension(N);
+
+    LCM::Vector<double>
+    span = max - min;
+
+    voxel_size_.set_dimension(N);
 
     for (Index i = 0; i < N; ++i) {
       const Index
       number_voxels = std::ceil((max(i) - min(i)) / delta);
-      voxels_dimension(i) = number_voxels;
+      voxels_per_dimension(i) = number_voxels;
+      voxel_size_(i) = span(i) / voxels_per_dimension(i);
     }
 
     //
@@ -627,41 +714,61 @@ namespace LCM {
     // Generalization to N dimensions fails here.
     // This is specific to 3D.
     //
-    voxels_.resize(voxels_dimension(0));
+    voxels_.resize(voxels_per_dimension(0));
 
-    for (Index i = 0; i < voxels_dimension(0); ++i) {
+    for (Index i = 0; i < voxels_per_dimension(0); ++i) {
 
-      voxels_[i].resize(voxels_dimension(1));
+      voxels_[i].resize(voxels_per_dimension(1));
 
-      for (Index j = 0; j < voxels_dimension(1); ++j) {
+      for (Index j = 0; j < voxels_per_dimension(1); ++j) {
 
-        voxels_[i][j].resize(voxels_dimension(2));
+        voxels_[i][j].resize(voxels_per_dimension(2));
 
       }
 
     }
 
     // Fill array
-    LCM::Vector<double> p(N);
+    LCM::Vector<double>
+    p(N);
 
-    for (Index i = 0; i < voxels_dimension(0); ++i) {
-      p(0) = i * delta + delta / 2.0 + min(0);
-      for (Index j = 0; j < voxels_dimension(1); ++j) {
-        p(1) = j * delta + delta / 2.0 + min(1);
-        for (Index k = 0; k < voxels_dimension(2); ++k) {
-          p(2) = k * delta + delta / 2.0 + min(2);
+    for (Index i = 0; i < voxels_per_dimension(0); ++i) {
+      p(0) = (i + 0.5) * span(0) / voxels_per_dimension(0) + min(0);
+      for (Index j = 0; j < voxels_per_dimension(1); ++j) {
+        p(1) = (j + 0.5) * span(1) / voxels_per_dimension(1) + min(1);
+        for (Index k = 0; k < voxels_per_dimension(2); ++k) {
+          p(2) = (k + 0.5) * span(2) / voxels_per_dimension(2) + min(2);
 
           voxels_[i][j][k] = IsInsideMeshByElement(p);
 
-          std::cout << i << "/" << voxels_dimension(0) << "-";
-          std::cout << j << "/" << voxels_dimension(1) << "-";
-          std::cout << k << "/" << voxels_dimension(2) << std::endl;
+          std::cout << i + 1 << "/" << voxels_per_dimension(0) << "-";
+          std::cout << j + 1 << "/" << voxels_per_dimension(1) << "-";
+          std::cout << k + 1 << "/" << voxels_per_dimension(2) << std::endl;
 
         }
 
       }
 
     }
+
+    // Output voxelization for debugging
+    std::ofstream ofs("voxels.csv");
+    ofs << "X, Y, Z" << std::endl;
+    for (Index i = 0; i <= voxels_per_dimension(0); ++i) {
+      p(0) = i * span(0) / voxels_per_dimension(0) + min(0);
+      for (Index j = 0; j <= voxels_per_dimension(1); ++j) {
+        p(1) = j * span(1) / voxels_per_dimension(1) + min(1);
+        for (Index k = 0; k <= voxels_per_dimension(2); ++k) {
+          p(2) = k * span(2) / voxels_per_dimension(2) + min(2);
+
+          ofs << p << std::endl;
+
+        }
+
+      }
+
+    }
+
 
     return;
   }
@@ -673,19 +780,19 @@ namespace LCM {
   bool
   ConnectivityArray::IsInsideMesh(Vector<double> const & point) const
   {
-    const Index i = (point(0) - lower_corner_(0)) / voxel_size_ + 0.5;
+    const Index i = (point(0) - lower_corner_(0)) / voxel_size_(0) + 0.5;
 
     if (i < 0 || i >= voxels_.size()) {
       return false;
     }
 
-    const Index j = (point(1) - lower_corner_(1)) / voxel_size_ + 0.5;
+    const Index j = (point(1) - lower_corner_(1)) / voxel_size_(1) + 0.5;
 
     if (j < 0 || j >= voxels_[0].size()) {
       return false;
     }
 
-    const Index k = (point(2) - lower_corner_(2)) / voxel_size_ + 0.5;
+    const Index k = (point(2) - lower_corner_(2)) / voxel_size_(2) + 0.5;
 
     if (k < 0 || k >= voxels_[0][0].size()) {
       return false;
@@ -1309,17 +1416,19 @@ namespace LCM {
       if (IsInsideMesh(p) == true) {
         generators.push_back(p);
         ++number_generators;
-        //std::cout << p;
       }
 
     }
 
     // K-means iteration
     const Index
-    max_iterations = 64;
+    max_iterations = 128;
 
     const Index
-    number_random_points = 64 * number_partitions;
+    cluster_size = GetClusterSize();
+
+    const Index
+    number_random_points = cluster_size * number_partitions;
 
     Index
     number_iterations = 0;
@@ -1328,7 +1437,7 @@ namespace LCM {
     diagonal_distance = norm(max - min);
 
     const double
-    tolerance = 1.0e-2 * diagonal_distance;
+    tolerance = 1.0e-4 * diagonal_distance;
 
     double
     max_step = diagonal_distance;
@@ -1358,9 +1467,6 @@ namespace LCM {
 
           point_generator_map[random_point_counter] =
               closest_point(random_point, generators);
-
-          //std::cout << "Random point: " << random_point_counter;
-          //std::cout << "/" << number_random_points << std::endl;
 
           ++random_point_counter;
         }
@@ -1397,6 +1503,8 @@ namespace LCM {
 
         // If cluster is empty then generator does not move.
         if (clusters[i].size() == 0) {
+          std::cout << "Iteration: " << number_iterations;
+          std::cout << ", generator " << i << "has zero points." << std::endl;
           continue;
         }
 
@@ -1426,6 +1534,13 @@ namespace LCM {
     std::map<int, int>
     partitions;
 
+    // Determine number of nodes that define element topology
+    const Index
+    nodes_per_element = GetNodesPerElement();
+
+    std::ofstream centroids_ofs("centroids.csv");
+
+    centroids_ofs << "X,Y,Z" << std::endl;
     for (AdjacencyMap::const_iterator
         elements_iter = connectivity_.begin();
         elements_iter != connectivity_.end();
@@ -1442,7 +1557,7 @@ namespace LCM {
 
       for (IDList::size_type
           i = 0;
-          i < node_list.size();
+          i < nodes_per_element;
           ++i) {
 
         PointMap::const_iterator
@@ -1456,10 +1571,18 @@ namespace LCM {
       const Vector<double>
       element_centroid = centroid(element_nodes);
 
-      //std::cout << element_centroid;
+      centroids_ofs << element_centroid << std::endl;
 
-      partitions[element] = closest_point(element_centroid, generators);
+      const Index
+      partition = closest_point(element_centroid, generators);
+      partitions[element] = partition;
 
+    }
+
+    std::ofstream generators_ofs("generators.csv");
+    generators_ofs << "X,Y,Z" << std::endl;
+    for (Index i = 0; i < generators.size(); ++i) {
+      generators_ofs << generators[i] << std::endl;
     }
 
     return partitions;

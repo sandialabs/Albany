@@ -3055,12 +3055,15 @@ namespace LCM {
     const Index
     N = u.get_dimension();
 
-    for (Index i = 0; i < N; ++i) {
-      os << std::scientific << " " << u(i);
+    if (N == 0) {
+      return os;
     }
 
-    os << std::endl;
-    os << std::endl;
+    os << std::scientific << u(0);
+
+    for (Index i = 1; i < N; ++i) {
+      os << std::scientific << "," << u(i);
+    }
 
     return os;
   }
@@ -3101,15 +3104,20 @@ namespace LCM {
     const Index
     N = A.get_dimension();
 
-    for (Index i = 0; i < N; ++i) {
-      for (Index j = 0; j < N; ++j) {
-        os << std::scientific << " " << A(i,j);
-      }
-      os << std::endl;
+    if (N == 0) {
+      return os;
     }
 
-    os << std::endl;
-    os << std::endl;
+    for (Index i = 0; i < N; ++i) {
+
+      os << std::scientific << A(i,0);
+
+      for (Index j = 1; j < N; ++j) {
+        os << std::scientific << "," << A(i,j);
+      }
+
+      os << std::endl;
+    }
 
     return os;
   }
@@ -3151,16 +3159,27 @@ namespace LCM {
     const Index
     N = A.get_dimension();
 
+    if (N == 0) {
+      return os;
+    }
+
     for (Index i = 0; i < N; ++i) {
+
       for (Index j = 0; j < N; ++j) {
-        for (Index k = 0; k < N; ++k) {
-          os << std::scientific << " ";
-          os << A(i,j,k);
+
+        os << std::scientific << A(i,j,0);
+
+        for (Index k = 1; k < N; ++k) {
+          os << std::scientific << "," << A(i,j,k);
         }
+
         os << std::endl;
+
       }
+
       os << std::endl;
       os << std::endl;
+
     }
 
     return os;
@@ -3205,21 +3224,36 @@ namespace LCM {
     const Index
     N = A.get_dimension();
 
+    if (N == 0) {
+      return os;
+    }
+
     for (Index i = 0; i < N; ++i) {
+
       for (Index j = 0; j < N; ++j) {
+
         for (Index k = 0; k < N; ++k) {
+
+          os << std::scientific << "," << A(i,j,k,0);
+
           for (Index l = 0; l < N; ++l) {
-            os << std::scientific << " ";
-            os << A(i,j,k,l);
+
+            os << std::scientific << "," << A(i,j,k,l);
           }
+
           os << std::endl;
+
         }
+
         os << std::endl;
         os << std::endl;
+
       }
+
       os << std::endl;
       os << std::endl;
       os << std::endl;
+
     }
 
     return os;

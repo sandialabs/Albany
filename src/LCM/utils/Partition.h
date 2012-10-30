@@ -122,6 +122,13 @@ namespace LCM {
     GetType() const;
 
     ///
+    /// \return Number of nodes that define element topology
+    /// (assume same type for all elements)
+    ///
+    Index
+    GetNodesPerElement() const;
+
+    ///
     /// \return Node ID and associated point in space
     ///
     PointMap
@@ -168,6 +175,30 @@ namespace LCM {
     ///
     std::pair<LCM::Vector<double>, LCM::Vector<double> >
     BoundingBox() const;
+
+    ///
+    /// \param K-means cluster size
+    ///
+    void
+    SetClusterSize(Index cluster_size);
+
+    ///
+    /// \return K-means cluster size
+    ///
+    Index
+    GetClusterSize() const;
+
+    ///
+    /// \param maximum divisions for voxelization
+    ///
+    void
+    SetMaximumDivisions(Index maximum_divisions);
+
+    ///
+    /// \return maximum divisions for voxelization
+    ///
+    Index
+    GetMaximumDivisions() const;
 
     ///
     /// Voxelization of the domain for fast determination
@@ -417,7 +448,7 @@ namespace LCM {
     discretization_ptr_;
 
     //
-    // Partitions if mesh is partioned; otherwise empty
+    // Partitions if mesh is partitioned; otherwise empty
     //
     std::map<int, int>
     partitions_;
@@ -432,8 +463,18 @@ namespace LCM {
     //
     // Size of voxel
     //
-    double
+    LCM::Vector<double>
     voxel_size_;
+
+    //
+    // Parameters for kmeans partitioning
+    //
+    Index
+    cluster_size_;
+
+    Index
+    maximum_divisions_;
+
     //
     // Limits of the bounding box for coordinate array
     //

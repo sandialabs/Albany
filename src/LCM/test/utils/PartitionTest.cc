@@ -75,6 +75,21 @@ int main(int ac, char* av[])
       &length_scale,
       "Length Scale");
 
+  int
+  cluster_size = 64;
+
+  command_line_processor.setOption(
+      "cluster-size",
+      &cluster_size,
+      "Cluster Size");
+
+  int
+  maximum_divisions = 64;
+
+  command_line_processor.setOption(
+      "maximum-divisions",
+      &maximum_divisions,
+      "Maximum Divisions");
 
   // Throw a warning and not error for unrecognized options
   command_line_processor.recogniseAllOptions(true);
@@ -99,6 +114,12 @@ int main(int ac, char* av[])
   //
   LCM::ConnectivityArray
   connectivity_array(input_file, output_file);
+
+  //
+  // Set extra parameters for K-means
+  //
+  connectivity_array.SetClusterSize(cluster_size);
+  connectivity_array.SetMaximumDivisions(maximum_divisions);
 
   //
   // Partition mesh
