@@ -426,6 +426,7 @@ SET(SOURCES ${SOURCES}
        problems/QCAD_PoissonProblem.cpp
        problems/QCAD_MaterialDatabase.cpp
        responses/QCAD_SaddleValueResponseFunction.cpp
+       responses/QCAD_GreensFunctionTunneling.cpp
   )
 
 SET(HEADERS ${HEADERS}
@@ -456,6 +457,7 @@ SET(HEADERS ${HEADERS}
        evaluators/QCAD_EvaluatorTools_Def.hpp
        problems/QCAD_PoissonProblem.hpp
        responses/QCAD_SaddleValueResponseFunction.hpp
+       responses/QCAD_GreensFunctionTunneling.hpp
   )
 
 

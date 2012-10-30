@@ -7,6 +7,7 @@
 #include <Epetra_LocalMap.h>
 #include "Albany_Utils.hpp"
 #include "QCAD_SaddleValueResponseFunction.hpp"
+#include "QCAD_GreensFunctionTunneling.hpp"
 #include <fstream>
 
 //! Helper function prototypes
@@ -70,6 +71,7 @@ SaddleValueResponseFunction(
   maxFinalPts     = params.get<int>("Maximum Number of Final Points", 0);
   finalPtSpacing  = params.get<double>("Final Point Spacing", 1);
 
+  bGetCurrent = (params.get<std::string>("Return Field Name", "") == "current");
 
   if(backtraceAfterIters < 0) backtraceAfterIters = 10000000;
   else if(backtraceAfterIters <= 1) backtraceAfterIters = 2; // can't backtrace until the second iteration
@@ -244,7 +246,7 @@ evaluateResponse(const double current_time,
     }
   }
 
-  //  5) Fill response (g-vector) with values near the highest image point
+  //  5) Fill response (g-vector) with values near the highest image point (computes current if desired)
   fillSaddlePointData(current_time, xdot, x, p, g, dbMode);
 
   return;
@@ -1029,6 +1031,26 @@ FindSaddlePoint_LevelSet(std::vector<double>& allFieldVals,
 
   // nMaxTrees < 2 - so we need more trees.  Could try to increase cutoffDistance and/or cutoffFieldVal.
   return 2;
+}
+
+
+double QCAD::SaddleValueResponseFunction::
+getCurrent() const
+{
+  const double kB = 8.617332e-5; // eV/K
+  const double effMass = 1.0; // in units of m_0
+  const double Temp = 10; // K
+  const double Vds = 0.0001; // one tenth of an meV bias
+
+  Teuchos::RCP<std::vector<double> > Ec = Teuchos::rcp( new std::vector<double>(finalPts.size()) );
+  for(std::size_t i=0; i<finalPts.size(); i++)
+    (*Ec)[i] = finalPts[i].value;
+
+  Teuchos::RCP<Epetra_MpiComm> Comm = Teuchos::rcp( new Epetra_MpiComm(MPI_COMM_WORLD) );
+  QCAD::GreensFunctionTunnelingSolver solver(Ec, finalPtSpacing, effMass, Comm); //Teuchos::rcp(comm.Clone())
+  double I = solver.computeCurrent(Vds, kB * Temp); // overwrite "Return Field Val" with current
+  std::cout << "Current I = " << I << " Amps" << std::endl;
+  return I;
 }
 
 

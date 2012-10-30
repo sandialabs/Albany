@@ -50,6 +50,11 @@ ResponseSaddleValue(Teuchos::ParameterList& p,
   bReturnSameField = (fieldName == retFieldName);
   //bLateralVolumes = true; // Future: make into a parameter
 
+  //! Special case when return field name == "current": then just compute 
+  //   as if returning the same field, and overwrite with current value at end
+  if(retFieldName == "current")
+    bReturnSameField = true;    
+
   //! setup operation field and its gradient, and the return field (if it's different)
   PHX::MDField<ScalarT> f(fieldName, dl->qp_scalar); field = f;
   PHX::MDField<ScalarT> fg(fieldGradientName, dl->qp_vector); fieldGradient = fg;
@@ -288,7 +293,12 @@ postEvaluate(typename Traits::PostEvalData workset)
     const double* pt = svResponseFn->getSaddlePointPosition();
     for(std::size_t i=0; i<numDims; i++) 
       this->global_response[2+i] = pt[i];
-  
+
+    if(retFieldName == "current") {
+      this->global_response[1] = this->global_response[0];
+      this->global_response[0] = svResponseFn->getCurrent();
+    }
+	
     // Do global scattering
     PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postEvaluate(workset);
   }

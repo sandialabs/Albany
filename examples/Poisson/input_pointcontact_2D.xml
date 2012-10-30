@@ -107,15 +107,49 @@
 	-->
       </ParameterList>
 
-      <Parameter name="Response 4" type="string" value="Save Field" />
+      <Parameter name="Response 4" type="string" value="Saddle Value" />
       <ParameterList name="ResponseParams 4">
+	<Parameter name="Debug Mode" type="int" value="1" />
+
+        <Parameter name="Field Name" type="string" value="Potential" />
+        <Parameter name="Field Gradient Name" type="string" value="Potential Gradient" />
+        <Parameter name="Return Field Name" type="string" value="current" />
+	<Parameter name="Field Scaling Factor" type="double" value="-1.0" />
+
+        <Parameter name="Output Filename" type="string" value="saddlePath_current.dat" />
+        <Parameter name="Output Interval" type="int" value="20" />
+        <Parameter name="Debug Filename" type="string" value="saddleDebug_current.dat" />
+
+	<Parameter name="Number of Image Points" type="int" value="21" />
+	<Parameter name="Image Point Size" type="double" value="0.4" />
+	<Parameter name="Maximum Iterations" type="int" value="100" />
+	<Parameter name="Max Time Step" type="double" value="1" />
+	<Parameter name="Min Time Step" type="double" value="0.001" />
+	<Parameter name="Min Spring Constant" type="double" value="1" />
+	<Parameter name="Max Spring Constant" type="double" value="1" />
+	<Parameter name="Convergence Tolerance" type="double" value="1e-6" />
+	<Parameter name="Climbing NEB" type="bool" value="1" />
+	<Parameter name="Anti-Kink Factor" type="double" value="1" />
+
+	<Parameter name="Begin Point" type="Array(double)" value="{-5, +8.0}" />
+	<Parameter name="End Point"   type="Array(double)" value="{-1, -10.0}" />
+
+        <Parameter type="int" name="Maximum Number of Final Points" value="100"/>
+        <Parameter type="double" name="Final Point Spacing" value="0.005"/>
+
+      </ParameterList>
+
+
+
+      <Parameter name="Response 5" type="string" value="Save Field" />
+      <ParameterList name="ResponseParams 5">
         <Parameter name="Vector Field Name" type="string" value="Potential Gradient" />
         <Parameter name="State Name" type="string" value="XGrad" />
 	<Parameter name="Vector Operation" type="string" value="xCoord" />
       </ParameterList>
 
-      <Parameter name="Response 5" type="string" value="Save Field" />
-      <ParameterList name="ResponseParams 5">
+      <Parameter name="Response 6" type="string" value="Save Field" />
+      <ParameterList name="ResponseParams 6">
         <Parameter name="Vector Field Name" type="string" value="Potential Gradient" />
         <Parameter name="State Name" type="string" value="YGrad" />
 	<Parameter name="Vector Operation" type="string" value="yCoord" />

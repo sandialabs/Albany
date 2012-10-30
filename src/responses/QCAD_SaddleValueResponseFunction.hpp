@@ -172,6 +172,7 @@ namespace QCAD {
     double getSaddlePointWeight(const double* p) const;
     double getTotalSaddlePointWeight() const;
     const double* getSaddlePointPosition() const;
+    double getCurrent() const;
     
   private:
 
@@ -283,6 +284,8 @@ namespace QCAD {
     //! data for final points (just used at end to get more data pts along saddle path)
     double finalPtSpacing;
     int maxFinalPts;
+
+    bool bGetCurrent;
 
     //! accumulation vectors for evaluator to fill
     mathVector imagePtValues;
