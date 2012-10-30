@@ -60,7 +60,7 @@ private:
   //! Vector to take the jump of
   PHX::MDField<ScalarT,Cell,QuadPoint> jump;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> refBasis;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> refDualBasis;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> refNormal;
 
   //! Reference Cell FieldContainers

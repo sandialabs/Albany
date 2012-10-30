@@ -50,10 +50,10 @@ private:
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
   //! Finite element basis for the midplane
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
-  //! Deformation Gradient
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> defGrad;
-  //! Cauchy Stress
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> stress;
+  //! Scalar Gradient
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> scalarGrad;
+  //! Scalar Jump
+    PHX::MDField<ScalarT,Cell,QuadPoint> scalarJump;
   //! Current configuration basis
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> currentBasis;
   //! Reference configuration dual basis
@@ -63,6 +63,9 @@ private:
   //! Reference configuration area
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> refArea;
 
+//  // weight times basis function value at integration point
+//  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
+
   //! Reference Cell FieldContainers
   Intrepid::FieldContainer<RealType> refValues;
   Intrepid::FieldContainer<RealType> refGrads;
@@ -70,7 +73,7 @@ private:
   Intrepid::FieldContainer<RealType> refWeights;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node,Dim> force;
+  PHX::MDField<ScalarT,Cell,Node> scalarResidual;
 
   unsigned int worksetSize;
   unsigned int numNodes;

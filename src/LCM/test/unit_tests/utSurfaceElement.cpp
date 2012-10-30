@@ -673,19 +673,19 @@ namespace {
 
     //-----------------------------------------------------------------------------------
     // reference basis
-    Teuchos::ArrayRCP<ScalarT> referenceBasis(numQPts*numDim*numDim);
+    Teuchos::ArrayRCP<ScalarT> referenceDualBasis(numQPts*numDim*numDim);
     for ( int i(0); i < numQPts; ++i ) {
-      referenceBasis[numDim*numDim*i+0]=0.0; referenceBasis[numDim*numDim*i+1]=0.0; referenceBasis[numDim*numDim*i+2]=0.5;
-      referenceBasis[numDim*numDim*i+3]=0.5; referenceBasis[numDim*numDim*i+4]=0.0; referenceBasis[numDim*numDim*i+5]=0.0;
-      referenceBasis[numDim*numDim*i+6]=0.0; referenceBasis[numDim*numDim*i+7]=1.0; referenceBasis[numDim*numDim*i+8]=0.0;
+      referenceDualBasis[numDim*numDim*i+0]=0.0; referenceDualBasis[numDim*numDim*i+1]=0.0; referenceDualBasis[numDim*numDim*i+2]=0.5;
+      referenceDualBasis[numDim*numDim*i+3]=0.5; referenceDualBasis[numDim*numDim*i+4]=0.0; referenceDualBasis[numDim*numDim*i+5]=0.0;
+      referenceDualBasis[numDim*numDim*i+6]=0.0; referenceDualBasis[numDim*numDim*i+7]=1.0; referenceDualBasis[numDim*numDim*i+8]=0.0;
     }
 
     // SetField evaluator, which will be used to manually assign values to the reference basis
     Teuchos::ParameterList rbPL;
-    rbPL.set<string>("Evaluated Field Name", "Reference Basis");
-    rbPL.set<Teuchos::ArrayRCP<ScalarT> >("Field Values", referenceBasis);
+    rbPL.set<string>("Evaluated Field Name", "Reference Dual Basis");
+    rbPL.set<Teuchos::ArrayRCP<ScalarT> >("Field Values", referenceDualBasis);
     rbPL.set<Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_tensor);
-    Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldRefBasis = Teuchos::rcp(new LCM::SetField<Residual, Traits>(rbPL));
+    Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldRefDualBasis = Teuchos::rcp(new LCM::SetField<Residual, Traits>(rbPL));
 
     //-----------------------------------------------------------------------------------
     // reference normal
@@ -736,7 +736,7 @@ namespace {
     //-----------------------------------------------------------------------------------
     // SurfaceScalarGradient evaluator
     Teuchos::ParameterList ssgPL;
-    ssgPL.set<string>("Reference Basis Name","Reference Basis");
+    ssgPL.set<string>("Reference Dual Basis Name","Reference Dual Basis");
     ssgPL.set<string>("Reference Normal Name", "Reference Normal");
     ssgPL.set<string>("Scalar Jump Name", "Jump");
     ssgPL.set<string>("Nodal Scalar Name", "Nodal Scalar");
@@ -752,7 +752,7 @@ namespace {
     PHX::FieldManager<PHAL::AlbanyTraits> fieldManager;
 
     // Register the evaluators with the field manager
-    fieldManager.registerEvaluator<Residual>(setFieldRefBasis);
+    fieldManager.registerEvaluator<Residual>(setFieldRefDualBasis);
     fieldManager.registerEvaluator<Residual>(setFieldRefNormal);
     fieldManager.registerEvaluator<Residual>(setFieldJump);
     fieldManager.registerEvaluator<Residual>(setFieldNodalScalar);
@@ -786,7 +786,7 @@ namespace {
     // Record the expected gradient
     LCM::Vector<ScalarT> expectedScalarGrad(0.0, 10.0, 0.0);
 
-    std::cout << "Perpendicular case:" << expectedScalarGrad << std::endl;
+    std::cout << "Perpendicular case: \n" << expectedScalarGrad << std::endl;
     std::cout << "expected scalar gradient:\n" << expectedScalarGrad << std::endl;
 
     std::cout << "scalar gradient:\n" << std::endl;
@@ -823,7 +823,7 @@ namespace {
     // Record the expected gradient
     LCM::Vector<ScalarT> expectedScalarGrad2(0.0, 0.0, 0.25);
 
-    std::cout << "Parallel case:" << expectedScalarGrad2 << std::endl;
+    std::cout << "Parallel case: \n" << expectedScalarGrad2 << std::endl;
     std::cout << "expected scalar gradient:\n" << expectedScalarGrad2 << std::endl;
 
     std::cout << "scalar gradient:\n" << std::endl;
