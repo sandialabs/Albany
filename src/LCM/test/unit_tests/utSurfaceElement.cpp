@@ -734,11 +734,11 @@ namespace {
     // SetField evaluator, which will be used to manually assign values to the 
     // reference dual basis
     Teuchos::ParameterList rdbPL;
-    rdbPL.set<string>("Evaluated Field Name", "Reference Basis");
+    rdbPL.set<string>("Evaluated Field Name", "Reference Dual Basis");
     rdbPL.set<ArrayRCP<ScalarT> >("Field Values", referenceDualBasis);
     rdbPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_tensor);
-    RCP<LCM::SetField<Residual, Traits> > setFieldRefBasis = 
-      rcp(new LCM::SetField<Residual, Traits>(rbPL));
+    RCP<LCM::SetField<Residual, Traits> > setFieldRefDualBasis = 
+      rcp(new LCM::SetField<Residual, Traits>(rdbPL));
 
     //-----------------------------------------------------------------------------------
     // reference normal
@@ -1026,7 +1026,7 @@ namespace {
       rcp(new CT(shards::getCellTopologyData<shards::Quadrilateral<4> >()));
     Intrepid::DefaultCubatureFactory<RealType> cubFactory;
     RCP<Intrepid::Cubature<RealType> > cubature = 
-cubFactory.create(*cellType, 3);
+      cubFactory.create(*cellType, 3);
 
     //--------------------------------------------------------------------------
     // SurfaceVectorGradient evaluator
