@@ -249,7 +249,8 @@ namespace LCM {
         LCM::Vector<ScalarT> G_2(3, &basis(cell, pt, 2, 0));
 
         ScalarT j0 = LCM::det(dPhi);
-        ScalarT jacobian = j0 * std::sqrt( LCM::dot(LCM::dot(G_2, dPhiInv * LCM::transpose(dPhiInv)), G_2));
+        ScalarT jacobian = j0 * 
+          std::sqrt( LCM::dot(LCM::dot(G_2, LCM::transpose(dPhiInv) * dPhiInv), G_2));
         area(cell, pt) = jacobian * refWeights(pt);
       }
     }

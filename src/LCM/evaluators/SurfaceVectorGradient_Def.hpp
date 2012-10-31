@@ -87,11 +87,11 @@ namespace LCM {
         LCM::Vector<ScalarT> G1(3, &refDualBasis(cell, pt, 1, 0));
         LCM::Vector<ScalarT> G2(3, &refDualBasis(cell, pt, 2, 0));
 
-        LCM::Tensor<ScalarT> F1(LCM::bun(g_0, G0) + LCM::bun(g_1, G1) + LCM::bun(g_2, G2));
+        LCM::Tensor<ScalarT> Fpar(LCM::bun(g_0, G0) + LCM::bun(g_1, G1) + LCM::bun(g_2, G2));
         // for Jay: bun()
-        LCM::Tensor<ScalarT> F2((1 / thickness) * LCM::bun(d, G_2));
+        LCM::Tensor<ScalarT> Fper((1 / thickness) * LCM::bun(d, G_2));
 
-        LCM::Tensor<ScalarT> F = F1 + F2;
+        LCM::Tensor<ScalarT> F = Fpar + Fper;
 
         defGrad(cell, pt, 0, 0) = F(0, 0);
         defGrad(cell, pt, 0, 1) = F(0, 1);
