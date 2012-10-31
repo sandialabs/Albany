@@ -475,7 +475,7 @@ namespace LCM {
 
     default:
       for (Index i = 0; i < N; ++i) {
-        e[i] -= 0.0;
+        e[i] = 0.0;
       }
       break;
 
@@ -2729,6 +2729,7 @@ namespace LCM {
 
   //
   // R^N skew symmetric 2nd-order tensor from vector, undefined
+  // for N!=3.
   // \param u vector
   //
   template<typename T>
@@ -2797,7 +2798,7 @@ namespace LCM {
   }
 
   //
-  // Swap row. Echange rows i and j in place
+  // Swap row. Exchange rows i and j in place
   // \param A tensor
   // \param i index
   // \param j index
@@ -2818,7 +2819,7 @@ namespace LCM {
   }
 
   //
-  // Swap column. Echange columns i and j in place
+  // Swap column. Exchange columns i and j in place
   // \param A tensor
   // \param i index
   // \param j index

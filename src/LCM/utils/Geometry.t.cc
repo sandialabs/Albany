@@ -184,7 +184,7 @@ namespace LCM {
 
     T s = dot(v, n);
 
-    if (s <= 0.0) return false;
+    if (s < 0.0) return false;
 
     return true;
   }

@@ -706,7 +706,7 @@ namespace LCM {
       const Index
       number_voxels = std::ceil((max(i) - min(i)) / delta);
       voxels_per_dimension(i) = number_voxels;
-      voxel_size_(i) = span(i) / voxels_per_dimension(i);
+      voxel_size_(i) = span(i) / number_voxels;
     }
 
     //
@@ -780,23 +780,42 @@ namespace LCM {
   bool
   ConnectivityArray::IsInsideMesh(Vector<double> const & point) const
   {
-    const Index i = (point(0) - lower_corner_(0)) / voxel_size_(0) + 0.5;
+    Index
+    i = (point(0) - lower_corner_(0)) / voxel_size_(0);
 
-    if (i < 0 || i >= voxels_.size()) {
+    Index
+    j = (point(1) - lower_corner_(1)) / voxel_size_(1);
+
+    Index
+    k = (point(2) - lower_corner_(2)) / voxel_size_(2);
+
+
+    const Index
+    x_size = voxels_.size();
+
+    const Index
+    y_size = voxels_[0].size();
+
+    const Index
+    z_size = voxels_[0][0].size();
+
+
+    if (i < 0 || i > x_size) {
       return false;
     }
 
-    const Index j = (point(1) - lower_corner_(1)) / voxel_size_(1) + 0.5;
-
-    if (j < 0 || j >= voxels_[0].size()) {
+    if (j < 0 || j > y_size) {
       return false;
     }
 
-    const Index k = (point(2) - lower_corner_(2)) / voxel_size_(2) + 0.5;
-
-    if (k < 0 || k >= voxels_[0][0].size()) {
+    if (k < 0 || k > z_size) {
       return false;
     }
+
+
+    if (i == x_size) --i;
+    if (j == y_size) --j;
+    if (k == z_size) --k;
 
     return voxels_[i][j][k];
   }
