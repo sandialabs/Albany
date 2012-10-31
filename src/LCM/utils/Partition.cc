@@ -1441,7 +1441,7 @@ namespace LCM {
 
     // K-means iteration
     const Index
-    max_iterations = 128;
+    max_iterations = 32;
 
     const Index
     cluster_size = GetClusterSize();
@@ -1553,6 +1553,14 @@ namespace LCM {
     std::map<int, int>
     partitions;
 
+    // Keep track of which partitions have been assigned elements.
+    std::set<int>
+    unassigned_partitions;
+
+    for (int partition = 0; partition < number_partitions; ++partition) {
+      unassigned_partitions.insert(partition);
+    }
+
     // Determine number of nodes that define element topology
     const Index
     nodes_per_element = GetNodesPerElement();
@@ -1595,6 +1603,25 @@ namespace LCM {
       const Index
       partition = closest_point(element_centroid, generators);
       partitions[element] = partition;
+
+      std::set<int>::const_iterator
+      it = unassigned_partitions.find(partition);
+
+      assert(it != unassigned_partitions.end());
+
+      unassigned_partitions.erase(it);
+
+    }
+
+    if (unassigned_partitions.size() > 0) {
+      std::cout << "WARNING: The following partitions were not" << std::endl;
+      std::cout << "assigned any elements (mesh too coarse?):" << std::endl;
+
+      for (std::set<int>::const_iterator it = unassigned_partitions.begin();
+          it != unassigned_partitions.end();
+          ++it) {
+        std::cout << (*it) << std::endl;
+      }
 
     }
 
