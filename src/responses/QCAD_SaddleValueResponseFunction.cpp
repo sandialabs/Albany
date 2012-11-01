@@ -72,6 +72,7 @@ SaddleValueResponseFunction(
   finalPtSpacing  = params.get<double>("Final Point Spacing", 1);
 
   bGetCurrent = (params.get<std::string>("Return Field Name", "") == "current");
+  current_Ecutoff_offset_from_Emax = params.get<double>("GF-CBR Method Energy Cutoff Offset", 0);
 
   if(backtraceAfterIters < 0) backtraceAfterIters = 10000000;
   else if(backtraceAfterIters <= 1) backtraceAfterIters = 2; // can't backtrace until the second iteration
@@ -1048,7 +1049,7 @@ getCurrent() const
 
   Teuchos::RCP<Epetra_MpiComm> Comm = Teuchos::rcp( new Epetra_MpiComm(MPI_COMM_WORLD) );
   QCAD::GreensFunctionTunnelingSolver solver(Ec, finalPtSpacing, effMass, Comm); //Teuchos::rcp(comm.Clone())
-  double I = solver.computeCurrent(Vds, kB * Temp); // overwrite "Return Field Val" with current
+  double I = solver.computeCurrent(Vds, kB * Temp, current_Ecutoff_offset_from_Emax); // overwrite "Return Field Val" with current
   std::cout << "Current I = " << I << " Amps" << std::endl;
   return I;
 }

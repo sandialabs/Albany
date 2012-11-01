@@ -294,7 +294,13 @@ postEvaluate(typename Traits::PostEvalData workset)
     for(std::size_t i=0; i<numDims; i++) 
       this->global_response[2+i] = pt[i];
 
-    if(retFieldName == "current") {
+    if(retFieldName == "current" &&
+       (QCAD::EvaluatorTools<EvalT,Traits>::getEvalType() == "Tangent" ||
+	QCAD::EvaluatorTools<EvalT,Traits>::getEvalType() == "Residual")) {
+      //We only really need to evaluate the current when computing the final response values,
+      // which if for the "Tangent" or "Residual" evaluation type (depeding on whether
+      // sensitivities are being computed).  It would be nice to have a cleaner
+      // way of implementing a response whose algorithm cannot support AD types. (EGN)
       this->global_response[1] = this->global_response[0];
       this->global_response[0] = svResponseFn->getCurrent();
     }
@@ -368,6 +374,8 @@ QCAD::ResponseSaddleValue<EvalT,Traits>::getValidResponseParameters() const
   validPL->set<double>("Percent to Shorten End", 0.0, "Percentage of total or half path (if guessed pt) to shorten the end of the path");
 
   validPL->set<Teuchos::Array<double> >("Saddle Point Guess", Teuchos::Array<double>(), "Estimate of where the saddle point lies");
+
+  validPL->set<double>("GF-CBR Method Energy Cutoff Offset", 0, "Value [in eV] added to the maximum energy integrated over in Green's Function - Contact Block Reduction method for obtaining current to obtain the cutoff energy, which sets the largest eigenvalue needed in the tight binding diagonalization part of the method");
 
   validPL->set<int>("Debug Mode", 0, "Print verbose debug messages to stdout");
   validPL->set< Teuchos::RCP<QCAD::SaddleValueResponseFunction> >("Response Function", Teuchos::null, "Saddle value response function");

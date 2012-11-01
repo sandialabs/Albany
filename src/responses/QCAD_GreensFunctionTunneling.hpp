@@ -33,18 +33,21 @@ namespace QCAD {
     // ptSpacing is in units of microns (um)
     GreensFunctionTunnelingSolver(const Teuchos::RCP<std::vector<double> >& EcValues_, 
 				  double ptSpacing, double effMass, 
-				  const Teuchos::RCP<Epetra_Comm>& Comm_);
+				  const Teuchos::RCP<Epetra_Comm>& Comm_,
+				  bool bNeumannBC = true);
     ~GreensFunctionTunnelingSolver();
 
     // returns current in units of Amps at a given Vds (in Volts)
-    double computeCurrent(double Vds, double kbT);
+    double computeCurrent(double Vds, double kbT, double Ecutoff_offset_from_Emax);
     
-    void computeCurrentRange(const std::vector<double> Vds, double kbT, std::vector<double>& resultingCurrent);
+    void computeCurrentRange(const std::vector<double> Vds, double kbT, 
+			     double Ecutoff_offset_from_Emax,
+			     std::vector<double>& resultingCurrent);
 
   private:
     double f0(double x) const;
 
-    bool doMatrixDiag(double Vds, std::vector<double>& Ec, double Emax,
+    bool doMatrixDiag(double Vds, std::vector<double>& Ec, double Ecutoff,
 		      std::vector<Anasazi::Value<double> >& evals,
 		      Teuchos::RCP<Epetra_MultiVector>& evecs);
 
@@ -53,6 +56,7 @@ namespace QCAD {
     Teuchos::RCP<Epetra_Map> Map;
     Teuchos::RCP<std::vector<double> >EcValues;
     double ptSpacing, mass, t0;
+    bool bUseNeumannBC;
   };
 
 }

@@ -286,6 +286,7 @@ namespace QCAD {
     int maxFinalPts;
 
     bool bGetCurrent;
+    double current_Ecutoff_offset_from_Emax;
 
     //! accumulation vectors for evaluator to fill
     mathVector imagePtValues;

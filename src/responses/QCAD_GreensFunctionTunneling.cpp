@@ -32,12 +32,14 @@
 // Assume ptSpacing is in units of microns (um)
 QCAD::GreensFunctionTunnelingSolver::
 GreensFunctionTunnelingSolver(const Teuchos::RCP<std::vector<double> >& EcValues_, 
-			      double ptSpacing_, double effMass, const Teuchos::RCP<Epetra_Comm>& Comm_)
+			      double ptSpacing_, double effMass, const Teuchos::RCP<Epetra_Comm>& Comm_,
+			      bool bNeumannBC)
 {  
   Comm = Comm_;
   EcValues = EcValues_;
   ptSpacing = ptSpacing_;
   mass = effMass;
+  bUseNeumannBC = bNeumannBC;
 }
 
 QCAD::GreensFunctionTunnelingSolver::
@@ -47,7 +49,7 @@ QCAD::GreensFunctionTunnelingSolver::
 
 
 double QCAD::GreensFunctionTunnelingSolver::
-computeCurrent(double Vds, double kbT)
+computeCurrent(double Vds, double kbT, double Ecutoff_offset_from_Emax)
 {
   const double hbar_1 = 6.58212e-16; // eV * s
   const double hbar_2 = 1.05457e-34; // J * s = kg * m^2 / s
@@ -64,15 +66,13 @@ computeCurrent(double Vds, double kbT)
   // dE = kbT / 10
   int nPts    = EcValues->size();
   double Emax = (*EcValues)[0] + 20*kbT;  // should this just be +20*kbT  (Suzey??)
-  double Emin = (*EcValues)[nPts-1] - Vds;
+  double Emin = std::min((*EcValues)[0],(*EcValues)[nPts-1]) - Vds;  // assume one of endpoints is min(EcValues)
   double dE = kbT / 10;
   int nEPts = int((Emax - Emin) / dE) + 1;
   double a0 = ptSpacing;
   bool ret;
 
-  double extra = 100*kbT; //eV - an extra empirical offset to Emax for 
-                      //     setting the eigenvalue range needed for convergence
-
+  double Ecutoff = Emax + Ecutoff_offset_from_Emax; // maximum eigenvalue needed
 
   Teuchos::RCP<std::vector<double> > pEc = Teuchos::null;
   Teuchos::RCP<std::vector<double> > pLastEc = Teuchos::null;
@@ -81,11 +81,11 @@ computeCurrent(double Vds, double kbT)
   t0  = hbar_1 * hbar_2 /(2*mass*m_0* pow(a0*um,2) ); // gives t0 in units of eV    
 
   std::cout << "Doing Initial H-mx diagonalization for Vds = " << Vds << std::endl;
-  ret = doMatrixDiag(Vds, *EcValues, Emax+extra, evals, evecs);
+  ret = doMatrixDiag(Vds, *EcValues, Ecutoff, evals, evecs);
   pEc = EcValues;
   std::cout << "  Diag w/ a0 = " << a0 << ", nPts = " << nPts << " gives "
 	    << "Max Eval = " << evals[evals.size()-1].realpart 
-	    << "(need >= "<<(Emax+extra)<<")" << std::endl;
+	    << "(need >= "<<Ecutoff<<")" << std::endl;
 
   while(ret == false && a0 > min_a0) {
     a0 /= 2; nPts *= 2;  
@@ -101,10 +101,10 @@ computeCurrent(double Vds, double kbT)
     }
 
     // Setup and diagonalize H matrix
-    ret = doMatrixDiag(Vds, *pEc, Emax+extra, evals, evecs);
+    ret = doMatrixDiag(Vds, *pEc, Ecutoff, evals, evecs);
     std::cout << "  Diag w/ a0 = " << a0 << ", nPts = " << nPts << " gives "
 	      << "Max Eval = " << evals[evals.size()-1].realpart 
-	      << "(need >= "<<(Emax+extra)<<")" << std::endl;
+	      << "(need >= "<<Ecutoff<<")" << std::endl;
   }
   std::cout << "Done H-mx diagonalization, now broadcasting results" << std::endl;
 
@@ -150,7 +150,7 @@ computeCurrent(double Vds, double kbT)
   std::vector<int> MyGlobalEnergyPts(NumMyEnergyPts);
   EnergyMap.MyGlobalElements(&MyGlobalEnergyPts[0]);
 
-  double I, Iloc = 0, x;
+  double I, Iloc = 0, x, y;
   double E, Gamma11, GammaNN, G11, G1N, GNN, T;
   std::complex<double> Sigma11, SigmaNN, G, p11, pNN;
   
@@ -159,16 +159,17 @@ computeCurrent(double Vds, double kbT)
     E = Emin + MyGlobalEnergyPts[i]*dE;
 
     x = (E-VL)*(t0-(E-VL)/4);
+    y = bUseNeumannBC ? 0 : t0;
     if( x >= 0 )
-      Sigma11 = std::complex<double>( (E-VL)/2 - t0, -sqrt(x) );
+      Sigma11 = std::complex<double>( (E-VL)/2 - y, -sqrt(x) );
     else
-      Sigma11 = std::complex<double>( (E-VL)/2 - t0 + sqrt(-x), 0);
+      Sigma11 = std::complex<double>( (E-VL)/2 - y + sqrt(-x), 0);
 
     x = (E-VR)*(t0-(E-VR)/4);
     if( x >= 0 )
-      SigmaNN = std::complex<double>( (E-VR)/2 - t0, -sqrt(x) );
+      SigmaNN = std::complex<double>( (E-VR)/2 - y, -sqrt(x) );
     else
-      SigmaNN = std::complex<double>( (E-VR)/2 - t0 + sqrt(-x ), 0);
+      SigmaNN = std::complex<double>( (E-VR)/2 - y + sqrt(-x ), 0);
 
     Gamma11 = 2*Sigma11.imag();
     GammaNN = 2*SigmaNN.imag();
@@ -209,7 +210,7 @@ double QCAD::GreensFunctionTunnelingSolver::f0(double x) const
 }
 
 bool QCAD::GreensFunctionTunnelingSolver::
-doMatrixDiag(double Vds, std::vector<double>& Ec, double Emax,
+doMatrixDiag(double Vds, std::vector<double>& Ec, double Ecutoff,
 	     std::vector<Anasazi::Value<double> >& evals, 
 	     Teuchos::RCP<Epetra_MultiVector>& evecs)
 {
@@ -231,13 +232,13 @@ doMatrixDiag(double Vds, std::vector<double>& Ec, double Emax,
   // on this processor
   std::vector<int> NumNz(nLocalEls);
 
-  /* We are building a matrix of block structure:
+  /* We are building a matrix of block structure (left = DBC, right = NBC):
   
-      | Ec+2t0  -t0                  |
-      | -t0    Ec+2t0  -t0           |
-      |         -t0   ...            |
-      |                    ..    -t0 |
-      |                   -t0  Ec+2t0|
+      | Ec+2t0  -t0                  |          | Ec+t0   -t0                  |
+      | -t0    Ec+2t0  -t0           |	        | -t0    Ec+2t0  -t0           |
+      |         -t0   ...            |	 OR     |         -t0   ...            |
+      |                    ..    -t0 |	        |                    ..    -t0 |
+      |                   -t0  Ec+2t0|	        |                   -t0  Ec+t0 |
 
    where the matrix has nPts rows and nPts columns
   */
@@ -252,10 +253,16 @@ doMatrixDiag(double Vds, std::vector<double>& Ec, double Emax,
   Teuchos::RCP<Epetra_CrsMatrix> A = Teuchos::rcp( new Epetra_CrsMatrix(Copy, *Map, &NumNz[0]) );
 
   // Fill Hamiltonian Matrix
-  std::vector<double> Values(3);
+  std::vector<double> Values(3), endValues(3);
   std::vector<int> Indices(3);
-  Values[0] = -t0; Values[1] = 2*t0; Values[2] = -t0;
   int NumEntries;
+
+  Values[0] = -t0; Values[1] = 2*t0; Values[2] = -t0;
+  if(bUseNeumannBC) {
+    endValues[0] = -t0; endValues[1] =   t0; endValues[2] = -t0;  }
+  else {
+    endValues[0] = -t0; endValues[1] = 2*t0; endValues[2] = -t0;  }
+
   
   for (int i=0; i<nLocalEls; i++) {
     double Ulin = -Vds * ((double)myGlobalElements[i]) / nPts;
@@ -265,14 +272,14 @@ doMatrixDiag(double Vds, std::vector<double>& Ec, double Emax,
       Indices[0] = 0;
       Indices[1] = 1;
       NumEntries = 2;
-      int info = A->InsertGlobalValues(myGlobalElements[i], NumEntries, &Values[1], &Indices[0]);
+      int info = A->InsertGlobalValues(myGlobalElements[i], NumEntries, &endValues[1], &Indices[0]);
       TEUCHOS_TEST_FOR_EXCEPTION( info != 0, std::runtime_error, "Failure in InsertGlobalValues()" );
     }
     else if (myGlobalElements[i] == nPts-1) {
       Indices[0] = nPts-2;
       Indices[1] = nPts-1;
       NumEntries = 2;
-      int info = A->InsertGlobalValues(myGlobalElements[i], NumEntries, &Values[0], &Indices[0]);
+      int info = A->InsertGlobalValues(myGlobalElements[i], NumEntries, &endValues[0], &Indices[0]);
       TEUCHOS_TEST_FOR_EXCEPTION( info != 0, std::runtime_error, "Failure in InsertGlobalValues()" );
     }
     else {
@@ -379,13 +386,14 @@ doMatrixDiag(double Vds, std::vector<double>& Ec, double Emax,
   }
 
   double maxEigenvalue = evals[sol.numVecs-1].realpart;
-  return (maxEigenvalue > Emax);
+  return (maxEigenvalue > Ecutoff);
 }
     
 void QCAD::GreensFunctionTunnelingSolver::
-computeCurrentRange(const std::vector<double> Vds, double kbT, std::vector<double>& resultingCurrent)
+computeCurrentRange(const std::vector<double> Vds, double kbT, 
+		    double Ecutoff_offset_from_Emax, std::vector<double>& resultingCurrent)
 {
   for(std::size_t i = 0; i < Vds.size(); i++) {
-    resultingCurrent[i] = computeCurrent(Vds[i], kbT);
+    resultingCurrent[i] = computeCurrent(Vds[i], kbT, Ecutoff_offset_from_Emax);
   }
 }

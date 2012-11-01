@@ -2,6 +2,7 @@
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Poisson 2D" />
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
+    <Parameter name="Compute Sensitivities" type="bool" value="1" />
 
     <Parameter name="LengthUnitInMeters" type="double" value="1e-6"/>
     <Parameter name="Temperature" type="double" value="300"/>
@@ -114,6 +115,7 @@
         <Parameter name="Field Name" type="string" value="Potential" />
         <Parameter name="Field Gradient Name" type="string" value="Potential Gradient" />
         <Parameter name="Return Field Name" type="string" value="current" />
+        <Parameter name="GF-CBR Method Energy Cutoff Offset" type="double" value="0.1" />
 	<Parameter name="Field Scaling Factor" type="double" value="-1.0" />
 
         <Parameter name="Output Filename" type="string" value="saddlePath_current.dat" />
