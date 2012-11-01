@@ -1007,6 +1007,8 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
   Teuchos::ParameterList emptyParamlist("Empty Parameters");
 
   if(preprocessType == "initial poisson") {
+    //! Turn off sensitivities
+    params.sublist("Problem").set("Compute Sensitivities", false);
 
     //! Set poisson parameters
     params.sublist("Problem").sublist("Poisson Source").set("Quantum Region Source", "semiclassical");
@@ -1040,6 +1042,9 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
   }
 
   else if(preprocessType == "Delta poisson") {
+    //! Turn off sensitivities
+    params.sublist("Problem").set("Compute Sensitivities", false);
+
     //! Rename output file
     //std::string exoName= "delta" + params.sublist("Discretization").get<std::string>("Exodus Output File Name");
     std::string exoName= params.sublist("Discretization").get<std::string>("Exodus Output File Name") + ".delta";
@@ -1107,6 +1112,9 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
   }
 
   else if(preprocessType == "No charge poisson") {
+    //! Turn off sensitivities
+    params.sublist("Problem").set("Compute Sensitivities", false);
+
     //! Rename output file
     std::string exoName= params.sublist("Discretization").get<std::string>("Exodus Output File Name") + ".nocharge";
     params.sublist("Discretization").set("Exodus Output File Name", exoName);
@@ -1174,6 +1182,9 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
   }
 	
   else if(preprocessType == "Coulomb poisson") {
+    //! Turn off sensitivities
+    params.sublist("Problem").set("Compute Sensitivities", false);
+
     //! Rename output file
     //std::string exoName= "coulomb" + params.sublist("Discretization").get<std::string>("Exodus Output File Name");
     std::string exoName= params.sublist("Discretization").get<std::string>("Exodus Output File Name") + ".coulomb";
@@ -1249,6 +1260,9 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
   }
 
   else if(preprocessType == "Coulomb poisson imaginary") {
+    //! Turn off sensitivities
+    params.sublist("Problem").set("Compute Sensitivities", false);
+
     //! Rename output file
     //std::string exoName= "coulomb" + params.sublist("Discretization").get<std::string>("Exodus Output File Name");
     std::string exoName= params.sublist("Discretization").get<std::string>("Exodus Output File Name") + ".coulomb";
@@ -1324,6 +1338,9 @@ preprocessParams(Teuchos::ParameterList& params, std::string preprocessType)
   }
   
   else if(preprocessType == "Poisson") {
+    //! Turn off sensitivities
+    params.sublist("Problem").set("Compute Sensitivities", false);
+
     //! Rename output file
     std::string exoName= params.sublist("Discretization").get<std::string>("Exodus Output File Name") + ".poisson";
     params.sublist("Discretization").set("Exodus Output File Name", exoName);
