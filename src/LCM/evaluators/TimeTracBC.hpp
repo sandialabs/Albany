@@ -9,6 +9,8 @@
 
 #include "PHAL_Neumann.hpp"
 
+#include "Teuchos_TwoDArray.hpp"
+
 namespace LCM {
 
 /** \brief Time dependent Neumann boundary condition evaluator
