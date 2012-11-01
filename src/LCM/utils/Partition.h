@@ -277,6 +277,15 @@ namespace LCM {
     PartitionKMeans(const double length_scale);
 
     ///
+    /// Partition mesh with sequential K-means algorithm
+    /// \param length_scale The length scale for variational nonlocal
+    /// regularization
+    /// \return Partition number for each element
+    ///
+    std::map<int, int>
+    PartitionKMeansSequential(const double length_scale);
+
+    ///
     /// Zoltan interface query function that returns the number of values
     /// needed to express the geometry of an object.
     /// For a three-dimensional object, the return value should be three.

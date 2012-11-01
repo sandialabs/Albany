@@ -57,7 +57,7 @@ int main(int ac, char* av[])
   scheme_names[] = {"geometric", "hypergraph", "kmeans"};
 
   LCM::PartitionScheme
-  partition_scheme = LCM::KMEANS;
+  partition_scheme = LCM::GEOMETRIC;
 
   command_line_processor.setOption(
       "scheme",
