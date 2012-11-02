@@ -50,6 +50,8 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> porosity;
   PHX::MDField<ScalarT,Cell,QuadPoint> biotCoefficient;
   PHX::MDField<ScalarT,Cell,QuadPoint> biotModulus;
+  PHX::MDField<ScalarT,Cell,QuadPoint> elasticModulus;
+  PHX::MDField<ScalarT,Cell,QuadPoint> pRatio;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> TGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint> Source;

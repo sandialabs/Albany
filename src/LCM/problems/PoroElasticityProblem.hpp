@@ -826,6 +826,8 @@ Albany::PoroElasticityProblem::constructEvaluators(
      p->set<string>("Kozeny-Carman Permeability Name", "Kozeny-Carman Permeability");
      p->set<string>("Biot Coefficient Name", "Biot Coefficient");
      p->set<string>("Biot Modulus Name", "Biot Modulus");
+     p->set<string>("Elastic Modulus Name", "Elastic Modulus");
+     p->set<string>("Poissons Ratio Name", "Poissons Ratio");
 
      p->set<string>("Gradient QP Variable Name", "Pore Pressure Gradient");
      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
