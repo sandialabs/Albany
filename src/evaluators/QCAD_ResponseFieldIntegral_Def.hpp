@@ -49,10 +49,11 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
   vector_dl->dimensions(dims);
   numDims = dims[2];
 
+  //! Initialize Region
+  opRegion  = Teuchos::rcp( new QCAD::MeshRegion<EvalT, Traits>("Coord Vec","Weights",*plist,materialDB,dl) );
+
   //! User-specified parameters
   std::string fieldName;
-  std::string ebNameStr = plist->get<std::string>("Element Block Name","");
-  if(ebNameStr.length() > 0) Albany::splitStringOnDelim(ebNameStr,',',ebNames);
 
   fieldName = plist->get<std::string>("Field Name","");
   if(fieldName.length() > 0) {
@@ -78,30 +79,11 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
     }
     else break;
   }
-
   bReturnImagPart = plist->get<bool>("Return Imaginary Part",false);
-  bQuantumEBsOnly = plist->get<bool>("Quantum Element Blocks Only",false);
-
+  
   std::string integrandLinLengthUnit; // linear length unit of integrand (e.g. "cm" for integrand in cm^-3)
   integrandLinLengthUnit = plist->get<std::string>("Integrand Length Unit","cm");
   bPositiveOnly = plist->get<bool>("Positive Return Only",false);
-
-  limitX = limitY = limitZ = false;
-  if( plist->isParameter("x min") && plist->isParameter("x max") ) {
-    limitX = true; TEUCHOS_TEST_FOR_EXCEPT(numDims <= 0);
-    xmin = plist->get<double>("x min");
-    xmax = plist->get<double>("x max");
-  }
-  if( plist->isParameter("y min") && plist->isParameter("y max") ) {
-    limitY = true; TEUCHOS_TEST_FOR_EXCEPT(numDims <= 1);
-    ymin = plist->get<double>("y min");
-    ymax = plist->get<double>("y max");
-  }
-  if( plist->isParameter("z min") && plist->isParameter("z max") ) {
-    limitZ = true; TEUCHOS_TEST_FOR_EXCEPT(numDims <= 2);
-    zmin = plist->get<double>("z min");
-    zmax = plist->get<double>("z max");
-  }
 
   //! compute scaling factor based on number of dimensions and units
   double integrand_length_unit_in_m;
@@ -122,8 +104,6 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
 				<< "Error! Invalid number of dimensions: " << numDims << std::endl);
 
 
-
-
   //! add dependent fields (all fields assumed scalar qp)
   std::vector<std::string>::const_iterator it;
   //for(it = fieldNames.begin(); it != fieldNames.end(); ++it) {
@@ -137,9 +117,11 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
     if(fieldIsComplex[i]) this->addDependentField(fi);
   }
 
-  //TODO: make name unique? Is this needed for anything?
   this->addDependentField(coordVec);
   this->addDependentField(weights);
+  opRegion->addDependentFields(this);
+
+  //TODO: make name unique? Is this needed for anything?
   this->setName(fieldName+" Response Field Integral"+PHX::TypeString<EvalT>::value);
   
   // Setup scatter evaluator
@@ -172,6 +154,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 
   this->utils.setFieldData(coordVec,fm);
   this->utils.setFieldData(weights,fm);
+  opRegion->postRegistrationSetup(fm);
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postRegistrationSetup(d,fm);
 }
 
@@ -193,11 +176,6 @@ template<typename EvalT, typename Traits>
 void QCAD::ResponseFieldIntegral<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  bool bQuantumEB = false; //if no material database, all element blocks are "non-quantum"
-
-  if(materialDB != Teuchos::null)
-    bQuantumEB = materialDB->getElementBlockParam<bool>(workset.EBName,"quantum",false);
-
   // Zero out local response
   for (typename PHX::MDField<ScalarT>::size_type i=0; 
        i<this->local_response.size(); i++)
@@ -205,9 +183,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   typename std::vector<PHX::MDField<ScalarT,Cell,QuadPoint> >::const_iterator it;
 
-  if( (ebNames.size() == 0 || 
-       std::find(ebNames.begin(), ebNames.end(), workset.EBName) != ebNames.end()) &&
-      (bQuantumEBsOnly == false || bQuantumEB == true) ) {
+  if(opRegion->elementBlockIsInRegion(workset.EBName)) {
 
     ScalarT term, val; //, dbI = 0.0;
     std::size_t n, max, nExtraMinuses, nOneBits, nBits = fields.size();
@@ -218,18 +194,9 @@ evaluateFields(typename Traits::EvalData workset)
     //for(std::size_t i=0; i<10; i++) dbMaxRe[i] = dbMaxIm[i] = 0.0;
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-
-      bool cellInBox = false;
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
-        if( (!limitX || (coordVec(cell,qp,0) >= xmin && coordVec(cell,qp,0) <= xmax)) &&
-            (!limitY || (coordVec(cell,qp,1) >= ymin && coordVec(cell,qp,1) <= ymax)) &&
-            (!limitZ || (coordVec(cell,qp,2) >= zmin && coordVec(cell,qp,2) <= zmax)) ) {
-          cellInBox = true; break; }
-      }
-      if( !cellInBox ) continue;
+      if(!opRegion->cellIsInRegion(cell)) continue;
 
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-
 	val = 0.0;
 
 	//Loop over all possible combinations of Re/Im parts which form product terms and 
@@ -333,11 +300,12 @@ QCAD::ResponseFieldIntegral<EvalT,Traits>::getValidResponseParameters() const
     PHAL::SeparableScatterScalarResponse<EvalT,Traits>::getValidResponseParameters();
   validPL->setParameters(*baseValidPL);
 
+  Teuchos::RCP<const Teuchos::ParameterList> regionValidPL = opRegion->getValidParameters();
+  validPL->setParameters(*regionValidPL);
+
   validPL->set<string>("Name", "", "Name of response function");
   validPL->set<int>("Phalanx Graph Visualization Detail", 0, "Make dot file to visualize phalanx graph");
   validPL->set<string>("Type", "", "Response type");
-  validPL->set<string>("Element Block Name", "", "Name of the element block to use as the integration domain");
-  validPL->set<bool>("Quantum Element Blocks Only",false);
 
   validPL->set<string>("Field Name", "", "Name of Field to integrate");
   validPL->set<string>("Field Name Im", "", "Name of Field to integrate");
@@ -353,12 +321,6 @@ QCAD::ResponseFieldIntegral<EvalT,Traits>::getValidResponseParameters() const
   validPL->set<bool>("Positive Return Only",false);
   validPL->set<bool>("Return Imaginary Part",false,"True return imaginary part of integral, False returns real part");
 
-  validPL->set<double>("x min", 0.0, "Integration domain minimum x coordinate");
-  validPL->set<double>("x max", 0.0, "Integration domain maximum x coordinate");
-  validPL->set<double>("y min", 0.0, "Integration domain minimum y coordinate");
-  validPL->set<double>("y max", 0.0, "Integration domain maximum y coordinate");
-  validPL->set<double>("z min", 0.0, "Integration domain minimum z coordinate");
-  validPL->set<double>("z max", 0.0, "Integration domain maximum z coordinate");
 
   validPL->set<string>("Description", "", "Description of this response used by post processors");
   

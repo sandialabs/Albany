@@ -15,6 +15,7 @@
 #include "Albany_ProblemUtils.hpp"
 #include "QCAD_MaterialDatabase.hpp"
 #include "QCAD_EvaluatorTools.hpp"
+#include "QCAD_MeshRegion.hpp"
 
 namespace QCAD {
 
@@ -53,25 +54,20 @@ namespace QCAD {
   private:
     Teuchos::RCP<const Teuchos::ParameterList> getValidResponseParameters() const;
 
-    std::string regionType;
     std::string outputFilename;
-    double levelSetFieldMin, levelSetFieldMax;
+    Teuchos::RCP< MeshRegion<EvalT, Traits> > opRegion;
 
     std::size_t numQPs;
     std::size_t numDims;
 
-    std::string levelSetFieldname;
-    PHX::MDField<ScalarT> levelSetField;    
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
     PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
     
-    std::vector<std::string> ebNames;
-    bool bQuantumEBsOnly;
-
     //Region boundary: for now just min/max along each coordinate direction
     //  * just MeshScalarTs - no derivative information for region boundaries yet, as
     //  * it's not clear this should be done and whether it's ever desired
     std::vector<MeshScalarT> minVals, maxVals;
+
 
     //! Material database
     Teuchos::RCP<QCAD::MaterialDatabase> materialDB;

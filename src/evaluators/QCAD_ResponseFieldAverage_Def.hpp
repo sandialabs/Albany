@@ -11,8 +11,8 @@
 #include "Phalanx.hpp"
 
 template<typename EvalT, typename Traits>
-QCAD::ResponseCenterOfMass<EvalT, Traits>::
-ResponseCenterOfMass(Teuchos::ParameterList& p,
+QCAD::ResponseFieldAverage<EvalT, Traits>::
+ResponseFieldAverage(Teuchos::ParameterList& p,
 		     const Teuchos::RCP<Albany::Layouts>& dl) :
   coordVec("Coord Vec", dl->qp_vector),
   weights("Weights", dl->qp_scalar)
@@ -54,18 +54,18 @@ ResponseCenterOfMass(Teuchos::ParameterList& p,
   this->addDependentField(weights);
   opRegion->addDependentFields(this);
 
-  this->setName(fieldName+" Response Center of Mass"+PHX::TypeString<EvalT>::value);
+  this->setName(fieldName+" Response Field Average"+PHX::TypeString<EvalT>::value);
 
   using PHX::MDALayout;
 
   // Setup scatter evaluator
   p.set("Stand-alone Evaluator", false);
   std::string local_response_name = 
-    fieldName + " Local Response Center of Mass";
+    fieldName + " Local Response Field Average";
   std::string global_response_name = 
-    fieldName + " Global Response Center of Mass";
+    fieldName + " Global Response Field Average";
   int worksetSize = scalar_dl->dimension(0);
-  int responseSize = 4;
+  int responseSize = 2;
   Teuchos::RCP<PHX::DataLayout> local_response_layout =
     Teuchos::rcp(new MDALayout<Cell,Dim>(worksetSize, responseSize));
   Teuchos::RCP<PHX::DataLayout> global_response_layout =
@@ -81,7 +81,7 @@ ResponseCenterOfMass(Teuchos::ParameterList& p,
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
-void QCAD::ResponseCenterOfMass<EvalT, Traits>::
+void QCAD::ResponseFieldAverage<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -94,7 +94,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
-void QCAD::ResponseCenterOfMass<EvalT, Traits>::
+void QCAD::ResponseFieldAverage<EvalT, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
   for (typename PHX::MDField<ScalarT>::size_type i=0; 
@@ -107,7 +107,7 @@ preEvaluate(typename Traits::PreEvalData workset)
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
-void QCAD::ResponseCenterOfMass<EvalT, Traits>::
+void QCAD::ResponseFieldAverage<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // Zero out local response
@@ -115,7 +115,7 @@ evaluateFields(typename Traits::EvalData workset)
        i<this->local_response.size(); i++)
     this->local_response[i] = 0.0;
 
-  ScalarT integral, moment;
+  ScalarT t;
 
   if(!opRegion->elementBlockIsInRegion(workset.EBName))
     return;
@@ -124,17 +124,15 @@ evaluateFields(typename Traits::EvalData workset)
   {
     if(!opRegion->cellIsInRegion(cell)) continue;
 
-    // Add to running total volume and mass moment
+    // Add to running total volume and field integral
     for (std::size_t qp=0; qp < numQPs; ++qp) {
-      integral = field(cell,qp) * weights(cell,qp);
-      this->local_response(cell,3) += integral;
-      this->global_response(3) += integral;
+      t = field(cell,qp) * weights(cell,qp); //component of integrated field
+      this->local_response(cell,0) += t;
+      this->global_response(0) += t;
 
-      for(std::size_t i=0; i<numDims && i<3; i++) {
-	moment = field(cell,qp) * weights(cell,qp) * coordVec(cell,qp,i);
-	this->local_response(cell,i) += moment;
-	this->global_response(i) += moment;
-      }
+      t = weights(cell,qp); //component of integrated volume
+      this->local_response(cell,1) += t;
+      this->global_response(1) += t;
     }
 
   }
@@ -145,7 +143,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
-void QCAD::ResponseCenterOfMass<EvalT, Traits>::
+void QCAD::ResponseFieldAverage<EvalT, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
   // Add contributions across processors
@@ -156,13 +154,15 @@ postEvaluate(typename Traits::PostEvalData workset)
     this->global_response.size(), &this->global_response[0], 
     &this->global_response[0]);
 
-  int iNormalizer = 3;
+  int iNormalizer = 1;
   if( fabs(this->global_response[iNormalizer]) > 1e-9 ) {
     for( int i=0; i < this->global_response.size(); i++) {
       if( i == iNormalizer ) continue;
       this->global_response[i] /= this->global_response[iNormalizer];
     }
-    this->global_response[iNormalizer] = 1.0;
+
+    //leave the normalizer as an output of the response (index [1] in this case)
+    //this->global_response[iNormalizer] = 1.0; 
   }
 
   // Do global scattering
@@ -172,10 +172,10 @@ postEvaluate(typename Traits::PostEvalData workset)
 // **********************************************************************
 template<typename EvalT,typename Traits>
 Teuchos::RCP<const Teuchos::ParameterList>
-QCAD::ResponseCenterOfMass<EvalT,Traits>::getValidResponseParameters() const
+QCAD::ResponseFieldAverage<EvalT,Traits>::getValidResponseParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
-     	rcp(new Teuchos::ParameterList("Valid ResponseCenterOfMass Params"));;
+     	rcp(new Teuchos::ParameterList("Valid ResponseFieldAverage Params"));;
   Teuchos::RCP<const Teuchos::ParameterList> baseValidPL =
     PHAL::SeparableScatterScalarResponse<EvalT,Traits>::getValidResponseParameters();
   validPL->setParameters(*baseValidPL);
@@ -185,7 +185,7 @@ QCAD::ResponseCenterOfMass<EvalT,Traits>::getValidResponseParameters() const
 
   validPL->set<string>("Name", "", "Name of response function");
   validPL->set<int>("Phalanx Graph Visualization Detail", 0, "Make dot file to visualize phalanx graph");
-  validPL->set<string>("Field Name", "", "Scalar field from which to compute center of mass");
+  validPL->set<string>("Field Name", "", "Scalar field to average");
   validPL->set<string>("Description", "", "Description of this response used by post processors");
 
   return validPL;

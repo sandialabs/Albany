@@ -32,7 +32,6 @@ ResponseRegionBoundary(Teuchos::ParameterList& p,
     materialDB = paramsFromProblem->get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
   else materialDB = Teuchos::null;
 
-
   // number of quad points per cell and dimension of space
   Teuchos::RCP<PHX::DataLayout> scalar_dl = dl->qp_scalar;
   Teuchos::RCP<PHX::DataLayout> vector_dl = dl->qp_vector;
@@ -49,35 +48,18 @@ ResponseRegionBoundary(Teuchos::ParameterList& p,
     maxVals[i] = -1e100;
   }
 
+  //! initialize operation region / domain
+  opRegion  = Teuchos::rcp( new QCAD::MeshRegion<EvalT, Traits>("Coord Vec","Weights",*plist,materialDB,dl) );
+
   // User-specified parameters
-  regionType     = plist->get<std::string>("Region Type");  // "Element Blocks", "Quantum Blocks", "Boxed Level Set"
   outputFilename = plist->get<std::string>("Output Filename");
-
-  //Always check for Element Block Names param (not just for "Element Blocks" region type
-  std::string ebNameStr = plist->get<std::string>("Element Block Names","");
-  if(ebNameStr.length() > 0) Albany::splitStringOnDelim(ebNameStr,',',ebNames);
-
-  bQuantumEBsOnly = plist->get<bool>("Quantum Element Blocks Only",false);
-
-  if(regionType == "Quantum Blocks") {
-    bQuantumEBsOnly = true;
-  }
-  else if(regionType == "Boxed Level Set") {
-    levelSetFieldname = plist->get<std::string>("Level Set Field Name");
-    levelSetFieldMin = plist->get<double>("Level Set Field Minimum", -1e100);
-    levelSetFieldMax = plist->get<double>("Level Set Field Maximum", +1e100);
-
-    PHX::MDField<ScalarT> f(levelSetFieldname, scalar_dl); 
-    levelSetField = f;
-    this->addDependentField(levelSetField);
-  }
 
   // add dependent fields
   this->addDependentField(coordVec);
   this->addDependentField(weights);
+  opRegion->addDependentFields(this);
 
-  // Create field tag: NOTE: may have name conflicts here: TODO: create a *unique* name based on the parameters (EGN)
-  response_field_tag = Teuchos::rcp(new PHX::Tag<ScalarT>(regionType + " Get Region Boundary Response",
+  response_field_tag = Teuchos::rcp(new PHX::Tag<ScalarT>("Get Region Boundary Response -> " + outputFilename,
 							  dl->dummy));
   this->addEvaluatedField(*response_field_tag);
 }
@@ -88,9 +70,9 @@ void QCAD::ResponseRegionBoundary<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  if(regionType == "Boxed Level Set") this->utils.setFieldData(levelSetField,fm);
   this->utils.setFieldData(coordVec,fm);
   this->utils.setFieldData(weights,fm);
+  opRegion->postRegistrationSetup(fm);
 }
 
 // **********************************************************************
@@ -98,58 +80,20 @@ template<typename EvalT, typename Traits>
 void QCAD::ResponseRegionBoundary<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  ScalarT avgCellVal, cellVol;
-  bool bQuantumEB = false; //if no material database, all element blocks are "non-quantum"
+  if(!opRegion->elementBlockIsInRegion(workset.EBName))
+    return;
 
-  if(materialDB != Teuchos::null)
-    bQuantumEB = materialDB->getElementBlockParam<bool>(workset.EBName,"quantum",false);
-
-  //check if this element block should be considered
-  if( (ebNames.size() == 0 || 
-       std::find(ebNames.begin(), ebNames.end(), workset.EBName) != ebNames.end()) &&
-      (bQuantumEBsOnly == false || bQuantumEB == true) ) {
-
-    if(regionType == "Boxed Level Set") {
-      for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-
-	// Get the cell volume, used for averaging over a cell
-	cellVol = 0.0;
-	for (std::size_t qp=0; qp < numQPs; ++qp)
-	  cellVol += weights(cell,qp);
-
-	// Get the average value for the cell (integral of field over cell divided by cell volume)
-	avgCellVal = 0.0;
-	for (std::size_t qp=0; qp < numQPs; ++qp) {
-	  avgCellVal += levelSetField(cell,qp) * weights(cell,qp);
-	}
-	avgCellVal /= cellVol;
-
-	if( avgCellVal <= levelSetFieldMax && avgCellVal >= levelSetFieldMin) {
-	  
-	  //Update min/max values using coordinates of quad points in this cell - better way using nodes?
-	  for (std::size_t qp=0; qp < numQPs; ++qp)  {
-	    for(std::size_t i=0; i<numDims; i++) {
-	      if(minVals[i] > coordVec(cell,qp,i)) minVals[i] = coordVec(cell,qp,i);
-	      if(maxVals[i] < coordVec(cell,qp,i)) maxVals[i] = coordVec(cell,qp,i);
-	    }
-	  }
-
-	}
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+    if(!opRegion->cellIsInRegion(cell)) continue;
+    
+    //Update min/max values using coordinates of quad points in this cell - better way using nodes?
+    for (std::size_t qp=0; qp < numQPs; ++qp)  {
+      for(std::size_t i=0; i<numDims; i++) {
+	if(minVals[i] > coordVec(cell,qp,i)) minVals[i] = coordVec(cell,qp,i);
+	if(maxVals[i] < coordVec(cell,qp,i)) maxVals[i] = coordVec(cell,qp,i);
       }
     }
-    else {  //other than "Boxed Level Set"
-      for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-	
-	//Update min/max values using coordinates of quad points in this cell - better way using nodes?
-	for (std::size_t qp=0; qp < numQPs; ++qp)  {
-	  for(std::size_t i=0; i<numDims; i++) {
-	    if(minVals[i] > coordVec(cell,qp,i)) minVals[i] = coordVec(cell,qp,i);
-	    if(maxVals[i] < coordVec(cell,qp,i)) maxVals[i] = coordVec(cell,qp,i);
-	  }
-	}
-      }
-    }
-  } // end check if element block should be considered
+  }
 }
 
 // **********************************************************************
@@ -232,18 +176,13 @@ QCAD::ResponseRegionBoundary<EvalT,Traits>::getValidResponseParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
      	rcp(new Teuchos::ParameterList("Valid ResponseRegionBoundary Params"));
 
+  Teuchos::RCP<const Teuchos::ParameterList> regionValidPL = opRegion->getValidParameters();
+  validPL->setParameters(*regionValidPL);
+
   validPL->set<string>("Name", "", "Name of response function");
   validPL->set<int>("Phalanx Graph Visualization Detail", 0, "Make dot file to visualize phalanx graph");
   validPL->set<string>("Type", "", "Response type");
-  validPL->set<string>("Region Type", "Element Blocks", "How region is defined: 'Element Blocks', 'Quantum Blocks', 'Boxed Level Set'");
   validPL->set<string>("Output Filename", "<filename>", "The file to write region boundary (min/max values) to");
-  validPL->set<string>("Element Block Names", "", "Names of element blocks to consider, comma delimited");
-  validPL->set<bool>("Quantum Element Blocks Only", false);
-  validPL->set<string>("Level Set Field Name", "<field name>",
-		       "Scalar Field to use for 'Boxed Level Set' region type");
-  validPL->set<double>("Level Set Field Minimum", 0.0, "Minimum value of field to include in region when using Boxed Level Set type");
-  validPL->set<double>("Level Set Field Maximum", 0.0, "Maximum value of field to include in region when using Boxed Level Set type");
-
   validPL->set<string>("Description", "", "Description of this response used by post processors");
 
   return validPL;

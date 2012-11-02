@@ -421,10 +421,12 @@ SET(SOURCES ${SOURCES}
        evaluators/QCAD_PoissonDirichlet.cpp
        evaluators/QCAD_ResponseFieldIntegral.cpp
        evaluators/QCAD_ResponseFieldValue.cpp
+       evaluators/QCAD_ResponseFieldAverage.cpp
        evaluators/QCAD_ResponseSaddleValue.cpp
        evaluators/QCAD_ResponseSaveField.cpp
        evaluators/QCAD_ResponseCenterOfMass.cpp
        evaluators/QCAD_ResponseRegionBoundary.cpp
+       evaluators/QCAD_MeshRegion.cpp
        evaluators/QCAD_EvaluatorTools.cpp
        problems/QCAD_PoissonProblem.cpp
        problems/QCAD_MaterialDatabase.cpp
@@ -446,6 +448,8 @@ SET(HEADERS ${HEADERS}
        evaluators/QCAD_ResponseFieldIntegral_Def.hpp
        evaluators/QCAD_ResponseFieldValue.hpp
        evaluators/QCAD_ResponseFieldValue_Def.hpp
+       evaluators/QCAD_ResponseFieldAverage.hpp
+       evaluators/QCAD_ResponseFieldAverage_Def.hpp
        evaluators/QCAD_ResponseSaddleValue.hpp
        evaluators/QCAD_ResponseSaddleValue_Def.hpp
        evaluators/QCAD_ResponseSaveField.hpp
@@ -454,6 +458,8 @@ SET(HEADERS ${HEADERS}
        evaluators/QCAD_ResponseCenterOfMass_Def.hpp
        evaluators/QCAD_ResponseRegionBoundary.hpp
        evaluators/QCAD_ResponseRegionBoundary_Def.hpp
+       evaluators/QCAD_MeshRegion.hpp
+       evaluators/QCAD_MeshRegion_Def.hpp
        evaluators/QCAD_EvaluatorTools.cpp
        evaluators/QCAD_EvaluatorTools.cpp
        evaluators/QCAD_EvaluatorTools.hpp

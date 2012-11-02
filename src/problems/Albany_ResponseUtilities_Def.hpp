@@ -8,6 +8,7 @@
 
 #include "QCAD_ResponseFieldIntegral.hpp"
 #include "QCAD_ResponseFieldValue.hpp"
+#include "QCAD_ResponseFieldAverage.hpp"
 #include "QCAD_ResponseSaddleValue.hpp"
 #include "QCAD_ResponseSaveField.hpp"
 #include "QCAD_ResponseCenterOfMass.hpp"
@@ -55,6 +56,15 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   { 
     RCP<QCAD::ResponseFieldValue<EvalT,Traits> > res_ev = 
       rcp(new QCAD::ResponseFieldValue<EvalT,Traits>(*p,dl));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+  }
+
+  else if (responseName == "Field Average") 
+  { 
+    RCP<QCAD::ResponseFieldAverage<EvalT,Traits> > res_ev = 
+      rcp(new QCAD::ResponseFieldAverage<EvalT,Traits>(*p,dl));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));

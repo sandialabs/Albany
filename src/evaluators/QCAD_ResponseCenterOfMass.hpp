@@ -7,6 +7,7 @@
 #ifndef QCAD_RESPONSECENTEROFMASS_HPP
 #define QCAD_RESPONSECENTEROFMASS_HPP
 
+#include "QCAD_MeshRegion.hpp"
 #include "PHAL_SeparableScatterScalarResponse.hpp"
 
 namespace QCAD {
@@ -44,11 +45,7 @@ namespace QCAD {
     PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
     
     std::string fieldName;
-    std::string opDomain;
-    std::string ebName;
-
-    bool limitX, limitY, limitZ;
-    double xmin, xmax, ymin, ymax, zmin, zmax;
+    Teuchos::RCP< MeshRegion<EvalT, Traits> > opRegion;
   };
 	
 }
