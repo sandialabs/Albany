@@ -210,6 +210,10 @@ Albany::LinComprNSProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
     p->set< RCP<DataLayout> >("Node QP Gradient Data Layout", dl->node_qp_gradient);
 
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Equation Set");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
     //Output
     p->set<string>("Residual Name", "LinComprNS Residual");
     p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);

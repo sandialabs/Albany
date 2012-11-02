@@ -30,6 +30,8 @@ Teuchos::RCP<Albany::AnalyticFunction> Albany::createAnalyticFunction(
     F = Teuchos::rcp(new Albany::GaussCos(neq, numDim, data));
   else if (name=="Linear Y")
     F = Teuchos::rcp(new Albany::LinearY(neq, numDim, data));
+  else if (name=="Gaussian Pressure")
+    F = Teuchos::rcp(new Albany::GaussianPress(neq, numDim, data));
   else
     TEUCHOS_TEST_FOR_EXCEPTION(name != "Valid Initial Condition Function",
                        std::logic_error,
@@ -188,5 +190,23 @@ void Albany::LinearY::compute(double* x, const double *X)
   x[0] = 0.0;
   x[1] = data[0] * X[0];
   if (numDim>2) x[2]=0.0;
+}
+//*****************************************************************************
+Albany::GaussianPress::GaussianPress(int neq_, int numDim_, Teuchos::Array<double> data_)
+ : numDim(numDim_), neq(neq_), data(data_)
+{
+  //for LinComprNS problems; 
+  //Sets an initial condition as a Gaussian pressure pulse 
+  std::cout << "setting gaussian pressure IC!" << std::endl; 
+  TEUCHOS_TEST_FOR_EXCEPTION((neq<3) || (numDim<2) || (data.size()!=4),
+			     std::logic_error,
+			     "Error! Invalid call of GaussianPress with " <<neq
+			     <<" "<< numDim <<"  "<< data.size() << std::endl);
+}
+void Albany::GaussianPress::compute(double* x, const double *X) 
+{
+  x[0] = 0.0;
+  x[1] = 0.0;
+  x[2] = data[0]*exp(-data[1]*((X[0] - data[2])*(X[0] - data[2]) + (X[1] - data[3])*(X[1] - data[3]))); 
 }
 //*****************************************************************************

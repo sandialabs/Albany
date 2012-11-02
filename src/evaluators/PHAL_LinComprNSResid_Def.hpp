@@ -4,7 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#define UNSTEADY
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -12,16 +11,6 @@
 #include "Intrepid_FunctionSpaceTools.hpp"
 
 namespace PHAL {
-
-//base flow values
-const double ubar = 1.0; 
-const double vbar = 1.0; 
-const double wbar = 1.0; 
-const double zetabar = 1.0; 
-const double pbar = 0.0; //0.714285714285714;
-//fluid parameters  
-const double alpha = 1.0; 
-const double gamma_gas = 1.4; //gas constant 
 
 
 //**********************************************************************
@@ -41,8 +30,12 @@ LinComprNSResid(const Teuchos::ParameterList& p) :
   force       (p.get<std::string>              ("Body Force Name"),
                p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
   Residual   (p.get<std::string>                   ("Residual Name"),
-              p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") )
+              p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") ), 
+  gamma_gas (1.4)
 {
+
+
+
   this->addDependentField(C);
   this->addDependentField(Cgrad);
   this->addDependentField(CDot);
@@ -61,11 +54,35 @@ LinComprNSResid(const Teuchos::ParameterList& p) :
   numQPs   = dims[2];
   numDims  = dims[3];
 
+
+  Teuchos::ParameterList* bf_list =
+  p.get<Teuchos::ParameterList*>("Parameter List");
+  std::string eqnType = bf_list->get("Type", "Euler");
+  
+  if (eqnType == "Euler") {
+    cout << "setting euler equations!" << endl; 
+    eqn_type = EULER; 
+  }
+  else if (eqnType == "Navier-Stokes") {
+    cout << "setting n-s equations!" << endl; 
+    eqn_type = NS; 
+  }
+
+
   C.fieldTag().dataLayout().dimensions(dims);
   vecDim  = dims[2];
 
+  Teuchos::Array<double> defaultBaseFlowData(vecDim+1); 
+  baseFlowData = bf_list->get("Base Flow Data", defaultBaseFlowData); 
+  gamma_gas = bf_list->get("Gamma", 1.4); 
+
+
 cout << " vecDim = " << vecDim << endl;
 cout << " numDims = " << numDims << endl;
+
+if (eqn_type == NS) {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+                                  std::endl << "Error in PHAL::LinComprNS constructor:  " <<
+                                  "NS equations not yet implemented. " << std::endl);} 
 
 
 if (numDims == 2 & vecDim != 3) {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
@@ -99,19 +116,24 @@ void LinComprNSResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   typedef Intrepid::FunctionSpaceTools FST;
+  //if (workset.transientTerms)
+   //   cout << "transient problem! " << endl; 
 
+  if (eqn_type == EULER) {
    if (numDims == 2) { //2D case
+    double ubar = baseFlowData[0]; 
+    double vbar = baseFlowData[1]; 
+    double zetabar = baseFlowData[2]; 
+    double pbar = baseFlowData[3]; 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {
           for (std::size_t i=0; i<vecDim; i++) 
              Residual(cell,node,i) = 0.0; 
-#ifdef UNSTEADY
           for (std::size_t qp=0; qp < numQPs; ++qp) {
-             for (std::size_t i=0; i < numDims; ++i) {
+             for (std::size_t i=0; i < vecDim; i++) {
                 Residual(cell,node,i) = CDot(cell,qp,i)*wBF(cell,node,qp); 
              }
           }
-#endif
           for (std::size_t qp=0; qp < numQPs; ++qp) {
              Residual(cell, node, 0) += ubar*Cgrad(cell,qp,0,0)*wBF(cell,node,qp) + vbar*Cgrad(cell,qp,0,1)*wBF(cell,node,qp) 
                                      + zetabar*Cgrad(cell,qp,2,0)*wBF(cell,node,qp) 
@@ -128,6 +150,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
    else if (numDims == 3) { //3D case
    }
+  }
 }
 
 //**********************************************************************

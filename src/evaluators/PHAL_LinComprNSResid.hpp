@@ -46,15 +46,20 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> CDot;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> force;
   
+  Teuchos::Array<double> baseFlowData;  
+  double gamma_gas; 
+  
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;
+
 
   std::size_t numNodes;
   std::size_t numQPs;
   std::size_t numDims;
   std::size_t vecDim;
   bool enableTransient;
-
+  enum EQNTYPE {EULER, NS}; 
+  EQNTYPE eqn_type;  
 };
 }
 

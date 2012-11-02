@@ -89,6 +89,7 @@ Albany::LinComprNSProblem::getValidProblemParameters() const
 
   validPL->set("Number of Species", 1, "Number of species eqs in LinComprNS equation set");
   validPL->sublist("Body Force", false, "");
+  validPL->sublist("Equation Set", false, "");
 
   return validPL;
 }

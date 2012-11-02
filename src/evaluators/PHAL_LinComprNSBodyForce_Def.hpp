@@ -14,11 +14,11 @@ namespace PHAL {
 const double pi = 3.1415926535897932385;
 
 //base flow values
-const double ubar = 1.0; 
-const double vbar = 1.0; 
-const double wbar = 1.0; 
+const double ubar = 0.0; 
+const double vbar = 0.0; 
+const double wbar = 0.0; 
 const double zetabar = 1.0; 
-const double pbar = 0.0; //0.714285714285714;
+const double pbar = 0.714285714285714;
 //fluid parameters  
 const double alpha = 1.0; 
 const double gamma_gas = 1.4; //gas constant 
@@ -94,7 +94,10 @@ evaluateFields(typename Traits::EvalData workset)
   	 force(cell,qp,i) = 0.0;
  }
  else if (bf_type == STEADYEUL) {
-   cout << "steady euler source" << endl; 
+    double ubar = 1.0; 
+    double vbar = 1.0; 
+    double zetabar = 1.0; 
+    double pbar = 0.0;
    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
      for (std::size_t qp=0; qp < numQPs; ++qp) {      
        ScalarT* f = &force(cell,qp,0);
@@ -105,15 +108,6 @@ evaluateFields(typename Traits::EvalData workset)
        f[0] = -1.0*(ubar*(y - x*sin(x)) + vbar*x + zetabar*2.0*x*(0.5-y));  
        f[1] = -1.0*(ubar*cos(x)*y + vbar*sin(x) - zetabar*x*x);  
        f[2] = -1.0*(gamma_gas*pbar*(y - x*sin(x) + sin(x)) + ubar*2.0*x*(0.5-y) - vbar*x*x);  
-       //f[0] =  -1.0*ubar*(u1*pi*sin(xpi)*sin(ypi)) 
-       //       + vbar*(u1*pi*cos(xpi)*cos(ypi));  
-         //     + zetabar*(p1*pi*cos(xpi) + p3*pi*y*cos(pi*x*y)); 
-       //f[1] = -1.0*ubar*(v1*pi*cos(xpi)*cos(ypi)) 
-       //       + vbar*(v1*pi*sin(xpi)*sin(ypi))
-       //       + zetabar*(p2*pi*sin(ypi) - p3*pi*x*cos(pi*x*y)); 
-       //f[2] = gamma_gas*pbar*(-1.0*u1*pi*sin(xpi)*sin(ypi) - v1*pi*sin(xpi)*sin(ypi))
-       //      + ubar*(p1*pi*cos(xpi) + p3*pi*y*cos(pi*x*y))
-       //      + vbar*(-1.0*p2*pi*sin(ypi) + p3*pi*x*cos(pi*x*y));  
      }
    }
  }
