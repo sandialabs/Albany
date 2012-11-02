@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef PHAL_LINCOMPRNSRESID_HPP
-#define PHAL_LINCOMPRNSRESID_HPP
+#ifndef PHAL_LINCOMPRNSBODYFORCE_HPP
+#define PHAL_LINCOMPRNSBODYFORCE_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -20,40 +20,39 @@ namespace PHAL {
 */
 
 template<typename EvalT, typename Traits>
-class LinComprNSResid : public PHX::EvaluatorWithBaseImpl<Traits>,
-		        public PHX::EvaluatorDerived<EvalT, Traits>  {
+class LinComprNSBodyForce : public PHX::EvaluatorWithBaseImpl<Traits>,
+		    public PHX::EvaluatorDerived<EvalT, Traits> {
 
 public:
 
-  LinComprNSResid(const Teuchos::ParameterList& p);
+  typedef typename EvalT::ScalarT ScalarT;
+
+  LinComprNSBodyForce(const Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
-			     PHX::FieldManager<Traits>& vm);
+                      PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
-private:
 
-  typedef typename EvalT::ScalarT ScalarT;
+private:
+ 
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  // Input:
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> C;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Cgrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> CDot;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> force;
+  // Input:  
+  PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
+  Teuchos::Array<double> gravity;
   
   // Output:
-  PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> force;
 
-  std::size_t numNodes;
+   //Radom field types
+  enum BFTYPE {NONE, STEADYEUL};
+  BFTYPE bf_type;
+
   std::size_t numQPs;
   std::size_t numDims;
   std::size_t vecDim;
-  bool enableTransient;
 
 };
 }

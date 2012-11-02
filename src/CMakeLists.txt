@@ -156,6 +156,7 @@ SET(SOURCES ${SOURCES}
         evaluators/PHAL_HeatEqResid.cpp
         evaluators/PHAL_GPAMResid.cpp
         evaluators/PHAL_LinComprNSResid.cpp
+        evaluators/PHAL_LinComprNSBodyForce.cpp
         evaluators/PHAL_ComputeBasisFunctions.cpp
         evaluators/PHAL_DOFInterpolation.cpp
         evaluators/PHAL_DOFGradInterpolation.cpp
@@ -217,6 +218,8 @@ SET(HEADERS ${HEADERS}
         evaluators/PHAL_GPAMResid_Def.hpp
         evaluators/PHAL_LinComprNSResid.hpp
         evaluators/PHAL_LinComprNSResid_Def.hpp
+        evaluators/PHAL_LinComprNSBodyForce.hpp
+        evaluators/PHAL_LinComprNSBodyForce_Def.hpp
         evaluators/PHAL_ComputeBasisFunctions.hpp
         evaluators/PHAL_ComputeBasisFunctions_Def.hpp
         evaluators/PHAL_DOFInterpolation.hpp

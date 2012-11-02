@@ -97,6 +97,7 @@ namespace Albany {
 #include "PHAL_LinComprNSResid.hpp"
 
 #include "PHAL_Source.hpp"
+#include "PHAL_LinComprNSBodyForce.hpp"
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
@@ -202,7 +203,8 @@ Albany::LinComprNSProblem::constructEvaluators(
     p->set<string>("QP Variable Name", "Concentration");
     p->set<string>("QP Time Derivative Variable Name", "Concentration_dot");
     p->set<string>("Gradient QP Variable Name", "Concentration Gradient");
-    
+    p->set<string>("Body Force Name", "Body Force");   
+ 
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_vecgradient);
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
@@ -215,6 +217,26 @@ Albany::LinComprNSProblem::constructEvaluators(
     ev = rcp(new PHAL::LinComprNSResid<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+
+   { // LinComprNS Body Force
+    RCP<ParameterList> p = rcp(new ParameterList("Body Force"));
+
+   //Input
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+    p->set< RCP<DataLayout> >("QP Gradient Data Layout", dl->qp_gradient);
+    p->set<string>("Coordinate Vector Name", "Coord Vec");
+
+    Teuchos::ParameterList& paramList = params->sublist("Body Force");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+   //Output
+     p->set<string>("Body Force Name", "Body Force");
+
+    ev = rcp(new PHAL::LinComprNSBodyForce<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
     PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter LinComprNS", dl->dummy);
