@@ -16,28 +16,28 @@ namespace LCM {
 template<typename EvalT, typename Traits>
 J2Stress<EvalT, Traits>::
 J2Stress(const Teuchos::ParameterList& p) :
-  defgrad          (p.get<std::string>                   ("DefGrad Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-  J                (p.get<std::string>                   ("DetDefGrad Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  elasticModulus   (p.get<std::string>                   ("Elastic Modulus Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  poissonsRatio    (p.get<std::string>                   ("Poissons Ratio Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  yieldStrength    (p.get<std::string>                   ("Yield Strength Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  hardeningModulus (p.get<std::string>                   ("Hardening Modulus Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  satMod           (p.get<std::string>                   ("Saturation Modulus Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  satExp           (p.get<std::string>                   ("Saturation Exponent Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  stress           (p.get<std::string>                   ("Stress Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-  Fp               (p.get<std::string>                   ("Fp Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-  eqps             (p.get<std::string>                   ("Eqps Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") )
+  defgrad          (p.get<std::string>             ("DefGrad Name"),
+	          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+  J                (p.get<std::string>             ("DetDefGrad Name"),
+	          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  elasticModulus   (p.get<std::string>             ("Elastic Modulus Name"),
+	          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  poissonsRatio    (p.get<std::string>             ("Poissons Ratio Name"),
+	          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  yieldStrength    (p.get<std::string>             ("Yield Strength Name"),
+	          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  hardeningModulus (p.get<std::string>             ("Hardening Modulus Name"),
+	          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  satMod           (p.get<std::string>             ("Saturation Modulus Name"),
+	          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  satExp           (p.get<std::string>             ("Saturation Exponent Name"),
+	          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+  stress           (p.get<std::string>             ("Stress Name"),
+	          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+  Fp               (p.get<std::string>             ("Fp Name"),
+	          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+  eqps             (p.get<std::string>             ("Eqps Name"),
+	          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") )
 {
   // Pull out numQPs and numDims from a Layout
   Teuchos::RCP<PHX::DataLayout> tensor_dl =
@@ -108,7 +108,11 @@ evaluateFields(typename Traits::EvalData workset)
   typedef Intrepid::FunctionSpaceTools FST;
   typedef Intrepid::RealSpaceTools<ScalarT> RST;
 
-  std::cout << "============= J2 STRESS_DEF ================= " << std::endl;
+  bool print = false;
+  if (typeid(ScalarT) == typeid(RealType)) print = true;
+  cout.precision(15);
+
+  if(print) std::cout << "========= J2 STRESS_DEF ============= " << std::endl;
 
   ScalarT kappa;
   ScalarT mu, mubar;
@@ -133,44 +137,34 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t qp=0; qp < numQPs; ++qp) 
     {
 
-	  std::cout << "defgrad tensor at cell " << cell << ", quadrature point " << qp << ":" << endl;
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(defgrad(cell, qp, 0, 0));
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(defgrad(cell, qp, 0, 1));
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(defgrad(cell, qp, 0, 2)) << endl;
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(defgrad(cell, qp, 1, 0));
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(defgrad(cell, qp, 1, 1));
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(defgrad(cell, qp, 1, 2)) << endl;
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(defgrad(cell, qp, 2, 0));
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(defgrad(cell, qp, 2, 1));
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(defgrad(cell, qp, 2, 2)) << endl;
-
-//	  std::cout << "Fpold tensor at cell " << cell << ", quadrature point " << qp << ":" << endl;
-//	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(Fpold(cell, qp, 0, 0));
-//	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(Fpold(cell, qp, 0, 1));
-//	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(Fpold(cell, qp, 0, 2)) << endl;
-//	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(Fpold(cell, qp, 1, 0));
-//	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(Fpold(cell, qp, 1, 1));
-//	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(Fpold(cell, qp, 1, 2)) << endl;
-//	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(Fpold(cell, qp, 2, 0));
-//	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(Fpold(cell, qp, 2, 1));
-//	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(Fpold(cell, qp, 2, 2)) << endl;
+	  if(print) std::cout << "defgrad tensor at cell " << cell
+			  << ", quadrature point " << qp << ":" << endl;
+	  if(print) std::cout << "  " << defgrad(cell, qp, 0, 0);
+	  if(print) std::cout << "  " << defgrad(cell, qp, 0, 1);
+	  if(print) std::cout << "  " << defgrad(cell, qp, 0, 2) << endl;
+	  if(print) std::cout << "  " << defgrad(cell, qp, 1, 0);
+	  if(print) std::cout << "  " << defgrad(cell, qp, 1, 1);
+	  if(print) std::cout << "  " << defgrad(cell, qp, 1, 2) << endl;
+	  if(print) std::cout << "  " << defgrad(cell, qp, 2, 0);
+	  if(print) std::cout << "  " << defgrad(cell, qp, 2, 1);
+	  if(print) std::cout << "  " << defgrad(cell, qp, 2, 2) << endl;
 
       // local parameters
-      kappa  = elasticModulus(cell,qp) / ( 3. * ( 1. - 2. * poissonsRatio(cell,qp) ) );
-      mu     = elasticModulus(cell,qp) / ( 2. * ( 1. + poissonsRatio(cell,qp) ) );
+      kappa  = elasticModulus(cell,qp)/(3. * (1. - 2. * poissonsRatio(cell,qp)));
+      mu     = elasticModulus(cell,qp)/(2. * (1. + poissonsRatio(cell,qp)));
       K      = hardeningModulus(cell,qp);
       Y      = yieldStrength(cell,qp);
       siginf = satMod(cell,qp);
       delta  = satExp(cell,qp);
       Jm23   = std::pow( J(cell,qp), -2./3. );
 
-      //std::cout << "kappa: " << Sacado::ScalarValue<ScalarT>::eval(kappa) << std::endl;
-      //std::cout << "mu   : " << Sacado::ScalarValue<ScalarT>::eval(mu) << std::endl;
-      //std::cout << "K    : " << Sacado::ScalarValue<ScalarT>::eval(K) << std::endl;
-      //std::cout << "Y    : " << Sacado::ScalarValue<ScalarT>::eval(Y) << std::endl;
+      //if(print) std::cout << "kappa: " << kappa << std::endl;
+      //if(print) std::cout << "mu   : " << mu << std::endl;
+      //if(print) std::cout << "K    : " << K << std::endl;
+      //if(print) std::cout << "Y    : " << Y << std::endl;
 
-      std::cout << "J    : " << Sacado::ScalarValue<ScalarT>::eval(J(cell,qp)) << std::endl;
-      std::cout << "Jm23    : " << Sacado::ScalarValue<ScalarT>::eval(Jm23) << std::endl;
+      if(print) std::cout << "J    : " << J(cell,qp) << std::endl;
+      if(print) std::cout << "Jm23    : " << Jm23 << std::endl;
 
 
       be.initialize(0.0);
@@ -183,22 +177,12 @@ evaluateFields(typename Traits::EvalData workset)
 	  {
 	    for (std::size_t q=0; q < numDims; ++q)
 	    {
-	      be(i,j) += Jm23 * defgrad(cell,qp,i,p) * Cpinv(cell,qp,p,q) * defgrad(cell,qp,j,q);
+	      be(i,j) += Jm23 * defgrad(cell,qp,i,p)
+	      	  * Cpinv(cell,qp,p,q) * defgrad(cell,qp,j,q);
 	    }
 	  }
 	}
       } 
-      
-	  std::cout << "be tensor at cell " << cell << ", quadrature point " << qp << ":" << endl;
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(be(0, 0));
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(be(0, 1));
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(be(0, 2)) << endl;
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(be(1, 0));
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(be(1, 1));
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(be(1, 2)) << endl;
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(be(2, 0));
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(be(2, 1));
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(be(2, 2)) << endl;
 
       trace = 0.0;
       for (std::size_t i=0; i < numDims; ++i)
@@ -213,18 +197,6 @@ evaluateFields(typename Traits::EvalData workset)
 	}
 	s(i,i) -= mu * trace;
       }	  
-      
-//	  std::cout << "s tensor at cell " << cell << ", quadrature point " << qp << ":" << endl;
-//	  std::cout << "  " << s(0, 0);
-//	  std::cout << "  " << s(0, 1);
-//	  std::cout << "  " << s(0, 2) << endl;
-//	  std::cout << "  " << s(1, 0);
-//	  std::cout << "  " << s(1, 1);
-//	  std::cout << "  " << s(1, 2) << endl;
-//	  std::cout << "  " << s(2, 0);
-//	  std::cout << "  " << s(2, 1);
-//	  std::cout << "  " << s(2, 2) << endl;
-
 
       // check for yielding
       // smag = s.norm();
@@ -236,26 +208,28 @@ evaluateFields(typename Traits::EvalData workset)
       if ( Sacado::ScalarValue<ScalarT>::eval(smag2) > 0.0 )
         smag = std::sqrt(smag2);
       
-      f = smag - sq23 * ( Y + K * eqpsold(cell,qp) + siginf * ( 1. - exp( -delta * eqpsold(cell,qp) ) ) );
+      f = smag - sq23 * ( Y + K * eqpsold(cell,qp)
+      	  + siginf * ( 1. - exp( -delta * eqpsold(cell,qp) ) ) );
 
-      std::cout << "smag : " << Sacado::ScalarValue<ScalarT>::eval(smag) << std::endl;
-      std::cout << "eqpsold: " << Sacado::ScalarValue<ScalarT>::eval(eqpsold(cell,qp)) << std::endl;
-      std::cout << "K      : " << Sacado::ScalarValue<ScalarT>::eval(K) << std::endl;
-      std::cout << "Y      : " << Sacado::ScalarValue<ScalarT>::eval(Y) << std::endl;
-      std::cout << "f      : " << Sacado::ScalarValue<ScalarT>::eval(f) << std::endl;
+      if(print) std::cout << "smag : " << smag << std::endl;
+      if(print) std::cout << "eqpsold: " << eqpsold(cell,qp) << std::endl;
+      if(print) std::cout << "K      : " << K << std::endl;
+      if(print) std::cout << "Y      : " << Y << std::endl;
+      if(print) std::cout << "f      : " << f << std::endl;
 
       if (f > 1E-12)
       {
 	// return mapping algorithm
 	bool converged = false;
 	ScalarT g = f;
-	ScalarT H = K * eqpsold(cell,qp) + siginf*( 1. - exp( -delta * eqpsold(cell,qp) ) );
-        ScalarT H2 = 0.0;
+	ScalarT H = K * eqpsold(cell,qp)
+				+ siginf*(1. - exp(-delta * eqpsold(cell,qp) ) );
+    ScalarT H2 = 0.0;
 	ScalarT dg = ( -2. * mubar ) * ( 1. + H / ( 3. * mubar ) );
 	ScalarT dH = 0.0;
-        ScalarT dH2 = 0.0;
+    ScalarT dH2 = 0.0;
 	ScalarT alpha = 0.0;
-        ScalarT alpha2 = 0.0;
+    ScalarT alpha2 = 0.0;
 	ScalarT res = 0.0;
 	int count = 0;
 	dgam = 0.0;
@@ -300,26 +274,18 @@ evaluateFields(typename Traits::EvalData workset)
 	    converged = true;
 
 	  TEUCHOS_TEST_FOR_EXCEPTION( count > 30, std::runtime_error,
-				      std::endl << "Error in return mapping, count = " << count <<
-                                      "\nres = " << res <<
-                                      "\nrelres = " << res/f <<
-                                      "\ng = " << F[0] <<
-                                      "\ndg = " << dFdX[0] <<
-                                      "\nalpha = " << alpha2 << std::endl);
+				   std::endl << "Error in return mapping, count = " << count <<
+                                    "\nres = " << res <<
+                                    "\nrelres = " << res/f <<
+                                    "\ng = " << F[0] <<
+                                    "\ndg = " << dFdX[0] <<
+                                    "\nalpha = " << alpha2 << std::endl);
 
         }
-        // std::cout << "g   : " << g << std::endl;
-   	    // std::cout << "before X: " << X[0] << std::endl;
-        // std::cout << "F   : " << F[0] << std::endl;
-        // std::cout << "dg  : " << dg << std::endl;
-        // std::cout << "dFdX: " << dFdX[0] << std::endl;
         
         solver.computeFadInfo(dFdX,X,F);
         
         dgam = X[0];
-        
-       // std::cout << "after X: " << X[0] << std::endl;
-       // std::cout << "dgam : " << dgam << std::endl;
 
         // plastic direction
         for (std::size_t i=0; i < numDims; ++i) 
@@ -344,7 +310,7 @@ evaluateFields(typename Traits::EvalData workset)
         // std::cout << "expA: \n";
         // for (std::size_t i=0; i < numDims; ++i)      
         //   for (std::size_t j=0; j < numDims; ++j)
-        //     std::cout << Sacado::ScalarValue<ScalarT>::eval(expA(i,j)) << " ";
+        //    std::cout << Sacado::ScalarValue<ScalarT>::eval(expA(i,j)) << " ";
         // std::cout << std::endl;
                   
         for (std::size_t i=0; i < numDims; ++i) 
@@ -368,7 +334,7 @@ evaluateFields(typename Traits::EvalData workset)
             Fp(cell,qp,i,j) = Fpold(cell,qp,i,j);
       }
       
-  	  std::cout << "after, eqps:  " << Sacado::ScalarValue<ScalarT>::eval(eqps(cell, qp)) << std::endl;;
+  	  if(print) std::cout << "after, eqps:  " << eqps(cell, qp) << std::endl;;
 
 
       // compute pressure
@@ -385,27 +351,29 @@ evaluateFields(typename Traits::EvalData workset)
       }
 
 
-	  std::cout << "stress tensor at cell " << cell << ", quadrature point " << qp << ":" << endl;
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(stress(cell, qp, 0, 0));
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(stress(cell, qp, 0, 1));
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(stress(cell, qp, 0, 2)) << endl;
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(stress(cell, qp, 1, 0));
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(stress(cell, qp, 1, 1));
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(stress(cell, qp, 1, 2)) << endl;
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(stress(cell, qp, 2, 0));
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(stress(cell, qp, 2, 1));
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(stress(cell, qp, 2, 2)) << endl;
+	  if(print) std::cout << "stress tensor at cell " << cell
+			  << ", quadrature point " << qp << ":" << endl;
+	  if(print) std::cout << "  " << stress(cell, qp, 0, 0);
+	  if(print) std::cout << "  " << stress(cell, qp, 0, 1);
+	  if(print) std::cout << "  " << stress(cell, qp, 0, 2) << endl;
+	  if(print) std::cout << "  " << stress(cell, qp, 1, 0);
+	  if(print) std::cout << "  " << stress(cell, qp, 1, 1);
+	  if(print) std::cout << "  " << stress(cell, qp, 1, 2) << endl;
+	  if(print) std::cout << "  " << stress(cell, qp, 2, 0);
+	  if(print) std::cout << "  " << stress(cell, qp, 2, 1);
+	  if(print) std::cout << "  " << stress(cell, qp, 2, 2) << endl;
 
-	  std::cout << "Fp tensor at cell " << cell << ", quadrature point " << qp << ":" << endl;
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(Fp(cell, qp, 0, 0));
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(Fp(cell, qp, 0, 1));
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(Fp(cell, qp, 0, 2)) << endl;
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(Fp(cell, qp, 1, 0));
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(Fp(cell, qp, 1, 1));
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(Fp(cell, qp, 1, 2)) << endl;
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(Fp(cell, qp, 2, 0));
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(Fp(cell, qp, 2, 1));
-	  std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(Fp(cell, qp, 2, 2)) << endl;
+	  if(print) std::cout << "Fp tensor at cell " << cell
+			  << ", quadrature point " << qp << ":" << endl;
+	  if(print) std::cout << "  " << Fp(cell, qp, 0, 0);
+	  if(print) std::cout << "  " << Fp(cell, qp, 0, 1);
+	  if(print) std::cout << "  " << Fp(cell, qp, 0, 2) << endl;
+	  if(print) std::cout << "  " << Fp(cell, qp, 1, 0);
+	  if(print) std::cout << "  " << Fp(cell, qp, 1, 1);
+	  if(print) std::cout << "  " << Fp(cell, qp, 1, 2) << endl;
+	  if(print) std::cout << "  " << Fp(cell, qp, 2, 0);
+	  if(print) std::cout << "  " << Fp(cell, qp, 2, 1);
+	  if(print) std::cout << "  " << Fp(cell, qp, 2, 2) << endl;
     }
   }
 
@@ -425,7 +393,8 @@ evaluateFields(typename Traits::EvalData workset)
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void 
-J2Stress<EvalT, Traits>::exponential_map(Intrepid::FieldContainer<ScalarT> & expA, const Intrepid::FieldContainer<ScalarT> A)
+J2Stress<EvalT, Traits>::exponential_map(Intrepid::FieldContainer<ScalarT> & expA,
+		const Intrepid::FieldContainer<ScalarT> A)
 {
   tmp.initialize(0.0);
   expA.initialize(0.0);
@@ -461,10 +430,10 @@ J2Stress<EvalT, Traits>::exponential_map(Intrepid::FieldContainer<ScalarT> & exp
     if (norm(tmp)/norm0 < 1.E-14 ) converged = true;
     
     TEUCHOS_TEST_FOR_EXCEPTION( k > 50.0, std::runtime_error,
-                                std::endl << "Error in exponential map, k = " << k << 
-                                "\nnorm0 = " << norm0 <<
-                                "\nnorm = " << norm(tmp)/norm0 <<
-                                "\nA = \n" << A << std::endl);
+                          std::endl << "Error in exponential map, k = " << k <<
+                          "\nnorm0 = " << norm0 <<
+                          "\nnorm = " << norm(tmp)/norm0 <<
+                          "\nA = \n" << A << std::endl);
     
   }
 }
