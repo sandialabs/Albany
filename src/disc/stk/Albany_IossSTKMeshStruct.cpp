@@ -255,12 +255,11 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
   // Restart index to read solution from exodus file.
   int index = params->get("Restart Index",-1); // Default to no restart
   double res_time = params->get<double>("Restart Time",-1.0); // Default to no restart
+  Ioss::Region *region = mesh_data->m_input_region;
 
 #ifdef ALBANY_ZOLTAN // rebalance needs Zoltan
 
   if(useSerialMesh){
-
-    Ioss::Region *region = mesh_data->m_input_region;
 
   	bulkData->modification_begin();
 
@@ -292,8 +291,10 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
 
   } // UseSerialMesh - reading mesh on PE 0
 
-  else { // Parallel read from Nemspread files - or we are running in serial
+  else 
 #endif
+
+  { // Parallel read from Nemspread files - or we are running in serial
 
     stk::io::populate_bulk_data(*bulkData, *mesh_data);
 
@@ -340,9 +341,7 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
 
     bulkData->modification_end();
 
-#ifdef ALBANY_ZOLTAN
   } // Parallel Read - or running in serial
-#endif
 
   if(hasRestartSolution){
 

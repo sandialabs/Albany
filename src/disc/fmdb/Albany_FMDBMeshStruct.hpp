@@ -1,21 +1,13 @@
-/********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-\********************************************************************/
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 
 #ifndef ALBANY_FMDBMESHSTRUCT_HPP
 #define ALBANY_FMDBMESHSTRUCT_HPP
+
+#include "Albany_AbstractMeshStruct.hpp"
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -29,7 +21,7 @@
 
 namespace Albany {
 
-  class FMDBMeshStruct {
+  class FMDBMeshStruct : public AbstractMeshStruct {
 
     public:
 
@@ -46,16 +38,34 @@ namespace Albany {
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize);
 
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs();
+
+    msType meshSpecsType(){ return FMDB_MS; }
+
+    bool hasRestartSolution;
+    double restartDataTime;
+    int neq;
+    int numDim;
+    bool interleavedOrdering;
+
     private:
 
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParameters() const;
 
+    void Construct_Pset(pMeshMdl mesh);
+
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
-    pGeomMdl geometry;
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs;
+
+    pGModel model;
     pMeshMdl mesh;
     pPart part;
+    int LB_method;
+    int LB_approach;
+
+    bool useSerialMesh;
 
   };
 

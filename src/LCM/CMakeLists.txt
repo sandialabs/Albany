@@ -388,18 +388,19 @@ IF(ALBANY_LAMENT)
   )
 ENDIF()
 
-
 include_directories (${Trilinos_INCLUDE_DIRS}
                      ${Albany_SOURCE_DIR}/src
-		     ${Albany_SOURCE_DIR}/src/evaluators
-		     ${Albany_SOURCE_DIR}/src/problems 
+                     ${Albany_SOURCE_DIR}/src/evaluators
+                     ${Albany_SOURCE_DIR}/src/problems 
                      ${Albany_SOURCE_DIR}/src/responses
-		     ${Albany_SOURCE_DIR}/src/stk
-		     ${Albany_SOURCE_DIR}/adapt
+                     ${Albany_SOURCE_DIR}/src/disc/stk
+                     ${Albany_SOURCE_DIR}/adapt
                      ./evaluators
-		     ./utils
-		     ./utils/tensor
-                     ${Trilinos_TPL_INCLUDE_DIRS})
+                     ./utils
+                     ./utils/tensor
+                     ${ALBANY_FMDB_INCLUDE_DIRS} 
+                     ${Trilinos_TPL_INCLUDE_DIRS}
+                     )
 
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
 
@@ -444,9 +445,9 @@ IF (ALBANY_LAME OR ALBANY_LAMENT)
     ${Albany_SOURCE_DIR}/src/PHAL_AlbanyTraits.cpp
     ${Albany_SOURCE_DIR}/src/Albany_Utils.cpp
     ${Albany_SOURCE_DIR}/src/Albany_StateManager.cpp
-    ${Albany_SOURCE_DIR}/src/stk/Albany_GenericSTKMeshStruct.cpp
-    ${Albany_SOURCE_DIR}/src/stk/Albany_TmplSTKMeshStruct.cpp
-    ${Albany_SOURCE_DIR}/src/stk/Albany_STKDiscretization.cpp
+    ${Albany_SOURCE_DIR}/src/disc/stk/Albany_GenericSTKMeshStruct.cpp
+    ${Albany_SOURCE_DIR}/src/disc/stk/Albany_TmplSTKMeshStruct.cpp
+    ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKDiscretization.cpp
     ${Albany_SOURCE_DIR}/src/problems/QCAD_MaterialDatabase.cpp
     utils/tensor/Tensor.cc
     utils/LameUtils.cpp
@@ -459,10 +460,18 @@ IF (ALBANY_LAME OR ALBANY_LAMENT)
 ENDIF ()
 
 IF(BUILD_SHARED_LIBS)
-  SET(LCM_UT_LIBS adapt hydride lcm albanyLib)
+  IF(ALBANY_SCOREC)
+    SET(LCM_UT_LIBS albanyLib adapt fmdb stk hydride lcm albanyLib)
+  ELSE()
+    SET(LCM_UT_LIBS albanyLib adapt stk hydride lcm albanyLib)
+  ENDIF()
 ELSE(BUILD_SHARED_LIBS)
   # We really don't link to anything in Hydride
-  SET(LCM_UT_LIBS lcm albanyLib)
+  IF(ALBANY_SCOREC)
+    SET(LCM_UT_LIBS lcm adapt albanyLib fmdb stk albanyLib)
+  ELSE()
+    SET(LCM_UT_LIBS lcm adapt albanyLib stk albanyLib )
+  ENDIF()
 ENDIF(BUILD_SHARED_LIBS)
 
 

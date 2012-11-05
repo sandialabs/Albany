@@ -10,10 +10,7 @@
 #include <vector>
 #include <fstream>
 
-#include "Teuchos_ParameterList.hpp"
-#include "Epetra_Comm.h"
-#include "Epetra_Map.h"
-#include "Albany_StateInfoStruct.hpp"
+#include "Albany_AbstractMeshStruct.hpp"
 
 // Start of STK stuff
 #include <stk_util/parallel/Parallel.hpp>
@@ -35,7 +32,7 @@ namespace Albany {
     double scale[3];
   };
 
-  struct AbstractSTKMeshStruct {
+  struct AbstractSTKMeshStruct : public AbstractMeshStruct {
 
     //AbstractSTKMeshStruct();
   virtual ~AbstractSTKMeshStruct(){}
@@ -48,6 +45,8 @@ namespace Albany {
                   const unsigned int neq_, 
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize) {};
+
+    msType meshSpecsType(){ return STK_MS; }
 
 
     typedef stk::mesh::Field<double,stk::mesh::Cartesian,stk::mesh::Cartesian> TensorFieldType ;

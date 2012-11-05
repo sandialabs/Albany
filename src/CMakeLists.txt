@@ -43,28 +43,6 @@ SET(HEADERS
         Albany_DummyParameterAccessor.hpp
   )
 
-#stk
-
-SET(SOURCES ${SOURCES}
-        stk/Albany_STKDiscretization.cpp
-        stk/Albany_DiscretizationFactory.cpp
-        stk/Albany_GenericSTKMeshStruct.cpp
-        stk/Albany_TmplSTKMeshStruct.cpp
-        stk/Albany_FromCubitSTKMeshStruct.cpp
-        stk/Albany_IossSTKMeshStruct.cpp
-  )
-
-SET(HEADERS ${HEADERS}
-        stk/Albany_AbstractDiscretization.hpp 
-        stk/Albany_STKDiscretization.hpp
-        stk/Albany_DiscretizationFactory.hpp
-        stk/Albany_AbstractSTKMeshStruct.hpp
-        stk/Albany_GenericSTKMeshStruct.hpp
-        stk/Albany_TmplSTKMeshStruct.hpp
-        stk/Albany_FromCubitSTKMeshStruct.hpp
-        stk/Albany_IossSTKMeshStruct.hpp
-  )
-
 #problems
 SET(SOURCES ${SOURCES}
         problems/Albany_AbstractProblem.cpp
@@ -143,24 +121,14 @@ SET(HEADERS ${HEADERS}
         responses/Albany_ResponseFactory.hpp
   )
 
-#stk
+#discretization
 SET(SOURCES ${SOURCES}
-        disc/stk/Albany_STKDiscretization.cpp
         disc/Albany_DiscretizationFactory.cpp
-        disc/stk/Albany_GenericSTKMeshStruct.cpp
-        disc/stk/Albany_TmplSTKMeshStruct.cpp
-        disc/stk/Albany_FromCubitSTKMeshStruct.cpp
-        disc/stk/Albany_IossSTKMeshStruct.cpp
   )
 SET(HEADERS ${HEADERS}
         disc/Albany_AbstractDiscretization.hpp
-        disc/stk/Albany_STKDiscretization.hpp
+        disc/Albany_AbstractMeshStruct.hpp
         disc/Albany_DiscretizationFactory.hpp
-        disc/stk/Albany_AbstractSTKMeshStruct.hpp
-        disc/stk/Albany_GenericSTKMeshStruct.hpp
-        disc/stk/Albany_TmplSTKMeshStruct.hpp
-        disc/stk/Albany_FromCubitSTKMeshStruct.hpp
-        disc/stk/Albany_IossSTKMeshStruct.hpp
   )
 
 #evaluators
@@ -467,19 +435,6 @@ IF(ALBANY_FELIX)
      )
 ENDIF()
 
-# RPI SCOREC Adaptivity tools
-IF(ALBANY_SCOREC)
-
-  SET(ALBANY_FMDB_INCLUDE_DIRS ./disc/fmdb)
-
-  SET(SOURCES ${SOURCES}
-		disc/fmdb/Albany_FMDBMeshStruct.cpp
-   )
-  SET(HEADERS ${HEADERS}
-		disc/fmdb/Albany_FMDBMeshStruct.hpp
-  )
-ENDIF()
-
 SET(SOURCES ${SOURCES}
        QCAD_Solver.cpp
        evaluators/QCAD_Permittivity.cpp
@@ -635,7 +590,8 @@ include_directories (${Trilinos_INCLUDE_DIRS}
 		                 ./Hydride/evaluators
                     )
 
-link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
+link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS}
+                  ${FMDB_LIBRARY_DIR})
 
 # LAME
 IF(ALBANY_LAME)
@@ -677,8 +633,6 @@ endif (ALBANY_ENABLE_CUBIT)
 
 # RPI SCOREC Adaptivity
 IF(ALBANY_SCOREC)
-  include_directories (${FMDB_INCLUDE_DIR})
-  link_directories (${FMDB_LIBRARY_DIR})
   set(SCOREC_LIB FMDB SCORECModel SCORECUtil ipcomman parmetis metis)
 ELSE()
   set(SCOREC_LIB )
@@ -702,23 +656,8 @@ ENDIF ()
 
 add_executable(AlbanyAnalysis Main_Analysis.cpp)
 
-set(ALL_LIBRARIES ${ALBANY_CI_LIB} ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${LAMENT_LIB} ${Trilinos_EXTRA_LD_FLAGS} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES} )
-
 add_subdirectory(adapt)
-
-SET(ALBANY_LIBRARIES albanyLib adapt)
-
-IF (ALBANY_LCM)
-  add_subdirectory(LCM)
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} lcm albanyLib)
-
-  IF (ALBANY_HYDRIDE) 
-#Hydride requires LCM
-    add_subdirectory(Hydride)
-    SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} hydride lcm albanyLib)
-  ENDIF()
-
-ENDIF()
+add_subdirectory(disc)
 
 set(ALL_LIBRARIES 
 	${ALBANY_CI_LIB} 
@@ -730,6 +669,37 @@ set(ALL_LIBRARIES
 	${Trilinos_EXTRA_LD_FLAGS} 
 	${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES} 
 )
+
+SET(ALBANY_LIBRARIES albanyLib adapt stk) 
+
+# RPI SCOREC Adaptivity tools
+IF(ALBANY_SCOREC)
+
+  SET(ALBANY_FMDB_INCLUDE_DIRS ./disc/fmdb)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} fmdb)
+  include_directories (${ALBANY_FMDB_INCLUDE_DIRS} ${FMDB_INCLUDE_DIR})
+
+ELSE()
+
+  SET(ALBANY_FMDB_INCLUDE_DIRS )
+
+ENDIF()
+
+IF (ALBANY_LCM)
+  add_subdirectory(LCM)
+
+  IF (ALBANY_HYDRIDE) 
+#Hydride requires LCM
+    add_subdirectory(Hydride)
+    SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} hydride lcm)
+  ELSE() 
+    SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} lcm)
+  ENDIF()
+
+ENDIF()
+
+# Put albanyLib at the end
+SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanyLib)
 
 target_link_libraries(Albany          ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})
 target_link_libraries(AlbanySG        ${ALBANY_LIBRARIES}  ${ALL_LIBRARIES})

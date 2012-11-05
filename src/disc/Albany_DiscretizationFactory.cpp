@@ -8,11 +8,16 @@
 #include "Albany_DiscretizationFactory.hpp"
 #include "Albany_STKDiscretization.hpp"
 #include "Albany_TmplSTKMeshStruct.hpp"
+#include "Albany_GenericSTKMeshStruct.hpp"
 #ifdef ALBANY_SEACAS
 #include "Albany_IossSTKMeshStruct.hpp"
 #endif
 #ifdef ALBANY_CUTR
 #include "Albany_FromCubitSTKMeshStruct.hpp"
+#endif
+#ifdef ALBANY_SCOREC
+#include "Albany_FMDBDiscretization.hpp"
+#include "Albany_FMDBMeshStruct.hpp"
 #endif
 
 
@@ -36,21 +41,20 @@ Albany::DiscretizationFactory::createMeshSpecs()
 {
   std::string& method = discParams->get("Method", "STK1D");
   if (method == "STK1D") {
-    stkMeshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<1>(discParams, adaptiveMesh, epetra_comm));
-    //stkMeshStruct = Teuchos::rcp(new Albany::Line1DSTKMeshStruct(discParams, epetra_comm));
+    meshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<1>(discParams, adaptiveMesh, epetra_comm));
   }
   else if (method == "STK0D") {
-    stkMeshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<0>(discParams, adaptiveMesh, epetra_comm));
+    meshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<0>(discParams, adaptiveMesh, epetra_comm));
   }
   else if (method == "STK2D") {
-    stkMeshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<2>(discParams, adaptiveMesh, epetra_comm));
+    meshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<2>(discParams, adaptiveMesh, epetra_comm));
   }
   else if (method == "STK3D") {
-    stkMeshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(discParams, adaptiveMesh, epetra_comm));
+    meshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(discParams, adaptiveMesh, epetra_comm));
   }
   else if (method == "Ioss" || method == "Exodus" ||  method == "Pamgen") {
 #ifdef ALBANY_SEACAS
-    stkMeshStruct = Teuchos::rcp(new Albany::IossSTKMeshStruct(discParams, adaptiveMesh, epetra_comm));
+    meshStruct = Teuchos::rcp(new Albany::IossSTKMeshStruct(discParams, adaptiveMesh, epetra_comm));
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(method == "Ioss" || method == "Exodus" ||  method == "Pamgen",
           Teuchos::Exceptions::InvalidParameter,
@@ -61,9 +65,19 @@ Albany::DiscretizationFactory::createMeshSpecs()
   else if (method == "Cubit") {
 #ifdef ALBANY_CUTR
     AGS"need to inherit from Generic"
-    stkMeshStruct = Teuchos::rcp(new Albany::FromCubitSTKMeshStruct(meshMover, discParams, neq));
+    meshStruct = Teuchos::rcp(new Albany::FromCubitSTKMeshStruct(meshMover, discParams, neq));
 #else 
     TEUCHOS_TEST_FOR_EXCEPTION(method == "Cubit", 
+          Teuchos::Exceptions::InvalidParameter,
+         "Error: Discretization method " << method 
+          << " requested, but not compiled in" << std::endl);
+#endif
+  }
+  else if (method == "FMDB") {
+#ifdef ALBANY_SCOREC
+    meshStruct = Teuchos::rcp(new Albany::FMDBMeshStruct(discParams, epetra_comm));
+#else 
+    TEUCHOS_TEST_FOR_EXCEPTION(method == "FMDB", 
           Teuchos::Exceptions::InvalidParameter,
          "Error: Discretization method " << method 
           << " requested, but not compiled in" << std::endl);
@@ -73,25 +87,38 @@ Albany::DiscretizationFactory::createMeshSpecs()
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, std::endl << 
        "Error!  Unknown discretization method in DiscretizationFactory: " << method << 
        "!" << std::endl << "Supplied parameter list is " << std::endl << *discParams 
-       << "\nValid Methods are: STK1D, STK2D, STK3D, Ioss, Exodus, Cubit" << std::endl);
+       << "\nValid Methods are: STK1D, STK2D, STK3D, Ioss, Exodus, Cubit, FMDB" << std::endl);
   }
 
-  return stkMeshStruct->getMeshSpecs();
+  return meshStruct->getMeshSpecs();
+
 }
 
 Teuchos::RCP<Albany::AbstractDiscretization>
 Albany::DiscretizationFactory::createDiscretization(unsigned int neq,
                            const Teuchos::RCP<Albany::StateInfoStruct>& sis)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(stkMeshStruct==Teuchos::null,
+  TEUCHOS_TEST_FOR_EXCEPTION(meshStruct==Teuchos::null,
        std::logic_error,
-       "stkMeshStruct accessed, but it has not been constructed" << std::endl);
+       "meshStruct accessed, but it has not been constructed" << std::endl);
 
-  stkMeshStruct->setFieldAndBulkData(epetra_comm, discParams, neq,
-                                     sis, stkMeshStruct->getMeshSpecs()[0]->worksetSize);
+  meshStruct->setFieldAndBulkData(epetra_comm, discParams, neq,
+                                     sis, meshStruct->getMeshSpecs()[0]->worksetSize);
 
-  Teuchos::RCP<Albany::AbstractDiscretization> strategy
-    = Teuchos::rcp(new Albany::STKDiscretization(stkMeshStruct, epetra_comm));
+  switch(meshStruct->meshSpecsType()){
 
-  return strategy;
+      case Albany::AbstractMeshStruct::STK_MS:
+        return Teuchos::rcp(new Albany::STKDiscretization(
+               Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(meshStruct), epetra_comm));
+      break;
+
+#ifdef ALBANY_SCOREC
+      case Albany::AbstractMeshStruct::FMDB_MS:
+        return Teuchos::rcp(new Albany::FMDBDiscretization(
+               Teuchos::rcp_dynamic_cast<Albany::FMDBMeshStruct>(meshStruct), epetra_comm));
+      break;
+#endif
+
+  }
+
 }

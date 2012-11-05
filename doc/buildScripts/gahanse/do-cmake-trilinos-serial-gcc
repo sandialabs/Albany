@@ -2,12 +2,11 @@
 #
 export TRILINOS_HOME=/repository/usr/local/trilinos/votds/Trilinos
 BUILD_DIR=`pwd`
-INSTALL_DIR=/repository/usr/local/trilinos/votds/MPI_RELD
-BOOST_DIR=/repository/usr/local/boost/boost_1_51_0
+INSTALL_DIR=/repository/usr/local/trilinos/votds/SERIAL_REL
+BOOST_DIR=/repository/usr/local/boost_1_50_0
 MPI_BASE_DIR=/repository/usr/local/gcc/gcc-4.7.2
-NETCDF=/repository/usr/local/parallel/netcdf-4.2.1.1
-HDFDIR=/repository/usr/local/parallel/hdf5-1.8.9
-PARMETISDIR=/repository/usr/local/parallel/ParMetis-3.1.1
+NETCDF=/repository/usr/local/serial/netcdf-4.2.1.1
+HDFDIR=/repository/usr/local/serial/hdf5-1.8.9
 MKL_PATH=/repository/usr/local/intel
 LABLAS_LIBRARY_DIRS="$MKL_PATH/mkl/lib/intel64;/usr/lib64"
 LABLAS_LIBRARY_NAMES="mkl_intel_lp64;mkl_sequential;mkl_core;pthread"
@@ -34,15 +33,13 @@ EXTRA_ARGS=$@
 rm -f CMakeCache.txt
 
 cmake \
-	-D CMAKE_BUILD_TYPE:STRING=RELWITHDEBINFO \
+	-D CMAKE_BUILD_TYPE:STRING=RELEASE \
 	-D DART_TESTING_TIMEOUT:STRING=600 \
 	-D TPL_ENABLE_Boost:BOOL=ON \
 	-D Trilinos_ENABLE_ThreadPool:BOOL=ON \
 	-D Boost_INCLUDE_DIRS:PATH=$BOOST_DIR/include \
 	-D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
 	-D Trilinos_VERBOSE_CONFIGURE:BOOL=OFF \
-	-D TPL_ENABLE_MPI:BOOL=ON \
-	-D MPI_BASE_DIR:PATH=$MPI_BASE_DIR \
 	-D TPL_OpenNURBS_INCLUDE_DIRS:PATH=$OPENNURBS_PATH \
 	-D TPL_OpenNURBS_LIBRARIES:PATH=$OPENNURBS_PATH/libopenNURBS.a \
 	-D TPL_ENABLE_OpenNURBS:BOOL=ON \
@@ -94,15 +91,12 @@ cmake \
 \
 	-D Trilinos_ENABLE_SEACAS:BOOL=ON \
 	-D Trilinos_ENABLE_Pamgen:BOOL=ON \
-\
 	-D TPL_ENABLE_Netcdf:BOOL=ON \
 	-D Netcdf_INCLUDE_DIRS:PATH=$NETCDF/include \
 	-D Netcdf_LIBRARY_DIRS:PATH=$NETCDF/lib \
-\
     -D TPL_ENABLE_HDF5:BOOL=ON \
     -D HDF5_INCLUDE_DIRS:PATH=$HDFDIR/include \
     -D HDF5_LIBRARY_DIRS:PATH=$HDFDIR/lib \
-\
     -D TPL_ENABLE_BLAS:STRING=ON \
     -D TPL_ENABLE_LAPACK:STRING=ON \
     -D BLAS_LIBRARY_DIRS:STRING=$LABLAS_LIBRARY_DIRS \
@@ -110,16 +104,20 @@ cmake \
     -D LAPACK_LIBRARY_DIRS:STRING=$LABLAS_LIBRARY_DIRS \
     -D LAPACK_LIBRARY_NAMES:STRING=$LABLAS_LIBRARY_NAMES \
 \
-    -D TPL_ENABLE_ParMETIS:BOOL=ON \
-    -D ParMETIS_INCLUDE_DIRS:PATH="${PARMETISDIR}" \
-    -D ParMETIS_LIBRARY_DIRS:PATH="${PARMETISDIR}" \
-\
 	-D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_DIR \
 $EXTRA_ARGS \
 ${TRILINOS_HOME}
 
 
 
+#    -D BLAS_LIBRARY_DIRS:STRING="/repository/usr/local/mkl/mkl/lib/intel64;/usr/lib64" \
+#    -D BLAS_LIBRARY_NAMES:STRING="mkl_intel_lp64; mkl_intel_thread; mkl_core; pthread" \
+#    -D LAPACK_LIBRARY_DIRS:STRING="/repository/usr/local/mkl/mkl/lib/intel64;/usr/lib64;/usr/lib" \
+#    -D LAPACK_LIBRARY_NAMES:STRING="mkl_intel_lp64; mkl_intel_thread; mkl_core; pthread; dl" \
+#    -D TPL_BLAS_LIBRARIES:STRING=$BLAS_LA_LIBS \
+#    -D BLAS_LIBS:STRING=$BLAS_LA_LIBS \
+#    -D TPL_LAPACK_LIBRARIES:STRING=$BLAS_LA_LIBS \
+#    -D LAPACK_LIBS:STRING="$BLAS_LA_LIBS" \
 
 
 #	-D CMAKE_CXX_FLAGS:STRING="-g -fno-var-tracking" \

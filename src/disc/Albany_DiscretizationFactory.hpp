@@ -14,7 +14,7 @@
 #include "Epetra_Comm.h"
 
 #include "Albany_AbstractDiscretization.hpp"
-#include "Albany_GenericSTKMeshStruct.hpp"
+#include "Albany_AbstractMeshStruct.hpp"
 
 #ifdef ALBANY_CUTR
 #include "CUTR_CubitMeshMover.hpp"
@@ -70,7 +70,8 @@ namespace Albany {
     Teuchos::RCP<CUTR::CubitMeshMover> meshMover;
 #endif
 
-    Teuchos::RCP<Albany::GenericSTKMeshStruct> stkMeshStruct;
+    Teuchos::RCP<Albany::AbstractMeshStruct> meshStruct;
+
   };
 
 }

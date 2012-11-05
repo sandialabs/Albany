@@ -63,6 +63,10 @@ add_subdirectory(ODE)
 add_subdirectory(ThermoElectrostatics2D)
 add_subdirectory(HeatEigenvalues)
 
+IF(ALBANY_SCOREC)
+  add_subdirectory(Heat2DFMDB)
+ENDIF()
+
 IF(ALBANY_LCM)
   add_subdirectory(DomainTear2D)
   add_subdirectory(ProjectionElasticity3D)

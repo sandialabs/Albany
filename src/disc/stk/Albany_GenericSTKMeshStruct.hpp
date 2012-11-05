@@ -7,8 +7,6 @@
 #ifndef ALBANY_GENERICSTKMESHSTRUCT_HPP
 #define ALBANY_GENERICSTKMESHSTRUCT_HPP
 
-//#include <vector>
-//#include <string>
 #include "Albany_AbstractSTKMeshStruct.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "Epetra_Comm.h"

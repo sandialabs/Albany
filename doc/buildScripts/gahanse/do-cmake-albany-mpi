@@ -92,7 +92,7 @@ else
     ALB_ENABLE_SCOREC=ON
     FMDBINCDIR=$SCOREC_BASE/fmdbParallel/include
     FMDBLIBDIR=$SCOREC_BASE/fmdbParallel/lib
-    SITERINCDIR=$SCOREC_BASE/SCOREC_Software/SCUtil/siter/src
+    SITERINCDIR=$SCOREC_BASE/SCOREC_Software/siter/src
     PARMETISLIBDIR=$SCOREC_BASE/parmetis/ParMetis-3.1.1
 fi
 

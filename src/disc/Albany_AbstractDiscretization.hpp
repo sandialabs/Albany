@@ -41,14 +41,14 @@ namespace Albany {
 
   class wsLid {
 
-     public:
+    public:
 
-     int ws; // the workset of the element containing the side
-     int LID; // the local id of the element containing the side
+    int ws; // the workset of the element containing the side
+    int LID; // the local id of the element containing the side
 
-   };
+  };
 
-   typedef std::map<int, wsLid > WsLIDList;
+  typedef std::map<int, wsLid > WsLIDList;
 
   class AbstractDiscretization {
   public:
