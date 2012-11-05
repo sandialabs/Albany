@@ -40,7 +40,7 @@ int main(int ac, char* av[])
   typedef PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
   typedef PHAL::AlbanyTraits Traits;
   string cauchy = "Cauchy_Stress";
-
+  cout.precision(15);
   //
   // Create a command line processor and parse command line options
   //
@@ -416,6 +416,8 @@ int main(int ac, char* av[])
     for (int istep = 0; istep <= number_steps; ++istep)
     {
 
+      std::cout << "****** in MPS step ******" << istep << endl;
+
       // applied deformation gradient
       defgrad[0] = 1.0 + istep * step_size;
 
@@ -430,17 +432,11 @@ int main(int ac, char* av[])
       fieldManager.postEvaluate<Residual>(workset);
 
 
-      std::cout << "// Pull the stress from the FieldManager" << std::endl;
-      fieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint, Dim, Dim>(stressField);
-
-      // std::cout << "// Pull eqps from the FieldManager" << std::endl;
-      // fieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint>(eqpsField);
-
-      // std::cout << "// Pull Fp from the FieldManager" << std::endl;
-      // fieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint, Dim, Dim>(FpField);
+      stateFieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint, Dim, Dim>(stressField);
+      stateFieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint>(eqpsField);
+      stateFieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint, Dim, Dim>(FpField);
 
       // Check the computed stresses
-      //              std::cout << "defgrad[0]= " << defgrad[0] << endl;
 
       for(size_type cell=0; cell<worksetSize; ++cell){
         for(size_type qp=0; qp<numQPts; ++qp){
@@ -457,20 +453,20 @@ int main(int ac, char* av[])
 
           std::cout << endl;
 
-          // std::cout << "in MPS, Eqps at cell " << cell << ", quadrature point " << qp << ":" << endl;
-          // std::cout << "  " << eqpsField(cell, qp) << endl;
-          // std::cout << endl;
+          std::cout << "in MPS, Eqps at cell " << cell << ", quadrature point " << qp << ":" << endl;
+          std::cout << "  " << eqpsField(cell, qp) << endl;
+          std::cout << endl;
 
-          // std::cout << "in MPS, Fp tensor at cell " << cell << ", quadrature point " << qp << ":" << endl;
-          // std::cout << "  " << FpField(cell, qp, 0, 0);
-          // std::cout << "  " << FpField(cell, qp, 0, 1);
-          // std::cout << "  " << FpField(cell, qp, 0, 2) << endl;
-          // std::cout << "  " << FpField(cell, qp, 1, 0);
-          // std::cout << "  " << FpField(cell, qp, 1, 1);
-          // std::cout << "  " << FpField(cell, qp, 1, 2) << endl;
-          // std::cout << "  " << FpField(cell, qp, 2, 0);
-          // std::cout << "  " << FpField(cell, qp, 2, 1);
-          // std::cout << "  " << FpField(cell, qp, 2, 2) << endl;
+          std::cout << "in MPS, Fp tensor at cell " << cell << ", quadrature point " << qp << ":" << endl;
+          std::cout << "  " << FpField(cell, qp, 0, 0);
+          std::cout << "  " << FpField(cell, qp, 0, 1);
+          std::cout << "  " << FpField(cell, qp, 0, 2) << endl;
+          std::cout << "  " << FpField(cell, qp, 1, 0);
+          std::cout << "  " << FpField(cell, qp, 1, 1);
+          std::cout << "  " << FpField(cell, qp, 1, 2) << endl;
+          std::cout << "  " << FpField(cell, qp, 2, 0);
+          std::cout << "  " << FpField(cell, qp, 2, 1);
+          std::cout << "  " << FpField(cell, qp, 2, 2) << endl;
 
         }
       }
