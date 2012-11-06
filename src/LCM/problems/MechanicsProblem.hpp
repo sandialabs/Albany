@@ -284,6 +284,7 @@ namespace Albany {
 #include "SaturationExponent.hpp"
 #include "DislocationDensity.hpp"
 #include "TLElasResid.hpp"
+#include "MechanicsResidual.hpp"
 #include "Time.hpp"
 #include "J2Fiber.hpp"
 #include "GursonFD.hpp"
@@ -386,7 +387,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   // FIXME, this could probably go into the ProblemUtils 
   // just like the call to getIntrepidBasis
-  RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > surfaceBasis;
+  RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > 
+    surfaceBasis;
   RCP<shards::CellTopology> surfaceTopology;
   RCP<Intrepid::Cubature<RealType> > surfaceCubature;
   if (surfaceElement)
@@ -1615,28 +1617,16 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     { // Residual
       RCP<ParameterList> p = rcp(new ParameterList("Residual"));
-
       //Input
       p->set<string>("Stress Name", cauchy);
-      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
-      p->set<string>("DefGrad Name", "F"); //dl->qp_tensor also
-
+      p->set<string>("DefGrad Name", "F");
       p->set<string>("DetDefGrad Name", "J");
-      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
       p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-      p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
-
       p->set<string>("Weighted BF Name", "wBF");
-      p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-
       //Output
       p->set<string>("Residual Name", "Displacement Residual");
-      p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
-
-      ev = rcp(new LCM::TLElasResid<EvalT,AlbanyTraits>(*p));
+      ev = rcp(new LCM::MechanicsResidual<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
     }
   }
