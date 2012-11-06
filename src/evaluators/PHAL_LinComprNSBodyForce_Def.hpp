@@ -13,16 +13,6 @@
 namespace PHAL {
 const double pi = 3.1415926535897932385;
 
-//base flow values
-const double ubar = 0.0; 
-const double vbar = 0.0; 
-const double wbar = 0.0; 
-const double zetabar = 1.0; 
-const double pbar = 0.714285714285714;
-//fluid parameters  
-const double alpha = 1.0; 
-const double gamma_gas = 1.4; //gas constant 
-
 //**********************************************************************
 
 template<typename EvalT, typename Traits>
@@ -41,6 +31,13 @@ LinComprNSBodyForce(const Teuchos::ParameterList& p) :
   }
   else if (type == "Steady Euler") {
     bf_type = STEADYEUL;  
+    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
+            p.get<std::string>("Coordinate Vector Name"),
+	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Gradient Data Layout") );
+    this->addDependentField(coordVec);
+  }
+  else if (type == "Unsteady Euler MMS") {
+    bf_type = UNSTEADYEULMMS;  
     coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Name"),
 	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Gradient Data Layout") );
@@ -75,7 +72,7 @@ void LinComprNSBodyForce<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  if (bf_type == STEADYEUL) {
+  if (bf_type == STEADYEUL || bf_type == UNSTEADYEULMMS) {
     this->utils.setFieldData(coordVec,fm);
   }
 
@@ -94,10 +91,11 @@ evaluateFields(typename Traits::EvalData workset)
   	 force(cell,qp,i) = 0.0;
  }
  else if (bf_type == STEADYEUL) {
-    double ubar = 1.0; 
-    double vbar = 1.0; 
-    double zetabar = 1.0; 
-    double pbar = 0.0;
+    const double ubar = 1.0; 
+    const double vbar = 1.0; 
+    const double zetabar = 1.0; 
+    const double pbar = 0.0;
+    const double gamma_gas = 1.4; 
    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
      for (std::size_t qp=0; qp < numQPs; ++qp) {      
        ScalarT* f = &force(cell,qp,0);
@@ -108,6 +106,30 @@ evaluateFields(typename Traits::EvalData workset)
        f[0] = -1.0*(ubar*(y - x*sin(x)) + vbar*x + zetabar*2.0*x*(0.5-y));  
        f[1] = -1.0*(ubar*cos(x)*y + vbar*sin(x) - zetabar*x*x);  
        f[2] = -1.0*(gamma_gas*pbar*(y - x*sin(x) + sin(x)) + ubar*2.0*x*(0.5-y) - vbar*x*x);  
+     }
+   }
+ }
+ else if (bf_type == UNSTEADYEULMMS) {
+   const double ubar = 0.0; 
+   const double vbar = 0.0; 
+   const double zetabar = 1.0; 
+   const double pbar = 0.7142857;
+   const double a = 1.0; 
+   const double gamma_gas = 1.4; 
+   const RealType time = workset.current_time;
+   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+     for (std::size_t qp=0; qp < numQPs; ++qp) {      
+       ScalarT* f = &force(cell,qp,0);
+       MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
+       MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
+       MeshScalarT x = coordVec(cell,qp,0); 
+       MeshScalarT y = coordVec(cell,qp,1);
+       f[0] = -1.0*exp(-a*time)*(-a*sin(x2pi)*cos(y2pi) + ubar*2.0*pi*cos(x2pi)*cos(y2pi) 
+                                 -vbar*2.0*pi*sin(x2pi)*sin(y2pi) + 2.0*pi*zetabar*cos(x2pi)*sin(y2pi));   
+       f[1] = -1.0*exp(-a*time)*(-a*cos(x2pi)*sin(y2pi) - 2.0*pi*ubar*sin(x2pi)*sin(y2pi) 
+                                 + vbar*2.0*pi*cos(x2pi)*cos(y2pi) + 2.0*pi*zetabar*sin(x2pi)*cos(y2pi)); 
+       f[2] = -1.0*exp(-a*time)*(-a*sin(x2pi)*sin(y2pi) + gamma_gas*pbar*4.0*pi*cos(x2pi)*cos(y2pi) + 
+                                 ubar*2.0*pi*cos(x2pi)*sin(y2pi) + vbar*2.0*pi*sin(x2pi)*cos(y2pi));   
      }
    }
  }

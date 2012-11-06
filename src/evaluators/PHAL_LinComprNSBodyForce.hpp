@@ -47,7 +47,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> force;
 
    //Radom field types
-  enum BFTYPE {NONE, STEADYEUL};
+  enum BFTYPE {NONE, STEADYEUL, UNSTEADYEULMMS};
   BFTYPE bf_type;
 
   std::size_t numQPs;

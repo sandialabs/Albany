@@ -16,3 +16,8 @@ add_test(${testName}_2DSteady ${SerialAlbany.exe} input2D.xml)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input2Dunsteady.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input2Dunsteady.xml COPYONLY)
 add_test(${testName}_2DUnsteadyInvPressPulse ${SerialAlbany.exe} input2Dunsteady.xml)
+
+# 5. Create the test with this name and standard executable
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input2DunsteadyMMS.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input2DunsteadyMMS.xml COPYONLY)
+add_test(${testName}_2DUnsteadyMMS ${SerialAlbany.exe} input2DunsteadyMMS.xml)

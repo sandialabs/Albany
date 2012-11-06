@@ -32,6 +32,8 @@ Teuchos::RCP<Albany::AnalyticFunction> Albany::createAnalyticFunction(
     F = Teuchos::rcp(new Albany::LinearY(neq, numDim, data));
   else if (name=="Gaussian Pressure")
     F = Teuchos::rcp(new Albany::GaussianPress(neq, numDim, data));
+  else if (name=="Sin-Cos")
+    F = Teuchos::rcp(new Albany::SinCos(neq, numDim, data));
   else
     TEUCHOS_TEST_FOR_EXCEPTION(name != "Valid Initial Condition Function",
                        std::logic_error,
@@ -205,8 +207,28 @@ Albany::GaussianPress::GaussianPress(int neq_, int numDim_, Teuchos::Array<doubl
 }
 void Albany::GaussianPress::compute(double* x, const double *X) 
 {
+  std::cout << "in gaussian press!" << std::endl; 
   x[0] = 0.0;
   x[1] = 0.0;
   x[2] = data[0]*exp(-data[1]*((X[0] - data[2])*(X[0] - data[2]) + (X[1] - data[3])*(X[1] - data[3]))); 
+}
+//*****************************************************************************
+Albany::SinCos::SinCos(int neq_, int numDim_, Teuchos::Array<double> data_)
+ : numDim(numDim_), neq(neq_), data(data_)
+{
+  std::cout << "setting SinCos IC!" << std::endl; 
+  TEUCHOS_TEST_FOR_EXCEPTION((neq<3) || (numDim<2),
+			     std::logic_error,
+			     "Error! Invalid call of SinCos with " <<neq
+			     <<" "<< numDim <<"  "<< data.size() << std::endl);
+}
+  //for validation of LinComprNS problems; 
+  //Sets an initial condition as a trigonometric function
+void Albany::SinCos::compute(double* x, const double *X) 
+{
+  std::cout << "in sincos!" << std::endl; 
+  x[0] = sin(2.0*pi*X[0])*cos(2.0*pi*X[1]);
+  x[1] = cos(2.0*pi*X[0])*sin(2.0*pi*X[1]); 
+  x[2] = sin(2.0*pi*X[0])*sin(2.0*pi*X[1]); 
 }
 //*****************************************************************************
