@@ -80,18 +80,19 @@ LinComprNSResid(const Teuchos::ParameterList& p) :
 cout << " vecDim = " << vecDim << endl;
 cout << " numDims = " << numDims << endl;
 
+if (baseFlowData.size()!=numDims+2) {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+                                  std::endl << "Error in PHAL::LinComprNS constructor:  " <<
+                                  "baseFlow data should have length numDims + 2 =  " << numDims+2 << "." << std::endl);} 
+
 if (eqn_type == NS) {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                                   std::endl << "Error in PHAL::LinComprNS constructor:  " <<
                                   "NS equations not yet implemented. " << std::endl);} 
 
 
-if (numDims == 2 & vecDim != 3) {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+if (eqn_type == EULER & vecDim != numDims+1) {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                                   std::endl << "Error in PHAL::LinComprNS constructor:  " <<
-                                  "Invalid Parameter vecDim.  vecDim should be 3 for a 2D problem. " << std::endl);}  
+                                  "Invalid Parameter vecDim.  vecDim should be numDims + 1 = " << numDims + 1 << " for Euler equations." << std::endl);}  
 
-if (numDims == 3) {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-                                  std::endl << "Error in PHAL::LinComprNS constructor:  " <<
-                                  "3D case not implemented yet. " << std::endl);}  
 }
 
 //**********************************************************************
@@ -124,7 +125,7 @@ evaluateFields(typename Traits::EvalData workset)
     double ubar = baseFlowData[0]; 
     double vbar = baseFlowData[1]; 
     double zetabar = baseFlowData[2]; 
-    double pbar = baseFlowData[3]; 
+    double pbar = baseFlowData[3];
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {
           for (std::size_t i=0; i<vecDim; i++) 
@@ -149,6 +150,37 @@ evaluateFields(typename Traits::EvalData workset)
         }
     }
    else if (numDims == 3) { //3D case
+    double ubar = baseFlowData[0]; 
+    double vbar = baseFlowData[1]; 
+    double wbar = baseFlowData[2]; 
+    double zetabar = baseFlowData[3]; 
+    double pbar = baseFlowData[4];
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t node=0; node < numNodes; ++node) {
+          for (std::size_t i=0; i<vecDim; i++) 
+             Residual(cell,node,i) = 0.0; 
+          for (std::size_t qp=0; qp < numQPs; ++qp) {
+             for (std::size_t i=0; i < vecDim; i++) {
+                Residual(cell,node,i) = CDot(cell,qp,i)*wBF(cell,node,qp); 
+             }
+          }
+          for (std::size_t qp=0; qp < numQPs; ++qp) {
+             Residual(cell, node, 0) += ubar*Cgrad(cell,qp,0,0)*wBF(cell,node,qp) + vbar*Cgrad(cell,qp,0,1)*wBF(cell,node,qp) 
+                                     +wbar*Cgrad(cell,qp,0,2)*wBF(cell,node,qp) + zetabar*Cgrad(cell,qp,3,0)*wBF(cell,node,qp) 
+                                     + force(cell,qp,0)*wBF(cell,node,qp); //ubar*du'/dx + vbar*du'/dy + wbar*du'/dz + zetabar*dp'/dx + f0
+             Residual(cell, node, 1) += ubar*Cgrad(cell,qp,1,0)*wBF(cell,node,qp) + vbar*Cgrad(cell,qp,1,1)*wBF(cell,node,qp) 
+                                     + wbar*Cgrad(cell,qp,1,2)*wBF(cell,node,qp) + zetabar*Cgrad(cell,qp,3,1)*wBF(cell,node,qp) 
+                                     + force(cell,qp,1)*wBF(cell,node,qp); //ubar*dv'/dx + vbar*dv'/dy + wbar*dv'/dz + zetabar*dp'/dy + f1
+             Residual(cell, node, 2) += ubar*Cgrad(cell,qp,2,0)*wBF(cell,node,qp) + vbar*Cgrad(cell,qp,2,1)*wBF(cell,node,qp)
+                                     + wbar*Cgrad(cell,qp,2,2)*wBF(cell,node,qp) + zetabar*Cgrad(cell,qp,3,2)*wBF(cell,node,qp)
+                                     + force(cell,qp,2)*wBF(cell,node,qp); //ubar*dw'/dx + vbar*dw'/dy + wbar*dw'/dz + zetabar*dp'/dz + f2
+             Residual(cell, node, 3) += gamma_gas*pbar*(Cgrad(cell,qp,0,0) + Cgrad(cell,qp,1,1) + Cgrad(cell,qp,2,2))*wBF(cell,node,qp) 
+                                     + ubar*Cgrad(cell,qp,3,0)*wBF(cell,node,qp) + vbar*Cgrad(cell,qp,3,1)*wBF(cell,node,qp) + wbar*Cgrad(cell,qp,3,2)*wBF(cell,node,qp) 
+                                     + force(cell,qp,3)*wBF(cell,node,qp); //gamma*pbar*div(u') + ubar*dp'/dx + vbar*dp'/dy + wbar*dp'/dz + f3
+            } 
+          } 
+        }
+     
    }
   }
 }
