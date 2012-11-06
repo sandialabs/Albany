@@ -1445,7 +1445,7 @@ namespace LCM {
 
     // K-means iteration
     const Index
-    max_iterations = 32;
+    max_iterations = 16;
 
     const Index
     cluster_size = GetClusterSize();
