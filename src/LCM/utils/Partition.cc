@@ -1130,6 +1130,10 @@ namespace LCM {
       partitions = PartitionKMeans(length_scale);
       break;
 
+    case LCM::SEQUENTIAL:
+      partitions = PartitionKMeansSequential(length_scale);
+      break;
+
     default:
       std::cerr << "Unknown partitioning scheme." << std::endl;
       exit(1);
@@ -1461,35 +1465,37 @@ namespace LCM {
     double
     max_step = diagonal_distance;
 
+    // Create random points.
+    Index
+    random_point_counter = 0;
+
+    std::vector< Vector<double> >
+    random_points;
+
+    while (random_point_counter < number_random_points) {
+
+      const Vector<double>
+      random_point = random_in_box(min, max);
+
+      const bool
+      point_is_in_mesh = IsInsideMesh(random_point);
+
+      if (point_is_in_mesh == true) {
+        random_points.push_back(random_point);
+
+        ++random_point_counter;
+      }
+
+    }
+
     while (max_step >= tolerance && number_iterations < max_iterations) {
 
-      // Create random points and assign to closest generators
-      Index
-      random_point_counter = 0;
-
-      std::vector< Vector<double> >
-      random_points;
-
+      // Assign random points to closest generators
       std::map<int, int>
       point_generator_map;
 
-      while (random_point_counter < number_random_points) {
-
-        const Vector<double>
-        random_point = random_in_box(min, max);
-
-        const bool
-        point_is_in_mesh = IsInsideMesh(random_point);
-
-        if (point_is_in_mesh == true) {
-          random_points.push_back(random_point);
-
-          point_generator_map[random_point_counter] =
-              closest_point(random_point, generators);
-
-          ++random_point_counter;
-        }
-
+      for (Index i = 0; i < random_points.size(); ++i) {
+        point_generator_map[i] = closest_point(random_points[i], generators);
       }
 
       // Determine cluster of random points for each generator
@@ -1680,10 +1686,10 @@ namespace LCM {
     }
 
     std::vector<Index>
-    weight(number_partitions);
+    weights(number_partitions);
 
     for (int i = 0; i < number_partitions; ++i) {
-      weight[i] = 1;
+      weights[i] = 1;
     }
 
     // K-means iteration
@@ -1703,98 +1709,61 @@ namespace LCM {
     diagonal_distance = norm(max - min);
 
     const double
-    tolerance = 1.0e-4 * diagonal_distance;
+    tolerance = 1.0e-7 * diagonal_distance;
+
+    std::vector<double>
+    steps(number_partitions);
+
+    for (int i = 0; i < number_partitions; ++i) {
+      steps[i] = diagonal_distance;
+    }
 
     double
-    max_step = diagonal_distance;
+    step_norm = diagonal_distance;
 
-    while (max_step >= tolerance && number_iterations < max_iterations) {
+    while (step_norm >= tolerance && number_iterations < max_iterations) {
 
-      // Create a random point, find closesr generator
+      // Create a random point, find closest generator
+      bool
+      is_point_in_domain = false;
 
-      // Create random points and assign to closest generators
-      Index
-      random_point_counter = 0;
+      Vector<double>
+      random_point(min.get_dimension());
 
-      std::vector< Vector<double> >
-      random_points;
-
-      std::map<int, int>
-      point_generator_map;
-
-      while (random_point_counter < number_random_points) {
-
-        const Vector<double>
+      while (is_point_in_domain == false) {
         random_point = random_in_box(min, max);
-
-        const bool
-        point_is_in_mesh = IsInsideMesh(random_point);
-
-        if (point_is_in_mesh == true) {
-          random_points.push_back(random_point);
-
-          point_generator_map[random_point_counter] =
-              closest_point(random_point, generators);
-
-          ++random_point_counter;
-        }
-
+        is_point_in_domain = IsInsideMesh(random_point);
       }
 
-      // Determine cluster of random points for each generator
-      std::vector<std::vector<Vector<double> > >
-      clusters;
+      // Determine index to closest generator
+      const Index
+      i = closest_point(random_point, generators);
 
-      clusters.resize(number_partitions);
+      // Update that generator and the weight
+      const Vector<double>
+      old_generator = generators[i];
 
-      for (std::map<int, int>::const_iterator it = point_generator_map.begin();
-          it != point_generator_map.end();
-          ++it) {
+      generators[i] =
+          (weights[i] * generators[i] + random_point) / (weights[i] + 1);
 
-        const int
-        point_index = (*it).first;
+      weights[i] += 1;
 
-        const int
-        generator_index = (*it).second;
+      steps[i] = norm(generators[i] - old_generator);
+      step_norm = norm(Vector<double>(number_partitions, &steps[0]));
 
-        clusters[generator_index].push_back(random_points[point_index]);
-
+      if (number_iterations % 10000 == 0) {
+        std::cout << "Iteration: " << number_iterations;
+        std::cout << ". Step: " << step_norm << ". ";
+        std::cout << "Tol:" << tolerance << std::endl;
       }
-
-      // Compute centroids of each cluster and set generators to
-      // these centroids.
-      max_step = 0.0;
-
-      for (std::vector< std::vector<Vector<double> > >::size_type i = 0;
-          i < clusters.size();
-          ++i) {
-
-        // If cluster is empty then generator does not move.
-        if (clusters[i].size() == 0) {
-          std::cout << "Iteration: " << number_iterations;
-          std::cout << ", generator " << i << " has zero points." << std::endl;
-          continue;
-        }
-
-        const Vector<double>
-        cluster_centroid = centroid(clusters[i]);
-
-        const double
-        step = norm(cluster_centroid - generators[i]);
-
-        if (step > max_step) {
-          max_step = step;
-        }
-
-        generators[i] = cluster_centroid;
-      }
-
-      std::cout << "Iteration: " << number_iterations;
-      std::cout << ". Step: " << max_step << ". Tol:" << tolerance << std::endl;
 
       ++number_iterations;
 
     }
+
+    std::cout << "Iteration: " << number_iterations;
+    std::cout << ". Step: " << step_norm << ". ";
+    std::cout << "Tol:" << tolerance << std::endl;
 
     // Set partition number for each element.
 

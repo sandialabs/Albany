@@ -48,13 +48,14 @@ int main(int ac, char* av[])
       "Output File Name");
 
   const int
-  number_schemes = 3;
+  number_schemes = 4;
 
   const LCM::PartitionScheme
-  scheme_values[] = {LCM::GEOMETRIC, LCM::HYPERGRAPH, LCM::KMEANS};
+  scheme_values[] =
+    {LCM::GEOMETRIC, LCM::HYPERGRAPH, LCM::KMEANS, LCM::SEQUENTIAL};
 
   const char*
-  scheme_names[] = {"geometric", "hypergraph", "kmeans"};
+  scheme_names[] = {"geometric", "hypergraph", "kmeans", "sequential"};
 
   LCM::PartitionScheme
   partition_scheme = LCM::GEOMETRIC;

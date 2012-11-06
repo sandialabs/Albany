@@ -60,7 +60,7 @@ namespace LCM {
   ///
   /// Useful to distinguish among different partitioning schemes.
   ///
-  enum PartitionScheme {UNKNOWN, GEOMETRIC, HYPERGRAPH, KMEANS};
+  enum PartitionScheme {UNKNOWN, GEOMETRIC, HYPERGRAPH, KMEANS, SEQUENTIAL};
 
   //
   ///Forward declarations
