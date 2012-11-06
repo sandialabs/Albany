@@ -28,6 +28,7 @@ public:
   TimeTracBC_Base(Teuchos::ParameterList& p);
 
   void computeVal(RealType time);
+  void computeCoordVal(RealType time);
 
 protected:
 

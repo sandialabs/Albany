@@ -28,8 +28,6 @@ namespace PHAL {
 
 */
 
-enum NEU_TYPE {COORD, NORMAL, INTJUMP, PRESS, ROBIN};
-enum SIDE_TYPE {OTHER, LINE, TRI}; // to calculate areas for pressure bc
 
 template<typename EvalT, typename Traits>
 class NeumannBase : 
@@ -38,6 +36,9 @@ class NeumannBase :
     public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
 
 public:
+
+  enum NEU_TYPE {COORD, NORMAL, INTJUMP, PRESS, ROBIN};
+  enum SIDE_TYPE {OTHER, LINE, TRI}; // to calculate areas for pressure bc
 
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
