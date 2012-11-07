@@ -60,13 +60,15 @@ void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
 
   // Handle element block specific constant data
 
-  if(name == "EBConstant"){
+  if(name == "EBPerturb" || name == "EBPerturbGaussian" || name == "EBConstant"){
 
     bool perturb_values = false;
+
     Teuchos::Array<double> defaultData(neq);
     Teuchos::Array<double> perturb_mag;
 
-    if(icParams.isParameter("Perturb IC")){
+    // Only perturb if the user has told us by how much to perturb
+    if(name != "EBConstant" && icParams.isParameter("Perturb IC")){
 
       perturb_values = true;
 
@@ -108,11 +110,20 @@ void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
       Teuchos::Array<double> data = icParams.get(wsEBNames[ws], defaultData);
       // Call factory method from library of initial condition functions
 
-      if(perturb_values)
-//        initFunc = Teuchos::rcp(new Albany::ConstantFunctionPerturbed(neq, numDim, ws, data, perturb_mag));
-        initFunc = Teuchos::rcp(new 
-          Albany::ConstantFunctionGaussianPerturbed(neq, numDim, ws, data, perturb_mag));
+      if(perturb_values){
+
+        if(name == "EBPerturb")
+
+          initFunc = Teuchos::rcp(new Albany::ConstantFunctionPerturbed(neq, numDim, ws, data, perturb_mag));
+
+        else // name == EBGaussianPerturb
+
+          initFunc = Teuchos::rcp(new 
+            Albany::ConstantFunctionGaussianPerturbed(neq, numDim, ws, data, perturb_mag));
+      }
+
       else
+
         initFunc = Teuchos::rcp(new Albany::ConstantFunction(neq, numDim, data));
 
       std::vector<double> X(neq);

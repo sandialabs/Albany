@@ -4,7 +4,7 @@
     <Parameter name="Solution Method" type="string" value="Transient"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
     <ParameterList name="Initial Condition">
-      <Parameter name="Function" type="string" value="EBConstant"/>
+      <Parameter name="Function" type="string" value="EBPerturb"/>
       <Parameter name="block_1" type="Array(double)" value="{0.0, 0.0}"/>
       <Parameter name="Perturb IC" type="Array(double)" value="{0.1, 0.0}"/>
     </ParameterList>
@@ -16,9 +16,8 @@
     <Parameter name="Langevin Noise Time Period" type="Array(int)" value="{0, 200}"/>
 -->
     <ParameterList name="Response Functions">
-      <Parameter name="Number" type="int" value="2"/>
+      <Parameter name="Number" type="int" value="1"/>
       <Parameter name="Response 0" type="string" value="Solution Average"/>
-      <Parameter name="Response 1" type="string" value="Solution Max Value"/>
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
@@ -28,8 +27,8 @@
     <Parameter name="Use Serial Mesh" type="bool" value="1"/>
   </ParameterList>
   <ParameterList name="Regression Results">
-    <Parameter name="Number of Comparisons" type="int" value="2"/>
-    <Parameter name="Test Values" type="Array(double)" value="{0.0,0.028}"/>
+    <Parameter name="Number of Comparisons" type="int" value="1"/>
+    <Parameter name="Test Values" type="Array(double)" value="{0.0}"/>
     <Parameter name="Relative Tolerance" type="double" value="1.0e-1"/>
     <Parameter name="Absolute Tolerance" type="double" value="1.0e-1"/>
   </ParameterList>

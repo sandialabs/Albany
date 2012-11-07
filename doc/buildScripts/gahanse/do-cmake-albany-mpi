@@ -11,14 +11,16 @@ eval set -- "$TEMP"
 
 while true ; do
     case "$1" in 
+      --dryrun) ECHO=echo; shift;;
+      --hyd) ALB_ENABLE_HYDRIDE=ON; shift ;;
       --lameinc)
              ALB_LAME_INC_DIR="$2"; shift 2;;
       --lamelib)
              ALB_LAME_LIB_DIR="$2"; shift 2;;
       --lcm) ALB_ENABLE_LCM=ON; shift ;;
-      --hyd) ALB_ENABLE_HYDRIDE=ON; shift ;;
       --scorec) ALB_ENABLE_SCOREC=ON; shift ;;
-      --dryrun) ECHO=echo; shift;;
+      --ascr) ALB_ENABLE_ASCR=ON; shift ;;
+      --felix) ALB_ENABLE_FELIX=ON; shift ;;
       --verbose) ALB_VERBOSE=ON; shift;;
       --fpe) ALB_CHECK_FPE=ON; shift;;
       --trilinos)
@@ -33,6 +35,8 @@ while true ; do
             echo "--lcm              enable LCM capabilities (default: off)"
             echo "--hyd              enable Hydride capabilities (default: off)"
             echo "--scorec           enable RPI SCOREC adaptation (default: off)"
+            echo "--ascr             enable ASCR capabilities (default: off)"
+            echo "--felix            enable Land Ice SciDAC project code (default: off)"
             echo "--fpe              enable traps for floating point exceptions (default: off)"
             echo "--trilinos <dir>   set location of Trilinos library (no default)"
             echo " ";
@@ -65,6 +69,16 @@ fi
 if [ -z "$ALB_ENABLE_LCM" -o "$ALB_ENABLE_LCM" = "OFF" ]; then
     echo -e "\nLCM capabilities are NOT configured. If this is incorrect, use option --lcm"
     ALB_ENABLE_LCM=OFF
+fi
+
+if [ -z "$ALB_ENABLE_FELIX" -o "$ALB_ENABLE_FELIX" = "OFF" ]; then
+    echo -e "\nFELIX capabilities are NOT configured. If this is incorrect, use option --felix"
+    ALB_ENABLE_FELIX=OFF
+fi
+
+if [ -z "$ALB_ENABLE_ASCR" -o "$ALB_ENABLE_ASCR" = "OFF" ]; then
+    echo -e "\nASCR capabilities are NOT configured. If this is incorrect, use option --ascr"
+    ALB_ENABLE_ASCR=OFF
 fi
 
 if [ -z "$ALB_ENABLE_SCOREC" -o "$ALB_ENABLE_SCOREC" = "OFF" ]; then
@@ -100,6 +114,8 @@ ${ECHO} cmake \
       -D ENABLE_CHECK_FPE:BOOL=${ALB_CHECK_FPE} \
       -D ENABLE_HYDRIDE:BOOL=${ALB_ENABLE_HYDRIDE} \
       -D ENABLE_SCOREC:BOOL=${ALB_ENABLE_SCOREC} \
+      -D ENABLE_FELIX:BOOL=${ALB_ENABLE_FELIX} \
+      -D ENABLE_ASCR:BOOL=${ALB_ENABLE_ASCR} \
       -D LAME_INCLUDE_DIR:FILEPATH="$ALB_LAME_INC_DIR" \
       -D LAME_LIBRARY_DIR:FILEPATH="$ALB_LAME_LIB_DIR" \
       -D FMDB_INCLUDE_DIR:FILEPATH="$FMDBINCDIR;$SITERINCDIR" \
