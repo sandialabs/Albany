@@ -47,7 +47,12 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> force;
   
   Teuchos::Array<double> baseFlowData;  
-  double gamma_gas; 
+  double gamma_gas; //1.4 typically 
+  double Rgas; //Non-dimensional gas constant Rgas = R*Tref/(cref*cref), where R = nondimensional gas constant = 287.0 typically
+  double Re;   //Reynolds number
+  double Pr;   //Prandtl number, 0.72 typically 
+  double mu; double lambda; //viscosity coefficients
+  double kappa; //thermal diffusivity 
   
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;
