@@ -2072,10 +2072,10 @@ namespace LCM {
   }
 
   //
-  // R^N logarithmic map using BCH expansion (3 terms)
+  // R^N logarithmic map using BCH expansion (4 terms)
   // \param x tensor
   // \param y tensor
-  // \return Baker-Campbell-Hausdorff series up to 3 terms
+  // \return Baker-Campbell-Hausdorff series up to 4 terms
   //
   template<typename T>
   Tensor<T>
@@ -2086,11 +2086,15 @@ namespace LCM {
         x + y
         +
         // second order term
-        T(0.5)*(x*y - y*x)
+        0.5*(x*y - y*x)
         +
         // third order term
-        T(1.0/12.0) *
-          (x*x*y - T(2.0)*x*y*x + x*y*y + y*x*x - T(2.0)*y*x*y + y*y*x);
+        1.0/12.0 *
+          (x*x*y - 2.0*x*y*x + x*y*y + y*x*x - 2.0*y*x*y + y*y*x)
+        +
+        // fourth order term
+        1.0/24.0 *
+        (x*x*y*y - 2.0*x*y*x*y + 2.0*y*x*y*x - y*y*x*x);
   }
 
   //
@@ -2612,7 +2616,7 @@ namespace LCM {
   //
   // Cholesky decomposition, rank-1 update algorithm
   // (Matrix Computations 3rd ed., Golub & Van Loan, p145)
-  // \param A assumed symetric tensor
+  // \param A assumed symmetric tensor
   // \return G Cholesky factor A = GG^T
   // \return completed (bool) algorithm ran to completion
   //

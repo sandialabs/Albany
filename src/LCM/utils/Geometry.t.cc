@@ -396,6 +396,60 @@ namespace LCM {
     return index;
   }
 
+  // Median of a sequence defined by random
+  // access iterators. Undefined for empty set.
+  // \param begin, end Iterators that define the sequence
+  // \return median of sequence
+  //
+  template<typename T, typename Iterator>
+  T
+  median(Iterator begin, Iterator end)
+  {
+    // Firewall
+    if (begin == end) {
+      std::cerr << "ERROR: Median undefined for empty set." << std::endl;
+      exit(1);
+    }
+
+    Index
+    size = end - begin;
+
+    T
+    median;
+
+    Index
+    mid_index = size / 2;
+
+    Iterator
+    mid_iterator = begin + mid_index;
+
+    std::nth_element(begin, mid_iterator, end);
+
+    if (size % 2 == 0) {
+
+      // Even number of elements
+      T
+      b = *mid_iterator;
+
+      Iterator
+      previous = mid_iterator - 1;
+
+      T
+      a = *previous;
+
+      median = (a + b) / 2.0;
+
+    } else {
+
+      // Odd number of elements
+      median = *mid_iterator;
+
+    }
+
+    return median;
+
+  }
+
 } // namespace LCM
 
 #endif // LCM_Geometry_t_cc

@@ -1334,10 +1334,10 @@ namespace LCM {
   polar_left_logV_lame(Tensor<T> const & F);
 
   ///
-  /// Logarithmic map using BCH expansion (3 terms)
+  /// Logarithmic map using BCH expansion (4 terms)
   /// \param v tensor
   /// \param r tensor
-  /// \return Baker-Campbell-Hausdorff series up to 3 terms
+  /// \return Baker-Campbell-Hausdorff series up to 4 terms
   ///
   template<typename T>
   Tensor<T>

@@ -176,6 +176,14 @@ namespace LCM {
   typename std::vector< Vector<T> >::size_type
   closest_point(Vector<T> const & p, std::vector< Vector<T> > const & n);
 
+  /// Median of a sequence defined by random
+  /// access iterators. Undefined for empty set.
+  /// \param begin, end Iterators that define the sequence
+  /// \return median of sequence
+  ///
+  template<typename T, typename Iterator>
+  T
+  median(Iterator begin, Iterator end);
 
 } // namespace LCM
 

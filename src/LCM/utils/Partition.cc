@@ -1588,8 +1588,7 @@ namespace LCM {
       std::vector< LCM::Vector<double> >
       element_nodes;
 
-      for (IDList::size_type
-          i = 0;
+      for (IDList::size_type i = 0;
           i < nodes_per_element;
           ++i) {
 
