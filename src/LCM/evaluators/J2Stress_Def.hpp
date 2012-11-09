@@ -109,7 +109,7 @@ evaluateFields(typename Traits::EvalData workset)
   typedef Intrepid::RealSpaceTools<ScalarT> RST;
 
   bool print = false;
-  if (typeid(ScalarT) == typeid(RealType)) print = true;
+  // if (typeid(ScalarT) == typeid(RealType)) print = true;
   cout.precision(15);
 
   if(print) std::cout << "========= J2 STRESS_DEF ============= " << std::endl;
@@ -387,7 +387,7 @@ evaluateFields(typename Traits::EvalData workset)
           Fp(cell,qp,i,i) = 1.0;
 
 
-  std::cout << "===================================== "<< std::endl;
+  //std::cout << "===================================== "<< std::endl;
 
 }
 //**********************************************************************
