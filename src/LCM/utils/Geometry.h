@@ -13,6 +13,14 @@
 namespace LCM {
 
   ///
+  /// Useful to distinguish among different finite elements.
+  ///
+  namespace ELEMENT{
+    enum Type {UNKNOWN, SEGMENTAL, TRIANGULAR,
+      QUADRILATERAL, TETRAHEDRAL, HEXAHEDRAL};
+  }
+
+  ///
   /// Length of a segment
   ///
   template<typename T>
@@ -71,7 +79,8 @@ namespace LCM {
   ///
   /// Centroids of segment, triangle, tetrahedron, quadrilateral
   /// and hexahedron.
-  /// For these we can just take the average of the vertices
+  /// For these we can just take the average of the vertices.
+  /// WARNING: This is not the center of mass.
   ///
   template<typename T>
   Vector<T>
@@ -184,6 +193,88 @@ namespace LCM {
   template<typename T, typename Iterator>
   T
   median(Iterator begin, Iterator end);
+
+  ///
+  /// Given quadrilateral nodes and a position
+  /// in parametric coordinates, interpolate.
+  /// \param xi position in parametric coordinates
+  /// \param p0 ... corner nodes
+  /// \return interpolated position
+  ///
+  template<typename T>
+  Vector<T>
+  interpolate_quadrilateral(
+      Vector<T> & xi,
+      Vector<T> const & p0,
+      Vector<T> const & p1,
+      Vector<T> const & p2,
+      Vector<T> const & p3);
+
+  ///
+  /// Given triangle nodes and a position
+  /// in parametric coordinates, interpolate.
+  /// \param xi position in parametric coordinates
+  /// \param p0 ... corner nodes
+  /// \return interpolated position
+  ///
+  template<typename T>
+  Vector<T>
+  interpolate_triangle(
+      Vector<T> & xi,
+      Vector<T> const & p0,
+      Vector<T> const & p1,
+      Vector<T> const & p2);
+
+  ///
+  /// Given hexahedron nodes and a position
+  /// in parametric coordinates, interpolate.
+  /// \param xi position in parametric coordinates
+  /// \param p0 ... corner nodes
+  /// \return interpolated position
+  ///
+  template<typename T>
+  Vector<T>
+  interpolate_hexahedron(
+      Vector<T> & xi,
+      Vector<T> const & p0,
+      Vector<T> const & p1,
+      Vector<T> const & p2,
+      Vector<T> const & p3,
+      Vector<T> const & p4,
+      Vector<T> const & p5,
+      Vector<T> const & p6,
+      Vector<T> const & p7);
+
+  ///
+  /// Given tetrahedron nodes and a position
+  /// in parametric coordinates, interpolate.
+  /// \param xi position in parametric coordinates
+  /// \param p0 ... corner nodes
+  /// \return interpolated position
+  ///
+  template<typename T>
+  Vector<T>
+  interpolate_tetrahedron(
+      Vector<T> & xi,
+      Vector<T> const & p0,
+      Vector<T> const & p1,
+      Vector<T> const & p2,
+      Vector<T> const & p3);
+
+  ///
+  /// Given element type and nodes and a position
+  /// in parametric coordinates, interpolate.
+  /// \param type element type
+  /// \param xi position in parametric coordinates
+  /// \param v ... corner nodes
+  /// \return interpolated position
+  ///
+  template<typename T>
+  Vector<T>
+  interpolate_element(
+      ELEMENT::Type element_type,
+      Vector<T> & xi,
+      std::vector< Vector<T> > const & v);
 
 } // namespace LCM
 

@@ -60,7 +60,11 @@ namespace LCM {
   ///
   /// Useful to distinguish among different partitioning schemes.
   ///
-  enum PartitionScheme {UNKNOWN, GEOMETRIC, HYPERGRAPH, KMEANS, SEQUENTIAL};
+  namespace PARTITION {
+
+    enum Scheme {UNKNOWN, GEOMETRIC, HYPERGRAPH, KMEANS, SEQUENTIAL};
+
+  }
 
   //
   ///Forward declarations
@@ -75,12 +79,6 @@ namespace LCM {
   ///
   class ConnectivityArray {
   public:
-
-    ///
-    /// Useful to distinguish among different finite elements.
-    ///
-    enum Type {UNKNOWN, SEGMENTAL, TRIANGULAR,
-      QUADRILATERAL, TETRAHEDRAL, HEXAHEDRAL};
 
     ///
     /// Default constructor for Connectivity Array
@@ -118,7 +116,7 @@ namespace LCM {
     /// \return Type of finite element in the array
     /// (assume same type for all elements)
     ///
-    Type
+    ELEMENT::Type
     GetType() const;
 
     ///
@@ -177,16 +175,16 @@ namespace LCM {
     BoundingBox() const;
 
     ///
-    /// \param K-means cluster size
+    /// \param K-means tolerance
     ///
     void
-    SetClusterSize(Index cluster_size);
+    SetTolerance(double tolerance);
 
     ///
-    /// \return K-means cluster size
+    /// \return K-means tolerance
     ///
-    Index
-    GetClusterSize() const;
+    double
+    GetTolerance() const;
 
     ///
     /// \param maximum divisions for voxelization
@@ -201,11 +199,29 @@ namespace LCM {
     GetMaximumDivisions() const;
 
     ///
+    /// \param maximum iterations for K-means
+    ///
+    void
+    SetMaximumIterations(Index maximum_iterations);
+
+    ///
+    /// \return maximum iterarions for K-means
+    ///
+    Index
+    GetMaximumIterations() const;
+
+    ///
     /// Voxelization of the domain for fast determination
     /// of points being inside or outside the domain.
     ///
     void
     Voxelize();
+
+    ///
+    /// Convert point to index into voxel array
+    ///
+    Vector<int>
+    PointToIndex(Vector<double> const & point) const;
 
     ///
     /// Determine is a given point is inside the mesh.
@@ -246,7 +262,7 @@ namespace LCM {
     ///
     std::map<int, int>
     Partition(
-        const LCM::PartitionScheme partition_scheme,
+        const PARTITION::Scheme partition_scheme,
         const double length_scale);
 
     ///
@@ -278,12 +294,11 @@ namespace LCM {
 
     ///
     /// Partition mesh with sequential K-means algorithm
-    /// \param length_scale The length scale for variational nonlocal
-    /// regularization
-    /// \return Partition number for each element
+    /// \param number of partitions
+    /// \return generators
     ///
-    std::map<int, int>
-    PartitionKMeansSequential(const double length_scale);
+    std::vector< Vector<double> >
+    InitializeKmeans(int number_partitions);
 
     ///
     /// Zoltan interface query function that returns the number of values
@@ -421,7 +436,7 @@ namespace LCM {
     // Given number of (vertex) nodes and space dimension,
     // determine the type of a finite element.
     //
-    Type
+    ELEMENT::Type
     FindType(int dimension, int nodes) const;
 
   private:
@@ -429,7 +444,7 @@ namespace LCM {
     //
     // The type of elements in the mesh (assumed that all are of same type)
     //
-    Type
+    ELEMENT::Type
     type_;
 
     //
@@ -478,11 +493,14 @@ namespace LCM {
     //
     // Parameters for kmeans partitioning
     //
-    Index
-    cluster_size_;
+    double
+    tolerance_;
 
     Index
     maximum_divisions_;
+
+    Index
+    maximum_iterations_;
 
     //
     // Limits of the bounding box for coordinate array
@@ -575,7 +593,7 @@ namespace LCM {
     // proper faces
     //
     std::vector< std::vector<int> >
-    GetFaceConnectivity(const ConnectivityArray::Type type) const;
+    GetFaceConnectivity(const ELEMENT::Type type) const;
 
   private:
 

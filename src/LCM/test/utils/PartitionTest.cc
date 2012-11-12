@@ -50,15 +50,15 @@ int main(int ac, char* av[])
   const int
   number_schemes = 4;
 
-  const LCM::PartitionScheme
-  scheme_values[] =
-    {LCM::GEOMETRIC, LCM::HYPERGRAPH, LCM::KMEANS, LCM::SEQUENTIAL};
+  const LCM::PARTITION::Scheme
+  scheme_values[] = {LCM::PARTITION::GEOMETRIC, LCM::PARTITION::HYPERGRAPH,
+      LCM::PARTITION::KMEANS};
 
   const char*
-  scheme_names[] = {"geometric", "hypergraph", "kmeans", "sequential"};
+  scheme_names[] = {"geometric", "hypergraph", "kmeans"};
 
-  LCM::PartitionScheme
-  partition_scheme = LCM::GEOMETRIC;
+  LCM::PARTITION::Scheme
+  partition_scheme = LCM::PARTITION::GEOMETRIC;
 
   command_line_processor.setOption(
       "scheme",
@@ -76,13 +76,13 @@ int main(int ac, char* av[])
       &length_scale,
       "Length Scale");
 
-  int
-  cluster_size = 64;
+  double
+  tolerance = 1.0e-4;
 
   command_line_processor.setOption(
-      "cluster-size",
-      &cluster_size,
-      "Cluster Size");
+      "tolerance",
+      &tolerance,
+      "Tolerance");
 
   int
   maximum_divisions = 64;
@@ -91,6 +91,14 @@ int main(int ac, char* av[])
       "maximum-divisions",
       &maximum_divisions,
       "Maximum Divisions");
+
+  int
+  maximum_iterations = 64;
+
+  command_line_processor.setOption(
+      "maximum-iterations",
+      &maximum_iterations,
+      "Maximum Iterations");
 
   // Throw a warning and not error for unrecognized options
   command_line_processor.recogniseAllOptions(true);
@@ -119,8 +127,9 @@ int main(int ac, char* av[])
   //
   // Set extra parameters for K-means
   //
-  connectivity_array.SetClusterSize(cluster_size);
+  connectivity_array.SetTolerance(tolerance);
   connectivity_array.SetMaximumDivisions(maximum_divisions);
+  connectivity_array.SetMaximumIterations(maximum_iterations);
 
   //
   // Partition mesh
