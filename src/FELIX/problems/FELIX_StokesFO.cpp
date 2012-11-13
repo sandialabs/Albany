@@ -107,29 +107,37 @@ FELIX::StokesFO::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs
    // Construct BC evaluators for all side sets and names
    // Note that the string index sets up the equation offset, so ordering is important
 
-   // Currently we aren't exactly doing this right.  I think to do this
-   // correctly we need different neumann evaluators for each DOF (velocity,
-   // pressure, temperature, flux) since velocity is a vector and the 
-   // others are scalars.  The dof_names stuff is only used
-   // for robin conditions, so at this point, as long as we don't enable
-   // robin conditions, this should work.
-
-   std::vector<string> nbcNames;
-   Teuchos::RCP< Teuchos::Array<string> > dof_names = 
-     Teuchos::rcp(new Teuchos::Array<string>);
+   std::vector<string> neumannNames(neq + 1);
    Teuchos::Array<Teuchos::Array<int> > offsets;
-   int idx = 0;
-     nbcNames.push_back("C0");
-     offsets.push_back(Teuchos::Array<int>(1,idx++));
-     if (numDim>=2) {
-       nbcNames.push_back("C1");
-       offsets.push_back(Teuchos::Array<int>(1,idx++));
-     }
-     offsets.push_back(Teuchos::Array<int>(1,idx++));
-     dof_names->push_back("Velocity");
+   offsets.resize(neq + 1);
+
+   neumannNames[0] = "C0";
+   offsets[0].resize(1);
+   offsets[0][0] = 0;
+   offsets[neq].resize(neq);
+   offsets[neq][0] = 0;
+
+   if (neq>1){
+      neumannNames[1] = "C1";
+      offsets[1].resize(1);
+      offsets[1][0] = 1;
+      offsets[neq][1] = 1;
+   }
+
+   if (neq>2){
+     neumannNames[2] = "C2";
+      offsets[2].resize(1);
+      offsets[2][0] = 2;
+      offsets[neq][2] = 2;
+   }
+
+   neumannNames[neq] = "all";
+
    // Construct BC evaluators for all possible names of conditions
-   // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
+   // Should only specify flux vector components (dCdx, dCdy, dCdz), or dCdn, not both
    std::vector<string> condNames(3); //dCdx, dCdy, dCdz, dCdn, basal
+   Teuchos::ArrayRCP<string> dof_names(1);
+     dof_names[0] = "Concentration";
 
    // Note that sidesets are only supported for two and 3D currently
    if(numDim == 2)
@@ -141,15 +149,14 @@ FELIX::StokesFO::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs
        std::endl << "Error: Sidesets only supported in 2 and 3D." << std::endl);
 
    condNames[1] = "dCdn";
-   
    condNames[2] = "basal";
 
-   nfm.resize(1);
+   nfm.resize(1); // FELIX problem only has one element block
 
-   nfm[0] = nbcUtils.constructBCEvaluators(meshSpecs, nbcNames,
-                                           Teuchos::arcp(dof_names),
-                                           false, 0, condNames, offsets, dl,
-                                           this->params, this->paramLib);
+   nfm[0] = nbcUtils.constructBCEvaluators(meshSpecs, neumannNames, dof_names, true, 0,
+                                          condNames, offsets, dl,
+                                          this->params, this->paramLib);
+
 
 }
 

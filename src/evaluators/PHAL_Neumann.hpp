@@ -37,7 +37,7 @@ class NeumannBase :
 
 public:
 
-  enum NEU_TYPE {COORD, NORMAL, INTJUMP, PRESS, ROBIN};
+  enum NEU_TYPE {COORD, NORMAL, INTJUMP, PRESS, ROBIN, BASAL};
   enum SIDE_TYPE {OTHER, LINE, TRI}; // to calculate areas for pressure bc
 
   typedef typename EvalT::ScalarT ScalarT;
@@ -98,6 +98,15 @@ protected:
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id);
+   
+  //Basal bc
+  void calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
+                          const Intrepid::FieldContainer<MeshScalarT>& phys_side_cub_points,
+   		          const Intrepid::FieldContainer<ScalarT>& dof_side,
+                          const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+                          const shards::CellTopology & celltopo,
+                          const int cellDims,
+                          int local_side_id);
 
    // Do the side integration
   void evaluateNeumannContribution(typename Traits::EvalData d);
@@ -106,6 +115,7 @@ protected:
   //! Coordinate vector at vertices
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
   PHX::MDField<ScalarT,Cell,Node> dof;
+  PHX::MDField<ScalarT,Cell,Node,VecDim> dofVec;
   Teuchos::RCP<shards::CellTopology> cellType;
   Teuchos::RCP<shards::CellTopology> sideType;
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubatureCell;
@@ -132,6 +142,9 @@ protected:
   Intrepid::FieldContainer<ScalarT> dofCell;
   Intrepid::FieldContainer<ScalarT> dofSide;
 
+  Intrepid::FieldContainer<ScalarT> dofCellVec;
+  Intrepid::FieldContainer<ScalarT> dofSideVec;
+  
   Intrepid::FieldContainer<ScalarT> data;
 
   // Output:

@@ -74,8 +74,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_ismip-hom_testA.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_ismip-hom_testA.xml COPYONLY)
 add_test(${testName}_FO_ISMIP-HOM_TestA ${Albany.exe} input_fo_ismip-hom_testA.xml)
 
-#  Twelfth test test
+#  Twelfth test
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_sinexp_neumann.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_sinexp_neumann.xml COPYONLY)
 add_test(${testName}_FO_SINEXP_Neumann ${Albany.exe} input_fo_sinexp_neumann.xml)
 
+#  Thirteenth test
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_cosexp_basal.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_cosexp_basal.xml COPYONLY)
+add_test(${testName}_FO_COSEXP_Basal ${Albany.exe} input_fo_cosexp_basal.xml)

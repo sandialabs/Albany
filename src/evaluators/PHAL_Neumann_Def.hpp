@@ -132,6 +132,24 @@ NeumannBase(const Teuchos::ParameterList& p) :
       new Sacado::ParameterRegistration<EvalT, SPL_Traits> (name, this, paramLib);
 
   }
+  else if(inputConditions == "basal"){ // Basal boundary condition for FELIX
+
+      // User has specified alpha and beta to set BC d(flux)/dn = beta*u + alpha
+      bc_type = BASAL;
+      robin_vals[0] = inputValues[0]; // beta
+      robin_vals[1] = inputValues[1]; // alpha
+
+      for(int i = 0; i < 2; i++) {
+        std::stringstream ss; ss << name << "[" << i << "]";
+        new Sacado::ParameterRegistration<EvalT, SPL_Traits> (ss.str(), this, paramLib);
+      }
+       PHX::MDField<ScalarT,Cell,Node,VecDim> tmp(p.get<string>("DOF Name"),
+           p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
+       dofVec = tmp;
+
+       this->addDependentField(dofVec);
+  }
+
   else {
 
       // User has specified conditions on sideset normal
@@ -193,6 +211,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
   cubWeightsSide.resize(numQPsSide);
   physPointsSide.resize(1, numQPsSide, cellDims);
   dofSide.resize(1, numQPsSide);
+  dofSideVec.resize(1, numQPsSide, numDOFsSet);
 
   // Do the BC one side at a time for now
   jacobianSide.resize(1, numQPsSide, cellDims, cellDims);
@@ -205,6 +224,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
   physPointsCell.resize(1, numNodes, cellDims);
   dofCell.resize(1, numNodes);
+  dofCellVec.resize(1, numNodes, numDOFsSet);
   neumann.resize(containerSize, numNodes, numDOFsSet);
   data.resize(1, numQPsSide, numDOFsSet);
 
@@ -223,6 +243,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(coordVec,fm);
   if (inputConditions == "robin") this->utils.setFieldData(dof,fm);
+  else if (inputConditions == "basal") this->utils.setFieldData(dofVec,fm);
   // Note, we do not need to add dependent field to fm here for output - that is done
   // by Neumann Aggregator
 }
@@ -312,6 +333,28 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
 	evaluate<ScalarT>(dofSide, dofCell, trans_basis_refPointsSide);
     }
 
+    // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
+    else if(bc_type == BASAL) {
+      for (std::size_t node=0; node < numNodes; ++node)
+        for(int dim = 0; dim < numDOFsSet; dim++)
+	   dofCellVec(0,node,dim) = dofVec(elem_LID,node,dim);
+
+      // This is needed, since evaluate currently sums into
+      for (int i=0; i < dofSideVec.size() ; i++) dofSideVec[i] = 0.0;
+
+      // Get dof at cubature points of appropriate side (see DOFVecInterpolation evaluator)
+      for (std::size_t node=0; node < numNodes; ++node) { 
+         for (std::size_t qp=0; qp < numQPsSide; ++qp) {
+            for (int dim = 0; dim < numDOFsSet; dim++) {
+               dofSideVec(0, qp, dim)  += dofCellVec(0, node, dim) * trans_basis_refPointsSide(0, node, qp); 
+            }
+          }
+       }
+
+      // Get dof at cubature points of appropriate side (see DOFVecInterpolation evaluator)
+      //Intrepid::FunctionSpaceTools::
+	//evaluate<ScalarT>(dofSide, dofCell, trans_basis_refPointsSide);
+    }
   // Transform the given BC data to the physical space QPs in each side (elem_side)
 
     switch(bc_type){
@@ -339,6 +382,11 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
   
          calc_press(data, physPointsSide, jacobianSide, *cellType, cellDims, elem_side);
          break;
+      
+      case BASAL:
+  
+         calc_dudn_basal(data, physPointsSide, dofSideVec, jacobianSide, *cellType, cellDims, elem_side);
+         break;
   
       default:
   
@@ -354,6 +402,8 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
          for (std::size_t dim=0; dim < numDOFsSet; ++dim)
            neumann(elem_LID, node, dim) += 
                   data(0, qp, dim) * weighted_trans_basis_refPointsSide(0, node, qp);
+
+
   }
   
 }
@@ -366,6 +416,12 @@ getValue(const std::string &n) {
   if (n == name) return const_val;
   else if(std::string::npos != n.find("robin")) {
     for(int i = 0; i < 3; i++) {
+      std::stringstream ss; ss << name << "[" << i << "]";
+      if (n == ss.str())  return robin_vals[i];
+    }
+  }
+  else if(std::string::npos != n.find("basal")) {
+    for(int i = 0; i < 2; i++) {
       std::stringstream ss; ss << name << "[" << i << "]";
       if (n == ss.str())  return robin_vals[i];
     }
@@ -538,6 +594,46 @@ calc_press(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
 //        qp_data_returned(cell, pt, dim) = const_val * side_normals(cell, pt, dim);
         qp_data_returned(cell, pt, dim) = const_val * side_normals(cell, pt, dim) / area;
 
+
+}
+
+
+template<typename EvalT, typename Traits>
+void NeumannBase<EvalT, Traits>::
+calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
+                          const Intrepid::FieldContainer<MeshScalarT>& phys_side_cub_points,
+   		          const Intrepid::FieldContainer<ScalarT>& dof_side,
+                          const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+                          const shards::CellTopology & celltopo,
+                          const int cellDims,
+                          int local_side_id){
+
+  int numCells = qp_data_returned.dimension(0); // How many cell's worth of data is being computed?
+  int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
+  int numDOFs = qp_data_returned.dimension(2); // How many DOFs per node to calculate?
+
+  //std::cout << "DEBUG: applying const dudn to sideset " << this->sideSetID << ": " << (const_val * scale) << std::endl;
+
+  const ScalarT& beta = robin_vals[0];
+  const ScalarT& alpha = robin_vals[1];
+  
+  Intrepid::FieldContainer<MeshScalarT> side_normals(numCells, numPoints, cellDims);
+  Intrepid::FieldContainer<MeshScalarT> normal_lengths(numCells, numPoints);
+
+  // for this side in the reference cell, get the components of the normal direction vector
+  Intrepid::CellTools<MeshScalarT>::getPhysicalSideNormals(side_normals, jacobian_side_refcell, 
+    local_side_id, celltopo);
+  
+  // scale normals (unity)
+  Intrepid::RealSpaceTools<MeshScalarT>::vectorNorm(normal_lengths, side_normals, Intrepid::NORM_TWO);
+  Intrepid::FunctionSpaceTools::scalarMultiplyDataData<MeshScalarT>(side_normals, normal_lengths, 
+    side_normals, true);
+ 
+
+  for(int cell = 0; cell < numCells; cell++) 
+    for(int pt = 0; pt < numPoints; pt++)
+      for(int dim = 0; dim < numDOFsSet; dim++)
+        qp_data_returned(cell, pt, dim) = beta*dof_side(cell, pt,dim)*side_normals(cell,pt,dim) - alpha*side_normals(cell,pt,dim); // d(stress)/dn = beta*u + alpha
 
 }
 

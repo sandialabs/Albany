@@ -304,10 +304,10 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
 
            p->set<string>                         ("Coordinate Vector Name", "Coord Vec");
 
-           if(conditions[k] == "robin") {
+           if(conditions[k] == "robin" || conditions[k] == "basal") {
              p->set<string>  ("DOF Name", dof_names[j]);
 	     p->set<bool> ("Vector Field", isVectorField);
-	     if (isVectorField) p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_vector);
+	     if (isVectorField) {cout << "is vector!" << endl; p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_vector);}
 	     else               p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_scalar);
            }
 
@@ -394,7 +394,7 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
 
            p->set<string>                         ("Coordinate Vector Name", "Coord Vec");
 
-           if(conditions[k] == "robin") {
+           if(conditions[k] == "robin" || conditions[k] == "basal") {
              p->set<string>  ("DOF Name", dof_names[j]);
 	     p->set<bool> ("Vector Field", isVectorField);
 	     if (isVectorField) p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_vector);

@@ -61,6 +61,17 @@ StokesFOBodyForce(const Teuchos::ParameterList& p) :
     this->addDependentField(muFELIX); 
     this->addDependentField(coordVec);
   }
+  else if (type == "FOCosExp2D") {
+    bf_type = FO_COSEXP2D;  
+    muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
+            p.get<std::string>("FELIX Viscosity QP Variable Name"),
+	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
+    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
+            p.get<std::string>("Coordinate Vector Name"),
+	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Gradient Data Layout") );
+    this->addDependentField(muFELIX); 
+    this->addDependentField(coordVec);
+  }
   else if (type == "FOSinCosZ") {
     bf_type = FO_SINCOSZ;  
     muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
@@ -105,7 +116,7 @@ void StokesFOBodyForce<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  if (bf_type == FO_SINCOS2D || bf_type == FO_SINEXP2D || bf_type == FO_SINCOSZ) {
+  if (bf_type == FO_SINCOS2D || bf_type == FO_SINEXP2D || bf_type == FO_COSEXP2D || bf_type == FO_SINCOSZ) {
     this->utils.setFieldData(muFELIX,fm);
     this->utils.setFieldData(coordVec,fm);
   }
@@ -155,6 +166,20 @@ evaluateFields(typename Traits::EvalData workset)
        MeshScalarT muqp = 1.0 ; //0.5*pow(A, -1.0/n)*pow(muargt, 1.0/n - 1.0);
        f[0] = -1.0*(-4.0*muqp*exp(coordVec(cell,qp,0)) - 12.0*muqp*pi*pi*cos(x2pi)*cos(y2pi) + 4.0*muqp*pi*pi*cos(y2pi));   
        f[1] =  -1.0*(20.0*muqp*pi*pi*sin(x2pi)*sin(y2pi)); 
+     }
+   }
+ }
+ else if (bf_type == FO_COSEXP2D) {
+   const double a = 1.0; 
+   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+     for (std::size_t qp=0; qp < numQPs; ++qp) {      
+       ScalarT* f = &force(cell,qp,0);
+       MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
+       MeshScalarT x = coordVec(cell,qp,0);
+       MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
+       MeshScalarT muqp = 1.0 ; //0.5*pow(A, -1.0/n)*pow(muargt, 1.0/n - 1.0);
+       f[0] = 2.0*muqp*(2.0*a*a*exp(a*x)*cos(y2pi) + 6.0*pi*pi*cos(x2pi)*cos(y2pi) - 2.0*pi*pi*exp(a*x)*cos(y2pi)); 
+       f[1] = 2.0*muqp*(-3.0*pi*a*exp(a*x)*sin(y2pi) - 10.0*pi*pi*sin(x2pi)*sin(y2pi)); 
      }
    }
  }
