@@ -1,19 +1,8 @@
-/********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-\********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -23,6 +12,7 @@
 
 namespace FELIX {
 
+const double pi = 3.1415926535897932385;
 //should values of these be hard-coded here, or read in from the input file?
 //for now, I have hard coded them here.
  
@@ -36,7 +26,7 @@ Viscosity(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ), 
   homotopyParam (1.0), 
   A(1.0), 
-  n(3)
+  n(3.0)
 {
   Teuchos::ParameterList* visc_list = 
    p.get<Teuchos::ParameterList*>("Parameter List");
@@ -44,9 +34,10 @@ Viscosity(const Teuchos::ParameterList& p) :
   std::string viscType = visc_list->get("Type", "Constant");
   homotopyParam = visc_list->get("Glen's Law Homotopy Parameter", 0.2);
   A = visc_list->get("Glen's Law A", 1.0); 
-  n = visc_list->get("Glen's Law n", 3);  
+  n = visc_list->get("Glen's Law n", 3.0);  
 
   if (viscType == "Constant"){ 
+    cout << "Constant viscosity!" << endl;
     visc_type = CONSTANT;
   }
   else if (viscType == "Glen's Law"){
@@ -55,7 +46,12 @@ Viscosity(const Teuchos::ParameterList& p) :
     cout << "A: " << A << endl; 
     cout << "n: " << n << endl;  
   }
-
+  
+  coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
+           p.get<std::string>("Coordinate Vector Name"),
+   p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") );
+  this->addDependentField(coordVec);
+  
   this->addDependentField(VGrad);
   
   this->addEvaluatedField(mu);
@@ -81,7 +77,7 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(VGrad,fm);
-  
+  this->utils.setFieldData(coordVec,fm);
   this->utils.setFieldData(mu,fm); 
 }
 

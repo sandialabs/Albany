@@ -1,0 +1,1121 @@
+%
+% $Id: SANDtemplate.tex,v 1.3 2007/12/13 21:27:14 rolf Exp $
+% A template to build SAND reports. See the examples for more details and
+% formatting suggestions. A command reference is available at
+% http://www.cs.sandia.gov/~rolf/SANDreport
+%
+\documentclass[pdf,12pt,report,strict]{SANDreport}
+
+\usepackage{graphicx}
+\usepackage[sort&compress,colon,square,numbers]{natbib}
+\usepackage{amsmath,amsfonts,amsthm,eucal}
+%\usepackage{enumerate}
+%\usepackage[letterpaper,margin=3cm]{geometry}
+%\usepackage{setspace}
+%\usepackage{float}
+%\usepackage[title]{appendix}
+%\usepackage{color}
+%\usepackage[T1]{fontenc}
+\usepackage{rotating}
+\usepackage{subfigure}
+
+\input{bold-symbols.tex}
+
+%
+\newcommand{\tensor}[1]{\ensuremath{\boldsymbol{#1}}}
+\newcommand{\jump}[1]{\lbrack\!\lbrack #1 \rbrack\!\rbrack}
+\newcommand{\alert}[1]{\textcolor{red}{#1}}
+\newtheorem{prop}{Proposition}
+\theoremstyle{remark}
+\newtheorem{rmk}{Remark}
+\renewcommand{\vec}[1]{\ensuremath{\boldsymbol{#1}}}
+
+
+
+% ---------------------------------------------------------------------------- %
+% Set the title, author, and date
+%
+\title{Albany Development: Getting Started}
+
+\date{}               % Leave this here but empty
+
+
+% ---------------------------------------------------------------------------- %
+% These are mandatory
+%
+\SANDnum{SAND20XX-????}         % e.g. \SANDnum{SAND2006-0420}
+\SANDprintDate{??}  % Month, year
+\SANDauthor{}
+ % One line, separated by commas
+
+
+% ---------------------------------------------------------------------------- %
+% These are optional
+%
+%\SANDrePrintDate{}     % May be repeated for successive printings
+%\SANDsupersed{}{}      % {Old SAND number}{Old date}
+
+
+% ---------------------------------------------------------------------------- %
+% Build your markings. See example files and SAND Report Guide
+%
+%\SANDreleaseType{}
+%\SANDmarkTopBottomCoverBackTitle{}
+%\SANDmarkBottomCover{}
+%\SANDmarkTopBottomCoverTitle{}
+%\SANDmarkTop{}
+%\SANDmarkBottom{}
+%\SANDmarkTopBottom{}
+%\SANDmarkCover{}
+%\SANDmarkCoverTitle{}
+
+
+% ---------------------------------------------------------------------------- %
+% Start the document
+%
+\begin{document}
+\maketitle
+
+% ------------------------------------------------------------------------ %
+% An Abstract is required for SAND reports
+%
+\begin{abstract}
+This document is intended to help new developers get started
+contributing to Albany. Albany is the main demonstration application
+of the AgileComponets strategy. It is a PDE code that strives to be
+built almost entirely from functionality in reusable libraries (such
+as Trilinos/STK/Dakota). Albany plays a large role in demonstrating
+and maturing functionality of new libraries, and also in the
+interfaces and interoperability between these libraries. It also
+serves to expose gaps in coverage of capabilities and
+interface. Another aspect of the project is to serve as a template for
+writing new applications against Trilinos/STK/Dakota. It uses CMake,
+CTest, and git, and grabs almost all configuration information from
+installed Trilinos. Albany was granted OpenSource license to share
+with collaborators.
+
+Albany is also the home for several application and algorithm
+projects that use and contribute to the overall infrastructure.
+These include the LCM (Laboratory for Computatinal Mechanics),
+QCAD (Quantum Computer Aided Design) and FELIX (Finite Element for
+Land Ice eXperiments) applications, as well as algorthmic projects
+in embedded uncertainty quantification, model order reduction, and
+maturation of the templated software stack in Trilinos.
+\end{abstract}
+
+
+% ------------------------------------------------------------------------ %
+% An Acknowledgment section is optional but important
+%
+%\clearpage
+%\chapter*{Acknowledgment}
+
+% ------------------------------------------------------------------------ %
+% The table of contents and list of figures and tables
+%
+\cleardoublepage            % TOC needs to start on an odd page
+\tableofcontents
+\listoffigures
+\listoftables
+
+
+%    % ---------------------------------------------------------------------- %
+%    % An optional preface or Foreword
+%    \clearpage
+%    \chapter*{Preface}
+%    \addcontentsline{toc}{chapter}{Preface}
+%
+%
+%    % ---------------------------------------------------------------------- %
+%    % An optional executive summary
+%    \clearpage
+%    \chapter*{Summary}
+%    \addcontentsline{toc}{chapter}{Summary}
+
+
+% ---------------------------------------------------------------------- %
+% An optional glossary. We don't want it to be numbered
+%\clearpage
+%\chapter*{Nomenclature}
+%\addcontentsline{toc}{chapter}{Nomenclature}
+%\begin{description}
+%\item[Term 1]
+%   Description
+%\item[Term 2]
+%   Description
+%\item[Term 3]
+%    Description
+%\end{description}
+
+
+% ---------------------------------------------------------------------- %
+% This is where the body of the report begins; usually with an Introduction
+%
+\SANDmain           % Start the main part of the report
+
+\chapter{Introduction}
+\label{Intro}
+
+Albany is the main demonstration application of the AgileComponets
+strategy. It is a PDE code that strives to be built almost entirely
+from functionality in reusable libraries (such as
+Trilinos/STK/Dakota). Albany plays a large role in demonstrating and
+maturing functionality of new libraries, and also in the interfaces
+and interoperability between these libraries. It also serves to expose
+gaps in our coverage of capabilities and interface. Another aspect of
+the project is to serve as a template for writing new applications
+against Trilinos/STK/Dakota. It uses CMake, CTest, and git, and grabs
+almost all configuration information from installed Trilinos. Albany
+was granted OpenSource license to share with collaborators.
+
+Albany is also the home for several application and algorithm
+projects that use and contribute to the overall infrastructure.
+These include the LCM (Laboratory for Computatinal Mechanics),
+QCAD (Quantum Computer Aided Design) and FELIX (Finite Element for
+Land Ice eXperiments) applications, as well as algorthmic projects
+in embedded uncertainty quantification, model order reduction, and
+maturation of the templated software stack in Trilinos.
+
+
+\section{Distinguishing Capabilities}
+
+The highlight of Albany is the PDE assembly. The template-based
+generic programming approach allows developers to just program for
+residual equations, and all manner of derivatives and polynomial
+propogations get automatically computed with no development
+effort. This approach uses Phalanx for rapid and flexible addition of
+physics, which works closely with Sacado and Stokhos for automatic
+propagation of derivatives and UQ. Intrepid and Shards packages are
+used for the local discretization. 
+
+A second strength of Albany is the
+demonstration of transformational analysis algorithms. Albany
+demonstrates the clean use of all Solver/Analysis tools in Trilinosi
+(through Piro, which was developed in Albany) including NOX, LOCA,
+Rythmos, Stokhos, and all of Dakota. On any problem we not only get a
+solution, but can also get sensitivities, run optimization problems,
+and perform uncertainty quantification. All of these approaches can
+access all of the linear solver options in Trilinos that are exposed
+by the Stratimikos layer. 
+
+The third main strength is the early
+adoption of STK, the sierra toolkit libraries. This includes the mesh
+database, IO, and will be growing soon to include mesh changes for
+stk\_rebalance and stk\_adapt.  
+
+Also of note is that Albany is, and intends to remain, a 
+Publically Available code base, free of export control 
+restrictions. This allows it to serve freely as a collaboration
+vehicle with universities and other labs, and as a template
+for building applications from Trilinos.
+
+\section{Physics Sets: what PDEs}
+
+Albany strives for a bit of a paradigm shift, where a code is defined
+more by its analysis capabilities and data structure choices, which
+are difficult to change, and less by the physics set. Much of Albany
+was developed in FY08-10 for solving simple heat transfer and poisson
+equations. With nonlinear source terms, this was adequate for
+developing and verifying all the hooks for analysis algorithms from
+sensitivity analysis to UQ. Recenty, Navier-Stokes equations have been
+added to the general Albany physics set. In FY11, two new projects
+(LCM and QCAD) were funded to develop application codes on Albany. These physics sets
+are developed in the Albany code, yet are distinct in many ways as
+well: C++ namespace, project teams, and funding sources.  
+More recenlty, other applications and algorithm research projects
+have chose Albany as their home. 
+
+\section{LCM: Labratory for Computational Mechanics}
+
+The first application project build on Albany is the LCM, or
+Laboratory for Computational Mechanics [Ostien-PI, Salinger, Mota,
+  Foulk, Littlewood]. This project is creating an OpenSource
+computational mechanics RandD code, with a particular emphasis on
+fracture and failure models. The infrastructure in Albany, which is
+aimed at rapid development of new physics with automated generation of
+analytic derivatives and sensitivities, is well suited for trying out
+new discretizations and new material models. The links to Dakota and
+handling of model parameter are set up to perform calibration and UQ
+studies. LCM serves as a research tool that can be shared with
+academics. Successful research ideas and code will be migrated to the
+production mechanics applications of Adagio and Presto. Albany can
+link against the LAME material library, and we are looking at ways of
+getting derivative info through it for more robust solution
+algorithms.  
+
+
+\subsection{Mechanics and Multi-Physics}
+Many engineering applications are multi-physical, in which cases 
+mechanical behaviors are largely depending on both 
+the constitutive responses and other physical processes taking 
+place within the solid. To accurately replicate and predict multiphysical 
+phenomena, additional constraint(s) must be added to the governing equations
+ such that all physical processes are represented properly. 
+LCM is equipped with a number of mixed finite element models aimed to capture
+the following multiphysical phenomena: thermomechanics, poromechanics, and hydrogen diffusion-deformation problems. 
+
+As the name implied, the thermomechanics problem deals with standard dissipative
+ solids under non-isothermal condition. In such a condition, deformation may
+  generate heat while heat diffusion may occur simultaneously within the body. 
+In LCM, the thermomechanical process is modeled by a multiplicative decomposition 
+of deformation gradient which takes account of the deformation induced by thermal
+ expansion, elastic energy storage and plastic dissipation. The balance of 
+linear momentum is coupled with the balance of energy equation to capture the
+ coupling between the solid deformation and thermal diffusion processes. 
+
+Poromechanics problem concerns with porous solids infiltrated with 
+liquid or gas. Examples of porous solids include bone, soft tissue, sand, clay, 
+rock and concrete. The hydraulic-mechanical coupling is two-way. On the one hand,
+ deformation may trigger seepage within the porous media. On the other hand, 
+  hydraulic response may also introduce time-dependence and gradient-dependence
+   into the mechanical behavior as the transient diffusion takes place.  In the case
+    where pore-fluid is trapped inside the host matrix, coupling between the solid and
+     fluid constituents may lead to isochoric deformation. In LCM, this coupled physics
+      is modeled via equal-order finite element spaces for displacement and pore
+       pressure. Since this discretization choice may lead to spurious oscillation, an
+        adaptive pressure projection stabilization scheme is introduced to guarantee
+         stable numerical solutions in both infinitesimal and finite deformation regimes. 
+         A concurrent coupling is used such that a phenomenon called Mandel-Cryer
+          effect can be properly captured. 
+ 
+In addition, LCM is also capable of modeling hydrogen transport within metals. This
+ model is used to analyze how presence of hydrogen affects fracture of metals in
+ various concentration levels. Since hydrogen-gas is increasingly popular to be used as 
+ an energy source, hydrogen embrittlement of metals is a key material issues one
+needed to address for future energy security. Mathematically, hydrogen transport can
+be modeled as a nonlinear convection-diffusion problem, in which the dislocation
+density may act as a source term that affects the distribution of hydrogen between
+the lattice site and the trapped site. To avoid spurious solutions commonly exhibited
+ in convection-diffusion problem at low diffusivity limit, we introduce an adaptively, projection based stabilization scheme,  which may reduce to lumped and higher-order mass formulation in one dimension. 
+
+\section{QCAD: Quantum Device Design}
+
+The other new application code built on Albany is the QCAD quantum dot
+design LDRD (Schrodinger-Poisson) [Muller-PI, Gao, Nielsen,
+  Salinger]. A poisson solve for classical representation of charge
+distribution is coupled to a Schrodinger region for quantum effects.
+Embedded UQ
+
+\section {Uncertainity Quantification (UQ)}
+Albany is also serving as a main development and demonstration
+environment for embedded UQ research [Phipps-PI, Wildey]. By
+leveraging the templated fill environment, polynomial representations
+can be directly propogated through the physics assembly. Many issues
+with data structures, parallelization, and linear algebra are being
+addressed.  
+
+\section{NEAMS}
+
+\section{FELIX}
+A new project, as of late FY12, using Albany as a PDE solver is the PISCEES SciDAC-3 project
+joint between the BER ans ASCR divisions of the office of science. This
+project is developing simulation tools for Ice Sheet dynamics (targeting
+Greenland and then Antarctica). The initial models going into the FELIX
+(Finite Element Land Ice Experiments) namespace within Albany area
+a 3D Stokes model with nonlinear viscosity
+formulation plus $2-3$ other models that are simplifications of Stokes.
+This project will drive much development in UQ through interactions 
+with Dakota. One unique feature of this project is that it will be able
+to use a mesh from LANL's MPAS framework, putting to test the abstraction
+layer that we put between the finite element asembly and the concrete
+STK Mesh implementation. Long term plans include adjoint for distributed
+boundary condition parameters, coupled temperature solves, and implicit
+advection of the Ice Sheet. The plan is for this code to be integrated
+into the CESM Community Earth System Model at NCAR as an option for the
+CISM Community Ice Sheet Model.
+
+\section{Nuclear Energy Reactor}
+
+\section{Further development}
+
+The new applications have exposed many weaknesses in the Albany code,
+and more importantly, some gaps in the aggregate Agile Components
+infrastructure. For instance, an initial implementation in Trilinos of
+time integrators has been developed in responses to the needs of the
+transient dynamics problem. Future development includes: load
+balancing and uniform mesh refinement, transitioning to Tpetra and a
+templated software stack, being a testbed for embedded UQ methods,
+early adoption of architecture-aware PDE assembly kernels, and
+eventually a full error estimation and adaptivity capability. Albany
+is making the transition from a demonstration prototype to a research
+code. It still seriously lacks full boundary condition support, any
+multi-physics capability, post-processing, and documentation (all the
+hard stuff). The sister code Drekar [Pawlowski, Cyr] has developed the
+infrastructure for multi-physics applications with varying physics and
+discretizations, which Albany does not support.
+
+\chapter{Building}
+\label{build}
+
+Building Albany, at a minimum, requires nothing but an installation of
+Trilinos. The AgileComponents philosophy is geared toward usage of
+multiple packages from the Trilinos suite of codes. Therefore, task
+number one is the acquisition, build, and installation of
+Trilinos. This chapter will layout the requirements for building the
+necessary third party libraries, as well as building and installing
+the proper Trilinos packages.  
+
+It is assumed that at this point you
+have a copy of the Albany code, possibly via a clone of the git
+repository. If not, see the beginning of Chapter \ref{workflow} 
+to see how to use \texttt{git} to get development versions of Albany and Trilinos.
+These commands require an account on the machine \texttt{software.sandia.gov}
+and being a member of the \texttt{trilinos} UNIX group.
+
+In the {\tt Albany/doc} directory there are some example
+script that provide templates for various steps of the build
+process. In particular, the configuration stage for Trilinos requires
+a CMake script, and an example can be found in the {\tt
+  trilinos-cmake} file, which will be reproduced here for
+completeness.
+\section{Example cmake file to configure Trilinos}
+\begin{verbatim}
+#/********************************************************************\
+#*            Albany, Copyright (2010) Sandia Corporation             *
+#*                                                                    *
+#* Notice: This computer software was prepared by Sandia Corporation, *
+#* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
+#* the Department of Energy (DOE). All rights in the computer software*
+#* are reserved by DOE on behalf of the United States Government and  *
+#* the Contractor as provided in the Contract. You are authorized to  *
+#* use this computer software for Governmental purposes but it is not *
+#* to be released or distributed to the public. NEITHER THE GOVERNMENT*
+#* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
+#* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
+#* including this sentence must appear on any copies of this software.*
+#*    Questions to Andy Salinger, agsalin@sandia.gov                  *
+#\********************************************************************/
+
+# This is a sample Trilinos configuration script for Albany.
+#
+# Boost is required, but just needs to be unpacked,
+# not compiled. Version _1_40 or newer.
+#
+# There are two optional build choices, commented below
+#   these are for Dakota and Exodus I/O capabilites.
+#
+# Albany automatically queries the Trilinos build to 
+# know if these capabilities are enabled or disabled.
+#
+#
+# All paths must me changed for your build (search "agsalin")
+#
+rm CMakeCache.txt
+
+cmake -D CMAKE_INSTALL_PREFIX:PATH=/home/agsalin/Trilinos/build/install \
+      -D Boost_INCLUDE_DIRS:FILEPATH="/home/agsalin/install/boost_1_47_0" \
+      -D CMAKE_BUILD_TYPE:STRING=NONE \
+      -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
+      -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
+      -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
+\
+      -D Trilinos_ENABLE_Teuchos:BOOL=ON \
+      -D Trilinos_ENABLE_Shards:BOOL=ON \
+      -D Trilinos_ENABLE_Sacado:BOOL=ON \
+      -D Trilinos_ENABLE_Epetra:BOOL=ON \
+      -D Trilinos_ENABLE_EpetraExt:BOOL=ON \
+      -D Trilinos_ENABLE_Ifpack:BOOL=ON \
+      -D Trilinos_ENABLE_AztecOO:BOOL=ON \
+      -D Trilinos_ENABLE_Amesos:BOOL=ON \
+      -D Trilinos_ENABLE_Anasazi:BOOL=ON \
+      -D Trilinos_ENABLE_Belos:BOOL=ON \
+      -D Trilinos_ENABLE_ML:BOOL=ON \
+      -D Trilinos_ENABLE_Phalanx:BOOL=ON \
+      -D Trilinos_ENABLE_Intrepid:BOOL=ON \
+      -D Trilinos_ENABLE_NOX:BOOL=ON \
+      -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
+      -D Trilinos_ENABLE_Thyra:BOOL=ON \
+      -D Trilinos_ENABLE_Rythmos:BOOL=ON \
+      -D Trilinos_ENABLE_MOOCHO:BOOL=ON \
+      -D Trilinos_ENABLE_OptiPack:BOOL=ON \
+      -D Trilinos_ENABLE_GlobiPack:BOOL=ON \
+      -D Trilinos_ENABLE_Stokhos:BOOL=ON \
+      -D Trilinos_ENABLE_Isorropia:BOOL=ON\
+      -D Trilinos_ENABLE_Piro:BOOL=ON \
+      -D Trilinos_ENABLE_STK:BOOL=ON \
+      -D Trilinos_ENABLE_Teko:BOOL=ON \
+\
+      -D Trilinos_ENABLE_Mesquite:BOOL=OFF\
+      -D Trilinos_ENABLE_Zoltan:BOOL=ON\
+      -D Trilinos_ENABLE_FEI:BOOL=OFF\
+\
+      -D Trilinos_ENABLE_TESTS:BOOL=OFF \
+      -D Piro_ENABLE_TESTS:BOOL=ON \
+      -D Trilinos_ENABLE_EXAMPLES:BOOL=OFF \
+      -D TPL_ENABLE_MPI:BOOL=ON \
+      -D TPL_ENABLE_Boost:BOOL=ON \
+\
+      -D Phalanx_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
+      -D Stokhos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
+      -D Stratimikos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
+\
+      -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
+      -D Trilinos_VERBOSE_CONFIGURE:BOOL=OFF \
+      -D CMAKE_CXX_FLAGS:STRING="-g -O2 -fno-var-tracking" \
+      -D Trilinos_ENABLE_Export_Makefiles:BOOL=ON \
+       ../
+
+#
+# Optional build capabilities:
+# (1) TriKota is a Trilinos package that builds the
+#     Dakota libraries, for optimization and UQ. See
+#     TriKota web page for how to unpack Dakota.
+#     Dakota requires boost libraries. See boost-make
+#     sample script for how to build these libraries.
+#
+#        -D Trilinos_ENABLE_TriKota:BOOL=ON \
+#        -D TriKota_ENABLE_DakotaCMake:BOOL=ON \
+#        -D DAKOTA_ENABLE_TESTS:BOOL=OFF \
+#        -D Boost_LIBRARY_DIRS:FILEPATH="$BOOSTDIR/lib" \
+#
+#
+# (2) These 5 lines regarding  SEACAS/netcdf  are needed
+#     for reading exodus meshes, but require an
+#     installed netcdf. Also used for Pamgen meshes.
+#        -D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
+#        -D Trilinos_ENABLE_Pamgen:BOOL=ON \
+#        -D TPL_ENABLE_Netcdf:BOOL=ON \
+#        -D TPL_Netcdf_INCLUDE_DIRS:PATH=/home/agsalin/install/netcdf-4.0.1/include \
+#        -D Netcdf_LIBRARY_DIRS:PATH=/home/agsalin/install/netcdf-4.0.1/lib \
+\end{verbatim}
+
+After executing this script, it should suffice to do
+\begin{verbatim}
+% make && ctest && make install
+\end{verbatim}
+where the enabled tests should pass. In the above script, this is
+just a handful of \texttt{piro} tests which are a good indicator
+if the build was successful.
+
+For runs using the exodus mesh database, which is the majority of
+examples and applications, it is necessary to have a set of the
+SEACAS tools installed on your machine. These can now be built
+from Trilinos. We recommend a separate build for these (as opposed
+to doing them as part of the Trilinos install above). The file 
+\texttt{Albany/doc/seacas-cmake} is a script that will configure 
+trilinos to build these tools.  Again, this should be followed
+by a  \texttt{make; make install} and making sure the executables,
+e.g. \texttt{epu}, are in your path.
+
+
+\section{Third Party Libraries}
+
+To build Trilinos with the aim of building Albany, a number of
+software dependencies must be met. They are termed third party
+libraries (TPLs). 
+\begin{enumerate}
+\item Git
+\item A recent version of Boost
+\item NetCDF - version $\ge$ 4.1.3 (version $>$ 4.2 also requires
+  HDF5)
+\item CMake - version $>$ 2.7 should be fine
+\item Some version of MPI, possibly openmpi - version $\ge$ 1.4.3
+\item BLAS/LAPACK - systeminstalled version on relatively modern
+  Linux/Mac machine works
+\item Optional - a recent version (4.7) of GCC
+\end{enumerate}
+There are some other products that can aid workflow.
+\begin{enumerate}
+\item eg -- Easy Git, makes some things clearer and cleaner
+\item doxygen/graphviz and dot - to build the doxygen documentation
+  and visualize the phalanx graphs
+\item paraview to post-process
+\item cubit for mesh generation (not currently free, for now)
+\item Optional - php (a php server is required if you want a local
+  build of the Albany website, useful for visualizing documentation,
+  but not necessary)
+\end{enumerate}
+
+\section{Example CMake File for Albany}
+The following cmake configuration script is enough to configure Albany.
+\begin{verbatim}
+#!/bin/bash
+rm CMakeCache.txt
+cmake  \
+    -D ALBANY_TRILINOS_DIR:FILEPATH=<location_of_trilinos_install> \
+    -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
+    -D ENABLE_LCM:BOOL=OFF \
+    ../
+\end{verbatim}
+Note that the \texttt{<location\_of\_trilinos\_install>} needs to be
+exacly the path in the \texttt{CMAKE\_INSTALL\_PREFIX} in the Trilinos
+build above.  This is typically executed from a subdirectory of Albany such as
+\texttt{build} or \texttt{build\_linux\_mpi\_20120920} depending on
+your personal directory-naming style.
+Note, that the final \texttt{   ../  } is the relative path to the Albany
+directory from the build directory where this script is invoked.
+
+After invoking the script, it remains to build Albany and run the
+tests, which can be accomplished from within the build directory using
+the following command.
+\begin{verbatim}
+% make && ctest
+\end{verbatim}
+If everyting is well, all the tests should pass. 
+
+Numerous parts of the build process are taken from the Trilinos install.
+For instance, the compilers, compiler flags, and any paths to netcdf,
+boost, blas, lapack, etc., are taken from the Trilinos build and do not
+need to be repeated in the Albany configuration.
+
+In addition, the Albany build system will auto-detect what packages 
+were built in Trilinos and set defines in Albany to accommodate.
+For example, the presence of the Zoltan package in the Trilinos install
+will trigger the definition of \texttt{ALBANY\_ZOLTAN}  on compile lines. 
+Corresponding \texttt{\#ifdef ALBANY\_ZOLTAN} lines in the source code
+will toggle the compilation of capabilities in Albany that require
+Zoltan, such as \texttt{stk\_rebalance}. The same is true for Dakota,
+SEACASIoss (for reading exodus files), and MPI (versus serial).
+
+There are other CMake configuration options recognized by the
+Albany build system. (In addition, CMake has a standard set that
+can be found at the CMake websote.) Many of these are experimental
+options and not generally supported, but currrently include [default]:
+\begin{verbatim}
+ENABLE_LCM             & Bool flag to enable LCM physics sets [off] \\
+ENABLE_FELIX           & Bool flag to enable FELIX physics sets [on] \\
+ENABLE_ASCR            & Bool flag to enable ASCR embedded UQ algorithm research [off] \\
+ENABLE_LAME            & Bool flag to enable links to the LAME material library [off] \\
+LAME_INCLUDE_DIR       & Path to installed Lame include directory \\
+LAME_LIBRARY_DIR       & Path to installed Lame lib directory \\
+ENABLE_ALBANY_CI       & Flag to enable links to the CI configuration interaction library [off] \\
+ALBANY_CI_INCLUDE_DIR  & Path to installed CI include directory \\
+ALBANY_CI_LIBRARY_DIR  & Path to installed CI lib directory \\
+ALBANY_CXX_FLAGS       & Extra flags for the C++ compiler appended to those from Trilinos \\
+CMAKE_CXX_FLAGS        & Flags for the C++ compiler overwriting those from Trilinos \\
+\end{verbatim}
+
+\chapter{Albany Directory Structure}
+\label{directories}
+
+This Chapter is meant to orient a new developer to the directory structure of
+the Albany repository.
+At the top level, Albany has three directories: \texttt{src} for the source code,
+\texttt{examples} for the example problems (which also serve as the regression tests),
+and a \texttt{doc} documentation directory.
+
+\section{Source Code Directories \texttt{Albany/src} }
+\begin{itemize}
+
+\item{\texttt{Albany/src}}  This top-level source code directory  \texttt{src} contains
+much of the generic Albany code that is application independent. This includes the
+top-level functionality of 
+\texttt{Main} routines and the factories for building the Trilinos \texttt{piro} solvers.
+The interface to the physics sets is the \texttt{Albany\_ModelEvaluator}, a concrete
+implementation of a central abstract layer in Trilinos. 
+
+Perhaps the most central piece of code is the \texttt{Albany\_Application} class.
+The constructor of this class orchestrates the building of the discretization (mesh),
+the problem (physics set), initial guess, and responses. The methods in this class
+are called directly from the \texttt{Albany\_ModelEvaluator} and compute the residual,
+Jacobian, responses, and other main quantities. These functions are the boundary between
+the code that is written specifically for the computation of these different quantities
+and the templated code, where a single code base will generate different quantities based
+on an Evaluation Type. That is, the different functions in this class for calculating
+a Residual vector or Jacobian matrix both call the same method to evaluate the PDEs, yet
+with a different template argument. This activates the Automatic Differentiation 
+infrastructure in Albany (more generally called template-based generic programming).
+Details of this implementation are in the \texttt{PHAL\_AlbanyTraits} class. The data
+that needs to span these two realms is packed in the \texttt{PHAL\_Workset} struct.
+
+Also in the \texttt{src} directory are classes to handle states (fields besides the
+solution vector that persist between subseqent solves), "observers" that control
+the output and postrprocessing of solutions, and utility functions (such as a single
+file to manage different parallel communicator abstractions and serial code).
+
+
+\item{\texttt{Albany/src/stk}}  The \texttt{stk} source code directory contains information
+on the global problem discretization. This includes all mesh data structures, parallel
+maps for solution vectors, coordinates, and other fields, as well as the graph of the
+matrix. This information is accessed by the rest of the code through the 
+\texttt{AbstractDiscretization} class, with accessor methods that are mainly 
+two types: (1) \texttt{Epetra} data structures for information that will 
+require communication between processors, and (2)
+standard vectors (\texttt{Teuchos::ArrayRCP} objects) for information that will not.
+A \texttt{Tpetra} branch of the code is under development as well.
+
+While the global discretization abstraction insulates the rest of the code from a
+specific mesh database and implementation, currently the only concrete implementation
+is through the \texttt{STK\_Mesh} library from Trilinos. The STM Mesh objects can be
+created by reading them in from Exodus or generated by the Pamgen library, both of
+which use the SEACAS and IOSS tools. Alternatively, simple meshes can be generated
+internally in the code without the need for these libraries, including lines, 
+rectangles (with quad or triangle elements), and brick shape meshes. These are useful
+for many demonstration a verification problems.
+
+\item{\texttt{Albany/src/problems}}  The \texttt{problems} source code directory contains
+classes that inherit from an \texttt{AbstractProblem}. The (overloaded) word problem 
+refers to a physics set, and includes things like Heat Transfer, Poisson equation, and
+Navier Stokes. A problem class registers a set of "evaluators" from derived from the
+Phalanx package in Trilinos that, in aggregate, will perform the assembly of the desired
+set of PDEs. All problem register the basic set of finite element evaluators as well as
+one or more problem-specific evaluators for computing diffusion operators, source terms,
+etc. Similarly, Problems define boundary condition evaluators, responses, and declare
+state fields (those that persist beyond one assembly). 
+
+We do not allow the Albany user to mix-and-match all physics (PDE terms)
+at run time in an input file, but must construct a "problem" where the physics terms
+are assembled. These themselves can be written to have some degree of run time configuratbility.
+However, for purposes of verification, reproducibility, and limiting user error, we 
+have made the choice to have physics sets hardwired into problem classes.
+
+\item{\texttt{Albany/src/evaluators}}  The \texttt{evaluators} source code directory contains
+Phalanx evaluators. Phalanx is a Trilinos package that allows users to build up physics
+sets from individual unit operations. For instance, evaluators exist to interpolate
+nodal data to quadrature points, to calculate diffusion operators, or to compute a
+source term. The granularity of computation that occurs in an evaluator is 
+free for a developer to choose. Common finite element operations tend to have fine
+granularity, where an evaluator performs a small well-defined task.
+
+Phalanx is written to work seamlessly with the Evaluation Type templating for full
+use of automatic differetiation. The main two places where template specialization is
+required are the \texttt{GatherSolution} and \texttt{ScatterResidual} evaluators which
+seed (initialize) and extract the date to and from the automatic differentiation types.
+Almost all other evaluators can be written just on the generic template type.
+Phalanx also uses the multi-dimensional data arrays that are interoperble with those in the
+Trilinos \texttt{intrepid} and \texttt{shards} packages.
+
+In this directory, there are all the evaluotors that are common to all finite element
+assemblies, as well as problem-specific evaluators for heat transfer, Navier-Stokes, 
+the QCAD Poisson and Schrodinger applications, and other applications. The LCM and
+FELIX projects have moved evaluators speific to their applications into other directories
+just for organization purposes.
+
+\item{\texttt{Albany/src/responses}}  The \texttt{responses} source code directory contains
+a growing library of responses, which are post-processing routines for quantities of interest.
+These include several common responses that involve norms of the solution vector. 
+Responses that required finite element information, such as integrals of quantites
+over the mesh, are all hooked up through the
+\texttt{FieldManagerScalarResponseFunction} function. This triggers an assembly
+phase, using evaluators, much like the Residual and Jacobian evalutations, and 
+also make use of template-based generic programming.
+
+\item{\texttt{Albany/src/LCM}}  The \texttt{LCM} source code directory contains 
+application-specific code for the LCM project, as escribedint he introduction. It contains
+\texttt{problems} and \texttt{evaluators} directories that describe and implement
+the physics sets needed for these applications domains. The problem classes assemble
+PDE descriptions using evaluators both from the \texttt{src/evaluators} directory as
+well as the \texttt{LCM/evaluators} directory. There are additional
+directories for LCM development, including a \texttt{utils} directory with a Tensor
+library. Since LCM includes such a large code base to compile, there is a CMake configuration 
+option \texttt{-D ENABLE\_LCM:=ON} needed to enable this code base (POC: Ostien).
+
+\item{\texttt{Albany/src/FELIX}}  The \texttt{FELIX} directory contains application-speciic
+code for the Ice Sheet dynamics application described in the introduction. It contains
+ \texttt{problems} and \texttt{evaluators} directories that describe and implement
+the physics sets needed for this application domain (POC: Kalashnikova).
+
+\item{\texttt{Albany/src/Hydride}}  The \texttt{Hydride} directory contains application-speciic
+code for the nuclear energy application of hydridization of cladding materials. It contains
+ \texttt{problems} and \texttt{evaluators} directories that describe and implement
+the physics sets needed for this application domain (POC: Hansen).
+
+\item{\texttt{Albany/src/MOR}}  The \texttt{MOR} directory contains source code specific
+to model order reduction. This includes the ability to collect and analyze snapshot
+information from Albany runs and produce reduced order models (POC: Cortial). 
+
+\end{itemize}
+  
+\subsection{Source Code Namespaces and File Naming Conventions}
+
+There are several C++ namespaces in use in Albany. Most of the code
+is in the Albany namespace. This includes the general-purpose code in
+the \texttt{src} directory for problem setup, the processing of the
+mesh, and setups of many problems (physics sets). Most new development
+starts by default using the Albany namespace. There are opportunities
+to use more namespaces to clarify the modularity of the code, such
+as between the solver code and discretization/mesh code. 
+
+In addition to \texttt{Albany}, there are a few other namespaces in 
+use to compartmentalize the code:
+\begin{itemize}
+\item{\texttt{PHAL}}  This namespace (short for PHalanx-ALbany) is for the
+code that derives from the Phalanx base classes. This is the magic that 
+allow for such rapid and flexible implementation of new PDEs and terms.
+In addition to the evaluators, also in this namespace are classes for
+the traits, data types, and workset that are integral to this part of the
+code.
+
+\item{\texttt{LCM, QCAD, FELIX}} These namespaces are used to visually separate 
+code specific to those application projects. This can aid in figuring out
+what code is gerenal-purpose or application specific and what parts of code can
+be excluded from lightweight compilations.
+\end{itemize}
+
+File naming conventions are as follows.
+\begin{itemize}
+\item{File Naming Conventions: prefix} Most source code files adheres to the 
+convention that the file name is the same as the class name, with the namespace
+as the prefix. So the class \texttt{Albany::SolverFactory} will have a filename
+starting with \texttt{Albany\_SolverFactory}.
+
+\item{File Naming Conventions: suffix} The code base that is not templated uses
+"\texttt{.hpp}" and "\texttt{.cpp}" suffixes. For the templated code base, which is primarily the
+code in the \texttt{evaluators} directories, we use the following naming conventions.
+There is a tiny "\texttt{{\em file}.cpp}" file for
+explicit template instatiation, a file with "\texttt{{\em file}\_Def.hpp}" extension
+for the definition files with the source code in it, and "\texttt{{\em file}.hpp}" for
+the header file.
+
+\end{itemize}
+
+\section{Example/Regression Directory \texttt{Albany/examples} }
+\texttt{Albany/examples} This directory holds all the example problems for Albany, which 
+also serve as the \textbf{regression tests}. 
+
+Each directory holds one or more \texttt{xml} file that is
+the input file for the run. Separate problems do {\em not} run off of separate executables. 
+The physics set and solution method are set in the input file. The
+large majority of examples run of of the same \texttt{Albany} executable, which performs simulations and
+linearized sensititivity anaysis. Problems that perform optimization or Dakota-based UQ 
+use the \texttt{AlbanyDakota} or \texttt{AlbanyAnalysis} executables, while intrusive UQ
+using the Stokhos package use the \texttt{AlbanySG} executable. Other \texttt{Main*.cpp} files
+can exist to create other executables, but these are currently experimental only.
+
+The input files for each example include a \texttt{Regression Results} section which 
+compares scalar responses, sensitivities, optimization results, and/or stochastic Galerkin
+results, to trusted values. Disrepencies between these results increment an integer that
+is the return code from \texttt{main()}. The \texttt{ctest} testing code uses this return
+code to decide pass/fail of tests. (We would like to extend the regression process to
+incorporate an \texttt{exodiff} capability to test the entire solution and the I/O 
+capability.)
+
+Many directories also include exodus files for specification of the finite element mesh,
+although some problems run from internally generated meshes. These have been partitioned
+using the \texttt{decomp} script from SEACAS. Both the serial and 4-processor versions
+of the exodus file are typically included.
+
+\section{Documentation Directories \texttt{Albany/doc} }
+
+\begin{itemize}
+
+\item{\texttt{Albany/doc}}  This top-level documentation directory contains
+useful CMake scripts with comments for configuring Trilinos, SEACAS tools,
+boost, and the albanyCI code. These have worked at one time on one machine,
+but are (unfortunately) not tested, so may drift out of date.
+
+\item{\texttt{Albany/doc/webpage}} The \texttt{webpage} directory contains
+html files for the Albany web page. (The webpage has not been filled in with 
+much detail.) On Sandia's internal SRN network, it can be view at
+\texttt{https://development.sandia.gov/Albany/}. Developers are encouraged
+to expand the coverage and usefulness of these webpages, including the
+Albany code as a whole as well as the project-specific tabs. 
+
+\item{\texttt{Albany/doc/doxygen}} The \texttt{doxygen} directory contains
+necessary files so that doxygen documentation of the source code will be
+generated. This is generated automatically and linked to from the Albany
+webpage. 
+
+\item{\texttt{Albany/doc/nightlyTestHarness}} This directory contains
+a set of shells scripts that are used, with minor modifications, as
+the nightly test harness. One file with machine-specific environment
+variables needs to be modifies (e.g. \texttt{set\_andys\_env.in}) an then
+the test harness is run with \texttt{./run\_master.sh set\_andys\_env.in}.
+This is currently run under a cron job on four platforms nightly.
+
+\item{\texttt{Albany/doc/developersGuide}} The directory that holds this
+document. Please improve and commit!
+
+\end{itemize}
+
+
+\chapter{Developer Workflow}
+\label{workflow}
+
+This chapter consists of introductions to using Git and CMake in your
+development workflow. Git is the source code control tool, and CMake
+is for configuration management and compiling the code. 
+
+\section{Development Using Git}
+
+The following are some workflow suggestions and general tips for using
+git. Of note is the autorebase feature provided by git, which in
+essence, upon pulling hides away your local work, updates your local
+repository against the remote master, and then applies your local
+changes "on top". This is good and safe and should be done early and
+often. To set this up, consult the following contents of the following
+gitconfig file.
+
+\begin{verbatim}
+===================== contents of ~/.gitconfig
+
+[user]
+        name = <name>
+        email = <redacted>
+[branch]
+        autosetuprebase = always
+[color]
+        ui = true
+        branch = auto
+        diff = auto
+        status = auto
+[core]
+        whitespace = -trailing-space,-space-before-tab
+        preloadingindex = true
+        preloadindex = true
+
+[branch "master"]
+        rebase = true
+
+
+====================== end contents
+\end{verbatim}
+
+It is encouraged for anyone to, at least, provide the [user] section
+such that the checkin messages are meaningful. You can do this by
+editing the .gitconfig file in your home directory (or creating it if
+it is not there) to include the contents above, or some subset.
+
+The following is then a list some useful git commands. Note most of
+the time git and eg are interchangeable. However there are a few
+places where eg is arguably more useful.
+
+\begin{itemize}
+\item to clone Trilinos and Albany into ./Trilinos and ./Albany
+\begin{verbatim}
+% git/eg clone <user>@software.sandia.gov:/space/git/Trilinos
+% git/eg clone <user>@software.sandia.gov:/space/git/Albany
+\end{verbatim}
+
+\item to pull the current repository
+\begin{verbatim}
+% git pull
+\end{verbatim}
+
+\item to push changes to the master
+\begin{verbatim}
+% git push
+\end{verbatim}
+
+\item to view the log of checkins to the repository
+\begin{verbatim}
+% git/eg log
+\end{verbatim}
+NB: eg log is much cleaner
+
+\item to prepare local currently tracked modified files to be committed
+\begin{verbatim}
+% git/eg add/stage <path_to_file>/<file>
+\end{verbatim}
+NB: git add and git stage work virtually the same in this case
+
+\item to prepare newly created files to be committed
+\begin{verbatim}
+% git/eg add <path_to_file>/<file>
+\end{verbatim}
+
+\item example workflow (using eg, but git would be the same)
+\begin{verbatim}
+% eg pull
+<edit some files>
+# now build
+% make
+# run the tests
+% ctest
+# tests didn't pass so 
+<fix some bugs>
+# build, run tests again
+% make && ctest
+#tests look good, commit local changes>
+% eg add <path_to_file>/<file>
+# check that everything is kosher
+% eg status
+# should say something like, "staged files ready to be committed"
+% eg commit
+# don't forget to write a nice one line description, 
+# followed by more detail if you like
+# then pull and test again before you push
+% eg pull
+% make
+% ctest
+# if nothing has broken
+%eg push
+\end{verbatim}
+
+\item hypothetically, pulled changes don't compile (this will happen)
+\begin{verbatim}
+# how to recover
+# check the log to see if there is an obvious checkin causing the error
+# there will be a tag, something like master~#
+# then use the following syntax, I'll use #=5 for demonstration
+# here eg is required
+% eg reset --working-copy master~5
+\end{verbatim}
+
+\item another hypothetical, you have lots of changes locally, but
+  you'd like to pull, and you haven't committed anything
+\begin{verbatim}
+# you can use the stash command
+% eg stash save workInProgress
+# now you can pull without issue
+% eg pull
+# then if you want to, you can apply your changes
+% eg stash apply workInProgress
+# then resolve conflicts as necessary
+\end{verbatim}
+\end{itemize}
+
+\section{Development Using CMake}
+
+Need to add how to have a
+conditional ENABLE\_MYCRUD compile option.
+
+The following are some general steps to add new evaluators or problems, as well as new test problems to Albany CMakeLists. As an example, there are two newly created source and header files belonging to Albany LCM \verb+ myNewProblem.cpp, myNewProblem.hpp+ that you would like to add to the CMakeLists (same steps apply for other types of Albany problems or evaluators). 
+\begin{itemize}
+\item Add new problem files in \verb+<path_to_Albany_directory>/src/CMakeList.txt+ at the correspoinding section (in this example \verb+ALBANY_LCM+)
+\begin{verbatim}
+# LCM
+IF(ALBANY_LCM)
+ SET(LCM_DIR ${Albany_SOURCE_DIR}/src/LCM)
+ # LCM problems
+ SET(SOURCES ${SOURCES}
+ ${LCM_DIR}/problems/myNewProblem.cpp
+ )
+ SET(HEADERS ${HEADERS}
+ ${LCM_DIR}/problems/myNewProblem.hpp
+ )
+ENDIF()
+\end{verbatim}
+
+\item To add a test problem to Albany examples, first create a new directory \verb+<path_to_Albany_directory>/examples/myNewProblem+
+
+\item Within the new directory, create necessary input files to run the example, as well as a \verb+CMakeLists.txt+ file. A simple example \verb+CMakeLists.txt+ file may include the following 
+\begin{verbatim}
+# 1. Copy Input file from source to binary dir
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
+# 2. Name the test with the directory name
+get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+# 3. Create the test with this name and standard executable
+add_test(${testName} ${Albany.exe})
+\end{verbatim}
+NB: you may also copy and paste existing test examples in Albany, and modify according to your new problem. 
+
+\item Add in \verb+<path_to_Albany_directory>/examples/CMakeLists.txt+ the directory name of the newly created example at corresponding sectioin (again, in this example \verb+ALBANY_LCM+). 
+\begin{verbatim}
+IF(ALBANY_LCM)
+ add_subdirectory{myNewProblem}  
+ENDIF()
+\end{verbatim}
+
+\item Compile and test to make sure the newly added problem passes ctest. 
+\begin{verbatim}
+% cd <path_to_Albany_directory>/build
+% make && ctest
+\end{verbatim}
+Once it passes ctest, you can push your changes to the master repository using the steps listed in the previous section.
+\end{itemize}
+
+\chapter{Albany Mailing Lists}
+All those interested in keeping up with Albany development should subscribe
+to the following mailman lists:
+\begin{itemize}
+\item albany-checkins  \texttt{ https://software.sandia.gov/mailman/listinfo/albany-checkins}
+\item albany-developers  \texttt{ https://software.sandia.gov/mailman/listinfo/albany-developers}
+\end{itemize}
+Developers making commits with any frequency should subscribe to the nightly test results
+(about 3 emails per night) since these test build/configuration/platform options that ]
+might not be part of your workflow.
+\begin{itemize}
+\item albany-regression  \texttt{ https://software.sandia.gov/mailman/listinfo/albany-regression}
+\end{itemize}
+
+
+\chapter{Albany Copyright and Licensing Info}
+
+\texttt{Albany 2.0} has been approved for open source release with a
+Publically Available designation. There is a file \texttt{license.txt} 
+with the full text. All other source code has a short banner that should
+be added to the top of any new source code files. We will re-assert 
+copyright for major releases, but not minor releases. 
+
+The license is (as one should expect) copied from what is used in a
+typical Trilinos package, which is a BSD-style license. 
+Since part of the license states that the details of the license 
+will be included in documentation, we attach it here.
+
+\begin{verbatim}
+************************************************************************
+     Albany 2.0:  Copyright 2012 Sandia Corporation
+
+Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+the U.S. Government retains certain rights in this software.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+1. Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+
+3. Neither the name of the Corporation nor the names of the
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Questions? Contact Andy Salinger (agsalin@sandia.gov)
+************************************************************************
+\end{verbatim}
+
+% ---------------------------------------------------------------------- %
+% References
+%
+\clearpage
+% If hyperref is included, then \phantomsection is already defined.
+% If not, we need to define it.
+\providecommand*{\phantomsection}{}
+\phantomsection
+\addcontentsline{toc}{chapter}{References}
+\bibliographystyle{plain}
+\bibliography{gettingStarted}
+
+% ---------------------------------------------------------------------- %
+%
+%\appendix
+%\chapter{Notation}
+% \printindex
+
+\begin{SANDdistribution}[CA]% or [CA]
+  % \SANDdistCRADA        % If this report is about CRADA work
+  % \SANDdistPatent       % If this report has a Patent Caution or Patent Interest
+  % \SANDdistLDRD         % If this report is about LDRD work
+
+  % External Address Format: {num copies}{Address}
+  \SANDdistExternal{}{}
+  \bigskip
+
+  % The following MUST BE between the external and internal distributions!
+  % \SANDdistClassified % If this report is classified
+
+  % Internal Address Format: {num copies}{Mail stop}{Name}{Org}
+  \SANDdistInternal{}{}{}{}
+
+  % Mail Channel Address Format: {num copies}{Mail Channel}{Name}{Org}
+  \SANDdistInternalM{}{}{}{}
+\end{SANDdistribution}
+
+
+% The second printing
+%\begin{SANDreDistribution}
+%    \SANDdistExternal{}{}
+%    \bigskip
+%    \SANDdistInternal{}{}{}{}
+%    \SANDdistInternalM{}{}{}{}
+%\end{SANDreDistribution}
+
+\end{document}

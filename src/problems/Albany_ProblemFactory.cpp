@@ -1,19 +1,8 @@
-/********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-\********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 
 #include "Teuchos_TestForException.hpp"
 #include "Albany_ProblemFactory.hpp"
@@ -23,6 +12,7 @@
 #include "Albany_MultiHeatProblem.hpp"
 #include "Albany_NavierStokes.hpp"
 #include "Albany_GPAMProblem.hpp"
+#include "Albany_LinComprNSProblem.hpp"
 #include "Albany_ODEProblem.hpp"
 #include "Albany_ThermoElectrostaticsProblem.hpp"
 #include "QCAD_PoissonProblem.hpp"
@@ -31,7 +21,6 @@
 #ifdef ALBANY_LCM
 #include "LCM/problems/MechanicsProblem.hpp"
 #include "LCM/problems/ElasticityProblem.hpp"
-#include "LCM/problems/MesoScaleLinkProblem.hpp"
 #include "LCM/problems/NonlinearElasticityProblem.hpp"
 #include "LCM/problems/ThermoElasticityProblem.hpp"
 #include "LCM/problems/PoroElasticityProblem.hpp"
@@ -46,7 +35,12 @@
 #include "LCM/problems/LameProblem.hpp"
 #endif
 #endif
+#ifdef ALBANY_HYDRIDE
+#include "Hydride/problems/HydrideProblem.hpp"
+#include "Hydride/problems/MesoScaleLinkProblem.hpp"
+#endif
 #include "FELIX/problems/FELIX_Stokes.hpp"
+#include "FELIX/problems/FELIX_StokesFO.hpp"
 
 Albany::ProblemFactory::ProblemFactory(
        const Teuchos::RCP<Teuchos::ParameterList>& problemParams_,
@@ -110,6 +104,12 @@ Albany::ProblemFactory::create()
   }
   else if (method == "GPAM 3D") {
     strategy = rcp(new Albany::GPAMProblem(problemParams, paramLib, 3));
+  }
+  else if (method == "LinComprNS 2D") {
+    strategy = rcp(new Albany::LinComprNSProblem(problemParams, paramLib, 2));
+  }
+  else if (method == "LinComprNS 3D") {
+    strategy = rcp(new Albany::LinComprNSProblem(problemParams, paramLib, 3));
   }
   else if (method == "Schrodinger 1D") {
     strategy = rcp(new QCAD::SchrodingerProblem(problemParams, paramLib, 1, comm));
@@ -239,6 +239,11 @@ Albany::ProblemFactory::create()
   else if (method == "Hydrogen Diffusion-Deformation 2D") {
     strategy = rcp(new Albany::HDiffusionDeformationProblem(problemParams, paramLib, 2));
   }
+#endif
+#ifdef ALBANY_HYDRIDE
+  else if (method == "Hydride 2D") {
+    strategy = rcp(new Albany::HydrideProblem(problemParams, paramLib, 2, comm));
+  }
   else if (method == "MesoScaleLink 1D") {
     strategy = rcp(new Albany::MesoScaleLinkProblem(problemParams, paramLib, 1, comm));
   }
@@ -255,6 +260,12 @@ Albany::ProblemFactory::create()
   }
   else if (method == "FELIX Stokes 2D" ) {
     strategy = rcp(new FELIX::Stokes(problemParams, paramLib, 2));
+  }
+  else if (method == "FELIX Stokes First Order 2D" || method == "FELIX Stokes FO 2D" ) {
+    strategy = rcp(new FELIX::StokesFO(problemParams, paramLib, 2));
+  }
+  else if (method == "FELIX Stokes First Order 3D" || method == "FELIX Stokes FO 3D" ) {
+    strategy = rcp(new FELIX::StokesFO(problemParams, paramLib, 3));
   }
 #endif
   else {

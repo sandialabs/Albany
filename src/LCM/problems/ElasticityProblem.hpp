@@ -1,19 +1,8 @@
-/********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-\********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 
 #ifndef ELASTICITYPROBLEM_HPP
 #define ELASTICITYPROBLEM_HPP
@@ -132,7 +121,7 @@ namespace Albany {
 #include "ElasticityResid.hpp"
 
 #include "Time.hpp"
-#include "CapModelStress.hpp"
+#include "CapExplicit.hpp"
 #include "GursonSDStress.hpp"
 
 #include "CapImplicit.hpp"
@@ -306,7 +295,7 @@ Albany::ElasticityProblem::constructEvaluators(
     ev = rcp(new LCM::Strain<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
-    if(matModel == "CapModel" || matModel == "GursonSD" || matModel == "CapImplicit"){
+    if(matModel == "CapExplicit" || matModel == "GursonSD" || matModel == "CapImplicit"){
       p = stateMgr.registerStateVariable("Strain", dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0, true);
     	ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     	fm0.template registerEvaluator<EvalT>(ev);
@@ -336,7 +325,7 @@ Albany::ElasticityProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (matModel == "CapModel" || matModel == "CapImplicit")
+  if (matModel == "CapExplicit" || matModel == "CapImplicit")
   {
 	{ // Cap model stress
 	  RCP<ParameterList> p = rcp(new ParameterList("Stress"));
@@ -388,17 +377,14 @@ Albany::ElasticityProblem::constructEvaluators(
       p->set<string>("Back Stress Name", "backStress"); //dl->qp_tensor also
       p->set<string>("Cap Parameter Name", "capParameter"); //dl->qp_tensor also
 
-      if(matModel == "CapModel"){
-          p->set<string>("Friction Name", "friction"); //dl->qp_scalar also
-          p->set<string>("Dilatancy Name", "dilatancy"); //dl->qp_scalar also
-          p->set<string>("Eqps Name", "eqps"); //dl->qp_scalar also
-          p->set<string>("Hardening Modulus Name", "hardeningModulus"); //dl->qp_scalar also
-
-      }
+      p->set<string>("Friction Name", "friction"); //dl->qp_scalar also
+      p->set<string>("Dilatancy Name", "dilatancy"); //dl->qp_scalar also
+      p->set<string>("Eqps Name", "eqps"); //dl->qp_scalar also
+      p->set<string>("Hardening Modulus Name", "hardeningModulus"); //dl->qp_scalar also
 
       //Declare what state data will need to be saved (name, layout, init_type)
-      if(matModel == "CapModel"){
-    	  ev = rcp(new LCM::CapModelStress<EvalT,AlbanyTraits>(*p));
+      if(matModel == "CapExplicit"){
+    	  ev = rcp(new LCM::CapExplicit<EvalT,AlbanyTraits>(*p));
       }
 
       if(matModel == "CapImplicit"){
@@ -416,20 +402,19 @@ Albany::ElasticityProblem::constructEvaluators(
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
 
-      if(matModel == "CapModel"){
-          p = stateMgr.registerStateVariable("friction",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0);
-          ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-          fm0.template registerEvaluator<EvalT>(ev);
-          p = stateMgr.registerStateVariable("dilatancy",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0);
-          ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-          fm0.template registerEvaluator<EvalT>(ev);
-          p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
-          ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-          fm0.template registerEvaluator<EvalT>(ev);
-          p = stateMgr.registerStateVariable("hardeningModulus",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0);
-          ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-          fm0.template registerEvaluator<EvalT>(ev);
-      }
+      p = stateMgr.registerStateVariable("friction",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      p = stateMgr.registerStateVariable("dilatancy",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+      p = stateMgr.registerStateVariable("hardeningModulus",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+
 
 	}
   }

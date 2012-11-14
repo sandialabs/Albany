@@ -1,19 +1,8 @@
-#/********************************************************************\
-#*            Albany, Copyright (2010) Sandia Corporation             *
-#*                                                                    *
-#* Notice: This computer software was prepared by Sandia Corporation, *
-#* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-#* the Department of Energy (DOE). All rights in the computer software*
-#* are reserved by DOE on behalf of the United States Government and  *
-#* the Contractor as provided in the Contract. You are authorized to  *
-#* use this computer software for Governmental purposes but it is not *
-#* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-#* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-#* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-#* including this sentence must appear on any copies of this software.*
-#*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-#\********************************************************************/
-
+# Change coupled tests to run on 4 proc's
+IF (ALBANY_MPI)
+  set(AlbanyCoupled.exe   ${MPIEX} ${MPINPF} 4 ${Albany_BINARY_DIR}/src/AlbanyCoupled)
+  set(AlbanySGCoupled.exe ${MPIEX} ${MPINPF} 4 ${Albany_BINARY_DIR}/src/AlbanySGCoupled)
+ENDIF()
 
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/pipe.xml
@@ -57,6 +46,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/network_coupled_sg.xml
 get_filename_component(testNamePipeSG ${CMAKE_CURRENT_SOURCE_DIR}_PipeSG NAME)
 get_filename_component(testNameReactorSG ${CMAKE_CURRENT_SOURCE_DIR}_ReactorSG NAME)
 get_filename_component(testNameNetworkSG ${CMAKE_CURRENT_SOURCE_DIR}_NetworkSG NAME)
+
 add_test(${testNamePipeSG} ${AlbanySG.exe} pipe_sg.xml)
 add_test(${testNameReactorSG} ${AlbanySG.exe} reactor_sg.xml)
 add_test(${testNameNetworkSG} ${AlbanySGCoupled.exe} network_coupled_sg.xml)

@@ -1,19 +1,8 @@
-/********************************************************************\
- *            Albany, Copyright (2010) Sandia Corporation             *
- *                                                                    *
- * Notice: This computer software was prepared by Sandia Corporation, *
- * hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
- * the Department of Energy (DOE). All rights in the computer software*
- * are reserved by DOE on behalf of the United States Government and  *
- * the Contractor as provided in the Contract. You are authorized to  *
- * use this computer software for Governmental purposes but it is not *
- * to be released or distributed to the public. NEITHER THE GOVERNMENT*
- * NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
- * ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
- * including this sentence must appear on any copies of this software.*
- *    Questions to Andy Salinger, agsalin@sandia.gov                  *
- \********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
@@ -24,26 +13,43 @@ namespace LCM {
 //**********************************************************************
   template<typename EvalT, typename Traits>
   CapImplicit<EvalT, Traits>::CapImplicit(const Teuchos::ParameterList& p) :
-      elasticModulus(p.get<std::string>("Elastic Modulus Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), poissonsRatio(
+     elasticModulus(p.get<std::string>("Elastic Modulus Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+     poissonsRatio(
           p.get<std::string>("Poissons Ratio Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), strain(
-          p.get<std::string>("Strain Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), stress(
-          p.get<std::string>("Stress Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), backStress(
-          p.get<std::string>("Back Stress Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), capParameter(
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+     strain(p.get<std::string>("Strain Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
+     stress(p.get<std::string>("Stress Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
+     backStress(p.get<std::string>("Back Stress Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
+     capParameter(
           p.get<std::string>("Cap Parameter Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), A(
-          p.get<RealType>("A Name")), B(p.get<RealType>("B Name")), C(
-          p.get<RealType>("C Name")), theta(p.get<RealType>("Theta Name")), R(
-          p.get<RealType>("R Name")), kappa0(p.get<RealType>("Kappa0 Name")), W(
-          p.get<RealType>("W Name")), D1(p.get<RealType>("D1 Name")), D2(
-          p.get<RealType>("D2 Name")), calpha(p.get<RealType>("Calpha Name")), psi(
-          p.get<RealType>("Psi Name")), N(p.get<RealType>("N Name")), L(
-          p.get<RealType>("L Name")), phi(p.get<RealType>("Phi Name")), Q(
-          p.get<RealType>("Q Name"))
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+     friction(p.get<std::string>("Friction Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+     dilatancy(p.get<std::string>("Dilatancy Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+     eqps(p.get<std::string>("Eqps Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+     hardeningModulus(p.get<std::string>("Hardening Modulus Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+     A(p.get<RealType>("A Name")),
+     B(p.get<RealType>("B Name")),
+     C(p.get<RealType>("C Name")),
+     theta(p.get<RealType>("Theta Name")),
+     R(p.get<RealType>("R Name")),
+     kappa0(p.get<RealType>("Kappa0 Name")),
+     W(p.get<RealType>("W Name")),
+     D1(p.get<RealType>("D1 Name")),
+     D2(p.get<RealType>("D2 Name")),
+     calpha(p.get<RealType>("Calpha Name")),
+     psi(p.get<RealType>("Psi Name")),
+     N(p.get<RealType>("N Name")),
+     L(p.get<RealType>("L Name")),
+     phi(p.get<RealType>("Phi Name")),
+     Q(p.get<RealType>("Q Name"))
   {
     // Pull out numQPs and numDims from a Layout
     Teuchos::RCP<PHX::DataLayout> tensor_dl = p.get<
@@ -63,11 +69,16 @@ namespace LCM {
     stressName = p.get<std::string>("Stress Name") + "_old";
     backStressName = p.get<std::string>("Back Stress Name") + "_old";
     capParameterName = p.get<std::string>("Cap Parameter Name") + "_old";
+    eqpsName = p.get<std::string>("Eqps Name") + "_old";
 
     // evaluated fields
     this->addEvaluatedField(stress);
     this->addEvaluatedField(backStress);
     this->addEvaluatedField(capParameter);
+    this->addEvaluatedField(friction);
+    this->addEvaluatedField(dilatancy);
+    this->addEvaluatedField(eqps);
+    this->addEvaluatedField(hardeningModulus);
 
     this->setName("Stress" + PHX::TypeString<EvalT>::value);
 
@@ -84,6 +95,10 @@ namespace LCM {
     this->utils.setFieldData(strain, fm);
     this->utils.setFieldData(backStress, fm);
     this->utils.setFieldData(capParameter, fm);
+    this->utils.setFieldData(friction, fm);
+    this->utils.setFieldData(dilatancy, fm);
+    this->utils.setFieldData(eqps, fm);
+    this->utils.setFieldData(hardeningModulus, fm);
   }
 
 //**********************************************************************
@@ -98,6 +113,7 @@ namespace LCM {
     Albany::MDArray stressold = (*workset.stateArrayPtr)[stressName];
     Albany::MDArray backStressold = (*workset.stateArrayPtr)[backStressName];
     Albany::MDArray capParameterold = (*workset.stateArrayPtr)[capParameterName];
+    Albany::MDArray eqpsold = (*workset.stateArrayPtr)[eqpsName];
 
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
       for (std::size_t qp = 0; qp < numQPs; ++qp) {
@@ -107,33 +123,58 @@ namespace LCM {
             / (1.0 - 2.0 * poissonsRatio(cell, qp));
         ScalarT mu = elasticModulus(cell, qp) / 2.0
             / (1.0 + poissonsRatio(cell, qp));
+        ScalarT bulkModulus = lame + (2. / 3.) * mu;
 
         // elastic matrix
-        LCM::Tensor4<ScalarT, 3> Celastic =
-            lame * LCM::identity_3<ScalarT, 3>()
-                + mu
-                    * (LCM::identity_1<ScalarT, 3>()
-                        + LCM::identity_2<ScalarT, 3>());
+        LCM::Tensor4<ScalarT> Celastic = lame * LCM::identity_3<ScalarT>(3)
+            + mu * (LCM::identity_1<ScalarT>(3) + LCM::identity_2<ScalarT>(3));
+
+        // elastic compliance tangent matrix
+        LCM::Tensor4<ScalarT> compliance =
+            (1. / bulkModulus / 9.) * LCM::identity_3<ScalarT>(3)
+                + (1. / mu / 2.)
+                    * (0.5
+                        * (LCM::identity_1<ScalarT>(3)
+                            + LCM::identity_2<ScalarT>(3))
+                        - (1. / 3.) * LCM::identity_3<ScalarT>(3));
+
+        // previous state
+        LCM::Tensor<ScalarT> sigmaN(3,0.0), alphaN(3,0.0), strainN(3,0.0);
 
         // incremental strain tensor
-        LCM::Tensor<ScalarT, 3> depsilon;
-        for (std::size_t i = 0; i < numDims; ++i)
-          for (std::size_t j = 0; j < numDims; ++j)
+        LCM::Tensor<ScalarT> depsilon(3);
+        for (std::size_t i = 0; i < numDims; ++i){
+          for (std::size_t j = 0; j < numDims; ++j){
             depsilon(i, j) = strain(cell, qp, i, j) - strainold(cell, qp, i, j);
+            strainN(i,j) = strainold(cell,qp,i,j);
+          }
+        }
 
         // trial state
-        LCM::Tensor<ScalarT, 3> sigmaVal = LCM::dotdot(Celastic, depsilon);
-        LCM::Tensor<ScalarT, 3> alphaVal;
+        LCM::Tensor<ScalarT> sigmaVal = LCM::dotdot(Celastic, depsilon);
+        LCM::Tensor<ScalarT> alphaVal(3,0.0);
 
         for (std::size_t i = 0; i < numDims; ++i) {
           for (std::size_t j = 0; j < numDims; ++j) {
             sigmaVal(i, j) = sigmaVal(i, j) + stressold(cell, qp, i, j);
             alphaVal(i, j) = backStressold(cell, qp, i, j);
+            sigmaN(i,j) = stressold(cell,qp,i,j);
+            alphaN(i,j) = backStressold(cell,qp,i,j);
           }
         }
 
         ScalarT kappaVal = capParameterold(cell, qp);
         ScalarT dgammaVal = 0.0;
+
+        // used in defining generalized hardening modulus
+        ScalarT Htan(0.0);
+
+        // define plastic strain increment, its two invariants: dev, and vol
+        LCM::Tensor<ScalarT> deps_plastic(3, 0.0);
+        ScalarT deqps(0.0), devolps(0.0);
+
+        // define temporary trial stress, used in computing plastic strain
+        LCM::Tensor<ScalarT> sigmaTr = sigmaVal;
 
         std::vector<ScalarT> XXVal(13);
 
@@ -141,7 +182,7 @@ namespace LCM {
         ScalarT f = compute_f(sigmaVal, alphaVal, kappaVal);
         XXVal = initialize(sigmaVal, alphaVal, kappaVal, dgammaVal);
 
-        // local NW
+        // local Newton loop
         if (f > 1.e-10) { // plastic yielding
 
           ScalarT normR, normR0, conv;
@@ -227,7 +268,85 @@ namespace LCM {
 
         //dgammaVal = XXVal[12];
 
+        //compute plastic strain increment deps_plastic = compliance ( sigma_tr - sigma_(n+1));
+        LCM::Tensor<ScalarT> dsigma = sigmaTr - sigmaVal;
+        deps_plastic = LCM::dotdot(compliance, dsigma);
+
+        // compute its two invariants: devolps (volumetric) and deqps (deviatoric)
+        devolps = LCM::trace(deps_plastic);
+        LCM::Tensor<ScalarT> dev_plastic = deps_plastic
+              - (1. / 3.) * devolps * LCM::identity<ScalarT>(3);
+        //deqps = std::sqrt(2./3.) * LCM::norm(dev_plastic);
+        // use altenative definition, just differ by constants
+        deqps = std::sqrt(2) * LCM::norm(dev_plastic);
+
+        //
         // update
+        //
+        // dilatancy
+        if (deqps != 0)
+           dilatancy(cell, qp) = devolps / deqps;
+        else
+           dilatancy(cell, qp) = 0.0;
+
+        // friction coefficient = dtau / dp;
+		// previous p and tau
+		ScalarT pN(0.0), tauN(0.0);
+		LCM::Tensor<ScalarT> xi = sigmaN - alphaN;
+		pN = LCM::trace(xi);
+		pN = pN / 3.;
+		LCM::Tensor<ScalarT> sN = xi - pN * LCM::identity<ScalarT>(3);
+		//qN = sqrt(3./2.) * LCM::norm(sN);
+		tauN = sqrt(1. / 2.) * LCM::norm(sN);
+
+		// current p, and tau
+		ScalarT p(0.0), tau(0.0);
+		xi = sigmaVal - alphaVal;
+		p = LCM::trace(xi);
+		p = p / 3.;
+		LCM::Tensor<ScalarT> s = xi - p * LCM::identity<ScalarT>(3);
+		//q = sqrt(3./2.) * LCM::norm(s);
+		tau = sqrt(1. / 2.) * LCM::norm(s);
+		//LCM::Tensor<ScalarT, 3> ds = s - sN;
+
+		// difference
+		ScalarT dtau = tau - tauN;
+		//ScalarT dtau = sqrt(1./2.) * LCM::norm(ds);
+		ScalarT dp = p - pN;
+
+		// friction coefficient by finite difference
+		if (dp != 0)
+		   friction(cell, qp) = dtau / dp;
+		else
+		   friction(cell, qp) = 0.0;
+
+		// hardening modulus
+		// previous r(gamma)
+		ScalarT rN(0.0);
+		ScalarT evol3 = LCM::trace(strainN);
+		evol3 = evol3 / 3.;
+		LCM::Tensor<ScalarT> e = strainN - evol3 * LCM::identity<ScalarT>(3);
+		rN = sqrt(2.) * LCM::norm(e);
+
+		// current r(gamma)
+		ScalarT r(0.0);
+		LCM::Tensor<ScalarT> strainCurrent = strainN + depsilon;
+		evol3 = LCM::trace(strainCurrent);
+		evol3 = evol3 / 3.;
+		e = strainCurrent - evol3 * LCM::identity<ScalarT>(3);
+		r = sqrt(2.) * LCM::norm(e);
+
+		// difference
+		ScalarT dr = r - rN;
+		// tagent hardening modulus
+		if (dr != 0) Htan = dtau / dr;
+
+		if (std::abs(1. - Htan / mu) > 0)
+			hardeningModulus(cell, qp) = Htan / (1. - Htan / mu);
+		else
+			hardeningModulus(cell, qp) = 0.0;
+
+		// stress and back stress
         for (std::size_t i = 0; i < numDims; ++i) {
           for (std::size_t j = 0; j < numDims; ++j) {
             stress(cell, qp, i, j) = sigmaVal(i, j);
@@ -236,6 +355,7 @@ namespace LCM {
         }
 
         capParameter(cell, qp) = kappaVal;
+        eqps(cell, qp) = eqpsold(cell, qp) + deqps;
 
       } //loop over qps
 
@@ -247,15 +367,15 @@ namespace LCM {
 // all local functions
   template<typename EvalT, typename Traits>
   typename CapImplicit<EvalT, Traits>::ScalarT CapImplicit<EvalT, Traits>::compute_f(
-      LCM::Tensor<ScalarT, 3> & sigma, LCM::Tensor<ScalarT, 3> & alpha,
+      LCM::Tensor<ScalarT> & sigma, LCM::Tensor<ScalarT> & alpha,
       ScalarT & kappa)
   {
 
-    LCM::Tensor<ScalarT, 3> xi = sigma - alpha;
+    LCM::Tensor<ScalarT> xi = sigma - alpha;
 
     ScalarT I1 = LCM::trace(xi), p = I1 / 3.;
 
-    LCM::Tensor<ScalarT, 3> s = xi - p * LCM::identity<ScalarT, 3>();
+    LCM::Tensor<ScalarT> s = xi - p * LCM::identity<ScalarT>(3);
 
     ScalarT J2 = 0.5 * LCM::dotdot(s, s);
 
@@ -282,15 +402,15 @@ namespace LCM {
 
   template<typename EvalT, typename Traits>
   typename CapImplicit<EvalT, Traits>::DFadType CapImplicit<EvalT, Traits>::compute_f(
-      LCM::Tensor<DFadType, 3> & sigma, LCM::Tensor<DFadType, 3> & alpha,
+      LCM::Tensor<DFadType> & sigma, LCM::Tensor<DFadType> & alpha,
       DFadType & kappa)
   {
 
-    LCM::Tensor<DFadType, 3> xi = sigma - alpha;
+    LCM::Tensor<DFadType> xi = sigma - alpha;
 
     DFadType I1 = LCM::trace(xi), p = I1 / 3.;
 
-    LCM::Tensor<DFadType, 3> s = xi - p * LCM::identity<DFadType, 3>();
+    LCM::Tensor<DFadType> s = xi - p * LCM::identity<DFadType>(3);
 
     DFadType J2 = 0.5 * LCM::dotdot(s, s);
 
@@ -317,15 +437,15 @@ namespace LCM {
 
   template<typename EvalT, typename Traits>
   typename CapImplicit<EvalT, Traits>::D2FadType CapImplicit<EvalT, Traits>::compute_g(
-      LCM::Tensor<D2FadType, 3> & sigma, LCM::Tensor<D2FadType, 3> & alpha,
+      LCM::Tensor<D2FadType> & sigma, LCM::Tensor<D2FadType> & alpha,
       D2FadType & kappa)
   {
 
-    LCM::Tensor<D2FadType, 3> xi = sigma - alpha;
+    LCM::Tensor<D2FadType> xi = sigma - alpha;
 
     D2FadType I1 = LCM::trace(xi), p = I1 / 3.;
 
-    LCM::Tensor<D2FadType, 3> s = xi - p * LCM::identity<D2FadType, 3>();
+    LCM::Tensor<D2FadType> s = xi - p * LCM::identity<D2FadType>(3);
 
     D2FadType J2 = 0.5 * LCM::dotdot(s, s);
 
@@ -352,9 +472,8 @@ namespace LCM {
 
   template<typename EvalT, typename Traits>
   std::vector<typename CapImplicit<EvalT, Traits>::ScalarT> CapImplicit<EvalT,
-      Traits>::initialize(LCM::Tensor<ScalarT, 3> & sigmaVal,
-      LCM::Tensor<ScalarT, 3> & alphaVal, ScalarT & kappaVal,
-      ScalarT & dgammaVal)
+      Traits>::initialize(LCM::Tensor<ScalarT> & sigmaVal,
+      LCM::Tensor<ScalarT> & alphaVal, ScalarT & kappaVal, ScalarT & dgammaVal)
   {
     std::vector<ScalarT> XX(13);
 
@@ -376,8 +495,8 @@ namespace LCM {
   }
 
   template<typename EvalT, typename Traits>
-  LCM::Tensor<typename CapImplicit<EvalT, Traits>::DFadType, 3> CapImplicit<
-      EvalT, Traits>::compute_dgdsigma(std::vector<DFadType> const & XX)
+  LCM::Tensor<typename CapImplicit<EvalT, Traits>::DFadType> CapImplicit<EvalT,
+      Traits>::compute_dgdsigma(std::vector<DFadType> const & XX)
   {
     std::vector<D2FadType> D2XX(13);
 
@@ -385,7 +504,7 @@ namespace LCM {
       D2XX[i] = D2FadType(13, i, XX[i]);
     }
 
-    LCM::Tensor<D2FadType, 3> sigma, alpha;
+    LCM::Tensor<D2FadType> sigma(3), alpha(3);
 
     sigma(0, 0) = D2XX[0];
     sigma(0, 1) = D2XX[5];
@@ -411,7 +530,7 @@ namespace LCM {
 
     D2FadType g = compute_g(sigma, alpha, kappa);
 
-    LCM::Tensor<DFadType, 3> dgdsigma;
+    LCM::Tensor<DFadType> dgdsigma(3);
 
     dgdsigma(0, 0) = g.dx(0);
     dgdsigma(0, 1) = g.dx(5);
@@ -437,8 +556,8 @@ namespace LCM {
   }
 
   template<typename EvalT, typename Traits>
-  LCM::Tensor<typename CapImplicit<EvalT, Traits>::DFadType, 3> CapImplicit<
-      EvalT, Traits>::compute_halpha(LCM::Tensor<DFadType, 3> const & dgdsigma,
+  LCM::Tensor<typename CapImplicit<EvalT, Traits>::DFadType> CapImplicit<EvalT,
+      Traits>::compute_halpha(LCM::Tensor<DFadType> const & dgdsigma,
       DFadType const J2_alpha)
   {
 
@@ -446,10 +565,10 @@ namespace LCM {
 
     DFadType I1 = LCM::trace(dgdsigma), p = I1 / 3.0;
 
-    LCM::Tensor<DFadType, 3> s = dgdsigma - p * LCM::identity<DFadType, 3>();
+    LCM::Tensor<DFadType> s = dgdsigma - p * LCM::identity<DFadType>(3);
 
     //LCM::Tensor<DFadType, 3> halpha = calpha * Galpha * s; // * operator not defined;
-    LCM::Tensor<DFadType, 3> halpha;
+    LCM::Tensor<DFadType> halpha(3);
     for (int i = 0; i < 3; i++) {
       for (int j = 0; j < 3; j++) {
         halpha(i, j) = calpha * Galpha * s(i, j);
@@ -494,9 +613,9 @@ namespace LCM {
   template<typename EvalT, typename Traits>
   void CapImplicit<EvalT, Traits>::compute_ResidJacobian(
       std::vector<ScalarT> const & XXVal, std::vector<ScalarT> & R,
-      std::vector<ScalarT> & dRdX, const LCM::Tensor<ScalarT, 3> & sigmaVal,
-      const LCM::Tensor<ScalarT, 3> & alphaVal, const ScalarT & kappaVal,
-      LCM::Tensor4<ScalarT, 3> const & Celastic, bool kappa_flag)
+      std::vector<ScalarT> & dRdX, const LCM::Tensor<ScalarT> & sigmaVal,
+      const LCM::Tensor<ScalarT> & alphaVal, const ScalarT & kappaVal,
+      LCM::Tensor4<ScalarT> const & Celastic, bool kappa_flag)
   {
 
     std::vector<DFadType> Rfad(13);
@@ -511,7 +630,7 @@ namespace LCM {
       XX[i] = DFadType(13, i, XXtmp[i]);
     }
 
-    LCM::Tensor<DFadType, 3> sigma, alpha;
+    LCM::Tensor<DFadType> sigma(3), alpha(3);
 
     sigma(0, 0) = XX[0];
     sigma(0, 1) = XX[5];
@@ -539,11 +658,11 @@ namespace LCM {
 
     DFadType f = compute_f(sigma, alpha, kappa);
 
-    LCM::Tensor<DFadType, 3> dgdsigma = compute_dgdsigma(XX);
+    LCM::Tensor<DFadType> dgdsigma = compute_dgdsigma(XX);
 
     DFadType J2_alpha = 0.5 * LCM::dotdot(alpha, alpha);
 
-    LCM::Tensor<DFadType, 3> halpha = compute_halpha(dgdsigma, J2_alpha);
+    LCM::Tensor<DFadType> halpha = compute_halpha(dgdsigma, J2_alpha);
 
     DFadType I1_dgdsigma = LCM::trace(dgdsigma);
 

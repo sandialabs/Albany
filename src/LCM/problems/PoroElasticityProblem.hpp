@@ -1,19 +1,8 @@
-/********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-\********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 
 #ifndef POROELASTICITYPROBLEM_HPP
 #define POROELASTICITYPROBLEM_HPP
@@ -149,8 +138,9 @@ namespace Albany {
 #include "PHAL_NSMaterialProperty.hpp"
 
 // Plasticity model from Q.Chen
-#include "CapModelStress.hpp"
+#include "CapExplicit.hpp"
 #include "GursonSDStress.hpp"
+#include "CapImplicit.hpp"
 
 
 template <typename EvalT>
@@ -525,7 +515,7 @@ Albany::PoroElasticityProblem::constructEvaluators(
      fm0.template registerEvaluator<EvalT>(ev);
    }
 
-   if (matModel == "CapModel")
+   if (matModel == "CapExplicit" || matModel == "CapImplicit")
    {
      { // Cap model stress
        RCP<ParameterList> p = rcp(new ParameterList("Stress"));
@@ -584,7 +574,14 @@ Albany::PoroElasticityProblem::constructEvaluators(
 
 
        //Declare what state data will need to be saved (name, layout, init_type)
-       ev = rcp(new LCM::CapModelStress<EvalT,AlbanyTraits>(*p));
+       if(matModel == "CapExplicit"){
+    	  ev = rcp(new LCM::CapExplicit<EvalT,AlbanyTraits>(*p));
+       }
+
+       if(matModel == "CapImplicit"){
+    	  ev = rcp(new LCM::CapImplicit<EvalT,AlbanyTraits>(*p));
+       }
+
        fm0.template registerEvaluator<EvalT>(ev);
        p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0, true);
        ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
@@ -829,6 +826,8 @@ Albany::PoroElasticityProblem::constructEvaluators(
      p->set<string>("Kozeny-Carman Permeability Name", "Kozeny-Carman Permeability");
      p->set<string>("Biot Coefficient Name", "Biot Coefficient");
      p->set<string>("Biot Modulus Name", "Biot Modulus");
+     p->set<string>("Elastic Modulus Name", "Elastic Modulus");
+     p->set<string>("Poissons Ratio Name", "Poissons Ratio");
 
      p->set<string>("Gradient QP Variable Name", "Pore Pressure Gradient");
      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);

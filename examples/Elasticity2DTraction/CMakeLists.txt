@@ -1,18 +1,3 @@
-#/********************************************************************\
-#*            Albany, Copyright (2010) Sandia Corporation             *
-#*                                                                    *
-#* Notice: This computer software was prepared by Sandia Corporation, *
-#* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-#* the Department of Energy (DOE). All rights in the computer software*
-#* are reserved by DOE on behalf of the United States Government and  *
-#* the Contractor as provided in the Contract. You are authorized to  *
-#* use this computer software for Governmental purposes but it is not *
-#* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-#* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-#* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *hole-m4-bKL.par.4.1hole-m4-bKL.par.4.1
-#* including this sentence must appear on any copies of this software.*
-#*    Questions to Glen Hansen, gahanse@sandia.gov                    *
-#\********************************************************************/
 
 
 # 1. Copy Input file from source to binary dir
@@ -35,8 +20,14 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/hole.exo.4.3
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/runtest.cmake COPYONLY)
 
+# 4. Copy the reference solution over
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/reference_hole.exo
+               ${CMAKE_CURRENT_BINARY_DIR}/reference_hole.exo COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/exodiff_commands
+               ${CMAKE_CURRENT_BINARY_DIR}/exodiff_commands COPYONLY)
+
 # 4. Build the test executable to read the ncdump file
-add_executable(TestNcdumpValues TestNcdumpValues.C)
+#add_executable(TestNcdumpValues TestNcdumpValues.C)
 
 # 5. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)

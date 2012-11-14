@@ -1,29 +1,22 @@
-/********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-\********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 
 #ifndef QCAD_RESPONSEFIELDINTEGRAL_HPP
 #define QCAD_RESPONSEFIELDINTEGRAL_HPP
 
+#include "QCAD_MeshRegion.hpp"
 #include "QCAD_MaterialDatabase.hpp"
 #include "PHAL_SeparableScatterScalarResponse.hpp"
 
 namespace QCAD {
 
-  const int MAX_FIELDNAMES_IN_INTEGRAL = 10;
+  //Maximum number of fields that can be multiplied together as an integrand
+  //  (Note: must be less than the number of bits in an integer)
+  const int MAX_FIELDNAMES_IN_INTEGRAL = 10; 
+  
 /** 
  * \brief Response Description
  */
@@ -51,13 +44,16 @@ namespace QCAD {
     Teuchos::RCP<const Teuchos::ParameterList> getValidResponseParameters() const;
 
     std::vector<std::string> fieldNames;
-    std::vector<std::string> ebNames;
-    bool bQuantumEBsOnly;
+    std::vector<std::string> fieldNames_Imag;
+    bool bReturnImagPart;
     
     std::size_t numQPs;
     std::size_t numDims;
     
+    std::vector<bool> fieldIsComplex;
+    std::vector<bool> conjugateFieldFlag;
     std::vector<PHX::MDField<ScalarT,Cell,QuadPoint> > fields;
+    std::vector<PHX::MDField<ScalarT,Cell,QuadPoint> > fields_Imag;
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
     PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
     Teuchos::Array<int> field_components;
@@ -65,8 +61,7 @@ namespace QCAD {
     double length_unit_in_m; // length unit for input and output mesh
     double scaling;          // scaling factor due to difference in mesh and integrand units
     bool bPositiveOnly;
-    bool limitX, limitY, limitZ;
-    double xmin, xmax, ymin, ymax, zmin, zmax;
+    Teuchos::RCP< MeshRegion<EvalT, Traits> > opRegion;
 
     //! Material database
     Teuchos::RCP<QCAD::MaterialDatabase> materialDB;

@@ -1,19 +1,8 @@
-/********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-\********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -78,12 +67,12 @@ evaluateFields(typename Traits::EvalData workset)
   else if(numDimensions == 4){
     int dim3 = evaluatedFieldDimensions[2];
     int dim4 = evaluatedFieldDimensions[3];
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(fieldValues.size() != dim3*dim4, "SetField::evaluateFields(), inconsistent data sizes.");
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(fieldValues.size() != dim1*dim2*dim3*dim4, "SetField::evaluateFields(), inconsistent data sizes.");
     for(int i=0 ; i<dim1 ; ++i){
       for(int j=0 ; j<dim2 ; ++j){
         for(int m=0 ; m<dim3 ; ++m){
           for(int n=0 ; n<dim4 ; ++n){
-            evaluatedField(i,j,m,n) = fieldValues[m*dim3 + n];
+            evaluatedField(i,j,m,n) = fieldValues[i*dim2*dim3*dim4 + j*dim3*dim4 + m*dim4 + n];
           }
         }
       }

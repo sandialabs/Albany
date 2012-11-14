@@ -1,19 +1,8 @@
-/********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-\********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 
 #ifndef PROJECTIONPROBLEM_HPP
 #define PROJECTIONPROBLEM_HPP
@@ -388,18 +377,14 @@ Albany::ProjectionProblem::constructEvaluators(
 
         //Input
         p->set<string>("DefGrad Name", "Deformation Gradient");
-        p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
         p->set<string>("Elastic Modulus Name", "Elastic Modulus");
-        p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-        p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
-        p->set<string>("DetDefGrad Name", "Jacobian");  // dl->qp_scalar also
+        p->set<string>("Poissons Ratio Name", "Poissons Ratio");
+        p->set<string>("DetDefGrad Name", "Jacobian");
 
         //Output
-        p->set<string>("Stress Name", matModel); //dl->qp_tensor also
+        p->set<string>("Stress Name", matModel);
 
-        ev = rcp(new LCM::Neohookean<EvalT,AlbanyTraits>(*p));
+        ev = rcp(new LCM::Neohookean<EvalT,AlbanyTraits>(*p,dl));
         fm0.template registerEvaluator<EvalT>(ev);
         p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0);
         ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));

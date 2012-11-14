@@ -1,4 +1,8 @@
-//
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 // Simple mesh partitioning program
 //
 
@@ -29,7 +33,7 @@ int main(int ac, char* av[])
 
   command_line_processor.setDocString(
       "Partitioning of Exodus mesh with Zoltan.\n"
-      "Uses geometric or hypergraph partitioning algorithms.\n");
+      "Uses geometric, hypergraph or K-means partitioning algorithms.\n");
 
   std::string input_file = "input.e";
   command_line_processor.setOption(
@@ -44,16 +48,17 @@ int main(int ac, char* av[])
       "Output File Name");
 
   const int
-  number_schemes = 2;
+  number_schemes = 4;
 
-  const LCM::PartitionScheme
-  scheme_values[] = {LCM::GEOMETRIC, LCM::HYPERGRAPH};
+  const LCM::PARTITION::Scheme
+  scheme_values[] = {LCM::PARTITION::GEOMETRIC, LCM::PARTITION::HYPERGRAPH,
+      LCM::PARTITION::KMEANS};
 
   const char*
-  scheme_names[] = {"geometric", "hypergraph"};
+  scheme_names[] = {"geometric", "hypergraph", "kmeans"};
 
-  LCM::PartitionScheme
-  partition_scheme = LCM::HYPERGRAPH;
+  LCM::PARTITION::Scheme
+  partition_scheme = LCM::PARTITION::GEOMETRIC;
 
   command_line_processor.setOption(
       "scheme",
@@ -64,13 +69,36 @@ int main(int ac, char* av[])
       "Partition Scheme");
 
   double
-  length_scale = 0.0016;
+  length_scale = 0.0017;
 
   command_line_processor.setOption(
       "length-scale",
       &length_scale,
       "Length Scale");
 
+  double
+  tolerance = 1.0e-4;
+
+  command_line_processor.setOption(
+      "tolerance",
+      &tolerance,
+      "Tolerance");
+
+  int
+  maximum_divisions = 64;
+
+  command_line_processor.setOption(
+      "maximum-divisions",
+      &maximum_divisions,
+      "Maximum Divisions");
+
+  int
+  maximum_iterations = 64;
+
+  command_line_processor.setOption(
+      "maximum-iterations",
+      &maximum_iterations,
+      "Maximum Iterations");
 
   // Throw a warning and not error for unrecognized options
   command_line_processor.recogniseAllOptions(true);
@@ -95,6 +123,13 @@ int main(int ac, char* av[])
   //
   LCM::ConnectivityArray
   connectivity_array(input_file, output_file);
+
+  //
+  // Set extra parameters for K-means
+  //
+  connectivity_array.SetTolerance(tolerance);
+  connectivity_array.SetMaximumDivisions(maximum_divisions);
+  connectivity_array.SetMaximumIterations(maximum_iterations);
 
   //
   // Partition mesh

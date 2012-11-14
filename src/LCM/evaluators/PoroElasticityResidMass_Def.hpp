@@ -1,19 +1,8 @@
-/********************************************************************\
- *            Albany, Copyright (2010) Sandia Corporation             *
- *                                                                    *
- * Notice: This computer software was prepared by Sandia Corporation, *
- * hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
- * the Department of Energy (DOE). All rights in the computer software*
- * are reserved by DOE on behalf of the United States Government and  *
- * the Contractor as provided in the Contract. You are authorized to  *
- * use this computer software for Governmental purposes but it is not *
- * to be released or distributed to the public. NEITHER THE GOVERNMENT*
- * NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
- * ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
- * including this sentence must appear on any copies of this software.*
- *    Questions to Andy Salinger, agsalin@sandia.gov                  *
-\********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -32,7 +21,7 @@ namespace LCM {
 		  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     Tdot        (p.get<std::string>                   ("QP Time Derivative Variable Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-	stabParameter        (p.get<std::string>                   ("Material Property Name"),
+	stabParameter  (p.get<std::string>                   ("Material Property Name"),
 		 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     ThermalCond (p.get<std::string>                   ("Thermal Conductivity Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
@@ -42,7 +31,11 @@ namespace LCM {
 	      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     biotCoefficient (p.get<std::string>           ("Biot Coefficient Name"),
 		     p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-    biotModulus (p.get<std::string>                   ("Biot Modulus Name"),
+    elasticModulus (p.get<std::string>                   ("Elastic Modulus Name"),
+		  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	pRatio (p.get<std::string>                   ("Poissons Ratio Name"),
+		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	biotModulus (p.get<std::string>                   ("Biot Modulus Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     wGradBF     (p.get<std::string>                   ("Weighted Gradient BF Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
@@ -82,6 +75,8 @@ namespace LCM {
     this->addDependentField(porosity);
     this->addDependentField(biotCoefficient);
     this->addDependentField(biotModulus);
+    this->addDependentField(elasticModulus);
+    this->addDependentField(pRatio);
     if (enableTransient) this->addDependentField(Tdot);
     this->addDependentField(TGrad);
     this->addDependentField(wGradBF);
@@ -166,6 +161,8 @@ namespace LCM {
     this->utils.setFieldData(porosity,fm);
     this->utils.setFieldData(biotCoefficient,fm);
     this->utils.setFieldData(biotModulus,fm);
+    this->utils.setFieldData(elasticModulus,fm);
+    this->utils.setFieldData(pRatio,fm);
     this->utils.setFieldData(TGrad,fm);
     this->utils.setFieldData(wGradBF,fm);
     if (haveSource)  this->utils.setFieldData(Source,fm);
@@ -275,8 +272,7 @@ evaluateFields(typename Traits::EvalData workset)
 	  				  // Pore-fluid Resistance Term
 	  				  TResidual(cell,node) +=  -(porePressure(cell, qp)
 	  						                   -porePressureold(cell, qp)
-	  						                  )
-	              		                    		/biotModulus(cell, qp)*
+	  						                  )/biotModulus(cell, qp)*
 	              		                    		wBF(cell, node, qp);
 	  			  }
 	  		  }
@@ -307,6 +303,8 @@ evaluateFields(typename Traits::EvalData workset)
   // Stabilization Term (only 2D and 3D problem need stabilizer)
 
 // Penalty Term
+
+  ScalarT Mp(0);  // 1/M' = 1/M + 1/(4/3G + K)
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell){
 
@@ -346,17 +344,21 @@ evaluateFields(typename Traits::EvalData workset)
 	  for (std::size_t node=0; node < numNodes; ++node) {
 		  for (std::size_t qp=0; qp < numQPs; ++qp) {
 
+
+			      Mp = elasticModulus(cell,qp)
+			    		  *(1-pRatio(cell,qp))
+			    		  /(1+pRatio(cell,qp))
+			    		  /(1-pRatio(cell,qp)-pRatio(cell,qp));
+
  				  TResidual(cell,node) -= (porePressure(cell, qp)
- 						                  -porePressureold(cell, qp)
- 						                               )
-                    		                    		*stabParameter(cell, qp)/biotModulus(cell, qp)*
+ 						                  -porePressureold(cell, qp) )
+                    		                    		*stabParameter(cell, qp)
+                    		                    		*(1/biotModulus(cell, qp)+1/Mp)*
                     		                    		( wBF(cell, node, qp)
-                    		                    		//		-tpterm(cell,node,qp)
                     		                    				);
- 				  TResidual(cell,node) += pterm(cell,qp)*stabParameter(cell, qp)/biotModulus(cell, qp)*
- 						 ( wBF(cell, node, qp)
- 							//	 -tpterm(cell,node,qp)
- 								 );
+ 				  TResidual(cell,node) += pterm(cell,qp)*stabParameter(cell, qp)
+		                                 *(1/biotModulus(cell, qp)+1/Mp)*
+ 						                  ( wBF(cell, node, qp) );
 
 
 

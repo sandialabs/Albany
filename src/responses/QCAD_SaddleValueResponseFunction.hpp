@@ -1,19 +1,8 @@
-/********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-\********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 
 #ifndef QCAD_SADDLEVALUERESPONSEFUNCTION_HPP
 #define QCAD_SADDLEVALUERESPONSEFUNCTION_HPP
@@ -211,11 +200,13 @@ namespace QCAD {
     void addBeginPointData(const std::string& elementBlock, const double* p, double value);
     void addEndPointData(const std::string& elementBlock, const double* p, double value);
     void addImagePointData(const double* p, double value, double* grad);
+    void addFinalImagePointData(const double* p, double value);
     void accumulatePointData(const double* p, double value, double* grad);
     void accumulateLevelSetData(const double* p, double value, double cellArea);
     double getSaddlePointWeight(const double* p) const;
     double getTotalSaddlePointWeight() const;
     const double* getSaddlePointPosition() const;
+    double getCurrent() const;
     
   private:
 
@@ -227,6 +218,9 @@ namespace QCAD {
     void initializeImagePointsT(const double current_time, const Tpetra_Vector* xdotT,
 			       const Tpetra_Vector& xT, const Teuchos::Array<ParamVec>& p,
 			       Tpetra_Vector& gT, int dbMode);
+    void initializeFinalImagePoints(const double current_time, const Epetra_Vector* xdot,
+			       const Epetra_Vector& x, const Teuchos::Array<ParamVec>& p,
+			       Epetra_Vector& g, int dbMode);
     void doNudgedElasticBand(const double current_time, const Epetra_Vector* xdot,
 			     const Epetra_Vector& x, const Teuchos::Array<ParamVec>& p,
 			     Epetra_Vector& g, int dbMode);
@@ -270,6 +264,9 @@ namespace QCAD {
 			     const Tpetra_Vector& xT, const Teuchos::Array<ParamVec>& p,
 			     Tpetra_Vector& gT, double* globalPtValues, double* globalPtWeights,
 			     double* globalPtGrads, std::vector<mathVector> lastPositions, int dbMode);
+    void getFinalImagePointValues(const double current_time, const Epetra_Vector* xdot,
+			     const Epetra_Vector& x, const Teuchos::Array<ParamVec>& p,
+			     Epetra_Vector& g, int dbMode);
     void writeOutput(int nIters);
     void initialIterationSetup(double& gradScale, double& springScale, int dbMode);
     void computeTangent(std::size_t i, mathVector& tangent, int dbMode);
@@ -301,6 +298,7 @@ namespace QCAD {
     std::size_t numDims;
     std::size_t nImagePts;
     std::vector<nebImagePt> imagePts;
+    std::vector<nebImagePt> finalPts;
     double imagePtSize;
     bool bClimbing, bAdaptivePointSize;
     double minAdaptivePointWt, maxAdaptivePointWt;
@@ -344,10 +342,21 @@ namespace QCAD {
     bool bLockToPlane;
     double lockedZ;
 
+    //! data for final points (just used at end to get more data pts along saddle path)
+    double finalPtSpacing;
+    int maxFinalPts;
+
+    bool bGetCurrent;
+    double current_Ecutoff_offset_from_Emax;
+
     //! accumulation vectors for evaluator to fill
     mathVector imagePtValues;
     mathVector imagePtWeights;
     mathVector imagePtGradComps;
+
+    mathVector finalPtValues;
+    mathVector finalPtWeights;
+
 
     //! mode of current evaluator operation (maybe not thread safe?)
     std::string mode;

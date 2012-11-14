@@ -1,19 +1,8 @@
-/********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-\********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 #include "ThermoPoroPlasticityProblem.hpp"
 #include "Albany_InitialCondition.hpp"
 
@@ -23,6 +12,9 @@
 
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemUtils.hpp"
+
+#include "Albany_EvaluatorUtils.hpp"
+#include "PHAL_AlbanyTraits.hpp"
 
 
 Albany::ThermoPoroPlasticityProblem::
@@ -151,14 +143,52 @@ Albany::ThermoPoroPlasticityProblem::getValidProblemParameters() const
   validPL->sublist("Pore-Fluid Density", false, "");
   validPL->sublist("Skeleton Specific Heat", false, "");
   validPL->sublist("Pore-Fluid Specific Heat", false, "");
-  validPL->sublist("Mixture Thermal Expansion", false, "");
-  validPL->sublist("Mixture Specific Heat", false, "");
-  if (matModel=="J2"){
-   validPL->sublist("Hardening Modulus", false, "");
-   validPL->sublist("Saturation Modulus", false, "");
-   validPL->sublist("Saturation Exponent", false, "");
-   validPL->sublist("Yield Strength", false, "");
-  }
+ // validPL->sublist("Mixture Thermal Expansion", false, "");
+ // validPL->sublist("Mixture Specific Heat", false, "");
+  if (matModel == "J2"|| matModel == "J2Fiber" || matModel == "GursonFD")
+   {
+     validPL->set<bool>("Compute Dislocation Density Tensor", false, "Flag to compute the dislocaiton density tensor (only for 3D)");
+     validPL->sublist("Hardening Modulus", false, "");
+     validPL->sublist("Yield Strength", false, "");
+     validPL->sublist("Saturation Modulus", false, "");
+     validPL->sublist("Saturation Exponent", false, "");
+   }
+
+   if (matModel == "J2Fiber")
+   {
+ 	validPL->set<RealType>("xiinf_J2",false,"");
+ 	validPL->set<RealType>("tau_J2",false,"");
+ 	validPL->set<RealType>("k_f1",false,"");
+ 	validPL->set<RealType>("q_f1",false,"");
+ 	validPL->set<RealType>("vol_f1",false,"");
+ 	validPL->set<RealType>("xiinf_f1",false,"");
+ 	validPL->set<RealType>("tau_f1",false,"");
+ 	validPL->set<RealType>("Mx_f1",false,"");
+ 	validPL->set<RealType>("My_f1",false,"");
+ 	validPL->set<RealType>("Mz_f1",false,"");
+ 	validPL->set<RealType>("k_f2",false,"");
+ 	validPL->set<RealType>("q_f2",false,"");
+ 	validPL->set<RealType>("vol_f2",false,"");
+ 	validPL->set<RealType>("xiinf_f2",false,"");
+ 	validPL->set<RealType>("tau_f2",false,"");
+ 	validPL->set<RealType>("Mx_f2",false,"");
+ 	validPL->set<RealType>("My_f2",false,"");
+ 	validPL->set<RealType>("Mz_f2",false,"");
+   }
+
+   if (matModel == "GursonFD")
+   {
+ 	validPL->set<RealType>("f0",false,"");
+ 	validPL->set<RealType>("kw",false,"");
+ 	validPL->set<RealType>("eN",false,"");
+ 	validPL->set<RealType>("sN",false,"");
+ 	validPL->set<RealType>("fN",false,"");
+ 	validPL->set<RealType>("fc",false,"");
+ 	validPL->set<RealType>("ff",false,"");
+ 	validPL->set<RealType>("q1",false,"");
+ 	validPL->set<RealType>("q2",false,"");
+ 	validPL->set<RealType>("q3",false,"");
+   }
 
   return validPL;
 }

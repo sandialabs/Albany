@@ -1,9 +1,8 @@
-/**
- * Topology.h
- *
- *  Created on: Jul 11, 2011
- *      Author: jrthune
- */
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 
 #include <Teuchos_CommandLineProcessor.hpp>
 #include <stk_mesh/base/Types.hpp>
@@ -52,19 +51,19 @@ namespace LCM {
 
   class topology {
   public:
-    /**
-     * \brief Default constructor for topology
-     */
+    ///
+    /// \brief Default constructor for topology
+    ///
     topology();
 
-    /**
-     * \brief Create mesh data structure
-     *
-     * \param[in] input_file is exodus II input file name
-     * \param[in] output_file is exodus II output file name
-     *
-     * Use if want to create new Albany mesh object
-     */
+    ///
+    /// \brief Create mesh data structure
+    ///
+    /// \param[in] input_file is exodus II input file name
+    /// \param[in] output_file is exodus II output file name
+    ///
+    /// Use if want to create new Albany mesh object
+    ///
     topology(std::string const & input_file, std::string const & output_file);
 
     /**

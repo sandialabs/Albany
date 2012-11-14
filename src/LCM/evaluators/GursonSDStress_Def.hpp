@@ -1,19 +1,8 @@
-/********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
- *                                                                    *
- * Notice: This computer software was prepared by Sandia Corporation, *
- * hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
- * the Department of Energy (DOE). All rights in the computer software*
- * are reserved by DOE on behalf of the United States Government and  *
- * the Contractor as provided in the Contract. You are authorized to  *
- * use this computer software for Governmental purposes but it is not *
- * to be released or distributed to the public. NEITHER THE GOVERNMENT*
- * NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
- * ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
- * including this sentence must appear on any copies of this software.*
- *    Questions to Andy Salinger, agsalin@sandia.gov                  *
- \********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
@@ -118,14 +107,11 @@ namespace LCM {
         if (std::abs(flag - 1) > 1.0e-10) Eor3mu = 3. * mu;
 
         // elastic matrix
-        LCM::Tensor4<ScalarT, 3> Celastic =
-            lame * LCM::identity_3<ScalarT, 3>()
-                + mu
-                    * (LCM::identity_1<ScalarT, 3>()
-                        + LCM::identity_2<ScalarT, 3>());
+        LCM::Tensor4<ScalarT> Celastic = lame * LCM::identity_3<ScalarT>(3)
+            + mu * (LCM::identity_1<ScalarT>(3) + LCM::identity_2<ScalarT>(3));
 
         // incremental strain tensor
-        LCM::Tensor<ScalarT, 3> depsilon(0.0), stressN(0.0);
+        LCM::Tensor<ScalarT> depsilon(3, 0.0), stressN(3, 0.0);
         for (std::size_t i = 0; i < numDims; ++i) {
           for (std::size_t j = 0; j < numDims; ++j) {
             depsilon(i, j) = strain(cell, qp, i, j) - strainold(cell, qp, i, j);
@@ -135,8 +121,7 @@ namespace LCM {
 
 // 		// previous state
         ScalarT pN = (1. / 3.) * LCM::trace(stressN);
-        LCM::Tensor<ScalarT, 3> devN = stressN
-            - pN * LCM::identity<ScalarT, 3>();
+        LCM::Tensor<ScalarT> devN = stressN - pN * LCM::identity<ScalarT>(3);
         ScalarT sigeN = std::sqrt(LCM::dotdot(devN, devN)) * std::sqrt(3. / 2.);
         ScalarT J3N = LCM::det(devN);
         ScalarT fvoidN = voidVolumeold(cell, qp);
@@ -144,11 +129,11 @@ namespace LCM {
         ScalarT YN = yieldStrengthold(cell, qp);
 // 
 // 		// trial state
-        LCM::Tensor<ScalarT, 3> stressVal = stressN
+        LCM::Tensor<ScalarT> stressVal = stressN
             + LCM::dotdot(Celastic, depsilon);
         ScalarT pVal = (1. / 3.) * LCM::trace(stressVal);
-        LCM::Tensor<ScalarT, 3> devVal = stressVal
-            - pVal * LCM::identity<ScalarT, 3>();
+        LCM::Tensor<ScalarT> devVal = stressVal
+            - pVal * LCM::identity<ScalarT>(3);
         ScalarT sigeVal = std::sqrt(LCM::dotdot(devVal, devVal))
             * std::sqrt(3. / 2.);
         ScalarT J3Val = LCM::det(devVal);
@@ -164,8 +149,8 @@ namespace LCM {
         if (Phi > 1.0e-10) {
           ScalarT tmp = 1.5 * q2 * pN / YN;
           ScalarT tmpfac = q1 * q2 * (1. / 3.) * YN * fvoidN * std::sinh(tmp);
-          LCM::Tensor<ScalarT, 3> dPhidsigma = devN
-              + tmpfac * LCM::identity<ScalarT, 3>();
+          LCM::Tensor<ScalarT> dPhidsigma = devN
+              + tmpfac * LCM::identity<ScalarT>(3);
 
           ScalarT dPhidf = -(2. / 3.) * YN * YN
               * (q3 * fvoidN - q1 * std::cosh(tmp));
@@ -189,7 +174,7 @@ namespace LCM {
           kai = LCM::dotdot(dPhidsigma, LCM::dotdot(Celastic, dPhidsigma));
           kai = kai - dPhidf * dfdgam - dPhidep * depdgam;
 
-          LCM::Tensor<ScalarT, 3> dPhidotCe = LCM::dotdot(dPhidsigma, Celastic);
+          LCM::Tensor<ScalarT> dPhidotCe = LCM::dotdot(dPhidsigma, Celastic);
 
           // incremental consistency parameter
           if (kai != 0)
@@ -207,7 +192,7 @@ namespace LCM {
           int iter = 0;
           while (!converged) {
             pVal = (1. / 3.) * LCM::trace(stressVal);
-            devVal = stressVal - pVal * LCM::identity<ScalarT, 3>();
+            devVal = stressVal - pVal * LCM::identity<ScalarT>(3);
             sigeVal = std::sqrt(LCM::dotdot(devVal, devVal))
                 * std::sqrt(3. / 2.);
             J3Val = LCM::det(devVal);
@@ -216,7 +201,7 @@ namespace LCM {
             tmp = 1.5 * q2 * pVal / YVal;
             tmpfac = q1 * q2 * (1. / 3.) * YVal * fvoidVal * std::sinh(tmp);
 
-            dPhidsigma = devVal + tmpfac * LCM::identity<ScalarT, 3>();
+            dPhidsigma = devVal + tmpfac * LCM::identity<ScalarT>(3);
 
             dPhidf = -(2. / 3.) * YVal * YVal
                 * (q3 * fvoidVal - q1 * std::cosh(tmp));
@@ -245,7 +230,7 @@ namespace LCM {
             else
               delta_gam = 0;
 
-            LCM::Tensor<ScalarT, 3> stressK;
+            LCM::Tensor<ScalarT> stressK(3);
             ScalarT fvoidK, epK, YK;
 
             stressK = stressVal - delta_gam * LCM::dotdot(Celastic, dPhidsigma);
@@ -254,8 +239,8 @@ namespace LCM {
             YK = compute_Y(epK, Eor3mu);
 
             ScalarT pK = (1. / 3.) * LCM::trace(stressK);
-            LCM::Tensor<ScalarT, 3> devK = stressK
-                - pK * LCM::identity<ScalarT, 3>();
+            LCM::Tensor<ScalarT> devK = stressK
+                - pK * LCM::identity<ScalarT>(3);
 
             ScalarT Phipre = compute_Phi(devK, pK, fvoidK, epK, Eor3mu);
 
@@ -316,7 +301,7 @@ namespace LCM {
 
   template<typename EvalT, typename Traits>
   typename EvalT::ScalarT GursonSDStress<EvalT, Traits>::compute_Phi(
-      LCM::Tensor<ScalarT, 3> & devVal, ScalarT & pVal, ScalarT & fvoidVal,
+      LCM::Tensor<ScalarT> & devVal, ScalarT & pVal, ScalarT & fvoidVal,
       ScalarT & epVal, ScalarT & Eor3mu)
   {
     ScalarT Y = compute_Y(epVal, Eor3mu);

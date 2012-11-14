@@ -1,19 +1,8 @@
-/********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-\********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 
 #include <cmath>
 
@@ -71,13 +60,15 @@ void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
 
   // Handle element block specific constant data
 
-  if(name == "EBConstant"){
+  if(name == "EBPerturb" || name == "EBPerturbGaussian" || name == "EBConstant"){
 
     bool perturb_values = false;
+
     Teuchos::Array<double> defaultData(neq);
     Teuchos::Array<double> perturb_mag;
 
-    if(icParams.isParameter("Perturb IC")){
+    // Only perturb if the user has told us by how much to perturb
+    if(name != "EBConstant" && icParams.isParameter("Perturb IC")){
 
       perturb_values = true;
 
@@ -119,11 +110,20 @@ void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
       Teuchos::Array<double> data = icParams.get(wsEBNames[ws], defaultData);
       // Call factory method from library of initial condition functions
 
-      if(perturb_values)
-//        initFunc = Teuchos::rcp(new Albany::ConstantFunctionPerturbed(neq, numDim, ws, data, perturb_mag));
-        initFunc = Teuchos::rcp(new 
-          Albany::ConstantFunctionGaussianPerturbed(neq, numDim, ws, data, perturb_mag));
+      if(perturb_values){
+
+        if(name == "EBPerturb")
+
+          initFunc = Teuchos::rcp(new Albany::ConstantFunctionPerturbed(neq, numDim, ws, data, perturb_mag));
+
+        else // name == EBGaussianPerturb
+
+          initFunc = Teuchos::rcp(new 
+            Albany::ConstantFunctionGaussianPerturbed(neq, numDim, ws, data, perturb_mag));
+      }
+
       else
+
         initFunc = Teuchos::rcp(new Albany::ConstantFunction(neq, numDim, data));
 
       std::vector<double> X(neq);
@@ -194,6 +194,7 @@ void InitialConditionsT(const Teuchos::RCP<Tpetra_Vector>& solnT,
                        const int neq, const int numDim,
                        Teuchos::ParameterList& icParams, const bool hasRestartSolution)
 {
+
   Teuchos::ArrayRCP<ST> solnT_nonconstView = solnT->get1dViewNonConst();
   // Called twice, with x and xdot. Different param lists are sent in.
   icParams.validateParameters(*Albany::getValidInitialConditionParameters(wsEBNames), 0);
@@ -207,33 +208,109 @@ void InitialConditionsT(const Teuchos::RCP<Tpetra_Vector>& solnT,
   if (name=="Restart") return;
 
   // Handle element block specific constant data
+  if(name == "EBPerturb" || name == "EBPerturbGaussian" || name == "EBConstant"){
 
-  if(name == "EBConstant"){
+    bool perturb_values = false;
 
     Teuchos::Array<double> defaultData(neq);
+    Teuchos::Array<double> perturb_mag;
+
+    // Only perturb if the user has told us by how much to perturb
+    if(name != "EBConstant" && icParams.isParameter("Perturb IC")){
+
+      perturb_values = true;
+
+      perturb_mag = icParams.get("Perturb IC", defaultData);
+
+    }
+
+/* The element block-based IC specification here is currently a hack. It assumes the initial value is constant
+ * within each element across the element block (or optionally perturbed somewhat element by element). The
+ * proper way to do this would be to project the element integration point values to the nodes using the basis
+ * functions and a consistent mass matrix.
+ *
+ * The current implementation uses a single integration point per element - this integration point value for this
+ * element within the element block is specified in the input file (and optionally perturbed). An approximation
+ * of the load vector is obtained by accumulating the resulting (possibly perturbed) value into the nodes. Then,
+ * a lumped version of the mass matrix is inverted and used to solve for the approximate nodal point initial 
+ * conditions.
+ */
+
+    // Use a Tpetra_Vector to hold the lumped mass matrix (has entries only on the diagonal). Zero-ed out.
+    Teuchos::RCP<Tpetra_Vector> lumpedMMT = Teuchos::rcp(new Tpetra_Vector(solnT->getMap(), true)); 
+
+    //get non-const view of solnT & lumpedMMT
+    Teuchos::ArrayRCP<ST> solnT_nonconstView = solnT->get1dViewNonConst();
+    Teuchos::ArrayRCP<ST> lumpedMMT_nonconstView = lumpedMMT->get1dViewNonConst();
+
+    // Make sure soln is zeroed - we are accumulating into it
+    for(int i = 0; i < solnT->getLocalLength(); i++)
+      solnT_nonconstView[i] = 0.0;
   
     // Loop over all worksets, elements, all local nodes: compute soln as a function of coord and wsEBName
 
-    std::vector<double> x; x.resize(neq);
-    for (int ws=0; ws < wsElNodeEqID.size(); ws++) {
+    std::vector<double> x; 
+    x.resize(neq);
+
+    Teuchos::RCP<Albany::AnalyticFunction> initFunc;
+
+    for (int ws=0; ws < wsElNodeEqID.size(); ws++) { // loop over worksets
 
       Teuchos::Array<double> data = icParams.get(wsEBNames[ws], defaultData);
       // Call factory method from library of initial condition functions
-      Teuchos::RCP<Albany::AnalyticFunction> initFunc
-        = createAnalyticFunction("Constant", neq, numDim, data);
 
-      for (int el=0; el < wsElNodeEqID[ws].size(); el++) {
-        for (int ln=0; ln < wsElNodeEqID[ws][el].size(); ln++) {
+      if(perturb_values){
 
-          const double* X = coords[ws][el][ln];
-          Teuchos::ArrayRCP<int> lid = wsElNodeEqID[ws][el][ln];
-          for (int i=0; i<neq; i++) x[i] = solnT_nonconstView[lid[i]];
-          initFunc->compute(&x[0],X);
-          for (int i=0; i<neq; i++) solnT_nonconstView[lid[i]] = x[i];
+        if(name == "EBPerturb")
+          initFunc = Teuchos::rcp(new Albany::ConstantFunctionPerturbed(neq, numDim, ws, data, perturb_mag));
+        
+        else // name == EBGaussianPerturb
+
+          initFunc = Teuchos::rcp(new 
+            Albany::ConstantFunctionGaussianPerturbed(neq, numDim, ws, data, perturb_mag));
+      }
+
+      else
+
+        initFunc = Teuchos::rcp(new Albany::ConstantFunction(neq, numDim, data));
+
+      std::vector<double> X(neq);
+
+      for (int el=0; el < wsElNodeEqID[ws].size(); el++) { // loop over elements in workset
+
+        for (int i=0; i<neq; i++) 
+            X[i] = 0;
+
+        for (int ln=0; ln < wsElNodeEqID[ws][el].size(); ln++) // loop over node local to the element
+          for (int i=0; i<neq; i++)
+            X[i] += coords[ws][el][ln][i]; // nodal coords
+
+        for (int i=0; i<neq; i++)
+          X[i] /= (double)neq;
+
+        initFunc->compute(&x[0], &X[0]);
+
+        for (int ln=0; ln < wsElNodeEqID[ws][el].size(); ln++) { // loop over node local to the element
+          Teuchos::ArrayRCP<int> lid = wsElNodeEqID[ws][el][ln]; // local node ids
+
+          for (int i=0; i<neq; i++){
+
+             solnT_nonconstView[lid[i]] += x[i];
+//             (*soln)[lid[i]] += X[i]; // Test with coord values
+             lumpedMMT_nonconstView[lid[i]] += 1.0;
+
+          }
 
     } } }
 
+//  Apply the inverted lumped mass matrix to get the final nodal projection
+
+    for(int i = 0; i < solnT->getLocalLength(); i++)
+
+      solnT_nonconstView[i] /= lumpedMMT_nonconstView[i];
+
   }
+
   else {
 
     Teuchos::Array<double> defaultData(neq);

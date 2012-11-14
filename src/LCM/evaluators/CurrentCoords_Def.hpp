@@ -1,19 +1,8 @@
-/********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-\********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -25,13 +14,11 @@ namespace LCM {
 //**********************************************************************
 template<typename EvalT, typename Traits>
 CurrentCoords<EvalT, Traits>::
-CurrentCoords(const Teuchos::ParameterList& p) :
-  refCoords     (p.get<std::string>("Reference Coordinates Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout") ),
-  displacement  (p.get<std::string>("Displacement Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout") ),
-  currentCoords (p.get<std::string>("Current Coordinates Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout") )
+CurrentCoords(const Teuchos::ParameterList& p,
+              const Teuchos::RCP<Albany::Layouts>& dl) :
+  refCoords     (p.get<std::string>("Reference Coordinates Name"),dl->vertices_vector),
+  displacement  (p.get<std::string>("Displacement Name"),dl->node_vector),
+  currentCoords (p.get<std::string>("Current Coordinates Name"),dl->node_vector)
 {
   this->addDependentField(refCoords);
   this->addDependentField(displacement);
@@ -40,15 +27,11 @@ CurrentCoords(const Teuchos::ParameterList& p) :
 
   this->setName("Current Coordinates"+PHX::TypeString<EvalT>::value);
 
-  Teuchos::RCP<PHX::DataLayout> dl =
-     p.get< Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout");
-     std::vector<PHX::DataLayout::size_type> dims;
-     dl->dimensions(dims);
-     worksetSize = dims[0];
-     numNodes = dims[1];
-     numDims = dims[2];
-
-
+  std::vector<PHX::DataLayout::size_type> dims;
+  dl->node_vector->dimensions(dims);
+  worksetSize = dims[0];
+  numNodes = dims[1];
+  numDims = dims[2];
 }
 
 //**********************************************************************

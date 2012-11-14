@@ -1,19 +1,8 @@
-/********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
- *                                                                    *
- * Notice: This computer software was prepared by Sandia Corporation, *
- * hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
- * the Department of Energy (DOE). All rights in the computer software*
- * are reserved by DOE on behalf of the United States Government and  *
- * the Contractor as provided in the Contract. You are authorized to  *
- * use this computer software for Governmental purposes but it is not *
- * to be released or distributed to the public. NEITHER THE GOVERNMENT*
- * NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
- * ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
- * including this sentence must appear on any copies of this software.*
- *    Questions to Andy Salinger, agsalin@sandia.gov                  *
- \********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 #ifndef CAPIMPLICIT_HPP
 #define CAPIMPLICIT_HPP
 
@@ -54,37 +43,37 @@ namespace LCM {
 
     // all local functions used in computing cap model stress:
     ScalarT
-    compute_f(LCM::Tensor<ScalarT, 3> & sigma, LCM::Tensor<ScalarT, 3> & alpha,
+    compute_f(LCM::Tensor<ScalarT> & sigma, LCM::Tensor<ScalarT> & alpha,
         ScalarT & kappa);
 
     std::vector<ScalarT>
-    initialize(LCM::Tensor<ScalarT, 3> & sigmaVal,
-        LCM::Tensor<ScalarT, 3> & alphaVal, ScalarT & kappaVal,
+    initialize(LCM::Tensor<ScalarT> & sigmaVal,
+        LCM::Tensor<ScalarT> & alphaVal, ScalarT & kappaVal,
         ScalarT & dgammaVal);
 
     void
     compute_ResidJacobian(std::vector<ScalarT> const & XXVal,
         std::vector<ScalarT> & R, std::vector<ScalarT> & dRdX,
-        const LCM::Tensor<ScalarT, 3> & sigmaVal,
-        const LCM::Tensor<ScalarT, 3> & alphaVal, const ScalarT & kappaVal,
-        LCM::Tensor4<ScalarT, 3> const & Celastic, bool kappa_flag);
+        const LCM::Tensor<ScalarT> & sigmaVal,
+        const LCM::Tensor<ScalarT> & alphaVal, const ScalarT & kappaVal,
+        LCM::Tensor4<ScalarT> const & Celastic, bool kappa_flag);
 
     DFadType
-    compute_f(LCM::Tensor<DFadType, 3> & sigma,
-        LCM::Tensor<DFadType, 3> & alpha, DFadType & kappa);
+    compute_f(LCM::Tensor<DFadType> & sigma,
+        LCM::Tensor<DFadType> & alpha, DFadType & kappa);
 
     D2FadType
-    compute_g(LCM::Tensor<D2FadType, 3> & sigma,
-        LCM::Tensor<D2FadType, 3> & alpha, D2FadType & kappa);
+    compute_g(LCM::Tensor<D2FadType> & sigma,
+        LCM::Tensor<D2FadType> & alpha, D2FadType & kappa);
 
-    LCM::Tensor<DFadType, 3>
+    LCM::Tensor<DFadType>
     compute_dgdsigma(std::vector<DFadType> const & XX);
 
     DFadType
     compute_Galpha(DFadType J2_alpha);
 
-    LCM::Tensor<DFadType, 3>
-    compute_halpha(LCM::Tensor<DFadType, 3> const & dgdsigma,
+    LCM::Tensor<DFadType>
+    compute_halpha(LCM::Tensor<DFadType> const & dgdsigma,
         DFadType const J2_alpha);
 
     DFadType
@@ -118,12 +107,17 @@ namespace LCM {
     RealType Q;
 
     std::string strainName, stressName;
-    std::string backStressName, capParameterName;
+    std::string backStressName, capParameterName, eqpsName;
 
     //output
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> stress;
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> backStress;
     PHX::MDField<ScalarT, Cell, QuadPoint> capParameter;
+    PHX::MDField<ScalarT, Cell, QuadPoint> friction;
+    PHX::MDField<ScalarT, Cell, QuadPoint> dilatancy;
+    PHX::MDField<ScalarT, Cell, QuadPoint> eqps;
+    PHX::MDField<ScalarT, Cell, QuadPoint> evolps;
+    PHX::MDField<ScalarT, Cell, QuadPoint> hardeningModulus;
 
   };
 }

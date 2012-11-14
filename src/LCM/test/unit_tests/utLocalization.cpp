@@ -1,19 +1,8 @@
-/********************************************************************  \
- *            Albany, Copyright (2010) Sandia Corporation             *
- *                                                                    *
- * Notice: This computer software was prepared by Sandia Corporation, *
- * hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
- * the Department of Energy (DOE). All rights in the computer software*
- * are reserved by DOE on behalf of the United States Government and  *
- * the Contractor as provided in the Contract. You are authorized to  *
- * use this computer software for Governmental purposes but it is not *
- * to be released or distributed to the public. NEITHER THE GOVERNMENT*
- * NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
- * ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
- * including this sentence must appear on any copies of this software.*
- *    Questions to Andy Salinger, agsalin@sandia.gov                  *
- \********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 #include <Teuchos_UnitTestHarness.hpp>
 #include <Teuchos_ParameterList.hpp>
 #include <Epetra_MpiComm.h>
@@ -266,17 +255,17 @@ namespace {
         PHAL::AlbanyTraits::Residual, Cell, QuadPoint, Dim, Dim>(defGradField);
 
     // Pull the nodal forces from the FieldManager
-    PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT, Cell, Node,
-        Dim> forceField("Force", node_vector);
+    PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT, Cell, Node, Dim> forceField(
+        "Force", node_vector);
     fieldManager.getFieldData<PHAL::AlbanyTraits::Residual::ScalarT,
         PHAL::AlbanyTraits::Residual, Cell, Node, Dim>(forceField);
 
     // Record the expected deformation gradient, which will be used to check the computed stress
-    LCM::Tensor<PHAL::AlbanyTraits::Residual::ScalarT, 3> expectedDefGrad(1.0,
-        0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 1.0);
+    LCM::Tensor<PHAL::AlbanyTraits::Residual::ScalarT> expectedDefGrad(1.0, 0.0,
+        0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 1.0);
 
     // Record the expected stress, which will be used to check the computed stress
-    LCM::Tensor<PHAL::AlbanyTraits::Residual::ScalarT, 3> expectedStress(
+    LCM::Tensor<PHAL::AlbanyTraits::Residual::ScalarT> expectedStress(
         1.305059212578845, 0.0, 0.0, 0.0, 4.139881574842310, 0.0, 0.0, 0.0,
         1.305059212578845);
 
@@ -366,24 +355,23 @@ namespace {
     }
     std::cout << endl;
 
-
     // Check the computed nodal forces
     typedef PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT>::size_type size_type;
     for (size_type cell = 0; cell < worksetSize; ++cell) {
-    	int numPlaneNodes = numNodes/2;
+      int numPlaneNodes = numNodes / 2;
       for (size_type nd = 0; nd < numPlaneNodes; ++nd) {
 
-        std::cout << "nodal force positive at cell " << cell << ", node "
-            << nd << ":" << endl;
+        std::cout << "nodal force positive at cell " << cell << ", node " << nd
+            << ":" << endl;
         std::cout << "  " << forceField(cell, nd, 0);
         std::cout << "  " << forceField(cell, nd, 1);
         std::cout << "  " << forceField(cell, nd, 2) << endl;
 
-        std::cout << "nodal force negative at cell " << cell << ", node "
-            << nd << ":" << endl;
-        std::cout << "  " << forceField(cell, nd+numPlaneNodes, 0);
-        std::cout << "  " << forceField(cell, nd+numPlaneNodes, 1);
-        std::cout << "  " << forceField(cell, nd+numPlaneNodes, 2) << endl;
+        std::cout << "nodal force negative at cell " << cell << ", node " << nd
+            << ":" << endl;
+        std::cout << "  " << forceField(cell, nd + numPlaneNodes, 0);
+        std::cout << "  " << forceField(cell, nd + numPlaneNodes, 1);
+        std::cout << "  " << forceField(cell, nd + numPlaneNodes, 2) << endl;
 
 //        std::cout << "Expected result:" << endl;
 //        std::cout << "  " << expectedForce(0, 0);

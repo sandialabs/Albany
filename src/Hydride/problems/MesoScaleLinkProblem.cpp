@@ -1,31 +1,21 @@
-/********************************************************************\
-*            Albany, Copyright (2012) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Glen Hansen, gahanse@sandia.gov                    *
-\********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 #include "MesoScaleLinkProblem.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemUtils.hpp"
 
 #ifdef ALBANY_MPI
 #include "Teuchos_TypeNameTraits.hpp"
+#include "Teuchos_OpaqueWrapper.hpp"
 
 namespace Teuchos {
 // Provide an explicit template specialization for the opaque type MPI_Comm
 // so that the instantiation of Teuchos::RCP<MPI_Comm> objects compiles correctly in debug mode
 // without relying on the implementation details of the MPI library.
-  TEUCHOS_TYPE_NAME_TRAITS_BUILTIN_TYPE_SPECIALIZATION(MPI_Comm);
+  TEUCHOS_TYPE_NAME_TRAITS_BUILTIN_TYPE_SPECIALIZATION( OpaqueWrapper<MPI_Comm> );
 } // namespace Teuchos
 #endif /* ALBANY_MPI */
 
@@ -176,7 +166,7 @@ Albany::MesoScaleLinkProblem::constructNeumannEvaluators(
 
   // Check to make sure that Neumann BCs are given in the input file
 
-  if(!neuUtils.haveNeumann(this->params))
+  if(!neuUtils.haveBCSpecified(this->params))
 
     return;
 

@@ -1,19 +1,8 @@
-/********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-\********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -23,57 +12,49 @@
 namespace LCM {
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-SurfaceVectorGradient<EvalT, Traits>::
-SurfaceVectorGradient(const Teuchos::ParameterList& p) :
-  thickness      (p.get<double>("thickness")), 
-  currentBasis   (p.get<std::string>("Current Basis Name"),
-                  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-  refDualBasis   (p.get<std::string>("Reference Dual Basis Name"),
-                  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-  refNormal      (p.get<std::string>("Reference Normal Name"),
-                  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  jump           (p.get<std::string>("Jump Name"),
-                  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  gradient        (p.get<std::string>("Surface Vector Gradient Name"),
-                   p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") )
-{
-  this->addDependentField(currentBasis);
-  this->addDependentField(refDualBasis);
-  this->addDependentField(refNormal);
-  this->addDependentField(jump);
+  template<typename EvalT, typename Traits>
+  SurfaceVectorGradient<EvalT, Traits>::
+  SurfaceVectorGradient(const Teuchos::ParameterList& p,
+                        const Teuchos::RCP<Albany::Layouts>& dl) :
+    thickness      (p.get<double>("thickness")), 
+    cubature       (p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")), 
+    currentBasis   (p.get<std::string>("Current Basis Name"),dl->qp_tensor),
+    refDualBasis   (p.get<std::string>("Reference Dual Basis Name"),dl->qp_tensor),
+    refNormal      (p.get<std::string>("Reference Normal Name"),dl->qp_vector),
+    jump           (p.get<std::string>("Vector Jump Name"),dl->qp_vector),
+    weights        (p.get<std::string>("Weights Name"),dl->qp_scalar),
+    defGrad        (p.get<std::string>("Surface Vector Gradient Name"),dl->qp_tensor),
+    J              (p.get<std::string>("Surface Vector Gradient Determinant Name"),dl->qp_scalar),
+    weightedAverage(false),
+    alpha(0.05)
+  {
+    if ( p.isType<string>("Weighted Volume Average J Name") )
+      weightedAverage = p.get<bool>("Weighted Volume Average J");
+    if ( p.isType<double>("Average J Stabilization Parameter Name") )
+      alpha = p.get<double>("Average J Stabilization Parameter");
 
-  this->addEvaluatedField(gradient);
+    this->addDependentField(currentBasis);
+    this->addDependentField(refDualBasis);
+    this->addDependentField(refNormal);
+    this->addDependentField(jump);    
+    this->addDependentField(weights);
 
-  this->setName("Surface Vector Gradient"+PHX::TypeString<EvalT>::value);
+    this->addEvaluatedField(defGrad);
+    this->addEvaluatedField(J);
 
-  Teuchos::RCP<PHX::DataLayout> nv_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout");
-  std::vector<PHX::DataLayout::size_type> dims;
-  nv_dl->dimensions(dims);
-  worksetSize = dims[0];
-  numNodes = dims[1];
-  numDims = dims[2];
+    this->setName("Surface Vector Gradient"+PHX::TypeString<EvalT>::value);
 
-  Teuchos::RCP<PHX::DataLayout> qpv_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
-  qpv_dl->dimensions(dims);
-  numQPs = dims[1];
+    std::vector<PHX::DataLayout::size_type> dims;
+    dl->node_vector->dimensions(dims);
+    worksetSize = dims[0];
+    numNodes = dims[1];
+    numDims = dims[2];
 
-  numPlaneNodes = numNodes / 2;
-  numPlaneDims = numDims - 1;
+    numQPs = cubature->getNumPoints();
 
-  // Allocate Temporary FieldContainers
-  refValues.resize(numPlaneNodes, numQPs);
-  refGrads.resize(numPlaneNodes, numQPs, numPlaneDims);
-  refPoints.resize(numQPs, numPlaneDims);
-  refWeights.resize(numQPs);
-
-  // Pre-Calculate reference element quantitites
-  cubature->getCubature(refPoints, refWeights);
-  intrepidBasis->getValues(refValues, refPoints, Intrepid::OPERATOR_VALUE);
-  intrepidBasis->getValues(refGrads, refPoints, Intrepid::OPERATOR_GRAD);
-}
+    numPlaneNodes = numNodes / 2;
+    numPlaneDims = numDims - 1;
+  }
 
   //**********************************************************************
   template<typename EvalT, typename Traits>
@@ -82,10 +63,12 @@ SurfaceVectorGradient(const Teuchos::ParameterList& p) :
                         PHX::FieldManager<Traits>& fm)
   {
     this->utils.setFieldData(currentBasis,fm);
-    this->utils.setFieldData(redDualBasis,fm);
+    this->utils.setFieldData(refDualBasis,fm);
     this->utils.setFieldData(refNormal,fm);
     this->utils.setFieldData(jump,fm);
-    this->utils.setFieldData(gradient,fm);
+    this->utils.setFieldData(weights,fm);
+    this->utils.setFieldData(defGrad,fm);
+    this->utils.setFieldData(J,fm);
   }
 
   //**********************************************************************
@@ -95,32 +78,65 @@ SurfaceVectorGradient(const Teuchos::ParameterList& p) :
   {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t pt=0; pt < numQPs; ++pt) {
-        LCM::Vector<ScalarT, 3> g_0(&currentBasis(cell, pt, 0, 0));
-        LCM::Vector<ScalarT, 3> g_1(&currentBasis(cell, pt, 1, 0));
-        LCM::Vector<ScalarT, 3> g_2(&currentBasis(cell, pt, 2, 0));
-        LCM::Vector<ScalarT, 3> G_2(&refNormal(cell, pt, 0));
-        LCM::Vector<ScalarT, 3> d(&jump(cell, pt, 0));
-        LCM::Vector<ScalarT, 3> G0(&refDualBases(cell, pt, 0, 0));
-        LCM::Vector<ScalarT, 3> G1(&refDualBases(cell, pt, 1, 0));
-        LCM::Vector<ScalarT, 3> G2(&refDualBases(cell, pt, 2, 0));
+        LCM::Vector<ScalarT> g_0(3, &currentBasis(cell, pt, 0, 0));
+        LCM::Vector<ScalarT> g_1(3, &currentBasis(cell, pt, 1, 0));
+        LCM::Vector<ScalarT> g_2(3, &currentBasis(cell, pt, 2, 0));
+        LCM::Vector<ScalarT> G_2(3, &refNormal(cell, pt, 0));
+        LCM::Vector<ScalarT> d(3, &jump(cell, pt, 0));
+        LCM::Vector<ScalarT> G0(3, &refDualBasis(cell, pt, 0, 0));
+        LCM::Vector<ScalarT> G1(3, &refDualBasis(cell, pt, 1, 0));
+        LCM::Vector<ScalarT> G2(3, &refDualBasis(cell, pt, 2, 0));
 
-        LCM::Tensor<ScalarT, 3> F1(LCM::bun(g_0, G0) + LCM::bun(g_1, G1) + LCM::bun(g_2, G2));
+        LCM::Tensor<ScalarT> Fpar(LCM::bun(g_0, G0) + LCM::bun(g_1, G1) + LCM::bun(g_2, G2));
         // for Jay: bun()
-        LCM::Tensor<ScalarT, 3> F2((1 / thickness) * LCM::bun(d, G_2));
+        LCM::Tensor<ScalarT> Fper((1 / thickness) * LCM::bun(d, G_2));
 
-        LCM::Tensor<ScalarT, 3> F = F1 + F2;
+        LCM::Tensor<ScalarT> F = Fpar + Fper;
 
-        gradient(cell, pt, 0, 0) = F(0, 0);
-        gradient(cell, pt, 0, 1) = F(0, 1);
-        gradient(cell, pt, 0, 2) = F(0, 2);
-        gradient(cell, pt, 1, 0) = F(1, 0);
-        gradient(cell, pt, 1, 1) = F(1, 1);
-        gradient(cell, pt, 1, 2) = F(1, 2);
-        gradient(cell, pt, 2, 0) = F(2, 0);
-        gradient(cell, pt, 2, 1) = F(2, 1);
-        gradient(cell, pt, 2, 2) = F(2, 2);
+        defGrad(cell, pt, 0, 0) = F(0, 0);
+        defGrad(cell, pt, 0, 1) = F(0, 1);
+        defGrad(cell, pt, 0, 2) = F(0, 2);
+        defGrad(cell, pt, 1, 0) = F(1, 0);
+        defGrad(cell, pt, 1, 1) = F(1, 1);
+        defGrad(cell, pt, 1, 2) = F(1, 2);
+        defGrad(cell, pt, 2, 0) = F(2, 0);
+        defGrad(cell, pt, 2, 1) = F(2, 1);
+        defGrad(cell, pt, 2, 2) = F(2, 2);
+
+        J(cell,pt) = LCM::det(F);        
+      }
     }
-  }
-  //**********************************************************************
-}
 
+    if (weightedAverage)
+    {
+      ScalarT Jbar, wJbar, vol;
+      for (std::size_t cell=0; cell < workset.numCells; ++cell)
+      {
+        Jbar = 0.0;
+        vol = 0.0;
+        for (std::size_t qp=0; qp < numQPs; ++qp)
+        {
+          Jbar += weights(cell,qp) * std::log( J(cell,qp) );
+          vol  += weights(cell,qp);
+        }
+        Jbar /= vol;
+
+        // Jbar = std::exp(Jbar);
+        for (std::size_t qp=0; qp < numQPs; ++qp)
+        {
+          for (std::size_t i=0; i < numDims; ++i)
+          {
+            for (std::size_t j=0; j < numDims; ++j)
+            {
+              wJbar = std::exp( (1-alpha) * Jbar + alpha * std::log( J(cell,qp) ) );
+              defGrad(cell,qp,i,j) *= std::pow( wJbar / J(cell,qp) ,1./3. );
+            }
+          }
+          J(cell,qp) = wJbar;
+        }
+      }
+    }
+
+  }
+  //**********************************************************************  
+}

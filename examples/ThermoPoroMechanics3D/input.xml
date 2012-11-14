@@ -17,7 +17,7 @@
 		
 		<ParameterList name="Initial Condition">
       <Parameter name="Function" type="string" value="Constant"/>
-      <Parameter name="Function Data" type="Array(double)" value="{0.0, 0.0, 0.0 , 0.00, 300.00}"/>
+      <Parameter name="Function Data" type="Array(double)" value="{0.0, 0.0, 0.0 , 0.00, 0.00}"/>
     </ParameterList>
 	
 	<!-- MATERIAL MODEL/PROPERTIES -->
@@ -35,7 +35,7 @@
 	<!-- Heat Diffusion Parameter -->
 	<ParameterList name="Reference Temperature">
 	 <Parameter name="Type" type="string" value="Constant"/>
-	 <Parameter name="Value" type="double" value="300.0"/>
+	 <Parameter name="Value" type="double" value="0.0"/>
 	</ParameterList>
 	<ParameterList name="Skeleton Thermal Expansion">
 	 <Parameter name="Type" type="string" value="Constant"/>

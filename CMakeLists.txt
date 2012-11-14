@@ -1,18 +1,8 @@
-#/********************************************************************\
-#*            Albany, Copyright (2010) Sandia Corporation             *
-#*                                                                    *
-#* Notice: This computer software was prepared by Sandia Corporation, *
-#* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-#* the Department of Energy (DOE). All rights in the computer software*
-#* are reserved by DOE on behalf of the United States Government and  *
-#* the Contractor as provided in the Contract. You are authorized to  *
-#* use this computer software for Governmental purposes but it is not *
-#* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-#* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-#* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-#* including this sentence must appear on any copies of this software.*
-#*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-#\********************************************************************/
+##*****************************************************************//
+##    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+##    This Software is released under the BSD license detailed     //
+##    in the file "license.txt" in the top-level Albany directory  //
+##*****************************************************************//
 
 # CMAKE File for Albany building against an installed Trilinos
 
@@ -23,6 +13,9 @@ IF (NOT DEFINED ALBANY_TRILINOS_DIR)
   MESSAGE(FATAL_ERROR "\nAlbany Error: cmake must define ALBANY_TRILINOS_DIR:
   (-D ALBANY_TRILINOS_DIR:FILEPATH=<trilinos_install_prefix>)!")
 ENDIF()
+
+# Advertise that we support shared libs
+SET_PROPERTY(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS TRUE)
 
 # Get Trilinos as one entity
 SET(CMAKE_PREFIX_PATH ${ALBANY_TRILINOS_DIR} ${CMAKE_PREFIX_PATH})
@@ -51,6 +44,17 @@ IF (CMAKE_Fortran_COMPILER) # Enable Fortran if it is enabled in Trilinos.
   ENABLE_LANGUAGE(Fortran) 
 ENDIF()
 
+# Build Albany as shared libraries if Trilinos was compiled that way
+
+IF(Trilinos_BUILD_SHARED_LIBS)
+  SET(Albany_LIBRARY_TYPE SHARED)
+  SET(BUILD_SHARED_LIBS ON)
+  MESSAGE("-- Building Albany with shared libraries")
+ELSE(Trilinos_BUILD_SHARED_LIBS)
+  SET(Albany_LIBRARY_TYPE STATIC)
+ENDIF(Trilinos_BUILD_SHARED_LIBS)
+
+
 # End of setup and error checking
 #  NOTE: PROJECT command checks for compilers, so this statement
 #        is moved AFTER setting CMAKE_CXX_COMPILER from Trilinos
@@ -62,6 +66,12 @@ IF (NOT CMAKE_CXX_FLAGS)
 ENDIF()
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ALBANY_CXX_FLAGS}")
 
+IF(${CMAKE_CXX_COMPILER_ID} MATCHES "Intel")
+  SET(USING_INTEL TRUE)
+# On Intel, turn of interprocedural optimization at linking to keep linker from hanging
+# This could possibly be removed with further study (GAH)
+  SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -no-ip")
+ENDIF()
 
 MESSAGE("-- Looking for Dakota (via TriKota):")
 LIST(FIND Trilinos_PACKAGE_LIST TriKota TriKota_List_ID)
@@ -187,6 +197,30 @@ ELSE()
   SET(ALBANY_ASCR FALSE)
 ENDIF()
 
+# Add option for Hydride work, defaults to disabled
+IF (NOT ENABLE_LCM)
+  MESSAGE("-- LCM is NOT Enabled.")
+  SET(ALBANY_LCM FALSE)
+ELSE()
+  ADD_DEFINITIONS(-DALBANY_LCM)
+  MESSAGE("-- LCM is Enabled, compiling with -DALBANY_LCM")
+  SET(ALBANY_LCM TRUE)
+ENDIF()
+
+IF (ENABLE_HYDRIDE)
+  IF (NOT ENABLE_LCM)
+    ADD_DEFINITIONS(-DALBANY_LCM)
+    MESSAGE("-- HYDRIDE requires LCM... compiling with -DALBANY_LCM")
+    SET(ALBANY_LCM TRUE)
+  ENDIF()
+  ADD_DEFINITIONS(-DALBANY_HYDRIDE)
+  MESSAGE("-- HYDRIDE is Enabled, compiling with -DALBANY_HYDRIDE")
+  SET(ALBANY_HYDRIDE TRUE)
+ELSE()
+  MESSAGE("-- HYDRIDE is NOT Enabled.")
+  SET(ALBANY_HYDRIDE FALSE)
+ENDIF()
+
 # Set optional build of FELIX (Land Ice SciDAC project), defaults to Disabled
 OPTION(ENABLE_FELIX "Flag to turn on FELIX Source code" OFF)
 IF (NOT ENABLE_FELIX)
@@ -230,7 +264,7 @@ ENDIF()
 
 IF (NOT ENABLE_ALBANY_VERBOSE)
   MESSAGE("-- Verbose printing is not enabled")      
-  SET(ALBANY_VERBOSE TRUE)
+  SET(ALBANY_VERBOSE FALSE)
 ELSE()  
   ADD_DEFINITIONS(-DALBANY_VERBOSE)
   MESSAGE("-- Verbose printing is enabled")

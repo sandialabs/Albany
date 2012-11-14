@@ -1,60 +1,54 @@
-///
-/// \file Tensor.t.cc
-/// First cut of LCM small tensor utilities. Templates.
-/// \author Alejandro Mota
-/// \author Jake Ostien
-///
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
+
 #if !defined(LCM_Tensor_t_cc)
 #define LCM_Tensor_t_cc
 
 namespace LCM {
 
   //
-  // R^N 3rd-order tensor constructor with NaNs
+  // set dimension
   //
-  template<typename T, Index N>
-  Tensor3<T, N>::Tensor3()
+  //
+  template<typename T>
+  void
+  Tensor3<T>::set_dimension(const Index N)
   {
+
     e.resize(N);
     for (Index i = 0; i < N; ++i) {
       e[i].resize(N);
       for (Index j = 0; j < N; ++j) {
         e[i][j].resize(N);
+      }
+    }
+
+    return;
+  }
+
+  //
+  // 3rd-order tensor default constructor
+  //
+  template<typename T>
+  Tensor3<T>::Tensor3()
+  {
+    return;
+  }
+
+  //
+  // 3rd-order tensor constructor with NaNs
+  //
+  template<typename T>
+  Tensor3<T>::Tensor3(const Index N)
+  {
+    set_dimension(N);
+
+    for (Index i = 0; i < N; ++i) {
+      for (Index j = 0; j < N; ++j) {
         for (Index k = 0; k < N; ++k) {
-          e[i][j][k] = not_a_number<T>();
-        }
-      }
-    }
-
-    return;
-  }
-
-  //
-  // R^3 3rd-order tensor constructor with NaNs
-  //
-  template<typename T>
-  Tensor3<T, 3>::Tensor3()
-  {
-    for (Index i = 0; i < 3; ++i) {
-      for (Index j = 0; j < 3; ++j) {
-        for (Index k = 0; k < 3; ++k) {
-          e[i][j][k] = not_a_number<T>();
-        }
-      }
-    }
-
-    return;
-  }
-
-  //
-  // R^2 3rd-order tensor constructor with NaNs
-  //
-  template<typename T>
-  Tensor3<T, 2>::Tensor3()
-  {
-    for (Index i = 0; i < 2; ++i) {
-      for (Index j = 0; j < 2; ++j) {
-        for (Index k = 0; k < 2; ++k) {
           e[i][j][k] = not_a_number<T>();
         }
       }
@@ -67,51 +61,14 @@ namespace LCM {
   // R^N 3rd-order tensor constructor with a scalar
   // \param s all components set to this scalar
   //
-  template<typename T, Index N>
-  Tensor3<T, N>::Tensor3(T const & s)
+  template<typename T>
+  Tensor3<T>::Tensor3(const Index N, T const & s)
   {
-    e.resize(N);
+    set_dimension(N);
+
     for (Index i = 0; i < N; ++i) {
-      e[i].resize(N);
       for (Index j = 0; j < N; ++j) {
-        e[i][j].resize(N);
         for (Index k = 0; k < N; ++k) {
-          e[i][j][k] = s;
-        }
-      }
-    }
-
-    return;
-  }
-
-  //
-  // R^3 3rd-order tensor constructor with a scalar
-  // \param s all components set to this scalar
-  //
-  template<typename T>
-  Tensor3<T, 3>::Tensor3(T const & s)
-  {
-    for (Index i = 0; i < 3; ++i) {
-      for (Index j = 0; j < 3; ++j) {
-        for (Index k = 0; k < 3; ++k) {
-          e[i][j][k] = s;
-        }
-      }
-    }
-
-    return;
-  }
-
-  //
-  // R^2 3rd-order tensor constructor with a scalar
-  // \param s all components set to this scalar
-  //
-  template<typename T>
-  Tensor3<T, 2>::Tensor3(T const & s)
-  {
-    for (Index i = 0; i < 2; ++i) {
-      for (Index j = 0; j < 2; ++j) {
-        for (Index k = 0; k < 2; ++k) {
           e[i][j][k] = s;
         }
       }
@@ -125,54 +82,17 @@ namespace LCM {
   // 3rd-order tensor constructor from 3rd-order tensor
   // \param A from which components are copied
   //
-  template<typename T, Index N>
-  Tensor3<T, N>::Tensor3(Tensor3<T, N> const & A)
+  template<typename T>
+  Tensor3<T>::Tensor3(Tensor3<T> const & A)
   {
-    e.resize(N);
+    const Index
+    N = A.get_dimension();
+
+    set_dimension(N);
 
     for (Index i = 0; i < N; ++i) {
-      e[i].resize(N);
       for (Index j = 0; j < N; ++j) {
-        e[i][j].resize(N);
         for (Index k = 0; k < N; ++k) {
-          e[i][j][k] = A.e[i][j][k];
-        }
-      }
-    }
-
-    return;
-  }
-
-  //
-  // R^3 copy constructor
-  // 3rd-order tensor constructor from 3rd-order tensor
-  // \param A from which components are copied
-  //
-  template<typename T>
-  Tensor3<T, 3>::Tensor3(Tensor3<T, 3> const & A)
-  {
-    for (Index i = 0; i < 3; ++i) {
-      for (Index j = 0; j < 3; ++j) {
-        for (Index k = 0; k < 3; ++k) {
-          e[i][j][k] = A.e[i][j][k];
-        }
-      }
-    }
-
-    return;
-  }
-
-  //
-  // R^2 copy constructor
-  // 3rd-order tensor constructor from 3rd-order tensor
-  // \param A from which components are copied
-  //
-  template<typename T>
-  Tensor3<T, 2>::Tensor3(Tensor3<T, 2> const & A)
-  {
-    for (Index i = 0; i < 2; ++i) {
-      for (Index j = 0; j < 2; ++j) {
-        for (Index k = 0; k < 2; ++k) {
           e[i][j][k] = A.e[i][j][k];
         }
       }
@@ -184,26 +104,8 @@ namespace LCM {
   //
   // R^N 3rd-order tensor simple destructor
   //
-  template<typename T, Index N>
-  Tensor3<T, N>::~Tensor3()
-  {
-    return;
-  }
-
-  //
-  // R^3 3rd-order tensor simple destructor
-  //
   template<typename T>
-  Tensor3<T, 3>::~Tensor3()
-  {
-    return;
-  }
-
-  //
-  // R^2 3rd-order tensor simple destructor
-  //
-  template<typename T>
-  Tensor3<T, 2>::~Tensor3()
+  Tensor3<T>::~Tensor3()
   {
     return;
   }
@@ -211,61 +113,25 @@ namespace LCM {
   //
   // R^N 3rd-order tensor copy assignment
   //
-  template<typename T, Index N>
-  Tensor3<T, N> &
-  Tensor3<T, N>::operator=(Tensor3<T, N> const & A)
+  template<typename T>
+  Tensor3<T> &
+  Tensor3<T>::operator=(Tensor3<T> const & A)
   {
     if (this != &A) {
-      e.resize(N);
+
+      const Index
+      N = A.get_dimension();
+
+      set_dimension(N);
+
       for (Index i = 0; i < N; ++i) {
-        e[i].resize(N);
         for (Index j = 0; j < N; ++j) {
-          e[i][j].resize(N);
           for (Index k = 0; k < N; ++k) {
             e[i][j][k] = A.e[i][j][k];
           }
         }
       }
-    }
 
-    return *this;
-  }
-
-  //
-  // R^3 3rd-order tensor copy assignment
-  //
-  template<typename T>
-  Tensor3<T, 3> &
-  Tensor3<T, 3>::operator=(Tensor3<T, 3> const & A)
-  {
-    if (this != &A) {
-      for (Index i = 0; i < 3; ++i) {
-        for (Index j = 0; j < 3; ++j) {
-          for (Index k = 0; k < 3; ++k) {
-            e[i][j][k] = A.e[i][j][k];
-          }
-        }
-      }
-    }
-
-    return *this;
-  }
-
-  //
-  // R^2 3rd-order tensor copy assignment
-  //
-  template<typename T>
-  Tensor3<T, 2> &
-  Tensor3<T, 2>::operator=(Tensor3<T, 2> const & A)
-  {
-    if (this != &A) {
-      for (Index i = 0; i < 2; ++i) {
-        for (Index j = 0; j < 2; ++j) {
-          for (Index k = 0; k < 2; ++k) {
-            e[i][j][k] = A.e[i][j][k];
-          }
-        }
-      }
     }
 
     return *this;
@@ -275,10 +141,15 @@ namespace LCM {
   // 3rd-order tensor increment
   // \param A added to this tensor
   //
-  template<typename T, Index N>
-  Tensor3<T, N> &
-  Tensor3<T, N>::operator+=(Tensor3<T, N> const & A)
+  template<typename T>
+  Tensor3<T> &
+  Tensor3<T>::operator+=(Tensor3<T> const & A)
   {
+    const Index
+    N = get_dimension();
+
+    assert(A.get_dimension() == N);
+
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
         for (Index k = 0; k < N; ++k) {
@@ -294,10 +165,15 @@ namespace LCM {
   // 3rd-order tensor decrement
   // \param A substracted from this tensor
   //
-  template<typename T, Index N>
-  Tensor3<T, N> &
-  Tensor3<T, N>::operator-=(Tensor3<T, N> const & A)
+  template<typename T>
+  Tensor3<T> &
+  Tensor3<T>::operator-=(Tensor3<T> const & A)
   {
+    const Index
+    N = get_dimension();
+
+    assert(A.get_dimension() == N);
+
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
         for (Index k = 0; k < N; ++k) {
@@ -312,52 +188,16 @@ namespace LCM {
   //
   // R^N fill 3rd-order tensor with zeros
   //
-  template<typename T, Index N>
+  template<typename T>
   void
-  Tensor3<T, N>::clear()
+  Tensor3<T>::clear()
   {
-    e.resize(N);
+    const Index
+    N = get_dimension();
+
     for (Index i = 0; i < N; ++i) {
-      e[i].resize(N);
       for (Index j = 0; j < N; ++j) {
-        e[i][j].resize(N);
         for (Index k = 0; k < N; ++k) {
-          e[i][j][k] = 0.0;
-        }
-      }
-    }
-
-    return;
-  }
-
-  //
-  // R^3 fill 3rd-order tensor with zeros
-  //
-  template<typename T>
-  void
-  Tensor3<T, 3>::clear()
-  {
-    for (Index i = 0; i < 3; ++i) {
-      for (Index j = 0; j < 3; ++j) {
-        for (Index k = 0; k < 3; ++k) {
-          e[i][j][k] = 0.0;
-        }
-      }
-    }
-
-    return;
-  }
-
-  //
-  // R^2 fill 3rd-order tensor with zeros
-  //
-  template<typename T>
-  void
-  Tensor3<T, 2>::clear()
-  {
-    for (Index i = 0; i < 2; ++i) {
-      for (Index j = 0; j < 2; ++j) {
-        for (Index k = 0; k < 2; ++k) {
           e[i][j][k] = 0.0;
         }
       }
@@ -372,11 +212,16 @@ namespace LCM {
   // \param B 3rd-order tensor
   // \return \f$ A + B \f$
   //
-  template<typename T, Index N>
-  Tensor3<T, N>
-  operator+(Tensor3<T, N> const & A, Tensor3<T, N> const & B)
+  template<typename T>
+  Tensor3<T>
+  operator+(Tensor3<T> const & A, Tensor3<T> const & B)
   {
-    Tensor3<T, N> S;
+    const Index
+    N = A.get_dimension();
+
+    assert(B.get_dimension() == N);
+
+    Tensor3<T> S(N);
 
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
@@ -395,11 +240,16 @@ namespace LCM {
   // \param B 3rd-order tensor
   // \return \f$ A - B \f$
   //
-  template<typename T, Index N>
-  Tensor3<T, N>
-  operator-(Tensor3<T, N> const & A, Tensor3<T, N> const & B)
+  template<typename T>
+  Tensor3<T>
+  operator-(Tensor3<T> const & A, Tensor3<T> const & B)
   {
-    Tensor3<T, N> S;
+    const Index
+    N = A.get_dimension();
+
+    assert(B.get_dimension() == N);
+
+    Tensor3<T> S(N);
 
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
@@ -416,11 +266,14 @@ namespace LCM {
   // 3rd-order tensor minus
   // \return \f$ -A \f$
   //
-  template<typename T, Index N>
-  Tensor3<T, N>
-  operator-(Tensor3<T, N> const & A)
+  template<typename T>
+  Tensor3<T>
+  operator-(Tensor3<T> const & A)
   {
-    Tensor3<T, N> S;
+    const Index
+    N = A.get_dimension();
+
+    Tensor3<T> S(N);
 
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
@@ -437,10 +290,15 @@ namespace LCM {
   // 3rd-order tensor equality
   // Tested by components
   //
-  template<typename T, Index N>
+  template<typename T>
   inline bool
-  operator==(Tensor3<T, N> const & A, Tensor3<T, N> const & B)
+  operator==(Tensor3<T> const & A, Tensor3<T> const & B)
   {
+    const Index
+    N = A.get_dimension();
+
+    assert(B.get_dimension() == N);
+
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
         for (Index k = 0; k < N; ++k) {
@@ -458,9 +316,9 @@ namespace LCM {
   // 3rd-order tensor inequality
   // Tested by components
   //
-  template<typename T, Index N>
+  template<typename T>
   inline bool
-  operator!=(Tensor3<T, N> const & A, Tensor3<T, N> const & B)
+  operator!=(Tensor3<T> const & A, Tensor3<T> const & B)
   {
     return !(A==B);
   }
@@ -471,11 +329,14 @@ namespace LCM {
   // \param A 3rd-order tensor
   // \return \f$ s A \f$
   //
-  template<typename T, Index N, typename S>
-  Tensor3<T, N>
-  operator*(S const & s, Tensor3<T, N> const & A)
+  template<typename T, typename S>
+  Tensor3<T>
+  operator*(S const & s, Tensor3<T> const & A)
   {
-    Tensor3<T, N> B;
+    const Index
+    N = A.get_dimension();
+
+    Tensor3<T> B(N);
 
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
@@ -494,9 +355,9 @@ namespace LCM {
   // \param s scalar
   // \return \f$ s A \f$
   //
-  template<typename T, Index N, typename S>
-  Tensor3<T, N>
-  operator*(Tensor3<T, N> const & A, S const & s)
+  template<typename T, typename S>
+  Tensor3<T>
+  operator*(Tensor3<T> const & A, S const & s)
   {
     return s * A;
   }
@@ -507,11 +368,16 @@ namespace LCM {
   // \param u vector
   // \return \f$ A u \f$
   //
-  template<typename T, Index N>
-  Tensor<T, N>
-  dot(Tensor3<T, N> const & A, Vector<T, N> const & u)
+  template<typename T>
+  Tensor<T>
+  dot(Tensor3<T> const & A, Vector<T> const & u)
   {
-    Tensor<T, N> B;
+    const Index
+    N = A.get_dimension();
+
+    assert(u.get_dimension() == N);
+
+    Tensor<T> B(N);
 
     for (Index j = 0; j < N; ++j) {
       for (Index k = 0; k < N; ++k) {
@@ -532,16 +398,21 @@ namespace LCM {
   // \param u vector
   // \return \f$ u A \f$
   //
-  template<typename T, Index N>
-  Tensor<T, N>
-  dot(Vector<T, N> const & u, Tensor3<T, N> const & A)
+  template<typename T>
+  Tensor<T>
+  dot(Vector<T> const & u, Tensor3<T> const & A)
   {
-    Tensor<T, N> B;
+    const Index
+    N = A.get_dimension();
 
-    for (Index i = 0; i < 3; ++i) {
-      for (Index j = 0; j < 3; ++j) {
+    assert(u.get_dimension() == N);
+
+    Tensor<T> B(N);
+
+    for (Index i = 0; i < N; ++i) {
+      for (Index j = 0; j < N; ++j) {
         T s = 0.0;
-        for (Index k = 0; k < 3; ++k) {
+        for (Index k = 0; k < N; ++k) {
           s += A(i,j,k) * u(k);
         }
         B(i,j) = s;
@@ -558,17 +429,21 @@ namespace LCM {
   // \param u vector
   // \return \f$ A u \f$
   //
-  template<typename T, Index N>
-  Tensor<T, N>
-  dot2(Tensor3<T, N> const & A, Vector<T, N> const & u)
+  template<typename T>
+  Tensor<T>
+  dot2(Tensor3<T> const & A, Vector<T> const & u)
   {
-    Tensor<T, N> B;
+    const Index
+    N = A.get_dimension();
 
-    for (Index i = 0; i < 3; ++i) {
-      for (Index k = 0; k < 3; ++k) {
-        B(i,k) = 0.0;
+    assert(u.get_dimension() == N);
+
+    Tensor<T> B(N);
+
+    for (Index i = 0; i < N; ++i) {
+      for (Index k = 0; k < N; ++k) {
         T s = 0.0;
-        for (Index j = 0; j < 3; ++j) {
+        for (Index j = 0; j < N; ++j) {
           s += A(i,j,k) * u(j);
         }
         B(i,k) = s;
@@ -584,66 +459,58 @@ namespace LCM {
   // \param u vector
   // \return \f$ u A \f$
   //
-  template<typename T, Index N>
-  Tensor<T, N>
-  dot2(Vector<T, N> const & u, Tensor3<T, N> const & A)
+  template<typename T>
+  Tensor<T>
+  dot2(Vector<T> const & u, Tensor3<T> const & A)
   {
     return dot2(A, u);
   }
 
 
   //
+  // set dimension
+  //
+  //
+  template<typename T>
+  void
+  Tensor4<T>::set_dimension(const Index N)
+  {
+
+    e.resize(N);
+    for (Index i = 0; i < N; ++i) {
+      e[i].resize(N);
+      for (Index j = 0; j < N; ++j) {
+        e[i][j].resize(N);
+        for (Index k = 0; k < N; ++k) {
+          e[i][j][k].resize(N);
+        }
+      }
+    }
+
+    return;
+  }
+
+  //
+  // R^N 4th-order tensor default constructor
+  //
+  template<typename T>
+  Tensor4<T>::Tensor4()
+  {
+    return;
+  }
+
+  //
   // R^N 4th-order tensor constructor with NaNs
   //
-  template<typename T, Index N>
-  Tensor4<T, N>::Tensor4()
+  template<typename T>
+  Tensor4<T>::Tensor4(const Index N)
   {
-    e.resize();
+    set_dimension(N);
+
     for (Index i = 0; i < N; ++i) {
-      e[i].resize();
       for (Index j = 0; j < N; ++j) {
-        e[i][j].resize();
         for (Index k = 0; k < N; ++k) {
-          e[i][j][k].resize();
           for (Index l = 0; l < N; ++l) {
-            e[i][j][k][l] = not_a_number<T>();
-          }
-        }
-      }
-    }
-
-    return;
-  }
-
-  //
-  // R^3 4th-order tensor constructor with NaNs
-  //
-  template<typename T>
-  Tensor4<T, 3>::Tensor4()
-  {
-    for (Index i = 0; i < 3; ++i) {
-      for (Index j = 0; j < 3; ++j) {
-        for (Index k = 0; k < 3; ++k) {
-          for (Index l = 0; l < 3; ++l) {
-            e[i][j][k][l] = not_a_number<T>();
-          }
-        }
-      }
-    }
-
-    return;
-  }
-
-  //
-  // R^2 4th-order tensor constructor with NaNs
-  //
-  template<typename T>
-  Tensor4<T, 2>::Tensor4()
-  {
-    for (Index i = 0; i < 2; ++i) {
-      for (Index j = 0; j < 2; ++j) {
-        for (Index k = 0; k < 2; ++k) {
-          for (Index l = 0; l < 2; ++l) {
             e[i][j][k][l] = not_a_number<T>();
           }
         }
@@ -657,57 +524,15 @@ namespace LCM {
   // R^N 4th-order tensor constructor with a scalar
   // \param s all components set to this scalar
   //
-  template<typename T, Index N>
-  Tensor4<T, N>::Tensor4(T const & s)
+  template<typename T>
+  Tensor4<T>::Tensor4(const Index N, T const & s)
   {
-    e.resize();
+    set_dimension(N);
+
     for (Index i = 0; i < N; ++i) {
-      e[i].resize();
       for (Index j = 0; j < N; ++j) {
-        e[i][j].resize();
         for (Index k = 0; k < N; ++k) {
-          e[i][j][k].resize();
           for (Index l = 0; l < N; ++l) {
-            e[i][j][k][l] = s;
-          }
-        }
-      }
-    }
-
-    return;
-  }
-
-  //
-  // R^3 4th-order tensor constructor with a scalar
-  // \param s all components set to this scalar
-  //
-  template<typename T>
-  Tensor4<T, 3>::Tensor4(T const & s)
-  {
-    for (Index i = 0; i < 3; ++i) {
-      for (Index j = 0; j < 3; ++j) {
-        for (Index k = 0; k < 3; ++k) {
-          for (Index l = 0; l < 3; ++l) {
-            e[i][j][k][l] = s;
-          }
-        }
-      }
-    }
-
-    return;
-  }
-
-  //
-  // R^2 4th-order tensor constructor with a scalar
-  // \param s all components set to this scalar
-  //
-  template<typename T>
-  Tensor4<T, 2>::Tensor4(T const & s)
-  {
-    for (Index i = 0; i < 2; ++i) {
-      for (Index j = 0; j < 2; ++j) {
-        for (Index k = 0; k < 2; ++k) {
-          for (Index l = 0; l < 2; ++l) {
             e[i][j][k][l] = s;
           }
         }
@@ -722,59 +547,18 @@ namespace LCM {
   // 4th-order tensor constructor with 4th-order tensor
   // \param A from which components are copied
   //
-  template<typename T, Index N>
-  Tensor4<T, N>::Tensor4(Tensor4<T, N> const & A)
+  template<typename T>
+  Tensor4<T>::Tensor4(Tensor4<T> const & A)
   {
-    e.resize();
+    const Index
+    N = A.get_dimension();
+
+    set_dimension(N);
+
     for (Index i = 0; i < N; ++i) {
-      e[i].resize();
       for (Index j = 0; j < N; ++j) {
-        e[i][j].resize();
         for (Index k = 0; k < N; ++k) {
-          e[i][j][k].resize();
           for (Index l = 0; l < N; ++l) {
-            e[i][j][k][l] = A.e[i][j][k][l];
-          }
-        }
-      }
-    }
-
-    return;
-  }
-
-  //
-  // R^3 copy constructor
-  // 4th-order tensor constructor with 4th-order tensor
-  // \param A from which components are copied
-  //
-  template<typename T>
-  Tensor4<T, 3>::Tensor4(Tensor4<T, 3> const & A)
-  {
-    for (Index i = 0; i < 3; ++i) {
-      for (Index j = 0; j < 3; ++j) {
-        for (Index k = 0; k < 3; ++k) {
-          for (Index l = 0; l < 3; ++l) {
-            e[i][j][k][l] = A.e[i][j][k][l];
-          }
-        }
-      }
-    }
-
-    return;
-  }
-
-  //
-  // R^2 copy constructor
-  // 4th-order tensor constructor with 4th-order tensor
-  // \param A from which components are copied
-  //
-  template<typename T>
-  Tensor4<T, 2>::Tensor4(Tensor4<T, 2> const & A)
-  {
-    for (Index i = 0; i < 2; ++i) {
-      for (Index j = 0; j < 2; ++j) {
-        for (Index k = 0; k < 2; ++k) {
-          for (Index l = 0; l < 2; ++l) {
             e[i][j][k][l] = A.e[i][j][k][l];
           }
         }
@@ -787,26 +571,8 @@ namespace LCM {
   //
   // R^N 4th-order tensor simple destructor
   //
-  template<typename T, Index N>
-  Tensor4<T, N>::~Tensor4()
-  {
-    return;
-  }
-
-  //
-  // R^3 4th-order tensor simple destructor
-  //
   template<typename T>
-  Tensor4<T, 3>::~Tensor4()
-  {
-    return;
-  }
-
-  //
-  // R^2 4th-order tensor simple destructor
-  //
-  template<typename T>
-  Tensor4<T, 2>::~Tensor4()
+  Tensor4<T>::~Tensor4()
   {
     return;
   }
@@ -814,63 +580,20 @@ namespace LCM {
   //
   // R^N 4th-order tensor copy assignment
   //
-  template<typename T, Index N>
-  Tensor4<T, N> &
-  Tensor4<T, N>::operator=(Tensor4<T, N> const & A)
+  template<typename T>
+  Tensor4<T> &
+  Tensor4<T>::operator=(Tensor4<T> const & A)
   {
     if (this != &A) {
-      e.resize();
+      const Index
+      N = A.get_dimension();
+
+      set_dimension(N);
+
       for (Index i = 0; i < N; ++i) {
-        e[i].resize();
         for (Index j = 0; j < N; ++j) {
-          e[i][j].resize();
           for (Index k = 0; k < N; ++k) {
-            e[i][j][k].resize();
             for (Index l = 0; l < N; ++l) {
-              e[i][j][k][l] = A.e[i][j][k][l];
-            }
-          }
-        }
-      }
-    }
-
-    return *this;
-  }
-
-  //
-  // R^3 4th-order tensor copy assignment
-  //
-  template<typename T>
-  Tensor4<T, 3> &
-  Tensor4<T, 3>::operator=(Tensor4<T, 3> const & A)
-  {
-    if (this != &A) {
-      for (Index i = 0; i < 3; ++i) {
-        for (Index j = 0; j < 3; ++j) {
-          for (Index k = 0; k < 3; ++k) {
-            for (Index l = 0; l < 3; ++l) {
-              e[i][j][k][l] = A.e[i][j][k][l];
-            }
-          }
-        }
-      }
-    }
-
-    return *this;
-  }
-
-  //
-  // R^2 4th-order tensor copy assignment
-  //
-  template<typename T>
-  Tensor4<T, 2> &
-  Tensor4<T, 2>::operator=(Tensor4<T, 2> const & A)
-  {
-    if (this != &A) {
-      for (Index i = 0; i < 2; ++i) {
-        for (Index j = 0; j < 2; ++j) {
-          for (Index k = 0; k < 2; ++k) {
-            for (Index l = 0; l < 2; ++l) {
               e[i][j][k][l] = A.e[i][j][k][l];
             }
           }
@@ -885,10 +608,15 @@ namespace LCM {
   // 4th-order tensor increment
   // \param A added to this tensor
   //
-  template<typename T, Index N>
-  Tensor4<T, N> &
-  Tensor4<T, N>::operator+=(Tensor4<T, N> const & A)
+  template<typename T>
+  Tensor4<T> &
+  Tensor4<T>::operator+=(Tensor4<T> const & A)
   {
+    const Index
+    N = get_dimension();
+
+    assert(A.get_dimension() == N);
+
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
         for (Index k = 0; k < N; ++k) {
@@ -906,10 +634,15 @@ namespace LCM {
   // 4th-order tensor decrement
   // \param A substracted from this tensor
   //
-  template<typename T, Index N>
-  Tensor4<T, N> &
-  Tensor4<T, N>::operator-=(Tensor4<T, N> const & A)
+  template<typename T>
+  Tensor4<T> &
+  Tensor4<T>::operator-=(Tensor4<T> const & A)
   {
+    const Index
+    N = get_dimension();
+
+    assert(A.get_dimension() == N);
+
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
         for (Index k = 0; k < N; ++k) {
@@ -926,58 +659,17 @@ namespace LCM {
   //
   // R^N fill 4th-order tensor with zeros
   //
-  template<typename T, Index N>
+  template<typename T>
   void
-  Tensor4<T, N>::clear()
+  Tensor4<T>::clear()
   {
-    e.resize();
+    const Index
+    N = get_dimension();
+
     for (Index i = 0; i < N; ++i) {
-      e[i].resize();
       for (Index j = 0; j < N; ++j) {
-        e[i][j].resize();
         for (Index k = 0; k < N; ++k) {
-          e[i][j][k].resize();
           for (Index l = 0; l < N; ++l) {
-            e[i][j][k][l] = 0.0;
-          }
-        }
-      }
-    }
-
-    return;
-  }
-
-  //
-  // R^3 fill 4th-order tensor with zeros
-  //
-  template<typename T>
-  void
-  Tensor4<T, 3>::clear()
-  {
-    for (Index i = 0; i < 3; ++i) {
-      for (Index j = 0; j < 3; ++j) {
-        for (Index k = 0; k < 3; ++k) {
-          for (Index l = 0; l < 3; ++l) {
-            e[i][j][k][l] = 0.0;
-          }
-        }
-      }
-    }
-
-    return;
-  }
-
-  //
-  // R^2 fill 4th-order tensor with zeros
-  //
-  template<typename T>
-  void
-  Tensor4<T, 2>::clear()
-  {
-    for (Index i = 0; i < 2; ++i) {
-      for (Index j = 0; j < 2; ++j) {
-        for (Index k = 0; k < 2; ++k) {
-          for (Index l = 0; l < 2; ++l) {
             e[i][j][k][l] = 0.0;
           }
         }
@@ -993,11 +685,17 @@ namespace LCM {
   // \param B 4th-order tensor
   // \return \f$ A + B \f$
   //
-  template<typename T, Index N>
-  Tensor4<T, N>
-  operator+(Tensor4<T, N> const & A, Tensor4<T, N> const & B)
+  template<typename T>
+  Tensor4<T>
+  operator+(Tensor4<T> const & A, Tensor4<T> const & B)
   {
-    Tensor4<T, N> S;
+    const Index
+    N = A.get_dimension();
+
+    assert(B.get_dimension() == N);
+
+    Tensor4<T> S(N);
+
 
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
@@ -1018,11 +716,16 @@ namespace LCM {
   // \param B 4th-order tensor
   // \return \f$ A - B \f$
   //
-  template<typename T, Index N>
-  Tensor4<T, N>
-  operator-(Tensor4<T, N> const & A, Tensor4<T, N> const & B)
+  template<typename T>
+  Tensor4<T>
+  operator-(Tensor4<T> const & A, Tensor4<T> const & B)
   {
-    Tensor4<T, N> S;
+    const Index
+    N = A.get_dimension();
+
+    assert(B.get_dimension() == N);
+
+    Tensor4<T> S(N);
 
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
@@ -1041,11 +744,14 @@ namespace LCM {
   // 4th-order tensor minus
   // \return \f$ -A \f$
   //
-  template<typename T, Index N>
-  Tensor4<T, N>
-  operator-(Tensor4<T, N> const & A)
+  template<typename T>
+  Tensor4<T>
+  operator-(Tensor4<T> const & A)
   {
-    Tensor4<T, N> S;
+    const Index
+    N = A.get_dimension();
+
+    Tensor4<T> S(N);
 
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
@@ -1064,10 +770,15 @@ namespace LCM {
   // 4th-order equality
   // Tested by components
   //
-  template<typename T, Index N>
+  template<typename T>
   inline bool
-  operator==(Tensor4<T, N> const & A, Tensor4<T, N> const & B)
+  operator==(Tensor4<T> const & A, Tensor4<T> const & B)
   {
+    const Index
+    N = A.get_dimension();
+
+    assert(B.get_dimension() == N);
+
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
         for (Index k = 0; k < N; ++k) {
@@ -1087,9 +798,9 @@ namespace LCM {
   // 4th-order inequality
   // Tested by components
   //
-  template<typename T, Index N>
+  template<typename T>
   inline bool
-  operator!=(Tensor4<T, N> const & A, Tensor4<T, N> const & B)
+  operator!=(Tensor4<T> const & A, Tensor4<T> const & B)
   {
     return !(A==B);
   }
@@ -1100,11 +811,14 @@ namespace LCM {
   // \param A 4th-order tensor
   // \return \f$ s A \f$
   //
-  template<typename T, Index N, typename S>
-  Tensor4<T, N>
-  operator*(S const & s, Tensor4<T, N> const & A)
+  template<typename T, typename S>
+  Tensor4<T>
+  operator*(S const & s, Tensor4<T> const & A)
   {
-    Tensor4<T, N> B;
+    const Index
+    N = A.get_dimension();
+
+    Tensor4<T> B(N);
 
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
@@ -1125,9 +839,9 @@ namespace LCM {
   // \param s scalar
   // \return \f$ s A \f$
   //
-  template<typename T, Index N, typename S>
-  Tensor4<T, N>
-  operator*(Tensor4<T, N> const & A, S const & s)
+  template<typename T, typename S>
+  Tensor4<T>
+  operator*(Tensor4<T> const & A, S const & s)
   {
     return s * A;
   }
@@ -1140,47 +854,64 @@ namespace LCM {
   // \param A nonsingular tensor
   // \return \f$ A^{-1} \f$
   //
-  template<typename T, Index N>
-  Tensor<T, N>
-  inverse(Tensor<T, N> const & A)
+  template<typename T>
+  Tensor<T>
+  inverse(Tensor<T> const & A)
   {
-    Tensor<T, N> S = A;
-    Tensor<T, N> B = identity<T, N>();
-    Vector<Index, N> p, q;
+    const Index
+    N = A.get_dimension();
 
-    p.clear();
-    q.clear();
+    Tensor<T> S = A;
+    Tensor<T> B = identity<T>(N);
 
-    // Determine full pivot
+    typedef std::set<Index> IndexSet;
+    typedef std::set<Index>::const_iterator IndexIter;
+
+    IndexSet intact_rows;
+    IndexSet intact_cols;
+
+    for (Index k = 0; k < N; ++k) {
+      intact_rows.insert(k);
+      intact_cols.insert(k);
+    }
+
+    // Gauss-Jordan elimination with full pivoting
     for (Index k = 0; k < N; ++k) {
 
-      Index m = k;
-      Index n = k;
+      // Determine full pivot
+      T pivot = 0.0;
 
-      T s = fabs(S(m, n));
+      IndexIter pivot_row_iter = intact_rows.begin();
+      IndexIter pivot_col_iter = intact_cols.begin();
 
-      for (Index i = k; i < N; ++i) {
-        for (Index j = k; j < N; ++j) {
-          if (fabs(S(i, j)) > s) {
-            m = i;
-            n = j;
-            s = fabs(S(i, j));
+      for (IndexIter rows_iter = intact_rows.begin();
+          rows_iter != intact_rows.end(); ++rows_iter) {
+
+        for (IndexIter cols_iter = intact_cols.begin();
+            cols_iter != intact_cols.end(); ++cols_iter) {
+
+          const Index row = *rows_iter;
+          const Index col = *cols_iter;
+          const T s = fabs(S(row, col));
+
+          if (s > pivot) {
+
+            pivot_row_iter = rows_iter;
+            pivot_col_iter = cols_iter;
+
+            pivot = s;
+
           }
+
         }
+
       }
 
-      // Swap rows and columns for pivoting
-      swap_row(S, k, m);
-      swap_row(B, k, m);
-
-      swap_col(S, k, n);
-      swap_col(B, k, n);
-
-      p(k) = m;
-      q(k) = n;
+      const Index pivot_row = *pivot_row_iter;
+      const Index pivot_col = *pivot_col_iter;
 
       // Gauss-Jordan elimination
-      const T t = S(k, k);
+      const T t = S(pivot_row, pivot_col);
 
       if (t == 0.0) {
         std::cerr << "ERROR: Inverse of singular tensor." << std::endl;
@@ -1188,75 +919,31 @@ namespace LCM {
       }
 
       for (Index j = 0; j < N; ++j) {
-        S(k, j) /= t;
-        B(k, j) /= t;
+        S(pivot_row, j) /= t;
+        B(pivot_row, j) /= t;
       }
 
       for (Index i = 0; i < N; ++i) {
-        if (i == k) continue;
+        if (i == pivot_row) continue;
 
-        const T c = S(i, k);
+        const T c = S(i, pivot_col);
 
         for (Index j = 0; j < N; ++j) {
-          S(i, j) -= c * S(k, j);
-          B(i, j) -= c * B(k, j);
+          S(i, j) -= c * S(pivot_row, j);
+          B(i, j) -= c * B(pivot_row, j);
         }
       }
 
-    }
-
-    // Restore order of rows and columns
-    for (Index k = N - 1; k > 0; --k) {
-
-      Index m = p(k);
-      Index n = q(k);
-
-      swap_row(B, k, m);
-      swap_col(B, k, n);
+      // Eliminate current row and col from intact rows and cols
+      intact_rows.erase(pivot_row_iter);
+      intact_cols.erase(pivot_col_iter);
 
     }
 
-    return B;
-  }
+    Tensor<T>
+    X = transpose(S) * B;
 
-  //
-  // R^3 2nd-order tensor inverse
-  // \param A nonsingular tensor
-  // \return \f$ A^{-1} \f$
-  //
-  template<typename T>
-  Tensor<T, 3>
-  inverse(Tensor<T, 3> const & A)
-  {
-    const T d = det(A);
-    assert(d != 0.0);
-    Tensor<T, 3> B(
-        -A(1,2)*A(2,1) + A(1,1)*A(2,2),
-         A(0,2)*A(2,1) - A(0,1)*A(2,2),
-        -A(0,2)*A(1,1) + A(0,1)*A(1,2),
-         A(1,2)*A(2,0) - A(1,0)*A(2,2),
-        -A(0,2)*A(2,0) + A(0,0)*A(2,2),
-         A(0,2)*A(1,0) - A(0,0)*A(1,2),
-        -A(1,1)*A(2,0) + A(1,0)*A(2,1),
-         A(0,1)*A(2,0) - A(0,0)*A(2,1),
-        -A(0,1)*A(1,0) + A(0,0)*A(1,1)
-    );
-    return B / d;
-  }
-
-  //
-  // R^2 2nd-order tensor inverse
-  // \param A nonsingular tensor
-  // \return \f$ A^{-1} \f$
-  //
-  template<typename T>
-  Tensor<T, 2>
-  inverse(Tensor<T, 2> const & A)
-  {
-    const T d = det(A);
-    assert(d != 0.0);
-    Tensor<T, 2> B(A(1,1), -A(0,1), -A(1,0), A(0,0));
-    return B / d;
+    return X;
   }
 
   //
@@ -1266,14 +953,17 @@ namespace LCM {
   // \param j index
   // \return Subtensor with i-row and j-col deleted.
   //
-  template<typename T, Index N>
-  Tensor<T, N - 1>
-  subtensor(Tensor<T, N> const & A, Index i, Index j)
+  template<typename T>
+  Tensor<T>
+  subtensor(Tensor<T> const & A, Index i, Index j)
   {
+    const Index
+    N = A.get_dimension();
+
     assert(i < N);
     assert(j < N);
 
-    Tensor<T, N - 1> B;
+    Tensor<T> B(N - 1);
 
     Index p = 0;
     Index q = 0;
@@ -1291,69 +981,13 @@ namespace LCM {
   }
 
   //
-  // R^3 Subtensor
-  // \param A tensor
-  // \param i index
-  // \param j index
-  // \return Subtensor with i-row and j-col deleted.
-  //
-  template<typename T>
-  Tensor<T, 2>
-  subtensor(Tensor<T, 3> const & A, Index i, Index j)
-  {
-    assert(i < 3);
-    assert(j < 3);
-
-    Tensor<T, 2> B;
-
-    Index p = 0;
-    Index q = 0;
-    for (Index m = 0; m < 3; ++m) {
-      if (m == i) continue;
-      for (Index n = 0; n < 3; ++n) {
-        if (n == j) continue;
-        B(p, q) = A(m, n);
-        ++q;
-      }
-      ++p;
-    }
-
-    return B;
-  }
-
-  //
-  // R^2 Subtensor
-  // \param A tensor
-  // \param i index
-  // \param j index
-  // \return Subtensor with i-row and j-col deleted.
-  //
-  template<typename T>
-  Tensor<T, 1>
-  subtensor(Tensor<T, 2> const & A, Index i, Index j)
-  {
-    assert(i < 2);
-    assert(j < 2);
-
-    Tensor<T, 1> B;
-
-    Index m = 1 - i;
-    Index n = 1 - j;
-
-    B(0, 0) = A(m, n);
-
-    return B;
-
-  }
-
-  //
   // R^N exponential map by Taylor series, radius of convergence is infinity
   // \param A tensor
   // \return \f$ \exp A \f$
   //
-  template<typename T, Index N>
-  Tensor<T, N>
-  exp(Tensor<T, N> const & A)
+  template<typename T>
+  Tensor<T>
+  exp(Tensor<T> const & A)
   {
     const Index
     max_iter = 128;
@@ -1361,14 +995,17 @@ namespace LCM {
     const T
     tol = machine_epsilon<T>();
 
-    Tensor<T, N>
-    term = identity<T, N>();
+    const Index
+    N = A.get_dimension();
+
+    Tensor<T>
+    term = identity<T>(N);
 
     // Relative error taken wrt to the first term, which is I and norm = 1
     T
     relative_error = 1.0;
 
-    Tensor<T, N>
+    Tensor<T>
     B = term;
 
     Index
@@ -1389,9 +1026,9 @@ namespace LCM {
   // \param A tensor
   // \return \f$ \log A \f$
   //
-  template<typename T, Index N>
-  Tensor<T, N>
-  log(Tensor<T, N> const & A)
+  template<typename T>
+  Tensor<T>
+  log(Tensor<T> const & A)
   {
     // Check whether skew-symmetric holds
 
@@ -1404,10 +1041,13 @@ namespace LCM {
     const T
     norm_arg = norm_1(A);
 
-    const Tensor<T, N>
-    Am1 = A - identity<T, N>();
+    const Index
+    N = A.get_dimension();
 
-    Tensor<T, N>
+    const Tensor<T>
+    Am1 = A - identity<T>(N);
+
+    Tensor<T>
     term = Am1;
 
     T
@@ -1416,7 +1056,7 @@ namespace LCM {
     T
     relative_error = norm_term / norm_arg;
 
-    Tensor<T, N>
+    Tensor<T>
     B = term;
 
     Index
@@ -1438,38 +1078,16 @@ namespace LCM {
   // \param R with \f$ R \in SO(N) \f$
   // \return \f$ r = \log R \f$ with \f$ r \in so(N) \f$
   //
-  template<typename T, Index N>
-  Tensor<T, N>
-  log_rotation(Tensor<T, N> const & R)
-  {
-    //firewalls, make sure R \in SO(N)
-    assert(norm(R*transpose(R) - eye<T, N>())
-        < 100.0 * machine_epsilon<T>());
-    assert(fabs(det(R) - 1.0)
-        < 100.0 * machine_epsilon<T>());
-
-    std::cerr << "Logarithm of SO(N) N != 2,3 not implemented." << std::endl;
-    exit(1);
-
-    Tensor<T, N>
-    r;
-    return r;
-  }
-
-  //
-  // R^3 logarithmic map of a rotation
-  // \param R with \f$ R \in SO(3) \f$
-  // \return \f$ r = \log R \f$ with \f$ r \in so(3) \f$
-  //
   template<typename T>
-  Tensor<T, 3>
-  log_rotation(Tensor<T, 3> const & R)
+  Tensor<T>
+  log_rotation(Tensor<T> const & R)
   {
-    //firewalls, make sure R \in SO(3)
-    assert(norm(R*transpose(R) - eye<T, 3>())
-        < 100.0 * std::numeric_limits<double>::epsilon());
-    assert(fabs(det(R) - 1.0)
-        < 100.0 * std::numeric_limits<double>::epsilon());
+    const Index
+    N = R.get_dimension();
+
+    //firewalls, make sure R \in SO(N)
+    assert(norm(R*transpose(R) - eye<T>(N)) < 100.0 * machine_epsilon<T>());
+    assert(fabs(det(R) - 1.0) < 100.0 * machine_epsilon<T>());
 
     // acos requires input between -1 and +1
     T
@@ -1484,52 +1102,35 @@ namespace LCM {
     T
     theta = acos(cosine);
 
-    Tensor<T, 3>
-    r;
+    Tensor<T>
+    r(N);
 
-    if (theta == 0) {
-      r = zero<T, 3>();
-    } else if (fabs(cosine + 1.0) <
-        10.0*machine_epsilon<T>())  {
-      // Rotation angle is PI.
-      r = log_rotation_pi(R);
-    } else {
-      r = T(theta/(2.0*sin(theta)))*(R - transpose(R));
+    switch (N) {
+
+    default:
+      std::cerr << "Logarithm of SO(N) N != 2,3 not implemented." << std::endl;
+      exit(1);
+      break;
+
+    case 3:
+      if (theta == 0) {
+        r = zero<T>(3);
+      } else if (fabs(cosine + 1.0) < 10.0*machine_epsilon<T>())  {
+        // Rotation angle is PI.
+        r = log_rotation_pi(R);
+      } else {
+        r = T(theta/(2.0*sin(theta)))*(R - transpose(R));
+      }
+      break;
+
+    case 2:
+      r(0,0) = 0.0;
+      r(0,1) = -theta;
+      r(1,0) = theta;
+      r(1,1) = 0.0;
+      break;
+
     }
-
-    return r;
-  }
-
-  //
-  // R^2 logarithmic map of a rotation
-  // \param R with \f$ R \in SO(2) \f$
-  // \return \f$ r = \log R \f$ with \f$ r \in so(2) \f$
-  //
-  template<typename T>
-  Tensor<T, 2>
-  log_rotation(Tensor<T, 2> const & R)
-  {
-    //firewalls, make sure R \in SO(2)
-    assert(norm(R*transpose(R) - eye<T, 2>())
-        < 100.0 * machine_epsilon<T>());
-    assert(fabs(det(R) - 1.0)
-        < 100.0 * machine_epsilon<T>());
-
-    // acos requires input between -1 and +1
-    T
-    cosine = R(0,0);
-
-    if (cosine < -1.0) {
-      cosine = -1.0;
-    } else if(cosine > 1.0) {
-      cosine = 1.0;
-    }
-
-    T
-    theta = acos(cosine);
-
-    Tensor<T, 2>
-    r(0.0, -theta, theta, 0.0);
 
     return r;
   }
@@ -1538,98 +1139,88 @@ namespace LCM {
   // \param R with \f$ R \in SO(N) \f$
   // \return \f$ r = \log R \f$ with \f$ r \in so(N) \f$
   //
-  template<typename T, Index N>
-  Tensor<T, N>
-  log_rotation_pi(Tensor<T, N> const & R)
-  {
-    std::cerr << "Logarithm of SO(N) N != 2,3 not implemented." << std::endl;
-    exit(1);
-
-    Tensor<T, N>
-    r;
-
-    return r;
-  }
-
-  // R^3 logarithmic map of a 180-degree rotation
-  // \param R with \f$ R \in SO(3) \f$
-  // \return \f$ r = \log R \f$ with \f$ r \in so(3) \f$
-  //
   template<typename T>
-  Tensor<T, 3>
-  log_rotation_pi(Tensor<T, 3> const & R)
+  Tensor<T>
+  log_rotation_pi(Tensor<T> const & R)
   {
+    const Index
+    N = R.get_dimension();
+
+    T
+    cosine = 0.5*(trace(R) - 1.0);
     // set firewall to make sure the rotation is indeed 180 degrees
-    assert(fabs(0.5 * (trace(R) - 1.0) + 1.0)
-        < machine_epsilon<T>());
+    assert(fabs(cosine + 1.0) < 10.0 * machine_epsilon<T>());
 
-    // obtain U from R = LU
-    Tensor<T, 3>
-    r = gaussian_elimination((R - identity<T, 3>()));
+    Tensor<T>
+    r(N);
 
-    // backward substitution (for rotation exp(R) only)
-    const T
-    tol = 10.0*machine_epsilon<T>();
+    switch (N) {
 
-    Vector<T, 3>
-    normal;
+    default:
+      std::cerr << "Logarithm of SO(N) N != 2,3 not implemented." << std::endl;
+      exit(1);
+      break;
 
-    if (fabs(r(2,2)) < tol){
-      normal(2) = 1.0;
-    } else {
-      normal(2) = 0.0;
+    case 3:
+      {
+        // obtain U from R = LU
+        r = gaussian_elimination((R - identity<T>(3)));
+
+        // backward substitution (for rotation exp(R) only)
+        const T tol = 10.0 * machine_epsilon<T>();
+
+        Vector<T> normal(3);
+
+        if (fabs(r(2,2)) < tol){
+          normal(2) = 1.0;
+        } else {
+          normal(2) = 0.0;
+        }
+
+        if (fabs(r(1,1)) < tol){
+          normal(1) = 1.0;
+        } else {
+          normal(1) = -normal(2)*r(1,2)/r(1,1);
+        }
+
+        if (fabs(r(0,0)) < tol){
+          normal(0) = 1.0;
+        } else {
+          normal(0) = -normal(1)*r(0,1) - normal(2)*r(0,2)/r(0,0);
+        }
+
+        normal = normal / norm(normal);
+
+        r.clear();
+        r(0,1) = -normal(2);
+        r(0,2) =  normal(1);
+        r(1,0) =  normal(2);
+        r(1,2) = -normal(0);
+        r(2,0) = -normal(1);
+        r(2,1) =  normal(0);
+
+        const T pi = acos(-1.0);
+
+        r = pi * r;
+      }
+      break;
+
+    case 2:
+      {
+        T theta = acos(-1.0);
+
+        if (R(0,0) > 0.0) {
+          theta = - theta;
+        }
+
+        r(0,0) = 0.0;
+        r(0,1) = -theta;
+        r(1,0) = theta;
+        r(1,1) = 0.0;
+      }
+      break;
+
     }
-
-    if (fabs(r(1,1)) < tol){
-      normal(1) = 1.0;
-    } else {
-      normal(1) = -normal(2)*r(1,2)/r(1,1);
-    }
-
-    if (fabs(r(0,0)) < tol){
-      normal(0) = 1.0;
-    } else {
-      normal(0) = -normal(1)*r(0,1) - normal(2)*r(0,2)/r(0,0);
-    }
-
-    normal = normal / norm(normal);
-
-    r.clear();
-    r(0,1) = -normal(2);
-    r(0,2) =  normal(1);
-    r(1,0) =  normal(2);
-    r(1,2) = -normal(0);
-    r(2,0) = -normal(1);
-    r(2,1) =  normal(0);
-
-    const T
-    pi = acos(-1.0);
-    r = pi * r;
-
-    return r;
-  }
-
-  // R^2 Logarithmic map of a 180-degree rotation
-  // \param R with \f$ R \in SO(2) \f$
-  // \return \f$ r = \log R \f$ with \f$ r \in so(2) \f$
-  //
-  template<typename T>
-  Tensor<T, 2>
-  log_rotation_pi(Tensor<T, 2> const & R)
-  {
-    // set firewall to make sure the rotation is indeed 180 degrees
-    assert(fabs(R(0,0) - 1.0) < machine_epsilon<T>());
-
-    const T
-    theta = acos(-1.0);
-
-    if (R(0,0) > 0.0) {
-      theta = - theta;
-    }
-
-    // obtain U from R = LU
-    Tensor<T, 2>
-    r(0.0, -theta, theta, 0.0);
 
     return r;
   }
@@ -1638,11 +1229,14 @@ namespace LCM {
   // \param matrix \f$ A \f$
   // \return \f$ U \f$ where \f$ A = LU \f$
   //
-  template<typename T, Index N>
-  Tensor<T, N>
-  gaussian_elimination(Tensor<T, N> const & A)
+  template<typename T>
+  Tensor<T>
+  gaussian_elimination(Tensor<T> const & A)
   {
-    Tensor<T, N>
+    const Index
+    N = A.get_dimension();
+
+    Tensor<T>
     U = A;
 
     const T
@@ -1690,10 +1284,13 @@ namespace LCM {
   // \param c and s for a rotation G in form [c, s; -s, c]
   // \param A
   //
-  template<typename T, Index N>
+  template<typename T>
   void
-  givens_left(T const & c, T const & s, Index i, Index k, Tensor<T, N> & A)
+  givens_left(T const & c, T const & s, Index i, Index k, Tensor<T> & A)
   {
+    const Index
+    N = A.get_dimension();
+
     for (Index j = 0; j < N; ++j) {
       T const t1 = A(i,j);
       T const t2 = A(k,j);
@@ -1705,12 +1302,15 @@ namespace LCM {
 
   // Apply Givens-Jacobi rotation on the right in place.
   // \param A
-  /// \param c and s for a rotation G in form [c, s; -s, c]
+  // \param c and s for a rotation G in form [c, s; -s, c]
   //
-  template<typename T, Index N>
+  template<typename T>
   void
-  givens_right(T const & c, T const & s, Index i, Index k, Tensor<T, N> & A)
+  givens_right(T const & c, T const & s, Index i, Index k, Tensor<T> & A)
   {
+    const Index
+    N = A.get_dimension();
+
     for (Index j = 0; j < N; ++j) {
       T const t1 = A(j,i);
       T const t2 = A(j,k);
@@ -1725,68 +1325,55 @@ namespace LCM {
   // \param r \f$ r \in so(N) \f$
   // \return \f$ R = \exp R \f$ with \f$ R \in SO(N) \f$
   //
-  template<typename T, Index N>
-  Tensor<T, N>
-  exp_skew_symmetric(Tensor<T, N> const & r)
-  {
-    std::cerr << "Exponential of so(N) N != 2,3 not implemented." << std::endl;
-    exit(1);
-
-    Tensor<T, N>
-    R;
-
-    return R;
-  }
-
-  //
-  // R^3 exponential map of a skew-symmetric tensor
-  // \param r \f$ r \in so(3) \f$
-  // \return \f$ R = \exp R \f$ with \f$ R \in SO(3) \f$
-  //
   template<typename T>
-  Tensor<T, 3>
-  exp_skew_symmetric(Tensor<T, 3> const & r)
+  Tensor<T>
+  exp_skew_symmetric(Tensor<T> const & r)
   {
     // Check whether skew-symmetry holds
     assert(norm(r+transpose(r)) < machine_epsilon<T>());
 
+    const Index
+    N = r.get_dimension();
+
+    Tensor<T>
+    R = identity<T>(N);
+
     T
-    theta = sqrt(r(2,1)*r(2,1)+r(0,2)*r(0,2)+r(1,0)*r(1,0));
+    theta = 0.0;
 
-    Tensor<T, 3>
-    R = identity<T, 3>();
+    switch (N) {
 
-    //Check whether norm == 0. If so, return identity.
-    if (theta >= machine_epsilon<T>()) {
-      R += sin(theta)/theta*r + (1.0-cos(theta))/(theta*theta)*r*r;
+    default:
+      std::cerr << "Exp of so(N) N != 2,3 not implemented." << std::endl;
+      exit(1);
+      break;
+
+    case 3:
+      theta = sqrt(r(2,1)*r(2,1)+r(0,2)*r(0,2)+r(1,0)*r(1,0));
+
+      //Check whether norm == 0. If so, return identity.
+      if (theta >= machine_epsilon<T>()) {
+        R += sin(theta)/theta*r + (1.0-cos(theta))/(theta*theta)*r*r;
+      }
+      break;
+
+    case 2:
+      theta = r(1,0);
+
+      T
+      c = cos(theta);
+
+      T
+      s = sin(theta);
+
+      R(0,0) = c;
+      R(0,1) = -s;
+      R(1,0) = s;
+      R(1,1) = c;
+
+      break;
+
     }
-
-    return R;
-  }
-
-  //
-  // R^2 exponential map of a skew-symmetric tensor
-  // \param r \f$ r \in so(3) \f$
-  // \return \f$ R = \exp R \f$ with \f$ R \in SO(3) \f$
-  //
-  template<typename T>
-  Tensor<T, 2>
-  exp_skew_symmetric(Tensor<T, 2> const & r)
-  {
-    // Check whether skew-symmetry holds
-    assert(norm(r+transpose(r)) < machine_epsilon<T>());
-
-    T
-    theta = r(1,0);
-
-    T
-    c = cos(theta);
-
-    T
-    s = sin(theta);
-
-    Tensor<T, 2>
-    R(c, -s, s, c);
 
     return R;
   }
@@ -1797,45 +1384,37 @@ namespace LCM {
   // \param A
   // \return \f$ \sqrt(\sum_i \sum_{j, j\neq i} a_{ij}^2) \f$
   //
-  template<typename T, Index N>
+  template<typename T>
   T
-  norm_off_diagonal(Tensor<T, N> const & A)
+  norm_off_diagonal(Tensor<T> const & A)
   {
+    const Index
+    N = A.get_dimension();
+
     T s = 0.0;
-    for (Index i = 0; i < N; ++i) {
-      for (Index j = 0; j < N; ++j) {
-        if (i != j) s += A(i,j)*A(i,j);
+
+    switch (N) {
+
+    default:
+      for (Index i = 0; i < N; ++i) {
+        for (Index j = 0; j < N; ++j) {
+          if (i != j) s += A(i,j)*A(i,j);
+        }
       }
+      break;
+
+    case 3:
+      s = A(0,1)*A(0,1) + A(0,2)*A(0,2) + A(1,2)*A(1,2) +
+          A(1,0)*A(1,0) + A(2,0)*A(2,0) + A(2,1)*A(2,1);
+      break;
+
+    case 2:
+      s = A(0,1)*A(0,1) + A(1,0)*A(1,0);
+      break;
+
     }
+
     return sqrt(s);
-  }
-
-  //
-  // R^3 off-diagonal norm. Useful for SVD and other algorithms
-  // that rely on Jacobi-type procedures.
-  // \param A
-  // \return \f$ \sqrt(\sum_i \sum_{j, j\neq i} a_{ij}^2) \f$
-  //
-  template<typename T>
-  T
-  norm_off_diagonal(Tensor<T, 3> const & A)
-  {
-    return sqrt(
-        A(0,1)*A(0,1) + A(0,2)*A(0,2) + A(1,2)*A(1,2) +
-        A(1,0)*A(1,0) + A(2,0)*A(2,0) + A(2,1)*A(2,1));
-  }
-
-  //
-  // R^2 off-diagonal norm. Useful for SVD and other algorithms
-  // that rely on Jacobi-type procedures.
-  // \param A
-  // \return \f$ \sqrt(\sum_i \sum_{j, j\neq i} a_{ij}^2) \f$
-  //
-  template<typename T>
-  T
-  norm_off_diagonal(Tensor<T, 2> const & A)
-  {
-    return sqrt(A(0,1)*A(0,1) + A(1,0)*A(1,0));
   }
 
   //
@@ -1844,14 +1423,17 @@ namespace LCM {
   // \param A
   // \return \f$ (p,q) = arg max_{i,j} |a_{ij}| \f$
   //
-  template<typename T, Index N>
+  template<typename T>
   std::pair<Index, Index>
-  arg_max_abs(Tensor<T, N> const & A)
+  arg_max_abs(Tensor<T> const & A)
   {
     Index p = 0;
     Index q = 0;
 
     T s = fabs(A(p,q));
+
+    const Index
+    N = A.get_dimension();
 
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
@@ -1872,14 +1454,17 @@ namespace LCM {
   // \param A
   // \return \f$ (p,q) = arg max_{i \neq j} |a_{ij}| \f$
   //
-  template<typename T, Index N>
+  template<typename T>
   std::pair<Index, Index>
-  arg_max_off_diagonal(Tensor<T, N> const & A)
+  arg_max_off_diagonal(Tensor<T> const & A)
   {
     Index p = 0;
     Index q = 1;
 
     T s = fabs(A(p,q));
+
+    const Index
+    N = A.get_dimension();
 
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
@@ -1894,238 +1479,275 @@ namespace LCM {
     return std::make_pair(p,q);
   }
 
-  //
-  // R^2 arg max off-diagonal. Useful for SVD and other algorithms
-  // that rely on Jacobi-type procedures.
-  // \param A
-  // \return \f$ (p,q) = arg max_{i \neq j} |a_{ij}| \f$
-  //
-  template<typename T>
-  std::pair<Index, Index>
-  arg_max_off_diagonal(Tensor<T, 2> const & A)
-  {
-    Index p = 0;
-    Index q = 1;
+  namespace {
 
-    if (fabs(A(1,0)) > fabs(A(0,1))) {
-      p = 1;
-      q = 0;
-    }
+    //
+    // Singular value decomposition (SVD) for 2x2
+    // bidiagonal matrix. Used for general 2x2 SVD.
+    // Adapted from LAPAPCK's DLASV2, Netlib's dlasv2.c
+    // and LBNL computational crystalography toolbox
+    // \param f, g, h where A = [f, g; 0, h]
+    // \return \f$ A = USV^T\f$
+    //
+    template<typename T>
+    boost::tuple<Tensor<T>, Tensor<T>, Tensor<T> >
+    svd_bidiagonal(T f, T g, T h)
+    {
+      T fa = std::abs(f);
+      T ga = std::abs(g);
+      T ha = std::abs(h);
 
-    return std::make_pair(p,q);
-  }
+      T s0 = 0.0;
+      T s1 = 0.0;
 
-  //
-  // Singular value decomposition (SVD) for 2x2
-  // bidiagonal matrix. Used for general 2x2 SVD.
-  // Adapted from LAPAPCK's DLASV2, Netlib's dlasv2.c
-  // and LBNL computational crystalography toolbox
-  // \param f, g, h where A = [f, g; 0, h]
-  // \return \f$ A = USV^T\f$
-  //
-  template<typename T>
-  boost::tuple<Tensor<T, 2>, Tensor<T, 2>, Tensor<T, 2> >
-  svd_bidiagonal(T f, T g, T h)
-  {
-    T fa = std::abs(f);
-    T ga = std::abs(g);
-    T ha = std::abs(h);
+      T cu = 1.0;
+      T su = 0.0;
+      T cv = 1.0;
+      T sv = 0.0;
 
-    T s0 = 0.0;
-    T s1 = 0.0;
+      bool swap_diag = (ha > fa);
 
-    T cu = 1.0;
-    T su = 0.0;
-    T cv = 1.0;
-    T sv = 0.0;
-
-    bool swap_diag = (ha > fa);
-
-    if (swap_diag) {
-      std::swap(fa, ha);
-      std::swap(f, h);
-    }
-
-    if (ga == 0.0) {
-      s1 = ha;
-      s0 = fa;
-    } else if (ga > fa && fa / ga < machine_epsilon<T>()) {
-      // case of very large ga
-      s0 = ga;
-      s1 = ha > 1.0 ?
-          T(fa / (ga / ha)) :
-          T((fa / ga) * ha);
-      cu = 1.0;
-      su = h / g;
-      cv = f / g;
-      sv = 1.0;
-    } else {
-      // normal case
-      T d = fa - ha;
-      T l = d != fa ?
-          T(d / fa) :
-          T(1.0); // l \in [0,1]
-      T m = g / f; // m \in (-1/macheps, 1/macheps)
-      T t = 2.0 - l; // t \in [1,2]
-      T mm = m * m;
-      T tt = t * t;
-      T s = sqrt(tt + mm); // s \in [1,1 + 1/macheps]
-      T r = l != 0.0 ?
-          T(sqrt(l * l + mm)) :
-          T(fabs(m)); // r \in [0,1 + 1/macheps]
-      T a = 0.5 * (s + r); // a \in [1,1 + |m|]
-      s1 = ha / a;
-      s0 = fa * a;
-
-      // Compute singular vectors
-      T tau; // second assignment to T in DLASV2
-      if (mm != 0.0) {
-        tau = (m / (s + t) + m / (r + l)) * (1.0 + a);
-      } else {
-        // note that m is very tiny
-        tau = l == 0.0 ?
-            T(copysign(T(2.0), f) * copysign(T(1.0), g)) :
-            T(g / copysign(d, f) + m / t);
+      if (swap_diag) {
+        std::swap(fa, ha);
+        std::swap(f, h);
       }
-      T lv = sqrt(tau * tau + 4.0); // second assignment to L in DLASV2
-      cv = 2.0 / lv;
-      sv = tau / lv;
-      cu = (cv + sv * m) / a;
-      su = (h / f) * sv / a;
+
+      if (ga == 0.0) {
+        s1 = ha;
+        s0 = fa;
+      } else if (ga > fa && fa / ga < machine_epsilon<T>()) {
+        // case of very large ga
+        s0 = ga;
+        s1 = ha > 1.0 ?
+            T(fa / (ga / ha)) :
+            T((fa / ga) * ha);
+        cu = 1.0;
+        su = h / g;
+        cv = f / g;
+        sv = 1.0;
+      } else {
+        // normal case
+        T d = fa - ha;
+        T l = d != fa ?
+            T(d / fa) :
+            T(1.0); // l \in [0,1]
+        T m = g / f; // m \in (-1/macheps, 1/macheps)
+        T t = 2.0 - l; // t \in [1,2]
+        T mm = m * m;
+        T tt = t * t;
+        T s = sqrt(tt + mm); // s \in [1,1 + 1/macheps]
+        T r = l != 0.0 ?
+            T(sqrt(l * l + mm)) :
+            T(fabs(m)); // r \in [0,1 + 1/macheps]
+        T a = 0.5 * (s + r); // a \in [1,1 + |m|]
+        s1 = ha / a;
+        s0 = fa * a;
+
+        // Compute singular vectors
+        T tau; // second assignment to T in DLASV2
+        if (mm != 0.0) {
+          tau = (m / (s + t) + m / (r + l)) * (1.0 + a);
+        } else {
+          // note that m is very tiny
+          tau = l == 0.0 ?
+              T(copysign(T(2.0), f) * copysign(T(1.0), g)) :
+              T(g / copysign(d, f) + m / t);
+        }
+        T lv = sqrt(tau * tau + 4.0); // second assignment to L in DLASV2
+        cv = 2.0 / lv;
+        sv = tau / lv;
+        cu = (cv + sv * m) / a;
+        su = (h / f) * sv / a;
+      }
+
+      // Fix signs of singular values in accordance to sign of singular vectors
+      s0 = copysign(s0, f);
+      s1 = copysign(s1, h);
+
+      if (swap_diag) {
+        std::swap(cu, sv);
+        std::swap(su, cv);
+      }
+
+      Tensor<T> U(cu, -su, su, cu);
+
+      Tensor<T> S(s0, 0.0, 0.0, s1);
+
+      Tensor<T> V(cv, -sv, sv, cv);
+
+      return boost::make_tuple(U, S, V);
     }
 
-    // Fix signs of singular values in accordance to sign of singular vectors
-    s0 = copysign(s0, f);
-    s1 = copysign(s1, h);
+    //
+    // R^2 singular value decomposition (SVD)
+    // \param A tensor
+    // \return \f$ A = USV^T\f$
+    //
+    template<typename T>
+    boost::tuple<Tensor<T>, Tensor<T>, Tensor<T> >
+    svd_2x2(Tensor<T> const & A)
+    {
+      assert(A.get_dimension() == 2);
 
-    if (swap_diag) {
-      std::swap(cu, sv);
-      std::swap(su, cv);
+      // First compute a givens rotation to eliminate 1,0 entry in tensor
+      T c = 1.0;
+      T s = 0.0;
+      boost::tie(c, s) = givens(A(0,0), A(1,0));
+
+      Tensor<T>
+      R(c, -s, s, c);
+
+      Tensor<T>
+      B = R * A;
+
+      // B is bidiagonal. Use specialized algorithm to compute its SVD
+      Tensor<T>
+      X(2), S(2), V(2);
+
+      boost::tie(X, S, V) = svd_bidiagonal(B(0,0), B(0,1), B(1,1));
+
+      // Complete general 2x2 SVD with givens rotation calculated above
+      Tensor<T>
+      U = transpose(R) * X;
+
+      return boost::make_tuple(U, S, V);
     }
 
-    Tensor<T, 2> U(cu, -su, su, cu);
+    //
+    // R^N singular value decomposition (SVD)
+    // \param A tensor
+    // \return \f$ A = USV^T\f$
+    //
+    template<typename T>
+    boost::tuple<Tensor<T>, Tensor<T>, Tensor<T> >
+    svd_NxN(Tensor<T> const & A)
+    {
+      Tensor<T>
+      S = A;
 
-    Tensor<T, 2> S(s0, 0.0, 0.0, s1);
+      const Index
+      N = A.get_dimension();
 
-    Tensor<T, 2> V(cv, -sv, sv, cv);
+      Tensor<T>
+      U = identity<T>(N);
 
-    return boost::make_tuple(U, S, V);
-  }
+      Tensor<T>
+      V = identity<T>(N);
+
+      T
+      off = norm_off_diagonal(S);
+
+      const T
+      tol = machine_epsilon<T>() * norm(A);
+
+      const Index
+      max_iter = 128;
+
+      Index
+      num_iter = 0;
+
+      while (off > tol && num_iter < max_iter) {
+
+        // Find largest off-diagonal entry
+        Index
+        p = 0;
+
+        Index
+        q = 0;
+
+        boost::tie(p,q) = arg_max_off_diagonal(S);
+
+        if (p > q) {
+          std::swap(p, q);
+        }
+
+        // Obtain left and right Givens rotations by using 2x2 SVD
+        Tensor <T>
+        Spq(S(p,p), S(p,q), S(q,p), S(q,q));
+
+        Tensor <T>
+        L(2), D(2), R(2);
+
+        boost::tie(L, D, R) = svd_2x2(Spq);
+
+        T const &
+        cl = L(0,0);
+
+        T const &
+        sl = L(0,1);
+
+        T const &
+        cr = R(0,0);
+
+        T const &
+        sr = (sgn(R(0,1)) == sgn(R(1,0))) ? T(-R(0,1)) : T(R(0,1));
+
+        // Apply both Givens rotations to matrices
+        // that are converging to singular values and singular vectors
+        givens_left(cl, sl, p, q, S);
+        givens_right(cr, sr, p, q, S);
+
+        givens_right(cl, sl, p, q, U);
+        givens_left(cr, sr, p, q, V);
+
+        off = norm_off_diagonal(S);
+        num_iter++;
+      }
+
+      if (num_iter == max_iter) {
+        std::cerr << "WARNING: SVD iteration did not converge." << std::endl;
+      }
+
+      // Fix signs for entries in the diagonal matrix S
+      // that are negative
+      for (Index i = 0; i < N; ++i) {
+        if (S(i,i) < 0.0) {
+          S(i,i) = -S(i,i);
+          for (Index j = 0; j < N; ++j) {
+            U(j,i) = -U(j,i);
+          }
+        }
+      }
+
+      Vector<T> s(N);
+      Tensor<T> P(N);
+
+      boost::tie(s, P) = sort_permutation(diag(S));
+      S = diag(s);
+      U = U * P;
+      V = V * P;
+
+      return boost::make_tuple(U, diag(diag(S)), transpose(V));
+    }
+
+  } // anonymous namespace
 
   //
   // R^N singular value decomposition (SVD)
   // \param A tensor
   // \return \f$ A = USV^T\f$
   //
-  template<typename T, Index N>
-  boost::tuple<Tensor<T, N>, Tensor<T, N>, Tensor<T, N> >
-  svd(Tensor<T, N> const & A)
-  {
-    Tensor<T, N>
-    S = A;
-
-    Tensor<T, N>
-    U = identity<T, N>();
-
-    Tensor<T, N>
-    V = identity<T, N>();
-
-    T
-    off = norm_off_diagonal(S);
-
-    const T
-    tol = machine_epsilon<T>() * norm(A);
-
-    const Index
-    max_iter = 128;
-
-    Index
-    num_iter = 0;
-
-    while (off > tol && num_iter < max_iter) {
-
-      // Find largest off-diagonal entry
-      Index
-      p = 0;
-
-      Index
-      q = 0;
-
-      boost::tie(p,q) = arg_max_off_diagonal(S);
-
-      if (p > q) {
-        std::swap(p, q);
-      }
-
-      // Obtain left and right Givens rotations by using 2x2 SVD
-      Tensor <T, 2>
-      Spq(S(p,p), S(p,q), S(q,p), S(q,q));
-
-      Tensor <T, 2>
-      L, D, R;
-
-      boost::tie(L, D, R) = svd(Spq);
-
-      T const &
-      cl = L(0,0);
-
-      T const &
-      sl = L(0,1);
-
-      T const &
-      cr = R(0,0);
-
-      T const &
-      sr = (sgn(R(0,1)) == sgn(R(1,0))) ? T(-R(0,1)) : T(R(0,1));
-
-      // Apply both Givens rotations to matrices
-      // that are converging to singular values and singular vectors
-      givens_left(cl, sl, p, q, S);
-      givens_right(cr, sr, p, q, S);
-
-      givens_right(cl, sl, p, q, U);
-      givens_left(cr, sr, p, q, V);
-
-      off = norm_off_diagonal(S);
-      num_iter++;
-    }
-
-    if (num_iter == max_iter) {
-      std::cerr << "WARNING: SVD iteration did not converge." << std::endl;
-    }
-
-    return boost::make_tuple(U, diag(diag(S)), transpose(V));
-  }
-
-  //
-  // R^2 singular value decomposition (SVD)
-  // \param A tensor
-  // \return \f$ A = USV^T\f$
-  //
   template<typename T>
-  boost::tuple<Tensor<T, 2>, Tensor<T, 2>, Tensor<T, 2> >
-  svd(Tensor<T, 2> const & A)
+  boost::tuple<Tensor<T>, Tensor<T>, Tensor<T> >
+  svd(Tensor<T> const & A)
   {
-    // First compute a givens rotation to eliminate 1,0 entry in tensor
-    T c = 1.0;
-    T s = 0.0;
-    boost::tie(c, s) = givens(A(0,0), A(1,0));
+    const Index
+    N = A.get_dimension();
 
-    Tensor<T, 2>
-    R(c, -s, s, c);
+    Tensor<T>
+    U(N), S(N), V(N);
 
-    Tensor<T, 2>
-    B = R * A;
+    switch (N) {
 
-    // B is bidiagonal. Use specialized algorithm to compute its SVD
-    Tensor<T, 2>
-    X, S, V;
+    default:
+      boost::tie(U, S, V) = svd_NxN(A);
+      break;
 
-    boost::tie(X, S, V) = svd_bidiagonal(B(0,0), B(0,1), B(1,1));
+    case 2:
+      boost::tie(U, S, V) = svd_2x2(A);
+      break;
 
-    // Complete general 2x2 SVD with givens rotation calculated above
-    Tensor<T, 2>
-    U = transpose(R) * X;
+    }
 
     return boost::make_tuple(U, S, V);
   }
@@ -2139,10 +1761,13 @@ namespace LCM {
   // The rotation/reflection obtained through this projection is
   // the orthogonal component of the real polar decomposition
   //
-  template<typename T, Index N>
-  Tensor<T, N>
-  polar_rotation(Tensor<T, N> const & A)
+  template<typename T>
+  Tensor<T>
+  polar_rotation(Tensor<T> const & A)
   {
+    const Index
+    N = A.get_dimension();
+
     bool
     scale = true;
 
@@ -2152,7 +1777,7 @@ namespace LCM {
     const T
     tol_conv = sqrt(N) * machine_epsilon<T>();
 
-    Tensor<T, N>
+    Tensor<T>
     X = A;
 
     T
@@ -2166,7 +1791,7 @@ namespace LCM {
 
     while (num_iter < max_iter) {
 
-      Tensor<T, N>
+      Tensor<T>
       Y = inverse(X);
 
       T
@@ -2177,10 +1802,10 @@ namespace LCM {
         mu = sqrt(sqrt(mu));
       }
 
-      Tensor<T, N>
+      Tensor<T>
       Z = 0.5 * (mu * X + transpose(Y) / mu);
 
-      Tensor<T, N>
+      Tensor<T>
       D = Z - X;
 
       T
@@ -2202,6 +1827,8 @@ namespace LCM {
         break;
       }
 
+      num_iter++;
+
     }
 
     if (num_iter == max_iter) {
@@ -2216,14 +1843,14 @@ namespace LCM {
   // \param A tensor (often a deformation-gradient-like tensor)
   // \return \f$ VR = A \f$ with \f$ R \in SO(N) \f$ and \f$ V \in SPD(N) \f$
   //
-  template<typename T, Index N>
-  std::pair<Tensor<T, N>, Tensor<T, N > >
-  polar_left(Tensor<T, N> const & A)
+  template<typename T>
+  std::pair<Tensor<T>, Tensor<T> >
+  polar_left(Tensor<T> const & A)
   {
-    Tensor<T, N>
+    Tensor<T>
     R = polar_rotation(A);
 
-    Tensor<T, N>
+    Tensor<T>
     V = symm(A * transpose(R));
 
     return std::make_pair(V, R);
@@ -2234,14 +1861,14 @@ namespace LCM {
   // \param A tensor (often a deformation-gradient-like tensor)
   // \return \f$ RU = A \f$ with \f$ R \in SO(N) \f$ and \f$ U \in SPD(N) \f$
   //
-  template<typename T, Index N>
-  std::pair<Tensor<T, N>, Tensor<T, N > >
-  polar_right(Tensor<T, N> const & A)
+  template<typename T>
+  std::pair<Tensor<T>, Tensor<T> >
+  polar_right(Tensor<T> const & A)
   {
-    Tensor<T, N>
+    Tensor<T>
     R = polar_rotation(A);
 
-    Tensor<T, N>
+    Tensor<T>
     U = symm(transpose(R) * A);
 
     return std::make_pair(R, U);
@@ -2253,43 +1880,45 @@ namespace LCM {
   // \return \f$ VR = F \f$ with \f$ R \in SO(3) \f$ and V SPD(3)
   //
   template<typename T>
-  std::pair<Tensor<T, 3>, Tensor<T, 3> >
-  polar_left_eig(Tensor<T, 3> const & F)
+  std::pair<Tensor<T>, Tensor<T> >
+  polar_left_eig(Tensor<T> const & F)
   {
-    // set up return tensors
-    Tensor<T, 3>
-    R;
+    assert(F.get_dimension() == 3);
 
-    Tensor<T, 3>
-    V;
+    // set up return tensors
+    Tensor<T>
+    R(3);
+
+    Tensor<T>
+    V(3);
 
     // temporary tensor used to compute R
-    Tensor<T, 3>
-    Vinv;
+    Tensor<T>
+    Vinv(3);
 
     // compute spd tensor
-    Tensor<T, 3>
+    Tensor<T>
     b = F * transpose(F);
 
     // get eigenvalues/eigenvectors
-    Tensor<T, 3>
-    eVal;
+    Tensor<T>
+    eVal(3);
 
-    Tensor<T, 3>
-    eVec;
+    Tensor<T>
+    eVec(3);
 
     boost::tie(eVec, eVal) = eig_spd(b);
 
     // compute sqrt() and inv(sqrt()) of eigenvalues
-    Tensor<T, 3>
-    x = zero<T, 3>();
+    Tensor<T>
+    x = zero<T>(3);
 
     x(0,0) = sqrt(eVal(0,0));
     x(1,1) = sqrt(eVal(1,1));
     x(2,2) = sqrt(eVal(2,2));
 
-    Tensor<T, 3>
-    xi = zero<T, 3>();
+    Tensor<T>
+    xi = zero<T>(3);
 
     xi(0,0) = 1.0 / x(0,0);
     xi(1,1) = 1.0 / x(1,1);
@@ -2309,42 +1938,44 @@ namespace LCM {
   // \return \f$ RU = F \f$ with \f$ R \in SO(3) \f$ and U SPD(3)
   //
   template<typename T>
-  std::pair<Tensor<T, 3>, Tensor<T, 3> >
-  polar_right_eig(Tensor<T, 3> const & F)
+  std::pair<Tensor<T>, Tensor<T> >
+  polar_right_eig(Tensor<T> const & F)
   {
-    Tensor<T, 3>
-    R;
+    assert(F.get_dimension() == 3);
 
-    Tensor<T, 3>
-    U;
+    Tensor<T>
+    R(3);
+
+    Tensor<T>
+    U(3);
 
     // temporary tensor used to compute R
-    Tensor<T, 3>
-    Uinv;
+    Tensor<T>
+    Uinv(3);
 
     // compute spd tensor
-    Tensor<T, 3>
+    Tensor<T>
     C = transpose(F) * F;
 
     // get eigenvalues/eigenvectors
-    Tensor<T, 3>
-    eVal;
+    Tensor<T>
+    eVal(3);
 
-    Tensor<T, 3>
-    eVec;
+    Tensor<T>
+    eVec(3);
 
     boost::tie(eVec, eVal) = eig_spd(C);
 
     // compute sqrt() and inv(sqrt()) of eigenvalues
-    Tensor<T, 3>
-    x = zero<T, 3>();
+    Tensor<T>
+    x = zero<T>(3);
 
     x(0,0) = sqrt(eVal(0,0));
     x(1,1) = sqrt(eVal(1,1));
     x(2,2) = sqrt(eVal(2,2));
 
-    Tensor<T, 3>
-    xi = zero<T, 3>();
+    Tensor<T>
+    xi = zero<T>(3);
 
     xi(0,0) = 1.0 / x(0,0);
     xi(1,1) = 1.0 / x(1,1);
@@ -2363,154 +1994,107 @@ namespace LCM {
   // \param F tensor (often a deformation-gradient-like tensor)
   // \return \f$ VR = F \f$ with \f$ R \in SO(N) \f$ and V SPD(N), and log V
   //
-  template<typename T, Index N>
-  boost::tuple<Tensor<T, N>, Tensor<T, N>, Tensor<T, N> >
-  polar_left_logV(Tensor<T, N> const & F)
+  template<typename T>
+  boost::tuple<Tensor<T>, Tensor<T>, Tensor<T> >
+  polar_left_logV(Tensor<T> const & F)
   {
-    Tensor<T, N>
-    X, S, Y;
+    const Index
+    N = F.get_dimension();
+
+    Tensor<T>
+    X(N), S(N), Y(N);
 
     boost::tie(X, S, Y) = svd(F);
 
-    Tensor<T, N>
+    Tensor<T>
     R = X * transpose(Y);
 
-    Tensor<T, N>
+    Tensor<T>
     V = X * S * transpose(X);
 
-    Tensor<T, N>
+    Tensor<T>
     s = S;
 
     for (Index i = 0; i < N; ++i) {
-      s(i,i) = log(s(i,i));
+      s(i,i) = std::log(s(i,i));
     }
 
-    Tensor<T, N>
+    Tensor<T>
     v = X * s * transpose(X);
 
     return boost::make_tuple(V, R, v);
   }
 
   //
-  // R^3 left polar decomposition with matrix logarithm for V
+  // R^N left polar decomposition with matrix logarithm for V
   // \param F tensor (often a deformation-gradient-like tensor)
-  // \return \f$ VR = F \f$ with \f$ R \in SO(3) \f$ and V SPD(3), and log V
+  // \return \f$ VR = F \f$ with \f$ R \in SO(N) \f$ and V SPD(N), and log V
   //
   template<typename T>
-  boost::tuple<Tensor<T, 3>, Tensor<T, 3>, Tensor<T, 3> >
-  polar_left_logV(Tensor<T, 3> const & F)
+  boost::tuple<Tensor<T>, Tensor<T>, Tensor<T> >
+  polar_left_logV_lame(Tensor<T> const & F)
   {
+    const Index
+    N = F.get_dimension();
+
     // set up return tensors
-    Tensor<T, 3>
-    R;
-
-    Tensor<T, 3>
-    V;
-
-    //v = log(V)
-    Tensor<T, 3>
-    v;
-
-    // temporary tensor used to compute R
-    Tensor<T, 3>
-    Vinv;
-
+    Tensor<T> R(N), V(N), v(N), Vinv(N);
+ 
     // compute spd tensor
-    Tensor<T, 3>
-    b = F * transpose(F);
-
+    Tensor<T> b = F*transpose(F);
+ 
     // get eigenvalues/eigenvectors
-    Tensor<T, 3>
-    eVal;
-
-    Tensor<T, 3>
-    eVec;
-
-    boost::tie(eVec, eVal) = eig_spd(b);
-
+    Tensor<T> eVal(N);
+    Tensor<T> eVec(N);
+    boost::tie(eVec,eVal) = eig_spd_cos(b);
+ 
     // compute sqrt() and inv(sqrt()) of eigenvalues
-    Tensor<T, 3>
-    x = zero<T, 3>();
-
+    Tensor<T> x = zero<T>(3);
     x(0,0) = sqrt(eVal(0,0));
     x(1,1) = sqrt(eVal(1,1));
     x(2,2) = sqrt(eVal(2,2));
-
-    Tensor<T, 3>
-    xi = zero<T, 3>();
-
+    Tensor<T> xi = zero<T>(3);
     xi(0,0) = 1.0/x(0,0);
     xi(1,1) = 1.0/x(1,1);
     xi(2,2) = 1.0/x(2,2);
-
-    Tensor<T, 3>
-    lnx = zero<T, 3>();
-
+    Tensor<T> lnx = zero<T>(3);
     lnx(0,0) = std::log(x(0,0));
     lnx(1,1) = std::log(x(1,1));
     lnx(2,2) = std::log(x(2,2));
-
+ 
     // compute V, Vinv, log(V)=v, and R
-    V    = eVec * x * transpose(eVec);
-    Vinv = eVec * xi * transpose(eVec);
-    v    = eVec * lnx * transpose(eVec);
-    R    = Vinv * F;
-
-    return boost::make_tuple(V, R, v);
+    V    = eVec*x*transpose(eVec);
+    Vinv = eVec*xi*transpose(eVec);
+    v    = eVec*lnx*transpose(eVec);
+    R    = Vinv*F;
+ 
+    return boost::make_tuple(V,R,v);
   }
 
   //
-  // R^2 left polar decomposition with matrix logarithm for V
-  // \param F tensor (often a deformation-gradient-like tensor)
-  // \return \f$ VR = F \f$ with \f$ R \in SO(2) \f$ and V SPD(2), and log V
-  //
-  template<typename T>
-  boost::tuple<Tensor<T, 2>, Tensor<T, 2>, Tensor<T, 2> >
-  polar_left_logV(Tensor<T, 2> const & F)
-  {
-    Tensor<T, 2>
-    X, S, Y;
-
-    boost::tie(X, S, Y) = svd(F);
-
-    Tensor<T, 2>
-    R = X * transpose(Y);
-
-    Tensor<T, 2>
-    V = X * S * transpose(X);
-
-    Tensor<T, 2>
-    s = S;
-
-    s(0,0) = log(s(0,0));
-    s(1,1) = log(s(1,1));
-
-    Tensor<T, 2>
-    v = X * s * transpose(X);
-
-    return boost::make_tuple(V, R, v);
-  }
-
-  //
-  // R^N logarithmic map using BCH expansion (3 terms)
+  // R^N logarithmic map using BCH expansion (4 terms)
   // \param x tensor
   // \param y tensor
-  // \return Baker-Campbell-Hausdorff series up to 3 terms
+  // \return Baker-Campbell-Hausdorff series up to 4 terms
   //
-  template<typename T, Index N>
-  Tensor<T, N>
-  bch(Tensor<T, N> const & x, Tensor<T, N> const & y)
+  template<typename T>
+  Tensor<T>
+  bch(Tensor<T> const & x, Tensor<T> const & y)
   {
     return
         // first order term
         x + y
         +
         // second order term
-        T(0.5)*(x*y - y*x)
+        0.5*(x*y - y*x)
         +
         // third order term
-        T(1.0/12.0) *
-          (x*x*y - T(2.0)*x*y*x + x*y*y + y*x*x - T(2.0)*y*x*y + y*y*x);
+        1.0/12.0 *
+          (x*x*y - 2.0*x*y*x + x*y*y + y*x*x - 2.0*y*x*y + y*y*x)
+        +
+        // fourth order term
+        1.0/24.0 *
+        (x*x*y*y - 2.0*x*y*x*y + 2.0*y*x*y*x - y*y*x*x);
   }
 
   //
@@ -2567,151 +2151,200 @@ namespace LCM {
     return std::make_pair(c, s);
   }
 
+  namespace {
+
+    //
+    // R^N eigenvalue decomposition for symmetric 2nd-order tensor
+    // \param A tensor
+    // \return V eigenvectors, D eigenvalues in diagonal Matlab-style
+    //
+    template<typename T>
+    std::pair<Tensor<T>, Tensor<T> >
+    eig_sym_NxN(Tensor<T> const & A)
+    {
+      Tensor<T>
+      D = symm(A);
+
+      const Index
+      N = A.get_dimension();
+
+      Tensor<T>
+      V = identity<T>(N);
+
+      T
+      off = norm_off_diagonal(D);
+
+      const T
+      tol = machine_epsilon<T>() * norm(A);
+
+      const Index
+      max_iter = 128;
+
+      Index
+      num_iter = 0;
+
+      while (off > tol && num_iter < max_iter) {
+
+        // Find largest off-diagonal entry
+        Index
+        p = 0;
+
+        Index
+        q = 0;
+
+        boost::tie(p,q) = arg_max_off_diagonal(D);
+        if (p > q) {
+          std::swap(p,q);
+        }
+
+        // Obtain Givens rotations by using 2x2 symmetric Schur algorithm
+        T const &
+        f = D(p,p);
+
+        T const &
+        g = D(p,q);
+
+        T const &
+        h = D(q,q);
+
+        T
+        c, s;
+
+        boost::tie(c, s) = schur_sym(f, g, h);
+
+        // Apply Givens rotation to matrices
+        // that are converging to eigenvalues and eigenvectors
+        givens_left(c, s, p, q, D);
+        givens_right(c, s, p, q, D);
+
+        givens_right(c, s, p, q, V);
+
+        off = norm_off_diagonal(D);
+        num_iter++;
+      }
+
+      if (num_iter == max_iter) {
+        std::cerr << "WARNING: EIG iteration did not converge." << std::endl;
+      }
+
+      Vector<T> d(N);
+      Tensor<T> P(N);
+
+      boost::tie(d, P) = sort_permutation(diag(D));
+      D = diag(d);
+      V = V * P;
+
+      return std::make_pair(V, D);
+    }
+
+    //
+    // R^2 eigenvalue decomposition for symmetric 2nd-order tensor
+    // \param A tensor
+    // \return V eigenvectors, D eigenvalues in diagonal Matlab-style
+    //
+    template<typename T>
+    std::pair<Tensor<T>, Tensor<T> >
+    eig_sym_2x2(Tensor<T> const & A)
+    {
+      assert(A.get_dimension() == 2);
+
+      const T f = A(0,0);
+      const T g = 0.5 * (A(0,1) + A(1,0));
+      const T h = A(1,1);
+
+      //
+      // Eigenvalues, based on LAPACK's dlae2
+      //
+      const T sum = f + h;
+      const T dif = fabs(f - h);
+      const T g2 = fabs(g + g);
+
+      T fhmax = f;
+      T fhmin = h;
+
+      const bool swap_diag = fabs(h) > fabs(f);
+
+      if (swap_diag == true) {
+        std::swap(fhmax, fhmin);
+      }
+
+      T r = 0.0;
+      if (dif > g2) {
+        const T t = g2 / dif;
+        r = dif * sqrt(1.0 + t * t);
+      } else if (dif < g2) {
+        const T t = dif / g2;
+        r = g2 * sqrt(1.0 + t * t);
+      } else {
+        // dif == g2, including zero
+        r = g2 * sqrt(2.0);
+      }
+
+      T s0 = 0.0;
+      T s1 = 0.0;
+
+      if (sum != 0.0) {
+        s0 = 0.5 * (sum + copysign(r, sum));
+        // Order of execution important.
+        // To get fully accurate smaller eigenvalue,
+        // next line needs to be executed in higher precision.
+        s1 = (fhmax / s0) * fhmin - (g / s0) * g;
+      } else {
+        // s0 == s1, including zero
+        s0 = 0.5 * r;
+        s1 = -0.5 * r;
+      }
+
+      Tensor<T>
+      D(s0, 0.0, 0.0, s1);
+
+      //
+      // Eigenvectors
+      //
+      T
+      c, s;
+
+      boost::tie(c, s) = schur_sym(f, g, h);
+
+      Tensor<T>
+      V(c, -s, s, c);
+
+      if (swap_diag == true) {
+        // swap eigenvectors if eigenvalues were swapped
+        std::swap(V(0,0), V(0,1));
+        std::swap(V(1,0), V(1,1));
+      }
+
+      return std::make_pair(V, D);
+    }
+
+  } // anonymous namespace
+
   //
   // R^N eigenvalue decomposition for symmetric 2nd-order tensor
   // \param A tensor
   // \return V eigenvectors, D eigenvalues in diagonal Matlab-style
   //
-  template<typename T, Index N>
-  std::pair<Tensor<T, N>, Tensor<T, N> >
-  eig_sym(Tensor<T, N> const & A)
-  {
-    Tensor<T, N>
-    D = symm(A);
-
-    Tensor<T, N>
-    V = identity<T, N>();
-
-    T
-    off = norm_off_diagonal(D);
-
-    const T
-    tol = machine_epsilon<T>() * norm(A);
-
-    const Index
-    max_iter = 128;
-
-    Index
-    num_iter = 0;
-
-    while (off > tol && num_iter < max_iter) {
-
-      // Find largest off-diagonal entry
-      Index
-      p = 0;
-
-      Index
-      q = 0;
-
-      boost::tie(p,q) = arg_max_off_diagonal(D);
-      if (p > q) {
-        std::swap(p,q);
-      }
-
-      // Obtain Givens rotations by using 2x2 symmetric Schur algorithm
-      Tensor <T, 2>
-      Dpq(D(p,p), D(p,q), D(q,p), D(q,q));
-
-      T
-      c, s;
-
-      boost::tie(c, s) = schur_sym(Dpq(0,0), Dpq(0,1), Dpq(1,1));
-
-      // Apply Givens rotation to matrices
-      // that are converging to eigenvalues and eigenvectors
-      givens_left(c, s, p, q, D);
-      givens_right(c, s, p, q, D);
-
-      givens_right(c, s, p, q, V);
-
-      off = norm_off_diagonal(D);
-      num_iter++;
-    }
-
-    if (num_iter == max_iter) {
-      std::cerr << "WARNING: EIG iteration did not converge." << std::endl;
-    }
-
-    return std::make_pair(V, diag(diag(D)));
-  }
-
-  //
-  // R^2 eigenvalue decomposition for symmetric 2nd-order tensor
-  // \param A tensor
-  // \return V eigenvectors, D eigenvalues in diagonal Matlab-style
-  //
   template<typename T>
-  std::pair<Tensor<T, 2>, Tensor<T, 2> >
-  eig_sym(Tensor<T, 2> const & A)
+  std::pair<Tensor<T>, Tensor<T> >
+  eig_sym(Tensor<T> const & A)
   {
-    const T f = A(0,0);
-    const T g = 0.5 * (A(0,1) + A(1,0));
-    const T h = A(1,1);
+    const Index
+    N = A.get_dimension();
 
-    //
-    // Eigenvalues, based on LAPACK's dlae2
-    //
-    const T sum = f + h;
-    const T dif = fabs(f - h);
-    const T g2 = fabs(g + g);
+    Tensor<T>
+    V(N), D(N);
 
-    T fhmax = f;
-    T fhmin = h;
+    switch (N) {
 
-    const bool swap_diag = fabs(h) > fabs(f);
+    default:
+      boost::tie(V, D) = eig_sym_NxN(A);
+      break;
 
-    if (swap_diag == true) {
-      std::swap(fhmax, fhmin);
-    }
+    case 2:
+      boost::tie(V, D) = eig_sym_2x2(A);
+      break;
 
-    T r = 0.0;
-    if (dif > g2) {
-      const T t = g2 / dif;
-      r = dif * sqrt(1.0 + t * t);
-    } else if (dif < g2) {
-      const T t = dif / g2;
-      r = g2 * sqrt(1.0 + t * t);
-    } else {
-      // dif == g2, including zero
-      r = g2 * sqrt(2.0);
-    }
-
-    T s0 = 0.0;
-    T s1 = 0.0;
-
-    if (sum != 0.0) {
-      s0 = 0.5 * (sum + copysign(r, sum));
-      // Order of execution important.
-      // To get fully accurate smaller eigenvalue,
-      // next line needs to be executed in higher precision.
-      s1 = (fhmax / s0) * fhmin - (g / s0) * g;
-    } else {
-      // s0 == s1, including zero
-      s0 = 0.5 * r;
-      s1 = -0.5 * r;
-    }
-
-    // const T s0 = c*c*f - 2.0*c*s*g + s*s*h;
-    // const T s1 = s*s*f + 2.0*c*s*g + c*c*h;
-
-    Tensor<T, 2>
-    D(s0, 0.0, 0.0, s1);
-
-    //
-    // Eigenvectors
-    //
-    T
-    c, s;
-
-    boost::tie(c, s) = schur_sym(f, g, h);
-
-    Tensor<T, 2>
-    V(c, -s, s, c);
-
-    if (swap_diag == true) {
-      // swap eigenvectors if eigenvalues were swapped
-      std::swap(V(0,0), V(0,1));
-      std::swap(V(1,0), V(1,1));
     }
 
     return std::make_pair(V, D);
@@ -2722,9 +2355,9 @@ namespace LCM {
   // \param A tensor
   // \return V eigenvectors, D eigenvalues in diagonal Matlab-style
   //
-  template<typename T, Index N>
-  std::pair<Tensor<T, N>, Tensor<T, N> >
-  eig_spd(Tensor<T, N> const & A)
+  template<typename T>
+  std::pair<Tensor<T>, Tensor<T> >
+  eig_spd(Tensor<T> const & A)
   {
     return eig_sym(A);
   }
@@ -2735,39 +2368,41 @@ namespace LCM {
   // \return V eigenvectors, D eigenvalues in diagonal Matlab-style
   //
   template<typename T>
-  std::pair<Tensor<T, 3>, Tensor<T, 3> >
-  eig_spd(Tensor<T, 3> const & A)
+  std::pair<Tensor<T>, Tensor<T> >
+  eig_spd_cos(Tensor<T> const & A)
   {
+    assert(A.get_dimension() == 3);
+
     // This algorithm comes from the journal article
     // Scherzinger and Dohrmann, CMAME 197 (2008) 4007-4015
 
     // this algorithm will return the eigenvalues in D
     // and the eigenvectors in V
-    Tensor<T, 3>
-    D = zero<T, 3>();
+    Tensor<T>
+    D = zero<T>(3);
 
-    Tensor<T, 3>
-    V = zero<T, 3>();
+    Tensor<T>
+    V = zero<T>(3);
 
     // not sure if this is necessary...
     T
     pi = acos(-1);
 
     // convenience operators
-    const Tensor<T, 3>
-    I = identity<T, 3>();
+    const Tensor<T>
+    I = identity<T>(3);
 
     int
     ii[3][2] = { { 1, 2 }, { 2, 0 }, { 0, 1 } };
 
-    Tensor<T, 3>
-    rm = zero<T, 3>();
+    Tensor<T>
+    rm = zero<T>(3);
 
     // scale the matrix to reduce the characteristic equation
     T
     trA = (1.0/3.0) * I1(A);
 
-    Tensor<T, 3>
+    Tensor<T>
     Ap(A - trA*I);
 
     // compute other invariants
@@ -2820,11 +2455,11 @@ namespace LCM {
       D(2,2) = 2.0 * cos(thetad3) * sqrt(-J2 / 3.0);
 
       // now reduce the system
-      Tensor<T, 3>
+      Tensor<T>
       R = Ap - D(2,2) * I;
 
       // QR factorization with column pivoting
-      Vector<T, 3> a;
+      Vector<T> a(3);
       a(0) = R(0,0)*R(0,0) + R(1,0)*R(1,0) + R(2,0)*R(2,0);
       a(1) = R(0,1)*R(0,1) + R(1,1)*R(1,1) + R(2,1)*R(2,1);
       a(2) = R(0,2)*R(0,2) + R(1,2)*R(1,2) + R(2,2)*R(2,2);
@@ -2895,17 +2530,17 @@ namespace LCM {
       V(2,2) /= mag;
 
       // now for the other two eigenvalues, extract vectors
-      Vector<T, 3>
+      Vector<T>
       rk(R(0,k), R(1,k), R(2,k));
 
-      Vector<T, 3>
+      Vector<T>
       rk2(R(0,k2), R(1,k2), R(2,k2));
 
       // compute projections
-      Vector<T, 3>
-      ak  = Ap * rk;
+      Vector<T>
+      ak = Ap * rk;
 
-      Vector<T, 3>
+      Vector<T>
       ak2 = Ap * rk2;
 
       // set up reduced remainder matrix
@@ -2979,26 +2614,64 @@ namespace LCM {
   }
 
   //
-  // R^2 eigenvalue decomposition for SPD 2nd-order tensor
-  // \param A tensor
-  // \return V eigenvectors, D eigenvalues in diagonal Matlab-style
+  // Cholesky decomposition, rank-1 update algorithm
+  // (Matrix Computations 3rd ed., Golub & Van Loan, p145)
+  // \param A assumed symmetric tensor
+  // \return G Cholesky factor A = GG^T
+  // \return completed (bool) algorithm ran to completion
   //
   template<typename T>
-  std::pair<Tensor<T, 2>,Tensor<T, 2> >
-  eig_spd(Tensor<T, 2> const & A)
+  std::pair<Tensor<T>, bool >
+  cholesky(Tensor<T> const & A)
   {
-    return eig_sym(A);
+    Tensor<T>
+    G = symm(A);
+
+    const Index
+    N = A.get_dimension();
+
+    for (Index k = 0; k < N; ++k) {
+
+      // Zeros above the diagonal
+      for (Index j = k + 1; j < N; ++j) {
+        G(k,j) = 0.0;
+      }
+
+      T
+      s = G(k,k);
+
+      if (s <= 0.0) {
+        return std::make_pair(G, false);
+      }
+
+      s = sqrt(s);
+
+      for (Index j = k + 1; j < N; ++j) {
+        G(j,k) /= s;
+      }
+
+      G(k,k) = s;
+
+      for (Index j = k + 1; j < N; ++j) {
+        for (Index i = j; i < N; ++i) {
+          G(i,j) -= G(i,k) * G(j,k);
+        }
+      }
+
+    }
+
+    return std::make_pair(G, true);
   }
 
   //
   // 4th-order identity I1
   // \return \f$ \delta_{ik} \delta_{jl} \f$ such that \f$ A = I_1 A \f$
   //
-  template<typename T, Index N>
-  const Tensor4<T, N>
-  identity_1()
+  template<typename T>
+  const Tensor4<T>
+  identity_1(const Index N)
   {
-    Tensor4<T, N> I(T(0.0));
+    Tensor4<T> I(N, T(0.0));
 
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
@@ -3019,11 +2692,11 @@ namespace LCM {
   // 4th-order identity I2
   // \return \f$ \delta_{il} \delta_{jk} \f$ such that \f$ A^T = I_2 A \f$
   //
-  template<typename T, Index N>
-  const Tensor4<T, N>
-  identity_2()
+  template<typename T>
+  const Tensor4<T>
+  identity_2(const Index N)
   {
-    Tensor4<T, N> I(T(0.0));
+    Tensor4<T> I(N, T(0.0));
 
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
@@ -3044,11 +2717,11 @@ namespace LCM {
   // 4th-order identity I3
   // \return \f$ \delta_{ij} \delta_{kl} \f$ such that \f$ I_A I = I_3 A \f$
   //
-  template<typename T, Index N>
-  const Tensor4<T, N>
-  identity_3()
+  template<typename T>
+  const Tensor4<T>
+  identity_3(const Index N)
   {
-    Tensor4<T, N> I(T(0.0));
+    Tensor4<T> I(N, T(0.0));
 
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
@@ -3071,11 +2744,16 @@ namespace LCM {
   // \param u vector
   // \return 3rd-order tensor \f$ A dot u \f$ as \f$ B_{ijk}=A_{ijkl}u_{l} \f$
   //
-  template<typename T, Index N>
-  Tensor3<T, N>
-  dot(Tensor4<T, N> const & A, Vector<T, N> const & u)
+  template<typename T>
+  Tensor3<T>
+  dot(Tensor4<T> const & A, Vector<T> const & u)
   {
-    Tensor3<T, N> B;
+    const Index
+    N = A.get_dimension();
+
+    assert(u.get_dimension() == N);
+
+    Tensor3<T> B(N);
 
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
@@ -3088,6 +2766,7 @@ namespace LCM {
         }
       }
     }
+
     return B;
   }
 
@@ -3097,11 +2776,16 @@ namespace LCM {
   // \param u vector
   // \return 3rd-order tensor \f$ u dot A \f$ as \f$ B_{jkl}=u_{i}A_{ijkl} \f$
   //
-  template<typename T, Index N>
-  Tensor3<T, N>
-  dot(Vector<T, N> const & u, Tensor4<T, N> const & A)
+  template<typename T>
+  Tensor3<T>
+  dot(Vector<T> const & u, Tensor4<T> const & A)
   {
-    Tensor3<T, N> B;
+    const Index
+    N = A.get_dimension();
+
+    assert(u.get_dimension() == N);
+
+    Tensor3<T> B(N);
 
     for (Index j = 0; j < N; ++j) {
       for (Index k = 0; k < N; ++k) {
@@ -3114,6 +2798,7 @@ namespace LCM {
         }
       }
     }
+
     return B;
   }
 
@@ -3123,11 +2808,16 @@ namespace LCM {
   // \param u vector
   // \return 3rd-order tensor \f$ A dot2 u \f$ as \f$ B_{ijl}=A_{ijkl}u_{k} \f$
   //
-  template<typename T, Index N>
-  Tensor3<T, N>
-  dot2(Tensor4<T, N> const & A, Vector<T, N> const & u)
+  template<typename T>
+  Tensor3<T>
+  dot2(Tensor4<T> const & A, Vector<T> const & u)
   {
-    Tensor3<T, N> B;
+    const Index
+    N = A.get_dimension();
+
+    assert(u.get_dimension() == N);
+
+    Tensor3<T> B(N);
 
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
@@ -3140,6 +2830,7 @@ namespace LCM {
         }
       }
     }
+
     return B;
   }
 
@@ -3149,11 +2840,16 @@ namespace LCM {
   // \param u vector
   // \return 3rd-order tensor \f$ u dot2 A \f$ as \f$ B_{ikl}=u_{j}A_{ijkl} \f$
   //
-  template<typename T, Index N>
-  Tensor3<T, N>
-  dot2(Vector<T, N> const & u, Tensor4<T, N> const & A)
+  template<typename T>
+  Tensor3<T>
+  dot2(Vector<T> const & u, Tensor4<T> const & A)
   {
-    Tensor3<T, N> B;
+    const Index
+    N = A.get_dimension();
+
+    assert(u.get_dimension() == N);
+
+    Tensor3<T> B(N);
 
     for (Index i = 0; i < N; ++i) {
       for (Index k = 0; k < N; ++k) {
@@ -3166,6 +2862,7 @@ namespace LCM {
         }
       }
     }
+
     return B;
   }
 
@@ -3175,11 +2872,16 @@ namespace LCM {
   // \param B 2nd-order tensor
   // \return 2nd-order tensor \f$ A:B \f$ as \f$ C_{ij}=A_{ijkl}B_{kl} \f$
   //
-  template<typename T, Index N>
-  Tensor<T, N>
-  dotdot(Tensor4<T, N> const & A, Tensor<T, N> const & B)
+  template<typename T>
+  Tensor<T>
+  dotdot(Tensor4<T> const & A, Tensor<T> const & B)
   {
-    Tensor<T, N> C;
+    const Index
+    N = A.get_dimension();
+
+    assert(B.get_dimension() == N);
+
+    Tensor<T> C(N);
 
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
@@ -3202,11 +2904,16 @@ namespace LCM {
   // \param A 4th-order tensor
   // \return 2nd-order tensor \f$ B:A \f$ as \f$ C_{kl}=A_{ijkl}B_{ij} \f$
   //
-  template<typename T, Index N>
-  Tensor<T, N>
-  dotdot(Tensor<T, N> const & B, Tensor4<T, N> const & A)
+  template<typename T>
+  Tensor<T>
+  dotdot(Tensor<T> const & B, Tensor4<T> const & A)
   {
-    Tensor<T, N> C;
+    const Index
+    N = A.get_dimension();
+
+    assert(B.get_dimension() == N);
+
+    Tensor<T> C(N);
 
     for (Index k = 0; k < N; ++k) {
       for (Index l = 0; l < N; ++l) {
@@ -3224,14 +2931,19 @@ namespace LCM {
   }
 
   // Tensor4 Tensor4 double dot product
-  /// \param A Tensor4
-  /// \param B Tensor4
-  /// \return a Tensor4 \f$ C_{ijkl} = A_{ijmn} : B){mnkl} \f$
-  template<typename T, Index N>
-  Tensor4<T, N>
-  dotdot(Tensor4<T, N> const & A, Tensor4<T, N> const & B)
+  // \param A Tensor4
+  // \param B Tensor4
+  // \return a Tensor4 \f$ C_{ijkl} = A_{ijmn} : B){mnkl} \f$
+  template<typename T>
+  Tensor4<T>
+  dotdot(Tensor4<T> const & A, Tensor4<T> const & B)
   {
-    Tensor4<T, N> C;
+    const Index
+    N = A.get_dimension();
+
+    assert(B.get_dimension() == N);
+
+    Tensor4<T> C(N);
 
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
@@ -3258,11 +2970,16 @@ namespace LCM {
   // \param B 2nd-order tensor
   // \return \f$ A \otimes B \f$
   //
-  template<typename T, Index N>
-  Tensor4<T, N>
-  tensor(Tensor<T, N> const & A, Tensor<T, N> const & B)
+  template<typename T>
+  Tensor4<T>
+  tensor(Tensor<T> const & A, Tensor<T> const & B)
   {
-    Tensor4<T, N> C;
+    const Index
+    N = A.get_dimension();
+
+    assert(B.get_dimension() == N);
+
+    Tensor4<T> C(N);
 
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
@@ -3285,11 +3002,16 @@ namespace LCM {
   // \return \f$ A \odot B \f$ which is
   // \f$ C_{ijkl} = \frac{1}{2}(A_{ik} B_{jl} + A_{il} B_{jk}) \f$
   //
-  template<typename T, Index N>
-  Tensor4<T, N>
-  odot(Tensor<T, N> const & A, Tensor<T, N> const & B)
+  template<typename T>
+  Tensor4<T>
+  odot(Tensor<T> const & A, Tensor<T> const & B)
   {
-    Tensor4<T, N> C;
+    const Index
+    N = A.get_dimension();
+
+    assert(B.get_dimension() == N);
+
+    Tensor4<T> C(N);
 
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
@@ -3310,46 +3032,16 @@ namespace LCM {
   // \param is input stream
   // \return is input stream
   //
-  template<typename T, Index N>
+  template<typename T>
   std::istream &
-  operator>>(std::istream & is, Vector<T, N> & u)
+  operator>>(std::istream & is, Vector<T> & u)
   {
+    const Index
+    N = u.get_dimension();
+
     for (Index i = 0; i < N; ++i) {
       is >> u(i);
     }
-
-    return is;
-  }
-
-  //
-  // R^3 vector input
-  // \param u vector
-  // \param is input stream
-  // \return is input stream
-  //
-  template<typename T>
-  std::istream &
-  operator>>(std::istream & is, Vector<T, 3> & u)
-  {
-    is >> u(0);
-    is >> u(1);
-    is >> u(2);
-
-    return is;
-  }
-
-  //
-  // R^2 vector input
-  // \param u vector
-  // \param is input stream
-  // \return is input stream
-  //
-  template<typename T>
-  std::istream &
-  operator>>(std::istream & is, Vector<T, 2> & u)
-  {
-    is >> u(0);
-    is >> u(1);
 
     return is;
   }
@@ -3360,55 +3052,22 @@ namespace LCM {
   // \param os output stream
   // \return os output stream
   //
-  template<typename T, Index N>
+  template<typename T>
   std::ostream &
-  operator<<(std::ostream & os, Vector<T, N> const & u)
+  operator<<(std::ostream & os, Vector<T> const & u)
   {
-    for (Index i = 0; i < N; ++i) {
-      os << std::scientific << " " << u(i);
+    const Index
+    N = u.get_dimension();
+
+    if (N == 0) {
+      return os;
     }
 
-    os << std::endl;
-    os << std::endl;
+    os << std::scientific << u(0);
 
-    return os;
-  }
-
-  //
-  // R^3 vector output
-  // \param u vector
-  // \param os output stream
-  // \return os output stream
-  //
-  template<typename T>
-  std::ostream &
-  operator<<(std::ostream & os, Vector<T, 3> const & u)
-  {
-    os << std::scientific << " " << u(0);
-    os << std::scientific << " " << u(1);
-    os << std::scientific << " " << u(2);
-
-    os << std::endl;
-    os << std::endl;
-
-    return os;
-  }
-
-  //
-  // R^2 vector output
-  // \param u vector
-  // \param os output stream
-  // \return os output stream
-  //
-  template<typename T>
-  std::ostream &
-  operator<<(std::ostream & os, Vector<T, 2> const & u)
-  {
-    os << std::scientific << " " << u(0);
-    os << std::scientific << " " << u(1);
-
-    os << std::endl;
-    os << std::endl;
+    for (Index i = 1; i < N; ++i) {
+      os << std::scientific << "," << u(i);
+    }
 
     return os;
   }
@@ -3419,10 +3078,13 @@ namespace LCM {
   // \param is input stream
   // \return is input stream
   //
-  template<typename T, Index N>
+  template<typename T>
   std::istream &
-  operator>>(std::istream & is, Tensor<T, N> & A)
+  operator>>(std::istream & is, Tensor<T> & A)
   {
+
+    const Index
+    N = A.get_dimension();
 
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
@@ -3434,126 +3096,32 @@ namespace LCM {
   }
 
   //
-  // R^3 tensor input
-  // \param A tensor
-  // \param is input stream
-  // \return is input stream
-  //
-  template<typename T>
-  std::istream &
-  operator>>(std::istream & is, Tensor<T, 3> & A)
-  {
-    is >> A(0,0);
-    is >> A(0,1);
-    is >> A(0,2);
-
-    is >> A(1,0);
-    is >> A(1,1);
-    is >> A(1,2);
-
-    is >> A(2,0);
-    is >> A(2,1);
-    is >> A(2,2);
-
-    return is;
-  }
-
-  //
-  // R^2 tensor input
-  // \param A tensor
-  // \param is input stream
-  // \return is input stream
-  //
-  template<typename T>
-  std::istream &
-  operator>>(std::istream & is, Tensor<T, 2> & A)
-  {
-    is >> A(0,0);
-    is >> A(0,1);
-
-    is >> A(1,0);
-    is >> A(1,1);
-
-    return is;
-  }
-
-  //
   // R^N tensor output
   // \param A tensor
   // \param os output stream
   // \return os output stream
   //
-  template<typename T, Index N>
+  template<typename T>
   std::ostream &
-  operator<<(std::ostream & os, Tensor<T, N> const & A)
+  operator<<(std::ostream & os, Tensor<T> const & A)
   {
-    for (Index i = 0; i < N; ++i) {
-      for (Index j = 0; j < N; ++j) {
-        os << std::scientific << " " << A(i,j);
-      }
-      os << std::endl;
+    const Index
+    N = A.get_dimension();
+
+    if (N == 0) {
+      return os;
     }
 
-    os << std::endl;
-    os << std::endl;
+    for (Index i = 0; i < N; ++i) {
 
-    return os;
-  }
+      os << std::scientific << A(i,0);
 
-  //
-  // R^3 tensor output
-  // \param A tensor
-  // \param os output stream
-  // \return os output stream
-  //
-  template<typename T>
-  std::ostream &
-  operator<<(std::ostream & os, Tensor<T, 3> const & A)
-  {
+      for (Index j = 1; j < N; ++j) {
+        os << std::scientific << "," << A(i,j);
+      }
 
-    os << std::scientific << " " << A(0,0);
-    os << std::scientific << " " << A(0,1);
-    os << std::scientific << " " << A(0,2);
-
-    os << std::endl;
-
-    os << std::scientific << " " << A(1,0);
-    os << std::scientific << " " << A(1,1);
-    os << std::scientific << " " << A(1,2);
-
-    os << std::endl;
-
-    os << std::scientific << " " << A(2,0);
-    os << std::scientific << " " << A(2,1);
-    os << std::scientific << " " << A(2,2);
-
-    os << std::endl;
-    os << std::endl;
-
-    return os;
-  }
-
-  //
-  // R^2 tensor output
-  // \param A tensor
-  // \param os output stream
-  // \return os output stream
-  //
-  template<typename T>
-  std::ostream &
-  operator<<(std::ostream & os, Tensor<T, 2> const & A)
-  {
-
-    os << std::scientific << " " << A(0,0);
-    os << std::scientific << " " << A(0,1);
-
-    os << std::endl;
-
-    os << std::scientific << " " << A(1,0);
-    os << std::scientific << " " << A(1,1);
-
-    os << std::endl;
-    os << std::endl;
+      os << std::endl;
+    }
 
     return os;
   }
@@ -3564,10 +3132,13 @@ namespace LCM {
   // \param is input stream
   // \return is input stream
   //
-  template<typename T, Index N>
+  template<typename T>
   std::istream &
-  operator>>(std::istream & is, Tensor3<T, N> & A)
+  operator>>(std::istream & is, Tensor3<T> & A)
   {
+    const Index
+    N = A.get_dimension();
+
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
         for (Index k = 0; k < N; ++k) {
@@ -3585,20 +3156,34 @@ namespace LCM {
   // \param os output stream
   // \return os output stream
   //
-  template<typename T, Index N>
+  template<typename T>
   std::ostream &
-  operator<<(std::ostream & os, Tensor3<T, N> const & A)
+  operator<<(std::ostream & os, Tensor3<T> const & A)
   {
+    const Index
+    N = A.get_dimension();
+
+    if (N == 0) {
+      return os;
+    }
+
     for (Index i = 0; i < N; ++i) {
+
       for (Index j = 0; j < N; ++j) {
-        for (Index k = 0; k < N; ++k) {
-          os << std::scientific << " ";
-          os << A(i,j,k);
+
+        os << std::scientific << A(i,j,0);
+
+        for (Index k = 1; k < N; ++k) {
+          os << std::scientific << "," << A(i,j,k);
         }
+
         os << std::endl;
+
       }
+
       os << std::endl;
       os << std::endl;
+
     }
 
     return os;
@@ -3610,10 +3195,13 @@ namespace LCM {
   // \param is input stream
   // \return is input stream
   //
-  template<typename T, Index N>
+  template<typename T>
   std::istream &
-  operator>>(std::istream & is, Tensor4<T, N> & A)
+  operator>>(std::istream & is, Tensor4<T> & A)
   {
+    const Index
+    N = A.get_dimension();
+
     for (Index i = 0; i < N; ++i) {
       for (Index j = 0; j < N; ++j) {
         for (Index k = 0; k < N; ++k) {
@@ -3633,25 +3221,43 @@ namespace LCM {
   // \param os output stream
   // \return os output stream
   //
-  template<typename T, Index N>
+  template<typename T>
   std::ostream &
-  operator<<(std::ostream & os, Tensor4<T, N> const & A)
+  operator<<(std::ostream & os, Tensor4<T> const & A)
   {
+    const Index
+    N = A.get_dimension();
+
+    if (N == 0) {
+      return os;
+    }
+
     for (Index i = 0; i < N; ++i) {
+
       for (Index j = 0; j < N; ++j) {
+
         for (Index k = 0; k < N; ++k) {
+
+          os << std::scientific << "," << A(i,j,k,0);
+
           for (Index l = 0; l < N; ++l) {
-            os << std::scientific << " ";
-            os << A(i,j,k,l);
+
+            os << std::scientific << "," << A(i,j,k,l);
           }
+
           os << std::endl;
+
         }
+
         os << std::endl;
         os << std::endl;
+
       }
+
       os << std::endl;
       os << std::endl;
       os << std::endl;
+
     }
 
     return os;

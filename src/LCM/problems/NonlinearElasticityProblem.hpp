@@ -1,19 +1,8 @@
-/********************************************************************\
- *            Albany, Copyright (2010) Sandia Corporation             *
- *                                                                    *
- * Notice: This computer software was prepared by Sandia Corporation, *
- * hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
- * the Department of Energy (DOE). All rights in the computer software*
- * are reserved by DOE on behalf of the United States Government and  *
- * the Contractor as provided in the Contract. You are authorized to  *
- * use this computer software for Governmental purposes but it is not *
- * to be released or distributed to the public. NEITHER THE GOVERNMENT*
- * NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
- * ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
- * including this sentence must appear on any copies of this software.*
- *    Questions to Andy Salinger, agsalin@sandia.gov                  *
-\********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 
 #ifndef NONLINEARELASTICITYPROBLEM_HPP
 #define NONLINEARELASTICITYPROBLEM_HPP
@@ -95,6 +84,7 @@ namespace Albany {
                         const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
     void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
+    void constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs);
 
   protected:
 
@@ -106,6 +96,7 @@ namespace Albany {
     int numVertices;
 
     std::string matModel;
+    Teuchos::RCP<Albany::Layouts> dl;
 
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState;
@@ -191,7 +182,7 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
        << ", Dim= " << numDim << endl;
 
   // Construct standard FEM evaluators with standard field names                              
-  RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
+  dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
   TEUCHOS_TEST_FOR_EXCEPTION(dl->vectorAndGradientLayoutsAreEquivalent==false, std::logic_error,
                              "Data Layout Usage in Mechanics problems assume vecDim = numDim");
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
@@ -363,18 +354,14 @@ Albany::NonlinearElasticityProblem::constructEvaluators(
 
       //Input
       p->set<string>("DefGrad Name", "F");
-      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
       p->set<string>("Elastic Modulus Name", "Elastic Modulus");
-      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-      p->set<string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
-      p->set<string>("DetDefGrad Name", "J");  // dl->qp_scalar also
+      p->set<string>("Poissons Ratio Name", "Poissons Ratio");
+      p->set<string>("DetDefGrad Name", "J");
 
       //Output
-      p->set<string>("Stress Name", matModel); //dl->qp_tensor also
+      p->set<string>("Stress Name", matModel);
 
-      ev = rcp(new LCM::Neohookean<EvalT,AlbanyTraits>(*p));
+      ev = rcp(new LCM::Neohookean<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
       p = stateMgr.registerStateVariable(matModel,dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));

@@ -1,19 +1,8 @@
-/********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-\********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 #include <Teuchos_Array.hpp>
 #include <Epetra_LocalMap.h>
 #include "Albany_Utils.hpp"
@@ -21,6 +10,7 @@
 #include "Teuchos_CommHelpers.hpp"
 #include "Tpetra_DistObject.hpp"
 #include "Tpetra_Map.hpp"
+#include "QCAD_GreensFunctionTunneling.hpp"
 #include <fstream>
 
 //! Helper function prototypes
@@ -83,8 +73,13 @@ SaddleValueResponseFunction(
   distanceCutoffFctr = params.get<double>("Levelset Distance Cutoff Factor", 1.0);
   levelSetRadius = params.get<double>("Levelset Radius", 0);
 
+  maxFinalPts     = params.get<int>("Maximum Number of Final Points", 0);
+  finalPtSpacing  = params.get<double>("Final Point Spacing", 1);
 
-  if(backtraceAfterIters < 0) backtraceAfterIters = 10000000; // negative number == don't backtrace
+  bGetCurrent = (params.get<std::string>("Return Field Name", "") == "current");
+  current_Ecutoff_offset_from_Emax = params.get<double>("GF-CBR Method Energy Cutoff Offset", 0);
+
+  if(backtraceAfterIters < 0) backtraceAfterIters = 10000000;
   else if(backtraceAfterIters <= 1) backtraceAfterIters = 2; // can't backtrace until the second iteration
 
   bLockToPlane = false;
@@ -234,14 +229,31 @@ evaluateResponse(const double current_time,
     iSaddlePt = iCenter; //don't need to check for positive weight at this point
   }
 
-//  3) Perform level-set method in a radius around saddle image point
-doLevelSet(current_time, xdot, x, p, g, dbMode);
+  //  3) Perform level-set method in a radius around saddle image point
+  doLevelSet(current_time, xdot, x, p, g, dbMode);
 
-//  4) Fill response (g-vector) with values near the highest image point
-fillSaddlePointData(current_time, xdot, x, p, g, dbMode);
+  //  4) Get data at "final points" which can be more dense than neb image points, if desired
+  if(maxIterations > 0 && maxFinalPts > 0) {
+    initializeFinalImagePoints(current_time, xdot, x, p, g, dbMode);
+    getFinalImagePointValues(current_time, xdot, x, p, g, dbMode);
 
+    // append "final point" data to output
+    if( outputFilename.length() > 0) {
+      std::fstream out; double pathLength = 0.0;
+      out.open(outputFilename.c_str(), std::fstream::out | std::fstream::app);
+      out << std::endl << std::endl << "# Final points" << std::endl;
+      for(std::size_t i=0; i<finalPts.size(); i++) {
+	//std::cout << "DEBUG printing pt " << i << " of " << finalPts.size() << std::endl;
+	out << i << " " << finalPts[i].coords[0] << " " << finalPts[i].coords[1] 
+	    << " " << finalPts[i].value << " " << pathLength << " " << finalPts[i].radius << std::endl;
+	if(i < (finalPts.size()-1)) pathLength += finalPts[i].coords.distanceTo(finalPts[i+1].coords);
+      }
+      out.close();
+    }
+  }
 
-
+  //  5) Fill response (g-vector) with values near the highest image point (computes current if desired)
+  fillSaddlePointData(current_time, xdot, x, p, g, dbMode);
 
   return;
 }
@@ -559,7 +571,106 @@ initializeImagePointsT(const double current_time,
 				    current_time, xdotT, xT, p, gT);
     //No MPI here - each proc only holds all of it's worksets -- not other procs worksets
   }
+}
 
+void
+QCAD::SaddleValueResponseFunction::
+initializeFinalImagePoints(const double current_time,
+		     const Epetra_Vector* xdot,
+		     const Epetra_Vector& x,
+		     const Teuchos::Array<ParamVec>& p,
+		     Epetra_Vector& g, int dbMode)
+{
+  // Determine the locations of the "final" image points, which interpolate between the image points used
+  //    in the nudged elastic band algorithm, and are used only as a means of getting more dense output data (more points along saddle path)
+  
+  if(dbMode > 1) std::cout << "Saddle Point:  Initializing Final Image Points" << std::endl;
+
+  double ptSpacing = finalPtSpacing; // space between final image points
+  int maxPoints    = maxFinalPts;    // maximum number of total final image points
+  
+  double* segmentLength = new double[nImagePts-1]; // segmentLength[i] == distance between imagePt[i] and imagePt[i+1]
+  double lengthBefore = 0.0, lengthAfter = 0.0;    // path length before and after saddle point
+  double radius = 0.0;
+  int nPtsBefore = 0, nPtsAfter = 0, nFinalPts;
+
+  // Get the distances along each leg of the current (final) saddle path
+  for(std::size_t i=0; i<nImagePts-1; i++) {
+    segmentLength[i] = imagePts[i].coords.distanceTo(imagePts[i+1].coords);
+    radius += imagePts[i].radius;
+    if( (int)i < iSaddlePt ) lengthBefore += segmentLength[i];
+    else lengthAfter += segmentLength[i];
+  }
+
+  radius += imagePts[nImagePts-1].radius;
+  radius /= nImagePts;  // average radius
+
+  // We'd like to put equal number of final points on each side of the saddle point.  Compute here how 
+  //  many final points (fixed spacing) will lie on each side of the saddle point.
+  if(maxPoints * ptSpacing < lengthBefore + lengthAfter) {
+    if( maxPoints * ptSpacing / 2 > lengthBefore)
+      nPtsBefore = int(lengthBefore / ptSpacing);
+    else if( maxPoints * ptSpacing / 2 > lengthAfter)
+      nPtsBefore = maxPoints - int(lengthAfter / ptSpacing);
+    else nPtsBefore = maxPoints / 2;
+
+    nPtsAfter = maxPoints - nPtsBefore;
+  }
+  else {
+    nPtsBefore = int(lengthBefore / ptSpacing);
+    nPtsAfter  = int(lengthAfter  / ptSpacing);
+  }
+
+  nFinalPts = nPtsBefore + nPtsAfter + 1; // one extra for "on/at" saddle point
+  finalPts.resize(nFinalPts);
+  finalPtValues.resize(nFinalPts);
+  finalPtWeights.resize(nFinalPts);
+
+  //! Initialize Final Image Points:  
+  //   interpolate between current image points
+
+  double offset = 0.0;
+  int iCurFinalPt = nPtsBefore;
+  for(int i=iSaddlePt-1; i >= 0; i--) {
+    const mathVector& initialPt = imagePts[i+1].coords;
+    const mathVector& v = (imagePts[i].coords - imagePts[i+1].coords) * (1.0/segmentLength[i]);  // normalized vector from initial -> final pt
+
+    int nPts = int((segmentLength[i]-offset) / ptSpacing);
+    double leftover = (segmentLength[i]-offset) - ptSpacing * nPts;
+
+    for(int j=0; j<nPts && iCurFinalPt >= 0; j++) {
+      //radius = (imagePts[i].radius + imagePts[i+1].radius)/2; // use average radius
+      finalPts[iCurFinalPt].init(initialPt + v * (ptSpacing * j + offset), radius );
+      iCurFinalPt--;
+    }
+    offset = ptSpacing - leftover; //how much to advance the first point of the next segment
+  }
+
+  //If there are any leftover points (at beginning), initialize them too
+  for(int j=0; j<=iCurFinalPt; j++) 
+    finalPts[j].init(imagePts[0].coords, imagePts[0].radius);
+
+
+  offset = ptSpacing;  //start initial point *after* saddle point this time
+  iCurFinalPt = nPtsBefore+1;
+  for(std::size_t i=iSaddlePt; i < nImagePts-1; i++) {
+    const mathVector& initialPt = imagePts[i].coords;
+    const mathVector& v = (imagePts[i+1].coords - imagePts[i].coords) * (1.0/segmentLength[i]);  // normalized vector from initial -> final pt
+
+    int nPts = int((segmentLength[i]-offset) / ptSpacing);
+    double leftover = (segmentLength[i]-offset) - ptSpacing * nPts;
+
+    for(int j=0; j<nPts && iCurFinalPt < nFinalPts; j++) {;
+      // radius = (imagePts[i].radius + imagePts[i+1].radius)/2; // use average radius
+      finalPts[iCurFinalPt].init(initialPt + v * (ptSpacing * j + offset), radius );
+      iCurFinalPt++;
+    }
+    offset = ptSpacing - leftover; //how much to advance the first point of the next segment
+  }
+
+  //If there are any leftover points, initialize them too
+  for(int j=iCurFinalPt; j<nFinalPts; j++) 
+    finalPts[j].init(imagePts[nImagePts-1].coords, imagePts[nImagePts-1].radius);
 
   return;
 }
@@ -1663,6 +1774,26 @@ FindSaddlePoint_LevelSetT(std::vector<double>& allFieldVals,
 }
 
 
+double QCAD::SaddleValueResponseFunction::
+getCurrent() const
+{
+  const double kB = 8.617332e-5; // eV/K
+  const double effMass = 1.0; // in units of m_0
+  const double Temp = 10; // K
+  const double Vds = 0.0001; // one tenth of an meV bias
+
+  Teuchos::RCP<std::vector<double> > Ec = Teuchos::rcp( new std::vector<double>(finalPts.size()) );
+  for(std::size_t i=0; i<finalPts.size(); i++)
+    (*Ec)[i] = finalPts[i].value;
+
+  Teuchos::RCP<Epetra_MpiComm> Comm = Teuchos::rcp( new Epetra_MpiComm(MPI_COMM_WORLD) );
+  QCAD::GreensFunctionTunnelingSolver solver(Ec, finalPtSpacing, effMass, Comm); //Teuchos::rcp(comm.Clone())
+  double I = solver.computeCurrent(Vds, kB * Temp, current_Ecutoff_offset_from_Emax); // overwrite "Return Field Val" with current
+  std::cout << "Current I = " << I << " Amps" << std::endl;
+  return I;
+}
+
+
 void
 QCAD::SaddleValueResponseFunction::
 evaluateTangent(const double alpha, 
@@ -1896,6 +2027,69 @@ getImagePointValues(const double current_time,
 
   return;
 }
+
+void
+QCAD::SaddleValueResponseFunction::
+getFinalImagePointValues(const double current_time,
+		    const Epetra_Vector* xdot,
+		    const Epetra_Vector& x,
+		    const Teuchos::Array<ParamVec>& p,
+		    Epetra_Vector& g, 
+		    int dbMode)
+{
+  const Epetra_Comm& comm = x.Map().Comm();
+
+  //Set xmax,xmin,ymax,ymin based on points
+  xmax = xmin = imagePts[0].coords[0];
+  ymax = ymin = imagePts[0].coords[1];
+  for(std::size_t i=1; i<nImagePts; i++) {
+    xmin = std::min(imagePts[i].coords[0],xmin);
+    xmax = std::max(imagePts[i].coords[0],xmax);
+    ymin = std::min(imagePts[i].coords[1],ymin);
+    ymax = std::max(imagePts[i].coords[1],ymax);
+  }
+  xmin -= 5*imagePtSize; xmax += 5*imagePtSize;
+  ymin -= 5*imagePtSize; ymax += 5*imagePtSize;
+    
+  //Reset value and weight of final image points as these are accumulated by evaluator fill
+  finalPtValues.fill(0.0);
+  finalPtWeights.fill(0.0);
+
+  if(bAggregateWorksets) {
+    //Use cached field and coordinate values to perform fill    
+    for(std::size_t i=0; i<vFieldValues.size(); i++) {
+      addFinalImagePointData( vCoords[i].data, vFieldValues[i] );
+    } 
+  }
+  else {
+    mode = "Collect final image point data";
+    Albany::FieldManagerScalarResponseFunction::evaluateResponse(
+				     current_time, xdot, x, p, g);
+  }
+
+  //MPI -- sum weights, value, and gradient for each image pt
+  std::size_t nFinalPts = finalPts.size();
+  if(nFinalPts > 0) {
+    double*  globalPtValues   = new double [nFinalPts];
+    double*  globalPtWeights  = new double [nFinalPts];
+    comm.SumAll( finalPtValues.data(),    globalPtValues,  nFinalPts );
+    comm.SumAll( finalPtWeights.data(),   globalPtWeights, nFinalPts );
+
+    // Put summed data into imagePts, normalizing value from different cell contributions
+    for(std::size_t i=0; i<nFinalPts; i++) {
+      finalPts[i].weight = globalPtWeights[i];
+      finalPts[i].grad.fill(0.0); // don't use gradient -- always fill with zeros
+
+      if(globalPtWeights[i] > 1e-6) 
+	finalPts[i].value = globalPtValues[i] / finalPts[i].weight;
+      else 
+	finalPts[i].value = 0.0; // no weight, so just set value to zero
+    }
+  }
+
+  return;
+}
+
 
 
 void
@@ -2224,6 +2418,20 @@ addImagePointData(const double* p, double value, double* grad)
       //std::cout << "DEBUG Image Pt " << i << " close to (" << p[0] << "," << p[1] << "," << p[2] << ")=" << value
       //	<< "  wt=" << w << "  totalW=" << imagePtWeights[i] << "  totalVal=" << imagePtValues[i]
       //	<< "  val=" << imagePtValues[i] / imagePtWeights[i] << std::endl;
+    }
+  }
+  return;
+}
+
+void QCAD::SaddleValueResponseFunction::
+addFinalImagePointData(const double* p, double value)
+{
+  double w;
+  for(std::size_t i=0; i< finalPts.size(); i++) {
+    w = pointFn(finalPts[i].coords.distanceTo(p) , finalPts[i].radius );
+    if(w > 0) {
+      finalPtWeights[i] += w;
+      finalPtValues[i] += w*value;
     }
   }
   return;

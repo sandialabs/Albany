@@ -1,19 +1,8 @@
-/********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-\********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 
 #ifndef ALBANY_ANALYTICFUNCTION_HPP
 #define ALBANY_ANALYTICFUNCTION_HPP
@@ -114,6 +103,26 @@ class GaussCos : public AnalyticFunction {
 class LinearY : public AnalyticFunction {
   public:
     LinearY(int neq_, int numDim_, Teuchos::Array<double> data_);
+    void compute(double* x, const double *X);
+  private:
+    int numDim; // size of coordinate vector X
+    int neq;    // size of solution vector x
+    Teuchos::Array<double> data;  
+};
+
+class GaussianPress : public AnalyticFunction {
+  public:
+    GaussianPress(int neq_, int numDim_, Teuchos::Array<double> data_);
+    void compute(double* x, const double *X);
+  private:
+    int numDim; // size of coordinate vector X
+    int neq;    // size of solution vector x
+    Teuchos::Array<double> data;  
+};
+
+class SinCos : public AnalyticFunction {
+  public:
+    SinCos(int neq_, int numDim_, Teuchos::Array<double> data_);
     void compute(double* x, const double *X);
   private:
     int numDim; // size of coordinate vector X

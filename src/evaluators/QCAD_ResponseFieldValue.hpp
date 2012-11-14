@@ -1,23 +1,13 @@
-/********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-\********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 
 #ifndef QCAD_RESPONSEFIELDVALUE_HPP
 #define QCAD_RESPONSEFIELDVALUE_HPP
 
+#include "QCAD_MeshRegion.hpp"
 #include "QCAD_MaterialDatabase.hpp"
 #include "PHAL_ScatterScalarResponse.hpp"
 
@@ -50,6 +40,7 @@ namespace QCAD {
 
     Teuchos::Array<int> field_components;
   };
+
 
   template<typename Traits> 
   class FieldValueScatterScalarResponse<PHAL::AlbanyTraits::Jacobian,Traits> : 
@@ -85,11 +76,12 @@ namespace QCAD {
       nodeID = nodeID_;
     }
 
+    Teuchos::Array<int> field_components;
+
   private:
 
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > nodeID;
     int numNodes;
-    Teuchos::Array<int> field_components;
   };
 
   template<typename Traits> 
@@ -126,11 +118,12 @@ namespace QCAD {
       nodeID = nodeID_;
     }
 
+    Teuchos::Array<int> field_components;
+
   private:
 
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > nodeID;
     int numNodes;
-    Teuchos::Array<int> field_components;
   };
 
   template<typename Traits> 
@@ -167,11 +160,12 @@ namespace QCAD {
       nodeID = nodeID_;
     }
 
+    Teuchos::Array<int> field_components;
+
   private:
 
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > nodeID;
     int numNodes;
-    Teuchos::Array<int> field_components;
   };
 
 /** 
@@ -208,21 +202,18 @@ namespace QCAD {
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
     PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > max_nodeID;
-    Teuchos::Array<int> field_components;
+    //Teuchos::Array<int> field_components;
     
     bool bOpFieldIsVector, bRetFieldIsVector;
 
     std::string operation;
     std::string opFieldName;
     std::string retFieldName;
-    std::string opDomain;
-    std::vector<std::string> ebNames;
-    bool bQuantumEBsOnly;
 
     bool bReturnOpField;
     bool opX, opY, opZ;
-    bool limitX, limitY, limitZ;
-    double xmin, xmax, ymin, ymax, zmin, zmax;
+
+    Teuchos::RCP< MeshRegion<EvalT, Traits> > opRegion;
 
     Teuchos::Array<double> initVals;
 

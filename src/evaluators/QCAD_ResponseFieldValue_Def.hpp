@@ -1,19 +1,8 @@
-/********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-\********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 
 #include <fstream>
 #include "Teuchos_TestForException.hpp"
@@ -31,7 +20,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   // Here we scatter the *global* response
   Teuchos::RCP<Epetra_Vector> g = workset.g;
   if (g != Teuchos::null)
-    for (std::size_t res = 0; res < this->field_components.size(); res++) {
+    for (int res = 0; res < this->field_components.size(); res++) {
       (*g)[res] = this->global_response[this->field_components[res]].val();
   }
 
@@ -57,15 +46,15 @@ postEvaluate(typename Traits::PostEvalData workset)
   if (nodeID != Teuchos::null) {
 
     // Loop over responses
-    for (std::size_t res = 0; res < this->field_components.size(); res++) {
+    for (int res = 0; res < this->field_components.size(); res++) {
       ScalarT& val = this->global_response(this->field_components[res]);
       
       // Loop over nodes in cell
-      for (unsigned int node_dof=0; node_dof<numNodes; node_dof++) {
+      for (int node_dof=0; node_dof<numNodes; node_dof++) {
 	int neq = nodeID[node_dof].size();
 	
 	// Loop over equations per node
-	for (unsigned int eq_dof=0; eq_dof<neq; eq_dof++) {
+	for (int eq_dof=0; eq_dof<neq; eq_dof++) {
 	  
 	  // local derivative component
 	  int deriv = neq * node_dof + eq_dof;
@@ -96,7 +85,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   // Here we scatter the *global* SG response
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > g_sg = workset.sg_g;
   if (g_sg != Teuchos::null) {
-    for (std::size_t res = 0; res < this->field_components.size(); res++) {
+    for (int res = 0; res < this->field_components.size(); res++) {
       ScalarT& val = this->global_response[this->field_components[res]];
       for (int block=0; block<g_sg->size(); block++)
 	(*g_sg)[block][res] = val.val().coeff(block);
@@ -130,15 +119,15 @@ postEvaluate(typename Traits::PostEvalData workset)
   if (nodeID != Teuchos::null) {
 
     // Loop over responses
-    for (std::size_t res = 0; res < this->field_components.size(); res++) {
+    for (int res = 0; res < this->field_components.size(); res++) {
       ScalarT& val = this->global_response(this->field_components[res]);
       
       // Loop over nodes in cell
-      for (unsigned int node_dof=0; node_dof<numNodes; node_dof++) {
+      for (int node_dof=0; node_dof<numNodes; node_dof++) {
 	int neq = nodeID[node_dof].size();
 	
 	// Loop over equations per node
-	for (unsigned int eq_dof=0; eq_dof<neq; eq_dof++) {
+	for (int eq_dof=0; eq_dof<neq; eq_dof++) {
 	  
 	  // local derivative component
 	  int deriv = neq * node_dof + eq_dof;
@@ -173,7 +162,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   // Here we scatter the *global* MP response
   Teuchos::RCP<Stokhos::ProductEpetraVector> g_mp = workset.mp_g;
   if (g_mp != Teuchos::null) {
-    for (std::size_t res = 0; res < this->field_components.size(); res++) {
+    for (int res = 0; res < this->field_components.size(); res++) {
       ScalarT& val = this->global_response[this->field_components[res]];
       for (int block=0; block<g_mp->size(); block++)
 	(*g_mp)[block][res] = val.val().coeff(block);
@@ -206,15 +195,15 @@ postEvaluate(typename Traits::PostEvalData workset)
   if (nodeID != Teuchos::null) {
 
     // Loop over responses
-    for (std::size_t res = 0; res < this->field_components.size(); res++) {
+    for (int res = 0; res < this->field_components.size(); res++) {
       ScalarT& val = this->global_response(this->field_components[res]);
       
       // Loop over nodes in cell
-      for (unsigned int node_dof=0; node_dof<numNodes; node_dof++) {
+      for (int node_dof=0; node_dof<numNodes; node_dof++) {
 	int neq = nodeID[node_dof].size();
 	
 	// Loop over equations per node
-	for (unsigned int eq_dof=0; eq_dof<neq; eq_dof++) {
+	for (int eq_dof=0; eq_dof<neq; eq_dof++) {
 	  
 	  // local derivative component
 	  int deriv = neq * node_dof + eq_dof;
@@ -269,6 +258,8 @@ ResponseFieldValue(Teuchos::ParameterList& p,
   numQPs  = dims[1];
   numDims = dims[2];
 
+  opRegion  = Teuchos::rcp( new QCAD::MeshRegion<EvalT, Traits>("Coord Vec","Weights",*plist,materialDB,dl) );
+
   // User-specified parameters
   operation    = plist->get<std::string>("Operation");
 
@@ -287,42 +278,9 @@ ResponseFieldValue(Teuchos::ParameterList& p,
   else retFieldName = plist->get<std::string>("Return Field Name", opFieldName);
   bReturnOpField = (opFieldName == retFieldName);
 
-  opDomain     = plist->get<std::string>("Operation Domain", "box");
   opX = plist->get<bool>("Operate on x-component", true) && (numDims > 0);
   opY = plist->get<bool>("Operate on y-component", true) && (numDims > 1);
   opZ = plist->get<bool>("Operate on z-component", true) && (numDims > 2);
-
-  if(opDomain == "box") {
-    limitX = limitY = limitZ = false;
-    bQuantumEBsOnly = false;
-
-    if( plist->isParameter("x min") && plist->isParameter("x max") ) {
-      limitX = true; TEUCHOS_TEST_FOR_EXCEPT(numDims <= 0);
-      xmin = plist->get<double>("x min");
-      xmax = plist->get<double>("x max");
-    }
-    if( plist->isParameter("y min") && plist->isParameter("y max") ) {
-      limitY = true; TEUCHOS_TEST_FOR_EXCEPT(numDims <= 1);
-      ymin = plist->get<double>("y min");
-      ymax = plist->get<double>("y max");
-    }
-    if( plist->isParameter("z min") && plist->isParameter("z max") ) {
-      limitZ = true; TEUCHOS_TEST_FOR_EXCEPT(numDims <= 2);
-      zmin = plist->get<double>("z min");
-      zmax = plist->get<double>("z max");
-    }
-  }
-  else if(opDomain == "element block") {
-    std::string ebNameStr = plist->get<std::string>("Element Block Name","");
-    if(ebNameStr.length() > 0) Albany::splitStringOnDelim(ebNameStr,',',ebNames);
-    bQuantumEBsOnly = plist->get<bool>("Quantum Element Blocks Only",false);
-  }
-  else if(opDomain == "quantum blocks") {
-    bQuantumEBsOnly = true;
-  }
-  else TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
-             << "Error!  Invalid operation domain type " << opDomain << std::endl); 
-
 
   // setup operation field and return field (if it's a different field)
   if(bOpFieldIsVector) {
@@ -341,6 +299,7 @@ ResponseFieldValue(Teuchos::ParameterList& p,
   this->addDependentField(opField);
   this->addDependentField(coordVec);
   this->addDependentField(weights);
+  opRegion->addDependentFields(this);
   if(!bReturnOpField) this->addDependentField(retField); //when return field is *different* from op field
 
   // Set sentinal values for max/min problems 
@@ -356,7 +315,7 @@ ResponseFieldValue(Teuchos::ParameterList& p,
   // Setup scatter evaluator
   std::string global_response_name = 
     opFieldName + " Global Response Field Value";
-  int worksetSize = scalar_dl->dimension(0);
+  //int worksetSize = scalar_dl->dimension(0);
   int responseSize = 5;
   Teuchos::RCP<PHX::DataLayout> global_response_layout =
     Teuchos::rcp(new PHX::MDALayout<Dim>(responseSize));
@@ -365,6 +324,12 @@ ResponseFieldValue(Teuchos::ParameterList& p,
   p.set("Stand-alone Evaluator", false);
   p.set("Global Response Field Tag", global_response_tag);
   this->setup(p,dl);
+
+  // Specify which components of response (in this case 0th and 1st) to 
+  //  scatter derivatives for.
+  FieldValueScatterScalarResponse<EvalT,Traits>::field_components.resize(2);
+  FieldValueScatterScalarResponse<EvalT,Traits>::field_components[0] = 0;
+  FieldValueScatterScalarResponse<EvalT,Traits>::field_components[1] = 1;
 }
 
 // **********************************************************************
@@ -377,6 +342,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(coordVec,fm);
   this->utils.setFieldData(weights,fm);
   if(!bReturnOpField) this->utils.setFieldData(retField,fm);
+  opRegion->postRegistrationSetup(fm);
   QCAD::FieldValueScatterScalarResponse<EvalT,Traits>::postRegistrationSetup(d,fm);
 }
 
@@ -399,30 +365,13 @@ void QCAD::ResponseFieldValue<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   ScalarT opVal, qpVal, cellVol;
-  bool bQuantumEB = false; //if no material database, all element blocks are "non-quantum"
 
-  if(materialDB != Teuchos::null)
-    bQuantumEB = materialDB->getElementBlockParam<bool>(workset.EBName,"quantum",false);
-
-  if(opDomain == "element block" || opDomain == "quantum blocks") {
-    if(ebNames.size() > 0 && std::find(ebNames.begin(), ebNames.end(), workset.EBName) == ebNames.end()) return;
-    if(bQuantumEBsOnly == true && bQuantumEB == false) return;
-  }
+  if(!opRegion->elementBlockIsInRegion(workset.EBName))
+    return;
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) 
   {
-    // If operation domain is a "box", check whether the current cell is 
-    //  at least partially contained within the box
-    if(opDomain == "box") {
-      bool cellInBox = false;
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
-        if( (!limitX || (coordVec(cell,qp,0) >= xmin && coordVec(cell,qp,0) <= xmax)) &&
-            (!limitY || (coordVec(cell,qp,1) >= ymin && coordVec(cell,qp,1) <= ymax)) &&
-            (!limitZ || (coordVec(cell,qp,2) >= zmin && coordVec(cell,qp,2) <= zmax)) ) {
-          cellInBox = true; break; }
-      }
-      if( !cellInBox ) continue;
-    }
+    if(!opRegion->cellIsInRegion(cell)) continue;
 
     // Get the cell volume, used for averaging over a cell
     cellVol = 0.0;
@@ -546,9 +495,13 @@ QCAD::ResponseFieldValue<EvalT,Traits>::getValidResponseParameters() const
     QCAD::FieldValueScatterScalarResponse<EvalT,Traits>::getValidResponseParameters();
   validPL->setParameters(*baseValidPL);
 
+  Teuchos::RCP<const Teuchos::ParameterList> regionValidPL = opRegion->getValidParameters();
+  validPL->setParameters(*regionValidPL);
+
   validPL->set<string>("Name", "", "Name of response function");
   validPL->set<int>("Phalanx Graph Visualization Detail", 0, "Make dot file to visualize phalanx graph");
   validPL->set<string>("Type", "", "Response type");
+
   validPL->set<string>("Operation", "Maximize", "Operation to perform");
   validPL->set<string>("Operation Field Name", "", "Scalar field to perform operation on");
   validPL->set<string>("Operation Vector Field Name", "", "Vector field to perform operation on");
@@ -557,23 +510,12 @@ QCAD::ResponseFieldValue<EvalT,Traits>::getValidResponseParameters() const
   validPL->set<string>("Return Vector Field Name", "<operation vector field name>",
 		       "Vector field to return value from");
 
-  validPL->set<string>("Operation Domain", "box", "Region to perform operation: 'box' or 'element block'");
   validPL->set<bool>("Operate on x-component", true, 
 		     "Whether to perform operation on x component of vector field");
   validPL->set<bool>("Operate on y-component", true, 
 		     "Whether to perform operation on y component of vector field");
   validPL->set<bool>("Operate on z-component", true, 
 		     "Whether to perform operation on z component of vector field");
-
-  validPL->set<double>("x min", 0.0, "Box domain minimum x coordinate");
-  validPL->set<double>("x max", 0.0, "Box domain maximum x coordinate");
-  validPL->set<double>("y min", 0.0, "Box domain minimum y coordinate");
-  validPL->set<double>("y max", 0.0, "Box domain maximum y coordinate");
-  validPL->set<double>("z min", 0.0, "Box domain minimum z coordinate");
-  validPL->set<double>("z max", 0.0, "Box domain maximum z coordinate");
-
-  validPL->set<string>("Element Block Name", "", "Comma-delimited element block name(s) that specifies domain");
-  validPL->set<bool>("Quantum Element Blocks Only",false);
 
   validPL->set<string>("Description", "", "Description of this response used by post processors");
 

@@ -1,19 +1,8 @@
-/********************************************************************\
- *            Albany, Copyright (2010) Sandia Corporation             *
- *                                                                    *
- * Notice: This computer software was prepared by Sandia Corporation, *
- * hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
- * the Department of Energy (DOE). All rights in the computer software*
- * are reserved by DOE on behalf of the United States Government and  *
- * the Contractor as provided in the Contract. You are authorized to  *
- * use this computer software for Governmental purposes but it is not *
- * to be released or distributed to the public. NEITHER THE GOVERNMENT*
- * NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
- * ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
- * including this sentence must appear on any copies of this software.*
- *    Questions to Andy Salinger, agsalin@sandia.gov                  *
- \********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
@@ -141,6 +130,13 @@ namespace LCM {
 
     ScalarT fvoid, eq;
 
+    // scratch space FCs
+    Tensor<ScalarT> be(3);
+    Tensor<ScalarT> logbe(3);
+    Tensor<ScalarT> s(3);
+    Tensor<ScalarT> A(3);
+    Tensor<ScalarT> expA(3);
+
     // previous state
     Albany::MDArray Fpold = (*workset.stateArrayPtr)[fpName];
     Albany::MDArray eqpsold = (*workset.stateArrayPtr)[eqpsName];
@@ -170,7 +166,7 @@ namespace LCM {
         delta = satExp(cell, qp);
 
         //
-        LCM::Tensor<ScalarT, 3> sigma, Rotate;
+        LCM::Tensor<ScalarT> sigma(3), Rotate(3);
 
         // Compute Trial State
         if (isHyper) { // Hyperelastic
@@ -187,11 +183,12 @@ namespace LCM {
 
           ScalarT detbe = LCM::det<ScalarT>(be);
 
-          s = mu * (logbe - trd3 * LCM::identity<ScalarT, 3>());
+          s = mu * (logbe - trd3 * LCM::identity<ScalarT>(3));
           p = 0.5 * kappa * std::log(detbe);
         } else { // hypoelastic
           ScalarT deltaT = deltaTime(0);
-          LCM::Tensor<ScalarT, 3> Fnew(defgrad(cell, qp, 0, 0),
+          LCM::Tensor<ScalarT> Fnew(
+              defgrad(cell, qp, 0, 0),
               defgrad(cell, qp, 0, 1), defgrad(cell, qp, 0, 2),
               defgrad(cell, qp, 1, 0), defgrad(cell, qp, 1, 1),
               defgrad(cell, qp, 1, 2), defgrad(cell, qp, 2, 0),
@@ -199,7 +196,8 @@ namespace LCM {
 
           int cell_int = int(cell);
           int qp_int = int(qp);
-          LCM::Tensor<ScalarT, 3> Fold(defGradold(cell_int, qp_int, 0, 0),
+          LCM::Tensor<ScalarT> Fold(
+              defGradold(cell_int, qp_int, 0, 0),
               defGradold(cell_int, qp_int, 0, 1),
               defGradold(cell_int, qp_int, 0, 2),
               defGradold(cell_int, qp_int, 1, 0),
@@ -209,7 +207,7 @@ namespace LCM {
               defGradold(cell_int, qp_int, 2, 1),
               defGradold(cell_int, qp_int, 2, 2));
 
-          LCM::Tensor<ScalarT, 3> sigmaold_unrot(
+          LCM::Tensor<ScalarT> sigmaold_unrot(
               stressold(cell_int, qp_int, 0, 0),
               stressold(cell_int, qp_int, 0, 1),
               stressold(cell_int, qp_int, 0, 2),
@@ -221,50 +219,48 @@ namespace LCM {
               stressold(cell_int, qp_int, 2, 2));
 
           // incremental deformation gradient
-          LCM::Tensor<ScalarT, 3> Finc = Fnew * LCM::inverse(Fold);
+          LCM::Tensor<ScalarT> Finc = Fnew * LCM::inverse(Fold);
 
           // left stretch V, and rotation R, from left polar decomposition of new deformation gradient
-          LCM::Tensor<ScalarT, 3> V;
+          LCM::Tensor<ScalarT> V(3);
           boost::tie(V, Rotate) = LCM::polar_left(Fnew);
 
           // incremental left stretch Vinc, incremental rotation Rinc, and log of incremental left stretch, logVinc
-          LCM::Tensor<ScalarT, 3> Vinc, Rinc, logVinc;
+          LCM::Tensor<ScalarT> Vinc(3), Rinc(3), logVinc(3);
           boost::tie(Vinc, Rinc) = LCM::polar_left(Finc);
           logVinc = LCM::log(Vinc);
 
           // log of incremental rotation
-          LCM::Tensor<ScalarT, 3> logRinc = LCM::log_rotation(Rinc);
+          LCM::Tensor<ScalarT> logRinc = LCM::log_rotation(Rinc);
 
           // log of incremental deformation gradient
-          LCM::Tensor<ScalarT, 3> logFinc = LCM::bch(logVinc, logRinc);
+          LCM::Tensor<ScalarT> logFinc = LCM::bch(logVinc, logRinc);
 
           // velocity gradient
-          LCM::Tensor<ScalarT, 3> L(0.0);
+          LCM::Tensor<ScalarT> L(3, 0.0);
           if (deltaT != 0) L = (1.0 / deltaT) * logFinc;
 
           // strain rate (a.k.a rate of deformation), in unrotated configuration
-          LCM::Tensor<ScalarT, 3> D_unrot = LCM::symm(L);
+          LCM::Tensor<ScalarT> D_unrot = LCM::symm(L);
 
           // rotated rate of deformation
-          LCM::Tensor<ScalarT, 3> D = LCM::dot(LCM::transpose(Rotate),
+          LCM::Tensor<ScalarT> D = LCM::dot(LCM::transpose(Rotate),
               LCM::dot(D_unrot, Rotate));
 
           // rotated old state of stress
-          LCM::Tensor<ScalarT, 3> sigmaold = LCM::dot(LCM::transpose(Rotate),
+          LCM::Tensor<ScalarT> sigmaold = LCM::dot(LCM::transpose(Rotate),
               LCM::dot(sigmaold_unrot, Rotate));
 
           // elasticity tensor
-          LCM::Tensor4<ScalarT, 3> Celastic = lame
-              * LCM::identity_3<ScalarT, 3>()
+          LCM::Tensor4<ScalarT> Celastic = lame * LCM::identity_3<ScalarT>(3)
               + mu
-                  * (LCM::identity_1<ScalarT, 3>()
-                      + LCM::identity_2<ScalarT, 3>());
+                  * (LCM::identity_1<ScalarT>(3) + LCM::identity_2<ScalarT>(3));
 
           // trial stress; defined at the beginning
           sigma = sigmaold + deltaT * LCM::dotdot(Celastic, D);
 
           p = (1. / 3.) * LCM::trace(sigma);
-          s = sigma - p * LCM::identity<ScalarT, 3>();
+          s = sigma - p * LCM::identity<ScalarT>(3);
         }
 
         fvoid = voidVolumeold(cell, qp);
@@ -352,7 +348,7 @@ namespace LCM {
 
             ScalarT tmp = 1.5 * q2 * p / Ybar;
 
-            LCM::Tensor<ScalarT, 3> dPhi(0.0);
+            LCM::Tensor<ScalarT> dPhi(3, 0.0);
 
             for (std::size_t i = 0; i < numDims; ++i) {
               for (std::size_t j = 0; j < numDims; ++j) {
@@ -400,9 +396,9 @@ namespace LCM {
             stress(cell, qp, i, i) += p / J(cell, qp);
           }
         } else { // for Hypoelastic
-          sigma = p * LCM::identity<ScalarT, 3>() + s;
+          sigma = p * LCM::identity<ScalarT>(3) + s;
           // rotate back to current configuration
-          LCM::Tensor<ScalarT, 3> sigma_unrot = LCM::dot(Rotate,
+          LCM::Tensor<ScalarT> sigma_unrot = LCM::dot(Rotate,
               LCM::dot(sigma, LCM::transpose(Rotate)));
           for (std::size_t i = 0; i < numDims; ++i)
             for (std::size_t j = 0; j < numDims; ++j)
@@ -428,7 +424,7 @@ namespace LCM {
 // all local functions
   template<typename EvalT, typename Traits>
   typename EvalT::ScalarT GursonFD<EvalT, Traits>::compute_Phi(
-      LCM::Tensor<ScalarT, 3> & s, ScalarT & p, ScalarT & fvoid, ScalarT & eq,
+      LCM::Tensor<ScalarT> & s, ScalarT & p, ScalarT & fvoid, ScalarT & eq,
       ScalarT & K, ScalarT & Y, ScalarT & siginf, ScalarT & delta,
       ScalarT & Jacobian, ScalarT & E)
   {
@@ -467,7 +463,7 @@ namespace LCM {
   template<typename EvalT, typename Traits>
   void GursonFD<EvalT, Traits>::compute_ResidJacobian(std::vector<ScalarT> & X,
       std::vector<ScalarT> & R, std::vector<ScalarT> & dRdX, const ScalarT & p,
-      const ScalarT & fvoid, const ScalarT & eq, LCM::Tensor<ScalarT, 3> & s,
+      const ScalarT & fvoid, const ScalarT & eq, LCM::Tensor<ScalarT> & s,
       ScalarT & mu, ScalarT & kappa, ScalarT & K, ScalarT & Y, ScalarT & siginf,
       ScalarT & delta, ScalarT & Jacobian)
   {
@@ -536,7 +532,7 @@ namespace LCM {
     psi = fvoid2 - psi;
     psi = 1. + psi;
 
-    LCM::Tensor<DFadType, 3> sfad(0.0);
+    LCM::Tensor<DFadType> sfad(3, 0.0);
 
     // valid for assumption Ntr = N;
     for (int i = 0; i < 3; i++) {

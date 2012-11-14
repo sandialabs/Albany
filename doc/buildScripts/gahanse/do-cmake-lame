@@ -1,0 +1,9 @@
+
+BUILD_DIR=`pwd`
+
+cmake \
+      -D CMAKE_Fortran_FLAGS:STRING="-DEIGHT_BYTE_REAL" \
+       ../
+
+#      -D CMAKE_Fortran_FLAGS:STRING="-fdefault-real-8" \
+

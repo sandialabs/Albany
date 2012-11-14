@@ -1,19 +1,8 @@
-/********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Glen Hansen, gahanse@sandia.gov                    *
-\********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 
 #ifndef PHAL_NEUMANN_HPP
 #define PHAL_NEUMANN_HPP
@@ -39,8 +28,6 @@ namespace PHAL {
 
 */
 
-enum NEU_TYPE {COORD, NORMAL, INTJUMP, PRESS, ROBIN};
-enum SIDE_TYPE {OTHER, LINE, TRI}; // to calculate areas for pressure bc
 
 template<typename EvalT, typename Traits>
 class NeumannBase : 
@@ -49,6 +36,9 @@ class NeumannBase :
     public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
 
 public:
+
+  enum NEU_TYPE {COORD, NORMAL, INTJUMP, PRESS, ROBIN, BASAL};
+  enum SIDE_TYPE {OTHER, LINE, TRI}; // to calculate areas for pressure bc
 
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
@@ -108,6 +98,15 @@ protected:
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id);
+   
+  //Basal bc
+  void calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
+                          const Intrepid::FieldContainer<MeshScalarT>& phys_side_cub_points,
+   		          const Intrepid::FieldContainer<ScalarT>& dof_side,
+                          const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+                          const shards::CellTopology & celltopo,
+                          const int cellDims,
+                          int local_side_id);
 
    // Do the side integration
   void evaluateNeumannContribution(typename Traits::EvalData d);
@@ -116,6 +115,7 @@ protected:
   //! Coordinate vector at vertices
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
   PHX::MDField<ScalarT,Cell,Node> dof;
+  PHX::MDField<ScalarT,Cell,Node,VecDim> dofVec;
   Teuchos::RCP<shards::CellTopology> cellType;
   Teuchos::RCP<shards::CellTopology> sideType;
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubatureCell;
@@ -142,6 +142,9 @@ protected:
   Intrepid::FieldContainer<ScalarT> dofCell;
   Intrepid::FieldContainer<ScalarT> dofSide;
 
+  Intrepid::FieldContainer<ScalarT> dofCellVec;
+  Intrepid::FieldContainer<ScalarT> dofSideVec;
+  
   Intrepid::FieldContainer<ScalarT> data;
 
   // Output:

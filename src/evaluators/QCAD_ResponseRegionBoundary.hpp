@@ -1,19 +1,8 @@
-/********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-\********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 
 #ifndef QCAD_RESPONSEREGIONBOUNDARY_HPP
 #define QCAD_RESPONSEREGIONBOUNDARY_HPP
@@ -26,6 +15,7 @@
 #include "Albany_ProblemUtils.hpp"
 #include "QCAD_MaterialDatabase.hpp"
 #include "QCAD_EvaluatorTools.hpp"
+#include "QCAD_MeshRegion.hpp"
 
 namespace QCAD {
 
@@ -64,25 +54,20 @@ namespace QCAD {
   private:
     Teuchos::RCP<const Teuchos::ParameterList> getValidResponseParameters() const;
 
-    std::string regionType;
     std::string outputFilename;
-    double levelSetFieldMin, levelSetFieldMax;
+    Teuchos::RCP< MeshRegion<EvalT, Traits> > opRegion;
 
     std::size_t numQPs;
     std::size_t numDims;
 
-    std::string levelSetFieldname;
-    PHX::MDField<ScalarT> levelSetField;    
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
     PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
     
-    std::vector<std::string> ebNames;
-    bool bQuantumEBsOnly;
-
     //Region boundary: for now just min/max along each coordinate direction
     //  * just MeshScalarTs - no derivative information for region boundaries yet, as
     //  * it's not clear this should be done and whether it's ever desired
     std::vector<MeshScalarT> minVals, maxVals;
+
 
     //! Material database
     Teuchos::RCP<QCAD::MaterialDatabase> materialDB;

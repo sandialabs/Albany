@@ -1,19 +1,8 @@
-/********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
- *                                                                    *
- * Notice: This computer software was prepared by Sandia Corporation, *
- * hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
- * the Department of Energy (DOE). All rights in the computer software*
- * are reserved by DOE on behalf of the United States Government and  *
- * the Contractor as provided in the Contract. You are authorized to  *
- * use this computer software for Governmental purposes but it is not *
- * to be released or distributed to the public. NEITHER THE GOVERNMENT*
- * NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
- * ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
- * including this sentence must appear on any copies of this software.*
- *    Questions to Andy Salinger, agsalin@sandia.gov                  *
- \********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 #ifndef GURSONFD_HPP
 #define GURSONFD_HPP
 
@@ -54,14 +43,14 @@ namespace LCM {
     // all local functions used in computing GursonFD model stress:
 
     ScalarT
-    compute_Phi(LCM::Tensor<ScalarT, 3> & s, ScalarT & p, ScalarT & fvoid,
+    compute_Phi(LCM::Tensor<ScalarT> & s, ScalarT & p, ScalarT & fvoid,
         ScalarT & eq, ScalarT & K, ScalarT & Y, ScalarT & siginf,
         ScalarT & delta, ScalarT & Jacobian, ScalarT & E);
 
     void
     compute_ResidJacobian(std::vector<ScalarT> & X, std::vector<ScalarT> & R,
         std::vector<ScalarT> & dRdX, const ScalarT & p, const ScalarT & fvoid,
-        const ScalarT & eq, LCM::Tensor<ScalarT, 3> & s, ScalarT & mu,
+        const ScalarT & eq, LCM::Tensor<ScalarT> & s, ScalarT & mu,
         ScalarT & kappa, ScalarT & K, ScalarT & Y, ScalarT & siginf,
         ScalarT & delta, ScalarT & Jacobian);
 
@@ -102,13 +91,6 @@ namespace LCM {
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> Fp;
     PHX::MDField<ScalarT, Cell, QuadPoint> eqps;
     PHX::MDField<ScalarT, Cell, QuadPoint> voidVolume;
-
-    // scratch space FCs
-    Tensor<ScalarT, 3> be;
-    Tensor<ScalarT, 3> logbe;
-    Tensor<ScalarT, 3> s;
-    Tensor<ScalarT, 3> A;
-    Tensor<ScalarT, 3> expA;
 
     Intrepid::FieldContainer<ScalarT> Fpinv;
     Intrepid::FieldContainer<ScalarT> FpinvT;

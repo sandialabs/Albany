@@ -1,19 +1,8 @@
-/********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-\********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 
 #ifndef PHAL_FACTORY_TRAITS_HPP
 #define PHAL_FACTORY_TRAITS_HPP
@@ -23,6 +12,7 @@
 #ifdef ALBANY_LCM
 #include "LCM/evaluators/KfieldBC.hpp"
 #include "LCM/evaluators/TimeDepBC.hpp"
+#include "LCM/evaluators/TimeTracBC.hpp"
 #include "LCM/evaluators/Time.hpp"
 #include "LCM/evaluators/TorsionBC.hpp"
 #endif
@@ -84,13 +74,21 @@ namespace PHAL {
     static const int id_neumann_aggregator        =  1;
     static const int id_gather_coord_vector       =  2;
     static const int id_gather_solution           =  3;
+    static const int id_timedep_bc                =  4; // Only for LCM probs
 
-   typedef boost::mpl::vector4< 
+#ifdef ALBANY_LCM
+    typedef boost::mpl::vector5<
+#else
+    typedef boost::mpl::vector4< 
+#endif
 
 	     PHAL::Neumann<_,Traits>,                     //  0
 	     PHAL::NeumannAggregator<_,Traits>,           //  1
              PHAL::GatherCoordinateVector<_,Traits>,      //  2
              PHAL::GatherSolution<_,Traits>               //  3
+#ifdef ALBANY_LCM
+        , LCM::TimeTracBC<_, Traits>                //  4
+#endif
 
 	  > EvaluatorTypes;
 };

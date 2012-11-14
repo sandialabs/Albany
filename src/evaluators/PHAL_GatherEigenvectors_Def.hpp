@@ -1,19 +1,8 @@
-/********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-\********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 
 #include <vector>
 #include <string>
@@ -75,6 +64,8 @@ evaluateFields(typename Traits::EvalData workset)
 
   const Epetra_MultiVector& e_r = *(workset.eigenDataPtr->eigenvectorRe);
   const Epetra_MultiVector& e_i = *(workset.eigenDataPtr->eigenvectorIm);
+  int numVecsInWorkset = std::min(e_r.NumVectors(),e_i.NumVectors());
+  int numVecsToGather  = std::min(numVecsInWorkset, (int)nEigenvectors);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID = workset.wsElNodeEqID[cell];
@@ -82,7 +73,7 @@ evaluateFields(typename Traits::EvalData workset)
     for(std::size_t node =0; node < this->numNodes; ++node) {
       int offsetIntoVec = nodeID[node][0]; // neq==1 hardwired
 
-      for (std::size_t k = 0; k < nEigenvectors; ++k) {
+      for (std::size_t k = 0; k < numVecsToGather; ++k) {
 	(this->eigenvector_Re[k])(cell,node) = (*(e_r(k)))[offsetIntoVec];
 	(this->eigenvector_Im[k])(cell,node) = (*(e_i(k)))[offsetIntoVec];
       }

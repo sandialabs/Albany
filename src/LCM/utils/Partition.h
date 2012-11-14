@@ -1,9 +1,8 @@
-///
-/// \file Partition.h
-/// Simple Zoltan compact hyperedge graph for partitioning meshes.
-/// Declarations.
-/// \author Alejandro Mota
-///
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 
 // Define only if Zoltan is enabled
 #if defined (ALBANY_LCM) && defined(ALBANY_ZOLTAN)
@@ -55,13 +54,17 @@ namespace LCM {
   ///
   /// Map for topologcal objects for which it is possible to associate points.
   ///
-  typedef std::map<int, LCM::Vector<double, 3> >
+  typedef std::map<int, LCM::Vector<double> >
   PointMap;
 
   ///
   /// Useful to distinguish among different partitioning schemes.
   ///
-  enum PartitionScheme {UNKNOWN, GEOMETRIC, HYPERGRAPH};
+  namespace PARTITION {
+
+    enum Scheme {UNKNOWN, GEOMETRIC, HYPERGRAPH, KMEANS, SEQUENTIAL};
+
+  }
 
   //
   ///Forward declarations
@@ -76,12 +79,6 @@ namespace LCM {
   ///
   class ConnectivityArray {
   public:
-
-    ///
-    /// Useful to distinguish among different finite elements.
-    ///
-    enum Type {UNKNOWN, SEGMENTAL, TRIANGULAR,
-      QUADRILATERAL, TETRAHEDRAL, HEXAHEDRAL};
 
     ///
     /// Default constructor for Connectivity Array
@@ -119,8 +116,15 @@ namespace LCM {
     /// \return Type of finite element in the array
     /// (assume same type for all elements)
     ///
-    Type
+    ELEMENT::Type
     GetType() const;
+
+    ///
+    /// \return Number of nodes that define element topology
+    /// (assume same type for all elements)
+    ///
+    Index
+    GetNodesPerElement() const;
 
     ///
     /// \return Node ID and associated point in space
@@ -165,6 +169,76 @@ namespace LCM {
     GetCentroids() const;
 
     ///
+    /// \return Bounding box for all nodes
+    ///
+    std::pair<LCM::Vector<double>, LCM::Vector<double> >
+    BoundingBox() const;
+
+    ///
+    /// \param K-means tolerance
+    ///
+    void
+    SetTolerance(double tolerance);
+
+    ///
+    /// \return K-means tolerance
+    ///
+    double
+    GetTolerance() const;
+
+    ///
+    /// \param maximum divisions for voxelization
+    ///
+    void
+    SetMaximumDivisions(Index maximum_divisions);
+
+    ///
+    /// \return maximum divisions for voxelization
+    ///
+    Index
+    GetMaximumDivisions() const;
+
+    ///
+    /// \param maximum iterations for K-means
+    ///
+    void
+    SetMaximumIterations(Index maximum_iterations);
+
+    ///
+    /// \return maximum iterarions for K-means
+    ///
+    Index
+    GetMaximumIterations() const;
+
+    ///
+    /// Voxelization of the domain for fast determination
+    /// of points being inside or outside the domain.
+    ///
+    void
+    Voxelize();
+
+    ///
+    /// Convert point to index into voxel array
+    ///
+    Vector<int>
+    PointToIndex(Vector<double> const & point) const;
+
+    ///
+    /// Determine is a given point is inside the mesh.
+    ///
+    bool
+    IsInsideMesh(Vector<double> const & point) const;
+
+    ///
+    /// Determine is a given point is inside the mesh
+    /// doing it element by element. Slow but useful
+    /// to set up an initial data structure that will
+    /// be used on a faster method.
+    ///
+    bool
+    IsInsideMeshByElement(Vector<double> const & point) const;
+
+    ///
     /// \param length_scale Length scale for partitioning for
     /// variational non-local regularization
     /// \return Number of partitions defined as total volume
@@ -188,11 +262,11 @@ namespace LCM {
     ///
     std::map<int, int>
     Partition(
-        const LCM::PartitionScheme partition_scheme,
+        const PARTITION::Scheme partition_scheme,
         const double length_scale);
 
     ///
-    /// Partition mesh with Zoltan Hypergraph algortithm
+    /// Partition mesh with Zoltan Hypergraph algorithm
     /// \param length_scale The length scale for variational nonlocal
     /// regularization
     /// \return Partition number for each element
@@ -201,13 +275,30 @@ namespace LCM {
     PartitionHyperGraph(const double length_scale);
 
     ///
-    /// Partition mesh with Zoltan Recursive Inertial Bisection algortithm
+    /// Partition mesh with Zoltan Recursive Inertial Bisection algorithm
     /// \param length_scale The length scale for variational nonlocal
     /// regularization
     /// \return Partition number for each element
     ///
     std::map<int, int>
     PartitionGeometric(const double length_scale);
+
+    ///
+    /// Partition mesh with K-means algorithm
+    /// \param length_scale The length scale for variational nonlocal
+    /// regularization
+    /// \return Partition number for each element
+    ///
+    std::map<int, int>
+    PartitionKMeans(const double length_scale);
+
+    ///
+    /// Partition mesh with sequential K-means algorithm
+    /// \param number of partitions
+    /// \return generators
+    ///
+    std::vector< Vector<double> >
+    InitializeKmeans(int number_partitions);
 
     ///
     /// Zoltan interface query function that returns the number of values
@@ -345,7 +436,7 @@ namespace LCM {
     // Given number of (vertex) nodes and space dimension,
     // determine the type of a finite element.
     //
-    Type
+    ELEMENT::Type
     FindType(int dimension, int nodes) const;
 
   private:
@@ -353,7 +444,7 @@ namespace LCM {
     //
     // The type of elements in the mesh (assumed that all are of same type)
     //
-    Type
+    ELEMENT::Type
     type_;
 
     //
@@ -381,10 +472,44 @@ namespace LCM {
     discretization_ptr_;
 
     //
-    // Partitions if mesh is partioned; otherwise empty
+    // Partitions if mesh is partitioned; otherwise empty
     //
     std::map<int, int>
     partitions_;
+
+    //
+    // Voxelization of the domain for fast determination
+    // of whether a point is inside the domain or not.
+    //
+    std::vector< std::vector< std::vector<bool> > >
+    voxels_;
+
+    //
+    // Size of voxel
+    //
+    LCM::Vector<double>
+    voxel_size_;
+
+    //
+    // Parameters for kmeans partitioning
+    //
+    double
+    tolerance_;
+
+    Index
+    maximum_divisions_;
+
+    Index
+    maximum_iterations_;
+
+    //
+    // Limits of the bounding box for coordinate array
+    //
+    LCM::Vector<double>
+    lower_corner_;
+
+    LCM::Vector<double>
+    upper_corner_;
 
   };
 
@@ -468,7 +593,7 @@ namespace LCM {
     // proper faces
     //
     std::vector< std::vector<int> >
-    GetFaceConnectivity(const ConnectivityArray::Type type) const;
+    GetFaceConnectivity(const ELEMENT::Type type) const;
 
   private:
 

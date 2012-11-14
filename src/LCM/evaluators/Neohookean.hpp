@@ -1,19 +1,8 @@
-/********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-\********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 
 #ifndef NEOHOOKEAN_HPP
 #define NEOHOOKEAN_HPP
@@ -22,14 +11,16 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+#include "Albany_Layouts.hpp"
 
 namespace LCM {
-/** \brief Neohookean stress response
+  /// \brief Neohookean stress response
+  ///
+  /// This evaluator computes stress based on a uncoupled Neohookean
+  /// Helmholtz potential
+  /// \f$ \sigma_{ij} = \frac{\kappa}{2}(J-1/J)\delta_{ij}
+  /// + \mu dev(\bar{b_{ij}}) \f$
 
-    This evaluator computes stress based on a uncoupled Neohookean
-    Helmholtz potential
-
-*/
 
 template<typename EvalT, typename Traits>
 class Neohookean : public PHX::EvaluatorWithBaseImpl<Traits>,
@@ -37,11 +28,21 @@ class Neohookean : public PHX::EvaluatorWithBaseImpl<Traits>,
 
 public:
 
-  Neohookean(const Teuchos::ParameterList& p);
+  ///
+  /// Constructor
+  ///
+  Neohookean(const Teuchos::ParameterList& p,
+             const Teuchos::RCP<Albany::Layouts>& dl);
 
+  ///
+  /// Phalanx method to allocate space
+  ///
   void postRegistrationSetup(typename Traits::SetupData d,
 			     PHX::FieldManager<Traits>& vm);
 
+  ///
+  /// Implementation of physics
+  ///
   void evaluateFields(typename Traits::EvalData d);
 
 private:
@@ -49,21 +50,45 @@ private:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> F;
+  ///
+  /// Input: Deformation Gradient
+  ///
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defGrad;
+
+  ///
+  /// Input: Determinant of Deformation Gradient
+  ///
   PHX::MDField<ScalarT,Cell,QuadPoint> J;
+
+  ///
+  /// Input: Elastic (or Young's) Modulus
+  ///
   PHX::MDField<ScalarT,Cell,QuadPoint> elasticModulus;
+
+  ///
+  /// Input: Poisson's Ratio
+  ///
   PHX::MDField<ScalarT,Cell,QuadPoint> poissonsRatio;
 
-  // Output:
+  ///
+  /// Output: Cauchy Stress
+  ///
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;
 
+  ///
+  /// Number of integration points
+  ///
   unsigned int numQPs;
-  unsigned int numDims;
-  unsigned int worksetSize;
 
-  // scratch space FCs
-  Intrepid::FieldContainer<ScalarT> FT;
+  ///
+  /// Number of problem dimensions
+  ///
+  unsigned int numDims;
+
+  ///
+  /// Number of elements in workset
+  ///
+  unsigned int worksetSize;
 };
 }
 

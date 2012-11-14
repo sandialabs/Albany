@@ -1,19 +1,8 @@
-/********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-\********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 
 #ifndef RECOVERY_MOUDULS_HPP
 #define RECOVERY_MOUDULS_HPP
@@ -30,56 +19,55 @@
 #include "Teuchos_Array.hpp"
 
 namespace LCM {
-/** 
- * \brief Evaluates recovery modulus, either as a constant, or temperature dependent
- * .
- */
 
-template<typename EvalT, typename Traits>
-class RecoveryModulus :
-  public PHX::EvaluatorWithBaseImpl<Traits>,
-  public PHX::EvaluatorDerived<EvalT, Traits>,
-  public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+  ///
+  /// \brief Evaluates recovery modulus, either as a constant, or temperature dependent
+  ///
+  template<typename EvalT, typename Traits>
+  class RecoveryModulus :
+    public PHX::EvaluatorWithBaseImpl<Traits>,
+    public PHX::EvaluatorDerived<EvalT, Traits>,
+    public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
   
-public:
-  typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
+  public:
+    typedef typename EvalT::ScalarT ScalarT;
+    typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  RecoveryModulus(Teuchos::ParameterList& p);
+    RecoveryModulus(Teuchos::ParameterList& p);
   
-  void postRegistrationSetup(typename Traits::SetupData d,
-			     PHX::FieldManager<Traits>& vm);
+    void postRegistrationSetup(typename Traits::SetupData d,
+                               PHX::FieldManager<Traits>& vm);
   
-  void evaluateFields(typename Traits::EvalData d);
+    void evaluateFields(typename Traits::EvalData d);
   
-  ScalarT& getValue(const std::string &n);
+    ScalarT& getValue(const std::string &n);
 
-private:
+  private:
 
-  std::size_t numQPs;
-  std::size_t numDims;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
-  PHX::MDField<ScalarT,Cell,QuadPoint> recoveryModulus;
+    std::size_t numQPs;
+    std::size_t numDims;
+    PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+    PHX::MDField<ScalarT,Cell,QuadPoint> recoveryModulus;
 
-  //! Is recoveryModulus constant, or random field
-  bool is_constant;
+    //! Is recoveryModulus constant, or random field
+    bool is_constant;
 
-  //! Constant value
-  ScalarT constant_value;
+    //! Constant value
+    ScalarT constant_value;
 
-  //! Optional dependence on Temperature Rd = c1 * exp(c2/Temperature)
-  PHX::MDField<ScalarT,Cell,QuadPoint> Temperature;
-  bool isThermoElastic;
-  ScalarT c1;
-  ScalarT c2;
-  RealType refTemp;
+    //! Optional dependence on Temperature Rd = c1 * exp(c2/Temperature)
+    PHX::MDField<ScalarT,Cell,QuadPoint> Temperature;
+    bool isThermoElastic;
+    ScalarT c1;
+    ScalarT c2;
+    RealType refTemp;
 
-  //! Exponential random field
-  Teuchos::RCP< Stokhos::KL::ExponentialRandomField<MeshScalarT> > exp_rf_kl;
+    //! Exponential random field
+    Teuchos::RCP< Stokhos::KL::ExponentialRandomField<MeshScalarT> > exp_rf_kl;
 
-  //! Values of the random variables
-  Teuchos::Array<ScalarT> rv;
-};
+    //! Values of the random variables
+    Teuchos::Array<ScalarT> rv;
+  };
 }
 
 #endif

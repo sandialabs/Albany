@@ -1,19 +1,8 @@
-/********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
- *                                                                    *
- * Notice: This computer software was prepared by Sandia Corporation, *
- * hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
- * the Department of Energy (DOE). All rights in the computer software*
- * are reserved by DOE on behalf of the United States Government and  *
- * the Contractor as provided in the Contract. You are authorized to  *
- * use this computer software for Governmental purposes but it is not *
- * to be released or distributed to the public. NEITHER THE GOVERNMENT*
- * NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
- * ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
- * including this sentence must appear on any copies of this software.*
- *    Questions to Andy Salinger, agsalin@sandia.gov                  *
- \********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
@@ -139,6 +128,13 @@ namespace LCM {
     ScalarT smag, f, p, dgam;
     ScalarT sq23 = std::sqrt(2. / 3.);
 
+    // scratch space FCs
+    Tensor<ScalarT> be(3);
+    Tensor<ScalarT> s(3);
+    Tensor<ScalarT> N(3);
+    Tensor<ScalarT> A(3);
+    Tensor<ScalarT> expA(3);
+
     //Albany::StateVariables  oldState = *workset.oldState;
     //Intrepid::FieldContainer<RealType>& Fpold   = *oldState[fpName];
     //Intrepid::FieldContainer<RealType>& eqpsold = *oldState[eqpsName];
@@ -221,7 +217,7 @@ namespace LCM {
 
         trd3 = trace(be) / 3.;
         mubar = trd3 * mu;
-        s = mu * (be - trd3 * eye<ScalarT, 3>());
+        s = mu * (be - trd3 * eye<ScalarT>(3));
 
         // std::cout << "s: \n" << s;
 
@@ -334,7 +330,7 @@ namespace LCM {
             stress(cell, qp, i, j) *= H2;
 
         // update be
-        be = ScalarT(1 / mu) * s + trd3 * eye<ScalarT, 3>();
+        be = ScalarT(1 / mu) * s + trd3 * eye<ScalarT>(3);
 
         // compute energy
         energy(cell, qp) = 0.5 * kappa

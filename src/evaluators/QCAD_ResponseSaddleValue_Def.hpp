@@ -1,19 +1,8 @@
-/********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-\********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 
 #include <fstream>
 #include "Teuchos_Array.hpp"
@@ -60,6 +49,11 @@ ResponseSaddleValue(Teuchos::ParameterList& p,
   retScaling = plist->get<double>("Return Field Scaling Factor",1.0);
   bReturnSameField = (fieldName == retFieldName);
   //bLateralVolumes = true; // Future: make into a parameter
+
+  //! Special case when return field name == "current": then just compute 
+  //   as if returning the same field, and overwrite with current value at end
+  if(retFieldName == "current")
+    bReturnSameField = true;    
 
   //! setup operation field and its gradient, and the return field (if it's different)
   PHX::MDField<ScalarT> f(fieldName, dl->qp_scalar); field = f;
@@ -181,6 +175,18 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+  else if(svResponseFn->getMode() == "Collect final image point data") {
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      getAvgCellCoordinates(coordVec, cell, dblAvgCoords, dblMaxZ);
+
+      if(svResponseFn->pointIsInImagePtRegion(dblAvgCoords, dblMaxZ)) {	
+	getCellQuantities(cell, cellVol, fieldVal, retFieldVal, fieldGrad);
+
+	dblFieldVal = QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue(fieldVal);
+	svResponseFn->addFinalImagePointData(dblAvgCoords, dblFieldVal);
+      }
+    }
+  }
   else if(svResponseFn->getMode() == "Accumulate all field data") {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       getAvgCellCoordinates(coordVec, cell, dblAvgCoords, dblMaxZ);
@@ -287,7 +293,18 @@ postEvaluate(typename Traits::PostEvalData workset)
     const double* pt = svResponseFn->getSaddlePointPosition();
     for(std::size_t i=0; i<numDims; i++) 
       this->global_response[2+i] = pt[i];
-  
+
+    if(retFieldName == "current" &&
+       (QCAD::EvaluatorTools<EvalT,Traits>::getEvalType() == "Tangent" ||
+	QCAD::EvaluatorTools<EvalT,Traits>::getEvalType() == "Residual")) {
+      //We only really need to evaluate the current when computing the final response values,
+      // which if for the "Tangent" or "Residual" evaluation type (depeding on whether
+      // sensitivities are being computed).  It would be nice to have a cleaner
+      // way of implementing a response whose algorithm cannot support AD types. (EGN)
+      this->global_response[1] = this->global_response[0];
+      this->global_response[0] = svResponseFn->getCurrent();
+    }
+	
     // Do global scattering
     PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postEvaluate(workset);
   }
@@ -342,6 +359,9 @@ QCAD::ResponseSaddleValue<EvalT,Traits>::getValidResponseParameters() const
   validPL->set<double>("z max", 0.0, "Domain maximum z coordinate");
   validPL->set<double>("Lock to z-coord", 0.0, "z-coordinate to lock elastic band to, making a 3D problem into 2D");
 
+  validPL->set<int>("Maximum Number of Final Points", 0, "Maximum number of final points to use.  Zero indicates no final points are used and data is just returned at image points.");
+  validPL->set<double>("Final Point Spacing", 1.0, "Spacing between final points (if they're used) - given in mesh units");
+
   validPL->set<Teuchos::Array<double> >("Begin Point", Teuchos::Array<double>(), "Beginning point of elastic band");
   validPL->set<string>("Begin Element Block", "", "Element block name whose minimum marks the elastic band's beginning");
   validPL->sublist("Begin Polygon", false, "Beginning polygon sublist");
@@ -354,6 +374,8 @@ QCAD::ResponseSaddleValue<EvalT,Traits>::getValidResponseParameters() const
   validPL->set<double>("Percent to Shorten End", 0.0, "Percentage of total or half path (if guessed pt) to shorten the end of the path");
 
   validPL->set<Teuchos::Array<double> >("Saddle Point Guess", Teuchos::Array<double>(), "Estimate of where the saddle point lies");
+
+  validPL->set<double>("GF-CBR Method Energy Cutoff Offset", 0, "Value [in eV] added to the maximum energy integrated over in Green's Function - Contact Block Reduction method for obtaining current to obtain the cutoff energy, which sets the largest eigenvalue needed in the tight binding diagonalization part of the method");
 
   validPL->set<int>("Debug Mode", 0, "Print verbose debug messages to stdout");
   validPL->set< Teuchos::RCP<QCAD::SaddleValueResponseFunction> >("Response Function", Teuchos::null, "Saddle value response function");

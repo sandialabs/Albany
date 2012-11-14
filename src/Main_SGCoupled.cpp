@@ -1,29 +1,21 @@
-/********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-\********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 
 #include <iostream>
 #include <string>
 
 #include "Albany_Utils.hpp"
 #include "Albany_SolverFactory.hpp"
+#include "Albany_NOXObserver.hpp"
+
 #include "Teuchos_GlobalMPISession.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Teuchos_StandardCatchMacros.hpp"
+
 #include "Epetra_Map.h"  //Needed for serial, somehow
 #include "Stokhos.hpp"
 #include "Stokhos_Epetra.hpp"
@@ -92,6 +84,7 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<const Epetra_Comm> app_comm = coupledSolver->getSpatialComm();
 
     // Set up each model
+    Teuchos::Array< Teuchos::RCP<NOX::Epetra::Observer> > observers(num_models);
     for (int m=0; m<num_models; m++) {
       Albany::SolverFactory slvrfctry(
 	model_filenames[m], 
@@ -99,6 +92,7 @@ int main(int argc, char *argv[]) {
       models[m] = slvrfctry.createAlbanyAppAndModel(apps[m], app_comm);
       Teuchos::ParameterList& appParams = slvrfctry.getParameters();
       piroParams[m] = Teuchos::rcp(&(appParams.sublist("Piro")),false);
+      observers[m] = Teuchos::rcp(new Albany_NOXObserver(apps[m]));
     }
 
     // Setup network model
@@ -116,7 +110,8 @@ int main(int argc, char *argv[]) {
       rcp(new Piro::Epetra::NECoupledModelEvaluator(models, piroParams,
 						    network_model,
 						    coupledPiroParams, 
-						    globalComm));
+						    globalComm,
+						    observers));
     coupledSolver->setup(coupledModel);
 
     // Solve coupled system

@@ -1,19 +1,8 @@
-/********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-\********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -311,34 +300,38 @@ QCAD::PoissonDirichlet<EvalT,Traits>::potentialForMBIncomplIon(const ScalarT &Nc
       const ScalarT &Nv, const ScalarT &Eg, const double &Chi, const std::string &dopType, 
       const double &dopingConc, const double &dopantActE )
 {
+  // maximum allowed exponent in an exponential function (unitless)
+  const double MAX_EXPONENT = 100.0; 
   ScalarT builtinPotential;
   
   // assume n = Nd+ to have an analytical expression (neglect p)  
   if(dopType == "Donor") 
   {
-    ScalarT tmp = -1./4.+1./4.*sqrt(1.+8.*dopingConc/Nc*exp(dopantActE/kbT));
-    if (tmp <= 0.)
+    ScalarT offset = (-dopantActE +qPhiRef -Chi) /1.0;
+    if (dopantActE/kbT > MAX_EXPONENT)  // exp(dopantActE/kbT) -> +infinity for very small T
     {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
-        std::endl << "Error ! Argument of log() function <= 0.0" 
-        << " in potentialForMBIncomplIon() function" << std::endl);
+      builtinPotential = offset +V0 *(0.5*log(dopingConc/(2.*Nc)) + dopantActE/(2.*kbT) );
     }
     else
-      builtinPotential = (-dopantActE+qPhiRef-Chi)/1.0 + V0*log(tmp);
+    { 
+      ScalarT tmp = -1./4.+1./4.*sqrt(1.+8.*dopingConc/Nc*exp(dopantActE/kbT));
+      builtinPotential = offset + V0*log(tmp);
+    }  
   }
   
   // assume p = Na- to have an analytical expression (neglect n)
   else if(dopType == "Acceptor") 
   {
-    ScalarT tmp = -1./8.+1./8.*sqrt(1.+16.*dopingConc/Nv*exp(dopantActE/kbT));
-    if (tmp <= 0.)
+    ScalarT offset = (dopantActE +qPhiRef -Chi -Eg) /1.0; 
+    if (dopantActE/kbT > MAX_EXPONENT)  // exp(dopantActE/kbT) -> +infinity for very small T
     {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
-        std::endl << "Error ! Argument of log() function <= 0.0" 
-        << " in potentialForMBIncomplIon() function" << std::endl);
+      builtinPotential = offset -V0 *(0.5*log(dopingConc/(4.*Nv)) + dopantActE/(2.*kbT) );
     }
     else
-      builtinPotential = (dopantActE+qPhiRef-Chi-Eg)/1.0 - V0*log(tmp);
+    {
+      ScalarT tmp = -1./8.+1./8.*sqrt(1.+16.*dopingConc/Nv*exp(dopantActE/kbT));
+      builtinPotential = offset - V0*log(tmp);
+    }
   }
 
   else 

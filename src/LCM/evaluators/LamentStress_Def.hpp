@@ -1,19 +1,8 @@
-/********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-\********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -198,15 +187,15 @@ evaluateFields(typename Traits::EvalData workset)
       // and then fill data into the vectors below
 
       // new deformation gradient (the current deformation gradient as computed in the current configuration)
-      LCM::Tensor<ScalarT, 3> Fnew( &defGradField(cell,qp,0,0) );
+      LCM::Tensor<ScalarT> Fnew( 3, &defGradField(cell,qp,0,0) );
 
       // old deformation gradient (deformation gradient at previous load step)
-      LCM::Tensor<ScalarT, 3> Fold( oldDefGrad(cell,qp,0,0), oldDefGrad(cell,qp,0,1), oldDefGrad(cell,qp,0,2),
+      LCM::Tensor<ScalarT> Fold( oldDefGrad(cell,qp,0,0), oldDefGrad(cell,qp,0,1), oldDefGrad(cell,qp,0,2),
                                     oldDefGrad(cell,qp,1,0), oldDefGrad(cell,qp,1,1), oldDefGrad(cell,qp,1,2),
                                     oldDefGrad(cell,qp,2,0), oldDefGrad(cell,qp,2,1), oldDefGrad(cell,qp,2,2) );
 
       // incremental deformation gradient
-      LCM::Tensor<ScalarT, 3> Finc = Fnew * LCM::inverse(Fold);
+      LCM::Tensor<ScalarT> Finc = Fnew * LCM::inverse(Fold);
 
       
       // DEBUGGING //
@@ -224,7 +213,7 @@ evaluateFields(typename Traits::EvalData workset)
       // END DEBUGGING //
 
       // left stretch V, and rotation R, from left polar decomposition of new deformation gradient
-      LCM::Tensor<ScalarT, 3> V, R, U;
+      LCM::Tensor<ScalarT> V(3), R(3), U(3);
       boost::tie(V,R) = LCM::polar_left(Fnew);
       //V = R * U * transpose(R);
       
@@ -264,26 +253,26 @@ evaluateFields(typename Traits::EvalData workset)
 
       // incremental left stretch Vinc, incremental rotation Rinc, and log of incremental left stretch, logVinc
       
-      LCM::Tensor<ScalarT, 3> Uinc, Vinc, Rinc, logVinc;
+      LCM::Tensor<ScalarT> Uinc(3), Vinc(3), Rinc(3), logVinc(3);
       //boost::tie(Vinc,Rinc,logVinc) = LCM::polar_left_logV(Finc);
       boost::tie(Vinc,Rinc) = LCM::polar_left(Finc);
       //Vinc = Rinc * Uinc * transpose(Rinc);
       logVinc = LCM::log(Vinc);
 
       // log of incremental rotation
-      LCM::Tensor<ScalarT, 3> logRinc = LCM::log_rotation(Rinc);
+      LCM::Tensor<ScalarT> logRinc = LCM::log_rotation(Rinc);
 
       // log of incremental deformation gradient
-      LCM::Tensor<ScalarT, 3> logFinc = LCM::bch(logVinc, logRinc);
+      LCM::Tensor<ScalarT> logFinc = LCM::bch(logVinc, logRinc);
 
       // velocity gradient
-      LCM::Tensor<ScalarT, 3> L = (1.0/deltaT)*logFinc;
+      LCM::Tensor<ScalarT> L = (1.0/deltaT)*logFinc;
 
       // strain rate (a.k.a rate of deformation)
-      LCM::Tensor<ScalarT, 3> D = LCM::symm(L);
+      LCM::Tensor<ScalarT> D = LCM::symm(L);
 
       // spin
-      LCM::Tensor<ScalarT, 3> W = LCM::skew(L);
+      LCM::Tensor<ScalarT> W = LCM::skew(L);
 
       // load everything into the Lament data structure
 
@@ -351,10 +340,10 @@ evaluateFields(typename Traits::EvalData workset)
       // std::cout << "after calling lament->getStress() 2" << std::endl;
 
       // rotate to get the Cauchy Stress
-      LCM::Tensor<ScalarT, 3> lameStress( stressNew[0], stressNew[3], stressNew[5],
+      LCM::Tensor<ScalarT> lameStress( stressNew[0], stressNew[3], stressNew[5],
                                           stressNew[3], stressNew[1], stressNew[4],
                                           stressNew[5], stressNew[4], stressNew[2] );
-      LCM::Tensor<ScalarT, 3> cauchy = R * lameStress * transpose(R);
+      LCM::Tensor<ScalarT> cauchy = R * lameStress * transpose(R);
 
       // DEBUGGING //
       //if(cell==0 && qp==0){

@@ -1,19 +1,8 @@
-/********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-\********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -299,7 +288,7 @@ StokesBodyForce(const Teuchos::ParameterList& p) :
   force(p.get<std::string>("Body Force Name"),
  	p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ), 
   A(1.0), 
-  n(3)
+  n(3.0)
 {
 
   Teuchos::ParameterList* bf_list = 
@@ -307,7 +296,7 @@ StokesBodyForce(const Teuchos::ParameterList& p) :
 
   std::string type = bf_list->get("Type", "None");
   A = bf_list->get("Glen's Law A", 1.0); 
-  n = bf_list->get("Glen's Law n", 3); 
+  n = bf_list->get("Glen's Law n", 3.0); 
   if (type == "None") {
     bf_type = NONE;
   }
@@ -472,14 +461,28 @@ evaluateFields(typename Traits::EvalData workset)
  else if (bf_type == SINSINGLEN) {
    double xphase=0.0, yphase=0.0; 
    double r = 3*pi;
+   //cout << "muqp force: " << endl; 
    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
      for (std::size_t qp=0; qp < numQPs; ++qp) {      
        ScalarT* f = &force(cell,qp,0);
        MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
        MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
-       MeshScalarT muqp = 0.5*pow(A, -1.0/n)*pow(2.0*pi*cos(x2pi + xphase)*cos(y2pi + yphase)+r, 1.0/n - 1.0);
-       f[0] = -8.0*pi*pi*sin(x2pi + xphase)*cos(y2pi + yphase)*(muqp - 1.0);
-       f[1] = 8.0*pi*pi*cos(x2pi + xphase)*sin(y2pi + yphase)*(muqp + 1.0);
+       //MeshScalarT muqp = x2pi*y2pi + r;
+       MeshScalarT muargt = 2.0*pi*cos(x2pi + xphase)*cos(y2pi + yphase) + r;  
+       MeshScalarT muqp = 0.5*pow(A, -1.0/n)*pow(muargt, 1.0/n - 1.0);
+       MeshScalarT dudx = 2.0*pi*cos(x2pi + xphase)*cos(y2pi + yphase) + r; 
+       MeshScalarT dudy = -2.0*pi*sin(x2pi + xphase)*cos(y2pi + yphase); 
+       MeshScalarT dvdx = 2.0*pi*sin(x2pi + xphase)*sin(y2pi+yphase); 
+       MeshScalarT dvdy = -2.0*pi*cos(x2pi + xphase)*cos(y2pi + yphase) - r;
+       MeshScalarT dmuargtdx = -4.0*pi*pi*sin(x2pi + xphase)*cos(y2pi + yphase); 
+       MeshScalarT dmuargtdy = -4.0*pi*pi*cos(x2pi + xphase)*sin(y2pi + yphase);  
+       //cout.precision(10);
+       //if (cell == 10)  
+       //   cout << muqp << endl; 
+       f[0] = -8.0*pi*pi*sin(x2pi + xphase)*cos(y2pi + yphase)*(muqp - 1.0) 
+            + 0.5*pow(A, -1.0/n)*(1.0/n - 1.0)*pow(muargt, 1.0/n - 2.0)*(dmuargtdx*dudx + dmuargtdy*dudy);
+       f[1] = 8.0*pi*pi*cos(x2pi + xphase)*sin(y2pi + yphase)*(muqp + 1.0) 
+            + 0.5*pow(A, -1.0/n)*(1.0/n - 1.0)*pow(muargt, 1.0/n - 2.0)*(dmuargtdx*dvdx + dmuargtdy*dvdy);
      }
    }
  }

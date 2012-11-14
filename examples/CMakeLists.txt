@@ -1,20 +1,8 @@
-#/********************************************************************\
-#*            Albany, Copyright (2010) Sandia Corporation             *
-#*                                                                    *
-#* Notice: This computer software was prepared by Sandia Corporation, *
-#* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-#* the Department of Energy (DOE). All rights in the computer software*
-#* are reserved by DOE on behalf of the United States Government and  *
-#* the Contractor as provided in the Contract. You are authorized to  *
-#* use this computer software for Governmental purposes but it is not *
-#* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-#* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-#* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-#* including this sentence must appear on any copies of this software.*
-#*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-#\********************************************************************/
-
-# 
+##*****************************************************************//
+##    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+##    This Software is released under the BSD license detailed     //
+##    in the file "license.txt" in the top-level Albany directory  //
+##*****************************************************************//
 
 IF (ALBANY_MPI)
   set(Albany.exe          ${MPIEX} ${MPINPF} ${MPIMNP} ${Albany_BINARY_DIR}/src/Albany)
@@ -52,7 +40,7 @@ set(SerialAlbanyDakota.exe  ${Albany_BINARY_DIR}/src/AlbanyDakota)
 
 # Tests
 IF(ALBANY_LCM)
-  set(PartitionTest.exe  ${Albany_BINARY_DIR}/src/PartitionTest)
+  set(PartitionTest.exe  ${Albany_BINARY_DIR}/src/LCM/PartitionTest)
 ENDIF()
 
 add_subdirectory(SteadyHeat1D)
@@ -69,6 +57,7 @@ add_subdirectory(MultiHeat)
 add_subdirectory(Helmholtz2D)
 
 add_subdirectory(GPAM)
+add_subdirectory(LinComprNS)
 add_subdirectory(ODE)
 add_subdirectory(ThermoElectrostatics2D)
 add_subdirectory(HeatEigenvalues)
@@ -110,6 +99,9 @@ IF(ALBANY_LCM)
  IF(ALBANY_LAMENT)
    add_subdirectory(LamentStaticElasticity3D)
  ENDIF()
+ENDIF()
+
+IF(ALBANY_HYDRIDE)
   IF(ALBANY_MPI)
     add_subdirectory(MultiScaleRing)
   ENDIF()
@@ -141,6 +133,7 @@ IF(ALBANY_SEACAS AND ALBANY_LCM)
   add_subdirectory(KfieldBC)
   add_subdirectory(HydrogenKfieldBC)
   add_subdirectory(Mechanics)
+  add_subdirectory(SurfaceElement)
 ENDIF()
 
 add_subdirectory(SGBratu1D)

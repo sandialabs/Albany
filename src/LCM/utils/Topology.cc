@@ -1,20 +1,19 @@
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
+
 #include "Topology.h"
 
 namespace LCM {
-  /**
-   * \brief Default constructor for topology
-   */
+
   topology::topology() :
       number_dimensions_(0), discretization_ptr_(Teuchos::null)
   {
     return;
   }
 
-  /**
-   * \brief Create mesh data structure
-   * \param[in] input_file is exodus II input file name
-   * \param[in] output_file is exodus II output file name
-   */
   topology::topology(std::string const & input_file,
       std::string const & output_file)
   {

@@ -1,25 +1,16 @@
-/********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-\********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Intrepid_RealSpaceTools.hpp"
+
+#include <typeinfo>
 
 namespace LCM {
 
@@ -54,7 +45,7 @@ ThermoPoroPlasticityResidMomentum(const Teuchos::ParameterList& p) :
   this->addDependentField(Temp);
   this->addDependentField(TempRef);
   this->addDependentField(defgrad);
-  this->addEvaluatedField(ExResidual);
+
 
   if (p.isType<bool>("Disable Transient"))
     enableTransient = !p.get<bool>("Disable Transient");
@@ -78,6 +69,8 @@ ThermoPoroPlasticityResidMomentum(const Teuchos::ParameterList& p) :
    this->addDependentField(uDotDot);
 
   }
+
+  this->addEvaluatedField(ExResidual);
 
 
   this->setName("ThermoPoroPlasticityResidMomentum"+PHX::TypeString<EvalT>::value);
@@ -126,11 +119,10 @@ evaluateFields(typename Traits::EvalData workset)
   typedef Intrepid::FunctionSpaceTools FST;
   typedef Intrepid::RealSpaceTools<ScalarT> RST;
 
-  RST::inverse(F_inv, defgrad);
-  RST::transpose(F_invT, F_inv);
-  FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
-  FST::scalarMultiplyDataData<ScalarT>(thermoEPS, alphaSkeleton , JF_invT);
-  // FST::tensorMultiplyDataData<ScalarT>(P, TotalStress, JF_invT);
+   RST::inverse(F_inv, defgrad);
+   RST::transpose(F_invT, F_inv);
+   FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
+   FST::scalarMultiplyDataData<ScalarT>(thermoEPS, alphaSkeleton , JF_invT);
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {
@@ -152,7 +144,7 @@ evaluateFields(typename Traits::EvalData workset)
                 		                   * wGradBF(cell, node, qp, dim);
     } } } } }
 
-
+ /*
   if (workset.transientTerms && enableTransient)
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {
@@ -160,7 +152,7 @@ evaluateFields(typename Traits::EvalData workset)
             for (std::size_t i=0; i<numDims; i++) {
                 ExResidual(cell,node,i) += uDotDot(cell, qp, i) * wBF(cell, node, qp);
     } } } }
-
+*/
 
 //  FST::integrate<ScalarT>(ExResidual, TotalStress, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
 

@@ -1,19 +1,8 @@
-/********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-\********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 
 #include <cmath>
 #include <ctime>
@@ -41,6 +30,10 @@ Teuchos::RCP<Albany::AnalyticFunction> Albany::createAnalyticFunction(
     F = Teuchos::rcp(new Albany::GaussCos(neq, numDim, data));
   else if (name=="Linear Y")
     F = Teuchos::rcp(new Albany::LinearY(neq, numDim, data));
+  else if (name=="Gaussian Pressure")
+    F = Teuchos::rcp(new Albany::GaussianPress(neq, numDim, data));
+  else if (name=="Sin-Cos")
+    F = Teuchos::rcp(new Albany::SinCos(neq, numDim, data));
   else
     TEUCHOS_TEST_FOR_EXCEPTION(name != "Valid Initial Condition Function",
                        std::logic_error,
@@ -199,5 +192,34 @@ void Albany::LinearY::compute(double* x, const double *X)
   x[0] = 0.0;
   x[1] = data[0] * X[0];
   if (numDim>2) x[2]=0.0;
+}
+//*****************************************************************************
+Albany::GaussianPress::GaussianPress(int neq_, int numDim_, Teuchos::Array<double> data_)
+ : numDim(numDim_), neq(neq_), data(data_)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION((neq<3) || (numDim<2) || (data.size()!=4),
+			     std::logic_error,
+			     "Error! Invalid call of GaussianPress with " <<neq
+			     <<" "<< numDim <<"  "<< data.size() << std::endl);
+}
+void Albany::GaussianPress::compute(double* x, const double *X) 
+{
+  for (int i=0; i<neq-1; i++) {x[i] = 0.0; }
+  x[neq-1] = data[0]*exp(-data[1]*((X[0] - data[2])*(X[0] - data[2]) + (X[1] - data[3])*(X[1] - data[3]))); 
+}
+//*****************************************************************************
+Albany::SinCos::SinCos(int neq_, int numDim_, Teuchos::Array<double> data_)
+ : numDim(numDim_), neq(neq_), data(data_)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION((neq<3) || (numDim<2),
+			     std::logic_error,
+			     "Error! Invalid call of SinCos with " <<neq
+			     <<" "<< numDim <<"  "<< data.size() << std::endl);
+}
+void Albany::SinCos::compute(double* x, const double *X) 
+{
+  x[0] = sin(2.0*pi*X[0])*cos(2.0*pi*X[1]);
+  x[1] = cos(2.0*pi*X[0])*sin(2.0*pi*X[1]); 
+  x[2] = sin(2.0*pi*X[0])*sin(2.0*pi*X[1]); 
 }
 //*****************************************************************************

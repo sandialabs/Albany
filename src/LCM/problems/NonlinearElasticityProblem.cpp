@@ -1,19 +1,8 @@
-/********************************************************************\
- *            Albany, Copyright (2010) Sandia Corporation             *
- *                                                                    *
- * Notice: This computer software was prepared by Sandia Corporation, *
- * hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
- * the Department of Energy (DOE). All rights in the computer software*
- * are reserved by DOE on behalf of the United States Government and  *
- * the Contractor as provided in the Contract. You are authorized to  *
- * use this computer software for Governmental purposes but it is not *
- * to be released or distributed to the public. NEITHER THE GOVERNMENT*
- * NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
- * ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
- * including this sentence must appear on any copies of this software.*
- *    Questions to Andy Salinger, agsalin@sandia.gov                  *
-\********************************************************************/
-
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 #include "NonlinearElasticityProblem.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemUtils.hpp"
@@ -71,7 +60,15 @@ buildProblem(
   fm[0]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
   buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, BUILD_RESID_FM, 
 		  Teuchos::null);
-  constructDirichletEvaluators(*meshSpecs[0]);
+
+  if(meshSpecs[0]->nsNames.size() > 0) // Build a nodeset evaluator if nodesets are present
+
+    constructDirichletEvaluators(*meshSpecs[0]);
+
+  if(meshSpecs[0]->ssNames.size() > 0) // Build a sideset evaluator if sidesets are present
+
+    constructNeumannEvaluators(meshSpecs[0]);
+
 }
 
 Teuchos::Array<Teuchos::RCP<const PHX::FieldTag> >
@@ -104,6 +101,77 @@ Albany::NonlinearElasticityProblem::constructDirichletEvaluators(
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                        this->params, this->paramLib);
+}
+
+// Neumann BCs
+void
+Albany::NonlinearElasticityProblem::constructNeumannEvaluators(
+        const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
+{
+   // Note: we only enter this function if sidesets are defined in the mesh file
+   // i.e. meshSpecs.ssNames.size() > 0
+
+   Albany::BCUtils<Albany::NeumannTraits> neuUtils;
+
+   // Check to make sure that Neumann BCs are given in the input file
+
+   if(!neuUtils.haveBCSpecified(this->params))
+
+      return;
+
+   // Construct BC evaluators for all side sets and names
+   // Note that the string index sets up the equation offset, so ordering is important
+   std::vector<string> neumannNames(neq + 1);
+   Teuchos::Array<Teuchos::Array<int> > offsets;
+   offsets.resize(neq + 1);
+
+   neumannNames[0] = "Tx";
+   offsets[0].resize(1);
+   offsets[0][0] = 0;
+   offsets[neq].resize(neq);
+   offsets[neq][0] = 0;
+
+   if (neq>1){ 
+      neumannNames[1] = "Ty";
+      offsets[1].resize(1);
+      offsets[1][0] = 1;
+      offsets[neq][1] = 1;
+   }
+
+   if (neq>2){
+     neumannNames[2] = "Tz";
+      offsets[2].resize(1);
+      offsets[2][0] = 2;
+      offsets[neq][2] = 2;
+   }
+
+   neumannNames[neq] = "all";
+
+   // Construct BC evaluators for all possible names of conditions
+   // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
+
+   std::vector<string> condNames(3); //dudx, dudy, dudz, dudn, P
+   Teuchos::ArrayRCP<string> dof_names(1);
+     dof_names[0] = "Displacement";
+
+   // Note that sidesets are only supported for two and 3D currently
+   if(numDim == 2)
+    condNames[0] = "(dudx, dudy)";
+   else if(numDim == 3)
+    condNames[0] = "(dudx, dudy, dudz)";
+   else
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+       std::endl << "Error: Sidesets only supported in 2 and 3D." << std::endl);
+
+   condNames[1] = "dudn";
+   condNames[2] = "P";
+
+   nfm.resize(1); // Elasticity problem only has one element block
+
+   nfm[0] = neuUtils.constructBCEvaluators(meshSpecs, neumannNames, dof_names, true, 0,
+                                          condNames, offsets, dl,
+                                          this->params, this->paramLib);
+
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
