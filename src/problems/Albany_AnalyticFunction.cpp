@@ -197,7 +197,6 @@ void Albany::LinearY::compute(double* x, const double *X)
 Albany::GaussianPress::GaussianPress(int neq_, int numDim_, Teuchos::Array<double> data_)
  : numDim(numDim_), neq(neq_), data(data_)
 {
-  std::cout << "setting gaussian pressure IC!" << std::endl; 
   TEUCHOS_TEST_FOR_EXCEPTION((neq<3) || (numDim<2) || (data.size()!=4),
 			     std::logic_error,
 			     "Error! Invalid call of GaussianPress with " <<neq
@@ -205,7 +204,6 @@ Albany::GaussianPress::GaussianPress(int neq_, int numDim_, Teuchos::Array<doubl
 }
 void Albany::GaussianPress::compute(double* x, const double *X) 
 {
-  std::cout << "in gaussian press!" << std::endl;
   for (int i=0; i<neq-1; i++) {x[i] = 0.0; }
   x[neq-1] = data[0]*exp(-data[1]*((X[0] - data[2])*(X[0] - data[2]) + (X[1] - data[3])*(X[1] - data[3]))); 
 }
@@ -213,7 +211,6 @@ void Albany::GaussianPress::compute(double* x, const double *X)
 Albany::SinCos::SinCos(int neq_, int numDim_, Teuchos::Array<double> data_)
  : numDim(numDim_), neq(neq_), data(data_)
 {
-  std::cout << "setting SinCos IC!" << std::endl; 
   TEUCHOS_TEST_FOR_EXCEPTION((neq<3) || (numDim<2),
 			     std::logic_error,
 			     "Error! Invalid call of SinCos with " <<neq
@@ -221,7 +218,6 @@ Albany::SinCos::SinCos(int neq_, int numDim_, Teuchos::Array<double> data_)
 }
 void Albany::SinCos::compute(double* x, const double *X) 
 {
-  std::cout << "in sincos!" << std::endl; 
   x[0] = sin(2.0*pi*X[0])*cos(2.0*pi*X[1]);
   x[1] = cos(2.0*pi*X[0])*sin(2.0*pi*X[1]); 
   x[2] = sin(2.0*pi*X[0])*sin(2.0*pi*X[1]); 

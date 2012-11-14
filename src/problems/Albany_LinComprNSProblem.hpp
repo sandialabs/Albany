@@ -151,7 +151,7 @@ Albany::LinComprNSProblem::constructEvaluators(
      Teuchos::ArrayRCP<string> dof_names(1);
      Teuchos::ArrayRCP<string> dof_names_dot(1);
      Teuchos::ArrayRCP<string> resid_names(1);
-     dof_names[0] = "Concentration";
+     dof_names[0] = "qFluct";
      dof_names_dot[0] = dof_names[0]+"_dot";
      resid_names[0] = "LinComprNS Residual";
      fm0.template registerEvaluator<EvalT>
@@ -200,9 +200,9 @@ Albany::LinComprNSProblem::constructEvaluators(
     //Input
     p->set<string>("Weighted BF Name", "wBF");
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set<string>("QP Variable Name", "Concentration");
-    p->set<string>("QP Time Derivative Variable Name", "Concentration_dot");
-    p->set<string>("Gradient QP Variable Name", "Concentration Gradient");
+    p->set<string>("QP Variable Name", "qFluct");
+    p->set<string>("QP Time Derivative Variable Name", "qFluct_dot");
+    p->set<string>("Gradient QP Variable Name", "qFluct Gradient");
     p->set<string>("Body Force Name", "Body Force");   
  
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);

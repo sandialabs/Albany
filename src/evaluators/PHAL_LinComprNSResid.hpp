@@ -41,9 +41,9 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> C;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Cgrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> CDot;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> qFluct; //vector q' containing fluid fluctuations in primitive variables
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> qFluctGrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> qFluctDot;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> force;
   
   Teuchos::Array<double> baseFlowData;  
@@ -53,6 +53,7 @@ private:
   double Pr;   //Prandtl number, 0.72 typically 
   double mu; double lambda; //viscosity coefficients
   double kappa; //thermal diffusivity 
+  bool IBP_convect_terms; //boolean specifying whether you want to integrate by parts the convective terms in the weak form 
   
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;

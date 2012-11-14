@@ -24,7 +24,7 @@ LinComprNSProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   numDim(numDim_)
 {
   // Get number of species equations from Problem specifications
-  neq = params_->get("Number of Species", numDim);
+  neq = params_->get("Number of PDE Equations", numDim);
 }
 
 Albany::LinComprNSProblem::
@@ -73,7 +73,7 @@ Albany::LinComprNSProblem::constructDirichletEvaluators(
    // Construct Dirichlet evaluators for all nodesets and names
    std::vector<string> dirichletNames(neq);
    for (int i=0; i<neq; i++) {
-     std::stringstream s; s << "C" << i;
+     std::stringstream s; s << "qFluct" << i;
      dirichletNames[i] = s.str();
    }
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
@@ -87,7 +87,7 @@ Albany::LinComprNSProblem::getValidProblemParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidLinComprNSProblemParams");
 
-  validPL->set("Number of Species", 1, "Number of species eqs in LinComprNS equation set");
+  validPL->set("Number of PDE Equations", 1, "Number of PDE Equations in LinComprNS equation set");
   validPL->sublist("Body Force", false, "");
   validPL->sublist("Equation Set", false, "");
 
