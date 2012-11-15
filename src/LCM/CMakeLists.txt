@@ -66,6 +66,7 @@
     evaluators/SurfaceScalarJump.cpp
     evaluators/SurfaceScalarGradient.cpp
     evaluators/SurfaceDiffusionResidual.cpp
+    evaluators/SurfaceTLPoroMassResidual.cpp
     evaluators/SurfaceVectorJump.cpp
     evaluators/SurfaceVectorGradient.cpp
     evaluators/SurfaceVectorResidual.cpp
@@ -195,6 +196,8 @@
     evaluators/SurfaceScalarGradient_Def.hpp
     evaluators/SurfaceDiffusionResidual.hpp
     evaluators/SurfaceDiffusionResidual_Def.hpp
+    evaluators/SurfaceTLPoroMassResidual.hpp
+    evaluators/SurfaceTLPoroMassResidual_Def.hpp
     evaluators/SurfaceVectorResidual.hpp
     evaluators/SurfaceVectorResidual_Def.hpp
     evaluators/CurrentCoords.hpp

@@ -457,6 +457,7 @@ namespace {
     double expectedJump(eps);
 
     // Check the computed jump
+    std::cout << endl;
     std::cout << "Perpendicular case:" << endl;
     for (size_type cell = 0; cell < worksetSize; ++cell) {
       for (size_type pt = 0; pt < numQPts; ++pt) {
@@ -722,7 +723,7 @@ namespace {
       referenceDualBasis[numDim*numDim*i+1]=0.0; 
       referenceDualBasis[numDim*numDim*i+2]=0.5;
       // G_2
-      referenceDualBasis[numDim*numDim*i+3]=0.5; 
+      referenceDualBasis[numDim*numDim*i+3]=0.5;
       referenceDualBasis[numDim*numDim*i+4]=0.0; 
       referenceDualBasis[numDim*numDim*i+5]=0.0;
       // G_3
@@ -849,8 +850,8 @@ namespace {
     // Record the expected gradient
     LCM::Vector<ScalarT> expectedScalarGrad(0.0, 10.0, 0.0);
 
-    std::cout << "Perpendicular case: \n" << expectedScalarGrad << std::endl;
-    std::cout << "expected scalar gradient:\n" << expectedScalarGrad << std::endl;
+    std::cout << "\n Perpendicular case: \n" << expectedScalarGrad << std::endl;
+    std::cout << "\n expected scalar gradient:\n" << expectedScalarGrad << std::endl;
 
     std::cout << "scalar gradient:\n" << std::endl;
     for (size_type cell = 0; cell < worksetSize; ++cell)
@@ -887,11 +888,11 @@ namespace {
     // Record the expected gradient
     LCM::Vector<ScalarT> expectedScalarGrad2(0.0, 0.0, 0.25);
 
-    std::cout << "Parallel case:" << expectedScalarGrad2 << std::endl;
-    std::cout << "expected scalar gradient:\n" << expectedScalarGrad2 
+    std::cout << "\n Parallel case: \n" << expectedScalarGrad2 << std::endl;
+    std::cout << "\n expected scalar gradient:\n" << expectedScalarGrad2
               << std::endl;
 
-    std::cout << "scalar gradient:\n" << std::endl;
+    std::cout << "\n scalar gradient:\n" << std::endl;
     for (size_type cell = 0; cell < worksetSize; ++cell)
       for (size_type pt = 0; pt < numQPts; ++pt)
         std::cout << LCM::Vector<ScalarT>(3, &scalarGrad(cell,pt,0)) 

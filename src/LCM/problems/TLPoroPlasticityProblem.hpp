@@ -145,7 +145,11 @@ namespace Albany {
 #include "DislocationDensity.hpp"
 #include "TLPoroStress.hpp"
 
-
+#include "SurfaceBasis.hpp"
+#include "SurfaceVectorJump.hpp"
+#include "SurfaceVectorGradient.hpp"
+#include "SurfaceVectorResidual.hpp"
+#include "CurrentCoords.hpp"
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
