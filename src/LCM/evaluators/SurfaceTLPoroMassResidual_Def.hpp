@@ -26,7 +26,11 @@ namespace LCM {
     refDualBasis   (p.get<std::string>("Reference Dual Basis Name"),dl->qp_tensor),
     refNormal      (p.get<std::string>("Reference Normal Name"),dl->qp_vector),
     refArea        (p.get<std::string>("Reference Area Name"),dl->qp_scalar),
-    poroMassResidual (p.get<std::string>("Surface Scalar Residual Name"),dl->node_scalar)
+    J        (p.get<std::string>("Surface Vector Gradient Determinant Name"),dl->qp_scalar),
+    porePressure       (p.get<std::string>("Pore Pressure Name"),dl->qp_scalar),
+    biotCoefficient      (p.get<std::string>("Biot Coefficient Name"),dl->qp_scalar),
+    biotModulus       (p.get<std::string>("Biot Modulus Name"),dl->qp_scalar),
+    poroMassResidual (p.get<std::string>("Surface Poromechanics Balance of Mass Residual Name"),dl->node_scalar)
   {
     this->addDependentField(scalarGrad);
     this->addDependentField(scalarJump);
@@ -34,6 +38,10 @@ namespace LCM {
     this->addDependentField(refDualBasis);
     this->addDependentField(refNormal);    
     this->addDependentField(refArea);
+    this->addDependentField(J);
+    this->addDependentField(porePressure);
+    this->addDependentField(biotCoefficient);
+    this->addDependentField(biotModulus);
 
     this->addEvaluatedField(poroMassResidual);
 
@@ -74,6 +82,10 @@ namespace LCM {
     this->utils.setFieldData(refDualBasis,fm);
     this->utils.setFieldData(refNormal,fm);
     this->utils.setFieldData(refArea,fm);
+    this->utils.setFieldData(J,fm);
+    this->utils.setFieldData(porePressure, fm);
+    this->utils.setFieldData(biotCoefficient, fm);
+    this->utils.setFieldData(biotModulus, fm);
     this->utils.setFieldData(poroMassResidual,fm);
   }
 

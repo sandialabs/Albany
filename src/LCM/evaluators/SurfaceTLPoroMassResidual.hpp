@@ -53,7 +53,7 @@ private:
   //! Scalar Gradient
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> scalarGrad;
   //! Scalar Jump
-    PHX::MDField<ScalarT,Cell,QuadPoint> scalarJump;
+   PHX::MDField<ScalarT,Cell,QuadPoint> scalarJump;
   //! Current configuration basis
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> currentBasis;
   //! Reference configuration dual basis
@@ -62,6 +62,14 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> refNormal;
   //! Reference configuration area
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> refArea;
+  //! Determinant of the surface deformation gradient
+  PHX::MDField<ScalarT,Cell,QuadPoint> J;
+  //! Pore Pressure at the 2D integration point location
+  PHX::MDField<ScalarT,Cell,QuadPoint> porePressure;
+  //! Biot Coefficient at the 2D integration point location
+  PHX::MDField<ScalarT,Cell,QuadPoint> biotCoefficient;
+  //! Biot Modulus at the 2D integration point location
+  PHX::MDField<ScalarT,Cell,QuadPoint> biotModulus;
 
 //  // weight times basis function value at integration point
 //  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
