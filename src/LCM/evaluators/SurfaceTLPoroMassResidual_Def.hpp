@@ -30,6 +30,7 @@ namespace LCM {
     porePressure       (p.get<std::string>("Pore Pressure Name"),dl->qp_scalar),
     biotCoefficient      (p.get<std::string>("Biot Coefficient Name"),dl->qp_scalar),
     biotModulus       (p.get<std::string>("Biot Modulus Name"),dl->qp_scalar),
+    deltaTime (p.get<std::string>("Delta Time Name"),dl->workset_scalar),
     poroMassResidual (p.get<std::string>("Surface Poromechanics Balance of Mass Residual Name"),dl->node_scalar)
   {
     this->addDependentField(scalarGrad);
@@ -42,6 +43,7 @@ namespace LCM {
     this->addDependentField(porePressure);
     this->addDependentField(biotCoefficient);
     this->addDependentField(biotModulus);
+    this->addDependentField(deltaTime);
 
     this->addEvaluatedField(poroMassResidual);
 
@@ -89,6 +91,7 @@ namespace LCM {
     this->utils.setFieldData(porePressure, fm);
     this->utils.setFieldData(biotCoefficient, fm);
     this->utils.setFieldData(biotModulus, fm);
+    this->utils.setFieldData(deltaTime, fm);
     this->utils.setFieldData(poroMassResidual,fm);
   }
 
@@ -107,29 +110,31 @@ namespace LCM {
 
     	  poroMassResidual(cell, node) = 0;
     	  poroMassResidual(cell, topNode) = 0;
+
     	  for (std::size_t pt=0; pt < numQPs; ++pt) {
-    	// Diffusion Term
-    	//	  poroMassResidual(cell, node) += refValues(node, pt)*scalarJump(cell,pt)*thickness*refArea(cell,pt);
+
+        // note: refArea = |J| * weight at integration point
 
     	// Local Rate of Change volumetric constraint term
-    	poroMassResidual(cell, node) -= refValues(node,pt)*refWeights(pt)*
+    	poroMassResidual(cell, node) -= refValues(node,pt)*
     		      				                                (J(cell,pt)-Jold(cell, pt))*
     		      				                                biotCoefficient(cell,pt)*refArea(cell,pt)*thickness;
 
     	// Local Rate of Change pressure term
-        poroMassResidual(cell, node) -= refValues(node,pt)*refWeights(pt)*
+        poroMassResidual(cell, node) -= refValues(node,pt)*
     				                                             (porePressure(cell,pt)-porePressureold(cell, pt))/
     				                                             biotModulus(cell,pt)*refArea(cell,pt)*thickness;
 
         poroMassResidual(cell, topNode) =  poroMassResidual(cell, node);
 
        // Diffusion term, which requires gradient term from the jump in the normal direction
-
+      // need deltaTime, deformation gradient, permeability..etc
+      // For now, I will focus on undrained response, but I will get back to it ASAP - Sun
 
     	  }
       }
 
-      // Stablization term (if needed)
+      // Stabilization term (if needed)
 
     }
 

@@ -42,10 +42,6 @@ namespace LCM {
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
 	stressGrad       (p.get<std::string>      ("Gradient Hydrostatic Stress Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-//    Source      (p.get<std::string>                ("Source Name"),
-//		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-//	MechSource      (p.get<std::string>            ("Mechanical Source Name"),
-//		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
    stabParameter  (p.get<std::string>         ("Material Property Name"),
 		p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     DefGrad      (p.get<std::string>          ("Deformation Gradient Name"),
@@ -62,8 +58,6 @@ namespace LCM {
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("Workset Scalar Data Layout")),
     TResidual   (p.get<std::string>           ("Residual Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") )
- //   haveSource  (p.get<bool>("Have Source"))
- //   ,haveMechSource  (p.get<bool>("Have Mechanical Source"))
   {
     if (p.isType<bool>("Disable Transient"))
       enableTransient = !p.get<bool>("Disable Transient");

@@ -88,7 +88,10 @@ namespace LCM {
         LCM::Vector<ScalarT> scalarGradPerpendicular(0, 0, 0);
         LCM::Vector<ScalarT> scalarGradParallel(0, 0, 0);
 
-       // Need to inverse basis [G_0 ; G_1 G_2] and none of them should be normalized
+       // Need to inverse basis [G_0 ; G_1; G_2] and none of them should be normalized
+        LCM::Tensor<ScalarT> Gbasis;
+
+
 
         // in-plane (parallel) contribution
         for (int node(0); node < numPlaneNodes; ++node) {

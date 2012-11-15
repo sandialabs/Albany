@@ -54,7 +54,6 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> Clattice;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> CLGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> stressGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint> MechSource;
   PHX::MDField<ScalarT,Cell,QuadPoint> stabParameter;
 
   // Input for the strain rate effect
@@ -68,9 +67,6 @@ private:
   // Input for hydro-static stress effect
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> Pstress;
   PHX::MDField<ScalarT,Cell,QuadPoint> tauFactor;
-
-
-
 
   // Time
   PHX::MDField<ScalarT,Dummy> deltaTime;

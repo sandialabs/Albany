@@ -77,6 +77,9 @@ private:
   //Data from previous time step
    std::string porePressureName, JName;
 
+   // Time
+   PHX::MDField<ScalarT,Dummy> deltaTime;
+
   //! Reference Cell FieldContainers
   Intrepid::FieldContainer<RealType> refValues;
   Intrepid::FieldContainer<RealType> refGrads;

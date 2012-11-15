@@ -250,7 +250,7 @@ Albany::MechanicsProblem::constructEvaluators(PHX::FieldManager<PHAL::AlbanyTrai
   const int worksetSize = meshSpecs.worksetSize;
 
 #ifdef ALBANY_VERBOSE
-  std::cout << "Setting numQPts, surface elemenet is " << surfaceElement << std::endl;
+  std::cout << "Setting numQPts, surface element is " << surfaceElement << std::endl;
 #endif
   numDim = cubature->getDimension();
   if ( !surfaceElement )
