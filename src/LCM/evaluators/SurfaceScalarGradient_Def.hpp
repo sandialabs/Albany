@@ -89,16 +89,22 @@ namespace LCM {
         LCM::Vector<ScalarT> scalarGradParallel(0, 0, 0);
 
        // Need to inverse basis [G_0 ; G_1; G_2] and none of them should be normalized
-        LCM::Tensor<ScalarT> Gbasis;
+        LCM::Tensor<ScalarT> gBasis(3, &refDualBasis(cell, pt, 0, 0));
+        LCM::Tensor<ScalarT> invRefDualBasis(3);
 
+        gBasis = LCM::transpose(gBasis);
+        invRefDualBasis = LCM::inverse(gBasis);
 
+        LCM::Vector<ScalarT> invG_0(3, &invRefDualBasis(0, 0));
+        LCM::Vector<ScalarT> invG_1(3, &invRefDualBasis(1, 0));
+        LCM::Vector<ScalarT> invG_2(3, &invRefDualBasis(2, 0));
 
         // in-plane (parallel) contribution
         for (int node(0); node < numPlaneNodes; ++node) {
           int topNode = node + numPlaneNodes;
           midPlaneAvg = 0.5 * (nodalScalar(cell, node) + nodalScalar(cell, topNode));
-          scalarGradParallel += refGrads(node, pt, 0) * midPlaneAvg * G_0;
-          scalarGradParallel += refGrads(node, pt, 1) * midPlaneAvg * G_1;
+          scalarGradParallel += refGrads(node, pt, 0) * midPlaneAvg * invG_0;
+          scalarGradParallel += refGrads(node, pt, 1) * midPlaneAvg * invG_1;
         }
 
         // normal (perpendicular) contribution

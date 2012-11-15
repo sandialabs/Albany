@@ -867,10 +867,11 @@ namespace {
     //--------------------------------------------------------------------------
     // Now test  gradient in parallel direction
 
+    double pert(0.3);
     //--------------------------------------------------------------------------
     // Nodal value of the scalar in localization element
     for (int i(0); i < nodalScalar.size(); ++i) nodalScalar[i] = 0.0;
-    nodalScalar[1] = nodalScalar[2] = nodalScalar[5] = nodalScalar[6] = 1.0;
+    nodalScalar[1] = nodalScalar[2] = nodalScalar[5] = nodalScalar[6] = pert;
 
     // jump
     for (int i(0); i < jump.size(); ++i) jump[i] = 0.0;
@@ -886,7 +887,7 @@ namespace {
 
 
     // Record the expected gradient
-    LCM::Vector<ScalarT> expectedScalarGrad2(0.0, 0.0, 0.25);
+    LCM::Vector<ScalarT> expectedScalarGrad2(0.0, 0.0, pert);
 
     std::cout << "\n Parallel case: \n" << expectedScalarGrad2 << std::endl;
     std::cout << "\n expected scalar gradient:\n" << expectedScalarGrad2
