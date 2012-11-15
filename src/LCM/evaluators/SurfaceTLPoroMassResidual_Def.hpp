@@ -68,6 +68,9 @@ namespace LCM {
     cubature->getCubature(refPoints, refWeights);
     intrepidBasis->getValues(refValues, refPoints, Intrepid::OPERATOR_VALUE);
     intrepidBasis->getValues(refGrads, refPoints, Intrepid::OPERATOR_GRAD);
+
+    porePressureName = p.get<std::string>("Pore Pressure Name")+"_old";
+    JName =p.get<std::string>("Surface Vector Gradient Determinant Name")+"_old";
   }
 
   //**********************************************************************
@@ -94,13 +97,40 @@ namespace LCM {
   void SurfaceTLPoroMassResidual<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
+	  Albany::MDArray porePressureold = (*workset.stateArrayPtr)[porePressureName];
+	  Albany::MDArray Jold = (*workset.stateArrayPtr)[JName];
+
     for (std::size_t cell(0); cell < workset.numCells; ++cell) {
       for (std::size_t node(0); node < numPlaneNodes; ++node) {
+    	  // initialize the residual
+    	  int topNode = node + numPlaneNodes;
+
     	  poroMassResidual(cell, node) = 0;
+    	  poroMassResidual(cell, topNode) = 0;
     	  for (std::size_t pt=0; pt < numQPs; ++pt) {
-    		  poroMassResidual(cell, node) += refValues(node, pt)*scalarJump(cell,pt)*thickness*refArea(cell,pt);
+    	// Diffusion Term
+    	//	  poroMassResidual(cell, node) += refValues(node, pt)*scalarJump(cell,pt)*thickness*refArea(cell,pt);
+
+    	// Local Rate of Change volumetric constraint term
+    	poroMassResidual(cell, node) -= refValues(node,pt)*refWeights(pt)*
+    		      				                                (J(cell,pt)-Jold(cell, pt))*
+    		      				                                biotCoefficient(cell,pt)*refArea(cell,pt)*thickness;
+
+    	// Local Rate of Change pressure term
+        poroMassResidual(cell, node) -= refValues(node,pt)*refWeights(pt)*
+    				                                             (porePressure(cell,pt)-porePressureold(cell, pt))/
+    				                                             biotModulus(cell,pt)*refArea(cell,pt)*thickness;
+
+        poroMassResidual(cell, topNode) =  poroMassResidual(cell, node);
+
+       // Diffusion term, which requires gradient term from the jump in the normal direction
+
+
     	  }
       }
+
+      // Stablization term (if needed)
+
     }
 
 

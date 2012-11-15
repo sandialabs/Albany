@@ -82,11 +82,13 @@ namespace LCM {
 
         LCM::Vector<ScalarT> G_0(3, &refDualBasis(cell, pt, 0, 0));
         LCM::Vector<ScalarT> G_1(3, &refDualBasis(cell, pt, 1, 0));
-     //   LCM::Vector<ScalarT> G_2(3, &refDualBasis(cell, pt, 2, 0));
+        LCM::Vector<ScalarT> G_2(3, &refDualBasis(cell, pt, 2, 0));
         LCM::Vector<ScalarT> N(3, &refNormal(cell, pt, 0));
 
         LCM::Vector<ScalarT> scalarGradPerpendicular(0, 0, 0);
         LCM::Vector<ScalarT> scalarGradParallel(0, 0, 0);
+
+       // Need to inverse basis [G_0 ; G_1 G_2] and none of them should be normalized
 
         // in-plane (parallel) contribution
         for (int node(0); node < numPlaneNodes; ++node) {

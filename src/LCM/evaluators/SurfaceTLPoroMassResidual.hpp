@@ -72,7 +72,10 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> biotModulus;
 
 //  // weight times basis function value at integration point
-//  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
+
+  //Data from previous time step
+   std::string porePressureName, JName;
 
   //! Reference Cell FieldContainers
   Intrepid::FieldContainer<RealType> refValues;
