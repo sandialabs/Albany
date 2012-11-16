@@ -68,8 +68,10 @@ SaddleValueResponseFunction(
   distanceCutoffFctr = params.get<double>("Levelset Distance Cutoff Factor", 1.0);
   levelSetRadius = params.get<double>("Levelset Radius", 0);
 
-  maxFinalPts     = params.get<int>("Maximum Number of Final Points", 0);
-  finalPtSpacing  = params.get<double>("Final Point Spacing", 1);
+  // set default maxFinalPts to nImagePts
+  maxFinalPts = params.get<int>("Maximum Number of Final Points", nImagePts);
+  gfGridSpacing  = params.get<double>("GF-CBR Method Grid Spacing", 0.0005);
+  fieldScaling = params.get<double>("Field Scaling Factor", 1.0);
 
   bGetCurrent = (params.get<std::string>("Return Field Name", "") == "current");
   current_Ecutoff_offset_from_Emax = params.get<double>("GF-CBR Method Energy Cutoff Offset", 0);
@@ -397,8 +399,7 @@ initializeFinalImagePoints(const double current_time,
   
   if(dbMode > 1) std::cout << "Saddle Point:  Initializing Final Image Points" << std::endl;
 
-  double ptSpacing = finalPtSpacing; // space between final image points
-  int maxPoints    = maxFinalPts;    // maximum number of total final image points
+  int maxPoints = maxFinalPts;    // maximum number of total final image points
   
   double* segmentLength = new double[nImagePts-1]; // segmentLength[i] == distance between imagePt[i] and imagePt[i+1]
   double lengthBefore = 0.0, lengthAfter = 0.0;    // path length before and after saddle point
@@ -406,16 +407,17 @@ initializeFinalImagePoints(const double current_time,
   int nPtsBefore = 0, nPtsAfter = 0, nFinalPts;
 
   // Get the distances along each leg of the current (final) saddle path
-  for(std::size_t i=0; i<nImagePts-1; i++) {
+  for(std::size_t i = 0; i < nImagePts-1; i++) {
     segmentLength[i] = imagePts[i].coords.distanceTo(imagePts[i+1].coords);
     radius += imagePts[i].radius;
     if( (int)i < iSaddlePt ) lengthBefore += segmentLength[i];
     else lengthAfter += segmentLength[i];
   }
-
+  
   radius += imagePts[nImagePts-1].radius;
   radius /= nImagePts;  // average radius
 
+/*
   // We'd like to put equal number of final points on each side of the saddle point.  Compute here how 
   //  many final points (fixed spacing) will lie on each side of the saddle point.
   if(maxPoints * ptSpacing < lengthBefore + lengthAfter) {
@@ -431,30 +433,81 @@ initializeFinalImagePoints(const double current_time,
     nPtsBefore = int(lengthBefore / ptSpacing);
     nPtsAfter  = int(lengthAfter  / ptSpacing);
   }
+*/
 
-  nFinalPts = nPtsBefore + nPtsAfter + 1; // one extra for "on/at" saddle point
+  // calculate point spacing for the entire saddle path and given maxPoints
+  double ptSpacing = (lengthBefore + lengthAfter)/(maxPoints-1); 
+  
+  // nPtsBefore = int(lengthBefore / ptSpacing);
+  // nPtsAfter  = int(lengthAfter  / ptSpacing);
+  // nFinalPts = nPtsBefore + nPtsAfter + 1;     // one extra for "on/at" saddle point
+  
+  nFinalPts = maxPoints; 
+  
   finalPts.resize(nFinalPts);
   finalPtValues.resize(nFinalPts);
   finalPtWeights.resize(nFinalPts);
 
-  //! Initialize Final Image Points:  
-  //   interpolate between current image points
+  //! Initialize Final Image Points: interpolate between current image points
+  //! If starting from the saddle point, the resulting finalPts.value vs pathLength 
+  //! is shifted leftward from the imagePts.value vs pathLength curve.
+  //! Hence, start from the first image point, and equally divide the entire saddle 
+  //! into (maxPoints-1) pieces.
+  
+  // Assign the starting and ending image points to finalPts
+  finalPts[0].init(imagePts[0].coords, imagePts[0].radius);
+  finalPts[nFinalPts-1].init(imagePts[nImagePts-1].coords, imagePts[nImagePts-1].radius);
+  
+  double offset = ptSpacing;  
+  int iCurFinalPt = 1;
+  
+  for(std::size_t i = 0; i < nImagePts-1; i++) {
+    const mathVector& initialPt = imagePts[i].coords;
+    const mathVector& v = (imagePts[i+1].coords - imagePts[i].coords) * (1.0/segmentLength[i]);  // normalized vector from initial -> final pt
 
-  double offset = 0.0;
-  int iCurFinalPt = nPtsBefore;
-  for(int i=iSaddlePt-1; i >= 0; i--) {
+	  if(segmentLength[i] > offset) {
+	    int nPtSegs = int((segmentLength[i]-offset) / ptSpacing);
+	    int nPts = nPtSegs + 1;
+  	  double leftover = (segmentLength[i]-offset) - ptSpacing * nPtSegs;
+
+	    for(int j = 0; j < nPts && iCurFinalPt < nFinalPts; j++) {
+    	  finalPts[iCurFinalPt].init(initialPt + v * (ptSpacing * j + offset), radius );
+      	iCurFinalPt++;
+    	}
+    	offset = ptSpacing - leftover; //how much to advance the first point of the next segment
+    }
+    else {
+    	offset -= segmentLength[i];
+    }
+  }
+  
+  //If there are any leftover points, initialize them too
+  for(int j = iCurFinalPt; j < nFinalPts; j++) 
+    finalPts[j].init(imagePts[nImagePts-1].coords, imagePts[nImagePts-1].radius);
+  
+
+/*
+  double offset = ptSpacing;
+  int iCurFinalPt = nPtsBefore-1;
+  for(int i = iSaddlePt-1; i >= 0; i--) {
     const mathVector& initialPt = imagePts[i+1].coords;
     const mathVector& v = (imagePts[i].coords - imagePts[i+1].coords) * (1.0/segmentLength[i]);  // normalized vector from initial -> final pt
 
-    int nPts = int((segmentLength[i]-offset) / ptSpacing);
-    double leftover = (segmentLength[i]-offset) - ptSpacing * nPts;
+    if(segmentLength[i] > offset) {
+	    int nPtSegs = int((segmentLength[i]-offset) / ptSpacing);
+  	  int nPts = nPtSegs + 1;
+    	double leftover = (segmentLength[i]-offset) - ptSpacing * nPtSegs;
 
-    for(int j=0; j<nPts && iCurFinalPt >= 0; j++) {
-      //radius = (imagePts[i].radius + imagePts[i+1].radius)/2; // use average radius
-      finalPts[iCurFinalPt].init(initialPt + v * (ptSpacing * j + offset), radius );
-      iCurFinalPt--;
+    	for(int j=0; j<nPts && iCurFinalPt >= 0; j++) {
+      	//radius = (imagePts[i].radius + imagePts[i+1].radius)/2; // use average radius
+      	finalPts[iCurFinalPt].init(initialPt + v * (ptSpacing * j + offset), radius );
+      	iCurFinalPt--;
+    	}
+    	offset = ptSpacing - leftover; //how much to advance the first point of the next segment
     }
-    offset = ptSpacing - leftover; //how much to advance the first point of the next segment
+    else {
+    	offset -= segmentLength[i];
+    }
   }
 
   //If there are any leftover points (at beginning), initialize them too
@@ -464,24 +517,32 @@ initializeFinalImagePoints(const double current_time,
 
   offset = ptSpacing;  //start initial point *after* saddle point this time
   iCurFinalPt = nPtsBefore+1;
-  for(std::size_t i=iSaddlePt; i < nImagePts-1; i++) {
+  for(std::size_t i = iSaddlePt; i < nImagePts-1; i++) {
     const mathVector& initialPt = imagePts[i].coords;
     const mathVector& v = (imagePts[i+1].coords - imagePts[i].coords) * (1.0/segmentLength[i]);  // normalized vector from initial -> final pt
 
-    int nPts = int((segmentLength[i]-offset) / ptSpacing);
-    double leftover = (segmentLength[i]-offset) - ptSpacing * nPts;
+	  if(segmentLength[i] > offset) {
+	    int nPtSegs = int((segmentLength[i]-offset) / ptSpacing);
+	    int nPts = nPtSegs + 1;
+  	  double leftover = (segmentLength[i]-offset) - ptSpacing * nPtSegs;
 
-    for(int j=0; j<nPts && iCurFinalPt < nFinalPts; j++) {;
-      // radius = (imagePts[i].radius + imagePts[i+1].radius)/2; // use average radius
-      finalPts[iCurFinalPt].init(initialPt + v * (ptSpacing * j + offset), radius );
-      iCurFinalPt++;
+	    for(int j=0; j<nPts && iCurFinalPt < nFinalPts; j++) {
+  	    // radius = (imagePts[i].radius + imagePts[i+1].radius)/2; // use average radius
+    	  finalPts[iCurFinalPt].init(initialPt + v * (ptSpacing * j + offset), radius );
+      	iCurFinalPt++;
+    	}
+    	offset = ptSpacing - leftover; //how much to advance the first point of the next segment
     }
-    offset = ptSpacing - leftover; //how much to advance the first point of the next segment
+    else {
+    	offset -= segmentLength[i];
+    }
   }
 
   //If there are any leftover points, initialize them too
   for(int j=iCurFinalPt; j<nFinalPts; j++) 
     finalPts[j].init(imagePts[nImagePts-1].coords, imagePts[nImagePts-1].radius);
+
+*/
 
   return;
 }
@@ -1035,20 +1096,116 @@ FindSaddlePoint_LevelSet(std::vector<double>& allFieldVals,
 }
 
 
-double QCAD::SaddleValueResponseFunction::
-getCurrent() const
+double QCAD::SaddleValueResponseFunction::getCurrent
+  (const double& lattTemp, const Teuchos::RCP<QCAD::MaterialDatabase>& materialDB) const
 {
-  const double kB = 8.617332e-5; // eV/K
-  const double effMass = 1.0; // in units of m_0
-  const double Temp = 10; // K
-  const double Vds = 0.0001; // one tenth of an meV bias
+  const double kB = 8.617332e-5;  // eV/K
+  double Temp = lattTemp;   // K
+  double Vds = kB*Temp;     // kB*T [V]
 
+  // segmentLength[i] == distance between imagePt[i] and imagePt[i+1]
+  double* segmentLength = new double[nImagePts-1]; 
+
+  // path length before and after saddle point
+  double lengthBefore = 0.0, lengthAfter = 0.0;    
+
+  // get the distances along each leg of the final saddle path
+  for(std::size_t i = 0; i < nImagePts-1; i++) 
+  {
+    segmentLength[i] = imagePts[i].coords.distanceTo(imagePts[i+1].coords);
+    if( (int)i < iSaddlePt ) 
+      lengthBefore += segmentLength[i];
+    else 
+      lengthAfter += segmentLength[i];
+  }
+  
+  // recalculate gfGridSpacing to obtain an integer number of points for GF-CBR calculation
+  int nGFPts = int( (lengthBefore + lengthAfter)/gfGridSpacing ) + 1;
+  double ptSpacing = (lengthBefore + lengthAfter)/(nGFPts-1);  // actual GF Grid Spacing
+  std::cout << "nGFPts = " << nGFPts << ", actual gfGridSpacing = " << ptSpacing << std::endl; 
+
+  // hard-code eff. mass along the saddle path with Reference Material's transverse eff. mass
+  std::string refMtrlName = materialDB->getParam<std::string>("Reference Material");
+  double effMass = materialDB->getMaterialParam<double>(refMtrlName,"Transverse Electron Effective Mass");
+
+  // unscale the Field Scaling Factor to obtain the actual Potential in [V]
+  Teuchos::RCP<std::vector<double> > pot = Teuchos::rcp( new std::vector<double>(finalPts.size()) );
+  for(std::size_t i = 0; i < finalPts.size(); i++)
+    (*pot)[i] = finalPts[i].value / fieldScaling;
+    
+  // compute energy reference
+  double qPhiRef;
+  {
+    std::string category = materialDB->getMaterialParam<std::string>(refMtrlName,"Category");
+    if (category == "Semiconductor") 
+    {
+      // Same qPhiRef needs to be used for the entire structure
+      double mdn = materialDB->getMaterialParam<double>(refMtrlName,"Electron DOS Effective Mass");
+      double mdp = materialDB->getMaterialParam<double>(refMtrlName,"Hole DOS Effective Mass");
+      double Chi = materialDB->getMaterialParam<double>(refMtrlName,"Electron Affinity");
+      double Eg0 = materialDB->getMaterialParam<double>(refMtrlName,"Zero Temperature Band Gap");
+      double alpha = materialDB->getMaterialParam<double>(refMtrlName,"Band Gap Alpha Coefficient");
+      double beta = materialDB->getMaterialParam<double>(refMtrlName,"Band Gap Beta Coefficient");
+      
+      double Eg = Eg0 - alpha*pow(Temp,2.0)/(beta+Temp); // in [eV]
+      double kbT = kB * Temp;      // in [eV]
+      double Eic = -Eg/2. + 3./4.*kbT*log(mdp/mdn);  // (Ei-Ec) in [eV]
+      qPhiRef = Chi - Eic;  // (Evac-Ei) in [eV] where Evac = vacuum level
+    }
+    else 
+      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+			  << "Error!  Invalid category " << category << " for reference material !" << std::endl);
+  }  
+  
+  // hard-code electron affinity using the Reference Material's value
+  double matChi = materialDB->getMaterialParam<double>(refMtrlName,"Electron Affinity");
+  
+/*
+  // compute conduction band [eV] from the potential and corresponding pathLens (non-uniform)
+  Teuchos::RCP<std::vector<double> > Ec = Teuchos::rcp( new std::vector<double>(imagePts.size()) );
+  Teuchos::RCP<std::vector<double> > pathLen = Teuchos::rcp( new std::vector<double>(imagePts.size()) );
+  
+  double pathLength = 0.0;
+  for(std::size_t i = 0; i < imagePts.size(); i++)
+  {
+    (*Ec)[i] = qPhiRef - matChi - (*pot)[i];
+    (*pathLen)[i] = pathLength;  // pathLen has non-uniform values
+    if (i < (imagePts.size()-1))
+      pathLength += imagePts[i].coords.distanceTo(imagePts[i+1].coords); 
+  }
+*/
+
+  // compute conduction band [eV] from the potential
   Teuchos::RCP<std::vector<double> > Ec = Teuchos::rcp( new std::vector<double>(finalPts.size()) );
-  for(std::size_t i=0; i<finalPts.size(); i++)
-    (*Ec)[i] = finalPts[i].value;
-
+  Teuchos::RCP<std::vector<double> > pathLen = Teuchos::rcp( new std::vector<double>(finalPts.size()) );
+  
+  double pathLength = 0.0;
+  for(std::size_t i = 0; i < finalPts.size(); i++)
+  {
+    (*Ec)[i] = qPhiRef - matChi - (*pot)[i];
+    (*pathLen)[i] = pathLength;  
+    if (i < (finalPts.size()-1))
+      pathLength += finalPts[i].coords.distanceTo(finalPts[i+1].coords);
+  }
+    
+  // append the computed Ec data to output file
+  if( outputFilename.length() > 0) 
+  {
+    std::fstream out; 
+    out.open(outputFilename.c_str(), std::fstream::out | std::fstream::app);
+    out << std::endl << std::endl << "# Computed Ec data" << std::endl;
+    for(std::size_t i = 0; i < finalPts.size(); i++) 
+    {
+	    out << i << " " << finalPts[i].coords[0] << " " << finalPts[i].coords[1] 
+	        << " " << (*Ec)[i] << " " << (*pathLen)[i] << " " << finalPts[i].radius << std::endl;
+    }
+    out.close();
+  }   
+          
+  // call the GF-CBR solver to compute current
   Teuchos::RCP<Epetra_MpiComm> Comm = Teuchos::rcp( new Epetra_MpiComm(MPI_COMM_WORLD) );
-  QCAD::GreensFunctionTunnelingSolver solver(Ec, finalPtSpacing, effMass, Comm); //Teuchos::rcp(comm.Clone())
+  QCAD::GreensFunctionTunnelingSolver solver(Ec, pathLen, nGFPts, ptSpacing, effMass, Comm); //Teuchos::rcp(comm.Clone())
+  
   double I = solver.computeCurrent(Vds, kB * Temp, current_Ecutoff_offset_from_Emax); // overwrite "Return Field Val" with current
   std::cout << "Current I = " << I << " Amps" << std::endl;
   return I;

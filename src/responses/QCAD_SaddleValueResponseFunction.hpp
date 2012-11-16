@@ -8,6 +8,7 @@
 #define QCAD_SADDLEVALUERESPONSEFUNCTION_HPP
 
 #include "Albany_FieldManagerScalarResponseFunction.hpp"
+#include "QCAD_MaterialDatabase.hpp"
 
 #define MAX_DIMENSIONS 3
 
@@ -172,7 +173,7 @@ namespace QCAD {
     double getSaddlePointWeight(const double* p) const;
     double getTotalSaddlePointWeight() const;
     const double* getSaddlePointPosition() const;
-    double getCurrent() const;
+    double getCurrent(const double& lattTemp, const Teuchos::RCP<QCAD::MaterialDatabase>& materialDB) const;
     
   private:
 
@@ -282,8 +283,10 @@ namespace QCAD {
     double lockedZ;
 
     //! data for final points (just used at end to get more data pts along saddle path)
-    double finalPtSpacing;
     int maxFinalPts;
+    
+    double gfGridSpacing;  // grid spacing for GB-CBR calculation
+    double fieldScaling;   // unscale the field specified by Field Name by Field Scaling Factor
 
     bool bGetCurrent;
     double current_Ecutoff_offset_from_Emax;

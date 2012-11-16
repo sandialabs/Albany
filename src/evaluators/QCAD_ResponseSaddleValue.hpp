@@ -10,6 +10,7 @@
 #include "PHAL_SeparableScatterScalarResponse.hpp"
 #include "QCAD_EvaluatorTools.hpp"
 #include "QCAD_SaddleValueResponseFunction.hpp"
+#include "QCAD_MaterialDatabase.hpp"
 
 
 /** 
@@ -70,6 +71,10 @@ namespace QCAD
     
     bool bReturnSameField;
     double scaling, retScaling;
+    double lattTemp; 
+    
+    Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
+
   };
 	
 }

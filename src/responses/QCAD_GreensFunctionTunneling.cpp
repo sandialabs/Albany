@@ -26,20 +26,70 @@
 #include "Teuchos_CommHelpers.hpp"
 
 #include "QCAD_GreensFunctionTunneling.hpp"
+#include <fstream>
 
 // Assume EcValues are in units of eV
 // Assume effMass is in units of m_0 (electron rest mass)
 // Assume ptSpacing is in units of microns (um)
+// Assume pathLen is in unit of microns (um)
+
 QCAD::GreensFunctionTunnelingSolver::
-GreensFunctionTunnelingSolver(const Teuchos::RCP<std::vector<double> >& EcValues_, 
-			      double ptSpacing_, double effMass, const Teuchos::RCP<Epetra_Comm>& Comm_,
-			      bool bNeumannBC)
+GreensFunctionTunnelingSolver(const Teuchos::RCP<std::vector<double> >& EcValues_,
+            const Teuchos::RCP<std::vector<double> >& pathLen_, int nGFPts_,
+			      double ptSpacing_, double effMass_, const Teuchos::RCP<Epetra_Comm>& Comm_,
+			      bool bNeumannBC_)
 {  
   Comm = Comm_;
-  EcValues = EcValues_;
   ptSpacing = ptSpacing_;
-  mass = effMass;
-  bUseNeumannBC = bNeumannBC;
+  nGFPts = nGFPts_; 
+  effMass = effMass_;
+  bNeumannBC = bNeumannBC_;
+
+  // Retrieve Ec and pathLen for spline interpolation
+  std::vector<double>  oldEcValues = (*EcValues_);
+  std::vector<double>  oldPathLen = (*pathLen_);
+  
+  // Get size of oldEcValues
+  int nOldPts = oldEcValues.size(); 
+  
+  // Call preSplineInterp() to obtain y2 
+  std::vector<double> y2(nOldPts,0.0);
+  prepSplineInterp(oldPathLen, oldEcValues, y2, nOldPts);  
+  
+  int klo = 0; 
+  int khi = nGFPts - 1; 
+  
+  // Initialize the pointer, otherwise, seg. fault
+  EcValues = Teuchos::rcp( new std::vector<double>(nGFPts) );
+  
+  // Keep the beginning and ending values the same
+  (*EcValues)[0] = oldEcValues[0];
+  (*EcValues)[nGFPts-1] = oldEcValues[nOldPts-1];
+  
+  // Interpolate Ec values to the fine spatial grid defined by ptSpacing and nGFPts
+  for (int i = 1; i < (nGFPts-1); i++)
+  {
+    double pathLength = double(i) * ptSpacing;
+    (*EcValues)[i] = execSplineInterp(oldPathLen, oldEcValues, y2, pathLength, nOldPts, klo, khi);
+  }
+  
+  std::cout << "writing to file ... " << std::endl;
+  std::string outputFilename = "test.dat"; 
+  if( outputFilename.length() > 0) 
+  {
+    std::fstream out; 
+    out.open(outputFilename.c_str(), std::fstream::out | std::fstream::app);
+    out << std::endl << std::endl << "# Index  Interpolated pathLength   Ec" << std::endl;
+    double pathLength = 0.0;
+    for(std::size_t i = 0; i < EcValues->size(); i++)
+    { 
+	    pathLength = double(i) * ptSpacing; 
+	    out << i << " " << pathLength << " " << (*EcValues)[i] << std::endl;
+    }
+    out.close();
+  }   
+  std::cout << "finish writing to file ... " << std::endl;
+  
 }
 
 QCAD::GreensFunctionTunnelingSolver::
@@ -51,16 +101,16 @@ QCAD::GreensFunctionTunnelingSolver::
 double QCAD::GreensFunctionTunnelingSolver::
 computeCurrent(double Vds, double kbT, double Ecutoff_offset_from_Emax)
 {
-  const double hbar_1 = 6.58212e-16; // eV * s
-  const double hbar_2 = 1.05457e-34; // J * s = kg * m^2 / s
-  const double m_0 = 9.11e-31; // kg
-  const double um = 1e-6; // m
+  const double hbar_1 = 6.582119e-16; // eV * s
+  const double hbar_2 = 1.054572e-34; // J * s = kg * m^2 / s
+  const double m_0 = 9.109382e-31;    // kg
+  const double um = 1e-6;     // m
   const double min_a0 = 1e-4; // um, so == .1nm  HARDCODED MIN PT SPACING
 
   std::vector<Anasazi::Value<double> > evals;
   Teuchos::RCP<Epetra_MultiVector> evecs;
 
-  //Setup Energy bins:  mu_L == 0, mu_R == -Vds, so set
+  // Setup Energy bins:  mu_L == 0, mu_R == -Vds, so set
   // Emin = Ec[0] + mu_L + 20kT
   // Emax = Ec[nPts-1] + mu_R
   // dE = kbT / 10
@@ -78,7 +128,7 @@ computeCurrent(double Vds, double kbT, double Ecutoff_offset_from_Emax)
   Teuchos::RCP<std::vector<double> > pLastEc = Teuchos::null;
 
   Map = Teuchos::rcp(new Epetra_Map(nPts, 0, *Comm));
-  t0  = hbar_1 * hbar_2 /(2*mass*m_0* pow(a0*um,2) ); // gives t0 in units of eV    
+  t0  = hbar_1 * hbar_2 /(2*effMass*m_0* pow(a0*um,2) ); // gives t0 in units of eV    
 
   std::cout << "Doing Initial H-mx diagonalization for Vds = " << Vds << std::endl;
   ret = doMatrixDiag(Vds, *EcValues, Ecutoff, evals, evecs);
@@ -89,7 +139,7 @@ computeCurrent(double Vds, double kbT, double Ecutoff_offset_from_Emax)
 
   while(ret == false && a0 > min_a0) {
     a0 /= 2; nPts *= 2;  
-    t0 = hbar_1 * hbar_2 /(2*mass*m_0* pow(a0*um,2) );
+    t0 = hbar_1 * hbar_2 /(2*effMass*m_0* pow(a0*um,2) );
     Map = Teuchos::rcp(new Epetra_Map(nPts, 0, *Comm));
 
     // Interpolate pLastEc onto pEc
@@ -159,7 +209,7 @@ computeCurrent(double Vds, double kbT, double Ecutoff_offset_from_Emax)
     E = Emin + MyGlobalEnergyPts[i]*dE;
 
     x = (E-VL)*(t0-(E-VL)/4);
-    y = bUseNeumannBC ? 0 : t0;
+    y = bNeumannBC ? 0 : t0;
     if( x >= 0 )
       Sigma11 = std::complex<double>( (E-VL)/2 - y, -sqrt(x) );
     else
@@ -258,7 +308,7 @@ doMatrixDiag(double Vds, std::vector<double>& Ec, double Ecutoff,
   int NumEntries;
 
   Values[0] = -t0; Values[1] = 2*t0; Values[2] = -t0;
-  if(bUseNeumannBC) {
+  if(bNeumannBC) {
     endValues[0] = -t0; endValues[1] =   t0; endValues[2] = -t0;  }
   else {
     endValues[0] = -t0; endValues[1] = 2*t0; endValues[2] = -t0;  }
@@ -388,6 +438,7 @@ doMatrixDiag(double Vds, std::vector<double>& Ec, double Ecutoff,
   double maxEigenvalue = evals[sol.numVecs-1].realpart;
   return (maxEigenvalue > Ecutoff);
 }
+
     
 void QCAD::GreensFunctionTunnelingSolver::
 computeCurrentRange(const std::vector<double> Vds, double kbT, 
@@ -397,3 +448,95 @@ computeCurrentRange(const std::vector<double> Vds, double kbT,
     resultingCurrent[i] = computeCurrent(Vds[i], kbT, Ecutoff_offset_from_Emax);
   }
 }
+
+
+void QCAD::GreensFunctionTunnelingSolver::prepSplineInterp
+  (const std::vector<double>& x, const std::vector<double>& y,  
+   std::vector<double>& y2, const int& n)
+{
+  /* Given arrays x(0:n-1) and y(0:n-1) containing a tabulated function, i.e., yi = f(xi),
+  with x0 < x1 < ... < x(n-1), this routine returns an array y2(0:n-1) of length n which 
+  contains the second derivatives of the interpolating function at the tabulated
+  points xi. Assume zero second derivatives at points 1 and n, that is, natural 
+  spline boundary conditions. y2(0:n-1) is used in the execSplineInterp() function.
+  */
+  
+  std::vector<double> u;
+  u.resize(n-1);  
+
+  // set the lower BC to be natural (2nd deriv. = 0)
+  y2[0] = 0.;
+  u[0] = 0.; 
+  
+  // decomposition loop of the tridiagonal algorithm, y2 and u are used for 
+  // temporary storage of the decomposed factors
+  double sig = 0.0, p = 0.0; 
+  for (int i = 1; i < (n-1); ++i)
+  {
+    sig = (x[i]-x[i-1]) / (x[i+1]-x[i-1]);
+    p = sig *y2[i-1] + 2.; 
+    y2[i] = (sig -1.)/p; 
+    u[i] = (6. *( (y[i+1]-y[i]) / (x[i+1]-x[i]) - (y[i]-y[i-1]) / (x[i]-x[i-1]) )
+               /(x[i+1]-x[i-1]) - sig*u[i-1]) / p; 
+  }
+  
+  // set the upper BC to be natural; 
+  double qn = 0., un = 0.; 
+  
+  // backsubstition of the tridiagonal algorithm to obtain y2
+  y2[n-1] = (un-qn*u[n-2]) / (qn*y2[n-2]+1.);   
+  for (int i = (n-2); i >=0; i--)
+  {
+    y2[i] = y2[i]*y2[i+1] + u[i];
+  }
+  
+  return; 
+} 
+
+
+double QCAD::GreensFunctionTunnelingSolver::execSplineInterp
+  (const std::vector<double>& xa, const std::vector<double>& ya,  
+   const std::vector<double>& y2a, const double& x, const int& n, int& klo, int& khi)
+{
+  /* Given the arrays xa(0:n-1) and ya(0:n-1) of length n, which tabulate a function 
+  with the xai's in order, and given array y2a(0:n-1), which is the output from 
+  prepSplineInterp() above, and given a value of x, this routine returns a 
+  cubic-spline interpolated value y. Because sequential calls are in order and 
+  closely spaced here, it is more efficient to store values of klo and khi and test 
+  if they remain appropriate on the next call.
+  */
+
+  // if x is not within (xa[klo], xa[khi]), reset klo and khi and find their new values by bisection
+  if ( (x < xa[klo]) || (x > xa[khi]) )
+  {
+    klo = 0; 
+    khi = n-1; 
+    
+    // bisection searching
+    while ( (khi-klo) > 1 )
+    {
+      int k = (khi+klo)/2;
+      if (xa[k] > x) 
+        khi = k;
+      else
+        klo = k; 
+    }
+  }
+  
+  // klo and khi now bracket the input value of x
+  
+  double h = xa[khi] - xa[klo]; 
+  if ( h < 1.e-100 ) 
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, 
+			 "Bad xa input in execSplineInterp. The xa's must be distinct ! \n");
+
+  // perform spline interpolation
+  double a = (xa[khi] - x) / h; 
+  double b = (x - xa[klo]) / h; 
+  double c = (pow(a, 3.)-a) * pow(h, 2.) / 6.;
+  double d = (pow(b, 3.)-b) * pow(h, 2.) / 6.;
+  double y = a*ya[klo] + b*ya[khi] + c*y2a[klo] + d*y2a[khi];  
+  
+  return y; 
+
+} 

@@ -369,6 +369,7 @@ QCAD::PoissonProblem::constructEvaluators(
     //  is not validated, so parameters in this list that are not used will not generate errors.
     RCP<ParameterList> pFromProb = rcp(new ParameterList("Response Parameters from Problem"));
     pFromProb->set<double>("Length unit in m", length_unit_in_m);
+    pFromProb->set<double>("Temperature", temperature); 
     pFromProb->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
 
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
