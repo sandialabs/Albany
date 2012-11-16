@@ -639,6 +639,89 @@ namespace LCM {
 
   }
 
+  //
+  // Given a vector of points, determine
+  // distances between all of them.
+  // \param vector of points
+  // \return distance matrix
+  //
+  template<typename T>
+  std::vector< std::vector<T> >
+  distance_matrix(std::vector< Vector<T> > const & points)
+  {
+    const Index
+    number_points = points.size();
+
+    std::vector< std::vector<T> >
+    distances(number_points);
+
+    for (Index i = 0; i < number_points; ++i) {
+
+      distances[i].resize(number_points);
+
+      distances[i][i] = 0.0;
+
+      for (Index j = i + 1; j < number_points; ++j) {
+
+        const T
+        distance = norm(points[i] - points[j]);
+
+        distances[i][j] = distance;
+        distances[j][i] = distance;
+
+      }
+
+    }
+
+    return distances;
+  }
+
+  //
+  // Given a distance matrix, determine the minimum
+  // distance between two distinct points.
+  // \param distance matrix
+  // \return minimum distance
+  //
+  template<typename T>
+  std::vector<T>
+  minimum_distances(std::vector< std::vector<T> > const & distances)
+  {
+    const Index
+    number_points = distances.size();
+
+    std::vector<T>
+    minima(number_points);
+
+    // First row
+    T
+    minimum = distances[0][1];
+
+    for (Index j = 2; j < number_points; ++j) {
+      minimum = std::min(minimum, distances[0][j]);
+    }
+
+    minima[0] = minimum;
+
+    // Remaining rows
+    for (Index i = 1; i < number_points; ++i) {
+
+      minimum = distances[i][0];
+
+      for (Index j = 1; j < number_points; ++j) {
+
+        if (i == j) continue;
+
+        minimum = std::min(minimum, distances[i][j]);
+
+      }
+
+      minima[i] = minimum;
+
+    }
+
+    return minima;
+  }
+
 } // namespace LCM
 
 #endif // LCM_Geometry_t_cc

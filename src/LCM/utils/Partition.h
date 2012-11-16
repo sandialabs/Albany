@@ -62,7 +62,7 @@ namespace LCM {
   ///
   namespace PARTITION {
 
-    enum Scheme {UNKNOWN, GEOMETRIC, HYPERGRAPH, KMEANS, SEQUENTIAL};
+    enum Scheme {UNKNOWN, GEOMETRIC, HYPERGRAPH, KMEANS, INEQUALITY};
 
   }
 
@@ -97,19 +97,19 @@ namespace LCM {
     ///
     /// \return Number of nodes on the array
     ///
-    int
+    Index
     GetNumberNodes() const;
 
     ///
     /// \return Number of elements in the array
     ///
-    int
+    Index
     GetNumberElements() const;
 
     ///
     /// \return Space dimension
     ///
-    int
+    Index
     GetDimension() const;
 
     ///
@@ -244,7 +244,7 @@ namespace LCM {
     /// \return Number of partitions defined as total volume
     /// of the array divided by the cube of the length scale
     ///
-    int
+    Index
     GetNumberPartitions(const double length_scale) const;
 
     ///
@@ -291,6 +291,15 @@ namespace LCM {
     ///
     std::map<int, int>
     PartitionKMeans(const double length_scale);
+
+    ///
+    /// Partition mesh with K-means algorithm and triangle inequality
+    /// \param length_scale The length scale for variational nonlocal
+    /// regularization
+    /// \return Partition number for each element
+    ///
+    std::map<int, int>
+    PartitionKMeansInequality(const double length_scale);
 
     ///
     /// Partition mesh with sequential K-means algorithm
@@ -437,7 +446,7 @@ namespace LCM {
     // determine the type of a finite element.
     //
     ELEMENT::Type
-    FindType(int dimension, int nodes) const;
+    FindType(Index dimension, Index nodes) const;
 
   private:
 
@@ -462,7 +471,7 @@ namespace LCM {
     //
     // Space dimension
     //
-    int
+    Index
     dimension_;
 
     //

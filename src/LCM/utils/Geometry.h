@@ -276,6 +276,26 @@ namespace LCM {
       Vector<T> & xi,
       std::vector< Vector<T> > const & v);
 
+  ///
+  /// Given a vector of points, determine
+  /// distances between all of them.
+  /// \param vector of points
+  /// \return distance matrix
+  ///
+  template<typename T>
+  std::vector< std::vector<T> >
+  distance_matrix(std::vector< Vector<T> > const & points);
+
+  ///
+  /// Given a distance matrix, determine the minimum
+  /// distance between two distinct points.
+  /// \param distance matrix
+  /// \return minimum distance
+  ///
+  template<typename T>
+  std::vector<T>
+  minimum_distances(std::vector< std::vector<T> > const & distances);
+
 } // namespace LCM
 
 #include "Geometry.i.cc"

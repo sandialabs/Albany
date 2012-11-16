@@ -182,7 +182,7 @@ namespace LCM {
     const CellTopologyData
     cell_topology = meshSpecs[0]->ctd;
 
-    const int
+    const Index
     dimension = cell_topology.dimension;
 
     assert(dimension == dimension_);
@@ -220,7 +220,7 @@ namespace LCM {
 
       LCM::Vector<double> point(0.0, 0.0, 0.0);
 
-      for (int j = 0; j < dimension; ++j) {
+      for (Index j = 0; j < dimension; ++j) {
         point(j) = coordinates[node * dimension + j];
       }
 
@@ -271,7 +271,7 @@ namespace LCM {
   //
   // \return Number of nodes on the array
   //
-  int
+  Index
   ConnectivityArray::GetNumberNodes() const
   {
     return nodes_.size();
@@ -280,7 +280,7 @@ namespace LCM {
   //
   // \return Number of elements in the array
   //
-  int
+  Index
   ConnectivityArray::GetNumberElements() const
   {
     return connectivity_.size();
@@ -289,7 +289,7 @@ namespace LCM {
   //
   // \return Space dimension
   //
-  int
+  Index
   ConnectivityArray::GetDimension() const
   {
     return dimension_;
@@ -1095,7 +1095,7 @@ namespace LCM {
   namespace {
 
     ELEMENT::Type
-    FindType1D(int nodes)
+    FindType1D(Index nodes)
     {
       ELEMENT::Type
       type = ELEMENT::UNKNOWN;
@@ -1112,7 +1112,7 @@ namespace LCM {
     }
 
     ELEMENT::Type
-    FindType2D(int nodes)
+    FindType2D(Index nodes)
     {
       ELEMENT::Type
       type = ELEMENT::UNKNOWN;
@@ -1132,7 +1132,7 @@ namespace LCM {
     }
 
     ELEMENT::Type
-    FindType3D(int nodes)
+    FindType3D(Index nodes)
     {
       ELEMENT::Type
       type = ELEMENT::UNKNOWN;
@@ -1158,7 +1158,7 @@ namespace LCM {
   // determine the type of a finite element.
   //
   ELEMENT::Type
-  ConnectivityArray::FindType(int dimension, int nodes) const
+  ConnectivityArray::FindType(Index dimension, Index nodes) const
   {
 
     ELEMENT::Type
@@ -1202,15 +1202,15 @@ namespace LCM {
   // \return Number of partitions defined as total volume
   // of the array divided by the cube of the length scale
   //
-  int
+  Index
   ConnectivityArray::GetNumberPartitions(const double length_scale) const
   {
     const double
     ball_volume = length_scale * length_scale * length_scale;
 
-    const int
+    const Index
     number_partitions =
-        static_cast<int>(round(GetVolume() / ball_volume));
+        static_cast<Index>(round(GetVolume() / ball_volume));
 
     return number_partitions;
   }
@@ -1330,6 +1330,10 @@ namespace LCM {
 
     case PARTITION::KMEANS:
       partitions = PartitionKMeans(length_scale);
+      break;
+
+    case PARTITION::INEQUALITY:
+      partitions = PartitionKMeansInequality(length_scale);
       break;
 
     default:
@@ -1676,16 +1680,19 @@ namespace LCM {
 
     }
 
+    const Index
+    number_points = domain_points.size();
+
     std::cout << "Main K-means Iteration." << std::endl;
 
     while (step_norm >= tolerance && number_iterations < max_iterations) {
 
       // Assign points to closest generators
-      std::map<int, int>
-      point_generator_map;
+      std::vector<double>
+      point_to_generator(number_points);
 
       for (Index i = 0; i < domain_points.size(); ++i) {
-        point_generator_map[i] = closest_point(domain_points[i], generators);
+        point_to_generator[i] = closest_point(domain_points[i], generators);
       }
 
       // Determine cluster of points for each generator
@@ -1694,17 +1701,12 @@ namespace LCM {
 
       clusters.resize(number_partitions);
 
-      for (std::map<int, int>::const_iterator it = point_generator_map.begin();
-          it != point_generator_map.end();
-          ++it) {
+      for (Index p = 0; p < point_to_generator.size(); ++p) {
 
-        const int
-        point_index = (*it).first;
+        const Index
+        c = point_to_generator[p];
 
-        const int
-        generator_index = (*it).second;
-
-        clusters[generator_index].push_back(domain_points[point_index]);
+        clusters[c].push_back(domain_points[p]);
 
       }
 
@@ -1833,6 +1835,379 @@ namespace LCM {
     generators_ofs << "X,Y,Z" << std::endl;
     for (Index i = 0; i < generators.size(); ++i) {
       generators_ofs << generators[i] << std::endl;
+    }
+
+    return partitions;
+
+  }
+
+  //
+  /// Partition mesh with K-means algortithm and triangle inequality
+  // \param length_scale The length scale for variational nonlocal
+  // regularization
+  // \return Partition number for each element
+  //
+  std::map<int, int>
+  ConnectivityArray::PartitionKMeansInequality(const double length_scale)
+  {
+    const Index
+    number_centers = GetNumberPartitions(length_scale);
+
+    Vector<double>
+    lower_corner;
+
+    Vector<double>
+    upper_corner;
+
+    boost::tie(lower_corner, upper_corner) = BoundingBox();
+
+    lower_corner_ = lower_corner;
+    upper_corner_ = upper_corner;
+
+    Vector<double>
+    span = upper_corner - lower_corner;
+
+    Voxelize();
+
+    // Create initial centers
+    std::vector< Vector<double> >
+    centers = InitializeKmeans(number_centers);
+
+    // Compute distances between centers
+    std::vector< std::vector<double> >
+    center_distances = distance_matrix(centers);
+
+    // K-means parameters
+    const Index
+    max_iterations = GetMaximumIterations();
+
+    Index
+    number_iterations = 0;
+
+    const double
+    diagonal_distance = norm(upper_corner - lower_corner);
+
+    const double
+    tolerance = GetTolerance() * diagonal_distance;
+
+    double
+    step_norm = diagonal_distance;
+
+    std::vector<double>
+    steps(number_centers);
+
+    for (Index i = 0; i < number_centers; ++i) {
+      steps[i] = diagonal_distance;
+    }
+
+    // Create points.
+    std::vector< Vector<double> >
+    domain_points;
+
+    for (Index i = 0; i < voxels_.size(); ++i) {
+
+      LCM::Vector<double>
+      p(lower_corner.get_dimension());
+
+      p(0) = (i + 0.5) * span(0) / voxels_.size() + lower_corner(0);
+
+      for (Index j = 0; j < voxels_[0].size(); ++j) {
+
+        p(1) = (j + 0.5) * span(1) / voxels_[0].size() + lower_corner(1);
+
+        for (Index k = 0; k < voxels_[0][0].size(); ++k) {
+
+          p(2) = (k + 0.5) * span(2) / voxels_[0][0].size() + lower_corner(2);
+
+          if (voxels_[i][j][k] == true) {
+            domain_points.push_back(p);
+          }
+
+        }
+
+      }
+
+    }
+
+    const Index
+    number_points = domain_points.size();
+
+    // Initialize lower bound
+    std::vector< std::vector<double> >
+    lower_bounds(number_points);
+
+    for (Index p = 0; p < number_points; ++p) {
+
+      lower_bounds[p].resize(number_centers);
+
+      for (Index c = 0; c < number_centers; ++c) {
+
+        lower_bounds[p][c] = 0.0;
+
+      }
+
+    }
+
+    // Assign points to centers and initialize upper bound
+    std::vector<double>
+    point_to_center(number_points);
+
+    std::vector<double>
+    upper_bounds(number_points);
+
+    for (Index p = 0; p < number_points; ++p) {
+
+      Vector<double> const &
+      point = domain_points[p];
+
+      double
+      min_distance = norm(point - centers[0]);
+
+      Index
+      closest_center_index = 0;
+
+      for (Index c = 1; c < number_centers; ++c) {
+
+        Vector<double> const &
+        center = centers[c];
+
+        // Use lemma 1 to determine if distance
+        // between point and center needs to be computed
+        if (center_distances[0][c] < 2.0 * min_distance) {
+
+          // Need to compute exact distance to new center
+          const double
+          distance = norm(point - center);
+
+          // Since distance was computed, update corresponding
+          // lower bound
+          lower_bounds[p][c] = distance;
+
+          // Check whether new center is closer
+          if (distance < min_distance) {
+            min_distance = distance;
+            closest_center_index = c;
+          }
+
+        }
+
+      }
+
+      point_to_center[p] = closest_center_index;
+
+      upper_bounds[p] = min_distance;
+
+    }
+
+    std::cout << "Main K-means Iteration." << std::endl;
+
+    std::vector<double>
+    half_minimum(number_centers);
+
+    while (step_norm >= tolerance && number_iterations < max_iterations) {
+
+      // Update minimum center half distances
+      half_minimum = minimum_distances(center_distances);
+      for (Index i = 0; i < number_centers; ++i) {
+        half_minimum[i] *= 0.5;
+      }
+
+      // Identify all points for which their upper bound
+      // is greater than half the distance between their
+      // centers and the next nearest center
+      std::vector<bool>
+      upper_bound_up_to_date(number_points);
+
+      for (Index p = 0; p < number_points; ++p) {
+
+        const Index
+        current_center_index = point_to_center[p];
+
+        const double
+        upper_bound = upper_bounds[p];
+
+        const bool
+        up_to_date = upper_bound <= half_minimum[current_center_index];
+
+        upper_bound_up_to_date[p] = up_to_date;
+
+        if (up_to_date == true) continue;
+
+        for (Index c = 0; c < number_centers; ++c) {
+
+          const bool
+          center_is_current_center = c == current_center_index;
+
+          if (center_is_current_center == true) continue;
+
+          const bool
+          lower_bound_exceeds_upper = lower_bounds[p][c] >= upper_bound;
+
+          if (lower_bound_exceeds_upper == true) continue;
+
+          const bool
+          half_distance_exceeds_upper =
+              0.5 * center_distances[current_center_index][c] >= upper_bound;
+
+          if (half_distance_exceeds_upper) continue;
+
+        }
+
+      }
+
+      // Assign points to closest centers
+      std::map<int, int>
+      point_center_map;
+
+      for (Index i = 0; i < domain_points.size(); ++i) {
+        point_center_map[i] = closest_point(domain_points[i], centers);
+      }
+
+      // Determine cluster of points for each generator
+      std::vector<std::vector<Vector<double> > >
+      clusters;
+
+      clusters.resize(number_centers);
+
+      for (std::map<int, int>::const_iterator it = point_center_map.begin();
+          it != point_center_map.end();
+          ++it) {
+
+        const int
+        point_index = (*it).first;
+
+        const int
+        generator_index = (*it).second;
+
+        clusters[generator_index].push_back(domain_points[point_index]);
+
+      }
+
+      // Compute centroids of each cluster and set centers to
+      // these centroids.
+      step_norm = 0.0;
+
+      for (std::vector< std::vector<Vector<double> > >::size_type i = 0;
+          i < clusters.size();
+          ++i) {
+
+        // If cluster is empty then generator does not move.
+        if (clusters[i].size() == 0) {
+          std::cout << "Iteration: " << number_iterations;
+          std::cout << ", generator " << i << " has zero points." << std::endl;
+          continue;
+        }
+
+        const Vector<double>
+        cluster_centroid = centroid(clusters[i]);
+
+        const double
+        step = norm(cluster_centroid - centers[i]);
+
+        if (step > step_norm) {
+          step_norm = step;
+        }
+
+        // Update the generator
+        const Vector<double>
+        old_generator = centers[i];
+
+        centers[i] = cluster_centroid;
+
+        steps[i] = norm(centers[i] - old_generator);
+      }
+
+      step_norm = norm(Vector<double>(number_centers, &steps[0]));
+
+      std::cout << "Iteration: " << number_iterations;
+      std::cout << ". Step: " << step_norm << ". Tol:" << tolerance << std::endl;
+
+      ++number_iterations;
+
+    }
+
+    // Set partition number for each element.
+
+    // Partition map.
+    std::map<int, int>
+    partitions;
+
+    // Keep track of which partitions have been assigned elements.
+    std::set<int>
+    unassigned_partitions;
+
+    for (Index partition = 0; partition < number_centers; ++partition) {
+      unassigned_partitions.insert(partition);
+    }
+
+    // Determine number of nodes that define element topology
+    const Index
+    nodes_per_element = GetNodesPerElement();
+
+    std::ofstream centroids_ofs("centroids.csv");
+
+    centroids_ofs << "X,Y,Z" << std::endl;
+    for (AdjacencyMap::const_iterator
+        elements_iter = connectivity_.begin();
+        elements_iter != connectivity_.end();
+        ++elements_iter) {
+
+      int const &
+      element = (*elements_iter).first;
+
+      IDList const &
+      node_list = (*elements_iter).second;
+
+      std::vector< LCM::Vector<double> >
+      element_nodes;
+
+      for (IDList::size_type i = 0;
+          i < nodes_per_element;
+          ++i) {
+
+        PointMap::const_iterator
+        nodes_iter = nodes_.find(node_list[i]);
+
+        assert(nodes_iter != nodes_.end());
+
+        element_nodes.push_back((*nodes_iter).second);
+
+      }
+
+      const Vector<double>
+      element_centroid = centroid(element_nodes);
+
+      centroids_ofs << element_centroid << std::endl;
+
+      const Index
+      partition = closest_point(element_centroid, centers);
+      partitions[element] = partition;
+
+      std::set<int>::const_iterator
+      it = unassigned_partitions.find(partition);
+
+      if (it != unassigned_partitions.end()) {
+        unassigned_partitions.erase(it);
+      }
+
+    }
+
+    if (unassigned_partitions.size() > 0) {
+      std::cout << "WARNING: The following partitions were not" << std::endl;
+      std::cout << "assigned any elements (mesh too coarse?):" << std::endl;
+
+      for (std::set<int>::const_iterator it = unassigned_partitions.begin();
+          it != unassigned_partitions.end();
+          ++it) {
+        std::cout << (*it) << std::endl;
+      }
+
+    }
+
+    std::ofstream generators_ofs("centers.csv");
+    generators_ofs << "X,Y,Z" << std::endl;
+    for (Index i = 0; i < centers.size(); ++i) {
+      generators_ofs << centers[i] << std::endl;
     }
 
     return partitions;

@@ -52,10 +52,10 @@ int main(int ac, char* av[])
 
   const LCM::PARTITION::Scheme
   scheme_values[] = {LCM::PARTITION::GEOMETRIC, LCM::PARTITION::HYPERGRAPH,
-      LCM::PARTITION::KMEANS};
+      LCM::PARTITION::KMEANS, LCM::PARTITION::INEQUALITY};
 
   const char*
-  scheme_names[] = {"geometric", "hypergraph", "kmeans"};
+  scheme_names[] = {"geometric", "hypergraph", "kmeans", "inequality"};
 
   LCM::PARTITION::Scheme
   partition_scheme = LCM::PARTITION::GEOMETRIC;
