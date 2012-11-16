@@ -8,6 +8,9 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
+#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid_RealSpaceTools.hpp"
+
 #include "Tensor.h"
 
 namespace LCM {
@@ -21,6 +24,7 @@ namespace LCM {
     cubature       (p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")),
     intrepidBasis  (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis")),
     scalarGrad        (p.get<std::string>("Scalar Gradient Name"),dl->qp_vector),
+    defGrad        (p.get<std::string>("DefGradName"),dl->qp_tensor),
     scalarJump        (p.get<std::string>("Scalar Jump Name"),dl->qp_scalar),
     currentBasis   (p.get<std::string>("Current Basis Name"),dl->qp_tensor),
     refDualBasis   (p.get<std::string>("Reference Dual Basis Name"),dl->qp_tensor),
@@ -30,10 +34,12 @@ namespace LCM {
     porePressure       (p.get<std::string>("Pore Pressure Name"),dl->qp_scalar),
     biotCoefficient      (p.get<std::string>("Biot Coefficient Name"),dl->qp_scalar),
     biotModulus       (p.get<std::string>("Biot Modulus Name"),dl->qp_scalar),
+    kcPermeability       (p.get<std::string>("Kozeny-Carman Permeability Name"),dl->qp_scalar),
     deltaTime (p.get<std::string>("Delta Time Name"),dl->workset_scalar),
     poroMassResidual (p.get<std::string>("Surface Poromechanics Balance of Mass Residual Name"),dl->node_scalar)
   {
     this->addDependentField(scalarGrad);
+    this->addDependentField(defGrad);
     this->addDependentField(scalarJump);
     this->addDependentField(currentBasis);
     this->addDependentField(refDualBasis);
@@ -43,6 +49,7 @@ namespace LCM {
     this->addDependentField(porePressure);
     this->addDependentField(biotCoefficient);
     this->addDependentField(biotModulus);
+    this->addDependentField(kcPermeability);
     this->addDependentField(deltaTime);
 
     this->addEvaluatedField(poroMassResidual);
@@ -66,6 +73,16 @@ namespace LCM {
     refPoints.resize(numQPs, numPlaneDims);
     refWeights.resize(numQPs);
 
+    // Works space FCs
+    C.resize(worksetSize, numQPs, numDims, numDims);
+    Cinv.resize(worksetSize, numQPs, numDims, numDims);
+    F_inv.resize(worksetSize, numQPs, numDims, numDims);
+    F_invT.resize(worksetSize, numQPs, numDims, numDims);
+    JF_invT.resize(worksetSize, numQPs, numDims, numDims);
+    KJF_invT.resize(worksetSize, numQPs, numDims, numDims);
+    Kref.resize(worksetSize, numQPs, numDims, numDims);
+
+
     // Pre-Calculate reference element quantitites
     cubature->getCubature(refPoints, refWeights);
     intrepidBasis->getValues(refValues, refPoints, Intrepid::OPERATOR_VALUE);
@@ -82,6 +99,7 @@ namespace LCM {
                         PHX::FieldManager<Traits>& fm)
   {
     this->utils.setFieldData(scalarGrad,fm);
+    this->utils.setFieldData(defGrad,fm);
     this->utils.setFieldData(scalarJump,fm);
     this->utils.setFieldData(currentBasis,fm);
     this->utils.setFieldData(refDualBasis,fm);
@@ -91,6 +109,7 @@ namespace LCM {
     this->utils.setFieldData(porePressure, fm);
     this->utils.setFieldData(biotCoefficient, fm);
     this->utils.setFieldData(biotModulus, fm);
+    this->utils.setFieldData(kcPermeability, fm);
     this->utils.setFieldData(deltaTime, fm);
     this->utils.setFieldData(poroMassResidual,fm);
   }
@@ -100,6 +119,9 @@ namespace LCM {
   void SurfaceTLPoroMassResidual<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
+	  typedef Intrepid::FunctionSpaceTools FST;
+	  typedef Intrepid::RealSpaceTools<ScalarT> RST;
+
 	  Albany::MDArray porePressureold = (*workset.stateArrayPtr)[porePressureName];
 	  Albany::MDArray Jold = (*workset.stateArrayPtr)[JName];
 
@@ -117,7 +139,7 @@ namespace LCM {
 
     	// Local Rate of Change volumetric constraint term
     	poroMassResidual(cell, node) -= refValues(node,pt)*
-    		      				                                (J(cell,pt)-Jold(cell, pt))*
+    			                                                 std::log(J(cell,pt)/Jold(cell, pt))*
     		      				                                biotCoefficient(cell,pt)*refArea(cell,pt)*thickness;
 
     	// Local Rate of Change pressure term
@@ -125,11 +147,23 @@ namespace LCM {
     				                                             (porePressure(cell,pt)-porePressureold(cell, pt))/
     				                                             biotModulus(cell,pt)*refArea(cell,pt)*thickness;
 
+        // If there is no diffusion, then the residual defines only on the mid-plane value
         poroMassResidual(cell, topNode) =  poroMassResidual(cell, node);
 
        // Diffusion term, which requires gradient term from the jump in the normal direction
       // need deltaTime, deformation gradient, permeability..etc
       // For now, I will focus on undrained response, but I will get back to it ASAP - Sun
+
+        ScalarT dt = deltaTime(0);
+
+        // Put back the permeability tensor to the reference configuration
+        RST::inverse(F_inv, defGrad);
+        RST::transpose(F_invT, F_inv);
+        FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
+        FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
+        FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
+
+
 
     	  }
       }

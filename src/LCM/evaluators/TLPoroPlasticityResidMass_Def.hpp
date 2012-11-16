@@ -195,7 +195,6 @@ evaluateFields(typename Traits::EvalData workset)
   typedef Intrepid::FunctionSpaceTools FST;
   typedef Intrepid::RealSpaceTools<ScalarT> RST;
 
-
   Albany::MDArray strainold = (*workset.stateArrayPtr)[strainName];
   Albany::MDArray porosityold = (*workset.stateArrayPtr)[porosityName];
   Albany::MDArray porePressureold = (*workset.stateArrayPtr)[porePressureName];
@@ -205,8 +204,6 @@ evaluateFields(typename Traits::EvalData workset)
   if (porosityold(1,1) < 0 || porosity(1,1) < 0 ) {
 	  cout << "negative porosity detected. Error! \n";
   }
-
-
 
   // Pore-fluid diffusion coupling.
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {

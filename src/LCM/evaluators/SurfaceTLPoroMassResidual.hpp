@@ -70,9 +70,13 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> biotCoefficient;
   //! Biot Modulus at the 2D integration point location
   PHX::MDField<ScalarT,Cell,QuadPoint> biotModulus;
+  //! Permeability at the 2D integration point location
+  PHX::MDField<ScalarT,Cell,QuadPoint> kcPermeability;
+  //! Deformation Gradient
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> defGrad;
 
 //  // weight times basis function value at integration point
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
+//  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
 
   //Data from previous time step
    std::string porePressureName, JName;
@@ -85,6 +89,15 @@ private:
   Intrepid::FieldContainer<RealType> refGrads;
   Intrepid::FieldContainer<RealType> refPoints;
   Intrepid::FieldContainer<RealType> refWeights;
+
+  // Work space FCs
+  Intrepid::FieldContainer<ScalarT> F_inv;
+  Intrepid::FieldContainer<ScalarT> F_invT;
+  Intrepid::FieldContainer<ScalarT> C;
+  Intrepid::FieldContainer<ScalarT> Cinv;
+  Intrepid::FieldContainer<ScalarT> JF_invT;
+  Intrepid::FieldContainer<ScalarT> KJF_invT;
+  Intrepid::FieldContainer<ScalarT> Kref;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> poroMassResidual;

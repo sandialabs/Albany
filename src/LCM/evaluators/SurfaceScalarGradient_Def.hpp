@@ -92,6 +92,7 @@ namespace LCM {
         LCM::Tensor<ScalarT> gBasis(3, &refDualBasis(cell, pt, 0, 0));
         LCM::Tensor<ScalarT> invRefDualBasis(3);
 
+        // This map the position vector from parent to current configuration in R^3
         gBasis = LCM::transpose(gBasis);
         invRefDualBasis = LCM::inverse(gBasis);
 
