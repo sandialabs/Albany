@@ -105,17 +105,6 @@ namespace LCM {
     /// Number of spatial dimensions
     ///
     std::size_t numDims;
-
-    ///
-    /// string to keep track of the material model name
-    ///
-    std::string matModel;
-
-    // // Work space FCs
-    // Intrepid::FieldContainer<ScalarT> F_inv;
-    // Intrepid::FieldContainer<ScalarT> F_invT;
-    // Intrepid::FieldContainer<ScalarT> JF_invT;
-    // Intrepid::FieldContainer<ScalarT> P;
   };
 }
 

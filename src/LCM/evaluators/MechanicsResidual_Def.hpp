@@ -44,16 +44,8 @@ namespace LCM {
     numDims  = dims[3];
     int worksetSize = dims[0];
 
-    // Works space FCs
-    //F_inv.resize(worksetSize, numQPs, numDims, numDims);
-    //F_invT.resize(worksetSize, numQPs, numDims, numDims);
-    //JF_invT.resize(worksetSize, numQPs, numDims, numDims);
-    //P.resize(worksetSize, numQPs, numDims, numDims);
-
     Teuchos::RCP<ParamLib> paramLib = 
       p.get< Teuchos::RCP<ParamLib> >("Parameter Library");
-
-    matModel = p.get<std::string>("Stress Name");
 
     zGrav=0.0;
     new Sacado::ParameterRegistration<EvalT, SPL_Traits>("zGrav", 
@@ -86,11 +78,6 @@ namespace LCM {
     typedef Intrepid::RealSpaceTools<ScalarT> RST;
 
     LCM::Tensor<ScalarT> F, P, sig;
-
-    // RST::inverse(F_inv, defgrad);
-    // RST::transpose(F_invT, F_inv);
-    // FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
-    // FST::tensorMultiplyDataData<ScalarT>(P, stress, JF_invT);
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {
         for (std::size_t dim=0; dim<numDims; dim++)  
