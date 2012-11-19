@@ -287,9 +287,10 @@ Albany::ModelEvaluator::createOutArgs() const
     for (int i=0; i<param_names.size(); i++)
       outArgs.setSupports(OUT_ARG_DfDp_sg, i, DerivativeSupport(DERIV_MV_BY_COL));
   }
+  for (int i=0; i<n_g; i++)
+    outArgs.setSupports(OUT_ARG_g_sg, i, true);
   if(app->support_DgDp_and_DgDx) {
     for (int i=0; i<n_g; i++) {
-      outArgs.setSupports(OUT_ARG_g_sg, i, true);
       if (app->getResponse(i)->isScalarResponse()) {
 	outArgs.setSupports(OUT_ARG_DgDx_sg, i, 
 			    DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
@@ -315,6 +316,8 @@ Albany::ModelEvaluator::createOutArgs() const
     for (int i=0; i<param_names.size(); i++)
       outArgs.setSupports(OUT_ARG_DfDp_mp, i, DerivativeSupport(DERIV_MV_BY_COL));
   }
+  for (int i=0; i<n_g; i++)
+    outArgs.setSupports(OUT_ARG_g_mp, i, true);
   if(app->support_DgDp_and_DgDx) {
     for (int i=0; i<n_g; i++) {
       outArgs.setSupports(OUT_ARG_g_mp, i, true);
