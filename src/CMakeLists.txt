@@ -373,22 +373,32 @@ IF(ALBANY_FELIX)
   SET(SOURCES ${SOURCES}
        ${FELIX_DIR}/evaluators/FELIX_StokesMomentumResid.cpp
        ${FELIX_DIR}/evaluators/FELIX_StokesFOResid.cpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesL1L2Resid.cpp
        ${FELIX_DIR}/evaluators/FELIX_Viscosity.cpp
        ${FELIX_DIR}/evaluators/FELIX_ViscosityFO.cpp
+       ${FELIX_DIR}/evaluators/FELIX_ViscosityL1L2.cpp
+       ${FELIX_DIR}/evaluators/FELIX_EpsilonL1L2.cpp
        ${FELIX_DIR}/evaluators/FELIX_StokesContinuityResid.cpp
        ${FELIX_DIR}/evaluators/FELIX_StokesTauM.cpp
        ${FELIX_DIR}/evaluators/FELIX_StokesContravarientMetricTensor.cpp
        ${FELIX_DIR}/evaluators/FELIX_StokesRm.cpp
        ${FELIX_DIR}/evaluators/FELIX_StokesBodyForce.cpp
        ${FELIX_DIR}/evaluators/FELIX_StokesFOBodyForce.cpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesL1L2BodyForce.cpp
    )
   SET(HEADERS ${HEADERS}
        ${FELIX_DIR}/evaluators/FELIX_StokesMomentumResid.hpp
        ${FELIX_DIR}/evaluators/FELIX_StokesFOResid_Def.hpp
        ${FELIX_DIR}/evaluators/FELIX_StokesFOResid.hpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesL1L2Resid_Def.hpp
+       ${FELIX_DIR}/evaluators/FELIX_StokesL1L2Resid.hpp
        ${FELIX_DIR}/evaluators/FELIX_StokesMomentumResid_Def.hpp
        ${FELIX_DIR}/evaluators/FELIX_ViscosityFO.hpp
        ${FELIX_DIR}/evaluators/FELIX_ViscosityFO_Def.hpp
+       ${FELIX_DIR}/evaluators/FELIX_ViscosityL1L2.hpp
+       ${FELIX_DIR}/evaluators/FELIX_ViscosityL1L2_Def.hpp
+       ${FELIX_DIR}/evaluators/FELIX_EpsilonL1L2.hpp
+       ${FELIX_DIR}/evaluators/FELIX_EpsilonL1L2_Def.hpp
        ${FELIX_DIR}/evaluators/FELIX_StokesContinuityResid.hpp
        ${FELIX_DIR}/evaluators/FELIX_StokesContinuityResid_Def.hpp
        ${FELIX_DIR}/evaluators/FELIX_StokesTauM.hpp
@@ -406,10 +416,12 @@ IF(ALBANY_FELIX)
   SET(SOURCES ${SOURCES}
        ${FELIX_DIR}/problems/FELIX_Stokes.cpp
        ${FELIX_DIR}/problems/FELIX_StokesFO.cpp
+       ${FELIX_DIR}/problems/FELIX_StokesL1L2.cpp
      )
   SET(HEADERS ${HEADERS}
        ${FELIX_DIR}/problems/FELIX_Stokes.hpp
        ${FELIX_DIR}/problems/FELIX_StokesFO.hpp
+       ${FELIX_DIR}/problems/FELIX_StokesL1L2.hpp
      )
 ENDIF()
 
