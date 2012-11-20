@@ -58,17 +58,17 @@ namespace LCM {
   void Neohookean<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
-    bool print = false;
-    if (typeid(ScalarT) == typeid(RealType)) print = true;
+    // bool print = false;
+    // if (typeid(ScalarT) == typeid(RealType)) print = true;
 
     cout.precision(15);
     ScalarT kappa;
     ScalarT mu;
     ScalarT Jm53;
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      if(print) std::cout << "Cell : " << cell << std::endl;
+      //if(print) std::cout << "Cell : " << cell << std::endl;
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-        if(print) std::cout << "   QP : " << qp << std::endl;
+        //if(print) std::cout << "   QP : " << qp << std::endl;
         kappa = elasticModulus(cell,qp) / ( 3. * ( 1. - 2. * poissonsRatio(cell,qp) ) );
         mu    = elasticModulus(cell,qp) / ( 2. * ( 1. + poissonsRatio(cell,qp) ) );
         Jm53  = std::pow(J(cell,qp), -5./3.);
@@ -79,8 +79,8 @@ namespace LCM {
         LCM::Tensor<ScalarT> sigma = 0.5 * kappa * ( J(cell,qp) - 1. / J(cell,qp) ) * I
           + mu * Jm53 * LCM::dev(b);
 
-        if(print) std::cout << "       F   :\n" << F << std::endl;
-        if(print) std::cout << "       sig :\n" << sigma << std::endl;
+        //if(print) std::cout << "       F   :\n" << F << std::endl;
+        //if(print) std::cout << "       sig :\n" << sigma << std::endl;
 
         for (std::size_t i=0; i < numDims; ++i)
           for (std::size_t j=0; j < numDims; ++j)
