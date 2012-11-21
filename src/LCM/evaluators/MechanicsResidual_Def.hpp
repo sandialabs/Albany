@@ -25,7 +25,8 @@ namespace LCM {
     defgrad(p.get<std::string>("DefGrad Name"),dl->qp_tensor),
     wGradBF(p.get<std::string>("Weighted Gradient BF Name"),dl->node_qp_vector),
     wBF    (p.get<std::string>("Weighted BF Name"),dl->node_qp_scalar),
-    Residual(p.get<std::string>("Residual Name"),dl->node_vector)
+    Residual(p.get<std::string>("Residual Name"),dl->node_vector),
+    havePorePressure(false)
   {
     this->addDependentField(stress);
     this->addDependentField(J);
@@ -36,6 +37,24 @@ namespace LCM {
     this->addEvaluatedField(Residual);
 
     this->setName("MechanicsResidual"+PHX::TypeString<EvalT>::value);
+
+    // logic to modify stress in the presence of a pore pressure
+    if (p.isType<std::string>("Pore Pressure Name") && 
+        p.isType<std::string>("Biot Coefficient Name")) {
+      havePorePressure = true;
+      // grab the pore pressure
+      PHX::MDField<ScalarT, Cell, QuadPoint> 
+        tmp(p.get<string>("Pore Pressure Name"), dl->qp_scalar);
+      porePressure = tmp;
+
+      // grab Boit's coefficient
+      PHX::MDField<ScalarT, Cell, QuadPoint> 
+        tmp2(p.get<string>("Biot Coefficient Name"), dl->qp_scalar);
+      biotCoeff = tmp2;
+
+      this->addDependentField(porePressure);
+      this->addDependentField(biotCoeff);
+    }
 
     std::vector<PHX::DataLayout::size_type> dims;
     wGradBF.fieldTag().dataLayout().dimensions(dims);
@@ -66,6 +85,10 @@ namespace LCM {
     this->utils.setFieldData(wGradBF,fm);
     this->utils.setFieldData(wBF,fm);
     this->utils.setFieldData(Residual,fm);
+    if (havePorePressure) {
+      this->utils.setFieldData(porePressure,fm);    
+      this->utils.setFieldData(biotCoeff,fm);
+    }
   }
 
   //----------------------------------------------------------------------------
@@ -74,10 +97,7 @@ namespace LCM {
   evaluateFields(typename Traits::EvalData workset)
   {
     cout.precision(15);
-    typedef Intrepid::FunctionSpaceTools FST;
-    typedef Intrepid::RealSpaceTools<ScalarT> RST;
-
-    LCM::Tensor<ScalarT> F, P, sig;
+    LCM::Tensor<ScalarT> F, P, sig, I(LCM::eye<ScalarT>(numDims));
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {
         for (std::size_t dim=0; dim<numDims; dim++)  
@@ -85,6 +105,8 @@ namespace LCM {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
           F = LCM::Tensor<ScalarT>( numDims, &defgrad(cell,qp,0,0) );
           sig = LCM::Tensor<ScalarT>( numDims, &stress(cell,qp,0,0) );
+          if (havePorePressure)
+            sig -= biotCoeff(cell,qp) * porePressure(cell,qp) * I;
           P = J(cell,qp)*sig*LCM::inverse(LCM::transpose(F));
           for (std::size_t i=0; i<numDims; i++) {
             for (std::size_t j=0; j<numDims; j++) {

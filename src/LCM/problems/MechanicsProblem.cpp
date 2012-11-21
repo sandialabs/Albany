@@ -66,7 +66,7 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 		  haveMech, haveMechEq);
   getVariableType(params->sublist("Heat"), "None", heatType, 
 		  haveHeat, haveHeatEq);
-  getVariableType(params->sublist("Pressure"), "None", pressureType, 
+  getVariableType(params->sublist("PorePressure"), "None", pressureType, 
 		  havePressure, havePressureEq);
   getVariableType(params->sublist("Transport"), "None", transportType, 
 		  haveTransport, haveTransportEq);
@@ -89,7 +89,7 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
        << std::endl
        << "\tHeat variables:         " << variableTypeToString(heatType) 
        << std::endl
-       << "\tPressure variables:     " << variableTypeToString(pressureType) 
+       << "\tPorePressure variables: " << variableTypeToString(pressureType) 
        << std::endl
        << "\tTransport variables:    " << variableTypeToString(transportType) 
        << std::endl;
@@ -188,7 +188,7 @@ Albany::MechanicsProblem::getValidProblemParameters() const
                        "Filename of material database xml file");
   validPL->sublist("Mech", false, "");
   validPL->sublist("Heat", false, "");
-  validPL->sublist("Pressure", false, "");
+  validPL->sublist("PorePressure", false, "");
   validPL->sublist("Transport", false, "");
   
 
