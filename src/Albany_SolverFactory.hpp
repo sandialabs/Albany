@@ -70,6 +70,10 @@ namespace Albany {
     Teuchos::ParameterList& getParameters() const
       { return *appParams; }
 
+    //! Set rigid body modes in parameter list
+    void setRigidBodyModesForML(Teuchos::ParameterList& mlList,
+				Albany::Application& app);
+
   private:
 
     // Private functions to set deafult parameter values

@@ -314,12 +314,11 @@ Albany::TLPoroPlasticityProblem::constructEvaluators(
 
      //Input
      p->set<string>("Gradient QP Variable Name", "Displacement Gradient");
-     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
      //Output
      p->set<string>("Strain Name", "Strain"); //dl->qp_tensor also
 
-     ev = rcp(new LCM::Strain<EvalT,AlbanyTraits>(*p));
+     ev = rcp(new LCM::Strain<EvalT,AlbanyTraits>(*p,dl));
      fm0.template registerEvaluator<EvalT>(ev);
      p = stateMgr.registerStateVariable("Strain",dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0,true);
      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));

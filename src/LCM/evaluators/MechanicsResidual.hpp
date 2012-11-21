@@ -84,7 +84,23 @@ namespace LCM {
     /// Input: Weighted Basis Functions
     ///
     PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
+
+    ///
+    /// Input: gravity constant
+    ///
     ScalarT zGrav;
+
+    ///
+    /// Optional
+    /// Input: Pore Pressure
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint> porePressure;
+
+    ///
+    /// Optional
+    /// Input: Biot Coefficient
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint> biotCoeff;
 
     ///
     /// Output: Residual Forces
@@ -105,6 +121,11 @@ namespace LCM {
     /// Number of spatial dimensions
     ///
     std::size_t numDims;
+
+    ///
+    /// Pore Pressure flag
+    ///
+    bool havePorePressure;
   };
 }
 

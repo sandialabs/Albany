@@ -547,46 +547,53 @@ setCoordinatesForML(const string& solutionMethod,
       if ("ML" == stratList->get<string>("Preconditioner Type")) {
          ParameterList& mlList = 
             stratList->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings");
-         double *x = NULL, *y = NULL, *z = NULL, *rbm = NULL;
+	 setRigidBodyModesForML(mlList, *app);
+      }  
+}
 
-         //numPDEs = # PDEs
-         //numElasticityDim = # elasticity dofs
-         //nullSpaceDim = dimension of elasticity nullspace
-         //numScalar = # scalar dofs coupled to elasticity 
+void Albany::SolverFactory::
+setRigidBodyModesForML(ParameterList& mlList,
+		       Albany::Application& app) 
+{
+  double *x = NULL, *y = NULL, *z = NULL, *rbm = NULL;
 
-         //get problem info for computing rigid body modes (RBMs) for elasticity 
-         int numPDEs, numElasticityDim, nullSpaceDim, numScalar;
-         app->getRBMInfo(numPDEs, numElasticityDim, numScalar, nullSpaceDim);
+  //numPDEs = # PDEs
+  //numElasticityDim = # elasticity dofs
+  //nullSpaceDim = dimension of elasticity nullspace
+  //numScalar = # scalar dofs coupled to elasticity 
 
-         // Get coordinate vectors from mesh
-         int nNodes;
-         app->getDiscretization()->getOwned_xyz(&x,&y,&z,&rbm,nNodes,numPDEs,numScalar,nullSpaceDim);
+  //get problem info for computing rigid body modes (RBMs) for elasticity 
+  int numPDEs, numElasticityDim, nullSpaceDim, numScalar;
+  app.getRBMInfo(numPDEs, numElasticityDim, numScalar, nullSpaceDim);
 
-         mlList.set("x-coordinates",x);
-         mlList.set("y-coordinates",y);
-         mlList.set("z-coordinates",z);
+  // Get coordinate vectors from mesh
+  int nNodes;
+  app.getDiscretization()->getOwned_xyz(
+    &x,&y,&z,&rbm,nNodes,numPDEs,numScalar,nullSpaceDim);
 
-         mlList.set("PDE equations", numPDEs);
-
-         if (numElasticityDim > 0 ) {
-           cout << "\nEEEEE setting ML Null Space for Elasticity-type problem of Dimension: " << numElasticityDim <<  " nodes  " << nNodes << " nullspace  " << nullSpaceDim << endl;
-           cout << "\nIKIKIK number scalar dofs: " <<numScalar <<  ", number PDEs  " << numPDEs << endl;
-           (void) Albany_ML_Coord2RBM(nNodes, x, y, z, rbm, numPDEs, numScalar, nullSpaceDim);
-           //const Epetra_Comm &comm = app->getMap()->Comm();
-           //Epetra_Map map(nNodes*numPDEs, 0, comm);
-           //Epetra_MultiVector rbm_mv(Copy, map, rbm, nNodes*numPDEs, nullSpaceDim + numScalar);
-           //cout << "rbm: " << rbm_mv << endl;
-           //for (int i = 0; i<nNodes*numPDEs*(nullSpaceDim+numScalar); i++)
-           //   cout << rbm[i] << endl;
-           //EpetraExt::MultiVectorToMatrixMarketFile("rbm.mm", rbm_mv);
-           mlList.set("null space: type","pre-computed");
-           mlList.set("null space: dimension",nullSpaceDim);
-           mlList.set("null space: vectors",rbm);
-           mlList.set("null space: add default vectors",false);
-
-         }  
-
-      }
+  mlList.set("x-coordinates",x);
+  mlList.set("y-coordinates",y);
+  mlList.set("z-coordinates",z);
+  
+  mlList.set("PDE equations", numPDEs);
+	 
+  if (numElasticityDim > 0 ) {
+    cout << "\nEEEEE setting ML Null Space for Elasticity-type problem of Dimension: " << numElasticityDim <<  " nodes  " << nNodes << " nullspace  " << nullSpaceDim << endl;
+    cout << "\nIKIKIK number scalar dofs: " <<numScalar <<  ", number PDEs  " << numPDEs << endl;
+    (void) Albany_ML_Coord2RBM(nNodes, x, y, z, rbm, numPDEs, numScalar, nullSpaceDim);
+    //const Epetra_Comm &comm = app->getMap()->Comm();
+    //Epetra_Map map(nNodes*numPDEs, 0, comm);
+    //Epetra_MultiVector rbm_mv(Copy, map, rbm, nNodes*numPDEs, nullSpaceDim + numScalar);
+    //cout << "rbm: " << rbm_mv << endl;
+    //for (int i = 0; i<nNodes*numPDEs*(nullSpaceDim+numScalar); i++)
+    //   cout << rbm[i] << endl;
+    //EpetraExt::MultiVectorToMatrixMarketFile("rbm.mm", rbm_mv);
+    mlList.set("null space: type","pre-computed");
+    mlList.set("null space: dimension",nullSpaceDim);
+    mlList.set("null space: vectors",rbm);
+    mlList.set("null space: add default vectors",false);
+    
+  }
 }
 
 //The following function returns the rigid body modes for elasticity problems.
