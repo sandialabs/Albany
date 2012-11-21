@@ -49,7 +49,7 @@ private:
   double n; 
 
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Cgrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Ugrad;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint> mu;
