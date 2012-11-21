@@ -39,18 +39,20 @@ namespace LCM {
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
     typedef typename Sacado::Fad::DFad<ScalarT> DFadType;
+    typedef LCM::Tensor<ScalarT> Tensor;
 
     // all local functions used in computing GursonFD model stress:
 
     ScalarT
-    compute_Phi(LCM::Tensor<ScalarT> & s, ScalarT & p, ScalarT & fvoid,
-        ScalarT & eq, ScalarT & K, ScalarT & Y, ScalarT & siginf,
-        ScalarT & delta, ScalarT & Jacobian, ScalarT & E);
+    compute_Phi(Tensor const & s, ScalarT const & p, ScalarT const & fvoid,
+        ScalarT const & eq, ScalarT const & K, ScalarT const & Y,
+        ScalarT const & siginf,ScalarT const & delta,
+        ScalarT const & Jacobian, ScalarT const & E);
 
     void
     compute_ResidJacobian(std::vector<ScalarT> & X, std::vector<ScalarT> & R,
         std::vector<ScalarT> & dRdX, const ScalarT & p, const ScalarT & fvoid,
-        const ScalarT & eq, LCM::Tensor<ScalarT> & s, ScalarT & mu,
+        const ScalarT & eq, Tensor & s, ScalarT & mu,
         ScalarT & kappa, ScalarT & K, ScalarT & Y, ScalarT & siginf,
         ScalarT & delta, ScalarT & Jacobian);
 

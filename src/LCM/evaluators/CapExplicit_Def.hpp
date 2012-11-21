@@ -14,33 +14,40 @@ namespace LCM {
   template<typename EvalT, typename Traits>
   CapExplicit<EvalT, Traits>::CapExplicit(const Teuchos::ParameterList& p) :
       elasticModulus(p.get<std::string>("Elastic Modulus Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), poissonsRatio(
-          p.get<std::string>("Poissons Ratio Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), strain(
-          p.get<std::string>("Strain Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), stress(
-          p.get<std::string>("Stress Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), backStress(
-          p.get<std::string>("Back Stress Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), capParameter(
-          p.get<std::string>("Cap Parameter Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), friction(
-          p.get<std::string>("Friction Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), dilatancy(
-          p.get<std::string>("Dilatancy Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), eqps(
-          p.get<std::string>("Eqps Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), hardeningModulus(
-          p.get<std::string>("Hardening Modulus Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), A(
-          p.get<RealType>("A Name")), B(p.get<RealType>("B Name")), C(
-          p.get<RealType>("C Name")), theta(p.get<RealType>("Theta Name")), R(
-          p.get<RealType>("R Name")), kappa0(p.get<RealType>("Kappa0 Name")), W(
-          p.get<RealType>("W Name")), D1(p.get<RealType>("D1 Name")), D2(
-          p.get<RealType>("D2 Name")), calpha(p.get<RealType>("Calpha Name")), psi(
-          p.get<RealType>("Psi Name")), N(p.get<RealType>("N Name")), L(
-          p.get<RealType>("L Name")), phi(p.get<RealType>("Phi Name")), Q(
-          p.get<RealType>("Q Name"))
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+      poissonsRatio(p.get<std::string>("Poissons Ratio Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+      strain(p.get<std::string>("Strain Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
+      stress(p.get<std::string>("Stress Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
+      backStress(p.get<std::string>("Back Stress Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
+      capParameter(p.get<std::string>("Cap Parameter Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+      friction(p.get<std::string>("Friction Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+      dilatancy(p.get<std::string>("Dilatancy Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+      eqps(p.get<std::string>("Eqps Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+      hardeningModulus(p.get<std::string>("Hardening Modulus Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+      A(p.get<RealType>("A Name")),
+      B(p.get<RealType>("B Name")),
+      C(p.get<RealType>("C Name")),
+      theta(p.get<RealType>("Theta Name")),
+      R(p.get<RealType>("R Name")),
+      kappa0(p.get<RealType>("Kappa0 Name")),
+      W(p.get<RealType>("W Name")),
+      D1(p.get<RealType>("D1 Name")),
+      D2(p.get<RealType>("D2 Name")),
+      calpha(p.get<RealType>("Calpha Name")),
+      psi(p.get<RealType>("Psi Name")),
+      N(p.get<RealType>("N Name")),
+      L(p.get<RealType>("L Name")),
+      phi(p.get<RealType>("Phi Name")),
+      Q(p.get<RealType>("Q Name"))
   {
     // Pull out numQPs and numDims from a Layout
     Teuchos::RCP<PHX::DataLayout> tensor_dl = p.get<
@@ -100,7 +107,7 @@ namespace LCM {
   {
 
     // previous state
-    Albany::MDArray strainold = (*workset.stateArrayPtr)[strainName];
+    Albany::MDArray strainOld = (*workset.stateArrayPtr)[strainName];
     Albany::MDArray stressold = (*workset.stateArrayPtr)[stressName];
     Albany::MDArray backStressold = (*workset.stateArrayPtr)[backStressName];
     Albany::MDArray capParameterold = (*workset.stateArrayPtr)[capParameterName];
@@ -133,7 +140,7 @@ namespace LCM {
         LCM::Tensor<ScalarT> depsilon(3);
         for (std::size_t i = 0; i < numDims; ++i)
           for (std::size_t j = 0; j < numDims; ++j)
-            depsilon(i, j) = strain(cell, qp, i, j) - strainold(cell, qp, i, j);
+            depsilon(i, j) = strain(cell, qp, i, j) - strainOld(cell, qp, i, j);
 
         // trial state
         LCM::Tensor<ScalarT> sigmaVal = LCM::dotdot(Celastic, depsilon);
@@ -143,7 +150,7 @@ namespace LCM {
         for (std::size_t i = 0; i < numDims; ++i) {
           for (std::size_t j = 0; j < numDims; ++j) {
             sigmaN(i, j) = stressold(cell, qp, i, j);
-            strainN(i, j) = strainold(cell, qp, i, j);
+            strainN(i, j) = strainOld(cell, qp, i, j);
             sigmaVal(i, j) = sigmaVal(i, j) + stressold(cell, qp, i, j);
             alphaVal(i, j) = backStressold(cell, qp, i, j);
           }
@@ -151,7 +158,8 @@ namespace LCM {
 
         ScalarT kappaVal = capParameterold(cell, qp);
 
-        // initialize friction and dilatancy (which will be updated only if plasticity occurs)
+        // initialize friction and dilatancy
+        // (which will be updated only if plasticity occurs)
         friction(cell, qp) = 0.0;
         dilatancy(cell, qp) = 0.0;
         hardeningModulus(cell, qp) = 0.0;
@@ -173,7 +181,7 @@ namespace LCM {
 
         // plastic correction
         ScalarT dgamma = 0.0;
-        if (f > 1.0e-10) {
+        if (f > 0.0) {
           LCM::Tensor<ScalarT> dfdsigma = compute_dfdsigma(sigmaN, alphaVal,
               kappaVal);
 
@@ -451,8 +459,8 @@ namespace LCM {
   }
 
   template<typename EvalT, typename Traits>
-  LCM::Tensor<typename CapExplicit<EvalT, Traits>::ScalarT> CapExplicit<
-      EvalT, Traits>::compute_dfdsigma(LCM::Tensor<ScalarT> & sigma,
+  LCM::Tensor<typename CapExplicit<EvalT, Traits>::ScalarT>
+  CapExplicit<EvalT, Traits>::compute_dfdsigma(LCM::Tensor<ScalarT> & sigma,
       LCM::Tensor<ScalarT> & alpha, ScalarT & kappa)
   {
     LCM::Tensor<ScalarT> dfdsigma(3);
