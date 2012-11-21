@@ -13,6 +13,8 @@
 #include <set>
 #include <vector>
 
+#include <boost/shared_ptr.hpp>
+
 #include <zoltan_cpp.h>
 
 #include <Teuchos_RCP.hpp>
@@ -72,6 +74,49 @@ namespace LCM {
   class ConnectivityArray;
   class DualGraph;
   class ZoltanHyperGraph;
+  struct BinaryTreeNode;
+
+  ///
+  /// Binary tree node for K-means filtering algorithm. See
+  /// An Efficient K-means Clustering Algorithm: Analysis and Implementation
+  /// T. Kanungo et al.
+  /// IEEE Transactions on Pattern Analysis and Machine Intelligence
+  /// 24(7) July 2002
+  ///
+  struct BinaryTreeNode {
+
+    // Branches
+    boost::shared_ptr<BinaryTreeNode>
+    left;
+
+    boost::shared_ptr<BinaryTreeNode>
+    right;
+
+    // Bounding box of cell
+    Vector<double>
+    lower_corner;
+
+    Vector<double>
+    upper_corner;
+
+    // Weighted centroid and count
+    Vector<double>
+    weighted_centroid;
+
+    Index
+    count;
+
+    std::set<Index>
+    cell_points;
+
+    std::set<Index>
+    candidate_centers;
+
+    Index
+    closest_center_to_midcell;
+
+
+  };
 
   ///
   /// Simple connectivity array.

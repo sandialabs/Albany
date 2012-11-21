@@ -381,7 +381,7 @@ namespace LCM {
     v0 = p - n[0];
 
     T
-    min = dot(v0, v0);
+    min = norm_square(v0);
 
     for (typename std::vector< Vector<T> >::size_type i = 1;
         i < n.size();
@@ -391,7 +391,7 @@ namespace LCM {
       vi = p - n[i];
 
       const T
-      s = dot(vi, vi);
+      s = norm_square(vi);
 
       if (s < min) {
         min = s;
@@ -721,6 +721,23 @@ namespace LCM {
 
     return minima;
   }
+
+  //
+  // Given two arbitrary points, define a hyperplane that is equidistant
+  // the points. Given a box defined by its corners, determine whether the box
+  // lies entirely on the side of the first arbitrary point.
+  //
+  template<typename T>
+  bool
+  box_closest_to_first(
+      Vector<T> const & p,
+      Vector<T> const & q,
+      Vector<T> const & lower_corner,
+      Vector<T> const & upper_corner)
+  {
+    return true;
+  }
+
 
 } // namespace LCM
 

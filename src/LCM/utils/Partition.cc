@@ -2124,13 +2124,10 @@ namespace LCM {
 
     // K-means sequential iteration
     const Index
-    maximum_divisions = GetMaximumDivisions();
+    number_random_points = GetMaximumIterations() * number_partitions;
 
     const Index
-    number_random_points = maximum_divisions * number_partitions;
-
-    const Index
-    max_iterations = GetMaximumIterations() * number_random_points;
+    max_iterations = number_random_points;
 
     Index
     number_iterations = 0;
