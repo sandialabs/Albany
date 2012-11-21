@@ -20,7 +20,7 @@
 namespace LCM {
 /** \brief
 
-    Compute the residual forces on a surface
+    Compute the balance of mass residual on the surface
 
 **/
 
