@@ -30,7 +30,7 @@ namespace Albany {
 
     //! Default constructor
     DiscretizationFactory(
-	      const Teuchos::RCP<Teuchos::ParameterList>& discParams,
+	      const Teuchos::RCP<Teuchos::ParameterList>& discParams, bool adaptive,
               const Teuchos::RCP<const Epetra_Comm>& epetra_comm);
 
     //! Destructor
@@ -62,6 +62,9 @@ namespace Albany {
     //! Parameter list specifying what element to create
     Teuchos::RCP<Teuchos::ParameterList> discParams;
     Teuchos::RCP<const Epetra_Comm> epetra_comm;
+
+    //! Flag to indicate that mesh adaptation is being used
+    bool adaptiveMesh;
 
 #ifdef ALBANY_CUTR
     Teuchos::RCP<CUTR::CubitMeshMover> meshMover;

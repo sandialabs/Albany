@@ -39,7 +39,17 @@ namespace Albany {
 
   typedef std::map<std::string, std::vector<SideStruct> > SideSetList;
 
- 
+  class wsLid {
+
+     public:
+
+     int ws; // the workset of the element containing the side
+     int LID; // the local id of the element containing the side
+
+   };
+
+   typedef std::map<int, wsLid > WsLIDList;
+
   class AbstractDiscretization {
   public:
 
@@ -91,6 +101,9 @@ namespace Albany {
 
     //! Retrieve Vector (length num worksets) of Physics Index
     virtual const Teuchos::ArrayRCP<int>&  getWsPhysIndex() const = 0;
+
+    //! Retrieve connectivity map from elementGID to workset
+    virtual WsLIDList&  getElemGIDws() = 0;
 
     //! Get solution vector from mesh database
     virtual Teuchos::RCP<Epetra_Vector> getSolutionField() const = 0;

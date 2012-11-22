@@ -156,6 +156,23 @@ struct Workset {
 
   // Container storing serializers for each evaluation type
   PHAL::TypeKeyMap<SerializerMap> serializerManager;
+
+  void print(std::ostream &os){
+
+    os << "Printing workset data:" << std::endl;
+    os << "\tEB name : " << EBName << std::endl;
+    os << "\tnumCells : " << numCells << std::endl;
+    os << "\twsElNodeEqID : " << std::endl;
+    for(int i = 0; i < wsElNodeEqID.size(); i++)
+      for(int j = 0; j < wsElNodeEqID[i].size(); j++)
+        for(int k = 0; k < wsElNodeEqID[i][j].size(); k++)
+          os << "\t\twsElNodeEqID[" << i << "][" << j << "][" << k << "] = " << 
+            wsElNodeEqID[i][j][k] << std::endl;
+    os << "\twsCoords : " << std::endl;
+    for(int i = 0; i < wsCoords.size(); i++)
+      for(int j = 0; j < wsCoords[i].size(); j++)
+          os << "\t\tcoord0:" << wsCoords[i][j][0] << "][" << wsCoords[i][j][1] << std::endl;
+  }
   
 };
 
@@ -293,6 +310,7 @@ struct Workset {
 	setValue<PHAL::AlbanyTraits::MPTangent>(serializer);
     }
   };
+
 }
 
 #endif

@@ -4,8 +4,10 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 /*
-Note: This problem is designed to demonstrate a scale-bridged calculation
-between 3D Elastic mechanics and the iMPALE mesoscale code.
+ * Note: This problem is designed to demonstrate a scale-bridged calculation
+ * between 3D Elastic mechanics and the iMPALE mesoscale code.
+ * 
+ * Note 2: This code is not compiled unless we have MPI available (see ifdef in CMakeLists.txt)
 */
 
 #ifndef MESOSCALELINK_HPP
@@ -308,7 +310,7 @@ Albany::MesoScaleLinkProblem::constructEvaluators(
     //Output
     p->set<string>("Strain Name", "Strain"); //dl->qp_tensor also
 
-    ev = rcp(new LCM::Strain<EvalT, AlbanyTraits>(*p));
+    ev = rcp(new LCM::Strain<EvalT, AlbanyTraits>(*p, dl));
     fm0.template registerEvaluator<EvalT>(ev);
 
   }

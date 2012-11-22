@@ -12,6 +12,7 @@
 
 #include "Piro_Epetra_NOXSolver.hpp"
 #include "Piro_Epetra_LOCASolver.hpp"
+#include "Piro_Epetra_LOCAAdaptiveSolver.hpp"
 #include "Piro_Epetra_RythmosSolver.hpp"
 #include "Piro_Epetra_VelocityVerletSolver.hpp"
 #include "Piro_Epetra_TrapezoidRuleSolver.hpp"
@@ -104,6 +105,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
       ObserverFactory observerFactory(Teuchos::sublist(appParams, "Problem", true), app);
       Rythmos_observer = observerFactory.createRythmosObserver();
       NOX_observer = observerFactory.createNoxObserver();
+
     }
 
     RCP<Teuchos::ParameterList> piroParams = 
@@ -117,18 +119,30 @@ Albany::SolverFactory::createAndGetAlbanyApp(
 
       Teuchos::ParameterList& locaParams = piroParams->sublist("LOCA");
 
-	  // If restarting, pick up the problem time from the restart file
+  	  // If restarting, pick up the problem time from the restart file
 
-	  if(app->getDiscretization()->hasRestartSolution())
+      if(app->getDiscretization()->hasRestartSolution())
 
-		locaParams.sublist("Stepper").set("Initial Value", app->getDiscretization()->restartDataTime());
+        locaParams.sublist("Stepper").set("Initial Value", app->getDiscretization()->restartDataTime());
 
       RCP<LOCA::SaveEigenData::AbstractStrategy> saveEigs =
         rcp(new Albany::SaveEigenData( locaParams, NOX_observer, &app->getStateMgr() ));
 
+      RCP<Albany::AdaptiveSolutionManager> adaptMgr = app->getAdaptSolMgr();
+
+      if(adaptMgr->hasAdaptation()){ // If an adaptation is desired
+
+        // return an adaptive solver
+     
+        return rcp(new Piro::Epetra::LOCAAdaptiveSolver(piroParams, model, adaptMgr,
+           NOX_observer, saveEigs));
+
+      }
+      else
+
         return  rcp(new Piro::Epetra::LOCASolver(piroParams, model, NOX_observer, saveEigs));
 
-	//return  rcp(new Piro::Epetra::LOCASolver(piroParams, model, NOX_observer));
+	   //return  rcp(new Piro::Epetra::LOCASolver(piroParams, model, NOX_observer));
     }
     else if (solutionMethod== "Transient" && secondOrder=="No") 
       return  rcp(new Piro::Epetra::RythmosSolver(piroParams, model, Rythmos_observer));

@@ -62,7 +62,7 @@ void Albany_RythmosObserver::observeStartTimeStep(
 
   double t = 0;
 
-  Epetra_Vector *ovlp_solution = app->getOverlapSolution(soln);
+  Epetra_Vector *ovlp_solution = app->getAdaptSolMgr()->getOverlapSolution(soln);
   exodusOutput.writeSolution(t, *ovlp_solution, true); // soln is overlapped
 
 #endif
@@ -105,7 +105,7 @@ void Albany_RythmosObserver::observeCompletedTimeStep(
 #ifdef ALBANY_SEACAS
 //  exodusOutput.writeSolution(t, soln);
 
-  Epetra_Vector *ovlp_solution = app->getOverlapSolution(soln);
+  Epetra_Vector *ovlp_solution = app->getAdaptSolMgr()->getOverlapSolution(soln);
   exodusOutput.writeSolution(t, *ovlp_solution, true); // soln is overlapped
 #endif
 

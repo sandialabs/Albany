@@ -879,7 +879,7 @@ namespace LCM {
     communicator = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
 
     Albany::DiscretizationFactory
-    disc_factory(disc_params, communicator);
+    disc_factory(disc_params, false, communicator);
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >
     meshSpecs = disc_factory.createMeshSpecs();

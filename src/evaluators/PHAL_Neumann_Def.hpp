@@ -432,8 +432,7 @@ typename NeumannBase<EvalT, Traits>::ScalarT&
 NeumannBase<EvalT, Traits>::
 getValue(const std::string &n) {
 
-  if (n == name) return const_val;
-  else if(std::string::npos != n.find("robin")) {
+  if(std::string::npos != n.find("robin")) {
     for(int i = 0; i < 3; i++) {
       std::stringstream ss; ss << name << "[" << i << "]";
       if (n == ss.str())  return robin_vals[i];
@@ -451,6 +450,10 @@ getValue(const std::string &n) {
       if (n == ss.str())  return dudx[i];
     }
   }
+
+//  if (n == name) return const_val;
+  return const_val;
+
 }
 
 

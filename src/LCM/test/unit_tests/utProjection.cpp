@@ -131,7 +131,7 @@ namespace {
         new Epetra_MpiComm(MPI_COMM_WORLD));
     int numberOfEquations = 3;
     Teuchos::RCP<Albany::GenericSTKMeshStruct> stkMeshStruct = Teuchos::rcp(
-        new Albany::TmplSTKMeshStruct<3>(discretizationParameterList, comm));
+        new Albany::TmplSTKMeshStruct<3>(discretizationParameterList, false, comm));
     stkMeshStruct->setFieldAndBulkData(comm, discretizationParameterList,
         numberOfEquations, stateMgr.getStateInfoStruct(),
         stkMeshStruct->getMeshSpecs()[0]->worksetSize);

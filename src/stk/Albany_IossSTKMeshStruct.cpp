@@ -21,6 +21,7 @@
 #include <Ioss_SubSystem.h>
 
 #include <stk_mesh/fem/FEMHelpers.hpp>
+#include <stk_mesh/fem/CreateAdjacentEntities.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include "Albany_Utils.hpp"
@@ -34,11 +35,12 @@
 #endif
 
 Albany::IossSTKMeshStruct::IossSTKMeshStruct(
-                  const Teuchos::RCP<Teuchos::ParameterList>& params,
+                  const Teuchos::RCP<Teuchos::ParameterList>& params, bool adaptive,
 		  const Teuchos::RCP<const Epetra_Comm>& comm) :
   GenericSTKMeshStruct(params),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   useSerialMesh(false),
+  adaptiveMesh(adaptive),
   periodic(params->get("Periodic BC", false))
 {
   params->validateParameters(*getValidDiscretizationParameters(),0);
@@ -67,7 +69,6 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
                                params->get<string>("Exodus Input File Name"),
                                Albany::getMpiCommFromEpetraComm(*comm), 
                                *metaData, *mesh_data); 
-    *out << "Albany_IOSS: Loading STKMesh from exodus file  " << endl;
   }
   else {
     *out << "Albany_IOSS: Loading STKMesh from Pamgen file  " 
@@ -111,14 +112,26 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     }
     else if ( part->primary_entity_rank() == metaData->side_rank()) {
       if (part->name()[0] != '{') {
-        //print(*out, "Found side_rank entity:\n", *part);
+        print(*out, "Found side_rank entity:\n", *part);
          ssPartVec[part->name()]=part;
-//         ssNames.push_back(part->name());
       }
     }
   }
 
   cullSubsetParts(ssNames, ssPartVec); // Eliminate sidesets that are subsets of other sidesets
+
+#if 0
+  // for debugging, print out the parts now
+  std::map<std::string, stk::mesh::Part*>::iterator it;
+
+  for(it = ssPartVec.begin(); it != ssPartVec.end(); ++it){ // loop over the parts in the map
+
+    // for each part in turn, get the name of parts that are a subset of it
+
+      print(*out, "Found \n", *it->second);
+  }
+  // end debugging
+#endif
 
   int cub = params->get("Cubature Degree",3);
   int worksetSizeMax = params->get("Workset Size",50);
@@ -218,12 +231,6 @@ Albany::IossSTKMeshStruct::readSerialMesh(const Teuchos::RCP<const Epetra_Comm>&
                                peZeroComm, 
                                *metaData, *mesh_data); 
 
-  if(my_rank == 0){
-
-    *out << "Albany_IOSS: Loading serial STKMesh from exodus file  " << endl;
-
-  }
-
   // Here, all PEs have read the metaData from the input file, and have a pointer to in_region in mesh_data
 
 #endif
@@ -258,17 +265,14 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
 
     if(comm->MyPID() == 0){ // read in the mesh on PE 0
 
-       readBulkData(*region);
-// Comment the line above and uncomment the one below once changes checked into Trilinos stk::io catch up (GAH)
-//       stk::io::process_mesh_bulk_data(region, *bulkData);
+       stk::io::process_mesh_bulk_data(region, *bulkData);
 
       // Read solution from exodus file.
       if (index<1) *out << "Restart Index not set. Not reading solution from exodus (" 
            << index << ")"<< endl;
       else {
         *out << "Restart Index set, reading solution time : " << index << endl;
-// Uncomment the one below once changes checked into Trilinos stk::io catch up (GAH)
-//         stk::io::input_mesh_fields(region, *bulkData, index);
+         stk::io::input_mesh_fields(region, *bulkData, index);
       }
 
     }
@@ -284,6 +288,25 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
 #endif
 
     stk::io::populate_bulk_data(*bulkData, *mesh_data);
+
+    // FIXME: This breaks sidesets and Neumann BC's. Something is removed from exo file?
+    // this should only be called if we are doing adaptation as it adds overhead
+    if(adaptiveMesh)
+
+      addElementEdges();
+#if 0
+  // for debugging, print out the parts now
+
+  std::map<std::string, stk::mesh::Part*>::iterator it;
+
+  for(it = ssPartVec.begin(); it != ssPartVec.end(); ++it){ // loop over the parts in the map
+
+    // for each part in turn, get the name of parts that are a subset of it
+      print(*out, "After edges, Found \n\n", *it->second);
+  }
+  // end debugging
+#endif
+
 
     if (!usePamgen)  {
       // Restart index to read solution from exodus file.
@@ -403,196 +426,78 @@ Albany::IossSTKMeshStruct::loadSolutionFieldHistory(int step)
   stk::io::process_input_request(*mesh_data, *bulkData, index);
 }
 
-/* 
- * GAH: TODO
- *
- * The function readBulkData duplicates the function stk::io::populate_bulk_data, with the exception of an
- * internal modification_begin() and modification_end(). When reading bulk data on a single processor (single
- * exodus file), all PEs must enter the modification_begin() / modification_end() block, but only one reads the
- * bulk data. TODO pull the modification statements from populate_bulk_data and retrofit.
- *
- */
-
-
-
 void 
-Albany::IossSTKMeshStruct::readBulkData(Ioss::Region& region){
+Albany::IossSTKMeshStruct::addElementEdges(){
 
-  stk::mesh::BulkData& bulk = *bulkData;
-  const stk::mesh::fem::FEMMetaData& fem_meta = *metaData;
+// Add element edges (faces) to the mesh for topology adaptation
+// From:  LCM/topology.cc
 
-  { // element blocks
+	stk::mesh::PartVector add_parts;
+	stk::mesh::create_adjacent_entities(*(bulkData), add_parts);
+// Note, if we return here sidesets are NOT broken!!!
+return;
+  stk::mesh::EntityRank elementRank = metaData->element_rank();
+  stk::mesh::EntityRank nodeRank = metaData->node_rank();
 
-    const Ioss::ElementBlockContainer& elem_blocks = region.get_element_blocks();
-    for(Ioss::ElementBlockContainer::const_iterator it = elem_blocks.begin();
-	it != elem_blocks.end(); ++it) {
-      Ioss::ElementBlock *entity = *it;
 
-      if (stk::io::include_entity(entity)) {
-	const std::string &name = entity->name();
-	stk::mesh::Part* const part = fem_meta.get_part(name);
-	assert(part != NULL);
+	bulkData->modification_begin();
 
-	const CellTopologyData* cell_topo = stk::io::get_cell_topology(*part);
-	if (cell_topo == NULL) {
-	  std::ostringstream msg ;
-	  msg << " INTERNAL_ERROR: Part " << part->name() << " returned NULL from get_cell_topology()";
-	  throw std::runtime_error( msg.str() );
+	std::vector<stk::mesh::Entity*> element_lst;
+	stk::mesh::get_entities(*(bulkData),elementRank,element_lst);
+
+// Somewhere here we are removing our sideset info!!! GAH
+
+	// Remove extra relations from element
+	for (int i = 0; i < element_lst.size(); ++i){
+		stk::mesh::Entity & element = *(element_lst[i]);
+		stk::mesh::PairIterRelation relations = element.relations();
+		std::vector<stk::mesh::Entity*> del_relations;
+		std::vector<int> del_ids;
+		for (stk::mesh::PairIterRelation::iterator j = relations.begin();
+				j != relations.end(); ++j){
+			// remove all relationships from element unless to faces(segments
+			//   in 2D) or nodes
+			if (j->entity_rank() != elementRank-1 && j->entity_rank() != nodeRank){
+				del_relations.push_back(j->entity());
+				del_ids.push_back(j->identifier());
+			}
+		}
+		for (int j = 0; j < del_relations.size(); ++j){
+			stk::mesh::Entity & entity = *(del_relations[j]);
+			bulkData->destroy_relation(element,entity,del_ids[j]);
+		}
+	};
+
+	if (elementRank == 3){
+		// Remove extra relations from face
+		std::vector<stk::mesh::Entity*> face_lst;
+		stk::mesh::get_entities(*(bulkData),elementRank-1,face_lst);
+		stk::mesh::EntityRank entityRank = face_lst[0]->entity_rank();
+		for (int i = 0; i < face_lst.size(); ++i){
+			stk::mesh::Entity & face = *(face_lst[i]);
+			stk::mesh::PairIterRelation relations = face_lst[i]->relations();
+			std::vector<stk::mesh::Entity*> del_relations;
+			std::vector<int> del_ids;
+			for (stk::mesh::PairIterRelation::iterator j = relations.begin();
+					j != relations.end(); ++j){
+				if (j->entity_rank() != entityRank+1 &&
+						j->entity_rank() != entityRank-1){
+					del_relations.push_back(j->entity());
+					del_ids.push_back(j->identifier());
+				}
+			}
+			for (int j = 0; j < del_relations.size(); ++j){
+				stk::mesh::Entity & entity = *(del_relations[j]);
+				bulkData->destroy_relation(face,entity,del_ids[j]);
+			}
+		}
 	}
 
-	std::vector<int> elem_ids ;
-	std::vector<int> connectivity ;
 
-	entity->get_field_data("ids", elem_ids);
-	entity->get_field_data("connectivity", connectivity);
-
-	size_t element_count = elem_ids.size();
-	int nodes_per_elem = cell_topo->node_count ;
-
-	std::vector<stk::mesh::EntityId> id_vec(nodes_per_elem);
-	std::vector<stk::mesh::Entity*> elements(element_count);
-
-	for(size_t i=0; i<element_count; ++i) {
-	  int *conn = &connectivity[i*nodes_per_elem];
-	  std::copy(&conn[0], &conn[0+nodes_per_elem], id_vec.begin());
-	  elements[i] = &stk::mesh::fem::declare_element(bulk, *part, elem_ids[i], &id_vec[0]);
-	}
-
-	// Add all element attributes as fields.
-	// If the only attribute is 'attribute', then add it; otherwise the other attributes are the
-	// named components of the 'attribute' field, so add them instead.
-	Ioss::NameList names;
-	entity->field_describe(Ioss::Field::ATTRIBUTE, &names);
-	for(Ioss::NameList::const_iterator I = names.begin(); I != names.end(); ++I) {
-	  if(*I == "attribute" && names.size() > 1)
-	    continue;
-	  stk::mesh::FieldBase *field = fem_meta.get_field<stk::mesh::FieldBase> (*I);
-	  if (field)
-	    stk::io::field_data_from_ioss(field, elements, entity, *I);
-	}
-      }
-    }
-  }
-
-  { // nodeblocks
-
-    const Ioss::NodeBlockContainer& node_blocks = region.get_node_blocks();
-    assert(node_blocks.size() == 1);
-
-    Ioss::NodeBlock *nb = node_blocks[0];
-
-    std::vector<stk::mesh::Entity*> nodes;
-    stk::io::get_entity_list(nb, fem_meta.node_rank(), bulk, nodes);
-
-    stk::mesh::Field<double,stk::mesh::Cartesian> *coord_field =
-      fem_meta.get_field<stk::mesh::Field<double,stk::mesh::Cartesian> >("coordinates");
-
-    stk::io::field_data_from_ioss(coord_field, nodes, nb, "mesh_model_coordinates");
-
-  }
-
-  { // nodesets
-
-    const Ioss::NodeSetContainer& node_sets = region.get_nodesets();
-
-    for(Ioss::NodeSetContainer::const_iterator it = node_sets.begin();
-	it != node_sets.end(); ++it) {
-      Ioss::NodeSet *entity = *it;
-
-      if (stk::io::include_entity(entity)) {
-	const std::string & name = entity->name();
-	stk::mesh::Part* const part = fem_meta.get_part(name);
-	assert(part != NULL);
-	stk::mesh::PartVector add_parts( 1 , part );
-
-	std::vector<int> node_ids ;
-	int node_count = entity->get_field_data("ids", node_ids);
-
-	std::vector<stk::mesh::Entity*> nodes(node_count);
-	stk::mesh::EntityRank n_rank = fem_meta.node_rank();
-	for(int i=0; i<node_count; ++i) {
-	  nodes[i] = bulk.get_entity(n_rank, node_ids[i] );
-	  if (nodes[i] != NULL)
-	    bulk.declare_entity(n_rank, node_ids[i], add_parts );
-	}
-
-	stk::mesh::Field<double> *df_field =
-	  fem_meta.get_field<stk::mesh::Field<double> >("distribution_factors");
-
-	if (df_field != NULL) {
-	  stk::io::field_data_from_ioss(df_field, nodes, entity, "distribution_factors");
-	}
-      }
-    }
-  }
-
-  { // sidesets
-
-    const Ioss::SideSetContainer& side_sets = region.get_sidesets();
-
-    for(Ioss::SideSetContainer::const_iterator it = side_sets.begin();
-	it != side_sets.end(); ++it) {
-      Ioss::SideSet *entity = *it;
-
-      if (stk::io::include_entity(entity)) {
-//	process_surface_entity(entity, bulk);
-  {
-    assert(entity->type() == Ioss::SIDESET);
-
-    size_t block_count = entity->block_count();
-    for (size_t i=0; i < block_count; i++) {
-      Ioss::SideBlock *block = entity->get_block(i);
-      if (stk::io::include_entity(block)) {
-	std::vector<int> side_ids ;
-	std::vector<int> elem_side ;
-
-	stk::mesh::Part * const sb_part = fem_meta.get_part(block->name());
-	stk::mesh::EntityRank elem_rank = fem_meta.element_rank();
-
-	block->get_field_data("ids", side_ids);
-	block->get_field_data("element_side", elem_side);
-
-	assert(side_ids.size() * 2 == elem_side.size());
-	stk::mesh::PartVector add_parts( 1 , sb_part );
-
-	size_t side_count = side_ids.size();
-	std::vector<stk::mesh::Entity*> sides(side_count);
-	for(size_t is=0; is<side_count; ++is) {
-	  stk::mesh::Entity* const elem = bulk.get_entity(elem_rank, elem_side[is*2]);
-
-	  // If NULL, then the element was probably assigned to an
-	  // element block that appears in the database, but was
-	  // subsetted out of the analysis mesh. Only process if
-	  // non-null.
-	  if (elem != NULL) {
-	    // Ioss uses 1-based side ordinal, stk::mesh uses 0-based.
-	    int side_ordinal = elem_side[is*2+1] - 1;
-
-	    stk::mesh::Entity* side_ptr = NULL;
-	    side_ptr = &stk::mesh::fem::declare_element_side(bulk, side_ids[is], *elem, side_ordinal);
-	    stk::mesh::Entity& side = *side_ptr;
-
-	    bulk.change_entity_parts( side, add_parts );
-	    sides[is] = &side;
-	  } else {
-	    sides[is] = NULL;
-	  }
-	}
-
-	const stk::mesh::Field<double, stk::mesh::ElementNode> *df_field =
-	  stk::io::get_distribution_factor_field(*sb_part);
-	if (df_field != NULL) {
-	  stk::io::field_data_from_ioss(df_field, sides, block, "distribution_factors");
-	}
-      }
-    }
-  }
-
-      }
-    }
-  }
+	bulkData->modification_end();
 
 }
+
 
 Teuchos::RCP<const Teuchos::ParameterList>
 Albany::IossSTKMeshStruct::getValidDiscretizationParameters() const

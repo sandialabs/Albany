@@ -100,7 +100,8 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
   }
 
   // Create a discretization, as required by the StateManager
-  Teuchos::RCP<Teuchos::ParameterList> discretizationParameterList = Teuchos::rcp(new Teuchos::ParameterList("Discretization"));
+  Teuchos::RCP<Teuchos::ParameterList> discretizationParameterList 
+     = Teuchos::rcp(new Teuchos::ParameterList("Discretization"));
   discretizationParameterList->set<int>("1D Elements", worksetSize);
   discretizationParameterList->set<int>("2D Elements", 1);
   discretizationParameterList->set<int>("3D Elements", 1);
@@ -108,7 +109,8 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
   discretizationParameterList->set<string>("Exodus Output File Name", "unitTestOutput.exo"); // Is this required?
   Teuchos::RCP<Epetra_Comm> comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
   int numberOfEquations = 3;
-  Teuchos::RCP<Albany::GenericSTKMeshStruct> stkMeshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(discretizationParameterList, comm));
+  Teuchos::RCP<Albany::GenericSTKMeshStruct> stkMeshStruct 
+       = Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(discretizationParameterList, false, comm));
   stkMeshStruct->setFieldAndBulkData(comm,
                                      discretizationParameterList,
                                      numberOfEquations,

@@ -334,6 +334,7 @@
   SET(SOURCES ${SOURCES}
     utils/Geometry.cc
     utils/FloatingPoint.cc
+    utils/Fracture.cc
     utils/Partition.cc
     utils/BarycentricSubdivision.cc
     utils/Tensor.cc
@@ -345,6 +346,7 @@
   SET(HEADERS ${HEADERS}
     utils/Geometry.h
     utils/FloatingPoint.h
+    utils/Fracture.h
     utils/Partition.h
     utils/Tensor.h
     utils/Topology.h
@@ -387,6 +389,7 @@ ENDIF()
 include_directories (${Trilinos_INCLUDE_DIRS}
                      ${Albany_SOURCE_DIR}/src ${Albany_SOURCE_DIR}/src/evaluators ${Albany_SOURCE_DIR}/src/problems 
                      ${Albany_SOURCE_DIR}/src/responses ${Albany_SOURCE_DIR}/src/stk
+                     ${Albany_SOURCE_DIR}/adapt
                      ./evaluators ./utils 
                      ${Trilinos_TPL_INCLUDE_DIRS})
 
@@ -448,7 +451,7 @@ IF (ALBANY_LAME OR ALBANY_LAMENT)
 ENDIF ()
 
 IF(BUILD_SHARED_LIBS)
-  SET(LCM_UT_LIBS hydride lcm albanyLib)
+  SET(LCM_UT_LIBS adapt hydride lcm albanyLib)
 ELSE(BUILD_SHARED_LIBS)
   # We really don't link to anything in Hydride
   SET(LCM_UT_LIBS lcm albanyLib)

@@ -383,7 +383,7 @@ int main(int ac, char* av[])
 
   int numberOfEquations = 3;
   Teuchos::RCP<Albany::GenericSTKMeshStruct> stkMeshStruct =
-    Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(discretizationParameterList, comm));
+    Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(discretizationParameterList, false, comm));
   stkMeshStruct->setFieldAndBulkData(comm,
                                      discretizationParameterList,
                                      numberOfEquations,

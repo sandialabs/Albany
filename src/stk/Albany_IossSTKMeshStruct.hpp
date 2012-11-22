@@ -21,7 +21,7 @@ namespace Albany {
     public:
 
     IossSTKMeshStruct(
-                  const Teuchos::RCP<Teuchos::ParameterList>& params,
+                  const Teuchos::RCP<Teuchos::ParameterList>& params, bool adaptive,
                   const Teuchos::RCP<const Epetra_Comm>& epetra_comm);
 
     ~IossSTKMeshStruct();
@@ -43,12 +43,14 @@ namespace Albany {
 
     void readSerialMesh(const Teuchos::RCP<const Epetra_Comm>& comm);
 
-    void readBulkData(Ioss::Region &region);
+    // Put edges in the mesh to support mesh fracture
+    void addElementEdges();
 
     Teuchos::RCP<Teuchos::FancyOStream> out;
     bool usePamgen;
     bool useSerialMesh;
     bool periodic;
+    bool adaptiveMesh;
     stk::io::MeshData* mesh_data;
   };
 

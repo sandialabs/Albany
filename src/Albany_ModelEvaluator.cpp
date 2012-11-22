@@ -143,13 +143,13 @@ Albany::ModelEvaluator::get_p_names(int l) const
 Teuchos::RCP<const Epetra_Vector>
 Albany::ModelEvaluator::get_x_init() const
 {
-  return app->getInitialSolution();
+  return app->getAdaptSolMgr()->getInitialSolution();
 }
 
 Teuchos::RCP<const Epetra_Vector>
 Albany::ModelEvaluator::get_x_dot_init() const
 {
-  return app->getInitialSolutionDot();
+  return app->getAdaptSolMgr()->getInitialSolutionDot();
 }
 
 Teuchos::RCP<const Epetra_Vector>

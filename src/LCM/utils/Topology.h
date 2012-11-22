@@ -4,6 +4,11 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#ifndef TOPOLOGY_H_
+#define TOPOLOGY_H_
+
+#include "Fracture.h"
+
 #include <Teuchos_CommandLineProcessor.hpp>
 #include <stk_mesh/base/Types.hpp>
 #include <stk_mesh/base/BulkData.hpp>
@@ -24,9 +29,6 @@
 #include <boost/graph/properties.hpp>
 #include <boost/graph/connected_components.hpp>
 #include <boost/graph/graphviz.hpp>
-
-#ifndef TOPOLOGY_H_
-#define TOPOLOGY_H_
 
 namespace LCM {
 
@@ -52,11 +54,6 @@ namespace LCM {
   class topology {
   public:
     ///
-    /// \brief Default constructor for topology
-    ///
-    topology();
-
-    ///
     /// \brief Create mesh data structure
     ///
     /// \param[in] input_file is exodus II input file name
@@ -74,6 +71,18 @@ namespace LCM {
      * Use if already have an Albany mesh object
      */
     topology(Teuchos::RCP<Albany::AbstractDiscretization> & discretization_ptr);
+
+    /**
+     * \brief Create mesh data structure
+     *
+     * \param[in] Albany discretization object
+     * \param[in] Fracture criterion object
+     *
+     * Use if already have an Albany mesh object, and want to fracture the mesh based
+     * on a criterion.
+     */
+    topology(Teuchos::RCP<Albany::AbstractDiscretization> & discretization_ptr,
+       Teuchos::RCP<AbstractFractureCriterion>& frac);
 
     /**
      * \brief Output relations associated with entity
@@ -105,22 +114,6 @@ namespace LCM {
     disp_connectivity();
 
     /**
-     * \brief Generic fracture criterion function.
-     *
-     * \param[in] entity
-     * \param[in] probability
-     * \return is criterion met
-     *
-     * Given an entity and probability, will determine if fracture criterion
-     * is met. Will return true if fracture criterion is met, else false.
-     * Fracture only defined on surface of elements. Thus, input entity
-     * must be of rank dimension-1, else error. For 2D, entity rank must = 1.
-     * For 3D, entity rank must = 2.
-     */
-    bool
-    fracture_criterion(Entity& entity, float p);
-
-    /**
      * \brief Iterates over the boundary entities of the mesh of (all entities
      * of rank dimension-1) and checks fracture criterion.
      *
@@ -131,6 +124,19 @@ namespace LCM {
      */
     void
     set_entities_open(std::map<EntityKey, bool>& entity_open);
+
+    /**
+     * \brief Iterates over the boundary entities contained in the passed-in
+     * vector and opens each edge traversed.
+     *
+     * \param vector of edges to open, map of entity and boolean value is entity opened
+     *
+     * If entity is in the vector, the entity and all lower order entities
+     * associated with it are marked as open.
+     */
+    void
+    set_entities_open(const std::vector<stk::mesh::Entity*>& fractured_edges,
+          std::map<EntityKey, bool>& entity_open);
 
     ///
     /// \brief Output the graph associated with the mesh to graphviz .dot
@@ -234,20 +240,17 @@ namespace LCM {
     {
       return discretization_ptr_;
     }
-    ;
 
     stk::mesh::BulkData*
     get_BulkData()
     {
       return bulkData_;
     }
-    ;
 
     Teuchos::RCP<Albany::AbstractSTKMeshStruct> get_stkMeshStruct()
     {
       return stkMeshStruct_;
     }
-    ;
 
     /**
      * \brief Creates a mesh of the fractured surfaces only.
@@ -349,6 +352,7 @@ namespace LCM {
      *
      * \todo generalize the function for 2D meshes
      */
+
     void
     fracture_boundary(std::map<EntityKey, bool> & entity_open);
 
@@ -360,7 +364,7 @@ namespace LCM {
 
     /*
      * \brief creates several entities at a time. The information about
-     * the type of entity and and the amount of entities is contained
+     * the type of entity and the amount of entities is contained
      * in the input vector called: "requests"
      */
     void
@@ -376,7 +380,7 @@ namespace LCM {
     /// \brief Adds a relation between two entities
     ///
     void
-    add_relation(Entity & source_entity,Entity & target_entity,
+    add_relation(Entity & source_entity, Entity & target_entity,
         EdgeId local_relation_id);
 
     ///
@@ -403,6 +407,7 @@ namespace LCM {
     ///
     /// \brief Gets the local relation id (0,1,2,...) between two entities
     ///
+
     EdgeId
     get_local_relation_id(const Entity & source_entity, const Entity & target_entity);
 
@@ -483,7 +488,7 @@ namespace LCM {
     /// \brief Returns a pointer with the coordinates of a given entity
     ///
     double*
-    get_pointer_of_coordintes(Entity * entity);
+    get_pointer_of_coordinates(Entity * entity);
 
     ///
     /// brief Returns a vector with the corresponding former boundary nodes of an input entity
@@ -507,6 +512,11 @@ namespace LCM {
     barycentric_subdivision();
 
   private:
+
+    ///
+    /// \brief Hide default constructor for topology
+    ///
+    topology();
 
     /**
      * \brief Create Albany discretization
@@ -536,6 +546,11 @@ namespace LCM {
     /// Will not give correct results if mesh has multiple element types.
     ///
     shards::CellTopology element_topology;
+
+   ///
+   /// Pointer to failure criteria object
+   ///
+   Teuchos::RCP<AbstractFractureCriterion> fracObject;
 
   };
   // class topology

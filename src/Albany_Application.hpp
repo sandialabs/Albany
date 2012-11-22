@@ -26,7 +26,7 @@
 #include "Albany_AbstractProblem.hpp"
 #include "Albany_AbstractResponseFunction.hpp"
 #include "Albany_StateManager.hpp"
-#include "Albany_Adaptation.hpp"
+#include "Albany_AdaptiveSolutionManager.hpp"
 
 #ifdef ALBANY_CUTR
   #include "CUTR_CubitMeshMover.hpp"
@@ -46,6 +46,8 @@
 #include "Stokhos_EpetraVectorOrthogPoly.hpp"
 #include "Stokhos_EpetraMultiVectorOrthogPoly.hpp"
 #include "EpetraExt_MultiComm.h"
+
+#include "LOCA_Epetra_Group.H"
 
 #include "Teko_InverseLibrary.hpp"
 
@@ -88,11 +90,8 @@ namespace Albany {
     //! Get Preconditioner Operator
     Teuchos::RCP<Epetra_Operator> getPreconditioner();
 
-    //! Get initial solution
-    Teuchos::RCP<const Epetra_Vector> getInitialSolution() const;
-
-    //! Get initial solution
-    Teuchos::RCP<const Epetra_Vector> getInitialSolutionDot() const;
+    //! Get the solution memory manager
+    Teuchos::RCP<Albany::AdaptiveSolutionManager> getAdaptSolMgr(){ return solMgr;}
 
     //! Get parameter library
     Teuchos::RCP<ParamLib> getParamLib();
@@ -451,16 +450,6 @@ namespace Albany {
     //! Access to number of worksets - needed for working with StateManager
     int getNumWorksets() { return numWorksets;};
 
-    //! Accessor function to Epetra_Import the solution from other PEs for output
-    Epetra_Vector* getOverlapSolution(const Epetra_Vector& solution) {
-
-      tmp_ovlp_sol->Import(solution, *importer, Insert);
-
-      return tmp_ovlp_sol.get();
-
-    }
-
-    
     bool is_adjoint;
     bool support_DfDp, support_DgDp_and_DgDx;
 
@@ -481,6 +470,8 @@ namespace Albany {
     //! Utility function to set up ShapeParameters through Sacado
     void registerShapeParameters();
 
+    void defineTimers();
+
   public:
 
     //! Routine to get workset (bucket) sized info needed by all Evaluation types
@@ -488,10 +479,15 @@ namespace Albany {
     void loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws);
 
     //! Routine to load some basic workset info needed by many Evaluation types
+/*
     void loadBasicWorksetInfo(
             PHAL::Workset& workset,
             Teuchos::RCP<Epetra_Vector> overlapped_x,
             Teuchos::RCP<Epetra_Vector> overlapped_xdot,
+            double current_time);
+*/
+    void loadBasicWorksetInfo(
+            PHAL::Workset& workset,
             double current_time);
 
     void loadWorksetJacobianInfo(PHAL::Workset& workset,
@@ -586,35 +582,11 @@ namespace Albany {
     //! Problem class
     Teuchos::RCP<Albany::AbstractProblem> problem;
 
-    //! Initial solution vector
-    Teuchos::RCP<Epetra_Vector> initial_x;
-
-    //! Initial solution vector
-    Teuchos::RCP<Epetra_Vector> initial_x_dot;
-
-    //! Importer for overlapped data
-    Teuchos::RCP<Epetra_Import> importer;
-
-    //! Exporter for overlapped data
-    Teuchos::RCP<Epetra_Export> exporter;
-
-    //! Overlapped solution vector
-    Teuchos::RCP<Epetra_Vector> overlapped_x;
-
-    //! Overlapped time derivative vector
-    Teuchos::RCP<Epetra_Vector> overlapped_xdot;
-
-    //! Overlapped residual vector
-    Teuchos::RCP<Epetra_Vector> overlapped_f;
-
-    //! Overlapped Jacobian matrix
-    Teuchos::RCP<Epetra_CrsMatrix> overlapped_jac;
-
-    //! Temporary overlapped solution vector (for output)
-    Teuchos::RCP<Epetra_Vector> tmp_ovlp_sol;
-
     //! Parameter library
     Teuchos::RCP<ParamLib> paramLib;
+
+    //! Solution memory manager
+    Teuchos::RCP<Albany::AdaptiveSolutionManager> solMgr;
 
     //! Response functions
     Teuchos::Array< Teuchos::RCP<Albany::AbstractResponseFunction> > responses;
@@ -702,8 +674,6 @@ namespace Albany {
     Teuchos::RCP<CUTR::CubitMeshMover> meshMover;
 #endif
 
-    Teuchos::RCP<Adaptation> adapter;
-
     unsigned int neq;
 
     //! Number of worksets (buckets) to be processed 
@@ -740,6 +710,8 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
   workset.wsElNodeEqID = wsElNodeEqID[ws];
   workset.wsCoords = coords[ws];
   workset.EBName = wsEBNames[ws];
+
+//  workset.print(*out);
 
   // Sidesets are integrated within the Cells
   loadWorksetSidesetInfo(workset, ws);

@@ -33,18 +33,6 @@
 
 namespace Albany {
 
- class wsLid {
-
-    public:
-
-    int ws; // the workset of the element containing the side
-    int LID; // the local id of the element containing the side
-
-  };
-
-  typedef std::map<int, wsLid > WsLIDList;
-
-
   class STKDiscretization : public Albany::AbstractDiscretization {
   public:
 
@@ -79,6 +67,9 @@ namespace Albany {
     //! Get Side set lists (typedef in Albany_AbstractDiscretization.hpp)
     const SideSetList& getSideSets(const int workset) const { return sideSets[workset]; };
 
+    //! Get connectivity map from elementGID to workset
+    WsLIDList& getElemGIDws() { return elemGIDws; };
+
     //! Get map from (Ws, El, Local Node) -> NodeLID
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >& getWsElNodeEqID() const;
 
@@ -112,16 +103,18 @@ namespace Albany {
     //! If restarting, convenience function to return restart data time
     double restartDataTime() const {return stkMeshStruct->restartDataTime;}
 
-    // After mesh modification, need to update the element connectivity and nodal coordinates
-    void updateMesh(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct,
-    		const Teuchos::RCP<const Epetra_Comm>& comm);
+    //! After mesh modification, need to update the element connectivity and nodal coordinates
+    void updateMesh();
 
     //! Accessor function to get coordinates for ML. Memory controlled here.
     void getOwned_xyz(double **x, double **y, double **z, double **rbm,
                       int& nNodes, int numPDEs, int numScalar, int nullSpaceDim);
 
-    // Function that transforms an STK mesh of a unit cube (for FELIX problems)
+    //! Function that transforms an STK mesh of a unit cube (for FELIX problems)
     void transformMesh(); 
+
+    //! Close current exodus file in stk_io and create a new one for an adapted mesh and new results
+    void reNameExodusOutput(std::string& filename);
 
   private:
 
@@ -258,6 +251,7 @@ namespace Albany {
     int outputInterval;
 #endif
     bool interleavedOrdering;
+
   };
 
 }

@@ -8,6 +8,9 @@
 
 namespace LCM {
 
+  /**
+   * \brief Default constructor for topology (private to topology class)
+   */
   topology::topology() :
       number_dimensions_(0), discretization_ptr_(Teuchos::null)
   {
@@ -29,7 +32,7 @@ namespace LCM {
     Teuchos::RCP<Epetra_Comm> communicator =
         Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
 
-    Albany::DiscretizationFactory disc_factory(disc_params, communicator);
+    Albany::DiscretizationFactory disc_factory(disc_params, false, communicator);
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs =
         disc_factory.createMeshSpecs();
@@ -40,6 +43,13 @@ namespace LCM {
     discretization_ptr_ = disc_factory.createDiscretization(3, stateInfo);
 
     topology::create_discretization();
+
+    // Create the full mesh representation. This must be done prior to the adaptation query. We are
+    // reading the mesh from a file so do it here.
+    topology::graph_initialization();
+
+    // Fracture the mesh randomly
+    fracObject = Teuchos::rcp(new GenericFractureCriterion(number_dimensions_, elementRank));
 
     return;
   }
@@ -59,7 +69,37 @@ namespace LCM {
 
     topology::create_discretization();
 
+    // This constructor assumes that the full mesh graph has been previously created.
+    //topology::graph_initialization();
+
+    // Fracture the mesh randomly
+    fracObject = Teuchos::rcp(new GenericFractureCriterion(number_dimensions_, elementRank));
+
     return;
+  }
+
+  /**
+   * \brief Create mesh data structure
+   *
+   * \param[in] Albany discretization object
+   * \param[in] Fracture criterion object
+   *
+   * Use if already have an Albany mesh object, and want to fracture the mesh based
+   * on a user-created fracture criterion object.
+   */
+  topology::topology(Teuchos::RCP<Albany::AbstractDiscretization>& discretization_ptr,
+    Teuchos::RCP<AbstractFractureCriterion>& frac) :
+	    discretization_ptr_(discretization_ptr),
+      fracObject(frac)
+  {
+
+	  topology::create_discretization();
+
+    // This function assumes that the full mesh graph has already been created.
+    //topology::graph_initialization(); 
+
+	  return;
+
   }
 
   /**
@@ -68,7 +108,7 @@ namespace LCM {
   void topology::create_discretization()
   {
 
-    // Need to access the bulkData and metaData classes in the mesh datastructure
+    // Need to access the bulkData and metaData classes in the mesh data structure
     Albany::STKDiscretization & stk_discretization =
         static_cast<Albany::STKDiscretization &>(*discretization_ptr_);
 
@@ -89,10 +129,8 @@ namespace LCM {
     element_topology = stk::mesh::fem::get_cell_topology(
         *(bulkData_->get_entity(elementRank, 1)));
 
-    // Create the full mesh representation
-    topology::graph_initialization();
-
     return;
+
   }
 
   /**
@@ -141,6 +179,7 @@ namespace LCM {
    * bulkData. Assumes that relationships between the elements and
    * nodes exist.
    */
+
   void topology::disp_connectivity()
   {
     // Create a list of element entities
@@ -168,97 +207,6 @@ namespace LCM {
       }
 
       cout << ":" << std::endl;
-    }
-
-    return;
-  }
-
-  /**
-   * \brief Generic fracture criterion function.
-   *
-   * \param[in] entity
-   * \param[in] probability
-   * \return is criterion met
-   *
-   * Given an entity and probability, will determine if fracture criterion
-   * is met. Will return true if fracture criterion is met, else false.
-   * Fracture only defined on surface of elements. Thus, input entity
-   * must be of rank dimension-1, else error. For 2D, entity rank must = 1.
-   * For 3D, entity rank must = 2.
-   */
-  bool topology::fracture_criterion(Entity& entity, float p)
-  {
-    // Fracture only defined on the boundary of the elements
-    EntityRank rank = entity.entity_rank();
-    assert(rank==number_dimensions_-1);
-
-    stk::mesh::PairIterRelation relations = entity.relations(elementRank);
-    if (relations.size() == 1) return false;
-
-    bool is_open = false;
-    // Check criterion
-    float random = 0.5 + 0.5 * Teuchos::ScalarTraits<double>::random();
-    if (random < p) {
-      is_open = true;
-    }
-
-    return is_open;
-  }
-
-  /**
-   * \brief Iterates over the boundary entities of the mesh of (all entities
-   * of rank dimension-1) and checks fracture criterion.
-   *
-   * \param map of entity and boolean value is entity open
-   *
-   * If fracture_criterion is met, the entity and all lower order entities
-   * associated with it are marked as open.
-   */
-  void topology::set_entities_open(std::map<EntityKey, bool>& entity_open)
-  {
-    // Fracture occurs at the boundary of the elements in the mesh.
-    //   The rank of the boundary elements is one less than the
-    //   dimension of the system.
-    std::vector<Entity*> boundary_lst;
-    stk::mesh::get_entities(*(bulkData_), number_dimensions_ - 1, boundary_lst);
-
-    // Probability that fracture_criterion will return true.
-    float p = 1.0;
-
-    // Iterate over the boundary entities
-    for (int i = 0; i < boundary_lst.size(); ++i) {
-      Entity& entity = *(boundary_lst[i]);
-      bool is_open = topology::fracture_criterion(entity, p);
-      // If the criterion is met, need to set lower rank entities
-      //   open as well
-      if (is_open == true && number_dimensions_ == 3) {
-        entity_open[entity.key()] = true;
-        stk::mesh::PairIterRelation segments = entity.relations(
-            entity.entity_rank() - 1);
-        // iterate over the segments
-        for (int j = 0; j < segments.size(); ++j) {
-          Entity & segment = *(segments[j].entity());
-          entity_open[segment.key()] = true;
-          stk::mesh::PairIterRelation nodes = segment.relations(
-              segment.entity_rank() - 1);
-          // iterate over nodes
-          for (int k = 0; k < nodes.size(); ++k) {
-            Entity& node = *(nodes[k].entity());
-            entity_open[node.key()] = true;
-          }
-        }
-      }
-      // If the mesh is 2D
-      else if (is_open == true && number_dimensions_ == 2) {
-        entity_open[entity.key()] = true;
-        stk::mesh::PairIterRelation nodes = entity.relations(
-            entity.entity_rank() - 1);
-        // iterate over nodes
-        for (int j = 0; j < nodes.size(); ++j) {
-          Entity & node = *(nodes[j].entity());
-          entity_open[node.key()] = true;
-        }
-      }
     }
 
     return;
@@ -481,6 +429,7 @@ namespace LCM {
    *
    * \note Valid for 2D and 3D meshes.
    */
+#if 1 // GAH - this is the original
   void topology::remove_extra_relations()
   {
     std::vector<Entity*> element_lst;
@@ -535,6 +484,66 @@ namespace LCM {
 
     return;
   }
+#else
+
+void
+topology::remove_extra_relations()
+{
+	std::vector<Entity*> element_lst;
+	stk::mesh::get_entities(*(bulkData_),elementRank,element_lst);
+
+	// Remove extra relations from element
+	for (int i = 0; i < element_lst.size(); ++i){
+		Entity & element = *(element_lst[i]);
+		stk::mesh::PairIterRelation relations = element.relations();
+		std::vector<Entity*> del_relations;
+		std::vector<int> del_ids;
+		for (stk::mesh::PairIterRelation::iterator j = relations.begin();
+				j != relations.end(); ++j){
+			// remove all relationships from element unless to faces(segments
+			//   in 2D) or nodes
+//			if (j->entity_rank() != elementRank-1 && j->entity_rank() != nodeRank){
+// GAH THIS NEEDS TO BE UNCOMMENTED!!!!!
+			if (j->entity_rank() != nodeRank){
+				del_relations.push_back(j->entity());
+				del_ids.push_back(j->identifier());
+			}
+		}
+		for (int j = 0; j < del_relations.size(); ++j){
+			Entity & entity = *(del_relations[j]);
+			bulkData_->destroy_relation(element,entity,del_ids[j]);
+		}
+	};
+
+	if (elementRank == 3){
+		// Remove extra relations from face
+		std::vector<Entity*> face_lst;
+		stk::mesh::get_entities(*(bulkData_),elementRank-1,face_lst);
+		EntityRank entityRank = face_lst[0]->entity_rank();
+		for (int i = 0; i < face_lst.size(); ++i){
+			Entity & face = *(face_lst[i]);
+			stk::mesh::PairIterRelation relations = face_lst[i]->relations();
+			std::vector<Entity*> del_relations;
+			std::vector<int> del_ids;
+			for (stk::mesh::PairIterRelation::iterator j = relations.begin();
+					j != relations.end(); ++j){
+				if (j->entity_rank() != entityRank+1 &&
+						j->entity_rank() != entityRank-1){
+					del_relations.push_back(j->entity());
+					del_ids.push_back(j->identifier());
+				}
+			}
+			for (int j = 0; j < del_relations.size(); ++j){
+				Entity & entity = *(del_relations[j]);
+				bulkData_->destroy_relation(face,entity,del_ids[j]);
+			}
+		}
+	}
+
+	return;
+}
+
+#endif
 
   /**
    * \brief Creates temporary nodal connectivity for the elements and removes the
@@ -581,7 +590,7 @@ namespace LCM {
     std::vector<Entity*> element_lst;
     stk::mesh::get_entities(*(bulkData_), elementRank, element_lst);
 
-    bulkData_->modification_begin();
+//    bulkData_->modification_begin(); // need to comment GAH?
 
     // Add relations from element to nodes
     for (int i = 0; i < element_lst.size(); ++i) {
@@ -592,17 +601,6 @@ namespace LCM {
         bulkData_->declare_relation(element, node, j);
       }
     }
-
-    // Recreate Albany STK Discretization
-    Albany::STKDiscretization & stk_discretization =
-        static_cast<Albany::STKDiscretization &>(*discretization_ptr_);
-
-    Teuchos::RCP<Epetra_Comm> communicator =
-        Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
-
-    stk_discretization.updateMesh(stkMeshStruct_, communicator);
-
-    bulkData_->modification_end();
 
     return;
   }
@@ -908,7 +906,6 @@ namespace LCM {
       }
     }
 
-    cout << "Number of fractured faces: " << numfractured << "\n";
     // Create the cohesive connectivity
     int j = 1;
     for (std::set<std::pair<Entity*, Entity*> >::iterator i =
@@ -927,6 +924,120 @@ namespace LCM {
     }
 
     return;
+  }
+
+
+  /**
+   * \brief Iterates over the boundary entities of the mesh of (all entities
+   * of rank dimension-1) and checks fracture criterion.
+   *
+   * \param map of entity and boolean value is entity open
+   *
+   * If fracture_criterion is met, the entity and all lower order entities
+   * associated with it are marked as open.
+   */
+  void topology::set_entities_open(std::map<EntityKey, bool>& entity_open)
+  {
+    // Fracture occurs at the boundary of the elements in the mesh.
+    //   The rank of the boundary elements is one less than the
+    //   dimension of the system.
+    std::vector<Entity*> boundary_lst;
+    stk::mesh::get_entities(*(bulkData_), number_dimensions_ - 1, boundary_lst);
+
+    // Probability that fracture_criterion will return true.
+    float p = 1.0;
+
+    // Iterate over the boundary entities
+    for (int i = 0; i < boundary_lst.size(); ++i) {
+      Entity& entity = *(boundary_lst[i]);
+      bool is_open = fracObject->fracture_criterion(entity, p);
+      // If the criterion is met, need to set lower rank entities
+      //   open as well
+      if (is_open == true && number_dimensions_ == 3) {
+        entity_open[entity.key()] = true;
+        stk::mesh::PairIterRelation segments = entity.relations(
+            entity.entity_rank() - 1);
+        // iterate over the segments
+        for (int j = 0; j < segments.size(); ++j) {
+          Entity & segment = *(segments[j].entity());
+          entity_open[segment.key()] = true;
+          stk::mesh::PairIterRelation nodes = segment.relations(
+              segment.entity_rank() - 1);
+          // iterate over nodes
+          for (int k = 0; k < nodes.size(); ++k) {
+            Entity& node = *(nodes[k].entity());
+            entity_open[node.key()] = true;
+          }
+        }
+      }
+      // If the mesh is 2D
+      else if (is_open == true && number_dimensions_ == 2) {
+        entity_open[entity.key()] = true;
+        stk::mesh::PairIterRelation nodes = entity.relations(
+            entity.entity_rank() - 1);
+        // iterate over nodes
+        for (int j = 0; j < nodes.size(); ++j) {
+          Entity & node = *(nodes[j].entity());
+          entity_open[node.key()] = true;
+        }
+      }
+    }
+
+    return;
+
+  }
+
+    /**
+     * \brief Iterates over the boundary entities contained in the passed-in
+     * vector and opens each edge traversed.
+     *
+     * \param vector of edges to open, map of entity and boolean value is entity opened
+     *
+     * If entity is in the vector, the entity and all lower order entities
+     * associated with it are marked as open.
+     */
+
+  void topology::set_entities_open(const std::vector<stk::mesh::Entity*>& fractured_edges,
+        std::map<EntityKey, bool>& entity_open)
+  {
+
+    // Iterate over the boundary entities
+    for (int i = 0; i < fractured_edges.size(); ++i) {
+      Entity& entity = *(fractured_edges[i]);
+      // Need to set lower rank entities
+      //   open as well
+      if (number_dimensions_ == 3) {
+        entity_open[entity.key()] = true;
+        stk::mesh::PairIterRelation segments = entity.relations(
+            entity.entity_rank() - 1);
+        // iterate over the segments
+        for (int j = 0; j < segments.size(); ++j) {
+          Entity & segment = *(segments[j].entity());
+          entity_open[segment.key()] = true;
+          stk::mesh::PairIterRelation nodes = segment.relations(
+              segment.entity_rank() - 1);
+          // iterate over nodes
+          for (int k = 0; k < nodes.size(); ++k) {
+            Entity& node = *(nodes[k].entity());
+            entity_open[node.key()] = true;
+          }
+        }
+      }
+      // If the mesh is 2D
+      else if (number_dimensions_ == 2) {
+        entity_open[entity.key()] = true;
+        stk::mesh::PairIterRelation nodes = entity.relations(
+            entity.entity_rank() - 1);
+        // iterate over nodes
+        for (int j = 0; j < nodes.size(); ++j) {
+          Entity & node = *(nodes[j].entity());
+          entity_open[node.key()] = true;
+        }
+      }
+    }
+
+    return;
+
   }
 
   /*

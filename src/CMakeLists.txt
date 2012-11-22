@@ -10,7 +10,6 @@ SET(SOURCES
         PHAL_Dimension.cpp
         PHAL_AlbanyTraits.cpp
         Albany_Application.cpp
-        Albany_Adaptation.cpp
         Albany_ObserverFactory.cpp
         Albany_RythmosObserver.cpp
         Albany_NOXObserver.cpp
@@ -22,7 +21,6 @@ SET(SOURCES
   )
 
 SET(HEADERS
-        Albany_Adaptation.hpp
         Albany_SolverFactory.hpp
         Albany_Utils.hpp
         Albany_DataTypes.hpp
@@ -43,6 +41,28 @@ SET(HEADERS
         Albany_SaveEigenData.hpp
         Albany_ExodusOutput.hpp
         Albany_DummyParameterAccessor.hpp
+  )
+
+#stk
+
+SET(SOURCES ${SOURCES}
+        stk/Albany_STKDiscretization.cpp
+        stk/Albany_DiscretizationFactory.cpp
+        stk/Albany_GenericSTKMeshStruct.cpp
+        stk/Albany_TmplSTKMeshStruct.cpp
+        stk/Albany_FromCubitSTKMeshStruct.cpp
+        stk/Albany_IossSTKMeshStruct.cpp
+  )
+
+SET(HEADERS ${HEADERS}
+        stk/Albany_AbstractDiscretization.hpp 
+        stk/Albany_STKDiscretization.hpp
+        stk/Albany_DiscretizationFactory.hpp
+        stk/Albany_AbstractSTKMeshStruct.hpp
+        stk/Albany_GenericSTKMeshStruct.hpp
+        stk/Albany_TmplSTKMeshStruct.hpp
+        stk/Albany_FromCubitSTKMeshStruct.hpp
+        stk/Albany_IossSTKMeshStruct.hpp
   )
 
 #problems
@@ -172,7 +192,6 @@ SET(SOURCES ${SOURCES}
         evaluators/PHAL_GatherCoordinateVector.cpp
         evaluators/PHAL_CahnHillRhoResid.cpp
         evaluators/PHAL_CahnHillWResid.cpp
-        evaluators/PHAL_CahnHillElasResid.cpp
         evaluators/PHAL_CahnHillChemTerm.cpp
         evaluators/PHAL_LangevinNoiseTerm.cpp
         evaluators/PHAL_JouleHeating.cpp
@@ -251,8 +270,6 @@ SET(HEADERS ${HEADERS}
         evaluators/PHAL_CahnHillRhoResid_Def.hpp
         evaluators/PHAL_CahnHillWResid.hpp
         evaluators/PHAL_CahnHillWResid_Def.hpp
-        evaluators/PHAL_CahnHillElasResid.hpp
-        evaluators/PHAL_CahnHillElasResid_Def.hpp
         evaluators/PHAL_CahnHillChemTerm.hpp
         evaluators/PHAL_CahnHillChemTerm_Def.hpp
         evaluators/PHAL_LangevinNoiseTerm.hpp
@@ -586,7 +603,7 @@ SET(CUTR_HDRS
 set(ALB_TRILINOS_LIBS ${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES})
 
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
-                     ./ ./evaluators ./problems ./responses ./stk
+                     ./ ./evaluators ./problems ./responses ./stk ./adapt
                      ./LCM/ ./LCM/evaluators ./LCM/utils ./FELIX/problems
                      ./FELIX/evaluators ./Hydride/problems ./Hydride/evaluators
                     )
@@ -650,16 +667,18 @@ add_executable(AlbanyAnalysis Main_Analysis.cpp)
 
 set(ALL_LIBRARIES ${ALBANY_CI_LIB} ${ALB_TRILINOS_LIBS} ${ALB_CUBIT_LIBS} ${LAME_LIB} ${LAMENT_LIB} ${Trilinos_EXTRA_LD_FLAGS} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES} )
 
-SET(ALBANY_LIBRARIES albanyLib)
+add_subdirectory(adapt)
+
+SET(ALBANY_LIBRARIES albanyLib adapt)
 
 IF (ALBANY_LCM)
   add_subdirectory(LCM)
-  SET(ALBANY_LIBRARIES albanyLib lcm albanyLib)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} lcm albanyLib)
 
   IF (ALBANY_HYDRIDE) 
 #Hydride requires LCM
     add_subdirectory(Hydride)
-    SET(ALBANY_LIBRARIES albanyLib hydride lcm albanyLib)
+    SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} hydride lcm albanyLib)
   ENDIF()
 
 ENDIF()

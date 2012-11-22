@@ -27,10 +27,10 @@ block 1 element type QUAD4
 
 nodeset 1 curve 7 2
 
-Sideset 1 curve 1 
+nodeset 2 curve 1 
 
-Sideset 2 curve 8
+nodeset 3 curve 8
 
 set large exodus file off
 
-export mesh "/Volumes/ascldap/Codes/Albany/examples/DomainTear2D/rip.exo" overwrite
+export mesh "/Volumes/ascldap/Codes/Albany/examples/DomainTear2D/rip2.exo" overwrite

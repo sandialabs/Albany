@@ -36,15 +36,16 @@
 #endif
 
 
-template<int Dim, class traits>
+template<unsigned Dim, class traits>
 Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
-                  const Teuchos::RCP<Teuchos::ParameterList>& params,
+                  const Teuchos::RCP<Teuchos::ParameterList>& params, bool adaptive,
                   const Teuchos::RCP<const Epetra_Comm>& comm) :
   GenericSTKMeshStruct(params, traits_type::size),
   periodic_x(params->get("Periodic_x BC", false)),
   periodic_y(params->get("Periodic_y BC", false)),
   periodic_z(params->get("Periodic_z BC", false)),
-  triangles(false)
+  triangles(false),
+  adaptiveMesh(adaptive)
 {
 
 /*
@@ -80,7 +81,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
   EBSpecs.resize(numEB);
 
-  for(int i = 0; i < Dim; i++){ // Get the number of elements in each dimension from params
+  for(unsigned i = 0; i < Dim; i++){ // Get the number of elements in each dimension from params
                                 // Note that nelem will default to 0 and scale to 1 if element
                                 // blocks are specified
 
@@ -108,7 +109,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
      std::stringstream nelem_txt, scale_txt;
 
-     for(int idx=0; idx < Dim - 1; idx++){
+     for(unsigned idx=0; idx < Dim - 1; idx++){
 
        nelem_txt << nelem[idx] << "x";
        scale_txt << scale[idx] << "x";
@@ -128,7 +129,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
    // Calculate total number of elements
    total_elems = nelem[0];
-   for(int i = 1; i < Dim; i++)
+   for(unsigned i = 1; i < Dim; i++)
       total_elems *= nelem[i];
 
   }
@@ -136,7 +137,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
     std::vector<int> min(Dim), max(Dim);
 
-    for(int i = 0; i < Dim; i++){
+    for(unsigned i = 0; i < Dim; i++){
 
       min[i] = INT_MAX;
       max[i] = INT_MIN;
@@ -153,7 +154,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 //      for(int i = 0; i < Dim; i++)
 
 //        nelem[i] += EBSpecs[eb].numElems(i);
-      for(int i = 0; i < Dim; i++){
+      for(unsigned i = 0; i < Dim; i++){
 
         min[i] = (min[i] < EBSpecs[eb].min[i]) ? min[i] : EBSpecs[eb].min[i];
         max[i] = (max[i] > EBSpecs[eb].max[i]) ? max[i] : EBSpecs[eb].max[i];
@@ -162,14 +163,14 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
     }
 
-    for(int i = 0; i < Dim; i++)
+    for(unsigned i = 0; i < Dim; i++)
 
       nelem[i] = max[i] - min[i];
 
     // Calculate total number of elements
     total_elems = nelem[0];
 
-    for(int i = 1; i < Dim; i++)
+    for(unsigned i = 1; i < Dim; i++)
 
       total_elems *= nelem[i];
 
@@ -179,7 +180,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
   // Construct the nodeset names
 
-  for(int idx=0; idx < Dim*2; idx++){ // 2 nodesets per dimension (one at beginning, one at end)
+  for(unsigned idx=0; idx < Dim*2; idx++){ // 2 nodesets per dimension (one at beginning, one at end)
     std::stringstream buf;
     buf << "NodeSet" << idx;
     nsNames.push_back(buf.str());
@@ -193,7 +194,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
   if(Dim > 1 ) // Sidesets present only for 2 and 3D problems
 
-    for(int idx=0; idx < Dim*2; idx++){ // 2 sidesets per dimension (one at beginning, one at end)
+    for(unsigned idx=0; idx < Dim*2; idx++){ // 2 sidesets per dimension (one at beginning, one at end)
       std::stringstream buf;
       buf << "SideSet" << idx;
       ssNames.push_back(buf.str());
@@ -277,7 +278,7 @@ std::cout << "Mesh size is " << total_elems << " elems." << std::endl;
  }
 }
 
-template<int Dim, class traits>
+template<unsigned Dim, class traits>
 void
 Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
                   const Teuchos::RCP<const Epetra_Comm>& comm,
@@ -295,7 +296,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
 //  x.resize(traits_type::size);
 //  x.resize(Dim);
 
-  for(int idx=0; idx < Dim; idx++){ 
+  for(unsigned idx=0; idx < Dim; idx++){ 
 
     // Allocate the storage
 
@@ -308,7 +309,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
 
     EBSpecs[eb].calcElemSizes(h_dim);
 
-  for(int idx=0; idx < Dim; idx++){
+  for(unsigned idx=0; idx < Dim; idx++){
 
     x[idx][0] = 0;
 
@@ -447,7 +448,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
 
 }
 
-template <int Dim, class traits>
+template <unsigned Dim, class traits>
 void 
 Albany::TmplSTKMeshStruct<Dim, traits>::DeclareParts(
               std::vector<EBSpecsStruct<Dim, traits> > ebStructArray, 
@@ -482,7 +483,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::DeclareParts(
   }
 }
 
-template <int Dim, class traits>
+template <unsigned Dim, class traits>
 void
 Albany::EBSpecsStruct<Dim, traits>::Initialize(unsigned int nnelems[], double blLen[]){
 

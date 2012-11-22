@@ -110,7 +110,9 @@ int main(int argc, char *argv[]) {
     responses_out.set_g(num_g-1,xfinal);
     
     setupTimer.~TimeMonitor();
+    *out << "Before main solve" << endl;
     solver->evalModel(params_in, responses_out);
+    *out << "After main solve" << endl;
 
     *out << "Finished eval of first model: Params, Responses " 
          << std::setprecision(12) << endl;

@@ -80,6 +80,7 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   validPL->sublist("Teko", false, "");
   validPL->sublist("Dirichlet BCs", false, "");
   validPL->sublist("Neumann BCs", false, "");
+  validPL->sublist("Adaptation", false, "");
   validPL->set<bool>("Solve Adjoint", false, "");
   validPL->set<bool>("Compute Sensitivities", true, "");
   validPL->set<bool>("Print Response Expansion", true, "");

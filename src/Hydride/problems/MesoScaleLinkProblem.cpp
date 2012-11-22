@@ -3,21 +3,23 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+
+/*
+ * Note 2: This code is not compiled unless we have MPI available (see ifdef in CMakeLists.txt)
+ */
+
 #include "MesoScaleLinkProblem.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemUtils.hpp"
 
-#ifdef ALBANY_MPI
 #include "Teuchos_TypeNameTraits.hpp"
-#include "Teuchos_OpaqueWrapper.hpp"
 
 namespace Teuchos {
 // Provide an explicit template specialization for the opaque type MPI_Comm
 // so that the instantiation of Teuchos::RCP<MPI_Comm> objects compiles correctly in debug mode
 // without relying on the implementation details of the MPI library.
-  TEUCHOS_TYPE_NAME_TRAITS_BUILTIN_TYPE_SPECIALIZATION( OpaqueWrapper<MPI_Comm> );
+  TEUCHOS_TYPE_NAME_TRAITS_BUILTIN_TYPE_SPECIALIZATION(MPI_Comm);
 } // namespace Teuchos
-#endif /* ALBANY_MPI */
 
 Albany::MesoScaleLinkProblem::
 MesoScaleLinkProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
@@ -28,7 +30,7 @@ MesoScaleLinkProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   haveSource(false),
   numDim(numDim_),
   comm(comm_),
-  mpi_comm(Albany::getMpiCommFromEpetraComm(*comm)) {
+  mpi_comm(Albany::getMpiCommFromEpetraComm(*comm_)) {
 
   TEUCHOS_TEST_FOR_EXCEPTION(comm->NumProc() != 1, std::logic_error,
                              "MesoScale bridge only supports 1 master processor currently:\n\tRun with \"mpirun -np 1 Albany\"");

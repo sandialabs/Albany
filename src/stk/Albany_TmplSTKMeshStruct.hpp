@@ -16,11 +16,11 @@ namespace Albany {
  */
 
 //! Traits class for STK mesh classes that generate their own mesh
-template<int Dim>
+template<unsigned Dim>
 struct albany_stk_mesh_traits { };
 
 //! Element block specs
-template<int Dim, class traits = albany_stk_mesh_traits<Dim> >
+template<unsigned Dim, class traits = albany_stk_mesh_traits<Dim> >
 struct EBSpecsStruct {
 
     EBSpecsStruct(){}
@@ -50,7 +50,7 @@ struct EBSpecsStruct {
 //    void calcElemSizes(std::vector<std::vector<double> > &h){ 
     void calcElemSizes(std::vector<double> h[]){ 
 //        for(std::size_t i = 0; i < h.size(); i++)
-        for(std::size_t i = 0; i < Dim; i++)
+        for(unsigned i = 0; i < Dim; i++)
           for(unsigned j = min[i]; j < max[i]; j++)
             h[i][j] = blLength[i] / double(max[i] - min[i]);
     }
@@ -64,7 +64,7 @@ struct EBSpecsStruct {
 
 //! Template for STK internal mesh generation classes
 
-template<int Dim, class traits = albany_stk_mesh_traits<Dim> >
+template<unsigned Dim, class traits = albany_stk_mesh_traits<Dim> >
 
   class TmplSTKMeshStruct : public GenericSTKMeshStruct {
 
@@ -78,7 +78,7 @@ template<int Dim, class traits = albany_stk_mesh_traits<Dim> >
     typedef typename traits_type::default_element_side_type default_element_side_type;
 
     //! Default constructor
-    TmplSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
+    TmplSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params, bool adaptive,
                   const Teuchos::RCP<const Epetra_Comm>& comm);
 
     ~TmplSTKMeshStruct() {};
@@ -116,6 +116,9 @@ template<int Dim, class traits = albany_stk_mesh_traits<Dim> >
 
     bool periodic_x, periodic_y, periodic_z;
     bool triangles; // Defaults to false, meaning quad elements
+
+    // Create the mesh to support adaptation
+    bool adaptiveMesh;
 
   };
 
