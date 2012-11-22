@@ -57,10 +57,18 @@ private:
 
   //coefficients for Glen's law
   double A; 
-  double n; 
+  double n;
+
+  //coefficients for ISMIP-HOM test cases
+  double L; 
+  double alpha;
+
+  std::size_t numQPsZ; //number of quadrature points for z-integral 
+  std::string surfType; //type of surface, e.g., Test A 
 
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Cgrad;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
+  PHX::MDField<ScalarT,Cell,QuadPoint> epsilonB;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint> mu;
@@ -69,6 +77,8 @@ private:
   
   enum VISCTYPE {CONSTANT, GLENSLAW};
   VISCTYPE visc_type;
+  enum SURFTYPE {BOX, TESTA};
+  SURFTYPE surf_type;
  
 };
 }

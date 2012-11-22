@@ -53,9 +53,9 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> force;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> C;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Cgrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> CDot;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> U;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Ugrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> UDot;
   PHX::MDField<ScalarT,Cell,QuadPoint> muFELIX;
   PHX::MDField<ScalarT,Cell,QuadPoint> epsilonXX;
   PHX::MDField<ScalarT,Cell,QuadPoint> epsilonYY;

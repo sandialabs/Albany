@@ -30,11 +30,11 @@ StokesL1L2Resid(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
   wGradBF    (p.get<std::string>                   ("Weighted Gradient BF Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Gradient Data Layout") ),
-  C          (p.get<std::string>                   ("QP Variable Name"),
+  U          (p.get<std::string>                   ("QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  Cgrad      (p.get<std::string>                   ("Gradient QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Concentration Tensor Data Layout") ),
-  CDot       (p.get<std::string>                   ("QP Time Derivative Variable Name"),
+  Ugrad      (p.get<std::string>                   ("Gradient QP Variable Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Velocity Tensor Data Layout") ),
+  UDot       (p.get<std::string>                   ("QP Time Derivative Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
   force       (p.get<std::string>              ("Body Force Name"),
  	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
@@ -49,10 +49,10 @@ StokesL1L2Resid(const Teuchos::ParameterList& p) :
   Residual   (p.get<std::string>                   ("Residual Name"),
               p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") )
 {
-  this->addDependentField(C);
-  this->addDependentField(Cgrad);
+  this->addDependentField(U);
+  this->addDependentField(Ugrad);
   this->addDependentField(force);
-  //this->addDependentField(CDot);
+  //this->addDependentField(UDot);
   this->addDependentField(wBF);
   this->addDependentField(wGradBF);
   this->addDependentField(muFELIX);
@@ -71,7 +71,7 @@ StokesL1L2Resid(const Teuchos::ParameterList& p) :
   numQPs   = dims[2];
   numDims  = dims[3];
 
-  C.fieldTag().dataLayout().dimensions(dims);
+  U.fieldTag().dataLayout().dimensions(dims);
   vecDim  = dims[2];
 
 cout << " in FELIX Stokes L1L2 residual! " << endl;
@@ -93,10 +93,10 @@ void StokesL1L2Resid<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(C,fm);
-  this->utils.setFieldData(Cgrad,fm);
+  this->utils.setFieldData(U,fm);
+  this->utils.setFieldData(Ugrad,fm);
   this->utils.setFieldData(force,fm);
-  //this->utils.setFieldData(CDot,fm);
+  //this->utils.setFieldData(UDot,fm);
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(wGradBF,fm);
   this->utils.setFieldData(muFELIX,fm);

@@ -27,8 +27,8 @@ namespace FELIX {
 template<typename EvalT, typename Traits>
 EpsilonL1L2<EvalT, Traits>::
 EpsilonL1L2(const Teuchos::ParameterList& p) :
-  Cgrad      (p.get<std::string>                   ("Gradient QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Concentration Tensor Data Layout") ),
+  Ugrad      (p.get<std::string>                   ("Gradient QP Variable Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Velocity Tensor Data Layout") ),
   epsilonXX          (p.get<std::string>                   ("FELIX EpsilonXX QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ), 
   epsilonYY          (p.get<std::string>                   ("FELIX EpsilonYY QP Variable Name"),
@@ -41,7 +41,7 @@ EpsilonL1L2(const Teuchos::ParameterList& p) :
   Teuchos::ParameterList* visc_list = 
    p.get<Teuchos::ParameterList*>("Parameter List");
   
-  this->addDependentField(Cgrad);
+  this->addDependentField(Ugrad);
   
   this->addEvaluatedField(epsilonXX);
   this->addEvaluatedField(epsilonYY);
@@ -68,7 +68,7 @@ void EpsilonL1L2<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(Cgrad,fm);
+  this->utils.setFieldData(Ugrad,fm);
   this->utils.setFieldData(epsilonXX,fm); 
   this->utils.setFieldData(epsilonYY,fm); 
   this->utils.setFieldData(epsilonXY,fm); 
@@ -91,9 +91,9 @@ evaluateFields(typename Traits::EvalData workset)
 {
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
-       epsilonXX(cell,qp) = Cgrad(cell,qp,0,0); 
-       epsilonYY(cell,qp) = Cgrad(cell,qp,1,1); 
-       epsilonXY(cell,qp) = 0.5*(Cgrad(cell,qp,0,1) + Cgrad(cell,qp,1,0)); 
+       epsilonXX(cell,qp) = Ugrad(cell,qp,0,0); 
+       epsilonYY(cell,qp) = Ugrad(cell,qp,1,1); 
+       epsilonXY(cell,qp) = 0.5*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0)); 
        epsilonB(cell,qp)  = epsilonXX(cell,qp)*epsilonXX(cell,qp) + epsilonYY(cell,qp)*epsilonYY(cell,qp) 
                           + epsilonXX(cell,qp)*epsilonYY(cell,qp) + epsilonXY(cell,qp)*epsilonXY(cell,qp);   
     }

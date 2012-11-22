@@ -35,7 +35,7 @@ StokesL1L2( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   numDim(numDim_)
 {
   // Get number of species equations from Problem specifications
-  neq = params_->get("Number of Species", numDim);
+  neq = params_->get("Number of PDE Equations", numDim);
 }
 
 FELIX::StokesL1L2::
@@ -86,7 +86,7 @@ FELIX::StokesL1L2::constructDirichletEvaluators(
    // Construct Dirichlet evaluators for all nodesets and names
    std::vector<string> dirichletNames(neq);
    for (int i=0; i<neq; i++) {
-     std::stringstream s; s << "C" << i;
+     std::stringstream s; s << "U" << i;
      dirichletNames[i] = s.str();
    }
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
@@ -100,7 +100,7 @@ FELIX::StokesL1L2::getValidProblemParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidStokesL1L2ProblemParams");
 
-  validPL->set("Number of Species", 1, "Number of species eqs in GPAM equation set");
+  validPL->set("Number of PDE Equations", 1, "Number of PDE Equations in Stokes equation set");
   validPL->sublist("FELIX Viscosity", false, "");
   validPL->sublist("Body Force", false, "");
   return validPL;
