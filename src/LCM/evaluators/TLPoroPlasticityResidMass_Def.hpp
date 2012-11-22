@@ -42,8 +42,6 @@ namespace LCM {
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
     Source      (p.get<std::string>                   ("Source Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-    strain      (p.get<std::string>                   ("Strain Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
 	coordVec      (p.get<std::string>                   ("Coordinate Vector Name"),
 				 p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout") ),
     cubature      (p.get<Teuchos::RCP <Intrepid::Cubature<RealType> > >("Cubature")),
@@ -90,9 +88,6 @@ namespace LCM {
       this->addDependentField(Absorption);
     }
 
-
-
-    this->addDependentField(strain);
     this->addDependentField(J);
     this->addDependentField(defgrad);
     this->addEvaluatedField(TResidual);
@@ -103,7 +98,6 @@ namespace LCM {
     vector_dl->dimensions(dims);
 
     // Get data from previous converged time step
-    strainName = p.get<std::string>("Strain Name")+"_old";
     porosityName = p.get<std::string>("Porosity Name")+"_old";
     porePressureName = p.get<std::string>("QP Pore Pressure Name")+"_old";
     JName =p.get<std::string>("DetDefGrad Name")+"_old";
@@ -181,7 +175,6 @@ namespace LCM {
     if (enableTransient) this->utils.setFieldData(Tdot,fm);
     if (haveAbsorption)  this->utils.setFieldData(Absorption,fm);
     if (haveConvection && haverhoCp)  this->utils.setFieldData(rhoCp,fm);
-    this->utils.setFieldData(strain,fm);
     this->utils.setFieldData(J,fm);
     this->utils.setFieldData(defgrad,fm);
     this->utils.setFieldData(TResidual,fm);
@@ -195,7 +188,6 @@ evaluateFields(typename Traits::EvalData workset)
   typedef Intrepid::FunctionSpaceTools FST;
   typedef Intrepid::RealSpaceTools<ScalarT> RST;
 
-  Albany::MDArray strainold = (*workset.stateArrayPtr)[strainName];
   Albany::MDArray porosityold = (*workset.stateArrayPtr)[porosityName];
   Albany::MDArray porePressureold = (*workset.stateArrayPtr)[porePressureName];
   Albany::MDArray Jold = (*workset.stateArrayPtr)[JName];
@@ -212,12 +204,6 @@ evaluateFields(typename Traits::EvalData workset)
 		  TResidual(cell,node)=0.0;
 		  for (std::size_t qp=0; qp < numQPs; ++qp) {
 
-			      // set correction for 1st time step
-			 //     if (J(cell,qp) == 0)
-			 //   		  J(cell,qp) = 1.0;
-			 //     if (Jold(cell,qp) == 0)
-			 //     		  Jold(cell,qp) = 1.0;
-
  				  // Volumetric Constraint Term
  				  TResidual(cell,node) += -biotCoefficient(cell, qp)*(
  					 std::log(J(cell,qp)/Jold(cell,qp))
@@ -226,18 +212,12 @@ evaluateFields(typename Traits::EvalData workset)
 
  				  // Pore-fluid Resistance Term
  				  TResidual(cell,node) +=  -(
- 					//	 -(J(cell,qp)-Jold(cell,qp))*porePressure(cell,qp) +
- 					//	 J(cell,qp)*
  						 (porePressure(cell,qp)-porePressureold(cell, qp) ))
- 						          //        /  (J(cell,qp)*J(cell,qp))
              		                    		/biotModulus(cell, qp)*
              		                    		wBF(cell, node, qp);
 			  }
 		  }
 	  }
-
-
-
 
   // Pore-Fluid Diffusion Term
 

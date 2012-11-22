@@ -664,6 +664,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<string>("Strain Name", "Strain");
     ev = rcp(new LCM::Strain<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
+
+    /* For some reason the save field below does not work.
      p = stateMgr.registerStateVariable("Strain",
                                       dl->qp_tensor,
                                         dl->dummy,
@@ -673,6 +675,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                        true);
      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
+     */
   }
 
   if (haveMechEq) { // Elastic Modulus
