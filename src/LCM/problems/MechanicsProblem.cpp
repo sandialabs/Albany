@@ -66,7 +66,7 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 		  haveMech, haveMechEq);
   getVariableType(params->sublist("Heat"), "None", heatType, 
 		  haveHeat, haveHeatEq);
-  getVariableType(params->sublist("PorePressure"), "None", pressureType, 
+  getVariableType(params->sublist("Pore Pressure"), "None", pressureType,
 		  havePressure, havePressureEq);
   getVariableType(params->sublist("Transport"), "None", transportType, 
 		  haveTransport, haveTransportEq);
@@ -89,7 +89,7 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
        << std::endl
        << "\tHeat variables:         " << variableTypeToString(heatType) 
        << std::endl
-       << "\tPorePressure variables: " << variableTypeToString(pressureType) 
+       << "\tPore Pressure variables: " << variableTypeToString(pressureType)
        << std::endl
        << "\tTransport variables:    " << variableTypeToString(transportType) 
        << std::endl;
@@ -115,9 +115,11 @@ void
 Albany::MechanicsProblem::getRBMInfoForML(
    int& numPDEs, int& numElasticityDim, int& numScalar,  int& nullSpaceDim)
 {
-  numPDEs = numDim;
+  // Need numPDEs should be numDim + nDOF for other governing equations  -SS
+
+  numPDEs = numDim +1;
   numElasticityDim = numDim;
-  numScalar = 0;
+  numScalar = 1;
   if (numDim == 1) {nullSpaceDim = 0; }
   else {
     if (numDim == 2) {nullSpaceDim = 3; }
@@ -172,6 +174,11 @@ Albany::MechanicsProblem::constructDirichletEvaluators(
   dirichletNames[0] = "X";
   if (neq>1) dirichletNames[1] = "Y";
   if (neq>2) dirichletNames[2] = "Z";
+
+  // Need DBC for multiphysics problem  -SS
+  if (neq>3) dirichletNames[3] = "porePressure";
+
+
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                        this->params, this->paramLib);
@@ -188,7 +195,7 @@ Albany::MechanicsProblem::getValidProblemParameters() const
                        "Filename of material database xml file");
   validPL->sublist("Mech", false, "");
   validPL->sublist("Heat", false, "");
-  validPL->sublist("PorePressure", false, "");
+  validPL->sublist("Pore Pressure", false, "");
   validPL->sublist("Transport", false, "");
   
 

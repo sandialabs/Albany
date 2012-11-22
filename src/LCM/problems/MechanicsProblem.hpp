@@ -1836,13 +1836,20 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
 
     if (haveMechEq) { // Residual
-      RCP<ParameterList> p = rcp(new ParameterList("Residual"));
+      RCP<ParameterList> p = rcp(new ParameterList("Displacement Residual"));
       //Input
       p->set<string>("Stress Name", cauchy);
       p->set<string>("DefGrad Name", "F");
       p->set<string>("DetDefGrad Name", "J");
       p->set<string>("Weighted Gradient BF Name", "wGrad BF");
       p->set<string>("Weighted BF Name", "wBF");
+
+      if (havePressureEq) {
+    	  p->set<string>("Pore Pressure Name", "Pore Pressure");
+    	  p->set<string>("Biot Coefficient Name", "Biot Coefficient");
+
+      }
+
       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
       //Output
       p->set<string>("Residual Name", "Displacement Residual");
@@ -1893,7 +1900,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   }
 
   if (havePressureEq) {  // Porosity
-    RCP<ParameterList> p = rcp(new ParameterList);
+    RCP<ParameterList> p = rcp(new ParameterList("Porosity"));
 
     p->set<string>("Porosity Name", "Porosity");
     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
@@ -1904,7 +1911,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Porosity");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-    double initPorosity = paramList.get("Value", 0.0);
+    double initPorosity = paramList.get("Value", 0.1);
 
     // Setting this turns on dependence of strain and pore pressure)
     p->set<string>("Strain Name", "Strain");
@@ -2100,7 +2107,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     //Output
-
     p->set<string>("Residual Name", "Pore Pressure Residual");
     p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
 
