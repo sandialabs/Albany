@@ -889,6 +889,39 @@ namespace LCM {
   }
 
   //
+  // R^N vector 2-norm square for fast distance calculations.
+  // \return \f$ u \cdot u \f$
+  //
+  template<typename T>
+  inline
+  T
+  norm_square(Vector<T> const & u)
+  {
+    const Index
+    N = u.get_dimension();
+
+    T s = 0.0;
+
+    switch (N) {
+
+    default:
+      s = dot(u, u);
+      break;
+
+    case 3:
+      s = u(0)*u(0) + u(1)*u(1) + u(2)*u(2);
+      break;
+
+    case 2:
+      s = u(0)*u(0) + u(1)*u(1);
+      break;
+
+    }
+
+    return s;
+  }
+
+  //
   // R^N vector 1-norm
   // \return \f$ \sum_i |u_i| \f$
   //
