@@ -275,7 +275,7 @@ void GursonFD<EvalT, Traits>::evaluateFields(
         ScalarT fvoid = voidVolumeold(cell, qp);
         ScalarT eq = eqpsOld(cell, qp);
 
-        ScalarT Phi = compute_Phi(s, p, fvoid, eq, K, Y, siginf, delta,
+        ScalarT Phi = YeldFunction(s, p, fvoid, eq, K, Y, siginf, delta,
         			J(cell, qp),elasticModulus(cell, qp));
 
         ScalarT dgam (0.0);
@@ -301,7 +301,7 @@ void GursonFD<EvalT, Traits>::evaluateFields(
           // local N-R loop
           while (true)
           {
-            compute_ResidJacobian(X, R, dRdX, p, fvoid, eq, s,
+            ResidualJacobian(X, R, dRdX, p, fvoid, eq, s,
             shearModulus, bulkModulus, K, Y,siginf, delta, J(cell, qp));
 
             normR = 0.0;
@@ -340,6 +340,20 @@ void GursonFD<EvalT, Traits>::evaluateFields(
           fvoid = X[2];
           eq    = X[3];
 
+          // accounts for void coalescence
+          ScalarT fvoidStar = fvoid;
+		  if ((fvoid > fc)&&(fvoid < ff))
+		  {
+			if((ff - fc) != 0.0) {
+				fvoidStar = fc + (fvoid - fc) * (1./q1 - fc) / (ff - fc);
+			}
+		  }
+		  else if(fvoid >= ff)
+		  {
+			fvoidStar = 1. / q1;
+			if(fvoidStar > 1.0) fvoidStar = 1.0;
+		  }
+
           for (std::size_t i = 0; i < numDims; ++i)
             for (std::size_t j = 0; j < numDims; ++j)
               s(i, j) = (1. / (1. + 2. * shearModulus * dgam)) * s(i, j);
@@ -371,7 +385,7 @@ void GursonFD<EvalT, Traits>::evaluateFields(
               for (std::size_t j = 0; j < numDims; ++j) {
                 dPhi(i, j) = s(i, j);
               }
-              dPhi(i, i) += 1. / 3. * q1 * q2 * Ybar * fvoid * std::sinh(tmp);
+              dPhi(i, i) += 1. / 3. * q1 * q2 * Ybar * fvoidStar * std::sinh(tmp);
             }
 
             Tensor A = dgam * dPhi;
@@ -445,7 +459,7 @@ void GursonFD<EvalT, Traits>::evaluateFields(
 // all local functions
 template<typename EvalT, typename Traits>
 typename EvalT::ScalarT
-GursonFD<EvalT, Traits>::compute_Phi(
+GursonFD<EvalT, Traits>::YeldFunction(
   Tensor const & s, ScalarT const & p, ScalarT const & fvoid, ScalarT const & eq,
   ScalarT const & K, ScalarT const & Y, ScalarT const & siginf,
   ScalarT const & delta,ScalarT const & Jacobian, ScalarT const & E)
@@ -471,7 +485,22 @@ GursonFD<EvalT, Traits>::compute_Phi(
 
     ScalarT tmp = 1.5 * q2 * p / Ybar;
 
-    ScalarT psi = 1. + q3 * fvoid * fvoid - 2. * q1 * fvoid * std::cosh(tmp);
+    // accounts for void coalescence
+    ScalarT fvoidStar = fvoid;
+    if ((fvoid > fc)&&(fvoid < ff))
+    {
+      if((ff - fc) != 0.0) {
+    	fvoidStar = fc + (fvoid - fc) * (1./q1 - fc) / (ff - fc);
+      }
+    }
+    else if(fvoid >= ff)
+    {
+      fvoidStar = 1. / q1;
+      if(fvoidStar > 1.0) fvoidStar = 1.0;
+    }
+
+    ScalarT psi = 1. + q3 * fvoidStar * fvoidStar
+    				- 2. * q1 * fvoidStar * std::cosh(tmp);
 
     // a quadratic representation will look like:
     ScalarT Phi = 0.5 * LCM::dotdot(s, s) - psi * Ybar * Ybar / 3.0;
@@ -486,11 +515,12 @@ GursonFD<EvalT, Traits>::compute_Phi(
 }
 
 template<typename EvalT, typename Traits>
-void GursonFD<EvalT, Traits>::compute_ResidJacobian(std::vector<ScalarT> & X,
+void GursonFD<EvalT, Traits>::ResidualJacobian(std::vector<ScalarT> & X,
       std::vector<ScalarT> & R, std::vector<ScalarT> & dRdX,  const ScalarT & p,
       const ScalarT & fvoid, const ScalarT & eq, Tensor & s,
-      ScalarT & shearModulus, ScalarT & bulkModulus, ScalarT & K, ScalarT & Y, ScalarT & siginf,
-      ScalarT & delta, ScalarT & Jacobian)
+      const ScalarT & shearModulus, const ScalarT & bulkModulus,
+      const ScalarT & K, const ScalarT & Y, const ScalarT & siginf,
+      const ScalarT & delta, const ScalarT & Jacobian)
 {
     ScalarT sq32 = std::sqrt(3. / 2.);
     ScalarT sq23 = std::sqrt(2. / 3.);
@@ -508,7 +538,22 @@ void GursonFD<EvalT, Traits>::compute_ResidJacobian(std::vector<ScalarT> & X,
       Xfad[i] = DFadType(4, i, Xval[i]);
     }
 
-    DFadType dgam = Xfad[0], pfad = Xfad[1], fvoidfad = Xfad[2], eqfad = Xfad[3];
+    DFadType dgam = Xfad[0], pFad = Xfad[1], fvoidFad = Xfad[2], eqFad = Xfad[3];
+
+    // accounts for void coalescence
+    DFadType fvoidFadStar = fvoidFad;
+
+    if ((fvoidFad > fc)&&(fvoidFad < ff))
+    {
+      if((ff - fc) != 0.0) {
+    	fvoidFadStar = fc + (fvoidFad - fc) * (1./q1 - fc) / (ff - fc);
+      }
+    }
+    else if(fvoidFad >= ff)
+    {
+      fvoidFadStar = 1. / q1;
+      if(fvoidFadStar > 1.0) fvoidFadStar = 1.0;
+    }
 
     // have to break down these equations, otherwise I get compile error
     // Yield strength
@@ -516,41 +561,41 @@ void GursonFD<EvalT, Traits>::compute_ResidJacobian(std::vector<ScalarT> & X,
 
     if (isSaturationH)
     { // original saturation type hardening
-      DFadType h(0.0); // h = siginf * (1. - std::exp(-delta*eqfad)) + K * eqfad;
-      h = delta * eqfad;
+      DFadType h(0.0); // h = siginf * (1. - std::exp(-delta*eqFad)) + K * eqFad;
+      h = delta * eqFad;
       h = -1. * h;
       h = std::exp(h);
       h = 1. - h;
       h = siginf * h;
-      h = h + K * eqfad;
+      h = h + K * eqFad;
 
       Ybar = Y + h;
     }
     else
     { // powerlaw hardening
       ScalarT E = 9. * bulkModulus * shearModulus / (3. * bulkModulus + shearModulus);
-      DFadType x(0.0); // x = 1. + E * eqfad / Y;
-      x = E * eqfad;
+      DFadType x(0.0); // x = 1. + E * eqFad / Y;
+      x = E * eqFad;
       x = x / Y;
       x = 1.0 + x;
-      //DFadType x = eqfad + eq0;
+      //DFadType x = eqFad + eq0;
       Ybar = Y * std::pow(x, N);
     }
 
     // Kirchhoff yield stress
     if (isHyper) Ybar = Ybar * Jacobian;
 
-    DFadType tmp = pfad / Ybar;
+    DFadType tmp = pFad / Ybar;
     tmp = 1.5 * tmp;
     tmp = q2 * tmp;
 
     DFadType fvoid2;
-    fvoid2 = fvoidfad * fvoidfad;
+    fvoid2 = fvoidFadStar * fvoidFadStar;
     fvoid2 = q3 * fvoid2;
 
     DFadType psi;
     psi = std::cosh(tmp);
-    psi = fvoidfad * psi;
+    psi = fvoidFadStar * psi;
     psi = 2. * psi;
     psi = q1 * psi;
     psi = fvoid2 - psi;
@@ -586,21 +631,21 @@ void GursonFD<EvalT, Traits>::compute_ResidJacobian(std::vector<ScalarT> & X,
     DFadType deq(0.0);
     if (smag != 0.0)
     {
-      deq = dgam * (smag2 + q1 * q2 * pfad * Ybar * fvoidfad * std::sinh(tmp))
-          / (1. - fvoidfad) / Ybar;
+      deq = dgam * (smag2 + q1 * q2 * pFad * Ybar * fvoidFadStar * std::sinh(tmp))
+          / (1. - fvoidFad) / Ybar;
     }
     else
     {
-      deq = dgam * (q1 * q2 * pfad * Ybar * fvoidfad * std::sinh(tmp))
-          / (1. - fvoidfad) / Ybar;
+      deq = dgam * (q1 * q2 * pFad * Ybar * fvoidFadStar * std::sinh(tmp))
+          / (1. - fvoidFad) / Ybar;
     }
     // void nucleation
     DFadType dfn(0.0);
     DFadType An(0.0), eratio(0.0);
-    eratio = -0.5 * (eqfad - eN) * (eqfad - eN) / sN / sN;
+    eratio = -0.5 * (eqFad - eN) * (eqFad - eN) / sN / sN;
 
     const double pi = acos(-1.0);
-    if (pfad >= 0.0)
+    if (pFad >= 0.0)
     {
       An = fN / sN / (std::sqrt(2.0 * pi)) * std::exp(eratio);
     }
@@ -610,12 +655,12 @@ void GursonFD<EvalT, Traits>::compute_ResidJacobian(std::vector<ScalarT> & X,
     DFadType dfg(0.0);
     if (taue > 0.0)
     {
-      dfg = dgam * q1 * q2 * (1. - fvoidfad) * fvoidfad * Ybar * std::sinh(tmp)
-          + sq23 * dgam * kw * fvoidfad * omega * smag;
+      dfg = dgam * q1 * q2 * (1. - fvoidFad) * fvoidFadStar * Ybar * std::sinh(tmp)
+          + sq23 * dgam * kw * fvoidFad * omega * smag;
     }
     else
     {
-      dfg = dgam * q1 * q2 * (1. - fvoidfad) * fvoidfad * Ybar * std::sinh(tmp);
+      dfg = dgam * q1 * q2 * (1. - fvoidFad) * fvoidFad * Ybar * std::sinh(tmp);
     }
 
     DFadType Phi;
@@ -624,10 +669,10 @@ void GursonFD<EvalT, Traits>::compute_ResidJacobian(std::vector<ScalarT> & X,
 
     // local system of equations
     Rfad[0] = Phi;
-    Rfad[1] = pfad - p
-        + dgam * q1 * q2 * bulkModulus * Ybar * fvoidfad * std::sinh(tmp);
-    Rfad[2] = fvoidfad - fvoid - dfg - dfn;
-    Rfad[3] = eqfad - eq - deq;
+    Rfad[1] = pFad - p
+        + dgam * q1 * q2 * bulkModulus * Ybar * fvoidFad * std::sinh(tmp);
+    Rfad[2] = fvoidFad - fvoid - dfg - dfn;
+    Rfad[3] = eqFad - eq - deq;
 
     // get ScalarT Residual
     for (int i = 0; i < 4; i++)

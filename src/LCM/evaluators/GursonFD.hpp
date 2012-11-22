@@ -44,17 +44,18 @@ namespace LCM {
     // all local functions used in computing GursonFD model stress:
 
     ScalarT
-    compute_Phi(Tensor const & s, ScalarT const & p, ScalarT const & fvoid,
+    YeldFunction(Tensor const & s, ScalarT const & p, ScalarT const & fvoid,
         ScalarT const & eq, ScalarT const & K, ScalarT const & Y,
         ScalarT const & siginf,ScalarT const & delta,
         ScalarT const & Jacobian, ScalarT const & E);
 
     void
-    compute_ResidJacobian(std::vector<ScalarT> & X, std::vector<ScalarT> & R,
-        std::vector<ScalarT> & dRdX, const ScalarT & p, const ScalarT & fvoid,
-        const ScalarT & eq, Tensor & s, ScalarT & mu,
-        ScalarT & kappa, ScalarT & K, ScalarT & Y, ScalarT & siginf,
-        ScalarT & delta, ScalarT & Jacobian);
+    ResidualJacobian(std::vector<ScalarT> & X,
+      std::vector<ScalarT> & R, std::vector<ScalarT> & dRdX,  const ScalarT & p,
+      const ScalarT & fvoid, const ScalarT & eq, Tensor & s,
+      const ScalarT & shearModulus, const ScalarT & bulkModulus,
+      const ScalarT & K, const ScalarT & Y, const ScalarT & siginf,
+      const ScalarT & delta, const ScalarT & Jacobian);
 
     //Input
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> defgrad;
