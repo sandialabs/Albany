@@ -830,9 +830,6 @@ Albany::TLPoroPlasticityProblem::constructEvaluators(
      p->set<string>("Weighted Gradient BF Name", "wGrad BF");
      p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
-     p->set<string>("Strain Name", "Strain");
-     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
      // Inputs: X, Y at nodes, Cubature, and Basis
      p->set<string>("Coordinate Vector Name","Coord Vec");
      p->set< RCP<DataLayout> >("Coordinate Data Layout", dl->vertices_vector);

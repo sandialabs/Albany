@@ -575,7 +575,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   if (havePressureEq) {
     Teuchos::ArrayRCP<string> dof_names(1);
     Teuchos::ArrayRCP<string> resid_names(1);
-    dof_names[0] = "PorePressure";
+    dof_names[0] = "Pore Pressure";
     resid_names[0] = dof_names[0]+" Residual";
 
     fm0.template registerEvaluator<EvalT>
@@ -606,7 +606,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       (evalUtils.constructScatterResidualEvaluator(false, 
                                                    resid_names,
                                                    offset,
-                                                   "Scatter PorePressure"));
+                                                   "Scatter Pore Pressure"));
     offset++;
   }
   else if (havePressure) { // constant Pressure
@@ -664,15 +664,18 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<string>("Strain Name", "Strain");
     ev = rcp(new LCM::Strain<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
-    // p = stateMgr.registerStateVariable("Strain",
-    //                                    dl->qp_tensor,
-    //                                    dl->dummy,
-    //                                    ebName,
-    //                                    "scalar",
-    //                                    0.0,
-    //                                    true);
-    // ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-    // fm0.template registerEvaluator<EvalT>(ev);
+
+    /* For some reason the save field below does not work.
+     p = stateMgr.registerStateVariable("Strain",
+                                      dl->qp_tensor,
+                                        dl->dummy,
+                                        ebName,
+                                        "scalar",
+                                       0.0,
+                                       true);
+     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+     fm0.template registerEvaluator<EvalT>(ev);
+     */
   }
 
   if (haveMechEq) { // Elastic Modulus
@@ -1802,6 +1805,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       ev = rcp(new LCM::DefGrad<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
 
+
       // optional output
       bool outputFlag(true);
       if ( materialDB->isElementBlockParam(ebName,"Output Deformation Gradient") )
@@ -1817,7 +1821,19 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                          outputFlag);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
+
+      // need J and J_old to perform time integration for poromechanics problem
+      p = stateMgr.registerStateVariable("J",
+                                                 dl->qp_scalar,
+                                                 dl->dummy,
+                                                 ebName,
+                                                 "scalar",
+                                                 1.0,
+                                                 true);
+        ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+         fm0.template registerEvaluator<EvalT>(ev);
     }
+
 
     if (haveMechEq) { // Residual
       RCP<ParameterList> p = rcp(new ParameterList("Residual"));
@@ -1854,7 +1870,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     RCP<ParameterList> p = rcp(new ParameterList("Gradient Element Length"));
 
     //Input
-    p->set<string>("Unit Gradient QP Variable Name", "PorePressure Gradient");
+    p->set<string>("Unit Gradient QP Variable Name", "Pore Pressure Gradient");
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     p->set<string>("Gradient BF Name", "Grad BF");
@@ -1895,13 +1911,15 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
     // porosity update based on Coussy's poromechanics (see p.79)
-    p->set<string>("QP Pore Pressure Name", "PorePressure");
+    p->set<string>("QP Pore Pressure Name", "Pore Pressure");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<string>("Biot Coefficient Name", "Biot Coefficient");
 
+    // Output Porosity
     ev = rcp(new LCM::Porosity<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+
     p = stateMgr.registerStateVariable("Porosity",
                                        dl->qp_scalar, 
                                        dl->dummy, 
@@ -1909,8 +1927,21 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                        "scalar",
                                        initPorosity,
                                        true);
+
+
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+
+    // need p and p_old to perform time integration.
+    p = stateMgr.registerStateVariable("Pore Pressure",
+                                           dl->qp_scalar,
+                                           dl->dummy,
+                                           ebName,
+                                           "scalar",
+                                          0.0,
+                                           true);
+        ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
   }
 
   if (havePressureEq) { // Biot Coefficient
@@ -1928,6 +1959,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     ev = rcp(new LCM::BiotCoefficient<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+
     p = stateMgr.registerStateVariable("Biot Coefficient",
                                        dl->qp_scalar,
                                        dl->dummy,
@@ -2014,7 +2046,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   }
 
   if (havePressureEq) { // Pore Pressure Resid
-    RCP<ParameterList> p = rcp(new ParameterList("Pore Pressure Resid"));
+    RCP<ParameterList> p = rcp(new ParameterList("Pore Pressure Residual"));
 
     //Input
 
@@ -2029,10 +2061,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     // Input from cubature points
     p->set<string>("Element Length Name", "Gradient Element Length");
-    p->set<string>("QP Pore Pressure Name", "PorePressure");
+    p->set<string>("QP Pore Pressure Name", "Pore Pressure");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<string>("QP Time Derivative Variable Name", "PorePressure");
+    p->set<string>("QP Time Derivative Variable Name", "Pore Pressure");
 
     p->set<string>("Material Property Name", "Stabilization Parameter");
     p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
@@ -2041,7 +2073,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<string>("Biot Coefficient Name", "Biot Coefficient");
     p->set<string>("Biot Modulus Name", "Biot Modulus");
 
-    p->set<string>("Gradient QP Variable Name", "PorePressure Gradient");
+    p->set<string>("Gradient QP Variable Name", "Pore Pressure Gradient");
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
@@ -2068,16 +2100,23 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     //Output
-    p->set<string>("Residual Name", "PorePressure Residual");
+
+    p->set<string>("Residual Name", "Pore Pressure Residual");
     p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
 
     ev = rcp(new LCM::TLPoroPlasticityResidMass<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+
   }
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
     PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter", dl->dummy);
     fm0.requireField<EvalT>(res_tag);
+
+    if (havePressureEq) {
+    PHX::Tag<typename EvalT::ScalarT> res_tag2("Scatter Pore Pressure", dl->dummy);
+    fm0.requireField<EvalT>(res_tag2);
+    }
     return res_tag.clone();
   }
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {

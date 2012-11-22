@@ -163,8 +163,6 @@ namespace LCM {
         FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
         FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
 
-
-
     	  }
       }
 
