@@ -311,6 +311,7 @@ namespace Albany {
 #include "KCPermeability.hpp"
 #include "Porosity.hpp"
 #include "TLPoroPlasticityResidMass.hpp"
+#include "SurfaceTLPoroMassResidual.hpp"
 #include "Strain.hpp"
 
 //------------------------------------------------------------------------------
