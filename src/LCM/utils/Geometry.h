@@ -297,15 +297,18 @@ namespace LCM {
   minimum_distances(std::vector< std::vector<T> > const & distances);
 
   ///
-  /// Given two arbitrary points, define a hyperplane that is equidistant
-  /// the points. Given a box defined by its corners, determine whether the box
-  /// lies entirely on the side of the first arbitrary point.
+  /// Given a set of points and the corners of a box:
+  /// Determine the closest point to the center of the box.
+  /// For the remaining points, define hyperplanes that are
+  /// equidistant to them and the closest point to the center of
+  /// the box.
+  /// Determine whether the box lies entirely on the side of the hyperplane
+  /// where the closest point to the center of the box lies as well.
   ///
   template<typename T>
-  bool
-  box_closest_to_first(
-      Vector<T> const & p,
-      Vector<T> const & q,
+  std::pair<Index, std::vector<bool> >
+  box_proximity_to_points(
+      std::vector< Vector<T> > const & points,
       Vector<T> const & lower_corner,
       Vector<T> const & upper_corner);
 

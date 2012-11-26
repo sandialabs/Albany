@@ -106,7 +106,8 @@ namespace LCM {
     discretization_ptr_(Teuchos::null),
     tolerance_(0),
     maximum_divisions_(0),
-    maximum_iterations_(0)
+    maximum_iterations_(0),
+    initializer_scheme_(PARTITION::HYPERGRAPH)
   {
     return;
   }
@@ -124,7 +125,8 @@ namespace LCM {
       discretization_ptr_(Teuchos::null),
       tolerance_(0),
       maximum_divisions_(0),
-      maximum_iterations_(0)
+      maximum_iterations_(0),
+      initializer_scheme_(PARTITION::HYPERGRAPH)
   {
     //Teuchos::GlobalMPISession mpiSession(&argc,&argv);
 
@@ -347,6 +349,24 @@ namespace LCM {
   ConnectivityArray::SetMaximumIterations(Index maximum_iterarions)
   {
     maximum_iterations_ = maximum_iterarions;
+  }
+
+  //
+  // \param Initializer scheme
+  //
+  void
+  ConnectivityArray::SetInitializerScheme(PARTITION::Scheme initializer_scheme)
+  {
+    initializer_scheme_ = initializer_scheme;
+  }
+
+  //
+  // \return Initializer scheme
+  //
+  PARTITION::Scheme
+  ConnectivityArray::GetInitializerScheme() const
+  {
+    return initializer_scheme_;
   }
 
   //
@@ -583,6 +603,99 @@ namespace LCM {
   }
 
   //
+  // \return Partition centroids
+  //
+  std::vector< Vector<double> >
+  ConnectivityArray::GetPartitionCentroids() const
+  {
+    std::map<int, int>
+    partitions = GetPartitions();
+
+    ScalarMap
+    element_volumes = GetVolumes();
+
+    ScalarMap
+    partition_volumes = GetPartitionVolumes();
+
+    const Index
+    number_partitions = partition_volumes.size();
+
+    std::vector< Vector<double> >
+    partition_centroids(number_partitions);
+
+    for (Index i = 0; i < number_partitions; ++i) {
+      partition_centroids[i].set_dimension(GetDimension());
+      partition_centroids[i].clear();
+    }
+
+    // Determine number of nodes that define element topology
+    const Index
+    nodes_per_element = GetNodesPerElement();
+
+    for (std::map<int, int>::const_iterator partitions_iterator =
+        partitions.begin();
+        partitions_iterator != partitions.end();
+        ++partitions_iterator) {
+
+      int
+      element = (*partitions_iterator).first;
+
+      int
+      partition = (*partitions_iterator).second;
+
+      AdjacencyMap::const_iterator
+      elements_iterator = connectivity_.find(element);
+
+      if (elements_iterator == connectivity_.end()) {
+        std::cerr << "Cannot find element in partition centroids." << element;
+        std::cerr << std::endl;
+        exit(1);
+      }
+
+      IDList const &
+      node_list = (*elements_iterator).second;
+
+      std::vector< LCM::Vector<double> >
+      element_nodes;
+
+      for (IDList::size_type i = 0; i < nodes_per_element; ++i) {
+
+        PointMap::const_iterator
+        nodes_iterator = nodes_.find(node_list[i]);
+
+        assert(nodes_iterator != nodes_.end());
+
+        element_nodes.push_back((*nodes_iterator).second);
+
+      }
+
+      const Vector<double>
+      element_centroid = centroid(element_nodes);
+
+      ScalarMap::const_iterator
+      volumes_iterator = element_volumes.find(element);
+
+      if (volumes_iterator == element_volumes.end()) {
+        std::cerr << "Cannot find volume for element " << element;
+        std::cerr << std::endl;
+        exit(1);
+      }
+
+      double
+      element_volume = (*volumes_iterator).second;
+
+      partition_centroids[partition] += element_volume * element_centroid;
+
+    }
+
+    for (Index i = 0; i < number_partitions; ++i) {
+      partition_centroids[i] = partition_centroids[i] / partition_volumes[i];
+    }
+
+    return partition_centroids;
+  }
+
+  //
   // \return Centroids for each element
   //
   PointMap
@@ -769,7 +882,7 @@ namespace LCM {
       const int
       element = (*elements_iter).first;
 
-      if ((element + 1) % 100 == 0) {
+      if ((element + 1) % 1000 == 0) {
         std::cout << "Processing element: " << element + 1;
         std::cout << "/" << number_of_elements << std::endl;
       }
@@ -836,6 +949,7 @@ namespace LCM {
       element_type = GetType();
 
       switch (element_type) {
+
       default:
         std::cerr << "ERROR: Unknown element type in voxelization";
         std::cerr << std::endl;
@@ -1320,6 +1434,10 @@ namespace LCM {
 
     switch (partition_scheme) {
 
+    case PARTITION::RANDOM:
+      partitions = PartitionRandom(length_scale);
+      break;
+
     case PARTITION::HYPERGRAPH:
       partitions = PartitionHyperGraph(length_scale);
       break;
@@ -1332,8 +1450,12 @@ namespace LCM {
       partitions = PartitionKMeans(length_scale);
       break;
 
-    case PARTITION::INEQUALITY:
-      partitions = PartitionKMeansInequality(length_scale);
+    case PARTITION::SEQUENTIAL:
+      partitions = PartitionSequential(length_scale);
+      break;
+
+    case PARTITION::KDTREE:
+      partitions = PartitionKDTree(length_scale);
       break;
 
     default:
@@ -1347,6 +1469,103 @@ namespace LCM {
     partitions_ = RenumberPartitions(partitions);
 
     return partitions_;
+
+  }
+
+  //
+  // \param Collection of centers
+  // \return Partition map that assigns each element to the
+  // closest center to its centroid
+  //
+  std::map<int, int>
+  ConnectivityArray::PartitionByCenters(
+      std::vector< Vector<double> > const & centers)
+  {
+    const Index
+    number_partitions = centers.size();
+
+    // Partition map.
+    std::map<int, int>
+    partitions;
+
+    // Keep track of which partitions have been assigned elements.
+    std::set<Index>
+    unassigned_partitions;
+
+    for (Index partition = 0; partition < number_partitions; ++partition) {
+      unassigned_partitions.insert(partition);
+    }
+
+    // Determine number of nodes that define element topology
+    const Index
+    nodes_per_element = GetNodesPerElement();
+
+    std::ofstream centroids_ofs("centroids.csv");
+
+    centroids_ofs << "X,Y,Z" << std::endl;
+    for (AdjacencyMap::const_iterator
+        elements_iter = connectivity_.begin();
+        elements_iter != connectivity_.end();
+        ++elements_iter) {
+
+      int const &
+      element = (*elements_iter).first;
+
+      IDList const &
+      node_list = (*elements_iter).second;
+
+      std::vector< LCM::Vector<double> >
+      element_nodes;
+
+      for (IDList::size_type i = 0; i < nodes_per_element; ++i) {
+
+        PointMap::const_iterator
+        nodes_iter = nodes_.find(node_list[i]);
+
+        assert(nodes_iter != nodes_.end());
+
+        element_nodes.push_back((*nodes_iter).second);
+
+      }
+
+      const Vector<double>
+      element_centroid = centroid(element_nodes);
+
+      centroids_ofs << element_centroid << std::endl;
+
+      const Index
+      partition = closest_point(element_centroid, centers);
+
+      partitions[element] = partition;
+
+      std::set<Index>::const_iterator
+      it = unassigned_partitions.find(partition);
+
+      if (it != unassigned_partitions.end()) {
+        unassigned_partitions.erase(it);
+      }
+
+    }
+
+    if (unassigned_partitions.size() > 0) {
+      std::cout << "WARNING: The following partitions were not" << std::endl;
+      std::cout << "assigned any elements (mesh too coarse?):" << std::endl;
+
+      for (std::set<Index>::const_iterator it = unassigned_partitions.begin();
+          it != unassigned_partitions.end();
+          ++it) {
+        std::cout << (*it) << std::endl;
+      }
+
+    }
+
+    std::ofstream generators_ofs("centers.csv");
+    generators_ofs << "X,Y,Z" << std::endl;
+    for (Index i = 0; i < centers.size(); ++i) {
+      generators_ofs << centers[i] << std::endl;
+    }
+
+    return partitions;
 
   }
 
@@ -1614,26 +1833,39 @@ namespace LCM {
     number_partitions = GetNumberPartitions(length_scale);
 
     Vector<double>
-    min;
+    lower_corner;
 
     Vector<double>
-    max;
+    upper_corner;
 
-    boost::tie(min, max) = BoundingBox();
+    boost::tie(lower_corner, upper_corner) = BoundingBox();
 
-    lower_corner_ = min;
-    upper_corner_ = max;
+    lower_corner_ = lower_corner;
+    upper_corner_ = upper_corner;
 
     Vector<double>
-    span = max - min;
+    span = upper_corner - lower_corner;
 
     Voxelize();
 
-    // Create initial generators
-    std::vector< Vector<double> >
-    generators = InitializeKmeans(number_partitions);
+    //
+    // Create initial centers
+    //
 
+    // Partition with initializer
+    const PARTITION::Scheme
+    initializer_scheme = GetInitializerScheme();
+
+    Partition(initializer_scheme, length_scale);
+
+    // Compute partition centroids and use those as initial centers
+
+    std::vector< Vector<double> >
+    centers = GetPartitionCentroids();
+
+    //
     // K-means iteration
+    //
     const Index
     max_iterations = GetMaximumIterations();
 
@@ -1641,7 +1873,7 @@ namespace LCM {
     number_iterations = 0;
 
     const double
-    diagonal_distance = norm(max - min);
+    diagonal_distance = norm(upper_corner - lower_corner);
 
     const double
     tolerance = GetTolerance() * diagonal_distance;
@@ -1661,14 +1893,14 @@ namespace LCM {
     domain_points;
 
     LCM::Vector<double>
-    p(min.get_dimension());
+    p(lower_corner.get_dimension());
 
     for (Index i = 0; i < voxels_.size(); ++i) {
-      p(0) = (i + 0.5) * span(0) / voxels_.size() + min(0);
+      p(0) = (i + 0.5) * span(0) / voxels_.size() + lower_corner(0);
       for (Index j = 0; j < voxels_[0].size(); ++j) {
-        p(1) = (j + 0.5) * span(1) / voxels_[0].size() + min(1);
+        p(1) = (j + 0.5) * span(1) / voxels_[0].size() + lower_corner(1);
         for (Index k = 0; k < voxels_[0][0].size(); ++k) {
-          p(2) = (k + 0.5) * span(2) / voxels_[0][0].size() + min(2);
+          p(2) = (k + 0.5) * span(2) / voxels_[0][0].size() + lower_corner(2);
 
           if (voxels_[i][j][k] == true) {
             domain_points.push_back(p);
@@ -1692,7 +1924,7 @@ namespace LCM {
       point_to_generator(number_points);
 
       for (Index i = 0; i < domain_points.size(); ++i) {
-        point_to_generator[i] = closest_point(domain_points[i], generators);
+        point_to_generator[i] = closest_point(domain_points[i], centers);
       }
 
       // Determine cluster of points for each generator
@@ -1729,7 +1961,7 @@ namespace LCM {
         cluster_centroid = centroid(clusters[i]);
 
         const double
-        step = norm(cluster_centroid - generators[i]);
+        step = norm(cluster_centroid - centers[i]);
 
         if (step > step_norm) {
           step_norm = step;
@@ -1737,105 +1969,26 @@ namespace LCM {
 
         // Update the generator
         const Vector<double>
-        old_generator = generators[i];
+        old_generator = centers[i];
 
-        generators[i] = cluster_centroid;
+        centers[i] = cluster_centroid;
 
-        steps[i] = norm(generators[i] - old_generator);
+        steps[i] = norm(centers[i] - old_generator);
       }
 
       step_norm = norm(Vector<double>(number_partitions, &steps[0]));
 
       std::cout << "Iteration: " << number_iterations;
-      std::cout << ". Step: " << step_norm << ". Tol:" << tolerance << std::endl;
+      std::cout << ". Step: " << step_norm << ". Tol: " << tolerance;
+      std::cout << std::endl;
 
       ++number_iterations;
 
     }
 
-    // Set partition number for each element.
-
     // Partition map.
     std::map<int, int>
-    partitions;
-
-    // Keep track of which partitions have been assigned elements.
-    std::set<int>
-    unassigned_partitions;
-
-    for (int partition = 0; partition < number_partitions; ++partition) {
-      unassigned_partitions.insert(partition);
-    }
-
-    // Determine number of nodes that define element topology
-    const Index
-    nodes_per_element = GetNodesPerElement();
-
-    std::ofstream centroids_ofs("centroids.csv");
-
-    centroids_ofs << "X,Y,Z" << std::endl;
-    for (AdjacencyMap::const_iterator
-        elements_iter = connectivity_.begin();
-        elements_iter != connectivity_.end();
-        ++elements_iter) {
-
-      int const &
-      element = (*elements_iter).first;
-
-      IDList const &
-      node_list = (*elements_iter).second;
-
-      std::vector< LCM::Vector<double> >
-      element_nodes;
-
-      for (IDList::size_type i = 0;
-          i < nodes_per_element;
-          ++i) {
-
-        PointMap::const_iterator
-        nodes_iter = nodes_.find(node_list[i]);
-
-        assert(nodes_iter != nodes_.end());
-
-        element_nodes.push_back((*nodes_iter).second);
-
-      }
-
-      const Vector<double>
-      element_centroid = centroid(element_nodes);
-
-      centroids_ofs << element_centroid << std::endl;
-
-      const Index
-      partition = closest_point(element_centroid, generators);
-      partitions[element] = partition;
-
-      std::set<int>::const_iterator
-      it = unassigned_partitions.find(partition);
-
-      if (it != unassigned_partitions.end()) {
-        unassigned_partitions.erase(it);
-      }
-
-    }
-
-    if (unassigned_partitions.size() > 0) {
-      std::cout << "WARNING: The following partitions were not" << std::endl;
-      std::cout << "assigned any elements (mesh too coarse?):" << std::endl;
-
-      for (std::set<int>::const_iterator it = unassigned_partitions.begin();
-          it != unassigned_partitions.end();
-          ++it) {
-        std::cout << (*it) << std::endl;
-      }
-
-    }
-
-    std::ofstream generators_ofs("generators.csv");
-    generators_ofs << "X,Y,Z" << std::endl;
-    for (Index i = 0; i < generators.size(); ++i) {
-      generators_ofs << generators[i] << std::endl;
-    }
+    partitions = PartitionByCenters(centers);
 
     return partitions;
 
@@ -1848,272 +2001,90 @@ namespace LCM {
   // \return Partition number for each element
   //
   std::map<int, int>
-  ConnectivityArray::PartitionKMeansInequality(const double length_scale)
+  ConnectivityArray::PartitionKDTree(const double length_scale)
   {
     const int
     number_partitions = GetNumberPartitions(length_scale);
 
     Vector<double>
-    min;
+    lower_corner;
 
     Vector<double>
-    max;
+    upper_corner;
 
-    boost::tie(min, max) = BoundingBox();
+    boost::tie(lower_corner, upper_corner) = BoundingBox();
 
-    lower_corner_ = min;
-    upper_corner_ = max;
+    lower_corner_ = lower_corner;
+    upper_corner_ = upper_corner;
 
     Vector<double>
-    span = max - min;
+    span = upper_corner - lower_corner;
+
+    std::cout << "WARNING: KD Tree is incomplete for now.";
+    std::cout << std::endl;
 
     Voxelize();
 
-    // Create initial generators
+    //
+    // Create initial centers
+    //
+
+    // Partition with initializer
+    const PARTITION::Scheme
+    initializer_scheme = GetInitializerScheme();
+
+    Partition(initializer_scheme, length_scale);
+
+    // Compute partition centroids and use those as initial centers
+
     std::vector< Vector<double> >
-    generators = InitializeKmeans(number_partitions);
-
-    // K-means iteration
-    const Index
-    max_iterations = GetMaximumIterations();
-
-    Index
-    number_iterations = 0;
-
-    const double
-    diagonal_distance = norm(max - min);
-
-    const double
-    tolerance = GetTolerance() * diagonal_distance;
-
-    double
-    step_norm = diagonal_distance;
-
-    std::vector<double>
-    steps(number_partitions);
-
-    for (int i = 0; i < number_partitions; ++i) {
-      steps[i] = diagonal_distance;
-    }
-
-    // Create points.
-    std::vector< Vector<double> >
-    domain_points;
-
-    LCM::Vector<double>
-    p(min.get_dimension());
-
-    for (Index i = 0; i < voxels_.size(); ++i) {
-      p(0) = (i + 0.5) * span(0) / voxels_.size() + min(0);
-      for (Index j = 0; j < voxels_[0].size(); ++j) {
-        p(1) = (j + 0.5) * span(1) / voxels_[0].size() + min(1);
-        for (Index k = 0; k < voxels_[0][0].size(); ++k) {
-          p(2) = (k + 0.5) * span(2) / voxels_[0][0].size() + min(2);
-
-          if (voxels_[i][j][k] == true) {
-            domain_points.push_back(p);
-          }
-
-        }
-
-      }
-
-    }
-
-    const Index
-    number_points = domain_points.size();
-
-    std::cout << "Main K-means Iteration." << std::endl;
-
-    while (step_norm >= tolerance && number_iterations < max_iterations) {
-
-      // Assign points to closest generators
-      std::vector<double>
-      point_to_generator(number_points);
-
-      for (Index i = 0; i < domain_points.size(); ++i) {
-        point_to_generator[i] = closest_point(domain_points[i], generators);
-      }
-
-      // Determine cluster of points for each generator
-      std::vector<std::vector<Vector<double> > >
-      clusters;
-
-      clusters.resize(number_partitions);
-
-      for (Index p = 0; p < point_to_generator.size(); ++p) {
-
-        const Index
-        c = point_to_generator[p];
-
-        clusters[c].push_back(domain_points[p]);
-
-      }
-
-      // Compute centroids of each cluster and set generators to
-      // these centroids.
-      step_norm = 0.0;
-
-      for (std::vector< std::vector<Vector<double> > >::size_type i = 0;
-          i < clusters.size();
-          ++i) {
-
-        // If cluster is empty then generator does not move.
-        if (clusters[i].size() == 0) {
-          std::cout << "Iteration: " << number_iterations;
-          std::cout << ", generator " << i << " has zero points." << std::endl;
-          continue;
-        }
-
-        const Vector<double>
-        cluster_centroid = centroid(clusters[i]);
-
-        const double
-        step = norm(cluster_centroid - generators[i]);
-
-        if (step > step_norm) {
-          step_norm = step;
-        }
-
-        // Update the generator
-        const Vector<double>
-        old_generator = generators[i];
-
-        generators[i] = cluster_centroid;
-
-        steps[i] = norm(generators[i] - old_generator);
-      }
-
-      step_norm = norm(Vector<double>(number_partitions, &steps[0]));
-
-      std::cout << "Iteration: " << number_iterations;
-      std::cout << ". Step: " << step_norm << ". Tol:" << tolerance << std::endl;
-
-      ++number_iterations;
-
-    }
-
-    // Set partition number for each element.
+    centers = GetPartitionCentroids();
 
     // Partition map.
     std::map<int, int>
-    partitions;
-
-    // Keep track of which partitions have been assigned elements.
-    std::set<int>
-    unassigned_partitions;
-
-    for (int partition = 0; partition < number_partitions; ++partition) {
-      unassigned_partitions.insert(partition);
-    }
-
-    // Determine number of nodes that define element topology
-    const Index
-    nodes_per_element = GetNodesPerElement();
-
-    std::ofstream centroids_ofs("centroids.csv");
-
-    centroids_ofs << "X,Y,Z" << std::endl;
-    for (AdjacencyMap::const_iterator
-        elements_iter = connectivity_.begin();
-        elements_iter != connectivity_.end();
-        ++elements_iter) {
-
-      int const &
-      element = (*elements_iter).first;
-
-      IDList const &
-      node_list = (*elements_iter).second;
-
-      std::vector< LCM::Vector<double> >
-      element_nodes;
-
-      for (IDList::size_type i = 0;
-          i < nodes_per_element;
-          ++i) {
-
-        PointMap::const_iterator
-        nodes_iter = nodes_.find(node_list[i]);
-
-        assert(nodes_iter != nodes_.end());
-
-        element_nodes.push_back((*nodes_iter).second);
-
-      }
-
-      const Vector<double>
-      element_centroid = centroid(element_nodes);
-
-      centroids_ofs << element_centroid << std::endl;
-
-      const Index
-      partition = closest_point(element_centroid, generators);
-      partitions[element] = partition;
-
-      std::set<int>::const_iterator
-      it = unassigned_partitions.find(partition);
-
-      if (it != unassigned_partitions.end()) {
-        unassigned_partitions.erase(it);
-      }
-
-    }
-
-    if (unassigned_partitions.size() > 0) {
-      std::cout << "WARNING: The following partitions were not" << std::endl;
-      std::cout << "assigned any elements (mesh too coarse?):" << std::endl;
-
-      for (std::set<int>::const_iterator it = unassigned_partitions.begin();
-          it != unassigned_partitions.end();
-          ++it) {
-        std::cout << (*it) << std::endl;
-      }
-
-    }
-
-    std::ofstream generators_ofs("generators.csv");
-    generators_ofs << "X,Y,Z" << std::endl;
-    for (Index i = 0; i < generators.size(); ++i) {
-      generators_ofs << generators[i] << std::endl;
-    }
+    partitions = PartitionByCenters(centers);
 
     return partitions;
 
   }
 
   //
-  /// Partition mesh with sequential K-means algortithm
+  // Partition mesh with sequential K-means algortithm
   // \param length_scale The length scale for variational nonlocal
   // regularization
   // \return Partition number for each element
   //
-  std::vector< Vector<double> >
-  ConnectivityArray::InitializeKmeans(int number_partitions)
+  std::map<int, int>
+  ConnectivityArray::PartitionSequential(const double length_scale)
   {
-    LCM::Vector<double>
-    min = lower_corner_;
+    const int
+    number_partitions = GetNumberPartitions(length_scale);
 
-    LCM::Vector<double>
-    max = upper_corner_;
+    Vector<double>
+    lower_corner;
 
-    // Create initial generators
-    int
-    number_generators = 0;
+    Vector<double>
+    upper_corner;
+
+    boost::tie(lower_corner, upper_corner) = BoundingBox();
+
+    lower_corner_ = lower_corner;
+    upper_corner_ = upper_corner;
+
+    //
+    // Create initial centers
+    //
+
+    // Partition with initializer
+    const PARTITION::Scheme
+    initializer_scheme = GetInitializerScheme();
+
+    Partition(initializer_scheme, length_scale);
+
+    // Compute partition centroids and use those as initial centers
 
     std::vector< Vector<double> >
-    generators;
-
-    while (number_generators < number_partitions) {
-
-      Vector<double>
-      p = random_in_box(min, max);
-
-      if (IsInsideMesh(p) == true) {
-        generators.push_back(p);
-        ++number_generators;
-      }
-
-    }
+    centers = GetPartitionCentroids();
 
     std::vector<Index>
     weights(number_partitions);
@@ -2133,7 +2104,7 @@ namespace LCM {
     number_iterations = 0;
 
     const double
-    diagonal_distance = norm(max - min);
+    diagonal_distance = norm(upper_corner - lower_corner);
 
     const double
     tolerance = GetTolerance() * diagonal_distance;
@@ -2148,7 +2119,7 @@ namespace LCM {
     double
     step_norm = diagonal_distance;
 
-    std::cout << "K-means Initialization." << std::endl;
+    std::cout << "K-means Sequential." << std::endl;
 
     while (step_norm >= tolerance && number_iterations < max_iterations) {
 
@@ -2157,45 +2128,100 @@ namespace LCM {
       is_point_in_domain = false;
 
       Vector<double>
-      random_point(min.get_dimension());
+      random_point(lower_corner.get_dimension());
 
       while (is_point_in_domain == false) {
-        random_point = random_in_box(min, max);
+        random_point = random_in_box(lower_corner, upper_corner);
         is_point_in_domain = IsInsideMesh(random_point);
       }
 
       // Determine index to closest generator
       const Index
-      i = closest_point(random_point, generators);
+      i = closest_point(random_point, centers);
 
       // Update the generator and the weight
       const Vector<double>
-      old_generator = generators[i];
+      old_generator = centers[i];
 
-      generators[i] =
-          (weights[i] * generators[i] + random_point) / (weights[i] + 1);
+      centers[i] =
+          (weights[i] * centers[i] + random_point) / (weights[i] + 1);
 
       weights[i] += 1;
 
-      steps[i] = norm(generators[i] - old_generator);
+      steps[i] = norm(centers[i] - old_generator);
       step_norm = norm(Vector<double>(number_partitions, &steps[0]));
 
       if (number_iterations % 10000 == 0) {
         std::cout << "Random point: " << number_iterations;
         std::cout << ". Step: " << step_norm << ". ";
-        std::cout << "Tol:" << tolerance << std::endl;
+        std::cout << "Tol: " << tolerance << std::endl;
       }
 
       ++number_iterations;
 
     }
 
-    std::cout << "Iteration: " << number_iterations;
+    std::cout << "Random point: " << number_iterations;
     std::cout << ". Step: " << step_norm << ". ";
-    std::cout << "Tol:" << tolerance << std::endl;
+    std::cout << "Tol: " << tolerance << std::endl;
 
-    return generators;
+    // Partition map.
+    std::map<int, int>
+    partitions = PartitionByCenters(centers);
 
+    return partitions;
+  }
+
+  //
+  // Partition mesh with randomly generated centers.
+  // Mostly used to initialize other schemes.
+  // \param length_scale The length scale for variational nonlocal
+  // regularization
+  // \return Partition number for each element
+  //
+  std::map<int, int>
+  ConnectivityArray::PartitionRandom(const double length_scale)
+  {
+    const int
+    number_partitions = GetNumberPartitions(length_scale);
+
+    Vector<double>
+    lower_corner;
+
+    Vector<double>
+    upper_corner;
+
+    boost::tie(lower_corner, upper_corner) = BoundingBox();
+
+    lower_corner_ = lower_corner;
+    upper_corner_ = upper_corner;
+
+    //
+    // Create initial centers
+    //
+    int
+    number_generators = 0;
+
+    std::vector< Vector<double> >
+    centers;
+
+    while (number_generators < number_partitions) {
+
+      Vector<double>
+      p = random_in_box(lower_corner, upper_corner);
+
+      if (IsInsideMesh(p) == true) {
+        centers.push_back(p);
+        ++number_generators;
+      }
+
+    }
+
+    // Partition map.
+    std::map<int, int>
+    partitions = PartitionByCenters(centers);
+
+    return partitions;
   }
 
   //

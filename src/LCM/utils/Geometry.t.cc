@@ -723,19 +723,67 @@ namespace LCM {
   }
 
   //
-  // Given two arbitrary points, define a hyperplane that is equidistant
-  // the points. Given a box defined by its corners, determine whether the box
-  // lies entirely on the side of the first arbitrary point.
+  // Given a set of points and the corners of a box:
+  // Determine the closest point to the center of the box.
+  // For the remaining points, define hyperplanes that are
+  // equidistant to them and the closest point to the center of
+  // the box.
+  // Determine whether the box lies entirely on the side of the hyperplane
+  // where the closest point to the center of the box lies as well.
   //
   template<typename T>
-  bool
-  box_closest_to_first(
-      Vector<T> const & p,
-      Vector<T> const & q,
+  std::pair<Index, std::vector<bool> >
+  box_proximity_to_points(
+      std::vector< Vector<T> > const & points,
       Vector<T> const & lower_corner,
       Vector<T> const & upper_corner)
   {
-    return true;
+    const Vector<T>
+    center_box = 0.5 * (lower_corner + upper_corner);
+
+    const Index
+    index_closest = closest_point(center_box, points);
+
+    Vector<T> const &
+    closest_to_center = points[index_closest];
+
+    const Index
+    number_points = points.size();
+
+    std::vector<bool>
+    is_in_closest_half(number_points);
+
+    for (Index i = 0; i < number_points; ++i) {
+
+      if (i == index_closest) {
+        is_in_closest_half[i] = true;
+        continue;
+      }
+
+      Vector<T> const &
+      point = points[i];
+
+      const Vector<T>
+      u = point - closest_to_center;
+
+      const Index
+      N = u.get_dimension();
+
+      Vector<T>
+      v(N);
+
+      for (Index j = 0; j < N; ++j) {
+
+        v(j) = u(j) >= 0.0 ? upper_corner(j) : lower_corner(j);
+
+      }
+
+      is_in_closest_half[i] =
+          norm_square(point - v) >= norm_square(closest_to_center - v);
+
+    }
+
+    return std::make_pair(index_closest, is_in_closest_half);
   }
 
 

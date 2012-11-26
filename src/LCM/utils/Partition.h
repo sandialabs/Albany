@@ -64,7 +64,14 @@ namespace LCM {
   ///
   namespace PARTITION {
 
-    enum Scheme {UNKNOWN, GEOMETRIC, HYPERGRAPH, KMEANS, INEQUALITY};
+    enum Scheme {
+      UNKNOWN,
+      RANDOM,
+      GEOMETRIC,
+      HYPERGRAPH,
+      KMEANS,
+      SEQUENTIAL,
+      KDTREE};
 
   }
 
@@ -208,6 +215,12 @@ namespace LCM {
     GetPartitionVolumes() const;
 
     ///
+    /// \return Partition centroids
+    ///
+    std::vector< Vector<double> >
+    GetPartitionCentroids() const;
+
+    ///
     /// \return Centroids for each element
     ///
     PointMap
@@ -256,6 +269,18 @@ namespace LCM {
     GetMaximumIterations() const;
 
     ///
+    /// \param Initializer scheme
+    ///
+    void
+    SetInitializerScheme(PARTITION::Scheme initializer_scheme);
+
+    ///
+    /// \return Initializer scheme
+    ///
+    PARTITION::Scheme
+    GetInitializerScheme() const;
+
+    ///
     /// Voxelization of the domain for fast determination
     /// of points being inside or outside the domain.
     ///
@@ -299,6 +324,14 @@ namespace LCM {
     GetDiscretization();
 
     ///
+    /// \param Collection of centers
+    /// \return Partition map that assigns each element to the
+    /// closest center to its centroid
+    ///
+    std::map<int, int>
+    PartitionByCenters(std::vector< Vector<double> > const & centers);
+
+    ///
     /// Partition mesh with the specified algorithm and length scale
     /// \param partition_scheme The partition algorithm to use
     /// \param length_scale The length scale for variational nonlocal
@@ -338,21 +371,32 @@ namespace LCM {
     PartitionKMeans(const double length_scale);
 
     ///
-    /// Partition mesh with K-means algorithm and triangle inequality
+    /// Partition mesh with K-means algorithm and KD-tree
     /// \param length_scale The length scale for variational nonlocal
     /// regularization
     /// \return Partition number for each element
     ///
     std::map<int, int>
-    PartitionKMeansInequality(const double length_scale);
+    PartitionKDTree(const double length_scale);
 
     ///
     /// Partition mesh with sequential K-means algorithm
-    /// \param number of partitions
-    /// \return generators
+    /// \param length_scale The length scale for variational nonlocal
+    /// regularization
+    /// \return Partition number for each element
     ///
-    std::vector< Vector<double> >
-    InitializeKmeans(int number_partitions);
+    std::map<int, int>
+    PartitionSequential(const double length_scale);
+
+    ///
+    /// Partition mesh with randomly generated centers.
+    /// Mostly used to initialize other schemes.
+    /// \param length_scale The length scale for variational nonlocal
+    /// regularization
+    /// \return Partition number for each element
+    ///
+    std::map<int, int>
+    PartitionRandom(const double length_scale);
 
     ///
     /// Zoltan interface query function that returns the number of values
@@ -564,6 +608,12 @@ namespace LCM {
 
     LCM::Vector<double>
     upper_corner_;
+
+    //
+    // Initializer scheme, if any.
+    //
+    PARTITION::Scheme
+    initializer_scheme_;
 
   };
 
