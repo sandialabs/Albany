@@ -290,7 +290,7 @@ evaluateFields(typename Traits::EvalData workset)
                   temp = 3.0 - 12.0*kcPermeability(cell,qp)*dt
           				/(elementLength(cell,qp)*elementLength(cell,qp));
 
-                  if (temp > 0) {
+                  if ((temp > 0) & stabParameter(cell,qp) > 0) {
 
  				  TResidual(cell,node) -= (
  					//	 -(J(cell,qp)-Jold(cell,qp))*porePressure(cell,qp)
