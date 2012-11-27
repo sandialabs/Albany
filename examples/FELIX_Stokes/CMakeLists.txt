@@ -5,6 +5,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_l1l2_sincos.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_l1l2_sincos.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_cosexp_basal_flip.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_cosexp_basal_flip.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_cosexp_basal_all.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_cosexp_basal_all.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_ismip-hom_testA.xml

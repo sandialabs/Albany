@@ -337,7 +337,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
     else if(bc_type == BASAL) {
       for (std::size_t node=0; node < numNodes; ++node)
         for(int dim = 0; dim < numDOFsSet; dim++)
-	   dofCellVec(0,node,dim) = dofVec(elem_LID,node,dim);
+	   dofCellVec(0,node,dim) = dofVec(elem_LID,node,this->offset[dim]);
 
       // This is needed, since evaluate currently sums into
       for (int i=0; i < dofSideVec.size() ; i++) dofSideVec[i] = 0.0;
@@ -633,7 +633,7 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
   for(int cell = 0; cell < numCells; cell++) 
     for(int pt = 0; pt < numPoints; pt++)
       for(int dim = 0; dim < numDOFsSet; dim++)
-        qp_data_returned(cell, pt, dim) = beta*dof_side(cell, pt,dim)*side_normals(cell,pt,dim) - alpha*side_normals(cell,pt,dim); // d(stress)/dn = beta*u + alpha
+        qp_data_returned(cell, pt, dim) = beta*dof_side(cell, pt,dim) - alpha*side_normals(cell,pt,dim); // d(stress)/dn = beta*u + alpha
 
 }
 
