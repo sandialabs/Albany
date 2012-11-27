@@ -4,14 +4,14 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef POROSITY_HPP
-#define POROSITY_HPP
+#if !defined(LCM_Porosity_hpp)
+#define LCM_Porosity_hpp
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-
+#include "Albany_Layouts.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "Epetra_Vector.h"
 #include "Sacado_ParameterAccessor.hpp"
@@ -19,70 +19,132 @@
 #include "Teuchos_Array.hpp"
 
 namespace LCM {
-/** 
- * \brief Evaluates porosity, either as a constant or a truncated
- * KL expansion.
- */
-
-// Porosity update is the most important part for the poromechanics
-// formulation. All poroelasticity parameters (Biot Coefficient,
-// Biot modulus, permeability, and consistent tangential tensor)
-// depend on porosity. The definition we used here is from
-// Coussy's poromechanics p.85.
-
-template<typename EvalT, typename Traits>
-class Porosity :
-  public PHX::EvaluatorWithBaseImpl<Traits>,
-  public PHX::EvaluatorDerived<EvalT, Traits>,
-  public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+  ///
+  /// \brief Evaluates porosity, either as a constant or a truncated
+  /// KL expansion.
+  ///
+  /// Porosity update is the most important part for the poromechanics
+  /// formulation. All poroelasticity parameters (Biot Coefficient,
+  /// Biot modulus, permeability, and consistent tangential tensor)
+  /// depend on porosity. The definition we used here is from
+  /// Coussy's poromechanics p.85.
+  ///
+  template<typename EvalT, typename Traits>
+  class Porosity :
+    public PHX::EvaluatorWithBaseImpl<Traits>,
+    public PHX::EvaluatorDerived<EvalT, Traits>,
+    public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
   
-public:
-  typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
+  public:
+    typedef typename EvalT::ScalarT ScalarT;
+    typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  Porosity(Teuchos::ParameterList& p);
+    ///
+    /// Constructor
+    ///    
+    Porosity(Teuchos::ParameterList& p,
+             const Teuchos::RCP<Albany::Layouts>& dl);
   
-  void postRegistrationSetup(typename Traits::SetupData d,
-			     PHX::FieldManager<Traits>& vm);
+    ///
+    /// Phalanx method to allocate space
+    ///
+    void postRegistrationSetup(typename Traits::SetupData d,
+                               PHX::FieldManager<Traits>& vm);
   
-  void evaluateFields(typename Traits::EvalData d);
+    ///
+    /// Implementation of physics
+    ///
+    void evaluateFields(typename Traits::EvalData d);
   
-  ScalarT& getValue(const std::string &n);
+    ///
+    /// Sacado method to access parameters
+    ///
+    ScalarT& getValue(const std::string &n);
 
-private:
+  private:
 
-  std::size_t numQPs;
-  std::size_t numDims;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
-  PHX::MDField<ScalarT,Cell,QuadPoint> porosity;
+    ///
+    /// Number of integration points
+    ///
+    std::size_t numQPs;
 
-  //! Is porosity constant, or random field
-  bool is_constant;
+    ///
+    /// Number of problem dimensions
+    ///
+    std::size_t numDims;
 
-  //! Constant value
-  ScalarT constant_value;
+    ///
+    /// Container for coordinates
+    ///
+    PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
 
-  //! Optional dependence on strain and porePressure
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> strain; // porosity holds linear relation to volumetric strain
+    ///
+    /// Container for porosity
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint> porosity;
 
-  bool isPoroElastic;
-  bool isCompressibleSolidPhase;
-  bool isCompressibleFluidPhase;
-  ScalarT initialPorosity_value;
+    ///
+    /// Is porosity constant, or random field
+    ///
+    bool is_constant;
 
-  // For compressible grain
-  PHX::MDField<ScalarT,Cell,QuadPoint> biotCoefficient;
-  PHX::MDField<ScalarT,Cell,QuadPoint> porePressure;
-  ScalarT GrainBulkModulus;
+    ///
+    /// Constant value
+    ///
+    ScalarT constant_value;
 
-  // ScalarT dEdT_value;  NOTE: a term needed to be add later on...for now, keep it simple.
+    ///
+    /// Optional dependence on strain and porePressure
+    ///
+    /// porosity holds linear relation to volumetric strain
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> strain;
 
-  //! Exponential random field
-  Teuchos::RCP< Stokhos::KL::ExponentialRandomField<MeshScalarT> > exp_rf_kl;
+    
+    ///
+    /// Constant value
+    ///
+    bool isPoroElastic;
 
-  //! Values of the random variables
-  Teuchos::Array<ScalarT> rv;
-};
+    ///
+    /// Constant value
+    ///
+    bool isCompressibleSolidPhase;
+
+    ///
+    /// Constant value
+    ///
+    bool isCompressibleFluidPhase;
+
+    ///
+    /// Constant value
+    ///
+    ScalarT initialPorosity_value;
+
+    ///
+    /// For compressible grain
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint> biotCoefficient;
+
+    ///
+    /// For compressible grain
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint> porePressure;
+
+    ///
+    /// For compressible grain
+    ///
+    ScalarT GrainBulkModulus;
+
+    ///
+    /// Exponential random field
+    ///
+    Teuchos::RCP< Stokhos::KL::ExponentialRandomField<MeshScalarT> > exp_rf_kl;
+
+    ///
+    /// Values of the random variables
+    ///
+    Teuchos::Array<ScalarT> rv;
+  };
 }
 
 #endif

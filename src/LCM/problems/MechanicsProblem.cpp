@@ -25,7 +25,7 @@ getVariableType(Teuchos::ParameterList& paramList,
     variableType = MECH_VAR_TYPE_DOF;
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-		       "Unknown variable type " << type << std::endl);
+                               "Unknown variable type " << type << std::endl);
   haveVariable = (variableType != MECH_VAR_TYPE_NONE);
   haveEquation = (variableType == MECH_VAR_TYPE_DOF);
 }
@@ -113,13 +113,13 @@ Albany::MechanicsProblem::
 //written by IK, Feb. 2012 
 void
 Albany::MechanicsProblem::getRBMInfoForML(
-   int& numPDEs, int& numElasticityDim, int& numScalar,  int& nullSpaceDim)
+   int& numPDEs, int& numElasticityDim, int& numScalar, int& nullSpaceDim)
 {
   // Need numPDEs should be numDim + nDOF for other governing equations  -SS
 
-  numPDEs = numDim +1;
+  numPDEs = neq;
   numElasticityDim = numDim;
-  numScalar = 1;
+  numScalar = numDim - neq;
   if (numDim == 1) {nullSpaceDim = 0; }
   else {
     if (numDim == 2) {nullSpaceDim = 3; }
@@ -171,13 +171,16 @@ Albany::MechanicsProblem::constructDirichletEvaluators(
 
   // Construct Dirichlet evaluators for all nodesets and names
   std::vector<string> dirichletNames(neq);
-  dirichletNames[0] = "X";
-  if (neq>1) dirichletNames[1] = "Y";
-  if (neq>2) dirichletNames[2] = "Z";
+  int index = 0;
+  if (haveMechEq) {
+    dirichletNames[index++] = "X";
+    if (neq>1) dirichletNames[index++] = "Y";
+    if (neq>2) dirichletNames[index++] = "Z";
+  }
 
-  // Need DBC for multiphysics problem  -SS
-  if (neq>3) dirichletNames[3] = "porePressure";
-
+  if (haveHeatEq) dirichletNames[index++] = "T";
+  if (havePressureEq) dirichletNames[index++] = "P";
+  if (haveTransportEq) dirichletNames[index++] = "C";
 
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,

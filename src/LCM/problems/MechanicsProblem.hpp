@@ -662,7 +662,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (haveMechEq || havePressureEq) { // Strain
+  if (!surfaceElement && (haveMechEq || havePressureEq)) { // Strain
     RCP<ParameterList> p = rcp(new ParameterList("Strain"));
     p->set<string>("Gradient QP Variable Name", "Displacement Gradient");
     p->set<string>("Strain Name", "Strain");
@@ -670,14 +670,14 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
 
     // For some reason the save field below does not work.
-     p = stateMgr.registerStateVariable("Strain",
-                                      dl->qp_tensor,
-                                        dl->dummy,
-                                        ebName,
-                                        "scalar",
+    p = stateMgr.registerStateVariable("Strain",
+                                       dl->qp_tensor,
+                                       dl->dummy,
+                                       ebName,
+                                       "scalar",
                                        0.0);
-     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-     fm0.template registerEvaluator<EvalT>(ev);
+    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
 
   }
 
@@ -1827,14 +1827,14 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       // need J and J_old to perform time integration for poromechanics problem
       p = stateMgr.registerStateVariable("J",
-                                                 dl->qp_scalar,
-                                                 dl->dummy,
-                                                 ebName,
-                                                 "scalar",
-                                                 1.0,
-                                                 true);
-        ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-         fm0.template registerEvaluator<EvalT>(ev);
+                                         dl->qp_scalar,
+                                         dl->dummy,
+                                         ebName,
+                                         "scalar",
+                                         1.0,
+                                         true);
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
     }
 
 
@@ -1848,8 +1848,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set<string>("Weighted BF Name", "wBF");
 
       if (havePressureEq) {
-    	  p->set<string>("Pore Pressure Name", "Pore Pressure");
-    	  p->set<string>("Biot Coefficient Name", "Biot Coefficient");
+        p->set<string>("Pore Pressure Name", "Pore Pressure");
+        p->set<string>("Biot Coefficient Name", "Biot Coefficient");
 
       }
 
@@ -1869,7 +1869,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<string>("Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Stabilization Parameter");
+    Teuchos::ParameterList& paramList = 
+      materialDB->getElementBlockSublist(ebName,"Stabilization Parameter");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
@@ -1907,28 +1908,20 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     p->set<string>("Porosity Name", "Porosity");
     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-
     // Setting this turns on dependence of strain and pore pressure)
     p->set<string>("Strain Name", "Strain");
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
     // porosity update based on Coussy's poromechanics (see p.79)
     p->set<string>("QP Pore Pressure Name", "Pore Pressure");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
     p->set<string>("Biot Coefficient Name", "Biot Coefficient");
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Porosity");
+    Teuchos::ParameterList& paramList = 
+      materialDB->getElementBlockSublist(ebName,"Porosity");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     // Output Porosity
-    ev = rcp(new LCM::Porosity<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new LCM::Porosity<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
-
     p = stateMgr.registerStateVariable("Porosity",
                                        dl->qp_scalar, 
                                        dl->dummy, 
@@ -1950,7 +1943,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Biot Coefficient");
+    Teuchos::ParameterList& paramList = 
+      materialDB->getElementBlockSublist(ebName,"Biot Coefficient");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     ev = rcp(new LCM::BiotCoefficient<EvalT,AlbanyTraits>(*p));
@@ -1976,7 +1970,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Biot Modulus");
+    Teuchos::ParameterList& paramList = 
+      materialDB->getElementBlockSublist(ebName,"Biot Modulus");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     // Setting this turns on linear dependence on porosity and Biot's coeffcient
@@ -2005,7 +2000,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Thermal Conductivity");
+    Teuchos::ParameterList& paramList = 
+      materialDB->getElementBlockSublist(ebName,"Thermal Conductivity");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     ev = rcp(new PHAL::ThermalConductivity<EvalT,AlbanyTraits>(*p));
@@ -2022,7 +2018,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Kozeny-Carman Permeability");
+    Teuchos::ParameterList& paramList = 
+      materialDB->getElementBlockSublist(ebName,"Kozeny-Carman Permeability");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     // Setting this turns on Kozeny-Carman relation
@@ -2104,26 +2101,30 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     // need p and p_old to perform time integration.
     p = stateMgr.registerStateVariable("Pore Pressure",
-                                           dl->qp_scalar,
-                                           dl->dummy,
-                                           ebName,
-                                           "scalar",
-                                          0.0,
-                                           true);
-        ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-        fm0.template registerEvaluator<EvalT>(ev);
+                                       dl->qp_scalar,
+                                       dl->dummy,
+                                       ebName,
+                                       "scalar",
+                                       0.0,
+                                       true);
+    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
 
   }
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
-    PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter", dl->dummy);
-    fm0.requireField<EvalT>(res_tag);
-
-    if (havePressureEq) {
-    PHX::Tag<typename EvalT::ScalarT> res_tag2("Scatter Pore Pressure", dl->dummy);
-    fm0.requireField<EvalT>(res_tag2);
+    Teuchos::RCP<const PHX::FieldTag> ret_tag;
+    if (haveMechEq) {
+      PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter", dl->dummy);
+      fm0.requireField<EvalT>(res_tag);
+      ret_tag = res_tag.clone();
     }
-    return res_tag.clone();
+    if (havePressureEq) {
+      PHX::Tag<typename EvalT::ScalarT> pres_tag("Scatter Pore Pressure", dl->dummy);
+      fm0.requireField<EvalT>(pres_tag);
+      ret_tag = pres_tag.clone();
+    }
+    return ret_tag;
   }
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);

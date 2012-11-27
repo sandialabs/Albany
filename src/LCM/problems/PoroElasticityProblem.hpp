@@ -343,22 +343,17 @@ Albany::PoroElasticityProblem::constructEvaluators(
 
      p->set<string>("Porosity Name", "Porosity");
      p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-
      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
      Teuchos::ParameterList& paramList = params->sublist("Porosity");
      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
      // Setting this turns on dependence of strain and pore pressure)
      p->set<string>("Strain Name", "Strain");
-     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-     //	  p->set<string>("QP Pore Pressure Name", "Pore Pressure");
+      //	  p->set<string>("QP Pore Pressure Name", "Pore Pressure");
      //	  p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
      //	  p->set<string>("Biot Coefficient Name", "Biot Coefficient");
 
-     ev = rcp(new LCM::Porosity<EvalT,AlbanyTraits>(*p));
+     ev = rcp(new LCM::Porosity<EvalT,AlbanyTraits>(*p,dl));
      fm0.template registerEvaluator<EvalT>(ev);
      p = stateMgr.registerStateVariable("Porosity",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.4, true);
      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
