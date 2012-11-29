@@ -271,18 +271,19 @@ Albany::ModelEvaluatorT::create_W_op() const
 
 
 //Analog of EpetraExt::ModelEvaluator::Preconditioner does not exist in thyra yet!
-/*Teuchos::RCP<EpetraExt::ModelEvaluator::Preconditioner>
-Albany::ModelEvaluator::create_WPrec() const
+Teuchos::RCP<Thyra::PreconditionerBase<ST> >
+Albany::ModelEvaluatorT::create_W_prec() const
 {
-  Teuchos::RCP<Epetra_Operator> precOp = app->getPreconditioner();
+/*  Teuchos::RCP<Epetra_Operator> precOp = app->getPreconditioner();
 
   // Teko prec needs space for Jacobian as well
   Extra_W_crs = Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(create_W(), true);
 
   // bool is answer to: "Prec is already inverted?"
   return Teuchos::rcp(new EpetraExt::ModelEvaluator::Preconditioner(precOp,true));
-}
 */
+}
+
 
 Teuchos::RCP<LinearOpBase<ST> > 
 Albany::ModelEvaluatorT::create_DgDx_op(int j) const
