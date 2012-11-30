@@ -310,8 +310,9 @@ postEvaluate(typename Traits::PostEvalData workset)
       this->global_response[2+i] = pt[i];
 
     if(retFieldName == "current" &&
-       (QCAD::EvaluatorTools<EvalT,Traits>::getEvalType() == "Tangent" ||
-        QCAD::EvaluatorTools<EvalT,Traits>::getEvalType() == "Residual")) 
+       //(QCAD::EvaluatorTools<EvalT,Traits>::getEvalType() == "Tangent" ||
+       // QCAD::EvaluatorTools<EvalT,Traits>::getEvalType() == "Residual"))
+       (QCAD::EvaluatorTools<EvalT,Traits>::getEvalType() == "Residual") )  
     {
       // We only really need to evaluate the current when computing the final response values,
       // which is for the "Tangent" or "Residual" evaluation type (depeding on whether
@@ -377,7 +378,6 @@ QCAD::ResponseSaddleValue<EvalT,Traits>::getValidResponseParameters() const
   validPL->set<double>("Lock to z-coord", 0.0, "z-coordinate to lock elastic band to, making a 3D problem into 2D");
 
   validPL->set<int>("Maximum Number of Final Points", 0, "Maximum number of final points to use.  Zero indicates no final points are used and data is just returned at image points.");
-  // validPL->set<double>("Final Point Spacing", 1.0, "Spacing between final points (if they're used) - given in mesh units");
 
   validPL->set<Teuchos::Array<double> >("Begin Point", Teuchos::Array<double>(), "Beginning point of elastic band");
   validPL->set<string>("Begin Element Block", "", "Element block name whose minimum marks the elastic band's beginning");
@@ -395,6 +395,11 @@ QCAD::ResponseSaddleValue<EvalT,Traits>::getValidResponseParameters() const
   validPL->set<double>("GF-CBR Method Energy Cutoff Offset", 0, "Value [in eV] added to the maximum energy integrated over in Green's Function - Contact Block Reduction method for obtaining current to obtain the cutoff energy, which sets the largest eigenvalue needed in the tight binding diagonalization part of the method");
   validPL->set<double>("GF-CBR Method Grid Spacing", 0.0005, "Uniform 1D grid spacing for GF-CBR current calculation - given in mesh units");
 
+  validPL->set<bool>("GF-CBR Method Vds Sweep", false, "Specify if want to sweep a range of Vds values or just want one Vds");
+  validPL->set<double>("GF-CBR Method Vds Initial Value", 0., "Initial Vds value [V] when sweeping Vds is true");
+  validPL->set<double>("GF-CBR Method Vds Final Value", 0., "Final Vds value [V]");
+  validPL->set<int>("GF-CBR Method Vds Steps", 10, "Number of Vds steps going from initial to final values");
+  
   validPL->set<int>("Debug Mode", 0, "Print verbose debug messages to stdout");
   validPL->set< Teuchos::RCP<QCAD::SaddleValueResponseFunction> >("Response Function", Teuchos::null, "Saddle value response function");
 

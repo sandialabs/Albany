@@ -66,13 +66,14 @@ GreensFunctionTunnelingSolver(const Teuchos::RCP<std::vector<double> >& EcValues
   (*EcValues)[0] = oldEcValues[0];
   (*EcValues)[nGFPts-1] = oldEcValues[nOldPts-1];
   
-  // Interpolate Ec values to the fine spatial grid defined by ptSpacing and nGFPts
+  // Splinely interpolate Ec values to the fine spatial grid defined by ptSpacing and nGFPts
   for (int i = 1; i < (nGFPts-1); i++)
   {
     double pathLength = double(i) * ptSpacing;
     (*EcValues)[i] = execSplineInterp(oldPathLen, oldEcValues, y2, pathLength, nOldPts, klo, khi);
   }
   
+/*
   std::cout << "writing to file ... " << std::endl;
   std::string outputFilename = "test.dat"; 
   if( outputFilename.length() > 0) 
@@ -89,6 +90,7 @@ GreensFunctionTunnelingSolver(const Teuchos::RCP<std::vector<double> >& EcValues
     out.close();
   }   
   std::cout << "finish writing to file ... " << std::endl;
+*/
   
 }
 
@@ -110,15 +112,30 @@ computeCurrent(double Vds, double kbT, double Ecutoff_offset_from_Emax)
   std::vector<Anasazi::Value<double> > evals;
   Teuchos::RCP<Epetra_MultiVector> evecs;
 
-  // Setup Energy bins:  mu_L == 0, mu_R == -Vds, so set
-  // Emin = Ec[0] + mu_L + 20kT
-  // Emax = Ec[nPts-1] + mu_R
-  // dE = kbT / 10
+  // chemical potential energies of the left and right leads
+  double muL = 0.; 
+  double muR = -Vds;   // Vds can be >= 0 or < 0
+
+  // Setup Energy bins for integration:  muL = 0, muR = -Vds, so set
+  // Emin = min(min(Ec), min(Ec)-Vds, muL, muR)
+  // Emax = max(muL, muR) + 40*kbT 
+  // dE ~ kbT / 10
   int nPts    = EcValues->size();
-  double Emax = (*EcValues)[0] + 20*kbT;  // should this just be +20*kbT  (Suzey??)
-  double Emin = std::min((*EcValues)[0],(*EcValues)[nPts-1]) - Vds;  // assume one of endpoints is min(EcValues)
+  double Emax = std::max(muL, muR) + 40.*kbT;  // fermi dist. ~ exp(-40)=4.25e-18 small enough
+  
+  // find minimum value of Ec
+  double minEc = (*EcValues)[0]; 
+  for (int i = 1; i < nPts; i++)
+    if ( (*EcValues)[i] < minEc )   minEc = (*EcValues)[i];
+  
+  // Emin = min(min(Ec), min(Ec)-Vds, muL, muR), valid for any Ec profile and Vds>=0 or <0
+  double Emin = std::min(minEc, minEc+muR); 
+  Emin = std::min(Emin, muL); 
+  Emin = std::min(Emin, muR); 
+  
   double dE = kbT / 10;
   int nEPts = int((Emax - Emin) / dE) + 1;
+  dE = (Emax - Emin)/(nEPts-1);  // recalculate dE for given nEPts
   double a0 = ptSpacing;
   bool ret;
 
@@ -128,24 +145,28 @@ computeCurrent(double Vds, double kbT, double Ecutoff_offset_from_Emax)
   Teuchos::RCP<std::vector<double> > pLastEc = Teuchos::null;
 
   Map = Teuchos::rcp(new Epetra_Map(nPts, 0, *Comm));
-  t0  = hbar_1 * hbar_2 /(2*effMass*m_0* pow(a0*um,2) ); // gives t0 in units of eV    
+  t0  = hbar_1 * hbar_2 /(2*effMass*m_0* pow(a0*um,2) ); // gives t0 in units of eV 
+  std::cout << "Emin=" << Emin << ", Emax=" << Emax << ", Ecutoff=" << Ecutoff <<", t0=" << t0 << std::endl;    
 
   std::cout << "Doing Initial H-mx diagonalization for Vds = " << Vds << std::endl;
   ret = doMatrixDiag(Vds, *EcValues, Ecutoff, evals, evecs);
   pEc = EcValues;
   std::cout << "  Diag w/ a0 = " << a0 << ", nPts = " << nPts << " gives "
 	    << "Max Eval = " << evals[evals.size()-1].realpart 
-	    << "(need >= "<<Ecutoff<<")" << std::endl;
+	    << "(need >= "<< Ecutoff << ")" << std::endl;
 
-  while(ret == false && a0 > min_a0) {
-    a0 /= 2; nPts *= 2;  
-    t0 = hbar_1 * hbar_2 /(2*effMass*m_0* pow(a0*um,2) );
+  // The following block is not called when a0 is small enough (<= 0.5 nm)
+  while(ret == false && a0 > min_a0) 
+  {
+    a0 /= 2.; nPts *= 2;  
+    t0 = hbar_1 * hbar_2 /(2.*effMass*m_0* pow(a0*um,2.) );
     Map = Teuchos::rcp(new Epetra_Map(nPts, 0, *Comm));
 
     // Interpolate pLastEc onto pEc
     pLastEc = pEc;
     pEc = Teuchos::rcp(new std::vector<double>(nPts));
-    for(int i=0; i<nPts; i++) {
+    for(int i = 0; i < nPts; i++) 
+    {
       if(i%2 && i/2+1<nPts/2) (*pEc)[i] = ((*pLastEc)[i/2] + (*pLastEc)[i/2+1])/2.0;
       else (*pEc)[i] = (*pLastEc)[i/2];
     }
@@ -154,13 +175,13 @@ computeCurrent(double Vds, double kbT, double Ecutoff_offset_from_Emax)
     ret = doMatrixDiag(Vds, *pEc, Ecutoff, evals, evecs);
     std::cout << "  Diag w/ a0 = " << a0 << ", nPts = " << nPts << " gives "
 	      << "Max Eval = " << evals[evals.size()-1].realpart 
-	      << "(need >= "<<Ecutoff<<")" << std::endl;
+	      << "(need >= "<< Ecutoff << ")" << std::endl;
   }
   std::cout << "Done H-mx diagonalization, now broadcasting results" << std::endl;
 
 
   // Since all we need are the eigenvalues at beginning and end (index [0] and [nPts-1] ?)
-  //  then broadcast these values to all processors
+  // then broadcast these values to all processors
   int nEvecs = evecs->NumVectors();
   int GIDlist[2];
   GIDlist[0] = 0; // "beginning" index
@@ -180,7 +201,7 @@ computeCurrent(double Vds, double kbT, double Ecutoff_offset_from_Emax)
   }
   Comm->Broadcast( &evecBeginEls[0], nEvecs, PIDlist[0] );
 
-  if(Comm->MyPID() == PIDlist[1]) { // this proc owns beginning point
+  if(Comm->MyPID() == PIDlist[1]) { // this proc owns ending point
     for(int i=0; i<nEvecs; i++)
       evecEndEls[i] = (*evecs)[i][LIDlist[1]]; // check that this is correct: Epetra_Vector [] operator takes *local* index?
   }
@@ -194,50 +215,51 @@ computeCurrent(double Vds, double kbT, double Ecutoff_offset_from_Emax)
 
   // Spread energy points evenly across processors
   Epetra_Map EnergyMap(nEPts, 0, *Comm);
-
+  
+  // Number of energy points on current processor. 
   int NumMyEnergyPts = EnergyMap.NumMyElements();
 
+  // Put list of global elements on this processor into the user-provided array. 
   std::vector<int> MyGlobalEnergyPts(NumMyEnergyPts);
   EnergyMap.MyGlobalElements(&MyGlobalEnergyPts[0]);
 
-  double I, Iloc = 0, x, y;
-  double E, Gamma11, GammaNN, G11, G1N, GNN, T;
-  std::complex<double> Sigma11, SigmaNN, G, p11, pNN;
+  double I, Iloc = 0., x, y;
+  double E, Gamma11, GammaNN, G011, G01N, G0NN, Tm;
+  std::complex<double> Sigma11, SigmaNN, GR1N, p11, pNN;
   
   // add up contributions to energy integral from current processor
-  for (int i=0; i<NumMyEnergyPts; i++) {
+  // eigenvectors are assumed to be real
+  for (int i = 0; i < NumMyEnergyPts; i++) {
     E = Emin + MyGlobalEnergyPts[i]*dE;
 
-    x = (E-VL)*(t0-(E-VL)/4);
-    y = bNeumannBC ? 0 : t0;
-    if( x >= 0 )
-      Sigma11 = std::complex<double>( (E-VL)/2 - y, -sqrt(x) );
+    x = (E-VL)*(t0-(E-VL)/4.);
+    y = bNeumannBC ? 0. : t0;
+    if( x >= 0. )
+      Sigma11 = std::complex<double>( (E-VL)/2. - y, -sqrt(x) );
     else
-      Sigma11 = std::complex<double>( (E-VL)/2 - y + sqrt(-x), 0);
+      Sigma11 = std::complex<double>( (E-VL)/2. - y + sqrt(-x), 0.);
 
-    x = (E-VR)*(t0-(E-VR)/4);
-    if( x >= 0 )
-      SigmaNN = std::complex<double>( (E-VR)/2 - y, -sqrt(x) );
+    x = (E-VR)*(t0-(E-VR)/4.);
+    if( x >= 0. )
+      SigmaNN = std::complex<double>( (E-VR)/2. - y, -sqrt(x) );
     else
-      SigmaNN = std::complex<double>( (E-VR)/2 - y + sqrt(-x ), 0);
+      SigmaNN = std::complex<double>( (E-VR)/2. - y + sqrt(-x ), 0.);
 
-    Gamma11 = 2*Sigma11.imag();
-    GammaNN = 2*SigmaNN.imag();
+    Gamma11 = -2.*Sigma11.imag();
+    GammaNN = -2.*SigmaNN.imag();
 
-    G11 = G1N = GNN = 0;
-    for(int j=0; j<nEvecs; j++) {
-      G11 += evecBeginEls[j] * evecBeginEls[j] / (E - evals[j].realpart);
-      G1N += evecBeginEls[j] * evecEndEls[j] / (E - evals[j].realpart);
-      GNN += evecEndEls[j] * evecEndEls[j] / (E - evals[j].realpart);
+    G011 = G01N = G0NN = 0.;
+    for(int j = 0; j < nEvecs; j++) {
+      G011 += evecBeginEls[j] * evecBeginEls[j] / (E - evals[j].realpart);
+      G01N += evecBeginEls[j] * evecEndEls[j] / (E - evals[j].realpart);
+      G0NN += evecEndEls[j] * evecEndEls[j] / (E - evals[j].realpart);
     }
 
-    p11 = Sigma11*G11; pNN = SigmaNN*GNN; 
-    G = G1N / ((p11-1.0)*(pNN-1.0) - Sigma11*SigmaNN*G1N*G1N);
-    T = Gamma11 * GammaNN * std::norm(G);
+    p11 = Sigma11*G011; pNN = SigmaNN*G0NN; 
+    GR1N = G01N / ((p11-1.0)*(pNN-1.0) - Sigma11*SigmaNN*G01N*G01N);
+    Tm = Gamma11 * GammaNN * std::norm(GR1N);
 
-    //std::cout << "Ept " << i << " Sigma11=" << Sigma11 << " SigmaNN=" << SigmaNN << " Gamma11=" << Gamma11 << " GammaNN=" << GammaNN << " G11=" << G11 << " G1N=" << G1N << " GNN=" << GNN << " G=" << G << " T=" << T << std::endl;
-
-    Iloc += T * f0((E-0)/kbT) * f0((E+Vds)/kbT) * dE;
+    Iloc += Tm * ( f0((E - muL)/kbT) - f0((E - muR)/kbT) ) * dE;
   }
 
   std::cout << "Energy Integral contrib from proc " << Comm->MyPID() << " = " << Iloc << std::endl;
@@ -247,17 +269,21 @@ computeCurrent(double Vds, double kbT, double Ecutoff_offset_from_Emax)
 
   std::cout << "Total Energy Integral = " << I << " eV" << std::endl;
   
-  const double h = 4.13567e-15; // eV * s
-  double q = 1.602e-19; // C
+  const double h = 4.135668e-15;  // eV * s
+  double q = 1.602177e-19;        // C
+  
+  // single-mode 1D ballistic current in [A]
   I = 2*q / h * I;  // since I was in units of eV, now I is in units of Amps (C/s)
 
   return I;
 }
 
+
 double QCAD::GreensFunctionTunnelingSolver::f0(double x) const
 {
-  return 1.0 / (1 + exp(x));
+  return 1.0 / (1. + exp(x));
 }
+
 
 bool QCAD::GreensFunctionTunnelingSolver::
 doMatrixDiag(double Vds, std::vector<double>& Ec, double Ecutoff,
@@ -307,16 +333,21 @@ doMatrixDiag(double Vds, std::vector<double>& Ec, double Ecutoff,
   std::vector<int> Indices(3);
   int NumEntries;
 
-  Values[0] = -t0; Values[1] = 2*t0; Values[2] = -t0;
+  Values[0] = -t0; Values[1] = 2.*t0; Values[2] = -t0;
   if(bNeumannBC) {
     endValues[0] = -t0; endValues[1] =   t0; endValues[2] = -t0;  }
   else {
-    endValues[0] = -t0; endValues[1] = 2*t0; endValues[2] = -t0;  }
+    endValues[0] = -t0; endValues[1] = 2.*t0; endValues[2] = -t0;  }
 
   
-  for (int i=0; i<nLocalEls; i++) {
-    double Ulin = -Vds * ((double)myGlobalElements[i]) / nPts;
-    Values[1] = 2*t0 + Ec[myGlobalElements[i]] + Ulin;
+  for (int i = 0; i < nLocalEls; i++) {
+    double Ulin = -Vds * ((double)myGlobalElements[i]) / (nPts-1);
+    Values[1] = 2.*t0 + Ec[myGlobalElements[i]] + Ulin;
+    
+    if (bNeumannBC)  // NBC
+      endValues[1] = t0 + Ec[myGlobalElements[i]] + Ulin;
+    else             // DBC
+      endValues[1] = 2.*t0 + Ec[myGlobalElements[i]] + Ulin;
 
     if (myGlobalElements[i]==0) {
       Indices[0] = 0;
@@ -344,7 +375,7 @@ doMatrixDiag(double Vds, std::vector<double>& Ec, double Ecutoff,
 
   // Finish up
   int info = A->FillComplete();
-  assert( info==0 );
+  assert( info == 0 );
   A->SetTracebackMode(1); // Shutdown Epetra Warning tracebacks
 
   

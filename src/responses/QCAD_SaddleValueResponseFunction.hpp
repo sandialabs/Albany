@@ -287,6 +287,11 @@ namespace QCAD {
     
     double gfGridSpacing;  // grid spacing for GB-CBR calculation
     double fieldScaling;   // unscale the field specified by Field Name by Field Scaling Factor
+    
+    double initVds;        // initial Vds value in [V]
+    double finalVds;       // final Vds value in [V]
+    int stepsVds;          // number of steps from initial to final Vds
+    bool bSweepVds;        // true if sweeping Vds, false if only using finalVds
 
     bool bGetCurrent;
     double current_Ecutoff_offset_from_Emax;

@@ -72,9 +72,17 @@ SaddleValueResponseFunction(
   maxFinalPts = params.get<int>("Maximum Number of Final Points", nImagePts);
   gfGridSpacing  = params.get<double>("GF-CBR Method Grid Spacing", 0.0005);
   fieldScaling = params.get<double>("Field Scaling Factor", 1.0);
+  
+  // set Vds information
+  bSweepVds = params.get<bool>("GF-CBR Method Vds Sweep", false);
+  initVds = params.get<double>("GF-CBR Method Vds Initial Value", 0.0);
+  finalVds = params.get<double>("GF-CBR Method Vds Final Value", 0.0);
+  stepsVds = params.get<int>("GF-CBR Method Vds Steps", 0);
 
   bGetCurrent = (params.get<std::string>("Return Field Name", "") == "current");
-  current_Ecutoff_offset_from_Emax = params.get<double>("GF-CBR Method Energy Cutoff Offset", 0);
+  
+  // set default value to 0.4 eV (always want a positive value)
+  current_Ecutoff_offset_from_Emax = params.get<double>("GF-CBR Method Energy Cutoff Offset", 0.5);
 
   if(backtraceAfterIters < 0) backtraceAfterIters = 10000000;
   else if(backtraceAfterIters <= 1) backtraceAfterIters = 2; // can't backtrace until the second iteration
@@ -238,7 +246,7 @@ evaluateResponse(const double current_time,
     if( outputFilename.length() > 0) {
       std::fstream out; double pathLength = 0.0;
       out.open(outputFilename.c_str(), std::fstream::out | std::fstream::app);
-      out << std::endl << std::endl << "# Final points" << std::endl;
+      out << std::endl << std::endl << "% Final points" << std::endl;
       for(std::size_t i=0; i<finalPts.size(); i++) {
 	//std::cout << "DEBUG printing pt " << i << " of " << finalPts.size() << std::endl;
 	out << i << " " << finalPts[i].coords[0] << " " << finalPts[i].coords[1] 
@@ -450,7 +458,7 @@ initializeFinalImagePoints(const double current_time,
 
   //! Initialize Final Image Points: interpolate between current image points
   //! If starting from the saddle point, the resulting finalPts.value vs pathLength 
-  //! is shifted leftward from the imagePts.value vs pathLength curve.
+  //! is shifted away from the imagePts.value vs pathLength curve.
   //! Hence, start from the first image point, and equally divide the entire saddle 
   //! into (maxPoints-1) pieces.
   
@@ -598,13 +606,13 @@ doNudgedElasticBand(const double current_time,
   if( outputFilename.length() > 0) {
     std::fstream out;
     out.open(outputFilename.c_str(), std::fstream::out);
-    out << "# Saddle point path" << std::endl;
-    out << "# index xCoord yCoord value pathLength pointRadius" << std::endl;
+    out << "% Saddle point path" << std::endl;
+    out << "% index xCoord yCoord value pathLength pointRadius" << std::endl;
     out.close();
   }
   if(debugFilename.length() > 0) {
     fDebug.open(debugFilename.c_str(), std::fstream::out);
-    fDebug << "# HighestValue  HighestIndex  AverageForce  TimeStep"
+    fDebug << "% HighestValue  HighestIndex  AverageForce  TimeStep"
 	   << "  HighestPtGradNorm  AverageOpposingForce  SpringBase" << std::endl;
   }
 
@@ -846,7 +854,7 @@ fillSaddlePointData(const double current_time,
   if( outputFilename.length() > 0) {
     std::fstream out; double pathLength = 0.0;
     out.open(outputFilename.c_str(), std::fstream::out | std::fstream::app);
-    out << std::endl << std::endl << "# Image points" << std::endl;
+    out << std::endl << std::endl << "% Image points" << std::endl;
     for(std::size_t i=0; i<nImagePts; i++) {
       out << i << " " << imagePts[i].coords[0] << " " << imagePts[i].coords[1]
 	  << " " << imagePts[i].value << " " << pathLength << " " << imagePts[i].radius << std::endl;
@@ -1101,7 +1109,6 @@ double QCAD::SaddleValueResponseFunction::getCurrent
 {
   const double kB = 8.617332e-5;  // eV/K
   double Temp = lattTemp;   // K
-  double Vds = kB*Temp;     // kB*T [V]
 
   // segmentLength[i] == distance between imagePt[i] and imagePt[i+1]
   double* segmentLength = new double[nImagePts-1]; 
@@ -1124,9 +1131,12 @@ double QCAD::SaddleValueResponseFunction::getCurrent
   double ptSpacing = (lengthBefore + lengthAfter)/(nGFPts-1);  // actual GF Grid Spacing
   std::cout << "nGFPts = " << nGFPts << ", actual gfGridSpacing = " << ptSpacing << std::endl; 
 
-  // hard-code eff. mass along the saddle path with Reference Material's transverse eff. mass
+  // hard-code eff. mass along the saddle path using Reference Material's transverse eff. mass
   std::string refMtrlName = materialDB->getParam<std::string>("Reference Material");
   double effMass = materialDB->getMaterialParam<double>(refMtrlName,"Transverse Electron Effective Mass");
+
+  // hard-code electron affinity using the Reference Material's value
+  double matChi = materialDB->getMaterialParam<double>(refMtrlName,"Electron Affinity");
 
   // unscale the Field Scaling Factor to obtain the actual Potential in [V]
   Teuchos::RCP<std::vector<double> > pot = Teuchos::rcp( new std::vector<double>(finalPts.size()) );
@@ -1157,24 +1167,6 @@ double QCAD::SaddleValueResponseFunction::getCurrent
 			  << "Error!  Invalid category " << category << " for reference material !" << std::endl);
   }  
   
-  // hard-code electron affinity using the Reference Material's value
-  double matChi = materialDB->getMaterialParam<double>(refMtrlName,"Electron Affinity");
-  
-/*
-  // compute conduction band [eV] from the potential and corresponding pathLens (non-uniform)
-  Teuchos::RCP<std::vector<double> > Ec = Teuchos::rcp( new std::vector<double>(imagePts.size()) );
-  Teuchos::RCP<std::vector<double> > pathLen = Teuchos::rcp( new std::vector<double>(imagePts.size()) );
-  
-  double pathLength = 0.0;
-  for(std::size_t i = 0; i < imagePts.size(); i++)
-  {
-    (*Ec)[i] = qPhiRef - matChi - (*pot)[i];
-    (*pathLen)[i] = pathLength;  // pathLen has non-uniform values
-    if (i < (imagePts.size()-1))
-      pathLength += imagePts[i].coords.distanceTo(imagePts[i+1].coords); 
-  }
-*/
-
   // compute conduction band [eV] from the potential
   Teuchos::RCP<std::vector<double> > Ec = Teuchos::rcp( new std::vector<double>(finalPts.size()) );
   Teuchos::RCP<std::vector<double> > pathLen = Teuchos::rcp( new std::vector<double>(finalPts.size()) );
@@ -1193,7 +1185,7 @@ double QCAD::SaddleValueResponseFunction::getCurrent
   {
     std::fstream out; 
     out.open(outputFilename.c_str(), std::fstream::out | std::fstream::app);
-    out << std::endl << std::endl << "# Computed Ec data" << std::endl;
+    out << std::endl << std::endl << "% Computed Ec data" << std::endl;
     for(std::size_t i = 0; i < finalPts.size(); i++) 
     {
 	    out << i << " " << finalPts[i].coords[0] << " " << finalPts[i].coords[1] 
@@ -1201,13 +1193,48 @@ double QCAD::SaddleValueResponseFunction::getCurrent
     }
     out.close();
   }   
-          
-  // call the GF-CBR solver to compute current
+
+  double I = 0.0; 
+
+  // instantiate the GF-CBR solver to compute current
   Teuchos::RCP<Epetra_MpiComm> Comm = Teuchos::rcp( new Epetra_MpiComm(MPI_COMM_WORLD) );
   QCAD::GreensFunctionTunnelingSolver solver(Ec, pathLen, nGFPts, ptSpacing, effMass, Comm); //Teuchos::rcp(comm.Clone())
   
-  double I = solver.computeCurrent(Vds, kB * Temp, current_Ecutoff_offset_from_Emax); // overwrite "Return Field Val" with current
-  std::cout << "Current I = " << I << " Amps" << std::endl;
+  // compute the currents for a range of Vds values
+  if (bSweepVds)   
+  {
+    int ptsVds = stepsVds + 1;  // include the ending point
+    std::vector<double> rangeVds(ptsVds, 0.0);
+    std::vector<double> rangeIds(ptsVds, 0.0); 
+    
+    double deltaVds = (finalVds - initVds) / double(ptsVds-1); 
+    for (int i = 0; i < ptsVds; i++)
+      rangeVds[i] = initVds + deltaVds * double(i); 
+    
+    solver.computeCurrentRange(rangeVds, kB * Temp, current_Ecutoff_offset_from_Emax, rangeIds);
+    
+    // set I to the last value of rangeIds
+    I = rangeIds[ptsVds-1];
+
+    // write Vds vs. Ids data to file
+    if ( outputFilename.length() > 0) 
+    {
+      std::fstream out; 
+      out.open(outputFilename.c_str(), std::fstream::out | std::fstream::app);
+      out << std::endl << std::endl << "% index, Vds [V] vs Ids [A] data" << std::endl;
+      for(std::size_t i = 0; i < rangeVds.size(); i++) 
+	      out << i << " " << rangeVds[i] << " " << rangeIds[i] << " " << std::endl;
+      out.close();
+    }
+    
+  }  // end of if (bSweepVds)
+  
+  // compute the current for a single Vds value
+  else             
+    I = solver.computeCurrent(finalVds, kB * Temp, current_Ecutoff_offset_from_Emax); // overwrite "Return Field Val" with current
+  
+  std::cout << "Final Vds = " << finalVds << " V, Current Ids = " << I << " Amps" << std::endl;
+  
   return I;
 }
 
@@ -1442,7 +1469,7 @@ writeOutput(int nIters)
   if( (nEvery > 0) && (nIters % nEvery == 1) && (outputFilename.length() > 0)) {
     std::fstream out; double pathLength = 0.0;
     out.open(outputFilename.c_str(), std::fstream::out | std::fstream::app);
-    out << "# Iteration " << nIters << std::endl;
+    out << "% Iteration " << nIters << std::endl;
     for(std::size_t i=0; i<nImagePts; i++) {
       out << i << " " << imagePts[i].coords[0] << " " << imagePts[i].coords[1]
 	  << " " << imagePts[i].value << " " << pathLength << " " << imagePts[i].radius << std::endl;
