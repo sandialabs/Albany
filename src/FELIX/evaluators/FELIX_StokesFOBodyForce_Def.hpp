@@ -113,6 +113,10 @@ StokesFOBodyForce(const Teuchos::ParameterList& p) :
     cout << "ISMIP-HOM Test C Source!" << endl; 
     bf_type = FO_ISMIPHOM_TESTC; 
   }
+  else if (type == "FO ISMIP-HOM Test D") {
+    cout << "ISMIP-HOM Test D Source!" << endl; 
+    bf_type = FO_ISMIPHOM_TESTD; 
+  }
 
   this->addEvaluatedField(force);
 
@@ -224,17 +228,25 @@ evaluateFields(typename Traits::EvalData workset)
    }
  }
  else if (bf_type == FO_COSEXP2DALL) {
-   cout << "all basal!" << endl; 
    const double a = 1.0; 
    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-     for (std::size_t qp=0; qp < numQPs; ++qp) {      
+     for (std::size_t qp=0; qp < numQPs; ++qp) {
        ScalarT* f = &force(cell,qp,0);
        MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
        MeshScalarT x = coordVec(cell,qp,0);
        MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
-       MeshScalarT muqp = 1.0 ; //0.5*pow(A, -1.0/n)*pow(muargt, 1.0/n - 1.0);
-       f[0] = 2.0*muqp*(2.0*a*a*exp(a*x)*sin(y2pi) - 3.0*pi*a*exp(a*x)*sin(y2pi) - 2.0*pi*pi*exp(a*x)*sin(y2pi)); 
-       f[1] = 2.0*muqp*(3.0*a*pi*exp(a*x)*cos(y2pi) + 1.0/2.0*a*a*exp(a*x)*cos(y2pi) - 8.0*pi*pi*exp(a*x)*cos(y2pi)); 
+       MeshScalarT muargt = (a*a + 4.0*pi*pi - 2.0*pi*a)*sin(y2pi)*sin(y2pi) + 1.0/4.0*(2.0*pi+a)*(2.0*pi+a)*cos(y2pi)*cos(y2pi);
+       muargt = sqrt(muargt)*exp(a*x);
+       MeshScalarT muqp = 1.0/2.0*pow(A, -1.0/n)*pow(muargt, 1.0/n - 1.0);
+       MeshScalarT dmuargtdx = a*muargt;
+       MeshScalarT dmuargtdy = 3.0/2.0*pi*(a*a+4.0*pi*pi-4.0*pi*a)*cos(y2pi)*sin(y2pi)*exp(a*x)/sqrt((a*a + 4.0*pi*pi - 2.0*pi*a)*sin(y2pi)*sin(y2pi) + 1.0/4.0*(2.0*pi+a)*(2.0*pi+a)*cos(y2pi)*cos(y2pi));
+       MeshScalarT exx = a*exp(a*x)*sin(y2pi);
+       MeshScalarT eyy = -2.0*pi*exp(a*x)*sin(y2pi);
+       MeshScalarT exy = 1.0/2.0*(2.0*pi+a)*exp(a*x)*cos(y2pi);
+       f[0] = 2.0*muqp*(2.0*a*a*exp(a*x)*sin(y2pi) - 3.0*pi*a*exp(a*x)*sin(y2pi) - 2.0*pi*pi*exp(a*x)*sin(y2pi))
+            + 2.0*0.5*pow(A, -1.0/n)*(1.0/n-1.0)*pow(muargt, 1.0/n-2.0)*(dmuargtdx*(2.0*exx + eyy) + dmuargtdy*exy);
+       f[1] = 2.0*muqp*(3.0*a*pi*exp(a*x)*cos(y2pi) + 1.0/2.0*a*a*exp(a*x)*cos(y2pi) - 8.0*pi*pi*exp(a*x)*cos(y2pi))
+            + 2.0*0.5*pow(A, -1.0/n)*(1.0/n-1.0)*pow(muargt, 1.0/n-2.0)*(dmuargtdx*exy + dmuargtdy*(exx + 2.0*eyy));
      }
    }
  }
@@ -257,7 +269,7 @@ evaluateFields(typename Traits::EvalData workset)
    }
  }
  //source for ISMIP-HOM Test A
- else if (bf_type == FO_ISMIPHOM_TESTA || bf_type == FO_ISMIPHOM_TESTC) {
+ else if (bf_type == FO_ISMIPHOM_TESTA || bf_type == FO_ISMIPHOM_TESTC || bf_type == FO_ISMIPHOM_TESTD) {
    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
      for (std::size_t qp=0; qp < numQPs; ++qp) {      
        ScalarT* f = &force(cell,qp,0);

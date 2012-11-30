@@ -50,13 +50,14 @@ private:
 
   // Input:
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Ugrad;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint> mu;
 
   unsigned int numQPs, numDims, numNodes;
   
-  enum VISCTYPE {CONSTANT, GLENSLAW};
+  enum VISCTYPE {CONSTANT, EXPTRIG, GLENSLAW};
   VISCTYPE visc_type;
  
 };

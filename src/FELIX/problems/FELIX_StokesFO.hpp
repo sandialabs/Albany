@@ -226,6 +226,8 @@ FELIX::StokesFO::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("FELIX Viscosity"));
 
     //Input
+    p->set<string>("Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("QP Gradient Data Layout", dl->qp_gradient); 
     p->set<string>("Gradient QP Variable Name", "Velocity Gradient");
     p->set< RCP<DataLayout> >("QP Velocity Tensor Data Layout", dl->qp_vecgradient);
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);

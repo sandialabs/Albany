@@ -136,15 +136,10 @@ void
 Albany::STKDiscretization::transformMesh()
 {
   std::string transformType = stkMeshStruct->transformType;
-  if (transformType == "None") {
-     transform_type = NONE;
-  }
-  else if (transformType == "ISMIP-HOM Test A") {
-    transform_type = ISMIP_HOM_TEST_A;
+  if (transformType == "ISMIP-HOM Test A") {
     cout << "Test A!" << endl;
-    int L = stkMeshStruct->felixL; 
+    double L = stkMeshStruct->felixL; 
     double alpha = stkMeshStruct->felixAlpha; 
-    cout << "here!" << endl;
     cout << "L: " << L << endl; 
     cout << "alpha degrees: " << alpha << endl; 
     alpha = alpha*pi/180; //convert alpha, read in from ParameterList, to radians
@@ -160,12 +155,10 @@ Albany::STKDiscretization::transformMesh()
       x[2] = s*x[2] + b*(1-x[2]);
      }
    }
-   else if (transformType == "ISMIP-HOM Test C") {
-    transform_type = ISMIP_HOM_TEST_C;
-    cout << "Test C!" << endl;
-    int L = stkMeshStruct->felixL; 
+   else if ((transformType == "ISMIP-HOM Test C") || (transformType == "ISMIP-HOM Test D")) {
+    cout << "Test C and D!" << endl;
+    double L = stkMeshStruct->felixL; 
     double alpha = stkMeshStruct->felixAlpha; 
-    cout << "here!" << endl;
     cout << "L: " << L << endl; 
     cout << "alpha degrees: " << alpha << endl; 
     alpha = alpha*pi/180; //convert alpha, read in from ParameterList, to radians
