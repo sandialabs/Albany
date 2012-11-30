@@ -21,7 +21,9 @@ namespace LCM {
     is_constant(true),
     isCompressibleSolidPhase(false),
     isCompressibleFluidPhase(false),
-    isPoroElastic(false)
+    isPoroElastic(false),
+    hasStrain(false),
+    hasJ(false)
   {
     Teuchos::ParameterList* porosity_list = 
       p.get<Teuchos::ParameterList*>("Parameter List");
@@ -81,13 +83,27 @@ namespace LCM {
       //   porePressure = tmp;
       //  this->addDependentField(porePressure);
 
+      hasStrain = true;
+
       PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim>
         ts(p.get<string>("Strain Name"), dl->qp_tensor);
       strain = ts;
       this->addDependentField(strain);
 
       isPoroElastic = true;
-      initialPorosity_value = 
+      initialPorosityValue = 
+        porosity_list->get("Initial Porosity Value", 0.0);
+      new Sacado::ParameterRegistration<EvalT, SPL_Traits>
+        ("Initial Porosity Value", this, paramLib);
+    }
+    else if ( p.isType<string>("DetDefGrad Name") ) {
+      hasJ = true;
+      PHX::MDField<ScalarT,Cell,QuadPoint>
+        tj(p.get<string>("DetDefGrad Name"), dl->qp_scalar);
+      J = tj;
+      this->addDependentField(J);
+      isPoroElastic = true;
+      initialPorosityValue = 
         porosity_list->get("Initial Porosity Value", 0.0);
       new Sacado::ParameterRegistration<EvalT, SPL_Traits>
         ("Initial Porosity Value", this, paramLib);
@@ -95,7 +111,7 @@ namespace LCM {
     else {
       // porosity will not change in this case.
       isPoroElastic=false; 
-      initialPorosity_value=0.0;
+      initialPorosityValue=0.0;
     }
 
     if ( p.isType<string>("Biot Coefficient Name") ) {
@@ -135,7 +151,8 @@ namespace LCM {
   {
     this->utils.setFieldData(porosity,fm);
     if (!is_constant) this->utils.setFieldData(coordVec,fm);
-    if (isPoroElastic) this->utils.setFieldData(strain,fm);
+    if (isPoroElastic && hasStrain) this->utils.setFieldData(strain,fm);
+    if (isPoroElastic && hasJ) this->utils.setFieldData(J,fm);
     if (isCompressibleSolidPhase) this->utils.setFieldData(biotCoefficient,fm);
     if (isCompressibleFluidPhase) this->utils.setFieldData(porePressure,fm);
 
@@ -166,35 +183,44 @@ namespace LCM {
       }
     }
     if ((isPoroElastic) && (isCompressibleSolidPhase) && (isCompressibleFluidPhase)) {
+      if ( hasStrain ) {
+        for (std::size_t cell=0; cell < numCells; ++cell) {
+          for (std::size_t qp=0; qp < numQPs; ++qp) {
+            porosity(cell,qp) = initialPorosityValue;
+
+            Teuchos::Array<MeshScalarT> point(numDims);
+            for (std::size_t i=0; i<numDims; i++) {
+              porosity(cell,qp) += biotCoefficient(cell,qp)*strain(cell,qp,i,i)
+                + porePressure(cell,qp)
+                *(biotCoefficient(cell,qp)-initialPorosityValue)/GrainBulkModulus;
+            }
+            // // for debug
+            // std::cout << "initial Porosity: " << initialPorosity_value << endl;
+            // std::cout << "Pore Pressure: " << porePressure << endl;
+            // std::cout << "Biot Coefficient: " << biotCoefficient << endl;
+            // std::cout << "Grain Bulk Modulus " << GrainBulkModulus << endl;
+
+            // porosity(cell,qp) += (1.0 - initialPorosity_value)
+            //   /GrainBulkModulus*porePressure(cell,qp);
+            // // for large deformation, \phi = J \dot \phi_{o}
+          }
+        }
+      } else if ( hasJ )
       for (std::size_t cell=0; cell < numCells; ++cell) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
-    	  porosity(cell,qp) = initialPorosity_value;
-
-    	  Teuchos::Array<MeshScalarT> point(numDims);
-          for (std::size_t i=0; i<numDims; i++) {
-            porosity(cell,qp) += biotCoefficient(cell,qp)*strain(cell,qp,i,i)
-              + porePressure(cell,qp)
-              *(biotCoefficient(cell,qp)-initialPorosity_value)/GrainBulkModulus;
-          }
-          // // for debug
-          // std::cout << "initial Porosity: " << initialPorosity_value << endl;
-          // std::cout << "Pore Pressure: " << porePressure << endl;
-          // std::cout << "Biot Coefficient: " << biotCoefficient << endl;
-          // std::cout << "Grain Bulk Modulus " << GrainBulkModulus << endl;
-
-          // porosity(cell,qp) += (1.0 - initialPorosity_value)
-          //   /GrainBulkModulus*porePressure(cell,qp);
-    	  // // for large deformation, \phi = J \dot \phi_{o}
+          porosity(cell,qp) = initialPorosityValue * J(cell,qp);
         }
-      }
+      }        
     } else {
       for (std::size_t cell=0; cell < numCells; ++cell) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
-          porosity(cell,qp) = initialPorosity_value;
+          porosity(cell,qp) = initialPorosityValue;
 
-          Teuchos::Array<MeshScalarT> point(numDims);
-          for (std::size_t i=0; i<numDims; i++) {
-            porosity(cell,qp) += strain(cell,qp,i,i);
+          if ( hasStrain ) {
+            Teuchos::Array<MeshScalarT> point(numDims);
+            for (std::size_t i=0; i<numDims; i++) {
+              porosity(cell,qp) += strain(cell,qp,i,i);
+            }
           }
         }
       }
@@ -209,7 +235,7 @@ namespace LCM {
     if (n == "Porosity")
       return constant_value;
     else if (n == "Initial Porosity Value")
-      return initialPorosity_value;
+      return initialPorosityValue;
     else if (n == "Grain Bulk Modulus Value")
       return GrainBulkModulus;
     for (int i=0; i<rv.size(); i++) {

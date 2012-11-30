@@ -154,6 +154,11 @@ namespace Albany {
     std::string variableTypeToString(const MECH_VAR_TYPE variableType);
 
     ///
+    /// Construct a string for consistent output with surface elements
+    /// 
+    std::string stateString(std::string, bool);
+
+    ///
     /// Boundary conditions on source term
     ///
     bool haveSource;
@@ -630,8 +635,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   }
 
   // string for cauchy stress used numerous times below
-  string cauchy = "Cauchy_Stress";
-  if ( surfaceElement ) cauchy = "Surface_Cauchy_Stress";
+  string cauchy = stateString("Cauchy_Stress",surfaceElement);
+  string Fp     = stateString("Fp",surfaceElement);
+  string eqps   = stateString("eqps",surfaceElement);
 
   { // Time
     RCP<ParameterList> p = rcp(new ParameterList("Time"));
@@ -670,7 +676,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
 
     // For some reason the save field below does not work.
-    p = stateMgr.registerStateVariable("Strain",
+    p = stateMgr.registerStateVariable(stateString("Strain",surfaceElement),
                                        dl->qp_tensor,
                                        dl->dummy,
                                        ebName,
@@ -894,7 +900,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       outputFlag = 
         materialDB->getElementBlockParam<bool>(ebName,"Output Alpha");
 
-    p = stateMgr.registerStateVariable("alpha",
+    p = stateMgr.registerStateVariable(stateString("alpha",surfaceElement),
                                        dl->qp_scalar, 
                                        dl->dummy, 
                                        ebName, 
@@ -1075,8 +1081,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
         //Output
         p->set<string>("Stress Name", cauchy);
-        p->set<string>("Fp Name", "Fp");
-        p->set<string>("Eqps Name", "eqps");
+        p->set<string>("Fp Name", Fp);
+        p->set<string>("Eqps Name", eqps);
 
         // Save state data
 
@@ -1089,7 +1095,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                            0.0);
         ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
-        p = stateMgr.registerStateVariable("Fp",
+        p = stateMgr.registerStateVariable(Fp,
                                            dl->qp_tensor, 
                                            dl->dummy, 
                                            ebName, 
@@ -1098,7 +1104,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                            true);
         ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
-        p = stateMgr.registerStateVariable("eqps",
+        p = stateMgr.registerStateVariable(eqps,
                                            dl->qp_scalar, 
                                            dl->dummy, 
                                            ebName, 
@@ -1909,7 +1915,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<string>("Porosity Name", "Porosity");
     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
     // Setting this turns on dependence of strain and pore pressure)
-    p->set<string>("Strain Name", "Strain");
+    //p->set<string>("Strain Name", "Strain");
+    p->set<string>("DetDefGrad Name", "J");
     // porosity update based on Coussy's poromechanics (see p.79)
     p->set<string>("QP Pore Pressure Name", "Pore Pressure");
     p->set<string>("Biot Coefficient Name", "Biot Coefficient");
@@ -2072,7 +2079,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
-    p->set<string>("Strain Name", "Strain");
+    //p->set<string>("Strain Name", "Strain");
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
     // Inputs: X, Y at nodes, Cubature, and Basis
@@ -2123,6 +2130,11 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       PHX::Tag<typename EvalT::ScalarT> pres_tag("Scatter Pore Pressure", dl->dummy);
       fm0.requireField<EvalT>(pres_tag);
       ret_tag = pres_tag.clone();
+    }
+    if (haveHeatEq) {
+      PHX::Tag<typename EvalT::ScalarT> heat_tag("Scatter Temperature", dl->dummy);
+      fm0.requireField<EvalT>(heat_tag);
+      ret_tag = heat_tag.clone();
     }
     return ret_tag;
   }

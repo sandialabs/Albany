@@ -214,4 +214,13 @@ Albany::MechanicsProblem::getAllocatedStates(
   oldState_ = oldState;
   newState_ = newState;
 }
+//------------------------------------------------------------------------------
+std::string 
+Albany::MechanicsProblem::stateString(std::string name, bool surfaceFlag)
+{
+  std::string outputName(name);
+  if (surfaceFlag) outputName = "Surface_"+name;
+  return outputName;
+}
+
 

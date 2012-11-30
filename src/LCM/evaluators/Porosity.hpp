@@ -99,26 +99,30 @@ namespace LCM {
     /// porosity holds linear relation to volumetric strain
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> strain;
 
+    ///
+    /// Optional dependence on det(F)
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint> J;
     
     ///
-    /// Constant value
+    /// flag to indicated usage in poroelastic context
     ///
     bool isPoroElastic;
 
     ///
-    /// Constant value
+    /// flag
     ///
     bool isCompressibleSolidPhase;
 
     ///
-    /// Constant value
+    /// flag
     ///
     bool isCompressibleFluidPhase;
 
     ///
-    /// Constant value
+    /// initial state
     ///
-    ScalarT initialPorosity_value;
+    ScalarT initialPorosityValue;
 
     ///
     /// For compressible grain
@@ -144,6 +148,16 @@ namespace LCM {
     /// Values of the random variables
     ///
     Teuchos::Array<ScalarT> rv;
+
+    ///
+    /// Strain flag
+    ///
+    bool hasStrain;
+
+    ///
+    /// J flag
+    ///
+    bool hasJ;
   };
 }
 
