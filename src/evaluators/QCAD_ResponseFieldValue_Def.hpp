@@ -70,7 +70,7 @@ postEvaluate(typename Traits::PostEvalData workset)
     } // response
   } // cell belongs to this proc
 
-  dg->Export(*overlapped_dg, *workset.x_importer, Insert);
+  dg->Export(*overlapped_dg, *workset.x_importer, Add);
 }
 
 // **********************************************************************
@@ -147,7 +147,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 
   for (int block=0; block<dgdx_sg->size(); block++)
     (*dg_sg)[block].Export((*overlapped_dg_sg)[block], 
-			   *workset.x_importer, Insert);
+			   *workset.x_importer, Add);
 }
 
 // **********************************************************************
@@ -223,7 +223,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 
   for (int block=0; block<dgdx_mp->size(); block++)
     (*dg_mp)[block].Export((*overlapped_dg_mp)[block], 
-			   *workset.x_importer, Insert);
+			   *workset.x_importer, Add);
 }
 
 template<typename EvalT, typename Traits>
@@ -481,6 +481,9 @@ postEvaluate(typename Traits::PostEvalData workset)
   // Do global scattering
   if (workset.comm->getRank() == winner)
     QCAD::FieldValueScatterScalarResponse<EvalT,Traits>::setNodeID(max_nodeID);
+  else
+    QCAD::FieldValueScatterScalarResponse<EvalT,Traits>::setNodeID(Teuchos::null);
+
   QCAD::FieldValueScatterScalarResponse<EvalT,Traits>::postEvaluate(workset);
 }
 
