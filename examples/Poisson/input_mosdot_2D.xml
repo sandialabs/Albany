@@ -19,6 +19,14 @@
       <Parameter name="Factor" type="double" value="1.0" />
       <Parameter name="Device" type="string" value="elementblocks" />
       <Parameter name="Oxide Charge" type="double" value="0" />
+      <ParameterList name="Mesh Region 0">
+	<Parameter name="Element Block Name" type="string" value="silicon.quantum" />
+	<Parameter name="Factor Value" type="double" value="1.0" />
+        <Parameter name="x min" type="double" value="-2.5" />
+        <Parameter name="x max" type="double" value="2.5" />
+        <Parameter name="y min" type="double" value="-1.5" />
+        <Parameter name="y max" type="double" value="0.0" />
+      </ParameterList>
     </ParameterList>
 
     <ParameterList name="Permittivity">
@@ -26,13 +34,14 @@
     </ParameterList>
 
     <ParameterList name="Parameters">
-      <Parameter name="Number" type="int" value="6" />
+      <Parameter name="Number" type="int" value="7" />
       <Parameter name="Parameter 0" type="string" value="DBC on NS substrate for DOF Phi" />
       <Parameter name="Parameter 1" type="string" value="DBC on NS lgate for DOF Phi" />
       <Parameter name="Parameter 2" type="string" value="DBC on NS rgate for DOF Phi" />
       <Parameter name="Parameter 3" type="string" value="DBC on NS topgate for DOF Phi" />
       <Parameter name="Parameter 4" type="string" value="Poisson Source Factor" />
       <Parameter name="Parameter 5" type="string" value="Oxide Charge" />
+      <Parameter name="Parameter 6" type="string" value="Mesh Region Factor 0" />
     </ParameterList>
 
     <ParameterList name="Response Functions">
@@ -155,7 +164,7 @@
     <Parameter name="Relative Tolerance" type="double" value="1.0e-3" />
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="1" />
     <Parameter name="Sensitivity Test Values 0" type="Array(double)"
-     	       value="{ 0.232672531746, 0.110149372853, 0.11016022242, 0.147347700424, -0.00355016340176, 765.402980973}" />
+     	       value="{ 0.232672531746, 0.110149372853, 0.11016022242, 0.147347700424, -0.00355016340176, 765.402980973, -0.00686355035805}" />
   </ParameterList>
 
   <ParameterList name="Piro">

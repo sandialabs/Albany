@@ -381,7 +381,7 @@ namespace LCM {
     v0 = p - n[0];
 
     T
-    min = dot(v0, v0);
+    min = norm_square(v0);
 
     for (typename std::vector< Vector<T> >::size_type i = 1;
         i < n.size();
@@ -391,7 +391,7 @@ namespace LCM {
       vi = p - n[i];
 
       const T
-      s = dot(vi, vi);
+      s = norm_square(vi);
 
       if (s < min) {
         min = s;
@@ -638,6 +638,154 @@ namespace LCM {
     return p;
 
   }
+
+  //
+  // Given a vector of points, determine
+  // distances between all of them.
+  // \param vector of points
+  // \return distance matrix
+  //
+  template<typename T>
+  std::vector< std::vector<T> >
+  distance_matrix(std::vector< Vector<T> > const & points)
+  {
+    const Index
+    number_points = points.size();
+
+    std::vector< std::vector<T> >
+    distances(number_points);
+
+    for (Index i = 0; i < number_points; ++i) {
+
+      distances[i].resize(number_points);
+
+      distances[i][i] = 0.0;
+
+      for (Index j = i + 1; j < number_points; ++j) {
+
+        const T
+        distance = norm(points[i] - points[j]);
+
+        distances[i][j] = distance;
+        distances[j][i] = distance;
+
+      }
+
+    }
+
+    return distances;
+  }
+
+  //
+  // Given a distance matrix, determine the minimum
+  // distance between two distinct points.
+  // \param distance matrix
+  // \return minimum distance
+  //
+  template<typename T>
+  std::vector<T>
+  minimum_distances(std::vector< std::vector<T> > const & distances)
+  {
+    const Index
+    number_points = distances.size();
+
+    std::vector<T>
+    minima(number_points);
+
+    // First row
+    T
+    minimum = distances[0][1];
+
+    for (Index j = 2; j < number_points; ++j) {
+      minimum = std::min(minimum, distances[0][j]);
+    }
+
+    minima[0] = minimum;
+
+    // Remaining rows
+    for (Index i = 1; i < number_points; ++i) {
+
+      minimum = distances[i][0];
+
+      for (Index j = 1; j < number_points; ++j) {
+
+        if (i == j) continue;
+
+        minimum = std::min(minimum, distances[i][j]);
+
+      }
+
+      minima[i] = minimum;
+
+    }
+
+    return minima;
+  }
+
+  //
+  // Given a set of points and the corners of a box:
+  // Determine the closest point to the center of the box.
+  // For the remaining points, define hyperplanes that are
+  // equidistant to them and the closest point to the center of
+  // the box.
+  // Determine whether the box lies entirely on the side of the hyperplane
+  // where the closest point to the center of the box lies as well.
+  //
+  template<typename T>
+  std::pair<Index, std::vector<bool> >
+  box_proximity_to_points(
+      std::vector< Vector<T> > const & points,
+      Vector<T> const & lower_corner,
+      Vector<T> const & upper_corner)
+  {
+    const Vector<T>
+    center_box = 0.5 * (lower_corner + upper_corner);
+
+    const Index
+    index_closest = closest_point(center_box, points);
+
+    Vector<T> const &
+    closest_to_center = points[index_closest];
+
+    const Index
+    number_points = points.size();
+
+    std::vector<bool>
+    is_in_closest_half(number_points);
+
+    for (Index i = 0; i < number_points; ++i) {
+
+      if (i == index_closest) {
+        is_in_closest_half[i] = true;
+        continue;
+      }
+
+      Vector<T> const &
+      point = points[i];
+
+      const Vector<T>
+      u = point - closest_to_center;
+
+      const Index
+      N = u.get_dimension();
+
+      Vector<T>
+      v(N);
+
+      for (Index j = 0; j < N; ++j) {
+
+        v(j) = u(j) >= 0.0 ? upper_corner(j) : lower_corner(j);
+
+      }
+
+      is_in_closest_half[i] =
+          norm_square(point - v) >= norm_square(closest_to_center - v);
+
+    }
+
+    return std::make_pair(index_closest, is_in_closest_half);
+  }
+
 
 } // namespace LCM
 

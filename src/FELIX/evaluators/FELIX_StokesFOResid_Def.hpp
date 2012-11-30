@@ -19,11 +19,11 @@ StokesFOResid(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
   wGradBF    (p.get<std::string>                   ("Weighted Gradient BF Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Gradient Data Layout") ),
-  C          (p.get<std::string>                   ("QP Variable Name"),
+  U          (p.get<std::string>                   ("QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  Cgrad      (p.get<std::string>                   ("Gradient QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Concentration Tensor Data Layout") ),
-  CDot       (p.get<std::string>                   ("QP Time Derivative Variable Name"),
+  Ugrad      (p.get<std::string>                   ("Gradient QP Variable Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Velocity Tensor Data Layout") ),
+  UDot       (p.get<std::string>                   ("QP Time Derivative Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
   force       (p.get<std::string>              ("Body Force Name"),
  	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
@@ -32,10 +32,10 @@ StokesFOResid(const Teuchos::ParameterList& p) :
   Residual   (p.get<std::string>                   ("Residual Name"),
               p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") )
 {
-  this->addDependentField(C);
-  this->addDependentField(Cgrad);
+  this->addDependentField(U);
+  this->addDependentField(Ugrad);
   this->addDependentField(force);
-  //this->addDependentField(CDot);
+  //this->addDependentField(UDot);
   this->addDependentField(wBF);
   this->addDependentField(wGradBF);
   this->addDependentField(muFELIX);
@@ -51,7 +51,7 @@ StokesFOResid(const Teuchos::ParameterList& p) :
   numQPs   = dims[2];
   numDims  = dims[3];
 
-  C.fieldTag().dataLayout().dimensions(dims);
+  U.fieldTag().dataLayout().dimensions(dims);
   vecDim  = dims[2];
 
 cout << " in FELIX Stokes FO residual! " << endl;
@@ -73,10 +73,10 @@ void StokesFOResid<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(C,fm);
-  this->utils.setFieldData(Cgrad,fm);
+  this->utils.setFieldData(U,fm);
+  this->utils.setFieldData(Ugrad,fm);
   this->utils.setFieldData(force,fm);
-  //this->utils.setFieldData(CDot,fm);
+  //this->utils.setFieldData(UDot,fm);
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(wGradBF,fm);
   this->utils.setFieldData(muFELIX,fm);
@@ -95,13 +95,13 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t node=0; node < numNodes; ++node) {
               for (std::size_t i=0; i<vecDim; i++)  Residual(cell,node,i)=0.0;
           for (std::size_t qp=0; qp < numQPs; ++qp) {
-             Residual(cell,node,0) += 2.0*muFELIX(cell,qp)*((2.0*Cgrad(cell,qp,0,0) + Cgrad(cell,qp,1,1))*wGradBF(cell,node,qp,0) + 
-                                      0.5*(Cgrad(cell,qp,0,1) + Cgrad(cell,qp,1,0))*wGradBF(cell,node,qp,1) + 
-                                      0.5*Cgrad(cell,qp,0,2)*wGradBF(cell,node,qp,2)) + 
+             Residual(cell,node,0) += 2.0*muFELIX(cell,qp)*((2.0*Ugrad(cell,qp,0,0) + Ugrad(cell,qp,1,1))*wGradBF(cell,node,qp,0) + 
+                                      0.5*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0))*wGradBF(cell,node,qp,1) + 
+                                      0.5*Ugrad(cell,qp,0,2)*wGradBF(cell,node,qp,2)) + 
                                       force(cell,qp,0)*wBF(cell,node,qp);
-             Residual(cell,node,1) += 2.0*muFELIX(cell,qp)*(0.5*(Cgrad(cell,qp,0,1) + Cgrad(cell,qp,1,0))*wGradBF(cell,node,qp,0) +
-                                      (Cgrad(cell,qp,0,0) + 2.0*Cgrad(cell,qp,1,1))*wGradBF(cell,node,qp,1) + 
-                                      0.5*Cgrad(cell,qp,1,2)*wGradBF(cell,node,qp,2)) + 
+             Residual(cell,node,1) += 2.0*muFELIX(cell,qp)*(0.5*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0))*wGradBF(cell,node,qp,0) +
+                                      (Ugrad(cell,qp,0,0) + 2.0*Ugrad(cell,qp,1,1))*wGradBF(cell,node,qp,1) + 
+                                      0.5*Ugrad(cell,qp,1,2)*wGradBF(cell,node,qp,2)) + 
                                       force(cell,qp,1)*wBF(cell,node,qp); 
               }
            
@@ -111,11 +111,11 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t node=0; node < numNodes; ++node) {
               for (std::size_t i=0; i<vecDim; i++)  Residual(cell,node,i)=0.0;
           for (std::size_t qp=0; qp < numQPs; ++qp) {
-             Residual(cell,node,0) += 2.0*muFELIX(cell,qp)*((2.0*Cgrad(cell,qp,0,0) + Cgrad(cell,qp,1,1))*wGradBF(cell,node,qp,0) + 
-                                      0.5*(Cgrad(cell,qp,0,1) + Cgrad(cell,qp,1,0))*wGradBF(cell,node,qp,1)) + 
+             Residual(cell,node,0) += 2.0*muFELIX(cell,qp)*((2.0*Ugrad(cell,qp,0,0) + Ugrad(cell,qp,1,1))*wGradBF(cell,node,qp,0) + 
+                                      0.5*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0))*wGradBF(cell,node,qp,1)) + 
                                       force(cell,qp,0)*wBF(cell,node,qp);
-             Residual(cell,node,1) += 2.0*muFELIX(cell,qp)*(0.5*(Cgrad(cell,qp,0,1) + Cgrad(cell,qp,1,0))*wGradBF(cell,node,qp,0) +
-                                      (Cgrad(cell,qp,0,0) + 2.0*Cgrad(cell,qp,1,1))*wGradBF(cell,node,qp,1)) + force(cell,qp,1)*wBF(cell,node,qp); 
+             Residual(cell,node,1) += 2.0*muFELIX(cell,qp)*(0.5*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0))*wGradBF(cell,node,qp,0) +
+                                      (Ugrad(cell,qp,0,0) + 2.0*Ugrad(cell,qp,1,1))*wGradBF(cell,node,qp,1)) + force(cell,qp,1)*wBF(cell,node,qp); 
               }
            
     } } }

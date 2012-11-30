@@ -262,6 +262,7 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
    // Drop into the "Neumann BCs" sublist
    Teuchos::ParameterList BCparams = params->sublist(traits_type::bcParamsPl);
    BCparams.validateParameters(*(traits_type::getValidBCParameters(meshSpecs->ssNames, bcNames, conditions)),0);
+  
 
    std::map<string, RCP<ParameterList> > evaluators_to_build;
    vector<string> bcs;
@@ -304,10 +305,20 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
 
            p->set<string>                         ("Coordinate Vector Name", "Coord Vec");
 
-           if(conditions[k] == "robin" || conditions[k] == "basal") {
+           if(conditions[k] == "robin") {
              p->set<string>  ("DOF Name", dof_names[j]);
 	     p->set<bool> ("Vector Field", isVectorField);
-	     if (isVectorField) {cout << "is vector!" << endl; p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_vector);}
+	     if (isVectorField) {p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_vector);}
+	     else               p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_scalar);
+           }
+           else if(conditions[k] == "basal") {
+             std::string betaName = BCparams.get("BetaXY", "Constant");
+             double L = BCparams.get("L", 1.0);
+             p->set<string> ("BetaXY", betaName); 
+             p->set<double> ("L", L);   
+             p->set<string>  ("DOF Name", dof_names[0]);
+	     p->set<bool> ("Vector Field", isVectorField);
+	     if (isVectorField) {p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_vector);}
 	     else               p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_scalar);
            }
 
@@ -394,8 +405,14 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
 
            p->set<string>                         ("Coordinate Vector Name", "Coord Vec");
 
-           if(conditions[k] == "robin" || conditions[k] == "basal") {
+           if(conditions[k] == "robin") {
              p->set<string>  ("DOF Name", dof_names[j]);
+	     p->set<bool> ("Vector Field", isVectorField);
+	     if (isVectorField) p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_vector);
+	     else               p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_scalar);
+           }
+           else if(conditions[k] == "basal") {
+             p->set<string>  ("DOF Name", dof_names[0]);
 	     p->set<bool> ("Vector Field", isVectorField);
 	     if (isVectorField) p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_vector);
 	     else               p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_scalar);
@@ -603,11 +620,11 @@ Albany::NeumannTraits::getValidBCParameters(
 
 
         validPL->sublist(tt, false, "SubList of BC corresponding to sideSetID and boundary condition");
-
       }
     }
   }
-  
+  validPL->set<string>("BetaXY","Constant","Function Type for Basal BC");
+  validPL->set<double>("L",1,"Length Scale for ISMIP-HOM Tests");
   return validPL;
 
 }

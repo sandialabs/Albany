@@ -15,7 +15,7 @@ namespace PHAL {
 template<typename EvalT, typename Traits>
 GatherSolutionBase<EvalT,Traits>::
 GatherSolutionBase(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl)
+                   const Teuchos::RCP<Albany::Layouts>& dl)
 {
   if (p.isType<bool>("Vector Field"))
     vectorField = p.get<bool>("Vector Field");

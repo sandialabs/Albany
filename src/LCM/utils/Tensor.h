@@ -659,6 +659,14 @@ namespace LCM {
   norm(Vector<T> const & u);
 
   ///
+  /// Vector 2-norm square. Used for fast distance calculation.
+  /// \return \f$ u \cdot u \f$
+  ///
+  template<typename T>
+  T
+  norm_square(Vector<T> const & u);
+
+  ///
   /// Vector 1-norm
   /// \return \f$ |u_0|+|u_1|+|u_2| \f$
   ///

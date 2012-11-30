@@ -90,7 +90,7 @@ namespace Albany {
     std::string transformType;
     //alpha and L are parameters read in from ParameterList for FELIX problems 
     double felixAlpha; 
-    int felixL; 
+    double felixL; 
 
     // Temporary flag to switch between 2D elements being Rank Elements or Faces
     bool useElementAsTopRank;

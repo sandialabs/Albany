@@ -52,6 +52,7 @@
     evaluators/J2Stress.cpp
     evaluators/ElasticityResid.cpp
     evaluators/TLElasResid.cpp
+    evaluators/MechanicsResidual.cpp
     evaluators/EnergyPotential.cpp
     evaluators/HardeningModulus.cpp
     evaluators/YieldStrength.cpp
@@ -164,6 +165,8 @@
     evaluators/ElasticityResid_Def.hpp
     evaluators/TLElasResid.hpp
     evaluators/TLElasResid_Def.hpp
+    evaluators/MechanicsResidual.hpp
+    evaluators/MechanicsResidual_Def.hpp
     evaluators/EnergyPotential.hpp
     evaluators/EnergyPotential_Def.hpp
     evaluators/HardeningModulus.hpp

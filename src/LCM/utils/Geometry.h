@@ -276,6 +276,42 @@ namespace LCM {
       Vector<T> & xi,
       std::vector< Vector<T> > const & v);
 
+  ///
+  /// Given a vector of points, determine
+  /// distances between all of them.
+  /// \param vector of points
+  /// \return distance matrix
+  ///
+  template<typename T>
+  std::vector< std::vector<T> >
+  distance_matrix(std::vector< Vector<T> > const & points);
+
+  ///
+  /// Given a distance matrix, determine the minimum
+  /// distance between two distinct points.
+  /// \param distance matrix
+  /// \return minimum distance
+  ///
+  template<typename T>
+  std::vector<T>
+  minimum_distances(std::vector< std::vector<T> > const & distances);
+
+  ///
+  /// Given a set of points and the corners of a box:
+  /// Determine the closest point to the center of the box.
+  /// For the remaining points, define hyperplanes that are
+  /// equidistant to them and the closest point to the center of
+  /// the box.
+  /// Determine whether the box lies entirely on the side of the hyperplane
+  /// where the closest point to the center of the box lies as well.
+  ///
+  template<typename T>
+  std::pair<Index, std::vector<bool> >
+  box_proximity_to_points(
+      std::vector< Vector<T> > const & points,
+      Vector<T> const & lower_corner,
+      Vector<T> const & upper_corner);
+
 } // namespace LCM
 
 #include "Geometry.i.cc"

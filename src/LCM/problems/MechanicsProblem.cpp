@@ -8,15 +8,52 @@
 #include "Albany_ProblemUtils.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 
+void
+Albany::MechanicsProblem::
+getVariableType(Teuchos::ParameterList& paramList,
+		const std::string& defaultType,
+		Albany::MechanicsProblem::MECH_VAR_TYPE& variableType,
+		bool& haveVariable,
+		bool& haveEquation)
+{
+  std::string type = paramList.get("Variable Type", defaultType);
+  if (type == "None")
+    variableType = MECH_VAR_TYPE_NONE;
+  else if (type == "Constant")
+    variableType = MECH_VAR_TYPE_CONSTANT;
+  else if (type == "DOF")
+    variableType = MECH_VAR_TYPE_DOF;
+  else
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                               "Unknown variable type " << type << std::endl);
+  haveVariable = (variableType != MECH_VAR_TYPE_NONE);
+  haveEquation = (variableType == MECH_VAR_TYPE_DOF);
+}
+//------------------------------------------------------------------------------
+std::string
+Albany::MechanicsProblem::
+variableTypeToString(Albany::MechanicsProblem::MECH_VAR_TYPE variableType)
+{
+  if (variableType == MECH_VAR_TYPE_NONE)
+    return "None";
+  else if (variableType == MECH_VAR_TYPE_CONSTANT)
+    return "Constant";
+  return "DOF";
+}
 
+//------------------------------------------------------------------------------
 Albany::MechanicsProblem::
 MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
                  const Teuchos::RCP<ParamLib>& paramLib_,
                  const int numDim_,
                  const Teuchos::RCP<const Epetra_Comm>& comm) :
-  Albany::AbstractProblem(params_, paramLib_, numDim_),
+  Albany::AbstractProblem(params_, paramLib_),
   haveSource(false),
   numDim(numDim_),
+  haveMechEq(false),
+  haveHeatEq(false),
+  havePressureEq(false),
+  haveTransportEq(false),
   haveMatDB(false)
 {
  
@@ -24,6 +61,38 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   *out << "Problem Name = " << method << std::endl;
   
   haveSource =  params->isSublist("Source Functions");
+
+  getVariableType(params->sublist("Mech"), "DOF", mechType, 
+		  haveMech, haveMechEq);
+  getVariableType(params->sublist("Heat"), "None", heatType, 
+		  haveHeat, haveHeatEq);
+  getVariableType(params->sublist("Pore Pressure"), "None", pressureType,
+		  havePressure, havePressureEq);
+  getVariableType(params->sublist("Transport"), "None", transportType, 
+		  haveTransport, haveTransportEq);
+
+  if (haveHeatEq)
+    haveSource =  params->isSublist("Source Functions");
+
+  // Compute number of equations
+  int num_eq = 0;
+  if (haveMechEq) num_eq += numDim;
+  if (haveHeatEq) num_eq += 1;
+  if (havePressureEq) num_eq += 1;
+  if (haveTransportEq) num_eq += 1;
+  this->setNumEquations(num_eq);
+
+  // Print out a summary of the problem
+  *out << "Mechanics problem:" << std::endl
+       << "\tSpatial dimension:      " << numDim << std::endl
+       << "\tMech variables:         " << variableTypeToString(mechType) 
+       << std::endl
+       << "\tHeat variables:         " << variableTypeToString(heatType) 
+       << std::endl
+       << "\tPore Pressure variables: " << variableTypeToString(pressureType)
+       << std::endl
+       << "\tTransport variables:    " << variableTypeToString(transportType) 
+       << std::endl;
 
   if(params->isType<string>("MaterialDB Filename")){
     haveMatDB = true;
@@ -34,29 +103,30 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
                              "Mechanics Problem Requires a Material Database");
 
 }
-
+//------------------------------------------------------------------------------
 Albany::MechanicsProblem::
 ~MechanicsProblem()
 {
 }
-
+//------------------------------------------------------------------------------
 //the following function returns the problem information required for setting the rigid body modes (RBMs) for elasticity problems (in src/Albany_SolverFactory.cpp)
 //written by IK, Feb. 2012 
 void
 Albany::MechanicsProblem::getRBMInfoForML(
-   int& numPDEs, int& numElasticityDim, int& numScalar,  int& nullSpaceDim)
+   int& numPDEs, int& numElasticityDim, int& numScalar, int& nullSpaceDim)
 {
-  numPDEs = numDim;
+  // Need numPDEs should be numDim + nDOF for other governing equations  -SS
+
+  numPDEs = neq;
   numElasticityDim = numDim;
-  numScalar = 0;
+  numScalar = numDim - neq;
   if (numDim == 1) {nullSpaceDim = 0; }
   else {
     if (numDim == 2) {nullSpaceDim = 3; }
     if (numDim == 3) {nullSpaceDim = 6; }
   }
 }
-
-
+//------------------------------------------------------------------------------
 void
 Albany::MechanicsProblem::
 buildProblem(
@@ -76,7 +146,7 @@ buildProblem(
   }
   constructDirichletEvaluators(*meshSpecs[0]);
 }
-
+//------------------------------------------------------------------------------
 Teuchos::Array<Teuchos::RCP<const PHX::FieldTag> >
 Albany::MechanicsProblem::
 buildEvaluators(
@@ -93,7 +163,7 @@ buildEvaluators(
   boost::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(op);
   return *op.tags;
 }
-
+//------------------------------------------------------------------------------
 void
 Albany::MechanicsProblem::constructDirichletEvaluators(
         const Albany::MeshSpecsStruct& meshSpecs)
@@ -101,111 +171,36 @@ Albany::MechanicsProblem::constructDirichletEvaluators(
 
   // Construct Dirichlet evaluators for all nodesets and names
   std::vector<string> dirichletNames(neq);
-  dirichletNames[0] = "X";
-  if (neq>1) dirichletNames[1] = "Y";
-  if (neq>2) dirichletNames[2] = "Z";
+  int index = 0;
+  if (haveMechEq) {
+    dirichletNames[index++] = "X";
+    if (neq>1) dirichletNames[index++] = "Y";
+    if (neq>2) dirichletNames[index++] = "Z";
+  }
+
+  if (haveHeatEq) dirichletNames[index++] = "T";
+  if (havePressureEq) dirichletNames[index++] = "P";
+  if (haveTransportEq) dirichletNames[index++] = "C";
+
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                        this->params, this->paramLib);
 }
-
+//------------------------------------------------------------------------------
 Teuchos::RCP<const Teuchos::ParameterList>
 Albany::MechanicsProblem::getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidMechanicsProblemParams");
 
-  // validPL->sublist("Elastic Modulus", false, "");
-  // validPL->sublist("Poissons Ratio", false, "");
-  // validPL->sublist("Bulk Modulus", false, "");
-  // validPL->sublist("Shear Modulus", false, "");
-
-  validPL->set<string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
+  validPL->set<string>("MaterialDB Filename",
+                       "materials.xml",
+                       "Filename of material database xml file");
+  validPL->sublist("Mech", false, "");
+  validPL->sublist("Heat", false, "");
+  validPL->sublist("Pore Pressure", false, "");
+  validPL->sublist("Transport", false, "");
   
-  // validPL->sublist("Material Model", false, "");
-  // validPL->set<bool>("avgJ", false, "Flag to indicate the J should be averaged");
-  // validPL->set<bool>("volavgJ", false, "Flag to indicate the J should be volume averaged");
-  // validPL->set<bool>("weighted_Volume_Averaged_J", false, "Flag to indicate the J should be volume averaged with stabilization");
-  // validPL->set<bool>("Use Composite Tet 10", false, "Flag to use the compostie tet 10 basis in Intrepid");
-
-
-  // if (matModel == "J2"|| matModel == "J2Fiber" || matModel == "GursonFD" || matModel == "RIHMR")
-  // {
-  //   validPL->set<bool>("Compute Dislocation Density Tensor", false, "Flag to compute the dislocaiton density tensor (only for 3D)");
-  //   validPL->sublist("Hardening Modulus", false, "");
-  //   validPL->sublist("Yield Strength", false, "");
-  //   validPL->sublist("Saturation Modulus", false, "");
-  //   validPL->sublist("Saturation Exponent", false, "");
-  // }
-
-  // if (matModel == "J2Fiber")
-  // {
-  //       validPL->set<RealType>("xiinf_J2",false,"");
-  //       validPL->set<RealType>("tau_J2",false,"");
-  //       validPL->set<RealType>("k_f1",false,"");
-  //       validPL->set<RealType>("q_f1",false,"");
-  //       validPL->set<RealType>("vol_f1",false,"");
-  //       validPL->set<RealType>("xiinf_f1",false,"");
-  //       validPL->set<RealType>("tau_f1",false,"");
-  //       validPL->set<RealType>("k_f2",false,"");
-  //       validPL->set<RealType>("q_f2",false,"");
-  //       validPL->set<RealType>("vol_f2",false,"");
-  //       validPL->set<RealType>("xiinf_f2",false,"");
-  //       validPL->set<RealType>("tau_f2",false,"");
-  //       validPL->set<RealType>("X0",false,"");
-  //       validPL->set<RealType>("Y0",false,"");
-  //       validPL->set<RealType>("Z0",false,"");
-  //       validPL->sublist("direction_f1",false,"");
-  //       validPL->sublist("direction_f2",false,"");
-  //       validPL->sublist("Ring Center",false,"");
-  //       validPL->set<bool>("isLocalCoord",false,"");
-  // }
-
-  // if (matModel == "GursonFD")
-  // {
-  //       validPL->set<RealType>("N",false,"");
-  //       validPL->set<RealType>("eq0",false,"");
-  //       validPL->set<RealType>("f0",false,"");
-  //       validPL->set<RealType>("kw",false,"");
-  //       validPL->set<RealType>("eN",false,"");
-  //       validPL->set<RealType>("sN",false,"");
-  //       validPL->set<RealType>("fN",false,"");
-  //       validPL->set<RealType>("fc",false,"");
-  //       validPL->set<RealType>("ff",false,"");
-  //       validPL->set<RealType>("q1",false,"");
-  //       validPL->set<RealType>("q2",false,"");
-  //       validPL->set<RealType>("q3",false,"");
-  //       validPL->set<bool>("isSaturationH",false,"");
-  //       validPL->set<bool>("isHyper",false,"");
-  // }
-
-  // if (matModel == "MooneyRivlin")
-  // {
-  //        validPL->set<RealType>("c1",false,"");
-  //        validPL->set<RealType>("c2",false,"");
-  //        validPL->set<RealType>("c",false,"");
-  // }
-
-  // if (matModel == "MooneyRivlinDamage")
-  // {
-  //        validPL->set<RealType>("c1",false,"");
-  //        validPL->set<RealType>("c2",false,"");
-  //        validPL->set<RealType>("c",false,"");
-  //        validPL->set<RealType>("zeta_inf",false,"");
-  //        validPL->set<RealType>("iota",false,"");
-  // }
-
-  // if (matModel == "MooneyRivlinIncompressible")
-  // {
-  //        validPL->set<RealType>("c1",false,"");
-  //        validPL->set<RealType>("c2",false,"");
-  //        validPL->set<RealType>("mu",false,"");
-  // }
-
-  // if (matModel == "RIHMR")
-  // {
-  //       validPL->sublist("Recovery Modulus", false, "");
-  // }
 
   return validPL;
 }
@@ -219,4 +214,13 @@ Albany::MechanicsProblem::getAllocatedStates(
   oldState_ = oldState;
   newState_ = newState;
 }
+//------------------------------------------------------------------------------
+std::string 
+Albany::MechanicsProblem::stateString(std::string name, bool surfaceFlag)
+{
+  std::string outputName(name);
+  if (surfaceFlag) outputName = "Surface_"+name;
+  return outputName;
+}
+
 

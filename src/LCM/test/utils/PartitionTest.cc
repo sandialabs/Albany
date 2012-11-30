@@ -32,8 +32,9 @@ int main(int ac, char* av[])
   command_line_processor;
 
   command_line_processor.setDocString(
-      "Partitioning of Exodus mesh with Zoltan.\n"
-      "Uses geometric, hypergraph or K-means partitioning algorithms.\n");
+      "Partitioning of Exodus mesh for nonlocal regularization.\n"
+      "Uses random, geometric, hypergraph or K-means variants "
+      "partitioning algorithms.\n");
 
   std::string input_file = "input.e";
   command_line_processor.setOption(
@@ -48,14 +49,23 @@ int main(int ac, char* av[])
       "Output File Name");
 
   const int
-  number_schemes = 4;
+  number_schemes = 5;
 
   const LCM::PARTITION::Scheme
-  scheme_values[] = {LCM::PARTITION::GEOMETRIC, LCM::PARTITION::HYPERGRAPH,
-      LCM::PARTITION::KMEANS};
+  scheme_values[] = {
+      LCM::PARTITION::GEOMETRIC,
+      LCM::PARTITION::HYPERGRAPH,
+      LCM::PARTITION::KMEANS,
+      LCM::PARTITION::SEQUENTIAL,
+      LCM::PARTITION::KDTREE};
 
   const char*
-  scheme_names[] = {"geometric", "hypergraph", "kmeans"};
+  scheme_names[] = {
+      "geometric",
+      "hypergraph",
+      "kmeans",
+      "sequential",
+      "kdtree"};
 
   LCM::PARTITION::Scheme
   partition_scheme = LCM::PARTITION::GEOMETRIC;
@@ -100,6 +110,32 @@ int main(int ac, char* av[])
       &maximum_iterations,
       "Maximum Iterations");
 
+  const int
+  number_initializers = 3;
+
+  const LCM::PARTITION::Scheme
+  initializer_values[] = {
+      LCM::PARTITION::RANDOM,
+      LCM::PARTITION::GEOMETRIC,
+      LCM::PARTITION::HYPERGRAPH};
+
+  const char*
+  initializer_names[] = {
+      "random",
+      "geometric",
+      "hypergraph"};
+
+  LCM::PARTITION::Scheme
+  initializer_scheme = LCM::PARTITION::HYPERGRAPH;
+
+  command_line_processor.setOption(
+      "initializer",
+      &initializer_scheme,
+      number_initializers,
+      initializer_values,
+      initializer_names,
+      "Initializer Scheme");
+
   // Throw a warning and not error for unrecognized options
   command_line_processor.recogniseAllOptions(true);
 
@@ -125,11 +161,12 @@ int main(int ac, char* av[])
   connectivity_array(input_file, output_file);
 
   //
-  // Set extra parameters for K-means
+  // Set extra parameters
   //
   connectivity_array.SetTolerance(tolerance);
   connectivity_array.SetMaximumDivisions(maximum_divisions);
   connectivity_array.SetMaximumIterations(maximum_iterations);
+  connectivity_array.SetInitializerScheme(initializer_scheme);
 
   //
   // Partition mesh

@@ -9,6 +9,8 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 
+const int MAX_MESH_REGIONS = 30;
+
 template<typename EvalT, typename Traits>
 QCAD::PoissonSource<EvalT, Traits>::
 PoissonSource(Teuchos::ParameterList& p,
@@ -139,6 +141,33 @@ PoissonSource(Teuchos::ParameterList& p,
     }
   }
 
+  //Add Mesh Region Parameters (factors which multiply RHS 
+  //  of Poisson equation in a given mesh region)
+  for(int i=0; i<MAX_MESH_REGIONS; i++) {
+    std::string subListName = Albany::strint("Mesh Region",i);
+    if( psList->isSublist(subListName) ) {
+      std::string factorName = Albany::strint("Mesh Region Factor",i);
+      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(factorName, this, paramLib);      
+
+      // Validate sublist
+      Teuchos::RCP<const Teuchos::ParameterList> regionreflist = 
+	QCAD::MeshRegion<EvalT, Traits>::getValidParameters();
+      Teuchos::ParameterList refsublist(*regionreflist);
+      refsublist.set<double>("Factor Value",1.0,"Initial value of the factor corresponding to this mesh region");
+      psList->sublist(subListName).validateParameters(refsublist,0);
+
+      // Create MeshRegion object
+      Teuchos::RCP<QCAD::MeshRegion<EvalT, Traits> > region = 
+	Teuchos::rcp( new QCAD::MeshRegion<EvalT, Traits>(p.get<std::string>("Coordinate Vector Name"),
+							  "Weights",psList->sublist(subListName),materialDB,dl) );
+
+      ScalarT value = psList->sublist(subListName).get<double>("Factor Value",1.0);
+      meshRegionList.push_back(region);
+      meshRegionFactors.push_back( value );
+    }
+    else break;
+  }
+
   if(quantumRegionSource == "coulomb") {
     //Add Sacado parameters to set indices of eigenvectors to be multipled together
     new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Source Eigenvector 1", this, paramLib);
@@ -148,6 +177,10 @@ PoissonSource(Teuchos::ParameterList& p,
   this->addDependentField(potential);
   this->addDependentField(coordVec);
   this->addDependentField(temperatureField);
+    
+  typename std::vector< Teuchos::RCP<MeshRegion<EvalT, Traits> > >::iterator it;
+  for(it = meshRegionList.begin(); it != meshRegionList.end(); it++)
+    (*it)->addDependentFields(this);
 
   this->addEvaluatedField(poissonSource);
   this->addEvaluatedField(chargeDensity);
@@ -189,6 +222,11 @@ postRegistrationSetup(typename Traits::SetupData d,
     this->utils.setFieldData(eigenvector_Re[k],fm);
     this->utils.setFieldData(eigenvector_Im[k],fm);
   }
+
+  typename std::vector< Teuchos::RCP<MeshRegion<EvalT, Traits> > >::iterator it;
+  for(it = meshRegionList.begin(); it != meshRegionList.end(); it++)
+    (*it)->postRegistrationSetup(fm);
+
 }
 
 // **********************************************************************
@@ -213,7 +251,14 @@ QCAD::PoissonSource<EvalT,Traits>::getValue(const std::string &n)
   else if( materialParams.find(n) != materialParams.end() ) return materialParams[n];
   else if( n == "Source Eigenvector 1") return sourceEvecInds[0];
   else if( n == "Source Eigenvector 2") return sourceEvecInds[1];
-  else TEUCHOS_TEST_FOR_EXCEPT(true); return factor; //dummy so all control paths return
+  else {
+    int nRegions = meshRegionFactors.size();
+    for(int i=0; i<nRegions; i++)
+      if( n == Albany::strint("Mesh Region Factor",i) ) return meshRegionFactors[i];
+
+    TEUCHOS_TEST_FOR_EXCEPT(true); 
+    return factor; //dummy so all control paths return
+  }
 }
 
 // **********************************************************************
@@ -249,6 +294,11 @@ QCAD::PoissonSource<EvalT,Traits>::getValidPoissonSourceParameters() const
     validPL->set<double>( *s, 0.0, "Doping Parameter [cm^-3]");
   for(s = chargeParamNames.begin(); s != chargeParamNames.end(); s++)
     validPL->set<double>( *s, 0.0, "Charge Parameter [cm^-3]");
+
+  for(int i=0; i<MAX_MESH_REGIONS; i++) {
+    std::string subListName = Albany::strint("Mesh Region",i);
+    validPL->sublist(subListName, false, "Sublist defining a mesh region");
+  }
   
   return validPL;
 }
@@ -264,7 +314,9 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
   // Scaling factors
   double X0 = length_unit_in_m/1e-2; // length scaling to get to [cm] (structure dimension in [um])
   ScalarT V0 = kbBoltz*temperature/1.0; // kb*T/q in [V]
-  ScalarT Lambda2 = eps0/(eleQ*X0*X0); // derived scaling factor
+  ScalarT Lambda2 = eps0/(eleQ*X0*X0);  // derived scaling factor
+  ScalarT mrsFromEBTest = 1.0;          // mesh region scaling factor from element block tests
+  ScalarT scaleFactor = factor;         // overall scaling of RHS
   
   //! Constant energy reference for heterogeneous structures
   ScalarT qPhiRef;
@@ -313,6 +365,17 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
   else if(quantumRegionSource == "ci")
     quantum_edensity_fn = &QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonCI;
   else quantum_edensity_fn = NULL;
+
+
+  //mesh region scaling by element block
+  std::size_t nRegions = meshRegionList.size();
+  std::vector<bool> bEBInRegion(nRegions,false);
+  for(std::size_t i=0; i<nRegions; i++) {    
+    if(meshRegionList[i]->elementBlockIsInRegion(workset.EBName)) {
+      mrsFromEBTest *= meshRegionFactors[i];
+      bEBInRegion[i] = true;
+    }
+  }
 
 
   //***************************************************************************
@@ -443,6 +506,15 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
         // loop over cells and qps
         for (std::size_t cell=0; cell < workset.numCells; ++cell)
         {
+	  if(nRegions > 0) {
+	    scaleFactor = mrsFromEBTest * factor;
+	    for(std::size_t i=0; i<nRegions; i++) {    
+	      if(!bEBInRegion[i] && meshRegionList[i]->cellIsInRegion(cell)) {
+		scaleFactor *= meshRegionFactors[i];
+	      }
+	    }
+	  }
+
           for (std::size_t qp=0; qp < numQPs; ++qp)
           {
             ScalarT approxEDensity = 0.0;
@@ -477,7 +549,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
             // the scaled full RHS
             ScalarT charge; 
             charge = 1.0/Lambda2*(hDensity- approxEDensity + ionN);
-            poissonSource(cell, qp) = factor*charge;
+            poissonSource(cell, qp) = scaleFactor*charge;
 
             // output states
             chargeDensity(cell, qp) = hDensity -eDensity +ionN;
@@ -520,6 +592,15 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
         // loop over cells and qps
         for (std::size_t cell=0; cell < workset.numCells; ++cell) 
         {
+	  if(nRegions > 0) {
+	    scaleFactor = mrsFromEBTest * factor;
+	    for(std::size_t i=0; i<nRegions; i++) {    
+	      if(!bEBInRegion[i] && meshRegionList[i]->cellIsInRegion(cell)) {
+		scaleFactor *= meshRegionFactors[i];
+	      }
+	    }
+	  }
+
           for (std::size_t qp=0; qp < numQPs; ++qp) 
           {
             // obtain the scaled potential
@@ -536,7 +617,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 	      charge = - prefactor * ( eigenvector_Re[i](cell,qp) * eigenvector_Re[j](cell,qp) + 
 				       eigenvector_Im[i](cell,qp) * eigenvector_Im[j](cell,qp));
 
-            poissonSource(cell, qp) = factor * 1.0/Lambda2 * charge; //sign??
+            poissonSource(cell, qp) = scaleFactor * 1.0/Lambda2 * charge; //sign??
 
             chargeDensity(cell, qp) = charge;
             electronDensity(cell, qp) = charge;
@@ -571,6 +652,15 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
       
         for (std::size_t cell=0; cell < workset.numCells; ++cell)
         {
+	  if(nRegions > 0) {
+	    scaleFactor = mrsFromEBTest * factor;
+	    for(std::size_t i=0; i<nRegions; i++) {    
+	      if(!bEBInRegion[i] && meshRegionList[i]->cellIsInRegion(cell)) {
+		scaleFactor *= meshRegionFactors[i];
+	      }
+	    }
+	  }
+
           for (std::size_t qp=0; qp < numQPs; ++qp)
           {
             const ScalarT& unscaled_phi = potential(cell,qp);  // [V]
@@ -590,7 +680,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
             eDensity = Nc*(this->*carrStat)(phi + eArgOffset + fermiE/kbT);
             hDensity = Nv*(this->*carrStat)(-phi + hArgOffset - fermiE/kbT);
             charge = 1.0/Lambda2 * (hDensity - eDensity + ionN);
-            poissonSource(cell, qp) = factor*charge;
+            poissonSource(cell, qp) = scaleFactor*charge;
           
             // output states
             chargeDensity(cell, qp) = charge*Lambda2;
@@ -613,6 +703,16 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 
         for (std::size_t cell=0; cell < workset.numCells; ++cell)
         {
+
+	  if(nRegions > 0) {
+	    scaleFactor = mrsFromEBTest * factor;
+	    for(std::size_t i=0; i<nRegions; i++) {    
+	      if(!bEBInRegion[i] && meshRegionList[i]->cellIsInRegion(cell)) {
+		scaleFactor *= meshRegionFactors[i];
+	      }
+	    }
+	  }
+
           for (std::size_t qp=0; qp < numQPs; ++qp)
           {
             const ScalarT& unscaled_phi = potential(cell,qp);  // [V]
@@ -623,7 +723,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
             eDensity = 0.0;
             hDensity = 0.0;
             charge = 0.0;
-            poissonSource(cell, qp) = factor*charge;
+            poissonSource(cell, qp) = scaleFactor*charge;
           
             // output states
             chargeDensity(cell, qp) = charge*Lambda2;
@@ -691,6 +791,16 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
         // loop over cells and qps
         for (std::size_t cell=0; cell < workset.numCells; ++cell)
         {
+
+	  if(nRegions > 0) {
+	    scaleFactor = mrsFromEBTest * factor;
+	    for(std::size_t i=0; i<nRegions; i++) {    
+	      if(!bEBInRegion[i] && meshRegionList[i]->cellIsInRegion(cell)) {
+		scaleFactor *= meshRegionFactors[i];
+	      }
+	    }
+	  }
+
           for (std::size_t qp=0; qp < numQPs; ++qp)
           {
             ScalarT approxEDensity = 0.0;
@@ -714,7 +824,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
             // the scaled full RHS
             ScalarT charge;
             charge = 1.0/Lambda2 * (-approxEDensity + fixedCharge);
-            poissonSource(cell, qp) = factor*charge;
+            poissonSource(cell, qp) = scaleFactor*charge;
 
             // output states
             chargeDensity(cell, qp) = -eDensity + fixedCharge; 
@@ -755,6 +865,15 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
         // loop over cells and qps
         for (std::size_t cell=0; cell < workset.numCells; ++cell) 
         {
+	  if(nRegions > 0) {
+	    scaleFactor = mrsFromEBTest * factor;
+	    for(std::size_t i=0; i<nRegions; i++) {    
+	      if(!bEBInRegion[i] && meshRegionList[i]->cellIsInRegion(cell)) {
+		scaleFactor *= meshRegionFactors[i];
+	      }
+	    }
+	  }
+
           for (std::size_t qp=0; qp < numQPs; ++qp) 
           {
             // obtain the scaled potential
@@ -763,7 +882,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 
             // the scaled full RHS   note: wavefunctions are assumed normalized and **REAL** here 
             ScalarT charge = -prefactor * ( eigenvector_Re[i](cell,qp) * eigenvector_Re[j](cell,qp) );
-            poissonSource(cell, qp) = factor * 1.0/Lambda2 * charge; //sign??
+            poissonSource(cell, qp) = scaleFactor * 1.0/Lambda2 * charge; //sign??
 
             chargeDensity(cell, qp) = charge;
             electronDensity(cell, qp) = charge;
@@ -797,6 +916,16 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
       
         for (std::size_t cell=0; cell < workset.numCells; ++cell)
         {
+	  
+	  if(nRegions > 0) {
+	    scaleFactor = mrsFromEBTest * factor;
+	    for(std::size_t i=0; i<nRegions; i++) {    
+	      if(!bEBInRegion[i] && meshRegionList[i]->cellIsInRegion(cell)) {
+		scaleFactor *= meshRegionFactors[i];
+	      }
+	    }
+	  }
+
           for (std::size_t qp=0; qp < numQPs; ++qp)
           {
             const ScalarT& unscaled_phi = potential(cell,qp);  //[V]
@@ -805,7 +934,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
             // the scaled full RHS
             ScalarT charge; 
             charge = 1.0/Lambda2*fixedCharge;  // only fixed charge in an insulator
-            poissonSource(cell, qp) = factor*charge;
+            poissonSource(cell, qp) = scaleFactor*charge;
 	    
             chargeDensity(cell, qp) = fixedCharge; // fixed space charge in an insulator
             electronDensity(cell, qp) = 0.0;       // no electrons in an insulator
@@ -826,6 +955,17 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
 
         for (std::size_t cell=0; cell < workset.numCells; ++cell)
         {
+	  
+	  if(nRegions > 0) {
+	    scaleFactor = mrsFromEBTest * factor;
+	    for(std::size_t i=0; i<nRegions; i++) {    
+	      if(!bEBInRegion[i] && meshRegionList[i]->cellIsInRegion(cell)) {
+		scaleFactor *= meshRegionFactors[i];
+	      }
+	    }
+	  }
+
+
           for (std::size_t qp=0; qp < numQPs; ++qp)
           {
             const ScalarT& unscaled_phi = potential(cell,qp);  //[V]
@@ -833,7 +973,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
           
             // the scaled full RHS
             ScalarT charge = 0.0;  // no charge in this RHS mode
-            poissonSource(cell, qp) = factor*charge;
+            poissonSource(cell, qp) = scaleFactor*charge;
 	    
             chargeDensity(cell, qp) = 0.0;         // no charge in this RHS mode
             electronDensity(cell, qp) = 0.0;       // no electrons in an insulator
@@ -868,6 +1008,16 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
     // The following assumes Metal is surrounded by Dirichlet BC
     for (std::size_t cell=0; cell < workset.numCells; ++cell)
     {
+
+      if(nRegions > 0) {
+	scaleFactor = mrsFromEBTest * factor;
+	for(std::size_t i=0; i<nRegions; i++) {    
+	  if(!bEBInRegion[i] && meshRegionList[i]->cellIsInRegion(cell)) {
+	    scaleFactor *= meshRegionFactors[i];
+	  }
+	}
+      }
+
       for (std::size_t qp=0; qp < numQPs; ++qp)
       {
         const ScalarT& unscaled_phi = potential(cell,qp); //[V]
@@ -876,7 +1026,7 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
         // the scaled full RHS
         ScalarT charge; 
         charge = 0.0;  // no charge in metal bulk
-        poissonSource(cell, qp) = factor*charge;
+        poissonSource(cell, qp) = scaleFactor*charge;
 	
         // output states
         chargeDensity(cell, qp) = 0.0;    

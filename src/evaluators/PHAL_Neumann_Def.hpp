@@ -13,6 +13,7 @@
 
 
 namespace PHAL {
+const double pi = 3.1415926535897932385;
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
@@ -146,6 +147,19 @@ NeumannBase(const Teuchos::ParameterList& p) :
        PHX::MDField<ScalarT,Cell,Node,VecDim> tmp(p.get<string>("DOF Name"),
            p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
        dofVec = tmp;
+     
+      betaName = p.get<string>("BetaXY"); 
+      L = p.get<double>("L"); 
+      cout << "BetaName: " << betaName << endl; 
+      cout << "L: " << L << endl;
+      if (betaName == "Constant") 
+        beta_type = CONSTANT; 
+      else if (betaName == "ExpTrig") 
+        beta_type = EXPTRIG; 
+      else if (betaName == "ISMIP-HOM Test C")
+        beta_type = ISMIP_HOM_TEST_C;  
+      else if (betaName == "ISMIP-HOM Test D")
+        beta_type = ISMIP_HOM_TEST_D;  
 
        this->addDependentField(dofVec);
   }
@@ -337,7 +351,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
     else if(bc_type == BASAL) {
       for (std::size_t node=0; node < numNodes; ++node)
         for(int dim = 0; dim < numDOFsSet; dim++)
-	   dofCellVec(0,node,dim) = dofVec(elem_LID,node,dim);
+	   dofCellVec(0,node,dim) = dofVec(elem_LID,node,this->offset[dim]);
 
       // This is needed, since evaluate currently sums into
       for (int i=0; i < dofSideVec.size() ; i++) dofSideVec[i] = 0.0;
@@ -629,11 +643,59 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
   Intrepid::FunctionSpaceTools::scalarMultiplyDataData<MeshScalarT>(side_normals, normal_lengths, 
     side_normals, true);
  
-
-  for(int cell = 0; cell < numCells; cell++) 
-    for(int pt = 0; pt < numPoints; pt++)
-      for(int dim = 0; dim < numDOFsSet; dim++)
-        qp_data_returned(cell, pt, dim) = beta*dof_side(cell, pt,dim)*side_normals(cell,pt,dim) - alpha*side_normals(cell,pt,dim); // d(stress)/dn = beta*u + alpha
+  const double a = 1.0;
+  const double Atmp = 1.0;
+  const double ntmp = 3.0;   
+  if (beta_type == CONSTANT) {//basal (robin) condition indepenent of space
+    betaXY = 1.0;  
+    for(int cell = 0; cell < numCells; cell++) { 
+      for(int pt = 0; pt < numPoints; pt++) {
+        for(int dim = 0; dim < numDOFsSet; dim++) {
+          qp_data_returned(cell, pt, dim) = betaXY*beta*dof_side(cell, pt,dim) - alpha*side_normals(cell,pt,dim); // d(stress)/dn = beta*u + alpha
+        }
+      }
+    }
+  }
+  else if (beta_type == EXPTRIG) {  
+    const double a = 1.0; 
+    const double A = 1.0; 
+    const double n = L; 
+    for(int cell = 0; cell < numCells; cell++) { 
+      for(int pt = 0; pt < numPoints; pt++) {
+        for(int dim = 0; dim < numDOFsSet; dim++) {
+          MeshScalarT x = physPointsCell(cell,pt,0);
+          MeshScalarT y2pi = 2.0*pi*physPointsCell(cell,pt,1);
+          MeshScalarT muargt = (a*a + 4.0*pi*pi - 2.0*pi*a)*sin(y2pi)*sin(y2pi) + 1.0/4.0*(2.0*pi+a)*(2.0*pi+a)*cos(y2pi)*cos(y2pi); 
+          muargt = sqrt(muargt)*exp(a*x);  
+          betaXY = 1.0/2.0*pow(A, -1.0/n)*pow(muargt, 1.0/n - 1.0);
+          qp_data_returned(cell, pt, dim) = betaXY*beta*dof_side(cell, pt,dim) - alpha*side_normals(cell,pt,dim); // d(stress)/dn = beta*u + alpha
+        }
+      }
+  }
+ }
+ else if (beta_type == ISMIP_HOM_TEST_C) { 
+    for(int cell = 0; cell < numCells; cell++) { 
+      for(int pt = 0; pt < numPoints; pt++) {
+        for(int dim = 0; dim < numDOFsSet; dim++) {
+          MeshScalarT x = physPointsCell(cell,pt,0);
+          MeshScalarT y = physPointsCell(cell,pt,1);
+          betaXY = 1.0 + sin(2.0*pi/L*x)*sin(2.0*pi/L*y); 
+          qp_data_returned(cell, pt, dim) = betaXY*beta*dof_side(cell, pt,dim) - alpha*side_normals(cell,pt,dim); // d(stress)/dn = beta*u + alpha
+        }
+      }
+  }
+ }
+ else if (beta_type == ISMIP_HOM_TEST_D) { 
+    for(int cell = 0; cell < numCells; cell++) { 
+      for(int pt = 0; pt < numPoints; pt++) {
+        for(int dim = 0; dim < numDOFsSet; dim++) {
+          MeshScalarT x = physPointsCell(cell,pt,0);
+          betaXY = 1.0 + sin(2.0*pi/L*x); 
+          qp_data_returned(cell, pt, dim) = betaXY*beta*dof_side(cell, pt,dim) - alpha*side_normals(cell,pt,dim); // d(stress)/dn = beta*u + alpha
+        }
+      }
+  }
+ }
 
 }
 

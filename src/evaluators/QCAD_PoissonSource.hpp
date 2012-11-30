@@ -21,6 +21,7 @@
 #include "Albany_Layouts.hpp"
 
 #include "QCAD_MaterialDatabase.hpp"
+#include "QCAD_MeshRegion.hpp"
 #include "QCAD_EvaluatorTools.hpp"
 
 namespace QCAD {
@@ -150,6 +151,10 @@ namespace QCAD {
     double length_unit_in_m; // length unit for input and output mesh
     //ScalarT C0;  // scaling for conc. [cm^-3]
     //ScalarT Lambda2;  // derived scaling factor (unitless) that appears in the scaled Poisson equation
+
+    //! Mesh Region parameters
+    std::vector< Teuchos::RCP<MeshRegion<EvalT, Traits> > > meshRegionList;
+    std::vector< ScalarT > meshRegionFactors;
     
     //! Schrodinger coupling
     bool bUsePredictorCorrector;

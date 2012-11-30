@@ -44,9 +44,6 @@ namespace QCAD {
     bool elementBlockIsInRegion(std::string ebName) const;
     bool cellIsInRegion(std::size_t cell);
 
-    Teuchos::RCP<const Teuchos::ParameterList> getValidParameters() const;
-
-
   private:
     std::size_t numQPs;
     std::size_t numDims;
@@ -74,6 +71,33 @@ namespace QCAD {
 
     //! Evaluator utils to hide templating
     PHX::EvaluatorUtilities<EvalT,Traits> utils;
+
+  public:
+    static Teuchos::RCP<const Teuchos::ParameterList> getValidParameters()
+    {
+      Teuchos::RCP<Teuchos::ParameterList> validPL =
+     	rcp(new Teuchos::ParameterList("Valid MeshRegion Params"));;
+
+      validPL->set<string>("Operation Domain", "", "Deprecated - does nothing"); //TODO: remove?
+      
+      validPL->set<string>("Element Block Name", "", "Element block name to restrict region to");
+      validPL->set<string>("Element Block Names", "", "Element block names to restrict region to");
+      validPL->set<bool>("Quantum Element Blocks Only", false, "Restricts region to quantum element blocks");
+      
+      validPL->set<double>("x min", 0.0, "Box domain minimum x coordinate");
+      validPL->set<double>("x max", 0.0, "Box domain maximum x coordinate");
+      validPL->set<double>("y min", 0.0, "Box domain minimum y coordinate");
+      validPL->set<double>("y max", 0.0, "Box domain maximum y coordinate");
+      validPL->set<double>("z min", 0.0, "Box domain minimum z coordinate");
+      validPL->set<double>("z max", 0.0, "Box domain maximum z coordinate");
+      
+      validPL->set<string>("Level Set Field Name", "<field name>","Scalar Field to use for level set region");
+      validPL->set<double>("Level Set Field Minimum", 0.0, "Minimum value of field to include in region");
+      validPL->set<double>("Level Set Field Maximum", 0.0, "Maximum value of field to include in region");
+      
+      return validPL;
+    }
+
   };
 
 }

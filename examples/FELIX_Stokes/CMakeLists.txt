@@ -3,22 +3,22 @@
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_l1l2_sincos.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_l1l2_sincos.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_cosexp_basal_flip.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_cosexp_basal_flip.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_sacado.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_sacado.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_ismip-hom_testA.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_ismip-hom_testA.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_ismip-hom_testC.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_ismip-hom_testC.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_ismip-hom_testD.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_ismip-hom_testD.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/reference_solution.dat
                ${CMAKE_CURRENT_BINARY_DIR}/reference_solution.dat COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ns.exo
-               ${CMAKE_CURRENT_BINARY_DIR}/ns.exo COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ns.exo.4.0
-               ${CMAKE_CURRENT_BINARY_DIR}/ns.exo.4.0 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ns.exo.4.1
-               ${CMAKE_CURRENT_BINARY_DIR}/ns.exo.4.1 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ns.exo.4.2
-               ${CMAKE_CURRENT_BINARY_DIR}/ns.exo.4.2 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ns.exo.4.3
-               ${CMAKE_CURRENT_BINARY_DIR}/ns.exo.4.3 COPYONLY)
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
@@ -49,11 +49,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_sincosz.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_sincosz.xml COPYONLY)
 add_test(${testName}_SinCosZ3DPeriodicXY ${Albany.exe} input_sincosz.xml)
 
-#  Seventh test
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_sacado.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_sacado.xml COPYONLY)
-add_test(${testName}_PolySacado ${Albany.exe} input_sacado.xml)
-
 #  Eighth test
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_sincos_glen.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_sincos_glen.xml COPYONLY)
@@ -83,3 +78,8 @@ add_test(${testName}_FO_SINEXP_Neumann ${Albany.exe} input_fo_sinexp_neumann.xml
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_cosexp_basal.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_cosexp_basal.xml COPYONLY)
 add_test(${testName}_FO_COSEXP_Basal ${Albany.exe} input_fo_cosexp_basal.xml)
+
+#  Fourteenth test
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_cosexp_basal_all.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_cosexp_basal_all.xml COPYONLY)
+add_test(${testName}_FO_COSEXP_BasalAll ${Albany.exe} input_fo_cosexp_basal_all.xml)

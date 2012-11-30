@@ -169,10 +169,6 @@ namespace Albany {
 
     double previous_time_label;
 
-    // Transformation types for FELIX problems
-    enum TRANSFORMTYPE {NONE, ISMIP_HOM_TEST_A};
-    TRANSFORMTYPE transform_type;
-
   protected:
 
     
