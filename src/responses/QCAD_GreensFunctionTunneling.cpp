@@ -103,14 +103,16 @@ QCAD::GreensFunctionTunnelingSolver::
 double QCAD::GreensFunctionTunnelingSolver::
 computeCurrent(double Vds, double kbT, double Ecutoff_offset_from_Emax)
 {
+  const bool bUseAnasazi = false;
   const double hbar_1 = 6.582119e-16; // eV * s
   const double hbar_2 = 1.054572e-34; // J * s = kg * m^2 / s
   const double m_0 = 9.109382e-31;    // kg
   const double um = 1e-6;     // m
   const double min_a0 = 1e-4; // um, so == .1nm  HARDCODED MIN PT SPACING
 
-  std::vector<Anasazi::Value<double> > evals;
-  Teuchos::RCP<Epetra_MultiVector> evecs;
+  std::vector<double> evals;
+  std::vector<double> evecBeginEls;
+  std::vector<double> evecEndEls;
 
   // chemical potential energies of the left and right leads
   double muL = 0.; 
@@ -140,6 +142,7 @@ computeCurrent(double Vds, double kbT, double Ecutoff_offset_from_Emax)
   bool ret;
 
   double Ecutoff = Emax + Ecutoff_offset_from_Emax; // maximum eigenvalue needed
+  int nEvecs;  // number of converged eigenvectors
 
   Teuchos::RCP<std::vector<double> > pEc = Teuchos::null;
   Teuchos::RCP<std::vector<double> > pLastEc = Teuchos::null;
@@ -149,63 +152,110 @@ computeCurrent(double Vds, double kbT, double Ecutoff_offset_from_Emax)
   std::cout << "Emin=" << Emin << ", Emax=" << Emax << ", Ecutoff=" << Ecutoff <<", t0=" << t0 << std::endl;    
 
   std::cout << "Doing Initial H-mx diagonalization for Vds = " << Vds << std::endl;
-  ret = doMatrixDiag(Vds, *EcValues, Ecutoff, evals, evecs);
-  pEc = EcValues;
-  std::cout << "  Diag w/ a0 = " << a0 << ", nPts = " << nPts << " gives "
-	    << "Max Eval = " << evals[evals.size()-1].realpart 
-	    << "(need >= "<< Ecutoff << ")" << std::endl;
 
-  // The following block is not called when a0 is small enough (<= 0.5 nm)
-  while(ret == false && a0 > min_a0) 
-  {
-    a0 /= 2.; nPts *= 2;  
-    t0 = hbar_1 * hbar_2 /(2.*effMass*m_0* pow(a0*um,2.) );
-    Map = Teuchos::rcp(new Epetra_Map(nPts, 0, *Comm));
+  if(bUseAnasazi) {
+    Teuchos::RCP<Epetra_MultiVector> evecs;
 
-    // Interpolate pLastEc onto pEc
-    pLastEc = pEc;
-    pEc = Teuchos::rcp(new std::vector<double>(nPts));
-    for(int i = 0; i < nPts; i++) 
-    {
-      if(i%2 && i/2+1<nPts/2) (*pEc)[i] = ((*pLastEc)[i/2] + (*pLastEc)[i/2+1])/2.0;
-      else (*pEc)[i] = (*pLastEc)[i/2];
-    }
-
-    // Setup and diagonalize H matrix
-    ret = doMatrixDiag(Vds, *pEc, Ecutoff, evals, evecs);
+    ret = doMatrixDiag_Anasazi(Vds, *EcValues, Ecutoff, evals, evecs);
+    pEc = EcValues;
     std::cout << "  Diag w/ a0 = " << a0 << ", nPts = " << nPts << " gives "
-	      << "Max Eval = " << evals[evals.size()-1].realpart 
-	      << "(need >= "<< Ecutoff << ")" << std::endl;
+    	    << "Max Eval = " << evals[evals.size()-1]
+    	    << "(need >= "<< Ecutoff << ")" << std::endl;
+    
+    // The following block is not called when a0 is small enough (<= 0.5 nm)
+    while(ret == false && a0 > min_a0) 
+    {
+      a0 /= 2.; nPts *= 2;  
+      t0 = hbar_1 * hbar_2 /(2.*effMass*m_0* pow(a0*um,2.) );
+      Map = Teuchos::rcp(new Epetra_Map(nPts, 0, *Comm));
+    
+      // Interpolate pLastEc onto pEc
+      pLastEc = pEc;
+      pEc = Teuchos::rcp(new std::vector<double>(nPts));
+      for(int i = 0; i < nPts; i++) 
+      {
+        if(i%2 && i/2+1<nPts/2) (*pEc)[i] = ((*pLastEc)[i/2] + (*pLastEc)[i/2+1])/2.0;
+        else (*pEc)[i] = (*pLastEc)[i/2];
+      }
+    
+      // Setup and diagonalize H matrix
+      ret = doMatrixDiag_Anasazi(Vds, *pEc, Ecutoff, evals, evecs);
+      std::cout << "  Diag w/ a0 = " << a0 << ", nPts = " << nPts << " gives "
+    	      << "Max Eval = " << evals[evals.size()-1]
+    	      << "(need >= "<< Ecutoff << ")" << std::endl;
+    }
+    std::cout << "Done H-mx diagonalization, now broadcasting results" << std::endl;
+    
+    
+    // Since all we need are the eigenvalues at beginning and end (index [0] and [nPts-1] ?)
+    // then broadcast these values to all processors
+    nEvecs = evecs->NumVectors();
+
+    int GIDlist[2];
+    GIDlist[0] = 0; // "beginning" index
+    GIDlist[1] = nPts-1; // "ending" index
+    
+    //Get the IDs (rank) of the processors holding beginning and ending index
+    std::vector<int> PIDlist(2), LIDlist(2);
+    Map->RemoteIDList(2, GIDlist, &PIDlist[0], &LIDlist[0]);
+    
+    // Broadcast the beginning and ending elements of each eigenvector to all processors
+    evecBeginEls.resize(nEvecs);
+    evecEndEls.resize(nEvecs);
+    
+    if(Comm->MyPID() == PIDlist[0]) { // this proc owns beginning point
+      for(int i=0; i<nEvecs; i++)
+        evecBeginEls[i] = (*evecs)[i][LIDlist[0]]; // check that this is correct: Epetra_Vector [] operator takes *local* index?
+    }
+    Comm->Broadcast( &evecBeginEls[0], nEvecs, PIDlist[0] );
+    
+    if(Comm->MyPID() == PIDlist[1]) { // this proc owns ending point
+      for(int i=0; i<nEvecs; i++)
+        evecEndEls[i] = (*evecs)[i][LIDlist[1]]; // check that this is correct: Epetra_Vector [] operator takes *local* index?
+    }
+    Comm->Broadcast( &evecEndEls[0], nEvecs, PIDlist[1] );
   }
-  std::cout << "Done H-mx diagonalization, now broadcasting results" << std::endl;
 
+  else {  // use TQL2 tridiagonal routine.  Not parallel, all procs compute and store all evectors & evals
 
-  // Since all we need are the eigenvalues at beginning and end (index [0] and [nPts-1] ?)
-  // then broadcast these values to all processors
-  int nEvecs = evecs->NumVectors();
-  int GIDlist[2];
-  GIDlist[0] = 0; // "beginning" index
-  GIDlist[1] = nPts-1; // "ending" index
-  
-  //Get the IDs (rank) of the processors holding beginning and ending index
-  std::vector<int> PIDlist(2), LIDlist(2);
-  Map->RemoteIDList(2, GIDlist, &PIDlist[0], &LIDlist[0]);
+    std::vector<double> evecs;
+    ret = doMatrixDiag_tql2(Vds, *EcValues, Ecutoff, evals, evecs);
+    pEc = EcValues;
+    std::cout << "  Diag w/ a0 = " << a0 << ", nPts = " << nPts << " gives "
+    	    << "Max Eval = " << evals[evals.size()-1]
+    	    << "(need >= "<< Ecutoff << ")" << std::endl;
+    
+    // The following block is not called when a0 is small enough (<= 0.5 nm)
+    while(false && ret == false && a0 > min_a0) 
+    {
+      a0 /= 2.; nPts *= 2;  
+      t0 = hbar_1 * hbar_2 /(2.*effMass*m_0* pow(a0*um,2.) );
+    
+      // Interpolate pLastEc onto pEc
+      pLastEc = pEc;
+      pEc = Teuchos::rcp(new std::vector<double>(nPts));
+      for(int i = 0; i < nPts; i++) 
+      {
+        if(i%2 && i/2+1<nPts/2) (*pEc)[i] = ((*pLastEc)[i/2] + (*pLastEc)[i/2+1])/2.0;
+        else (*pEc)[i] = (*pLastEc)[i/2];
+      }
+    
+      // Setup and diagonalize H matrix
+      ret = doMatrixDiag_tql2(Vds, *pEc, Ecutoff, evals, evecs);
+      std::cout << "  Diag w/ a0 = " << a0 << ", nPts = " << nPts << " gives "
+    	      << "Max Eval = " << evals[evals.size()-1] 
+    	      << "(need >= "<< Ecutoff << ")" << std::endl;
+    }
+    std::cout << "Done H-mx diagonalization" << std::endl;
 
-  // Broadcast the beginning and ending elements of each eigenvector to all processors
-  std::vector<double> evecBeginEls(nEvecs);
-  std::vector<double> evecEndEls(nEvecs);
-
-  if(Comm->MyPID() == PIDlist[0]) { // this proc owns beginning point
-    for(int i=0; i<nEvecs; i++)
-      evecBeginEls[i] = (*evecs)[i][LIDlist[0]]; // check that this is correct: Epetra_Vector [] operator takes *local* index?
+    nEvecs = nPts;
+    evecBeginEls.resize(nEvecs);
+    evecEndEls.resize(nEvecs);
+    for(int i=0; i<nEvecs; i++) { // assume evecs are in *columns* of evecs
+      evecBeginEls[i] = evecs[i];
+      evecEndEls[i] = evecs[nPts*(nPts-1) + i];
+    }
   }
-  Comm->Broadcast( &evecBeginEls[0], nEvecs, PIDlist[0] );
-
-  if(Comm->MyPID() == PIDlist[1]) { // this proc owns ending point
-    for(int i=0; i<nEvecs; i++)
-      evecEndEls[i] = (*evecs)[i][LIDlist[1]]; // check that this is correct: Epetra_Vector [] operator takes *local* index?
-  }
-  Comm->Broadcast( &evecEndEls[0], nEvecs, PIDlist[1] );
 
   // Potential energies, assumed to be constant, in each lead
   double VL = (*pEc)[0];
@@ -250,9 +300,9 @@ computeCurrent(double Vds, double kbT, double Ecutoff_offset_from_Emax)
 
     G011 = G01N = G0NN = 0.;
     for(int j = 0; j < nEvecs; j++) {
-      G011 += evecBeginEls[j] * evecBeginEls[j] / (E - evals[j].realpart);
-      G01N += evecBeginEls[j] * evecEndEls[j] / (E - evals[j].realpart);
-      G0NN += evecEndEls[j] * evecEndEls[j] / (E - evals[j].realpart);
+      G011 += evecBeginEls[j] * evecBeginEls[j] / (E - evals[j]);
+      G01N += evecBeginEls[j] * evecEndEls[j] / (E - evals[j]);
+      G0NN += evecEndEls[j] * evecEndEls[j] / (E - evals[j]);
     }
 
     p11 = Sigma11*G011; pNN = SigmaNN*G0NN; 
@@ -286,8 +336,98 @@ double QCAD::GreensFunctionTunnelingSolver::f0(double x) const
 
 
 bool QCAD::GreensFunctionTunnelingSolver::
-doMatrixDiag(double Vds, std::vector<double>& Ec, double Ecutoff,
-	     std::vector<Anasazi::Value<double> >& evals, 
+doMatrixDiag_tql2(double Vds, std::vector<double>& Ec, double Ecutoff,
+		  std::vector<double>& evals, 
+		  std::vector<double>& evecs)
+{
+  bool bPrintResults = false;
+  int ierr;
+  int nPts = Ec.size();
+  std::vector<double> offDiag(nPts);  //off diagonal of symmetric tri-diagonal matrix (last nPts-1 els)
+
+  /* We are building a matrix of block structure (left = DBC, right = NBC):
+  
+      | Ec+2t0  -t0                  |          | Ec+t0   -t0                  |
+      | -t0    Ec+2t0  -t0           |	        | -t0    Ec+2t0  -t0           |
+      |         -t0   ...            |	 OR     |         -t0   ...            |
+      |                    ..    -t0 |	        |                    ..    -t0 |
+      |                   -t0  Ec+2t0|	        |                   -t0  Ec+t0 |
+
+   where the matrix has nPts rows and nPts columns
+  */
+
+
+  // Initialize diagonal of matrix in evals (since these will be the eigenvalues upon exit from tql2)
+  //  and the off diagonal elements in the offDiag (tql2 only looks at the last nPts-1 els)
+  evals.resize(nPts);
+  for (int i = 0; i < nPts; i++) {
+    double Ulin = -Vds * ((double)i) / (nPts-1);
+    evals[i] = 2*t0 + Ec[i] + Ulin;
+    offDiag[i] = -t0;
+  }  
+  if(bNeumannBC) {
+    evals[0] -= t0;
+    evals[nPts-1] -= t0;
+  }
+  
+  // initialize evecs to n x n identity mx
+  evecs.resize(nPts*nPts);
+  for(int i=0; i<nPts; i++) {
+    for(int j=0; j<nPts; j++) {
+      evecs[nPts*i + j] = (i==j) ? 1.0 : 0.0;  
+    } 
+  }
+
+  /*DEBUG
+  std::cout << "Doing diag with: " << std::endl;
+  std::cout << "Diag = "; printVector(evals, 1, evals.size());
+  std::cout << "OffDiag = "; printVector(offDiag, 1, offDiag.size());
+  std::cout << "Z = " << std::endl;  printVector(evecs,nPts,nPts);
+  */
+  
+  // Diagonalize the matrix
+  int nEvecs, max_iter = 1000;
+  tql2(nPts, max_iter, evals, offDiag, evecs, ierr);
+
+  /*DEBUG
+  std::cout << "Results: (ret = " << ierr << ")" << std::endl;
+  std::cout << "Evals = "; printVector(evals, 1, evals.size());
+  std::cout << "Evecs = " << std::endl;  printVector(evecs,nPts,nPts);
+  */
+
+
+  // Truncate evals to the number of converged eigenvalues
+  //  (note that they aren't necessarily ordered when ierr != 0)
+  if(ierr != 0) {
+    nEvecs = ierr;
+    evals.resize(nEvecs);
+  }
+  else nEvecs = nPts;
+
+  // Print the results
+  if(bPrintResults) {
+    std::ostringstream os;
+    os.setf(std::ios_base::right, std::ios_base::adjustfield);
+    os<<"TQL2 solver returned " << ierr << std::endl;
+    os<<std::endl;
+    os<<"------------------------------------------------------"<<std::endl;
+    os<<std::setw(16)<<"Eigenvalue"<<std::endl;
+    os<<"------------------------------------------------------"<<std::endl;
+    for (int i=0; i<nEvecs; i++) {
+      os<<std::setw(16)<<evals[i]<<std::endl;
+    }
+    os<<"------------------------------------------------------"<<std::endl;
+    std::cout << os.str() << std::endl;
+  }
+
+  double maxEigenvalue = evals[nPts-1];
+  return (maxEigenvalue > Ecutoff);
+}
+
+
+bool QCAD::GreensFunctionTunnelingSolver::
+doMatrixDiag_Anasazi(double Vds, std::vector<double>& Ec, double Ecutoff,
+	     std::vector<double>& evals, 
 	     Teuchos::RCP<Epetra_MultiVector>& evecs)
 {
   typedef Epetra_MultiVector MV;
@@ -295,6 +435,7 @@ doMatrixDiag(double Vds, std::vector<double>& Ec, double Ecutoff,
   typedef Anasazi::MultiVecTraits<double, Epetra_MultiVector> MVT;
 
   bool bPrintResults = false;
+  std::vector<Anasazi::Value<double> > anasazi_evals;
 
   // Get number of local pts for this proc from newly created Map.
   int nPts = Ec.size();
@@ -428,8 +569,9 @@ doMatrixDiag(double Vds, std::vector<double>& Ec, double Ecutoff,
 
   // Get the eigenvalues and eigenvectors from the eigenproblem
   Anasazi::Eigensolution<double,MV> sol = eigenProblem->getSolution();
-  evals = sol.Evals;
+  anasazi_evals = sol.Evals;
   evecs = sol.Evecs;
+  evals.resize(sol.numVecs);
 
   // Compute residuals.
   std::vector<double> normR(sol.numVecs);
@@ -438,7 +580,8 @@ doMatrixDiag(double Vds, std::vector<double>& Ec, double Ecutoff,
     Epetra_MultiVector tempAevec( *Map, sol.numVecs );
     T.putScalar(0.0); 
     for (int i=0; i<sol.numVecs; i++) {
-      T(i,i) = evals[i].realpart;
+      T(i,i) = anasazi_evals[i].realpart;
+      evals[i] = anasazi_evals[i].realpart;
     }
     A->Apply( *evecs, tempAevec );
     MVT::MvTimesMatAddMv( -1.0, *evecs, T, 1.0, tempAevec );
@@ -458,15 +601,15 @@ doMatrixDiag(double Vds, std::vector<double>& Ec, double Ecutoff,
       <<std::endl;
     os<<"------------------------------------------------------"<<std::endl;
     for (int i=0; i<sol.numVecs; i++) {
-      os<<std::setw(16)<<evals[i].realpart
-	<<std::setw(18)<<normR[i]/evals[i].realpart
+      os<<std::setw(16)<<anasazi_evals[i].realpart
+	<<std::setw(18)<<normR[i]/anasazi_evals[i].realpart
 	<<std::endl;
     }
     os<<"------------------------------------------------------"<<std::endl;
     std::cout << os.str() << std::endl;
   }
 
-  double maxEigenvalue = evals[sol.numVecs-1].realpart;
+  double maxEigenvalue = anasazi_evals[sol.numVecs-1].realpart;
   return (maxEigenvalue > Ecutoff);
 }
 
@@ -571,3 +714,210 @@ double QCAD::GreensFunctionTunnelingSolver::execSplineInterp
   return y; 
 
 } 
+
+
+//Utility routine for printing a stl vector of doubles.  this
+// should probably be moved to a utility source file or replaced.
+void printVector(const std::vector<double>& v, int m, int n)
+{
+  assert((int)v.size() == m*n);
+  for(int i=0; i<m; i++) {
+    for(int j=0; j<n; j++) {
+      std::cout << v[n*i + j] << "  ";
+    }
+    std::cout << std::endl;
+  }
+}
+
+
+
+
+// Helper function for tql2
+double pythag(double a, double b)
+{
+  return sqrt(a*a + b*b);
+}
+
+// Helper function for tql2:
+// returns the value of a with the sign of b
+double sign(double a, double b)
+{
+  return (b >= 0) ? fabs(a) : -fabs(a);
+}
+
+
+// Shamelessly taken from http://www.netlib.org/seispack/tql2.f (converted to C)
+int QCAD::GreensFunctionTunnelingSolver::tql2(int n, int max_iter,
+					      std::vector<double>& d, 
+					      std::vector<double>& e, 
+					      std::vector<double>& z,
+					      int& ierr)
+{
+  int i,j,k,l,m,ii,l1,l2;
+  double c,c2,c3,dl1,el1,f,g,h,p,r,s,s2,tst1,tst2;
+
+  /*
+   *     this subroutine is a translation of the algol procedure tql2,
+   *     num. math. 11, 293-306(1968) by bowdler, martin, reinsch, and
+   *     wilkinson handbook for auto. comp., vol.ii-linear algebra, 227-240(1971).
+   *
+   *     this subroutine finds the eigenvalues and eigenvectors
+   *     of a symmetric tridiagonal matrix by the ql method.
+   *     the eigenvectors of a full symmetric matrix can also
+   *     be found if  tred2  has been used to reduce this
+   *     full matrix to tridiagonal form.
+   *
+   *     on input
+   *
+   *        n is the order of the matrix.
+   *
+   *        d contains the diagonal elements of the input matrix.
+   *
+   *        e contains the subdiagonal elements of the input matrix
+   *		 c          in its last n-1 positions.  e(1) is arbitrary.
+   *
+   *        z contains the transformation matrix produced in the
+   *          reduction by  tred2, if performed.  if the eigenvectors
+   *		 c          of the tridiagonal matrix are desired, z must contain
+   *          the identity matrix.
+   *
+   *      on output
+   *
+   *        d contains the eigenvalues in ascending order.  if an
+   *		 c          error exit is made, the eigenvalues are correct but
+   *		 c          unordered for indices 1,2,...,ierr-1.
+   *
+   *        e has been destroyed.
+   *
+   *        z contains orthonormal eigenvectors of the symmetric
+   *		 c          tridiagonal (or full) matrix.  if an error exit is made,
+   *          z contains the eigenvectors associated with the stored
+   *          eigenvalues.
+   *
+   *        ierr is set to
+   *		 c          zero       for normal return,
+   *          j          if the j-th eigenvalue has not been
+   *                     determined after 30 iterations.
+   *
+   *		 c     calls pythag for  sqrt(a*a + b*b) .
+   *
+   *		 c     questions and comments should be directed to burton s. garbow,
+   *		 c     mathematics and computer science div, argonne national laboratory
+   *
+   *     this version dated august 1983.
+   *
+   *     ------------------------------------------------------------------
+   */
+
+  ierr = 0;
+  if (n == 1) return ierr;
+
+  for(i=1; i<n; i++)
+    e[i-1] = e[i];
+
+  f = 0.0;
+  tst1 = 0.0;
+  e[n-1] = 0.0;
+
+  for(l=0; l<n; l++) {
+    j = 0;
+    h = fabs(d[l]) + fabs(e[l]);
+    if(tst1 < h) tst1 = h;  
+    //  .......... look for small sub-diagonal element ..........
+
+    for(m=l; m<n; m++) { 
+      tst2 = tst1 + fabs(e[m]);
+      if(tst2 == tst1) break;
+      // .......... e[n-1] is always zero, so there is no exit
+      //              through the bottom of the loop ..........
+    }
+
+    if(m != l) {
+      do {
+        if(j == max_iter) {
+	  //     .......... set error -- no convergence to an
+	  //                eigenvalue after maximum allowed iterations ..........
+	  ierr = l; return ierr;
+        }
+        
+        j = j + 1;
+        //   .......... form shift ..........
+        l1 = l + 1;
+        l2 = l1 + 1;
+        g = d[l];
+        p = (d[l1] - g) / (2.0 * e[l]);
+        r = pythag(p,1.0);
+        d[l] = e[l] / (p + sign(r,p));
+        d[l1] = e[l] * (p + sign(r,p));
+        dl1 = d[l1];
+        h = g - d[l];
+        if (l2 <= n) {
+          for(i=l2; i<n; i++) 
+	    d[i] = d[i] - h;
+        }
+        f = f + h;
+        
+        //.......... ql transformation ..........
+        p = d[m];
+        c = 1.0;
+        c2 = c;
+        el1 = e[l1];
+        s = 0.0;
+        
+        // .......... for i=m-1 step -1 until l do -- ..........
+	for(i=m-1; i>=l; i--) {
+          c3 = c2;
+          c2 = c;
+          s2 = s;
+          g = c * e[i];
+          h = c * p;
+          r = pythag(p,e[i]);
+          e[i+1] = s * r;
+          s = e[i] / r;
+          c = p / r;
+          p = c * d[i] - s * g;
+          d[i+1] = h + s * (c * g + s * d[i]);
+        
+          // .......... form vector ..........
+          for(k=0; k<n; k++) {
+	    h = z[n*k + (i+1)];
+	    z[n*k + (i+1)] = s * z[n*k + i] + c * h;
+	    z[n*k + i] = c * z[n*k + i] - s * h;
+	  }
+        }
+        
+        p = -s * s2 * c3 * el1 * e[l] / dl1;
+        e[l] = s * p;
+        d[l] = c * p;
+        tst2 = tst1 + fabs(e[l]);
+      }	while(tst2 > tst1);
+    }
+    
+    d[l] = d[l] + f;
+  }
+
+  // .......... order eigenvalues and eigenvectors ..........
+  for(ii=1; ii<n; ii++) { 
+    i = ii - 1;
+    k = i;
+    p = d[i];
+
+    for(j=ii; j<n; j++) {
+      if(d[j] >= p) continue;
+      k = j;
+      p = d[j];
+    }
+
+    if(k == i) continue;
+    d[k] = d[i];
+    d[i] = p;
+
+    for(j=0; j<n; j++) {
+      p = z[n*j + i];
+      z[n*j + i] = z[n*j + k];
+      z[n*j + k] = p;
+    }
+  }
+
+  return ierr;
+}

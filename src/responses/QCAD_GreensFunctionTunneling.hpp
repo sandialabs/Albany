@@ -48,9 +48,16 @@ namespace QCAD {
   private:
     double f0(double x) const;
 
-    bool doMatrixDiag(double Vds, std::vector<double>& Ec, double Ecutoff,
-		      std::vector<Anasazi::Value<double> >& evals,
+    bool doMatrixDiag_Anasazi(double Vds, std::vector<double>& Ec, double Ecutoff,
+		      std::vector<double>& evals,
 		      Teuchos::RCP<Epetra_MultiVector>& evecs);
+    bool doMatrixDiag_tql2(double Vds, std::vector<double>& Ec, double Ecutoff,
+			   std::vector<double>& evals, 
+			   std::vector<double>& evecs);
+    int tql2(int n, int max_iter, std::vector<double>& d, std::vector<double>& e, 
+	     std::vector<double>& z, int& ierr);
+
+
     
     // y2 must be passed by reference since its values are changed in the routine
     void prepSplineInterp(const std::vector<double>& x, const std::vector<double>& y,  
