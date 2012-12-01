@@ -320,7 +320,7 @@ namespace Albany {
 #include "Porosity.hpp"
 #include "TLPoroPlasticityResidMass.hpp"
 #include "SurfaceTLPoroMassResidual.hpp"
-#include "Strain.hpp"
+//#include "Strain.hpp"
 
 //------------------------------------------------------------------------------
 template <typename EvalT>
@@ -668,24 +668,24 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (!surfaceElement && (haveMechEq || havePressureEq)) { // Strain
-    RCP<ParameterList> p = rcp(new ParameterList("Strain"));
-    p->set<string>("Gradient QP Variable Name", "Displacement Gradient");
-    p->set<string>("Strain Name", "Strain");
-    ev = rcp(new LCM::Strain<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+  // if (!surfaceElement && (haveMechEq || havePressureEq)) { // Strain
+  //   RCP<ParameterList> p = rcp(new ParameterList("Strain"));
+  //   p->set<string>("Gradient QP Variable Name", "Displacement Gradient");
+  //   p->set<string>("Strain Name", "Strain");
+  //   ev = rcp(new LCM::Strain<EvalT,AlbanyTraits>(*p,dl));
+  //   fm0.template registerEvaluator<EvalT>(ev);
 
-    // For some reason the save field below does not work.
-    p = stateMgr.registerStateVariable(stateString("Strain",surfaceElement),
-                                       dl->qp_tensor,
-                                       dl->dummy,
-                                       ebName,
-                                       "scalar",
-                                       0.0);
-    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
+  //   // For some reason the save field below does not work.
+  //   p = stateMgr.registerStateVariable(stateString("Strain",surfaceElement),
+  //                                      dl->qp_tensor,
+  //                                      dl->dummy,
+  //                                      ebName,
+  //                                      "scalar",
+  //                                      0.0);
+  //   ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+  //   fm0.template registerEvaluator<EvalT>(ev);
 
-  }
+  // }
 
   if (haveMechEq) { // Elastic Modulus
     RCP<ParameterList> p = rcp(new ParameterList);
@@ -1916,7 +1916,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
     // Setting this turns on dependence of strain and pore pressure)
     //p->set<string>("Strain Name", "Strain");
-    p->set<string>("DetDefGrad Name", "J");
+    if (haveMechEq) p->set<string>("DetDefGrad Name", "J");
     // porosity update based on Coussy's poromechanics (see p.79)
     p->set<string>("QP Pore Pressure Name", "Pore Pressure");
     p->set<string>("Biot Coefficient Name", "Biot Coefficient");
@@ -2093,11 +2093,13 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<string>("Delta Time Name", "Delta Time");
     p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
 
-    p->set<string>("DefGrad Name", "F");
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
-    p->set<string>("DetDefGrad Name", "J");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    if (haveMechEq) {
+      p->set<string>("DefGrad Name", "F");
+      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+      
+      p->set<string>("DetDefGrad Name", "J");
+      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    }
 
     //Output
     p->set<string>("Residual Name", "Pore Pressure Residual");

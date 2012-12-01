@@ -10,6 +10,8 @@
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Intrepid_RealSpaceTools.hpp"
 
+#include <typeinfo>
+
 namespace LCM {
 
 //**********************************************************************
@@ -68,6 +70,9 @@ template<typename EvalT, typename Traits>
 void DefGrad<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  //bool print = false;
+  //if (typeid(ScalarT) == typeid(RealType)) print = true;
+
   // Compute DefGrad tensor from displacement gradient
   for (std::size_t cell=0; cell < workset.numCells; ++cell)
   {

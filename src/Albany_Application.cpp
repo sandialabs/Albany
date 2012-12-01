@@ -480,6 +480,7 @@ computeGlobalResidual(const double current_time,
     dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
   } 
   //cout << "Global Resid f\n" << f << endl;
+  //cout << "Global Soln x\n" << x << endl;
 }
 
 void

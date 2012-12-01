@@ -82,6 +82,7 @@ private:
   bool haveAbsorption;
   bool enableTransient;
   bool haverhoCp;
+  bool haveMech;
   unsigned int numNodes;
   unsigned int numQPs;
   unsigned int numDims;

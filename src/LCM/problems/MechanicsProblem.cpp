@@ -62,7 +62,7 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   
   haveSource =  params->isSublist("Source Functions");
 
-  getVariableType(params->sublist("Mech"), "DOF", mechType, 
+  getVariableType(params->sublist("Displacement"), "DOF", mechType, 
 		  haveMech, haveMechEq);
   getVariableType(params->sublist("Heat"), "None", heatType, 
 		  haveHeat, haveHeatEq);
@@ -84,14 +84,14 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   // Print out a summary of the problem
   *out << "Mechanics problem:" << std::endl
-       << "\tSpatial dimension:      " << numDim << std::endl
-       << "\tMech variables:         " << variableTypeToString(mechType) 
+       << "\tSpatial dimension:       " << numDim << std::endl
+       << "\tMechanics variables:     " << variableTypeToString(mechType) 
        << std::endl
-       << "\tHeat variables:         " << variableTypeToString(heatType) 
+       << "\tHeat variables:          " << variableTypeToString(heatType) 
        << std::endl
        << "\tPore Pressure variables: " << variableTypeToString(pressureType)
        << std::endl
-       << "\tTransport variables:    " << variableTypeToString(transportType) 
+       << "\tTransport variables:     " << variableTypeToString(transportType) 
        << std::endl;
 
   if(params->isType<string>("MaterialDB Filename")){
@@ -118,10 +118,11 @@ Albany::MechanicsProblem::getRBMInfoForML(
   // Need numPDEs should be numDim + nDOF for other governing equations  -SS
 
   numPDEs = neq;
-  numElasticityDim = numDim;
-  numScalar = numDim - neq;
-  if (numDim == 1) {nullSpaceDim = 0; }
-  else {
+  numElasticityDim = 0;
+  if (haveMechEq) numElasticityDim = numDim;
+  numScalar = neq - numElasticityDim;
+  if (haveMechEq) {
+    if (numDim == 1) {nullSpaceDim = 0; }
     if (numDim == 2) {nullSpaceDim = 3; }
     if (numDim == 3) {nullSpaceDim = 6; }
   }
@@ -196,7 +197,7 @@ Albany::MechanicsProblem::getValidProblemParameters() const
   validPL->set<string>("MaterialDB Filename",
                        "materials.xml",
                        "Filename of material database xml file");
-  validPL->sublist("Mech", false, "");
+  validPL->sublist("Displacement", false, "");
   validPL->sublist("Heat", false, "");
   validPL->sublist("Pore Pressure", false, "");
   validPL->sublist("Transport", false, "");

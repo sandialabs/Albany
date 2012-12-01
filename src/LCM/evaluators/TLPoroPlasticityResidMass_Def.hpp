@@ -10,6 +10,7 @@
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Intrepid_RealSpaceTools.hpp"
 
+#include <typeinfo>
 namespace LCM {
 
   //**********************************************************************
@@ -50,16 +51,17 @@ namespace LCM {
                    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     deltaTime (p.get<std::string>("Delta Time Name"),
                p.get<Teuchos::RCP<PHX::DataLayout> >("Workset Scalar Data Layout")),
-    J           (p.get<std::string>                   ("DetDefGrad Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-    defgrad     (p.get<std::string>                   ("DefGrad Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+    // J           (p.get<std::string>                   ("DetDefGrad Name"),
+    //              p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+    // defgrad     (p.get<std::string>                   ("DefGrad Name"),
+    //              p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
     TResidual   (p.get<std::string>                   ("Residual Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
     haveSource  (p.get<bool>("Have Source")),
     haveConvection(false),
     haveAbsorption  (p.get<bool>("Have Absorption")),
-    haverhoCp(false)
+    haverhoCp(false),
+    haveMech(false)
   {
     if (p.isType<bool>("Disable Transient"))
       enableTransient = !p.get<bool>("Disable Transient");
@@ -88,9 +90,28 @@ namespace LCM {
       this->addDependentField(Absorption);
     }
 
-    this->addDependentField(J);
-    this->addDependentField(defgrad);
+    // this->addDependentField(J);
+    // this->addDependentField(defgrad);
     this->addEvaluatedField(TResidual);
+
+    if (p.isType<string>("DefGrad Name")) {
+      Teuchos::RCP<PHX::DataLayout> tensor_dl =
+        p.get< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
+      Teuchos::RCP<PHX::DataLayout> scalar_dl =
+        p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+
+      haveMech = true;
+
+      PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim>
+        tf(p.get<string>("DefGrad Name"), tensor_dl);
+      defgrad = tf;
+      this->addDependentField(defgrad);
+
+      PHX::MDField<ScalarT,Cell,QuadPoint>
+        tj(p.get<string>("DetDefGrad Name"), scalar_dl);
+      J = tj;
+      this->addDependentField(J);
+    }
 
     Teuchos::RCP<PHX::DataLayout> vector_dl =
       p.get< Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout");
@@ -100,23 +121,23 @@ namespace LCM {
     // Get data from previous converged time step
     porosityName = p.get<std::string>("Porosity Name")+"_old";
     porePressureName = p.get<std::string>("QP Pore Pressure Name")+"_old";
-    JName =p.get<std::string>("DetDefGrad Name")+"_old";
-
-
-
+    if (haveMech) JName =p.get<std::string>("DetDefGrad Name")+"_old";
+      
     worksetSize = dims[0];
     numNodes = dims[1];
     numQPs  = dims[2];
     numDims = dims[3];
 
-    // Works space FCs
-    C.resize(worksetSize, numQPs, numDims, numDims);
-    Cinv.resize(worksetSize, numQPs, numDims, numDims);
-    F_inv.resize(worksetSize, numQPs, numDims, numDims);
-    F_invT.resize(worksetSize, numQPs, numDims, numDims);
-    JF_invT.resize(worksetSize, numQPs, numDims, numDims);
-    KJF_invT.resize(worksetSize, numQPs, numDims, numDims);
-    Kref.resize(worksetSize, numQPs, numDims, numDims);
+    if (haveMech) {
+      // Works space FCs
+      C.resize(worksetSize, numQPs, numDims, numDims);
+      Cinv.resize(worksetSize, numQPs, numDims, numDims);
+      F_inv.resize(worksetSize, numQPs, numDims, numDims);
+      F_invT.resize(worksetSize, numQPs, numDims, numDims);
+      JF_invT.resize(worksetSize, numQPs, numDims, numDims);
+      KJF_invT.resize(worksetSize, numQPs, numDims, numDims);
+      Kref.resize(worksetSize, numQPs, numDims, numDims);
+    }
 
 
 
@@ -144,12 +165,12 @@ namespace LCM {
     if (convectionVels.size()>0) {
       haveConvection = true;
       if (p.isType<bool>("Have Rho Cp"))
-	haverhoCp = p.get<bool>("Have Rho Cp");
+        haverhoCp = p.get<bool>("Have Rho Cp");
       if (haverhoCp) {
-	PHX::MDField<ScalarT,Cell,QuadPoint> tmp(p.get<string>("Rho Cp Name"),
-						 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"));
-	rhoCp = tmp;
-	this->addDependentField(rhoCp);
+        PHX::MDField<ScalarT,Cell,QuadPoint> tmp(p.get<string>("Rho Cp Name"),
+                                                 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"));
+        rhoCp = tmp;
+        this->addDependentField(rhoCp);
       }
     }
 
@@ -161,7 +182,7 @@ namespace LCM {
   template<typename EvalT, typename Traits>
   void TLPoroPlasticityResidMass<EvalT, Traits>::
   postRegistrationSetup(typename Traits::SetupData d,
-			PHX::FieldManager<Traits>& fm)
+                        PHX::FieldManager<Traits>& fm)
   {
     this->utils.setFieldData(stabParameter,fm);
     this->utils.setFieldData(elementLength,fm);
@@ -181,8 +202,10 @@ namespace LCM {
     if (enableTransient) this->utils.setFieldData(Tdot,fm);
     if (haveAbsorption)  this->utils.setFieldData(Absorption,fm);
     if (haveConvection && haverhoCp)  this->utils.setFieldData(rhoCp,fm);
-    this->utils.setFieldData(J,fm);
-    this->utils.setFieldData(defgrad,fm);
+    if (haveMech) {
+      this->utils.setFieldData(J,fm);
+      this->utils.setFieldData(defgrad,fm);
+    }
     this->utils.setFieldData(TResidual,fm);
   }
 
@@ -191,12 +214,18 @@ namespace LCM {
   void TLPoroPlasticityResidMass<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
+    bool print = false;
+    if (typeid(ScalarT) == typeid(RealType)) print = true;
+
     typedef Intrepid::FunctionSpaceTools FST;
     typedef Intrepid::RealSpaceTools<ScalarT> RST;
 
     Albany::MDArray porosityold = (*workset.stateArrayPtr)[porosityName];
     Albany::MDArray porePressureold = (*workset.stateArrayPtr)[porePressureName];
-    Albany::MDArray Jold = (*workset.stateArrayPtr)[JName];
+    Albany::MDArray Jold;
+    if (haveMech) {
+      Jold = (*workset.stateArrayPtr)[JName];
+    } 
 
     // Set Warning message
     if (porosityold(1,1) < 0 || porosity(1,1) < 0 ) {
@@ -210,14 +239,18 @@ namespace LCM {
         TResidual(cell,node)=0.0;
         for (std::size_t qp=0; qp < numQPs; ++qp) {
 
+
           // Volumetric Constraint Term
-          TResidual(cell,node) += -biotCoefficient(cell, qp) * (std::log(J(cell,qp)/Jold(cell,qp))) * wBF(cell, node, qp)  ;
+          if (haveMech)  {
+            TResidual(cell,node) += -biotCoefficient(cell, qp) * (std::log(J(cell,qp)/Jold(cell,qp))) * wBF(cell, node, qp)  ;
+          }
 
           // Pore-fluid Resistance Term
           TResidual(cell,node) +=  -(
                                      (porePressure(cell,qp)-porePressureold(cell, qp) ))
             /biotModulus(cell, qp)*
             wBF(cell, node, qp);
+
         }
       }
     }
@@ -226,14 +259,19 @@ namespace LCM {
 
     ScalarT dt = deltaTime(0);
 
-    RST::inverse(F_inv, defgrad);
-    RST::transpose(F_invT, F_inv);
-    FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
-    FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
-    FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
+    if (print) std::cout << "dt: " << dt << std::endl;
 
-    FST::tensorMultiplyDataData<ScalarT> (flux, Kref, TGrad); // flux_i = k I_ij p_j
-
+    if (haveMech) {
+      RST::inverse(F_inv, defgrad);
+      RST::transpose(F_invT, F_inv);
+      FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
+      FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
+      FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
+      FST::tensorMultiplyDataData<ScalarT> (flux, Kref, TGrad); // flux_i = k I_ij p_j
+    } else {
+      FST::scalarMultiplyDataData<ScalarT> (flux, kcPermeability, TGrad); // flux_i = kc p_i
+    }
+      
     for (std::size_t cell=0; cell < workset.numCells; ++cell){
       for (std::size_t qp=0; qp < numQPs; ++qp) {
         for (std::size_t dim=0; dim <numDims; ++dim){
@@ -242,9 +280,25 @@ namespace LCM {
       }
     }
 
-
     FST::integrate<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
 
+    if (print) {
+      for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+        std::cout << "Cell : " << cell << std::endl;
+        for (std::size_t qp=0; qp < numQPs; ++qp) {
+          std::cout << "   QP : " << qp << std::endl;
+          std::cout << "     Porosity        : " << porosity(cell,qp) << std::endl;
+          std::cout << "     Porosityold     : " << porosityold(cell,qp) << std::endl;
+          if (haveMech) {
+            std::cout << "     J               : " << J(cell,qp) << std::endl;
+            std::cout << "     Jold            : " << Jold(cell,qp) << std::endl;
+          }
+          std::cout << "     porePressure    : " << porePressure(cell,qp) << std::endl;
+          std::cout << "     porePressureold : " << porePressureold(cell,qp) << std::endl;
+          std::cout << "     kcPermeability  : " << kcPermeability(cell,qp) << std::endl;
+        }
+      }
+    }
     //---------------------------------------------------------------------------//
     // Stabilization Term
 
@@ -256,13 +310,13 @@ namespace LCM {
       porePbar = 0.0;
       vol = 0.0;
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-	porePbar += weights(cell,qp)*(
+        porePbar += weights(cell,qp)*(
                                       //	-(J(cell,qp)-Jold(cell,qp))*porePressure(cell,qp)
                                       //	 						 +  J(cell,qp)*
                                       (porePressure(cell,qp)-porePressureold(cell, qp) )
                                       //	 						 / (J(cell,qp)*J(cell,qp))
                                       );
-	vol  += weights(cell,qp);
+        vol  += weights(cell,qp);
       }
       porePbar /= vol;
       for (std::size_t qp=0; qp < numQPs; ++qp) {
@@ -320,14 +374,7 @@ namespace LCM {
         }
       }
     }
-
-
-
-
-
-
   }
-
   //**********************************************************************
 }
 
