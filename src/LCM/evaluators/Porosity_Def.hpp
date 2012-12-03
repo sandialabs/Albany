@@ -182,10 +182,15 @@ namespace LCM {
         }
       }
     }
+
+
+
+    // if the porous media is deforming
     if ((isPoroElastic) && (isCompressibleSolidPhase) && (isCompressibleFluidPhase)) {
       if ( hasStrain ) {
         for (std::size_t cell=0; cell < numCells; ++cell) {
           for (std::size_t qp=0; qp < numQPs; ++qp) {
+
             porosity(cell,qp) = initialPorosityValue;
 
             Teuchos::Array<MeshScalarT> point(numDims);
@@ -194,6 +199,10 @@ namespace LCM {
                 + porePressure(cell,qp)
                 *(biotCoefficient(cell,qp)-initialPorosityValue)/GrainBulkModulus;
             }
+    	    // Set Warning message
+    	    if ( porosity(cell,qp) < 0 ) {
+    	      cout << "negative porosity detected. Error! \n";
+    	    }
             // // for debug
             // std::cout << "initial Porosity: " << initialPorosity_value << endl;
             // std::cout << "Pore Pressure: " << porePressure << endl;
@@ -208,20 +217,26 @@ namespace LCM {
       } else if ( hasJ )
       for (std::size_t cell=0; cell < numCells; ++cell) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
-          porosity(cell,qp) = initialPorosityValue * J(cell,qp);
+          porosity(cell,qp) = initialPorosityValue; //  + std::log(J(cell,qp));
+  	    // Set Warning message
+  	    if ( porosity(cell,qp) < 0 ) {
+  	      cout << "negative porosity detected. Error! \n";
+  	    }
+
         }
       }        
     } else {
       for (std::size_t cell=0; cell < numCells; ++cell) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
           porosity(cell,qp) = initialPorosityValue;
-
+          /*
           if ( hasStrain ) {
             Teuchos::Array<MeshScalarT> point(numDims);
             for (std::size_t i=0; i<numDims; i++) {
               porosity(cell,qp) += strain(cell,qp,i,i);
             }
           }
+          */
         }
       }
     }

@@ -220,17 +220,12 @@ namespace LCM {
     typedef Intrepid::FunctionSpaceTools FST;
     typedef Intrepid::RealSpaceTools<ScalarT> RST;
 
-    Albany::MDArray porosityold = (*workset.stateArrayPtr)[porosityName];
     Albany::MDArray porePressureold = (*workset.stateArrayPtr)[porePressureName];
     Albany::MDArray Jold;
     if (haveMech) {
       Jold = (*workset.stateArrayPtr)[JName];
     } 
 
-    // Set Warning message
-    if (porosityold(1,1) < 0 || porosity(1,1) < 0 ) {
-      cout << "negative porosity detected. Error! \n";
-    }
 
     // Pore-fluid diffusion coupling.
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
@@ -247,9 +242,8 @@ namespace LCM {
 
           // Pore-fluid Resistance Term
           TResidual(cell,node) +=  -(
-                                     (porePressure(cell,qp)-porePressureold(cell, qp) ))
-            /biotModulus(cell, qp)*
-            wBF(cell, node, qp);
+                                    (porePressure(cell,qp)-porePressureold(cell, qp) ))
+           /biotModulus(cell, qp)*wBF(cell, node, qp);
 
         }
       }
@@ -288,14 +282,17 @@ namespace LCM {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
           std::cout << "   QP : " << qp << std::endl;
           std::cout << "     Porosity        : " << porosity(cell,qp) << std::endl;
-          std::cout << "     Porosityold     : " << porosityold(cell,qp) << std::endl;
           if (haveMech) {
             std::cout << "     J               : " << J(cell,qp) << std::endl;
             std::cout << "     Jold            : " << Jold(cell,qp) << std::endl;
           }
           std::cout << "     porePressure    : " << porePressure(cell,qp) << std::endl;
           std::cout << "     porePressureold : " << porePressureold(cell,qp) << std::endl;
+          std::cout << "     Biot Coefficient  : " << biotCoefficient(cell,qp) << std::endl;
+          std::cout << "     Biot Modulus  : " << biotModulus(cell,qp) << std::endl;
           std::cout << "     kcPermeability  : " << kcPermeability(cell,qp) << std::endl;
+          std::cout << "     Element Length  : " << elementLength(cell,qp) << std::endl;
+          std::cout << "     dt  : " << dt << std::endl;
         }
       }
     }
@@ -311,10 +308,7 @@ namespace LCM {
       vol = 0.0;
       for (std::size_t qp=0; qp < numQPs; ++qp) {
         porePbar += weights(cell,qp)*(
-                                      //	-(J(cell,qp)-Jold(cell,qp))*porePressure(cell,qp)
-                                      //	 						 +  J(cell,qp)*
                                       (porePressure(cell,qp)-porePressureold(cell, qp) )
-                                      //	 						 / (J(cell,qp)*J(cell,qp))
                                       );
         vol  += weights(cell,qp);
       }
@@ -350,10 +344,7 @@ namespace LCM {
           if ((temp > 0) & stabParameter(cell,qp) > 0) {
 
             TResidual(cell,node) -= (
-                                     //	 -(J(cell,qp)-Jold(cell,qp))*porePressure(cell,qp)
-                                     //	 +  J(cell,qp)*
                                      (porePressure(cell,qp)-porePressureold(cell, qp) )
-                                     //	 / (J(cell,qp)*J(cell,qp))
                                      )
               *stabParameter(cell, qp)
               *std::abs(temp) // should be 1 but use 0.5 for safety
@@ -368,7 +359,6 @@ namespace LCM {
               *(0.5 + 0.5*std::tanh( (temp-1)/kcPermeability(cell,qp)  ))
               /biotModulus(cell, qp)*
               ( wBF(cell, node, qp)
-                //	 -tpterm(cell,node,qp)
                 );
           }
         }

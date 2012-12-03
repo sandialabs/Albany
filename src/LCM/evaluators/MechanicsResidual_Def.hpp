@@ -98,19 +98,31 @@ namespace LCM {
   {
     cout.precision(15);
     LCM::Tensor<ScalarT> F, P, sig, I(LCM::eye<ScalarT>(numDims));
+
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {
-        for (std::size_t dim=0; dim<numDims; dim++)  
+
+    	// initilize residual
+        for (std::size_t dim=0; dim<numDims; dim++)  {
           Residual(cell,node,dim)=0.0;
+        }
+
         for (std::size_t qp=0; qp < numQPs; ++qp) {
           F = LCM::Tensor<ScalarT>( numDims, &defgrad(cell,qp,0,0) );
           sig = LCM::Tensor<ScalarT>( numDims, &stress(cell,qp,0,0) );
-          if (havePorePressure)
-            sig -= biotCoeff(cell,qp) * porePressure(cell,qp) * I;
+
+       // Effective Stress theory
+       if (havePorePressure){
+          sig -= biotCoeff(cell,qp) * porePressure(cell,qp) * I;
+       }
+
+       // map Cauchy stress to 1st PK
           P = J(cell,qp)*sig*LCM::inverse(LCM::transpose(F));
+
           for (std::size_t i=0; i<numDims; i++) {
             for (std::size_t j=0; j<numDims; j++) {
               Residual(cell,node,i) += P(i, j) * wGradBF(cell, node, qp, j);
+
             } 
           } 
         } 
@@ -126,6 +138,8 @@ namespace LCM {
         }
     **/
   }
+
+
   //----------------------------------------------------------------------------
   template<typename EvalT,typename Traits>
   typename MechanicsResidual<EvalT,Traits>::ScalarT&
@@ -133,6 +147,7 @@ namespace LCM {
   {
     return zGrav;
   }
+
 
   //----------------------------------------------------------------------------
 }
