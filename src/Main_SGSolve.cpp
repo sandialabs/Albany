@@ -117,6 +117,9 @@ int main(int argc, char *argv[]) {
 	       << *(responses_out.get_g(i)) << std::endl;
       }
 
+      // Get final solution as initial guess
+      ig = responses_out.get_g(ng-1);
+
       Teuchos::TimeMonitor::summarize(std::cout,false,true,false);
     }
 
@@ -140,6 +143,13 @@ int main(int argc, char *argv[]) {
 	sg_solver->resetSolverParameters(sg_solver_params);
       }
     }
+    Teuchos::ParameterList& problemParams = albanyParams.sublist("Problem");
+    std::string solutionMethod = 
+      problemParams.get("Solution Method", "Steady");
+    std::string secondOrder = problemParams.get("Second Order", "No");
+    std::string problemName = problemParams.get("Name", "Heat 1D");
+    sg_slvrfctry.setCoordinatesForML(solutionMethod, secondOrder, piroParams,
+				     app, problemName);
 
     // Setup SG solver
     sg_solver->setup(model, NOX_observer);
@@ -198,6 +208,7 @@ int main(int argc, char *argv[]) {
 	  g_sg->computeMean(g_mean);
 	  g_sg->computeStandardDeviation(g_std_dev);
 	  out->precision(12);
+	  out->setf(std::ios::scientific);
 	  *out << "Response " << i << " Mean =      " << std::endl 
 	       << g_mean << std::endl;
 	  *out << "Response " << i << " Std. Dev. = " << std::endl 
