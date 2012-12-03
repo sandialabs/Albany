@@ -217,7 +217,7 @@ namespace LCM {
       } else if ( hasJ )
       for (std::size_t cell=0; cell < numCells; ++cell) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
-          porosity(cell,qp) = initialPorosityValue; //  + std::log(J(cell,qp));
+          porosity(cell,qp) = initialPorosityValue*J(cell,qp);
   	    // Set Warning message
   	    if ( porosity(cell,qp) < 0 ) {
   	      cout << "negative porosity detected. Error! \n";

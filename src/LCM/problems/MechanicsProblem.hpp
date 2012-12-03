@@ -597,7 +597,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     fm0.template registerEvaluator<EvalT>
       (evalUtils.constructGatherSolutionEvaluator_noTransient(false, 
-                                                              dof_names));
+                                                              dof_names, offset));
 
     fm0.template registerEvaluator<EvalT>
       (evalUtils.constructGatherCoordinateVectorEvaluator());
