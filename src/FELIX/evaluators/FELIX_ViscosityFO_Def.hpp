@@ -13,8 +13,6 @@
 namespace FELIX {
 
 const double pi = 3.1415926535897932385;
-//should values of these be hard-coded here, or read in from the input file?
-//for now, I have hard coded them here.
  
 //**********************************************************************
 template<typename EvalT, typename Traits>
@@ -111,7 +109,7 @@ evaluateFields(typename Traits::EvalData workset)
         MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
         MeshScalarT muargt = (a*a + 4.0*pi*pi - 2.0*pi*a)*sin(y2pi)*sin(y2pi) + 1.0/4.0*(2.0*pi+a)*(2.0*pi+a)*cos(y2pi)*cos(y2pi); 
         muargt = sqrt(muargt)*exp(a*x);  
-        mu(cell,qp) = 1.0/2.0*pow(A, -1.0/n)*pow(muargt, 1.0/n - 1.0);  
+        mu(cell,qp) = 1.0/2.0*pow(A, -1.0/n)*pow(muargt, 1.0/n - 1.0); 
       }
     }
   }
