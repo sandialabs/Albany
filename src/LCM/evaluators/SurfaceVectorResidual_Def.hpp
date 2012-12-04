@@ -38,6 +38,24 @@ namespace LCM {
 
     this->setName("Surface Vector Residual"+PHX::TypeString<EvalT>::value);
 
+    // logic to modify stress in the presence of a pore pressure
+      if (p.isType<std::string>("Pore Pressure Name") &&
+          p.isType<std::string>("Biot Coefficient Name")) {
+        havePorePressure = true;
+        // grab the pore pressure
+        PHX::MDField<ScalarT, Cell, QuadPoint>
+          tmp(p.get<string>("Pore Pressure Name"), dl->qp_scalar);
+        porePressure = tmp;
+
+        // grab Boit's coefficient
+        PHX::MDField<ScalarT, Cell, QuadPoint>
+          tmp2(p.get<string>("Biot Coefficient Name"), dl->qp_scalar);
+        biotCoeff = tmp2;
+
+        this->addDependentField(porePressure);
+        this->addDependentField(biotCoeff);
+      }
+
     std::vector<PHX::DataLayout::size_type> dims;
     dl->node_vector->dimensions(dims);
     worksetSize = dims[0];
@@ -74,6 +92,11 @@ namespace LCM {
     this->utils.setFieldData(refNormal,fm);
     this->utils.setFieldData(refArea,fm);
     this->utils.setFieldData(force,fm);
+
+    if (havePorePressure) {
+      this->utils.setFieldData(porePressure,fm);
+      this->utils.setFieldData(biotCoeff,fm);
+    }
   }
 
   //----------------------------------------------------------------------------
@@ -119,6 +142,13 @@ namespace LCM {
           LCM::Tensor<ScalarT> F(3, &defGrad(cell, pt, 0, 0));
           // cauchy stress
           LCM::Tensor<ScalarT> sigma(3, &stress(cell, pt, 0, 0));
+
+          // Effective Stress theory
+          LCM::Tensor<ScalarT>  I(LCM::eye<ScalarT>(numDims));
+          if (havePorePressure){
+             sigma -= biotCoeff(cell,pt) * porePressure(cell,pt) * I;
+          }
+
 
           // compute P
           LCM::Tensor<ScalarT> P = det(F) * sigma * inverse(transpose(F));

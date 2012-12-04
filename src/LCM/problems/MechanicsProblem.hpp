@@ -1785,6 +1785,13 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         p->set<string>("Reference Normal Name", "Reference Normal");
         p->set<string>("Reference Area Name", "Reference Area");
 
+        // Effective stress theory for poromechanics problem
+        if (havePressureEq) {
+          p->set<string>("Pore Pressure Name", "Pore Pressure");
+          p->set<string>("Biot Coefficient Name", "Biot Coefficient");
+
+        }
+
         // outputs
         p->set<string>("Surface Vector Residual Name", "Displacement Residual");
 
@@ -1858,6 +1865,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set<string>("Weighted Gradient BF Name", "wGrad BF");
       p->set<string>("Weighted BF Name", "wBF");
 
+      // Effective stress theory for poromechanics problem
       if (havePressureEq) {
         p->set<string>("Pore Pressure Name", "Pore Pressure");
         p->set<string>("Biot Coefficient Name", "Biot Coefficient");
@@ -1871,41 +1879,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       fm0.template registerEvaluator<EvalT>(ev);
 
     }
-    /*
-   else if (haveMechEq & havePressureEq){
-      // Put TLPoroPlasticityResidMomentum here
-        RCP<ParameterList> p = rcp(new ParameterList("Displacement Residual"));
+  } // end of bulk element logic
 
-        //Input
-        p->set<string>("Total Stress Name", "Total Stress");
-        p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
-        p->set<string>("DefGrad Name", "F");
-        p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
-        p->set<string>("DetDefGrad Name", "J");
-        p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-        p->set<string>("Weighted BF Name", "wBF");
-        p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
-
-
-        p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-        p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
-
-        p->set<bool>("Disable Transient", true);
-
-        //Output
-        p->set<string>("Residual Name", "Displacement Residual");
-        p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
-
-        ev = rcp(new LCM::TLPoroPlasticityResidMomentum<EvalT,AlbanyTraits>(*p));
-        fm0.template registerEvaluator<EvalT>(ev);
-
-        */
-
-
- 
   if (havePressureEq) { // Constant Stabilization Parameter
     RCP<ParameterList> p = rcp(new ParameterList);
 
@@ -2196,7 +2171,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   }
 
 
-  } // end of bulk element logic
+//} // end of bulk element logic
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
     Teuchos::RCP<const PHX::FieldTag> ret_tag;

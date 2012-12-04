@@ -68,6 +68,18 @@ private:
   Intrepid::FieldContainer<RealType> refPoints;
   Intrepid::FieldContainer<RealType> refWeights;
 
+  /// Optional
+     /// Input: Pore Pressure
+     ///
+     PHX::MDField<ScalarT,Cell,QuadPoint> porePressure;
+
+     ///
+     /// Optional
+     /// Input: Biot Coefficient
+     ///
+     PHX::MDField<ScalarT,Cell,QuadPoint> biotCoeff;
+
+
   // Output:
   PHX::MDField<ScalarT,Cell,Node,Dim> force;
 
@@ -77,6 +89,11 @@ private:
   unsigned int numDims;
   unsigned int numPlaneNodes;
   unsigned int numPlaneDims;
+
+  ///
+  /// Pore Pressure flag
+  ///
+  bool havePorePressure;
 };
 }
 

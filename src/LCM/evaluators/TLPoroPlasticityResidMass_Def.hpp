@@ -275,7 +275,7 @@ namespace LCM {
     }
 
     FST::integrate<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
-
+/*
     if (print) {
       for (std::size_t cell=0; cell < workset.numCells; ++cell) {
         std::cout << "Cell : " << cell << std::endl;
@@ -296,6 +296,8 @@ namespace LCM {
         }
       }
     }
+      */
+
     //---------------------------------------------------------------------------//
     // Stabilization Term
 
