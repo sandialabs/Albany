@@ -154,7 +154,7 @@ namespace LCM {
       // need deltaTime, deformation gradient, permeability..etc
 
 
-      /*
+
       // For now, I will focus on undrained response, but I will get back to it ASAP - Sun
 
 
@@ -167,7 +167,7 @@ namespace LCM {
         FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
         FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
 
-        */
+
 
     	  }
       }
