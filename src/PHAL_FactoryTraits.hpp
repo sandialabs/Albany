@@ -17,6 +17,7 @@
 #include "LCM/evaluators/TorsionBC.hpp"
 #endif
 #include "QCAD_PoissonDirichlet.hpp"
+#include "QCAD_PoissonNeumann.hpp"
 #include "PHAL_Dirichlet.hpp"
 #include "PHAL_Neumann.hpp"
 #include "PHAL_GatherCoordinateVector.hpp"
@@ -72,22 +73,24 @@ namespace PHAL {
   
     static const int id_neumann                   =  0;
     static const int id_neumann_aggregator        =  1;
-    static const int id_gather_coord_vector       =  2;
-    static const int id_gather_solution           =  3;
-    static const int id_timedep_bc                =  4; // Only for LCM probs
+    static const int id_qcad_poisson_neumann      =  2;
+    static const int id_gather_coord_vector       =  3;
+    static const int id_gather_solution           =  4;
+    static const int id_timedep_bc                =  5; // Only for LCM probs
 
 #ifdef ALBANY_LCM
-    typedef boost::mpl::vector5<
+    typedef boost::mpl::vector6<
 #else
-    typedef boost::mpl::vector4< 
+    typedef boost::mpl::vector5< 
 #endif
 
 	     PHAL::Neumann<_,Traits>,                     //  0
 	     PHAL::NeumannAggregator<_,Traits>,           //  1
-             PHAL::GatherCoordinateVector<_,Traits>,      //  2
-             PHAL::GatherSolution<_,Traits>               //  3
+	     QCAD::PoissonNeumann<_,Traits>,              //  2
+             PHAL::GatherCoordinateVector<_,Traits>,      //  3
+             PHAL::GatherSolution<_,Traits>               //  4
 #ifdef ALBANY_LCM
-        , LCM::TimeTracBC<_, Traits>                //  4
+        , LCM::TimeTracBC<_, Traits>                //  5
 #endif
 
 	  > EvaluatorTypes;

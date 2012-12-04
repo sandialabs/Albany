@@ -431,6 +431,7 @@ SET(SOURCES ${SOURCES}
        evaluators/QCAD_PoissonResid.cpp
        evaluators/QCAD_PoissonSource.cpp
        evaluators/QCAD_PoissonDirichlet.cpp
+       evaluators/QCAD_PoissonNeumann.cpp
        evaluators/QCAD_ResponseFieldIntegral.cpp
        evaluators/QCAD_ResponseFieldValue.cpp
        evaluators/QCAD_ResponseFieldAverage.cpp
@@ -456,6 +457,8 @@ SET(HEADERS ${HEADERS}
        evaluators/QCAD_PoissonSource_Def.hpp
        evaluators/QCAD_PoissonDirichlet.hpp
        evaluators/QCAD_PoissonDirichlet_Def.hpp
+       evaluators/QCAD_PoissonNeumann.hpp
+       evaluators/QCAD_PoissonNeumann_Def.hpp
        evaluators/QCAD_ResponseFieldIntegral.hpp
        evaluators/QCAD_ResponseFieldIntegral_Def.hpp
        evaluators/QCAD_ResponseFieldValue.hpp
