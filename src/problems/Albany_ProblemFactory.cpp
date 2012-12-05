@@ -13,6 +13,7 @@
 #include "Albany_NavierStokes.hpp"
 #include "Albany_GPAMProblem.hpp"
 #include "Albany_LinComprNSProblem.hpp"
+#include "Albany_ComprNSProblem.hpp"
 #include "Albany_ODEProblem.hpp"
 #include "Albany_ThermoElectrostaticsProblem.hpp"
 #include "QCAD_PoissonProblem.hpp"
@@ -111,6 +112,12 @@ Albany::ProblemFactory::create()
   }
   else if (method == "LinComprNS 3D") {
     strategy = rcp(new Albany::LinComprNSProblem(problemParams, paramLib, 3));
+  }
+  else if (method == "ComprNS 2D") {
+    strategy = rcp(new Albany::ComprNSProblem(problemParams, paramLib, 2));
+  }
+  else if (method == "ComprNS 3D") {
+    strategy = rcp(new Albany::ComprNSProblem(problemParams, paramLib, 3));
   }
   else if (method == "Schrodinger 1D") {
     strategy = rcp(new QCAD::SchrodingerProblem(problemParams, paramLib, 1, comm));

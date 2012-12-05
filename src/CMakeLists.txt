@@ -60,6 +60,7 @@ SET(SOURCES ${SOURCES}
         problems/Albany_NavierStokes.cpp
         problems/Albany_GPAMProblem.cpp
         problems/Albany_LinComprNSProblem.cpp
+        problems/Albany_ComprNSProblem.cpp
         problems/Albany_ODEProblem.cpp
         problems/Albany_Helmholtz2DProblem.cpp
         problems/Albany_ThermoElectrostaticsProblem.cpp
@@ -83,6 +84,7 @@ SET(HEADERS ${HEADERS}
         problems/Albany_NavierStokes.hpp
         problems/Albany_GPAMProblem.hpp
         problems/Albany_LinComprNSProblem.hpp
+        problems/Albany_ComprNSProblem.hpp
         problems/Albany_ODEProblem.hpp
         problems/Albany_Helmholtz2DProblem.hpp
         problems/Albany_ThermoElectrostaticsProblem.hpp
@@ -157,6 +159,8 @@ SET(SOURCES ${SOURCES}
         evaluators/PHAL_GPAMResid.cpp
         evaluators/PHAL_LinComprNSResid.cpp
         evaluators/PHAL_LinComprNSBodyForce.cpp
+        evaluators/PHAL_ComprNSResid.cpp
+        evaluators/PHAL_ComprNSBodyForce.cpp
         evaluators/PHAL_ComputeBasisFunctions.cpp
         evaluators/PHAL_DOFInterpolation.cpp
         evaluators/PHAL_DOFGradInterpolation.cpp
@@ -218,8 +222,12 @@ SET(HEADERS ${HEADERS}
         evaluators/PHAL_GPAMResid_Def.hpp
         evaluators/PHAL_LinComprNSResid.hpp
         evaluators/PHAL_LinComprNSResid_Def.hpp
+        evaluators/PHAL_ComprNSResid.hpp
+        evaluators/PHAL_ComprNSResid_Def.hpp
         evaluators/PHAL_LinComprNSBodyForce.hpp
         evaluators/PHAL_LinComprNSBodyForce_Def.hpp
+        evaluators/PHAL_ComprNSBodyForce.hpp
+        evaluators/PHAL_ComprNSBodyForce_Def.hpp
         evaluators/PHAL_ComputeBasisFunctions.hpp
         evaluators/PHAL_ComputeBasisFunctions_Def.hpp
         evaluators/PHAL_DOFInterpolation.hpp

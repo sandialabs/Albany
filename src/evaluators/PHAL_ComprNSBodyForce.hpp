@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef PHAL_LINCOMPRNSBODYFORCE_HPP
-#define PHAL_LINCOMPRNSBODYFORCE_HPP
+#ifndef PHAL_COMPRNSBODYFORCE_HPP
+#define PHAL_COMPRNSBODYFORCE_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -20,14 +20,14 @@ namespace PHAL {
 */
 
 template<typename EvalT, typename Traits>
-class LinComprNSBodyForce : public PHX::EvaluatorWithBaseImpl<Traits>,
+class ComprNSBodyForce : public PHX::EvaluatorWithBaseImpl<Traits>,
 		    public PHX::EvaluatorDerived<EvalT, Traits> {
 
 public:
 
   typedef typename EvalT::ScalarT ScalarT;
 
-  LinComprNSBodyForce(const Teuchos::ParameterList& p);
+  ComprNSBodyForce(const Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
@@ -47,9 +47,9 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> force;
 
    //Force types
-  enum BFTYPE {NONE, STEADYEUL, UNSTEADYEULMMS, DRIVENPULSE};
+  enum BFTYPE {NONE};
   BFTYPE bf_type;
-
+  
   std::size_t numQPs;
   std::size_t numDims;
   std::size_t vecDim;
