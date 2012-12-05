@@ -108,6 +108,8 @@ private:
   unsigned int numDims;
   unsigned int numPlaneNodes;
   unsigned int numPlaneDims;
+
+  bool haveMech;
 };
 }
 

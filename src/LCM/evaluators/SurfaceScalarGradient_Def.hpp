@@ -45,6 +45,15 @@ namespace LCM {
     numPlaneNodes = numNodes / 2;
     numPlaneDims = numDims - 1;
 
+#ifdef ALBANY_VERBOSE
+    std::cout << "in Surface Gradient Jump" << std::endl;
+    std::cout << " numPlaneNodes: " << numPlaneNodes << std::endl;
+    std::cout << " numPlaneDims: " << numPlaneDims << std::endl;
+    std::cout << " numQPs: " << numQPs << std::endl;
+    std::cout << " cubature->getNumPoints(): " << cubature->getNumPoints() << std::endl;
+    std::cout << " cubature->getDimension(): " << cubature->getDimension() << std::endl;
+#endif
+
     // Allocate Temporary FieldContainers
     refValues.resize(numPlaneNodes, numQPs);
     refGrads.resize(numPlaneNodes, numQPs, numPlaneDims);
