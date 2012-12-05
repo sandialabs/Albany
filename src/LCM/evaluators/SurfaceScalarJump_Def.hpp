@@ -19,11 +19,13 @@ SurfaceScalarJump(const Teuchos::ParameterList& p,
   cubature      (p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")), 
   intrepidBasis (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis")), 
   scalar        (p.get<std::string>("Scalar Name"),dl->node_scalar),
-  scalarJump    (p.get<std::string>("Scalar Jump Name"),dl->qp_scalar)
+  scalarJump    (p.get<std::string>("Scalar Jump Name"),dl->qp_scalar),
+  scalarAverage (p.get<std::string>("Scalar Average Name"),dl->qp_scalar)
 {
   this->addDependentField(scalar);
 
   this->addEvaluatedField(scalarJump);
+  this->addEvaluatedField(scalarAverage);
 
   this->setName("Surface Scalar Jump"+PHX::TypeString<EvalT>::value);
 
@@ -67,6 +69,7 @@ SurfaceScalarJump(const Teuchos::ParameterList& p,
   {
     this->utils.setFieldData(scalar,fm);
     this->utils.setFieldData(scalarJump,fm);
+    this->utils.setFieldData(scalarAverage,fm);
   }
 
   //**********************************************************************
@@ -84,10 +87,9 @@ SurfaceScalarJump(const Teuchos::ParameterList& p,
           int topNode = node + numPlaneNodes;
           scalarA += refValues(node, pt) * scalar(cell, node);
           scalarB += refValues(node, pt) * scalar(cell, topNode);
-
         }
         scalarJump(cell,pt) = scalarB - scalarA;
-
+        scalarAverage(cell,pt) = 0.5*(scalarB + scalarA);
       }
     }
   }

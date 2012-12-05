@@ -25,7 +25,8 @@ namespace LCM {
     refDualBasis   (p.get<std::string>("Reference Dual Basis Name"),dl->qp_tensor),
     refNormal      (p.get<std::string>("Reference Normal Name"),dl->qp_vector),
     refArea        (p.get<std::string>("Reference Area Name"),dl->qp_scalar),
-    force          (p.get<std::string>("Surface Vector Residual Name"),dl->node_vector)
+    force          (p.get<std::string>("Surface Vector Residual Name"),dl->node_vector),
+    havePorePressure(false)
   {
     this->addDependentField(defGrad);
     this->addDependentField(stress);
@@ -39,22 +40,22 @@ namespace LCM {
     this->setName("Surface Vector Residual"+PHX::TypeString<EvalT>::value);
 
     // logic to modify stress in the presence of a pore pressure
-      if (p.isType<std::string>("Pore Pressure Name") &&
-          p.isType<std::string>("Biot Coefficient Name")) {
-        havePorePressure = true;
-        // grab the pore pressure
-        PHX::MDField<ScalarT, Cell, QuadPoint>
-          tmp(p.get<string>("Pore Pressure Name"), dl->qp_scalar);
-        porePressure = tmp;
+    if (p.isType<std::string>("Pore Pressure Name") &&
+        p.isType<std::string>("Biot Coefficient Name")) {
+      havePorePressure = true;
+      // grab the pore pressure
+      PHX::MDField<ScalarT, Cell, QuadPoint>
+        tmp(p.get<string>("Pore Pressure Name"), dl->qp_scalar);
+      porePressure = tmp;
 
-        // grab Boit's coefficient
-        PHX::MDField<ScalarT, Cell, QuadPoint>
-          tmp2(p.get<string>("Biot Coefficient Name"), dl->qp_scalar);
-        biotCoeff = tmp2;
+      // grab Boit's coefficient
+      PHX::MDField<ScalarT, Cell, QuadPoint>
+        tmp2(p.get<string>("Biot Coefficient Name"), dl->qp_scalar);
+      biotCoeff = tmp2;
 
-        this->addDependentField(porePressure);
-        this->addDependentField(biotCoeff);
-      }
+      this->addDependentField(porePressure);
+      this->addDependentField(biotCoeff);
+    }
 
     std::vector<PHX::DataLayout::size_type> dims;
     dl->node_vector->dimensions(dims);

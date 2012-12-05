@@ -122,7 +122,7 @@ namespace LCM {
     porosityName = p.get<std::string>("Porosity Name")+"_old";
     porePressureName = p.get<std::string>("QP Pore Pressure Name")+"_old";
     if (haveMech) JName =p.get<std::string>("DetDefGrad Name")+"_old";
-      
+
     worksetSize = dims[0];
     numNodes = dims[1];
     numQPs  = dims[2];
@@ -225,15 +225,12 @@ namespace LCM {
     if (haveMech) {
       Jold = (*workset.stateArrayPtr)[JName];
     } 
-
-
     // Pore-fluid diffusion coupling.
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
       for (std::size_t node=0; node < numNodes; ++node) {
         TResidual(cell,node)=0.0;
         for (std::size_t qp=0; qp < numQPs; ++qp) {
-
 
           // Volumetric Constraint Term
           if (haveMech)  {
@@ -248,12 +245,9 @@ namespace LCM {
         }
       }
     }
-
     // Pore-Fluid Diffusion Term
 
     ScalarT dt = deltaTime(0);
-
-    if (print) std::cout << "dt: " << dt << std::endl;
 
     if (haveMech) {
       RST::inverse(F_inv, defgrad);
@@ -273,30 +267,7 @@ namespace LCM {
         }
       }
     }
-
     FST::integrate<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
-/*
-    if (print) {
-      for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-        std::cout << "Cell : " << cell << std::endl;
-        for (std::size_t qp=0; qp < numQPs; ++qp) {
-          std::cout << "   QP : " << qp << std::endl;
-          std::cout << "     Porosity        : " << porosity(cell,qp) << std::endl;
-          if (haveMech) {
-            std::cout << "     J               : " << J(cell,qp) << std::endl;
-            std::cout << "     Jold            : " << Jold(cell,qp) << std::endl;
-          }
-          std::cout << "     porePressure    : " << porePressure(cell,qp) << std::endl;
-          std::cout << "     porePressureold : " << porePressureold(cell,qp) << std::endl;
-          std::cout << "     Biot Coefficient  : " << biotCoefficient(cell,qp) << std::endl;
-          std::cout << "     Biot Modulus  : " << biotModulus(cell,qp) << std::endl;
-          std::cout << "     kcPermeability  : " << kcPermeability(cell,qp) << std::endl;
-          std::cout << "     Element Length  : " << elementLength(cell,qp) << std::endl;
-          std::cout << "     dt  : " << dt << std::endl;
-        }
-      }
-    }
-      */
 
     //---------------------------------------------------------------------------//
     // Stabilization Term
@@ -332,7 +303,6 @@ namespace LCM {
       }
 
     }
-
     ScalarT temp(0);
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {

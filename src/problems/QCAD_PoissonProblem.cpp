@@ -285,9 +285,217 @@ QCAD::PoissonProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::Mesh
    condNames[3] = "robin";
 
    nfm.resize(1); // Poisson problem only has one physics set
-   nfm[0] = bcUtils.constructBCEvaluators(meshSpecs, bcNames, dof_names, false, 0,
-				  condNames, offsets, dl, this->params, this->paramLib, materialDB);
 
+   //nfm[0] = bcUtils.constructBCEvaluators(meshSpecs, bcNames, dof_names, false, 0,
+   //				  condNames, offsets, dl, this->params, this->paramLib, materialDB);
+   bool isVectorField = false;
+   int offsetToFirstDOF = 0;
+
+   // From here down, this code was copied from constructBCEvaluators call commented out
+   //   above and modified to create QCAD::PoissonNeumann evaluators.
+   using Teuchos::RCP;
+   using Teuchos::rcp;
+   using Teuchos::ParameterList;
+   using PHX::DataLayout;
+   using PHX::MDALayout;
+   using std::vector;
+   using std::string;
+
+   using PHAL::NeumannFactoryTraits;
+   using PHAL::AlbanyTraits;
+
+   // Drop into the "Neumann BCs" sublist
+   Teuchos::ParameterList BCparams = this->params->sublist(Albany::NeumannTraits::bcParamsPl);
+   BCparams.validateParameters(*(Albany::NeumannTraits::getValidBCParameters(meshSpecs->ssNames, bcNames, condNames)),0);
+   
+   
+   std::map<string, RCP<ParameterList> > evaluators_to_build;
+   vector<string> bcs;
+
+   // Check for all possible standard BCs (every dof on every sideset) to see which is set
+   for (std::size_t i=0; i<meshSpecs->ssNames.size(); i++) {
+     for (std::size_t j=0; j<bcNames.size(); j++) {
+       for (std::size_t k=0; k<condNames.size(); k++) {
+	 
+        // construct input.xml string like:
+        // "NBC on SS sidelist_12 for DOF T set dudn"
+        //  or
+        // "NBC on SS sidelist_12 for DOF T set (dudx, dudy)"
+        // or
+        // "NBC on SS surface_1 for DOF all set P"
+
+         std::string ss = Albany::NeumannTraits::constructBCName(meshSpecs->ssNames[i], bcNames[j], condNames[k]);
+
+         // Have a match of the line in input.xml
+	 
+         if (BCparams.isParameter(ss)) {
+	   
+//           std::cout << "Constructing NBC: " << ss << std::endl;
+	   
+           TEUCHOS_TEST_FOR_EXCEPTION(BCparams.isType<string>(ss), std::logic_error,
+				      "NBC array information in XML file must be of type Array(double)\n");
+	   
+           // These are read in the Albany::Neumann constructor (PHAL_Neumann_Def.hpp)
+	   
+           RCP<ParameterList> p = rcp(new ParameterList);
+	   
+	   int type = NeumannFactoryTraits<AlbanyTraits>::id_qcad_poisson_neumann;
+	   p->set<int>                            ("Type", type);
+	   
+           p->set<RCP<ParamLib> >                 ("Parameter Library", this->paramLib);
+	 
+	   p->set<string>                         ("Side Set ID", meshSpecs->ssNames[i]);
+	   p->set<Teuchos::Array< int > >         ("Equation Offset", offsets[j]);
+	   p->set< RCP<Albany::Layouts> >         ("Layouts Struct", dl);
+           p->set< RCP<Albany::MeshSpecsStruct> >         ("Mesh Specs Struct", meshSpecs);
+	   
+           p->set<string>                         ("Coordinate Vector Name", "Coord Vec");
+
+           if(condNames[k] == "robin") {
+             p->set<string>  ("DOF Name", dof_names[j]);
+	     p->set<bool> ("Vector Field", isVectorField);
+	     if (isVectorField) {p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_vector);}
+	     else               p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_scalar);
+           }
+           else if(condNames[k] == "basal") {
+             std::string betaName = BCparams.get("BetaXY", "Constant");
+             double L = BCparams.get("L", 1.0);
+             p->set<string> ("BetaXY", betaName); 
+             p->set<double> ("L", L);   
+             p->set<string>  ("DOF Name", dof_names[0]);
+	     p->set<bool> ("Vector Field", isVectorField);
+	     if (isVectorField) {p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_vector);}
+	     else               p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_scalar);
+           }
+
+           // Pass the input file line
+           p->set< string >                       ("Neumann Input String", ss);
+           p->set< Teuchos::Array<double> >       ("Neumann Input Value", BCparams.get<Teuchos::Array<double> >(ss));
+           p->set< string >                       ("Neumann Input Conditions", condNames[k]);
+
+           // If we are doing a Neumann internal boundary with a "scaled jump" (includes "robin" too)
+           // The material DB database needs to be passed to the BC object
+
+           if(condNames[k] == "scaled jump" || condNames[k] == "robin"){ 
+
+              TEUCHOS_TEST_FOR_EXCEPTION(materialDB == Teuchos::null,
+                Teuchos::Exceptions::InvalidParameter, 
+                "This BC needs a material database specified");
+
+              p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
+
+
+           }
+
+
+    // Inputs: X, Y at nodes, Cubature, and Basis
+    //p->set<string>("Node Variable Name", "Neumann");
+
+           std::stringstream ess; ess << "Evaluator for " << ss;
+           evaluators_to_build[ess.str()] = p;
+
+  
+           bcs.push_back(ss);
+         }
+       }
+     }
+   }
+
+
+   // Build evaluator for Gather Coordinate Vector
+   string NeuGCV="Evaluator for Gather Coordinate Vector";
+   {
+      RCP<ParameterList> p = rcp(new ParameterList);
+      p->set<int>("Type", Albany::NeumannTraits::typeGCV);
+
+      // Input: Periodic BC flag
+      p->set<bool>("Periodic BC", false);
+ 
+      // Output:: Coordindate Vector at vertices
+      p->set< RCP<DataLayout> >  ("Coordinate Data Layout",  dl->vertices_vector);
+      p->set< string >("Coordinate Vector Name", "Coord Vec");
+ 
+      evaluators_to_build[NeuGCV] = p;
+   }
+
+   // Build evaluator for Gather Solution
+   string NeuGS="Evaluator for Gather Solution";
+   {
+     RCP<ParameterList> p = rcp(new ParameterList());
+     p->set<int>("Type", Albany::NeumannTraits::typeGS);
+ 
+     // for new way
+     p->set< RCP<Albany::Layouts> >("Layouts Struct", dl);
+
+     p->set< Teuchos::ArrayRCP<std::string> >("Solution Names", dof_names);
+
+     p->set<bool>("Vector Field", isVectorField);
+     if (isVectorField) p->set< RCP<DataLayout> >("Data Layout", dl->node_vector);
+     else               p->set< RCP<DataLayout> >("Data Layout", dl->node_scalar);
+
+     p->set<int>("Offset of First DOF", offsetToFirstDOF);
+     p->set<bool>("Disable Transient", true);
+
+     evaluators_to_build[NeuGS] = p;
+   }
+
+
+   // Build evaluator that causes the evaluation of all the NBCs
+   string allBC="Evaluator for all Neumann BCs";
+   {
+      RCP<ParameterList> p = rcp(new ParameterList);
+      p->set<int>("Type", Albany::NeumannTraits::typeNa);
+
+      p->set<vector<string>* >("NBC Names", &bcs);
+      p->set< RCP<DataLayout> >("Data Layout", dl->dummy);
+      p->set<string>("NBC Aggregator Name", allBC);
+      evaluators_to_build[allBC] = p;
+   }
+
+   // Inlined call to:
+   // nfm[0] = bcUtils.buildFieldManager(evaluators_to_build, allBC, dl->dummy);
+   // since function is private -- consider making this public?
+
+   // Build Field Evaluators for each evaluation type
+   PHX::EvaluatorFactory<AlbanyTraits,PHAL::NeumannFactoryTraits<AlbanyTraits> > factory;
+   RCP< vector< RCP<PHX::Evaluator_TemplateManager<AlbanyTraits> > > > evaluators;
+   evaluators = factory.buildEvaluators(evaluators_to_build);
+
+   // Create a FieldManager
+   Teuchos::RCP<PHX::FieldManager<AlbanyTraits> > fm
+     = Teuchos::rcp(new PHX::FieldManager<AlbanyTraits>);
+
+   // Register all Evaluators
+   PHX::registerEvaluators(evaluators, *fm);
+
+   PHX::Tag<AlbanyTraits::Residual::ScalarT> res_tag0(allBC, dl->dummy);
+   fm->requireField<AlbanyTraits::Residual>(res_tag0);
+
+   PHX::Tag<AlbanyTraits::Jacobian::ScalarT> jac_tag0(allBC, dl->dummy);
+   fm->requireField<AlbanyTraits::Jacobian>(jac_tag0);
+
+   PHX::Tag<AlbanyTraits::Tangent::ScalarT> tan_tag0(allBC, dl->dummy);
+   fm->requireField<AlbanyTraits::Tangent>(tan_tag0);
+
+   PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_tag0(allBC, dl->dummy);
+   fm->requireField<AlbanyTraits::SGResidual>(sgres_tag0);
+
+   PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag0(allBC, dl->dummy);
+   fm->requireField<AlbanyTraits::SGJacobian>(sgjac_tag0);
+
+   PHX::Tag<AlbanyTraits::SGTangent::ScalarT> sgtan_tag0(allBC, dl->dummy);
+   fm->requireField<AlbanyTraits::SGTangent>(sgtan_tag0);
+
+   PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag0(allBC, dl->dummy);
+   fm->requireField<AlbanyTraits::MPResidual>(mpres_tag0);
+
+   PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag0(allBC, dl->dummy);
+   fm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag0);
+
+   PHX::Tag<AlbanyTraits::MPTangent::ScalarT> mptan_tag0(allBC, dl->dummy);
+   fm->requireField<AlbanyTraits::MPTangent>(mptan_tag0);
+
+   nfm[0] = fm;
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

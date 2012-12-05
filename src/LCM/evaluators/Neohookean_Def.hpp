@@ -59,7 +59,7 @@ namespace LCM {
   evaluateFields(typename Traits::EvalData workset)
   {
     bool print = false;
-    if (typeid(ScalarT) == typeid(RealType)) print = true;
+    //if (typeid(ScalarT) == typeid(RealType)) print = true;
 
     cout.precision(15);
     ScalarT kappa;

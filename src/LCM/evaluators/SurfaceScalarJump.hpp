@@ -49,7 +49,7 @@ private:
   //! Finite element basis for the midplane
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
   //! Vector to take the jump of
-  PHX::MDField<MeshScalarT,Cell,Vertex> scalar;
+  PHX::MDField<ScalarT,Cell,Vertex> scalar;
 
   // Reference Cell FieldContainers
   Intrepid::FieldContainer<RealType> refValues;
@@ -59,6 +59,7 @@ private:
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint> scalarJump;
+  PHX::MDField<ScalarT,Cell,QuadPoint> scalarAverage;
 
   unsigned int worksetSize;
   unsigned int numNodes;

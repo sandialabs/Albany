@@ -416,6 +416,7 @@ namespace {
     Teuchos::ParameterList sjPL;
     sjPL.set<string>("Scalar Name","Current Scalar");
     sjPL.set<string>("Scalar Jump Name", "Scalar Jump");
+    sjPL.set<string>("Scalar Average Name", "Scalar Avg");
     sjPL.set<RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
     sjPL.set<RCP<Intrepid::Basis<RealType, FC > > >
       ("Intrepid Basis", intrepidBasis);
