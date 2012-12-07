@@ -161,6 +161,7 @@ SET(SOURCES ${SOURCES}
         evaluators/PHAL_LinComprNSBodyForce.cpp
         evaluators/PHAL_ComprNSResid.cpp
         evaluators/PHAL_ComprNSBodyForce.cpp
+        evaluators/PHAL_ComprNSViscosity.cpp
         evaluators/PHAL_ComputeBasisFunctions.cpp
         evaluators/PHAL_DOFInterpolation.cpp
         evaluators/PHAL_DOFGradInterpolation.cpp
@@ -228,6 +229,8 @@ SET(HEADERS ${HEADERS}
         evaluators/PHAL_LinComprNSBodyForce_Def.hpp
         evaluators/PHAL_ComprNSBodyForce.hpp
         evaluators/PHAL_ComprNSBodyForce_Def.hpp
+        evaluators/PHAL_ComprNSViscosity.hpp
+        evaluators/PHAL_ComprNSViscosity_Def.hpp
         evaluators/PHAL_ComputeBasisFunctions.hpp
         evaluators/PHAL_ComputeBasisFunctions_Def.hpp
         evaluators/PHAL_DOFInterpolation.hpp

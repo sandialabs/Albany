@@ -75,9 +75,12 @@ namespace Albany {
       const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
     void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
+    void constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs);
 
   protected:
     int numDim;
+    Teuchos::RCP<Albany::Layouts> dl;
+
 
   };
 
@@ -96,8 +99,10 @@ namespace Albany {
 
 #include "PHAL_ComprNSResid.hpp"
 
+#include "PHAL_Neumann.hpp"
 #include "PHAL_Source.hpp"
 #include "PHAL_ComprNSBodyForce.hpp"
+#include "PHAL_ComprNSViscosity.hpp"
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
@@ -138,7 +143,7 @@ Albany::ComprNSProblem::constructEvaluators(
   
    int vecDim = neq;
 
-   RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, vecDim));
+   dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, vecDim));
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
    bool supportsTransient=true;
    int offset=0;
@@ -210,6 +215,11 @@ Albany::ComprNSProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
     p->set< RCP<DataLayout> >("Node QP Gradient Data Layout", dl->node_qp_gradient);
 
+    p->set<string>("Viscosity Mu QP Variable Name", "Viscosity Mu");
+    p->set<string>("Viscosity Lambda QP Variable Name", "Viscosity Lambda");
+    p->set<string>("Viscosity Kappa QP Variable Name", "Viscosity Kappa");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Equation Set");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
@@ -220,6 +230,30 @@ Albany::ComprNSProblem::constructEvaluators(
 
     ev = rcp(new PHAL::ComprNSResid<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+  }
+  { // Viscosity
+    RCP<ParameterList> p = rcp(new ParameterList("Viscosity"));
+
+    //Input
+    p->set<string>("Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+    p->set< RCP<DataLayout> >("QP Gradient Data Layout", dl->qp_gradient); 
+    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_vecgradient);
+    p->set<string>("QP Variable Name", "qFluct");
+    
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Viscosity");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+  
+    //Output
+    p->set<string>("Viscosity Mu QP Variable Name", "Viscosity Mu");
+    p->set<string>("Viscosity Lambda QP Variable Name", "Viscosity Lambda");
+    p->set<string>("Viscosity Kappa QP Variable Name", "Viscosity Kappa");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+    ev = rcp(new PHAL::ComprNSViscosity<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+    
   }
 
    { // ComprNS Body Force

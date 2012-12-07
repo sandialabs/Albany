@@ -235,9 +235,9 @@ Albany::TaylorGreenVortex::TaylorGreenVortex(int neq_, int numDim_, Teuchos::Arr
 }
 void Albany::TaylorGreenVortex::compute(double* x, const double *X) 
 {
-  x[0] = -cos(2.0*pi*X[0])*sin(2.0*pi*X[1]); //initial u-velocity
-  x[1] = sin(2.0*pi*X[0])*cos(2.0*pi*X[1]); //initial v-velocity
-  x[2] = 1.0;
-  x[3] = cos(2.0*pi*X[0]) + cos(2.0*pi*X[1]);  
+  x[0] = 1.0; //initial density 
+  x[1] = -cos(2.0*pi*X[0])*sin(2.0*pi*X[1]); //initial u-velocity
+  x[2] = sin(2.0*pi*X[0])*cos(2.0*pi*X[1]); //initial v-velocity
+  x[3] = cos(2.0*pi*X[0]) + cos(2.0*pi*X[1]); //initial temperature   
 }
 //*****************************************************************************

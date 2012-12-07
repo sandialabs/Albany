@@ -29,17 +29,13 @@ ComprNSResid(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
   force       (p.get<std::string>              ("Body Force Name"),
                p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  mu          (p.get<std::string>                   ("Viscosity Mu QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),  
-  lambda          (p.get<std::string>                   ("Viscosity Lambda QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),  
-  kappa          (p.get<std::string>                   ("Viscosity Kappa QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),  
   Residual   (p.get<std::string>                   ("Residual Name"),
               p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") ) 
 {
 
   //TO DOs: 
+  //swap order of equations so continuity is first 
+  //Viscosity evaluator (Sutherland's viscosity law)
   //Stress evaluator
   //3D 
 
@@ -47,9 +43,6 @@ ComprNSResid(const Teuchos::ParameterList& p) :
   this->addDependentField(qFluctGrad);
   this->addDependentField(qFluctDot);
   this->addDependentField(force);
-  this->addDependentField(mu);
-  this->addDependentField(kappa);
-  this->addDependentField(lambda);
   this->addDependentField(wBF);
   this->addDependentField(wGradBF);
 
@@ -75,16 +68,23 @@ ComprNSResid(const Teuchos::ParameterList& p) :
   Rgas = bf_list->get("Gas constant R", 0.714285733);
   Pr = bf_list->get("Prandtl number Pr", 0.72); 
   Re = bf_list->get("Reynolds number Re", 1.0); 
+  mu = bf_list->get("Viscocity mu", 0.0); 
+  lambda = -2.0/3.0*mu; //Stokes' hypothesis
+  kappa = bf_list->get("Diffusivity kappa", 0.0);  
 
+
+cout << "mu: " << mu << endl; 
+cout << "lambda: " << lambda << endl; 
+cout << "kappa: " << kappa << endl; 
 
 
 cout << " vecDim = " << vecDim << endl;
 cout << " numDims = " << numDims << endl;
 
 
-if (vecDim != numDims+2) {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-                                  std::endl << "Error in PHAL::ComprNS constructor:  " <<
-                                  "Invalid Parameter vecDim.  vecDim should be numDims + 2 = " << numDims + 2 << "." << std::endl);}  
+//if (vecDim != numDims+2) {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+//                                  std::endl << "Error in PHAL::ComprNS constructor:  " <<
+  //                                "Invalid Parameter vecDim.  vecDim should be numDims + 2 = " << numDims + 2 << "." << std::endl);}  
 
 
 }
@@ -99,9 +99,6 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(qFluctGrad,fm);
   this->utils.setFieldData(qFluctDot,fm);
   this->utils.setFieldData(force,fm);
-  this->utils.setFieldData(mu,fm);
-  this->utils.setFieldData(kappa,fm);
-  this->utils.setFieldData(lambda,fm);
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(wGradBF,fm);
 
@@ -115,38 +112,39 @@ evaluateFields(typename Traits::EvalData workset)
 {
   typedef Intrepid::FunctionSpaceTools FST;
 
-  if (numDims == 2) { //2D case; order of variables is rho, u, v, T
+  if (numDims == 2) { //2D case
       for (std::size_t cell=0; cell < workset.numCells; ++cell) {
         for (std::size_t node=0; node < numNodes; ++node) {
           for (std::size_t i=0; i<vecDim; i++) 
              Residual(cell,node,i) = 0.0; 
           for (std::size_t qp=0; qp < numQPs; ++qp) {
-             Residual(cell,node,0) = qFluctDot(cell,qp,0)*wBF(cell,node,qp);  //d(rho)/dt
-             for (std::size_t i=1; i < vecDim; i++) {
-                Residual(cell,node,i) = qFluct(cell,qp,0)*qFluctDot(cell,qp,i)*wBF(cell,node,qp); //rho*du_i/dt; rho*dT/dt 
+             for (std::size_t i=0; i < 2; i++) {
+                Residual(cell,node,i) = qFluct(cell,qp,2)*qFluctDot(cell,qp,i)*wBF(cell,node,qp); //rho*du_i/dt 
              }
+             Residual(cell,node,2) = qFluctDot(cell,qp,2)*wBF(cell,node,qp);  //d(rho)/dt
+             Residual(cell,node,3) = qFluct(cell,qp,2)*qFluctDot(cell,qp,3)*wBF(cell,node,qp); //rho*dT/dt   
           }
           for (std::size_t qp=0; qp < numQPs; ++qp) {
-             Residual(cell, node, 0) += qFluct(cell,qp,0)*(qFluctGrad(cell,qp,1,0)+qFluctGrad(cell,qp,2,1))*wBF(cell,node,qp) //rho*div(u)
-                                      + (qFluct(cell,qp,1)*qFluctGrad(cell,qp,0,0) + qFluct(cell,qp,2)*qFluctGrad(cell,qp,0,1))*wBF(cell,node,qp) //u*d(rho)/dx + v*d(rho)/dy  
+             Residual(cell, node, 0) += qFluct(cell,qp,2)*(qFluct(cell,qp,0)*qFluctGrad(cell,qp,0,0) + qFluct(cell,qp,1)*qFluctGrad(cell,qp,0,1))*wBF(cell,node,qp) //rho*(u*du/dx + v*du/dy)
+                                      + Rgas*(qFluct(cell,qp,2)*qFluctGrad(cell,qp,3,0) + qFluct(cell,qp,3)*qFluctGrad(cell,qp,2,0))*wBF(cell,node,qp) //R*(rho*dT/dx + T*d(rho)/dx) 
+                                      + (mu/Re*2.0*qFluctGrad(cell,qp,0,0) + lambda/Re*(qFluctGrad(cell,qp,0,0)+qFluctGrad(cell,qp,1,1)))*wGradBF(cell,node,qp,0) //tau11
+                                      + mu/Re*(qFluctGrad(cell,qp,0,1)+qFluctGrad(cell,qp,1,0))*wGradBF(cell,node,qp,1)//tau12
                                       + force(cell,qp,0)*wBF(cell,node,qp); //f0
-             Residual(cell, node, 1) += qFluct(cell,qp,0)*(qFluct(cell,qp,1)*qFluctGrad(cell,qp,1,0) + qFluct(cell,qp,2)*qFluctGrad(cell,qp,1,1))*wBF(cell,node,qp) //rho*(u*du/dx + v*du/dy)
-                                      + Rgas*(qFluct(cell,qp,0)*qFluctGrad(cell,qp,3,0) + qFluct(cell,qp,3)*qFluctGrad(cell,qp,0,0))*wBF(cell,node,qp) //R*(rho*dT/dx + T*d(rho)/dx) 
-                                      + (mu(cell,qp)/Re*2.0*qFluctGrad(cell,qp,1,0) + lambda(cell,qp)/Re*(qFluctGrad(cell,qp,1,0)+qFluctGrad(cell,qp,2,1)))*wGradBF(cell,node,qp,0) //tau11
-                                      + mu(cell,qp)/Re*(qFluctGrad(cell,qp,1,1)+qFluctGrad(cell,qp,2,0))*wGradBF(cell,node,qp,1)//tau12
+             Residual(cell, node, 1) += qFluct(cell,qp,2)*(qFluct(cell,qp,0)*qFluctGrad(cell,qp,1,0) + qFluct(cell,qp,1)*qFluctGrad(cell,qp,1,1))*wBF(cell,node,qp) //rho*(u*dv/dx + v*dv/dy)
+                                      + Rgas*(qFluct(cell,qp,2)*qFluctGrad(cell,qp,3,1) + qFluct(cell,qp,3)*qFluctGrad(cell,qp,2,1))*wBF(cell,node,qp) //R*(rho*dT/dy + T*d(rho)/dy)
+                                      + mu/Re*(qFluctGrad(cell,qp,0,1)+qFluctGrad(cell,qp,1,0))*wGradBF(cell,node,qp,0) //tau21
+                                      + (mu/Re*2.0*qFluctGrad(cell,qp,1,1) + lambda/Re*(qFluctGrad(cell,qp,0,0)+qFluctGrad(cell,qp,1,1)))*wGradBF(cell,node,qp,1) //tau22
                                       + force(cell,qp,1)*wBF(cell,node,qp); //f1
-             Residual(cell, node, 2) += qFluct(cell,qp,0)*(qFluct(cell,qp,1)*qFluctGrad(cell,qp,2,0) + qFluct(cell,qp,2)*qFluctGrad(cell,qp,2,1))*wBF(cell,node,qp) //rho*(u*dv/dx + v*dv/dy)
-                                      + Rgas*(qFluct(cell,qp,0)*qFluctGrad(cell,qp,3,1) + qFluct(cell,qp,3)*qFluctGrad(cell,qp,0,1))*wBF(cell,node,qp) //R*(rho*dT/dy + T*d(rho)/dy)
-                                      + mu(cell,qp)/Re*(qFluctGrad(cell,qp,1,1)+qFluctGrad(cell,qp,2,0))*wGradBF(cell,node,qp,0) //tau21
-                                      + (mu(cell,qp)/Re*2.0*qFluctGrad(cell,qp,2,1) + lambda(cell,qp)/Re*(qFluctGrad(cell,qp,1,0)+qFluctGrad(cell,qp,2,1)))*wGradBF(cell,node,qp,1) //tau22
-                                      + force(cell,qp,2)*wBF(cell,node,qp); //f2
-             Residual(cell, node, 3) += qFluct(cell,qp,0)*(qFluct(cell,qp,1)*qFluctGrad(cell,qp,3,0) + qFluct(cell,qp,2)*qFluctGrad(cell,qp,3,1) //rho*(u*dT/dx + v*dT/dy) 
-                                      + (gamma_gas - 1.0)*qFluct(cell,qp,3)*(qFluctGrad(cell,qp,1,0) + qFluctGrad(cell,qp,2,1)))*wBF(cell,node,qp) //(gamma-1)*T*div(u)
-                                      - (gamma_gas - 1.0)/Rgas*qFluctGrad(cell,qp,1,0)*(mu(cell,qp)/Re*2.0*qFluctGrad(cell,qp,1,0) + lambda(cell,qp)/Re*(qFluctGrad(cell,qp,1,0) + qFluctGrad(cell,qp,2,1)))*wBF(cell,node,qp) //-(gamma-1)/R*du/dx*tau11 
-                                      - (gamma_gas - 1.0)/Rgas*mu(cell,qp)/Re*qFluctGrad(cell,qp,2,0)*(qFluctGrad(cell,qp,1,1)+qFluctGrad(cell,qp,2,0))*wBF(cell,node,qp) //-(gamma-1)/R*(dv/dx*tau12)
-                                      - (gamma_gas - 1.0)/Rgas*mu(cell,qp)/Re*qFluctGrad(cell,qp,1,1)*(qFluctGrad(cell,qp,1,1)+qFluctGrad(cell,qp,2,0))*wBF(cell,node,qp) //-(gamma-1)/R*(du/dy*tau12)
-                                      - (gamma_gas - 1.0)/Rgas*qFluctGrad(cell,qp,2,1)*(mu(cell,qp)/Re*2.0*qFluctGrad(cell,qp,2,1) + lambda(cell,qp)/Re*(qFluctGrad(cell,qp,1,0) + qFluctGrad(cell,qp,2,1)))*wBF(cell,node,qp) // -(gamma-1)/R*dv/dy*tau22
-                                      + gamma_gas*kappa(cell,qp)/(Pr*Re)*(qFluctGrad(cell,qp,3,0)*wGradBF(cell,node,qp,0) + qFluctGrad(cell,qp,3,1)*wGradBF(cell,node,qp,1)) //gamma*kappa/(Pr*Re)*(Delta T)
+             Residual(cell, node, 2) += qFluct(cell,qp,2)*(qFluctGrad(cell,qp,0,0)+qFluctGrad(cell,qp,1,1))*wBF(cell,node,qp) //rho*div(u)
+                                      + (qFluct(cell,qp,0)*qFluctGrad(cell,qp,2,0) + qFluct(cell,qp,1)*qFluctGrad(cell,qp,2,1))*wBF(cell,node,qp) //u*d(rho)/dx + v*d(rho)/dy  
+                                      + force(cell,qp,2)*wBF(cell,node,qp); //f2 
+             Residual(cell, node, 3) += qFluct(cell,qp,2)*(qFluct(cell,qp,0)*qFluctGrad(cell,qp,3,0) + qFluct(cell,qp,1)*qFluctGrad(cell,qp,3,1) //rho*(u*dT/dx + v*dT/dy) 
+                                      + (gamma_gas - 1.0)*qFluct(cell,qp,3)*(qFluctGrad(cell,qp,0,0) + qFluctGrad(cell,qp,1,1)))*wBF(cell,node,qp) //(gamma-1)*T*div(u)
+                                      - (gamma_gas - 1.0)/Rgas*qFluctGrad(cell,qp,0,0)*(mu/Re*2.0*qFluctGrad(cell,qp,0,0) + lambda/Re*(qFluctGrad(cell,qp,0,0) + qFluctGrad(cell,qp,1,1)))*wBF(cell,node,qp) //-(gamma-1)/R*du/dx*tau11 
+                                      - (gamma_gas - 1.0)/Rgas*mu/Re*qFluctGrad(cell,qp,1,0)*(qFluctGrad(cell,qp,0,1)+qFluctGrad(cell,qp,1,0))*wBF(cell,node,qp) //-(gamma-1)/R*(dv/dx*tau12)
+                                      - (gamma_gas - 1.0)/Rgas*mu/Re*qFluctGrad(cell,qp,0,1)*(qFluctGrad(cell,qp,0,1)+qFluctGrad(cell,qp,1,0))*wBF(cell,node,qp) //-(gamma-1)/R*(du/dy*tau12)
+                                      - (gamma_gas - 1.0)/Rgas*qFluctGrad(cell,qp,1,1)*(mu/Re*2.0*qFluctGrad(cell,qp,1,1) + lambda/Re*(qFluctGrad(cell,qp,0,0) + qFluctGrad(cell,qp,1,1)))*wBF(cell,node,qp) // -(gamma-1)/R*dv/dy*tau22
+                                      + gamma_gas*kappa/(Pr*Re)*(qFluctGrad(cell,qp,3,0)*wGradBF(cell,node,qp,0) + qFluctGrad(cell,qp,3,1)*wGradBF(cell,node,qp,1)) //gamma*kappa/(Pr*Re)*(Delta T)
                                       + force(cell,qp,3)*wBF(cell,node,qp);  //f3 
            } 
           } 
