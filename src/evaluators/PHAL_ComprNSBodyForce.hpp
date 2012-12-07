@@ -47,7 +47,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> force;
 
    //Force types
-  enum BFTYPE {NONE};
+  enum BFTYPE {NONE, TAYLOR_GREEN_VORTEX};
   BFTYPE bf_type;
   
   std::size_t numQPs;

@@ -34,6 +34,8 @@ Teuchos::RCP<Albany::AnalyticFunction> Albany::createAnalyticFunction(
     F = Teuchos::rcp(new Albany::GaussianPress(neq, numDim, data));
   else if (name=="Sin-Cos")
     F = Teuchos::rcp(new Albany::SinCos(neq, numDim, data));
+  else if (name=="Taylor-Green Vortex")
+    F = Teuchos::rcp(new Albany::TaylorGreenVortex(neq, numDim, data));
   else
     TEUCHOS_TEST_FOR_EXCEPTION(name != "Valid Initial Condition Function",
                        std::logic_error,
@@ -221,5 +223,21 @@ void Albany::SinCos::compute(double* x, const double *X)
   x[0] = sin(2.0*pi*X[0])*cos(2.0*pi*X[1]);
   x[1] = cos(2.0*pi*X[0])*sin(2.0*pi*X[1]); 
   x[2] = sin(2.0*pi*X[0])*sin(2.0*pi*X[1]); 
+}
+//*****************************************************************************
+Albany::TaylorGreenVortex::TaylorGreenVortex(int neq_, int numDim_, Teuchos::Array<double> data_)
+ : numDim(numDim_), neq(neq_), data(data_)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION((neq<3) || (numDim!=2),
+			     std::logic_error,
+			     "Error! Invalid call of TaylorGreenVortex with " <<neq
+			     <<" "<< numDim <<"  "<< data.size() << std::endl);
+}
+void Albany::TaylorGreenVortex::compute(double* x, const double *X) 
+{
+  x[0] = -cos(2.0*pi*X[0])*sin(2.0*pi*X[1]); //initial u-velocity
+  x[1] = sin(2.0*pi*X[0])*cos(2.0*pi*X[1]); //initial v-velocity
+  x[2] = 1.0;
+  x[3] = cos(2.0*pi*X[0]) + cos(2.0*pi*X[1]);  
 }
 //*****************************************************************************
