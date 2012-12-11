@@ -42,6 +42,7 @@ private:
   // Input:  
   PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> qFluct; //vector q' containing fluid fluctuations in primitive variables
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> qFluctGrad;
   //reference values for viscosities
   double muref; 
   double kapparef; 
@@ -53,6 +54,12 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> mu;
   PHX::MDField<ScalarT,Cell,QuadPoint> kappa;
   PHX::MDField<ScalarT,Cell,QuadPoint> lambda;
+  PHX::MDField<ScalarT,Cell,QuadPoint> tau11;
+  PHX::MDField<ScalarT,Cell,QuadPoint> tau12;
+  PHX::MDField<ScalarT,Cell,QuadPoint> tau13;
+  PHX::MDField<ScalarT,Cell,QuadPoint> tau22;
+  PHX::MDField<ScalarT,Cell,QuadPoint> tau23;
+  PHX::MDField<ScalarT,Cell,QuadPoint> tau33;
 
    //Force types
   enum VISCTYPE {CONSTANT, SUTHERLAND};

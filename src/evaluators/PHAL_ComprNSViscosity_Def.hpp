@@ -11,7 +11,6 @@
 #include "Intrepid_FunctionSpaceTools.hpp"
 
 namespace PHAL {
-const double pi = 3.1415926535897932385;
 //**********************************************************************
 
 template<typename EvalT, typename Traits>
@@ -19,11 +18,25 @@ ComprNSViscosity<EvalT, Traits>::
 ComprNSViscosity(const Teuchos::ParameterList& p) :
   qFluct       (p.get<std::string>                   ("QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
+  qFluctGrad      (p.get<std::string>                   ("Gradient QP Variable Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
   mu          (p.get<std::string>                   ("Viscosity Mu QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),  
   kappa       (p.get<std::string>                   ("Viscosity Kappa QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ), 
   lambda       (p.get<std::string>                   ("Viscosity Lambda QP Variable Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ), 
+  tau11          (p.get<std::string>                   ("Stress Tau11 QP Variable Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),  
+  tau12       (p.get<std::string>                   ("Stress Tau12 QP Variable Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ), 
+  tau13       (p.get<std::string>                   ("Stress Tau13 QP Variable Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ), 
+  tau22       (p.get<std::string>                   ("Stress Tau22 QP Variable Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ), 
+  tau23       (p.get<std::string>                   ("Stress Tau23 QP Variable Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ), 
+  tau33       (p.get<std::string>                   ("Stress Tau33 QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ) 
 {
   Teuchos::ParameterList* visc_list = 
@@ -51,22 +64,29 @@ ComprNSViscosity(const Teuchos::ParameterList& p) :
 	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Gradient Data Layout") );
 
   this->addDependentField(qFluct);
+  this->addDependentField(qFluctGrad);
   this->addDependentField(coordVec);
   this->addEvaluatedField(mu);
   this->addEvaluatedField(kappa);
   this->addEvaluatedField(lambda);
+  this->addEvaluatedField(tau11);
+  this->addEvaluatedField(tau12);
+  this->addEvaluatedField(tau13);
+  this->addEvaluatedField(tau22);
+  this->addEvaluatedField(tau23);
+  this->addEvaluatedField(tau33);
 
-  Teuchos::RCP<PHX::DataLayout> vector_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
-  vector_dl->dimensions(dims);
-  numQPs  = dims[1];
-  numDims = dims[2];
+  qFluctGrad.fieldTag().dataLayout().dimensions(dims);
+  numQPs   = dims[2];
+  numDims  = dims[3];
 
   qFluct.fieldTag().dataLayout().dimensions(dims);
   vecDim  = dims[2];
 
   cout << "vecdim in viscosity evaluator: " << vecDim << endl; 
+  cout << "numDims in viscosity evaluator: " << numDims << endl; 
+  cout << "numQPs in viscosity evaluator: " << numQPs << endl; 
   cout << "Mu_ref: " << muref << endl; 
   cout << "Kappa_ref: " << kapparef << endl; 
 
@@ -80,10 +100,17 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(qFluct,fm);
+  this->utils.setFieldData(qFluctGrad,fm);
   this->utils.setFieldData(mu,fm); 
   this->utils.setFieldData(kappa,fm); 
   this->utils.setFieldData(lambda,fm); 
   this->utils.setFieldData(coordVec,fm); 
+  this->utils.setFieldData(tau11,fm); 
+  this->utils.setFieldData(tau12,fm); 
+  this->utils.setFieldData(tau13,fm); 
+  this->utils.setFieldData(tau22,fm); 
+  this->utils.setFieldData(tau23,fm); 
+  this->utils.setFieldData(tau33,fm); 
 }
 
 //**********************************************************************
@@ -91,6 +118,7 @@ template<typename EvalT, typename Traits>
 void ComprNSViscosity<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  //Visocisity coefficients
   if (visc_type == CONSTANT){
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
@@ -109,6 +137,28 @@ evaluateFields(typename Traits::EvalData workset)
         kappa(cell,qp) = mu(cell,qp)*Cp/Pr/kapparef; 
         mu(cell,qp) = mu(cell,qp)/muref; //non-dimensionalize mu 
         lambda(cell,qp) = -2.0/3.0*mu(cell,qp); //Stokes' hypothesis
+      }
+    }
+  }
+  //Viscous stresses
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+    for (std::size_t qp=0; qp < numQPs; ++qp) {
+      tau11(cell,qp) = mu(cell,qp)*2.0*qFluctGrad(cell,qp,1,0) + lambda(cell,qp)*(qFluctGrad(cell,qp,1,0) + qFluctGrad(cell,qp,2,1)); //mu*2*du/dx + lambda*div(u) 
+      tau12(cell,qp) = mu(cell,qp)*(qFluctGrad(cell,qp,1,1) + qFluctGrad(cell,qp,2,0)); //mu*(du/dy + dv/dx)
+      tau13(cell,qp) = 0.0; 
+      tau22(cell,qp) = mu(cell,qp)*2.0*qFluctGrad(cell,qp,2,1) + lambda(cell,qp)*(qFluctGrad(cell,qp,1,0) + qFluctGrad(cell,qp,2,1)); //mu*2*dv/dy + lambda*div(u) 
+      tau23(cell,qp) = 0.0; 
+      tau33(cell,qp) = 0.0; 
+    }
+  }
+  if (numDims == 3) {//3D case 
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+        tau11(cell,qp) += lambda(cell,qp)*qFluctGrad(cell,qp,3,2); //+lambda*dw/dz 
+        tau13(cell,qp) += mu(cell,qp)*(qFluctGrad(cell,qp,1,2) + qFluctGrad(cell,qp,3,0)); //mu*(du/dz + dw/dx)
+        tau22(cell,qp) += lambda(cell,qp)*qFluctGrad(cell,qp,3,2); //+lambda*dw/dz 
+        tau23(cell,qp) += mu(cell,qp)*(qFluctGrad(cell,qp,2,3) + qFluctGrad(cell,qp,3,1)); //mu*(dv/dz + dw/dy)
+        tau33(cell,qp) += mu(cell,qp)*2.0*qFluctGrad(cell,qp,3,2) + lambda(cell,qp)*(qFluctGrad(cell,qp,1,0) + qFluctGrad(cell,qp,2,1) + qFluct(cell,qp,3,2)); //mu*2*dw/dz + lambda*div(u) 
       }
     }
   }

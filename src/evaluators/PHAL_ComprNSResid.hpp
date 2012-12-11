@@ -53,6 +53,12 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> mu;
   PHX::MDField<ScalarT,Cell,QuadPoint> kappa;
   PHX::MDField<ScalarT,Cell,QuadPoint> lambda;
+  PHX::MDField<ScalarT,Cell,QuadPoint> tau11;
+  PHX::MDField<ScalarT,Cell,QuadPoint> tau12;
+  PHX::MDField<ScalarT,Cell,QuadPoint> tau13;
+  PHX::MDField<ScalarT,Cell,QuadPoint> tau22;
+  PHX::MDField<ScalarT,Cell,QuadPoint> tau23;
+  PHX::MDField<ScalarT,Cell,QuadPoint> tau33;
   
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;

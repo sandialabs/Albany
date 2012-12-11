@@ -220,6 +220,13 @@ Albany::ComprNSProblem::constructEvaluators(
     p->set<string>("Viscosity Kappa QP Variable Name", "Viscosity Kappa");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     
+    p->set<string>("Stress Tau11 QP Variable Name", "Stress Tau11");
+    p->set<string>("Stress Tau12 QP Variable Name", "Stress Tau12");
+    p->set<string>("Stress Tau13 QP Variable Name", "Stress Tau13");
+    p->set<string>("Stress Tau22 QP Variable Name", "Stress Tau22");
+    p->set<string>("Stress Tau23 QP Variable Name", "Stress Tau23");
+    p->set<string>("Stress Tau33 QP Variable Name", "Stress Tau33");
+    
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Equation Set");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
@@ -240,6 +247,7 @@ Albany::ComprNSProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("QP Gradient Data Layout", dl->qp_gradient); 
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_vecgradient);
     p->set<string>("QP Variable Name", "qFluct");
+    p->set<string>("Gradient QP Variable Name", "qFluct Gradient");
     
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Viscosity");
@@ -250,6 +258,12 @@ Albany::ComprNSProblem::constructEvaluators(
     p->set<string>("Viscosity Lambda QP Variable Name", "Viscosity Lambda");
     p->set<string>("Viscosity Kappa QP Variable Name", "Viscosity Kappa");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set<string>("Stress Tau11 QP Variable Name", "Stress Tau11");
+    p->set<string>("Stress Tau12 QP Variable Name", "Stress Tau12");
+    p->set<string>("Stress Tau13 QP Variable Name", "Stress Tau13");
+    p->set<string>("Stress Tau22 QP Variable Name", "Stress Tau22");
+    p->set<string>("Stress Tau23 QP Variable Name", "Stress Tau23");
+    p->set<string>("Stress Tau33 QP Variable Name", "Stress Tau33");
 
     ev = rcp(new PHAL::ComprNSViscosity<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
