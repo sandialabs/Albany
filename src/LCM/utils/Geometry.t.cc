@@ -3,10 +3,10 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-
 #if !defined(LCM_Geometry_t_cc)
 #define LCM_Geometry_t_cc
 
+#include <iterator>
 
 namespace LCM {
 
@@ -418,8 +418,8 @@ namespace LCM {
       exit(1);
     }
 
-    Index
-    size = end - begin;
+    Index const
+    size = std::distance(begin, end);
 
     T
     median;
@@ -430,7 +430,7 @@ namespace LCM {
     Iterator
     mid_iterator = begin + mid_index;
 
-    std::nth_element(begin, mid_iterator, end);
+    std::partial_sort(begin, mid_iterator, end);
 
     if (size % 2 == 0) {
 
@@ -721,71 +721,6 @@ namespace LCM {
 
     return minima;
   }
-
-  //
-  // Given a set of points and the corners of a box:
-  // Determine the closest point to the center of the box.
-  // For the remaining points, define hyperplanes that are
-  // equidistant to them and the closest point to the center of
-  // the box.
-  // Determine whether the box lies entirely on the side of the hyperplane
-  // where the closest point to the center of the box lies as well.
-  //
-  template<typename T>
-  std::pair<Index, std::vector<bool> >
-  box_proximity_to_points(
-      std::vector< Vector<T> > const & points,
-      Vector<T> const & lower_corner,
-      Vector<T> const & upper_corner)
-  {
-    const Vector<T>
-    center_box = 0.5 * (lower_corner + upper_corner);
-
-    const Index
-    index_closest = closest_point(center_box, points);
-
-    Vector<T> const &
-    closest_to_center = points[index_closest];
-
-    const Index
-    number_points = points.size();
-
-    std::vector<bool>
-    is_in_closest_half(number_points);
-
-    for (Index i = 0; i < number_points; ++i) {
-
-      if (i == index_closest) {
-        is_in_closest_half[i] = true;
-        continue;
-      }
-
-      Vector<T> const &
-      point = points[i];
-
-      const Vector<T>
-      u = point - closest_to_center;
-
-      const Index
-      N = u.get_dimension();
-
-      Vector<T>
-      v(N);
-
-      for (Index j = 0; j < N; ++j) {
-
-        v(j) = u(j) >= 0.0 ? upper_corner(j) : lower_corner(j);
-
-      }
-
-      is_in_closest_half[i] =
-          norm_square(point - v) >= norm_square(closest_to_center - v);
-
-    }
-
-    return std::make_pair(index_closest, is_in_closest_half);
-  }
-
 
 } // namespace LCM
 
