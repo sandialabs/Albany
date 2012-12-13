@@ -132,6 +132,7 @@ namespace LCM {
     this->utils.setFieldData(deltaTime, fm);
     this->utils.setFieldData(poroMassResidual,fm);
     if (haveMech) {
+    	//NOTE: those are in surface elements
       this->utils.setFieldData(defGrad,fm);
       this->utils.setFieldData(J,fm);
     }
@@ -180,7 +181,7 @@ namespace LCM {
           // need deltaTime, deformation gradient, permeability..etc
 
 
-          /*
+
           // For now, I will focus on undrained response, but I will get back to it ASAP - Sun
 
           ScalarT dt = deltaTime(0);
@@ -192,7 +193,7 @@ namespace LCM {
           FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
           FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
 
-          */
+
         }
       }
 
