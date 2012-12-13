@@ -105,6 +105,17 @@ StokesFOBodyForce(const Teuchos::ParameterList& p) :
     this->addDependentField(muFELIX); 
     this->addDependentField(coordVec);
   }
+  else if (type == "Poisson") {
+    bf_type = POISSON;  
+    muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
+            p.get<std::string>("FELIX Viscosity QP Variable Name"),
+	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
+    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
+            p.get<std::string>("Coordinate Vector Name"),
+	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Gradient Data Layout") );
+    this->addDependentField(muFELIX); 
+    this->addDependentField(coordVec);
+  }
   else if (type == "FO ISMIP-HOM Test A") {
     cout << "ISMIP-HOM Test A Source!" << endl; 
     bf_type = FO_ISMIPHOM_TESTA; 
@@ -146,7 +157,7 @@ void StokesFOBodyForce<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  if (bf_type == FO_SINCOS2D || bf_type == FO_SINEXP2D || bf_type == FO_COSEXP2D || bf_type == FO_COSEXP2DFLIP || bf_type == FO_COSEXP2DALL || bf_type == FO_SINCOSZ) {
+  if (bf_type == FO_SINCOS2D || bf_type == FO_SINEXP2D || bf_type == FO_COSEXP2D || bf_type == FO_COSEXP2DFLIP || bf_type == FO_COSEXP2DALL || bf_type == FO_SINCOSZ || bf_type == POISSON) {
     this->utils.setFieldData(muFELIX,fm);
     this->utils.setFieldData(coordVec,fm);
   }
@@ -196,6 +207,15 @@ evaluateFields(typename Traits::EvalData workset)
        MeshScalarT muqp = 1.0 ; //0.5*pow(A, -1.0/n)*pow(muargt, 1.0/n - 1.0);
        f[0] = -1.0*(-4.0*muqp*exp(coordVec(cell,qp,0)) - 12.0*muqp*pi*pi*cos(x2pi)*cos(y2pi) + 4.0*muqp*pi*pi*cos(y2pi));   
        f[1] =  -1.0*(20.0*muqp*pi*pi*sin(x2pi)*sin(y2pi)); 
+     }
+   }
+ }
+ else if (bf_type == POISSON) { //source term for debugging of Neumann BC
+   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+     for (std::size_t qp=0; qp < numQPs; ++qp) {      
+       ScalarT* f = &force(cell,qp,0);
+       MeshScalarT x = coordVec(cell,qp,0);
+       f[0] = exp(x);  
      }
    }
  }

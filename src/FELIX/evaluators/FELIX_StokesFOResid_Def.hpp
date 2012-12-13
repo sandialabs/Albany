@@ -32,6 +32,20 @@ StokesFOResid(const Teuchos::ParameterList& p) :
   Residual   (p.get<std::string>                   ("Residual Name"),
               p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") )
 {
+
+  Teuchos::ParameterList* list = 
+    p.get<Teuchos::ParameterList*>("Parameter List");
+
+  std::string type = list->get("Type", "FELIX");
+  if (type == "FELIX") {
+    cout << "setting FELIX FO model physics" << endl; 
+    eqn_type = FELIX;
+  }
+  else if (type == "Poisson") { //temporary addition of Poisson operator for debugging of Neumann BC
+    cout << "setting Poisson (Laplace) operator" << endl; 
+    eqn_type = POISSON;
+  }
+
   this->addDependentField(U);
   this->addDependentField(Ugrad);
   this->addDependentField(force);
@@ -61,9 +75,12 @@ cout << " numQPs = " << numQPs << endl;
 cout << " numNodes = " << numNodes << endl; 
 
 
-if (vecDim != 2)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+if (vecDim != 2 & eqn_type == FELIX)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 				  std::endl << "Error in FELIX::StokesFOResid constructor:  " <<
 				  "Invalid Parameter vecDim.  Problem implemented for 2 dofs per node only (u and v). " << std::endl);}
+if (vecDim != 1 & eqn_type == POISSON)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+				  std::endl << "Error in FELIX::StokesFOResid constructor:  " <<
+				  "Invalid Parameter vecDim.  Poisson problem implemented for 1 dof per node only. " << std::endl);}
 
 }
 
@@ -91,6 +108,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
   typedef Intrepid::FunctionSpaceTools FST;
   if (numDims == 3) { //3D case
+    if (eqn_type == FELIX) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {
               for (std::size_t i=0; i<vecDim; i++)  Residual(cell,node,i)=0.0;
@@ -106,7 +124,21 @@ evaluateFields(typename Traits::EvalData workset)
               }
            
     } } }
+    else if (eqn_type == POISSON) { //Laplace (Poisson) operator
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t node=0; node < numNodes; ++node) {
+              for (std::size_t i=0; i<vecDim; i++)  Residual(cell,node,i)=0.0;
+          for (std::size_t qp=0; qp < numQPs; ++qp) {
+             Residual(cell,node,0) += Ugrad(cell,qp,0,0)*wGradBF(cell,node,qp,0) + 
+                                      Ugrad(cell,qp,0,1)*wGradBF(cell,node,qp,1) + 
+                                      Ugrad(cell,qp,0,2)*wGradBF(cell,node,qp,2) +  
+                                      force(cell,qp,0)*wBF(cell,node,qp);
+              }
+           
+    } } }
+   }
    else { //2D case
+   if (eqn_type == FELIX) { 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {
               for (std::size_t i=0; i<vecDim; i++)  Residual(cell,node,i)=0.0;
@@ -119,6 +151,18 @@ evaluateFields(typename Traits::EvalData workset)
               }
            
     } } }
+    else if (eqn_type == POISSON) { //Laplace (Poisson) operator
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t node=0; node < numNodes; ++node) {
+              for (std::size_t i=0; i<vecDim; i++)  Residual(cell,node,i)=0.0;
+          for (std::size_t qp=0; qp < numQPs; ++qp) {
+             Residual(cell,node,0) += Ugrad(cell,qp,0,0)*wGradBF(cell,node,qp,0) + 
+                                      Ugrad(cell,qp,0,1)*wGradBF(cell,node,qp,1) + 
+                                      force(cell,qp,0)*wBF(cell,node,qp);
+              }
+           
+    } } }
+   }
 }
 
 //**********************************************************************

@@ -47,6 +47,9 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> UDot;
   PHX::MDField<ScalarT,Cell,QuadPoint> muFELIX;
 
+  enum EQNTYPE {FELIX, POISSON};
+  EQNTYPE eqn_type;
+  
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;
 
