@@ -399,6 +399,7 @@ QCAD::ResponseSaddleValue<EvalT,Traits>::getValidResponseParameters() const
   validPL->set<double>("GF-CBR Method Vds Initial Value", 0., "Initial Vds value [V] when sweeping Vds is true");
   validPL->set<double>("GF-CBR Method Vds Final Value", 0., "Final Vds value [V]");
   validPL->set<int>("GF-CBR Method Vds Steps", 10, "Number of Vds steps going from initial to final values");
+  validPL->set<string>("GF-CBR Method Eigensolver", "", "Eigensolver used by the GF-CBR method");
   
   validPL->set<int>("Debug Mode", 0, "Print verbose debug messages to stdout");
   validPL->set< Teuchos::RCP<QCAD::SaddleValueResponseFunction> >("Response Function", Teuchos::null, "Saddle value response function");

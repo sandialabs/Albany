@@ -73,25 +73,24 @@ GreensFunctionTunnelingSolver(const Teuchos::RCP<std::vector<double> >& EcValues
     (*EcValues)[i] = execSplineInterp(oldPathLen, oldEcValues, y2, pathLength, nOldPts, klo, khi);
   }
   
-/*
-  std::cout << "writing to file ... " << std::endl;
-  std::string outputFilename = "test.dat"; 
+/* temporarily keep it
+
+  matlabEvals.resize(nGFPts); 
+  std::cout << "read Matlab-generated eigenvalues ..." << std::endl; 
+  std::string outputFilename = "matlab_evals.dat";
   if( outputFilename.length() > 0) 
   {
     std::fstream out; 
-    out.open(outputFilename.c_str(), std::fstream::out | std::fstream::app);
-    out << std::endl << std::endl << "# Index  Interpolated pathLength   Ec" << std::endl;
-    double pathLength = 0.0;
-    for(std::size_t i = 0; i < EcValues->size(); i++)
+    out.open(outputFilename.c_str(), std::fstream::in);
+
+    for (int i = 0; i < (nGFPts-1); i++)
     { 
-	    pathLength = double(i) * ptSpacing; 
-	    out << i << " " << pathLength << " " << (*EcValues)[i] << std::endl;
+	    out >> matlabEvals[i];
+	    // std::cout << "i=" << i << ", matlabEvals[i]=" << matlabEvals[i] << std::endl; 
     }
     out.close();
   }   
-  std::cout << "finish writing to file ... " << std::endl;
-*/
-  
+  std::cout << "finish reading from file ... " << std::endl;  */
 }
 
 QCAD::GreensFunctionTunnelingSolver::
@@ -101,9 +100,10 @@ QCAD::GreensFunctionTunnelingSolver::
 
 
 double QCAD::GreensFunctionTunnelingSolver::
-computeCurrent(double Vds, double kbT, double Ecutoff_offset_from_Emax)
+computeCurrent(double Vds, double kbT, double Ecutoff_offset_from_Emax, bool bUseAnasazi)
 {
-  const bool bUseAnasazi = false;
+  // const bool bUseAnasazi = false;
+  
   const double hbar_1 = 6.582119e-16; // eV * s
   const double hbar_2 = 1.054572e-34; // J * s = kg * m^2 / s
   const double m_0 = 9.109382e-31;    // kg
@@ -119,22 +119,22 @@ computeCurrent(double Vds, double kbT, double Ecutoff_offset_from_Emax)
   double muR = -Vds;   // Vds can be >= 0 or < 0
 
   // Setup Energy bins for integration:  muL = 0, muR = -Vds, so set
-  // Emin = min(min(Ec), min(Ec)-Vds, muL, muR)
-  // Emax = max(muL, muR) + 40*kbT 
+  // Emin = min(Ec[0], Ec[nPts-1]-Vds)
+  // Emax = max(muL, muR) + 20*kbT 
   // dE ~ kbT / 10
   int nPts    = EcValues->size();
-  double Emax = std::max(muL, muR) + 40.*kbT;  // fermi dist. ~ exp(-40)=4.25e-18 small enough
+  double Emax = std::max(muL, muR) + 20.*kbT;  // fermi dist. ~ exp(-40)=2.06e-9 small enough
   
-  // find minimum value of Ec
-  double minEc = (*EcValues)[0]; 
-  for (int i = 1; i < nPts; i++)
-    if ( (*EcValues)[i] < minEc )   minEc = (*EcValues)[i];
-  
-  // Emin = min(min(Ec), min(Ec)-Vds, muL, muR), valid for any Ec profile and Vds>=0 or <0
-  double Emin = std::min(minEc, minEc+muR); 
-  Emin = std::min(Emin, muL); 
-  Emin = std::min(Emin, muR); 
-  
+  // Emin = min(Ec[0], Ec[nPts-1]-Vds), should work for arbitrary 1D Ec profile and Vds >= 0 or <0
+  double Emin = std::min((*EcValues)[0], (*EcValues)[nPts-1]+muR); 
+  if (Emin > Emax)
+  {
+    double tmp = Emin; 
+    Emin = Emax; 
+    Emax = tmp; 
+  }
+
+  // set up uniform energy spacing
   double dE = kbT / 10;
   int nEPts = int((Emax - Emin) / dE) + 1;
   dE = (Emax - Emin)/(nEPts-1);  // recalculate dE for given nEPts
@@ -158,12 +158,12 @@ computeCurrent(double Vds, double kbT, double Ecutoff_offset_from_Emax)
 
     ret = doMatrixDiag_Anasazi(Vds, *EcValues, Ecutoff, evals, evecs);
     pEc = EcValues;
-    std::cout << "  Diag w/ a0 = " << a0 << ", nPts = " << nPts << " gives "
-    	    << "Max Eval = " << evals[evals.size()-1]
-    	    << "(need >= "<< Ecutoff << ")" << std::endl;
+    std::cout << "  Diag w/ a0 = " << a0 << ", nPts = " << nPts << " give "
+    	    << evals.size() << " eigenvalues, with Max Eval = " << evals[evals.size()-1] << std::endl; 
+    	    // << "(need >= "<< Ecutoff << ")" << std::endl;
     
     // The following block is not called when a0 is small enough (<= 0.5 nm)
-    while(ret == false && a0 > min_a0) 
+    while(false && ret == false && a0 > min_a0) 
     {
       a0 /= 2.; nPts *= 2;  
       t0 = hbar_1 * hbar_2 /(2.*effMass*m_0* pow(a0*um,2.) );
@@ -221,9 +221,9 @@ computeCurrent(double Vds, double kbT, double Ecutoff_offset_from_Emax)
     std::vector<double> evecs;
     ret = doMatrixDiag_tql2(Vds, *EcValues, Ecutoff, evals, evecs);
     pEc = EcValues;
-    std::cout << "  Diag w/ a0 = " << a0 << ", nPts = " << nPts << " gives "
-    	    << "Max Eval = " << evals[evals.size()-1]
-    	    << "(need >= "<< Ecutoff << ")" << std::endl;
+    std::cout << "  Diag w/ a0 = " << a0 << ", nPts = " << nPts << " give "
+    	    << evals.size() << " eigenvalues, with Max Eval = " << evals[evals.size()-1] << std::endl; 
+    	    // << "(need >= "<< Ecutoff << ")" << std::endl;
     
     // The following block is not called when a0 is small enough (<= 0.5 nm)
     while(false && ret == false && a0 > min_a0) 
@@ -248,10 +248,12 @@ computeCurrent(double Vds, double kbT, double Ecutoff_offset_from_Emax)
     }
     std::cout << "Done H-mx diagonalization" << std::endl;
 
-    nEvecs = nPts;
+    // nEvecs = nPts;
+    nEvecs = evals.size();  // include the case where only part of EVs are found, not equal to nPts
+      
     evecBeginEls.resize(nEvecs);
     evecEndEls.resize(nEvecs);
-    for(int i=0; i<nEvecs; i++) { // assume evecs are in *columns* of evecs
+    for(int i = 0; i < nEvecs; i++) { // assume evecs are in *columns* of evecs
       evecBeginEls[i] = evecs[i];
       evecEndEls[i] = evecs[nPts*(nPts-1) + i];
     }
@@ -398,11 +400,16 @@ doMatrixDiag_tql2(double Vds, std::vector<double>& Ec, double Ecutoff,
 
   // Truncate evals to the number of converged eigenvalues
   //  (note that they aren't necessarily ordered when ierr != 0)
-  if(ierr != 0) {
-    nEvecs = ierr;
+  if(ierr != 0) 
+  {
+    nEvecs = ierr-1;		// because the ierr-th eigenvalue is not determined
     evals.resize(nEvecs);
+    std::cout << "Only " << nEvecs << "eigenvalues out of total " << nPts << " are found !" << std::endl;
+    
+    // sort evals and evecs (note: evals.size() < nPts)
+    sortTql2PartialResults(nPts, evals, evecs);
   }
-  else nEvecs = nPts;
+  else nEvecs = nPts;  // find all evals and evecs
 
   // Print the results
   if(bPrintResults) {
@@ -417,10 +424,29 @@ doMatrixDiag_tql2(double Vds, std::vector<double>& Ec, double Ecutoff,
       os<<std::setw(16)<<evals[i]<<std::endl;
     }
     os<<"------------------------------------------------------"<<std::endl;
-    std::cout << os.str() << std::endl;
+    std::cout << os.str() << std::endl; 
+/*
+    std::ostringstream os;
+    os.setf(std::ios_base::right, std::ios_base::adjustfield);
+    os << "Evals difference between Matlab and tql2 " << std::endl;
+    os << std::endl;
+    os << "------------------------------------------------------" << std::endl;
+    os << "Index" << std::setw(16) << "  Eigenvalue difference" << std::endl;
+    os << "------------------------------------------------------" << std::endl;
+    
+    for (int i = 0; i < nEvecs; i++)
+    {
+      if (std::abs(matlabEvals[i]-evals[i]) > 1e-3)
+        os << i << std::setw(16) << matlabEvals[i]-evals[i] << std::endl;
+    }
+    os << "------------------------------------------------------" << std::endl;
+    std::cout << os.str() << std::endl;  */
+
   }
 
-  double maxEigenvalue = evals[nPts-1];
+  // double maxEigenvalue = evals[nPts-1];
+  double maxEigenvalue = evals[nEvecs-1];  // include the (ierr!=0) case
+  
   return (maxEigenvalue > Ecutoff);
 }
 
@@ -594,19 +620,39 @@ doMatrixDiag_Anasazi(double Vds, std::vector<double>& Ec, double Ecutoff,
 
   // Print the results
   if(bPrintResults) {
+
     os<<std::endl;
     os<<"------------------------------------------------------"<<std::endl;
     os<<std::setw(16)<<"Eigenvalue"
       <<std::setw(18)<<"Direct Residual"
       <<std::endl;
     os<<"------------------------------------------------------"<<std::endl;
-    for (int i=0; i<sol.numVecs; i++) {
+    for (int i=0; i<sol.numVecs; i++) 
+    {
       os<<std::setw(16)<<anasazi_evals[i].realpart
-	<<std::setw(18)<<normR[i]/anasazi_evals[i].realpart
-	<<std::endl;
+        <<std::setw(18)<<normR[i]/anasazi_evals[i].realpart
+        <<std::endl;
     }
     os<<"------------------------------------------------------"<<std::endl;
-    std::cout << os.str() << std::endl;
+    std::cout << os.str() << std::endl;  
+
+/*
+    std::ostringstream os;
+    os.setf(std::ios_base::right, std::ios_base::adjustfield);
+    os << "Evals difference between Matlab and Anasazi " << std::endl;
+    os << std::endl;
+    os << "------------------------------------------------------" << std::endl;
+    os << "Index" << std::setw(16) << "Eigenvalue difference" << std::endl;
+    os << "------------------------------------------------------" << std::endl;
+    
+    for (int i = 0; i < sol.numVecs; i++)
+    {
+      if (std::abs(matlabEvals[i] - anasazi_evals[i].realpart) > 1e-3)
+        os << i << std::setw(16) << matlabEvals[i] - anasazi_evals[i].realpart << std::endl;
+    }
+    os << "------------------------------------------------------" << std::endl; 
+    std::cout << os.str() << std::endl;  */
+
   }
 
   double maxEigenvalue = anasazi_evals[sol.numVecs-1].realpart;
@@ -616,10 +662,10 @@ doMatrixDiag_Anasazi(double Vds, std::vector<double>& Ec, double Ecutoff,
     
 void QCAD::GreensFunctionTunnelingSolver::
 computeCurrentRange(const std::vector<double> Vds, double kbT, 
-		    double Ecutoff_offset_from_Emax, std::vector<double>& resultingCurrent)
+	double Ecutoff_offset_from_Emax, std::vector<double>& resultingCurrent, bool bUseAnasazi)
 {
   for(std::size_t i = 0; i < Vds.size(); i++) {
-    resultingCurrent[i] = computeCurrent(Vds[i], kbT, Ecutoff_offset_from_Emax);
+    resultingCurrent[i] = computeCurrent(Vds[i], kbT, Ecutoff_offset_from_Emax, bUseAnasazi);
   }
 }
 
@@ -797,7 +843,7 @@ int QCAD::GreensFunctionTunnelingSolver::tql2(int n, int max_iter,
    *        ierr is set to
    *		 c          zero       for normal return,
    *          j          if the j-th eigenvalue has not been
-   *                     determined after 30 iterations.
+   *                     determined after max_iter iterations.
    *
    *		 c     calls pythag for  sqrt(a*a + b*b) .
    *
@@ -920,4 +966,44 @@ int QCAD::GreensFunctionTunnelingSolver::tql2(int n, int max_iter,
   }
 
   return ierr;
+}
+
+
+// Sort eigenvalues in ascending order and corresponding eigenvectors when tql2() 
+// finds only part of evals and evecs, taken from tql2()
+void QCAD::GreensFunctionTunnelingSolver::sortTql2PartialResults 
+  (int n, std::vector<double>& d, std::vector<double>& z)
+{
+  int nEVs = d.size(); 
+  int ii, i, k, j;
+  double p; 
+  
+  // .......... order eigenvalues and eigenvectors ..........
+  for(ii = 1; ii < nEVs; ii++) 
+  { 
+    i = ii - 1;
+    k = i;
+    p = d[i];
+
+    for(j = ii; j < nEVs; j++) 
+    {
+      if(d[j] >= p) continue;
+      k = j;
+      p = d[j];
+    }
+
+    if(k == i) continue;
+    d[k] = d[i];
+    d[i] = p;
+
+    // rearrange eigenvectors
+    for(j = 0; j < n; j++) 
+    {
+      p = z[n*j + i];
+      z[n*j + i] = z[n*j + k];
+      z[n*j + k] = p;
+    }
+  }
+
+  return; 
 }
