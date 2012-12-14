@@ -118,8 +118,9 @@
         <Parameter name="Field Scaling Factor" type="double" value="-1.0" />
         
         <!-- For 1D current calculation in real quantum dot devices, want 
-             Grid Spacing < 0.0005 (um), Energy Cutoff Offset is not used,
+             Grid Spacing < 0.0005 (um), Energy Cutoff Offset is not used;
              When Vds Sweep = false, the current is calculated only for Vds Final Value,
+             which should be on the order of kbT
              Eigensolver can be either Anasazi or tql2 (recommended)
         !-->
         <Parameter name="GF-CBR Method Energy Cutoff Offset" type="double" value="0.1" />
