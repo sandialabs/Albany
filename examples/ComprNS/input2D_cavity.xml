@@ -5,10 +5,11 @@
    <Parameter name="Solution Method" type="string" value="Transient"/>
     <Parameter name="Number of PDE Equations" type="int" value="4"/>
     <ParameterList name="Dirichlet BCs">     
-      <!--Parameter name="DBC on NS surface_1 for DOF qFluct0" type="double" value="0.0"/-->
+      <Parameter name="DBC on NS nodelist_1 for DOF qFluct0" type="double" value="0.0"/>
+      <Parameter name="DBC on NS nodelist_3 for DOF qFluct0" type="double" value="0.0"/>
     </ParameterList>
     <ParameterList name="Neumann BCs">     
-      <Parameter name="NBC on SS surface_1 for DOF qFluct0 set dFluxdn" type="Array(double)" value="{0.0}"/>
+      <Parameter name="NBC on SS surface_2 for DOF all set dFluxdn" type="Array(double)" value="{0.0}"/>
     </ParameterList>
     <ParameterList name="Body Force">
        <Parameter name="Type" type="string" value="None"/>
@@ -30,7 +31,7 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
-    <Parameter name="Restart Index" type="int" value="0"/>
+    <Parameter name="Restart Index" type="int" value="1"/>
     <Parameter name="Exodus Input File Name" type="string" value="cavl2soln.exo"/>
     <Parameter name="Exodus Output File Name" type="string" value="cavl2soln_out.exo "/>
   </ParameterList>
