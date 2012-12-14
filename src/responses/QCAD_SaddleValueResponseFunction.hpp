@@ -292,6 +292,8 @@ namespace QCAD {
     double finalVds;       // final Vds value in [V]
     int stepsVds;          // number of steps from initial to final Vds
     bool bSweepVds;        // true if sweeping Vds, false if only using finalVds
+    
+    std::string gfEigensolver;  // Anasazi or tql2 eigensolver used for the GF-CBR calculation
 
     bool bGetCurrent;
     double current_Ecutoff_offset_from_Emax;

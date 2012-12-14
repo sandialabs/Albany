@@ -9,10 +9,10 @@
     <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
 
     <ParameterList name="Dirichlet BCs">
-      <Parameter name="DBC on NS top for DOF Phi" type="double" value="+.2" />
-      <Parameter name="DBC on NS bottom for DOF Phi" type="double" value="+.2" />
-      <Parameter name="DBC on NS lgate for DOF Phi" type="double" value="-1" />
-      <Parameter name="DBC on NS rgate for DOF Phi" type="double" value="-1" />
+      <Parameter name="DBC on NS top for DOF Phi" type="double" value="0.5" />
+      <Parameter name="DBC on NS bottom for DOF Phi" type="double" value="0.5" />
+      <Parameter name="DBC on NS lgate for DOF Phi" type="double" value="-0.1" />
+      <Parameter name="DBC on NS rgate for DOF Phi" type="double" value="-0.1" />
     </ParameterList>
 
     <ParameterList name="Poisson Source">
@@ -110,34 +110,45 @@
 
       <Parameter name="Response 4" type="string" value="Saddle Value" />
       <ParameterList name="ResponseParams 4">
-	<Parameter name="Debug Mode" type="int" value="1" />
+        <Parameter name="Debug Mode" type="int" value="1" />
 
         <Parameter name="Field Name" type="string" value="Potential" />
         <Parameter name="Field Gradient Name" type="string" value="Potential Gradient" />
         <Parameter name="Return Field Name" type="string" value="current" />
+        <Parameter name="Field Scaling Factor" type="double" value="-1.0" />
+        
+        <!-- For 1D current calculation in real quantum dot devices, want 
+             Grid Spacing < 0.0005 (um), Energy Cutoff Offset is not used;
+             When Vds Sweep = false, the current is calculated only for Vds Final Value,
+             which should be on the order of kbT
+             Eigensolver can be either Anasazi or tql2 (recommended)
+        !-->
         <Parameter name="GF-CBR Method Energy Cutoff Offset" type="double" value="0.1" />
-	<Parameter name="Field Scaling Factor" type="double" value="-1.0" />
+        <Parameter name="GF-CBR Method Grid Spacing" type="double" value="0.05"/>
+        <Parameter name="GF-CBR Method Vds Sweep" type="bool" value="false" />
+        <Parameter name="GF-CBR Method Vds Initial Value" type="double" value="0.0" />
+        <Parameter name="GF-CBR Method Vds Steps" type="int" value="20" />
+        <Parameter name="GF-CBR Method Vds Final Value" type="double" value="0.001" />
+        <Parameter name="GF-CBR Method Eigensolver" type="string" value="tql2"  />
 
         <Parameter name="Output Filename" type="string" value="saddlePath_current.dat" />
         <Parameter name="Output Interval" type="int" value="20" />
         <Parameter name="Debug Filename" type="string" value="saddleDebug_current.dat" />
 
-	<Parameter name="Number of Image Points" type="int" value="21" />
-	<Parameter name="Image Point Size" type="double" value="0.4" />
-	<Parameter name="Maximum Iterations" type="int" value="100" />
-	<Parameter name="Max Time Step" type="double" value="1" />
-	<Parameter name="Min Time Step" type="double" value="0.001" />
-	<Parameter name="Min Spring Constant" type="double" value="1" />
-	<Parameter name="Max Spring Constant" type="double" value="1" />
-	<Parameter name="Convergence Tolerance" type="double" value="1e-6" />
-	<Parameter name="Climbing NEB" type="bool" value="1" />
-	<Parameter name="Anti-Kink Factor" type="double" value="1" />
+        <Parameter name="Number of Image Points" type="int" value="21" />
+        <Parameter name="Image Point Size" type="double" value="0.4" />
+        <Parameter name="Maximum Number of Final Points" type="int" value="100"/>
+        <Parameter name="Maximum Iterations" type="int" value="100" />
+        <Parameter name="Max Time Step" type="double" value="1" />
+        <Parameter name="Min Time Step" type="double" value="0.001" />
+        <Parameter name="Min Spring Constant" type="double" value="1" />
+        <Parameter name="Max Spring Constant" type="double" value="1" />
+        <Parameter name="Convergence Tolerance" type="double" value="1e-6" />
+        <Parameter name="Climbing NEB" type="bool" value="1" />
+        <Parameter name="Anti-Kink Factor" type="double" value="1" />
 
-	<Parameter name="Begin Point" type="Array(double)" value="{-5, +8.0}" />
-	<Parameter name="End Point"   type="Array(double)" value="{-1, -10.0}" />
-
-        <Parameter type="int" name="Maximum Number of Final Points" value="100"/>
-        <Parameter type="double" name="Final Point Spacing" value="0.005"/>
+        <Parameter name="Begin Point" type="Array(double)" value="{-5, +8.0}" />
+        <Parameter name="End Point"   type="Array(double)" value="{-1, -10.0}" />
 
       </ParameterList>
 

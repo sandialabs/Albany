@@ -79,9 +79,13 @@ SaddleValueResponseFunction(
   finalVds = params.get<double>("GF-CBR Method Vds Final Value", 0.0);
   stepsVds = params.get<int>("GF-CBR Method Vds Steps", 0);
 
+  // specify the eigensolver to be used for the GF-CBR calculation
+  gfEigensolver = params.get<std::string>("GF-CBR Method Eigensolver", "tql2");
+  std::cout << "gfEigensolver = " << gfEigensolver << std::endl; 
+  
   bGetCurrent = (params.get<std::string>("Return Field Name", "") == "current");
   
-  // set default value to 0.4 eV (always want a positive value)
+  // set default value to 0.5 eV (always want a positive value)
   current_Ecutoff_offset_from_Emax = params.get<double>("GF-CBR Method Energy Cutoff Offset", 0.5);
 
   if(backtraceAfterIters < 0) backtraceAfterIters = 10000000;
@@ -1200,6 +1204,16 @@ double QCAD::SaddleValueResponseFunction::getCurrent
   Teuchos::RCP<Epetra_MpiComm> Comm = Teuchos::rcp( new Epetra_MpiComm(MPI_COMM_WORLD) );
   QCAD::GreensFunctionTunnelingSolver solver(Ec, pathLen, nGFPts, ptSpacing, effMass, Comm); //Teuchos::rcp(comm.Clone())
   
+  // set the eigensolver to be used
+  bool bUseAnasazi = false; 
+  if (gfEigensolver == "Anasazi")
+     bUseAnasazi = true; 
+  else if (gfEigensolver == "tql2")
+     bUseAnasazi = false; 
+  else
+     TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+			  << "Error!  Invalid GF-CBR Method Eigensolver, must be either Anasazi or tql2 !" << std::endl);
+  
   // compute the currents for a range of Vds values
   if (bSweepVds)   
   {
@@ -1211,7 +1225,7 @@ double QCAD::SaddleValueResponseFunction::getCurrent
     for (int i = 0; i < ptsVds; i++)
       rangeVds[i] = initVds + deltaVds * double(i); 
     
-    solver.computeCurrentRange(rangeVds, kB * Temp, current_Ecutoff_offset_from_Emax, rangeIds);
+    solver.computeCurrentRange(rangeVds, kB * Temp, current_Ecutoff_offset_from_Emax, rangeIds, bUseAnasazi);
     
     // set I to the last value of rangeIds
     I = rangeIds[ptsVds-1];
@@ -1231,7 +1245,7 @@ double QCAD::SaddleValueResponseFunction::getCurrent
   
   // compute the current for a single Vds value
   else             
-    I = solver.computeCurrent(finalVds, kB * Temp, current_Ecutoff_offset_from_Emax); // overwrite "Return Field Val" with current
+    I = solver.computeCurrent(finalVds, kB * Temp, current_Ecutoff_offset_from_Emax, bUseAnasazi); // overwrite "Return Field Val" with current
   
   std::cout << "Final Vds = " << finalVds << " V, Current Ids = " << I << " Amps" << std::endl;
   
